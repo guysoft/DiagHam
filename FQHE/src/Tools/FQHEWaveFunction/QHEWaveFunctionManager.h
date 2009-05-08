@@ -82,6 +82,8 @@ class QHEWaveFunctionManager
       PairedCF =  0x14005,
       PairedCFCB = 0x18004,
       OneOneOne = 0x04004,
+      PairedCFS =  0x114005,
+      PairedCFP =  0x214005,
       OneS = 0x100000,
       TwoThirdsS = 0x200000,
       TwoThirdsUnpolarized = 0x200001,

@@ -51,6 +51,8 @@
 #include "Tools/FQHEWaveFunction/MooreReadOnDiskWaveFunction.h"
 #include "Tools/FQHEWaveFunction/PfaffianOnDiskWaveFunction.h"
 #include "Tools/FQHEWaveFunction/PairedCFOnSphereWithSpinWaveFunction.h"
+#include "Tools/FQHEWaveFunction/PairedCFOnSpherePermanentWaveFunction.h"
+#include "Tools/FQHEWaveFunction/PairedCFOnSphereSpinSingletWaveFunction.h"
 #include "Tools/FQHEWaveFunction/TwoThirdSingletState.h"
 #include "Tools/FQHEWaveFunction/TwoThirdUnpolarizedCF.h"
 #include "Tools/FQHEWaveFunction/HundRuleCFStates.h"
@@ -113,7 +115,8 @@ void QHEWaveFunctionManager::AddOptionGroup(OptionManager* manager)
     {
       // PairedCF(CB)Options:
       (*WaveFunctionGroup) += new SingleDoubleOption  ('\n', "bosons", "coefficient for boson contribution (pairedcfcb only)",1.0);
-      (*WaveFunctionGroup) += new MultipleDoubleOption  ('\n', "pair-coeff", "sequence of pairing coefficients (pairedcf* only)",'+');
+      (*WaveFunctionGroup) += new SingleDoubleOption  ('\n', "MR-coeff", "coefficient for Moore-Read contribution (pairedcf only)",1.0);
+      (*WaveFunctionGroup) += new MultipleDoubleOption  ('\n', "pair-coeff", "sequence of pairing coefficients (pairedcfp only)",'+');
       (*WaveFunctionGroup) += new SingleIntegerOption  ('\n', "pair-wave", "choose pairing channel s,+p,... (pairedcf* only)",1);
       (*WaveFunctionGroup) += new BooleanOption  ('\n', "pair-compatibility", "adopt old conventions for normalisation (pairedcf* only)");
       (*WaveFunctionGroup) += new BooleanOption  ('\n', "jastrow-inside", "move jastrow factors inside determinant (1s only)");
@@ -145,7 +148,7 @@ ostream& QHEWaveFunctionManager::ShowAvalaibleWaveFunctions (ostream& str)
       str << "  * genericcf : generic composite fermions wave function" << endl;            
       str << "  * unprojectedcf : generic unprojected composite fermions wave function" << endl;
       str << "  * pairedcf : paired composite fermion wave function at flux 2N-3" << endl;
-      str << "  * paired2QH : paired composite fermion wave function with two quasi-holes at flux 2N-2" << endl;
+      str << "  * paired2QH : paired composite fermion wave function with two quasi-holes at flux 2N-2+PC" << endl;
       str << "  * hund : composite fermion state, if half filled highest shell using Hund's rule" << endl;
     }
   else
@@ -166,6 +169,7 @@ ostream& QHEWaveFunctionManager::ShowAvalaibleWaveFunctions (ostream& str)
 	  str << "  * 2-3up : Spin-unpolarized composite fermion state at two-third filling" << endl;
 	  str << "  * pairedcf : paired composite fermion wave function at flux 2N_1-1" << endl;	  
 	  str << "  * pairedcfcb : paired composite fermion wave function at flux 2N_1-1 with CB component" << endl;
+	  str << "  * pairedcfs : paired composite fermion spin singlet wave function at flux 2N-2" << endl;	  
 	  str << "  * hund : singlet state with each layer formed according to Hund's rule" << endl;
 	}
     else
@@ -425,6 +429,61 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	      delete [] Coefficients;
 	      return rst;
 	    }
+	  if ((strcmp ( this->Options->GetString("test-wavefunction"), "pairedcfs") == 0))
+	    {
+	      int N= this->Options->GetInteger("nbr-particles");
+	      int Sz= Options->GetInteger("SzTotal");
+	      if ((N&1)||(Sz!=0))
+		{
+		  cout << "Paired spin singlet CF states require equal population of both spin-species and even N!" << endl;
+		  exit(1);
+		}
+	      int LL;
+	      double *Coefficients = this->Options->GetDoubles("pair-coeff",LL);
+	      if (Coefficients==NULL)
+		{
+		  Coefficients = new double[1];
+		  Coefficients[0]=0.0;
+		  LL=1;
+		}
+	      int pairWave = this->Options->GetInteger("pair-wave");
+	      PairedCFOnSphereSpinSingletWaveFunction* rst = new PairedCFOnSphereSpinSingletWaveFunction(N, LL, pairWave, Coefficients, 2);	      
+	      rst->AdaptAverageMCNorm();
+	      delete [] Coefficients;
+	      return rst;
+	    }
+	  if ((strcmp ( this->Options->GetString("test-wavefunction"), "pairedcfp") == 0))
+	    {
+	      int N= this->Options->GetInteger("nbr-particles");
+	      int Sz= Options->GetInteger("SzTotal");
+	      if ((N&1)||(Sz!=0))
+		{
+		  cout << "Paired CF permanent states require equal population of both spin-species and even N!" << endl;
+		  exit(1);
+		}
+	      int LL;
+	      double *Coefficients = this->Options->GetDoubles("pair-coeff",LL);
+	      if (Coefficients==NULL)
+		{
+		  Coefficients = new double[1];
+		  Coefficients[0]=0.0;
+		  LL=1;
+		}
+	      double MR =this->Options->GetDouble("MR-coeff");
+	      bool conventions = this->Options->GetBoolean("pair-compatibility");
+	      int attached = this->Options->GetInteger("nbr-flux");
+	      if (attached % 2 != 0)
+		{
+		  cout << "Attention, changing number of flux attached to 2 - please indicate the requested value with --nbr-flux"<<endl;
+		  attached = 2;
+		}
+	      int pairWave = this->Options->GetInteger("pair-wave");
+	      PairedCFOnSpherePermanentWaveFunction* rst = new PairedCFOnSpherePermanentWaveFunction(N, LL,
+										 pairWave, MR,
+										 Coefficients, conventions, attached);	      	      rst->AdaptAverageMCNorm();
+	      delete [] Coefficients;
+	      return rst;
+	    }
 	  if ((strcmp (this->Options->GetString("test-wavefunction"), "hund") == 0))
 	    {
 	      int N= Options->GetInteger("nbr-particles");
@@ -583,6 +642,10 @@ int QHEWaveFunctionManager::GetWaveFunctionType()
     return QHEWaveFunctionManager::PairedCFCB;
   if ((strcmp (this->Options->GetString("test-wavefunction"), "111") == 0))
     return QHEWaveFunctionManager::OneOneOne;
+  if ((strcmp (this->Options->GetString("test-wavefunction"), "pairedcfs") == 0))
+    return QHEWaveFunctionManager::PairedCFS;
+  if ((strcmp (this->Options->GetString("test-wavefunction"), "pairedcfp") == 0))
+    return QHEWaveFunctionManager::PairedCFP;  
   if ((strcmp (this->Options->GetString("test-wavefunction"), "HR") == 0))
     return QHEWaveFunctionManager::HaldaneRezayi;
   if ((strcmp (this->Options->GetString("test-wavefunction"), "XH") == 0))

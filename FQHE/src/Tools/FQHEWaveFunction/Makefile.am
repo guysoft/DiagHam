@@ -55,4 +55,6 @@ PfaffianOnSphereTwoQuasielectronWaveFunction.cc \
 FQHESphereLaughlinOneQuasiholeWaveFunction.cc \
 FQHESphereLaughlinOneQuasielectronWaveFunction.cc \
 FQHEDiskLaughlinOneQuasiholeWaveFunction.cc \
-FQHEDiskLaughlinOneJainQuasielectronWaveFunction.cc
+FQHEDiskLaughlinOneJainQuasielectronWaveFunction.cc \
+PairedCFOnSphereSpinSingletWaveFunction.cc \
+PairedCFOnSpherePermanentWaveFunction.cc

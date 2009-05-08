@@ -128,7 +128,7 @@ MCHistoryRecord::MCHistoryRecord(char* fileName, int nbrPositions, double & samp
     }
 
   // find last block:
-  int skip = (NumAdditionalData>SkipAdditional ? NumAdditionalData : SkipAdditional);
+  int skip = ((unsigned)NumAdditionalData>SkipAdditional ? NumAdditionalData : SkipAdditional);
   std::streampos secondLastBlock, lastBlock=0;
   char signature; 
   while ( ! (HistoryFile.eof()))
@@ -204,6 +204,7 @@ MCHistoryRecord::MCHistoryRecord(char *Input, int &nbrPositions, List<AbstractMC
     {
       nbrPositions = this->NbrPositions;
     }
+  cout << "MCHistoryRecord "<< Input << " for system with "<<NbrPositions/2<< " particles"<<endl;
   int numAdditional;
   ReadLittleEndian(HistoryFile,numAdditional);
   this->AdditionalData=NULL;
@@ -252,6 +253,7 @@ MCHistoryRecord::MCHistoryRecord(char *Input, int &nbrPositions, List<AbstractMC
     }
   else
     { // no additional data:
+      cout << "No additional data in MCHistoryRecord "<< Input << endl;
       this->NumAdditionalData=0;
       this->SkipAdditional=0;
     }
@@ -260,6 +262,7 @@ MCHistoryRecord::MCHistoryRecord(char *Input, int &nbrPositions, List<AbstractMC
   if (this->LastSampleCount!=0)
     {
       cout << "Problem with header of History record " <<Input << endl;
+      cout << "LastSampleCount = "<<LastSampleCount<<endl;
       exit(2);
     }
   this->StartPos=HistoryFile.tellg();
@@ -297,9 +300,12 @@ void MCHistoryRecord::RecordRejectedStep()
 // record accepted step - to be called for each accepted step, or at every step to be written to file
 bool MCHistoryRecord::RecordAcceptedStep( double samplingAmplitude, RealVector &positions, Complex &valueExact)
 {
+  // fix to assure that first recorded step is one that was accepted:
+  if (LastSampleCount==TotalSampleCount) LastSampleCount=0;
+  //
   this->TotalSampleCount++;
   this->TotalRecordCount++;
-  // first: write multiplicity of last configuration (is part of prior record)
+  // first: write multiplicity of last configuration (is part of prior record)  
   WriteLittleEndian(LogFile,this->LastSampleCount);
   // then: write info about new positions (starting new record)
   char signature = 'b'; // signature for a new Block

@@ -10,4 +10,5 @@ GroupedPermutations.cc \
 ClebschGordanDiskCoefficients.cc \
 ArithmeticGeometricMean.cc \
 JacobiThetaFunction.cc \
-WignerSmallDMatrix.cc
+WignerSmallDMatrix.cc \
+ThreeJSymbol.cc

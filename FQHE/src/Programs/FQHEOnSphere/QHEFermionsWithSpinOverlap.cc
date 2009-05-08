@@ -530,7 +530,7 @@ int main(int argc, char** argv)
     }
 
 
-    if (HistoryMode == 4) // continuing to work on old History
+  if (HistoryMode == 4) // continuing to work on old History
     {
       if (Manager.GetString("exact-state") == 0)
 	{
