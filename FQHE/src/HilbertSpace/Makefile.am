@@ -72,4 +72,5 @@ FermionOnSphereUnnormalizedBasis.cc \
 BosonOnSphereHaldaneHugeBasisShort.cc \
 BosonOnSphereWithSpin.cc \
 FermionOnSphereWithSpinHaldaneBasis.cc \
-FermionOnSphereWithSpinHaldaneBasisLong.cc
+FermionOnSphereWithSpinHaldaneBasisLong.cc \
+FermionOnSphereHaldaneLargeBasis.cc

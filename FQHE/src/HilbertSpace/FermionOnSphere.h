@@ -76,6 +76,7 @@ class FermionOnSphere :  public ParticleOnSphere
 
   friend class FermionOnSphereUnnormalizedBasis;
   friend class FermionOnSphereHaldaneBasis;
+  friend class FermionOnSphereHaldaneLargeBasis;
   friend class FermionOnSphereSymmetricBasis;
   friend class FermionOnSphereHaldaneSymmetricBasis;
 

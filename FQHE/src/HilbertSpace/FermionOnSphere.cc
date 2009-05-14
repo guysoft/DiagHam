@@ -140,10 +140,13 @@ FermionOnSphere::~FermionOnSphere ()
 	delete[] this->StateLzMax;
       delete[] this->SignLookUpTable;
       delete[] this->SignLookUpTableMask;
-      delete[] this->LookUpTableShift;
-      for (int i = 0; i < this->NbrLzValue; ++i)
-	delete[] this->LookUpTable[i];
-      delete[] this->LookUpTable;
+      if (this->LookUpTableShift != 0)
+	{
+	  delete[] this->LookUpTableShift;
+	  for (int i = 0; i < this->NbrLzValue; ++i)
+	    delete[] this->LookUpTable[i];
+	  delete[] this->LookUpTable;
+	}
     }
 }
 

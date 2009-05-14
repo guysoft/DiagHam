@@ -4,6 +4,7 @@
 #include "HilbertSpace/FermionOnSphereSymmetricBasis.h"
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
 #include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasis.h"
+#include "HilbertSpace/FermionOnSphereHaldaneLargeBasis.h"
 #include "HilbertSpace/FermionOnSphereHaldaneHugeBasis.h"
 #include "HilbertSpace/BosonOnSphereShort.h"
 #include "HilbertSpace/BosonOnSphereHaldaneHugeBasisShort.h"
@@ -50,6 +51,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "initial-state", "use an optional state where some of the components have already been computed, improving computation time");
   (*SystemGroup) += new BooleanOption  ('\n', "fermion", "compute the slater decomposition of the Jack polynomial times Vandermonde");
   (*SystemGroup) += new BooleanOption  ('\n', "huge-basis", "use huge Hilbert space support");
+  (*SystemGroup) += new BooleanOption  ('\n', "large-basis", "use large Hilbert space support (i.e. handle non-squeezed Hilbert space larger than 2^31 without hard-drive storage)");
   (*SystemGroup) += new SingleIntegerOption ('\n', "huge-fulldim", "indicate the full Hilbert space dimension (i.e. without squeezing) when using huge Hilbert space (0 if it has to be computed)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "file-size", "maximum file size (in MBytes) when using huge mode", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
@@ -126,7 +128,7 @@ int main(int argc, char** argv)
 	  if (Manager.GetString("save-hilbert") != 0)
 	    {
 	      InitialSpace = new BosonOnSphereHaldaneHugeBasisShort (NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetInteger("file-size"), ReferenceState, ((unsigned long) Manager.GetInteger("memory")) << 20, false);
-	      InitialSpace->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+	      InitialSpace->WriteHilbertSpace(Manager.GetString("save-hilbert"));
 	      return 0;
 	    }
 	  if (Manager.GetString("load-hilbert") == 0)
@@ -169,14 +171,14 @@ int main(int argc, char** argv)
 	  return 0;
 	}
       BosonOnSphereHaldaneBasisShort* InitialSpace;
-      if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
-	InitialSpace = new BosonOnSphereHaldaneBasisShort(((SingleStringOption*) Manager["load-hilbert"])->GetString());
+      if (Manager.GetString("load-hilbert") != 0)
+	InitialSpace = new BosonOnSphereHaldaneBasisShort(Manager.GetString("load-hilbert"));
       else
 	{
 	  InitialSpace = new BosonOnSphereHaldaneBasisShort(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);	  
-	  if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+	  if (Manager.GetString("save-hilbert") != 0)
 	    {
-	      InitialSpace->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+	      InitialSpace->WriteHilbertSpace(Manager.GetString("save-hilbert"));
 	      return 0;
 	    }
 	}
@@ -218,14 +220,14 @@ int main(int argc, char** argv)
 	  if (Manager.GetBoolean("huge-basis") == true)
 	    {
 	      FermionOnSphereHaldaneHugeBasis* InitialSpace;
-	      if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
-		InitialSpace = new FermionOnSphereHaldaneHugeBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString(), Manager.GetInteger("memory"));
+	      if (Manager.GetString("load-hilbert") != 0)
+		InitialSpace = new FermionOnSphereHaldaneHugeBasis(Manager.GetString("load-hilbert"), Manager.GetInteger("memory"));
 	      else
 		{
 		  InitialSpace = new FermionOnSphereHaldaneHugeBasis (NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetInteger("file-size"), ReferenceState, ((unsigned long) Manager.GetInteger("memory")) << 20, false, Manager.GetInteger("huge-fulldim"));
-		  if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+		  if (Manager.GetString("save-hilbert") != 0)
 		    {		      
-		      InitialSpace->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+		      InitialSpace->WriteHilbertSpace(Manager.GetString("save-hilbert"));
 		      return 0;
 		    }
 		}
@@ -261,15 +263,32 @@ int main(int argc, char** argv)
 	      return 0;
 	    }
 	  FermionOnSphereHaldaneBasis* InitialSpace;
-	  if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
-	    InitialSpace = new FermionOnSphereHaldaneBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString());
+	  if (Manager.GetBoolean("large-basis") == true)
+	    {
+	      if (Manager.GetString("load-hilbert") != 0)
+		InitialSpace = new FermionOnSphereHaldaneLargeBasis(Manager.GetString("load-hilbert"));
+	      else
+		{
+		  InitialSpace = new FermionOnSphereHaldaneLargeBasis(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);	  
+		  if (Manager.GetString("save-hilbert") != 0)
+		    {
+		      InitialSpace->WriteHilbertSpace(Manager.GetString("save-hilbert"));
+		      return 0;
+		    }
+		}
+	    }
 	  else
 	    {
-	      InitialSpace = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);	  
-	      if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+	      if (Manager.GetString("load-hilbert") != 0)
+		InitialSpace = new FermionOnSphereHaldaneBasis(Manager.GetString("load-hilbert"));
+	      else
 		{
-		  InitialSpace->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
-		  return 0;
+		  InitialSpace = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);	  
+		  if (Manager.GetString("save-hilbert") != 0)
+		    {
+		      InitialSpace->WriteHilbertSpace(Manager.GetString("save-hilbert"));
+		      return 0;
+		    }
 		}
 	    }
 	  RealVector OutputState;
@@ -305,14 +324,14 @@ int main(int argc, char** argv)
       else
 	{
 	  FermionOnSphereHaldaneSymmetricBasis* InitialSpace;
-	  if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
-	    InitialSpace = new FermionOnSphereHaldaneSymmetricBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString());
+	  if (Manager.GetString("load-hilbert") != 0)
+	    InitialSpace = new FermionOnSphereHaldaneSymmetricBasis(Manager.GetString("load-hilbert"));
 	  else
 	    {
 	      InitialSpace = new FermionOnSphereHaldaneSymmetricBasis(NbrParticles, NbrFluxQuanta, ReferenceState);	  
-	      if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+	      if (Manager.GetString("save-hilbert") != 0)
 		{
-		  InitialSpace->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+		  InitialSpace->WriteHilbertSpace(Manager.GetString("save-hilbert"));
 		  return 0;
 		}
 	    }
