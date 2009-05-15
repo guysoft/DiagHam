@@ -135,16 +135,16 @@ FermionOnSphereHaldaneLargeBasis::FermionOnSphereHaldaneLargeBasis (int nbrFermi
 //       cout << i << " : " << this->FindStateIndex(this->StateDescription[i]) << endl;
 //     }
   
-//   int truc = 0;
-//   for (int i = 0; i <= this->BTreeLookUpTableDepth; ++i)
-//     {
-//       cout << "level " << i << endl;
-//       for (int j = 0; j < (1 << i); ++j)
-// 	{
-// 	  cout << this->BTreeLookUpTable[truc] << endl;
-// 	  ++truc;
-// 	}
-//     }
+  int truc = 0;
+  for (int i = 0; i <= this->BTreeLookUpTableDepth; ++i)
+    {
+      cout << "level " << i << endl;
+      for (int j = 0; j < (1 << i); ++j)
+	{
+	  cout << "  " << j << " -> " << this->BTreeLookUpTable[truc] << endl;
+	  ++truc;
+	}
+    }
 //   cout << "hil : " << endl;
 //   for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
 //     {
@@ -513,11 +513,12 @@ RealVector FermionOnSphereHaldaneLargeBasis::ConvertFromNbodyBasis(RealVector& s
 
 long FermionOnSphereHaldaneLargeBasis::FindStateIndex(unsigned long stateDescription)
 {
-//  cout << "search " << stateDescription << endl;
+  cout << "search " << stateDescription << endl;
   long PosMax = 0l;
   long PosMin = 0l;
   for (int i = 0; i <= this->BTreeLookUpTableDepth; ++i)
     {
+      cout << "level " << i << " " << PosMax << " " << BTreeLookUpTable[PosMin + PosMax];
       if (stateDescription <= BTreeLookUpTable[PosMin + PosMax])
 	{
 	  PosMax <<= 1;
@@ -528,7 +529,7 @@ long FermionOnSphereHaldaneLargeBasis::FindStateIndex(unsigned long stateDescrip
 	  PosMax <<= 1;
 	}
       PosMin += 1l << i;      
-//      cout << "level " << i << " " << PosMax << endl;
+      cout << " " << PosMax << endl;
     }
   PosMin = PosMax;
   ++PosMin;
@@ -539,7 +540,7 @@ long FermionOnSphereHaldaneLargeBasis::FindStateIndex(unsigned long stateDescrip
     PosMin *=  this->LargeHilbertSpaceDimension >> (this->BTreeLookUpTableDepth + 1);
   long PosMid = (PosMin + PosMax) >> 1;
   unsigned long CurrentState = this->StateDescription[PosMid];
-//  cout << PosMax << " " << PosMid << " " << PosMin << endl;
+  cout << PosMax << " " << PosMid << " " << PosMin << endl;
   while ((PosMax != PosMid) && (CurrentState != stateDescription))
     {
       if (CurrentState > stateDescription)
