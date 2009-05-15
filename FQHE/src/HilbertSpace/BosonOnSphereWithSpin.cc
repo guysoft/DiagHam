@@ -787,6 +787,7 @@ ostream& BosonOnSphereWithSpin::PrintState (ostream& Str, int* stateDesc)
 
 int BosonOnSphereWithSpin::GenerateStates(int nbrBosonsUp, int nbrBosonsDown, int lzMax, int currentLzMax, int totalLz, int pos)
 {
+  cout << "GenerateStates(Up:"<< nbrBosonsUp<<", Down"<< nbrBosonsDown<<", currLz:"<<currentLzMax<< ", totalLz:" <<totalLz<<", pos:"<< pos<<")"<<endl;
   if ((nbrBosonsUp < 0) || (nbrBosonsDown < 0) || (totalLz < 0) || (currentLzMax < 0) || (((nbrBosonsUp + nbrBosonsDown) * currentLzMax) < totalLz))
     return pos;
   if ((nbrBosonsUp + nbrBosonsDown) == 0)
@@ -827,11 +828,11 @@ int BosonOnSphereWithSpin::GenerateStates(int nbrBosonsUp, int nbrBosonsDown, in
       }
     else return pos;
   int ReducedCurrentLzMax = currentLzMax - 1;
-  int TmpPos = pos;
-  for (int UpToPlace=0; UpToPlace<=nbrBosonsUp; ++UpToPlace)
-    for (int DownToPlace=0; DownToPlace<=nbrBosonsDown; ++DownToPlace)
+  int TmpPos = pos;  
+  for (int UpToPlace=nbrBosonsUp; UpToPlace>=0; --UpToPlace)
+    for (int DownToPlace=nbrBosonsDown; DownToPlace>=0; --DownToPlace)
       {
-	TmpPos = this->GenerateStates(nbrBosonsUp - UpToPlace, nbrBosonsDown-DownToPlace, lzMax, ReducedCurrentLzMax, totalLz-(UpToPlace+DownToPlace)*currentLzMax, pos);
+	TmpPos = this->GenerateStates(nbrBosonsUp-UpToPlace, nbrBosonsDown-DownToPlace, lzMax, ReducedCurrentLzMax, totalLz-(UpToPlace+DownToPlace)*currentLzMax, pos);
 	for (int i = pos; i < TmpPos; i++)
 	  this->StateDescription[i][currentLzMax] = (UpToPlace << 16) | DownToPlace;
 	pos = TmpPos;
