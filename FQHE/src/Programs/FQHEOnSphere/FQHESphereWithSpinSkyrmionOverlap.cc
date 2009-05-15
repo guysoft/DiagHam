@@ -14,11 +14,10 @@
 #include "MathTools/ClebschGordanCoefficients.h"
 
 #include "Tools/FQHEWaveFunction/QHEWaveFunctionManager.h"
-#include "Tools/FQHEWaveFunction/PairedCFOnSphereWithSpinWaveFunction.h"
+#include "Tools/FQHEWaveFunction/SkyrmionOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/WaveFunctionOverlapOptimizer.h"
-#include "Tools/FQHEWaveFunction/ExtendedHalperinWavefunction.h"
-#include "Tools/FQHEWaveFunction/HundRuleBilayerSinglet.h"
 #include "Tools/FQHEMonteCarlo/ParticleOnSphereCollection.h"
+#include "Tools/FQHEWaveFunction/HundRuleBilayerSinglet.h"
 
 #include "MCObservables/RealObservable.h"
 #include "MCObservables/ComplexObservable.h"
@@ -67,7 +66,7 @@ int main(int argc, char** argv)
   cout.precision(14);
 
   // some running options and help
-  OptionManager Manager ("QHEFermionsWithSpinOverlap" , "0.01");
+  OptionManager Manager ("FQHESphereWithSpinSkyrmionOverlap" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* MonteCarloGroup = new OptionGroup ("Monte Carlo options");
@@ -75,9 +74,9 @@ int main(int argc, char** argv)
 
   ArchitectureManager Architecture;
   QHEWaveFunctionManager WaveFunctionManager(QHEWaveFunctionManager::SphereWithSpinGeometry);
-
+  
   Manager += SystemGroup;
-  WaveFunctionManager.AddOptionGroup(&Manager);
+  SkyrmionOnSphereWaveFunction::AddSkyrmionOptionGroup(Manager, &WaveFunctionManager);  
   Manager += MonteCarloGroup;
   Architecture.AddOptionGroup(&Manager);
   Manager += PrecalculationGroup;
@@ -85,9 +84,11 @@ int main(int argc, char** argv)
 
 
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 10);
-  (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 9);
-  (*SystemGroup) += new SingleIntegerOption  ('s', "SzTotal", "twice the z component of the total spin of the system", 0);
-  (*SystemGroup) += new SingleStringOption  ('\n', "exact-state", "name of the file containing the vector obtained using exact diagonalization");
+  (*SystemGroup) += new SingleIntegerOption  ('l', "total-lzmax", "total number of flux quanta (0 if it has to be guessed from input file name)", 0);  
+  (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total lz value of the system (0 if it has to be guessed from input file name)", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the z component of the total spin of the system (0 if it has to be guessed from file name)", 0);  
+  
+  (*SystemGroup) += new SingleStringOption  ('\0', "exact-state", "name of the file containing the vector obtained using exact diagonalization");
   (*SystemGroup) += new BooleanOption  ('\n', "use-trial", "calculate overlap against a known trial state");
   (*SystemGroup) += new BooleanOption ('\n', "list-wavefunctions", "list all available test wave fuctions");  
   (*SystemGroup) += new SingleStringOption  ('\n', "use-exact", "file name of an exact state that has to be used as test wave function");
@@ -119,18 +120,9 @@ int main(int argc, char** argv)
   
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
-  if (Manager.ProceedOptions(argv, argc, cout) == false)
-    {
-      cout << "see man page for option syntax or type QHEFermionsWithSpinOverlap -h" << endl;
-      return -1;
-    }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
-    {
-      Manager.DisplayHelp (cout);
-      return 0;
-    }
+  Manager.StandardProceedings(argv, argc, cout);
 
-    if (Manager.GetBoolean("list-wavefunctions") == true)
+  if (Manager.GetBoolean("list-wavefunctions") == true)
     {
       WaveFunctionManager.ShowAvalaibleWaveFunctions(cout);
       return 0;
@@ -138,13 +130,14 @@ int main(int argc, char** argv)
 
   bool UseTrial = Manager.GetBoolean("use-trial");
   int NbrFermions = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
-  int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
-  int SzTotal = ((SingleIntegerOption*) Manager["SzTotal"])->GetInteger();
+  int LzMax = ((SingleIntegerOption*) Manager["total-lzmax"])->GetInteger();
+  int TotalLz = Manager.GetInteger("total-lz");
+  int TotalSz = ((SingleIntegerOption*) Manager["total-sz"])->GetInteger();
   int NbrIter = ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();  
   int NbrWarmUpIter = Manager.GetInteger("nbr-warmup-iter");
   
-  int NbrFermionsUp = (NbrFermions+SzTotal)/2;
-  int NbrFermionsDown = (NbrFermions-SzTotal)/2;
+  int NbrFermionsUp = (NbrFermions+TotalSz)/2;
+  int NbrFermionsDown = (NbrFermions-TotalSz)/2;
 
   bool LzSymmetrizedBasis = false; // ((BooleanOption*) Manager["lzsymmetrized-basis"])->GetBoolean();
   bool SzSymmetrizedBasis = false; // ((BooleanOption*) Manager["szsymmetrized-basis"])->GetBoolean();
@@ -152,7 +145,7 @@ int main(int argc, char** argv)
 
   if (NbrFermionsUp+NbrFermionsDown!=NbrFermions)
     {
-      cout << "Attention, your combination of NbrFermions and SzTotal is not possible!" << endl;
+      cout << "Attention, your combination of NbrFermions and TotalSz is not possible!" << endl;
       exit(1);
     }
   
@@ -204,7 +197,8 @@ int main(int argc, char** argv)
       
     }
   
-  Abstract1DComplexFunction* TestWaveFunction = WaveFunctionManager.GetWaveFunction();
+  Abstract1DComplexFunction* TestWaveFunction = new SkyrmionOnSphereWaveFunction(Architecture.GetArchitecture(),
+					   Manager, NbrFermions, LzMax, TotalLz, TotalSz, &WaveFunctionManager);
 
   if (TestWaveFunction == 0)
     {
@@ -289,7 +283,7 @@ int main(int argc, char** argv)
 	      {
 		if (State.GetVectorDimension()>0)
 		  {
-		    Space = new FermionOnSphereWithSpin(NbrFermions, 0, LzMax, SzTotal, MemorySpace);
+		    Space = new FermionOnSphereWithSpin(NbrFermions, 0, LzMax, TotalSz, MemorySpace);
 		  }
 	      }
 	    else
@@ -327,7 +321,7 @@ int main(int argc, char** argv)
 		Space = new FermionOnSphereWithSpinLzSzSymmetry(Manager.GetString("load-hilbert"), MemorySpace);
 	  else
 	    if (Manager.GetString("load-hilbert") == 0)
-	      Space = new FermionOnSphereWithSpinLzSymmetry(NbrFermions, LzMax, SzTotal, ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean(), MemorySpace);
+	      Space = new FermionOnSphereWithSpinLzSymmetry(NbrFermions, LzMax, TotalSz, ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean(), MemorySpace);
 	    else
 	      Space = new FermionOnSphereWithSpinLzSymmetry(Manager.GetString("load-hilbert"), MemorySpace);	      
 	  if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
@@ -341,7 +335,7 @@ int main(int argc, char** argv)
 // #ifdef __64_BITS__
 //       if (LzMax <= 31)
 //         {
-//           Space = new FermionOnSphereWithSpin(NbrFermions, 0 /* assume L=0 for GS */, LzMax, SzTotal);
+//           Space = new FermionOnSphereWithSpin(NbrFermions, 0 /* assume L=0 for GS */, LzMax, TotalSz);
 //         }
 //       else
 // 	{
@@ -351,7 +345,7 @@ int main(int argc, char** argv)
 // #else
 //       if (LzMax <= 15)
 //         {
-//           Space = new FermionOnSphereWithSpin(NbrFermions, 0 /* assume L=0 for GS */, LzMax, SzTotal);
+//           Space = new FermionOnSphereWithSpin(NbrFermions, 0 /* assume L=0 for GS */, LzMax, TotalSz);
 // 	}
 //       else
 // 	{
@@ -486,7 +480,7 @@ int main(int argc, char** argv)
   int TimeCoherence;
   
   // test symmetry for spin reversal:
-  if ((SzTotal==0)&&(NbrFermions%2==0)) // otherwise this is not so easy...
+  if ((TotalSz==0)&&(NbrFermions%2==0)) // otherwise this is not so easy...
     {
       // calculate value:
       if (UseTrial)

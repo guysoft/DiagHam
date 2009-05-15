@@ -209,10 +209,10 @@ int main(int argc, char** argv)
     }
 
   AbstractRandomNumberGenerator* RandomNumber = 0;
-  if (((SingleStringOption*) Manager["random-file"])->GetString() != 0)
+  if (Manager.GetString("random-file") != 0)
     {
-      RandomNumber = new FileRandomNumberGenerator(((SingleStringOption*) Manager["random-file"])->GetString(), (unsigned long)((NbrWarmUpIter + NbrIter) * 4.33) + 2000, 
-						     ((SingleIntegerOption*) Manager["random-seek"])->GetInteger());
+      RandomNumber = new FileRandomNumberGenerator(Manager.GetString("random-file"), (unsigned long)((NbrWarmUpIter + NbrIter) * 4.33) + 2000, 
+						     Manager.GetInteger("random-seek"));
     }
   else
     {

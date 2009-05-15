@@ -3,6 +3,8 @@
 #include "HilbertSpace/BosonOnSphereWithSpin.h"
 
 #include "Hamiltonian/ParticleOnSphereWithSpinGenericHamiltonian.h"
+#include "Hamiltonian/ParticleOnSphereWithSpinS2Hamiltonian.h"
+#include "Hamiltonian/ParticleOnSphereWithSpinL2Hamiltonian.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -57,6 +59,8 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleDoubleOption ('\n', "l2-factor", "multiplicative factor in front of an optional L^2 operator than can be added to the Hamiltonian", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "s2-factor", "multiplicative factor in front of an optional S^2 operator than can be added to the Hamiltonian", 0.0);
+
+  (*SystemGroup) += new BooleanOption ('\n', "l2-s2-only", "compose Hamiltonian only of L2 and S2 terms");
   
   (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
   (*LanczosGroup)  += new SingleIntegerOption  ('\n', "full-diag", 
@@ -120,8 +124,7 @@ int main(int argc, char** argv)
   int SzTotal = ((SingleIntegerOption*) Manager["total-sz"])->GetInteger();
   bool HaldaneBasisFlag = Manager.GetBoolean("haldane");
 
-  long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
-  unsigned long MemorySpace = ((unsigned long) ((SingleIntegerOption*) Manager["fast-search"])->GetInteger()) << 20;
+  long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;  
   int InitialLz = ((SingleIntegerOption*) Manager["initial-lz"])->GetInteger();
   int NbrLz = ((SingleIntegerOption*) Manager["nbr-lz"])->GetInteger();
   char* LoadPrecalculationFileName = ((SingleStringOption*) Manager["load-precalculation"])->GetString();
@@ -146,10 +149,13 @@ int main(int argc, char** argv)
       return -1;
     }
 
-  if (((SingleStringOption*) Manager["interaction-file"])->GetString() == 0)
+  if (Manager.GetString("interaction-file") == 0)
     {
-      cout << "an interaction file has to be provided" << endl;
-      return -1;
+      if (!Manager.GetBoolean("l2-s2-only"))
+	{
+	  cout << "an interaction file has to be provided" << endl;
+	  return -1;
+	}
     }
   else
     {
@@ -175,7 +181,7 @@ int main(int argc, char** argv)
   sprintf (OutputNameLz, "bosons_sphere_su2_%s%s_n_%d_2s_%d_sz_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), ExtraTerms,
 	   NbrBosons, LzMax, SzTotal);
 
-  int Max = (((LzMax - NbrUp + 1) * NbrUp) + ((LzMax - NbrDown + 1) * NbrDown));
+  int Max = (LzMax * (NbrUp+NbrDown));
   cout << "maximum Lz value = " << Max << endl;
 
   int  L = 0;
@@ -205,14 +211,38 @@ int main(int argc, char** argv)
       for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 	Space->PrintState(cout, i) << endl;
 
-      AbstractQHEOnSphereWithSpinHamiltonian* Hamiltonian;      
-      Hamiltonian = new ParticleOnSphereWithSpinGenericHamiltonian(Space, NbrBosons, LzMax, PseudoPotentials, OneBodyPotentialUpUp, OneBodyPotentialDownDown, NULL, 
-								   Architecture.GetArchitecture(), Memory, onDiskCacheFlag, LoadPrecalculationFileName);
+      AbstractQHEOnSphereWithSpinHamiltonian* Hamiltonian;
 
-      if (((SingleDoubleOption*) Manager["s2-factor"])->GetDouble() != 0.0)
-	Hamiltonian->AddS2(L, SzTotal, ((SingleDoubleOption*) Manager["s2-factor"])->GetDouble(), ((unsigned long)Manager.GetInteger("s2-memory")) << 20);
-      if (((SingleDoubleOption*) Manager["l2-factor"])->GetDouble() != 0.0)
-	Hamiltonian->AddL2(L, SzTotal, ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(), ((unsigned long)Manager.GetInteger("l2-memory")) << 20); 
+      if (Manager.GetBoolean("l2-s2-only"))
+	{
+	  if (((SingleDoubleOption*) Manager["l2-factor"])->GetDouble() != 0.0)
+	    {
+	      Hamiltonian = new ParticleOnSphereWithSpinL2Hamiltonian(Space, NbrBosons, LzMax, L, 
+								      Architecture.GetArchitecture(),
+								      Manager.GetDouble("l2-factor"),
+						      ((unsigned long)Manager.GetInteger("l2-memory")) << 20);
+	      
+	      
+	      if (((SingleDoubleOption*) Manager["s2-factor"])->GetDouble() != 0.0)
+		Hamiltonian->AddS2(L, SzTotal, Manager.GetDouble("s2-factor"),
+				   ((unsigned long)Manager.GetInteger("s2-memory")) << 20);
+	    }
+	  else
+	    Hamiltonian = new ParticleOnSphereWithSpinS2Hamiltonian(Space, NbrBosons, LzMax, L, SzTotal,
+								    Architecture.GetArchitecture(),
+								      Manager.GetDouble("s2-factor"),
+						      ((unsigned long)Manager.GetInteger("s2-memory")) << 20);
+	}
+      else // full Hamiltonian
+	{
+	  Hamiltonian = new ParticleOnSphereWithSpinGenericHamiltonian(Space, NbrBosons, LzMax, PseudoPotentials, OneBodyPotentialUpUp, OneBodyPotentialDownDown, NULL, 
+								       Architecture.GetArchitecture(), Memory, onDiskCacheFlag, LoadPrecalculationFileName);
+	  
+	  if (((SingleDoubleOption*) Manager["s2-factor"])->GetDouble() != 0.0)
+	    Hamiltonian->AddS2(L, SzTotal, ((SingleDoubleOption*) Manager["s2-factor"])->GetDouble(), ((unsigned long)Manager.GetInteger("s2-memory")) << 20);
+	  if (((SingleDoubleOption*) Manager["l2-factor"])->GetDouble() != 0.0)
+	    Hamiltonian->AddL2(L, SzTotal, ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(), ((unsigned long)Manager.GetInteger("l2-memory")) << 20);
+	}
       
       Hamiltonian->ShiftHamiltonian(Shift);
       if (SavePrecalculationFileName != 0)

@@ -272,6 +272,15 @@ class BosonOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // return value = reference on current output stream 
   virtual ostream& PrintState (ostream& Str, int state);
 
+  // print a given State
+  //
+  // Str = reference on current output stream 
+  // stateDesc = array describing the state to print
+  // return value = reference on current output stream 
+  
+  ostream& PrintState (ostream& Str, int* stateDesc);
+
+
   // find state index from a string
   //
   // stateDescription = string describing the state

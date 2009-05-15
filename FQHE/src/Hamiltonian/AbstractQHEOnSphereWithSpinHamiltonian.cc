@@ -463,7 +463,7 @@ long AbstractQHEOnSphereWithSpinHamiltonian::PartialFastMultiplicationMemory(int
 	{
 	  for (int m1 = 0; m1 < this->NbrM12IntraIndices; ++m1)
 	    {
-	      Coefficient = TmpParticles->AuAu(i, this->M1IntraValue[m1], this->M2IntraValue[m1]);	  
+	      Coefficient = TmpParticles->AuAu(i, this->M1IntraValue[m1], this->M2IntraValue[m1]);
 	      if (Coefficient != 0.0)
 		{
 		  SumIndices = this->M1IntraValue[m1] + this->M2IntraValue[m1];

@@ -110,7 +110,7 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // nbrFermions = number of fermions
   // totalLz = twice the momentum total value
   // lzMax = twice the maximum Lz value reached by a fermion
-  // totalSpin = twce the total spin value
+  // totalSpin = twice the total spin value
   // memory = amount of memory granted for precalculations
   FermionOnSphereWithSpin (int nbrFermions, int totalLz, int lzMax, int totalSpin, unsigned long memory = 10000000);
 

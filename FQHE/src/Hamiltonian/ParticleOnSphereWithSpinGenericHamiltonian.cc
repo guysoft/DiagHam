@@ -5,7 +5,7 @@
 //                                                                            //
 //                  Copyright (C) 2001-2004 Nicolas Regnault                  //
 //                                                                            //
-//                                                                            //
+//                                 if (((SingleDoubleOption*) Manager["s2-factor"])->GetDouble() != 0.0)                                           //
 //       class of hamiltonian associated to particles on a sphere with        //
 //     SU(2) spin and a generic interaction defined by its pseudopotential    //
 //                                                                            //

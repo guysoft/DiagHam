@@ -57,4 +57,5 @@ FQHESphereLaughlinOneQuasielectronWaveFunction.cc \
 FQHEDiskLaughlinOneQuasiholeWaveFunction.cc \
 FQHEDiskLaughlinOneJainQuasielectronWaveFunction.cc \
 PairedCFOnSphereSpinSingletWaveFunction.cc \
-PairedCFOnSpherePermanentWaveFunction.cc
+PairedCFOnSpherePermanentWaveFunction.cc \
+SkyrmionOnSphereWaveFunction.cc

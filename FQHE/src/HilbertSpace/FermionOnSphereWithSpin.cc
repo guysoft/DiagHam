@@ -1526,7 +1526,7 @@ long FermionOnSphereWithSpin::ShiftedEvaluateHilbertSpaceDimension(int nbrFermio
     return 0l;
 
   unsigned long Tmp = 0l;  
-  if (nbrFermions > 2)    
+  if (nbrFermions > 2)
     Tmp += this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin - 1);
   else
     if ((totalLz == (2 * lzMax)) && (totalSpin == 1))

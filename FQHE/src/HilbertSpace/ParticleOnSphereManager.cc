@@ -116,11 +116,20 @@ ParticleOnSphereManager::~ParticleOnSphereManager()
 //
 // manager = pointer to the option manager
 
-void ParticleOnSphereManager::AddOptionGroup(OptionManager* manager)
+void ParticleOnSphereManager::AddOptionGroup(OptionManager* manager, const char* comment)
 {
   this->Options = manager;
-  OptionGroup* SystemGroup  = new OptionGroup ("system options");
-  OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
+  char tmpC[255];
+  if (comment==NULL)
+    sprintf(tmpC,"system options");
+  else
+    sprintf(tmpC,"system options (%s)",comment);  
+  OptionGroup* SystemGroup  = new OptionGroup (tmpC);
+  if (comment==NULL)
+    sprintf(tmpC,"precalculation options");
+  else
+    sprintf(tmpC,"precalculation options (%s)",comment);    
+  OptionGroup* PrecalculationGroup = new OptionGroup (tmpC);
   (*(this->Options)) += SystemGroup;
   (*(this->Options)) += PrecalculationGroup;
 
