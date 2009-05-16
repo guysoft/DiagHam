@@ -85,6 +85,11 @@ BosonOnSphere::BosonOnSphere (int nbrBosons, int totalLz, int lzMax)
   (*(this->KeptCoordinates)) = -1;
   this->Minors = 0;
 
+  for (int i=0; i<HilbertSpaceDimension; ++i)
+    {
+      PrintState(cout,i)<<endl;      
+    }
+
 #ifdef __DEBUG__
   int UsedMemory = 0;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
@@ -608,9 +613,9 @@ ostream& BosonOnSphere::PrintState (ostream& Str, int state)
     Str << TmpState[i] << " ";
   for (; i <= this->LzMax; ++i)
     Str << "0 ";
-  //  Str << " key = " << this->Keys[state] << " lzmax  = " << this->StateLzMax[state]<< " position = " << FindStateIndex(TmpState, Max);
-//    Str << " key = " << this->Keys[state] << " lzmax position = " << this->LzMaxPosition[Max * (this->NbrBosons + 1) + TmpState[Max]]
-//        << " position = " << FindStateIndex(TmpState, Max);
+  Str << " key = " << this->Keys[state] << " lzmax  = " << this->StateLzMax[state]<< " position = " << FindStateIndex(TmpState, Max);
+  Str << " key = " << this->Keys[state] << " lzmax position = " << this->LzMaxPosition[Max * (this->NbrBosons + 1) + TmpState[Max]]
+      << " position = " << FindStateIndex(TmpState, Max);
   return Str;
 }
 

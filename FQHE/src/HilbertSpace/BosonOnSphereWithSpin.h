@@ -48,8 +48,8 @@ class BosonOnSphereWithSpin :  public ParticleOnSphereWithSpin
 
   // number of bosons
   int NbrBosons;
-  // number of bosons plus 1
-  int IncNbrBosons;
+  // number of bosons per spin and angular momentum state, plus 1
+  int IncMaxNbrBosons;
   // twice the momentum total value
   int TotalLz;
   // momentum total value shifted by LzMax / 2 * NbrBosons
@@ -67,14 +67,14 @@ class BosonOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // array describing each state
   int** StateDescription;
   // array giving maximum Lz value reached for a boson in a given state
-  int* StateLzMax;
+  int* StateLzSzMax;
 
   // multiplicative factors used during key construction
   int* KeyMultiplicationTable;
   // keys associated to each state
   int* Keys;
   // indicate position of the first state with a given number of boson having a given maximum Lz value
-  int* LzMaxPosition;
+  int* LzSzMaxPosition;
   // array that indicates how many different states are store for each sector (a sector is given by its lzmax and the number of bosons that are at lzmax)
   int* KeyInvertSectorSize;
   // array that contains sorted possible key for each sector
