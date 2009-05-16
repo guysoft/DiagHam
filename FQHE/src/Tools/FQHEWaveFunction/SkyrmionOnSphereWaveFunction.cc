@@ -67,6 +67,11 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
 	  UseExact=false;
 	  PolarizedParticles=nbrParticles;
 	  AnalyticPolarizedWaveFunction = waveFunctionManager->GetWaveFunction();
+	  if (AnalyticPolarizedWaveFunction==0)
+	    {
+	      cout << "Failed to option valid analytic wavefunction. Please check your wavefunction options!"<<endl;
+	      exit(-1);
+	    }
 	}
       else
 	{
@@ -107,6 +112,14 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
 	{
 	  cout << "can't open vector file " << manager.GetString("polarized-state") << endl;
 	  exit(-1);      
+	}
+    }
+  else
+    {
+      if (PolarizedLzMax>totalLzMax)
+	{
+	  cout << "Error: polarized state has to be at a lower flux than the exact state";
+	  exit(-1);
 	}
     }
 
@@ -158,6 +171,12 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
     {
       cout << "Error: total spin has to match: BosonSz == TotalSz";
       exit(-1);
+    }
+
+  if (BosonicState.ReadVector (manager.GetString("bosonic-state")) == false)
+    {
+      cout << "can't open vector file " << manager.GetString("bosonic-state") << endl;
+      exit(-1);      
     }
   
   this->PolarizedSpace=NULL;

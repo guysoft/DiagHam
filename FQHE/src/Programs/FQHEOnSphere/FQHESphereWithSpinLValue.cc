@@ -32,6 +32,7 @@
 #include "HilbertSpace/FermionOnSphereWithSpinLzSzSymmetryLong.h"
 #include "HilbertSpace/FermionOnSphereWithSpinSzSymmetryLong.h"
 #include "HilbertSpace/FermionOnSphereWithSpinLzSymmetryLong.h"
+#include "HilbertSpace/BosonOnSphereWithSpin.h"
 
 #include "Hamiltonian/ParticleOnSphereWithSpinL2Hamiltonian.h"
 #include "Hamiltonian/ParticleOnSphereWithSpinS2Hamiltonian.h"
@@ -302,7 +303,7 @@ int main(int argc, char** argv)
     }
   else
     {
-      Space = 0;
+      Space = new BosonOnSphereWithSpin(NbrParticles, TotalLz, LzMax, TotalSz);
     }
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
   

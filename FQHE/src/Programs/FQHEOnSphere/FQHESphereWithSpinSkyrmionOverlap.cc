@@ -73,7 +73,7 @@ int main(int argc, char** argv)
   OptionGroup* PrecalculationGroup = new OptionGroup ("Precalculation options");
 
   ArchitectureManager Architecture;
-  QHEWaveFunctionManager WaveFunctionManager(QHEWaveFunctionManager::SphereWithSpinGeometry);
+  QHEWaveFunctionManager WaveFunctionManager;
   
   Manager += SystemGroup;
   SkyrmionOnSphereWaveFunction::AddSkyrmionOptionGroup(Manager, &WaveFunctionManager);  
@@ -88,7 +88,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total lz value of the system (0 if it has to be guessed from input file name)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the z component of the total spin of the system (0 if it has to be guessed from file name)", 0);  
   
-  (*SystemGroup) += new SingleStringOption  ('\0', "exact-state", "name of the file containing the vector obtained using exact diagonalization");
+  (*SystemGroup) += new SingleStringOption  ('e', "exact-state", "name of the file containing the vector obtained using exact diagonalization");
   (*SystemGroup) += new BooleanOption  ('\n', "use-trial", "calculate overlap against a known trial state");
   (*SystemGroup) += new BooleanOption ('\n', "list-wavefunctions", "list all available test wave fuctions");  
   (*SystemGroup) += new SingleStringOption  ('\n', "use-exact", "file name of an exact state that has to be used as test wave function");

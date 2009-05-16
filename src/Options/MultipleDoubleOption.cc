@@ -222,7 +222,7 @@ char* MultipleDoubleOption::GetAsAString()
   else
     {
       TmpString= new char[7];
-      TmpString="empty";
+      sprintf(TmpString,"%s","empty");
     }
   return TmpString;
 }
@@ -315,9 +315,10 @@ int MultipleDoubleOption::AnalyzeString(const char *String)
       else //this should now be a number
 	{
 	  if( sscanf(tmpC,"%lf%s",&tmp,tmpC2) >0)
-	    {
-	      strcpy(tmpC,tmpC2);
+	    {	      
 	      this->Doubles[n++]=tmp;
+	      if (n<Length)
+		strcpy(tmpC,tmpC2);
 	    }
 	  else  {	    
 	    this->ErrorCode = MultipleDoubleOption::NotAnDouble;

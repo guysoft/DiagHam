@@ -164,21 +164,39 @@ int main(int argc, char** argv)
 	return -1;
     }
 
-  char* OutputNameLz = new char [512 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
+  char* InteractionName;
   char* ExtraTerms = new char[50];
-  ExtraTerms[0]='\0';
-  if (Manager.GetDouble("l2-factor") != 0.0)
-    {
-      if (Manager.GetDouble("s2-factor") != 0.0)
-	sprintf(ExtraTerms,"_l2_%g_s2_%g",Manager.GetDouble("l2-factor"), Manager.GetDouble("s2-factor"));
+  ExtraTerms[0]='\0';    
+  if (Manager.GetBoolean("l2-s2-only"))
+    {      
+      InteractionName=new char[50];
+      if (Manager.GetDouble("l2-factor") != 0.0)
+	{
+	  if (Manager.GetDouble("s2-factor") != 0.0)
+	    sprintf(InteractionName,"l2_%g_s2_%g",Manager.GetDouble("l2-factor"), Manager.GetDouble("s2-factor"));
+	  else
+	    sprintf(InteractionName,"l2_%g",Manager.GetDouble("l2-factor"));
+	}
       else
-	sprintf(ExtraTerms,"_l2_%g",Manager.GetDouble("l2-factor"));
+	if (Manager.GetDouble("s2-factor") != 0.0)
+	  sprintf(InteractionName,"s2_%g",Manager.GetDouble("s2-factor"));
     }
   else
-    if (Manager.GetDouble("s2-factor") != 0.0)
-      sprintf(ExtraTerms,"_s2_%g",Manager.GetDouble("s2-factor"));
-  
-  sprintf (OutputNameLz, "bosons_sphere_su2_%s%s_n_%d_2s_%d_sz_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), ExtraTerms,
+    {
+      InteractionName=Manager.GetString("interaction-name");
+      if (Manager.GetDouble("l2-factor") != 0.0)
+	{
+	  if (Manager.GetDouble("s2-factor") != 0.0)
+	    sprintf(ExtraTerms,"_l2_%g_s2_%g",Manager.GetDouble("l2-factor"), Manager.GetDouble("s2-factor"));
+	  else
+	    sprintf(ExtraTerms,"_l2_%g",Manager.GetDouble("l2-factor"));
+	}
+      else
+	if (Manager.GetDouble("s2-factor") != 0.0)
+	  sprintf(ExtraTerms,"_s2_%g",Manager.GetDouble("s2-factor"));
+    }
+  char* OutputNameLz = new char [512 + strlen(InteractionName)];
+  sprintf (OutputNameLz, "bosons_sphere_su2_%s%s_n_%d_2s_%d_sz_%d_lz.dat", InteractionName, ExtraTerms,
 	   NbrBosons, LzMax, SzTotal);
 
   int Max = (LzMax * (NbrUp+NbrDown));
@@ -254,7 +272,7 @@ int main(int argc, char** argv)
 	{
 	  EigenvectorName = new char [120];
 	  sprintf (EigenvectorName, "bosons_sphere_su2_%s%s_n_%d_2s_%d_sz_%d_lz_%d",
-		   ((SingleStringOption*) Manager["interaction-name"])->GetString(), ExtraTerms,
+		   InteractionName, ExtraTerms,
 		   NbrBosons, LzMax, SzTotal, L);
 	}
       QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);

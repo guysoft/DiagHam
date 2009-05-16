@@ -313,9 +313,10 @@ int MultipleIntegerOption::AnalyzeString(const char *String)
       else //this should now be a number
 	{
 	  if( sscanf(tmpC,"%d%s",&tmp,tmpC2) >0)
-	    {
-	      strcpy(tmpC,tmpC2);
+	    {	      
 	      this->Integers[n++]=tmp;
+	      if (n<Length)
+		strcpy(tmpC,tmpC2);
 	    }
 	  else  {	    
 	    this->ErrorCode = MultipleIntegerOption::NotAnInteger;
