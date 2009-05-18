@@ -44,8 +44,12 @@ class FermionOnSphereHaldaneLargeBasis :  public FermionOnSphereHaldaneBasis
 
  protected:
   
+  // depth of the B-tree used to improve state index search speed
   int BTreeLookUpTableDepth;
+  // B-tree used to improve state index search speed
   unsigned long* BTreeLookUpTable;
+  // number of state indices covered by a leaf of the B-tree
+  long BTreeLookUpTableNbrIndices;
 
  public:
 

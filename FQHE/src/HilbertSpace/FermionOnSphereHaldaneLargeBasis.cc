@@ -125,7 +125,7 @@ FermionOnSphereHaldaneLargeBasis::FermionOnSphereHaldaneLargeBasis (int nbrFermi
     this->KeepStateFlag[i] = 0x0l;
   this->RawGenerateStates(this->NbrFermions, this->LzMax, this->LzMax, (this->TotalLz + this->NbrFermions * this->LzMax) >> 1, 0);
   this->GenerateLookUpTable(memory);
-  cout << "BTreeLookUpTableDepth = " << this->BTreeLookUpTableDepth << endl;
+  cout << "B-Tree look-up table depth = " << this->BTreeLookUpTableDepth << endl;
 //   for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
 //     {
 //       if (i != this->FindStateIndex(this->StateDescription[i]))
@@ -339,11 +339,13 @@ FermionOnSphereHaldaneLargeBasis::FermionOnSphereHaldaneLargeBasis (char* fileNa
   this->Flag.Initialize();
 
   this->GenerateLookUpTable(memory);
+  this->LookUpTableShift = 0;
+  this->LookUpTable = 0;
 #ifdef __DEBUG__
   unsigned long UsedMemory = 0l;
   UsedMemory += ((unsigned long) this->LargeHilbertSpaceDimension) * (sizeof(unsigned long));
   UsedMemory += this->NbrLzValue * sizeof(int);
-  UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
+  UsedMemory += (1l << (this->BTreeLookUpTableDepth + 1)) * sizeof(unsigned long);
   UsedMemory +=  (1 << this->MaximumSignLookUp) * sizeof(double);
   cout << "memory requested for Hilbert space = ";
   if (UsedMemory >= 1024)
@@ -514,37 +516,29 @@ RealVector FermionOnSphereHaldaneLargeBasis::ConvertFromNbodyBasis(RealVector& s
 
 long FermionOnSphereHaldaneLargeBasis::FindStateIndex(unsigned long stateDescription)
 {
-//   cout << "search " << stateDescription << endl;
   long PosMax = 0l;
   long PosMin = 0l;
-//  long PosMin = this->LargeHilbertSpaceDimension - 1l;
   for (int i = 0; i <= this->BTreeLookUpTableDepth; ++i)
     {
-//      cout << "level " << i << " " << PosMax << " " << BTreeLookUpTable[PosMin + PosMax];
-      if (stateDescription <= BTreeLookUpTable[PosMin + PosMax])
+      if (stateDescription <= this->BTreeLookUpTable[PosMin + PosMax])
 	{
 	  PosMax <<= 1;
 	  ++PosMax;
 	}
       else
-	{
-	  PosMax <<= 1;
-	}
+	PosMax <<= 1;
       PosMin += 1l << i;      
-//      cout << " " << PosMax << endl;
     }
   PosMin = PosMax;
   ++PosMin;
-  PosMax *= this->LargeHilbertSpaceDimension >> (this->BTreeLookUpTableDepth + 1);
+  PosMax *= this->BTreeLookUpTableNbrIndices;
   if (PosMin == (1l << (this->BTreeLookUpTableDepth + 1)))
     PosMin = this->LargeHilbertSpaceDimension - 1l;
   else
-    {
-      PosMin *=  this->LargeHilbertSpaceDimension >> (this->BTreeLookUpTableDepth + 1);
-    }
+    PosMin *= this->BTreeLookUpTableNbrIndices;
+
   long PosMid = (PosMin + PosMax) >> 1;
   unsigned long CurrentState = this->StateDescription[PosMid];
-//   cout << PosMax << " " << PosMid << " " << PosMin << endl;
   while ((PosMax != PosMid) && (CurrentState != stateDescription))
     {
       if (CurrentState > stateDescription)
@@ -752,6 +746,7 @@ void FermionOnSphereHaldaneLargeBasis::GenerateLookUpTable(unsigned long memory)
 	  TmpIndex2 += TmpJump;
 	}
     }
+  this->BTreeLookUpTableNbrIndices = this->LargeHilbertSpaceDimension >> (this->BTreeLookUpTableDepth + 1);
 
   // look-up tables for evaluating sign when applying creation/annihilation operators
   int Size = 1 << this->MaximumSignLookUp;

@@ -267,7 +267,7 @@ int main(int argc, char** argv)
 	  if (Manager.GetBoolean("large-basis") == true)
 	    {
 	      if (Manager.GetString("load-hilbert") != 0)
-		InitialSpace = new FermionOnSphereHaldaneLargeBasis(Manager.GetString("load-hilbert"));
+		InitialSpace = new FermionOnSphereHaldaneLargeBasis(Manager.GetString("load-hilbert"), Manager.GetInteger("large-memory") << 10);
 	      else
 		{
 		  InitialSpace = new FermionOnSphereHaldaneLargeBasis(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState, Manager.GetInteger("large-memory") << 10);	  
