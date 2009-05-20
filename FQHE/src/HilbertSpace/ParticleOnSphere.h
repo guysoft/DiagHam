@@ -227,6 +227,20 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // return value = density matrix of the subsytem
   virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int subsytemSize, int nbrFermionSector, int lzSector, RealVector& groundState);
 
+  // compute part of the Schmidt decomposition, allowing cut in the reduced denisty matrix eigenvalue space
+  // 
+  // subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax to -Lzmax+subsytemSize-1)
+  // nbrFermionSector = number of particles that belong to the subsytem 
+  // lzSector = Lz sector in which the density matrix has to be evaluated 
+  // groundState = reference on the total system ground state
+  // eigenvalueCut = discard all contribution from the reduced density matrix whose eigenvalues is lower than eigenvalueCut
+  // rebuiltSchmidtGroundState = reference on the state to whose current sector contribution to the Schmidt decomposition will be added 
+  // diagonalizedDensityMatrix = reference on the diagonalized reduced density matrix associated to the current sector (with down ordered diagonal elements)
+  // transformationMatrix =  reference on the transformation matric that diagonalizes the reduced density matrix
+  // return value = reference on rebuiltSchmidtGroundState
+  virtual RealVector& EvaluatePartialSchmidtDecomposition(int subsytemSize, int nbrFermionSector, int lzSector, double eigenvalueCut,
+							  RealVector& groundState, RealVector& rebuiltSchmidtGroundState,
+							  RealDiagonalMatrix& diagonalizedDensityMatrix, RealMatrix& transformationMatrix);
   // find state index from a string
   //
   // stateDescription = string describing the state
