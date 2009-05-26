@@ -196,7 +196,7 @@ int main(int argc, char** argv)
     }
   cout << LzMax << " " << NbrParticles << " " << TotalMaxLz << endl;
   cout << "dim = " << Space->GetHilbertSpaceDimension() << endl;
-  ParticleOnSphereL2Hamiltonian Hamiltonian (Space, NbrParticles, LzMax, TotalLz, Architecture.GetArchitecture(), 1.0, 0, true);
+  //  ParticleOnSphereL2Hamiltonian Hamiltonian (Space, NbrParticles, LzMax, TotalLz, Architecture.GetArchitecture(), 1.0, 0, true);
 
   RealVector TmpState(Space->GetHilbertSpaceDimension());
   RealVector TmpState2(Space->GetHilbertSpaceDimension());
@@ -216,17 +216,34 @@ int main(int argc, char** argv)
     {
       TmpState.Copy(State);
       double TmpNorm = TmpState.Norm();
-      for (int CurrentL = l + 2; (CurrentL <= TotalMaxLz) && (TmpNorm > Accuracy); CurrentL +=2)
+      cout << "truc " << TmpNorm << endl;
+      for (int CurrentL = l + 2; (CurrentL <= TotalMaxLz) && (TmpNorm != Accuracy); CurrentL +=2)
 	{
+<<<<<<< .mine
+	  ParticleOnSphereL2Hamiltonian Hamiltonian (Space, NbrParticles, LzMax, TotalLz, Architecture.GetArchitecture(), 1.0, 0, true);// / (-0.25 * ((double) (CurrentL * (CurrentL + 2)))), 0, true);
+	  //	  Hamiltonian.ShiftHamiltonian(1.0);
+	  //	  Hamiltonian.ShiftHamiltonian(-0.25 * (CurrentL * (CurrentL + 2)));
+=======
 //	  TmpState /= TmpNorm;
 //	  Hamiltonian.ShiftHamiltonian(- 0.25 * (CurrentL * (CurrentL + 2)));
+>>>>>>> .r1123
 	  VectorHamiltonianMultiplyOperation Operation (&Hamiltonian, &TmpState, &TmpState2);
 	  Operation.ApplyOperation(Architecture.GetArchitecture());
+<<<<<<< .mine
+	  //cout << (TmpState * TmpState2) << endl;
+	  //	  TmpNorm = TmpState2.Norm();
+=======
 //	  TmpNorm = TmpState2.Norm();
+>>>>>>> .r1123
 	  //	  TmpState2 /=  TmpNorm;
+<<<<<<< .mine
+	  //	  cout << CurrentL << " " << TmpNorm << endl;
+	  //	  TmpState2 /= -0.25 * ((double) (CurrentL * (CurrentL + 2)));
+=======
 //	  cout << CurrentL << " " << TmpNorm << endl;
 	  TmpState2 /= -0.25 * ((double) (CurrentL * (CurrentL + 2)));
 //	  TmpState2 += TmpState;
+>>>>>>> .r1123
 	  RealVector TmpVector = TmpState2;
 	  TmpState2 = TmpState;
 	  TmpState = TmpVector;
@@ -237,7 +254,9 @@ int main(int argc, char** argv)
 	{
 	  cout << "norm = " << TmpNorm << endl;
 	  cout << Manager.GetString("state") << " has a non-zero projection on the L=" << (0.5 * ((double) l)) << " subspace" << endl;
-	  TmpState /= TmpNorm;
+	  //	  TmpState /= TmpNorm;
+	  ParticleOnSphereL2Hamiltonian Hamiltonian (Space, NbrParticles, LzMax, TotalLz, Architecture.GetArchitecture(), 1.0, 0, true);
+	  Hamiltonian.ShiftHamiltonian(0.0);
 	  VectorHamiltonianMultiplyOperation Operation (&Hamiltonian, &TmpState, &TmpState2);
 	  Operation.ApplyOperation(Architecture.GetArchitecture());
 	  cout << (TmpState * TmpState) << " " << (TmpState * TmpState2) << endl;
