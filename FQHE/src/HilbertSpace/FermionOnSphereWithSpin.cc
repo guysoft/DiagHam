@@ -105,6 +105,9 @@ FermionOnSphereWithSpin::FermionOnSphereWithSpin (int nbrFermions, int totalLz, 
   this->HilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 
 						     (this->TotalSpin + this->NbrFermions) >> 1, 0l);
   this->GenerateLookUpTable(memory);
+
+//   for (int i=0; i<HilbertSpaceDimension; ++i)
+//     PrintState(cout, i)<<endl;
   
 #ifdef __DEBUG__
   long UsedMemory = 0;
@@ -173,6 +176,8 @@ FermionOnSphereWithSpin::~FermionOnSphereWithSpin ()
       for (int i = 0; i < (2 * this->NbrLzValue); ++i)
 	delete[] this->LookUpTable[i];
       delete[] this->LookUpTable;
+      delete[] this->SignLookUpTableMask;
+      delete[] this->SignLookUpTable;
     }
 }
 
@@ -641,7 +646,7 @@ double FermionOnSphereWithSpin::AuAd (int index, int n1, int n2)
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
 #endif
   this->ProdATemporaryState &= ~(0x1ul << n1);
-  while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
+  while ( ((this->ProdATemporaryState >> this->ProdALzMax) == 0) && (this->ProdALzMax>0))
     --this->ProdALzMax;
   return Coefficient;
 }
@@ -1032,7 +1037,8 @@ ostream& FermionOnSphereWithSpin::PrintState (ostream& Str, int state)
 	Str << "X ";
       else Str << "0 ";
     }
-//   Str << " position = " << this->FindStateIndex(TmpState, this->StateHighestBit[state]);
+//  Str << " value = "<<TmpState;
+//  Str << " position = " << this->FindStateIndex(TmpState, this->StateHighestBit[state]);
 //   if (state !=  this->FindStateIndex(TmpState, this->StateHighestBit[state]))
 //         Str << " error! ";
   return Str;

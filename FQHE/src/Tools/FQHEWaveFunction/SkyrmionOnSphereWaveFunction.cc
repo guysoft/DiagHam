@@ -245,6 +245,55 @@ Abstract1DComplexFunction* SkyrmionOnSphereWaveFunction::Clone ()
   return new SkyrmionOnSphereWaveFunction(*this);
 }
 
+void SkyrmionOnSphereWaveFunction::TestSymmetries(RealVector& x)
+{
+  Complex ValueSpin, ValuePolarized, ValueSpin2, ValuePolarized2;
+  double Tmp2;
+  if (UseExact)
+    {
+      QHEParticleWaveFunctionOperation Operation(PolarizedSpace, &PolarizedState, &x, this->OneBodyBasis, /* TimeCoherence */ -1);
+      Operation.ApplyOperation(this->Architecture);      
+      ValuePolarized = Operation.GetScalar();
+    }
+  else
+    {
+      ValuePolarized = (*(this->AnalyticPolarizedWaveFunction))(x);
+    }
+  QHEParticleWaveFunctionOperation Operation(BosonicSpace, &BosonicState, &x, this->OneBodyBasis, /* TimeCoherence */ -1);
+  Operation.ApplyOperation(this->Architecture);      
+  ValueSpin = Operation.GetScalar();
+  int NUp = this->NbrParticles/2;
+  // exchange spin up and spin down
+  for (int j = 0; j < NUp; ++j)
+    {
+      Tmp2 = x[j << 1];
+      x[j << 1] = x[(j+NUp) << 1];
+      x[(j+NUp) << 1] = Tmp2;
+      Tmp2 = x[1 + (j << 1)];
+      x[1+(j <<1)] = x[1+ ((j+NUp) << 1)];
+      x[1+ ((j+NUp) << 1)] = Tmp2;
+    }
+  // recalculate:
+  if (UseExact)
+    {
+      QHEParticleWaveFunctionOperation Operation(PolarizedSpace, &PolarizedState, &x, this->OneBodyBasis, /* TimeCoherence */ -1);
+      Operation.ApplyOperation(this->Architecture);      
+      ValuePolarized2 = Operation.GetScalar();
+    }
+  else
+    {
+      ValuePolarized2 = (*(this->AnalyticPolarizedWaveFunction))(x);
+    }
+  QHEParticleWaveFunctionOperation Operation2(BosonicSpace, &BosonicState, &x, this->OneBodyBasis, /* TimeCoherence */ -1);
+  Operation2.ApplyOperation(this->Architecture);      
+  ValueSpin2 = Operation2.GetScalar();
+  cout << "Pol Before exchange: "<< ValuePolarized << endl << "After exchange:  " << ValuePolarized2 << endl;
+  cout << "Pol Parity: " << ValuePolarized/ValuePolarized2 << endl;
+  cout << "Bos Before exchange: "<< ValueSpin  << endl << "After exchange:  " << ValueSpin2 << endl;
+  cout << "Bos Parity: " << ValueSpin / ValueSpin2 << endl;
+}
+
+
 // evaluate function at a given point
 //
 // x = point where the function has to be evaluated

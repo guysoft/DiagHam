@@ -447,7 +447,7 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 	      File << (this->LValue/ 2) << " " << (HRep(0, 0)  - this->EnergyShift);
 	      if (this->ComputeEnergyFlag == true)
 		File << " " << (HRep(0, 0)  - this->EnergyShift) ;
-	      File << endl;
+	      File << endl;	      
 	    }
 	  else
 	    {
@@ -457,6 +457,16 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 	      double TmpMomentum = Oper.MatrixElement(TmpEigenvector, TmpEigenvector).Re;
 	      File << (this->LValue/ 2) << " " << (HRep(0, 0)  - this->EnergyShift);
 	      File << " "  << TmpMomentum << " " << (0.5 * (sqrt ((4.0 * TmpMomentum) + 1.0) - 1.0)) << endl;	      
+	    }
+	  if (this->EvaluateEigenvectors)
+	    {
+	      
+	      char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
+	      RealVector TmpEigenvector(1);
+	      TmpEigenvector[0]=1.0;
+	      sprintf (TmpVectorName, "%s.0.vec", this->EigenvectorFileName);
+	      TmpEigenvector.WriteVector(TmpVectorName);
+	      delete [] TmpVectorName;
 	    }
 	}
     }

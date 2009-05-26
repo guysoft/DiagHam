@@ -1334,7 +1334,7 @@ Complex BosonOnSphereWithSpin::EvaluateWaveFunctionWithTimeCoherence (RealVector
 Complex BosonOnSphereWithSpin::EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis, 
 					     int firstComponent, int nbrComponent)
 {  
-  Complex ValueUp(0.0, 0.0), ValueDown(0.0, 0.0);
+  Complex Value(0.0, 0.0), TmpValue(0.0, 0.0);
   Complex Tmp;
   ComplexMatrix PermUp(this->NbrBosonsUp, this->NbrBosonsUp);  
   ComplexMatrix FunctionsUp(this->LzMax + 1, this->NbrBosonsUp);
@@ -1385,7 +1385,7 @@ Complex BosonOnSphereWithSpin::EvaluateWaveFunction (RealVector& state, RealVect
       TmpComponent = state[k];
       if (TmpComponent!=0.0)
 	{
-	  TmpFactor = TmpComponent * Factors[this->NbrBosonsUp];
+	  TmpFactor = Factors[this->NbrBosonsUp];
 	  Pos = 0;
 	  Lz = 0;
 	  while (Pos < this->NbrBosonsUp)
@@ -1411,10 +1411,10 @@ Complex BosonOnSphereWithSpin::EvaluateWaveFunction (RealVector& state, RealVect
 		  PermUp[i].Im(j) = TmpColum2.Im(Indices[j]);
 		}
 	    }
-	  ValueUp += PermUp.FastPermanent(ChangeBitUp, ChangeBitSignUp) * TmpFactor;
+	  TmpValue = PermUp.FastPermanent(ChangeBitUp, ChangeBitSignUp) * TmpFactor;
 	  Pos = 0;
 	  Lz = 0;
-	  TmpFactor = TmpComponent * Factors[this->NbrBosonsDown];
+	  TmpFactor = Factors[this->NbrBosonsDown];
 	  while (Pos < this->NbrBosonsDown)
 	    {
 	      TmpStateDescription = (this->StateDescription[k][Lz])&0xffff;
@@ -1438,7 +1438,8 @@ Complex BosonOnSphereWithSpin::EvaluateWaveFunction (RealVector& state, RealVect
 		  PermDown[i].Im(j) = TmpColum2.Im(Indices[j]);
 		}
 	    }
-	  ValueDown += PermDown.FastPermanent(ChangeBitDown, ChangeBitSignDown) * TmpFactor;
+	  TmpValue *= PermDown.FastPermanent(ChangeBitDown, ChangeBitSignDown) * TmpFactor;
+	  Value+=TmpComponent*TmpValue;
 	}
     }
   delete[] ChangeBitSignUp;
@@ -1447,7 +1448,7 @@ Complex BosonOnSphereWithSpin::EvaluateWaveFunction (RealVector& state, RealVect
   delete[] ChangeBitDown;
   delete[] Factors;
   delete[] Indices;
-  return ValueUp*ValueDown;
+  return Value;
 }
 
 // evaluate wave function in real space using a given basis and only for a given range of components, using time coherence

@@ -452,7 +452,6 @@ int QHEOnLatticeMainTask::ExecuteMainTask()
 	  if (this->ComputeEnergyFlag == true)
 	    File << " " << (HRep(0, 0)  - this->EnergyShift) ;
 	  File << endl;
-
 	  if (this->EvaluateEigenvectors)
 	    {
 	      

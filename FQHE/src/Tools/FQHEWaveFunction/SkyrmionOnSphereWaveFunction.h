@@ -121,6 +121,9 @@ class SkyrmionOnSphereWaveFunction: public Abstract1DComplexFunction
   // return value = function value at x  
   Complex operator ()(RealVector& x);
 
+  // test parity under reversal of all spins for the two parts of the function
+  void TestSymmetries(RealVector& x);
+
   // add an option group containing all options related to the skyrmion wave functions
   //
   // manager = pointer to the option manager

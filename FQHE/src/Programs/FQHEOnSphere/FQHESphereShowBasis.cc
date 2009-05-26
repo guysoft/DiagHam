@@ -5,6 +5,7 @@
 #include "HilbertSpace/FermionOnSphereWithSU4Spin.h"
 #include "HilbertSpace/FermionOnSphereWithSU3Spin.h"
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
+#include "HilbertSpace/BosonOnSphereWithSpin.h"
 //#include "HilbertSpace/FermionOnSphereBernevigBasis.h"
 //#include "HilbertSpace/BosonOnSphereBernevigBasisShort.h"
 
@@ -91,20 +92,27 @@ int main(int argc, char** argv)
   ParticleOnSphere* Space = 0;
   if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
     {
-      if (BernevigFlag == false)
+      if (SU2SpinFlag == false)
 	{
-	  Space = new BosonOnSphere(NbrParticles, TotalLz, NbrFluxQuanta);
+	  if (BernevigFlag == false)
+	    {
+	      Space = new BosonOnSphere(NbrParticles, TotalLz, NbrFluxQuanta);
+	    }
+	  else
+	    {
+	      int* ReferenceState = 0;
+	      ReferenceState = new int[NbrFluxQuanta + 1];
+	      for (int i = 0; i <= NbrFluxQuanta; ++i)
+		ReferenceState[i] = 0;
+	      for (int i = 0; i <= NbrFluxQuanta; i += 2)
+		ReferenceState[i] = 1;
+	      //	  Space = new BosonOnSphereBernevigBasisShort(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);
+	      return 0;
+	    }
 	}
       else
 	{
-	  int* ReferenceState = 0;
-	  ReferenceState = new int[NbrFluxQuanta + 1];
-	  for (int i = 0; i <= NbrFluxQuanta; ++i)
-	    ReferenceState[i] = 0;
-	  for (int i = 0; i <= NbrFluxQuanta; i += 2)
-	    ReferenceState[i] = 1;
-//	  Space = new BosonOnSphereBernevigBasisShort(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);
-	  return 0;
+	  Space = new BosonOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
 	}
     }
   else

@@ -521,6 +521,8 @@ int main(int argc, char** argv)
       cout << "Ex Parity: " << ValueExact/ValueExact2 << endl;
       cout << "Tr Before exchange: "<< ValueTrial << endl << "After exchange:  " << ValueTrial2 << endl;
       cout << "Tr Parity: " << ValueTrial/ValueTrial2 << endl;
+
+      ((SkyrmionOnSphereWaveFunction*)TestWaveFunction)->TestSymmetries(Particles->GetPositions());
     }
 
 
