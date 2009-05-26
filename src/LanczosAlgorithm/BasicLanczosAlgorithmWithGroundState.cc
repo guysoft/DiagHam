@@ -300,7 +300,7 @@ Vector& BasicLanczosAlgorithmWithGroundState::GetGroundState()
 	      this->V2 = this->V3;
 	      this->V3 = this->V1;
 	      this->V1 = TmpV;
- 	      cout << ".";
+ 	      cout << i << "/" << this->DiagonalizedMatrix.GetNbrRow() << "           \r";
  	      cout.flush();
 	    }
 	}
@@ -314,7 +314,7 @@ Vector& BasicLanczosAlgorithmWithGroundState::GetGroundState()
 	      sprintf(TmpVectorName, "vector.%d", i);
 	      this->V1.ReadVector(TmpVectorName);	      
 	      this->GroundState.AddLinearCombination(TmpComponents[i], this->V1);	      
-	      cout << ".";
+	      cout << i << "/" << this->DiagonalizedMatrix.GetNbrRow() << "           \r";
 	      cout.flush();
 	    }	  
 	  delete[] TmpVectorName;

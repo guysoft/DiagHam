@@ -58,6 +58,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "large-memory", "maximum memory (in kBytes) that can allocated for precalculations when using huge mode", 1);
   (*OutputGroup) += new SingleStringOption ('o', "bin-output", "output the Jack polynomial decomposition into a binary file");
   (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the Jack polynomial decomposition into a text file");
+  (*OutputGroup) += new BooleanOption ('n', "normalize", "express the Jack polynomial in the normalized basis");
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the Haldane basis)",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -153,6 +154,8 @@ int main(int argc, char** argv)
 	  else
 	    InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, Alpha);
 	  
+	  if (Manager.GetBoolean("normalize"))
+            InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);
 	  if (OutputTxtFileName != 0)
 	    {
 	      ofstream File;
@@ -192,11 +195,14 @@ int main(int argc, char** argv)
 	    cout << "can't open " << Manager.GetString("initial-state") << endl;
 	    return -1;
 	  }
+      if (Manager.GetBoolean("normalize"))
+	InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);
       if (SymmetrizedBasis == false)    
 	InitialSpace->GenerateJackPolynomial(OutputState, Alpha);
       else
 	InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, Alpha);
-      
+      if (Manager.GetBoolean("normalize"))
+	InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);      
       if (OutputTxtFileName != 0)
 	{
 	  ofstream File;
@@ -245,6 +251,8 @@ int main(int argc, char** argv)
 		InitialSpace->GenerateJackPolynomial(OutputState, Alpha);
 	      else
 		InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, Alpha);
+	      if (Manager.GetBoolean("normalize"))
+		InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);
 	      if (OutputTxtFileName != 0)
 		{
 		  ofstream File;
@@ -305,6 +313,8 @@ int main(int argc, char** argv)
 	    InitialSpace->GenerateJackPolynomial(OutputState, Alpha);
 	  else
 	    InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, Alpha);
+	  if (Manager.GetBoolean("normalize"))
+            InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);
 	  if (OutputTxtFileName != 0)
 	    {
 	      ofstream File;
@@ -346,6 +356,8 @@ int main(int argc, char** argv)
 		return -1;
 	      }
 	  InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, Alpha);
+	  if (Manager.GetBoolean("normalize"))
+	    InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);
 	  if (OutputTxtFileName != 0)
 	    {
 	      ofstream File;

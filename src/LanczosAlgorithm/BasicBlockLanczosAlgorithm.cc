@@ -457,7 +457,7 @@ Vector* BasicBlockLanczosAlgorithm::GetEigenstates(int nbrEigenstates)
 	      this->LanczosVectors[k + this->BlockSize] = this->LanczosVectors[k + (2 * this->BlockSize)];
 	      this->LanczosVectors[k + (2 * this->BlockSize)] = TmpVector;
 	    }
- 	  cout << ".";
+	  cout << i << "/" << this->Index  << "           \r";
  	  cout.flush();
 	}
     }
@@ -491,7 +491,7 @@ Vector* BasicBlockLanczosAlgorithm::GetEigenstates(int nbrEigenstates)
 	      AddRealLinearCombinationOperation Operation (&(Eigenstates[k]), this->LanczosVectors, this->BlockSize,  TmpCoefficents);
 	      Operation.ApplyOperation(this->Architecture);
 	    }
- 	  cout << ".";
+	  cout << i << "/" << this->Index << "           \r";
  	  cout.flush();
 	}
       delete[] TmpVectorName;
