@@ -95,7 +95,7 @@ class ConfigurationParser
   //
   // parameterName = string corresponding to a parameter name
   // separator = caharacter which is used as separator between integer values in the string
-  //             (if \s is used, then any number of consecutive \s or \t are identify as one separator)
+  //             (if \s is used, then any number of consecutive \s or \t are identified as one separator)
   // array = reference on the array where the read values have to be stored (allocation is done by the method itself)
   // nbrValues = reference on the integer where the number of read values has to be stored
   // return value = true if no error occured
@@ -112,7 +112,7 @@ class ConfigurationParser
   //
   // parameterName = string corresponding to a parameter name
   // separator = caharacter which is used as separator between double values in the string
-  //             (if \s is used, then any number of consecutive \s or \t are identify as one separator)
+  //             (if \s is used, then any number of consecutive \s or \t are identified as one separator)
   // array = reference on the array where the read values have to be stored (allocation is done by the method itself)
   // nbrValues = reference on the double where the number of read values has to be stored
   // return value = true if no error occured
@@ -122,7 +122,7 @@ class ConfigurationParser
   //
   // parameterName = string corresponding to a parameter name
   // separator = character which is used as separator between integer values in the string 
-  //             (if \s is used, then any number of consecutive \s or \t are identify as one separator)
+  //             (if \s is used, then any number of consecutive \s or \t are identified as one separator)
   // array = reference on the array where the read values have to be stored (allocation is done by the method itself)
   // nbrValues = reference on the integer where the number of read values has to be stored
   // return value = true if no errro occured
@@ -132,13 +132,13 @@ class ConfigurationParser
   //
   // parameterName = string corresponding to a parameter name
   // majorSeparator = character which is used as separator between two lines
-  //             (if \s is used, then any number of consecutive \s or \t are identify as one separator)
+  //             (if \s is used, then any number of consecutive \s or \t are identified as one separator)
   // minorSeparator = character which is used as separator between two elements of one line
-  //             (if \s is used, then any number of consecutive \s or \t are identify as one separator)
+  //             (if \s is used, then any number of consecutive \s or \t are identified as one separator)
   // array = reference on the array where the read values have to be stored (allocation is done by the method itself)
-  // nbrArray = reference on tthe number of strings or lines that have been extracted
+  // nbrArray = reference on the number of strings or lines that have been extracted
   // nbrValues = reference on the array of number of element per extracted line
-  // return value = true if no errro occured
+  // return value = true if no error occured
   bool GetAsStringMultipleArray (const char* parameterName, char majorSeparator, char minorSeparator, char***& array, int& nbrArrays, int*& nbrValues);
 
   // dump configuration file

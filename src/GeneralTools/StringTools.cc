@@ -218,3 +218,27 @@ ostream& PrintMemorySize(ostream &str, int bytes)
     str << bytes;
   return str;
 }
+
+// print the given memory size in b, kb, Mb, or Gb
+// str = stream to write to
+// bytes = size in bytes
+// return = reference on stream
+ostream& PrintMemorySize(ostream &str, long bytes)
+{
+  if (bytes >= 1024)
+    if (bytes >= 1048576)
+      if (bytes >= 1073741824)
+#ifdef __64_BITS__
+	if (bytes >= (0x1l<<40))
+	  str << (bytes >> 40) << "To";
+	else
+#endif
+	  str << (bytes >> 30) << "Go";
+      else
+	str << (bytes >> 20) << "Mo";
+    else
+      str << (bytes >> 10) << "ko";
+  else
+    str << bytes;
+  return str;
+}

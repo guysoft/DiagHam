@@ -67,6 +67,8 @@ bool CleanLine (char* line);
 // bytes = size in bytes
 // return = reference on stream
 ostream& PrintMemorySize(ostream &str, int bytes);
+// overload for long argument
+ostream& PrintMemorySize(ostream &str, long bytes);
 
 
 
