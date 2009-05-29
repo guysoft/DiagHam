@@ -34,7 +34,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/FermiOnSphereWithSpin.h"
+#include "HilbertSpace/FermionOnSphereWithSpin.h"
 
 #include <iostream>
 
@@ -50,9 +50,11 @@ class FermionOnSphereTwoLandauLevels :  public FermionOnSphereWithSpin
   // maximum Lz value reached by a fermion with a spin down
   int LzMaxDown;
   // shift to apply on the spin up part
-  int UpStateShift;
+  int LzShiftUp;
   // shift to apply on the spin down part
-  int DownStateShift;
+  int LzShiftDown;
+  // sum of LzShiftUp and LzShiftDown
+  int LzTotalShift;
 
  public:
 
@@ -60,14 +62,14 @@ class FermionOnSphereTwoLandauLevels :  public FermionOnSphereWithSpin
   //
   FermionOnSphereTwoLandauLevels();
 
-s  // basic constructor
+  // basic constructor with no contraint on the number of particles per spin component
   // 
   // nbrFermions = number of fermions
   // totalLz = twice the momentum total value
-  // lzMax = twice the maximum Lz value reached by a fermion
-  // totalSpin = twce the total spin value
+  // lzMaxUp = twice the maximum Lz value reached by a fermion with a spin up
+  // lzMaxDown = twice the maximum Lz value reached by a fermion with a spin down
   // memory = amount of memory granted for precalculations
-  FermionOnSphereTwoLandauLevels (int nbrFermions, int totalLz, int lzMax, int totalSpin, unsigned long memory = 10000000);
+  FermionOnSphereTwoLandauLevels (int nbrFermions, int totalLz, int lzMaxUp, int lzMaxDown, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
@@ -132,14 +134,13 @@ s  // basic constructor
 
   // generate all states corresponding to the constraints
   // 
-  // nbrFermionsUp = number of fermions with spin up
-  // nbrFermionsDown = number of fermions with spin down
+  // nbrFermions = number of fermions
   // lzMaxUp = momentum maximum value for a fermion with spin up
   // lzMaxDown = momentum maximum value for a fermion with spin down
   // totalLz = momentum total value
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  virtual long GenerateFullStates(int nbrFermionsUp, int nbrFermionsDown, int lzMaxUp, int lzMaxDown, int totalLz, long pos);
+  virtual long GenerateFullStates(int nbrFermions, int lzMaxUp, int lzMaxDown, int totalLz, long pos);
 
 };
 

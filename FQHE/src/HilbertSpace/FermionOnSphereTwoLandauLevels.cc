@@ -65,12 +65,12 @@ FermionOnSphereTwoLandauLevels::FermionOnSphereTwoLandauLevels()
 {
 }
 
-// basic constructor
+// basic constructor with no contraint on the number of particles per spin component
 // 
 // nbrFermions = number of fermions
 // totalLz = twice the momentum total value
-// lzMax = twice the maximum Lz value reached by a fermion
-// totalSpin = twce the total spin value
+// lzMaxUp = twice the maximum Lz value reached by a fermion with a spin up
+// lzMaxDown = twice the maximum Lz value reached by a fermion with a spin down
 // memory = amount of memory granted for precalculations
 
 FermionOnSphereTwoLandauLevels::FermionOnSphereTwoLandauLevels (int nbrFermions, int totalLz, int lzMaxUp, int lzMaxDown, unsigned long memory)
@@ -78,20 +78,27 @@ FermionOnSphereTwoLandauLevels::FermionOnSphereTwoLandauLevels (int nbrFermions,
   this->NbrFermions = nbrFermions;
   this->IncNbrFermions = this->NbrFermions + 1;
   this->TotalLz = totalLz;
-  this->TotalSpin = totalSpin;
-  this->NbrFermionsUp = (this->NbrFermions+this->TotalSpin)/2;
-  this->NbrFermionsDown = (this->NbrFermions-this->TotalSpin)/2;
+  this->TotalSpin = 0;
+  this->NbrFermionsUp = 0;
+  this->NbrFermionsDown = 0;
   this->LzMaxUp = lzMaxUp;
   this->LzMaxDown = lzMaxDown;
   if (this->LzMaxUp >= this->LzMaxDown)
-    this->LzMax = this->LzMaxUp;
+    {
+      this->LzMax = this->LzMaxUp;
+      this->LzShiftUp = 0;
+      this->LzShiftDown = (this->LzMaxUp - this->LzMaxDown) >> 1;
+    }
   else
-    this->LzMax = this->LzMaxDown;
+    {
+      this->LzMax = this->LzMaxDown;
+      this->LzShiftDown = 0;
+      this->LzShiftUp = (this->LzMaxDown - this->LzMaxUp) >> 1;
+    }
+  this->LzTotalShift = this->LzMaxDown + this->LzMaxUp;
   this->NbrLzValue = this->LzMax + 1;
   this->MaximumSignLookUp = 16;
-  this->UpStateShift = 0;
-  this->DownStateShift = 0;
-  this->LargeHilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->NbrFermionsUp, this->NbrFermionsDown, this->LzMaxUp, this->LzMaxDown, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1);
+  this->LargeHilbertSpaceDimension = this->ShiftedEvaluateFullHilbertSpaceDimension(this->NbrFermions, this->LzMaxUp, this->LzMaxDown, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1);
   if (this->LargeHilbertSpaceDimension >= (1l << 30))
     this->HilbertSpaceDimension = 0;
   else
@@ -99,7 +106,7 @@ FermionOnSphereTwoLandauLevels::FermionOnSphereTwoLandauLevels (int nbrFermions,
   this->Flag.Initialize();
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
   this->StateHighestBit = new int [this->HilbertSpaceDimension];  
-  if (this->GenerateStates(this->NbrFermionsUp, this->NbrFermionsDown, this->LzMaxUp, this->LzMaxDown, this->TotalLz, 0) != this->HilbertSpaceDimension)
+  if (this->GenerateFullStates(this->NbrFermions, this->LzMaxUp, this->LzMaxDown, this->TotalLz, 0) != this->HilbertSpaceDimension)
     {
        cout << "Mismatch in State-count and State Generation in FermionOnSphereTwoLandauLevels!" << endl;
        exit(1);
@@ -148,6 +155,9 @@ FermionOnSphereTwoLandauLevels::FermionOnSphereTwoLandauLevels(const FermionOnSp
   this->LzMax = fermions.LzMax;
   this->LzMaxUp = fermions.LzMaxUp;
   this->LzMaxDown = fermions.LzMaxDown;
+  this->LzShiftUp = fermions.LzShiftUp;
+  this->LzShiftDown = fermions.LzShiftDown;
+  this->LzTotalShift = fermions.LzTotalShift;
   this->NbrLzValue = fermions.NbrLzValue;
   this->TotalSpin = fermions.TotalSpin;
   this->NbrFermionsUp = fermions.NbrFermionsUp;
@@ -191,6 +201,9 @@ FermionOnSphereTwoLandauLevels& FermionOnSphereTwoLandauLevels::operator = (cons
   this->LzMax = fermions.LzMax;
   this->LzMaxUp = fermions.LzMaxUp;
   this->LzMaxDown = fermions.LzMaxDown;
+  this->LzShiftUp = fermions.LzShiftUp;
+  this->LzShiftDown = fermions.LzShiftDown;
+  this->LzTotalShift = fermions.LzTotalShift;
   this->NbrLzValue = fermions.NbrLzValue;
   this->TotalSpin = fermions.TotalSpin;
   this->NbrFermionsUp = fermions.NbrFermionsUp;
@@ -225,55 +238,112 @@ AbstractHilbertSpace* FermionOnSphereTwoLandauLevels::Clone()
 
 long FermionOnSphereTwoLandauLevels::GenerateStates(int nbrFermionsUp, int nbrFermionsDown, int lzMaxUp, int lzMaxDown, int totalLz, long pos)
 {
-  if ((nbrFermionsUp < 0) || (nbrFermionsDown < 0) || (totalLz < 0))
+  if ((nbrFermionsUp < 0) || (nbrFermionsDown < 0) || (totalLz < this->LzTotalShift))
     return pos;
-  if ((nbrFermionsUp == 0) && (totalLz == 0) && (nbrFremionsDown == 0))
+  if ((nbrFermionsUp == 0) && (totalLz == this->LzTotalShift) && (nbrFermionsDown == 0))
       {
 	this->StateDescription[pos] = 0x0ul;
 	return (pos + 1l);
       }
     
-  if ((lzMaxUp < 0) || (lzMaxDown < 0) || ((lzMaxUp + 1) < nbrFermionsUp) || ((lzMaxDown + 1) < nbrFermionsDown)
-      || ((((2 * lzMax + nbrFermions + 1 - totalSpin) * nbrFermions) >> 1) < totalLz))
+  if ((lzMaxUp < 0) || (lzMaxDown < 0) || ((lzMaxUp + 1) < nbrFermionsUp) || ((lzMaxDown + 1) < nbrFermionsDown))
     return pos;
   
   if ((nbrFermionsUp == 1) && (nbrFermionsDown == 0)) 
-    if (lzMaxUp >= totalLz)
+    if ((lzMaxUp + this->LzShiftUp) >= totalLz)
       {
-	this->StateDescription[pos] = 0x1ul << ((totalLz << 1) + 1);
+	this->StateDescription[pos] = 0x1ul << (((totalLz + this->LzShiftUp) << 1) + 1);
 	return (pos + 1l);
       }
     else
       return pos;
   if ((nbrFermionsDown == 1) && (nbrFermionsUp == 0)) 
-    if (lzMaxDown >= totalLz)
+    if ((lzMaxDown + this->LzShiftDown) >= totalLz)
       {
-	this->StateDescription[pos] = 0x1ul << (totalLz << 1);
+	this->StateDescription[pos] = 0x1ul << ((totalLz + this->LzShiftDown) << 1);
 	return (pos + 1l);
       }
     else
       return pos;
 
-  if ((lzMaxUp == 0)  && (lzMaxDown == 0) && (totalLz != 0))
+  if ((lzMaxUp == 0)  && (lzMaxDown == 0) && (totalLz != this->LzTotalShift))
     return pos;
 
 
-  long TmpPos = this->GenerateStates(nbrFermionsUp - 1, nbrFermionsDown, lzMaxUp - 1, lzMaxDown - 1, totalLz - (lzMaxUp + lzMaxDown), pos);
-  unsigned long Mask = 0x3ul << (lzMax << 1);
+  long TmpPos = this->GenerateStates(nbrFermionsUp - 1, nbrFermionsDown - 1, lzMaxUp - 1, lzMaxDown - 1, totalLz - (lzMaxUp + lzMaxDown + this->LzTotalShift), pos);
+  unsigned long Mask = 0x3ul << (lzMaxUp << 1);
   for (; pos < TmpPos; ++pos)
     this->StateDescription[pos] |= Mask;
-  TmpPos = this->GenerateStates(nbrFermionsUp - 1, nbrFermionsDown, lzMaxUp - 1, lzMaxDown, totalLz - lzMaxUp,  pos);
-  Mask = 0x2ul << (lzMax << 1);
+  TmpPos = this->GenerateStates(nbrFermionsUp - 1, nbrFermionsDown, lzMaxUp - 1, lzMaxDown, totalLz - lzMaxUp - this->LzShiftUp,  pos);
+  Mask = 0x2ul << (lzMaxUp << 1);
   for (; pos < TmpPos; ++pos)
     this->StateDescription[pos] |= Mask;
-  TmpPos = this->GenerateStates(nbrFermionsUp, nbrFermionsDown - 1, lzMaxUp, lzMaxDown - 1, totalLz - lzMaxDown,  pos);
-  Mask = 0x1ul << (lzMax << 1);
+  TmpPos = this->GenerateStates(nbrFermionsUp, nbrFermionsDown - 1, lzMaxUp, lzMaxDown - 1, totalLz - lzMaxDown - this->LzShiftDown,  pos);
+  Mask = 0x1ul << (lzMaxDown << 1);
   for (; pos < TmpPos; ++pos)
     this->StateDescription[pos] |= Mask;
 
   return this->GenerateStates(nbrFermionsUp, nbrFermionsDown, lzMaxUp - 1, lzMaxDown - 1, totalLz, pos);
 };
 
+// generate all states corresponding to the constraints
+// 
+// nbrFermions = number of fermions
+// lzMaxUp = momentum maximum value for a fermion with spin up
+// lzMaxDown = momentum maximum value for a fermion with spin down
+// totalLz = momentum total value
+// pos = position in StateDescription array where to store states
+// return value = position from which new states have to be stored
+
+long FermionOnSphereTwoLandauLevels::GenerateFullStates(int nbrFermions, int lzMaxUp, int lzMaxDown, int totalLz, long pos)
+{
+  if ((nbrFermions < 0) || (totalLz < this->LzTotalShift))
+    return pos;
+  if ((nbrFermions == 0) && (totalLz == this->LzTotalShift))
+      {
+	this->StateDescription[pos] = 0x0ul;
+	return (pos + 1l);
+      }
+    
+  if ((lzMaxUp < 0) || (lzMaxDown < 0) || ((lzMaxUp + lzMaxDown + 2) < nbrFermions))
+    return pos;
+  
+  if (nbrFermions == 1) 
+    if (lzMaxUp >= totalLz)
+      {
+	this->StateDescription[pos] = 0x1ul << (((totalLz + this->LzShiftUp) << 1) + 1 );
+	return (pos + 1l);
+      }
+    else
+      return pos;
+  if (nbrFermions == 1) 
+    if (lzMaxDown >= totalLz)
+      {
+	this->StateDescription[pos] = 0x1ul << ((totalLz + this->LzShiftDown) << 1);
+	return (pos + 1l);
+      }
+    else
+      return pos;
+
+  if ((lzMaxUp == 0)  && (lzMaxDown == 0) && (totalLz != this->LzTotalShift))
+    return pos;
+
+
+  long TmpPos = this->GenerateFullStates(nbrFermions - 2, lzMaxUp - 1, lzMaxDown - 1, totalLz - (lzMaxUp + lzMaxDown + this->LzTotalShift), pos);
+  unsigned long Mask = 0x3ul << ((lzMaxUp + this->LzShiftUp) << 1);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  TmpPos = this->GenerateFullStates(nbrFermions - 1, lzMaxUp - 1, lzMaxDown, totalLz - lzMaxUp - this->LzShiftUp,  pos);
+  Mask = 0x2ul << ((lzMaxUp + this->LzShiftUp) << 1);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  TmpPos = this->GenerateFullStates(nbrFermions - 1, lzMaxUp, lzMaxDown - 1, totalLz - lzMaxDown - this->LzShiftDown,  pos);
+  Mask = 0x1ul << ((lzMaxDown + this->LzShiftDown) << 1);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+
+  return this->GenerateFullStates(nbrFermions, lzMaxUp - 1, lzMaxDown - 1, totalLz, pos);
+}
 
 // evaluate Hilbert space dimension
 //
@@ -286,34 +356,28 @@ long FermionOnSphereTwoLandauLevels::GenerateStates(int nbrFermionsUp, int nbrFe
 
 long FermionOnSphereTwoLandauLevels::ShiftedEvaluateHilbertSpaceDimension(int nbrFermionsUp, int nbrFermionsDown, int lzMaxUp, int lzMaxDown, int totalLz)
 {
-  if ((nbrFermionsUp < 0) || (totalLz < 0)  || (totalSpin < 0) || (nbrFermionsDown < 0))
+  if ((nbrFermionsUp < 0) || (totalLz < 0) || (nbrFermionsDown < 0))
     return 0l;
-  if ((lzMaxUp < 0) || (lzMaxDown < 0) || ((lzMaxUp + 1) < nbrFermionsUp) || ((lzMaxDown + 1) < nbrFermionsDown) 
-      || ((((2 * lzMax + nbrFermions + 1 - totalSpin) * nbrFermions) >> 1) < totalLz))
+  if ((lzMaxUp < 0) || (lzMaxDown < 0) || ((lzMaxUp + 1) < nbrFermionsUp) || ((lzMaxDown + 1) < nbrFermionsDown)) 
     return 0l;
     
   if ((nbrFermionsUp == 1) && (nbrFermionsDown == 0)) 
-    if (lzMaxUp >= totalLz)
+    if ((lzMaxUp + this->LzShiftUp) >= totalLz)
       return 1l;
     else
       return 0l;
   if ((nbrFermionsDown == 1) && (nbrFermionsUp == 0)) 
-    if (lzMaxDown >= totalLz)
+    if ((lzMaxDown + this->LzShiftDown) >= totalLz)
       return 1l;
     else
       return 0l;
 
-  if ((lzMaxUp == 0) && (lzMaxDown == 0) && (totalLz != 0))
+  if ((lzMaxUp == 0) && (lzMaxDown == 0) && (totalLz != this->LzTotalShift))
     return 0l;
 
-  unsigned long Tmp = 0l;  
-  if ((nbrFermionsUp + nbrFermionsDown) > 2)    
-    Tmp += this->ShiftedEvaluateHilbertSpaceDimension(nbrFermionsUp - 1, nbrFermionsDown - 1, lzMaxUp - 1, lzMaxDown - 1, totalLz - (lzMaxUp + lzMaxDown));
-  else
-    if ((totalLz == (lzMaxUp + lzMaxDown)) && (nbrFermionsUp == 1))
-      ++Tmp;
-  return  (Tmp + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermionsUp - 1, nbrFermionsDown - 1, lzMaxUp - 1, lzMaxDown, totalLz - lzMaxUp)
-	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermionsUp, nbrFermionsDown - 1, lzMaxUp, lzMaxDown - 1, totalLz - lzMaxDown)
+  return  (this->ShiftedEvaluateHilbertSpaceDimension(nbrFermionsUp - 1, nbrFermionsDown - 1, lzMaxUp - 1, lzMaxDown - 1, totalLz - (lzMaxUp + lzMaxDown + this->LzTotalShift))
+	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermionsUp - 1, nbrFermionsDown, lzMaxUp, lzMaxDown - 1, totalLz - lzMaxUp - this->LzShiftUp)
+	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermionsUp, nbrFermionsDown - 1, lzMaxUp, lzMaxDown - 1, totalLz - lzMaxDown - this->LzShiftDown)
 	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermionsUp, nbrFermionsDown, lzMaxUp - 1, lzMaxDown - 1, totalLz));
 
 }
@@ -330,24 +394,25 @@ long FermionOnSphereTwoLandauLevels::ShiftedEvaluateFullHilbertSpaceDimension(in
 {
   if ((nbrFermions < 0) || (totalLz < 0))
     return 0l;
-  if ((lzMaxUp < 0) || (lzMaxDown < 0) || ((lzMaxUp + lzMaxDown + 2) < nbrFermions))
+  if (((lzMaxUp < 0) && (lzMaxDown < 0)) || ((lzMaxUp + lzMaxDown + 2) < nbrFermions))
     return 0l;
     
   if (nbrFermions == 1) 
-    if ((lzMaxUp >= totalLz) && (lzMaxDown >= totalLz))
+    if (((lzMaxUp + this->LzShiftUp) >= totalLz) && ((lzMaxDown + this->LzShiftDown) >= totalLz))
       return 2l;
     else
-      if ((lzMaxUp >= totalLz) || (lzMaxDown >= totalLz))
+      if (((lzMaxUp + this->LzShiftUp) >= totalLz) || ((lzMaxDown + this->LzShiftDown) >= totalLz))
 	return 1l;
       else
 	return 0l;
 
-  if ((lzMaxUp == 0) && (lzMaxDown == 0) && (totalLz != 0))
+  if ((lzMaxUp == 0) && (lzMaxDown == 0) && (totalLz != this->LzTotalShift))
     return 0l;
 
-  return  (this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMaxUp - 1, lzMaxDown, totalLz - lzMaxUp)
-	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMaxUp, lzMaxDown - 1, totalLz - lzMaxDown)
-	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMaxUp - 1, lzMaxDown - 1, totalLz));
+  return  (this->ShiftedEvaluateFullHilbertSpaceDimension(nbrFermions - 2, lzMaxUp - 1, lzMaxDown - 1, totalLz - (lzMaxUp + lzMaxDown + this->LzTotalShift))
+	   + this->ShiftedEvaluateFullHilbertSpaceDimension(nbrFermions -1, lzMaxUp - 1, lzMaxDown, totalLz - lzMaxUp - this->LzShiftUp)
+	   + this->ShiftedEvaluateFullHilbertSpaceDimension(nbrFermions - 1, lzMaxUp, lzMaxDown - 1, totalLz - lzMaxDown - this->LzShiftDown)
+	   + this->ShiftedEvaluateFullHilbertSpaceDimension(nbrFermions, lzMaxUp - 1, lzMaxDown - 1, totalLz));
 }
 
 
@@ -364,8 +429,8 @@ RealVector FermionOnSphereTwoLandauLevels::ForgeSU2FromU1(RealVector& upState, F
   RealVector FinalState(this->HilbertSpaceDimension, true);
   for (int j = 0; j < upStateSpace.HilbertSpaceDimension; ++j)
     {
-      unsigned long TmpUpState = upStateSpace.StateDescription[j] << this->UpStateShift;
-      int TmpPos = upStateSpace.LzMax + this->UpStateShift;
+      unsigned long TmpUpState = upStateSpace.StateDescription[j] << this->LzShiftUp;
+      int TmpPos = upStateSpace.LzMax + this->LzShiftUp;
       while (TmpPos > 0)
 	{
 	  unsigned long Tmp = TmpUpState & (0x1ul << TmpPos);
@@ -423,8 +488,8 @@ RealVector FermionOnSphereTwoLandauLevels::ForgeSU2FromU1(RealVector& upState, F
 
   for (int j = 0; j < downStateSpace.HilbertSpaceDimension; ++j)
     {
-      unsigned long TmpDownState = downStateSpace.StateDescription[j] << this->DownStateShift;
-      int TmpPos = downStateSpace.LzMax + this->DownStateShift;
+      unsigned long TmpDownState = downStateSpace.StateDescription[j] << this->LzShiftDown;
+      int TmpPos = downStateSpace.LzMax + this->LzShiftDown;
       while (TmpPos > 0)
 	{
 	  unsigned long Tmp = TmpDownState & (0x1ul << TmpPos);
