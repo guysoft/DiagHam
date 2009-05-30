@@ -333,29 +333,41 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   //
   // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
   // alpha = value of the Jack polynomial alpha coefficient
+  // minIndex = start computing the Jack polynomial from the minIndex-th component
+  // maxIndex = stop  computing the Jack polynomial up to the maxIndex-th component (0 if it has to be computed up to the end)
+  // partialSave = save partial results in a given vector file
   // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
-  virtual RealVector& GenerateJackPolynomial(RealVector& jack, double alpha);
+  virtual RealVector& GenerateJackPolynomial(RealVector& jack, double alpha, long minIndex = 0l, long maxIndex = 0l, char* partialSave = 0);
 
   // create the Jack polynomial decomposition corresponding to the root partition assuming the resulting state is invariant under the Lz<->-Lz symmetry
   //
   // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
   // alpha = value of the Jack polynomial alpha coefficient
+  // minIndex = start computing the Jack polynomial from the minIndex-th component
+  // maxIndex = stop  computing the Jack polynomial up to the maxIndex-th component (0 if it has to be computed up to the end)
+  // partialSave = save partial results in a given vector file
   // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
-  virtual RealVector& GenerateSymmetrizedJackPolynomial(RealVector& jack, double alpha);
+  virtual RealVector& GenerateSymmetrizedJackPolynomial(RealVector& jack, double alpha, long minIndex = 0l, long maxIndex = 0l, char* partialSave = 0);
 
   // create the Jack polynomial decomposition corresponding to the root partition, using an optimized version of the code
   //
   // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
   // alpha = value of the Jack polynomial alpha coefficient
+  // minIndex = start computing the Jack polynomial from the minIndex-th component
+  // maxIndex = stop  computing the Jack polynomial up to the maxIndex-th component (0 if it has to be computed up to the end)
+  // partialSave = save partial results in a given vector file
   // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
-  virtual RealVector& OptimizedGenerateJackPolynomial(RealVector& jack, double alpha);
+  virtual RealVector& OptimizedGenerateJackPolynomial(RealVector& jack, double alpha, long minIndex = 0l, long maxIndex = 0l, char* partialSave = 0);
 
   // create the Jack polynomial decomposition corresponding to the root partition assuming the resulting state is invariant under the Lz<->-Lz symmetry, using an optimized version of the code
   //
   // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
   // alpha = value of the Jack polynomial alpha coefficient
+  // minIndex = start computing the Jack polynomial from the minIndex-th component
+  // maxIndex = stop  computing the Jack polynomial up to the maxIndex-th component (0 if it has to be computed up to the end)
+  // partialSave = save partial results in a given vector file
   // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
-  virtual RealVector& OptimizedGenerateSymmetrizedJackPolynomial(RealVector& jack, double alpha);
+  virtual RealVector& OptimizedGenerateSymmetrizedJackPolynomial(RealVector& jack, double alpha, long minIndex = 0l, long maxIndex = 0l, char* partialSave = 0);
 
   // compute part of the Jack polynomial square normalization in a given range of indices
   //

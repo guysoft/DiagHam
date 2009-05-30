@@ -1470,9 +1470,12 @@ void FermionOnSphereHaldaneHugeBasis::InitializeWaveFunctionEvaluation (bool tim
 //
 // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
 // alpha = value of the Jack polynomial alpha coefficient
+// minIndex = start computing the Jack polynomial from the minIndex-th component
+// maxIndex = stop  computing the Jack polynomial up to the maxIndex-th component (0 if it has to be computed up to the end)
+// partialSave = save partial results in a given vector file
 // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
 
-RealVector& FermionOnSphereHaldaneHugeBasis::GenerateJackPolynomial(RealVector& jack, double alpha)
+RealVector& FermionOnSphereHaldaneHugeBasis::GenerateJackPolynomial(RealVector& jack, double alpha, long minIndex, long maxIndex, char* partialSave)
 {
   jack[0] = 1.0;
   double InvAlpha =  2.0 * (1.0 - alpha) / alpha;
@@ -1487,7 +1490,11 @@ RealVector& FermionOnSphereHaldaneHugeBasis::GenerateJackPolynomial(RealVector& 
     RhoRoot += TmpMonomial[j] * (TmpMonomial[j] - InvAlpha * ((double) j));
   int ReducedNbrFermions = this->NbrFermions - 1;
 
-  for (long i = 1; i < this->LargeHilbertSpaceDimension; ++i)
+  if (minIndex <= 0)
+    minIndex = 1;
+  if ((maxIndex <= 0) || (maxIndex >= this->LargeHilbertSpaceDimension))
+    maxIndex = this->LargeHilbertSpaceDimension - 1l;
+  for (long i = minIndex; i <= maxIndex; ++i)
     {
       double Rho = 0.0;
       unsigned long CurrentPartition = this->StateDescription[i];
@@ -1555,9 +1562,12 @@ RealVector& FermionOnSphereHaldaneHugeBasis::GenerateJackPolynomial(RealVector& 
 //
 // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
 // alpha = value of the Jack polynomial alpha coefficient
+// minIndex = start computing the Jack polynomial from the minIndex-th component
+// maxIndex = stop  computing the Jack polynomial up to the maxIndex-th component (0 if it has to be computed up to the end)
+// partialSave = save partial results in a given vector file
 // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
 
-RealVector& FermionOnSphereHaldaneHugeBasis::GenerateSymmetrizedJackPolynomial(RealVector& jack, double alpha)
+RealVector& FermionOnSphereHaldaneHugeBasis::GenerateSymmetrizedJackPolynomial(RealVector& jack, double alpha, long minIndex, long maxIndex, char* partialSave)
 {
   jack[0] = 1.0;
   double InvAlpha =  2.0 * (1.0 - alpha) / alpha;
@@ -1574,7 +1584,11 @@ RealVector& FermionOnSphereHaldaneHugeBasis::GenerateSymmetrizedJackPolynomial(R
   double SymSign = 1.0;
   if ((((this->NbrFermions * ReducedNbrFermions) >> 1) & 1) != 0)
     SymSign = -1.0;
-  for (long i = 1; i < this->LargeHilbertSpaceDimension; ++i)
+  if (minIndex <= 0)
+    minIndex = 1;
+  if ((maxIndex <= 0) || (maxIndex >= this->LargeHilbertSpaceDimension))
+    maxIndex = this->LargeHilbertSpaceDimension - 1l;
+  for (long i = minIndex; i <= maxIndex; ++i)
     {
       double Rho = 0.0;
       unsigned long CurrentPartition = this->StateDescription[i];
@@ -1651,9 +1665,12 @@ RealVector& FermionOnSphereHaldaneHugeBasis::GenerateSymmetrizedJackPolynomial(R
 //
 // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
 // alpha = value of the Jack polynomial alpha coefficient
+// minIndex = start computing the Jack polynomial from the minIndex-th component
+// maxIndex = stop  computing the Jack polynomial up to the maxIndex-th component (0 if it has to be computed up to the end)
+// partialSave = save partial results in a given vector file
 // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
 
-RealVector& FermionOnSphereHaldaneHugeBasis::OptimizedGenerateJackPolynomial(RealVector& jack, double alpha)
+RealVector& FermionOnSphereHaldaneHugeBasis::OptimizedGenerateJackPolynomial(RealVector& jack, double alpha, long minIndex, long maxIndex, char* partialSave)
 {
   jack[0] = 1.0;
   double InvAlpha =  2.0 * (1.0 - alpha) / alpha;
@@ -1678,7 +1695,11 @@ RealVector& FermionOnSphereHaldaneHugeBasis::OptimizedGenerateJackPolynomial(Rea
       Factors[i] = new double[MaxConnected];
     }
 
-  for (long i = 1; i < this->LargeHilbertSpaceDimension;)
+  if (minIndex <= 0)
+    minIndex = 1;
+  if ((maxIndex <= 0) || (maxIndex >= this->LargeHilbertSpaceDimension))
+    maxIndex = this->LargeHilbertSpaceDimension - 1l;
+  for (long i = minIndex; i <= maxIndex; ++i)
     {
       double Rho = 0.0;
       long Limit = i;
@@ -1729,9 +1750,12 @@ RealVector& FermionOnSphereHaldaneHugeBasis::OptimizedGenerateJackPolynomial(Rea
 //
 // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
 // alpha = value of the Jack polynomial alpha coefficient
+// minIndex = start computing the Jack polynomial from the minIndex-th component
+// maxIndex = stop  computing the Jack polynomial up to the maxIndex-th component (0 if it has to be computed up to the end)
+// partialSave = save partial results in a given vector file
 // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
 
-RealVector& FermionOnSphereHaldaneHugeBasis::OptimizedGenerateSymmetrizedJackPolynomial(RealVector& jack, double alpha)
+RealVector& FermionOnSphereHaldaneHugeBasis::OptimizedGenerateSymmetrizedJackPolynomial(RealVector& jack, double alpha, long minIndex, long maxIndex, char* partialSave)
 {
   return jack;
 }

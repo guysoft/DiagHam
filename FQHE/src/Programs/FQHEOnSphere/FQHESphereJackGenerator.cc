@@ -49,6 +49,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0) to speed up calculations");
   (*SystemGroup) += new BooleanOption  ('\n', "sym-storage", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0), both for speed and storage");
   (*SystemGroup) += new SingleStringOption  ('\n', "initial-state", "use an optional state where some of the components have already been computed, improving computation time");
+  (*SystemGroup) += new SingleIntegerOption ('\n', "min-index", "compute the Jack polynomial from the min-index-th component (require an initial state)", 0l);
+  (*SystemGroup) += new SingleIntegerOption ('\n', "max-index", "compute the Jack polynomial from the max-index-th component (require an initial state, 0 if it has computed up to the end)", 0l);
   (*SystemGroup) += new BooleanOption  ('\n', "fermion", "compute the slater decomposition of the Jack polynomial times Vandermonde");
   (*SystemGroup) += new BooleanOption  ('\n', "huge-basis", "use huge Hilbert space support");
   (*SystemGroup) += new BooleanOption  ('\n', "large-basis", "use large Hilbert space support (i.e. handle non-squeezed Hilbert space larger than 2^31 without hard-drive storage)");
@@ -81,6 +83,14 @@ int main(int argc, char** argv)
   int TotalLz = 0;
   char* OutputFileName = ((SingleStringOption*) Manager["bin-output"])->GetString();
   char* OutputTxtFileName = ((SingleStringOption*) Manager["txt-output"])->GetString();
+
+  long MinIndex = Manager.GetInteger("min-index");
+  long MaxIndex = Manager.GetInteger("max-index");
+  if (((MinIndex != 0l) || (MaxIndex != 0)) && (Manager.GetString("initial-state") == 0))
+    {
+      cout << "error, min-index/max-index options require an inital state" << endl;
+      return 0;
+    }
 
   if ((OutputTxtFileName == 0) && (OutputFileName == 0))
     {
@@ -150,9 +160,9 @@ int main(int argc, char** argv)
 		return -1;
 	      }
 	  if (SymmetrizedBasis == false)    
-	    InitialSpace->GenerateJackPolynomial(OutputState, Alpha);
+	    InitialSpace->GenerateJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex);
 	  else
-	    InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, Alpha);
+	    InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex);
 	  
 	  if (Manager.GetBoolean("normalize"))
             InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);
@@ -248,9 +258,9 @@ int main(int argc, char** argv)
 		    return -1;
 		  }
 	      if (SymmetrizedBasis == false)    
-		InitialSpace->GenerateJackPolynomial(OutputState, Alpha);
+		InitialSpace->GenerateJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex);
 	      else
-		InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, Alpha);
+		InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex);
 	      if (Manager.GetBoolean("normalize"))
 		InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);
 	      if (OutputTxtFileName != 0)
