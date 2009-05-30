@@ -157,7 +157,7 @@ FermionOnSphereHaldaneLargeBasis::FermionOnSphereHaldaneLargeBasis (int nbrFermi
   this->TmpGeneratedStatesLzMax = new int [MaxSweeps * 1000];
   long Memory = 0l;
 
-  int TmpIndex = this->FindStateIndex(this->ReferenceState, ReferenceStateLzMax);
+  long TmpIndex = this->FindStateIndex(this->ReferenceState);
 #ifdef  __64_BITS__
   this->KeepStateFlag[TmpIndex >> 6] = 0x1l << (TmpIndex & 0x3f);
 #else
@@ -184,7 +184,7 @@ FermionOnSphereHaldaneLargeBasis::FermionOnSphereHaldaneLargeBasis (int nbrFermi
   3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
   3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
   4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8};
-  for (int i = 0; i < ReducedHilbertSpaceDimension; ++i)
+  for (long i = 0; i < ReducedHilbertSpaceDimension; ++i)
     {
       TmpKeepStateFlag = this->KeepStateFlag[i];
       NewHilbertSpaceDimension += TmpNbrOne[TmpKeepStateFlag & 0xffl];
@@ -202,7 +202,7 @@ FermionOnSphereHaldaneLargeBasis::FermionOnSphereHaldaneLargeBasis (int nbrFermi
 
   unsigned long* TmpStateDescription = new unsigned long [NewHilbertSpaceDimension];
   NewHilbertSpaceDimension = 0l;
-  int TotalIndex = 0;
+  long TotalIndex = 0;
 #ifdef  __64_BITS__
   if ((this->LargeHilbertSpaceDimension & 0x3fl) != 0)
 #else
