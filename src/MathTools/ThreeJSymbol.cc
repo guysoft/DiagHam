@@ -215,7 +215,7 @@ void ThreeJSymbol::ApplyThreeJPrefactors()
 	  for (int m2 = M2Min; m2<=M2Max; m2 += 2)
 	    {	      
 	      int M2Pos = (m2 + this->J2) >> 1;
-	      int Parity = (this->J1-this->J2-m1-m2)>>1;
+	      int Parity = (this->J1-this->J2+m1+m2)>>1;
 	      if (Parity & 0x1)
 		this->Coefficients[M1Pos][M2Pos][(j - this->JMin[M1Pos][M2Pos]) >> 1] *= -J3Factor;
 	      else

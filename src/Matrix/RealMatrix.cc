@@ -304,7 +304,18 @@ void RealMatrix::Resize (int nbrRow, int nbrColumn)
 	Tmp[i] = this->Columns[i];      
       for (int i = this->NbrColumn; i < nbrColumn; i++)
 	Tmp[i] = RealVector(nbrRow);
-      delete[] this->Columns;
+      if (this->ColumnGarbageFlag != 0)
+	{
+	  if ((*(this->ColumnGarbageFlag)) == 1)
+	    {
+	      delete[] this->Columns;
+	      delete this->ColumnGarbageFlag;
+	    }
+	  else
+	    (*(this->ColumnGarbageFlag))--;
+	}
+      this->ColumnGarbageFlag = new int;
+      *(this->ColumnGarbageFlag) = 1;
       this->Columns = Tmp;
       this->TrueNbrColumn = nbrColumn;
       this->NbrColumn = nbrColumn;

@@ -116,6 +116,10 @@ class ClebschGordanCoefficients
   // return value = false if no coefficient has been returned
   bool Iterate(int& j, double& coefficient);
 
+  // return the values of the angular momenta that have been coupled
+  int GetJ1(){return this->J1;}
+  int GetJ2(){return this->J2;}
+
   // print a particular coefficient (without testing if m1, m2 and j are valid)
   //
   // str = reference on output stream

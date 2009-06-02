@@ -75,6 +75,7 @@ class ParticleOnSphereManager
   // add an option group containing all options related to the Hilbert space construction 
   //
   // manager = pointer to the option manager
+  // comment = string appended to name of option group 
   void AddOptionGroup(OptionManager* manager, const char* comment=0);
 
   // get the Hilbert space defined by the running options and a given Total Lz value
