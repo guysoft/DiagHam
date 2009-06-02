@@ -1550,6 +1550,8 @@ RealVector& FermionOnSphereHaldaneHugeBasis::GenerateJackPolynomial(RealVector& 
 	{
 	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
 	  cout.flush();
+	  if ((partialSave != 0) && ((i & 0xfffffffl) == 0l))
+	    jack.WriteVector(partialSave);
 	}
     }
   delete[] TmpMonomial;
@@ -1653,6 +1655,8 @@ RealVector& FermionOnSphereHaldaneHugeBasis::GenerateSymmetrizedJackPolynomial(R
 	{
 	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
 	  cout.flush();
+	  if ((partialSave != 0) && ((i & 0xfffffffl) == 0l))
+	    jack.WriteVector(partialSave);
 	}
     }
   delete[] TmpMonomial;

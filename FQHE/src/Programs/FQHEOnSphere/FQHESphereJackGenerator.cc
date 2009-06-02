@@ -160,9 +160,9 @@ int main(int argc, char** argv)
 		return -1;
 	      }
 	  if (SymmetrizedBasis == false)    
-	    InitialSpace->GenerateJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex);
+	    InitialSpace->GenerateJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex, OutputFileName);
 	  else
-	    InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex);
+	    InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex, OutputFileName);
 	  
 	  if (Manager.GetBoolean("normalize"))
             InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);
@@ -258,9 +258,9 @@ int main(int argc, char** argv)
 		    return -1;
 		  }
 	      if (SymmetrizedBasis == false)    
-		InitialSpace->GenerateJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex);
+		InitialSpace->GenerateJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex, OutputFileName);
 	      else
-		InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex);
+		InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex, OutputFileName);
 	      if (Manager.GetBoolean("normalize"))
 		InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);
 	      if (OutputTxtFileName != 0)
