@@ -11,4 +11,5 @@ ClebschGordanDiskCoefficients.cc \
 ArithmeticGeometricMean.cc \
 JacobiThetaFunction.cc \
 WignerSmallDMatrix.cc \
-ThreeJSymbol.cc
+ThreeJSymbol.cc \
+PartialThreeJSymbol.cc
