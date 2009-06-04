@@ -120,6 +120,43 @@ int ParticleOnSphereCollection::Move()
   return LastMoved;
 }
 
+
+// randomly moves all particles 
+void ParticleOnSphereCollection::RotateAll()
+{
+  double theta = this->Theta0*fabs(Generator->GetGaussianRandomNumber());
+  double phi = 2.0*M_PI*Generator->GetRealRandomNumber();
+  this->RotateAll(theta, phi);
+}
+
+// moves all particles by angles theta and phi
+void ParticleOnSphereCollection::RotateAll(double theta, double phi)
+{
+  Complex move_v = sin(theta/2.0)*Polar(1.0, phi/2.0);
+  Complex move_u = cos(theta/2.0)*Polar(1.0,-phi/2.0);
+  Complex lastU, lastV;
+  for (int nbrParticle=0; nbrParticle<NbrParticles; ++nbrParticle)
+    {
+      lastU=SpinorUCoordinates[nbrParticle];
+      lastV=SpinorVCoordinates[nbrParticle];
+      SpinorUCoordinates[nbrParticle] =lastU*Conj(move_u)+lastV*Conj(move_v);
+      SpinorVCoordinates[nbrParticle] =-lastU*move_v+lastV*move_u;
+      this->ThetaPhi[nbrParticle<<1] = (2.0*acos(Norm(SpinorUCoordinates[nbrParticle])));
+      this->ThetaPhi[(nbrParticle<<1)+1] = (Arg(SpinorVCoordinates[nbrParticle])-Arg(SpinorUCoordinates[nbrParticle]));
+      // cout << "new coordinates: ("<<this->ThetaPhi[nbrParticle<<1]<<", " << this->ThetaPhi[(nbrParticle<<1)+1] << ")" <<endl;
+    }
+
+  // rotate old positions, as well
+  lastU=this->LastU;
+  lastV=this->LastV;
+  this->LastU=lastU*Conj(move_u)+lastV*Conj(move_v);
+  this->LastV=-lastU*move_v+lastV*move_u;
+  this->LastTheta = (2.0*acos(Norm(LastU)));
+  this->LastPhi = (Arg(LastV)-Arg(LastU));
+  
+}
+
+
 // restore last move
 void ParticleOnSphereCollection::RestoreMove()
 {
@@ -183,5 +220,49 @@ void ParticleOnSphereCollection::Randomize()
       this->SpinorVCoordinates[i].Im = s*sin(phi/2.0);
       this->ThetaPhi[i<<1] = (2.0*acos(Norm(SpinorUCoordinates[i])));
       this->ThetaPhi[(i<<1)+1] = (Arg(SpinorVCoordinates[i])-Arg(SpinorUCoordinates[i]));
+    }
+}
+
+// get absolute values of all relative distances
+// distances = matrix in which to return the distances
+void ParticleOnSphereCollection::GetDistances(RealSymmetricMatrix &distances)
+{
+  if ((distances.GetNbrRow()!=NbrParticles)||(distances.GetNbrColumn()!=NbrParticles))
+    distances.Resize(NbrParticles,NbrParticles);
+  for (int i=0; i<NbrParticles; ++i)
+    {
+      distances(i,i)=0.0;
+      for (int j=i+1; j<NbrParticles; ++j)
+	{
+	  distances(i,j)=Norm(this->SpinorUCoordinates[i]*this->SpinorVCoordinates[j]-this->SpinorUCoordinates[j]*this->SpinorVCoordinates[i]);
+	}
+    }
+  return;
+}
+
+
+// toggle positions of first N/2 particles with the remaining N/2 positions
+//
+void ParticleOnSphereCollection::ToggleHalfHalf()
+{
+  if (NbrParticles&1) return;
+  double TmpD;
+  Complex TmpC;
+  int NUp = this->NbrParticles/2;
+  // exchange spin up and spin down
+  for (int j = 0; j < NUp; ++j)
+    {
+      TmpD = ThetaPhi[j << 1];      
+      ThetaPhi[j << 1] = ThetaPhi[(j+NUp) << 1];
+      ThetaPhi[(j+NUp) << 1] = TmpD;
+      TmpD = ThetaPhi[1 + (j << 1)];
+      ThetaPhi[1+(j <<1)] = ThetaPhi[1+ ((j+NUp) << 1)];
+      ThetaPhi[1+ ((j+NUp) << 1)] = TmpD;
+      TmpC = SpinorUCoordinates[j];
+      SpinorUCoordinates[j] = SpinorUCoordinates[j+NUp];
+      SpinorUCoordinates[j+NUp] = TmpC;
+      TmpC = SpinorVCoordinates[j];
+      SpinorVCoordinates[j] = SpinorVCoordinates[j+NUp];
+      SpinorVCoordinates[j+NUp] = TmpC;
     }
 }

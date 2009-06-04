@@ -37,6 +37,7 @@
 #include "GeneralTools/GarbageFlag.h"
 #include "Vector/RealVector.h"
 #include "AbstractParticleCollection.h"
+#include "Matrix/RealSymmetricMatrix.h"
 
 class ParticleOnSphereCollection : public AbstractParticleCollection {
  private:
@@ -51,7 +52,7 @@ class ParticleOnSphereCollection : public AbstractParticleCollection {
   AbstractRandomNumberGenerator *Generator;
   bool ExternalGenerator;
   GarbageFlag Flag;
-  RealVector ThetaPhi;  
+  RealVector ThetaPhi;
   
  public:
 
@@ -70,6 +71,12 @@ class ParticleOnSphereCollection : public AbstractParticleCollection {
   // randomly select a particle and move it
   // return value = number of particle that was moved
   int Move();
+
+  // rotate the coordinates of all particles with a common random vector (cannot be reverted for now)
+  void RotateAll();
+
+  // rotate the coordinates of all particles by the rotation that brings the north pole to angles theta and phi
+  void RotateAll(double theta, double phi);
 
   // get previous coordinates of last particle that was moved
   void GetPreviousPos(Complex &lastU, Complex &lastV)
@@ -106,6 +113,14 @@ class ParticleOnSphereCollection : public AbstractParticleCollection {
 
   // get type of collection
   virtual int GetCollectionType();
+
+  // get absolute values of all relative distances
+  // distances = matrix in which to return the distances
+  void GetDistances(RealSymmetricMatrix &distances);
+
+  // toggle positions of first N/2 particles with the remaining N/2 positions
+  //
+  void ToggleHalfHalf();
   
 };
 

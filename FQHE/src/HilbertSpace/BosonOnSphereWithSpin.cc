@@ -1349,7 +1349,7 @@ Complex BosonOnSphereWithSpin::EvaluateWaveFunction (RealVector& state, RealVect
       TmpCoordinates[0] = position[j << 1];
       TmpCoordinates[1] = position[1 + (j << 1)];
       for (int i = 0; i <= this->LzMax; ++i)
-	{
+	{	  
 	  basis.GetFunctionValue(TmpCoordinates, Tmp, i);
 	  FunctionsUp[j].Re(i) = Tmp.Re;
 	  FunctionsUp[j].Im(i) = Tmp.Im;

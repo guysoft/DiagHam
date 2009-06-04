@@ -516,13 +516,37 @@ int main(int argc, char** argv)
 	  Operation2.ApplyOperation(Architecture.GetArchitecture());
 	  ValueExact2 = (Operation2.GetScalar());
 	}
+
+//       RealSymmetricMatrix Distances(NbrFermions,NbrFermions);
+//       Particles->GetDistances(Distances);
+//       cout << "Distances before rotation:"<<endl<<Distances<<endl;
+
+      // rotate all particles      
+      Particles->RotateAll();
+
+//       Particles->GetDistances(Distances);
+//       cout << "Distances after rotation:"<<endl<<Distances<<endl;
+      
+      // recalculate:
+      Complex ValueTrial3 = (*TestWaveFunction)(Particles->GetPositions());
+      Complex ValueExact3;
+      if (UseTrial)
+	ValueExact3 = (*ReplaceExactFunction)(Particles->GetPositions());
+      else
+	{
+	  QHEParticleWaveFunctionOperation Operation3(Space, &State, &(Particles->GetPositions()), &Basis,-1);
+	  Operation3.ApplyOperation(Architecture.GetArchitecture());
+	  ValueExact3 = (Operation3.GetScalar());
+	}
       
       cout << "Ex Before exchange: "<< ValueExact << endl << "After exchange:  " << ValueExact2 << endl;
       cout << "Ex Parity: " << ValueExact/ValueExact2 << endl;
+      cout << "Ex After rotation: " << ValueExact3 << " ratio: "<< Norm(ValueExact/ValueExact3) << endl;
       cout << "Tr Before exchange: "<< ValueTrial << endl << "After exchange:  " << ValueTrial2 << endl;
       cout << "Tr Parity: " << ValueTrial/ValueTrial2 << endl;
+      cout << "Tr After rotation: " << ValueTrial3 << " ratio: "<< Norm(ValueTrial/ValueTrial3) << endl;
 
-      ((SkyrmionOnSphereWaveFunction*)TestWaveFunction)->TestSymmetries(Particles->GetPositions());
+      ((SkyrmionOnSphereWaveFunction*)TestWaveFunction)->TestSymmetries(Particles);
     }
 
 

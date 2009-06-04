@@ -59,6 +59,8 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
   this->PolarizedLz = manager.GetInteger("polarized-lz");  
   
   this->AnalyticPolarizedWaveFunction=NULL;
+
+  this->Flag.Initialize();
   
   if (manager.GetString("polarized-state")==0)
     {
@@ -202,10 +204,11 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
 	    cout << "States of this polarized Hilbert space cannot be represented in a single word." << endl;
 	    exit(-1);
 	  }
-
+  
   this->BosonicSpace=new BosonOnSphereWithSpin(NbrParticles, BosonLz, BosonLzMax, BosonSz);
-
-  this->OneBodyBasis = new ParticleOnSphereFunctionBasis(totalLzMax, basisType);
+  
+  this->OneBodyBasisPol = new ParticleOnSphereFunctionBasis(PolarizedLzMax, basisType);
+  this->OneBodyBasisBos = new ParticleOnSphereFunctionBasis(BosonLzMax, basisType);
 }
 
 // copy constructor
@@ -221,19 +224,25 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(const SkyrmionOnSpher
   this->BosonicState=function.BosonicState;
   this->PolarizedSpace=function.PolarizedSpace;
   this->BosonicSpace=function.BosonicSpace;
-  this->OneBodyBasis=function.OneBodyBasis;
-  this->UseExact=function.UseExact;
+  this->OneBodyBasisBos=function.OneBodyBasisBos;
+  this->OneBodyBasisPol=function.OneBodyBasisPol;
+  this->UseExact=function.UseExact;  
   this->AnalyticPolarizedWaveFunction=function.AnalyticPolarizedWaveFunction;
-
+  this->Flag=function.Flag;
 }
 
 // destructor
 //
 SkyrmionOnSphereWaveFunction::~SkyrmionOnSphereWaveFunction()
 {
-  if (!UseExact)
-    delete this->PolarizedSpace;
-  delete this->BosonicSpace;
+  if ((this->Flag.Shared() == false) && (this->Flag.Used() == true))
+    {
+      if (!UseExact)
+	delete this->PolarizedSpace;
+      delete this->BosonicSpace;
+      delete this->OneBodyBasisPol;
+      delete this->OneBodyBasisBos;
+    }
 }
 
 // clone function 
@@ -245,52 +254,70 @@ Abstract1DComplexFunction* SkyrmionOnSphereWaveFunction::Clone ()
   return new SkyrmionOnSphereWaveFunction(*this);
 }
 
-void SkyrmionOnSphereWaveFunction::TestSymmetries(RealVector& x)
+void SkyrmionOnSphereWaveFunction::TestSymmetries(ParticleOnSphereCollection *particles)
 {
-  Complex ValueSpin, ValuePolarized, ValueSpin2, ValuePolarized2;
-  double Tmp2;
+  Complex ValueSpin, ValuePolarized, ValueSpin2, ValuePolarized2, ValueSpin3, ValuePolarized3;
   if (UseExact)
     {
-      QHEParticleWaveFunctionOperation Operation(PolarizedSpace, &PolarizedState, &x, this->OneBodyBasis, /* TimeCoherence */ -1);
+      QHEParticleWaveFunctionOperation Operation(PolarizedSpace, &PolarizedState, &(particles->GetPositions()),
+						 this->OneBodyBasisPol, /* TimeCoherence */ -1);
       Operation.ApplyOperation(this->Architecture);      
       ValuePolarized = Operation.GetScalar();
     }
   else
     {
-      ValuePolarized = (*(this->AnalyticPolarizedWaveFunction))(x);
+      ValuePolarized = (*(this->AnalyticPolarizedWaveFunction))(particles->GetPositions());
     }
-  QHEParticleWaveFunctionOperation Operation(BosonicSpace, &BosonicState, &x, this->OneBodyBasis, /* TimeCoherence */ -1);
+  QHEParticleWaveFunctionOperation Operation(BosonicSpace, &BosonicState, &(particles->GetPositions()),
+					     this->OneBodyBasisBos, /* TimeCoherence */ -1);
   Operation.ApplyOperation(this->Architecture);      
   ValueSpin = Operation.GetScalar();
-  int NUp = this->NbrParticles/2;
-  // exchange spin up and spin down
-  for (int j = 0; j < NUp; ++j)
-    {
-      Tmp2 = x[j << 1];
-      x[j << 1] = x[(j+NUp) << 1];
-      x[(j+NUp) << 1] = Tmp2;
-      Tmp2 = x[1 + (j << 1)];
-      x[1+(j <<1)] = x[1+ ((j+NUp) << 1)];
-      x[1+ ((j+NUp) << 1)] = Tmp2;
-    }
+
+  particles->ToggleHalfHalf();
+
   // recalculate:
   if (UseExact)
     {
-      QHEParticleWaveFunctionOperation Operation(PolarizedSpace, &PolarizedState, &x, this->OneBodyBasis, /* TimeCoherence */ -1);
+      QHEParticleWaveFunctionOperation Operation(PolarizedSpace, &PolarizedState, &(particles->GetPositions()),
+						 this->OneBodyBasisPol, /* TimeCoherence */ -1);
       Operation.ApplyOperation(this->Architecture);      
       ValuePolarized2 = Operation.GetScalar();
     }
   else
     {
-      ValuePolarized2 = (*(this->AnalyticPolarizedWaveFunction))(x);
+      ValuePolarized2 = (*(this->AnalyticPolarizedWaveFunction))(particles->GetPositions());
     }
-  QHEParticleWaveFunctionOperation Operation2(BosonicSpace, &BosonicState, &x, this->OneBodyBasis, /* TimeCoherence */ -1);
+  QHEParticleWaveFunctionOperation Operation2(BosonicSpace, &BosonicState, &(particles->GetPositions()),
+					      this->OneBodyBasisBos, /* TimeCoherence */ -1);
   Operation2.ApplyOperation(this->Architecture);      
   ValueSpin2 = Operation2.GetScalar();
+
+  // rotate all particles      
+  particles->RotateAll(0.781723465, 2.13428571);
+
+  // recalculate:
+  if (UseExact)
+    {
+      QHEParticleWaveFunctionOperation Operation(PolarizedSpace, &PolarizedState, &(particles->GetPositions()),
+						 this->OneBodyBasisPol, /* TimeCoherence */ -1);
+      Operation.ApplyOperation(this->Architecture);      
+      ValuePolarized3 = Operation.GetScalar();
+    }
+  else
+    {
+      ValuePolarized3 = (*(this->AnalyticPolarizedWaveFunction))(particles->GetPositions());
+    }
+  QHEParticleWaveFunctionOperation Operation3(BosonicSpace, &BosonicState, &(particles->GetPositions()),
+					      this->OneBodyBasisBos, /* TimeCoherence */ -1);
+  Operation3.ApplyOperation(this->Architecture);      
+  ValueSpin3 = Operation3.GetScalar();
+  
   cout << "Pol Before exchange: "<< ValuePolarized << endl << "After exchange:  " << ValuePolarized2 << endl;
   cout << "Pol Parity: " << ValuePolarized/ValuePolarized2 << endl;
+  cout << "Pol After rotation: " << ValuePolarized3 << " ratio: "<< Norm(ValuePolarized/ValuePolarized3) << endl;
   cout << "Bos Before exchange: "<< ValueSpin  << endl << "After exchange:  " << ValueSpin2 << endl;
   cout << "Bos Parity: " << ValueSpin / ValueSpin2 << endl;
+  cout << "Bos After rotation: " << ValueSpin3 << " ratio: "<< Norm(ValueSpin/ValueSpin3) << endl;
 }
 
 
@@ -304,7 +331,8 @@ Complex SkyrmionOnSphereWaveFunction::operator ()(RealVector& x)
   Complex ValueSpin,ValuePolarized;
   if (UseExact)
     {
-      QHEParticleWaveFunctionOperation Operation(PolarizedSpace, &PolarizedState, &x, this->OneBodyBasis, /* TimeCoherence */ -1);
+      QHEParticleWaveFunctionOperation Operation(PolarizedSpace, &PolarizedState, &x,
+						 this->OneBodyBasisPol, /* TimeCoherence */ -1);
       Operation.ApplyOperation(this->Architecture);      
       ValuePolarized = Operation.GetScalar();
     }
@@ -312,7 +340,8 @@ Complex SkyrmionOnSphereWaveFunction::operator ()(RealVector& x)
     {
       ValuePolarized = (*(this->AnalyticPolarizedWaveFunction))(x);
     }
-  QHEParticleWaveFunctionOperation Operation(BosonicSpace, &BosonicState, &x, this->OneBodyBasis, /* TimeCoherence */ -1);
+  QHEParticleWaveFunctionOperation Operation(BosonicSpace, &BosonicState, &x,
+					     this->OneBodyBasisBos, /* TimeCoherence */ -1);
   Operation.ApplyOperation(this->Architecture);      
   ValueSpin = Operation.GetScalar();
   

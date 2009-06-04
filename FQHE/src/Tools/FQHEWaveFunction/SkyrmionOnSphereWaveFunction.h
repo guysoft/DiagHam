@@ -40,6 +40,8 @@
 #include "HilbertSpace/ParticleOnSphereWithSpin.h"
 #include "HilbertSpace/ParticleOnSphere.h"
 #include "FunctionBasis/ParticleOnSphereFunctionBasis.h"
+#include "Tools/FQHEMonteCarlo/ParticleOnSphereCollection.h"
+#include "GeneralTools/GarbageFlag.h"
 
 #ifdef USE_HILBERT_SPACE
 
@@ -81,14 +83,19 @@ class SkyrmionOnSphereWaveFunction: public Abstract1DComplexFunction
   // Hilbert space associated to the polarized SkyrmionOnSphere state
   ParticleOnSphereWithSpin *BosonicSpace;
 
-  // one body real space basis to use 
-  AbstractFunctionBasis* OneBodyBasis;  
+  // one body real space basis to use for polarized state
+  AbstractFunctionBasis* OneBodyBasisPol;
+  // one body real space basis to use for bosonic state
+  AbstractFunctionBasis* OneBodyBasisBos;
   
   // flag indicating whether we are using an exact polarized wavefunction
   bool UseExact;
 
   // Analytic polarized wavefunction
   Abstract1DComplexFunction* AnalyticPolarizedWaveFunction;
+
+  // Garbage flag
+  GarbageFlag Flag;
 
  public:
 
@@ -121,8 +128,8 @@ class SkyrmionOnSphereWaveFunction: public Abstract1DComplexFunction
   // return value = function value at x  
   Complex operator ()(RealVector& x);
 
-  // test parity under reversal of all spins for the two parts of the function
-  void TestSymmetries(RealVector& x);
+  // test parity under reversal of all spins and rotation
+  void TestSymmetries(ParticleOnSphereCollection *particles);
 
   // add an option group containing all options related to the skyrmion wave functions
   //
