@@ -94,6 +94,9 @@ class SkyrmionOnSphereWaveFunction: public Abstract1DComplexFunction
   // Analytic polarized wavefunction
   Abstract1DComplexFunction* AnalyticPolarizedWaveFunction;
 
+  // minimum dimension of bosonic space before parallelisation is used
+  int MinParallel;
+
   // Garbage flag
   GarbageFlag Flag;
 

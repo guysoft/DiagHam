@@ -791,9 +791,9 @@ ostream& BosonOnSphereWithSpin::PrintState (ostream& Str, int state)
     }
   for (; i <= this->LzMax; ++i)
     Str << "  0 |";
-  Str << " lzszmax  = " << this->StateLzSzMax[state];
-  Str << " key = " << GenerateKey(TmpState, this->StateLzSzMax[state]);
-  Str << " position = " << FindStateIndex(TmpState, this->StateLzSzMax[state]);
+//   Str << " lzszmax  = " << this->StateLzSzMax[state];
+//   Str << " key = " << GenerateKey(TmpState, this->StateLzSzMax[state]);
+//   Str << " position = " << FindStateIndex(TmpState, this->StateLzSzMax[state]);
   return Str;
 }
 

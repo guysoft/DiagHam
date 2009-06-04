@@ -56,12 +56,13 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
   this->NbrParticles=nbrParticles;
   int PolarizedParticles = manager.GetInteger("nbr-particles");
   this->PolarizedLzMax = manager.GetInteger("polarized-lzmax"); 
-  this->PolarizedLz = manager.GetInteger("polarized-lz");  
+  this->PolarizedLz = manager.GetInteger("polarized-lz");
+  this->MinParallel = manager.GetInteger("min-parallel");
   
   this->AnalyticPolarizedWaveFunction=NULL;
 
   this->Flag.Initialize();
-  
+
   if (manager.GetString("polarized-state")==0)
     {
       if (waveFunctionManager!=NULL)
@@ -268,11 +269,14 @@ void SkyrmionOnSphereWaveFunction::TestSymmetries(ParticleOnSphereCollection *pa
     {
       ValuePolarized = (*(this->AnalyticPolarizedWaveFunction))(particles->GetPositions());
     }
-  QHEParticleWaveFunctionOperation Operation(BosonicSpace, &BosonicState, &(particles->GetPositions()),
-					     this->OneBodyBasisBos, /* TimeCoherence */ -1);
-  Operation.ApplyOperation(this->Architecture);      
-  ValueSpin = Operation.GetScalar();
-
+  if (BosonicSpace->GetHilbertSpaceDimension()>this->MinParallel)
+    {
+      QHEParticleWaveFunctionOperation Operation(BosonicSpace, &BosonicState, &(particles->GetPositions()),
+						 this->OneBodyBasisBos, /* TimeCoherence */ -1);
+      Operation.ApplyOperation(this->Architecture);      
+      ValueSpin = Operation.GetScalar();
+      }
+  else ValueSpin3 = BosonicSpace->EvaluateWaveFunction (BosonicState, particles->GetPositions(), *(this->OneBodyBasisBos));
   particles->ToggleHalfHalf();
 
   // recalculate:
@@ -287,11 +291,15 @@ void SkyrmionOnSphereWaveFunction::TestSymmetries(ParticleOnSphereCollection *pa
     {
       ValuePolarized2 = (*(this->AnalyticPolarizedWaveFunction))(particles->GetPositions());
     }
-  QHEParticleWaveFunctionOperation Operation2(BosonicSpace, &BosonicState, &(particles->GetPositions()),
-					      this->OneBodyBasisBos, /* TimeCoherence */ -1);
-  Operation2.ApplyOperation(this->Architecture);      
-  ValueSpin2 = Operation2.GetScalar();
-
+  if (BosonicSpace->GetHilbertSpaceDimension()>this->MinParallel)
+    {
+      QHEParticleWaveFunctionOperation Operation2(BosonicSpace, &BosonicState, &(particles->GetPositions()),
+						  this->OneBodyBasisBos, /* TimeCoherence */ -1);
+      Operation2.ApplyOperation(this->Architecture);      
+      ValueSpin2 = Operation2.GetScalar();
+    }
+  else ValueSpin3 = BosonicSpace->EvaluateWaveFunction (BosonicState, particles->GetPositions(), (*this->OneBodyBasisBos));
+  
   // rotate all particles      
   particles->RotateAll(0.781723465, 2.13428571);
 
@@ -307,10 +315,14 @@ void SkyrmionOnSphereWaveFunction::TestSymmetries(ParticleOnSphereCollection *pa
     {
       ValuePolarized3 = (*(this->AnalyticPolarizedWaveFunction))(particles->GetPositions());
     }
-  QHEParticleWaveFunctionOperation Operation3(BosonicSpace, &BosonicState, &(particles->GetPositions()),
-					      this->OneBodyBasisBos, /* TimeCoherence */ -1);
-  Operation3.ApplyOperation(this->Architecture);      
-  ValueSpin3 = Operation3.GetScalar();
+  if (BosonicSpace->GetHilbertSpaceDimension()>this->MinParallel)
+    {
+      QHEParticleWaveFunctionOperation Operation3(BosonicSpace, &BosonicState, &(particles->GetPositions()),
+						  this->OneBodyBasisBos, /* TimeCoherence */ -1);
+      Operation3.ApplyOperation(this->Architecture);
+      ValueSpin3 = Operation3.GetScalar();
+    }
+  else ValueSpin3 = BosonicSpace->EvaluateWaveFunction (BosonicState, particles->GetPositions(), *(this->OneBodyBasisBos));
   
   cout << "Pol Before exchange: "<< ValuePolarized << endl << "After exchange:  " << ValuePolarized2 << endl;
   cout << "Pol Parity: " << ValuePolarized/ValuePolarized2 << endl;
@@ -361,6 +373,7 @@ void SkyrmionOnSphereWaveFunction::AddSkyrmionOptionGroup(OptionManager &manager
   (*SkyrmionGroup) += new SingleIntegerOption  ('l', "polarized-lzmax", "total number of flux quanta (0 if it has to be guessed from input file name)", 0);  
   (*SkyrmionGroup) += new SingleIntegerOption  ('z', "polarized-lz", "twice the total lz value of the system (0 if it has to be guessed from input file name)", 0);
   (*SkyrmionGroup) += new SingleStringOption  ('\n', "bosonic-state", "file name of spinful bosonic part of wave function",0);
+  (*SkyrmionGroup) += new SingleIntegerOption  ('\n', "min-parallel", "minimum dimension of bosonic space before parallel evaluation is applied", 5000);
 
   if (wfManager!=NULL)
     wfManager->AddOptionGroup(&manager);

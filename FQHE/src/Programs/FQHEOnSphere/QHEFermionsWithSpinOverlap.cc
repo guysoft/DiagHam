@@ -261,6 +261,18 @@ int main(int argc, char** argv)
 		  // default filename: add extension to exact vector
 		  HistoryFileName = new char[strlen(Manager.GetString("exact-state"))+6];
 		  sprintf(HistoryFileName,"%s.samp",Manager.GetString("exact-state"));
+		  char * tmpC = new char[strlen(HistoryFileName)+5];
+		  sprintf(tmpC,"%s",HistoryFileName);
+		  std::ifstream testExistant(tmpC,std::ios::in);
+		  int count=1;
+		  while (testExistant.is_open())
+		    {
+		      testExistant.close();
+		      sprintf(tmpC,"%s%d", HistoryFileName, count++);
+		      testExistant.open(tmpC,std::ios::in);
+		    }
+		  delete [] HistoryFileName;
+		  HistoryFileName = tmpC;
 		}
 	    }
 	  char *tmpC = WaveFunctionManager.GetDescription();
