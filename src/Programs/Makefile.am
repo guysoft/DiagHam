@@ -1,6 +1,6 @@
 SUBDIRS=
 
-bin_PROGRAMS=ExplicitMatrixExample ResizeLanczos GenericOverlap VectorBinary2Ascii ReplayFastLanczos ExtractLinearlyIndependentVectors GenerateRandomNumbers BuildSuperPosition TestDiagHamConf ReorthogonalizeVectorSet MergeMCHistories NormalizeVector PrintAllThreeJ ZeroingVector
+bin_PROGRAMS=ExplicitMatrixExample ResizeLanczos GenericOverlap VectorBinary2Ascii ReplayFastLanczos ExtractLinearlyIndependentVectors GenerateRandomNumbers BuildSuperPosition TestDiagHamConf ReorthogonalizeVectorSet MergeMCHistories NormalizeVector PrintAllThreeJ ZeroingVector CountingZero
 
 ExplicitMatrixExample_SOURCES=ExplicitMatrixExample.cc
 
@@ -29,6 +29,8 @@ NormalizeVector_SOURCES=NormalizeVector.cc
 PrintAllThreeJ_SOURCES=PrintAllThreeJ.cc
 
 ZeroingVector_SOURCES=ZeroingVector.cc
+
+CountingZero_SOURCES=CountingZero.cc
 
 ExplicitMatrixExample_DEPENDENCIES=$(top_builddir)/src/Architecture/libArchitecture.a $(top_builddir)/src/Architecture/ArchitectureOperation/libArchitectureOperation.a $(top_builddir)/src/Interaction/libInteraction.a $(top_builddir)/src/Interaction/InternalInteraction/libInternalInteraction.a $(top_builddir)/src/Operator/libOperator.a $(top_builddir)/src/LanczosAlgorithm/libLanczosAlgorithm.a $(top_builddir)/src/Hamiltonian/libHamiltonian.a $(top_builddir)/src/HilbertSpace/libHilbertSpace.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/QuantumNumber/libQuantumNumber.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Polynomial/libPolynomial.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/Base/src/BitmapTools/BitmapPicture/libBitmapPicture.a $(top_builddir)/Base/src/BitmapTools/Color/libColor.a $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/FunctionBasis/libFunctionBasis.a
 
@@ -60,7 +62,7 @@ GenerateRandomNumbers_LDADD=-L$(top_builddir)/src/Vector -L$(top_builddir)/src/M
 
 BuildSuperPosition_DEPENDENCIES= $(top_builddir)/src/Vector/libVector.a  $(top_builddir)/src/Options/libOptions.a
 
-BuildSuperPosition_LDADD= -L$(top_builddir)/src/Vector  -L$(top_builddir)/src/Options -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/Output -lVector -lOptions -lGeneralTools -lOutput
+BuildSuperPosition_LDADD= -L$(top_builddir)/src/Vector  -L$(top_builddir)/src/Options -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/Output -lVector -lOptions -lGeneralTools -lOutput @BZ2_LIBS@
 
 ReorthogonalizeVectorSet_DEPENDENCIES=$(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Options/libOptions.a
 
@@ -81,3 +83,7 @@ PrintAllThreeJ_LDADD=-L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/Ma
 ZeroingVector_DEPENDENCIES=$(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Options/libOptions.a
 
 ZeroingVector_LDADD=-L$(top_builddir)/src/Vector -L$(top_builddir)/src/Matrix -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/Options -L$(top_builddir)/src/Output -lMatrix -lVector -lGeneralTools -lOutput -lOptions @MATH_LIBS@ @THREAD_LIBS@ @LAPACK_LIBS@ @BLAS_LIBS@ @FORTRAN2C_LIBS@
+
+CountingZero_DEPENDENCIES=$(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Options/libOptions.a
+
+CountingZero_LDADD=-L$(top_builddir)/src/Vector -L$(top_builddir)/src/Matrix -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/Options -L$(top_builddir)/src/Output -lMatrix -lVector -lGeneralTools -lOutput -lOptions @MATH_LIBS@ @THREAD_LIBS@ @LAPACK_LIBS@ @BLAS_LIBS@ @FORTRAN2C_LIBS@

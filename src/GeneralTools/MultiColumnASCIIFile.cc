@@ -36,7 +36,9 @@
 #include <string.h>
 #include <fstream>
 #include <iostream>
-
+#ifdef __BZ2LIB__
+#include <bzlib.h>
+#endif
 
 using std::ifstream;
 using std::ios;
@@ -79,29 +81,74 @@ MultiColumnASCIIFile::~MultiColumnASCIIFile()
 
 bool MultiColumnASCIIFile::Parse(char* filename)
 {
-  ifstream File;
-  File.open(filename, ios::binary | ios::in);
-  if (!File.is_open())
+  char* TmpBuffer = 0;
+  unsigned int Size = 0;
+#ifdef __BZ2LIB__
+  if (strcasestr(filename, ".bz2") == 0)
+#endif
     {
-      char* TmpString = new char [strlen (filename) + 32]; 
-      sprintf (TmpString, "cannot open file: %s\n", filename);
-      this->ErrorLog += TmpString;
-      return false;
+      ifstream File;
+      File.open(filename, ios::binary | ios::in);
+      if (!File.is_open())
+	{
+	  char* TmpString = new char [strlen (filename) + 32]; 
+	  sprintf (TmpString, "cannot open file: %s\n", filename);
+	  this->ErrorLog += TmpString;
+	  return false;
+	}
+      File.seekg(0, ios::end);
+      Size = File.tellg();
+      File.seekg(0, ios::beg);
+      TmpBuffer = new char [Size + 1];
+      if (TmpBuffer == 0)
+	{
+	  char* TmpString = new char [strlen (filename) + 32]; 
+	  sprintf (TmpString, "%s is too big\n", filename);
+	  this->ErrorLog += TmpString;
+	  return false;
+	}
+      File.read(TmpBuffer, Size);
+      TmpBuffer[Size] = '\0';
+      File.close();
     }
-  File.seekg(0, ios::end);
-  unsigned int Size = File.tellg();
-  File.seekg(0, ios::beg);
-  char* TmpBuffer = new char [Size + 1];
-  if (TmpBuffer == 0)
+#ifdef __BZ2LIB__
+  else
     {
-      char* TmpString = new char [strlen (filename) + 32]; 
-      sprintf (TmpString, "%s is too big\n", filename);
-      this->ErrorLog += TmpString;
-      return false;
+      int Bz2TotalSize = 0;
+      FILE* InputFile = fopen (filename, "r");
+      int BzError;
+      BZFILE* BzInputFile = BZ2_bzReadOpen (&BzError, InputFile, 0, 0, NULL, 0);
+      if (BzError  != BZ_OK)
+	{
+	  BZ2_bzReadClose(&BzError, BzInputFile);
+	  char* TmpString = new char [strlen (filename) + 32]; 
+	  sprintf (TmpString, "cannot open file: %s\n", filename);
+	  this->ErrorLog += TmpString;
+	  return false;
+	}
+      BzError = BZ_OK;
+      int BufferMaxSize = 256;
+      List<char*> TmpBufferList;
+      while (BzError == BZ_OK)
+	{
+	  char* TmpBz2Buffer = new char[BufferMaxSize + 1];
+	  int TmpNbrReadBytes =  BZ2_bzRead (&BzError, BzInputFile, TmpBz2Buffer, BufferMaxSize);	  
+	  Bz2TotalSize += TmpNbrReadBytes;
+	  TmpBz2Buffer[TmpNbrReadBytes] = '\0';
+	  TmpBufferList += TmpBz2Buffer;
+	}
+      BZ2_bzReadClose (&BzError, BzInputFile);      
+      TmpBuffer = new char[Bz2TotalSize + 1];
+      int TmpBz2TotalSize = 0;
+      ListIterator<char*> TmpBufferIterator(TmpBufferList);
+      char** Tmp;
+      while ((Tmp = TmpBufferIterator()))
+	{
+	  strcpy (TmpBuffer + TmpBz2TotalSize, (*Tmp));
+	  TmpBz2TotalSize += BufferMaxSize;
+	}
     }
-  File.read(TmpBuffer, Size);
-  TmpBuffer[Size] = '\0';
-  File.close();
+#endif
   unsigned int Pos = 0;
   int MaxNbrLines = 0;
   while (Pos < Size)

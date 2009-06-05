@@ -3,6 +3,9 @@
 /* use big endian byte ordering */
 #undef HAVE_BIGENDIAN
 
+/* define if we are using bzip2 library */
+#undef HAVE_BZ2
+
 /* define if we are using GSL libraries */
 #undef HAVE_GSL
 

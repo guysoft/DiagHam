@@ -82,6 +82,11 @@ typedef struct { doublereal r, i; } doublecomplex;
 #endif
 
 
+// bz2 flag
+#ifdef HAVE_BZ2
+#define __BZ2LIB__
+#endif
+
 // architecture dependant options
 //
 

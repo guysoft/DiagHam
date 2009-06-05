@@ -98,7 +98,7 @@ FermionOnSphereTwoLandauLevels::FermionOnSphereTwoLandauLevels (int nbrFermions,
   this->LzTotalShift = this->LzMaxDown + this->LzMaxUp;
   this->NbrLzValue = this->LzMax + 1;
   this->MaximumSignLookUp = 16;
-  this->LargeHilbertSpaceDimension = this->ShiftedEvaluateFullHilbertSpaceDimension(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1);
+  this->LargeHilbertSpaceDimension = this->ShiftedEvaluateFullHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1);
   if (this->LargeHilbertSpaceDimension >= (1l << 30))
     this->HilbertSpaceDimension = 0;
   else
@@ -106,7 +106,7 @@ FermionOnSphereTwoLandauLevels::FermionOnSphereTwoLandauLevels (int nbrFermions,
   this->Flag.Initialize();
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
   this->StateHighestBit = new int [this->HilbertSpaceDimension];  
-  int TmpDimension = this->GenerateFullStates(this->NbrFermions, this->LzMax, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 0);
+  int TmpDimension = this->GenerateFullStates(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 0);
   if (TmpDimension != this->HilbertSpaceDimension)
     {
       cout << "Mismatch in State-count and State Generation in FermionOnSphereTwoLandauLevels! " << this->HilbertSpaceDimension << " " << TmpDimension  << endl;
