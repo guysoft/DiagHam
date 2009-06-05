@@ -135,12 +135,11 @@ class FermionOnSphereTwoLandauLevels :  public FermionOnSphereWithSpin
   // generate all states corresponding to the constraints
   // 
   // nbrFermions = number of fermions
-  // lzMaxUp = momentum maximum value for a fermion with spin up
-  // lzMaxDown = momentum maximum value for a fermion with spin down
+  // lzMaxUp = momentum maximum value for a fermion
   // totalLz = momentum total value
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  virtual long GenerateFullStates(int nbrFermions, int lzMaxUp, int lzMaxDown, int totalLz, long pos);
+  virtual long GenerateFullStates(int nbrFermions, int lzMax, int totalLz, long pos);
 
 };
 

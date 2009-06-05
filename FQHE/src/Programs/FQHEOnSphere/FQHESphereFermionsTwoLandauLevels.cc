@@ -81,13 +81,11 @@ int main(int argc, char** argv)
     }
 
 
-  bool GroundFlag = ((BooleanOption*) Manager["ground"])->GetBoolean();
   int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
   if (ULONG_MAX>>20 < (unsigned long)Manager.GetInteger("memory"))
     cout << "Warning: integer overflow in memory request - you might want to use 64 bit code."<<endl;
   unsigned long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
-  if (Manager.GetString("energy-expectation") != 0 ) Memory = 0x0l;
   int InitialLz = ((SingleIntegerOption*) Manager["initial-lz"])->GetInteger();
   int NbrLz = ((SingleIntegerOption*) Manager["nbr-lz"])->GetInteger();
   char* LoadPrecalculationFileName = ((SingleStringOption*) Manager["load-precalculation"])->GetString();  
@@ -95,6 +93,8 @@ int main(int argc, char** argv)
   bool FirstRun = true;
   double* PseudoPotentials = 0;
   double* OneBodyPotentials = 0;
+  int LzMaxUp = LzMax;
+  int LzMaxDown = LzMax - 2;
 //   if (((SingleStringOption*) Manager["interaction-file"])->GetString() == 0)
 //     {
 //       cout << "an interaction file has to be provided" << endl;
@@ -135,8 +135,6 @@ int main(int argc, char** argv)
       L = Max;
   if ((abs(Max) & 1) != (abs(InitialLz) & 1))
     L += 1;
-  if (GroundFlag == true)
-      Max = L;
   else
     {
       if (NbrLz > 0)
@@ -146,6 +144,13 @@ int main(int argc, char** argv)
     }
   for (; L <= Max; L += 2)
     {
+
+      ParticleOnSphere* Space = new FermionOnSphereTwoLandauLevels (NbrParticles, L, LzMaxUp, LzMaxDown);
+      for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+	{
+	  cout << i << " : ";
+	  Space->PrintState(cout, i) << endl;
+	}
 //       ParticleOnSphere* Space = (FermionOnSphere*) ParticleManager.GetHilbertSpace(L);
 //       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
 //       AbstractQHEOnSphereHamiltonian* Hamiltonian = 0;
