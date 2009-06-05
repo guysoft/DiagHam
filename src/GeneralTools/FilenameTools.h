@@ -85,4 +85,13 @@ char*  GetExtensionFromFileName(char* fileName, int maxL=0);
 // return value = corresponding string (0 if the old extension was not found)
 char* ReplaceExtensionToFileName(char* fileName, const char* oldExtension, const char* newExtension);
 
+
+// remove extension from a file name
+//
+// fileName = string corresponding to the file name (with optional relative path)
+// oldExtension = extension to remove (with initial dot)
+// return value = corresponding string (0 if the old extension was not found)
+
+char* RemoveExtensionFromFileName(char* fileName, const char* oldExtension);
+
 #endif

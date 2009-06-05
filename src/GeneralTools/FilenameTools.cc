@@ -262,3 +262,20 @@ char* ReplaceExtensionToFileName(char* fileName, const char* oldExtension, const
   return TmpFileName;
 }
 
+// remove extension from a file name
+//
+// fileName = string corresponding to the file name (with optional relative path)
+// oldExtension = extension to remove (with initial dot)
+// return value = corresponding string (0 if the old extension was not found)
+
+char* RemoveExtensionFromFileName(char* fileName, const char* oldExtension)
+{
+  char* ExtensionPosition = strstr(fileName, oldExtension);
+  if (ExtensionPosition == 0)
+    return 0;
+  long TmpLength = strlen(fileName);
+  long TmpLength2 = TmpLength - strlen(oldExtension);  
+  char* TmpFileName = new char[TmpLength2 + 1];
+  strncpy (TmpFileName, fileName, TmpLength2);
+  return TmpFileName;
+}

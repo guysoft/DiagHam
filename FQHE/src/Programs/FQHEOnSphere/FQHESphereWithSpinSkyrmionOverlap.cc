@@ -224,7 +224,7 @@ int main(int argc, char** argv)
     }
   else
     {
-       RandomNumber = new StdlibRandomNumberGenerator (Manager.GetInteger("randomSeed"));
+      RandomNumber = new StdlibRandomNumberGenerator (Manager.GetInteger("randomSeed"));
     }
   
 
@@ -719,6 +719,9 @@ int main(int argc, char** argv)
     }
   delete Particles;
   delete Space;
+  delete TestWaveFunction;
+  delete RandomNumber;
+  delete [] HistoryFileName;
   return 0;
 }
 

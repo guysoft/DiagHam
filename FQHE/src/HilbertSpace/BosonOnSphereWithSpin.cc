@@ -168,7 +168,7 @@ BosonOnSphereWithSpin::~BosonOnSphereWithSpin ()
 	delete[] this->StateDescription[i];
       delete[] this->StateDescription;
       delete[] this->StateLzSzMax;
-      int Size = (this->LzMax + 2) * this->IncMaxNbrBosons;
+      int Size = (2*(this->LzMax+1) + 1) * this->IncMaxNbrBosons;
       for (int i = 0; i < Size; ++i)
 	{
 	  if (this->KeyInvertSectorSize[i] > 0)
@@ -179,11 +179,12 @@ BosonOnSphereWithSpin::~BosonOnSphereWithSpin ()
 	      delete[] this->KeyInvertTableNbrIndices[i];
 	      delete[] this->KeyInvertIndices[i];
 	    }
-	}      
+	}
       delete[] this->KeyInvertSectorSize;
       delete[] this->KeyInvertTable;
       delete[] this->KeyInvertTableNbrIndices;
       delete[] this->KeyInvertIndices;
+
       if (this->MinorsUp != 0)
 	{
 	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)

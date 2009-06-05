@@ -183,28 +183,31 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
     }
   
   this->PolarizedSpace=NULL;
+  if (UseExact)
+    {
 #ifdef __64_BITS__
-  if (PolarizedLzMax <= 63)
+      if (PolarizedLzMax <= 63)
 #else
-    if (PolarizedLzMax <= 31)
+	if (PolarizedLzMax <= 31)
 #endif
-      {	
-	PolarizedSpace = new FermionOnSphere(NbrParticles, PolarizedLz, PolarizedLzMax);
-      }
-    else
-#ifdef __128_BIT_LONGLONG__
-      if (PolarizedLzMax <= 126)
-#else
-	if (PolarizedLzMax <= 62)
-#endif
-	  {	    
-	    PolarizedSpace = new FermionOnSphereLong(NbrParticles, PolarizedLz, PolarizedLzMax);
+	  {	
+	    PolarizedSpace = new FermionOnSphere(NbrParticles, PolarizedLz, PolarizedLzMax);
 	  }
 	else
-	  {
-	    cout << "States of this polarized Hilbert space cannot be represented in a single word." << endl;
-	    exit(-1);
-	  }
+#ifdef __128_BIT_LONGLONG__
+	  if (PolarizedLzMax <= 126)
+#else
+	    if (PolarizedLzMax <= 62)
+#endif
+	      {	    
+		PolarizedSpace = new FermionOnSphereLong(NbrParticles, PolarizedLz, PolarizedLzMax);
+	      }
+	    else
+	      {
+		cout << "States of this polarized Hilbert space cannot be represented in a single word." << endl;
+		exit(-1);
+	      }
+    }
   
   this->BosonicSpace=new BosonOnSphereWithSpin(NbrParticles, BosonLz, BosonLzMax, BosonSz);
   
@@ -238,7 +241,7 @@ SkyrmionOnSphereWaveFunction::~SkyrmionOnSphereWaveFunction()
 {
   if ((this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
-      if (!UseExact)
+      if (UseExact)
 	delete this->PolarizedSpace;
       delete this->BosonicSpace;
       delete this->OneBodyBasisPol;
@@ -276,7 +279,8 @@ void SkyrmionOnSphereWaveFunction::TestSymmetries(ParticleOnSphereCollection *pa
       Operation.ApplyOperation(this->Architecture);      
       ValueSpin = Operation.GetScalar();
       }
-  else ValueSpin3 = BosonicSpace->EvaluateWaveFunction (BosonicState, particles->GetPositions(), *(this->OneBodyBasisBos));
+  else ValueSpin = BosonicSpace->EvaluateWaveFunction(BosonicState, particles->GetPositions(), *(this->OneBodyBasisBos));
+  
   particles->ToggleHalfHalf();
 
   // recalculate:
@@ -298,7 +302,7 @@ void SkyrmionOnSphereWaveFunction::TestSymmetries(ParticleOnSphereCollection *pa
       Operation2.ApplyOperation(this->Architecture);      
       ValueSpin2 = Operation2.GetScalar();
     }
-  else ValueSpin3 = BosonicSpace->EvaluateWaveFunction (BosonicState, particles->GetPositions(), (*this->OneBodyBasisBos));
+  else ValueSpin2 = BosonicSpace->EvaluateWaveFunction(BosonicState, particles->GetPositions(), (*this->OneBodyBasisBos));
   
   // rotate all particles      
   particles->RotateAll(0.781723465, 2.13428571);
@@ -322,7 +326,7 @@ void SkyrmionOnSphereWaveFunction::TestSymmetries(ParticleOnSphereCollection *pa
       Operation3.ApplyOperation(this->Architecture);
       ValueSpin3 = Operation3.GetScalar();
     }
-  else ValueSpin3 = BosonicSpace->EvaluateWaveFunction (BosonicState, particles->GetPositions(), *(this->OneBodyBasisBos));
+  else ValueSpin3 = BosonicSpace->EvaluateWaveFunction(BosonicState, particles->GetPositions(), *(this->OneBodyBasisBos));
   
   cout << "Pol Before exchange: "<< ValuePolarized << endl << "After exchange:  " << ValuePolarized2 << endl;
   cout << "Pol Parity: " << ValuePolarized/ValuePolarized2 << endl;
@@ -352,10 +356,14 @@ Complex SkyrmionOnSphereWaveFunction::operator ()(RealVector& x)
     {
       ValuePolarized = (*(this->AnalyticPolarizedWaveFunction))(x);
     }
-  QHEParticleWaveFunctionOperation Operation(BosonicSpace, &BosonicState, &x,
-					     this->OneBodyBasisBos, /* TimeCoherence */ -1);
-  Operation.ApplyOperation(this->Architecture);      
-  ValueSpin = Operation.GetScalar();
+  if (BosonicSpace->GetHilbertSpaceDimension()>this->MinParallel)
+    {  
+      QHEParticleWaveFunctionOperation Operation(BosonicSpace, &BosonicState, &x,
+						 this->OneBodyBasisBos, /* TimeCoherence */ -1);
+      Operation.ApplyOperation(this->Architecture);      
+      ValueSpin = Operation.GetScalar();
+    }
+  else ValueSpin = BosonicSpace->EvaluateWaveFunction(BosonicState, x, *(this->OneBodyBasisBos));
   
   return ValuePolarized*ValueSpin;
 }
