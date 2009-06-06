@@ -35,7 +35,7 @@
 #include "config.h"
 #include "QHEWaveFunctionManager.h"
 #include "Architecture/AbstractArchitecture.h"
-#include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
+#include "MathTools/NumericalAnalysis/Abstract1DComplexTrialFunction.h"
 #include "Vector/RealVector.h"
 #include "HilbertSpace/ParticleOnSphereWithSpin.h"
 #include "HilbertSpace/ParticleOnSphere.h"
@@ -49,7 +49,7 @@ class AbstractQHEParticle;
 class AbstractFunctionBasis;
 
 
-class SkyrmionOnSphereWaveFunction: public Abstract1DComplexFunction
+class SkyrmionOnSphereWaveFunction: public Abstract1DComplexTrialFunction
 {
 
  protected:
@@ -87,12 +87,18 @@ class SkyrmionOnSphereWaveFunction: public Abstract1DComplexFunction
   AbstractFunctionBasis* OneBodyBasisPol;
   // one body real space basis to use for bosonic state
   AbstractFunctionBasis* OneBodyBasisBos;
+
+  // last value of the bosonic state
+  Complex LastBosonicValue;
   
   // flag indicating whether we are using an exact polarized wavefunction
   bool UseExact;
 
   // Analytic polarized wavefunction
   Abstract1DComplexFunction* AnalyticPolarizedWaveFunction;
+
+  // type cast of function pointer, if suitable
+  Abstract1DComplexTrialFunction* AnalyticPolarizedTrialWaveFunction;
 
   // minimum dimension of bosonic space before parallelisation is used
   int MinParallel;
@@ -131,8 +137,31 @@ class SkyrmionOnSphereWaveFunction: public Abstract1DComplexFunction
   // return value = function value at x  
   Complex operator ()(RealVector& x);
 
+  // get a value of the wavefunction for the last set of coordinates, but with different variational parameters
+  // parameters =  alternative set of parameters
+  virtual Complex GetForOtherParameters( double *parameters);
+
+  // do many evaluations of the function, storing the result in the vector results given in the call
+  // result = vector of leading dimension of the array coefficients for returning values
+  // x = positions to evaluate the wavefuntion in
+  // format for passing parameters as [nbrSet][nbrParameter],
+  virtual void GetForManyParameters(ComplexVector &results, RealVector& x, double **coefficients);
+
+  // access internal values of parameters
+  virtual double *GetTrialParameters();
+
+  // get number of parameters
+  virtual int GetNbrParameters();
+  
+  // set new values of the trial coefficients (keeping the initial number of parameters)
+  virtual void SetTrialParameters(double * coefficients);
+
   // test parity under reversal of all spins and rotation
   void TestSymmetries(ParticleOnSphereCollection *particles);
+
+  // get function properties, and possible extensions of interface 
+  // 
+  virtual unsigned GetProperties();
 
   // add an option group containing all options related to the skyrmion wave functions
   //

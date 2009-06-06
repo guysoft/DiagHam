@@ -92,7 +92,9 @@ class Abstract1DComplexTrialFunctionOnSphere : public Abstract1DComplexTrialFunc
   // set new values of the trial coefficients (keeping the initial number of parameters)
   virtual void SetTrialParameters(double * coefficients) = 0;
 
-
+  // get function properties, and possible extensions of interface 
+  // 
+  virtual unsigned GetProperties();
   
 };
 

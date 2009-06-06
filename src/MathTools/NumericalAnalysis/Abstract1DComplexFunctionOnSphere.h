@@ -68,6 +68,10 @@ class Abstract1DComplexFunctionOnSphere : public Abstract1DComplexFunction
   // return value = function value at (uv)
   virtual Complex CalculateFromSpinorVariables(ComplexVector& uv) = 0;
 
+  // get function properties, and possible extensions of interface 
+  // 
+  virtual unsigned GetProperties();
+
 };
 
 #endif

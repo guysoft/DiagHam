@@ -266,7 +266,7 @@ MCHistoryRecord::MCHistoryRecord(char *Input, int &nbrPositions, List<AbstractMC
       exit(2);
     }
   this->StartPos=HistoryFile.tellg();
-  //cout << "Constructor: StartPos is: " << StartPos << " peeking: " <<HistoryFile.peek() << endl;
+  // cout << "Constructor: StartPos is: " << StartPos << " peeking: " <<HistoryFile.peek() << endl;
 }
 
 

@@ -28,13 +28,18 @@ using std::endl;
 // linearPoints = number of points calculated at once along direction of steepest descent
 // limitSamples = upper limit to number of samples used from history-record
 // logFileName = name of an (optional) logfile
-WaveFunctionOverlapOptimizer::WaveFunctionOverlapOptimizer( Abstract1DComplexTrialFunction *trialState, char *historyFileName, int nbrParticles, bool excludeLastParameter, int linearPoints, int cloudyPoints, int limitSamples, char *logFileName)
+WaveFunctionOverlapOptimizer::WaveFunctionOverlapOptimizer( Abstract1DComplexFunction *trialState, char *historyFileName, int nbrParticles, bool excludeLastParameter, int linearPoints, int cloudyPoints, int limitSamples, char *logFileName)
 {
   this->NbrParticles = nbrParticles;
   int nbrCoordinates = 2*nbrParticles;
   this->History = new MCHistoryRecord(historyFileName, nbrCoordinates /* could add additional observables here */);
   this->Positions.Resize(2*nbrParticles);
-  this->TrialState = trialState;
+  if ((trialState->GetProperties() & Abstract1DComplexFunction::Trial)==0)
+    {
+      cout << "This wavefunction cannot be optimized, as it contains to variational parameters"<<endl;
+      exit(1);
+    }
+  this->TrialState = (Abstract1DComplexTrialFunction*) trialState;
   this->NbrParameters = this->TrialState->GetNbrParameters();
   this->LastParameterExcluded = excludeLastParameter; // do not optimize last trial parameter
   if (excludeLastParameter)
@@ -49,7 +54,7 @@ WaveFunctionOverlapOptimizer::WaveFunctionOverlapOptimizer( Abstract1DComplexTri
   this->MaxParameters = MaxPoints*(1+2*this->EffectiveNbrParameters);
   if (this->MaxParameters<1+2*DIFFERENTIAL_SPREAD*this->EffectiveNbrParameters)
     this->MaxParameters = 1+2*DIFFERENTIAL_SPREAD*this->EffectiveNbrParameters;
-  if (CloudyPoints!=0)
+  if (CloudyPoints!=0)    
     this->Generator = new NumRecRandomGenerator(std::time(0));
   this->Differentials = new double[this->NbrParameters];
   this->NormObservation = new double[MaxParameters];
@@ -64,7 +69,7 @@ WaveFunctionOverlapOptimizer::WaveFunctionOverlapOptimizer( Abstract1DComplexTri
   this->typicalWF=0.0;
   this->NormTrialObs = NULL;
   this->OverlapObs = NULL;
-  
+
   // get an idea of the average amplitude of the different numbers in HistoryFile:
   int sampleCount;
   double SamplingAmplitude;
@@ -99,7 +104,6 @@ WaveFunctionOverlapOptimizer::WaveFunctionOverlapOptimizer( Abstract1DComplexTri
     }
 
   cout << "typicalSA= " << typicalSA << ", typicalWF="<<typicalWF<<", typicalTV="<<typicalTV<<endl;
-
   this->OutlierLimit=OUTLIER_LIMIT;
   int OutlierCount;
   double Variance=0.0;

@@ -63,3 +63,10 @@ Complex Abstract1DComplexFunctionOnSphere::operator ()(RealVector& x)
   return Tmp;
 }
 
+
+// get function properties, and possible extensions of interface 
+// 
+unsigned Abstract1DComplexFunctionOnSphere::GetProperties()
+{
+  return Abstract1DComplexFunction::Basic | Abstract1DComplexFunction::OnSphere;
+}

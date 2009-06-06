@@ -457,8 +457,8 @@ int main(int argc, char** argv)
       // code to optimize paired state with available samples:
       bool varyMR = Manager.GetBoolean("varyMR");
       WaveFunctionOverlapOptimizer *Optimizer =
-	new WaveFunctionOverlapOptimizer( (Abstract1DComplexTrialFunction*) TestWaveFunction,
-					  HistoryFileName, NbrFermions, /* excludeLastParameter */ !varyMR,
+	new WaveFunctionOverlapOptimizer( TestWaveFunction, HistoryFileName, NbrFermions,
+					  /* excludeLastParameter */ !varyMR,
 					  Manager.GetInteger("linearPoints"), Manager.GetInteger("randomPoints"),
 					  Manager.GetInteger("limitSamples"));
       RealVector optimalParameters( ((Abstract1DComplexTrialFunction*) TestWaveFunction)->GetNbrParameters());

@@ -93,7 +93,7 @@ class WaveFunctionOverlapOptimizer
   // linearPoints = number of points calculated at once along direction of steepest descent
   // limitSamples = upper limit to number of samples used from history-record
   // logFileName = name of an (optional) logfile
-  WaveFunctionOverlapOptimizer( Abstract1DComplexTrialFunction *trialState, char *historyFileName, int nbrParticles, bool excludeLastParameter = true, int linearPoints = 20, int cloudyPoints = 30, int limitSamples = 10000000, char* logFileName = NULL);
+  WaveFunctionOverlapOptimizer( Abstract1DComplexFunction *trialState, char *historyFileName, int nbrParticles, bool excludeLastParameter = true, int linearPoints = 20, int cloudyPoints = 30, int limitSamples = 10000000, char* logFileName = NULL);
   ~WaveFunctionOverlapOptimizer();
 
   // launch optimization procedure

@@ -44,6 +44,14 @@ class Abstract1DComplexFunction
 
  public:
 
+  enum ComplexFunctionProperties
+    {
+      Basic = 0x1u,
+      OnSphere = 0x2u,
+      Trial = 0x4u
+    };
+    
+
   // virtual destructor
   //
   virtual ~Abstract1DComplexFunction();
@@ -63,6 +71,9 @@ class Abstract1DComplexFunction
   // factor = factor to be multiplied
   virtual void Renormalize(double factor);
 
+  // get function properties, and possible extensions of interface 
+  // 
+  virtual unsigned GetProperties() {return Abstract1DComplexFunction::Basic;}
 };
 
 #endif

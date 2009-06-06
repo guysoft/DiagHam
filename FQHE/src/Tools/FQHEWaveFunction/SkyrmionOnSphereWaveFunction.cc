@@ -58,8 +58,9 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
   this->PolarizedLzMax = manager.GetInteger("polarized-lzmax"); 
   this->PolarizedLz = manager.GetInteger("polarized-lz");
   this->MinParallel = manager.GetInteger("min-parallel");
-  
+  this->LastBosonicValue = 0.0;
   this->AnalyticPolarizedWaveFunction=NULL;
+  this->AnalyticPolarizedTrialWaveFunction=NULL;
 
   this->Flag.Initialize();
 
@@ -69,12 +70,14 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
 	{
 	  UseExact=false;
 	  PolarizedParticles=nbrParticles;
-	  AnalyticPolarizedWaveFunction = waveFunctionManager->GetWaveFunction();
+	  AnalyticPolarizedWaveFunction = waveFunctionManager->GetWaveFunction();	  
 	  if (AnalyticPolarizedWaveFunction==0)
 	    {
 	      cout << "Failed to option valid analytic wavefunction. Please check your wavefunction options!"<<endl;
 	      exit(-1);
 	    }
+	  if (AnalyticPolarizedWaveFunction->GetProperties() & Abstract1DComplexFunction::Trial)
+	    AnalyticPolarizedTrialWaveFunction = (Abstract1DComplexTrialFunction*) AnalyticPolarizedWaveFunction;
 	}
       else
 	{
@@ -344,7 +347,7 @@ void SkyrmionOnSphereWaveFunction::TestSymmetries(ParticleOnSphereCollection *pa
 
 Complex SkyrmionOnSphereWaveFunction::operator ()(RealVector& x)
 {
-  Complex ValueSpin,ValuePolarized;
+  Complex ValuePolarized;
   if (UseExact)
     {
       QHEParticleWaveFunctionOperation Operation(PolarizedSpace, &PolarizedState, &x,
@@ -361,12 +364,104 @@ Complex SkyrmionOnSphereWaveFunction::operator ()(RealVector& x)
       QHEParticleWaveFunctionOperation Operation(BosonicSpace, &BosonicState, &x,
 						 this->OneBodyBasisBos, /* TimeCoherence */ -1);
       Operation.ApplyOperation(this->Architecture);      
-      ValueSpin = Operation.GetScalar();
+      this->LastBosonicValue = Operation.GetScalar();
     }
-  else ValueSpin = BosonicSpace->EvaluateWaveFunction(BosonicState, x, *(this->OneBodyBasisBos));
+  else this->LastBosonicValue = BosonicSpace->EvaluateWaveFunction(BosonicState, x, *(this->OneBodyBasisBos));
   
-  return ValuePolarized*ValueSpin;
+  return ValuePolarized*this->LastBosonicValue;
 }
+
+// get a value of the wavefunction for the last set of coordinates, but with different variational parameters
+// parameters =  alternative set of parameters
+Complex SkyrmionOnSphereWaveFunction::GetForOtherParameters(double *parameters)
+{
+  if ((UseExact)|(AnalyticPolarizedTrialWaveFunction==NULL))
+    {
+      cout << "Cannot change any parameters in SkyrmionOnSphereWaveFunction when calculating from exact state"
+	   << ", or using non variational wavefunction."<<endl;
+      exit(1);
+    }
+  Complex Result=this->AnalyticPolarizedTrialWaveFunction->GetForOtherParameters(parameters);
+  
+  return Result*this->LastBosonicValue;
+}
+
+// do many evaluations of the function, storing the result in the vector results given in the call
+// result = vector of leading dimension of the array coefficients for returning values
+// x = positions to evaluate the wavefuntion in
+// format for passing parameters as [nbrSet][nbrParameter],
+void SkyrmionOnSphereWaveFunction::GetForManyParameters(ComplexVector &results, RealVector& x, double **coefficients)
+{
+  if ((UseExact)|(AnalyticPolarizedTrialWaveFunction==NULL))
+    {
+      cout << "Cannot change any parameters in SkyrmionOnSphereWaveFunction when calculating from exact state"
+	   << ", or using non variational wavefunction."<<endl;
+      exit(1);
+    }
+  this->AnalyticPolarizedTrialWaveFunction->GetForManyParameters(results,x,coefficients);
+
+  Complex BosonicPart;
+  if (BosonicSpace->GetHilbertSpaceDimension()>this->MinParallel)
+    {  
+      QHEParticleWaveFunctionOperation Operation(BosonicSpace, &BosonicState, &x,
+						 this->OneBodyBasisBos, /* TimeCoherence */ -1);
+      Operation.ApplyOperation(this->Architecture);      
+      BosonicPart = Operation.GetScalar();
+    }
+  else BosonicPart = BosonicSpace->EvaluateWaveFunction(BosonicState, x, *(this->OneBodyBasisBos));
+  for (int i=0; i<results.GetVectorDimension(); ++i)
+    results[i]*=BosonicPart;
+}
+
+// access internal values of parameters
+double *SkyrmionOnSphereWaveFunction::GetTrialParameters()
+{
+  if ((UseExact)|(AnalyticPolarizedTrialWaveFunction==NULL))
+    {
+      cout << "Cannot get any parameters in SkyrmionOnSphereWaveFunction when calculating from exact state"
+	   << ", or using non variational wavefunction."<<endl;
+      exit(1);
+    }
+  return this->AnalyticPolarizedTrialWaveFunction->GetTrialParameters();
+}
+
+// get number of parameters
+int SkyrmionOnSphereWaveFunction::GetNbrParameters() 
+{
+  if ((UseExact)|(AnalyticPolarizedTrialWaveFunction==NULL))
+    {
+      cout << "No parameters available in SkyrmionOnSphereWaveFunction when calculating from exact state"
+	   << ", or using non variational wavefunction."<<endl;
+      exit(1);
+    }
+  return this->AnalyticPolarizedTrialWaveFunction->GetNbrParameters();
+}
+
+  
+// set new values of the trial coefficients (keeping the initial number of parameters)
+void SkyrmionOnSphereWaveFunction::SetTrialParameters(double * coefficients)
+{
+  if ((UseExact)|(AnalyticPolarizedTrialWaveFunction==NULL))
+    {
+      cout << "Cannot change any parameters in SkyrmionOnSphereWaveFunction when calculating from exact state"
+	   << ", or using non variational wavefunction."<<endl;
+      exit(1);
+    }
+  this->AnalyticPolarizedTrialWaveFunction->SetTrialParameters(coefficients);
+}
+
+
+// get function properties, and possible extensions of interface 
+// 
+unsigned SkyrmionOnSphereWaveFunction::GetProperties()
+{
+  if (UseExact)
+    return Abstract1DComplexFunction::Basic;
+  else
+    return this->AnalyticPolarizedWaveFunction->GetProperties();
+}
+
+
 
 
 // add an option group containing all options related to the skyrmion wave functions
