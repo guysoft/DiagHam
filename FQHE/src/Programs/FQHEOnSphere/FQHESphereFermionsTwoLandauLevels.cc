@@ -15,6 +15,8 @@
 #include "GeneralTools/ConfigurationParser.h"
 #include "GeneralTools/FilenameTools.h"
 
+#include "MathTools/BinomialCoefficients.h"
+
 #include <iostream>
 #include <stdlib.h>
 #include <math.h>
@@ -49,12 +51,14 @@ int main(int argc, char** argv)
   Manager += ToolsGroup;
   Manager += MiscGroup;
 
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "level-difference", "Landau level index difference", 1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-lz", "twice the inital momentum projection for the system", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of lz value to evaluate", -1);
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
+  (*SystemGroup) += new SingleDoubleOption  ('e', "cyclotron-energy", "cyclotron energy in e^2/(epsilon l_b) unit ", 0.0);
 
   (*PrecalculationGroup) += new BooleanOption ('\n', "disk-cache", "use disk cache for fast multiplication", false);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
@@ -66,7 +70,6 @@ int main(int argc, char** argv)
 #endif
   (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
   
-  (*MiscGroup) += new SingleStringOption('\n', "energy-expectation", "name of the file containing the state vector, whose energy expectation value shall be calculated");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -74,27 +77,31 @@ int main(int argc, char** argv)
       cout << "see man page for option syntax or type FQHESphereFermionsTwoLandauLevels -h" << endl;
       return -1;
     }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
     }
 
 
-  int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
-  int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
-  if (ULONG_MAX>>20 < (unsigned long)Manager.GetInteger("memory"))
+  int NbrParticles = Manager.GetInteger("nbr-particles");
+  int LzMax = Manager.GetInteger("lzmax");
+  if (ULONG_MAX>>20 < (unsigned long) Manager.GetInteger("memory"))
     cout << "Warning: integer overflow in memory request - you might want to use 64 bit code."<<endl;
-  unsigned long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
-  int InitialLz = ((SingleIntegerOption*) Manager["initial-lz"])->GetInteger();
-  int NbrLz = ((SingleIntegerOption*) Manager["nbr-lz"])->GetInteger();
-  char* LoadPrecalculationFileName = ((SingleStringOption*) Manager["load-precalculation"])->GetString();  
-  bool DiskCacheFlag = ((BooleanOption*) Manager["disk-cache"])->GetBoolean();
+  unsigned long Memory = Manager.GetInteger("memory");
+  int InitialLz = Manager.GetInteger("initial-lz");
+  int NbrLz = Manager.GetInteger("nbr-lz");
+  char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");  
+  bool DiskCacheFlag = Manager.GetBoolean("disk-cache");
   bool FirstRun = true;
   double* PseudoPotentials = 0;
   double* OneBodyPotentials = 0;
-  int LzMaxUp = LzMax;
-  int LzMaxDown = LzMax - 2;
+  int LandauLevelIndexDifference = Manager.GetInteger("level-difference");
+  int LzMaxUp = LzMax + (2 * LandauLevelIndexDifference);
+  int LzMaxDown = LzMax;
+  double CyclotronEnergy = Manager.GetDouble("cyclotron-energy");
+
+
 //   if (((SingleStringOption*) Manager["interaction-file"])->GetString() == 0)
 //     {
 //       cout << "an interaction file has to be provided" << endl;
@@ -125,7 +132,9 @@ int main(int argc, char** argv)
 //   char* OutputNameLz = new char [256 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
 //   sprintf (OutputNameLz, "fermions_%s_n_%d_2s_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax);
 
-  int Max = ((LzMax - NbrParticles + 1) * NbrParticles);
+  int TmpNbrParticleDown = (NbrParticles - LandauLevelIndexDifference) / 2;
+  int Max = (((LzMax - TmpNbrParticleDown + 1) * TmpNbrParticleDown) +
+	     ((LzMax + (2 * LandauLevelIndexDifference) - (NbrParticles - TmpNbrParticleDown) + 1) * (NbrParticles - TmpNbrParticleDown)));
 
   int  L = InitialLz;
   if (L < -Max)
@@ -142,20 +151,28 @@ int main(int argc, char** argv)
 	  Max = L + (2 * (NbrLz - 1));
 	}
     }
+  int TotalDim = 0;
+
   for (; L <= Max; L += 2)
     {
 
       ParticleOnSphere* Space = new FermionOnSphereTwoLandauLevels (NbrParticles, L, LzMaxUp, LzMaxDown);
-      for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-	{
-	  cout << i << " : ";
-	  Space->PrintState(cout, i) << endl;
-	}
-//       ParticleOnSphere* Space = (FermionOnSphere*) ParticleManager.GetHilbertSpace(L);
-//       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
-//       AbstractQHEOnSphereHamiltonian* Hamiltonian = 0;
-//       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
-// 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
+//       for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+// 	{
+// 	  cout << i << " : ";
+// 	  Space->PrintState(cout, i) << endl;
+// 	}
+
+//       cout << L << " : " <<  Space->GetHilbertSpaceDimension() << endl;
+//       if (L == 0)
+// 	TotalDim += Space->GetHilbertSpaceDimension();
+//       else
+// 	TotalDim += (2 * Space->GetHilbertSpaceDimension());
+
+      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
+      //      AbstractQHEOnSphereWithSpinHamiltonian* Hamiltonian = 0;
+      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
+ 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
 //       if (OneBodyPotentials == 0)
 // 	Hamiltonian = new ParticleOnSphereGenericHamiltonian(Space, NbrParticles, LzMax, PseudoPotentials,
 // 							     ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),
@@ -219,6 +236,8 @@ int main(int argc, char** argv)
 //       if (FirstRun == true)
 // 	FirstRun = false;
      }
-
+//   cout << "total dim = " << TotalDim << endl;
+//   BinomialCoefficients TmpCoef(2 * (LzMax + 1 + LandauLevelIndexDifference));
+//   cout << TmpCoef(2 * (LzMax + 1 + LandauLevelIndexDifference), NbrParticles) << endl;
   return 0;
 }

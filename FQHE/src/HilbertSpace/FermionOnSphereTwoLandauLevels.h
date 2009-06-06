@@ -106,31 +106,28 @@ class FermionOnSphereTwoLandauLevels :  public FermionOnSphereWithSpin
   //
   // nbrFermionsUp = number of fermions with spin up
   // nbrFermionsDown = number of fermions with spin down
-  // lzMaxUp = momentum maximum value for a fermion with spin up
-  // lzMaxDown = momentum maximum value for a fermion with spin down
+  // lzMax = momentum maximum value for a fermion
   // totalLz = momentum total value
   // return value = Hilbert space dimension      
-  virtual long ShiftedEvaluateHilbertSpaceDimension(int nbrFermionsUp, int nbrFermionsDown, int lzMaxUp, int lzMaxDown, int totalLz);
+  virtual long ShiftedEvaluateHilbertSpaceDimension(int nbrFermionsUp, int nbrFermionsDown, int lzMax, int totalLz);
 
   // evaluate Hilbert space dimension without constraint on the number of particles per level
   //
   // nbrFermions = number of fermions
-  // lzMaxUp = momentum maximum value for a fermion with spin up
-  // lzMaxDown = momentum maximum value for a fermion with spin down
+  // lzMax = momentum maximum value for a fermion
   // totalLz = momentum total value
   // return value = Hilbert space dimension
-  virtual long ShiftedEvaluateFullHilbertSpaceDimension(int nbrFermions, int lzMaxUp, int lzMaxDown, int totalLz);
+  virtual long ShiftedEvaluateFullHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
 
   // generate all states corresponding to the constraints
   // 
   // nbrFermionsUp = number of fermions with spin up
   // nbrFermionsDown = number of fermions with spin down
-  // lzMaxUp = momentum maximum value for a fermion with spin up
-  // lzMaxDown = momentum maximum value for a fermion with spin down
+  // lzMax = momentum maximum value for a fermion
   // totalLz = momentum total value
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  virtual long GenerateStates(int nbrFermionsUp, int nbrFermionsDown, int lzMaxUp, int lzMaxDown, int totalLz, long pos);
+  virtual long GenerateStates(int nbrFermionsUp, int nbrFermionsDown, int lzMax, int totalLz, long pos);
 
   // generate all states corresponding to the constraints
   // 
