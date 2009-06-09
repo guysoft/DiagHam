@@ -196,6 +196,8 @@ void ExtractPathAndFileName (const char* input, char* &path, char* &fileName)
     {
       path = new char[3];
       sprintf(path,"./");
+      fileName = new char[strlen(input)+1];
+      sprintf(fileName,input);
     }
   else
     {
