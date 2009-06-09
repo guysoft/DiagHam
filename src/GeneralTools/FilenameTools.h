@@ -63,6 +63,14 @@ bool IsFile (const char* fileName);
 // return value = corresponding string
 char* ConcatenatePathAndFileName (char* path, char* fileName);
 
+// concatenate path and file name
+//
+// input = input string
+// path = string corresponding to the path 
+// fileName = string corresponding to the file name
+//
+void ExtractPathAndFileName (const char* input, char* &path, char* &fileName);
+
 // add a given extension to a file name
 //
 // fileName = string corresponding to the file name (with optional relative path)

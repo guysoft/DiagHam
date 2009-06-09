@@ -182,6 +182,34 @@ char* ConcatenatePathAndFileName (char* path, char* fileName)
   return TmpFileName;
 }
 
+
+// concatenate path and file name
+//
+// input = input string
+// path = string corresponding to the path 
+// fileName = string corresponding to the file name
+//
+void ExtractPathAndFileName (const char* input, char* &path, char* &fileName)
+{
+  char* TmpFile = strrchr(input,'/');
+  if (TmpFile==NULL)
+    {
+      path = new char[3];
+      sprintf(path,"./");
+    }
+  else
+    {
+      ++TmpFile;
+      char TmpC=TmpFile[0];
+      TmpFile[0]='\0';
+      path = new char[strlen(input)+1];
+      sprintf(path,input);
+      TmpFile[0]=TmpC;
+      fileName = new char[strlen(TmpFile)+1];
+      sprintf(fileName,TmpFile);
+    }
+}
+
 // add a given extension to a file name
 //
 // fileName = string corresponding to the file name (with optional relative path)
@@ -275,7 +303,7 @@ char* RemoveExtensionFromFileName(char* fileName, const char* oldExtension)
     return 0;
   long TmpLength = strlen(fileName);
   long TmpLength2 = TmpLength - strlen(oldExtension);  
-  char* TmpFileName = new char[TmpLength2 + 1];
+  char* TmpFileName = new char[TmpLength2 + 2];
   strncpy (TmpFileName, fileName, TmpLength2);
   return TmpFileName;
 }
