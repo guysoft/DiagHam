@@ -28,57 +28,63 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef ABSTRACTZDENSITYPROFILE_H
-#define ABSTRACTZDENSITYPROFILE_H
+#ifndef INFINITEWELLMIXEDDENSITYPROFILE_H
+#define INFINITEWELLMIXEDDENSITYPROFILE_H
 
 
 #include "config.h"
 
+#include "AbstractZDensityProfile.h"
 
-
-class AbstractZDensityProfile {
+class InfiniteWellMixedDensityProfile : public AbstractZDensityProfile
+{
  private:
-  
+
+  // width of the well
+  double Width;
+
+  // the norm of the (square) wavefunction
+  double SqNorm;
+
+  // the band index (starting to number at zero)
+  int Band;
 
  public:
-  
-  enum ZDensityProfileTypes
-    {
-      TabulatedProfile = 0x00000,
-      InfiniteWell = 0x00001,
-      FangHoward = 0x00002,
-      InfiniteWellExc = 0x00003,
-      InfiniteWellBilayerLeft = 0x00004, 
-      InfiniteWellBilayerRight = 0x00005,
-      InfiniteWellMixed = 0x00006
-    };
+
+  // the standard constructor -> well with 1 magnetic length width
+  InfiniteWellMixedDensityProfile();
+
+  // constructor
+  // width = width of the well
+  // band = band index (allows for excited states to be obtained)
+  // 
+  InfiniteWellMixedDensityProfile(double width, int band = 0);
   
   // virtual destructor
-  virtual ~AbstractZDensityProfile();
+  virtual ~InfiniteWellMixedDensityProfile();
 
   // get minimum and maximum value of density profile where the probability density is larger than precision
   // min = minimum value of z offset
   // max = maximum value of z offset
   // precision = requested precision
-  virtual void GetSupport(double &min, double &max, double precision=1e-10) = 0;
+  virtual void GetSupport(double &min, double &max, double precision=1e-10);
 
   // evaluate the density for a given offset
   // z = offset of distribution
-  virtual double GetValue(double z) = 0;
+  virtual double GetValue(double z);
 
-  // get type of the density profile
-  virtual int GetType() = 0;
-
-  // a static class function to return an actual DensityProfile object of some type
-  static AbstractZDensityProfile* CreateZDensityProfile (char *type, double width);
-
-  // a static class function to return the name of a type of DensityProfile
-  // type = a string carrying either the number of the density profile, or a filename (if tabulated)
-  static char *DensityProfileName(char *type);
   
 
+  // get type of the density profile
+  virtual int GetType();
 
 };
+
+// get type of the density profile
+inline int InfiniteWellMixedDensityProfile::GetType()
+{
+  return AbstractZDensityProfile::InfiniteWellMixed;
+}
 
 
 #endif

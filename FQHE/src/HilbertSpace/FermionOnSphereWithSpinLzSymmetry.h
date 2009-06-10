@@ -49,6 +49,8 @@ using std::dec;
 class FermionOnSphereWithSpinLzSymmetry :  public FermionOnSphereWithSpinLzSzSymmetry
 {
 
+ friend class FermionOnSphereWithSpinAllSzLzSymmetry;
+
  protected:
 
 

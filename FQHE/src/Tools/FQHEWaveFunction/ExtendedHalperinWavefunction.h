@@ -66,6 +66,9 @@ class ExtendedHalperinWavefunction: public Abstract1DComplexFunctionOnSphere
   int R;
   int S;
   int T;
+  int U;
+  int V;
+  int B;
   
   // flag to indicate whether Jastrow factors should be moved inside Cauchy determinant.
   bool JastrowInside;
@@ -106,6 +109,16 @@ class ExtendedHalperinWavefunction: public Abstract1DComplexFunctionOnSphere
   // skew symmetric matrix for overall pfaffian factor
   ComplexSkewSymmetricMatrix *PfaffianFactor;
 
+  // skew symmetric matrix for overall pfaffian factor
+  ComplexSkewSymmetricMatrix *PfaffianFactorIntraUp;
+  // skew symmetric matrix for overall pfaffian factor
+  ComplexSkewSymmetricMatrix *PfaffianFactorIntraDown;
+
+  // skew symmetric matrix for overall pfaffian factor
+  ComplexSkewSymmetricMatrix *PfaffianFactorInter;
+
+
+
   
  public:
 
@@ -124,7 +137,7 @@ class ExtendedHalperinWavefunction: public Abstract1DComplexFunctionOnSphere
   // s = power of Cauchy-permanent
   // t = power of overall Pfaffian factor
   // moveJastrowInside = move jastrow-factors inside cauchy determinant
-  ExtendedHalperinWavefunction(int nbrParticles, int k, int m, int p, int q=0, int r=1, int s=1, int t=0, bool moveJastrowInside = false );
+  ExtendedHalperinWavefunction(int nbrParticles, int k, int m, int p, int q=0, int r=1, int s=1, int t=0, int u=0, int v=0, int b=0, bool moveJastrowInside = false );
 
   // copy constructor
   //

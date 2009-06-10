@@ -6,8 +6,7 @@
 #include "HilbertSpace/FermionOnSphereWithSU3Spin.h"
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
 #include "HilbertSpace/BosonOnSphereWithSpin.h"
-//#include "HilbertSpace/FermionOnSphereBernevigBasis.h"
-//#include "HilbertSpace/BosonOnSphereBernevigBasisShort.h"
+#include "HilbertSpace/FermionOnSphereWithSpinAllSz.h"
 
 #include "MathTools/ClebschGordanCoefficients.h"
 
@@ -46,6 +45,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "su2-spin", "consider particles with SU(2) spin");
   (*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the z component of the total spin of the system (only useful in su(2)/su(4) mode)", 0);
+  (*SystemGroup) += new BooleanOption  ('\n', "all-sz", "consider particles with SU(2) spin all Sz components");
+  (*SystemGroup) += new BooleanOption  ('\n', "add-index", "add index of the Hilbert space vectors");
+  (*SystemGroup) += new BooleanOption  ('\n', "add-szvalue", "add Sz value to each Hilbert space vector (valid only for all-sz)");
   (*SystemGroup) += new BooleanOption  ('\n', "su3-spin", "consider particles with SU(2) spin");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "total-tz", "twice the quantum number of the system associated to the Tz generator (only useful in su(3) mode)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "total-y", "three time the quantum number of the system associated to the Y generator (only useful in su(3) mode)", 0);
@@ -76,6 +78,9 @@ int main(int argc, char** argv)
   int TotalTz = ((SingleIntegerOption*) Manager["total-tz"])->GetInteger();
   int TotalY = ((SingleIntegerOption*) Manager["total-y"])->GetInteger();
   bool SU2SpinFlag = ((BooleanOption*) Manager["su2-spin"])->GetBoolean();
+  bool AllSzFlag = ((BooleanOption*) Manager["all-sz"])->GetBoolean();
+  bool AddIndex = ((BooleanOption*) Manager["add-index"])->GetBoolean();
+  bool AddSzValue = ((BooleanOption*) Manager["add-szvalue"])->GetBoolean();
   bool SU3SpinFlag = ((BooleanOption*) Manager["su3-spin"])->GetBoolean();
   bool SU4SpinFlag = ((BooleanOption*) Manager["su4-spin"])->GetBoolean();
   int TotalSz = ((SingleIntegerOption*) Manager["total-sz"])->GetInteger();
@@ -117,7 +122,7 @@ int main(int argc, char** argv)
     }
   else
     {
-      if ((SU2SpinFlag == false) && (SU3SpinFlag == false) && (SU4SpinFlag == false))
+      if ((SU2SpinFlag == false) && (SU3SpinFlag == false) && (SU4SpinFlag == false) && (AllSzFlag == false))
 	{
 	  if (BernevigFlag == false)
 	    {
@@ -147,11 +152,14 @@ int main(int argc, char** argv)
 	}
       else
  	if (SU2SpinFlag == true)
-	  Space = new FermionOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
-	else
-	  if (SU3SpinFlag == true)
-	    Space = new FermionOnSphereWithSU3Spin(NbrParticles, TotalLz, NbrFluxQuanta, TotalTz, TotalY);
+	 Space = new FermionOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
+	else 
+	  if (AllSzFlag == true)
+	    Space = new FermionOnSphereWithSpinAllSz(NbrParticles, TotalLz, NbrFluxQuanta);
 	  else
+	   if (SU3SpinFlag == true)
+	     Space = new FermionOnSphereWithSU3Spin(NbrParticles, TotalLz, NbrFluxQuanta, TotalTz, TotalY);
+	   else
 	    if (SU4SpinFlag == true)
 	      Space = new FermionOnSphereWithSU4Spin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz, TotalIz, TotalPz);	    
     }
@@ -181,6 +189,9 @@ int main(int argc, char** argv)
 	    else
 	      if (SU2SpinFlag == true)
 		sprintf (OutputFileName, "fermions_sphere_n_%d_2s_%d_lz_%d_sz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz, TotalSz);
+	     else
+	      if (AllSzFlag == true)
+		sprintf (OutputFileName, "fermions_sphere_n_%d_2s_%d_lz_%d_allsz.basis", NbrParticles, NbrFluxQuanta, TotalLz);
 	      else
 		if (SU3SpinFlag == true)
 		  sprintf (OutputFileName, "fermions_sphere_su3_n_%d_2s_%d_lz_%d_tz_%d_y_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz, TotalTz, TotalY);
@@ -206,10 +217,20 @@ int main(int argc, char** argv)
   if (((SingleStringOption*) Manager["state"])->GetString() == 0)
     if (((BooleanOption*) Manager["save-disk"])->GetBoolean() == true)
       for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-	Space->PrintState(File, i) << endl;
+	{
+	  if (AddIndex == true) File<<i<<" ";
+	  Space->PrintState(File, i);
+	  if (AddSzValue == true) File<<" Sz= "<<Space->GetSzValue(i)<< endl;
+	   else File<<endl;
+        }
     else
       for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-	Space->PrintState(cout, i) << endl;
+	{
+	  if (AddIndex == true) cout<<i<<" ";
+	  Space->PrintState(cout, i);
+	  if (AddSzValue == true) cout<<" Sz= "<<Space->GetSzValue(i)<< endl;
+           else cout<<endl;
+        }
       
    else
      {
@@ -235,7 +256,12 @@ int main(int argc, char** argv)
 	       for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 		 {
 		   if (fabs(State[i]) > Error)
-		     Space->PrintState(File, i) << " : " << State[i] << endl;	   
+                     {
+		       if (AddIndex == true) File<<i<<" ";	
+		       Space->PrintState(File, i) << " : " << State[i];
+		       if (AddSzValue == true) File<<" Sz= "<<Space->GetSzValue(i)<< endl;
+                        else File<<endl;
+                     }
 		   else		     
 		     {
 		       WeightHiddenComponents += State[i] * State[i];
@@ -248,7 +274,12 @@ int main(int argc, char** argv)
 	     for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 	       {
 		 if (fabs(State[i]) > Error)
-		   Space->PrintState(cout, i) << " : " << State[i] << endl;	   
+		   {
+                     if (AddIndex == true) cout<<i<<" ";
+		     Space->PrintState(cout, i) << " : " << State[i];
+	             if (AddSzValue == true) cout<<" Sz= "<<Space->GetSzValue(i)<< endl;
+                      else cout<<endl;
+                   }
 		 else		     
 		   {
 		     WeightHiddenComponents += State[i] * State[i];

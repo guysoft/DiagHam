@@ -1,15 +1,15 @@
-////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////
 //                                                                            //
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//          Copyright (C) 2001-2005 Gunnar Moller and Nicolas Regnault        //
+//                  Copyright (C) 2001-2005 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                   class of fermions on sphere with spin without            //
-//                            sign precalculation table                       //
+//                     class of fermions on sphere with spin with             //
+//                                 Lz<->-Lz symmetry                          //
 //                                                                            //
-//                        last modification : 12/12/2005                      //
+//                        last modification : 15/08/2007                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,29 +29,28 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef FERMIONONSPHEREWITHSPINALLSZ_H
-#define FERMIONONSPHEREWITHSPINALLSZ_H
+#ifndef FERMIONONSPHEREWITHSPINALLSZLZSYMMETRY_H
+#define FERMIONONSPHEREWITHSPINALLSZLZSYMMETRY_H
 
 
 #include "config.h"
-#include "HilbertSpace/FermionOnSphereWithSpin.h"
+#include "HilbertSpace/FermionOnSphereWithSpinLzSymmetry.h"
+#include "HilbertSpace/FermionOnSphereWithSpinAllSz.h"
 
 #include <iostream>
 
 
-class FermionOnSphere;
+using std::cout;
+using std::endl;
+using std::hex;
+using std::dec;
 
 
-class FermionOnSphereWithSpinAllSz :  public FermionOnSphereWithSpin
+
+class FermionOnSphereWithSpinAllSzLzSymmetry :  public FermionOnSphereWithSpinLzSymmetry
 {
 
-     friend class FermionOnSphereWithSpinAllSzLzSymmetry;
-/*   friend class FermionOnSphereWithSpinAllSzLzSzSymmetry; */
-/*   friend class FermionOnSphereWithSpinAllSzSzSymmetry; */
-/*   friend class FermionOnSphereWithSpinAllSzLzSymmetry; */
-
  protected:
-
 
   // temporary storage during state generation
   int **MaxTotalLz;
@@ -59,38 +58,58 @@ class FermionOnSphereWithSpinAllSz :  public FermionOnSphereWithSpin
 
  public:
 
-  // default constructor
+  // default constructor 
   //
-  FermionOnSphereWithSpinAllSz();
+  FermionOnSphereWithSpinAllSzLzSymmetry ();
 
   // basic constructor
   // 
   // nbrFermions = number of fermions
-  // totalLz = twice the momentum total value
   // lzMax = twice the maximum Lz value reached by a fermion
+  // totalSz = twce the total spin value
+  // minusParity = select the  Lz <-> -Lz symmetric sector with negative parity
   // memory = amount of memory granted for precalculations
-  FermionOnSphereWithSpinAllSz (int nbrFermions, int totalLz, int lzMax, unsigned long memory = 10000000);
+  FermionOnSphereWithSpinAllSzLzSymmetry (int nbrFermions, int lzMax, bool minusParity, unsigned long memory = 10000000);
+
+  // constructor from a binary file that describes the Hilbert space
+  //
+  // fileName = name of the binary file
+  // memory = amount of memory granted for precalculations
+  FermionOnSphereWithSpinAllSzLzSymmetry (char* fileName, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
-  FermionOnSphereWithSpinAllSz(const FermionOnSphereWithSpinAllSz& fermions);
+  FermionOnSphereWithSpinAllSzLzSymmetry(const FermionOnSphereWithSpinAllSzLzSymmetry& fermions);
 
   // destructor
   //
-  ~FermionOnSphereWithSpinAllSz ();
+  ~FermionOnSphereWithSpinAllSzLzSymmetry ();
 
   // assignement (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space
-  FermionOnSphereWithSpinAllSz& operator = (const FermionOnSphereWithSpinAllSz& fermions);
+  FermionOnSphereWithSpinAllSzLzSymmetry& operator = (const FermionOnSphereWithSpinAllSzLzSymmetry& fermions);
 
   // clone Hilbert space (without duplicating datas)
   //
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
 
+  // convert a given state from symmetric basis to the usual n-body basis
+  //
+  // state = reference on the vector to convert
+  // nbodyBasis = reference on the nbody-basis to use
+  // return value = converted vector  
+  virtual RealVector ConvertToNbodyBasis(RealVector& state, FermionOnSphereWithSpinAllSz& nbodyBasis);
+
+  // convert a given state from the usual n-body basis to the symmetric basis
+  //
+  // state = reference on the vector to convert
+  // nbodyBasis = reference on the nbody-basis to use
+  // return value = converted vector
+  virtual RealVector ConvertToSymmetricNbodyBasis(RealVector& state, FermionOnSphereWithSpinAllSz& nbodyBasis);
 
   // apply a^+_m_u a_n_d operator to a given state 
   //
@@ -117,27 +136,10 @@ class FermionOnSphereWithSpinAllSz :  public FermionOnSphereWithSpin
   // su2Space = the subspace onto which the projection is carried out
   // SzValue = the desired value of Sz
 
-  virtual RealVector ForgeSU2FromTunneling(RealVector& state, FermionOnSphereWithSpin& su2Space, int SzValue);
+  virtual RealVector ForgeSU2FromTunneling(RealVector& state, FermionOnSphereWithSpinLzSymmetry& su2Space, int SzValue);
 
-  // Project the state from the tunneling space (all Sz's)
-  // to the U(1) space (u1Space)
-  //
-  // state = state that needs to be projected
-  // u1Space = the subspace onto which the projection is carried out
-  virtual RealVector ForgeU1FromTunneling(RealVector& state, FermionOnSphere& u1Space);
-
-  // Calculate mean value <Sx> in a given state
-  //
-  // state = given state
-  virtual double MeanSxValue(RealVector& state);
-
-  // Calculate mean value <Sz> in a given state
-  //
-  // state = given state
-  virtual double MeanSzValue(RealVector& state);
-
-
- protected:
+  
+  protected:
 
   // evaluate Hilbert space dimension
   //
@@ -157,6 +159,8 @@ class FermionOnSphereWithSpinAllSz :  public FermionOnSphereWithSpin
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
   virtual long GenerateStates(int nbrFermions, int lzMax, int totalLz, long pos);
+
+
 
 };
 

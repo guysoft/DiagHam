@@ -1,7 +1,29 @@
+//*****************************************************************************************************
+//*			     QUANTUM WELL PROGRAM 			     
+//*									     
+//*  assumes the following Hamiltonian:				     
+//*  H= -(DeltaSAS/2)\sum_{m} (c_{m,up}^+c_{m,up} 			     	
+//*	  - c_{m,down}^+c_{m,down}) 	
+//*
+//*  +\sum_{m2>m1,m4>m3} (-4V_{m1m2m3m4}^{upupupup}) c_{m2,up}^+c_{m1,up}^+c_{m4,up}c_{m3,up}
+//*  + (up <--> down)
+//*  +\sum_{m1,m2,m3,m4} (-2V_{m1m2m3m4}^{updownupdown})c_{m2,up}^+c_{m1,down}^+c_{m4,up}c_{m3,down}
+//*  
+//*  +\sum_{m2>m1,m4>m3} (-4V_{m1m2m3m4}^{upupdowndown}) (c_{m2,up}^+c_{m1,up}^+c_{m4,down}c_{m3,down}
+//*			   + c_{m2,down}^+c_{m1,down}^+c_{m4,up}c_{m3,up})
+//*  +\sum_{m1,m2,m3,m4} (+2V_{m1m2m3m4}^{upupdowndown}) c_{m2,down}^+c_{m1,up}^+c_{m3,down}c_{m4,up}
+//*
+//*  *NOTE* The sign in the last term is opposite to the other ones for the given order of 
+//*         creation/annihilation operators (to comply with the existing AuAd and AduAdd routines).
+//*         The first term is the Zeeman splitting between the two subbands, followed by typical
+//*	    bilayer terms and the last three lines are the mixed terms where there is a spin flip in 
+//*         the interaction vertex.
+//*****************************************************************************************************
+
 #include "HilbertSpace/AbstractQHEParticle.h"
 #include "HilbertSpace/FermionOnSphereWithSpinAllSz.h"
 #include "HilbertSpace/FermionOnSphereWithSpinAllSzLzSymmetry.h"
-#include "Hamiltonian/ParticleOnSphereBilayerHamiltonian.h"
+#include "Hamiltonian/ParticleOnSphereQuantumWellHamiltonian.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -57,8 +79,6 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "lzsymmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
   (*SystemGroup) += new BooleanOption  ('\n', "minus-lzparity", "select the  Lz <-> -Lz symmetric sector with negative parity");
   (*SystemGroup) += new SingleDoubleOption  ('t', "tunnelling", "tunnelling splitting Delta_SAS", 0.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "inplane-angle", "angle of the magnetic field tilt (ratio B_{parallel}/B_{perpendicular})", 0.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "inplane-distance", "distance between the layers for in-plane field calculation", 0.0);
 
   (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
   (*LanczosGroup)  += new SingleIntegerOption  ('\n', "full-diag", 
@@ -122,9 +142,6 @@ int main(int argc, char** argv)
   
   int NbrFermions = Manager.GetInteger("nbr-particles");
   double DeltaSAS = Manager.GetDouble("tunnelling"); 
-  double TiltAngle = Manager.GetDouble("inplane-angle");
-  double TiltDistance = Manager.GetDouble("inplane-distance");
-
   int LzMax = Manager.GetInteger("lzmax");
   bool LzSymmetrizedBasis = Manager.GetBoolean("lzsymmetrized-basis");
   bool MinusParity=Manager.GetBoolean("minus-lzparity");
@@ -138,7 +155,7 @@ int main(int argc, char** argv)
   bool onDiskCacheFlag = Manager.GetBoolean("disk");
   bool FirstRun = true;
   double** PseudoPotentials  = new double*[10];
-  for (int i = 0; i < 3; ++i)
+  for (int i = 0; i < 4; ++i)
     {
       PseudoPotentials[i] = new double[LzMax + 1];
       for (int j = 0; j <= LzMax; ++j)
@@ -172,7 +189,7 @@ int main(int argc, char** argv)
 	      cout << "Invalid number of pseudo-potentials in Pseudopotentials" << endl;
 	      return -1;	  
 	    }
-	  for (int i = 0; i < 3; ++i)
+	  for (int i = 0; i < 4; ++i)
 	    for (int j = 0; j < TmpNbrPseudoPotentials; ++j)
 	      PseudoPotentials[i][j] = TmpPseudoPotentials[j];
 	}
@@ -233,6 +250,23 @@ int main(int argc, char** argv)
 	    cout << "PseudopotentialsUpDown has a wrong value in " << Manager.GetString("interaction-file") << endl;
 	    return -1;
 	  }
+     if (InteractionDefinition.GetAsDoubleArray("PseudopotentialsMixed", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
+	{
+	  Flag = true;
+	  if (TmpNbrPseudoPotentials != (LzMax +1))
+	    {
+	      cout << "Invalid number of pseudo-potentials in PseudopotentialsMixed" << endl;
+	      return -1;	  
+	    }
+	  for (int j = 0; j < TmpNbrPseudoPotentials; ++j)
+	    PseudoPotentials[3][j] = TmpPseudoPotentials[j];
+	}
+      else
+	if (InteractionDefinition["PseudopotentialsMixed"] != 0)
+	  {
+	    cout << "PseudopotentialsMixed has a wrong value in " << Manager.GetString("interaction-file") << endl;
+	    return -1;
+	  }
       if (InteractionDefinition.GetAsDoubleArray("OneBodyPotentialUpUp", ' ', OneBodyPotentialUpUp, TmpNbrPseudoPotentials) == true)
 	{
 	  if (TmpNbrPseudoPotentials != (LzMax + 1))
@@ -251,12 +285,15 @@ int main(int argc, char** argv)
 	}
     }
 
-  double Qvector = TiltDistance*TiltAngle;
   if (DeltaSAS!=0.0)
     {
-      OneBodyPotentialUpDown = new double[LzMax + 1];
-      for (int i=0; i<=LzMax; ++i)
-       OneBodyPotentialUpDown[i] = -1.0*DeltaSAS*exp(-Qvector*Qvector/4.0);
+      OneBodyPotentialUpUp = new double[LzMax + 1];
+      OneBodyPotentialDownDown = new double[LzMax + 1];
+      for (int i=0; i<=LzMax; ++i)  
+       {
+		OneBodyPotentialUpUp[i] = -1.0*DeltaSAS;
+		OneBodyPotentialDownDown[i] = DeltaSAS;
+	   }
     }
 
 
@@ -344,11 +381,11 @@ int main(int argc, char** argv)
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
         Memory = Architecture.GetArchitecture()->GetLocalMemory();
-      
+
       AbstractQHEHamiltonian* Hamiltonian;      
-      Hamiltonian = new ParticleOnSphereBilayerHamiltonian(Space, NbrFermions, LzMax, PseudoPotentials,
+      Hamiltonian = new ParticleOnSphereQuantumWellHamiltonian(Space, NbrFermions, LzMax, PseudoPotentials,
 								   OneBodyPotentialUpUp, OneBodyPotentialDownDown,
-								   OneBodyPotentialUpDown, Qvector, 
+								   OneBodyPotentialUpDown, 
 								   Architecture.GetArchitecture(), Memory, onDiskCacheFlag,
 								   LoadPrecalculationFileName);
 
@@ -380,8 +417,13 @@ int main(int argc, char** argv)
 	FirstRun = false;
     }
   delete[] OutputNameLz;
-  for (int i = 0; i < 3; ++i) delete[] PseudoPotentials[i];
+  for (int i = 0; i < 4; ++i) delete[] PseudoPotentials[i];
   delete[] PseudoPotentials;
+  if (DeltaSAS!=0.0)
+    {
+      delete[] OneBodyPotentialUpUp;
+      delete[] OneBodyPotentialDownDown;
+    }
   return 0;
 }
 

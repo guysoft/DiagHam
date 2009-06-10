@@ -10,4 +10,5 @@ InfiniteWellDensityProfile.cc \
 FangHowardDensityProfile.cc \
 PseudoPotentialGenerator.cc \
 TabulatedDensityProfile.cc \
-InfiniteWellBilayerDensityProfile.cc
+InfiniteWellBilayerDensityProfile.cc \
+InfiniteWellMixedDensityProfile.cc

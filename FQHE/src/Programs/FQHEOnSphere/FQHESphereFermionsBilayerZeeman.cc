@@ -1,7 +1,7 @@
 #include "HilbertSpace/AbstractQHEParticle.h"
 #include "HilbertSpace/FermionOnSphereWithSpinAllSz.h"
 #include "HilbertSpace/FermionOnSphereWithSpinAllSzLzSymmetry.h"
-#include "Hamiltonian/ParticleOnSphereBilayerHamiltonian.h"
+#include "Hamiltonian/ParticleOnSphereWithSpinGenericHamiltonian.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -57,8 +57,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "lzsymmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
   (*SystemGroup) += new BooleanOption  ('\n', "minus-lzparity", "select the  Lz <-> -Lz symmetric sector with negative parity");
   (*SystemGroup) += new SingleDoubleOption  ('t', "tunnelling", "tunnelling splitting Delta_SAS", 0.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "inplane-angle", "angle of the magnetic field tilt (ratio B_{parallel}/B_{perpendicular})", 0.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "inplane-distance", "distance between the layers for in-plane field calculation", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "zeeman", "Zeeman field", 0.0);
 
   (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
   (*LanczosGroup)  += new SingleIntegerOption  ('\n', "full-diag", 
@@ -122,9 +121,7 @@ int main(int argc, char** argv)
   
   int NbrFermions = Manager.GetInteger("nbr-particles");
   double DeltaSAS = Manager.GetDouble("tunnelling"); 
-  double TiltAngle = Manager.GetDouble("inplane-angle");
-  double TiltDistance = Manager.GetDouble("inplane-distance");
-
+  double Zeeman = Manager.GetDouble("zeeman"); 
   int LzMax = Manager.GetInteger("lzmax");
   bool LzSymmetrizedBasis = Manager.GetBoolean("lzsymmetrized-basis");
   bool MinusParity=Manager.GetBoolean("minus-lzparity");
@@ -251,18 +248,27 @@ int main(int argc, char** argv)
 	}
     }
 
-  double Qvector = TiltDistance*TiltAngle;
   if (DeltaSAS!=0.0)
     {
       OneBodyPotentialUpDown = new double[LzMax + 1];
       for (int i=0; i<=LzMax; ++i)
-       OneBodyPotentialUpDown[i] = -1.0*DeltaSAS*exp(-Qvector*Qvector/4.0);
+	OneBodyPotentialUpDown[i] = -1.0*DeltaSAS;
     }
 
+  if (Zeeman!=0.0)
+    {
+      OneBodyPotentialUpUp = new double[LzMax + 1];
+      OneBodyPotentialDownDown = new double[LzMax + 1];
+      for (int i=0; i<=LzMax; ++i)
+	   {
+		  OneBodyPotentialUpUp[i] = -1.0*Zeeman;
+		  OneBodyPotentialDownDown[i] = Zeeman;
+	    }
+    }
 
   char* OutputNameLz = new char [512 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
-  sprintf (OutputNameLz, "fermions_sphere_su2_%s_n_%d_2s_%d_t_%f_lz.dat", Manager.GetString("interaction-name"), 
-	   NbrFermions, LzMax, DeltaSAS);
+  sprintf (OutputNameLz, "fermions_sphere_su2_%s_n_%d_2s_%d_t_%f_h_%f_lz.dat", Manager.GetString("interaction-name"), 
+	   NbrFermions, LzMax, DeltaSAS, Zeeman);
 
   
   int Max = (((LzMax - (NbrFermions+1)/2 + 1) * ((NbrFermions+1)/2)) + ((LzMax - (NbrFermions)/2 + 1) * (NbrFermions/2)));
@@ -346,9 +352,9 @@ int main(int argc, char** argv)
         Memory = Architecture.GetArchitecture()->GetLocalMemory();
       
       AbstractQHEHamiltonian* Hamiltonian;      
-      Hamiltonian = new ParticleOnSphereBilayerHamiltonian(Space, NbrFermions, LzMax, PseudoPotentials,
+      Hamiltonian = new ParticleOnSphereWithSpinGenericHamiltonian(Space, NbrFermions, LzMax, PseudoPotentials,
 								   OneBodyPotentialUpUp, OneBodyPotentialDownDown,
-								   OneBodyPotentialUpDown, Qvector, 
+								   OneBodyPotentialUpDown, 
 								   Architecture.GetArchitecture(), Memory, onDiskCacheFlag,
 								   LoadPrecalculationFileName);
 
@@ -362,9 +368,9 @@ int main(int argc, char** argv)
       if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
 	{
 	  EigenvectorName = new char [120];
-	  sprintf (EigenvectorName, "fermions_sphere_su2_%s_n_%d_2s_%d_t_%f_lz_%d",
+	  sprintf (EigenvectorName, "fermions_sphere_su2_%s_n_%d_2s_%d_t_%f_h_%f_lz_%d",
 		   ((SingleStringOption*) Manager["interaction-name"])->GetString(), 
-		   NbrFermions, LzMax, DeltaSAS, L);
+		   NbrFermions, LzMax, DeltaSAS, Zeeman, L);
 	}
       QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);
       MainTaskOperation TaskOperation (&Task);

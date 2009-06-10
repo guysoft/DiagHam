@@ -52,4 +52,7 @@ ParticleOnDiskGenericHamiltonian.cc \
 ParticleOnDiskLPlusLMinusHamiltonian.cc \
 ParticleOnSphereGenericThreeBodyHamiltonian.cc \
 AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian.cc \
-ParticleOnSphereWithSpinGenericThreeBodyHamiltonian.cc
+ParticleOnSphereWithSpinGenericThreeBodyHamiltonian.cc \
+ParticleOnSphereQuantumWellHamiltonian.cc \
+AbstractQHEOnSphereQuantumWellHamiltonian.cc \
+ParticleOnSphereBilayerHamiltonian.cc

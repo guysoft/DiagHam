@@ -5,7 +5,7 @@
 //                                                                            //
 //                  Copyright (C) 2001-2004 Nicolas Regnault                  //
 //                                                                            //
-//                                 if (((SingleDoubleOption*) Manager["s2-factor"])->GetDouble() != 0.0)                                           //
+//                                                                            //
 //       class of hamiltonian associated to particles on a sphere with        //
 //     SU(2) spin and a generic interaction defined by its pseudopotential    //
 //                                                                            //
@@ -29,7 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "Hamiltonian/ParticleOnSphereWithSpinGenericHamiltonian.h"
+#include "Hamiltonian/ParticleOnSphereBilayerHamiltonian.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
@@ -53,10 +53,6 @@ using std::endl;
 using std::ostream;
 
 
-ParticleOnSphereWithSpinGenericHamiltonian::ParticleOnSphereWithSpinGenericHamiltonian()
-{
-}
-
 // constructor from default datas
 //
 // particles = Hilbert space associated to the system
@@ -72,8 +68,8 @@ ParticleOnSphereWithSpinGenericHamiltonian::ParticleOnSphereWithSpinGenericHamil
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
-ParticleOnSphereWithSpinGenericHamiltonian::ParticleOnSphereWithSpinGenericHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, 
-										       double** pseudoPotential, double* onebodyPotentialUpUp, double* onebodyPotentialDownDown, double* onebodyPotentialUpDown,
+ParticleOnSphereBilayerHamiltonian::ParticleOnSphereBilayerHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, 
+										       double** pseudoPotential, double* onebodyPotentialUpUp, double* onebodyPotentialDownDown, double* onebodyPotentialUpDown, double qvector,
 										       AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, 
 										       char* precalculationFileName)
 {
@@ -93,6 +89,7 @@ ParticleOnSphereWithSpinGenericHamiltonian::ParticleOnSphereWithSpinGenericHamil
       for (int i = 0; i < this->NbrLzValue; ++i)
 	this->PseudoPotentials[j][i] = pseudoPotential[j][this->LzMax - i];
     }
+  this->Qvector = qvector;
   this->EvaluateInteractionFactors();
   this->HamiltonianShift = 0.0;
   long MinIndex;
@@ -165,9 +162,9 @@ ParticleOnSphereWithSpinGenericHamiltonian::ParticleOnSphereWithSpinGenericHamil
 // destructor
 //
 
-ParticleOnSphereWithSpinGenericHamiltonian::~ParticleOnSphereWithSpinGenericHamiltonian() 
+ParticleOnSphereBilayerHamiltonian::~ParticleOnSphereBilayerHamiltonian() 
 {
-  for (int j = 0; j < 3; ++j)
+/*  for (int j = 0; j < 3; ++j)
     delete[] this->PseudoPotentials[j];
   delete[] this->PseudoPotentials;
   if (this->FastMultiplicationFlag == true)
@@ -196,97 +193,11 @@ ParticleOnSphereWithSpinGenericHamiltonian::~ParticleOnSphereWithSpinGenericHami
 	 }
        delete[] this->NbrInteractionPerComponent;
     }
+*/
 }
 
-// set Hilbert space
-//
-// hilbertSpace = pointer to Hilbert space to use
 
-void ParticleOnSphereWithSpinGenericHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
-{
-  delete[] this->InteractionFactors;
-  this->Particles = (ParticleOnSphere*) hilbertSpace;
-  this->EvaluateInteractionFactors();
-}
-
-// get Hilbert space on which Hamiltonian acts
-//
-// return value = pointer to used Hilbert space
-
-AbstractHilbertSpace* ParticleOnSphereWithSpinGenericHamiltonian::GetHilbertSpace ()
-{
-  return this->Particles;
-}
-
-// return dimension of Hilbert space where Hamiltonian acts
-//
-// return value = corresponding matrix elementdimension
-
-int ParticleOnSphereWithSpinGenericHamiltonian::GetHilbertSpaceDimension ()
-{
-  return this->Particles->GetHilbertSpaceDimension();
-}
-
-// shift Hamiltonian from a given energy
-//
-// shift = shift value
-
-void ParticleOnSphereWithSpinGenericHamiltonian::ShiftHamiltonian (double shift)
-{
-  this->HamiltonianShift = shift;
-}
-  
-// evaluate matrix element
-//
-// V1 = vector to left multiply with current matrix
-// V2 = vector to right multiply with current matrix
-// return value = corresponding matrix element
-
-Complex ParticleOnSphereWithSpinGenericHamiltonian::MatrixElement (RealVector& V1, RealVector& V2) 
-{
-  double x = 0.0;
-  int dim = this->Particles->GetHilbertSpaceDimension();
-  for (int i = 0; i < dim; i++)
-    {
-    }
-  return Complex(x);
-}
-  
-// evaluate matrix element
-//
-// V1 = vector to left multiply with current matrix
-// V2 = vector to right multiply with current matrix
-// return value = corresponding matrix element
-
-Complex ParticleOnSphereWithSpinGenericHamiltonian::MatrixElement (ComplexVector& V1, ComplexVector& V2) 
-{
-  return Complex();
-}
-
-// return a list of left interaction operators
-//
-// return value = list of left interaction operators
-
-List<Matrix*> ParticleOnSphereWithSpinGenericHamiltonian::LeftInteractionOperators()
-{
-  List<Matrix*> TmpList;
-  return TmpList;
-}
-
-// return a list of right interaction operators
-//
-// return value = list of right interaction operators
-
-List<Matrix*> ParticleOnSphereWithSpinGenericHamiltonian::RightInteractionOperators()
-{
-  List<Matrix*> TmpList;
-  return TmpList;
-}
-
-// evaluate all interaction factors
-//   
-
-void ParticleOnSphereWithSpinGenericHamiltonian::EvaluateInteractionFactors()
+void ParticleOnSphereBilayerHamiltonian::EvaluateInteractionFactors()
 {
 // this part of the code has been tested and is working (27/07/2007) but seems slower than the other method. This part is kept for testing purpose only
 
@@ -560,7 +471,7 @@ void ParticleOnSphereWithSpinGenericHamiltonian::EvaluateInteractionFactors()
 		      TmpCoefficient = ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
 		      this->InteractionFactorsupdown[i][Index] += this->PseudoPotentials[2][J >> 1] * TmpCoefficient;
 		    }
-		  this->InteractionFactorsupdown[i][Index] *= -Factor;
+		  this->InteractionFactorsupdown[i][Index] *= -Factor*cos(this->Qvector*((double)(m1-m3)));
 		  ++TotalNbrInteractionFactors;
 		  ++Index;
 		}
@@ -569,99 +480,6 @@ void ParticleOnSphereWithSpinGenericHamiltonian::EvaluateInteractionFactors()
     }
   else
     {
-      this->NbrIntraSectorSums = 2 * this->LzMax;
-      this->NbrIntraSectorIndicesPerSum = new int[this->NbrIntraSectorSums];
-      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
-	this->NbrIntraSectorIndicesPerSum[i] = 0;      
-      for (int m1 = 0; m1 < this->LzMax; ++m1)
-	for (int m2 = m1; m2 <= this->LzMax; ++m2)
-	  ++this->NbrIntraSectorIndicesPerSum[m1 + m2];
-      this->IntraSectorIndicesPerSum = new int* [this->NbrIntraSectorSums];
-      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
-	{
-	  this->IntraSectorIndicesPerSum[i] = new int[2 * this->NbrIntraSectorIndicesPerSum[i]];      
-	  this->NbrIntraSectorIndicesPerSum[i] = 0;
-	}
-      for (int m1 = 0; m1 < this->LzMax; ++m1)
-	for (int m2 = m1; m2 <= this->LzMax; ++m2)
-	  {
-	    this->IntraSectorIndicesPerSum[m1 + m2][this->NbrIntraSectorIndicesPerSum[m1 + m2] << 1] = m1;
-	    this->IntraSectorIndicesPerSum[m1 + m2][1 + (this->NbrIntraSectorIndicesPerSum[m1 + m2] << 1)] = m2;
-	    ++this->NbrIntraSectorIndicesPerSum[m1 + m2];
-	  }
-
-      this->InteractionFactorsupup = new double* [this->NbrIntraSectorSums];
-      this->InteractionFactorsdowndown = new double* [this->NbrIntraSectorSums];
-      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
-	{
-	  this->InteractionFactorsupup[i] = new double[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
-	  this->InteractionFactorsdowndown[i] = new double[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
-	  int Index = 0;
-	  for (int j1 = 0; j1 < this->NbrIntraSectorIndicesPerSum[i]; ++j1)
-	    {
-	      int m1 = (this->IntraSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMax;
-	      int m2 = (this->IntraSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMax;
-	      for (int j2 = 0; j2 < this->NbrIntraSectorIndicesPerSum[i]; ++j2)
-		{
-		  int m3 = (this->IntraSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMax;
-		  int m4 = (this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMax;
-		  Clebsch.InitializeCoefficientIterator(m1, m2);
-		  this->InteractionFactorsupup[i][Index] = 0.0;
-		  this->InteractionFactorsdowndown[i][Index] = 0.0;
-		  while (Clebsch.Iterate(J, ClebschCoef))
-		    {
-		      if (((J >> 1) & 1) != Sign)
-			{
-			  TmpCoefficient = ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
-			  this->InteractionFactorsupup[i][Index] += this->PseudoPotentials[0][J >> 1] * TmpCoefficient;
-			  this->InteractionFactorsdowndown[i][Index] += this->PseudoPotentials[1][J >> 1] * TmpCoefficient;
-			}
-		    }
-		  if (m1 != m2)
-		    {
-		      this->InteractionFactorsupup[i][Index] *= 2.0;
-		      this->InteractionFactorsdowndown[i][Index] *= 2.0;
-		    }
-		  if (m3 != m4)
-		    {
-		      this->InteractionFactorsupup[i][Index] *= 2.0;
-		      this->InteractionFactorsdowndown[i][Index] *= 2.0;
-		    }
-		  this->InteractionFactorsupup[i][Index] *= -1.0;
-		  this->InteractionFactorsdowndown[i][Index] *= -1.0;		  
-		  TotalNbrInteractionFactors += 2;
-		  ++Index;
-		}
-	    }
-	}
-
-      this->InteractionFactorsupdown = new double* [this->NbrInterSectorSums];
-      for (int i = 0; i < this->NbrInterSectorSums; ++i)
-	{
-	  this->InteractionFactorsupdown[i] = new double[this->NbrInterSectorIndicesPerSum[i] * this->NbrInterSectorIndicesPerSum[i]];
-	  int Index = 0;
-	  for (int j1 = 0; j1 < this->NbrInterSectorIndicesPerSum[i]; ++j1)
-	    {
-	      double Factor = 2.0;
-	      int m1 = (this->InterSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMax;
-	      int m2 = (this->InterSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMax;
-	      for (int j2 = 0; j2 < this->NbrInterSectorIndicesPerSum[i]; ++j2)
-		{
-		  int m3 = (this->InterSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMax;
-		  int m4 = (this->InterSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMax;
-		  Clebsch.InitializeCoefficientIterator(m1, m2);
-		  this->InteractionFactorsupdown[i][Index] = 0.0;
-		  while (Clebsch.Iterate(J, ClebschCoef))
-		    {
-		      TmpCoefficient = ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
-		      this->InteractionFactorsupdown[i][Index] += this->PseudoPotentials[2][J >> 1] * TmpCoefficient;
-		    }
-		  this->InteractionFactorsupdown[i][Index] *= -Factor;
-		  ++TotalNbrInteractionFactors;
-		  ++Index;
-		}
-	    }
-	}
     }
 
 

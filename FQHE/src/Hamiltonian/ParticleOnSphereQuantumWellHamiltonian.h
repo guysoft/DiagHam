@@ -29,13 +29,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PARTICLEONSPHEREWITHSPINGENERICHAMILTONIAN_H
-#define PARTICLEONSPHEREWITHSPINGENERICHAMILTONIAN_H
+#ifndef PARTICLEONSPHEREQUANTUMWELLHAMILTONIAN_H
+#define PARTICLEONSPHEREQUANTUMWELLHAMILTONIAN_H
 
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphereWithSpin.h"
-#include "Hamiltonian/AbstractQHEOnSphereWithSpinHamiltonian.h"
+#include "Hamiltonian/AbstractQHEOnSphereQuantumWellHamiltonian.h"
 
 #include <iostream>
 
@@ -47,7 +47,7 @@ class MathematicaOutput;
 class AbstractArchitecture;
 
 
-class ParticleOnSphereWithSpinGenericHamiltonian : public AbstractQHEOnSphereWithSpinHamiltonian
+class ParticleOnSphereQuantumWellHamiltonian : public AbstractQHEOnSphereQuantumWellHamiltonian
 {
 
   friend class QHEParticlePrecalculationOperation;
@@ -58,12 +58,7 @@ class ParticleOnSphereWithSpinGenericHamiltonian : public AbstractQHEOnSphereWit
   // first index refered to the spin sector (sorted as up-up, down-down, up-down)
   double** PseudoPotentials;
 
-  //parameter taking into account the in-plane field defined by Q=(B_paralel/B_perpendicular)*distance	
-  double Qvector;
-
  public:
-
-  ParticleOnSphereWithSpinGenericHamiltonian();
 
   // constructor from default datas
   //
@@ -79,7 +74,7 @@ class ParticleOnSphereWithSpinGenericHamiltonian : public AbstractQHEOnSphereWit
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnSphereWithSpinGenericHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, double** pseudoPotential,
+  ParticleOnSphereQuantumWellHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, double** pseudoPotential,
 					     double* onebodyPotentialUpUp, double* onebodyPotentialDownDown,
 					     double* onebodyPotentialUpDown, 
 					     AbstractArchitecture* architecture, long memory = -1, 
@@ -87,7 +82,7 @@ class ParticleOnSphereWithSpinGenericHamiltonian : public AbstractQHEOnSphereWit
 
   // destructor
   //
-  ~ParticleOnSphereWithSpinGenericHamiltonian();
+  ~ParticleOnSphereQuantumWellHamiltonian();
 
   // clone hamiltonian without duplicating datas
   //

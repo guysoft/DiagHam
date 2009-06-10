@@ -62,7 +62,7 @@ ExtendedHalperinWavefunction::ExtendedHalperinWavefunction()
 // s = power of Cauchy-permanent
 // t = power of overall Pfaffian factor
 // moveJastrowInside = flag to indicate whether Jastrow factors should be moved inside Cauchy determinant
-ExtendedHalperinWavefunction::ExtendedHalperinWavefunction(int nbrParticles, int k, int m, int p, int q, int r, int s, int t,bool moveJastrowInside )
+ExtendedHalperinWavefunction::ExtendedHalperinWavefunction(int nbrParticles, int k, int m, int p, int q, int r, int s, int t, int u, int v, int b, bool moveJastrowInside )
 {  
   if (nbrParticles&1)
     {
@@ -81,6 +81,8 @@ ExtendedHalperinWavefunction::ExtendedHalperinWavefunction(int nbrParticles, int
   this->R=r;
   this->S=s;
   this->T=t;
+  this->U=u;
+  this->V=v;
   // cout << "P="<<P<<" Q="<<Q<<" R="<<R<<" S="<<S<<endl;
   if ( (moveJastrowInside) && (P!=0) && (R==1))
     {
@@ -112,10 +114,26 @@ ExtendedHalperinWavefunction::ExtendedHalperinWavefunction(int nbrParticles, int
 #endif
   this->Matrix2 = new ComplexMatrix(this->NbrParticlesPerLayer,this->NbrParticlesPerLayer);
   
-  if (this->T>0)
+  if (this->T!=0)
     this->PfaffianFactor = new ComplexSkewSymmetricMatrix(this->NbrParticles);
   else
     this->PfaffianFactor = NULL;
+
+  if (this->U!=0)
+    this->PfaffianFactorIntraUp = new ComplexSkewSymmetricMatrix(this->NbrParticlesPerLayer);
+  else
+    this->PfaffianFactorIntraUp = NULL;
+
+  if (this->V!=0)
+    this->PfaffianFactorIntraDown = new ComplexSkewSymmetricMatrix(this->NbrParticlesPerLayer);
+  else
+    this->PfaffianFactorIntraDown = NULL;
+
+  if (this->B!=0)
+    this->PfaffianFactorInter = new ComplexSkewSymmetricMatrix(this->NbrParticlesPerLayer);
+  else
+    this->PfaffianFactorInter = NULL;
+
   
   this->J11 = new Complex[this->NbrParticlesPerLayer];
   this->J12 = new Complex[this->NbrParticlesPerLayer];
@@ -148,6 +166,9 @@ ExtendedHalperinWavefunction::ExtendedHalperinWavefunction(const ExtendedHalperi
   this->R=function.R;
   this->S=function.S;
   this->T=function.T;
+  this->U=function.U;  
+  this->V=function.V;
+  this->B=function.B;
   this->HaveDeterminant=function.HaveDeterminant;
   this->DeterminantNorm=function.DeterminantNorm;
   this->PermanentNorm=function.PermanentNorm;
@@ -161,10 +182,26 @@ ExtendedHalperinWavefunction::ExtendedHalperinWavefunction(const ExtendedHalperi
 #endif
   this->Matrix2 = new ComplexMatrix(this->NbrParticlesPerLayer,this->NbrParticlesPerLayer);
   
-  if (this->T>0)
+  if (this->T!=0)
     this->PfaffianFactor = new ComplexSkewSymmetricMatrix(this->NbrParticles);
   else
     this->PfaffianFactor = NULL;
+
+  if (this->U!=0)
+    this->PfaffianFactorIntraUp = new ComplexSkewSymmetricMatrix(this->NbrParticlesPerLayer);
+  else
+    this->PfaffianFactorIntraUp = NULL;
+
+  if (this->V!=0)
+    this->PfaffianFactorIntraDown = new ComplexSkewSymmetricMatrix(this->NbrParticlesPerLayer);
+  else
+    this->PfaffianFactorIntraDown = NULL;
+
+  if (this->B!=0)
+    this->PfaffianFactorInter = new ComplexSkewSymmetricMatrix(this->NbrParticlesPerLayer);
+  else
+    this->PfaffianFactorInter = NULL;
+
 
   this->J11 = new Complex[this->NbrParticlesPerLayer];
   this->J12 = new Complex[this->NbrParticlesPerLayer];
@@ -198,8 +235,15 @@ ExtendedHalperinWavefunction::~ExtendedHalperinWavefunction()
       delete [] J22;
       delete Matrix;
       delete Matrix2;
-      if (this->T>0)
+      if (this->T!=0)
 	delete [] PfaffianFactor;
+      if (this->U!=0)
+	delete [] PfaffianFactorIntraUp;
+      if (this->V!=0)
+	delete [] PfaffianFactorIntraDown;
+      if (this->B!=0)
+	delete [] PfaffianFactorInter;
+    
     }
 }
 
@@ -311,13 +355,48 @@ Complex ExtendedHalperinWavefunction::operator()(RealVector& x)
       for (int s=this->S; s>0; --s) result*=tmp;
       for (int s=this->S; s<0; ++s) result/=tmp;
     }
-  if (T>0)
+  //Calculate Pfaffian(s)
+  if (T!=0)
     {
       for (int i=1; i<NbrParticles; ++i)
 	for (int j=0; j<i; ++j)
 	  PfaffianFactor->SetMatrixElement(i,j,0.5*M_PI/JastrowFactorElements[i][j]);
-      result*=PfaffianFactor->Pfaffian();
+
+      tmp=PfaffianFactor->Pfaffian(); 	
+      for (int t=this->T; t>0; --t) result*=tmp;
+      for (int t=this->T; t<0; ++t) result/=tmp;
     }
+  if (U!=0)
+    {
+     for (int i=1; i<NbrParticlesPerLayer; ++i)
+	  for (int j=0; j<i; ++j)
+	     PfaffianFactorIntraUp->SetMatrixElement(i,j,0.5*M_PI/JastrowFactorElements[i][j]);
+
+      tmp=PfaffianFactorIntraUp->Pfaffian(); 	
+      for (int u=this->U; u>0; --u) result*=tmp;
+      for (int u=this->U; u<0; ++u) result/=tmp;
+    }
+  if (V!=0)
+    {
+     for (int i=NbrParticlesPerLayer+1; i<2*NbrParticlesPerLayer; ++i)
+	  for (int j=NbrParticlesPerLayer; j<i; ++j)
+	     PfaffianFactorIntraDown->SetMatrixElement(i-NbrParticlesPerLayer,j-NbrParticlesPerLayer,0.5*M_PI/JastrowFactorElements[i][j]);
+
+      tmp=PfaffianFactorIntraDown->Pfaffian(); 	
+      for (int v=this->V; v>0; --v) result*=tmp;
+      for (int v=this->V; v<0; ++v) result/=tmp;
+    }
+  if (B!=0)
+    {
+     for (int i=0; i<NbrParticlesPerLayer; ++i)
+	  for (int j=NbrParticlesPerLayer; j<2*NbrParticlesPerLayer; ++j)
+	     PfaffianFactorInter->SetMatrixElement(i,j-NbrParticlesPerLayer,0.5*M_PI/JastrowFactorElements[i][j]);
+
+      tmp=PfaffianFactorInter->Pfaffian(); 	
+      for (int b=this->B; b>0; --b) result*=tmp;
+      for (int b=this->B; b<0; ++b) result/=tmp;
+    }
+
   return result;
 }
 
@@ -415,6 +494,48 @@ Complex ExtendedHalperinWavefunction::CalculateFromSpinorVariables(ComplexVector
       for (int s=this->S; s>0; --s) result*=tmp;
       for (int s=this->S; s<0; ++s) result/=tmp;
     }
+  //Calculate Pfaffian(s)
+  if (T!=0)
+    {
+      for (int i=1; i<NbrParticles; ++i)
+	for (int j=0; j<i; ++j)
+	  PfaffianFactor->SetMatrixElement(i,j,0.5*M_PI/JastrowFactorElements[i][j]);
+
+      tmp=PfaffianFactor->Pfaffian(); 	
+      for (int t=this->T; t>0; --t) result*=tmp;
+      for (int t=this->T; t<0; ++t) result/=tmp;
+    }
+  if (U!=0)
+    {
+     for (int i=1; i<NbrParticlesPerLayer; ++i)
+	  for (int j=0; j<i; ++j)
+	     PfaffianFactorIntraUp->SetMatrixElement(i,j,0.5*M_PI/JastrowFactorElements[i][j]);
+
+      tmp=PfaffianFactorIntraUp->Pfaffian(); 	
+      for (int u=this->U; u>0; --u) result*=tmp;
+      for (int u=this->U; u<0; ++u) result/=tmp;
+    }
+  if (V!=0)
+    {
+     for (int i=NbrParticlesPerLayer+1; i<2*NbrParticlesPerLayer; ++i)
+	  for (int j=NbrParticlesPerLayer; j<i; ++j)
+	     PfaffianFactorIntraDown->SetMatrixElement(i-NbrParticlesPerLayer,j-NbrParticlesPerLayer,0.5*M_PI/JastrowFactorElements[i][j]);
+
+      tmp=PfaffianFactorIntraDown->Pfaffian(); 	
+      for (int v=this->V; v>0; --v) result*=tmp;
+      for (int v=this->V; v<0; ++v) result/=tmp;
+    }
+  if (B!=0)
+    {
+     for (int i=0; i<NbrParticlesPerLayer; ++i)
+	  for (int j=NbrParticlesPerLayer; j<2*NbrParticlesPerLayer; ++j)
+	     PfaffianFactorInter->SetMatrixElement(i,j-NbrParticlesPerLayer,0.5*M_PI/JastrowFactorElements[i][j]);
+
+      tmp=PfaffianFactorInter->Pfaffian(); 	
+      for (int b=this->B; b>0; --b) result*=tmp;
+      for (int b=this->B; b<0; ++b) result/=tmp;
+    }
+
   return result;
 }
 

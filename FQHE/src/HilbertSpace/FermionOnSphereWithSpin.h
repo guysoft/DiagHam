@@ -29,8 +29,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef FERMIONONSPHEREWITHSPINNOTAB_H
-#define FERMIONONSPHEREWITHSPINNOTAB_H
+#ifndef FERMIONONSPHEREWITHSPIN_H
+#define FERMIONONSPHEREWITHSPIN_H
 
 
 #include "config.h"
@@ -52,6 +52,7 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   friend class FermionOnSphereWithSU4Spin;
   friend class FermionOnSphereWithSpinAllSz;
   friend class FermionOnSphereWithSpinHaldaneBasis;
+  friend class FermionOnSphereWithSpinAllSzLzSymmetry;
 
 
  protected:

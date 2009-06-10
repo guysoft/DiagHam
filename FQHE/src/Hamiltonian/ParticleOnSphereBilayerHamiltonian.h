@@ -29,13 +29,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PARTICLEONSPHEREWITHSPINGENERICHAMILTONIAN_H
-#define PARTICLEONSPHEREWITHSPINGENERICHAMILTONIAN_H
+#ifndef PARTICLEONSPHEREBILAYERHAMILTONIAN_H
+#define PARTICLEONSPHEREBILAYERHAMILTONIAN_H
 
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphereWithSpin.h"
-#include "Hamiltonian/AbstractQHEOnSphereWithSpinHamiltonian.h"
+#include "Hamiltonian/ParticleOnSphereWithSpinGenericHamiltonian.h"
 
 #include <iostream>
 
@@ -47,23 +47,17 @@ class MathematicaOutput;
 class AbstractArchitecture;
 
 
-class ParticleOnSphereWithSpinGenericHamiltonian : public AbstractQHEOnSphereWithSpinHamiltonian
+class ParticleOnSphereBilayerHamiltonian : public ParticleOnSphereWithSpinGenericHamiltonian
 {
 
   friend class QHEParticlePrecalculationOperation;
 
  protected:
 
-  // array with the pseudo-potentials (ordered such that the last element corresponds to the delta interaction)
-  // first index refered to the spin sector (sorted as up-up, down-down, up-down)
-  double** PseudoPotentials;
-
   //parameter taking into account the in-plane field defined by Q=(B_paralel/B_perpendicular)*distance	
   double Qvector;
 
  public:
-
-  ParticleOnSphereWithSpinGenericHamiltonian();
 
   // constructor from default datas
   //
@@ -79,71 +73,71 @@ class ParticleOnSphereWithSpinGenericHamiltonian : public AbstractQHEOnSphereWit
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnSphereWithSpinGenericHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, double** pseudoPotential,
+  ParticleOnSphereBilayerHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, double** pseudoPotential,
 					     double* onebodyPotentialUpUp, double* onebodyPotentialDownDown,
-					     double* onebodyPotentialUpDown, 
+					     double* onebodyPotentialUpDown, double qvector,
 					     AbstractArchitecture* architecture, long memory = -1, 
 					     bool onDiskCacheFlag = false, char* precalculationFileName = 0);
 
   // destructor
   //
-  ~ParticleOnSphereWithSpinGenericHamiltonian();
+  ~ParticleOnSphereBilayerHamiltonian();
 
   // clone hamiltonian without duplicating datas
   //
   // return value = pointer to cloned hamiltonian
-  AbstractHamiltonian* Clone ();
+  //AbstractHamiltonian* Clone ();
 
   // set Hilbert space
   //
   // hilbertSpace = pointer to Hilbert space to use
-  void SetHilbertSpace (AbstractHilbertSpace* hilbertSpace);
+  //void SetHilbertSpace (AbstractHilbertSpace* hilbertSpace);
 
   // get Hilbert space on which Hamiltonian acts
   //
   // return value = pointer to used Hilbert space
-  AbstractHilbertSpace* GetHilbertSpace ();
+  //AbstractHilbertSpace* GetHilbertSpace ();
 
   // return dimension of Hilbert space where Hamiltonian acts
   //
   // return value = corresponding matrix elementdimension
-  int GetHilbertSpaceDimension ();
+  //int GetHilbertSpaceDimension ();
   
   // shift Hamiltonian from a given energy
   //
   // shift = shift value
-  void ShiftHamiltonian (double shift);
+  //void ShiftHamiltonian (double shift);
 
   // evaluate matrix element
   //
   // V1 = vector to left multiply with current matrix
   // V2 = vector to right multiply with current matrix
   // return value = corresponding matrix element
-  Complex MatrixElement (RealVector& V1, RealVector& V2);
+  //Complex MatrixElement (RealVector& V1, RealVector& V2);
   
   // evaluate matrix element
   //
   // V1 = vector to left multiply with current matrix
   // V2 = vector to right multiply with current matrix
   // return value = corresponding matrix element
-  Complex MatrixElement (ComplexVector& V1, ComplexVector& V2);
+  //Complex MatrixElement (ComplexVector& V1, ComplexVector& V2);
 
   // return a list of left interaction operators
   //
   // return value = list of left interaction operators
-  List<Matrix*> LeftInteractionOperators();  
+  //List<Matrix*> LeftInteractionOperators();  
 
   // return a list of right interaction operators 
   //
   // return value = list of right interaction operators
-  List<Matrix*> RightInteractionOperators();  
+  //List<Matrix*> RightInteractionOperators();  
 
 
  protected:
  
   // evaluate all interaction factors
   //   
-  void EvaluateInteractionFactors();
+  virtual void EvaluateInteractionFactors();
 
 
 };

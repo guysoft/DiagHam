@@ -143,42 +143,8 @@ typedef struct { doublereal r, i; } doublecomplex;
 
 // define long long types (128 bits on x86_64 architecture, 64 bits elsewhere)
 
-#ifdef __x86_64__
-
-
-#ifdef __INTEL_COMPILER
-
-// test if we might be running the LP64 / Intel hybrid (e.g. Darwin HPC facility)
-#ifdef __LP64__
-
 #define LONGLONG long long
 #define ULONGLONG unsigned long long
-
-#else
-
-#define __128_BIT_LONGLONG__
-#define LONGLONG __m128i
-#define ULONGLONG __m128i
-
-#endif
-
-#else
-
-typedef int int128_t __attribute__((__mode__(TI)));
-typedef unsigned int uint128_t __attribute__((__mode__(TI)));
-
-#define __128_BIT_LONGLONG__
-#define LONGLONG int128_t
-#define ULONGLONG uint128_t
-
-#endif
-
-#else
-
-#define LONGLONG long long
-#define ULONGLONG unsigned long long
-
-#endif
 
 // package option
 //

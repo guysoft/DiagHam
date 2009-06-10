@@ -234,7 +234,12 @@ namespace DiagPseudoPotentials
     // call inner integral over z2, maybe change algorithm by choosing other KEY values
     gsl_integration_qag (parameters->innerIntegral, parameters->Z2min, parameters->Z2max,
 			 parameters->epsAbs, parameters->epsRel, parameters->sizeW,
-			 /* KEY */ GSL_INTEG_GAUSS41, parameters->w, &result, &error);        
+			 /* KEY */ GSL_INTEG_GAUSS15, parameters->w, &result, &error);        
+//    gsl_integration_qags (parameters->innerIntegral, parameters->Z2min, parameters->Z2max,
+//			 parameters->epsAbs, parameters->epsRel, parameters->sizeW,
+//			 parameters->w, &result, &error);        
+
+
     return result*parameters->Rho1->GetValue(z1);
   }
   
@@ -334,8 +339,10 @@ double* EvaluateFiniteWidthPseudoPotentials(int nbrFlux, int landauLevel, Abstra
       
       // call the outer integration over z1
       gsl_integration_qag (&TheOuterIntegrand, Z1min, Z1max, OuterParameters.epsAbs, OuterParameters.epsRel,
-			   OuterParameters.sizeW, /* KEY */ GSL_INTEG_GAUSS41, IntW1, &result, &error);        
-      
+      			   OuterParameters.sizeW, /* KEY */ GSL_INTEG_GAUSS15, IntW1, &result, &error);        
+//	gsl_integration_qags (&TheOuterIntegrand, Z1min, Z1max, OuterParameters.epsAbs, OuterParameters.epsRel,
+  //                    OuterParameters.sizeW, IntW1, &result, &error);              
+
       FinalPseudopotentials[l]=result;
       cout << "V_"<<l<<"="<<result<<" +/- "<< error<<endl;
     }
@@ -433,7 +440,7 @@ double* EvaluateFiniteWidthPseudoPotentialsNoInterpolation(int nbrFlux, int land
       InnerParameters.relativeM = MaxMomentum-l;
       // call the outer integration over z1
       gsl_integration_qag (&TheOuterIntegrand, Z1min, Z1max, OuterParameters.epsAbs, OuterParameters.epsRel,
-			   OuterParameters.sizeW, /* KEY */ GSL_INTEG_GAUSS31, IntW1, &result, &error);        
+			   OuterParameters.sizeW, /* KEY */ GSL_INTEG_GAUSS61, IntW1, &result, &error);        
       
       FinalPseudopotentials[l]=result;
       cout << "V_"<<l<<"="<<result<<" +/- "<< error<<endl;

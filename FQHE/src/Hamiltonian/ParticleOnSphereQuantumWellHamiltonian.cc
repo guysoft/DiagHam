@@ -5,7 +5,7 @@
 //                                                                            //
 //                  Copyright (C) 2001-2004 Nicolas Regnault                  //
 //                                                                            //
-//                                 if (((SingleDoubleOption*) Manager["s2-factor"])->GetDouble() != 0.0)                                           //
+//                                                                            //
 //       class of hamiltonian associated to particles on a sphere with        //
 //     SU(2) spin and a generic interaction defined by its pseudopotential    //
 //                                                                            //
@@ -29,7 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "Hamiltonian/ParticleOnSphereWithSpinGenericHamiltonian.h"
+#include "Hamiltonian/ParticleOnSphereQuantumWellHamiltonian.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
@@ -53,10 +53,6 @@ using std::endl;
 using std::ostream;
 
 
-ParticleOnSphereWithSpinGenericHamiltonian::ParticleOnSphereWithSpinGenericHamiltonian()
-{
-}
-
 // constructor from default datas
 //
 // particles = Hilbert space associated to the system
@@ -72,10 +68,7 @@ ParticleOnSphereWithSpinGenericHamiltonian::ParticleOnSphereWithSpinGenericHamil
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
-ParticleOnSphereWithSpinGenericHamiltonian::ParticleOnSphereWithSpinGenericHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, 
-										       double** pseudoPotential, double* onebodyPotentialUpUp, double* onebodyPotentialDownDown, double* onebodyPotentialUpDown,
-										       AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, 
-										       char* precalculationFileName)
+ParticleOnSphereQuantumWellHamiltonian::ParticleOnSphereQuantumWellHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, double** pseudoPotential, double* onebodyPotentialUpUp, double* onebodyPotentialDownDown, double* onebodyPotentialUpDown, AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, char* precalculationFileName)
 {
   this->Particles = particles;
   this->LzMax = lzmax;
@@ -84,10 +77,10 @@ ParticleOnSphereWithSpinGenericHamiltonian::ParticleOnSphereWithSpinGenericHamil
   this->FastMultiplicationFlag = false;
   this->OneBodyTermFlag = false;
   this->Architecture = architecture;
-  this->PseudoPotentials = new double* [3];
+  this->PseudoPotentials = new double* [4];
   this->L2Hamiltonian = 0;
   this->S2Hamiltonian = 0;
-  for (int j = 0; j < 3; ++j)
+  for (int j = 0; j < 4; ++j)
     {
       this->PseudoPotentials[j] = new double [this->NbrLzValue];
       for (int i = 0; i < this->NbrLzValue; ++i)
@@ -165,9 +158,9 @@ ParticleOnSphereWithSpinGenericHamiltonian::ParticleOnSphereWithSpinGenericHamil
 // destructor
 //
 
-ParticleOnSphereWithSpinGenericHamiltonian::~ParticleOnSphereWithSpinGenericHamiltonian() 
+ParticleOnSphereQuantumWellHamiltonian::~ParticleOnSphereQuantumWellHamiltonian() 
 {
-  for (int j = 0; j < 3; ++j)
+  for (int j = 0; j < 4; ++j)
     delete[] this->PseudoPotentials[j];
   delete[] this->PseudoPotentials;
   if (this->FastMultiplicationFlag == true)
@@ -202,7 +195,7 @@ ParticleOnSphereWithSpinGenericHamiltonian::~ParticleOnSphereWithSpinGenericHami
 //
 // hilbertSpace = pointer to Hilbert space to use
 
-void ParticleOnSphereWithSpinGenericHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
+void ParticleOnSphereQuantumWellHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
 {
   delete[] this->InteractionFactors;
   this->Particles = (ParticleOnSphere*) hilbertSpace;
@@ -213,7 +206,7 @@ void ParticleOnSphereWithSpinGenericHamiltonian::SetHilbertSpace (AbstractHilber
 //
 // return value = pointer to used Hilbert space
 
-AbstractHilbertSpace* ParticleOnSphereWithSpinGenericHamiltonian::GetHilbertSpace ()
+AbstractHilbertSpace* ParticleOnSphereQuantumWellHamiltonian::GetHilbertSpace ()
 {
   return this->Particles;
 }
@@ -222,7 +215,7 @@ AbstractHilbertSpace* ParticleOnSphereWithSpinGenericHamiltonian::GetHilbertSpac
 //
 // return value = corresponding matrix elementdimension
 
-int ParticleOnSphereWithSpinGenericHamiltonian::GetHilbertSpaceDimension ()
+int ParticleOnSphereQuantumWellHamiltonian::GetHilbertSpaceDimension ()
 {
   return this->Particles->GetHilbertSpaceDimension();
 }
@@ -231,7 +224,7 @@ int ParticleOnSphereWithSpinGenericHamiltonian::GetHilbertSpaceDimension ()
 //
 // shift = shift value
 
-void ParticleOnSphereWithSpinGenericHamiltonian::ShiftHamiltonian (double shift)
+void ParticleOnSphereQuantumWellHamiltonian::ShiftHamiltonian (double shift)
 {
   this->HamiltonianShift = shift;
 }
@@ -242,7 +235,7 @@ void ParticleOnSphereWithSpinGenericHamiltonian::ShiftHamiltonian (double shift)
 // V2 = vector to right multiply with current matrix
 // return value = corresponding matrix element
 
-Complex ParticleOnSphereWithSpinGenericHamiltonian::MatrixElement (RealVector& V1, RealVector& V2) 
+Complex ParticleOnSphereQuantumWellHamiltonian::MatrixElement (RealVector& V1, RealVector& V2) 
 {
   double x = 0.0;
   int dim = this->Particles->GetHilbertSpaceDimension();
@@ -258,7 +251,7 @@ Complex ParticleOnSphereWithSpinGenericHamiltonian::MatrixElement (RealVector& V
 // V2 = vector to right multiply with current matrix
 // return value = corresponding matrix element
 
-Complex ParticleOnSphereWithSpinGenericHamiltonian::MatrixElement (ComplexVector& V1, ComplexVector& V2) 
+Complex ParticleOnSphereQuantumWellHamiltonian::MatrixElement (ComplexVector& V1, ComplexVector& V2) 
 {
   return Complex();
 }
@@ -267,7 +260,7 @@ Complex ParticleOnSphereWithSpinGenericHamiltonian::MatrixElement (ComplexVector
 //
 // return value = list of left interaction operators
 
-List<Matrix*> ParticleOnSphereWithSpinGenericHamiltonian::LeftInteractionOperators()
+List<Matrix*> ParticleOnSphereQuantumWellHamiltonian::LeftInteractionOperators()
 {
   List<Matrix*> TmpList;
   return TmpList;
@@ -277,7 +270,7 @@ List<Matrix*> ParticleOnSphereWithSpinGenericHamiltonian::LeftInteractionOperato
 //
 // return value = list of right interaction operators
 
-List<Matrix*> ParticleOnSphereWithSpinGenericHamiltonian::RightInteractionOperators()
+List<Matrix*> ParticleOnSphereQuantumWellHamiltonian::RightInteractionOperators()
 {
   List<Matrix*> TmpList;
   return TmpList;
@@ -286,7 +279,7 @@ List<Matrix*> ParticleOnSphereWithSpinGenericHamiltonian::RightInteractionOperat
 // evaluate all interaction factors
 //   
 
-void ParticleOnSphereWithSpinGenericHamiltonian::EvaluateInteractionFactors()
+void ParticleOnSphereQuantumWellHamiltonian::EvaluateInteractionFactors()
 {
 // this part of the code has been tested and is working (27/07/2007) but seems slower than the other method. This part is kept for testing purpose only
 
@@ -460,6 +453,7 @@ void ParticleOnSphereWithSpinGenericHamiltonian::EvaluateInteractionFactors()
     Sign = 0;
   double TmpCoefficient = 0.0;
 
+//INTER
   this->NbrInterSectorSums = 2 * this->LzMax + 1;
   this->NbrInterSectorIndicesPerSum = new int[this->NbrInterSectorSums];
   for (int i = 0; i < this->NbrInterSectorSums; ++i)
@@ -481,8 +475,11 @@ void ParticleOnSphereWithSpinGenericHamiltonian::EvaluateInteractionFactors()
 	++this->NbrInterSectorIndicesPerSum[(m1 + m2)];
       }
 
+//FERMIONS ONLY
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
+
+//INTRA
       this->NbrIntraSectorSums = 2 * this->LzMax - 1;
       this->NbrIntraSectorIndicesPerSum = new int[this->NbrIntraSectorSums];
       for (int i = 0; i < this->NbrIntraSectorSums; ++i)
@@ -537,7 +534,9 @@ void ParticleOnSphereWithSpinGenericHamiltonian::EvaluateInteractionFactors()
 		  ++Index;
 		}
 	    }
-	}
+       }
+
+//FILL IN INTER
 
       this->InteractionFactorsupdown = new double* [this->NbrInterSectorSums];
       for (int i = 0; i < this->NbrInterSectorSums; ++i)
@@ -566,102 +565,133 @@ void ParticleOnSphereWithSpinGenericHamiltonian::EvaluateInteractionFactors()
 		}
 	    }
 	}
-    }
-  else
-    {
-      this->NbrIntraSectorSums = 2 * this->LzMax;
-      this->NbrIntraSectorIndicesPerSum = new int[this->NbrIntraSectorSums];
-      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
-	this->NbrIntraSectorIndicesPerSum[i] = 0;      
+
+//*********************************************************************************************************
+//********************************     M I X E D     T E R M S ***********************************************
+//*********************************************************************************************************
+// Mixed term indices that have the same structure as intra terms
+
+     this->NbrMixedIntraSectorSums = 2 * this->LzMax - 1;
+      this->NbrMixedIntraSectorIndicesPerSum = new int[this->NbrMixedIntraSectorSums];
+      for (int i = 0; i < this->NbrMixedIntraSectorSums; ++i)
+	this->NbrMixedIntraSectorIndicesPerSum[i] = 0;      
       for (int m1 = 0; m1 < this->LzMax; ++m1)
-	for (int m2 = m1; m2 <= this->LzMax; ++m2)
-	  ++this->NbrIntraSectorIndicesPerSum[m1 + m2];
-      this->IntraSectorIndicesPerSum = new int* [this->NbrIntraSectorSums];
-      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
+	for (int m2 = m1 + 1; m2 <= this->LzMax; ++m2)
+	  ++this->NbrMixedIntraSectorIndicesPerSum[(m1 + m2) - 1];
+      this->MixedIntraSectorIndicesPerSum = new int* [this->NbrMixedIntraSectorSums];
+      for (int i = 0; i < this->NbrMixedIntraSectorSums; ++i)
 	{
-	  this->IntraSectorIndicesPerSum[i] = new int[2 * this->NbrIntraSectorIndicesPerSum[i]];      
-	  this->NbrIntraSectorIndicesPerSum[i] = 0;
+	  this->MixedIntraSectorIndicesPerSum[i] = new int[2 * this->NbrMixedIntraSectorIndicesPerSum[i]];      
+	  this->NbrMixedIntraSectorIndicesPerSum[i] = 0;
 	}
       for (int m1 = 0; m1 < this->LzMax; ++m1)
-	for (int m2 = m1; m2 <= this->LzMax; ++m2)
+	for (int m2 = m1 + 1; m2 <= this->LzMax; ++m2)
 	  {
-	    this->IntraSectorIndicesPerSum[m1 + m2][this->NbrIntraSectorIndicesPerSum[m1 + m2] << 1] = m1;
-	    this->IntraSectorIndicesPerSum[m1 + m2][1 + (this->NbrIntraSectorIndicesPerSum[m1 + m2] << 1)] = m2;
-	    ++this->NbrIntraSectorIndicesPerSum[m1 + m2];
+	    this->MixedIntraSectorIndicesPerSum[(m1 + m2) - 1][this->NbrMixedIntraSectorIndicesPerSum[(m1 + m2) - 1] << 1] = m1;
+	    this->MixedIntraSectorIndicesPerSum[(m1 + m2) - 1][1 + (this->NbrMixedIntraSectorIndicesPerSum[(m1 + m2) - 1] << 1)] = m2;
+	    ++this->NbrMixedIntraSectorIndicesPerSum[(m1 + m2) - 1];
 	  }
 
-      this->InteractionFactorsupup = new double* [this->NbrIntraSectorSums];
-      this->InteractionFactorsdowndown = new double* [this->NbrIntraSectorSums];
-      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
+//Fill in the matrix elements
+
+      this->InteractionFactorsmixedintra= new double* [this->NbrMixedIntraSectorSums];
+      for (int i = 0; i < this->NbrMixedIntraSectorSums; ++i)
 	{
-	  this->InteractionFactorsupup[i] = new double[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
-	  this->InteractionFactorsdowndown[i] = new double[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
+	  this->InteractionFactorsmixedintra[i] = new double[this->NbrMixedIntraSectorIndicesPerSum[i] * this->NbrMixedIntraSectorIndicesPerSum[i]];
 	  int Index = 0;
-	  for (int j1 = 0; j1 < this->NbrIntraSectorIndicesPerSum[i]; ++j1)
+	  for (int j1 = 0; j1 < this->NbrMixedIntraSectorIndicesPerSum[i]; ++j1)
 	    {
-	      int m1 = (this->IntraSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMax;
-	      int m2 = (this->IntraSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMax;
-	      for (int j2 = 0; j2 < this->NbrIntraSectorIndicesPerSum[i]; ++j2)
+	      int m1 = (this->MixedIntraSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMax;
+	      int m2 = (this->MixedIntraSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMax;
+	      for (int j2 = 0; j2 < this->NbrMixedIntraSectorIndicesPerSum[i]; ++j2)
 		{
-		  int m3 = (this->IntraSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMax;
-		  int m4 = (this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMax;
+		  int m3 = (this->MixedIntraSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMax;
+		  int m4 = (this->MixedIntraSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMax;
 		  Clebsch.InitializeCoefficientIterator(m1, m2);
-		  this->InteractionFactorsupup[i][Index] = 0.0;
-		  this->InteractionFactorsdowndown[i][Index] = 0.0;
+		  this->InteractionFactorsmixedintra[i][Index] = 0.0;
 		  while (Clebsch.Iterate(J, ClebschCoef))
 		    {
-		      if (((J >> 1) & 1) != Sign)
+		      if (((J >> 1) & 1) == Sign)
 			{
 			  TmpCoefficient = ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
-			  this->InteractionFactorsupup[i][Index] += this->PseudoPotentials[0][J >> 1] * TmpCoefficient;
-			  this->InteractionFactorsdowndown[i][Index] += this->PseudoPotentials[1][J >> 1] * TmpCoefficient;
+			  this->InteractionFactorsmixedintra[i][Index] += this->PseudoPotentials[3][J >> 1] * TmpCoefficient;
 			}
 		    }
-		  if (m1 != m2)
-		    {
-		      this->InteractionFactorsupup[i][Index] *= 2.0;
-		      this->InteractionFactorsdowndown[i][Index] *= 2.0;
-		    }
-		  if (m3 != m4)
-		    {
-		      this->InteractionFactorsupup[i][Index] *= 2.0;
-		      this->InteractionFactorsdowndown[i][Index] *= 2.0;
-		    }
-		  this->InteractionFactorsupup[i][Index] *= -1.0;
-		  this->InteractionFactorsdowndown[i][Index] *= -1.0;		  
+		  this->InteractionFactorsmixedintra[i][Index] *= -4.0;
 		  TotalNbrInteractionFactors += 2;
 		  ++Index;
 		}
 	    }
-	}
+        }
 
-      this->InteractionFactorsupdown = new double* [this->NbrInterSectorSums];
-      for (int i = 0; i < this->NbrInterSectorSums; ++i)
+
+//Mixed term indices that have the same structure as inter terms
+
+
+    this->NbrMixedInterSectorSums = 2 * this->LzMax + 1;
+    this->NbrMixedInterSectorIndicesPerSum = new int[this->NbrMixedInterSectorSums];
+    for (int i = 0; i < this->NbrMixedInterSectorSums; ++i)
+     this->NbrMixedInterSectorIndicesPerSum[i] = 0;
+    for (int m1 = 0; m1 <= this->LzMax; ++m1)
+     for (int m2 = 0; m2 <= this->LzMax; ++m2)
+       ++this->NbrMixedInterSectorIndicesPerSum[m1 + m2];      
+    this->MixedInterSectorIndicesPerSum = new int* [this->NbrMixedInterSectorSums];
+    for (int i = 0; i < this->NbrMixedInterSectorSums; ++i)
+     {
+       this->MixedInterSectorIndicesPerSum[i] = new int[2 * this->NbrMixedInterSectorIndicesPerSum[i]];      
+       this->NbrMixedInterSectorIndicesPerSum[i] = 0;
+     }
+    for (int m1 = 0; m1 <= this->LzMax; ++m1)
+      for (int m2 = 0; m2 <= this->LzMax; ++m2)
+       {
+	 this->MixedInterSectorIndicesPerSum[(m1 + m2)][this->NbrMixedInterSectorIndicesPerSum[(m1 + m2)] << 1] = m1;
+	 this->MixedInterSectorIndicesPerSum[(m1 + m2)][1 + (this->NbrMixedInterSectorIndicesPerSum[(m1 + m2)] << 1)] = m2;
+	 ++this->NbrMixedInterSectorIndicesPerSum[(m1 + m2)];
+       }
+
+
+//Fill in the matrix elements
+
+
+      this->InteractionFactorsmixedinter = new double* [this->NbrMixedInterSectorSums];
+      for (int i = 0; i < this->NbrMixedInterSectorSums; ++i)
 	{
-	  this->InteractionFactorsupdown[i] = new double[this->NbrInterSectorIndicesPerSum[i] * this->NbrInterSectorIndicesPerSum[i]];
+	  this->InteractionFactorsmixedinter[i] = new double[this->NbrMixedInterSectorIndicesPerSum[i] * this->NbrMixedInterSectorIndicesPerSum[i]];
 	  int Index = 0;
-	  for (int j1 = 0; j1 < this->NbrInterSectorIndicesPerSum[i]; ++j1)
+	  for (int j1 = 0; j1 < this->NbrMixedInterSectorIndicesPerSum[i]; ++j1)
 	    {
 	      double Factor = 2.0;
-	      int m1 = (this->InterSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMax;
-	      int m2 = (this->InterSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMax;
-	      for (int j2 = 0; j2 < this->NbrInterSectorIndicesPerSum[i]; ++j2)
+	      int m1 = (this->MixedInterSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMax;
+	      int m2 = (this->MixedInterSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMax;
+	      for (int j2 = 0; j2 < this->NbrMixedInterSectorIndicesPerSum[i]; ++j2)
 		{
-		  int m3 = (this->InterSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMax;
-		  int m4 = (this->InterSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMax;
+		  int m3 = (this->MixedInterSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMax;
+		  int m4 = (this->MixedInterSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMax;
 		  Clebsch.InitializeCoefficientIterator(m1, m2);
-		  this->InteractionFactorsupdown[i][Index] = 0.0;
+		  this->InteractionFactorsmixedinter[i][Index] = 0.0;
 		  while (Clebsch.Iterate(J, ClebschCoef))
 		    {
 		      TmpCoefficient = ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
-		      this->InteractionFactorsupdown[i][Index] += this->PseudoPotentials[2][J >> 1] * TmpCoefficient;
+		      this->InteractionFactorsmixedinter[i][Index] += this->PseudoPotentials[3][J >> 1] * TmpCoefficient;
 		    }
-		  this->InteractionFactorsupdown[i][Index] *= -Factor;
+		  //The sign of the Factor is opposite to UpDown case
+		  this->InteractionFactorsmixedinter[i][Index] *= Factor;
 		  ++TotalNbrInteractionFactors;
 		  ++Index;
 		}
 	    }
 	}
+
+
+
+
+//*********************************************************************************************************
+//********************************     M I X E D     T E R M S ***********************************************
+//*********************************************************************************************************
+
+    }
+  else
+    {
     }
 
 

@@ -132,7 +132,7 @@ FermionOnSphereWithSpinAllSz::FermionOnSphereWithSpinAllSz (int nbrFermions, int
 //       exit(1);
 //     }
   
-  this->HilbertSpaceDimension = this->GenerateStates(this->NbrFermions, (this->LzMax<<1)+1, (this->LzMax<<1)+1, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 0x0l);
+  this->HilbertSpaceDimension = this->GenerateStates(this->NbrFermions, (this->LzMax<<1)+1, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 0x0l);
 
 // this->HilbertSpaceDimension = OldGenerateStates(this->NbrFermions, this->LzMax, this->TotalLz);
   
@@ -146,6 +146,21 @@ FermionOnSphereWithSpinAllSz::FermionOnSphereWithSpinAllSz (int nbrFermions, int
     delete [] MaxTotalLz[i];
   delete [] MaxTotalLz;
 
+/*
+  for (int i=0; i<HilbertSpaceDimension; ++i)
+    {
+      unsigned long TmpState = this->StateDescription[i];
+      int TmpPos = this->LzMax << 1;
+      int TmpSzValue=0;
+      while (TmpPos >= 0)
+	{
+	  TmpSzValue+=((TmpState>>(TmpPos+1)) & 0x1ul) - ( (TmpState>>TmpPos) & 0x1ul );
+	  TmpPos -= 2;
+	}	
+	cout<<"Basis vector index= "<<i<<"      "; this->PrintState(cout, i); cout<<"  Sz="<<TmpSzValue<<endl;
+
+    }
+*/
 
 #ifdef __DEBUG__
   int UsedMemory = 0;
@@ -357,14 +372,14 @@ int FermionOnSphereWithSpinAllSz::AddAu (int index, int m, int n, double& coeffi
 // generate all states corresponding to the constraints
 // 
 // nbrFermions = number of fermions
-// posMax = highest bit occupied by a fermion
-// currentPosMax = momentum maximum value for a fermion in the state
+// lzMax = momentum maximum value for a fermion in the state
 // totalLz = momentum total value
 // pos = position in StateDescription array where to store states
 // return value = position from which new states have to be stored
-long FermionOnSphereWithSpinAllSz::GenerateStates(int nbrFermions, int posMax, int currentPosMax, int totalLz, long pos)
+
+long FermionOnSphereWithSpinAllSz::GenerateStates(int nbrFermions, int posMax, int totalLz, long pos)
 {
-  if ((nbrFermions == 0) || (totalLz < 0)  || (currentPosMax < (nbrFermions - 1)))
+  if ((nbrFermions == 0) || (totalLz < 0)  || (posMax < (nbrFermions - 1)))
     return pos;
   
 //   if ((nbrFermions == 0) && (totalLz == 0)) // this could occur only if we assigned two fermions at once
@@ -375,7 +390,7 @@ long FermionOnSphereWithSpinAllSz::GenerateStates(int nbrFermions, int posMax, i
 //       return pos;
 //     }
 
-  int LzTotalMax = this->MaxTotalLz[currentPosMax][nbrFermions];  
+  int LzTotalMax = this->MaxTotalLz[posMax][nbrFermions];  
 //   int LzTotalMax = 0;
 //   for (int n=0; n<nbrFermions; ++n) LzTotalMax += (currentPosMax-n)/2;
   
@@ -386,60 +401,58 @@ long FermionOnSphereWithSpinAllSz::GenerateStates(int nbrFermions, int posMax, i
 
   if (nbrFermions == 1)
     {
-      if ((currentPosMax>>1) >= totalLz)
-	{
-	  if ( ((currentPosMax>>1) > totalLz) || (((currentPosMax>>1) == totalLz) && (currentPosMax&1)))
-	    {
-	      this->StateHighestBit[pos] = posMax;
-	      this->StateDescription[pos++] = 0x1ul << ((totalLz << 1) + 1);
-	    }
-	  this->StateHighestBit[pos] = posMax;
-	  this->StateDescription[pos++] = 0x1ul << (totalLz << 1);
-	}
+      if ((posMax>>1) >= totalLz)
+        {
+          if ( ((posMax>>1) > totalLz) || (((posMax>>1) == totalLz) && (posMax&1)))
+            {
+              this->StateHighestBit[pos] = (totalLz << 1) + 1;
+              this->StateDescription[pos++] = 0x1ul << ((totalLz << 1) + 1);
+            }
+          this->StateHighestBit[pos] = (totalLz << 1);
+          this->StateDescription[pos++] = 0x1ul << (totalLz << 1);
+        }
       return pos;
     }
 
-  if (((currentPosMax>>1) == 0) && (totalLz != 0))
+  if (((posMax>>1) == 0) && (totalLz != 0))
     return pos;
   
   long TmpPos;
   unsigned long Mask;
-  TmpPos = this->GenerateStates(nbrFermions - 1, posMax, currentPosMax - 1, totalLz - (currentPosMax>>1),  pos);
-  Mask = 0x1ul << currentPosMax;
+  TmpPos = this->GenerateStates(nbrFermions - 1, posMax - 1, totalLz - (posMax>>1),  pos);
+  Mask = 0x1ul << posMax;
   for (; pos < TmpPos; ++pos)
     this->StateDescription[pos] |= Mask;
-  if (posMax == currentPosMax)
-    return this->GenerateStates(nbrFermions, currentPosMax - 1, currentPosMax - 1, totalLz, pos);
-  else return this->GenerateStates(nbrFermions, posMax, currentPosMax - 1, totalLz, pos);
+  return this->GenerateStates(nbrFermions, posMax - 1, totalLz, pos);
 };
 
 
 // evaluate Hilbert space dimension
 //
 // nbrFermions = number of fermions
-// currentPosMax = highest position for next particle to be placed
+// posMax = highest position for next particle to be placed
 // totalLz = momentum total value
 // return value = Hilbert space dimension
 
-long FermionOnSphereWithSpinAllSz::ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int currentPosMax, int totalLz)
+long FermionOnSphereWithSpinAllSz::ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int posMax, int totalLz)
 {
-  if ((nbrFermions == 0) || (totalLz < 0)  || (currentPosMax < (nbrFermions - 1)))
+  if ((nbrFermions == 0) || (totalLz < 0)  || (posMax < (nbrFermions - 1)))
     return 0;
   
-  int LzTotalMax = this->MaxTotalLz[currentPosMax][nbrFermions];
+  int LzTotalMax = this->MaxTotalLz[posMax][nbrFermions];
 //   int LzTotalMax = 0;
 //   for (int n=0; n<nbrFermions; ++n) LzTotalMax += (currentPosMax-n)>>1;
 //   cout << "LzTotalMax="<<LzTotalMax<<", LzTotalMax2="<<LzTotalMax2<<endl;
 
   if (LzTotalMax < totalLz)
     return 0;
-  if ((nbrFermions == 1) && ((currentPosMax>>1) >= totalLz))
+  if ((nbrFermions == 1) && ((posMax>>1) >= totalLz))
     {
-      if ((currentPosMax>>1) >totalLz) return 2;
-      else return 1+(currentPosMax&1);
+      if ((posMax>>1) >totalLz) return 2;
+      else return 1+(posMax&1);
     }
-  return  (this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, currentPosMax - 1, totalLz - (currentPosMax>>1))
-	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions, currentPosMax - 1, totalLz));
+  return  (this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, posMax - 1, totalLz - (posMax>>1))
+           + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions, posMax - 1, totalLz));
 }
 
 
@@ -577,7 +590,7 @@ double FermionOnSphereWithSpinAllSz::MeanSxValue(RealVector& state)
 
 double FermionOnSphereWithSpinAllSz::MeanSzValue(RealVector& state)
 {
-  //  double Coefficient;
+  double Coefficient;
   int Dim = this->HilbertSpaceDimension;
 
   RealVector FinalState(Dim, true);

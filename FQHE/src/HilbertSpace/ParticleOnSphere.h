@@ -315,6 +315,12 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // return value = trucated state
   virtual RealVector TruncateStateWithPatternConstraint(RealVector& inputVector, ParticleOnSphere* reducedSpace, int* pattern, int patternSize, int patternShift = 0);
 
+  // get Sz component of the spin
+  //
+  // j = index of the vector in Hilbert space
+  // return value = Sz component
+  virtual int GetSzValue(int j);
+
 };
 
 #endif

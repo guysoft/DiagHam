@@ -3,8 +3,10 @@
 #include "FangHowardDensityProfile.h"
 #include "TabulatedDensityProfile.h"
 #include "InfiniteWellBilayerDensityProfile.h"
+#include "InfiniteWellMixedDensityProfile.h"
 
 #include <iostream>
+
 using std::cout;
 using std::endl;
 
@@ -40,6 +42,9 @@ AbstractZDensityProfile* AbstractZDensityProfile::CreateZDensityProfile (char *t
     case AbstractZDensityProfile::InfiniteWellBilayerRight:
       return new InfiniteWellBilayerDensityProfile(width,+1);
       break;
+    case AbstractZDensityProfile::InfiniteWellMixed:
+      return new InfiniteWellMixedDensityProfile(width);
+      break;
     default:
       cout << "This type of Density Profile is not defined, yet"<<endl;
       return 0;
@@ -72,6 +77,9 @@ char *AbstractZDensityProfile::DensityProfileName(char *type)
       break;
     case AbstractZDensityProfile::InfiniteWellBilayerRight:
       sprintf(buffer,"Infinite Well Potential, 1/sqrt(2)[ |0> + |1> ] state");
+      break;
+    case AbstractZDensityProfile::InfiniteWellMixed:
+      sprintf(buffer,"Infinite Well Mixed Potential");
       break;
     default:
       sprintf(buffer,"Unknown");
