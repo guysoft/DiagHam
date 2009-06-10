@@ -94,7 +94,7 @@ void QHEWaveFunctionManager::AddOptionGroup(OptionManager* manager)
   OptionGroup* WaveFunctionGroup  = new OptionGroup ("analytical wave function options");
   (*(this->Options)) += WaveFunctionGroup;
   (*WaveFunctionGroup) += new SingleStringOption  ('\n', "test-wavefunction", "name of the test wave fuction",0);
-  (*WaveFunctionGroup) += new SingleIntegerOption  ('\n', "nbr-flux", "number of quantum flux attached to each particle (laughlin and *cf only)", 1, true, 1);
+  (*WaveFunctionGroup) += new SingleIntegerOption  ('\n', "nbr-flux", "number of quantum flux attached to each particle (laughlin and *cf only)", 1, true, 0);
   (*WaveFunctionGroup) += new SingleIntegerOption  ('\n', "cluster-size", "number of particles per cluster (read only)", 3, true, 2);
   (*WaveFunctionGroup) += new SingleIntegerOption  ('\n', "nbr-level", "number of pseudo Landau levels (filledcf only)", 1, true, 1);
   (*WaveFunctionGroup) += new SingleStringOption  ('\n', "cf-file", "name of the file describing the composite fermion state (genericcf only)");

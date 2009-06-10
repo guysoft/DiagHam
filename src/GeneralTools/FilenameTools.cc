@@ -303,9 +303,10 @@ char* RemoveExtensionFromFileName(char* fileName, const char* oldExtension)
   char* ExtensionPosition = strstr(fileName, oldExtension);
   if (ExtensionPosition == 0)
     return 0;
-  long TmpLength = strlen(fileName);
-  long TmpLength2 = TmpLength - strlen(oldExtension);  
-  char* TmpFileName = new char[TmpLength2 + 2];
+  int TmpLength = strlen(fileName);
+  int TmpLength2 = TmpLength - strlen(oldExtension);  
+  char* TmpFileName = new char[TmpLength2 + 1];
   strncpy (TmpFileName, fileName, TmpLength2);
+  TmpFileName[TmpLength2]='\0';
   return TmpFileName;
 }
