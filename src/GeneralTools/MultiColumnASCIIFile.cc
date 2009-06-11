@@ -147,6 +147,8 @@ bool MultiColumnASCIIFile::Parse(char* filename)
 	  strcpy (TmpBuffer + TmpBz2TotalSize, (*Tmp));
 	  TmpBz2TotalSize += BufferMaxSize;
 	}
+      TmpBuffer[Bz2TotalSize] = '\0';
+      Size = Bz2TotalSize;
     }
 #endif
   unsigned int Pos = 0;

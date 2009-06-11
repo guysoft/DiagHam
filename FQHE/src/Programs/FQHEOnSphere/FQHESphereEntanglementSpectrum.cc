@@ -10,6 +10,8 @@
 #include "GeneralTools/ConfigurationParser.h"
 #include "GeneralTools/MultiColumnASCIIFile.h"
 
+#include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
+
 #include <iostream>
 #include <stdlib.h>
 #include <math.h>
@@ -48,11 +50,22 @@ int main(int argc, char** argv)
   int NbrOrbitalsInPartition = Manager.GetInteger("nbr-orbitals");
   int NbrParticlesInPartition = Manager.GetInteger("nbr-particles");
   double Error = Manager.GetDouble("eigenvalue-error");
+  int NbrParticles = 0;
+  int NbrFluxQuanta = 0;
+  int TotalLz = 0;
+  bool Statistics = true;
 
   if (Manager.GetString("density-matrix") == 0)
     {
       cout << "a reduced density matrix has to be provided, see man page for option syntax or type FQHESphereEntanglementSpectrum -h" << endl;
+      return -1;
     }
+
+  if (FQHEOnSphereFindSystemInfoFromVectorFileName(Manager.GetString("density-matrix"), NbrParticles, NbrFluxQuanta, TotalLz, Statistics) == false)
+    {
+      cout << "can't retrieve system informations from the reduced density matrix file name" << endl;
+      return -1;
+    } 
 
   MultiColumnASCIIFile DensityMatrix;
   if (DensityMatrix.Parse(Manager.GetString("density-matrix")) == false)
@@ -95,13 +108,14 @@ int main(int argc, char** argv)
       ofstream File;
       File.open(OutputFileName, ios::out);
       File.precision(14);
+      File << "# la na lz shifted_lz lambda -log(lambda)" << endl;
       if (NbrParticlesInPartition == 0)
 	{
 	  while ((Index < MaxIndex) && (LaValues[Index] == NbrOrbitalsInPartition))
 	    {
 	      double Tmp = Coefficients[Index];
 	      if (Tmp > Error)
-		File << NbrOrbitalsInPartition << " " << NbrParticlesInPartition << " " << LzValues[Index] << " " << Tmp << " " << LzValues[Index] << " " << (-log(Tmp)) << endl;
+		File << NbrOrbitalsInPartition << " " << NbrParticlesInPartition << " " << LzValues[Index] << " " << (-0.5 * (LzValues[Index] + ((NbrOrbitalsInPartition - 1 - NbrFluxQuanta) * NbrParticlesInPartition))) << " " << Tmp << " " << (-log(Tmp)) << endl;
 	      ++Index;
 	    }
 	}
@@ -115,7 +129,7 @@ int main(int argc, char** argv)
 		{
 		  double Tmp = Coefficients[Index];
 		  if (Tmp > Error)
-		    File << NbrOrbitalsInPartition << " " << NbrParticlesInPartition << " " << LzValues[Index] << " " << Tmp << " " << LzValues[Index] << " " << (-log(Tmp)) << endl;
+		    File << NbrOrbitalsInPartition << " " << NbrParticlesInPartition << " " << LzValues[Index] << " " << (-0.5 * (LzValues[Index] + ((NbrOrbitalsInPartition - 1 - NbrFluxQuanta) * NbrParticlesInPartition))) << " " << Tmp << " " << (-log(Tmp)) << endl;
 		  ++Index;
 		}	      
 	    }
