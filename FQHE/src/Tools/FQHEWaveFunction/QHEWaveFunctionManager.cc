@@ -106,7 +106,7 @@ void QHEWaveFunctionManager::AddOptionGroup(OptionManager* manager)
       (*WaveFunctionGroup) += new MultipleDoubleOption  ('\n', "pair-coeff", "sequence of pairing coefficients (pairedcf only)",'+');
       (*WaveFunctionGroup) += new BooleanOption  ('\n', "pair-compatibility", "adopt old conventions for normalisation (pairedcf only)");
       (*WaveFunctionGroup) += new BooleanOption  ('\n', "fermion-state", "generate a fermionic wavefunction (RR)");
-      (*WaveFunctionGroup) += new SingleIntegerOption  ('\n', "nbr-levels", "number of CF levels to fill (><0) (SLBS)",-2);
+      (*WaveFunctionGroup) += new SingleIntegerOption  ('\n', "CF-levels", "number of CF levels to fill (><0) (SLBS)",-2);
       (*WaveFunctionGroup) += new SingleIntegerOption  ('\n', "Jz-Value", "Total angular momentum Jz (hund only)", 0);
       (*WaveFunctionGroup) += new SingleIntegerOption  ('\n', "hund-L2", "Total angular momentum J if less than maximal (hund only)", -1);
       (*WaveFunctionGroup) += new MultipleIntegerOption  ('\n', "JM-Values", "Angular momentum J and projection on z axis J,M (paired2QH only)",',');
@@ -238,7 +238,7 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	      Coefficients[0]=0.0;
 	      LL=1;
 	    }
-	  int NbrLevels= this->Options->GetInteger("nbr-levels");
+	  int NbrLevels= this->Options->GetInteger("CF-levels");
 	  double MR =this->Options->GetDouble("MR-coeff");
 	  SLBSVariationalState* rst = new SLBSVariationalState(N, LL, MR, Coefficients, NbrLevels);
 	  rst->AdaptAverageMCNorm();
