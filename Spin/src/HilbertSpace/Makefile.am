@@ -10,4 +10,7 @@ Spin1AKLTChain.cc \
 Spin1Chain.cc \
 Spin1FullAKLTChain.cc \
 Spin1ChainWithTranslations.cc \
-ThierryChain.cc
+ThierryChain.cc \
+AbstractSUNSpinCollection.cc \
+GenericSUNSpinCollection.cc
+

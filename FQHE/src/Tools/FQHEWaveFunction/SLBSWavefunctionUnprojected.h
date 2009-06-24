@@ -29,28 +29,58 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef SLBSVARIATIONALSTATE_H
-#define SLBSVARIATIONALSTATE_H
+#ifndef SLBSWAVEFUNCTIONUNPROJECTED_H
+#define SLBSWAVEFUNCTIONUNPROJECTED_H
 
 
 #include "config.h"
 #include "GeneralTools/GarbageFlag.h"
 #include "MathTools/Complex.h"
-#include "MathTools/NumericalAnalysis/Abstract1DComplexTrialFunctionOnSphere.h"
+#include "MathTools/NumericalAnalysis/Abstract1DComplexFunctionOnSphere.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/ComplexSkewSymmetricMatrix.h"
 #include "Tools/FQHEWaveFunction/JainCFOnSphereOrbitals.h"
-#include "Tools/FQHEWaveFunction/PairedCFOnSphereWaveFunction.h"
 
-class SLBSVariationalState: public Abstract1DComplexTrialFunctionOnSphere
+class SLBSWavefunctionUnprojected: public Abstract1DComplexFunctionOnSphere
 {
 
  protected:
 
   JainCFOnSphereOrbitals *OrbitalFactory;
 
+  bool NegativeFieldFlag;
+  
   int NbrParticles;
   int EffectiveFlux;
+
+  // number of Landau levels filled with composite fermions
+  int NbrLandauLevels;
+
+  // twice the value of the momentum in the lowest pseudo-Landau level
+  int TwiceS;
+
+  // power to which the Jastrow factor has to be raised
+  int ActualJastrowPower;
+
+
+  // array containing prefactors of each projected monopole harmonic
+  double** NormalizationPrefactors;
+
+  // array containing constant factors that appears in the sum of projected monopole harmonic (except LLL)
+  double*** SumPrefactors;
+
+    // for temporary storage:
+  Complex * SpinorUCoordinates;
+  Complex * SpinorVCoordinates;
+  // temporary array used to store powers of the u spinor coordinates
+  Complex** SpinorUCoordinatePower;
+  // temporary array used to store powers of the v spinor coordinates
+  Complex** SpinorVCoordinatePower;
+  // temporary array  used to store f(a,b) = S_k' (u_i v_k - u_k v_i)^-(a+b) * (u_i v_k)^a (u_k v_i)^b factors that appear in the CF monopole spherical harmonic 
+  Complex*** DerivativeFactors;
+  // a duplicate array of DerivativeFactors used for precalculations
+  Complex*** DerivativeFactors2;
+
 
   GarbageFlag Flag;
   
@@ -60,8 +90,9 @@ class SLBSVariationalState: public Abstract1DComplexTrialFunctionOnSphere
   ComplexMatrix Orbitals;
   ComplexMatrix *Slater;
 
-  // general paired state for Pfaffian part:
-  PairedCFOnSphereWaveFunction *PfaffianPart;
+  // for Pfaffian part
+  ComplexSkewSymmetricMatrix *Pfaffian;
+  
   
   // For internal communication with AdaptNorm:
   Complex Determinant;
@@ -77,35 +108,30 @@ class SLBSVariationalState: public Abstract1DComplexTrialFunctionOnSphere
   // this variable is used to pass on this value between the different subroutines
   double Interpolation;
 
-  // for testing:
-  Complex * SpinorUCoordinates;
-  Complex * SpinorVCoordinates;
+  // temporary array used to store (u_i v_j - u_j v_i)^-1 factors
+  Complex** JastrowFactorElements;
   
  public:
 
   // default constructor
   //
-  SLBSVariationalState();
-
+  SLBSWavefunctionUnprojected();
 
   // constructor
   //
   // nbrParticles = number of particles
-  // nbrVariationalLandauLevels = number of CF LL's to be calculated for pairing fct
-  //                              (= length of array 'variationalCoefficients')
-  // MooreReadCoefficient = prefactor of Moore-Read 1/z term
-  // variationalCoefficients = variational coefficients of pair wavefunction
-  // levels = number of LL's filled in CF part of wavefunction
-  SLBSVariationalState(int nbrParticles, int nbrVariationalLandauLevels, double MooreReadCoefficient, double *variationalCoefficients, int levels=2);
+  // nbrLandauLevels = number of LL's of CF orbitals to fill (unprojected)
+  // negFluxFlag = indicating sign of Jain wavefunction component
+  SLBSWavefunctionUnprojected(int nbrParticles, int nbrLandauLevels=2, bool negFluxFlag=false);
 
   // copy constructor
   //
   // function = reference on the wave function to copy
-  SLBSVariationalState(const SLBSVariationalState& function);
+  SLBSWavefunctionUnprojected(const SLBSWavefunctionUnprojected& function);
 
   // destructor
   //
-  ~SLBSVariationalState();
+  ~SLBSWavefunctionUnprojected();
 
   // clone function 
   //
@@ -127,20 +153,6 @@ class SLBSVariationalState: public Abstract1DComplexTrialFunctionOnSphere
   virtual Complex CalculateFromSpinorVariables(ComplexVector& uv);
 
 
-    // get a value of the wavefunction for the last set of coordinates, but with different variational coefficients
-  virtual Complex GetForOtherParameters( double *coefficients);
- 
-  // do many evaluations, storing the result in the vector results given in the call
-  // x: positions to evaluate the wavefuntion in
-  // format for passing parameters in the matrix coefficients coefficients[nbrSet][LandauLevel],
-  // the entry [][NbrLandauLevels] corresponds to the MooreRead Term.
-  virtual void GetForManyParameters(ComplexVector &results, RealVector& x, double **coefficients);
-  
-  // set new values of the trial coefficients (keeping the number of LL's)
-  virtual void SetTrialParameters(double * coefficients);
-
-
-
   // normalize the wave-function to one for the given particle positions
   // x = point where the function has to be evaluated
   void AdaptNorm(RealVector& x);
@@ -150,13 +162,35 @@ class SLBSVariationalState: public Abstract1DComplexTrialFunctionOnSphere
 
  private:
 
-  // do all precalculation operations required for a new set of positions
+  // evaluate monopole spherical harmonic 
+  //
+  // coordinate = index of the coordinate
+  // momentum = monopole spherical harmonic Lz momentum (plus S shift)
+  // landauLevel = index of the Landau level
+  // maximumMomentum = maxixum momentum that can be reached in the Landau level
+  // return value = value of the monopole spherical harmonic at the given point
+  Complex EvaluateMonopoleHarmonic (int coordinate, int momentum, int landauLevel, int maximumMomentum);
 
-  void EvaluateTables();
+  // evaluate constant factors that appears in the sum of projected monopole harmonic (except LLL)
+  //
+  void EvaluateSumPrefactors();
+
+  // evaluate normalization factors of projected monopole harmonics
+  //
+  void EvaluateNormalizationPrefactors();
+
+  
+  // evaluate precalculation tables used during wave function evaluation (called at each evaluation)
+  //
+  // requires SpinorUCoordinates and SpinorVCoordinates to be initialized prior to call
+  // derivativeFlag = indicate if precalculation tables invloved in derivative evaluation have to be calculated
+  // return value = value of the Jastrow factor
+  
+  Complex EvaluateTables(bool derivativeFlag);
 
 };
 
 
 
 
-#endif //SLBSVARIATIONALSTATE
+#endif //SLBSWAVEFUNCTIONUNPROJECTED_H

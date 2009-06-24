@@ -14,8 +14,8 @@ MultiFileMCHistoryRecord::MultiFileMCHistoryRecord()
 // nbrInputFiles: number of input files
 // inputFileNames: history files to be merged
 // additionalData: description of additional fields
-MultiFileMCHistoryRecord::MultiFileMCHistoryRecord(char* outputFileName, int nbrInputFiles, char **inputFileNames, int &nbrPositions, List<AbstractMCHistoryData> *additionalData)
-{
+MultiFileMCHistoryRecord::MultiFileMCHistoryRecord(char* outputFileName, int nbrInputFiles, char **inputFileNames, int &nbrPositions, List<AbstractMCHistoryData> *additionalData, bool verbose)
+{  
   this->NbrHistoryFiles = nbrInputFiles;
   this->InputHistories = new MCHistoryRecord*[NbrHistoryFiles];
   this->RecordMode = AbstractMCHistoryRecord::Reading;
@@ -37,10 +37,15 @@ MultiFileMCHistoryRecord::MultiFileMCHistoryRecord(char* outputFileName, int nbr
       MCHistoryRecord *OutputHistory = new MCHistoryRecord(this->ProjectedStepNum, this->NbrPositions, "as in source files",
 							   "merged", outputFileName);
       
-      for (NbrPresentHistory=0; NbrPresentHistory<NbrHistoryFiles; ++ NbrPresentHistory)
+      for (NbrPresentHistory=0; NbrPresentHistory<NbrHistoryFiles; ++NbrPresentHistory)
 	{
 	  while (InputHistories[NbrPresentHistory]->GetMonteCarloStep(SampleCount, SamplingAmplitude, &(Positions[0]), ValueExact))
 	    {
+	      if (verbose)
+		{
+		  cout << "SampleCount= "<<SampleCount<<", SamplingAmplitude="<<SamplingAmplitude<<", Value="<<
+		    ValueExact<<endl;
+		}
 	      // record accepted step - to be called for each accepted step, or at every step to be written to file
 	      OutputHistory->RecordAcceptedStep( SamplingAmplitude, Positions, ValueExact);
 	    }

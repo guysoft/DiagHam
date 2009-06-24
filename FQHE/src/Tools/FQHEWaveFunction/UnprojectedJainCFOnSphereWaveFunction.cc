@@ -338,4 +338,3 @@ void UnprojectedJainCFOnSphereWaveFunction::EvaluateSumPrefactors()
       MaxMomentum += 2;
     }
 }
-

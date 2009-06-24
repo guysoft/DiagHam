@@ -54,20 +54,32 @@ SLBSVariationalState::SLBSVariationalState()
 // constructor
 //
 // nbrParticles = number of particles
-// nbrVariationalLandauLevels = number of CF LL's to be calculated (= length of array 'variationalCoefficients')
+// nbrVariationalLandauLevels = number of CF LL's to be calculated for pairing fct
+//                              (= length of array 'variationalCoefficients')
 // MooreReadCoefficient = prefactor of Moore-Read 1/z term
 // variationalCoefficients = variational coefficients of pair wavefunction
-SLBSVariationalState::SLBSVariationalState(int nbrParticles, int nbrVariationalLandauLevels, double MooreReadCoefficient, double *variationalCoefficients)
+SLBSVariationalState::SLBSVariationalState(int nbrParticles, int nbrVariationalLandauLevels, double MooreReadCoefficient, double *variationalCoefficients, int levels)
 {
-  if ((nbrParticles & 1)||(nbrParticles < 4))
+  int Levels = abs(levels);
+  if (((nbrParticles % Levels)!=0)||(nbrParticles < 2*Levels))
     {
-      cout << "This state requires an even number of fermions >= 4" << endl;
+      cout << "This state requires an multiple of "<<Levels<<" fermions >= "<<2*Levels << endl;
+      exit(1);
+    }
+  if (nbrParticles < 4)
+    {
+      cout << "This state requires a number of fermions >= 4" << endl;
       exit(1);
     }
   this->NbrParticles = nbrParticles;
-  this->EffectiveFlux = -((NbrParticles -2)/2 - 1);
+  int NegativeFieldFlag;
+  if (levels<0)
+    NegativeFieldFlag = true;
+  else
+    NegativeFieldFlag = false;
+  this->EffectiveFlux = ((NbrParticles -Levels*(Levels-1))/Levels - 1)*(1-2*NegativeFieldFlag);
   cout << "EffectiveFlux="<<EffectiveFlux<<endl;
-  this->OrbitalFactory = new JainCFOnSphereOrbitals(NbrParticles, /*NbrLandauLevels*/ 2, EffectiveFlux, /*JastrowPower*/ 2);
+  this->OrbitalFactory = new JainCFOnSphereOrbitals(NbrParticles, /*NbrLandauLevels*/ Levels, EffectiveFlux, /*JastrowPower*/ 2);
   this->NbrParameters = nbrVariationalLandauLevels+1;
   this->TrialParameters = new double[nbrVariationalLandauLevels+1];
   for (int i=0; i<nbrVariationalLandauLevels; ++i) this->TrialParameters[i] = variationalCoefficients[i];

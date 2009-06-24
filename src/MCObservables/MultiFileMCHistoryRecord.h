@@ -72,7 +72,7 @@ class MultiFileMCHistoryRecord : public AbstractMCHistoryRecord
   // inputFileNames: history files to be merged
   // nbrPositions: requested number of particle positions (call with 0 to return value given in input files)
   // additionalData: description of additional fields
-  MultiFileMCHistoryRecord(char* outputFileName, int nbrInputFiles, char **inputFileNames, int &nbrPositions, List<AbstractMCHistoryData> *additionalData=NULL);
+  MultiFileMCHistoryRecord(char* outputFileName, int nbrInputFiles, char **inputFileNames, int &nbrPositions, List<AbstractMCHistoryData> *additionalData=NULL, bool verbose=false);
     
   // destructor -> automatically closes LogFile
   virtual ~MultiFileMCHistoryRecord();

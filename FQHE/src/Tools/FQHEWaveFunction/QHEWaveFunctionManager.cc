@@ -37,6 +37,7 @@
 #include "Tools/FQHEWaveFunction/SLBSWavefunction.h"
 #include "Tools/FQHEWaveFunction/SLBSWavefunction2.h"
 #include "Tools/FQHEWaveFunction/SLBSVariationalState.h"
+#include "Tools/FQHEWaveFunction/SLBSWavefunctionUnprojected.h"
 #include "Tools/FQHEWaveFunction/JainCFFilledLevelOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/LaughlinOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/MooreReadOnSphereWaveFunction.h"
@@ -105,7 +106,7 @@ void QHEWaveFunctionManager::AddOptionGroup(OptionManager* manager)
       (*WaveFunctionGroup) += new MultipleDoubleOption  ('\n', "pair-coeff", "sequence of pairing coefficients (pairedcf only)",'+');
       (*WaveFunctionGroup) += new BooleanOption  ('\n', "pair-compatibility", "adopt old conventions for normalisation (pairedcf only)");
       (*WaveFunctionGroup) += new BooleanOption  ('\n', "fermion-state", "generate a fermionic wavefunction (RR)");
-      (*WaveFunctionGroup) += new BooleanOption  ('\n', "negflux", "use Jain state with negative flux (SLBS)");      
+      (*WaveFunctionGroup) += new SingleIntegerOption  ('\n', "nbr-levels", "number of CF levels to fill (><0) (SLBS)",-2);
       (*WaveFunctionGroup) += new SingleIntegerOption  ('\n', "Jz-Value", "Total angular momentum Jz (hund only)", 0);
       (*WaveFunctionGroup) += new SingleIntegerOption  ('\n', "hund-L2", "Total angular momentum J if less than maximal (hund only)", -1);
       (*WaveFunctionGroup) += new MultipleIntegerOption  ('\n', "JM-Values", "Angular momentum J and projection on z axis J,M (paired2QH only)",',');
@@ -144,6 +145,7 @@ ostream& QHEWaveFunctionManager::ShowAvalaibleWaveFunctions (ostream& str)
       str << "  * read : Read-Rezayi state wave function" << endl;
       str << "  * RR : Read-Rezayi wave function (using blocks)" << endl;
       str << "  * SLBS : Slingerland-Bonderson wave function" << endl;
+      str << "  * SLBS-Unp : Slingerland-Bonderson wave function (unprojected)" << endl;
       str << "  * filledcf : composite fermions wave function (only with filled pseudo Landau levels)" << endl;
       str << "  * genericcf : generic composite fermions wave function" << endl;            
       str << "  * unprojectedcf : generic unprojected composite fermions wave function" << endl;
@@ -236,8 +238,9 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	      Coefficients[0]=0.0;
 	      LL=1;
 	    }
+	  int NbrLevels= this->Options->GetInteger("nbr-levels");
 	  double MR =this->Options->GetDouble("MR-coeff");
-	  SLBSVariationalState* rst = new SLBSVariationalState(N, LL, MR, Coefficients);
+	  SLBSVariationalState* rst = new SLBSVariationalState(N, LL, MR, Coefficients, NbrLevels);
 	  rst->AdaptAverageMCNorm();
 	  delete [] Coefficients;
 	  return rst;
@@ -248,12 +251,19 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	  SLBSWavefunction2 *rst = new SLBSWavefunction2(N);
 	  rst->AdaptAverageMCNorm();
 	  return rst;
+	}
+      if (strcmp (this->Options->GetString("test-wavefunction"), "SLBS-Unp") == 0)
+	{
+	  int N=this->Options->GetInteger("nbr-particles");
+	  SLBSWavefunctionUnprojected *rst = new SLBSWavefunctionUnprojected(N);
+	  rst->AdaptAverageMCNorm();
+	  return rst;
 	}      
       if (strcmp (this->Options->GetString("test-wavefunction"), "SLBS") == 0)
 	{
 	  int N=this->Options->GetInteger("nbr-particles");
-	  bool Flag=this->Options->GetBoolean("negflux");
-	  SLBSWavefunction *rst = new SLBSWavefunction(N, Flag);
+	  int levels=this->Options->GetBoolean("nbr-levels");
+	  SLBSWavefunction *rst = new SLBSWavefunction(N, levels);
 	  rst->AdaptAverageMCNorm();
 	  return rst;
 	}

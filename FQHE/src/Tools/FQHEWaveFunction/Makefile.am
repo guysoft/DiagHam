@@ -47,7 +47,7 @@ FQHESU3GeneralizedGaffnianOnSphereWaveFunction.cc \
 SLBSWavefunction.cc \
 SLBSWavefunction2.cc \
 SLBSVariationalState.cc \
-SLBSWavefunction.cc \
+SLBSWavefunctionUnprojected.cc \
 FQHESphereSymmetrizedSU2ToU1WaveFunction.cc \
 PfaffianOnDiskTwoQuasiholeWaveFunction.cc \
 PfaffianOnDiskTwoQuasielectronWaveFunction.cc \
