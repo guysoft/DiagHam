@@ -399,6 +399,19 @@ double BosonOnSphereShort::AdA (int index, int m)
   return (double) (this->TemporaryState[m]);  
 }
 
+// apply a^+_m a_m operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation and annihilation operator
+// return value = coefficient obtained when applying a^+_m a_m
+
+double BosonOnSphereShort::AdA (long index, int m)
+{
+  this->FermionToBoson(this->FermionBasis->StateDescription[index], this->FermionBasis->StateLzMax[index], this->TemporaryState, this->TemporaryStateLzMax);
+  if (this->TemporaryStateLzMax < m)  
+    return 0.0;
+  return (double) (this->TemporaryState[m]);  
+}
 
 // print a given State
 //

@@ -499,6 +499,20 @@ double FermionOnSphereUnlimited::AdA (int index, int m)
     return 1.0;
 }
 
+// apply a^+_m a_m operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation and annihilation operator
+// return value = coefficient obtained when applying a^+_m a_m
+
+double FermionOnSphereUnlimited::AdA (long index, int m)
+{
+  if (this->StateDescription[index].GetOccupation(m) == 0)
+    return 0.0;
+  else
+    return 1.0;
+}
+
 // find state index
 //
 // stateDescription = reference on the state description

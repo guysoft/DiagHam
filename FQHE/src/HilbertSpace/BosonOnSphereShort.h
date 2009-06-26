@@ -202,6 +202,13 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // return value = coefficient obtained when applying a^+_m a_m
   virtual double AdA (int index, int m);
 
+  // apply a^+_m a_m operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation and annihilation operator
+  // return value = coefficient obtained when applying a^+_m a_m
+  virtual double AdA (long index, int m);
+
   // print a given State
   //
   // Str = reference on current output stream 

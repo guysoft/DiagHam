@@ -238,6 +238,19 @@ double FermionOnSphereWithSpinSzProjection::AdA (int index, int m)
     return FullSpace->AddAd( index, m);
 }
 
+// apply a^+_m a_m operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation and annihilation operator
+// return value = coefficient obtained when applying a^+_m a_m
+double FermionOnSphereWithSpinSzProjection::AdA (long index, int m)
+{
+  if (SzProjectionValue>0)
+    return FullSpace->AduAu( index, m);
+  else
+    return FullSpace->AddAd( index, m);
+}
+
 
 // print a given State
 //

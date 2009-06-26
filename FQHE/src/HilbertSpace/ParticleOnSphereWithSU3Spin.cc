@@ -64,6 +64,17 @@ double ParticleOnSphereWithSU3Spin::AdA (int index, int m)
   return (this->Ad1A1(index, m) + this->Ad2A2(index, m) + this->Ad3A3(index, m));
 }
 
+// apply sum_s a^+_m_s a_m_s operator to a given state (sum over all spin states)
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation and annihilation operator
+// return value = coefficient obtained when applying a^+_m a_m
+
+double ParticleOnSphereWithSU3Spin::AdA (long index, int m)
+{
+  return (this->Ad1A1(index, m) + this->Ad2A2(index, m) + this->Ad3A3(index, m));
+}
+
 
 // evaluate wave function in real space using a given basis
 //

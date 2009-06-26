@@ -225,6 +225,25 @@ int ParticleOnSphere::AdA (int index, int m, int n, double& coefficient)
     }
 }
 
+// apply a^+_m a_n operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+long ParticleOnSphere::AdA (long index, int m, int n, double& coefficient)
+{
+  if (m != n)
+    return this->HilbertSpaceDimension;
+  else
+    {
+      coefficient = this->AdA(index, m);
+      return index;
+    }
+}
+
 // evaluate wave function in real space using a given basis
 //
 // state = vector corresponding to the state in the Fock basis

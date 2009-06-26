@@ -99,6 +99,13 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // return value = coefficient obtained when applying a^+_m a_m
   virtual double AdA (int index, int m);
 
+  // apply sum_s a^+_m_s a_m_s operator to a given state (sum over all spin states)
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation and annihilation operator
+  // return value = coefficient obtained when applying a^+_m a_m
+  virtual double AdA (long index, int m);
+
   // apply a^+_m_d a_m_d operator to a given state (only spin down)
   //
   // index = index of the state on which the operator has to be applied
@@ -140,6 +147,14 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // return value = index of the destination state 
   virtual int AduAd (int index, int m, int n, double& coefficient);
 
+  // apply a^+_m_u a_n_d operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation/annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AduAd (int index, int m, double& coefficient);
+
   // apply a^+_m_d a_n_u operator to a given state 
   //
   // index = index of the state on which the operator has to be applied
@@ -148,6 +163,14 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
   virtual int AddAu (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_d a_n_u operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation/annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AddAu (int index, int m, double& coefficient);
 
   // apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdu call
   //

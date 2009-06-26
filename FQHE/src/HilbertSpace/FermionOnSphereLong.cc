@@ -613,6 +613,20 @@ double FermionOnSphereLong::AdA (int index, int m)
     return 0.0;
 }
 
+// apply a^+_m a_m operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation and annihilation operator
+// return value = coefficient obtained when applying a^+_m a_m
+
+double FermionOnSphereLong::AdA (long index, int m)
+{
+  if ((this->StateDescription[index] & (((ULONGLONG) (0x1)) << m)) != ((ULONGLONG) 0x0))
+    return 1.0;
+  else
+    return 0.0;
+}
+
 // apply a^+_m a_n operator to a given state 
 //
 // index = index of the state on which the operator has to be applied

@@ -194,6 +194,16 @@ class AbstractQHEOnSphereWithSpinHamiltonian : public AbstractQHEOnSphereHamilto
   virtual void EvaluateMNTwoBodyFastMultiplicationComponent(ParticleOnSphereWithSpin* particles, int index, 
 							  int* indexArray, double* coefficientArray, long& position);
 
+  // core part of the FastMultiplication method involving the one-body interaction
+  // 
+  // particles = pointer to the Hilbert space
+  // index = index of the component on which the Hamiltonian has to act on
+  // indexArray = array where indices connected to the index-th component through the Hamiltonian
+  // coefficientArray = array of the numerical coefficients related to the indexArray
+  // position = reference on the current position in arrays indexArray and coefficientArray
+  void EvaluateMNOneBodyFastMultiplicationComponent(ParticleOnSphereWithSpin* particles, int index, 
+						    int* indexArray, double* coefficientArray, long& position);
+
   // core part of the AddMultiply method involving the one-body interaction, including loop on vector components
   // 
   // particles = pointer to the Hilbert space
@@ -927,6 +937,55 @@ inline void AbstractQHEOnSphereWithSpinHamiltonian::EvaluateMNOneBodyAddMultiply
 
 }
 
+// core part of the FastMultiplication method involving the one-body interaction
+// 
+// particles = pointer to the Hilbert space
+// index = index of the component on which the Hamiltonian has to act on
+// indexArray = array where indices connected to the index-th component through the Hamiltonian
+// coefficientArray = array of the numerical coefficients related to the indexArray
+// position = reference on the current position in arrays indexArray and coefficientArray
+
+inline void AbstractQHEOnSphereWithSpinHamiltonian::EvaluateMNOneBodyFastMultiplicationComponent(ParticleOnSphereWithSpin* particles, int index, 
+												 int* indexArray, double* coefficientArray, long& position)
+{
+  if ((this->OneBodyInteractionFactorsdowndown != 0) || (this->OneBodyInteractionFactorsupup != 0))
+    {
+      double TmpDiagonal = 0.0;
+      if (this->OneBodyInteractionFactorsupup != 0)
+	for (int j = 0; j <= this->LzMax; ++j)
+	  TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * particles->AduAu(index + this->PrecalculationShift, j);
+      if (this->OneBodyInteractionFactorsdowndown != 0)
+	for (int j = 0; j <= this->LzMax; ++j)
+	  TmpDiagonal += this->OneBodyInteractionFactorsdowndown[j] * particles->AddAd(index + this->PrecalculationShift, j);	  
+	  indexArray[position] = index + this->PrecalculationShift;
+	  coefficientArray[position] = TmpDiagonal;
+	  ++position;	  
+    }
+  if (this->OneBodyInteractionFactorsupdown != 0)
+    {
+      int Dim = particles->GetHilbertSpaceDimension();
+      double Coefficient;
+      int Index;
+      for (int j = 0; j <= this->LzMax; ++j)
+	{
+	  Index = particles->AddAu(index + this->PrecalculationShift, j, j, Coefficient);
+	  if (Index < Dim)
+	    {
+	      indexArray[position] = Index;
+	      coefficientArray[position] = Coefficient * OneBodyInteractionFactorsupdown[j];
+	      ++position;
+	    }
+	  Index = particles->AduAd(index + this->PrecalculationShift, j, j, Coefficient);
+	  if (Index < Dim)
+	    {
+	      indexArray[position] = Index;
+	      coefficientArray[position] = Coefficient * OneBodyInteractionFactorsupdown[j];
+	      ++position;
+	    }
+	}
+    }       
+}
+
 // core part of the PartialFastMultiplicationMemory method involving two-body term
 // 
 // particles = pointer to the Hilbert space
@@ -1069,6 +1128,27 @@ inline void AbstractQHEOnSphereWithSpinHamiltonian::EvaluateMNTwoBodyFastMultipl
 	{
 	  ++memory;
 	  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+	}
+    }
+  if (this->OneBodyInteractionFactorsupdown != 0)
+    {
+      for (int i = firstComponent; i < lastComponent; ++i)
+	{
+	  for (int j=0; j<= this->LzMax; ++j)
+	    {
+	      Index = particles->AddAu(i, j, j, Coefficient);
+	      if (Index < Dim)
+		{
+		  ++Memory;
+		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		}
+	      Index = particles->AduAd(i, j, j, Coefficient);
+	      if (Index < Dim)
+		{
+		  ++Memory;
+		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		}
+	    }
 	}
     }
 }

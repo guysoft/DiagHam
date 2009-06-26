@@ -506,6 +506,19 @@ double BosonOnSphere::AdA (int index, int m)
   return (double) (this->StateDescription[index][m]);  
 }
 
+// apply a^+_m a_m operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation and annihilation operator
+// return value = coefficient obtained when applying a^+_m a_m
+
+double BosonOnSphere::AdA (long index, int m)
+{
+  if (this->StateLzMax[index] < m)  
+    return 0.0;
+  return (double) (this->StateDescription[index][m]);  
+}
+
 // find state index
 //
 // stateDescription = array describing the state

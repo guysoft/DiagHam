@@ -55,4 +55,6 @@ AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian.cc \
 ParticleOnSphereWithSpinGenericThreeBodyHamiltonian.cc \
 ParticleOnSphereQuantumWellHamiltonian.cc \
 AbstractQHEOnSphereQuantumWellHamiltonian.cc \
-ParticleOnSphereBilayerHamiltonian.cc
+ParticleOnSphereBilayerHamiltonian.cc \
+AbstractQHEOnSphereWithSpinFullHamiltonian.cc \
+ParticleOnSphereTwoLandauLevelHamiltonian.cc

@@ -68,6 +68,13 @@ class ParticleOnSphereWithSU3Spin :  public ParticleOnSphere
   // return value = coefficient obtained when applying a^+_m a_m
   virtual double AdA (int index, int m);
 
+  // apply sum_s a^+_m_s a_m_s operator to a given state (sum over all spin states)
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation and annihilation operator
+  // return value = coefficient obtained when applying a^+_m a_m
+  virtual double AdA (long index, int m);
+
   // apply a^+_m_1 a_m_1 operator to a given state (only state 1 Tz=+1/2, Y=+1/3)
   //
   // index = index of the state on which the operator has to be applied

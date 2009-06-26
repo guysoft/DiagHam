@@ -6,6 +6,8 @@
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
 #include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
 
+#include "Hamiltonian/ParticleOnSphereTwoLandauLevelHamiltonian.h"
+
 #include "LanczosAlgorithm/LanczosManager.h"
 
 #include "MainTask/QHEOnSphereMainTask.h"
@@ -16,6 +18,8 @@
 #include "GeneralTools/FilenameTools.h"
 
 #include "MathTools/BinomialCoefficients.h"
+
+#include "Tools/FQHEFiles/FQHESpherePseudopotentialTools.h"
 
 #include <iostream>
 #include <cstdlib>
@@ -95,7 +99,7 @@ int main(int argc, char** argv)
   char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");  
   bool DiskCacheFlag = Manager.GetBoolean("disk-cache");
   bool FirstRun = true;
-  double* PseudoPotentials = 0;
+  double** PseudoPotentials = 0;
   double* OneBodyPotentials = 0;
   int LandauLevelIndexDifference = Manager.GetInteger("level-difference");
   int LzMaxUp = LzMax + (2 * LandauLevelIndexDifference);
@@ -103,35 +107,22 @@ int main(int argc, char** argv)
   double CyclotronEnergy = Manager.GetDouble("cyclotron-energy");
 
 
-//   if (((SingleStringOption*) Manager["interaction-file"])->GetString() == 0)
-//     {
-//       cout << "an interaction file has to be provided" << endl;
-//       return -1;
-//     }
-//   else
-//     {
-//       ConfigurationParser InteractionDefinition;
-//       if (InteractionDefinition.Parse(((SingleStringOption*) Manager["interaction-file"])->GetString()) == false)
-// 	{
-// 	  InteractionDefinition.DumpErrors(cout) << endl;
-// 	  return -1;
-// 	}
-//       int TmpNbrPseudoPotentials;
-//       if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials", ' ', PseudoPotentials, TmpNbrPseudoPotentials) == false)
-// 	{
-// 	  cout << "Weights is not defined or has a wrong value in " << ((SingleStringOption*) Manager["interaction-file"])->GetString() << endl;
-// 	  return -1;
-// 	}
-//       cout << "LzMax= " << TmpNbrPseudoPotentials << " " << LzMax << endl;
-//       if (TmpNbrPseudoPotentials != (LzMax +1))
-// 	{
-// 	  cout << "Invalid number of pseudo-potentials" << endl;
-// 	  return -1;	  
-// 	}
-//     }
+   if (((SingleStringOption*) Manager["interaction-file"])->GetString() == 0)
+     {
+       cout << "an interaction file has to be provided" << endl;
+       return -1;
+     }
+   else
+     {
+       double* OneBodyPotentialUpUp = 0;
+       double* OneBodyPotentialDownDown = 0;
+       if (FQHESphereSU2GetPseudopotentials(Manager.GetString("interaction-file"), LzMax, PseudoPotentials,
+					   OneBodyPotentialUpUp, OneBodyPotentialDownDown) == false)
+	 return -1;
+     }
 
-//   char* OutputNameLz = new char [256 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
-//   sprintf (OutputNameLz, "fermions_%s_n_%d_2s_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax);
+   char* OutputNameLz = new char [256 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
+   sprintf (OutputNameLz, "fermions_sphere_2ll_%s_n_%d_2s_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax);
 
   int TmpNbrParticleDown = (NbrParticles - LandauLevelIndexDifference) / 2;
   int Max = (((LzMax - TmpNbrParticleDown + 1) * TmpNbrParticleDown) +
@@ -152,12 +143,12 @@ int main(int argc, char** argv)
 	  Max = L + (2 * (NbrLz - 1));
 	}
     }
-  int TotalDim = 0;
+  //  int TotalDim = 0;
 
   for (; L <= Max; L += 2)
     {
 
-      ParticleOnSphere* Space = new FermionOnSphereTwoLandauLevels (NbrParticles, L, LzMaxUp, LzMaxDown);
+      ParticleOnSphereWithSpin* Space = new FermionOnSphereTwoLandauLevels (NbrParticles, L, LzMaxUp, LzMaxDown);
 //       for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 // 	{
 // 	  cout << i << " : ";
@@ -171,71 +162,63 @@ int main(int argc, char** argv)
 // 	TotalDim += (2 * Space->GetHilbertSpaceDimension());
 
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
-      //      AbstractQHEOnSphereWithSpinHamiltonian* Hamiltonian = 0;
+      AbstractQHEOnSphereWithSpinHamiltonian* Hamiltonian = 0;
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
  	Memory = Architecture.GetArchitecture()->GetLocalMemory();
-//       if (OneBodyPotentials == 0)
-// 	Hamiltonian = new ParticleOnSphereGenericHamiltonian(Space, NbrParticles, LzMax, PseudoPotentials,
-// 							     ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),
-// 							     Architecture.GetArchitecture(), 
-// 							     Memory, DiskCacheFlag,
-// 							     LoadPrecalculationFileName);
-//       else
-// 	Hamiltonian = new ParticleOnSphereGenericHamiltonian(Space, NbrParticles, LzMax, PseudoPotentials, OneBodyPotentials,
-// 							     ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),
-// 							     Architecture.GetArchitecture(), 
-// 							     Memory, DiskCacheFlag,
-// 							     LoadPrecalculationFileName);
+      Hamiltonian = new ParticleOnSphereTwoLandauLevelHamiltonian(Space, NbrParticles, LzMax, LandauLevelIndexDifference, PseudoPotentials,
+								  CyclotronEnergy,
+								  Architecture.GetArchitecture(), 
+								  Memory, DiskCacheFlag,
+								  LoadPrecalculationFileName);
+      double Shift = - 0.5 * ((double) (NbrParticles * NbrParticles)) / (0.5 * ((double) LzMax));
+      
+      if (Manager.GetString("energy-expectation") != 0 )
+	{
+	  char* StateFileName = Manager.GetString("energy-expectation");
+	  if (IsFile(StateFileName) == false)
+	    {
+	      cout << "state " << StateFileName << " does not exist or can't be opened" << endl;
+	      return -1;           
+	    }
+	  RealVector State;
+	  if (State.ReadVector(StateFileName) == false)
+	    {
+	      cout << "error while reading " << StateFileName << endl;
+	      return -1;
+	    }
+	  if (State.GetVectorDimension()!=Space->GetHilbertSpaceDimension())
+	    {
+	      cout << "error: vector and Hilbert-space have unequal dimensions"<<endl;
+	      return -1;
+	    }
+	  RealVector TmpState(Space->GetHilbertSpaceDimension());
+	  VectorHamiltonianMultiplyOperation Operation (Hamiltonian, &State, &TmpState);
+	  Operation.ApplyOperation(Architecture.GetArchitecture());
+	  double EnergyValue = State*TmpState;
+	  cout << "< Energy > = "<<EnergyValue<<endl;
+	  cout << "< shifted energy > = "<<EnergyValue + Shift<<endl;
+	  return 0;
+	}
+      
+      Hamiltonian->ShiftHamiltonian(Shift);
+      char* EigenvectorName = 0;
+      if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
+	{
+	  EigenvectorName = new char [64];
+	  sprintf (EigenvectorName, "fermions_sphere_2ll_%s_n_%d_2s_%d_lz_%d", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax, L);
+	}
+      
+      QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);
+      MainTaskOperation TaskOperation (&Task);
+      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+      if (EigenvectorName != 0)
+	{
+	  delete[] EigenvectorName;
+	}
 
-//       double Shift = - 0.5 * ((double) (NbrParticles * NbrParticles)) / (0.5 * ((double) LzMax));
-      
-//       if (Manager.GetString("energy-expectation") != 0 )
-// 	{
-// 	  char* StateFileName = Manager.GetString("energy-expectation");
-// 	  if (IsFile(StateFileName) == false)
-// 	    {
-// 	      cout << "state " << StateFileName << " does not exist or can't be opened" << endl;
-// 	      return -1;           
-// 	    }
-// 	  RealVector State;
-// 	  if (State.ReadVector(StateFileName) == false)
-// 	    {
-// 	      cout << "error while reading " << StateFileName << endl;
-// 	      return -1;
-// 	    }
-// 	  if (State.GetVectorDimension()!=Space->GetHilbertSpaceDimension())
-// 	    {
-// 	      cout << "error: vector and Hilbert-space have unequal dimensions"<<endl;
-// 	      return -1;
-// 	    }
-// 	  RealVector TmpState(Space->GetHilbertSpaceDimension());
-// 	  VectorHamiltonianMultiplyOperation Operation (Hamiltonian, &State, &TmpState);
-// 	  Operation.ApplyOperation(Architecture.GetArchitecture());
-// 	  double EnergyValue = State*TmpState;
-// 	  cout << "< Energy > = "<<EnergyValue<<endl;
-// 	  cout << "< shifted energy > = "<<EnergyValue + Shift<<endl;
-// 	  return 0;
-// 	}
-      
-//       Hamiltonian->ShiftHamiltonian(Shift);
-//       char* EigenvectorName = 0;
-//       if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
-// 	{
-// 	  EigenvectorName = new char [64];
-// 	  sprintf (EigenvectorName, "fermions_%s_n_%d_2s_%d_lz_%d", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax, L);
-// 	}
-      
-//       QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);
-//       MainTaskOperation TaskOperation (&Task);
-//       TaskOperation.ApplyOperation(Architecture.GetArchitecture());
-//       if (EigenvectorName != 0)
-// 	{
-// 	  delete[] EigenvectorName;
-// 	}
-
-//       delete Hamiltonian;
-//       if (FirstRun == true)
-// 	FirstRun = false;
+      delete Hamiltonian;
+      if (FirstRun == true)
+	FirstRun = false;
      }
 //   cout << "total dim = " << TotalDim << endl;
 //   BinomialCoefficients TmpCoef(2 * (LzMax + 1 + LandauLevelIndexDifference));

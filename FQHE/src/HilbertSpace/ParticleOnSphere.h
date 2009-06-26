@@ -171,6 +171,22 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // return value = index of the destination state 
   virtual int AdA (int index, int m, int n, double& coefficient);
 
+  // apply a^+_m a_m operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation and annihilation operator
+  // return value = coefficient obtained when applying a^+_m a_m
+  virtual double AdA (long index, int m) = 0;
+
+  // apply a^+_m a_n operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual long AdA (long index, int m, int n, double& coefficient);
+
   // evaluate wave function in real space using a given basis
   //
   // state = vector corresponding to the state in the Fock basis

@@ -66,6 +66,17 @@ double ParticleOnSphereWithSpin::AdA (int index, int m)
   return (this->AddAd(index, m) + this->AduAu(index, m));
 }
 
+// apply sum_s a^+_m_s a_m_s operator to a given state (sum over all spin states)
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation and annihilation operator
+// return value = coefficient obtained when applying a^+_m a_m
+
+double ParticleOnSphereWithSpin::AdA (long index, int m)
+{
+  return (this->AddAd(index, m) + this->AduAu(index, m));
+}
+
 
 // apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdu call
 //
@@ -176,6 +187,18 @@ int ParticleOnSphereWithSpin::AduAd (int index, int m, int n, double& coefficien
   return this->HilbertSpaceDimension;
 }
 
+// apply a^+_m_u a_n_d operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation/annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSpin::AduAd (int index, int m, double& coefficient)
+{
+  return this->AduAd(index, m, m, coefficient);
+}
+
 // apply a^+_m_d a_n_u operator to a given state 
 //
 // index = index of the state on which the operator has to be applied
@@ -188,6 +211,19 @@ int ParticleOnSphereWithSpin::AddAu (int index, int m, int n, double& coefficien
 {
   return this->HilbertSpaceDimension;
 }
+
+// apply a^+_m_d a_n_u operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation/annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSpin::AddAu (int index, int m, double& coefficient)
+{
+  return this->AddAu(index, m, m, coefficient);
+}
+
 
 // apply a^+_m1_u a^+_m2_d operator to the state produced using AuAu method (without destroying it)
 //

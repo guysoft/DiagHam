@@ -527,7 +527,7 @@ long AbstractQHEOnSphereWithSpinHamiltonian::PartialFastMultiplicationMemory(int
     {
       for (int i = firstComponent; i < LastComponent; ++i)
 	{
-	  for (int j=0; j<LzMax+1; ++j)
+	  for (int j=0; j<= this->LzMax; ++j)
 	    {
 	      Index = TmpParticles->AddAu(i, j, j, Coefficient);
 	      if (Index < Dim)
@@ -585,41 +585,7 @@ void AbstractQHEOnSphereWithSpinHamiltonian::EnableFastMultiplication()
       TmpCoefficientArray = this->InteractionPerComponentCoefficient[TotalPos];
       Pos = 0l;
       this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, TmpIndexArray, TmpCoefficientArray, Pos);
-      if ((this->OneBodyInteractionFactorsdowndown != 0) || (this->OneBodyInteractionFactorsupup != 0))
-	{
-	  double TmpDiagonal = 0.0;
-	  if (this->OneBodyInteractionFactorsupup != 0)
-	    for (int j = 0; j <= this->LzMax; ++j)
-	      TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * TmpParticles->AduAu(i + this->PrecalculationShift, j);
-	  if (this->OneBodyInteractionFactorsdowndown != 0)
-	    for (int j = 0; j <= this->LzMax; ++j)
-	      TmpDiagonal += this->OneBodyInteractionFactorsdowndown[j] * TmpParticles->AddAd(i + this->PrecalculationShift, j);	  
-	  TmpIndexArray[Pos] = i + this->PrecalculationShift;
-	  TmpCoefficientArray[Pos] = TmpDiagonal;
-	  ++Pos;	  
-	}
-      if (this->OneBodyInteractionFactorsupdown != 0)
-	{
-	  double Coefficient;
-	  int Index;
-	  for (int j = 0; j <= this->LzMax; ++j)
-	    {
-	      Index = TmpParticles->AddAu(i + this->PrecalculationShift, j, j, Coefficient);
-	      if (Index < Dim)
-		{
-		  TmpIndexArray[Pos] = Index;
-		  TmpCoefficientArray[Pos] = Coefficient * OneBodyInteractionFactorsupdown[j];
-		  ++Pos;
-		}
-	      Index = TmpParticles->AduAd(i + this->PrecalculationShift, j, j, Coefficient);
-	      if (Index < Dim)
-		{
-		  TmpIndexArray[Pos] = Index;
-		  TmpCoefficientArray[Pos] = Coefficient * OneBodyInteractionFactorsupdown[j];
-		  ++Pos;
-		}
-	    }
-	}       
+      this->EvaluateMNOneBodyFastMultiplicationComponent(TmpParticles, i, TmpIndexArray, TmpCoefficientArray, Pos);
       ++TotalPos;
     }
   this->FastMultiplicationFlag = true;
