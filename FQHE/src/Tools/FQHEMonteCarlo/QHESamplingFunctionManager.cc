@@ -40,6 +40,7 @@
 #include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
 
 #include <iostream>
+#include <cstring>
 
 
 using std::endl;

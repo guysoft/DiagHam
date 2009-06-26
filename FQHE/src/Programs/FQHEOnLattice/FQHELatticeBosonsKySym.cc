@@ -14,8 +14,9 @@
 #include "Options/Options.h"
 
 #include <iostream>
-#include <stdlib.h>
-#include <math.h>
+#include <cstdlib>
+#include <climits>
+#include <cmath>
 #include <sys/time.h>
 #include <stdio.h>
 

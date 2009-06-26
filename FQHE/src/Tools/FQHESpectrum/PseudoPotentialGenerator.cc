@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <iostream>
+#include <cstdlib>
 
 using std::sqrt;
 using std::cout;

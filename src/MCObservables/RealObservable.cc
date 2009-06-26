@@ -32,6 +32,8 @@
 
 #include <cmath>
 #include <iostream>
+#include <cstdlib>
+
 
 RealObservable::RealObservable(int Maxbins, int minObsPerBin)
 {

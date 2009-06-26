@@ -31,6 +31,8 @@
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
 
 #include <iostream>
+#include <cstring>
+#include <cstdlib>
 
 
 using std::cout;

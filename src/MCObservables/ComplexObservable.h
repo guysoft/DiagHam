@@ -35,7 +35,9 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <cmath>
 #include "MathTools/Complex.h"
+
 
 #define LARGE_N 256  // defines the bin size from which a partly filled bin is used in Variance
 #define DEF_OBS_PER_BIN 2

@@ -31,9 +31,10 @@
 #include "config.h"
 #include "Tools/FQHESpectrum/QHEOnSphereLzSortedSpectrum.h"
 
-#include <string.h>
 #include <fstream>
-#include <math.h>
+#include <cmath>
+#include <cstdlib>
+#include <cstring>
 
 
 using std::ifstream;

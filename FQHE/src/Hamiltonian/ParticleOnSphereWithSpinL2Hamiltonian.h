@@ -77,6 +77,23 @@ class ParticleOnSphereWithSpinL2Hamiltonian : public AbstractQHEOnSphereWithSpin
 				AbstractArchitecture* architecture, double l2Factor = 1.0, long memory = -1, 
 				bool onDiskCacheFlag = false, char* precalculationFileName = 0);
 
+  // constructor with an additional S^2 term
+  //
+  // particles = Hilbert space associated to the system
+  // nbrParticles = number of particles
+  // lzmax = maximum Lz value reached by a particle in the state
+  // totalLz = twice the projected momentum total value
+  // totalSz = twice the projected spin total value
+  // architecture = architecture to use for precalculation
+  // l2Factor = multiplicative factor in front of the L^2 operator in the Hamiltonian
+  // s2Factor = multiplicative factor in front of the S^2 operator in the Hamiltonian
+  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+  // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
+  // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
+  ParticleOnSphereWithSpinL2Hamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, int totalLz, int totalSz,
+					AbstractArchitecture* architecture, double l2Factor, double s2Factor, long memory = -1, bool onDiskCacheFlag = false,
+					char* precalculationFileName = 0);
+
   // destructor
   //
   ~ParticleOnSphereWithSpinL2Hamiltonian();

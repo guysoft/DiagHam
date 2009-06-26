@@ -41,6 +41,7 @@
 #include <iostream>
 #include <sys/time.h>
 #include <fstream>
+#include <climits>
 
 
 using std::ofstream;

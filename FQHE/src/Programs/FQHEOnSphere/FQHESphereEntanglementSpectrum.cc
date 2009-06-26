@@ -13,8 +13,9 @@
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
 
 #include <iostream>
-#include <stdlib.h>
-#include <math.h>
+#include <cstdlib>
+#include <cmath>
+#include <cstring>
 #include <fstream>
 
 using std::cout;
@@ -34,6 +35,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption ('l', "nbr-orbitals", "compute the Jack polynomial from the max-index-th component (require an initial state, 0 if it has computed up to the end)", 0l);
   (*SystemGroup) += new SingleStringOption  ('o', "output", "output name for the entanglement spectrum (default name replace density-matrix full.ent extension with la_x_na_y.entspec)");
   (*SystemGroup) += new SingleDoubleOption  ('e', "eigenvalue-error", "lowest acceptable reduced density matrix eignvalue", 1e-14);  
+  (*SystemGroup) += new BooleanOption ('\n', "show-minmaxlza", "show minimum an maximum Lz value that can be reached");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -54,7 +56,7 @@ int main(int argc, char** argv)
   int NbrFluxQuanta = 0;
   int TotalLz = 0;
   bool Statistics = true;
-
+  
   if (Manager.GetString("density-matrix") == 0)
     {
       cout << "a reduced density matrix has to be provided, see man page for option syntax or type FQHESphereEntanglementSpectrum -h" << endl;
@@ -83,11 +85,13 @@ int main(int argc, char** argv)
   int* NaValues = DensityMatrix.GetAsIntegerArray(1);
   int* LzValues = DensityMatrix.GetAsIntegerArray(2);
   double* Coefficients = DensityMatrix.GetAsDoubleArray(3);
-
+  double MinLza = 1e300;
+  double MaxLza = -MinLza; 
   int Index = 0l;
   int MaxIndex = DensityMatrix.GetNbrLines();
   while ((Index < MaxIndex) && (LaValues[Index] != NbrOrbitalsInPartition))
     ++Index;
+
 
   if (Index < MaxIndex)
     {
@@ -115,7 +119,14 @@ int main(int argc, char** argv)
 	    {
 	      double Tmp = Coefficients[Index];
 	      if (Tmp > Error)
-		File << NbrOrbitalsInPartition << " " << NbrParticlesInPartition << " " << LzValues[Index] << " " << (-0.5 * (LzValues[Index] + ((NbrOrbitalsInPartition - 1 - NbrFluxQuanta) * NbrParticlesInPartition))) << " " << Tmp << " " << (-log(Tmp)) << endl;
+		{
+		  double TmpLza = (-0.5 * (LzValues[Index] + ((NbrOrbitalsInPartition - 1 - NbrFluxQuanta) * NaValues[Index])));
+		  File << NbrOrbitalsInPartition << " " << NaValues[Index] << " " << LzValues[Index] << " " <<  TmpLza<< " " << Tmp << " " << (-log(Tmp)) << endl;
+		  if (TmpLza < MinLza)
+		    MinLza = TmpLza;
+		  if (TmpLza > MaxLza)
+		    MaxLza = TmpLza;
+		}
 	      ++Index;
 	    }
 	}
@@ -125,11 +136,19 @@ int main(int argc, char** argv)
 	    ++Index;
 	  if (Index < MaxIndex)
 	    {
+	      double Shift = ((NbrOrbitalsInPartition - 1 - NbrFluxQuanta) * NbrParticlesInPartition);
 	      while ((Index < MaxIndex) && (LaValues[Index] == NbrOrbitalsInPartition) && (NaValues[Index] == NbrParticlesInPartition))
 		{
 		  double Tmp = Coefficients[Index];
 		  if (Tmp > Error)
-		    File << NbrOrbitalsInPartition << " " << NbrParticlesInPartition << " " << LzValues[Index] << " " << (-0.5 * (LzValues[Index] + ((NbrOrbitalsInPartition - 1 - NbrFluxQuanta) * NbrParticlesInPartition))) << " " << Tmp << " " << (-log(Tmp)) << endl;
+		    {
+		      double TmpLza = (-0.5 * (LzValues[Index] + Shift));
+		      File << NbrOrbitalsInPartition << " " << NbrParticlesInPartition << " " << LzValues[Index] << " " << TmpLza << " " << Tmp << " " << (-log(Tmp)) << endl;
+		      if (TmpLza < MinLza)
+			MinLza = TmpLza;
+		      if (TmpLza > MaxLza)
+			MaxLza = TmpLza;
+		    }
 		  ++Index;
 		}	      
 	    }
@@ -146,6 +165,13 @@ int main(int argc, char** argv)
       cout << "error, no entanglement spectrum can be computed from current data (invalid number of orbitals)" << endl;
       return -1;
     }
+
+  if (Manager.GetBoolean("show-minmaxlza"))
+    {
+      cout << "min Lza = " << MinLza << endl;
+      cout << "max Lza = " << MaxLza << endl;
+    }
+
   return 0;
 }
 

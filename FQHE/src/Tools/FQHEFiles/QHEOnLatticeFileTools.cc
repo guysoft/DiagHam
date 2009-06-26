@@ -31,6 +31,8 @@
 #include "Tools/FQHEFiles/QHEOnLatticeFileTools.h"
 
 #include <iostream>
+#include <cstring>
+#include <cstdlib>
 
 
 using std::cout;

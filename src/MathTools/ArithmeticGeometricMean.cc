@@ -1,6 +1,8 @@
 #include "ArithmeticGeometricMean.h"
 
 #include <cmath>
+#include <cstdlib>
+
 using std::sqrt;
 
 // default constructor

@@ -36,6 +36,7 @@
 
 #include <iostream>
 #include <string.h>
+#include <cstdlib>
 
 
 using std::ostream;

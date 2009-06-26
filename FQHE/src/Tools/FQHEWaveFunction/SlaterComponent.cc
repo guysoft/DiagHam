@@ -35,6 +35,7 @@
 #include <iostream>
 #include <bitset>
 #include <cmath>
+#include <cstdlib>
 
 using std::cout;
 using std::endl;

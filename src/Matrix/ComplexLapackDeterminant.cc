@@ -3,8 +3,12 @@
 #ifdef HAVE_LAPACK
 
 #include <iostream>
+#include <cstdlib>
+
+
 using std::cout;
 using std::endl;
+
 
 // binding to the LAPACK zgetrf routine for LU decomposition
 //

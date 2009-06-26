@@ -34,6 +34,8 @@
 #include "GeneralTools/ListIterator.h"
 #include "GeneralTools/ArrayTools.h"
 
+#include <cstring>
+#include <cstdlib>
 
 // list all files or directories that obey a given pattern (that can include relative/absolute path) /to/directory/patternxxxsuffix where xxx is an integer
 //

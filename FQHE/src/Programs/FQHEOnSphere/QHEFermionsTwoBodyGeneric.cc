@@ -25,7 +25,8 @@
 #include "GeneralTools/FilenameTools.h"
 
 #include <iostream>
-#include <stdlib.h>
+#include <cstdlib>
+#include <climits>
 #include <math.h>
 #include <sys/time.h>
 #include <stdio.h>

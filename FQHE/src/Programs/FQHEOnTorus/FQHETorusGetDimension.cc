@@ -13,8 +13,9 @@
 #include "Options/SingleStringOption.h"
 
 #include <iostream>
-#include <stdlib.h>
-#include <math.h>
+#include <cstdlib>
+#include <cstring>
+#include <cmath>
 #include <fstream>
 
 using std::ios;

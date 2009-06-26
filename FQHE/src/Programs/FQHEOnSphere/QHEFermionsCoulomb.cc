@@ -12,10 +12,11 @@
 #include "Options/Options.h"
 
 #include <iostream>
-#include <stdlib.h>
-#include <math.h>
+#include <cstdlib>
+#include <cmath>
 #include <sys/time.h>
 #include <stdio.h>
+#include <climits>
 
 
 using std::ios;

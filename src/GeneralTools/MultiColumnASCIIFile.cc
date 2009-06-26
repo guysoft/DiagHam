@@ -34,6 +34,8 @@
 #include "GeneralTools/StringTools.h"
 
 #include <string.h>
+#include <cstring>
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #ifdef __BZ2LIB__

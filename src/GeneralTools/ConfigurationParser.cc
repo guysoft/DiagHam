@@ -36,6 +36,8 @@
 #include <string.h>
 #include <fstream>
 #include <iostream>
+#include <cstring>
+#include <cstdlib>
 
 
 using std::ifstream;

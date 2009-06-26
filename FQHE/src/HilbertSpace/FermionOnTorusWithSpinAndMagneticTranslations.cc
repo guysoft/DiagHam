@@ -41,12 +41,14 @@
 #include "MathTools/IntegerAlgebraTools.h"
 #include "GeneralTools/ArrayTools.h"
 
-#include <math.h>
+#include <cmath>
+#include <cstdlib>
 
 using std::cout;
 using std::endl;
 using std::dec;
 using std::hex;
+using std::abs;
 
 // basic constructor
 // 

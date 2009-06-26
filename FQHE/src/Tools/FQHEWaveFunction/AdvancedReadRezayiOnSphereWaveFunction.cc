@@ -38,7 +38,8 @@
 #include "GeneralTools/OrderedList.h"
 
 #include <iostream>
-#include <math.h>
+#include <cstdlib>
+#include <cmath>
 
 
 using std::cout;

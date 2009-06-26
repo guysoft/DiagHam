@@ -1,7 +1,7 @@
 #include "HilbertSpace/AbstractQHEParticle.h"
 #include "HilbertSpace/ParticleOnSphereManager.h"
 
-#include "Hamiltonian/ParticleOnSphereWithSpinL2Hamiltonian.h"
+#include "Hamiltonian/ParticleOnSphereWithSpinS2Hamiltonian.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -37,7 +37,7 @@ int main(int argc, char** argv)
   cout.precision(14);
 
   // some running options and help
-  OptionManager Manager ("FQHESphereWithSpinL2Diagonalize" , "0.01");
+  OptionManager Manager ("FQHESphereWithSpinS2Diagonalize" , "0.01");
   OptionGroup* LanczosGroup  = new OptionGroup ("Lanczos options");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
@@ -54,10 +54,9 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
 
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the system", 0);
-  (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "l2");
+  (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "s2");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
-  (*SystemGroup) += new SingleDoubleOption ('\n', "l2-factor", "multiplicative factor in front of the L^2 operator ", 1.0);
-  (*SystemGroup) += new SingleDoubleOption ('\n', "s2-factor", "multiplicative factor in front of an optional S^2 operator than can be added to the Hamiltonian", 0.0);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "s2-factor", "multiplicative factor in front of the S^2 operator ", 1.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "energy-shift", "if non zero, override energy shift using the indicated value ", -10.0);
 
   (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
@@ -95,7 +94,7 @@ int main(int argc, char** argv)
   
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHESphereWithSpinL2Diagonalize -h" << endl;
+      cout << "see man page for option syntax or type FQHESphereWithSpinS2Diagonalize -h" << endl;
       return -1;
     }
   if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
@@ -122,16 +121,9 @@ int main(int argc, char** argv)
   if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
     Memory = Architecture.GetArchitecture()->GetLocalMemory();
   AbstractQHEOnSphereHamiltonian* Hamiltonian = 0;
-  if (Manager.GetDouble("s2-factor") == 0.0)
-    Hamiltonian = new ParticleOnSphereWithSpinL2Hamiltonian(Space, NbrParticles, LzMax, TotalLz,
+  Hamiltonian = new ParticleOnSphereWithSpinS2Hamiltonian(Space, NbrParticles, LzMax, TotalLz, TotalSz,
 							    Architecture.GetArchitecture(), 
-							    ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),
-							    Memory, DiskCacheFlag,
-							    LoadPrecalculationFileName);
-  else
-    Hamiltonian = new ParticleOnSphereWithSpinL2Hamiltonian(Space, NbrParticles, LzMax, TotalLz, TotalSz,
-							    Architecture.GetArchitecture(), 
-							    Manager.GetDouble("l2-factor"), Manager.GetDouble("s2-factor"),
+							    ((SingleDoubleOption*) Manager["s2-factor"])->GetDouble(),
 							    Memory, DiskCacheFlag,
 							    LoadPrecalculationFileName);
 

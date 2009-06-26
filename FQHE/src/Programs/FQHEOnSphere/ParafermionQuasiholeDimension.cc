@@ -15,8 +15,9 @@
 
 
 #include <iostream>
-#include <stdlib.h>
-#include <math.h>
+#include <cstdlib>
+#include <cmath>
+#include <cstring>
 
 using std::cout;
 using std::endl;

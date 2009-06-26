@@ -34,6 +34,7 @@
 #include "MathTools/FactorialCoefficient.h"
 
 #include <iostream>
+#include <cstdlib>
 
 
 using std::cout;
