@@ -38,7 +38,8 @@
 #include "FunctionBasis/AbstractFunctionBasis.h"
 #include "GeneralTools/UnsignedIntegerTools.h"
 
-#include <math.h>
+#include <cmath>
+#include <cstdlib>
 
 #include <bitset>
 using std::bitset;

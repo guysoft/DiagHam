@@ -30,6 +30,8 @@
 
 
 #include <fstream>
+#include <iostream>
+#include <cstdlib>
 
 using std::cout;
 using std::ofstream;

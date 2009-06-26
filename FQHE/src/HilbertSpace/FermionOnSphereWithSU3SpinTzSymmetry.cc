@@ -43,6 +43,7 @@
 
 #include <math.h>
 #include <fstream>
+#include <cstdlib>
 
 using std::cout;
 using std::endl;

@@ -41,7 +41,7 @@
 
 #include <iostream>
 #include <cstring>
-
+#include <stdio.h>
 
 using std::endl;
 using std::cout;

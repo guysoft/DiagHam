@@ -13,6 +13,7 @@
 #include "FunctionBasis/ParticleOnSphereGenericLLFunctionBasis.h"
 
 #include <iostream>
+#include <cstdlib>
 
 using std::cout;
 using std::endl;

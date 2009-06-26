@@ -8,6 +8,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
+#include <stdio.h>
 
 using std::cout;
 using std::endl;

@@ -47,7 +47,7 @@
 
 int GetAllFilesDirectories(const char* pattern, char**& matchedFileArray, const char* suffix)
 {
-  char* Path = strrchr(pattern, '/');
+  const char* Path = strrchr(pattern, '/');
   char* TmpPattern;
   long PatternLength;
   DIR* TmpDirectory;
@@ -193,7 +193,7 @@ char* ConcatenatePathAndFileName (char* path, char* fileName)
 //
 void ExtractPathAndFileName (const char* input, char* &path, char* &fileName)
 {
-  char* TmpFile = strrchr(input,'/');
+  const char* TmpFile = strrchr(input,'/');
   if (TmpFile==NULL)
     {
       path = new char[3];
@@ -203,13 +203,10 @@ void ExtractPathAndFileName (const char* input, char* &path, char* &fileName)
     }
   else
     {
-      ++TmpFile;
-      char TmpC=TmpFile[0];
-      TmpFile[0]='\0';
-      path = new char[strlen(input)+1];
-      sprintf(path,input);
-      TmpFile[0]=TmpC;
-      fileName = new char[strlen(TmpFile)+1];
+      long TmpLength = strlen(input) - strlen(TmpFile);
+      path = new char[TmpLength + 1];
+      strncpy(path, input, TmpLength);
+      fileName = new char[strlen(TmpFile) + 1];
       sprintf(fileName,TmpFile);
     }
 }

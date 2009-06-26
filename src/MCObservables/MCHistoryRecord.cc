@@ -1,7 +1,9 @@
 #include "MCHistoryRecord.h"
 #include "GeneralTools/Endian.h"
 #include "GeneralTools/ListIterator.h"
+
 #include <iostream>
+#include <cstdlib>
 
 using std::ios;
 using std::cout;

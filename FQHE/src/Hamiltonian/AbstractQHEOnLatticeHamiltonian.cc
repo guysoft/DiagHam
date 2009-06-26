@@ -42,7 +42,7 @@
 #include <sys/time.h>
 #include <fstream>
 #include <climits>
-
+#include <cstdlib>
 
 using std::ofstream;
 using std::ifstream;

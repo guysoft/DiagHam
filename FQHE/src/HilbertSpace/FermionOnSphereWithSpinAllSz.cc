@@ -41,8 +41,10 @@
 #include "MathTools/BinomialCoefficients.h"
 #include "GeneralTools/UnsignedIntegerTools.h"
 #include "GeneralTools/StringTools.h"
-#include <math.h>
+
+#include <cmath>
 #include <bitset>
+#include <cstdlib>
 
 using std::cout;
 using std::endl;

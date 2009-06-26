@@ -30,8 +30,13 @@
 
 #include "config.h"
 #include "UnsignedIntegerTools.h"
+
 #include <iostream>
 #include <cstdlib>
+#include <iostream>
+
+using std::cout;
+using std::endl;
 
 
 // return next bigger word with same number of bits set.
@@ -52,7 +57,11 @@ unsigned long nextone (unsigned long i)
       count++;
       bit<<=1;
     }
-  if (!bit) {printf("overflow in nextone");return (~0ul);}
+  if (!bit)
+    {
+      cout << "overflow in nextone" << endl;
+      return (~0ul);
+    }
   
   i &= (~(bit-1));           /* clear lower bits */
   

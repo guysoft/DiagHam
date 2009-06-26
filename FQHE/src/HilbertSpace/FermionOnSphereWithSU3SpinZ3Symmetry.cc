@@ -41,8 +41,9 @@
 #include "GeneralTools/UnsignedIntegerTools.h"
 #include "GeneralTools/Endian.h"
 
-#include <math.h>
+#include <cmath>
 #include <fstream>
+#include <cstdlib>
 
 using std::cout;
 using std::endl;

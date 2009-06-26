@@ -43,8 +43,10 @@
 #include "MathTools/BinomialCoefficients.h"
 #include "GeneralTools/UnsignedIntegerTools.h"
 #include "GeneralTools/Endian.h"
+
 #include <math.h>
 #include <bitset>
+#include <cstdlib>
 
 using std::cout;
 using std::endl;

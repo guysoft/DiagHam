@@ -41,6 +41,7 @@
 #include "GeneralTools/UnsignedIntegerTools.h"
 
 #include <math.h>
+#include <cstdlib>
 
 using std::cout;
 using std::endl;

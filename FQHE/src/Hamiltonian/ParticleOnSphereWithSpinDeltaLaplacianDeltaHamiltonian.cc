@@ -47,6 +47,7 @@
 #include <iostream>
 #include <sys/time.h>
 #include <fstream>
+#include <cstdlib>
 
 using std::cout;
 using std::endl;

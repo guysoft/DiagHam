@@ -37,6 +37,7 @@
 #include <math.h>
 #include <fstream>
 #include <iostream>
+#include <cstdlib>
 
 #ifdef __MPI__
 #include <mpi.h>
