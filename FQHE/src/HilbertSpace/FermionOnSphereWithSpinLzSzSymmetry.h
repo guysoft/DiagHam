@@ -96,12 +96,10 @@ static  unsigned long FermionOnSphereWithSpinLzInvertTable[] = {0x0ul, 0x40ul, 0
 class FermionOnSphereWithSpinLzSzSymmetry :  public FermionOnSphereWithSpin
 {
 
- private:
+ protected:
 
   // indicate that both the Lz and Sz symmetry have the same parity
   bool LzSzSameParityFlag;
-
- protected:
 
   // shift to apply to a state before inverting its expression
   int InvertShift;
