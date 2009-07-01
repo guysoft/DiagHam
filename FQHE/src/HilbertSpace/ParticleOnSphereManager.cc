@@ -60,6 +60,7 @@
 #include "HilbertSpace/FermionOnSphereWithSpinSzSymmetryLong.h"
 #include "HilbertSpace/FermionOnSphereWithSpinLzSymmetry.h"
 #include "HilbertSpace/FermionOnSphereWithSpinLzSymmetryLong.h"
+#include "HilbertSpace/FermionOnSphereWithSpinHaldaneLzSzSymmetry.h"
 
 #include "HilbertSpace/FermionOnSphereWithSU3Spin.h"
 #include "HilbertSpace/FermionOnSphereWithSU3SpinTzSymmetry.h"
@@ -660,30 +661,49 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU2(int totalLz)
 	      cout << "error while parsing " << this->Options->GetString("reference-file") << endl;	      
 	      return 0;
 	    }
+	  if ((SzSymmetrizedBasis == true) && (SzTotal == 0) && (LzSymmetrizedBasis == true) && (totalLz == 0))
+	    {
 #ifdef __64_BITS__
-	  if (LzMax <= 31)
+	      if (LzMax <= 31)
 #else
-	    if (LzMax <= 15)
+		if (LzMax <= 15)
 #endif
-	      {
-		Space = new FermionOnSphereWithSpinHaldaneBasis(NbrFermions, totalLz, LzMax, SzTotal, ReferenceStates, NbrReferenceStates);
-	      }
-	    else
-	      {
+		  {
+		    Space = new FermionOnSphereWithSpinHaldaneLzSzSymmetry(NbrFermions, LzMax, this->Options->GetBoolean("minus-szparity"), this->Options->GetBoolean("minus-lzparity"), ReferenceStates, NbrReferenceStates);
+		  }
+		else
+		  {
+		    cout << "States of this Hilbert space cannot be represented in a single word." << endl;
+		    return 0;
+		  }
+	    }
+	  else
+	    {
+#ifdef __64_BITS__
+	      if (LzMax <= 31)
+#else
+		if (LzMax <= 15)
+#endif
+		  {
+		    Space = new FermionOnSphereWithSpinHaldaneBasis(NbrFermions, totalLz, LzMax, SzTotal, ReferenceStates, NbrReferenceStates);
+		  }
+		else
+		  {
 #ifdef __128_BIT_LONGLONG__
-		if (LzMax <= 63)
+		    if (LzMax <= 63)
 #else
-		  if (LzMax <= 31)
+		      if (LzMax <= 31)
 #endif
-		    {
-		      Space = new FermionOnSphereWithSpinHaldaneBasisLong (NbrFermions, totalLz, LzMax, SzTotal, ReferenceStates, NbrReferenceStates);
-		    }
-		  else
-		    {
-		      cout << "States of this Hilbert space cannot be represented in a single word." << endl;
-		      return 0;
-		    }	
-	      }
+			{
+			  Space = new FermionOnSphereWithSpinHaldaneBasisLong (NbrFermions, totalLz, LzMax, SzTotal, ReferenceStates, NbrReferenceStates);
+			}
+		      else
+			{
+			  cout << "States of this Hilbert space cannot be represented in a single word." << endl;
+			  return 0;
+			}	
+		  }
+	    }
 	  return Space;
 	}	
     }

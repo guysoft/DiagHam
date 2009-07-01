@@ -122,18 +122,13 @@ int main(int argc, char** argv)
   if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
     Memory = Architecture.GetArchitecture()->GetLocalMemory();
   AbstractQHEOnSphereHamiltonian* Hamiltonian = 0;
-  if (Manager.GetDouble("s2-factor") == 0.0)
-    Hamiltonian = new ParticleOnSphereWithSpinL2Hamiltonian(Space, NbrParticles, LzMax, TotalLz,
-							    Architecture.GetArchitecture(), 
-							    ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),
-							    Memory, DiskCacheFlag,
-							    LoadPrecalculationFileName);
-  else
-    Hamiltonian = new ParticleOnSphereWithSpinL2Hamiltonian(Space, NbrParticles, LzMax, TotalLz, TotalSz,
-							    Architecture.GetArchitecture(), 
-							    Manager.GetDouble("l2-factor"), Manager.GetDouble("s2-factor"),
-							    Memory, DiskCacheFlag,
-							    LoadPrecalculationFileName);
+  Hamiltonian = new ParticleOnSphereWithSpinL2Hamiltonian(Space, NbrParticles, LzMax, TotalLz,
+							  Architecture.GetArchitecture(), 
+							  ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),
+							  Memory, DiskCacheFlag,
+							  LoadPrecalculationFileName);
+  if (Manager.GetDouble("s2-factor") != 0.0)
+    ((AbstractQHEOnSphereWithSpinHamiltonian*) Hamiltonian)->AddS2(TotalLz, TotalSz, Manager.GetDouble("s2-factor"), Memory);
 
   double Shift = ((SingleDoubleOption*) Manager["energy-shift"])->GetDouble();
   Hamiltonian->ShiftHamiltonian(Shift);
