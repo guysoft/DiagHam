@@ -9,8 +9,11 @@
 #include "HilbertSpace/FermionOnSphereHaldaneBasisLong.h"
 #include "HilbertSpace/FermionOnSphereSymmetricBasisLong.h"
 #include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasisLong.h"
+#include "HilbertSpace/FermionOnSphereHaldaneLargeBasis.h"
+#include "HilbertSpace/FermionOnSphereHaldaneHugeBasis.h"
 
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
+#include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
 
 #include "GeneralTools/ConfigurationParser.h"
 
@@ -70,7 +73,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "landau-level", "index of the Landau level (0 being the LLL)", 0);
   (*SystemGroup) += new SingleStringOption  ('e', "eigenstate", "name of the file containing the eigenstate");
   (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
-  (*SystemGroup) += new SingleStringOption  ('\n', "reference-state", "reference state to start the Haldane algorithm from (can be laughlin, pfaffian or readrezayi3)", "laughlin");
+  (*SystemGroup) += new BooleanOption  ('\n', "huge-basis", "use huge Hilbert space support");
+  (*SystemGroup) += new BooleanOption  ('\n', "large-basis", "use large Hilbert space support (i.e. handle non-squeezed Hilbert space larger than 2^31 without hard-drive storage)");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "file-size", "maximum file size (in MBytes) when using huge mode", 0);
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
   (*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-points", "number of point to evaluate", 1000);
@@ -79,6 +84,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "density", "plot density insted of density-density correlation", false);
   (*SystemGroup) += new BooleanOption  ('\n', "coefficients-only", "only compute the one or two body coefficients that are requested to evaluate the density-density correlation", false);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
+  (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "huge-memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
+  (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "large-memory", "maximum memory (in kBytes) that can allocated for precalculations when using huge mode", 1);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the Haldane basis)",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with rhorho extension");
@@ -182,98 +189,81 @@ int main(int argc, char** argv)
       int* ReferenceState = 0;
       if (((SingleStringOption*) Manager["reference-file"])->GetString() == 0)
 	{
-	  ReferenceState = new int[LzMax + 1];
-	  for (int i = 0; i <= LzMax; ++i)
-	    ReferenceState[i] = 0;
-	  if (strcasecmp(((SingleStringOption*) Manager["reference-state"])->GetString(), "laughlin") == 0)
-	    for (int i = 0; i <= LzMax; i += 3)
-	      ReferenceState[i] = 1;
-	  else
-	    if (strcasecmp(((SingleStringOption*) Manager["reference-state"])->GetString(), "pfaffian") == 0)
-	      for (int i = 0; i <= LzMax; i += 4)
-		{
-		  ReferenceState[i] = 1;
-		  ReferenceState[i + 1] = 1;
-		}
-	    else
-	      if (strcasecmp(((SingleStringOption*) Manager["reference-state"])->GetString(), "readrezayi3") == 0)
-		for (int i = 0; i <= LzMax; i += 5)
-		  {
-		    ReferenceState[i] = 1;
-		    ReferenceState[i + 1] = 1;
-		    ReferenceState[i + 2] = 1;
-		  }
-	      else
-		{
-		  cout << "unknown reference state " << ((SingleStringOption*) Manager["reference-state"])->GetString() << endl;
-		  return -1;
-		}
+	  return -1;
 	}
       else
-	{
-	  ConfigurationParser ReferenceStateDefinition;
-	  if (ReferenceStateDefinition.Parse(((SingleStringOption*) Manager["reference-file"])->GetString()) == false)
-	    {
-	      ReferenceStateDefinition.DumpErrors(cout) << endl;
-	      return -1;
-	    }
-	  if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", NbrParticles) == false) || (NbrParticles <= 0))
-	    {
-	      cout << "NbrParticles is not defined or as a wrong value" << endl;
-	      return -1;
-	    }
-	  if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", LzMax) == false) || (LzMax <= 0))
-	    {
-	      cout << "LzMax is not defined or as a wrong value" << endl;
-	      return -1;
-	    }
-	  int MaxNbrLz;
-	  if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
-	    {
-	      cout << "error while parsing ReferenceState in " << ((SingleStringOption*) Manager["reference-file"])->GetString() << endl;
-	      return -1;     
-	    }
-	  if (MaxNbrLz != (LzMax + 1))
-	    {
-	      cout << "wrong LzMax value in ReferenceState" << endl;
-	      return -1;     
-	    }
-	}	
+	if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles,LzMax, ReferenceState) == false)
+	  return -1;
       if (SymmetrizedBasis == false)
 	{
+	  if (Manager.GetBoolean("large-basis") == true)
+	    {
+	      if (Manager.GetString("load-hilbert") != 0)
+		Space = new FermionOnSphereHaldaneLargeBasis(Manager.GetString("load-hilbert"), Manager.GetInteger("large-memory") << 10);
+	      else
+		{
+		  Space = new FermionOnSphereHaldaneLargeBasis(NbrParticles, TotalLz, LzMax, ReferenceState, Manager.GetInteger("large-memory") << 10);	  
+		  if (Manager.GetString("save-hilbert") != 0)
+		    {
+		      ((FermionOnSphereHaldaneLargeBasis*) Space)->WriteHilbertSpace(Manager.GetString("save-hilbert"));
+		      return 0;
+		    }
+		}
+	    }
+	  else
+	    {
+	      if (Manager.GetBoolean("huge-basis") == true)
+		{
+		  if (Manager.GetString("save-hilbert") != 0)
+		    {
+		      Space = new FermionOnSphereHaldaneHugeBasis (NbrParticles, TotalLz, LzMax, Manager.GetInteger("file-size"), ReferenceState, ((unsigned long) Manager.GetInteger("huge-memory")) << 20, false);
+		      ((FermionOnSphereHaldaneHugeBasis*) Space)->WriteHilbertSpace(Manager.GetString("save-hilbert"));
+		      return 0;
+		    }
+		  if (Manager.GetString("load-hilbert") == 0)
+		    {
+		      cout << "error : huge basis mode requires to save and load the Hilbert space" << endl;
+		      return -1;
+		    }
+		  Space = new FermionOnSphereHaldaneHugeBasis (Manager.GetString("load-hilbert"), Manager.GetInteger("huge-memory"));
+		}
+	      else
+		{
 #ifdef __64_BITS__
-	  if (LzMax <= 62)
+		  if (LzMax <= 62)
 #else
-	    if (LzMax <= 30)
+		    if (LzMax <= 30)
 #endif
-	      {
-		if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
-		  Space = new FermionOnSphereHaldaneBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
-		else
-		  Space = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, LzMax, ReferenceState, MemorySpace);
-		if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
-		  {
-		    ((FermionOnSphereHaldaneBasis*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
-		    return 0;
-		  }
-	      }
-	    else
-#ifdef __128_BIT_LONGLONG__
-	      if (LzMax <= 126)
-#else
-		if (LzMax <= 62)
-#endif
-		  {
-		    if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
-		      Space = new FermionOnSphereHaldaneBasisLong(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
-		    else
-		      Space = new FermionOnSphereHaldaneBasisLong(NbrParticles, TotalLz, LzMax, ReferenceState, MemorySpace);
-		    if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
 		      {
-			((FermionOnSphereHaldaneBasisLong*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
-			return 0;
+			if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
+			  Space = new FermionOnSphereHaldaneBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+			else
+			  Space = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, LzMax, ReferenceState, MemorySpace);
+			if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+			  {
+			    ((FermionOnSphereHaldaneBasis*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+			    return 0;
+			  }
 		      }
-		  }	       
+		    else
+#ifdef __128_BIT_LONGLONG__
+		      if (LzMax <= 126)
+#else
+			if (LzMax <= 62)
+#endif
+			  {
+			    if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
+			      Space = new FermionOnSphereHaldaneBasisLong(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+			    else
+			      Space = new FermionOnSphereHaldaneBasisLong(NbrParticles, TotalLz, LzMax, ReferenceState, MemorySpace);
+			    if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+			      {
+				((FermionOnSphereHaldaneBasisLong*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+				return 0;
+			      }
+			  }	       
+		}
+	    }
 	}
       else
 	{

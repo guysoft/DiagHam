@@ -209,10 +209,10 @@ void ParticleOnSphereTwoLandauLevelHamiltonian::EvaluateInteractionFactors()
   this->NbrDownDownSectorIndicesPerSum = new int [this->NbrDownDownSectorSums];
   for (int i = 0; i < this->NbrUpUpSectorSums; ++i)
     this->NbrUpUpSectorIndicesPerSum[i] = 0;
-  for (int i = 0; i < this->NbrUpUpSectorSums; ++i)
-    this->NbrUpUpSectorIndicesPerSum[i] = 0;
-  for (int i = 0; i < this->NbrUpUpSectorSums; ++i)
-    this->NbrUpUpSectorIndicesPerSum[i] = 0;
+  for (int i = 0; i < this->NbrUpDownSectorSums; ++i)
+    this->NbrUpDownSectorIndicesPerSum[i] = 0;
+  for (int i = 0; i < this->NbrDownDownSectorSums; ++i)
+    this->NbrDownDownSectorIndicesPerSum[i] = 0;
 
   for (int m1 = 0; m1 <= this->LzMaxUp; ++m1)
     for (int m2 = 0; m2 <= this->LzMaxUp; ++m2)
@@ -279,7 +279,7 @@ void ParticleOnSphereTwoLandauLevelHamiltonian::EvaluateInteractionFactors()
  	{
 	  if (this->NbrUpUpSectorIndicesPerSum[i] > 0)
 	    {
-	      this->InteractionFactorsUpUpUpUp[i] = new double[this->NbrUpUpSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
+	      this->InteractionFactorsUpUpUpUp[i] = new double[this->NbrUpUpSectorIndicesPerSum[i] * this->NbrUpUpSectorIndicesPerSum[i]];
 	      int Index = 0;
 	      for (int j1 = 0; j1 < this->NbrUpUpSectorIndicesPerSum[i]; ++j1)
 		{
@@ -312,7 +312,7 @@ void ParticleOnSphereTwoLandauLevelHamiltonian::EvaluateInteractionFactors()
  	{
 	  if (this->NbrDownDownSectorIndicesPerSum[i] > 0)
 	    {
-	      this->InteractionFactorsDownDownDownDown[i] = new double[this->NbrDownDownSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
+	      this->InteractionFactorsDownDownDownDown[i] = new double[this->NbrDownDownSectorIndicesPerSum[i] * this->NbrDownDownSectorIndicesPerSum[i]];
 	      int Index = 0;
 	      for (int j1 = 0; j1 < this->NbrDownDownSectorIndicesPerSum[i]; ++j1)
 		{

@@ -1041,20 +1041,8 @@ int main(int argc, char** argv)
        ComplexVector UV (NbrParticles * 2, true);
        RealVector TmpPositions (NbrParticles * 2, true);
        RandomUV (UV, TmpPositions, NbrParticles, RandomNumber);
-       cout << SymmetrizedFunction->CalculateFromSpinorVariables(UV) << endl;;
-       
-//        UV.Re(2) = UV.Re(0);
-//        UV.Im(2) = UV.Im(0);
-//        UV.Re(3) = UV.Re(1);
-//        UV.Im(3) = UV.Im(1);
-//        UV.Re(4) = UV.Re(0);
-//        UV.Im(4) = UV.Im(0);
-//        UV.Re(5) = UV.Re(1);
-//        UV.Im(5) = UV.Im(1);
-//        UV.Re(6) = UV.Re(0);
-//        UV.Im(6) = UV.Im(0);
-//        UV.Re(7) = UV.Re(1);
-//        UV.Im(7) = UV.Im(1);
+       cout << "wave function initial value : " << SymmetrizedFunction->CalculateFromSpinorVariables(UV) << endl;;
+       cout << "test symmetry : " << endl;
        for (int i = 0; i < NbrParticles; ++i)
 	 {
 	   for (int j = i + 1; j < NbrParticles; ++j)
@@ -1066,6 +1054,13 @@ int main(int argc, char** argv)
 	       FlipCoordinates(UV, i, j);
 	       
 	     }
+	 }
+       cout << "test vanishing properties : " << endl;
+       for (int i = 1; i < NbrParticles; ++i)
+	 {
+	   UV[(i << 1)] = UV[0];
+	   UV[(i << 1) + 1] = UV[1];
+	   cout << (i  + 1) << " body cancellation : " << SymmetrizedFunction->CalculateFromSpinorVariables(UV) << endl;
 	 }
      }
   return 0;

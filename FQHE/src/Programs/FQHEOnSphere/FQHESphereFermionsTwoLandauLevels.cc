@@ -116,6 +116,9 @@ int main(int argc, char** argv)
      {
        double* OneBodyPotentialUpUp = 0;
        double* OneBodyPotentialDownDown = 0;
+       PseudoPotentials = new double*[9];
+       for (int i = 0; i < 9; ++i)
+	 PseudoPotentials[i] = new double [LzMaxUp + 1];
        if (FQHESphereSU2GetPseudopotentials(Manager.GetString("interaction-file"), LzMax, PseudoPotentials,
 					   OneBodyPotentialUpUp, OneBodyPotentialDownDown) == false)
 	 return -1;

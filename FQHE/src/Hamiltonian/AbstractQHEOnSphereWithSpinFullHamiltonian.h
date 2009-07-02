@@ -523,6 +523,7 @@ inline void AbstractQHEOnSphereWithSpinFullHamiltonian::EvaluateMNTwoBodyFastMul
   double* TmpInteractionFactor;
   int Dim = particles->GetHilbertSpaceDimension();
 // UpUp sector
+  cout << index << " upup" << endl;
   for (int j = 0; j < this->NbrUpUpSectorSums; ++j)
     {
       int Lim = 2 * this->NbrUpUpSectorIndicesPerSum[j];
@@ -578,6 +579,7 @@ inline void AbstractQHEOnSphereWithSpinFullHamiltonian::EvaluateMNTwoBodyFastMul
 	}
     }
   // DownDown sector
+  cout << index << " downdown" << endl;
   for (int j = 0; j < this->NbrDownDownSectorSums; ++j)
     {
       int Lim = 2 * this->NbrDownDownSectorIndicesPerSum[j];
@@ -633,6 +635,7 @@ inline void AbstractQHEOnSphereWithSpinFullHamiltonian::EvaluateMNTwoBodyFastMul
 	}
     }
   // UpDown sector
+  cout << index << " updown" << endl;
   for (int j = 0; j < this->NbrUpDownSectorSums; ++j)
     {
       int Lim = 2 * this->NbrUpDownSectorIndicesPerSum[j];
