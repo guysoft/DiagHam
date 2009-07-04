@@ -236,7 +236,7 @@ inline void AbstractQHEOnSphereWithSpinFullHamiltonian::EvaluateMNTwoBodyAddMult
 		    vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;
 		  ++TmpInteractionFactor;
 		}
-	      TmpInteractionFactor = this->InteractionFactorsUpDownUpUp[j] + (i1 * Lim) >> 2);
+	      TmpInteractionFactor = this->InteractionFactorsUpDownUpUp[j] + ((i1 * Lim) >> 2);
 	      TmpIndices2 = this->UpDownSectorIndicesPerSum[j];
 	      Lim2 = 2 * this->NbrUpDownSectorIndicesPerSum[j];
 	      for (int i2 = 0; i2 < Lim2; i2 += 2)
