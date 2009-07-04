@@ -175,34 +175,6 @@ int main(int argc, char** argv)
 								  LoadPrecalculationFileName);
       double Shift = - 0.5 * ((double) (NbrParticles * NbrParticles)) / (0.5 * ((double) LzMax));
       
-      if (Manager.GetString("energy-expectation") != 0 )
-	{
-	  char* StateFileName = Manager.GetString("energy-expectation");
-	  if (IsFile(StateFileName) == false)
-	    {
-	      cout << "state " << StateFileName << " does not exist or can't be opened" << endl;
-	      return -1;           
-	    }
-	  RealVector State;
-	  if (State.ReadVector(StateFileName) == false)
-	    {
-	      cout << "error while reading " << StateFileName << endl;
-	      return -1;
-	    }
-	  if (State.GetVectorDimension()!=Space->GetHilbertSpaceDimension())
-	    {
-	      cout << "error: vector and Hilbert-space have unequal dimensions"<<endl;
-	      return -1;
-	    }
-	  RealVector TmpState(Space->GetHilbertSpaceDimension());
-	  VectorHamiltonianMultiplyOperation Operation (Hamiltonian, &State, &TmpState);
-	  Operation.ApplyOperation(Architecture.GetArchitecture());
-	  double EnergyValue = State*TmpState;
-	  cout << "< Energy > = "<<EnergyValue<<endl;
-	  cout << "< shifted energy > = "<<EnergyValue + Shift<<endl;
-	  return 0;
-	}
-      
       Hamiltonian->ShiftHamiltonian(Shift);
       char* EigenvectorName = 0;
       if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	

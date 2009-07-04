@@ -216,7 +216,7 @@ inline void AbstractQHEOnSphereWithSpinFullHamiltonian::EvaluateMNTwoBodyAddMult
 	  if (Coefficient3 != 0.0)
 	    {
 	      Coefficient3 *= vSource[index];
-	      TmpInteractionFactor = &(this->InteractionFactorsUpUpUpUp[j][(i1 * Lim) >> 2]);
+	      TmpInteractionFactor = this->InteractionFactorsUpUpUpUp[j] + ((i1 * Lim) >> 2);
 	      TmpIndices2 = this->UpUpSectorIndicesPerSum[j];
 	      int Lim2 = 2 * this->NbrUpUpSectorIndicesPerSum[j];
 	      for (int i2 = 0; i2 < Lim2; i2 += 2)
@@ -226,7 +226,7 @@ inline void AbstractQHEOnSphereWithSpinFullHamiltonian::EvaluateMNTwoBodyAddMult
 		    vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;
 		  ++TmpInteractionFactor;
 		}
-	      TmpInteractionFactor = &(this->InteractionFactorsDownDownUpUp[j][(i1 * Lim) >> 2]);
+	      TmpInteractionFactor = this->InteractionFactorsDownDownUpUp[j] + ((i1 * Lim) >> 2);
 	      TmpIndices2 = this->DownDownSectorIndicesPerSum[j];
 	      Lim2 = 2 * this->NbrDownDownSectorIndicesPerSum[j];
 	      for (int i2 = 0; i2 < Lim2; i2 += 2)
@@ -236,7 +236,7 @@ inline void AbstractQHEOnSphereWithSpinFullHamiltonian::EvaluateMNTwoBodyAddMult
 		    vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;
 		  ++TmpInteractionFactor;
 		}
-	      TmpInteractionFactor = &(this->InteractionFactorsUpDownUpUp[j][(i1 * Lim) >> 2]);
+	      TmpInteractionFactor = this->InteractionFactorsUpDownUpUp[j] + (i1 * Lim) >> 2);
 	      TmpIndices2 = this->UpDownSectorIndicesPerSum[j];
 	      Lim2 = 2 * this->NbrUpDownSectorIndicesPerSum[j];
 	      for (int i2 = 0; i2 < Lim2; i2 += 2)
@@ -260,7 +260,7 @@ inline void AbstractQHEOnSphereWithSpinFullHamiltonian::EvaluateMNTwoBodyAddMult
 	  if (Coefficient3 != 0.0)
 	    {
 	      Coefficient3 *= vSource[index];
-	      TmpInteractionFactor = &(this->InteractionFactorsUpUpDownDown[j][(i1 * Lim) >> 2]);
+	      TmpInteractionFactor = this->InteractionFactorsUpUpDownDown[j] + ((i1 * Lim) >> 2);
 	      TmpIndices2 = this->UpUpSectorIndicesPerSum[j];
 	      int Lim2 = 2 * this->NbrUpUpSectorIndicesPerSum[j];
 	      for (int i2 = 0; i2 < Lim2; i2 += 2)
@@ -270,7 +270,7 @@ inline void AbstractQHEOnSphereWithSpinFullHamiltonian::EvaluateMNTwoBodyAddMult
 		    vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;
 		  ++TmpInteractionFactor;
 		}
-	      TmpInteractionFactor = &(this->InteractionFactorsDownDownDownDown[j][(i1 * Lim) >> 2]);
+	      TmpInteractionFactor = this->InteractionFactorsDownDownDownDown[j] + ((i1 * Lim) >> 2);
 	      TmpIndices2 = this->DownDownSectorIndicesPerSum[j];
 	      Lim2 = 2 * this->NbrDownDownSectorIndicesPerSum[j];
 	      for (int i2 = 0; i2 < Lim2; i2 += 2)
@@ -280,7 +280,7 @@ inline void AbstractQHEOnSphereWithSpinFullHamiltonian::EvaluateMNTwoBodyAddMult
 		    vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;
 		  ++TmpInteractionFactor;
 		}
-	      TmpInteractionFactor = &(this->InteractionFactorsUpDownDownDown[j][(i1 * Lim) >> 2]);
+	      TmpInteractionFactor = this->InteractionFactorsUpDownDownDown[j] + ((i1 * Lim) >> 2);
 	      TmpIndices2 = this->UpDownSectorIndicesPerSum[j];
 	      Lim2 = 2 * this->NbrUpDownSectorIndicesPerSum[j];
 	      for (int i2 = 0; i2 < Lim2; i2 += 2)
@@ -304,7 +304,7 @@ inline void AbstractQHEOnSphereWithSpinFullHamiltonian::EvaluateMNTwoBodyAddMult
 	  if (Coefficient3 != 0.0)
 	    {
 	      Coefficient3 *= vSource[index];
-	      TmpInteractionFactor = &(this->InteractionFactorsUpUpUpDown[j][(i1 * Lim) >> 2]);
+	      TmpInteractionFactor = this->InteractionFactorsUpUpUpDown[j] + ((i1 * Lim) >> 2);
 	      TmpIndices2 = this->UpUpSectorIndicesPerSum[j];
 	      int Lim2 = 2 * this->NbrUpUpSectorIndicesPerSum[j];
 	      for (int i2 = 0; i2 < Lim2; i2 += 2)
@@ -314,7 +314,7 @@ inline void AbstractQHEOnSphereWithSpinFullHamiltonian::EvaluateMNTwoBodyAddMult
 		    vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;
 		  ++TmpInteractionFactor;
 		}
-	      TmpInteractionFactor = &(this->InteractionFactorsDownDownUpDown[j][(i1 * Lim) >> 2]);
+	      TmpInteractionFactor = this->InteractionFactorsDownDownUpDown[j] + ((i1 * Lim) >> 2);
 	      TmpIndices2 = this->DownDownSectorIndicesPerSum[j];
 	      Lim2 = 2 * this->NbrDownDownSectorIndicesPerSum[j];
 	      for (int i2 = 0; i2 < Lim2; i2 += 2)
@@ -324,7 +324,7 @@ inline void AbstractQHEOnSphereWithSpinFullHamiltonian::EvaluateMNTwoBodyAddMult
 		    vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;
 		  ++TmpInteractionFactor;
 		}
-	      TmpInteractionFactor = &(this->InteractionFactorsUpDownUpDown[j][(i1 * Lim) >> 2]);
+	      TmpInteractionFactor = this->InteractionFactorsUpDownUpDown[j] + ((i1 * Lim) >> 2);
 	      TmpIndices2 = this->UpDownSectorIndicesPerSum[j];
 	      Lim2 = 2 * this->NbrUpDownSectorIndicesPerSum[j];
 	      for (int i2 = 0; i2 < Lim2; i2 += 2)

@@ -107,7 +107,9 @@ ParticleOnSphereTwoLandauLevelHamiltonian::ParticleOnSphereTwoLandauLevelHamilto
     {
       if (memory > 0)
 	{
+	  cout << "done" << endl;
 	  long TmpMemory = this->FastMultiplicationMemory(memory);
+	  cout << "done" << endl;
 	  if (TmpMemory < 1024)
 	    cout  << "fast = " <<  TmpMemory << "b ";
 	  else
@@ -269,14 +271,40 @@ void ParticleOnSphereTwoLandauLevelHamiltonian::EvaluateInteractionFactors()
  	++this->NbrDownDownSectorIndicesPerSum[m1 + m2 + (2 * this->LandauLevelIndexDifference)];
        }
 
+  this->InteractionFactorsUpUpUpUp = new double* [this->NbrUpUpSectorSums];
+  this->InteractionFactorsUpDownUpUp = new double* [this->NbrUpUpSectorSums];
+  this->InteractionFactorsDownDownUpUp = new double* [this->NbrUpUpSectorSums];
+  for (int i = 0; i < this->NbrUpUpSectorSums; ++i)
+    {
+      this->InteractionFactorsUpUpUpUp = 0;
+      this->InteractionFactorsUpDownUpUp = 0;
+      this->InteractionFactorsDownDownUpUp = 0;
+    }
+  this->InteractionFactorsDownDownDownDown = new double* [this->NbrDownDownSectorSums];
+  this->InteractionFactorsUpDownDownDown = new double* [this->NbrDownDownSectorSums];
+  this->InteractionFactorsUpUpDownDown = new double* [this->NbrDownDownSectorSums];
+  for (int i = 0; i < this->NbrUpDownSectorSums; ++i)
+    {
+      this->InteractionFactorsUpUpUpDown = 0;
+      this->InteractionFactorsUpDownUpDown = 0;
+      this->InteractionFactorsDownDownUpDown = 0;
+    }
+  this->InteractionFactorsUpUpUpDown = new double* [this->NbrUpDownSectorSums];
+  this->InteractionFactorsUpDownUpDown = new double* [this->NbrUpDownSectorSums];
+  this->InteractionFactorsDownDownUpDown = new double* [this->NbrUpDownSectorSums];
+  for (int i = 0; i < this->NbrUpDownSectorSums; ++i)
+    {
+      this->InteractionFactorsUpUpUpDown = 0;
+      this->InteractionFactorsUpDownUpDown = 0;
+      this->InteractionFactorsDownDownUpDown = 0;
+    }
 
 
-   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
-     {
-       //upup-upup term
-       this->InteractionFactorsUpUpUpUp = new double* [this->NbrUpUpSectorSums];
+  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+    {
+      //upup-upup term
        for (int i = 0; i < this->NbrUpUpSectorSums; ++i)
- 	{
+	 {
 	  if (this->NbrUpUpSectorIndicesPerSum[i] > 0)
 	    {
 	      this->InteractionFactorsUpUpUpUp[i] = new double[this->NbrUpUpSectorIndicesPerSum[i] * this->NbrUpUpSectorIndicesPerSum[i]];
@@ -307,7 +335,6 @@ void ParticleOnSphereTwoLandauLevelHamiltonian::EvaluateInteractionFactors()
  	    }
         }
        // downdown-downdown term
-       this->InteractionFactorsDownDownDownDown = new double* [this->NbrDownDownSectorSums];
        for (int i = 0; i < this->NbrDownDownSectorSums; ++i)
  	{
 	  if (this->NbrDownDownSectorIndicesPerSum[i] > 0)
