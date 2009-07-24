@@ -375,7 +375,10 @@ int main(int argc, char** argv)
       
     
   if (!UsePfaffian)
-    Space = new FermionOnSphere(NbrFermions, Lz, LzMax);
+    {
+      Space = new FermionOnSphere(NbrFermions, Lz, LzMax);
+      cout << "Hilbertspace dimension="<<Space->GetHilbertSpaceDimension()<<endl;
+    }
   ParticleOnSphereFunctionBasis Basis(LzMax,ParticleOnSphereFunctionBasis::LeftHanded);  
   
   double PreviousSamplingAmplitude;

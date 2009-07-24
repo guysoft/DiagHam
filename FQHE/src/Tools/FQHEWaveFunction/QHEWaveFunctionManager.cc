@@ -262,7 +262,7 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
       if (strcmp (this->Options->GetString("test-wavefunction"), "SLBS") == 0)
 	{
 	  int N=this->Options->GetInteger("nbr-particles");
-	  int levels=this->Options->GetBoolean("nbr-levels");
+	  int levels=this->Options->GetBoolean("CF-levels");
 	  SLBSWavefunction *rst = new SLBSWavefunction(N, levels);
 	  rst->AdaptAverageMCNorm();
 	  return rst;

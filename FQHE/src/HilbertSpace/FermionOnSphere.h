@@ -96,6 +96,8 @@ class FermionOnSphere :  public ParticleOnSphere
 
   friend class BosonOnDiskShort;
 
+  friend class PairedCFOnSphereThreeEightsState;
+
  protected:
 
   // number of fermions

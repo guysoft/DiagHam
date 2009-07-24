@@ -106,7 +106,7 @@ class SLBSWavefunctionUnprojected: public Abstract1DComplexFunctionOnSphere
 
   // if particles are very close to each other, interpolation occurs in JainCFOrbitals
   // this variable is used to pass on this value between the different subroutines
-  double Interpolation;
+  // double Interpolation;
 
   // temporary array used to store (u_i v_j - u_j v_i)^-1 factors
   Complex** JastrowFactorElements;

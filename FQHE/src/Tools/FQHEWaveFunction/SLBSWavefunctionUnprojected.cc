@@ -67,16 +67,18 @@ SLBSWavefunctionUnprojected::SLBSWavefunctionUnprojected(int nbrParticles, int n
   this->NbrParticles = nbrParticles;
   this->NbrLandauLevels=nbrLandauLevels;
   this->NegativeFieldFlag = negFluxFlag;
+  this->ActualJastrowPower=2;
   
   this->TwiceS = (this->NbrParticles / this->NbrLandauLevels) - this->NbrLandauLevels;
   this->EffectiveFlux = this->TwiceS*(1-2*NegativeFieldFlag);
   cout << "EffectiveFlux="<<EffectiveFlux<<endl;
 
   this->Flag.Initialize();
-  this->Interpolation=1.0;
+  //this->Interpolation=1.0;
   this->Slater = new ComplexMatrix(this->NbrParticles,this->NbrParticles);
   this->Pfaffian = new ComplexSkewSymmetricMatrix(this->NbrParticles);
   this->SlaterElementNorm = 1.0;
+  
   
   this->SpinorUCoordinates = new Complex[NbrParticles];
   this->SpinorVCoordinates = new Complex[NbrParticles];
@@ -111,7 +113,7 @@ SLBSWavefunctionUnprojected::SLBSWavefunctionUnprojected(const SLBSWavefunctionU
   this->NegativeFieldFlag = function.NegativeFieldFlag;
   this->EffectiveFlux = function.EffectiveFlux;
   this->Flag = function.Flag;
-  this->Interpolation=function.Interpolation;
+  //this->Interpolation=function.Interpolation;
   this->Slater = new ComplexMatrix(this->NbrParticles,this->NbrParticles);
   this->Pfaffian = new ComplexSkewSymmetricMatrix(this->NbrParticles);
     
@@ -166,14 +168,14 @@ Complex SLBSWavefunctionUnprojected::operator ()(RealVector& x)
       SpinorVCoordinates[i].Re *= c;
       SpinorVCoordinates[i].Im *= s;
     }
-  this->Chi1 = this->EvaluateTables(false);
+  this->EvaluateTables(false);
   
   Complex Tmp;
 
   // initialize Slater determinant and Pfaffian
   for (int i=0;i<this->NbrParticles;++i)
     for(int j=0;j<i;++j)
-      Pfaffian->SetMatrixElement(i,j,1.0/JastrowFactorElements[i][j]);
+      Pfaffian->SetMatrixElement(i,j,JastrowFactorElements[i][j] /* testing*/ *SlaterElementNorm);
   
   for (int i = 0; i < this->NbrParticles; ++i)
     {
@@ -183,7 +185,7 @@ Complex SLBSWavefunctionUnprojected::operator ()(RealVector& x)
 	{
 	  for (int k = 0; k <= MaxMomentum; ++k)
 	    {	      
-	      Slater->SetMatrixElement(Index, i, this->EvaluateMonopoleHarmonic(i, k, j, MaxMomentum));
+	      Slater->SetMatrixElement(Index, i, this->EvaluateMonopoleHarmonic(i, k, j, MaxMomentum)*SlaterElementNorm);
 	      ++Index;
 	    }
 	  MaxMomentum += 2;
@@ -193,7 +195,13 @@ Complex SLBSWavefunctionUnprojected::operator ()(RealVector& x)
   this->Determinant=Slater->Determinant();
   this->PfaffianValue=Pfaffian->Pfaffian();
 
-  return this->PfaffianValue*Interpolation*this->Chi1*this->Determinant;
+  return this->PfaffianValue*this->Chi1*this->Determinant;
+  
+  // testing validity for 2/5 state:
+  // return this->Determinant*this->Chi1*this->Chi1;
+
+  // testing validity for MR state:
+  // return this->PfaffianValue*this->Chi1*this->Chi1;
 }
 
 // evaluate function at a given point
@@ -212,7 +220,7 @@ Complex SLBSWavefunctionUnprojected::CalculateFromSpinorVariables(ComplexVector&
       this->SpinorVCoordinates[i].Im = uv.Im(2*i+1);
     }
 
-  this->Chi1 = this->EvaluateTables(false);
+  this->EvaluateTables(false);
   
   Complex Tmp;
 
@@ -229,7 +237,7 @@ Complex SLBSWavefunctionUnprojected::CalculateFromSpinorVariables(ComplexVector&
 	{
 	  for (int k = 0; k <= MaxMomentum; ++k)
 	    {	      
-	      Slater->SetMatrixElement(Index, i, this->EvaluateMonopoleHarmonic(i, k, j, MaxMomentum));
+	      Slater->SetMatrixElement(Index, i, this->EvaluateMonopoleHarmonic(i, k, j, MaxMomentum)*SlaterElementNorm);
 	      ++Index;
 	    }
 	  MaxMomentum += 2;
@@ -239,8 +247,10 @@ Complex SLBSWavefunctionUnprojected::CalculateFromSpinorVariables(ComplexVector&
   this->Determinant=Slater->Determinant();
   this->PfaffianValue=Pfaffian->Pfaffian();
 
-  return this->PfaffianValue*Interpolation*this->Chi1*this->Determinant;
+  return this->PfaffianValue*this->Chi1*this->Determinant;
   
+  // testing validity for 2/5 state:
+  // return this->Determinant*this->Chi1*this->Chi1;
 }
 
 
@@ -474,7 +484,7 @@ Complex SLBSWavefunctionUnprojected::EvaluateTables(bool derivativeFlag)
 
   Complex JastrowFactor(1.0);
   Complex Tmp;
-  for (int i = 0; i < this->NbrParticles; ++i)
+  for (int i = 1; i < this->NbrParticles; ++i)
     {
       for (int j = 0; j < i; ++j)
 	{
@@ -483,10 +493,10 @@ Complex SLBSWavefunctionUnprojected::EvaluateTables(bool derivativeFlag)
 	  JastrowFactor *= Tmp;
 	}
     }
-  Tmp = JastrowFactor;
+  this->Chi1=JastrowFactor;
   for (int i = 1; i < this->ActualJastrowPower; ++i)
     {
-      JastrowFactor *= Tmp;
+      JastrowFactor *= this->Chi1;
     }
 
   if (derivativeFlag == true)
