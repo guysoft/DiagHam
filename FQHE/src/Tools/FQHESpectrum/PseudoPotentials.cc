@@ -234,7 +234,7 @@ namespace DiagPseudoPotentials
     double result, error;
     // call inner integral over z2, maybe change algorithm by choosing other KEY values
     gsl_integration_qag (parameters->innerIntegral, parameters->Z2min, parameters->Z2max,
-			 parameters->epsAbs, parameters->epsRel, parameters->sizeW,
+			 parameters->epsAbs, parameters->epsRel/3.0, parameters->sizeW,
 			 /* KEY */ GSL_INTEG_GAUSS15, parameters->w, &result, &error);        
 //    gsl_integration_qags (parameters->innerIntegral, parameters->Z2min, parameters->Z2max,
 //			 parameters->epsAbs, parameters->epsRel, parameters->sizeW,
@@ -257,9 +257,10 @@ namespace DiagPseudoPotentials
 // multiplier = number of integration intervals used per point of discretization
 // layerSeparation = layer separation d in bilayer, or layer thickness d modeled by interaction 1/sqrt(r^2+d^2)
 // zDensity2 = (optional) density distribution of layer 2, if absent, taken to be equal to 1st profile
+// epsRel = tolerance given to integration routine
 // return value = array that contains the pseudopotentials
 
-double* EvaluateFiniteWidthPseudoPotentials(int nbrFlux, int landauLevel, AbstractZDensityProfile *zDensity, int points, double multiplier, double layerSeparation, AbstractZDensityProfile *zDensity2)
+double* EvaluateFiniteWidthPseudoPotentials(int nbrFlux, int landauLevel, AbstractZDensityProfile *zDensity, int points, double multiplier, double layerSeparation, AbstractZDensityProfile *zDensity2, double epsRel)
 {
 #ifdef HAVE_GSL
   gsl_spline *VmSpline=0;
@@ -315,7 +316,7 @@ double* EvaluateFiniteWidthPseudoPotentials(int nbrFlux, int landauLevel, Abstra
   OuterParameters.Z2max = Z2max;
   OuterParameters.Rho1 = zDensity;  
   OuterParameters.epsAbs = 0;
-  OuterParameters.epsRel = 1e-8;
+  OuterParameters.epsRel = epsRel;
   OuterParameters.innerVar = &InnerParameters;
   gsl_function TheInnerIntegrand;
   TheInnerIntegrand.function = &DiagPseudoPotentials::IntegrandZ2;
@@ -382,9 +383,10 @@ double* EvaluateFiniteWidthPseudoPotentials(int nbrFlux, int landauLevel, Abstra
 // multiplier = number of integration intervals used per point of discretization
 // layerSeparation = layer separation d in bilayer, or layer thickness d modeled by interaction 1/sqrt(r^2+d^2)
 // zDensity2 = (optional) density distribution of layer 2, if absent, taken to be equal to 1st profile
+// epsRel = tolerance given to integration routine
 // return value = array that contains the pseudopotentials
 
-double* EvaluateFiniteWidthPseudoPotentialsNoInterpolation(int nbrFlux, int landauLevel, AbstractZDensityProfile *zDensity, int points, double multiplier, double layerSeparation, AbstractZDensityProfile *zDensity2)
+double* EvaluateFiniteWidthPseudoPotentialsNoInterpolation(int nbrFlux, int landauLevel, AbstractZDensityProfile *zDensity, int points, double multiplier, double layerSeparation, AbstractZDensityProfile *zDensity2, double epsRel)
 {
 #ifdef HAVE_GSL
   cout.precision(14);
@@ -421,7 +423,7 @@ double* EvaluateFiniteWidthPseudoPotentialsNoInterpolation(int nbrFlux, int land
   OuterParameters.Z2max = Z2max;
   OuterParameters.Rho1 = zDensity;  
   OuterParameters.epsAbs = 0;
-  OuterParameters.epsRel = 1e-8;
+  OuterParameters.epsRel = epsRel;
   OuterParameters.innerVar = &InnerParameters;
   gsl_function TheInnerIntegrand;
   TheInnerIntegrand.function = &DiagPseudoPotentials::IntegrandZ2NoInterpolation;

@@ -50,6 +50,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleIntegerOption ('\n', "profile-points", "number of points where profile is evaluated", 200);
 
   (*SystemGroup) += new  SingleDoubleOption ('\n', "profile-multiplier", "multiplier for number of integration points",1.0);
+  (*SystemGroup) += new  SingleDoubleOption ('\n', "tolerance", "relative tolerance to be achieved in numerical integrations",1e-8);
 
   (*SystemGroup) += new  BooleanOption ('n', "no-interpolation","do not use interpolation for finite width calculations");
 
@@ -151,12 +152,14 @@ int main(int argc, char** argv)
 	Pseudopotentials = EvaluateFiniteWidthPseudoPotentialsNoInterpolation(NbrFlux, LandauLevel, Profile,
 							    /*, points=200 */ Manager.GetInteger("profile-points"),
 							    /*, multiplier=5.0 */ Manager.GetDouble("profile-multiplier"),
-							    Manager.GetDouble("layer-separation"), OtherProfile);
+							    Manager.GetDouble("layer-separation"), OtherProfile,
+								Manager.GetDouble("tolerance"));
       else
 	Pseudopotentials = EvaluateFiniteWidthPseudoPotentials(NbrFlux, LandauLevel, Profile,
 							    /*, points=200 */ Manager.GetInteger("profile-points"),
 							    /*, multiplier=5.0 */ Manager.GetDouble("profile-multiplier"),
-							    Manager.GetDouble("layer-separation"), OtherProfile);
+							       Manager.GetDouble("layer-separation"), OtherProfile,
+							       Manager.GetDouble("tolerance"));
     }
   else
     {

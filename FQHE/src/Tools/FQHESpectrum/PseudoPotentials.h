@@ -53,10 +53,11 @@ double* EvaluatePseudopotentials(int nbrFlux, int landauLevel, double layerSepar
 // multiplier = number of integration intervals used per point of discretization
 // layerSeparation = layer separation d in bilayer, or layer thickness d modeled by interaction 1/sqrt(r^2+d^2)
 // zDensity2 = (optional) density distribution of layer 2, if absent, taken to be equal to 1st profile
+// epsRel = tolerance given to integration routine
 // return value = array that conatins the pseudopotentials
 double* EvaluateFiniteWidthPseudoPotentials(int nbrFlux, int landauLevel, AbstractZDensityProfile *zDensity,
 					   int points=200, double multiplier=5.0, double layerSeparation=0.0,
-					   AbstractZDensityProfile *zDensity2=0);
+					   AbstractZDensityProfile *zDensity2=0, double epsRel=1e-8);
 
 
 // evalute pseudopotentials for coulomb interaction in a given Landau level with a given density profile,
@@ -69,9 +70,10 @@ double* EvaluateFiniteWidthPseudoPotentials(int nbrFlux, int landauLevel, Abstra
 // multiplier = number of integration intervals used per point of discretization
 // layerSeparation = layer separation d in bilayer, or layer thickness d modeled by interaction 1/sqrt(r^2+d^2)
 // zDensity2 = (optional) density distribution of layer 2, if absent, taken to be equal to 1st profile
+// epsRel = tolerance given to integration routine
 // return value = array that contains the pseudopotentials
 
-double* EvaluateFiniteWidthPseudoPotentialsNoInterpolation(int nbrFlux, int landauLevel, AbstractZDensityProfile *zDensity, int points, double multiplier, double layerSeparation, AbstractZDensityProfile *zDensity2);
+double* EvaluateFiniteWidthPseudoPotentialsNoInterpolation(int nbrFlux, int landauLevel, AbstractZDensityProfile *zDensity, int points, double multiplier, double layerSeparation, AbstractZDensityProfile *zDensity2, double epsRel=1e-8);
 
 
 
