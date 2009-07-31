@@ -241,8 +241,8 @@ ParticleOnSphereGenericThreeBodyHamiltonian::ParticleOnSphereGenericThreeBodyHam
 
   this->MaxRelativeAngularMomentum = maxRelativeAngularMomentum;
   this->NbrThreeBodyPseudoPotential = maxRelativeAngularMomentum;
-  this->ThreeBodyPseudoPotential = new double[this->NbrThreeBodyPseudoPotential];
-  for (int i = 0; i < this->NbrThreeBodyPseudoPotential; ++i)
+  this->ThreeBodyPseudoPotential = new double[this->NbrThreeBodyPseudoPotential + 1];
+  for (int i = 0; i <= this->NbrThreeBodyPseudoPotential; ++i)
     this->ThreeBodyPseudoPotential[i] = threeBodyPseudoPotential[i];
 
 
