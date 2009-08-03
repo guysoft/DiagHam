@@ -54,6 +54,12 @@ LatticeConnections::LatticeConnections()
       LatticeDefinition.DumpErrors(cout) << endl;
       exit(-1);
     }
+  if ((Descriptor = LatticeDefinition["Descriptor"] ) == NULL)
+    {
+      cout << "Attention, 'Descriptor' is not defined, unnamed lattice geometry!" << endl;
+      Descriptor = new char[10];
+      sprintf(Descriptor,"unnamed");
+    }
   if ((LatticeDefinition.GetAsSingleInteger("NbrSites", NbrSitesPerCell) == false) || (NbrSitesPerCell <= 0))
     {
       cout << "NbrSites is not defined or as a wrong value" << endl;
@@ -366,6 +372,7 @@ LatticeConnections::~LatticeConnections()
       for (int i=0; i<NbrNeighborCells; ++i)
 	delete [] this->NeighborCells[i];
       delete [] this->NeighborCells;
+      delete [] this->Descriptor;
     }
 }
 
@@ -435,6 +442,17 @@ void LatticeConnections::GetPartners(int nbrSite, int * &partners, int &nbrPartn
       partners = NULL;
       nbrPartners = 0;
     }
+}
+
+// get a string describing the lattice geometry
+// 
+char *LatticeConnections::GeometryString()
+{
+  char *rst = new char[strlen(this->Descriptor)+20];
+  sprintf(rst,"%s_%d", this->Descriptor, this->PeriodicRep[0]);
+  for (int i=1; i<Dimension; ++i)
+    sprintf(rst,"%sx%d", rst, this->PeriodicRep[i]);
+  return rst;
 }
 
 

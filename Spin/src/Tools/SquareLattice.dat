@@ -1,5 +1,6 @@
 # Definition of a square lattice with the minimal unit cell of 1 sites
 #
+Descriptor = square
 NbrSites = 1
 Dimension = 2
 PeriodicRepeat = 2,2

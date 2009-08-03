@@ -127,6 +127,12 @@ class MultipleSpinChainHamiltonian : public AbstractHamiltonian
   // shift = shift value
   void ShiftHamiltonian (double shift);
 
+  // save precalculations in a file
+  // 
+  // fileName = pointer to a string containg the name of the file where precalculations have to be stored
+  // return value = true if no error occurs
+  bool SavePrecalculation (char* fileName);
+
   // evaluate matrix element
   //
   // V1 = vector to left multiply with current matrix

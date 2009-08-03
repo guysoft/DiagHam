@@ -62,6 +62,9 @@ class LatticeConnections
   // Periodic repetitions in the 1,2,...,Dim direction
   int *PeriodicRep;
 
+  // Descriptor for lattice
+  char *Descriptor;
+
   // Matrix containing lattice vectors
   RealMatrix LatticeVectors;
 
@@ -124,6 +127,10 @@ class LatticeConnections
   // partners = array to partner sites
   // nbrPartners = number of partners found
   void GetPartners(int nbrSite, int * &partners, int &nbrPartners);
+
+  // get a string describing the lattice geometry
+  // 
+  char *GeometryString();
   
   // add an option group containing all options related to the LatticeGeometry options
   //

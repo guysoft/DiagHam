@@ -1,5 +1,6 @@
 # Definition of a hexagonal lattice with the minimal unit cell of 2 sites
 #
+Descriptor = hexagonal
 NbrSites = 2
 Dimension = 2
 PeriodicRepeat = 2,2

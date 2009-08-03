@@ -8,10 +8,13 @@
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
+#include "Architecture/ArchitectureOperation/MainTaskOperation.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
 #include "GeneralTools/FilenameTools.h"
+
+#include "MainTask/GenericRealMainTask.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -76,16 +79,64 @@ int main(int argc, char** argv)
 
   int NbrSpins=Lattice->GetNbrSites();
 
-  GenericSUNSpinCollection *Space = new GenericSUNSpinCollection(LevelN, NbrSpins, CartanQuantumNumbers, MemorySpace);
-  
-  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
-  
-  AbstractSUNSpinHamiltonian *Hamiltonian =
-    new SUNSpinOnLatticeQuadraticHamiltonian(Space, Lattice, Architecture.GetArchitecture(),
-					     Memory, LoadPrecalculationFileName);
+  bool FirstRun = true;
 
-  delete Space;
+  double Shift=0.0;
+
+  char *SubspaceLegend= new char[50];
+  sprintf(SubspaceLegend,"C0");
+  for (int n=1; n < LevelN; ++n)
+    sprintf(SubspaceLegend,"%s C%d", SubspaceLegend, n);
+  
+  char *Geometry=Lattice->GeometryString();
+  char *OutputFileName = new char[100];
+  sprintf (OutputFileName, "spins_SU%d_%s_n_%d_c", LevelN, Geometry, NbrSpins);
+
+  // for the moment, have a single set of cartan quantum-numbers -> add to filename
+  for (int n=0; n < LevelN; ++n)
+    sprintf(OutputFileName,"%s_%d", OutputFileName, CartanQuantumNumbers[n]);
+  
+  // [loop over cartan quantum numbers]
+  {
+    char *SubspaceStr = new char[50];
+    sprintf(SubspaceStr,"%d",CartanQuantumNumbers[0]);
+    for (int n=1; n < LevelN; ++n)
+      sprintf(SubspaceStr,"%s %d", SubspaceStr, CartanQuantumNumbers[n]);
+    GenericSUNSpinCollection *Space = new GenericSUNSpinCollection(LevelN, NbrSpins, CartanQuantumNumbers, MemorySpace);
+    
+    Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
+    
+    AbstractSUNSpinHamiltonian *Hamiltonian =
+      new SUNSpinOnLatticeQuadraticHamiltonian(Space, Lattice, Architecture.GetArchitecture(),
+					       Memory, LoadPrecalculationFileName);
+
+
+    char* EigenvectorName = 0;
+    if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
+      {
+	EigenvectorName = new char [64];
+	sprintf (EigenvectorName, "spins_SU%d_%s_n_%d_c", LevelN, Geometry, NbrSpins);
+	for (int n=0; n < LevelN; ++n)
+	  sprintf(EigenvectorName,"%s_%d", EigenvectorName, CartanQuantumNumbers[n]);
+      }
+    
+    GenericRealMainTask Task (&Manager, Space, &Lanczos, Hamiltonian, SubspaceStr, SubspaceLegend,
+			      Shift, OutputFileName, FirstRun, EigenvectorName);
+    MainTaskOperation TaskOperation (&Task);
+    TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+    if (EigenvectorName != 0)
+	{
+	  delete[] EigenvectorName;
+	}
+      delete Hamiltonian;
+      if (FirstRun == true)
+	FirstRun = false;
+    
+    delete Space;
+    delete Hamiltonian;
+    delete [] CartanQuantumNumbers;
+  }
+  delete [] Geometry;
+  delete [] OutputFileName;
   delete Lattice;
-  delete Hamiltonian;
-  delete [] CartanQuantumNumbers;
 }

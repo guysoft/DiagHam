@@ -179,6 +179,15 @@ void NDMAPSpinChainHamiltonian::ShiftHamiltonian (double shift)
   for (int i = 0; i < this->Chain->GetHilbertSpaceDimension(); i ++)
     this->SzSzContributions[i] += shift;
 }
+
+// save precalculations in a file
+// 
+// fileName = pointer to a string containg the name of the file where precalculations have to be stored
+// return value = true if no error occurs
+bool NDMAPSpinChainHamiltonian::SavePrecalculation (char* fileName)
+{
+  return false;
+}
   
 // evaluate matrix element
 //

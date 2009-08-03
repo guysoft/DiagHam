@@ -77,6 +77,8 @@ class LanczosManager
   // return value = pointer to the Lanczos algorithm
   AbstractLanczosAlgorithm* GetLanczosAlgorithm(AbstractArchitecture* architecture, bool forceEigenstateComputation = false);
 
+  
+
 };
 
 #endif

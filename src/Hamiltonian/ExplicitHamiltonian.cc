@@ -108,6 +108,14 @@ void ExplicitHamiltonian::ShiftHamiltonian (double shift)
     (*(this->Hamiltonian))(i, i) += shift;
 }
 
+// save precalculations in a file
+// 
+// fileName = pointer to a string containg the name of the file where precalculations have to be stored
+// return value = true if no error occurs
+bool ExplicitHamiltonian::SavePrecalculation (char* fileName)
+{
+}
+
 // return matrix representation of current Hamiltonian
 //
 // return value = reference to representation

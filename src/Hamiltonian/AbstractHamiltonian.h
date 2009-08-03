@@ -86,6 +86,12 @@ class AbstractHamiltonian
   //
   // shift = shift value
   virtual void ShiftHamiltonian (double shift) = 0;
+
+  // save precalculations in a file
+  // 
+  // fileName = pointer to a string containg the name of the file where precalculations have to be stored
+  // return value = true if no error occurs
+  virtual bool SavePrecalculation (char* fileName) = 0;
   
   // store Hamiltonian into an hermitian matrix
   //

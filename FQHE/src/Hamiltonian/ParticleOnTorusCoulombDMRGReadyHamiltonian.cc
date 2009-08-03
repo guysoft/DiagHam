@@ -148,6 +148,16 @@ int ParticleOnTorusCoulombDMRGReadyHamiltonian::GetHilbertSpaceDimension ()
 void ParticleOnTorusCoulombDMRGReadyHamiltonian::ShiftHamiltonian (double shift)
 {
 }
+
+// save precalculations in a file
+// 
+// fileName = pointer to a string containg the name of the file where precalculations have to be stored
+// return value = true if no error occurs
+bool ParticleOnTorusCoulombDMRGReadyHamiltonian::SavePrecalculation (char* fileName)
+{
+  return false;
+}
+
   
 // evaluate matrix element
 //
