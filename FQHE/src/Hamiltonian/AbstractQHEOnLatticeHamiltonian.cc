@@ -1309,7 +1309,7 @@ long AbstractQHEOnLatticeHamiltonian::FastMultiplicationMemory(long allowedMemor
 	  delete[] this->NbrComplexInteractionPerComponent;
 	  this->NbrRealInteractionPerComponent = TmpNbrRealInteractionPerComponent;
 	  this->NbrComplexInteractionPerComponent = TmpNbrComplexInteractionPerComponent;
-	}      
+	}
     }
   else
     {

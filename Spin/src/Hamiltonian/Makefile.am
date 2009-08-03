@@ -21,4 +21,7 @@ V15Hamiltonian.cc \
 XXZSpinChainHamiltonian.cc \
 PeriodicXXZSpinChainWith2ndNeighborCouplingHamiltonian.cc \
 SpinChainHamiltonianWithTranslations.cc \
-NDMAPSpinChainHamiltonian.cc 
+NDMAPSpinChainHamiltonian.cc \
+AbstractSUNSpinHamiltonian.cc \
+AbstractSUNSpinOnLatticeHamiltonian.cc \
+SUNSpinOnLatticeQuadraticHamiltonian.cc

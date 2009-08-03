@@ -170,6 +170,8 @@ void FullReorthogonalizedLanczosAlgorithmWithDiskStorage::ResumeLanczosAlgorithm
   this->LanczosVectors[2].ReadVector(TmpVectorName);
   sprintf(TmpVectorName, "vector.%d", (this->Index - 1));
   this->LanczosVectors[3].ReadVector(TmpVectorName);
+  
+  delete [] TmpVectorName;
 }
   
 // get last produced vector

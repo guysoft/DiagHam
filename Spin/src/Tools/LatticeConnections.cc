@@ -419,6 +419,23 @@ int LatticeConnections::GetSiteNumber(int *cellCoordinates, int sublattice)
 }
 
 
+// request address of partners of site
+// nbrSite = number of site whose partners to request
+// partners = array to partner sites
+// nbrPartners = number of partners found
+void LatticeConnections::GetPartners(int nbrSite, int * &partners, int &nbrPartners)
+{
+  if ((nbrSite>0)&&(nbrSite<NbrSites))
+    {
+      partners = this->Partners[nbrSite];
+      nbrPartners = this->NbrPartners[nbrSite];
+    }
+  else
+    {
+      partners = NULL;
+      nbrPartners = 0;
+    }
+}
 
 
 // add an option group containing all options related to the LatticeGeometry options

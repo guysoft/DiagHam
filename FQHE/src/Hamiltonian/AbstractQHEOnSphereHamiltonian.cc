@@ -473,7 +473,7 @@ RealVector& AbstractQHEOnSphereHamiltonian::LowLevelAddMultiplyPartialFastMultip
 		  }
 	      }
 	  }
-      }    
+      }
 
   delete TmpParticles;
   return vDestination;

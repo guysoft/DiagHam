@@ -3,6 +3,8 @@
 #include "HilbertSpace/FermionOnSphereSymmetricBasis.h"
 #include "HilbertSpace/FermionOnSphereUnlimited.h"
 #include "Hamiltonian/ParticleOnSphereGenericHamiltonian.h"
+#include "Hamiltonian/ParticleOnSphereL2Hamiltonian.h"
+#include "Hamiltonian/ProjectedQHEHamiltonian.h"
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
 #include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasis.h"
 #include "HilbertSpace/FermionOnSphereLong.h"
@@ -66,6 +68,10 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new SingleDoubleOption ('\n', "l2-factor", "multiplicative factor in front of an optional L^2 operator than can be added to the Hamiltonian", 0.0);
+  (*SystemGroup) += new BooleanOption ('\n', "l2-only", "compose Hamiltonian only of L2 terms");
+  (*SystemGroup) += new BooleanOption  ('\n', "l2-project", "project onto subspace of lowest L^2");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "l2-memory", "precalculation memory for L^2 operator",1000);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "l2-nbr-vectors", "number of states stored for L^2 projection",10);
   (*SystemGroup) += new BooleanOption  ('\n', "get-lvalue", "compute mean l value from <L^2> for each eigenvalue");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
 
@@ -110,8 +116,11 @@ int main(int argc, char** argv)
   double* OneBodyPotentials = 0;
   if (((SingleStringOption*) Manager["interaction-file"])->GetString() == 0)
     {
-      cout << "an interaction file has to be provided" << endl;
-      return -1;
+      if (!Manager.GetBoolean("l2-only"))
+	{
+	  cout << "an interaction file has to be provided" << endl;
+	  return -1;
+	}
     }
   else
     {
@@ -143,8 +152,15 @@ int main(int argc, char** argv)
 	}
     }
 
-  char* OutputNameLz = new char [256 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
-  sprintf (OutputNameLz, "fermions_%s_n_%d_2s_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax);
+  char* InteractionName;
+  if (Manager.GetBoolean("l2-only"))
+    {      
+      InteractionName=new char[3];
+      sprintf (InteractionName, "l2");
+    }
+  else InteractionName=new char[3 + strlen(Manager.GetString("interaction-name"))];
+  char* OutputNameLz = new char [256 + strlen(InteractionName)];
+  sprintf (OutputNameLz, "fermions_%s_n_%d_2s_%d_lz.dat", InteractionName, NbrParticles, LzMax);
 
   int Max = ((LzMax - NbrParticles + 1) * NbrParticles);
 
@@ -169,23 +185,33 @@ int main(int argc, char** argv)
     {
       ParticleOnSphere* Space = (FermionOnSphere*) ParticleManager.GetHilbertSpace(L);
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
-      AbstractQHEOnSphereHamiltonian* Hamiltonian = 0;
+      AbstractQHEHamiltonian* Hamiltonian = 0;
+      double Shift=0.0;
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
-      if (OneBodyPotentials == 0)
-	Hamiltonian = new ParticleOnSphereGenericHamiltonian(Space, NbrParticles, LzMax, PseudoPotentials,
-							     ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),
-							     Architecture.GetArchitecture(), 
-							     Memory, DiskCacheFlag,
-							     LoadPrecalculationFileName);
+      if (Manager.GetBoolean("l2-only"))
+	{
+	  Hamiltonian = new ParticleOnSphereL2Hamiltonian(Space, NbrParticles, LzMax, L, 
+								  Architecture.GetArchitecture(), 1.0,
+						      ((unsigned long)Manager.GetInteger("l2-memory")) << 20);
+	}
       else
-	Hamiltonian = new ParticleOnSphereGenericHamiltonian(Space, NbrParticles, LzMax, PseudoPotentials, OneBodyPotentials,
-							     ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),
-							     Architecture.GetArchitecture(), 
-							     Memory, DiskCacheFlag,
-							     LoadPrecalculationFileName);
-
-      double Shift = - 0.5 * ((double) (NbrParticles * NbrParticles)) / (0.5 * ((double) LzMax));
+	{
+	  if (OneBodyPotentials == 0)
+	    Hamiltonian = new ParticleOnSphereGenericHamiltonian(Space, NbrParticles, LzMax, PseudoPotentials,
+								 ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),
+								 Architecture.GetArchitecture(), 
+								 Memory, DiskCacheFlag,
+								 LoadPrecalculationFileName);
+	  else
+	    Hamiltonian = new ParticleOnSphereGenericHamiltonian(Space, NbrParticles, LzMax, PseudoPotentials, OneBodyPotentials,
+								 ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),
+								 Architecture.GetArchitecture(), 
+								 Memory, DiskCacheFlag,
+								 LoadPrecalculationFileName);
+	  
+	  Shift = - 0.5 * ((double) (NbrParticles * NbrParticles)) / (0.5 * ((double) LzMax));
+	}
       
       if (Manager.GetString("energy-expectation") != 0 )
 	{
@@ -216,11 +242,22 @@ int main(int argc, char** argv)
 	}
       
       Hamiltonian->ShiftHamiltonian(Shift);
+      AbstractQHEHamiltonian *Projector=NULL;
+      if (Manager.GetBoolean("l2-project"))
+	{
+	  AbstractQHEHamiltonian *TmpHamiltonian = Hamiltonian;
+	  Projector = new ParticleOnSphereL2Hamiltonian(Space, NbrParticles, LzMax, L,
+							Architecture.GetArchitecture(), /* l2Factor */ 1.0, 
+							((unsigned long)Manager.GetInteger("l2-memory")) << 20);
+	  Hamiltonian = new ProjectedQHEHamiltonian (TmpHamiltonian, Projector, Architecture.GetArchitecture(),
+						     Manager.GetInteger("l2-nbr-vectors"));//,  int maxIterProj);
+	}
+      
       char* EigenvectorName = 0;
       if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
 	{
 	  EigenvectorName = new char [64];
-	  sprintf (EigenvectorName, "fermions_%s_n_%d_2s_%d_lz_%d", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax, L);
+	  sprintf (EigenvectorName, "fermions_%s_n_%d_2s_%d_lz_%d", InteractionName, NbrParticles, LzMax, L);
 	}
       
       QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);
@@ -230,7 +267,8 @@ int main(int argc, char** argv)
 	{
 	  delete[] EigenvectorName;
 	}
-
+      if (Projector!=NULL)
+	delete Projector;
       delete Hamiltonian;
       if (FirstRun == true)
 	FirstRun = false;

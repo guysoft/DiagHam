@@ -42,6 +42,8 @@
 
 using std::ostream;
 
+#include "GeneralTools/RealUniqueArray.h"
+#include "GeneralTools/ComplexUniqueArray.h"
 
 class AbstractArchitecture;
 
@@ -58,55 +60,49 @@ class AbstractSUNSpinOnLatticeHamiltonian : public AbstractSUNSpinHamiltonian
 
   // number of particles
   int NbrSpins;
-
-  // maximum Lz value reached by a particle in the state
-  int LevelN;
-
-  // array containing all interaction factors 
-  double* InteractionFactors;
-  // number of interaction factors
-  int NbrInteractionFactors;
-  // arrays for indices attached to each interaction factor
-  int* M1Value;
-  int* M2Value;
-  int* M3Value;
-  // alternative method used to store indices attached to each interaction factor
-  int NbrM12Indices;
-  int* NbrM3Values;
-  int** M3Values;
-
-  // flag to indicate if there is any one body terms in the Hamiltonian
-  bool OneBodyTermFlag;
-  // array containing all factors fo the one body terms
-  double* OneBodyInteractionFactors;
-  // number of one body terms
-  int NbrOneBodyInteractionFactors;
-  // arrays for indices attached to each one body term
-  int* OneBodyMValues;
-  int* OneBodyNValues;
-
-  // pointer to an optional L^2 operator in the Hamiltonian 
-  ParticleOnSphereSquareTotalMomentumOperator* L2Operator;
+  
+  // flag indicating whether complex interaction coefficients exist
+  bool HaveComplexInteractions;
+  // array containing all real interaction factors
+  double* PermutationPrefactors;
+  // array containing all complex interaction factors
+  Complex* ComplexPermutationPrefactors;
+  // number of P_ij terms
+  int NbrPermutationTerms;
+  // number of P_ij terms with complex prefactor
+  int NbrComplexPermutationTerms;
+  // arrays for indices of spins related by terms P_ij with varying prefactors
+  int* PermutationI;
+  int* PermutationJ;
 
   // shift to apply to go from precalculation index to the corresponding index in the HilbertSpace
   int PrecalculationShift;
-
   // amount of memory (in bytes) that can be used to store precalculated matrix elements
-  long Memory; 
+  long AllowedMemory;
+  // flag indicating whether fast multiplication data was loaded from a file
+  bool LoadedPrecalculation;
   // flag for fast multiplication algorithm
-  bool FastMultiplicationFlag;
+  bool FastMultiplicationFlag;  
   // step between each precalculated index (main part: start at 0, FastMultiplicationStep, 2*FastMultiplicationStep, ...)
-  int FastMultiplicationStep;
-  // step between each precalculated index (optional part: start at 1, FastMultiplicationSubStep, 2 * FastMultiplicationSubStep, ...)
-  int FastMultiplicationSubStep;
-  // indicate the poistion of the data relative to the sub step precalculations in NbrInteractionPerComponent, InteractionPerComponentIndex, and InteractionPerComponentCoefficient
-  int FastMultiplicationSubStepPosition;
-  // number of non-null term in the hamiltonian for each state
-  int* NbrInteractionPerComponent;
+  int FastMultiplicationStep;  
+  // number of non-null real terms in the hamiltonian for each state (typically a small number)
+  unsigned short* NbrRealInteractionPerComponent;
+  // number of non-null complex terms in the hamiltonian for each state
+  unsigned short* NbrComplexInteractionPerComponent;
   // index of the state obtained for each term of the hamiltonian when applying on a given state
+  // holding indices for both real (1st) and complex matrix elements
   int** InteractionPerComponentIndex;
-  // multiplicative coefficient obtained for each term of the hamiltonian when applying on a given state and with a given destination state
-  double** InteractionPerComponentCoefficient;
+  // index of real (first in enumeration) and complex (following) multiplicative coefficients obtained for each term of the hamiltonian when applying on a given state and with a given destination state
+  unsigned short** InteractionPerComponentCoefficientIndex;
+
+  
+
+  // array storing a single copy of each real matrix element value
+  RealUniqueArray RealInteractionCoefficients;
+
+  // array storing a single copy of each real matrix element value
+  ComplexUniqueArray ComplexInteractionCoefficients;
+  
 
   // flag to indicate if a hamiltonian is temporary stored on disk
   bool DiskStorageFlag;
@@ -121,7 +117,6 @@ class AbstractSUNSpinOnLatticeHamiltonian : public AbstractSUNSpinHamiltonian
 
   // shift to apply to the Hamiltonian diagonal elements
   double HamiltonianShift;
-
 
 
  public:
@@ -338,7 +333,7 @@ class AbstractSUNSpinOnLatticeHamiltonian : public AbstractSUNSpinHamiltonian
 
   // evaluate all interaction factors
   //   
-  virtual void EvaluateInteractionFactors() = 0;
+  virtual void EvaluateInteractionTerms() = 0;
 
   // test the amount of memory needed for fast multiplication algorithm
   //
@@ -349,9 +344,9 @@ class AbstractSUNSpinOnLatticeHamiltonian : public AbstractSUNSpinHamiltonian
   // test the amount of memory needed for fast multiplication algorithm (partial evaluation)
   //
   // firstComponent = index of the first component that has to be precalcualted
-  // lastComponent  = index of the last component that has to be precalcualted
+  // nbrComponent  = number of components that have to be precalculated
   // return value = number of non-zero matrix element
-  virtual long PartialFastMultiplicationMemory(int firstComponent, int lastComponent);
+  virtual long PartialFastMultiplicationMemory(int firstComponent, int nbrComponent);
 
   // enable fast multiplication algorithm
   //

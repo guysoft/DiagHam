@@ -115,7 +115,16 @@ class LatticeConnections
   // sublattice = sublattice index
   int GetSiteNumber(int *cellCoordinates, int sublattice);
 
+  // request total number of sites
+  //
+  int GetNbrSites(){return this->NbrSites;}
 
+  // request address of partners of site
+  // nbrSite = number of site whose partners to request
+  // partners = array to partner sites
+  // nbrPartners = number of partners found
+  void GetPartners(int nbrSite, int * &partners, int &nbrPartners);
+  
   // add an option group containing all options related to the LatticeGeometry options
   //
   // manager = pointer to the option manager
@@ -136,6 +145,7 @@ class LatticeConnections
   inline int Periodize(int coordinate, int dimension);
   
 };
+
 
 // get number of a site in cell nbrCell
 // nbrCell = cell to be addressed

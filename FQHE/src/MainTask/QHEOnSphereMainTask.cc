@@ -808,7 +808,7 @@ void QHEOnSphereMainTask::DiagonalizeInHilbertSubspace(char* subspaceDescription
     {
       RealVector TmpVector (Basis[0].GetVectorDimension(), true);
       VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(Basis[i]), &TmpVector);
-      Operation1.ApplyOperation(this->Architecture);      
+      Operation1.ApplyOperation(this->Architecture);
       TmpVectors[i] = TmpVector;
     }
   for (int i = 0; i < TmpHilbertSpaceDimension; ++i)

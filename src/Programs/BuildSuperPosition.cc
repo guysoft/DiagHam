@@ -33,6 +33,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new MultipleStringOption  ('\0', "states", "names of all vector files that should be superposed");
   (*SystemGroup) += new BooleanOption  ('c', "complex", "Assume vectors consist of complex numbers");
   (*SystemGroup) += new SingleDoubleOption  ('r', "random-component", "amplitude of a random component to be added",0.0);
+  (*SystemGroup) += new SingleIntegerOption  ('R', "random-only", "generate a pure random vector, argument is dimension",0);
   (*SystemGroup) += new BooleanOption  ('n', "no-normalize", "do NOT normalize the final vector");
   (*SystemGroup) += new SingleStringOption  ('o', "output", "names of output filename","superposition.vec");
   (*SystemGroup) += new SingleStringOption  ('f', "description-file", "build the superposition for a linear combination of a vector set described in a text file");
@@ -40,6 +41,33 @@ int main(int argc, char** argv)
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   Manager.StandardProceedings(argv, argc, cout);
+
+  if (Manager.GetInteger("random-only")>0)
+    {
+      int VectorDimension=Manager.GetInteger("random-only");
+      if (Manager.GetBoolean("complex"))
+	{
+	  ComplexVector Vector(VectorDimension);
+	  for (int i = 0; i < VectorDimension; ++i)
+	    {
+	      Vector.Re(i) = (rand() - 32767) * 0.5;
+	      Vector.Im(i) = (rand() - 32767) * 0.5;
+	    }
+	  Vector /= Vector.Norm();
+	  Vector.WriteVector(Manager.GetString("output"));
+	}
+      else
+	{
+	  RealVector Vector(VectorDimension);
+	  for (int i = 0; i < VectorDimension; ++i)
+	    Vector[i] = (rand() - 32767) * 0.5;
+	  Vector /= Vector.Norm();
+	  Vector.WriteVector(Manager.GetString("output"));
+	}
+      cout << "Generated random vector of dimension "<<VectorDimension<<" (file: "<<
+	Manager.GetString("output")<<" )"<<endl;
+      exit(0);
+    }
   
   if (Manager.GetString("description-file") == 0)
     {
