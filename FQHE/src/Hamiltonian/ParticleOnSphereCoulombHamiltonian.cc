@@ -40,6 +40,8 @@
 #include "MathTools/FactorialCoefficient.h"
 #include "MathTools/ClebschGordanCoefficients.h"
 
+#include "Operator/ParticleOnSphereSquareTotalMomentumOperator.h"
+
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/QHEParticlePrecalculationOperation.h"
 

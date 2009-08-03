@@ -29,13 +29,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef ABSTRACTSUNSPINONLATTICEHAMILTONIAN_H
-#define ABSTRACTSUNSPINONLATTICEHAMILTONIAN_H
+#ifndef ABSTRACTQHEONSPHEREHAMILTONIAN_H
+#define ABSTRACTQHEONSPHEREHAMILTONIAN_H
 
 
 #include "config.h"
-#include "HilbertSpace/GenericSUNSpinCollection.h"
-#include "Hamiltonian/AbstractSUNSpinHamiltonian.h"
+#include "HilbertSpace/ParticleOnSphere.h"
+#include "Hamiltonian/AbstractQHEHamiltonian.h"
 
 #include <iostream>
 
@@ -44,23 +44,26 @@ using std::ostream;
 
 
 class AbstractArchitecture;
+class ParticleOnSphereSquareTotalMomentumOperator;
 
 
-class AbstractSUNSpinOnLatticeHamiltonian : public AbstractSUNSpinHamiltonian
+class AbstractQHEOnSphereHamiltonian : public AbstractQHEHamiltonian
 {
 
-  //  friend class SUNSpinPrecalculationOperation;
-
+  friend class QHEParticlePrecalculationOperation;
+  friend class LinearlySuperposedQHEOnSphereHamiltonian;
  protected:
   
   // Hilbert space associated to the system
-  GenericSUNSpinCollection* Spins;
+  ParticleOnSphere* Particles;
 
   // number of particles
-  int NbrSpins;
+  int NbrParticles;
 
   // maximum Lz value reached by a particle in the state
-  int LevelN;
+  int LzMax;
+  // number of Lz values in a state
+  int NbrLzValue;
 
   // array containing all interaction factors 
   double* InteractionFactors;
@@ -128,11 +131,11 @@ class AbstractSUNSpinOnLatticeHamiltonian : public AbstractSUNSpinHamiltonian
 
   // default constructor
   //
-  AbstractSUNSpinOnLatticeHamiltonian();
+  AbstractQHEOnSphereHamiltonian();
 
   // destructor
   //
-  virtual ~AbstractSUNSpinOnLatticeHamiltonian() = 0;
+  virtual ~AbstractQHEOnSphereHamiltonian() = 0;
 
   // set Hilbert space
   //
@@ -185,7 +188,7 @@ class AbstractSUNSpinOnLatticeHamiltonian : public AbstractSUNSpinHamiltonian
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
   virtual RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
-				       int firstComponent, int nbrComponent);
+                                       int firstComponent, int nbrComponent);
 
   // multiply a set of vectors by the current hamiltonian for a given range of indices 
   // and store result in another set of vectors, low level function (no architecture optimization)
@@ -197,7 +200,7 @@ class AbstractSUNSpinOnLatticeHamiltonian : public AbstractSUNSpinHamiltonian
   // nbrComponent = number of components to evaluate
   // return value = pointer to the array of vectors where result has been stored
   virtual RealVector* LowLevelMultipleMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
-					       int firstComponent, int nbrComponent);
+                                               int firstComponent, int nbrComponent);
 
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)
@@ -216,7 +219,7 @@ class AbstractSUNSpinOnLatticeHamiltonian : public AbstractSUNSpinHamiltonian
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
   virtual RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
-					  int firstComponent, int nbrComponent);
+                                          int firstComponent, int nbrComponent);
 
   // multiply a et of vectors by the current hamiltonian for a given range of indices 
   // and add result to another et of vectors, low level function (no architecture optimization)
@@ -228,7 +231,7 @@ class AbstractSUNSpinOnLatticeHamiltonian : public AbstractSUNSpinHamiltonian
   // nbrComponent = number of components to evaluate
   // return value = pointer to the array of vectors where result has been stored
   virtual RealVector* LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
-						  int firstComponent, int nbrComponent);
+                                                  int firstComponent, int nbrComponent);
 
   // multiply a vector by the current hamiltonian and store result in another vector
   // low level function (no architecture optimization)
@@ -247,7 +250,7 @@ class AbstractSUNSpinOnLatticeHamiltonian : public AbstractSUNSpinHamiltonian
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
   virtual ComplexVector& LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-				  int firstComponent, int nbrComponent);
+                                  int firstComponent, int nbrComponent);
 
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)
@@ -266,7 +269,7 @@ class AbstractSUNSpinOnLatticeHamiltonian : public AbstractSUNSpinHamiltonian
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
   virtual ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-				     int firstComponent, int nbrComponent);
+                                     int firstComponent, int nbrComponent);
  
   // return a list of left interaction operators
   //
@@ -296,7 +299,7 @@ class AbstractSUNSpinOnLatticeHamiltonian : public AbstractSUNSpinHamiltonian
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
   virtual RealVector& LowLevelAddMultiplyPartialFastMultiply(RealVector& vSource, RealVector& vDestination, 
-							     int firstComponent, int nbrComponent);
+                                                             int firstComponent, int nbrComponent);
 
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)
@@ -308,7 +311,7 @@ class AbstractSUNSpinOnLatticeHamiltonian : public AbstractSUNSpinHamiltonian
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
   virtual RealVector& LowLevelAddMultiplyDiskStorage(RealVector& vSource, RealVector& vDestination, 
-						     int firstComponent, int nbrComponent);
+                                                     int firstComponent, int nbrComponent);
 
   // multiply a et of vectors by the current hamiltonian for a given range of indices 
   // and add result to another et of vectors, low level function (no architecture optimization)
@@ -321,7 +324,7 @@ class AbstractSUNSpinOnLatticeHamiltonian : public AbstractSUNSpinHamiltonian
   // nbrComponent = number of components to evaluate
   // return value = pointer to the array of vectors where result has been stored
   virtual RealVector* LowLevelMultipleAddMultiplyPartialFastMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
-								     int firstComponent, int nbrComponent);
+                                                                     int firstComponent, int nbrComponent);
 
   // multiply a et of vectors by the current hamiltonian for a given range of indices 
   // and add result to another et of vectors, low level function (no architecture optimization)
@@ -334,7 +337,7 @@ class AbstractSUNSpinOnLatticeHamiltonian : public AbstractSUNSpinHamiltonian
   // nbrComponent = number of components to evaluate
   // return value = pointer to the array of vectors where result has been stored
   virtual RealVector* LowLevelMultipleAddMultiplyDiskStorage(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
-							     int firstComponent, int nbrComponent);
+                                                             int firstComponent, int nbrComponent);
 
   // evaluate all interaction factors
   //   
