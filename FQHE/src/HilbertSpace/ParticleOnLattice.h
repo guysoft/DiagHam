@@ -28,8 +28,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PARTICLEONBRAVAISLATTICE_H
-#define PARTICLEONBRAVAISLATTICE_H
+#ifndef PARTICLEONLATTICE_H
+#define PARTICLEONLATTICE_H
 
 
 #include "config.h"

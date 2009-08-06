@@ -172,3 +172,17 @@ AbstractLanczosAlgorithm* LanczosManager::GetLanczosAlgorithm(AbstractArchitectu
     }
   return this->LanczosAlgorithm;
 }
+
+// delete last created Lanczos object
+//
+// return = true if object deleted
+bool LanczosManager::FreeLanczosAlgorithm()
+{
+  if (this->LanczosAlgorithm != NULL)
+    {
+      delete this->LanczosAlgorithm;
+      this->LanczosAlgorithm=NULL;
+      return true;
+    }
+  else return false;
+}

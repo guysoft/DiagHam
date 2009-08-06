@@ -132,7 +132,7 @@ void AbstractQHEOnLatticeHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hil
 void AbstractQHEOnLatticeHamiltonian::SetNbrFluxQuanta(int nbrFluxQuanta)
 {
   this->NbrFluxQuanta=nbrFluxQuanta;
-  this->FluxDensity=((double)nbrFluxQuanta)/NbrCells;
+  this->FluxDensity=((double)nbrFluxQuanta)/NbrSites;
   this->Particles->SetNbrFluxQuanta(nbrFluxQuanta);
   if (NbrHoppingTerms>0)
     {

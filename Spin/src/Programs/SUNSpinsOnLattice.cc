@@ -38,13 +38,13 @@ int main(int argc, char** argv)
   ArchitectureManager Architecture;
   LanczosManager Lanczos(false);  
   Manager += SystemGroup;
-  LatticeConnections::AddOptionGroup(&Manager);  
+  LatticeConnections::AddOptionGroup(&Manager);
   Architecture.AddOptionGroup(&Manager);
   Lanczos.AddOptionGroup(&Manager);
   Manager += PrecalculationGroup;
   Manager += MiscGroup;
   
-  (*SystemGroup) += new SingleIntegerOption  ('n', "level-n", "level of SU(N) symmetry group", 3);
+  (*SystemGroup) += new SingleIntegerOption  ('N', "level-n", "level of SU(N) symmetry group", 3);
   (*SystemGroup) += new MultipleIntegerOption  ('t', "cartan", "eigenvalues of the generators of the cartan algebra",',');
 
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
@@ -76,7 +76,7 @@ int main(int argc, char** argv)
     cout << "More values of Cartan operators than needed. Will ignore all beyond N-1"<<endl;  
  
   LatticeConnections *Lattice = new LatticeConnections();
-
+  
   int NbrSpins=Lattice->GetNbrSites();
 
   bool FirstRun = true;
@@ -85,23 +85,25 @@ int main(int argc, char** argv)
 
   char *SubspaceLegend= new char[50];
   sprintf(SubspaceLegend,"C0");
-  for (int n=1; n < LevelN; ++n)
+  for (int n=1; n < LevelN-1; ++n)
     sprintf(SubspaceLegend,"%s C%d", SubspaceLegend, n);
   
   char *Geometry=Lattice->GeometryString();
   char *OutputFileName = new char[100];
-  sprintf (OutputFileName, "spins_SU%d_%s_n_%d_c", LevelN, Geometry, NbrSpins);
+  sprintf (OutputFileName, "spins_SU%d_%s_n_%d_c", LevelN-1, Geometry, NbrSpins);
 
   // for the moment, have a single set of cartan quantum-numbers -> add to filename
-  for (int n=0; n < LevelN; ++n)
+  for (int n=0; n < LevelN-1; ++n)
     sprintf(OutputFileName,"%s_%d", OutputFileName, CartanQuantumNumbers[n]);
+  sprintf(OutputFileName,"%s.dat", OutputFileName);
   
   // [loop over cartan quantum numbers]
   {
     char *SubspaceStr = new char[50];
-    sprintf(SubspaceStr,"%d",CartanQuantumNumbers[0]);
-    for (int n=1; n < LevelN; ++n)
+    sprintf(SubspaceStr,"%d", CartanQuantumNumbers[0]);
+    for (int n=1; n < LevelN-1; ++n)
       sprintf(SubspaceStr,"%s %d", SubspaceStr, CartanQuantumNumbers[n]);
+    
     GenericSUNSpinCollection *Space = new GenericSUNSpinCollection(LevelN, NbrSpins, CartanQuantumNumbers, MemorySpace);
     
     Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
@@ -116,7 +118,7 @@ int main(int argc, char** argv)
       {
 	EigenvectorName = new char [64];
 	sprintf (EigenvectorName, "spins_SU%d_%s_n_%d_c", LevelN, Geometry, NbrSpins);
-	for (int n=0; n < LevelN; ++n)
+	for (int n=0; n < LevelN-1; ++n)
 	  sprintf(EigenvectorName,"%s_%d", EigenvectorName, CartanQuantumNumbers[n]);
       }
     
@@ -128,15 +130,17 @@ int main(int argc, char** argv)
 	{
 	  delete[] EigenvectorName;
 	}
-      delete Hamiltonian;
-      if (FirstRun == true)
-	FirstRun = false;
+
+    if (FirstRun == true)
+      FirstRun = false;
     
     delete Space;
     delete Hamiltonian;
     delete [] CartanQuantumNumbers;
+    delete [] SubspaceStr;
   }
   delete [] Geometry;
   delete [] OutputFileName;
+  delete [] SubspaceLegend;
   delete Lattice;
 }

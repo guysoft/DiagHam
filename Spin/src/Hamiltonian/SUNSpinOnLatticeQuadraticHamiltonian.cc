@@ -68,7 +68,7 @@ SUNSpinOnLatticeQuadraticHamiltonian::SUNSpinOnLatticeQuadraticHamiltonian(Gener
 	{
 	  long TmpMemory = this->FastMultiplicationMemory(memory);
 	  cout  << "fast = ";
-	  PrintMemorySize(cout, TmpMemory);
+	  PrintMemorySize(cout, TmpMemory)<<endl;
 	  if (memory > 0)
 	    {
 	      this->EnableFastMultiplication();

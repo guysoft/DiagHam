@@ -28,33 +28,35 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include "LatticeConnections.h"
+#include "LatticePhases.h"
 #include "Options/Options.h"
 #include "Matrix/RealSymmetricMatrix.h"
+#include "Matrix/RealAntisymmetricMatrix.h"
 
 #include <iostream>
 using std::cout;
 using std::endl;
 
-
+#include <cmath>
+using std::fabs;
 
 // generate the object using options from Option Manager
 //
-LatticeConnections::LatticeConnections()
+LatticePhases::LatticePhases()
 {
-  if (LatticeConnections::Options==NULL)
+  if (LatticePhases::Options==NULL)
     {
-      cout << "Define the OptionManager, first, before creating any LatticeConnections"<<endl;
+      cout << "Define the OptionManager, first, before creating any LatticePhases"<<endl;
       exit(1);
     }
-
+  
   ConfigurationParser LatticeDefinition;
   if (LatticeDefinition.Parse(this->Options->GetString("lattice-definition")) == false)
     {
       LatticeDefinition.DumpErrors(cout) << endl;
       exit(-1);
     }
-  if (LatticeDefinition["Descriptor"]== NULL)
+  if (LatticeDefinition["Descriptor"] == NULL)
     {
       cout << "Attention, 'Descriptor' is not defined, unnamed lattice geometry!" << endl;
       Descriptor = new char[10];
@@ -67,20 +69,20 @@ LatticeConnections::LatticeConnections()
     }
   if ((LatticeDefinition.GetAsSingleInteger("NbrSites", NbrSitesPerCell) == false) || (NbrSitesPerCell <= 0))
     {
-      cout << "NbrSites is not defined or as a wrong value" << endl;
+      cout << "NbrSites is not defined or has invalid value" << endl;
       exit(-1);
     }
   if ((LatticeDefinition.GetAsSingleInteger("Dimension", Dimension) == false) || (Dimension <= 0))
     {
-      cout << "Dimension is not defined or as a wrong value" << endl;
+      cout << "Dimension is not defined or has invalid value" << endl;
       exit(-1);
     }
   int TmpDimension;
-  PeriodicRep = LatticeConnections::Options->GetIntegers("cells-repeat",TmpDimension);
+  PeriodicRep = LatticePhases::Options->GetIntegers("cells-repeat",TmpDimension);
   if (TmpDimension==0)
     if ((LatticeDefinition.GetAsIntegerArray("PeriodicRepeat",',',PeriodicRep, TmpDimension) == false))
       {
-	cout << "PeriodicRepeat is not defined or as a wrong value, simulating a single unit cell" << endl;
+	cout << "PeriodicRepeat is not defined or has invalid value, simulating a single unit cell" << endl;
 	PeriodicRep = new int[Dimension];
 	TmpDimension=Dimension;
 	for (int i=0; i<Dimension; ++i) PeriodicRep[i]=1;
@@ -116,6 +118,17 @@ LatticeConnections::LatticeConnections()
 	}
       delete [] Components;
     }
+  double Rescale=1.0;
+  if (Options->GetBoolean("normalize-lattice"))
+    {
+      double Area = LatticeVectors.Determinant();
+      Rescale = pow((double)NbrSitesPerCell/Area,1.0/(double)Dimension);
+      for (int i=0; i<Dimension; ++i)
+	LatticeVectors[i]*=Rescale;
+      Area = LatticeVectors.Determinant();
+    }
+  
+  
   SubLatticeVectors.Resize(Dimension, NbrSitesPerCell);
   for (int i=0; i<NbrSitesPerCell; ++i)
     {
@@ -137,27 +150,66 @@ LatticeConnections::LatticeConnections()
 	  SubLatticeVectors[i][j]=Components[j];
 	}
       delete [] Components;
+      if (fabs(Rescale-1.0)>1e-10)
+	SubLatticeVectors[i]*=Rescale;
     }
-  // determine connectivity:
+  
+  // determine connectivity, and tunnelling phases
+  // two alternate methods: indicate individual tunnelling phases, or give a gauge choice
+  this->HaveGauge=false;
+  if ((LatticeDefinition["UseGauge"]!=NULL)&&
+      ( (strcmp(LatticeDefinition["UseGauge"],"yes")>0) || (strcmp(LatticeDefinition["UseGauge"],"YES")>0)
+	|| (strcmp(LatticeDefinition["UseGauge"],"true")>0) || (strcmp(LatticeDefinition["UseGauge"],"TRUE")>0) ))
+    {
+      this->HaveGauge=true;
+      if (LatticeDefinition.GetAsSingleDouble ("GaugeAxx", this->GaugeAxx)==false)
+	this->GaugeAxx=0.0;
+      if (LatticeDefinition.GetAsSingleDouble ("GaugeAxy", this->GaugeAxy)==false)
+	this->GaugeAxy=0.0;
+      if (LatticeDefinition.GetAsSingleDouble ("GaugeAyx", this->GaugeAyx)==false)
+	this->GaugeAyx=0.0;
+      if (LatticeDefinition.GetAsSingleDouble ("GaugeAyy", this->GaugeAyy)==false)
+	this->GaugeAyy=0.0;
+      this->AbsBField=GaugeAxy-GaugeAyx;
+      if (fabs(AbsBField)<1e-14)
+	{
+	  cout << "If using gauge mode, the magnetic field B=GaugeAxy - GaugeAyx needs to be non-zero" << endl;
+	  exit(-1);
+	}       
+      if (this->Options->GetBoolean("normalize-lattice"))
+	{
+	  this->AbsBField=1.0/this->AbsBField;
+	  this->GaugeAxx*=this->AbsBField;
+	  this->GaugeAxy*=this->AbsBField;
+	  this->GaugeAyx*=this->AbsBField;
+	  this->GaugeAyy*=this->AbsBField;
+	  this->AbsBField=1.0;
+	  
+	}
+    }
   char ***NeighborString;
   int NbrPairs;
   int *NbrValues;
   RealSymmetricMatrix NeighborsInCellMatrix(NbrSitesPerCell, true);
+  RealAntisymmetricMatrix TunnellingPhaseMatrix(NbrSitesPerCell, true);
   if (LatticeDefinition["NeighborsInCell"]!=NULL)
     {
       if (LatticeDefinition.GetAsStringMultipleArray ("NeighborsInCell", '|', ',', NeighborString, NbrPairs, NbrValues)==false)
 	{
 	  cout << "error while parsing NeighborsInCell in " << this->Options->GetString("lattice-definition") << endl;
 	  exit(-1);
-	}      
+	}
       for (int p=0; p<NbrPairs; ++p)
 	{
 	  int s1, s2;
-	  if (NbrValues[p]!=2)
+	  if (NbrValues[p]<2)
 	    {
 	      cout << "error while decoding NeighborsInCell in " << this->Options->GetString("lattice-definition") << endl;
 	      cout << "Indicate paires of neighboring sites separated by commas and different pairs by bars: "
-		   << "NeighborsInCell = s1,s2 | s3, s4 | ..."<<endl;
+		   << "NeighborsInCell = s1,s2[,phaseA12=0.0] | s3, s4[,phaseA34=0.0] | ..."
+		   << "Phases can either be indicated explitly, or will be deduced from gauge if defined"
+		   << " or assumed to be one, otherwise"<<endl;
+	      
 	      exit(-1);
 	    }
 	  s1=strtod(NeighborString[p][0], NULL);
@@ -170,7 +222,17 @@ LatticeConnections::LatticeConnections()
 	    {
 	      if ((s2<0)||(s2>=NbrSitesPerCell))
 		cout << "Attention: pair index "<<s2<<" out of range, ignoring pair ("<<s1<<", "<<s2<<")."<<endl;
-	      else NeighborsInCellMatrix(s1,s2)=1.0;
+	      else
+		{
+		  NeighborsInCellMatrix(s1,s2)=1.0;
+		  // determine tunnelling phase
+		  if (NbrValues[p]<3)
+		    {
+		      TunnellingPhaseMatrix(s1,s2)=0.0;
+		    }
+		  else		    
+		    TunnellingPhaseMatrix(s1,s2)=strtod(NeighborString[p][2], NULL);
+		}
 	    }
 	}
       for (int i=0; i<NbrPairs; ++i)
@@ -182,7 +244,7 @@ LatticeConnections::LatticeConnections()
       delete [] NbrValues;
       delete [] NeighborString;
     }
-  cout << "NeighborsInCell="<<NeighborsInCellMatrix;
+  cout << "NeighborsInCell="<<endl<<NeighborsInCellMatrix;
   if (LatticeDefinition.GetAsStringMultipleArray ("NeighborCells", '|', ',', NeighborString, NbrPairs, NbrValues)==false)
     {
       cout << "error while parsing NeighborCells in " << this->Options->GetString("lattice-definition") << endl;
@@ -213,6 +275,7 @@ LatticeConnections::LatticeConnections()
   delete [] NeighborString;
   delete [] NbrValues;
   RealMatrix **NeighborsAcrossBoundary = new RealMatrix*[NbrNeighborCells];
+  RealMatrix **PhasesAcrossBoundary = new RealMatrix*[NbrNeighborCells];
   for (int d=0; d<NbrNeighborCells; ++d)
     {
       sprintf(FieldName,"NeighborsAcrossBoundary%d",NeighborCells[d][0]);
@@ -224,6 +287,7 @@ LatticeConnections::LatticeConnections()
 	       << ", no connections added."<< endl;
 	}
       NeighborsAcrossBoundary[d] = new RealMatrix(NbrSitesPerCell, NbrSitesPerCell, true);
+      PhasesAcrossBoundary[d] = new RealMatrix(NbrSitesPerCell, NbrSitesPerCell, true);
       for (int p=0; p<NbrPairs; ++p)
 	{
 	  int s1, s2;
@@ -231,7 +295,9 @@ LatticeConnections::LatticeConnections()
 	    {
 	      cout << "error while decoding "<<FieldName<<" in " << this->Options->GetString("lattice-definition") << endl;
 	      cout << "Indicate paires of neighboring sites separated by commas and different pairs by bars: "
-		   << FieldName <<" = s1,s2 | s3, s4 | ..."<<endl;
+		   << FieldName <<" = s1,s2[,phaseA12] | s3, s4 [,phaseA34] | ..."
+		   << "Phases can either be indicated explitly, or will be deduced from gauge if defined"
+		   << " or assumed to be one, otherwise"<<endl;
 	      exit(-1);
 	    }
 	  s1=strtod(NeighborString[p][0], NULL);
@@ -244,7 +310,17 @@ LatticeConnections::LatticeConnections()
 	    {
 	      if ((s2<0)||(s2>=NbrSitesPerCell))
 		cout << "Attention: pair index "<<s2<<" out of range, ignoring pair ("<<s1<<", "<<s2<<")."<<endl;
-	      else NeighborsAcrossBoundary[d]->SetMatrixElement(s1, s2, 1.0);
+	      else
+		{
+		  NeighborsAcrossBoundary[d]->SetMatrixElement(s1, s2, 1.0);
+		  // determine tunnelling phase
+		  if (NbrValues[p]<3)
+		    {
+		      PhasesAcrossBoundary[d]->SetMatrixElement(s1, s2, 0.0);
+		    }
+		  else
+		    PhasesAcrossBoundary[d]->SetMatrixElement(s1,s2,strtod(NeighborString[p][2], NULL));
+		}
 	    }
 	}
       for (int i=0; i<NbrPairs; ++i)
@@ -255,14 +331,16 @@ LatticeConnections::LatticeConnections()
 	}
       delete [] NbrValues;
       delete [] NeighborString;
-      cout << FieldName<<"="<<*NeighborsAcrossBoundary[d]<<endl;
+      cout << FieldName<<"="<<endl<<*NeighborsAcrossBoundary[d];
     }  
   
   this->Neighbors = new int*[NbrSites];
+  this->TunnellingPhases = new double*[NbrSites];
   this->NbrNeighbors = new int[NbrSites];
   for (int i=0; i<NbrSites; ++i)
     this->NbrNeighbors[i] = 0;
   int *TmpNeighbors = new int[NbrNeighborCells*NbrSites];
+  double *TmpPhases = new double[NbrNeighborCells*NbrSites];
   
   this->NbrCells = this->PeriodicRep[0];
   for (int d=1; d<Dimension; ++d)
@@ -270,6 +348,7 @@ LatticeConnections::LatticeConnections()
 
   int *CellCoordinates = new int[Dimension];
   int *CellCoordinates2 = new int[Dimension];
+  int *Translation3 = new int[Dimension];
   for (int c=0; c<NbrCells; ++c)
     {
       this->GetCellCoordinates(c, CellCoordinates);
@@ -282,83 +361,72 @@ LatticeConnections::LatticeConnections()
 	  for (int j=0; j<NbrSitesPerCell; ++j)
 	    {
 	      Site2 = this->GetSiteNumber(c, j);
-	      cout << "Site 2="<<Site2;
+	      
 	      if (NeighborsInCellMatrix(i,j)>0.0)
-		{
-		  cout << "... is neighbor"<<endl;
+		{		  
 		  TmpNeighbors[NbrNeighbors[Site1]]=Site2;
+		  if (this->HaveGauge)
+		    TmpPhases[NbrNeighbors[Site1]] = GetTunnellingPhaseFromGauge(Site1, Site2);
+		  else
+		    TmpPhases[NbrNeighbors[Site1]] = TunnellingPhaseMatrix(Site1,Site2);
+		  cout << "Site 2="<<Site2 << " is neighbor with phase "<<TmpPhases[NbrNeighbors[Site1]]<<endl;
 		  ++NbrNeighbors[Site1];
 		}
-	      else cout << "... not neighbor"<<endl;
 	      for (int d=0; d<NbrNeighborCells; ++d)
 		{
 		  if ((*(NeighborsAcrossBoundary[d]))(i,j)!=0.0)
 		    {
 		      for (int k=0; k<Dimension; ++k)
 			CellCoordinates2[k]=CellCoordinates[k]+NeighborCells[d][k];
-		      Site3 = this->GetSiteNumber(CellCoordinates2, j);
+		      Site3 = this->GetSiteNumber(CellCoordinates2, j, Translation3);
 		      cout << "additional neighbor from NeigborCell "<<d<<" at "<<
-			CellCoordinates2[0]<<", "<<CellCoordinates2[1]<<", "<<j<<" : Site 3="<<Site3<<endl;
+			CellCoordinates2[0]<<", "<<CellCoordinates2[1]<<", "<<j<<" : Site 3="<<Site3
+			   <<" with translation "<<Translation3[0];
+		      for (int i=1; i<Dimension; ++i) cout << " "<<Translation3[i];		      
 		      TmpNeighbors[NbrNeighbors[Site1]]=Site3;
+		      if (this->HaveGauge)
+			TmpPhases[NbrNeighbors[Site1]] = GetTunnellingPhaseFromGauge(Site1, Site3, Translation3);
+		      else
+			TmpPhases[NbrNeighbors[Site1]]=(*PhasesAcrossBoundary[d])(Site1,Site3);
+		      cout << " and phase "<<TmpPhases[NbrNeighbors[Site1]]<<endl;
 		      ++NbrNeighbors[Site1];
 		    }
 		}	      
 	    }
 	  if (NbrNeighbors[Site1]>0)
-	    Neighbors[Site1] = new int[NbrNeighbors[Site1]];
+	    {
+	      Neighbors[Site1] = new int[NbrNeighbors[Site1]];
+	      TunnellingPhases[Site1] = new double[NbrNeighbors[Site1]];
+	    }
 	  else Neighbors[Site1] = NULL;
 	  for (int k=0; k<NbrNeighbors[Site1]; ++k)
-	    Neighbors[Site1][k] = TmpNeighbors[k];
+	    {
+	      Neighbors[Site1][k] = TmpNeighbors[k];
+	      TunnellingPhases[Site1][k] = TmpPhases[k];
+	    }
 	}
     }
 
-  this->Partners = new int*[NbrSites];
-  this->NbrPartners = new int[NbrSites];
-  for (int i=0; i<NbrSites; ++i)
-    this->NbrPartners[i]=0;
-  
-  for (int i=0; i<NbrSites; ++i)
-    {
-      cout <<  "Neighbors["<<i<<"] = "<<Neighbors[i][0];
-      for (int k=1; k<NbrNeighbors[i]; ++k) cout <<" "<<Neighbors[i][k];
-      cout << endl;
-      this->ArraySort(Neighbors[i], NbrNeighbors[i]);
-      cout <<  "sorted = "<<Neighbors[i][0];
-      for (int k=1; k<NbrNeighbors[i]; ++k) cout <<" "<<Neighbors[i][k];
-      cout << endl;
-      int j=0; 
-      while((j<NbrNeighbors[i])&&(Neighbors[i][j]>=i)) ++j;
-      this->NbrPartners[i] = j;
-      if (j>0)
-	{
-	  this->Partners[i] = new int[this->NbrPartners[i]];
-	  for (int k=0; k<NbrPartners[i]; ++k)
-	    this->Partners[i][k]=this->Neighbors[i][k];
-	}
-      else this->Partners[i] = NULL;
-      if (NbrPartners[i]>0)
-	{
-	  cout <<  "Partners["<<i<<"] = "<<Partners[i][0];
-	  for (int k=1; k<NbrPartners[i]; ++k) cout <<" "<<Partners[i][k];
-	  cout << endl;
-	}
-      else cout << "no partners"<<endl;
-    }
-
-  cout << "LatticeConnections created"<<endl;
+  cout << "LatticePhases created"<<endl;
 
   for (int d=0; d<NbrNeighborCells; ++d)
-    delete NeighborsAcrossBoundary[d];
+    {
+      delete NeighborsAcrossBoundary[d];
+      delete PhasesAcrossBoundary[d];
+    }
   delete [] NeighborsAcrossBoundary;
+  delete [] PhasesAcrossBoundary;
   delete [] CellCoordinates;
   delete [] CellCoordinates2;
+  delete [] Translation3;
   delete [] FieldName;
   delete [] TmpNeighbors;
+  delete [] TmpPhases;
 }
 
 // destructor
 //
-LatticeConnections::~LatticeConnections()
+LatticePhases::~LatticePhases()
 {
   if (NbrSites!=0)
     {
@@ -367,13 +435,12 @@ LatticeConnections::~LatticeConnections()
 	{
 	  if (this->Neighbors[i]!=NULL)
 	    delete [] this->Neighbors[i];
-	  if (this->Partners[i]!=NULL)
-	    delete [] this->Partners[i];
+	  if (this->TunnellingPhases[i]!=NULL)
+	    delete [] this->TunnellingPhases[i];
 	}      
       delete [] this->Neighbors;
-      delete [] this->Partners;
+      delete [] this->TunnellingPhases;
       delete [] this->NbrNeighbors;
-      delete [] this->NbrPartners;
       for (int i=0; i<NbrNeighborCells; ++i)
 	delete [] this->NeighborCells[i];
       delete [] this->NeighborCells;
@@ -385,7 +452,7 @@ LatticeConnections::~LatticeConnections()
 // get cell coordinates given the number of the unit cell
 // nbrCell = cell to be looked up
 // cellCoordinates = resulting coordinates, has to be reserved prior to call
-void LatticeConnections::GetCellCoordinates(int nbrCell, int *cellCoordinates)
+void LatticePhases::GetCellCoordinates(int nbrCell, int *cellCoordinates)
 {
   int Divisor=1;
   while (nbrCell<0) nbrCell+=NbrCells;
@@ -400,7 +467,7 @@ void LatticeConnections::GetCellCoordinates(int nbrCell, int *cellCoordinates)
 // nbrSite = cell to be looked up
 // cellCoordinates = resulting coordinates, has to be reserved prior to call
 // sublattice = resulting sublattice
-void LatticeConnections::GetSiteCoordinates(int nbrSite, int *cellCoordinates, int &sublattice)
+void LatticePhases::GetSiteCoordinates(int nbrSite, int *cellCoordinates, int &sublattice)
 {
   while (nbrSite<0) nbrSite+=NbrSites;
   sublattice = nbrSite%NbrSitesPerCell;
@@ -417,10 +484,10 @@ void LatticeConnections::GetSiteCoordinates(int nbrSite, int *cellCoordinates, i
 // get number of a site in cell nbrCell
 // cellCoordinates = coordinates of cell to be addressed
 // sublattice = sublattice index
-int LatticeConnections::GetSiteNumber(int *cellCoordinates, int sublattice)
+int LatticePhases::GetSiteNumber(int *cellCoordinates, int sublattice)
 {
   int Result=this->Periodize(cellCoordinates[Dimension-1],Dimension-1);
-  for (int i=Dimension-1; i>-1; --i)
+  for (int i=Dimension-2; i>-1; --i)
     {
       Result*=this->PeriodicRep[i];
       Result+=this->Periodize(cellCoordinates[i],i);
@@ -430,28 +497,57 @@ int LatticeConnections::GetSiteNumber(int *cellCoordinates, int sublattice)
   return Result%NbrSites;
 }
 
+// get number of a site in cell nbrCell, and return translation vector back into the simulation cell
+// cellCoordinates = coordinates of cell to be addressed
+// sublattice = sublattice index
+// translation = vector of tranlation back into simulation cell
+int LatticePhases::GetSiteNumber(int *cellCoordinates, int sublattice, int *translation)
+{
+  int Result=this->Periodize(cellCoordinates[Dimension-1], Dimension-1, translation[Dimension-1]);
+  for (int i=Dimension-2; i>-1; --i)
+    {
+      Result*=this->PeriodicRep[i];
+      Result+=this->Periodize(cellCoordinates[i], i, translation[i]);
+    }
+  Result*=NbrSitesPerCell;
+  Result+=sublattice;
+  return Result%NbrSites;
+}
+
 
 // request address of partners of site
 // nbrSite = number of site whose partners to request
-// partners = array to partner sites
-// nbrPartners = number of partners found
-void LatticeConnections::GetPartners(int nbrSite, int * &partners, int &nbrPartners)
+// nbrNeighbors = number of partners found
+// Neighbors = array to partner sites
+// phases = values of phase for tunnelling matrix element
+void LatticePhases::GetNeighbors(int nbrSite, int &nbrNeighbors, int * &neighbors, double * &phases)
 {
   if ((nbrSite>-1)&&(nbrSite<NbrSites))
     {
-      partners = this->Partners[nbrSite];
-      nbrPartners = this->NbrPartners[nbrSite];
+      neighbors = this->Neighbors[nbrSite];
+      nbrNeighbors = this->NbrNeighbors[nbrSite];
+      phases = this->TunnellingPhases[nbrSite];
     }
   else
     {
-      partners = NULL;
-      nbrPartners = 0;
+      nbrNeighbors = 0;
+      neighbors = NULL;
+      phases = NULL;
     }
+}
+
+// get total number of hopping terms
+int LatticePhases::GetNbrHoppingTerms()
+{
+  int sum=0;
+  for (int i=0; i<NbrSites; ++i)
+    sum += this->NbrNeighbors[i];
+  return sum;
 }
 
 // get a string describing the lattice geometry
 // 
-char *LatticeConnections::GeometryString()
+char *LatticePhases::GeometryString()
 {
   char *rst = new char[strlen(this->Descriptor)+20];
   sprintf(rst,"%s_%d", this->Descriptor, this->PeriodicRep[0]);
@@ -464,30 +560,31 @@ char *LatticeConnections::GeometryString()
 // add an option group containing all options related to the LatticeGeometry options
 //
 // manager = pointer to the option manager
-void LatticeConnections::AddOptionGroup(OptionManager* manager)
+void LatticePhases::AddOptionGroup(OptionManager* manager)
 {
-  LatticeConnections::Options = manager;
+  LatticePhases::Options = manager;
   OptionGroup* LatticeGroup  = new OptionGroup ("lattice options");
-  (*(LatticeConnections::Options)) += LatticeGroup;
+  (*(LatticePhases::Options)) += LatticeGroup;
 
-  (*LatticeGroup) += new SingleStringOption  ('L', "lattice-definition", "File defining the geometry of the lattice");
-  (*LatticeGroup) += new MultipleIntegerOption  ('c', "cells-repeat", "number of times unit cell is repeated in the x-, y-,..., dim- directions of the lattice (overriding default given in definition)", ',');
+  (*LatticeGroup) += new SingleStringOption ('L', "lattice-definition", "File defining the geometry of the lattice");
+  (*LatticeGroup) += new MultipleIntegerOption ('C', "cells-repeat", "number of times unit cell is repeated in the x-, y-,..., dim- directions of the lattice (overriding default given in definition)", ',');
+  (*LatticeGroup) += new BooleanOption ('\n', "normalize-lattice", "normalize unit cell area to #of sites, and field strength to one");
 }
 
 
 
-OptionManager* LatticeConnections::Options=NULL;
+OptionManager* LatticePhases::Options=NULL;
 
-int round(double a) {
+int MyRound(double a) {
 return int(a + 0.5);
 }
 
 // simple sort algorithm
 // array = integer array to be sorted
 // length = length of array
-void LatticeConnections::ArraySort(int* array, int length)
+void LatticePhases::ArraySort(int* array, int length)
 {
-  int inc = round(length/2.0);
+  int inc = MyRound(length/2.0);
   int tmpI;
   while (inc > 0)
     {
@@ -504,4 +601,62 @@ void LatticeConnections::ArraySort(int* array, int length)
 	}
       inc = round(inc / 2.2);
     }
+}
+
+// calculate the tunnelling phase between two given sites from the gauge
+// s1 = start site
+// s2 = end site
+// cellTranslation = indicating whether translation across a boundary ocurred
+// return = relative phase
+double LatticePhases::GetTunnellingPhaseFromGauge(int s1, int s2, int *cellTranslation)
+{
+  if (this->HaveGauge)
+    {
+      double Result=0.0;
+      // calculate site coordinates
+      int *S1Coordinates = new int[this->Dimension];
+      int *S2Coordinates = new int[this->Dimension];
+      int S1Sublattice, S2Sublattice;
+      this->GetSiteCoordinates(s1, S1Coordinates, S1Sublattice);
+      this->GetSiteCoordinates(s2, S2Coordinates, S2Sublattice);
+      RealVector Position1(this->Dimension,true);
+      RealVector Position2(this->Dimension,true);
+      RealVector Translation(this->Dimension,true);
+      for (int i=0; i<Dimension; ++i)
+	{
+	  Position1.AddLinearCombination((double)S1Coordinates[i],LatticeVectors[i]);
+	  Position2.AddLinearCombination((double)S2Coordinates[i],LatticeVectors[i]);
+	  if (cellTranslation!=NULL)
+	    Translation.AddLinearCombination((double)cellTranslation[i],LatticeVectors[i]);
+	}
+      Position1.AddLinearCombination(1.0,SubLatticeVectors[S1Sublattice]);
+      Position2.AddLinearCombination(1.0,SubLatticeVectors[S2Sublattice]);
+      Position2.AddLinearCombination(-1.0,Translation);
+      cout << endl<<"Position1="<<endl<<Position1;
+      cout << "Position2="<<endl<<Position2;
+      if (this->Dimension==2)
+	{
+	  Result += 0.5*GaugeAxx*(Position2[0]*Position2[0]-Position1[0]*Position1[0]);
+	  Result += 0.5*GaugeAyx*(Position2[0]-Position1[0])*(Position2[1]+Position1[1]);
+	  Result += 0.5*GaugeAxy*(Position2[1]-Position1[1])*(Position2[0]+Position1[0]);
+	  Result += 0.5*GaugeAyy*(Position2[1]*Position2[1]-Position1[1]*Position1[1]);
+	  // xxx: check signs and prefactors here!
+	  cout << "Raw phase="<<Result;
+	  if (Translation.SqrNorm()>1e-15)
+	    {
+	      Result +=(GaugeAxx*Translation[0]+GaugeAyx*Translation[1])*Position2[0];
+	      Result +=(GaugeAxy*Translation[0]+GaugeAyy*Translation[1])*Position2[1];
+	    }
+	  cout << ", after corrections"<<Result<<endl;
+	}
+      else
+	{
+	  cout << "Need to define LatticePhases::GetTunnellingPhaseFromGauge for dimension d>2"<<endl;
+	}
+      delete [] S1Coordinates;
+      delete [] S2Coordinates;
+      return Result;
+    }
+  else
+    return 0.0;
 }

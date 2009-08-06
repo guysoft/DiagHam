@@ -295,7 +295,6 @@ RealVector& AbstractSUNSpinOnLatticeHamiltonian::LowLevelAddMultiply(RealVector&
     {
       if (this->FastMultiplicationStep == 1)
 	{
-	  cout << "NEED TO CHECK FAST CALCULATION"<<endl;
 	  int* TmpIndexArray;
 	  unsigned short* TmpCoefficientIndexArray;
 	  double TmpSource;
@@ -586,7 +585,6 @@ RealVector* AbstractSUNSpinOnLatticeHamiltonian::LowLevelMultipleAddMultiply(Rea
     {
       if (this->FastMultiplicationStep == 1)
 	{
-	  cout << "NEED TO CHECK FAST CALCULATION"<<endl;
 	  int* TmpIndexArray;	  
 	  unsigned short* TmpCoefficientIndexArray;
 	  unsigned short TmpNbrRealInteraction;

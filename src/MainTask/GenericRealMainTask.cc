@@ -232,6 +232,7 @@ GenericRealMainTask::~GenericRealMainTask()
   if (this->EigenvectorFileName != 0)
     delete[] this->EigenvectorFileName;
   delete [] this->SubspaceStr;
+  delete [] this->SubspaceLegend;
 }
   
 // set architecture bound to the task
@@ -601,7 +602,7 @@ int GenericRealMainTask::ExecuteMainTask()
       Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
 	((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);
       cout << "time = " << Dt << endl;
-      delete Lanczos;
+      AlgorithmManager->FreeLanczosAlgorithm();
     }
   cout << "----------------------------------------------------------------" << endl;
   File.close(); 

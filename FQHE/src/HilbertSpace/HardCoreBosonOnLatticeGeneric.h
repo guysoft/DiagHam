@@ -5,8 +5,11 @@
 //                                                                            //
 //                  Copyright (C) 2001-2008 Gunnar Moeller                    //
 //                                                                            //
+//  class of bosons on linearly indexed system for a system size such that    //
+//               NbrStates  < 63 or 31 (64 bits or 32bits systems)            //
 //                                                                            //
-//          class of hard-core boson with a single quantum number             //
+//                  states indexed by y-momentum and x-position               //
+//                    (Landau gauge, A(r) = \alpha x \vec e_y)                //
 //                                                                            //
 //                        last modification : 11/02/2008                      //
 //                                                                            //
@@ -28,22 +31,18 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef HARDCOREBOSON_H
-#define HARDCOREBOSON_H
+#ifndef HARDCOREBOSONONLATTICEGENERIC_H
+#define HARDCOREBOSONONLATTICEGENERIC_H
 
 #include "config.h"
 #include "MathTools/Complex.h"
-#include "HilbertSpace/AbstractQHEParticle.h"
+#include "HilbertSpace/ParticleOnLattice.h"
 #include "Matrix/RealSymmetricMatrix.h"
 #include "GeneralTools/GarbageFlag.h"
+#include "Tools/FQHESpectrum/LatticePhases.h"
 
-class BosonOnLattice;
-
-class HardCoreBoson :  public AbstractQHEParticle
+class HardCoreBosonOnLatticeGeneric :  public ParticleOnLattice
 {
-
-  friend class BosonOnLattice;
-  friend class BosonOnLatticeGeneric;
 
  protected:
 
@@ -53,6 +52,32 @@ class HardCoreBoson :  public AbstractQHEParticle
   // number of States
   int NbrStates;
 
+  // underlying lattice geometry
+  LatticePhases* LatticeGeometry;
+
+  // lengths in units of lattice-vectors
+  int* Length;
+
+  // true lattice dimension
+  int TrueDimension;
+  
+  int NbrSublattices;
+  // number of flux quanta piercing the simulation cell
+  int NbrFluxQuanta;
+  // flux density (flux quanta per unit cell)
+  double FluxDensity;
+
+  // solenoid flux through torus around periodic boundary conditions (units of pi)
+  double SolenoidX;
+  double SolenoidY;
+
+  // phases occurred when translating the system by a full system length (at y=1, or x=1)
+  // in the x-direction
+  Complex LxTranslationPhase;
+  // and in the y-direction
+  Complex LyTranslationPhase;  
+
+
   // array describing each state
   unsigned long* StateDescription;
   // array giving the highest bit reached for a bososn in a given state
@@ -61,7 +86,7 @@ class HardCoreBoson :  public AbstractQHEParticle
   // temporary state used when applying ProdA operator
   unsigned long ProdATemporaryState;
   // Lz maximum value associated to temporary state used when applying ProdA operator
-  int ProdAHighestBit;
+  int ProdAHighestBit;  
 
   // maximum shift used for searching a position in the look-up table
   int MaximumLookUpShift;
@@ -73,7 +98,11 @@ class HardCoreBoson :  public AbstractQHEParticle
   int** LookUpTable;
 
   // pointer to the target space when an index is require after applying basic operation
-  HardCoreBoson* TargetSpace;
+  HardCoreBosonOnLatticeGeneric* TargetSpace;
+
+  // internal storage for coordinates/translations for access to LatticePhases
+  int* TmpCoordinates;
+  int* TmpTranslations;
 
 
  public:
@@ -84,28 +113,32 @@ class HardCoreBoson :  public AbstractQHEParticle
     };
 
   // default constructor
-  HardCoreBoson();
+  HardCoreBosonOnLatticeGeneric();
 
-  // constructor
-  // nbrBosons = number of bosons in system
-  // nbrStates = number of states available
-  // memory = amount of memory granted for precalculations
-  HardCoreBoson(int nbrBosons, int nbrStates, unsigned long memory = 10000000);
+  // basic constructor -> yields a square lattice in Landau gauge
+  // 
+  // nbrBosons = number of bosons
+  // latticeGeometry = geometry of lattice system is living on
+  // nbrFluxQuanta = number of flux quanta piercing the simulation cell
+  // memory = memory that can be allocated for precalculations
+  // solenoidX = solenoid flux through lattice in x-direction (in units of pi)
+  // solenoidY = solenoid flux through lattice in y-direction (in units of pi)
+  HardCoreBosonOnLatticeGeneric (int nbrBosons, LatticePhases *latticeGeometry, int nbrFluxQuanta, unsigned long memory = 10000000, double solenoidX=0.0, double solenoidY=0.0);  
 
   // copy constructor (without duplicating datas)
   //
   // bosons = reference on the hilbert space to copy to copy
-  HardCoreBoson(const HardCoreBoson& bosons);
+  HardCoreBosonOnLatticeGeneric(const HardCoreBosonOnLatticeGeneric& bosons);
 
   // virtual destructor
   //
-  virtual ~HardCoreBoson ();
+  virtual ~HardCoreBosonOnLatticeGeneric ();
 
   // assignment (without duplicating datas)
   //
   // bosons = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space
-  HardCoreBoson& operator = (const HardCoreBoson& bosons);
+  HardCoreBosonOnLatticeGeneric& operator = (const HardCoreBosonOnLatticeGeneric& bosons);
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -116,6 +149,12 @@ class HardCoreBoson :  public AbstractQHEParticle
   //
   // return value = particle statistic
   virtual int GetParticleStatistic();
+  
+  // get the quantization axis 
+  //
+  // return value = particle statistic
+  virtual char GetLandauGaugeAxis();
+
 
   // get information about any additional symmetry of the Hilbert space
   //
@@ -141,16 +180,37 @@ class HardCoreBoson :  public AbstractQHEParticle
   virtual AbstractHilbertSpace* ExtractSubspace (AbstractQuantumNumber& q, 
 						 SubspaceSpaceConverter& converter);
 
-
   // set a different target space (for all basic operations)
   //
   // targetSpace = pointer to the target space
-  virtual void SetTargetSpace(HardCoreBoson* targetSpace);
+  virtual void SetTargetSpace(HardCoreBosonOnLatticeGeneric* targetSpace);
 
   // return Hilbert space dimension of the target space
   //
   // return value = Hilbert space dimension
   virtual int GetTargetHilbertSpaceDimension();
+
+  // it is possible to change the flux through the simulation cell
+  // Attention: this does require the Hamiltonian to be recalculated!!
+  // nbrFluxQuanta = number of quanta of flux piercing the simulation cell
+  virtual void SetNbrFluxQuanta(int nbrFluxQuanta);
+
+  // change flux through cell and periodic boundary conditions
+  // Attention: this does require the Hamiltonian to be recalculated!!
+  // nbrFluxQuanta = number of quanta of flux piercing the simulation cell
+  // solenoidX = new solenoid flux through torus in x-direction
+  // solenoidY = new solenoid flux through torus in y-direction
+  virtual void SetNbrFluxQuanta(int nbrFluxQuanta, double solenoidX, double solenoidY);
+
+  // obtain the current setting of the flux piercing this lattice
+  virtual int GetNbrFluxQuanta();
+
+  // apply creation operator to a word, using the conventions
+  // for state-coding and quantum numbers of this space
+  // state = word to be acted upon
+  // q = quantum number of boson to be added
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  virtual unsigned long Ad (unsigned long state, int q, double& coefficient);
 
   // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state 
   //
@@ -160,7 +220,7 @@ class HardCoreBoson :  public AbstractQHEParticle
   // n1 = first index for annihilation operator
   // n2 = second index for annihilation operator
   // return value = index of the destination state 
-  virtual int AdAdAA (int index, int m1, int m2, int n1, int n2);
+  virtual int AdAdAA (int index, int m1, int m2, int n1, int n2, double &coefficient);
 
   // apply a_n1 a_n2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AdAd call
   //
@@ -174,23 +234,75 @@ class HardCoreBoson :  public AbstractQHEParticle
   //
   // m1 = first index for creation operator
   // m2 = second index for creation operator
+  // coefficient = reference on a multiplicative, trivially one here (not changed)
   // return value = index of the destination state 
-  virtual int AdAd (int m1, int m2);
+  virtual int AdAd (int m1, int m2, double& coefficient);
 
   // apply a^+_m a_m operator to a given state 
   //
   // index = index of the state on which the operator has to be applied
   // m = index of the creation and annihilation operator
   // return value = the destination state, if non-zero exectation, otherwise: HilbertSpaceDimension
-  virtual int AdA (int index, int m);
+  virtual double AdA (int index, int m);
 
   // apply a^+_m a_n operator to a given state 
   //
   // index = index of the state on which the operator has to be applied
   // m = index of the creation operator
   // n = index of the annihilation operator
+  // coefficient = reference on the multiplicative factor (result always 1.0 here)
   // return value = index of the destination state 
-  virtual int AdA (int index, int m, int n);
+  virtual int AdA (int index, int m, int n, double& coefficient);
+
+ 
+  // apply \sum q U_q a^+_q a_q ( a^+_q a_q - 1 )
+  // index = index of the state on which the operator has to be applied
+  // nbrInteraction = number of q-values in sum, if equals NbrStates, ordered sequence 0,...,NbrStates-1 assumed
+  // qValues = array of quantum numbers where an interaction is present
+  // interactionPerQ = coefficient U_q of the interaction
+  //
+  virtual double AdAdAADiagonal(int index, int nbrInteraction, double *interactionPerQ, int *qValues);
+
+  // code set of quantum numbers posx, posy into a single integer
+  // posx = position along x-direction
+  // posy = position along y-direction
+  // sublattice = sublattice index
+  // translationPhase = returns phase occurred from translating the
+  //                    site to the fundamental region [0,Lx-1] x [0,Ly-1]
+  virtual int EncodeQuantumNumber(int posx, int posy, int sublattice, Complex &translationPhase);
+
+  // decode a single encoded quantum number q to the set of quantum numbers posx, posy, sublattice
+  // posx = position along x-direction
+  // posy = position along y-direction
+  // sublattice = sublattice index
+  virtual void DecodeQuantumNumber(int q, int &posx, int &posy, int &sublattice);
+
+  // obtain a list of quantum numbers in state
+  // index = index of many-body state to be considered
+  // quantumNumbers = integer array of length NbrParticles, to be written with quantum numbers of individual particles
+  // normalization = indicating the multiplicity of the state for bosonic spaces
+  virtual void ListQuantumNumbers(int index, int *quantumNumbers, double &normalization);
+
+  // obtain a list of quantum numbers in state
+  // index = index of many-body state to be considered
+  // quantumNumbers = integer array of length NbrParticles, to be written with quantum numbers of individual particles
+  virtual void ListQuantumNumbers(int index, int *quantumNumbers);
+
+  // translate a state by a multiple of the lattice vectors
+  // shiftX = length of translation in x-direction
+  // shiftY = length of translation in y-direction
+  // translationPhase = returns phase inccurred by translation
+  // return value = index of translated state
+  virtual int TranslateState(int index, int shiftX, int shiftY, Complex &translationPhase);
+
+  // find whether there is a translation vector from state i to state f
+  // i = index of initial state
+  // f = index of final state
+  // shiftX = length of translation in x-direction
+  // shiftY = length of translation in y-direction
+  // return value = final state can be reached by translation
+  virtual bool IsTranslation(int i, int f, int &shiftX, int &shiftY);
+
 
   // evaluate wave function in real space using a given basis
   //
@@ -245,6 +357,13 @@ class HardCoreBoson :  public AbstractQHEParticle
   // state = ID of the state to print
   // return value = reference on current output stream 
   virtual ostream& PrintState (ostream& Str, int state);
+
+  // carefully test whether state is in Hilbert-space and find corresponding state index
+  //
+  // stateDescription = unsigned integer describing the state
+  // highestBit = maximum nonzero bit reached by a particle in the state (can be given negative, if not known)
+  // return value = corresponding index, or dimension of space, if not found
+  virtual int CarefulFindStateIndex(unsigned long stateDescription, int highestBit);
 
  protected:
 
