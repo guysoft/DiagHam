@@ -1,5 +1,7 @@
-#include "HilbertSpace/BosonOnLattice.h"
+Phases[n]#include "HilbertSpace/BosonOnLattice.h"
 #include "HilbertSpace/HardCoreBosonOnLattice.h"
+#include "HilbertSpace/BosonOnLatticeGeneric.h"
+#include "HilbertSpace/HardCoreBosonOnLatticeGeneric.h"
 
 #include "Operator/ParticleOnLatticeOneBodyOperator.h"
 #include "Operator/ParticleOnLatticeTranslationOperator.h"

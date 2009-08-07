@@ -369,7 +369,7 @@ LatticePhases::LatticePhases()
 		    TmpPhases[NbrNeighbors[Site1]] = GetTunnellingPhaseFromGauge(Site1, Site2);
 		  else
 		    TmpPhases[NbrNeighbors[Site1]] = TunnellingPhaseMatrix(Site1,Site2);
-		  cout << "Site 2="<<Site2 << " is neighbor with phase "<<TmpPhases[NbrNeighbors[Site1]]<<endl;
+		  cout << "Neighbors "<<Site1<<"->"<<Site2<<" with phase "<<TmpPhases[NbrNeighbors[Site1]]<<endl;
 		  ++NbrNeighbors[Site1];
 		}
 	      for (int d=0; d<NbrNeighborCells; ++d)
@@ -378,16 +378,16 @@ LatticePhases::LatticePhases()
 		    {
 		      for (int k=0; k<Dimension; ++k)
 			CellCoordinates2[k]=CellCoordinates[k]+NeighborCells[d][k];
-		      Site3 = this->GetSiteNumber(CellCoordinates2, j, Translation3);
-		      cout << "additional neighbor from NeigborCell "<<d<<" at "<<
-			CellCoordinates2[0]<<", "<<CellCoordinates2[1]<<", "<<j<<" : Site 3="<<Site3
-			   <<" with translation "<<Translation3[0];
+		      Site3 = this->GetSiteNumber(CellCoordinates2, j, Translation3);		      
 		      for (int i=1; i<Dimension; ++i) cout << " "<<Translation3[i];		      
 		      TmpNeighbors[NbrNeighbors[Site1]]=Site3;
 		      if (this->HaveGauge)
 			TmpPhases[NbrNeighbors[Site1]] = GetTunnellingPhaseFromGauge(Site1, Site3, Translation3);
 		      else
 			TmpPhases[NbrNeighbors[Site1]]=(*PhasesAcrossBoundary[d])(Site1,Site3);
+		      cout << "additional neighbors "<<Site1<<"->"<<Site3<<" from NeigborCell "<<d<<" at "<<
+			CellCoordinates2[0]<<", "<<CellCoordinates2[1]<<", "<<j<<" : Site 3="<<Site3
+			   <<" with translation "<<Translation3[0];
 		      cout << " and phase "<<TmpPhases[NbrNeighbors[Site1]]<<endl;
 		      ++NbrNeighbors[Site1];
 		    }
