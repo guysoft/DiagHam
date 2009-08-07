@@ -217,6 +217,60 @@ int main(int argc, char** argv)
 	    calcArekN12_2S22(Map, Signs, (ParticleOnSphereWithSpin*)Space, NbrParticles, LzMax, Lz, Dimension);
 	    break;
 	  }
+	case 2:
+	  {
+	    cout << "Using fixed basis for N=10, 2S=18"<<endl;
+	    if (NbrParticles!=10)
+	      {
+		cout << "Need to have N=10 particles for this basis"<<endl;
+		exit(1);
+	      }
+	    if (LzMax!=18)
+	      {
+		cout << "Need to have 2S=18 flux for this basis"<<endl;
+		exit(1);
+	      }
+	    if ((Sz!=0)||(Lz!=0))
+	      {
+		cout << "Need to have Sz=Lz=0 for this basis"<<endl;
+		exit(1);
+	      }
+	    int Dimension = 3472230;
+	    if (Space->GetHilbertSpaceDimension()!=Dimension)
+	      {
+		cout << "Problem with dimension!"<<endl;
+		exit(1);
+	      }
+	    calcArekN10_2S18(Map, Signs, (ParticleOnSphereWithSpin*)Space, NbrParticles, LzMax, Lz, Dimension);
+	    break;
+	  }
+	case 3:
+	  {
+	    cout << "Using fixed basis for N=8, 2S=14"<<endl;
+	    if (NbrParticles!=8)
+	      {
+		cout << "Need to have N=8 particles for this basis"<<endl;
+		exit(1);
+	      }
+	    if (LzMax!=14)
+	      {
+		cout << "Need to have 2S=14 flux for this basis"<<endl;
+		exit(1);
+	      }
+	    if ((Sz!=0)||(Lz!=0))
+	      {
+		cout << "Need to have Sz=Lz=0 for this basis"<<endl;
+		exit(1);
+	      }
+	    int Dimension = 67189;
+	    if (Space->GetHilbertSpaceDimension()!=Dimension)
+	      {
+		cout << "Problem with dimension!"<<endl;
+		exit(1);
+	      }
+	    calcArekN8_2S14(Map, Signs, (ParticleOnSphereWithSpin*)Space, NbrParticles, LzMax, Lz, Dimension);
+	    break;
+	  }
 	default:
 	  {
 	    cout << "Undefined basis!"<<endl;
@@ -372,6 +426,9 @@ void calcArekN12_2S22(int*Map, double *Signs, ParticleOnSphereWithSpin* Space, i
 }
 
 /************************************************************************/
+
+
+/**********************************************************************
 c PARAMETERS
 c     N=10
 c     lT=18
@@ -387,13 +444,13 @@ void calcArekN10_2S18(int*Map, double *Signs, ParticleOnSphereWithSpin* Space, i
   unsigned long StateDesc;
   double Coeff,TmpCoeff;
 
-  for (int k05u=0; k05u<k06u; ++k05u)
+  for (int k05u=0; k05u<=N_phi; ++k05u)
     for (int k04u=0; k04u<k05u; ++k04u)
       for (int k03u=0; k03u<k04u; ++k03u)
 	for (int k02u=0; k02u<k03u; ++k02u)
 	  for (int k01u=0; k01u<k02u; ++k01u)
 	    
-	    for (int k05d=0; k05d<k06d; ++k05d)
+	    for (int k05d=0; k05d<=N_phi; ++k05d)
 	      for (int k04d=0; k04d<k05d; ++k04d)
 		for (int k03d=0; k03d<k04d; ++k03d)
 		  for (int k02d=0;  k02d<k03d; ++k02d)
@@ -454,7 +511,7 @@ void calcArekN10_2S18(int*Map, double *Signs, ParticleOnSphereWithSpin* Space, i
   
 /************************************************************************/
 
-/************************************************************************/
+/*********************************************************************
 c PARAMETERS
 c     N=8
 c     lT=14
@@ -464,18 +521,18 @@ c     numd=67189
 
 // one-off basis from Arek
 
-void calcArekN10_2S18(int*Map, double *Signs, ParticleOnSphereWithSpin* Space, int N, int N_phi,int Lz_total, int Dim)
+void calcArekN8_2S14(int*Map, double *Signs, ParticleOnSphereWithSpin* Space, int N, int N_phi,int Lz_total, int Dim)
 {
   int i=0;
   unsigned long StateDesc;
   double Coeff,TmpCoeff;
 
-  for (int k04u=0; k04u<k05u; ++k04u)
+  for (int k04u=0; k04u<=N_phi; ++k04u)
     for (int k03u=0; k03u<k04u; ++k03u)
       for (int k02u=0; k02u<k03u; ++k02u)
 	for (int k01u=0; k01u<k02u; ++k01u)
 	  
-	  for (int k04d=0; k04d<k05d; ++k04d)
+	  for (int k04d=0; k04d<=N_phi; ++k04d)
 	    for (int k03d=0; k03d<k04d; ++k03d)
 	      for (int k02d=0;  k02d<k03d; ++k02d)
 		for (int k01d=0; k01d<k02d; ++k01d)
@@ -495,9 +552,6 @@ void calcArekN10_2S18(int*Map, double *Signs, ParticleOnSphereWithSpin* Space, i
 			Coeff*=TmpCoeff;
 			StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k04u, 1, TmpCoeff);
 			Coeff*=TmpCoeff;
-			StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k05u, 1, TmpCoeff);
-			Coeff*=TmpCoeff;
-			    
 
 			StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k01d, 0, TmpCoeff);
 			Coeff*=TmpCoeff;
@@ -506,8 +560,6 @@ void calcArekN10_2S18(int*Map, double *Signs, ParticleOnSphereWithSpin* Space, i
 			StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k03d, 0, TmpCoeff);
 			Coeff*=TmpCoeff;
 			StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k04d, 0, TmpCoeff);
-			Coeff*=TmpCoeff;
-			StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k05d, 0, TmpCoeff);
 			Coeff*=TmpCoeff;
 			    
 			if(i >= Dim)
