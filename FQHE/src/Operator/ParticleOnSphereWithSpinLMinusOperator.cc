@@ -57,7 +57,7 @@ ParticleOnSphereWithSpinLMinusOperator::ParticleOnSphereWithSpinLMinusOperator(P
   this->Coefficients = RealVector(this->LzMax + 1);
   for (int i = 0; i <= this->LzMax; ++i)
     {
-      this->Coefficients[i] = sqrt(0.25 * ((double) ((((this->LzMax + 2) * this->LzMax) - (((2 * i) - this->LzMax) * ((2 * i) - this->LzMax + 2))))));
+      this->Coefficients[i] = sqrt(0.25 * ((double) ((((this->LzMax + 2) * this->LzMax) - (((2 * i) - this->LzMax) * ((2 * i) - this->LzMax - 2))))));
     }
 }
 
@@ -138,12 +138,12 @@ Complex ParticleOnSphereWithSpinLMinusOperator::MatrixElement (RealVector& V1, R
       for (int j = 1; j <= this->LzMax; ++j)
 	{
 	  Index = this->Particle->AddAd(i, j - 1, j, Coefficient);
-	  if (Index != TargetDim)
+	  if (Index < TargetDim)
 	    {
 	      Element += V1[Index] * Tmp * Coefficient * this->Coefficients[j];		  
 	    }
 	  Index = this->Particle->AduAu(i, j - 1, j, Coefficient);
-	  if (Index != TargetDim)
+	  if (Index < TargetDim)
 	    {
 	      Element += V1[Index] * Tmp * Coefficient * this->Coefficients[j];		  
 	    }
@@ -180,7 +180,7 @@ RealVector& ParticleOnSphereWithSpinLMinusOperator::LowLevelMultiply(RealVector&
   double Coefficient = 0.0;
   int TargetDim = this->Particle->GetTargetHilbertSpaceDimension();
   double Tmp;
-  for (int i = firstComponent; i < Last; ++i)
+  for (int i = 0; i < TargetDim; ++i)
     {
       vDestination[i] = 0.0;
     }
@@ -190,12 +190,12 @@ RealVector& ParticleOnSphereWithSpinLMinusOperator::LowLevelMultiply(RealVector&
       for (int j = 1; j <= this->LzMax; ++j)
 	{
 	  Index = this->Particle->AddAd(i, j - 1, j, Coefficient);
-	  if (Index != TargetDim)
+	  if (Index < TargetDim)
 	    {
 	      vDestination[Index] += Tmp * Coefficient * this->Coefficients[j];		  
 	    }
 	  Index = this->Particle->AduAu(i, j - 1, j, Coefficient);
-	  if (Index != TargetDim)
+	  if (Index < TargetDim)
 	    {
 	      vDestination[Index] += Tmp * Coefficient * this->Coefficients[j];		  
 	    }

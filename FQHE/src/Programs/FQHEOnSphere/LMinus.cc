@@ -80,7 +80,7 @@ int main(int argc, char** argv)
   bool FermionFlag = false;
   if (((SingleStringOption*) Manager["statistics"])->GetString() == 0)
     FermionFlag = true;
-  if (FQHEOnSphereFindSystemInfoFromFileName(((SingleStringOption*) Manager["input-file"])->GetString(), NbrParticles, LzMax, FermionFlag) == false)
+  if (FQHEOnSphereFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["input-file"])->GetString(), NbrParticles, LzMax, Lz, FermionFlag) == false)
     {
       return -1;
     }
@@ -101,7 +101,7 @@ int main(int argc, char** argv)
   int Parity = Lz & 1;
   if (Parity != ((NbrParticles * LzMax) & 1))
     {
-      cout << "Lz and (NbrParticles * LzMax) must have the parity" << endl;
+      cout << "Lz and (NbrParticles * LzMax) must have the same parity" << endl;
       return -1;           
     }
 
@@ -116,6 +116,7 @@ int main(int argc, char** argv)
   long MemorySpace = 9l << 20;
   ParticleOnSphere* IntialSpace;
   ParticleOnSphere* TargetSpace;
+  cout << "Creating space for Lz="<<Lz<<"/2"<<endl;
   if (FermionFlag == true)
     {
 #ifdef __64_BITS__
@@ -144,46 +145,70 @@ int main(int argc, char** argv)
     }
   for (int i = 1; i <= NbrLMinus; ++i)
     {
+      if (Lz - (2 * i) < - LzMax)
+	{
+	  cout << "Cannot apply LMinus more than "<<i-1<<" times"<<endl;
+	  exit(-1);
+	}
+      cout << "Creating space for Lz="<<Lz - (2 * i)<<"/2"<<endl;
       if (FermionFlag == true)
 	{
 #ifdef __64_BITS__
 	  if (LzMax <= 63)
 	    {
-	      TargetSpace = new FermionOnSphere(NbrParticles, Lz, LzMax - (2 * i), MemorySpace);
+	      TargetSpace = new FermionOnSphere(NbrParticles, Lz - (2 * i), LzMax, MemorySpace);
 	    }
 	  else
 	    {
-	      TargetSpace = new FermionOnSphereUnlimited(NbrParticles, Lz, LzMax - (2 * i), MemorySpace);
+	      TargetSpace = new FermionOnSphereUnlimited(NbrParticles, Lz - (2 * i), LzMax, MemorySpace);
 	    }
 #else
 	  if (LzMax <= 31)
 	    {
-	      TargetSpace = new FermionOnSphere(NbrParticles, Lz, LzMax - (2 * i), MemorySpace);
+	      TargetSpace = new FermionOnSphere(NbrParticles, Lz - (2 * i), LzMax, MemorySpace);
 	    }
 	  else
 	    {
-	      TargetSpace = new FermionOnSphereUnlimited(NbrParticles, Lz, LzMax - (2 * i), MemorySpace);
+	      TargetSpace = new FermionOnSphereUnlimited(NbrParticles, Lz - (2 * i), LzMax, MemorySpace);
 	    }
 #endif
 	}
       else
 	{
-	  TargetSpace = new BosonOnSphere(NbrParticles, Lz, LzMax - (2 * i));
+	  TargetSpace = new BosonOnSphere(NbrParticles, Lz - (2 * i), LzMax);
 	}
       IntialSpace->SetTargetSpace(TargetSpace);
-      TargetVector = RealVector(TargetSpace->GetHilbertSpaceDimension());
-      ParticleOnSphereLMinusOperator LMinus(IntialSpace, Lz, LzMax  - (2 * i) + 2);
+      TargetVector = RealVector(TargetSpace->GetHilbertSpaceDimension(), true);
+      if (TargetSpace->GetHilbertSpaceDimension()!=IntialSpace->GetTargetHilbertSpaceDimension())
+	{
+	  cout << "Problem with setting target space"<<endl;
+	  exit(-1);
+	}
+      ParticleOnSphereLMinusOperator LMinus(IntialSpace, Lz - (2 * i) + 2, LzMax);
       LMinus.Multiply(InitialVector, TargetVector);
       delete IntialSpace;
       IntialSpace = TargetSpace;
       InitialVector = TargetVector;
-    }  
-  if (InitialVector.WriteVector(((SingleStringOption*) Manager["output-file"])->GetString()) == false)
+      InitialVector/=InitialVector.Norm();
+    }
+  char *OutputName;
+  if (Manager.GetString("output-file")!=NULL)
     {
-      cout << "error while writing " << ((SingleStringOption*) Manager["output-file"])->GetString() << endl;
+      OutputName = new char[strlen(Manager.GetString("output-file"))+1];
+      strcpy(OutputName,Manager.GetString("output-file"));
+    }
+  else
+    {
+      OutputName = new char[strlen(Manager.GetString("input-file"))+10];
+      sprintf(OutputName,"%s_L-",Manager.GetString("input-file"));
+    }  
+  if (InitialVector.WriteVector(OutputName) == false)
+    {
+      cout << "error while writing " << OutputName << endl;
       return -1;
     }
   delete IntialSpace;
+  delete [] OutputName;
   return 0;
 }
 

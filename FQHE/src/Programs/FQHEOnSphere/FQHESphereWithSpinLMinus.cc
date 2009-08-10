@@ -56,16 +56,12 @@ int main(int argc, char** argv)
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
-  if (Manager.ProceedOptions(argv, argc, cout) == false)
+  Manager.StandardProceedings(argv, argc, cout);
+
+  if (Manager.GetString("input-file")==NULL)
     {
-      cout << "see man page for option syntax or type LMinus -h" << endl;
-      return -1;
-    }
-  
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
-    {
-      Manager.DisplayHelp (cout);
-      return 0;
+      cout << "An input file is required!"<<endl;
+      exit(-1);
     }
 
   int NbrParticles = Manager.GetInteger("nbr-particles");
@@ -97,12 +93,12 @@ int main(int argc, char** argv)
   int Parity = Lz & 1;
   if (Parity != ((NbrParticles * LzMax) & 1))
     {
-      cout << "Lz and (NbrParticles * LzMax) must have the parity" << endl;
+      cout << "Lz and (NbrParticles * LzMax) must have the same parity" << endl;
       return -1;           
     }
   if (NbrParticles&1 != TotalSz&1)
     {
-      cout << "Sz and NbrParticles must have the parity" << endl;
+      cout << "Sz and NbrParticles must have the same parity" << endl;
       return -1;
     }
 
@@ -154,7 +150,7 @@ int main(int argc, char** argv)
 #ifdef __64_BITS__
 	  if (LzMax <= 31)
 	    {
-	      TargetSpace = new FermionOnSphereWithSpin(NbrParticles, Lz, LzMax - (2 * i), TotalSz, MemorySpace);
+	      TargetSpace = new FermionOnSphereWithSpin(NbrParticles, Lz - (2 * i), LzMax, TotalSz, MemorySpace);
 	    }
 	  else
 	    {
@@ -165,7 +161,7 @@ int main(int argc, char** argv)
 #else
 	  if (LzMax <= 15)
 	    {
-	      TargetSpace = new FermionOnSphereWithSpin(NbrParticles, Lz, LzMax - (2 * i), TotalSz, MemorySpace);
+	      TargetSpace = new FermionOnSphereWithSpin(NbrParticles, Lz - (2 * i), LzMax, TotalSz, MemorySpace);
 	    }
 	  else
 	    {
@@ -177,22 +173,35 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  TargetSpace = new BosonOnSphereWithSpin(NbrParticles, Lz, LzMax - (2 * i), TotalSz);
+	  TargetSpace = new BosonOnSphereWithSpin(NbrParticles, Lz - (2 * i), LzMax, TotalSz);
 	}
       IntialSpace->SetTargetSpace(TargetSpace);
       TargetVector = RealVector(TargetSpace->GetHilbertSpaceDimension());
-      ParticleOnSphereWithSpinLMinusOperator LMinus(IntialSpace, Lz, LzMax  - (2 * i) + 2);
+      ParticleOnSphereWithSpinLMinusOperator LMinus(IntialSpace, Lz - (2 * i) + 2, LzMax);
       LMinus.Multiply(InitialVector, TargetVector);
       delete IntialSpace;
       IntialSpace = TargetSpace;
       InitialVector = TargetVector;
-    }  
-  if (InitialVector.WriteVector(Manager.GetString("output-file")) == false)
+      InitialVector/=InitialVector.Norm();
+    }
+  char *OutputName;
+  if (Manager.GetString("output-file")!=NULL)
     {
-      cout << "error while writing " << Manager.GetString("output-file") << endl;
+      OutputName = new char[strlen(Manager.GetString("output-file"))+1];
+      strcpy(OutputName,Manager.GetString("output-file"));
+    }
+  else
+    {
+      OutputName = new char[strlen(Manager.GetString("input-file"))+10];
+      sprintf(OutputName,"%s_L-",Manager.GetString("input-file"));
+    }
+  if (InitialVector.WriteVector(OutputName) == false)
+    {
+      cout << "error while writing " << OutputName << endl;
       return -1;
     }
   delete IntialSpace;
+  delete [] OutputName;
   return 0;
 }
 

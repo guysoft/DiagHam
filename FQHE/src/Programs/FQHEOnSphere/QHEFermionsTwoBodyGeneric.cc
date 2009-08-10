@@ -158,7 +158,15 @@ int main(int argc, char** argv)
       InteractionName=new char[3];
       sprintf (InteractionName, "l2");
     }
-  else InteractionName=new char[3 + strlen(Manager.GetString("interaction-name"))];
+  else
+    {
+      InteractionName=new char[15 + strlen(Manager.GetString("interaction-name"))];
+      if (Manager.GetDouble("l2-factor")!=0.0)
+	sprintf (InteractionName, "%s_l2_%g",Manager.GetString("interaction-name"),Manager.GetDouble("l2-factor"));
+      else
+	strcpy (InteractionName, Manager.GetString("interaction-name"));
+      
+    }
   char* OutputNameLz = new char [256 + strlen(InteractionName)];
   sprintf (OutputNameLz, "fermions_%s_n_%d_2s_%d_lz.dat", InteractionName, NbrParticles, LzMax);
 

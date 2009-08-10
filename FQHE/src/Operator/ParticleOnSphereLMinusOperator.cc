@@ -56,7 +56,7 @@ ParticleOnSphereLMinusOperator::ParticleOnSphereLMinusOperator(ParticleOnSphere*
   this->Coefficients = RealVector(this->LzMax + 1);
   for (int i = 0; i <= this->LzMax; ++i)
     {
-      this->Coefficients[i] = sqrt(0.25 * ((double) ((((this->LzMax + 2) * this->LzMax) - (((2 * i) - this->LzMax) * ((2 * i) - this->LzMax + 2))))));
+      this->Coefficients[i] = sqrt(0.25 * ((double) ((((this->LzMax + 2) * this->LzMax) - (((2 * i) - this->LzMax) * ((2 * i) - this->LzMax - 2))))));
     }
 }
 
@@ -137,7 +137,7 @@ Complex ParticleOnSphereLMinusOperator::MatrixElement (RealVector& V1, RealVecto
       for (int j = 1; j <= this->LzMax; ++j)
 	{
 	  Index = this->Particle->AdA(i, j - 1, j, Coefficient);
-	  if (Index != TargetDim)
+	  if (Index < TargetDim)
 	    {
 	      Element += V1[Index] * Tmp * Coefficient * this->Coefficients[j];		  
 	    }
@@ -169,12 +169,12 @@ Complex ParticleOnSphereLMinusOperator::MatrixElement (ComplexVector& V1, Comple
 RealVector& ParticleOnSphereLMinusOperator::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
 							     int firstComponent, int nbrComponent)
 {
-  int Last = firstComponent + nbrComponent;;
+  int Last = firstComponent + nbrComponent;
   int Index = 0;
   double Coefficient = 0.0;
   int TargetDim = this->Particle->GetTargetHilbertSpaceDimension();
   double Tmp;
-  for (int i = firstComponent; i < Last; ++i)
+  for (int i = 0; i < TargetDim; ++i)
     {
       vDestination[i] = 0.0;
     }
@@ -184,7 +184,7 @@ RealVector& ParticleOnSphereLMinusOperator::LowLevelMultiply(RealVector& vSource
       for (int j = 1; j <= this->LzMax; ++j)
 	{
 	  Index = this->Particle->AdA(i, j - 1, j, Coefficient);
-	  if (Index != TargetDim)
+	  if (Index < TargetDim)
 	    {
 	      vDestination[Index] += Tmp * Coefficient * this->Coefficients[j];		  
 	    }
