@@ -42,6 +42,22 @@ ParticleOnSphereWithSpin::~ParticleOnSphereWithSpin ()
 {
 }
 
+// set a different target space (for all basic operations)
+//
+// targetSpace = pointer to the target space
+void ParticleOnSphereWithSpin::SetTargetSpace(ParticleOnSphere* targetSpace)
+{
+}
+
+// return Hilbert space dimension of the target space
+//
+// return value = Hilbert space dimension
+int ParticleOnSphereWithSpin::GetTargetHilbertSpaceDimension()
+{
+  return this->HilbertSpaceDimension;
+}
+  
+
 // apply creation operator to a word, using the conventions
 // for state-coding and quantum numbers of this space
 // state = word to be acted upon

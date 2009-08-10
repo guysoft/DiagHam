@@ -237,6 +237,44 @@ AbstractHilbertSpace* FermionOnSphereWithSpinLong::ExtractSubspace (AbstractQuan
   return 0;
 }
 
+// apply creation operator to a word, using the conventions
+// for state-coding and quantum numbers of this space
+// state = word to be acted upon
+// m = Lz value of particle to be added
+// s = spin index of particle to be added (0=down, 1=up)
+// coefficient = reference on the double where the multiplicative factor has to be stored
+ULONGLONG FermionOnSphereWithSpinLong::Ad (ULONGLONG state, int m, int s, double& coefficient)
+{
+  m = (m<<1) + (s&1);
+  if ((state & (((ULONGLONG)0x1ul) << m)) != 0)
+    {
+      coefficient=0.0;
+      return (ULONGLONG)0x0l;
+    }
+  int NewHighestBit = getHighestBit(state)-1;
+  coefficient = 1.0;
+  if (m > NewHighestBit)
+    NewHighestBit = m;
+  else
+    {
+      coefficient *= this->SignLookUpTable[(state >> m) & this->SignLookUpTableMask[m]];
+      coefficient *= this->SignLookUpTable[(state >> (m + 16))  & this->SignLookUpTableMask[m + 16]];
+      coefficient *= this->SignLookUpTable[(state >> (m + 32)) & this->SignLookUpTableMask[m + 32]];
+      coefficient *= this->SignLookUpTable[(state >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
+#ifdef __128_BIT_LONGLONG__
+      coefficient *= this->SignLookUpTable[(state >> (n2 + 64)) & this->SignLookUpTableMask[n2 + 64]];
+      coefficient *= this->SignLookUpTable[(state >> (n2 + 80)) & this->SignLookUpTableMask[n2 + 80]];
+      coefficient *= this->SignLookUpTable[(state >> (n2 + 96)) & this->SignLookUpTableMask[n2 + 96]];
+      coefficient *= this->SignLookUpTable[(state >> (n2 + 112)) & this->SignLookUpTableMask[n2 + 112]];
+#endif
+
+    }
+  state |= (((ULONGLONG)0x1ul) << m);
+
+  return state;
+}
+
+
 // apply a^+_u_m1 a^+_u_m2 a_u_n1 a_u_n2 operator to a given state (with m1+m2=n1+n2)
 //
 // index = index of the state on which the operator has to be applied

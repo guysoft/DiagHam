@@ -63,33 +63,58 @@ class SkyrmionOnSphereWaveFunction: public Abstract1DComplexTrialFunction
   // Nbr of flux in polarized part
   int PolarizedLzMax;
 
-  // Angular momentum in polarized part
-  int PolarizedLz;
+  // Angular moment(a) in polarized part
+  int *PolarizedLz;
+
+  // angular momentum of polarized state(s)
+  int PolarizedL;
 
   // data for bosonic hilbert-space
   int BosonLzMax;
-  int BosonLz;
+  // angular moment(a) of bosonic state(s)
+  int *BosonLz;
   int BosonSz;
+  // angular momentum of boson state(s)
+  int BosonL;
+
+  // total angular momentum and projection
+  int TotalL;
+  int TotalLz;
+
+  
+
+  // coupling of bosons and polarized state(s)
+  int NbrCoupling;
+  int *BosonIndex;
+  int *PolarizedIndex;
+  double *CouplingForIndex;
+  // arrays of temporary results to be used internally in operator()
+  // for polarized state
+  Complex *TmpValuePolarized;
+  // for bosonic state
+  Complex *LastValueBosonic;
+  
+    
+  // if non-zero angular momenta, number of states in respective multiplet
+  int NbrMultipletPolarized;
+  int NbrMultipletBosons;
   
   // vector that describes polarized state components in PolarizedSpace basis
-  RealVector PolarizedState;
+  RealVector *PolarizedState;
 
   // vector that describes bosonic spin texture components in BosonicSpace basis
-  RealVector BosonicState;
-
+  RealVector *BosonicState;
+  
   // Hilbert space associated to the polarized SkyrmionOnSphere state
-  ParticleOnSphere* PolarizedSpace;
-
+  ParticleOnSphere** PolarizedSpace;
+  
   // Hilbert space associated to the polarized SkyrmionOnSphere state
-  ParticleOnSphereWithSpin *BosonicSpace;
+  ParticleOnSphereWithSpin **BosonicSpace;
 
   // one body real space basis to use for polarized state
   AbstractFunctionBasis* OneBodyBasisPol;
   // one body real space basis to use for bosonic state
-  AbstractFunctionBasis* OneBodyBasisBos;
-
-  // last value of the bosonic state
-  Complex LastBosonicValue;
+  AbstractFunctionBasis* OneBodyBasisBos;  
   
   // flag indicating whether we are using an exact polarized wavefunction
   bool UseExact;

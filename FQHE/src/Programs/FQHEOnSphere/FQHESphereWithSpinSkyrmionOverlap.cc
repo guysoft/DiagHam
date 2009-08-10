@@ -239,11 +239,10 @@ int main(int argc, char** argv)
   MCHistoryRecord *History=NULL;
   char *HistoryFileName=NULL;
   if (HistoryMode>0)
-    {
-      HistoryFileName=Manager.GetString("history-file");      
+    {      
       if (HistoryMode==1)
 	{
-	  if (HistoryFileName==NULL)
+	  if (Manager.GetString("history-file")==NULL)
 	    {
 	      if (UseTrial)
 		{
@@ -268,6 +267,11 @@ int main(int argc, char** argv)
 		  delete [] HistoryFileName;
 		  HistoryFileName = tmpC;
 		}
+	    }
+	  else
+	    {
+	      HistoryFileName=new char[strlen(Manager.GetString("history-file"))+1];
+	      strcpy(HistoryFileName,Manager.GetString("history-file"));
 	    }
 	  char *tmpC = WaveFunctionManager.GetDescription();
 	  History=new MCHistoryRecord(NbrIter, 2*NbrFermions, Manager.GetString("exact-state"), tmpC, HistoryFileName

@@ -51,6 +51,16 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // return value = particle statistic
   virtual int GetParticleStatistic() = 0;
 
+  // set a different target space (for all basic operations)
+  //
+  // targetSpace = pointer to the target space
+  virtual void SetTargetSpace(ParticleOnSphere* targetSpace);
+
+  // return Hilbert space dimension of the target space
+  //
+  // return value = Hilbert space dimension
+  virtual int GetTargetHilbertSpaceDimension();
+
   // apply creation operator to a word, using the conventions
   // for state-coding and quantum numbers of this space
   // state = word to be acted upon
@@ -104,7 +114,7 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // index = index of the state on which the operator has to be applied
   // m = index of the creation and annihilation operator
   // return value = coefficient obtained when applying a^+_m a_m
-  virtual double AdA (long index, int m);
+  virtual double AdA (long index, int m);  
 
   // apply a^+_m_d a_m_d operator to a given state (only spin down)
   //

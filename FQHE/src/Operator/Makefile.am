@@ -15,4 +15,5 @@ ParticleOnLatticeOneBodyOperator.cc \
 ParticleOnLatticeTranslationOperator.cc \
 ParticleOnLatticeDensityDensityOperator.cc \
 ParticleOnLatticeFluxOperator.cc \
-ParticleOnSphereWithSpinDensityOperator.cc
+ParticleOnSphereWithSpinDensityOperator.cc \
+ParticleOnSphereWithSpinLMinusOperator.cc

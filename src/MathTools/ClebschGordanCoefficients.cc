@@ -140,6 +140,23 @@ double ClebschGordanCoefficients::GetCoefficient (int m1, int m2, int j)
   return this->Coefficients[TmpPos1][TmpPos2][(j - this->JMin[TmpPos1][TmpPos2]) >> 1];
 }
 
+// get a particular coefficient (including testing if m1, m2 and j are valid)
+//
+// m1 = projection of first angular momentum 
+// m2 = projection of second angular momentum 
+// j = resulting angular momentum
+// return value = corresponding Clebsch Gordan coefficient
+double ClebschGordanCoefficients::CarefulGetCoefficient (int m1, int m2, int j)
+{
+  if ((m1>=-J1)&&(m1<=J1)&&(m2>=-J2)&&(m2<=J2))
+    {
+      int TmpPos1 = (this->J1 + m1) >> 1;
+      int TmpPos2 = (this->J2 + m2) >> 1;
+      return this->Coefficients[TmpPos1][TmpPos2][(j - this->JMin[TmpPos1][TmpPos2]) >> 1];
+    }
+  else return 0.0;
+}
+
 // initial an iterator on all Clebsch Gordan coefficients for fixed m1 and m2 values
 //
 // m1 = projection of first angular momentum 

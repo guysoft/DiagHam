@@ -103,6 +103,14 @@ class ClebschGordanCoefficients
   // return value = corresponding Clebsch Gordan coefficient
   double GetCoefficient (int m1, int m2, int j);
 
+  // get a particular coefficient (including testing if m1, m2 and j are valid)
+  //
+  // m1 = projection of first angular momentum 
+  // m2 = projection of second angular momentum 
+  // j = resulting angular momentum
+  // return value = corresponding Clebsch Gordan coefficient
+  double CarefulGetCoefficient (int m1, int m2, int j);
+
   // initial an iterator on all Clebsch Gordan coefficients for fixed m1 and m2 values
   //
   // m1 = projection of first angular momentum 

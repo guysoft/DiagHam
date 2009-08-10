@@ -45,7 +45,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption ('s', "state", "vector to import in ascii format");
   (*SystemGroup) += new SingleStringOption ('r', "raw-state", "vector to import in FORTRAN binary format");
   (*SystemGroup) += new SingleStringOption ('b', "basis", "description of basis in which vector is formatted (none = standard basis)");
-  (*SystemGroup) += new SingleIntegerOption ('c', "coded-basis", "use internally coded basis (1 = A. Wojs 12@22, 2 = A. Wojs 10@18, 3 = A. Wojs 8@14,)");
+  (*SystemGroup) += new SingleIntegerOption ('c', "coded-basis", "use internally coded basis (1 = A. Wojs 12@22, 2 = A. Wojs 10@18, 3 = A. Wojs 8@14)");
   (*SystemGroup) += new SingleIntegerOption ('z', "lz-value", "twice the total lz value", 0);
   (*OutputGroup) += new SingleStringOption ('o', "output-state", "use this name for the output vector state instead of standard terminology");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -295,8 +295,13 @@ int main(int argc, char** argv)
   if (OutputName==NULL)
     {
       OutputName = new char[512];
-      sprintf(OutputName,"fermions_sphere_spin_import-%s_n_%d_2S_%d_Sz_%d_lz_%d.vec",
-	      Manager.GetString("state"), NbrParticles, LzMax, Sz, Lz);      
+      if (Manager.GetString("state")!=NULL)
+	sprintf(OutputName,"fermions_sphere_spin_import-%s_n_%d_2S_%d_Sz_%d_lz_%d.vec",
+		Manager.GetString("state"), NbrParticles, LzMax, Sz, Lz);
+      else if (Manager.GetString("raw-state")!=NULL)
+	sprintf(OutputName,"fermions_sphere_spin_import-%s_n_%d_2S_%d_Sz_%d_lz_%d.vec",
+		Manager.GetString("raw-state"), NbrParticles, LzMax, Sz, Lz);
+	
     }
 
   if (Manager.GetString("state")!=0)
@@ -438,7 +443,7 @@ c     numd=3472230
 
 // one-off basis from Arek
 
-void calcArekN10_2S18(int*Map, double *Signs, ParticleOnSphereWithSpin* Space, int N, int N_phi,int Lz_total, int Dim)
+void calcArekN10_2S18(int*Map, double *Signs, ParticleOnSphereWithSpin* Space, int N, int N_phi, int Lz_total, int Dim)
 {
   int i=0;
   unsigned long StateDesc;
