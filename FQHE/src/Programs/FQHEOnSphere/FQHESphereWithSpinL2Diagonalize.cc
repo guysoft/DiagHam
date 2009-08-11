@@ -2,6 +2,7 @@
 #include "HilbertSpace/ParticleOnSphereManager.h"
 
 #include "Hamiltonian/ParticleOnSphereWithSpinL2Hamiltonian.h"
+#include "Hamiltonian/ParticleOnSphereWithSpinS2Hamiltonian.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -104,14 +105,30 @@ int main(int argc, char** argv)
   if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
     Memory = Architecture.GetArchitecture()->GetLocalMemory();
   AbstractQHEOnSphereHamiltonian* Hamiltonian = 0;
-  Hamiltonian = new ParticleOnSphereWithSpinL2Hamiltonian(Space, NbrParticles, LzMax, TotalLz,
-							  Architecture.GetArchitecture(), 
-							  ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),
-							  Memory, DiskCacheFlag,
-							  LoadPrecalculationFileName);
-  if (Manager.GetDouble("s2-factor") != 0.0)
-    ((AbstractQHEOnSphereWithSpinHamiltonian*) Hamiltonian)->AddS2(TotalLz, TotalSz, Manager.GetDouble("s2-factor"), Memory);
-
+  if (Manager.GetDouble("l2-factor")!=0.0)
+    {
+      Hamiltonian = new ParticleOnSphereWithSpinL2Hamiltonian(Space, NbrParticles, LzMax, TotalLz,
+							      Architecture.GetArchitecture(), 
+							      ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),
+							      Memory, DiskCacheFlag,
+							      LoadPrecalculationFileName);
+      if (Manager.GetDouble("s2-factor") != 0.0)
+	((AbstractQHEOnSphereWithSpinHamiltonian*) Hamiltonian)->AddS2(TotalLz, TotalSz, Manager.GetDouble("s2-factor"), Memory);
+    }
+  else
+    {
+      if (Manager.GetDouble("s2-factor")!=0.0)
+	Hamiltonian = new ParticleOnSphereWithSpinS2Hamiltonian(Space, NbrParticles, LzMax, TotalLz, TotalSz,
+								Architecture.GetArchitecture(), 
+								Manager.GetDouble("s2-factor"),
+								Memory, DiskCacheFlag,
+								LoadPrecalculationFileName);
+      else
+	{
+	  cout << "Either L2 or S2 term have to be non-zero!"<<endl;
+	  exit(-1);
+	}
+    }
   double Shift = ((SingleDoubleOption*) Manager["energy-shift"])->GetDouble();
   Hamiltonian->ShiftHamiltonian(Shift);
   char* EigenvectorName = 0;
