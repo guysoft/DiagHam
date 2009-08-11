@@ -65,6 +65,9 @@ class FullReorthogonalizedLanczosAlgorithmWithDiskStorage : public AbstractLancz
   // number of vector that can be allocated at the same time in local memory (null if all vectors have to be stored in local memory)
   int MaxNbrVectors;
 
+  // internally stored dimension, to be used if re-read from disk for vector calculation only
+  int VectorDimension;
+
  public:
 
   // default constructor

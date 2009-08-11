@@ -1,6 +1,6 @@
 SUBDIRS=
 
-bin_PROGRAMS=ExplicitMatrixExample ResizeLanczos GenericOverlap VectorBinary2Ascii ReplayFastLanczos ExtractLinearlyIndependentVectors GenerateRandomNumbers BuildSuperPosition TestDiagHamConf ReorthogonalizeVectorSet MergeMCHistories NormalizeVector PrintAllThreeJ ZeroingVector CountingZero
+bin_PROGRAMS=ExplicitMatrixExample ResizeLanczos GenericOverlap VectorBinary2Ascii ReplayLanczos ReplayFastLanczos ExtractLinearlyIndependentVectors GenerateRandomNumbers BuildSuperPosition TestDiagHamConf ReorthogonalizeVectorSet MergeMCHistories NormalizeVector PrintAllThreeJ ZeroingVector CountingZero
 
 ExplicitMatrixExample_SOURCES=ExplicitMatrixExample.cc
 
@@ -9,6 +9,8 @@ ResizeLanczos_SOURCES=ResizeLanczos.cc
 GenericOverlap_SOURCES=GenericOverlap.cc
 
 VectorBinary2Ascii_SOURCES=VectorBinary2Ascii.cc
+
+ReplayLanczos_SOURCES=ReplayLanczos.cc
 
 ReplayFastLanczos_SOURCES=ReplayFastLanczos.cc
 
@@ -47,6 +49,10 @@ GenericOverlap_LDADD= -L$(top_builddir)/src/Vector  -L$(top_builddir)/src/Option
 VectorBinary2Ascii_DEPENDENCIES= $(top_builddir)/src/Vector/libVector.a  $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/GeneralTools/libGeneralTools.a
 
 VectorBinary2Ascii_LDADD= -L$(top_builddir)/src/Vector  -L$(top_builddir)/src/Options -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/Output -lVector -lOptions -lGeneralTools -lOutput
+
+ReplayLanczos_DEPENDENCIES=$(top_builddir)/src/Architecture/libArchitecture.a $(top_builddir)/src/Architecture/ArchitectureOperation/libArchitectureOperation.a $(top_builddir)/src/LanczosAlgorithm/libLanczosAlgorithm.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Options/libOptions.a
+
+ReplayLanczos_LDADD=-L$(top_builddir)/src/Architecture -L$(top_builddir)/src/Architecture/ArchitectureOperation -L$(top_builddir)/src/LanczosAlgorithm/ -L$(top_builddir)/src/Vector -L$(top_builddir)/src/Matrix -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/Options -L$(top_builddir)/src/Output -lArchitecture -lArchitectureOperation -lLanczosAlgorithm -lArchitectureOperation -lMatrix -lVector -lGeneralTools -lOutput -lOptions @MATH_LIBS@ @THREAD_LIBS@ @LAPACK_LIBS@ @BLAS_LIBS@ @FORTRAN2C_LIBS@
 
 ReplayFastLanczos_DEPENDENCIES=$(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Options/libOptions.a
 

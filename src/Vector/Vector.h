@@ -103,27 +103,27 @@ class Vector
   // Get Vector dimension
   //
   // return value = vector dimension
-  int GetVectorDimension();
+  int GetVectorDimension() const;
   
   // Get Vector dimension for vector bigger than 2^31
   //
   // return value = vector dimension
-  long GetLargeVectorDimension();
+  long GetLargeVectorDimension() const;
   
   // check if the vector is bigger than 2^31
   //
   // return value = true if the vector is bigger than 2^31
-  bool IsLargeVector();
+  bool IsLargeVector() const;
   
   // Get Vector type
   //
   // return value = flag indicating vector type
-  int GetVectorType();
+  int GetVectorType() const;
   
   // get vector id
   //
   // return value = vector id
-  virtual int GetVectorId();
+  virtual int GetVectorId() const;
 
   // set vector id
   //
@@ -295,7 +295,7 @@ class Vector
 //
 // return value = vector dimension
 
-inline int Vector::GetVectorDimension()
+inline int Vector::GetVectorDimension() const
 {
   return this->Dimension;
 }
@@ -304,7 +304,7 @@ inline int Vector::GetVectorDimension()
 //
 // return value = vector dimension
 
-inline long Vector::GetLargeVectorDimension()
+inline long Vector::GetLargeVectorDimension() const
 {
   return this->LargeDimension;
 }
@@ -313,7 +313,7 @@ inline long Vector::GetLargeVectorDimension()
 //
 // return value = true if the vector is bigger than 2^31
 
-inline bool Vector::IsLargeVector()
+inline bool Vector::IsLargeVector() const
 {
   if ((this->VectorType & Vector::LargeData) == 0)
     return false;
@@ -325,7 +325,7 @@ inline bool Vector::IsLargeVector()
 //
 // return value = flag indicating vector type
 
-inline int Vector::GetVectorType()
+inline int Vector::GetVectorType() const
 {
   return this->VectorType;
 }
@@ -334,7 +334,7 @@ inline int Vector::GetVectorType()
 //
 // return value = vector id
 
-inline int Vector::GetVectorId()
+inline int Vector::GetVectorId() const
 {
   return this->VectorId;
 }

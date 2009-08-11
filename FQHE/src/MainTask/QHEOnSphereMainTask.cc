@@ -682,7 +682,6 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 		      VectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &(Eigenvectors[this->NbrEigenvalue - 1]), &TmpEigenvector);
 		      Operation1.ApplyOperation(this->Architecture);
 		      Scalar = TmpEigenvector * Eigenvectors[this->NbrEigenvalue - 1];
-		      Scalar = TmpEigenvector * Eigenvectors[this->NbrEigenvalue - 1];
 		      Precision = fabs((Scalar - TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1)) / TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1));		  
 		      cout << (TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->EnergyShift) << " " << (Scalar - this->EnergyShift) << " " 
 			   << Precision << " ";

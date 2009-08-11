@@ -65,7 +65,10 @@ FullReorthogonalizedLanczosAlgorithmWithDiskStorage::FullReorthogonalizedLanczos
   this->MaximumNumberIteration = maxIter;
   this->NbrEigenvalue = nbrEigenvalue;
   this->MaxNbrVectors = maxNbrVectors;
+  if (this->MaxNbrVectors<5)
+    this->MaxNbrVectors = 5;
   this->LanczosVectors = new RealVector [this->MaxNbrVectors];
+  this->VectorDimension = 0;
   if (maxIter > 0)
     {
       this->TridiagonalizedMatrix = RealTriDiagonalSymmetricMatrix(this->MaximumNumberIteration, true);
@@ -106,6 +109,7 @@ FullReorthogonalizedLanczosAlgorithmWithDiskStorage::FullReorthogonalizedLanczos
   this->EigenvaluePrecision = algorithm.EigenvaluePrecision;
   this->EigenvectorPrecision = algorithm.EigenvectorPrecision;
   this->StrongConvergenceFlag = algorithm.StrongConvergenceFlag;
+  this->VectorDimension = algorithm.VectorDimension;
   this->PreviousWantedEigenvalues = new double [this->NbrEigenvalue];
   for (int i = 0; i < this->NbrEigenvalue; ++i)
     this->PreviousWantedEigenvalues[i] = 0.0;
@@ -127,10 +131,15 @@ FullReorthogonalizedLanczosAlgorithmWithDiskStorage::~FullReorthogonalizedLanczo
 
 void FullReorthogonalizedLanczosAlgorithmWithDiskStorage::InitializeLanczosAlgorithm() 
 {
-  int Dimension = this->Hamiltonian->GetHilbertSpaceDimension();
+  if (this->Hamiltonian == NULL)
+    {
+      cout << "A Hamiltonian has to be declared before initializing a Lanczos Algorithm"<<endl;
+      exit(-1);
+    }
+  this->VectorDimension = this->Hamiltonian->GetHilbertSpaceDimension();
   for (int i = 0; i < this->MaxNbrVectors; ++i)
-    this->LanczosVectors[i] = RealVector (Dimension);
-  for (int i = 0; i < Dimension; i++)
+    this->LanczosVectors[i] = RealVector (VectorDimension);
+  for (int i = 0; i < VectorDimension; i++)
     this->LanczosVectors[0][i] = (rand() - 32767) * 0.5;
   this->LanczosVectors[0] /= this->LanczosVectors[0].Norm();
   this->Index = 0;
@@ -143,9 +152,18 @@ void FullReorthogonalizedLanczosAlgorithmWithDiskStorage::InitializeLanczosAlgor
 
 void FullReorthogonalizedLanczosAlgorithmWithDiskStorage::InitializeLanczosAlgorithm(const Vector& vector) 
 {
-  int Dimension = this->Hamiltonian->GetHilbertSpaceDimension();
+  if (this->Hamiltonian == NULL)
+    {
+      cout << "A Hamiltonian has to be declared before initializing a Lanczos Algorithm"<<endl;
+      exit(-1);
+    }
+  this->VectorDimension = this->Hamiltonian->GetHilbertSpaceDimension();
+  if (VectorDimension != vector.GetVectorDimension())
+    {
+      cout << "initial vector does not match dimension of Hilbert-space"<<endl;
+    }
   for (int i = 0; i < this->MaxNbrVectors; ++i)
-    this->LanczosVectors[i] = RealVector (Dimension);
+    this->LanczosVectors[i] = RealVector (VectorDimension);
   this->LanczosVectors[0] = vector;
   this->Index = 0;
   this->TridiagonalizedMatrix.Resize(0, 0);
@@ -156,21 +174,30 @@ void FullReorthogonalizedLanczosAlgorithmWithDiskStorage::InitializeLanczosAlgor
 
 void FullReorthogonalizedLanczosAlgorithmWithDiskStorage::ResumeLanczosAlgorithm()
 {
-  int Dimension = this->Hamiltonian->GetHilbertSpaceDimension();
-  for (int i = 0; i < this->MaxNbrVectors; ++i)
-    this->LanczosVectors[i] = RealVector (Dimension);
-  this->ReadState();
-  char* TmpVectorName = new char [256];
   
+  for (int i = 0; i < this->MaxNbrVectors; ++i)
+    this->LanczosVectors[i] = RealVector ();
+  this->ReadState();
+  char* TmpVectorName = new char [256];  
   sprintf(TmpVectorName, "vector.%d", this->Index);
   this->LanczosVectors[0].ReadVector(TmpVectorName);
+  this->VectorDimension = LanczosVectors[0].GetVectorDimension();
+  if (this->Hamiltonian != NULL)
+    {
+      if (this->Hamiltonian->GetHilbertSpaceDimension() != this->VectorDimension)
+	{
+	  cout << "Hamiltonian does not match dimension of stored vectors in resuming"<<endl;
+	  exit(-1);
+	}
+    }
   sprintf(TmpVectorName, "vector.%d", (this->Index + 1));
   this->LanczosVectors[1].ReadVector(TmpVectorName);
   sprintf(TmpVectorName, "vector.%d", (this->Index + 2));
   this->LanczosVectors[2].ReadVector(TmpVectorName);
   sprintf(TmpVectorName, "vector.%d", (this->Index - 1));
   this->LanczosVectors[3].ReadVector(TmpVectorName);
-  
+  for (int i = 4; i < this->MaxNbrVectors; ++i)
+    this->LanczosVectors[i].Resize(VectorDimension);
   delete [] TmpVectorName;
 }
   
@@ -219,7 +246,7 @@ Vector* FullReorthogonalizedLanczosAlgorithmWithDiskStorage::GetEigenstates(int 
     {
       for (int j = 0; j < this->TridiagonalizedMatrix.GetNbrRow(); ++j)
 	TmpCoefficents[j] = TmpEigenvector(j, i);
-      Eigenstates[i] = RealVector (this->Hamiltonian->GetHilbertSpaceDimension());
+      Eigenstates[i] = RealVector (this->VectorDimension);
       Eigenstates[i].Copy(this->LanczosVectors[0], TmpEigenvector(0, i));
       int ReducedMaxNbrVector =  this->MaxNbrVectors - 1;
       int MaxPos = (this->TridiagonalizedMatrix.GetNbrRow() - 1) / ReducedMaxNbrVector;
