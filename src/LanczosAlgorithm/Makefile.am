@@ -21,7 +21,8 @@ BasicLanczosAlgorithmWithGroundStateDiskStorage.cc \
 ComplexBasicLanczosAlgorithmWithGroundStateFastDisk.cc \
 BasicBlockLanczosAlgorithm.cc \
 LanczosManager.cc \
-InternalReorthogonalizedLanczosAlgorithm.cc
+InternalReorthogonalizedLanczosAlgorithm.cc \
+ProjectedLanczosAlgorithmWithGroundState.cc
 
 
 #ComplexBasicLanczosAlgorithmDiskWithGroundState.cc 

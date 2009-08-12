@@ -35,6 +35,7 @@
 #include "config.h"
 
 #include "MainTask/AbstractMainTask.h"
+#include "Hamiltonian/AbstractHamiltonian.h"
 
 #include <iostream>
 
@@ -125,6 +126,18 @@ class QHEOnSphereMainTask: public AbstractMainTask
   // name of the file that contains a optional set of vectors to which eigenstates have to be orthogonal
   char* LanczosReorthogonalization;
 
+  // fields for storage of optional projector operators to use in Lanczos algorithm
+  AbstractHamiltonian** Projectors;
+  // number of such projectors
+  int NbrProjectors;
+
+  // additional storage vectors in RAM for projected lanczos
+  int NbrProjectorStorage;
+  // max nr iterations per projector
+  int ProjectorIterMax;
+  // precision for projection
+  double ProjectorPrecision;
+
  public:
 
   // constructor
@@ -138,9 +151,13 @@ class QHEOnSphereMainTask: public AbstractMainTask
   // firstRun = flag that indicates if it the first time the main task is used
   // eigenvectorFileName = prefix to add to the name of each file that will contain an eigenvector
   // lzMax = twice the maximum Lz value reached by a particle
+  // projectors = operators to use for projection after each application of the Hamiltonian
+  // nbrProjectors = number of separate projectors
+
   QHEOnSphereMainTask(OptionManager* options, AbstractHilbertSpace* space, 
 		      AbstractQHEHamiltonian* hamiltonian, int lValue, double shift, char* outputFileName,
-		      bool firstRun = true, char* eigenvectorFileName = 0, int lzMax = 0);
+		      bool firstRun = true, char* eigenvectorFileName = 0, int lzMax = 0,
+		      AbstractHamiltonian** projectors = NULL, int nbrProjectors=0);
   
   // destructor
   //  

@@ -50,6 +50,7 @@
 #include "LanczosAlgorithm/FullReorthogonalizedBlockLanczosAlgorithm.h"
 #include "LanczosAlgorithm/BasicBlockLanczosAlgorithm.h"
 #include "LanczosAlgorithm/BasicLanczosAlgorithmWithGroundStateDiskStorage.h"
+#include "LanczosAlgorithm/ProjectedLanczosAlgorithmWithGroundState.h"
 
 #include "Options/OptionManager.h"
 #include "Options/AbstractOption.h"
@@ -89,10 +90,12 @@ using std::ofstream;
 // firstRun = flag that indicates if it the first time the main task is used
 // eigenvectorFileName = prefix to add to the name of each file that will contain an eigenvector
 // lzMax = twice the maximum Lz value reached by a particle
+// projectors = operators to use for projection after each application of the Hamiltonian
+// nbrProjectors = number of separate projectors
 
 QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbertSpace* space, 
 					 AbstractQHEHamiltonian* hamiltonian, int lValue, double shift, char* outputFileName,
-					 bool firstRun, char* eigenvectorFileName, int lzMax)
+					 bool firstRun, char* eigenvectorFileName, int lzMax, AbstractHamiltonian** projectors, int nbrProjectors)
 {
   this->OutputFileName = new char [strlen(outputFileName) + 1];
   strncpy(this->OutputFileName, outputFileName, strlen(outputFileName));
@@ -245,6 +248,25 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
       this->LanczosReorthogonalization = 0;
     }
   this->FirstRun = firstRun;
+  this->Projectors = projectors;
+  this->NbrProjectors = nbrProjectors;
+
+  if ((*options)["projector-storage"] != 0)
+    {
+      this->NbrProjectorStorage = options->GetInteger("projector-storage");
+    }
+  else this->NbrProjectorStorage = 0;
+  if ((*options)["projector-iter-max"] != 0)
+    {
+      this->ProjectorIterMax = options->GetInteger("projector-iter-max");
+    }
+  else this->ProjectorIterMax = MaxNbrIterLanczos;
+  
+  if ((*options)["projector-precision"] != 0)
+    {
+      this->ProjectorPrecision = options->GetDouble("projector-precision");
+    }
+  else this->ProjectorPrecision = this->LanczosPrecision;
 }  
  
 // destructor
@@ -478,8 +500,16 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 	  if (this->DiskFlag == false)
 	    if ((this->EvaluateEigenvectors == true) || (this->ComputeLValueFlag == true))
 	      {
-		cout << "Using BasicLanczosAlgorithmWithGroundState"<<endl;
-		Lanczos = new BasicLanczosAlgorithmWithGroundState(this->Architecture, this->MaxNbrIterLanczos, this->FastDiskFlag, this->ResumeFastDiskFlag);
+		if (this->NbrProjectors>0)
+		  {
+		    cout << "Using BasicLanczosAlgorithmWithGroundState"<<endl;
+		    Lanczos = new BasicLanczosAlgorithmWithGroundState(this->Architecture, this->MaxNbrIterLanczos, this->FastDiskFlag, this->ResumeFastDiskFlag);
+		  }
+		else
+		  {
+		    cout << "Using ProjectedLanczosAlgorithmWithGroundState"<<endl;
+		    Lanczos = new ProjectedLanczosAlgorithmWithGroundState(this->Projectors, this->NbrProjectors, this->Architecture, this->MaxNbrIterLanczos, this->NbrProjectorStorage, this->ProjectorIterMax, this->FastDiskFlag, this->ResumeFastDiskFlag, this->ProjectorPrecision);
+		  }
 	      }
 	    else
 	      {
