@@ -319,6 +319,25 @@ ComplexVector& ComplexVector::operator = (const RealVector& vector)
 // coefficient = optional coefficient which multiply source to copy
 // return value = reference on current vector
 
+ComplexVector& ComplexVector::Copy (ComplexVector& vector)
+{
+  if (this->Dimension != vector.Dimension)
+    this->Resize(vector.Dimension);
+  Complex *Ci=this->Components;
+  Complex *Cj=vector.Components;
+  for (int i = 0; i < this->Dimension; i++, Ci++, Cj++)
+    {
+      Ci->Re = Cj->Re;
+      Ci->Im = Cj->Im;
+    }
+  return *this;
+}
+// copy a vector into another
+//
+// vector = vector to copy
+// coefficient = optional coefficient which multiply source to copy
+// return value = reference on current vector
+
 ComplexVector& ComplexVector::Copy (ComplexVector& vector, double coefficient)
 {
   if (this->Dimension != vector.Dimension)

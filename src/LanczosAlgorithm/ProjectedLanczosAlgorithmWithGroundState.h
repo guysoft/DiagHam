@@ -39,6 +39,7 @@
 #include "Hamiltonian/AbstractHamiltonian.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Vector/RealVector.h"
+#include "GeneralTools/GarbageFlag.h"
 
 
 class ProjectedLanczosAlgorithmWithGroundState : public AbstractLanczosAlgorithm
@@ -82,6 +83,10 @@ class ProjectedLanczosAlgorithmWithGroundState : public AbstractLanczosAlgorithm
   AbstractHamiltonian** Projectors;
   // number thereof
   int NbrProjectors;
+
+  // flag for restarting
+  bool RestartProjection;
+    
 
   // Index for number of iterations for internal projector operations
   int InternalIndex;
@@ -136,6 +141,9 @@ class ProjectedLanczosAlgorithmWithGroundState : public AbstractLanczosAlgorithm
 
   // temporary array for filenames
   char *TmpOutputName;
+
+  // garbage flag
+  GarbageFlag Flag;
   
 
  public:
@@ -151,7 +159,8 @@ class ProjectedLanczosAlgorithmWithGroundState : public AbstractLanczosAlgorithm
   // diskFlag = use disk storage to increase speed of ground state calculation
   // resumeDiskFlag = indicates that the Lanczos algorithm has to be resumed from an unfinished one (loading initial Lanczos algorithm state from disk)
   // projectorPrecision = precision required for projector operations
-  ProjectedLanczosAlgorithmWithGroundState(AbstractHamiltonian** projectors, int nbrProjectors, AbstractArchitecture* architecture, int maxIter = 0, int nbrStorageVectors = 0, int projectorIterMax = 100, bool diskFlag = false, bool resumeDiskFlag = false, double projectorPrecision = 1e-13);
+  // restartProjection = flag indicating whether projection should be restarted in precision not reached
+  ProjectedLanczosAlgorithmWithGroundState(AbstractHamiltonian** projectors, int nbrProjectors, AbstractArchitecture* architecture, int maxIter = 0, int nbrStorageVectors = 0, int projectorIterMax = 100, bool diskFlag = false, bool resumeDiskFlag = false, double projectorPrecision = 1e-13, bool restartProjection = false);
 
   // copy constructor
   //
@@ -256,14 +265,15 @@ class ProjectedLanczosAlgorithmWithGroundState : public AbstractLanczosAlgorithm
   // vec = vector to be saved
   // index = vector index in Lanczos routine
   // mainLanczos = flag indicating whether vector is part of main lanczos algorithm
+  // keepOriginal = flag indicating whether original vector needs to be kept in place
   // return = true on success
-  bool SaveVector(RealVector &vec, int index, bool mainLanczos = true);
+  bool SaveVector(RealVector &vec, int index, bool mainLanczos = true, bool keepOriginal = false);
 
   // reread vector
   // vec = vector to be retrieved
   // index = vector index in Lanczos routine
   // mainLanczos = flag indicating whether vector is part of main lanczos algorithm
-  // keepCopy = flag indicating whether the saved vector still needs to be kept in memory after reloading
+  // keepCopy = flag indicating whether the saved vector still needs to be kept in (live) memory after reloading
   void ReadVector(RealVector &vec, int index, bool mainLanczos = true, bool keepCopy = true);
 };
 

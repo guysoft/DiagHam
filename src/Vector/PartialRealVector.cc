@@ -222,6 +222,27 @@ PartialRealVector& PartialRealVector::operator = (const PartialRealVector& vecto
 // coefficient = optional coefficient which multiply source to copy
 // return value = reference on current vector
 
+PartialRealVector& PartialRealVector::Copy (PartialRealVector& vector)
+{
+  if (this->Dimension != vector.Dimension)
+    this->Resize(vector.Dimension);
+  this->Localize();
+  vector.Localize();
+  this->IndexShift = vector.IndexShift;
+  this->RealDimension = vector.RealDimension;
+  for (int i = 0; i < this->Dimension; i++)
+    this->Components[i] = vector.Components[i];
+  this->Delocalize();
+  vector.Delocalize();
+  return *this;
+}
+
+// copy a vector into another
+//
+// vector = vector to copy
+// coefficient = optional coefficient which multiply source to copy
+// return value = reference on current vector
+
 PartialRealVector& PartialRealVector::Copy (PartialRealVector& vector, double coefficient)
 {
   if (this->Dimension != vector.Dimension)

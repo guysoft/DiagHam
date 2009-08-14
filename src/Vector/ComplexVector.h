@@ -156,9 +156,15 @@ class ComplexVector : public Vector
   // copy a vector into another
   //
   // vector = vector to copy
+  // return value = reference on current vector
+  ComplexVector& Copy (ComplexVector& vector);
+
+  // copy a vector into another
+  //
+  // vector = vector to copy
   // coefficient = optional coefficient which multiply source to copy
   // return value = reference on current vector
-  ComplexVector& Copy (ComplexVector& vector, double coefficient = 1.0);
+  ComplexVector& Copy (ComplexVector& vector, double coefficient);
 
   // copy a vector into another
   //

@@ -234,6 +234,30 @@ PartialComplexVector& PartialComplexVector::operator = (const PartialComplexVect
 // coefficient = optional coefficient which multiply source to copy
 // return value = reference on current vector
 
+PartialComplexVector& PartialComplexVector::Copy (PartialComplexVector& vector)
+{
+  if (this->Dimension != vector.Dimension)
+    this->Resize(vector.Dimension);
+  this->Localize();
+  vector.Localize();
+  this->IndexShift = vector.IndexShift;
+  this->RealDimension = vector.RealDimension;
+  for (int i = 0; i < this->Dimension; i++)
+    {
+      this->Components[i].Re = vector.Components[i].Re;
+      this->Components[i].Im = vector.Components[i].Im;
+    }
+  this->Delocalize();
+  vector.Delocalize();
+  return *this;
+}
+
+// copy a vector into another
+//
+// vector = vector to copy
+// coefficient = optional coefficient which multiply source to copy
+// return value = reference on current vector
+
 PartialComplexVector& PartialComplexVector::Copy (PartialComplexVector& vector, double coefficient)
 {
   if (this->Dimension != vector.Dimension)

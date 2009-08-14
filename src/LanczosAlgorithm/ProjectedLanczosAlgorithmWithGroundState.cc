@@ -43,6 +43,7 @@
 
 #include <stdlib.h>
 #include <math.h>
+#include <sys/time.h>
 #include <iostream>
 
 
@@ -64,8 +65,10 @@ using std::endl;
 // diskFlag = use disk storage to increase speed of ground state calculation
 // resumeDiskFlag = indicates that the Lanczos algorithm has to be resumed from an unfinished one (loading initial Lanczos algorithm state from disk)
 // projectorPrecision = precision required for projector operations
-ProjectedLanczosAlgorithmWithGroundState::ProjectedLanczosAlgorithmWithGroundState(AbstractHamiltonian** projectors, int nbrProjectors, AbstractArchitecture* architecture, int maxIter, int nbrStorageVectors, int projectorIterMax, bool diskFlag, bool resumeDiskFlag, double projectorPrecision)
+// restartProjection = flag indicating whether projection should be restarted in precision not reached
+ProjectedLanczosAlgorithmWithGroundState::ProjectedLanczosAlgorithmWithGroundState(AbstractHamiltonian** projectors, int nbrProjectors, AbstractArchitecture* architecture, int maxIter, int nbrStorageVectors, int projectorIterMax, bool diskFlag, bool resumeDiskFlag, double projectorPrecision, bool restartProjection)
 {
+  this->Flag.Initialize();
   this->Index = 0;
   this->Hamiltonian = 0;
   this->V1 = RealVector();
@@ -96,7 +99,7 @@ ProjectedLanczosAlgorithmWithGroundState::ProjectedLanczosAlgorithmWithGroundSta
   this->EigenvaluePrecision = MACHINE_PRECISION;
   this->NbrEigenvalue = 1;
 
-  // projector issues:
+  // projector fields:
   this->Projectors=projectors;
   this->NbrProjectors=nbrProjectors;
   this->InternalIndex=0;
@@ -112,7 +115,10 @@ ProjectedLanczosAlgorithmWithGroundState::ProjectedLanczosAlgorithmWithGroundSta
       this->InternalTridiagonalizedMatrix = RealTriDiagonalSymmetricMatrix();
       this->InternalDiagonalizedMatrix = RealTriDiagonalSymmetricMatrix();
     }
-  this->ProjectorPrecision=projectorPrecision;
+  this->ProjectorPrecision=MACHINE_PRECISION;
+  if (projectorPrecision != 0.0)
+    this->ProjectorPrecision = projectorPrecision;
+  this->RestartProjection = restartProjection;
   this->PreviousProjectorGroundstate=0.0;
   // initialize storage
   MainLanczosVectorFlags = new int[MainIterMax];
@@ -141,6 +147,7 @@ ProjectedLanczosAlgorithmWithGroundState::ProjectedLanczosAlgorithmWithGroundSta
 
 ProjectedLanczosAlgorithmWithGroundState::ProjectedLanczosAlgorithmWithGroundState(const ProjectedLanczosAlgorithmWithGroundState& algorithm) 
 {
+  this->Flag = algorithm.Flag;
   this->Index = algorithm.Index;
   this->Hamiltonian = algorithm.Hamiltonian;
   this->V1 = algorithm.V1;
@@ -187,7 +194,15 @@ ProjectedLanczosAlgorithmWithGroundState::~ProjectedLanczosAlgorithmWithGroundSt
 	delete[] this->OrthogonalizationSetFileNames[i];
       delete[] this->OrthogonalizationSetFileNames;
     }
-  // clean up for projector stuff xxx
+  // clean up core of Projector
+  this->ClearProjectorLanczosAlgorithm();
+  if ((this->Flag.Shared() == false) && (this->Flag.Used() == true))
+    {
+      delete [] this->VectorStorageFlags;
+      delete [] this->MainLanczosVectorFlags;
+      delete [] this->ProjectorLanczosVectorFlags;
+      delete [] this->LanczosVectorStorage;
+    }
   delete [] TmpOutputName;
 }
 
@@ -210,6 +225,9 @@ void ProjectedLanczosAlgorithmWithGroundState::InitializeLanczosAlgorithm()
 	}
       this->ExternalOrthonogalization(this->V1);
       this->V1 /= this->V1.Norm();
+      // project initial vector
+      for (int p=0; p<NbrProjectors; ++p)
+	this->ProjectVector(p);
       if (this->DiskFlag == false)
 	this->InitialState = RealVector (this->V1, true);
       else
@@ -242,10 +260,16 @@ void ProjectedLanczosAlgorithmWithGroundState::InitializeLanczosAlgorithm(const 
 	  this->ExternalOrthonogalization(this->V1);
 	  this->V1 /= this->V1.Norm();
 	}
+      // project initial vector
+      for (int p=0; p<NbrProjectors; ++p)
+	this->ProjectVector(p);
       if (this->DiskFlag == false)
 	this->InitialState = RealVector (vector, true);
       else
-	this->SaveVector(V1,0);
+	{
+	  //cout << "calling this->SaveVector(V1,0,true,true) on line "<<__LINE__<<endl;
+	  this->SaveVector(V1,0,true,true);
+	}
       this->Index = 0;
       this->GroundStateFlag = false;
       this->TridiagonalizedMatrix.Resize(0, 0);
@@ -403,6 +427,7 @@ void ProjectedLanczosAlgorithmWithGroundState::RunLanczosAlgorithm (int nbrIter)
       VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->V1, &this->V2);
       Operation1.ApplyOperation(this->Architecture);
       // apply projector here
+      //cout << "calling this->SaveVector(V1,0) on line "<<__LINE__<<endl;
       this->SaveVector(V1,0);
       // swap V1, V2
       {
@@ -410,6 +435,7 @@ void ProjectedLanczosAlgorithmWithGroundState::RunLanczosAlgorithm (int nbrIter)
 	this->V1 = this->V2;
 	this->V2 = TmpV; 
       }
+      //cout << "Line "<<__LINE__<<": V1="<<endl<<V1;
       for (int p=0; p<NbrProjectors; ++p)
 	this->ProjectVector(p);
       // swap V1, V2
@@ -426,13 +452,19 @@ void ProjectedLanczosAlgorithmWithGroundState::RunLanczosAlgorithm (int nbrIter)
       this->ExternalOrthonogalization(this->V2);
       this->V2 /= this->V2.Norm(); 
       if (this->DiskFlag == true)
-	this->SaveVector(V2,1);
+	{
+	  //cout << "calling this->SaveVector(V2,1) on line "<<__LINE__<<endl;
+	  this->SaveVector(V2,1,true,true);
+	}
       VectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &this->V2, &this->V3);
       Operation2.ApplyOperation(this->Architecture);
       // apply projector here
       // vector0 is already saved
       if (this->DiskFlag == false) // have already saved vector1 above if DiskFlag is true
-	this->SaveVector(V2,1);      
+	{
+	  //cout << "calling this->SaveVector(V2,1) on line "<<__LINE__<<endl;
+	  this->SaveVector(V2,1); // do not need copy of V2 in process after this call
+	}
       // swap V1, V3
       {
 	RealVector TmpV (this->V1);
@@ -477,7 +509,8 @@ void ProjectedLanczosAlgorithmWithGroundState::RunLanczosAlgorithm (int nbrIter)
 	  this->V3 /= this->V3.Norm();
 	  if (this->DiskFlag == true)
 	    {
-	      this->SaveVector(V3, i);
+	      //cout << "calling this->SaveVector(V3,"<<i<<") on line "<<__LINE__<<endl;
+	      this->SaveVector(V3, i, true, true);
 	      this->WriteState();
 	    }
 	}
@@ -506,12 +539,15 @@ void ProjectedLanczosAlgorithmWithGroundState::RunLanczosAlgorithm (int nbrIter)
       // apply projector here
       // vector0..i-1 are already saved
       if (this->DiskFlag == false) // have already saved contents of V1 above if DiskFlag is true
-	this->SaveVector(V2, i);
+	{
+	  //cout << "calling this->SaveVector(V2,"<<i<<") on line "<<__LINE__<<endl;
+	  this->SaveVector(V2, i); // do not need copy here, once more
+	}
       // swap V1, V3
       {
 	RealVector TmpV (this->V1);
 	this->V1 = this->V3;
-	this->V3 = TmpV; 
+	this->V3 = TmpV;
       }
       for (int p=0; p<NbrProjectors; ++p)
 	this->ProjectVector(p);
@@ -565,18 +601,30 @@ bool ProjectedLanczosAlgorithmWithGroundState::TestConvergence ()
 // project the vector stored in V1 to the groundstate of the given Projector number
 // nbrProjector = number of projector to use for this run
 void ProjectedLanczosAlgorithmWithGroundState::ProjectVector(int nbrProjector)
-{  
+{
   this->InitializeProjectorLanczosAlgorithm();
+  cout << "[ Projecting" << endl;
   this->RunProjectorLanczosAlgorithm(nbrProjector, 3);
   int CurrentNbrIterLanczos = 4;
-
+  timeval TotalStartingTime;
+  timeval TotalEndingTime;
+  gettimeofday (&(TotalStartingTime), 0);
   while ((this->TestProjectorConvergence() == false) && (CurrentNbrIterLanczos < this->ProjectorIterMax))
     {
       ++CurrentNbrIterLanczos;
-      this->RunLanczosAlgorithm(1);
+      this->RunProjectorLanczosAlgorithm(nbrProjector, 1);
+      gettimeofday (&(TotalEndingTime), 0);
+      double Precision = fabs((PreviousProjectorGroundstate - ProjectorGroundstate) / PreviousProjectorGroundstate);
+      double Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+	((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);		      
+      TotalStartingTime.tv_usec = TotalEndingTime.tv_usec;
+      TotalStartingTime.tv_sec = TotalEndingTime.tv_sec;
+      cout << "   "<<CurrentNbrIterLanczos<<": " << ProjectorGroundstate << " " << Precision << " ("<<Dt<<" s)"<<endl;
     }
-  bool Restart = !(this->TestProjectorConvergence());
-  this->V1=this->GetProjectorGroundState();
+  bool Restart=false;
+  if (this->RestartProjection)
+    Restart = !(this->TestProjectorConvergence());
+  this->GetProjectorGroundState();
   if (Restart)
     this->ProjectVector(nbrProjector);
 }
@@ -611,16 +659,19 @@ void ProjectedLanczosAlgorithmWithGroundState::RunProjectorLanczosAlgorithm (int
       this->InternalTridiagonalizedMatrix.Resize(Dimension, Dimension);
       VectorHamiltonianMultiplyOperation Operation1 (this->Projectors[nbrProjector], &this->V1, &this->V2);
       Operation1.ApplyOperation(this->Architecture);
-      this->InternalTridiagonalizedMatrix.DiagonalElement(Index) = (this->V1 * this->V2);
-      this->V2.AddLinearCombination(-this->InternalTridiagonalizedMatrix.DiagonalElement(this->Index), 
+      this->InternalTridiagonalizedMatrix.DiagonalElement(InternalIndex) = (this->V1 * this->V2);
+      this->V2.AddLinearCombination(-this->InternalTridiagonalizedMatrix.DiagonalElement(this->InternalIndex), 
 				    this->V1);
       this->ExternalOrthonogalization(this->V2);
-      this->V2 /= this->V2.Norm();      
-      this->SaveVector(V2, 1, false);
+      this->V2 /= this->V2.Norm();
+      this->SaveVector(V2, 1, false, true); // need to keep V2 in process, here
+      // it may be necessary to resize V3 if this vector has been dropped earlier in main lanczos
+      if (V3.GetVectorDimension()==0)
+	V3.Resize(V2.GetVectorDimension());
       VectorHamiltonianMultiplyOperation Operation2 (this->Projectors[nbrProjector], &this->V2, &this->V3);
       Operation2.ApplyOperation(this->Architecture);
-      this->InternalTridiagonalizedMatrix.UpperDiagonalElement(this->Index) = (this->V1 * this->V3);
-      this->InternalTridiagonalizedMatrix.DiagonalElement(this->Index + 1) = (this->V2 * this->V3);
+      this->InternalTridiagonalizedMatrix.UpperDiagonalElement(this->InternalIndex) = (this->V1 * this->V3);
+      this->InternalTridiagonalizedMatrix.DiagonalElement(this->InternalIndex + 1) = (this->V2 * this->V3);
     }
   else
     {
@@ -642,8 +693,8 @@ void ProjectedLanczosAlgorithmWithGroundState::RunProjectorLanczosAlgorithm (int
       delete[] TmpVector;
       this->ExternalOrthonogalization(this->V3);
       this->V3 /= this->V3.Norm();
-
-      this->SaveVector(V3, i, false);
+      //cout << "calling this->SaveVector(V3,"<<i<<",false) on line "<<__LINE__<<endl;
+      this->SaveVector(V3, i, false, true); // need V3 in process
       // hardwired option "fast-disk" which forgets one of the vectors at this point to save memory
       {
 	RealVector TmpV (this->V2);
@@ -651,7 +702,7 @@ void ProjectedLanczosAlgorithmWithGroundState::RunProjectorLanczosAlgorithm (int
 	this->V3 = TmpV;	  
 	this->V1 = RealVector();
       }
-      this->InternalIndex++;
+      ++this->InternalIndex;
       VectorHamiltonianMultiplyOperation Operation1 (this->Projectors[nbrProjector], &this->V2, &this->V3);
       Operation1.ApplyOperation(this->Architecture);
       // if (this->DiskFlag == true)
@@ -677,7 +728,7 @@ void ProjectedLanczosAlgorithmWithGroundState::RunProjectorLanczosAlgorithm (int
   else
     {
       this->ProjectorDiagonalize();
-      this->DiagonalizedMatrix.SortMatrixUpOrder();
+      this->InternalDiagonalizedMatrix.SortMatrixUpOrder();
       this->PreviousProjectorGroundstate = 2.0 * this->InternalDiagonalizedMatrix.DiagonalElement(0);
     }
 }
@@ -706,7 +757,7 @@ Vector& ProjectedLanczosAlgorithmWithGroundState::GetProjectorGroundState()
     {
       this->ReadVector(V2, i, false, false);	      
       this->V1.AddLinearCombination(TmpComponents[i], this->V2);
-      cout << i << "/" << this->DiagonalizedMatrix.GetNbrRow() << "           \r";
+      cout << i << "/" << this->InternalDiagonalizedMatrix.GetNbrRow() << "           \r";
       cout.flush();
     }
   
@@ -819,7 +870,8 @@ void ProjectedLanczosAlgorithmWithGroundState::InitializeProjectorLanczosAlgorit
     this->ClearProjectorLanczosAlgorithm();
   this->ExternalOrthonogalization(this->V1);
   this->V1 /= this->V1.Norm();
-  this->SaveVector(V1, this->InternalIndex, false);
+  // cout << "calling this->SaveVector(V1,"<<InternalIndex<<",false,true) on line "<<__LINE__<<endl;
+  this->SaveVector(V1, this->InternalIndex, false, true); // need to keep V1 in process
   this->InternalTridiagonalizedMatrix.Resize(0, 0);
 }
 
@@ -828,13 +880,18 @@ void ProjectedLanczosAlgorithmWithGroundState::InitializeProjectorLanczosAlgorit
 //
 void ProjectedLanczosAlgorithmWithGroundState::ClearProjectorLanczosAlgorithm()
 {
-  // forget all previously stored internal lanczos vectors  
+  // forget all previously stored internal lanczos vectors
   for (int i=0; i<NbrStorageVectors; ++i)
     if(VectorStorageFlags[i]&ProjectorLanczosVector)
-      VectorStorageFlags[i]=Empty;  
-  for (int i=0; i<InternalIndex; ++i)
+      {
+	VectorStorageFlags[i]=Empty;
+	ProjectorLanczosVectorFlags[VectorStorageFlags[i]&StorageIndexMask]=0;
+      }
+  for (int i=0; i<InternalIndex+2; ++i)
     {
-      if (ProjectorLanczosVectorFlags[i]&SavedOnDisk!=0)
+//       cout << "ProjectorLanczosVectorFlags["<<i<<"]="<<hex<<ProjectorLanczosVectorFlags[i]<<dec<<endl;
+//       cout.setf(ios::dec, ios::basefield); // alternative way of setting output format
+      if (ProjectorLanczosVectorFlags[i]&SavedOnDisk)
 	{
 	  sprintf(TmpOutputName,"vector-int.%d",i);
 	  if( remove(TmpOutputName) != 0 )
@@ -842,8 +899,9 @@ void ProjectedLanczosAlgorithmWithGroundState::ClearProjectorLanczosAlgorithm()
 	}
       ProjectorLanczosVectorFlags[i]=0;
     }
-  NbrStoredInternal=0;
-  InternalIndex=0;
+  this->NbrStoredInternal=0;
+  this->InternalIndex=0;
+  this->PreviousProjectorGroundstate=0.0;
 }
 
 // diagonalize internal tridiagonalized matrix and find ground state energy
@@ -866,8 +924,9 @@ void ProjectedLanczosAlgorithmWithGroundState::ProjectorDiagonalize ()
 // vec = vector to be savec
 // index = vector index in Lanczos routine
 // mainLanczos = flag indicating whether vector is part of main lanczos algorithm
+// keepOriginal = flag indicating whether original vector needs to be kept in place
 // return = true on success
-bool ProjectedLanczosAlgorithmWithGroundState::SaveVector(RealVector &vec, int index, bool mainLanczos)
+bool ProjectedLanczosAlgorithmWithGroundState::SaveVector(RealVector &vec, int index, bool mainLanczos, bool keepOriginal)
 {
   int StorageFlag=index & StorageIndexMask;
   int VectorFlag=0;
@@ -892,10 +951,19 @@ bool ProjectedLanczosAlgorithmWithGroundState::SaveVector(RealVector &vec, int i
 	      if (MainLanczosVectorFlags[index] & SavedInMemory)
 		{
 		  for (int i=0; i<NbrStorageVectors; ++i)
-		    if (VectorStorageFlags[i] & StorageIndexMask == index) // find vector
+		    if ((VectorStorageFlags[i] & StorageIndexMask) == index) // find vector
 		      {
-			vec=LanczosVectorStorage[i].Copy(vec);
-			cout << "attention, overwriting vector "<<index<<" in RAM"<<endl;
+			if (keepOriginal)
+			  {
+			    LanczosVectorStorage[i].Copy(vec);
+			    cout << "attention, overwriting vector "<<index<<" in RAM"<<endl;
+			  }
+			else
+			  {
+			    RealVector TmpV(vec);
+			    vec=LanczosVectorStorage[i];
+			    LanczosVectorStorage[i]=TmpV;
+			  }
 			break;
 		      }
 		}
@@ -910,25 +978,39 @@ bool ProjectedLanczosAlgorithmWithGroundState::SaveVector(RealVector &vec, int i
 			    {
 			      ++NbrStoredMain;
 			      VectorStorageFlags[i] = StorageFlag;
-			      RealVector TmpV(vec);
-			      vec=LanczosVectorStorage[i];
-			      LanczosVectorStorage[i]=TmpV;
+			      if (keepOriginal)
+				{
+				  LanczosVectorStorage[i].Copy(vec);
+				}
+			      else
+				{
+				  RealVector TmpV(vec);
+				  vec=LanczosVectorStorage[i];
+				  LanczosVectorStorage[i]=TmpV;
+				}
 			      VectorFlag |= (i & VectorIndexMask);
 			      VectorFlag |= SavedInMemory;
 			      MainLanczosVectorFlags[index]=VectorFlag;
 			      break;
 			    }
-			  if (VectorStorageFlags[i]&ProjectorLanczosVector!=0) // internal storage that can be overwritten?
+			  if ((VectorStorageFlags[i]&ProjectorLanczosVector)!=0) // internal storage that can be overwritten?
 			    {
 			      ++NbrStoredMain;
 			      --NbrStoredInternal;
 			      // mark state as forgotten
-			      int TmpIndex = VectorStorageFlags[i]&VectorIndexMask;
+			      int TmpIndex = (VectorStorageFlags[i]&VectorIndexMask);
 			      ProjectorLanczosVectorFlags[TmpIndex]=0;
 			      VectorStorageFlags[i] = StorageFlag;
-			      RealVector TmpV(vec);
-			      vec=LanczosVectorStorage[i];
-			      LanczosVectorStorage[i]=TmpV;
+			      if (keepOriginal)
+				{
+				  LanczosVectorStorage[i].Copy(vec);
+				}
+			      else
+				{
+				  RealVector TmpV(vec);
+				  vec=LanczosVectorStorage[i];
+				  LanczosVectorStorage[i]=TmpV;
+				}
 			      VectorFlag |= (i & VectorIndexMask);
 			      VectorFlag |= SavedInMemory;
 			      MainLanczosVectorFlags[index]=VectorFlag;
@@ -942,14 +1024,14 @@ bool ProjectedLanczosAlgorithmWithGroundState::SaveVector(RealVector &vec, int i
 		      int MinIndex=MainIterMax;
 		      for (int i=0; i<NbrStorageVectors; ++i)
 			{
-			  if (VectorStorageFlags[i]&StorageIndexMask < MinIndex)
+			  if ((VectorStorageFlags[i]&StorageIndexMask) < MinIndex)
 			    {
 			      MinPos=i;
-			      MinIndex=VectorStorageFlags[i]&StorageIndexMask;
+			      MinIndex=(VectorStorageFlags[i]&StorageIndexMask);
 			    }
 			}
 		      // check for consistence: state should have been written to disk
-		      if (MainLanczosVectorFlags[MinIndex] & SavedOnDisk == 0)
+		      if ((MainLanczosVectorFlags[MinIndex] & SavedOnDisk) == 0)
 			{
 			  cout << "Problem in ProjectedLanczosAlgorithmWithGroundState::SaveVector - should have saved Main vector no. MinIndex, but not flagged"<<endl;
 			  exit(-1);
@@ -958,9 +1040,16 @@ bool ProjectedLanczosAlgorithmWithGroundState::SaveVector(RealVector &vec, int i
 		      MainLanczosVectorFlags[index]&= ~SavedInMemory;
 		      MainLanczosVectorFlags[index]&= ~VectorIndexMask;
 		      VectorStorageFlags[MinPos] = StorageFlag;
-		      RealVector TmpV(vec);
-		      vec=LanczosVectorStorage[MinPos];
-		      LanczosVectorStorage[MinPos]=TmpV;
+		      if (keepOriginal)
+			{
+			  LanczosVectorStorage[MinPos].Copy(vec);
+			}
+		      else
+			{
+			  RealVector TmpV(vec);
+			  vec=LanczosVectorStorage[MinPos];
+			  LanczosVectorStorage[MinPos]=TmpV;
+			}
 		      VectorFlag |= (MinPos & VectorIndexMask);
 		      VectorFlag |= SavedInMemory;
 		      MainLanczosVectorFlags[index]=VectorFlag;
@@ -977,9 +1066,18 @@ bool ProjectedLanczosAlgorithmWithGroundState::SaveVector(RealVector &vec, int i
 	      if (MainLanczosVectorFlags[index] & SavedInMemory)
 		{
 		  for (int i=0; i<NbrStorageVectors; ++i)
-		    if (VectorStorageFlags[i] & StorageIndexMask == index) // find vector
-		      {
-			vec=LanczosVectorStorage[i].Copy(vec);
+		    if ((VectorStorageFlags[i] & StorageIndexMask) == index) // find vector
+		      {			
+			if (keepOriginal)
+			  {
+			    LanczosVectorStorage[i].Copy(vec);
+			  }
+			else
+			  {
+			    RealVector TmpV(vec);
+			    vec=LanczosVectorStorage[i];
+			    LanczosVectorStorage[i]=TmpV;
+			  }
 			cout << "attention, overwriting vector "<<index<<" in RAM"<<endl;
 			break;
 		      }
@@ -995,25 +1093,39 @@ bool ProjectedLanczosAlgorithmWithGroundState::SaveVector(RealVector &vec, int i
 			    {
 			      ++NbrStoredMain;
 			      VectorStorageFlags[i] = StorageFlag;
-			      RealVector TmpV(vec);
-			      vec=LanczosVectorStorage[i];
-			      LanczosVectorStorage[i]=TmpV;
+			      if (keepOriginal)
+				{
+				  LanczosVectorStorage[i].Copy(vec);
+				}
+			      else
+				{
+				  RealVector TmpV(vec);
+				  vec=LanczosVectorStorage[i];
+				  LanczosVectorStorage[i]=TmpV;
+				}
 			      VectorFlag |= (i & VectorIndexMask);
 			      VectorFlag |= SavedInMemory;
 			      MainLanczosVectorFlags[index]=VectorFlag;
 			      break;
 			    }
-			  if (VectorStorageFlags[i]&ProjectorLanczosVector!=0) // internal storage that can be overwritten?
+			  if ((VectorStorageFlags[i]&ProjectorLanczosVector)!=0) // internal storage that can be overwritten?
 			    {
 			      ++NbrStoredMain;
 			      --NbrStoredInternal;
 			      // mark state as forgotten
-			      int TmpIndex = VectorStorageFlags[i]&VectorIndexMask;
+			      int TmpIndex = (VectorStorageFlags[i]&VectorIndexMask);
 			      ProjectorLanczosVectorFlags[TmpIndex]=0;
 			      VectorStorageFlags[i] = StorageFlag;
-			      RealVector TmpV(vec);
-			      vec=LanczosVectorStorage[i];
-			      LanczosVectorStorage[i]=TmpV;
+			      if (keepOriginal)
+				{
+				  LanczosVectorStorage[i].Copy(vec);
+				}
+			      else
+				{
+				  RealVector TmpV(vec);
+				  vec=LanczosVectorStorage[i];
+				  LanczosVectorStorage[i]=TmpV;
+				}
 			      VectorFlag |= (i & VectorIndexMask);
 			      VectorFlag |= SavedInMemory;
 			      MainLanczosVectorFlags[index]=VectorFlag;
@@ -1028,19 +1140,26 @@ bool ProjectedLanczosAlgorithmWithGroundState::SaveVector(RealVector &vec, int i
 		      for (int i=0; i<NbrStorageVectors; ++i)
 			{
 			  if ((VectorStorageFlags[i]&MainLanczosVector) &&
-			      (VectorStorageFlags[i]&StorageIndexMask < MinIndex))
+			      ((VectorStorageFlags[i]&StorageIndexMask) < MinIndex))
 			    {
 			      MinPos=i;
-			      MinIndex=VectorStorageFlags[i]&StorageIndexMask;
+			      MinIndex=(VectorStorageFlags[i]&StorageIndexMask);
 			    }
 			}
 		      // mark state as forgotten from memory
 		      MainLanczosVectorFlags[index]&= ~SavedInMemory;
 		      MainLanczosVectorFlags[index]&= ~VectorIndexMask;
 		      VectorStorageFlags[MinPos] = StorageFlag;
-		      RealVector TmpV(vec);
-		      vec=LanczosVectorStorage[MinPos];
-		      LanczosVectorStorage[MinPos]=TmpV;
+		      if (keepOriginal)
+			{
+			  LanczosVectorStorage[MinPos].Copy(vec);
+			}
+		      else
+			{
+			  RealVector TmpV(vec);
+			  vec=LanczosVectorStorage[MinPos];
+			  LanczosVectorStorage[MinPos]=TmpV;
+			}
 		      VectorFlag |= (MinPos & VectorIndexMask);
 		      VectorFlag |= SavedInMemory;
 		      MainLanczosVectorFlags[index]=VectorFlag;
@@ -1058,6 +1177,7 @@ bool ProjectedLanczosAlgorithmWithGroundState::SaveVector(RealVector &vec, int i
 	      if (UseSwap2)
 		{
 		  sprintf(TmpOutputName,"vector.swap-2");
+		  //cout << "Writing to disk: "<<TmpOutputName<<endl;
 		  vec.WriteVector(TmpOutputName);
 		  VectorFlag |= SavedOnSwap2;
 		  MainLanczosVectorFlags[index] = VectorFlag;
@@ -1068,6 +1188,7 @@ bool ProjectedLanczosAlgorithmWithGroundState::SaveVector(RealVector &vec, int i
 	      else
 		{
 		  sprintf(TmpOutputName,"vector.swap-1");
+		  //cout << "Writing to disk: "<<TmpOutputName<<endl;
 		  vec.WriteVector(TmpOutputName);
 		  VectorFlag |= SavedOnSwap1;
 		  MainLanczosVectorFlags[index] = VectorFlag;
@@ -1089,11 +1210,18 @@ bool ProjectedLanczosAlgorithmWithGroundState::SaveVector(RealVector &vec, int i
 	      for (int i=0; i<NbrStorageVectors; ++i)
 		if (VectorStorageFlags[i]==Empty) // new empty position?
 		  {
-		    ++NbrStoredMain;
+		    ++NbrStoredInternal;
 		    VectorStorageFlags[i] = StorageFlag;
-		    RealVector TmpV(vec);
-		    vec=LanczosVectorStorage[i];
-		    LanczosVectorStorage[i]=TmpV;
+		    if (keepOriginal)
+		      {
+			LanczosVectorStorage[i].Copy(vec);
+		      }
+		    else
+		      {
+			RealVector TmpV(vec);
+			vec=LanczosVectorStorage[i];
+			LanczosVectorStorage[i]=TmpV;
+		      }
 		    VectorFlag |= (i & VectorIndexMask);
 		    VectorFlag |= SavedInMemory;
 		    ProjectorLanczosVectorFlags[index]=VectorFlag;
@@ -1108,15 +1236,15 @@ bool ProjectedLanczosAlgorithmWithGroundState::SaveVector(RealVector &vec, int i
 		  int MinIndex=MainIterMax;
 		  for (int i=0; i<NbrStorageVectors; ++i)
 		    {
-		      if ((VectorStorageFlags[i]&MainLanczosVector != 0)
-			  &&(VectorStorageFlags[i]&StorageIndexMask < MinIndex))
+		      if (((VectorStorageFlags[i]&MainLanczosVector) != 0)
+			  &&((VectorStorageFlags[i]&StorageIndexMask) < MinIndex))
 			{
 			  MinPos=i;
-			  MinIndex=VectorStorageFlags[i]&StorageIndexMask;
+			  MinIndex=(VectorStorageFlags[i]&StorageIndexMask);
 			}
 		    }
 		  // check for consistence: state should have been written to disk
-		  if (MainLanczosVectorFlags[MinIndex] & SavedOnDisk == 0)
+		  if ((MainLanczosVectorFlags[MinIndex] & SavedOnDisk) == 0)
 		    {
 		      cout << "Problem in ProjectedLanczosAlgorithmWithGroundState::SaveVector - should have saved Main vector no. MinIndex, but not flagged"<<endl;
 		      exit(-1);
@@ -1126,42 +1254,69 @@ bool ProjectedLanczosAlgorithmWithGroundState::SaveVector(RealVector &vec, int i
 		  MainLanczosVectorFlags[MinIndex] &= ~VectorIndexMask;
 		  --NbrStoredMain;
 		  VectorStorageFlags[MinPos] = StorageFlag;
-		  RealVector TmpV(vec);
-		  vec=LanczosVectorStorage[MinPos];
-		  LanczosVectorStorage[MinPos]=TmpV;
+		  if (keepOriginal)
+		    {
+		      LanczosVectorStorage[MinPos].Copy(vec);
+		    }
+		  else
+		    {
+		      RealVector TmpV(vec);
+		      vec=LanczosVectorStorage[MinPos];
+		      LanczosVectorStorage[MinPos]=TmpV;
+		    }
 		  VectorFlag |= (MinPos & VectorIndexMask);
 		  VectorFlag |= SavedInMemory;
 		  ProjectorLanczosVectorFlags[index]=VectorFlag;
 		  ++NbrStoredInternal;
 		}
-	      else // have two or less states from main lanczos->write oldest internal state to disk
+	      else // have two or less states from main lanczos
 		{
-		  int MinPos=0;
-		  int MinIndex=ProjectorIterMax;
-		  for (int i=0; i<NbrStorageVectors; ++i)
+		  // did we store any internal vectors at all? -> write oldest internal state to disk
+		  if (NbrStoredInternal>0)
 		    {
-		      if ((VectorStorageFlags[i]&ProjectorLanczosVector != 0)
-			  &&(VectorStorageFlags[i]&StorageIndexMask < MinIndex))
+		      int MinPos=0;
+		      int MinIndex=ProjectorIterMax;
+		      for (int i=0; i<NbrStorageVectors; ++i)
 			{
-			  MinPos=i;
-			  MinIndex=VectorStorageFlags[i]&StorageIndexMask;
+			  if (((VectorStorageFlags[i]&ProjectorLanczosVector) != 0)
+			      &&((VectorStorageFlags[i]&StorageIndexMask) < MinIndex))
+			    {
+			      MinPos=i;
+			      MinIndex=(VectorStorageFlags[i]&StorageIndexMask);
+			    }
 			}
-		    }
-		  // save oldest vector to disk
-		  sprintf(TmpOutputName,"vector-int.%d",MinIndex);
-		  LanczosVectorStorage[MinPos].WriteVector(TmpOutputName);
-		  ProjectorLanczosVectorFlags[MinIndex] |= SavedOnDisk;
-		  ProjectorLanczosVectorFlags[MinIndex] &= ~SavedInMemory;
-		  ProjectorLanczosVectorFlags[MinIndex] &= ~VectorIndexMask;
+		      // save oldest vector to disk
+		      sprintf(TmpOutputName,"vector-int.%d",MinIndex);
+		      //cout << "Writing to disk: "<<TmpOutputName<<endl;
+		      LanczosVectorStorage[MinPos].WriteVector(TmpOutputName);
+		      ProjectorLanczosVectorFlags[MinIndex] |= SavedOnDisk;
+		      ProjectorLanczosVectorFlags[MinIndex] &= ~SavedInMemory;
+		      ProjectorLanczosVectorFlags[MinIndex] &= ~VectorIndexMask;
 
-		  // save new vector in memory
-		  VectorStorageFlags[MinPos] = StorageFlag;
-		  RealVector TmpV(vec);
-		  vec=LanczosVectorStorage[MinPos];
-		  LanczosVectorStorage[MinPos]=TmpV;
-		  VectorFlag |= (MinPos & VectorIndexMask);
-		  VectorFlag |= SavedInMemory;
-		  ProjectorLanczosVectorFlags[index]=VectorFlag;
+		      // save new vector in memory
+		      VectorStorageFlags[MinPos] = StorageFlag;
+		      if (keepOriginal)
+			{
+			  LanczosVectorStorage[MinPos].Copy(vec);
+			}
+		      else
+			{
+			  RealVector TmpV(vec);
+			  vec=LanczosVectorStorage[MinPos];
+			  LanczosVectorStorage[MinPos]=TmpV;
+			}
+		      VectorFlag |= (MinPos & VectorIndexMask);
+		      VectorFlag |= SavedInMemory;
+		      ProjectorLanczosVectorFlags[index]=VectorFlag;
+		    }
+		  else // no internal vectors stored in RAM -> write to disk, then.
+		    {
+		      sprintf(TmpOutputName,"vector-int.%d",index);
+		      //cout << "Writing to disk: "<<TmpOutputName<<endl;
+		      vec.WriteVector(TmpOutputName);
+		      VectorFlag |= SavedOnDisk;
+		      ProjectorLanczosVectorFlags[index] = VectorFlag;
+		    }
 		}
 	    }
 	}
@@ -1169,8 +1324,9 @@ bool ProjectedLanczosAlgorithmWithGroundState::SaveVector(RealVector &vec, int i
 	{
 	  sprintf(TmpOutputName,"vector-int.%d",index);
 	  vec.WriteVector(TmpOutputName);
+	  //cout << "Writing to disk: "<<TmpOutputName<<endl;
 	  VectorFlag |= SavedOnDisk;
-	  MainLanczosVectorFlags[index] = VectorFlag;
+	  ProjectorLanczosVectorFlags[index] = VectorFlag;
 	}
     }
   return true;
@@ -1195,7 +1351,7 @@ void ProjectedLanczosAlgorithmWithGroundState::ReadVector(RealVector &vec, int i
     }
   if (VectorFlags & SavedInMemory)
     {
-      int StoragePos = VectorFlags & VectorIndexMask;
+      int StoragePos = (VectorFlags & VectorIndexMask);
       if (keepCopy)
 	{
 	  vec.Copy(LanczosVectorStorage[StoragePos]);

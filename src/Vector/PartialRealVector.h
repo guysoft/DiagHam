@@ -111,7 +111,14 @@ class PartialRealVector : public RealVector
   // vector = vector to copy
   // coefficient = optional coefficient which multiply source to copy
   // return value = reference on current vector
-  PartialRealVector& Copy (PartialRealVector& vector, double coefficient = 1.0);
+  PartialRealVector& Copy (PartialRealVector& vector);
+
+  // copy a vector into another
+  //
+  // vector = vector to copy
+  // coefficient = optional coefficient which multiply source to copy
+  // return value = reference on current vector
+  PartialRealVector& Copy (PartialRealVector& vector, double coefficient);
 
   // create a new vector with same size and same type but without duplicating datas
   //

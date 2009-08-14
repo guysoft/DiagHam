@@ -474,6 +474,25 @@ void RealVector::ResizeAndClean (int dimension)
 // coefficient = optional coefficient which multiply source to copy
 // return value = reference on current vector
 
+RealVector& RealVector::Copy (RealVector& vector)
+{
+  if (this->Dimension != vector.Dimension)
+    this->Resize(vector.Dimension);
+  this->Localize();
+  vector.Localize();
+  for (int i = 0; i < this->Dimension; i++)
+    this->Components[i] = vector.Components[i];
+  this->Delocalize();
+  vector.Delocalize();
+  return *this;
+}
+
+// copy a vector into another
+//
+// vector = vector to copy
+// coefficient = optional coefficient which multiply source to copy
+// return value = reference on current vector
+
 RealVector& RealVector::Copy (RealVector& vector, double coefficient)
 {
   if (this->Dimension != vector.Dimension)

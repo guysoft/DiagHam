@@ -137,6 +137,8 @@ class QHEOnSphereMainTask: public AbstractMainTask
   int ProjectorIterMax;
   // precision for projection
   double ProjectorPrecision;
+  // flag for restarting projection
+  bool RestartProjection;
 
  public:
 

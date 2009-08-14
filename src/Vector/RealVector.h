@@ -186,9 +186,15 @@ class RealVector : public Vector
   // copy a vector into another
   //
   // vector = vector to copy
+  // return value = reference on current vector
+  RealVector& Copy (RealVector& vector);
+
+  // copy a vector into another
+  //
+  // vector = vector to copy
   // coefficient = optional coefficient which multiply source to copy
   // return value = reference on current vector
-  RealVector& Copy (RealVector& vector, double coefficient = 1.0);
+  RealVector& Copy (RealVector& vector, double coefficient);
 
   // create a new vector with same size and same type but without duplicating datas
   //

@@ -112,7 +112,14 @@ class PartialComplexVector : public ComplexVector
   // vector = vector to copy
   // coefficient = optional coefficient which multiply source to copy
   // return value = reference on current vector
-  PartialComplexVector& Copy (PartialComplexVector& vector, double coefficient = 1.0);
+  PartialComplexVector& Copy (PartialComplexVector& vector);
+
+  // copy a vector into another
+  //
+  // vector = vector to copy
+  // coefficient = optional coefficient which multiply source to copy
+  // return value = reference on current vector
+  PartialComplexVector& Copy (PartialComplexVector& vector, double coefficient);
 
   // create a new vector with same size and same type but without duplicating datas
   //

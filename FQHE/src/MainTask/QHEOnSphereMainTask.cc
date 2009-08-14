@@ -267,6 +267,12 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
       this->ProjectorPrecision = options->GetDouble("projector-precision");
     }
   else this->ProjectorPrecision = this->LanczosPrecision;
+  if ((*options)["restart-projection"] != 0)
+    {
+      this->RestartProjection = options->GetBoolean("restart-projection");
+    }
+  else this->RestartProjection = false;
+  
 }  
  
 // destructor
@@ -502,13 +508,13 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 	      {
 		if (this->NbrProjectors>0)
 		  {
-		    cout << "Using BasicLanczosAlgorithmWithGroundState"<<endl;
-		    Lanczos = new BasicLanczosAlgorithmWithGroundState(this->Architecture, this->MaxNbrIterLanczos, this->FastDiskFlag, this->ResumeFastDiskFlag);
+		    cout << "Using ProjectedLanczosAlgorithmWithGroundState"<<endl;
+		    Lanczos = new ProjectedLanczosAlgorithmWithGroundState(this->Projectors, this->NbrProjectors, this->Architecture, this->MaxNbrIterLanczos, this->NbrProjectorStorage, this->ProjectorIterMax, this->FastDiskFlag, this->ResumeFastDiskFlag, this->ProjectorPrecision, this->RestartProjection);
 		  }
 		else
 		  {
-		    cout << "Using ProjectedLanczosAlgorithmWithGroundState"<<endl;
-		    Lanczos = new ProjectedLanczosAlgorithmWithGroundState(this->Projectors, this->NbrProjectors, this->Architecture, this->MaxNbrIterLanczos, this->NbrProjectorStorage, this->ProjectorIterMax, this->FastDiskFlag, this->ResumeFastDiskFlag, this->ProjectorPrecision);
+		    cout << "Using BasicLanczosAlgorithmWithGroundState"<<endl;
+		    Lanczos = new BasicLanczosAlgorithmWithGroundState(this->Architecture, this->MaxNbrIterLanczos, this->FastDiskFlag, this->ResumeFastDiskFlag);
 		  }
 	      }
 	    else
@@ -520,7 +526,7 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 	    if ((this->EvaluateEigenvectors == true) || (this->ComputeLValueFlag == true))
 	      {
 		cout << "Using BasicLanczosAlgorithmWithGroundStateDiskStorage"<<endl;
-		Lanczos = new BasicLanczosAlgorithmWithGroundStateDiskStorage(this->Architecture, this->NbrIterLanczos, this->MaxNbrIterLanczos);
+		Lanczos = new basiclanczosalgorithmwithgroundstatediskstorage(this->Architecture, this->NbrIterLanczos, this->MaxNbrIterLanczos);
 	      }
 	    else
 	      {

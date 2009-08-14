@@ -95,6 +95,8 @@ int main(int argc, char** argv)
   (*LanczosGroup) += new  BooleanOption ('\n', "project-s2", "add a projector onto the S2 groundstate");
   (*LanczosGroup) += new  BooleanOption ('\n', "project-l2-s2", "add a projector onto the common groundstate of L2+S2");
   (*LanczosGroup) += new SingleIntegerOption  ('\n', "projector-storage", "additional number of vectors in RAM when using projected Lanczos", 2);
+  (*LanczosGroup) += new SingleIntegerOption  ('\n', "projector-iter-max", "maximum number of iterations for internal lanczos",100);
+  (*LanczosGroup) += new  BooleanOption ('\n', "restart-projection", "allow lanczos projections to be restarted if full convergence not yet reached");
   
   
   (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-lz", "twice the inital momentum projection for the system", -1);
@@ -356,7 +358,7 @@ int main(int argc, char** argv)
       if (Manager.GetBoolean("project-l2-s2")) ++NbrProjectors;
       Projectors = new AbstractHamiltonian*[NbrProjectors];
       NbrProjectors = 0;
-      if (Manager.GetBoolean("project-l2")) 
+      if (Manager.GetBoolean("project-l2"))
 	{
 	  AbstractHamiltonian* L2Projector =
 	    new ParticleOnSphereWithSpinL2Hamiltonian(Space, NbrFermions, LzMax, L,
@@ -365,7 +367,7 @@ int main(int argc, char** argv)
 						      onDiskCacheFlag);
 	  Projectors[NbrProjectors++]=L2Projector;
 	}
-      if (Manager.GetBoolean("project-22")) 
+      if (Manager.GetBoolean("project-s2"))
 	{
 	  AbstractHamiltonian* S2Projector =
 	    new ParticleOnSphereWithSpinS2Hamiltonian(Space, NbrFermions, LzMax, L, SzTotal,
@@ -374,7 +376,7 @@ int main(int argc, char** argv)
 						      onDiskCacheFlag);
 	  Projectors[NbrProjectors++]=S2Projector;
 	}
-      if (Manager.GetBoolean("project-l2-s2")) 
+      if (Manager.GetBoolean("project-l2-s2"))
 	{
 	  AbstractQHEOnSphereWithSpinHamiltonian* L2S2Projector =
 	    new ParticleOnSphereWithSpinL2Hamiltonian(Space, NbrFermions, LzMax, L,
