@@ -59,4 +59,5 @@ AbstractQHEOnSphereQuantumWellHamiltonian.cc \
 ParticleOnSphereBilayerHamiltonian.cc \
 AbstractQHEOnSphereWithSpinFullHamiltonian.cc \
 ParticleOnSphereTwoLandauLevelHamiltonian.cc \
-ProjectedQHEHamiltonian.cc
+ProjectedQHEHamiltonian.cc \
+ParticleOnSphereGenericFourBodyHamiltonian.cc

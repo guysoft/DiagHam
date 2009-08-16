@@ -54,6 +54,11 @@ class FermionOnSphereWithSpinHaldaneBasis :  public FermionOnSphereWithSpin
   int* TmpGeneratedStatesLzMax;
   unsigned long* KeepStateFlag;
 
+  // array storing the number of permutation used to texture a state
+  int* NbrPermutations;
+  // array storing the permutations used to texture a state
+  unsigned long** Permutations;
+
  public:
 
   // default constructor
@@ -72,6 +77,16 @@ class FermionOnSphereWithSpinHaldaneBasis :  public FermionOnSphereWithSpin
   FermionOnSphereWithSpinHaldaneBasis (int nbrFermions, int& totalLz, int lzMax, int& totalSpin, 
 				       int** rootPartitions, int nbrRootPartitions, 
 				       unsigned long memory = 10000000);
+
+  // constructor from textureless root configuration
+  // 
+  // nbrFermions = number of fermions
+  // totalLz = twice the momentum total value
+  // lzMax = twice the maximum Lz value reached by a fermion
+  // totalSpin = twice the total spin value
+  // texturelessRootPartition = root partition describing the squeezed basis, spin texture has to be added on top of it 
+  // memory = amount of memory granted for precalculations
+  FermionOnSphereWithSpinHaldaneBasis (int nbrFermions, int& totalLz, int lzMax, int totalSpin, int* texturelessRootPartition, unsigned long memory);
 
   // copy constructor (without duplicating datas)
   //
@@ -131,6 +146,18 @@ class FermionOnSphereWithSpinHaldaneBasis :  public FermionOnSphereWithSpin
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
   virtual long GenerateSqueezedStates(int lzMax, unsigned long referenceState, long pos, long& memory);
+
+  // generate all squeezed states from a textureless root partition
+  // 
+  // lzMax = momentum maximum value for a fermion in the state
+  // totalLz = momentum total value
+  // pos = position in StateDescription array where to store states
+  // return value = position from which new states have to be stored
+  long GenerateSqueezedTexturelessStates(int lzMax, unsigned long referenceState, long pos, long& memory);
+
+  // evaluate all permutations requested to sapply spin texture
+  //
+  void EvaluatePermutations();
 
 };
 
