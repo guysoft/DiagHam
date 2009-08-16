@@ -526,7 +526,7 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 	    if ((this->EvaluateEigenvectors == true) || (this->ComputeLValueFlag == true))
 	      {
 		cout << "Using BasicLanczosAlgorithmWithGroundStateDiskStorage"<<endl;
-		Lanczos = new basiclanczosalgorithmwithgroundstatediskstorage(this->Architecture, this->NbrIterLanczos, this->MaxNbrIterLanczos);
+		Lanczos = new BasicLanczosAlgorithmWithGroundStateDiskStorage(this->Architecture, this->NbrIterLanczos, this->MaxNbrIterLanczos);
 	      }
 	    else
 	      {

@@ -767,7 +767,7 @@ long FermionOnSphereWithSpinHaldaneBasis::GenerateSqueezedStates(int lzMax, unsi
 
 long FermionOnSphereWithSpinHaldaneBasis::GenerateSqueezedTexturelessStates(int lzMax, unsigned long referenceState, long pos, long& memory)
 {
-  int MaxSweeps = (this->NbrFermions * (this->NbrFermions - 1)) >> 1;  
+  /*  int MaxSweeps = (this->NbrFermions * (this->NbrFermions - 1)) >> 1;  
   unsigned long* TmpGeneratedStates2 = this->TmpGeneratedStates + (MaxSweeps * memory);
   memory += 1;
   int TmpCurrentLzMax = 2;
@@ -867,7 +867,7 @@ long FermionOnSphereWithSpinHaldaneBasis::GenerateSqueezedTexturelessStates(int 
 	  int TmpLzMax = 0;
 	  pos = this->GenerateSqueezedTexturelessStates(TmpLzMax, TmpGeneratedStates2[i], pos, memory);
 	}
-  memory -= 1;
+	memory -= 1;*/
   return pos;
 }
 

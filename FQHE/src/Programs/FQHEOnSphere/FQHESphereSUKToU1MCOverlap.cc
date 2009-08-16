@@ -294,6 +294,11 @@ int main(int argc, char** argv)
     }
 
   Abstract1DComplexFunctionOnSphere* BaseFunction = 0;
+  if (StatisticFlag == false)
+    {
+      IntraCorrelation++;
+      InterCorrelation++;
+    }
   switch (KValue)
     {
     case 2:
@@ -334,9 +339,9 @@ int main(int argc, char** argv)
   else
     {
       if (((SingleStringOption*) Manager["load-permutations"])->GetString() == 0)
-	SymmetrizedFunction = new FQHESphereSymmetrizedSUKToU1WaveFunction (NbrParticles, KValue, BaseFunction, true);      
+	SymmetrizedFunction = new FQHESphereSymmetrizedSUKToU1WaveFunction (NbrParticles, KValue, BaseFunction, StatisticFlag);      
       else
-	SymmetrizedFunction = new FQHESphereSymmetrizedSUKToU1WaveFunction (((SingleStringOption*) Manager["load-permutations"])->GetString(), BaseFunction, true);  
+	SymmetrizedFunction = new FQHESphereSymmetrizedSUKToU1WaveFunction (((SingleStringOption*) Manager["load-permutations"])->GetString(), BaseFunction, StatisticFlag);  
       if (((SingleStringOption*) Manager["save-permutations"])->GetString() != 0)
 	{
 	  ((FQHESphereSymmetrizedSUKToU1WaveFunction*) SymmetrizedFunction)->WritePermutations(((SingleStringOption*) Manager["save-permutations"])->GetString());
