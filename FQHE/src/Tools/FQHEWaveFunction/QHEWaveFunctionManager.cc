@@ -58,7 +58,7 @@
 #include "Tools/FQHEWaveFunction/TwoThirdUnpolarizedCF.h"
 #include "Tools/FQHEWaveFunction/HundRuleCFStates.h"
 #include "Tools/FQHEWaveFunction/HundRuleBilayerSinglet.h"
-
+#include "Tools/FQHEWaveFunction/CFOnSphereWithSpinPartonTunnellingWaveFunction.h"
 #include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
 #include "MathTools/NumericalAnalysis/AntisymmetrizedComplexFunction.h"
 
@@ -123,6 +123,7 @@ void QHEWaveFunctionManager::AddOptionGroup(OptionManager* manager)
       (*WaveFunctionGroup) += new BooleanOption  ('\n', "jastrow-inside", "move jastrow factors inside determinant (1s only)");
       (*WaveFunctionGroup) += new MultipleIntegerOption  ('\n', "XHC", "coefficients (k,l,p,q,r,s,t,u,v,b) of extended Halperin wavefunction  (XH only)",',' ,',', "2,2,-2,0");
       (*WaveFunctionGroup) += new BooleanOption  ('\n', "antisymmetrize", "antisymmetrize wavefunction (XH only)");
+      (*WaveFunctionGroup) += new MultipleIntegerOption  ('\n', "partonShells", "number of shells for parton & effective flux: lFup,lFdown,N_phi^eff",',');
     }
   else 
     if (this->GeometryID & QHEWaveFunctionManager::SphereWithSU3SpinGeometry)
@@ -173,6 +174,7 @@ ostream& QHEWaveFunctionManager::ShowAvalaibleWaveFunctions (ostream& str)
 	  str << "  * pairedcfcb : paired composite fermion wave function at flux 2N_1-1 with CB component" << endl;
 	  str << "  * pairedcfs : paired composite fermion spin singlet wave function at flux 2N-2" << endl;	  
 	  str << "  * hund : singlet state with each layer formed according to Hund's rule" << endl;
+	  str << "  * cfparton : bilayer state with parton tunnelling" << endl;
 	}
     else
       if (this->GeometryID == QHEWaveFunctionManager::SphereWithSU3SpinGeometry)
@@ -499,6 +501,30 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	      int N= Options->GetInteger("nbr-particles");
 	      int n=N/2;
 	      HundRuleBilayerSinglet* rst = new HundRuleBilayerSinglet(n);
+	      rst->AdaptAverageMCNorm();
+	      return rst;	      
+	    }
+	  if ((strcmp (this->Options->GetString("test-wavefunction"), "cfparton") == 0))
+	    {
+	      int N= Options->GetInteger("nbr-particles");
+	      int attached = this->Options->GetInteger("nbr-flux");
+	      if (attached % 2 != 0)
+		{
+		  cout << "Attention, changing number of flux attached to 2 - please indicate the requested value with --nbr-flux"<<endl;
+		  attached = 2;
+		}
+	      int Length;
+	      int *PartonParameters = this->Options->GetIntegers("partonShells",Length);
+	      int EffectiveFlux=1;
+	      if ((Length!=3)&&(Length!=2))
+		{
+		  cout << "Need parameters for Parton wavefunction: --partonShells LFUp,LFDown[,EffectiveFlux]"<<endl;
+		  exit(-1);
+		}
+	      if (Length>2)
+		EffectiveFlux = PartonParameters[2];
+	      CFOnSphereWithSpinPartonTunnellingWaveFunction* rst = new CFOnSphereWithSpinPartonTunnellingWaveFunction
+		(N, PartonParameters[0], PartonParameters[1], EffectiveFlux, attached);
 	      rst->AdaptAverageMCNorm();
 	      return rst;	      
 	    }

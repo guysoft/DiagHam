@@ -72,6 +72,9 @@ class BasicLanczosAlgorithmWithGroundStateDiskStorage : public AbstractLanczosAl
   // maximum number of iterations when evaluating the ground state eigenvector 
   int NbrIterationsGroundState;
 
+  // internally stored dimension, to be used if re-read from disk for vector calculation only
+  int VectorDimension;
+
  public:
 
   // default constructor

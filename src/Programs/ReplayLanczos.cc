@@ -60,20 +60,22 @@ int main(int argc, char** argv)
 
   char *OutputName;
 
+  ifstream File;
+  int LanczosIndex;
+  File.open("lanczos.dat", ios::binary | ios::in);
+  ReadLittleEndian(File, LanczosIndex);
+  File.close();
+      
   if (Manager.GetString("ground-filename")!=NULL)
     {
       OutputName = new char[strlen(Manager.GetString("ground-filename"))+16];
     }
   else
-    {
-      ifstream File;
-      int LanczosIndex;
-      File.open("lanczos.dat", ios::binary | ios::in);
-      ReadLittleEndian(File, LanczosIndex);
-      File.close();
+    {      
       OutputName = new char[30];
-      sprintf(OutputName, "ground.%d", LanczosIndex);
+      sprintf(OutputName, "ground.%d", LanczosIndex);      
     }
+  cout << "Resuming Lanczos algorithm at step "<<LanczosIndex<<endl;
   
   if (!Manager.GetBoolean("complex-lanczos"))
     {
@@ -82,22 +84,29 @@ int main(int argc, char** argv)
 	  if (Manager.GetBoolean("reorthogonalized"))
 	    {
 	      FullReorthogonalizedLanczosAlgorithmWithDiskStorage Lanczos(Architecture.GetArchitecture(), NbrEigenvalue, 0,0);
-	      Lanczos.ResumeLanczosAlgorithm();
 	      if (EigenstateFlag)
 		{
+		  cout << "Now reading in previous state";
+		  Lanczos.ResumeLanczosAlgorithm();	      
 		  char *TmpVectorName = new char[strlen(OutputName)+10];
 		  RealVector* Eigenvectors = (RealVector*) Lanczos.GetEigenstates(NbrEigenvalue);
+		  cout << "Constructing eigenstates"<<endl;
 		  for (int i = 0; i < NbrEigenvalue; ++i)
-		    {
+		    {		      
 		      sprintf (TmpVectorName, "%s.%d.vec", OutputName, i);
 		      Eigenvectors[i].WriteVector(TmpVectorName);
 		    }
 		  delete [] TmpVectorName;		  
 		}
+	      else
+		{
+		  cout << "Please request eigenvalues!"<<endl;
+		  exit(0);
+		}
 	    }
 	  else
 	    {
-	      BasicLanczosAlgorithmWithGroundStateDiskStorage Lanczos(Architecture.GetArchitecture(), 0,0);
+	      BasicLanczosAlgorithmWithGroundStateDiskStorage Lanczos(Architecture.GetArchitecture(), 0, 0);
 	      Lanczos.ResumeLanczosAlgorithm();
 	      if (EigenstateFlag)
 		{

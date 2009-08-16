@@ -755,7 +755,7 @@ Vector& ProjectedLanczosAlgorithmWithGroundState::GetProjectorGroundState()
   this->V1 *= TmpComponents[this->InternalDiagonalizedMatrix.GetNbrRow()-1];
   for (int i = this->InternalDiagonalizedMatrix.GetNbrRow()-2; i > -1; --i)
     {
-      this->ReadVector(V2, i, false, false);	      
+      this->ReadVector(V2, i, false, false);    
       this->V1.AddLinearCombination(TmpComponents[i], this->V2);
       cout << i << "/" << this->InternalDiagonalizedMatrix.GetNbrRow() << "           \r";
       cout.flush();

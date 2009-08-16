@@ -93,7 +93,8 @@ class QHEWaveFunctionManager
       TrialWaveFunction = 0x10000,
       Halperin = 0x1000000,
       SLBS = 0x2000000,
-      SLBSV = 0x2010000
+      SLBSV = 0x2010000,
+      CFParton = 0x4000000
     };
   
   // constructor

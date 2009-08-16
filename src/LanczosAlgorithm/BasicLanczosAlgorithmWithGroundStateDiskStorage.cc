@@ -82,6 +82,7 @@ BasicLanczosAlgorithmWithGroundStateDiskStorage::BasicLanczosAlgorithmWithGround
   this->EigenvaluePrecision = MACHINE_PRECISION;
   this->NbrEigenvalue = 1;
   this->GroundStateEvaluationFlag = 0;
+  this->VectorDimension = 0;
 }
 
 // copy constructor
@@ -105,6 +106,7 @@ BasicLanczosAlgorithmWithGroundStateDiskStorage::BasicLanczosAlgorithmWithGround
   this->NbrEigenvalue = 1;
   this->GroundStateEvaluationFlag = algorithm.GroundStateEvaluationFlag;
   this->NbrIterationsGroundState = algorithm.NbrIterationsGroundState;
+  this->VectorDimension = algorithm.VectorDimension;
 }
 
 // destructor
@@ -119,13 +121,18 @@ BasicLanczosAlgorithmWithGroundStateDiskStorage::~BasicLanczosAlgorithmWithGroun
 
 void BasicLanczosAlgorithmWithGroundStateDiskStorage::InitializeLanczosAlgorithm() 
 {
-  int Dimension = this->Hamiltonian->GetHilbertSpaceDimension();
-  this->V1 = RealVector (Dimension);
-  this->V2 = RealVector (Dimension);
-  this->V3 = RealVector (Dimension);
+  if (this->Hamiltonian == NULL)
+    {
+      cout << "A Hamiltonian has to be declared before initializing a Lanczos Algorithm"<<endl;
+      exit(-1);
+    }
+  this->VectorDimension = this->Hamiltonian->GetHilbertSpaceDimension();
+  this->V1 = RealVector (this->VectorDimension);
+  this->V2 = RealVector (this->VectorDimension);
+  this->V3 = RealVector (this->VectorDimension);
   int Shift = RAND_MAX / 2;
   double Scale = 1.0 / ((double) Shift);
-  for (int i = 0; i < Dimension; i++)
+  for (int i = 0; i < this->VectorDimension; i++)
     {
       this->V1[i] = Scale * ((double) (rand() - Shift));
     }
@@ -142,10 +149,19 @@ void BasicLanczosAlgorithmWithGroundStateDiskStorage::InitializeLanczosAlgorithm
 
 void BasicLanczosAlgorithmWithGroundStateDiskStorage::InitializeLanczosAlgorithm(const Vector& vector) 
 {
-  int Dimension = this->Hamiltonian->GetHilbertSpaceDimension();
+  if (this->Hamiltonian == NULL)
+    {
+      cout << "A Hamiltonian has to be declared before initializing a Lanczos Algorithm"<<endl;
+      exit(-1);
+    }
+  this->VectorDimension = this->Hamiltonian->GetHilbertSpaceDimension();
+  if (VectorDimension != vector.GetVectorDimension())
+    {
+      cout << "initial vector does not match dimension of Hilbert-space"<<endl;
+    }
   this->V1 = vector;
-  this->V2 = RealVector (Dimension);
-  this->V3 = RealVector (Dimension);
+  this->V2 = RealVector (this->VectorDimension);
+  this->V3 = RealVector (this->VectorDimension);
   this->InitialState = RealVector (vector, true);
   this->Index = 0;
   this->InitialState.WriteVector("vector.0");
@@ -157,15 +173,22 @@ void BasicLanczosAlgorithmWithGroundStateDiskStorage::InitializeLanczosAlgorithm
 //
 
 void BasicLanczosAlgorithmWithGroundStateDiskStorage::ResumeLanczosAlgorithm()
-{ 
-  int Dimension = this->Hamiltonian->GetHilbertSpaceDimension();
+{
   this->ReadState();
-  this->InitialState = RealVector (Dimension);
-  this->V1 = RealVector (Dimension);
-  this->V2 = RealVector (Dimension);
-  this->V3 = RealVector (Dimension);
-  this->InitialState.ReadVector("vector.0");
   this->V1.ReadVector("vector.1");
+  this->VectorDimension = this->V1.GetVectorDimension();
+  if (this->Hamiltonian != NULL)
+    {
+      if (this->Hamiltonian->GetHilbertSpaceDimension() != this->VectorDimension)
+	{
+	  cout << "Hamiltonian does not match dimension of stored vectors in resuming"<<endl;
+	  exit(-1);
+	}
+    }
+  this->InitialState = RealVector (this->VectorDimension);
+  this->V2 = RealVector (this->VectorDimension);
+  this->V3 = RealVector (this->VectorDimension);
+  this->InitialState.ReadVector("vector.0");
   this->V2.ReadVector("vector.2");
   this->V3.ReadVector("vector.3");
   if (this->TestConvergence() == true)
@@ -384,8 +407,8 @@ bool BasicLanczosAlgorithmWithGroundStateDiskStorage::WriteState()
   WriteLittleEndian(File, this->NbrEigenvalue);
   int TmpDimension = this->TridiagonalizedMatrix.GetNbrRow();
   WriteLittleEndian(File, TmpDimension);
-  for (int i = 0; i < TmpDimension; ++i)    
-    {    
+  for (int i = 0; i < TmpDimension; ++i)
+    {
       WriteLittleEndian(File, this->TridiagonalizedMatrix.DiagonalElement(i));
     }
   --TmpDimension;
