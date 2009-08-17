@@ -67,6 +67,7 @@ CFOnSphereWithSpinPartonTunnellingWaveFunction::CFOnSphereWithSpinPartonTunnelli
     }
   this->LFUp=lFUp;
   this->LFDown=lFDown;
+  this->MaxLF = (lFUp>lFDown?lFUp:lFDown);
   this->AbsEffectiveFlux = abs(nbrEffectiveFlux);
   this->NbrParticlesUp = LFUp*(AbsEffectiveFlux+1)+LFUp*(LFUp-1);
   this->NbrParticlesDown = LFDown*(AbsEffectiveFlux+1)+LFDown*(LFDown-1);
@@ -76,9 +77,8 @@ CFOnSphereWithSpinPartonTunnellingWaveFunction::CFOnSphereWithSpinPartonTunnelli
       cout << "Total number of particles does not agree with parameters!"<<endl;
       exit(-1);
     }
-  this->AbsEffectiveFlux = abs(nbrEffectiveFlux);
-  this->Orbitals1 = new JainCFOnSphereOrbitals(NbrParticlesUp, LFUp, nbrEffectiveFlux, jastrowPower);
-  this->Orbitals2 = new JainCFOnSphereOrbitals(NbrParticlesDown, LFDown, nbrEffectiveFlux, jastrowPower);
+  this->Orbitals1 = new JainCFOnSphereOrbitals(NbrParticlesUp, MaxLF, nbrEffectiveFlux, jastrowPower);
+  this->Orbitals2 = new JainCFOnSphereOrbitals(NbrParticlesDown, MaxLF, nbrEffectiveFlux, jastrowPower);
   this->ElementNorm=1.0;
   this->Flag.Initialize();
   
@@ -110,6 +110,7 @@ CFOnSphereWithSpinPartonTunnellingWaveFunction::CFOnSphereWithSpinPartonTunnelli
   this->NbrParticles = function.NbrParticles;
   this->LFUp = function.LFUp;
   this->LFDown = function.LFDown;
+  this->MaxLF = function.MaxLF;
   this->AbsEffectiveFlux = function.AbsEffectiveFlux;
   this->Flag = function.Flag;  
   this->Orbitals1 = function.Orbitals1;
@@ -321,60 +322,66 @@ void CFOnSphereWithSpinPartonTunnellingWaveFunction::EvaluateTables()
 
   // initialize Slater determinant 
 
-  alpha=0;
-  for (int n=0;n<this->LFUp;n++)
+  // up particles: first Nup lines
+  for (int i=0;i<this->NbrParticlesUp;++i)
     {
-      for (int m2=-AbsEffectiveFlux-2*n; m2<=AbsEffectiveFlux+2*n;m2+=2)
-	{
-	  for (int i=0;i<this->NbrParticlesUp;++i)
-	    {
-	      TmpC=OrbitalValues1[alpha][i];
+      alpha=0;
+      for (int n=0;n<this->LFUp;n++)
+	for (int m2=-AbsEffectiveFlux-2*n; m2<=AbsEffectiveFlux+2*n;m2+=2)
+	  {
+	    TmpC=OrbitalValues1[alpha][i]*J11[i];
 #ifdef USE_LAPACK_CFCB
-	      Matrix->SetMatrixElement(i, alpha, Real(TmpC), Imag(TmpC));
+	    Matrix->SetMatrixElement(i, alpha, Real(TmpC), Imag(TmpC));
 #else
-	      (*Matrix)[i].Re(alpha) = Real(TmpC);
-	      (*Matrix)[i].Im(alpha) = Imag(TmpC);
-#endif	      
-	    }
-	  for (int i=0;i<this->NbrParticlesDown;++i)
-	    {
-	      TmpC=OrbitalValues2[alpha][i];
+	    (*Matrix)[i].Re(alpha) = Real(TmpC);
+	    (*Matrix)[i].Im(alpha) = Imag(TmpC);
+#endif
+	    ++alpha;
+	  }
+      alpha=0;
+      for (int n=0;n<this->LFDown;n++)
+	for (int m2=-AbsEffectiveFlux-2*n; m2<=AbsEffectiveFlux+2*n;m2+=2)
+	  {
+	    TmpC=OrbitalValues1[alpha][i]*J11[i];
 #ifdef USE_LAPACK_CFCB
-	      Matrix->SetMatrixElement(this->NbrParticlesUp+i, alpha, Real(TmpC), Imag(TmpC));
+	    Matrix->SetMatrixElement(i, this->NbrParticlesUp+alpha, Real(TmpC), Imag(TmpC));
 #else
-	      (*Matrix)[this->NbrParticlesUp+i].Re(alpha) = Real(TmpC);
-	      (*Matrix)[this->NbrParticlesUp+i].Im(alpha) = Imag(TmpC);
-#endif	      
-	    }
-	  alpha++;
-	}
+	    (*Matrix)[i].Re(this->NbrParticlesUp+alpha) = Real(TmpC);
+	    (*Matrix)[i].Im(this->NbrParticlesUp+alpha) = Imag(TmpC);
+#endif
+	    ++alpha;
+	  }
     }
-  alpha=0;
-  for (int n=0;n<this->LFDown;n++)
+  
+  // down particles - lines Nup+1...N
+  for (int i=0;i<this->NbrParticlesDown;++i)
     {
-      for (int m2=-AbsEffectiveFlux-2*n; m2<=AbsEffectiveFlux+2*n;m2+=2)
-	{
-	  for (int i=0;i<this->NbrParticlesUp;++i)
-	    {
-	      TmpC=OrbitalValues1[alpha][i];
+      alpha=0;
+      for (int n=0;n<this->LFUp;n++)
+	for (int m2=-AbsEffectiveFlux-2*n; m2<=AbsEffectiveFlux+2*n;m2+=2)
+	  {
+	    TmpC=OrbitalValues2[alpha][i]*J22[i];
 #ifdef USE_LAPACK_CFCB
-	      Matrix->SetMatrixElement(i, alpha+this->NbrParticlesUp, Real(TmpC), Imag(TmpC));
+	    Matrix->SetMatrixElement(this->NbrParticlesUp+i, alpha, Real(TmpC), Imag(TmpC));
 #else
-	      (*Matrix)[i].Re(alpha+this->NbrParticlesUp) = Real(TmpC);
-	      (*Matrix)[i].Im(alpha+this->NbrParticlesUp) = Imag(TmpC);
-#endif	      
-	    }
-	  for (int i=0;i<this->NbrParticlesDown;++i)
-	    {
-	      TmpC=-OrbitalValues2[alpha][i];
+	    (*Matrix)[this->NbrParticlesUp+i].Re(alpha) = Real(TmpC);
+	    (*Matrix)[this->NbrParticlesUp+i].Im(alpha) = Imag(TmpC);
+#endif
+	    ++alpha;
+	  }
+      alpha=0;
+      for (int n=0;n<this->LFDown;n++)
+	for (int m2=-AbsEffectiveFlux-2*n; m2<=AbsEffectiveFlux+2*n;m2+=2)
+	  {
+	    // minus sign here for asymmetric states!
+	    TmpC=-OrbitalValues2[alpha][i]*J22[i];
 #ifdef USE_LAPACK_CFCB
-	      Matrix->SetMatrixElement(this->NbrParticlesUp+i, alpha+this->NbrParticlesUp, Real(TmpC), Imag(TmpC));
+	    Matrix->SetMatrixElement(this->NbrParticlesUp+i, this->NbrParticlesUp+alpha, Real(TmpC), Imag(TmpC));
 #else
-	      (*Matrix)[this->NbrParticlesUp+i].Re(alpha+this->NbrParticlesUp) = Real(TmpC);
-	      (*Matrix)[this->NbrParticlesUp+i].Im(alpha+this->NbrParticlesUp) = Imag(TmpC);
-#endif	      
-	    }
-	  alpha++;
-	}
+	    (*Matrix)[this->NbrParticlesUp+i].Re(this->NbrParticlesUp+alpha) = Real(TmpC);
+	    (*Matrix)[this->NbrParticlesUp+i].Im(this->NbrParticlesUp+alpha) = Imag(TmpC);
+#endif
+	    ++alpha;
+	  }
     }
 }

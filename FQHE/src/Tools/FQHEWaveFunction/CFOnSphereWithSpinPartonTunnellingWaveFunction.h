@@ -58,6 +58,8 @@ class CFOnSphereWithSpinPartonTunnellingWaveFunction: public Abstract1DComplexFu
   int LFUp;
   // Fermi momentum in Down - layer
   int LFDown;
+  // maximum Fermi momentum
+  int MaxLF;
   // Number of particles in Up - layer
   int NbrParticlesUp;
   // Number of particles in Down - layer

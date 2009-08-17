@@ -209,6 +209,7 @@ Vector& InternalReorthogonalizedLanczosAlgorithm::ExtractGroundState()
   
   for (int j = 0; j < this->TridiagonalizedMatrix.GetNbrRow(); ++j)
     TmpCoefficents[j] = TmpEigenvector(j, 0);
+  cout << "TmpEigenvectorInt="<<TmpEigenvector<<endl;
   
   RealVector* Eigenstate = &(this->LanczosVectors[0]);
   (*Eigenstate) *= TmpEigenvector(0, 0);

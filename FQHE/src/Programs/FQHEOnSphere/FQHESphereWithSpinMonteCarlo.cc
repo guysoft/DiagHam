@@ -43,9 +43,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum angular momentum", 9);
   (*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the total spin", 0);
   
-  (*SystemGroup) += new SingleDoubleOption  ('D', "lowest-d", "smallest layer separation d where the energy is evaluated", 0.0, true, /* minimum value */ 0.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "spacing-d", "spacing of layer separation d where the energy is evaluated", 0.25, true, /* minimum value */ 0.0);
-  (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-d", "number of layer separation d where the energy is evaluated", 13);
+  (*SystemGroup) += new SingleDoubleOption  ('D', "lowest-D", "smallest layer separation d where the energy is evaluated", 0.0, true, /* minimum value */ 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "spacing-D", "spacing of layer separation d where the energy is evaluated", 0.25, true, /* minimum value */ 0.0);
+  (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-D", "number of layer separation d where the energy is evaluated", 13);
   (*SystemGroup) += new SingleStringOption('\n',"all-params","File containing all parameters of the interaction");
   (*SystemGroup) += new SingleStringOption('\n',"params-inter","File containing parameters of inter-spin interaction");
   (*SystemGroup) += new SingleStringOption('\n',"params-intra","File containing parameters of intra-spin interaction");
@@ -73,9 +73,9 @@ int main(int argc, char** argv)
   
 
   int NbrParticles = Manager.GetInteger("nbr-particles");
-  double LowestD = Manager.GetDouble("lowest-d");
-  double Spacing = Manager.GetDouble("spacing-d");
-  int NbrSeparations = Manager.GetInteger("nbr-d");
+  double LowestD = Manager.GetDouble("lowest-D");
+  double Spacing = Manager.GetDouble("spacing-D");
+  int NbrSeparations = Manager.GetInteger("nbr-D");
   int SzTotal = Manager.GetInteger("total-sz");
   int NbrFlux = Manager.GetInteger("lzmax");
   int NbrUp = (NbrParticles + SzTotal)/2;

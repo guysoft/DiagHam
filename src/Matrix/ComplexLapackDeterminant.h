@@ -75,6 +75,13 @@ class ComplexLapackDeterminant
   // (re,im) = new value for matrix element
   void SetMatrixElement(int i, int j, const double re, const double im);
 
+  // get a matrix element
+  //
+  // i = line position
+  // j = column position
+  // x = reference on the variable where to store the requested matrix element
+  void GetMatrixElement(int i, int j, Complex& x) const;
+
 
   // calculate the determinant, loosing information about the matrix elements
   Complex Determinant();
@@ -84,6 +91,19 @@ class ComplexLapackDeterminant
 
   
 };
+
+// get a matrix element
+//
+// i = line position
+// j = column position
+// x = reference on the variable where to store the requested matrix element
+
+inline void ComplexLapackDeterminant::GetMatrixElement(int i, int j, Complex& x) const
+{
+  x.Re = this->Components[i+j*Dimension].r;
+  x.Im = this->Components[i+j*Dimension].i;
+}
+
 
 #endif // HAVE_LAPACK
 
