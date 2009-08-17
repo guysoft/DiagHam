@@ -155,6 +155,8 @@ void SimpleMonteCarloOnSphereAlgorithm::NormalizePsi(int time)
 // all options are included via the AddOptionGroup method
 void SimpleMonteCarloOnSphereAlgorithm::Simulate(ostream &Output)
 {
+  this->NbrAcceptedMoves = 0l;
+  this->NbrAttemptedMoves = 0l;
   int NbrSteps = this->Options->GetInteger("nbr-iter");
   int DensityOfSamples = this->Options->GetInteger("sample-density");
   if (DensityOfSamples < 0)
@@ -195,6 +197,8 @@ void SimpleMonteCarloOnSphereAlgorithm::Simulate(ostream &Output)
 	}
       Output << endl;
     }
+  cout << "====== accepted moves: "<< (double)this->NbrAcceptedMoves / (double)this->NbrAttemptedMoves *100.0
+       <<"% ======"<<endl;
 }
 
 
@@ -206,7 +210,8 @@ void SimpleMonteCarloOnSphereAlgorithm::PerformMicroSteps(int nbrSteps)
   double acceptanceProbability;
   for (int i = 0; i < nbrSteps; ++i)
     {
-      System->Move();
+      System->Move();      
+      ++this->NbrAttemptedMoves;
       acceptanceProbability = SamplingFunction->GetTransitionRatio();
       if ((acceptanceProbability < 1.0) &&  (System->GetRandomNumber() > acceptanceProbability))
 	{
@@ -215,6 +220,7 @@ void SimpleMonteCarloOnSphereAlgorithm::PerformMicroSteps(int nbrSteps)
       else
 	{
 	  this->SamplingFunction->AcceptedMove();
+	  ++this->NbrAcceptedMoves;
 	}
     }
 }

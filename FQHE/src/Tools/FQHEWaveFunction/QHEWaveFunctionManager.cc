@@ -516,15 +516,18 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	      int Length;
 	      int *PartonParameters = this->Options->GetIntegers("partonShells",Length);
 	      int EffectiveFlux=1;
-	      if ((Length!=3)&&(Length!=2))
+	      int NbrUp=-1;
+	      if ((Length<2)||(Length>4))
 		{
-		  cout << "Need parameters for Parton wavefunction: --partonShells LFUp,LFDown[,EffectiveFlux]"<<endl;
+		  cout << "Need parameters for Parton wavefunction: --partonShells LFBonding,LFAntibonding[,EffectiveFlux][,NbrUp]"<<endl;
 		  exit(-1);
 		}
 	      if (Length>2)
 		EffectiveFlux = PartonParameters[2];
+	      if (Length>3)
+		NbrUp = PartonParameters[3];
 	      CFOnSphereWithSpinPartonTunnellingWaveFunction* rst = new CFOnSphereWithSpinPartonTunnellingWaveFunction
-		(N, PartonParameters[0], PartonParameters[1], EffectiveFlux, attached);
+		(N, PartonParameters[0], PartonParameters[1], EffectiveFlux, attached, NbrUp);
 	      rst->AdaptAverageMCNorm();
 	      return rst;	      
 	    }

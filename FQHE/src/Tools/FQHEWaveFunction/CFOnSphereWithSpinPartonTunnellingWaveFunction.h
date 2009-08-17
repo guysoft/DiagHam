@@ -55,15 +55,19 @@ class CFOnSphereWithSpinPartonTunnellingWaveFunction: public Abstract1DComplexFu
   JainCFOnSphereOrbitals *Orbitals2;
 
   // Fermi momentum in Up - layer
-  int LFUp;
+  int LFBonding;
   // Fermi momentum in Down - layer
-  int LFDown;
+  int LFAntiBonding;
   // maximum Fermi momentum
   int MaxLF;
   // Number of particles in Up - layer
   int NbrParticlesUp;
   // Number of particles in Down - layer
   int NbrParticlesDown;
+  // Number of orbitals in bonding FS
+  int NbrOrbsBonding;
+  // Number of orbitals in anti-bonding FS
+  int NbrOrbsAntiBonding;
   // total number of particles;
   int NbrParticles;
   
@@ -114,12 +118,13 @@ class CFOnSphereWithSpinPartonTunnellingWaveFunction: public Abstract1DComplexFu
   // constructor
   //
   // nbrParticles = total number of particles
-  // lFUp = Fermi momentum in Up - layer
-  // lFDown = Fermi momentum in Down - layer
+  // lFBonding = Fermi momentum in bonding FS
+  // lFAntiBonding = Fermi momentum in antibonding FS
   // nbrEffectiveFlux = number of flux quanta of the magnetic monopole field experienced by CF's
   // jastrowPower = power to which the Jastrow factor has to be raised
-  CFOnSphereWithSpinPartonTunnellingWaveFunction(int nbrParticles, int lFUp, int lFDown, int nbrEffectiveFlux,
-						 int jastrowPower=2);
+  // nbrParticlesUp = number of particles in upper layer (-1 if half filling each)
+  CFOnSphereWithSpinPartonTunnellingWaveFunction(int nbrParticles, int lFBonding, int lFAntiBonding, int nbrEffectiveFlux,
+						 int jastrowPower=2, int nbrParticlesUp=-1);
 
   // copy constructor
   //

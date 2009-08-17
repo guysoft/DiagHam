@@ -54,24 +54,39 @@ CFOnSphereWithSpinPartonTunnellingWaveFunction::CFOnSphereWithSpinPartonTunnelli
 // constructor
 //
 // nbrParticles = total number of particles
-// lFUp = Fermi momentum in Up - layer
-// lFDown = Fermi momentum in Down - layer
+// lFBonding = Fermi momentum in Up - layer
+// lFAntiBonding = Fermi momentum in Down - layer
 // nbrEffectiveFlux = number of flux quanta of the magnetic monopole field experienced by CF's
 // jastrowPower = power to which the Jastrow factor has to be raised
-CFOnSphereWithSpinPartonTunnellingWaveFunction::CFOnSphereWithSpinPartonTunnellingWaveFunction(int nbrParticles,
-                                                    int lFUp, int lFDown, int nbrEffectiveFlux, int jastrowPower)
+// nbrParticlesUp = number of particles in upper layer (-1 if half filling each)
+CFOnSphereWithSpinPartonTunnellingWaveFunction::CFOnSphereWithSpinPartonTunnellingWaveFunction(int nbrParticles, int lFBonding, int lFAntiBonding, int nbrEffectiveFlux, int jastrowPower, int nbrParticlesUp)
 {
-  if ((lFUp<0)||(lFDown<0)||(nbrParticles<=0))
+  if ((lFBonding<0)||(lFAntiBonding<0)||(nbrParticles<=0))
     {
       cout << "Need to fill at least one shell with particles"<<endl;
     }
-  this->LFUp=lFUp;
-  this->LFDown=lFDown;
-  this->MaxLF = (lFUp>lFDown?lFUp:lFDown);
+  if (nbrParticlesUp<0)
+    {
+      if (nbrParticles&1)
+	{
+	  cout << "Please give explicit number of up-particles for any layer unbalanced configuration!"<<endl;
+	  exit(1);
+	}
+      this->NbrParticlesUp = nbrParticles/2;
+      this->NbrParticlesDown = nbrParticles/2;
+    }
+  else
+    {
+      this->NbrParticlesUp = nbrParticlesUp;
+      this->NbrParticlesDown = nbrParticles-nbrParticlesUp;
+    }
+  this->LFBonding=lFBonding;
+  this->LFAntiBonding=lFAntiBonding;
+  this->MaxLF = (lFBonding>lFAntiBonding?lFBonding:lFAntiBonding);
   this->AbsEffectiveFlux = abs(nbrEffectiveFlux);
-  this->NbrParticlesUp = LFUp*(AbsEffectiveFlux+1)+LFUp*(LFUp-1);
-  this->NbrParticlesDown = LFDown*(AbsEffectiveFlux+1)+LFDown*(LFDown-1);
-  this->NbrParticles = this->NbrParticlesUp + this->NbrParticlesDown;
+  this->NbrOrbsBonding = LFBonding*(AbsEffectiveFlux+1)+LFBonding*(LFBonding-1);
+  this->NbrOrbsAntiBonding = LFAntiBonding*(AbsEffectiveFlux+1)+LFAntiBonding*(LFAntiBonding-1);
+  this->NbrParticles = this->NbrOrbsBonding + this->NbrOrbsAntiBonding;  
   if (this->NbrParticles!=nbrParticles)
     {
       cout << "Total number of particles does not agree with parameters!"<<endl;
@@ -107,9 +122,11 @@ CFOnSphereWithSpinPartonTunnellingWaveFunction::CFOnSphereWithSpinPartonTunnelli
 {
   this->NbrParticlesUp = function.NbrParticlesUp;
   this->NbrParticlesDown = function.NbrParticlesDown;
+  this->NbrOrbsBonding = function.NbrOrbsBonding;
+  this->NbrOrbsAntiBonding = function.NbrOrbsAntiBonding;
   this->NbrParticles = function.NbrParticles;
-  this->LFUp = function.LFUp;
-  this->LFDown = function.LFDown;
+  this->LFBonding = function.LFBonding;
+  this->LFAntiBonding = function.LFAntiBonding;
   this->MaxLF = function.MaxLF;
   this->AbsEffectiveFlux = function.AbsEffectiveFlux;
   this->Flag = function.Flag;  
@@ -204,7 +221,7 @@ void CFOnSphereWithSpinPartonTunnellingWaveFunction::AdaptNorm(RealVector& x)
   double det=Norm((*this)(x));
   while ((det<.1)||(det>50.0))
     {
-      //cout <<"N'="<< this->ElementNorm << " det="<<det<<endl;
+      cout <<"N'="<< this->ElementNorm << " det="<<det<<endl;
       if (det>1e300) 
 	this->ElementNorm*= pow((double)1.0e-300,(double)1.0/(this->NbrParticles));
       else if (det==0.0) 
@@ -212,7 +229,7 @@ void CFOnSphereWithSpinPartonTunnellingWaveFunction::AdaptNorm(RealVector& x)
       else 
 	this->ElementNorm*= pow(det,(double)-1.0/(this->NbrParticles));
       det=Norm((*this)(x));
-      //cout <<"N'="<< this->ElementNorm << endl;
+      cout <<"N'="<< this->ElementNorm << endl;
     }
 }
 
@@ -286,7 +303,7 @@ void CFOnSphereWithSpinPartonTunnellingWaveFunction::EvaluateTables()
     {
       for (int i=0;i<this->NbrParticlesUp;i++)
 	{
-	  J11[i]=1.0;
+	  J11[i]=this->ElementNorm;
 	  for(int j=0;j<i;j++) J11[i] *= Orbitals1->JastrowFactorElement(i,j);
 	  for(int j=i+1;j<NbrParticlesUp;j++) J11[i] *= Orbitals1->JastrowFactorElement(i,j);
 	}
@@ -295,7 +312,7 @@ void CFOnSphereWithSpinPartonTunnellingWaveFunction::EvaluateTables()
     {
       for (int i=0;i<this->NbrParticlesUp;i++)
 	{
-	  J11[i]=1.0;
+	  J11[i]=this->ElementNorm;
 	  for(int j=0;j<i;j++) J11[i] *= ((Orbitals1->SpinorU(i) * Orbitals1->SpinorV(j)) - (Orbitals1->SpinorU(j) * Orbitals1->SpinorV(i)));
 	  for(int j=i+1;j<NbrParticlesUp;j++) J11[i] *= ((Orbitals1->SpinorU(i) * Orbitals1->SpinorV(j)) - (Orbitals1->SpinorU(j) * Orbitals1->SpinorV(i)));
 	}
@@ -305,7 +322,7 @@ void CFOnSphereWithSpinPartonTunnellingWaveFunction::EvaluateTables()
     {
       for (int i=0;i<this->NbrParticlesDown;i++)
 	{
-	  J22[i]=1.0;
+	  J22[i]=this->ElementNorm;
 	  for(int j=0;j<i;j++) J22[i] *= Orbitals2->JastrowFactorElement(i,j);
 	  for(int j=i+1;j<NbrParticlesDown;j++) J22[i] *= Orbitals2->JastrowFactorElement(i,j);
 	}
@@ -314,7 +331,7 @@ void CFOnSphereWithSpinPartonTunnellingWaveFunction::EvaluateTables()
     {
       for (int i=0;i<this->NbrParticlesDown;i++)
 	{
-	  J22[i]=1.0;
+	  J22[i]=this->ElementNorm;
 	  for(int j=0;j<i;j++) J22[i] *= ((Orbitals2->SpinorU(i) * Orbitals2->SpinorV(j)) - (Orbitals2->SpinorU(j) * Orbitals2->SpinorV(i)));
 	  for(int j=i+1;j<NbrParticlesDown;j++) J22[i] *= ((Orbitals2->SpinorU(i) * Orbitals2->SpinorV(j)) - (Orbitals2->SpinorU(j) * Orbitals2->SpinorV(i)));
 	}
@@ -326,7 +343,7 @@ void CFOnSphereWithSpinPartonTunnellingWaveFunction::EvaluateTables()
   for (int i=0;i<this->NbrParticlesUp;++i)
     {
       alpha=0;
-      for (int n=0;n<this->LFUp;n++)
+      for (int n=0;n<this->LFBonding;n++)
 	for (int m2=-AbsEffectiveFlux-2*n; m2<=AbsEffectiveFlux+2*n;m2+=2)
 	  {
 	    TmpC=OrbitalValues1[alpha][i]*J11[i];
@@ -339,15 +356,15 @@ void CFOnSphereWithSpinPartonTunnellingWaveFunction::EvaluateTables()
 	    ++alpha;
 	  }
       alpha=0;
-      for (int n=0;n<this->LFDown;n++)
+      for (int n=0;n<this->LFAntiBonding;n++)
 	for (int m2=-AbsEffectiveFlux-2*n; m2<=AbsEffectiveFlux+2*n;m2+=2)
 	  {
 	    TmpC=OrbitalValues1[alpha][i]*J11[i];
 #ifdef USE_LAPACK_CFCB
-	    Matrix->SetMatrixElement(i, this->NbrParticlesUp+alpha, Real(TmpC), Imag(TmpC));
+	    Matrix->SetMatrixElement(i, this->NbrOrbsBonding+alpha, Real(TmpC), Imag(TmpC));
 #else
-	    (*Matrix)[i].Re(this->NbrParticlesUp+alpha) = Real(TmpC);
-	    (*Matrix)[i].Im(this->NbrParticlesUp+alpha) = Imag(TmpC);
+	    (*Matrix)[i].Re(this->NbrOrbsBonding+alpha) = Real(TmpC);
+	    (*Matrix)[i].Im(this->NbrOrbsBonding+alpha) = Imag(TmpC);
 #endif
 	    ++alpha;
 	  }
@@ -357,7 +374,7 @@ void CFOnSphereWithSpinPartonTunnellingWaveFunction::EvaluateTables()
   for (int i=0;i<this->NbrParticlesDown;++i)
     {
       alpha=0;
-      for (int n=0;n<this->LFUp;n++)
+      for (int n=0;n<this->LFBonding;n++)
 	for (int m2=-AbsEffectiveFlux-2*n; m2<=AbsEffectiveFlux+2*n;m2+=2)
 	  {
 	    TmpC=OrbitalValues2[alpha][i]*J22[i];
@@ -370,18 +387,25 @@ void CFOnSphereWithSpinPartonTunnellingWaveFunction::EvaluateTables()
 	    ++alpha;
 	  }
       alpha=0;
-      for (int n=0;n<this->LFDown;n++)
+      for (int n=0;n<this->LFAntiBonding;n++)
 	for (int m2=-AbsEffectiveFlux-2*n; m2<=AbsEffectiveFlux+2*n;m2+=2)
 	  {
 	    // minus sign here for asymmetric states!
 	    TmpC=-OrbitalValues2[alpha][i]*J22[i];
 #ifdef USE_LAPACK_CFCB
-	    Matrix->SetMatrixElement(this->NbrParticlesUp+i, this->NbrParticlesUp+alpha, Real(TmpC), Imag(TmpC));
+	    Matrix->SetMatrixElement(this->NbrParticlesUp+i, this->NbrOrbsBonding+alpha, Real(TmpC), Imag(TmpC));
 #else
-	    (*Matrix)[this->NbrParticlesUp+i].Re(this->NbrParticlesUp+alpha) = Real(TmpC);
-	    (*Matrix)[this->NbrParticlesUp+i].Im(this->NbrParticlesUp+alpha) = Imag(TmpC);
+	    (*Matrix)[this->NbrParticlesUp+i].Re(this->NbrOrbsBonding+alpha) = Real(TmpC);
+	    (*Matrix)[this->NbrParticlesUp+i].Im(this->NbrOrbsBonding+alpha) = Imag(TmpC);
 #endif
 	    ++alpha;
 	  }
     }
+  
+//   for (int i=0; i<NbrParticles; ++i)
+//     for (int j=0; j<NbrParticles; ++j)
+//       {
+// 	Matrix->GetMatrixElement(i,j,TmpC);
+// 	cout << "M["<<i<<","<<j<<"]="<<TmpC<<endl;
+//       }
 }

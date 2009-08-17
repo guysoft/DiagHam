@@ -75,6 +75,13 @@ class SimpleMonteCarloOnSphereAlgorithm
 
   // flag whether we need to clean up SamplingFunction
   bool HavePrivateSamplingFct;
+
+  // number of attempted microsteps
+  long NbrAttemptedMoves;
+
+  // number of accepted microsteps
+  long NbrAcceptedMoves;
+
   
   
  public:
