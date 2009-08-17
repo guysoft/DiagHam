@@ -266,7 +266,7 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
     {
       this->ProjectorPrecision = options->GetDouble("projector-precision");
     }
-  else this->ProjectorPrecision = this->LanczosPrecision;
+  else this->ProjectorPrecision = 10.0*this->LanczosPrecision;
   if ((*options)["restart-projection"] != 0)
     {
       this->RestartProjection = options->GetBoolean("restart-projection");

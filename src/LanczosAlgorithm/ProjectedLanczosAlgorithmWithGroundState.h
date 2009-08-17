@@ -269,14 +269,14 @@ class ProjectedLanczosAlgorithmWithGroundState : public AbstractLanczosAlgorithm
   // keepOriginal = flag indicating whether original vector needs to be kept in place
   // return = true on success
   bool SaveVector(RealVector &vec, int index, bool mainLanczos = true, bool keepOriginal = false); // test version
-  bool SaveVectorFull(RealVector &vec, int index, bool mainLanczos = true, bool keepOriginal = false);
+  bool SaveVectorTest(RealVector &vec, int index, bool mainLanczos = true, bool keepOriginal = false);
   // reread vector
   // vec = vector to be retrieved
   // index = vector index in Lanczos routine
   // mainLanczos = flag indicating whether vector is part of main lanczos algorithm
   // keepCopy = flag indicating whether the saved vector still needs to be kept in (live) memory after reloading
   void ReadVector(RealVector &vec, int index, bool mainLanczos = true, bool keepCopy = true);  // test version
-  void ReadVectorFull(RealVector &vec, int index, bool mainLanczos = true, bool keepCopy = true);
+  void ReadVectorTest(RealVector &vec, int index, bool mainLanczos = true, bool keepCopy = true);
 };
 
 #endif
