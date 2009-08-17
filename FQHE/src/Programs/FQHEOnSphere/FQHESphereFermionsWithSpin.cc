@@ -191,6 +191,7 @@ int main(int argc, char** argv)
 	  for (int i = 0; i < 3; ++i)
 	    for (int j = 0; j < TmpNbrPseudoPotentials; ++j)
 	      PseudoPotentials[i][j] = TmpPseudoPotentials[j];
+	  delete []TmpPseudoPotentials;
 	}
       else
 	if (InteractionDefinition["Pseudopotentials"] != 0)
@@ -310,7 +311,7 @@ int main(int argc, char** argv)
       ParticleOnSphereWithSpin* Space = (ParticleOnSphereWithSpin*)ParticleManager.GetHilbertSpace(L);
       
       cout << "l=" <<  L << endl;
-
+      
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
         Memory = Architecture.GetArchitecture()->GetLocalMemory();
@@ -424,6 +425,9 @@ int main(int argc, char** argv)
     }
   delete[] OutputNameLz;
   delete[] ExtraTerms;
+  for (int i = 0; i < 3; ++i)
+    delete [] PseudoPotentials[i];
+  delete [] PseudoPotentials;
   return 0;
 }
 

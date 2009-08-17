@@ -317,7 +317,7 @@ int main(int argc, char** argv)
   VectorHamiltonianMultiplyOperation Operation (&Hamiltonian, &State, &TmpState);
   Operation.ApplyOperation(Architecture.GetArchitecture());
   double L2Value = TmpState * State;
-  double RawTmpAngularMomentum = 0.5 * (sqrt ((4.0 * L2Value) + 1.0) - 1.0);
+  double RawTmpAngularMomentum = 0.5 * (sqrt (((double)4.0 * L2Value) + (double)1.0) - 1.0);
   cout << "<L^2> = " << L2Value << endl
        << "<L> = " << RawTmpAngularMomentum << endl;
   if (((BooleanOption*) Manager["no-spin"])->GetBoolean() == false)
@@ -326,7 +326,7 @@ int main(int argc, char** argv)
       VectorHamiltonianMultiplyOperation Operation2 (&Hamiltonian2, &State, &TmpState);
       Operation2.ApplyOperation(Architecture.GetArchitecture());
       L2Value = TmpState * State;
-      RawTmpAngularMomentum = 0.5 * (sqrt ((4.0 * L2Value) + 1.0) - 1.0);
+      RawTmpAngularMomentum = 0.5 * (sqrt (((double)4.0 * L2Value) + (double)1.0) - 1.0);
       cout << "<S^2> = " << L2Value << endl
 	   << "<S> = " << RawTmpAngularMomentum << endl;
     }

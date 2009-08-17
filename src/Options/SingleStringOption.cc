@@ -87,6 +87,8 @@ int SingleStringOption::ReadOption(char** argumentValues, int nbrArgument, int a
   if (this->OptionCode == 0)
     if (Argument[0] != '-')
       {
+	if (this->String != 0)
+	  delete[] this->String;
 	this->String = new char [strlen (Argument) + 1];
 	strcpy (this->String, Argument);
 	return 1;
@@ -106,6 +108,8 @@ int SingleStringOption::ReadOption(char** argumentValues, int nbrArgument, int a
     Pos++;
   if (Pos != Lim)
     {
+      if (this->String != 0)
+	delete[] this->String;
       this->String = new char [Lim - Pos + 1];
       strcpy (this->String, &(Argument[Pos]));
       return 1;
@@ -116,6 +120,8 @@ int SingleStringOption::ReadOption(char** argumentValues, int nbrArgument, int a
       return -1;
     }
   Argument = argumentValues[argumentPosition + 1];
+  if (this->String != 0)
+    delete[] this->String;
   this->String = new char [strlen (Argument) + 1];
   strcpy (this->String, Argument);
   return 2;
