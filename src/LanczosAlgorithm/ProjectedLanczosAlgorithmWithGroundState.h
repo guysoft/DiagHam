@@ -227,15 +227,16 @@ class ProjectedLanczosAlgorithmWithGroundState : public AbstractLanczosAlgorithm
 
   // project the vector stored in V1 to the groundstate of the given Projector number
   // nbrProjector = number of projector to use for this run
-  void ProjectVector(int nbrProjector);
+  // return = true if Lanczos was run, or false if no projection needed to be done
+  bool ProjectVector(int nbrProjector);
   
 
   // run current internal Lanczos algorithm (continue from previous results if Lanczos algorithm has already been run)
   //
   // nbrProjector = number of projector to use for this run
   // nbrIter = number of iteration to do 
-  
-  void RunProjectorLanczosAlgorithm (int nbrProjector, int nbrIter);
+  // return = true, if initial vector satisfied the condition that projector was zero
+  bool RunProjectorLanczosAlgorithm (int nbrProjector, int nbrIter);
 
 
   // initialize Lanczos algorithm starting from the vector currently held in V1

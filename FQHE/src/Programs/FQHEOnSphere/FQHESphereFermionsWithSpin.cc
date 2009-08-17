@@ -365,6 +365,7 @@ int main(int argc, char** argv)
 						      Architecture.GetArchitecture(), 1.0,
 						      ((unsigned long)Manager.GetInteger("l2-memory")) << 20,
 						      onDiskCacheFlag);
+	  L2Projector->ShiftHamiltonian(-0.25*(double)L*(L+2.0));
 	  Projectors[NbrProjectors++]=L2Projector;
 	}
       if (Manager.GetBoolean("project-s2"))
@@ -374,6 +375,7 @@ int main(int argc, char** argv)
 						      Architecture.GetArchitecture(), 1.0,
 						      ((unsigned long)Manager.GetInteger("s2-memory")) << 20,
 						      onDiskCacheFlag);
+	  S2Projector->ShiftHamiltonian(-0.25*(double)SzTotal*(SzTotal+2.0));
 	  Projectors[NbrProjectors++]=S2Projector;
 	}
       if (Manager.GetBoolean("project-l2-s2"))
@@ -386,6 +388,7 @@ int main(int argc, char** argv)
 	  if (Manager.GetDouble("s2-factor") != 0.0)
 	    L2S2Projector->AddS2(L, SzTotal, Manager.GetDouble("s2-factor"), ((unsigned long)Manager.GetInteger("l2-memory")) << 20);
 
+	  L2S2Projector->ShiftHamiltonian(-0.25*(double)L*(L+2.0)-0.25*(double)SzTotal*(SzTotal+2.0));
 	  Projectors[NbrProjectors++]=L2S2Projector;
 	}
       Hamiltonian->ShiftHamiltonian(Shift);

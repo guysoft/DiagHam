@@ -231,7 +231,10 @@ void ProjectedLanczosAlgorithmWithGroundState::InitializeLanczosAlgorithm()
       if (this->DiskFlag == false)
 	this->InitialState = RealVector (this->V1, true);
       else
-	this->V1.WriteVector("vector.0");
+	{
+	  // cout << "calling this->SaveVector(V1,0) on line "<<__LINE__<<endl;
+	  this->SaveVector(V1,0,true,true);
+	}
       this->Index = 0;
       this->TridiagonalizedMatrix.Resize(0, 0);
     }
@@ -261,8 +264,9 @@ void ProjectedLanczosAlgorithmWithGroundState::InitializeLanczosAlgorithm(const 
 	  this->V1 /= this->V1.Norm();
 	}
       // project initial vector
+      bool RequireReorthogonalization = false;
       for (int p=0; p<NbrProjectors; ++p)
-	this->ProjectVector(p);
+	RequireReorthogonalization |= this->ProjectVector(p);
       if (this->DiskFlag == false)
 	this->InitialState = RealVector (vector, true);
       else
@@ -424,11 +428,16 @@ void ProjectedLanczosAlgorithmWithGroundState::RunLanczosAlgorithm (int nbrIter)
       if (nbrIter < 2)
 	Dimension = this->TridiagonalizedMatrix.GetNbrRow() + 2;
       this->TridiagonalizedMatrix.Resize(Dimension, Dimension);
+      // begin step 0->1
       VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->V1, &this->V2);
       Operation1.ApplyOperation(this->Architecture);
+      this->TridiagonalizedMatrix.DiagonalElement(Index) = (this->V1 * this->V2);
+      this->V2.AddLinearCombination(-this->TridiagonalizedMatrix.DiagonalElement(this->Index), this->V1);
+      this->ExternalOrthogonalization(this->V2);
+      this->V2 /= this->V2.Norm();
+      
       // apply projector here
-      //cout << "calling this->SaveVector(V1,0) on line "<<__LINE__<<endl;
-      this->SaveVector(V1,0);
+      // (V1 already saved in initialization)
       // swap V1, V2
       {
 	RealVector TmpV (this->V1);
@@ -436,63 +445,37 @@ void ProjectedLanczosAlgorithmWithGroundState::RunLanczosAlgorithm (int nbrIter)
 	this->V2 = TmpV; 
       }
       //cout << "Line "<<__LINE__<<": V1="<<endl<<V1;
+      bool RequireReorthogonalization = false;
       for (int p=0; p<NbrProjectors; ++p)
-	this->ProjectVector(p);
+	RequireReorthogonalization |= this->ProjectVector(p);
       // swap V1, V2
       {
 	RealVector TmpV (this->V1);
 	this->V1 = this->V2;
 	this->V2 = TmpV; 
       }      
-      this->ReadVector(V1,0);
-
-      sprintf(TmpOutputName, "vector-refXX.0");
-      cout << "Writing reference vector "<<TmpOutputName<<endl;
-      V1.WriteVector(TmpOutputName);
-      sprintf(TmpOutputName, "vector-refXX.1");
-      cout << "Writing reference vector "<<TmpOutputName<<endl;
-      V2.WriteVector(TmpOutputName);
+      this->ReadVector(V1,0);      
+      
       // end projector
-      this->TridiagonalizedMatrix.DiagonalElement(Index) = (this->V1 * this->V2);
-      this->V2.AddLinearCombination(-this->TridiagonalizedMatrix.DiagonalElement(this->Index), 
-				    this->V1);
-      this->ExternalOrthogonalization(this->V2);
-      this->V2 /= this->V2.Norm();
-      sprintf(TmpOutputName, "vector-refXX.2");
-      cout << "Writing reference vector "<<TmpOutputName<<endl;
-      V2.WriteVector(TmpOutputName);
+
+      // orthogonalizing again, if needed
+      if (RequireReorthogonalization)
+	{
+	  double NewScalarProd = this->V1 * this->V2;
+	  this->V2.AddLinearCombination(-NewScalarProd, this->V1);
+	  this->ExternalOrthogonalization(this->V2);
+	  this->V2 /= this->V2.Norm();
+	}
+      
       if (this->DiskFlag == true)
 	{
-	  //cout << "calling this->SaveVector(V2,1) on line "<<__LINE__<<endl;
+	  // cout << "calling this->SaveVector(V2,1) on line "<<__LINE__<<endl;
 	  this->SaveVector(V2,1,true,true);
 	}
+      // ============ end step 0->1 ===========
+      // begin step 1->2
       VectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &this->V2, &this->V3);
       Operation2.ApplyOperation(this->Architecture);
-      // apply projector here
-      // vector0 is already saved
-      if (this->DiskFlag == false) // have already saved vector1 above if DiskFlag is true
-	{
-	  //cout << "calling this->SaveVector(V2,1) on line "<<__LINE__<<endl;
-	  this->SaveVector(V2,1); // do not need copy of V2 in process after this call
-	}
-      // swap V1, V3
-      {
-	RealVector TmpV (this->V1);
-	this->V1 = this->V3;
-	this->V3 = TmpV; 
-      }
-      for (int p=0; p<NbrProjectors; ++p)
-	this->ProjectVector(p);
-      // swap V1, V3
-      {
-	RealVector TmpV (this->V1);
-	this->V1 = this->V3;
-	this->V3 = TmpV; 
-      }
-      this->ReadVector(V1,0);
-      this->ReadVector(V2,1);
-      // end projector
-      
       this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) = (this->V1 * this->V3);
       this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1) = (this->V2 * this->V3);
     }
@@ -513,13 +496,60 @@ void ProjectedLanczosAlgorithmWithGroundState::RunLanczosAlgorithm (int nbrIter)
 	  TmpCoefficient[0] = -this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index);
 	  TmpCoefficient[1] = -this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1);
 	  AddRealLinearCombinationOperation Operation4 (&(this->V3),  TmpVector, 2, TmpCoefficient);
-	  Operation4.ApplyOperation(this->Architecture);
-	  delete[] TmpVector;
+	  Operation4.ApplyOperation(this->Architecture);	  
 	  this->ExternalOrthogonalization(this->V3);
 	  this->V3 /= this->V3.Norm();
+
+	  // apply projector here
+	  // vector0..i-1 are already saved
+	  if (this->DiskFlag == false) // have already saved contents of V1 above if DiskFlag is true
+	    {
+	      // cout << "calling this->SaveVector(V2,"<<i<<") on line "<<__LINE__<<endl;
+	      this->SaveVector(V2, i-1); // do not need copy here, once more
+	    }
+	  // swap V1, V3
+	  {
+	    RealVector TmpV (this->V1);
+	    this->V1 = this->V3;
+	    this->V3 = TmpV;
+	  }
+	  bool RequireReorthogonalization = false;
+	  for (int p=0; p<NbrProjectors; ++p)
+	    RequireReorthogonalization |= this->ProjectVector(p);
+	  // swap V1, V3
+	  {
+	    RealVector TmpV (this->V1);
+	    this->V1 = this->V3;
+	    this->V3 = TmpV; 
+	  }
+	  this->ReadVector(V1,i-2);
+	  this->ReadVector(V2,i-1);
+	  // end projector
+	  
+	  // reorthogonalize once more, if needed:
+	  if (RequireReorthogonalization)
+	    {
+	      // recalculate scalar products
+	      RealVector* TmpVectorScalarProduct[2];
+	      TmpVectorScalarProduct[0] = &(this->V1);
+	      TmpVectorScalarProduct[1] = &(this->V2);
+	      MultipleRealScalarProductOperation Operation (&(this->V3), TmpVectorScalarProduct, 2, TmpScalarProduct);
+	      Operation.ApplyOperation(this->Architecture);
+	      // perform subtractions
+	      TmpVector[0] = this->V1;
+	      TmpVector[1] = this->V2;
+	      TmpCoefficient[0] = -TmpScalarProduct[0];
+	      TmpCoefficient[1] = -TmpScalarProduct[1];
+	      AddRealLinearCombinationOperation Operation1 (&(this->V3),  TmpVector, 2, TmpCoefficient);
+	      Operation1.ApplyOperation(this->Architecture);	  
+	      this->ExternalOrthogonalization(this->V3);
+	      this->V3 /= this->V3.Norm();
+	    }
+	  delete[] TmpVector;
+	  
 	  if (this->DiskFlag == true)
 	    {
-	      //cout << "calling this->SaveVector(V3,"<<i<<") on line "<<__LINE__<<endl;
+	      // cout << "calling this->SaveVector(V3,"<<i<<") on line "<<__LINE__<<endl;
 	      this->SaveVector(V3, i, true, true);
 	      this->WriteState();
 	    }
@@ -545,32 +575,10 @@ void ProjectedLanczosAlgorithmWithGroundState::RunLanczosAlgorithm (int nbrIter)
       this->Index++;
       VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->V2, &this->V3);
       Operation1.ApplyOperation(this->Architecture);
-
-      // apply projector here
-      // vector0..i-1 are already saved
-      if (this->DiskFlag == false) // have already saved contents of V1 above if DiskFlag is true
+      if (this->DiskFlag == true)
 	{
-	  //cout << "calling this->SaveVector(V2,"<<i<<") on line "<<__LINE__<<endl;
-	  this->SaveVector(V2, i); // do not need copy here, once more
+	  this->ReadVector(V1,i-1);
 	}
-      // swap V1, V3
-      {
-	RealVector TmpV (this->V1);
-	this->V1 = this->V3;
-	this->V3 = TmpV;
-      }
-      for (int p=0; p<NbrProjectors; ++p)
-	this->ProjectVector(p);
-      // swap V1, V3
-      {
-	RealVector TmpV (this->V1);
-	this->V1 = this->V3;
-	this->V3 = TmpV; 
-      }
-      this->ReadVector(V1,i-1);
-      this->ReadVector(V2,i);
-      // end projector
-      
       RealVector* TmpVectorScalarProduct[2];
       TmpVectorScalarProduct[0] = &(this->V1);
       TmpVectorScalarProduct[1] = &(this->V2);
@@ -608,48 +616,60 @@ bool ProjectedLanczosAlgorithmWithGroundState::TestConvergence ()
 }
 
 
-#include "InternalReorthogonalizedLanczosAlgorithm.h"
+// #include "InternalReorthogonalizedLanczosAlgorithm.h"
 
 // project the vector stored in V1 to the groundstate of the given Projector number
 // nbrProjector = number of projector to use for this run
-void ProjectedLanczosAlgorithmWithGroundState::ProjectVector(int nbrProjector)
+// return = true if Lanczos was run, or false if no projection needed to be done
+bool ProjectedLanczosAlgorithmWithGroundState::ProjectVector(int nbrProjector)
 {
   this->InitializeProjectorLanczosAlgorithm();
 
-  // testing:
-  static int Cycle=0;
-  InternalReorthogonalizedLanczosAlgorithm Backup(this->Architecture, 1, 0, this->ProjectorIterMax);
-  RealVector TmpV(V1,true);
-  Backup.SetHamiltonian(this->Projectors[nbrProjector]);
-  Backup.ProjectVector(TmpV);
-  sprintf(TmpOutputName, "vector-ref.%d",Cycle++);
-  cout << "Writing reference vector "<<TmpOutputName<<endl;
-  TmpV.WriteVector(TmpOutputName);
+//   // testing:
+//   static int Cycle=0;
+//   InternalReorthogonalizedLanczosAlgorithm Backup(this->Architecture, 1, 0, this->ProjectorIterMax);
+//   RealVector TmpV(V1,true);
+//   Backup.SetHamiltonian(this->Projectors[nbrProjector]);
+//   Backup.ProjectVector(TmpV);
+//   sprintf(TmpOutputName, "vector-ref.%d",Cycle++);
+//   cout << "Writing reference vector "<<TmpOutputName<<endl;
+//   TmpV.WriteVector(TmpOutputName);
 
-  cout << "[ Projecting" << endl;
-  this->RunProjectorLanczosAlgorithm(nbrProjector, 3);
-  int CurrentNbrIterLanczos = 4;
-  timeval TotalStartingTime;
-  timeval TotalEndingTime;
-  gettimeofday (&(TotalStartingTime), 0);
-  while ((this->TestProjectorConvergence() == false) && (CurrentNbrIterLanczos < this->ProjectorIterMax))
+  cout << "[ Projection "<<nbrProjector<<"...";
+  bool Done = this->RunProjectorLanczosAlgorithm(nbrProjector, 3);
+  if (Done)
     {
-      ++CurrentNbrIterLanczos;
-      this->RunProjectorLanczosAlgorithm(nbrProjector, 1);
-      gettimeofday (&(TotalEndingTime), 0);
-      double Precision = fabs((PreviousProjectorGroundstate - ProjectorGroundstate) / PreviousProjectorGroundstate);
-      double Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
-	((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);		      
-      TotalStartingTime.tv_usec = TotalEndingTime.tv_usec;
-      TotalStartingTime.tv_sec = TotalEndingTime.tv_sec;
-      cout << "   "<<CurrentNbrIterLanczos<<": " << ProjectorGroundstate << " " << Precision << " ("<<Dt<<" s)"<<endl;
+      cout << "not required! ]"<<endl;
+      return false;
     }
-  bool Restart=false;
-  if (this->RestartProjection)
-    Restart = !(this->TestProjectorConvergence());
-  this->GetProjectorGroundState();
-  if (Restart)
-    this->ProjectVector(nbrProjector);
+  else
+    {      
+      int CurrentNbrIterLanczos = 4;
+      timeval TotalStartingTime;
+      timeval TotalEndingTime;
+      gettimeofday (&(TotalStartingTime), 0);
+      while ((this->TestProjectorConvergence() == false) && (CurrentNbrIterLanczos < this->ProjectorIterMax))
+	{
+	  cout << endl;
+	  ++CurrentNbrIterLanczos;
+	  this->RunProjectorLanczosAlgorithm(nbrProjector, 1);
+	  gettimeofday (&(TotalEndingTime), 0);
+	  double Precision = fabs((PreviousProjectorGroundstate - ProjectorGroundstate) / PreviousProjectorGroundstate);
+	  double Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+	    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);		      
+	  TotalStartingTime.tv_usec = TotalEndingTime.tv_usec;
+	  TotalStartingTime.tv_sec = TotalEndingTime.tv_sec;
+	  cout << "   "<<CurrentNbrIterLanczos<<": " << ProjectorGroundstate << " " << Precision << " ("<<Dt<<" s)";
+	}
+      cout << "... DONE ]"<<endl;
+      bool Restart=false;
+      if (this->RestartProjection)
+	Restart = !(this->TestProjectorConvergence());
+      this->GetProjectorGroundState();
+      if (Restart)
+	this->ProjectVector(nbrProjector);
+      return true;
+    }
 }
 
 // test if convergence has been reached in internal lanczos
@@ -658,8 +678,9 @@ void ProjectedLanczosAlgorithmWithGroundState::ProjectVector(int nbrProjector)
 
 bool ProjectedLanczosAlgorithmWithGroundState::TestProjectorConvergence ()
 {
-  if ((fabs(this->InternalDiagonalizedMatrix.DiagonalElement(0) - this->PreviousProjectorGroundstate) < 
-       (this->ProjectorPrecision * fabs(this->InternalDiagonalizedMatrix.DiagonalElement(0)))))
+  if ( (fabs(this->InternalDiagonalizedMatrix.DiagonalElement(0)) < this->ProjectorPrecision) ||
+       (fabs(this->InternalDiagonalizedMatrix.DiagonalElement(0) - this->PreviousProjectorGroundstate) < 
+	(this->ProjectorPrecision * fabs(this->InternalDiagonalizedMatrix.DiagonalElement(0)))))
     return true;
   else
     return false;
@@ -671,7 +692,7 @@ bool ProjectedLanczosAlgorithmWithGroundState::TestProjectorConvergence ()
 // nbrProjector = number of projector to use for this run
 // nbrIter = number of iteration to do 
 
-void ProjectedLanczosAlgorithmWithGroundState::RunProjectorLanczosAlgorithm (int nbrProjector, int nbrIter) 
+bool ProjectedLanczosAlgorithmWithGroundState::RunProjectorLanczosAlgorithm (int nbrProjector, int nbrIter) 
 {
   int Dimension;
   if (this->InternalIndex == 0)
@@ -683,11 +704,15 @@ void ProjectedLanczosAlgorithmWithGroundState::RunProjectorLanczosAlgorithm (int
       VectorHamiltonianMultiplyOperation Operation1 (this->Projectors[nbrProjector], &this->V1, &this->V2);
       Operation1.ApplyOperation(this->Architecture);
       this->InternalTridiagonalizedMatrix.DiagonalElement(InternalIndex) = (this->V1 * this->V2);
+      if (fabs(this->InternalTridiagonalizedMatrix.DiagonalElement(InternalIndex))<this->ProjectorPrecision)
+	{
+	  return true;
+	}      
       this->V2.AddLinearCombination(-this->InternalTridiagonalizedMatrix.DiagonalElement(this->InternalIndex), 
 				    this->V1);
       this->ExternalOrthogonalization(this->V2);
       this->V2 /= this->V2.Norm();
-      cout << "calling this->SaveVector(V2,"<<1<<",false,true) on line "<<__LINE__<<endl;
+      // cout << "calling this->SaveVector(V2,"<<1<<",false,true) on line "<<__LINE__<<endl;
       this->SaveVector(V2, 1, false, true); // need to keep V2 in process, here
       // it may be necessary to resize V3 if this vector has been dropped earlier in main lanczos
       if (V3.GetVectorDimension()==0)
@@ -717,16 +742,16 @@ void ProjectedLanczosAlgorithmWithGroundState::RunProjectorLanczosAlgorithm (int
       delete[] TmpVector;
       this->ExternalOrthogonalization(this->V3);
       this->V3 /= this->V3.Norm();
-      cout << "calling this->SaveVector(V3,"<<i<<",false) on line "<<__LINE__<<endl;
+      // cout << "calling this->SaveVector(V3,"<<i<<",false) on line "<<__LINE__<<endl;
       this->SaveVector(V3, i, false, true); // need V3 in process
       
       if (false) // hardwired option "fast-disk" which forgets one of the vectors at this point to save memory
-      {
-	RealVector TmpV (this->V2);
-	this->V2 = this->V3;
-	this->V3 = TmpV;	  
-	this->V1 = RealVector();
-      }
+	{
+	  RealVector TmpV (this->V2);
+	  this->V2 = this->V3;
+	  this->V3 = TmpV;	  
+	  this->V1 = RealVector();
+	}
       else
 	{
 	  RealVector TmpV (this->V1);
@@ -764,6 +789,7 @@ void ProjectedLanczosAlgorithmWithGroundState::RunProjectorLanczosAlgorithm (int
       this->InternalDiagonalizedMatrix.SortMatrixUpOrder();
       this->PreviousProjectorGroundstate = 2.0 * this->InternalDiagonalizedMatrix.DiagonalElement(0);
     }
+  return false;
 }
 
 // get last vector produced by projector lanczos; result is stored in internal vector V1
@@ -783,47 +809,19 @@ Vector& ProjectedLanczosAlgorithmWithGroundState::GetProjectorGroundState()
   double* TmpComponents = new double [this->InternalTridiagonalizedMatrix.GetNbrRow()];
   for (int j = 0; j < this->InternalTridiagonalizedMatrix.GetNbrRow(); ++j)
     TmpComponents[j] = TmpEigenvector(j, 0);
-  cout << "TmpEigenvectorProj="<<TmpEigenvector<<endl;
 
-  cout << "Reading back "<<this->InternalDiagonalizedMatrix.GetNbrRow()-1<<endl;
   this->ReadVector(this->V2, this->InternalDiagonalizedMatrix.GetNbrRow()-1, false, false);
   this->V1.Copy(this->V2, TmpComponents[this->InternalDiagonalizedMatrix.GetNbrRow()-1]);
   for (int i = this->InternalDiagonalizedMatrix.GetNbrRow()-2; i > -1; --i)
     {
-      cout << "Reading back "<<i<<endl;
       this->ReadVector(V2, i, false, false);    
       this->V1.AddLinearCombination(TmpComponents[i], this->V2);
       cout << i << "/" << this->InternalDiagonalizedMatrix.GetNbrRow() << "           \r";
       cout.flush();
     }
-
-  this->V3.ReadVector("vector-int.0");	      
-  this->V2.Copy(this->V3, TmpComponents[0]);
-  char* TmpVectorName = new char [256];
-  for (int i = 1; i < this->InternalDiagonalizedMatrix.GetNbrRow(); ++i)
-    {
-      sprintf(TmpVectorName, "vector-int.%d", i);
-      this->V3.ReadVector(TmpVectorName);	      
-      this->V2.AddLinearCombination(TmpComponents[i], this->V3);
-      cout << i << "/" << this->InternalDiagonalizedMatrix.GetNbrRow() << "           \r";
-      cout.flush();
-    }
-  delete[] TmpVectorName;
-
-  // testing:
-  static int Cycle=0;
-  sprintf(TmpOutputName, "vector-ref2.%d",Cycle);
-  cout << "Writing reference vector "<<TmpOutputName<<endl;
-  V2.WriteVector(TmpOutputName);
-  
-  cout << "Checking: "<<V1*V2<<endl;
-  
   cout << endl;
   this->ExternalOrthogonalization(this->V1);
-  this->V1 /= this->V1.Norm();
-  sprintf(TmpOutputName, "vector-ref3.%d",Cycle++);
-  cout << "Writing reference vector "<<TmpOutputName<<endl;
-  V1.WriteVector(TmpOutputName);
+  this->V1 /= this->V1.Norm();  
   delete[] TmpComponents;
   return this->V1;
 }
@@ -930,7 +928,7 @@ void ProjectedLanczosAlgorithmWithGroundState::InitializeProjectorLanczosAlgorit
     this->ClearProjectorLanczosAlgorithm();
   this->ExternalOrthogonalization(this->V1);
   this->V1 /= this->V1.Norm();
-  cout << "calling this->SaveVector(V1,"<<InternalIndex<<",false,true) on line "<<__LINE__<<endl;
+  // cout << "calling this->SaveVector(V1,"<<InternalIndex<<",false,true) on line "<<__LINE__<<endl;
   this->SaveVector(V1, this->InternalIndex, false, true); // need to keep V1 in process
   this->InternalTridiagonalizedMatrix.ResizeAndClean(0, 0);
 }
@@ -956,8 +954,8 @@ void ProjectedLanczosAlgorithmWithGroundState::ClearProjectorLanczosAlgorithm()
 	  sprintf(TmpOutputName,"vector-int.%d",i);
 	  if( remove(TmpOutputName) != 0 )
 	    cout<<"Error deleting file "<<TmpOutputName<<endl;
-	  else
-	    cout<<"Deleted file "<<TmpOutputName<<endl;
+// 	  else
+// 	    cout<<"Deleted file "<<TmpOutputName<<endl;
 	}
       ProjectorLanczosVectorFlags[i]=0;
     }
@@ -987,7 +985,7 @@ void ProjectedLanczosAlgorithmWithGroundState::ProjectorDiagonalize ()
 // mainLanczos = flag indicating whether vector is part of main lanczos algorithm
 // keepOriginal = flag indicating whether original vector needs to be kept in place
 // return = true on success
-bool ProjectedLanczosAlgorithmWithGroundState::SaveVector(RealVector &vec, int index, bool mainLanczos, bool keepOriginal)
+bool ProjectedLanczosAlgorithmWithGroundState::SaveVectorFull(RealVector &vec, int index, bool mainLanczos, bool keepOriginal)
 {
   int StorageFlag=index & StorageIndexMask;
   int VectorFlag=0;
@@ -1025,7 +1023,7 @@ bool ProjectedLanczosAlgorithmWithGroundState::SaveVector(RealVector &vec, int i
 // index = vector index in Lanczos routine
 // mainLanczos = flag indicating whether vector is part of main lanczos algorithm
 // keepCopy = flag indicating whether the saved vector still needs to be kept in memory after reloading
-void ProjectedLanczosAlgorithmWithGroundState::ReadVector(RealVector &vec, int index, bool mainLanczos, bool keepCopy)
+void ProjectedLanczosAlgorithmWithGroundState::ReadVectorFull(RealVector &vec, int index, bool mainLanczos, bool keepCopy)
 {
   int VectorFlags;
   if (mainLanczos == true)
@@ -1056,7 +1054,7 @@ void ProjectedLanczosAlgorithmWithGroundState::ReadVector(RealVector &vec, int i
 // mainLanczos = flag indicating whether vector is part of main lanczos algorithm
 // keepOriginal = flag indicating whether original vector needs to be kept in place
 // return = true on success
-bool ProjectedLanczosAlgorithmWithGroundState::SaveVectorFull(RealVector &vec, int index, bool mainLanczos, bool keepOriginal)
+bool ProjectedLanczosAlgorithmWithGroundState::SaveVector(RealVector &vec, int index, bool mainLanczos, bool keepOriginal)
 {
   int StorageFlag=index & StorageIndexMask;
   int VectorFlag=0;
@@ -1467,7 +1465,7 @@ bool ProjectedLanczosAlgorithmWithGroundState::SaveVectorFull(RealVector &vec, i
 // index = vector index in Lanczos routine
 // mainLanczos = flag indicating whether vector is part of main lanczos algorithm
 // keepCopy = flag indicating whether the saved vector still needs to be kept in memory after reloading
-void ProjectedLanczosAlgorithmWithGroundState::ReadVectorFull(RealVector &vec, int index, bool mainLanczos, bool keepCopy)
+void ProjectedLanczosAlgorithmWithGroundState::ReadVector(RealVector &vec, int index, bool mainLanczos, bool keepCopy)
 {
   int VectorFlags;
   if (mainLanczos == true)
