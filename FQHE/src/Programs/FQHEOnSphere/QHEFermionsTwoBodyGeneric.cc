@@ -4,7 +4,7 @@
 #include "HilbertSpace/FermionOnSphereUnlimited.h"
 #include "Hamiltonian/ParticleOnSphereGenericHamiltonian.h"
 #include "Hamiltonian/ParticleOnSphereL2Hamiltonian.h"
-#include "Hamiltonian/ProjectedQHEHamiltonian.h"
+//#include "Hamiltonian/ProjectedQHEHamiltonian.h"
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
 #include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasis.h"
 #include "HilbertSpace/FermionOnSphereLong.h"
@@ -53,13 +53,14 @@ int main(int argc, char** argv)
   LanczosManager Lanczos(false);
   ParticleOnSphereManager ParticleManager(true, false, 1);
   ParticleManager.AddOptionGroup(&Manager);
-  OptionGroup* SystemGroup = Manager.GetOptionGroup("system options");
+  OptionGroup* SystemGroup = Manager.GetOptionGroup("system options");  
   OptionGroup* PrecalculationGroup = Manager.GetOptionGroup("precalculation options");
 
   Architecture.AddOptionGroup(&Manager);
-  Lanczos.AddOptionGroup(&Manager);
+  Lanczos.AddOptionGroup(&Manager);  
   Manager += ToolsGroup;
   Manager += MiscGroup;
+  OptionGroup* LanczosGroup = Manager.GetOptionGroup("Lanczos options");
 
   (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-lz", "twice the inital momentum projection for the system", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of lz value to evaluate", -1);
@@ -69,11 +70,17 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new SingleDoubleOption ('\n', "l2-factor", "multiplicative factor in front of an optional L^2 operator than can be added to the Hamiltonian", 0.0);
   (*SystemGroup) += new BooleanOption ('\n', "l2-only", "compose Hamiltonian only of L2 terms");
-  (*SystemGroup) += new BooleanOption  ('\n', "l2-project", "project onto subspace of lowest L^2");
+  //  (*SystemGroup) += new BooleanOption  ('\n', "l2-project", "project onto subspace of lowest L^2");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "l2-memory", "precalculation memory for L^2 operator",1000);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "l2-nbr-vectors", "number of states stored for L^2 projection",10);
   (*SystemGroup) += new BooleanOption  ('\n', "get-lvalue", "compute mean l value from <L^2> for each eigenvalue");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
+  
+  (*LanczosGroup) += new  BooleanOption ('\n', "project-l2", "add a projector onto the L2 groundstate");
+  (*LanczosGroup) += new SingleIntegerOption  ('\n', "projector-storage", "additional number of vectors in RAM when using projected Lanczos", 2);
+  (*LanczosGroup) += new SingleIntegerOption  ('\n', "projector-iter-max", "maximum number of iterations for internal lanczos",100);
+  (*LanczosGroup) += new SingleDoubleOption ('\n', "projector-precision", "define Lanczos precision for projection (0 if automatically defined by the program)", 1e-14);
+  (*LanczosGroup) += new  BooleanOption ('\n', "restart-projection", "allow lanczos projections to be restarted if full convergence not yet reached");
 
   (*PrecalculationGroup) += new BooleanOption ('\n', "disk-cache", "use disk cache for fast multiplication", false);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
@@ -168,7 +175,11 @@ int main(int argc, char** argv)
       
     }
   char* OutputNameLz = new char [256 + strlen(InteractionName)];
-  sprintf (OutputNameLz, "fermions_%s_n_%d_2s_%d_lz.dat", InteractionName, NbrParticles, LzMax);
+  char* ExtraTerms = new char[50];
+  ExtraTerms[0]='\0';
+  if (Manager.GetBoolean("project-l2"))
+    sprintf(ExtraTerms,"_Pl2");
+  sprintf (OutputNameLz, "fermions_%s%s_n_%d_2s_%d_lz.dat", InteractionName, ExtraTerms, NbrParticles, LzMax);
 
   int Max = ((LzMax - NbrParticles + 1) * NbrParticles);
 
@@ -250,15 +261,30 @@ int main(int argc, char** argv)
 	}
       
       Hamiltonian->ShiftHamiltonian(Shift);
-      AbstractQHEHamiltonian *Projector=NULL;
-      if (Manager.GetBoolean("l2-project"))
+//       AbstractQHEHamiltonian *Projector=NULL;
+//       if (Manager.GetBoolean("l2-project"))
+// 	{
+// 	  AbstractQHEHamiltonian *TmpHamiltonian = Hamiltonian;
+// 	  Projector = new ParticleOnSphereL2Hamiltonian(Space, NbrParticles, LzMax, L,
+// 							Architecture.GetArchitecture(), /* l2Factor */ 1.0, 
+// 							((unsigned long)Manager.GetInteger("l2-memory")) << 20);
+// 	  Hamiltonian = new ProjectedQHEHamiltonian (TmpHamiltonian, Projector, Architecture.GetArchitecture(),
+// 						     Manager.GetInteger("l2-nbr-vectors"));//,  int maxIterProj);
+// 	}
+
+      // add eventual projectors
+      int NbrProjectors = 0;
+      AbstractHamiltonian** Projectors = NULL;
+      if (Manager.GetBoolean("project-l2")) ++NbrProjectors;
+      Projectors = new AbstractHamiltonian*[NbrProjectors];
+      NbrProjectors = 0;
+      if (Manager.GetBoolean("project-l2"))
 	{
-	  AbstractQHEHamiltonian *TmpHamiltonian = Hamiltonian;
-	  Projector = new ParticleOnSphereL2Hamiltonian(Space, NbrParticles, LzMax, L,
-							Architecture.GetArchitecture(), /* l2Factor */ 1.0, 
-							((unsigned long)Manager.GetInteger("l2-memory")) << 20);
-	  Hamiltonian = new ProjectedQHEHamiltonian (TmpHamiltonian, Projector, Architecture.GetArchitecture(),
-						     Manager.GetInteger("l2-nbr-vectors"));//,  int maxIterProj);
+	  AbstractHamiltonian* L2Projector =
+	    Hamiltonian = new ParticleOnSphereL2Hamiltonian(Space, NbrParticles, LzMax, L, 
+							    Architecture.GetArchitecture(), 1.0);
+	  L2Projector->ShiftHamiltonian(-0.25*(double)L*(L+2.0));
+	  Projectors[NbrProjectors++]=L2Projector;
 	}
       
       char* EigenvectorName = 0;
@@ -268,15 +294,16 @@ int main(int argc, char** argv)
 	  sprintf (EigenvectorName, "fermions_%s_n_%d_2s_%d_lz_%d", InteractionName, NbrParticles, LzMax, L);
 	}
       
-      QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);
+      QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax, Projectors, NbrProjectors);
       MainTaskOperation TaskOperation (&Task);
       TaskOperation.ApplyOperation(Architecture.GetArchitecture());
       if (EigenvectorName != 0)
 	{
 	  delete[] EigenvectorName;
 	}
-      if (Projector!=NULL)
-	delete Projector;
+      for (int p=0; p<NbrProjectors;++p)
+	delete Projectors[p];
+      delete [] Projectors;
       delete Hamiltonian;
       if (FirstRun == true)
 	FirstRun = false;

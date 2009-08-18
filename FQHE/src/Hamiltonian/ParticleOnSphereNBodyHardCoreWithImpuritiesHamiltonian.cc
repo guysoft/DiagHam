@@ -280,32 +280,6 @@ ParticleOnSphereNBodyHardCoreWithImpuritiesHamiltonian::~ParticleOnSphereNBodyHa
   delete[] this->MinSumIndices;
   delete[] this->MaxSumIndices;
 
-  if (this->FastMultiplicationFlag == true)
-    {
-      if (this->DiskStorageFlag == false)
-	{
-	  long MinIndex;
-	  long MaxIndex;
-	  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
-	  int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
-	  int ReducedDim = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
-	  if ((ReducedDim * this->FastMultiplicationStep) != EffectiveHilbertSpaceDimension)
-	    ++ReducedDim;
-	  for (int i = 0; i < ReducedDim; ++i)
-	    {
-	      delete[] this->InteractionPerComponentIndex[i];
-	      delete[] this->InteractionPerComponentCoefficient[i];
-	    }
-	  delete[] this->InteractionPerComponentIndex;
-	  delete[] this->InteractionPerComponentCoefficient;
-	}
-      else
-	{
-	  remove (this->DiskStorageFileName);
-	  delete[] this->DiskStorageFileName;
-	}
-      delete[] this->NbrInteractionPerComponent;
-    }
 }
 
 // evaluate all interaction factors (including those arising from impurities)

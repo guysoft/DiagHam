@@ -143,6 +143,7 @@ ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian::~ParticleOnTorusDeltaWi
       delete[] this->InteractionPerComponentCoefficient;
       delete[] this->NbrInteractionPerComponent;
       delete[] this->InteractionPerComponentNbrTranslation;
+      this->FastMultiplicationFlag = false;
     }
 }
 

@@ -271,16 +271,27 @@ int main(int argc, char** argv)
   char* OutputNameLz = new char [512 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
   char* ExtraTerms = new char[50];
   ExtraTerms[0]='\0';
-  if (Manager.GetDouble("l2-factor") != 0.0)
+  if (Manager.GetBoolean("project-l2-s2"))
     {
-      if (Manager.GetDouble("s2-factor") != 0.0)
-	sprintf(ExtraTerms,"_l2_%g_s2_%g",Manager.GetDouble("l2-factor"), Manager.GetDouble("s2-factor"));
-      else
-	sprintf(ExtraTerms,"_l2_%g",Manager.GetDouble("l2-factor"));
+      sprintf(ExtraTerms,"_Pl2-s2_%g",Manager.GetDouble("s2-factor")/Manager.GetDouble("l2-factor"));
     }
   else
-    if (Manager.GetDouble("s2-factor") != 0.0)
-      sprintf(ExtraTerms,"_s2_%g",Manager.GetDouble("s2-factor"));
+    {      
+      if (Manager.GetDouble("l2-factor") != 0.0)
+	{
+	  if (Manager.GetDouble("s2-factor") != 0.0)
+	    sprintf(ExtraTerms,"_l2_%g_s2_%g",Manager.GetDouble("l2-factor"), Manager.GetDouble("s2-factor"));
+	  else
+	    sprintf(ExtraTerms,"_l2_%g",Manager.GetDouble("l2-factor"));
+	}
+      else
+	if (Manager.GetDouble("s2-factor") != 0.0)
+	  sprintf(ExtraTerms,"_s2_%g",Manager.GetDouble("s2-factor"));
+      if (Manager.GetBoolean("project-l2"))
+	sprintf(ExtraTerms,"%s_Pl2", ExtraTerms);
+      if (Manager.GetBoolean("project-s2"))
+	sprintf(ExtraTerms,"%s_Ps2", ExtraTerms);
+    }
   
   sprintf (OutputNameLz, "fermions_sphere_su2_%s%s_n_%d_2s_%d_sz_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), ExtraTerms,
 	   NbrFermions, LzMax, SzTotal);
@@ -384,11 +395,11 @@ int main(int argc, char** argv)
 	{
 	  AbstractQHEOnSphereWithSpinHamiltonian* L2S2Projector =
 	    new ParticleOnSphereWithSpinL2Hamiltonian(Space, NbrFermions, LzMax, L,
-						      Architecture.GetArchitecture(), Manager.GetDouble("l2-factor"),
+						      Architecture.GetArchitecture(), 1.0,
 						      ((unsigned long)Manager.GetInteger("l2-memory")) << 20,
 						      onDiskCacheFlag);
 	  if (Manager.GetDouble("s2-factor") != 0.0)
-	    L2S2Projector->AddS2(L, SzTotal, Manager.GetDouble("s2-factor"), ((unsigned long)Manager.GetInteger("l2-memory")) << 20);
+	    L2S2Projector->AddS2(L, SzTotal, Manager.GetDouble("s2-factor")/Manager.GetDouble("l2-factor"), ((unsigned long)Manager.GetInteger("l2-memory")) << 20);
 
 	  L2S2Projector->ShiftHamiltonian(-0.25*(double)L*(L+2.0)-0.25*(double)SzTotal*(SzTotal+2.0));
 	  Projectors[NbrProjectors++]=L2S2Projector;

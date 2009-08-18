@@ -106,6 +106,7 @@ ParticleOnSphereDeltaModifiedHamiltonian::~ParticleOnSphereDeltaModifiedHamilton
       delete[] this->InteractionPerComponentIndex;
       delete[] this->InteractionPerComponentCoefficient;
       delete[] this->NbrInteractionPerComponent;
+      this->FastMultiplicationFlag = false;
     }
 }
 

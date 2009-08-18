@@ -88,17 +88,6 @@ ParticleOnTorusCoulombDMRGReadyHamiltonian::~ParticleOnTorusCoulombDMRGReadyHami
   delete[] this->M1Value;
   delete[] this->M2Value;
   delete[] this->M3Value;
-  if (this->FastMultiplicationFlag == true)
-    {
-      for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); ++i)
-	{
-	  delete[] this->InteractionPerComponentIndex[i];
-	  delete[] this->InteractionPerComponentCoefficient[i];
-	}
-      delete[] this->InteractionPerComponentIndex;
-      delete[] this->InteractionPerComponentCoefficient;
-      delete[] this->NbrInteractionPerComponent;
-    }
 }
 
 // set Hilbert space
