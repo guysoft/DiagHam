@@ -300,7 +300,7 @@ int main(int argc, char** argv)
 		if (State.GetVectorDimension()>0)
 		  {
 		    Space = new FermionOnSphereWithSpin(NbrFermions, TotalLz, LzMax, TotalSz, MemorySpace);
-		    if (State.GetVectorDimension()!=Space.GetHilbertSpaceDimension())
+		    if (State.GetVectorDimension()!=Space->GetHilbertSpaceDimension())
 		      {
 			cout << "Mismatch of dimensions between Hilbert-space and state vector!"<<endl;
 		      }
