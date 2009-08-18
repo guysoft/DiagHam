@@ -107,7 +107,7 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
 	  cout << "please indicate angular momentum component Lz for all trial states in multiplet"<<endl;
 	  exit(-1);
 	}
-      for (int i=1; i<tmpNbrStates; ++i)
+      for (int i=0; i<tmpNbrStates; ++i)
 	{
 	  if (FQHEOnSphereFindSystemInfoFromVectorFileName(TmpStates[i],
 							   PolarizedParticles, PolarizedLzMax, PolarizedLz[i], Statistics) == false)
@@ -132,6 +132,10 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
 	    {
 	      cout << "can't open vector file " << manager.GetString("polarized-state") << endl;
 	      exit(-1);      
+	    }
+	  else
+	    {
+	      cout << "Read polarized state "<<TmpStates[i]<<" as vector "<<i<<" with angular momentum Lz="<<PolarizedLz[i]<<endl;
 	    }
 
 	}
@@ -165,7 +169,7 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
       exit(-1);
     }
   this->BosonicState = new RealVector[this->NbrMultipletBosons];
-  for (int i=1; i<tmpNbrStates; ++i)
+  for (int i=0; i<tmpNbrStates; ++i)
     {
       if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(TmpStates[i], NbrBosons,
 							       BosonLzMax, BosonLz[i], BosonSz,
@@ -213,6 +217,10 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
 	{
 	  cout << "can't open vector file " << TmpStates[i] << endl;
 	  exit(-1);      
+	}
+      else
+	{
+	  cout << "Read bosonic state "<<TmpStates[i]<<" as vector "<<i<<" with angular momentum Lz="<<BosonLz[i]<<endl;
 	}
     }
   
@@ -279,6 +287,7 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
       this->CouplingForIndex = new double[NbrCoupling];
       // assign terms in expansion
       this->NbrCoupling=0;
+      cout << "Vector-Couplings:"<<endl;
       for (int mP=-this->PolarizedL; mP<=this->PolarizedL; mP+=2)
 	for (int mB=-this->BosonL; mB<=this->BosonL; mB+=2)
 	  if ((mP+mB==this->TotalLz)&&(Clebsch.CarefulGetCoefficient (mP, mB, this->TotalL)))
@@ -302,6 +311,9 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
 		  cout << "Require polarized state with angular momentum lz="<<mB<<endl;
 		  exit(-1);
 		}
+	      cout << CouplingForIndex[NbrCoupling] << " * | ("<<this->BosonL<<", "
+		   << BosonLz[BosonIndex[NbrCoupling]]<<")_B, ("<<this->PolarizedL<<", "
+		   << PolarizedLz[PolarizedIndex[NbrCoupling]]<<")_P >"<<endl;
 	      ++NbrCoupling;
 	    }
     }

@@ -1177,7 +1177,7 @@ void BosonOnSphereWithSpin::CoreGenerateLookUpTable(int dimension, int lzMax, in
   keyInvertSectorSize[CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax] = 1;
   int* TmpKeyInvertTable = keyInvertTable[CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax];
   int* TmpKeyInvertTableNbrIndices = keyInvertTableNbrIndices[CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax];
-  cout << "keys="<<keys<<", CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax="<<CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax<<" TmpKeyInvertTable="<<TmpKeyInvertTable<<endl;
+  //cout << "keys="<<keys<<", CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax="<<CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax<<" TmpKeyInvertTable="<<TmpKeyInvertTable<<endl;
   TmpKeyInvertTable[0] = keys[0];
   TmpKeyInvertTableNbrIndices[0] = 1;
   for (int i = 1; i < dimension; ++i)
