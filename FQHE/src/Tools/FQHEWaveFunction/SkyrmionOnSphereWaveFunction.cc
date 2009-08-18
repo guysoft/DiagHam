@@ -244,7 +244,7 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
       cout << "Counting relevant couplings: ";
       for (int mP=-this->PolarizedL; mP<=this->PolarizedL; mP+=2)
 	for (int mB=-this->BosonL; mB<=this->BosonL; mB+=2)
-	  if ((mP+mB==this->TotalLz)&&(Clebsch.CarefulGetCoefficient (mP, mB, this->TotalL)))
+	  if ((mP+mB==this->TotalLz)&&(Clebsch.CarefulGetCoefficient (mP, mB, this->TotalL)!=0.0))
 	    ++NbrCoupling;
       cout << NbrCoupling<<endl;
       this->BosonIndex = new int[NbrCoupling];
@@ -252,10 +252,9 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
       this->CouplingForIndex = new double[NbrCoupling];
       // assign terms in expansion
       this->NbrCoupling=0;
-      cout << "Vector-Couplings:"<<endl;
       for (int mP=-this->PolarizedL; mP<=this->PolarizedL; mP+=2)
 	for (int mB=-this->BosonL; mB<=this->BosonL; mB+=2)
-	  if ((mP+mB==this->TotalLz)&&(Clebsch.CarefulGetCoefficient (mP, mB, this->TotalL)))
+	  if ((mP+mB==this->TotalLz)&&(Clebsch.CarefulGetCoefficient (mP, mB, this->TotalL)!=0.0))
 	    {
 	      this->CouplingForIndex[NbrCoupling] = Clebsch.CarefulGetCoefficient (mP, mB, this->TotalL);
 	      this->BosonIndex[NbrCoupling] = -1;
@@ -269,7 +268,7 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
 		}
 	      this->PolarizedIndex[NbrCoupling] = -1;
 	      for (int i=0; i<NbrMultipletPolarized; ++i)
-		if (PolarizedLz[i]==mB)
+		if (PolarizedLz[i]==mP)
 		  this->PolarizedIndex[NbrCoupling] = i;
 	      if (this->PolarizedIndex[NbrCoupling] == -1)
 		{
@@ -292,7 +291,7 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
       for (int i=0; i<NbrCoupling; ++i)
 	{
 	  cout << "Creating polarized space for Lz="<<PolarizedLz[PolarizedIndex[i]]
-	       <<" at position "<<PolarizedIndex[i]<<endl;
+	       <<" at position "<<PolarizedIndex[i]<<": ";
 #ifdef __64_BITS__
 	  if (PolarizedLzMax <= 63)
 #else
@@ -329,7 +328,7 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
     this->BosonicSpace[i] = NULL;
   for (int i=0; i<NbrCoupling; ++i)
     {
-      cout << "Creating bosonic space for Lz="<<BosonLz[i]<<" at position "<<BosonIndex[i]<<endl;
+      cout << "Creating bosonic space for Lz="<<BosonLz[i]<<" at position "<<BosonIndex[i]<<": ";
       this->BosonicSpace[BosonIndex[i]]= new BosonOnSphereWithSpin(NbrParticles, BosonLz[BosonIndex[i]], BosonLzMax, BosonSz);
     }
   for (int i=0; i<NbrMultipletBosons; ++i)
