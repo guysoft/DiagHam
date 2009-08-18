@@ -116,7 +116,7 @@ int main(int argc, char** argv)
   if (Manager.GetString("energy-expectation") != 0 ) Memory = 0x0l;
   int InitialLz = ((SingleIntegerOption*) Manager["initial-lz"])->GetInteger();
   int NbrLz = ((SingleIntegerOption*) Manager["nbr-lz"])->GetInteger();
-  char* LoadPrecalculationFileName = ((SingleStringOption*) Manager["load-precalculation"])->GetString();  
+  char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");
   bool DiskCacheFlag = ((BooleanOption*) Manager["disk-cache"])->GetBoolean();
   bool FirstRun = true;
   double* PseudoPotentials = 0;
@@ -281,8 +281,8 @@ int main(int argc, char** argv)
       if (Manager.GetBoolean("project-l2"))
 	{
 	  AbstractHamiltonian* L2Projector =
-	    Hamiltonian = new ParticleOnSphereL2Hamiltonian(Space, NbrParticles, LzMax, L, 
-							    Architecture.GetArchitecture(), 1.0);
+	    new ParticleOnSphereL2Hamiltonian(Space, NbrParticles, LzMax, L, 
+					      Architecture.GetArchitecture(), 1.0);
 	  L2Projector->ShiftHamiltonian(-0.25*(double)L*(L+2.0));
 	  Projectors[NbrProjectors++]=L2Projector;
 	}
@@ -305,9 +305,12 @@ int main(int argc, char** argv)
 	delete Projectors[p];
       delete [] Projectors;
       delete Hamiltonian;
+      delete Space;
       if (FirstRun == true)
 	FirstRun = false;
     }
-
+  delete [] PseudoPotentials;
+  delete [] OutputNameLz;
+  delete [] ExtraTerms;
   return 0;
 }

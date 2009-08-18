@@ -227,10 +227,15 @@ ParticleOnSphereGenericHamiltonian::ParticleOnSphereGenericHamiltonian(ParticleO
 
 ParticleOnSphereGenericHamiltonian::~ParticleOnSphereGenericHamiltonian() 
 {
-  delete[] this->InteractionFactors;
+  delete[] this->InteractionFactors;  
   delete[] this->M1Value;
   delete[] this->M2Value;
-  delete[] this->M3Value;
+  if (M3Value!=0)
+    {
+      delete[] this->M3Value;
+    }
+  else
+    delete[] this->M3Value;
   delete[] this->PseudoPotential;
   if (this->OneBodyTermFlag == true)
     delete[] this->OneBodyPotentials;
@@ -368,15 +373,16 @@ void ParticleOnSphereGenericHamiltonian::EvaluateInteractionFactors()
 		++Pos;
 	      }
 	  }
-      this->NbrInteractionFactors = 0;
-      this->M1Value = new int [Pos];
-      this->M2Value = new int [Pos];
-      this->M3Value = new int [Pos];
+      this->NbrInteractionFactors = 0;      
       this->InteractionFactors = new double [Pos];
       cout << "nbr interaction = " << Pos << endl;
       Pos = 0;
       MaxCoefficient *= MACHINE_PRECISION;
       double Factor = - 4.0;
+//       this->NbrM3Values=0;
+//       this->M1Value = new int [Pos];
+//       this->M2Value = new int [Pos];
+//       this->M3Value = new int [Pos];      
 //       for (int m1 = 0; m1 < this->NbrLzValue; ++m1)
 // 	for (int m2 = 0; m2 < m1; ++m2)
 // 	  {
@@ -406,6 +412,7 @@ void ParticleOnSphereGenericHamiltonian::EvaluateInteractionFactors()
       this->M2Value = new int [this->NbrM12Indices];
       this->NbrM3Values = new int [this->NbrM12Indices];
       this->M3Values = new int* [this->NbrM12Indices];
+      this->M3Value = 0;
       int TotalIndex = 0;
       Pos = 0;
       for (int m1 = 0; m1 < this->NbrLzValue; ++m1)
@@ -469,16 +476,16 @@ void ParticleOnSphereGenericHamiltonian::EvaluateInteractionFactors()
 	      }
 	  }
       this->NbrInteractionFactors = 0;
-      this->M1Value = new int [Pos];
-      this->M2Value = new int [Pos];
-      this->M3Value = new int [Pos];
       this->InteractionFactors = new double [Pos];
       cout << "nbr interaction = " << Pos << endl;
       Pos = 0;
       MaxCoefficient *= MACHINE_PRECISION;
       double Factor = 4.0;
 
-
+//       this->NbrM12Indices = 0;
+//       this->M1Value = new int [Pos];
+//       this->M2Value = new int [Pos];
+//       this->M3Value = new int [Pos];
 //       for (int m1 = 0; m1 < this->NbrLzValue; ++m1)
 // 	{
 // 	  for (int m2 = 0; m2 < m1; ++m2)
@@ -550,6 +557,7 @@ void ParticleOnSphereGenericHamiltonian::EvaluateInteractionFactors()
       this->M1Value = new int [this->NbrM12Indices];
       this->M2Value = new int [this->NbrM12Indices];
       this->NbrM3Values = new int [this->NbrM12Indices];
+      this->M3Value = 0;
       this->M3Values = new int* [this->NbrM12Indices];
       int TotalIndex = 0;
       Pos = 0;

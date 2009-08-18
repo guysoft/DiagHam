@@ -138,6 +138,9 @@ ParticleOnSphereL2Hamiltonian::~ParticleOnSphereL2Hamiltonian()
   delete[] this->M1Value;
   delete[] this->M2Value;
   delete[] this->M3Value;
+  delete[] this->OneBodyMValues;
+  delete[] this->OneBodyNValues;
+  delete[] this->OneBodyInteractionFactors;
 }
 
 // set Hilbert space
