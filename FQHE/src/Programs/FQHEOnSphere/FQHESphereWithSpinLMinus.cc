@@ -111,29 +111,29 @@ int main(int argc, char** argv)
     }
 	
   long MemorySpace = 9l << 20;
-  ParticleOnSphereWithSpin* IntialSpace;
+  ParticleOnSphereWithSpin* InitialSpace;
   ParticleOnSphereWithSpin* TargetSpace;
   if (FermionFlag == true)
     {
 #ifdef __64_BITS__
       if (LzMax <= 31)
 	{
-	  IntialSpace = new FermionOnSphereWithSpin(NbrParticles, Lz, LzMax, TotalSz, MemorySpace);
+	  InitialSpace = new FermionOnSphereWithSpin(NbrParticles, Lz, LzMax, TotalSz, MemorySpace);
 	}
       else
 	{
-	  // IntialSpace = new FermionOnSphereUnlimited(NbrParticles, Lz, LzMax, MemorySpace);
+	  // InitialSpace = new FermionOnSphereUnlimited(NbrParticles, Lz, LzMax, MemorySpace);
 	  cout << "Fermions with Spin not defined yet for LzMax > 31"<<endl;
 	  exit(-1);
 	}
 #else
       if (LzMax <= 15)
 	{
-	  IntialSpace = new FermionOnSphereWithSpin(NbrParticles, Lz, LzMax, TotalSz, MemorySpace);
+	  InitialSpace = new FermionOnSphereWithSpin(NbrParticles, Lz, LzMax, TotalSz, MemorySpace);
 	}
       else
 	{
-	  // IntialSpace = new FermionOnSphereUnlimited(NbrParticles, Lz, LzMax, MemorySpace);
+	  // InitialSpace = new FermionOnSphereUnlimited(NbrParticles, Lz, LzMax, MemorySpace);
 	  cout << "Fermions with Spin not defined yet for LzMax > 15, consider using a 64 bit machine!"<<endl;
 	  exit(-1);
 	}
@@ -141,7 +141,7 @@ int main(int argc, char** argv)
     }
   else
     {
-      IntialSpace = new BosonOnSphereWithSpin(NbrParticles, Lz, LzMax, TotalSz);
+      InitialSpace = new BosonOnSphereWithSpin(NbrParticles, Lz, LzMax, TotalSz);
     }
   for (int i = 1; i <= NbrLMinus; ++i)
     {
@@ -175,12 +175,12 @@ int main(int argc, char** argv)
 	{
 	  TargetSpace = new BosonOnSphereWithSpin(NbrParticles, Lz - (2 * i), LzMax, TotalSz);
 	}
-      IntialSpace->SetTargetSpace(TargetSpace);
+      InitialSpace->SetTargetSpace(TargetSpace);
       TargetVector = RealVector(TargetSpace->GetHilbertSpaceDimension());
-      ParticleOnSphereWithSpinLMinusOperator LMinus(IntialSpace, Lz - (2 * i) + 2, LzMax);
+      ParticleOnSphereWithSpinLMinusOperator LMinus(InitialSpace, Lz - (2 * i) + 2, LzMax);
       LMinus.Multiply(InitialVector, TargetVector);
-      delete IntialSpace;
-      IntialSpace = TargetSpace;
+      delete InitialSpace;
+      InitialSpace = TargetSpace;
       InitialVector = TargetVector;
       InitialVector/=InitialVector.Norm();
     }
@@ -200,7 +200,7 @@ int main(int argc, char** argv)
       cout << "error while writing " << OutputName << endl;
       return -1;
     }
-  delete IntialSpace;
+  delete InitialSpace;
   delete [] OutputName;
   return 0;
 }

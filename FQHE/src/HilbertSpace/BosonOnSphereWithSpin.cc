@@ -99,8 +99,8 @@ BosonOnSphereWithSpin::BosonOnSphereWithSpin (int nbrBosons, int totalLz, int lz
   this->MinorsUp = 0;
   this->MinorsDown = 0;
 
-  //  for (int i=0; i<HilbertSpaceDimension; ++i)
-  //    PrintState(cout,i)<<endl;
+//   for (int i=0; i<HilbertSpaceDimension; ++i)
+//     PrintState(cout,i)<<endl;
 
 #ifdef __DEBUG__
   int UsedMemory = 0;
@@ -712,8 +712,8 @@ int BosonOnSphereWithSpin::AduAu (int index, int m, int n, double& coefficient)
 int BosonOnSphereWithSpin::AddAd (int index, int m, int n, double& coefficient)
 {
   int CurrentLzMax = this->StateLzSzMax[index]>>1;
-  int* State = this->StateDescription[index];
-  if ((n > CurrentLzMax) || ((State[n] >> 16) == 0)) // || ((State[n] & 0xffff) == 0)) // shift for up, mask for down
+  int* State = this->StateDescription[index];  
+  if ((n > CurrentLzMax) || ((State[n] & 0xffff) == 0)) // || ((State[n] & 0xffff) == 0)) // shift for up, mask for down
     {
       return 0.0;
     }
@@ -749,7 +749,7 @@ int BosonOnSphereWithSpin::AduAd (int index, int m, int n, double& coefficient)
 {
   int CurrentLzMax = this->StateLzSzMax[index]>>1;
   int* State = this->StateDescription[index];
-  if ((n > CurrentLzMax) || ((State[n] >> 16) == 0)) // || ((State[n] & 0xffff) == 0)) // shift for up, mask for down
+  if ((n > CurrentLzMax) || ((State[n] & 0xffff) == 0)) // || ((State[n] & 0xffff) == 0)) // shift for up, mask for down
     {
       return 0.0;
     }
@@ -819,10 +819,10 @@ int BosonOnSphereWithSpin::AddAu (int index, int m, int n, double& coefficient)
 
 int BosonOnSphereWithSpin::FindStateIndex(int* stateDescription, int lzszmax)
 {
-  //cout << "Searching: ";
-  //PrintState(cout, stateDescription)<<" "<<" lzszmax="<<lzszmax;
+//   cout << "Searching: ";
+//   PrintState(cout, stateDescription)<<" "<<" lzszmax="<<lzszmax;
   int TmpKey = this->GenerateKey(stateDescription, lzszmax);
-  //cout << "key="<<TmpKey<<endl;
+//   cout << "key="<<TmpKey<<endl;
   int Offset;
   if (lzszmax&1)
     Offset=stateDescription[lzszmax>>1]>>16;
@@ -836,6 +836,7 @@ int BosonOnSphereWithSpin::FindStateIndex(int* stateDescription, int lzszmax)
   while (TmpPos2 != TmpPos)
     {
       TmpPos3 = (TmpPos2 + TmpPos) >> 1;
+//       cout << "this->KeyInvertSectorSize["<<Sector<<"] = " << this->KeyInvertSectorSize[Sector] <<", TmpPos3="<<TmpPos3<<endl;
       if (TmpKey < TmpKeyInvertTable[TmpPos3])
 	{
 	  TmpPos2 = TmpPos3 - 1;
@@ -1176,7 +1177,7 @@ void BosonOnSphereWithSpin::CoreGenerateLookUpTable(int dimension, int lzMax, in
   keyInvertSectorSize[CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax] = 1;
   int* TmpKeyInvertTable = keyInvertTable[CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax];
   int* TmpKeyInvertTableNbrIndices = keyInvertTableNbrIndices[CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax];
-  //cout << "keys="<<keys<<", CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax="<<CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax<<" TmpKeyInvertTable="<<TmpKeyInvertTable<<endl;
+  cout << "keys="<<keys<<", CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax="<<CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax<<" TmpKeyInvertTable="<<TmpKeyInvertTable<<endl;
   TmpKeyInvertTable[0] = keys[0];
   TmpKeyInvertTableNbrIndices[0] = 1;
   for (int i = 1; i < dimension; ++i)

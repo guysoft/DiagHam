@@ -87,6 +87,7 @@ int main(int argc, char** argv)
   
   (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-lz", "twice the inital momentum projection for the system", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of lz value to evaluate", -1);
+  (*SystemGroup) += new BooleanOption  ('\n', "negative-lz", "calculate for negative, instead of positive Lz");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
@@ -201,7 +202,8 @@ int main(int argc, char** argv)
 
   int Max = (LzMax * (NbrUp+NbrDown));
   cout << "maximum Lz value = " << Max << endl;
-
+  int LSign=1;
+  if (Manager.GetBoolean("negative-lz")) LSign=-1;
   int  L = 0;
   if ((abs(Max) & 1) != 0)
      L = 1;
@@ -222,7 +224,7 @@ int main(int argc, char** argv)
     {
       double Shift = -10.0;
       ParticleOnSphereWithSpin* Space = 0;
-      Space = (ParticleOnSphereWithSpin*) ParticleManager.GetHilbertSpace(L);
+      Space = (ParticleOnSphereWithSpin*) ParticleManager.GetHilbertSpace(L*LSign);
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
         Memory = Architecture.GetArchitecture()->GetLocalMemory();
@@ -235,7 +237,7 @@ int main(int argc, char** argv)
 	{
 	  if (((SingleDoubleOption*) Manager["l2-factor"])->GetDouble() != 0.0)
 	    {
-	      Hamiltonian = new ParticleOnSphereWithSpinL2Hamiltonian(Space, NbrBosons, LzMax, L, 
+	      Hamiltonian = new ParticleOnSphereWithSpinL2Hamiltonian(Space, NbrBosons, LzMax, L*LSign, 
 								      Architecture.GetArchitecture(),
 								      Manager.GetDouble("l2-factor"),
 						      ((unsigned long)Manager.GetInteger("l2-memory")) << 20);
@@ -246,7 +248,7 @@ int main(int argc, char** argv)
 				   ((unsigned long)Manager.GetInteger("s2-memory")) << 20);
 	    }
 	  else
-	    Hamiltonian = new ParticleOnSphereWithSpinS2Hamiltonian(Space, NbrBosons, LzMax, L, SzTotal,
+	    Hamiltonian = new ParticleOnSphereWithSpinS2Hamiltonian(Space, NbrBosons, LzMax, L*LSign, SzTotal,
 								    Architecture.GetArchitecture(),
 								      Manager.GetDouble("s2-factor"),
 						      ((unsigned long)Manager.GetInteger("s2-memory")) << 20);
@@ -257,9 +259,9 @@ int main(int argc, char** argv)
 								       Architecture.GetArchitecture(), Memory, onDiskCacheFlag, LoadPrecalculationFileName);
 	  
 	  if (((SingleDoubleOption*) Manager["s2-factor"])->GetDouble() != 0.0)
-	    Hamiltonian->AddS2(L, SzTotal, ((SingleDoubleOption*) Manager["s2-factor"])->GetDouble(), ((unsigned long)Manager.GetInteger("s2-memory")) << 20);
+	    Hamiltonian->AddS2(L*LSign, SzTotal, ((SingleDoubleOption*) Manager["s2-factor"])->GetDouble(), ((unsigned long)Manager.GetInteger("s2-memory")) << 20);
 	  if (((SingleDoubleOption*) Manager["l2-factor"])->GetDouble() != 0.0)
-	    Hamiltonian->AddL2(L, SzTotal, ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(), ((unsigned long)Manager.GetInteger("l2-memory")) << 20);
+	    Hamiltonian->AddL2(L*LSign, SzTotal, ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(), ((unsigned long)Manager.GetInteger("l2-memory")) << 20);
 	}
       
       Hamiltonian->ShiftHamiltonian(Shift);
@@ -273,9 +275,9 @@ int main(int argc, char** argv)
 	  EigenvectorName = new char [120];
 	  sprintf (EigenvectorName, "bosons_sphere_su2_%s%s_n_%d_2s_%d_sz_%d_lz_%d",
 		   InteractionName, ExtraTerms,
-		   NbrBosons, LzMax, SzTotal, L);
+		   NbrBosons, LzMax, SzTotal, L*LSign);
 	}
-      QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);
+      QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L*LSign, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);
       MainTaskOperation TaskOperation (&Task);
       TaskOperation.ApplyOperation(Architecture.GetArchitecture());
       delete Hamiltonian;
