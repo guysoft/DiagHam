@@ -231,6 +231,7 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
     {
       for (int i=0; i<NbrMultipletPolarized; ++i)
 	{
+	  cout << "Creating polarized space for Lz="<<PolarizedLz[i]<<endl;
 #ifdef __64_BITS__
 	  if (PolarizedLzMax <= 63)
 #else
@@ -256,10 +257,11 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
 	}
     }
   
-  this->BosonicSpace=new ParticleOnSphereWithSpin*[NbrMultipletBosons];  
+  this->BosonicSpace = new ParticleOnSphereWithSpin*[NbrMultipletBosons];
   for (int i=0; i<NbrMultipletBosons; ++i)
     {
-      this->BosonicSpace[i]=new BosonOnSphereWithSpin(NbrParticles, BosonLz[i], BosonLzMax, BosonSz);      
+      cout << "Creating bosonic space for Lz="<<BosonLz[i]<<endl;
+      this->BosonicSpace[i]=new BosonOnSphereWithSpin(NbrParticles, BosonLz[i], BosonLzMax, BosonSz);
     }
 
   if ((this->BosonL==0)&&(this->PolarizedL==0))
@@ -278,10 +280,12 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
       ClebschGordanCoefficients Clebsch(this->PolarizedL, this->BosonL);
       // count number of relevant couplings
       this->NbrCoupling=0;
+      cout << "Counting relevant couplings: ";
       for (int mP=-this->PolarizedL; mP<=this->PolarizedL; mP+=2)
 	for (int mB=-this->BosonL; mB<=this->BosonL; mB+=2)
 	  if ((mP+mB==this->TotalLz)&&(Clebsch.CarefulGetCoefficient (mP, mB, this->TotalL)))
 	    ++NbrCoupling;
+      cout << NbrCoupling<<endl;
       this->BosonIndex = new int[NbrCoupling];
       this->PolarizedIndex = new int[NbrCoupling];
       this->CouplingForIndex = new double[NbrCoupling];
