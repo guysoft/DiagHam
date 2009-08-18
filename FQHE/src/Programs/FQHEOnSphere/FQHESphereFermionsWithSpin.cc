@@ -371,16 +371,6 @@ int main(int argc, char** argv)
       if (Manager.GetBoolean("project-l2-s2")) ++NbrProjectors;
       Projectors = new AbstractHamiltonian*[NbrProjectors];
       NbrProjectors = 0;
-      if (Manager.GetBoolean("project-l2"))
-	{
-	  AbstractHamiltonian* L2Projector =
-	    new ParticleOnSphereWithSpinL2Hamiltonian(Space, NbrFermions, LzMax, L,
-						      Architecture.GetArchitecture(), 1.0,
-						      ((unsigned long)Manager.GetInteger("l2-memory")) << 20,
-						      onDiskCacheFlag);
-	  L2Projector->ShiftHamiltonian(-0.25*(double)L*(L+2.0));
-	  Projectors[NbrProjectors++]=L2Projector;
-	}
       if (Manager.GetBoolean("project-s2"))
 	{
 	  AbstractHamiltonian* S2Projector =
@@ -391,6 +381,16 @@ int main(int argc, char** argv)
 	  S2Projector->ShiftHamiltonian(-0.25*(double)SzTotal*(SzTotal+2.0));
 	  Projectors[NbrProjectors++]=S2Projector;
 	}
+      if (Manager.GetBoolean("project-l2"))
+	{
+	  AbstractHamiltonian* L2Projector =
+	    new ParticleOnSphereWithSpinL2Hamiltonian(Space, NbrFermions, LzMax, L,
+						      Architecture.GetArchitecture(), 1.0,
+						      ((unsigned long)Manager.GetInteger("l2-memory")) << 20,
+						      onDiskCacheFlag);
+	  L2Projector->ShiftHamiltonian(-0.25*(double)L*(L+2.0));
+	  Projectors[NbrProjectors++]=L2Projector;
+	}      
       if (Manager.GetBoolean("project-l2-s2"))
 	{
 	  AbstractQHEOnSphereWithSpinHamiltonian* L2S2Projector =

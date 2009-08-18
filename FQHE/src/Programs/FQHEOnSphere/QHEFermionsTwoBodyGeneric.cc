@@ -202,6 +202,7 @@ int main(int argc, char** argv)
     }
   for (; L <= Max; L += 2)
     {
+      cout << "Lz="<<L<<endl;
       ParticleOnSphere* Space = (FermionOnSphere*) ParticleManager.GetHilbertSpace(L);
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       AbstractQHEHamiltonian* Hamiltonian = 0;
@@ -291,7 +292,7 @@ int main(int argc, char** argv)
       if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
 	{
 	  EigenvectorName = new char [64];
-	  sprintf (EigenvectorName, "fermions_%s_n_%d_2s_%d_lz_%d", InteractionName, NbrParticles, LzMax, L);
+	  sprintf (EigenvectorName, "fermions_%s%s_n_%d_2s_%d_lz_%d", InteractionName, ExtraTerms, NbrParticles, LzMax, L);
 	}
       
       QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax, Projectors, NbrProjectors);
