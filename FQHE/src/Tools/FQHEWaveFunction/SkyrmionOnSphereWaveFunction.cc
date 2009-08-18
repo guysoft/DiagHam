@@ -224,46 +224,7 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
 	}
     }
   
-  this->PolarizedSpace=new ParticleOnSphere*[NbrMultipletPolarized];
-  for (int i=0; i<NbrMultipletPolarized; ++i)
-    this->PolarizedSpace[i]=NULL;  
-  if (UseExact)
-    {
-      for (int i=0; i<NbrMultipletPolarized; ++i)
-	{
-	  cout << "Creating polarized space for Lz="<<PolarizedLz[i]<<endl;
-#ifdef __64_BITS__
-	  if (PolarizedLzMax <= 63)
-#else
-	    if (PolarizedLzMax <= 31)
-#endif
-	      {	
-		PolarizedSpace[i] = new FermionOnSphere(NbrParticles, PolarizedLz[i], PolarizedLzMax);
-	      }
-	    else
-#ifdef __128_BIT_LONGLONG__
-	      if (PolarizedLzMax <= 126)
-#else
-		if (PolarizedLzMax <= 62)
-#endif
-		  {	    
-		    PolarizedSpace[i] = new FermionOnSphereLong(NbrParticles, PolarizedLz[i], PolarizedLzMax);
-		  }
-		else
-		  {
-		    cout << "States of this polarized Hilbert space cannot be represented in a single word." << endl;
-		    exit(-1);
-		  }
-	}
-    }
   
-  this->BosonicSpace = new ParticleOnSphereWithSpin*[NbrMultipletBosons];
-  for (int i=0; i<NbrMultipletBosons; ++i)
-    {
-      cout << "Creating bosonic space for Lz="<<BosonLz[i]<<endl;
-      this->BosonicSpace[i]=new BosonOnSphereWithSpin(NbrParticles, BosonLz[i], BosonLzMax, BosonSz);
-    }
-
   if ((this->BosonL==0)&&(this->PolarizedL==0))
     {
       this->NbrCoupling=1;
@@ -315,12 +276,66 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
 		  cout << "Require polarized state with angular momentum lz="<<mB<<endl;
 		  exit(-1);
 		}
-	      cout << CouplingForIndex[NbrCoupling] << " * | ("<<this->BosonL<<", "
+	      cout << "Coupling "<<NbrCoupling<<": "<<CouplingForIndex[NbrCoupling] << " * | ("<<this->BosonL<<", "
 		   << BosonLz[BosonIndex[NbrCoupling]]<<")_B, ("<<this->PolarizedL<<", "
-		   << PolarizedLz[PolarizedIndex[NbrCoupling]]<<")_P >"<<endl;
+		   << PolarizedLz[PolarizedIndex[NbrCoupling]]<<")_P >"<<"  (vectors "<<BosonIndex[NbrCoupling]<< "_B"
+		   << " and "<<PolarizedIndex[NbrCoupling] <<"_P)"<< endl;
 	      ++NbrCoupling;
 	    }
     }
+
+  this->PolarizedSpace=new ParticleOnSphere*[NbrMultipletPolarized];
+  for (int i=0; i<NbrMultipletPolarized; ++i)
+    this->PolarizedSpace[i]=NULL;  
+  if (UseExact)
+    {
+      for (int i=0; i<NbrCoupling; ++i)
+	{
+	  cout << "Creating polarized space for Lz="<<PolarizedLz[PolarizedIndex[i]]
+	       <<" at position "<<PolarizedIndex[i]<<endl;
+#ifdef __64_BITS__
+	  if (PolarizedLzMax <= 63)
+#else
+	    if (PolarizedLzMax <= 31)
+#endif
+	      {	
+		PolarizedSpace[PolarizedIndex[i]] =
+		  new FermionOnSphere(NbrParticles, PolarizedLz[PolarizedIndex[i]], PolarizedLzMax);
+	      }
+	    else
+#ifdef __128_BIT_LONGLONG__
+	      if (PolarizedLzMax <= 126)
+#else
+		if (PolarizedLzMax <= 62)
+#endif
+		  {	    
+		    PolarizedSpace[PolarizedIndex[i]] =
+		      new FermionOnSphereLong(NbrParticles, PolarizedLz[PolarizedIndex[i]], PolarizedLzMax);
+		  }
+		else
+		  {
+		    cout << "States of this polarized Hilbert space cannot be represented in a single word." << endl;
+		    exit(-1);
+		  }
+	}
+    }
+  // clear up unnecessary vectors
+  for (int i=0; i<NbrMultipletPolarized; ++i)
+    if (PolarizedSpace[i]==NULL)
+      this->PolarizedState[i]=RealVector();  
+  
+  this->BosonicSpace = new ParticleOnSphereWithSpin*[NbrMultipletBosons];
+  for (int i=0; i<NbrMultipletBosons; ++i)
+    this->BosonicSpace[i] = NULL;
+  for (int i=0; i<NbrCoupling; ++i)
+    {
+      cout << "Creating bosonic space for Lz="<<BosonLz[i]<<" at position "<<BosonIndex[i]<<endl;
+      this->BosonicSpace[BosonIndex[i]]= new BosonOnSphereWithSpin(NbrParticles, BosonLz[BosonIndex[i]], BosonLzMax, BosonSz);
+    }
+  for (int i=0; i<NbrMultipletBosons; ++i)
+    if (BosonicSpace[i]==NULL)
+      this->BosonicState[i]=RealVector();  
+  
   
   this->OneBodyBasisPol = new ParticleOnSphereFunctionBasis(PolarizedLzMax, basisType);
   this->OneBodyBasisBos = new ParticleOnSphereFunctionBasis(BosonLzMax, basisType);
@@ -378,7 +393,8 @@ SkyrmionOnSphereWaveFunction::~SkyrmionOnSphereWaveFunction()
       if (UseExact)
 	{
 	  for (int i=0; i<NbrMultipletPolarized; ++i)
-	    delete this->PolarizedSpace[i];
+	    if (this->PolarizedSpace[i]!=NULL)
+	      delete this->PolarizedSpace[i];
 	}
       delete[] this->PolarizedSpace;
       delete[] this->BosonLz;
@@ -387,7 +403,8 @@ SkyrmionOnSphereWaveFunction::~SkyrmionOnSphereWaveFunction()
       delete[] this->PolarizedIndex;
       delete[] this->CouplingForIndex;
       for (int i=0; i<NbrMultipletBosons; ++i)
-	delete this->BosonicSpace[i];
+	if (this->BosonicSpace[i]!=NULL)
+	  delete this->BosonicSpace[i];
       delete[] this->BosonicSpace;
       delete[] this->BosonicState;
       delete[] this->PolarizedState;
