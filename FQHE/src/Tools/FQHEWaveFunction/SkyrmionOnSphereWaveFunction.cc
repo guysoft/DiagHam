@@ -65,6 +65,12 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
 
   this->TotalL=manager.GetInteger("skyrmionL");
   this->TotalLz=manager.GetInteger("skyrmion-lz");
+
+  if (abs(this->TotalLz)>this->TotalL)
+    {
+      cout << "Invalid TotalLz: require |Lz| <= L"<<endl;
+      exit(-1);
+    }  
   
   this->Flag.Initialize();  
 
@@ -241,7 +247,8 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
       ClebschGordanCoefficients Clebsch(this->PolarizedL, this->BosonL);
       // count number of relevant couplings
       this->NbrCoupling=0;
-      cout << "Counting relevant couplings: ";
+      cout << "Coupling "<<this->PolarizedL << "_P + "<<this->BosonL<<"_B"<<" = "<<this->TotalL<<"_tot at Lz_tot = "
+	   << this->TotalLz << " -- relevant couplings: ";
       for (int mP=-this->PolarizedL; mP<=this->PolarizedL; mP+=2)
 	for (int mB=-this->BosonL; mB<=this->BosonL; mB+=2)
 	  if ((mP+mB==this->TotalLz)&&(Clebsch.CarefulGetCoefficient (mP, mB, this->TotalL)!=0.0))
@@ -649,7 +656,7 @@ void SkyrmionOnSphereWaveFunction::AddSkyrmionOptionGroup(OptionManager &manager
   manager+=SkyrmionGroup;
   
   (*SkyrmionGroup) += new MultipleStringOption  ('\n', "polarized-state", "file name of polarized fermionic reference wave function (if omitted using analytic function)");
-  (*SkyrmionGroup) += new SingleIntegerOption  ('L', "polarizedL", "twice the angular momentum of the polarized state", 0);
+  (*SkyrmionGroup) += new SingleIntegerOption  ('L', "polarizedL", "twice the angular momentum of the polarized state", 0, true, 0);
   (*SkyrmionGroup) += new SingleIntegerOption  ('l', "polarized-lzmax", "total number of flux quanta (0 if it has to be guessed from input file name)", 0);  
   (*SkyrmionGroup) += new MultipleIntegerOption  ('z', "polarized-lz", "twice the total lz value of the polarized vector(s) (0 if it has to be guessed from input file name)", ',',',',"0");
   (*SkyrmionGroup) += new MultipleStringOption  ('\n', "bosonic-state", "file name of spinful bosonic part of wave function");
