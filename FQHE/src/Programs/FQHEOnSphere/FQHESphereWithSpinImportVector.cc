@@ -285,9 +285,9 @@ int main(int argc, char** argv)
 		cout << "Need to have 2S=20 flux for this basis"<<endl;
 		exit(1);
 	      }
-	    if (Sz!=1)
+	    if (Sz!=-1)
 	      {
-		cout << "Need to have Sz=1 for this basis"<<endl;
+		cout << "Need to have Sz=-1 for this basis"<<endl;
 		exit(1);
 	      }
 	    int Dimension = Space->GetHilbertSpaceDimension();
@@ -471,21 +471,21 @@ void calcArekN11_2S20(int*Map, double *Signs, ParticleOnSphereWithSpin* Space, i
   unsigned long StateDesc;
   double Coeff,TmpCoeff;
 
-  for (int k06u=0; k06u<=N_phi; ++k06u)
-    for (int k05u=0; k05u<k06u; ++k05u)
-      for (int k04u=0; k04u<k05u; ++k04u)
-	for (int k03u=0; k03u<k04u; ++k03u)
-	  for (int k02u=0; k02u<k03u; ++k02u)
-	    for (int k01u=0; k01u<k02u; ++k01u)
-	      
-	      for (int k05d=0; k05d<=N_phi; ++k05d)
+  for (int k05u=0; k05u<=N_phi; ++k05u)
+    for (int k04u=0; k04u<k05u; ++k04u)
+      for (int k03u=0; k03u<k04u; ++k03u)
+	for (int k02u=0; k02u<k03u; ++k02u)
+	  for (int k01u=0; k01u<k02u; ++k01u)
+
+	    for (int k06d=0; k06d<=N_phi; ++k06d)
+	      for (int k05d=0; k05d<k06d; ++k05d)
 		for (int k04d=0; k04d<k05d; ++k04d)
 		  for (int k03d=0; k03d<k04d; ++k03d)
 		    for (int k02d=0;  k02d<k03d; ++k02d)
 		      for (int k01d=0; k01d<k02d; ++k01d)
 			{
-			  int ksum=k01u+k02u+k03u+k04u+k05u+k06u
-			    +k01d+k02d+k03d+k04d+k05d;
+			  int ksum=k01u+k02u+k03u+k04u+k05u
+			    +k01d+k02d+k03d+k04d+k05d+k06d;
 
 			  if(2*ksum-N*N_phi == Lz_total)
 			    {
@@ -500,9 +500,7 @@ void calcArekN11_2S20(int*Map, double *Signs, ParticleOnSphereWithSpin* Space, i
 			    StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k04u, 1, TmpCoeff);
 			    Coeff*=TmpCoeff;
 			    StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k05u, 1, TmpCoeff);
-			    Coeff*=TmpCoeff;
-			    StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k06u, 1, TmpCoeff);
-			    Coeff*=TmpCoeff;
+			    Coeff*=TmpCoeff;			    
 			    
 
 			    StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k01d, 0, TmpCoeff);
@@ -514,6 +512,8 @@ void calcArekN11_2S20(int*Map, double *Signs, ParticleOnSphereWithSpin* Space, i
 			    StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k04d, 0, TmpCoeff);
 			    Coeff*=TmpCoeff;
 			    StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k05d, 0, TmpCoeff);
+			    Coeff*=TmpCoeff;
+			    StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k06d, 0, TmpCoeff);
 			    Coeff*=TmpCoeff;
 			    
 			    if ((Dim>0)&&(i >= Dim))
