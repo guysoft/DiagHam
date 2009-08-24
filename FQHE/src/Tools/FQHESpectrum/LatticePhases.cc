@@ -184,11 +184,13 @@ LatticePhases::LatticePhases()
 	  this->GaugeAyx*=this->AbsBField;
 	  this->GaugeAyy*=this->AbsBField;
 	  this->AbsBField=1.0;
-	  
 	}
-      cout << "Gauge used : A= ("<<GaugeAxx<<"*x +"<<GaugeAyx<<"*y) e_x + ("<<GaugeAxy
-	   <<"*x +"<<GaugeAyy<<"*y) e_y"<<endl;
+      cout << "Gauge used : A= ("<<GaugeAxx<<"*x +"<<GaugeAyx<<"*y) e_x"
+	   << " + ("<<GaugeAxy << "*x +"<<GaugeAyy<<"*y) e_y, "
+	   << "field strength B="<<this->AbsBField<<endl;
     }
+	cout << "Attention, the code is currently not functional for gauges involving both Axy and Ayx!"<<endl;
+	
   for (int i=0; i<Dimension; ++i)
     cout << "LatticeVector["<<i<<"]="<<endl<<LatticeVectors[i];
   for (int i=0; i<NbrSitesPerCell; ++i)

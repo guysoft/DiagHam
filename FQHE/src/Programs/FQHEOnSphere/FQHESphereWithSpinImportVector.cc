@@ -28,6 +28,7 @@ using std::bitset;
 
 void calcArekN12_2S22(int*Map, double *Signs, ParticleOnSphereWithSpin* Space, int N=12, int N_phi=22,int Lz_total=0, int Dim=198472577);
 void calcArekN10_2S18(int*Map, double *Signs, ParticleOnSphereWithSpin* Space, int N=10, int N_phi=18,int Lz_total=0, int Dim=3472230);
+void calcArekN11_2S20(int*Map, double *Signs, ParticleOnSphereWithSpin* Space, int N=11, int N_phi=20,int Lz_total=4, int Dim=0);
 void calcArekN8_2S14(int*Map, double *Signs, ParticleOnSphereWithSpin* Space, int N=8, int N_phi=14,int Lz_total=0, int Dim=67189);
 
 int main(int argc, char** argv)
@@ -45,7 +46,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption ('s', "state", "vector to import in ascii format");
   (*SystemGroup) += new SingleStringOption ('r', "raw-state", "vector to import in FORTRAN binary format");
   (*SystemGroup) += new SingleStringOption ('b', "basis", "description of basis in which vector is formatted (none = standard basis)");
-  (*SystemGroup) += new SingleIntegerOption ('c', "coded-basis", "use internally coded basis (1 = A. Wojs 12@22, 2 = A. Wojs 10@18, 3 = A. Wojs 8@14)");
+  (*SystemGroup) += new SingleIntegerOption ('c', "coded-basis", "use internally coded basis (1 = A. Wojs 12@22, 2 = A. Wojs 10@18, 3 = A. Wojs 8@14, 4 = A. Wojs 11@20)");
   (*SystemGroup) += new SingleIntegerOption ('z', "lz-value", "twice the total lz value", 0);
   (*OutputGroup) += new SingleStringOption ('o', "output-state", "use this name for the output vector state instead of standard terminology");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -271,6 +272,28 @@ int main(int argc, char** argv)
 	    calcArekN8_2S14(Map, Signs, (ParticleOnSphereWithSpin*)Space, NbrParticles, LzMax, Lz, Dimension);
 	    break;
 	  }
+	case 4:
+	  {
+	    cout << "Using fixed basis for N=11, 2S=20"<<endl;
+	    if (NbrParticles!=11)
+	      {
+		cout << "Need to have N=11 particles for this basis"<<endl;
+		exit(1);
+	      }
+	    if (LzMax!=20)
+	      {
+		cout << "Need to have 2S=20 flux for this basis"<<endl;
+		exit(1);
+	      }
+	    if (Sz!=1)
+	      {
+		cout << "Need to have Sz=1 for this basis"<<endl;
+		exit(1);
+	      }
+	    int Dimension = Space->GetHilbertSpaceDimension();
+	    calcArekN11_2S20(Map, Signs, (ParticleOnSphereWithSpin*)Space, NbrParticles, LzMax, Lz, Dimension);
+	    break;
+	  }
 	default:
 	  {
 	    cout << "Undefined basis!"<<endl;
@@ -432,6 +455,89 @@ void calcArekN12_2S22(int*Map, double *Signs, ParticleOnSphereWithSpin* Space, i
 
 /************************************************************************/
 
+
+/**********************************************************************
+c PARAMETERS
+c     N=11
+c     lT=20
+c     MT=4
+c     numd=input
+**********************************************************************/
+
+
+void calcArekN11_2S20(int*Map, double *Signs, ParticleOnSphereWithSpin* Space, int N, int N_phi,int Lz_total, int Dim)
+{
+  int i=0;
+  unsigned long StateDesc;
+  double Coeff,TmpCoeff;
+
+  for (int k06u=0; k06u<=N_phi; ++k06u)
+    for (int k05u=0; k05u<k06u; ++k05u)
+      for (int k04u=0; k04u<k05u; ++k04u)
+	for (int k03u=0; k03u<k04u; ++k03u)
+	  for (int k02u=0; k02u<k03u; ++k02u)
+	    for (int k01u=0; k01u<k02u; ++k01u)
+	      
+	      for (int k05d=0; k05d<=N_phi; ++k05d)
+		for (int k04d=0; k04d<k05d; ++k04d)
+		  for (int k03d=0; k03d<k04d; ++k03d)
+		    for (int k02d=0;  k02d<k03d; ++k02d)
+		      for (int k01d=0; k01d<k02d; ++k01d)
+			{
+			  int ksum=k01u+k02u+k03u+k04u+k05u+k06u
+			    +k01d+k02d+k03d+k04d+k05d;
+
+			  if(2*ksum-N*N_phi == Lz_total)
+			    {
+			    Coeff=1.0;
+			    StateDesc=0x0ul;
+			    StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k01u, 1, TmpCoeff);
+			    Coeff*=TmpCoeff;
+			    StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k02u, 1, TmpCoeff);
+			    Coeff*=TmpCoeff;
+			    StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k03u, 1, TmpCoeff);
+			    Coeff*=TmpCoeff;
+			    StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k04u, 1, TmpCoeff);
+			    Coeff*=TmpCoeff;
+			    StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k05u, 1, TmpCoeff);
+			    Coeff*=TmpCoeff;
+			    StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k06u, 1, TmpCoeff);
+			    Coeff*=TmpCoeff;
+			    
+
+			    StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k01d, 0, TmpCoeff);
+			    Coeff*=TmpCoeff;
+			    StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k02d, 0, TmpCoeff);
+			    Coeff*=TmpCoeff;
+			    StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k03d, 0, TmpCoeff);
+			    Coeff*=TmpCoeff;
+			    StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k04d, 0, TmpCoeff);
+			    Coeff*=TmpCoeff;
+			    StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k05d, 0, TmpCoeff);
+			    Coeff*=TmpCoeff;
+			    
+			    if ((Dim>0)&&(i >= Dim))
+			      {
+				cout << "Error generating Map: size overflow!"<<endl;
+				exit(1);
+			      }
+			    Map[i]=((ParticleOnSphereWithSpin*)Space)->CarefulFindStateIndex(StateDesc,-1);
+			    if ((Map[i]<0)||(Map[i]>Space->GetHilbertSpaceDimension()))
+			      {
+				cout << "Problem with state ["<<i<<"] mapped to "<<Map[i]<<endl;
+				Map[i]=0;
+			      }				
+			    Signs[i]=Coeff;
+			    ++i;
+			  }
+		      }
+  
+  if((Dim>0)&&(i != Dim))
+    {
+      printf("wrong numd");
+      exit(1);
+    }
+}
 
 /**********************************************************************
 c PARAMETERS
