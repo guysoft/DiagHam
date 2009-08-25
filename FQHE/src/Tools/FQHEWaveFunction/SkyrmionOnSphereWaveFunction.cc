@@ -124,13 +124,13 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
 	    }
 	  if (PolarizedParticles!=nbrParticles)
 	    {
-	      cout << "Error: polarized and exact state have to have the same number of particles";
+	      cout << "Error: polarized and exact state have to have the same number of particles"<<endl;
 	      exit(-1);
 	    }
       
 	  if (PolarizedLzMax>totalLzMax)
 	    {
-	      cout << "Error: polarized state has to be at a lower flux than the exact state";
+	      cout << "Error: polarized state has to be at a lower flux than the exact state"<<endl;
 	      exit(-1);
 	    }
       
@@ -150,7 +150,7 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
     {
       if (PolarizedLzMax>totalLzMax)
 	{
-	  cout << "Error: polarized state has to be at a lower flux than the exact state";
+	  cout << "Error: polarized state has to be at a lower flux than the exact state"<<endl;
 	  exit(-1);
 	}
     }
@@ -160,7 +160,7 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
   this->BosonLzMax = 0;
   this->BosonLz = manager.GetIntegers("bosonic-lz",NbrMultipletBosons);
   this->BosonL = manager.GetInteger("bosonicL");
-  this->BosonSz = 0;
+  this->BosonSz = manager.GetInteger("bosonic-sz");
   bool SzSymmetrizedBasis = false;
   bool SzMinusParity = false;
   bool LzSymmetrizedBasis = false;
@@ -188,7 +188,7 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
 
       if (NbrBosons!=nbrParticles)
 	{
-	  cout << "Error: bosonic and exact state have to have the same number of particles";
+	  cout << "Error: bosonic and exact state have to have the same number of particles"<<endl;
 	  exit(-1);
 	}
   
@@ -196,7 +196,7 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
 	BosonLzMax = totalLzMax-PolarizedLzMax;
       else if (BosonLzMax!=totalLzMax-PolarizedLzMax)
 	{
-	  cout << "Error: total flux has to match: BosonLzMax == TotalLzMax-PolarizedLzMax";
+	  cout << "Error: total flux has to match: BosonLzMax == TotalLzMax-PolarizedLzMax"<<endl;
 	  exit(-1);
 	}
       
@@ -206,7 +206,7 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
 	    BosonLz[0] = totalLz;
 	  else if (BosonLz[0]!=totalLz)
 	    {
-	      cout << "Error: total angular momentum has to match: BosonLz == TotalLz";
+	      cout << "Error: total angular momentum has to match: BosonLz == TotalLz"<<endl;
 	      exit(-1);
 	    }
 	}
@@ -215,7 +215,7 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
 	BosonSz = totalSz;
       else if (BosonSz!=totalSz)
 	{
-	  cout << "Error: total spin has to match: BosonSz == TotalSz";
+	  cout << "Error: total spin has to match: BosonSz == TotalSz ("<<BosonSz<<" vs "<<TotalSz<<")"<<endl;
 	  exit(-1);
 	}
       
@@ -661,6 +661,7 @@ void SkyrmionOnSphereWaveFunction::AddSkyrmionOptionGroup(OptionManager &manager
   (*SkyrmionGroup) += new MultipleIntegerOption  ('z', "polarized-lz", "twice the total lz value of the polarized vector(s) (0 if it has to be guessed from input file name)", ',',',',"0");
   (*SkyrmionGroup) += new MultipleStringOption  ('\n', "bosonic-state", "file name of spinful bosonic part of wave function");
   (*SkyrmionGroup) += new MultipleIntegerOption  ('\n', "bosonic-lz", "twice the total lz value of the bosonic vector(s) (0 if it has to be guessed from input file name)", ',',',',"0");
+  (*SkyrmionGroup) += new MultipleIntegerOption  ('\n', "bosonic-sz", "twice the total sz value of the bosonic vector(s) (0 if it has to be guessed from input file name)", ',',',',"0");
   (*SkyrmionGroup) += new SingleIntegerOption  ('\n', "bosonicL", "twice the angular momentum of the polarized state", 0);
   (*SkyrmionGroup) += new SingleIntegerOption  ('\n', "skyrmionL", "twice the angular momentum of the skyrmion trial state", 0);
   (*SkyrmionGroup) += new SingleIntegerOption  ('\n', "skyrmion-lz", "twice the angular momentum projection Lz of the skyrmion trial state", 0);
