@@ -661,7 +661,7 @@ void SkyrmionOnSphereWaveFunction::AddSkyrmionOptionGroup(OptionManager &manager
   (*SkyrmionGroup) += new MultipleIntegerOption  ('z', "polarized-lz", "twice the total lz value of the polarized vector(s) (0 if it has to be guessed from input file name)", ',',',',"0");
   (*SkyrmionGroup) += new MultipleStringOption  ('\n', "bosonic-state", "file name of spinful bosonic part of wave function");
   (*SkyrmionGroup) += new MultipleIntegerOption  ('\n', "bosonic-lz", "twice the total lz value of the bosonic vector(s) (0 if it has to be guessed from input file name)", ',',',',"0");
-  (*SkyrmionGroup) += new MultipleIntegerOption  ('\n', "bosonic-sz", "twice the total sz value of the bosonic vector(s) (0 if it has to be guessed from input file name)", ',',',',"0");
+  (*SkyrmionGroup) += new SingleIntegerOption  ('\n', "bosonic-sz", "twice the total sz value of the bosonic vector(s) (0 if it has to be guessed from input file name)", 0);
   (*SkyrmionGroup) += new SingleIntegerOption  ('\n', "bosonicL", "twice the angular momentum of the polarized state", 0);
   (*SkyrmionGroup) += new SingleIntegerOption  ('\n', "skyrmionL", "twice the angular momentum of the skyrmion trial state", 0);
   (*SkyrmionGroup) += new SingleIntegerOption  ('\n', "skyrmion-lz", "twice the angular momentum projection Lz of the skyrmion trial state", 0);
