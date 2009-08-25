@@ -215,7 +215,7 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
 	BosonSz = totalSz;
       else if (BosonSz!=totalSz)
 	{
-	  cout << "Error: total spin has to match: BosonSz == TotalSz ("<<BosonSz<<" vs "<<TotalSz<<")"<<endl;
+	  cout << "Error: total spin has to match: BosonSz == TotalSz ("<<BosonSz<<" vs "<<totalSz<<")"<<endl;
 	  exit(-1);
 	}
       
