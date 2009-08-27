@@ -74,6 +74,7 @@ BasicBlockLanczosAlgorithm::BasicBlockLanczosAlgorithm(AbstractArchitecture* arc
   this->NbrEigenvalue = nbrEigenvalue;
   if ((this->MaximumNumberIteration % this->BlockSize) != 0)
     this->MaximumNumberIteration = ((this->MaximumNumberIteration / this->BlockSize) + 1) * this->BlockSize;
+  cout << "this->MaximumNumberIteration " << this->MaximumNumberIteration << endl;
   this->DiskFlag = diskFlag;
   this->ResumeDiskFlag = resumeDiskFlag;
   this->LanczosVectors = new RealVector [3 * this->BlockSize];
@@ -199,6 +200,10 @@ void BasicBlockLanczosAlgorithm::InitializeLanczosAlgorithm()
       this->Index = 0;
       this->ReducedMatrix.Resize(0, 0);
     }
+  else
+    {
+      this->ReadState();
+    }
 }
   
 // initialize Lanczos algorithm with a given vector
@@ -242,6 +247,10 @@ void BasicBlockLanczosAlgorithm::InitializeLanczosAlgorithm(const Vector& vector
 	  delete[] TmpVectorName;	  
 	}
       this->ReducedMatrix.Resize(0, 0);
+    }
+  else
+    {
+      this->ReadState();
     }
 }
 
@@ -294,6 +303,10 @@ void BasicBlockLanczosAlgorithm::InitializeLanczosAlgorithm(Vector* vectors, int
 	}
       this->Index = 0;
       this->ReducedMatrix.Resize(0, 0);
+    }
+  else
+    {
+      this->ReadState();
     }
 }
 
@@ -596,6 +609,17 @@ void BasicBlockLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter)
 	    }
 	  this->ReorthogonalizeVectors(&(this->LanczosVectors[2 * this->BlockSize]), this->BlockSize, this->ReducedMatrix, 
 				       NewVectorPosition - this->BlockSize, NewVectorPosition);  
+	  if (this->DiskFlag == true)
+	    {
+	      char* TmpVectorName = new char [256];
+	      for (int k = 0; k < this->BlockSize; ++k)
+		{
+		  sprintf(TmpVectorName, "vector.%d", (this->Index * this->BlockSize) + k);
+		  this->LanczosVectors[(2 * this->BlockSize) + k].WriteVector(TmpVectorName);
+		}	  
+	      delete[] TmpVectorName;
+	      this->WriteState();
+	    }
 	}
       else
 	{
@@ -603,19 +627,14 @@ void BasicBlockLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter)
 	}
       if (this->DiskFlag == true)
 	{
-	  char* TmpVectorName = new char [256];
 	  for (int k = 0; k < this->BlockSize; ++k)
 	    {
-	      sprintf(TmpVectorName, "vector.%d", (this->Index * this->BlockSize) + k);
-	      this->LanczosVectors[(2 * this->BlockSize) + k].WriteVector(TmpVectorName);
 	      RealVector TmpVector = this->LanczosVectors[k];
 	      this->LanczosVectors[k] = this->LanczosVectors[k + this->BlockSize];
 	      this->LanczosVectors[k + this->BlockSize] = this->LanczosVectors[k + (2 * this->BlockSize)];
 	      this->LanczosVectors[k + (2 * this->BlockSize)] = TmpVector;
 	      this->LanczosVectors[k] = RealVector();
 	    }
-	  delete[] TmpVectorName;
-	  this->WriteState();
 	}
       else
 	{
@@ -789,6 +808,7 @@ bool BasicBlockLanczosAlgorithm::ReadState()
   ReadLittleEndian(File, this->MaximumNumberIteration);  
   int TmpDimension;
   ReadLittleEndian(File, TmpDimension);
+  cout << this->Index << " " << this->NbrEigenvalue << " " << TmpDimension << endl;
   this->ReducedMatrix.Resize(TmpDimension, TmpDimension);
   int TwiceBlockSize = 2 * this->BlockSize;
   int TmpMax = TmpDimension - TwiceBlockSize;
@@ -803,7 +823,12 @@ bool BasicBlockLanczosAlgorithm::ReadState()
 	ReadLittleEndian(File, this->ReducedMatrix(i, j));
     }  
   File.close();  
+  cout << this->Index << " " << this->NbrEigenvalue << " " << TmpDimension << " " << endl;
+  for (int k = 1; k < TmpDimension; ++k)
+    cout << this->ReducedMatrix(k - 1,k) << "   ";
+  cout << endl;
   char* TmpVectorName = new char [256];
+  this->Index -= 2;
   for (int k = 0; k < this->BlockSize; ++k)
     {
       sprintf(TmpVectorName, "vector.%d", ((this->Index * this->BlockSize) + k));
@@ -813,6 +838,7 @@ bool BasicBlockLanczosAlgorithm::ReadState()
       sprintf(TmpVectorName, "vector.%d", (((this->Index + 2) * this->BlockSize) + k));
       this->LanczosVectors[k + (this->BlockSize * 2)].ReadVector(TmpVectorName);
     }
+  this->Index += 2;
   delete[] TmpVectorName;
   return true;
 }
@@ -832,6 +858,10 @@ bool BasicBlockLanczosAlgorithm::WriteState()
   WriteLittleEndian(File, this->MaximumNumberIteration);  
   int TmpDimension = this->ReducedMatrix.GetNbrRow();
   WriteLittleEndian(File, TmpDimension);
+  cout << this->Index << " " << this->NbrEigenvalue << " " << TmpDimension << " " <<endl;
+  for (int k = 1; k < TmpDimension; ++k)
+    cout << this->ReducedMatrix(k - 1,k) << "   ";
+  cout << endl;
   int TwiceBlockSize = 2 * this->BlockSize;
   int TmpMax = TmpDimension - TwiceBlockSize;
   for (int i = 0; i < TmpMax; ++i)    

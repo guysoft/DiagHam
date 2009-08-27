@@ -54,6 +54,7 @@ class BosonOnTorus :  public ParticleOnTorus
   int MomentumConstraint;
   // index of the momentum orbit
   bool MomentumConstraintFlag;
+  int GCDMaxMomentum;
 
   // array describing each state
   int** StateDescription;

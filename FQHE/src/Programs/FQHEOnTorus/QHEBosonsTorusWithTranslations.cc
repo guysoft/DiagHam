@@ -193,23 +193,23 @@ int main(int argc, char** argv)
 
   int MomentumModulo = FindGCD(NbrBosons, MaxMomentum);
   //  MomentumModulo = 1;
-  for (int x = 0; x < MomentumModulo; ++x)
-    for (int y = 0; y < MomentumModulo; ++y)
-    {     
-      cout << "----------------------------------------------------------------" << endl;
-      cout << " Ratio = " << XRatio << endl;
-//      BosonOnTorus TotalSpace (NbrBosons, MaxMomentum, y);
-      BosonOnTorusWithMagneticTranslations TotalSpace2 (NbrBosons, MaxMomentum, x, y);
-      cout << " Total Hilbert space dimension = " << TotalSpace2.GetHilbertSpaceDimension() << endl;
-      cout << "momentum = (" << x << "," << y << ")" << endl;
-//       for (int i = 0; i < TotalSpace2.GetHilbertSpaceDimension(); ++i)
-// 	{
-// 	  cout << i << " = ";
-// 	  TotalSpace2.PrintState(cout, i) << endl;
-// 	}
-      cout << endl << endl;
-      }
-  return 0;
+//   for (int x = 0; x < MomentumModulo; ++x)
+//     for (int y = 0; y < MomentumModulo; ++y)
+//     {     
+//       cout << "----------------------------------------------------------------" << endl;
+//       cout << " Ratio = " << XRatio << endl;
+// //      BosonOnTorus TotalSpace (NbrBosons, MaxMomentum, y);
+//       BosonOnTorusWithMagneticTranslations TotalSpace2 (NbrBosons, MaxMomentum, x, y);
+//       cout << " Total Hilbert space dimension = " << TotalSpace2.GetHilbertSpaceDimension() << endl;
+//       cout << "momentum = (" << x << "," << y << ")" << endl;
+// //       for (int i = 0; i < TotalSpace2.GetHilbertSpaceDimension(); ++i)
+// // 	{
+// // 	  cout << i << " = ";
+// // 	  TotalSpace2.PrintState(cout, i) << endl;
+// // 	}
+//       cout << endl << endl;
+//       }
+//   return 0;
   for (int x = 0; x < MomentumModulo; ++x)
     for (int y = 0; y < MomentumModulo; ++y)
     {     

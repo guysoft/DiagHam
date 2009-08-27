@@ -34,6 +34,7 @@
 #include "QuantumNumber/PeriodicMomentumQuantumNumber.h"
 #include "MathTools/FactorialCoefficient.h"
 #include "HilbertSpace/SubspaceSpaceConverter.h"
+#include "MathTools/IntegerAlgebraTools.h"
 
 #include <math.h>
 
@@ -91,6 +92,7 @@ BosonOnTorus::BosonOnTorus (int nbrBosons, int maxMomentum, int momentumConstrai
   this->NbrLzValue = this->MaxMomentum + 1;
   this->MomentumConstraint = momentumConstraint;
   this->MomentumConstraintFlag = true;
+  this->GCDMaxMomentum = FindGCD(this->NbrBosons, this->MaxMomentum);
 
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->MaxMomentum);
   cout << "dim = " << this->HilbertSpaceDimension << endl;

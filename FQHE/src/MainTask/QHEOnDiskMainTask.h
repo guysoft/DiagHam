@@ -118,6 +118,10 @@ class QHEOnDiskMainTask: public AbstractMainTask
 
  public:
 
+  // default constructor
+  //
+  QHEOnDiskMainTask ();
+
   // constructor
   //  
   // options = pointer to the options managers containing all running options

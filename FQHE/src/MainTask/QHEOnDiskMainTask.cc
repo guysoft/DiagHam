@@ -75,6 +75,13 @@ using std::endl;
 using std::ofstream;
 
 
+// default constructor
+//
+
+QHEOnDiskMainTask::QHEOnDiskMainTask ()
+{
+}
+
 // constructor
 //  
 // options = pointer to the options managers containing all running options

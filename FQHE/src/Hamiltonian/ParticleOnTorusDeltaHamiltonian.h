@@ -83,21 +83,7 @@ class ParticleOnTorusDeltaHamiltonian : public AbstractQHEOnTorusHamiltonian
   // shift = shift value
   void ShiftHamiltonian (double shift);
 
-  // Output Stream overload
-  //
-  // Str = reference on output stream
-  // H = Hamiltonian to print
-  // return value = reference on output stream
-  friend ostream& operator << (ostream& Str, ParticleOnTorusDeltaHamiltonian& H);
-
-  // Mathematica Output Stream overload
-  //
-  // Str = reference on Mathematica output stream
-  // H = Hamiltonian to print
-  // return value = reference on output stream
-  friend MathematicaOutput& operator << (MathematicaOutput& Str, ParticleOnTorusDeltaHamiltonian& H);
-
- private:
+ protected:
  
   // evaluate all interaction factors
   //   
@@ -111,28 +97,6 @@ class ParticleOnTorusDeltaHamiltonian : public AbstractQHEOnTorusHamiltonian
   // m4 = fourth index
   // return value = numerical coefficient
   double EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4);
-
-  // evaluate Wigner crystal energy per particle
-  //
-  // return value = Wigner crystal energy per particle
-  double EvaluateWignerCrystalEnergy ();
-
-  // evaluate Misra function (integral of t^n exp (-xt) between 1 and +inf)
-  //
-  // n = index of the Misra function
-  // x = point where the function has to be evaluated (> 0)
-  // return value = value of the n-Misra function at x
-  double MisraFunction (double n, double x);
-
-  // evaluate part of the integral needed in the Misra function (integral of t^n exp (-xt) between min and max)
-  //
-  // n = index of the Misra function
-  // x = point where the function has to be evaluated (> 0)
-  // min = lower bound of the integral
-  // max = upper bound of the integral
-  // nbrSubdivision = number of subdivision used for the integral
-  // return value = value of the integral
-  double PartialMisraFunction (double n, double x, double min, double max, int nbrSubdivision);
 
 };
 

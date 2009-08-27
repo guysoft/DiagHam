@@ -75,9 +75,7 @@ ParticleOnTorusDeltaHamiltonian::ParticleOnTorusDeltaHamiltonian(ParticleOnTorus
   this->FastMultiplicationFlag = false;
   this->Ratio = ratio;
   this->InvRatio = 1.0 / ratio;
-  double WignerEnergy = 0.0;//his->EvaluateWignerCrystalEnergy() / 2.0;
   this->Architecture = architecture;
-  cout << "Wigner Energy = " << WignerEnergy << endl;
   this->EvaluateInteractionFactors();
   this->EnergyShift = 0.0;
   if (precalculationFileName == 0)
@@ -160,6 +158,7 @@ void ParticleOnTorusDeltaHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hil
 
 void ParticleOnTorusDeltaHamiltonian::ShiftHamiltonian (double shift)
 {
+  this->EnergyShift = shift;
 }
   
 // evaluate all interaction factors
@@ -339,7 +338,7 @@ double ParticleOnTorusDeltaHamiltonian::EvaluateInteractionCoefficient(int m1, i
 	}
       else
 	{
-	  Coefficient = 0.0;
+	  Coefficient = 1.0;
 	  Precision = 1.0;
 	}
       while ((fabs(Coefficient) + Precision) != fabs(Coefficient))
@@ -365,7 +364,7 @@ double ParticleOnTorusDeltaHamiltonian::EvaluateInteractionCoefficient(int m1, i
 	}
       else
 	{
-	  Coefficient = 0.0;
+	  Coefficient = 1.0;
 	  Precision = 1.0;
 	}
       while ((fabs(Coefficient) + Precision) != fabs(Coefficient))
@@ -379,160 +378,5 @@ double ParticleOnTorusDeltaHamiltonian::EvaluateInteractionCoefficient(int m1, i
       N2 -= this->MaxMomentum;
     }
   return (Sum / (4.0 * M_PI * this->MaxMomentum));
-}
-
-// evaluate Wigner crystal energy per particle
-//
-// return value = Wigner crystal energy per particle
-
-double ParticleOnTorusDeltaHamiltonian::EvaluateWignerCrystalEnergy ()
-{
-  double TmpRatio = M_PI * this->Ratio;
-  double TmpInvRatio = M_PI * this->InvRatio;
-  double Energy = this->MisraFunction(-0.5, TmpRatio);
-  double Precision = Energy;
-  int L1 = 2;
-  while ((Energy + Precision) > Energy)
-    {
-      Precision = this->MisraFunction(-0.5, TmpRatio * L1 * L1);
-      Energy += Precision;
-      ++L1;
-    }
-  Energy *= 2.0;
-  int L2 = 1;
-  double PartialEnergy = Energy;
-  while ((PartialEnergy + Energy) > Energy)
-    {
-      PartialEnergy = 2.0 * this->MisraFunction(-0.5, TmpInvRatio * L2 * L2);
-      Precision = PartialEnergy;
-      L1 = 1;
-      while (((PartialEnergy + Precision) > PartialEnergy))// && ((fabs(PartialEnergy - Precision) + Energy) > Energy))
-	{
-	  Precision = 4.0 * this->MisraFunction(-0.5, TmpRatio * L1 * L1 + TmpInvRatio * L2 * L2);
-	  PartialEnergy += Precision;
-	  ++L1;	  
-	}
-      Energy += PartialEnergy;
-      ++L2;
-    }
-  return 2.0 * (Energy - 2.0) / sqrt (2.0 * M_PI * this->MaxMomentum);
-}
-
-// evaluate Misra function (integral of t^n exp (-xt) between 1 and +inf)
-//
-// n = index of the Misra function
-// x = point where the function has to be evaluated (> 0)
-// return value = value of the n-Misra function at x
-
-double ParticleOnTorusDeltaHamiltonian::MisraFunction (double n, double x)
-{
-  int NbrSubdivision = 100000;
-  double PreviousSum = this->PartialMisraFunction(n, x, 0.0, 1.0, NbrSubdivision);
-  double NewSum = PreviousSum;
-  PreviousSum *= 2.0;
-  while ((fabs(PreviousSum - NewSum) / PreviousSum) > MACHINE_PRECISION)
-    {
-      PreviousSum = NewSum;
-      NbrSubdivision += 10000;
-      NewSum = this->PartialMisraFunction(n, x, 0.0, 1.0, NbrSubdivision);
-    }
-  return 2.0 * (sqrt(M_PI * 0.25 / x) - NewSum);
-}
-
-// evaluate part of the integral needed in the Misra function (integral of t^n exp (-xt) between min and max)
-//
-// n = index of the Misra function
-// x = point where the function has to be evaluated (> 0)
-// min = lower bound of the integral
-// max = upper bound of the integral
-// nbrSubdivision = number of subdivision used for the integral
-// return value = value of the integral
-
-double ParticleOnTorusDeltaHamiltonian::PartialMisraFunction (double n, double x, double min, double max, int nbrSubdivision)
-{
-  double Sum = 0.0;
-  x *= -1.0;
-  --nbrSubdivision;
-  max  = (max - min) / ((double) nbrSubdivision);
-  Sum += (0.5 + M1_12 * 2.0 * x * min * max )* exp(min * min * x);
-  min += max;
-  --nbrSubdivision;
-  while (nbrSubdivision > 0)
-    {
-      Sum += exp(min * min * x);
-      min += max;
-      --nbrSubdivision;
-    }
-  Sum += (0.5 - M1_12 * 2.0 * x * min * max) * exp(min * min * x);
-  Sum *= max;
-  return Sum;
-}
-
-// Output Stream overload
-//
-// Str = reference on output stream
-// H = Hamiltonian to print
-// return value = reference on output stream
-
-ostream& operator << (ostream& Str, ParticleOnTorusDeltaHamiltonian& H) 
-{
-  RealVector TmpV2 (H.Particles->GetHilbertSpaceDimension(), true);
-  RealVector* TmpV = new RealVector [H.Particles->GetHilbertSpaceDimension()];
-  for (int i = 0; i < H.Particles->GetHilbertSpaceDimension(); i++)
-    {
-      TmpV[i] = RealVector(H.Particles->GetHilbertSpaceDimension());
-      if (i > 0)
-	TmpV2[i - 1] = 0.0;
-      TmpV2[i] = 1.0;
-      H.LowLevelMultiply (TmpV2, TmpV[i]);
-    }
-  for (int i = 0; i < H.Particles->GetHilbertSpaceDimension(); i++)
-    {
-      for (int j = 0; j < H.Particles->GetHilbertSpaceDimension(); j++)
-	{
-	  Str << TmpV[j][i] << "    ";
-	}
-      Str << endl;
-    }
-  return Str;
-}
-
-// Mathematica Output Stream overload
-//
-// Str = reference on Mathematica output stream
-// H = Hamiltonian to print
-// return value = reference on output stream
-
-MathematicaOutput& operator << (MathematicaOutput& Str, ParticleOnTorusDeltaHamiltonian& H) 
-{
-  RealVector TmpV2 (H.Particles->GetHilbertSpaceDimension(), true);
-  RealVector* TmpV = new RealVector [H.Particles->GetHilbertSpaceDimension()];
-  for (int i = 0; i < H.Particles->GetHilbertSpaceDimension(); i++)
-    {
-      TmpV[i] = RealVector(H.Particles->GetHilbertSpaceDimension());
-      if (i > 0)
-	TmpV2[i - 1] = 0.0;
-      TmpV2[i] = 1.0;
-      H.LowLevelMultiply (TmpV2, TmpV[i]);
-    }
-  Str << "{";
-  for (int i = 0; i < (H.Particles->GetHilbertSpaceDimension() - 1); i++)
-    {
-      Str << "{";
-      for (int j = 0; j < (H.Particles->GetHilbertSpaceDimension() - 1); j++)
-	{
-	  Str << TmpV[j][i] << ",";
-	}
-      Str << TmpV[H.Particles->GetHilbertSpaceDimension() - 1][i];
-      Str << "},";
-    }
-  Str << "{";
-  for (int j = 0; j < (H.Particles->GetHilbertSpaceDimension() - 1); j++)
-    {
-      Str << TmpV[j][H.Particles->GetHilbertSpaceDimension() - 1] << ",";
-    }
-  Str << TmpV[H.Particles->GetHilbertSpaceDimension() - 1][H.Particles->GetHilbertSpaceDimension() - 1];
-  Str << "}}";
-  return Str;
 }
 

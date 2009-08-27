@@ -178,7 +178,7 @@ RealVector& AbstractQHEOnTorusHamiltonian::LowLevelAddMultiply(RealVector& vSour
 {
   int LastComponent = firstComponent + nbrComponent;
   int Dim = this->Particles->GetHilbertSpaceDimension();
-  double Shift = 0.0;
+  double Shift = this->EnergyShift;
   double Coefficient;
   if (this->FastMultiplicationFlag == false)
     {

@@ -546,12 +546,20 @@ void ParticleOnSphereGenericFourBodyHamiltonian::EvaluateInteractionFactors()
 	  int TmpSum = TmpNIndices2[0] + TmpNIndices2[1] + TmpNIndices2[2] + TmpNIndices2[3];
 	  while (((4 * this->LzMax) - TmpMaxRealtiveMonentum)  < TmpSum)
 	    --TmpMaxRealtiveMonentum;
-	  double** TmpProjectorCoefficients = new double* [TmpMaxRealtiveMonentum + 1];
+	  double** TmpProjectorCoefficients = new double* [this->MaxRelativeAngularMomentum + 1];
 	  if (this->FourBodyPseudoPotential[0] != 0.0)
 	    TmpProjectorCoefficients[0] = this->ComputeProjectorCoefficients(0, 1, TmpNIndices2, Lim);
 	  for (int i = 1; i <= TmpMaxRealtiveMonentum; ++i)  
 	    if (this->FourBodyPseudoPotential[i] != 0.0)
 	      TmpProjectorCoefficients[i] = this->ComputeProjectorCoefficients(2 * i, 1, TmpNIndices2, Lim);
+	  if (this->MaxRelativeAngularMomentum >= 5)
+	      TmpProjectorCoefficients[5] = this->ComputeProjectorCoefficients(8, 2, TmpNIndices2, Lim);
+	  if (this->MaxRelativeAngularMomentum >= 6)
+	      TmpProjectorCoefficients[6] = this->ComputeProjectorCoefficients(10, 1, TmpNIndices2, Lim);
+	  if (this->MaxRelativeAngularMomentum >= 7)
+	      TmpProjectorCoefficients[7] = this->ComputeProjectorCoefficients(10, 2, TmpNIndices2, Lim);
+	    
+
 	  for (int i = 0; i < Lim; ++i)
 	    {
 	      this->NbrMIndices[4][TmpNbrNIndices] = Lim;		    
@@ -578,14 +586,6 @@ void ParticleOnSphereGenericFourBodyHamiltonian::EvaluateInteractionFactors()
 		    if (this->FourBodyPseudoPotential[k] != 0.0)
 		      TmpInteraction2 += this->FourBodyPseudoPotential[k] * TmpProjectorCoefficients[k][i] * TmpProjectorCoefficients[k][j];
 		  TmpInteraction2 *= TmpSymmetryFactors[i] * TmpSymmetryFactors[j];
-// 		  if ((MinSum == 1) && (i == 0) && (j == 0))
-// 		    {
-// 		      cout << MinSum << " " << i << " " << j << " " << TmpInteraction2 << endl;
-// 		      for (int k = 2; k <= TmpMaxRealtiveMonentum; ++k)  
-// 			if (this->FourBodyPseudoPotential[k] != 0.0)		      
-// 			  cout << TmpProjectorCoefficients[k][i] << " " << TmpProjectorCoefficients[k][j] << endl;
-// 		      cout << TmpSymmetryFactors[i] << " " << TmpSymmetryFactors[j] << endl;
-// 		    }
 		}
 	      for (int j = 0; j < 4; ++j)
 		{
@@ -823,52 +823,104 @@ double* ParticleOnSphereGenericFourBodyHamiltonian::ComputeProjectorCoefficients
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     MaxJ -= 2;
   ClebschGordanCoefficients Clebsh (this->LzMax, this->LzMax);
-  ClebschGordanCoefficients* ClebshArray = new ClebschGordanCoefficients[MaxJ + 1];
-  int MinJ = JValue - this->LzMax;
-  if (MinJ < 0)
-    MinJ = 0;
-  for (int j = MaxJ; j >= 0; --j)
-    ClebshArray[j] = ClebschGordanCoefficients(j, this->LzMax);
-  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
-    for (int i = 0; i < nbrIndexSets; ++i)
-      {
-	double Tmp = 0.0;
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[1], indices[2], indices[3], JValue, ClebshArray);
-	Tmp -= this->ComputeProjectorCoefficients4Body(indices[0], indices[1], indices[3], indices[2], JValue, ClebshArray);
-	Tmp -= this->ComputeProjectorCoefficients4Body(indices[0], indices[2], indices[1], indices[3], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[2], indices[3], indices[1], JValue, ClebshArray);
-	Tmp -= this->ComputeProjectorCoefficients4Body(indices[0], indices[3], indices[2], indices[1], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[3], indices[1], indices[2], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[2], indices[0], indices[3], JValue, ClebshArray);
-	Tmp -= this->ComputeProjectorCoefficients4Body(indices[1], indices[2], indices[3], indices[0], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[3], indices[2], indices[0], JValue, ClebshArray);
-	Tmp -= this->ComputeProjectorCoefficients4Body(indices[1], indices[3], indices[0], indices[2], JValue, ClebshArray);	  
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[2], indices[3], indices[0], indices[1], JValue, ClebshArray);
-	Tmp -= this->ComputeProjectorCoefficients4Body(indices[2], indices[3], indices[1], indices[0], JValue, ClebshArray);
-	TmpCoefficients[i] = Tmp;
-	indices += 4;
-      }
+  ClebschGordanCoefficients* ClebshArray = 0;
+  ClebschGordanCoefficients** ClebshArray2 = 0;
+  if (degeneracyIndex == 2)
+    {      
+      ClebshArray2 = new ClebschGordanCoefficients*[2 * this->LzMax +1];
+      for (int j = (2 * this->LzMax); j >= 0; --j)
+	{
+	  ClebshArray2[j] = new ClebschGordanCoefficients[2 * this->LzMax +1];
+	  for (int k = (2 * this->LzMax); k >= 0; --k)
+	    ClebshArray2[j][k] = ClebschGordanCoefficients(j, k);
+	}
+      if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+	for (int i = 0; i < nbrIndexSets; ++i)
+	  {
+	    double Tmp = 0.0;
+	    Tmp += this->ComputeProjectorCoefficients4BodySecondChannel(indices[0], indices[1], indices[2], indices[3], JValue, ClebshArray2);
+	    Tmp -= this->ComputeProjectorCoefficients4BodySecondChannel(indices[0], indices[1], indices[3], indices[2], JValue, ClebshArray2);
+	    Tmp -= this->ComputeProjectorCoefficients4BodySecondChannel(indices[0], indices[2], indices[1], indices[3], JValue, ClebshArray2);
+	    Tmp += this->ComputeProjectorCoefficients4BodySecondChannel(indices[0], indices[2], indices[3], indices[1], JValue, ClebshArray2);
+	    Tmp -= this->ComputeProjectorCoefficients4BodySecondChannel(indices[0], indices[3], indices[2], indices[1], JValue, ClebshArray2);
+	    Tmp += this->ComputeProjectorCoefficients4BodySecondChannel(indices[0], indices[3], indices[1], indices[2], JValue, ClebshArray2);
+	    Tmp += this->ComputeProjectorCoefficients4BodySecondChannel(indices[1], indices[2], indices[0], indices[3], JValue, ClebshArray2);
+	    Tmp -= this->ComputeProjectorCoefficients4BodySecondChannel(indices[1], indices[2], indices[3], indices[0], JValue, ClebshArray2);
+	    Tmp += this->ComputeProjectorCoefficients4BodySecondChannel(indices[1], indices[3], indices[2], indices[0], JValue, ClebshArray2);
+	    Tmp -= this->ComputeProjectorCoefficients4BodySecondChannel(indices[1], indices[3], indices[0], indices[2], JValue, ClebshArray2);	  
+	    Tmp += this->ComputeProjectorCoefficients4BodySecondChannel(indices[2], indices[3], indices[0], indices[1], JValue, ClebshArray2);
+	    Tmp -= this->ComputeProjectorCoefficients4BodySecondChannel(indices[2], indices[3], indices[1], indices[0], JValue, ClebshArray2);
+	    TmpCoefficients[i] = Tmp;
+	    indices += 4;
+	  }
+      else
+	for (int i = 0; i < nbrIndexSets; ++i)
+	  {
+	    double Tmp = 0.0;
+	    Tmp += this->ComputeProjectorCoefficients4BodySecondChannel(indices[0], indices[1], indices[2], indices[3], JValue, ClebshArray2);
+	    Tmp += this->ComputeProjectorCoefficients4BodySecondChannel(indices[0], indices[1], indices[3], indices[2], JValue, ClebshArray2);
+	    Tmp += this->ComputeProjectorCoefficients4BodySecondChannel(indices[0], indices[2], indices[1], indices[3], JValue, ClebshArray2);
+	    Tmp += this->ComputeProjectorCoefficients4BodySecondChannel(indices[0], indices[2], indices[3], indices[1], JValue, ClebshArray2);
+	    Tmp += this->ComputeProjectorCoefficients4BodySecondChannel(indices[0], indices[3], indices[2], indices[1], JValue, ClebshArray2);
+	    Tmp += this->ComputeProjectorCoefficients4BodySecondChannel(indices[0], indices[3], indices[1], indices[2], JValue, ClebshArray2);
+	    Tmp += this->ComputeProjectorCoefficients4BodySecondChannel(indices[1], indices[2], indices[0], indices[3], JValue, ClebshArray2);
+	    Tmp += this->ComputeProjectorCoefficients4BodySecondChannel(indices[1], indices[2], indices[3], indices[0], JValue, ClebshArray2);
+	    Tmp += this->ComputeProjectorCoefficients4BodySecondChannel(indices[1], indices[3], indices[2], indices[0], JValue, ClebshArray2);
+	    Tmp += this->ComputeProjectorCoefficients4BodySecondChannel(indices[1], indices[3], indices[0], indices[2], JValue, ClebshArray2);	  
+	    Tmp += this->ComputeProjectorCoefficients4BodySecondChannel(indices[2], indices[3], indices[0], indices[1], JValue, ClebshArray2);
+	    Tmp += this->ComputeProjectorCoefficients4BodySecondChannel(indices[2], indices[3], indices[1], indices[0], JValue, ClebshArray2);
+	    TmpCoefficients[i] = Tmp;
+	    indices += 4;
+	  }
+      for (int j = (2 * this->LzMax); j >= 0; --j)
+	delete[] ClebshArray2[j];
+      delete[] ClebshArray2;
+    }
   else
-    for (int i = 0; i < nbrIndexSets; ++i)
-      {
-	double Tmp = 0.0;
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[1], indices[2], indices[3], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[1], indices[3], indices[2], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[2], indices[1], indices[3], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[2], indices[3], indices[1], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[3], indices[2], indices[1], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[3], indices[1], indices[2], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[2], indices[0], indices[3], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[2], indices[3], indices[0], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[3], indices[2], indices[0], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[3], indices[0], indices[2], JValue, ClebshArray);	  
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[2], indices[3], indices[0], indices[1], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[2], indices[3], indices[1], indices[0], JValue, ClebshArray);
-	TmpCoefficients[i] = Tmp;
-	indices += 4;
-      }
-  delete[] ClebshArray;
-
+    {
+      ClebshArray = new ClebschGordanCoefficients[MaxJ + 1];
+      for (int j = MaxJ; j >= 0; --j)
+	ClebshArray[j] = ClebschGordanCoefficients(j, this->LzMax);
+      if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+	for (int i = 0; i < nbrIndexSets; ++i)
+	  {
+	    double Tmp = 0.0;
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[1], indices[2], indices[3], JValue, ClebshArray);
+	    Tmp -= this->ComputeProjectorCoefficients4Body(indices[0], indices[1], indices[3], indices[2], JValue, ClebshArray);
+	    Tmp -= this->ComputeProjectorCoefficients4Body(indices[0], indices[2], indices[1], indices[3], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[2], indices[3], indices[1], JValue, ClebshArray);
+	    Tmp -= this->ComputeProjectorCoefficients4Body(indices[0], indices[3], indices[2], indices[1], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[3], indices[1], indices[2], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[2], indices[0], indices[3], JValue, ClebshArray);
+	    Tmp -= this->ComputeProjectorCoefficients4Body(indices[1], indices[2], indices[3], indices[0], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[3], indices[2], indices[0], JValue, ClebshArray);
+	    Tmp -= this->ComputeProjectorCoefficients4Body(indices[1], indices[3], indices[0], indices[2], JValue, ClebshArray);	  
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[2], indices[3], indices[0], indices[1], JValue, ClebshArray);
+	    Tmp -= this->ComputeProjectorCoefficients4Body(indices[2], indices[3], indices[1], indices[0], JValue, ClebshArray);
+	    TmpCoefficients[i] = Tmp;
+	    indices += 4;
+	  }
+      else
+	for (int i = 0; i < nbrIndexSets; ++i)
+	  {
+	    double Tmp = 0.0;
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[1], indices[2], indices[3], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[1], indices[3], indices[2], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[2], indices[1], indices[3], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[2], indices[3], indices[1], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[3], indices[2], indices[1], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[3], indices[1], indices[2], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[2], indices[0], indices[3], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[2], indices[3], indices[0], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[3], indices[2], indices[0], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[3], indices[0], indices[2], JValue, ClebshArray);	  
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[2], indices[3], indices[0], indices[1], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[2], indices[3], indices[1], indices[0], JValue, ClebshArray);
+	    TmpCoefficients[i] = Tmp;
+	    indices += 4;
+	  }
+      delete[] ClebshArray;
+    }
   return TmpCoefficients;
 }
 
@@ -907,5 +959,45 @@ double ParticleOnSphereGenericFourBodyHamiltonian::ComputeProjectorCoefficients4
 			   clebshArray[j2].GetCoefficient(Sum2, ((m4 << 1) - this->LzMax), jValue)); 
 	}
     }
+  return Tmp;
+}
+
+// compute a given projector coefficient for the 4-body interaction in the second channel
+//
+// m1 = first index
+// m2 = second index
+// m3 = third inde
+// m4 = fourth index
+// jValue = total angular momentum
+// minJ = minimum angular momentum that can be reach by four particles
+// return value = corresponding projector coefficient
+
+double ParticleOnSphereGenericFourBodyHamiltonian::ComputeProjectorCoefficients4BodySecondChannel(int m1, int m2, int m3, int m4, int jValue, 
+												  ClebschGordanCoefficients** clebshArray)
+{
+  double Tmp = 0.0;
+  double Tmp2 = 0.0;
+  int Sum1 = ((m1 + m2) << 1)  - (2 * this->LzMax);
+  int Sum2 = ((m3 + m4) << 1)  - (2 * this->LzMax);
+  int MaxJ = 2 * this->LzMax;
+  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+    MaxJ -= 2;
+  int TmpMinJ1 = abs(Sum1);
+  int TmpMinJ2 = abs(Sum2);
+  for (int j1 = MaxJ; j1 >= TmpMinJ1; j1 -= 4)
+    {
+      Tmp2 = clebshArray[this->LzMax][this->LzMax].GetCoefficient(((m1 << 1) - this->LzMax), ((m2 << 1)- this->LzMax), j1);
+      for (int j2 = MaxJ; j2 >= TmpMinJ2; j2 -= 4)
+	{
+ 	  if ((abs(j1 - j2) <= jValue) && ((j1 + j2) >= jValue))
+	    {
+	      ClebschGordanCoefficients TmpClebsh (j1, j2);
+	      Tmp += Tmp2 * (clebshArray[this->LzMax][this->LzMax].GetCoefficient(((m3 << 1) - this->LzMax), ((m4 << 1)- this->LzMax), j2) * 
+			     clebshArray[j1][j2].GetCoefficient(Sum1, Sum2, jValue)); 
+	    }
+	}
+    }
+
+
   return Tmp;
 }

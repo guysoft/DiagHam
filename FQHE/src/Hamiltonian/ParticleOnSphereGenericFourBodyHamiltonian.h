@@ -142,6 +142,18 @@ class ParticleOnSphereGenericFourBodyHamiltonian : public AbstractQHEOnSphereNBo
   double ComputeProjectorCoefficients4Body(int m1, int m2, int m3, int m4, int jValue, 
 					   ClebschGordanCoefficients* clebshArray);
 
+  // compute a given projector coefficient for the 4-body interaction in the second channel
+  //
+  // m1 = first index
+  // m2 = second index
+  // m3 = third inde
+  // m4 = fourth index
+  // jValue = total angular momentum
+  // minJ = minimum angular momentum that can be reach by four particles
+  // return value = corresponding projector coefficient
+  double ComputeProjectorCoefficients4BodySecondChannel(int m1, int m2, int m3, int m4, int jValue, 
+							ClebschGordanCoefficients** clebshArray);
+
 };
 
 #endif
