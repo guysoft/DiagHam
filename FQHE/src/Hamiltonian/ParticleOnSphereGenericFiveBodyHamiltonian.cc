@@ -30,7 +30,7 @@
 
 
 #include "config.h"
-#include "Hamiltonian/ParticleOnSphereGenericFourBodyHamiltonian.h"
+#include "Hamiltonian/ParticleOnSphereGenericFiveBodyHamiltonian.h"
 #include "Operator/ParticleOnSphereSquareTotalMomentumOperator.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "MathTools/ClebschGordanCoefficients.h"
@@ -48,7 +48,7 @@ using std::endl;
 // default constructor
 //
 
-ParticleOnSphereGenericFourBodyHamiltonian::ParticleOnSphereGenericFourBodyHamiltonian()
+ParticleOnSphereGenericFiveBodyHamiltonian::ParticleOnSphereGenericFiveBodyHamiltonian()
 {
 }
 
@@ -57,17 +57,17 @@ ParticleOnSphereGenericFourBodyHamiltonian::ParticleOnSphereGenericFourBodyHamil
 // particles = Hilbert space associated to the system
 // nbrParticles = number of particles
 // lzmax = maximum Lz value reached by a particle in the state
-// fourBodyPseudoPotential = array with the four-body pseudo-potentials sorted with respect to the relative angular momentum, 
+// fiveBodyPseudoPotential = array with the five-body pseudo-potentials sorted with respect to the relative angular momentum, 
 //                            taking into account of additional degeneracy for relative momentum greater than 5 for bosons (8 for fermions)
-// maxRelativeAngularMomentum =  maxixmum relative angular momentum that is used in FourBodyPseudoPotential
+// maxRelativeAngularMomentum =  maxixmum relative angular momentum that is used in FiveBodyPseudoPotential
 // l2Factor = multiplicative factor in front of an additional L^2 operator in the Hamiltonian (0 if none)
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
-ParticleOnSphereGenericFourBodyHamiltonian::ParticleOnSphereGenericFourBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
-											 double* fourBodyPseudoPotential, int maxRelativeAngularMomentum, double l2Factor, 
+ParticleOnSphereGenericFiveBodyHamiltonian::ParticleOnSphereGenericFiveBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
+											 double* fiveBodyPseudoPotential, int maxRelativeAngularMomentum, double l2Factor, 
 											 AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, 
 											 char* precalculationFileName)
 {
@@ -112,10 +112,10 @@ ParticleOnSphereGenericFourBodyHamiltonian::ParticleOnSphereGenericFourBodyHamil
     }
 
   this->MaxRelativeAngularMomentum = maxRelativeAngularMomentum;
-  this->NbrFourBodyPseudoPotential = maxRelativeAngularMomentum + 1;
-  this->FourBodyPseudoPotential = new double[this->NbrFourBodyPseudoPotential];
-  for (int i = 0; i < this->NbrFourBodyPseudoPotential; ++i)
-    this->FourBodyPseudoPotential[i] = fourBodyPseudoPotential[i];
+  this->NbrFiveBodyPseudoPotential = maxRelativeAngularMomentum + 1;
+  this->FiveBodyPseudoPotential = new double[this->NbrFiveBodyPseudoPotential];
+  for (int i = 0; i < this->NbrFiveBodyPseudoPotential; ++i)
+    this->FiveBodyPseudoPotential[i] = fiveBodyPseudoPotential[i];
 
   this->NBodyFlags[4] = true;
   this->Architecture = architecture;
@@ -185,9 +185,9 @@ ParticleOnSphereGenericFourBodyHamiltonian::ParticleOnSphereGenericFourBodyHamil
 // particles = Hilbert space associated to the system
 // nbrParticles = number of particles
 // lzmax = maximum Lz value reached by a particle in the state
-// fourBodyPseudoPotential = array with the four-body pseudo-potentials sorted with respect to the relative angular momentum, 
+// fiveBodyPseudoPotential = array with the five-body pseudo-potentials sorted with respect to the relative angular momentum, 
 //                            taking into account of additional degeneracy for relative momentum greater than 5 for bosons (8 for fermions)
-// maxRelativeAngularMomentum =  maxixmum relative angular momentum that is used in FourBodyPseudoPotential
+// maxRelativeAngularMomentum =  maxixmum relative angular momentum that is used in FiveBodyPseudoPotential
 // l2Factor = multiplicative factor in front of an additional L^2 operator in the Hamiltonian (0 if none)
 // pseudoPotential = array with the pseudo-potentials (ordered such that the first element corresponds to the delta interaction)
 // architecture = architecture to use for precalculation
@@ -195,8 +195,8 @@ ParticleOnSphereGenericFourBodyHamiltonian::ParticleOnSphereGenericFourBodyHamil
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
-ParticleOnSphereGenericFourBodyHamiltonian::ParticleOnSphereGenericFourBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
-											 double* fourBodyPseudoPotential, int maxRelativeAngularMomentum,
+ParticleOnSphereGenericFiveBodyHamiltonian::ParticleOnSphereGenericFiveBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
+											 double* fiveBodyPseudoPotential, int maxRelativeAngularMomentum,
 											 double l2Factor, double* pseudoPotential, 
 											 AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, 
 											 char* precalculationFileName)
@@ -240,10 +240,10 @@ ParticleOnSphereGenericFourBodyHamiltonian::ParticleOnSphereGenericFourBodyHamil
     this->PseudoPotential[i] = pseudoPotential[this->LzMax - i];
 
   this->MaxRelativeAngularMomentum = maxRelativeAngularMomentum;
-  this->NbrFourBodyPseudoPotential = maxRelativeAngularMomentum;
-  this->FourBodyPseudoPotential = new double[this->NbrFourBodyPseudoPotential + 1];
-  for (int i = 0; i <= this->NbrFourBodyPseudoPotential; ++i)
-    this->FourBodyPseudoPotential[i] = fourBodyPseudoPotential[i];
+  this->NbrFiveBodyPseudoPotential = maxRelativeAngularMomentum;
+  this->FiveBodyPseudoPotential = new double[this->NbrFiveBodyPseudoPotential + 1];
+  for (int i = 0; i <= this->NbrFiveBodyPseudoPotential; ++i)
+    this->FiveBodyPseudoPotential[i] = fiveBodyPseudoPotential[i];
 
 
   for (int k = 0; k <= this->MaxNBody; ++k)
@@ -311,7 +311,7 @@ ParticleOnSphereGenericFourBodyHamiltonian::ParticleOnSphereGenericFourBodyHamil
 // destructor
 //
 
-ParticleOnSphereGenericFourBodyHamiltonian::~ParticleOnSphereGenericFourBodyHamiltonian()
+ParticleOnSphereGenericFiveBodyHamiltonian::~ParticleOnSphereGenericFiveBodyHamiltonian()
 {
   for (int k = 1; k <= this->MaxNBody; ++k)
     if (this->NBodyFlags[k] == true)
@@ -345,7 +345,7 @@ ParticleOnSphereGenericFourBodyHamiltonian::~ParticleOnSphereGenericFourBodyHami
   delete[] this->NbrMIndices;
   delete[] this->MIndices;
   delete[] this->MNNBodyInteractionFactors;
-  delete[] this->FourBodyPseudoPotential;
+  delete[] this->FiveBodyPseudoPotential;
 
   delete[] this->NBodyFlags;
   delete[] this->NBodyInteractionFactors;
@@ -370,7 +370,7 @@ ParticleOnSphereGenericFourBodyHamiltonian::~ParticleOnSphereGenericFourBodyHami
 //
 // return value = pointer to cloned hamiltonian
 
-AbstractHamiltonian* ParticleOnSphereGenericFourBodyHamiltonian::Clone ()
+AbstractHamiltonian* ParticleOnSphereGenericFiveBodyHamiltonian::Clone ()
 {
   return 0;
 }
@@ -379,7 +379,7 @@ AbstractHamiltonian* ParticleOnSphereGenericFourBodyHamiltonian::Clone ()
 // evaluate all interaction factors
 //   
 
-void ParticleOnSphereGenericFourBodyHamiltonian::EvaluateInteractionFactors()
+void ParticleOnSphereGenericFiveBodyHamiltonian::EvaluateInteractionFactors()
 {
   double* TmpNormalizationCoeffients = new double[this->NbrLzValue];
   double TmpFactor = ((double) this->NbrLzValue) / (4.0 * M_PI);
@@ -444,10 +444,10 @@ void ParticleOnSphereGenericFourBodyHamiltonian::EvaluateInteractionFactors()
 	      while (((4 * this->LzMax) - TmpMaxRealtiveMonentum)  < TmpSum)
 		--TmpMaxRealtiveMonentum;
 	      double** TmpProjectorCoefficients = new double* [TmpMaxRealtiveMonentum + 1];
-	      if (this->FourBodyPseudoPotential[4] != 0.0)
+	      if (this->FiveBodyPseudoPotential[4] != 0.0)
 		TmpProjectorCoefficients[4] = this->ComputeProjectorCoefficients(12, 1, TmpNIndices2, Lim);
 	      for (int i = 5; i <= TmpMaxRealtiveMonentum; ++i)  
-		if (this->FourBodyPseudoPotential[i] != 0.0)
+		if (this->FiveBodyPseudoPotential[i] != 0.0)
 		  TmpProjectorCoefficients[i] = this->ComputeProjectorCoefficients(2 * i, 1, TmpNIndices2, Lim);
 	      for (int i = 0; i < Lim; ++i)
 		{
@@ -467,11 +467,11 @@ void ParticleOnSphereGenericFourBodyHamiltonian::EvaluateInteractionFactors()
 			}			
 		      double& TmpInteraction2 = TmpInteraction[j];
 		      TmpInteraction2 = 0.0;
-		      if (this->FourBodyPseudoPotential[4] != 0.0)
-			TmpInteraction2 += this->FourBodyPseudoPotential[4] * TmpProjectorCoefficients[4][i] * TmpProjectorCoefficients[4][j];
+		      if (this->FiveBodyPseudoPotential[4] != 0.0)
+			TmpInteraction2 += this->FiveBodyPseudoPotential[4] * TmpProjectorCoefficients[4][i] * TmpProjectorCoefficients[4][j];
 		      for (int k = 5; k <= TmpMaxRealtiveMonentum; ++k)  
-			if (this->FourBodyPseudoPotential[k] != 0.0)
-			  TmpInteraction2 += this->FourBodyPseudoPotential[k] * TmpProjectorCoefficients[k][i] * TmpProjectorCoefficients[k][j];
+			if (this->FiveBodyPseudoPotential[k] != 0.0)
+			  TmpInteraction2 += this->FiveBodyPseudoPotential[k] * TmpProjectorCoefficients[k][i] * TmpProjectorCoefficients[k][j];
 		    }
 		  for (int j = 0; j < 4; ++j)
 		    {
@@ -481,10 +481,10 @@ void ParticleOnSphereGenericFourBodyHamiltonian::EvaluateInteractionFactors()
 		    }
 		  ++TmpNbrNIndices;
 		}
-	      if (this->FourBodyPseudoPotential[4] != 0.0)
+	      if (this->FiveBodyPseudoPotential[4] != 0.0)
 		delete[] TmpProjectorCoefficients[4];
 	      for (int i = 5; i <= TmpMaxRealtiveMonentum; ++i)  
-		if (this->FourBodyPseudoPotential[i] != 0.0)
+		if (this->FiveBodyPseudoPotential[i] != 0.0)
 		  delete[] TmpProjectorCoefficients[i];
 	      delete[] TmpProjectorCoefficients;		
 	    }
@@ -547,10 +547,10 @@ void ParticleOnSphereGenericFourBodyHamiltonian::EvaluateInteractionFactors()
 	  while (((4 * this->LzMax) - TmpMaxRealtiveMonentum)  < TmpSum)
 	    --TmpMaxRealtiveMonentum;
 	  double** TmpProjectorCoefficients = new double* [this->MaxRelativeAngularMomentum + 1];
-	  if (this->FourBodyPseudoPotential[0] != 0.0)
+	  if (this->FiveBodyPseudoPotential[0] != 0.0)
 	    TmpProjectorCoefficients[0] = this->ComputeProjectorCoefficients(0, 1, TmpNIndices2, Lim);
 	  for (int i = 1; i <= TmpMaxRealtiveMonentum; ++i)  
-	    if (this->FourBodyPseudoPotential[i] != 0.0)
+	    if (this->FiveBodyPseudoPotential[i] != 0.0)
 	      TmpProjectorCoefficients[i] = this->ComputeProjectorCoefficients(2 * i, 1, TmpNIndices2, Lim);
 	  if (this->MaxRelativeAngularMomentum >= 5)
 	      TmpProjectorCoefficients[5] = this->ComputeProjectorCoefficients(8, 2, TmpNIndices2, Lim);
@@ -580,11 +580,11 @@ void ParticleOnSphereGenericFourBodyHamiltonian::EvaluateInteractionFactors()
 		    }			
 		  double& TmpInteraction2 = TmpInteraction[j];
 		  TmpInteraction2 = 0.0;
-		  if (this->FourBodyPseudoPotential[0] != 0.0)
-		    TmpInteraction2 += this->FourBodyPseudoPotential[0] * TmpProjectorCoefficients[0][i] * TmpProjectorCoefficients[0][j];
+		  if (this->FiveBodyPseudoPotential[0] != 0.0)
+		    TmpInteraction2 += this->FiveBodyPseudoPotential[0] * TmpProjectorCoefficients[0][i] * TmpProjectorCoefficients[0][j];
 		  for (int k = 2; k <= TmpMaxRealtiveMonentum; ++k)  
-		    if (this->FourBodyPseudoPotential[k] != 0.0)
-		      TmpInteraction2 += this->FourBodyPseudoPotential[k] * TmpProjectorCoefficients[k][i] * TmpProjectorCoefficients[k][j];
+		    if (this->FiveBodyPseudoPotential[k] != 0.0)
+		      TmpInteraction2 += this->FiveBodyPseudoPotential[k] * TmpProjectorCoefficients[k][i] * TmpProjectorCoefficients[k][j];
 		  TmpInteraction2 *= TmpSymmetryFactors[i] * TmpSymmetryFactors[j];
 		}
 	      for (int j = 0; j < 4; ++j)
@@ -595,10 +595,10 @@ void ParticleOnSphereGenericFourBodyHamiltonian::EvaluateInteractionFactors()
 		}
 	      ++TmpNbrNIndices;
 	    }		
-	  if (this->FourBodyPseudoPotential[0] != 0.0)
+	  if (this->FiveBodyPseudoPotential[0] != 0.0)
 	    delete[] TmpProjectorCoefficients[0];
 	  for (int i = 2; i <= TmpMaxRealtiveMonentum; ++i)  
-	    if (this->FourBodyPseudoPotential[i] != 0.0)
+	    if (this->FiveBodyPseudoPotential[i] != 0.0)
 	      delete[] TmpProjectorCoefficients[i];
 	  delete[] TmpProjectorCoefficients;		
 	}
@@ -610,201 +610,6 @@ void ParticleOnSphereGenericFourBodyHamiltonian::EvaluateInteractionFactors()
       delete[] TmpInteractionCoeffients;
     }
   delete[] TmpNormalizationCoeffients;
-  if (this->FullTwoBodyFlag == true)
-    {
-      int Lim;
-      int Min;
-      int Pos = 0;
-      ClebschGordanCoefficients Clebsch (this->LzMax, this->LzMax);
-      int J = 2 * this->LzMax - 2;
-      int m4;
-      double ClebschCoef;
-      double* TmpCoefficient = new double [this->NbrLzValue * this->NbrLzValue * this->NbrLzValue];
-      
-      int Sign = 1;
-      if (this->LzMax & 1)
-	Sign = 0;
-      double MaxCoefficient = 0.0;
-      
-      if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
-	{
-	  for (int m1 = -this->LzMax; m1 <= this->LzMax; m1 += 2)
-	    for (int m2 =  -this->LzMax; m2 < m1; m2 += 2)
-	      {
-		Lim = m1 + m2 + this->LzMax;
-		if (Lim > this->LzMax)
-		  Lim = this->LzMax;
-		Min = m1 + m2 - this->LzMax;
-		if (Min < -this->LzMax)
-		  Min = -this->LzMax;
-		for (int m3 = Min; m3 <= Lim; m3 += 2)
-		  {
-		    Clebsch.InitializeCoefficientIterator(m1, m2);
-		    m4 = m1 + m2 - m3;
-		    TmpCoefficient[Pos] = 0.0;
-		    while (Clebsch.Iterate(J, ClebschCoef))
-		      {
-			if (((J >> 1) & 1) == Sign)
-			  TmpCoefficient[Pos] += this->PseudoPotential[J >> 1] * ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
-		      }
-		    if (fabs(TmpCoefficient[Pos]) > MaxCoefficient)
-		      MaxCoefficient = TmpCoefficient[Pos];
-		    ++Pos;
-		  }
-	      }
-	  this->NbrInteractionFactors = 0;
-	  this->M1Value = new int [Pos];
-	  this->M2Value = new int [Pos];
-	  this->M3Value = new int [Pos];
-	  this->InteractionFactors = new double [Pos];
-	  cout << "nbr interaction = " << Pos << endl;
-	  Pos = 0;
-	  MaxCoefficient *= MACHINE_PRECISION;
-	  double Factor = - 4.0;
-	  this->NbrM12Indices = (this->NbrLzValue * (this->NbrLzValue - 1)) / 2;
-	  this->M1Value = new int [this->NbrM12Indices];
-	  this->M2Value = new int [this->NbrM12Indices];
-	  this->NbrM3Values = new int [this->NbrM12Indices];
-	  this->M3Values = new int* [this->NbrM12Indices];
-	  int TotalIndex = 0;
-	  Pos = 0;
-	  for (int m1 = 0; m1 < this->NbrLzValue; ++m1)
-	    for (int m2 = 0; m2 < m1; ++m2)
-	      {
-		Lim = m1 + m2;
-		if (Lim > this->LzMax)
-		  Lim = this->LzMax;
-		Min = m1 + m2 - this->LzMax;
-		if (Min < 0)
-		  Min = 0;
-		this->M1Value[TotalIndex] = m1;
-		this->M2Value[TotalIndex] = m2;	    
-		this->NbrM3Values[TotalIndex] = 0;
-		for (int m3 = Min; m3 <= Lim; ++m3)
-		  if ((2 * m3) > (m1 + m2))
-		    ++this->NbrM3Values[TotalIndex];
-		if (this->NbrM3Values[TotalIndex] > 0)
-		  {
-		    this->M3Values[TotalIndex] = new int [this->NbrM3Values[TotalIndex]];
-		    int TmpIndex = 0;
-		    for (int m3 = Min; m3 <= Lim; ++m3)
-		      {
-			if ((2 * m3) > (m1 + m2))
-			  {
-			    this->M3Values[TotalIndex][TmpIndex] = m3;
-			    this->InteractionFactors[this->NbrInteractionFactors] = Factor * TmpCoefficient[Pos];
-			    ++this->NbrInteractionFactors;
-			    ++TmpIndex;
-			  }
-			++Pos;
-		      }
-		  }
-		++TotalIndex;
-	      }
-	}
-      else
-	{
-	  for (int m1 = -this->LzMax; m1 <= this->LzMax; m1 += 2)
-	    for (int m2 =  -this->LzMax; m2 <= m1; m2 += 2)
-	      {
-		Lim = m1 + m2 + this->LzMax;
-		if (Lim > this->LzMax)
-		  Lim = this->LzMax;
-		Min = m1 + m2 - this->LzMax;
-		if (Min < -this->LzMax)
-		  Min = -this->LzMax;
-		for (int m3 = Min; m3 <= Lim; m3 += 2)
-		  {
-		    Clebsch.InitializeCoefficientIterator(m1, m2);
-		    m4 = m1 + m2 - m3;
-		    TmpCoefficient[Pos] = 0.0;
-		    while (Clebsch.Iterate(J, ClebschCoef))
-		      {
-			if (((J >> 1) & 1) != Sign)
-			  TmpCoefficient[Pos] += this->PseudoPotential[J >> 1] * ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
-		      }
-		    if (fabs(TmpCoefficient[Pos]) > MaxCoefficient)
-		      MaxCoefficient = TmpCoefficient[Pos];
-		    ++Pos;
-		  }
-	      }
-	  this->NbrInteractionFactors = 0;
-	  this->M1Value = new int [Pos];
-	  this->M2Value = new int [Pos];
-	  this->M3Value = new int [Pos];
-	  this->InteractionFactors = new double [Pos];
-	  cout << "nbr interaction = " << Pos << endl;
-	  Pos = 0;
-	  MaxCoefficient *= MACHINE_PRECISION;
-	  double Factor = 4.0;
-	  for (int m1 = 0; m1 < this->NbrLzValue; ++m1)
-	    {
-	      for (int m2 = 0; m2 < m1; ++m2)
-		{
-		  Lim = m1 + m2;
-		  if (Lim > this->LzMax)
-		    Lim = this->LzMax;
-		  Min = m1 + m2 - this->LzMax;
-		  if (Min < 0)
-		    Min = 0;
-		  for (int m3 = Min; m3 <= Lim; ++m3)
-		    {
-		      if (fabs(TmpCoefficient[Pos]) > MaxCoefficient)
-			{
-			  if ((2 * m3) > (m1 + m2))
-			    {
-			      this->InteractionFactors[this->NbrInteractionFactors] = Factor * TmpCoefficient[Pos];
-			      this->M1Value[this->NbrInteractionFactors] = m1;
-			      this->M2Value[this->NbrInteractionFactors] = m2;
-			      this->M3Value[this->NbrInteractionFactors] = m3;
-			      ++this->NbrInteractionFactors;
-			    }
-			  else
-			    if ((2 * m3) == (m1 + m2))
-			      {
-				this->InteractionFactors[this->NbrInteractionFactors] = 0.5 * Factor * TmpCoefficient[Pos];
-				this->M1Value[this->NbrInteractionFactors] = m1;
-				this->M2Value[this->NbrInteractionFactors] = m2;
-				this->M3Value[this->NbrInteractionFactors] = m3;
-				++this->NbrInteractionFactors;
-			      }
-			}
-		      ++Pos;
-		    }
-		}	
-	      Lim = 2 * m1;
-	      if (Lim > this->LzMax)
-		Lim = this->LzMax;
-	      Min = 2 * m1 - this->LzMax;
-	      if (Min < 0)
-		Min = 0;
-	      for (int m3 = Min; m3 <= Lim; ++m3)
-		{
-		  if (fabs(TmpCoefficient[Pos]) > MaxCoefficient)
-		    {
-		      if (m3 > m1)
-			{
-			  this->InteractionFactors[this->NbrInteractionFactors] = 0.5 * Factor * TmpCoefficient[Pos];
-			  this->M1Value[this->NbrInteractionFactors] = m1;
-			  this->M2Value[this->NbrInteractionFactors] = m1;
-			  this->M3Value[this->NbrInteractionFactors] = m3;
-			  ++this->NbrInteractionFactors;
-			}
-		      else
-			if (m3 == m1)
-			  {
-			    this->InteractionFactors[this->NbrInteractionFactors] = 0.25 * Factor * TmpCoefficient[Pos];
-			    this->M1Value[this->NbrInteractionFactors] = m1;
-			    this->M2Value[this->NbrInteractionFactors] = m1;
-			    this->M3Value[this->NbrInteractionFactors] = m3;
-			    ++this->NbrInteractionFactors;
-			  }
-		    }
-		  ++Pos;
-		}
-	    }
-	}
-    }
 }
 
 // compute all projector coefficient associated to a given relative angular momentum between 4 particles
@@ -814,7 +619,7 @@ void ParticleOnSphereGenericFourBodyHamiltonian::EvaluateInteractionFactors()
 // indices = array that contains all possible sets of indices (size of the array is 4 * nbrIndexSets)
 // nbrIndexSets = number of sets
 
-double* ParticleOnSphereGenericFourBodyHamiltonian::ComputeProjectorCoefficients(int relativeMomentum, int degeneracyIndex, int* indices, int nbrIndexSets)
+double* ParticleOnSphereGenericFiveBodyHamiltonian::ComputeProjectorCoefficients(int relativeMomentum, int degeneracyIndex, int* indices, int nbrIndexSets)
 {
   double* TmpCoefficients = new double [nbrIndexSets];
   int JValue = (4 * this->LzMax) - relativeMomentum;
@@ -904,24 +709,12 @@ double* ParticleOnSphereGenericFourBodyHamiltonian::ComputeProjectorCoefficients
 	for (int i = 0; i < nbrIndexSets; ++i)
 	  {
 	    double Tmp = 0.0;
-	    Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[1], indices[2], indices[3], JValue, ClebshArray);
-	    Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[1], indices[3], indices[2], JValue, ClebshArray);
-	    Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[2], indices[1], indices[3], JValue, ClebshArray);
-	    Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[2], indices[3], indices[1], JValue, ClebshArray);
-	    Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[3], indices[2], indices[1], JValue, ClebshArray);
-	    Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[3], indices[1], indices[2], JValue, ClebshArray);
-	    Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[0], indices[2], indices[3], JValue, ClebshArray);
-	    Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[0], indices[3], indices[2], JValue, ClebshArray);
-	    Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[2], indices[0], indices[3], JValue, ClebshArray);
-	    Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[2], indices[3], indices[0], JValue, ClebshArray);	  
-	    Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[3], indices[2], indices[0], JValue, ClebshArray);
-	    Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[3], indices[0], indices[2], JValue, ClebshArray);	  
-	    Tmp += this->ComputeProjectorCoefficients4Body(indices[2], indices[1], indices[0], indices[3], JValue, ClebshArray);
-	    Tmp += this->ComputeProjectorCoefficients4Body(indices[2], indices[1], indices[3], indices[0], JValue, ClebshArray);
-	    Tmp += this->ComputeProjectorCoefficients4Body(indices[2], indices[0], indices[1], indices[3], JValue, ClebshArray);
-	    Tmp += this->ComputeProjectorCoefficients4Body(indices[2], indices[0], indices[3], indices[1], JValue, ClebshArray);
-	    Tmp += this->ComputeProjectorCoefficients4Body(indices[2], indices[1], indices[0], indices[3], JValue, ClebshArray);
-	    Tmp += this->ComputeProjectorCoefficients4Body(indices[2], indices[1], indices[3], indices[0], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients5Body(indices[0], indices[1], indices[2], indices[3], indices[4], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients5Body(indices[0], indices[1], indices[2], indices[4], indices[3], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients5Body(indices[0], indices[1], indices[3], indices[2], indices[4], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients5Body(indices[0], indices[1], indices[3], indices[4], indices[2], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients5Body(indices[0], indices[1], indices[4], indices[3], indices[2], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients5Body(indices[0], indices[1], indices[4], indices[2], indices[3], JValue, ClebshArray);
 	    TmpCoefficients[i] = Tmp;
 	    indices += 4;
 	  }
@@ -930,7 +723,7 @@ double* ParticleOnSphereGenericFourBodyHamiltonian::ComputeProjectorCoefficients
   return TmpCoefficients;
 }
 
-// compute a given projector coefficient for the 4-body interaction 
+// compute a given projector coefficient for the 5-body interaction 
 //
 // m1 = first index
 // m2 = second index
@@ -940,7 +733,7 @@ double* ParticleOnSphereGenericFourBodyHamiltonian::ComputeProjectorCoefficients
 // minJ = minimum angular momentum that can be reach by three particles
 // return value = corresponding projector coefficient
 
-double ParticleOnSphereGenericFourBodyHamiltonian::ComputeProjectorCoefficients4Body(int m1, int m2, int m3, int m4, int jValue, 
+double ParticleOnSphereGenericFiveBodyHamiltonian::ComputeProjectorCoefficients4Body(int m1, int m2, int m3, int m4, int jValue, 
 										     ClebschGordanCoefficients* clebshArray)
 {
   double Tmp = 0.0;
@@ -968,17 +761,17 @@ double ParticleOnSphereGenericFourBodyHamiltonian::ComputeProjectorCoefficients4
   return Tmp;
 }
 
-// compute a given projector coefficient for the 4-body interaction in the second channel
+// compute a given projector coefficient for the 5-body interaction in the second channel
 //
 // m1 = first index
 // m2 = second index
 // m3 = third inde
 // m4 = fourth index
 // jValue = total angular momentum
-// minJ = minimum angular momentum that can be reach by four particles
+// minJ = minimum angular momentum that can be reach by five particles
 // return value = corresponding projector coefficient
 
-double ParticleOnSphereGenericFourBodyHamiltonian::ComputeProjectorCoefficients4BodySecondChannel(int m1, int m2, int m3, int m4, int jValue, 
+double ParticleOnSphereGenericFiveBodyHamiltonian::ComputeProjectorCoefficients4BodySecondChannel(int m1, int m2, int m3, int m4, int jValue, 
 												  ClebschGordanCoefficients** clebshArray)
 {
   double Tmp = 0.0;
