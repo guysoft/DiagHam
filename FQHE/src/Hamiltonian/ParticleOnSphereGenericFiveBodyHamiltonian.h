@@ -83,6 +83,26 @@ class ParticleOnSphereGenericFiveBodyHamiltonian : public ParticleOnSphereGeneri
 					      AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
 					      char* precalculationFileName = 0);
 
+ // constructor from default datas with a full four-body interaction
+  //
+  // particles = Hilbert space associated to the system
+  // nbrParticles = number of particles
+  // lzmax = maximum Lz value reached by a particle in the state
+  // fiveBodyPseudoPotential = array with the five-body pseudo-potentials sorted with respect to the relative angular momentum, 
+  // maxRelativeAngularMomentum =  maxixmum relative angular momentum that is used in FiveBodyPseudoPotential
+  // fourBodyPseudoPotential = array with the four-body pseudo-potentials sorted with respect to the relative angular momentum, 
+  // fourBodyMaxRelativeAngularMomentum =  maxixmum relative angular momentum that is used in FourBodyPseudoPotential
+  // l2Factor = multiplicative factor in front of an additional L^2 operator in the Hamiltonian (0 if none)
+  // architecture = architecture to use for precalculation
+  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+  // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
+  // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
+  ParticleOnSphereGenericFiveBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
+					     double* fiveBodyPseudoPotential, int maxRelativeAngularMomentum, 
+					     double* fourBodyPseudoPotential, int fourBodyMaxRelativeAngularMomentum, 
+					     double l2Factor, AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, 
+					     char* precalculationFileName);
+
   // constructor from datas with a fully-defined two body interaction
   //
   // particles = Hilbert space associated to the system
@@ -115,17 +135,20 @@ class ParticleOnSphereGenericFiveBodyHamiltonian : public ParticleOnSphereGeneri
 
  protected:
  
-  // compute all projector coefficient associated to a given relative angular momentum between 3 particles
+  // compute all projector coefficient associated to a given relative angular momentum between 5 particles
   //
-  // relativeMomentum = value of twice the relative angular momentum between the 3 particles
-  // degeneracyIndex = optional degeneracy index for relative angular momentum greater than 5 for bosons (8 for fermions)
-  // indices = array that contains all possible sets of indices (size of the array is 3 * nbrIndexSets)
+  // relativeMomentum = value of twice the relative angular momentum between the 5 particles
+  // indices = array that contains all possible sets of indices (size of the array is 5 * nbrIndexSets)
   // nbrIndexSets = number of sets
-  double* ComputeProjectorCoefficients(int relativeMomentum, int degeneracyIndex, int* indices, int nbrIndexSets);
+  double* Compute5BodyCoefficients(int relativeMomentum, int* indices, int nbrIndexSets);
 
   // evaluate all interaction factors
   //   
   virtual void EvaluateInteractionFactors();
+
+  // evaluate all interaction factors for the five body interaction part
+  //   
+  void Evaluate5BodyInteractionFactors();
 
   // compute a given projector coefficient for the 5-body interaction 
   //
@@ -133,23 +156,12 @@ class ParticleOnSphereGenericFiveBodyHamiltonian : public ParticleOnSphereGeneri
   // m2 = second index
   // m3 = third inde
   // m4 = fourth index
+  // m5 = fifth index
   // jValue = total angular momentum
   // minJ = minimum angular momentum that can be reach by three particles
   // return value = corresponding projector coefficient
-  double ComputeProjectorCoefficients5Body(int m1, int m2, int m3, int m4, int jValue, 
+  double ComputeProjectorCoefficients5Body(int m1, int m2, int m3, int m4, int m5, int jValue, 
 					   ClebschGordanCoefficients* clebshArray);
-
-  // compute a given projector coefficient for the 5-body interaction in the second channel
-  //
-  // m1 = first index
-  // m2 = second index
-  // m3 = third inde
-  // m4 = fourth index
-  // jValue = total angular momentum
-  // minJ = minimum angular momentum that can be reach by four particles
-  // return value = corresponding projector coefficient
-  double ComputeProjectorCoefficients5BodySecondChannel(int m1, int m2, int m3, int m4, int jValue, 
-							ClebschGordanCoefficients** clebshArray);
 
 };
 
