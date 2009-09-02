@@ -808,7 +808,6 @@ bool BasicBlockLanczosAlgorithm::ReadState()
   ReadLittleEndian(File, this->MaximumNumberIteration);  
   int TmpDimension;
   ReadLittleEndian(File, TmpDimension);
-  cout << this->Index << " " << this->NbrEigenvalue << " " << TmpDimension << endl;
   this->ReducedMatrix.Resize(TmpDimension, TmpDimension);
   int TwiceBlockSize = 2 * this->BlockSize;
   int TmpMax = TmpDimension - TwiceBlockSize;
@@ -823,10 +822,6 @@ bool BasicBlockLanczosAlgorithm::ReadState()
 	ReadLittleEndian(File, this->ReducedMatrix(i, j));
     }  
   File.close();  
-  cout << this->Index << " " << this->NbrEigenvalue << " " << TmpDimension << " " << endl;
-  for (int k = 1; k < TmpDimension; ++k)
-    cout << this->ReducedMatrix(k - 1,k) << "   ";
-  cout << endl;
   char* TmpVectorName = new char [256];
   this->Index -= 2;
   for (int k = 0; k < this->BlockSize; ++k)
@@ -858,10 +853,6 @@ bool BasicBlockLanczosAlgorithm::WriteState()
   WriteLittleEndian(File, this->MaximumNumberIteration);  
   int TmpDimension = this->ReducedMatrix.GetNbrRow();
   WriteLittleEndian(File, TmpDimension);
-  cout << this->Index << " " << this->NbrEigenvalue << " " << TmpDimension << " " <<endl;
-  for (int k = 1; k < TmpDimension; ++k)
-    cout << this->ReducedMatrix(k - 1,k) << "   ";
-  cout << endl;
   int TwiceBlockSize = 2 * this->BlockSize;
   int TmpMax = TmpDimension - TwiceBlockSize;
   for (int i = 0; i < TmpMax; ++i)    
