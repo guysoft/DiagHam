@@ -103,6 +103,7 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
 
   bool Statistics = true;
   
+  
   if (UseExact)
     {
       int tmpNbrStates;
@@ -326,9 +327,10 @@ SkyrmionOnSphereWaveFunction::SkyrmionOnSphereWaveFunction(AbstractArchitecture*
 	}
     }
   // clear up unnecessary vectors
-  for (int i=0; i<NbrMultipletPolarized; ++i)
-    if (PolarizedSpace[i]==NULL)
-      this->PolarizedState[i]=RealVector();  
+  if (UseExact)
+    for (int i=0; i<NbrMultipletPolarized; ++i)
+      if (PolarizedSpace[i]==NULL)
+	this->PolarizedState[i]=RealVector();  
   
   this->BosonicSpace = new ParticleOnSphereWithSpin*[NbrMultipletBosons];
   for (int i=0; i<NbrMultipletBosons; ++i)
