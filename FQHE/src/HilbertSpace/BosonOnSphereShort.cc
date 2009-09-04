@@ -427,7 +427,6 @@ ostream& BosonOnSphereShort::PrintState (ostream& Str, int state)
     Str << this->TemporaryState[i] << " ";
   for (; i <= this->LzMax; ++i)
     Str << "0 ";
-  Str << "   lzmax = " << this->TemporaryStateLzMax;
   return Str;
 }
 

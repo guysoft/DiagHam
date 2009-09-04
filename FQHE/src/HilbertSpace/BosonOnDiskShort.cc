@@ -149,4 +149,153 @@ BosonOnDiskShort& BosonOnDiskShort::operator = (const BosonOnDiskShort& bosons)
   return *this;
 }
 
+// convert a state such that its components are now expressed in the unnormalized basis
+//
+// state = reference to the state to convert
+// reference = set which component as to be normalized to 1
+// return value = converted state
 
+RealVector& BosonOnDiskShort::ConvertToUnnormalizedMonomial(RealVector& state, long reference)
+{
+  unsigned long* TmpMonomialReference = new unsigned long [this->NbrBosons];
+  unsigned long* TmpMonomial = new unsigned long [this->NbrBosons];
+  double Factor = 1.0 / state[reference];
+  state[reference] = 1.0;
+  this->ConvertToMonomial(this->FermionBasis->StateDescription[reference], this->FermionBasis->StateLzMax[reference], TmpMonomialReference);
+  double* SqrtCoefficients = new double [this->LzMax + 1];
+  double* InvSqrtCoefficients = new double [this->LzMax + 1];
+  SqrtCoefficients[0] = 1.0;
+  InvSqrtCoefficients[0] = 1.0;
+  for (int k = 1; k <= this->LzMax; ++k)
+    {
+      SqrtCoefficients[k] = sqrt((double) k) * SqrtCoefficients[k - 1];
+      InvSqrtCoefficients[k] = 1.0 / SqrtCoefficients[k];
+    }
+  FactorialCoefficient ReferenceFactorial;
+  FactorialCoefficient Factorial;
+  this->FermionToBoson(this->FermionBasis->StateDescription[reference], this->FermionBasis->StateLzMax[reference], 
+		       this->TemporaryState, this->TemporaryStateLzMax);
+  for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
+    if (this->TemporaryState[k] > 1)
+      ReferenceFactorial.FactorialDivide(this->TemporaryState[k]);
+  for (int i = 1; i < this->HilbertSpaceDimension; ++i)
+    {
+      this->ConvertToMonomial(this->FermionBasis->StateDescription[i], this->FermionBasis->StateLzMax[i], TmpMonomial);
+      int Index1 = 0;
+      int Index2 = 0;
+      double Coefficient = Factor;
+      while ((Index1 < this->NbrBosons) && (Index2 < this->NbrBosons))
+	{
+	  while ((Index1 < this->NbrBosons) && (TmpMonomialReference[Index1] > TmpMonomial[Index2]))
+	    {
+	      Coefficient *= InvSqrtCoefficients[TmpMonomialReference[Index1]];
+	      ++Index1;
+	    }
+	  while ((Index1 < this->NbrBosons) && (Index2 < this->NbrBosons) && (TmpMonomialReference[Index1] == TmpMonomial[Index2]))
+	    {
+	      ++Index1;
+	      ++Index2;
+	    }
+	  while ((Index2 < this->NbrBosons) && (TmpMonomialReference[Index1] < TmpMonomial[Index2]))
+	    {
+	      Coefficient *= SqrtCoefficients[TmpMonomial[Index2]];
+	      ++Index2;
+	    }	  
+	}
+      while (Index1 < this->NbrBosons)
+	{
+	  Coefficient *= InvSqrtCoefficients[TmpMonomialReference[Index1]];
+	  ++Index1;
+	}
+      while (Index2 < this->NbrBosons)
+	{
+	  Coefficient *= SqrtCoefficients[TmpMonomialReference[Index2]];
+	  ++Index2;
+	}
+      Factorial = ReferenceFactorial;
+      this->FermionToBoson(this->FermionBasis->StateDescription[i], this->FermionBasis->StateLzMax[i], 
+			   this->TemporaryState, this->TemporaryStateLzMax);
+      for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
+	if (this->TemporaryState[k] > 1)
+	  Factorial.FactorialMultiply(this->TemporaryState[k]);
+      Coefficient *= sqrt(Factorial.GetNumericalValue());
+      state[i] *= Coefficient;
+    }
+  return state;
+}
+
+// convert a state such that its components are now expressed in the normalized basis
+//
+// state = reference to the state to convert
+// reference = set which component has been normalized to 1
+// return value = converted state
+
+RealVector& BosonOnDiskShort::ConvertFromUnnormalizedMonomial(RealVector& state, long reference)
+{
+  unsigned long* TmpMonomialReference = new unsigned long [this->NbrBosons];
+  unsigned long* TmpMonomial = new unsigned long [this->NbrBosons];
+  double Factor = state[reference];
+  state[reference] = 1.0;
+  this->ConvertToMonomial(this->FermionBasis->StateDescription[reference], this->FermionBasis->StateLzMax[reference], TmpMonomialReference);
+  double* SqrtCoefficients = new double [this->LzMax + 1];
+  double* InvSqrtCoefficients = new double [this->LzMax + 1];
+  SqrtCoefficients[0] = 1.0;
+  InvSqrtCoefficients[0] = 1.0;
+  for (int k = 0; k <= this->LzMax; ++k)
+    {
+      InvSqrtCoefficients[k] = sqrt((double) k) * InvSqrtCoefficients[k - 1];
+      SqrtCoefficients[k] = 1.0 / InvSqrtCoefficients[k];
+    }
+  FactorialCoefficient ReferenceFactorial;
+  FactorialCoefficient Factorial;
+  this->FermionToBoson(this->FermionBasis->StateDescription[reference], this->FermionBasis->StateLzMax[reference], 
+		       this->TemporaryState, this->TemporaryStateLzMax);
+  for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
+    if (this->TemporaryState[k] > 1)
+      ReferenceFactorial.FactorialMultiply(this->TemporaryState[k]);
+  for (int i = 1; i < this->HilbertSpaceDimension; ++i)
+    {
+      this->ConvertToMonomial(this->FermionBasis->StateDescription[i], this->FermionBasis->StateLzMax[i], TmpMonomial);
+      int Index1 = 0;
+      int Index2 = 0;
+      double Coefficient = Factor;
+      while ((Index1 < this->NbrBosons) && (Index2 < this->NbrBosons))
+	{
+	  while ((Index1 < this->NbrBosons) && (TmpMonomialReference[Index1] > TmpMonomial[Index2]))
+	    {
+	      Coefficient *= InvSqrtCoefficients[TmpMonomialReference[Index1]];
+	      ++Index1;
+	    }
+	  while ((Index1 < this->NbrBosons) && (Index2 < this->NbrBosons) && (TmpMonomialReference[Index1] == TmpMonomial[Index2]))
+	    {
+	      ++Index1;
+	      ++Index2;
+	    }
+	  while ((Index2 < this->NbrBosons) && (TmpMonomialReference[Index1] < TmpMonomial[Index2]))
+	    {
+	      Coefficient *= SqrtCoefficients[TmpMonomial[Index2]];
+	      ++Index2;
+	    }	  
+	}
+      while (Index1 < this->NbrBosons)
+	{
+	  Coefficient *= InvSqrtCoefficients[TmpMonomialReference[Index1]];
+	  ++Index1;
+	}
+      while (Index2 < this->NbrBosons)
+	{
+	  Coefficient *= SqrtCoefficients[TmpMonomialReference[Index2]];
+	  ++Index2;
+	}
+      Factorial = ReferenceFactorial;
+      this->FermionToBoson(this->FermionBasis->StateDescription[i], this->FermionBasis->StateLzMax[i], 
+			   this->TemporaryState, this->TemporaryStateLzMax);
+      for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
+	if (this->TemporaryState[k] > 1)
+	  Factorial.FactorialDivide(this->TemporaryState[k]);
+      Coefficient *= sqrt(Factorial.GetNumericalValue());
+      state[i] *= Coefficient;
+    }
+  state /= state.Norm();
+  return state;
+}

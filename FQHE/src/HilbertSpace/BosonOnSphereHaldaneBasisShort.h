@@ -110,15 +110,23 @@ class BosonOnSphereHaldaneBasisShort :  public BosonOnSphereShort
   // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
   // alpha = value of the Jack polynomial alpha coefficient
   // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
-  RealVector& GenerateJackPolynomial(RealVector& jack, double alpha);
+  virtual RealVector& GenerateJackPolynomial(RealVector& jack, double alpha);
 
   // create the Jack polynomial decomposition corresponding to the root partition assuming the resulting state is invariant under the Lz<->-Lz symmetry
   //
   // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
   // alpha = value of the Jack polynomial alpha coefficient
   // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
-  RealVector& GenerateSymmetrizedJackPolynomial(RealVector& jack, double alpha);
+  virtual RealVector& GenerateSymmetrizedJackPolynomial(RealVector& jack, double alpha);
 
+  // check partitions that may lead to singular coefficient in a given Jack polynomial decomposition
+  //
+  // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
+  // alpha = value of the Jack polynomial alpha coefficient
+  // error = error when comparing two rho values
+  // return value = vector with non-zero component being rho factor of possible singular coefficients
+  virtual RealVector& CheckPossibleSingularCoefficientsInJackPolynomial(RealVector& jack, double alpha, double error);
+  
 };
 
 #endif

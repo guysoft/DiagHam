@@ -223,6 +223,14 @@ class FermionOnSphereHaldaneBasis :  public FermionOnSphere
   // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
   virtual RealVector& GenerateSymmetrizedJackPolynomial(RealVector& jack, double alpha);
 
+  // check partitions that may lead to singular coefficient in a given Jack polynomial decomposition
+  //
+  // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
+  // alpha = value of the Jack polynomial alpha coefficient
+  // error = error when comparing two rho values
+  // return value = vector with non-zero component being rho factor of possible singular coefficients
+  RealVector& CheckPossibleSingularCoefficientsInJackPolynomial(RealVector& jack, double alpha, double error);
+  
  protected:
 
   // find state index

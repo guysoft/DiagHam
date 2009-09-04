@@ -405,3 +405,43 @@ RealVector& BosonOnSphereHaldaneBasisShort::GenerateSymmetrizedJackPolynomial(Re
 
   return jack;
 }
+
+// check partitions that may lead to singular coefficient in a given Jack polynomial decomposition
+//
+// jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
+// alpha = value of the Jack polynomial alpha coefficient
+// error = error when comparing two rho values
+// return value = vector with non-zero component being rho factor of possible singular coefficients
+
+RealVector& BosonOnSphereHaldaneBasisShort::CheckPossibleSingularCoefficientsInJackPolynomial(RealVector& jack, double alpha, double error)
+{
+  double InvAlpha =  2.0 / alpha;
+
+  unsigned long* TmpMonomial = new unsigned long [this->NbrBosons];
+  unsigned long* TmpMonomial2 = new unsigned long [this->NbrBosons];
+
+  double RhoRoot = 0.0;
+  unsigned long MaxRoot = this->FermionBasis->StateDescription[0];
+  this->ConvertToMonomial(MaxRoot, this->FermionBasis->StateLzMax[0], TmpMonomial);
+  for (int j = 0; j < this->NbrBosons; ++j)
+    RhoRoot += TmpMonomial[j] * (TmpMonomial[j] - 1.0 - InvAlpha * ((double) j));
+  int ReducedNbrBosons = this->NbrBosons - 1;
+
+  jack[0] = RhoRoot;
+  for (long i = 1; i < this->LargeHilbertSpaceDimension; ++i)
+    {
+      double Rho = 0.0;
+      unsigned long CurrentPartition = this->FermionBasis->StateDescription[i];
+      this->ConvertToMonomial(CurrentPartition, this->FermionBasis->StateLzMax[i], TmpMonomial);
+      for (int j = 0; j < this->NbrBosons; ++j)
+	Rho += TmpMonomial[j] * (TmpMonomial[j] - 1.0 - InvAlpha * ((double) j));
+      if ((fabs(RhoRoot - Rho) < error) || (fabs(RhoRoot - Rho) < (error * fabs(RhoRoot))))
+	jack[i] = Rho;
+      else
+	jack[i] = 0.0;
+      }
+  delete[] TmpMonomial;
+
+  return jack;
+}
+  

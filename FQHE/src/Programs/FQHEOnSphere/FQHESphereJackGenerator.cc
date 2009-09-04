@@ -58,6 +58,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "file-size", "maximum file size (in MBytes) when using huge mode", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "large-memory", "maximum memory (in kBytes) that can allocated for precalculations when using huge mode", 1);
+  (*SystemGroup) += new BooleanOption  ('\n', "check-singularity", "display configurations which may produce singularities");
   (*OutputGroup) += new SingleStringOption ('o', "bin-output", "output the Jack polynomial decomposition into a binary file");
   (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the Jack polynomial decomposition into a text file");
   (*OutputGroup) += new BooleanOption ('n', "normalize", "express the Jack polynomial in the normalized basis");
@@ -197,6 +198,19 @@ int main(int argc, char** argv)
 	    }
 	}
       RealVector OutputState;
+      if (Manager.GetBoolean("check-singularity") == true)
+	{
+	  OutputState = RealVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
+	  InitialSpace->CheckPossibleSingularCoefficientsInJackPolynomial(OutputState, Alpha, 1e-14);
+	  cout << "partitions that may lead to singular coefficients : " << endl;
+	  for (long i = 1l; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
+	    if (OutputState[i] != 0.0)
+	      {
+		InitialSpace->PrintStateMonomial(cout, i) << " = ";
+		InitialSpace->PrintState(cout, i) << endl;
+	      }
+	  return 0;
+	}
       if (Manager.GetString("initial-state") == 0)
 	OutputState = RealVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
       else
@@ -311,6 +325,19 @@ int main(int argc, char** argv)
 		}
 	    }
 	  RealVector OutputState;
+	  if (Manager.GetBoolean("check-singularity") == true)
+	    {
+	      OutputState = RealVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
+	      InitialSpace->CheckPossibleSingularCoefficientsInJackPolynomial(OutputState, Alpha, 1e-14);
+	      cout << "partitions that may lead to singular coefficients : " << endl;
+	      for (long i = 1l; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
+		if (OutputState[i] != 0.0)
+		  {
+		    InitialSpace->PrintStateMonomial(cout, i) << " = ";
+		    InitialSpace->PrintState(cout, i) << endl;
+		  }
+	      return 0;
+	    }
 	  if (Manager.GetString("initial-state") == 0)
 	    OutputState = RealVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
 	  else

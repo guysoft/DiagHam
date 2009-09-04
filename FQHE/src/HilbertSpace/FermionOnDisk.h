@@ -71,9 +71,21 @@ class FermionOnDisk:  public FermionOnSphere
   // return value = reference on current hilbert space
   virtual FermionOnDisk& operator = (const FermionOnDisk& fermions);
 
+  // convert a state such that its components are now expressed in the unnormalized basis
+  //
+  // state = reference to the state to convert
+  // reference = set which component as to be normalized to 1
+  // return value = converted state
+  virtual RealVector& ConvertToUnnormalizedMonomial(RealVector& state, long reference = 0);    
+
+  // convert a state such that its components are now expressed in the normalized basis
+  //
+  // state = reference to the state to convert
+  // reference = set which component has been normalized to 1
+  // return value = converted state
+  virtual RealVector& ConvertFromUnnormalizedMonomial(RealVector& state, long reference = 0);
 
 };
-
 
 #endif
 

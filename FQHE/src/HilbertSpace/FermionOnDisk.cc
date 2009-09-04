@@ -168,3 +168,264 @@ FermionOnDisk& FermionOnDisk::operator = (const FermionOnDisk& fermions)
   return *this;
 }
 
+// convert a state such that its components are now expressed in the unnormalized basis
+//
+// state = reference to the state to convert
+// reference = set which component as to be normalized to 1
+// return value = converted state
+
+RealVector& FermionOnDisk::ConvertToUnnormalizedMonomial(RealVector& state, long reference)
+{
+  double* SqrtCoefficients = new double [this->LzMax + 1];
+  double* InvSqrtCoefficients = new double [this->LzMax + 1];
+  SqrtCoefficients[0] = 1.0;
+  InvSqrtCoefficients[0] = 1.0;
+  for (int k = 1; k <= this->LzMax; ++k)
+    {
+      SqrtCoefficients[k] = sqrt((double) k) * SqrtCoefficients[k - 1];
+      InvSqrtCoefficients[k] = 1.0 / SqrtCoefficients[k];
+    }
+  if (reference >= 0l)
+    {
+      int* TmpMonomialReference = new int [this->NbrFermions];
+      int* TmpMonomial = new int [this->NbrFermions];
+      double Factor = 1.0 / state[reference];
+      unsigned long TmpState = this->StateDescription[reference];
+      int Index = 0;
+      for (int j = this->LzMax; j >= 0; --j)
+	if (((TmpState >> j) & 1ul) != 0ul)
+	  TmpMonomialReference[Index++] = j;
+      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	{
+	  Index = 0;
+	  TmpState = this->StateDescription[i];
+	  for (int j = this->LzMax; j >= 0; --j)
+	    if (((TmpState >> j) & 1ul) != 0ul)
+	      TmpMonomial[Index++] = j;
+	  int Index1 = 0;
+	  int Index2 = 0;
+	  double Coefficient = Factor;
+	  while ((Index1 < this->NbrFermions) && (Index2 < this->NbrFermions))
+	    {
+	      while ((Index1 < this->NbrFermions) && (TmpMonomialReference[Index1] > TmpMonomial[Index2]))
+		{
+		  Coefficient *= InvSqrtCoefficients[TmpMonomialReference[Index1]];
+		  ++Index1;
+		}
+	      while ((Index1 < this->NbrFermions) && (Index2 < this->NbrFermions) && (TmpMonomialReference[Index1] == TmpMonomial[Index2]))
+		{
+		  ++Index1;
+		  ++Index2;
+		}
+	      while ((Index2 < this->NbrFermions) && (TmpMonomialReference[Index1] < TmpMonomial[Index2]))
+		{
+		  Coefficient *= SqrtCoefficients[TmpMonomial[Index2]];
+		  ++Index2;
+		}	  
+	    }
+	  while (Index1 < this->NbrFermions)
+	    {
+	      Coefficient *= InvSqrtCoefficients[TmpMonomialReference[Index1]];
+	      ++Index1;
+	    }
+	  while (Index2 < this->NbrFermions)
+	    {
+	      Coefficient *= SqrtCoefficients[TmpMonomialReference[Index2]];
+	      ++Index2;
+	    }
+	  state[i] *= Coefficient;
+	}
+      state[reference] = 1.0;
+      delete[] InvSqrtCoefficients;
+      delete[] TmpMonomialReference;
+      delete[] TmpMonomial;
+   }
+  else
+    {
+      int* TmpMonomialReference = new int [this->NbrFermions];
+      int* TmpMonomial = new int [this->NbrFermions];
+      double Factor = 1.0;
+      unsigned long TmpState = this->StateDescription[0l];
+      int Index = 0;
+      for (int j = this->LzMax; j >= 0; --j)
+	if (((TmpState >> j) & 1ul) != 0ul)
+	  TmpMonomialReference[Index++] = j;
+      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	{
+	  Index = 0;
+	  TmpState = this->StateDescription[i];
+	  for (int j = this->LzMax; j >= 0; --j)
+	    if (((TmpState >> j) & 1ul) != 0ul)
+	      TmpMonomial[Index++] = j;
+	  int Index1 = 0;
+	  int Index2 = 0;
+	  double Coefficient = Factor;
+	  while ((Index1 < this->NbrFermions) && (Index2 < this->NbrFermions))
+	    {
+	      while ((Index1 < this->NbrFermions) && (TmpMonomialReference[Index1] > TmpMonomial[Index2]))
+		{
+		  Coefficient *= InvSqrtCoefficients[TmpMonomialReference[Index1]];
+		  ++Index1;
+		}
+	      while ((Index1 < this->NbrFermions) && (Index2 < this->NbrFermions) && (TmpMonomialReference[Index1] == TmpMonomial[Index2]))
+		{
+		  ++Index1;
+		  ++Index2;
+		}
+	      while ((Index2 < this->NbrFermions) && (TmpMonomialReference[Index1] < TmpMonomial[Index2]))
+		{
+		  Coefficient *= SqrtCoefficients[TmpMonomial[Index2]];
+		  ++Index2;
+		}	  
+	    }
+	  while (Index1 < this->NbrFermions)
+	    {
+	      Coefficient *= InvSqrtCoefficients[TmpMonomialReference[Index1]];
+	      ++Index1;
+	    }
+	  while (Index2 < this->NbrFermions)
+	    {
+	      Coefficient *= SqrtCoefficients[TmpMonomialReference[Index2]];
+	      ++Index2;
+	    }
+	  state[i] *= Coefficient;
+	}
+      delete[] InvSqrtCoefficients;
+      delete[] TmpMonomialReference;
+      delete[] TmpMonomial;
+   }
+  delete[] SqrtCoefficients;
+  return state;
+}
+
+// convert a state such that its components are now expressed in the normalized basis
+//
+// state = reference to the state to convert
+// reference = set which component has been normalized to 1
+// return value = converted state
+
+RealVector& FermionOnDisk::ConvertFromUnnormalizedMonomial(RealVector& state, long reference)
+{
+  BinomialCoefficients Binomials(this->LzMax);
+  double* SqrtCoefficients = new double [this->LzMax + 1];
+  double* InvSqrtCoefficients = new double [this->LzMax + 1];
+  InvSqrtCoefficients[0] = 1.0;
+  SqrtCoefficients[0] = 1.0;
+  for (int k = 1; k <= this->LzMax; ++k)
+    {
+      InvSqrtCoefficients[k] = sqrt((double) k) * InvSqrtCoefficients[k - 1];
+      SqrtCoefficients[k] = 1.0 / InvSqrtCoefficients[k];
+    }
+  if (reference >= 0l)
+    {
+      int* TmpMonomialReference = new int [this->NbrFermions];
+      int* TmpMonomial = new int [this->NbrFermions];
+      double Factor = 1.0 / state[reference];
+      state[reference] = 1.0;
+      unsigned long TmpState = this->StateDescription[reference];
+      int Index = 0;
+      for (int j = this->LzMax; j >= 0; --j)
+	if (((TmpState >> j) & 1ul) != 0ul)
+	  TmpMonomialReference[Index++] = j;
+      for (int i = 1; i < this->HilbertSpaceDimension; ++i)
+	{
+	  Index = 0;
+	  TmpState = this->StateDescription[i];
+	  for (int j = this->LzMax; j >= 0; --j)
+	    if (((TmpState >> j) & 1ul) != 0ul)
+	      TmpMonomial[Index++] = j;
+	  int Index1 = 0;
+	  int Index2 = 0;
+	  double Coefficient = Factor;
+	  while ((Index1 < this->NbrFermions) && (Index2 < this->NbrFermions))
+	    {
+	      while ((Index1 < this->NbrFermions) && (TmpMonomialReference[Index1] > TmpMonomial[Index2]))
+		{
+		  Coefficient *= InvSqrtCoefficients[TmpMonomialReference[Index1]];
+		  ++Index1;
+		}
+	      while ((Index1 < this->NbrFermions) && (Index2 < this->NbrFermions) && (TmpMonomialReference[Index1] == TmpMonomial[Index2]))
+		{
+		  ++Index1;
+		  ++Index2;
+		}
+	      while ((Index2 < this->NbrFermions) && (TmpMonomialReference[Index1] < TmpMonomial[Index2]))
+		{
+		  Coefficient *= SqrtCoefficients[TmpMonomial[Index2]];
+		  ++Index2;
+		}	  
+	    }
+	  while (Index1 < this->NbrFermions)
+	    {
+	      Coefficient *= InvSqrtCoefficients[TmpMonomialReference[Index1]];
+	      ++Index1;
+	    }
+	  while (Index2 < this->NbrFermions)
+	    {
+	      Coefficient *= SqrtCoefficients[TmpMonomialReference[Index2]];
+	      ++Index2;
+	    }
+	  state[i] *= Coefficient;
+	}
+      delete[] TmpMonomialReference;
+      delete[] TmpMonomial;
+      delete[] InvSqrtCoefficients;
+      state /= state.Norm();
+    }
+  else
+    {
+      int* TmpMonomialReference = new int [this->NbrFermions];
+      int* TmpMonomial = new int [this->NbrFermions];
+      double Factor = 1.0;
+      unsigned long TmpState = this->StateDescription[0l];
+      int Index = 0;
+      for (int j = this->LzMax; j >= 0; --j)
+	if (((TmpState >> j) & 1ul) != 0ul)
+	  TmpMonomialReference[Index++] = j;
+      for (int i = 1; i < this->HilbertSpaceDimension; ++i)
+	{
+	  Index = 0;
+	  TmpState = this->StateDescription[i];
+	  for (int j = this->LzMax; j >= 0; --j)
+	    if (((TmpState >> j) & 1ul) != 0ul)
+	      TmpMonomial[Index++] = j;
+	  int Index1 = 0;
+	  int Index2 = 0;
+	  double Coefficient = Factor;
+	  while ((Index1 < this->NbrFermions) && (Index2 < this->NbrFermions))
+	    {
+	      while ((Index1 < this->NbrFermions) && (TmpMonomialReference[Index1] > TmpMonomial[Index2]))
+		{
+		  Coefficient *= InvSqrtCoefficients[TmpMonomialReference[Index1]];
+		  ++Index1;
+		}
+	      while ((Index1 < this->NbrFermions) && (Index2 < this->NbrFermions) && (TmpMonomialReference[Index1] == TmpMonomial[Index2]))
+		{
+		  ++Index1;
+		  ++Index2;
+		}
+	      while ((Index2 < this->NbrFermions) && (TmpMonomialReference[Index1] < TmpMonomial[Index2]))
+		{
+		  Coefficient *= SqrtCoefficients[TmpMonomial[Index2]];
+		  ++Index2;
+		}	  
+	    }
+	  while (Index1 < this->NbrFermions)
+	    {
+	      Coefficient *= InvSqrtCoefficients[TmpMonomialReference[Index1]];
+	      ++Index1;
+	    }
+	  while (Index2 < this->NbrFermions)
+	    {
+	      Coefficient *= SqrtCoefficients[TmpMonomialReference[Index2]];
+	      ++Index2;
+	    }
+	  state[i] *= Coefficient;
+	}
+      delete[] TmpMonomialReference;
+      delete[] TmpMonomial;
+      delete[] InvSqrtCoefficients;
+    }
+  delete[] SqrtCoefficients;
+  return state;
+}
