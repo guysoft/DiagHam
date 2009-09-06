@@ -153,7 +153,7 @@ FermionOnSphereWithSpinHaldaneLargeBasis::FermionOnSphereWithSpinHaldaneLargeBas
   else
     this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
   this->Flag.Initialize();
-  this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
+  this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
   this->StateHighestBit = 0;  
   cout << "generating Hilbert space (" << this->LargeHilbertSpaceDimension << ")" << endl;
   this->LargeHilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 
