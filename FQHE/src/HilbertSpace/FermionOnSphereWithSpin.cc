@@ -40,14 +40,21 @@
 #include "FunctionBasis/AbstractFunctionBasis.h"
 #include "MathTools/BinomialCoefficients.h"
 #include "GeneralTools/UnsignedIntegerTools.h"
+#include "MathTools/FactorialCoefficient.h"
+#include "GeneralTools/Endian.h"
+
 #include <math.h>
 #include <bitset>
+#include <fstream>
 
 using std::cout;
 using std::endl;
 using std::hex;
 using std::dec;
 using std::bitset;
+using std::ofstream;
+using std::ifstream;
+using std::ios;
 
 #define WANT_LAPACK
 
@@ -282,7 +289,39 @@ int FermionOnSphereWithSpin::GetTargetHilbertSpaceDimension()
   return this->TargetSpace->HilbertSpaceDimension;
 }
 
+// save Hilbert space description to disk
+//
+// fileName = name of the file where the Hilbert space description has to be saved
+// return value = true if no error occured
 
+bool FermionOnSphereWithSpin::WriteHilbertSpace (char* fileName)
+{
+  ofstream File;
+  File.open(fileName, ios::binary | ios::out);
+  if (!File.is_open())
+    {
+      cout << "can't open the file: " << fileName << endl;
+      return false;
+    }
+  WriteLittleEndian(File, this->HilbertSpaceDimension);
+  WriteLittleEndian(File, this->LargeHilbertSpaceDimension);
+  WriteLittleEndian(File, this->NbrFermions);
+  WriteLittleEndian(File, this->LzMax);
+  WriteLittleEndian(File, this->TotalLz);
+  WriteLittleEndian(File, this->TotalSpin);
+  if (this->HilbertSpaceDimension != 0)
+    {
+      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	WriteLittleEndian(File, this->StateDescription[i]);
+    }
+  else
+    {
+      for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+	WriteLittleEndian(File, this->StateDescription[i]);
+    }
+  File.close();
+  return true;
+}
 
 // apply creation operator to a word, using the conventions
 // for state-coding and quantum numbers of this space
@@ -1523,14 +1562,17 @@ void FermionOnSphereWithSpin::GenerateLookUpTable(unsigned long memory)
   while ((TmpPosition & (0x1ul << CurrentHighestBit)) == 0x0ul)
     --CurrentHighestBit;  
 
-  this->StateHighestBit[0] = CurrentHighestBit;
-  for (int i = 1; i < this->HilbertSpaceDimension; ++i)
+  if (this->StateHighestBit != 0)
     {
-      TmpPosition = this->StateDescription[i];
-      while ((TmpPosition & (0x1ul << CurrentHighestBit)) == 0x0ul)
-	--CurrentHighestBit;  
-      this->StateHighestBit[i] = CurrentHighestBit;
-   }
+      this->StateHighestBit[0] = CurrentHighestBit;
+      for (int i = 1; i < this->HilbertSpaceDimension; ++i)
+	{
+	  TmpPosition = this->StateDescription[i];
+	  while ((TmpPosition & (0x1ul << CurrentHighestBit)) == 0x0ul)
+	    --CurrentHighestBit;  
+	  this->StateHighestBit[i] = CurrentHighestBit;
+	}
+    }
 
   // evaluate look-up table size
   memory /= (sizeof(int*) * 2*this->NbrLzValue);
@@ -1549,7 +1591,7 @@ void FermionOnSphereWithSpin::GenerateLookUpTable(unsigned long memory)
   this->LookUpTableShift = new int [2*this->NbrLzValue];
   for (int i = 0; i < 2*this->NbrLzValue; ++i)
     this->LookUpTable[i] = new int [this->LookUpTableMemorySize + 1];
-  int CurrentLargestBit = this->StateHighestBit[0];
+  int CurrentLargestBit = CurrentHighestBit;
   cout << this->NbrLzValue << " " << CurrentLargestBit << endl;
   int* TmpLookUpTable = this->LookUpTable[CurrentLargestBit];
   if (CurrentLargestBit < this->MaximumLookUpShift)
@@ -1566,8 +1608,10 @@ void FermionOnSphereWithSpin::GenerateLookUpTable(unsigned long memory)
     }
   TmpLookUpTable[CurrentLookUpTableValue] = 0;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-    {
-      if (CurrentLargestBit != this->StateHighestBit[i])
+    {     
+      while ((TmpPosition & (0x1ul << CurrentHighestBit)) == 0x0ul)
+	--CurrentHighestBit;  
+      if (CurrentLargestBit != CurrentHighestBit)
 	{
 	  while (CurrentLookUpTableValue > 0)
 	    {
@@ -1575,7 +1619,7 @@ void FermionOnSphereWithSpin::GenerateLookUpTable(unsigned long memory)
 	      --CurrentLookUpTableValue;
 	    }
 	  TmpLookUpTable[0] = i;
- 	  CurrentLargestBit = this->StateHighestBit[i];
+ 	  CurrentLargestBit = CurrentHighestBit;
 	  TmpLookUpTable = this->LookUpTable[CurrentLargestBit];
 	  if (CurrentLargestBit < this->MaximumLookUpShift)
 	    this->LookUpTableShift[CurrentLargestBit] = 0;
@@ -2359,3 +2403,54 @@ RealSymmetricMatrix FermionOnSphereWithSpin::EvaluatePartialDensityMatrixSpinSep
 
 
 
+// compute part of the Jack polynomial square normalization in a given range of indices
+//
+// state = reference on the unnormalized Jack polynomial
+// minIndex = first index to compute
+// nbrComponents = number of indices to compute (0 if they all have to be computed from minIndex)
+// return value = quare normalization
+
+double FermionOnSphereWithSpin::JackSqrNormalization (RealVector& outputVector, long minIndex, long nbrComponents)
+{
+  double SqrNorm = 0.0;
+  int* TmpMonomialUp = new int [this->NbrFermionsUp];
+  int* TmpMonomialDown = new int [this->NbrFermionsDown];
+  FactorialCoefficient Factorial;
+  int HalfLzMax = this->LzMax >> 1;
+  long MaxIndex = minIndex + nbrComponents;
+  if (MaxIndex == minIndex)
+    MaxIndex = this->LargeHilbertSpaceDimension;
+  for (long i = minIndex; i < MaxIndex; ++i)
+    MaxIndex = this->LargeHilbertSpaceDimension;
+  for (long i = minIndex; i < MaxIndex; ++i)
+    {
+      Factorial.SetToOne();
+      this->ConvertToMonomial(this->StateDescription[i], TmpMonomialUp, TmpMonomialDown);
+      for (int k = 0; k < this->NbrFermionsUp; ++k)
+        {
+          if (HalfLzMax < TmpMonomialUp[k])
+            Factorial.PartialFactorialMultiply(HalfLzMax + 1, TmpMonomialUp[k]);
+          else
+            if (HalfLzMax > TmpMonomialUp[k])
+              Factorial.PartialFactorialDivide(TmpMonomialUp[k] + 1, HalfLzMax);
+	}
+      for (int k = 0; k < this->NbrFermionsDown; ++k)
+        {\
+	  if (HalfLzMax < TmpMonomialDown[k])
+            Factorial.PartialFactorialMultiply(HalfLzMax + 1, TmpMonomialDown[k]);
+          else
+            if (HalfLzMax > TmpMonomialDown[k])
+              Factorial.PartialFactorialDivide(TmpMonomialDown[k] + 1, HalfLzMax);
+        }
+      SqrNorm +=(outputVector[i] * outputVector[i]) * Factorial.GetNumericalValue();
+      if ((i & 0x3fffl) == 0l)
+        {
+          cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100l) / this->LargeHilbertSpaceDimension) << "%)           \r";
+          cout.flush();
+        }
+    }
+  cout << endl;
+  delete[] TmpMonomialUp;
+  delete[] TmpMonomialDown;
+  return SqrNorm;
+}

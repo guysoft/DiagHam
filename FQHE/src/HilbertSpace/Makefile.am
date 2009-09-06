@@ -78,4 +78,5 @@ FermionOnSphereWithSpinHaldaneBasis.cc \
 FermionOnSphereWithSpinHaldaneBasisLong.cc \
 FermionOnSphereHaldaneLargeBasis.cc \
 FermionOnSphereTwoLandauLevels.cc \
-FermionOnSphereWithSpinHaldaneLzSzSymmetry.cc
+FermionOnSphereWithSpinHaldaneLzSzSymmetry.cc \
+FermionOnSphereWithSpinHaldaneLargeBasis.cc 

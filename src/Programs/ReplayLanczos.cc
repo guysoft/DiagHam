@@ -102,7 +102,7 @@ int main(int argc, char** argv)
 	      else
 		{
 		  cout << "Please request eigenvalues!"<<endl;
-		  exit(0);
+		  return 0;
 		}
 	    }
 	  else
@@ -125,7 +125,7 @@ int main(int argc, char** argv)
       else
 	{
 	  cout << "Block Lanczos not defined yet"<<endl;
-	  exit(-1);
+	  return -1;
 	}
     }
   else // have complex Lanczos data
@@ -137,7 +137,7 @@ int main(int argc, char** argv)
       else
 	{
 	  cout << "Block Lanczos not defined yet"<<endl;
-	  exit(-1);
+	  return -1;
 	}
     }
   delete [] OutputName;

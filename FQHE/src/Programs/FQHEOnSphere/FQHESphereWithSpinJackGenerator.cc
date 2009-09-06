@@ -2,6 +2,7 @@
 
 #include "HilbertSpace/FermionOnSphereWithSpinHaldaneBasis.h"
 #include "HilbertSpace/FermionOnSphereWithSpinHaldaneBasisLong.h"
+#include "HilbertSpace/FermionOnSphereWithSpinHaldaneLargeBasis.h"
 
 #include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
 
@@ -42,6 +43,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
   (*SystemGroup) += new SingleDoubleOption  ('a', "alpha", "alpha coefficient of the Jack polynomial", -2.0);
   (*SystemGroup) += new SingleStringOption  ('\n', "initial-state", "use an optional state where some of the components have already been computed, improving computation time");
+  (*SystemGroup) += new BooleanOption  ('\n', "large-basis", "use large Hilbert space support (i.e. handle non-squeezed Hilbert space larger than 2^31 without hard-drive storage)");
   (*OutputGroup) += new SingleStringOption ('o', "bin-output", "output the Jack polynomial decomposition into a binary file");
   (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the Jack polynomial decomposition into a text file");
   (*OutputGroup) += new BooleanOption ('\n', "txt-separatespin", "for the text output, use the sign convention which separates spins");
@@ -88,17 +90,38 @@ int main(int argc, char** argv)
     }
 
   FermionOnSphereWithSpinHaldaneBasis* InitialSpace;
-//   if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
-//     InitialSpace = new FermionOnSphereWithSpinHaldaneBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString());
-//   else
-//    {
-      InitialSpace = new FermionOnSphereWithSpinHaldaneBasis(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz, ReferenceStates, NbrReferenceStates);	  
-//       if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
-// 	{
-// 	  InitialSpace->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
-// 	  return 0;
-// 	}
-//     }
+  if (Manager.GetBoolean("large-basis") == false)
+    {
+      //   if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
+      //     InitialSpace = new FermionOnSphereWithSpinHaldaneBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString());
+      //   else
+      //    {
+      InitialSpace = new FermionOnSphereWithSpinHaldaneBasis(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz, ReferenceStates, NbrReferenceStates); 
+      if (Manager.GetString("save-hilbert") != 0)
+	{
+	  InitialSpace->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+	  return 0;
+	}
+      //}
+    }
+  else
+    {
+      if (Manager.GetString("load-hilbert") != 0)
+	{
+	  InitialSpace = new FermionOnSphereWithSpinHaldaneLargeBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString());
+	}
+      else
+	{
+	  InitialSpace = new FermionOnSphereWithSpinHaldaneLargeBasis(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz, ReferenceStates, NbrReferenceStates); 
+	  if (Manager.GetString("save-hilbert") != 0)
+	    {
+	      ((FermionOnSphereWithSpinHaldaneLargeBasis*) InitialSpace)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+	      return 0;
+	    }
+	}
+    }
+  
+
   RealVector OutputState;
   if (Manager.GetString("initial-state") == 0)
     OutputState = RealVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);

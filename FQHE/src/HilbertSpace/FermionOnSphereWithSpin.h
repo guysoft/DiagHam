@@ -72,6 +72,8 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   int NbrLzValue;
   // twice the total spin value
   int TotalSpin;
+  // highest bit in a given state description
+  int HighestBit;
 
   // array describing each state
   unsigned long* StateDescription;
@@ -175,6 +177,11 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   
   int GetTargetHilbertSpaceDimension();
 
+  // save Hilbert space description to disk
+  //
+  // fileName = name of the file where the Hilbert space description has to be saved
+  // return value = true if no error occured
+  bool WriteHilbertSpace (char* fileName);
   
   // apply creation operator to a word, using the conventions
   // for state-coding and quantum numbers of this space
@@ -442,6 +449,14 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // state = state whose spin splitting sign has to be computed
   // return = splitting sign
   virtual double GetSpinSeparationSignFromIndex(unsigned long index);
+
+  // compute part of the Jack polynomial square normalization in a given range of indices
+  //
+  // state = reference on the unnormalized Jack polynomial
+  // minIndex = first index to compute
+  // nbrComponents = number of indices to compute (0 if they all have to be computed from minIndex)
+  // return value = quare normalization
+  double JackSqrNormalization (RealVector& outputVector, long minIndex, long nbrComponents);
 
  protected:
 
