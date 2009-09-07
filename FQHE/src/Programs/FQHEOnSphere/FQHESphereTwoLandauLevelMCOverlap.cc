@@ -29,6 +29,7 @@
 #include "Tools/FQHEWaveFunction/MooreReadOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/UnprojectedJainCFOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/FQHESphereProductWaveFunction.h"
+#include "Tools/FQHEWaveFunction/FQHESphereSymmetrizedSU2ToU1WaveFunction.h"
 
 #include "Vector/ComplexVector.h"
 
@@ -134,11 +135,15 @@ int main(int argc, char** argv)
   cout << "nbr of CF Landau levels = " << NbrLandauLevels << endl;
   Abstract1DComplexFunctionOnSphere** BaseFunctionArray = new Abstract1DComplexFunctionOnSphere*[NbrLandauLevels];
   for (int i = 0; i < NbrLandauLevels; ++i)
-    BaseFunctionArray[i] = BaseFunction;
+    BaseFunctionArray[i] = (Abstract1DComplexFunctionOnSphere*) (BaseFunction->Clone());
   NbrParticles *= NbrLandauLevels;
   Abstract1DComplexFunctionOnSphere* ProductWaveFunction = new FQHESphereProductWaveFunction(NbrParticles, BaseFunctionArray, NbrLandauLevels, 0, true);
 
-  Abstract1DComplexFunctionOnSphere* SymmetrizedFunction = new FQHESphereSymmetrizedSUKToU1WaveFunction (NbrParticles, NbrLandauLevels, BaseFunction, StatisticFlag);      
+  Abstract1DComplexFunctionOnSphere* SymmetrizedFunction = 0;
+  if (NbrLandauLevels == 2)
+    SymmetrizedFunction = new FQHESphereSymmetrizedSU2ToU1WaveFunction(NbrParticles, NbrParticles / 2, ProductWaveFunction, false);
+  else
+    SymmetrizedFunction = new FQHESphereSymmetrizedSUKToU1WaveFunction (NbrParticles, NbrLandauLevels, ProductWaveFunction, false);      
 
   Abstract1DComplexFunctionOnSphere* TestFunction;
   AbstractRandomNumberGenerator* RandomNumber = 0;

@@ -146,8 +146,8 @@ FermionOnSphereWithSpinHaldaneLargeBasis::FermionOnSphereWithSpinHaldaneLargeBas
   totalSpin = this->TotalSpin;
 
   cout << "computing Hilbert space dimension" << endl;
-  this->LargeHilbertSpaceDimension = (int) this->ShiftedEvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 
-										      (this->TotalSpin + this->NbrFermions) >> 1);
+  this->LargeHilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 
+										(this->TotalSpin + this->NbrFermions) >> 1);
   if (this->LargeHilbertSpaceDimension >= (1l << 30))
     this->HilbertSpaceDimension = 0;
   else
@@ -495,16 +495,6 @@ bool FermionOnSphereWithSpinHaldaneLargeBasis::WriteHilbertSpace (char* fileName
     WriteLittleEndian(File, this->RootPartitions[j]);
   for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
     WriteLittleEndian(File, this->StateDescription[i]);
-  if (this->HilbertSpaceDimension != 0)
-    {
-      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-	WriteLittleEndian(File, this->StateDescription[i]);
-    }
-  else
-    {
-      for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
-	WriteLittleEndian(File, this->StateDescription[i]);
-    }
   File.close();
   return true;
 }

@@ -92,12 +92,14 @@ UnprojectedJainCFOnSphereWaveFunction::UnprojectedJainCFOnSphereWaveFunction(con
       this->TwiceS = function.TwiceS;
       this->JastrowPower = function.JastrowPower;
       this->Flag = function.Flag;
+      this->ReverseFluxFlag = function.ReverseFluxFlag;
+      this->ActualJastrowPower = function.ActualJastrowPower;
       this->LevelOccupation = function.LevelOccupation;
       this->LinearCombinationCoefficients =  function.LinearCombinationCoefficients;
       this->NbrLinearCombination = function.NbrLinearCombination;
       this->NormalizationPrefactors = function.NormalizationPrefactors;
       this->SumPrefactors = function.SumPrefactors;
-      this->JastrowFactorElements = new Complex*[this->NbrParticles - 1];
+      this->JastrowFactorElements = new Complex*[this->NbrParticles];
       for (int i = 1; i < this->NbrParticles; ++i)
 	this->JastrowFactorElements[i] = new Complex[i];
       this->SpinorUCoordinates = new Complex[NbrParticles];
