@@ -130,6 +130,16 @@ class JainCFFilledLevelOnSphereWaveFunction: public Abstract1DComplexFunctionOnS
   // return value = function value at (uv)
   virtual Complex CalculateFromSpinorVariables(ComplexVector& uv);
 
+  // get the total number of particles
+  //
+  // return value = total number of particles
+  virtual int GetNbrParticles();
+
+  // get the number of CF Landau levels
+  //
+  // return value = number of CF Landau levels
+  virtual int GetNbrLandauLevels();
+
  protected:
 
   // evaluate precalculation tables used during wave function evaluation (called at each evaluation)
@@ -164,5 +174,23 @@ class JainCFFilledLevelOnSphereWaveFunction: public Abstract1DComplexFunctionOnS
   Complex EvaluateCFMonopoleHarmonicDerivative(int index, int alpha, int beta);
 
 };
+
+// get the total number of particles
+//
+// return value = total number of particles
+
+inline int JainCFFilledLevelOnSphereWaveFunction::GetNbrParticles()
+{
+  return this->NbrParticles;
+}
+
+// get the number of CF Landau levels
+//
+// return value = number of CF Landau levels
+
+inline int JainCFFilledLevelOnSphereWaveFunction::GetNbrLandauLevels()
+{
+  return this->NbrLandauLevels;
+}
 
 #endif
