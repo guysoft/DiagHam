@@ -257,6 +257,7 @@ class ParticleOnSphere :  public AbstractQHEParticle
   virtual RealVector& EvaluatePartialSchmidtDecomposition(int subsytemSize, int nbrFermionSector, int lzSector, double eigenvalueCut,
 							  RealVector& groundState, RealVector& rebuiltSchmidtGroundState,
 							  RealDiagonalMatrix& diagonalizedDensityMatrix, RealMatrix& transformationMatrix);
+
   // find state index from a string
   //
   // stateDescription = string describing the state

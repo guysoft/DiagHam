@@ -100,6 +100,8 @@ class FermionOnSphere :  public ParticleOnSphere
 
   friend class PairedCFOnSphereThreeEightsState;
 
+  friend class ParticleOnSphereProjectorHamiltonian;
+
  protected:
 
   // number of fermions
