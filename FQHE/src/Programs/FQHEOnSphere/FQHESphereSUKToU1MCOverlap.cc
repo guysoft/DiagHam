@@ -1061,12 +1061,51 @@ int main(int argc, char** argv)
 	     }
 	 }
        cout << "test vanishing properties : " << endl;
-       for (int i = 1; i < NbrParticles; ++i)
-	 {
-	   UV[(i << 1)] = UV[0];
-	   UV[(i << 1) + 1] = UV[1];
-	   cout << (i  + 1) << " body cancellation : " << SymmetrizedFunction->CalculateFromSpinorVariables(UV) << endl;
-	 }
+        for (int i = 1; i < NbrParticles; ++i)
+ 	 {
+ 	   UV.Re((i << 1)) = UV.Re(0) * (1 + 0.0001 *RandomNumber->GetRealRandomNumber());
+ 	   UV.Im((i << 1)) = UV.Im(0) * (1 + 0.0001 *RandomNumber->GetRealRandomNumber());
+ 	   UV.Re((i << 1) + 1) = UV.Re(1) * (1 + 0.0001 *RandomNumber->GetRealRandomNumber());
+ 	   UV.Im((i << 1) + 1) = UV.Im(1) * (1 + 0.0001 *RandomNumber->GetRealRandomNumber());
+ 	   cout << (i  + 1) << " body cancellation : " << SymmetrizedFunction->CalculateFromSpinorVariables(UV) << endl;
+ 	 }
+//        ComplexVector UV2 (NbrParticles * 2, true);
+//        double Direction1Cos = 2.0 * M_PI * RandomNumber->GetRealRandomNumber(); 
+//        double Direction1Sin = sin (Direction1Cos); 
+//        Direction1Cos = cos (Direction1Cos);
+//        double Direction2Cos = 2.0 * M_PI * RandomNumber->GetRealRandomNumber(); 
+//        double Direction2Sin = sin(Direction2Cos);
+//        Direction2Cos = cos(Direction2Cos);
+//        UV.Re(2) = UV.Re(0) + 0.0001 * Direction1Cos;
+//        UV.Im(2) = UV.Im(0) + 0.0001 * Direction1Sin;
+//        UV.Re(3) = UV.Re(1) + 0.0001 * Direction2Cos;
+//        UV.Im(3) = UV.Im(1) + 0.0001 * Direction2Sin;
+//        UV2.Copy(UV);
+//        UV2.Re(4) = UV.Re(0) * (1 + 0.001 *RandomNumber->GetRealRandomNumber());
+//        UV2.Im(4) = UV.Im(0) * (1 + 0.001 *RandomNumber->GetRealRandomNumber());
+//        UV2.Re(5) = UV.Re(1) * (1 + 0.001 *RandomNumber->GetRealRandomNumber());
+//        UV2.Im(5) = UV.Im(1) * (1 + 0.001 *RandomNumber->GetRealRandomNumber());
+//        double Epsilon = 0.01;
+//        for (int i = 0; i < 100; ++i)
+// 	 {
+// 	   UV.Re(4) = UV.Re(0) * (1 + Epsilon *RandomNumber->GetRealRandomNumber());
+// 	   UV.Im(4) = UV.Im(0) * (1 + Epsilon *RandomNumber->GetRealRandomNumber());	   
+// 	   UV.Re(5) = UV.Re(1) * (1 + Epsilon *RandomNumber->GetRealRandomNumber());
+// 	   UV.Im(5) = UV.Im(1) * (1 + Epsilon *RandomNumber->GetRealRandomNumber());	   
+// 	   UV.Re(6) = UV.Re(4) * (1 + Epsilon *RandomNumber->GetRealRandomNumber());
+// 	   UV.Im(6) = UV.Im(4) * (1 + Epsilon *RandomNumber->GetRealRandomNumber());	   
+// 	   UV.Re(7) = UV.Re(5) * (1 + Epsilon *RandomNumber->GetRealRandomNumber());
+// 	   UV.Im(7) = UV.Im(5) * (1 + Epsilon *RandomNumber->GetRealRandomNumber());	   
+// 	   UV2.Re(6) = UV.Re(0) * (1 + Epsilon *RandomNumber->GetRealRandomNumber());
+// 	   UV2.Im(6) = UV.Im(0) * (1 + Epsilon *RandomNumber->GetRealRandomNumber());	   
+// 	   UV2.Re(7) = UV.Re(1) * (1 + Epsilon *RandomNumber->GetRealRandomNumber());
+// 	   UV2.Im(7) = UV.Im(1) * (1 + Epsilon *RandomNumber->GetRealRandomNumber());	   
+// 	   Complex Tmp1 = SymmetrizedFunction->CalculateFromSpinorVariables(UV);
+// 	   Complex Tmp2 = SymmetrizedFunction->CalculateFromSpinorVariables(UV2);	   
+// 	   cout << i << " : " << Tmp1 << " " << Tmp2 << " " << (Tmp1 / Tmp2) << " " << (Norm(Tmp1) / Norm(Tmp2)) << endl;
+// 	   Epsilon -= 0.0001;
+// 	 }
+       
      }
   return 0;
 }

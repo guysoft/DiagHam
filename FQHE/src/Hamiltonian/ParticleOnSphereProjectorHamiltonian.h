@@ -51,7 +51,14 @@ class ParticleOnSphereProjectorHamiltonian : public AbstractQHEOnSphereNBodyInte
 
  protected:
 
+  // vector state describing the projector
+  RealVector ProjectorState;
+  // number of particles for the projector state
+  int ProjectorNbrParticles;
+  // space associated to the projector state
+  ParticleOnSphere* ProjectorSpace;
   
+
  public:
 
   // default constructor

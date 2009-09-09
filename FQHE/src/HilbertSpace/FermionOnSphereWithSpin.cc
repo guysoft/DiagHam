@@ -2435,7 +2435,7 @@ double FermionOnSphereWithSpin::JackSqrNormalization (RealVector& outputVector, 
               Factorial.PartialFactorialDivide(TmpMonomialUp[k] + 1, HalfLzMax);
 	}
       for (int k = 0; k < this->NbrFermionsDown; ++k)
-        {\
+        {
 	  if (HalfLzMax < TmpMonomialDown[k])
             Factorial.PartialFactorialMultiply(HalfLzMax + 1, TmpMonomialDown[k]);
           else
