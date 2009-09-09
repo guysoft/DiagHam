@@ -669,7 +669,7 @@ double LatticePhases::GetTunnellingPhaseFromGauge(int s1, int s2, int *cellTrans
 	  if (Translation.SqrNorm()>1e-15)
 	    {
 	      double MagneticTranslation=(GaugeAxx*Translation[0]+GaugeAyx*Translation[1])*CellPosition2[0];
-	      MagneticTranslation +=(GaugeAxy*Translation[0]+GaugeAyy*Translation[1])*CellPosition2[1];
+	      MagneticTranslation +=(GaugeAxy*Translation[0]+GaugeAyy*Translation[1])*(CellPosition2[1]+Translation[1]);
 	      Result += MagneticTranslation;
 	      cout << ", magnetic translation: "<<MagneticTranslation;
 	    }
