@@ -223,6 +223,12 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // return value = reference on current output stream 
   virtual ostream& PrintStateMonomial (ostream& Str, int state);
 
+  // convert a fermionic state to its monomial representation
+  //
+  // index = index of the fermionic state
+  // finalState = reference on the array where the monomial representation has to be stored
+  virtual void GetMonomial(long index, int*& finalState);
+
   // evaluate wave function in real space using a given basis and only for a given range of components
   //
   // state = vector corresponding to the state in the Fock basis
@@ -399,6 +405,33 @@ inline void BosonOnSphereShort::FermionToBoson(unsigned long initialState, int i
     }
   --finalStateLzMax;
 }
+
+// convert a fermionic state to its monomial representation
+//
+// index = index of the fermionic state
+// finalState = reference on the array where the monomial representation has to be stored
+
+inline void BosonOnSphereShort::GetMonomial(long index, int*& finalState)
+{
+  int Index = 0;
+  unsigned long InitialState = this->FermionBasis->StateDescription[index];
+  int InitialStateLzMax  = this->FermionBasis->LzMax;
+  int TmpLz = InitialStateLzMax  - this->NbrBosons + 1;
+  while (InitialStateLzMax >= 0)
+    {
+      while ((InitialStateLzMax >= 0) && (((InitialState >> InitialStateLzMax) & 0x1ul) != 0x0ul))
+	{
+	  finalState[Index++] = TmpLz;
+	  --InitialStateLzMax;
+	}
+      while ((InitialStateLzMax >= 0) && (((InitialState >> InitialStateLzMax) & 0x1ul) == 0x0ul))
+	{
+	  --TmpLz;
+	  --InitialStateLzMax;
+	}
+    }
+}
+
 
 // convert a bosonic state to its monomial representation
 //

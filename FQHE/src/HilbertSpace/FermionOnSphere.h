@@ -400,6 +400,12 @@ class FermionOnSphere :  public ParticleOnSphere
   // return value = corresponding index, -1 if an error occured
   virtual int FindStateIndex(char* stateDescription);
 
+  // convert a fermionic state to its monomial representation
+  //
+  // index = index of the fermionic state
+  // finalState = reference on the array where the monomial representation has to be stored
+  virtual void GetMonomial(long index, int*& finalState);
+
   // convert a state such that its components are now expressed in the unnormalized basis
   //
   // state = reference to the state to convert
@@ -538,6 +544,16 @@ inline unsigned long FermionOnSphere::GetSymmetricState (unsigned long initialSt
 #endif	
   TmpState >>= this->InvertUnshift;
   return TmpState;
+}
+
+// convert a fermionic state to its monomial representation
+//
+// index = index of the fermionic state
+// finalState = reference on the array where the monomial representation has to be stored
+
+inline void FermionOnSphere::GetMonomial(long index, int*& finalState)
+{
+  this->ConvertToMonomial(this->StateDescription[index], finalState);
 }
 
 // convert a fermionic state to its monomial representation

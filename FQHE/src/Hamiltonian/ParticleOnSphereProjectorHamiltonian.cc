@@ -71,7 +71,9 @@ ParticleOnSphereProjectorHamiltonian::ParticleOnSphereProjectorHamiltonian((Part
 
   this->OneBodyTermFlag = false;
   this->FullTwoBodyFlag = false;
-  this->MaxNBody = 4;
+  this->MaxNBody = projectorNbrParticles;
+  this->ProjectorSpace = projectorSpace;
+  this->ProjectorState = projectorState;
 
   this->NBodyFlags = new bool [this->MaxNBody + 1];
   this->NBodyInteractionFactors = new double** [this->MaxNBody + 1];
@@ -104,7 +106,7 @@ ParticleOnSphereProjectorHamiltonian::ParticleOnSphereProjectorHamiltonian((Part
       this->MNNBodyInteractionFactors[k] = 0;
     }
 
-  this->NBodyFlags[4] = true;
+  this->NBodyFlags[this->MaxNBody] = true;
   this->Architecture = architecture;
   this->EvaluateInteractionFactors();
   this->HamiltonianShift = 0.0;
@@ -266,125 +268,85 @@ AbstractHamiltonian* ParticleOnSphereProjectorHamiltonian::Clone ()
 
 void ParticleOnSphereProjectorHamiltonian::EvaluateInteractionFactors()
 {
-  double* TmpNormalizationCoeffients = new double[this->NbrLzValue];
-  double TmpFactor = ((double) this->NbrLzValue) / (4.0 * M_PI);
-  double TmpBinomial = 1.0;
-  TmpNormalizationCoeffients[0] = sqrt (TmpBinomial * TmpFactor);
-  for (int i = 1; i < this->NbrLzValue; ++i)
-    {
-      TmpBinomial *= this->LzMax - ((double) i) + 1.0;
-      TmpBinomial /= ((double) i);
-      TmpNormalizationCoeffients[i] = sqrt (TmpBinomial * TmpFactor);
-    }
+  int* TmpMonomial = new int[this->MaxNBody];
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
-      double Coefficient;
-      GetAllSkewSymmetricIndices(this->NbrLzValue, 4, this->NbrSortedIndicesPerSum[4], this->SortedIndicesPerSum[4]);
-      this->MaxSumIndices[4] = (this->LzMax * 4) - 5;
-      this->MinSumIndices[4] = 6;
-      double* TmpInteractionCoeffients = new double[this->MaxSumIndices[4] + 1];
-      TmpInteractionCoeffients[0] = 1.0;
-      TmpInteractionCoeffients[1] = 1.0;
-      for (int i = 2; i <= this->MaxSumIndices[4]; ++i)
-	{
-	  Coefficient = 1.0;
-	  for (int j = 1; j < i; ++j)
-	    {
-	      double Coefficient2 = TmpInteractionCoeffients[j];
-	      TmpInteractionCoeffients[j] += Coefficient;
-	      Coefficient = Coefficient2;
-	    }
-	  TmpInteractionCoeffients[i] = 1.0;
-	}
-      Coefficient = 4.0 * M_PI / (((double) this->MaxSumIndices[4]) + 1.0);
-      double Radius = 2.0 / ((double) this->LzMax);
-      for (int i = 2; i <= 4; ++i)
-	{
-	  Coefficient *= (double) (i * i);	  
-	  Coefficient *= Radius;
-	}
-      for (int i = 0; i <= this->MaxSumIndices[4]; ++i)
-	TmpInteractionCoeffients[i] = sqrt(Coefficient / TmpInteractionCoeffients[i]);
+      FermionOnSphere* TmpSpace = (FermionOnSphere*) this->ProjectorSpace;
+      TmpSpace->GetMonomial(0, TmpMonomial);
+      this->MaxSumIndices[this->MaxNBody] = 0;
+      for (int i = 0; i < this->MaxNBody; ++i)
+	this->MaxSumIndices[this->MaxNBody] += TmpMonomial[i];
+      this->MinSumIndices[this->MaxNBody] = this->MaxSumIndices[this->MaxNBody];
       
-      long TmpNbrNIndices = 0;
-      for (int MinSum = 0; MinSum <= this->MaxSumIndices[4]; ++MinSum)
-	TmpNbrNIndices += this->NbrSortedIndicesPerSum[4][MinSum];
-      this->NbrNIndices[4] = TmpNbrNIndices;
-      this->NIndices[4] = new int[TmpNbrNIndices * 4];
-      this->NbrMIndices[4] = new long[TmpNbrNIndices];
-      this->MIndices[4] = new int*[TmpNbrNIndices];
-      this->MNNBodyInteractionFactors[4] = new double* [TmpNbrNIndices];
-      TmpNbrNIndices = 0;	 
-      int* TmpNIndices = this->NIndices[4];
-      for (int MinSum = 0; MinSum <= this->MaxSumIndices[4]; ++MinSum)
+      for (int MinSum = 0; MinSum < this->MaxSumIndices[this->MaxNBody]; ++MinSum)
+	this->NbrSortedIndicesPerSum[this->MaxNBody][MinSum] = 0;
+    }
+
+  this->NbrSortedIndicesPerSum[this->MaxNBody][this->ProjectorSpaceTotalLz] = this->ProjectorSpace->GetHilbertSpaceDimension;
+  this->NbrNIndices[this->MaxNBody] = this->ProjectorSpace->GetHilbertSpaceDimension;
+  this->NIndices[this->MaxNBody] = new int[this->ProjectorSpace->GetHilbertSpaceDimension * this->MaxNBody];
+  this->NbrMIndices[this->MaxNBody] = new long[this->ProjectorSpace->GetHilbertSpaceDimension];
+  this->MIndices[this->MaxNBody] = new int*[this->ProjectorSpace->GetHilbertSpaceDimension];
+  this->MNNBodyInteractionFactors[this->MaxNBody] = new double* [this->ProjectorSpace->GetHilbertSpaceDimension];
+  TmpNbrNIndices = 0;	 
+  int* TmpNIndices = this->NIndices[this->MaxNBody];
+  for (int MinSum = 0; MinSum <= this->MaxSumIndices[this->MaxNBody]; ++MinSum)
+    {
+      int Lim = this->NbrSortedIndicesPerSum[this->MaxNBody][MinSum];
+      if (Lim > 0)
 	{
-	  int Lim = this->NbrSortedIndicesPerSum[4][MinSum];
-	  if (Lim > 0)
+	  int* TmpNIndices2 = this->SortedIndicesPerSum[this->MaxNBody][MinSum];
+	  int TmpSum = TmpNIndices2[0] + TmpNIndices2[1] + TmpNIndices2[2] + TmpNIndices2[3];
+	  while (((this->MaxNBody * this->LzMax) - TmpMaxRealtiveMonentum)  < TmpSum)
+	    --TmpMaxRealtiveMonentum;
+	  TmpProjectorCoefficients[this->MaxNBody] = this->ComputeProjectorCoefficients(12, 1, TmpNIndices2, Lim);
+	  for (int i = 5; i <= TmpMaxRealtiveMonentum; ++i)  
+	    if (this->FourBodyPseudoPotential[i] != 0.0)
+	      TmpProjectorCoefficients[i] = this->ComputeProjectorCoefficients(2 * i, 1, TmpNIndices2, Lim);
+	  for (int i = 0; i < Lim; ++i)
 	    {
-	      int* TmpNIndices2 = this->SortedIndicesPerSum[4][MinSum];
-	      int TmpMaxRealtiveMonentum = 8;
-	      if (this->MaxRelativeAngularMomentum <= TmpMaxRealtiveMonentum)
-		TmpMaxRealtiveMonentum = this->MaxRelativeAngularMomentum;
-	      int TmpSum = TmpNIndices2[0] + TmpNIndices2[1] + TmpNIndices2[2] + TmpNIndices2[3];
-	      while (((4 * this->LzMax) - TmpMaxRealtiveMonentum)  < TmpSum)
-		--TmpMaxRealtiveMonentum;
-	      double** TmpProjectorCoefficients = new double* [TmpMaxRealtiveMonentum + 1];
-	      if (this->FourBodyPseudoPotential[4] != 0.0)
-		TmpProjectorCoefficients[4] = this->ComputeProjectorCoefficients(12, 1, TmpNIndices2, Lim);
-	      for (int i = 5; i <= TmpMaxRealtiveMonentum; ++i)  
-		if (this->FourBodyPseudoPotential[i] != 0.0)
-		  TmpProjectorCoefficients[i] = this->ComputeProjectorCoefficients(2 * i, 1, TmpNIndices2, Lim);
-	      for (int i = 0; i < Lim; ++i)
+	      this->NbrMIndices[this->MaxNBody][TmpNbrNIndices] = Lim;		    
+	      this->MIndices[this->MaxNBody][TmpNbrNIndices] = new int [Lim * 4];
+	      this->MNNBodyInteractionFactors[this->MaxNBody][TmpNbrNIndices] = new double [Lim];
+	      int* TmpMIndices = this->MIndices[this->MaxNBody][TmpNbrNIndices];
+	      int* TmpMIndices2 = this->SortedIndicesPerSum[this->MaxNBody][MinSum];
+	      double* TmpInteraction = this->MNNBodyInteractionFactors[this->MaxNBody][TmpNbrNIndices];
+	      for (int j = 0; j < Lim; ++j)
 		{
-		  this->NbrMIndices[4][TmpNbrNIndices] = Lim;		    
-		  this->MIndices[4][TmpNbrNIndices] = new int [Lim * 3];
-		  this->MNNBodyInteractionFactors[4][TmpNbrNIndices] = new double [Lim];
-		  int* TmpMIndices = this->MIndices[4][TmpNbrNIndices];
-		  int* TmpMIndices2 = this->SortedIndicesPerSum[4][MinSum];
-		  double* TmpInteraction = this->MNNBodyInteractionFactors[4][TmpNbrNIndices];
-		  for (int j = 0; j < Lim; ++j)
+		  for (int l = 0; l < this->MaxNBody; ++l)
 		    {
-		      for (int l = 0; l < 4; ++l)
-			{
-			  (*TmpMIndices) = (*TmpMIndices2);			
-			  ++TmpMIndices;
-			  ++TmpMIndices2;
-			}			
-		      double& TmpInteraction2 = TmpInteraction[j];
-		      TmpInteraction2 = 0.0;
-		      if (this->FourBodyPseudoPotential[4] != 0.0)
-			TmpInteraction2 += this->FourBodyPseudoPotential[4] * TmpProjectorCoefficients[4][i] * TmpProjectorCoefficients[4][j];
-		      for (int k = 5; k <= TmpMaxRealtiveMonentum; ++k)  
-			if (this->FourBodyPseudoPotential[k] != 0.0)
-			  TmpInteraction2 += this->FourBodyPseudoPotential[k] * TmpProjectorCoefficients[k][i] * TmpProjectorCoefficients[k][j];
-		    }
-		  for (int j = 0; j < 4; ++j)
-		    {
-		      (*TmpNIndices) = (*TmpNIndices2);			
-		      ++TmpNIndices;
-		      ++TmpNIndices2;
-		    }
-		  ++TmpNbrNIndices;
+		      (*TmpMIndices) = (*TmpMIndices2);			
+		      ++TmpMIndices;
+		      ++TmpMIndices2;
+		    }			
+		  double& TmpInteraction2 = TmpInteraction[j];
+		  TmpInteraction2 = 0.0;
+		  if (this->FourBodyPseudoPotential[this->MaxNBody] != 0.0)
+		    TmpInteraction2 += this->FourBodyPseudoPotential[this->MaxNBody] * TmpProjectorCoefficients[this->MaxNBody][i] * TmpProjectorCoefficients[this->MaxNBody][j];
+		  for (int k = 5; k <= TmpMaxRealtiveMonentum; ++k)  
+		    if (this->FourBodyPseudoPotential[k] != 0.0)
+		      TmpInteraction2 += this->FourBodyPseudoPotential[k] * TmpProjectorCoefficients[k][i] * TmpProjectorCoefficients[k][j];
 		}
-	      if (this->FourBodyPseudoPotential[4] != 0.0)
-		delete[] TmpProjectorCoefficients[4];
-	      for (int i = 5; i <= TmpMaxRealtiveMonentum; ++i)  
-		if (this->FourBodyPseudoPotential[i] != 0.0)
-		  delete[] TmpProjectorCoefficients[i];
-	      delete[] TmpProjectorCoefficients;		
+	      for (int j = 0; j < this->MaxNBody; ++j)
+		{
+		  (*TmpNIndices) = (*TmpNIndices2);			
+		  ++TmpNIndices;
+		  ++TmpNIndices2;
+		}
+	      ++TmpNbrNIndices;
 	    }
 	}
       delete[] TmpInteractionCoeffients;
     }
   else
     {
-      this->MinSumIndices[4] = 0;
-      this->MaxSumIndices[4] = this->LzMax * 4;
-      double* TmpInteractionCoeffients = new double[this->MaxSumIndices[4] + 1];
+      this->MinSumIndices[this->MaxNBody] = 0;
+      this->MaxSumIndices[this->MaxNBody] = this->LzMax * this->MaxNBody;
+      double* TmpInteractionCoeffients = new double[this->MaxSumIndices[this->MaxNBody] + 1];
       double Coefficient;
       TmpInteractionCoeffients[0] = 1.0;
       TmpInteractionCoeffients[1] = 1.0;
-      for (int i = 2; i <= this->MaxSumIndices[4]; ++i)
+      for (int i = 2; i <= this->MaxSumIndices[this->MaxNBody]; ++i)
 	{
 	  Coefficient = 1.0;
 	  for (int j = 1; j < i; ++j)
@@ -395,41 +357,41 @@ void ParticleOnSphereProjectorHamiltonian::EvaluateInteractionFactors()
 	    }
 	  TmpInteractionCoeffients[i] = 1.0;
 	}
-      Coefficient = 4.0 * M_PI / (((double) this->MaxSumIndices[4]) + 1.0);
+      Coefficient = this->MaxNBody.0 * M_PI / (((double) this->MaxSumIndices[this->MaxNBody]) + 1.0);
       double Radius = 2.0 / ((double) this->LzMax);
-      for (int i = 2; i <= 4; ++i)
+      for (int i = 2; i <= this->MaxNBody; ++i)
 	{
 	  Coefficient *= (double) (i * i);	  
 	  Coefficient *= Radius;
 	}
-      for (int i = 0; i <= this->MaxSumIndices[4]; ++i)
+      for (int i = 0; i <= this->MaxSumIndices[this->MaxNBody]; ++i)
 	TmpInteractionCoeffients[i] = sqrt(Coefficient / TmpInteractionCoeffients[i]);
       
       double** SortedIndicesPerSumSymmetryFactor;
-      GetAllSymmetricIndices(this->NbrLzValue, 4, this->NbrSortedIndicesPerSum[4], this->SortedIndicesPerSum[4],
+      GetAllSymmetricIndices(this->NbrLzValue, this->MaxNBody, this->NbrSortedIndicesPerSum[this->MaxNBody], this->SortedIndicesPerSum[this->MaxNBody],
 			     SortedIndicesPerSumSymmetryFactor);
       
       
       long TmpNbrNIndices = 0;
-      for (int MinSum = 0; MinSum <= this->MaxSumIndices[4]; ++MinSum)
-	TmpNbrNIndices += this->NbrSortedIndicesPerSum[4][MinSum];
-      this->NbrNIndices[4] = TmpNbrNIndices;
-      this->NIndices[4] = new int[TmpNbrNIndices * 4];
-      this->NbrMIndices[4] = new long[TmpNbrNIndices];
-      this->MIndices[4] = new int*[TmpNbrNIndices];
-      this->MNNBodyInteractionFactors[4] = new double* [TmpNbrNIndices];
+      for (int MinSum = 0; MinSum <= this->MaxSumIndices[this->MaxNBody]; ++MinSum)
+	TmpNbrNIndices += this->NbrSortedIndicesPerSum[this->MaxNBody][MinSum];
+      this->NbrNIndices[this->MaxNBody] = TmpNbrNIndices;
+      this->NIndices[this->MaxNBody] = new int[TmpNbrNIndices * this->MaxNBody];
+      this->NbrMIndices[this->MaxNBody] = new long[TmpNbrNIndices];
+      this->MIndices[this->MaxNBody] = new int*[TmpNbrNIndices];
+      this->MNNBodyInteractionFactors[this->MaxNBody] = new double* [TmpNbrNIndices];
       TmpNbrNIndices = 0;	 
-      int* TmpNIndices = this->NIndices[4];
-      for (int MinSum = 0; MinSum <= this->MaxSumIndices[4]; ++MinSum)
+      int* TmpNIndices = this->NIndices[this->MaxNBody];
+      for (int MinSum = 0; MinSum <= this->MaxSumIndices[this->MaxNBody]; ++MinSum)
 	{
-	  int Lim = this->NbrSortedIndicesPerSum[4][MinSum];
+	  int Lim = this->NbrSortedIndicesPerSum[this->MaxNBody][MinSum];
 	  double* TmpSymmetryFactors = SortedIndicesPerSumSymmetryFactor[MinSum];
-	  int* TmpNIndices2 = this->SortedIndicesPerSum[4][MinSum];
+	  int* TmpNIndices2 = this->SortedIndicesPerSum[this->MaxNBody][MinSum];
 	  int TmpMaxRealtiveMonentum = 5;
 	  if (this->MaxRelativeAngularMomentum <= TmpMaxRealtiveMonentum)
 	    TmpMaxRealtiveMonentum = this->MaxRelativeAngularMomentum;
 	  int TmpSum = TmpNIndices2[0] + TmpNIndices2[1] + TmpNIndices2[2] + TmpNIndices2[3];
-	  while (((4 * this->LzMax) - TmpMaxRealtiveMonentum)  < TmpSum)
+	  while (((this->MaxNBody * this->LzMax) - TmpMaxRealtiveMonentum)  < TmpSum)
 	    --TmpMaxRealtiveMonentum;
 	  double** TmpProjectorCoefficients = new double* [TmpMaxRealtiveMonentum + 1];
 	  if (this->FourBodyPseudoPotential[0] != 0.0)
@@ -439,16 +401,16 @@ void ParticleOnSphereProjectorHamiltonian::EvaluateInteractionFactors()
 	      TmpProjectorCoefficients[i] = this->ComputeProjectorCoefficients(2 * i, 1, TmpNIndices2, Lim);
 	  for (int i = 0; i < Lim; ++i)
 	    {
-	      this->NbrMIndices[4][TmpNbrNIndices] = Lim;		    
-	      this->MIndices[4][TmpNbrNIndices] = new int [Lim * 4];
-	      this->MNNBodyInteractionFactors[4][TmpNbrNIndices] = new double [Lim];
-	      int* TmpMIndices = this->MIndices[4][TmpNbrNIndices];
-	      int* TmpMIndices2 = this->SortedIndicesPerSum[4][MinSum];
-	      double* TmpInteraction = this->MNNBodyInteractionFactors[4][TmpNbrNIndices];
+	      this->NbrMIndices[this->MaxNBody][TmpNbrNIndices] = Lim;		    
+	      this->MIndices[this->MaxNBody][TmpNbrNIndices] = new int [Lim * this->MaxNBody];
+	      this->MNNBodyInteractionFactors[this->MaxNBody][TmpNbrNIndices] = new double [Lim];
+	      int* TmpMIndices = this->MIndices[this->MaxNBody][TmpNbrNIndices];
+	      int* TmpMIndices2 = this->SortedIndicesPerSum[this->MaxNBody][MinSum];
+	      double* TmpInteraction = this->MNNBodyInteractionFactors[this->MaxNBody][TmpNbrNIndices];
 	      for (int j = 0; j < Lim; ++j)
 		{
 		  double Coefficient2 = TmpSymmetryFactors[j];
-		  for (int l = 0; l < 4; ++l)
+		  for (int l = 0; l < this->MaxNBody; ++l)
 		    {
 		      Coefficient2 *= TmpNormalizationCoeffients[(*TmpMIndices2)];		    
 		      (*TmpMIndices) = (*TmpMIndices2);			
@@ -472,7 +434,7 @@ void ParticleOnSphereProjectorHamiltonian::EvaluateInteractionFactors()
 // 		      cout << TmpSymmetryFactors[i] << " " << TmpSymmetryFactors[j] << endl;
 // 		    }
 		}
-	      for (int j = 0; j < 4; ++j)
+	      for (int j = 0; j < this->MaxNBody; ++j)
 		{
 		  (*TmpNIndices) = (*TmpNIndices2);			
 		  ++TmpNIndices;
@@ -487,7 +449,7 @@ void ParticleOnSphereProjectorHamiltonian::EvaluateInteractionFactors()
 	      delete[] TmpProjectorCoefficients[i];
 	  delete[] TmpProjectorCoefficients;		
 	}
-      for (int MinSum = 0; MinSum <= this->MaxSumIndices[4]; ++MinSum)
+      for (int MinSum = 0; MinSum <= this->MaxSumIndices[this->MaxNBody]; ++MinSum)
 	{
 	  delete[] SortedIndicesPerSumSymmetryFactor[MinSum];
 	}
@@ -495,200 +457,5 @@ void ParticleOnSphereProjectorHamiltonian::EvaluateInteractionFactors()
       delete[] TmpInteractionCoeffients;
     }
   delete[] TmpNormalizationCoeffients;
-  if (this->FullTwoBodyFlag == true)
-    {
-      int Lim;
-      int Min;
-      int Pos = 0;
-      ClebschGordanCoefficients Clebsch (this->LzMax, this->LzMax);
-      int J = 2 * this->LzMax - 2;
-      int m4;
-      double ClebschCoef;
-      double* TmpCoefficient = new double [this->NbrLzValue * this->NbrLzValue * this->NbrLzValue];
-      
-      int Sign = 1;
-      if (this->LzMax & 1)
-	Sign = 0;
-      double MaxCoefficient = 0.0;
-      
-      if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
-	{
-	  for (int m1 = -this->LzMax; m1 <= this->LzMax; m1 += 2)
-	    for (int m2 =  -this->LzMax; m2 < m1; m2 += 2)
-	      {
-		Lim = m1 + m2 + this->LzMax;
-		if (Lim > this->LzMax)
-		  Lim = this->LzMax;
-		Min = m1 + m2 - this->LzMax;
-		if (Min < -this->LzMax)
-		  Min = -this->LzMax;
-		for (int m3 = Min; m3 <= Lim; m3 += 2)
-		  {
-		    Clebsch.InitializeCoefficientIterator(m1, m2);
-		    m4 = m1 + m2 - m3;
-		    TmpCoefficient[Pos] = 0.0;
-		    while (Clebsch.Iterate(J, ClebschCoef))
-		      {
-			if (((J >> 1) & 1) == Sign)
-			  TmpCoefficient[Pos] += this->PseudoPotential[J >> 1] * ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
-		      }
-		    if (fabs(TmpCoefficient[Pos]) > MaxCoefficient)
-		      MaxCoefficient = TmpCoefficient[Pos];
-		    ++Pos;
-		  }
-	      }
-	  this->NbrInteractionFactors = 0;
-	  this->M1Value = new int [Pos];
-	  this->M2Value = new int [Pos];
-	  this->M3Value = new int [Pos];
-	  this->InteractionFactors = new double [Pos];
-	  cout << "nbr interaction = " << Pos << endl;
-	  Pos = 0;
-	  MaxCoefficient *= MACHINE_PRECISION;
-	  double Factor = - 4.0;
-	  this->NbrM12Indices = (this->NbrLzValue * (this->NbrLzValue - 1)) / 2;
-	  this->M1Value = new int [this->NbrM12Indices];
-	  this->M2Value = new int [this->NbrM12Indices];
-	  this->NbrM3Values = new int [this->NbrM12Indices];
-	  this->M3Values = new int* [this->NbrM12Indices];
-	  int TotalIndex = 0;
-	  Pos = 0;
-	  for (int m1 = 0; m1 < this->NbrLzValue; ++m1)
-	    for (int m2 = 0; m2 < m1; ++m2)
-	      {
-		Lim = m1 + m2;
-		if (Lim > this->LzMax)
-		  Lim = this->LzMax;
-		Min = m1 + m2 - this->LzMax;
-		if (Min < 0)
-		  Min = 0;
-		this->M1Value[TotalIndex] = m1;
-		this->M2Value[TotalIndex] = m2;	    
-		this->NbrM3Values[TotalIndex] = 0;
-		for (int m3 = Min; m3 <= Lim; ++m3)
-		  if ((2 * m3) > (m1 + m2))
-		    ++this->NbrM3Values[TotalIndex];
-		if (this->NbrM3Values[TotalIndex] > 0)
-		  {
-		    this->M3Values[TotalIndex] = new int [this->NbrM3Values[TotalIndex]];
-		    int TmpIndex = 0;
-		    for (int m3 = Min; m3 <= Lim; ++m3)
-		      {
-			if ((2 * m3) > (m1 + m2))
-			  {
-			    this->M3Values[TotalIndex][TmpIndex] = m3;
-			    this->InteractionFactors[this->NbrInteractionFactors] = Factor * TmpCoefficient[Pos];
-			    ++this->NbrInteractionFactors;
-			    ++TmpIndex;
-			  }
-			++Pos;
-		      }
-		  }
-		++TotalIndex;
-	      }
-	}
-      else
-	{
-	  for (int m1 = -this->LzMax; m1 <= this->LzMax; m1 += 2)
-	    for (int m2 =  -this->LzMax; m2 <= m1; m2 += 2)
-	      {
-		Lim = m1 + m2 + this->LzMax;
-		if (Lim > this->LzMax)
-		  Lim = this->LzMax;
-		Min = m1 + m2 - this->LzMax;
-		if (Min < -this->LzMax)
-		  Min = -this->LzMax;
-		for (int m3 = Min; m3 <= Lim; m3 += 2)
-		  {
-		    Clebsch.InitializeCoefficientIterator(m1, m2);
-		    m4 = m1 + m2 - m3;
-		    TmpCoefficient[Pos] = 0.0;
-		    while (Clebsch.Iterate(J, ClebschCoef))
-		      {
-			if (((J >> 1) & 1) != Sign)
-			  TmpCoefficient[Pos] += this->PseudoPotential[J >> 1] * ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
-		      }
-		    if (fabs(TmpCoefficient[Pos]) > MaxCoefficient)
-		      MaxCoefficient = TmpCoefficient[Pos];
-		    ++Pos;
-		  }
-	      }
-	  this->NbrInteractionFactors = 0;
-	  this->M1Value = new int [Pos];
-	  this->M2Value = new int [Pos];
-	  this->M3Value = new int [Pos];
-	  this->InteractionFactors = new double [Pos];
-	  cout << "nbr interaction = " << Pos << endl;
-	  Pos = 0;
-	  MaxCoefficient *= MACHINE_PRECISION;
-	  double Factor = 4.0;
-	  for (int m1 = 0; m1 < this->NbrLzValue; ++m1)
-	    {
-	      for (int m2 = 0; m2 < m1; ++m2)
-		{
-		  Lim = m1 + m2;
-		  if (Lim > this->LzMax)
-		    Lim = this->LzMax;
-		  Min = m1 + m2 - this->LzMax;
-		  if (Min < 0)
-		    Min = 0;
-		  for (int m3 = Min; m3 <= Lim; ++m3)
-		    {
-		      if (fabs(TmpCoefficient[Pos]) > MaxCoefficient)
-			{
-			  if ((2 * m3) > (m1 + m2))
-			    {
-			      this->InteractionFactors[this->NbrInteractionFactors] = Factor * TmpCoefficient[Pos];
-			      this->M1Value[this->NbrInteractionFactors] = m1;
-			      this->M2Value[this->NbrInteractionFactors] = m2;
-			      this->M3Value[this->NbrInteractionFactors] = m3;
-			      ++this->NbrInteractionFactors;
-			    }
-			  else
-			    if ((2 * m3) == (m1 + m2))
-			      {
-				this->InteractionFactors[this->NbrInteractionFactors] = 0.5 * Factor * TmpCoefficient[Pos];
-				this->M1Value[this->NbrInteractionFactors] = m1;
-				this->M2Value[this->NbrInteractionFactors] = m2;
-				this->M3Value[this->NbrInteractionFactors] = m3;
-				++this->NbrInteractionFactors;
-			      }
-			}
-		      ++Pos;
-		    }
-		}	
-	      Lim = 2 * m1;
-	      if (Lim > this->LzMax)
-		Lim = this->LzMax;
-	      Min = 2 * m1 - this->LzMax;
-	      if (Min < 0)
-		Min = 0;
-	      for (int m3 = Min; m3 <= Lim; ++m3)
-		{
-		  if (fabs(TmpCoefficient[Pos]) > MaxCoefficient)
-		    {
-		      if (m3 > m1)
-			{
-			  this->InteractionFactors[this->NbrInteractionFactors] = 0.5 * Factor * TmpCoefficient[Pos];
-			  this->M1Value[this->NbrInteractionFactors] = m1;
-			  this->M2Value[this->NbrInteractionFactors] = m1;
-			  this->M3Value[this->NbrInteractionFactors] = m3;
-			  ++this->NbrInteractionFactors;
-			}
-		      else
-			if (m3 == m1)
-			  {
-			    this->InteractionFactors[this->NbrInteractionFactors] = 0.25 * Factor * TmpCoefficient[Pos];
-			    this->M1Value[this->NbrInteractionFactors] = m1;
-			    this->M2Value[this->NbrInteractionFactors] = m1;
-			    this->M3Value[this->NbrInteractionFactors] = m3;
-			    ++this->NbrInteractionFactors;
-			  }
-		    }
-		  ++Pos;
-		}
-	    }
-	}
-    }
 }
 
