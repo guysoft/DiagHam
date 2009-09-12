@@ -78,19 +78,6 @@ FQHEDiskQuasiholePropagatorOperation::~FQHEDiskQuasiholePropagatorOperation()
   delete this->HilbertSpace;
 }
   
-// set range of indices
-// 
-// firstComponent = index of the first component
-// nbrComponent = number of component
-
-void FQHEDiskQuasiholePropagatorOperation::SetLargeIndicesRange (const long& firstComponent, const long& nbrComponent)
-{
-  this->LargeFirstComponent = firstComponent;
-  this->LargeNbrComponent = nbrComponent;
-  this->FirstComponent = 0;
-  this->NbrComponent = 0;
-}
-
 // clone operation
 //
 // return value = pointer to cloned operation

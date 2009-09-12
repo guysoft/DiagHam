@@ -6,7 +6,10 @@ use strict 'vars';
 my $InputFile = $ARGV[0];
 my $ClusterDescriptionFile = $ARGV[1];
 my $OptimizerOperation = "VectorHamiltonianMultiply core";
-
+if (defined($ARGV[2]))
+{
+   $OptimizerOperation = $ARGV[2]." core";    
+}
 my $NbrMPINodes;
 my $TotalNbrNodes;
 my %ClusterDescription;

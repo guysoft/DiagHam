@@ -146,8 +146,13 @@ FermionOnSphereWithSpinHaldaneLargeBasis::FermionOnSphereWithSpinHaldaneLargeBas
   totalSpin = this->TotalSpin;
 
   cout << "computing Hilbert space dimension" << endl;
+<<<<<<< .mine
+  this->LargeHilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 
+									        (this->TotalSpin + this->NbrFermions) >> 1);
+=======
   this->LargeHilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 
 										(this->TotalSpin + this->NbrFermions) >> 1);
+>>>>>>> .r1235
   if (this->LargeHilbertSpaceDimension >= (1l << 30))
     this->HilbertSpaceDimension = 0;
   else
@@ -207,7 +212,7 @@ FermionOnSphereWithSpinHaldaneLargeBasis::FermionOnSphereWithSpinHaldaneLargeBas
   3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
   3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
   4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8};
-  for (int i = 0; i < ReducedHilbertSpaceDimension; ++i)
+  for (long i = 0; i < ReducedHilbertSpaceDimension; ++i)
     {
       TmpKeepStateFlag = this->KeepStateFlag[i];
       NewHilbertSpaceDimension += TmpNbrOne[TmpKeepStateFlag & 0xffl];
@@ -231,7 +236,7 @@ FermionOnSphereWithSpinHaldaneLargeBasis::FermionOnSphereWithSpinHaldaneLargeBas
   delete[] this->LargeLookUpTable;
   unsigned long* TmpStateDescription = new unsigned long [NewHilbertSpaceDimension];
   NewHilbertSpaceDimension = 0l;
-  int TotalIndex = 0;
+  long TotalIndex = 0l;
 #ifdef  __64_BITS__
   if ((this->LargeHilbertSpaceDimension & 0x3fl) != 0)
 #else
@@ -290,11 +295,11 @@ FermionOnSphereWithSpinHaldaneLargeBasis::FermionOnSphereWithSpinHaldaneLargeBas
 
   
 #ifdef __DEBUG__
-  int UsedMemory = 0;
-  UsedMemory += this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
+  long UsedMemory = 0;
+  UsedMemory += this->LargeHilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
   cout << "memory requested for Hilbert space = ";
-  if (UsedMemory >= 1024)
-    if (UsedMemory >= 1048576)
+  if (UsedMemory >= 1024l)
+    if (UsedMemory >= 1048576l)
       cout << (UsedMemory >> 20) << "Mo" << endl;
     else
       cout << (UsedMemory >> 10) << "ko" <<  endl;
@@ -367,13 +372,12 @@ FermionOnSphereWithSpinHaldaneLargeBasis::FermionOnSphereWithSpinHaldaneLargeBas
 
   this->GenerateLookUpTable(memory);
 
-  
 #ifdef __DEBUG__
-  int UsedMemory = 0;
-  UsedMemory += this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
+  long UsedMemory = 0;
+  UsedMemory += this->LargeHilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
   cout << "memory requested for Hilbert space = ";
-  if (UsedMemory >= 1024)
-    if (UsedMemory >= 1048576)
+  if (UsedMemory >= 1024l)
+    if (UsedMemory >= 1048576l)
       cout << (UsedMemory >> 20) << "Mo" << endl;
     else
       cout << (UsedMemory >> 10) << "ko" <<  endl;
@@ -493,8 +497,6 @@ bool FermionOnSphereWithSpinHaldaneLargeBasis::WriteHilbertSpace (char* fileName
   WriteLittleEndian(File, this->NbrRootPartitions);
   for (int j = 0; j < this->NbrRootPartitions; ++j)
     WriteLittleEndian(File, this->RootPartitions[j]);
-  for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
-    WriteLittleEndian(File, this->StateDescription[i]);
   File.close();
   return true;
 }
@@ -553,7 +555,7 @@ long FermionOnSphereWithSpinHaldaneLargeBasis::FindStateIndex(unsigned long stat
     return PosMid;
   else
     if ((this->StateDescription[PosMin] != stateDescription) && (this->StateDescription[PosMax] != stateDescription))
-      return this->HilbertSpaceDimension;
+      return this->LargeHilbertSpaceDimension;
     else
       return PosMin;
 }
@@ -1117,7 +1119,7 @@ void FermionOnSphereWithSpinHaldaneLargeBasis::GenerateLookUpTable(unsigned long
       TmpLookUpTable[CurrentLookUpTableValue] = this->LargeHilbertSpaceDimension - 1l;
       --CurrentLookUpTableValue;
     }
-  TmpLookUpTable[0] = this->HilbertSpaceDimension - 1;
+  TmpLookUpTable[0] = this->LargeHilbertSpaceDimension - 1l;
 
   // look-up tables for evaluating sign when applying creation/annihilation operators
   int Size = 1 << this->MaximumSignLookUp;

@@ -69,12 +69,6 @@ class FQHEDiskQuasiholePropagatorOperation: public AbstractScalarSumOperation
   //
   ~FQHEDiskQuasiholePropagatorOperation();
   
-  // set range of indices
-  // 
-  // firstComponent = index of the first component
-  // nbrComponent = number of component
-  void SetLargeIndicesRange (const long& firstComponent, const long& nbrComponent);
-
   // get dimension (i.e. Hilbert space dimension)
   //
   // return value = dimension

@@ -121,7 +121,6 @@ int main(int argc, char** argv)
 	}
     }
   
-
   RealVector OutputState;
   if (Manager.GetString("initial-state") == 0)
     OutputState = RealVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
