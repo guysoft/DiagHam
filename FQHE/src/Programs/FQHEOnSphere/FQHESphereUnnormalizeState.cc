@@ -212,7 +212,9 @@ int main(int argc, char** argv)
       else
 	{
 	  if (HaldaneBasisFlag == false)
-	    OutputBasis = new BosonOnSphereShort(NbrParticles, TotalLz, LzMax);
+	    {
+	      OutputBasis = new BosonOnSphereShort(NbrParticles, TotalLz, LzMax);
+	    }
 	  else
 	    {
 	      int* ReferenceState = 0;

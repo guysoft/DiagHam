@@ -146,13 +146,8 @@ FermionOnSphereWithSpinHaldaneLargeBasis::FermionOnSphereWithSpinHaldaneLargeBas
   totalSpin = this->TotalSpin;
 
   cout << "computing Hilbert space dimension" << endl;
-<<<<<<< .mine
-  this->LargeHilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 
-									        (this->TotalSpin + this->NbrFermions) >> 1);
-=======
   this->LargeHilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 
 										(this->TotalSpin + this->NbrFermions) >> 1);
->>>>>>> .r1235
   if (this->LargeHilbertSpaceDimension >= (1l << 30))
     this->HilbertSpaceDimension = 0;
   else
@@ -1159,4 +1154,5 @@ void FermionOnSphereWithSpinHaldaneLargeBasis::GenerateLookUpTable(unsigned long
     this->SignLookUpTableMask[i] = 0x0ul;
 #endif
 }
+
 

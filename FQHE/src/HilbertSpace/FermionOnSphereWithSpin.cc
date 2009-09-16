@@ -1271,6 +1271,7 @@ int FermionOnSphereWithSpin::CarefulFindStateIndex(unsigned long stateDescriptio
 int FermionOnSphereWithSpin::FindStateIndex(unsigned long stateDescription, int lzmax)
 {
   long PosMax = stateDescription >> this->LookUpTableShift[lzmax];
+  cout << stateDescription << " " << lzmax << endl;
   long PosMin = this->LookUpTable[lzmax][PosMax];
   PosMax = this->LookUpTable[lzmax][PosMax + 1];
   long PosMid = (PosMin + PosMax) >> 1;
@@ -1572,6 +1573,7 @@ void FermionOnSphereWithSpin::GenerateLookUpTable(unsigned long memory)
 	    --CurrentHighestBit;  
 	  this->StateHighestBit[i] = CurrentHighestBit;
 	}
+      CurrentHighestBit = this->StateHighestBit[0];
     }
 
   // evaluate look-up table size
@@ -2423,32 +2425,33 @@ double FermionOnSphereWithSpin::JackSqrNormalization (RealVector& outputVector, 
   for (long i = minIndex; i < MaxIndex; ++i)
     MaxIndex = this->LargeHilbertSpaceDimension;
   for (long i = minIndex; i < MaxIndex; ++i)
-    {
-      Factorial.SetToOne();
-      this->ConvertToMonomial(this->StateDescription[i], TmpMonomialUp, TmpMonomialDown);
-      for (int k = 0; k < this->NbrFermionsUp; ++k)
-        {
-          if (HalfLzMax < TmpMonomialUp[k])
-            Factorial.PartialFactorialMultiply(HalfLzMax + 1, TmpMonomialUp[k]);
-          else
-            if (HalfLzMax > TmpMonomialUp[k])
-              Factorial.PartialFactorialDivide(TmpMonomialUp[k] + 1, HalfLzMax);
-	}
-      for (int k = 0; k < this->NbrFermionsDown; ++k)
-        {
-	  if (HalfLzMax < TmpMonomialDown[k])
-            Factorial.PartialFactorialMultiply(HalfLzMax + 1, TmpMonomialDown[k]);
-          else
-            if (HalfLzMax > TmpMonomialDown[k])
-              Factorial.PartialFactorialDivide(TmpMonomialDown[k] + 1, HalfLzMax);
-        }
-      SqrNorm +=(outputVector[i] * outputVector[i]) * Factorial.GetNumericalValue();
-      if ((i & 0x3fffl) == 0l)
-        {
-          cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100l) / this->LargeHilbertSpaceDimension) << "%)           \r";
-          cout.flush();
-        }
-    }
+    if (outputVector[i] != 0.0)
+      {
+	Factorial.SetToOne();
+	this->ConvertToMonomial(this->StateDescription[i], TmpMonomialUp, TmpMonomialDown);
+	for (int k = 0; k < this->NbrFermionsUp; ++k)
+	  {
+	    if (HalfLzMax < TmpMonomialUp[k])
+	      Factorial.PartialFactorialMultiply(HalfLzMax + 1, TmpMonomialUp[k]);
+	    else
+	      if (HalfLzMax > TmpMonomialUp[k])
+		Factorial.PartialFactorialDivide(TmpMonomialUp[k] + 1, HalfLzMax);
+	  }
+	for (int k = 0; k < this->NbrFermionsDown; ++k)
+	  {
+	    if (HalfLzMax < TmpMonomialDown[k])
+	      Factorial.PartialFactorialMultiply(HalfLzMax + 1, TmpMonomialDown[k]);
+	    else
+	      if (HalfLzMax > TmpMonomialDown[k])
+		Factorial.PartialFactorialDivide(TmpMonomialDown[k] + 1, HalfLzMax);
+	  }
+	SqrNorm +=(outputVector[i] * outputVector[i]) * Factorial.GetNumericalValue();
+	if ((i & 0x3fffl) == 0l)
+	  {
+	    cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100l) / this->LargeHilbertSpaceDimension) << "%)           \r";
+	    cout.flush();
+	  }
+      }
   cout << endl;
   delete[] TmpMonomialUp;
   delete[] TmpMonomialDown;

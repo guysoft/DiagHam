@@ -859,30 +859,60 @@ double* ParticleOnSphereGenericFourBodyHamiltonian::Compute4BodyCoefficients(int
     for (int i = 0; i < nbrIndexSets; ++i)
       {
 	double Tmp = 0.0;
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[1], indices[2], indices[3], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[1], indices[3], indices[2], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[2], indices[1], indices[3], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[2], indices[3], indices[1], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[3], indices[1], indices[2], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[3], indices[2], indices[1], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[0], indices[2], indices[3], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[0], indices[3], indices[2], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[2], indices[0], indices[3], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[2], indices[3], indices[0], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[3], indices[0], indices[2], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[3], indices[2], indices[0], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[2], indices[0], indices[1], indices[3], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[2], indices[0], indices[3], indices[1], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[2], indices[1], indices[0], indices[3], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[2], indices[1], indices[3], indices[0], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[2], indices[3], indices[0], indices[1], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[2], indices[3], indices[1], indices[0], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[3], indices[0], indices[1], indices[2], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[3], indices[0], indices[2], indices[1], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[3], indices[1], indices[0], indices[2], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[3], indices[1], indices[2], indices[0], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[3], indices[2], indices[0], indices[1], JValue, ClebshArray);
-	Tmp += this->ComputeProjectorCoefficients4Body(indices[3], indices[2], indices[1], indices[0], JValue, ClebshArray);
+	if (relativeMomentum < 4)
+	  {
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[1], indices[2], indices[3], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[1], indices[3], indices[2], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[2], indices[1], indices[3], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[2], indices[3], indices[1], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[3], indices[1], indices[2], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[3], indices[2], indices[1], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[0], indices[2], indices[3], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[0], indices[3], indices[2], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[2], indices[0], indices[3], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[2], indices[3], indices[0], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[3], indices[0], indices[2], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[3], indices[2], indices[0], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[2], indices[0], indices[1], indices[3], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[2], indices[0], indices[3], indices[1], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[2], indices[1], indices[0], indices[3], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[2], indices[1], indices[3], indices[0], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[2], indices[3], indices[0], indices[1], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[2], indices[3], indices[1], indices[0], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[3], indices[0], indices[1], indices[2], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[3], indices[0], indices[2], indices[1], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[3], indices[1], indices[0], indices[2], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[3], indices[1], indices[2], indices[0], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[3], indices[2], indices[0], indices[1], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[3], indices[2], indices[1], indices[0], JValue, ClebshArray);
+	  }
+	else
+	  {
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[1], indices[2], indices[3], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[1], indices[3], indices[2], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[2], indices[1], indices[3], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[2], indices[3], indices[1], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[3], indices[1], indices[2], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[3], indices[2], indices[1], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[0], indices[2], indices[3], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[0], indices[3], indices[2], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[2], indices[0], indices[3], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[2], indices[3], indices[0], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[3], indices[0], indices[2], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[3], indices[2], indices[0], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[2], indices[0], indices[1], indices[3], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[2], indices[0], indices[3], indices[1], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[2], indices[1], indices[0], indices[3], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[2], indices[1], indices[3], indices[0], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[2], indices[3], indices[0], indices[1], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[2], indices[3], indices[1], indices[0], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[3], indices[0], indices[1], indices[2], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[3], indices[0], indices[2], indices[1], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[3], indices[1], indices[0], indices[2], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[3], indices[1], indices[2], indices[0], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[3], indices[2], indices[0], indices[1], JValue, ClebshArray);
+	    Tmp += this->ComputeProjectorCoefficients4Body(indices[3], indices[2], indices[1], indices[0], JValue, ClebshArray);
+	  }
 	TmpCoefficients[i] = Tmp;
 	indices += 4;
       }
@@ -922,11 +952,74 @@ double ParticleOnSphereGenericFourBodyHamiltonian::ComputeProjectorCoefficients4
 	TmpMinJ2 = abs(Sum2);
       for (int j2 = j1 + this->LzMax; j2 >= TmpMinJ2; j2 -= 2)
 	{
-	  if (abs(Sum1 + ((m3 << 1) - this->LzMax)) <= j2)
+	  if ((abs(Sum1 + ((m3 << 1) - this->LzMax)) <= j2) && (abs(j1 - this->LzMax) <= j2))
 	    Tmp += Tmp2 * (clebshArray[j1].GetCoefficient(Sum1, ((m3 << 1) - this->LzMax), j2) * 
 			   clebshArray[j2].GetCoefficient(Sum2, ((m4 << 1) - this->LzMax), jValue)); 
 	}
     }
   return Tmp;
+}
+
+// compute a given projector coefficient for the 4-body interaction 
+//
+// m1 = first index
+// m2 = second index
+// m3 = third inde
+// m4 = fourth index
+// jValue = total angular momentum
+// minJ = minimum angular momentum that can be reach by three particles
+// return value = corresponding projector coefficient
+
+double ParticleOnSphereGenericFourBodyHamiltonian::ComputeProjectorCoefficients4Body2(int m1, int m2, int m3, int m4, int jValue, 
+										     ClebschGordanCoefficients* clebshArray)
+{
+  double Tmp = 0.0;
+  double Tmp2 = 0.0;
+  int TmpMinJ2;
+  int Sum1 = ((m1 + m2) << 1)  - (2 * this->LzMax);
+  int Sum2 = Sum1 + (m3 << 1)  - this->LzMax;
+  if (abs(Sum2 + ((m4 << 1) - this->LzMax)) > jValue)
+    return 0.0;
+  int TmpMinJ = abs(Sum1);
+  int MaxJ = 2 * this->LzMax;
+  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+    MaxJ -= 2;
+  for (int j1 = MaxJ; j1 >= TmpMinJ; j1 -= 4)
+    {
+      Tmp2 = clebshArray[this->LzMax].GetCoefficient(((m1 << 1) - this->LzMax), ((m2 << 1)- this->LzMax), j1);
+      TmpMinJ2 = abs(jValue - this->LzMax);
+      if (TmpMinJ2 < abs(Sum2))
+	TmpMinJ2 = abs(Sum2);
+      for (int j2 = j1 + this->LzMax - 6; j2 >= TmpMinJ2; j2 -= 2)
+	{
+	  if ((abs(Sum1 + ((m3 << 1) - this->LzMax)) <= j2) && (abs(j1 - this->LzMax) <= j2))
+	    Tmp += Tmp2 * (clebshArray[j1].GetCoefficient(Sum1, ((m3 << 1) - this->LzMax), j2) * 
+			   clebshArray[j2].GetCoefficient(Sum2, ((m4 << 1) - this->LzMax), jValue)); 
+	}
+    }
+  return Tmp;
+//   double Tmp = 0.0;
+//   double Tmp2 = 0.0;
+//   int TmpMinJ2;
+//   int Sum1 = ((m1 + m2) << 1)  - (2 * this->LzMax);
+//   int Sum2 = ((m3 + m4) << 1)  - (2 * this->LzMax);
+//   if (abs(Sum2 + Sum1) > jValue)
+//     return 0.0;
+//   int TmpMinJ = abs(Sum1);
+//   int MaxJ = 2 * this->LzMax;
+//   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+//     MaxJ -= 2;
+//   for (int j1 = MaxJ; j1 >= TmpMinJ; j1 -= 4)
+//     {
+//       Tmp2 = clebshArray[this->LzMax].GetCoefficient(((m1 << 1) - this->LzMax), ((m2 << 1)- this->LzMax), j1);
+//       TmpMinJ2 = abs(Sum2);
+//       for (int j2 = 2 * this->LzMax - 4; j2 >= TmpMinJ2; j2 -= 2)
+// 	{
+// 	  if ((abs(j1 + j2) >= jValue) && (abs(j1 - j2) <= jValue))
+// 	    Tmp += Tmp2 * (clebshArray[j1].GetCoefficient(((m3 << 1) - this->LzMax), ((m4 << 1) - this->LzMax), j2) * 
+// 			   clebshArray[j2].GetCoefficient(Sum1, Sum2, jValue)); 
+// 	}
+//     }
+//   return Tmp;
 }
 

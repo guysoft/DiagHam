@@ -41,7 +41,8 @@
 
 
 using std::ostream;
-
+using std::cout;
+using std::endl;
 
 class AbstractQHEOnSphereNBodyInteractionHamiltonian : public AbstractQHEOnSphereHamiltonian
 {

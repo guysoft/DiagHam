@@ -25,7 +25,9 @@
 #include "Tools/FQHEWaveFunction/PfaffianOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/JainCFFilledLevelOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/HundRuleCFStates.h"
+#include "Tools/FQHEWaveFunction/HalperinOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/SU3HalperinOnSphereWaveFunction.h"
+#include "Tools/FQHEWaveFunction/SU4HalperinOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/MooreReadOnSphereWaveFunction.h"
 
 #include "Vector/ComplexVector.h"
@@ -134,7 +136,11 @@ int main(int argc, char** argv)
   int NbrIter = ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();
   bool InvertFlag = Manager.GetBoolean("reverse-flux");
   bool ResumeFlag = Manager.GetBoolean("resume");
-  int LzMax = NbrParticlePerColor * (((KValue - 1) * InterCorrelation) + IntraCorrelation) - IntraCorrelation - KValue + 1;
+  int LzMax = 0;
+  if ((IntraCorrelation & 1) != (InterCorrelation & 1))
+     LzMax = NbrParticlePerColor * (((KValue - 1) * InterCorrelation) + IntraCorrelation) - IntraCorrelation - KValue + 1;
+  else
+    LzMax = NbrParticlePerColor * (((KValue - 1) * InterCorrelation) + IntraCorrelation) - IntraCorrelation;
   bool UseExactFlag = false;
   bool StatisticFlag = !(((BooleanOption*) Manager["boson"])->GetBoolean());
   bool UseBaseAsWeightFlag = ((BooleanOption*) Manager["weight-symmetrized"])->GetBoolean();
@@ -299,36 +305,63 @@ int main(int argc, char** argv)
       IntraCorrelation++;
       InterCorrelation++;
     }
-  switch (KValue)
+  if ((IntraCorrelation & 1) != (InterCorrelation & 1))
     {
-    case 2:
-      {
-	BaseFunction = new FQHESU2HalperinPermanentOnSphereWaveFunction (NbrParticlePerColor, NbrParticlePerColor, 
-									 IntraCorrelation - 1, IntraCorrelation - 1, InterCorrelation - 1, InvertFlag);
-      }
-      break;
-    case 3:
-      {
-	BaseFunction = new FQHESU3HalperinPermanentOnSphereWaveFunction(NbrParticlePerColor, NbrParticlePerColor, NbrParticlePerColor, 
-									IntraCorrelation - 1, IntraCorrelation - 1, IntraCorrelation - 1, 
-									InterCorrelation - 1, InterCorrelation - 1, InterCorrelation - 1, InvertFlag);
-      }
-      break;
-    case 4:
-      {
-	BaseFunction = new FQHESU4HalperinPermanentOnSphereWaveFunction(NbrParticlePerColor, NbrParticlePerColor, NbrParticlePerColor, 
-									NbrParticlePerColor,
-									IntraCorrelation - 1, IntraCorrelation - 1, IntraCorrelation - 1,
-                                                                        IntraCorrelation - 1, InterCorrelation - 1, InterCorrelation - 1,
-									InterCorrelation - 1, InterCorrelation - 1, InterCorrelation - 1,
-									InterCorrelation - 1, InvertFlag);
-      }
-      break;
-    default:
-      {
-	cout << "invalid or unsupported number of colors (i.e. k)" << endl;
-	return -1;
-      }
+      switch (KValue)
+	{
+	case 2:
+	  {
+	    BaseFunction = new FQHESU2HalperinPermanentOnSphereWaveFunction (NbrParticlePerColor, NbrParticlePerColor, 
+									     IntraCorrelation - 1, IntraCorrelation - 1, InterCorrelation - 1, InvertFlag);
+	  }
+	  break;
+	case 3:
+	  {
+	    BaseFunction = new FQHESU3HalperinPermanentOnSphereWaveFunction(NbrParticlePerColor, NbrParticlePerColor, NbrParticlePerColor, 
+									    IntraCorrelation - 1, IntraCorrelation - 1, IntraCorrelation - 1, 
+									    InterCorrelation - 1, InterCorrelation - 1, InterCorrelation - 1, InvertFlag);
+	  }
+	  break;
+	case 4:
+	  {
+	    BaseFunction = new FQHESU4HalperinPermanentOnSphereWaveFunction(NbrParticlePerColor, NbrParticlePerColor, NbrParticlePerColor, 
+									    NbrParticlePerColor,
+									    IntraCorrelation - 1, IntraCorrelation - 1, IntraCorrelation - 1,
+									    IntraCorrelation - 1, InterCorrelation - 1, InterCorrelation - 1,
+									    InterCorrelation - 1, InterCorrelation - 1, InterCorrelation - 1,
+									    InterCorrelation - 1, InvertFlag);
+	  }
+	  break;
+	default:
+	  {
+	    cout << "invalid or unsupported number of colors (i.e. k)" << endl;
+	    return -1;
+	  }
+	}
+    }
+  else
+    {
+      switch (KValue)
+	{
+	case 2:
+	  {
+	    BaseFunction = new HalperinOnSphereWaveFunction (NbrParticlePerColor, NbrParticlePerColor, 
+								      IntraCorrelation - 1, IntraCorrelation - 1, InterCorrelation - 1);
+	  }
+	  break;
+	case 3:
+	  {
+	    BaseFunction = new SU3HalperinOnSphereWaveFunction(NbrParticlePerColor, NbrParticlePerColor, NbrParticlePerColor, 
+							       IntraCorrelation - 1, IntraCorrelation - 1, IntraCorrelation - 1, 
+							       InterCorrelation - 1, InterCorrelation - 1, InterCorrelation - 1);
+	  }
+	  break;
+	default:
+	  {
+	    cout << "invalid or unsupported number of colors (i.e. k)" << endl;
+	    return -1;
+	  }
+	}
     }
   Abstract1DComplexFunctionOnSphere* SymmetrizedFunction = 0;
   Abstract1DComplexFunctionOnSphere* SymmetrizedFunction2 = 0;

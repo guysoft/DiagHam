@@ -540,7 +540,7 @@ void ParticleOnSphereGenericThreeBodyHamiltonian::EvaluateInteractionFactors()
 	  int Lim = this->NbrSortedIndicesPerSum[3][MinSum];
 	  double* TmpSymmetryFactors = SortedIndicesPerSumSymmetryFactor[MinSum];
 	  int* TmpNIndices2 = this->SortedIndicesPerSum[3][MinSum];
-	  int TmpMaxRealtiveMonentum = 5;
+	  int TmpMaxRealtiveMonentum = 10;
 	  if (this->MaxRelativeAngularMomentum <= TmpMaxRealtiveMonentum)
 	    TmpMaxRealtiveMonentum = this->MaxRelativeAngularMomentum;
 	  int TmpSum = TmpNIndices2[0] + TmpNIndices2[1] + TmpNIndices2[2];

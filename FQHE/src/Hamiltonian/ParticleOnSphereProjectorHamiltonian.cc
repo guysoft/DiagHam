@@ -264,6 +264,7 @@ void ParticleOnSphereProjectorHamiltonian::EvaluateInteractionFactors()
 {
   int* TmpMonomial = new int[this->MaxNBody];
   int TmpSum = 0;
+  double* IndexSymmetryFactor = new double [this->ProjectorSpace->GetHilbertSpaceDimension()];
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
       FermionOnSphere* TmpSpace = (FermionOnSphere*) this->ProjectorSpace;
@@ -284,10 +285,16 @@ void ParticleOnSphereProjectorHamiltonian::EvaluateInteractionFactors()
 	      (*TmpSortedIndicesPerSum) = TmpMonomial[j];
 	      ++TmpSortedIndicesPerSum;
 	    }
+	  IndexSymmetryFactor[i] = 1.0;
 	}
     }
   else  
     {
+      double* SymmetryFactor = new double [this->MaxNBody + 1];
+      SymmetryFactor[0] = 1.0;
+      SymmetryFactor[1] = 1.0;
+      for (int i = 2; i <= this->MaxNBody; ++i)
+	SymmetryFactor[i] = SymmetryFactor[i - 1] / sqrt ((double) i);
       BosonOnSphereShort* TmpSpace = (BosonOnSphereShort*) this->ProjectorSpace;
       TmpSpace->GetMonomial(0, TmpMonomial);
       this->MaxSumIndices[this->MaxNBody] = 0;
@@ -301,12 +308,25 @@ void ParticleOnSphereProjectorHamiltonian::EvaluateInteractionFactors()
       for (int i = 0; i < this->ProjectorSpace->GetHilbertSpaceDimension(); ++i)
 	{
 	  TmpSpace->GetMonomial(i, TmpMonomial);	  
+	  IndexSymmetryFactor[i] = 1.0;
+	  int CurrentOccupation = 0;
+	  int NbrOccupation = 0;
 	  for (int j = 0; j < this->MaxNBody; ++j)
 	    {
 	      (*TmpSortedIndicesPerSum) = TmpMonomial[j];
 	      ++TmpSortedIndicesPerSum;
+	      if (CurrentOccupation != TmpMonomial[j])
+		{
+		  IndexSymmetryFactor[i] *= SymmetryFactor[NbrOccupation];
+		  CurrentOccupation =  TmpMonomial[j];
+		  NbrOccupation = 1;
+		}
+	      else
+		++NbrOccupation;
 	    }
+	  IndexSymmetryFactor[i] *= SymmetryFactor[NbrOccupation];	  
 	}
+      delete[] SymmetryFactor;
     }
 
   this->NbrSortedIndicesPerSum[this->MaxNBody] = new int [TmpSum + 1];
@@ -342,7 +362,7 @@ void ParticleOnSphereProjectorHamiltonian::EvaluateInteractionFactors()
 	      ++TmpMIndices;
 	      ++TmpMIndices2;
 	    }			
-	  TmpInteraction[j] = this->ProjectorState[i] * this->ProjectorState[j];
+	  TmpInteraction[j] = this->ProjectorState[i] * this->ProjectorState[j] * IndexSymmetryFactor[i] * IndexSymmetryFactor[j];
 	}
       for (int j = 0; j < this->MaxNBody; ++j)
 	{
@@ -352,6 +372,7 @@ void ParticleOnSphereProjectorHamiltonian::EvaluateInteractionFactors()
 	}
       ++TmpNbrNIndices;
     }
+
 
 }
 
