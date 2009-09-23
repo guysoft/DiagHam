@@ -33,6 +33,10 @@
 
 #include "config.h"
 
+// see if we have a generalised lattice, or standard square lattice
+// filename = filename to be tested
+// return = true if general lattice
+bool FQHEOnLatticeHaveGeneralLattice(char* filename);
 
 // try to guess system information from file name
 //
@@ -72,6 +76,19 @@ bool FQHEOnLatticeFindSystemInfoFromVectorFileName(char* filename, int& nbrParti
 // hardcore = returns true if hardcore bosons encountered
 // return value = true if no error occured
 bool FQHEOnLatticeFindSystemInfoWithKyFromVectorFileName(char* filename, int& nbrParticles, int& lx, int& ly, int &kyMomentum, double &interaction, int &flux, int &nbrState, bool& statistics, bool &hardcore);
+
+// try to guess system information from file name
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles (grab it only if initial value is 0)
+// interaction = strength of interaction parameter
+// flux = number of flux quanta
+// nbrState = number of eigenstate
+// statistics = reference to flag for fermionic statistics (true for fermion, false for bosons, grab it only if initial value is true)
+// hardcore = returns true if hardcore bosons encountered
+// return value = true if no error occured
+bool FQHEOnLatticeFindSystemInfoFromGeneralVectorFileName(char* filename, int& nbrParticles, double &interaction, int &flux, int &nbrState, bool& statistics, bool &hardcore);
+
 
 
 #endif

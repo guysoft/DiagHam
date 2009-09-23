@@ -666,12 +666,27 @@ double LatticePhases::GetTunnellingPhaseFromGauge(int s1, int s2, int *cellTrans
 	  Result += 0.5*GaugeAyy*(Position2[1]*Position2[1]-Position1[1]*Position1[1]);
 	  // xxx: check signs and prefactors here!
 	  cout << "Raw phase="<<Result;
-	  if (Translation.SqrNorm()>1e-15)
+	  if (Translation.SqrNorm()>1e-14)
 	    {
-	      double MagneticTranslation=(GaugeAxx*Translation[0]+GaugeAyx*Translation[1])*CellPosition2[0];
-	      MagneticTranslation +=(GaugeAxy*Translation[0]+GaugeAyy*Translation[1])*(CellPosition2[1]+Translation[1]);
-	      Result += MagneticTranslation;
-	      cout << ", magnetic translation: "<<MagneticTranslation;
+	      if (Translation[0]>0.0)
+		{
+		  // translate in x-direction first:
+		  double MagneticTranslation =(GaugeAxy*Translation[0]+GaugeAyy*Translation[1])*CellPosition2[1]; // (CellPosition2[1]+0.5*Translation[1]);
+		  // then translate in y-direction
+		  MagneticTranslation+=(GaugeAxx*Translation[0]+GaugeAyx*Translation[1])*(CellPosition2[0]+Translation[0]); // (CellPosition2[0]+Translation[0]+0.5*Translation[0]);
+		  
+		  Result += MagneticTranslation;
+		  cout << ", magnetic translation: "<<MagneticTranslation;
+		}
+	      else
+		{
+		  // translate in y-direction first:
+		  double MagneticTranslation =(GaugeAxx*Translation[0]+GaugeAyx*Translation[1])*CellPosition2[0]; // (CellPosition2[0]+0.5*Translation[0]);
+		  // translate in x-direction first:
+		  MagneticTranslation+= (GaugeAxy*Translation[0]+GaugeAyy*Translation[1])*(CellPosition2[1]+Translation[1]); // (CellPosition2[1]+Translation[1]+0.5*Translation[1]);
+		  Result += MagneticTranslation;
+		  cout << ", magnetic translation: "<<MagneticTranslation;
+		}
 	    }
 	  cout << ", after corrections"<<Result<<endl;
 	}
@@ -686,68 +701,3 @@ double LatticePhases::GetTunnellingPhaseFromGauge(int s1, int s2, int *cellTrans
   else
     return 0.0;
 }
-
-
-/*
-// version that's working with landau-gauge in x- and y-directions, but not symmetric
-// calculate the tunnelling phase between two given sites from the gauge
-// s1 = start site
-// s2 = end site
-// cellTranslation = indicating whether translation across a boundary ocurred
-// return = relative phase
-double GetTunnellingPhaseFromGauge_Ref(int s1, int s2, int *cellTranslation)
-{
-  if (this->HaveGauge)
-    {
-      double Result=0.0;
-      // calculate site coordinates
-      int *S1Coordinates = new int[this->Dimension];
-      int *S2Coordinates = new int[this->Dimension];
-      int S1Sublattice, S2Sublattice;
-      this->GetSiteCoordinates(s1, S1Coordinates, S1Sublattice);
-      this->GetSiteCoordinates(s2, S2Coordinates, S2Sublattice);
-      RealVector Position1(this->Dimension,true);
-      RealVector Position2(this->Dimension,true);
-      RealVector Translation(this->Dimension,true);
-      for (int i=0; i<Dimension; ++i)
-	{
-	  Position1.AddLinearCombination((double)S1Coordinates[i],LatticeVectors[i]);
-	  Position2.AddLinearCombination((double)S2Coordinates[i],LatticeVectors[i]);
-	  if (cellTranslation!=NULL)
-	    Translation.AddLinearCombination((double)cellTranslation[i],LatticeVectors[i]);
-	}
-      Position1.AddLinearCombination(1.0,SubLatticeVectors[S1Sublattice]);
-      Position2.AddLinearCombination(1.0,SubLatticeVectors[S2Sublattice]);
-      Position2.AddLinearCombination(-1.0,Translation);
-      cout << "Position1="<<endl<<Position1;
-      cout << "Position2="<<endl<<Position2;
-      cout << "Translation="<<endl<<Translation;
-      if (this->Dimension==2)
-	{
-	  Result += 0.5*GaugeAxx*(Position2[0]*Position2[0]-Position1[0]*Position1[0]);
-	  Result += 0.5*GaugeAyx*(Position2[0]-Position1[0])*(Position2[1]+Position1[1]);
-	  Result += 0.5*GaugeAxy*(Position2[1]-Position1[1])*(Position2[0]+Position1[0]);
-	  Result += 0.5*GaugeAyy*(Position2[1]*Position2[1]-Position1[1]*Position1[1]);
-	  // xxx: check signs and prefactors here!
-	  cout << "Raw phase="<<Result;
-	  if (Translation.SqrNorm()>1e-15)
-	    {
-	      double MagneticTranslation=(GaugeAxx*Translation[0]+GaugeAyx*Translation[1])*Position2[0];
-	      MagneticTranslation +=(GaugeAxy*Translation[0]+GaugeAyy*Translation[1])*Position2[1];
-	      Result += MagneticTranslation;
-	      cout << ", magnetic translation: "<<MagneticTranslation;
-	    }
-	  cout << ", after corrections"<<Result<<endl;
-	}
-      else
-	{
-	  cout << "Need to define LatticePhases::GetTunnellingPhaseFromGauge for dimension d>2"<<endl;
-	}
-      delete [] S1Coordinates;
-      delete [] S2Coordinates;
-      return Result;
-    }
-  else
-    return 0.0;
-}
-*/

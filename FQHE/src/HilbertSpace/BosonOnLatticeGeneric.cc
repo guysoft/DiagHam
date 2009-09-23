@@ -306,7 +306,7 @@ int BosonOnLatticeGeneric::GetNbrFluxQuanta()
 }
 
 
-void print_array2(int length, long unsigned int*array)
+/*void print_array2(int length, long unsigned int*array)
 {
   if (length>0)
     {
@@ -315,6 +315,7 @@ void print_array2(int length, long unsigned int*array)
       cout << " (length "<<length<<")"<<endl;
     }
 }
+*/
 
 
 // apply creation operator to a word, using the conventions

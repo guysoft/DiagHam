@@ -3,6 +3,8 @@
 #include "HilbertSpace/BosonOnLatticeGeneric.h"
 #include "HilbertSpace/HardCoreBosonOnLatticeGeneric.h"
 
+#include "Tools/FQHESpectrum/LatticePhases.h"
+
 #include "Operator/ParticleOnLatticeOneBodyOperator.h"
 #include "Operator/ParticleOnLatticeTranslationOperator.h"
 
@@ -68,7 +70,8 @@ int main(int argc, char** argv)
   ArchitectureManager Architecture;
 
   Manager += SystemGroup;
-  Architecture.AddOptionGroup(&Manager);
+  LatticePhases::AddOptionGroup(&Manager);
+  Architecture.AddOptionGroup(&Manager);  
   Manager += PrecalculationGroup;
   Manager += OutputGroup;
   Manager += MiscGroup;
@@ -117,16 +120,50 @@ int main(int argc, char** argv)
   int TmpI=-1;
   bool Statistics=false;
   bool HardCore=false;
-  if (FQHEOnLatticeFindSystemInfoFromVectorFileName(VectorFiles[0], NbrBosons, Lx, Ly, Interaction, NbrFluxQuanta, TmpI, Statistics, HardCore) == false)
+  bool GenericLattice=false;
+  int NbrSites=0;
+  int NbrSubLattices=1;
+  LatticePhases *Lattice = NULL;
+  if (FQHEOnLatticeHaveGeneralLattice(VectorFiles[0]))
     {
-      cout<<"Please use standard file-names, or indicate all system parameters!"<<endl;
-      exit(1);
-    }  
-  HardCore=(HardCore||Manager.GetBoolean("hard-core"));
-  if (Manager.GetBoolean("no-hard-core"))
-    HardCore=false;
+      GenericLattice=true;
+      if (Manager.GetString("lattice-definition")==NULL)
+	{
+	  cout << "Please indicate the file with the lattice-definition for this vector"<<endl;
+	  exit(1);
+	}
+      // get the lattice geometry
+      Lattice = new LatticePhases();
+      NbrSites = Lattice->GetNbrSites();
+      Lx = Lattice->GetLatticeLength(0);
+      Ly = Lattice->GetLatticeLength(1);
+      NbrSubLattices = Lattice->GetNbrSubLattices();
+      char* LatticeName = Lattice->GeometryString();
+      if (strstr(VectorFiles[0], LatticeName)==0)
+	{
+	  cout << "The given lattice parameters do not coincide with the filename, verify lattice definition, and repetition of unit cells"<<endl;
+	}
+      delete [] LatticeName;
+      if (FQHEOnLatticeFindSystemInfoFromGeneralVectorFileName(VectorFiles[0], NbrBosons, Interaction, NbrFluxQuanta, TmpI, Statistics, HardCore) == false)
+	{
+	  cout<<"Please use standard file-names, or indicate all necessary system parameters!"<<endl;
+	  exit(1);
+	}
+      
+    }
+  else
+    {
+      if (FQHEOnLatticeFindSystemInfoFromVectorFileName(VectorFiles[0], NbrBosons, Lx, Ly, Interaction, NbrFluxQuanta, TmpI, Statistics, HardCore) == false)
+	{
+	  cout<<"Please use standard file-names, or indicate all system parameters!"<<endl;
+	  exit(1);
+	}
+      HardCore=(HardCore||Manager.GetBoolean("hard-core"));
+      if (Manager.GetBoolean("no-hard-core"))
+	HardCore=false;
+      NbrSites = Lx*Ly;
+    }
   
-  int NbrSites = Lx*Ly;
   int VectorDimension=0;
   ComplexVector *Vectors = new ComplexVector[NbrVectors];
   bool tmpB, haveVector=false;
@@ -141,18 +178,6 @@ int main(int argc, char** argv)
 	  exit(1);
 	}
       haveVector=haveVector | tmpB;
-	    
-//       cout << "Vector "<<i<<":"<<endl;
-//       for (int j=0; j<VectorDimension; ++j)
-// 	{
-// 	  cout<<Vectors[i][j]<<" ( ";
-// 	  Space->PrintState(cout,j);
-// 	  cout << " )"<<endl;
-// 	}
-//       int dX, dY;
-//       for (int fi=0; fi<VectorDimension; ++fi)
-// 	if (Space->IsTranslation(0, fi, dX, dY))
-// 	    cout << "Potential translation " << 0 << "->"<<fi<<endl;
     }
 
   if (!haveVector)
@@ -162,9 +187,18 @@ int main(int argc, char** argv)
     }  
 
   ParticleOnLattice* Space;
-  if (HardCore)
-    Space =new HardCoreBosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
-  else Space = new BosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
+  if (GenericLattice)
+    {
+      if (HardCore)
+	Space = new HardCoreBosonOnLatticeGeneric(NbrBosons, Lattice, NbrFluxQuanta, MemorySpace);
+      else Space = new BosonOnLatticeGeneric(NbrBosons, Lattice, NbrFluxQuanta, MemorySpace);
+    }
+  else
+    {
+      if (HardCore)
+	Space =new HardCoreBosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
+      else Space = new BosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
+    }
 
   if (VectorDimension != Space->GetHilbertSpaceDimension())
     {
@@ -200,27 +234,29 @@ int main(int argc, char** argv)
   int CreationIndex, AnnihilationIndex, TotalIndexI, TotalIndexJ;  
   for (int CreationX=0; CreationX<Lx; ++CreationX)
     for (int CreationY=0; CreationY<Ly; ++CreationY)
-      {
-	CreationIndex = Space->EncodeQuantumNumber(CreationX, CreationY, 0, Tmp);	
-	for (int AnnihilationX=0; AnnihilationX<Lx; ++AnnihilationX)
-	  for (int AnnihilationY=0; AnnihilationY<Ly; ++AnnihilationY)
-	    {
-	      AnnihilationIndex = Space->EncodeQuantumNumber(AnnihilationX, AnnihilationY, 0, Tmp);
-	      DensityOperator->SetCreationAnnihilationIndex(CreationIndex,AnnihilationIndex);
-	      // calculate possible matrix elements in subspace of vectors
-	      for (int numVector=0; numVector<NbrVectors; ++numVector)
-		for (int numVector2=0; numVector2<NbrVectors; ++numVector2)
-		  {
-		    TotalIndexI = CreationIndex+numVector*NbrSites;
-		    TotalIndexJ = AnnihilationIndex+numVector2*NbrSites;
-		    if (TotalIndexI<=TotalIndexJ)
+      for (int CreationSub=0; CreationSub<NbrSubLattices; ++CreationSub)
+	{
+	  CreationIndex = Space->EncodeQuantumNumber(CreationX, CreationY, CreationSub, Tmp);
+	  for (int AnnihilationX=0; AnnihilationX<Lx; ++AnnihilationX)
+	    for (int AnnihilationY=0; AnnihilationY<Ly; ++AnnihilationY)
+	      for (int AnnihilationSub=0; AnnihilationSub<NbrSubLattices; ++AnnihilationSub)
+		{
+		  AnnihilationIndex = Space->EncodeQuantumNumber(AnnihilationX, AnnihilationY, AnnihilationSub, Tmp);
+		  DensityOperator->SetCreationAnnihilationIndex(CreationIndex,AnnihilationIndex);
+		  // calculate possible matrix elements in subspace of vectors
+		  for (int numVector=0; numVector<NbrVectors; ++numVector)
+		    for (int numVector2=0; numVector2<NbrVectors; ++numVector2)
 		      {
-			Tmp=DensityOperator->MatrixElement(Vectors[numVector], Vectors[numVector2]);
-			Rho.SetMatrixElement(TotalIndexI,TotalIndexJ,Tmp);
+			TotalIndexI = CreationIndex+numVector*NbrSites;
+			TotalIndexJ = AnnihilationIndex+numVector2*NbrSites;
+			if (TotalIndexI<=TotalIndexJ)
+			  {
+			    Tmp=DensityOperator->MatrixElement(Vectors[numVector], Vectors[numVector2]);
+			    Rho.SetMatrixElement(TotalIndexI,TotalIndexJ,Tmp);
+			  }
 		      }
-		  }	      
-	    }
-      }  
+		}
+	}
   
   //cout << "Matrix="<<endl<<Rho<<endl;
   // calculate eigenvalues & vectors of Rho
@@ -388,6 +424,9 @@ int main(int argc, char** argv)
 	  cout << "Sum-EV["<<i<<"] = " << M2[DensityMatrixDimension2-1-i] << endl;
     }
 
+  
+  // stop here if we have a generic lattice -> translations as of yet not implemented
+  if (GenericLattice) exit(0);    
 
   cout<< "====== Analysis of momentum eigenvalues ====="<<endl;
 
