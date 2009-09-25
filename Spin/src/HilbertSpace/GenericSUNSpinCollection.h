@@ -181,7 +181,7 @@ class GenericSUNSpinCollection : public AbstractSUNSpinCollection
   // generate key from coding bits
   // codingBits = indexed part of a StateDescription
   // 
-  inline int GenerateKey(unsigned int codingBits);
+  inline unsigned GenerateKey(unsigned long codingBits);
 
 
 };
@@ -189,9 +189,9 @@ class GenericSUNSpinCollection : public AbstractSUNSpinCollection
 // generate key from coding bits
 // codingBits = indexed part of a StateDescription
 // 
-int GenericSUNSpinCollection::GenerateKey(unsigned int codingBits)
+unsigned GenericSUNSpinCollection::GenerateKey(unsigned long codingBits)
 {
-  int Key=(codingBits>>((this->LookUpTableDepth-1)*BITS));
+  unsigned Key=(codingBits>>((this->LookUpTableDepth-1)*BITS));
   for (int k=this->LookUpTableDepth-2; k>0; --k)
     {
       Key*=this->LevelN;

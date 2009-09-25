@@ -398,12 +398,15 @@ long GenericSUNSpinCollection::GenerateStates(int nbrSpin, int levelN, long pos,
 // memeory = memory size that can be allocated for the look-up table
 void GenericSUNSpinCollection::GenerateLookUpTable(unsigned long memory)
 {
-  long MaxNbrIntegers = memory/sizeof(int);
-  long TmpMemory=this->LevelN;
+  unsigned long MaxNbrIntegers = memory/sizeof(int);
+  unsigned long TmpMemory=this->LevelN;
+  unsigned MaxKey=this->LevelN;
   this->LookUpTableDepth=1;
-  while ((TmpMemory*LevelN<MaxNbrIntegers)&&(LookUpTableDepth<this->NbrSpins))
+  while ((TmpMemory*LevelN<MaxNbrIntegers)&&(LookUpTableDepth<this->NbrSpins)&&(MaxKey<UINT_MAX/LevelN))
     {
       TmpMemory*=this->LevelN;
+      MaxKey*=this->LevelN;
+      MaxKey+=this->LevelN;
       this->LookUpTableDepth++;
     }
   this->LookUpTableShift=BITS*(this->NbrSpins-this->LookUpTableDepth);
@@ -412,9 +415,9 @@ void GenericSUNSpinCollection::GenerateLookUpTable(unsigned long memory)
 //   cout << "LookUpTableShift="<<LookUpTableShift<<endl;
 //   cout << "LookUpTableSize="<<TmpMemory<<endl;
   unsigned long CurrentIndexedBits=this->StateDescription[0]>>LookUpTableShift;
-  int CurrentKey=this->GenerateKey(CurrentIndexedBits);
-  int NewKey;
-  for (int t=CurrentKey+1; t<TmpMemory+1; ++t)
+  unsigned CurrentKey=this->GenerateKey(CurrentIndexedBits);
+  unsigned NewKey;
+  for (unsigned t=CurrentKey+1; t<TmpMemory+1; ++t)
     {
       this->LookUpTable[t]=0;
     }
@@ -425,13 +428,14 @@ void GenericSUNSpinCollection::GenerateLookUpTable(unsigned long memory)
 	{
 	  CurrentIndexedBits = this->StateDescription[i]>>LookUpTableShift;
 	  NewKey = this->GenerateKey(CurrentIndexedBits);
-	  for (int t=CurrentKey; t>NewKey; --t)
+	  for (unsigned t=CurrentKey; t>NewKey; --t)
 	    this->LookUpTable[t]=i;
 	  CurrentKey=NewKey;
 	}
     }
-  for (int t=CurrentKey; t>=0; --t)
+  for (unsigned t=CurrentKey; t>0; --t)
     this->LookUpTable[t]=this->HilbertSpaceDimension;
+  this->LookUpTable[0]=this->HilbertSpaceDimension;
 
 //   for (int i=0; i<TmpMemory+1;++i)
 //     cout << "LookUpTable["<<i<<"]="<<LookUpTable[i]<<endl;
