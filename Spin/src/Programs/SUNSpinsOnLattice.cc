@@ -176,7 +176,7 @@ int main(int argc, char** argv)
   
   char *Geometry=Lattice->GeometryString();
   char *OutputFileName = new char[100];
-  sprintf (OutputFileName, "spins_SU%d_%s_n_%d_c", LevelN-1, Geometry, NbrSpins);
+  sprintf (OutputFileName, "spins_SU%d_%s_n_%d_c", LevelN, Geometry, NbrSpins);
 
   // if there is a single set of cartan quantum-numbers -> add to filename
   if (NbrSectors==1)

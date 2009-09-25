@@ -126,7 +126,7 @@ GenericSUNSpinCollection::GenericSUNSpinCollection(int levelN, int nbrSpins, int
   cout << "memory requested for Hilbert space = ";
   PrintMemorySize(cout, UsedMemory)<<endl;
   UsedMemory = this->LookUpTableDepth*sizeof(int);
-  for (int i=1; i<this->LookUpTableDepth; ++i) UsedMemory *= this->LookUpTableDepth;
+  for (int i=1; i<this->LookUpTableDepth; ++i) UsedMemory *= this->LevelN;
   cout << "memory requested for lookup table = ";
   PrintMemorySize(cout, UsedMemory)<<endl;
 #endif
