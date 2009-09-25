@@ -125,7 +125,7 @@ int main(int argc, char** argv)
   LatticeConnections *Lattice = new LatticeConnections();
   
   int NbrSpins=Lattice->GetNbrSites();
-
+  cout << "NbrSpins="<<NbrSpins<<endl;
   if (NbrCartan>0)
     {
       if (NbrCartan<LevelN-1)
