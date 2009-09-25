@@ -121,7 +121,7 @@ int main(int argc, char** argv)
   int *CartanQuantumNumbers;
   int **AllCartanQuantumNumbers=NULL;
   CartanQuantumNumbers = Manager.GetIntegers("cartan",NbrCartan);  
- 
+  cout << "NbrCartan="<<NbrCartan<<", NbrSectors="<<NbrSectors <<endl;
   LatticeConnections *Lattice = new LatticeConnections();
   
   int NbrSpins=Lattice->GetNbrSites();
@@ -156,6 +156,7 @@ int main(int argc, char** argv)
       AllCartanQuantumNumbers = new int*[NbrSectors];
       int TmpSectors = GenerateCartanQuantumNumbers(AllCartanQuantumNumbers, NbrSectors, NbrSpins, LevelN,
 							     NbrSpins, LevelN, 0);
+      CartanQuantumNumbers = AllCartanQuantumNumbers[0];
       if (TmpSectors!=NbrSectors)
 	{
 	  cout << "Problem with generation of quantum numbers"<<endl;

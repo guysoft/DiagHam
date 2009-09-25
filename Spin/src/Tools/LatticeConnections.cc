@@ -36,6 +36,9 @@
 using std::cout;
 using std::endl;
 
+// verbosity flag
+//#define VERBOSE
+
 
 
 // generate the object using options from Option Manager
@@ -182,7 +185,9 @@ LatticeConnections::LatticeConnections()
       delete [] NbrValues;
       delete [] NeighborString;
     }
+#ifdef VERBOSE
   cout << "NeighborsInCell="<<NeighborsInCellMatrix;
+#endif
   if (LatticeDefinition.GetAsStringMultipleArray ("NeighborCells", '|', ',', NeighborString, NbrPairs, NbrValues)==false)
     {
       cout << "error while parsing NeighborCells in " << this->Options->GetString("lattice-definition") << endl;
@@ -255,7 +260,9 @@ LatticeConnections::LatticeConnections()
 	}
       delete [] NbrValues;
       delete [] NeighborString;
+#ifdef VERBOSE
       cout << FieldName<<"="<<*NeighborsAcrossBoundary[d]<<endl;
+#endif
     }  
   
   this->Neighbors = new int*[NbrSites];
@@ -273,23 +280,33 @@ LatticeConnections::LatticeConnections()
   for (int c=0; c<NbrCells; ++c)
     {
       this->GetCellCoordinates(c, CellCoordinates);
+#ifdef VERBOSE
       cout << "Cell "<<c<<":"<< CellCoordinates[0]<<", "<<CellCoordinates[1]<<endl;
+#endif
       int Site1, Site2, Site3;
       for (int i=0; i<NbrSitesPerCell; ++i)
 	{
 	  Site1 = this->GetSiteNumber(c, i);
+#ifdef VERBOSE
 	  cout << "Site 1="<<Site1<<endl;
+#endif
 	  for (int j=0; j<NbrSitesPerCell; ++j)
 	    {
 	      Site2 = this->GetSiteNumber(c, j);
+#ifdef VERBOSE
 	      cout << "Site 2="<<Site2;
+#endif
 	      if (NeighborsInCellMatrix(i,j)>0.0)
 		{
+#ifdef VERBOSE
 		  cout << "... is neighbor"<<endl;
+#endif
 		  TmpNeighbors[NbrNeighbors[Site1]]=Site2;
 		  ++NbrNeighbors[Site1];
 		}
+#ifdef VERBOSE
 	      else cout << "... not neighbor"<<endl;
+#endif
 	      for (int d=0; d<NbrNeighborCells; ++d)
 		{
 		  if ((*(NeighborsAcrossBoundary[d]))(i,j)!=0.0)
@@ -297,8 +314,10 @@ LatticeConnections::LatticeConnections()
 		      for (int k=0; k<Dimension; ++k)
 			CellCoordinates2[k]=CellCoordinates[k]+NeighborCells[d][k];
 		      Site3 = this->GetSiteNumber(CellCoordinates2, j);
+#ifdef VERBOSE
 		      cout << "additional neighbor from NeigborCell "<<d<<" at "<<
 			CellCoordinates2[0]<<", "<<CellCoordinates2[1]<<", "<<j<<" : Site 3="<<Site3<<endl;
+#endif
 		      TmpNeighbors[NbrNeighbors[Site1]]=Site3;
 		      ++NbrNeighbors[Site1];
 		    }
@@ -319,13 +338,17 @@ LatticeConnections::LatticeConnections()
   
   for (int i=0; i<NbrSites; ++i)
     {
+#ifdef VERBOSE
       cout <<  "Neighbors["<<i<<"] = "<<Neighbors[i][0];
       for (int k=1; k<NbrNeighbors[i]; ++k) cout <<" "<<Neighbors[i][k];
       cout << endl;
+#endif
       this->ArraySort(Neighbors[i], NbrNeighbors[i]);
-      cout <<  "sorted = "<<Neighbors[i][0];
+#ifdef VERBOSE
+      cout <<  "sorted = "<<Neighbors[i][0];      
       for (int k=1; k<NbrNeighbors[i]; ++k) cout <<" "<<Neighbors[i][k];
       cout << endl;
+#endif
       int j=0; 
       while((j<NbrNeighbors[i])&&(Neighbors[i][j]>=i)) ++j;
       this->NbrPartners[i] = j;
@@ -336,6 +359,7 @@ LatticeConnections::LatticeConnections()
 	    this->Partners[i][k]=this->Neighbors[i][k];
 	}
       else this->Partners[i] = NULL;
+#ifdef VERBOSE
       if (NbrPartners[i]>0)
 	{
 	  cout <<  "Partners["<<i<<"] = "<<Partners[i][0];
@@ -343,6 +367,7 @@ LatticeConnections::LatticeConnections()
 	  cout << endl;
 	}
       else cout << "no partners"<<endl;
+#endif
     }
 
   cout << "LatticeConnections created"<<endl;
@@ -471,7 +496,7 @@ void LatticeConnections::AddOptionGroup(OptionManager* manager)
   (*(LatticeConnections::Options)) += LatticeGroup;
 
   (*LatticeGroup) += new SingleStringOption  ('L', "lattice-definition", "File defining the geometry of the lattice");
-  (*LatticeGroup) += new MultipleIntegerOption  ('c', "cells-repeat", "number of times unit cell is repeated in the x-, y-,..., dim- directions of the lattice (overriding default given in definition)", ',');
+  (*LatticeGroup) += new MultipleIntegerOption  ('C', "cells-repeat", "number of times unit cell is repeated in the x-, y-,..., dim- directions of the lattice (overriding default given in definition)", ',');
 }
 
 
