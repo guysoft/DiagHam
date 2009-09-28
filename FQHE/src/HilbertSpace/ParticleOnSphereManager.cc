@@ -83,6 +83,7 @@
 
 
 #include <stdlib.h>
+#include <cstring>
 
 
 // default constructor

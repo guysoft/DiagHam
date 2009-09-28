@@ -8,7 +8,7 @@
 
 #include "Options/Options.h"
 
-
+#include <cstring>
 #include <iostream>
 #include <fstream>
 
