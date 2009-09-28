@@ -36,7 +36,8 @@
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
 
-
+#include <cstdlib>
+#include <limits.h>
 #include <iostream>
 using std::cout;
 using std::endl;
