@@ -37,6 +37,7 @@
 #include "Hamiltonian/ParticleOnSphereWithSpinL2Hamiltonian.h"
 #include "Hamiltonian/ParticleOnSphereWithSpinS2Hamiltonian.h"
 
+#include <cstring>
 #include <iostream>
 #include <stdlib.h>
 #include <math.h>

@@ -21,6 +21,7 @@
 #include <math.h>
 #include <sys/time.h>
 #include <iostream>
+#include <limits.h>
 
 using std::cout;
 using std::endl;

@@ -38,6 +38,7 @@
 
 #include "Hamiltonian/ParticleOnSphereL2Hamiltonian.h"
 
+#include <cstring>
 #include <iostream>
 #include <stdlib.h>
 #include <math.h>

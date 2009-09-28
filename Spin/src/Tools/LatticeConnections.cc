@@ -32,6 +32,7 @@
 #include "Options/Options.h"
 #include "Matrix/RealSymmetricMatrix.h"
 
+#include <cstdlib>
 #include <iostream>
 #include <cstring>
 using std::cout;

@@ -2,6 +2,7 @@
 #include "GeneralTools/ConfigurationParser.h"
 
 #include <cmath>
+#include <cstring>
 using std::sqrt;
 using std::cout;
 using std::endl;

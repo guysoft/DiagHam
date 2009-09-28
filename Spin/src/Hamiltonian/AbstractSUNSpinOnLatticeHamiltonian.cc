@@ -42,8 +42,10 @@
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/SUNSpinPrecalculationOperation.h"
 
+#include <cstdlib>
 #include <iostream>
 #include <sys/time.h>
+#include <limits.h>
 #include <fstream>
 #include <cstring>
 

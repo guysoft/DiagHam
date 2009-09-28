@@ -1,6 +1,7 @@
 #include "SphereWithSpinGeneralEnergy.h"
 #include "GeneralTools/ConfigurationParser.h"
 
+#include <cstring>
 #include <cmath>
 using std::sqrt;
 using std::cout;
