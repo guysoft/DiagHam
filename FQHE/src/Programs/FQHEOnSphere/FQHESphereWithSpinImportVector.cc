@@ -14,6 +14,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <cstring>
 #include <stdlib.h>
 #include <math.h>
 #include <fstream>

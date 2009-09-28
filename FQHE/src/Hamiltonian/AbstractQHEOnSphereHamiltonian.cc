@@ -40,6 +40,7 @@
 #include "Architecture/ArchitectureOperation/QHEParticlePrecalculationOperation.h"
 
 #include <iostream>
+#include <cstring>
 #include <sys/time.h>
 #include <fstream>
 

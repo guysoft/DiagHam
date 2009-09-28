@@ -37,6 +37,7 @@
 using std::cout;
 using std::endl;
 
+#include <cstring>
 #include <cmath>
 using std::fabs;
 

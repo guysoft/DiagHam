@@ -27,6 +27,7 @@
 #include "Hamiltonian/ParticleOnSphereDeltaHamiltonian.h"
 
 #include <iostream>
+#include <cstring>
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>

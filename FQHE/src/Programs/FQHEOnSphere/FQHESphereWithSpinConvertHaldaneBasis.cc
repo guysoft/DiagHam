@@ -17,6 +17,7 @@
 #include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
 
 #include <iostream>
+#include <cstring>
 #include <stdlib.h>
 #include <math.h>
 #include <fstream>

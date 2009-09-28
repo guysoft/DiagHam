@@ -13,6 +13,8 @@
 #include <iostream>
 #include <fstream>
 
+#include <cstring>
+
 using std::ios;
 using std::cout;
 using std::endl;

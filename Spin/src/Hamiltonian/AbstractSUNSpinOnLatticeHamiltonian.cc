@@ -45,7 +45,7 @@
 #include <iostream>
 #include <sys/time.h>
 #include <fstream>
-
+#include <cstring>
 
 using std::ofstream;
 using std::ifstream;

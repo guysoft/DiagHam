@@ -23,6 +23,7 @@
 #include "Options/Options.h"
 
 #include <iostream>
+#include <cstring>
 #include <stdlib.h>
 #include <cmath>
 #include <sys/time.h>

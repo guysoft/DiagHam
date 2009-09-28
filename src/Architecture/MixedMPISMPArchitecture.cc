@@ -39,6 +39,7 @@
 #include "GeneralTools/MultiColumnASCIIFile.h"
 
 #include <fstream>
+#include <cstring>
 #include <sys/time.h>
 #include <string.h>
 #include <iostream>

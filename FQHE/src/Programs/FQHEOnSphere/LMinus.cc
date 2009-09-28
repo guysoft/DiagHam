@@ -28,6 +28,7 @@
 
 #include <iostream>
 #include <stdlib.h>
+#include <cstring>
 #include <math.h>
 #include <stdio.h>
 

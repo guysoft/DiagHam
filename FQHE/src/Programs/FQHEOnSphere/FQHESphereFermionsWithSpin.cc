@@ -29,6 +29,7 @@
 #include <cstdlib>
 #include <climits>
 #include <cmath>
+#include <cstring>
 #include <sys/time.h>
 #include <stdio.h>
 #ifdef __MPI__

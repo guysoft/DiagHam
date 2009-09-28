@@ -48,6 +48,7 @@
 #include <sys/time.h>
 #include <fstream>
 #include <cstdlib>
+#include <cstring>
 
 using std::cout;
 using std::endl;

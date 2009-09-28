@@ -43,6 +43,7 @@
 #include <fstream>
 #include <climits>
 #include <cstdlib>
+#include <cstring>
 
 using std::ofstream;
 using std::ifstream;

@@ -14,6 +14,7 @@
 #include "GeneralTools/ConfigurationParser.h"
 
 #include <iostream>
+#include <cstring>
 #include <stdlib.h>
 #include <math.h>
 #include <sys/time.h>

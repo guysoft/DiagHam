@@ -40,6 +40,7 @@
 #include <math.h>
 #include <sys/time.h>
 #include <stdio.h>
+#include <cstring>
 
 double dsqrarg;
 #define DSQR(a) ((dsqrarg=(a)) == 0.0 ? 0.0 : dsqrarg*dsqrarg)

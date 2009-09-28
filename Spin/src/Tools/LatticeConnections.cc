@@ -33,6 +33,7 @@
 #include "Matrix/RealSymmetricMatrix.h"
 
 #include <iostream>
+#include <cstring>
 using std::cout;
 using std::endl;
 

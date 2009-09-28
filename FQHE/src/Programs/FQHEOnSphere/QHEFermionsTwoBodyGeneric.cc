@@ -29,6 +29,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <climits>
+#include <cstring>
 #include <math.h>
 #include <sys/time.h>
 #include <stdio.h>

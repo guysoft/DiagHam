@@ -63,6 +63,7 @@
 #include "GeneralTools/ConfigurationParser.h"
 
 #include <iostream>
+#include <cstring>
 #include <sys/time.h>
 #include <stdlib.h>
 #include <stdio.h>

@@ -3,6 +3,7 @@
 #include <iostream>
 #include <ctime>
 #include <cmath>
+#include <cstring>
 
 #define TAB "\t"
 

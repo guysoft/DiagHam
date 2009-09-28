@@ -63,7 +63,7 @@
 #include "MathTools/NumericalAnalysis/AntisymmetrizedComplexFunction.h"
 
 #include <iostream>
-
+#include <cstring>
 
 using std::endl;
 using std::cout;

@@ -40,6 +40,7 @@
 #include <string.h>
 #include <iostream>
 #include <fstream>
+#include <cstring>
 #ifdef __MPI__
 #include <mpi.h>
 #endif
