@@ -3,8 +3,9 @@
 //*									     
 //*  assumes the following Hamiltonian:				     
 //*  H= -(DeltaSAS/2)\sum_{m} (c_{m,up}^+c_{m,up} 			     	
-//*	  - c_{m,down}^+c_{m,down}) 	
-//*
+//*	  - c_{m,down}^+c_{m,down})
+//*    -(Imbalance)\sum_{m}(c_{m,up}^+c_{m,down} 			     	
+//*	  + c_{m,down}^+c_{m,up}) 
 //*  +\sum_{m2>m1,m4>m3} (-4V_{m1m2m3m4}^{upupupup}) c_{m2,up}^+c_{m1,up}^+c_{m4,up}c_{m3,up}
 //*  + (up <--> down)
 //*  +\sum_{m1,m2,m3,m4} (-2V_{m1m2m3m4}^{updownupdown})c_{m2,up}^+c_{m1,down}^+c_{m4,up}c_{m3,down}
@@ -15,9 +16,9 @@
 //*
 //*  *NOTE* The sign in the last term is opposite to the other ones for the given order of 
 //*         creation/annihilation operators (to comply with the existing AuAd and AduAdd routines).
-//*         The first term is the Zeeman splitting between the two subbands, followed by typical
-//*	    bilayer terms and the last three lines are the mixed terms where there is a spin flip in 
-//*         the interaction vertex.
+//*         The first term is the Zeeman splitting between the two subbands, followed by term which describes 
+//*         density imbalance and the typical bilayer terms (the last three lines are the mixed terms where 
+//*         there is a spin flip in the interaction vertex).
 //*****************************************************************************************************
 
 #include "HilbertSpace/AbstractQHEParticle.h"
@@ -79,8 +80,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 9);
   (*SystemGroup) += new BooleanOption  ('\n', "lzsymmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
   (*SystemGroup) += new BooleanOption  ('\n', "minus-lzparity", "select the  Lz <-> -Lz symmetric sector with negative parity");
-  (*SystemGroup) += new SingleDoubleOption  ('t', "tunnelling", "tunnelling splitting Delta_SAS", 0.0);
-
+  (*SystemGroup) += new SingleDoubleOption  ('t', "tunnelling", "tunnelling splitting Delta_SAS that couples to S_z term", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('b', "density-imbalance", "density imbalance term that couples to S_x", 0.0);
   (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
   (*LanczosGroup)  += new SingleIntegerOption  ('\n', "full-diag", 
 						"maximum Hilbert space dimension for which full diagonalization is applied", 
@@ -143,6 +144,7 @@ int main(int argc, char** argv)
   
   int NbrFermions = Manager.GetInteger("nbr-particles");
   double DeltaSAS = Manager.GetDouble("tunnelling"); 
+  double DensityImbalance = Manager.GetDouble("density-imbalance"); 
   int LzMax = Manager.GetInteger("lzmax");
   bool LzSymmetrizedBasis = Manager.GetBoolean("lzsymmetrized-basis");
   bool MinusParity=Manager.GetBoolean("minus-lzparity");
@@ -297,10 +299,16 @@ int main(int argc, char** argv)
 	   }
     }
 
+  if (DensityImbalance!=0.0)
+    {
+      OneBodyPotentialUpDown = new double[LzMax + 1];
+      for (int i=0; i<=LzMax; ++i)  
+	OneBodyPotentialUpDown[i] = -DensityImbalance;
+    }
+
 
   char* OutputNameLz = new char [512 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
-  sprintf (OutputNameLz, "fermions_sphere_su2_%s_n_%d_2s_%d_t_%f_lz.dat", Manager.GetString("interaction-name"), 
-	   NbrFermions, LzMax, DeltaSAS);
+  sprintf (OutputNameLz, "fermions_sphere_su2_%s_n_%d_2s_%d_t_%f_b_%f_lz.dat", Manager.GetString("interaction-name"), NbrFermions, LzMax, DeltaSAS, DensityImbalance);
 
   
   int Max = (((LzMax - (NbrFermions+1)/2 + 1) * ((NbrFermions+1)/2)) + ((LzMax - (NbrFermions)/2 + 1) * (NbrFermions/2)));
@@ -399,10 +407,10 @@ int main(int argc, char** argv)
       char* EigenvectorName = 0;
       if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
 	{
-	  EigenvectorName = new char [120];
-	  sprintf (EigenvectorName, "fermions_sphere_su2_%s_n_%d_2s_%d_t_%f_lz_%d",
+	  EigenvectorName = new char [512];
+	  sprintf (EigenvectorName, "fermions_sphere_su2_%s_n_%d_2s_%d_t_%f_b_%f_lz_%d",
 		   ((SingleStringOption*) Manager["interaction-name"])->GetString(), 
-		   NbrFermions, LzMax, DeltaSAS, L);
+		   NbrFermions, LzMax, DeltaSAS, DensityImbalance, L);
 	}
       QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);
       MainTaskOperation TaskOperation (&Task);
@@ -425,7 +433,7 @@ int main(int argc, char** argv)
       delete[] OneBodyPotentialUpUp;
       delete[] OneBodyPotentialDownDown;
     }
+  if (DensityImbalance!=0.0)
+      delete[] OneBodyPotentialUpDown;
   return 0;
 }
-
-
