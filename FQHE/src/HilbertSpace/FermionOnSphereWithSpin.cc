@@ -1271,7 +1271,6 @@ int FermionOnSphereWithSpin::CarefulFindStateIndex(unsigned long stateDescriptio
 int FermionOnSphereWithSpin::FindStateIndex(unsigned long stateDescription, int lzmax)
 {
   long PosMax = stateDescription >> this->LookUpTableShift[lzmax];
-  cout << stateDescription << " " << lzmax << endl;
   long PosMin = this->LookUpTable[lzmax][PosMax];
   PosMax = this->LookUpTable[lzmax][PosMax + 1];
   long PosMid = (PosMin + PosMax) >> 1;
@@ -1611,6 +1610,7 @@ void FermionOnSphereWithSpin::GenerateLookUpTable(unsigned long memory)
   TmpLookUpTable[CurrentLookUpTableValue] = 0;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     {     
+      TmpPosition = this->StateDescription[i];
       while ((TmpPosition & (0x1ul << CurrentHighestBit)) == 0x0ul)
 	--CurrentHighestBit;  
       if (CurrentLargestBit != CurrentHighestBit)
