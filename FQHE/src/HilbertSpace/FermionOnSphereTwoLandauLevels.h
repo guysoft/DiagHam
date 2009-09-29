@@ -91,6 +91,140 @@ class FermionOnSphereTwoLandauLevels :  public FermionOnSphereWithSpin
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
 
+  // apply a^+_m_d a_m_d operator to a given state (only spin down)
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation and annihilation operator
+  // return value = coefficient obtained when applying a^+_m a_m
+  virtual double AddAd (int index, int m);
+
+  // apply a^+_m_u a_m_u operator to a given state  (only spin up)
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation and annihilation operator
+  // return value = coefficient obtained when applying a^+_m a_m
+  virtual double AduAu (int index, int m);
+
+  // apply a^+_m_u a_n_u operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AduAu (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_d a_n_d operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AddAd (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_u a_n_d operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AduAd (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_d a_n_u operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AddAu (int index, int m, int n, double& coefficient);
+
+  // apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdu call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator (spin up)
+  // n2 = second index for annihilation operator (spin up)
+  // return value =  multiplicative factor 
+  virtual double AuAu (int index, int n1, int n2);
+
+  // apply a_n1_d a_n2_d operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AddAdd call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator (spin down)
+  // n2 = second index for annihilation operator (spin down)
+  // return value =  multiplicative factor 
+  virtual double AdAd (int index, int n1, int n2);
+
+  // apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdd call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator (spin up)
+  // n2 = second index for annihilation operator (spin down)
+  // return value =  multiplicative factor 
+  virtual double AuAd (int index, int n1, int n2);
+
+  // apply a^+_m1_u a^+_m2_u operator to the state produced using AuAu method (without destroying it)
+  //
+  // m1 = first index for creation operator (spin up)
+  // m2 = second index for creation operator (spin up)
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AduAdu (int m1, int m2, double& coefficient);
+
+  // apply a^+_m1_d a^+_m2_d operator to the state produced using AuAu method (without destroying it)
+  //
+  // m1 = first index for creation operator (spin down)
+  // m2 = second index for creation operator (spin down)
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AddAdd (int m1, int m2, double& coefficient);
+
+  // apply a^+_m1_u a^+_m2_d operator to the state produced using AuAu method (without destroying it)
+  //
+  // m1 = first index for creation operator (spin up)
+  // m2 = second index for creation operator (spin down)
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AduAdd (int m1, int m2, double& coefficient);
+
+  // apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
+  // spinIndices = array of spin indixes associated to each annihilation operators first index corresponding to the leftmost operator, 0 stands for spin down and 1 stands for spin up)
+  // nbrIndices = number of creation (or annihilation) operators
+  // return value =  multiplicative factor 
+  virtual double ProdA (int index, int* n, int* spinIndices, int nbrIndices);
+
+  // apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
+  // spinIndices = integer that gives the spin indices associated to each annihilation operators, first index corresponding to the rightmost bit (i.e. 2^0), 0 stands for spin down and 1 stands for spin up
+  // nbrIndices = number of creation (or annihilation) operators
+  // return value =  multiplicative factor 
+  virtual double ProdA (int index, int* n, int spinIndices, int nbrIndices);
+
+  // apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
+  //
+  // m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+  // spinIndices = array of spin indixes associated to each annihilation operators first index corresponding to the leftmost operator, 0 stands for spin down and 1 stands for spin up)
+  // nbrIndices = number of creation (or annihilation) operators
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int ProdAd (int* m, int* spinIndices, int nbrIndices, double& coefficient);
+
+  // apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
+  //
+  // m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+  // spinIndices = integer that gives the spin indices associated to each creation operators, first index corresponding to the rightmost bit (i.e. 2^0), 0 stands for spin down and 1 stands for spin up
+  // nbrIndices = number of creation (or annihilation) operators
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int ProdAd (int* m, int spinIndices, int nbrIndices, double& coefficient);
+
   // create an SU(2) state from two U(1) state
   //
   // upState = vector describing the up spin part of the output state
