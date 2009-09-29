@@ -7,6 +7,7 @@
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
 #include "HilbertSpace/FermionOnSphereWithSpinHaldaneBasis.h"
 #include "HilbertSpace/FermionOnSphereWithSpinHaldaneBasisLong.h"
+#include "HilbertSpace/FermionOnSphereWithSpinHaldaneLargeBasis.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -247,32 +248,45 @@ int main(int argc, char** argv)
 	  cout << "error while parsing " << Manager.GetString("excited-reference") << endl;
 	  return 0;
 	}
-#ifdef __64_BITS__
-      if (ExcitedLzMax <= 31)
+      if (Manager.GetBoolean("excitedhuge-basis") == true)
+        {
+          if (Manager.GetString("excitedload-hilbert") != 0)
+            {
+              ExcitedBasis = new FermionOnSphereWithSpinHaldaneLargeBasis(Manager.GetString("excitedload-hilbert"));
+            }
+          else
+            {
+              ExcitedBasis = new FermionOnSphereWithSpinHaldaneLargeBasis(ExcitedNbrParticles, ExcitedTotalLz, ExcitedLzMax, TotalSz, ReferenceStates, NbrReferenceStates); 
+            }
+        }
+      else
+        {	
+ #ifdef __64_BITS__
+          if (ExcitedLzMax <= 31)
 #else
-	if (ExcitedLzMax <= 15)
+	  if (ExcitedLzMax <= 15)
 #endif
-	  {
-	    ExcitedBasis = new FermionOnSphereWithSpinHaldaneBasis(ExcitedNbrParticles, ExcitedTotalLz, ExcitedLzMax, TotalSz, ReferenceStates, NbrReferenceStates);
-	  }
-	else
-	  {
+	    {
+	      ExcitedBasis = new FermionOnSphereWithSpinHaldaneBasis(ExcitedNbrParticles, ExcitedTotalLz, ExcitedLzMax, TotalSz, ReferenceStates, NbrReferenceStates);
+	    }
+	  else
+	    {
 #ifdef __128_BIT_LONGLONG__
-	    if (ExcitedLzMax <= 63)
+	      if (ExcitedLzMax <= 63)
 #else
-	      if (ExcitedLzMax <= 31)
+	        if (ExcitedLzMax <= 31)
 #endif
-		{
-		  ExcitedBasis = new FermionOnSphereWithSpinHaldaneBasisLong (ExcitedNbrParticles, ExcitedTotalLz, ExcitedLzMax, TotalSz, ReferenceStates, NbrReferenceStates);
-		}
-	      else
-		{
-		  cout << "States of this Hilbert space cannot be represented in a single word." << endl;
-		  return 0;
-		}
-	  }
-    }
-  
+		  {
+		    ExcitedBasis = new FermionOnSphereWithSpinHaldaneBasisLong (ExcitedNbrParticles, ExcitedTotalLz, ExcitedLzMax, TotalSz, ReferenceStates, NbrReferenceStates);
+		  }
+	        else
+	   	  {
+		    cout << "States of this Hilbert space cannot be represented in a single word." << endl;
+		    return 0;
+		  }
+	    }
+      }
+  }
   FQHEDiskQuasiholePropagatorOperation Operation2(ExcitedBasis, &ExcitedVector);
   Operation2.ApplyOperation(Architecture.GetArchitecture());
   double Excited = Operation2.GetScalar().Re;
