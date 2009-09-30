@@ -72,6 +72,7 @@ int main(int argc, char** argv)
   if (Manager.GetString("ground-filename")!=NULL)
     {
       OutputName = new char[strlen(Manager.GetString("ground-filename"))+16];
+      sprintf(OutputName,"%s",Manager.GetString("ground-filename"));
     }
   else
     {
