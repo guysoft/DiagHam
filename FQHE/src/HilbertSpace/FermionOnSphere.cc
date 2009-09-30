@@ -2283,9 +2283,9 @@ RealVector& FermionOnSphere::FuseStates (RealVector& outputVector, RealVector& l
 double FermionOnSphere::JackSqrNormalization (RealVector& outputVector, long minIndex, long nbrComponents)
 {
   double SqrNorm = 0.0;
-  int* TmpMonomial = new int [this->NbrFermions];
+  unsigned long* TmpMonomial = new unsigned long [this->NbrFermions];
   FactorialCoefficient Factorial;
-  int HalfLzMax = this->LzMax >> 1;
+  unsigned long HalfLzMax = this->LzMax >> 1;
   long MaxIndex = minIndex + nbrComponents;
   if (MaxIndex == minIndex)
     MaxIndex = this->LargeHilbertSpaceDimension;

@@ -404,7 +404,7 @@ class FermionOnSphere :  public ParticleOnSphere
   //
   // index = index of the fermionic state
   // finalState = reference on the array where the monomial representation has to be stored
-  virtual void GetMonomial(long index, int*& finalState);
+  virtual void GetMonomial(long index, unsigned long*& finalState);
 
   // convert a state such that its components are now expressed in the unnormalized basis
   //
@@ -501,13 +501,13 @@ class FermionOnSphere :  public ParticleOnSphere
   //
   // initialState = initial fermionic state in its fermionic representation
   // finalState = reference on the array where the monomial representation has to be stored
-  virtual void ConvertToMonomial(unsigned long initialState, int*& finalState);
+  virtual void ConvertToMonomial(unsigned long initialState, unsigned long*& finalState);
 
   // convert a fermionic state from its monomial representation
   //
   // initialState = array where the monomial representation is stored
   // return value = fermionic state in its fermionic representation
-  virtual unsigned long ConvertFromMonomial(int* initialState);
+  virtual unsigned long ConvertFromMonomial(unsigned long* initialState);
 
 };
 
@@ -551,7 +551,7 @@ inline unsigned long FermionOnSphere::GetSymmetricState (unsigned long initialSt
 // index = index of the fermionic state
 // finalState = reference on the array where the monomial representation has to be stored
 
-inline void FermionOnSphere::GetMonomial(long index, int*& finalState)
+inline void FermionOnSphere::GetMonomial(long index, unsigned long*& finalState)
 {
   this->ConvertToMonomial(this->StateDescription[index], finalState);
 }
@@ -561,10 +561,10 @@ inline void FermionOnSphere::GetMonomial(long index, int*& finalState)
 // initialState = initial fermionic state in its fermionic representation
 // finalState = reference on the array where the monomial representation has to be stored
 
-inline void FermionOnSphere::ConvertToMonomial(unsigned long initialState, int*& finalState)
+inline void FermionOnSphere::ConvertToMonomial(unsigned long initialState, unsigned long*& finalState)
 {
   int Index = 0;
-  for (int j = this->LzMax; j >= 0; --j)
+  for (unsigned long j = this->LzMax; j >= 0ul; --j)
     if (((initialState >> j) & 1ul) != 0ul)
       finalState[Index++] = j;
 }
@@ -574,7 +574,7 @@ inline void FermionOnSphere::ConvertToMonomial(unsigned long initialState, int*&
 // initialState = array where the monomial representation is stored
 // return value = fermionic state in its fermionic representation
 
-inline unsigned long FermionOnSphere::ConvertFromMonomial(int* initialState)
+inline unsigned long FermionOnSphere::ConvertFromMonomial(unsigned long* initialState)
 {
   unsigned long TmpState = 0x0ul;  
   for (int j = 0; j < this->NbrFermions; ++j)

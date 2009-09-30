@@ -227,7 +227,7 @@ class BosonOnSphereShort :  public ParticleOnSphere
   //
   // index = index of the fermionic state
   // finalState = reference on the array where the monomial representation has to be stored
-  virtual void GetMonomial(long index, int*& finalState);
+  virtual void GetMonomial(long index, unsigned long*& finalState);
 
   // evaluate wave function in real space using a given basis and only for a given range of components
   //
@@ -411,7 +411,7 @@ inline void BosonOnSphereShort::FermionToBoson(unsigned long initialState, int i
 // index = index of the fermionic state
 // finalState = reference on the array where the monomial representation has to be stored
 
-inline void BosonOnSphereShort::GetMonomial(long index, int*& finalState)
+inline void BosonOnSphereShort::GetMonomial(long index, unsigned long*& finalState)
 {
   int Index = 0;
   unsigned long InitialState = this->FermionBasis->StateDescription[index];
@@ -421,7 +421,7 @@ inline void BosonOnSphereShort::GetMonomial(long index, int*& finalState)
     {
       while ((InitialStateLzMax >= 0) && (((InitialState >> InitialStateLzMax) & 0x1ul) != 0x0ul))
 	{
-	  finalState[Index++] = TmpLz;
+	  finalState[Index++] = (unsigned long) TmpLz;
 	  --InitialStateLzMax;
 	}
       while ((InitialStateLzMax >= 0) && (((InitialState >> InitialStateLzMax) & 0x1ul) == 0x0ul))

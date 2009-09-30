@@ -1134,8 +1134,8 @@ RealVector& FermionOnSphereHaldaneSymmetricBasis::GenerateSymmetrizedJackPolynom
   jack[0] = 1.0;
   double InvAlpha =  2.0 * (1.0 - alpha) / alpha;
 
-  int* TmpMonomial = new int [this->NbrFermions];
-  int* TmpMonomial2 = new int [this->NbrFermions];
+  unsigned long* TmpMonomial = new unsigned long [this->NbrFermions];
+  unsigned long* TmpMonomial2 = new unsigned long [this->NbrFermions];
 
   double RhoRoot = 0.0;
   unsigned long MaxRoot = this->StateDescription[0] & FERMION_SPHERE_SYMMETRIC_MASK;

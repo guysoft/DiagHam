@@ -262,7 +262,7 @@ AbstractHamiltonian* ParticleOnSphereProjectorHamiltonian::Clone ()
 
 void ParticleOnSphereProjectorHamiltonian::EvaluateInteractionFactors()
 {
-  int* TmpMonomial = new int[this->MaxNBody];
+  unsigned long* TmpMonomial = new unsigned long[this->MaxNBody];
   int TmpSum = 0;
   double* IndexSymmetryFactor = new double [this->ProjectorSpace->GetHilbertSpaceDimension()];
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
