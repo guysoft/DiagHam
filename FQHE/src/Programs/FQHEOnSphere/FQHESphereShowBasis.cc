@@ -1,4 +1,4 @@
-#include "HilbertSpace/BosonOnSphere.h"
+#include "HilbertSpace/BosonOnSphereShort.h"
 #include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
 #include "HilbertSpace/FermionOnSphere.h"
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
@@ -108,7 +108,7 @@ int main(int argc, char** argv)
 	{
 	  if (HaldaneBasisFlag == false)
 	    {
-	      Space = new BosonOnSphere(NbrParticles, TotalLz, NbrFluxQuanta);
+	      Space = new BosonOnSphereShort(NbrParticles, TotalLz, NbrFluxQuanta);
 	    }
 	  else
 	    {
