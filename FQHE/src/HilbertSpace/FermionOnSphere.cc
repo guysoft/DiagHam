@@ -1915,9 +1915,10 @@ RealVector FermionOnSphere::ParticleHoleSymmetrize (RealVector& state, FermionOn
 //
 // state = reference to the state to convert
 // reference = set which component as to be normalized to 1
+// symmetryFactor = if true also remove the symmetry factors
 // return value = converted state
 
-RealVector& FermionOnSphere::ConvertToUnnormalizedMonomial(RealVector& state, long reference)
+RealVector& FermionOnSphere::ConvertToUnnormalizedMonomial(RealVector& state, long reference, bool symmetryFactor)
 {
   double* SqrtCoefficients = new double [this->LzMax + 1];
   BinomialCoefficients Binomials(this->LzMax);
@@ -2064,9 +2065,10 @@ RealVector& FermionOnSphere::ConvertToUnnormalizedMonomial(RealVector& state, lo
 //
 // state = reference to the state to convert
 // reference = set which component has been normalized to 1
+// symmetryFactor = if true also add the symmetry factors
 // return value = converted state
 
-RealVector& FermionOnSphere::ConvertFromUnnormalizedMonomial(RealVector& state, long reference)
+RealVector& FermionOnSphere::ConvertFromUnnormalizedMonomial(RealVector& state, long reference, bool symmetryFactor)
 {
   BinomialCoefficients Binomials(this->LzMax);
   double* SqrtCoefficients = new double [this->LzMax + 1];

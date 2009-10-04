@@ -1,3 +1,4 @@
+#include "HilbertSpace/ParticleOnSphereManager.h"
 #include "HilbertSpace/BosonOnSphere.h"
 #include "HilbertSpace/BosonOnSphereSymmetricBasis.h"
 #include "HilbertSpace/BosonOnSphereShort.h"
@@ -43,26 +44,23 @@ int main(int argc, char** argv)
   OptionManager Manager ("FQHESphereBosonsProjectorHamiltonian" , "0.01");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
-  OptionGroup* SystemGroup = new OptionGroup ("system options");
-  OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
 
   ArchitectureManager Architecture;
   LanczosManager Lanczos(false);
+  ParticleOnSphereManager ParticleManager(false, true, 1);
+  ParticleManager.AddOptionGroup(&Manager);
+  OptionGroup* SystemGroup = Manager.GetOptionGroup("system options");
+  OptionGroup* PrecalculationGroup = Manager.GetOptionGroup("precalculation options");
 
-  Manager += SystemGroup;
   Architecture.AddOptionGroup(&Manager);
   Lanczos.AddOptionGroup(&Manager);
   Manager += ToolsGroup;
-  Manager += PrecalculationGroup;
   Manager += MiscGroup;
 
-  (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 5);
-  (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 8);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-lz", "twice the inital momentum projection for the system", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of lz value to evaluate", -1);
   (*SystemGroup) += new  SingleStringOption ('\n', "projector-state", "file describing the projector state");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
-  (*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new SingleDoubleOption ('\n', "l2-factor", "multiplicative factor in front of an optional L^2 operator than can be added to the Hamiltonian", 0.0);
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
@@ -73,8 +71,6 @@ int main(int argc, char** argv)
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-precalculation", "save precalculation in a file",0);
-  (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the Haldane basis)",0);
-  (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
 
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
@@ -152,26 +148,7 @@ int main(int argc, char** argv)
 
   for (; L <= Max; L += 2)
     {
-      ParticleOnSphere* Space = 0;
-#ifdef  __64_BITS__
-      if ((LzMax + NbrParticles - 1) < 63)
-#else
-	if ((LzMax + NbrParticles - 1) < 31)	
-#endif
-	  {
-	    if ((SymmetrizedBasis == false) || (L != 0))
-	      Space = new BosonOnSphereShort(NbrParticles, L, LzMax);
-	    else
-	      Space = new BosonOnSphereSymmetricBasisShort(NbrParticles, LzMax);
-	  }
-	else
-	  {
-	    if ((SymmetrizedBasis == false) || (L != 0))
-	      Space = new BosonOnSphere (NbrParticles, L, LzMax);
-	    else
-	      Space = new BosonOnSphereSymmetricBasis(NbrParticles, LzMax);
-	  }
-
+      ParticleOnSphere* Space = (ParticleOnSphere*) ParticleManager.GetHilbertSpace(L);
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       AbstractQHEOnSphereHamiltonian* Hamiltonian = 0;
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)

@@ -50,6 +50,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "huge-basis", "use huge Hilbert space support");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "normalization", "indicates which component should be set to one", 0l);
+  (*SystemGroup) += new BooleanOption  ('\n', "symmetry-factor", "do not remove(add) the symmetry factor when (un)normalizing");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "name of the unnormalized vector that will be generated");
   (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the vector into a text file");
   (*OutputGroup) += new BooleanOption ('\n', "txt-separatespin", "for the text output, use the sign convention which separates spins");
@@ -78,6 +79,7 @@ int main(int argc, char** argv)
   bool SU2Flag = false;
   int TotalSz = 0;
   double Error = ((SingleDoubleOption*) Manager["hide-component"])->GetDouble();
+  bool SymmetryFactor = !(Manager.GetBoolean("symmetry-factor"));
 	   
   bool Statistics = true;
   if (strstr(Manager.GetString("input-state"), "su2") == 0)
@@ -230,9 +232,9 @@ int main(int argc, char** argv)
     }
 
    if (Manager.GetBoolean("normalize"))
-     OutputBasis->ConvertFromUnnormalizedMonomial(OutputState, Manager.GetInteger("normalization"));
+     OutputBasis->ConvertFromUnnormalizedMonomial(OutputState, Manager.GetInteger("normalization"), SymmetryFactor);
    else
-     OutputBasis->ConvertToUnnormalizedMonomial(OutputState, Manager.GetInteger("normalization"));
+     OutputBasis->ConvertToUnnormalizedMonomial(OutputState, Manager.GetInteger("normalization"), SymmetryFactor);
   
 
   cout << OutputBasis->GetHilbertSpaceDimension() << " " << OutputState.GetVectorDimension() << endl;

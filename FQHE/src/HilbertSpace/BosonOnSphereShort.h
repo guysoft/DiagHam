@@ -253,15 +253,17 @@ class BosonOnSphereShort :  public ParticleOnSphere
   //
   // state = reference to the state to convert
   // reference = set which component has to be normalized to 1
+  // symmetryFactor = if true also remove the symmetry factors
   // return value = converted state
-  virtual RealVector& ConvertToUnnormalizedMonomial(RealVector& state, long reference = 0);
+  virtual RealVector& ConvertToUnnormalizedMonomial(RealVector& state, long reference = 0, bool symmetryFactor = true);
 
   // convert a state such that its components are now expressed in the normalized basis
   //
   // state = reference to the state to convert
   // reference = set which component has been normalized to 1
+  // symmetryFactor = if true also add the symmetry factors
   // return value = converted state
-  virtual RealVector& ConvertFromUnnormalizedMonomial(RealVector& state, long reference = 0);
+  virtual RealVector& ConvertFromUnnormalizedMonomial(RealVector& state, long reference = 0, bool symmetryFactor = true);
 
   // fuse two states which belong to different Hilbert spaces 
   //

@@ -62,7 +62,7 @@ class BosonOnSphereHaldaneBasisShort :  public BosonOnSphereShort
   // totalLz = momentum total value
   // lzMax = maximum Lz value reached by a boson
   // referenceState = array that describes the reference state to start from
-  BosonOnSphereHaldaneBasisShort (int nbrBosons, int totalLz, int lzMax, int* referenceState);
+  BosonOnSphereHaldaneBasisShort (int nbrBosons, int& totalLz, int lzMax, int* referenceState);
 
   // constructor from a binary file that describes the Hilbert space
   //

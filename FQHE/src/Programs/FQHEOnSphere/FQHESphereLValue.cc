@@ -28,6 +28,7 @@
 #include "HilbertSpace/BosonOnSphereSymmetricBasis.h"
 #include "HilbertSpace/BosonOnSphereShort.h"
 #include "HilbertSpace/BosonOnSphereSymmetricBasisShort.h"
+#include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
 #include "HilbertSpace/FermionOnSphere.h"
 #include "HilbertSpace/FermionOnSphereWithSpinSzProjection.h"
 #include "HilbertSpace/FermionOnSphereUnlimited.h"
@@ -284,24 +285,69 @@ int main(int argc, char** argv)
     }
   else
     {
+      if (HaldaneBasisFlag == false)
+        {
 #ifdef  __64_BITS__
-      if ((LzMax + NbrParticles - 1) < 63)
+	  if ((LzMax + NbrParticles - 1) < 63)
 #else
-	if ((LzMax + NbrParticles - 1) < 31)	
+	    if ((LzMax + NbrParticles - 1) < 31)	
 #endif
-	  {
-	    if ((SymmetrizedBasis == false) || (TotalLz != 0))
-	      Space = new BosonOnSphereShort(NbrParticles, TotalLz, LzMax);
+	      {
+		if ((SymmetrizedBasis == false) || (TotalLz != 0))
+		  Space = new BosonOnSphereShort(NbrParticles, TotalLz, LzMax);
+		else
+		  Space = new BosonOnSphereSymmetricBasisShort(NbrParticles, LzMax);
+	      }
 	    else
-	      Space = new BosonOnSphereSymmetricBasisShort(NbrParticles, LzMax);
-	  }
-	else
-	  {
-	    if ((SymmetrizedBasis == false) || (TotalLz != 0))
-	      Space = new BosonOnSphere (NbrParticles, TotalLz, LzMax);
-	    else
-	      Space = new BosonOnSphereSymmetricBasis(NbrParticles, LzMax);
-	  }
+	      {
+		if ((SymmetrizedBasis == false) || (TotalLz != 0))
+		  Space = new BosonOnSphere (NbrParticles, TotalLz, LzMax);
+		else
+		  Space = new BosonOnSphereSymmetricBasis(NbrParticles, LzMax);
+	      }
+	}
+      else
+	{
+	  int* ReferenceState = 0;
+          if (((SingleStringOption*) Manager["reference-file"])->GetString() == 0)
+            {
+              cout << "error, a reference file is needed for bosons in Haldane basis" << endl;
+              return -1;
+            }
+          ConfigurationParser ReferenceStateDefinition;
+          if (ReferenceStateDefinition.Parse(((SingleStringOption*) Manager["reference-file"])->GetString()) == false)
+            {
+              ReferenceStateDefinition.DumpErrors(cout) << endl;
+              return -1;
+            }
+          if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", NbrParticles) == false) || (NbrParticles <= 0))
+            {
+              cout << "NbrParticles is not defined or as a wrong value" << endl;
+              return -1;
+            }
+          if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", LzMax) == false) || (LzMax <= 0))
+            {
+              cout << "LzMax is not defined or as a wrong value" << endl;
+              return -1;
+            }
+          int MaxNbrLz;
+          if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
+            {
+	      cout << "error while parsing ReferenceState in " << ((SingleStringOption*) Manager["reference-file"])->GetString() << endl;
+              return -1;
+            }
+          if (MaxNbrLz != (LzMax + 1))
+            {
+              cout << "wrong LzMax value in ReferenceState" << endl;
+              return -1;
+            }
+#ifdef  __64_BITS__
+          if ((LzMax + NbrParticles - 1) < 63)
+#else
+            if ((LzMax + NbrParticles - 1) < 31)
+#endif
+              Space = new BosonOnSphereHaldaneBasisShort(NbrParticles, TotalLz, LzMax, ReferenceState);
+        }
     }
     
   

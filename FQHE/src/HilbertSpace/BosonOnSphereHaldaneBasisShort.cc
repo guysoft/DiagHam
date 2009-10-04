@@ -59,7 +59,7 @@ BosonOnSphereHaldaneBasisShort::BosonOnSphereHaldaneBasisShort ()
 // lzMax = maximum Lz value reached by a boson
 // referenceState = array that describes the reference state to start from
 
-BosonOnSphereHaldaneBasisShort::BosonOnSphereHaldaneBasisShort (int nbrBosons, int totalLz, int lzMax, int* referenceState)
+BosonOnSphereHaldaneBasisShort::BosonOnSphereHaldaneBasisShort (int nbrBosons, int& totalLz, int lzMax, int* referenceState)
 {
   this->NbrBosons = nbrBosons;
   this->IncNbrBosons = this->NbrBosons + 1;
@@ -72,16 +72,20 @@ BosonOnSphereHaldaneBasisShort::BosonOnSphereHaldaneBasisShort (int nbrBosons, i
   int TmpIndex = 0;
   for (int i = 0; i <= ShiftedLzMax; ++i)
     TmpReferenceState[i] = 0;   
+  this->TotalLz = 0;
   for (int i = 0; i <= this->LzMax; ++i)
     {
       for (int j = 0; j < referenceState[i]; ++j)
 	{
 	  TmpReferenceState[TmpIndex] = 1;
 	  ++TmpIndex;
+	  this->TotalLz += i;
 	}
       ++TmpIndex;
     }
+  this->TotalLz = (2 * this->TotalLz) - (this->NbrBosons *  this->LzMax);
   this->FermionBasis = new FermionOnSphereHaldaneBasis(nbrBosons, totalLz, this->LzMax + nbrBosons - 1, TmpReferenceState);
+  totalLz = this->TotalLz;
   delete[] TmpReferenceState;
   this->HilbertSpaceDimension = this->FermionBasis->GetHilbertSpaceDimension();
   this->LargeHilbertSpaceDimension = this->FermionBasis->GetLargeHilbertSpaceDimension();
@@ -221,7 +225,9 @@ RealVector BosonOnSphereHaldaneBasisShort::ConvertToNbodyBasis(RealVector& state
 {
   RealVector TmpVector (nbodyBasis.GetHilbertSpaceDimension(), true);
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-    TmpVector[nbodyBasis.FermionBasis->FindStateIndex(this->FermionBasis->StateDescription[i], this->FermionBasis->StateLzMax[i])] = state[i];
+    {
+      TmpVector[nbodyBasis.FermionBasis->FindStateIndex(this->FermionBasis->StateDescription[i], this->FermionBasis->StateLzMax[i])] = state[i];
+    }
   return TmpVector;
 }
 

@@ -457,9 +457,10 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomia
 //
 // state = reference to the state to convert
 // reference = set which component as to be normalized to 1
+// symmetryFactor = if true also remove the symmetry factors
 // return value = converted state
 
-RealVector& BosonOnSphereHaldaneHugeBasisShort::ConvertToUnnormalizedMonomial(RealVector& state, long reference)
+RealVector& BosonOnSphereHaldaneHugeBasisShort::ConvertToUnnormalizedMonomial(RealVector& state, long reference, bool symmetryFactor)
 {
   unsigned long* TmpMonomialReference = new unsigned long [this->NbrBosons];
   unsigned long* TmpMonomial = new unsigned long [this->NbrBosons];
@@ -522,13 +523,16 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::ConvertToUnnormalizedMonomial(Re
 	  Coefficient *= SqrtCoefficients[TmpMonomialReference[Index2]];
 	  ++Index2;
 	}
-      Factorial = ReferenceFactorial;
-      this->FermionToBoson(TmpState, TmpLzMax, 
-			   this->TemporaryState, this->TemporaryStateLzMax);
-      for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
-	if (this->TemporaryState[k] > 1)
-	  Factorial.FactorialMultiply(this->TemporaryState[k]);
-      Coefficient *= sqrt(Factorial.GetNumericalValue());
+      if (symmetryFactor == true)
+	{
+	  Factorial = ReferenceFactorial;
+	  this->FermionToBoson(TmpState, TmpLzMax, 
+			       this->TemporaryState, this->TemporaryStateLzMax);
+	  for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
+	    if (this->TemporaryState[k] > 1)
+	      Factorial.FactorialMultiply(this->TemporaryState[k]);
+	  Coefficient *= sqrt(Factorial.GetNumericalValue());
+	}
       state[i] *= Coefficient;
     }
   return state;
@@ -538,9 +542,10 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::ConvertToUnnormalizedMonomial(Re
 //
 // state = reference to the state to convert
 // reference = set which component has been normalized to 1
+// symmetryFactor = if true also add the symmetry factors
 // return value = converted state
 
-RealVector& BosonOnSphereHaldaneHugeBasisShort::ConvertFromUnnormalizedMonomial(RealVector& state, long reference)
+RealVector& BosonOnSphereHaldaneHugeBasisShort::ConvertFromUnnormalizedMonomial(RealVector& state, long reference, bool symmetryFactor)
 {
   unsigned long* TmpMonomialReference = new unsigned long [this->NbrBosons];
   unsigned long* TmpMonomial = new unsigned long [this->NbrBosons];
@@ -603,13 +608,16 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::ConvertFromUnnormalizedMonomial(
 	  Coefficient *= SqrtCoefficients[TmpMonomialReference[Index2]];
 	  ++Index2;
 	}
-      Factorial = ReferenceFactorial;
-      this->FermionToBoson(TmpState, TmpLzMax, 
-			   this->TemporaryState, this->TemporaryStateLzMax);
-      for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
-	if (this->TemporaryState[k] > 1)
-	  Factorial.FactorialDivide(this->TemporaryState[k]);
-      Coefficient *= sqrt(Factorial.GetNumericalValue());
+      if (symmetryFactor == true)
+	{
+	  Factorial = ReferenceFactorial;
+	  this->FermionToBoson(TmpState, TmpLzMax, 
+			       this->TemporaryState, this->TemporaryStateLzMax);
+	  for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
+	    if (this->TemporaryState[k] > 1)
+	      Factorial.FactorialDivide(this->TemporaryState[k]);
+	  Coefficient *= sqrt(Factorial.GetNumericalValue());
+	}
       state[i] *= Coefficient;
     }
   state /= state.Norm();

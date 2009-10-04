@@ -42,7 +42,6 @@
 #include "Matrix/RealDiagonalMatrix.h"
 
 #include "HilbertSpace/AbstractHilbertSpace.h"
-#include "HilbertSpace/ParticleOnLattice.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"

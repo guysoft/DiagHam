@@ -1,5 +1,7 @@
 #include "HilbertSpace/BosonOnSphere.h"
+#include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
 #include "HilbertSpace/FermionOnSphere.h"
+#include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
 #include "HilbertSpace/FermionOnSphereUnlimited.h"
 #include "HilbertSpace/ParticleOnSphereWithSpin.h"
 #include "HilbertSpace/FermionOnSphereWithSU4Spin.h"
@@ -9,6 +11,7 @@
 #include "HilbertSpace/FermionOnSphereWithSpinAllSz.h"
 
 #include "MathTools/ClebschGordanCoefficients.h"
+#include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -55,8 +58,11 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "su4-spin", "consider particles with SU(4) spin");
   (*SystemGroup) += new SingleIntegerOption  ('i', "total-isosz", "twice the z component of the total isospin of the system (only usefull in su(4) mode)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('e', "total-entanglement", "twice the projection of the total spin-isopsin entanglement of the system (only usefull in su(4) mode)", 0);
+  (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
+  (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
   (*SystemGroup) += new SingleStringOption ('\n', "state", "name of an optional vector state whose component values can be displayed behind each corresponding n-body state");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "hide-component", "hide state components (and thus the corresponding n-body state) whose absolute value is lower than a given error (0 if all components have to be shown", 0.0);
+  (*SystemGroup) += new SingleStringOption ('\n', "get-index", "find the index of a given n-body state");
   (*OutputGroup) += new BooleanOption  ('\n', "variance", "show state variance");
   (*OutputGroup) += new BooleanOption  ('\n', "save-disk", "save output on disk");
   (*OutputGroup) += new SingleStringOption ('\n', "output-file", "use this file name instead of statistics_sphere_suN_n_nbrparticles_q_nbrfluxquanta_z_totallz.basis");
@@ -87,7 +93,7 @@ int main(int argc, char** argv)
   int TotalSz = ((SingleIntegerOption*) Manager["total-sz"])->GetInteger();
   int TotalIz = ((SingleIntegerOption*) Manager["total-isosz"])->GetInteger();
   int TotalPz = ((SingleIntegerOption*) Manager["total-entanglement"])->GetInteger();
-  bool BernevigFlag = false;
+  bool HaldaneBasisFlag = ((BooleanOption*) Manager["haldane"])->GetBoolean();
     
   if (((NbrParticles * NbrFluxQuanta) & 1) != (TotalLz & 1)) 
     {
@@ -100,20 +106,16 @@ int main(int argc, char** argv)
     {
       if (SU2SpinFlag == false)
 	{
-	  if (BernevigFlag == false)
+	  if (HaldaneBasisFlag == false)
 	    {
 	      Space = new BosonOnSphere(NbrParticles, TotalLz, NbrFluxQuanta);
 	    }
 	  else
 	    {
 	      int* ReferenceState = 0;
-	      ReferenceState = new int[NbrFluxQuanta + 1];
-	      for (int i = 0; i <= NbrFluxQuanta; ++i)
-		ReferenceState[i] = 0;
-	      for (int i = 0; i <= NbrFluxQuanta; i += 2)
-		ReferenceState[i] = 1;
-	      //	  Space = new BosonOnSphereBernevigBasisShort(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);
-	      return 0;
+	      if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, NbrFluxQuanta, ReferenceState) == false)
+		return -1;
+	      Space = new BosonOnSphereHaldaneBasisShort(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);
 	    }
 	}
       else
@@ -125,7 +127,7 @@ int main(int argc, char** argv)
     {
       if ((SU2SpinFlag == false) && (SU3SpinFlag == false) && (SU4SpinFlag == false) && (AllSzFlag == false))
 	{
-	  if (BernevigFlag == false)
+	  if (HaldaneBasisFlag == false)
 	    {
 #ifdef __64_BITS__
 	      if (NbrFluxQuanta <= 63)
@@ -142,13 +144,9 @@ int main(int argc, char** argv)
  	  else
  	    {
  	      int* ReferenceState = 0;
- 	      ReferenceState = new int[NbrFluxQuanta + 1];
- 	      for (int i = 0; i <= NbrFluxQuanta; ++i)
- 		ReferenceState[i] = 0;
- 	      for (int i = 0; i <= NbrFluxQuanta; i += 3)
- 		ReferenceState[i] = 1;
- 	      Space = 0;
-	      //new FermionOnSphereBernevigBasis(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState, 3);
+	      if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, NbrFluxQuanta, ReferenceState) == false)
+		return -1;
+ 	      Space = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);
  	    }
 	}
       else
@@ -165,6 +163,21 @@ int main(int argc, char** argv)
 	      Space = new FermionOnSphereWithSU4Spin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz, TotalIz, TotalPz);	    
     }
   
+  if (Manager.GetString("get-index") != 0)
+    {
+      long TmpIndex = Space->FindStateIndex(Manager.GetString("get-index"));
+      if (TmpIndex == Space->GetHilbertSpaceDimension())
+	{
+	  cout << "state " << Manager.GetString("get-index") << " not found" << endl;
+	}
+      else
+	{
+	  cout << TmpIndex << " : ";
+	  Space->PrintState(cout, TmpIndex) << endl;	   
+	}
+      return 0;
+    }
+
 
   ofstream File;
   char* OutputFileName = 0;
@@ -219,7 +232,8 @@ int main(int argc, char** argv)
     if (((BooleanOption*) Manager["save-disk"])->GetBoolean() == true)
       for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 	{
-	  if (AddIndex == true) File<<i<<" ";
+	  if (AddIndex == true) 
+	    File << i << " ";
 	  Space->PrintState(File, i);
 	  if (AddSzValue == true) File<<" Sz= "<<Space->GetSzValue(i)<< endl;
 	   else File<<endl;
@@ -227,7 +241,8 @@ int main(int argc, char** argv)
     else
       for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 	{
-	  if (AddIndex == true) cout<<i<<" ";
+	  if (AddIndex == true) 
+	    cout << i <<" ";
 	  Space->PrintState(cout, i);
 	  if (AddSzValue == true) cout<<" Sz= "<<Space->GetSzValue(i)<< endl;
            else cout<<endl;
@@ -258,7 +273,8 @@ int main(int argc, char** argv)
 		 {
 		   if (fabs(State[i]) > Error)
                      {
-		       if (AddIndex == true) File<<i<<" ";	
+		       if (AddIndex == true) 
+			 File << i << " ";	
 		       Space->PrintState(File, i) << " : " << State[i];
 		       if (AddSzValue == true) File<<" Sz= "<<Space->GetSzValue(i)<< endl;
                         else File<<endl;
@@ -276,7 +292,8 @@ int main(int argc, char** argv)
 	       {
 		 if (fabs(State[i]) > Error)
 		   {
-                     if (AddIndex == true) cout<<i<<" ";
+                     if (AddIndex == true) 
+		       cout << i <<" ";
 		     Space->PrintState(cout, i) << " : " << State[i];
 	             if (AddSzValue == true) cout<<" Sz= "<<Space->GetSzValue(i)<< endl;
                       else cout<<endl;

@@ -359,9 +359,10 @@ int ParticleOnSphere::FindStateIndex(char* stateDescription)
 //
 // state = reference to the state to convert
 // reference = set which component has to be normalized to 1
+// symmetryFactor = if true also remove the symmetry factors
 // return value = converted state
 
-RealVector& ParticleOnSphere::ConvertToUnnormalizedMonomial(RealVector& state, long reference)
+RealVector& ParticleOnSphere::ConvertToUnnormalizedMonomial(RealVector& state, long reference, bool symmetryFactor)
 {
   return state;
 }
@@ -370,9 +371,10 @@ RealVector& ParticleOnSphere::ConvertToUnnormalizedMonomial(RealVector& state, l
 //
 // state = reference to the state to convert
 // reference = set which component has been normalized to 1
+// symmetryFactor = if true also add the symmetry factors
 // return value = converted state
 
-RealVector& ParticleOnSphere::ConvertFromUnnormalizedMonomial(RealVector& state, long reference)
+RealVector& ParticleOnSphere::ConvertFromUnnormalizedMonomial(RealVector& state, long reference, bool symmetryFactor)
 {
   return state;
 }

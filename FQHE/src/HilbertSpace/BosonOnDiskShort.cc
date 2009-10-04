@@ -153,9 +153,10 @@ BosonOnDiskShort& BosonOnDiskShort::operator = (const BosonOnDiskShort& bosons)
 //
 // state = reference to the state to convert
 // reference = set which component as to be normalized to 1
+// symmetryFactor = if true also remove the symmetry factors
 // return value = converted state
 
-RealVector& BosonOnDiskShort::ConvertToUnnormalizedMonomial(RealVector& state, long reference)
+RealVector& BosonOnDiskShort::ConvertToUnnormalizedMonomial(RealVector& state, long reference, bool symmetryFactor)
 {
   unsigned long* TmpMonomialReference = new unsigned long [this->NbrBosons];
   unsigned long* TmpMonomial = new unsigned long [this->NbrBosons];
@@ -212,13 +213,16 @@ RealVector& BosonOnDiskShort::ConvertToUnnormalizedMonomial(RealVector& state, l
 	  Coefficient *= SqrtCoefficients[TmpMonomialReference[Index2]];
 	  ++Index2;
 	}
-      Factorial = ReferenceFactorial;
-      this->FermionToBoson(this->FermionBasis->StateDescription[i], this->FermionBasis->StateLzMax[i], 
-			   this->TemporaryState, this->TemporaryStateLzMax);
-      for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
-	if (this->TemporaryState[k] > 1)
-	  Factorial.FactorialMultiply(this->TemporaryState[k]);
-      Coefficient *= sqrt(Factorial.GetNumericalValue());
+      if (symmetryFactor == true)
+	{
+	  Factorial = ReferenceFactorial;
+	  this->FermionToBoson(this->FermionBasis->StateDescription[i], this->FermionBasis->StateLzMax[i], 
+			       this->TemporaryState, this->TemporaryStateLzMax);
+	  for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
+	    if (this->TemporaryState[k] > 1)
+	      Factorial.FactorialMultiply(this->TemporaryState[k]);
+	  Coefficient *= sqrt(Factorial.GetNumericalValue());
+	}
       state[i] *= Coefficient;
     }
   return state;
@@ -228,9 +232,10 @@ RealVector& BosonOnDiskShort::ConvertToUnnormalizedMonomial(RealVector& state, l
 //
 // state = reference to the state to convert
 // reference = set which component has been normalized to 1
+// symmetryFactor = if true also add the symmetry factors
 // return value = converted state
 
-RealVector& BosonOnDiskShort::ConvertFromUnnormalizedMonomial(RealVector& state, long reference)
+RealVector& BosonOnDiskShort::ConvertFromUnnormalizedMonomial(RealVector& state, long reference, bool symmetryFactor)
 {
   unsigned long* TmpMonomialReference = new unsigned long [this->NbrBosons];
   unsigned long* TmpMonomial = new unsigned long [this->NbrBosons];
@@ -287,13 +292,16 @@ RealVector& BosonOnDiskShort::ConvertFromUnnormalizedMonomial(RealVector& state,
 	  Coefficient *= SqrtCoefficients[TmpMonomialReference[Index2]];
 	  ++Index2;
 	}
-      Factorial = ReferenceFactorial;
-      this->FermionToBoson(this->FermionBasis->StateDescription[i], this->FermionBasis->StateLzMax[i], 
-			   this->TemporaryState, this->TemporaryStateLzMax);
-      for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
-	if (this->TemporaryState[k] > 1)
-	  Factorial.FactorialDivide(this->TemporaryState[k]);
-      Coefficient *= sqrt(Factorial.GetNumericalValue());
+      if (symmetryFactor == true)
+	{
+	  Factorial = ReferenceFactorial;
+	  this->FermionToBoson(this->FermionBasis->StateDescription[i], this->FermionBasis->StateLzMax[i], 
+			       this->TemporaryState, this->TemporaryStateLzMax);
+	  for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
+	    if (this->TemporaryState[k] > 1)
+	      Factorial.FactorialDivide(this->TemporaryState[k]);
+	  Coefficient *= sqrt(Factorial.GetNumericalValue());
+	}
       state[i] *= Coefficient;
     }
   state /= state.Norm();

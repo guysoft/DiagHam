@@ -2117,9 +2117,10 @@ RealVector FermionOnSphereWithSpin::ForgeU1FromSU2(RealVector& state, FermionOnS
 //
 // state = reference to the state to convert
 // reference = set which component as to be normalized to 1
+// symmetryFactor = if true also remove the symmetry factors
 // return value = converted state
 
-RealVector& FermionOnSphereWithSpin::ConvertToUnnormalizedMonomial(RealVector& state, long reference)
+RealVector& FermionOnSphereWithSpin::ConvertToUnnormalizedMonomial(RealVector& state, long reference, bool symmetryFactor)
 {
   int* TmpMonomialReference = new int [this->NbrFermions];
   int* TmpMonomial = new int [this->NbrFermions];
@@ -2218,9 +2219,10 @@ RealVector& FermionOnSphereWithSpin::ConvertToUnnormalizedMonomial(RealVector& s
 //
 // state = reference to the state to convert
 // reference = set which component has been normalized to 1
+// symmetryFactor = if true also add the symmetry factors
 // return value = converted state
 
-RealVector& FermionOnSphereWithSpin::ConvertFromUnnormalizedMonomial(RealVector& state, long reference)
+RealVector& FermionOnSphereWithSpin::ConvertFromUnnormalizedMonomial(RealVector& state, long reference, bool symmetryFactor)
 {
   int* TmpMonomialReference = new int [this->NbrFermions];
   int* TmpMonomial = new int [this->NbrFermions];

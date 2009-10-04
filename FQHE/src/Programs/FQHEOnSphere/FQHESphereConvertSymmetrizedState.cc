@@ -8,6 +8,11 @@
 #include "HilbertSpace/FermionOnSphereSymmetricBasisLong.h"
 #include "HilbertSpace/FermionOnSphereHaldaneBasisLong.h"
 #include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasisLong.h"
+#include "HilbertSpace/BosonOnSphere.h"
+#include "HilbertSpace/BosonOnSphereSymmetricBasis.h"
+#include "HilbertSpace/BosonOnSphereShort.h"
+#include "HilbertSpace/BosonOnSphereSymmetricBasisShort.h"
+
 
 #include "Options/Options.h"
 
@@ -307,6 +312,76 @@ int main(int argc, char** argv)
 		    }
 		}
 	}
+    }
+  else
+    {
+      RealVector OutputState;
+#ifdef  __64_BITS__
+      if ((NbrFluxQuanta + NbrParticles - 1) < 63)
+#else
+        if ((NbrFluxQuanta + NbrParticles - 1) < 31)
+#endif
+          {
+	    BosonOnSphereSymmetricBasisShort InitialSpace(NbrParticles, NbrFluxQuanta);
+	    cout << "Initial dimension: "<<InitialSpace.GetHilbertSpaceDimension()<<endl;
+	    BosonOnSphereShort TargetSpace(NbrParticles, TotalLz, NbrFluxQuanta);
+	    cout << "Target dimension: "<<TargetSpace.GetHilbertSpaceDimension()<<endl;
+	    if (SymmetrizeFlag)
+	      {
+		if (TargetSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
+		  {
+		    cout << "dimension mismatch between Hilbert space and input state" << endl;
+		    return -1;
+		  }
+                cout << "ConvertToSymmetricNbodyBasis not implemented" << endl;
+		//		OutputState = InitialSpace.ConvertToSymmetricNbodyBasis(State, TargetSpace);
+	      }
+	    else
+	      {
+		if (InitialSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
+		  {
+		    cout << "dimension mismatch between Hilbert space and input state" << endl;
+		    return -1;
+		  }
+		OutputState = InitialSpace.ConvertToNbodyBasis(State, TargetSpace);
+	      }
+	    if (OutputState.WriteVector(((SingleStringOption*) Manager["output-file"])->GetString()) == false)
+	      {
+		cout << "error while writing output state " << ((SingleStringOption*) Manager["output-file"])->GetString() << endl;
+		return -1;
+	      }
+	  }
+	else
+	  {
+            BosonOnSphereSymmetricBasis InitialSpace(NbrParticles, NbrFluxQuanta);
+            cout << "Initial dimension: "<<InitialSpace.GetHilbertSpaceDimension()<<endl;
+            BosonOnSphere TargetSpace(NbrParticles, TotalLz, NbrFluxQuanta);
+	    cout << "Target dimension: "<<TargetSpace.GetHilbertSpaceDimension()<<endl;
+	    if (SymmetrizeFlag)
+	      {
+		if (TargetSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
+		  {
+		    cout << "dimension mismatch between Hilbert space and input state" << endl;
+		    return -1;
+		  }
+		cout << "ConvertToSymmetricNbodyBasis not implemented" << endl;
+		//		OutputState = InitialSpace.ConvertToSymmetricNbodyBasis(State, TargetSpace);
+	      }
+	    else
+	      {
+		if (InitialSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
+		  {
+		    cout << "dimension mismatch between Hilbert space and input state" << endl;
+		    return -1;
+		  }
+		OutputState = InitialSpace.ConvertToNbodyBasis(State, TargetSpace);
+	      }
+	    if (OutputState.WriteVector(((SingleStringOption*) Manager["output-file"])->GetString()) == false)
+	      {
+		cout << "error while writing output state " << ((SingleStringOption*) Manager["output-file"])->GetString() << endl;
+		return -1;
+	      }
+	  }      
     }
 }
 

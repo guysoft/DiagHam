@@ -382,9 +382,10 @@ FermionOnDiskHaldaneBasis& FermionOnDiskHaldaneBasis::operator = (const FermionO
 //
 // state = reference to the state to convert
 // reference = set which component as to be normalized to 1
+// symmetryFactor = if true also remove the symmetry factors
 // return value = converted state
 
-RealVector& FermionOnDiskHaldaneBasis::ConvertToUnnormalizedMonomial(RealVector& state, long reference)
+RealVector& FermionOnDiskHaldaneBasis::ConvertToUnnormalizedMonomial(RealVector& state, long reference, bool symmetryFactor)
 {
   double* SqrtCoefficients = new double [this->LzMax + 1];
   double* InvSqrtCoefficients = new double [this->LzMax + 1];
@@ -512,9 +513,10 @@ RealVector& FermionOnDiskHaldaneBasis::ConvertToUnnormalizedMonomial(RealVector&
 //
 // state = reference to the state to convert
 // reference = set which component has been normalized to 1
+// symmetryFactor = if true also add the symmetry factors
 // return value = converted state
 
-RealVector& FermionOnDiskHaldaneBasis::ConvertFromUnnormalizedMonomial(RealVector& state, long reference)
+RealVector& FermionOnDiskHaldaneBasis::ConvertFromUnnormalizedMonomial(RealVector& state, long reference, bool symmetryFactor)
 {
   BinomialCoefficients Binomials(this->LzMax);
   double* SqrtCoefficients = new double [this->LzMax + 1];
