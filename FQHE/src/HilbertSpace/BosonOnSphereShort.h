@@ -302,6 +302,12 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // return value = quare normalization 
   virtual double JackSqrNormalization (RealVector& outputVector, long minIndex = 0l, long nbrComponents = 0l);
 
+  // find state index from a string
+  //
+  // stateDescription = string describing the state
+  // return value = corresponding index, -1 if an error occured
+  virtual int FindStateIndex(char* stateDescription);
+
  protected:
 
   // convert a bosonic state into its fermionic counterpart

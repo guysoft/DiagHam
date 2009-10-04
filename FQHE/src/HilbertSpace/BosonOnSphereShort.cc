@@ -39,8 +39,10 @@
 #include "FunctionBasis/AbstractFunctionBasis.h"
 #include "MathTools/BinomialCoefficients.h"
 #include "MathTools/FactorialCoefficient.h" 
+#include "GeneralTools/StringTools.h"
 
 #include <math.h>
+#include <stdlib.h>
 
 
 using std::cout;
@@ -454,6 +456,35 @@ ostream& BosonOnSphereShort::PrintStateMonomial (ostream& Str, int state)
   return Str;
 }
 
+
+// find state index from a string
+//
+// stateDescription = string describing the state
+// return value = corresponding index, -1 if an error occured
+
+int BosonOnSphereShort::FindStateIndex(char* stateDescription)
+{
+   char** TmpDescription;
+  if (SplitLine(stateDescription, TmpDescription, ' ') != (this->LzMax + 1))
+    return -1;
+  int TmpNbrParticles = 0;
+  int TmpTotalLz = 0;
+  for (int i = 0; i <= this->LzMax; ++i)
+    {
+      int Tmp = atoi(TmpDescription[i]);
+      this->TemporaryState[i] = Tmp;
+      TmpTotalLz += (i * Tmp);
+      TmpNbrParticles += Tmp;
+      delete[] TmpDescription[i];
+    }
+  delete[] TmpDescription;
+  if ((TmpNbrParticles != this->NbrBosons) || (TmpTotalLz != ((this->TotalLz + this->NbrBosons * this->LzMax) >> 1)))
+    return -1;
+  int NewLzMax = this->LzMax;
+  while (this->TemporaryState[NewLzMax] == 0)
+    --NewLzMax;
+ return this->FermionBasis->FindStateIndex(this->BosonToFermion(this->TemporaryState, NewLzMax), NewLzMax + this->NbrBosons - 1);
+}
 
 // evaluate wave function in real space using a given basis and only for a given range of components
 //
