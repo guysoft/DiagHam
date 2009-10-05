@@ -91,7 +91,7 @@ class AbstractHamiltonian
   // 
   // fileName = pointer to a string containg the name of the file where precalculations have to be stored
   // return value = true if no error occurs
-  virtual bool SavePrecalculation (char* fileName) = 0;
+  virtual bool SavePrecalculation (char* fileName);
   
   // store Hamiltonian into an hermitian matrix
   //

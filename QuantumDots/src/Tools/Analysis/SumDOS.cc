@@ -16,7 +16,7 @@
 #else
 #include <strstream>
 #endif
-#include <string>
+#include <cstring>
 #include <unistd.h>
 
 

@@ -3,7 +3,7 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2003-2004 Duc-Phuong Nguyen                  //
+//                  Copyright (C) 2003-2004 Duc-Phuong Nguyen                 //
 //                                                                            //
 //                                                                            //
 //        class of hamiltonian associated quantum dots in 3 dimensions        //
@@ -38,6 +38,8 @@
 
 #include <iostream>
 #include <math.h>
+#include <stdlib.h>
+
 
 using std::ostream;
 using std::cout;

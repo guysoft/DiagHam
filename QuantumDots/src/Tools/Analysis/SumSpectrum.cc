@@ -10,8 +10,8 @@
 
 #include <iostream>
 #include <fstream>
-#include <strstream>
-#include <string>
+#include <sstream>
+#include <cstring>
 
 using std::cout;
 using std::ifstream;

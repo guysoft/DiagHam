@@ -55,6 +55,16 @@ AbstractHamiltonian::~AbstractHamiltonian()
 {
 }
 
+// save precalculations in a file
+//
+// fileName = pointer to a string containg the name of the file where precalculations have to be stored
+// return value = true if no error occurs
+
+bool AbstractHamiltonian::SavePrecalculation (char* fileName)
+{
+  return false;
+}
+
 // store Hamiltonian into an hermitian matrix
 //
 // M = reference on matrix where Hamiltonian has to be stored

@@ -14,6 +14,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <stdlib.h>
 
 using std::cout;
 using std::ifstream;
