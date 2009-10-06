@@ -48,17 +48,18 @@ using std::ostream;
 
 
 // constructor for contact interactions on a square lattice
-  //
-  // particles = Hilbert space associated to the system
-  // nbrParticles = number of particles
-  // latticeGeometry = geometry of lattice system is living on
-  // nbrFluxQuanta = number of flux quanta piercing the simulation cell
-  // contactInteractionU = strength of on-site delta interaction
-  // reverseHopping = flag to indicate if sign of hopping terms should be reversed
-  // architecture = architecture to use for precalculation
-  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-ParticleOnLatticeGenericHamiltonian::ParticleOnLatticeGenericHamiltonian(ParticleOnLattice* particles, int nbrParticles, LatticePhases *latticeGeometry, int nbrFluxQuanta, double contactInteractionU, bool reverseHopping, AbstractArchitecture* architecture, int memory, char* precalculationFileName)
+//
+// particles = Hilbert space associated to the system
+// nbrParticles = number of particles
+// latticeGeometry = geometry of lattice system is living on
+// nbrFluxQuanta = number of flux quanta piercing the simulation cell
+// contactInteractionU = strength of on-site delta interaction
+// reverseHopping = flag to indicate if sign of hopping terms should be reversed
+// architecture = architecture to use for precalculation
+// memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+// precalculationFileName = option file name where precalculation can be read instead of reevaluting them
+// hoppingOnly = evaluate only energy of hopping terms, excluding local potentials
+ParticleOnLatticeGenericHamiltonian::ParticleOnLatticeGenericHamiltonian(ParticleOnLattice* particles, int nbrParticles, LatticePhases *latticeGeometry, int nbrFluxQuanta, double contactInteractionU, bool reverseHopping, AbstractArchitecture* architecture, int memory, char* precalculationFileName, bool hoppingOnly)
 {
   this->Particles=particles;
   this->NbrParticles=nbrParticles;
@@ -78,6 +79,7 @@ ParticleOnLatticeGenericHamiltonian::ParticleOnLatticeGenericHamiltonian(Particl
   this->ContactInteractionU=contactInteractionU;
   this->ReverseHopping = reverseHopping;
   this->Architecture = architecture;
+  this->HoppingOnly = hoppingOnly;
   this->EvaluateInteractionFactors();
   this->FastMultiplicationFlag = false;
   long MinIndex;
@@ -167,6 +169,8 @@ void ParticleOnLatticeGenericHamiltonian::EvaluateInteractionFactors()
 {  
   // hopping terms are present independent of statistics:
   this->NbrHoppingTerms=LatticeGeometry->GetNbrHoppingTerms();
+  if (!this->HoppingOnly)
+    this->NbrHoppingTerms+=LatticeGeometry->GetNbrLocalPotentials();
   this->HoppingTerms = new Complex[NbrHoppingTerms];
   this->KineticQi = new int[NbrHoppingTerms];
   this->KineticQf = new int[NbrHoppingTerms];
@@ -192,8 +196,9 @@ void ParticleOnLatticeGenericHamiltonian::EvaluateInteractionFactors()
 	}
     }
 
-  if (LatticeGeometry->HaveOneParticlePotentials())
+  if ((!this->HoppingOnly)&&(LatticeGeometry->HaveOneParticlePotentials()))
     {
+      cout << "Adding one particle potentials in Hamiltonian"<<endl;
       int NbrPotentials;
       int *PotentialPositions;
       double *Potentials = LatticeGeometry->GetOneParticlePotentials(NbrPotentials, PotentialPositions);
@@ -206,9 +211,9 @@ void ParticleOnLatticeGenericHamiltonian::EvaluateInteractionFactors()
 	  cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<endl;
 #endif
 	  ++TmpNumberTerms;
-	  }
+	}
     }
-
+  
   // we have no general four-particle interactions:
   this->NbrInteractionFactors=0;
   this->NbrQ12Indices=0;

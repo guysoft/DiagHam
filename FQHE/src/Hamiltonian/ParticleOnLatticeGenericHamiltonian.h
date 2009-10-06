@@ -67,6 +67,9 @@ class ParticleOnLatticeGenericHamiltonian : public AbstractQHEOnLatticeHamiltoni
   // flag for reversed hopping
   bool ReverseHopping;
 
+  // flag indicating if local potentials are suppressed
+  bool HoppingOnly;
+
  public:
 
   // constructor for contact interactions on a square lattice
@@ -80,7 +83,8 @@ class ParticleOnLatticeGenericHamiltonian : public AbstractQHEOnLatticeHamiltoni
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnLatticeGenericHamiltonian(ParticleOnLattice* particles, int nbrParticles, LatticePhases *latticeGeometry, int nbrFluxQuanta, double contactInteractionU, bool reverseHopping, AbstractArchitecture* architecture, int memory = -1, char* precalculationFileName = 0);
+  // hoppingOnly = evaluate only energy of hopping terms, excluding local potentials
+  ParticleOnLatticeGenericHamiltonian(ParticleOnLattice* particles, int nbrParticles, LatticePhases *latticeGeometry, int nbrFluxQuanta, double contactInteractionU, bool reverseHopping, AbstractArchitecture* architecture, int memory = -1, char* precalculationFileName = 0, bool hoppingOnly = false);
 
   // destructor
   //

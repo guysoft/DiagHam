@@ -445,6 +445,7 @@ LatticePhases::LatticePhases()
     }
   else if (LatticeDefinition["LocalPotentials"]!=NULL)
     {
+      cout << "Reading local potentials"<<endl;
       if (LatticeDefinition.GetAsStringMultipleArray ("LocalPotentials", '|', ',', NeighborString, NbrPairs, NbrValues)==false)
 	{
 	  cout << "error while parsing LocalPotentials in " << this->Options->GetString("lattice-definition") << endl;
@@ -619,8 +620,15 @@ int LatticePhases::GetNbrHoppingTerms()
   int sum=0;
   for (int i=0; i<NbrSites; ++i)
     sum += this->NbrNeighbors[i];
-  return sum+NbrOneParticlePotentials;
+  return sum;
 }
+
+// get total number of local potential terms
+int LatticePhases::GetNbrLocalPotentials()
+{
+  return NbrOneParticlePotentials;
+}
+
 
 // get a string describing the lattice geometry
 // 

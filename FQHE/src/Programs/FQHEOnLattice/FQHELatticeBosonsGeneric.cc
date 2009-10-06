@@ -103,6 +103,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption('c',"hard-core","Use Hilbert-space of hard-core bosons");
   
   (*SystemGroup) += new BooleanOption  ('\n', "positive-hopping", "choose positive sign of hopping terms", false);
+  (*SystemGroup) += new BooleanOption  ('\n', "hopping-only", "evaluate only energy of hopping terms, excluding interactions and local potentials", false);
   (*SystemGroup) += new BooleanOption  ('\n', "all-flux", "calculate all values of the flux to test symmetry under n_phi->1-n_phi", false);
 
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
@@ -192,7 +193,7 @@ int main(int argc, char** argv)
   
   AbstractQHEOnLatticeHamiltonian* Hamiltonian;
   Hamiltonian = new ParticleOnLatticeGenericHamiltonian(Space, NbrBosons, Lattice, NbrFluxQuanta, ContactU,
-						      ReverseHopping, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName);
+							ReverseHopping, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName, OnlyHopping);
 
   if (Manager.GetString("energy-expectation") != 0 )
 	{
