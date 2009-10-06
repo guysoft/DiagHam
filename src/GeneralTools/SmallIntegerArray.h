@@ -38,7 +38,7 @@ class SmallIntegerArray
 {
  private:
   // internal storage
-  unsigned int *InternalArray;
+  unsigned long int *InternalArray;
   // number of words used
   int NbrWords;
   // number of entries
@@ -66,14 +66,17 @@ class SmallIntegerArray
   SmallIntegerArray(int nbrEntries, int largestInteger, unsigned *allEntries);
 
   // copy constructor (full duplication)
+  //
   SmallIntegerArray( const SmallIntegerArray &array);
 
   // augment an array by an additional element
   // array = initial part of array
   // toAppend = new entry
+  //
   SmallIntegerArray( const SmallIntegerArray &array, unsigned toAppend);
 
   //destructor
+  //
   ~SmallIntegerArray();
 
   
@@ -82,28 +85,35 @@ class SmallIntegerArray
   //
   // array = array to assign
   // return value = reference on current array
+  //
   SmallIntegerArray& operator = (const SmallIntegerArray& array);
 
 
   // access functions: reading
+  //
   void GetElement(int i, unsigned &value);
   unsigned GetElement(int i);
 
   // access function: writing
+  //
   void SetElement(int i, unsigned value);
 
   // fast access for all elements
   // values = array of unsigned integers, supposed to be sufficiently large for answer
+  //
   void GetElements(unsigned *values);
 
   // fast access for all elements
   // values = array of unsigned integers, supposed to be sufficiently large for answer
+  //
   void SetElements(unsigned *values);
 
   // request length of array
+  //
   int GetNbrElements() { return NbrEntries;}
 
   // logical operations
+  //
   friend bool operator == (const SmallIntegerArray& a1, const SmallIntegerArray& a2);
   friend bool operator != (const SmallIntegerArray& a1, const SmallIntegerArray& a2);
   friend bool operator < (const SmallIntegerArray& a1,const SmallIntegerArray& a2);
@@ -112,6 +122,7 @@ class SmallIntegerArray
   friend bool operator >= (const SmallIntegerArray& a1,const SmallIntegerArray& a2);
 
   // output stream overload
+  //
   friend ostream& operator << (ostream & Str, SmallIntegerArray& a);
   
   

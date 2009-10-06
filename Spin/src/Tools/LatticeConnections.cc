@@ -50,9 +50,13 @@ LatticeConnections::LatticeConnections()
   if (LatticeConnections::Options==NULL)
     {
       cout << "Define the OptionManager, first, before creating any LatticeConnections"<<endl;
-      exit(1);
+      exit(-1);
     }
-
+  if (this->Options->GetString("lattice-definition")==0)
+    {
+      cout << "Please indicate a lattice definition with flag -L or --lattice-definition"<<endl;
+      exit(-1);
+    }
   ConfigurationParser LatticeDefinition;
   if (LatticeDefinition.Parse(this->Options->GetString("lattice-definition")) == false)
     {

@@ -126,7 +126,26 @@ class GenericSUNSpinCollection : public AbstractSUNSpinCollection
 						 SubspaceSpaceConverter& converter);
 
   // permutation operator of two spins
+  // index = index of state to perform on
+  // s1 = index of spin 1
+  // s2 = index of spin 2
+  // return = index of final state
   int SpinPermutation(int index, int s1, int s2);
+
+  // cyclic permutation of three spins
+  // index = index of state to perform on
+  // s1 = index of spin 1
+  // s2 = index of spin 2
+  // s3 = index of spin 3
+  // return = index of final state
+  int CyclicSpinPermutation(int index, int s1, int s2, int s3);
+
+  // cyclic permutation of k spins
+  // index = index of state to perform on
+  // numS = number of spins to permute
+  // si = indices of spins
+  // return = index of final state
+  int CyclicSpinPermutation(int index, int numS, int *si);
   
   // get diagonal terms for an S*S interaction (counting instances for connections with same prefactor)
   // index = number of state to be considered

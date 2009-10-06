@@ -312,7 +312,7 @@ void ParticleOnLatticeDeltaHamiltonian::EvaluateInteractionFactors()
 	  {
 	    KineticQi[TmpNumberTerms] = Particles->EncodeQuantumNumber(x, y, 0, TranslationPhase);
 	    KineticQf[TmpNumberTerms] = KineticQi[TmpNumberTerms];
-	    HoppingTerms[TmpNumberTerms] = this->DeltaPotential*(-0.5+G.GetRealRandomNumber());
+	    HoppingTerms[TmpNumberTerms] = this->RandomPotential*(-0.5+G.GetRealRandomNumber());
 	    //cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
 	    ++TmpNumberTerms;
 	  }

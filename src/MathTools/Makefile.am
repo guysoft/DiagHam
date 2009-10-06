@@ -12,4 +12,5 @@ ArithmeticGeometricMean.cc \
 JacobiThetaFunction.cc \
 WignerSmallDMatrix.cc \
 ThreeJSymbol.cc \
-PartialThreeJSymbol.cc
+PartialThreeJSymbol.cc \
+KCombinations.cc

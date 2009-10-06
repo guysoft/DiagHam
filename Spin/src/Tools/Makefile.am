@@ -2,4 +2,5 @@ SUBDIRS=
 
 noinst_LIBRARIES=libSpinTools.a
 
-libSpinTools_a_SOURCES=LatticeConnections.cc
+libSpinTools_a_SOURCES=LatticeConnections.cc \
+SUNSpinFileTools.cc

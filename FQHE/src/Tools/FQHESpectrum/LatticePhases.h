@@ -93,6 +93,11 @@ class LatticePhases
 
   // tunnelling phases for tunnelling to existing neighbors, same ordering as array Neighbors
   double **TunnellingPhases;
+
+  // local one-particle potentials
+  double *OneParticlePotentials;
+  int NbrOneParticlePotentials;
+  int *OneParticlePotentialPositions;
   
  public:
 
@@ -167,6 +172,13 @@ class LatticePhases
   // get a string describing the lattice geometry
   // 
   char *GeometryString();
+
+  // request if single-particle potentials are defined
+  bool HaveOneParticlePotentials();
+
+  // request single-particle potentials 
+  double* GetOneParticlePotentials(int &nbrPotentials, int* &positions);
+
   
   // add an option group containing all options related to the LatticeGeometry options
   //

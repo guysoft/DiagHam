@@ -34,6 +34,16 @@
 using std::cout;
 using std::endl;
 
+#ifdef __64_BITS__
+
+#define ULENGTH 64
+
+#else
+
+#define ULENGTH 32
+
+#endif
+
 // default constructor
 //
 SmallIntegerArray::SmallIntegerArray(int largestInteger)
@@ -51,10 +61,10 @@ SmallIntegerArray::SmallIntegerArray(int nbrEntries, int largestInteger)
 {
   this->NbrBitsPerEntry=getHighestBit(largestInteger);
   this->NbrEntries=( nbrEntries>0 ? nbrEntries : 1);
-  int EntriesPerWord=32/NbrBitsPerEntry;
+  int EntriesPerWord=ULENGTH/NbrBitsPerEntry;
   this->NbrWords=NbrEntries/EntriesPerWord;
   if (NbrEntries%EntriesPerWord!=0) ++this->NbrWords;
-  this->InternalArray=new unsigned [this->NbrWords];
+  this->InternalArray=new unsigned long [this->NbrWords];
 }
 
 // constructor from given content as integers
@@ -65,11 +75,11 @@ SmallIntegerArray::SmallIntegerArray(int nbrEntries, int largestInteger)
 SmallIntegerArray::SmallIntegerArray(int nbrEntries, int largestInteger, unsigned *allEntries)
 {
   this->NbrBitsPerEntry=getHighestBit(largestInteger);
-  int EntriesPerWord=32/NbrBitsPerEntry;
+  int EntriesPerWord=ULENGTH/NbrBitsPerEntry;
   this->NbrEntries=(nbrEntries>0 ? nbrEntries : 1);
   this->NbrWords=NbrEntries/EntriesPerWord;
   if (NbrEntries%EntriesPerWord!=0) ++this->NbrWords;
-  this->InternalArray=new unsigned [this->NbrWords];
+  this->InternalArray=new unsigned long [this->NbrWords];
   this->SetElements(allEntries);
 }
 
@@ -77,7 +87,7 @@ SmallIntegerArray::SmallIntegerArray(int nbrEntries, int largestInteger, unsigne
 SmallIntegerArray::SmallIntegerArray( const SmallIntegerArray &array)
 {
   this->NbrWords=array.NbrWords;
-  this->InternalArray=new unsigned [this->NbrWords];
+  this->InternalArray=new unsigned long [this->NbrWords];
   for (int i=0; i<NbrWords; ++i)
     this->InternalArray[i]=array.InternalArray[i];
   this->NbrEntries=array.NbrEntries;
@@ -99,10 +109,10 @@ SmallIntegerArray::SmallIntegerArray( const SmallIntegerArray &array, unsigned t
 {
   this->NbrEntries = array.NbrEntries+1;
   this->NbrBitsPerEntry=array.NbrBitsPerEntry;
-  int EntriesPerWord=32/array.NbrBitsPerEntry;
+  int EntriesPerWord=ULENGTH/array.NbrBitsPerEntry;
   this->NbrWords=NbrEntries/EntriesPerWord;
   if (NbrEntries%EntriesPerWord!=0) ++this->NbrWords;
-  this->InternalArray=new unsigned [this->NbrWords];
+  this->InternalArray=new unsigned long [this->NbrWords];
   for (int i=0; i<array.NbrWords; ++i)
     this->InternalArray[i]=array.InternalArray[i];
   this->SetElement(NbrEntries-1,toAppend);
@@ -117,7 +127,7 @@ SmallIntegerArray& SmallIntegerArray::operator = (const SmallIntegerArray& array
   if (this->NbrEntries>0)
     delete [] this->InternalArray;
   this->NbrWords=array.NbrWords;
-  this->InternalArray=new unsigned [this->NbrWords];
+  this->InternalArray=new unsigned long [this->NbrWords];
   for (int i=0; i<NbrWords; ++i)
     this->InternalArray[i]=array.InternalArray[i];
   this->NbrEntries=array.NbrEntries;
@@ -128,29 +138,29 @@ SmallIntegerArray& SmallIntegerArray::operator = (const SmallIntegerArray& array
 // access function: reading
 void SmallIntegerArray::GetElement(int i, unsigned &value)
 {
-  int EntriesPerWord=32/NbrBitsPerEntry;
+  int EntriesPerWord=ULENGTH/NbrBitsPerEntry;
   int Word = i/EntriesPerWord;
   int Entry = i%EntriesPerWord;
-  unsigned Mask = ( ( ( (0x1u << ((Entry+1)*NbrBitsPerEntry-1)) - 1) | (0x1u << ((Entry+1)*NbrBitsPerEntry-1)) ) ^ ((0x1u << ((Entry*NbrBitsPerEntry))) -1));
+  unsigned Mask = ( ( ( (0x1ul << ((Entry+1)*NbrBitsPerEntry-1)) - 1) | (0x1ul << ((Entry+1)*NbrBitsPerEntry-1)) ) ^ ((0x1ul << ((Entry*NbrBitsPerEntry))) -1));
   value =(InternalArray[Word] & Mask) >> (Entry*NbrBitsPerEntry);
 }
 
 unsigned SmallIntegerArray::GetElement(int i)
 {
-  int EntriesPerWord=32/NbrBitsPerEntry;
+  int EntriesPerWord=ULENGTH/NbrBitsPerEntry;
   int Word = i/EntriesPerWord;
   int Entry = i%EntriesPerWord;
-  unsigned Mask = ( ( ( (0x1u << ((Entry+1)*NbrBitsPerEntry-1)) - 1) | (0x1u << ((Entry+1)*NbrBitsPerEntry-1)) ) ^ ((0x1u << ((Entry*NbrBitsPerEntry))) -1));
+  unsigned Mask = ( ( ( (0x1ul << ((Entry+1)*NbrBitsPerEntry-1)) - 1) | (0x1ul << ((Entry+1)*NbrBitsPerEntry-1)) ) ^ ((0x1ul << ((Entry*NbrBitsPerEntry))) -1));
   return (InternalArray[Word] & Mask) >> (Entry*NbrBitsPerEntry);
 }
 
 // access function: writing
 void SmallIntegerArray::SetElement(int i, unsigned value)
 {
-  int EntriesPerWord=32/NbrBitsPerEntry;
+  int EntriesPerWord=ULENGTH/NbrBitsPerEntry;
   int Word = i/EntriesPerWord;
   int Entry = i%EntriesPerWord;
-  unsigned Mask = ( ( ( (0x1u << ((Entry+1)*NbrBitsPerEntry-1)) - 1) | (0x1u << ((Entry+1)*NbrBitsPerEntry-1)) ) ^ ((0x1u << ((Entry*NbrBitsPerEntry))) -1));
+  unsigned Mask = ( ( ( (0x1ul << ((Entry+1)*NbrBitsPerEntry-1)) - 1) | (0x1ul << ((Entry+1)*NbrBitsPerEntry-1)) ) ^ ((0x1ul << ((Entry*NbrBitsPerEntry))) -1));
   InternalArray[Word] &= ~Mask;
   InternalArray[Word] |= (Mask&(value<<Entry*NbrBitsPerEntry));
 }
@@ -160,11 +170,11 @@ void SmallIntegerArray::SetElement(int i, unsigned value)
 // values = array of unsigned integers, supposed to be sufficiently large for answer
 void SmallIntegerArray::GetElements(unsigned *values)
 {
-  int EntriesPerWord=32/NbrBitsPerEntry;  
+  int EntriesPerWord=ULENGTH/NbrBitsPerEntry;  
   int TotalCount=0;
   for (int w=0; w<NbrWords; ++w)
     {
-      int Mask = ((0x1u << NbrBitsPerEntry) - 1);
+      int Mask = ((0x1ul << NbrBitsPerEntry) - 1);
       int Shift=0;
       for (int i=0; (i<EntriesPerWord)&&(TotalCount<NbrEntries); ++i, ++TotalCount)
       {
@@ -179,12 +189,12 @@ void SmallIntegerArray::GetElements(unsigned *values)
 // values = array of unsigned integers, supposed to be sufficiently large for answer
 void SmallIntegerArray::SetElements(unsigned *values)
 {
-  int EntriesPerWord=32/NbrBitsPerEntry;  
+  int EntriesPerWord=ULENGTH/NbrBitsPerEntry;  
   int TotalCount=0;  
   for (int w=0; w<NbrWords; ++w)
     {
-      InternalArray[w]=0x0u;
-      int Mask = ((0x1u << NbrBitsPerEntry) -1);
+      InternalArray[w]=0x0ul;
+      int Mask = ((0x1ul << NbrBitsPerEntry) -1);
       int Shift=0;
       for (int i=0; (i<EntriesPerWord)&&(TotalCount<NbrEntries); ++i, ++TotalCount)
       {

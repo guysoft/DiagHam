@@ -16,3 +16,6 @@ NeighborsAcrossBoundary-1_0 = 0,0
 # prefactors of vector potential A= (A_xx x + Ayx y ) e_x + (A_xy x + Ayy y ) e_y
 UseGauge = yes
 GaugeAyx = -1.0
+#optional values:
+#RandomPotentials = strength
+#LocalPotentials = site,strength | site2, strength2 | ...

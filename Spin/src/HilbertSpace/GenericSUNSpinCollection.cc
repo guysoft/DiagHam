@@ -246,6 +246,70 @@ int GenericSUNSpinCollection::SpinPermutation(int index, int s1, int s2)
   return this->FindStateIndex(State);
 }
 
+// cyclic permutation of three spins
+// index = index of state to perform on
+// s1 = index of spin 1
+// s2 = index of spin 2
+// s3 = index of spin 3
+int GenericSUNSpinCollection::CyclicSpinPermutation(int index, int s1, int s2, int s3)
+{
+  unsigned long State = this->StateDescription[index];
+//   bitset<32> b = State;
+//   cout << "P["<<s1<<", "<<s2<<", "<<b<<"] = ";
+  int LastPos=BITS*s3;
+  unsigned BufferedSpin = ((State>>(s3*BITS))&MASK);
+  State &= (~0ul ^ (MASK<<LastPos));
+
+  int CurrentPos=BITS*s2;
+  unsigned CurrentSpin = ((State>>(s2*BITS))&MASK);
+  State &= (~0ul ^ (MASK<<CurrentPos));
+  State |= (CurrentSpin<<LastPos);
+
+  CurrentPos=BITS*s1;
+  CurrentSpin = ((State>>(s1*BITS))&MASK);
+  State &= (~0ul ^ (MASK<<CurrentPos));
+  State |= (CurrentSpin<<LastPos);
+
+  State |= (BufferedSpin<<CurrentPos);
+//   b=State;
+//   cout << b << endl;
+  return this->FindStateIndex(State);
+}
+
+
+
+// cyclic permutation of k spins
+// index = index of state to perform on
+// numS = number of spins to permute
+// si = indices of spins
+// return = index of final state
+int GenericSUNSpinCollection::CyclicSpinPermutation(int index, int numS, int *si)
+{
+  unsigned long State = this->StateDescription[index];
+//   bitset<32> b = State;
+//   cout << "P["<<s1<<", "<<s2<<", "<<b<<"] = ";
+  int *spinPt=&(si[numS-1]);
+  int LastPos=BITS* *spinPt;
+  unsigned BufferedSpin = ((State>>(*spinPt*BITS))&MASK);
+  State &= (~0ul ^ (MASK<<LastPos));
+
+  int CurrentPos=0;
+  unsigned CurrentSpin;
+  for (int n=numS-2; n>=0; --n)
+    {
+      --spinPt;
+      CurrentPos = BITS* *spinPt;
+      CurrentSpin = ((State>>(*spinPt *BITS))&MASK);
+      State &= (~0ul ^ (MASK<<CurrentPos));
+      State |= (CurrentSpin<<LastPos);
+    }
+
+  State |= (BufferedSpin<<CurrentPos);
+//   b=State;
+//   cout << b << endl;
+  return this->FindStateIndex(State);
+}
+
 // get diagonal terms for an S*S interaction (counting instances for connections with same prefactor)
 // index = number of state to be considered
 int GenericSUNSpinCollection::S2DiagonalElements(int index)

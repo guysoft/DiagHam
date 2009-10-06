@@ -32,6 +32,7 @@
 #include "Options/Options.h"
 #include "Matrix/RealSymmetricMatrix.h"
 #include "Matrix/RealAntisymmetricMatrix.h"
+#include "MathTools/RandomNumber/NumRecRandomGenerator.h"
 
 #include <iostream>
 using std::cout;
@@ -426,6 +427,56 @@ LatticePhases::LatticePhases()
 	    }
 	}
     }
+  this->OneParticlePotentials=NULL;
+  NbrOneParticlePotentials=0;
+  if (LatticeDefinition["RandomPotentials"]!=NULL)
+    {
+      double randomStrength = strtod(LatticeDefinition["RandomPotentials"],NULL);
+      this->OneParticlePotentials = new double[NbrSites];
+      this->OneParticlePotentialPositions = new int[NbrSites];
+      NumRecRandomGenerator G;
+      G.UseTimeSeed();
+      for (int i=0; i<NbrSites; ++i)
+	{
+	  OneParticlePotentials[i]=randomStrength*(-0.5+G.GetRealRandomNumber());
+	  this->OneParticlePotentialPositions[i] = i;
+	}
+      NbrOneParticlePotentials = NbrSites;
+    }
+  else if (LatticeDefinition["LocalPotentials"]!=NULL)
+    {
+      if (LatticeDefinition.GetAsStringMultipleArray ("LocalPotentials", '|', ',', NeighborString, NbrPairs, NbrValues)==false)
+	{
+	  cout << "error while parsing LocalPotentials in " << this->Options->GetString("lattice-definition") << endl;
+	  exit(-1);
+	}
+      this->OneParticlePotentials = new double[NbrSites];
+      this->OneParticlePotentialPositions = new int[NbrSites];
+      for (int i=0; i<NbrSites; ++i) OneParticlePotentials[i]=0.0;
+      for (int p=0; p<NbrPairs; ++p)
+	{
+	  if (NbrValues[p]!=2)
+	    {
+	      cout << "error while decoding LocalPotentials in " << this->Options->GetString("lattice-definition") << endl;
+	      cout << "Indicate index of sites and potential at this site separated by commas"<<endl
+		   << "Separate multiple entries by bars: "
+		   << "NeighborCells = s_1,V_1 | ... | s_N, V_N | ..."<<endl;
+	      exit(-1);
+	    }
+	  int SiteIndex = atoi(NeighborString[p][0]);
+	  if ((SiteIndex<0)||(SiteIndex>=NbrSites))
+	    {
+	      cout << "SiteIndex "<<SiteIndex<<" out of range in LatticePhases - ignoring potential indicated for this site"<<endl;
+	    }
+	  else
+	    {
+	      this->OneParticlePotentials[NbrOneParticlePotentials] = strtod(NeighborString[p][1], NULL);
+	      this->OneParticlePotentialPositions[NbrOneParticlePotentials] = SiteIndex;
+	      ++NbrOneParticlePotentials;
+	    }
+	}
+    }
+  
 
   cout << "LatticePhases created"<<endl;
 
@@ -465,6 +516,11 @@ LatticePhases::~LatticePhases()
 	delete [] this->NeighborCells[i];
       delete [] this->NeighborCells;
       delete [] this->Descriptor;
+      if (NbrOneParticlePotentials>0)
+	{
+	  delete[] OneParticlePotentials;
+	  delete[] OneParticlePotentialPositions;
+	}
     }
 }
 
@@ -563,7 +619,7 @@ int LatticePhases::GetNbrHoppingTerms()
   int sum=0;
   for (int i=0; i<NbrSites; ++i)
     sum += this->NbrNeighbors[i];
-  return sum;
+  return sum+NbrOneParticlePotentials;
 }
 
 // get a string describing the lattice geometry
@@ -576,6 +632,26 @@ char *LatticePhases::GeometryString()
     sprintf(rst,"%sx%d", rst, this->PeriodicRep[i]);
   return rst;
 }
+
+
+// request if single-particle potentials are defined
+bool LatticePhases::HaveOneParticlePotentials()
+{
+  if (this->OneParticlePotentials!=NULL)
+    return true;
+  else
+    return false;
+}
+
+// request single-particle potentials 
+double* LatticePhases::GetOneParticlePotentials(int &nbrPotentials, int* &positions)
+{
+  nbrPotentials = NbrOneParticlePotentials;
+  positions = OneParticlePotentialPositions;
+  return OneParticlePotentials;
+}
+
+
 
 
 // add an option group containing all options related to the LatticeGeometry options

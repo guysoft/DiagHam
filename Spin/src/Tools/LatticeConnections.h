@@ -122,6 +122,15 @@ class LatticeConnections
   //
   int GetNbrSites(){return this->NbrSites;}
 
+  // access lattice extension in d-th direction
+  int GetNbrSubLattices(){return this->NbrSitesPerCell;}
+
+  // access lattice extension in d-th direction
+  int GetLatticeLength(int direction){return this->PeriodicRep[direction];}
+
+  // access dimension
+  int GetLatticeDimension(){return this->Dimension;}
+
   // request address of partners of site
   // nbrSite = number of site whose partners to request
   // partners = array to partner sites

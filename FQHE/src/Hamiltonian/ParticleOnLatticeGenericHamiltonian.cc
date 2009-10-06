@@ -192,20 +192,22 @@ void ParticleOnLatticeGenericHamiltonian::EvaluateInteractionFactors()
 	}
     }
 
-//   if (this->RandomPotential != 0.0)
-//     {
-//       NumRecRandomGenerator G;
-//       G.UseTimeSeed();
-//       for (int x=0; x<Lx; ++x)
-// 	for (int y=0; y<Ly; ++y)
-// 	  {
-// 	    KineticQi[TmpNumberTerms] = Particles->EncodeQuantumNumber(x, y, 0, TranslationPhase);
-// 	    KineticQf[TmpNumberTerms] = KineticQi[TmpNumberTerms];
-// 	    HoppingTerms[TmpNumberTerms] = this->DeltaPotential*(-0.5+G.GetRealRandomNumber());
-// 	    //cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
-// 	    ++TmpNumberTerms;
-// 	  }
-//     }
+  if (LatticeGeometry->HaveOneParticlePotentials())
+    {
+      int NbrPotentials;
+      int *PotentialPositions;
+      double *Potentials = LatticeGeometry->GetOneParticlePotentials(NbrPotentials, PotentialPositions);
+      for (int n=0; n<NbrPotentials; ++n)
+	{
+	  KineticQi[TmpNumberTerms] = PotentialPositions[n];
+	  KineticQf[TmpNumberTerms] = KineticQi[TmpNumberTerms];
+	  HoppingTerms[TmpNumberTerms] = Potentials[n];
+#ifdef DEBUG_OUTPUT
+	  cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<endl;
+#endif
+	  ++TmpNumberTerms;
+	  }
+    }
 
   // we have no general four-particle interactions:
   this->NbrInteractionFactors=0;
