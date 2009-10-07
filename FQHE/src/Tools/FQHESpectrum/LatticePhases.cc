@@ -192,12 +192,14 @@ LatticePhases::LatticePhases()
 	   << " + ("<<GaugeAxy << "*x +"<<GaugeAyy<<"*y) e_y, "
 	   << "field strength B="<<this->AbsBField<<endl;
     }
-	cout << "Attention, the code is currently not functional for gauges involving both Axy and Ayx!"<<endl;
-	
+#ifdef DEBUG_OUTPUT
+  cout << "Attention, the code is currently not functional for gauges involving both Axy and Ayx!"<<endl;
+
   for (int i=0; i<Dimension; ++i)
     cout << "LatticeVector["<<i<<"]="<<endl<<LatticeVectors[i];
   for (int i=0; i<NbrSitesPerCell; ++i)
     cout << "SubLatticeVector["<<i<<"]="<<endl<<SubLatticeVectors[i];
+#endif
   char ***NeighborString;
   int NbrPairs;
   int *NbrValues;
@@ -255,7 +257,10 @@ LatticePhases::LatticePhases()
       delete [] NbrValues;
       delete [] NeighborString;
     }
+  
+#ifdef DEBUG_OUTPUT
   cout << "NeighborsInCell="<<endl<<NeighborsInCellMatrix;
+#endif
   if (LatticeDefinition.GetAsStringMultipleArray ("NeighborCells", '|', ',', NeighborString, NbrPairs, NbrValues)==false)
     {
       cout << "error while parsing NeighborCells in " << this->Options->GetString("lattice-definition") << endl;
@@ -342,7 +347,10 @@ LatticePhases::LatticePhases()
 	}
       delete [] NbrValues;
       delete [] NeighborString;
+      
+#ifdef DEBUG_OUTPUT
       cout << FieldName<<"="<<endl<<*NeighborsAcrossBoundary[d];
+#endif
     }  
   
   this->Neighbors = new int*[NbrSites];
@@ -363,12 +371,18 @@ LatticePhases::LatticePhases()
   for (int c=0; c<NbrCells; ++c)
     {
       this->GetCellCoordinates(c, CellCoordinates);
+      
+#ifdef DEBUG_OUTPUT
       cout << "Cell "<<c<<":"<< CellCoordinates[0]<<", "<<CellCoordinates[1]<<endl;
+#endif
       int Site1, Site2, Site3;
       for (int i=0; i<NbrSitesPerCell; ++i)
 	{
 	  Site1 = this->GetSiteNumber(c, i);
+	  
+#ifdef DEBUG_OUTPUT
 	  cout << "Site 1="<<Site1<<endl;
+#endif
 	  for (int j=0; j<NbrSitesPerCell; ++j)
 	    {
 	      Site2 = this->GetSiteNumber(c, j);
@@ -380,7 +394,10 @@ LatticePhases::LatticePhases()
 		    TmpPhases[NbrNeighbors[Site1]] = GetTunnellingPhaseFromGauge(Site1, Site2);
 		  else
 		    TmpPhases[NbrNeighbors[Site1]] = TunnellingPhaseMatrix(Site1,Site2);
+		  
+#ifdef DEBUG_OUTPUT
 		  cout << "Neighbors "<<Site1<<"->"<<Site2<<" with phase "<<TmpPhases[NbrNeighbors[Site1]]<<endl;
+#endif
 		  ++NbrNeighbors[Site1];
 		}
 	      for (int d=0; d<NbrNeighborCells; ++d)
@@ -390,26 +407,33 @@ LatticePhases::LatticePhases()
 		      for (int k=0; k<Dimension; ++k)
 			{
 			  CellCoordinates2[k]=CellCoordinates[k]+NeighborCells[d][k];
+#ifdef DEBUG_OUTPUT
 			  cout << "CellCoordinates["<<k<<"]="<<CellCoordinates[k]<< ", "
 			       << "NeighborCells["<<d<<", "<<k<<"]="<<NeighborCells[d][k]<< ", "
 			       << "CellCoordinates2["<<k<<"]="<<CellCoordinates2[k]<<endl;
+#endif
 			}
 		      Site3 = this->GetSiteNumber(CellCoordinates2, j, Translation3);
+#ifdef DEBUG_OUTPUT
 		      cout << "Translation3= ["<<Translation3[0]<<", "<<Translation3[1]<<"]"<<endl;
+#endif
 		      TmpNeighbors[NbrNeighbors[Site1]]=Site3;
 		      if (this->HaveGauge)
 			{
+#ifdef DEBUG_OUTPUT
 			  cout << "Evaluating translation phase:"<<endl;
+#endif
 			  TmpPhases[NbrNeighbors[Site1]] = GetTunnellingPhaseFromGauge(Site1, Site3, Translation3);
 			}
 		      else
-			TmpPhases[NbrNeighbors[Site1]]=(*PhasesAcrossBoundary[d])(Site1,Site3);
+			TmpPhases[NbrNeighbors[Site1]]=(*PhasesAcrossBoundary[d])(Site1,Site3);   
+#ifdef DEBUG_OUTPUT
 		      cout << "additional neighbors "<<Site1<<"->"<<Site3<<" from NeigborCell "<<d<<" at "<<
 			CellCoordinates2[0]<<", "<<CellCoordinates2[1]<<", "<<j<<" : Site 3="<<Site3
 			   <<" with translation "<<Translation3[0];
 		      for (int i=1; i<Dimension; ++i) cout << " "<<Translation3[i];
 		      cout << " and phase "<<TmpPhases[NbrNeighbors[Site1]]<<endl;
-		      
+#endif
 		      ++NbrNeighbors[Site1];
 		    }
 		}	      
@@ -580,7 +604,9 @@ int LatticePhases::GetSiteNumber(int *cellCoordinates, int sublattice)
 // translation = vector of tranlation back into simulation cell
 int LatticePhases::GetSiteNumber(int *cellCoordinates, int sublattice, int *translation)
 {
+#ifdef DEBUG_OUTPUT
   cout << "Periodizing entry"<<Dimension-1<<endl;
+#endif
   int Result=this->Periodize(cellCoordinates[Dimension-1], Dimension-1, translation[Dimension-1]);
   for (int i=Dimension-2; i>-1; --i)
     {
@@ -741,9 +767,11 @@ double LatticePhases::GetTunnellingPhaseFromGauge(int s1, int s2, int *cellTrans
       Position2.AddLinearCombination(1.0,SubLatticeVectors[S2Sublattice]);
       CellPosition2.AddLinearCombination(1.0,SubLatticeVectors[S2Sublattice]);
       
+#ifdef DEBUG_OUTPUT
       cout << "Position1="<<endl<<Position1;
       cout << "Position2="<<endl<<Position2;
       cout << "Translation="<<endl<<Translation;
+#endif
       if (this->Dimension==2)
 	{
 	  Result += 0.5*GaugeAxx*(Position2[0]*Position2[0]-Position1[0]*Position1[0]);
@@ -751,7 +779,9 @@ double LatticePhases::GetTunnellingPhaseFromGauge(int s1, int s2, int *cellTrans
 	  Result += 0.5*GaugeAxy*(Position2[1]-Position1[1])*(Position2[0]+Position1[0]);
 	  Result += 0.5*GaugeAyy*(Position2[1]*Position2[1]-Position1[1]*Position1[1]);
 	  // xxx: check signs and prefactors here!
+#ifdef DEBUG_OUTPUT
 	  cout << "Raw phase="<<Result;
+#endif
 	  if (Translation.SqrNorm()>1e-14)
 	    {
 	      if (Translation[0]>0.0)
@@ -762,7 +792,9 @@ double LatticePhases::GetTunnellingPhaseFromGauge(int s1, int s2, int *cellTrans
 		  MagneticTranslation+=(GaugeAxx*Translation[0]+GaugeAyx*Translation[1])*(CellPosition2[0]+Translation[0]); // (CellPosition2[0]+Translation[0]+0.5*Translation[0]);
 		  
 		  Result += MagneticTranslation;
+#ifdef DEBUG_OUTPUT
 		  cout << ", magnetic translation: "<<MagneticTranslation;
+#endif
 		}
 	      else
 		{
@@ -771,10 +803,14 @@ double LatticePhases::GetTunnellingPhaseFromGauge(int s1, int s2, int *cellTrans
 		  // translate in x-direction first:
 		  MagneticTranslation+= (GaugeAxy*Translation[0]+GaugeAyy*Translation[1])*(CellPosition2[1]+Translation[1]); // (CellPosition2[1]+Translation[1]+0.5*Translation[1]);
 		  Result += MagneticTranslation;
+#ifdef DEBUG_OUTPUT
 		  cout << ", magnetic translation: "<<MagneticTranslation;
+#endif
 		}
 	    }
+#ifdef DEBUG_OUTPUT
 	  cout << ", after corrections"<<Result<<endl;
+#endif
 	}
       else
 	{

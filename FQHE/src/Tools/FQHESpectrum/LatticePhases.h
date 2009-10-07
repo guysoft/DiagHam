@@ -163,7 +163,7 @@ class LatticePhases
   // get total number of hopping terms
   int GetNbrHoppingTerms();
 
-  // get total number of hopping terms
+  // get total number of local potential terms
   int GetNbrLocalPotentials();
   
   // calculate the tunnelling phase between two given sites from the gauge
