@@ -224,7 +224,6 @@ int main(int argc, char** argv)
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
 
   ParticleOnLatticeOneBodyOperator *DensityOperator= new ParticleOnLatticeOneBodyOperator(Space);
-  ParticleOnLatticeTranslationOperator *TranslationOperator= new ParticleOnLatticeTranslationOperator(Space);
 
   cout<< "========= Analysis of density matrix ========"<<endl;
   
@@ -431,29 +430,31 @@ int main(int argc, char** argv)
 
   cout<< "====== Analysis of momentum eigenvalues ====="<<endl;
 
+  ParticleOnLatticeTranslationOperator *TranslationOperator= new ParticleOnLatticeTranslationOperator(Space);
+    
   ComplexVector TmpState(VectorDimension);
   ComplexVector TmpState2(VectorDimension);
 
 
   if (Manager.GetBoolean("show-translation"))
-  {
-    // testing unitarity of translation operator matrix and display it:
-    ComplexMatrix TrRep(VectorDimension, VectorDimension);  
-    
-    TranslationOperator->SetTranslationComponents(1,0);
-    for (int i=0; i<VectorDimension; ++i)
-      {
-	TmpState2.ClearVector();
-	TmpState2.Re(i)=1.0;
-	VectorOperatorMultiplyOperation Operation (TranslationOperator, &TmpState2, &TmpState);      
-	Operation.ApplyOperation(Architecture.GetArchitecture());      
-	for (int j=0; j<VectorDimension; ++j)
-	  TrRep.SetMatrixElement(j,i,TmpState[j]);
-      }
-    
-    cout << "Representation of T_x"<<endl<<TrRep<<endl;
-  }
-
+    {
+      // testing unitarity of translation operator matrix and display it:
+      ComplexMatrix TrRep(VectorDimension, VectorDimension);  
+      
+      TranslationOperator->SetTranslationComponents(1,0);
+      for (int i=0; i<VectorDimension; ++i)
+	{
+	  TmpState2.ClearVector();
+	  TmpState2.Re(i)=1.0;
+	  VectorOperatorMultiplyOperation Operation (TranslationOperator, &TmpState2, &TmpState);      
+	  Operation.ApplyOperation(Architecture.GetArchitecture());      
+	  for (int j=0; j<VectorDimension; ++j)
+	    TrRep.SetMatrixElement(j,i,TmpState[j]);
+	}
+      
+      cout << "Representation of T_x"<<endl<<TrRep<<endl;
+    }
+  
   
   ComplexMatrix XTranslationMatrix(NbrVectors, NbrVectors);
   ComplexMatrix YTranslationMatrix(NbrVectors, NbrVectors);

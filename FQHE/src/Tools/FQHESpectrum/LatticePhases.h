@@ -239,14 +239,14 @@ int LatticePhases::Periodize(int coordinate, int dimension, int &shift)
 {
   int result;
   shift=0;
-  std::cout << "Raw value: "<<coordinate;
+  //std::cout << "Raw value: "<<coordinate;
   if (coordinate<0)
     {
       shift = (coordinate/PeriodicRep[dimension] + 1)*PeriodicRep[dimension];
       coordinate += shift;
     }
   shift += (result=(coordinate%PeriodicRep[dimension])) - coordinate;
-  std::cout << ", shift="<<shift<<", result="<<result<<std::endl;
+  //std::cout << ", shift="<<shift<<", result="<<result<<std::endl;
   return result;
 }
 
