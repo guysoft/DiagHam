@@ -1,6 +1,7 @@
 #include "HilbertSpace/BosonOnLatticeGeneric.h"
 #include "HilbertSpace/HardCoreBosonOnLatticeGeneric.h"
 #include "Hamiltonian/ParticleOnLatticeGenericHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeExternalHamiltonian.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -101,6 +102,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('u', "contactU", "prefactor U of the contact interaction (kinetic term ~ 1)", 1.0);
   (*SystemGroup) += new MultipleDoubleOption  ('s', "solenoid-flux", "twist in periodic boundary conditions phi_x[,phi_y])",',');
   (*SystemGroup) += new BooleanOption('c',"hard-core","Use Hilbert-space of hard-core bosons");
+  (*SystemGroup) += new SingleStringOption  ('e', "external-two-body", "use definition of two-body interactions from a file");
   
   (*SystemGroup) += new BooleanOption  ('\n', "positive-hopping", "choose positive sign of hopping terms", false);
   (*SystemGroup) += new BooleanOption  ('\n', "hopping-only", "evaluate only energy of hopping terms, excluding local potentials", false);
@@ -164,25 +166,34 @@ int main(int argc, char** argv)
   char interactionStr[100]="";
   if ( (OutputName = Manager.GetString("output-file")) == NULL)
     {
-      OutputName = new char [256];      
-      if (ReverseHopping)
-	sprintf(reverseHoppingString,"_rh");
-      if (HardCore)
+      OutputName = new char [256];
+      if (Manager.GetString("external-two-body")==NULL)
 	{
-	  sprintf(interactionStr,"_hardcore");
-	}
-      else
-	{
-	  sprintf(interactionStr,"_u_%g",ContactU);
-	}
-      if ((SolenoidX!=0.0)||(SolenoidY!=0.0))
+	  if (ReverseHopping)
+	    sprintf(reverseHoppingString,"_rh");
+	  if (HardCore)
+	    {
+	      sprintf(interactionStr,"_hardcore");
+	    }
+	  else
+	    {
+	      sprintf(interactionStr,"_u_%g",ContactU);
+	    }
+	  if ((SolenoidX!=0.0)||(SolenoidY!=0.0))
 	    {
 	      sprintf(interactionStr,"%s_s_%g_%g",interactionStr,SolenoidX,SolenoidY);
 	    }
-      if (NbrFluxValues == 1)
-	sprintf (OutputName, "bosons_lattice_%s_n_%d%s%s_q_%d.dat", LatticeName, NbrBosons, interactionStr, reverseHoppingString, NbrFluxQuanta);
+	  if (NbrFluxValues == 1)
+	    sprintf (OutputName, "bosons_lattice_%s_n_%d%s%s_q_%d.dat", LatticeName, NbrBosons, interactionStr, reverseHoppingString, NbrFluxQuanta);
+	  else
+	    sprintf (OutputName, "bosons_lattice_%s_n_%d%s%s_q.dat", LatticeName, NbrBosons, interactionStr, reverseHoppingString);
+	}
       else
-	sprintf (OutputName, "bosons_lattice_%s_n_%d%s%s_q.dat", LatticeName, NbrBosons, interactionStr, reverseHoppingString);
+	{
+	  NbrFluxValues = 1;
+	  NbrFluxQuanta = NbrSites/2;
+	  sprintf (OutputName, "bosons_lattice_%s_n_%d_ext_q_%d.dat", LatticeName, NbrBosons, NbrFluxQuanta);
+	}
     }
   ParticleOnLattice* Space;
   if (HardCore)
@@ -192,8 +203,13 @@ int main(int argc, char** argv)
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
   
   AbstractQHEOnLatticeHamiltonian* Hamiltonian;
-  Hamiltonian = new ParticleOnLatticeGenericHamiltonian(Space, NbrBosons, Lattice, NbrFluxQuanta, ContactU,
-							ReverseHopping, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName, Manager.GetBoolean("hopping-only"));
+  if (Manager.GetString("external-two-body")==NULL)
+    Hamiltonian = new ParticleOnLatticeGenericHamiltonian(Space, NbrBosons, Lattice, NbrFluxQuanta, ContactU,
+							  ReverseHopping, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName, Manager.GetBoolean("hopping-only"));
+  else
+    Hamiltonian = new ParticleOnLatticeExternalHamiltonian(Space, NbrBosons, NbrSites, /*OneParticleTerms */ NULL,
+							   Manager.GetString("external-two-body"), Architecture.GetArchitecture(),
+							   Memory, LoadPrecalculationFileName);
 
   if (Manager.GetString("energy-expectation") != 0 )
 	{
@@ -281,7 +297,11 @@ int main(int argc, char** argv)
       if (Manager.GetBoolean("eigenstate"))	
 	{
 	  EigenvectorName = new char [64];
-	  sprintf (EigenvectorName, "bosons_lattice_%s_n_%d%s%s_q_%d", LatticeName, NbrBosons, interactionStr, reverseHoppingString, NbrFluxQuanta);
+	  if (Manager.GetString("external-two-body")==NULL)
+	    sprintf (EigenvectorName, "bosons_lattice_%s_n_%d%s%s_q_%d", LatticeName, NbrBosons, interactionStr, reverseHoppingString, NbrFluxQuanta);
+	  else
+	    sprintf (EigenvectorName, "bosons_lattice_%s_n_%d_ext_q_%d", LatticeName, NbrBosons, NbrFluxQuanta);
+	  
 	}
       QHEOnLatticeMainTask Task (&Manager, Space, Hamiltonian, NbrFluxQuanta, 0.0, OutputName, FirstRun, EigenvectorName);
       MainTaskOperation TaskOperation (&Task);

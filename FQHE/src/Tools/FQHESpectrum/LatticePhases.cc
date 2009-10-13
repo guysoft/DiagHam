@@ -161,8 +161,8 @@ LatticePhases::LatticePhases()
   // two alternate methods: indicate individual tunnelling phases, or give a gauge choice
   this->HaveGauge=false;
   if ((LatticeDefinition["UseGauge"]!=NULL)&&
-      ( (strcmp(LatticeDefinition["UseGauge"],"yes")>0) || (strcmp(LatticeDefinition["UseGauge"],"YES")>0)
-	|| (strcmp(LatticeDefinition["UseGauge"],"true")>0) || (strcmp(LatticeDefinition["UseGauge"],"TRUE")>0) ))
+      ( (strcmp(LatticeDefinition["UseGauge"],"yes")==0) || (strcmp(LatticeDefinition["UseGauge"],"YES")==0)
+	|| (strcmp(LatticeDefinition["UseGauge"],"true")==0) || (strcmp(LatticeDefinition["UseGauge"],"TRUE")==0) ))
     {
       this->HaveGauge=true;
       if (LatticeDefinition.GetAsSingleDouble ("GaugeAxx", this->GaugeAxx)==false)
@@ -501,8 +501,16 @@ LatticePhases::LatticePhases()
 	    }
 	}
     }
-  
 
+  if (LatticeDefinition["NbrFlux"]!=NULL)
+    {
+      this->PredefinedFluxFlag=true;
+      this->PredefinedFlux = atoi(LatticeDefinition["NbrFlux"]);
+    }
+  else
+    {
+      this->PredefinedFluxFlag=false;
+    }
   cout << "LatticePhases created"<<endl;
 
   for (int d=0; d<NbrNeighborCells; ++d)
@@ -580,6 +588,22 @@ void LatticePhases::GetSiteCoordinates(int nbrSite, int *cellCoordinates, int &s
     }
   cellCoordinates[Dimension-1] = (nbrSite/Divisor)%this->PeriodicRep[Dimension-1];
 }
+
+// retrieve the position of a given site
+// cellCoordinates = resulting coordinates, has to be reserved prior to call
+// sublattice = resulting sublattice  
+RealVector LatticePhases::GetSitePosition(int *cellCoordinates, int sublattice)
+{
+  RealVector Position(this->Dimension,true);
+  for (int i=0; i<Dimension; ++i)
+    {
+      Position.AddLinearCombination((double)cellCoordinates[i],LatticeVectors[i]);
+    }
+  Position.AddLinearCombination(1.0,SubLatticeVectors[sublattice]);
+  // cout << "Position of site "<<cellCoordinates[0]<<", "<<cellCoordinates[1]<<", "<<sublattice<<endl<<Position;
+  return Position;
+}
+
 
 
 // get number of a site in cell nbrCell

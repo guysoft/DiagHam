@@ -75,6 +75,12 @@ class LatticePhases
   double GaugeAyy;
   double AbsBField;
 
+  // flag indicating whether a specific flux density was given
+  bool PredefinedFluxFlag;
+
+  // predefined number of flux
+  int PredefinedFlux;
+  
   // Matrix containing lattice vectors
   RealMatrix LatticeVectors;
 
@@ -119,6 +125,11 @@ class LatticePhases
   // cellCoordinates = resulting coordinates, has to be reserved prior to call
   // sublattice = resulting sublattice
   void GetSiteCoordinates(int nbrSite, int *cellCoordinates, int &sublattice);
+
+  // retrieve the position of a given site
+  // cellCoordinates = resulting coordinates, has to be reserved prior to call
+  // sublattice = resulting sublattice  
+  RealVector GetSitePosition(int *cellCoordinates, int sublattice);
   
   // get number of a site in cell nbrCell
   // nbrCell = cell to be addressed
@@ -165,6 +176,13 @@ class LatticePhases
 
   // get total number of local potential terms
   int GetNbrLocalPotentials();
+
+  // have predefined flux
+  bool HavePredefinedFlux(){return this->PredefinedFluxFlag;}
+
+  // get predefined flux value
+  int GetPredefinedFlux(){return this->PredefinedFlux;}
+  
   
   // calculate the tunnelling phase between two given sites from the gauge
   // s1 = start site

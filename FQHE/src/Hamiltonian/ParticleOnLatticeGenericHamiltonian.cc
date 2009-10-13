@@ -187,7 +187,9 @@ void ParticleOnLatticeGenericHamiltonian::EvaluateInteractionFactors()
 	{
 	  KineticQi[TmpNumberTerms] = s;
 	  KineticQf[TmpNumberTerms] = Neighbors[n];
+#ifdef DEBUG_OUTPUT
 	  cout << "Using flux density="<<this->FluxDensity<<" and Phase="<<Phases[n]<<endl;
+#endif
 	  HoppingTerms[TmpNumberTerms] = HoppingSign*Polar(1.0,-2.0*M_PI*this->FluxDensity*Phases[n]);
 #ifdef DEBUG_OUTPUT
 	  cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<endl;

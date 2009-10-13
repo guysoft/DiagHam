@@ -548,7 +548,7 @@ char* OptionManager::GetString(const char *optionName)
 	return ((SingleStringOption*)OptionPointer)->GetString();
       else
 	{
-	  cout << "Boolean value of Option '"<<optionName<<"' was requested, but is of different type!" << endl;
+	  cout << "String value of Option '"<<optionName<<"' was requested, but is of different type!" << endl;
 	  exit(-1);
 	}
     }

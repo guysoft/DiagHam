@@ -135,9 +135,12 @@ void SphereBilayerCoulombEnergy::PrintStatus(std::ostream &output, bool all)
 void SphereBilayerCoulombEnergy::WriteDataFile(std::ostream &output)
 {
   output << "#  d\t  E  \t err  "<<endl;
+  int OldPrecision=output.precision();
+  output.precision(8);
   for (int i=0; i<this->NbrSeparations; ++i)
     output << this->Separations[i] << "\t" << this->Values->Average(i)
-	   <<"\t"<<this->Values->ErrorEstimate(i)<<endl;  
+	   <<"\t"<<this->Values->ErrorEstimate(i)<<endl;
+  output.precision(OldPrecision);
 }
 
 // set particle collection that the observable operates on

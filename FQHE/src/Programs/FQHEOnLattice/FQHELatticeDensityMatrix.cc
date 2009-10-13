@@ -215,7 +215,10 @@ int main(int argc, char** argv)
 	  for (int i=0; i<VectorDimension; ++i)
 	    {
 	      Space->PrintState(cout, i);
-	      cout <<" :  "<<Vectors[v][i]<<endl;
+	      cout.precision(5);
+	      cout <<" :  "<<Vectors[v][i];
+	      cout <<" -- "<<Norm(Vectors[v][i])<<" "<<Arg(Vectors[v][i])/M_PI<<endl;
+	      cout.precision(14);
 	    }
 	}
       exit(0);
@@ -295,11 +298,28 @@ int main(int argc, char** argv)
 	      sprintf(RhoVecOut,"%s.dm%d.dat",VectorFiles[0],s);
 	      ofstream DataFile(RhoVecOut);
 	      DataFile << "# X\tY\tv_x\tv_y"<<endl;
+	      int CellPosition[2];
+	      RealVector SitePosition;
 	      for (int x=0; x<Lx; ++x)
 		for (int y=0; y<Ly; ++y)
+		  for (int Sub=0; Sub<NbrSubLattices; ++Sub)
 		  {
-		    int q = Space->EncodeQuantumNumber(x, y, 0, Tmp);	
-		    DataFile << x<<"\t"<<y<<"\t"<<EigenState[DensityMatrixDimension-1-q].Re<<"\t"<<EigenState[DensityMatrixDimension-1-q].Im<<endl;
+		    int q = Space->EncodeQuantumNumber(x, y, Sub, Tmp);
+		    double X,Y;
+		    if (GenericLattice)
+		      {
+			CellPosition[0]=x;
+			CellPosition[1]=y;
+			SitePosition = Lattice->GetSitePosition(CellPosition,Sub);
+			X=SitePosition[0];
+			Y=SitePosition[1];
+		      }
+		    else
+		      {
+			X=(double)x;
+			Y=(double)y;
+		      }
+		    DataFile << X<<"\t"<<Y<<"\t"<<EigenState[DensityMatrixDimension-1-q].Re<<"\t"<<EigenState[DensityMatrixDimension-1-q].Im<<endl;
 		  }
 	      DataFile.close();
 	    }

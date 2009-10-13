@@ -1,0 +1,367 @@
+////////////////////////////////////////////////////////////////////////////////
+//                                                                            //
+//                                                                            //
+//                            DiagHam  version 0.01                           //
+//                                                                            //
+//                  Copyright (C) 2001-2008 Gunnar Moeller                    //
+//                                                                            //
+//                                                                            //
+//                 class of quatum Hall hamiltonian associated                //
+//   to particles with contact interactions on a lattice in magnetic field    //
+//                                                                            //
+//                      last modification : 13/02/2008                        //
+//                                                                            //
+//                                                                            //
+//    This program is free software; you can redistribute it and/or modify    //
+//    it under the terms of the GNU General Public License as published by    //
+//    the Free Software Foundation; either version 2 of the License, or       //
+//    (at your option) any later version.                                     //
+//                                                                            //
+//    This program is distributed in the hope that it will be useful,         //
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//    GNU General Public License for more details.                            //
+//                                                                            //
+//    You should have received a copy of the GNU General Public License       //
+//    along with this program; if not, write to the Free Software             //
+//    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.               //
+//                                                                            //
+////////////////////////////////////////////////////////////////////////////////
+
+
+#include "config.h"
+#include "Hamiltonian/ParticleOnLatticeExternalHamiltonian.h"
+#include "Output/MathematicaOutput.h"
+#include "GeneralTools/FilenameTools.h"
+#include "GeneralTools/MultiColumnASCIIFile.h"
+#include "GeneralTools/StringTools.h"
+#include "Architecture/AbstractArchitecture.h"
+
+#include <iostream>
+using std::cout;
+using std::endl;
+
+using std::ostream;
+
+// switch for debugging output:
+//#define DEBUG_OUTPUT
+
+
+
+// constructor for contact interactions on a square lattice
+//
+// particles = Hilbert space associated to the system
+// nbrParticles = number of particles
+// nbrStates = number of quantum states
+// oneParticleTerms = file describing single particle terms
+// twoParticleTerms = file describing two-particle terms
+// architecture = architecture to use for precalculation
+// memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+// precalculationFileName = option file name where precalculation can be read instead of reevaluting them
+ParticleOnLatticeExternalHamiltonian::ParticleOnLatticeExternalHamiltonian(ParticleOnLattice* particles, int nbrParticles, int nbrStates, const char* oneParticleTerms, const char* twoParticleTerms, AbstractArchitecture* architecture, int memory, char* precalculationFileName)
+{
+  this->Particles=particles;
+  this->NbrParticles=nbrParticles;
+  if (oneParticleTerms!=NULL)
+    {
+      this->OneParticleTerms = new char[strlen(oneParticleTerms)+2];
+      strcpy(this->OneParticleTerms,oneParticleTerms);
+    }
+  else this->OneParticleTerms=NULL;
+  if (TwoParticleTerms!=NULL)
+    {
+      this->TwoParticleTerms = new char[strlen(twoParticleTerms)+2];
+      strcpy(this->TwoParticleTerms,twoParticleTerms);
+    }
+  else this->TwoParticleTerms=NULL;
+  this->HaveKySymmetry=false;
+  this->KyMax=0;  
+  this->NbrSites = nbrStates;
+  this->NbrFluxQuanta=0;
+  this->HamiltonianShift=0.0;
+  this->FluxDensity=0.0;
+  this->Architecture = architecture;
+  this->EvaluateInteractionFactors();
+  this->FastMultiplicationFlag = false;
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  this->PrecalculationShift = (int) MinIndex;  
+  if (precalculationFileName == 0)
+    {
+      if (memory > 0)
+	{
+	  int TmpMemory = this->FastMultiplicationMemory(memory);
+	  PrintMemorySize(cout, TmpMemory)<< endl;
+	  if (memory > 0)
+	    this->EnableFastMultiplication();
+	}
+    }
+  else
+    this->LoadPrecalculation(precalculationFileName);
+}
+
+// destructor
+//
+ParticleOnLatticeExternalHamiltonian::~ParticleOnLatticeExternalHamiltonian()
+{
+  if (NbrHoppingTerms>0)
+    {
+      delete [] this->HoppingTerms;
+      delete [] this->KineticQi;
+      delete [] this->KineticQf;
+    }
+  if (NbrInteractionFactors>0)
+    {
+      delete [] this->InteractionFactors;
+      delete [] this->Q1Value;
+      delete [] this->Q2Value;
+      delete [] this->Q3Value;
+      delete [] this->Q4Value;
+    }
+  if (NbrQ12Indices>0)
+    {
+      for (int i=0; i<NbrQ12Indices; ++i)
+	{
+	  delete [] this->Q3PerQ12[i];
+	  delete [] this->Q4PerQ12[i];
+	}
+      delete [] this->NbrQ34Values;
+      delete [] this->InteractionFactors;
+      delete [] this->Q1Value;
+      delete [] this->Q2Value;
+      
+    }
+  if (NbrDiagonalInteractionFactors>0)
+    {
+      delete [] this->DiagonalInteractionFactors;
+      delete [] this->DiagonalQValues;
+    }
+}
+
+
+// Output Stream overload
+//
+// Str = reference on output stream
+// H = Hamiltonian to print
+// return value = reference on output stream
+ostream& operator << (ostream& Str, ParticleOnLatticeExternalHamiltonian& H)
+{
+  Str << "Need to implement ostream& operator << for ParticleOnLatticeExternalHamiltonian!" << endl;
+  return Str;
+}
+
+// Mathematica Output Stream overload
+//
+// Str = reference on Mathematica output stream
+// H = Hamiltonian to print
+// return value = reference on output stream
+MathematicaOutput& operator << (MathematicaOutput& Str, ParticleOnLatticeExternalHamiltonian& H)
+{
+  Str << "Need to implement MathematicaOutput& operator << for ParticleOnLatticeExternalHamiltonian!\n";
+  return Str;
+}
+
+
+// evaluate all interaction factors
+//   
+void ParticleOnLatticeExternalHamiltonian::EvaluateInteractionFactors()
+{  
+  if (this->OneParticleTerms!=0)
+    {
+      if (!IsFile(this->OneParticleTerms))
+	{
+	  cout << "Could not read file with single particle interactions "<<this->OneParticleTerms<<endl;
+	  exit(1);
+	}
+      MultiColumnASCIIFile Parser;
+      if ((Parser.Parse(this->OneParticleTerms))&&((Parser.GetNbrColumns()==4)||(Parser.GetNbrColumns()==3)))
+	{
+	  this->NbrHoppingTerms = Parser.GetNbrLines();
+	  this->HoppingTerms = new Complex[NbrHoppingTerms];
+	  this->KineticQf = Parser.GetAsIntegerArray (0);
+	  this->KineticQi = Parser.GetAsIntegerArray (1);
+	  double *TmpRe = Parser.GetAsDoubleArray (2);
+	  if (Parser.GetNbrColumns()==4)
+	    {
+	      double *TmpIm = Parser.GetAsDoubleArray (3);
+	      for (int i=0; i<NbrHoppingTerms; ++i)
+		this->HoppingTerms[i]=Complex(TmpRe[i],TmpIm[i]);
+	      delete [] TmpIm; 
+	    }
+	  else
+	    {
+	      for (int i=0; i<NbrHoppingTerms; ++i)
+		this->HoppingTerms[i]=Complex(TmpRe[i],0.0);
+	    }
+	  delete [] TmpRe;
+	}
+      else
+	{
+	  cout << "Error parsing single particle interactions "<<this->OneParticleTerms<<
+	    " (3 or 4 columns required: Qf, Qi, Re(M), [Im(M)])"<<endl;
+	  exit(1);
+	}
+    }
+  else
+    {
+      this->NbrHoppingTerms = 0;
+    }
+
+  this->NbrInteractionFactors=0;
+  
+  if (NbrQ12Indices>0)
+    {
+      for (int i=0; i<NbrQ12Indices; ++i)
+	{
+	  delete [] this->Q3PerQ12[i];
+	  delete [] this->Q4PerQ12[i];
+	}
+      delete [] this->NbrQ34Values;
+      delete [] this->InteractionFactors;
+      delete [] this->Q1Value;
+      delete [] this->Q2Value;
+      
+    }
+  if (this->TwoParticleTerms!=0)
+    {
+      if (!IsFile(this->TwoParticleTerms))
+	{
+	  cout << "Could not read file with two-particle interactions "<<this->TwoParticleTerms<<endl;
+	  exit(1);
+	}
+      MultiColumnASCIIFile Parser;
+      if ((Parser.Parse(this->TwoParticleTerms))&&(Parser.GetNbrColumns()<6))
+	{
+	  int TmpNbrLines = Parser.GetNbrLines();
+	  this->NbrQ12Indices = 0;
+	  this->NbrDiagonalInteractionFactors = 0;
+	  int TmpNbrInteractionFactors=0;
+	  int *TmpQ1 = Parser.GetAsIntegerArray (0);
+	  int *TmpQ2 = Parser.GetAsIntegerArray (1);
+	  int *TmpQ3 = Parser.GetAsIntegerArray (2);
+	  int *TmpQ4 = Parser.GetAsIntegerArray (3);
+	  double *TmpRe = Parser.GetAsDoubleArray (4);
+	  double *TmpIm = Parser.GetAsDoubleArray (5);
+	  // count pairs of Q1,Q2 first
+	  int oldQ1=TmpQ1[0], oldQ2=TmpQ2[0];
+	  int *TmpNbrQ34Values = new int[TmpNbrLines];
+	  TmpNbrQ34Values[NbrQ12Indices]=0;
+	  int Pos=0;
+	  while (Pos<TmpNbrLines)
+	    {
+	      while ((TmpQ1[Pos]==oldQ1)&&(TmpQ2[Pos]==oldQ2))
+		{
+		  // have diagonal element?
+		  if ((TmpQ1[Pos]==TmpQ2[Pos])&&(TmpQ1[Pos]==TmpQ3[Pos])&&(TmpQ1[Pos]==TmpQ4[Pos]))
+		    ++this->NbrDiagonalInteractionFactors;
+		  else
+		    {
+		      ++TmpNbrQ34Values[NbrQ12Indices];
+		      ++TmpNbrInteractionFactors;
+		    }
+		  ++Pos;
+		}
+	      ++NbrQ12Indices;	     
+	      oldQ1=TmpQ1[Pos];
+	      oldQ2=TmpQ2[Pos];
+	      // have diagonal element?
+	      if ((TmpQ1[Pos]==TmpQ2[Pos])&&(TmpQ1[Pos]==TmpQ3[Pos])&&(TmpQ1[Pos]==TmpQ4[Pos]))
+		{
+		  ++this->NbrDiagonalInteractionFactors;
+		  TmpNbrQ34Values[NbrQ12Indices]=0;
+		}
+	      else
+		TmpNbrQ34Values[NbrQ12Indices]=1;
+	      ++Pos;
+	    }
+
+	  // assign memory
+	  this->NbrQ34Values = new int[NbrQ12Indices];
+	  for (int i=0; i<NbrQ12Indices; ++i)
+	    this->NbrQ34Values[i]=TmpNbrQ34Values[i];
+	  delete [] TmpNbrQ34Values;
+	  this->InteractionFactors = new Complex[TmpNbrInteractionFactors];
+	  this->Q1Value = new int[NbrQ12Indices];
+	  this->Q2Value = new int[NbrQ12Indices];
+	  for (int i=0; i<NbrQ12Indices; ++i)
+	    {
+	      this->Q3PerQ12[i] = new int[NbrQ34Values[i]];
+	      this->Q4PerQ12[i] = new int[NbrQ34Values[i]];
+	    }
+	  this->DiagonalQValues = new int[NbrDiagonalInteractionFactors];
+	  this->DiagonalInteractionFactors = new double[NbrDiagonalInteractionFactors];
+	  // read matrix elements into storage structure
+	  int Q12Index=0;
+	  int Q34Index=0;
+	  int GeneralIndex=0;
+	  int DiagonalIndex=0;
+	  Q1Value[0]=TmpQ1[0];
+	  Q2Value[0]=TmpQ2[0];
+	  oldQ1=TmpQ1[0];
+	  oldQ2=TmpQ2[0];
+	  Pos=0;
+	  while (Pos<TmpNbrLines)
+	    {
+	      while ((TmpQ1[Pos]==oldQ1)&&(TmpQ2[Pos]==oldQ2))
+		{
+		  // have diagonal element?
+		  if ((TmpQ1[Pos]==TmpQ2[Pos])&&(TmpQ1[Pos]==TmpQ3[Pos])&&(TmpQ1[Pos]==TmpQ4[Pos]))
+		    {
+		      this->DiagonalQValues[DiagonalIndex]=TmpQ1[Pos];
+		      this->DiagonalInteractionFactors[DiagonalIndex++]=TmpRe[Pos];
+		    }
+		  else
+		    {
+		      Q3PerQ12[Q12Index][Q34Index]=TmpQ3[Pos];
+		      Q4PerQ12[Q12Index][Q34Index++]=TmpQ4[Pos];
+		      this->InteractionFactors[GeneralIndex++]=Complex(TmpRe[Pos],TmpIm[Pos]);
+		    }
+		  ++Pos;
+		}
+	      ++Q12Index;
+	      Q34Index=0;
+	      Q1Value[Q12Index]=TmpQ1[Pos];
+	      Q2Value[Q12Index]=TmpQ2[Pos];
+	      oldQ1=TmpQ1[Pos];
+	      oldQ2=TmpQ2[Pos];
+	      // have diagonal element?
+	      if ((TmpQ1[Pos]==TmpQ2[Pos])&&(TmpQ1[Pos]==TmpQ3[Pos])&&(TmpQ1[Pos]==TmpQ4[Pos]))
+		{
+		  this->DiagonalQValues[DiagonalIndex]=TmpQ1[Pos];
+		  this->DiagonalInteractionFactors[DiagonalIndex++]=TmpRe[Pos];
+		}
+	      else
+		{
+		  Q3PerQ12[Q12Index][Q34Index]=TmpQ3[Pos];
+		  Q4PerQ12[Q12Index][Q34Index++]=TmpQ4[Pos];
+		  this->InteractionFactors[GeneralIndex++]=Complex(TmpRe[Pos],TmpIm[Pos]);
+		}
+	      ++Pos;
+	    }
+	  if (GeneralIndex!=TmpNbrInteractionFactors)
+	    {
+	      cout << "Inconsistency in count of matrix elements for ParticleOnLatticeExternalHamiltonian"<<endl;
+	      exit(1);
+	    }
+	  delete [] TmpQ1;
+	  delete [] TmpQ2;
+	  delete [] TmpQ3;
+	  delete [] TmpQ4;
+	  delete [] TmpRe;
+	  delete [] TmpIm;
+	}
+      else
+	{
+	  cout << "Error parsing two-particle interactions "<<this->TwoParticleTerms<<
+	    " [6 columns required: Q1, Q2, Q3, Q4, Re(M), Im(M)]"<<endl;
+	  exit(-1);
+	}
+    }
+  else
+    {
+      // we have no general four-particle interactions:     
+      this->NbrQ12Indices=0;
+    }
+  
+}

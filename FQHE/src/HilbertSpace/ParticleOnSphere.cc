@@ -461,4 +461,5 @@ RealVector ParticleOnSphere::TruncateStateWithPatternConstraint(RealVector& inpu
 
 int ParticleOnSphere::GetSzValue(int j)
 {
+  
 } 

@@ -36,6 +36,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "discard-sign", "compute sum_i |v1_i * v2_i| instead of sum_i v1_i * v2_i");
   (*SystemGroup) += new BooleanOption  ('x', "no-cross", "calculate only overlap of 1st vector with all others");
   (*SystemGroup) += new BooleanOption  ('x', "no-square", "calculate only the scalar products");
+  (*SystemGroup) += new BooleanOption  ('d', "dimension", "show vector dimension");
   (*SystemGroup) += new BooleanOption  ('\n', "quiet", "discard any output except the overlaps");
   
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -82,6 +83,10 @@ int main(int argc, char** argv)
 	    {
 	      cout << "can't open vector file " << VectorFiles[i] << endl;
 	      return -1;      
+	    }
+	  if ((i==0)&&(Manager.GetBoolean("dimension")))
+	    {
+	      cout << "Vector dimension = "<<State1.GetVectorDimension() <<endl;
 	    }
 	  for (int j=i+1; j<NbrVectors; ++j)
 	    {	      
@@ -132,6 +137,10 @@ int main(int argc, char** argv)
 	    {
 	      cout << "can't open vector file " << VectorFiles[i] << endl;
 	      return -1;      
+	    }
+	  if ((i==0)&&(Manager.GetBoolean("dimension")))
+	    {
+	      cout << "Vector dimension = "<<State1.GetVectorDimension() <<endl;
 	    }
 	  for (int j=i+1; j<NbrVectors; ++j)
 	    {	      
