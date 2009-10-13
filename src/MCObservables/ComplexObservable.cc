@@ -194,7 +194,7 @@ double ComplexObservable::VarianceOfBins()
 
 double ComplexObservable::ErrorEstimate()
 {
-  return (std::sqrt(this->VarianceOfBins()/this->BinNumber()));
+  return (sqrt(this->VarianceOfBins()/this->BinNumber()));
 }
 
 

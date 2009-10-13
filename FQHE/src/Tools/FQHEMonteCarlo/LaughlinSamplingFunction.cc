@@ -111,5 +111,5 @@ Complex LaughlinSamplingFunction::GetFunctionValue()
 void LaughlinSamplingFunction::ScaleByFactor(double scale)
 {
   double factors = (double)NbrParticles*(NbrParticles-1)*this->Exponent/2.0;
-  this->ElementNorm *= std::pow(scale,1.0/factors);
+  this->ElementNorm *= pow(scale,1.0/factors);
 }

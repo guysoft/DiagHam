@@ -586,14 +586,14 @@ double WeightedRealVectorObservable::VarianceOfBins(int i)  // treat as if all b
 
 double WeightedRealVectorObservable::ErrorEstimate(int i)
 {
-  return  (std::sqrt(this->VarianceOfBins(i)/this->SingleBinNumber(i)));
+  return  (sqrt(this->VarianceOfBins(i)/this->SingleBinNumber(i)));
 }
 
 double* WeightedRealVectorObservable::ErrorEstimate()
 {
   double *rst=this->VarianceOfBins();
   for (int i=0; i<NumFields;++i)
-    rst[i]=std::sqrt(rst[i]/this->SingleBinNumber(i));
+    rst[i]= sqrt(rst[i]/this->SingleBinNumber(i));
   return rst;
 }
 

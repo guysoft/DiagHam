@@ -195,7 +195,7 @@ double RealObservable::VarianceOfBins()
 
 double RealObservable::ErrorEstimate()
 {
-  return (std::sqrt(this->VarianceOfBins()/this->BinNumber()));
+  return (sqrt(this->VarianceOfBins()/this->BinNumber()));
 }
 
 

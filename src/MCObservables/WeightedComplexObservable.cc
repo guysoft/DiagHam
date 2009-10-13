@@ -285,7 +285,7 @@ double WeightedComplexObservable::VarianceOfBins()  // treat as if all bins had 
 
 double WeightedComplexObservable::ErrorEstimate()
 {
-  return (std::sqrt(this->VarianceOfBins()/this->BinNumber()));
+  return (sqrt(this->VarianceOfBins()/this->BinNumber()));
 }
 
 

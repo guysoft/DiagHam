@@ -610,7 +610,7 @@ RealSymmetricMatrix  BosonOnSphereShort::EvaluatePartialDensityMatrix (int subsy
   int ShiftedLzSector = (lzSector + nbrBosonSector * (subsytemSize - 1)) >> 1;
   int ShiftedLzComplementarySector = ShiftedTotalLz - ShiftedLzSector;
   int NbrBosonsComplementarySector = this->NbrBosons - nbrBosonSector;
-  if ((ShiftedLzComplementarySector < 0) || (ShiftedLzComplementarySector > (NbrBosonsComplementarySector * this->LzMax)))
+  if ((ShiftedLzComplementarySector < (NbrBosonsComplementarySector * subsytemSize)) || (ShiftedLzComplementarySector > (NbrBosonsComplementarySector * (this->LzMax))))
     {
       RealSymmetricMatrix TmpDensityMatrix;
       return TmpDensityMatrix;	  
@@ -882,36 +882,36 @@ RealVector& BosonOnSphereShort::ConvertFromUnnormalizedMonomial(RealVector& stat
       int Index1 = 0;
       int Index2 = 0;
       double Coefficient = Factor;
-      while ((Index1 < this->NbrBosons) && (Index2 < this->NbrBosons))
+      if (symmetryFactor == true)
 	{
-	  while ((Index1 < this->NbrBosons) && (TmpMonomialReference[Index1] > TmpMonomial[Index2]))
+	  while ((Index1 < this->NbrBosons) && (Index2 < this->NbrBosons))
+	    {
+	      while ((Index1 < this->NbrBosons) && (TmpMonomialReference[Index1] > TmpMonomial[Index2]))
+		{
+		  Coefficient *= InvSqrtCoefficients[TmpMonomialReference[Index1]];
+		  ++Index1;
+		}
+	      while ((Index1 < this->NbrBosons) && (Index2 < this->NbrBosons) && (TmpMonomialReference[Index1] == TmpMonomial[Index2]))
+		{
+		  ++Index1;
+		  ++Index2;
+		}
+	      while ((Index2 < this->NbrBosons) && (TmpMonomialReference[Index1] < TmpMonomial[Index2]))
+		{
+		  Coefficient *= SqrtCoefficients[TmpMonomial[Index2]];
+		  ++Index2;
+		}	  
+	    }
+	  while (Index1 < this->NbrBosons)
 	    {
 	      Coefficient *= InvSqrtCoefficients[TmpMonomialReference[Index1]];
 	      ++Index1;
 	    }
-	  while ((Index1 < this->NbrBosons) && (Index2 < this->NbrBosons) && (TmpMonomialReference[Index1] == TmpMonomial[Index2]))
+	  while (Index2 < this->NbrBosons)
 	    {
-	      ++Index1;
+	      Coefficient *= SqrtCoefficients[TmpMonomialReference[Index2]];
 	      ++Index2;
 	    }
-	  while ((Index2 < this->NbrBosons) && (TmpMonomialReference[Index1] < TmpMonomial[Index2]))
-	    {
-	      Coefficient *= SqrtCoefficients[TmpMonomial[Index2]];
-	      ++Index2;
-	    }	  
-	}
-      while (Index1 < this->NbrBosons)
-	{
-	  Coefficient *= InvSqrtCoefficients[TmpMonomialReference[Index1]];
-	  ++Index1;
-	}
-      while (Index2 < this->NbrBosons)
-	{
-	  Coefficient *= SqrtCoefficients[TmpMonomialReference[Index2]];
-	  ++Index2;
-	}
-      if (symmetryFactor == true)
-	{
 	  Factorial = ReferenceFactorial;
 	  this->FermionToBoson(this->FermionBasis->StateDescription[i], this->FermionBasis->StateLzMax[i], 
 			       this->TemporaryState, this->TemporaryStateLzMax);
@@ -919,6 +919,16 @@ RealVector& BosonOnSphereShort::ConvertFromUnnormalizedMonomial(RealVector& stat
 	    if (this->TemporaryState[k] > 1)
 	      Factorial.FactorialDivide(this->TemporaryState[k]);
 	  Coefficient *= sqrt(Factorial.GetNumericalValue());
+	}
+      else
+	{
+	  Factorial = ReferenceFactorial;
+	  this->FermionToBoson(this->FermionBasis->StateDescription[i], this->FermionBasis->StateLzMax[i], 
+			       this->TemporaryState, this->TemporaryStateLzMax);
+	  for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
+	    if (this->TemporaryState[k] > 1)
+	      Factorial.FactorialDivide(this->TemporaryState[k]);
+	  Coefficient *= (Factorial.GetNumericalValue());
 	}
       state[i] *= Coefficient;
     }

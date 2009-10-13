@@ -288,7 +288,7 @@ double WeightedRealObservable::VarianceOfBins()  // treat as if all bins had the
 
 double WeightedRealObservable::ErrorEstimate()
 {
-  return (std::sqrt(this->VarianceOfBins()/this->BinNumber()));
+  return (sqrt(this->VarianceOfBins()/this->BinNumber()));
 }
 
 

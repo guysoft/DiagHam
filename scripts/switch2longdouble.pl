@@ -34,8 +34,8 @@ sub SwitchToLongDouble
       {
 	if (!($TmpLine =~ /^\s*\/\//))
 	  {
-	    $TmpLine =~ s/double/long double/mg;
-	    $TmpLine =~ s/long long double/long double/mg;
+	    $TmpLine =~ s/double\s/long double /mg;
+	    $TmpLine =~ s/long long double\s/long double\s/mg;
 	    $TmpLine =~ s/pow\s*\(/powl\(/mg;
 	    $TmpLine =~ s/cos\s*\(/cosl\(/mg;
 	    $TmpLine =~ s/sin\s*\(/sinl\(/mg;
@@ -50,6 +50,7 @@ sub SwitchToLongDouble
 	    $TmpLine =~ s/exp2\s*\(/exp2l\(/mg;
 	    $TmpLine =~ s/log\s*\(/logl\(/mg;
 	    $TmpLine =~ s/sqrt\s*\(/sqrtl\(/mg;
+	    $TmpLine =~ s/cout\.precision\(14\)/cout\.precision\(18\)/mg;
 	  }
 	$TmpFile .= $TmpLine;
       }

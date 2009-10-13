@@ -29,6 +29,7 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
 
   (*SystemGroup) += new SingleStringOption  ('\0', "vector", "vector to normalize");
+  (*SystemGroup) += new BooleanOption  ('\n', "careful-normalize", "normalize with higher numerical accuracy");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -48,7 +49,19 @@ int main(int argc, char** argv)
       cout << "can't open vector file " << Manager.GetString("vector") << endl;
       return -1;      
     }
-  State /= State.Norm();
+
+  if (Manager.GetBoolean("careful-normalize") == false)
+    {
+      State /= State.Norm();
+    }
+  else
+    {
+      long double Norm = 0.0;
+      for (long i = 0l; i < State.GetLargeVectorDimension();++i)
+	Norm += ((long double) State[i]) * ((long double) State[i]);
+      Norm = sqrtl(Norm);
+      State /= (double) Norm;      
+    }
   if (State.WriteVector (Manager.GetString("vector")) == false)
     {
       cout << "can't overwrite vector file " << Manager.GetString("vector") << endl;

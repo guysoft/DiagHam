@@ -378,7 +378,7 @@ double WaveFunctionOverlapOptimizer::GetRandomOffset(int parameter)
     prefactor = 0.01/prefactor;
   else
     prefactor = 100.0;
-  return (sign * prefactor * std::exp(-ran));
+  return (sign * prefactor * exp(-ran));
 }
 
 
@@ -438,7 +438,7 @@ double WaveFunctionOverlapOptimizer::GetMaximumSqrOverlap(RealVector &optimalPar
       else if(CloudyPoints>0)
 	{  // random Overlap lower, but give it a chance here, anyways
 	  double reference = (point==0 ? Precision : overlaps[point]-overlaps[0]);
-	  if ( std::exp(- ( overlaps[point]-randomOverlap) / reference ) > Generator->GetRealRandomNumber() )
+	  if (exp(- ( overlaps[point]-randomOverlap) / reference ) > Generator->GetRealRandomNumber() )
 	    point = point2; // use random point
 	}
       this->LastOverlaps[(NbrIterations++)%NUM_SAVE]=overlaps[point];
