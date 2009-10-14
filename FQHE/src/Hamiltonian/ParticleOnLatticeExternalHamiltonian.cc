@@ -70,7 +70,7 @@ ParticleOnLatticeExternalHamiltonian::ParticleOnLatticeExternalHamiltonian(Parti
       strcpy(this->OneParticleTerms,oneParticleTerms);
     }
   else this->OneParticleTerms=NULL;
-  if (TwoParticleTerms!=NULL)
+  if (twoParticleTerms!=NULL)
     {
       this->TwoParticleTerms = new char[strlen(twoParticleTerms)+2];
       strcpy(this->TwoParticleTerms,twoParticleTerms);
@@ -83,6 +83,7 @@ ParticleOnLatticeExternalHamiltonian::ParticleOnLatticeExternalHamiltonian(Parti
   this->HamiltonianShift=0.0;
   this->FluxDensity=0.0;
   this->Architecture = architecture;
+  cout << "Calling this->EvaluateInteractionFactors()"<<endl;
   this->EvaluateInteractionFactors();
   this->FastMultiplicationFlag = false;
   long MinIndex;
@@ -212,20 +213,7 @@ void ParticleOnLatticeExternalHamiltonian::EvaluateInteractionFactors()
 
   this->NbrInteractionFactors=0;
   
-  if (NbrQ12Indices>0)
-    {
-      for (int i=0; i<NbrQ12Indices; ++i)
-	{
-	  delete [] this->Q3PerQ12[i];
-	  delete [] this->Q4PerQ12[i];
-	}
-      delete [] this->NbrQ34Values;
-      delete [] this->InteractionFactors;
-      delete [] this->Q1Value;
-      delete [] this->Q2Value;
-      
-    }
-  if (this->TwoParticleTerms!=0)
+  if (this->TwoParticleTerms!=NULL)
     {
       if (!IsFile(this->TwoParticleTerms))
 	{
@@ -233,7 +221,7 @@ void ParticleOnLatticeExternalHamiltonian::EvaluateInteractionFactors()
 	  exit(1);
 	}
       MultiColumnASCIIFile Parser;
-      if ((Parser.Parse(this->TwoParticleTerms))&&(Parser.GetNbrColumns()<6))
+      if ((Parser.Parse(this->TwoParticleTerms))&&(Parser.GetNbrColumns()>=6))
 	{
 	  int TmpNbrLines = Parser.GetNbrLines();
 	  this->NbrQ12Indices = 0;
@@ -248,36 +236,64 @@ void ParticleOnLatticeExternalHamiltonian::EvaluateInteractionFactors()
 	  // count pairs of Q1,Q2 first
 	  int oldQ1=TmpQ1[0], oldQ2=TmpQ2[0];
 	  int *TmpNbrQ34Values = new int[TmpNbrLines];
-	  TmpNbrQ34Values[NbrQ12Indices]=0;
+	  bool HaveLargerQ1=false, HaveSmallerQ1=false;
+	  bool HaveLargerQ3=false, HaveSmallerQ3=false;
+	  TmpNbrQ34Values[0]=0;
 	  int Pos=0;
 	  while (Pos<TmpNbrLines)
 	    {
-	      while ((TmpQ1[Pos]==oldQ1)&&(TmpQ2[Pos]==oldQ2))
+	      if (TmpQ1[Pos]>TmpQ2[Pos]) HaveLargerQ1=true;
+	      else if (TmpQ1[Pos]<TmpQ2[Pos]) HaveSmallerQ1=true;
+	      if (TmpQ3[Pos]>TmpQ4[Pos]) HaveLargerQ3=true;
+	      else if (TmpQ3[Pos]<TmpQ4[Pos]) HaveSmallerQ3=true;
+	      while ((TmpQ1[Pos]==oldQ1)&&(TmpQ2[Pos]==oldQ2)&&(Pos<TmpNbrLines))
 		{
 		  // have diagonal element?
 		  if ((TmpQ1[Pos]==TmpQ2[Pos])&&(TmpQ1[Pos]==TmpQ3[Pos])&&(TmpQ1[Pos]==TmpQ4[Pos]))
-		    ++this->NbrDiagonalInteractionFactors;
+		    {
+		      ++this->NbrDiagonalInteractionFactors;
+		      //cout << Pos<<" : "<< TmpQ1[Pos]<<" " << TmpQ2[Pos]<<" " << TmpQ3[Pos]<<" " << TmpQ4[Pos]<<" : diagonal"<<endl;
+		    }
 		  else
 		    {
 		      ++TmpNbrQ34Values[NbrQ12Indices];
 		      ++TmpNbrInteractionFactors;
+		      //cout << Pos<<" : "<< TmpQ1[Pos]<<" " << TmpQ2[Pos]<<" " << TmpQ3[Pos]<<" " << TmpQ4[Pos]<<" : off-diagonal"<<endl;
 		    }
 		  ++Pos;
 		}
-	      ++NbrQ12Indices;	     
-	      oldQ1=TmpQ1[Pos];
-	      oldQ2=TmpQ2[Pos];
-	      // have diagonal element?
-	      if ((TmpQ1[Pos]==TmpQ2[Pos])&&(TmpQ1[Pos]==TmpQ3[Pos])&&(TmpQ1[Pos]==TmpQ4[Pos]))
+	      if (Pos<TmpNbrLines)
 		{
-		  ++this->NbrDiagonalInteractionFactors;
-		  TmpNbrQ34Values[NbrQ12Indices]=0;
+		  ++NbrQ12Indices;	     
+		  oldQ1=TmpQ1[Pos];
+		  oldQ2=TmpQ2[Pos];
+		  // have diagonal element?
+		  if ((TmpQ1[Pos]==TmpQ2[Pos])&&(TmpQ1[Pos]==TmpQ3[Pos])&&(TmpQ1[Pos]==TmpQ4[Pos]))
+		    {
+		      ++this->NbrDiagonalInteractionFactors;
+		      TmpNbrQ34Values[NbrQ12Indices]=0;
+		      //cout << Pos<<" : "<< TmpQ1[Pos]<<" " << TmpQ2[Pos]<<" " << TmpQ3[Pos]<<" " << TmpQ4[Pos]<<" : diagonal"<<endl;
+		    }
+		  else
+		    {
+		      ++TmpNbrInteractionFactors;
+		      TmpNbrQ34Values[NbrQ12Indices]=1;
+		      //cout << Pos<<" : "<< TmpQ1[Pos]<<" " << TmpQ2[Pos]<<" " << TmpQ3[Pos]<<" " << TmpQ4[Pos]<<" : off-diagonal"<<endl;
+		    }
+		  ++Pos;
 		}
-	      else
-		TmpNbrQ34Values[NbrQ12Indices]=1;
-	      ++Pos;
 	    }
-
+	  ++NbrQ12Indices;
+	  int sum=NbrDiagonalInteractionFactors;
+	  cout << "Count of matrix elements:"<<endl
+	       << "Diagonal: "<<NbrDiagonalInteractionFactors<<endl
+	       << "NbrQ12Indices= "<<NbrQ12Indices<<endl;
+	  for (int i=0; i<NbrQ12Indices; ++i)
+	    {
+	      cout << "  NbrQ34Values["<<i<<"]="<<TmpNbrQ34Values[i]<<endl;
+	      sum+=TmpNbrQ34Values[i];
+	    }
+	  cout << "total elements: "<<sum<<" (lines: "<<TmpNbrLines<<")"<<endl;
 	  // assign memory
 	  this->NbrQ34Values = new int[NbrQ12Indices];
 	  for (int i=0; i<NbrQ12Indices; ++i)
@@ -286,6 +302,8 @@ void ParticleOnLatticeExternalHamiltonian::EvaluateInteractionFactors()
 	  this->InteractionFactors = new Complex[TmpNbrInteractionFactors];
 	  this->Q1Value = new int[NbrQ12Indices];
 	  this->Q2Value = new int[NbrQ12Indices];
+	  this->Q3PerQ12 = new int*[NbrQ12Indices];
+	  this->Q4PerQ12 = new int*[NbrQ12Indices];
 	  for (int i=0; i<NbrQ12Indices; ++i)
 	    {
 	      this->Q3PerQ12[i] = new int[NbrQ34Values[i]];
@@ -293,6 +311,16 @@ void ParticleOnLatticeExternalHamiltonian::EvaluateInteractionFactors()
 	    }
 	  this->DiagonalQValues = new int[NbrDiagonalInteractionFactors];
 	  this->DiagonalInteractionFactors = new double[NbrDiagonalInteractionFactors];
+	  // test whether we need to apply symmetry factors
+	  bool Q12Symmetry=false, Q34Symmetry=false;
+	  if (HaveSmallerQ1^HaveLargerQ1)
+	    Q12Symmetry=true;
+	  if (HaveSmallerQ3^HaveLargerQ3)
+	    Q34Symmetry=true;
+	  cout << "Assuming symmetry in";
+	  if (Q12Symmetry) cout << " Q12";
+	  if (Q34Symmetry) cout << " Q34";
+	  cout<<endl;
 	  // read matrix elements into storage structure
 	  int Q12Index=0;
 	  int Q34Index=0;
@@ -305,7 +333,7 @@ void ParticleOnLatticeExternalHamiltonian::EvaluateInteractionFactors()
 	  Pos=0;
 	  while (Pos<TmpNbrLines)
 	    {
-	      while ((TmpQ1[Pos]==oldQ1)&&(TmpQ2[Pos]==oldQ2))
+	      while ((TmpQ1[Pos]==oldQ1)&&(TmpQ2[Pos]==oldQ2)&&(Pos<TmpNbrLines))
 		{
 		  // have diagonal element?
 		  if ((TmpQ1[Pos]==TmpQ2[Pos])&&(TmpQ1[Pos]==TmpQ3[Pos])&&(TmpQ1[Pos]==TmpQ4[Pos]))
@@ -317,33 +345,47 @@ void ParticleOnLatticeExternalHamiltonian::EvaluateInteractionFactors()
 		    {
 		      Q3PerQ12[Q12Index][Q34Index]=TmpQ3[Pos];
 		      Q4PerQ12[Q12Index][Q34Index++]=TmpQ4[Pos];
-		      this->InteractionFactors[GeneralIndex++]=Complex(TmpRe[Pos],TmpIm[Pos]);
+		      double SymFactor=1.0;
+		      if ((Q12Symmetry)&&(TmpQ1[Pos]!=TmpQ2[Pos])) SymFactor*=2.0;
+		      if ((Q34Symmetry)&&(TmpQ3[Pos]!=TmpQ4[Pos])) SymFactor*=2.0;
+		      this->InteractionFactors[GeneralIndex++]=SymFactor*Complex(TmpRe[Pos],TmpIm[Pos]);
 		    }
 		  ++Pos;
 		}
-	      ++Q12Index;
-	      Q34Index=0;
-	      Q1Value[Q12Index]=TmpQ1[Pos];
-	      Q2Value[Q12Index]=TmpQ2[Pos];
-	      oldQ1=TmpQ1[Pos];
-	      oldQ2=TmpQ2[Pos];
-	      // have diagonal element?
-	      if ((TmpQ1[Pos]==TmpQ2[Pos])&&(TmpQ1[Pos]==TmpQ3[Pos])&&(TmpQ1[Pos]==TmpQ4[Pos]))
+	      if (Pos<TmpNbrLines)
 		{
-		  this->DiagonalQValues[DiagonalIndex]=TmpQ1[Pos];
-		  this->DiagonalInteractionFactors[DiagonalIndex++]=TmpRe[Pos];
+		  ++Q12Index;
+		  Q34Index=0;
+		  Q1Value[Q12Index]=TmpQ1[Pos];
+		  Q2Value[Q12Index]=TmpQ2[Pos];
+		  oldQ1=TmpQ1[Pos];
+		  oldQ2=TmpQ2[Pos];
+		  // have diagonal element?
+		  if ((TmpQ1[Pos]==TmpQ2[Pos])&&(TmpQ1[Pos]==TmpQ3[Pos])&&(TmpQ1[Pos]==TmpQ4[Pos]))
+		    {
+		      this->DiagonalQValues[DiagonalIndex]=TmpQ1[Pos];
+		      this->DiagonalInteractionFactors[DiagonalIndex++]=TmpRe[Pos];
+		    }
+		  else
+		    {
+		      Q3PerQ12[Q12Index][Q34Index]=TmpQ3[Pos];
+		      Q4PerQ12[Q12Index][Q34Index++]=TmpQ4[Pos];
+		      double SymFactor=1.0;
+		      if ((Q12Symmetry)&&(TmpQ1[Pos]!=TmpQ2[Pos])) SymFactor*=2.0;
+		      if ((Q34Symmetry)&&(TmpQ3[Pos]!=TmpQ4[Pos])) SymFactor*=2.0;
+		      this->InteractionFactors[GeneralIndex++]=SymFactor*Complex(TmpRe[Pos],TmpIm[Pos]);
+		    }
+		  ++Pos;
 		}
-	      else
-		{
-		  Q3PerQ12[Q12Index][Q34Index]=TmpQ3[Pos];
-		  Q4PerQ12[Q12Index][Q34Index++]=TmpQ4[Pos];
-		  this->InteractionFactors[GeneralIndex++]=Complex(TmpRe[Pos],TmpIm[Pos]);
-		}
-	      ++Pos;
 	    }
 	  if (GeneralIndex!=TmpNbrInteractionFactors)
 	    {
 	      cout << "Inconsistency in count of matrix elements for ParticleOnLatticeExternalHamiltonian"<<endl;
+	      exit(1);
+	    }
+	  if (DiagonalIndex!=NbrDiagonalInteractionFactors)
+	    {
+	      cout << "Inconsistency in count of diagonal matrix elements for ParticleOnLatticeExternalHamiltonian"<<endl;
 	      exit(1);
 	    }
 	  delete [] TmpQ1;
@@ -364,6 +406,7 @@ void ParticleOnLatticeExternalHamiltonian::EvaluateInteractionFactors()
     {
       // we have no general four-particle interactions:     
       this->NbrQ12Indices=0;
+      cout << "No two-particle interactions"<<endl;
     }
   
 }

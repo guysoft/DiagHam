@@ -420,7 +420,7 @@ double BosonOnLatticeGeneric::AA (int index, int r1, int r2)
   if (this->ProdATemporaryState[r2]==0)
     {
       --ProdATemporaryStateHighestBit;
-      while (ProdATemporaryState[TemporaryStateHighestBit] == 0)
+      while (ProdATemporaryState[ProdATemporaryStateHighestBit] == 0)
 	--ProdATemporaryStateHighestBit;
     }
   Coefficient *= this->ProdATemporaryState[r1];
@@ -428,7 +428,7 @@ double BosonOnLatticeGeneric::AA (int index, int r1, int r2)
   if (this->ProdATemporaryState[r1]==0)
     {
       --ProdATemporaryStateHighestBit;
-      while (ProdATemporaryState[TemporaryStateHighestBit] == 0)
+      while (ProdATemporaryState[ProdATemporaryStateHighestBit] == 0)
 	--ProdATemporaryStateHighestBit;
     }
   return sqrt(Coefficient);
@@ -446,6 +446,7 @@ int BosonOnLatticeGeneric::AdAd (int q1, int q2, double& coefficient)
 {
   for (int i = 0; i < this->NbrStates; ++i)
     this->TemporaryState[i] = this->ProdATemporaryState[i];
+  TemporaryStateHighestBit=ProdATemporaryStateHighestBit;
   ++this->TemporaryState[q2];
   coefficient = this->TemporaryState[q2];
   if (q2 > TemporaryStateHighestBit)
