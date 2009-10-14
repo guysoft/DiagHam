@@ -37,6 +37,8 @@
 #include "GeneralTools/StringTools.h"
 #include "Architecture/AbstractArchitecture.h"
 
+#include <cstdlib>
+#include <cstring>
 #include <iostream>
 using std::cout;
 using std::endl;

@@ -10,7 +10,7 @@
 #include <math.h>
 #include <sys/time.h>
 #include <stdio.h>
-
+#include <cstring>
 
 using std::ios;
 using std::cout;
