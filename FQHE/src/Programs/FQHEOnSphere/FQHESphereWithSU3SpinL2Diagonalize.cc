@@ -135,7 +135,7 @@ int main(int argc, char** argv)
 	   NbrParticles, LzMax, TotalTz, TotalY);
 
 
-  ParticleOnSphereWithSU3Spin* Space;
+  ParticleOnSphereWithSU3Spin* Space=0;
   if (((BooleanOption*) Manager["boson"])->GetBoolean() == false)
     {
       if ((TzSymmetrizedBasis == false) && (Z3SymmetrizedBasis == false))

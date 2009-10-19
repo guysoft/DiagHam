@@ -53,6 +53,9 @@ using std::endl;
 using std::ostream;
 
 
+// threshold before something is defined different from zero
+#define THRESHOLD 1.71245451764e-13
+
 // default constructor
 //
 AbstractQHEOnLatticeHamiltonian::AbstractQHEOnLatticeHamiltonian()
@@ -462,13 +465,13 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiply(ComplexVecto
 			    {
 			      TmpInteractionRe = this->InteractionFactors[ProcessedNbrInteractionFactors].Re;
 			      TmpInteractionIm = this->InteractionFactors[ProcessedNbrInteractionFactors].Im;
-			      cout << "this->InteractionFactors["<<ProcessedNbrInteractionFactors<<"]="<<
-				this->InteractionFactors[ProcessedNbrInteractionFactors]
-				   << ", TmpInteractionRe="<<TmpInteractionRe<<", TmpInteractionIm="<<TmpInteractionIm<<endl;
+// 			      cout << "this->InteractionFactors["<<ProcessedNbrInteractionFactors<<"]="<<
+// 				this->InteractionFactors[ProcessedNbrInteractionFactors]
+// 				   << ", TmpInteractionRe="<<TmpInteractionRe<<", TmpInteractionIm="<<TmpInteractionIm<<endl;
 			      vDestination.Re(Index) += Coefficient2 * (TmpRe*TmpInteractionRe-TmpIm*TmpInteractionIm);
 			      vDestination.Im(Index) += Coefficient2 * (TmpRe*TmpInteractionIm+TmpIm*TmpInteractionRe);
-			      cout << this->Q1Value[i12]<< " " << this->Q2Value[i12] << " " << TmpQ3Values[i34] << " "
-				   << TmpQ4Values[i34] << " " <<TmpInteractionRe << " " << TmpInteractionIm << endl;
+// 			      cout << "Element on "<<i<<"->"<<Index<<" from "<<this->Q1Value[i12]<< " " << this->Q2Value[i12] << " " << TmpQ3Values[i34] << " "
+// 				   << TmpQ4Values[i34] << " " <<TmpInteractionRe << " " << TmpInteractionIm << endl;
 			    }
 			  ++ProcessedNbrInteractionFactors;
 			}
@@ -514,20 +517,20 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiply(ComplexVecto
 	      TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[i];
 	      TmpRe = vSource[k].Re;
 	      TmpIm = vSource[k].Im;
-	      cout << "Component "<<i<<" NbrReal="<<TmpNbrRealInteraction<<", NbrComplex="<<TmpNbrComplexInteraction<<endl;
+	      //	      cout << "Component "<<i<<" NbrReal="<<TmpNbrRealInteraction<<", NbrComplex="<<TmpNbrComplexInteraction<<endl;
 	      int Pos=0;
 	      for (; Pos < TmpNbrRealInteraction; ++Pos)
 		{
-		  cout << "TmpIndexArray["<<Pos<<"]="<<TmpIndexArray[Pos]<<" TmpCoefficientIndexArray[Pos]="<<TmpCoefficientIndexArray[Pos]
-		       << " RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]]="<<RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]]<<endl;
+// 		  cout << "TmpIndexArray["<<Pos<<"]="<<TmpIndexArray[Pos]<<" TmpCoefficientIndexArray[Pos]="<<TmpCoefficientIndexArray[Pos]
+// 		       << " RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]]="<<RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]]<<endl;
 		  vDestination.Re(TmpIndexArray[Pos]) +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]]*TmpRe;
 		  vDestination.Im(TmpIndexArray[Pos]) +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]]*TmpIm;
 		}
 	      for (int j=0; j < TmpNbrComplexInteraction; ++j, ++Pos)
 		{
 		  TmpCPtr= &(ComplexInteractionCoefficients[TmpCoefficientIndexArray[Pos]]);
-		  cout << "TmpIndexArray["<<Pos<<"]="<<TmpIndexArray[Pos]<<" TmpCoefficientIndexArray[Pos]="<<TmpCoefficientIndexArray[Pos]
-		       << " ComplexInteractionCoefficients[TmpCoefficientIndexArray[Pos]]="<<ComplexInteractionCoefficients[TmpCoefficientIndexArray[Pos]]<<endl;
+// 		  cout << "TmpIndexArray["<<Pos<<"]="<<TmpIndexArray[Pos]<<" TmpCoefficientIndexArray[Pos]="<<TmpCoefficientIndexArray[Pos]
+// 		       << " ComplexInteractionCoefficients[TmpCoefficientIndexArray[Pos]]="<<ComplexInteractionCoefficients[TmpCoefficientIndexArray[Pos]]<<endl;
 
 		  vDestination.Re(TmpIndexArray[Pos]) +=  TmpCPtr->Re*TmpRe-TmpCPtr->Im*TmpIm;
 		  vDestination.Im(TmpIndexArray[Pos]) +=  TmpCPtr->Re*TmpIm+TmpCPtr->Im*TmpRe;		  
@@ -1363,7 +1366,7 @@ long AbstractQHEOnLatticeHamiltonian::PartialFastMultiplicationMemory(int firstC
       qi = this->KineticQi[j];
       qf = this->KineticQf[j];
       TmpInteraction = this->HoppingTerms[j];
-      if (fabs(TmpInteraction.Im)<1e-14)
+      if (fabs(TmpInteraction.Im)<THRESHOLD)
 	{
 	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
@@ -1399,7 +1402,7 @@ long AbstractQHEOnLatticeHamiltonian::PartialFastMultiplicationMemory(int firstC
 	  int q3 = this->Q3Value[j];
 	  int q4 = this->Q4Value[j];
 	  TmpInteraction = this->InteractionFactors[j];
-	  if (fabs(TmpInteraction.Im)<1e-14)
+	  if (fabs(TmpInteraction.Im)<THRESHOLD)
 	    {
 	      for (int i = firstComponent; i < LastComponent; ++i)
 		{
@@ -1449,10 +1452,11 @@ long AbstractQHEOnLatticeHamiltonian::PartialFastMultiplicationMemory(int firstC
 		      if (Index < this->Particles->GetHilbertSpaceDimension())
 			{
 			  ++Memory;
-			  if (fabs(this->InteractionFactors[ProcessedNbrInteractionFactors].Im)<1e-14)
+			  if (fabs(this->InteractionFactors[ProcessedNbrInteractionFactors].Im)<THRESHOLD)
 			    ++this->NbrRealInteractionPerComponent[i - this->PrecalculationShift];
 			  else
 			    ++this->NbrComplexInteractionPerComponent[i - this->PrecalculationShift];
+			  // cout << "4b - connecting :"<<Index<<", "<<i<<": "<<Coefficient<<"*"<<Coefficient2<<"*"<<this->InteractionFactors[ProcessedNbrInteractionFactors]<< " (q's=["<<this->Q1Value[i12]<<", "<<this->Q2Value[i12]<<", "<<TmpQ3Values[i34]<<", "<<TmpQ4Values[i34]<<"])"<<endl;
 			}
 		      ++ProcessedNbrInteractionFactors;
 		    }
@@ -1470,7 +1474,7 @@ long AbstractQHEOnLatticeHamiltonian::PartialFastMultiplicationMemory(int firstC
 	{
 	  Coefficient = TmpParticles->AdAdAADiagonal(i, NbrDiagonalInteractionFactors,
 						     DiagonalInteractionFactors, DiagonalQValues);
-	  if (fabs(Coefficient)>1e-14)
+	  if (fabs(Coefficient)>THRESHOLD)
 	    {
 	      ++Memory;
 	      ++this->NbrRealInteractionPerComponent[i - this->PrecalculationShift];
@@ -1518,6 +1522,8 @@ void AbstractQHEOnLatticeHamiltonian::EnableFastMultiplication()
   for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
     {
       TmpInteractionPerComponent = this->NbrRealInteractionPerComponent[TotalPos]+this->NbrComplexInteractionPerComponent[TotalPos];
+//       cout << "Interactions for component "<<i<<":  real "<< this->NbrRealInteractionPerComponent[TotalPos]<<" complex "
+// 	   << this->NbrComplexInteractionPerComponent[TotalPos] <<endl;
       this->InteractionPerComponentIndex[TotalPos] = new int [TmpInteractionPerComponent];
       this->InteractionPerComponentCoefficientIndex[TotalPos] = new unsigned short [TmpInteractionPerComponent];      
       TmpIndexArray = this->InteractionPerComponentIndex[TotalPos];
@@ -1535,7 +1541,7 @@ void AbstractQHEOnLatticeHamiltonian::EnableFastMultiplication()
 	  if (Index < Dim)
 	    {
 	      //cout << "Element ("<<qi<<"->"<<qf<<"): "<<Coefficient<<endl;
-	      if (fabs(this->HoppingTerms[j].Im)<1e-14) // real element
+	      if (fabs(this->HoppingTerms[j].Im)<THRESHOLD) // real element
 		{
 		  TmpIndexArray[PosR] = Index;
 		  tmpElementPos = RealInteractionCoefficients.InsertElement
@@ -1561,7 +1567,7 @@ void AbstractQHEOnLatticeHamiltonian::EnableFastMultiplication()
 		  TmpCoefficientIndexArray[PosC] = (unsigned short) tmpElementPos;
 		  ++PosC;
 		}
-	      // cout << "connecting :"<<Index<<", "<<i<<": "<<Coefficient*this->HoppingTerms[j]<<endl;
+	      //cout << "Hopping connecting :"<<Index<<", "<<i<<": "<<Coefficient*this->HoppingTerms[j]<<endl;
 	    }
 	}
 
@@ -1577,7 +1583,7 @@ void AbstractQHEOnLatticeHamiltonian::EnableFastMultiplication()
 	      Index = TmpParticles->AdAdAA(i, q1, q2, q3, q4, Coefficient);
 	      if (Index < Dim)
 		{
-		  if (fabs(this->InteractionFactors[j].Im)<1e-14) // real element
+		  if (fabs(this->InteractionFactors[j].Im)<THRESHOLD) // real element
 		    {
 		      TmpIndexArray[PosR] = Index;
 		      tmpElementPos = RealInteractionCoefficients.InsertElement
@@ -1627,11 +1633,11 @@ void AbstractQHEOnLatticeHamiltonian::EnableFastMultiplication()
 		      Index = TmpParticles->AdAd(TmpQ3Values[i34], TmpQ4Values[i34], Coefficient2);
 		      if (Index < Dim)
 			{
-			  if (fabs(this->InteractionFactors[ProcessedNbrInteractionFactors].Im)<1e-14) 
+			  if (fabs(this->InteractionFactors[ProcessedNbrInteractionFactors].Im)<THRESHOLD) 
 			    {
 			      TmpIndexArray[PosR] = Index;
 			      tmpElementPos = RealInteractionCoefficients.InsertElement
-				(Coefficient*this->InteractionFactors[ProcessedNbrInteractionFactors].Re);
+				(Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors].Re);
 			      if (tmpElementPos > USHRT_MAX )
 				{
 				  cout << "Error: too many different real matrix elements for fast storage"<<endl;
@@ -1639,12 +1645,14 @@ void AbstractQHEOnLatticeHamiltonian::EnableFastMultiplication()
 				}
 			      TmpCoefficientIndexArray[PosR] = (unsigned short) tmpElementPos;
 			      ++PosR;
+			      if (PosR>this->NbrRealInteractionPerComponent[TotalPos])
+				cout << "Problem with count of real matrix elements"<<endl;
 			    }
 			  else
 			    {
 			      TmpIndexArray[PosC] = Index;
 			      tmpElementPos = ComplexInteractionCoefficients.InsertElement
-				(Coefficient*this->InteractionFactors[ProcessedNbrInteractionFactors]);
+				(Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors]);
 			      if (tmpElementPos > USHRT_MAX )
 				{
 				  cout << "Error: too many different complex matrix elements for fast storage"<<endl;
@@ -1653,21 +1661,22 @@ void AbstractQHEOnLatticeHamiltonian::EnableFastMultiplication()
 			      TmpCoefficientIndexArray[PosC] = (unsigned short) tmpElementPos;
 			      ++PosC;
 			    }
-			  ++ProcessedNbrInteractionFactors;
-			}		     
-		      else
-			ProcessedNbrInteractionFactors += this->NbrQ34Values[i12];
+			  //cout << "4b - connecting :"<<Index<<", "<<i<<": "<<Coefficient<<"*"<<Coefficient2<<"*"<<this->InteractionFactors[ProcessedNbrInteractionFactors]<< " (q's=["<<this->Q1Value[i12]<<", "<<this->Q2Value[i12]<<", "<<TmpQ3Values[i34]<<", "<<TmpQ4Values[i34]<<"])"<<endl;
+			}
+		      ++ProcessedNbrInteractionFactors;
 		    }
 		}
+	      else
+		ProcessedNbrInteractionFactors += this->NbrQ34Values[i12];
 	    }
 	}
-
+      
       // separated diagonal terms as these will be the general rule for contact interactions
       if (NbrDiagonalInteractionFactors>0)
 	{
 	  Coefficient = TmpParticles->AdAdAADiagonal(i, NbrDiagonalInteractionFactors,
 						     DiagonalInteractionFactors, DiagonalQValues);
-	  if (fabs(Coefficient)>1e-14)
+	  if (fabs(Coefficient)>THRESHOLD)
 	    {
 	      TmpIndexArray[PosR] = i;
 	      tmpElementPos = RealInteractionCoefficients.InsertElement(Coefficient);
@@ -1678,7 +1687,7 @@ void AbstractQHEOnLatticeHamiltonian::EnableFastMultiplication()
 		}
 	      TmpCoefficientIndexArray[PosR] = (unsigned short) tmpElementPos;
 	      ++PosR;
-	      // cout << "diag - connecting :"<<i<<", "<<i<<": "<<Coefficient<<endl;
+	      //cout << "diag - connecting :"<<i<<", "<<i<<": "<<Coefficient<<endl;
 	    }	   
 	}
       ++TotalPos;

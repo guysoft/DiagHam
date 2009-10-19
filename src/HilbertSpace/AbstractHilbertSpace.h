@@ -106,6 +106,10 @@ class AbstractHilbertSpace
   virtual AbstractHilbertSpace* ExtractSubspace (AbstractQuantumNumber& q, 
 						 SubspaceSpaceConverter& converter) = 0;
 
+  // write the entire Hilbert-space basis to the given stream
+  // Str = stream to write on
+  virtual ostream& ShowBasis (ostream& Str);
+
   // print a given State
   //
   // Str = reference on current output stream 

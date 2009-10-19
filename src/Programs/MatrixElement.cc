@@ -35,7 +35,6 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('c', "complex", "Assume vectors consist of complex numbers");
   (*SystemGroup) += new BooleanOption  ('g', "gauge", "Take phase such that largest coefficient is real and positive");
   (*SystemGroup) += new SingleStringOption  ('i', "interaction", "File defining the interaction matrix elements");
-  (*SystemGroup) += new BooleanOption  ('\n', "conjugate", "Conjugate the second (complex) number");
   (*SystemGroup) += new BooleanOption  ('\n', "quiet", "discard any output except the matrix element (suitable for scripting)");
   (*SystemGroup) += new BooleanOption  ('\n', "verbose", "give a lot of output");
   
@@ -167,7 +166,7 @@ int main(int argc, char** argv)
 		  }
 	      Complex Phase=Polar(1.0,-Arg(States[i][maxI]));
 	      if (VerboseFlag)
-		cout << "State "<<i<<": gauging with phase: "<<Phase<<endl;
+		cout << "State "<<i<<": gauging with phase: "<<Phase<<" for element "<<maxI<<endl;
 	      States[i]*=Phase;
 	    }
 	}

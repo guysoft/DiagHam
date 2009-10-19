@@ -233,6 +233,10 @@ QHEOnLatticeMainTask::QHEOnLatticeMainTask(OptionManager* options, AbstractHilbe
     {
       this->ComputeEnergyFlag = false;
     }
+  if (((*options)["show-basis"] != 0) && (((BooleanOption*) (*options)["show-basis"])->GetBoolean() == true))
+    {
+      this->Space->ShowBasis(cout);
+    }
   if (((*options)["show-hamiltonian"] != 0) && (((BooleanOption*) (*options)["show-hamiltonian"])->GetBoolean() == true))
     {
       HermitianMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension());
@@ -903,6 +907,7 @@ void QHEOnLatticeMainTask::AddOptionGroup(OptionManager *optionManager)
   (*LanczosGroup) += new SingleDoubleOption ('\n', "lanczos-precision", "define Lanczos precision for eigenvalues (0 if automatically defined by the program)", 0);
   (*LanczosGroup) += new  BooleanOption ('\n', "fast-disk", "use disk storage to increase speed of ground state calculation and decrease memory footprint when using Lanczos algorithm");
   (*LanczosGroup) += new  BooleanOption ('\n', "resume-fastdisk", "resume the fast-disk mode Lanczos algorithm from a stopped one (for example due to computer crash)");
+  (*LanczosGroup) += new  BooleanOption ('\n',"show-basis", "show the basis of the Hilbert-space");
   (*LanczosGroup) += new  BooleanOption ('\n',"show-hamiltonian", "show Hamiltonian matrix, and exit");
 #ifdef HAVE_ARPACK
   (*LanczosGroup) += new  BooleanOption ('\n',"use-arpack","use ARPACK routines for Lanczos algorithm");

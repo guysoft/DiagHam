@@ -107,7 +107,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "positive-hopping", "choose positive sign of hopping terms", false);
   (*SystemGroup) += new BooleanOption  ('\n', "hopping-only", "evaluate only energy of hopping terms, excluding local potentials", false);
   (*SystemGroup) += new BooleanOption  ('\n', "all-flux", "calculate all values of the flux to test symmetry under n_phi->1-n_phi", false);
-
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "hamiltonian-shift", "additional shift of Hamiltonian",0.0);
+  (*SystemGroup) += new BooleanOption  ('\n', "shift-dice", "shift to zero of half-filled dice-lattice");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-precalculation", "save precalculation in a file",0);
@@ -135,6 +136,9 @@ int main(int argc, char** argv)
   bool ReverseHopping = Manager.GetBoolean("positive-hopping");
   bool HardCore = Manager.GetBoolean("hard-core");
   double ContactU = Manager.GetDouble("contactU");
+  double Shift = Manager.GetDouble("hamiltonian-shift");
+  if (Manager.GetBoolean("shift-dice"))
+    Shift = -NbrBosons*sqrt(6.0);
   if (HardCore) ContactU=0.0;
   if (ULONG_MAX>>20 < (unsigned long)Manager.GetInteger("memory"))
     cout << "Warning: integer overflow in memory request - you might want to use 64 bit code."<<endl;
@@ -149,15 +153,22 @@ int main(int argc, char** argv)
   LatticePhases *Lattice = new LatticePhases();
 
   int NbrSites = Lattice->GetNbrSites();
-
+  
   int NbrFluxValues = 1;
-  if (NbrFluxQuanta == -1)
+  if (Lattice->HavePredefinedFlux())
     {
-      NbrFluxQuanta = 0;
-      if (Manager.GetBoolean("all-flux"))
-	NbrFluxValues = NbrSites+1;
-      else
-	NbrFluxValues = (NbrSites+2)/2;
+      NbrFluxQuanta = Lattice->GetPredefinedFlux();
+    }
+  else
+    {
+      if (NbrFluxQuanta == -1)
+	{
+	  NbrFluxQuanta = 0;
+	  if (Manager.GetBoolean("all-flux"))
+	    NbrFluxValues = NbrSites+1;
+	  else
+	    NbrFluxValues = (NbrSites+2)/2;
+	}
     }
 
   char* OutputName;
@@ -191,8 +202,12 @@ int main(int argc, char** argv)
       else
 	{
 	  NbrFluxValues = 1;
-	  NbrFluxQuanta = NbrSites/2;
-	  sprintf (OutputName, "bosons_lattice_%s_n_%d_ext_q_%d.dat", LatticeName, NbrBosons, NbrFluxQuanta);
+	  NbrFluxQuanta = 3*NbrSites/2;
+	  if (HardCore)
+	    {
+	      sprintf(interactionStr,"_hardcore");
+	    }
+	  sprintf (OutputName, "bosons_lattice_%s_n_%d_ext%s_q_%d.dat", LatticeName, NbrBosons, interactionStr, NbrFluxQuanta);
 	}
     }
   ParticleOnLattice* Space;
@@ -250,10 +265,11 @@ int main(int argc, char** argv)
 //       {
 // 	HRe.GetMatrixElement(i,j,one);
 // 	HIm.GetMatrixElement(i,j,two);
-// 	one= one*M_I;
+// 	one*=M_I;
 // 	if (Norm(one-two)>1e-10)
 // 	  cout << "Discrepancy in "<<i<<", "<<j<<": "<<one << " vs " << two << endl;
 //       }
+//   cout << "HRe="<<endl<<HRe;
 //   for (int i=0; i<Hamiltonian->GetHilbertSpaceDimension(); ++i)
 //     for (int j=0; j<i; ++j)
 //       {
@@ -300,10 +316,10 @@ int main(int argc, char** argv)
 	  if (Manager.GetString("external-two-body")==NULL)
 	    sprintf (EigenvectorName, "bosons_lattice_%s_n_%d%s%s_q_%d", LatticeName, NbrBosons, interactionStr, reverseHoppingString, NbrFluxQuanta);
 	  else
-	    sprintf (EigenvectorName, "bosons_lattice_%s_n_%d_ext_q_%d", LatticeName, NbrBosons, NbrFluxQuanta);
+	    sprintf (EigenvectorName, "bosons_lattice_%s_n_%d_ext%s_q_%d", LatticeName, NbrBosons, interactionStr, NbrFluxQuanta);
 	  
 	}
-      QHEOnLatticeMainTask Task (&Manager, Space, Hamiltonian, NbrFluxQuanta, 0.0, OutputName, FirstRun, EigenvectorName);
+      QHEOnLatticeMainTask Task (&Manager, Space, Hamiltonian, NbrFluxQuanta, Shift, OutputName, FirstRun, EigenvectorName);
       MainTaskOperation TaskOperation (&Task);
       TaskOperation.ApplyOperation(Architecture.GetArchitecture());
       if (EigenvectorName != 0)

@@ -450,7 +450,7 @@ double HardCoreBosonOnLatticeGeneric::AA (int index, int n1, int n2)
   
   this->ProdATemporaryState &= ~(((unsigned long) (0x1)) << n1);
 
-  while ((this->ProdATemporaryState >> this->ProdAHighestBit) == 0)
+  while ((this->ProdAHighestBit>0)&&(this->ProdATemporaryState >> this->ProdAHighestBit) == 0)
     --this->ProdAHighestBit;
   return 1.0;
 }
@@ -481,6 +481,7 @@ int HardCoreBosonOnLatticeGeneric::AdAd (int m1, int m2, double& coefficient)
   if (m1 > NewHighestBit)
     NewHighestBit = m1;
   TmpState |= (((unsigned long) (0x1)) << m1);
+  coefficient=1.0;
   return this->TargetSpace->FindStateIndex(TmpState, NewHighestBit);
 }
 

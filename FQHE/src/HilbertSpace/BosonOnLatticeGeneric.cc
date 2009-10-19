@@ -363,18 +363,18 @@ int BosonOnLatticeGeneric::AdAdAA (int index, int q1, int q2, int r1, int r2, do
     }
   coefficient = this->TemporaryState[r2];
   --this->TemporaryState[r2];
-  if (this->TemporaryState[r2]==0)
+  if ((r2==TemporaryStateHighestBit)&&(this->TemporaryState[r2]==0)&&(TemporaryStateHighestBit>0))
     {
       --TemporaryStateHighestBit;
-      while (TemporaryState[TemporaryStateHighestBit] == 0)
+      while ((TemporaryStateHighestBit>0)&&(TemporaryState[TemporaryStateHighestBit] == 0))
 	--TemporaryStateHighestBit;
     }
   coefficient *= this->TemporaryState[r1];
   --this->TemporaryState[r1];
-  if (this->TemporaryState[r1]==0)
+  if ((r1==TemporaryStateHighestBit)&&(this->TemporaryState[r1]==0)&&(TemporaryStateHighestBit>0))
     {
       --TemporaryStateHighestBit;
-      while (TemporaryState[TemporaryStateHighestBit] == 0)
+      while ((TemporaryStateHighestBit>0)&&(TemporaryState[TemporaryStateHighestBit] == 0))
 	--TemporaryStateHighestBit;
     }
   if (q2 > TemporaryStateHighestBit)
@@ -397,7 +397,6 @@ int BosonOnLatticeGeneric::AdAdAA (int index, int q1, int q2, int r1, int r2, do
   return this->HardCoreBasis->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateHighestBit), this->TemporaryStateHighestBit + this->NbrBosons - 1);
 }
 
-
 // apply a_r1 a_r2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next AdAd call
 //
 // index = index of the state on which the operator has to be applied
@@ -407,30 +406,45 @@ int BosonOnLatticeGeneric::AdAdAA (int index, int q1, int q2, int r1, int r2, do
 
 double BosonOnLatticeGeneric::AA (int index, int r1, int r2)
 {
+#ifdef DEBUG_OUTPUT
+  cout << "AA ("<<index <<" " <<r1 <<" " <<r2<<") ";
+  this->PrintState(cout,index);
+#endif
   this->FermionToBoson(this->HardCoreBasis->StateDescription[index], this->HardCoreBasis->StateHighestBit[index], this->ProdATemporaryState, this->ProdATemporaryStateHighestBit);
   if ((r1 > this->ProdATemporaryStateHighestBit) || (r2 > this->ProdATemporaryStateHighestBit) || 
       (this->ProdATemporaryState[r1] == 0) || (this->ProdATemporaryState[r2] == 0) || ((r1 == r2) && (this->ProdATemporaryState[r1] == 1)))
     {
+#ifdef DEBUG_OUTPUT
+      if ((index==4)||(index==2))
+	cout << "Vanishing on "<<index<<": "<<r1<<" "<<r2<<endl;
+#endif
       return 0.0;
     }
   for (int i = this->ProdATemporaryStateHighestBit + 1; i < this->NbrStates; ++i)
     this->ProdATemporaryState[i] = 0ul;
   double Coefficient = this->ProdATemporaryState[r2];
   --this->ProdATemporaryState[r2];
-  if (this->ProdATemporaryState[r2]==0)
+  if ((r2==ProdATemporaryStateHighestBit)&&(ProdATemporaryStateHighestBit>0)&&(this->ProdATemporaryState[r2]==0))
     {
       --ProdATemporaryStateHighestBit;
-      while (ProdATemporaryState[ProdATemporaryStateHighestBit] == 0)
+      while ((ProdATemporaryStateHighestBit>0)&&(ProdATemporaryState[ProdATemporaryStateHighestBit] == 0))
 	--ProdATemporaryStateHighestBit;
     }
   Coefficient *= this->ProdATemporaryState[r1];
   --this->ProdATemporaryState[r1];
-  if (this->ProdATemporaryState[r1]==0)
+  if ((r1==ProdATemporaryStateHighestBit)&&(ProdATemporaryStateHighestBit>0)&&(this->ProdATemporaryState[r1]==0))
     {
       --ProdATemporaryStateHighestBit;
-      while (ProdATemporaryState[ProdATemporaryStateHighestBit] == 0)
+      while ((ProdATemporaryStateHighestBit>0)&&(ProdATemporaryState[ProdATemporaryStateHighestBit] == 0))
 	--ProdATemporaryStateHighestBit;
     }
+#ifdef DEBUG_OUTPUT
+  if ((index==4)||(index==2))
+    cout << "Acting on "<<index<<": "<<r1<<" "<<r2<<endl;
+  cout << "ProdATemporaryState="<<this->ProdATemporaryState[0];
+  for (int i=1; i<NbrStates; ++i) cout << " " <<this->ProdATemporaryState[i];
+  cout << " (h.b. "<<ProdATemporaryStateHighestBit<<")"<<endl;
+#endif
   return sqrt(Coefficient);
 }
 
@@ -455,8 +469,20 @@ int BosonOnLatticeGeneric::AdAd (int q1, int q2, double& coefficient)
   coefficient *= this->TemporaryState[q1];
   if (q1 > TemporaryStateHighestBit)
     TemporaryStateHighestBit = q1;
-  coefficient = sqrt(coefficient);  
+  coefficient = sqrt(coefficient);
+#ifdef DEBUG_OUTPUT
+  cout << "Temporary State="<<this->TemporaryState[0];
+  for (int i=1; i<NbrStates; ++i) cout << " " <<this->TemporaryState[i];
+  cout << " (h.b. "<<TemporaryStateHighestBit<<")"<<endl;
+  unsigned long TargetState=this->BosonToFermion(this->TemporaryState, this->TemporaryStateHighestBit);
+  int TargetIndex=this->HardCoreBasis->FindStateIndex(TargetState, this->TemporaryStateHighestBit + this->NbrBosons - 1);
+  bitset<32> b=TargetState;
+  bitset<32> b2=HardCoreBasis->StateDescription[TargetIndex];
+  cout << q1 << " " << q2 <<" Binary Target: "<<b<<" index "<<TargetIndex<<" vs "<<b2<<endl;
+  return TargetIndex;
+#else
   return this->HardCoreBasis->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateHighestBit), this->TemporaryStateHighestBit + this->NbrBosons - 1);
+#endif
 }
 
 

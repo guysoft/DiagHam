@@ -114,6 +114,7 @@ void ExplicitHamiltonian::ShiftHamiltonian (double shift)
 // return value = true if no error occurs
 bool ExplicitHamiltonian::SavePrecalculation (char* fileName)
 {
+  return false;
 }
 
 // return matrix representation of current Hamiltonian

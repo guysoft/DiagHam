@@ -194,7 +194,7 @@ int main(int argc, char** argv)
 
 
   long MemorySpace = 9l << 20;
-  ParticleOnSphereWithSU3Spin* Space;
+  ParticleOnSphereWithSU3Spin* Space=0;
   if (FermionFlag == true)
     {
       if ((TzSymmetrizedBasis == false) && (Z3SymmetrizedBasis == false))

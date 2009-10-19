@@ -242,12 +242,12 @@ void ParticleOnLatticeExternalHamiltonian::EvaluateInteractionFactors()
 	  int Pos=0;
 	  while (Pos<TmpNbrLines)
 	    {
-	      if (TmpQ1[Pos]>TmpQ2[Pos]) HaveLargerQ1=true;
-	      else if (TmpQ1[Pos]<TmpQ2[Pos]) HaveSmallerQ1=true;
-	      if (TmpQ3[Pos]>TmpQ4[Pos]) HaveLargerQ3=true;
-	      else if (TmpQ3[Pos]<TmpQ4[Pos]) HaveSmallerQ3=true;
 	      while ((TmpQ1[Pos]==oldQ1)&&(TmpQ2[Pos]==oldQ2)&&(Pos<TmpNbrLines))
 		{
+		  if (TmpQ1[Pos]>TmpQ2[Pos]) HaveLargerQ1=true;
+		  else if (TmpQ1[Pos]<TmpQ2[Pos]) HaveSmallerQ1=true;
+		  if (TmpQ3[Pos]>TmpQ4[Pos]) HaveLargerQ3=true;
+		  else if (TmpQ3[Pos]<TmpQ4[Pos]) HaveSmallerQ3=true;
 		  // have diagonal element?
 		  if ((TmpQ1[Pos]==TmpQ2[Pos])&&(TmpQ1[Pos]==TmpQ3[Pos])&&(TmpQ1[Pos]==TmpQ4[Pos]))
 		    {
@@ -264,6 +264,10 @@ void ParticleOnLatticeExternalHamiltonian::EvaluateInteractionFactors()
 		}
 	      if (Pos<TmpNbrLines)
 		{
+		  if (TmpQ1[Pos]>TmpQ2[Pos]) HaveLargerQ1=true;
+		  else if (TmpQ1[Pos]<TmpQ2[Pos]) HaveSmallerQ1=true;
+		  if (TmpQ3[Pos]>TmpQ4[Pos]) HaveLargerQ3=true;
+		  else if (TmpQ3[Pos]<TmpQ4[Pos]) HaveSmallerQ3=true;
 		  ++NbrQ12Indices;	     
 		  oldQ1=TmpQ1[Pos];
 		  oldQ2=TmpQ2[Pos];
@@ -317,6 +321,10 @@ void ParticleOnLatticeExternalHamiltonian::EvaluateInteractionFactors()
 	    Q12Symmetry=true;
 	  if (HaveSmallerQ3^HaveLargerQ3)
 	    Q34Symmetry=true;
+	  if (HaveSmallerQ1) cout << "HaveSmallerQ1"<<endl;
+	  if (HaveLargerQ1) cout << "HaveLargerQ1"<<endl;
+	  if (HaveSmallerQ3) cout << "HaveSmallerQ3"<<endl;
+	  if (HaveLargerQ3) cout << "HaveLargerQ3"<<endl;
 	  cout << "Assuming symmetry in";
 	  if (Q12Symmetry) cout << " Q12";
 	  if (Q34Symmetry) cout << " Q34";
@@ -338,6 +346,7 @@ void ParticleOnLatticeExternalHamiltonian::EvaluateInteractionFactors()
 		  // have diagonal element?
 		  if ((TmpQ1[Pos]==TmpQ2[Pos])&&(TmpQ1[Pos]==TmpQ3[Pos])&&(TmpQ1[Pos]==TmpQ4[Pos]))
 		    {
+		      // cout << "Diagonal Interaction "<<TmpRe[Pos]<<" v_"<<TmpQ1[Pos]<<endl;
 		      this->DiagonalQValues[DiagonalIndex]=TmpQ1[Pos];
 		      this->DiagonalInteractionFactors[DiagonalIndex++]=TmpRe[Pos];
 		    }
@@ -348,6 +357,8 @@ void ParticleOnLatticeExternalHamiltonian::EvaluateInteractionFactors()
 		      double SymFactor=1.0;
 		      if ((Q12Symmetry)&&(TmpQ1[Pos]!=TmpQ2[Pos])) SymFactor*=2.0;
 		      if ((Q34Symmetry)&&(TmpQ3[Pos]!=TmpQ4[Pos])) SymFactor*=2.0;
+		      // cout << "Interaction "<<TmpRe[Pos]<<"+I*"<<TmpIm[Pos]<<" with Sym "<<SymFactor<<"  v_"<<TmpQ1[Pos]<<" "
+		      //      << TmpQ2[Pos]<<" "<<TmpQ3[Pos]<<" "<<TmpQ4[Pos]<<" "<<endl;
 		      this->InteractionFactors[GeneralIndex++]=SymFactor*Complex(TmpRe[Pos],TmpIm[Pos]);
 		    }
 		  ++Pos;
@@ -363,6 +374,7 @@ void ParticleOnLatticeExternalHamiltonian::EvaluateInteractionFactors()
 		  // have diagonal element?
 		  if ((TmpQ1[Pos]==TmpQ2[Pos])&&(TmpQ1[Pos]==TmpQ3[Pos])&&(TmpQ1[Pos]==TmpQ4[Pos]))
 		    {
+		      // cout << "Diagonal Interaction "<<TmpRe[Pos]<<" v_"<<TmpQ1[Pos]<<endl;
 		      this->DiagonalQValues[DiagonalIndex]=TmpQ1[Pos];
 		      this->DiagonalInteractionFactors[DiagonalIndex++]=TmpRe[Pos];
 		    }
@@ -373,6 +385,8 @@ void ParticleOnLatticeExternalHamiltonian::EvaluateInteractionFactors()
 		      double SymFactor=1.0;
 		      if ((Q12Symmetry)&&(TmpQ1[Pos]!=TmpQ2[Pos])) SymFactor*=2.0;
 		      if ((Q34Symmetry)&&(TmpQ3[Pos]!=TmpQ4[Pos])) SymFactor*=2.0;
+		      // cout << "Interaction "<<TmpRe[Pos]<<"+I*"<<TmpIm[Pos]<<" with Sym "<<SymFactor<<"  v_"<<TmpQ1[Pos]<<" "
+		      //      <<TmpQ2[Pos]<<" "<<TmpQ3[Pos]<<" "<<TmpQ4[Pos]<<" "<<endl;		      
 		      this->InteractionFactors[GeneralIndex++]=SymFactor*Complex(TmpRe[Pos],TmpIm[Pos]);
 		    }
 		  ++Pos;

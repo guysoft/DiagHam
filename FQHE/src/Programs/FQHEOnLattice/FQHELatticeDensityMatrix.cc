@@ -96,6 +96,8 @@ int main(int argc, char** argv)
   (*OutputGroup) += new SingleDoubleOption  ('r',"dynamic-range","range of density operator eigenvalues to be displayed",1e-5);
   (*OutputGroup) += new BooleanOption  ('\n', "show-translation", "display the matrix defining the translation operator");
   (*OutputGroup) += new BooleanOption  ('\n', "show-basis", "show elements of vector in basis and exit");
+    (*SystemGroup) += new BooleanOption  ('\n', "normalize-phase", "change phase to make largest absolute value real and positive");
+  (*OutputGroup) += new SingleDoubleOption  ('\n', "display-threshold", "only display values larger than threshold",0.0);
   (*MiscGroup) += new SingleIntegerOption ('\n', "nbr-density", "number of density matrix eigenstates to be written out",1);
   (*MiscGroup) += new SingleIntegerOption ('s',"superpositions","in case of two input vectors, number of values for phase in superpositions",12);
   (*MiscGroup) += new BooleanOption  ('V', "verbose", "give additional output");  
@@ -212,14 +214,45 @@ int main(int argc, char** argv)
       for (int v=0; v<NbrVectors; ++v)
 	{
 	  cout << "Components of vector "<<v<<":"<<endl;
-	  for (int i=0; i<VectorDimension; ++i)
+	  if (Manager.GetBoolean("normalize-phase"))
 	    {
-	      Space->PrintState(cout, i);
-	      cout.precision(5);
-	      cout <<" :  "<<Vectors[v][i];
-	      cout <<" -- "<<Norm(Vectors[v][i])<<" "<<Arg(Vectors[v][i])/M_PI<<endl;
-	      cout.precision(14);
+	      double MaxNorm=0.0;
+	      int MaxIndex=0;
+	      for (int i = 0; i < Vectors[v].GetVectorDimension();++i)
+		{
+		  if (Norm(Vectors[v][i])>MaxNorm)
+		    {
+		      MaxNorm=Norm(Vectors[v][i]);
+		      MaxIndex=i;
+		    }
+		}
+	      Vectors[v] *= Polar(1.0,-Arg(Vectors[v][MaxIndex]));
 	    }
+	  if (Manager.GetDouble("display-threshold")>0.0)
+	    {
+	      double Threshold=Manager.GetDouble("display-threshold");
+	      for (int i=0; i<VectorDimension; ++i)
+		{
+		  if (Norm(Vectors[v][i])>Threshold)
+		    {
+		      Space->PrintState(cout, i);
+		      cout.precision(5);
+		      cout <<" :  "<<Vectors[v][i];
+		      cout <<" -- "<<Norm(Vectors[v][i])<<" "<<Arg(Vectors[v][i])/M_PI<<endl;
+		      cout.precision(14);
+		    }
+		}
+	      }
+	  else
+		
+	    for (int i=0; i<VectorDimension; ++i)
+	      {
+		Space->PrintState(cout, i);
+		cout.precision(5);
+		cout <<" :  "<<Vectors[v][i];
+		cout <<" -- "<<Norm(Vectors[v][i])<<" "<<Arg(Vectors[v][i])/M_PI<<endl;
+		cout.precision(14);
+	      }
 	}
       exit(0);
     }
@@ -291,6 +324,20 @@ int main(int argc, char** argv)
 	  for (int i=0; i<DensityMatrixDimension; ++i)
 	    {
 	      Q.GetMatrixElement(i,DensityMatrixDimension-1-s,EigenState[DensityMatrixDimension-1-i]);
+	    }
+	  if (Manager.GetBoolean("normalize-phase"))
+	    {
+	      double MaxNorm=0.0;
+	      int MaxIndex=0;
+	      for (int i = 0; i < EigenState.GetVectorDimension();++i)
+		{
+		  if (Norm(EigenState[i])>MaxNorm)
+		    {
+		      MaxNorm=Norm(EigenState[i]);
+		      MaxIndex=i;
+		    }
+		}
+	      EigenState *= Polar(1.0,-Arg(EigenState[MaxIndex]));
 	    }
 	  EigenState.WriteVector(RhoVecOut);
 	  if (Manager.GetBoolean("plot-density"))

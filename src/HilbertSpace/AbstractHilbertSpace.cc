@@ -48,3 +48,11 @@ int AbstractHilbertSpace::GetHilbertSpaceAdditionalSymmetry()
 }
 
 
+// write the entire Hilbert-space basis to the given stream
+// Str = stream to write on
+ostream& AbstractHilbertSpace::ShowBasis (ostream& Str)
+{
+  for (int i=0; i<this->GetHilbertSpaceDimension(); ++i)
+    this->PrintState(Str,i)<<std::endl;
+  return Str;
+}
