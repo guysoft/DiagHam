@@ -99,5 +99,12 @@ double* EvaluateOneBodyPotentials(int nbrFlux, int landauLevel, double northPole
 //
 double* GetMonomialPseudopotentials(int nbrFlux, int exponentN, bool onlyOdd, bool verbose = false);
   
+// evaluate graphene bilayer pseudopotentials
+//
+// nbrflux = number of flux quanta for the lowest Landau level (i.e. twice the maximum momentum for a single particle
+// l1, l2, l3, l4 = Landau level indices (0 for lowest LL, 1 for first excited LL)
+//
+double* EvaluateGrapheneBilayerPseudopotentials(int nbrFlux, int& nbrPseudopotentials, int l1, int l2, int l3, int l4, bool verbose = true);
+
 
 #endif //PSEUDOPOTENTIALS_H

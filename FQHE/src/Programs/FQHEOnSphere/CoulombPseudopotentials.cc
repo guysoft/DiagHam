@@ -39,7 +39,13 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption ('\n', "north-potential", "potential assosciated to the impurity at the north pole", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "south-potential", "potential assosciated to the impurity at the south pole", 0.0);
   (*SystemGroup) += new  BooleanOption ('\n', "relativistic-fermions", "assume relativistic fermions");
-  
+  (*SystemGroup) += new  BooleanOption ('\n', "graphene-bilayer", "calculate pseudopotentials for bilayer graphene (need to specify the four Landau level indices)");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "l1", "Landau level index for graphene bilayer pseudopotentials, can be 0 (LLL) or 1 (1st LL)", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "l2", "Landau level index for graphene bilayer pseudopotentials, can be 0 (LLL) or 1 (1st LL)", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "l3", "Landau level index for graphene bilayer pseudopotentials, can be 0 (LLL) or 1 (1st LL)", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "l4", "Landau level index for graphene bilayer pseudopotentials, can be 0 (LLL) or 1 (1st LL)", 0);
+
+
   (*SystemGroup) += new  SingleDoubleOption ('d', "layer-separation", "assume finite layer separation",0.0);
 
   (*SystemGroup) += new  SingleDoubleOption ('t', "layer-thickness", "assume finite layer thickness",0.0);
@@ -77,244 +83,295 @@ int main(int argc, char** argv)
       return 0;
     }
 
-  int LandauLevel = ((SingleIntegerOption*) Manager["landau-level"])->GetInteger();
-  int NbrFlux = ((SingleIntegerOption*) Manager["nbr-flux"])->GetInteger();
-  double layerSeparation = Manager.GetDouble("layer-separation");
-  int MaxMomentum = NbrFlux + (LandauLevel << 1);
+  if (((BooleanOption*) Manager["graphene-bilayer"])->GetBoolean() == false)
+   {
+    int LandauLevel = ((SingleIntegerOption*) Manager["landau-level"])->GetInteger();
+    int NbrFlux = ((SingleIntegerOption*) Manager["nbr-flux"])->GetInteger();
+    double layerSeparation = Manager.GetDouble("layer-separation");
+    int MaxMomentum = NbrFlux + (LandauLevel << 1);
   
-  char* OutputFile;
-  ((SingleDoubleOption*)Manager["add-v0"])->SetStringFormat("%g");
-  ((SingleDoubleOption*)Manager["add-v1"])->SetStringFormat("%g");
-  ((SingleDoubleOption*)Manager["layer-thickness"])->SetStringFormat("%g");
-  ((SingleDoubleOption*)Manager["layer-separation"])->SetStringFormat("%g");
-  if (((SingleStringOption*) Manager["output"])->GetString() == 0l)
-    {
-      if (((BooleanOption*) Manager["relativistic-fermions"])->GetBoolean() == true)
-	OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_relativistic_l_%landau-level%_2s_%nbr-flux%.dat");
-      else
-	{
-	  if (Manager.GetDouble("layer-thickness")>0.0)
-	    {
-	      if (layerSeparation==0.0)
-		OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_t_%layer-thickness%_%profile-type%.dat");
-	      else
-		OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_t_%layer-thickness%_d_%layer-separation%_%profile-type%.dat");
-	    }
-	  else
-	    {	      
-	      if ((Manager.GetDouble("add-v0")==0.0)&&(Manager.GetDouble("add-v1")==0.0))
-		{
-		  if (layerSeparation==0.0)
-		    OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%.dat");
-		  else
-		    OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_d_%layer-separation%.dat");
-		}
-	      else
-		{
-		  if (Manager.GetDouble("add-v0")==0.0)
-		    {
-		      if (layerSeparation==0.0)
-			OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_w_%add-v1%.dat");
-		      else
-			OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_d_%layer-separation%_w_%add-v1%.dat");
-		    }
-		  else if (Manager.GetDouble("add-v1")==0.0)
-		    {
-		      if (layerSeparation==0.0)
-			OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_v_%add-v0%.dat");
-		      else
-			OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_d_%layer-separation%_v_%add-v0%.dat");
-		    }
-		  else
-		    {
-		      if (layerSeparation==0.0)
-			OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_v_%add-v0%_w_%add-v1%.dat");
-		      else
-			OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_d_%layer-separation%_v_%add-v0%_w_%add-v1%.dat");
-		    }
-		}
-	    }
-	}
-    }
-  else
-    {
-      OutputFile = new char [strlen(((SingleStringOption*) Manager["output"])->GetString()) + 1];
-      strcpy (OutputFile, ((SingleStringOption*) Manager["output"])->GetString());
-    }
+    char* OutputFile;
+    ((SingleDoubleOption*)Manager["add-v0"])->SetStringFormat("%g");
+    ((SingleDoubleOption*)Manager["add-v1"])->SetStringFormat("%g");
+    ((SingleDoubleOption*)Manager["layer-thickness"])->SetStringFormat("%g");
+    ((SingleDoubleOption*)Manager["layer-separation"])->SetStringFormat("%g");
+    if (((SingleStringOption*) Manager["output"])->GetString() == 0l)
+      {
+        if (((BooleanOption*) Manager["relativistic-fermions"])->GetBoolean() == true)
+	  OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_relativistic_l_%landau-level%_2s_%nbr-flux%.dat");
+        else
+	  {
+	    if (Manager.GetDouble("layer-thickness")>0.0)
+	      {
+	        if (layerSeparation==0.0)
+		  OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_t_%layer-thickness%_%profile-type%.dat");
+	        else
+		  OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_t_%layer-thickness%_d_%layer-separation%_%profile-type%.dat");
+	      }
+	    else
+	      {	      
+	        if ((Manager.GetDouble("add-v0")==0.0)&&(Manager.GetDouble("add-v1")==0.0))
+		  {
+		    if (layerSeparation==0.0)
+		      OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%.dat");
+  		    else
+		      OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_d_%layer-separation%.dat");
+		  }
+	        else
+		  {
+		    if (Manager.GetDouble("add-v0")==0.0)
+		      {
+		        if (layerSeparation==0.0)
+			  OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_w_%add-v1%.dat");
+		        else
+			  OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_d_%layer-separation%_w_%add-v1%.dat");
+		      }
+		    else if (Manager.GetDouble("add-v1")==0.0)
+		      {
+		        if (layerSeparation==0.0)
+			  OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_v_%add-v0%.dat");
+		        else
+			  OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_d_%layer-separation%_v_%add-v0%.dat");
+		      }
+		    else
+		      {
+		        if (layerSeparation==0.0)
+			  OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_v_%add-v0%_w_%add-v1%.dat");
+		        else
+			  OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_d_%layer-separation%_v_%add-v0%_w_%add-v1%.dat");
+		      }
+		  }
+	      }
+	  }
+      }
+    else
+      {
+        OutputFile = new char [strlen(((SingleStringOption*) Manager["output"])->GetString()) + 1];
+        strcpy (OutputFile, ((SingleStringOption*) Manager["output"])->GetString());
+      }
 
-      double* Pseudopotentials;
-  if (Manager.GetDouble("layer-thickness")>0.0)
-    {      
-      AbstractZDensityProfile *Profile = AbstractZDensityProfile::CreateZDensityProfile(Manager.GetString("profile-type"),Manager.GetDouble("layer-thickness"));
-      AbstractZDensityProfile *OtherProfile=NULL;
-      if (Manager.GetString("other-profile")!=NULL)
-	OtherProfile = AbstractZDensityProfile::CreateZDensityProfile(Manager.GetString("other-profile"),Manager.GetDouble("layer-thickness"));
-      if (Manager.GetBoolean("no-interpolation"))
-	Pseudopotentials = EvaluateFiniteWidthPseudoPotentialsNoInterpolation(NbrFlux, LandauLevel, Profile,
+        double* Pseudopotentials;
+    if (Manager.GetDouble("layer-thickness")>0.0)
+      {      
+        AbstractZDensityProfile *Profile = AbstractZDensityProfile::CreateZDensityProfile(Manager.GetString("profile-type"),Manager.GetDouble("layer-thickness"));
+        AbstractZDensityProfile *OtherProfile=NULL;
+        if (Manager.GetString("other-profile")!=NULL)
+	  OtherProfile = AbstractZDensityProfile::CreateZDensityProfile(Manager.GetString("other-profile"),Manager.GetDouble("layer-thickness"));
+        if (Manager.GetBoolean("no-interpolation"))
+	  Pseudopotentials = EvaluateFiniteWidthPseudoPotentialsNoInterpolation(NbrFlux, LandauLevel, Profile,
 							    /*, points=200 */ Manager.GetInteger("profile-points"),
 							    /*, multiplier=5.0 */ Manager.GetDouble("profile-multiplier"),
 							    Manager.GetDouble("layer-separation"), OtherProfile,
 								Manager.GetDouble("tolerance"));
-      else
-	Pseudopotentials = EvaluateFiniteWidthPseudoPotentials(NbrFlux, LandauLevel, Profile,
+        else
+	  Pseudopotentials = EvaluateFiniteWidthPseudoPotentials(NbrFlux, LandauLevel, Profile,
 							    /*, points=200 */ Manager.GetInteger("profile-points"),
 							    /*, multiplier=5.0 */ Manager.GetDouble("profile-multiplier"),
 							       Manager.GetDouble("layer-separation"), OtherProfile,
 							       Manager.GetDouble("tolerance"));
-    }
-  else
-    {
-      Pseudopotentials = EvaluatePseudopotentials(NbrFlux, LandauLevel, layerSeparation, true);
+      }
+    else
+      {
+        Pseudopotentials = EvaluatePseudopotentials(NbrFlux, LandauLevel, layerSeparation, true);
   
-      if (((BooleanOption*) Manager["relativistic-fermions"])->GetBoolean() == true)
-	{
-	  double* PseudopotentialsNMinus1 = EvaluatePseudopotentials(NbrFlux, LandauLevel - 1, layerSeparation, true);
-	  for (int i = 0; i <= MaxMomentum; ++i)
-	    Pseudopotentials[i] = 0.5 * (Pseudopotentials[i] + PseudopotentialsNMinus1[i]);
-	  delete[] PseudopotentialsNMinus1;
-	}
-    }
-  double* OneBodyPotentials = 0;
-  if (((BooleanOption*) Manager["add-impurities"])->GetBoolean() == true)
-    OneBodyPotentials = EvaluateOneBodyPotentials(NbrFlux, LandauLevel, 
+        if (((BooleanOption*) Manager["relativistic-fermions"])->GetBoolean() == true)
+	  {
+	    double* PseudopotentialsNMinus1 = EvaluatePseudopotentials(NbrFlux, LandauLevel - 1, layerSeparation, true);
+	    for (int i = 0; i <= MaxMomentum; ++i)
+	      Pseudopotentials[i] = 0.5 * (Pseudopotentials[i] + PseudopotentialsNMinus1[i]);
+	    delete[] PseudopotentialsNMinus1;
+	  }
+      }
+    double* OneBodyPotentials = 0;
+    if (((BooleanOption*) Manager["add-impurities"])->GetBoolean() == true)
+      OneBodyPotentials = EvaluateOneBodyPotentials(NbrFlux, LandauLevel, 
 						  ((SingleDoubleOption*) Manager["north-potential"])->GetDouble(),
 						  ((SingleDoubleOption*) Manager["south-potential"])->GetDouble());
 
-  if (((BooleanOption*) Manager["std-output"])->GetBoolean() == false)
-    {
-      ofstream File;
-      File.open(OutputFile, ios::binary | ios::out);
-      File.precision(14);
-      File << "# pseudopotentials on the sphere for coulomb interaction ";
-      if (((BooleanOption*) Manager["relativistic-fermions"])->GetBoolean() == true)
-	File << " for relativistic fermions";
-      File << endl
+    if (((BooleanOption*) Manager["std-output"])->GetBoolean() == false)
+      {
+        ofstream File;
+        File.open(OutputFile, ios::binary | ios::out);
+        File.precision(14);
+        File << "# pseudopotentials on the sphere for coulomb interaction ";
+        if (((BooleanOption*) Manager["relativistic-fermions"])->GetBoolean() == true)
+	  File << " for relativistic fermions";
+        File << endl
 	   << "# in the Landau level N=" << LandauLevel << " for 2S=" << NbrFlux << " flux quanta" << endl;
-      if (layerSeparation != 0.0)
-	File << "# with finite layer separation d=" << layerSeparation << endl;
-      if (Manager.GetDouble("layer-thickness") > 0.0)
-	{
-	  File << "# with finite layer width W=" << Manager.GetDouble("layer-thickness") << endl;
-	  if (Manager.GetString("other-profile")!=NULL)
-	    File << "# for type1 = "<<AbstractZDensityProfile::DensityProfileName(Manager.GetString("profile-type"))
+        if (layerSeparation != 0.0)
+	  File << "# with finite layer separation d=" << layerSeparation << endl;
+        if (Manager.GetDouble("layer-thickness") > 0.0)
+	  {
+	    File << "# with finite layer width W=" << Manager.GetDouble("layer-thickness") << endl;
+	    if (Manager.GetString("other-profile")!=NULL)
+	      File << "# for type1 = "<<AbstractZDensityProfile::DensityProfileName(Manager.GetString("profile-type"))
 		 << " and type2 = "<<AbstractZDensityProfile::DensityProfileName(Manager.GetString("other-profile"))<< endl;
-	  else
-	    File << "# and type: "<<AbstractZDensityProfile::DensityProfileName(Manager.GetString("profile-type"))<<endl;
-	}
-      if (OneBodyPotentials != 0)
-	{
-	  File << "# with two impurities (V_north = " << ((SingleDoubleOption*) Manager["north-potential"])->GetDouble() 
+	    else
+	      File << "# and type: "<<AbstractZDensityProfile::DensityProfileName(Manager.GetString("profile-type"))<<endl;
+	  }
+        if (OneBodyPotentials != 0)
+	  {
+	    File << "# with two impurities (V_north = " << ((SingleDoubleOption*) Manager["north-potential"])->GetDouble() 
 	       << " and V_south = " << ((SingleDoubleOption*) Manager["south-potential"])->GetDouble() << ")" << endl;
-	}
-      if (Manager.GetDouble("add-v0")!=0.0)
-	File << "# with \\delta V_0="<<Manager.GetDouble("add-v0")<<endl;
-      if (Manager.GetDouble("add-v1")!=0.0)
-	File << "# with \\delta V_1="<<Manager.GetDouble("add-v1")<<endl;
-      File << "#" << endl
-	   << "# Pseudopotentials = V_0 V_1 ..." << endl << endl
-	   << "Pseudopotentials =";
-      File << " " << Pseudopotentials[0]+Manager.GetDouble("add-v0");
-      File << " " << Pseudopotentials[1]+Manager.GetDouble("add-v1");
-      for (int i = 2; i <= MaxMomentum; ++i)
-	File << " " << Pseudopotentials[i];
-      File << endl;
-      if (OneBodyPotentials != 0)
-	{
-	  File << endl << "Onebodypotentials =";
-	  for (int i = 0; i <= MaxMomentum; ++i)
-	    File << " " << OneBodyPotentials[i];
-	  File << endl;
-	}
-      if (Manager.GetBoolean("nbody"))
-	{
-	  int Length;
-	  double *potentials = Manager.GetDoubles("nbody-potentials",Length);
-	  if (potentials != 0)
-	    {
-	      File << endl << "NbrNBody = "<<Length-1<<endl;
-	      File << "Weights =";
-	      for (int i=0; i<Length; ++i)
-		File <<" "<<potentials[i];
-	      File <<endl;
-	    }
-	  else
-	    {
-	      File << endl << "NbrNBody = 2"<<endl;
-	      File << "Weights = 0 0 0";
-	    }
-	}
+	  }
+        if (Manager.GetDouble("add-v0")!=0.0)
+	  File << "# with \\delta V_0="<<Manager.GetDouble("add-v0")<<endl;
+        if (Manager.GetDouble("add-v1")!=0.0)
+	  File << "# with \\delta V_1="<<Manager.GetDouble("add-v1")<<endl;
+         File << "#" << endl
+	  << "# Pseudopotentials = V_0 V_1 ..." << endl << endl
+	  << "Pseudopotentials =";
+        File << " " << Pseudopotentials[0]+Manager.GetDouble("add-v0");
+        File << " " << Pseudopotentials[1]+Manager.GetDouble("add-v1");
+        for (int i = 2; i <= MaxMomentum; ++i)
+	  File << " " << Pseudopotentials[i];
+        File << endl;
+        if (OneBodyPotentials != 0)
+	  {
+	    File << endl << "Onebodypotentials =";
+	    for (int i = 0; i <= MaxMomentum; ++i)
+	      File << " " << OneBodyPotentials[i];
+	    File << endl;
+	  }
+        if (Manager.GetBoolean("nbody"))
+	  {
+	    int Length;
+	    double *potentials = Manager.GetDoubles("nbody-potentials",Length);
+	    if (potentials != 0)
+	      {
+	        File << endl << "NbrNBody = "<<Length-1<<endl;
+	        File << "Weights =";
+	        for (int i=0; i<Length; ++i)
+		  File <<" "<<potentials[i];
+	        File <<endl;
+	      }
+	    else
+	      {
+	        File << endl << "NbrNBody = 2"<<endl;
+	        File << "Weights = 0 0 0";
+	      }
+	  }
       
-      File.close();
-    }
-  else
-    {
-      cout.precision(14);
-      cout << "# pseudopotentials on the sphere for coulomb interaction ";
-      if (((BooleanOption*) Manager["relativistic-fermions"])->GetBoolean() == true)
-	cout << " for relativistic fermions";
-      cout << endl
+        File.close();
+      }
+    else
+      {
+        cout.precision(14);
+        cout << "# pseudopotentials on the sphere for coulomb interaction ";
+        if (((BooleanOption*) Manager["relativistic-fermions"])->GetBoolean() == true)
+	  cout << " for relativistic fermions";
+        cout << endl
 	   << "# in the Landau level N=" << LandauLevel << " for 2S=" << NbrFlux << " flux quanta" << endl;
-      if (layerSeparation != 0.0)
-	cout << "# with finite layer separation d=" << layerSeparation << endl;
-      if (Manager.GetDouble("layer-thickness") > 0.0)
-	{
-	  cout << "# with finite layer width W=" << Manager.GetDouble("layer-thickness") << endl;
-	  cout << "# and type: "<<AbstractZDensityProfile::DensityProfileName(Manager.GetString("profile-type"))<<endl;
-	}
-      if (OneBodyPotentials != 0)
-	{
-	  cout << "# with two impurities (V_north = " << ((SingleDoubleOption*) Manager["north-potential"])->GetDouble() 
+        if (layerSeparation != 0.0)
+	  cout << "# with finite layer separation d=" << layerSeparation << endl;
+        if (Manager.GetDouble("layer-thickness") > 0.0)
+	  {
+	    cout << "# with finite layer width W=" << Manager.GetDouble("layer-thickness") << endl;
+	    cout << "# and type: "<<AbstractZDensityProfile::DensityProfileName(Manager.GetString("profile-type"))<<endl;
+	  }
+        if (OneBodyPotentials != 0)
+	  {
+	    cout << "# with two impurities (V_north = " << ((SingleDoubleOption*) Manager["north-potential"])->GetDouble() 
 	       << " and V_south = " << ((SingleDoubleOption*) Manager["south-potential"])->GetDouble() << ")" << endl;
-	}
-      cout << "#" << endl
+	  }
+        cout << "#" << endl
 	   << "# Pseudopotentials = V_0 V_1 ..." << endl << endl
 	   << "Pseudopotentials =";
-      for (int i = 0; i <= MaxMomentum; ++i)
-	cout << " " << Pseudopotentials[i];
-      cout << endl;
-      if (OneBodyPotentials != 0)
-	{
-	  cout << endl << "Onebodypotentials =";
-	  for (int i = 0; i <= MaxMomentum; ++i)
-	    cout << " " << OneBodyPotentials[i];
-	  cout << endl;
-	}
-    }  
+        for (int i = 0; i <= MaxMomentum; ++i)
+	  cout << " " << Pseudopotentials[i];
+        cout << endl;
+        if (OneBodyPotentials != 0)
+	  {
+	    cout << endl << "Onebodypotentials =";
+	    for (int i = 0; i <= MaxMomentum; ++i)
+	      cout << " " << OneBodyPotentials[i];
+	    cout << endl;
+	  }
+      }  
 
-  if (Manager.GetBoolean("tab"))
-    {
-      ofstream File;
-      char *TabFileName = ReplaceExtensionToFileName(OutputFile,"dat","tab");
-      File.open(TabFileName, ios::binary | ios::out);
-      File.precision(14);
-      File << "# pseudopotentials on the sphere for coulomb interaction ";
-      if (((BooleanOption*) Manager["relativistic-fermions"])->GetBoolean() == true)
-	File << " for relativistic fermions";
-      File << endl
+    if (Manager.GetBoolean("tab"))
+      {
+        ofstream File;
+        char *TabFileName = ReplaceExtensionToFileName(OutputFile,"dat","tab");
+        File.open(TabFileName, ios::binary | ios::out);
+        File.precision(14);
+        File << "# pseudopotentials on the sphere for coulomb interaction ";
+        if (((BooleanOption*) Manager["relativistic-fermions"])->GetBoolean() == true)
+	  File << " for relativistic fermions";
+        File << endl
 	   << "# in the Landau level N=" << LandauLevel << " for 2S=" << NbrFlux << " flux quanta" << endl;
-      if (layerSeparation != 0.0)
-	File << "# with finite layer separation d=" << layerSeparation << endl;
-      if (Manager.GetDouble("layer-thickness") > 0.0)
-	{
-	  File << "# with finite layer width W=" << Manager.GetDouble("layer-thickness") << endl;
-	  File << "# and type: "<<AbstractZDensityProfile::DensityProfileName(Manager.GetString("profile-type"))<<endl;
-	}      
-      if (Manager.GetDouble("add-v0")!=0.0)
-	File << "# with \\delta V_0="<<Manager.GetDouble("add-v0")<<endl;
-      if (Manager.GetDouble("add-v1")!=0.0)
-	File << "# with \\delta V_1="<<Manager.GetDouble("add-v1")<<endl;
-      File << "#" << endl
+        if (layerSeparation != 0.0)
+	  File << "# with finite layer separation d=" << layerSeparation << endl;
+        if (Manager.GetDouble("layer-thickness") > 0.0)
+	  {
+	    File << "# with finite layer width W=" << Manager.GetDouble("layer-thickness") << endl;
+	    File << "# and type: "<<AbstractZDensityProfile::DensityProfileName(Manager.GetString("profile-type"))<<endl;
+	  }      
+        if (Manager.GetDouble("add-v0")!=0.0)
+	  File << "# with \\delta V_0="<<Manager.GetDouble("add-v0")<<endl;
+        if (Manager.GetDouble("add-v1")!=0.0)
+	  File << "# with \\delta V_1="<<Manager.GetDouble("add-v1")<<endl;
+        File << "#" << endl
 	   << "# m\tV_m" << endl;      
-      File << "0\t" << Pseudopotentials[0]+Manager.GetDouble("add-v0")<<endl;
-      File << "1\t" << Pseudopotentials[1]+Manager.GetDouble("add-v1")<<endl;
-      for (int i = 2; i <= MaxMomentum; ++i)
-	File << i<<"\t" << Pseudopotentials[i]<<endl;
-      File.close();
-      delete [] TabFileName;
-    }
+        File << "0\t" << Pseudopotentials[0]+Manager.GetDouble("add-v0")<<endl;
+        File << "1\t" << Pseudopotentials[1]+Manager.GetDouble("add-v1")<<endl;
+        for (int i = 2; i <= MaxMomentum; ++i)
+	  File << i<<"\t" << Pseudopotentials[i]<<endl;
+        File.close();
+        delete [] TabFileName;
+      }
   
-  delete[] OutputFile;
-  return 0;
+    delete[] OutputFile;
+  }
+ else //Calculate pseudopotentials for graphene bilayer
+  {
+    int NbrFlux = ((SingleIntegerOption*) Manager["nbr-flux"])->GetInteger();
+    int LLIndex1 = ((SingleIntegerOption*) Manager["l1"])->GetInteger();
+    int LLIndex2 = ((SingleIntegerOption*) Manager["l2"])->GetInteger();
+    int LLIndex3 = ((SingleIntegerOption*) Manager["l3"])->GetInteger();
+    int LLIndex4 = ((SingleIntegerOption*) Manager["l4"])->GetInteger();
+
+    if ((LLIndex1<0) || (LLIndex1>1) || (LLIndex2<0) || (LLIndex2>1) || (LLIndex3<0) || (LLIndex3>1) || (LLIndex4<0) || (LLIndex4>1) )
+     {
+       cout<<"Invalid indices"<<endl;
+       exit(1);
+     }
+    cout<<"Calculating graphene bilayer pseudopotentials for Nflux= "<<NbrFlux<<" LL indices: "<<LLIndex1<<" "<<LLIndex2<<" "<<LLIndex3<<" "<<LLIndex4<<endl;
+
+     //-----------------------------------------------------
+     //---------  prepare output ---------------------------
+     //-----------------------------------------------------
+
+    char* OutputFile;
+
+    if (((SingleStringOption*) Manager["output"])->GetString() == 0l)
+      OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_llmixing_2s_%nbr-flux%_l1_%l1_l2_%l2_l3_%l3_l4_%l4.dat");
+    else
+      {
+        OutputFile = new char [strlen(((SingleStringOption*) Manager["output"])->GetString()) + 1];
+        strcpy (OutputFile, ((SingleStringOption*) Manager["output"])->GetString());
+      }
+
+
+    double* Pseudopotentials;
+    int NbrPseudopotentials = 0;
+    Pseudopotentials = EvaluateGrapheneBilayerPseudopotentials(NbrFlux, NbrPseudopotentials, LLIndex1, LLIndex2, LLIndex3, LLIndex4);
+
+
+   ofstream File;
+   File.open(OutputFile, ios::binary | ios::out);
+   File.precision(14);
+   File << "Pseudopotentials=";        
+   for (int i = 0; i <= NbrPseudopotentials - 1; ++i)
+    File << " " << Pseudopotentials[i];
+   File << endl;      
+   File.close();
+
+   cout.precision(14);
+  
+   delete[] OutputFile;
+   delete[] Pseudopotentials;
+  }
+
+ return 0;
 }
-
-

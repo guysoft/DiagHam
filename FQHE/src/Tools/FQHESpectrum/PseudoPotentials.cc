@@ -461,3 +461,93 @@ double* EvaluateFiniteWidthPseudoPotentialsNoInterpolation(int nbrFlux, int land
    return 0;
 #endif
 }
+
+// evaluate graphene bilayer pseudopotentials
+//
+// nbrflux = number of flux quanta for the lowest Landau level (i.e. twice the maximum momentum for a single particle
+// l1, l2, l3, l4 = Landau level indices (0 for lowest LL, 1 for first excited LL)
+//
+double* EvaluateGrapheneBilayerPseudopotentials(int nbrFlux, int& nbrPseudopotentials, int llindex1, int llindex2, int llindex3, int llindex4, bool verbose)
+{
+  cout.precision(14); 
+  double Q = 0.5 * nbrFlux;
+  double l1 = Q + llindex1;
+  double l2 = Q + llindex2;
+  double l3 = Q + llindex3;
+  double l4 = Q + llindex4;
+
+  double Lmin = (fabs(l1 - l2)) >? (fabs(l3 - l4));
+  double Lmax = (l1 + l2) <? (l3 + l4);
+
+  nbrPseudopotentials = ((int)(Lmax - Lmin) + 1);
+
+  cout<<"Lmin: "<<Lmin<<" LMax: "<<Lmax<<" Nbr= "<<nbrPseudopotentials<<endl;
+
+  double* Pseudopotentials = new double [nbrPseudopotentials];
+
+  //Prepare the tables of CG coeffs to speed up calculation
+
+ 
+  ClebschGordanCoefficients Coefficients12((int)(2.0*l1), (int)(2.0*l2));
+  ClebschGordanCoefficients Coefficients34((int)(2.0*l3), (int)(2.0*l4));
+
+  double min12 = l1 <? l2;
+  double min34 = l3 <? l4;
+ 
+  double minj=l1;
+  for (double m1 = -min12; m1<= min12; m1 += 1.0)
+   for (double m2 = -min34; m2 <= min34; m2 += 1.0)
+    if (fabs(m1-m2)<minj)
+     minj = fabs(m1-m2);
+  double maxj = (l1 + l2) <? (l3 + l4);
+  int length = (int) (maxj - minj) + 1;
+
+  ClebschGordanCoefficients* Coefficients1j = new ClebschGordanCoefficients[length];
+  ClebschGordanCoefficients* Coefficients2j = new ClebschGordanCoefficients[length];
+  ClebschGordanCoefficients* Coefficients3j = new ClebschGordanCoefficients[length];
+  ClebschGordanCoefficients* Coefficients4j = new ClebschGordanCoefficients[length];
+
+  for (int j = (int)minj; j<= (int)maxj; j++)
+   {
+     Coefficients1j[j] = ClebschGordanCoefficients((int)(2.0*l1), 2*j); 
+     Coefficients2j[j] = ClebschGordanCoefficients((int)(2.0*l2), 2*j); 
+     Coefficients3j[j] = ClebschGordanCoefficients((int)(2.0*l3), 2*j); 
+     Coefficients4j[j] = ClebschGordanCoefficients((int)(2.0*l4), 2*j); 
+   }
+
+
+  //Proceed to calculate pseudopotentials
+
+  for (double l = 0.0; l <= (Lmax - Lmin); l += 1.0)
+    {
+     double TmpPseudopotentials = 0.0;
+ 
+     for (double m1 = -min12; m1<= min12; m1 += 1.0)
+      for (double m2 = -min34; m2 <= min34; m2 += 1.0)
+       {
+         double Sign = pow(-1.0, m2 - m1 + l1 + l2 + l3 + l4);
+         double CGTerm1 = Coefficients12.GetCoefficient((int)(2.0*m1), (int)(-2.0*m1), (int)(2.0*(Lmax - l))) * Coefficients34.GetCoefficient((int)(2.0*m2), (int)(-2.0*m2), (int)(2.0*(Lmax - l)));
+         
+	 double abs_m12 = fabs(m1-m2);
+         
+         double min1234 = (l1 + l2) <? (l3 + l4);
+         double CGTerm2 = 0.0;
+         for (double j = abs_m12; j <= min1234; j+=1.0)
+           if ( (l1 <= l3 + j) && (l1 >= fabs(l3-j)) && (l2 <= l4 + j) && (l2 >= fabs(l4-j)) && (l3 <= l1 + j) && (l3 >= fabs(l1-j)) && (l4 <= l2 + j) && (l4 >= fabs(l2-j))  )
+              CGTerm2 += ( Coefficients1j[(int)j].GetCoefficient((int)(-2.0*m1), (int)(-2.0*(m2-m1)), (int)(2.0*l3)) * Coefficients2j[(int)j].GetCoefficient( (int)(2.0*m1), (int)(2.0*(m2-m1)), (int)(2.0*l4)) * Coefficients3j[(int)j].GetCoefficient( (int)(2.0*Q), 0, (int)(2.0*l1)) * Coefficients4j[(int)j].GetCoefficient( (int)(2.0*Q), 0, (int)(2.0*l2)) );
+
+         TmpPseudopotentials += (Sign * CGTerm1 * CGTerm2);
+       } 
+      Pseudopotentials[(int)l] = TmpPseudopotentials / sqrt (Q); 
+      if (verbose == true)
+	cout << Pseudopotentials[(int)l] << "  ";
+  }
+
+  cout << endl;
+
+  delete[] Coefficients1j;      
+  delete[] Coefficients2j;      
+  delete[] Coefficients3j;      
+  delete[] Coefficients4j;      
+  return Pseudopotentials;
+}
