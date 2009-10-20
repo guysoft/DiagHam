@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2008 Gunnar Moeller                    //
 //                                                                            //
 //                                                                            //
-//      class for a basic Monte Carlo algorith for particles on a sphere      //
+//        class for a binned correlation function on the sphere geometry      //
 //                                                                            //
-//                        last modification : 23/01/2008                      //
+//                        last modification : 19/10/2009                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,58 +28,97 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef ABSTRACTOBSERVABLE_H
-#define ABSTRACTOBSERVABLE_H
+#ifndef SPHERETWOBODYCORRELATOR_H
+#define SPHERETWOBODYCORRELATOR_H
 
 #include "config.h"
-
+#include "AbstractObservable.h"
+#include "ParticleOnSphereCollection.h"
 #include <iostream>
 
-class AbstractParticleCollection;
 
-class AbstractObservable
+class SphereTwoBodyCorrelator
 {
  protected:
-  unsigned Type;
+    // Radius of the sphere in units of magnetic length
+  double Radius;
+
+  // Number of Flux quanta piercing the sphere
+  int NbrFlux;
+
+  // number of bins
+  int Bins;
+
+  // overall resolution 
+  int Resolution;
+
+  // increased resolution for the interval close to the origin
+  int Highres;
+
+  // number of datapoints to be included in that interval
+  int Range;
+
+  // total weight of observations
+  double Measures;
+
+  // array of measurements
+  double *Correlations;
+
+  // Number of particles
+  int NbrParticles;
+
+   // system that the observable operates on
+  ParticleOnSphereCollection *System;
+
+  // pointers to spinor coordinates (external)
+  Complex *SpinorUCoordinates;
+  Complex *SpinorVCoordinates;
+
+  // Flag for output
+  bool PrintLength;
   
  public:
+
+  // standard constructor
+  SphereTwoBodyCorrelator();
   
-  enum Properties{
-    RealObservable = 0x1u,
-    ComplexObservable = 0x2u,
-    VectorValued = 0x4u
-  };
+  // constructor
+  // nbrFlux = number of flux piercing the sphere
+  // resolution = total number of bins
+  // highres = number of points in high resolution interval at small r
+  // range =  ranger over which high resolution is implemented
+  // printLength = flag setting units of x-axis upon output length / angle
+  SphereTwoBodyCorrelator(int nbrFlux, int resolution, int highres, int range=0, bool printLength=true);
   
   // destructor
-  virtual ~AbstractObservable();
+  virtual ~SphereTwoBodyCorrelator();
 
   // call to make an observation
   // weight = relative weight of this sample
-  virtual void RecordValue(double weight) = 0;
+  virtual void RecordValue(double weight);
+
+  // set units of print output
+  virtual void SetPrintLength(bool printLength=true){this->PrintLength=printLength;}
 
   // print legend to the given stream
   // all = flag indicating whether to print all, or shortened information
-  virtual void PrintLegend(std::ostream &output, bool all = false) = 0;
+  virtual void PrintLegend(std::ostream &output, bool all = false);
 
   // print status to the given stream
   // all = flag indicating whether to print all, or shortened information
-  virtual void PrintStatus(std::ostream &output, bool all = false) = 0;
-
-  // request whether observable should be printed
-  //
-  virtual bool IncludeInPrint();
-
-  // set print status
-  //
-  virtual void IncludeInPrint(bool newStatus);
+  virtual void PrintStatus(std::ostream &output, bool all = false);
 
   // print formatted data suitable for plotting
   // ouput = the target stream
-  virtual void WriteDataFile(std::ostream &output) = 0;
+  virtual void WriteDataFile(std::ostream &output);
+
+  // write binary data 
+  // ouput = the target stream
+  virtual void WriteBinaryData(std::ostream &output);
 
   // set particle collection that the observable operates on
   // system = particle collection
-  virtual void SetParticleCollection(AbstractParticleCollection *system) = 0;
+  virtual void SetParticleCollection(AbstractParticleCollection *system);
   
 };
 

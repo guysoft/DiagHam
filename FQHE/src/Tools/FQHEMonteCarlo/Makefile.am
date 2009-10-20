@@ -15,4 +15,6 @@ HalperinSamplingFunction.cc \
 SphereCoulombEnergy.cc \
 TrivialSamplingFunction.cc \
 SphereGeneralEnergy.cc \
-SphereWithSpinGeneralEnergy.cc
+SphereWithSpinGeneralEnergy.cc \
+SphereTwoBodyCorrelator.cc \
+SphereBilayerTwoBodyCorrelator.cc

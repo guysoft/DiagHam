@@ -250,6 +250,7 @@ void SimpleMonteCarloOnSphereAlgorithm::WriteObservations(ostream &str)
 {
   for (int i=0; i<NbrObservables; ++i)
     {
-      Observables[i]->WriteDataFile(str);
+      if (Observables[i]->IncludeInPrint())
+	Observables[i]->WriteDataFile(str);
     }
 }

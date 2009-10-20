@@ -7,7 +7,7 @@
 #include "Tools/FQHEMonteCarlo/SimpleMonteCarloOnSphereAlgorithm.h"
 #include "Tools/FQHEMonteCarlo/SphereBilayerCoulombEnergy.h"
 #include "Tools/FQHEMonteCarlo/SphereWithSpinGeneralEnergy.h"
-
+#include "Tools/FQHEMonteCarlo/SphereBilayerTwoBodyCorrelator.h"
 #include "MCObservables/RealObservable.h"
 
 #include "Options/Options.h"
@@ -57,7 +57,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('b', "background-only", "print background energy, and exit");  
   (*SystemGroup) += new SingleIntegerInternalOption  ('n', "SzTotal", "number of layer separation d where the energy is evaluated", 0);
 
-  (*SystemGroup) += new SingleStringOption('o',"output","file to write a log of results");
+  (*SystemGroup) += new SingleStringOption('o',"output","file to write a log of results (and a separate correlation function)");
   
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -141,19 +141,31 @@ int main(int argc, char** argv)
 	  exit(0);
 	}
     }
-  
+
+  SphereBilayerTwoBodyCorrelator *Correlators= new SphereBilayerTwoBodyCorrelator(NbrFlux, NbrUp, 1024, 1, 1);
+  Correlators->IncludeInPrint(false);
+  MonteCarloRoutine.AddObservable(Correlators, 20);
   // run simulation
   MonteCarloRoutine.Simulate();
 
   // print final results:
   cout << "Final results:" << endl;
   MonteCarloRoutine.WriteObservations(cout);
-
+  
   if (Manager.GetString("output")!=NULL)
     {
       ofstream LogFile(Manager.GetString("output"),std::ios::out);
       MonteCarloRoutine.WriteObservations(LogFile);
       LogFile.close();
+      char *CorrName=new char[strlen(Manager.GetString("output"))+10];
+      sprintf(CorrName,"%s.corr",Manager.GetString("output"));
+      ofstream CorrFile(CorrName,std::ios::out);
+      Correlators->WriteDataFile(CorrFile);
+      CorrFile.close();
+    }
+  else
+    {
+      Correlators->WriteDataFile(cout);
     }
 
   if (TestWaveFunction!=NULL) delete TestWaveFunction;
