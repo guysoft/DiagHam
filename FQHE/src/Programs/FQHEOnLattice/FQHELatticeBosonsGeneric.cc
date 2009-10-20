@@ -1,5 +1,6 @@
 #include "HilbertSpace/BosonOnLatticeGeneric.h"
 #include "HilbertSpace/HardCoreBosonOnLatticeGeneric.h"
+#include "HilbertSpace/SingleBosonOnLatticeGeneric.h"
 #include "Hamiltonian/ParticleOnLatticeGenericHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeExternalHamiltonian.h"
 
@@ -211,9 +212,16 @@ int main(int argc, char** argv)
 	}
     }
   ParticleOnLattice* Space;
-  if (HardCore)
-    Space = new HardCoreBosonOnLatticeGeneric(NbrBosons, Lattice, NbrFluxQuanta, MemorySpace, SolenoidX, SolenoidY);
-  else Space = new BosonOnLatticeGeneric(NbrBosons, Lattice, NbrFluxQuanta, MemorySpace, SolenoidX, SolenoidY);
+  if (NbrBosons==1)
+    {
+      Space = new SingleBosonOnLatticeGeneric(Lattice, NbrFluxQuanta, SolenoidX, SolenoidY);
+    }
+  else
+    {
+      if (HardCore)
+	Space = new HardCoreBosonOnLatticeGeneric(NbrBosons, Lattice, NbrFluxQuanta, MemorySpace, SolenoidX, SolenoidY);
+      else Space = new BosonOnLatticeGeneric(NbrBosons, Lattice, NbrFluxQuanta, MemorySpace, SolenoidX, SolenoidY);
+    }
   
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
   

@@ -83,7 +83,6 @@ ParticleOnLatticeExternalHamiltonian::ParticleOnLatticeExternalHamiltonian(Parti
   this->HamiltonianShift=0.0;
   this->FluxDensity=0.0;
   this->Architecture = architecture;
-  cout << "Calling this->EvaluateInteractionFactors()"<<endl;
   this->EvaluateInteractionFactors();
   this->FastMultiplicationFlag = false;
   long MinIndex;
@@ -288,6 +287,7 @@ void ParticleOnLatticeExternalHamiltonian::EvaluateInteractionFactors()
 		}
 	    }
 	  ++NbrQ12Indices;
+#ifdef DEBUG_OUTPUT
 	  int sum=NbrDiagonalInteractionFactors;
 	  cout << "Count of matrix elements:"<<endl
 	       << "Diagonal: "<<NbrDiagonalInteractionFactors<<endl
@@ -298,6 +298,7 @@ void ParticleOnLatticeExternalHamiltonian::EvaluateInteractionFactors()
 	      sum+=TmpNbrQ34Values[i];
 	    }
 	  cout << "total elements: "<<sum<<" (lines: "<<TmpNbrLines<<")"<<endl;
+#endif
 	  // assign memory
 	  this->NbrQ34Values = new int[NbrQ12Indices];
 	  for (int i=0; i<NbrQ12Indices; ++i)
@@ -321,11 +322,8 @@ void ParticleOnLatticeExternalHamiltonian::EvaluateInteractionFactors()
 	    Q12Symmetry=true;
 	  if (HaveSmallerQ3^HaveLargerQ3)
 	    Q34Symmetry=true;
-	  if (HaveSmallerQ1) cout << "HaveSmallerQ1"<<endl;
-	  if (HaveLargerQ1) cout << "HaveLargerQ1"<<endl;
-	  if (HaveSmallerQ3) cout << "HaveSmallerQ3"<<endl;
-	  if (HaveLargerQ3) cout << "HaveLargerQ3"<<endl;
-	  cout << "Assuming symmetry in";
+	  if ((Q12Symmetry)||(Q34Symmetry))
+	    cout << "Assuming symmetry in";
 	  if (Q12Symmetry) cout << " Q12";
 	  if (Q34Symmetry) cout << " Q34";
 	  cout<<endl;

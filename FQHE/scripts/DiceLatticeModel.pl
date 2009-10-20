@@ -62,6 +62,8 @@ $UnitCells[1]=2;
 my $DisplayHelp=0;
 my $AllElements=0;
 my $UseExtrapolateAnalytical=1;
+my $NonZeroThreshold = 1e-6;
+
 while( (defined($ARGV[0])&&$ARGV[0] =~ /^-/ ))
   {
     if ( $ARGV[0] =~ /-a/ )
@@ -96,6 +98,19 @@ while( (defined($ARGV[0])&&$ARGV[0] =~ /^-/ ))
 	  {
 	    shift(@ARGV);
 	    $RatioU = $ARGV[0];
+	  }
+      }
+    if ( $ARGV[0] =~ /-z/ )
+      {
+	if (length($ARGV[0])>2)
+	  {
+	    $NonZeroThreshold = $ARGV[0];
+	    $NonZeroThreshold =~ s/-z//;
+	  }
+	else
+	  {
+	    shift(@ARGV);
+	    $NonZeroThreshold = $ARGV[0];
 	  }
       }
     if ( $ARGV[0] =~ /-r/ )
@@ -149,6 +164,7 @@ if ($DisplayHelp)
     print("       -d: name of directory to generate files in (default: ./dice_Lx_Ly)\n");
     print("       -u: ratio of U6 to U3 on 6-fold and 3-fold connected sites of dice lattice\n");
     print("       -a: include all matrix elements, ignoring obvious symmetries\n");
+    print("       -z: threshold above which elements are considered as non-zero\n");
     exit(1);
   }
 
@@ -355,7 +371,7 @@ sub ExtrapolateToAnalyticalValue
 	  }
       }
     my $AbsVal = sqrt($Re*$Re+$Im*$Im);
-    if ($AbsVal>1e-7)
+    if ($AbsVal>$NonZeroThreshold)
       {
 	my $RoundedMultiples=0;
 	my $UsedPrefactor=-1;
