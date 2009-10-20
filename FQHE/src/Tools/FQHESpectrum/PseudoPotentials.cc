@@ -476,8 +476,8 @@ double* EvaluateGrapheneBilayerPseudopotentials(int nbrFlux, int& nbrPseudopoten
   double l3 = Q + llindex3;
   double l4 = Q + llindex4;
 
-  double Lmin = (fabs(l1 - l2)) >? (fabs(l3 - l4));
-  double Lmax = (l1 + l2) <? (l3 + l4);
+  double Lmin = ((fabs(l1 - l2) > fabs(l3 - l4)) ? fabs(l1 - l2) : fabs(l3 - l4));
+  double Lmax = ((l1 + l2 < l3 + l4) ? (l1 + l2) : (l3 + l4));
 
   nbrPseudopotentials = ((int)(Lmax - Lmin) + 1);
 
@@ -491,15 +491,15 @@ double* EvaluateGrapheneBilayerPseudopotentials(int nbrFlux, int& nbrPseudopoten
   ClebschGordanCoefficients Coefficients12((int)(2.0*l1), (int)(2.0*l2));
   ClebschGordanCoefficients Coefficients34((int)(2.0*l3), (int)(2.0*l4));
 
-  double min12 = l1 <? l2;
-  double min34 = l3 <? l4;
+  double min12 = l1 < l2 ? l1 : l2;
+  double min34 = l3 < l4 ? l3 : l4;
  
   double minj=l1;
   for (double m1 = -min12; m1<= min12; m1 += 1.0)
    for (double m2 = -min34; m2 <= min34; m2 += 1.0)
     if (fabs(m1-m2)<minj)
      minj = fabs(m1-m2);
-  double maxj = (l1 + l2) <? (l3 + l4);
+  double maxj = ((l1 + l2) < (l3 + l4) ? (l1+l2) : (l3+l4));
   int length = (int) (maxj - minj) + 1;
 
   ClebschGordanCoefficients* Coefficients1j = new ClebschGordanCoefficients[length];
@@ -530,7 +530,7 @@ double* EvaluateGrapheneBilayerPseudopotentials(int nbrFlux, int& nbrPseudopoten
          
 	 double abs_m12 = fabs(m1-m2);
          
-         double min1234 = (l1 + l2) <? (l3 + l4);
+         double min1234 = (l1 + l2) < (l3 + l4) ? l1 + l2 : l3 + l4;
          double CGTerm2 = 0.0;
          for (double j = abs_m12; j <= min1234; j+=1.0)
            if ( (l1 <= l3 + j) && (l1 >= fabs(l3-j)) && (l2 <= l4 + j) && (l2 >= fabs(l4-j)) && (l3 <= l1 + j) && (l3 >= fabs(l1-j)) && (l4 <= l2 + j) && (l4 >= fabs(l2-j))  )
