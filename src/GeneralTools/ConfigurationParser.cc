@@ -393,7 +393,7 @@ bool ConfigurationParser::GetAsIntegerArray (const char* parameterName, char sep
 	    ++nbrValues;
 	  ++Start;
 	}
-      cout << nbrValues << endl;
+      // cout << nbrValues << endl;
       array = new int [nbrValues + 1];
       nbrValues = 0;
       Start = TmpValue;
@@ -515,7 +515,7 @@ bool ConfigurationParser::GetAsDoubleArray (const char* parameterName, char sepa
 	    ++nbrValues;
 	  ++Start;
 	}
-      cout << nbrValues << endl;
+      // cout << nbrValues << endl;
       array = new double [nbrValues + 1];
       nbrValues = 0;
       Start = TmpValue;

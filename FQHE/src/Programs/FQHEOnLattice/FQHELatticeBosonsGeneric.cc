@@ -34,7 +34,7 @@ using std::ofstream;
 #include "Matrix/ComplexMatrix.h"
 
 // switch for debug output
-//#define DEBUG_OUTPUT
+#define DEBUG_OUTPUT
 
 // store imaginary Hamiltonian into a complex matrix
 //
@@ -134,7 +134,7 @@ int main(int argc, char** argv)
     double *Fluxes=Manager.GetDoubles("solenoid-flux", tmpI);
     if (tmpI>0) SolenoidX=Fluxes[0];
     if (tmpI>1) SolenoidY=Fluxes[1];
-    
+    cout << "Read: SolenoidX="<<SolenoidX<<" SolenoidY="<<SolenoidY<<endl;
     if (tmpI>0) delete [] Fluxes;
   }
   bool ReverseHopping = Manager.GetBoolean("positive-hopping");
