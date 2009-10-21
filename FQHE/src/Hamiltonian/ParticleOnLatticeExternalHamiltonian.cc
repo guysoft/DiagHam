@@ -128,6 +128,8 @@ ParticleOnLatticeExternalHamiltonian::~ParticleOnLatticeExternalHamiltonian()
 	  delete [] this->Q3PerQ12[i];
 	  delete [] this->Q4PerQ12[i];
 	}
+      delete [] this->Q3PerQ12;
+      delete [] this->Q4PerQ12;
       delete [] this->NbrQ34Values;
       delete [] this->InteractionFactors;
       delete [] this->Q1Value;
@@ -139,6 +141,11 @@ ParticleOnLatticeExternalHamiltonian::~ParticleOnLatticeExternalHamiltonian()
       delete [] this->DiagonalInteractionFactors;
       delete [] this->DiagonalQValues;
     }
+  if (OneParticleTerms!=NULL)
+    delete [] this->OneParticleTerms;
+  if (this->TwoParticleTerms!=NULL)
+    delete [] this->TwoParticleTerms;
+
 }
 
 
@@ -241,7 +248,7 @@ void ParticleOnLatticeExternalHamiltonian::EvaluateInteractionFactors()
 	  int Pos=0;
 	  while (Pos<TmpNbrLines)
 	    {
-	      while ((TmpQ1[Pos]==oldQ1)&&(TmpQ2[Pos]==oldQ2)&&(Pos<TmpNbrLines))
+	      while ((Pos<TmpNbrLines)&&(TmpQ1[Pos]==oldQ1)&&(TmpQ2[Pos]==oldQ2))
 		{
 		  if (TmpQ1[Pos]>TmpQ2[Pos]) HaveLargerQ1=true;
 		  else if (TmpQ1[Pos]<TmpQ2[Pos]) HaveSmallerQ1=true;
@@ -339,7 +346,7 @@ void ParticleOnLatticeExternalHamiltonian::EvaluateInteractionFactors()
 	  Pos=0;
 	  while (Pos<TmpNbrLines)
 	    {
-	      while ((TmpQ1[Pos]==oldQ1)&&(TmpQ2[Pos]==oldQ2)&&(Pos<TmpNbrLines))
+	      while ((Pos<TmpNbrLines)&&(TmpQ1[Pos]==oldQ1)&&(TmpQ2[Pos]==oldQ2))
 		{
 		  // have diagonal element?
 		  if ((TmpQ1[Pos]==TmpQ2[Pos])&&(TmpQ1[Pos]==TmpQ3[Pos])&&(TmpQ1[Pos]==TmpQ4[Pos]))

@@ -251,14 +251,15 @@ LatticePhases::LatticePhases()
 		}
 	    }
 	}
+     
       for (int i=0; i<NbrPairs; ++i)
 	{
 	  for (int j=0; j<NbrValues[i]; ++j)
 	    delete [] NeighborString[i][j];
 	  delete [] NeighborString[i];
 	}
-      delete [] NbrValues;
       delete [] NeighborString;
+      delete [] NbrValues;
     }
   
 #ifdef DEBUG_OUTPUT
@@ -520,7 +521,17 @@ LatticePhases::LatticePhases()
 	      this->OneParticlePotentialPositions[NbrOneParticlePotentials] = SiteIndex;
 	      ++NbrOneParticlePotentials;
 	    }
+
 	}
+      for (int p=0; p<NbrPairs; ++p)
+	{
+	  for (int q=0; q<NbrValues[p]; ++q)
+	    delete [] NeighborString[p][q];
+	  delete [] NeighborString[p];
+	}
+      delete [] NbrValues;
+      delete [] NeighborString;
+
     }
 
   if (LatticeDefinition["NbrFlux"]!=NULL)
@@ -546,7 +557,7 @@ LatticePhases::LatticePhases()
   delete [] Translation3;
   delete [] FieldName;
   delete [] TmpNeighbors;
-  for (int i=0; i<NbrSites; ++i)
+  for (int i=0; i<NbrNeighborCells*NbrSites; ++i)
     delete [] TmpNeighborShift[i];
   delete [] TmpNeighborShift;
   delete [] TmpPhases;

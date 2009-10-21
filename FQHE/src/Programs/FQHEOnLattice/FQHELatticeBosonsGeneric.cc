@@ -328,7 +328,7 @@ int main(int argc, char** argv)
       char* EigenvectorName = 0;
       if (Manager.GetBoolean("eigenstate"))	
 	{
-	  EigenvectorName = new char [64];
+	  EigenvectorName = new char [255];
 	  if (Manager.GetString("external-two-body")==NULL)
 	    sprintf (EigenvectorName, "bosons_lattice_%s_n_%d%s%s_q_%d", LatticeName, NbrBosons, interactionStr, reverseHoppingString, NbrFluxQuanta);
 	  else

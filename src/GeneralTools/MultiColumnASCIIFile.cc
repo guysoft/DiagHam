@@ -107,6 +107,7 @@ bool MultiColumnASCIIFile::Parse(char* filename)
 	  char* TmpString = new char [strlen (filename) + 32]; 
 	  sprintf (TmpString, "%s is too big\n", filename);
 	  this->ErrorLog += TmpString;
+	  delete[] TmpBuffer;
 	  return false;
 	}
       File.read(TmpBuffer, Size);
@@ -126,6 +127,7 @@ bool MultiColumnASCIIFile::Parse(char* filename)
 	  char* TmpString = new char [strlen (filename) + 32]; 
 	  sprintf (TmpString, "cannot open file: %s\n", filename);
 	  this->ErrorLog += TmpString;
+	  delete[] TmpBuffer;
 	  return false;
 	}
       BzError = BZ_OK;
@@ -184,6 +186,7 @@ bool MultiColumnASCIIFile::Parse(char* filename)
 		  char* TmpString = new char [strlen (filename) + 256]; 
 		  sprintf (TmpString, "fatal error at line %d in file %s : can't retrieve number of columns\n", LineNumber, filename);
 		  this->ErrorLog += TmpString;
+		  delete[] TmpBuffer;
 		  return false;
 		}
 	      this->Data = new char** [this->NbrColumns];
@@ -201,6 +204,7 @@ bool MultiColumnASCIIFile::Parse(char* filename)
 		  char* TmpString = new char [strlen (filename) + 256]; 
 		  sprintf (TmpString, "fatal error at line %d in file %s : the number of columns is different from %d\n", LineNumber, filename, this->NbrColumns);
 		  this->ErrorLog += TmpString;
+		  delete[] TmpBuffer;
 		  return false;		  
 		}
 	      for (int i = 0; i < this->NbrColumns; ++i)
@@ -212,6 +216,7 @@ bool MultiColumnASCIIFile::Parse(char* filename)
       ++Pos;
     }
   delete[] TmpArray;
+  delete[] TmpBuffer;
   if (this->NbrLines != MaxNbrLines)
     {
       for (int i = 0; i < this->NbrColumns; ++i)
