@@ -299,6 +299,16 @@ void BosonOnLatticeGeneric::SetNbrFluxQuanta(int nbrFluxQuanta, double solenoidX
   this->SetNbrFluxQuanta(nbrFluxQuanta);
 }
 
+// request solenoid fluxes
+// solenoidX = new solenoid flux through torus in x-direction
+// solenoidY = new solenoid flux through torus in y-direction
+//
+void BosonOnLatticeGeneric::GetSolenoidFluxes(double &solenoidX, double &solenoidY)
+{
+  solenoidX=this->SolenoidX;
+  solenoidY=this->SolenoidY;
+}
+
 // obtain the current setting of the flux piercing this lattice
 int BosonOnLatticeGeneric::GetNbrFluxQuanta()
 {

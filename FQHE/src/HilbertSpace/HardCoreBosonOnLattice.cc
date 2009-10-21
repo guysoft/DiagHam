@@ -316,6 +316,17 @@ void HardCoreBosonOnLattice::SetNbrFluxQuanta(int nbrFluxQuanta, double solenoid
   this->SetNbrFluxQuanta(nbrFluxQuanta);
 }
 
+// request solenoid fluxes
+// solenoidX = new solenoid flux through torus in x-direction
+// solenoidY = new solenoid flux through torus in y-direction
+//
+void HardCoreBosonOnLattice::GetSolenoidFluxes(double &solenoidX, double &solenoidY)
+{
+  solenoidX=this->SolenoidX;
+  solenoidY=this->SolenoidY;
+}
+
+
 
 // obtain the current setting of the flux piercing this lattice
 int HardCoreBosonOnLattice::GetNbrFluxQuanta()

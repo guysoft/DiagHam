@@ -194,6 +194,12 @@ class HardCoreBosonOnLattice :  public ParticleOnLattice
   // solenoidY = new solenoid flux through torus in y-direction
   virtual void SetNbrFluxQuanta(int nbrFluxQuanta, double solenoidX, double solenoidY);
 
+  // request solenoid fluxes
+  // solenoidX = new solenoid flux through torus in x-direction
+  // solenoidY = new solenoid flux through torus in y-direction
+  //
+  virtual void GetSolenoidFluxes(double &solenoidX, double &solenoidY);
+
   // obtain the current setting of the flux piercing this lattice
   virtual int GetNbrFluxQuanta();
 

@@ -275,7 +275,7 @@ int main(int argc, char** argv)
 	      if (status == GSL_SUCCESS)
 		printf ("Minimum found at:\n");
 
-	      printf ("%5d %.5f %.5f %10.5f\n", iter,
+	      printf ("%5d %.5f %.5f %10.5f\n", (int)iter,
 		      gsl_vector_get (s->x, 0),
 		      gsl_vector_get (s->x, 1),
 		      s->f);
@@ -338,7 +338,7 @@ int main(int argc, char** argv)
 		}
 
 	      printf ("%5d %10.3e %10.3ef f() = %7.3f size = %.3f\n",
-		      iter,
+		      (int)iter,
 		      gsl_vector_get (s->x, 0),
 		      gsl_vector_get (s->x, 1),
 		      s->fval, size);

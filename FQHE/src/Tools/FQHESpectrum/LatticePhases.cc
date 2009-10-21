@@ -43,6 +43,9 @@ using std::endl;
 #include <cmath>
 using std::fabs;
 
+// switch for debugging statements
+//#define DEBUG_OUTPUT
+
 // generate the object using options from Option Manager
 //
 LatticePhases::LatticePhases()
@@ -354,11 +357,19 @@ LatticePhases::LatticePhases()
     }  
   
   this->Neighbors = new int*[NbrSites];
+  this->NeighborShift = new int**[NbrSites];
   this->TunnellingPhases = new double*[NbrSites];
   this->NbrNeighbors = new int[NbrSites];
   for (int i=0; i<NbrSites; ++i)
     this->NbrNeighbors[i] = 0;
   int *TmpNeighbors = new int[NbrNeighborCells*NbrSites];
+  int **TmpNeighborShift = new int*[NbrNeighborCells*NbrSites];
+  for (int i=0; i<NbrNeighborCells*NbrSites; ++i)
+    {
+      TmpNeighborShift[i]=new int[Dimension];
+      for (int j=0; j<Dimension; ++j)
+	TmpNeighborShift[i][j]=0;
+    }
   double *TmpPhases = new double[NbrNeighborCells*NbrSites];
   
   this->NbrCells = this->PeriodicRep[0];
@@ -368,6 +379,7 @@ LatticePhases::LatticePhases()
   int *CellCoordinates = new int[Dimension];
   int *CellCoordinates2 = new int[Dimension];
   int *Translation3 = new int[Dimension];
+  
   for (int c=0; c<NbrCells; ++c)
     {
       this->GetCellCoordinates(c, CellCoordinates);
@@ -394,7 +406,8 @@ LatticePhases::LatticePhases()
 		    TmpPhases[NbrNeighbors[Site1]] = GetTunnellingPhaseFromGauge(Site1, Site2);
 		  else
 		    TmpPhases[NbrNeighbors[Site1]] = TunnellingPhaseMatrix(Site1,Site2);
-		  
+		  for (int r=0; r<Dimension; ++r)
+		    TmpNeighborShift[NbrNeighbors[Site1]][r]=0;
 #ifdef DEBUG_OUTPUT
 		  cout << "Neighbors "<<Site1<<"->"<<Site2<<" with phase "<<TmpPhases[NbrNeighbors[Site1]]<<endl;
 #endif
@@ -418,6 +431,8 @@ LatticePhases::LatticePhases()
 		      cout << "Translation3= ["<<Translation3[0]<<", "<<Translation3[1]<<"]"<<endl;
 #endif
 		      TmpNeighbors[NbrNeighbors[Site1]]=Site3;
+		      for (int r=0; r<Dimension; ++r)
+			TmpNeighborShift[NbrNeighbors[Site1]][r]=Translation3[r]/PeriodicRep[r];
 		      if (this->HaveGauge)
 			{
 #ifdef DEBUG_OUTPUT
@@ -432,7 +447,8 @@ LatticePhases::LatticePhases()
 			CellCoordinates2[0]<<", "<<CellCoordinates2[1]<<", "<<j<<" : Site 3="<<Site3
 			   <<" with translation "<<Translation3[0];
 		      for (int i=1; i<Dimension; ++i) cout << " "<<Translation3[i];
-		      cout << " and phase "<<TmpPhases[NbrNeighbors[Site1]]<<endl;
+		      cout << " and phase "<<TmpPhases[NbrNeighbors[Site1]]<<" Shift "<<TmpNeighborShift[NbrNeighbors[Site1]][0]
+			   << ","<<TmpNeighborShift[NbrNeighbors[Site1]][1]<<endl;
 #endif
 		      ++NbrNeighbors[Site1];
 		    }
@@ -442,12 +458,17 @@ LatticePhases::LatticePhases()
 	    {
 	      Neighbors[Site1] = new int[NbrNeighbors[Site1]];
 	      TunnellingPhases[Site1] = new double[NbrNeighbors[Site1]];
+	      NeighborShift[Site1] = new int*[NbrNeighbors[Site1]];
+	      for (int k=0; k<NbrNeighbors[Site1]; ++k)
+		NeighborShift[Site1][k] = new int[Dimension];
 	    }
 	  else Neighbors[Site1] = NULL;
 	  for (int k=0; k<NbrNeighbors[Site1]; ++k)
 	    {
 	      Neighbors[Site1][k] = TmpNeighbors[k];
 	      TunnellingPhases[Site1][k] = TmpPhases[k];
+	      for (int r=0; r<Dimension; ++r)
+		NeighborShift[Site1][k][r]=TmpNeighborShift[k][r];
 	    }
 	}
     }
@@ -525,6 +546,9 @@ LatticePhases::LatticePhases()
   delete [] Translation3;
   delete [] FieldName;
   delete [] TmpNeighbors;
+  for (int i=0; i<NbrSites; ++i)
+    delete [] TmpNeighborShift[i];
+  delete [] TmpNeighborShift;
   delete [] TmpPhases;
 }
 
@@ -539,10 +563,17 @@ LatticePhases::~LatticePhases()
 	{
 	  if (this->Neighbors[i]!=NULL)
 	    delete [] this->Neighbors[i];
+	  if (this->Neighbors[i]!=NULL)
+	    {
+	      for (int j=0; j<NbrNeighbors[i]; ++j)
+		delete [] NeighborShift[i][j];
+	      delete [] NeighborShift[i];
+	    }
 	  if (this->TunnellingPhases[i]!=NULL)
 	    delete [] this->TunnellingPhases[i];
 	}      
       delete [] this->Neighbors;
+      delete [] NeighborShift;
       delete [] this->TunnellingPhases;
       delete [] this->NbrNeighbors;
       for (int i=0; i<NbrNeighborCells; ++i)
@@ -648,13 +679,15 @@ int LatticePhases::GetSiteNumber(int *cellCoordinates, int sublattice, int *tran
 // nbrNeighbors = number of partners found
 // Neighbors = array to partner sites
 // phases = values of phase for tunnelling matrix element
-void LatticePhases::GetNeighbors(int nbrSite, int &nbrNeighbors, int * &neighbors, double * &phases)
+// periodicTranslations = translations into the fundamental domain
+void LatticePhases::GetNeighbors(int nbrSite, int &nbrNeighbors, int * &neighbors, double * &phases, int **&periodicTranslations)
 {
   if ((nbrSite>-1)&&(nbrSite<NbrSites))
     {
       neighbors = this->Neighbors[nbrSite];
       nbrNeighbors = this->NbrNeighbors[nbrSite];
       phases = this->TunnellingPhases[nbrSite];
+      periodicTranslations = this->NeighborShift[nbrSite];
     }
   else
     {

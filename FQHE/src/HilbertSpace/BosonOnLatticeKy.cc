@@ -339,6 +339,17 @@ void BosonOnLatticeKy::SetNbrFluxQuanta(int nbrFluxQuanta, double solenoidX, dou
   exit(-1);
 }
 
+
+// request solenoid fluxes
+// solenoidX = new solenoid flux through torus in x-direction
+// solenoidY = new solenoid flux through torus in y-direction
+//
+void BosonOnLatticeKy::GetSolenoidFluxes(double &solenoidX, double &solenoidY)
+{
+  solenoidX=0.0;
+  solenoidY=0.0;
+}
+
 // obtain the current setting of the flux piercing this lattice
 int BosonOnLatticeKy::GetNbrFluxQuanta()
 {

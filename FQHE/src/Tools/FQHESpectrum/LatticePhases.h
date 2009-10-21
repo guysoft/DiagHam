@@ -92,8 +92,11 @@ class LatticePhases
   // and number thereof
   int NbrNeighborCells;
 
-  // compact coding of neighborship relations  
+  // compact coding of neighborship relations (site,neighborIdx)
   int **Neighbors;
+  // array indicating shift of sites around periodic boundaries in the different dimensions (site,neighborIdx,dimension)
+  int ***NeighborShift;
+  
   // number of neighbors for spin i
   int *NbrNeighbors;
 
@@ -160,7 +163,8 @@ class LatticePhases
   // nbrNeighbors = number of partners found
   // Neighbors = array to partner sites
   // phases = values of phase for tunnelling matrix element
-  void GetNeighbors(int nbrSite, int &nbrNeighbors, int * &neighbors, double * &phases);
+  // periodicTranslations = translations into the fundamental domain
+  void GetNeighbors(int nbrSite, int &nbrNeighbors, int * &neighbors, double * &phases, int **&periodicTranslations);
 
   // access lattice extension in d-th direction
   int GetLatticeLength(int direction){return this->PeriodicRep[direction];}

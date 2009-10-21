@@ -333,6 +333,16 @@ void FermionOnLattice::SetNbrFluxQuanta(int nbrFluxQuanta, double solenoidX, dou
   this->SetNbrFluxQuanta(nbrFluxQuanta);
 }
 
+// request solenoid fluxes
+// solenoidX = new solenoid flux through torus in x-direction
+// solenoidY = new solenoid flux through torus in y-direction
+//
+void FermionOnLattice::GetSolenoidFluxes(double &solenoidX, double &solenoidY)
+{
+  solenoidX=this->SolenoidX;
+  solenoidY=this->SolenoidY;
+}
+
 
 // obtain the current setting of the flux piercing this lattice
 int FermionOnLattice::GetNbrFluxQuanta()

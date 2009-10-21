@@ -33,6 +33,9 @@ using std::ofstream;
 
 #include "Matrix/ComplexMatrix.h"
 
+// switch for debug output
+//#define DEBUG_OUTPUT
+
 // store imaginary Hamiltonian into a complex matrix
 //
 // M = reference on matrix where Hamiltonian has to be stored
@@ -104,7 +107,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new MultipleDoubleOption  ('s', "solenoid-flux", "twist in periodic boundary conditions phi_x[,phi_y])",',');
   (*SystemGroup) += new BooleanOption('c',"hard-core","Use Hilbert-space of hard-core bosons");
   (*SystemGroup) += new SingleStringOption  ('e', "external-two-body", "use definition of two-body interactions from a file");
-  
+  (*SystemGroup) += new SingleStringOption  ('E', "external-name", "descriptor of external interaction (if in use)","ext");
   (*SystemGroup) += new BooleanOption  ('\n', "positive-hopping", "choose positive sign of hopping terms", false);
   (*SystemGroup) += new BooleanOption  ('\n', "hopping-only", "evaluate only energy of hopping terms, excluding local potentials", false);
   (*SystemGroup) += new BooleanOption  ('\n', "all-flux", "calculate all values of the flux to test symmetry under n_phi->1-n_phi", false);
@@ -208,7 +211,12 @@ int main(int argc, char** argv)
 	    {
 	      sprintf(interactionStr,"_hardcore");
 	    }
-	  sprintf (OutputName, "bosons_lattice_%s_n_%d_ext%s_q_%d.dat", LatticeName, NbrBosons, interactionStr, NbrFluxQuanta);
+	  if ((SolenoidX!=0.0)||(SolenoidY!=0.0))
+	    {
+	      sprintf(interactionStr,"%s_s_%g_%g",interactionStr,SolenoidX,SolenoidY);
+	    }
+	  sprintf (OutputName, "bosons_lattice_%s_n_%d_%s%s_q_%d.dat", LatticeName, NbrBosons, Manager.GetString("external-name"),
+		   interactionStr, NbrFluxQuanta);
 	}
     }
   ParticleOnLattice* Space;
@@ -262,53 +270,53 @@ int main(int argc, char** argv)
 	}
 
 //   // testing Hamiltonian:
-  
-//   ComplexMatrix HRe(Hamiltonian->GetHilbertSpaceDimension(),Hamiltonian->GetHilbertSpaceDimension());
-//   ComplexMatrix HIm(Hamiltonian->GetHilbertSpaceDimension(),Hamiltonian->GetHilbertSpaceDimension());
-//   GetHamiltonian(Hamiltonian,HRe);
-//   GetHamiltonianIm(Hamiltonian,HIm);
-//   Complex one, two, M_I(0.0,1.0);
-//   for (int i=0; i<Hamiltonian->GetHilbertSpaceDimension(); ++i)
-//     for (int j=0; j<Hamiltonian->GetHilbertSpaceDimension(); ++j)
-//       {
-// 	HRe.GetMatrixElement(i,j,one);
-// 	HIm.GetMatrixElement(i,j,two);
-// 	one*=M_I;
-// 	if (Norm(one-two)>1e-10)
-// 	  cout << "Discrepancy in "<<i<<", "<<j<<": "<<one << " vs " << two << endl;
-//       }
-//   cout << "HRe="<<endl<<HRe;
-//   for (int i=0; i<Hamiltonian->GetHilbertSpaceDimension(); ++i)
-//     for (int j=0; j<i; ++j)
-//       {
-// 	HRe.GetMatrixElement(i,j,one);
-// 	HRe.GetMatrixElement(j,i,two);
-// 	if (Norm(one-Conj(two))>1e-10)
-// 	  cout << "Matrix not hermitian in "<<i<<", "<<j<<": "<<one << " vs " << two << endl;
-//       }
+#ifdef DEBUG_OUTPUT  
+  ComplexMatrix HRe(Hamiltonian->GetHilbertSpaceDimension(),Hamiltonian->GetHilbertSpaceDimension());
+  ComplexMatrix HIm(Hamiltonian->GetHilbertSpaceDimension(),Hamiltonian->GetHilbertSpaceDimension());
+  GetHamiltonian(Hamiltonian,HRe);
+  GetHamiltonianIm(Hamiltonian,HIm);
+  Complex one, two, M_I(0.0,1.0);
+  for (int i=0; i<Hamiltonian->GetHilbertSpaceDimension(); ++i)
+    for (int j=0; j<Hamiltonian->GetHilbertSpaceDimension(); ++j)
+      {
+	HRe.GetMatrixElement(i,j,one);
+	HIm.GetMatrixElement(i,j,two);
+	one*=M_I;
+	if (Norm(one-two)>1e-10)
+	  cout << "Discrepancy in "<<i<<", "<<j<<": "<<one << " vs " << two << endl;
+      }
+  cout << "HRe="<<endl<<HRe;
+  for (int i=0; i<Hamiltonian->GetHilbertSpaceDimension(); ++i)
+    for (int j=0; j<i; ++j)
+      {
+	HRe.GetMatrixElement(i,j,one);
+	HRe.GetMatrixElement(j,i,two);
+	if (Norm(one-Conj(two))>1e-10)
+	  cout << "Matrix not hermitian in "<<i<<", "<<j<<": "<<one << " vs " << two << endl;
+      }
 
-//   ComplexVector TmpV1a (Hamiltonian->GetHilbertSpaceDimension(), true);
-//   ComplexVector TmpV1b (Hamiltonian->GetHilbertSpaceDimension(), true);
-//   ComplexVector TmpV2a (Hamiltonian->GetHilbertSpaceDimension(), true);
-//   ComplexVector TmpV2b (Hamiltonian->GetHilbertSpaceDimension(), true);
-//   for (int i = 0; i < Hamiltonian->GetHilbertSpaceDimension(); i++)
-//     {
-//       TmpV1a.Re(i) = (rand() - 32767) * 0.5;
-//       TmpV1a.Im(i) = (rand() - 32767) * 0.5;
-//     }
-//   TmpV1a /= TmpV1a.Norm();
-//   TmpV1b = TmpV1a*M_I;
-//   Hamiltonian->LowLevelMultiply(TmpV1a, TmpV2a);
-//   Hamiltonian->LowLevelMultiply(TmpV1b, TmpV2b);
-//   for (int j=0; j<Hamiltonian->GetHilbertSpaceDimension(); ++j)
-//       {
-// 	one = TmpV2a[j];
-// 	two = TmpV2b[j];
-// 	one = one*M_I;
-// 	if (Norm(one-two)>1e-10)
-// 	  cout << "Discrepancy in "<<j<<": "<<one << " vs " << two << endl;
-//       }  
-
+  ComplexVector TmpV1a (Hamiltonian->GetHilbertSpaceDimension(), true);
+  ComplexVector TmpV1b (Hamiltonian->GetHilbertSpaceDimension(), true);
+  ComplexVector TmpV2a (Hamiltonian->GetHilbertSpaceDimension(), true);
+  ComplexVector TmpV2b (Hamiltonian->GetHilbertSpaceDimension(), true);
+  for (int i = 0; i < Hamiltonian->GetHilbertSpaceDimension(); i++)
+    {
+      TmpV1a.Re(i) = (rand() - 32767) * 0.5;
+      TmpV1a.Im(i) = (rand() - 32767) * 0.5;
+    }
+  TmpV1a /= TmpV1a.Norm();
+  TmpV1b = TmpV1a*M_I;
+  Hamiltonian->LowLevelMultiply(TmpV1a, TmpV2a);
+  Hamiltonian->LowLevelMultiply(TmpV1b, TmpV2b);
+  for (int j=0; j<Hamiltonian->GetHilbertSpaceDimension(); ++j)
+      {
+	one = TmpV2a[j];
+	two = TmpV2b[j];
+	one = one*M_I;
+	if (Norm(one-two)>1e-10)
+	  cout << "Discrepancy in "<<j<<": "<<one << " vs " << two << endl;
+      }  
+#endif
 
   for (int iter=0; iter<NbrFluxValues; ++iter, ++NbrFluxQuanta)
     {
@@ -324,7 +332,8 @@ int main(int argc, char** argv)
 	  if (Manager.GetString("external-two-body")==NULL)
 	    sprintf (EigenvectorName, "bosons_lattice_%s_n_%d%s%s_q_%d", LatticeName, NbrBosons, interactionStr, reverseHoppingString, NbrFluxQuanta);
 	  else
-	    sprintf (EigenvectorName, "bosons_lattice_%s_n_%d_ext%s_q_%d", LatticeName, NbrBosons, interactionStr, NbrFluxQuanta);
+	    sprintf (EigenvectorName, "bosons_lattice_%s_n_%d_%s%s_q_%d", LatticeName, NbrBosons, Manager.GetString("external-name"),
+		     interactionStr, NbrFluxQuanta);
 	  
 	}
       QHEOnLatticeMainTask Task (&Manager, Space, Hamiltonian, NbrFluxQuanta, Shift, OutputName, FirstRun, EigenvectorName);

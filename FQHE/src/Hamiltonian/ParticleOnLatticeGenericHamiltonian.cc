@@ -178,11 +178,15 @@ void ParticleOnLatticeGenericHamiltonian::EvaluateInteractionFactors()
   int TmpNumberTerms=0;
   int *Neighbors;
   double *Phases;
+  int **Translations;
   int NbrNeighbors;
   double HoppingSign = (this->ReverseHopping ? 1.0 : -1.0);
+  double SolenoidX, SolenoidY;
+  Particles->GetSolenoidFluxes(SolenoidX, SolenoidY);
+  
   for (int s=0; s<NbrSites; ++s)
     {
-      this->LatticeGeometry->GetNeighbors(s, NbrNeighbors, Neighbors, Phases);
+      this->LatticeGeometry->GetNeighbors(s, NbrNeighbors, Neighbors, Phases, Translations);
       for (int n=0; n<NbrNeighbors; ++n)
 	{
 	  KineticQi[TmpNumberTerms] = s;
@@ -190,9 +194,13 @@ void ParticleOnLatticeGenericHamiltonian::EvaluateInteractionFactors()
 #ifdef DEBUG_OUTPUT
 	  cout << "Using flux density="<<this->FluxDensity<<" and Phase="<<Phases[n]<<endl;
 #endif
-	  HoppingTerms[TmpNumberTerms] = HoppingSign*Polar(1.0,-2.0*M_PI*this->FluxDensity*Phases[n]);
+	  
+	  HoppingTerms[TmpNumberTerms] = Polar(1.0,Translations[n][0]*SolenoidX)*Polar(1.0,Translations[n][1]*SolenoidY)*HoppingSign*
+	    Polar(1.0,-2.0*M_PI*this->FluxDensity*Phases[n]);
 #ifdef DEBUG_OUTPUT
-	  cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<endl;
+	  cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]
+	       << " including solenoid flux "<< Polar(1.0,Translations[n][0]*SolenoidX)<<"_x, "
+	       <<Polar(1.0,Translations[n][1]*SolenoidY)<<"_y ("<<Translations[n][0]<<","<<Translations[n][1]<<")"<<endl;
 #endif
 	  ++TmpNumberTerms;
 	}
