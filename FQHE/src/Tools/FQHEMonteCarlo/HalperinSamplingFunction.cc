@@ -174,5 +174,5 @@ void HalperinSamplingFunction::ScaleByFactor(double scale)
   double Factors = (double)NbrUp*(NbrUp-1)*this->Exponent_K/2.0;
   Factors += NbrDown*(NbrDown-1)*this->Exponent_L/2.0;
   Factors += (double)NbrUp*NbrDown*this->Exponent_M;
-  this->ElementNorm *= std::pow(scale,1.0/Factors);
+  this->ElementNorm *= pow(scale,1.0/Factors);
 }

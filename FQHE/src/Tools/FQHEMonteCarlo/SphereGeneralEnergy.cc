@@ -464,7 +464,7 @@ double SphereGeneralEnergy::GetPotentialValue(double R)
       *RijSq = R*R;
       for (int k=1; k<NumSqPowers; ++k)
 	RijSqPowers[k]=RijSqPowers[k-1]* *RijSq;
-      double GaussianIJ=std::exp(-*RijSq);
+      double GaussianIJ = exp(-*RijSq);
       double rst = Asymptotics[0]/sqrt(*RijSq+AsymptoticsReg[0]);  // B1/sqrt(r^2+d^2)
       rst += Coefficients[0] * GaussianIJ; // gaussian term C0 exp(-r^2)
       // gaussian terms Ck r^2k exp(-r^2)

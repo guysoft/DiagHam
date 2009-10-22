@@ -31,6 +31,7 @@
 #include "LaughlinWithSpinSamplingFunction.h"
 #include "ParticleOnSphereCollection.h"
 #include <cmath>
+
 #include <iostream>
 using std::cout;
 using std::endl;
@@ -133,5 +134,5 @@ Complex LaughlinWithSpinSamplingFunction::GetFunctionValue()
 void LaughlinWithSpinSamplingFunction::ScaleByFactor(double scale)
 {
   double factors = (double)NbrPerLayer*(NbrPerLayer-1)*this->Exponent;
-  this->ElementNorm *= std::pow(scale,1.0/factors);
+  this->ElementNorm *= pow(scale,1.0/factors);
 }
