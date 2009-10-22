@@ -34,8 +34,8 @@ sub SwitchToLongDouble
       {
 	if (!($TmpLine =~ /^\s*\/\//))
 	  {
-	    $TmpLine =~ s/double\s/long double /mg;
-	    $TmpLine =~ s/long long double\s/long double\s/mg;
+	    $TmpLine =~ s/double([^a-zA-Z0-9])/long double$1/mg;
+	    $TmpLine =~ s/long long double/long double/mg;
 	    $TmpLine =~ s/pow\s*\(/powl\(/mg;
 	    $TmpLine =~ s/cos\s*\(/cosl\(/mg;
 	    $TmpLine =~ s/sin\s*\(/sinl\(/mg;
