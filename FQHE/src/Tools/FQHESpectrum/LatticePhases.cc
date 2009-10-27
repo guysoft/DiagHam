@@ -33,6 +33,8 @@
 #include "Matrix/RealSymmetricMatrix.h"
 #include "Matrix/RealAntisymmetricMatrix.h"
 #include "MathTools/RandomNumber/NumRecRandomGenerator.h"
+#include "GeneralTools/ConfigurationParser.h"
+
 
 #include <iostream>
 using std::cout;

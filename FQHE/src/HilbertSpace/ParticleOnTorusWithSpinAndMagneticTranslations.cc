@@ -31,6 +31,9 @@
 #include "config.h"
 #include "HilbertSpace/ParticleOnTorusWithSpinAndMagneticTranslations.h"
 
+#include <iostream>
+using std::cout;
+using std::endl;
 
 // virtual destructor
 //
@@ -50,6 +53,7 @@ ParticleOnTorusWithSpinAndMagneticTranslations::~ParticleOnTorusWithSpinAndMagne
 
 double ParticleOnTorusWithSpinAndMagneticTranslations::AuAu (int index, int n1, int n2)
 {
+  cout << "Warning: using dummy function ParticleOnTorusWithSpinAndMagneticTranslations::AuAu"<<endl;
   return 0.0;
 }
 
@@ -62,6 +66,7 @@ double ParticleOnTorusWithSpinAndMagneticTranslations::AuAu (int index, int n1, 
 
 double ParticleOnTorusWithSpinAndMagneticTranslations:: AdAd (int index, int n1, int n2)
 {
+  cout << "Warning: using dummy function ParticleOnTorusWithSpinAndMagneticTranslations::AdAd"<<endl;
   return 0.0;
 }
 
@@ -74,6 +79,20 @@ double ParticleOnTorusWithSpinAndMagneticTranslations:: AdAd (int index, int n1,
 
 double ParticleOnTorusWithSpinAndMagneticTranslations::AuAd (int index, int n1, int n2)
 {
+  cout << "Warning: using dummy function ParticleOnTorusWithSpinAndMagneticTranslations::AuAd"<<endl;
+  return 0.0;
+}
+
+// apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdd call
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator (spin up)
+// n2 = second index for annihilation operator (spin down)
+// return value =  multiplicative factor 
+
+double ParticleOnTorusWithSpinAndMagneticTranslations::AdAu (int index, int n1, int n2)
+{
+  cout << "Warning: using dummy function ParticleOnTorusWithSpinAndMagneticTranslations::AdAu"<<endl;
   return 0.0;
 }
 

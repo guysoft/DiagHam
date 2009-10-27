@@ -63,6 +63,11 @@ my $DisplayHelp=0;
 my $AllElements=0;
 my $UseExtrapolateAnalytical=1;
 my $NonZeroThreshold = 1e-6;
+my $SolenoidCmd="";
+my $SolenoidStr="";
+my $HaveSolenoid=0;
+my $SolenoidX=0;
+my $SolenoidY=0;
 
 while( (defined($ARGV[0])&&$ARGV[0] =~ /^-/ ))
   {
@@ -153,6 +158,33 @@ while( (defined($ARGV[0])&&$ARGV[0] =~ /^-/ ))
 	  }
 	print ("Evaluating matrix elements for $UnitCells[0]x$UnitCells[1] unit cells\n");
       }
+    if ( $ARGV[0] =~ /-s/ )
+      {
+	if (length($ARGV[0])>2)
+	  {
+	    $SolenoidCmd = $ARGV[0];
+	    $SolenoidCmd =~ s/-s//;
+	  }
+	else
+	  {
+	    shift(@ARGV);
+	    $SolenoidCmd = $ARGV[0];
+	  }
+	$HaveSolenoid=1;
+	my @TmpArray = split(/,/,$SolenoidCmd);	
+	my $TmpLength = $#TmpArray+1;
+	if ( $TmpLength >= 1)
+	  {
+	    $SolenoidX=$TmpArray[0];
+	  }
+	if ( $TmpLength >= 2)
+	  {
+	    $SolenoidY=$TmpArray[1];
+	  }
+	$SolenoidCmd="-s ".$SolenoidCmd;
+	$SolenoidStr=sprintf ("_s_%g_%g", $SolenoidX, $SolenoidY);
+	print ("Using solenoid fluxes $SolenoidStr $SolenoidCmd\n");
+      }
     shift(@ARGV);
   }
 
@@ -164,6 +196,7 @@ if ($DisplayHelp)
     print("       -d: name of directory to generate files in (default: ./dice_Lx_Ly)\n");
     print("       -u: ratio of U6 to U3 on 6-fold and 3-fold connected sites of dice lattice\n");
     print("       -a: include all matrix elements, ignoring obvious symmetries\n");
+    print("       -s: use solenoid fluxes (s_x,s_y)\n");
     print("       -z: threshold above which elements are considered as non-zero\n");
     exit(1);
   }
@@ -211,7 +244,7 @@ for (my $i=0; $i<$NbrSites; ++$i)
     print DEFINITION ($DiceLattice);
     close(DEFINITION);
     # run single particle calculation
-    my $Command = "$Program -p 1 -L $LatticeFile -q ".(3*$NbrCells)." -c --eigenstate -n 1";
+    my $Command = "$Program -p 1 -L $LatticeFile -q ".(3*$NbrCells)." -c --eigenstate -n 1 $SolenoidCmd";
     system($Command);
   }
 
@@ -239,7 +272,7 @@ open (DEFINITION, ">$InteractionFile");
 print DEFINITION ($Interaction);
 close (DEFINITION);
 
-my $MatrixFile = "MatrixElements_Delta_u_".$RatioU."_".$UnitCells[0]."x".$UnitCells[1].".dat";
+my $MatrixFile = "MatrixElements_Delta_u_".$RatioU."_".$UnitCells[0]."x".$UnitCells[1].$SolenoidStr.".dat";
 open (MATRIX, ">$MatrixFile");
 
 # calculate all matrix elements
@@ -300,7 +333,7 @@ for (my $Index1=0; $Index1<$NbrSites; ++$Index1)
 		  {
 		    $Imag=0.0;
 		  }
-		if ((abs($Real)>0.0)||(abs($Imag)>0.0))
+		if (((abs($Real)>0.0)||(abs($Imag)>0.0))&&($Real*$Real+$Imag*$Imag>1e-12))
 		  {
 		    printf("$Index1 $Index2 $Index3 $Index4 ".$Real." ".$Imag." "
 			   .$RoundedMultiples3." ".$RoundedMultiples6."\n");
@@ -331,7 +364,6 @@ sub GetSiteIndex
       }
   }
 
-
 # get filename of wavefunction at given trapping site
 #
 # $_[0] = index of trapping site
@@ -339,7 +371,7 @@ sub GetSiteIndex
 sub GetLocalWavefunction
   {
     my $SiteIndex = $_[0];
-    return "bosons_lattice_dice_doubled_S".$SiteIndex."_V_-".abs($Trapping)."_".$UnitCells[0]."x".$UnitCells[1]."_n_1_hardcore_q_"
+    return "bosons_lattice_dice_doubled_S".$SiteIndex."_V_-".abs($Trapping)."_".$UnitCells[0]."x".$UnitCells[1]."_n_1_hardcore".$SolenoidStr."_q_"
       .(3*$NbrCells).".0.vec";
   }
 
@@ -359,7 +391,7 @@ sub ExtrapolateToAnalyticalValue
     my $NbrKnown = push (@KnownPrefactors,1.0);
     $NbrKnown = push (@KnownPrefactors,sqrt(2.0));
 
-    if ((abs($Im)>1e-5)&&(abs(abs($Re/$Im)-1.0)<1e-5))
+    if (($HaveSolenoid==0)&&(abs($Im)>1e-5)&&(abs(abs($Re/$Im)-1.0)<1e-5))
       {
 	if ($Re*$Im>0.0)
 	  {

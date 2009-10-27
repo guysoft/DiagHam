@@ -276,6 +276,14 @@ AbstractHilbertSpace* BosonOnLatticeGeneric::ExtractSubspace (AbstractQuantumNum
   return 0;
 }
 
+// get the number of sites
+//
+// return value = number of sites
+int BosonOnLatticeGeneric::GetNbrSites()
+{
+  return this->NbrStates;
+}
+
 // it is possible to change the flux through the simulation cell
 // Attention: this does require the Hamiltonian to be recalculated!!
 // nbrFluxQuanta = number of quanta of flux piercing the simulation cell

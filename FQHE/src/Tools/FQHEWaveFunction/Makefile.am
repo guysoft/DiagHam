@@ -60,4 +60,5 @@ PairedCFOnSphereSpinSingletWaveFunction.cc \
 PairedCFOnSpherePermanentWaveFunction.cc \
 SkyrmionOnSphereWaveFunction.cc \
 CFOnSphereWithSpinPartonTunnellingWaveFunction.cc \
-FQHESphereProductWaveFunction.cc
+FQHESphereProductWaveFunction.cc \
+GutzwillerOnLatticeWaveFunction.cc

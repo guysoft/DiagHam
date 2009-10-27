@@ -40,7 +40,6 @@
 #include "MathTools/FactorialCoefficient.h"
 #include "MathTools/ClebschGordanCoefficients.h"
 #include "MathTools/IntegerAlgebraTools.h"
-
 #include "Architecture/AbstractArchitecture.h"
 
 #include <iostream>
@@ -55,6 +54,8 @@ using std::ostream;
 
 #define M1_12 0.08333333333333333
 
+double MySqrArg;
+#define GETSQR(a) ((MySqrArg=(a)) == 1.0 ? 1.0 : MySqrArg*MySqrArg)
 
 // constructor from default datas
 //
@@ -63,13 +64,16 @@ using std::ostream;
 // maxMomentum = maximum Lz value reached by a particle in the state
 // xMomentum = momentum in the x direction (modulo GCD of nbrParticles and maxMomentum)
 // ratio = ratio between the width in the x direction and the width in the y direction
+// landauLevel = landauLevel to be simulated
+// nbrPseudopotentials = number of pseudopotentials indicated
+// pseudopotentials = pseudopotential coefficients
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
 ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian(ParticleOnTorusWithMagneticTranslations* particles, 
 														     int nbrParticles, int maxMomentum, 
-														     int xMomentum, double ratio, 
+														     int xMomentum, double ratio, int landauLevel, int nbrPseudopotentials, double* pseudopotentials,
 														     AbstractArchitecture* architecture, int memory, 
 														     char* precalculationFileName)
 {
@@ -82,12 +86,30 @@ ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::ParticleOnTorusCoulom
   this->FastMultiplicationFlag = false;
   this->Ratio = ratio;
   this->InvRatio = 1.0 / ratio;
-//  double WignerEnergy = this->EvaluateWignerCrystalEnergy() / 2.0;
-  double WignerEnergy = 0.0;
+  this->LandauLevel = landauLevel;
+  this->NbrPseudopotentials = nbrPseudopotentials;
+  if (this->NbrPseudopotentials>0)
+    {
+      this->Pseudopotentials = pseudopotentials;
+      this->LaguerreM=new LaguerreFunction[NbrPseudopotentials];
+      for (int i=0; i<NbrPseudopotentials; ++i)
+	this->LaguerreM[i]=LaguerreFunction(i);
+    }
+  else
+    {
+      this->Pseudopotentials = NULL;
+      this->LaguerreM=NULL;
+    }
+  this->LaguerreN=LaguerreFunction(this->LandauLevel);
+  this->LaguerreN.PrintValue(cout, 0)<<endl;
+  this->LaguerreN.PrintValue(cout, 1)<<endl;
+  this->LaguerreN.PrintValue(cout, 2)<<endl;
+  this->WignerEnergy = this->EvaluateWignerCrystalEnergy() / 2.0;
+  //double WignerEnergy = 0.0;
   this->Architecture = architecture;
   cout << "Wigner Energy = " << WignerEnergy << endl;  
   this->EvaluateInteractionFactors();
-  this->EnergyShift = 0.0;
+  this->EnergyShift = ((double) this->NbrParticles)*WignerEnergy;
   this->CosinusTable = new double [this->MaxMomentum];
   this->SinusTable = new double [this->MaxMomentum];
   for (int i = 0; i < this->MaxMomentum; ++i)
@@ -148,6 +170,10 @@ ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::~ParticleOnTorusCoulo
       delete[] this->NbrInteractionPerComponent;
       delete[] this->InteractionPerComponentNbrTranslation;
     }
+  if (this->NbrPseudopotentials>0)
+    delete [] this->LaguerreM;
+  cout << "a test"<<endl;
+  cout.flush();
 }
 
 // set Hilbert space
@@ -178,6 +204,7 @@ void ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::SetHilbertSpace 
 
 void ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::ShiftHamiltonian (double shift)
 {
+  this->EnergyShift=shift+this->WignerEnergy;
 }
   
 // evaluate all interaction factors
@@ -280,7 +307,7 @@ double ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::EvaluateIntera
       Q2 = this->Ratio * N2 * N2;
       if (N2 != 0.0)
 	{
-	  Coefficient = exp(- PIOnM * Q2) / sqrt(Q2);
+	  Coefficient = this->GetVofQ(PIOnM*Q2);
 	  Precision = Coefficient;
 	}
       else
@@ -291,7 +318,7 @@ double ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::EvaluateIntera
       while ((fabs(Coefficient) + Precision) != fabs(Coefficient))
 	{
 	  Q2 = this->InvRatio * N1 * N1 + this->Ratio * N2 * N2;
-	  Precision = 2.0 * exp(- PIOnM * Q2) / sqrt(Q2);
+	  Precision = 2.0 * this->GetVofQ(PIOnM*Q2);
 	  Coefficient += Precision * cos (N1 * Factor);
 	  N1 += 1.0;
 	}
@@ -306,7 +333,7 @@ double ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::EvaluateIntera
       Q2 = this->Ratio * N2 * N2;
       if (N2 != 0.0)
 	{
-	  Coefficient = exp(- PIOnM * Q2) / sqrt(Q2);
+	  Coefficient =  this->GetVofQ(PIOnM*Q2);
 	  Precision = Coefficient;
 	}
       else
@@ -317,14 +344,35 @@ double ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::EvaluateIntera
       while ((fabs(Coefficient) + Precision) != fabs(Coefficient))
 	{
 	  Q2 = this->InvRatio * N1 * N1 + this->Ratio * N2 * N2;
-	  Precision = 2.0 *  exp(- PIOnM * Q2) / sqrt(Q2);
+	  Precision = 2.0 * this->GetVofQ(PIOnM*Q2);
 	  Coefficient += Precision * cos (N1 * Factor);
 	  N1 += 1.0;
 	}
       Sum += Coefficient;
       N2 -= this->MaxMomentum;
     }
-  return (Sum / (2.0 * sqrt(2.0 * M_PI * this->MaxMomentum)));
+  return (Sum / (2.0 * this->MaxMomentum));
+}
+
+
+// get fourier transform of interaction
+// Q2_half = one half of q² value
+double ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::GetVofQ(double Q2_half)
+{
+  double Result;
+  double Q2=2.0*Q2_half;
+  if (this->LandauLevel>-1)
+    {
+      //cout << "branch 1 : Ln="<<this->LaguerreN.GetValue(Q2_half)<<" Ln2="<<GETSQR(this->LaguerreN(Q2_half))<<", exp="<<exp(-Q2_half)<<" 1/Q="<<1.0/sqrt(Q2)<<" ";
+      //this->LaguerreN.PrintValue(cout, Q2_half)<<" ";
+      Result=GETSQR(this->LaguerreN(Q2_half)) * exp(-Q2_half) / sqrt(Q2);
+    }
+  else
+    Result=0.0;
+  for (int i=0; i<NbrPseudopotentials; ++i)
+    Result += this->Pseudopotentials[i]*this->LaguerreM[i].GetValue(Q2);
+  //cout <<"V("<<2*Q2_half<<")="<<Result<<" LL="<<this->LandauLevel<<endl;
+  return Result;
 }
 
 // evaluate Wigner crystal energy per particle
@@ -372,15 +420,19 @@ double ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::EvaluateWigner
 
 double ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::MisraFunction (double n, double x)
 {
+  int Count=0;
   int NbrSubdivision = 100000;
   double PreviousSum = this->PartialMisraFunction(n, x, 0.0, 1.0, NbrSubdivision);
   double NewSum = PreviousSum;
   PreviousSum *= 2.0;
-  while ((fabs(PreviousSum - NewSum) / PreviousSum) > MACHINE_PRECISION)
+  while (((fabs(PreviousSum - NewSum) / PreviousSum) > MACHINE_PRECISION) && (Count<5))
     {
+      if ((fabs(PreviousSum - NewSum) / PreviousSum) < 1e-11)
+	++Count;
       PreviousSum = NewSum;
       NbrSubdivision += 10000;
       NewSum = this->PartialMisraFunction(n, x, 0.0, 1.0, NbrSubdivision);
+      //cout << " PreviousSum = " << PreviousSum << "   NewSum = " << NewSum << "  diff="<<PreviousSum-NewSum<<endl;
     }
   return 2.0 * (sqrt(M_PI * 0.25 / x) - NewSum);
 }

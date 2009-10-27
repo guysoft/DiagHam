@@ -285,7 +285,6 @@ ComplexVector& AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::LowLevelAd
 {
   int LastComponent = firstComponent + nbrComponent;
   int Dim = this->Particles->GetHilbertSpaceDimension();
-  double Shift = 0.0;
   double Coefficient;
   double Cosinus;
   double Sinus;
@@ -368,8 +367,8 @@ ComplexVector& AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::LowLevelAd
 		  vDestination.Re(TmpIndexArray[j]) += ((Cosinus * TmpRe) - (Sinus * TmpIm));
 		  vDestination.Im(TmpIndexArray[j]) += ((Sinus * TmpRe) + (Cosinus * TmpIm));
 		}
-	      vDestination.Re(i) += Shift * TmpRe;
-	      vDestination.Im(i) += Shift * TmpIm;
+	      vDestination.Re(i) += this->EnergyShift * TmpRe;
+	      vDestination.Im(i) += this->EnergyShift * TmpIm;
 	    }
 	}
       else
@@ -405,8 +404,8 @@ ComplexVector& AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::LowLevelAd
 		  vDestination.Re(TmpIndexArray[j]) += ((Cosinus * TmpRe) - (Sinus * TmpIm));
 		  vDestination.Im(TmpIndexArray[j]) += ((Sinus * TmpRe) + (Cosinus * TmpIm));
 		}
-	      vDestination.Re(i) += Shift * TmpRe;
-	      vDestination.Im(i) += Shift * TmpIm;
+	      vDestination.Re(i) += this->EnergyShift * TmpRe;
+	      vDestination.Im(i) += this->EnergyShift * TmpIm;
 	      ++Pos;
 	    }
 	  int Index;

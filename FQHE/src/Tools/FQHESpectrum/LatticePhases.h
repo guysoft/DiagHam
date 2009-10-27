@@ -34,7 +34,6 @@
 
 #include "config.h"
 #include "Options/OptionManager.h"
-#include "GeneralTools/ConfigurationParser.h"
 #include "Matrix/RealMatrix.h"
 
 #include <iostream>

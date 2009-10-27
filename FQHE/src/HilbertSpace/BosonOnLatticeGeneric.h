@@ -152,6 +152,11 @@ class BosonOnLatticeGeneric : public ParticleOnLattice
   // return value = particle statistic
   virtual char GetLandauGaugeAxis(){return '\0';}
 
+    // get the number of sites
+  //
+  // return value = number of sites
+  virtual int GetNbrSites();
+
   // return a list of all possible quantum numbers 
   //
   // return value = pointer to corresponding quantum number

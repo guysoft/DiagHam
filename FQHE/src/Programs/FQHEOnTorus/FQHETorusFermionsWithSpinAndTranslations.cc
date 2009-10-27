@@ -298,7 +298,7 @@ NbrFermions,MaxMomentum, TotalSpin, XRatio);
 		File.close();
 		exit(0);
 	      }
-	    GroundStateEnergy = Lowest;
+	    GroundStateEnergy = TmpMatrix.DiagonalElement(0);
 	    cout << endl;
 	    cout << TmpMatrix.DiagonalElement(0) << " " << Lowest << " " << Precision << "  Nbr of iterations = " 
 		 << CurrentNbrIterLanczos << endl;

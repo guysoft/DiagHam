@@ -65,6 +65,10 @@ class ParticleOnLattice :  public AbstractQHEParticle
   // return value = particle statistic
   virtual char GetLandauGaugeAxis() = 0;
 
+  // get the number of sites
+  //
+  // return value = number of sites
+  virtual int GetNbrSites() = 0;
 
   // get information about any additional symmetry of the Hilbert space
   //

@@ -71,8 +71,8 @@ ParticleOnTorusCoulombHamiltonian::ParticleOnTorusCoulombHamiltonian(ParticleOnT
   this->FastMultiplicationFlag = false;
   this->Ratio = ratio;
   this->InvRatio = 1.0 / ratio;
-//  this->WignerEnergy = this->EvaluateWignerCrystalEnergy() / 2.0;
-  this->WignerEnergy = 0.0;
+  this->WignerEnergy = this->EvaluateWignerCrystalEnergy() / 2.0;
+  //this->WignerEnergy = 0.0;
   cout << "Wigner Energy = " << WignerEnergy << endl;
   this->EvaluateInteractionFactors();
   cout << "fast = " << this->FastMultiplicationMemory() << endl;
@@ -624,6 +624,7 @@ double ParticleOnTorusCoulombHamiltonian::EvaluateInteractionCoefficient(int m1,
       N2 -= this->MaxMomentum;
 //      cout << "partial sum = " << Sum << " " << Coefficient << endl;
     }
+  //cout << "Coefficient " << m1 << " "  << m2 << " "  << m3 << " "  << m4 << " " << (Sum / (2.0 * sqrt(2.0 * M_PI * this->MaxMomentum)))<<endl;
   return (Sum / (2.0 * sqrt(2.0 * M_PI * this->MaxMomentum)));
 /*  while ((fabs(Sum) + fabs(Coefficient)) != fabs(Sum))
     {
@@ -716,16 +717,19 @@ double ParticleOnTorusCoulombHamiltonian::EvaluateWignerCrystalEnergy ()
 
 double ParticleOnTorusCoulombHamiltonian::MisraFunction (double n, double x)
 {
+  int Count=0;
   int NbrSubdivision = 100000;
   double PreviousSum = this->PartialMisraFunction(n, x, 0.0, 1.0, NbrSubdivision);
   double NewSum = PreviousSum;
   PreviousSum *= 2.0;
-  while ((fabs(PreviousSum - NewSum) / PreviousSum) > MACHINE_PRECISION)
+  while (((fabs(PreviousSum - NewSum) / PreviousSum) > MACHINE_PRECISION) && (Count<5))
     {
+      if ((fabs(PreviousSum - NewSum) / PreviousSum) < 1e-11)
+	++Count;
       PreviousSum = NewSum;
       NbrSubdivision += 10000;
       NewSum = this->PartialMisraFunction(n, x, 0.0, 1.0, NbrSubdivision);
-//      cout << " PreviousSum = " << PreviousSum << "   NewSum = " << NewSum << endl;
+      //cout << " PreviousSum = " << PreviousSum << "   NewSum = " << NewSum << "  diff="<<PreviousSum-NewSum<<endl;
     }
   return 2.0 * (sqrt(M_PI * 0.25 / x) - NewSum);
 }
@@ -742,18 +746,28 @@ double ParticleOnTorusCoulombHamiltonian::MisraFunction (double n, double x)
 double ParticleOnTorusCoulombHamiltonian::PartialMisraFunction (double n, double x, double min, double max, int nbrSubdivision)
 {
   double Sum = 0.0;
+  double PartialSum = 0.0;
+  int PartialDivision=(int)sqrt((double)nbrSubdivision);
+  int PartialCount=1;
   x *= -1.0;
   --nbrSubdivision;
   max  = (max - min) / ((double) nbrSubdivision);
-  Sum += (0.5 + M1_12 * 2.0 * x * min * max )* exp(min * min * x);
+  PartialSum += (0.5 + M1_12 * 2.0 * x * min * max )* exp(min * min * x);
   min += max;
   --nbrSubdivision;
   while (nbrSubdivision > 0)
     {
-      Sum += exp(min * min * x);
+      if ((PartialCount++) == PartialDivision)
+	{
+	  Sum+=PartialSum;
+	  PartialSum=0.0;
+	  PartialCount=1;
+	}
+      PartialSum += exp(min * min * x);
       min += max;
       --nbrSubdivision;
     }
+  Sum += PartialSum;
   Sum += (0.5 - M1_12 * 2.0 * x * min * max) * exp(min * min * x);
   Sum *= max;
   return Sum;

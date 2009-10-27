@@ -83,12 +83,12 @@ ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::ParticleOnToru
   this->Ratio = ratio;  
   this->InvRatio = 1.0 / ratio;
   this->LayerSeparation=layerSeparation;
-//  double WignerEnergy = this->EvaluateWignerCrystalEnergy() / 2.0;
-  double WignerEnergy = 0.0;
+  double WignerEnergy = this->EvaluateWignerCrystalEnergy() / 2.0;
+  // double WignerEnergy = 0.0;
   this->Architecture = architecture;
   cout << "Wigner Energy = " << WignerEnergy << endl;  
   this->EvaluateInteractionFactors();
-  this->EnergyShift = 0.0;
+  this->EnergyShift = ((double) this->NbrParticles)*WignerEnergy; // 0.0;
   this->CosinusTable = new double [this->MaxMomentum];
   this->SinusTable = new double [this->MaxMomentum];
   for (int i = 0; i < this->MaxMomentum; ++i)
@@ -234,10 +234,10 @@ void ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::EvaluateI
 		    m4 -= this->MaxMomentum;
 		if (m3 > m4)
 		  {
-		    TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->LayerSeparation)
-					   + this->EvaluateInteractionCoefficient(m2, m1, m4, m3, this->LayerSeparation)
-					   - this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->LayerSeparation)
-					   - this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->LayerSeparation));
+		    TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, 0.0)
+					   + this->EvaluateInteractionCoefficient(m2, m1, m4, m3, 0.0)
+					   - this->EvaluateInteractionCoefficient(m1, m2, m4, m3, 0.0)
+					   - this->EvaluateInteractionCoefficient(m2, m1, m3, m4, 0.0));
 		    if (MaxCoefficient < fabs(TmpCoefficient[Pos]))
 		      MaxCoefficient = fabs(TmpCoefficient[Pos]);
 		    ++Pos;
@@ -251,7 +251,6 @@ void ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::EvaluateI
       M12Index = 0;
       Pos = 0;
       int TmpNbrInteractionFactors = 0;
-      double Factor = - 4.0;
       for (int m1 = 0; m1 < this->MaxMomentum; ++m1)
 	for (int m2 = 0; m2 < m1; ++m2)
 	  {
@@ -301,7 +300,8 @@ void ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::EvaluateI
 		else
 		  if (m4 >= this->MaxMomentum)
 		    m4 -= this->MaxMomentum;		
-		TmpCoefficient[Pos] = this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->LayerSeparation);
+		TmpCoefficient[Pos] = this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->LayerSeparation)
+		                    - this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->LayerSeparation);
 		if (MaxCoefficient < fabs(TmpCoefficient[Pos]))
 		  MaxCoefficient = fabs(TmpCoefficient[Pos]);
 		++Pos;
@@ -313,7 +313,6 @@ void ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::EvaluateI
       M12Index = 0;
       Pos = 0;
       TmpNbrInteractionFactors = 0;
-      Factor = - 4.0;  // check factor here... xxx 
       for (int m1 = 0; m1 < this->MaxMomentum; ++m1)
 	for (int m2 = 0; m2 < this->MaxMomentum; ++m2)
 	  {
@@ -346,6 +345,8 @@ void ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::EvaluateI
     }
   else
     {
+      cout << "Bosonic statistics not defined yet for ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian"<<endl;
+      exit(1);
     }
   cout << "====================================" << endl;
   delete[] TmpCoefficient;
@@ -365,11 +366,11 @@ double ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::Evaluat
   double Coefficient = 1.0;
   double PIOnM = M_PI / ((double) this->MaxMomentum);
   double Factor =  - ((double) (m1-m3)) * PIOnM * 2.0;
+  double Factor2 = sqrt(2.0*PIOnM);
   double Sum = 0.0;
   double N2 = (double) (m1 - m4);
   double N1;
-  double Q,Q2;
-  double D2 = layerSeparation * layerSeparation;
+  double SqrtQ2, Q2;
   double Precision;
 //  cout << "new coef====================================" << m1 << " "  << m2 << " "  << m3 << " "  << m4 << endl;
   while ((fabs(Sum) + fabs(Coefficient)) != fabs(Sum))
@@ -378,27 +379,20 @@ double ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::Evaluat
       Q2 = this->Ratio * N2 * N2;
       if (N2 != 0.0)
 	{
-	  Coefficient = exp(- PIOnM * Q2 ) / sqrt(Q2+D2);
+	  SqrtQ2=sqrt(Q2);
+	  Coefficient = exp(- PIOnM * Q2 - layerSeparation * Factor2 * SqrtQ2) / SqrtQ2;
 	  Precision = Coefficient;
 	}
       else
 	{
-	  if (layerSeparation != 0.0)
-	    {
-	      Coefficient = 1.0/layerSeparation;
-	      Precision = Coefficient;
-	    }
-	  else
-	    {
-	      Coefficient = 0.0; // could be infinite, here!
-	      Precision = 1.0;
-	    }
+	  Coefficient = 0.0; 
+	  Precision = 1.0;
 	}
       while ((fabs(Coefficient) + Precision) != fabs(Coefficient))
 	{
 	  Q2 = this->InvRatio * N1 * N1 + this->Ratio * N2 * N2;
-	  Q=sqrt(Q2);
-	  Precision = 2.0 * exp(- PIOnM * Q2) / sqrt(Q2 + D2);
+	  SqrtQ2=sqrt(Q2);
+	  Precision = 2.0 * exp(- PIOnM * Q2 - layerSeparation * Factor2 * SqrtQ2) / SqrtQ2;	  
 	  Coefficient += Precision * cos (N1 * Factor);
 	  N1 += 1.0;
 	}
@@ -413,32 +407,27 @@ double ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::Evaluat
       Q2 = this->Ratio * N2 * N2;
       if (N2 != 0.0)
 	{
-	  Coefficient = exp(- PIOnM * Q2) / sqrt(Q2 + D2);
+	  SqrtQ2=sqrt(Q2);
+	  Coefficient = exp(- PIOnM * Q2 - layerSeparation * Factor2 * SqrtQ2) / SqrtQ2;
 	  Precision = Coefficient;
 	}
       else
 	{
-	  if (layerSeparation != 0.0)
-	    {
-	      Coefficient = 1.0/layerSeparation;
-	      Precision = Coefficient;
-	    }
-	  else
-	    {
-	      Coefficient = 0.0; // could be infinite, here!
-	      Precision = 1.0;
-	    }
+	  Coefficient = 0.0; 
+	  Precision = 1.0;
 	}
       while ((fabs(Coefficient) + Precision) != fabs(Coefficient))
 	{
 	  Q2 = this->InvRatio * N1 * N1 + this->Ratio * N2 * N2;
-	  Precision = 2.0 *  exp(- PIOnM * Q2) / sqrt(Q2 + D2);
+	  SqrtQ2=sqrt(Q2);
+	  Precision = 2.0 * exp(- PIOnM * Q2 - layerSeparation * Factor2 * SqrtQ2) / SqrtQ2;
 	  Coefficient += Precision * cos (N1 * Factor);
 	  N1 += 1.0;
 	}
       Sum += Coefficient;
       N2 -= this->MaxMomentum;
     }
+  //cout << "Coefficient ("<<layerSeparation<<") " << m1 << " "  << m2 << " "  << m3 << " "  << m4 << " " << (Sum / (2.0 * sqrt(2.0 * M_PI * this->MaxMomentum)))<<endl;
   return (Sum / (2.0 * sqrt(2.0 * M_PI * this->MaxMomentum)));
 }
 
@@ -487,15 +476,19 @@ double ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::Evaluat
 
 double ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::MisraFunction (double n, double x)
 {
+  int Count=0;
   int NbrSubdivision = 100000;
   double PreviousSum = this->PartialMisraFunction(n, x, 0.0, 1.0, NbrSubdivision);
   double NewSum = PreviousSum;
   PreviousSum *= 2.0;
-  while ((fabs(PreviousSum - NewSum) / PreviousSum) > MACHINE_PRECISION)
+  while (((fabs(PreviousSum - NewSum) / PreviousSum) > MACHINE_PRECISION) && (Count<5))
     {
+      if ((fabs(PreviousSum - NewSum) / PreviousSum) < 1e-11)
+	++Count;
       PreviousSum = NewSum;
       NbrSubdivision += 10000;
       NewSum = this->PartialMisraFunction(n, x, 0.0, 1.0, NbrSubdivision);
+      //cout << " PreviousSum = " << PreviousSum << "   NewSum = " << NewSum << "  diff="<<PreviousSum-NewSum<<endl;
     }
   return 2.0 * (sqrt(M_PI * 0.25 / x) - NewSum);
 }

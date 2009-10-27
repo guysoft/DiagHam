@@ -56,6 +56,9 @@ using std::endl;
 using std::ostream;
 
 
+// switch for debugging output
+//#define DEBUG_OUTPUT
+
 // destructor
 //
 
@@ -299,7 +302,7 @@ ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Low
   unsigned H16Mask = (~0u)^L16Mask;
   int LastComponent = firstComponent + nbrComponent;
   int Dim = this->Particles->GetHilbertSpaceDimension();
-  double Coefficient;
+    double Coefficient;
   double Cosinus;
   double Sinus;
   int NbrTranslation;
@@ -309,10 +312,11 @@ ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Low
       double Coefficient3;
       int Index;
       int m1, m2, m3, m4;      
-      int SumIndices;
+      //int SumIndices;
       int TmpNbrM34Values;
       unsigned* TmpM34Values;      
       int ReducedNbrInteractionFactors;
+      ParticleOnTorusWithSpinAndMagneticTranslations* TmpParticles = (ParticleOnTorusWithSpinAndMagneticTranslations*) this->Particles->Clone();
       for (int i = firstComponent; i < LastComponent; ++i)
 	{
 	  ReducedNbrInteractionFactors = 0;
@@ -320,23 +324,23 @@ ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Low
 	    {
 	      m1 = this->M12IntraValue[m12] & L16Mask;
 	      m2 = (this->M12IntraValue[m12] & H16Mask)>>16;
-	      Coefficient = Particles->AuAu(i, m1, m2);
+	      Coefficient = TmpParticles->AuAu(i, m1, m2);
 	      if (Coefficient != 0.0)
 		{
-		  SumIndices = m1 + m2;
+		  //SumIndices = m1 + m2;
 		  TmpNbrM34Values = this->NbrM34IntraValues[m12];
 		  TmpM34Values = this->M34IntraValues[m12];
 		  for (int m34 = 0; m34 < TmpNbrM34Values; ++m34)
 		    {
 		      m3 = (TmpM34Values[m34]) & L16Mask;
 		      m4 = ((TmpM34Values[m34]) & H16Mask)>>16;
-		      Index = Particles->AduAdu(m3, m4, Coefficient2, NbrTranslation);
+		      Index = TmpParticles->AduAdu(m3, m4, Coefficient2, NbrTranslation);
 		      if (Index < Dim)
 			{
 			  Coefficient3 = Coefficient * Coefficient2 * this->InteractionFactorsUpUp[ReducedNbrInteractionFactors];
 			  // int Index2, NbrTranslation2;
 // 			  double Coefficientprime;
-// 			  Index2 = Particles->AduAduAuAu (i, m3, m4, m1, m2, Coefficientprime, NbrTranslation2);
+// 			  Index2 = TmpParticles->AduAduAuAu (i, m3, m4, m1, m2, Coefficientprime, NbrTranslation2);
 // 			  if (Index != Index2)
 // 			    cout << "Problem with Index in HilbertSpace from AbstractHamiltonian" << endl;
 // 			  if (Coefficient*Coefficient2 != Coefficientprime)
@@ -352,6 +356,11 @@ ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Low
 // 			    }
 // 			  if (NbrTranslation != NbrTranslation2)
 // 			    cout << "Problem with NbrTranslation in HilbertSpace from AbstractHamiltonian" << endl;
+#ifdef DEBUG_OUTPUT
+			  cout << "Adding matrix element uu " << this->InteractionFactorsUpUp[ReducedNbrInteractionFactors]
+			       << " with prefactors "<< Coefficient*Coefficient2 << " for i=" << i
+			       << " m1= " << m1 << " m2= " << m2 << " m3= " << m3 << " m4= " << m4<< endl;
+#endif
 	       		  Cosinus = Coefficient3 * this->CosinusTable[NbrTranslation];			  
 			  Sinus = Coefficient3 * this->SinusTable[NbrTranslation];
 			  vDestination.Re(Index) += ((vSource.Re(i) * Cosinus) - (vSource.Im(i) * Sinus));
@@ -368,20 +377,25 @@ ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Low
 	    {
 	      m1 = this->M12IntraValue[m12] & L16Mask;
 	      m2 = (this->M12IntraValue[m12] & H16Mask)>>16;
-	      Coefficient = Particles->AdAd(i, m1, m2);	  
+	      Coefficient = TmpParticles->AdAd(i, m1, m2);	  
 	      if (Coefficient != 0.0)
 		{
-		  SumIndices = m1 + m2;
+		  //SumIndices = m1 + m2;
 		  TmpNbrM34Values = this->NbrM34IntraValues[m12];
 		  TmpM34Values = this->M34IntraValues[m12];
 		  for (int m34 = 0; m34 < TmpNbrM34Values; ++m34)
 		    {
 		      m3 = (TmpM34Values[m34]) & L16Mask;
 		      m4 = ((TmpM34Values[m34]) & H16Mask)>>16;
-		      Index = Particles->AddAdd(m3, m4, Coefficient2, NbrTranslation);
+		      Index = TmpParticles->AddAdd(m3, m4, Coefficient2, NbrTranslation);
 		      if (Index < Dim)
 			{
 			  Coefficient3 = Coefficient * Coefficient2 * this->InteractionFactorsDownDown[ReducedNbrInteractionFactors];
+#ifdef DEBUG_OUTPUT
+			  cout << "Adding matrix element dd " << this->InteractionFactorsDownDown[ReducedNbrInteractionFactors]
+			       << " with prefactors "<< Coefficient*Coefficient2 << " for i=" << i
+			       << " m1= " << m1 << " m2= " << m2 << " m3= " << m3 << " m4= " << m4<< endl;
+#endif
 			  Cosinus = Coefficient3 * this->CosinusTable[NbrTranslation];
 			  Sinus = Coefficient3 * this->SinusTable[NbrTranslation];
 			  vDestination.Re(Index) += ((vSource.Re(i) * Cosinus) - (vSource.Im(i) * Sinus));
@@ -399,25 +413,32 @@ ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Low
 	    {
 	      m1 = this->M12InterValue[m12] & L16Mask;
 	      m2 = (this->M12InterValue[m12] & H16Mask)>>16;
-	      Coefficient = Particles->AuAd(i, m1, m2);	  
+	      Coefficient = TmpParticles->AuAd(i, m1, m2);	  
 	      if (Coefficient != 0.0)
 		{
-		  SumIndices = m1 + m2;
+		  //SumIndices = m1 + m2;
 		  TmpNbrM34Values = this->NbrM34InterValues[m12];
 		  TmpM34Values = this->M34InterValues[m12];
 		  for (int m34 = 0; m34 < TmpNbrM34Values; ++m34)
 		    {
 		      m3 = (TmpM34Values[m34]) & L16Mask;
 		      m4 = ((TmpM34Values[m34]) & H16Mask)>>16;
-		      Index = Particles->AduAdd(m3, m4, Coefficient2, NbrTranslation);
+		      Index = TmpParticles->AduAdd(m3, m4, Coefficient2, NbrTranslation);
 		      if (Index < Dim)
 			{
 			  Coefficient3 = Coefficient * Coefficient2 * this->InteractionFactorsUpDown[ReducedNbrInteractionFactors];
+#ifdef DEBUG_OUTPUT
+			  cout << "Adding matrix element udud " << this->InteractionFactorsUpDown[ReducedNbrInteractionFactors]
+			       << " with prefactors "<< Coefficient*Coefficient2 << " for i=" << i
+			       << " m1= " << m1 << " m2= " << m2 << " m3= " << m3 << " m4= " << m4<< " Cos="
+			       << this->CosinusTable[NbrTranslation]<<" Sin="<<this->SinusTable[NbrTranslation]<<endl;
+#endif
 			  Cosinus = Coefficient3 * this->CosinusTable[NbrTranslation];
 			  Sinus = Coefficient3 * this->SinusTable[NbrTranslation];
 			  vDestination.Re(Index) += ((vSource.Re(i) * Cosinus) - (vSource.Im(i) * Sinus));
 			  vDestination.Im(Index) += ((vSource.Re(i) * Sinus) + (vSource.Im(i) * Cosinus));
-			}		      ++ReducedNbrInteractionFactors;
+			}
+		      ++ReducedNbrInteractionFactors;
 		    }
 		}
 	      else
@@ -434,8 +455,8 @@ ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Low
 		TmpDiagonal = 0.0;
 		for (int j = 0; j <= this->MaxMomentum; ++j) 
 		  {
-		    TmpDiagonal += this->OneBodyInteractionFactorsUpUp[j] * Particles->AduAu(i, j);
-		    TmpDiagonal += this->OneBodyInteractionFactorsDownDown[j] * Particles->AddAd(i, j);
+		    TmpDiagonal += this->OneBodyInteractionFactorsUpUp[j] * TmpParticles->AduAu(i, j);
+		    TmpDiagonal += this->OneBodyInteractionFactorsDownDown[j] * TmpParticles->AddAd(i, j);
 		  }
 		vDestination.Re(i) += (this->EnergyShift + TmpDiagonal) * vSource.Re(i);
 		vDestination.Im(i) += (this->EnergyShift + TmpDiagonal) * vSource.Im(i);
@@ -448,7 +469,7 @@ ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Low
 	      { 
 		TmpDiagonal = 0.0;
 		for (int j = 0; j <= this->MaxMomentum; ++j) 
-		  TmpDiagonal += this->OneBodyInteractionFactorsUpUp[j] * Particles->AduAu(i, j);
+		  TmpDiagonal += this->OneBodyInteractionFactorsUpUp[j] * TmpParticles->AduAu(i, j);
 		vDestination.Re(i) += (this->EnergyShift + TmpDiagonal) * vSource.Re(i);
 		vDestination.Im(i) += (this->EnergyShift + TmpDiagonal) * vSource.Im(i);
 	      }
@@ -461,7 +482,7 @@ ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Low
 	      { 
 		TmpDiagonal = 0.0;
 		for (int j = 0; j <= this->MaxMomentum; ++j) 
-		  TmpDiagonal += this->OneBodyInteractionFactorsDownDown[j] * Particles->AddAd(i, j);
+		  TmpDiagonal += this->OneBodyInteractionFactorsDownDown[j] * TmpParticles->AddAd(i, j);
 		vDestination.Re(i) += (this->EnergyShift + TmpDiagonal) * vSource.Re(i);
 		vDestination.Im(i) += (this->EnergyShift + TmpDiagonal) * vSource.Im(i);
 	      }
@@ -472,6 +493,7 @@ ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Low
 	      vDestination.Re(i) += (this->EnergyShift) * vSource.Re(i);
 	      vDestination.Im(i) += (this->EnergyShift) * vSource.Im(i);
 	    }
+      delete TmpParticles;
     }
   else // fast multiplication
     {
@@ -514,6 +536,7 @@ ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Low
 	  int TmpNbrInteraction;
 	  int Pos = firstComponent / this->FastMultiplicationStep; 
 	  int PosMod = firstComponent % this->FastMultiplicationStep;
+	  ParticleOnTorusWithSpinAndMagneticTranslations* TmpParticles = (ParticleOnTorusWithSpinAndMagneticTranslations*) this->Particles->Clone();
 	  double TmpRe;
 	  double TmpIm;
 	  if (PosMod != 0)
@@ -547,7 +570,7 @@ ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Low
 	  double Coefficient3;
 	  int Index;
 	  int m1, m2, m3, m4;      
-	  int SumIndices;
+	  //int SumIndices;
 	  int TmpNbrM34Values;
 	  unsigned* TmpM34Values;      
 	  int ReducedNbrInteractionFactors;
@@ -561,17 +584,17 @@ ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Low
 		      {
 			m1 = this->M12IntraValue[m12] & L16Mask;
 			m2 = (this->M12IntraValue[m12] & H16Mask)>>16;
-			Coefficient = Particles->AuAu(i, m1, m2);
+			Coefficient = TmpParticles->AuAu(i, m1, m2);
 			if (Coefficient != 0.0)
 			  {
-			    SumIndices = m1 + m2;
+			    //SumIndices = m1 + m2;
 			    TmpNbrM34Values = this->NbrM34IntraValues[m12];
 			    TmpM34Values = this->M34IntraValues[m12];
 			    for (int m34 = 0; m34 < TmpNbrM34Values; ++m34)
 			      {
 				m3 = (TmpM34Values[m34]) & L16Mask;
 				m4 = ((TmpM34Values[m34]) & H16Mask)>>16;
-				Index = Particles->AduAdu(m3, m4, Coefficient2, NbrTranslation);
+				Index = TmpParticles->AduAdu(m3, m4, Coefficient2, NbrTranslation);
 				if (Index < Dim)
 				  {
 				    Coefficient3 = Coefficient * Coefficient2 * this->InteractionFactorsUpUp[ReducedNbrInteractionFactors];
@@ -591,17 +614,17 @@ ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Low
 		      {
 			m1 = this->M12IntraValue[m12] & L16Mask;
 			m2 = (this->M12IntraValue[m12] & H16Mask)>>16;
-			Coefficient = Particles->AdAd(i, m1, m2);	  
+			Coefficient = TmpParticles->AdAd(i, m1, m2);	  
 			if (Coefficient != 0.0)
 			  {
-			    SumIndices = m1 + m2;
+			    //SumIndices = m1 + m2;
 			    TmpNbrM34Values = this->NbrM34IntraValues[m12];
 			    TmpM34Values = this->M34IntraValues[m12];
 			    for (int m34 = 0; m34 < TmpNbrM34Values; ++m34)
 			      {
 				m3 = (TmpM34Values[m34]) & L16Mask;
 				m4 = ((TmpM34Values[m34]) & H16Mask)>>16;
-				Index = Particles->AddAdd(m3, m4, Coefficient2, NbrTranslation);
+				Index = TmpParticles->AddAdd(m3, m4, Coefficient2, NbrTranslation);
 				if (Index < Dim)
 				  {
 				    Coefficient3 = Coefficient * Coefficient2 * this->InteractionFactorsDownDown[ReducedNbrInteractionFactors];
@@ -622,17 +645,17 @@ ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Low
 		      {
 			m1 = this->M12InterValue[m12] & L16Mask;
 			m2 = (this->M12InterValue[m12] & H16Mask)>>16;
-			Coefficient = Particles->AuAd(i, m1, m2);	  
+			Coefficient = TmpParticles->AuAd(i, m1, m2);	  
 			if (Coefficient != 0.0)
 			  {
-			    SumIndices = m1 + m2;
+			    //SumIndices = m1 + m2;
 			    TmpNbrM34Values = this->NbrM34InterValues[m12];
 			    TmpM34Values = this->M34InterValues[m12];
 			    for (int m34 = 0; m34 < TmpNbrM34Values; ++m34)
 			      {
 				m3 = (TmpM34Values[m34]) & L16Mask;
 				m4 = ((TmpM34Values[m34]) & H16Mask)>>16;
-				Index = Particles->AduAdd(m3, m4, Coefficient2, NbrTranslation);
+				Index = TmpParticles->AduAdd(m3, m4, Coefficient2, NbrTranslation);
 				if (Index < Dim)
 				  {
 				    Coefficient3 = Coefficient * Coefficient2 * this->InteractionFactorsUpDown[ReducedNbrInteractionFactors];
@@ -657,8 +680,8 @@ ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Low
 			  TmpDiagonal = 0.0;
 			  for (int j = 0; j <= this->MaxMomentum; ++j) 
 			    {
-			      TmpDiagonal += this->OneBodyInteractionFactorsUpUp[j] * Particles->AduAu(i, j);
-			      TmpDiagonal += this->OneBodyInteractionFactorsDownDown[j] * Particles->AddAd(i, j);
+			      TmpDiagonal += this->OneBodyInteractionFactorsUpUp[j] * TmpParticles->AduAu(i, j);
+			      TmpDiagonal += this->OneBodyInteractionFactorsDownDown[j] * TmpParticles->AddAd(i, j);
 			    }
 			  vDestination.Re(i) += (this->EnergyShift + TmpDiagonal) * vSource.Re(i);
 			  vDestination.Im(i) += (this->EnergyShift + TmpDiagonal) * vSource.Im(i);
@@ -671,7 +694,7 @@ ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Low
 			{ 
 			  TmpDiagonal = 0.0;
 			  for (int j = 0; j <= this->MaxMomentum; ++j) 
-			    TmpDiagonal += this->OneBodyInteractionFactorsUpUp[j] * Particles->AduAu(i, j);
+			    TmpDiagonal += this->OneBodyInteractionFactorsUpUp[j] * TmpParticles->AduAu(i, j);
 			  vDestination.Re(i) += (this->EnergyShift + TmpDiagonal) * vSource.Re(i);
 			  vDestination.Im(i) += (this->EnergyShift + TmpDiagonal) * vSource.Im(i);
 			}
@@ -684,7 +707,7 @@ ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Low
 			{ 
 			  TmpDiagonal = 0.0;
 			  for (int j = 0; j <= this->MaxMomentum; ++j) 
-			    TmpDiagonal += this->OneBodyInteractionFactorsDownDown[j] * Particles->AddAd(i, j);
+			    TmpDiagonal += this->OneBodyInteractionFactorsDownDown[j] * TmpParticles->AddAd(i, j);
 			  vDestination.Re(i) += (this->EnergyShift + TmpDiagonal) * vSource.Re(i);
 			  vDestination.Im(i) += (this->EnergyShift + TmpDiagonal) * vSource.Im(i);
 			}
@@ -696,6 +719,7 @@ ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Low
 			vDestination.Im(i) += this->EnergyShift * vSource.Im(i);
 		      }
 	      }
+	  delete TmpParticles;
 	}
     }
       
@@ -800,10 +824,11 @@ long AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialFastMu
   int NbrTranslation;
   int Dim = Particles->GetHilbertSpaceDimension();
   int LastComponent = nbrComponent + firstComponent;
+  ParticleOnTorusWithSpinAndMagneticTranslations* TmpParticles = (ParticleOnTorusWithSpinAndMagneticTranslations*) this->Particles->Clone();
   
   double Coefficient2;
   int m1, m2, m3, m4;      
-  int SumIndices;
+  //int SumIndices;
   int TmpNbrM34Values;
   unsigned* TmpM34Values;      
   int ReducedNbrInteractionFactors;
@@ -814,17 +839,17 @@ long AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialFastMu
 	{
 	  m1 = this->M12IntraValue[m12] & L16Mask;
 	  m2 = (this->M12IntraValue[m12] & H16Mask)>>16;
-	  Coefficient = Particles->AuAu(i, m1, m2);
+	  Coefficient = TmpParticles->AuAu(i, m1, m2);
 	  if (Coefficient != 0.0)
 	    {
-	      SumIndices = m1 + m2;
+	      //SumIndices = m1 + m2;
 	      TmpNbrM34Values = this->NbrM34IntraValues[m12];
 	      TmpM34Values = this->M34IntraValues[m12];
 	      for (int m34 = 0; m34 < TmpNbrM34Values; ++m34)
 		{
 		  m3 = (TmpM34Values[m34]) & L16Mask;
 		  m4 = ((TmpM34Values[m34]) & H16Mask)>>16;
-		  Index = Particles->AduAdu(m3, m4, Coefficient2, NbrTranslation);
+		  Index = TmpParticles->AduAdu(m3, m4, Coefficient2, NbrTranslation);
 		  if (Index < Dim)
 		    {
 		      ++Memory;
@@ -841,17 +866,17 @@ long AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialFastMu
 	{
 	  m1 = this->M12IntraValue[m12] & L16Mask;
 	  m2 = (this->M12IntraValue[m12] & H16Mask)>>16;
-	  Coefficient = Particles->AdAd(i, m1, m2);	  
+	  Coefficient = TmpParticles->AdAd(i, m1, m2);	  
 	  if (Coefficient != 0.0)
 	    {
-	      SumIndices = m1 + m2;
+	      //SumIndices = m1 + m2;
 	      TmpNbrM34Values = this->NbrM34IntraValues[m12];
 	      TmpM34Values = this->M34IntraValues[m12];
 	      for (int m34 = 0; m34 < TmpNbrM34Values; ++m34)
 		{
 		  m3 = (TmpM34Values[m34]) & L16Mask;
 		  m4 = ((TmpM34Values[m34]) & H16Mask)>>16;
-		  Index = Particles->AddAdd(m3, m4, Coefficient2, NbrTranslation);
+		  Index = TmpParticles->AddAdd(m3, m4, Coefficient2, NbrTranslation);
 		  if (Index < Dim)
 		    {
 		      ++Memory;
@@ -869,17 +894,17 @@ long AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialFastMu
 	{
 	  m1 = this->M12InterValue[m12] & L16Mask;
 	  m2 = (this->M12InterValue[m12] & H16Mask)>>16;
-	  Coefficient = Particles->AuAd(i, m1, m2);	  
+	  Coefficient = TmpParticles->AuAd(i, m1, m2);	  
 	  if (Coefficient != 0.0)
 	    {
-	      SumIndices = m1 + m2;
+	      //SumIndices = m1 + m2;
 	      TmpNbrM34Values = this->NbrM34InterValues[m12];
 	      TmpM34Values = this->M34InterValues[m12];
 	      for (int m34 = 0; m34 < TmpNbrM34Values; ++m34)
 		{
 		  m3 = (TmpM34Values[m34]) & L16Mask;
 		  m4 = ((TmpM34Values[m34]) & H16Mask)>>16;
-		  Index = Particles->AduAdd(m3, m4, Coefficient2, NbrTranslation);
+		  Index = TmpParticles->AduAdd(m3, m4, Coefficient2, NbrTranslation);
 		  if (Index < Dim)
 		    {
 		      ++Memory;
@@ -900,8 +925,8 @@ long AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialFastMu
 	    TmpDiagonal = 0.0;
 	    for (int j = 0; j <= this->MaxMomentum; ++j) 
 	      {
-		TmpDiagonal += this->OneBodyInteractionFactorsUpUp[j] * Particles->AduAu(i, j);
-		TmpDiagonal += this->OneBodyInteractionFactorsDownDown[j] * Particles->AddAd(i, j);
+		TmpDiagonal += this->OneBodyInteractionFactorsUpUp[j] * TmpParticles->AduAu(i, j);
+		TmpDiagonal += this->OneBodyInteractionFactorsDownDown[j] * TmpParticles->AddAd(i, j);
 	      }
 	    if (TmpDiagonal!=0.0)
 	      {
@@ -914,7 +939,7 @@ long AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialFastMu
 	    double TmpDiagonal = 0.0;
 	    TmpDiagonal = 0.0;
 	    for (int j = 0; j <= this->MaxMomentum; ++j) 
-	      TmpDiagonal += this->OneBodyInteractionFactorsUpUp[j] * Particles->AduAu(i, j);
+	      TmpDiagonal += this->OneBodyInteractionFactorsUpUp[j] * TmpParticles->AduAu(i, j);
 	    if (TmpDiagonal!=0.0)
 	      {
 		++Memory;
@@ -927,7 +952,7 @@ long AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialFastMu
 	    double TmpDiagonal = 0.0;
 	    TmpDiagonal = 0.0;
 	    for (int j = 0; j <= this->MaxMomentum; ++j) 
-	      TmpDiagonal += this->OneBodyInteractionFactorsDownDown[j] * Particles->AddAd(i, j);
+	      TmpDiagonal += this->OneBodyInteractionFactorsDownDown[j] * TmpParticles->AddAd(i, j);
 	    if (TmpDiagonal!=0.0)
 	      {
 		++Memory;
@@ -937,6 +962,7 @@ long AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialFastMu
     }
   Memory = ((2*sizeof (int*) + sizeof (int) + sizeof(double*)) * this->Particles->GetHilbertSpaceDimension() + 
 	    Memory *  (sizeof (int) + sizeof(double) + sizeof(int)));
+  delete TmpParticles;
   return Memory;  
 }
 
@@ -987,9 +1013,10 @@ void AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialEnable
   int* TmpNbrTranslationArray;
   int Dim = Particles->GetHilbertSpaceDimension();
   int LastComponent = firstComponent + nbrComponent;
+  ParticleOnTorusWithSpinAndMagneticTranslations* TmpParticles = (ParticleOnTorusWithSpinAndMagneticTranslations*) this->Particles->Clone();
   double Coefficient2;
   int m1, m2, m3, m4;      
-  int SumIndices;
+  //int SumIndices;
   int TmpNbrM34Values;
   unsigned* TmpM34Values;
   int Pos;
@@ -1018,17 +1045,17 @@ void AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialEnable
 	{
 	  m1 = this->M12IntraValue[m12] & L16Mask;
 	  m2 = (this->M12IntraValue[m12] & H16Mask)>>16;
-	  Coefficient = Particles->AuAu(i, m1, m2);
+	  Coefficient = TmpParticles->AuAu(i, m1, m2);
 	  if (Coefficient != 0.0)
 	    {
-	      SumIndices = m1 + m2;
+	      //SumIndices = m1 + m2;
 	      TmpNbrM34Values = this->NbrM34IntraValues[m12];
 	      TmpM34Values = this->M34IntraValues[m12];
 	      for (int m34 = 0; m34 < TmpNbrM34Values; ++m34)
 		{
 		  m3 = (TmpM34Values[m34]) & L16Mask;
 		  m4 = ((TmpM34Values[m34]) & H16Mask)>>16;
-		  Index = Particles->AduAdu(m3, m4, Coefficient2, NbrTranslation);
+		  Index = TmpParticles->AduAdu(m3, m4, Coefficient2, NbrTranslation);
 		  if (Index < Dim)
 		    {
 		      TmpIndexArray[Pos] = Index;
@@ -1047,17 +1074,17 @@ void AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialEnable
 	{
 	  m1 = this->M12IntraValue[m12] & L16Mask;
 	  m2 = (this->M12IntraValue[m12] & H16Mask)>>16;
-	  Coefficient = Particles->AdAd(i, m1, m2);	  
+	  Coefficient = TmpParticles->AdAd(i, m1, m2);	  
 	  if (Coefficient != 0.0)
 	    {
-	      SumIndices = m1 + m2;
+	      //SumIndices = m1 + m2;
 	      TmpNbrM34Values = this->NbrM34IntraValues[m12];
 	      TmpM34Values = this->M34IntraValues[m12];
 	      for (int m34 = 0; m34 < TmpNbrM34Values; ++m34)
 		{
 		  m3 = (TmpM34Values[m34]) & L16Mask;
 		  m4 = ((TmpM34Values[m34]) & H16Mask)>>16;
-		  Index = Particles->AddAdd(m3, m4, Coefficient2, NbrTranslation);
+		  Index = TmpParticles->AddAdd(m3, m4, Coefficient2, NbrTranslation);
 		  if (Index < Dim)
 		    {
 		      TmpIndexArray[Pos] = Index;
@@ -1077,17 +1104,17 @@ void AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialEnable
 	{
 	  m1 = this->M12InterValue[m12] & L16Mask;
 	  m2 = (this->M12InterValue[m12] & H16Mask)>>16;
-	  Coefficient = Particles->AuAd(i, m1, m2);	  
+	  Coefficient = TmpParticles->AuAd(i, m1, m2);	  
 	  if (Coefficient != 0.0)
 	    {
-	      SumIndices = m1 + m2;
+	      //SumIndices = m1 + m2;
 	      TmpNbrM34Values = this->NbrM34InterValues[m12];
 	      TmpM34Values = this->M34InterValues[m12];
 	      for (int m34 = 0; m34 < TmpNbrM34Values; ++m34)
 		{
 		  m3 = (TmpM34Values[m34]) & L16Mask;
 		  m4 = ((TmpM34Values[m34]) & H16Mask)>>16;
-		  Index = Particles->AduAdd(m3, m4, Coefficient2, NbrTranslation);
+		  Index = TmpParticles->AduAdd(m3, m4, Coefficient2, NbrTranslation);
 		  if (Index < Dim)
 		    {
 		      TmpIndexArray[Pos] = Index;
@@ -1110,8 +1137,8 @@ void AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialEnable
 	    TmpDiagonal = 0.0;
 	    for (int j = 0; j <= this->MaxMomentum; ++j) 
 	      {
-		TmpDiagonal += this->OneBodyInteractionFactorsUpUp[j] * Particles->AduAu(i, j);
-		TmpDiagonal += this->OneBodyInteractionFactorsDownDown[j] * Particles->AddAd(i, j);
+		TmpDiagonal += this->OneBodyInteractionFactorsUpUp[j] * TmpParticles->AduAu(i, j);
+		TmpDiagonal += this->OneBodyInteractionFactorsDownDown[j] * TmpParticles->AddAd(i, j);
 	      }
 	    if (TmpDiagonal!=0.0)
 	      {
@@ -1126,7 +1153,7 @@ void AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialEnable
 	    double TmpDiagonal = 0.0;
 	    TmpDiagonal = 0.0;
 	    for (int j = 0; j <= this->MaxMomentum; ++j) 
-	      TmpDiagonal += this->OneBodyInteractionFactorsUpUp[j] * Particles->AduAu(i, j);
+	      TmpDiagonal += this->OneBodyInteractionFactorsUpUp[j] * TmpParticles->AduAu(i, j);
 	    if (TmpDiagonal!=0.0)
 	      {
 		TmpIndexArray[Pos] = i;
@@ -1141,7 +1168,7 @@ void AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialEnable
 	    double TmpDiagonal = 0.0;
 	    TmpDiagonal = 0.0;
 	    for (int j = 0; j <= this->MaxMomentum; ++j) 
-	      TmpDiagonal += this->OneBodyInteractionFactorsDownDown[j] * Particles->AddAd(i, j);
+	      TmpDiagonal += this->OneBodyInteractionFactorsDownDown[j] * TmpParticles->AddAd(i, j);
 	    if (TmpDiagonal!=0.0)
 	      {
 		TmpIndexArray[Pos] = i;

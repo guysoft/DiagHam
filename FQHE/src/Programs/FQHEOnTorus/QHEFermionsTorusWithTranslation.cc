@@ -19,6 +19,7 @@
 
 #include "GeneralTools/ListIterator.h"
 #include "MathTools/IntegerAlgebraTools.h"
+#include "GeneralTools/ConfigurationParser.h"
 
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "HilbertSpace/SubspaceSpaceConverter.h"
@@ -51,7 +52,7 @@ int main(int argc, char** argv)
   cout.precision(14);
 
   // some running options and help
-  OptionManager Manager ("QHEBosonsDelta" , "0.01");
+  OptionManager Manager ("QHEFermionsTorusWithTranslation" , "0.01");
   OptionGroup* LanczosGroup  = new OptionGroup ("Lanczos options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
@@ -72,8 +73,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption   ('r', "ratio", 
 					      "ratio between lengths along the x and y directions (-1 if has to be taken equal to nbr-particles/4)", 
 					      -1);
-
-
+  (*SystemGroup) += new SingleIntegerOption  ('L', "landau-level", "Landau-level to be simulated", 0, true, 0);
+  (*SystemGroup) += new SingleStringOption  ('\n', "interaction-file", "file describing the interaction");
+  
   (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
   (*LanczosGroup) += new SingleIntegerOption  ('\n', "full-diag", 
 					       "maximum Hilbert space dimension for which full diagonalization is applied", 
@@ -97,7 +99,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type QHEBosonsDelta -h" << endl;
+      cout << "see man page for option syntax or type QHEFermionsTorusWithTranslation -h" << endl;
       return -1;
     }
   if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
@@ -107,8 +109,6 @@ int main(int argc, char** argv)
     }
 
 
-
-
   int MaxNbrIterLanczos = ((SingleIntegerOption*) Manager["iter-max"])->GetInteger();
   int NbrIterLanczos = ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();
   int NbrEigenvalue = ((SingleIntegerOption*) Manager["nbr-eigen"])->GetInteger();
@@ -116,6 +116,47 @@ int main(int argc, char** argv)
   int MaxMomentum = ((SingleIntegerOption*) Manager["max-momentum"])->GetInteger();
   int XMomentum = ((SingleIntegerOption*) Manager["x-momentum"])->GetInteger();
   int YMomentum = ((SingleIntegerOption*) Manager["y-momentum"])->GetInteger();
+  int LandauLevel=0;
+  int NbrPseudopotentials=0;
+  double *Pseudopotentials=NULL;
+  char *InteractionName=NULL;
+  if (Manager.GetString("interaction-file")!=NULL)
+    {
+      ConfigurationParser InteractionDefinition;
+      if (InteractionDefinition.Parse(Manager.GetString("interaction-file")) == false)
+	{
+	  InteractionDefinition.DumpErrors(cout) << endl;
+	  exit(-1);
+	}
+      if (InteractionDefinition["CoulombLandauLevel"] != NULL)
+	LandauLevel = atoi(InteractionDefinition["CoulombLandauLevel"]);
+      if (InteractionDefinition["Name"] == NULL)
+	{
+	  if (InteractionDefinition["CoulombLandauLevel"] == NULL)
+	    {
+	      cout << "Attention, using unnamed interaction! Please include a line 'Name = ...'" << endl;
+	      InteractionName = new char[16];
+	      sprintf(InteractionName,"coulomb_l_%d",LandauLevel);
+	    }
+	  else
+	    {
+	      InteractionName = new char[10];
+	      sprintf(InteractionName,"unnamed");
+	    }
+	}
+      else
+	{
+	  InteractionName = new char[strlen(InteractionDefinition["Name"])+1];
+	  strcpy(InteractionName, InteractionDefinition["Name"]);
+	}
+      InteractionDefinition.GetAsDoubleArray("Pseudopotentials", ' ', Pseudopotentials, NbrPseudopotentials);
+    }
+  else
+    {
+      LandauLevel = Manager.GetInteger("landau-level");
+      InteractionName = new char[1];
+      InteractionName[0]='\0';
+    }
   int MaxFullDiagonalization = ((SingleIntegerOption*) Manager["full-diag"])->GetInteger();
   double XRatio = NbrFermions / 4.0;
   if (((SingleDoubleOption*) Manager["ratio"])->GetDouble() > 0)
@@ -133,7 +174,17 @@ int main(int argc, char** argv)
   double GroundStateEnergy = 0.0;
 
   char* OutputNameLz = new char [512];
-  sprintf (OutputNameLz, "fermions_torus_coulomb_n_%d_2s_%d_ratio_%f.dat", NbrFermions, MaxMomentum, XRatio);
+  if (NbrPseudopotentials>0)
+    {
+      sprintf (OutputNameLz, "fermions_torus_%s_n_%d_2s_%d_ratio_%f.dat", InteractionName, NbrFermions, MaxMomentum, XRatio);
+    }
+  else
+    {
+      if (LandauLevel>0)
+	sprintf (OutputNameLz, "fermions_torus_coulomb_l_%d_n_%d_2s_%d_ratio_%f.dat", LandauLevel, NbrFermions, MaxMomentum, XRatio);
+      else
+	sprintf (OutputNameLz, "fermions_torus_coulomb_n_%d_2s_%d_ratio_%f.dat", NbrFermions, MaxMomentum, XRatio);
+    }
   ofstream File;
   File.open(OutputNameLz, ios::binary | ios::out);
   File.precision(14);
@@ -195,7 +246,7 @@ int main(int argc, char** argv)
 	Architecture.GetArchitecture()->SetDimension(TotalSpace.GetHilbertSpaceDimension());
 	
 	AbstractHamiltonian* Hamiltonian = new ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian (&TotalSpace, 
-													  NbrFermions, MaxMomentum, XMomentum, XRatio,
+													  NbrFermions, MaxMomentum, XMomentum, XRatio, LandauLevel, NbrPseudopotentials, Pseudopotentials, 
 													  Architecture.GetArchitecture(), 
 													  Memory);
       if (Hamiltonian->GetHilbertSpaceDimension() < MaxFullDiagonalization)
@@ -285,7 +336,7 @@ int main(int argc, char** argv)
 	      File.close();
 	      exit(0);
 	    }
-	  GroundStateEnergy = Lowest;
+	  GroundStateEnergy = TmpMatrix.DiagonalElement(0);
 	  cout << endl;
 	  cout << TmpMatrix.DiagonalElement(0) << " " << Lowest << " " << Precision << "  Nbr of iterations = " 
 	       << CurrentNbrIterLanczos << endl;

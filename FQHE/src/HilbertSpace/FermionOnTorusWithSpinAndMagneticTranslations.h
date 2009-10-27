@@ -257,7 +257,7 @@ class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWit
   // return value =  multiplicative factor 
   double AdAd (int index, int n1, int n2);
 
-  // apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdd call
+  // apply a_n1_u a_n2_d operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdd call
   //
   // index = index of the state on which the operator has to be applied
   // n1 = first index for annihilation operator (spin up)
@@ -265,6 +265,15 @@ class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWit
   // return value =  multiplicative factor 
   double AuAd (int index, int n1, int n2);
 
+  // apply a_n1_d a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdd call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator (spin up)
+  // n2 = second index for annihilation operator (spin down)
+  // return value =  multiplicative factor 
+  double AdAu (int index, int n1, int n2);
+
+  
   // apply a^+_m1_u a^+_m2_u operator to the state produced using AuAu method (without destroying it)
   //
   // m1 = first index for creation operator (spin up)

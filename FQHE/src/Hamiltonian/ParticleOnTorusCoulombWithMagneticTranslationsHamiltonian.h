@@ -37,6 +37,7 @@
 #include "HilbertSpace/ParticleOnTorusWithMagneticTranslations.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
 #include "Hamiltonian/AbstractQHEOnTorusWithMagneticTranslationsHamiltonian.h"
+#include "MathTools/LaguerreFunction.h"
 
 #include <iostream>
 
@@ -50,6 +51,10 @@ class MathematicaOutput;
 class ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian : public AbstractQHEOnTorusWithMagneticTranslationsHamiltonian
 {
 
+ protected:
+  // energy of wigner crystal reference
+  double WignerEnergy;
+
  public:
 
   // constructor from default datas
@@ -59,11 +64,14 @@ class ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian : public Abstrac
   // maxMomentum = maximum Lz value reached by a particle in the state
   // xMomentum = momentum in the x direction (modulo GCD of nbrBosons and maxMomentum)
   // ratio = ratio between the width in the x direction and the width in the y direction
+  // landauLevel = landauLevel to be simulated
+  // nbrPseudopotentials = number of pseudopotentials indicated
+  // pseudopotentials = pseudopotential coefficients
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
   ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian(ParticleOnTorusWithMagneticTranslations* particles, int nbrParticles, int maxMomentum, int xMomentum,
-							    double ratio, AbstractArchitecture* architecture, int memory = -1, char* precalculationFileName = 0);
+							    double ratio, int landauLevel, int nbrPseudopotentials, double* pseudopotentials, AbstractArchitecture* architecture, int memory = -1, char* precalculationFileName = 0);
 
   // destructor
   //
@@ -113,6 +121,10 @@ class ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian : public Abstrac
   // return value = numerical coefficient
   double EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4);
 
+  // get fourier transform of interaction
+  // Q2_half = one half of q² value
+  double GetVofQ(double Q2_half);
+
   // evaluate Wigner crystal energy per particle
   //
   // return value = Wigner crystal energy per particle
@@ -134,6 +146,25 @@ class ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian : public Abstrac
   // nbrSubdivision = number of subdivision used for the integral
   // return value = value of the integral
   double PartialMisraFunction (double n, double x, double min, double max, int nbrSubdivision);
+
+  
+ private:
+  
+  // landau Level index
+  int LandauLevel;
+
+  // Number of Pseudopotential
+  int NbrPseudopotentials;
+
+  // pseudopotential coefficients
+  double *Pseudopotentials;
+
+  // Laguerre polynomial for the Landau level
+  LaguerreFunction LaguerreN;
+  
+  // Laguerre polynomial for the pseudopotentials
+  LaguerreFunction *LaguerreM;
+
 
 };
 
