@@ -53,6 +53,14 @@ double Abs (double x);
 double TestOdd (int  x);
 
 // constructors
+Polynomial::Polynomial ()
+{
+  this->Degree = 0;
+  this->Coefficient = new double [this->Degree + 1];
+  this->RootFlag = false;
+  this->NoRootFlag = false;
+  this->Coefficient[0] = 0.0;
+}
 
 Polynomial::Polynomial (int Deg, double* Coef)
 {
@@ -134,9 +142,41 @@ Polynomial& Polynomial::operator = (const Polynomial& P)
 // x = point where to evaluate polynomial
 // return value = polynomial value at x
 
+double Polynomial::operator() (double x)
+{
+  double Res = this->Coefficient[this->Degree];
+  for (int i = this->Degree - 1 ; i >= 0; i--)
+    {
+      Res *= x;
+      Res += this->Coefficient[i];
+    }
+  return Res;
+}
+
+// Return polynomial value at a given point
+//
+// x = point where to evaluate polynomial
+// return value = polynomial value at x
+
 double Polynomial::PolynomialEvaluate (double x)
 {
   double Res = this->Coefficient[this->Degree];
+  for (int i = this->Degree - 1 ; i >= 0; i--)
+    {
+      Res *= x;
+      Res += this->Coefficient[i];
+    }
+  return Res;
+}
+
+// Return polynomial value at a given point
+//
+// x = point where to evaluate polynomial
+// return value = polynomial value at x
+
+Complex Polynomial::operator() (const Complex &x)
+{
+  Complex Res = this->Coefficient[this->Degree];
   for (int i = this->Degree - 1 ; i >= 0; i--)
     {
       Res *= x;

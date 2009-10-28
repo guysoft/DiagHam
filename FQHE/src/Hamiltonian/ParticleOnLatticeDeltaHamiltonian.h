@@ -78,7 +78,7 @@ class ParticleOnLatticeDeltaHamiltonian : public AbstractQHEOnLatticeHamiltonian
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnLatticeDeltaHamiltonian(ParticleOnLattice* particles, int nbrParticles, int lx, int ly, int nbrFluxQuanta, double contactInteractionU, bool reverseHopping, double deltaPotential, double randomPotential, AbstractArchitecture* architecture, int memory = -1, char* precalculationFileName = 0);
+  ParticleOnLatticeDeltaHamiltonian(ParticleOnLattice* particles, int nbrParticles, int lx, int ly, int nbrFluxQuanta, double contactInteractionU, bool reverseHopping, double deltaPotential, double randomPotential, AbstractArchitecture* architecture, unsigned long memory = 0, char* precalculationFileName = 0);
 
   // destructor
   //

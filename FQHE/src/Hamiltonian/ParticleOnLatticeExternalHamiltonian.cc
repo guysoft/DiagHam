@@ -60,7 +60,7 @@ using std::ostream;
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-ParticleOnLatticeExternalHamiltonian::ParticleOnLatticeExternalHamiltonian(ParticleOnLattice* particles, int nbrParticles, int nbrStates, const char* oneParticleTerms, const char* twoParticleTerms, AbstractArchitecture* architecture, int memory, char* precalculationFileName)
+ParticleOnLatticeExternalHamiltonian::ParticleOnLatticeExternalHamiltonian(ParticleOnLattice* particles, int nbrParticles, int nbrStates, const char* oneParticleTerms, const char* twoParticleTerms, AbstractArchitecture* architecture, unsigned long memory, char* precalculationFileName)
 {
   this->Particles=particles;
   this->NbrParticles=nbrParticles;
@@ -93,7 +93,7 @@ ParticleOnLatticeExternalHamiltonian::ParticleOnLatticeExternalHamiltonian(Parti
     {
       if (memory > 0)
 	{
-	  int TmpMemory = this->FastMultiplicationMemory(memory);
+	  long TmpMemory = this->FastMultiplicationMemory(memory);
 	  PrintMemorySize(cout, TmpMemory)<< endl;
 	  if (memory > 0)
 	    this->EnableFastMultiplication();

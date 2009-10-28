@@ -1,14 +1,15 @@
 ////////////////////////////////////////////////////////////////////////////////
 //                                                                            //
+//                           RayTrace version  0.10                           //
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                     class of clebsch gordan coefficients                   //
+//                   Class of polynomial with real coefficients               //
 //                                                                            //
-//                        last modification : 19/06/2002                      //
+//                        last modification : 15/01/2001                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -27,84 +28,39 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-
-#ifndef LAGUERREFUNCTION_H
-#define LAGUERREFUNCTION_H
-
-
-#include "config.h"
-#include "GeneralTools/GarbageFlag.h"
-#include "Vector/RealVector.h"
-#include <iostream>
-
+#include "SpecialPolynomial.h"
+#include "MathTools/FactorialCoefficient.h"
 
 using std::ostream;
 
-
-class LaguerreFunction
+// return a Laguerre Polynomial of rank n (optionally associated Laguerre function)
+// n = index
+// alpha = modifier
+Polynomial LaguerrePolynomial(int n, int alpha)
 {
-
- private:
-
-  // degree
-  int N;
-
-  // modifier
-  int Alpha;
-
-  // array of prefactors of the polynomial terms
   double *Coefficients;
+  if (n<0)
+    {
+      Coefficients=new double[1];
+      Coefficients[0]=0.0;
+      n=0;
+    }
+  else
+    {
+      Coefficients=new double[n+1];
+      FactorialCoefficient MyCoefficient; 
+      for (int m=0; m<=n; ++m)
+	{
+	  MyCoefficient.SetToOne();
+	  MyCoefficient.FactorialMultiply(n+alpha);
+	  MyCoefficient.FactorialDivide(m);
+	  MyCoefficient.FactorialDivide(alpha+m);
+	  MyCoefficient.FactorialDivide(n-m);
+	  Coefficients[m]=MyCoefficient.GetNumericalValue();
+	  if (m&1)
+	    Coefficients[m]*=-1.0;
+	}
+    }
+  return Polynomial (n, Coefficients, true);
+}
 
-  
- public:
-
-  // default constructor
-  // creates L_0^0
-  //
-  LaguerreFunction();
-
-  // constructor for a Laguerre polynomial
-  //
-  // n = index
-  // alpha = modifier
-  LaguerreFunction(int n, int alpha=0);
-
-  // copy constructor (duplicating datas)
-  //
-  // coefficients = reference on function to copy
-  LaguerreFunction (const LaguerreFunction& laguerre);
-
-  // destructor
-  //
-  ~LaguerreFunction ();
-
-  // get the value of the function for a given coordinate x
-  //
-  // x = complex coordinate
-  // return = function value at z
-  
-  double operator()(const double &x);
-
-  
-  // get the value of the function for a given coordinate x
-  //
-  // x = argument
-  // return = function value at x
-
-  double GetValue(const double &x);
-  
-  // get the value of the function for a given coordinate z
-  // values = complex vector where to store results
-  // manyZ = complex vector of coordinates
-  // return = function value at z
-  void GetManyValues(RealVector &values, RealVector &manyX);
-
-  // pretty-print a function value
-  // str = stream to print to
-  // x = point where to evaluate
-  ostream& PrintValue(ostream &str, const double &x);
-  
-  
-};
-
-#endif

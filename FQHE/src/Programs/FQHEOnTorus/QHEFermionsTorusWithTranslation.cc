@@ -33,10 +33,11 @@
 #include "Options/SingleStringOption.h"
 
 #include <iostream>
-#include <stdlib.h>
-#include <math.h>
+#include <cstring>
+#include <cstdlib>
+#include <cmath>
 #include <sys/time.h>
-#include <stdio.h>
+#include <cstdio>
 #include <fstream>
 
 

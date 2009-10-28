@@ -40,6 +40,7 @@
 #include "MathTools/FactorialCoefficient.h"
 #include "MathTools/ClebschGordanCoefficients.h"
 #include "MathTools/IntegerAlgebraTools.h"
+#include "Polynomial/SpecialPolynomial.h"
 #include "Architecture/AbstractArchitecture.h"
 
 #include <iostream>
@@ -91,19 +92,17 @@ ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::ParticleOnTorusCoulom
   if (this->NbrPseudopotentials>0)
     {
       this->Pseudopotentials = pseudopotentials;
-      this->LaguerreM=new LaguerreFunction[NbrPseudopotentials];
+      this->LaguerreM=new Polynomial[NbrPseudopotentials];
       for (int i=0; i<NbrPseudopotentials; ++i)
-	this->LaguerreM[i]=LaguerreFunction(i);
+	this->LaguerreM[i]=LaguerrePolynomial(i);
     }
   else
     {
       this->Pseudopotentials = NULL;
       this->LaguerreM=NULL;
     }
-  this->LaguerreN=LaguerreFunction(this->LandauLevel);
-  this->LaguerreN.PrintValue(cout, 0)<<endl;
-  this->LaguerreN.PrintValue(cout, 1)<<endl;
-  this->LaguerreN.PrintValue(cout, 2)<<endl;
+  this->LaguerreN=LaguerrePolynomial(this->LandauLevel);
+  cout << this->LaguerreN<<endl;
   this->WignerEnergy = this->EvaluateWignerCrystalEnergy() / 2.0;
   //double WignerEnergy = 0.0;
   this->Architecture = architecture;
@@ -370,7 +369,7 @@ double ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::GetVofQ(double
   else
     Result=0.0;
   for (int i=0; i<NbrPseudopotentials; ++i)
-    Result += this->Pseudopotentials[i]*this->LaguerreM[i].GetValue(Q2);
+    Result += this->Pseudopotentials[i]*this->LaguerreM[i].PolynomialEvaluate(Q2);
   //cout <<"V("<<2*Q2_half<<")="<<Result<<" LL="<<this->LandauLevel<<endl;
   return Result;
 }

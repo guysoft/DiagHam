@@ -58,7 +58,7 @@ using std::ostream;
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-ParticleOnLatticeWithKyDeltaHamiltonian::ParticleOnLatticeWithKyDeltaHamiltonian(ParticleOnLattice* particles, int nbrParticles, int lx, int ly, int kyMax, int nbrFluxQuanta, double contactInteractionU, bool reverseHopping, double randomPotential, AbstractArchitecture* architecture, int memory, char* precalculationFileName)
+ParticleOnLatticeWithKyDeltaHamiltonian::ParticleOnLatticeWithKyDeltaHamiltonian(ParticleOnLattice* particles, int nbrParticles, int lx, int ly, int kyMax, int nbrFluxQuanta, double contactInteractionU, bool reverseHopping, double randomPotential, AbstractArchitecture* architecture, unsigned long memory, char* precalculationFileName)
 {
   this->Particles=particles;
   this->NbrParticles=nbrParticles;
@@ -87,7 +87,7 @@ ParticleOnLatticeWithKyDeltaHamiltonian::ParticleOnLatticeWithKyDeltaHamiltonian
     {
       if (memory > 0)
 	{
-	  int TmpMemory = this->FastMultiplicationMemory(memory);
+	  long TmpMemory = this->FastMultiplicationMemory(memory);
 	  if (TmpMemory < 1024)
 	    cout  << "fast = " <<  TmpMemory << "b ";
 	  else

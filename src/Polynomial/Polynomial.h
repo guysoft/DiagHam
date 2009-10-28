@@ -64,6 +64,7 @@ private:
 public:
  
   // constructors
+  Polynomial ();
   Polynomial (int Deg, double* Coef);
   Polynomial (int Deg, double* Coef, bool flag); // flag = true if Coef has to be used directly
   Polynomial (const Polynomial& P);
@@ -78,8 +79,20 @@ public:
   //
   // x = point where to evaluate polynomial
   // return value = polynomial value at x
+  double operator () (double x);
+  
+  // Return polynomial value at a given point
+  //
+  // x = point where to evaluate polynomial
+  // return value = polynomial value at x
   double PolynomialEvaluate (double x);
   
+  // Return polynomial value at a given point
+  //
+  // x = point where to evaluate polynomial
+  // return value = polynomial value at x
+  Complex operator() (const Complex &x);
+
   // Return polynomial value at a given point
   //
   // x = point where to evaluate polynomial

@@ -151,7 +151,7 @@ int main(int argc, char** argv)
   char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");
   bool FirstRun = true;
 
-  if (Manager.GetString("energy-expectation") != 0 ) Memory = 0x0l;
+  if (Manager.GetString("energy-expectation") != 0 ) Memory = 0x0ul;
 
   // get the lattice geometry
   LatticePhases *Lattice = new LatticePhases();

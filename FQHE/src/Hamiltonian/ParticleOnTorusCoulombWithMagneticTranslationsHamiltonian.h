@@ -37,7 +37,7 @@
 #include "HilbertSpace/ParticleOnTorusWithMagneticTranslations.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
 #include "Hamiltonian/AbstractQHEOnTorusWithMagneticTranslationsHamiltonian.h"
-#include "MathTools/LaguerreFunction.h"
+#include "Polynomial/Polynomial.h"
 
 #include <iostream>
 
@@ -160,10 +160,10 @@ class ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian : public Abstrac
   double *Pseudopotentials;
 
   // Laguerre polynomial for the Landau level
-  LaguerreFunction LaguerreN;
+  Polynomial LaguerreN;
   
   // Laguerre polynomial for the pseudopotentials
-  LaguerreFunction *LaguerreM;
+  Polynomial *LaguerreM;
 
 
 };
