@@ -1,5 +1,6 @@
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithmWithDiskStorage.h"
 #include "LanczosAlgorithm/BasicLanczosAlgorithmWithGroundStateDiskStorage.h"
+#include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage.h"
 #include "Vector/RealVector.h"
 
 #include "Architecture/AbstractArchitecture.h"
@@ -87,10 +88,10 @@ int main(int argc, char** argv)
 	  if (Manager.GetBoolean("reorthogonalized"))
 	    {
 	      FullReorthogonalizedLanczosAlgorithmWithDiskStorage Lanczos(Architecture.GetArchitecture(), NbrEigenvalue, 0,0);
+	      cout << "Now reading in previous state";
+	      Lanczos.ResumeLanczosAlgorithm();
 	      if (EigenstateFlag)
 		{
-		  cout << "Now reading in previous state";
-		  Lanczos.ResumeLanczosAlgorithm();	      
 		  char *TmpVectorName = new char[strlen(OutputName)+10];
 		  RealVector* Eigenvectors = (RealVector*) Lanczos.GetEigenstates(NbrEigenvalue);
 		  cout << "Constructing eigenstates"<<endl;
@@ -103,7 +104,7 @@ int main(int argc, char** argv)
 		}
 	      else
 		{
-		  cout << "Please request eigenvalues!"<<endl;
+		  cout << "Please request eigenvectors!"<<endl;
 		  return 0;
 		}
 	    }
@@ -134,7 +135,35 @@ int main(int argc, char** argv)
     {
       if (BlockLanczosFlag == false)
 	{
-	  FullReorthogonalizedLanczosAlgorithmWithDiskStorage Lanczos(Architecture.GetArchitecture(), NbrEigenvalue, 0,0);
+	  if (Manager.GetBoolean("reorthogonalized"))
+	    {
+	      FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage Lanczos(Architecture.GetArchitecture(), NbrEigenvalue, 0,0);
+	      cout << "Now reading in previous state";
+	      Lanczos.ResumeLanczosAlgorithm();	      
+		  
+	      if (EigenstateFlag)
+		{
+		  char *TmpVectorName = new char[strlen(OutputName)+10];
+		  ComplexVector* Eigenvectors = (ComplexVector*) Lanczos.GetEigenstates(NbrEigenvalue);
+		  cout << "Constructing eigenstates"<<endl;
+		  for (int i = 0; i < NbrEigenvalue; ++i)
+		    {		      
+		      sprintf (TmpVectorName, "%s.%d.vec", OutputName, i);
+		      Eigenvectors[i].WriteVector(TmpVectorName);
+		    }
+		  delete [] TmpVectorName;		  
+		}
+	      else
+		{
+		  cout << "Please request eigenvectors!"<<endl;
+		  return 0;
+		}
+	    }
+	  else
+	    {
+	      cout << "Simple complex Lanczos not defined yet!"<<endl;
+	      return 0;
+	    }
 	}
       else
 	{

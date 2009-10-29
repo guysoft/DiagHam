@@ -340,11 +340,11 @@ void FullReorthogonalizedBlockLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter
 	this->LanczosVectors[k + this->BlockSize] = RealVector(this->Hamiltonian->GetHilbertSpaceDimension());
       MultipleVectorHamiltonianMultiplyOperation Operation (this->Hamiltonian, this->LanczosVectors, &(this->LanczosVectors[this->BlockSize]), this->BlockSize);
       Operation.ApplyOperation(this->Architecture);
- 
+      
       for (int i = 0; i < this->BlockSize; ++i)
 	{
 	  MultipleRealScalarProductOperation Operation2 (&(this->LanczosVectors[i + this->BlockSize]), this->LanczosVectors,   
-							i + 1, this->TemporaryCoefficients);
+							 i + 1, this->TemporaryCoefficients);
 	  Operation2.ApplyOperation(this->Architecture);
 	  for (int j = 0; j <= i; ++j)
 	    {

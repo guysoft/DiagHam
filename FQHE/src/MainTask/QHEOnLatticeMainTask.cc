@@ -243,7 +243,7 @@ QHEOnLatticeMainTask::QHEOnLatticeMainTask(OptionManager* options, AbstractHilbe
       this->Hamiltonian->GetHamiltonian(HRep);
       cout << HRep << endl;
     }  
-  if (((*options)["lanczos-precision"] != 0) && (((SingleDoubleOption*) (*options)["lanczos-precision"])->GetDouble() > 0))
+  if (((*options)["lanczos-precision"] != 0) && (((SingleDoubleOption*) (*options)["lanczos-precision"])->GetDouble() > 0.0))
     {
       this->LanczosPrecision = ((SingleDoubleOption*) (*options)["lanczos-precision"])->GetDouble();
     }
