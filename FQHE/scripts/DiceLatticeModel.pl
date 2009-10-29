@@ -181,8 +181,16 @@ while( (defined($ARGV[0])&&$ARGV[0] =~ /^-/ ))
 	  {
 	    $SolenoidY=$TmpArray[1];
 	  }
-	$SolenoidCmd="-s ".$SolenoidCmd;
-	$SolenoidStr=sprintf ("_s_%g_%g", $SolenoidX, $SolenoidY);
+	if (($SolenoidX!=0.0)||($SolenoidY!=0.0))
+	  {
+	    $SolenoidCmd="-s ".$SolenoidCmd;
+	    $SolenoidStr=sprintf ("_s_%g_%g", $SolenoidX, $SolenoidY);
+	  }
+	else
+	  {
+	    $SolenoidCmd="";
+	    $SolenoidStr="";
+	  }
 	print ("Using solenoid fluxes $SolenoidStr $SolenoidCmd\n");
       }
     shift(@ARGV);
