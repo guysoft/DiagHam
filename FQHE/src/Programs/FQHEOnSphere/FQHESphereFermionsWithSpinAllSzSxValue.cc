@@ -19,6 +19,7 @@
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
 
 #include "Operator/ParticleOnSphereSquareTotalMomentumOperator.h"
+#include "Operator/ParticleOnSphereWithSpinAllSzExcitonOrder.h"
 
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
 
@@ -63,7 +64,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('t', "tunneling-amp", "tunneling amplitude", 0.0);
   (*SystemGroup) += new SingleStringOption  ('\n', "statistics", "particle statistics (bosons or fermions, try to guess it from file name if not defined)");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
- 
+  (*SystemGroup) += new BooleanOption  ('\n', "exciton-order", "calculate exciton order correlation for bilayer with all Sz components");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "orbital-separation", "separation between orbitals (exciton order only)", 1); 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -84,6 +86,56 @@ int main(int argc, char** argv)
       return -1;
     }
 
+  if (Manager.GetBoolean("exciton-order"))
+  {
+   int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
+   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
+   int TotalLz = ((SingleIntegerOption*) Manager["total-lz"])->GetInteger();
+   int OrbitalSeparation = ((SingleIntegerOption*) Manager["orbital-separation"])->GetInteger();
+
+   long MemorySpace = 9l << 20;
+
+   FermionOnSphereWithSpinAllSz* Space;
+#ifdef __64_BITS__
+   if (LzMax <= 31)
+    {
+      Space = new FermionOnSphereWithSpinAllSz(NbrParticles, TotalLz, LzMax, MemorySpace);
+    }
+   else
+    {
+      cout << "States of this Hilbert space cannot be represented in a single word." << endl;
+      return -1;
+    }
+#else
+   if (LzMax <= 15)
+    {
+      Space = new FermionOnSphereWithSpinAllSz(NbrParticles, TotalLz, LzMax, MemorySpace);
+    }
+   else
+    {
+      cout << "States of this Hilbert space cannot be represented in a single word." << endl;
+      return -1;
+    }
+#endif
+
+   cout << "dim = " << Space->GetHilbertSpaceDimension() << endl;
+
+   cout << NbrParticles << " " << TotalLz << " " << LzMax << " " << endl;
+
+   RealVector State;
+   if (State.ReadVector (Manager.GetString("state")) == false)
+    {
+      cout << "can't open vector file " << Manager.GetString("state") << endl;
+      return -1;      
+    }
+
+   ParticleOnSphereWithSpinAllSzExcitonOrder ExcitonOrderOperator (Space, OrbitalSeparation, 0, 0, OrbitalSeparation);
+
+   cout << " Exciton order parameter " << "<c^*_up," << OrbitalSeparation << " c^*_down,0 c_up,0 c_down," << OrbitalSeparation << "> : " << endl;   
+   cout << ExcitonOrderOperator.GetExcitonOrderLevel2(State) << endl;  
+  }
+  else //...no bilayer exciton order requested
+  {
   int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
   int TotalLz = ((SingleIntegerOption*) Manager["total-lz"])->GetInteger();
@@ -171,6 +223,7 @@ int main(int argc, char** argv)
 	
 	delete Space;
     }
+  }
   return 0;
 }
 
