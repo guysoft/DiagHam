@@ -13,6 +13,7 @@ my $Diagonalizer="FQHELatticeBosonsGeneric";
 my $OverlapExe="GenericOverlap";
 
 my $CalculateVectors=0;
+my $RawElements="";
 my $NbrGrid=20;
 my $GridString="";
 my $GridString2="";
@@ -164,6 +165,11 @@ while( (defined($ARGV[0])&&$ARGV[0] =~ /^-/ ))
 	$CalculateVectors=1;
 	print("Will calculate missing vectors!\n");
       }
+    if ( $ARGV[0] =~ /-R/ )
+      {
+	$RawElements="-r";
+	print("Calculating raw matrix Elements!\n");
+      }
     shift(@ARGV);
   }
 
@@ -178,6 +184,7 @@ if (!defined($ARGV[0]))
     print("       -r: reference points A,B as theta1A,theta2A,theta1B,theta2B (default 0,0,1,1)\n");
     print("       -u: interaction strength u_6/u_3 or 'hardcore'\n");
     print("       -c: optionally calculate missing vector files\n");
+    print("       -R: use raw value for matrix elements without any correction\n");
     print("       -m: memory for precalculations when calculating vectors\n");
     print("       -q: quantum numbers of states to be considered part of multiplet (-q q1,q2,q3,...)\n");
     print("       -s: number of states to be calculated at each point\n");
@@ -443,24 +450,23 @@ sub TestVectors {
 	  my $SolenoidString = "";
 	  if (($SolenoidX!=0.0)||($SolenoidY!=0.0))
 	    {
-	      $SolenoidString = sprintf("--solenoid-flux %g,%g",$SolenoidX, $SolenoidY);
+	      $SolenoidString = sprintf("_s_%g_%g",$SolenoidX, $SolenoidY);
 	    }
+	  $MatrixElements = sprintf("MatrixElements_Delta_u_%g_%s%s.dat", $InteractionU, $LatticeGeometry, $SolenoidString);
 	  if ($HardCore==1)
 	    {
-	      $MatrixElements = "MatrixElements_Delta_u_1_$LatticeGeometry.dat";
-	      $Instruction = sprintf("%s -c -e MatrixElements_Delta_u_1_%s.dat --eigenstate --show-itertime %s", $Command, $LatticeGeometry, $SolenoidString);
+	      $Instruction = sprintf("%s -c -e %s -E ext%s --eigenstate --show-itertime", $Command, $MatrixElements, $SolenoidString);
 	    }
 	  else
 	    {
-	      $MatrixElements = "MatrixElements_Delta_u_".$InteractionU."_$LatticeGeometry.dat";
-	      $Instruction = sprintf("%s -e MatrixElements_Delta_u_%g_%s.dat -E ext_u_%g --eigenstate --show-itertime %s", $Command, $InteractionU, $LatticeGeometry, $InteractionU, $SolenoidString);
+	      $Instruction = sprintf("%s -e %s -E ext_u_%g%s --eigenstate --show-itertime ", $Command, $MatrixElements, $InteractionU, $SolenoidString);
 	    }
 	  if ( ! -e $MatrixElements )
 	    {
 	      my $TmpGeometry = $LatticeGeometry;
 	      $TmpGeometry =~ s/x/,/;
 	      print ("Need to recalculate matrix elements, first...\n");
-	      my $Instruction2 = "$MatrixElementCode -d ./ -u $InteractionU -s $SolenoidX,$SolenoidY -C $TmpGeometry";
+	      my $Instruction2 = "$MatrixElementCode -d ./ -u $InteractionU -s $SolenoidX,$SolenoidY -C $TmpGeometry $RawElements";
 	      print ("running ".$Instruction2."\n");
 	      system($Instruction2);
 	    }

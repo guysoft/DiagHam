@@ -66,6 +66,7 @@ void SphereCoulombEnergy::RecordValue(double weight)
   this->Values->Observe(0.5*E/Radius, weight);
 }
 
+
 // print legend to the given stream
 void SphereCoulombEnergy::PrintLegend(std::ostream &output, bool all)
 {
@@ -119,4 +120,11 @@ void SphereCoulombEnergy::SetParticleCollection(AbstractParticleCollection *syst
   this->System = (ParticleOnSphereCollection*) system;
   this->NbrParticles = System->GetNbrParticles();
   this->System->GetSpinorCoordinates(SpinorUCoordinates, SpinorVCoordinates);
+}
+
+// additional routines for energy observables:
+// returns the total background energy
+double SphereCoulombEnergy::GetTotalBackgroundEnergy()
+{
+  return 0.5*this->NbrParticles*this->NbrParticles/this->Radius; // not tested...
 }

@@ -181,7 +181,7 @@ int main(int argc, char** argv)
   char interactionStr[100]="";
   if ( (OutputName = Manager.GetString("output-file")) == NULL)
     {
-      OutputName = new char [256];
+      OutputName = new char [1024];
       if (Manager.GetString("external-two-body")==NULL)
 	{
 	  if (ReverseHopping)
@@ -335,7 +335,7 @@ int main(int argc, char** argv)
       char* EigenvectorName = 0;
       if (Manager.GetBoolean("eigenstate"))	
 	{
-	  EigenvectorName = new char [255];
+	  EigenvectorName = new char [1024];
 	  if (Manager.GetString("external-two-body")==NULL)
 	    sprintf (EigenvectorName, "bosons_lattice_%s_n_%d%s%s_q_%d", LatticeName, NbrBosons, interactionStr, reverseHoppingString, NbrFluxQuanta);
 	  else

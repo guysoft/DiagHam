@@ -102,9 +102,9 @@ ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::ParticleOnTorusCoulom
       this->LaguerreM=NULL;
     }
   this->LaguerreN=LaguerrePolynomial(this->LandauLevel);
-  cout << this->LaguerreN<<endl;
-  this->WignerEnergy = this->EvaluateWignerCrystalEnergy() / 2.0;
-  //double WignerEnergy = 0.0;
+  //cout << this->LaguerreN<<endl;
+  //this->WignerEnergy = this->EvaluateWignerCrystalEnergy() / 2.0;
+  double WignerEnergy = 0.0;
   this->Architecture = architecture;
   cout << "Wigner Energy = " << WignerEnergy << endl;  
   this->EvaluateInteractionFactors();
@@ -171,8 +171,6 @@ ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::~ParticleOnTorusCoulo
     }
   if (this->NbrPseudopotentials>0)
     delete [] this->LaguerreM;
-  cout << "a test"<<endl;
-  cout.flush();
 }
 
 // set Hilbert space
@@ -311,7 +309,7 @@ double ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::EvaluateIntera
 	}
       else
 	{
-	  Coefficient = 0.0;
+	  Coefficient = this->GetVofQ(PIOnM*Q2); // yields non-zero terms only for non-singular interactions
 	  Precision = 1.0;
 	}
       while ((fabs(Coefficient) + Precision) != fabs(Coefficient))
@@ -325,7 +323,7 @@ double ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::EvaluateIntera
       N2 += this->MaxMomentum;
     }
   N2 = (double) (m1 - m4 - this->MaxMomentum);
-  Coefficient = Sum;	    
+  Coefficient = 1.0;
   while ((fabs(Sum) + fabs(Coefficient)) != fabs(Sum))
     {
       N1 = 1.0;
@@ -337,7 +335,7 @@ double ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::EvaluateIntera
 	}
       else
 	{
-	  Coefficient = 0.0;
+	  Coefficient = this->GetVofQ(PIOnM*Q2); // yields non-zero terms only for non-singular interactions
 	  Precision = 1.0;
 	}
       while ((fabs(Coefficient) + Precision) != fabs(Coefficient))
@@ -360,18 +358,19 @@ double ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::GetVofQ(double
 {
   double Result;
   double Q2=2.0*Q2_half;
-  if (this->LandauLevel>-1)
+  if ((this->LandauLevel>-1)&&(Q2_half!=0.0))
     {
       //cout << "branch 1 : Ln="<<this->LaguerreN.GetValue(Q2_half)<<" Ln2="<<GETSQR(this->LaguerreN(Q2_half))<<", exp="<<exp(-Q2_half)<<" 1/Q="<<1.0/sqrt(Q2)<<" ";
       //this->LaguerreN.PrintValue(cout, Q2_half)<<" ";
-      Result=GETSQR(this->LaguerreN(Q2_half)) * exp(-Q2_half) / sqrt(Q2);
+      Result=GETSQR(this->LaguerreN(Q2_half)) / sqrt(Q2);
     }
   else
     Result=0.0;
   for (int i=0; i<NbrPseudopotentials; ++i)
-    Result += this->Pseudopotentials[i]*this->LaguerreM[i].PolynomialEvaluate(Q2);
+    if (this->Pseudopotentials[i]!=0.0)
+      Result += 2.0*this->Pseudopotentials[i]*this->LaguerreM[i].PolynomialEvaluate(Q2);
   //cout <<"V("<<2*Q2_half<<")="<<Result<<" LL="<<this->LandauLevel<<endl;
-  return Result;
+  return Result * exp(-Q2_half);
 }
 
 // evaluate Wigner crystal energy per particle

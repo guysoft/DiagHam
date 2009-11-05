@@ -97,6 +97,11 @@ class SphereCoulombEnergy : public AbstractObservable
   // set particle collection that the observable operates on
   // system = particle collection
   virtual void SetParticleCollection(AbstractParticleCollection *system);
+
+  // additional routines for energy observables:
+  // returns the total background energy
+  double GetTotalBackgroundEnergy();
+
   
 };
 

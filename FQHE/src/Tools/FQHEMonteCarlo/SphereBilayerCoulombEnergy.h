@@ -108,6 +108,11 @@ class SphereBilayerCoulombEnergy : public AbstractObservable
   // set particle collection that the observable operates on
   // system = particle collection
   virtual void SetParticleCollection(AbstractParticleCollection *system);
+
+  // additional routines for energy observables:
+  // sep = layer separation
+  // returns the total background energy for a layer separation 
+  double GetTotalBackgroundEnergy(double sep);
   
 };
 

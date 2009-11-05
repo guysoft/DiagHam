@@ -76,6 +76,7 @@ int main(int argc, char** argv)
 					      -1);
   (*SystemGroup) += new SingleIntegerOption  ('L', "landau-level", "Landau-level to be simulated", 0, true, 0);
   (*SystemGroup) += new SingleStringOption  ('\n', "interaction-file", "file describing the interaction");
+  (*SystemGroup) += new BooleanOption  ('\n', "all-points", "calculate all points", false);
   
   (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
   (*LanczosGroup) += new SingleIntegerOption  ('\n', "full-diag", 
@@ -162,7 +163,7 @@ int main(int argc, char** argv)
   double XRatio = NbrFermions / 4.0;
   if (((SingleDoubleOption*) Manager["ratio"])->GetDouble() > 0)
     {
-       XRatio = ((SingleDoubleOption*) Manager["ratio"])->GetDouble();
+      XRatio = ((SingleDoubleOption*) Manager["ratio"])->GetDouble();
     }
   bool ResumeFlag = ((BooleanOption*) Manager["resume"])->GetBoolean();
   bool DiskFlag = ((BooleanOption*) Manager["disk"])->GetBoolean();
@@ -194,6 +195,9 @@ int main(int argc, char** argv)
   
   int MomentumModulo = FindGCD(NbrFermions, MaxMomentum);
   int XMaxMomentum = (MomentumModulo - 1);
+  bool GenerateMomenta = false;
+  if ((XMomentum < 0)||(YMomentum < 0))
+    GenerateMomenta = true;
   if (XMomentum < 0)
     XMomentum = 0;
   else
@@ -202,62 +206,207 @@ int main(int argc, char** argv)
   if (YMomentum < 0)
     YMomentum = 0;
   else
-    YMaxMomentum = YMomentum; 
+    YMaxMomentum = YMomentum;
 
-  for (; XMomentum <= XMaxMomentum; ++XMomentum)
-    for (int YMomentum2 = YMomentum; YMomentum2 <= YMaxMomentum; ++YMomentum2)
-      {     
-	cout << "----------------------------------------------------------------" << endl;
-	cout << " Ratio = " << XRatio << endl;
-//	FermionOnTorus TotalSpace (NbrFermions, MaxMomentum, y);
-	FermionOnTorusWithMagneticTranslations TotalSpace (NbrFermions, MaxMomentum, XMomentum, YMomentum2);
-	cout << " Total Hilbert space dimension = " << TotalSpace.GetHilbertSpaceDimension() << endl;
-	//      cout << "momentum = " << Momentum << endl;
-	cout << "momentum = (" << XMomentum << "," << YMomentum2 << ")" << endl;
-//	cout << "momentum = (" << y << ")" << endl;
-/*	for (int i = 0; i < TotalSpace.GetHilbertSpaceDimension(); ++i)
-	  {
-	    cout << i << " = ";
-	    TotalSpace.PrintState(cout, i) << endl;
-	  }
+  int NbrMomenta;
+  int *XMomenta;
+  int *YMomenta;
+  int *Multiplicities = NULL;
+  int CenterX=0, CenterY=0;
+
+  if (GenerateMomenta==false)
+    {
+      NbrMomenta=1;
+      XMomenta = new int[1];
+      YMomenta = new int[1];
+      XMomenta[0]=XMomentum;
+      YMomenta[0]=YMomentum;
+    }
+  else
+    {
+      if (Manager.GetBoolean("all-points"))
+	{
+	  int Pos=0;
+	  NbrMomenta = (XMaxMomentum-XMomentum+1)*(YMaxMomentum-YMomentum+1);
+	  XMomenta = new int[NbrMomenta];
+	  YMomenta = new int[NbrMomenta];
+	  for (; XMomentum <= XMaxMomentum; ++XMomentum)
+	    for (int YMomentum2 = YMomentum; YMomentum2<= YMaxMomentum; ++YMomentum2)
+	      {
+		XMomenta[Pos]=XMomentum;
+		YMomenta[Pos]=YMomentum2;
+		++Pos;
+		cout << "Pos="<<Pos<<endl;
+	      }
+	}
+      else // determine inequivalent states in BZ
+	{
+	  if (NbrFermions&1)
+	    {
+	      CenterX=0;
+	      CenterY=0;
+	    }
+	  else
+	    {
+	      if ((NbrFermions/MomentumModulo*MaxMomentum/MomentumModulo)&1) // p*q odd?
+		{
+		  CenterX=MomentumModulo/2;
+		  CenterY=MomentumModulo/2;
+		}
+	      else
+		{
+		  CenterX=0;
+		  CenterY=0;
+		}
+	    }
+	  if (XRatio == 1.0)
+	    {
+	      NbrMomenta=0;
+	      for (int Kx = CenterX; Kx<=CenterX+MomentumModulo/2; ++Kx)
+		for (int Ky= (Kx-CenterX)+CenterY; Ky<=CenterY+MomentumModulo/2; ++Ky)
+		  {
+		    ++NbrMomenta;
+		  }
+	      int Pos=0;
+	      XMomenta = new int[NbrMomenta];
+	      YMomenta = new int[NbrMomenta];
+	      Multiplicities = new int[NbrMomenta];
+	      for (int Kx = 0; Kx<=MomentumModulo/2; ++Kx)
+		for (int Ky= Kx; Ky<=MomentumModulo/2; ++Ky, ++Pos)
+		  {
+		    XMomenta[Pos]=CenterX+Kx;
+		    YMomenta[Pos]=CenterY+Ky;
+		    if (Kx==0)
+		      {
+			if (Ky==0)
+			  Multiplicities[Pos]=1; // BZ center
+			else if (Ky==MomentumModulo/2)
+			  Multiplicities[Pos]=2;
+			else Multiplicities[Pos]=4;
+		      }
+		    else if (Kx==MomentumModulo/2)
+		      {
+			Multiplicities[Pos]=1; // BZ corner
+		      }
+		    else
+		      {
+			if (Ky==Kx) // diagonal ?
+			  {
+			    Multiplicities[Pos]=4; 
+			  }
+			else
+			  {
+			    if (Ky==MomentumModulo/2)
+			      Multiplicities[Pos]=4;
+			    else
+			      Multiplicities[Pos]=8;
+			  }
+		      }
+		  }
+	    }
+	  else // rectangular torus
+	    {
+	      NbrMomenta=(MomentumModulo/2+1)*(MomentumModulo/2+1);
+	      int Pos=0;
+	      XMomenta = new int[NbrMomenta];
+	      YMomenta = new int[NbrMomenta];
+	      Multiplicities = new int[NbrMomenta];
+	      for (int Kx = 0; Kx<=MomentumModulo/2; ++Kx)
+		for (int Ky= 0; Ky<=MomentumModulo/2; ++Ky, ++Pos)
+		  {
+		    XMomenta[Pos]=CenterX+Kx;
+		    YMomenta[Pos]=CenterY+Ky;
+		    if (Kx==0)
+		      {
+			if (Ky==0)
+			  Multiplicities[Pos]=1; // BZ center
+			else // on Gamma->X]
+			  Multiplicities[Pos]=2;
+		      }
+		    else
+		      {
+			if (Ky==0)
+			  Multiplicities[Pos]=2;
+			else
+			  {
+			    if (Kx==MomentumModulo/2)
+			      {
+				if (Ky==MomentumModulo/2) // BZ corner?
+				  Multiplicities[Pos]=1;
+				else
+				  Multiplicities[Pos]=2;
+			      }
+			    else
+			      {
+				if (Ky==MomentumModulo/2) // on edge?
+				  Multiplicities[Pos]=2;
+				else
+				  Multiplicities[Pos]=4;
+			      }
+			  }
+		      }
+		  }
+	    }
+	}
+    }
+  
+  
+  for (int Pos=0;Pos<NbrMomenta; ++Pos)
+    {
+      XMomentum=XMomenta[Pos];
+      YMomentum=YMomenta[Pos];
+      
+      cout << "----------------------------------------------------------------" << endl;
+      cout << " Ratio = " << XRatio << endl;
+      //	FermionOnTorus TotalSpace (NbrFermions, MaxMomentum, y);
+      FermionOnTorusWithMagneticTranslations TotalSpace (NbrFermions, MaxMomentum, XMomentum, YMomentum);
+      cout << " Total Hilbert space dimension = " << TotalSpace.GetHilbertSpaceDimension() << endl;
+      //      cout << "momentum = " << Momentum << endl;
+      cout << "momentum = (" << XMomentum << "," << YMomentum << ")" << endl;
+      //	cout << "momentum = (" << y << ")" << endl;
+      /*	for (int i = 0; i < TotalSpace.GetHilbertSpaceDimension(); ++i)
+	{
+	cout << i << " = ";
+	TotalSpace.PrintState(cout, i) << endl;
+	}
 	cout << endl << endl;
 	exit(0);*/
-/*      for (int i = 0; i < TotalSpace.GetHilbertSpaceDimension(); ++i)
-	{
-	  cout << "---------------------------------------------" << endl;
-	  cout << i << " = " << endl;;
-	  for (int m1 = 0; m1 < MaxMomentum; ++m1)
-	    for (int m2 = 0; m2 < m1; ++m2)
+      /*      for (int i = 0; i < TotalSpace.GetHilbertSpaceDimension(); ++i)
+	      {
+	      cout << "---------------------------------------------" << endl;
+	      cout << i << " = " << endl;;
+	      for (int m1 = 0; m1 < MaxMomentum; ++m1)
+	      for (int m2 = 0; m2 < m1; ++m2)
 	      for (int m3 = 0; m3 < MaxMomentum; ++m3)
-		{
-		  int m4 = m1 + m2 - m3;
-		  if (m4 < 0)
-		    m4 += MaxMomentum;
-		  else
-		    if (m4 >= MaxMomentum)
-		      m4 -= MaxMomentum;
-		  if (m3 > m4)
-		    {
-		      double Coefficient = 0.0;
-		      int NbrTranslations = 0;
-		      TotalSpace.AdAdAA(i, m1, m2, m3, m4, Coefficient, NbrTranslations);
-		    }
-		}
-		}*/
-	Architecture.GetArchitecture()->SetDimension(TotalSpace.GetHilbertSpaceDimension());
+	      {
+	      int m4 = m1 + m2 - m3;
+	      if (m4 < 0)
+	      m4 += MaxMomentum;
+	      else
+	      if (m4 >= MaxMomentum)
+	      m4 -= MaxMomentum;
+	      if (m3 > m4)
+	      {
+	      double Coefficient = 0.0;
+	      int NbrTranslations = 0;
+	      TotalSpace.AdAdAA(i, m1, m2, m3, m4, Coefficient, NbrTranslations);
+	      }
+	      }
+	      }*/
+      Architecture.GetArchitecture()->SetDimension(TotalSpace.GetHilbertSpaceDimension());
 	
-	AbstractHamiltonian* Hamiltonian = new ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian (&TotalSpace, 
-													  NbrFermions, MaxMomentum, XMomentum, XRatio, LandauLevel, NbrPseudopotentials, Pseudopotentials, 
-													  Architecture.GetArchitecture(), 
-													  Memory);
+      AbstractHamiltonian* Hamiltonian = new ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian (&TotalSpace, 
+													NbrFermions, MaxMomentum, XMomentum, XRatio, LandauLevel, NbrPseudopotentials, Pseudopotentials, 
+													Architecture.GetArchitecture(), 
+													Memory);
       if (Hamiltonian->GetHilbertSpaceDimension() < MaxFullDiagonalization)
 	{
 	  HermitianMatrix HRep2 (Hamiltonian->GetHilbertSpaceDimension());
 	  Hamiltonian->GetHamiltonian(HRep2);
 	  Complex Zero;
-//	  HRep2.SetMatrixElement(0, 1, Zero);
-//	  HRep2.SetMatrixElement(1, 5, Zero);
-//	  cout << HRep2 << endl;	  
+	  //	  HRep2.SetMatrixElement(0, 1, Zero);
+	  //	  HRep2.SetMatrixElement(1, 5, Zero);
+	  //	  cout << HRep2 << endl;	  
 	  RealSymmetricMatrix HRep (HRep2.ConvertToSymmetricMatrix());
 	  if (Hamiltonian->GetHilbertSpaceDimension() > 1)
 	    {
@@ -269,14 +418,17 @@ int main(int argc, char** argv)
 		GroundStateEnergy = TmpTriDiag.DiagonalElement(0);
 	      for (int j = 0; j < Hamiltonian->GetHilbertSpaceDimension() ; j++)
 		{
-		  File << XMomentum << " " << YMomentum2 << " " << TmpTriDiag.DiagonalElement(2 * j) << endl;
-		  cout << XMomentum << " " << YMomentum2 << " " << TmpTriDiag.DiagonalElement(2 * j) << endl;
+		  File << XMomentum << " " << YMomentum << " " << TmpTriDiag.DiagonalElement(2 * j);
+		  if (Multiplicities!=NULL)
+		    File << " " << Multiplicities[Pos] << endl;
+		  else File << endl;
+		  cout << XMomentum << " " << YMomentum << " " << TmpTriDiag.DiagonalElement(2 * j) << endl;
 		}
 	      cout << endl;
 	    }
 	  else
 	    {
-	      File << XMomentum << " " << YMomentum2 << " " << HRep(0, 0) << endl;
+	      File << XMomentum << " " << YMomentum << " " << HRep(0, 0) << endl;
 	    }
 	}
       else
@@ -344,7 +496,10 @@ int main(int argc, char** argv)
 	  for (int i = 0; i <= NbrEigenvalue; ++i)
 	    {
 	      cout << TmpMatrix.DiagonalElement(i) << " ";
-	      File << XMomentum << " " << YMomentum2 << " " << TmpMatrix.DiagonalElement(i) << endl;
+	      File << XMomentum << " " << YMomentum << " " << TmpMatrix.DiagonalElement(i);
+	      if (Multiplicities!=NULL)
+		File << " " << Multiplicities[Pos] << endl;
+	      else File << endl;
 	    }
 	  cout << endl;
 	  gettimeofday (&(TotalEndingTime), 0);
@@ -362,5 +517,9 @@ int main(int argc, char** argv)
     }
   File.close();
 
+  delete [] XMomenta;
+  delete [] YMomenta;
+  if (Multiplicities!=0)
+    delete [] Multiplicities;
   return 0;
 }

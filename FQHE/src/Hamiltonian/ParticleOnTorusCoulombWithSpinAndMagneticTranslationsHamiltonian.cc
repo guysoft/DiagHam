@@ -299,9 +299,16 @@ void ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::EvaluateI
 		  m4 += this->MaxMomentum;
 		else
 		  if (m4 >= this->MaxMomentum)
-		    m4 -= this->MaxMomentum;		
-		TmpCoefficient[Pos] = this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->LayerSeparation)
-		                    - this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->LayerSeparation);
+		    m4 -= this->MaxMomentum;
+		if ((m1!=m2)||(m3!=m4))
+		  {
+		    TmpCoefficient[Pos] = this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->LayerSeparation)
+		      + this->EvaluateInteractionCoefficient(m2, m1, m4, m3, this->LayerSeparation);
+		  }
+		else
+		  {
+		    TmpCoefficient[Pos] = this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->LayerSeparation);
+		  }
 		if (MaxCoefficient < fabs(TmpCoefficient[Pos]))
 		  MaxCoefficient = fabs(TmpCoefficient[Pos]);
 		++Pos;
@@ -328,9 +335,10 @@ void ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::EvaluateI
 		    m4 -= this->MaxMomentum;
 		if  (fabs(TmpCoefficient[Pos]) > MaxCoefficient)
 		  {
-		    this->InteractionFactorsUpDown[TmpNbrInteractionFactors] = TmpCoefficient[Pos];
+		    // swap 3,4, introduce additional minus sign
+		    this->InteractionFactorsUpDown[TmpNbrInteractionFactors] = -1.0*TmpCoefficient[Pos];
 		    this->M34InterValues[M12Index][this->NbrM34InterValues[M12Index]]
-		      = (m3&L16Mask)|((m4&L16Mask)<<16);
+		      = (m4&L16Mask)|((m3&L16Mask)<<16); // rather than (m3&L16Mask)|((m4&L16Mask)<<16);
 		    ++TmpNbrInteractionFactors;
 		    ++this->NbrM34InterValues[M12Index];
 		  }
@@ -362,6 +370,72 @@ void ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::EvaluateI
 // return value = numerical coefficient
 
 double ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4, double layerSeparation)
+{
+
+  double Coefficient = 1.0;
+  double PIOnM = M_PI / ((double) this->MaxMomentum);
+  double Factor =  - ((double) (m1-m3)) * PIOnM * 2.0;
+  double Sum = 0.0;
+  double N2 = (double) (m1 - m4);
+  double N1;
+  double Q2;
+  double Precision;
+//  cout << "new coef====================================" << m1 << " "  << m2 << " "  << m3 << " "  << m4 << endl;
+  while ((fabs(Sum) + fabs(Coefficient)) != fabs(Sum))
+    {
+      N1 = 1.0;
+      Q2 = this->Ratio * N2 * N2;
+      if (N2 != 0.0)
+	{
+	  Coefficient = this->GetVofQ(PIOnM*Q2, layerSeparation);
+	  Precision = Coefficient;
+	}
+      else
+	{
+	  Coefficient = 0.0;// this->GetVofQ(PIOnM*Q2, layerSeparation); // yields non-zero terms only for non-singular interactions
+	  Precision = 1.0;
+	}
+      while ((fabs(Coefficient) + Precision) != fabs(Coefficient))
+	{
+	  Q2 = this->InvRatio * N1 * N1 + this->Ratio * N2 * N2;
+	  Precision = 2.0 * this->GetVofQ(PIOnM*Q2, layerSeparation);
+	  Coefficient += Precision * cos (N1 * Factor);
+	  N1 += 1.0;
+	}
+      Sum += Coefficient;
+      N2 += this->MaxMomentum;
+    }
+  N2 = (double) (m1 - m4 - this->MaxMomentum);
+  Coefficient = 1.0;
+  while ((fabs(Sum) + fabs(Coefficient)) != fabs(Sum))
+    {
+      N1 = 1.0;
+      Q2 = this->Ratio * N2 * N2;
+      if (N2 != 0.0)
+	{
+	  Coefficient =  this->GetVofQ(PIOnM*Q2, layerSeparation);
+	  Precision = Coefficient;
+	}
+      else
+	{
+	  Coefficient = 0.0; // this->GetVofQ(PIOnM*Q2, layerSeparation); // yields non-zero terms only for non-singular interactions
+	  Precision = 1.0;
+	}
+      while ((fabs(Coefficient) + Precision) != fabs(Coefficient))
+	{
+	  Q2 = this->InvRatio * N1 * N1 + this->Ratio * N2 * N2;
+	  Precision = 2.0 * this->GetVofQ(PIOnM*Q2, layerSeparation);
+	  Coefficient += Precision * cos (N1 * Factor);
+	  N1 += 1.0;
+	}
+      Sum += Coefficient;
+      N2 -= this->MaxMomentum;
+    }
+  return (Sum / (2.0 * this->MaxMomentum));
+}
+
+/*
+// old version
 {
   double Coefficient = 1.0;
   double PIOnM = M_PI / ((double) this->MaxMomentum);
@@ -430,6 +504,17 @@ double ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::Evaluat
   //cout << "Coefficient ("<<layerSeparation<<") " << m1 << " "  << m2 << " "  << m3 << " "  << m4 << " " << (Sum / (2.0 * sqrt(2.0 * M_PI * this->MaxMomentum)))<<endl;
   return (Sum / (2.0 * sqrt(2.0 * M_PI * this->MaxMomentum)));
 }
+*/
+
+// get fourier transform of interaction
+// Q2_half = one half of q² value
+// layerSeparation = layer separation
+double ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::GetVofQ(double Q2_half, double layerSeparation)
+{
+  double Q=sqrt(2.0*Q2_half);
+  return exp(-Q2_half-Q*layerSeparation)/Q;
+}
+
 
 // evaluate Wigner crystal energy per particle
 //

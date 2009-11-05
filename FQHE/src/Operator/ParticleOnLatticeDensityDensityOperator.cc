@@ -42,6 +42,21 @@
 using std::cout;
 using std::endl;
 
+// constructor from default datas
+//
+// particle = hilbert space associated to the particles
+// siteIndex1 = index of first site to be considered
+// siteIndex2 = index of second site to be considered
+ParticleOnLatticeDensityDensityOperator::ParticleOnLatticeDensityDensityOperator(ParticleOnLattice* particle, int siteIndex1, int siteIndex2)
+{
+  this->Particle = (ParticleOnLattice*) (particle->Clone());
+  this->CreationIndex1 = siteIndex1;
+  this->CreationIndex2 = siteIndex2;
+  this->AnnihilationIndex1 = siteIndex2;
+  this->AnnihilationIndex2 = siteIndex1;
+}
+
+
 
 // constructor from default datas
 //

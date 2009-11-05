@@ -118,6 +118,12 @@ class ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian : public 
   // return value = numerical coefficient
   double EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4, double layerSeparation=0.0);
 
+  // get fourier transform of interaction
+  // Q2_half = one half of q² value
+  // layerSeparation = layer separation
+  double GetVofQ(double Q2_half, double layerSeparation=0.0);
+
+  
   // evaluate Wigner crystal energy per particle
   //
   // return value = Wigner crystal energy per particle

@@ -156,3 +156,15 @@ void SphereBilayerCoulombEnergy::SetParticleCollection(AbstractParticleCollectio
     }  
   this->System->GetSpinorCoordinates(SpinorUCoordinates, SpinorVCoordinates);
 }
+
+
+// additional routines for energy observables:
+// sep = layer separation
+// returns the total background energy for a layer separation
+//
+// attention: in previous work, convention of E_bg ~ N1(N1-1) for intra-layer background energy
+double SphereBilayerCoulombEnergy::GetTotalBackgroundEnergy(double sep)
+{
+  int N1 = this->NbrParticles>>1;
+  return 0.5*(N1*N1+N1*N1)/this->Radius + N1*N1/this->NbrFlux*(sqrt(2.0*this->NbrFlux+sep*sep)-sep); // not tested...
+}

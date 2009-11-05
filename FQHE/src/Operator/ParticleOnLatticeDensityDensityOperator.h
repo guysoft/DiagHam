@@ -57,6 +57,14 @@ class ParticleOnLatticeDensityDensityOperator : public AbstractOperator
   int AnnihilationIndex2;
   
  public:
+
+  // constructor from default datas
+  //
+  // particle = hilbert space associated to the particles
+  // siteIndex1 = index of first site to be considered
+  // siteIndex2 = index of second site to be considered
+  ParticleOnLatticeDensityDensityOperator(ParticleOnLattice* particle, int siteIndex1, int siteIndex2);
+
   
   // constructor from default datas
   //

@@ -2,6 +2,10 @@
 
 #include "HilbertSpace/BosonOnLattice.h"
 #include "HilbertSpace/HardCoreBosonOnLattice.h"
+#include "HilbertSpace/HardCoreBosonOnLatticeGeneric.h"
+#include "HilbertSpace/BosonOnLatticeGeneric.h"
+
+#include "Tools/FQHESpectrum/LatticePhases.h"
 
 #include "Operator/ParticleOnLatticeDensityDensityOperator.h"
 #include "Operator/ParticleOnLatticeOneBodyOperator.h"
@@ -46,6 +50,7 @@ int main(int argc, char** argv)
   ArchitectureManager Architecture;
 
   Manager += SystemGroup;
+  LatticePhases::AddOptionGroup(&Manager);
   Architecture.AddOptionGroup(&Manager);
   Manager += MiscGroup;
   Manager += PrecalculationGroup;
@@ -57,6 +62,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('y', "ly", "length in y-direction of given lattice", 0);
   (*SystemGroup) += new SingleIntegerOption  ('q', "flux", "number of flux quanta piercing the lattice", 0);
   (*SystemGroup) += new BooleanOption('c',"hard-core","Use Hilbert-space of hard-core bosons");
+  (*SystemGroup) += new BooleanOption('n',"no-hard-core","Do not use Hilbert-space of hard-core bosons (overriding detection from filename)");
 
   (*SystemGroup) += new BooleanOption  ('\n', "density", "plot density insted of density-density correlation", false);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);  
@@ -81,21 +87,63 @@ int main(int argc, char** argv)
       cout << "At least one vector file is required!"<<endl;
       exit(1);
     }
+
+  double Interaction=-1.0;
+  int TmpI=-1;
+  bool Statistics=false;
+  bool HardCore=false;
+  bool GenericLattice=false;
+  int NbrSites=0;
+  int NbrSubLattices=1;
+  
+  LatticePhases *Lattice = NULL;
+
   ParticleOnLattice* Space = 0;
   bool Plot = Manager.GetBoolean("gnuplot");
   for (int i=0; i<NbrVectors; ++i)
-    {      
-      double Interaction=0.0;
-      int TmpI=-1;
-      bool Statistics=false;
-      bool HardCore=false;
-      if (FQHEOnLatticeFindSystemInfoFromVectorFileName(VectorFiles[i], NbrBosons, Lx, Ly, Interaction, NbrFluxQuanta, TmpI, Statistics, HardCore) == false)
+    {
+      if (FQHEOnLatticeHaveGeneralLattice(VectorFiles[i]))
 	{
-	  cout<<"Please use standard file-names, or indicate all system parameters!"<<endl;
-	  exit(-1);
+	  GenericLattice=true;
+	  if (Manager.GetString("lattice-definition")==NULL)
+	    {
+	      cout << "Please indicate the file with the lattice-definition for this vector"<<endl;
+	      exit(1);
+	    }
+	  // get the lattice geometry
+	  Lattice = new LatticePhases();
+	  NbrSites = Lattice->GetNbrSites();
+	  Lx = Lattice->GetLatticeLength(0);
+	  Ly = Lattice->GetLatticeLength(1);
+	  NbrSubLattices = Lattice->GetNbrSubLattices();
+	  char* LatticeName = Lattice->GeometryString();
+	  if (strstr(VectorFiles[0], LatticeName)==0)
+	    {
+	      cout << "The given lattice parameters do not coincide with the filename, verify lattice definition, and repetition of unit cells"<<endl;
+	    }
+	  delete [] LatticeName;
+	  if (FQHEOnLatticeFindSystemInfoFromGeneralVectorFileName(VectorFiles[0], NbrBosons, Interaction, NbrFluxQuanta, TmpI, Statistics, HardCore) == false)
+	    {
+	      cout<<"Please use standard file-names, or indicate all necessary system parameters!"<<endl;
+	      exit(1);
+	    }
+	  
 	}
-      HardCore=(HardCore||Manager.GetBoolean("hard-core"));
-  
+      else
+	{
+	  if (FQHEOnLatticeFindSystemInfoFromVectorFileName(VectorFiles[0], NbrBosons, Lx, Ly, Interaction, NbrFluxQuanta, TmpI, Statistics, HardCore) == false)
+	    {
+	      cout<<"Please use standard file-names, or indicate all system parameters!"<<endl;
+	      exit(1);
+	    }
+	  HardCore=(HardCore||Manager.GetBoolean("hard-core"));
+	  if (Manager.GetBoolean("no-hard-core"))
+	    HardCore=false;
+	  NbrSites = Lx*Ly;
+	}
+
+      
+      
       int VectorDimension=0;
       ComplexVector State;
       if (State.ReadVector (VectorFiles[i]) == false)
@@ -128,10 +176,19 @@ int main(int argc, char** argv)
       cout << "<in  "<<VectorFiles[i]<<endl<<">out "<<OutputNameCorr<<endl;
       if ((Space == 0) || (Space->GetHilbertSpaceDimension()!=VectorDimension))
 	{
-	  if (Space == 0) delete Space;
-	  if (HardCore)
-	    Space =new HardCoreBosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
-	  else Space = new BosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
+	  if (Space != 0) delete Space;
+	  if (GenericLattice)
+	    {
+	      if (HardCore)
+		Space = new HardCoreBosonOnLatticeGeneric(NbrBosons, Lattice, NbrFluxQuanta, MemorySpace);
+	      else Space = new BosonOnLatticeGeneric(NbrBosons, Lattice, NbrFluxQuanta, MemorySpace);
+	    }
+	  else
+	    {
+	      if (HardCore)
+		Space =new HardCoreBosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
+	      else Space = new BosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
+	    }
 	  
 	  if (VectorDimension != Space->GetHilbertSpaceDimension())
 	    {
@@ -143,6 +200,8 @@ int main(int argc, char** argv)
       File.precision(14);
       File.open(OutputNameCorr, ios::binary | ios::out);      
       Complex Tmp;
+      int CellPosition[2];
+      RealVector SitePosition;
       if (DensityFlag == false)
 	{
 	  File << "# density-density correlation for " << VectorFiles[i]<< endl;
@@ -153,11 +212,29 @@ int main(int argc, char** argv)
 	    {
 	      for (int y = 0; y < Ly; ++y)
 		{
-		  int q=Space->EncodeQuantumNumber(x, y, 0, Tmp);
-		  ParticleOnLatticeDensityDensityOperator Operator (Space, q, 0, q, 0);
-		  double ME=Real(Operator.MatrixElement(State, State));
-		  if (q==0) ME = Real(Zero)*Real(Zero);
-		  File << x << "\t" << y << "\t" << ME << endl;		  
+		  for (int Sub=0; Sub<NbrSubLattices; ++Sub)
+		    {
+		      int q=Space->EncodeQuantumNumber(x, y, Sub, Tmp);
+		      ParticleOnLatticeDensityDensityOperator Operator (Space, q, 0);
+		      double ME=Real(Operator.MatrixElement(State, State));
+		      if (q==0) ME = Real(Zero)*Real(Zero);
+		      double X,Y;
+		      if (GenericLattice)
+			{
+			  CellPosition[0]=x;
+			  CellPosition[1]=y;
+			  SitePosition = Lattice->GetSitePosition(CellPosition,Sub);
+			  X=SitePosition[0];
+			  Y=SitePosition[1];
+			}
+		      else
+			{
+			  X=(double)x;
+			  Y=(double)y;
+			}
+		      
+		      File << X << "\t" << Y << "\t" << ME << endl;
+		    }
 		}
 	      if (Plot) File << endl;
 	    }
@@ -169,11 +246,26 @@ int main(int argc, char** argv)
 	  for (int x = 0; x < Lx; ++x)
 	    {
 	      for (int y = 0; y < Ly; ++y)
-		{
-		  int q=Space->EncodeQuantumNumber(x, y, 0, Tmp);
-		  ParticleOnLatticeOneBodyOperator Operator (Space, q, q);
-		  File << x << "\t" << y << "\t" << Real(Operator.MatrixElement(State, State)) << endl;		  
-		}
+		for (int Sub=0; Sub<NbrSubLattices; ++Sub)
+		  {
+		    int q=Space->EncodeQuantumNumber(x, y, Sub, Tmp);
+		    ParticleOnLatticeOneBodyOperator Operator (Space, q, q);
+		    double X,Y;
+		    if (GenericLattice)
+		      {
+			CellPosition[0]=x;
+			CellPosition[1]=y;
+			SitePosition = Lattice->GetSitePosition(CellPosition,Sub);
+			X=SitePosition[0];
+			Y=SitePosition[1];
+		      }
+		    else
+		      {
+			X=(double)x;
+			Y=(double)y;
+		      }
+		    File << X << "\t" << Y << "\t" << Real(Operator.MatrixElement(State, State)) << endl;		  
+		  }
 	      if (Plot) File << endl;
 	    }
 	}
