@@ -545,6 +545,7 @@ Vector& PartialRealVector::ReassembleVector(MPI::Intracomm& communicator, int id
 {
   if (id == communicator.Get_rank())
     {
+      int NbrMPINodes = communicator.Get_size();
       int TmpArray[2];
       for (int i = 0; i < NbrMPINodes; ++i)
 	if (id != i)

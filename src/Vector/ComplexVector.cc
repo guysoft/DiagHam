@@ -2235,10 +2235,11 @@ Vector& ComplexVector::SumVector(MPI::Intracomm& communicator, int id)
 // id = id of the destination MPI process
 // return value = reference on the current vector
 
-Vector& ComplexVector::ReassembleVector(MPI::Intracomm& communicator, int id);
+Vector& ComplexVector::ReassembleVector(MPI::Intracomm& communicator, int id)
 {
   if (id == communicator.Get_rank())
     {
+      int NbrMPINodes = communicator.Get_size();
       int TmpArray[2];
       for (int i = 0; i < NbrMPINodes; ++i)
 	if (id != i)
