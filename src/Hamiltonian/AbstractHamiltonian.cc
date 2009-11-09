@@ -558,6 +558,848 @@ ComplexVector* AbstractHamiltonian::LowLevelMultipleAddMultiply(ComplexVector* v
   return vDestinations;
 }
 
+
+
+
+// multiply a vector by the current hamiltonian and store result in another vector
+// low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// return value = reference on vectorwhere result has been stored
+
+RealVector& AbstractHamiltonian::ConjugateLowLevelMultiply(RealVector& vSource, RealVector& vDestination)
+{
+  return this->ConjugateLowLevelMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
+}
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and store result in another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+RealVector& AbstractHamiltonian::ConjugateLowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
+						  int firstComponent, int nbrComponent)
+{
+  return this->ConjugateLowLevelMultiply(vSource, vDestination, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
+}
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and store result in another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// sourceStart = source vector first index
+// sourceStep = step to add to go to the following source vector index
+// sourceShift = shift to apply when directly accessing source vector component (must be substracted to the real index)
+// sourceNbrComponent = number of component to take into account in the source vector
+// destinationStart = destination vector first index
+// destinationStep = step to add to go to the following destination vector index
+// destinationShift = shift to apply when directly accessing destination vector component (must be substracted to the real index)
+// destinationNbrComponent = number of component to take into account in the destination vector
+// return value = reference on vector where result has been stored
+
+RealVector& AbstractHamiltonian::ConjugateLowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
+						  int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
+						  int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
+{
+  return vDestination;
+}
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and add result to another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector at which result has to be added
+// return value = reference on vectorwhere result has been stored
+
+RealVector& AbstractHamiltonian::ConjugateLowLevelAddMultiply(RealVector& vSource, RealVector& vDestination)
+{
+  return this->ConjugateLowLevelAddMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
+}
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and add result to another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector at which result has to be added
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+RealVector& AbstractHamiltonian::ConjugateLowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+						     int firstComponent, int nbrComponent)
+{
+  return this->ConjugateLowLevelAddMultiply(vSource, vDestination, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
+}
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and add result in another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// sourceStart = source vector first index
+// sourceStep = step to add to go to the following source vector index
+// sourceShift = shift to apply when directly accessing source vector component (must be substracted to the real index)
+// sourceNbrComponent = number of component to take into account in the source vector
+// destinationStart = destination vector first index
+// destinationStep = step to add to go to the following destination vector index
+// destinationShift = shift to apply when directly accessing destination vector component (must be substracted to the real index)
+// destinationNbrComponent = number of component to take into account in the destination vector
+// return value = reference on vector where result has been stored
+
+RealVector& AbstractHamiltonian::ConjugateLowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+						     int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
+						     int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
+{
+  return vDestination;
+}
+
+// multiply a set of vectors by the current hamiltonian and store result in another set of vectors
+// low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors where result has to be stored
+// nbrVectors = number of vectors that have to be evaluated together
+// return value = pointer to the array of vectors where result has been stored
+
+RealVector* AbstractHamiltonian::ConjugateLowLevelMultipleMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors)
+{
+  return this->ConjugateLowLevelMultipleMultiply(vSources, vDestinations, nbrVectors, 0, this->GetHilbertSpaceDimension());
+}
+
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and store result in another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors where result has to be stored
+// nbrVectors = number of vectors that have to be evaluated together
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = pointer to the array of vectors where result has been stored
+
+RealVector* AbstractHamiltonian::ConjugateLowLevelMultipleMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
+							  int firstComponent, int nbrComponent)
+{
+  return this->ConjugateLowLevelMultipleMultiply(vSources, vDestinations, nbrVectors, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
+}
+
+// multiply a set of vector by the current hamiltonian for a given range of indices 
+// and store result in another set of vector, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors where result has to be stored
+// nbrVectors = number of vectors that have to be evaluated together
+// sourceStart = source vector first index
+// sourceStep = step to add to go to the following source vector index
+// sourceShift = shift to apply when directly accessing source vector component (must be substracted to the real index)
+// sourceNbrComponent = number of component to take into account in the source vector
+// destinationStart = destination vector first index
+// destinationStep = step to add to go to the following destination vector index
+// destinationShift = shift to apply when directly accessing destination vector component (must be substracted to the real index)
+// destinationNbrComponent = number of component to take into account in the destination vector
+// return value = pointer to the array of vectors where result has been stored
+
+RealVector* AbstractHamiltonian::ConjugateLowLevelMultipleMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
+							  int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
+							  int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
+{
+  for (int i = 0; i < nbrVectors; ++i)
+    this->ConjugateLowLevelMultiply(vSources[i], vDestinations[i], sourceStart, sourceStep, sourceShift, sourceNbrComponent, sourceNbrComponent, 
+			   destinationStep, destinationShift, destinationNbrComponent);
+  return vDestinations;
+}
+
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and add result to another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vector sat which result has to be added
+// nbrVectors = number of vectors that have to be evaluated together
+// return value = pointer to the array of vectors where result has been stored
+
+RealVector* AbstractHamiltonian::ConjugateLowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors)
+{
+  return this->ConjugateLowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, 0, this->GetHilbertSpaceDimension());
+}
+
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and add result to another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors at which result has to be added
+// nbrVectors = number of vectors that have to be evaluated together
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = pointer to the array of vectors where result has been stored
+
+RealVector* AbstractHamiltonian::ConjugateLowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors,
+							     int firstComponent, int nbrComponent)
+{
+  return this->ConjugateLowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
+}
+ 
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and add result in another set of vectors, low level function (no architecture optimization)
+//
+// vSource = array of vectors to be multiplied
+// vDestination = array of vectors where result has to be stored
+// nbrVectors = number of vectors that have to be evaluated together
+// sourceStart = source vector first index
+// sourceStep = step to add to go to the following source vector index
+// sourceShift = shift to apply when directly accessing source vector component (must be substracted to the real index)
+// sourceNbrComponent = number of component to take into account in the source vector
+// destinationStart = destination vector first index
+// destinationStep = step to add to go to the following destination vector index
+// destinationShift = shift to apply when directly accessing destination vector component (must be substracted to the real index)
+// destinationNbrComponent = number of component to take into account in the destination vector
+// return value = pointer to the array of vectors where result has been stored
+
+RealVector* AbstractHamiltonian::ConjugateLowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors,
+							     int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
+							     int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
+{
+  for (int i = 0; i < nbrVectors; ++i)
+    this->ConjugateLowLevelAddMultiply(vSources[i], vDestinations[i], sourceStart, sourceStep, sourceShift, sourceNbrComponent, sourceNbrComponent, 
+			      destinationStep, destinationShift, destinationNbrComponent);
+  return vDestinations;
+}
+
+// multiply a vector by the current hamiltonian and store result in another vector
+// low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// return value = reference on vectorwhere result has been stored
+
+ComplexVector& AbstractHamiltonian::ConjugateLowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination)
+{
+  return this->ConjugateLowLevelMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
+}
+
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and store result in another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+ComplexVector& AbstractHamiltonian::ConjugateLowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+						     int firstComponent, int nbrComponent)
+{
+  return this->ConjugateLowLevelMultiply(vSource, vDestination, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
+}
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and store result in another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// sourceStart = source vector first index
+// sourceStep = step to add to go to the following source vector index
+// sourceShift = shift to apply when directly accessing source vector component (must be substracted to the real index)
+// sourceNbrComponent = number of component to take into account in the source vector
+// destinationStart = destination vector first index
+// destinationStep = step to add to go to the following destination vector index
+// destinationShift = shift to apply when directly accessing destination vector component (must be substracted to the real index)
+// destinationNbrComponent = number of component to take into account in the destination vector
+// return value = reference on vector where result has been stored
+
+ComplexVector& AbstractHamiltonian::ConjugateLowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+						     int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
+						     int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
+{
+  return vDestination;
+}
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and add result to another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector at which result has to be added
+// return value = reference on vectorwhere result has been stored
+
+ComplexVector& AbstractHamiltonian::ConjugateLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination)
+{
+  return this->ConjugateLowLevelAddMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
+}
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and add result to another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector at which result has to be added
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+ComplexVector& AbstractHamiltonian::ConjugateLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+							int firstComponent, int nbrComponent)
+{
+  return this->ConjugateLowLevelAddMultiply(vSource, vDestination, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
+}
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and add result to another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// sourceStart = source vector first index
+// sourceStep = step to add to go to the following source vector index
+// sourceShift = shift to apply when directly accessing source vector component (must be substracted to the real index)
+// sourceNbrComponent = number of component to take into account in the source vector
+// destinationStart = destination vector first index
+// destinationStep = step to add to go to the following destination vector index
+// destinationShift = shift to apply when directly accessing destination vector component (must be substracted to the real index)
+// destinationNbrComponent = number of component to take into account in the destination vector
+// return value = reference on vector where result has been stored
+
+ComplexVector& AbstractHamiltonian::ConjugateLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+							int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
+							int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
+{
+  return vDestination;
+}
+
+// multiply a set of vectors by the current hamiltonian and store result in another set of vectors
+// low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors where result has to be stored
+// nbrVectors = number of vectors that have to be evaluated together
+// return value = pointer to the array of vectors where result has been stored
+
+ComplexVector* AbstractHamiltonian::ConjugateLowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors)
+{
+  return this->ConjugateLowLevelMultipleMultiply(vSources, vDestinations, nbrVectors, 0, this->GetHilbertSpaceDimension());
+}
+
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and store result in another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors where result has to be stored
+// nbrVectors = number of vectors that have to be evaluated together
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = pointer to the array of vectors where result has been stored
+
+ComplexVector* AbstractHamiltonian::ConjugateLowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+							     int firstComponent, int nbrComponent)
+{
+  return this->ConjugateLowLevelMultipleMultiply(vSources, vDestinations, nbrVectors, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
+}
+
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and store result in another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors where result has to be stored
+// nbrVectors = number of vectors that have to be evaluated together
+// sourceStart = source vector first index
+// sourceStep = step to add to go to the following source vector index
+// sourceShift = shift to apply when directly accessing source vector component (must be substracted to the real index)
+// sourceNbrComponent = number of component to take into account in the source vector
+// destinationStart = destination vector first index
+// destinationStep = step to add to go to the following destination vector index
+// destinationShift = shift to apply when directly accessing destination vector component (must be substracted to the real index)
+// destinationNbrComponent = number of component to take into account in the destination vector
+// return value = pointer to the array of vectors where result has been stored
+
+ComplexVector* AbstractHamiltonian::ConjugateLowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+							     int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
+							     int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
+{
+  for (int i = 0; i < nbrVectors; ++i)
+    this->ConjugateLowLevelMultiply(vSources[i], vDestinations[i], sourceStart, sourceStep, sourceShift, sourceNbrComponent, sourceNbrComponent, 
+			   destinationStep, destinationShift, destinationNbrComponent);
+  return vDestinations;
+}
+
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and add result to another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors at which result has to be added
+// nbrVectors = number of vectors that have to be evaluated together
+// return value = pointer to the array of vectors where result has been stored
+
+ComplexVector* AbstractHamiltonian::ConjugateLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors)
+{
+  return this->ConjugateLowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, 0, this->GetHilbertSpaceDimension());
+}
+
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and add result to another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors at which result has to be added
+// nbrVectors = number of vectors that have to be evaluated together
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = pointer to the array of vectors where result has been stored
+
+ComplexVector* AbstractHamiltonian::ConjugateLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+								int firstComponent, int nbrComponent)
+{
+  return this->ConjugateLowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
+}
+ 
+
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and add result to another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors where result has to be stored
+// nbrVectors = number of vectors that have to be evaluated together
+// sourceStart = source vector first index
+// sourceStep = step to add to go to the following source vector index
+// sourceShift = shift to apply when directly accessing source vector component (must be substracted to the real index)
+// sourceNbrComponent = number of component to take into account in the source vector
+// destinationStart = destination vector first index
+// destinationStep = step to add to go to the following destination vector index
+// destinationShift = shift to apply when directly accessing destination vector component (must be substracted to the real index)
+// destinationNbrComponent = number of component to take into account in the destination vector
+// return value = pointer to the array of vectors where result has been stored
+
+ComplexVector* AbstractHamiltonian::ConjugateLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+								int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
+								int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
+{
+  for (int i = 0; i < nbrVectors; ++i)
+    this->ConjugateLowLevelAddMultiply(vSources[i], vDestinations[i], sourceStart, sourceStep, sourceShift, sourceNbrComponent, sourceNbrComponent, 
+			      destinationStep, destinationShift, destinationNbrComponent);
+  return vDestinations;
+}
+
+
+
+// multiply a vector by the current hamiltonian and store result in another vector
+// low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// return value = reference on vectorwhere result has been stored
+
+RealVector& AbstractHamiltonian::HermitianLowLevelMultiply(RealVector& vSource, RealVector& vDestination)
+{
+  return this->HermitianLowLevelMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
+}
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and store result in another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+RealVector& AbstractHamiltonian::HermitianLowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
+						  int firstComponent, int nbrComponent)
+{
+  return this->HermitianLowLevelMultiply(vSource, vDestination, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
+}
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and store result in another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// sourceStart = source vector first index
+// sourceStep = step to add to go to the following source vector index
+// sourceShift = shift to apply when directly accessing source vector component (must be substracted to the real index)
+// sourceNbrComponent = number of component to take into account in the source vector
+// destinationStart = destination vector first index
+// destinationStep = step to add to go to the following destination vector index
+// destinationShift = shift to apply when directly accessing destination vector component (must be substracted to the real index)
+// destinationNbrComponent = number of component to take into account in the destination vector
+// return value = reference on vector where result has been stored
+
+RealVector& AbstractHamiltonian::HermitianLowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
+						  int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
+						  int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
+{
+  return vDestination;
+}
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and add result to another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector at which result has to be added
+// return value = reference on vectorwhere result has been stored
+
+RealVector& AbstractHamiltonian::HermitianLowLevelAddMultiply(RealVector& vSource, RealVector& vDestination)
+{
+  return this->HermitianLowLevelAddMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
+}
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and add result to another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector at which result has to be added
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+RealVector& AbstractHamiltonian::HermitianLowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+						     int firstComponent, int nbrComponent)
+{
+  return this->HermitianLowLevelAddMultiply(vSource, vDestination, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
+}
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and add result in another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// sourceStart = source vector first index
+// sourceStep = step to add to go to the following source vector index
+// sourceShift = shift to apply when directly accessing source vector component (must be substracted to the real index)
+// sourceNbrComponent = number of component to take into account in the source vector
+// destinationStart = destination vector first index
+// destinationStep = step to add to go to the following destination vector index
+// destinationShift = shift to apply when directly accessing destination vector component (must be substracted to the real index)
+// destinationNbrComponent = number of component to take into account in the destination vector
+// return value = reference on vector where result has been stored
+
+RealVector& AbstractHamiltonian::HermitianLowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+						     int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
+						     int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
+{
+  return vDestination;
+}
+
+// multiply a set of vectors by the current hamiltonian and store result in another set of vectors
+// low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors where result has to be stored
+// nbrVectors = number of vectors that have to be evaluated together
+// return value = pointer to the array of vectors where result has been stored
+
+RealVector* AbstractHamiltonian::HermitianLowLevelMultipleMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors)
+{
+  return this->HermitianLowLevelMultipleMultiply(vSources, vDestinations, nbrVectors, 0, this->GetHilbertSpaceDimension());
+}
+
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and store result in another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors where result has to be stored
+// nbrVectors = number of vectors that have to be evaluated together
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = pointer to the array of vectors where result has been stored
+
+RealVector* AbstractHamiltonian::HermitianLowLevelMultipleMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
+							  int firstComponent, int nbrComponent)
+{
+  return this->HermitianLowLevelMultipleMultiply(vSources, vDestinations, nbrVectors, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
+}
+
+// multiply a set of vector by the current hamiltonian for a given range of indices 
+// and store result in another set of vector, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors where result has to be stored
+// nbrVectors = number of vectors that have to be evaluated together
+// sourceStart = source vector first index
+// sourceStep = step to add to go to the following source vector index
+// sourceShift = shift to apply when directly accessing source vector component (must be substracted to the real index)
+// sourceNbrComponent = number of component to take into account in the source vector
+// destinationStart = destination vector first index
+// destinationStep = step to add to go to the following destination vector index
+// destinationShift = shift to apply when directly accessing destination vector component (must be substracted to the real index)
+// destinationNbrComponent = number of component to take into account in the destination vector
+// return value = pointer to the array of vectors where result has been stored
+
+RealVector* AbstractHamiltonian::HermitianLowLevelMultipleMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
+							  int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
+							  int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
+{
+  for (int i = 0; i < nbrVectors; ++i)
+    this->HermitianLowLevelMultiply(vSources[i], vDestinations[i], sourceStart, sourceStep, sourceShift, sourceNbrComponent, sourceNbrComponent, 
+			   destinationStep, destinationShift, destinationNbrComponent);
+  return vDestinations;
+}
+
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and add result to another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vector sat which result has to be added
+// nbrVectors = number of vectors that have to be evaluated together
+// return value = pointer to the array of vectors where result has been stored
+
+RealVector* AbstractHamiltonian::HermitianLowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors)
+{
+  return this->HermitianLowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, 0, this->GetHilbertSpaceDimension());
+}
+
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and add result to another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors at which result has to be added
+// nbrVectors = number of vectors that have to be evaluated together
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = pointer to the array of vectors where result has been stored
+
+RealVector* AbstractHamiltonian::HermitianLowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors,
+							     int firstComponent, int nbrComponent)
+{
+  return this->HermitianLowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
+}
+ 
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and add result in another set of vectors, low level function (no architecture optimization)
+//
+// vSource = array of vectors to be multiplied
+// vDestination = array of vectors where result has to be stored
+// nbrVectors = number of vectors that have to be evaluated together
+// sourceStart = source vector first index
+// sourceStep = step to add to go to the following source vector index
+// sourceShift = shift to apply when directly accessing source vector component (must be substracted to the real index)
+// sourceNbrComponent = number of component to take into account in the source vector
+// destinationStart = destination vector first index
+// destinationStep = step to add to go to the following destination vector index
+// destinationShift = shift to apply when directly accessing destination vector component (must be substracted to the real index)
+// destinationNbrComponent = number of component to take into account in the destination vector
+// return value = pointer to the array of vectors where result has been stored
+
+RealVector* AbstractHamiltonian::HermitianLowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors,
+							     int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
+							     int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
+{
+  for (int i = 0; i < nbrVectors; ++i)
+    this->HermitianLowLevelAddMultiply(vSources[i], vDestinations[i], sourceStart, sourceStep, sourceShift, sourceNbrComponent, sourceNbrComponent, 
+			      destinationStep, destinationShift, destinationNbrComponent);
+  return vDestinations;
+}
+
+// multiply a vector by the current hamiltonian and store result in another vector
+// low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// return value = reference on vectorwhere result has been stored
+
+ComplexVector& AbstractHamiltonian::HermitianLowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination)
+{
+  return this->HermitianLowLevelMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
+}
+
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and store result in another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+ComplexVector& AbstractHamiltonian::HermitianLowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+						     int firstComponent, int nbrComponent)
+{
+  return this->HermitianLowLevelMultiply(vSource, vDestination, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
+}
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and store result in another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// sourceStart = source vector first index
+// sourceStep = step to add to go to the following source vector index
+// sourceShift = shift to apply when directly accessing source vector component (must be substracted to the real index)
+// sourceNbrComponent = number of component to take into account in the source vector
+// destinationStart = destination vector first index
+// destinationStep = step to add to go to the following destination vector index
+// destinationShift = shift to apply when directly accessing destination vector component (must be substracted to the real index)
+// destinationNbrComponent = number of component to take into account in the destination vector
+// return value = reference on vector where result has been stored
+
+ComplexVector& AbstractHamiltonian::HermitianLowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+						     int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
+						     int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
+{
+  return vDestination;
+}
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and add result to another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector at which result has to be added
+// return value = reference on vectorwhere result has been stored
+
+ComplexVector& AbstractHamiltonian::HermitianLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination)
+{
+  return this->HermitianLowLevelAddMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
+}
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and add result to another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector at which result has to be added
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+ComplexVector& AbstractHamiltonian::HermitianLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+							int firstComponent, int nbrComponent)
+{
+  return this->HermitianLowLevelAddMultiply(vSource, vDestination, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
+}
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and add result to another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// sourceStart = source vector first index
+// sourceStep = step to add to go to the following source vector index
+// sourceShift = shift to apply when directly accessing source vector component (must be substracted to the real index)
+// sourceNbrComponent = number of component to take into account in the source vector
+// destinationStart = destination vector first index
+// destinationStep = step to add to go to the following destination vector index
+// destinationShift = shift to apply when directly accessing destination vector component (must be substracted to the real index)
+// destinationNbrComponent = number of component to take into account in the destination vector
+// return value = reference on vector where result has been stored
+
+ComplexVector& AbstractHamiltonian::HermitianLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+							int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
+							int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
+{
+  return vDestination;
+}
+
+// multiply a set of vectors by the current hamiltonian and store result in another set of vectors
+// low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors where result has to be stored
+// nbrVectors = number of vectors that have to be evaluated together
+// return value = pointer to the array of vectors where result has been stored
+
+ComplexVector* AbstractHamiltonian::HermitianLowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors)
+{
+  return this->HermitianLowLevelMultipleMultiply(vSources, vDestinations, nbrVectors, 0, this->GetHilbertSpaceDimension());
+}
+
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and store result in another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors where result has to be stored
+// nbrVectors = number of vectors that have to be evaluated together
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = pointer to the array of vectors where result has been stored
+
+ComplexVector* AbstractHamiltonian::HermitianLowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+							     int firstComponent, int nbrComponent)
+{
+  return this->HermitianLowLevelMultipleMultiply(vSources, vDestinations, nbrVectors, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
+}
+
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and store result in another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors where result has to be stored
+// nbrVectors = number of vectors that have to be evaluated together
+// sourceStart = source vector first index
+// sourceStep = step to add to go to the following source vector index
+// sourceShift = shift to apply when directly accessing source vector component (must be substracted to the real index)
+// sourceNbrComponent = number of component to take into account in the source vector
+// destinationStart = destination vector first index
+// destinationStep = step to add to go to the following destination vector index
+// destinationShift = shift to apply when directly accessing destination vector component (must be substracted to the real index)
+// destinationNbrComponent = number of component to take into account in the destination vector
+// return value = pointer to the array of vectors where result has been stored
+
+ComplexVector* AbstractHamiltonian::HermitianLowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+							     int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
+							     int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
+{
+  for (int i = 0; i < nbrVectors; ++i)
+    this->HermitianLowLevelMultiply(vSources[i], vDestinations[i], sourceStart, sourceStep, sourceShift, sourceNbrComponent, sourceNbrComponent, 
+			   destinationStep, destinationShift, destinationNbrComponent);
+  return vDestinations;
+}
+
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and add result to another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors at which result has to be added
+// nbrVectors = number of vectors that have to be evaluated together
+// return value = pointer to the array of vectors where result has been stored
+
+ComplexVector* AbstractHamiltonian::HermitianLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors)
+{
+  return this->HermitianLowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, 0, this->GetHilbertSpaceDimension());
+}
+
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and add result to another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors at which result has to be added
+// nbrVectors = number of vectors that have to be evaluated together
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = pointer to the array of vectors where result has been stored
+
+ComplexVector* AbstractHamiltonian::HermitianLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+								int firstComponent, int nbrComponent)
+{
+  return this->HermitianLowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
+}
+ 
+
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and add result to another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors where result has to be stored
+// nbrVectors = number of vectors that have to be evaluated together
+// sourceStart = source vector first index
+// sourceStep = step to add to go to the following source vector index
+// sourceShift = shift to apply when directly accessing source vector component (must be substracted to the real index)
+// sourceNbrComponent = number of component to take into account in the source vector
+// destinationStart = destination vector first index
+// destinationStep = step to add to go to the following destination vector index
+// destinationShift = shift to apply when directly accessing destination vector component (must be substracted to the real index)
+// destinationNbrComponent = number of component to take into account in the destination vector
+// return value = pointer to the array of vectors where result has been stored
+
+ComplexVector* AbstractHamiltonian::HermitianLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+								int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
+								int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
+{
+  for (int i = 0; i < nbrVectors; ++i)
+    this->HermitianLowLevelAddMultiply(vSources[i], vDestinations[i], sourceStart, sourceStep, sourceShift, sourceNbrComponent, sourceNbrComponent, 
+			      destinationStep, destinationShift, destinationNbrComponent);
+  return vDestinations;
+}
+
+
 // store Hamiltonian into a picture (drawing non zero element with a color scale)
 //
 // error = absolute minimum value to be considered as non zero element
@@ -685,6 +1527,14 @@ List<Matrix*> AbstractHamiltonian::RightInteractionOperators()
   return List<Matrix*>();
 }
 
+// ask if Hamiltonian implements hermitian symmetry operations
+//
+bool AbstractHamiltonian::IsHermitian()
+{
+  return false;
+}
+
+
 // multiply a vector by the current hamiltonian and store result in another vector
 //
 // vSource = vector to be multiplied
@@ -708,6 +1558,8 @@ Vector& AbstractHamiltonian::Multiply(Vector& vSource, Vector& vDestination)
   return vDestination;
 }
 
+
+
 // multiply a vector by the current hamiltonian for a given range of indices 
 // and store result in another vector
 //
@@ -729,6 +1581,108 @@ Vector& AbstractHamiltonian::Multiply(Vector& vSource, Vector& vDestination,
   else
     {
       return this->LowLevelMultiply((ComplexVector&) vSource, (ComplexVector&) vDestination, firstComponent, nbrComponent);
+    }
+  return vDestination;
+}
+
+
+// multiply a vector by the current hamiltonian and store result in another vector
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// return value = reference on vectorwhere result has been stored
+
+Vector& AbstractHamiltonian::ConjugateMultiply(Vector& vSource, Vector& vDestination)
+{
+  if ((vSource.GetVectorType() & Vector::DataTypeMask) != (vDestination.GetVectorType() & Vector::DataTypeMask))
+    {
+      return vDestination;
+    }
+  if ((vSource.GetVectorType() & Vector::DataTypeMask) == Vector::RealDatas)
+    {
+      return this->ConjugateLowLevelMultiply((RealVector&) vSource, (RealVector&) vDestination);
+    }
+  else
+    {
+      return this->ConjugateLowLevelMultiply((ComplexVector&) vSource, (ComplexVector&) vDestination);
+    }
+  return vDestination;
+}
+
+
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and store result in another vector
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+Vector& AbstractHamiltonian::ConjugateMultiply(Vector& vSource, Vector& vDestination, 
+				      int firstComponent, int nbrComponent)
+{
+  if ((vSource.GetVectorType() & Vector::DataTypeMask) != (vDestination.GetVectorType() & Vector::DataTypeMask))
+    return vDestination;
+  if ((vSource.GetVectorType() & Vector::DataTypeMask) == Vector::RealDatas)
+    {
+      return this->ConjugateLowLevelMultiply((RealVector&) vSource, (RealVector&) vDestination, firstComponent, nbrComponent);
+    }
+  else
+    {
+      return this->ConjugateLowLevelMultiply((ComplexVector&) vSource, (ComplexVector&) vDestination, firstComponent, nbrComponent);
+    }
+  return vDestination;
+}
+
+
+// multiply a vector by the current hamiltonian and store result in another vector
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// return value = reference on vectorwhere result has been stored
+
+Vector& AbstractHamiltonian::HermitianMultiply(Vector& vSource, Vector& vDestination)
+{
+  if ((vSource.GetVectorType() & Vector::DataTypeMask) != (vDestination.GetVectorType() & Vector::DataTypeMask))
+    {
+      return vDestination;
+    }
+  if ((vSource.GetVectorType() & Vector::DataTypeMask) == Vector::RealDatas)
+    {
+      return this->HermitianLowLevelMultiply((RealVector&) vSource, (RealVector&) vDestination);
+    }
+  else
+    {
+      return this->HermitianLowLevelMultiply((ComplexVector&) vSource, (ComplexVector&) vDestination);
+    }
+  return vDestination;
+}
+
+
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and store result in another vector
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+Vector& AbstractHamiltonian::HermitianMultiply(Vector& vSource, Vector& vDestination, 
+				      int firstComponent, int nbrComponent)
+{
+  if ((vSource.GetVectorType() & Vector::DataTypeMask) != (vDestination.GetVectorType() & Vector::DataTypeMask))
+    return vDestination;
+  if ((vSource.GetVectorType() & Vector::DataTypeMask) == Vector::RealDatas)
+    {
+      return this->HermitianLowLevelMultiply((RealVector&) vSource, (RealVector&) vDestination, firstComponent, nbrComponent);
+    }
+  else
+    {
+      return this->HermitianLowLevelMultiply((ComplexVector&) vSource, (ComplexVector&) vDestination, firstComponent, nbrComponent);
     }
   return vDestination;
 }
@@ -756,6 +1710,8 @@ Vector& AbstractHamiltonian::AddMultiply(Vector& vSource, Vector& vDestination)
     }
   return vDestination;
 }
+
+
 
 // multiply a vector by the current hamiltonian for a given range of indices 
 // and add result to another vector, low level function (no architecture optimization)
@@ -889,3 +1845,320 @@ Vector* AbstractHamiltonian::MultipleAddMultiply(Vector* vSources, Vector* vDest
     }
 }
 
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and add result to another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector at which result has to be added
+// return value = reference on vectorwhere result has been stored
+
+Vector& AbstractHamiltonian::ConjugateAddMultiply(Vector& vSource, Vector& vDestination)
+{
+  if ((vSource.GetVectorType() & Vector::DataTypeMask) != (vDestination.GetVectorType() & Vector::DataTypeMask))
+    {
+      return vDestination;
+    }
+  if (vSource.GetVectorType() == Vector::RealDatas)
+    {
+      return this->ConjugateLowLevelAddMultiply((RealVector&) vSource, (RealVector&) vDestination);
+    }
+  else
+    {
+      return this->ConjugateLowLevelAddMultiply((ComplexVector&) vSource, (ComplexVector&) vDestination);
+    }
+  return vDestination;
+}
+
+
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and add result to another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector at which result has to be added
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+Vector& AbstractHamiltonian::ConjugateAddMultiply(Vector& vSource, Vector& vDestination, 
+					 int firstComponent, int nbrComponent)
+{
+  if ((vSource.GetVectorType() & Vector::DataTypeMask) != (vDestination.GetVectorType() & Vector::DataTypeMask))
+    return vDestination;
+  if ((vSource.GetVectorType() & Vector::DataTypeMask) == Vector::RealDatas)
+    {
+      return this->ConjugateLowLevelAddMultiply((RealVector&) vSource, (RealVector&) vDestination, firstComponent, nbrComponent);
+    }
+  else
+    {
+      return this->ConjugateLowLevelAddMultiply((ComplexVector&) vSource, (ComplexVector&) vDestination, firstComponent, nbrComponent);
+    }
+  return vDestination;
+}
+
+// multiply a set of vectors by the current hamiltonian
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors where result has to be stored
+// return value = reference on vector where result has been stored
+
+Vector* AbstractHamiltonian::ConjugateMultipleMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors)
+{
+  if (vSources[0].GetVectorType() != vDestinations[0].GetVectorType())
+    return vDestinations;
+  for (int i = 1; i < nbrVectors; ++i)
+    if ((vSources[0].GetVectorType() != vSources[i].GetVectorType()) || (vDestinations[0].GetVectorType() != vDestinations[i].GetVectorType()))
+      return vDestinations;
+  if ((vSources[0].GetVectorType() & Vector::DataTypeMask) == Vector::RealDatas)
+    {
+      return this->ConjugateLowLevelMultipleMultiply((RealVector*) vSources, (RealVector*) vDestinations, nbrVectors);
+    }
+  else
+    {
+      return this->ConjugateLowLevelMultipleMultiply((ComplexVector*) vSources, (ComplexVector*) vDestinations, nbrVectors);
+    }
+}
+
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors where result has to be stored
+// nbrVectors = number of vectors that have to be evaluated together
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+Vector* AbstractHamiltonian::ConjugateMultipleMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors, 
+					      int firstComponent, int nbrComponent)
+{
+  if (vSources[0].GetVectorType() != vDestinations[0].GetVectorType())
+    return vDestinations;
+  cout << "check 0" << endl;
+  for (int i = 1; i < nbrVectors; ++i)
+    {
+      if ((vSources[0].GetVectorType() != vSources[i].GetVectorType()) || (vDestinations[0].GetVectorType() != vDestinations[i].GetVectorType()))
+	return vDestinations;
+    }
+  if ((vSources[0].GetVectorType() & Vector::DataTypeMask) == Vector::RealDatas)
+    {
+      cout << "check real " << endl;
+      return this->ConjugateLowLevelMultipleMultiply((RealVector*) vSources, (RealVector*) vDestinations, nbrVectors, firstComponent, nbrComponent);
+    }
+  else
+    {
+      return this->ConjugateLowLevelMultipleMultiply((ComplexVector*) vSources, (ComplexVector*) vDestinations, nbrVectors, firstComponent, nbrComponent);
+    }
+}
+
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and add result to another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors at which result has to be added
+// nbrVectors = number of vectors that have to be evaluated together
+// return value = reference on vector where result has been stored
+
+Vector* AbstractHamiltonian::ConjugateMultipleAddMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors)
+{
+  if (vSources[0].GetVectorType() != vDestinations[0].GetVectorType())
+    return vDestinations;
+  for (int i = 1; i < nbrVectors; ++i)
+    if ((vSources[0].GetVectorType() != vSources[i].GetVectorType()) || (vDestinations[0].GetVectorType() != vDestinations[i].GetVectorType()))
+      return vDestinations;
+  if ((vSources[0].GetVectorType() & Vector::DataTypeMask) == Vector::RealDatas)
+    {
+      return this->ConjugateLowLevelMultipleAddMultiply((RealVector*) vSources, (RealVector*) vDestinations, nbrVectors);
+    }
+  else
+    {
+      return this->ConjugateLowLevelMultipleAddMultiply((ComplexVector*) vSources, (ComplexVector*) vDestinations, nbrVectors);
+    }
+}
+
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and add result to another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors at which result has to be added
+// nbrVectors = number of vectors that have to be evaluated together
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+Vector* AbstractHamiltonian::ConjugateMultipleAddMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors,
+						 int firstComponent, int nbrComponent)
+{
+  if (vSources[0].GetVectorType() != vDestinations[0].GetVectorType())
+    return vDestinations;
+  for (int i = 1; i < nbrVectors; ++i)
+    if ((vSources[0].GetVectorType() != vSources[i].GetVectorType()) || (vDestinations[0].GetVectorType() != vDestinations[i].GetVectorType()))
+      return vDestinations;
+  if ((vSources[0].GetVectorType() & Vector::DataTypeMask) == Vector::RealDatas)
+    {
+      return this->ConjugateLowLevelMultipleAddMultiply((RealVector*) vSources, (RealVector*) vDestinations, nbrVectors, firstComponent, nbrComponent);
+    }
+  else
+    {
+      return this->ConjugateLowLevelMultipleAddMultiply((ComplexVector*) vSources, (ComplexVector*) vDestinations, nbrVectors, firstComponent, nbrComponent);
+    }
+}
+
+
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and add result to another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector at which result has to be added
+// return value = reference on vectorwhere result has been stored
+
+Vector& AbstractHamiltonian::HermitianAddMultiply(Vector& vSource, Vector& vDestination)
+{
+  if ((vSource.GetVectorType() & Vector::DataTypeMask) != (vDestination.GetVectorType() & Vector::DataTypeMask))
+    {
+      return vDestination;
+    }
+  if (vSource.GetVectorType() == Vector::RealDatas)
+    {
+      return this->HermitianLowLevelAddMultiply((RealVector&) vSource, (RealVector&) vDestination);
+    }
+  else
+    {
+      return this->HermitianLowLevelAddMultiply((ComplexVector&) vSource, (ComplexVector&) vDestination);
+    }
+  return vDestination;
+}
+
+
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and add result to another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector at which result has to be added
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+Vector& AbstractHamiltonian::HermitianAddMultiply(Vector& vSource, Vector& vDestination, 
+					 int firstComponent, int nbrComponent)
+{
+  if ((vSource.GetVectorType() & Vector::DataTypeMask) != (vDestination.GetVectorType() & Vector::DataTypeMask))
+    return vDestination;
+  if ((vSource.GetVectorType() & Vector::DataTypeMask) == Vector::RealDatas)
+    {
+      return this->HermitianLowLevelAddMultiply((RealVector&) vSource, (RealVector&) vDestination, firstComponent, nbrComponent);
+    }
+  else
+    {
+      return this->HermitianLowLevelAddMultiply((ComplexVector&) vSource, (ComplexVector&) vDestination, firstComponent, nbrComponent);
+    }
+  return vDestination;
+}
+
+// multiply a set of vectors by the current hamiltonian
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors where result has to be stored
+// return value = reference on vector where result has been stored
+
+Vector* AbstractHamiltonian::HermitianMultipleMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors)
+{
+  if (vSources[0].GetVectorType() != vDestinations[0].GetVectorType())
+    return vDestinations;
+  for (int i = 1; i < nbrVectors; ++i)
+    if ((vSources[0].GetVectorType() != vSources[i].GetVectorType()) || (vDestinations[0].GetVectorType() != vDestinations[i].GetVectorType()))
+      return vDestinations;
+  if ((vSources[0].GetVectorType() & Vector::DataTypeMask) == Vector::RealDatas)
+    {
+      return this->HermitianLowLevelMultipleMultiply((RealVector*) vSources, (RealVector*) vDestinations, nbrVectors);
+    }
+  else
+    {
+      return this->HermitianLowLevelMultipleMultiply((ComplexVector*) vSources, (ComplexVector*) vDestinations, nbrVectors);
+    }
+}
+
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors where result has to be stored
+// nbrVectors = number of vectors that have to be evaluated together
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+Vector* AbstractHamiltonian::HermitianMultipleMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors, 
+					      int firstComponent, int nbrComponent)
+{
+  if (vSources[0].GetVectorType() != vDestinations[0].GetVectorType())
+    return vDestinations;
+  cout << "check 0" << endl;
+  for (int i = 1; i < nbrVectors; ++i)
+    {
+      if ((vSources[0].GetVectorType() != vSources[i].GetVectorType()) || (vDestinations[0].GetVectorType() != vDestinations[i].GetVectorType()))
+	return vDestinations;
+    }
+  if ((vSources[0].GetVectorType() & Vector::DataTypeMask) == Vector::RealDatas)
+    {
+      cout << "check real " << endl;
+      return this->HermitianLowLevelMultipleMultiply((RealVector*) vSources, (RealVector*) vDestinations, nbrVectors, firstComponent, nbrComponent);
+    }
+  else
+    {
+      return this->HermitianLowLevelMultipleMultiply((ComplexVector*) vSources, (ComplexVector*) vDestinations, nbrVectors, firstComponent, nbrComponent);
+    }
+}
+
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and add result to another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors at which result has to be added
+// nbrVectors = number of vectors that have to be evaluated together
+// return value = reference on vector where result has been stored
+
+Vector* AbstractHamiltonian::HermitianMultipleAddMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors)
+{
+  if (vSources[0].GetVectorType() != vDestinations[0].GetVectorType())
+    return vDestinations;
+  for (int i = 1; i < nbrVectors; ++i)
+    if ((vSources[0].GetVectorType() != vSources[i].GetVectorType()) || (vDestinations[0].GetVectorType() != vDestinations[i].GetVectorType()))
+      return vDestinations;
+  if ((vSources[0].GetVectorType() & Vector::DataTypeMask) == Vector::RealDatas)
+    {
+      return this->HermitianLowLevelMultipleAddMultiply((RealVector*) vSources, (RealVector*) vDestinations, nbrVectors);
+    }
+  else
+    {
+      return this->HermitianLowLevelMultipleAddMultiply((ComplexVector*) vSources, (ComplexVector*) vDestinations, nbrVectors);
+    }
+}
+
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and add result to another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors at which result has to be added
+// nbrVectors = number of vectors that have to be evaluated together
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+Vector* AbstractHamiltonian::HermitianMultipleAddMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors,
+						 int firstComponent, int nbrComponent)
+{
+  if (vSources[0].GetVectorType() != vDestinations[0].GetVectorType())
+    return vDestinations;
+  for (int i = 1; i < nbrVectors; ++i)
+    if ((vSources[0].GetVectorType() != vSources[i].GetVectorType()) || (vDestinations[0].GetVectorType() != vDestinations[i].GetVectorType()))
+      return vDestinations;
+  if ((vSources[0].GetVectorType() & Vector::DataTypeMask) == Vector::RealDatas)
+    {
+      return this->HermitianLowLevelMultipleAddMultiply((RealVector*) vSources, (RealVector*) vDestinations, nbrVectors, firstComponent, nbrComponent);
+    }
+  else
+    {
+      return this->HermitianLowLevelMultipleAddMultiply((ComplexVector*) vSources, (ComplexVector*) vDestinations, nbrVectors, firstComponent, nbrComponent);
+    }
+}
