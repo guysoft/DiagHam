@@ -61,6 +61,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('x', "lx", "length in x-direction of given lattice", 0);
   (*SystemGroup) += new SingleIntegerOption  ('y', "ly", "length in y-direction of given lattice", 0);
   (*SystemGroup) += new SingleIntegerOption  ('q', "flux", "number of flux quanta piercing the lattice", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('r', "reference", "reference site for two-particle correlations", 0);
   (*SystemGroup) += new BooleanOption('c',"hard-core","Use Hilbert-space of hard-core bosons");
   (*SystemGroup) += new BooleanOption('n',"no-hard-core","Do not use Hilbert-space of hard-core bosons (overriding detection from filename)");
 
@@ -142,6 +143,7 @@ int main(int argc, char** argv)
 	  NbrSites = Lx*Ly;
 	}
 
+      int ReferenceSite = Manager.GetInteger("reference")%NbrSites;
       
       
       int VectorDimension=0;
@@ -158,6 +160,8 @@ int main(int argc, char** argv)
 	strncpy(OutputNameCorr, VectorFiles[i], ending-VectorFiles[i]);
       else
 	strcpy(OutputNameCorr, VectorFiles[i]);
+      if (ReferenceSite!=0)
+	sprintf (OutputNameCorr, "%s_ref_%d", OutputNameCorr, ReferenceSite);
       char* PlotNameCmd=0;
       char* PlotNamePS=0;
       if (Plot)
@@ -206,7 +210,7 @@ int main(int argc, char** argv)
 	{
 	  File << "# density-density correlation for " << VectorFiles[i]<< endl;
 	  File << "# x\ty\tg"<< endl;
-	  ParticleOnLatticeOneBodyOperator Operator0 (Space, 0, 0);
+	  ParticleOnLatticeOneBodyOperator Operator0 (Space, ReferenceSite, ReferenceSite);
 	  Complex Zero=Operator0.MatrixElement(State, State);
 	  for (int x = 0; x < Lx; ++x)
 	    {
@@ -215,9 +219,12 @@ int main(int argc, char** argv)
 		  for (int Sub=0; Sub<NbrSubLattices; ++Sub)
 		    {
 		      int q=Space->EncodeQuantumNumber(x, y, Sub, Tmp);
-		      ParticleOnLatticeDensityDensityOperator Operator (Space, q, 0);
-		      double ME=Real(Operator.MatrixElement(State, State));
-		      if (q==0) ME = Real(Zero)*Real(Zero);
+		      ParticleOnLatticeDensityDensityOperator Operator (Space, q, ReferenceSite);
+		      double ME;
+		      if (q==ReferenceSite)
+			ME = Real(Zero)*Real(Zero);
+		      else
+			ME=Real(Operator.MatrixElement(State, State));
 		      double X,Y;
 		      if (GenericLattice)
 			{

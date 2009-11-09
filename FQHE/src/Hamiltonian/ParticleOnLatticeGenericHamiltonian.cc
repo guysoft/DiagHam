@@ -43,7 +43,7 @@ using std::endl;
 using std::ostream;
 
 // switch for debugging output:
-//#define DEBUG_OUTPUT
+#define DEBUG_OUTPUT
 
 
 
@@ -59,7 +59,7 @@ using std::ostream;
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 // hoppingOnly = evaluate only energy of hopping terms, excluding local potentials
-ParticleOnLatticeGenericHamiltonian::ParticleOnLatticeGenericHamiltonian(ParticleOnLattice* particles, int nbrParticles, LatticePhases *latticeGeometry, int nbrFluxQuanta, double contactInteractionU, bool reverseHopping, AbstractArchitecture* architecture, unsigned long memory, char* precalculationFileName, bool hoppingOnly)
+ParticleOnLatticeGenericHamiltonian::ParticleOnLatticeGenericHamiltonian(ParticleOnLattice* particles, int nbrParticles, LatticePhases *latticeGeometry, int nbrFluxQuanta, double contactInteractionU, bool reverseHopping, AbstractArchitecture* architecture, unsigned long memory, char* precalculationFileName, double overrideFluxDensity, bool hoppingOnly)
 {
   this->Particles=particles;
   this->NbrParticles=nbrParticles;
@@ -76,6 +76,18 @@ ParticleOnLatticeGenericHamiltonian::ParticleOnLatticeGenericHamiltonian(Particl
   this->NbrFluxQuanta=nbrFluxQuanta;
   this->HamiltonianShift=0.0;
   this->FluxDensity=((double)nbrFluxQuanta)/NbrSites; // xxx
+  if (overrideFluxDensity!=0.0)
+    {
+      if (LatticeGeometry->AllowContinuousPhases())
+	{
+	  this->FluxDensity=overrideFluxDensity;
+	}
+      else
+	{
+	  cout << "This lattice does not support non-quantized fluxes"<<endl;
+	  exit(1);
+	}
+    }
   this->ContactInteractionU=contactInteractionU;
   this->ReverseHopping = reverseHopping;
   this->Architecture = architecture;

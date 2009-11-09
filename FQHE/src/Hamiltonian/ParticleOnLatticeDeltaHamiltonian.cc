@@ -42,7 +42,7 @@ using std::endl;
 using std::ostream;
 
 // switch for debugging output:
-//#define DEBUG_OUTPUT
+#define DEBUG_OUTPUT
 
 
 

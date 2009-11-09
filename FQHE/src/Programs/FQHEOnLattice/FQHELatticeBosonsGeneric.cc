@@ -103,6 +103,7 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 8);
   (*SystemGroup) += new SingleIntegerOption  ('q', "flux", "number of flux quanta piercing the lattice (-1=all)", -1);
+  (*SystemGroup) += new SingleDoubleOption  ('Q', "cont-flux", "multiples of flux quanta piercing the lattice", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('u', "contactU", "prefactor U of the contact interaction (kinetic term ~ 1)", 1.0);
   (*SystemGroup) += new MultipleDoubleOption  ('s', "solenoid-flux", "twist in periodic boundary conditions phi_x[,phi_y])",',');
   (*SystemGroup) += new BooleanOption('c',"hard-core","Use Hilbert-space of hard-core bosons");
@@ -165,13 +166,21 @@ int main(int argc, char** argv)
     }
   else
     {
-      if (NbrFluxQuanta == -1)
+      if (Manager.GetDouble("cont-flux")!=0.0)
 	{
+	  NbrFluxValues = 1;
 	  NbrFluxQuanta = 0;
-	  if (Manager.GetBoolean("all-flux"))
-	    NbrFluxValues = NbrSites+1;
-	  else
-	    NbrFluxValues = (NbrSites+2)/2;
+	}
+      else
+	{
+	  if (NbrFluxQuanta == -1)
+	    {
+	      NbrFluxQuanta = 0;
+	      if (Manager.GetBoolean("all-flux"))
+		NbrFluxValues = NbrSites+1;
+	      else
+		NbrFluxValues = (NbrSites+2)/2;
+	    }
 	}
     }
 
@@ -199,7 +208,12 @@ int main(int argc, char** argv)
 	      sprintf(interactionStr,"%s_s_%g_%g",interactionStr,SolenoidX,SolenoidY);
 	    }
 	  if (NbrFluxValues == 1)
-	    sprintf (OutputName, "bosons_lattice_%s_n_%d%s%s_q_%d.dat", LatticeName, NbrBosons, interactionStr, reverseHoppingString, NbrFluxQuanta);
+	    {
+	      if (Manager.GetDouble("cont-flux")!=0.0)
+		sprintf (OutputName, "bosons_lattice_%s_n_%d%s%s_Q_%g.dat", LatticeName, NbrBosons, interactionStr, reverseHoppingString, Manager.GetDouble("cont-flux"));
+	      else
+		sprintf (OutputName, "bosons_lattice_%s_n_%d%s%s_q_%d.dat", LatticeName, NbrBosons, interactionStr, reverseHoppingString, NbrFluxQuanta);
+	    }
 	  else
 	    sprintf (OutputName, "bosons_lattice_%s_n_%d%s%s_q.dat", LatticeName, NbrBosons, interactionStr, reverseHoppingString);
 	}
@@ -236,7 +250,7 @@ int main(int argc, char** argv)
   AbstractQHEOnLatticeHamiltonian* Hamiltonian;
   if (Manager.GetString("external-two-body")==NULL)
     Hamiltonian = new ParticleOnLatticeGenericHamiltonian(Space, NbrBosons, Lattice, NbrFluxQuanta, ContactU,
-							  ReverseHopping, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName, Manager.GetBoolean("hopping-only"));
+							  ReverseHopping, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName, Manager.GetDouble("cont-flux"), Manager.GetBoolean("hopping-only"));
   else
     Hamiltonian = new ParticleOnLatticeExternalHamiltonian(Space, NbrBosons, NbrSites, /*OneParticleTerms */ NULL,
 							   Manager.GetString("external-two-body"), Architecture.GetArchitecture(),

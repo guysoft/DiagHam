@@ -393,21 +393,23 @@ int main(int argc, char** argv)
 	  Superposition.AddLinearCombination (Phase, Vectors[1]);
 	  for (int CreationX=0; CreationX<Lx; ++CreationX)
 	    for (int CreationY=0; CreationY<Ly; ++CreationY)
-	      {
-		CreationIndex = Space->EncodeQuantumNumber(CreationX, CreationY, 0, Tmp);	
-		for (int AnnihilationX=0; AnnihilationX<Lx; ++AnnihilationX)
-		  for (int AnnihilationY=0; AnnihilationY<Ly; ++AnnihilationY)
-		    {
-		      AnnihilationIndex = Space->EncodeQuantumNumber(AnnihilationX, AnnihilationY, 0, Tmp);
-		      DensityOperator->SetCreationAnnihilationIndex(CreationIndex,AnnihilationIndex);
-		      // calculate possible matrix elements in subspace of vectors
-		      if (CreationIndex <= AnnihilationIndex)
+	      for (int CreationSub=0; CreationSub<NbrSubLattices; ++CreationSub)
+		{
+		  CreationIndex = Space->EncodeQuantumNumber(CreationX, CreationY, CreationSub, Tmp);	
+		  for (int AnnihilationX=0; AnnihilationX<Lx; ++AnnihilationX)
+		    for (int AnnihilationY=0; AnnihilationY<Ly; ++AnnihilationY)
+		      for (int AnnihilationSub=0; AnnihilationSub<NbrSubLattices; ++AnnihilationSub)
 			{
-			  Tmp=DensityOperator->MatrixElement(Superposition, Superposition);
-			  Rho2.SetMatrixElement(CreationIndex, AnnihilationIndex, Tmp);
+			  AnnihilationIndex = Space->EncodeQuantumNumber(AnnihilationX, AnnihilationY, AnnihilationSub, Tmp);
+			  DensityOperator->SetCreationAnnihilationIndex(CreationIndex,AnnihilationIndex);
+			  // calculate possible matrix elements in subspace of vectors
+			  if (CreationIndex <= AnnihilationIndex)
+			    {
+			      Tmp=DensityOperator->MatrixElement(Superposition, Superposition);
+			      Rho2.SetMatrixElement(CreationIndex, AnnihilationIndex, Tmp);
+			    }
 			}
-		    }
-	      }
+		}
 	  Rho2.Diagonalize(M2, Q, 1e-10, 250);
 	  cout << "EV's["<<2*k<<"/"<<Manager.GetInteger("superpositions")<<"pi] = " << M2[DensityMatrixDimension2-1] << ", "
 	       <<M2[DensityMatrixDimension2-2] <<", "<<M2[DensityMatrixDimension2-3]<<endl;

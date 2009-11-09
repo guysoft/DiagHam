@@ -77,6 +77,9 @@ class LatticePhases
   // flag indicating whether a specific flux density was given
   bool PredefinedFluxFlag;
 
+  // flag for continuous phases
+  bool ContinuousPhases;
+  
   // predefined number of flux
   int PredefinedFlux;
   
@@ -186,6 +189,8 @@ class LatticePhases
   // get predefined flux value
   int GetPredefinedFlux(){return this->PredefinedFlux;}
   
+  // allows continuos phases?
+  bool AllowContinuousPhases(){return this->ContinuousPhases;}
   
   // calculate the tunnelling phase between two given sites from the gauge
   // s1 = start site

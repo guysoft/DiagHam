@@ -46,7 +46,7 @@ using std::endl;
 using std::fabs;
 
 // switch for debugging statements
-//#define DEBUG_OUTPUT
+#define DEBUG_OUTPUT
 
 // generate the object using options from Option Manager
 //
@@ -313,7 +313,7 @@ LatticePhases::LatticePhases()
       for (int p=0; p<NbrPairs; ++p)
 	{
 	  int s1, s2;
-	  if (NbrValues[p]!=2)
+	  if (NbrValues[p]<2)
 	    {
 	      cout << "error while decoding "<<FieldName<<" in " << this->Options->GetString("lattice-definition") << endl;
 	      cout << "Indicate paires of neighboring sites separated by commas and different pairs by bars: "
@@ -341,7 +341,12 @@ LatticePhases::LatticePhases()
 		      PhasesAcrossBoundary[d]->SetMatrixElement(s1, s2, 0.0);
 		    }
 		  else
-		    PhasesAcrossBoundary[d]->SetMatrixElement(s1,s2,strtod(NeighborString[p][2], NULL));
+		    {
+		      PhasesAcrossBoundary[d]->SetMatrixElement(s1,s2,strtod(NeighborString[p][2], NULL));
+#ifdef DEBUG_OUTPUT
+		      cout << "Phase between neighbor sites "<<s1<<", "<<s2<<": "<<(*(PhasesAcrossBoundary[d]))(s1,s2)<<endl;
+#endif
+		    }
 		}
 	    }
 	}
@@ -444,7 +449,8 @@ LatticePhases::LatticePhases()
 			  TmpPhases[NbrNeighbors[Site1]] = GetTunnellingPhaseFromGauge(Site1, Site3, Translation3);
 			}
 		      else
-			TmpPhases[NbrNeighbors[Site1]]=(*PhasesAcrossBoundary[d])(Site1,Site3);   
+			TmpPhases[NbrNeighbors[Site1]]=(*(PhasesAcrossBoundary[d]))(Site1%NbrSitesPerCell,Site3%NbrSitesPerCell);
+
 #ifdef DEBUG_OUTPUT
 		      cout << "additional neighbors "<<Site1<<"->"<<Site3<<" from NeigborCell "<<d<<" at "<<
 			CellCoordinates2[0]<<", "<<CellCoordinates2[1]<<", "<<j<<" : Site 3="<<Site3
@@ -545,6 +551,17 @@ LatticePhases::LatticePhases()
     {
       this->PredefinedFluxFlag=false;
     }
+  if (LatticeDefinition["ContinuousPhases"]!=NULL)
+    {
+      if (( (strcmp(LatticeDefinition["ContinuousPhases"],"yes")==0) || (strcmp(LatticeDefinition["ContinuousPhases"],"YES")==0)
+	    ||(strcmp(LatticeDefinition["ContinuousPhases"],"true")==0) || (strcmp(LatticeDefinition["ContinuousPhases"],"TRUE")==0) ))
+	{
+	  this->ContinuousPhases=true;
+	}
+      else this->ContinuousPhases=false;  
+    }
+  else this->ContinuousPhases=false;
+  
   cout << "LatticePhases created"<<endl;
 
   for (int d=0; d<NbrNeighborCells; ++d)
