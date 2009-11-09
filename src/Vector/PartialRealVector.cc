@@ -554,16 +554,16 @@ Vector& PartialRealVector::ReassembleVector(MPI::Intracomm& communicator, int id
 	    TmpArray[1] = 0;
 	    communicator.Recv(TmpArray, 2, MPI::INT, i, 1); 
 	    TmpArray[0] -= this->IndexShift;
-	    communicator.Recv(this->Components + TmpArray[0], TmpArray[1], MPI::DOUBLE, id, 1);   	    
+	    communicator.Recv(this->Components + TmpArray[0], TmpArray[1], MPI::DOUBLE, i, 1); 
 	  }      
     }
   else
     {
       int TmpArray[2];
       TmpArray[0] = this->IndexShift;
-      TmpArray[1] = this->RealDimension;
+      TmpArray[1] = this->Dimension;
       communicator.Send(TmpArray, 2, MPI::INT, id, 1);
-      communicator.Send(this->Components, this->RealDimension, MPI::DOUBLE, id, 1);  
+      communicator.Send(this->Components, this->Dimension, MPI::DOUBLE, id, 1);  
     }
   return *this;
 }

@@ -3662,8 +3662,8 @@ Vector& RealVector::ReassembleVector(MPI::Intracomm& communicator, int id)
 	  {
 	    TmpArray[0] = 0;
 	    TmpArray[1] = 0;
-	    communicator.Recv(TmpArray, 2, MPI::INT, i, 1);      	    
-	    communicator.Recv(this->Components + TmpArray[0], TmpArray[1], MPI::DOUBLE, id, 1);   	    
+	    communicator.Recv(TmpArray, 2, MPI::INT, i, 1);      	
+	    communicator.Recv(this->Components + TmpArray[0], TmpArray[1], MPI::DOUBLE, i, 1);   	    
 	  }      
     }
   else

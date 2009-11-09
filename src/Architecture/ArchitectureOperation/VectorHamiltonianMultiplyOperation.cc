@@ -131,6 +131,18 @@ VectorHamiltonianMultiplyOperation::VectorHamiltonianMultiplyOperation(AbstractH
   architecture->GetTypicalRange(TmpMinimumIndex, TmpMaximumIndex);
   this->FirstComponent = (int) TmpMinimumIndex;  
   this->NbrComponent = (int) (TmpMaximumIndex - TmpMinimumIndex + 1l);
+  int TmpFlag = 0;
+  architecture->BroadcastToSlaves(TmpFlag);
+  if (TmpFlag == 1)
+    this->UseConjugateFlag = true;
+  else
+    this->UseConjugateFlag = false;
+  TmpFlag = 0;
+  architecture->BroadcastToSlaves(TmpFlag);
+  if (TmpFlag == 1)
+    this->UseHermitianFlag = true;
+  else
+    this->UseHermitianFlag = false;
   if (this->UseConjugateFlag == true)
     {
       this->SourceVector = architecture->BroadcastVector();
@@ -270,6 +282,15 @@ bool VectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOperation(Sim
  	{
  	  return false;
  	}
+       int TmpFlag = 0;
+       if (this->UseConjugateFlag == true)
+	 TmpFlag = 1;
+       architecture->BroadcastToSlaves(TmpFlag);
+       TmpFlag = 0;
+       if (this->UseHermitianFlag == true)
+         TmpFlag = 1;
+       architecture->BroadcastToSlaves(TmpFlag);
+       this->DestinationVector->ClearVector();
        if (this->UseConjugateFlag == true)
 	 {
 	   architecture->BroadcastVector(this->SourceVector);
