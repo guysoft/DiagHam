@@ -58,6 +58,11 @@ class VectorHamiltonianMultiplyOperation: public AbstractArchitectureOperation
   // vector where the result has to be stored
   Vector* DestinationVector;  
 
+  // use conjugate hamiltonian instead of the hamiltonian itself
+  bool UseConjugateFlag;
+  // use full hermitian structure of the hamiltonian
+  bool UseHermitianFlag;
+
  public:
   
   // constructor 
@@ -65,7 +70,11 @@ class VectorHamiltonianMultiplyOperation: public AbstractArchitectureOperation
   // hamiltonian = pointer to the hamiltonian to use
   // sourceVector = vector to be multiplied by the hamiltonian
   // destinationVector = vector where the result has to be stored
-  VectorHamiltonianMultiplyOperation(AbstractHamiltonian* hamiltonian, Vector* sourceVector, Vector* destinationVector);
+  // forceNormalMultiplication = force to use direct hamiltonian multiplication (override hamiltonian option)
+  // forceConjugateMultiplication = force to use hamiltonian for multiplication (override hamiltonian option)
+  // forceHermitianMultiplication = force to use hermitian property when multiplying  (override hamiltonian option)
+  VectorHamiltonianMultiplyOperation(AbstractHamiltonian* hamiltonian, Vector* sourceVector, Vector* destinationVector, 
+				     bool forceNormalMultiplication = false, bool forceConjugateMultiplication = false, bool forceHermitianeMultiplication = false);
 
   // copy constructor 
   //

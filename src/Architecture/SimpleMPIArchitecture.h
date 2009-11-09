@@ -203,6 +203,12 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // return value = reference on the vector
   virtual Vector& SumVector(Vector& vector);
 
+  // reassemble current vector into the one of the master node
+  // 
+  // vector = reference on the vector to add (or the destination vector of the master node)
+  // return value = reference on the vector
+  virtual Vector& ReassembleVector(Vector& vector);
+
   // get a temporary file name
   //
   // return value = string corresponding to a temporary file name
@@ -258,6 +264,20 @@ inline Vector& SimpleMPIArchitecture::SumVector(Vector& vector)
 {
 #ifdef __MPI__
   return vector.SumVector(MPI::COMM_WORLD, 0);
+#else
+  return vector;
+#endif
+}
+
+// reassemble current vector into the one of the master node
+// 
+// vector = reference on the vector to add (or the destination vector of the master node)
+// return value = reference on the vector
+
+inline Vector& SimpleMPIArchitecture::ReassembleVector(Vector& vector)
+{
+#ifdef __MPI__
+  return vector.ReassembleVector(MPI::COMM_WORLD, 0);
 #else
   return vector;
 #endif

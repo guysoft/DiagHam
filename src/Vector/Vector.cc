@@ -295,6 +295,17 @@ Vector& Vector::SumVector(MPI::Intracomm& communicator, int id)
   return *this;
 }
 
+// reassemble vector from a scattered one
+// 
+// communicator = reference on the communicator to use 
+// id = id of the destination MPI process
+// return value = reference on the current vector
+
+Vector& Vector::ReassembleVector(MPI::Intracomm& communicator, int id)
+{
+  return *this;
+}
+
 // create a new vector on each MPI node which is an exact clone of the broadcasted one
 //
 // communicator = reference on the communicator to use 

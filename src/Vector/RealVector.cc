@@ -3645,6 +3645,37 @@ Vector& RealVector::SumVector(MPI::Intracomm& communicator, int id)
   return *this;
 }
 
+// reassemble vector from a scattered one
+// 
+// communicator = reference on the communicator to use 
+// id = id of the destination MPI process
+// return value = reference on the current vector
+
+Vector& RealVector::ReassembleVector(MPI::Intracomm& communicator, int id)
+{
+  if (id == communicator.Get_rank())
+    {
+      int TmpArray[2];
+      for (int i = 0; i < NbrMPINodes; ++i)
+	if (id != i)
+	  {
+	    TmpArray[0] = 0;
+	    TmpArray[1] = 0;
+	    communicator.Recv(TmpArray, 2, MPI::INT, i, 1);      	    
+	    communicator.Recv(this->Components + TmpArray[0], TmpArray[1], MPI::DOUBLE, id, 1);   	    
+	  }      
+    }
+  else
+    {
+      int TmpArray[2];
+      TmpArray[0] = 0;
+      TmpArray[1] = this->Dimension;
+      communicator.Send(TmpArray, 2, MPI::INT, id, 1);
+      communicator.Send(this->Components, this->Dimension, MPI::DOUBLE, id, 1);  
+    }
+  return *this;
+}
+
 // create a new vector on each MPI node which is an exact clone of the broadcasted one
 //
 // communicator = reference on the communicator to use 
