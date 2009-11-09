@@ -1144,8 +1144,8 @@ RealVector& AbstractQHEOnSphereHamiltonian::ConjugateLowLevelAddMultiply(RealVec
 	      double TmpSum=0.0;
 	      for (j = 0; j < TmpNbrInteraction; ++j)
 		TmpSum +=  TmpCoefficientArray[j] * vSource[TmpIndexArray[j]];
-	      vDestination[k] += TmpSum;
-	      vDestination[k++] += this->HamiltonianShift * Coefficient;
+	      vDestination[k] += TmpSum + this->HamiltonianShift * vSource[k];
+	      k++;
 	    }
 	}
       else
@@ -1203,10 +1203,10 @@ RealVector& AbstractQHEOnSphereHamiltonian::ConjugateLowLevelAddMultiplyPartialF
       TmpNbrInteraction = this->NbrInteractionPerComponent[Pos];
       TmpIndexArray = this->InteractionPerComponentIndex[Pos];
       TmpCoefficientArray = this->InteractionPerComponentCoefficient[Pos];
-      Coefficient = vSource[l];
+      double TmpSum=0.0;
       for (j = 0; j < TmpNbrInteraction; ++j)
-	vDestination[TmpIndexArray[j]] +=  TmpCoefficientArray[j] * Coefficient;
-      vDestination[l] += this->HamiltonianShift * Coefficient;
+	TmpSum +=  TmpCoefficientArray[j] * vSource[TmpIndexArray[j]];
+      vDestination[l] += TmpSum + this->HamiltonianShift * vSource[l];
       l += this->FastMultiplicationStep;
       ++Pos;
     }
@@ -1235,7 +1235,7 @@ RealVector& AbstractQHEOnSphereHamiltonian::ConjugateLowLevelAddMultiplyPartialF
 		  {
 		    Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
 		    if (Index < Dim)
-		      vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
+		      vDestination[i] += Coefficient * TmpInteraction * vSource[Index];
 		  }
 	      }
 	    m1 = this->M1Value[ReducedNbrInteractionFactors];
@@ -1247,7 +1247,7 @@ RealVector& AbstractQHEOnSphereHamiltonian::ConjugateLowLevelAddMultiplyPartialF
 	      {
 		Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
 		if (Index < Dim)
-		  vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
+		  vDestination[i] += Coefficient * TmpInteraction * vSource[Index];
 		vDestination[i] += this->HamiltonianShift * vSource[i];
 	      }
 	  }
@@ -1259,6 +1259,7 @@ RealVector& AbstractQHEOnSphereHamiltonian::ConjugateLowLevelAddMultiplyPartialF
 	    int* TmpM3Values;
 	    for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
 	      {
+		double TmpSum=0.0;
 		ReducedNbrInteractionFactors = 0;
 		for (m1 = 0; m1 < this->NbrM12Indices; ++m1)
 		  {
@@ -1266,21 +1267,20 @@ RealVector& AbstractQHEOnSphereHamiltonian::ConjugateLowLevelAddMultiplyPartialF
 		    if (Coefficient != 0.0)
 		      {
 			SumIndices = this->M1Value[m1] + this->M2Value[m1];
-			Coefficient *= vSource[i];
 			TmpNbrM3Values = this->NbrM3Values[m1];
 			TmpM3Values = this->M3Values[m1];
 			for (m3 = 0; m3 < TmpNbrM3Values; ++m3)
 			  {
 			    Index = TmpParticles->AdAd(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
 			    if (Index < Dim)			
-			      vDestination[Index] += Coefficient * this->InteractionFactors[ReducedNbrInteractionFactors] * Coefficient2;
+			      TmpSum += vSource[Index] * Coefficient * this->InteractionFactors[ReducedNbrInteractionFactors] * Coefficient2;
 			    ++ReducedNbrInteractionFactors;
 			  }
 		      }
 		    else
 		      ReducedNbrInteractionFactors += this->NbrM3Values[m1];
 		  }
-		vDestination[i] += this->HamiltonianShift * vSource[i];
+		vDestination[i] += TmpSum + this->HamiltonianShift * vSource[i];
 	      }
 	    
 	  }
@@ -1295,7 +1295,7 @@ RealVector& AbstractQHEOnSphereHamiltonian::ConjugateLowLevelAddMultiplyPartialF
 		  {
 		    Index = this->Particles->AdA(i, m1, m2, Coefficient);
 		    if (Index < Dim)
-		      vDestination[Index] += Coefficient * TmpInteraction * vSource[i];		  
+		      vDestination[i] += Coefficient * TmpInteraction * vSource[Index];
 		  }
 	      }
 	  }
@@ -1318,7 +1318,6 @@ RealVector& AbstractQHEOnSphereHamiltonian::ConjugateLowLevelAddMultiplyPartialF
 RealVector& AbstractQHEOnSphereHamiltonian::ConjugateLowLevelAddMultiplyDiskStorage(RealVector& vSource, RealVector& vDestination, 
 									   int firstComponent, int nbrComponent)
 {
-  cout << "ConjugateLowLevelAddMultiplyDiskStorage not yet edited!"<<endl;
   double Coefficient;
   int* BufferIndexArray = new int [this->BufferSize * this->MaxNbrInteractionPerComponent];
   double* BufferCoefficientArray  = new double [this->BufferSize * this->MaxNbrInteractionPerComponent];
@@ -1363,16 +1362,16 @@ RealVector& AbstractQHEOnSphereHamiltonian::ConjugateLowLevelAddMultiplyDiskStor
       TmpCoefficientArray = BufferCoefficientArray;
       for (int l = 0; l < this->BufferSize; ++l)
 	{
+	  double TmpSum=0.0;
 	  TmpNbrInteraction = this->NbrInteractionPerComponent[firstComponent];
-	  Coefficient = vSource[k];
 	  if (TmpNbrInteraction > 0)
 	    {
 	      for (int j = 0; j < TmpNbrInteraction; ++j)
-		vDestination[TmpIndexArray[j]] +=  TmpCoefficientArray[j] * Coefficient;
+		TmpSum +=  TmpCoefficientArray[j] * vSource[TmpIndexArray[j]];
 	      TmpIndexArray += TmpNbrInteraction;
 	      TmpCoefficientArray += TmpNbrInteraction;
 	    }
-	  vDestination[k] += this->HamiltonianShift * Coefficient;
+	  vDestination[k] += TmpSum + this->HamiltonianShift * vSource[k];
 	  ++k;
 	  ++firstComponent;
 	}
@@ -1399,16 +1398,16 @@ RealVector& AbstractQHEOnSphereHamiltonian::ConjugateLowLevelAddMultiplyDiskStor
       TmpCoefficientArray = BufferCoefficientArray;
       for (int i = 0; i < Lim; ++i)
 	{
+	  double TmpSum = 0.0;
 	  TmpNbrInteraction = this->NbrInteractionPerComponent[firstComponent];
-	  Coefficient = vSource[k];
 	  if (TmpNbrInteraction > 0)
 	    {
 	      for (int j = 0; j < TmpNbrInteraction; ++j)
-		vDestination[TmpIndexArray[j]] +=  TmpCoefficientArray[j] * Coefficient;
+		TmpSum +=  TmpCoefficientArray[j] * vSource[TmpIndexArray[j]];
 	      TmpIndexArray += TmpNbrInteraction;
 	      TmpCoefficientArray += TmpNbrInteraction;
 	    }
-	  vDestination[k] += this->HamiltonianShift * Coefficient;
+	  vDestination[k] += TmpSum + this->HamiltonianShift * Coefficient;
 	  ++k;
 	  ++firstComponent;
 	}
@@ -1463,7 +1462,7 @@ RealVector* AbstractQHEOnSphereHamiltonian::ConjugateLowLevelMultipleAddMultiply
 		    {
 		      Coefficient *= TmpInteraction;
 		      for (int l = 0; l < nbrVectors; ++l)
-			vDestinations[l][Index] += Coefficient * vSources[l][i];
+			vDestinations[l][i] += Coefficient * vSources[l][Index];
 		    }
 		}
 	    }
@@ -1474,11 +1473,13 @@ RealVector* AbstractQHEOnSphereHamiltonian::ConjugateLowLevelMultipleAddMultiply
 	  int SumIndices;
 	  int TmpNbrM3Values;
 	  int* TmpM3Values;
-	  double* TmpCoefficients = new double[nbrVectors];
+	  double* TmpSum = new double[nbrVectors];
 	  int ReducedNbrInteractionFactors;
 	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
 	      ReducedNbrInteractionFactors = 0;
+	      for (int l = 0; l < nbrVectors; ++l)
+		TmpSum[l] = 0.0;
 	      for (m1 = 0; m1 < this->NbrM12Indices; ++m1)
 		{
 		  Coefficient = TmpParticles->AA(i, this->M1Value[m1], this->M2Value[m1]);	  
@@ -1487,22 +1488,25 @@ RealVector* AbstractQHEOnSphereHamiltonian::ConjugateLowLevelMultipleAddMultiply
 		      SumIndices = this->M1Value[m1] + this->M2Value[m1];
 		      TmpNbrM3Values = this->NbrM3Values[m1];
 		      TmpM3Values = this->M3Values[m1];
-		      for (int l = 0; l < nbrVectors; ++l)
-			TmpCoefficients[l] = Coefficient * vSources[l][i];
 		      for (m3 = 0; m3 < TmpNbrM3Values; ++m3)
 			{
 			  Index = TmpParticles->AdAd(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
 			  if (Index < Dim)
-			    for (int l = 0; l < nbrVectors; ++l)
-			      vDestinations[l][Index] += TmpCoefficients[l] * this->InteractionFactors[ReducedNbrInteractionFactors] * Coefficient2;
-			  ++ReducedNbrInteractionFactors;
+			    {
+			      Coefficient *= this->InteractionFactors[ReducedNbrInteractionFactors] * Coefficient2;
+			      for (int l = 0; l < nbrVectors; ++l)
+				TmpSum[l] += Coefficient * vSources[l][Index];
+			      ++ReducedNbrInteractionFactors;
+			    }
 			}
 		    }
 		  else
 		    ReducedNbrInteractionFactors += this->NbrM3Values[m1];
 		}
+	      for (int l = 0; l < nbrVectors; ++l)
+		vDestinations[l][i]+=TmpSum[l];
 	    }
-	  delete[] TmpCoefficients;
+	  delete[] TmpSum;
 	}
       for (int l = 0; l < nbrVectors; ++l)
 	{
@@ -1525,7 +1529,7 @@ RealVector* AbstractQHEOnSphereHamiltonian::ConjugateLowLevelMultipleAddMultiply
 		    {
 		      Coefficient *= TmpInteraction;
 		      for (int l = 0; l < nbrVectors; ++l)
-			vDestinations[l][Index] += Coefficient * vSources[l][i];
+			vDestinations[l][i] += Coefficient * vSources[l][Index];
 		    }
 		}
 	    }
@@ -1536,37 +1540,34 @@ RealVector* AbstractQHEOnSphereHamiltonian::ConjugateLowLevelMultipleAddMultiply
     {
       if (this->FastMultiplicationStep == 1)
 	{
-	  double* Coefficient2 = new double [nbrVectors];
+	  double* TmpSum = new double [nbrVectors];
 	  int* TmpIndexArray;
 	  double* TmpCoefficientArray; 
 	  int j;
-	  int Pos;
+	  int Index;
 	  int TmpNbrInteraction;
 	  int k = firstComponent;
 	  firstComponent -= this->PrecalculationShift;
 	  LastComponent -= this->PrecalculationShift;
 	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
+	      for (int l = 0; l < nbrVectors; ++l)
+		TmpSum[l] = 0.0;
 	      TmpNbrInteraction = this->NbrInteractionPerComponent[i];
 	      TmpIndexArray = this->InteractionPerComponentIndex[i];
 	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[i];
-	      for (int l = 0; l < nbrVectors; ++l)
-		{
-		  Coefficient2[l] = vSources[l][k];
-		  vDestinations[l][k] += this->HamiltonianShift * Coefficient2[l];
-		}
 	      for (j = 0; j < TmpNbrInteraction; ++j)
 		{
-		  Pos = TmpIndexArray[j];
+		  Index = TmpIndexArray[j];
 		  Coefficient = TmpCoefficientArray[j];
 		  for (int l = 0; l < nbrVectors; ++l)
-		    {
-		      vDestinations[l][Pos] +=  Coefficient * Coefficient2[l];
-		    }
+		    TmpSum[l] +=  Coefficient * vSources[l][Index];
 		}
+	      for (int l = 0; l < nbrVectors; ++l)
+		vDestinations[l][k] += TmpSum[l] + this->HamiltonianShift * vSources[l][k];
 	      ++k;
 	    }
-	  delete[] Coefficient2;
+	  delete[] TmpSum;
 	}
       else
 	{
@@ -1600,14 +1601,14 @@ RealVector* AbstractQHEOnSphereHamiltonian::ConjugateLowLevelMultipleAddMultiply
 RealVector* AbstractQHEOnSphereHamiltonian::ConjugateLowLevelMultipleAddMultiplyPartialFastMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
 											   int firstComponent, int nbrComponent)
 {
-  cout << "ConjugateLowLevelMultipleAddMultiplyPartialFastMultiply not yet edited!"<<endl;
   int LastComponent = firstComponent + nbrComponent;
   int Dim = this->Particles->GetHilbertSpaceDimension();
   double Coefficient;
   ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
+  double *TmpSum = new double[nbrVectors];
   int* TmpIndexArray;
   double* TmpCoefficientArray; 
-  double* Coefficient2 = new double [nbrVectors];
+  // double* Coefficient2 = new double [nbrVectors];
   int j;
   int TmpNbrInteraction;
   firstComponent -= this->PrecalculationShift;
@@ -1623,23 +1624,20 @@ RealVector* AbstractQHEOnSphereHamiltonian::ConjugateLowLevelMultipleAddMultiply
   int l =  PosMod + firstComponent + this->PrecalculationShift;
   for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
     {
+      for (int n = 0; n < nbrVectors; ++n)
+	TmpSum[n] = 0.0;
       TmpNbrInteraction = this->NbrInteractionPerComponent[Pos];
       TmpIndexArray = this->InteractionPerComponentIndex[Pos];
       TmpCoefficientArray = this->InteractionPerComponentCoefficient[Pos];
-      for (int k = 0; k < nbrVectors; ++k)
-	{
-	  Coefficient2[k] = vSources[k][l];
-	  vDestinations[k][l] += this->HamiltonianShift * Coefficient2[k];
-	}
       for (j = 0; j < TmpNbrInteraction; ++j)
 	{
 	  Pos2 = TmpIndexArray[j];
 	  Coefficient = TmpCoefficientArray[j];
 	  for (int k = 0; k < nbrVectors; ++k)
-	    {
-	      vDestinations[k][Pos2] += Coefficient  * Coefficient2[k];
-	    }
+	    TmpSum[k] += Coefficient  * vSources[k][Pos2];
 	}
+      for (int k = 0; k < nbrVectors; ++k)
+	vDestinations[k][l] += TmpSum[k] + this->HamiltonianShift * vSources[k][l];
       l += this->FastMultiplicationStep;
       ++Pos;
     }
@@ -1669,7 +1667,7 @@ RealVector* AbstractQHEOnSphereHamiltonian::ConjugateLowLevelMultipleAddMultiply
 		    {
 		      Coefficient *= TmpInteraction;
 		      for (int l = 0; l < nbrVectors; ++l)
-			vDestinations[l][Index] += Coefficient * vSources[l][i];
+			vDestinations[l][i] += Coefficient * vSources[l][Index];
 		    }
 		}
 	    }
@@ -1679,11 +1677,12 @@ RealVector* AbstractQHEOnSphereHamiltonian::ConjugateLowLevelMultipleAddMultiply
 	    int SumIndices;
 	    int TmpNbrM3Values;
 	    int* TmpM3Values;
-	    double* TmpCoefficients = new double[nbrVectors];
 	    int ReducedNbrInteractionFactors;
 	    for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
 	      {
 		ReducedNbrInteractionFactors = 0;
+		for (int l = 0; l < nbrVectors; ++l)
+		  TmpSum[l] = 0.0; 
 		for (m1 = 0; m1 < this->NbrM12Indices; ++m1)
 		  {
 		    Coefficient = TmpParticles->AA(i, this->M1Value[m1], this->M2Value[m1]);	  
@@ -1692,22 +1691,26 @@ RealVector* AbstractQHEOnSphereHamiltonian::ConjugateLowLevelMultipleAddMultiply
 			SumIndices = this->M1Value[m1] + this->M2Value[m1];
 			TmpNbrM3Values = this->NbrM3Values[m1];
 			TmpM3Values = this->M3Values[m1];
-			for (int l = 0; l < nbrVectors; ++l)
-			  TmpCoefficients[l] = Coefficient * vSources[l][i];
+			
 			for (m3 = 0; m3 < TmpNbrM3Values; ++m3)
 			  {
 			    Index = TmpParticles->AdAd(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
 			    if (Index < Dim)
-			      for (int l = 0; l < nbrVectors; ++l)
-				vDestinations[l][Index] += TmpCoefficients[l] * this->InteractionFactors[ReducedNbrInteractionFactors] * Coefficient2;
+			      {
+				Coefficient *= this->InteractionFactors[ReducedNbrInteractionFactors] * Coefficient2;
+				for (int l = 0; l < nbrVectors; ++l)
+				  TmpSum[l] += Coefficient * vSources[l][Index];
+			      }
 			    ++ReducedNbrInteractionFactors;
 			  }
 		      }
 		    else
 		      ReducedNbrInteractionFactors += this->NbrM3Values[m1];
 		  }
+		for (int l = 0; l < nbrVectors; ++l)
+		  vDestinations[l][i]+=TmpSum[l];
 	      }
-	    delete[] TmpCoefficients;
+	    delete[] TmpSum;
 	  }
 	for (int l = 0; l < nbrVectors; ++l)
 	  {
@@ -1730,13 +1733,13 @@ RealVector* AbstractQHEOnSphereHamiltonian::ConjugateLowLevelMultipleAddMultiply
 		      {
 			Coefficient *= TmpInteraction;
 			for (int l = 0; l < nbrVectors; ++l)
-			  vDestinations[l][Index] += Coefficient * vSources[l][i];
+			  vDestinations[l][i] += Coefficient * vSources[l][Index];
 		      }
 		  }
 	      }
 	  }
       }
-  delete[] Coefficient2;
+  delete[] TmpSum;
   delete TmpParticles;
   return vDestinations;
 }
@@ -1755,14 +1758,13 @@ RealVector* AbstractQHEOnSphereHamiltonian::ConjugateLowLevelMultipleAddMultiply
 RealVector* AbstractQHEOnSphereHamiltonian::ConjugateLowLevelMultipleAddMultiplyDiskStorage(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
 										   int firstComponent, int nbrComponent)
 {
-  cout << "ConjugateLowLevelMultipleAddMultiplyDiskStorage not yet edited"<<endl;
   double Coefficient;
   int* BufferIndexArray = new int [this->BufferSize * this->MaxNbrInteractionPerComponent];
   double* BufferCoefficientArray  = new double [this->BufferSize * this->MaxNbrInteractionPerComponent];
-  double* Coefficient2 = new double [nbrVectors];
   int TmpNbrIteration = nbrComponent / this->BufferSize;
   int* TmpIndexArray;
   double* TmpCoefficientArray;
+  double *TmpSum = new double[nbrVectors]; 
   int TmpNbrInteraction;
   int k = firstComponent;
   int EffectiveHilbertSpaceDimension;
@@ -1781,7 +1783,8 @@ RealVector* AbstractQHEOnSphereHamiltonian::ConjugateLowLevelMultipleAddMultiply
     FileOffset += this->NbrInteractionPerComponent[i];
   File.seekg (((FileOffset + EffectiveHilbertSpaceDimension + 1) * sizeof(int)), ios::cur);
   FileJump += (sizeof(double) - sizeof(int)) * FileOffset;
-  
+
+
   for (int i = 0; i < TmpNbrIteration; ++i)
     {
       int TmpPos = firstComponent;
@@ -1802,12 +1805,9 @@ RealVector* AbstractQHEOnSphereHamiltonian::ConjugateLowLevelMultipleAddMultiply
       TmpCoefficientArray = BufferCoefficientArray;
       for (int m = 0; m < this->BufferSize; ++m)
 	{
-	  TmpNbrInteraction = this->NbrInteractionPerComponent[firstComponent];
 	  for (int l = 0; l < nbrVectors; ++l)
-	    {
-	      Coefficient2[l] = vSources[l][k];
-	      vDestinations[l][k] += this->HamiltonianShift * Coefficient2[l];
-	    }
+	    TmpSum[l]=0.0;
+	  TmpNbrInteraction = this->NbrInteractionPerComponent[firstComponent];
 	  if (TmpNbrInteraction > 0)
 	    {
 	      for (int j = 0; j < TmpNbrInteraction; ++j)
@@ -1815,13 +1815,13 @@ RealVector* AbstractQHEOnSphereHamiltonian::ConjugateLowLevelMultipleAddMultiply
 		  Pos = TmpIndexArray[j];
 		  Coefficient = TmpCoefficientArray[j];
 		  for (int l = 0; l < nbrVectors; ++l)
-		    {
-		      vDestinations[l][Pos] +=  Coefficient * Coefficient2[l];
-		    }
+		    TmpSum[l] +=  Coefficient * vSources[l][Pos];
 		}
 	      TmpIndexArray += TmpNbrInteraction;
 	      TmpCoefficientArray += TmpNbrInteraction;
 	    }
+	  for (int l = 0; l < nbrVectors; ++l)
+	    vDestinations[l][k] += TmpSum[l] + this->HamiltonianShift * vSources[l][k];
 	  ++k;
 	  ++firstComponent;
 	}
@@ -1848,12 +1848,9 @@ RealVector* AbstractQHEOnSphereHamiltonian::ConjugateLowLevelMultipleAddMultiply
       TmpCoefficientArray = BufferCoefficientArray;
       for (int m = 0; m < Lim; ++m)
 	{
-	  TmpNbrInteraction = this->NbrInteractionPerComponent[firstComponent];
 	  for (int l = 0; l < nbrVectors; ++l)
-	    {
-	      Coefficient2[l] = vSources[l][k];
-	      vDestinations[l][k] += this->HamiltonianShift * Coefficient2[l];
-	    }
+	    TmpSum[l]=0.0;
+	  TmpNbrInteraction = this->NbrInteractionPerComponent[firstComponent];
 	  if (TmpNbrInteraction > 0)
 	    {
 	      for (int j = 0; j < TmpNbrInteraction; ++j)
@@ -1861,22 +1858,22 @@ RealVector* AbstractQHEOnSphereHamiltonian::ConjugateLowLevelMultipleAddMultiply
 		  Pos = TmpIndexArray[j];
 		  Coefficient = TmpCoefficientArray[j];
 		  for (int l = 0; l < nbrVectors; ++l)
-		    {
-		      vDestinations[l][Pos] +=  Coefficient * Coefficient2[l];
-		    }
+		    TmpSum[l] +=  Coefficient * vSources[l][Pos];
 		}
 	      TmpIndexArray += TmpNbrInteraction;
 	      TmpCoefficientArray += TmpNbrInteraction;
 	    }
+	  for (int l = 0; l < nbrVectors; ++l)
+	    vDestinations[l][k] += TmpSum[l] + this->HamiltonianShift * vSources[l][k];
 	  ++k;
 	  ++firstComponent;
 	}
     }
   
   File.close();
+  delete[] TmpSum;
   delete[] BufferIndexArray;
   delete[] BufferCoefficientArray;
-  delete[] Coefficient2;
   return vDestinations;
 }
 
