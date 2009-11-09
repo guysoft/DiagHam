@@ -19,6 +19,7 @@
 #include "Options/BooleanOption.h"
 #include "Options/SingleIntegerOption.h"
 #include "Options/SingleStringOption.h"
+#include "Options/SingleDoubleOption.h"
 
 #include "GeneralTools/ArrayTools.h"
 #include "GeneralTools/FilenameTools.h"
@@ -76,6 +77,7 @@ int main(int argc, char** argv)
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
+  (*ToolsGroup) += new SingleDoubleOption  ('\n', "diag-precision", "convergence precision in non LAPACK mode", 1e-7);
 #endif
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -450,7 +452,7 @@ int main(int argc, char** argv)
 						      PartialDensityMatrix.GetNbrRow(), true);
 			    for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
 			      TmpEigenstates[i][i] = 1.0;
-			    PartialDensityMatrix.Diagonalize(TmpDiag, TmpEigenstates);
+			    PartialDensityMatrix.Diagonalize(TmpDiag, TmpEigenstates, Manager.GetDouble("diag-precision"));
 			    TmpDiag.SortMatrixDownOrder(TmpEigenstates);
 			    char* TmpEigenstateName = new char[512];
 			    int MaxNbrEigenstates = NbrEigenstates;
@@ -471,7 +473,7 @@ int main(int argc, char** argv)
 			  }
 			else
 			  {
-			    PartialDensityMatrix.Diagonalize(TmpDiag);
+			    PartialDensityMatrix.Diagonalize(TmpDiag, Manager.GetDouble("diag-precision"));
 			    TmpDiag.SortMatrixDownOrder();
 			  }
 		      }
@@ -481,7 +483,7 @@ int main(int argc, char** argv)
 		      {
 			if (PartialDensityMatrix.GetNbrRow() == 1)
 			  {
-			    PartialDensityMatrix.Diagonalize(TmpDiag);
+			    PartialDensityMatrix.Diagonalize(TmpDiag, Manager.GetDouble("diag-precision"));
 			    TmpDiag.SortMatrixDownOrder();
 			  }
 			else
@@ -490,7 +492,7 @@ int main(int argc, char** argv)
 						      PartialDensityMatrix.GetNbrRow(), true);
 			    for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
 			      TmpEigenstates[i][i] = 1.0;
-			    PartialDensityMatrix.Diagonalize(TmpDiag, TmpEigenstates);
+			    PartialDensityMatrix.Diagonalize(TmpDiag, TmpEigenstates, Manager.GetDouble("diag-precision"));
 			    TmpDiag.SortMatrixDownOrder(TmpEigenstates);
 			    char* TmpEigenstateName = new char[512];
 			    int MaxNbrEigenstates = NbrEigenstates;
@@ -512,7 +514,7 @@ int main(int argc, char** argv)
 		      }
 		    else
 		      {
-			PartialDensityMatrix.Diagonalize(TmpDiag);
+			PartialDensityMatrix.Diagonalize(TmpDiag, Manager.GetDouble("diag-precision"));
 			TmpDiag.SortMatrixDownOrder();
 		      }
 #endif		  

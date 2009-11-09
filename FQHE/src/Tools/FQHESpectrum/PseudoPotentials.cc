@@ -112,7 +112,8 @@ double* GetMonomialPseudopotentials(int nbrFlux, int exponentN, bool onlyOdd, bo
   if (onlyOdd) // fit only the odd pseudopotentials?
     {
       sizeRst /= 2;
-      if (nbrFlux&1==0) --sizeRst;
+      if ((nbrFlux & 1) ==0)
+	--sizeRst;
     }    
   int spacing = (onlyOdd ?2:1);
   int M= (onlyOdd?1:0);
@@ -551,3 +552,29 @@ double* EvaluateGrapheneBilayerPseudopotentials(int nbrFlux, int& nbrPseudopoten
   delete[] Coefficients4j;      
   return Pseudopotentials;
 }
+
+// evalute pseudopotentials for dipolar interaction in the lowest Landau level Landau level
+//
+// nbrFlux = number of flux quanta (i.e. twice the maximum momentum for a single particle)
+// quiet = indicate whether Coulomb Pseudopotentials should be printed on screen
+// return value = array that conatins the pseudopotentials
+
+double* EvaluateDipolarPseudopotentials(int nbrFlux, bool quiet)
+{
+  double* Pseudopotentials = new double [nbrFlux + 1];
+  double Factor = 1.0 / sqrt(0.5 * ((double) nbrFlux));
+  Factor *= Factor * Factor;
+  Factor *= 0.5 * ((double) (nbrFlux + 1)) * ((double) (nbrFlux + 1));
+  BinomialCoefficients Binomial (4 * nbrFlux);
+  for (int j = 0; j < nbrFlux; ++j)
+    {
+      Pseudopotentials[nbrFlux - j] = (Factor / (((double) (nbrFlux + 1 + j)) * (((double) (nbrFlux - j))))) * 
+	(Binomial.GetNumericalCoefficient(2 *(nbrFlux + j), nbrFlux + j) / Binomial(2 * nbrFlux, nbrFlux)) * 
+	(Binomial.GetNumericalCoefficient(2 *(nbrFlux - j - 1), nbrFlux - j - 1) / Binomial.GetNumericalCoefficient(2 * nbrFlux, nbrFlux));
+      if (quiet == false)
+	cout << "V[" << (nbrFlux - j) << "] = " << Pseudopotentials[nbrFlux - j] << endl;
+    }
+  Pseudopotentials[0] = 0.0;
+  return Pseudopotentials;
+}
+

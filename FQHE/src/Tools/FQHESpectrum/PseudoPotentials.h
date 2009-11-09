@@ -44,6 +44,13 @@
 // return value = array that conatins the pseudopotentials
 double* EvaluatePseudopotentials(int nbrFlux, int landauLevel, double layerSeparation=0.0, bool quiet=false);
 
+// evalute pseudopotentials for dipolar interaction in the lowest Landau level Landau level
+//
+// nbrFlux = number of flux quanta (i.e. twice the maximum momentum for a single particle)
+// quiet = indicate whether Coulomb Pseudopotentials should be printed on screen
+// return value = array that conatins the pseudopotentials
+double* EvaluateDipolarPseudopotentials(int nbrFlux, bool quiet = false);
+
 // evalute pseudopotentials for coulomb interaction in a given Landau level with a given density profile
 //
 // nbrFlux = number of flux quanta (i.e. twice the maximum momentum for a single particle)

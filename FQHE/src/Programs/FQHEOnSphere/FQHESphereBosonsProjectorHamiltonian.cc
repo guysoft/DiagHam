@@ -5,6 +5,8 @@
 #include "HilbertSpace/BosonOnSphereSymmetricBasisShort.h"
 
 #include "Hamiltonian/ParticleOnSphereProjectorHamiltonian.h"
+#include "Hamiltonian/LinearlySuperposedQHEOnSphereHamiltonian.h"
+#include "Hamiltonian/ParticleOnSphereGenericHamiltonian.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -61,6 +63,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of lz value to evaluate", -1);
   (*SystemGroup) += new  SingleStringOption ('\n', "projector-state", "file describing the projector state");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
+  (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing an optional 2-body interaction in terms of the pseudo-potential");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new SingleDoubleOption ('\n', "l2-factor", "multiplicative factor in front of an optional L^2 operator than can be added to the Hamiltonian", 0.0);
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
@@ -153,11 +156,50 @@ int main(int argc, char** argv)
       AbstractQHEOnSphereHamiltonian* Hamiltonian = 0;
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
-      Hamiltonian = new ParticleOnSphereProjectorHamiltonian(Space, NbrParticles, LzMax, ProjectorState, ProjectorSpace, ProjectorNbrParticles,
-							     ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),
-							     Architecture.GetArchitecture(), 
-							     Memory, DiskCacheFlag,
-							     LoadPrecalculationFileName);
+      if (Manager.GetString("interaction-file") == 0)
+	{
+	  Hamiltonian = new ParticleOnSphereProjectorHamiltonian(Space, NbrParticles, LzMax, ProjectorState, ProjectorSpace, ProjectorNbrParticles,
+								 ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),
+								 Architecture.GetArchitecture(), 
+								 Memory, DiskCacheFlag,
+								 LoadPrecalculationFileName);
+	}
+      else
+	{
+	  ConfigurationParser InteractionDefinition;
+	  double* PseudoPotentials = 0;
+	  if (InteractionDefinition.Parse(((SingleStringOption*) Manager["interaction-file"])->GetString()) == false)
+	    {
+	      InteractionDefinition.DumpErrors(cout) << endl;
+	      return -1;
+	    }
+	  int TmpNbrPseudoPotentials;
+	  if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials", ' ', PseudoPotentials, TmpNbrPseudoPotentials) == false)
+	    {
+	      cout << "Weights is not defined or as a wrong value in " << ((SingleStringOption*) Manager["interaction-file"])->GetString() << endl;
+	      return -1;
+	    }
+	  if (TmpNbrPseudoPotentials != (LzMax +1))
+	    {
+	      cout << "Invalid number of pseudo-potentials" << endl;
+	      return -1;	  
+	    }
+	  AbstractQHEOnSphereHamiltonian** TmpHamiltonians = new AbstractQHEOnSphereHamiltonian*[2];
+	  TmpHamiltonians[0] = new ParticleOnSphereProjectorHamiltonian(Space, NbrParticles, LzMax, ProjectorState, 
+									ProjectorSpace, ProjectorNbrParticles,
+									((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),
+									Architecture.GetArchitecture(), 
+									Memory, DiskCacheFlag,
+									LoadPrecalculationFileName);
+	  TmpHamiltonians[1] = new ParticleOnSphereGenericHamiltonian(Space, NbrParticles, LzMax, PseudoPotentials,
+								      ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),
+								      Architecture.GetArchitecture(), 
+								      Memory);
+	  double* TmpCoefficients = new double [2];
+	  TmpCoefficients[0] = 1.0;
+	  TmpCoefficients[1] = 1.0;	  
+	  Hamiltonian = new LinearlySuperposedQHEOnSphereHamiltonian(2, TmpCoefficients, TmpHamiltonians);
+	}
 
       double Shift = - 0.5 * ((double) (NbrParticles * NbrParticles)) / (0.5 * ((double) LzMax));
       Hamiltonian->ShiftHamiltonian(Shift);

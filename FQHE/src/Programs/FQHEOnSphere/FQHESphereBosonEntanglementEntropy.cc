@@ -176,16 +176,19 @@ int main(int argc, char** argv)
 	if ((LzMax + NbrParticles - 1) < 31)	
 #endif
 	  {
-	    if ((SymmetrizedBasis == false) || (TotalLz != 0))
-	      Spaces[i] = new BosonOnSphereShort (NbrParticles, TotalLz[i], LzMax);
-	    else
+	    if (Manager.GetBoolean("haldane") == false)
 	      {
-		Spaces[i] = new BosonOnSphereShort (NbrParticles, TotalLz[i], LzMax);
-		BosonOnSphereSymmetricBasisShort TmpSpace(NbrParticles, LzMax);
-		RealVector OutputState = TmpSpace.ConvertToNbodyBasis(GroundStates[i], *((BosonOnSphereShort*) Spaces[i]));
-		GroundStates[i] = OutputState;
+		if ((SymmetrizedBasis == false) || (TotalLz != 0))
+		  Spaces[i] = new BosonOnSphereShort (NbrParticles, TotalLz[i], LzMax);
+		else
+		  {
+		    Spaces[i] = new BosonOnSphereShort (NbrParticles, TotalLz[i], LzMax);
+		    BosonOnSphereSymmetricBasisShort TmpSpace(NbrParticles, LzMax);
+		    RealVector OutputState = TmpSpace.ConvertToNbodyBasis(GroundStates[i], *((BosonOnSphereShort*) Spaces[i]));
+		    GroundStates[i] = OutputState;
+		  }
 	      }
-	    if (Manager.GetBoolean("haldane") == true)
+	    else
 	      {
 		int* ReferenceState = 0;
 		if (((SingleStringOption*) Manager["reference-file"])->GetString() == 0)
