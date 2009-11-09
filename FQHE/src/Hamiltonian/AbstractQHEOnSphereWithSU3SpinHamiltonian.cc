@@ -117,6 +117,21 @@ AbstractQHEOnSphereWithSU3SpinHamiltonian::~AbstractQHEOnSphereWithSU3SpinHamilt
     delete[] this->OneBodyInteractionFactors33;  
 }
 
+// ask if Hamiltonian implements hermitian symmetry operations
+//
+bool AbstractQHEOnSphereWithSU3SpinHamiltonian::IsHermitian()
+{
+  return false;
+}
+
+// ask if Hamiltonian implements conjugate methods
+//
+bool AbstractQHEOnSphereWithSU3SpinHamiltonian::IsConjugate()
+{
+  return false;
+}
+
+
 // multiply a vector by the current hamiltonian for a given range of indices 
 // and add result to another vector, low level function (no architecture optimization)
 //

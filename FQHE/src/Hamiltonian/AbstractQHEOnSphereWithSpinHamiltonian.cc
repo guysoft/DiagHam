@@ -116,6 +116,20 @@ AbstractQHEOnSphereWithSpinHamiltonian::~AbstractQHEOnSphereWithSpinHamiltonian(
     delete this->L2Hamiltonian;
 }
 
+// ask if Hamiltonian implements hermitian symmetry operations
+//
+bool AbstractQHEOnSphereWithSpinHamiltonian::IsHermitian()
+{
+  return false;
+}
+
+// ask if Hamiltonian implements conjugate methods
+//
+bool AbstractQHEOnSphereWithSpinHamiltonian::IsConjugate()
+{
+  return false;
+}
+
 // add an additional S^2 term to the Hamiltonian
 //
 // totalLz = twice the projected momentum total value

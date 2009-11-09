@@ -31,7 +31,7 @@
 
 #include "config.h"
 #include "Hamiltonian/ParticleOnSphereGenericFiveBodyHamiltonian.h"
-#include "Operator/ParticleOnSphereSquareTotalMomentumOperator.h"
+#include "Hamiltonian/ParticleOnSphereL2Hamiltonian.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "MathTools/ClebschGordanCoefficients.h"
 
@@ -172,7 +172,7 @@ ParticleOnSphereGenericFiveBodyHamiltonian::ParticleOnSphereGenericFiveBodyHamil
 
   if (l2Factor != 0.0)
     {
-      this->L2Operator = new ParticleOnSphereSquareTotalMomentumOperator(this->Particles, this->LzMax, l2Factor);
+      this->L2Operator = new ParticleOnSphereL2Hamiltonian(this->Particles, this->NbrParticles, this->LzMax, this->Particles->GetLzValue() , this->Architecture, l2Factor); 
     }
   else
     {
@@ -310,7 +310,7 @@ ParticleOnSphereGenericFiveBodyHamiltonian::ParticleOnSphereGenericFiveBodyHamil
 
   if (l2Factor != 0.0)
     {
-      this->L2Operator = new ParticleOnSphereSquareTotalMomentumOperator(this->Particles, this->LzMax, l2Factor);
+      this->L2Operator = new ParticleOnSphereL2Hamiltonian(this->Particles, this->NbrParticles, this->LzMax, this->Particles->GetLzValue() , this->Architecture, l2Factor);
     }
   else
     {
@@ -440,7 +440,7 @@ ParticleOnSphereGenericFiveBodyHamiltonian::ParticleOnSphereGenericFiveBodyHamil
     this->LoadPrecalculation(precalculationFileName);
   if (l2Factor != 0.0)
     {
-      this->L2Operator = new ParticleOnSphereSquareTotalMomentumOperator(this->Particles, this->LzMax, l2Factor);
+      this->L2Operator = new ParticleOnSphereL2Hamiltonian(this->Particles, this->NbrParticles, this->LzMax, this->Particles->GetLzValue() , this->Architecture, l2Factor);
     }
   else
     {

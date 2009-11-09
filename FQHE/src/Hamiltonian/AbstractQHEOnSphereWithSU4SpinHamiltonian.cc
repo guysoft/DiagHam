@@ -100,6 +100,21 @@ AbstractQHEOnSphereWithSU4SpinHamiltonian::~AbstractQHEOnSphereWithSU4SpinHamilt
     }
 }
 
+// ask if Hamiltonian implements hermitian symmetry operations
+//
+bool AbstractQHEOnSphereWithSU4SpinHamiltonian::IsHermitian()
+{
+  return false;
+}
+
+// ask if Hamiltonian implements conjugate methods
+//
+bool AbstractQHEOnSphereWithSU4SpinHamiltonian::IsConjugate()
+{
+  return false;
+}
+
+
 // multiply a vector by the current hamiltonian for a given range of indices 
 // and add result to another vector, low level function (no architecture optimization)
 //

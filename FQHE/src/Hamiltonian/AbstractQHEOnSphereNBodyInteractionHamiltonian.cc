@@ -35,7 +35,7 @@
 #include "Vector/ComplexVector.h"
 #include "MathTools/Complex.h"
 #include "MathTools/IntegerAlgebraTools.h"
-#include "Operator/ParticleOnSphereSquareTotalMomentumOperator.h"
+#include "Hamiltonian/ParticleOnSphereL2Hamiltonian.h"
 
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/QHEParticlePrecalculationOperation.h"
@@ -60,6 +60,21 @@ using std::ios;
 AbstractQHEOnSphereNBodyInteractionHamiltonian::~AbstractQHEOnSphereNBodyInteractionHamiltonian()
 {
 }
+
+// ask if Hamiltonian implements hermitian symmetry operations
+//
+bool AbstractQHEOnSphereNBodyInteractionHamiltonian::IsHermitian()
+{
+  return false;
+}
+
+// ask if Hamiltonian implements conjugate methods
+//
+bool AbstractQHEOnSphereNBodyInteractionHamiltonian::IsConjugate()
+{
+  return false;
+}
+
 
 // multiply a vector by the current hamiltonian for a given range of indices 
 // and add result to another vector, low level function (no architecture optimization)

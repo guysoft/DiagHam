@@ -45,7 +45,7 @@ class ParticleOnSphere :  public AbstractQHEParticle
 
   enum 
     {
-      NoSymmetry = 0x0,
+       NoSymmetry = 0x0,
       LzMinusLzSymmetry = 0x1
     };
 
@@ -333,6 +333,12 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // patternShift = indicate where the pattern has to be applied
   // return value = trucated state
   virtual RealVector TruncateStateWithPatternConstraint(RealVector& inputVector, ParticleOnSphere* reducedSpace, int* pattern, int patternSize, int patternShift = 0);
+
+  // get Lz component of a component
+  //
+  // j = index of the component in Hilbert space
+  // return value = twice the Lz component
+  virtual int GetLzValue(int j=0);
 
   // get Sz component of the spin
   //

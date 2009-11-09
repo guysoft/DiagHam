@@ -35,7 +35,7 @@
 #include "MathTools/ClebschGordanCoefficients.h"
 #include "MathTools/FactorialCoefficient.h"
 #include "FunctionBasis/ParticleOnSphereFunctionBasis.h"
-#include "Operator/ParticleOnSphereSquareTotalMomentumOperator.h"
+#include "Hamiltonian/ParticleOnSphereL2Hamiltonian.h"
 
 #include "Vector/RealVector.h"
 #include "FunctionBasis/ParticleOnSphereGenericLLFunctionBasis.h"
@@ -157,7 +157,7 @@ ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::ParticleOnSphereNBody
     this->LoadPrecalculation(precalculationFileName);
   if (l2Factor != 0.0)
     {
-      this->L2Operator = new ParticleOnSphereSquareTotalMomentumOperator(this->Particles, this->LzMax, l2Factor);
+      this->L2Operator = new ParticleOnSphereL2Hamiltonian(this->Particles, this->NbrParticles, this->LzMax, this->Particles->GetLzValue() , this->Architecture, l2Factor);
     }
   else
     {
@@ -272,7 +272,7 @@ ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::ParticleOnSphereNBody
     this->LoadPrecalculation(precalculationFileName);
   if (l2Factor != 0.0)
     {
-      this->L2Operator = new ParticleOnSphereSquareTotalMomentumOperator(this->Particles, this->LzMax, l2Factor);
+      this->L2Operator = new ParticleOnSphereL2Hamiltonian(this->Particles, this->NbrParticles, this->LzMax, this->Particles->GetLzValue() , this->Architecture, l2Factor);
     }
   else
     {

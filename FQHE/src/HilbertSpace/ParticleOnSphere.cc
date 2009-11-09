@@ -454,6 +454,15 @@ RealVector ParticleOnSphere::TruncateStateWithPatternConstraint(RealVector& inpu
   return TmpVector;
 }
 
+// get Lz component of a component
+//
+// j = index of the component in Hilbert space
+// return value = twice the Lz component
+int ParticleOnSphere::GetLzValue(int j)
+{
+  return 0;
+}
+
 // get Sz component of the spin
 //
 // j = index of the vector in Hilbert space

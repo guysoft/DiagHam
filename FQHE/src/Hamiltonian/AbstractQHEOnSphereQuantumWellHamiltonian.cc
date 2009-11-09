@@ -164,6 +164,22 @@ void AbstractQHEOnSphereQuantumWellHamiltonian::AddL2 (int totalLz, int totalSz,
   this->L2Hamiltonian = new ParticleOnSphereWithSpinL2Hamiltonian((ParticleOnSphereWithSpin*)this->Particles, this->NbrParticles, this->LzMax, totalLz, this->Architecture, factor, memory);
 }
 
+
+// ask if Hamiltonian implements hermitian symmetry operations
+//
+bool AbstractQHEOnSphereQuantumWellHamiltonian::IsHermitian()
+{
+  return false;
+}
+
+// ask if Hamiltonian implements conjugate methods
+//
+bool AbstractQHEOnSphereQuantumWellHamiltonian::IsConjugate()
+{
+  return false;
+}
+
+
 // multiply a vector by the current hamiltonian for a given range of indices 
 // and add result to another vector, low level function (no architecture optimization)
 //

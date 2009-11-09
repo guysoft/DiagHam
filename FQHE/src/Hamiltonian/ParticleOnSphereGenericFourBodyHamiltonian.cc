@@ -31,7 +31,7 @@
 
 #include "config.h"
 #include "Hamiltonian/ParticleOnSphereGenericFourBodyHamiltonian.h"
-#include "Operator/ParticleOnSphereSquareTotalMomentumOperator.h"
+#include "Hamiltonian/ParticleOnSphereL2Hamiltonian.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "MathTools/ClebschGordanCoefficients.h"
 
@@ -171,7 +171,7 @@ ParticleOnSphereGenericFourBodyHamiltonian::ParticleOnSphereGenericFourBodyHamil
 
   if (l2Factor != 0.0)
     {
-      this->L2Operator = new ParticleOnSphereSquareTotalMomentumOperator(this->Particles, this->LzMax, l2Factor);
+      this->L2Operator = new ParticleOnSphereL2Hamiltonian(this->Particles, this->NbrParticles, this->LzMax, this->Particles->GetLzValue() , this->Architecture, l2Factor);
     }
   else
     {
@@ -300,7 +300,7 @@ ParticleOnSphereGenericFourBodyHamiltonian::ParticleOnSphereGenericFourBodyHamil
     this->LoadPrecalculation(precalculationFileName);
   if (l2Factor != 0.0)
     {
-      this->L2Operator = new ParticleOnSphereSquareTotalMomentumOperator(this->Particles, this->LzMax, l2Factor);
+      this->L2Operator = new ParticleOnSphereL2Hamiltonian(this->Particles, this->NbrParticles, this->LzMax, this->Particles->GetLzValue() , this->Architecture, l2Factor); 
     }
   else
     {

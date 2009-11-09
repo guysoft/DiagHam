@@ -100,6 +100,14 @@ class AbstractQHEOnSphereWithSU4SpinHamiltonian : public AbstractQHEOnSphereHami
   //
   virtual ~AbstractQHEOnSphereWithSU4SpinHamiltonian() = 0;
 
+  // ask if Hamiltonian implements methods using hermitian symmetry 
+  //
+  virtual bool IsHermitian();
+
+  // ask if Hamiltonian implements methods applying the conjugate of the Hamiltonian
+  //
+  virtual bool IsConjugate();
+
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)
   //
