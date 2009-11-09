@@ -43,7 +43,7 @@ using std::endl;
 using std::ostream;
 
 // switch for debugging output:
-#define DEBUG_OUTPUT
+//#define DEBUG_OUTPUT
 
 
 
@@ -210,9 +210,9 @@ void ParticleOnLatticeGenericHamiltonian::EvaluateInteractionFactors()
 	  HoppingTerms[TmpNumberTerms] = Polar(1.0,Translations[n][0]*SolenoidX)*Polar(1.0,Translations[n][1]*SolenoidY)*HoppingSign*
 	    Polar(1.0,-2.0*M_PI*this->FluxDensity*Phases[n]);
 #ifdef DEBUG_OUTPUT
-	  cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]
-	       << " including solenoid flux "<< Polar(1.0,Translations[n][0]*SolenoidX)<<"_x, "
-	       <<Polar(1.0,Translations[n][1]*SolenoidY)<<"_y ("<<Translations[n][0]<<","<<Translations[n][1]<<")"<<endl;
+	  cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms];
+	  cout << " including solenoid flux "<< Polar(1.0,Translations[n][0]*SolenoidX)<<"_x, ";
+	  cout << Polar(1.0,Translations[n][1]*SolenoidY)<<"_y ("<<Translations[n][0]<<","<<Translations[n][1]<<")"<<endl;
 #endif
 	  ++TmpNumberTerms;
 	}

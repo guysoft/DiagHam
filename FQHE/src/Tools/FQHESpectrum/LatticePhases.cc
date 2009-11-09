@@ -46,7 +46,7 @@ using std::endl;
 using std::fabs;
 
 // switch for debugging statements
-#define DEBUG_OUTPUT
+//#define DEBUG_OUTPUT
 
 // generate the object using options from Option Manager
 //
@@ -413,7 +413,7 @@ LatticePhases::LatticePhases()
 		  if (this->HaveGauge)
 		    TmpPhases[NbrNeighbors[Site1]] = GetTunnellingPhaseFromGauge(Site1, Site2);
 		  else
-		    TmpPhases[NbrNeighbors[Site1]] = TunnellingPhaseMatrix(Site1,Site2);
+		    TmpPhases[NbrNeighbors[Site1]] = TunnellingPhaseMatrix(Site1%NbrSitesPerCell,Site2%NbrSitesPerCell);
 		  for (int r=0; r<Dimension; ++r)
 		    TmpNeighborShift[NbrNeighbors[Site1]][r]=0;
 #ifdef DEBUG_OUTPUT

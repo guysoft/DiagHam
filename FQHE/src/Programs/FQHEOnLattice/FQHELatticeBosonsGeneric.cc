@@ -350,12 +350,16 @@ int main(int argc, char** argv)
       if (Manager.GetBoolean("eigenstate"))	
 	{
 	  EigenvectorName = new char [1024];
-	  if (Manager.GetString("external-two-body")==NULL)
-	    sprintf (EigenvectorName, "bosons_lattice_%s_n_%d%s%s_q_%d", LatticeName, NbrBosons, interactionStr, reverseHoppingString, NbrFluxQuanta);
+	  if ((NbrFluxValues == 1)&&(Manager.GetDouble("cont-flux")!=0.0))
+	    sprintf (EigenvectorName, "bosons_lattice_%s_n_%d%s%s_Q_%g", LatticeName, NbrBosons, interactionStr, reverseHoppingString, Manager.GetDouble("cont-flux"));
 	  else
-	    sprintf (EigenvectorName, "bosons_lattice_%s_n_%d_%s%s_q_%d", LatticeName, NbrBosons, Manager.GetString("external-name"),
-		     interactionStr, NbrFluxQuanta);
-	  
+	    {
+	      if (Manager.GetString("external-two-body")==NULL)
+		sprintf (EigenvectorName, "bosons_lattice_%s_n_%d%s%s_q_%d", LatticeName, NbrBosons, interactionStr, reverseHoppingString, NbrFluxQuanta);
+	      else
+		sprintf (EigenvectorName, "bosons_lattice_%s_n_%d_%s%s_q_%d", LatticeName, NbrBosons, Manager.GetString("external-name"),
+			 interactionStr, NbrFluxQuanta);
+	    }
 	}
       QHEOnLatticeMainTask Task (&Manager, Space, Hamiltonian, NbrFluxQuanta, Shift, OutputName, FirstRun, EigenvectorName);
       MainTaskOperation TaskOperation (&Task);
