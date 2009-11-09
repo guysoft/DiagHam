@@ -162,9 +162,10 @@ RealVector& AbstractHamiltonian::LowLevelMultiply(RealVector& vSource, RealVecto
 // return value = reference on vector where result has been stored
 
 RealVector& AbstractHamiltonian::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
-						  int firstComponent, int nbrComponent)
+						  int firstComponent, int nbrComponent) 
 {
-  return this->LowLevelMultiply(vSource, vDestination, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
+  vDestination.ClearVector();
+  return this->LowLevelAddMultiply(vSource, vDestination, firstComponent, nbrComponent);
 }
 
 // multiply a vector by the current hamiltonian for a given range of indices 
@@ -262,9 +263,11 @@ RealVector* AbstractHamiltonian::LowLevelMultipleMultiply(RealVector* vSources, 
 // return value = pointer to the array of vectors where result has been stored
 
 RealVector* AbstractHamiltonian::LowLevelMultipleMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
-							  int firstComponent, int nbrComponent)
+                                                                     int firstComponent, int nbrComponent)
 {
-  return this->LowLevelMultipleMultiply(vSources, vDestinations, nbrVectors, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
+  for (int i = 0; i < nbrVectors; ++i)
+    vDestinations[i].ClearVector();
+  return LowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, nbrComponent);
 }
 
 // multiply a set of vector by the current hamiltonian for a given range of indices 

@@ -1152,3 +1152,11 @@ double BosonOnSphereShort::JackSqrNormalization (RealVector& outputVector, long 
   return SqrNorm;
 }
 
+// get Lz component of a component
+//
+// j = index of the component in Hilbert space
+// return value = twice the  component
+int BosonOnSphereShort::GetLzValue(int j)
+{
+  return this->TotalLz;
+}

@@ -384,6 +384,13 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // return value = quare normalization 
   virtual double JackSqrNormalization (RealVector& outputVector, long minIndex = 0l, long nbrComponents = 0l);
 
+  // get Lz component of a component
+  //
+  // j = index of the component in Hilbert space
+  // return value = twice the Lz component
+  virtual int GetLzValue(int j=0);
+
+
  protected:
 
   // find state index

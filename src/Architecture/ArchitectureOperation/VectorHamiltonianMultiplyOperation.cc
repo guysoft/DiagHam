@@ -204,7 +204,7 @@ bool VectorHamiltonianMultiplyOperation::RawApplyOperation()
       this->Hamiltonian->HermitianMultiply((*(this->SourceVector)), (*(this->DestinationVector)), this->FirstComponent, 
 					   this->NbrComponent);
       return true;
-    }
+      }
   this->Hamiltonian->Multiply((*(this->SourceVector)), (*(this->DestinationVector)), this->FirstComponent, 
 			      this->NbrComponent);
   return true;

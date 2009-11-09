@@ -718,6 +718,16 @@ int FermionOnSphereLong::FindStateIndex(ULONGLONG stateDescription, int lzmax)
     return PosMin;
 }
 
+// get Lz component of a component
+//
+// j = index of the component in Hilbert space
+// return value = twice the  component
+int FermionOnSphereLong::GetLzValue(int j)
+{
+  return this->TotalLz;
+}
+
+
 // print a given State
 //
 // Str = reference on current output stream 

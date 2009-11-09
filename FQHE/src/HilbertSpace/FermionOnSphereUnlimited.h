@@ -218,6 +218,13 @@ class FermionOnSphereUnlimited :  public ParticleOnSphere
   //
   // timeCoherence = true if time coherence has to be used
   virtual void InitializeWaveFunctionEvaluation (bool timeCoherence = false);
+
+  // get Lz component of a component
+  //
+  // j = index of the component in Hilbert space
+  // return value = twice the Lz component
+  virtual int GetLzValue(int j=0);
+
   
  protected:
 

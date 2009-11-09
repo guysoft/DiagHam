@@ -811,3 +811,11 @@ void FermionOnSphereUnlimited::InitializeWaveFunctionEvaluation (bool timeCohere
 {
 }
   
+// get Lz component of a component
+//
+// j = index of the component in Hilbert space
+// return value = twice the  component
+int FermionOnSphereUnlimited::GetLzValue(int j)
+{
+  return this->TotalLz;
+}
