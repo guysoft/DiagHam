@@ -138,9 +138,13 @@ class AbstractHamiltonian
   // return value = list of right interaction operators
   virtual List<Matrix*> RightInteractionOperators();
 
-  // ask if Hamiltonian implements hermitian symmetry operations
+  // ask if Hamiltonian implements methods using hermitian symmetry 
   //
   virtual bool IsHermitian();
+
+  // ask if Hamiltonian implements methods applying the conjugate of the Hamiltonian
+  //
+  virtual bool IsConjugate();
 
   // evaluate matrix element
   //

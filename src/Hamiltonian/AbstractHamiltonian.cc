@@ -1527,9 +1527,16 @@ List<Matrix*> AbstractHamiltonian::RightInteractionOperators()
   return List<Matrix*>();
 }
 
-// ask if Hamiltonian implements hermitian symmetry operations
+// ask if Hamiltonian implements methods using hermitian symmetry 
 //
 bool AbstractHamiltonian::IsHermitian()
+{
+  return false;
+}
+
+// ask if Hamiltonian implements methods applying the conjugate of the Hamiltonian
+//
+bool AbstractHamiltonian::IsConjugate()
 {
   return false;
 }
