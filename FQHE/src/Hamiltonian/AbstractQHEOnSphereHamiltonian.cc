@@ -116,7 +116,7 @@ void AbstractQHEOnSphereHamiltonian::ShiftHamiltonian (double shift)
 //
 bool AbstractQHEOnSphereHamiltonian::IsHermitian()
 {
-  return true;
+  return false;
 }
 
 // ask if Hamiltonian implements conjugate methods
@@ -171,6 +171,7 @@ RealVector& AbstractQHEOnSphereHamiltonian::LowLevelAddMultiply(RealVector& vSou
   double Coefficient;
   if (this->FastMultiplicationFlag == false)
     {
+      //cout << "AbstractQHEOnSphereHamiltonian::LowLevelAddMultiply, FastMultiplicationFlag == false"<<endl;
       int Index;
       int m1;
       int m2;
@@ -1028,6 +1029,7 @@ RealVector& AbstractQHEOnSphereHamiltonian::ConjugateLowLevelAddMultiply(RealVec
   double Coefficient;
   if (this->FastMultiplicationFlag == false)
     {
+      //cout << "AbstractQHEOnSphereHamiltonian::ConjugateLowLevelAddMultiply, FastMultiplicationFlag == false"<<endl;
       int Index;
       int m1;
       int m2;
@@ -1071,9 +1073,9 @@ RealVector& AbstractQHEOnSphereHamiltonian::ConjugateLowLevelAddMultiply(RealVec
 	  double TmpSum;
 	  int SumIndices;
 	  int TmpNbrM3Values;
-	  int* TmpM3Values;
+	  int* TmpM3Values; 
 	  for (int i = firstComponent; i < LastComponent; ++i)
-	    { 
+	    {
 	      ReducedNbrInteractionFactors = 0;
 	      for (m1 = 0; m1 < this->NbrM12Indices; ++m1)
 		{
@@ -1177,7 +1179,7 @@ RealVector& AbstractQHEOnSphereHamiltonian::ConjugateLowLevelAddMultiply(RealVec
 RealVector& AbstractQHEOnSphereHamiltonian::ConjugateLowLevelAddMultiplyPartialFastMultiply(RealVector& vSource, RealVector& vDestination, 
 										   int firstComponent, int nbrComponent)
 {
-  cout << "ConjugateLowLevelAddMultiplyPartialFastMultiply not yet edited!"<<endl;
+  //cout << "ConjugateLowLevelAddMultiplyPartialFastMultiply not yet edited!"<<endl;
   int LastComponent = firstComponent + nbrComponent;
   int Dim = this->Particles->GetHilbertSpaceDimension();
   double Coefficient;
@@ -1897,6 +1899,7 @@ RealVector& AbstractQHEOnSphereHamiltonian::HermitianLowLevelAddMultiply(RealVec
   double Coefficient;
   if (this->FastMultiplicationFlag == false)
     {
+      cout << "AbstractQHEOnSphereHamiltonian::HermitianLowLevelAddMultiply, FastMultiplicationFlag == false"<<endl;
       int Index;
       int m1;
       int m2;

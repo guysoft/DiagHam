@@ -195,7 +195,7 @@ bool VectorHamiltonianMultiplyOperation::RawApplyOperation()
 {
   if (this->UseConjugateFlag == true)
     {
-      this->Hamiltonian->ConjugateMultiply((*(this->SourceVector)), (*(this->DestinationVector)), this->FirstComponent, 
+      this->Hamiltonian->ConjugateAddMultiply((*(this->SourceVector)), (*(this->DestinationVector)), this->FirstComponent, 
 					   this->NbrComponent);
       return true;
     }
@@ -204,7 +204,7 @@ bool VectorHamiltonianMultiplyOperation::RawApplyOperation()
       this->Hamiltonian->HermitianMultiply((*(this->SourceVector)), (*(this->DestinationVector)), this->FirstComponent, 
 					   this->NbrComponent);
       return true;
-      }
+    }
   this->Hamiltonian->Multiply((*(this->SourceVector)), (*(this->DestinationVector)), this->FirstComponent, 
 			      this->NbrComponent);
   return true;
@@ -240,6 +240,7 @@ bool VectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOperation(SMP
 	  TmpOperations[i]->SetDestinationVector(this->DestinationVector->EmptyClone(true));
 	}
     }
+
   architecture->SendJobs();
   for (int i = 1; i < architecture->GetNbrThreads(); ++i)
     {
