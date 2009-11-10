@@ -456,6 +456,131 @@ class AbstractQHEOnSphereHamiltonian : public AbstractQHEHamiltonian
   // return value = true if no error occurs
   virtual bool LoadPrecalculation (char* fileName);
 
+  // core part of the FastMultiplication method involving 2-body term
+  // 
+  // particles = pointer to the Hilbert space
+  // index = index of the component on which the Hamiltonian has to act on
+  // indexArray = array where indices connected to the index-th component through the Hamiltonian
+  // coefficientArray = array of the numerical coefficients related to the indexArray
+  // position = reference on the current position in arrays indexArray and coefficientArray
+  void EvaluateMNTwoBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index, 
+						    int* indexArray, double* coefficientArray, long& position);
+
 };
+
+// core part of the FastMultiplication method involving 2-body term
+// 
+// particles = pointer to the Hilbert space
+// index = index of the component on which the Hamiltonian has to act on
+// indexArray = array where indices connected to the index-th component through the Hamiltonian
+// coefficientArray = array of the numerical coefficients related to the indexArray
+// position = reference on the current position in arrays indexArray and coefficientArray
+
+inline void AbstractQHEOnSphereHamiltonian::EvaluateMNTwoBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index, 
+											 int* indexArray, double* coefficientArray, long& position)
+{
+  if (this->NbrM12Indices == 0)
+    {
+      this->InteractionPerComponentIndex[position] = new int [this->NbrInteractionPerComponent[position]];
+      this->InteractionPerComponentCoefficient[position] = new double [this->NbrInteractionPerComponent[position]];      
+      indexArray = this->InteractionPerComponentIndex[position];
+      coefficientArray = this->InteractionPerComponentCoefficient[position];
+      int Pos = 0;
+      int m1;
+      int m2;
+      int m3;
+      int m4;
+      int Index = 0;
+      double Coefficient = 0.0;
+      for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+	{
+	  m1 = this->M1Value[j];
+	  m2 = this->M2Value[j];
+	  m3 = this->M3Value[j];
+	  m4 = m1 + m2 - m3;
+	  Index = particles->AdAdAA(index + this->PrecalculationShift, m1, m2, m3, m4, Coefficient);
+	  if (Index < particles->GetHilbertSpaceDimension())
+	    {
+	      indexArray[Pos] = Index;
+	      coefficientArray[Pos] = Coefficient * this->InteractionFactors[j];
+	      ++Pos;
+	    }
+	}
+      if (this->OneBodyTermFlag == true)
+	{
+	  for (int j = 0; j < this->NbrOneBodyInteractionFactors; ++j)
+	    {
+	      m1 = this->OneBodyMValues[j];
+	      m2 = this->OneBodyNValues[j];
+	      Index = particles->AdA(index + this->PrecalculationShift, m1, m2, Coefficient);
+	      if (Index < particles->GetHilbertSpaceDimension())
+		{
+		  indexArray[Pos] = Index;
+		  coefficientArray[Pos] = Coefficient * this->OneBodyInteractionFactors[j];
+		  ++Pos;
+		}
+	    }
+	}
+      ++position;
+    }
+  else
+    {
+      double Coefficient2;
+      int SumIndices;
+      int TmpNbrM3Values;
+      int* TmpM3Values;
+      int ReducedNbrInteractionFactors;
+      this->InteractionPerComponentIndex[position] = new int [this->NbrInteractionPerComponent[position]];
+      this->InteractionPerComponentCoefficient[position] = new double [this->NbrInteractionPerComponent[position]];      
+      indexArray = this->InteractionPerComponentIndex[position];
+      coefficientArray = this->InteractionPerComponentCoefficient[position];
+      int Pos = 0;
+      int Index = 0;
+      double Coefficient = 0.0;
+      ReducedNbrInteractionFactors = 0;
+      for (int m1 = 0; m1 < this->NbrM12Indices; ++m1)
+	{
+	  Coefficient = particles->AA(index + this->PrecalculationShift, this->M1Value[m1], this->M2Value[m1]);	  
+	  if (Coefficient != 0.0)
+	    {
+	      SumIndices = this->M1Value[m1] + this->M2Value[m1];
+	      TmpM3Values = this->M3Values[m1];
+	      TmpNbrM3Values = this->NbrM3Values[m1];
+	      for (int m3 = 0; m3 < TmpNbrM3Values; ++m3)
+		{
+		  Index = particles->AdAd(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
+		  if (Index < particles->GetHilbertSpaceDimension())
+		    {
+		      indexArray[Pos] = Index;
+		      coefficientArray[Pos] = Coefficient * Coefficient2 * this->InteractionFactors[ReducedNbrInteractionFactors];
+		      ++Pos;
+		    }		      
+		  ++ReducedNbrInteractionFactors;
+		}    
+	    }
+	  else
+	    ReducedNbrInteractionFactors += this->NbrM3Values[m1];
+	}
+      if (this->OneBodyTermFlag == true)
+	{
+	  int m1;
+	  int m2;
+	  for (int j = 0; j < this->NbrOneBodyInteractionFactors; ++j)
+	    {
+	      m1 = this->OneBodyMValues[j];
+	      m2 = this->OneBodyNValues[j];
+	      Index = particles->AdA(index + this->PrecalculationShift, m1, m2, Coefficient);
+	      if (Index < particles->GetHilbertSpaceDimension())
+		{
+		  indexArray[Pos] = Index;
+		  coefficientArray[Pos] = Coefficient * this->OneBodyInteractionFactors[j];
+		  ++Pos;
+		}
+	    }
+	}
+      ++position;
+    }      
+}
+
 
 #endif
