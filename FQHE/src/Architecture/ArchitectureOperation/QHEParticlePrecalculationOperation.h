@@ -88,6 +88,13 @@ class QHEParticlePrecalculationOperation: public AbstractPrecalculationOperation
   //
   // return value = true if no error occurs
   bool RawApplyOperation();
+
+  // apply operation for SMP architecture
+  //
+  // architecture = pointer to the architecture
+  // return value = true if no error occurs
+  bool ArchitectureDependentApplyOperation(SMPArchitecture* architecture);
+
   
 };
 

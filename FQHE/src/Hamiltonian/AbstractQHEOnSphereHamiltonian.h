@@ -95,7 +95,8 @@ class AbstractQHEOnSphereHamiltonian : public AbstractQHEHamiltonian
   int PrecalculationShift;
 
   // amount of memory (in bytes) that can be used to store precalculated matrix elements
-  long Memory; 
+  long Memory;
+  
   // flag for fast multiplication algorithm
   bool FastMultiplicationFlag;
   // step between each precalculated index (main part: start at 0, FastMultiplicationStep, 2*FastMultiplicationStep, ...)
@@ -107,6 +108,13 @@ class AbstractQHEOnSphereHamiltonian : public AbstractQHEHamiltonian
   // multiplicative coefficient obtained for each term of the hamiltonian when applying on a given state and with a given destination state
   double** InteractionPerComponentCoefficient;
 
+  // number of tasks for load balancing
+  int NbrBalancedTasks;
+  // load balancing array for parallelisation, indicating starting indices
+  long *LoadBalancingArray;
+  // cumulative count of non-zero matrix elements
+  
+  
   // flag to indicate if a hamiltonian is temporary stored on disk
   bool DiskStorageFlag;
   // name of the file that contains hamiltonian matrix elements
@@ -152,6 +160,12 @@ class AbstractQHEOnSphereHamiltonian : public AbstractQHEHamiltonian
   //
   // shift = shift value
   virtual void ShiftHamiltonian (double shift);
+
+  // get the preferred distribution over parallel execution in N tasks for parallel Hamiltonian-Vector multiplication
+  // nbrThreads = number of threads requested
+  // segmentIndices = array returning the reference to an array of the first index of each of the segments
+  //
+  virtual bool GetLoadBalancing(int nbrTasks, long* &segmentIndices);
   
   // ask if Hamiltonian implements methods using hermitian symmetry 
   //

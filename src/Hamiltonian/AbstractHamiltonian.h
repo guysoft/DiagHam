@@ -138,6 +138,18 @@ class AbstractHamiltonian
   // return value = list of right interaction operators
   virtual List<Matrix*> RightInteractionOperators();
 
+  // get the preferred distribution over parallel execution in N tasks for parallel Hamiltonian-Vector multiplication
+  // nbrThreads = number of threads requested
+  // segmentIndices = array returning the reference to an array of the first index of each of the segments
+  //
+  virtual bool GetLoadBalancing(int nbrTasks, long* &segmentIndices);
+
+  // set the preferred distribution over parallel execution in N tasks for parallel Hamiltonian-Vector multiplication
+  // nbrThreads = number of threads requested
+  // segmentIndices = array returning the first index of each of the segments
+  //
+  virtual bool SetLoadBalancing(int nbrTasks, long* segmentIndices);
+
   // ask if Hamiltonian implements methods using hermitian symmetry 
   //
   virtual bool IsHermitian();

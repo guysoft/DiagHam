@@ -1549,6 +1549,24 @@ List<Matrix*> AbstractHamiltonian::RightInteractionOperators()
   return List<Matrix*>();
 }
 
+// get the preferred distribution over parallel execution in N tasks for parallel Hamiltonian-Vector multiplication
+// nbrThreads = number of threads requested
+// segmentIndices = array returning the reference to an array of the first index of each of the segments
+//
+bool AbstractHamiltonian::GetLoadBalancing(int nbrTasks, long* &segmentIndices)
+{
+  return false;
+}
+
+// set the preferred distribution over parallel execution in N tasks for parallel Hamiltonian-Vector multiplication
+// nbrThreads = number of threads requested
+// segmentIndices = array returning the first index of each of the segments
+//
+bool AbstractHamiltonian::SetLoadBalancing(int nbrTasks, long* segmentIndices)
+{
+  return false;
+}
+
 // ask if Hamiltonian implements methods using hermitian symmetry 
 //
 bool AbstractHamiltonian::IsHermitian()

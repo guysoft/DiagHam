@@ -104,3 +104,32 @@ bool QHEParticlePrecalculationOperation::RawApplyOperation()
 }
 
 
+// apply operation for SMP architecture
+//
+// architecture = pointer to the architecture
+// return value = true if no error occurs
+
+bool QHEParticlePrecalculationOperation::ArchitectureDependentApplyOperation(SMPArchitecture* architecture)
+{
+  int Step = this->NbrComponent / architecture->GetNbrThreads();
+  int TmpFirstComponent = this->FirstComponent;
+  int ReducedNbrThreads = architecture->GetNbrThreads() - 1;
+  QHEParticlePrecalculationOperation** TmpOperations = new QHEParticlePrecalculationOperation* [architecture->GetNbrThreads()];
+  for (int i = 0; i < ReducedNbrThreads; ++i)
+    {
+      TmpOperations[i] = (QHEParticlePrecalculationOperation*) this->Clone();
+      architecture->SetThreadOperation(TmpOperations[i], i);
+      TmpOperations[i]->SetIndicesRange(TmpFirstComponent, Step);
+      TmpFirstComponent += Step;
+    }
+  TmpOperations[ReducedNbrThreads] = (QHEParticlePrecalculationOperation*) this->Clone();
+  architecture->SetThreadOperation(TmpOperations[ReducedNbrThreads], ReducedNbrThreads);
+  TmpOperations[ReducedNbrThreads]->SetIndicesRange(TmpFirstComponent, 
+						    this->FirstComponent + this->NbrComponent - TmpFirstComponent);  
+  architecture->SendJobs();
+  for (int i = 0; i < architecture->GetNbrThreads(); ++i)
+    delete TmpOperations[i];
+  delete[] TmpOperations;
+  return true;  
+}
+

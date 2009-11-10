@@ -58,6 +58,9 @@ using std::ostream;
 AbstractQHEOnSphereHamiltonian::AbstractQHEOnSphereHamiltonian()
 {
   this->NbrM12Indices = 0;
+  this->NbrInteractionPerComponent=0;
+  this->LoadBalancingArray=0;
+  this->NbrBalancedTasks=0;
 }
 
 // destructor
@@ -71,6 +74,33 @@ AbstractQHEOnSphereHamiltonian::~AbstractQHEOnSphereHamiltonian()
 	delete[] this->M3Values[i];
       delete[] this->M3Values;
       delete[] this->NbrM3Values;
+    }
+  if (this->FastMultiplicationFlag == true)
+    {
+      if (this->DiskStorageFlag == false)
+	{
+	  long MinIndex;
+	  long MaxIndex;
+	  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+	  int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+	  int ReducedDim = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
+	  if ((ReducedDim * this->FastMultiplicationStep) != EffectiveHilbertSpaceDimension)
+	    ++ReducedDim;
+	  for (int i = 0; i < ReducedDim; ++i)
+	    {
+	      delete[] this->InteractionPerComponentIndex[i];
+	      delete[] this->InteractionPerComponentCoefficient[i];
+	    }
+	  delete[] this->InteractionPerComponentIndex;
+	  delete[] this->InteractionPerComponentCoefficient;
+	}
+      else
+	{
+	  remove (this->DiskStorageFileName);
+	  delete[] this->DiskStorageFileName;
+	}
+      delete[] this->NbrInteractionPerComponent;
+      this->FastMultiplicationFlag = false;
     }
 }
 
@@ -2755,6 +2785,70 @@ List<Matrix*> AbstractQHEOnSphereHamiltonian::RightInteractionOperators()
   return TmpList;
 }
 
+// get the preferred distribution over parallel execution in N tasks for parallel Hamiltonian-Vector multiplication
+// nbrThreads = number of threads requested
+// segmentIndices = array returning the reference to an array of the first index of each of the segments
+//
+bool AbstractQHEOnSphereHamiltonian::GetLoadBalancing(int nbrTasks, long* &segmentIndices)
+{
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+
+  if (NbrInteractionPerComponent!=0)
+    {
+      int ReducedSpaceDimension  = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
+
+      if ((LoadBalancingArray==0)||(NbrBalancedTasks!=nbrTasks))
+	{
+	  if (LoadBalancingArray!=0)
+	    delete [] LoadBalancingArray;
+	  this->LoadBalancingArray = new long[nbrTasks+1];
+	  this->NbrBalancedTasks=nbrTasks;
+	  long TmpNbrElement=0;
+	  for (int i=0; i<ReducedSpaceDimension; ++i)
+	    TmpNbrElement+=NbrInteractionPerComponent[i];
+	  long TmpNbrPerSegment = TmpNbrElement/nbrTasks;
+	  TmpNbrElement=0;
+	  int Pos=0;
+	  this->LoadBalancingArray[0]=MinIndex;
+	  for (int i=0; i<ReducedSpaceDimension; ++i)
+	    {
+	      TmpNbrElement+=NbrInteractionPerComponent[i];
+	      if (TmpNbrElement>TmpNbrPerSegment)
+		{
+		  LoadBalancingArray[Pos+1]=MinIndex+i*this->FastMultiplicationStep;
+		  TmpNbrElement=0;
+		  ++Pos;
+		}
+	    }
+	  LoadBalancingArray[nbrTasks]=MaxIndex+1;
+	}
+    }
+  else
+    {
+      if ((LoadBalancingArray==0)||(NbrBalancedTasks!=nbrTasks))
+	{
+	  if (LoadBalancingArray!=0)
+	    delete [] LoadBalancingArray;
+	  this->LoadBalancingArray = new long[nbrTasks+1];
+	  
+	  int Step = EffectiveHilbertSpaceDimension / nbrTasks;
+	  this->LoadBalancingArray[0]=MinIndex;
+	  for (int i=0; i<nbrTasks; ++i)
+	    LoadBalancingArray[i]=MinIndex+i*Step;
+	  LoadBalancingArray[nbrTasks]=MaxIndex+1;
+	}
+    }
+  
+  for (int i=0; i<nbrTasks; ++i)
+    segmentIndices[i]=LoadBalancingArray[i];
+  
+  return true;
+}
+
+
 // test the amount of memory needed for fast multiplication algorithm
 //
 // allowedMemory = amount of memory that cam be allocated for fast multiplication
@@ -2782,6 +2876,8 @@ long AbstractQHEOnSphereHamiltonian::FastMultiplicationMemory(long allowedMemory
   long Memory = 0;
   for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
     Memory += this->NbrInteractionPerComponent[i];
+
+  
 
   cout << "nbr interaction = " << Memory << endl;
   long TmpMemory = allowedMemory - (sizeof (int*) + sizeof (int) + sizeof(double*)) * EffectiveHilbertSpaceDimension;
@@ -2960,18 +3056,10 @@ void AbstractQHEOnSphereHamiltonian::EnableFastMultiplication()
   this->InteractionPerComponentIndex = new int* [ReducedSpaceDimension];
   this->InteractionPerComponentCoefficient = new double* [ReducedSpaceDimension];
 
+  
 
   QHEParticlePrecalculationOperation Operation(this, false);
   Operation.ApplyOperation(this->Architecture);
-
-//   long TotalPos = 0;  
-//   for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
-//     {
-//       this->InteractionPerComponentIndex[TotalPos] = new int [this->NbrInteractionPerComponent[TotalPos]];
-//       this->InteractionPerComponentCoefficient[TotalPos] = new double [this->NbrInteractionPerComponent[TotalPos]];      
-//       this->EvaluateMNTwoBodyFastMultiplicationComponent(this->Particles, i, this->InteractionPerComponentIndex[TotalPos], 
-// 							 this->InteractionPerComponentCoefficient[TotalPos], TotalPos);
-//     }
   
   this->FastMultiplicationFlag = true;
   gettimeofday (&(TotalEndingTime2), 0);

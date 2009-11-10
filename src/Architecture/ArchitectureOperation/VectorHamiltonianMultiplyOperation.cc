@@ -205,6 +205,7 @@ AbstractArchitectureOperation* VectorHamiltonianMultiplyOperation::Clone()
 
 bool VectorHamiltonianMultiplyOperation::RawApplyOperation()
 {
+  
   if (this->UseConjugateFlag == true)
     {
       cout << "Conjugate raw apply "<<this->FirstComponent<<", "<<this->NbrComponent<<endl;
@@ -230,22 +231,25 @@ bool VectorHamiltonianMultiplyOperation::RawApplyOperation()
 
 bool VectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOperation(SMPArchitecture* architecture)
 {
-  int Step = this->NbrComponent / architecture->GetNbrThreads();
-  int TmpFirstComponent = this->FirstComponent;
-  int ReducedNbrThreads = architecture->GetNbrThreads() - 1;
+  long *SegmentIndices=0;
+  int TmpNbrThreads = architecture->GetNbrThreads();
+  if (Hamiltonian->GetLoadBalancing(TmpNbrThreads, SegmentIndices)==false)
+    {
+      SegmentIndices = new long[TmpNbrThreads+1];
+      int Step = this->NbrComponent / TmpNbrThreads;
+      SegmentIndices[0]=this->FirstComponent;
+      for (int i=0; i<TmpNbrThreads; ++i)
+	SegmentIndices[i]=this->FirstComponent+i*Step;
+      SegmentIndices[TmpNbrThreads]=this->FirstComponent+this->NbrComponent+1;
+    }
   VectorHamiltonianMultiplyOperation** TmpOperations = new VectorHamiltonianMultiplyOperation* [architecture->GetNbrThreads()];
-  this->DestinationVector->ClearVector();
-  for (int i = 0; i < ReducedNbrThreads; ++i)
+  //this->DestinationVector->ClearVector();
+  for (int i = 0; i < TmpNbrThreads; ++i)
     {
       TmpOperations[i] = (VectorHamiltonianMultiplyOperation*) this->Clone();
       architecture->SetThreadOperation(TmpOperations[i], i);
-      TmpOperations[i]->SetIndicesRange(TmpFirstComponent, Step);
-      TmpFirstComponent += Step;
+      TmpOperations[i]->SetIndicesRange(SegmentIndices[i], SegmentIndices[i+1]-SegmentIndices[i]);
     }
-  TmpOperations[ReducedNbrThreads] = (VectorHamiltonianMultiplyOperation*) this->Clone();
-  architecture->SetThreadOperation(TmpOperations[ReducedNbrThreads], ReducedNbrThreads);
-  TmpOperations[ReducedNbrThreads]->SetIndicesRange(TmpFirstComponent, 
-						    this->FirstComponent + this->NbrComponent - TmpFirstComponent);  
   if (this->UseConjugateFlag == false)
     {
       for (int i = 1; i < architecture->GetNbrThreads(); ++i)
@@ -253,7 +257,6 @@ bool VectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOperation(SMP
 	  TmpOperations[i]->SetDestinationVector(this->DestinationVector->EmptyClone(true));
 	}
     }
-
   architecture->SendJobs();
   for (int i = 1; i < architecture->GetNbrThreads(); ++i)
     {

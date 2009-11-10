@@ -111,7 +111,7 @@ class SMPArchitecture : public AbstractArchitecture
   // send jobs to threads
   //
   void SendJobs ();
-  
+
 };
 
 // get the  number of threads that run simultaneously
