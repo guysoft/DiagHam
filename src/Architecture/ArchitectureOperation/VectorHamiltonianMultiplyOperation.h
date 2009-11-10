@@ -63,6 +63,9 @@ class VectorHamiltonianMultiplyOperation: public AbstractArchitectureOperation
   // use full hermitian structure of the hamiltonian
   bool UseHermitianFlag;
 
+  // execution time measured in RawApply
+  double ExecutionTime;
+  
  public:
   
   // constructor 

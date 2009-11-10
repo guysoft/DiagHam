@@ -62,6 +62,7 @@ VectorHamiltonianMultiplyOperation::VectorHamiltonianMultiplyOperation (Abstract
   this->SourceVector = sourceVector;
   this->DestinationVector = destinationVector;  
   this->OperationType = AbstractArchitectureOperation::VectorHamiltonianMultiply;
+  this->ExecutionTime=0.0;
   if ((forceNormalMultiplication == false) && (forceConjugateMultiplication == false) && (forceHermitianeMultiplication == false))
     {
       this->UseConjugateFlag = false;
@@ -115,6 +116,7 @@ VectorHamiltonianMultiplyOperation::VectorHamiltonianMultiplyOperation(const Vec
   this->OperationType = AbstractArchitectureOperation::VectorHamiltonianMultiply;
   this->UseConjugateFlag = operation.UseConjugateFlag;
   this->UseHermitianFlag = operation.UseHermitianFlag;
+  this->ExecutionTime=operation.ExecutionTime;
 }
   
 // constructor from a master node information
@@ -205,22 +207,27 @@ AbstractArchitectureOperation* VectorHamiltonianMultiplyOperation::Clone()
 
 bool VectorHamiltonianMultiplyOperation::RawApplyOperation()
 {
-  
+  timeval TotalStartingTime2;
+  timeval TotalEndingTime2;
+  gettimeofday (&(TotalStartingTime2), 0);
+
   if (this->UseConjugateFlag == true)
     {
-      cout << "Conjugate raw apply "<<this->FirstComponent<<", "<<this->NbrComponent<<endl;
       this->Hamiltonian->ConjugateMultiply((*(this->SourceVector)), (*(this->DestinationVector)), this->FirstComponent, 
 					   this->NbrComponent);
-      return true;
     }
-  if (this->UseHermitianFlag == true)
+  else if (this->UseHermitianFlag == true)
     {
       this->Hamiltonian->HermitianMultiply((*(this->SourceVector)), (*(this->DestinationVector)), this->FirstComponent, 
 					   this->NbrComponent);
-      return true;
     }
-  this->Hamiltonian->Multiply((*(this->SourceVector)), (*(this->DestinationVector)), this->FirstComponent, 
+  else this->Hamiltonian->Multiply((*(this->SourceVector)), (*(this->DestinationVector)), this->FirstComponent, 
 			      this->NbrComponent);
+  
+  gettimeofday (&(TotalEndingTime2), 0);
+  this->ExecutionTime = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
+    ((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
+  
   return true;
 }
 
@@ -258,6 +265,8 @@ bool VectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOperation(SMP
 	}
     }
   architecture->SendJobs();
+  for (int i = 0; i < architecture->GetNbrThreads(); ++i)
+    cout << "T("<<i <<")= "<< TmpOperations[i]->ExecutionTime<<endl;
   for (int i = 1; i < architecture->GetNbrThreads(); ++i)
     {
       if (this->UseConjugateFlag == false)

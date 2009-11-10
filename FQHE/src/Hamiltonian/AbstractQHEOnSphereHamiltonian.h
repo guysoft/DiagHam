@@ -495,8 +495,6 @@ inline void AbstractQHEOnSphereHamiltonian::EvaluateMNTwoBodyFastMultiplicationC
 {
   if (this->NbrM12Indices == 0)
     {
-      this->InteractionPerComponentIndex[position] = new int [this->NbrInteractionPerComponent[position]];
-      this->InteractionPerComponentCoefficient[position] = new double [this->NbrInteractionPerComponent[position]];      
       indexArray = this->InteractionPerComponentIndex[position];
       coefficientArray = this->InteractionPerComponentCoefficient[position];
       int Pos = 0;
@@ -544,8 +542,6 @@ inline void AbstractQHEOnSphereHamiltonian::EvaluateMNTwoBodyFastMultiplicationC
       int TmpNbrM3Values;
       int* TmpM3Values;
       int ReducedNbrInteractionFactors;
-      this->InteractionPerComponentIndex[position] = new int [this->NbrInteractionPerComponent[position]];
-      this->InteractionPerComponentCoefficient[position] = new double [this->NbrInteractionPerComponent[position]];      
       indexArray = this->InteractionPerComponentIndex[position];
       coefficientArray = this->InteractionPerComponentCoefficient[position];
       int Pos = 0;

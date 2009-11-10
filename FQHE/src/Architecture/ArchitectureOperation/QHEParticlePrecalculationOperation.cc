@@ -133,3 +133,4 @@ bool QHEParticlePrecalculationOperation::ArchitectureDependentApplyOperation(SMP
   return true;  
 }
 
+
