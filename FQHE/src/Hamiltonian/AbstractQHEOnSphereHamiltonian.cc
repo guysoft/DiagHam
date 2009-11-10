@@ -2824,6 +2824,11 @@ bool AbstractQHEOnSphereHamiltonian::GetLoadBalancing(int nbrTasks, long* &segme
 		}
 	    }
 	  LoadBalancingArray[nbrTasks]=MaxIndex+1;
+
+	  cout << "LoadBalancingArray=["<<LoadBalancingArray[0];
+	  for (int i=1; i<=nbrTasks; ++i)
+	    cout <<" "<<LoadBalancingArray[i];
+	  cout << "]"<< endl;
 	}
     }
   else
@@ -2841,10 +2846,7 @@ bool AbstractQHEOnSphereHamiltonian::GetLoadBalancing(int nbrTasks, long* &segme
 	  LoadBalancingArray[nbrTasks]=MaxIndex+1;
 	}
     }
-  
-  for (int i=0; i<nbrTasks; ++i)
-    segmentIndices[i]=LoadBalancingArray[i];
-  
+  segmentIndices=LoadBalancingArray;
   return true;
 }
 
