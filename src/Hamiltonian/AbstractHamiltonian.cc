@@ -592,7 +592,7 @@ RealVector& AbstractHamiltonian::ConjugateLowLevelMultiply(RealVector& vSource, 
 RealVector& AbstractHamiltonian::ConjugateLowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
 							   int firstComponent, int nbrComponent)
 {
-  vDestination.ClearVectorSegment(firstComponent, nbrComponent);
+  vDestination.ClearVectorSegment((long)firstComponent, (long)nbrComponent);
   return this->ConjugateLowLevelAddMultiply(vSource, vDestination, firstComponent, nbrComponent);
 }
 
