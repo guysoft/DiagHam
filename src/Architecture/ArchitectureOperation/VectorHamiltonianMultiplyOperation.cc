@@ -207,7 +207,8 @@ bool VectorHamiltonianMultiplyOperation::RawApplyOperation()
 {
   if (this->UseConjugateFlag == true)
     {
-      this->Hamiltonian->ConjugateAddMultiply((*(this->SourceVector)), (*(this->DestinationVector)), this->FirstComponent, 
+      cout << "Conjugate raw apply "<<this->FirstComponent<<", "<<this->NbrComponent<<endl;
+      this->Hamiltonian->ConjugateMultiply((*(this->SourceVector)), (*(this->DestinationVector)), this->FirstComponent, 
 					   this->NbrComponent);
       return true;
     }

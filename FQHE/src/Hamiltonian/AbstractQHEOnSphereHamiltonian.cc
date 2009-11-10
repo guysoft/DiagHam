@@ -123,7 +123,7 @@ bool AbstractQHEOnSphereHamiltonian::IsHermitian()
 //
 bool AbstractQHEOnSphereHamiltonian::IsConjugate()
 {
-  return true;
+  return false;
 }
 
 

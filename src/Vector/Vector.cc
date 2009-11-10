@@ -109,6 +109,15 @@ Vector& Vector::ClearVector ()
   return *this;
 }
 
+// put select vector components to zero
+// start = start index
+// nbrComponent = number of components to set to zero
+// return value = reference on current vector
+Vector& Vector::ClearVectorSegment ()
+{
+  return *this;
+}
+
 // sum two vectors
 //
 // vector = vector to add

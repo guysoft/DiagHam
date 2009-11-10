@@ -144,6 +144,12 @@ class Vector
   // return value = reference on current vector
   virtual Vector& ClearVector ();
 
+  // put select vector components to zero
+  // start = start index
+  // nbrComponent = number of components to set to zero
+  // return value = reference on current vector
+  virtual Vector& ClearVectorSegment ();
+
   // create a new vector with same size and same type but non-initialized components
   //
   // zeroFlag = true if all coordinates have to be set to zero

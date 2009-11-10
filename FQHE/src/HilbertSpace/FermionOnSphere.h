@@ -302,6 +302,14 @@ class FermionOnSphere :  public ParticleOnSphere
   // return value = index of the destination state 
   virtual long AdA (long index, int m, int n, double& coefficient);
 
+  // check whether a given operator \prod c^\dagger_m \prod c_n increases or decreases the index of a state
+  //
+  // m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+  // n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
+  // nbrIndices = number of creation (or annihilation) operators
+  // return value = 1, if created state is of higher value, 0 if equal, and -1 if lesser value
+  virtual int CheckOrder (int* m, int* n, int nbrIndices);
+
   // get the variance of the state
   // index = index of state to consider
   virtual int StateVariance (int index);

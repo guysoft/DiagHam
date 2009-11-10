@@ -1410,7 +1410,7 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::PartialEnableFastMultiplica
 	}
      for (int k = 2; k <= this->MaxNBody; ++k)
 	if (this->NBodyFlags[k] == true)
-	  this->EvaluateMNNBodyFastMultiplicationComponent(this->Particles, i, k, TmpIndexArray, TmpCoefficientArray, Pos);
+	  this->EvaluateMNNBodyFastMultiplicationComponent(TmpParticles, i, k, TmpIndexArray, TmpCoefficientArray, Pos);
     }
   delete TmpParticles;
 }
