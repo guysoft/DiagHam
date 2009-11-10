@@ -113,7 +113,7 @@ Vector& Vector::ClearVector ()
 // start = start index
 // nbrComponent = number of components to set to zero
 // return value = reference on current vector
-Vector& Vector::ClearVectorSegment ()
+Vector& Vector::ClearVectorSegment (long start, long nbrComponent)
 {
   return *this;
 }

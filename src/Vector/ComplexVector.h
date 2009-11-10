@@ -191,6 +191,13 @@ class ComplexVector : public Vector
   // return value = reference on current vector
   Vector& ClearVector ();
 
+  // put select vector components to zero
+  //
+  // start = start index
+  // nbrComponent = number of components to set to zero
+  // return value = reference on current vector
+  Vector& ClearVectorSegment (long start, long nbrComponent);
+
   // change sign of a vector
   //
   // return value = reference on current vector

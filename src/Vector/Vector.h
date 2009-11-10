@@ -148,7 +148,7 @@ class Vector
   // start = start index
   // nbrComponent = number of components to set to zero
   // return value = reference on current vector
-  virtual Vector& ClearVectorSegment ();
+  virtual Vector& ClearVectorSegment (long start, long nbrComponent);
 
   // create a new vector with same size and same type but non-initialized components
   //

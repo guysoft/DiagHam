@@ -405,6 +405,22 @@ Vector& ComplexVector::ClearVector ()
   return *this;
 }
 
+// put select vector components to zero
+//
+// start = start index
+// nbrComponent = number of components to set to zero
+// return value = reference on current vector
+
+Vector& ComplexVector::ClearVectorSegment (long start, long nbrComponent)
+{
+  nbrComponent += start;
+  for (;start < nbrComponent; ++ start)
+    this->Components[start] = 0.0;  
+  return *this;
+}
+
+
+
 // change sign of a vector
 //
 // return value = reference on current vector

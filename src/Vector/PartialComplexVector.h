@@ -134,6 +134,13 @@ class PartialComplexVector : public ComplexVector
   // return value = pointer to the array of new vectors
   Vector* EmptyCloneArray(int nbrVectors, bool zeroFlag = false);
 
+  // put select vector components to zero
+  //
+  // start = start index
+  // nbrComponent = number of components to set to zero
+  // return value = reference on current vector
+  Vector& ClearVectorSegment (long start, long nbrComponent);
+
   // Get Vector dimension
   //
   // return value = vector dimension
