@@ -2847,10 +2847,10 @@ long AbstractQHEOnSphereHamiltonian::FastMultiplicationMemory(long allowedMemory
 // test the amount of memory needed for fast multiplication algorithm (partial evaluation)
 //
 // firstComponent = index of the first component that has to be precalcualted
-// lastComponent  = index of the last component that has to be precalcualted
+// nbrComponent  = number of components that has to be precalcualted
 // return value = number of non-zero matrix element
 
-long AbstractQHEOnSphereHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int lastComponent)
+long AbstractQHEOnSphereHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int nbrComponent)
 {
   int Index;
   double Coefficient;
@@ -2860,7 +2860,7 @@ long AbstractQHEOnSphereHamiltonian::PartialFastMultiplicationMemory(int firstCo
   int m3;
   int m4;
   ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
-  int LastComponent = lastComponent + firstComponent;
+  int LastComponent = nbrComponent + firstComponent;
   if (this->NbrM12Indices == 0)
     {
       for (int i = firstComponent; i < LastComponent; ++i)
@@ -2961,15 +2961,18 @@ void AbstractQHEOnSphereHamiltonian::EnableFastMultiplication()
   this->InteractionPerComponentCoefficient = new double* [ReducedSpaceDimension];
 
 
-  long TotalPos = 0;  
-  for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
-    {
-      this->InteractionPerComponentIndex[TotalPos] = new int [this->NbrInteractionPerComponent[TotalPos]];
-      this->InteractionPerComponentCoefficient[TotalPos] = new double [this->NbrInteractionPerComponent[TotalPos]];      
-      this->EvaluateMNTwoBodyFastMultiplicationComponent(this->Particles, i, this->InteractionPerComponentIndex[TotalPos], 
-							 this->InteractionPerComponentCoefficient[TotalPos], TotalPos);
-    }
+  QHEParticlePrecalculationOperation Operation(this, false);
+  Operation.ApplyOperation(this->Architecture);
 
+//   long TotalPos = 0;  
+//   for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
+//     {
+//       this->InteractionPerComponentIndex[TotalPos] = new int [this->NbrInteractionPerComponent[TotalPos]];
+//       this->InteractionPerComponentCoefficient[TotalPos] = new double [this->NbrInteractionPerComponent[TotalPos]];      
+//       this->EvaluateMNTwoBodyFastMultiplicationComponent(this->Particles, i, this->InteractionPerComponentIndex[TotalPos], 
+// 							 this->InteractionPerComponentCoefficient[TotalPos], TotalPos);
+//     }
+  
   this->FastMultiplicationFlag = true;
   gettimeofday (&(TotalEndingTime2), 0);
   cout << "------------------------------------------------------------------" << endl << endl;;
@@ -2981,60 +2984,23 @@ void AbstractQHEOnSphereHamiltonian::EnableFastMultiplication()
 // enable fast multiplication algorithm (partial evaluation)
 //
 // firstComponent = index of the first component that has to be precalcualted
-// lastComponent  = index of the last component that has to be precalcualted
+// nbrComponent  = index of the last component that has to be precalcualted
 
-void AbstractQHEOnSphereHamiltonian::PartialEnableFastMultiplication(int firstComponent, int lastComponent)
+void AbstractQHEOnSphereHamiltonian::PartialEnableFastMultiplication(int firstComponent, int nbrComponent)
 {
-  int Index;
-  double Coefficient;
-  int m1;
-  int m2;
-  int m3;
-  int m4;
-  int* TmpIndexArray;
-  double* TmpCoefficientArray;
-  int Pos;
-  int Min = firstComponent / this->FastMultiplicationStep;
-  int Max = lastComponent / this->FastMultiplicationStep;
+  int LastComponent = nbrComponent + firstComponent;
   ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
- 
-  for (int i = Min; i < Max; ++i)
+
+  long TotalPos = ((firstComponent-1)/this->FastMultiplicationStep)+1;
+  
+  for (int i = TotalPos*this->FastMultiplicationStep; i < LastComponent; i += this->FastMultiplicationStep)
     {
-      this->InteractionPerComponentIndex[i] = new int [this->NbrInteractionPerComponent[i]];
-      this->InteractionPerComponentCoefficient[i] = new double [this->NbrInteractionPerComponent[i]];      
-      TmpIndexArray = this->InteractionPerComponentIndex[i];
-      TmpCoefficientArray = this->InteractionPerComponentCoefficient[i];
-      Pos = 0;
-      for (int j = 0; j < this->NbrInteractionFactors; ++j) 
-	{
-	  m1 = this->M1Value[j];
-	  m2 = this->M2Value[j];
-	  m3 = this->M3Value[j];
-	  m4 = m1 + m2 - m3;
-	  Index = TmpParticles->AdAdAA(i * this->FastMultiplicationStep, m1, m2, m3, m4, Coefficient);
-	  if (Index < this->Particles->GetHilbertSpaceDimension())
-	    {
-	      TmpIndexArray[Pos] = Index;
-	      TmpCoefficientArray[Pos] = Coefficient * this->InteractionFactors[j];
-	      ++Pos;
-	    }
-	}
-      if (this->OneBodyTermFlag == true)
-	{
-	  for (int j = 0; j < this->NbrOneBodyInteractionFactors; ++j)
-	    {
-	      m1 = this->OneBodyMValues[j];
-	      m2 = this->OneBodyNValues[j];
-	      Index = this->Particles->AdA(i + this->PrecalculationShift, m1, m2, Coefficient);
-	      if (Index < this->Particles->GetHilbertSpaceDimension())
-		{
-		  TmpIndexArray[Pos] = Index;
-		  TmpCoefficientArray[Pos] = Coefficient * this->OneBodyInteractionFactors[j];
-		  ++Pos;
-		}
-	    }
-	}
-   }
+      this->InteractionPerComponentIndex[TotalPos] = new int [this->NbrInteractionPerComponent[TotalPos]];
+      this->InteractionPerComponentCoefficient[TotalPos] = new double [this->NbrInteractionPerComponent[TotalPos]];      
+      this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[TotalPos], 
+							 this->InteractionPerComponentCoefficient[TotalPos], TotalPos);
+    }
+  
   delete TmpParticles;
 }
 
