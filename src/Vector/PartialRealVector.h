@@ -133,6 +133,12 @@ class PartialRealVector : public RealVector
   // return value = pointer to the array of new vectors
   Vector* EmptyCloneArray(int nbrVectors, bool zeroFlag = false);
 
+  // put select vector components to zero
+  // start = start index
+  // nbrComponent = number of components to set to zero
+  // return value = reference on current vector
+  virtual Vector& ClearVectorSegment (long start, long nbrComponent);
+
   // Get Vector dimension
   //
   // return value = vector dimension
@@ -160,6 +166,8 @@ class PartialRealVector : public RealVector
   // fileName = name of the file where the vector has to be read
   // return value = true if no error occurs
   bool ReadVector (char* fileName);
+
+  
 
 #ifdef __MPI__
 

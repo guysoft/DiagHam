@@ -155,7 +155,7 @@ class DelocalizedRealVector : public RealVector
   //
   // dimension = new dimension
   void ResizeAndClean (int dimension);
-
+  
   // copy a vector into another
   //
   // vector = vector to copy

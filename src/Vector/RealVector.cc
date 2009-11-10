@@ -548,6 +548,23 @@ Vector& RealVector::ClearVector ()
   return *this;
 }
 
+// put select vector components to zero
+// start = start index
+// nbrComponent = number of components to set to zero
+// return value = reference on current vector
+Vector& RealVector::ClearVectorSegment (long start, long nbrComponent)
+{
+  this->Localize();
+  nbrComponent += start;
+  if (nbrComponent >= ((long) this->Dimension))
+    nbrComponent = (long) this->Dimension;     
+  for (;start < nbrComponent; ++ start)
+    this->Components[start] = 0.0;  
+  this->Delocalize(true);
+  return *this;
+}
+
+
 // change sign of a vector
 //
 // return value = reference on current vector

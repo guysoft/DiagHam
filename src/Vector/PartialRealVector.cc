@@ -282,6 +282,22 @@ Vector* PartialRealVector::EmptyCloneArray(int nbrVectors, bool zeroFlag)
   return TmpVectors;
 }
 
+// put select vector components to zero
+// start = start index
+// nbrComponent = number of components to set to zero
+// return value = reference on current vector
+Vector& PartialRealVector::ClearVectorSegment (long start, long nbrComponent)
+{
+  start -= this->IndexShift;
+  nbrComponent += start;
+  if (nbrComponent >= ((long) this->Dimension))
+    nbrComponent = (long) this->Dimension;     
+  for (;start < nbrComponent; ++ start)
+    this->Components[start] = 0.0;  
+  return *this;
+
+}
+
 
 // write vector in a file 
 //
