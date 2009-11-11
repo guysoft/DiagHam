@@ -2124,7 +2124,6 @@ RealVector& AbstractQHEOnSphereHamiltonian::HermitianLowLevelAddMultiply(RealVec
   double Coefficient;
   if (this->FastMultiplicationFlag == false)
     {
-      cout << "AbstractQHEOnSphereHamiltonian::HermitianLowLevelAddMultiply, FastMultiplicationFlag == false"<<endl;
       int Index;
       int m1;
       int m2;

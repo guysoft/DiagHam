@@ -75,14 +75,14 @@ void ArchitectureManager::AddOptionGroup(OptionManager* manager)
 #ifdef __SMP__
   (*ParallelizationGroup) += new BooleanOption  ('S', "SMP", "enable SMP mode");
   (*ParallelizationGroup) += new SingleIntegerOption  ('\n', "processors", "number of processors to use in SMP mode", 2);
+  (*ParallelizationGroup) += new SingleStringOption  ('\n', "smp-profil", "enable SMP profiling, the name of the log file  has to be passed as argument");
 #endif
 #ifdef __MPI__
   (*ParallelizationGroup) += new BooleanOption  ('\n', "mpi", "enable MPI mode");  
 #ifdef __SMP__
-  (*ParallelizationGroup) += new SingleStringOption ('\n', "mpi-smp", "enable both MPI and SMP mode, the name file describing the cluster has to be passed as argument");  
+  (*ParallelizationGroup) += new SingleStringOption ('\n', "mpi-smp", "enable both MPI and SMP mode, the name file describing the cluster has to be passed as argument");
 #endif
   (*ParallelizationGroup) += new SingleStringOption  ('\n', "cluster-profil", "enable cluster profiling, the name of the log file  has to be passed as argument");  
-  (*ParallelizationGroup) += new SingleStringOption  ('\n', "smp-profil", "enable SMP profiling, the name of the log file  has to be passed as argument");
 #endif
   
 }
