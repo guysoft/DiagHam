@@ -154,7 +154,7 @@ bool AbstractQHEOnSphereHamiltonian::IsHermitian()
 //
 bool AbstractQHEOnSphereHamiltonian::IsConjugate()
 {
-  return false;
+  return true;
 }
 
 // symmetrize interaction factors to enable hermitian matrix multiplication
@@ -237,7 +237,7 @@ bool AbstractQHEOnSphereHamiltonian::HermitianSymmetrizeInteractionFactors()
 	OldNbrInteractionFactors+=this->NbrM3Values[m1];
       int TmpNbrInteractionFactors=0;
       double *TmpInteractionFactors=new double[OldNbrInteractionFactors];
-      int Pos = 0;
+      int Pos=0;
       for (int m1 = 0; m1 < this->NbrM12Indices; ++m1)
 	{
 	  M[0]=this->M1Value[m1];
@@ -252,6 +252,7 @@ bool AbstractQHEOnSphereHamiltonian::HermitianSymmetrizeInteractionFactors()
 	      N[0]=OldM3Values[m3];
 	      N[1]=SumIndices - OldM3Values[m3];
 	      M3Flags[m3] = this->Particles->CheckOrder(M, N, 2);
+	      // cout << "Check Order ="<< M3Flags[m3]<<endl;
 	      if (M3Flags[m3]>0)
 		{
 		  ++TmpNbrM3Values;
@@ -266,13 +267,19 @@ bool AbstractQHEOnSphereHamiltonian::HermitianSymmetrizeInteractionFactors()
 	    }
 	  if (TmpNbrM3Values>0)
 	    {
+	      //cout << "M1="<<M[0]<<", M2="<<M[1]<<": ";
 	      ++TmpNbrM12Values;
 	      M12Flags[m1]=1;
 	      TmpM3Values = new int[TmpNbrM3Values];
 	      int Pos2=0;
 	      for (int m3 = 0; m3 < OldNbrM3Values; ++m3)
 		if (M3Flags[m3]>=0)
-		  TmpM3Values[Pos2]=OldM3Values[m3];
+		  {
+		    TmpM3Values[Pos2]=OldM3Values[m3];
+		    //    cout << " " << TmpM3Values[Pos2];
+		    Pos2++;
+		  }
+	      //cout << endl;
 	      delete [] OldM3Values;
 	      this->M3Values[m1] = TmpM3Values;
 	      this->NbrM3Values[m1] = TmpNbrM3Values;
@@ -285,6 +292,7 @@ bool AbstractQHEOnSphereHamiltonian::HermitianSymmetrizeInteractionFactors()
 	}
       if (this->NbrM12Indices!=TmpNbrM12Values)
 	{
+	  cout << "reducing unused M1,M2"<<endl;
 	  int **NewM3Values=new int*[TmpNbrM12Values];
 	  int *NewNbrM3Values=new int[TmpNbrM12Values];
 	  Pos = 0;
@@ -306,6 +314,12 @@ bool AbstractQHEOnSphereHamiltonian::HermitianSymmetrizeInteractionFactors()
       for (int i=0; i<TmpNbrInteractionFactors; ++i)
 	this->InteractionFactors[i]=TmpInteractionFactors[i];
       delete [] TmpInteractionFactors;
+
+//       Pos=0;
+//       for (int m1=0; m1<this->NbrM12Indices; ++m1)
+// 	for (int m3=0; m3<this->NbrM3Values[m1]; ++m3)
+// 	  cout << "New Interaction Factor ["<<this->M1Value[m1]<<", "<<this->M2Value[m1]<<", "<<this->M3Values[m1][m3]<<"]="
+// 	       << this->InteractionFactors[Pos]<<endl;
     }
 
   if (this->OneBodyTermFlag == true)

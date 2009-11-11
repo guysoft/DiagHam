@@ -83,6 +83,7 @@ int main(int argc, char** argv)
   (*LanczosGroup) += new SingleDoubleOption ('\n', "projector-precision", "define Lanczos precision for projection (0 if automatically defined by the program)", 1e-14);
   (*LanczosGroup) += new  BooleanOption ('\n', "restart-projection", "allow lanczos projections to be restarted if full convergence not yet reached");
 
+  (*PrecalculationGroup) += new BooleanOption ('\n', "no-hermitian", "do not use hermitian symmetry of the hamiltonian");
   (*PrecalculationGroup) += new BooleanOption ('\n', "disk-cache", "use disk cache for fast multiplication", false);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
@@ -214,22 +215,25 @@ int main(int argc, char** argv)
 	{
 	  Hamiltonian = new ParticleOnSphereL2Hamiltonian(Space, NbrParticles, LzMax, L, 
 								  Architecture.GetArchitecture(), 1.0,
-							  ((unsigned long)Manager.GetInteger("l2-memory")) << 20);
+							  ((unsigned long)Manager.GetInteger("l2-memory")) << 20,
+							  false, false, NULL, !Manager.GetBoolean("no-hermitian"));
 	}
       else
 	{
 	  if (OneBodyPotentials == 0)
 	    Hamiltonian = new ParticleOnSphereGenericHamiltonian(Space, NbrParticles, LzMax, PseudoPotentials,
-								 ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),
+								 Manager.GetDouble("l2-factor"),
 								 Architecture.GetArchitecture(), 
 								 Memory, DiskCacheFlag,
-								 LoadPrecalculationFileName, /* hermitianFlag */ true);
+								 LoadPrecalculationFileName,
+								 !Manager.GetBoolean("no-hermitian"));
 	  else
 	    Hamiltonian = new ParticleOnSphereGenericHamiltonian(Space, NbrParticles, LzMax, PseudoPotentials, OneBodyPotentials,
-								 ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),
+								 Manager.GetDouble("l2-factor"),
 								 Architecture.GetArchitecture(), 
 								 Memory, DiskCacheFlag,
-								 LoadPrecalculationFileName);
+								 LoadPrecalculationFileName,
+								 !Manager.GetBoolean("no-hermitian"));
 	  
 	  Shift = - 0.5 * ((double) (NbrParticles * NbrParticles)) / (0.5 * ((double) LzMax));
 	}
