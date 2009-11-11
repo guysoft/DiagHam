@@ -69,6 +69,14 @@ SMPArchitecture::SMPArchitecture(int nbrThreads, char* logFile)
       this->VerboseModeFlag = true;
       this->LogFile = new char [strlen(logFile) + 1];
       strcpy (this->LogFile, logFile);
+      ofstream File;
+      File.open(this->LogFile, ios::out);
+      if (!File.is_open())
+	{
+	  cout << "ERROR : cannot write log file " << this->LogFile << endl;
+	  this->VerboseModeFlag = false;
+	}
+      File.close();
     }
   else
     {
