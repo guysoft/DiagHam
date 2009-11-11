@@ -64,10 +64,10 @@ using std::ostream;
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-
+// hermitianFlag = flag to indicate if hermitian symmetry of Hamiltonian shall be used
 ParticleOnSphereGenericHamiltonian::ParticleOnSphereGenericHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, double* pseudoPotential, double l2Factor,
 								       AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag,
-								       char* precalculationFileName)
+								       char* precalculationFileName, bool hermitianFlag)
 {
   this->Particles = particles;
   this->LzMax = lzmax;
@@ -87,6 +87,8 @@ ParticleOnSphereGenericHamiltonian::ParticleOnSphereGenericHamiltonian(ParticleO
   this->PrecalculationShift = (int) MinIndex;  
   this->DiskStorageFlag = onDiskCacheFlag;
   this->Memory = memory;
+  if (hermitianFlag)
+    this->HermitianSymmetrizeInteractionFactors();
   if (precalculationFileName == 0)
     {
       if (memory > 0)
@@ -126,8 +128,11 @@ ParticleOnSphereGenericHamiltonian::ParticleOnSphereGenericHamiltonian(ParticleO
     this->LoadPrecalculation(precalculationFileName);
 
   if (l2Factor != 0.0)
-    {
-      this->L2Operator = new ParticleOnSphereL2Hamiltonian(this->Particles, this->NbrParticles, this->LzMax, this->Particles->GetLzValue() , this->Architecture, l2Factor);
+    { 
+      this->L2Operator = new ParticleOnSphereL2Hamiltonian(this->Particles, this->NbrParticles, this->LzMax,
+							   this->Particles->GetLzValue() , this->Architecture, l2Factor,
+							   /*memory*/ -1, /* fixedLz */ true, /* onDiskCacheFlag */ false,
+							   /*precalculationFileName */ false, hermitianFlag);
     }
   else
     {
@@ -147,11 +152,11 @@ ParticleOnSphereGenericHamiltonian::ParticleOnSphereGenericHamiltonian(ParticleO
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-
+// hermitianFlag = flag to indicate if hermitian symmetry of Hamiltonian shall be used
 ParticleOnSphereGenericHamiltonian::ParticleOnSphereGenericHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
 								       double* pseudoPotential, double* oneBodyPotentials, double l2Factor,
 								       AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag,
-								       char* precalculationFileName)
+								       char* precalculationFileName, bool hermitianFlag)
 {
   this->Particles = particles;
   this->LzMax = lzmax;
@@ -174,6 +179,8 @@ ParticleOnSphereGenericHamiltonian::ParticleOnSphereGenericHamiltonian(ParticleO
   this->PrecalculationShift = (int) MinIndex;  
   this->DiskStorageFlag = onDiskCacheFlag;
   this->Memory = memory;
+  if (hermitianFlag)
+    this->HermitianSymmetrizeInteractionFactors();
   if (precalculationFileName == 0)
     {
       if (memory > 0)
@@ -214,7 +221,10 @@ ParticleOnSphereGenericHamiltonian::ParticleOnSphereGenericHamiltonian(ParticleO
 
   if (l2Factor != 0.0)
     {
-      this->L2Operator = new ParticleOnSphereL2Hamiltonian(this->Particles, this->NbrParticles, this->LzMax, this->Particles->GetLzValue() , this->Architecture, l2Factor);
+      this->L2Operator = new ParticleOnSphereL2Hamiltonian(this->Particles, this->NbrParticles, this->LzMax,
+							   this->Particles->GetLzValue() , this->Architecture, l2Factor,
+							   /*memory*/ -1, /* fixedLz */ true, /* onDiskCacheFlag */ false,
+							   /*precalculationFileName */ false, hermitianFlag);
     }
   else
     {

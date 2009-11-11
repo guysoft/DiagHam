@@ -214,7 +214,7 @@ int main(int argc, char** argv)
 	{
 	  Hamiltonian = new ParticleOnSphereL2Hamiltonian(Space, NbrParticles, LzMax, L, 
 								  Architecture.GetArchitecture(), 1.0,
-						      ((unsigned long)Manager.GetInteger("l2-memory")) << 20);
+							  ((unsigned long)Manager.GetInteger("l2-memory")) << 20);
 	}
       else
 	{
@@ -223,7 +223,7 @@ int main(int argc, char** argv)
 								 ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),
 								 Architecture.GetArchitecture(), 
 								 Memory, DiskCacheFlag,
-								 LoadPrecalculationFileName);
+								 LoadPrecalculationFileName, /* hermitianFlag */ true);
 	  else
 	    Hamiltonian = new ParticleOnSphereGenericHamiltonian(Space, NbrParticles, LzMax, PseudoPotentials, OneBodyPotentials,
 								 ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),

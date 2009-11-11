@@ -73,9 +73,10 @@ class ParticleOnSphereGenericHamiltonian : public AbstractQHEOnSphereHamiltonian
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
+  // hermitianFlag = flag to indicate if hermitian symmetry of Hamiltonian shall be used
   ParticleOnSphereGenericHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, double* pseudoPotential, double l2Factor,
 				     AbstractArchitecture* architecture, long memory = -1, 
-				     bool onDiskCacheFlag = false, char* precalculationFileName = 0);
+				     bool onDiskCacheFlag = false, char* precalculationFileName = 0, bool hermitianFlag = false);
 
   // constructor with one body terms
   //
@@ -89,10 +90,11 @@ class ParticleOnSphereGenericHamiltonian : public AbstractQHEOnSphereHamiltonian
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
+  // hermitianFlag = flag to indicate if hermitian symmetry of Hamiltonian shall be used
   ParticleOnSphereGenericHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
 				     double* pseudoPotential, double* oneBodyPotentials, double l2Factor,
 				     AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag,
-				     char* precalculationFileName);
+				     char* precalculationFileName, bool hermitianFlag = false);
     
   // destructor
   //

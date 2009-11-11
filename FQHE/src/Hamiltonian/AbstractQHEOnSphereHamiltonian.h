@@ -96,6 +96,9 @@ class AbstractQHEOnSphereHamiltonian : public AbstractQHEHamiltonian
 
   // amount of memory (in bytes) that can be used to store precalculated matrix elements
   long Memory;
+
+  // flag for implementation of hermitian symmetry
+  bool HermitianSymmetryFlag;
   
   // flag for fast multiplication algorithm
   bool FastMultiplicationFlag;
@@ -175,6 +178,9 @@ class AbstractQHEOnSphereHamiltonian : public AbstractQHEHamiltonian
   //
   virtual bool IsConjugate();
 
+  // symmetrize interaction factors to enable hermitian matrix multiplication
+  // return = true upon success
+  virtual bool HermitianSymmetrizeInteractionFactors();
 
   // evaluate matrix element
   //

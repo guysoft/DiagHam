@@ -62,11 +62,11 @@ using std::ostream;
 // fixedLz = true if the contribution of the of the Lz^2 has to be computed from the total Lz, false if it has to be computed using the two body operators
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-
+// hermitianFlag = flag to indicate if hermitian symmetry of Hamiltonian shall be used
 ParticleOnSphereL2Hamiltonian::ParticleOnSphereL2Hamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax,
 							     int totalLz, AbstractArchitecture* architecture,
 							     double l2Factor,  long memory, bool fixedLz,
-							     bool onDiskCacheFlag, char* precalculationFileName)
+							     bool onDiskCacheFlag, char* precalculationFileName, bool hermitianFlag)
 {
   this->Particles = particles;
   this->LzMax = lzmax;
@@ -89,6 +89,8 @@ ParticleOnSphereL2Hamiltonian::ParticleOnSphereL2Hamiltonian(ParticleOnSphere* p
   this->PrecalculationShift = (int) MinIndex;  
   this->DiskStorageFlag = onDiskCacheFlag;
   this->Memory = memory;
+  if (hermitianFlag)
+    this->HermitianSymmetrizeInteractionFactors();
   if (precalculationFileName == 0)
     {
       if (memory > 0)

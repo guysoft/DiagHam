@@ -761,6 +761,14 @@ long FermionOnSphere::AdA (long index, int m, int n, double& coefficient)
   return this->TargetSpace->FindStateIndex(TmpState, NewLzMax);
 }
 
+// check whether HilbertSpace implements ordering of operators
+//
+bool FermionOnSphere::HaveOrder ()
+{
+  return true;
+}
+
+
 // check whether a given operator \prod c^\dagger_m \prod c_n increases or decreases the index of a state
 //
 // m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)

@@ -61,6 +61,7 @@ AbstractQHEOnSphereHamiltonian::AbstractQHEOnSphereHamiltonian()
   this->NbrInteractionPerComponent=0;
   this->LoadBalancingArray=0;
   this->NbrBalancedTasks=0;
+  this->HermitianSymmetryFlag=false;
 }
 
 // destructor
@@ -146,7 +147,7 @@ void AbstractQHEOnSphereHamiltonian::ShiftHamiltonian (double shift)
 //
 bool AbstractQHEOnSphereHamiltonian::IsHermitian()
 {
-  return false;
+  return HermitianSymmetryFlag;
 }
 
 // ask if Hamiltonian implements conjugate methods
@@ -155,6 +156,190 @@ bool AbstractQHEOnSphereHamiltonian::IsConjugate()
 {
   return false;
 }
+
+// symmetrize interaction factors to enable hermitian matrix multiplication
+// return = true upon success
+bool AbstractQHEOnSphereHamiltonian::HermitianSymmetrizeInteractionFactors()
+{
+  if (HermitianSymmetryFlag)
+    return true;
+
+  if (this->Particles->HaveOrder()==false)
+    {
+      cout << "Hamiltonian tried to use hermitian symmetry, but this is not implemented in HilbertSpace!"<<endl;
+      HermitianSymmetryFlag=false;
+      return false;
+    }
+
+  cout << "Using hermitian symmetry"<<endl;
+  
+  int *M = new int[2];
+  int *N = new int[2];
+  if (this->NbrM12Indices == 0)
+    {
+      int TmpNbrInteractionFactors = 0;
+      int *Flags = new int[NbrInteractionFactors];
+      for (int j = 0; j < NbrInteractionFactors; ++j) 
+	{
+	  M[0] = this->M1Value[j];
+	  M[1] = this->M2Value[j];
+	  N[0] = this->M3Value[j];
+	  N[1] = this->M1Value[j] + this->M2Value[j] - this->M3Value[j];
+	  Flags[j] = this->Particles->CheckOrder (M, N, 2);
+	  if (Flags[j]>0)
+	    ++TmpNbrInteractionFactors;
+	  else if (Flags[j]==0)
+	    {
+	      ++TmpNbrInteractionFactors;
+	      this->InteractionFactors[j]*=0.5; // diagonal term: make up for double counting
+	    }
+	}
+      double* TmpInteractionFactors = new double[TmpNbrInteractionFactors];
+      int* TmpM1Value = new int[TmpNbrInteractionFactors];
+      int* TmpM2Value = new int[TmpNbrInteractionFactors];
+      int* TmpM3Value = new int[TmpNbrInteractionFactors];
+      int Pos=0;
+      for (int j = 0; j < NbrInteractionFactors; ++j)
+	{
+	  if (Flags[j]>=0)
+	    {
+	      TmpInteractionFactors[Pos]=InteractionFactors[j];
+	      TmpM1Value[Pos]=M1Value[j];
+	      TmpM2Value[Pos]=M2Value[j];
+	      TmpM3Value[Pos]=M3Value[j];
+	      ++Pos;
+	    }
+	}
+      delete [] InteractionFactors;
+      delete [] M1Value;
+      delete [] M2Value;
+      delete [] M3Value;
+      this->InteractionFactors = TmpInteractionFactors;
+      this->NbrInteractionFactors = TmpNbrInteractionFactors;
+      this->M1Value = TmpM1Value;
+      this->M2Value = TmpM2Value;
+      this->M3Value = TmpM3Value;
+      delete [] Flags;
+    }
+  else
+    {
+      int SumIndices;
+      int OldNbrM3Values;
+      int* OldM3Values;
+      int TmpNbrM12Values = 0;
+      int* M12Flags = new int[this->NbrM12Indices];
+      int TmpNbrM3Values;
+      int* TmpM3Values;
+      int* M3Flags;
+      // quick 5count of interaction factors
+      int OldNbrInteractionFactors=0;
+      for (int m1 = 0; m1 < this->NbrM12Indices; ++m1)
+	OldNbrInteractionFactors+=this->NbrM3Values[m1];
+      int TmpNbrInteractionFactors=0;
+      double *TmpInteractionFactors=new double[OldNbrInteractionFactors];
+      int Pos = 0;
+      for (int m1 = 0; m1 < this->NbrM12Indices; ++m1)
+	{
+	  M[0]=this->M1Value[m1];
+	  M[1]=this->M2Value[m1];
+	  SumIndices = this->M1Value[m1] + this->M2Value[m1];
+	  OldNbrM3Values = this->NbrM3Values[m1];
+	  OldM3Values = this->M3Values[m1];
+	  TmpNbrM3Values = 0;
+	  M3Flags = new int[OldNbrM3Values];
+	  for (int m3 = 0; m3 < OldNbrM3Values; ++m3)
+	    {
+	      N[0]=OldM3Values[m3];
+	      N[1]=SumIndices - OldM3Values[m3];
+	      M3Flags[m3] = this->Particles->CheckOrder(M, N, 2);
+	      if (M3Flags[m3]>0)
+		{
+		  ++TmpNbrM3Values;
+		  TmpInteractionFactors[TmpNbrInteractionFactors++]=this->InteractionFactors[Pos];
+		}
+	      else if (M3Flags[m3]==0)
+		{
+		  ++TmpNbrM3Values;
+		  TmpInteractionFactors[TmpNbrInteractionFactors++]=0.5*this->InteractionFactors[Pos];
+		}
+	      ++Pos;
+	    }
+	  if (TmpNbrM3Values>0)
+	    {
+	      ++TmpNbrM12Values;
+	      M12Flags[m1]=1;
+	      TmpM3Values = new int[TmpNbrM3Values];
+	      int Pos2=0;
+	      for (int m3 = 0; m3 < OldNbrM3Values; ++m3)
+		if (M3Flags[m3]>=0)
+		  TmpM3Values[Pos2]=OldM3Values[m3];
+	      delete [] OldM3Values;
+	      this->M3Values[m1] = TmpM3Values;
+	      this->NbrM3Values[m1] = TmpNbrM3Values;
+ 	    }
+	  else
+	    {
+	      M12Flags[m1]=-1;
+	      delete [] OldM3Values;
+	    }
+	}
+      if (this->NbrM12Indices!=TmpNbrM12Values)
+	{
+	  int **NewM3Values=new int*[TmpNbrM12Values];
+	  int *NewNbrM3Values=new int[TmpNbrM12Values];
+	  Pos = 0;
+	  for (int m1 = 0; m1 < this->NbrM12Indices; ++m1)
+	    if (M12Flags[m1]>0)
+	      {
+		NewM3Values[Pos]=this->M3Values[m1];
+		NewNbrM3Values[Pos]=this->NbrM3Values[m1];
+		++Pos;
+	      }
+	  delete [] this->M3Values;
+	  delete [] this->NbrM3Values;
+	  this->M3Values=NewM3Values;
+	  this->NbrM3Values=NewNbrM3Values;
+	}
+      // reduce size of table InteractionFactors to match new size, and copy contents
+      delete [] this->InteractionFactors;
+      this->InteractionFactors = new double[TmpNbrInteractionFactors];
+      for (int i=0; i<TmpNbrInteractionFactors; ++i)
+	this->InteractionFactors[i]=TmpInteractionFactors[i];
+      delete [] TmpInteractionFactors;
+    }
+
+  if (this->OneBodyTermFlag == true)
+    {
+      int TmpNbrOneBodyInteractionFactors=0;
+      int *Flags = new int[this->NbrOneBodyInteractionFactors];
+      for (int j = 0; j < this->NbrOneBodyInteractionFactors; ++j)
+	{
+	  M[0] = this->OneBodyMValues[j];
+	  N[0] = this->OneBodyNValues[j];
+	  Flags[j] = this->Particles->CheckOrder(M, N, 1);
+	  if (Flags[j]>0)
+	    ++TmpNbrOneBodyInteractionFactors;
+	  else if (Flags[j]==0)
+	    {
+	      ++TmpNbrOneBodyInteractionFactors;
+	      OneBodyInteractionFactors[j]*=0.5;
+	    }
+	}
+      double *TmpOneBodyInteractionFactors = new double[TmpNbrOneBodyInteractionFactors];
+      int Pos=0;
+      for (int j = 0; j < this->NbrOneBodyInteractionFactors; ++j)
+	if (Flags[j]>=0)
+	  TmpOneBodyInteractionFactors[Pos++]=this->OneBodyInteractionFactors[j];
+      delete [] this->OneBodyInteractionFactors;
+      this->OneBodyInteractionFactors = TmpOneBodyInteractionFactors;
+    }
+
+  delete [] M;
+  delete [] N;
+  this->HermitianSymmetryFlag=true;
+  return true;
+}
+
 
 
 // evaluate matrix element
@@ -1107,9 +1292,9 @@ RealVector& AbstractQHEOnSphereHamiltonian::ConjugateLowLevelAddMultiply(RealVec
 	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
 	      ReducedNbrInteractionFactors = 0;
+	      TmpSum=0.0;
 	      for (m1 = 0; m1 < this->NbrM12Indices; ++m1)
 		{
-		  TmpSum=0.0;
 		  Coefficient = TmpParticles->AA(i, this->M1Value[m1], this->M2Value[m1]);	  
 		  if (Coefficient != 0.0)
 		    {
@@ -1131,8 +1316,8 @@ RealVector& AbstractQHEOnSphereHamiltonian::ConjugateLowLevelAddMultiply(RealVec
 		    }
 		  else
 		    ReducedNbrInteractionFactors += this->NbrM3Values[m1];
-		  vDestination[i] += TmpSum;
 		}
+	      vDestination[i] += TmpSum;
 	    }
 	  for (int i = firstComponent; i < LastComponent; ++i)
 	    vDestination[i] += this->HamiltonianShift * vSource[i];
@@ -1163,7 +1348,7 @@ RealVector& AbstractQHEOnSphereHamiltonian::ConjugateLowLevelAddMultiply(RealVec
 	  double* TmpCoefficientArray; 
 	  int j;
 	  int TmpNbrInteraction;
-	  int k = firstComponent; // xxx check if this part is correct!
+	  int k = firstComponent; 
 	  firstComponent -= this->PrecalculationShift;
 	  LastComponent -= this->PrecalculationShift;
 	  for (int i = firstComponent; i < LastComponent; ++i)
@@ -1947,7 +2132,11 @@ RealVector& AbstractQHEOnSphereHamiltonian::HermitianLowLevelAddMultiply(RealVec
 		{
 		  Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
 		  if (Index < Dim)
-		    vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
+		    {
+		      Coefficient *= TmpInteraction;
+		      vDestination[Index] += Coefficient * vSource[i];
+		      vDestination[i] += Coefficient * vSource[Index];
+		    }
 		}
 	    }
 	  m1 = this->M1Value[ReducedNbrInteractionFactors];
@@ -1959,39 +2148,50 @@ RealVector& AbstractQHEOnSphereHamiltonian::HermitianLowLevelAddMultiply(RealVec
 	    {
 	      Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
 	      if (Index < Dim)
-		vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
+		{
+		  Coefficient *= TmpInteraction;
+		  vDestination[Index] += Coefficient * vSource[i];
+		  vDestination[i] += Coefficient * vSource[Index];
+		}
 	      vDestination[i] += this->HamiltonianShift * vSource[i];
 	    }
 	}
       else
 	{
+	  double TmpSum;
 	  double Coefficient2;
+	  double Coefficient3;
 	  int SumIndices;
 	  int TmpNbrM3Values;
 	  int* TmpM3Values;
 	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
 	      ReducedNbrInteractionFactors = 0;
+	      TmpSum=0.0;
 	      for (m1 = 0; m1 < this->NbrM12Indices; ++m1)
 		{
 		  Coefficient = TmpParticles->AA(i, this->M1Value[m1], this->M2Value[m1]);	  
 		  if (Coefficient != 0.0)
 		    {
 		      SumIndices = this->M1Value[m1] + this->M2Value[m1];
-		      Coefficient *= vSource[i];
+		      Coefficient3 = Coefficient*vSource[i];
 		      TmpNbrM3Values = this->NbrM3Values[m1];
 		      TmpM3Values = this->M3Values[m1];
 		      for (m3 = 0; m3 < TmpNbrM3Values; ++m3)
 			{
 			  Index = TmpParticles->AdAd(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
-			  if (Index < Dim)			
-			    vDestination[Index] += Coefficient * this->InteractionFactors[ReducedNbrInteractionFactors] * Coefficient2;
+			  if (Index < Dim)
+			    {
+			      TmpSum += vSource[Index] * Coefficient * this->InteractionFactors[ReducedNbrInteractionFactors] * Coefficient2;
+			      vDestination[Index] += this->InteractionFactors[ReducedNbrInteractionFactors] * Coefficient2 * Coefficient3;
+			    }
 			  ++ReducedNbrInteractionFactors;
 			}
 		    }
 		  else
 		    ReducedNbrInteractionFactors += this->NbrM3Values[m1];
 		}
+	      vDestination[i] += TmpSum;
 	    }
 	  for (int i = firstComponent; i < LastComponent; ++i)
 	    vDestination[i] += this->HamiltonianShift * vSource[i];
@@ -2008,7 +2208,10 @@ RealVector& AbstractQHEOnSphereHamiltonian::HermitianLowLevelAddMultiply(RealVec
 		{
 		  Index = this->Particles->AdA(i, m1, m2, Coefficient);
 		  if (Index < Dim)
-		    vDestination[Index] += Coefficient * TmpInteraction * vSource[i];		  
+		    {
+		      vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
+		      vDestination[i] += Coefficient * TmpInteraction * vSource[Index];
+		    }
 		}
 	    }
 	}
@@ -2031,9 +2234,13 @@ RealVector& AbstractQHEOnSphereHamiltonian::HermitianLowLevelAddMultiply(RealVec
 	      TmpIndexArray = this->InteractionPerComponentIndex[i];
 	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[i];
 	      Coefficient = vSource[k];
+	      double TmpSum=0.0;
 	      for (j = 0; j < TmpNbrInteraction; ++j)
-		vDestination[TmpIndexArray[j]] +=  TmpCoefficientArray[j] * Coefficient;
-	      vDestination[k++] += this->HamiltonianShift * Coefficient;
+		{
+		  vDestination[TmpIndexArray[j]] +=  TmpCoefficientArray[j] * Coefficient;
+		  TmpSum +=  TmpCoefficientArray[j] * vSource[TmpIndexArray[j]];
+		}
+	      vDestination[k++] += TmpSum + this->HamiltonianShift * Coefficient;
 	    }
 	}
       else

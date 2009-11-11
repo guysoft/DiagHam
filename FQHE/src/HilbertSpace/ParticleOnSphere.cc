@@ -244,6 +244,13 @@ long ParticleOnSphere::AdA (long index, int m, int n, double& coefficient)
     }
 }
 
+// check whether HilbertSpace implements ordering of operators
+//
+bool ParticleOnSphere::HaveOrder ()
+{
+  return false;
+}
+
 // check whether a given operator \prod c^\dagger_m \prod c_n increases or decreases the index of a state
 //
 // m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
@@ -252,7 +259,6 @@ long ParticleOnSphere::AdA (long index, int m, int n, double& coefficient)
 // return value = 1, if created state is of higher value, 0 if equal, and -1 if lesser value
 int ParticleOnSphere::CheckOrder (int* m, int* n, int nbrIndices)
 {
-  cout << "Need to overload function ParticleOnSphere::CheckOrder"<<endl;
   return 0;
 }
 

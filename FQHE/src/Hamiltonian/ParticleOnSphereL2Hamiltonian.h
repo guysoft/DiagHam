@@ -77,10 +77,11 @@ class ParticleOnSphereL2Hamiltonian : public AbstractQHEOnSphereHamiltonian
   // fixedLz = true if the contribution of the of the Lz^2 has to be computed from the total Lz, false if it has to be computed using the two body operators
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
+  // hermitianFlag = flag to indicate if hermitian symmetry of Hamiltonian shall be used
   ParticleOnSphereL2Hamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, int totalLz,
 				AbstractArchitecture* architecture, double l2Factor = 1.0, 
 				long memory = -1, bool fixedLz = true,
-				bool onDiskCacheFlag = false, char* precalculationFileName = 0);
+				bool onDiskCacheFlag = false, char* precalculationFileName = 0, bool hermitianFlag = false);
 
   // destructor
   //
