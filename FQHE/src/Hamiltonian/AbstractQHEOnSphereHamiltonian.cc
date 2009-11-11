@@ -3058,7 +3058,12 @@ void AbstractQHEOnSphereHamiltonian::EnableFastMultiplication()
   this->InteractionPerComponentIndex = new int* [ReducedSpaceDimension];
   this->InteractionPerComponentCoefficient = new double* [ReducedSpaceDimension];
 
-  
+  // allocate all memory at the outset:
+  for (int i = 0; i < ReducedSpaceDimension; ++i)
+    {
+      this->InteractionPerComponentIndex[i] = new int [this->NbrInteractionPerComponent[i]];
+      this->InteractionPerComponentCoefficient[i] = new double [this->NbrInteractionPerComponent[i]];
+    }
 
   QHEParticlePrecalculationOperation Operation(this, false);
   Operation.ApplyOperation(this->Architecture);
@@ -3085,8 +3090,6 @@ void AbstractQHEOnSphereHamiltonian::PartialEnableFastMultiplication(int firstCo
   
   for (int i = TotalPos*this->FastMultiplicationStep; i < LastComponent; i += this->FastMultiplicationStep)
     {
-      this->InteractionPerComponentIndex[TotalPos] = new int [this->NbrInteractionPerComponent[TotalPos]];
-      this->InteractionPerComponentCoefficient[TotalPos] = new double [this->NbrInteractionPerComponent[TotalPos]];      
       this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[TotalPos], 
 							 this->InteractionPerComponentCoefficient[TotalPos], TotalPos);
     }
