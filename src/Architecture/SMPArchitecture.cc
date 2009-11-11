@@ -31,14 +31,18 @@
 #include "config.h"
 #include "Architecture/SMPArchitecture.h"
 #include "Architecture/ArchitectureOperation/AbstractArchitectureOperation.h"
+#include "GeneralTools/StringTools.h"
 
 #ifdef __SMP__
 #include <pthread.h>
 #endif
 #include <stdlib.h>
 #include <iostream>
+#include <fstream>
 
 
+using std::ofstream;
+using std::ios;
 using std::cout;
 using std::endl;
 
@@ -54,11 +58,24 @@ void* ThreadExecuteOperation(void* param);
 // constructor
 //
 // nbrThreads = number of threads to run simultaneously (in principle, the number of processors that can be allocated)
+// logFile = name of the optional log file to allow code profiling on SMP architecture
 
-SMPArchitecture::SMPArchitecture(int nbrThreads)
+SMPArchitecture::SMPArchitecture(int nbrThreads, char* logFile)
 {
   this->ArchitectureID = AbstractArchitecture::SMP;
   this->NbrThreads = nbrThreads;
+  if (logFile != 0)
+    {
+      this->VerboseModeFlag = true;
+      this->LogFile = new char [strlen(logFile) + 1];
+      strcpy (this->LogFile, logFile);
+    }
+  else
+    {
+      this->VerboseModeFlag = false;
+      this->LogFile = 0;
+    }
+
 #ifdef __SMP__
   this->ThreadParameters = new ThreadMainParameter [this->NbrThreads];
   this->Threads = new pthread_t [this->NbrThreads];
@@ -78,6 +95,8 @@ SMPArchitecture::~SMPArchitecture()
 #ifdef __SMP__
   delete[] this->Threads;
 #endif
+  if (this->LogFile != 0)
+    delete[] this->LogFile;
 }
   
 // set the operation that has to be executed by a given thread
@@ -153,3 +172,39 @@ void* ThreadExecuteOperation(void* param)
   return 0;
 }
 
+// add an entry to the log file
+//
+// message = string corresponding to entry to add to the log file
+// masterFlag = true if only the master node should add the entry
+// return value = true if no error occured
+
+bool SMPArchitecture::AddToLog(const char * message, bool masterFlag)
+{
+  if ((this->VerboseModeFlag == true) && (this->LogFile != 0))
+    {
+      ofstream File;
+      File.open(this->LogFile, ios::out | ios::app);
+      if (!File.is_open())
+	{
+	  cout << "ERROR : cannot write log file " << this->LogFile << endl;
+	  return false;
+	}
+      File << message << endl;
+      File.close();
+      return true;
+    }
+  return false;
+}
+
+// dump the log file into a string
+//
+// header = optional header to add before the log file
+// footer = optional footer to add at the end of the log file
+// return value = string or 0 if an error occured or log is not available
+
+char* SMPArchitecture::DumpLog(const char* header, const char* footer)
+{
+  if ((this->VerboseModeFlag == false) || (this->LogFile == 0))
+    return 0;
+  return DumpTextFile(this->LogFile, header, footer);
+}

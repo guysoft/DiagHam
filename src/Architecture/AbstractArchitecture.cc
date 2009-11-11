@@ -128,3 +128,33 @@ char* AbstractArchitecture::GetTemporaryFileName()
   return TmpString;
 }
   
+// indicate if the log file option is activated
+//
+// return value = true if the option is activated
+
+bool AbstractArchitecture::VerboseMode()
+{
+  return false;
+}
+
+// add an entry to the log file
+//
+// message = string corresponding to entry to add to the log file
+// masterFlag = true if only the master node should add the entry
+// return value = true if no error occured
+
+bool AbstractArchitecture::AddToLog(const char* message, bool masterFlag)
+{
+  return false;
+}
+
+// dump the log file into a string
+//
+// header = optional header to add before the log file
+// footer = optional footer to add at the end of the log file
+// return value = string or 0 if an error occured or log is not available
+
+char* AbstractArchitecture::DumpLog(const char* header, const char* footer)
+{
+  return 0;
+}

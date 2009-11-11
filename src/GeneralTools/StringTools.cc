@@ -31,7 +31,15 @@
 #include "config.h"
 #include "GeneralTools/StringTools.h"
 
-#include <string.h>
+#include <fstream>
+#include <cstring>
+#include <iostream>
+
+
+using std::ifstream;
+using std::ios;
+using std::cout;
+using std::endl;
 
 // split a line using a given separator
 //
@@ -199,6 +207,53 @@ bool CleanLine (char* line)
   return true;
 }
 
+
+// dump a text file into a string
+//
+// fileName = input file name
+// header = optional header to add before the log file
+// footer = optional footer to add at the end of the log file
+// return value = string or 0 if an error occured
+
+char* DumpTextFile(const char* fileName, const char* header, const char* footer)
+{
+  ifstream File;
+  File.open(fileName, ios::binary | ios::in);
+  if (!File.is_open())
+    {
+      return 0;
+    }
+  File.seekg(0, ios::end);
+  unsigned int Size = File.tellg();
+  File.seekg(0, ios::beg);
+  unsigned int HeaderSize = 0;
+  if (header != 0)
+    {
+      HeaderSize = strlen(header);
+    }
+  unsigned int FooterSize = 0;
+  if (footer != 0)
+    {
+      FooterSize  = strlen(footer);
+    }
+  char* TmpBuffer = new char [Size + HeaderSize + FooterSize + 1];
+  if (TmpBuffer == 0)
+    {
+      return 0;
+    }
+  if (header != 0)
+    {
+      strcpy (TmpBuffer, header);
+    }
+  File.read(TmpBuffer + HeaderSize, Size);
+  File.close();
+  if (footer != 0)
+    {
+      strcpy (TmpBuffer + HeaderSize + Size, footer);
+    }
+  TmpBuffer[Size + HeaderSize + FooterSize] = '\0';
+  return TmpBuffer;
+}
 
 // print the given memory size in b, kb, Mb, or Gb
 // str = stream to write to

@@ -267,7 +267,17 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* lo
   if (this->NbrCPUPerNode[this->MPIRank] > 1)
     {
       delete this->LocalArchitecture;
-      this->LocalArchitecture = new SMPArchitecture(this->NbrCPUPerNode[this->MPIRank]);
+      if (logFile == 0)
+	{
+	  this->LocalArchitecture = new SMPArchitecture(this->NbrCPUPerNode[this->MPIRank]);
+	}
+      else
+	{
+	  char* TmpLogFileName = new char [strlen(logFile) + 128];
+	  sprintf (TmpLogFileName, "%s.local.%i.dat", logFile, this->MPIRank);
+	  this->LocalArchitecture = new SMPArchitecture(this->NbrCPUPerNode[this->MPIRank], TmpLogFileName);
+	  delete[] TmpLogFileName;
+	}
     }
 }
   
@@ -276,6 +286,19 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* lo
 
 MixedMPISMPArchitecture::~MixedMPISMPArchitecture()
 {
+  if (this->VerboseModeFlag == true)
+    {
+      if (this->NbrCPUPerNode[this->MPIRank] > 1)
+	{
+	  char* TmpString = this->LocalArchitecture->DumpLog("detailed log :\n", "-------------------------");
+	  this->AddToLog(TmpString);
+	  delete[] TmpString;
+	}
+      else
+	{
+	  this->AddToLog("detailed log : none\n-------------------------");
+	}
+    }
   delete[] this->NbrCPUPerNode;
   delete[] this->ClusterMemoryArray;
   if (this->NodeHostnames != 0)

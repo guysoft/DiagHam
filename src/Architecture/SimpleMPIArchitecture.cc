@@ -35,6 +35,7 @@
 #include "Vector/Vector.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
+#include "GeneralTools/StringTools.h"
 
 #include <sys/time.h>
 #include <string.h>
@@ -539,7 +540,7 @@ char* SimpleMPIArchitecture::GetTemporaryFileName()
 // masterFlag = true if only the master node should add the entry
 // return value = true if no error occured
 
-bool SimpleMPIArchitecture::AddToLog(char * message, bool masterFlag)
+bool SimpleMPIArchitecture::AddToLog(const char * message, bool masterFlag)
 {
 #ifdef __MPI__
   if (this->MasterNodeFlag == false)
@@ -584,6 +585,18 @@ bool SimpleMPIArchitecture::AddToLog(char * message, bool masterFlag)
 #endif  
 }
 
+// dump the log file into a string
+//
+// header = optional header to add before the log file
+// footer = optional footer to add at the end of the log file
+// return value = string or 0 if an error occured or log is not available
+
+char* SimpleMPIArchitecture::DumpLog(const char* header, const char* footer)
+{
+  if ((this->VerboseModeFlag == false) || (this->LogFile == 0))
+    return 0;
+  return DumpTextFile(this->LogFile, header, footer);
+}
 
 
 

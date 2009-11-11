@@ -227,7 +227,14 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // message = string corresponding to entry to add to the log file
   // masterFlag = true if only the master node should add the entry
   // return value = true if no error occured
-  virtual bool AddToLog(char * message, bool masterFlag = false);
+  virtual bool AddToLog(const char * message, bool masterFlag = false);
+
+  // dump the log file into a string
+  //
+  // header = optional header to add before the log file
+  // footer = optional footer to add at the end of the log file
+  // return value = string or 0 if an error occured or log is not available
+  virtual char* DumpLog(const char* header = 0, const char* footer = 0);
 
 };
 

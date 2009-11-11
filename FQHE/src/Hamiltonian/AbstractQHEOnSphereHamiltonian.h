@@ -501,8 +501,8 @@ inline void AbstractQHEOnSphereHamiltonian::EvaluateMNTwoBodyFastMultiplicationC
 {
   if (this->NbrM12Indices == 0)
     {
-      indexArray = this->InteractionPerComponentIndex[position];
-      coefficientArray = this->InteractionPerComponentCoefficient[position];
+      //      indexArray = this->InteractionPerComponentIndex[position];
+      //      coefficientArray = this->InteractionPerComponentCoefficient[position];
       int Pos = 0;
       int m1;
       int m2;
@@ -516,7 +516,7 @@ inline void AbstractQHEOnSphereHamiltonian::EvaluateMNTwoBodyFastMultiplicationC
 	  m2 = this->M2Value[j];
 	  m3 = this->M3Value[j];
 	  m4 = m1 + m2 - m3;
-	  Index = particles->AdAdAA(index + this->PrecalculationShift, m1, m2, m3, m4, Coefficient);
+	  Index = particles->AdAdAA(index, m1, m2, m3, m4, Coefficient);
 	  if (Index < particles->GetHilbertSpaceDimension())
 	    {
 	      indexArray[Pos] = Index;
@@ -530,7 +530,7 @@ inline void AbstractQHEOnSphereHamiltonian::EvaluateMNTwoBodyFastMultiplicationC
 	    {
 	      m1 = this->OneBodyMValues[j];
 	      m2 = this->OneBodyNValues[j];
-	      Index = particles->AdA(index + this->PrecalculationShift, m1, m2, Coefficient);
+	      Index = particles->AdA(index, m1, m2, Coefficient);
 	      if (Index < particles->GetHilbertSpaceDimension())
 		{
 		  indexArray[Pos] = Index;
@@ -548,15 +548,15 @@ inline void AbstractQHEOnSphereHamiltonian::EvaluateMNTwoBodyFastMultiplicationC
       int TmpNbrM3Values;
       int* TmpM3Values;
       int ReducedNbrInteractionFactors;
-      indexArray = this->InteractionPerComponentIndex[position];
-      coefficientArray = this->InteractionPerComponentCoefficient[position];
+      //      indexArray = this->InteractionPerComponentIndex[position];
+      //      coefficientArray = this->InteractionPerComponentCoefficient[position];
       int Pos = 0;
       int Index = 0;
       double Coefficient = 0.0;
       ReducedNbrInteractionFactors = 0;
       for (int m1 = 0; m1 < this->NbrM12Indices; ++m1)
 	{
-	  Coefficient = particles->AA(index + this->PrecalculationShift, this->M1Value[m1], this->M2Value[m1]);	  
+	  Coefficient = particles->AA(index, this->M1Value[m1], this->M2Value[m1]);	  
 	  if (Coefficient != 0.0)
 	    {
 	      SumIndices = this->M1Value[m1] + this->M2Value[m1];
@@ -585,7 +585,7 @@ inline void AbstractQHEOnSphereHamiltonian::EvaluateMNTwoBodyFastMultiplicationC
 	    {
 	      m1 = this->OneBodyMValues[j];
 	      m2 = this->OneBodyNValues[j];
-	      Index = particles->AdA(index + this->PrecalculationShift, m1, m2, Coefficient);
+	      Index = particles->AdA(index, m1, m2, Coefficient);
 	      if (Index < particles->GetHilbertSpaceDimension())
 		{
 		  indexArray[Pos] = Index;

@@ -227,7 +227,6 @@ bool VectorHamiltonianMultiplyOperation::RawApplyOperation()
   gettimeofday (&(TotalEndingTime2), 0);
   this->ExecutionTime = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
     ((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
-  
   return true;
 }
 
@@ -265,8 +264,15 @@ bool VectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOperation(SMP
 	}
     }
   architecture->SendJobs();
-  for (int i = 0; i < architecture->GetNbrThreads(); ++i)
-    cout << "T("<<i <<")= "<< TmpOperations[i]->ExecutionTime<<endl;
+  if (architecture->VerboseMode() == true)
+    {
+      char TmpString[512];
+      for (int i = 0; i < architecture->GetNbrThreads(); ++i)
+	{
+	  sprintf (TmpString, "VectorHamiltonianMultiply core operation on SMP id %d done in %.3f seconds", i, TmpOperations[i]->ExecutionTime);
+	  architecture->AddToLog(TmpString);
+	}
+    }
   for (int i = 1; i < architecture->GetNbrThreads(); ++i)
     {
       if (this->UseConjugateFlag == false)

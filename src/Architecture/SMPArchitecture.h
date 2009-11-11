@@ -86,12 +86,18 @@ class SMPArchitecture : public AbstractArchitecture
       Accomplished = 0x8
     };
 
+  // name of the optional log file to allow code profiling on SMP architecture
+  char* LogFile;
+  // flag to indicate if the log file option is activated
+  bool VerboseModeFlag;
+
  public:
   
   // constructor
   //
   // nbrThreads = number of threads to run simultaneously (in principle, the number of processors that can be allocated)
-  SMPArchitecture(int nbrThreads);
+  // logFile = name of the optional log file to allow code profiling on SMP architecture
+  SMPArchitecture(int nbrThreads, char* logFile = 0);
   
   // destructor
   //
@@ -112,6 +118,25 @@ class SMPArchitecture : public AbstractArchitecture
   //
   void SendJobs ();
 
+  // indicate if the log file option is activated
+  //
+  // return value = true if the option is activated
+  bool VerboseMode();
+
+  // add an entry to the log file
+  //
+  // message = string corresponding to entry to add to the log file
+  // masterFlag = true if only the master node should add the entry
+  // return value = true if no error occured
+  bool AddToLog(const char * message, bool masterFlag = false);
+
+  // dump the log file into a string
+  //
+  // header = optional header to add before the log file
+  // footer = optional footer to add at the end of the log file
+  // return value = string or 0 if an error occured or log is not available
+  char* DumpLog(const char* header = 0, const char* footer = 0);
+
 };
 
 // get the  number of threads that run simultaneously
@@ -121,6 +146,15 @@ class SMPArchitecture : public AbstractArchitecture
 inline int SMPArchitecture::GetNbrThreads()
 {
   return this->NbrThreads;
+}
+
+// indicate if the log file option is activated
+//
+// return value = true if the option is activated
+
+inline bool SMPArchitecture::VerboseMode()
+{
+  return this->VerboseModeFlag;
 }
 
 #endif

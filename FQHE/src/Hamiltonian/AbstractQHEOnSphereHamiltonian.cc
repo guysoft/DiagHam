@@ -3303,13 +3303,14 @@ void AbstractQHEOnSphereHamiltonian::EnableFastMultiplication()
 // nbrComponent  = index of the last component that has to be precalcualted
 
 void AbstractQHEOnSphereHamiltonian::PartialEnableFastMultiplication(int firstComponent, int nbrComponent)
-{
+{  
   int LastComponent = nbrComponent + firstComponent;
   ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
 
-  long TotalPos = ((firstComponent-1)/this->FastMultiplicationStep)+1;
-  
-  for (int i = TotalPos*this->FastMultiplicationStep; i < LastComponent; i += this->FastMultiplicationStep)
+  long TotalPos = ((firstComponent - this->PrecalculationShift - 1) / this->FastMultiplicationStep) + 1;
+  int InitalPos = ((firstComponent - 1) / this->FastMultiplicationStep) + 1;
+  InitalPos *= this->FastMultiplicationStep;
+  for (int i = InitalPos; i < LastComponent; i += this->FastMultiplicationStep)
     {
       this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[TotalPos], 
 							 this->InteractionPerComponentCoefficient[TotalPos], TotalPos);

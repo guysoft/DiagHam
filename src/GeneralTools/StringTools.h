@@ -61,6 +61,13 @@ int FixedSplitLine(char* string, char** array, int nbrElements, char separator);
 // return value = true if the line still contains usefull information
 bool CleanLine (char* line);
 
+// dump a text file into a string
+//
+// fileName = input file name
+// header = optional header to add before the log file
+// footer = optional footer to add at the end of the log file
+// return value = string or 0 if an error occured
+char* DumpTextFile(const char* fileName, const char* header, const char* footer);
 
 // print the given memory size in b, kb, Mb, or Gb
 // str = stream to write to
