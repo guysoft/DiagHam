@@ -54,7 +54,7 @@ void ReadLittleEndian (ifstream& file, ClassName& var)
       TmpBin1[sizeof(ClassName) - i -1] = TmpBin2[i];
     }
 #endif
-};
+}
 
 // function to write Little Endian encoded variable from a file using 
 //
@@ -78,5 +78,5 @@ void WriteLittleEndian (ofstream& file, ClassName& var)
 #else
   file.write ((char*) &var, sizeof(ClassName));
 #endif
-};
+}
 
