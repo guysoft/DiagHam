@@ -51,6 +51,10 @@ RealUniqueArray::RealUniqueArray(int internalSize)
       this->Elements=new double[internalSize];
       this->Flag.Initialize();
     }
+#ifdef __SMP__
+  this->BufferMutex = new pthread_mutex_t;
+  pthread_mutex_init(this->BufferMutex, NULL);
+#endif
 }
 
 RealUniqueArray::RealUniqueArray(RealUniqueArray &array, bool duplicateFlag)
@@ -72,6 +76,10 @@ RealUniqueArray::RealUniqueArray(RealUniqueArray &array, bool duplicateFlag)
 	  this->Flag.Initialize();
 	}
     }
+#ifdef __SMP__
+  this->BufferMutex = new pthread_mutex_t;
+  pthread_mutex_init(this->BufferMutex, NULL);
+#endif
 }
 
 // destructor
@@ -81,6 +89,10 @@ RealUniqueArray::~RealUniqueArray()
     {
       delete [] Elements;
     }
+#ifdef __SMP__
+  pthread_mutex_destroy(this->BufferMutex);
+  delete this->BufferMutex;
+#endif
 }
 
 // Insert element
@@ -94,6 +106,9 @@ int RealUniqueArray::InsertElement(double element)
 	return i;
     }
   // element not found
+#ifdef __SMP__
+  pthread_mutex_lock(this->BufferMutex);
+#endif
   if (NbrElements < InternalSize)
     {
       this->Elements[NbrElements]=element;
@@ -111,7 +126,11 @@ int RealUniqueArray::InsertElement(double element)
 	delete [] Elements;
       this->Elements=newElements;      
     }
-  return (NbrElements-1);
+  int Result=NbrElements-1;
+#ifdef __SMP__
+  pthread_mutex_unlock(this->BufferMutex);
+#endif
+  return Result;
 }
 
 // search entry
@@ -133,6 +152,9 @@ int RealUniqueArray::SearchElement(double value)
 // internalSize = minimum table size to allocate (only used if disallocating)
 void RealUniqueArray::Empty(bool disallocate, int internalSize)
 {
+#ifdef __SMP__
+  pthread_mutex_lock(this->BufferMutex);
+#endif
   if (disallocate)
     {
       if ((this->InternalSize!=0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
@@ -143,6 +165,10 @@ void RealUniqueArray::Empty(bool disallocate, int internalSize)
       this->Elements = new double[InternalSize];
     }
   this->NbrElements=0;
+#ifdef __SMP__
+  pthread_mutex_unlock(this->BufferMutex);
+#endif
+
 }
 
 
@@ -159,6 +185,9 @@ void RealUniqueArray::WriteArray(ofstream &file)
 // file = open stream to read from
 void RealUniqueArray::ReadArray(ifstream &file)
 {
+#ifdef __SMP__
+  pthread_mutex_lock(this->BufferMutex);
+#endif
   if ( (this->InternalSize!=0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
       delete [] Elements;
@@ -169,5 +198,8 @@ void RealUniqueArray::ReadArray(ifstream &file)
   this->NbrElements=TmpDimension;
   this->Elements=new double[TmpDimension];
   for (int i = 0; i < this->NbrElements; ++i)
-    ReadLittleEndian(file, this->Elements[i]);  
+    ReadLittleEndian(file, this->Elements[i]);
+#ifdef __SMP__
+  pthread_mutex_unlock(this->BufferMutex);
+#endif
 }

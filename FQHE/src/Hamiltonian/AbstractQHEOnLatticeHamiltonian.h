@@ -47,6 +47,12 @@ using std::ostream;
 
 class AbstractArchitecture;
 
+using std::cout;
+using std::endl;
+
+// threshold before something is defined different from zero
+#define LATTICEHAMILTONIAN_IDENTICAL_ELEMENT_THRESHOLD 1.71245451764e-13
+
 
 class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
 {
@@ -122,7 +128,9 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
 
   // shift to apply to go from precalculation index to the corresponding index in the HilbertSpace
   int PrecalculationShift;
-
+  
+  // flag for implementation of hermitian symmetry
+  bool HermitianSymmetryFlag;
   
   // amount of memory (in bytes) that can be used to store precalculated matrix elements
   long AllowedMemory;
@@ -148,7 +156,12 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
 
   // array storing a single copy of each real matrix element value
   ComplexUniqueArray ComplexInteractionCoefficients;
-  
+
+  // number of tasks for load balancing
+  int NbrBalancedTasks;
+  // load balancing array for parallelisation, indicating starting indices
+  long *LoadBalancingArray;
+  // cumulative count of non-zero matrix elements
 
   // flag to indicate if a hamiltonian is temporary stored on disk
   bool DiskStorageFlag;
@@ -200,6 +213,18 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   //
   // shift = shift value
   virtual void ShiftHamiltonian (double shift);
+  
+  // ask if Hamiltonian implements methods using hermitian symmetry 
+  //
+  virtual bool IsHermitian();
+
+  // ask if Hamiltonian implements methods applying the conjugate of the Hamiltonian
+  //
+  virtual bool IsConjugate();
+
+  // symmetrize interaction factors to enable hermitian matrix multiplication
+  // return = true upon success
+  virtual bool HermitianSymmetrizeInteractionFactors();
 
   // evaluate matrix element
   //
@@ -215,69 +240,17 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // return value = corresponding matrix element
   virtual Complex MatrixElement (ComplexVector& V1, ComplexVector& V2);
 
-  // multiply a vector by the current hamiltonian and store result in another vector
-  // low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector where result has to be stored
-  // return value = reference on vectorwhere result has been stored
-  virtual RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination);
-
-  // multiply a vector by the current hamiltonian for a given range of idinces 
-  // and store result in another vector, low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector where result has to be stored
-  // firstComponent = index of the first component to evaluate
-  // nbrComponent = number of components to evaluate
-  // return value = reference on vector where result has been stored
-  virtual RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
-				       int firstComponent, int nbrComponent);
-
-  // multiply a set of vectors by the current hamiltonian for a given range of indices 
-  // and store result in another set of vectors, low level function (no architecture optimization)
-  //
-  // vSources = array of vectors to be multiplied
-  // vDestinations = array of vectors where result has to be stored
-  // nbrVectors = number of vectors that have to be evaluated together
-  // firstComponent = index of the first component to evaluate
-  // nbrComponent = number of components to evaluate
-  // return value = pointer to the array of vectors where result has been stored
-  virtual RealVector* LowLevelMultipleMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
-					       int firstComponent, int nbrComponent);
-
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)
   //
-  // vSource = vector to be multiplied
-  // vDestination = vector at which result has to be added
-  // return value = reference on vectorwhere result has been stored
-  virtual RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination);
-
-  // multiply a vector by the current hamiltonian for a given range of indices 
-  // and add result to another vector, low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
+  // vSource = vector to be multiplied<
   // vDestination = vector at which result has to be added
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  virtual RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
-					  int firstComponent, int nbrComponent);
+  virtual ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+					     int firstComponent, int nbrComponent);
 
-  // multiply a et of vectors by the current hamiltonian for a given range of indices 
-  // and add result to another et of vectors, low level function (no architecture optimization)
-  //
-  // vSources = array of vectors to be multiplied
-  // vDestinations = array of vectors at which result has to be added
-  // nbrVectors = number of vectors that have to be evaluated together
-  // firstComponent = index of the first component to evaluate
-  // nbrComponent = number of components to evaluate
-  // return value = pointer to the array of vectors where result has been stored
-  virtual RealVector* LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
-						  int firstComponent, int nbrComponent);
-
-  
   // multiply a et of vectors by the current hamiltonian for a given range of indices 
   // and add result to another et of vectors, low level function (no architecture optimization)
   //
@@ -288,34 +261,7 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // nbrComponent = number of components to evaluate
   // return value = pointer to the array of vectors where result has been stored
   virtual ComplexVector* LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
-						  int firstComponent, int nbrComponent);
-
-  // multiply a vector by the current hamiltonian and store result in another vector
-  // low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector where result has to be stored
-  // return value = reference on vectorwhere result has been stored
-  virtual ComplexVector& LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination);
-
-  // multiply a vector by the current hamiltonian for a given range of indices 
-  // and store result in another vector, low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector where result has to be stored
-  // firstComponent = index of the first component to evaluate
-  // nbrComponent = number of components to evaluate
-  // return value = reference on vector where result has been stored
-  virtual ComplexVector& LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-				  int firstComponent, int nbrComponent);
-
-  // multiply a vector by the current hamiltonian for a given range of indices 
-  // and add result to another vector, low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector at which result has to be added
-  // return value = reference on vectorwhere result has been stored
-  virtual ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination);
+						     int firstComponent, int nbrComponent);
 
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)
@@ -325,8 +271,45 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  virtual ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-				     int firstComponent, int nbrComponent);
+  virtual ComplexVector& ConjugateLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+						      int firstComponent, int nbrComponent);
+
+  // multiply a et of vectors by the current hamiltonian for a given range of indices 
+  // and add result to another et of vectors, low level function (no architecture optimization)
+  //
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors at which result has to be added
+  // nbrVectors = number of vectors that have to be evaluated together
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = pointer to the array of vectors where result has been stored
+  virtual ComplexVector* ConjugateLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+							      int firstComponent, int nbrComponent);
+
+  // multiply a vector by the current hamiltonian for a given range of indices 
+  // and add result to another vector, low level function (no architecture optimization)
+  //
+  // vSource = vector to be multiplied<
+  // vDestination = vector at which result has to be added
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = reference on vector where result has been stored
+  virtual ComplexVector& HermitianLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+						      int firstComponent, int nbrComponent);
+
+  // multiply a et of vectors by the current hamiltonian for a given range of indices 
+  // and add result to another et of vectors, low level function (no architecture optimization)
+  //
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors at which result has to be added
+  // nbrVectors = number of vectors that have to be evaluated together
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = pointer to the array of vectors where result has been stored
+  virtual ComplexVector* HermitianLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+							      int firstComponent, int nbrComponent);
+
+
  
   // return a list of left interaction operators
   //
@@ -356,7 +339,7 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
   virtual ComplexVector& LowLevelAddMultiplyPartialFastMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-							     int firstComponent, int nbrComponent);
+								int firstComponent, int nbrComponent);
 
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)
@@ -368,7 +351,7 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
   virtual ComplexVector& LowLevelAddMultiplyDiskStorage(ComplexVector& vSource, ComplexVector& vDestination, 
-						     int firstComponent, int nbrComponent);
+							int firstComponent, int nbrComponent);
 
   // multiply a et of vectors by the current hamiltonian for a given range of indices 
   // and add result to another et of vectors, low level function (no architecture optimization)
@@ -381,7 +364,7 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // nbrComponent = number of components to evaluate
   // return value = pointer to the array of vectors where result has been stored
   virtual ComplexVector* LowLevelMultipleAddMultiplyPartialFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
-								     int firstComponent, int nbrComponent);
+									int firstComponent, int nbrComponent);
 
   // multiply a et of vectors by the current hamiltonian for a given range of indices 
   // and add result to another et of vectors, low level function (no architecture optimization)
@@ -393,12 +376,119 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = pointer to the array of vectors where result has been stored
-  ComplexVector* LowLevelMultipleAddMultiplyDiskStorage(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
-						     int firstComponent, int nbrComponent);
+  virtual ComplexVector* LowLevelMultipleAddMultiplyDiskStorage(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+								int firstComponent, int nbrComponent);
 
+  // multiply a vector by the current hamiltonian for a given range of indices 
+  // and add result to another vector, low level function (no architecture optimization)
+  // using partial fast multiply option
+  //
+  // vSource = vector to be multiplied
+  // vDestination = vector at which result has to be added
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = reference on vector where result has been stored
+  virtual ComplexVector& ConjugateLowLevelAddMultiplyPartialFastMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+									 int firstComponent, int nbrComponent);
+
+  // multiply a vector by the current hamiltonian for a given range of indices 
+  // and add result to another vector, low level function (no architecture optimization)
+  // using disk storage option
+  //
+  // vSource = vector to be multiplied
+  // vDestination = vector at which result has to be added
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = reference on vector where result has been stored
+  virtual ComplexVector& ConjugateLowLevelAddMultiplyDiskStorage(ComplexVector& vSource, ComplexVector& vDestination, 
+								 int firstComponent, int nbrComponent);
+
+  // multiply a et of vectors by the current hamiltonian for a given range of indices 
+  // and add result to another et of vectors, low level function (no architecture optimization)
+  // using partial fast multiply option
+  //
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors at which result has to be added
+  // nbrVectors = number of vectors that have to be evaluated together
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = pointer to the array of vectors where result has been stored
+  virtual ComplexVector* ConjugateLowLevelMultipleAddMultiplyPartialFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+										 int firstComponent, int nbrComponent);
+
+  // multiply a et of vectors by the current hamiltonian for a given range of indices 
+  // and add result to another et of vectors, low level function (no architecture optimization)
+  // using disk storage option
+  //
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors at which result has to be added
+  // nbrVectors = number of vectors that have to be evaluated together
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = pointer to the array of vectors where result has been stored
+  virtual ComplexVector* ConjugateLowLevelMultipleAddMultiplyDiskStorage(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+									 int firstComponent, int nbrComponent);
+
+  // multiply a vector by the current hamiltonian for a given range of indices 
+  // and add result to another vector, low level function (no architecture optimization)
+  // using partial fast multiply option
+  //
+  // vSource = vector to be multiplied
+  // vDestination = vector at which result has to be added
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = reference on vector where result has been stored
+  virtual ComplexVector& HermitianLowLevelAddMultiplyPartialFastMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+									 int firstComponent, int nbrComponent);
+
+  // multiply a vector by the current hamiltonian for a given range of indices 
+  // and add result to another vector, low level function (no architecture optimization)
+  // using disk storage option
+  //
+  // vSource = vector to be multiplied
+  // vDestination = vector at which result has to be added
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = reference on vector where result has been stored
+  virtual ComplexVector& HermitianLowLevelAddMultiplyDiskStorage(ComplexVector& vSource, ComplexVector& vDestination, 
+								 int firstComponent, int nbrComponent);
+
+  // multiply a et of vectors by the current hamiltonian for a given range of indices 
+  // and add result to another et of vectors, low level function (no architecture optimization)
+  // using partial fast multiply option
+  //
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors at which result has to be added
+  // nbrVectors = number of vectors that have to be evaluated together
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = pointer to the array of vectors where result has been stored
+  virtual ComplexVector* HermitianLowLevelMultipleAddMultiplyPartialFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+										 int firstComponent, int nbrComponent);
+
+  // multiply a et of vectors by the current hamiltonian for a given range of indices 
+  // and add result to another et of vectors, low level function (no architecture optimization)
+  // using disk storage option
+  //
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors at which result has to be added
+  // nbrVectors = number of vectors that have to be evaluated together
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = pointer to the array of vectors where result has been stored
+  virtual ComplexVector* HermitianLowLevelMultipleAddMultiplyDiskStorage(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+									 int firstComponent, int nbrComponent);
+
+  
   // evaluate all interaction factors
   //   
   virtual void EvaluateInteractionFactors() = 0;
+
+  // get the preferred distribution over parallel execution in N tasks for parallel Hamiltonian-Vector multiplication
+  // nbrThreads = number of threads requested
+  // segmentIndices = array returning the reference to an array of the first index of each of the segments
+  //
+  virtual bool GetLoadBalancing(int nbrTasks, long* &segmentIndices);
 
   // test the amount of memory needed for fast multiplication algorithm
   //
@@ -419,7 +509,7 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
 
   // firstComponent = index of the first component that has to be precalcualted
   // lastComponent  = index of the last component that has to be precalcualted
-  virtual void PartialEnableFastMultiplication(int firstComponent, int lastComponent);
+  virtual void PartialEnableFastMultiplication(int firstComponent, int nbrComponent);
   
   // enable fast multiplication algorithm using on disk cache 
   //
@@ -432,6 +522,207 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // return value = true if no error occurs
   virtual bool LoadPrecalculation (char* fileName);
 
+  // core part of the FastMultiplication method involving 1- and 2-body terms and diagonal elements
+  // 
+  // particles = pointer to the Hilbert space
+  // index = index of the component on which the Hamiltonian has to act on
+  // indexArray = array where indices connected to the index-th component through the Hamiltonian
+  // coefficientIndexArray = array of the indices of the numerical coefficients related to the indexArray
+  // position = reference on the current position in arrays indexArray and coefficientArray
+  void EvaluateFastMultiplicationComponent(ParticleOnLattice* particles, int index, 
+					   int* indexArray, unsigned short* coefficientIndexArray, long& position);
+
+  
 };
+
+
+// core part of the FastMultiplication method involving 1- and 2-body terms and diagonal elements
+// 
+// particles = pointer to the Hilbert space
+// index = index of the component on which the Hamiltonian has to act on
+// indexArray = array where indices connected to the index-th component through the Hamiltonian
+// coefficientIndexArray = array of the indices of the numerical coefficients related to the indexArray
+// position = reference on the current position in arrays indexArray and coefficientArray
+
+inline void AbstractQHEOnLatticeHamiltonian::EvaluateFastMultiplicationComponent(ParticleOnLattice* particles, int index, 
+										 int* indexArray, unsigned short* coefficientIndexArray, long& position)
+{
+  int qi, qf;
+  int Index2;
+  int tmpElementPos;
+  double Coefficient;
+  int PosR, PosC;
+  int Dim = this->Particles->GetHilbertSpaceDimension();
+  int TmpInteractionPerComponent = this->NbrRealInteractionPerComponent[position]+this->NbrComplexInteractionPerComponent[position];
+  //       cout << "Interactions for component "<<i<<":  real "<< this->NbrRealInteractionPerComponent[position]<<" complex "
+  // 	   << this->NbrComplexInteractionPerComponent[position] <<endl;
+  this->InteractionPerComponentIndex[position] = new int [TmpInteractionPerComponent];
+  this->InteractionPerComponentCoefficientIndex[position] = new unsigned short [TmpInteractionPerComponent];      
+  indexArray = this->InteractionPerComponentIndex[position];
+  coefficientIndexArray = this->InteractionPerComponentCoefficientIndex[position];
+  PosR = 0;  // counter for position of real matrix elements
+  PosC = this->NbrRealInteractionPerComponent[position];  // counter for position of complex matrix elements
+
+  // deal with kinetic energy terms first!             
+  for (int j = 0; j < NbrHoppingTerms; ++j)
+    {
+      qi = this->KineticQi[j];
+      qf = this->KineticQf[j];
+      // considering: this->HoppingTerms[j]
+      Index2 = particles->AdA(index, qf, qi, Coefficient);	  
+      if (Index2 < Dim)
+	{
+	  //cout << "Element ("<<qi<<"->"<<qf<<"): "<<Coefficient<<endl;
+	  if (fabs(this->HoppingTerms[j].Im)<LATTICEHAMILTONIAN_IDENTICAL_ELEMENT_THRESHOLD) // real element
+	    {
+	      indexArray[PosR] = Index2;
+	      tmpElementPos = RealInteractionCoefficients.InsertElement
+		(Coefficient*this->HoppingTerms[j].Re);
+	      if (tmpElementPos > USHRT_MAX )
+		{
+		  cout << "Error: too many different real matrix elements for fast storage"<<endl;
+		  exit(1);
+		}
+	      coefficientIndexArray[PosR] = (unsigned short) tmpElementPos;
+	      ++PosR;
+	    }
+	  else
+	    {
+	      indexArray[PosC] = Index2;
+	      tmpElementPos = ComplexInteractionCoefficients.InsertElement
+		(Coefficient*this->HoppingTerms[j]);
+	      if (tmpElementPos > USHRT_MAX )
+		{
+		  cout << "Error: too many different complex matrix elements for fast storage"<<endl;
+		  exit(1);
+		}
+	      coefficientIndexArray[PosC] = (unsigned short) tmpElementPos;
+	      ++PosC;
+	    }
+	  //cout << "Hopping connecting :"<<Index2<<", "<<i<<": "<<Coefficient*this->HoppingTerms[j]<<endl;
+	}
+    }
+
+  // four-fermion interactions:
+  if (this->NbrQ12Indices == 0) // full storage
+    { 	  
+      for (int j = 0; j < NbrInteractionFactors; ++j) 
+	{
+	  int q1 = this->Q1Value[j];
+	  int q2 = this->Q2Value[j];
+	  int q3 = this->Q3Value[j];
+	  int q4 = this->Q4Value[j];	       
+	  Index2 = particles->AdAdAA(index, q1, q2, q3, q4, Coefficient);
+	  if (Index2 < Dim)
+	    {
+	      if (fabs(this->InteractionFactors[j].Im)<LATTICEHAMILTONIAN_IDENTICAL_ELEMENT_THRESHOLD) // real element
+		{
+		  indexArray[PosR] = Index2;
+		  tmpElementPos = RealInteractionCoefficients.InsertElement
+		    (Coefficient*this->InteractionFactors[j].Re);
+		  if (tmpElementPos > USHRT_MAX )
+		    {
+		      cout << "Error: too many different real matrix elements for fast storage"<<endl;
+		      exit(1);
+		    }
+		  coefficientIndexArray[PosR] = (unsigned short) tmpElementPos;
+		  ++PosR;
+		}
+	      else
+		{
+		  indexArray[PosC] = Index2;
+		  tmpElementPos = ComplexInteractionCoefficients.InsertElement
+		    (Coefficient*this->InteractionFactors[j]);
+		  if (tmpElementPos > USHRT_MAX )
+		    {
+		      cout << "Error: too many different complex matrix elements for fast storage"<<endl;
+		      exit(1);
+		    }
+		  coefficientIndexArray[PosC] = (unsigned short) tmpElementPos;
+		  ++PosC;
+		}
+	      //cout << "4b - connecting :"<<Index2<<", "<<i<<": "<<Coefficient*this->InteractionFactors[j]<< " (q's=["<<q1<<","<<q2<<","<<q3<<","<<q4<<"])"<<endl;
+	    }
+	}
+    }
+  else // intelligent storage
+    {
+      double Coefficient2;
+      int ProcessedNbrInteractionFactors = 0;
+      int TmpNbrQ34Values;
+      int* TmpQ3Values;
+      int* TmpQ4Values;
+      for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
+	{
+	  Coefficient = particles->AA(index, this->Q1Value[i12], this->Q2Value[i12]);
+	  if (Coefficient != 0.0)
+	    {
+	      TmpNbrQ34Values = this->NbrQ34Values[i12];
+	      TmpQ3Values = this->Q3PerQ12[i12];
+	      TmpQ4Values = this->Q4PerQ12[i12];
+	      for (int i34 = 0; i34 < TmpNbrQ34Values; ++i34)
+		{
+		  Index2 = particles->AdAd(TmpQ3Values[i34], TmpQ4Values[i34], Coefficient2);
+		  if (Index2 < Dim)
+		    {
+		      if (fabs(this->InteractionFactors[ProcessedNbrInteractionFactors].Im)<LATTICEHAMILTONIAN_IDENTICAL_ELEMENT_THRESHOLD) 
+			{
+			  indexArray[PosR] = Index2;
+			  tmpElementPos = RealInteractionCoefficients.InsertElement
+			    (Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors].Re);
+			  if (tmpElementPos > USHRT_MAX )
+			    {
+			      cout << "Error: too many different real matrix elements for fast storage"<<endl;
+			      exit(1);
+			    }
+			  coefficientIndexArray[PosR] = (unsigned short) tmpElementPos;
+			  ++PosR;
+			  if (PosR>this->NbrRealInteractionPerComponent[position])
+			    cout << "Problem with count of real matrix elements"<<endl;
+			}
+		      else
+			{
+			  indexArray[PosC] = Index2;
+			  tmpElementPos = ComplexInteractionCoefficients.InsertElement
+			    (Coefficient*Coefficient2*this->InteractionFactors[ProcessedNbrInteractionFactors]);
+			  if (tmpElementPos > USHRT_MAX )
+			    {
+			      cout << "Error: too many different complex matrix elements for fast storage"<<endl;
+			      exit(1);
+			    }
+			  coefficientIndexArray[PosC] = (unsigned short) tmpElementPos;
+			  ++PosC;
+			}
+		      //cout << "4b - connecting :"<<Index2<<", "<<i<<": "<<Coefficient<<"*"<<Coefficient2<<"*"<<this->InteractionFactors[ProcessedNbrInteractionFactors]<< " (q's=["<<this->Q1Value[i12]<<", "<<this->Q2Value[i12]<<", "<<TmpQ3Values[i34]<<", "<<TmpQ4Values[i34]<<"])"<<endl;
+		    }
+		  ++ProcessedNbrInteractionFactors;
+		}
+	    }
+	  else
+	    ProcessedNbrInteractionFactors += this->NbrQ34Values[i12];
+	}
+    }
+      
+  // separated diagonal terms as these will be the general rule for contact interactions
+  if (NbrDiagonalInteractionFactors>0)
+    {
+      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors,
+						 DiagonalInteractionFactors, DiagonalQValues);
+      if (fabs(Coefficient)>LATTICEHAMILTONIAN_IDENTICAL_ELEMENT_THRESHOLD)
+	{
+	  indexArray[PosR] = index;
+	  tmpElementPos = RealInteractionCoefficients.InsertElement(Coefficient);
+	  if (tmpElementPos > USHRT_MAX )
+	    {
+	      cout << "Error: too many different real matrix elements for fast storage"<<endl;
+	      exit(1);
+	    }
+	  coefficientIndexArray[PosR] = (unsigned short) tmpElementPos;
+	  ++PosR;
+	  //cout << "diag - connecting :"<<i<<", "<<i<<": "<<Coefficient<<endl;
+	}	   
+    }
+  ++position;
+}
 
 #endif

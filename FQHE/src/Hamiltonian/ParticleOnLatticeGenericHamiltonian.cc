@@ -58,8 +58,9 @@ using std::ostream;
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
+// hermitianFlag = flag indicating whether to use hermitian symmetry
 // hoppingOnly = evaluate only energy of hopping terms, excluding local potentials
-ParticleOnLatticeGenericHamiltonian::ParticleOnLatticeGenericHamiltonian(ParticleOnLattice* particles, int nbrParticles, LatticePhases *latticeGeometry, int nbrFluxQuanta, double contactInteractionU, bool reverseHopping, AbstractArchitecture* architecture, unsigned long memory, char* precalculationFileName, double overrideFluxDensity, bool hoppingOnly)
+ParticleOnLatticeGenericHamiltonian::ParticleOnLatticeGenericHamiltonian(ParticleOnLattice* particles, int nbrParticles, LatticePhases *latticeGeometry, int nbrFluxQuanta, double contactInteractionU, bool reverseHopping, AbstractArchitecture* architecture, unsigned long memory, char* precalculationFileName, double overrideFluxDensity, bool hermitianFlag, bool hoppingOnly)
 {
   this->Particles=particles;
   this->NbrParticles=nbrParticles;
@@ -75,7 +76,7 @@ ParticleOnLatticeGenericHamiltonian::ParticleOnLatticeGenericHamiltonian(Particl
   this->NbrSites = this->LatticeGeometry->GetNbrSites();
   this->NbrFluxQuanta=nbrFluxQuanta;
   this->HamiltonianShift=0.0;
-  this->FluxDensity=((double)nbrFluxQuanta)/NbrSites; // xxx
+  this->FluxDensity=((double)nbrFluxQuanta)/NbrSites; 
   if (overrideFluxDensity!=0.0)
     {
       if (LatticeGeometry->AllowContinuousPhases())
@@ -97,7 +98,9 @@ ParticleOnLatticeGenericHamiltonian::ParticleOnLatticeGenericHamiltonian(Particl
   long MinIndex;
   long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
-  this->PrecalculationShift = (int) MinIndex;  
+  this->PrecalculationShift = (int) MinIndex;
+  if (hermitianFlag)
+    this->HermitianSymmetrizeInteractionFactors();
   if (precalculationFileName == 0)
     {
       if (memory > 0)

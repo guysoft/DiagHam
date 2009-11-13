@@ -61,6 +61,7 @@ AbstractQHEOnSphereHamiltonian::AbstractQHEOnSphereHamiltonian()
   this->NbrInteractionPerComponent=0;
   this->LoadBalancingArray=0;
   this->NbrBalancedTasks=0;
+  this->FastMultiplicationStep=0;
   this->HermitianSymmetryFlag=false;
 }
 
@@ -583,7 +584,7 @@ RealVector& AbstractQHEOnSphereHamiltonian::LowLevelAddMultiplyPartialFastMultip
   LastComponent += this->PrecalculationShift;
   for (int k = 0; k < this->FastMultiplicationStep; ++k)
     if (PosMod != k)
-      {		
+      {
 	if (this->NbrM12Indices == 0)
 	  {
 	    for (int j = 0; j < ReducedNbrInteractionFactors; ++j) 
@@ -920,9 +921,7 @@ RealVector* AbstractQHEOnSphereHamiltonian::LowLevelMultipleAddMultiply(RealVect
 		  Pos = TmpIndexArray[j];
 		  Coefficient = TmpCoefficientArray[j];
 		  for (int l = 0; l < nbrVectors; ++l)
-		    {
-		      vDestinations[l][Pos] +=  Coefficient * Coefficient2[l];
-		    }
+		    vDestinations[l][Pos] +=  Coefficient * Coefficient2[l];
 		}
 	      ++k;
 	    }
@@ -3098,7 +3097,7 @@ bool AbstractQHEOnSphereHamiltonian::GetLoadBalancing(int nbrTasks, long* &segme
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
 
-  if (NbrInteractionPerComponent!=0)
+  if ((NbrInteractionPerComponent!=0)&&(this->FastMultiplicationStep!=0))
     {
       int ReducedSpaceDimension  = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
 

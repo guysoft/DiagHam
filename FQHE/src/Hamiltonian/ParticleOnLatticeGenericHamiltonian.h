@@ -84,8 +84,9 @@ class ParticleOnLatticeGenericHamiltonian : public AbstractQHEOnLatticeHamiltoni
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
   // overrideFluxDensity = non-quantized flux density, if admissible by lattice
+  // hermitianFlag = flag indicating whether to use hermitian symmetry
   // hoppingOnly = evaluate only energy of hopping terms, excluding local potentials
-  ParticleOnLatticeGenericHamiltonian(ParticleOnLattice* particles, int nbrParticles, LatticePhases *latticeGeometry, int nbrFluxQuanta, double contactInteractionU, bool reverseHopping, AbstractArchitecture* architecture, unsigned long memory = 0, char* precalculationFileName = 0, double overrideFluxDensity=0.0, bool hoppingOnly = false);
+  ParticleOnLatticeGenericHamiltonian(ParticleOnLattice* particles, int nbrParticles, LatticePhases *latticeGeometry, int nbrFluxQuanta, double contactInteractionU, bool reverseHopping, AbstractArchitecture* architecture, unsigned long memory = 0, char* precalculationFileName = 0, double overrideFluxDensity=0.0, bool hermitianFlag = false, bool hoppingOnly = false);
 
   // destructor
   //

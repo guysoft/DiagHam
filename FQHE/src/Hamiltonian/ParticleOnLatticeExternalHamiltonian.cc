@@ -60,7 +60,8 @@ using std::ostream;
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-ParticleOnLatticeExternalHamiltonian::ParticleOnLatticeExternalHamiltonian(ParticleOnLattice* particles, int nbrParticles, int nbrStates, const char* oneParticleTerms, const char* twoParticleTerms, AbstractArchitecture* architecture, unsigned long memory, char* precalculationFileName)
+// hermitianFlag = flag indicating whether to use hermitian symmetry
+ParticleOnLatticeExternalHamiltonian::ParticleOnLatticeExternalHamiltonian(ParticleOnLattice* particles, int nbrParticles, int nbrStates, const char* oneParticleTerms, const char* twoParticleTerms, AbstractArchitecture* architecture, unsigned long memory, char* precalculationFileName, bool hermitianFlag)
 {
   this->Particles=particles;
   this->NbrParticles=nbrParticles;
@@ -88,7 +89,9 @@ ParticleOnLatticeExternalHamiltonian::ParticleOnLatticeExternalHamiltonian(Parti
   long MinIndex;
   long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
-  this->PrecalculationShift = (int) MinIndex;  
+  this->PrecalculationShift = (int) MinIndex;
+  if (hermitianFlag)
+    this->HermitianSymmetrizeInteractionFactors();
   if (precalculationFileName == 0)
     {
       if (memory > 0)

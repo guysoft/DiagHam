@@ -378,7 +378,8 @@ ComplexVector& AbstractHamiltonian::LowLevelMultiply(ComplexVector& vSource, Com
 ComplexVector& AbstractHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 						     int firstComponent, int nbrComponent)
 {
-  return this->LowLevelMultiply(vSource, vDestination, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
+  vDestination.ClearVector();
+  return this->LowLevelAddMultiply(vSource, vDestination, firstComponent, nbrComponent);
 }
 
 // multiply a vector by the current hamiltonian for a given range of indices 
@@ -480,7 +481,9 @@ ComplexVector* AbstractHamiltonian::LowLevelMultipleMultiply(ComplexVector* vSou
 ComplexVector* AbstractHamiltonian::LowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
 							     int firstComponent, int nbrComponent)
 {
-  return this->LowLevelMultipleMultiply(vSources, vDestinations, nbrVectors, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
+  for (int i = 0; i < nbrVectors; ++i)
+    vDestinations[i].ClearVector();
+  return this->LowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, nbrComponent);
 }
 
 // multiply a set of vectors by the current hamiltonian for a given range of indices 
@@ -806,7 +809,8 @@ ComplexVector& AbstractHamiltonian::ConjugateLowLevelMultiply(ComplexVector& vSo
 ComplexVector& AbstractHamiltonian::ConjugateLowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 						     int firstComponent, int nbrComponent)
 {
-  return this->ConjugateLowLevelMultiply(vSource, vDestination, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
+  vDestination.ClearVectorSegment((long)firstComponent, (long)nbrComponent);
+  return this->ConjugateLowLevelAddMultiply(vSource, vDestination, firstComponent, nbrComponent);
 }
 
 // multiply a vector by the current hamiltonian for a given range of indices 
@@ -908,7 +912,9 @@ ComplexVector* AbstractHamiltonian::ConjugateLowLevelMultipleMultiply(ComplexVec
 ComplexVector* AbstractHamiltonian::ConjugateLowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
 							     int firstComponent, int nbrComponent)
 {
-  return this->ConjugateLowLevelMultipleMultiply(vSources, vDestinations, nbrVectors, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
+  for (int i=0; i<nbrVectors; ++i)
+    vDestinations[i].ClearVectorSegment((long)firstComponent, (long)nbrComponent);
+  return this->ConjugateLowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, nbrComponent);
 }
 
 // multiply a set of vectors by the current hamiltonian for a given range of indices 
@@ -933,7 +939,7 @@ ComplexVector* AbstractHamiltonian::ConjugateLowLevelMultipleMultiply(ComplexVec
 {
   for (int i = 0; i < nbrVectors; ++i)
     this->ConjugateLowLevelMultiply(vSources[i], vDestinations[i], sourceStart, sourceStep, sourceShift, sourceNbrComponent, sourceNbrComponent, 
-			   destinationStep, destinationShift, destinationNbrComponent);
+				    destinationStep, destinationShift, destinationNbrComponent);
   return vDestinations;
 }
 
@@ -1234,7 +1240,8 @@ ComplexVector& AbstractHamiltonian::HermitianLowLevelMultiply(ComplexVector& vSo
 ComplexVector& AbstractHamiltonian::HermitianLowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 						     int firstComponent, int nbrComponent)
 {
-  return this->HermitianLowLevelMultiply(vSource, vDestination, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
+  vDestination.ClearVector();
+  return this->HermitianLowLevelAddMultiply(vSource, vDestination, firstComponent, nbrComponent);
 }
 
 // multiply a vector by the current hamiltonian for a given range of indices 
@@ -1336,7 +1343,9 @@ ComplexVector* AbstractHamiltonian::HermitianLowLevelMultipleMultiply(ComplexVec
 ComplexVector* AbstractHamiltonian::HermitianLowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
 							     int firstComponent, int nbrComponent)
 {
-  return this->HermitianLowLevelMultipleMultiply(vSources, vDestinations, nbrVectors, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
+  for (int i=0; i<nbrVectors; ++i)
+    vDestinations[i].ClearVector();
+  return this->HermitianLowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, nbrComponent);
 }
 
 // multiply a set of vectors by the current hamiltonian for a given range of indices 

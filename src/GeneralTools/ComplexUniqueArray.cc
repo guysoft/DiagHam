@@ -49,6 +49,10 @@ ComplexUniqueArray::ComplexUniqueArray(int internalSize)
       this->Elements=new Complex[internalSize];
       this->Flag.Initialize();
     }
+#ifdef __SMP__
+  this->BufferMutex = new pthread_mutex_t;
+  pthread_mutex_init(this->BufferMutex, NULL);
+#endif
 }
 
 ComplexUniqueArray::ComplexUniqueArray(ComplexUniqueArray &array, bool duplicateFlag)
@@ -70,6 +74,10 @@ ComplexUniqueArray::ComplexUniqueArray(ComplexUniqueArray &array, bool duplicate
 	  this->Flag.Initialize();
 	}
     }
+#ifdef __SMP__
+  this->BufferMutex = new pthread_mutex_t;
+  pthread_mutex_init(this->BufferMutex, NULL);
+#endif
 }
 
 // destructor
@@ -79,6 +87,10 @@ ComplexUniqueArray::~ComplexUniqueArray()
     {
       delete [] Elements;
     }
+#ifdef __SMP__
+  pthread_mutex_destroy(this->BufferMutex);
+  delete this->BufferMutex;
+#endif
 }
 
 // Insert element
@@ -91,6 +103,9 @@ int ComplexUniqueArray::InsertElement(const Complex& element)
       if (SqrNorm(Elements[i]-element)<1e-30)
 	return i;
     }
+#ifdef __SMP__
+  pthread_mutex_lock(this->BufferMutex);
+#endif
   // element not found
   if (NbrElements < InternalSize)
     {
@@ -109,7 +124,11 @@ int ComplexUniqueArray::InsertElement(const Complex& element)
 	delete [] Elements;
       this->Elements=newElements;      
     }
-  return (NbrElements-1);
+  int Result=NbrElements-1;
+#ifdef __SMP__
+  pthread_mutex_unlock(this->BufferMutex);
+#endif
+  return Result;
 }
 
 // search entry
@@ -131,6 +150,9 @@ int ComplexUniqueArray::SearchElement(const Complex &value)
 // internalSize = minimum table size to allocate (only used if disallocating)
 void ComplexUniqueArray::Empty(bool disallocate, int internalSize)
 {
+#ifdef __SMP__
+  pthread_mutex_lock(this->BufferMutex);
+#endif
   if (disallocate)
     {
       if ((this->InternalSize!=0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
@@ -141,6 +163,9 @@ void ComplexUniqueArray::Empty(bool disallocate, int internalSize)
       this->Elements = new Complex[InternalSize];
     }
   this->NbrElements=0;
+#ifdef __SMP__
+  pthread_mutex_unlock(this->BufferMutex);
+#endif
 }
 
 
@@ -157,6 +182,9 @@ void ComplexUniqueArray::WriteArray(ofstream &file)
 // file = open stream to read from
 void ComplexUniqueArray::ReadArray(ifstream &file)
 {
+#ifdef __SMP__
+  pthread_mutex_lock(this->BufferMutex);
+#endif
   if ( (this->InternalSize!=0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
       delete [] Elements;
@@ -167,5 +195,9 @@ void ComplexUniqueArray::ReadArray(ifstream &file)
   this->NbrElements=TmpDimension;
   this->Elements=new Complex[TmpDimension];
   for (int i = 0; i < this->NbrElements; ++i)
-    ReadLittleEndian(file, this->Elements[i]);  
+    ReadLittleEndian(file, this->Elements[i]);
+#ifdef __SMP__
+  pthread_mutex_unlock(this->BufferMutex);
+#endif
+
 }

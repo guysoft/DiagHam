@@ -643,6 +643,50 @@ void BosonOnLattice::DecodeQuantumNumber(int q, int &posx, int &posy, int &subla
   posy=(q%(m*Ly))/m;  
 }
 
+// check whether HilbertSpace implements ordering of operators
+//
+bool BosonOnLattice::HaveOrder ()
+{
+  return true;
+}
+
+
+// check whether a given operator \prod c^\dagger_m \prod c_n increases or decreases the index of a state
+//
+// m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+// n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
+// nbrIndices = number of creation (or annihilation) operators
+// return value = 1, if created state is of higher value, 0 if equal, and -1 if lesser value
+int BosonOnLattice::CheckOrder (int* m, int* n, int nbrIndices)
+{
+  if (nbrIndices>this->NbrBosons) return 0;
+  this->TemporaryStateHighestBit=0;
+  for (int i=0; i<this->NbrStates; ++i)
+    this->TemporaryState[i]=0;
+  for (int i=0; i<nbrIndices; ++i)
+    {
+      ++this->TemporaryState[m[i]];
+      if (m[i]>TemporaryStateHighestBit)
+	TemporaryStateHighestBit=m[i];
+    }
+  unsigned long CreationValue=this->BosonToFermion(this->ShiftedState, this->ShiftedStateHighestBit);
+  this->TemporaryStateHighestBit=0;
+  for (int i=0; i<this->NbrStates; ++i)
+    this->TemporaryState[i]=0;
+  for (int i=0; i<nbrIndices; ++i)
+    {
+      ++this->TemporaryState[n[i]];
+      if (n[i]>TemporaryStateHighestBit)
+	TemporaryStateHighestBit=n[i];
+    }
+  unsigned long AnnihilationValue=this->BosonToFermion(this->ShiftedState, this->ShiftedStateHighestBit);
+  if (CreationValue > AnnihilationValue)
+    return 1;
+  else if (CreationValue < AnnihilationValue)
+    return -1;
+  else return 0;
+}
+
 // obtain a list of quantum numbers in state
 // index = index of many-body state to be considered
 // quantumNumbers = integer array of length NbrParticles, to be written with quantum numbers of individual particles

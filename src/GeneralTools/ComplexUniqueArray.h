@@ -52,6 +52,11 @@ class ComplexUniqueArray
   // number of elements stored
   int NbrElements;
 
+  // mutex to lock write access to array Elements
+#ifdef __SMP__
+  pthread_mutex_t* BufferMutex;
+#endif
+
   // garbage flag
   GarbageFlag Flag;
 

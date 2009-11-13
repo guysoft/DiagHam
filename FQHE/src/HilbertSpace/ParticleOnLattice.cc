@@ -147,6 +147,25 @@ double ParticleOnLattice::AdAdAADiagonal(int index, int nbrInteraction, double *
   return result;
 }
 
+// check whether HilbertSpace implements ordering of operators
+//
+bool ParticleOnLattice::HaveOrder ()
+{
+  return false;
+}
+
+// check whether a given operator \prod c^\dagger_m \prod c_n increases or decreases the index of a state
+//
+// m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+// n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
+// nbrIndices = number of creation (or annihilation) operators
+// return value = 1, if created state is of higher value, 0 if equal, and -1 if lesser value
+int ParticleOnLattice::CheckOrder (int* m, int* n, int nbrIndices)
+{
+  return 0;
+}
+
+
 
 // obtain a list of quantum numbers in state
 // quantumNumbers = integer array of length NbrParticles, to be written with quantum numbers of individual particles

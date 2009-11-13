@@ -71,7 +71,8 @@ class ParticleOnLatticeExternalHamiltonian : public AbstractQHEOnLatticeHamilton
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnLatticeExternalHamiltonian(ParticleOnLattice* particles, int nbrParticles, int nbrStates, const char* oneParticleTerms, const char* twoParticleTerms, AbstractArchitecture* architecture, unsigned long memory = 0, char* precalculationFileName = 0);
+  // hermitianFlag = flag indicating whether to use hermitian symmetry
+  ParticleOnLatticeExternalHamiltonian(ParticleOnLattice* particles, int nbrParticles, int nbrStates, const char* oneParticleTerms, const char* twoParticleTerms, AbstractArchitecture* architecture, unsigned long memory = 0, char* precalculationFileName = 0, bool hoppingOnly = false);
 
   // destructor
   //

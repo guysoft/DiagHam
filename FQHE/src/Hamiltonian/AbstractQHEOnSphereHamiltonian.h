@@ -163,12 +163,6 @@ class AbstractQHEOnSphereHamiltonian : public AbstractQHEHamiltonian
   //
   // shift = shift value
   virtual void ShiftHamiltonian (double shift);
-
-  // get the preferred distribution over parallel execution in N tasks for parallel Hamiltonian-Vector multiplication
-  // nbrThreads = number of threads requested
-  // segmentIndices = array returning the reference to an array of the first index of each of the segments
-  //
-  virtual bool GetLoadBalancing(int nbrTasks, long* &segmentIndices);
   
   // ask if Hamiltonian implements methods using hermitian symmetry 
   //
@@ -436,13 +430,16 @@ class AbstractQHEOnSphereHamiltonian : public AbstractQHEHamiltonian
   virtual RealVector* HermitianLowLevelMultipleAddMultiplyDiskStorage(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
                                                              int firstComponent, int nbrComponent);
 
-
-  
-
   
   // evaluate all interaction factors
   //   
   virtual void EvaluateInteractionFactors() = 0;
+
+  // get the preferred distribution over parallel execution in N tasks for parallel Hamiltonian-Vector multiplication
+  // nbrThreads = number of threads requested
+  // segmentIndices = array returning the reference to an array of the first index of each of the segments
+  //
+  virtual bool GetLoadBalancing(int nbrTasks, long* &segmentIndices);
 
   // test the amount of memory needed for fast multiplication algorithm
   //
