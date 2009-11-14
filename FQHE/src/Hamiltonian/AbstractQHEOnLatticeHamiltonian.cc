@@ -282,6 +282,8 @@ bool AbstractQHEOnLatticeHamiltonian::HermitianSymmetrizeInteractionFactors()
 
   cout << "Using hermitian symmetry"<<endl;
 
+  cout << "Attention: hermitian mode is known to have problems if used with memory storage!"<<endl;
+  
   int *M = new int[2];
   int *N = new int[2];
 

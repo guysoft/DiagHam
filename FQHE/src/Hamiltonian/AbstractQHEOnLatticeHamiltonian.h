@@ -40,6 +40,7 @@
 #include "GeneralTools/ComplexUniqueArray.h"
 
 #include <iostream>
+#include <cstdlib>
 
 
 using std::ostream;
