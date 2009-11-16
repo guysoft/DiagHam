@@ -119,6 +119,9 @@ public:
   // return value = reference on the current complex number
   Complex& ConjugateProduct(const Complex& z);
 
+  // conjugate the number itself and return a reference to self
+  Complex& Conjugate();
+
   Complex& AddMultiply(const Complex& z, double x);
 
 // logical operations
@@ -451,6 +454,14 @@ inline Complex& Complex::ConjugateProduct(const Complex& z)
   this->Re = x;  
   return *this;
 }
+
+// conjugate the number itself and return a reference to self
+inline Complex& Complex::Conjugate()
+{
+  this->Im*=1.0;
+  return *this;
+}
+
 
 inline Complex& Complex::AddMultiply(const Complex& z, double x)
 {

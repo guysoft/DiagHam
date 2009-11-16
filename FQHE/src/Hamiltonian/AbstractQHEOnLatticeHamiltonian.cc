@@ -282,8 +282,6 @@ bool AbstractQHEOnLatticeHamiltonian::HermitianSymmetrizeInteractionFactors()
 
   cout << "Using hermitian symmetry"<<endl;
 
-  cout << "Attention: hermitian mode is known to have problems if used with memory storage!"<<endl;
-  
   int *M = new int[2];
   int *N = new int[2];
 
@@ -297,6 +295,7 @@ bool AbstractQHEOnLatticeHamiltonian::HermitianSymmetrizeInteractionFactors()
 	  M[0] = this->KineticQi[j];
 	  N[0] = this->KineticQf[j];
 	  Flags[j] = this->Particles->CheckOrder(M, N, 1);
+	  // cout << "M="<<M[0]<<", N="<<N[0]<<", order: "<<Flags[j]<<" element: "<<HoppingTerms[j]<<endl;
 	  if (Flags[j]>0)
 	    ++TmpNbrHoppingTerms;
 	  else if (Flags[j]==0)
@@ -306,12 +305,24 @@ bool AbstractQHEOnLatticeHamiltonian::HermitianSymmetrizeInteractionFactors()
 	    }
 	}
       Complex *TmpHoppingTerms = new Complex[TmpNbrHoppingTerms];
+      int *TmpQi = new int[TmpNbrHoppingTerms];
+      int *TmpQf = new int[TmpNbrHoppingTerms];
       int Pos=0;
       for (int j = 0; j < this->NbrHoppingTerms; ++j)
 	if (Flags[j]>=0)
-	  TmpHoppingTerms[Pos++]=this->HoppingTerms[j];
+	  {
+	    TmpHoppingTerms[Pos]=this->HoppingTerms[j];
+	    TmpQi[Pos]=this->KineticQi[j];
+	    TmpQf[Pos]=this->KineticQf[j];
+	    ++Pos;
+	  }
       delete [] this->HoppingTerms;
+      delete [] this->KineticQi;
+      delete [] this->KineticQf;
       this->HoppingTerms = TmpHoppingTerms;
+      this->KineticQi = TmpQi;
+      this->KineticQf = TmpQf; 
+      this->NbrHoppingTerms = TmpNbrHoppingTerms;
     }
   
   if (this->NbrQ12Indices == 0)
@@ -1735,8 +1746,8 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiply(Com
 		  Index = TmpParticles->AdA(i, qf, qi, Coefficient);
 		  if (Index < Dim)
 		    {
-		      vDestination[Index] += Coefficient * TmpInteraction*vSource[i];
-		      vDestination[i] += Coefficient * Conj(TmpInteraction)*vSource[Index];
+		      vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
+		      vDestination[i] += Coefficient * Conj(TmpInteraction) * vSource[Index];
 		    }
 		}
 	    }
@@ -1748,15 +1759,15 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiply(Com
 	      Index = TmpParticles->AdA(i, qf, qi, Coefficient);
 	      if (Index < Dim)
 		{
-		  vDestination[Index] += Coefficient * TmpInteraction*vSource[i];
-		  vDestination[i] += Coefficient * Conj(TmpInteraction)*vSource[Index];
+		  vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
+		  vDestination[i] += Coefficient * Conj(TmpInteraction) * vSource[Index];
 		}
 	      vDestination[i] += this->HamiltonianShift * vSource[i];
-	    }         
+	    }
 	}
       // four-fermion interactions:
       if (this->NbrQ12Indices == 0) // full storage
-	{ 	  
+	{
 	  for (int j = 0; j < NbrInteractionFactors; ++j) 
 	    {
 	      int q1 = this->Q1Value[j];
@@ -1892,17 +1903,15 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiply(Com
 ComplexVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiplyPartialFastMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 										   int firstComponent, int nbrComponent)
 {
-  cout << "needs to be done"<<endl;
   int Index;
-  double TmpInteractionRe,TmpInteractionIm;
   int LastComponent = firstComponent + nbrComponent;
   int Dim = this->Particles->GetHilbertSpaceDimension();
   double Coefficient;
   ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
   int* TmpIndexArray;
   unsigned short* TmpCoefficientIndexArray;
-  double TmpRe, TmpIm;
-  Complex *TmpCPtr, TmpC;
+  Complex TmpInteraction, TmpC;
+  Complex TmpSum;
   int TmpNbrRealInteraction;
   int TmpNbrComplexInteraction;
   firstComponent -= this->PrecalculationShift;
@@ -1921,22 +1930,21 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiplyPart
       TmpNbrComplexInteraction = this->NbrComplexInteractionPerComponent[Pos];
       TmpIndexArray = this->InteractionPerComponentIndex[Pos];
       TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[Pos];
-      TmpRe = vSource[l].Re;
-      TmpIm = vSource[l].Im;
+      TmpSum=0.0;
+      TmpC = vSource[l];
       int Pos2=0;
       for (; Pos2 < TmpNbrRealInteraction; ++Pos2)
 	{
-	  vDestination.Re(TmpIndexArray[Pos2]) +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos2]]*TmpRe;
-	  vDestination.Im(TmpIndexArray[Pos2]) +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos2]]*TmpIm;
+	  vDestination[TmpIndexArray[Pos2]] +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos2]]*TmpC;
+	  TmpSum += RealInteractionCoefficients[TmpCoefficientIndexArray[Pos2]]*vSource[TmpIndexArray[Pos2]];
 	}
       for (int j=0; j < TmpNbrComplexInteraction; ++j, ++Pos2)
 	{
-	  TmpCPtr= &(ComplexInteractionCoefficients[TmpCoefficientIndexArray[Pos2]]);
-	  vDestination.Re(TmpIndexArray[Pos2]) +=  TmpCPtr->Re*TmpRe-TmpCPtr->Im*TmpIm;
-	  vDestination.Im(TmpIndexArray[Pos2]) +=  TmpCPtr->Re*TmpIm+TmpCPtr->Im*TmpRe;		  
+	  TmpInteraction= ComplexInteractionCoefficients[TmpCoefficientIndexArray[Pos2]];
+	  vDestination[TmpIndexArray[Pos2]] +=  TmpInteraction*TmpC;
+	  TmpSum +=  Conj(TmpInteraction) * vSource[TmpIndexArray[Pos2]];
 	}
-      vDestination.Re(l) += this->HamiltonianShift * TmpRe;
-      vDestination.Im(l) += this->HamiltonianShift * TmpIm;	      
+      vDestination[l] += TmpSum + this->HamiltonianShift * TmpC;
       l += this->FastMultiplicationStep;
       ++Pos;
     }
@@ -1957,32 +1965,29 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiplyPart
 	      {
 		qi = this->KineticQi[j];
 		qf = this->KineticQf[j];
-		TmpInteractionRe = this->HoppingTerms[j].Re;
-		TmpInteractionIm = this->HoppingTerms[j].Im;
+		TmpInteraction = this->HoppingTerms[j];
 		for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
 		  {
 		    Index = TmpParticles->AdA(i, qf, qi, Coefficient);
 		    if (Index < Dim)
 		      {
-			vDestination.Re(Index) += Coefficient * (TmpInteractionRe*vSource[i].Re - TmpInteractionIm*vSource[i].Im);
-			vDestination.Im(Index) += Coefficient * (TmpInteractionRe*vSource[i].Im + TmpInteractionIm*vSource[i].Re);
+			vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
+			vDestination[i] += Coefficient * Conj(TmpInteraction) * vSource[Index];
 		      }
 		  }
 	      }
 	    qi = this->KineticQi[ReducedNbrHoppingTerms];
 	    qf = this->KineticQf[ReducedNbrHoppingTerms];
-	    TmpInteractionRe = this->HoppingTerms[ReducedNbrHoppingTerms].Re;
-	    TmpInteractionIm = this->HoppingTerms[ReducedNbrHoppingTerms].Im;
+	    TmpInteraction = this->HoppingTerms[ReducedNbrHoppingTerms];
 	    for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
 	      {
 		Index = TmpParticles->AdA(i, qf, qi, Coefficient);
 		if (Index < Dim)
 		  {
-		    vDestination.Re(Index) += Coefficient * (TmpInteractionRe*vSource[i].Re - TmpInteractionIm*vSource[i].Im);
-		    vDestination.Im(Index) += Coefficient * (TmpInteractionRe*vSource[i].Im + TmpInteractionIm*vSource[i].Re);
+		    vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
+		    vDestination[i] += Coefficient * Conj(TmpInteraction) * vSource[Index];
 		  }
-		vDestination.Re(i) += this->HamiltonianShift * vSource[i].Re;
-		vDestination.Im(i) += this->HamiltonianShift * vSource[i].Im;
+		vDestination[i] += this->HamiltonianShift * vSource[i];
 	      }         
 	  }
 	// four-fermion interactions:
@@ -1994,36 +1999,36 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiplyPart
 		int q2 = this->Q2Value[j];
 		int q3 = this->Q3Value[j];
 		int q4 = this->Q4Value[j];
-		TmpInteractionRe = this->InteractionFactors[j].Re;
-		TmpInteractionIm = this->InteractionFactors[j].Im;
+		TmpInteraction = this->InteractionFactors[j];
 		for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
 		  {
 		    Index = TmpParticles->AdAdAA(i, q1, q2, q3, q4, Coefficient);
 		    if (Index < Dim)
 		      {
-			vDestination.Re(Index) += Coefficient * (TmpInteractionRe*vSource[i].Re - TmpInteractionIm*vSource[i].Im);
-			vDestination.Im(Index) += Coefficient * (TmpInteractionRe*vSource[i].Im + TmpInteractionIm*vSource[i].Re);
+			vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
+			vDestination[i] += Coefficient * Conj(TmpInteraction) * vSource[Index];
 		      }
 		  }
 	      }
 	  }
 	else // intelligent storage
 	  {
-	    double Coefficient2, TmpRe, TmpIm;
+	    double Coefficient2;
+	    Complex TmpSum;
 	    int ProcessedNbrInteractionFactors;
 	    int TmpNbrQ34Values;
 	    int* TmpQ3Values;
 	    int* TmpQ4Values;
 	    for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
 	      {
+		TmpSum = 0.0;
 		ProcessedNbrInteractionFactors = 0;
 		for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
 		  {
 		    Coefficient = TmpParticles->AA(i, this->Q1Value[i12], this->Q2Value[i12]);
 		    if (Coefficient != 0.0)
 		      {
-			TmpRe = vSource[i].Re*Coefficient;
-			TmpIm = vSource[i].Im*Coefficient;
+			TmpC = vSource[i]*Coefficient;
 			TmpNbrQ34Values = this->NbrQ34Values[i12];
 			TmpQ3Values = this->Q3PerQ12[i12];
 			TmpQ4Values = this->Q4PerQ12[i12];
@@ -2032,10 +2037,9 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiplyPart
 			    Index = TmpParticles->AdAd(TmpQ3Values[i34], TmpQ4Values[i34], Coefficient2);
 			    if (Index < Dim)
 			      {
-				TmpInteractionRe = this->InteractionFactors[ProcessedNbrInteractionFactors].Re;
-				TmpInteractionIm = this->InteractionFactors[ProcessedNbrInteractionFactors].Im;
-				vDestination.Re(Index) += Coefficient2 * (TmpRe*TmpInteractionRe-TmpIm*TmpInteractionIm);
-				vDestination.Im(Index) += Coefficient2 * (TmpRe*TmpInteractionIm+TmpIm*TmpInteractionRe);
+				TmpInteraction = this->InteractionFactors[ProcessedNbrInteractionFactors];
+				vDestination[Index] += Coefficient2 * TmpInteraction * TmpC;
+				TmpSum += (Coefficient * Coefficient2) * Conj(TmpInteraction) * vSource[Index];
 			      }
 			    ++ProcessedNbrInteractionFactors;
 			  }
@@ -2043,6 +2047,7 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiplyPart
 		    else
 		      ProcessedNbrInteractionFactors += this->NbrQ34Values[i12];
 		  }
+		vDestination[i] += TmpSum;
 	      }
 	  }	  
   
@@ -2053,8 +2058,7 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiplyPart
 	      {
 		Coefficient = TmpParticles->AdAdAADiagonal(i, NbrDiagonalInteractionFactors,
 							   DiagonalInteractionFactors, DiagonalQValues);
-		vDestination.Re(i) +=  Coefficient * vSource[i].Re;
-		vDestination.Im(i) +=  Coefficient * vSource[i].Im;
+		vDestination[i] +=  Coefficient * vSource[i];
 	      }
 	  }
       }
@@ -2093,7 +2097,6 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiplyDisk
 ComplexVector* AbstractQHEOnLatticeHamiltonian::HermitianLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
 									int firstComponent, int nbrComponent)
 {
-  cout << "needs to be done"<<endl;
   int LastComponent = firstComponent + nbrComponent;
   int Dim = this->Particles->GetHilbertSpaceDimension();  
   double Coefficient;
@@ -2122,6 +2125,9 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::HermitianLowLevelMultipleAddMult
 		      TmpCoefficient = Coefficient * TmpInteraction;
 		      for (int l = 0; l < nbrVectors; ++l)
 			vDestinations[l][Index] += TmpCoefficient * vSources[l][i];
+		      TmpCoefficient.Conjugate();
+		      for (int l = 0; l < nbrVectors; ++l)
+			vDestinations[l][i] += TmpCoefficient * vSources[l][Index];
 		    }
 		}
 	    }
@@ -2138,6 +2144,9 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::HermitianLowLevelMultipleAddMult
 		  TmpCoefficient = Coefficient * TmpInteraction;
 		  for (int l = 0; l < nbrVectors; ++l)
 		    vDestinations[l][Index] += TmpCoefficient * vSources[l][i];
+		  TmpCoefficient.Conjugate();
+		  for (int l = 0; l < nbrVectors; ++l)
+		    vDestinations[l][i] += TmpCoefficient * vSources[l][Index];
 		}
 	      for (int l = 0; l < nbrVectors; ++l)
 		vDestinations[l][i] += this->HamiltonianShift * vSources[l][i];
@@ -2161,6 +2170,9 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::HermitianLowLevelMultipleAddMult
 		      TmpCoefficient = Coefficient * TmpInteraction;
 		      for (int l = 0; l < nbrVectors; ++l)
 			vDestinations[l][Index] += TmpCoefficient * vSources[l][i];
+		      TmpCoefficient.Conjugate();
+		      for (int l = 0; l < nbrVectors; ++l)
+			vDestinations[l][i] += TmpCoefficient * vSources[l][Index];
 		    }
 		}
 	    }
@@ -2173,8 +2185,11 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::HermitianLowLevelMultipleAddMult
 	  int* TmpQ3Values;
 	  int* TmpQ4Values;
 	  Complex* TmpCoefficients = new Complex[nbrVectors];
+	  Complex* TmpSum = new Complex[nbrVectors];
 	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
+	      for (int l = 0; l < nbrVectors; ++l)
+		TmpSum[l] = 0.0;
 	      ProcessedNbrInteractionFactors = 0;
 	      for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
 		{
@@ -2182,7 +2197,7 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::HermitianLowLevelMultipleAddMult
 		  if (Coefficient != 0.0)
 		    {
 		      for (int l = 0; l < nbrVectors; ++l)
-			TmpCoefficients[l] = vSources[l][i]*Coefficient;
+			TmpCoefficients[l] = vSources[l][i];
 		      TmpNbrQ34Values = this->NbrQ34Values[i12];
 		      TmpQ3Values = this->Q3PerQ12[i12];
 		      TmpQ4Values = this->Q4PerQ12[i12];
@@ -2191,9 +2206,12 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::HermitianLowLevelMultipleAddMult
 			  Index = TmpParticles->AdAd(TmpQ3Values[i34], TmpQ4Values[i34], Coefficient2);
 			  if (Index < Dim)
 			    {
-			      TmpCoefficient = this->InteractionFactors[ProcessedNbrInteractionFactors] * Coefficient2;
+			      TmpCoefficient = this->InteractionFactors[ProcessedNbrInteractionFactors] * (Coefficient * Coefficient2);
 			      for (int l = 0; l < nbrVectors; ++l)
 				vDestinations[l][Index] += TmpCoefficient * TmpCoefficients[l];
+			      TmpCoefficient.Conjugate();
+			      for (int l = 0; l < nbrVectors; ++l)
+				TmpSum[l] += TmpCoefficient * vSources[l][Index];
 			    }
 			  ++ProcessedNbrInteractionFactors;
 			}
@@ -2201,10 +2219,13 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::HermitianLowLevelMultipleAddMult
 		  else
 		    ProcessedNbrInteractionFactors += this->NbrQ34Values[i12];
 		}
+	      for (int l = 0; l < nbrVectors; ++l)
+		vDestinations[l][i] += TmpSum[l];
 	    }
 	  delete [] TmpCoefficients;
+	  delete [] TmpSum;
 	}	  
-
+      
       // separated diagonal terms as these will be the general rule for contact interactions
       if (NbrDiagonalInteractionFactors>0)
 	{
@@ -2230,6 +2251,9 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::HermitianLowLevelMultipleAddMult
 	  unsigned short TmpNbrRealInteraction;
 	  unsigned short TmpNbrComplexInteraction;
 	  Complex* Coefficient2 = new Complex [nbrVectors];
+	  Complex* TmpSum = new Complex[nbrVectors];
+	  for (int l = 0; l < nbrVectors; ++l)
+	    TmpSum[l] = 0.0;
 	  int k = firstComponent;
 	  firstComponent -= this->PrecalculationShift;
 	  LastComponent -= this->PrecalculationShift;
@@ -2241,8 +2265,8 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::HermitianLowLevelMultipleAddMult
 	      TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[i];
 	      for (int l = 0; l < nbrVectors; ++l)
 		{
+		  TmpSum[l] = 0.0;
 		  Coefficient2[l] = vSources[l][k];
-		  vDestinations[l][k] += this->HamiltonianShift * Coefficient2[l];
 		}
 	      int Pos=0;
 	      for (; Pos < TmpNbrRealInteraction; ++Pos)
@@ -2250,7 +2274,10 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::HermitianLowLevelMultipleAddMult
 		  Index = TmpIndexArray[Pos];
 		  TmpRealCoefficient = RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]];
 		  for (int l = 0; l < nbrVectors; ++l)
-		    vDestinations[l][Index] +=  TmpRealCoefficient * Coefficient2[l];
+		    {
+		      vDestinations[l][Index] +=  TmpRealCoefficient * Coefficient2[l];
+		      TmpSum[l] += TmpRealCoefficient * vSources[l][Index];
+		    }
 		}
 	      for (int j=0; j < TmpNbrComplexInteraction; ++j, ++Pos)
 		{
@@ -2258,7 +2285,12 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::HermitianLowLevelMultipleAddMult
 		  TmpCoefficient = ComplexInteractionCoefficients[TmpCoefficientIndexArray[Pos]];
 		  for (int l = 0; l < nbrVectors; ++l)
 		    vDestinations[l][Index] +=  TmpCoefficient * Coefficient2[l];
+		  TmpCoefficient.Conjugate();
+		  for (int l = 0; l < nbrVectors; ++l)
+		    TmpSum[l] += TmpCoefficient * vSources[l][Index];
 		}
+	      for (int l = 0; l < nbrVectors; ++l)
+		vDestinations[l][k] += TmpSum[l] + this->HamiltonianShift * Coefficient2[l];
 	    }
 	  delete [] Coefficient2;
 	}

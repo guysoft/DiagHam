@@ -708,8 +708,11 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateFastMultiplicationComponent
   // separated diagonal terms as these will be the general rule for contact interactions
   if (NbrDiagonalInteractionFactors>0)
     {
+      // need additional symmetry factor of 1/2 in hermitian mode, as diagonal elements will not be treated separately if stored in memory!
       Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors,
 						 DiagonalInteractionFactors, DiagonalQValues);
+      if (this->IsHermitian())
+	Coefficient*=0.5;
       if (fabs(Coefficient)>LATTICEHAMILTONIAN_IDENTICAL_ELEMENT_THRESHOLD)
 	{
 	  indexArray[PosR] = index;

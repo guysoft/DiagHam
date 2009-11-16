@@ -77,7 +77,10 @@ HermitianMatrix& AbstractHamiltonian::GetHamiltonian (HermitianMatrix& M)
   for (int i = 0; i < this->GetHilbertSpaceDimension(); i++)
     {
       TmpV1.Re(i) = 1.0;
-      this->LowLevelMultiply(TmpV1, TmpV2);
+      if (this->IsHermitian())
+	this->HermitianLowLevelMultiply(TmpV1, TmpV2);
+      else
+	this->LowLevelMultiply(TmpV1, TmpV2);
       for (int j = i; j < this->GetHilbertSpaceDimension(); j++)
 	{
 	  M.SetMatrixElement(i, j, TmpV2[j]);
@@ -99,7 +102,10 @@ RealSymmetricMatrix& AbstractHamiltonian::GetHamiltonian (RealSymmetricMatrix& M
   for (int i = 0; i < this->GetHilbertSpaceDimension(); i++)
     {
       TmpV1[i] = 1.0;
-      this->LowLevelMultiply(TmpV1, TmpV2);
+      if (this->IsHermitian())
+	this->HermitianLowLevelMultiply(TmpV1, TmpV2);
+      else
+	this->LowLevelMultiply(TmpV1, TmpV2);
       for (int j = i; j < this->GetHilbertSpaceDimension(); j++)
 	M.SetMatrixElement(i, j, TmpV2[j]);
       TmpV1[i] = 0.0;	

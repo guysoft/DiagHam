@@ -276,6 +276,18 @@ class HardCoreBosonOnLatticeKy : public ParticleOnLattice
   // extract the momentum ky from a quantum number q
   // return: momentum ky (in range 0...Kmax-1)
   int DecodeKy(int q);
+
+  // check whether HilbertSpace implements ordering of operators
+  //
+  virtual bool HaveOrder ();
+  
+  // check whether a given operator \prod c^\dagger_m \prod c_n increases or decreases the index of a state
+  //
+  // m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+  // n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
+  // nbrIndices = number of creation (or annihilation) operators
+  // return value = 1, if created state is of higher value, 0 if equal, and -1 if lesser value
+  virtual int CheckOrder (int* m, int* n, int nbrIndices);
   
   // obtain a list of quantum numbers in state
   // index = index of many-body state to be considered

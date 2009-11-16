@@ -74,12 +74,12 @@ while( (defined($ARGV[0])&&$ARGV[0] =~ /^-/ ))
 	    $Separator = $ARGV[0];
 	  }
       }
-    if ( $ARGV[0] =~ /-d/ )
+    if ( $ARGV[0] =~ /-e/ )
       {
 	if (length($ARGV[0])>2)
 	  {
 	    $DefaultValue = $ARGV[0];
-	    $DefaultValue =~ s/-d//;
+	    $DefaultValue =~ s/-e//;
 	  }
 	else
 	  {

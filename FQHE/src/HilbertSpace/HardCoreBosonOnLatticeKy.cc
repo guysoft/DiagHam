@@ -735,6 +735,58 @@ void HardCoreBosonOnLatticeKy::DecodeCompositeMomentum(int q, int &ky, int &flux
   fluxSubLattice = q%TranslationCell;
 }
 
+// check whether HilbertSpace implements ordering of operators
+//
+bool HardCoreBosonOnLatticeKy::HaveOrder ()
+{
+  return true;
+}
+
+
+// check whether a given operator \prod c^\dagger_m \prod c_n increases or decreases the index of a state
+//
+// m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+// n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
+// nbrIndices = number of creation (or annihilation) operators
+// return value = 1, if created state is of higher value, 0 if equal, and -1 if lesser value
+int HardCoreBosonOnLatticeKy::CheckOrder (int* m, int* n, int nbrIndices)
+{
+  unsigned long CreationValue=0x0ul;
+  unsigned long AnnihilationValue=0x0ul;
+  for (int i=0; i<nbrIndices; ++i)
+    {
+      CreationValue |= 0x1ul << m[i];
+      AnnihilationValue |= 0x1ul << n[i];
+    }
+  if (CreationValue > AnnihilationValue)
+    return 1;
+  else if (CreationValue < AnnihilationValue)
+    return -1;
+  else return 0;
+}
+
+// obtain a list of quantum numbers in state
+// index = index of many-body state to be considered
+// quantumNumbers = integer array of length NbrParticles, to be written with quantum numbers of individual particles
+// normalization = indicating the multiplicity of the state for bosonic spaces
+void HardCoreBosonOnLatticeKy::ListQuantumNumbers(int index, int *quantumNumbers, double &normalization)
+{
+  normalization=1.0;
+  this->ListQuantumNumbers(index, quantumNumbers);
+}
+
+// obtain a list of quantum numbers in state
+// quantumNumbers = integer array of length NbrParticles, to be written with quantum numbers of individual particles
+void HardCoreBosonOnLatticeKy::ListQuantumNumbers(int index, int *quantumNumbers)
+{
+  unsigned long State = this->StateDescription[index];
+  int HighestBit = this->StateHighestBit[index];
+  int NbrQ=0;
+  for (int q=0; q<=HighestBit; ++q)
+    if (State&(0x1ul<<q))
+      quantumNumbers[NbrQ++]=q;
+}
+
 
 // translate a state by a multiple of the lattice vectors
 // shiftX = length of translation in x-direction

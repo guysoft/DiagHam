@@ -166,6 +166,18 @@ class FermionOnLattice :  public ParticleOnLattice
   // return value = symmetry id
   virtual int GetHilbertSpaceAdditionalSymmetry();
 
+  // check whether HilbertSpace implements ordering of operators
+  //
+  virtual bool HaveOrder ();
+  
+  // check whether a given operator \prod c^\dagger_m \prod c_n increases or decreases the index of a state
+  //
+  // m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+  // n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
+  // nbrIndices = number of creation (or annihilation) operators
+  // return value = 1, if created state is of higher value, 0 if equal, and -1 if lesser value
+  virtual int CheckOrder (int* m, int* n, int nbrIndices);
+
   // return a list of all possible quantum numbers 
   //
   // return value = pointer to corresponding quantum number

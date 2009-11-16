@@ -669,7 +669,7 @@ int BosonOnLattice::CheckOrder (int* m, int* n, int nbrIndices)
       if (m[i]>TemporaryStateHighestBit)
 	TemporaryStateHighestBit=m[i];
     }
-  unsigned long CreationValue=this->BosonToFermion(this->ShiftedState, this->ShiftedStateHighestBit);
+  unsigned long CreationValue=this->BosonToFermion(this->TemporaryState, this->TemporaryStateHighestBit);
   this->TemporaryStateHighestBit=0;
   for (int i=0; i<this->NbrStates; ++i)
     this->TemporaryState[i]=0;
@@ -679,7 +679,7 @@ int BosonOnLattice::CheckOrder (int* m, int* n, int nbrIndices)
       if (n[i]>TemporaryStateHighestBit)
 	TemporaryStateHighestBit=n[i];
     }
-  unsigned long AnnihilationValue=this->BosonToFermion(this->ShiftedState, this->ShiftedStateHighestBit);
+  unsigned long AnnihilationValue=this->BosonToFermion(this->TemporaryState, this->TemporaryStateHighestBit);
   if (CreationValue > AnnihilationValue)
     return 1;
   else if (CreationValue < AnnihilationValue)

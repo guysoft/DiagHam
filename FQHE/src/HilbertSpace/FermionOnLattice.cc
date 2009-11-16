@@ -277,6 +277,36 @@ int FermionOnLattice::GetHilbertSpaceAdditionalSymmetry()
 }
 
 
+// check whether HilbertSpace implements ordering of operators
+//
+bool FermionOnLattice::HaveOrder ()
+{
+  return true;
+}
+
+
+// check whether a given operator \prod c^\dagger_m \prod c_n increases or decreases the index of a state
+//
+// m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+// n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
+// nbrIndices = number of creation (or annihilation) operators
+// return value = 1, if created state is of higher value, 0 if equal, and -1 if lesser value
+int FermionOnLattice::CheckOrder (int* m, int* n, int nbrIndices)
+{
+  unsigned long CreationValue=0x0ul;
+  unsigned long AnnihilationValue=0x0ul;
+  for (int i=0; i<nbrIndices; ++i)
+    {
+      CreationValue |= 0x1ul << m[i];
+      AnnihilationValue |= 0x1ul << n[i];
+    }
+  if (CreationValue > AnnihilationValue)
+    return 1;
+  else if (CreationValue < AnnihilationValue)
+    return -1;
+  else return 0;
+}
+
 
 // return a list of all possible quantum numbers 
 //
