@@ -62,7 +62,7 @@ using std::ostream;
 // magneticG = magnetic coupling constant times magnetic field 
 
 ParticleOnTorusCoulombWithSpinHamiltonian::ParticleOnTorusCoulombWithSpinHamiltonian(ParticleOnTorusWithSpin* particles, int nbrParticles, int maxMomentum,
-										     double ratio, double magneticG)
+										     double ratio, double magneticG, double layerSeparation)
 {
   this->Particles = particles;
   this->MaxMomentum = maxMomentum;
@@ -72,6 +72,7 @@ ParticleOnTorusCoulombWithSpinHamiltonian::ParticleOnTorusCoulombWithSpinHamilto
   this->FastMultiplicationFlag = false;
   this->Ratio = ratio;
   this->InvRatio = 1.0 / ratio;
+  this->LayerSeparation=layerSeparation;
   this->WignerEnergy = this->EvaluateWignerCrystalEnergy() / 2.0;
   cout << "Wigner Energy = " << WignerEnergy << endl;
   this->EvaluateInteractionFactors();
@@ -609,7 +610,7 @@ void ParticleOnTorusCoulombWithSpinHamiltonian::EvaluateInteractionFactors()
 // m4 = fourth index
 // return value = numerical coefficient
 
-double ParticleOnTorusCoulombWithSpinHamiltonian::EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4)
+double ParticleOnTorusCoulombWithSpinHamiltonian::EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4, double layerSeparation)
 {
   double Coefficient = 1.0;
   double PIOnM = M_PI / ((double) this->MaxMomentum);
@@ -625,7 +626,7 @@ double ParticleOnTorusCoulombWithSpinHamiltonian::EvaluateInteractionCoefficient
       Q2 = this->Ratio * N2 * N2;
       if (N2 != 0.0)
 	{
-	  Coefficient = exp(- PIOnM * Q2) / sqrt(Q2);
+	  Coefficient = this->GetVofQ(PIOnM*Q2, layerSeparation); // exp(- PIOnM * Q2) / sqrt(Q2);
 	  Precision = Coefficient;
 	}
       else
@@ -636,7 +637,7 @@ double ParticleOnTorusCoulombWithSpinHamiltonian::EvaluateInteractionCoefficient
       while ((fabs(Coefficient) + Precision) != fabs(Coefficient))
 	{
 	  Q2 = this->InvRatio * N1 * N1 + this->Ratio * N2 * N2;
-	  Precision = 2.0 * exp(- PIOnM * Q2) / sqrt(Q2);
+	  Precision = 2.0 * this->GetVofQ(PIOnM*Q2, layerSeparation); // exp(- PIOnM * Q2) / sqrt(Q2);
 	  Coefficient += Precision * cos (N1 * Factor);
 	  N1 += 1.0;
 	}
@@ -651,7 +652,7 @@ double ParticleOnTorusCoulombWithSpinHamiltonian::EvaluateInteractionCoefficient
       Q2 = this->Ratio * N2 * N2;
       if (N2 != 0.0)
 	{
-	  Coefficient = exp(- PIOnM * Q2) / sqrt(Q2);
+	  Coefficient = this->GetVofQ(PIOnM*Q2, layerSeparation); // exp(- PIOnM * Q2) / sqrt(Q2);
 	  Precision = Coefficient;
 	}
       else
@@ -662,14 +663,23 @@ double ParticleOnTorusCoulombWithSpinHamiltonian::EvaluateInteractionCoefficient
       while ((fabs(Coefficient) + Precision) != fabs(Coefficient))
 	{
 	  Q2 = this->InvRatio * N1 * N1 + this->Ratio * N2 * N2;
-	  Precision = 2.0 *  exp(- PIOnM * Q2) / sqrt(Q2);
+	  Precision = 2.0 *  this->GetVofQ(PIOnM*Q2, layerSeparation); // exp(- PIOnM * Q2) / sqrt(Q2);
 	  Coefficient += Precision * cos (N1 * Factor);
 	  N1 += 1.0;
 	}
       Sum += Coefficient;
       N2 -= this->MaxMomentum;
     }
-  return (Sum / (2.0 * sqrt(2.0 * M_PI * this->MaxMomentum)));
+  return (Sum / (2.0 * this->MaxMomentum)); // (Sum / (2.0 * sqrt(2.0 * M_PI * this->MaxMomentum)));
+}
+
+// get fourier transform of interaction
+// Q2_half = one half of q² value
+// layerSeparation = layer separation
+double ParticleOnTorusCoulombWithSpinHamiltonian::GetVofQ(double Q2_half, double layerSeparation)
+{
+  double Q=sqrt(2.0*Q2_half);
+  return exp(-Q2_half-Q*layerSeparation)/Q;
 }
 
 // evaluate Wigner crystal energy per particle

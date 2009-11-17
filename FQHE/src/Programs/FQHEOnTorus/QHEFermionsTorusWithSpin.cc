@@ -1,3 +1,5 @@
+#include "Options/Options.h";
+
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
 
@@ -6,8 +8,7 @@
 
 #include "LanczosAlgorithm/BasicLanczosAlgorithmWithGroundState.h"
 #include "LanczosAlgorithm/BasicLanczosAlgorithm.h"
-#include "Architecture/MonoProcessorArchitecture.h"
-#include "Architecture/SMPArchitecture.h"
+#include "Architecture/ArchitectureManager.h"
 
 #include "GeneralTools/ListIterator.h"
 #include "HilbertSpace/SubspaceSpaceConverter.h"
@@ -31,37 +32,57 @@ using std::ofstream;
 int main(int argc, char** argv)
 {
   cout.precision(14);
-  int NbrFermions = 6;
-  if (argc >= 2)
-    NbrFermions = atoi (argv[1]);
-  int InvNu = 3;
-  int MaxMomentum = (InvNu * NbrFermions) / 2;
-  int L = 0;
-//  double GroundStateEnergy = 0.0;
-/*  if (argc >= 3)
-    LzTotal = atoi (argv[3]);*/
-  char* OutputNameLz = "fermions_torus.dat";
-  char* OutputNameL = "fermions_torus.dat";
+
+  // some running options and help
+  OptionManager Manager ("QHEFermionsTorusWithSpin" , "0.01");
+  OptionGroup* LanczosGroup  = new OptionGroup ("Lanczos options");
+  OptionGroup* MiscGroup = new OptionGroup ("misc options");
+  OptionGroup* SystemGroup = new OptionGroup ("system options");
+  OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
+
+  ArchitectureManager ArchitectureMaster;
+
+  Manager += SystemGroup;
+  ArchitectureMaster.AddOptionGroup(&Manager);
+  Manager += LanczosGroup;
+  Manager += PrecalculationGroup;
+  Manager += MiscGroup;
+
+  (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 6);
+  (*SystemGroup) += new SingleIntegerOption  ('l', "max-momentum", "maximum momentum for a single particle", 18);
+  (*SystemGroup) += new SingleIntegerOption  ('s', "total-spin", "total spin of the system", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('x', "x-momentum", "constraint on the total momentum in the x direction (negative if none)", -1);
+  (*SystemGroup) += new SingleDoubleOption   ('r', "ratio", 
+					      "ratio between lengths along the x and y directions (-1 if has to be taken equal to nbr-particles/4)", -1.0);
+  (*SystemGroup) += new SingleDoubleOption   ('d', "layerSeparation", 
+					      "for bilayer simulations: layer separation in magnetic lengths", 0.0);
+  (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
+  
+  Manager.StandardProceedings(argv, argc, cout);
+    
+  int NbrFermions = Manager.GetInteger("nbr-particles");
+  int MaxMomentum = Manager.GetInteger("max-momentum");
+  double LayerSeparation = Manager.GetDouble("layerSeparation");
+  char* OutputNameLz = new char[256];
+  sprintf (OutputNameLz, "fermions_torus_su2_coulomb_d_%g_n_%d_2s_%d.dat", LayerSeparation, NbrFermions, MaxMomentum);
   double XRatio = NbrFermions / 4.0;
-  if (argc >= 3)
-    {
-      MaxMomentum = atoi (argv[2]);
-    }
+  if (Manager.GetDouble("ratio")>0.0)
+    XRatio=Manager.GetDouble("ratio");
+  
   int Max = MaxMomentum;
   if (argc >= 4)
     Max = atoi (argv[3]);
   ofstream File;
 //  File.open(OutputNameLz, ios::binary | ios::out);
 //  int Max = ((MaxMomentum - NbrFermions) * NbrFermions);
-  int TotalSize = 0;
 //  XRatio = 0.7;
 //  XRatio = 1.0 / XRatio;
 //  NbrFermions = 3;
 //  XRatio = 1.0;
 //  MaxMomentum = 3;
   double Zeeman = 0.0;
-  double ZeemanMax = 1.0;
-  int NbrIter = 101;
+  double ZeemanMax = 0.0;
+  int NbrIter = 1;
   double ZeemanInc = (ZeemanMax - Zeeman) / ((double) (NbrIter - 1));
   for (; MaxMomentum <= Max; ++MaxMomentum)
     {     
@@ -91,7 +112,7 @@ int main(int argc, char** argv)
 	      cout << i << " = ";
 	      TmpSpace->PrintState(cout, i) << endl;
 	    }*/
-	  ParticleOnTorusCoulombWithSpinHamiltonian Hamiltonian(TmpSpace, NbrFermions, MaxMomentum, XRatio, Zeeman);
+	  ParticleOnTorusCoulombWithSpinHamiltonian Hamiltonian(TmpSpace, NbrFermions, MaxMomentum, XRatio, Zeeman, LayerSeparation);
 	  double CurrentZeeman = Zeeman;
 	  for (int ZeemanLoop = 0; ZeemanLoop < NbrIter; ++ZeemanLoop)
 	    {
@@ -129,7 +150,7 @@ int main(int argc, char** argv)
 		}
 	      else
 		{
-		  AbstractArchitecture* Architecture = new SMPArchitecture(2);
+		  AbstractArchitecture* Architecture = ArchitectureMaster.GetArchitecture();
 		  BasicLanczosAlgorithm Lanczos(Architecture, 1);
 		  int MaxNbrIterLanczos = 200; 
 		  double Precision = 1.0;

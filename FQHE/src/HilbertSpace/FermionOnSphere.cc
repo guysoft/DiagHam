@@ -1121,7 +1121,7 @@ Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& po
   ComplexMatrix Slater(this->NbrFermions, this->NbrFermions);
 #endif
   ComplexMatrix Functions(this->LzMax + 1, this->NbrFermions);
-  
+  ComplexVector Lengths(this->LzMax + 1);
   // temporary array used to stored indices when evaluating wave function
   int* Indices = new int [this->NbrFermions];
   
@@ -1858,7 +1858,7 @@ RealVector& FermionOnSphere::EvaluatePartialSchmidtDecomposition(int subsytemSiz
 		}
 	      int Pos2;
 	      Pos = 0;
-	      double TmpValue;
+	      // double TmpValue;
 	      for (int i = MinIndex; i < TmpIndex; ++i)
 		{
 		  Pos2 = 0;

@@ -76,7 +76,7 @@ HermitianMatrix& AbstractHamiltonian::GetHamiltonian (HermitianMatrix& M)
   ComplexVector TmpV2 (this->GetHilbertSpaceDimension(), true);
   for (int i = 0; i < this->GetHilbertSpaceDimension(); i++)
     {
-      TmpV1.Re(i) = 1.0;
+      TmpV1[i] = 1.0;
       if (this->IsHermitian())
 	this->HermitianLowLevelMultiply(TmpV1, TmpV2);
       else
@@ -85,7 +85,7 @@ HermitianMatrix& AbstractHamiltonian::GetHamiltonian (HermitianMatrix& M)
 	{
 	  M.SetMatrixElement(i, j, TmpV2[j]);
 	}
-      TmpV1.Re(i) = 0.0;
+      TmpV1[i] = 0.0;
     }
   return M;  
 }
@@ -155,7 +155,10 @@ Matrix* AbstractHamiltonian::GetHamiltonian ()
 
 RealVector& AbstractHamiltonian::LowLevelMultiply(RealVector& vSource, RealVector& vDestination)
 {
-  return this->LowLevelMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
+  if (this->IsHermitian())
+    return this->HermitianLowLevelMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
+  else
+    return this->LowLevelMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
 }
 
 // multiply a vector by the current hamiltonian for a given range of indices 
@@ -368,7 +371,10 @@ RealVector* AbstractHamiltonian::LowLevelMultipleAddMultiply(RealVector* vSource
 
 ComplexVector& AbstractHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination)
 {
-  return this->LowLevelMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
+  if (this->IsHermitian())
+    return this->HermitianLowLevelMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
+  else
+    return this->LowLevelMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
 }
 
 

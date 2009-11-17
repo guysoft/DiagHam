@@ -234,7 +234,10 @@ sub ProcessFile
 	  }
 	else
 	  {
-	    push(@InitialValues, $DefaultValue);
+	    for (my $j=1; $j<=@$NbrInitialReplacements[$i]; ++$j)
+	      {
+		push(@InitialValues, $DefaultValue);
+	      }
 	  }
 	# print ("Initial Replacement $i : ".$Format." value: ".$Value."\n");
       }

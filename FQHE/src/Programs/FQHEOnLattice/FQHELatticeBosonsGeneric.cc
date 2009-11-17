@@ -48,7 +48,10 @@ ComplexMatrix& GetHamiltonianIm (AbstractHamiltonian *H, ComplexMatrix& M)
   for (int i = 0; i < H->GetHilbertSpaceDimension(); i++)
     {
       TmpV1.Im(i) = 1.0;
-      H->LowLevelMultiply(TmpV1, TmpV2);
+      if (H->IsHermitian())
+	H->HermitianLowLevelMultiply(TmpV1, TmpV2);
+      else
+	H->LowLevelMultiply(TmpV1, TmpV2);
       for (int j = 0; j < H->GetHilbertSpaceDimension(); j++)
 	{
 	  M.SetMatrixElement(i, j, TmpV2[j]);
@@ -70,7 +73,10 @@ ComplexMatrix& GetHamiltonian (AbstractHamiltonian *H, ComplexMatrix& M)
   for (int i = 0; i < H->GetHilbertSpaceDimension(); i++)
     {
       TmpV1.Re(i) = 1.0;
-      H->LowLevelMultiply(TmpV1, TmpV2);
+      if (H->IsHermitian())
+	H->HermitianLowLevelMultiply(TmpV1, TmpV2);
+      else
+	H->LowLevelMultiply(TmpV1, TmpV2);
       for (int j = 0; j < H->GetHilbertSpaceDimension(); j++)
 	{
 	  M.SetMatrixElement(i, j, TmpV2[j]);

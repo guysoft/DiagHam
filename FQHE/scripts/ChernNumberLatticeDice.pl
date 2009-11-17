@@ -108,6 +108,7 @@ while( (defined($ARGV[0])&&$ARGV[0] =~ /^-/ ))
             shift(@ARGV);
             $Options = $ARGV[0];
           }
+	print ("Read Options: $Options\n");
       }
 
     if ( $ARGV[0] =~ /-q/ )
@@ -241,6 +242,8 @@ if ( $tmp =~ /x86_64/ )
   }
 my $Program = $Diagonalizer.$Extension;
 
+print ("Using command line options: ".$Options."\n");
+
 my $TmpFile;
 foreach $TmpFile (@ARGV)
   {
@@ -358,7 +361,7 @@ sub AnalyzeChern
 		    my $TmpCmd = $OvlCommand." ".$VectorA1." ".$VectorB;
 		    my $OvlString= `$TmpCmd`;
 		    chomp($OvlString);
-		    print("run $TmpCmd\n$OvlString\n");
+		    #print("run $TmpCmd\n$OvlString\n");
 		    @Overlaps = split(/ /,$OvlString);
 		    my $z = cplx($Overlaps[0],$Overlaps[1]);
 		    push(@Column1,$z);

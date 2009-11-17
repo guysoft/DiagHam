@@ -336,12 +336,20 @@ bool AbstractQHEOnLatticeHamiltonian::HermitianSymmetrizeInteractionFactors()
 	  N[0] = this->Q3Value[j];
 	  N[1] = this->Q4Value[j];
 	  Flags[j] = this->Particles->CheckOrder (M, N, 2);
+	  cout << "Flag("<<this->Q1Value[j]<<", "<<this->Q2Value[j]<<", "<<this->Q3Value[j]<<", "<<this->Q4Value[j]<<")="<<Flags[j]<<endl;
 	  if (Flags[j]>0)
 	    ++TmpNbrInteractionFactors;
-	  else if (Flags[j]==0)
+	  else
 	    {
-	      ++TmpNbrInteractionFactors;
-	      this->InteractionFactors[j]*=0.5; // diagonal term: make up for double counting
+	      if (Flags[j]==0)
+		{
+		  ++TmpNbrInteractionFactors;
+		  this->InteractionFactors[j]*=0.5; // diagonal term: make up for double counting
+		}
+	      else
+		{
+		  cout << "Discarding element "<<this->Q1Value[j]<<", "<<this->Q2Value[j]<<", "<<this->Q3Value[j]<<", "<<this->Q4Value[j]<<endl;
+		}
 	    }
 	}
       Complex* TmpInteractionFactors = new Complex[TmpNbrInteractionFactors];
@@ -407,7 +415,7 @@ bool AbstractQHEOnLatticeHamiltonian::HermitianSymmetrizeInteractionFactors()
 	      N[0]=OldQ3PerQ12[q34];
 	      N[1]=OldQ4PerQ12[q34];
 	      Q34Flags[q34] = this->Particles->CheckOrder(M, N, 2);
-	      // cout << "Check Order ="<< Q3Flags[m3]<<endl;
+	      //cout << "Flag("<<M[0]<<", "<<M[1]<<", "<<N[0]<<", "<<N[1]<<")="<<Q34Flags[q34]<<endl;
 	      if (Q34Flags[q34]>0)
 		{
 		  ++TmpNbrQ34Values;
@@ -418,11 +426,16 @@ bool AbstractQHEOnLatticeHamiltonian::HermitianSymmetrizeInteractionFactors()
 		  ++TmpNbrQ34Values;
 		  TmpInteractionFactors[TmpNbrInteractionFactors++]=0.5*this->InteractionFactors[Pos];
 		}
+// 	      else
+// 		{
+// 		  cout << "Discarding element "<<M[0]<<", "<<M[1]<<", "<<N[0]<<", "<<N[1]<<endl;
+// 		}
+	      
 	      ++Pos;
 	    }
 	  if (TmpNbrQ34Values>0)
 	    {
-	      //cout << "Q1="<<M[0]<<", M2="<<M[1]<<": ";
+	      //cout << "Q1="<<M[0]<<", Q2="<<M[1]<<": ";
 	      ++TmpNbrQ12Values;
 	      Q12Flags[q12]=1;
 	      TmpQ3PerQ12 = new int[TmpNbrQ34Values];
@@ -433,7 +446,8 @@ bool AbstractQHEOnLatticeHamiltonian::HermitianSymmetrizeInteractionFactors()
 		  {
 		    TmpQ3PerQ12[Pos2]=OldQ3PerQ12[q34];
 		    TmpQ4PerQ12[Pos2]=OldQ4PerQ12[q34];
-		    //    cout << " " << TmpQ3PerQ12[Pos2];
+		    //cout << " Q3: " << TmpQ3PerQ12[Pos2];
+		    //cout << " Q4: " << TmpQ4PerQ12[Pos2];
 		    Pos2++;
 		  }
 	      //cout << endl;
@@ -452,7 +466,8 @@ bool AbstractQHEOnLatticeHamiltonian::HermitianSymmetrizeInteractionFactors()
 	}
       if (this->NbrQ12Indices!=TmpNbrQ12Values)
 	{
-	  cout << "reducing unused Q1,Q2"<<endl;
+	  int *NewQ1Value=new int[TmpNbrQ12Values];
+	  int *NewQ2Value=new int[TmpNbrQ12Values];
 	  int **NewQ3PerQ12=new int*[TmpNbrQ12Values];
 	  int **NewQ4PerQ12=new int*[TmpNbrQ12Values];
 	  int *NewNbrQ34Values=new int[TmpNbrQ12Values];
@@ -460,17 +475,24 @@ bool AbstractQHEOnLatticeHamiltonian::HermitianSymmetrizeInteractionFactors()
 	  for (int q12 = 0; q12 < this->NbrQ12Indices; ++q12)
 	    if (Q12Flags[q12]>0)
 	      {
+		NewQ1Value[Pos]=this->Q1Value[q12];
+		NewQ2Value[Pos]=this->Q2Value[q12];
 		NewQ3PerQ12[Pos]=this->Q3PerQ12[q12];
 		NewQ4PerQ12[Pos]=this->Q4PerQ12[q12];
 		NewNbrQ34Values[Pos]=this->NbrQ34Values[q12];
 		++Pos;
 	      }
+	  delete [] this->Q1Value;
+	  delete [] this->Q2Value;
 	  delete [] this->Q3PerQ12;
 	  delete [] this->Q4PerQ12;
 	  delete [] this->NbrQ34Values;
+	  this->Q1Value=NewQ1Value;
+	  this->Q2Value=NewQ2Value;
 	  this->Q3PerQ12=NewQ3PerQ12;
-	  this->Q3PerQ12=NewQ3PerQ12;
+	  this->Q4PerQ12=NewQ4PerQ12;
 	  this->NbrQ34Values=NewNbrQ34Values;
+	  this->NbrQ12Indices=TmpNbrQ12Values;
 	}
       // reduce size of table InteractionFactors to match new size, and copy contents
       delete [] this->InteractionFactors;
@@ -702,8 +724,6 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiply(ComplexVecto
 	}
     }
 
-  //cout << "vDestination:" <<endl<<vDestination<<endl;
-  
   return vDestination;
 }
 
@@ -1525,9 +1545,7 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelMultipleAddMult
 	  TmpInteraction = Conj(this->HoppingTerms[ReducedNbrHoppingTerms]);
 	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
-	      //cout << "element "<<qi<<"->"<<qf<<" on "<<i<<": "; 
 	      Index = TmpParticles->AdA(i, qf, qi, Coefficient);
-	      //cout << "target: "<<Index<<endl;
 	      if (Index < Dim)
 		{
 		  TmpCoefficient = Coefficient * TmpInteraction;
@@ -1804,6 +1822,7 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiply(Com
 		  Coefficient = TmpParticles->AA(i, this->Q1Value[i12], this->Q2Value[i12]);
 		  if (Coefficient != 0.0)
 		    {
+		      //cout << "Non-zero: a_"<<this->Q1Value[i12]<<" a_"<< this->Q2Value[i12]<<"| "<<i<<">  [following: "<<NbrQ34Values[i12]<<"]"<<endl;
 		      TmpCoefficient = vSource[i];
 		      TmpNbrQ34Values = this->NbrQ34Values[i12];
 		      TmpQ3Values = this->Q3PerQ12[i12];
@@ -1811,13 +1830,19 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiply(Com
 		      for (int i34 = 0; i34 < TmpNbrQ34Values; ++i34)
 			{
 			  Index = TmpParticles->AdAd(TmpQ3Values[i34], TmpQ4Values[i34], Coefficient2);
+			  //cout << "Testing a^+_"<<TmpQ3Values[i34]<<" a^+_"<< TmpQ4Values[i34]<<" ";
 			  if (Index < Dim)
 			    {
+			      // cout << " -> "<<Index<<endl;
 			      TmpInteraction = this->InteractionFactors[ProcessedNbrInteractionFactors];
 			      Coefficient2*=Coefficient;
 			      vDestination[Index] += Coefficient2 * TmpCoefficient * TmpInteraction;
+			      //cout << "H["<<i<<", "<<Index<<"]="<<Coefficient2 * TmpInteraction<<endl;
 			      TmpSum += Coefficient2*Conj(TmpInteraction)*vSource[Index];
+			      //cout << "H["<<Index<<", "<<i<<"]="<<Coefficient2 * Conj(TmpInteraction)<<endl;
 			    }
+// 			  else
+// 			    cout << " -> ZERO"<<endl;
 			  ++ProcessedNbrInteractionFactors;
 			}
 		    }
@@ -2136,9 +2161,7 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::HermitianLowLevelMultipleAddMult
 	  TmpInteraction = this->HoppingTerms[ReducedNbrHoppingTerms];
 	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
-	      //cout << "element "<<qi<<"->"<<qf<<" on "<<i<<": "; 
 	      Index = TmpParticles->AdA(i, qf, qi, Coefficient);
-	      //cout << "target: "<<Index<<endl;
 	      if (Index < Dim)
 		{
 		  TmpCoefficient = Coefficient * TmpInteraction;
@@ -2386,6 +2409,7 @@ bool AbstractQHEOnLatticeHamiltonian::GetLoadBalancing(int nbrTasks, long* &segm
 	  if (LoadBalancingArray!=0)
 	    delete [] LoadBalancingArray;
 	  this->LoadBalancingArray = new long[nbrTasks+1];
+	  long *SegmentSize = new long[nbrTasks];
 	  this->NbrBalancedTasks=nbrTasks;
 	  long TmpNbrElement=0;
 	  for (int i=0; i<ReducedSpaceDimension; ++i)
@@ -2399,17 +2423,20 @@ bool AbstractQHEOnLatticeHamiltonian::GetLoadBalancing(int nbrTasks, long* &segm
 	      TmpNbrElement+=NbrRealInteractionPerComponent[i]+NbrComplexInteractionPerComponent[i];
 	      if (TmpNbrElement>TmpNbrPerSegment)
 		{
+		  SegmentSize[Pos]=TmpNbrElement;
 		  LoadBalancingArray[Pos+1]=MinIndex+i*this->FastMultiplicationStep;
 		  TmpNbrElement=0;
 		  ++Pos;
 		}
 	    }
 	  LoadBalancingArray[nbrTasks]=MaxIndex+1;
+	  SegmentSize[nbrTasks-1]=TmpNbrElement;
 
-	  cout << "LoadBalancingArray=["<<LoadBalancingArray[1]-LoadBalancingArray[0];
-	  for (int i=2; i<=nbrTasks; ++i)
-	    cout <<" "<<LoadBalancingArray[i]-LoadBalancingArray[i-1];
+	  cout << "LoadBalancingArray=[ ("<<LoadBalancingArray[1]-LoadBalancingArray[0]<<", "<<SegmentSize[0]<<")";
+	  for (int i=1; i<nbrTasks; ++i)
+	    cout <<" ("<<LoadBalancingArray[i+1]-LoadBalancingArray[i]<<", "<<SegmentSize[i]<<")";
 	  cout << "]"<< endl;
+	  delete [] SegmentSize;
 	}
     }
   else

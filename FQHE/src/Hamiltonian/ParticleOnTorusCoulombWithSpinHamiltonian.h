@@ -72,6 +72,8 @@ class ParticleOnTorusCoulombWithSpinHamiltonian : public AbstractHamiltonian
   double Ratio;
   // ratio between the width in the y direction and the width in the x direction
   double InvRatio;
+  // layer separation
+  double LayerSeparation;
 
   // array containing all interaction factors 
   double* InteractionFactors;
@@ -101,7 +103,7 @@ class ParticleOnTorusCoulombWithSpinHamiltonian : public AbstractHamiltonian
   // maxMomentum = maximum Lz value reached by a particle in the state
   // ratio = ratio between the width in the x direction and the width in the y direction
   // magneticG = magnetic coupling constant times magnetic field 
-  ParticleOnTorusCoulombWithSpinHamiltonian(ParticleOnTorusWithSpin* particles, int nbrParticles, int maxMomentum, double ratio, double magneticG);
+  ParticleOnTorusCoulombWithSpinHamiltonian(ParticleOnTorusWithSpin* particles, int nbrParticles, int maxMomentum, double ratio, double magneticG = 0.0, double layerSeparation=0.0);
 
   // destructor
   //
@@ -263,6 +265,11 @@ class ParticleOnTorusCoulombWithSpinHamiltonian : public AbstractHamiltonian
   //   
   void EvaluateInteractionFactors();
 
+  // get fourier transform of interaction
+  // Q2_half = one half of q² value
+  // layerSeparation = layer separation
+  double GetVofQ(double Q2_half, double layerSeparation=0.0);
+
   // test the amount of memory needed for fast multiplication algorithm
   //
   // return value = amount of memory needed
@@ -279,7 +286,7 @@ class ParticleOnTorusCoulombWithSpinHamiltonian : public AbstractHamiltonian
   // m3 = third index
   // m4 = fourth index
   // return value = numerical coefficient
-  double EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4);
+  double EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4, double layerSeparation = 0.0);
 
   // evaluate Wigner crystal energy per particle
   //

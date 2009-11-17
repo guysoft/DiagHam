@@ -49,8 +49,8 @@ using std::ios;
 
 int main(int argc, char** argv)
 {
-    cout.precision(14);
-
+  cout.precision(14);
+    
   // some running options and help
   OptionManager Manager ("FQHETorusFermionsWithSpinAndTranslations" , "0.01");
   OptionGroup* LanczosGroup  = new OptionGroup ("Lanczos options");

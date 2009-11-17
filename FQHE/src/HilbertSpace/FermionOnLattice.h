@@ -166,7 +166,7 @@ class FermionOnLattice :  public ParticleOnLattice
   // return value = symmetry id
   virtual int GetHilbertSpaceAdditionalSymmetry();
 
-  // check whether HilbertSpace implements ordering of operators
+  // check whether HilbertSpace impaements ordering of operators
   //
   virtual bool HaveOrder ();
   
