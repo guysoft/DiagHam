@@ -66,6 +66,14 @@ class MultipleVectorHamiltonianMultiplyOperation: public AbstractArchitectureOpe
   // number of vectors that have to be evaluated together
   int NbrVectors;
 
+    // use conjugate hamiltonian instead of the hamiltonian itself
+  bool UseConjugateFlag;
+  // use full hermitian structure of the hamiltonian
+  bool UseHermitianFlag;
+
+  // execution time measured in RawApply
+  double ExecutionTime;
+
  public:
   
   // constructor for real vectors
@@ -74,7 +82,11 @@ class MultipleVectorHamiltonianMultiplyOperation: public AbstractArchitectureOpe
   // sourceVectors = array of vectors to be multiplied by the hamiltonian
   // destinationVectors = array of vectors where the result has to be stored
   // nbrVectors = number of vectors that have to be evaluated together
-  MultipleVectorHamiltonianMultiplyOperation(AbstractHamiltonian* hamiltonian, RealVector* sourceVectors, RealVector* destinationVectors, int nbrVectors);
+  // forceNormalMultiplication = force to use direct hamiltonian multiplication (override hamiltonian option)
+  // forceConjugateMultiplication = force to use hamiltonian for multiplication (override hamiltonian option)
+  // forceHermitianMultiplication = force to use hermitian property when multiplying  (override hamiltonian option)
+
+  MultipleVectorHamiltonianMultiplyOperation(AbstractHamiltonian* hamiltonian, RealVector* sourceVectors, RealVector* destinationVectors, int nbrVectors, bool forceNormalMultiplication = false, bool forceConjugateMultiplication = false, bool forceHermitianeMultiplication = false);
 
   // constructor for complex vectors
   //
@@ -82,7 +94,11 @@ class MultipleVectorHamiltonianMultiplyOperation: public AbstractArchitectureOpe
   // sourceVectors = array of vectors to be multiplied by the hamiltonian
   // destinationVectors = array of vectors where the result has to be stored
   // nbrVectors = number of vectors that have to be evaluated together
-  MultipleVectorHamiltonianMultiplyOperation(AbstractHamiltonian* hamiltonian, ComplexVector* sourceVectors, ComplexVector* destinationVectors, int nbrVectors);
+  // forceNormalMultiplication = force to use direct hamiltonian multiplication (override hamiltonian option)
+  // forceConjugateMultiplication = force to use hamiltonian for multiplication (override hamiltonian option)
+  // forceHermitianMultiplication = force to use hermitian property when multiplying  (override hamiltonian option)
+
+  MultipleVectorHamiltonianMultiplyOperation(AbstractHamiltonian* hamiltonian, ComplexVector* sourceVectors, ComplexVector* destinationVectors, int nbrVectors, bool forceNormalMultiplication = false, bool forceConjugateMultiplication = false, bool forceHermitianeMultiplication = false);
 
   // copy constructor 
   //

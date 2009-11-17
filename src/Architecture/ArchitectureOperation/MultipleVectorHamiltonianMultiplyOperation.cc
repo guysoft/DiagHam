@@ -47,9 +47,12 @@
 // sourceVectors = array of vectors to be multiplied by the hamiltonian
 // destinationVectors = array of vectors where the result has to be stored
 // nbrVectors = number of vectors that have to be evaluated together
+// forceNormalMultiplication = force to use direct hamiltonian multiplication (override hamiltonian option)
+// forceConjugateMultiplication = force to use hamiltonian for multiplication (override hamiltonian option)
+// forceHermitianMultiplication = force to use hermitian property when multiplying  (override hamiltonian option)
 
 MultipleVectorHamiltonianMultiplyOperation::MultipleVectorHamiltonianMultiplyOperation (AbstractHamiltonian* hamiltonian, RealVector* sourceVectors, 
-											RealVector* destinationVectors, int nbrVectors)
+											RealVector* destinationVectors, int nbrVectors, bool forceNormalMultiplication, bool forceConjugateMultiplication, bool forceHermitianeMultiplication)
 {
   this->FirstComponent = 0;
   this->NbrComponent = sourceVectors[0].GetVectorDimension();
@@ -60,6 +63,44 @@ MultipleVectorHamiltonianMultiplyOperation::MultipleVectorHamiltonianMultiplyOpe
   this->ComplexDestinationVectors = 0; 
   this->NbrVectors = nbrVectors;
   this->OperationType = AbstractArchitectureOperation::MultipleVectorHamiltonianMultiply;
+  this->ExecutionTime=0.0;
+  if ((forceNormalMultiplication == false) && (forceConjugateMultiplication == false) && (forceHermitianeMultiplication == false))
+    {
+      this->UseConjugateFlag = false;
+      this->UseHermitianFlag = false;
+      if (this->Hamiltonian->IsHermitian() == true)
+	{
+	  this->UseHermitianFlag = true;
+	}
+      else
+	{
+	  if (this->Hamiltonian->IsConjugate() == true)
+	    {
+	      this->UseConjugateFlag = true;
+	    }
+	}
+    }
+  else
+    {
+      if (forceNormalMultiplication == true)
+	{
+	  this->UseConjugateFlag = false;
+	  this->UseHermitianFlag = false;
+	}
+      else
+	{
+	  if (forceConjugateMultiplication == true)
+	    {
+	      this->UseConjugateFlag = true;
+	      this->UseHermitianFlag = false;
+	    }
+	  else
+	    {
+	      this->UseConjugateFlag = false;
+	      this->UseHermitianFlag = true;
+	    }
+	}
+    }
 }
 
 // constructor for complex vectors
@@ -68,9 +109,12 @@ MultipleVectorHamiltonianMultiplyOperation::MultipleVectorHamiltonianMultiplyOpe
 // sourceVectors = array of vectors to be multiplied by the hamiltonian
 // destinationVectors = array of vectors where the result has to be stored
 // nbrVectors = number of vectors that have to be evaluated together
+// forceNormalMultiplication = force to use direct hamiltonian multiplication (override hamiltonian option)
+// forceConjugateMultiplication = force to use hamiltonian for multiplication (override hamiltonian option)
+// forceHermitianMultiplication = force to use hermitian property when multiplying  (override hamiltonian option)
 
 MultipleVectorHamiltonianMultiplyOperation::MultipleVectorHamiltonianMultiplyOperation (AbstractHamiltonian* hamiltonian, ComplexVector* sourceVectors, 
-											ComplexVector* destinationVectors, int nbrVectors)
+											ComplexVector* destinationVectors, int nbrVectors, bool forceNormalMultiplication, bool forceConjugateMultiplication, bool forceHermitianeMultiplication)
 {
   this->FirstComponent = 0;
   this->NbrComponent = sourceVectors[0].GetVectorDimension();
@@ -81,6 +125,44 @@ MultipleVectorHamiltonianMultiplyOperation::MultipleVectorHamiltonianMultiplyOpe
   this->ComplexDestinationVectors = destinationVectors; 
   this->NbrVectors = nbrVectors;
   this->OperationType = AbstractArchitectureOperation::MultipleVectorHamiltonianMultiply;
+  this->ExecutionTime=0.0;
+  if ((forceNormalMultiplication == false) && (forceConjugateMultiplication == false) && (forceHermitianeMultiplication == false))
+    {
+      this->UseConjugateFlag = false;
+      this->UseHermitianFlag = false;
+      if (this->Hamiltonian->IsHermitian() == true)
+	{
+	  this->UseHermitianFlag = true;
+	}
+      else
+	{
+	  if (this->Hamiltonian->IsConjugate() == true)
+	    {
+	      this->UseConjugateFlag = true;
+	    }
+	}
+    }
+  else
+    {
+      if (forceNormalMultiplication == true)
+	{
+	  this->UseConjugateFlag = false;
+	  this->UseHermitianFlag = false;
+	}
+      else
+	{
+	  if (forceConjugateMultiplication == true)
+	    {
+	      this->UseConjugateFlag = true;
+	      this->UseHermitianFlag = false;
+	    }
+	  else
+	    {
+	      this->UseConjugateFlag = false;
+	      this->UseHermitianFlag = true;
+	    }
+	}
+    }
 }
 
 // copy constructor 
@@ -97,6 +179,9 @@ MultipleVectorHamiltonianMultiplyOperation::MultipleVectorHamiltonianMultiplyOpe
   this->ComplexSourceVectors = operation.ComplexSourceVectors;
   this->ComplexDestinationVectors = operation.ComplexDestinationVectors;  
   this->NbrVectors = operation.NbrVectors;
+  this->UseConjugateFlag = operation.UseConjugateFlag;
+  this->UseHermitianFlag = operation.UseHermitianFlag;
+  this->ExecutionTime = operation.ExecutionTime;
   this->OperationType = AbstractArchitectureOperation::MultipleVectorHamiltonianMultiply;
 }
   
@@ -114,8 +199,48 @@ MultipleVectorHamiltonianMultiplyOperation::MultipleVectorHamiltonianMultiplyOpe
   architecture->GetTypicalRange(TmpMinimumIndex, TmpMaximumIndex);
   this->FirstComponent = (int) TmpMinimumIndex;  
   this->NbrComponent = (int) (TmpMaximumIndex - TmpMinimumIndex + 1l);
-  Vector** TmpSourceVectors = architecture->BroadcastVectorArray(this->NbrVectors);
-  Vector** TmpDestinationVectors = architecture->BroadcastVectorTypeArray(this->NbrVectors);
+  // copied from VectorHamiltonianMultiplyOperation, please check!
+  int TmpFlag = 0;
+  architecture->BroadcastToSlaves(TmpFlag);
+  if (TmpFlag == 1)
+    this->UseConjugateFlag = true;
+  else
+    this->UseConjugateFlag = false;
+  TmpFlag = 0;
+  architecture->BroadcastToSlaves(TmpFlag);
+  if (TmpFlag == 1)
+    this->UseHermitianFlag = true;
+  else
+    this->UseHermitianFlag = false;
+
+  Vector** TmpSourceVectors;
+  Vector** TmpDestinationVectors;
+  
+  if (this->UseConjugateFlag == true)
+    {
+      TmpSourceVectors = architecture->BroadcastVectorArray(this->NbrVectors);  
+      TmpDestinationVectors = architecture->ScatterVectorArray(this->NbrVectors);
+    }
+  else
+    {
+      if (this->UseHermitianFlag == true)
+	{
+	  TmpSourceVectors = architecture->BroadcastVectorArray(this->NbrVectors);  
+	  TmpDestinationVectors = architecture->BroadcastVectorTypeArray(this->NbrVectors);
+	}
+      else
+	{
+	  // think one needs to scatter source vectors, rather than broadcast, here
+	  TmpSourceVectors = architecture->ScatterVectorArray(this->NbrVectors);  
+	  TmpDestinationVectors = architecture->BroadcastVectorTypeArray(this->NbrVectors);
+	}
+    }
+
+  // OLD OPERATIONS AT THIS POINT (NORMAL MODE)
+  // TmpSourceVectors = architecture->BroadcastVectorArray(this->NbrVectors);
+  // TmpDestinationVectors = architecture->BroadcastVectorTypeArray(this->NbrVectors);
+
+  // continue with old code: create pointers to new vectors, according to vector type
   if (TmpSourceVectors[0]->GetVectorType() == Vector::RealDatas)
     {
       this->RealSourceVectors = new RealVector[this->NbrVectors];
@@ -194,16 +319,44 @@ AbstractArchitectureOperation* MultipleVectorHamiltonianMultiplyOperation::Clone
 
 bool MultipleVectorHamiltonianMultiplyOperation::RawApplyOperation()
 {
+  timeval TotalStartingTime2;
+  timeval TotalEndingTime2;
+  gettimeofday (&(TotalStartingTime2), 0);
+
   if (this->RealSourceVectors != 0)
     {
-      this->Hamiltonian->LowLevelMultipleMultiply(this->RealSourceVectors, this->RealDestinationVectors, this->NbrVectors, this->FirstComponent, 
-						  this->NbrComponent);
+      if (this->UseConjugateFlag == true)
+	{
+	  this->Hamiltonian->ConjugateLowLevelMultipleMultiply(this->RealSourceVectors, this->RealDestinationVectors, this->NbrVectors,
+							       this->FirstComponent, this->NbrComponent);
+	}
+      else if (this->UseHermitianFlag == true)
+	{
+	  this->Hamiltonian->HermitianLowLevelMultipleMultiply(this->RealSourceVectors, this->RealDestinationVectors,
+							       this->NbrVectors, this->FirstComponent, this->NbrComponent);
+	}
+      else this->Hamiltonian->LowLevelMultipleMultiply(this->RealSourceVectors, this->RealDestinationVectors, this->NbrVectors,
+						       this->FirstComponent, this->NbrComponent);
     }
   else
     {
-      this->Hamiltonian->LowLevelMultipleMultiply(this->ComplexSourceVectors, this->ComplexDestinationVectors, this->NbrVectors, this->FirstComponent, 
+      if (this->UseConjugateFlag == true)
+	{
+	  this->Hamiltonian->ConjugateLowLevelMultipleMultiply(this->ComplexSourceVectors, this->ComplexDestinationVectors, this->NbrVectors,
+							       this->FirstComponent, this->NbrComponent);
+	}
+      else if (this->UseHermitianFlag == true)
+	{
+	  this->Hamiltonian->HermitianLowLevelMultipleMultiply(this->ComplexSourceVectors, this->ComplexDestinationVectors,
+							       this->NbrVectors, this->FirstComponent, this->NbrComponent);
+	}
+      else this->Hamiltonian->LowLevelMultipleMultiply(this->ComplexSourceVectors, this->ComplexDestinationVectors, this->NbrVectors, this->FirstComponent, 
 						  this->NbrComponent);
     }
+
+  gettimeofday (&(TotalEndingTime2), 0);
+  this->ExecutionTime = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
+    ((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
   return true;
 }
 
@@ -217,52 +370,62 @@ bool MultipleVectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOpera
   bool RealFlag = false;
   if (this->ComplexDestinationVectors == 0)
     RealFlag = true;
-  int Step = this->NbrComponent / architecture->GetNbrThreads();
-  int TmpFirstComponent = this->FirstComponent;
-  int ReducedNbrThreads = architecture->GetNbrThreads() - 1;
+  long *SegmentIndices=0;
+  int TmpNbrThreads = architecture->GetNbrThreads();
+  if (Hamiltonian->GetLoadBalancing(TmpNbrThreads, SegmentIndices)==false)
+    {
+      SegmentIndices = new long[TmpNbrThreads+1];
+      int Step = this->NbrComponent / TmpNbrThreads;
+      SegmentIndices[0]=this->FirstComponent;
+      for (int i=0; i<TmpNbrThreads; ++i)
+	SegmentIndices[i]=this->FirstComponent+i*Step;
+      SegmentIndices[TmpNbrThreads]=this->FirstComponent+this->NbrComponent+1;
+    }
   MultipleVectorHamiltonianMultiplyOperation** TmpOperations = new MultipleVectorHamiltonianMultiplyOperation* [architecture->GetNbrThreads()];
-  if (RealFlag == true)
-    {
-      for (int i = 0; i < this->NbrVectors; ++i)
-	this->RealDestinationVectors[i].ClearVector();
-    }
-  else
-    {
-      for (int i = 0; i < this->NbrVectors; ++i)
-	this->ComplexDestinationVectors[i].ClearVector();
-    }
-   for (int i = 0; i < ReducedNbrThreads; ++i)
+  for (int i = 0; i < TmpNbrThreads; ++i)
     {
       TmpOperations[i] = (MultipleVectorHamiltonianMultiplyOperation*) this->Clone();
-      TmpOperations[i]->SetIndicesRange(TmpFirstComponent, Step);
       architecture->SetThreadOperation(TmpOperations[i], i);
-      TmpFirstComponent += Step;
+      TmpOperations[i]->SetIndicesRange(SegmentIndices[i], SegmentIndices[i+1]-SegmentIndices[i]);
     }
-  TmpOperations[ReducedNbrThreads] = (MultipleVectorHamiltonianMultiplyOperation*) this->Clone();
-  TmpOperations[ReducedNbrThreads]->SetIndicesRange(TmpFirstComponent, this->NbrComponent + this->FirstComponent - TmpFirstComponent);  
-  architecture->SetThreadOperation(TmpOperations[ReducedNbrThreads], ReducedNbrThreads);
-  for (int i = 1; i < architecture->GetNbrThreads(); ++i)
-    {
-      if (RealFlag == true)
-	TmpOperations[i]->SetDestinationVectors((RealVector*) this->RealDestinationVectors[0].EmptyCloneArray(this->NbrVectors, true));
-      else
-	TmpOperations[i]->SetDestinationVectors((ComplexVector*) this->ComplexDestinationVectors[0].EmptyCloneArray(this->NbrVectors, true));
 
+  if (this->UseConjugateFlag == false)
+    {
+      for (int i = 1; i < architecture->GetNbrThreads(); ++i)
+	{
+	  if (RealFlag == true)
+	    TmpOperations[i]->SetDestinationVectors((RealVector*) this->RealDestinationVectors[0].EmptyCloneArray(this->NbrVectors, true));
+	  else
+	    TmpOperations[i]->SetDestinationVectors((ComplexVector*) this->ComplexDestinationVectors[0].EmptyCloneArray(this->NbrVectors, true));
+	}
     }
+
   architecture->SendJobs();
+  if (architecture->VerboseMode() == true)
+    {
+      char TmpString[512];
+      for (int i = 0; i < architecture->GetNbrThreads(); ++i)
+	{
+	  sprintf (TmpString, "MultipleVectorHamiltonianMultiply core operation on SMP id %d done in %.3f seconds", i, TmpOperations[i]->ExecutionTime);
+	  architecture->AddToLog(TmpString);
+	}
+    }
   for (int i = 1; i < architecture->GetNbrThreads(); ++i)
     {
-      if (RealFlag == true)
+      if (this->UseConjugateFlag == false)
 	{
-	  for (int j = 0; j < this->NbrVectors; ++j)
-	    this->RealDestinationVectors[j] += TmpOperations[i]->RealDestinationVectors[j];
-	  delete[] TmpOperations[i]->RealDestinationVectors;
-	}
-      else
-	{
-	  for (int j = 0; j < this->NbrVectors; ++j)
-	    this->ComplexDestinationVectors[j] += TmpOperations[i]->ComplexDestinationVectors[j];
-	  delete[] TmpOperations[i]->ComplexDestinationVectors;
+	  if (RealFlag == true)
+	    {
+	      for (int j = 0; j < this->NbrVectors; ++j)
+		this->RealDestinationVectors[j] += TmpOperations[i]->RealDestinationVectors[j];
+	      delete[] TmpOperations[i]->RealDestinationVectors;
+	    }
+	  else
+	    {
+	      for (int j = 0; j < this->NbrVectors; ++j)
+		this->ComplexDestinationVectors[j] += TmpOperations[i]->ComplexDestinationVectors[j];
+	      delete[] TmpOperations[i]->ComplexDestinationVectors;
+	    }
 	}
       delete TmpOperations[i];
     }
@@ -285,16 +448,58 @@ bool MultipleVectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOpera
 	{
 	  return false;
 	}
-      if (this->RealDestinationVectors != 0)
-	{
-	  architecture->BroadcastVectorArray(this->NbrVectors, this->RealSourceVectors);
-	  architecture->BroadcastVectorTypeArray(this->NbrVectors, this->RealDestinationVectors);  
-	}
-      else
-	{
-	  architecture->BroadcastVectorArray(this->NbrVectors, this->ComplexSourceVectors);
-	  architecture->BroadcastVectorTypeArray(this->NbrVectors, this->ComplexDestinationVectors);  
-	}
+
+      int TmpFlag = 0;
+       if (this->UseConjugateFlag == true)
+	 TmpFlag = 1;
+       architecture->BroadcastToSlaves(TmpFlag);
+       TmpFlag = 0;
+       if (this->UseHermitianFlag == true)
+         TmpFlag = 1;
+       architecture->BroadcastToSlaves(TmpFlag);
+       this->DestinationVector->ClearVector();
+       if (this->UseConjugateFlag == true)
+	 {
+	   if (this->RealDestinationVectors != 0)
+	     {
+	       architecture->BroadcastVectorArray(this->NbrVectors, this->RealSourceVectors);
+	       architecture->ScatterVectorArray(this->NbrVectors, this->RealDestinationVectors);  
+	     }
+	   else
+	     {
+	       architecture->BroadcastVectorArray(this->NbrVectors, this->ComplexSourceVectors);
+	       architecture->ScatterVectorArray(this->NbrVectors, this->ComplexDestinationVectors);  
+	     }
+	 }
+       else
+	 {
+	   if (this->UseHermitianFlag == true)
+	     {
+	       if (this->RealDestinationVectors != 0)
+		 {
+		   architecture->BroadcastVectorArray(this->NbrVectors, this->RealSourceVectors);
+		   architecture->BroadcastVectorTypeArray(this->NbrVectors, this->RealDestinationVectors);  
+		 }
+	       else
+		 {
+		   architecture->BroadcastVectorArray(this->NbrVectors, this->ComplexSourceVectors);
+		   architecture->BroadcastVectorTypeArray(this->NbrVectors, this->ComplexDestinationVectors);  
+		 }
+	     }
+	   else
+	     {
+	       if (this->RealDestinationVectors != 0)
+		 {
+		   architecture->ScatterVectorArray(this->NbrVectors, this->RealSourceVectors);
+		   architecture->BroadcastVectorTypeArray(this->NbrVectors, this->RealDestinationVectors);  
+		 }
+	       else
+		 {
+		   architecture->ScatterVectorArray(this->NbrVectors, this->ComplexSourceVectors);
+		   architecture->BroadcastVectorTypeArray(this->NbrVectors, this->ComplexDestinationVectors);  
+		 }
+	     }
+	 }
     }
   long TmpMinimumIndex = 0;
   long TmpMaximumIndex = 0;
@@ -318,16 +523,45 @@ bool MultipleVectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOpera
       sprintf (TmpString, "MultipleVectorHamiltonianMultiply core operation done in %.3f seconds", Dt);
       architecture->AddToLog(TmpString);
     }
-  if (this->RealDestinationVectors != 0)
+  if ((architecture->IsMasterNode()) && (architecture->VerboseMode()))
+    gettimeofday (&TotalStartingTime, 0);
+  if (this->UseConjugateFlag == true)
     {
-      for (int i = 0; i < this->NbrVectors; ++i)
-	architecture->SumVector(this->RealDestinationVectors[i]);
+      if (this->RealDestinationVectors != 0)
+	{
+	  for (int i = 0; i < this->NbrVectors; ++i)
+	    architecture->ReassembleVector(this->RealDestinationVectors[i]);
+	}
+      else
+	{
+	  for (int i = 0; i < this->NbrVectors; ++i)
+	    architecture->ReassembleVector(this->ComplexDestinationVectors[i]);
+	}
     }
   else
     {
-      for (int i = 0; i < this->NbrVectors; ++i)
-	architecture->SumVector(this->ComplexDestinationVectors[i]);
+      if (this->RealDestinationVectors != 0)
+	{
+	  for (int i = 0; i < this->NbrVectors; ++i)
+	    architecture->SumVector(this->RealDestinationVectors[i]);
+	}
+      else
+	{
+	  for (int i = 0; i < this->NbrVectors; ++i)
+	    architecture->SumVector(this->ComplexDestinationVectors[i]);
+	}
     }
+  if ((architecture->IsMasterNode()) && (architecture->VerboseMode()))
+    {
+      timeval TotalEndingTime;
+      gettimeofday (&TotalEndingTime, 0);
+      double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 
+		    (((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));		      
+      char TmpString[256];
+      sprintf (TmpString, "MultipleVectorHamiltonianMultiply sum operation done in %.3f seconds", Dt);
+      architecture->AddToLog(TmpString, true);
+    }
+  
   if (architecture->IsMasterNode() == false)
     {
       if (this->RealDestinationVectors != 0)

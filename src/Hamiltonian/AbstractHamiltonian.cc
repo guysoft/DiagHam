@@ -260,7 +260,10 @@ RealVector& AbstractHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVe
 
 RealVector* AbstractHamiltonian::LowLevelMultipleMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors)
 {
-  return this->LowLevelMultipleMultiply(vSources, vDestinations, nbrVectors, 0, this->GetHilbertSpaceDimension());
+  if (this->IsHermitian())
+    return this->HermitianLowLevelMultipleMultiply(vSources, vDestinations, nbrVectors, 0, this->GetHilbertSpaceDimension());
+  else
+    return this->LowLevelMultipleMultiply(vSources, vDestinations, nbrVectors, 0, this->GetHilbertSpaceDimension());
 }
 
 // multiply a set of vectors by the current hamiltonian for a given range of indices 
@@ -477,7 +480,10 @@ ComplexVector& AbstractHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, 
 
 ComplexVector* AbstractHamiltonian::LowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors)
 {
-  return this->LowLevelMultipleMultiply(vSources, vDestinations, nbrVectors, 0, this->GetHilbertSpaceDimension());
+  if (this->IsHermitian())
+    return this->HermitianLowLevelMultipleMultiply(vSources, vDestinations, nbrVectors, 0, this->GetHilbertSpaceDimension());
+  else
+    return this->LowLevelMultipleMultiply(vSources, vDestinations, nbrVectors, 0, this->GetHilbertSpaceDimension());
 }
 
 // multiply a set of vectors by the current hamiltonian for a given range of indices 
