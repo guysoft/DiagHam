@@ -457,7 +457,16 @@ bool MultipleVectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOpera
        if (this->UseHermitianFlag == true)
          TmpFlag = 1;
        architecture->BroadcastToSlaves(TmpFlag);
-       this->DestinationVector->ClearVector();
+       if (this->RealDestinationVectors != 0)
+	 {
+	   for (int i = 0; i < this->NbrVectors; ++i)
+	     this->RealDestinationVectors[i].ClearVector();
+	 }
+       else
+	 {
+	   for (int i = 0; i < this->NbrVectors; ++i)
+	     this->ComplexDestinationVectors[i].ClearVector();
+	 }
        if (this->UseConjugateFlag == true)
 	 {
 	   if (this->RealDestinationVectors != 0)
