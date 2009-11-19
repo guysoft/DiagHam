@@ -654,15 +654,22 @@ void ParticleOnSphereGenericFiveBodyHamiltonian::Evaluate5BodyInteractionFactors
 	  for (int i = 1; i <= TmpMaxRealtiveMonentum; ++i)  
 	    if (this->FiveBodyPseudoPotential[i] != 0.0)
 	      TmpProjectorCoefficients[i] = this->Compute5BodyCoefficients(2 * i, TmpNIndices2, Lim);	    
-	  for (int i = 4; i <= TmpMaxRealtiveMonentum; ++i)  
-	    if (this->FiveBodyPseudoPotential[i] != 0.0)
-	      {
-		int MaxClosing[4];
-		MaxClosing[0] = 0;
-		MaxClosing[1] = 0;
-		MaxClosing[2] = 2;
-		TmpProjectorCoefficients2[i] = this->Compute5BodyCoefficientsWithDirection(2 * i, TmpNIndices2, Lim, MaxClosing);	   
-	      }
+	  if ((TmpMaxRealtiveMonentum >= 4) && (this->FiveBodyPseudoPotential[4] != 0.0))
+	    {
+	      int MaxClosing[4];
+	      MaxClosing[0] = 0;
+	      MaxClosing[1] = 0;
+	      MaxClosing[2] = 2;
+	      TmpProjectorCoefficients2[4] = this->Compute5BodyCoefficientsWithDirection(8, TmpNIndices2, Lim, MaxClosing);	   
+	    }
+	  if ((TmpMaxRealtiveMonentum >= 5) && (this->FiveBodyPseudoPotential[5] != 0.0))
+	    {
+	      int MaxClosing[4];
+	      MaxClosing[0] = 0;
+	      MaxClosing[1] = 0;
+	      MaxClosing[2] = 2;
+	      TmpProjectorCoefficients2[5] = this->Compute5BodyCoefficientsWithDirection(10, TmpNIndices2, Lim, MaxClosing);	   
+	    }
 
 	  for (int i = 0; i < Lim; ++i)
 	    {

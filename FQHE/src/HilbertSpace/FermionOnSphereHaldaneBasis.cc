@@ -92,6 +92,11 @@ FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis (int nbrFermions, int& 
     }
   this->TotalLz = ((this->TotalLz << 1) - (this->LzMax * this->NbrFermions));
   totalLz = this->TotalLz;
+  unsigned long TmpSymmetricState = this->GetSymmetricState (this->ReferenceState);
+  if (TmpSymmetricState == this->ReferenceState)
+    this->SymmetricReferenceState = true;
+  else
+    this->SymmetricReferenceState = false;
 
 #ifdef __64_BITS__
   this->InvertShift = 32 - ((this->LzMax + 1) >> 1);
@@ -340,6 +345,11 @@ FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis (char* fileName, unsign
   this->MaximumSignLookUp = 16;
   this->IncNbrFermions = this->NbrFermions + 1;
   this->Flag.Initialize();
+  unsigned long TmpSymmetricState = this->GetSymmetricState (this->ReferenceState);
+  if (TmpSymmetricState == this->ReferenceState)
+    this->SymmetricReferenceState = true;
+  else
+    this->SymmetricReferenceState = false;
 
   this->GenerateLookUpTable(memory);
 #ifdef __DEBUG__
@@ -385,6 +395,7 @@ FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis(const FermionOnSphereHa
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
+  this->SymmetricReferenceState =  fermions.SymmetricReferenceState;
 }
 
 // destructor
@@ -434,6 +445,7 @@ FermionOnSphereHaldaneBasis& FermionOnSphereHaldaneBasis::operator = (const Ferm
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
+  this->SymmetricReferenceState =  fermions.SymmetricReferenceState;
   this->InitializeWaveFunctionEvaluation();
   return *this;
 }
@@ -984,7 +996,7 @@ long FermionOnSphereHaldaneBasis::GenerateStates(int lzMax, unsigned long refere
 	{
 	  this->KeepStateFlag[TmpIndex >> 6] |= 0x1l << (TmpIndex & 0x3f);
 	  ++NbrNewEntries;
-	  if (this->TotalLz == 0)
+	  if (this->SymmetricReferenceState == true)
 	    {
 	      unsigned long TmpSymmetricState = this->GetSymmetricState (TmpState);
 	      int TmpSymLzMax = this->LzMax;
@@ -1003,7 +1015,7 @@ long FermionOnSphereHaldaneBasis::GenerateStates(int lzMax, unsigned long refere
 	{
 	  this->KeepStateFlag[TmpIndex >> 5] |= 0x1l << (TmpIndex & 0x1f);
 	  ++NbrNewEntries;
-	  if (this->TotalLz == 0)
+	  if (this->SymmetricReferenceState == true)
 	    {
 	      unsigned long TmpSymmetricState = this->GetSymmetricState (TmpState);
 	      int TmpSymLzMax = this->LzMax;

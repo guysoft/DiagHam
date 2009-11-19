@@ -51,6 +51,8 @@ class FermionOnSphereHaldaneBasis :  public FermionOnSphere
 
   // topmost state 
   unsigned long ReferenceState;
+  // flag to indicate if the reference state is Lz<->-Lz invariant
+  bool SymmetricReferenceState;
 
   // three temporary arrays used during Hilbert space generation
   unsigned long* TmpGeneratedStates;
