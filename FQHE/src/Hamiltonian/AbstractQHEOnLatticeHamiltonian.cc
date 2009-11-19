@@ -327,61 +327,64 @@ bool AbstractQHEOnLatticeHamiltonian::HermitianSymmetrizeInteractionFactors()
   
   if (this->NbrQ12Indices == 0)
     {
-      int TmpNbrInteractionFactors = 0;
-      int *Flags = new int[NbrInteractionFactors];
-      for (int j = 0; j < NbrInteractionFactors; ++j) 
+      if (NbrInteractionFactors>0)
 	{
-	  M[0] = this->Q1Value[j];
-	  M[1] = this->Q2Value[j];
-	  N[0] = this->Q3Value[j];
-	  N[1] = this->Q4Value[j];
-	  Flags[j] = this->Particles->CheckOrder (M, N, 2);
-	  cout << "Flag("<<this->Q1Value[j]<<", "<<this->Q2Value[j]<<", "<<this->Q3Value[j]<<", "<<this->Q4Value[j]<<")="<<Flags[j]<<endl;
-	  if (Flags[j]>0)
-	    ++TmpNbrInteractionFactors;
-	  else
+	  int TmpNbrInteractionFactors = 0;
+	  int *Flags = new int[NbrInteractionFactors];
+	  for (int j = 0; j < NbrInteractionFactors; ++j) 
 	    {
-	      if (Flags[j]==0)
-		{
-		  ++TmpNbrInteractionFactors;
-		  this->InteractionFactors[j]*=0.5; // diagonal term: make up for double counting
-		}
+	      M[0] = this->Q1Value[j];
+	      M[1] = this->Q2Value[j];
+	      N[0] = this->Q3Value[j];
+	      N[1] = this->Q4Value[j];
+	      Flags[j] = this->Particles->CheckOrder (M, N, 2);
+	      cout << "Flag("<<this->Q1Value[j]<<", "<<this->Q2Value[j]<<", "<<this->Q3Value[j]<<", "<<this->Q4Value[j]<<")="<<Flags[j]<<endl;
+	      if (Flags[j]>0)
+		++TmpNbrInteractionFactors;
 	      else
 		{
-		  cout << "Discarding element "<<this->Q1Value[j]<<", "<<this->Q2Value[j]<<", "<<this->Q3Value[j]<<", "<<this->Q4Value[j]<<endl;
+		  if (Flags[j]==0)
+		    {
+		      ++TmpNbrInteractionFactors;
+		      this->InteractionFactors[j]*=0.5; // diagonal term: make up for double counting
+		    }
+		  else
+		    {
+		      cout << "Discarding element "<<this->Q1Value[j]<<", "<<this->Q2Value[j]<<", "<<this->Q3Value[j]<<", "<<this->Q4Value[j]<<endl;
+		    }
 		}
 	    }
-	}
-      Complex* TmpInteractionFactors = new Complex[TmpNbrInteractionFactors];
-      int* TmpQ1Value = new int[TmpNbrInteractionFactors];
-      int* TmpQ2Value = new int[TmpNbrInteractionFactors];
-      int* TmpQ3Value = new int[TmpNbrInteractionFactors];
-      int* TmpQ4Value = new int[TmpNbrInteractionFactors];
-      int Pos=0;
-      for (int j = 0; j < NbrInteractionFactors; ++j)
-	{
-	  if (Flags[j]>=0)
+	  Complex* TmpInteractionFactors = new Complex[TmpNbrInteractionFactors];
+	  int* TmpQ1Value = new int[TmpNbrInteractionFactors];
+	  int* TmpQ2Value = new int[TmpNbrInteractionFactors];
+	  int* TmpQ3Value = new int[TmpNbrInteractionFactors];
+	  int* TmpQ4Value = new int[TmpNbrInteractionFactors];
+	  int Pos=0;
+	  for (int j = 0; j < NbrInteractionFactors; ++j)
 	    {
-	      TmpInteractionFactors[Pos]=InteractionFactors[j];
-	      TmpQ1Value[Pos]=Q1Value[j];
-	      TmpQ2Value[Pos]=Q2Value[j];
-	      TmpQ3Value[Pos]=Q3Value[j];
-	      TmpQ4Value[Pos]=Q4Value[j];
-	      ++Pos;
+	      if (Flags[j]>=0)
+		{
+		  TmpInteractionFactors[Pos]=InteractionFactors[j];
+		  TmpQ1Value[Pos]=Q1Value[j];
+		  TmpQ2Value[Pos]=Q2Value[j];
+		  TmpQ3Value[Pos]=Q3Value[j];
+		  TmpQ4Value[Pos]=Q4Value[j];
+		  ++Pos;
+		}
 	    }
+	  delete [] InteractionFactors;
+	  delete [] Q1Value;
+	  delete [] Q2Value;
+	  delete [] Q3Value;
+	  delete [] Q4Value;
+	  this->InteractionFactors = TmpInteractionFactors;
+	  this->NbrInteractionFactors = TmpNbrInteractionFactors;
+	  this->Q1Value = TmpQ1Value;
+	  this->Q2Value = TmpQ2Value;
+	  this->Q3Value = TmpQ3Value;
+	  this->Q4Value = TmpQ4Value;
+	  delete [] Flags;
 	}
-      delete [] InteractionFactors;
-      delete [] Q1Value;
-      delete [] Q2Value;
-      delete [] Q3Value;
-      delete [] Q4Value;
-      this->InteractionFactors = TmpInteractionFactors;
-      this->NbrInteractionFactors = TmpNbrInteractionFactors;
-      this->Q1Value = TmpQ1Value;
-      this->Q2Value = TmpQ2Value;
-      this->Q3Value = TmpQ3Value;
-      this->Q4Value = TmpQ4Value;
-      delete [] Flags;
     }
   else
     {
