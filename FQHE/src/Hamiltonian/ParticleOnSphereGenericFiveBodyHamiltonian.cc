@@ -659,7 +659,7 @@ void ParticleOnSphereGenericFiveBodyHamiltonian::Evaluate5BodyInteractionFactors
 	      int MaxClosing[4];
 	      MaxClosing[0] = 0;
 	      MaxClosing[1] = 0;
-	      MaxClosing[2] = 2;
+	      MaxClosing[2] = 4;
 	      TmpProjectorCoefficients2[4] = this->Compute5BodyCoefficientsWithDirection(8, TmpNIndices2, Lim, MaxClosing);	   
 	    }
 	  if ((TmpMaxRealtiveMonentum >= 5) && (this->FiveBodyPseudoPotential[5] != 0.0))
@@ -667,7 +667,7 @@ void ParticleOnSphereGenericFiveBodyHamiltonian::Evaluate5BodyInteractionFactors
 	      int MaxClosing[4];
 	      MaxClosing[0] = 0;
 	      MaxClosing[1] = 0;
-	      MaxClosing[2] = 2;
+	      MaxClosing[2] = 4;
 	      TmpProjectorCoefficients2[5] = this->Compute5BodyCoefficientsWithDirection(10, TmpNIndices2, Lim, MaxClosing);	   
 	    }
 
