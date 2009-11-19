@@ -92,11 +92,6 @@ FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis (int nbrFermions, int& 
     }
   this->TotalLz = ((this->TotalLz << 1) - (this->LzMax * this->NbrFermions));
   totalLz = this->TotalLz;
-  unsigned long TmpSymmetricState = this->GetSymmetricState (this->ReferenceState);
-  if (TmpSymmetricState == this->ReferenceState)
-    this->SymmetricReferenceState = true;
-  else
-    this->SymmetricReferenceState = false;
 
 #ifdef __64_BITS__
   this->InvertShift = 32 - ((this->LzMax + 1) >> 1);
@@ -107,6 +102,11 @@ FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis (int nbrFermions, int& 
     this->InvertUnshift = this->InvertShift - 1;
   else
     this->InvertUnshift = this->InvertShift;
+  unsigned long TmpSymmetricState = this->GetSymmetricState (this->ReferenceState);
+  if (TmpSymmetricState == this->ReferenceState)
+    this->SymmetricReferenceState = true;
+  else
+    this->SymmetricReferenceState = false;
 
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz);
   if (this->LargeHilbertSpaceDimension >= (1l << 30))
