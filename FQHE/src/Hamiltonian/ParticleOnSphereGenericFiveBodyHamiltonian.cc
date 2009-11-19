@@ -648,11 +648,21 @@ void ParticleOnSphereGenericFiveBodyHamiltonian::Evaluate5BodyInteractionFactors
 	  while (((5 * this->LzMax) - TmpMaxRealtiveMonentum)  < TmpSum)
 	    --TmpMaxRealtiveMonentum;
 	  double** TmpProjectorCoefficients = new double* [ TmpMaxRealtiveMonentum+ 1];
+	  double** TmpProjectorCoefficients2 = new double* [ TmpMaxRealtiveMonentum+ 1];
 	  if (this->FiveBodyPseudoPotential[0] != 0.0)
 	    TmpProjectorCoefficients[0] = this->Compute5BodyCoefficients(0, TmpNIndices2, Lim);
 	  for (int i = 1; i <= TmpMaxRealtiveMonentum; ++i)  
 	    if (this->FiveBodyPseudoPotential[i] != 0.0)
 	      TmpProjectorCoefficients[i] = this->Compute5BodyCoefficients(2 * i, TmpNIndices2, Lim);	    
+	  for (int i = 4; i <= TmpMaxRealtiveMonentum; ++i)  
+	    if (this->FiveBodyPseudoPotential[i] != 0.0)
+	      {
+		int MaxClosing[4];
+		MaxClosing[0] = 0;
+		MaxClosing[1] = 0;
+		MaxClosing[2] = 2;
+		TmpProjectorCoefficients2[i] = this->Compute5BodyCoefficientsWithDirection(2 * i, TmpNIndices2, Lim, MaxClosing);	   
+	      }
 
 	  for (int i = 0; i < Lim; ++i)
 	    {
@@ -679,6 +689,9 @@ void ParticleOnSphereGenericFiveBodyHamiltonian::Evaluate5BodyInteractionFactors
 		  for (int k = 2; k <= TmpMaxRealtiveMonentum; ++k)  
 		    if (this->FiveBodyPseudoPotential[k] != 0.0)
 		      TmpInteraction2 += this->FiveBodyPseudoPotential[k] * TmpProjectorCoefficients[k][i] * TmpProjectorCoefficients[k][j];
+		  for (int k = 4; k <= TmpMaxRealtiveMonentum; ++k)  
+		    if (this->FiveBodyPseudoPotential[k] != 0.0)
+		      TmpInteraction2 += this->FiveBodyPseudoPotential[k] * TmpProjectorCoefficients2[k][i] * TmpProjectorCoefficients2[k][j];
 		  TmpInteraction2 *= TmpSymmetryFactors[i] * TmpSymmetryFactors[j];
 		}
 	      for (int j = 0; j < 5; ++j)
@@ -694,6 +707,7 @@ void ParticleOnSphereGenericFiveBodyHamiltonian::Evaluate5BodyInteractionFactors
 	  for (int i = 2; i <= TmpMaxRealtiveMonentum; ++i)  
 	    if (this->FiveBodyPseudoPotential[i] != 0.0)
 	      delete[] TmpProjectorCoefficients[i];
+
 	  delete[] TmpProjectorCoefficients;		
 	}
       for (int MinSum = 0; MinSum <= this->MaxSumIndices[5]; ++MinSum)
@@ -984,6 +998,285 @@ double* ParticleOnSphereGenericFiveBodyHamiltonian::Compute5BodyCoefficients(int
   return TmpCoefficients;
 }
 
+// compute all projector coefficient associated to a given relative angular momentum between 5 particles in a given direction
+//
+// relativeMomentum = value of twice the relative angular momentum between the 4 particles
+// indices = array that contains all possible sets of indices (size of the array is 4 * nbrIndexSets)
+// nbrIndexSets = number of sets
+// maxClosing = array that gives the maximum angular momentum when a particle approach the cluster of n+1 particles  (n being the index of MaxClosing)
+
+double* ParticleOnSphereGenericFiveBodyHamiltonian::Compute5BodyCoefficientsWithDirection(int relativeMomentum, int* indices, int nbrIndexSets, int* maxClosing)
+{
+  double* TmpCoefficients = new double [nbrIndexSets];
+  int JValue = (5 * this->LzMax) - relativeMomentum;
+
+  int MaxJ = 4 * this->LzMax;
+  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+    MaxJ -= 2;
+  ClebschGordanCoefficients Clebsh (this->LzMax, this->LzMax);
+  ClebschGordanCoefficients* ClebshArray = 0;
+  ClebshArray = new ClebschGordanCoefficients[MaxJ + 1];
+  for (int j = MaxJ; j >= 0; --j)
+    ClebshArray[j] = ClebschGordanCoefficients(j, this->LzMax);
+
+  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+    for (int i = 0; i < nbrIndexSets; ++i)
+      {
+	double Tmp = 0.0;
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[1], indices[2], indices[3], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[1], indices[2], indices[4], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[1], indices[3], indices[2], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[1], indices[3], indices[4], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[1], indices[4], indices[2], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[1], indices[4], indices[3], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[2], indices[1], indices[3], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[2], indices[1], indices[4], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[2], indices[3], indices[1], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[2], indices[3], indices[4], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[2], indices[4], indices[1], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[2], indices[4], indices[3], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[3], indices[1], indices[2], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[3], indices[1], indices[4], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[3], indices[2], indices[1], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[3], indices[2], indices[4], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[3], indices[4], indices[1], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[3], indices[4], indices[2], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[4], indices[1], indices[2], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[4], indices[1], indices[3], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[4], indices[2], indices[1], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[4], indices[2], indices[3], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[4], indices[3], indices[1], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[4], indices[3], indices[2], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[0], indices[2], indices[3], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[0], indices[2], indices[4], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[0], indices[3], indices[2], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[0], indices[3], indices[4], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[0], indices[4], indices[2], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[0], indices[4], indices[3], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[2], indices[0], indices[3], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[2], indices[0], indices[4], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[2], indices[3], indices[0], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[2], indices[3], indices[4], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[2], indices[4], indices[0], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[2], indices[4], indices[3], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[3], indices[0], indices[2], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[3], indices[0], indices[4], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[3], indices[2], indices[0], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[3], indices[2], indices[4], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[3], indices[4], indices[0], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[3], indices[4], indices[2], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[4], indices[0], indices[2], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[4], indices[0], indices[3], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[4], indices[2], indices[0], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[4], indices[2], indices[3], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[4], indices[3], indices[0], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[4], indices[3], indices[2], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[0], indices[1], indices[3], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[0], indices[1], indices[4], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[0], indices[3], indices[1], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[0], indices[3], indices[4], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[0], indices[4], indices[1], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[0], indices[4], indices[3], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[1], indices[0], indices[3], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[1], indices[0], indices[4], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[1], indices[3], indices[0], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[1], indices[3], indices[4], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[1], indices[4], indices[0], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[1], indices[4], indices[3], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[3], indices[0], indices[1], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[3], indices[0], indices[4], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[3], indices[1], indices[0], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[3], indices[1], indices[4], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[3], indices[4], indices[0], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[3], indices[4], indices[1], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[4], indices[0], indices[1], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[4], indices[0], indices[3], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[4], indices[1], indices[0], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[4], indices[1], indices[3], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[4], indices[3], indices[0], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[4], indices[3], indices[1], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[0], indices[1], indices[2], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[0], indices[1], indices[4], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[0], indices[2], indices[1], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[0], indices[2], indices[4], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[0], indices[4], indices[1], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[0], indices[4], indices[2], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[1], indices[0], indices[2], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[1], indices[0], indices[4], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[1], indices[2], indices[0], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[1], indices[2], indices[4], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[1], indices[4], indices[0], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[1], indices[4], indices[2], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[2], indices[0], indices[1], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[2], indices[0], indices[4], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[2], indices[1], indices[0], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[2], indices[1], indices[4], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[2], indices[4], indices[0], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[2], indices[4], indices[1], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[4], indices[0], indices[1], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[4], indices[0], indices[2], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[4], indices[1], indices[0], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[4], indices[1], indices[2], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[4], indices[2], indices[0], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[4], indices[2], indices[1], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[0], indices[1], indices[2], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[0], indices[1], indices[3], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[0], indices[2], indices[1], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[0], indices[2], indices[3], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[0], indices[3], indices[1], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[0], indices[3], indices[2], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[1], indices[0], indices[2], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[1], indices[0], indices[3], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[1], indices[2], indices[0], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[1], indices[2], indices[3], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[1], indices[3], indices[0], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[1], indices[3], indices[2], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[2], indices[0], indices[1], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[2], indices[0], indices[3], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[2], indices[1], indices[0], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[2], indices[1], indices[3], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[2], indices[3], indices[0], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[2], indices[3], indices[1], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[3], indices[0], indices[1], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[3], indices[0], indices[2], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[3], indices[1], indices[0], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[3], indices[1], indices[2], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp -= this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[3], indices[2], indices[0], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[3], indices[2], indices[1], indices[0], JValue, maxClosing, ClebshArray);
+	TmpCoefficients[i] = Tmp;
+	indices += 5;
+      }
+  else
+    for (int i = 0; i < nbrIndexSets; ++i)
+      {
+	double Tmp = 0.0;
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[1], indices[2], indices[3], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[1], indices[2], indices[4], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[1], indices[3], indices[2], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[1], indices[3], indices[4], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[1], indices[4], indices[2], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[1], indices[4], indices[3], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[2], indices[1], indices[3], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[2], indices[1], indices[4], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[2], indices[3], indices[1], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[2], indices[3], indices[4], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[2], indices[4], indices[1], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[2], indices[4], indices[3], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[3], indices[1], indices[2], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[3], indices[1], indices[4], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[3], indices[2], indices[1], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[3], indices[2], indices[4], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[3], indices[4], indices[1], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[3], indices[4], indices[2], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[4], indices[1], indices[2], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[4], indices[1], indices[3], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[4], indices[2], indices[1], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[4], indices[2], indices[3], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[4], indices[3], indices[1], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[0], indices[4], indices[3], indices[2], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[0], indices[2], indices[3], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[0], indices[2], indices[4], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[0], indices[3], indices[2], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[0], indices[3], indices[4], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[0], indices[4], indices[2], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[0], indices[4], indices[3], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[2], indices[0], indices[3], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[2], indices[0], indices[4], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[2], indices[3], indices[0], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[2], indices[3], indices[4], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[2], indices[4], indices[0], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[2], indices[4], indices[3], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[3], indices[0], indices[2], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[3], indices[0], indices[4], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[3], indices[2], indices[0], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[3], indices[2], indices[4], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[3], indices[4], indices[0], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[3], indices[4], indices[2], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[4], indices[0], indices[2], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[4], indices[0], indices[3], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[4], indices[2], indices[0], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[4], indices[2], indices[3], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[4], indices[3], indices[0], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[1], indices[4], indices[3], indices[2], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[0], indices[1], indices[3], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[0], indices[1], indices[4], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[0], indices[3], indices[1], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[0], indices[3], indices[4], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[0], indices[4], indices[1], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[0], indices[4], indices[3], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[1], indices[0], indices[3], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[1], indices[0], indices[4], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[1], indices[3], indices[0], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[1], indices[3], indices[4], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[1], indices[4], indices[0], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[1], indices[4], indices[3], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[3], indices[0], indices[1], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[3], indices[0], indices[4], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[3], indices[1], indices[0], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[3], indices[1], indices[4], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[3], indices[4], indices[0], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[3], indices[4], indices[1], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[4], indices[0], indices[1], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[4], indices[0], indices[3], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[4], indices[1], indices[0], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[4], indices[1], indices[3], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[4], indices[3], indices[0], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[2], indices[4], indices[3], indices[1], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[0], indices[1], indices[2], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[0], indices[1], indices[4], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[0], indices[2], indices[1], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[0], indices[2], indices[4], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[0], indices[4], indices[1], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[0], indices[4], indices[2], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[1], indices[0], indices[2], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[1], indices[0], indices[4], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[1], indices[2], indices[0], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[1], indices[2], indices[4], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[1], indices[4], indices[0], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[1], indices[4], indices[2], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[2], indices[0], indices[1], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[2], indices[0], indices[4], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[2], indices[1], indices[0], indices[4], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[2], indices[1], indices[4], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[2], indices[4], indices[0], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[2], indices[4], indices[1], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[4], indices[0], indices[1], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[4], indices[0], indices[2], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[4], indices[1], indices[0], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[4], indices[1], indices[2], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[4], indices[2], indices[0], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[3], indices[4], indices[2], indices[1], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[0], indices[1], indices[2], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[0], indices[1], indices[3], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[0], indices[2], indices[1], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[0], indices[2], indices[3], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[0], indices[3], indices[1], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[0], indices[3], indices[2], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[1], indices[0], indices[2], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[1], indices[0], indices[3], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[1], indices[2], indices[0], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[1], indices[2], indices[3], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[1], indices[3], indices[0], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[1], indices[3], indices[2], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[2], indices[0], indices[1], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[2], indices[0], indices[3], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[2], indices[1], indices[0], indices[3], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[2], indices[1], indices[3], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[2], indices[3], indices[0], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[2], indices[3], indices[1], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[3], indices[0], indices[1], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[3], indices[0], indices[2], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[3], indices[1], indices[0], indices[2], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[3], indices[1], indices[2], indices[0], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[3], indices[2], indices[0], indices[1], JValue, maxClosing, ClebshArray);
+	Tmp += this->ComputeProjectorCoefficients5BodyWithDirection(indices[4], indices[3], indices[2], indices[1], indices[0], JValue, maxClosing, ClebshArray);
+	TmpCoefficients[i] = Tmp;
+	indices += 5;
+      }
+  delete[] ClebshArray;
+  return TmpCoefficients;
+}
+
 // compute a given projector coefficient for the 5-body interaction 
 //
 // m1 = first index
@@ -1027,6 +1320,61 @@ double ParticleOnSphereGenericFiveBodyHamiltonian::ComputeProjectorCoefficients5
 	      if (TmpMinJ3 < abs(Sum3))
 		TmpMinJ3 = abs(Sum3);	      
 	      for (int j3 = j2 + this->LzMax; j3 >= TmpMinJ3; j3 -= 2)
+		{
+		  if ((abs(Sum2 + ((m4 << 1) - this->LzMax)) <= j3) && (abs(j3 - this->LzMax) <= jValue) && (abs(j2 - this->LzMax) <= j3))
+		    Tmp += Tmp3 * (clebshArray[j2].GetCoefficient(Sum2, ((m4 << 1) - this->LzMax), j3) * 
+				   clebshArray[j3].GetCoefficient(Sum3, ((m5 << 1) - this->LzMax), jValue)); 
+		}
+	    }
+	}
+    }
+  return Tmp;
+}
+
+// compute a given projector coefficient for the 5-body interaction in a given direction
+//
+// m1 = first index
+// m2 = second index
+// m3 = third inde
+// m4 = fourth index
+// m5 = fifth index
+// jValue = total angular momentum
+// maxClosing = array that gives the maximum angular momentum when a particle approach the cluster of n+1 particles  (n being the index of MaxClosing)
+// return value = corresponding projector coefficient
+
+double ParticleOnSphereGenericFiveBodyHamiltonian::ComputeProjectorCoefficients5BodyWithDirection(int m1, int m2, int m3, int m4, int m5, int jValue, 
+												  int* maxClosing, ClebschGordanCoefficients* clebshArray)
+{
+  double Tmp = 0.0;
+  double Tmp2 = 0.0;
+  double Tmp3 = 0.0;
+  int TmpMinJ2;
+  int TmpMinJ3;
+  int Sum1 = ((m1 + m2) << 1)  - (2 * this->LzMax);
+  int Sum2 = Sum1 + (m3 << 1)  - this->LzMax;
+  int Sum3 = Sum2 + (m4 << 1)  - this->LzMax;
+  if (abs(Sum3 + ((m5 << 1) - this->LzMax)) > jValue)
+    return 0.0;
+  int TmpMinJ = abs(Sum1);
+  int MaxJ = 2 * this->LzMax;
+  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+    MaxJ -= 2;
+  MaxJ -= maxClosing[0];
+  for (int j1 = MaxJ; j1 >= TmpMinJ; j1 -= 4)
+    {
+      Tmp2 = clebshArray[this->LzMax].GetCoefficient(((m1 << 1) - this->LzMax), ((m2 << 1)- this->LzMax), j1);
+      TmpMinJ2 = abs(j1 - this->LzMax);
+      if (TmpMinJ2 < abs(Sum2))
+	TmpMinJ2 = abs(Sum2);
+      for (int j2 = j1 + this->LzMax - maxClosing[1]; j2 >= TmpMinJ2; j2 -= 2)
+	{
+	  if (abs(Sum1 + ((m3 << 1) - this->LzMax)) <= j2)
+	    {
+	      Tmp3 = Tmp2 * clebshArray[j1].GetCoefficient(Sum1, ((m3 << 1) - this->LzMax), j2);
+	      TmpMinJ3 = abs(jValue - this->LzMax);
+	      if (TmpMinJ3 < abs(Sum3))
+		TmpMinJ3 = abs(Sum3);	      
+	      for (int j3 = j2 + this->LzMax - maxClosing[2]; j3 >= TmpMinJ3; j3 -= 2)
 		{
 		  if ((abs(Sum2 + ((m4 << 1) - this->LzMax)) <= j3) && (abs(j3 - this->LzMax) <= jValue) && (abs(j2 - this->LzMax) <= j3))
 		    Tmp += Tmp3 * (clebshArray[j2].GetCoefficient(Sum2, ((m4 << 1) - this->LzMax), j3) * 

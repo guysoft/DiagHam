@@ -141,8 +141,8 @@ class AbstractQHEOnSphereNBodyInteractionHamiltonian : public AbstractQHEOnSpher
   // enable fast multiplication algorithm (partial evaluation)
   //
   // firstComponent = index of the first component that has to be precalcualted
-  // lastComponent  = index of the last component that has to be precalcualted
-  virtual void PartialEnableFastMultiplication(int firstComponent, int lastComponent);
+  // nbrComponent  = index of the last component that has to be precalcualted
+  virtual void PartialEnableFastMultiplication(int firstComponent, int nbrComponent);
 
   // enable fast multiplication algorithm
   //

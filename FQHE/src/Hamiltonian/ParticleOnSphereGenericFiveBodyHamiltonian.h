@@ -142,6 +142,14 @@ class ParticleOnSphereGenericFiveBodyHamiltonian : public ParticleOnSphereGeneri
   // nbrIndexSets = number of sets
   double* Compute5BodyCoefficients(int relativeMomentum, int* indices, int nbrIndexSets);
 
+  // compute all projector coefficient associated to a given relative angular momentum between 5 particles in a given direction
+  //
+  // relativeMomentum = value of twice the relative angular momentum between the 4 particles
+  // indices = array that contains all possible sets of indices (size of the array is 4 * nbrIndexSets)
+  // nbrIndexSets = number of sets
+  // maxClosing = array that gives the maximum angular momentum when a particle approach the cluster of n+1 particles  (n being the index of MaxClosing)
+  double* Compute5BodyCoefficientsWithDirection(int relativeMomentum, int* indices, int nbrIndexSets, int* maxClosing);
+
   // evaluate all interaction factors
   //   
   virtual void EvaluateInteractionFactors();
@@ -162,6 +170,19 @@ class ParticleOnSphereGenericFiveBodyHamiltonian : public ParticleOnSphereGeneri
   // return value = corresponding projector coefficient
   double ComputeProjectorCoefficients5Body(int m1, int m2, int m3, int m4, int m5, int jValue, 
 					   ClebschGordanCoefficients* clebshArray);
+
+  // compute a given projector coefficient for the 5-body interaction in a given direction
+  //
+  // m1 = first index
+  // m2 = second index
+  // m3 = third inde
+  // m4 = fourth index
+  // m5 = fifth index
+  // jValue = total angular momentum
+  // maxClosing = array that gives the maximum angular momentum when a particle approach the cluster of n+1 particles  (n being the index of MaxClosing)
+  // return value = corresponding projector coefficient
+  double ComputeProjectorCoefficients5BodyWithDirection(int m1, int m2, int m3, int m4, int m5, int jValue, 
+							int* maxClosing, ClebschGordanCoefficients* clebshArray);
 
 };
 

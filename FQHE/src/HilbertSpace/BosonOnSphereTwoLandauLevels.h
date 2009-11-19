@@ -34,16 +34,60 @@
 
 
 #include "config.h"
-#include "HilbertSpace/BosonOnSphereWithSpin.h"
+#include "HilbertSpace/ParticleOnSphereWithSpin.h"
 
 #include <iostream>
 
 
 
-class BosonOnSphereTwoLandauLevels :  public BosonOnSphereWithSpin
+class BosonOnSphereTwoLandauLevels :  public ParticleOnSphereWithSpin
 {
 
  protected:
+
+  // number of fermions
+  int NbrBosons;
+  // number of fermions plus 1
+  int IncNbrBosons;
+  // momentum total value
+  int TotalLz;
+  // maximum Lz value reached by a fermion
+  int LzMax;
+  // number of fermions with spin up / down
+  int NbrBosonsUp;
+  int NbrBosonsDown;
+  // number of Lz values in a stat
+  int NbrLzValue;
+  // twice the total spin value
+  int TotalSpin;
+  // highest bit in a given state description
+  int HighestBit;
+
+  // array describing each state
+  unsigned long* StateDescription;
+  // array giving maximum Lz value reached for a fermion in a given state
+  int* StateHighestBit;
+
+  // maximum shift used for searching a position in the look-up table
+  int MaximumLookUpShift;
+  // memory used for the look-up table in a given lzmax sector
+  unsigned long LookUpTableMemorySize;
+  // shift used in each lzmax sector
+  int* LookUpTableShift;
+  // look-up table with two entries : the first one used lzmax value of the state an the second 
+  int** LookUpTable;
+
+  // a table containing ranging from 0 to 2^MaximumSignLookUp - 1
+  double* SignLookUpTable;
+  // a table containing the mask on the bits to keep for each shift that is requested by sign evaluation
+  unsigned long* SignLookUpTableMask;
+  // number to evalute size of SignLookUpTable
+  int MaximumSignLookUp;
+
+  // temporary state used when applying ProdA operator
+  unsigned long ProdATemporaryState;
+  // Lz maximum value associated to temporary state used when applying ProdA operator
+  int ProdALzMax;
 
   // maximum Lz value reached by a boson with a spin up
   int LzMaxUp;
@@ -55,6 +99,9 @@ class BosonOnSphereTwoLandauLevels :  public BosonOnSphereWithSpin
   int LzShiftDown;
   // sum of LzShiftUp and LzShiftDown
   int LzTotalShift;
+  // numer of bit occupied by the down part
+  int UpStateShift;
+
 
  public:
 
@@ -91,6 +138,37 @@ class BosonOnSphereTwoLandauLevels :  public BosonOnSphereWithSpin
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
 
+  // extract subspace with a fixed quantum number
+  //
+  // q = quantum number value
+  // converter = reference on subspace-space converter to use
+  // return value = pointer to the new subspace
+  virtual AbstractHilbertSpace* ExtractSubspace (AbstractQuantumNumber& q, 
+						 SubspaceSpaceConverter& converter);
+
+  // return a list of all possible quantum numbers 
+  //
+  // return value = pointer to corresponding quantum number
+  virtual List<AbstractQuantumNumber*> GetQuantumNumbers ();
+
+  // return quantum number associated to a given state
+  //
+  // index = index of the state
+  // return value = pointer to corresponding quantum number
+  virtual AbstractQuantumNumber* GetQuantumNumber (int index);
+
+  // get the particle statistic 
+  //
+  // return value = particle statistic
+  virtual int GetParticleStatistic();
+
+  // print a given State
+  //
+  // Str = reference on current output stream 
+  // state = ID of the state to print
+  // return value = reference on current output stream 
+  virtual ostream& PrintState (ostream& Str, int state);
+
   // create an SU(2) state from two U(1) state
   //
   // upState = vector describing the up spin part of the output state
@@ -104,10 +182,13 @@ class BosonOnSphereTwoLandauLevels :  public BosonOnSphereWithSpin
 
   // convert a bosonic state into its fermionic counterpart
   //
-  // initialState = reference on the array where initialbosonic  state is stored
-  // initialStateLzMax = reference on the initial bosonic state maximum Lz value
+  // initialStateUp = reference on the array where the initial up bosonic state is stored
+  // initialStateLzMaxUp = reference on the initial up bosonic state maximum Lz value
+  // initialStateDown = reference on the array where the initial down bosonic state is stored
+  // initialStateLzMaxDown = reference on the initial down bosonic state maximum Lz value
   // return value = corresponding fermionic state
-  unsigned long BosonToFermion(unsigned long*& initialState, int& initialStateLzMax);
+  unsigned long BosonToFermion(unsigned long*& initialStateUp, int& initialStateLzMaxUp, 
+			       unsigned long*& initialStateDown, int& initialStateLzMaxDown);
 
   // convert a fermionic state into its bosonic  counterpart
   //
@@ -134,7 +215,21 @@ class BosonOnSphereTwoLandauLevels :  public BosonOnSphereWithSpin
   // return value = position from which new states have to be stored
   virtual long GenerateStates(int nbrBosons, int lzMax, int totalLz, long pos);
 
+  // generate look-up table associated to current Hilbert space
+  // 
+  // memory = memory size that can be allocated for the look-up table
+  virtual void GenerateLookUpTable(unsigned long memory);
+
 };
+
+// get the particle statistic 
+//
+// return value = particle statistic
+
+inline int BosonOnSphereTwoLandauLevels::GetParticleStatistic()
+{
+  return ParticleOnSphere::BosonicStatistic;
+}
 
 // convert a bosonic state into its fermionic counterpart
 //
@@ -144,7 +239,8 @@ class BosonOnSphereTwoLandauLevels :  public BosonOnSphereWithSpin
 // initialStateLzMaxDown = reference on the initial down bosonic state maximum Lz value
 // return value = corresponding fermionic state
 
-inline unsigned long BosonOnSphereTwoLandauLevels::BosonToFermion(unsigned long*& initialStateUp, int& initialStateLzMaxUp, unsigned long*& initialStateDown, int& initialStateLzMaxDown)
+inline unsigned long BosonOnSphereTwoLandauLevels::BosonToFermion(unsigned long*& initialStateUp, int& initialStateLzMaxUp, 
+								  unsigned long*& initialStateDown, int& initialStateLzMaxDown)
 {
   unsigned long TmpState = 0x0ul;
   unsigned long Shift = 0;
@@ -164,7 +260,7 @@ inline unsigned long BosonOnSphereTwoLandauLevels::BosonToFermion(unsigned long*
 }
 
 // convert a fermionic state into its bosonic  counterpart
-//
+// 
 // initialState = initial fermionic state
 // initialStateLzMax = initial fermionic state maximum Lz value
 // finalState = reference on the array where the bosonic state has to be stored

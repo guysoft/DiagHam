@@ -97,10 +97,11 @@ BosonOnSphereTwoLandauLevels::BosonOnSphereTwoLandauLevels (int nbrBosons, int t
       this->LzShiftDown = 0;
       this->LzShiftUp = (this->LzMaxDown - this->LzMaxUp) >> 1;
     }
+  this->UpStateShift = nbrBosons + lzMaxDown;
   this->LzTotalShift = this->LzMaxDown + this->LzMaxUp;
   this->NbrLzValue = this->LzMax + 1;
   this->MaximumSignLookUp = 16;
-  this->LargeHilbertSpaceDimension = this->ShiftedEvaluateFullHilbertSpaceDimension(this->NbrBosons, this->LzMax, (this->TotalLz + (this->NbrBosons * this->LzMax)) >> 1);
+  this->LargeHilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->NbrBosons, this->LzMax, (this->TotalLz + (this->NbrBosons * this->LzMax)) >> 1);
   if (this->LargeHilbertSpaceDimension >= (1l << 30))
     this->HilbertSpaceDimension = 0;
   else
@@ -108,7 +109,7 @@ BosonOnSphereTwoLandauLevels::BosonOnSphereTwoLandauLevels (int nbrBosons, int t
   this->Flag.Initialize();
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
   this->StateHighestBit = new int [this->HilbertSpaceDimension];  
-  int TmpDimension = this->GenerateFullStates(this->NbrBosons, this->LzMax, (this->TotalLz + (this->NbrBosons * this->LzMax)) >> 1, 0);
+  int TmpDimension = this->GenerateStates(this->NbrBosons, this->LzMax, (this->TotalLz + (this->NbrBosons * this->LzMax)) >> 1, 0);
   if (TmpDimension != this->HilbertSpaceDimension)
     {
       cout << "Mismatch in State-count and State Generation in BosonOnSphereTwoLandauLevels! " << this->HilbertSpaceDimension << " " << TmpDimension  << endl;
@@ -163,6 +164,7 @@ BosonOnSphereTwoLandauLevels::BosonOnSphereTwoLandauLevels(const BosonOnSphereTw
   this->LzShiftUp = bosons.LzShiftUp;
   this->LzShiftDown = bosons.LzShiftDown;
   this->LzTotalShift = bosons.LzTotalShift;
+  this->UpStateShift = bosons.UpStateShift;
   this->NbrLzValue = bosons.NbrLzValue;
   this->TotalSpin = bosons.TotalSpin;
   this->NbrBosonsUp = bosons.NbrBosonsUp;
@@ -231,6 +233,51 @@ AbstractHilbertSpace* BosonOnSphereTwoLandauLevels::Clone()
   return new BosonOnSphereTwoLandauLevels(*this);
 }
 
+// extract subspace with a fixed quantum number
+//
+// q = quantum number value
+// converter = reference on subspace-space converter to use
+// return value = pointer to the new subspace
+
+AbstractHilbertSpace* BosonOnSphereTwoLandauLevels::ExtractSubspace (AbstractQuantumNumber& q, 
+						 SubspaceSpaceConverter& converter)
+{
+  return 0;
+}
+
+
+// return a list of all possible quantum numbers 
+//
+// return value = pointer to corresponding quantum number
+
+List<AbstractQuantumNumber*> BosonOnSphereTwoLandauLevels::GetQuantumNumbers ()
+{
+  List<AbstractQuantumNumber*> TmpList;
+  TmpList += new SzQuantumNumber (this->TotalLz);
+  return TmpList;
+}
+
+// return quantum number associated to a given state
+//
+// index = index of the state
+// return value = pointer to corresponding quantum number
+
+AbstractQuantumNumber* BosonOnSphereTwoLandauLevels::GetQuantumNumber (int index)
+{
+  return new SzQuantumNumber (this->TotalLz);
+}
+
+// print a given State
+//
+// Str = reference on current output stream 
+// state = ID of the state to print
+// return value = reference on current output stream 
+
+ostream& BosonOnSphereTwoLandauLevels::PrintState (ostream& Str, int state)
+{
+  return Str;
+}
+
 // evaluate Hilbert space dimension without constraint on the number of particles per level
 //
 // nbrBosons = number of bosons
@@ -247,32 +294,22 @@ long BosonOnSphereTwoLandauLevels::ShiftedEvaluateHilbertSpaceDimension(int nbrB
   if (lzMax < 0) 
     return 0l;
     
-  if (nbrBosons == 1) 
-    {
-      long Tmp = 0l;
-      if (lzMax >= totalLz)
-	{
-	  if (((this->LzMaxUp + this->LzShiftUp) >= totalLz) && (totalLz >= this->LzShiftUp))
-	    ++Tmp;
-	  if (((this->LzMaxDown + this->LzShiftDown) >= totalLz) && (totalLz >= this->LzShiftDown))
-	    ++Tmp;
-	}
-      return Tmp;
-    }
-
   if ((lzMax == 0) && (totalLz != 0))
     return 0l;
 
   long Tmp = 0l;
   if ((lzMax <= (this->LzMaxUp + this->LzShiftUp)) && (lzMax >= this->LzShiftUp))
     {
+      for (int i = nbrBosons; i >= 1; --i)
+	Tmp += this->ShiftedEvaluateHilbertSpaceDimension(nbrBosons - i, lzMax - 1, totalLz - (i * lzMax));
       if ((lzMax <= (this->LzMaxDown + this->LzShiftDown)) && (lzMax >= this->LzShiftDown))
-	Tmp += this->ShiftedEvaluateFullHilbertSpaceDimension(nbrBosons - 2, lzMax - 1, totalLz - (2 * lzMax));
-      Tmp += this->ShiftedEvaluateFullHilbertSpaceDimension(nbrBosons -1, lzMax - 1, totalLz - lzMax);
+	for (int i = nbrBosons & 0x0fffffffe; i >= 2; i -= 2)
+	  Tmp += this->ShiftedEvaluateHilbertSpaceDimension(nbrBosons - i, lzMax - 1, totalLz - (i * lzMax));
     }
   if ((lzMax <= (this->LzMaxDown + this->LzShiftDown)) && (lzMax >= this->LzShiftDown))    
-    Tmp += this->ShiftedEvaluateFullHilbertSpaceDimension(nbrBosons - 1, lzMax - 1, totalLz - lzMax);
-  Tmp += this->ShiftedEvaluateFullHilbertSpaceDimension(nbrBosons, lzMax - 1, totalLz);
+    for (int i = nbrBosons; i >= 1; --i) 
+      Tmp += this->ShiftedEvaluateHilbertSpaceDimension(nbrBosons - i, lzMax - 1, totalLz - (i * lzMax));
+  Tmp += this->ShiftedEvaluateHilbertSpaceDimension(nbrBosons, lzMax - 1, totalLz);
   return Tmp;
 }
 
@@ -284,7 +321,7 @@ long BosonOnSphereTwoLandauLevels::ShiftedEvaluateHilbertSpaceDimension(int nbrB
 // pos = position in StateDescription array where to store states
 // return value = position from which new states have to be stored
 
-long BosonOnSphereTwoLandauLevels::GenerateFullStates(int nbrBosons, int lzMax, int totalLz, long pos)
+long BosonOnSphereTwoLandauLevels::GenerateStates(int nbrBosons, int lzMax, int totalLz, long pos)
 {
   if (nbrBosons < 0)
     return pos;
@@ -297,51 +334,33 @@ long BosonOnSphereTwoLandauLevels::GenerateFullStates(int nbrBosons, int lzMax, 
   if (lzMax < 0)
     return pos;
   
-  if (nbrBosons == 1) 
-     {
-       if (lzMax >= totalLz)
-	 {
-	   if (((this->LzMaxUp + this->LzShiftUp) >= totalLz) && (totalLz >= this->LzShiftUp))
-	     {
-	       this->StateDescription[pos] = 0x2ul << (totalLz << 1);
-	       ++pos;
-	     }
-	   if (((this->LzMaxDown + this->LzShiftDown) >= totalLz) && (totalLz >= this->LzShiftDown))
-	     {
-	       this->StateDescription[pos] = 0x1ul << (totalLz << 1);
-	       ++pos;
-	     }
-	 }
-       return pos;
-     }
-
   if ((lzMax == 0) && (totalLz != 0))
     return pos;
 
-  if (((lzMax <= (this->LzMaxUp + this->LzShiftUp)) && (lzMax >= this->LzShiftUp)) &&
-      ((lzMax <= (this->LzMaxDown + this->LzShiftDown)) && (lzMax >= this->LzShiftDown)))
+  if ((lzMax <= (this->LzMaxUp + this->LzShiftUp)) && (lzMax >= this->LzShiftUp))
     {
-      long TmpPos = this->GenerateFullStates(nbrBosons - 2, lzMax - 1, totalLz - (2 * lzMax), pos);
-      unsigned long Mask = 0x3ul << ((lzMax) << 1);
+      long TmpPos = this->GenerateStates(nbrBosons - 1, lzMax - 1, totalLz - lzMax,  pos);
+      unsigned long Mask = (0x1ul << lzMax) << this->UpStateShift;
       for (; pos < TmpPos; ++pos)
 	this->StateDescription[pos] |= Mask;
     }
-  if ((lzMax <= (this->LzMaxUp + this->LzShiftUp)) && (lzMax >= this->LzShiftUp))
+  if (((lzMax <= (this->LzMaxUp + this->LzShiftUp)) && (lzMax >= this->LzShiftUp)) &&
+      ((lzMax <= (this->LzMaxDown + this->LzShiftDown)) && (lzMax >= this->LzShiftDown)))
     {
-      long TmpPos = this->GenerateFullStates(nbrBosons - 1, lzMax - 1, totalLz - lzMax,  pos);
-      unsigned long Mask = 0x2ul << ((lzMax) << 1);
+      long TmpPos = this->GenerateStates(nbrBosons - 2, lzMax - 1, totalLz - (2 * lzMax), pos);
+      unsigned long Mask = ((0x1ul << lzMax) << this->UpStateShift) | (0x1ul << lzMax);
       for (; pos < TmpPos; ++pos)
 	this->StateDescription[pos] |= Mask;
     }
   if ((lzMax <= (this->LzMaxDown + this->LzShiftDown)) && (lzMax >= this->LzShiftDown))
     {
-      long TmpPos = this->GenerateFullStates(nbrBosons - 1, lzMax - 1, totalLz - lzMax,  pos);
-      unsigned long Mask = 0x1ul << ((lzMax) << 1);
+      long TmpPos = this->GenerateStates(nbrBosons - 1, lzMax - 1, totalLz - lzMax,  pos);
+      unsigned long Mask = 0x1ul << lzMax;
       for (; pos < TmpPos; ++pos)
 	this->StateDescription[pos] |= Mask;
     }
 
-  return this->GenerateFullStates(nbrBosons, lzMax - 1, totalLz, pos);
+  return this->GenerateStates(nbrBosons, lzMax - 1, totalLz, pos);
 }
 
 // create an SU(2) state from two U(1) state
@@ -355,84 +374,92 @@ long BosonOnSphereTwoLandauLevels::GenerateFullStates(int nbrBosons, int lzMax, 
 RealVector BosonOnSphereTwoLandauLevels::ForgeSU2FromU1(RealVector& upState, BosonOnSphere& upStateSpace, RealVector& downState, BosonOnSphere& downStateSpace)
 {
   RealVector FinalState(this->HilbertSpaceDimension, true);
-  for (int j = 0; j < upStateSpace.HilbertSpaceDimension; ++j)
-    {
-      unsigned long TmpUpState = upStateSpace.StateDescription[j] << this->LzShiftUp;
-      int TmpPos = upStateSpace.LzMax + this->LzShiftUp;
-      while (TmpPos > 0)
-	{
-	  unsigned long Tmp = TmpUpState & (0x1ul << TmpPos);
-	  TmpUpState |= Tmp << TmpPos;
-	  TmpUpState ^= Tmp;
-	  --TmpPos;
-	}
-      TmpUpState <<= 1;
-      double TmpComponent = upState[j];
-      int Max = 63;
-      while ((TmpUpState & (0x1ul << Max)) == 0x0ul)
-	--Max;
-      int Min = 0;
-      while ((TmpUpState & (0x1ul << Min)) == 0x0ul)
-	++Min;
-      unsigned long TmpUpStateMask = (0x1ul << Max) - 1;
-      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-	if ((this->StateDescription[i] & TmpUpState) == TmpUpState)
-	  {	    
-	    unsigned long TmpUpState3 = this->StateDescription[i] & TmpUpStateMask;
-	    unsigned long TmpUpState2 = TmpUpState3;
-#ifdef  __64_BITS__
-	    TmpUpState3 &= 0x5555555555555555ul;
-	    TmpUpState2 &= 0xaaaaaaaaaaaaaaaaul;
-#else
-	    TmpUpState3 &= 0x55555555ul;
-	    TmpUpState2 &= 0xaaaaaaaaul;
-#endif	    
-	    unsigned long Sign = 0x0;
-	    int Pos = this->LzMax << 1;
-	    while ((Pos > 0) && ((TmpUpState3 & (0x1ul << Pos)) == 0x0ul))
-	      Pos -= 2;
-	    while (Pos > 0)
-	      {
-		unsigned long TmpUpState4 = TmpUpState2 & ((0x1ul << Pos) - 1ul);
-#ifdef  __64_BITS__
-		TmpUpState4 ^= TmpUpState4 >> 32;
-#endif	
-		TmpUpState4 ^= TmpUpState4 >> 16;
-		TmpUpState4 ^= TmpUpState4 >> 8;
-		TmpUpState4 ^= TmpUpState4 >> 4;
-		TmpUpState4 ^= TmpUpState4 >> 2;
-		TmpUpState4 ^= TmpUpState4 >> 1;
-		Sign ^= TmpUpState4;
-		Pos -= 2;
-		while ((Pos > 0) && ((TmpUpState3 & (0x1ul << Pos)) == 0x0ul))
-		  Pos -= 2;
-	      }
-	    if ((Sign & 0x1ul) == 0x0ul)
-	      FinalState[i] = TmpComponent;
-	    else
-	      FinalState[i] = -TmpComponent;
-	  }
-    }
+//   for (int j = 0; j < upStateSpace.HilbertSpaceDimension; ++j)
+//     {
+//       unsigned long TmpUpState = upStateSpace.StateDescription[j] << this->LzShiftUp;
+//       int TmpPos = upStateSpace.LzMax + this->LzShiftUp;
+//       while (TmpPos > 0)
+// 	{
+// 	  unsigned long Tmp = TmpUpState & (0x1ul << TmpPos);
+// 	  TmpUpState |= Tmp << TmpPos;
+// 	  TmpUpState ^= Tmp;
+// 	  --TmpPos;
+// 	}
+//       TmpUpState <<= 1;
+//       double TmpComponent = upState[j];
+//       int Max = 63;
+//       while ((TmpUpState & (0x1ul << Max)) == 0x0ul)
+// 	--Max;
+//       int Min = 0;
+//       while ((TmpUpState & (0x1ul << Min)) == 0x0ul)
+// 	++Min;
+//       unsigned long TmpUpStateMask = (0x1ul << Max) - 1;
+//       for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+// 	if ((this->StateDescription[i] & TmpUpState) == TmpUpState)
+// 	  {	    
+// 	    unsigned long TmpUpState3 = this->StateDescription[i] & TmpUpStateMask;
+// 	    unsigned long TmpUpState2 = TmpUpState3;
+// #ifdef  __64_BITS__
+// 	    TmpUpState3 &= 0x5555555555555555ul;
+// 	    TmpUpState2 &= 0xaaaaaaaaaaaaaaaaul;
+// #else
+// 	    TmpUpState3 &= 0x55555555ul;
+// 	    TmpUpState2 &= 0xaaaaaaaaul;
+// #endif	    
+// 	    unsigned long Sign = 0x0;
+// 	    int Pos = this->LzMax << 1;
+// 	    while ((Pos > 0) && ((TmpUpState3 & (0x1ul << Pos)) == 0x0ul))
+// 	      Pos -= 2;
+// 	    while (Pos > 0)
+// 	      {
+// 		unsigned long TmpUpState4 = TmpUpState2 & ((0x1ul << Pos) - 1ul);
+// #ifdef  __64_BITS__
+// 		TmpUpState4 ^= TmpUpState4 >> 32;
+// #endif	
+// 		TmpUpState4 ^= TmpUpState4 >> 16;
+// 		TmpUpState4 ^= TmpUpState4 >> 8;
+// 		TmpUpState4 ^= TmpUpState4 >> 4;
+// 		TmpUpState4 ^= TmpUpState4 >> 2;
+// 		TmpUpState4 ^= TmpUpState4 >> 1;
+// 		Sign ^= TmpUpState4;
+// 		Pos -= 2;
+// 		while ((Pos > 0) && ((TmpUpState3 & (0x1ul << Pos)) == 0x0ul))
+// 		  Pos -= 2;
+// 	      }
+// 	    if ((Sign & 0x1ul) == 0x0ul)
+// 	      FinalState[i] = TmpComponent;
+// 	    else
+// 	      FinalState[i] = -TmpComponent;
+// 	  }
+//     }
 
-  for (int j = 0; j < downStateSpace.HilbertSpaceDimension; ++j)
-    {
-      unsigned long TmpDownState = downStateSpace.StateDescription[j] << this->LzShiftDown;
-      int TmpPos = downStateSpace.LzMax + this->LzShiftDown;
-      while (TmpPos > 0)
-	{
-	  unsigned long Tmp = TmpDownState & (0x1ul << TmpPos);
-	  TmpDownState |= Tmp << TmpPos;
-	  TmpDownState ^= Tmp;
-	  --TmpPos;
-	}
-      double TmpComponent = downState[j];
-      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-	if ((this->StateDescription[i] & TmpDownState) == TmpDownState)
-	  {
-	    FinalState[i] *= TmpComponent;
-	  }
-    }
+//   for (int j = 0; j < downStateSpace.HilbertSpaceDimension; ++j)
+//     {
+//       unsigned long TmpDownState = downStateSpace.StateDescription[j] << this->LzShiftDown;
+//       int TmpPos = downStateSpace.LzMax + this->LzShiftDown;
+//       while (TmpPos > 0)
+// 	{
+// 	  unsigned long Tmp = TmpDownState & (0x1ul << TmpPos);
+// 	  TmpDownState |= Tmp << TmpPos;
+// 	  TmpDownState ^= Tmp;
+// 	  --TmpPos;
+// 	}
+//       double TmpComponent = downState[j];
+//       for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+// 	if ((this->StateDescription[i] & TmpDownState) == TmpDownState)
+// 	  {
+// 	    FinalState[i] *= TmpComponent;
+// 	  }
+//     }
 
   return FinalState;
+}
+
+// generate look-up table associated to current Hilbert space
+// 
+// memory = memory size that can be allocated for the look-up table
+
+void BosonOnSphereTwoLandauLevels::GenerateLookUpTable(unsigned long memory)
+{
 }
 

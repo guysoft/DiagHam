@@ -58,6 +58,51 @@ int ParticleOnSphereWithSpin::GetTargetHilbertSpaceDimension()
 }
   
 
+// apply a^+_m1_d a^+_m2_d a_n1_d a_n2_d operator to a given state (with m1+m2=n1+n2, only spin down)
+//
+// index = index of the state on which the operator has to be applied
+// m1 = first index for creation operator (spin down)
+// m2 = second index for creation operator (spin down)
+// n1 = first index for annihilation operator (spin down)
+// n2 = second index for annihilation operator (spin down)
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSpin::AddAddAdAd (int index, int m1, int m2, int n1, int n2, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m1_u a^+_m2_u a_n1_u a_n2_u operator to a given state (with m1+m2=n1+n2, only spin up)
+//
+// index = index of the state on which the operator has to be applied
+// m1 = first index for creation operator (spin up)
+// m2 = second index for creation operator (spin up)
+// n1 = first index for annihilation operator (spin up)
+// n2 = second index for annihilation operator (spin up)
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSpin::AduAduAuAu (int index, int m1, int m2, int n1, int n2, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m1_d a^+_m2_u a_n1_d a_n2_u operator to a given state (with m1+m2=n1+n2, one spin up an one spin own)
+//
+// index = index of the state on which the operator has to be applied
+// m1 = first index for creation operator (spin down)
+// m2 = second index for creation operator (spin up)
+// n1 = first index for annihilation operator (spin down)
+// n2 = second index for annihilation operator (spin up)
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSpin::AddAduAdAu (int index, int m1, int m2, int n1, int n2, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}
+
 // apply creation operator to a word, using the conventions
 // for state-coding and quantum numbers of this space
 // state = word to be acted upon
@@ -301,6 +346,28 @@ int ParticleOnSphereWithSpin::ProdAd (int* m, int* spinIndices, int nbrIndices, 
 // return value = index of the destination state 
 
 int ParticleOnSphereWithSpin::ProdAd (int* m, int spinIndices, int nbrIndices, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_d a_m_d operator to a given state (only spin down)
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation and annihilation operator
+// return value = coefficient obtained when applying a^+_m a_m
+
+double ParticleOnSphereWithSpin::AddAd (int index, int m)
+{
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_u a_m_u operator to a given state  (only spin up)
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation and annihilation operator
+// return value = coefficient obtained when applying a^+_m a_m
+
+double ParticleOnSphereWithSpin::AduAu (int index, int m)
 {
   return this->HilbertSpaceDimension;
 }
