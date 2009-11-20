@@ -87,7 +87,7 @@ bool FQHEOnLatticeFindSystemInfoWithKyFromVectorFileName(char* filename, int& nb
 // statistics = reference to flag for fermionic statistics (true for fermion, false for bosons, grab it only if initial value is true)
 // hardcore = returns true if hardcore bosons encountered
 // return value = true if no error occured
-bool FQHEOnLatticeFindSystemInfoFromGeneralVectorFileName(char* filename, int& nbrParticles, double &interaction, int &flux, int &nbrState, bool& statistics, bool &hardcore);
+bool FQHEOnLatticeFindSystemInfoFromGeneralVectorFileName(char* filename, int& nbrParticles, double &interaction, int &flux, int &nbrState, bool& statistics, bool &hardcore, bool &haveContFlux, double &contFlux);
 
 
 

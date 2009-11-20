@@ -83,6 +83,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('x', "lx", "length in x-direction of given lattice", 0);
   (*SystemGroup) += new SingleIntegerOption  ('y', "ly", "length in y-direction of given lattice", 0);
   (*SystemGroup) += new SingleIntegerOption  ('q', "flux", "number of flux quanta piercing the lattice", 0);
+  (*SystemGroup) += new SingleDoubleOption  ('Q', "cont-flux", "multiples of flux quanta piercing the lattice", 0.0);
   (*SystemGroup) += new BooleanOption('c',"hard-core","Use Hilbert-space of hard-core bosons");
   (*SystemGroup) += new BooleanOption('n',"no-hard-core","Do not use Hilbert-space of hard-core bosons (overriding detection from filename)");
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
@@ -142,12 +143,14 @@ int main(int argc, char** argv)
       Ly = Lattice->GetLatticeLength(1);
       NbrSubLattices = Lattice->GetNbrSubLattices();
       char* LatticeName = Lattice->GeometryString();
+      bool HaveContFlux;
+      double ContFlux;
       if (strstr(VectorFiles[0], LatticeName)==0)
 	{
 	  cout << "The given lattice parameters do not coincide with the filename, verify lattice definition, and repetition of unit cells"<<endl;
 	}
       delete [] LatticeName;
-      if (FQHEOnLatticeFindSystemInfoFromGeneralVectorFileName(VectorFiles[0], NbrBosons, Interaction, NbrFluxQuanta, TmpI, Statistics, HardCore) == false)
+      if (FQHEOnLatticeFindSystemInfoFromGeneralVectorFileName(VectorFiles[0], NbrBosons, Interaction, NbrFluxQuanta, TmpI, Statistics, HardCore, HaveContFlux, ContFlux) == false)
 	{
 	  cout<<"Please use standard file-names, or indicate all necessary system parameters!"<<endl;
 	  exit(1);

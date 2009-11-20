@@ -122,8 +122,10 @@ int main(int argc, char** argv)
 	    {
 	      cout << "The given lattice parameters do not coincide with the filename, verify lattice definition, and repetition of unit cells"<<endl;
 	    }
+	  bool HaveContFlux;
+	  double ContFlux;
 	  delete [] LatticeName;
-	  if (FQHEOnLatticeFindSystemInfoFromGeneralVectorFileName(VectorFiles[0], NbrBosons, Interaction, NbrFluxQuanta, TmpI, Statistics, HardCore) == false)
+	  if (FQHEOnLatticeFindSystemInfoFromGeneralVectorFileName(VectorFiles[0], NbrBosons, Interaction, NbrFluxQuanta, TmpI, Statistics, HardCore, HaveContFlux, ContFlux) == false)
 	    {
 	      cout<<"Please use standard file-names, or indicate all necessary system parameters!"<<endl;
 	      exit(1);

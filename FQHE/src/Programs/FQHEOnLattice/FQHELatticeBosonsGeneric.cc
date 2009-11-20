@@ -217,7 +217,7 @@ int main(int argc, char** argv)
 	  if (NbrFluxValues == 1)
 	    {
 	      if (Manager.GetDouble("cont-flux")!=0.0)
-		sprintf (OutputName, "bosons_lattice_%s_n_%d%s%s_Q_%g.dat", LatticeName, NbrBosons, interactionStr, reverseHoppingString, Manager.GetDouble("cont-flux"));
+		sprintf (OutputName, "bosons_lattice_%s_n_%d%s%s_Q_%gs.dat", LatticeName, NbrBosons, interactionStr, reverseHoppingString, Manager.GetDouble("cont-flux"));
 	      else
 		sprintf (OutputName, "bosons_lattice_%s_n_%d%s%s_q_%d.dat", LatticeName, NbrBosons, interactionStr, reverseHoppingString, NbrFluxQuanta);
 	    }
@@ -358,7 +358,7 @@ int main(int argc, char** argv)
 	{
 	  EigenvectorName = new char [1024];
 	  if ((NbrFluxValues == 1)&&(Manager.GetDouble("cont-flux")!=0.0))
-	    sprintf (EigenvectorName, "bosons_lattice_%s_n_%d%s%s_Q_%g", LatticeName, NbrBosons, interactionStr, reverseHoppingString, Manager.GetDouble("cont-flux"));
+	    sprintf (EigenvectorName, "bosons_lattice_%s_n_%d%s%s_Q_%gs", LatticeName, NbrBosons, interactionStr, reverseHoppingString, Manager.GetDouble("cont-flux"));
 	  else
 	    {
 	      if (Manager.GetString("external-two-body")==NULL)

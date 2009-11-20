@@ -669,7 +669,7 @@ bool FQHEOnLatticeFindSystemInfoWithKyFromVectorFileName(char* filename, int& nb
 // statistics = reference to flag for fermionic statistics (true for fermion, false for bosons, grab it only if initial value is true)
 // hardcore = returns true if hardcore bosons encountered
 // return value = true if no error occured
-bool FQHEOnLatticeFindSystemInfoFromGeneralVectorFileName(char* filename, int& nbrParticles, double &interaction, int &flux, int &nbrState, bool& statistics, bool &hardcore)
+bool FQHEOnLatticeFindSystemInfoFromGeneralVectorFileName(char* filename, int& nbrParticles, double &interaction, int &flux, int &nbrState, bool& statistics, bool &hardcore, bool &haveContFlux, double &contFlux)
 {
   char* StrNbrParticles;
   if (nbrParticles == 0)
@@ -732,32 +732,47 @@ bool FQHEOnLatticeFindSystemInfoFromGeneralVectorFileName(char* filename, int& n
     }
   // definitely search for _q_ even if q!=0
     {
-      StrNbrParticles = strstr(filename, "_q_");
-      if (StrNbrParticles != 0)
+      StrNbrParticles = strstr(filename, "_Q_");
+      if (StrNbrParticles!=NULL)
 	{
+	  char *TmpChar;
 	  StrNbrParticles += 3;
-	  int SizeString = 0;
-	  while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '.') && (StrNbrParticles[SizeString] >= '0') 
-		 && (StrNbrParticles[SizeString] <= '9') && (StrNbrParticles[SizeString] >= '0'))
-	    ++SizeString;
-	  if (SizeString != 0)
+	  haveContFlux=true;
+	  contFlux=strtod(StrNbrParticles,&TmpChar);
+	  StrNbrParticles=TmpChar;
+	  if (*StrNbrParticles=='s')
+	    ++StrNbrParticles;
+	}
+      else
+	{
+	  haveContFlux=false;
+	  StrNbrParticles = strstr(filename, "_q_");
+	  if (StrNbrParticles != 0)
 	    {
-	      char tmpC=StrNbrParticles[SizeString];
-	      StrNbrParticles[SizeString] = '\0';
-	      if (flux == 0)
+	      StrNbrParticles += 3;
+	      int SizeString = 0;
+	      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '.') && (StrNbrParticles[SizeString] >= '0') 
+		     && (StrNbrParticles[SizeString] <= '9') && (StrNbrParticles[SizeString] >= '0'))
+		++SizeString;
+	      if (SizeString != 0)
 		{
-		  flux = atoi(StrNbrParticles);
-		}
+		  char tmpC=StrNbrParticles[SizeString];
+		  StrNbrParticles[SizeString] = '\0';
+		  if (flux == 0)
+		    {
+		      flux = atoi(StrNbrParticles);
+		    }
 	      StrNbrParticles[SizeString] = tmpC;
 	      StrNbrParticles += SizeString;
+		}
+	      else
+		StrNbrParticles = 0;
 	    }
-	  else
-	    StrNbrParticles = 0;
-	}
-      if (StrNbrParticles == 0)
-	{
-	  cout << "can't guess flux from file name " << filename << endl;
-	  return false;
+	  if (StrNbrParticles == 0)
+	    {
+	      cout << "can't guess flux from file name " << filename << endl;
+	      return false;
+	    }
 	}
       if (nbrState==0)
 	{
