@@ -394,6 +394,7 @@ int main(int argc, char** argv)
 	  Complex Phase = Polar(sqrt(0.5),(2.0*M_PI*k)/Manager.GetInteger("superpositions"));
 	  Superposition.Copy(Vectors[0],sqrt(0.5));
 	  Superposition.AddLinearCombination (Phase, Vectors[1]);
+	  Superposition /= Superposition.Norm();
 	  for (int CreationX=0; CreationX<Lx; ++CreationX)
 	    for (int CreationY=0; CreationY<Ly; ++CreationY)
 	      for (int CreationSub=0; CreationSub<NbrSubLattices; ++CreationSub)
@@ -428,7 +429,7 @@ int main(int argc, char** argv)
 	    }
 	}
       
-      char *RhoVecOut = new char[strlen(VectorFiles[0])+10];
+      char *RhoVecOut = new char[strlen(VectorFiles[0])+50];
       
       if (Max1>=0)
 	{

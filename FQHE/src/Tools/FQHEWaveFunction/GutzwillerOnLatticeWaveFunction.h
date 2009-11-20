@@ -33,9 +33,12 @@
 
 class AbstractQHEOnLatticeHamiltonian;
 class AbstractArchitecture;
+class AbstractRandomNumberGenerator;
 
 #include "Vector/ComplexVector.h"
+#include "Vector/RealVector.h"
 #include "HilbertSpace/ParticleOnLattice.h"
+
 
 class GutzwillerOnLatticeWaveFunction
 {
@@ -46,6 +49,9 @@ class GutzwillerOnLatticeWaveFunction
 
   // number of particles in many-body state
   int NbrParticles;
+
+  // maximal occupation of a single site
+  int MaxOccupation;
 
   // number of sites on lattice
   int NbrSites;
@@ -60,8 +66,9 @@ class GutzwillerOnLatticeWaveFunction
   int NbrVariationalParameters;
   
   // vector with variational parameters
-  // order: {(a^0_i),(a^1_i),...}, i=0...N_s
-  ComplexVector VariationalParameters;
+  // a^0_i real, a^k_i complex (k>1)
+  // order: {(a^0_i)_i,(Re(a^1_i),Im(a^1_i))_i,(Re(a^2_i),Im(a^2_i))_i,...}, i=0...N_s, where ()_i signifies a vector for all entries i
+  RealVector VariationalParameters;
 
   // target Hilbert space
   ParticleOnLattice *Space;
@@ -71,6 +78,9 @@ class GutzwillerOnLatticeWaveFunction
 
   // Architecture
   AbstractArchitecture *Architecture;
+
+  // random number generator
+  AbstractRandomNumberGenerator *RandomNumbers;
 
  public:
   // constructor
@@ -87,17 +97,37 @@ class GutzwillerOnLatticeWaveFunction
   // return = resultingState
   ComplexVector & GetGutzwillerWaveFunction();
 
-  // set trial parameters
-  void SetVariationalParameters(ComplexVector &variationalParameters);
+  // get the Many-Body state that was last calculated
+  // return = state
+  ComplexVector & GetLastWaveFunction() {return this->TargetVector;}
 
+
+  // set trial parameters
+  void SetVariationalParameters(RealVector &variationalParameters);
+
+  // set parameters to a random initial distribution (random phase)
+  void SetToRandomPhase();
+  
   // define a Hamiltonian to enable immediate evaluation of the energy
   void SetHamiltonian(AbstractQHEOnLatticeHamiltonian *hamiltonian);
   
   // define an architecture to enable multi-processor operations
   void SetArchitecture(AbstractArchitecture *architecture);
 
+  // get expectation value of the energy
+  double GetEnergy();
+
+  // optimize wavefunction starting from present settings of VariationalParameters
+  // tolerance = final tolerance on the variational parameters
+  // maxIter = maximal number of function evaluations
+  //
+  double Optimize(double tolerance, int maxIter);
+
  protected:
- 
+
+  // target function for optimizer routine:
+  double EvaluateEnergy(int nbrParameters, double *x);
+
   // main recursion to calculate State \prod_i[\sum_k \sum a^k_i a^\dagger_i)^k] |state>
   // nextQ = value quantum number in next operator to be applied
   // nbrBosons = number of bosons already in state
