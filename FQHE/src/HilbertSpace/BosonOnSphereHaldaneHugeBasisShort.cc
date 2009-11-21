@@ -68,6 +68,7 @@ BosonOnSphereHaldaneHugeBasisShort::BosonOnSphereHaldaneHugeBasisShort ()
 
 BosonOnSphereHaldaneHugeBasisShort::BosonOnSphereHaldaneHugeBasisShort (int nbrBosons, int totalLz, int lzMax, unsigned long maxFileSize, int* referenceState, unsigned long memory, bool symmetricFlag, long fullDimension)
 {
+  this->TargetSpace = this;
   this->NbrBosons = nbrBosons;
   this->IncNbrBosons = this->NbrBosons + 1;
   this->TotalLz = totalLz;
@@ -150,6 +151,10 @@ BosonOnSphereHaldaneHugeBasisShort::BosonOnSphereHaldaneHugeBasisShort (char* fi
 
 BosonOnSphereHaldaneHugeBasisShort::BosonOnSphereHaldaneHugeBasisShort(const BosonOnSphereHaldaneHugeBasisShort& bosons)
 {
+  if (bosons.TargetSpace != &bosons)
+    this->TargetSpace = bosons.TargetSpace;
+  else
+    this->TargetSpace = this;
   this->NbrBosons = bosons.NbrBosons;
   this->IncNbrBosons = bosons.IncNbrBosons;
   this->TotalLz = bosons.TotalLz;
@@ -196,6 +201,10 @@ BosonOnSphereHaldaneHugeBasisShort& BosonOnSphereHaldaneHugeBasisShort::operator
 	}
       delete this->KeptCoordinates;
     }
+  if (bosons.TargetSpace != &bosons)
+    this->TargetSpace = bosons.TargetSpace;
+  else
+    this->TargetSpace = this;
   this->NbrBosons = bosons.NbrBosons;
   this->IncNbrBosons = bosons.IncNbrBosons;
   this->TotalLz = bosons.TotalLz;

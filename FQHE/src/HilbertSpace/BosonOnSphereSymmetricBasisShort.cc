@@ -59,6 +59,7 @@ BosonOnSphereSymmetricBasisShort::BosonOnSphereSymmetricBasisShort ()
 
 BosonOnSphereSymmetricBasisShort::BosonOnSphereSymmetricBasisShort (int nbrBosons, int lzMax)
 {
+  this->TargetSpace = this;
   this->NbrBosons = nbrBosons;
   this->IncNbrBosons = this->NbrBosons + 1;
   this->TotalLz = 0;
@@ -94,6 +95,10 @@ BosonOnSphereSymmetricBasisShort::BosonOnSphereSymmetricBasisShort (int nbrBoson
 
 BosonOnSphereSymmetricBasisShort::BosonOnSphereSymmetricBasisShort(const BosonOnSphereSymmetricBasisShort& bosons)
 {
+  if (bosons.TargetSpace != &bosons)
+    this->TargetSpace = bosons.TargetSpace;
+  else
+    this->TargetSpace = this;
   this->NbrBosons = bosons.NbrBosons;
   this->IncNbrBosons = bosons.IncNbrBosons;
   this->TotalLz = bosons.TotalLz;
@@ -143,6 +148,10 @@ BosonOnSphereSymmetricBasisShort& BosonOnSphereSymmetricBasisShort::operator = (
       delete this->KeptCoordinates;
       delete[] this->StateLzMax;
     }
+  if (bosons.TargetSpace != &bosons)
+    this->TargetSpace = bosons.TargetSpace;
+  else
+    this->TargetSpace = this;
   this->NbrBosons = bosons.NbrBosons;
   this->IncNbrBosons = bosons.IncNbrBosons;
   this->TotalLz = bosons.TotalLz;

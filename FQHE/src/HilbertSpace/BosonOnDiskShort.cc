@@ -54,6 +54,7 @@ using std::endl;
 
 BosonOnDiskShort::BosonOnDiskShort (int nbrBosons, int totalLz, int lzMax)
 {
+  this->TargetSpace = this;
   this->NbrBosons = nbrBosons;
   this->IncNbrBosons = this->NbrBosons + 1;
   this->TotalLz = totalLz;
@@ -89,6 +90,10 @@ BosonOnDiskShort::BosonOnDiskShort (int nbrBosons, int totalLz, int lzMax)
 
 BosonOnDiskShort::BosonOnDiskShort(const BosonOnDiskShort& bosons)
 {
+  if (bosons.TargetSpace != &bosons)
+    this->TargetSpace = bosons.TargetSpace;
+  else
+    this->TargetSpace = this;
   this->NbrBosons = bosons.NbrBosons;
   this->IncNbrBosons = bosons.IncNbrBosons;
   this->TotalLz = bosons.TotalLz;
@@ -132,6 +137,10 @@ BosonOnDiskShort& BosonOnDiskShort::operator = (const BosonOnDiskShort& bosons)
 	}
       delete this->KeptCoordinates;
     }
+  if (bosons.TargetSpace != &bosons)
+    this->TargetSpace = bosons.TargetSpace;
+  else
+    this->TargetSpace = this;
   this->NbrBosons = bosons.NbrBosons;
   this->IncNbrBosons = bosons.IncNbrBosons;
   this->TotalLz = bosons.TotalLz;

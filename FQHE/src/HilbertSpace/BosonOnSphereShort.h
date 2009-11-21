@@ -73,6 +73,9 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // number of Lz values in a state
   int NbrLzValue;
 
+  // pointer to the target space when an index is require after applying basic operation
+  BosonOnSphereShort* TargetSpace;
+
   // pointer to an integer which indicate which coordinates are kept for the next time step iteration
   int* KeptCoordinates;
   // minors of permanents used for the time coherent wave function evaluation
@@ -117,6 +120,16 @@ class BosonOnSphereShort :  public ParticleOnSphere
   //
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
+
+  // set a different target space (for all basic operations)
+  //
+  // targetSpace = pointer to the target space
+  virtual void SetTargetSpace(ParticleOnSphere* targetSpace);
+
+  // return Hilbert space dimension of the target space
+  //
+  // return value = Hilbert space dimension
+  virtual int GetTargetHilbertSpaceDimension();
 
   // get the particle statistic 
   //

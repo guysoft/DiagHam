@@ -80,7 +80,7 @@ BosonOnSphereShort::BosonOnSphereShort (int nbrBosons, int totalLz, int lzMax)
   this->ProdATemporaryState = new unsigned long [this->NbrLzValue];
   this->Flag.Initialize();
   int TmpLzMax = this->LzMax;
-
+  this->TargetSpace = this;
 
   if (this->ShiftedTotalLz < TmpLzMax)
     {
@@ -98,6 +98,10 @@ BosonOnSphereShort::BosonOnSphereShort (int nbrBosons, int totalLz, int lzMax)
 
 BosonOnSphereShort::BosonOnSphereShort(const BosonOnSphereShort& bosons)
 {
+  if (bosons.TargetSpace != &bosons)
+    this->TargetSpace = bosons.TargetSpace;
+  else
+    this->TargetSpace = this;
   this->NbrBosons = bosons.NbrBosons;
   this->IncNbrBosons = bosons.IncNbrBosons;
   this->TotalLz = bosons.TotalLz;
@@ -156,6 +160,10 @@ BosonOnSphereShort& BosonOnSphereShort::operator = (const BosonOnSphereShort& bo
 	}
       delete this->KeptCoordinates;
     }
+  if (bosons.TargetSpace != &bosons)
+    this->TargetSpace = bosons.TargetSpace;
+  else
+    this->TargetSpace = this;
   this->NbrBosons = bosons.NbrBosons;
   this->IncNbrBosons = bosons.IncNbrBosons;
   this->TotalLz = bosons.TotalLz;
@@ -180,6 +188,25 @@ BosonOnSphereShort& BosonOnSphereShort::operator = (const BosonOnSphereShort& bo
 AbstractHilbertSpace* BosonOnSphereShort::Clone()
 {
   return new BosonOnSphereShort(*this);
+}
+
+// set a different target space (for all basic operations)
+//
+// targetSpace = pointer to the target space
+
+void BosonOnSphereShort::SetTargetSpace(ParticleOnSphere* targetSpace)
+{
+  this->TargetSpace = (BosonOnSphereShort*) targetSpace;
+  this->FermionBasis->SetTargetSpace(this->TargetSpace->FermionBasis);
+}
+
+// return Hilbert space dimension of the target space
+//
+// return value = Hilbert space dimension
+
+int BosonOnSphereShort::GetTargetHilbertSpaceDimension()
+{
+  return this->TargetSpace->HilbertSpaceDimension;
 }
 
 // return a list of all possible quantum numbers 
@@ -247,7 +274,7 @@ int BosonOnSphereShort::AdAdAA (int index, int m1, int m2, int n1, int n2, doubl
   this->TemporaryStateLzMax = this->LzMax;
   while (this->TemporaryState[this->TemporaryStateLzMax] == 0)
     --this->TemporaryStateLzMax;
-  return this->FermionBasis->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax), this->TemporaryStateLzMax + this->NbrBosons - 1);
+  return this->TargetSpace->FermionBasis->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax), this->TemporaryStateLzMax + this->NbrBosons - 1);
 }
 
 // apply Prod_i a^+_mi Prod_i a_ni operator to a given state (with Sum_i  mi= Sum_i ni)
@@ -293,7 +320,7 @@ int BosonOnSphereShort::ProdAdProdA (int index, int* m, int* n, int nbrIndices, 
   this->TemporaryStateLzMax = this->LzMax;
   while (this->TemporaryState[this->TemporaryStateLzMax] == 0)
     --this->TemporaryStateLzMax;
-  return this->FermionBasis->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax), this->TemporaryStateLzMax + this->NbrBosons - 1);
+  return this->TargetSpace->FermionBasis->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax), this->TemporaryStateLzMax + this->NbrBosons - 1);
 }
 
 // apply a_n1 a_n2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next AdAd call
@@ -365,7 +392,7 @@ int BosonOnSphereShort::AdAd (int m1, int m2, double& coefficient)
   this->TemporaryStateLzMax = this->LzMax;
   while (this->TemporaryState[this->TemporaryStateLzMax] == 0)
     --this->TemporaryStateLzMax;
-  return this->FermionBasis->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax), this->TemporaryStateLzMax + this->NbrBosons - 1);
+  return this->TargetSpace->FermionBasis->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax), this->TemporaryStateLzMax + this->NbrBosons - 1);
 }
 
 // apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
@@ -386,7 +413,7 @@ int BosonOnSphereShort::ProdAd (int* m, int nbrIndices, double& coefficient)
   this->TemporaryStateLzMax = this->LzMax;
   while (this->TemporaryState[this->TemporaryStateLzMax] == 0)
     --this->TemporaryStateLzMax;
-  return this->FermionBasis->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax), this->TemporaryStateLzMax + this->NbrBosons - 1);
+  return this->TargetSpace->FermionBasis->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax), this->TemporaryStateLzMax + this->NbrBosons - 1);
 }
 
 // apply a^+_m a_m operator to a given state 
