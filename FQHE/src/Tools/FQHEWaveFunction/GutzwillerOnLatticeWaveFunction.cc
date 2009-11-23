@@ -36,6 +36,8 @@
 #include "MathTools/RandomNumber/NumRecRandomGenerator.h"
 #include "Tools/NewUnconstrainedOptimizsation.h"
 #include <iostream>
+#include <sys/time.h>
+
 using std::cout;
 using std::endl;
 
@@ -71,7 +73,9 @@ GutzwillerOnLatticeWaveFunction::GutzwillerOnLatticeWaveFunction(int nbrParticle
     }
   else
     this->VariationalParameters = RealVector(NbrVariationalParameters);
-  this->RandomNumbers = new NumRecRandomGenerator();
+  timeval RandomTime;
+  gettimeofday (&(RandomTime), 0);
+  this->RandomNumbers = new NumRecRandomGenerator(RandomTime.tv_sec);
   this->Dim = Space->GetHilbertSpaceDimension();
   this->Hamiltonian=NULL;
   this->Architecture=NULL;
@@ -92,9 +96,10 @@ ComplexVector & GutzwillerOnLatticeWaveFunction::GetGutzwillerWaveFunction()
 
   // call main recursion
   this->Product(NbrSites-1, 0, 0x0ul, 1.0);
-  
+  if (TargetVector.Norm()==0.0)
+    cout << "Attention, obtained state with zero norm"<<endl;
   this->TargetVector/=this->TargetVector.Norm();
-//   cout <<"Test norm: "<<TargetVector.Norm()<<endl;
+  //   cout <<"Test norm: "<<TargetVector.Norm()<<endl;
   return this->TargetVector;
 }
 
@@ -115,19 +120,19 @@ void GutzwillerOnLatticeWaveFunction::SetToRandomPhase()
   Complex TmpC;
   
   for (int i=0; i<NbrSites; ++i)
-    this->VariationalParameters[i]=0.0;
+    this->VariationalParameters[i]=1.0;
   for (int i=0; i<NbrSites; ++i)
     {
       TmpC=Polar((double)NbrParticles/NbrSites,2.0*M_PI*RandomNumbers->GetRealRandomNumber());
       this->VariationalParameters[NbrSites+2*i]=TmpC.Re;
       this->VariationalParameters[NbrSites+2*i+1]=TmpC.Im;
+      for (int n=2; n<MaxOccupation; ++n)
+	for (int i=0; i<NbrSites; ++i)
+	  {
+	    this->VariationalParameters[(2*n-1)*NbrSites+2*i]=TmpC.Re/n/n;
+	    this->VariationalParameters[(2*n-1)*NbrSites+2*i+1]=TmpC.Im/n/n;
+	  }
     }
-  for (int n=2; n<MaxOccupation; ++n)
-    for (int i=0; i<NbrSites; ++i)
-      {
-	this->VariationalParameters[(2*n-1)*NbrSites+2*i]=0.0;
-	this->VariationalParameters[(2*n-1)*NbrSites+2*i+1]=0.0;
-      }
 }
 
 // define a Hamiltonian to enable immediate evaluation of the energy
@@ -145,7 +150,6 @@ void GutzwillerOnLatticeWaveFunction::SetArchitecture(AbstractArchitecture *arch
 // get expectation value of the energy
 double GutzwillerOnLatticeWaveFunction::GetEnergy()
 {
-  this->GetGutzwillerWaveFunction();
   if (this->Hamiltonian==NULL)
     {
       cout << "Please define a Hamiltonian first" << endl;
@@ -156,6 +160,7 @@ double GutzwillerOnLatticeWaveFunction::GetEnergy()
       cout << "Please define an Architecture first" << endl;
       exit(1);
     }
+  this->GetGutzwillerWaveFunction();
   ComplexVector TmpState(this->Space->GetHilbertSpaceDimension());
   VectorHamiltonianMultiplyOperation Operation (this->Hamiltonian, &(this->TargetVector), &TmpState);
   Operation.ApplyOperation(this->Architecture);
@@ -173,6 +178,7 @@ double GutzwillerOnLatticeWaveFunction::GetEnergy()
 // in last stage of recursion, writes to this->TargetVector
 void GutzwillerOnLatticeWaveFunction::Product (int nextQ, int nbrBosons, unsigned long state, Complex prefactor)
 {
+  // cout << "Calling: Product ("<<nextQ<<", "<< nbrBosons<<", "<<state<<", "<< prefactor<<")"<<endl;
   int Index;
   unsigned long ResultingState;
   double AdFactor;
@@ -206,17 +212,15 @@ void GutzwillerOnLatticeWaveFunction::Product (int nextQ, int nbrBosons, unsigne
     }
 }
 
-GutzwillerOnLatticeWaveFunction *OptimizedObject;
-
 // target function for optimizer routine:
 double GutzwillerOnLatticeWaveFunction::EvaluateEnergy(int nbrParameters, double *x)
 {
-  if (nbrParameters!=this->NbrVariationalParameters)
+  if (nbrParameters!=this->NbrVariationalParameters-1)
     {
       cout << "Unexpected error"<<endl;
     }
-  for (int i=0; i<this->NbrVariationalParameters; ++i)
-    this->VariationalParameters[i]=x[i+1];
+  for (int i=1; i<this->NbrVariationalParameters; ++i)
+    this->VariationalParameters[i]=x[i];
   return this->GetEnergy();
 }
 
@@ -227,17 +231,19 @@ double GutzwillerOnLatticeWaveFunction::EvaluateEnergy(int nbrParameters, double
 double GutzwillerOnLatticeWaveFunction::Optimize(double tolerance, int maxIter)
 {
   double InitialStepSize=1.0;
-  int NbrPoints = 2 * NbrVariationalParameters + 1, rnf;
+  int EffectiveNbrVariationalParameters = NbrVariationalParameters-1;
+  cout << "Initial parameters:" << endl << this->VariationalParameters;
+  int NbrPoints = 2 * EffectiveNbrVariationalParameters + 1, rnf;
   double Result;
-  OptimizedObject = this;
-  double *Work = new double[(NbrPoints+13)*(NbrPoints+NbrVariationalParameters)
-			    + 3*NbrVariationalParameters*(NbrVariationalParameters+3)/2 + 12];
+  double *Work = new double[(NbrPoints+13)*(NbrPoints+EffectiveNbrVariationalParameters)
+			    + 3*EffectiveNbrVariationalParameters*(EffectiveNbrVariationalParameters+3)/2 + 12];
   // passing parameter vector to optimizer as vector indexed from 1, not 0:
-  double *x = &(this->VariationalParameters[0])-1;
+  double *x = &this->VariationalParameters[0];
   double (GutzwillerOnLatticeWaveFunction::*TargetFunction)(int, double*)=&GutzwillerOnLatticeWaveFunction::EvaluateEnergy;
   GutzwillerOnLatticeWaveFunction *TargetObject=this;
-  Result = NewUOA::newuoa(NbrVariationalParameters, NbrPoints, x, InitialStepSize,
+  Result = NewUOA::newuoa(EffectiveNbrVariationalParameters, NbrPoints, x, InitialStepSize,
 			  tolerance, &rnf, maxIter, Work, TargetObject, TargetFunction);
+  cout << "Final parameters:" << endl << this->VariationalParameters;
   delete [] Work;
   return Result;
   
