@@ -301,7 +301,11 @@ double GutzwillerOnLatticeWaveFunction::EvaluateEnergy(int nbrParameters, double
     this->VariationalParameters[0]=1e-6;
 #endif
   ++this->NbrEvaluations;
-  cout << ".";
+  if ((this->NbrEvaluations<20)
+      || ((this->NbrEvaluations<1000)&&(this->NbrEvaluations%10==0))
+      || (this->NbrEvaluations%100==0))
+    cout << ".";
+  cout.flush();
   //cout << "new parameters:" << endl << this->VariationalParameters;
   return this->GetEnergy();
 }
@@ -350,7 +354,11 @@ double GutzwillerOnLatticeWaveFunction::EvaluateEnergy(int nbrParameters, double
     this->VariationalParameters[0]=1e-6;
 #endif
   ++this->NbrEvaluations;
-  cout << ".";
+  if ((this->NbrEvaluations<20)
+      || ((this->NbrEvaluations<1000)&&(this->NbrEvaluations%10==0))
+      || (this->NbrEvaluations%100==0))
+    cout << ".";
+  cout.flush();
   return this->GetEnergy();
 }
 

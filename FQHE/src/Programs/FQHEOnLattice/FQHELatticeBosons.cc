@@ -18,6 +18,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <cmath>
+#include <cstring>
 #include <climits>
 #include <sys/time.h>
 #include <stdio.h>

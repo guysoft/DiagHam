@@ -107,20 +107,20 @@ namespace NewUOA
     /* Set the unscaled initial direction D. Form the gradient of BLLFUNC
      * atXOPT, and multiply D by the second derivative matrix of
      * BLLFUNC. */
-    dd = 0;
+    dd = 0.0;
     i__2 = n;
     for (i__ = 1; i__ <= i__2; ++i__) {
       d__[i__] = xpt[*knew + i__ * xpt_dim1] - xopt[i__];
       gc[i__] = bmat[*knew + i__ * bmat_dim1];
-      gd[i__] = 0;
+      gd[i__] = 0.0;
       /* Computing 2nd power */
       d__1 = d__[i__];
       dd += d__1 * d__1;
     }
     i__2 = npt;
     for (k = 1; k <= i__2; ++k) {
-      temp = 0;
-      sum = 0;
+      temp = 0.0;
+      sum = 0.0;
       i__1 = n;
       for (j = 1; j <= i__1; ++j) {
 	temp += xpt[k + j * xpt_dim1] * xopt[j];
@@ -136,7 +136,7 @@ namespace NewUOA
     }
     /* Scale D and GD, with a sign change if required. Set S to another
      * vector in the initial two dimensional subspace. */
-    gg = sp = dhd = 0;
+    gg = sp = dhd = 0.0;
     i__1 = n;
     for (i__ = 1; i__ <= i__1; ++i__) {
       /* Computing 2nd power */
@@ -146,8 +146,8 @@ namespace NewUOA
       dhd += d__[i__] * gd[i__];
     }
     scale = *delta / sqrt(dd);
-    if (sp * dhd < 0) scale = -scale;
-    temp = 0;
+    if (sp * dhd < 0.0) scale = -scale;
+    temp = 0.0;
     if (sp * sp > dd * .99 * gg) temp = 1.0;
     tau = scale * (fabs(sp) + 0.5 * scale * fabs(dhd));
     if (gg * delsq < tau * .01 * tau) temp = 1.0;
@@ -161,7 +161,7 @@ namespace NewUOA
      * required length and direction, except that termination occurs if
      * the given D and S are nearly parallel. */
     for (iterc = 0; iterc != n; ++iterc) {
-      dd = sp = ss = 0;
+      dd = sp = ss = 0.0;
       i__1 = n;
       for (i__ = 1; i__ <= i__1; ++i__) {
 	/* Computing 2nd power */
@@ -178,14 +178,14 @@ namespace NewUOA
       i__1 = n;
       for (i__ = 1; i__ <= i__1; ++i__) {
 	s[i__] = (dd * s[i__] - sp * d__[i__]) / denom;
-	w[i__] = 0;
+	w[i__] = 0.0;
       }
       /* Calculate the coefficients of the objective function on the
        * circle, beginning with the multiplication of S by the second
        * derivative matrix. */
       i__1 = npt;
       for (k = 1; k <= i__1; ++k) {
-	sum = 0;
+	sum = 0.0;
 	i__2 = n;
 	for (j = 1; j <= i__2; ++j)
 	  sum += xpt[k + j * xpt_dim1] * s[j];
@@ -194,7 +194,7 @@ namespace NewUOA
 	for (i__ = 1; i__ <= i__2; ++i__)
 	  w[i__] += sum * xpt[k + i__ * xpt_dim1];
       }
-      cf1 = cf2 = cf3 = cf4 = cf5 = 0;
+      cf1 = cf2 = cf3 = cf4 = cf5 = 0.0;
       i__2 = n;
       for (i__ = 1; i__ <= i__2; ++i__) {
 	cf1 += s[i__] * w[i__];
@@ -226,7 +226,7 @@ namespace NewUOA
       }
       if (isave == 0) tempa = tau;
       if (isave == iu) tempb = taubeg;
-      step = 0;
+      step = 0.0;
       if (tempa != tempb) {
 	tempa -= taumax;
 	tempb -= taumax;
@@ -310,7 +310,7 @@ namespace NewUOA
       /* Store the first NPT elements of the KNEW-th column of H in W(N+1)
        * to W(N+NPT). */
       i__1 = npt;
-      for (k = 1; k <= i__1; ++k) w[n + k] = 0;
+      for (k = 1; k <= i__1; ++k) w[n + k] = 0.0;
       i__1 = nptm;
       for (j = 1; j <= i__1; ++j) {
 	temp = zmat[*knew + j * zmat_dim1];
@@ -325,7 +325,7 @@ namespace NewUOA
        * from X_OPT to X_KNEW, but a different direction to an
        * interpolation point may be chosen, in order to prevent S from
        * being nearly parallel to D. */
-      dd = ds = ss = xoptsq = 0;
+      dd = ds = ss = xoptsq = 0.0;
       i__2 = n;
       for (i__ = 1; i__ <= i__2; ++i__) {
 	/* Computing 2nd power */
@@ -346,8 +346,8 @@ namespace NewUOA
 	i__2 = npt;
 	for (k = 1; k <= i__2; ++k) {
 	  if (k != *kopt) {
-	    dstemp = 0;
-	    sstemp = 0;
+	    dstemp = 0.0;
+	    sstemp = 0.0;
 	    i__1 = n;
 	    for (i__ = 1; i__ <= i__1; ++i__) {
 	      diff = xpt[k + i__ * xpt_dim1] - xopt[i__];
@@ -368,13 +368,13 @@ namespace NewUOA
       }
       ssden = dd * ss - ds * ds;
       iterc = 0;
-      densav = 0;
+      densav = 0.0;
       /* Begin the iteration by overwriting S with a vector that has the
        * required length and direction. */
     BDL70:
       ++iterc;
       temp = 1.0 / sqrt(ssden);
-      xoptd = xopts = 0;
+      xoptd = xopts = 0.0;
       i__2 = n;
       for (i__ = 1; i__ <= i__2; ++i__) {
 	s[i__] = temp * (dd * s[i__] - ds * d__[i__]);
@@ -389,11 +389,11 @@ namespace NewUOA
       den[2] = 2.0 * xopts * dd;
       den[3] = tempa - tempb;
       den[4] = xoptd * xopts;
-      for (i__ = 6; i__ <= 9; ++i__) den[i__ - 1] = 0;
+      for (i__ = 6; i__ <= 9; ++i__) den[i__ - 1] = 0.0;
       /* Put the coefficients of Wcheck in WVEC. */
       i__2 = npt;
       for (k = 1; k <= i__2; ++k) {
-	tempa = tempb = tempc = 0;
+	tempa = tempb = tempc = 0.0;
 	i__1 = n;
 	for (i__ = 1; i__ <= i__1; ++i__) {
 	  tempa += xpt[k + i__ * xpt_dim1] * d__[i__];
@@ -409,21 +409,21 @@ namespace NewUOA
       i__2 = n;
       for (i__ = 1; i__ <= i__2; ++i__) {
 	ip = i__ + npt;
-	wvec[ip + wvec_dim1] = 0;
+	wvec[ip + wvec_dim1] = 0.0;
 	wvec[ip + (wvec_dim1 << 1)] = d__[i__];
 	wvec[ip + wvec_dim1 * 3] = s[i__];
-	wvec[ip + (wvec_dim1 << 2)] = 0;
-	wvec[ip + wvec_dim1 * 5] = 0;
+	wvec[ip + (wvec_dim1 << 2)] = 0.0;
+	wvec[ip + wvec_dim1 * 5] = 0.0;
       }
       /* Put the coefficents of THETA*Wcheck in PROD. */
       for (jc = 1; jc <= 5; ++jc) {
 	nw = npt;
 	if (jc == 2 || jc == 3) nw = *ndim;
 	i__2 = npt;
-	for (k = 1; k <= i__2; ++k) prod[k + jc * prod_dim1] = 0;
+	for (k = 1; k <= i__2; ++k) prod[k + jc * prod_dim1] = 0.0;
 	i__2 = nptm;
 	for (j = 1; j <= i__2; ++j) {
-	  sum = 0;
+	  sum = 0.0;
 	  i__1 = npt;
 	  for (k = 1; k <= i__1; ++k) sum += zmat[k + j * zmat_dim1] * wvec[k + jc * wvec_dim1];
 	  if (j < *idz) sum = -sum;
@@ -434,7 +434,7 @@ namespace NewUOA
 	if (nw == *ndim) {
 	  i__1 = npt;
 	  for (k = 1; k <= i__1; ++k) {
-	    sum = 0;
+	    sum = 0.0;
 	    i__2 = n;
 	    for (j = 1; j <= i__2; ++j)
 	      sum += bmat[k + j * bmat_dim1] * wvec[npt + j + jc * wvec_dim1];
@@ -443,7 +443,7 @@ namespace NewUOA
 	}
 	i__1 = n;
 	for (j = 1; j <= i__1; ++j) {
-	  sum = 0;
+	  sum = 0.0;
 	  i__2 = nw;
 	  for (i__ = 1; i__ <= i__2; ++i__)
 	    sum += bmat[i__ + j * bmat_dim1] * wvec[i__ + jc * wvec_dim1];
@@ -453,7 +453,7 @@ namespace NewUOA
       /* Include in DEN the part of BETA that depends on THETA. */
       i__1 = *ndim;
       for (k = 1; k <= i__1; ++k) {
-	sum = 0;
+	sum = 0.0;
 	for (i__ = 1; i__ <= 5; ++i__) {
 	  par[i__ - 1] = 0.5 * prod[k + i__ * prod_dim1] * wvec[k + i__ * wvec_dim1];
 	  sum += par[i__ - 1];
@@ -532,7 +532,7 @@ namespace NewUOA
 	  par[j] = par[1] * par[j - 2] + par[2] * par[j - 3];
 	}
 	sumold = sum;
-	sum = 0;
+	sum = 0.0;
 	for (j = 1; j <= 9; ++j)
 	  sum += denex[j - 1] * par[j - 1];
 	if (fabs(sum) > fabs(denmax)) {
@@ -545,7 +545,7 @@ namespace NewUOA
       }
       if (isave == 0) tempa = sum;
       if (isave == iu) tempb = denold;
-      step = 0;
+      step = 0.0;
       if (tempa != tempb) {
 	tempa -= denmax;
 	tempb -= denmax;
@@ -560,20 +560,20 @@ namespace NewUOA
 	par[j - 1] = par[1] * par[j - 3] - par[2] * par[j - 2];
 	par[j] = par[1] * par[j - 2] + par[2] * par[j - 3];
       }
-      *beta = 0;
-      denmax = 0;
+      *beta = 0.0;
+      denmax = 0.0;
       for (j = 1; j <= 9; ++j) {
 	*beta += den[j - 1] * par[j - 1];
 	denmax += denex[j - 1] * par[j - 1];
       }
       i__1 = *ndim;
       for (k = 1; k <= i__1; ++k) {
-	vlag[k] = 0;
+	vlag[k] = 0.0;
 	for (j = 1; j <= 5; ++j)
 	  vlag[k] += prod[k + j * prod_dim1] * par[j - 1];
       }
       tau = vlag[*knew];
-      dd = tempa = tempb = 0;
+      dd = tempa = tempb = 0.0;
       i__1 = n;
       for (i__ = 1; i__ <= i__1; ++i__) {
 	d__[i__] = par[1] * d__[i__] + par[2] * s[i__];
@@ -597,7 +597,7 @@ namespace NewUOA
       }
       i__1 = npt;
       for (k = 1; k <= i__1; ++k) {
-	sum = 0;
+	sum = 0.0;
 	i__2 = n;
 	for (j = 1; j <= i__2; ++j)
 	  sum += xpt[k + j * xpt_dim1] * w[j];
@@ -606,8 +606,8 @@ namespace NewUOA
 	for (i__ = 1; i__ <= i__2; ++i__)
 	  s[i__] += temp * xpt[k + i__ * xpt_dim1];
       }
-      ss = 0;
-      ds = 0;
+      ss = 0.0;
+      ds = 0.0;
       i__2 = n;
       for (i__ = 1; i__ <= i__2; ++i__) {
 	/* Computing 2nd power */
@@ -621,7 +621,7 @@ namespace NewUOA
     BDL340:
       i__2 = *ndim;
       for (k = 1; k <= i__2; ++k) {
-	w[k] = 0;
+	w[k] = 0.0;
 	for (j = 1; j <= 5; ++j) w[k] += wvec[k + j * wvec_dim1] * par[j - 1];
       }
       vlag[*kopt] += 1.0;
@@ -670,20 +670,20 @@ namespace NewUOA
       goto TRL170;
       /* Prepare for the first line search. */
     TRL20:
-      qred = dd = 0;
+      qred = dd = 0.0;
       i__1 = n;
       for (i__ = 1; i__ <= i__1; ++i__) {
-	step[i__] = 0;
-	hs[i__] = 0;
+	step[i__] = 0.0;
+	hs[i__] = 0.0;
 	g[i__] = gq[i__] + hd[i__];
 	d__[i__] = -g[i__];
 	/* Computing 2nd power */
 	d__1 = d__[i__];
 	dd += d__1 * d__1;
       }
-      *crvmin = 0;
-      if (dd == 0) goto TRL160;
-      ds = ss = 0;
+      *crvmin = 0.0;
+      if (dd == 0.0) goto TRL160;
+      ds = ss = 0.0;
       gg = dd;
       ggbeg = gg;
       /* Calculate the step to the trust region boundary and the product
@@ -694,12 +694,12 @@ namespace NewUOA
       bstep = temp / (ds + sqrt(ds * ds + dd * temp));
       goto TRL170;
     TRL50:
-      dhd = 0;
+      dhd = 0.0;
       i__1 = n;
       for (j = 1; j <= i__1; ++j) dhd += d__[j] * hd[j];
       /* Update CRVMIN and set the step-length ATRLPHA. */
       alpha = bstep;
-      if (dhd > 0) {
+      if (dhd > 0.0) {
 	temp = dhd / dd;
 	if (iterc == 1) *crvmin = temp;
 	*crvmin = fmin(*crvmin, temp);
@@ -711,7 +711,7 @@ namespace NewUOA
       qred += qadd;
       /* Update STEP and HS. */
       ggsav = gg;
-      gg = 0;
+      gg = 0.0;
       i__1 = n;
       for (i__ = 1; i__ <= i__1; ++i__) {
 	step[i__] += alpha * d__[i__];
@@ -724,7 +724,7 @@ namespace NewUOA
       if (alpha < bstep) {
 	if (qadd <= qred * .01 || gg <= ggbeg * 1e-4 || iterc == itermax) goto TRL160;
 	temp = gg / ggsav;
-	dd = ds = ss = 0;
+	dd = ds = ss = 0.0;
 	i__1 = n;
 	for (i__ = 1; i__ <= i__1; ++i__) {
 	  d__[i__] = temp * d__[i__] - g[i__] - hs[i__];
@@ -736,16 +736,16 @@ namespace NewUOA
 	  d__1 = step[i__];
 	  ss += d__1 * d__1;
 	}
-	if (ds <= 0) goto TRL160;
+	if (ds <= 0.0) goto TRL160;
 	if (ss < delsq) goto TRL40;
       }
-      *crvmin = 0;
+      *crvmin = 0.0;
       itersw = iterc;
       /* Test whether an alternative iteration is required. */
     TRL90:
       if (gg <= ggbeg * 1e-4) goto TRL160;
-      sg = 0;
-      shs = 0;
+      sg = 0.0;
+      shs = 0.0;
       i__1 = n;
       for (i__ = 1; i__ <= i__1; ++i__) {
 	sg += step[i__] * g[i__];
@@ -765,7 +765,7 @@ namespace NewUOA
 	d__[i__] = tempa * (g[i__] + hs[i__]) - tempb * step[i__];
       goto TRL170;
     TRL120:
-      dg = dhd = dhs = 0;
+      dg = dhd = dhs = 0.0;
       i__1 = n;
       for (i__ = 1; i__ <= i__1; ++i__) {
 	dg += d__[i__] * g[i__];
@@ -794,7 +794,7 @@ namespace NewUOA
       }
       if ((TYPE) isave == 0) tempa = qnew;
       if (isave == iu) tempb = qbeg;
-      angle = 0;
+      angle = 0.0;
       if (tempa != tempb) {
 	tempa -= qmin;
 	tempb -= qmin;
@@ -805,7 +805,7 @@ namespace NewUOA
       cth = cos(angle);
       sth = sin(angle);
       reduc = qbeg - (sg + cf * cth) * cth - (dg + dhs * cth) * sth;
-      gg = 0;
+      gg = 0.0;
       i__1 = n;
       for (i__ = 1; i__ <= i__1; ++i__) {
 	step[i__] = cth * step[i__] + sth * d__[i__];
@@ -825,10 +825,10 @@ namespace NewUOA
        * are distinguished by the value of ITERC. */
     TRL170:
       i__1 = n;
-      for (i__ = 1; i__ <= i__1; ++i__) hd[i__] = 0;
+      for (i__ = 1; i__ <= i__1; ++i__) hd[i__] = 0.0;
       i__1 = npt;
       for (k = 1; k <= i__1; ++k) {
-	temp = 0;
+	temp = 0.0;
 	i__2 = n;
 	for (j = 1; j <= i__2; ++j)
 	  temp += xpt[k + j * xpt_dim1] * d__[j];
@@ -837,7 +837,7 @@ namespace NewUOA
 	for (i__ = 1; i__ <= i__2; ++i__)
 	  hd[i__] += temp * xpt[k + i__ * xpt_dim1];
       }
-      ih = 0;
+      ih = 0.0;
       i__2 = n;
       for (j = 1; j <= i__2; ++j) {
 	i__1 = j;
@@ -885,7 +885,7 @@ namespace NewUOA
       for (j = 2; j <= i__1; ++j) {
 	if (j == *idz) {
 	  jl = *idz;
-	} else if (zmat[*knew + j * zmat_dim1] != 0) {
+	} else if (fabs(zmat[*knew + j * zmat_dim1]) > 0.0) {
 	  /* Computing 2nd power */
 	  d__1 = zmat[*knew + jl * zmat_dim1];
 	  /* Computing 2nd power */
@@ -901,7 +901,7 @@ namespace NewUOA
 	      - tempb * zmat[i__ + jl * zmat_dim1];
 	    zmat[i__ + jl * zmat_dim1] = temp;
 	  }
-	  zmat[*knew + j * zmat_dim1] = 0;
+	  zmat[*knew + j * zmat_dim1] = 0.0;
 	}
       }
       /* Put the first NPT components of the KNEW-th column of HLAG into
@@ -932,12 +932,12 @@ namespace NewUOA
 	for (i__ = 1; i__ <= i__1; ++i__)
 	  zmat[i__ + zmat_dim1] = tempa * zmat[i__ + zmat_dim1] - tempb *
 	    vlag[i__];
-	if (*idz == 1 && temp < 0) *idz = 2;
-	if (*idz >= 2 && temp >= 0) iflag = 1;
+	if (*idz == 1 && temp < 0.0) *idz = 2;
+	if (*idz >= 2 && temp >= 0.0) iflag = 1;
       } else {
 	/* Complete the updating of ZMAT in the alternative case. */
 	ja = 1;
-	if (*beta >= 0) {
+	if (*beta >= 0.0) {
 	  ja = jl;
 	}
 	jb = jl + 1 - ja;
@@ -954,9 +954,9 @@ namespace NewUOA
 	  zmat[i__ + jb * zmat_dim1] = scalb * (zmat[i__ + jb * zmat_dim1]
 						- tempa * w[i__] - tempb * vlag[i__]);
 	}
-	if (denom <= 0) {
-	  if (*beta < 0) ++(*idz);
-	  if (*beta >= 0) iflag = 1;
+	if (denom <= 0.0) {
+	  if (*beta < 0.0) ++(*idz);
+	  if (*beta >= 0.0) iflag = 1;
 	}
       }
       /* IDZ is reduced in the following case, and usually the first
@@ -1063,19 +1063,19 @@ namespace NewUOA
       xbase[j] = x[j];
       i__2 = npt;
       for (k = 1; k <= i__2; ++k)
-	xpt[k + j * xpt_dim1] = 0;
+	xpt[k + j * xpt_dim1] = 0.0;
       i__2 = *ndim;
       for (i__ = 1; i__ <= i__2; ++i__)
-	bmat[i__ + j * bmat_dim1] = 0;
+	bmat[i__ + j * bmat_dim1] = 0.0;
     }
     i__2 = nh;
-    for (ih = 1; ih <= i__2; ++ih) hq[ih] = 0;
+    for (ih = 1; ih <= i__2; ++ih) hq[ih] = 0.0;
     i__2 = npt;
     for (k = 1; k <= i__2; ++k) {
-      pq[k] = 0;
+      pq[k] = 0.0;
       i__1 = nptm;
       for (j = 1; j <= i__1; ++j)
-	zmat[k + j * zmat_dim1] = 0;
+	zmat[k + j * zmat_dim1] = 0.0;
     }
     /* Begin the initialization procedure. NF becomes 1.0 more than the
      * number of function values so far. The coordinates of the
@@ -1152,8 +1152,8 @@ namespace NewUOA
        * functions and the initial quadratic model. */
     } else {
       ih = ipt * (ipt - 1) / 2 + jpt;
-      if (xipt < 0) ipt += n;
-      if (xjpt < 0) jpt += n;
+      if (xipt < 0.0) ipt += n;
+      if (xjpt < 0.0) jpt += n;
       zmat[nfmm * zmat_dim1 + 1] = recip;
       zmat[nf + nfmm * zmat_dim1] = recip;
       zmat[ipt + 1 + nfmm * zmat_dim1] = -recip;
@@ -1166,7 +1166,7 @@ namespace NewUOA
     rho = rhobeg;
     delta = rho;
     idz = 1;
-    diffa = diffb = itest = xoptsq = 0;
+    diffa = diffb = itest = xoptsq = 0.0;
     i__1 = n;
     for (i__ = 1; i__ <= i__1; ++i__) {
       xopt[i__] = xpt[kopt + i__ * xpt_dim1];
@@ -1184,7 +1184,7 @@ namespace NewUOA
     trsapp(n, npt, &xopt[1], &xpt[xpt_offset], &gq[1], &hq[1], &pq[1], &
 	    delta, &d__[1], &w[1], &w[np], &w[np + n], &w[np + (n << 1)], &
 	    crvmin);
-    dsq = 0;
+    dsq = 0.0;
     i__1 = n;
     for (i__ = 1; i__ <= i__1; ++i__) {
       /* Computing 2nd power */
@@ -1213,7 +1213,7 @@ namespace NewUOA
       tempq = xoptsq * .25;
       i__1 = npt;
       for (k = 1; k <= i__1; ++k) {
-	sum = 0;
+	sum = 0.0;
 	i__2 = n;
 	for (i__ = 1; i__ <= i__2; ++i__)
 	  sum += xpt[k + i__ * xpt_dim1] * xopt[i__];
@@ -1237,7 +1237,7 @@ namespace NewUOA
        * calculated. */
       i__3 = nptm;
       for (k = 1; k <= i__3; ++k) {
-	sumz = 0;
+	sumz = 0.0;
 	i__2 = npt;
 	for (i__ = 1; i__ <= i__2; ++i__) {
 	  sumz += zmat[i__ + k * zmat_dim1];
@@ -1271,7 +1271,7 @@ namespace NewUOA
       ih = 0;
       i__2 = n;
       for (j = 1; j <= i__2; ++j) {
-	w[j] = 0;
+	w[j] = 0.0;
 	i__1 = npt;
 	for (k = 1; k <= i__1; ++k) {
 	  w[j] += pq[k] * xpt[k + j * xpt_dim1];
@@ -1290,14 +1290,14 @@ namespace NewUOA
       i__1 = n;
       for (j = 1; j <= i__1; ++j) {
 	xbase[j] += xopt[j];
-	xopt[j] = 0;
+	xopt[j] = 0.0;
       }
-      xoptsq = 0;
+      xoptsq = 0.0;
     }
     /* Pick the model step if KNEW is positive. A different choice of D
      * may be made later, if the choice of D by BIGLAG causes
      * substantial cancellation in DENOM. */
-    if (knew > 0) {
+    if (knew > 0.0) {
       biglag(n, npt, &xopt[1], &xpt[xpt_offset], &bmat[bmat_offset], &zmat[zmat_offset], &idz,
 	     ndim, &knew, &dstep, &d__[1], &alpha, &vlag[1], &vlag[npt + 1], &w[1], &w[np], &w[np + n], objectPtr, func);
     }
@@ -1305,9 +1305,9 @@ namespace NewUOA
      * NPT components of W_check will be held in W. */
     i__1 = npt;
     for (k = 1; k <= i__1; ++k) {
-      suma = 0;
-      sumb = 0;
-      sum = 0;
+      suma = 0.0;
+      sumb = 0.0;
+      sum = 0.0;
       i__2 = n;
       for (j = 1; j <= i__2; ++j) {
 	suma += xpt[k + j * xpt_dim1] * d__[j];
@@ -1317,10 +1317,10 @@ namespace NewUOA
       w[k] = suma * (.5 * suma + sumb);
       vlag[k] = sum;
     }
-    beta = 0;
+    beta = 0.0;
     i__1 = nptm;
     for (k = 1; k <= i__1; ++k) {
-      sum = 0;
+      sum = 0.0;
       i__2 = npt;
       for (i__ = 1; i__ <= i__2; ++i__)
 	sum += zmat[i__ + k * zmat_dim1] * w[i__];
@@ -1332,11 +1332,11 @@ namespace NewUOA
       for (i__ = 1; i__ <= i__2; ++i__)
 	vlag[i__] += sum * zmat[i__ + k * zmat_dim1];
     }
-    bsum = 0;
-    dx = 0;
+    bsum = 0.0;
+    dx = 0.0;
     i__2 = n;
     for (j = 1; j <= i__2; ++j) {
-      sum = 0;
+      sum = 0.0;
       i__1 = npt;
       for (i__ = 1; i__ <= i__1; ++i__)
 	sum += w[i__] * bmat[i__ + j * bmat_dim1];
@@ -1409,7 +1409,7 @@ namespace NewUOA
     fsave = fopt;
     if (f < fopt) {
       fopt = f;
-      xoptsq = 0;
+      xoptsq = 0.0;
       i__1 = n;
       for (i__ = 1; i__ <= i__1; ++i__) {
 	xopt[i__] = xnew[i__];
@@ -1419,9 +1419,9 @@ namespace NewUOA
       }
     }
     ksave = knew;
-    if (knew > 0) goto L410;
+    if (knew > 0.0) goto L410;
     /* Pick the next value of DELTA after a trust region step. */
-    if (vquad >= 0) {
+    if (vquad >= 0.0) {
       fprintf(stderr, "++ Return from NEWUOA because a trust region step has failed to reduce Q.\n");
       goto L530;
     }
@@ -1445,14 +1445,14 @@ namespace NewUOA
     /* Computing 2nd power */
     d__1 = fmax(d__2, rho);
     rhosq = d__1 * d__1;
-    ktemp = detrat = 0;
+    ktemp = detrat = 0.0;
     if (f >= fsave) {
       ktemp = kopt;
       detrat = 1.0;
     }
     i__1 = npt;
     for (k = 1; k <= i__1; ++k) {
-      hdiag = 0;
+      hdiag = 0.0;
       i__2 = nptm;
       for (j = 1; j <= i__2; ++j) {
 	temp = 1.0;
@@ -1464,7 +1464,7 @@ namespace NewUOA
       /* Computing 2nd power */
       d__2 = vlag[k];
       temp = (d__1 = beta * hdiag + d__2 * d__2, fabs(d__1));
-      distsq = 0;
+      distsq = 0.0;
       i__2 = n;
       for (j = 1; j <= i__2; ++j) {
 	/* Computing 2nd power */
@@ -1498,7 +1498,7 @@ namespace NewUOA
 	hq[ih] += temp * xpt[knew + j * xpt_dim1];
       }
     }
-    pq[knew] = 0;
+    pq[knew] = 0.0;
     /* Update the other second derivative parameters, and then the
      * gradient vector of the model. Also include the new interpolation
      * point. */
@@ -1511,7 +1511,7 @@ namespace NewUOA
 	pq[k] += temp * zmat[k + j * zmat_dim1];
       }
     }
-    gqsq = 0;
+    gqsq = 0.0;
     i__1 = n;
     for (i__ = 1; i__ <= i__1; ++i__) {
       gq[i__] += diff * bmat[knew + i__ * bmat_dim1];
@@ -1524,17 +1524,17 @@ namespace NewUOA
      * function, then calculate the gradient of the least Frobenius norm
      * interpolant at XBASE, and store it in W, using VLAG for a vector
      * of right hand sides. */
-    if (ksave == 0 && delta == rho) {
+    if (ksave == 0 && fabs(delta - rho)<1e-12) {
       if (fabs(ratio) > .01) {
 	itest = 0;
       } else {
 	i__1 = npt;
 	for (k = 1; k <= i__1; ++k)
 	  vlag[k] = fval[k] - fval[kopt];
-	gisq = 0;
+	gisq = 0.0;
 	i__1 = n;
 	for (i__ = 1; i__ <= i__1; ++i__) {
-	  sum = 0;
+	  sum = 0.0;
 	  i__2 = npt;
 	  for (k = 1; k <= i__2; ++k)
 	    sum += bmat[k + i__ * bmat_dim1] * vlag[k];
@@ -1550,10 +1550,10 @@ namespace NewUOA
 	  i__1 = n;
 	  for (i__ = 1; i__ <= i__1; ++i__) gq[i__] = w[i__];
 	  i__1 = nh;
-	  for (ih = 1; ih <= i__1; ++ih) hq[ih] = 0;
+	  for (ih = 1; ih <= i__1; ++ih) hq[ih] = 0.0;
 	  i__1 = nptm;
 	  for (j = 1; j <= i__1; ++j) {
-	    w[j] = 0;
+	    w[j] = 0.0;
 	    i__2 = npt;
 	    for (k = 1; k <= i__2; ++k)
 	      w[j] += vlag[k] * zmat[k + j * zmat_dim1];
@@ -1561,7 +1561,7 @@ namespace NewUOA
 	  }
 	  i__1 = npt;
 	  for (k = 1; k <= i__1; ++k) {
-	    pq[k] = 0;
+	    pq[k] = 0.0;
 	    i__2 = nptm;
 	    for (j = 1; j <= i__2; ++j)
 	      pq[k] += zmat[k + j * zmat_dim1] * w[j];
@@ -1584,7 +1584,7 @@ namespace NewUOA
     distsq = delta * 4. * delta;
     i__2 = npt;
     for (k = 1; k <= i__2; ++k) {
-      sum = 0;
+      sum = 0.0;
       i__1 = n;
       for (j = 1; j <= i__1; ++j) {
 	/* Computing 2nd power */
@@ -1606,7 +1606,7 @@ namespace NewUOA
       dsq = dstep * dstep;
       goto L120;
     }
-    if (ratio > 0) goto L100;
+    if (ratio > 0.0) goto L100;
     if (fmax(delta, dnorm) > rho) goto L100;
     /* The calculations with the current value of RHO are complete. Pick
      * the next values of RHO and DELTA. */
