@@ -373,6 +373,8 @@ int main(int argc, char** argv)
 	}
       if (Manager.GetBoolean("optimize-condensate"))
 	{
+	  char *ParameterName = new char[strlen(EigenvectorName)+10];
+	  sprintf(ParameterName,"%s.cond.par",EigenvectorName);
 	  sprintf(EigenvectorName,"%s.cond.vec",EigenvectorName);
 	  GutzwillerOnLatticeWaveFunction Condensate(NbrBosons, HardCore, Space);
 	  Condensate.SetHamiltonian(Hamiltonian);
@@ -381,7 +383,9 @@ int main(int argc, char** argv)
 	  int MaxEval = NbrSites*(NbrBosons+1)*2*Manager.GetInteger("nbr-iter");
 	  double Energy=Condensate.Optimize(Manager.GetDouble("tolerance"), MaxEval);
 	  Condensate.GetLastWaveFunction().WriteVector(EigenvectorName);
+	  Condensate.GetVariationalParameters().WriteVector(ParameterName);
 	  cout << "Found condensate state with energy: "<<Energy<<endl<<EigenvectorName<<endl;
+	  delete [] ParameterName;
 	}
       else
 	{

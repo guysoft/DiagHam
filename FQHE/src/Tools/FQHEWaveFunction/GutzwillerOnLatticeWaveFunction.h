@@ -67,6 +67,9 @@ class GutzwillerOnLatticeWaveFunction
 
   // number of parameters for empty sites
   int NbrEmptyParameters;
+
+  // number of evaluations in optimization
+  int NbrEvaluations;
   
   // vector with variational parameters
   // a^0_i real, a^k_i complex (k>1)
@@ -104,6 +107,9 @@ class GutzwillerOnLatticeWaveFunction
   // return = state
   ComplexVector & GetLastWaveFunction() {return this->TargetVector;}
 
+  // get the parameters of the Many-Body state that was last calculated
+  // return = state
+  RealVector & GetVariationalParameters() {return this->VariationalParameters;}
 
   // set trial parameters
   void SetVariationalParameters(RealVector &variationalParameters);

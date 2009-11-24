@@ -238,8 +238,10 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
 
   (*SystemGroup) += new SingleStringOption  ('\0', "condensate", "filename of vector describing condensate WF");
-
+  
   (*SystemGroup) += new SingleStringOption  ('a', "alt-input", "alternative input for filename of vector describing condensate WF in format provided by Nigel");
+
+  (*SystemGroup) += new SingleStringOption  ('g', "gutzwiller", "binary vector with parameters of a Gutzwiller wavefunction");
   
 
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles of target many-body state", 0);
@@ -262,21 +264,28 @@ int main(int argc, char** argv)
   int NbrFluxQuanta = Manager.GetInteger("flux");
   unsigned long MemorySpace = 9ul << 20;
 
-  char* CondensateFile;  
-
-  if (Manager.GetString("alt-input")!=NULL)
+  char* CondensateFile=0;  
+  char* GutzwillerFile=0;  
+  if (Manager.GetString("gutzwiller")!=NULL)
     {
-      CondensateFile = Manager.GetString("alt-input");
+      GutzwillerFile = Manager.GetString("gutzwiller");
+      CondensateFile = GutzwillerFile;
     }
-  else
-    {
-      CondensateFile = Manager.GetString("condensate");
-      if (Manager.GetString("condensate")==0)
-	{
-	  cout << "A vector for the condensate is required" << endl;
-	  exit(1);
-	}
-    }  
+  else {
+    if (Manager.GetString("alt-input")!=NULL)
+      {
+	CondensateFile = Manager.GetString("alt-input");
+      }
+    else
+      {
+	CondensateFile = Manager.GetString("condensate");
+	if (Manager.GetString("condensate")==0)
+	  {
+	    cout << "A vector for the condensate is required" << endl;
+	    exit(1);
+	  }
+      }
+  }
 
   double Interaction=10.0;
   int TmpI=-1;
@@ -307,94 +316,107 @@ int main(int argc, char** argv)
 
   ComplexVector CondensateState;
   RealVector UnoccupiedNorms;
+  RealVector GeneralParameters;
 
-  if (Manager.GetString("alt-input")!=NULL)
+  if (GutzwillerFile!=NULL)
     {
-      MultiColumnASCIIFile Parser(' ');
-
-      if (Parser.Parse(CondensateFile)==false)
+      if (GeneralParameters.ReadVector(GutzwillerFile)==false)
 	{
-	  cout<<"Could not read condensate file "<<CondensateFile<<" !"<<endl;
+	  cout << "Error reading parameters for general Gutzwiller state from "<<GutzwillerFile<<endl;
 	  exit(1);
 	}
-
-      if (Parser.GetNbrColumns()!=4)
-	{
-	  cout<<"Error: Four columns, [ x y theta phi ] expected in condensate file !"<<endl;
-	  exit(1);
-	}
-      if (Parser.GetNbrLines()!=Lx*Ly)
-	{
-	  cout<<"Error: Wrong number of lines in condensate file !"<<endl;
-	  exit(1);
-	}
-
-      CondensateState.Resize(Lx*Ly);
-      UnoccupiedNorms.Resize(Lx*Ly);
-
-      int *x = Parser.GetAsIntegerArray(0);
-      int *y = Parser.GetAsIntegerArray(1);
-
-      double *theta = Parser.GetAsDoubleArray(2);
-      double *phi = Parser.GetAsDoubleArray(3);
-
-      ParticleOnLattice *Space = new BosonOnLattice(1, Lx, Ly, NbrFluxQuanta, MemorySpace);
-
-      int Dim=Lx*Ly;
-      Complex Tmp;
-      if (Manager.GetInteger("alt-format")==0)
-	{
-	  if (Manager.GetBoolean("alt-ignore-amplitude"))
-	    {
-	      for (int i=0; i<Dim; ++i)
-		{      
-		  int q = Space->EncodeQuantumNumber(x[i]-1, y[i]-1, 0, Tmp);
-		  CondensateState[Dim-1-q]=Polar(1.0, phi[i]); // CondensateState[Dim-1-q]
-		  UnoccupiedNorms[Dim-1-q]=0.0;
-		}
-	    }
-	  else
-	    {
-	      cout << "# x \t y \t vx \t vy"<<endl;
-	      for (int i=0; i<Dim; ++i)
-		{      
-		  int q = Space->EncodeQuantumNumber(x[i]-1, y[i]-1, 0, Tmp);
-		  CondensateState[Dim-1-q]=Complex(cos(theta[i]/2.0)*cos(phi[i]), cos(theta[i]/2.0)*sin(phi[i])); // CondensateState[Dim-1-q]
-		  UnoccupiedNorms[Dim-1-q]=sin(theta[i]/2.0);
-		  cout <<x[i]-1<<"\t"<<y[i]-1<<"\t"<<CondensateState[Dim-1-q].Re<<"\t"<<CondensateState[Dim-1-q].Im<<endl;
-		}
-	      cout <<"CondensateState:"<<endl<<CondensateState<<endl;
-	    }
-	}
-      else if (Manager.GetInteger("alt-format")==1)
-	{
-	  for (int i=0; i<Dim; ++i)
-	    {      
-	      int q = Space->EncodeQuantumNumber(x[i], y[i], 0, Tmp);
-	      CondensateState[Dim-1-q].Re= theta[i]; 
-	      CondensateState[Dim-1-q].Im= phi[i]; 
-	      UnoccupiedNorms[Dim-1-q]=0.0;
-	    }
-	}
-      delete Space;      
-      
+      else
+	cout << "Read parameters for general Gutzwiller state from "<<GutzwillerFile<<endl;
     }
   else
     {
-      if (CondensateState.ReadVector(Manager.GetString("condensate"))==false)
+      if (Manager.GetString("alt-input")!=NULL)
 	{
-	  cout<<"Could not read condensate state!"<<endl;
-	  exit(1);
+	  MultiColumnASCIIFile Parser(' ');
+
+	  if (Parser.Parse(CondensateFile)==false)
+	    {
+	      cout<<"Could not read condensate file "<<CondensateFile<<" !"<<endl;
+	      exit(1);
+	    }
+
+	  if (Parser.GetNbrColumns()!=4)
+	    {
+	      cout<<"Error: Four columns, [ x y theta phi ] expected in condensate file !"<<endl;
+	      exit(1);
+	    }
+	  if (Parser.GetNbrLines()!=Lx*Ly)
+	    {
+	      cout<<"Error: Wrong number of lines in condensate file !"<<endl;
+	      exit(1);
+	    }
+
+	  CondensateState.Resize(Lx*Ly);
+	  UnoccupiedNorms.Resize(Lx*Ly);
+
+	  int *x = Parser.GetAsIntegerArray(0);
+	  int *y = Parser.GetAsIntegerArray(1);
+
+	  double *theta = Parser.GetAsDoubleArray(2);
+	  double *phi = Parser.GetAsDoubleArray(3);
+
+	  ParticleOnLattice *Space = new BosonOnLattice(1, Lx, Ly, NbrFluxQuanta, MemorySpace);
+
+	  int Dim=Lx*Ly;
+	  Complex Tmp;
+	  if (Manager.GetInteger("alt-format")==0)
+	    {
+	      if (Manager.GetBoolean("alt-ignore-amplitude"))
+		{
+		  for (int i=0; i<Dim; ++i)
+		    {      
+		      int q = Space->EncodeQuantumNumber(x[i]-1, y[i]-1, 0, Tmp);
+		      CondensateState[Dim-1-q]=Polar(1.0, phi[i]); // CondensateState[Dim-1-q]
+		      UnoccupiedNorms[Dim-1-q]=0.0;
+		    }
+		}
+	      else
+		{
+		  cout << "# x \t y \t vx \t vy"<<endl;
+		  for (int i=0; i<Dim; ++i)
+		    {      
+		      int q = Space->EncodeQuantumNumber(x[i]-1, y[i]-1, 0, Tmp);
+		      CondensateState[Dim-1-q]=Complex(cos(theta[i]/2.0)*cos(phi[i]), cos(theta[i]/2.0)*sin(phi[i])); // CondensateState[Dim-1-q]
+		      UnoccupiedNorms[Dim-1-q]=sin(theta[i]/2.0);
+		      cout <<x[i]-1<<"\t"<<y[i]-1<<"\t"<<CondensateState[Dim-1-q].Re<<"\t"<<CondensateState[Dim-1-q].Im<<endl;
+		    }
+		  cout <<"CondensateState:"<<endl<<CondensateState<<endl;
+		}
+	    }
+	  else if (Manager.GetInteger("alt-format")==1)
+	    {
+	      for (int i=0; i<Dim; ++i)
+		{      
+		  int q = Space->EncodeQuantumNumber(x[i], y[i], 0, Tmp);
+		  CondensateState[Dim-1-q].Re= theta[i]; 
+		  CondensateState[Dim-1-q].Im= phi[i]; 
+		  UnoccupiedNorms[Dim-1-q]=0.0;
+		}
+	    }
+	  delete Space;      
+      
 	}
-      if (CondensateState.GetVectorDimension()!=Lx*Ly)
+      else
 	{
-	  cout<<"Number of sites in condensate does not match the lattice Lx="<<Lx<<", Ly="<<Ly<<"!"<<endl;
-	  exit(1);
+	  if (CondensateState.ReadVector(Manager.GetString("condensate"))==false)
+	    {
+	      cout<<"Could not read condensate state!"<<endl;
+	      exit(1);
+	    }
+	  if (CondensateState.GetVectorDimension()!=Lx*Ly)
+	    {
+	      cout<<"Number of sites in condensate does not match the lattice Lx="<<Lx<<", Ly="<<Ly<<"!"<<endl;
+	      exit(1);
+	    }
+	  UnoccupiedNorms.Resize(Lx*Ly);
+	  for (int i=0; i<Lx*Ly; ++i) UnoccupiedNorms[i]=0.0;
 	}
-      UnoccupiedNorms.Resize(Lx*Ly);
-      for (int i=0; i<Lx*Ly; ++i) UnoccupiedNorms[i]=0.0;
-    }
-  
+    }  
   
 
   ParticleOnLattice* Space;
@@ -402,26 +424,37 @@ int main(int argc, char** argv)
     Space =new HardCoreBosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
   else Space = new BosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
 
-  GutzwillerWaveFunction GutzwillerState(NbrBosons, CondensateState, UnoccupiedNorms, Space);
+  if (GutzwillerFile!=0)
+    {
+      GutzwillerOnLatticeWaveFunction GutzwillerState(NbrBosons, HardCore, Space, &GeneralParameters);
+      char extension[30];
+      sprintf(extension,"N_%d.gw",NbrBosons);
+      char *TmpFileName = AddExtensionToFileName(CondensateFile, extension);
+      GutzwillerState.GetGutzwillerWaveFunction().WriteVector(TmpFileName);
+      delete [] TmpFileName;
+    }
+  else
+    {
+      GutzwillerWaveFunction GutzwillerState(NbrBosons, CondensateState, UnoccupiedNorms, Space);
+      
+      ComplexVector GutzwillerStateVector = GutzwillerState.GetGutzwillerWaveFunction();
+      char extension[30];
+      sprintf(extension,"N_%d.gw",NbrBosons);
+      char *TmpFileName = AddExtensionToFileName(CondensateFile, extension);
+      GutzwillerStateVector.WriteVector(TmpFileName);
+      delete [] TmpFileName;
 
-  ComplexVector GutzwillerStateVector = GutzwillerState.GetGutzwillerWaveFunction();
-  char extension[20];
-  sprintf(extension,"N_%d.gw",NbrBosons);
-  char *TmpFileName = AddExtensionToFileName(CondensateFile, extension);
-  GutzwillerStateVector.WriteVector(TmpFileName);
-  delete [] TmpFileName;
+      // for equivalent results using external class:
+      /*
+	GutzwillerOnLatticeWaveFunction GutzwillerState2(NbrBosons, HardCore, Space);
+	GutzwillerState2.ImportCondensate(CondensateState,UnoccupiedNorms);
+	sprintf(extension,"N_%d.gw2",NbrBosons);
+	TmpFileName = AddExtensionToFileName(CondensateFile, extension);
+	GutzwillerState2.GetGutzwillerWaveFunction().WriteVector(TmpFileName);
+	delete [] TmpFileName;
+      */
+
+    }
   
 
-  int NbrSites = Lx * Ly;
-  int VariationalSize;
-  RealVector VariationalParameters2;
-
-  GutzwillerOnLatticeWaveFunction GutzwillerState2(NbrBosons, HardCore, Space);
-  GutzwillerState2.ImportCondensate(CondensateState,UnoccupiedNorms);
-  sprintf(extension,"N_%d.gw2",NbrBosons);
-  
-  TmpFileName = AddExtensionToFileName(CondensateFile, extension);
-  GutzwillerState2.GetGutzwillerWaveFunction().WriteVector(TmpFileName);
-
-  delete [] TmpFileName;
 }
