@@ -18,6 +18,8 @@
 #include "GeneralTools/FilenameTools.h"
 #include "GeneralTools/MultiColumnASCIIFile.h"
 
+#include "Tools/FQHEWaveFunction/GutzwillerOnLatticeWaveFunction.h"
+
 #include "Tools/FQHEFiles/QHEOnLatticeFileTools.h"
 
 #include "Options/Options.h"
@@ -43,11 +45,11 @@ class GutzwillerWaveFunction
 {
 public:
   // constructor
-  // nbrParticles = particles in the condensate (should match space)
+  // nbrparticles = particles in the condensate (should match space)
   // condensateWF = condensate wavefunction, in notation as single-particle hilbert-space
   // unoccupiedTerms = norms of empty states, allowing form \prod_i (Norm_i + \psi_i a^\dagger_i) |state>
   // space = target-space of many-body state
-  GutzwillerWaveFunction(int nbrParticles, ComplexVector& condensateWF, ComplexVector& unoccupiedTerms, ParticleOnLattice *space);
+  GutzwillerWaveFunction(int nbrParticles, ComplexVector& condensateWF, RealVector& unoccupiedTerms, ParticleOnLattice *space);
 
   // destructor
   ~GutzwillerWaveFunction();
@@ -79,7 +81,7 @@ protected:
   ComplexVector CondensateState;
 
   // additional terms for wavefunction
-  ComplexVector UnoccupiedTerms;
+  RealVector UnoccupiedTerms;
 
   // number of particles in many-body state
   int NbrParticles;
@@ -99,12 +101,12 @@ protected:
 // nbrParticles = particles in the condensate (should match space)
 // condensateWF = condensate wavefunction, in notation as single-particle hilbert-space
 // space = target-space of many-body state
-GutzwillerWaveFunction::GutzwillerWaveFunction(int nbrParticles, ComplexVector &condensateWF, ComplexVector& unoccupiedTerms, ParticleOnLattice *space)
+GutzwillerWaveFunction::GutzwillerWaveFunction(int nbrParticles, ComplexVector &condensateWF, RealVector& unoccupiedTerms, ParticleOnLattice *space)
 {
   this->NbrParticles = nbrParticles;
   this->Space = space;
   this->CondensateState = ComplexVector(condensateWF,true);
-  this->UnoccupiedTerms = ComplexVector(unoccupiedTerms,true);
+  this->UnoccupiedTerms = RealVector(unoccupiedTerms,true);
   // believe this is the way it should be done to get CondensateState[q] associated with quantum no. q.
 //   cout << "initial condensate: "<<CondensateState<<endl;
   this->CondensateState.ReverseVector();
@@ -304,7 +306,7 @@ int main(int argc, char** argv)
     cout << endl;
 
   ComplexVector CondensateState;
-  ComplexVector UnoccupiedNorms;
+  RealVector UnoccupiedNorms;
 
   if (Manager.GetString("alt-input")!=NULL)
     {
@@ -348,8 +350,7 @@ int main(int argc, char** argv)
 		{      
 		  int q = Space->EncodeQuantumNumber(x[i]-1, y[i]-1, 0, Tmp);
 		  CondensateState[Dim-1-q]=Polar(1.0, phi[i]); // CondensateState[Dim-1-q]
-		  UnoccupiedNorms[Dim-1-q].Re=0.0;
-		  UnoccupiedNorms[Dim-1-q].Im=0.0;
+		  UnoccupiedNorms[Dim-1-q]=0.0;
 		}
 	    }
 	  else
@@ -359,8 +360,7 @@ int main(int argc, char** argv)
 		{      
 		  int q = Space->EncodeQuantumNumber(x[i]-1, y[i]-1, 0, Tmp);
 		  CondensateState[Dim-1-q]=Complex(cos(theta[i]/2.0)*cos(phi[i]), cos(theta[i]/2.0)*sin(phi[i])); // CondensateState[Dim-1-q]
-		  UnoccupiedNorms[Dim-1-q].Re=sin(theta[i]/2.0);
-		  UnoccupiedNorms[Dim-1-q].Im=0.0;
+		  UnoccupiedNorms[Dim-1-q]=sin(theta[i]/2.0);
 		  cout <<x[i]-1<<"\t"<<y[i]-1<<"\t"<<CondensateState[Dim-1-q].Re<<"\t"<<CondensateState[Dim-1-q].Im<<endl;
 		}
 	      cout <<"CondensateState:"<<endl<<CondensateState<<endl;
@@ -373,8 +373,7 @@ int main(int argc, char** argv)
 	      int q = Space->EncodeQuantumNumber(x[i], y[i], 0, Tmp);
 	      CondensateState[Dim-1-q].Re= theta[i]; 
 	      CondensateState[Dim-1-q].Im= phi[i]; 
-	      UnoccupiedNorms[Dim-1-q].Re=0.0;
-	      UnoccupiedNorms[Dim-1-q].Im=0.0;
+	      UnoccupiedNorms[Dim-1-q]=0.0;
 	    }
 	}
       delete Space;      
@@ -409,8 +408,20 @@ int main(int argc, char** argv)
   char extension[20];
   sprintf(extension,"N_%d.gw",NbrBosons);
   char *TmpFileName = AddExtensionToFileName(CondensateFile, extension);
-
   GutzwillerStateVector.WriteVector(TmpFileName);
+  delete [] TmpFileName;
+  
+
+  int NbrSites = Lx * Ly;
+  int VariationalSize;
+  RealVector VariationalParameters2;
+
+  GutzwillerOnLatticeWaveFunction GutzwillerState2(NbrBosons, HardCore, Space);
+  GutzwillerState2.ImportCondensate(CondensateState,UnoccupiedNorms);
+  sprintf(extension,"N_%d.gw2",NbrBosons);
+  
+  TmpFileName = AddExtensionToFileName(CondensateFile, extension);
+  GutzwillerState2.GetGutzwillerWaveFunction().WriteVector(TmpFileName);
 
   delete [] TmpFileName;
 }

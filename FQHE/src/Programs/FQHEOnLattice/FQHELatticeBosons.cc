@@ -9,6 +9,8 @@
 
 #include "MainTask/QHEOnLatticeMainTask.h"
 
+#include "Tools/FQHEWaveFunction/GutzwillerOnLatticeWaveFunction.h"
+
 #include "GeneralTools/FilenameTools.h"
 
 #include "Options/Options.h"
@@ -114,6 +116,8 @@ int main(int argc, char** argv)
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
+  (*MiscGroup) += new BooleanOption('\n', "optimize-condensate", "optimize a trial condensate wavefunction instead of diagonalizing");
+  (*MiscGroup) += new SingleDoubleOption('\n', "tolerance", "tolerance for variational parameters in condensate",1e-6);
   (*MiscGroup) += new SingleStringOption('\n', "energy-expectation", "name of the file containing the state vector, whose energy expectation value shall be calculated");
   (*MiscGroup) += new SingleStringOption  ('o', "output-file", "redirect output to this file",NULL);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -294,14 +298,29 @@ int main(int argc, char** argv)
       if (!FirstRun) Hamiltonian->SetNbrFluxQuanta(NbrFluxQuanta);
   
       char* EigenvectorName = 0;
-      if (Manager.GetBoolean("eigenstate"))	
+      if ((Manager.GetBoolean("eigenstate")||(Manager.GetBoolean("optimize-condensate"))))
 	{
 	  EigenvectorName = new char [64];
 	  sprintf (EigenvectorName, "bosons_lattice_n_%d_x_%d_y_%d%s_%s%sq_%d", NbrBosons, Lx, Ly, interactionStr, reverseHoppingString, deltaString, NbrFluxQuanta);
 	}
-      QHEOnLatticeMainTask Task (&Manager, Space, Hamiltonian, NbrFluxQuanta, 0.0, OutputName, FirstRun, EigenvectorName);
-      MainTaskOperation TaskOperation (&Task);
-      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+      if (Manager.GetBoolean("optimize-condensate"))
+	{
+	  sprintf(EigenvectorName,"%s.cond.vec",EigenvectorName);
+	  GutzwillerOnLatticeWaveFunction Condensate(NbrBosons, HardCore, Space);
+	  Condensate.SetHamiltonian(Hamiltonian);
+	  Condensate.SetArchitecture(Architecture.GetArchitecture());
+	  Condensate.SetToRandomPhase();
+	  int MaxEval = NbrSites*(NbrBosons+1)*2*Manager.GetInteger("nbr-iter");
+	  double Energy=Condensate.Optimize(Manager.GetDouble("tolerance"), MaxEval);
+	  Condensate.GetLastWaveFunction().WriteVector(EigenvectorName);
+	  cout << "Found condensate state with energy: "<<Energy<<endl<<EigenvectorName<<endl;
+	}
+      else
+	{
+	  QHEOnLatticeMainTask Task (&Manager, Space, Hamiltonian, NbrFluxQuanta, 0.0, OutputName, FirstRun, EigenvectorName);
+	  MainTaskOperation TaskOperation (&Task);
+	  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+	}
       if (EigenvectorName != 0)
 	{
 	  delete[] EigenvectorName;

@@ -64,6 +64,9 @@ class GutzwillerOnLatticeWaveFunction
 
   // number of variational parameters
   int NbrVariationalParameters;
+
+  // number of parameters for empty sites
+  int NbrEmptyParameters;
   
   // vector with variational parameters
   // a^0_i real, a^k_i complex (k>1)
@@ -88,7 +91,7 @@ class GutzwillerOnLatticeWaveFunction
   // hardCore = flag indicating whether double occupations may occur or whether hardcore particles are present
   // space = target-space of many-body state
   // variationalParameters = initial set of trial parameters
-  GutzwillerOnLatticeWaveFunction(int nbrParticles, bool hardCore, ParticleOnLattice *space, ComplexVector *variationalParameters=NULL);
+  GutzwillerOnLatticeWaveFunction(int nbrParticles, bool hardCore, ParticleOnLattice *space, RealVector *variationalParameters=NULL);
 
   // destructor
   ~GutzwillerOnLatticeWaveFunction();
@@ -107,6 +110,9 @@ class GutzwillerOnLatticeWaveFunction
 
   // set parameters to a random initial distribution (random phase)
   void SetToRandomPhase();
+
+  // import parameters in format of FQHELatticeCondensateState
+  void ImportCondensate(ComplexVector &condensateState, RealVector &emptyNorms);
   
   // define a Hamiltonian to enable immediate evaluation of the energy
   void SetHamiltonian(AbstractQHEOnLatticeHamiltonian *hamiltonian);
