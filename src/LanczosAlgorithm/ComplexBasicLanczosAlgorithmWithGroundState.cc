@@ -146,6 +146,7 @@ Vector& ComplexBasicLanczosAlgorithmWithGroundState::GetGroundState()
       this->V2 = this->InitialState; 
       this->InitialState = TmpV;
       int lim = this->DiagonalizedMatrix.GetNbrRow() - 3;
+      cout << "Calculating vector: ";
       for (int i = 1; i < lim; ++i)
 	{
 	  VectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &this->V3, &this->V1);
@@ -158,11 +159,14 @@ Vector& ComplexBasicLanczosAlgorithmWithGroundState::GetGroundState()
 	  this->V2 = this->V3;
 	  this->V3 = this->V1;
 	  this->V1 = TmpV;
+	  cout << ".";
+	  cout.flush();
 	}
+      cout << "done." << endl;
       this->InitialState /= this->InitialState.Norm();
 //      cout << (this->InitialState * this->InitialState) << endl;
 //      this->Hamiltonian->Multiply(this->InitialState, this->V3);
- //     cout << "GroundStateEnergy =  " << (this->V3 * this->InitialState) << endl;
+//      cout << "GroundStateEnergy =  " << (this->V3 * this->InitialState) << endl;
       this->GroundStateFlag = true;
     }
   return this->InitialState;

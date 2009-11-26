@@ -371,7 +371,7 @@ void ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::EvaluateI
 
 double ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4, double layerSeparation)
 {
-
+  if ((m1==m2)&&(m1==m3)&&(m1==m4)) return 1.0;
   double Coefficient = 1.0;
   double PIOnM = M_PI / ((double) this->MaxMomentum);
   double Factor =  - ((double) (m1-m3)) * PIOnM * 2.0;

@@ -61,7 +61,7 @@ using std::ostream;
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 // hermitianFlag = flag indicating whether to use hermitian symmetry
-ParticleOnLatticeExternalHamiltonian::ParticleOnLatticeExternalHamiltonian(ParticleOnLattice* particles, int nbrParticles, int nbrStates, const char* oneParticleTerms, const char* twoParticleTerms, AbstractArchitecture* architecture, unsigned long memory, char* precalculationFileName, bool hermitianFlag)
+ParticleOnLatticeExternalHamiltonian::ParticleOnLatticeExternalHamiltonian(ParticleOnLattice* particles, int nbrParticles, int nbrStates, const char* oneParticleTerms, const char* twoParticleTerms, AbstractArchitecture* architecture, unsigned long memory, char* precalculationFileName, bool hermitianFlag, LatticePhases *latticeGeometry)
 {
   this->Particles=particles;
   this->NbrParticles=nbrParticles;
@@ -77,6 +77,7 @@ ParticleOnLatticeExternalHamiltonian::ParticleOnLatticeExternalHamiltonian(Parti
       strcpy(this->TwoParticleTerms,twoParticleTerms);
     }
   else this->TwoParticleTerms=NULL;
+  this->LatticeGeometry=latticeGeometry;
   this->HaveKySymmetry=false;
   this->KyMax=0;  
   this->NbrSites = nbrStates;
@@ -218,6 +219,45 @@ void ParticleOnLatticeExternalHamiltonian::EvaluateInteractionFactors()
   else
     {
       this->NbrHoppingTerms = 0;
+    }
+
+
+  if ((this->LatticeGeometry!=NULL)&&(this->LatticeGeometry->HaveOneParticlePotentials()))
+    {
+      int OldNumberTerms=this->NbrHoppingTerms;
+      this->NbrHoppingTerms+=LatticeGeometry->GetNbrLocalPotentials();
+      int *NewQi=new int[this->NbrHoppingTerms];
+      int *NewQf=new int[this->NbrHoppingTerms];
+      Complex *NewHoppingTerms=new Complex[this->NbrHoppingTerms];
+      if (OldNumberTerms>0)
+	{
+	  for (int i=0; i<OldNumberTerms; ++i)
+	    {
+	      NewQi[i] = KineticQi[i];
+	      NewQf[i] = KineticQi[i];
+	      NewHoppingTerms[i] = HoppingTerms[i];
+	    }
+	  delete[]KineticQi;
+	  delete[]KineticQf;
+	  delete[]HoppingTerms;
+	}
+      this->KineticQi=NewQi;
+      this->KineticQf=NewQf;
+      this->HoppingTerms=NewHoppingTerms;
+      cout << "Adding one particle potentials in Hamiltonian"<<endl;
+      int NbrPotentials;
+      int *PotentialPositions;
+      double *Potentials = LatticeGeometry->GetOneParticlePotentials(NbrPotentials, PotentialPositions);
+      for (int n=0; n<NbrPotentials; ++n)
+	{
+	  KineticQi[OldNumberTerms] = PotentialPositions[n];
+	  KineticQf[OldNumberTerms] = KineticQi[OldNumberTerms];
+	  HoppingTerms[OldNumberTerms] = Potentials[n];
+#ifdef DEBUG_OUTPUT
+	  cout << "H["<<KineticQi[OldNumberTerms]<<"->"<<KineticQf[OldNumberTerms]<<"]="<<HoppingTerms[OldNumberTerms]<<endl;
+#endif
+	  ++OldNumberTerms;
+	}
     }
 
   this->NbrInteractionFactors=0;

@@ -58,7 +58,9 @@ class ParticleOnLatticeExternalHamiltonian : public AbstractQHEOnLatticeHamilton
   // filename for external two-particle interactions
   char *TwoParticleTerms;
 
-
+  // lattice structure (if known)
+  LatticePhases *LatticeGeometry;
+  
  public:
 
   // constructor for contact interactions on a square lattice
@@ -72,7 +74,7 @@ class ParticleOnLatticeExternalHamiltonian : public AbstractQHEOnLatticeHamilton
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
   // hermitianFlag = flag indicating whether to use hermitian symmetry
-  ParticleOnLatticeExternalHamiltonian(ParticleOnLattice* particles, int nbrParticles, int nbrStates, const char* oneParticleTerms, const char* twoParticleTerms, AbstractArchitecture* architecture, unsigned long memory = 0, char* precalculationFileName = 0, bool hoppingOnly = false);
+  ParticleOnLatticeExternalHamiltonian(ParticleOnLattice* particles, int nbrParticles, int nbrStates, const char* oneParticleTerms, const char* twoParticleTerms, AbstractArchitecture* architecture, unsigned long memory = 0, char* precalculationFileName = 0, bool hoppingOnly = false, LatticePhases *latticeGeometry = NULL);
 
   // destructor
   //

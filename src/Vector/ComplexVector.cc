@@ -32,6 +32,7 @@
 #include <fstream>
 #include <iostream>
 #include <cstdlib>
+#include <climits>
 
 using std::cout;
 using std::ofstream;
@@ -2020,21 +2021,21 @@ bool ComplexVector::ReadVector (const char* fileName)
       return false;
     }
 
-  unsigned ZeroPos, MaxPos;
+  std::streampos ZeroPos, MaxPos;
   File.seekg (0, ios::beg);
   ZeroPos = File.tellg();
   File.seekg (0, ios::end);
   MaxPos = File.tellg ();
   
-  unsigned Length = MaxPos-ZeroPos-sizeof(int);  
+  std::streampos Length = MaxPos-ZeroPos-sizeof(int);  
   File.seekg (0, ios::beg);
   int TmpDimension;
   ReadLittleEndian(File, TmpDimension);
-
-  if (Length/sizeof(double)<(unsigned)TmpDimension)
+  // test: (TmpDimension<INT_MAX/sizeof(double))&&
+  if (((std::streampos)Length/(std::streampos)sizeof(double)<(std::streampos)TmpDimension))
     {      
-      cout << "Error reading complex vector "<<fileName<<": estimated length "<<Length/(2*sizeof(double))<<" vs dimension "<<TmpDimension<<endl;
-      if ((unsigned)TmpDimension==Length/sizeof(double))
+      cout << "Error reading complex vector "<<fileName<<": estimated length "<<(std::streampos)Length/(2*sizeof(double))<<" vs dimension "<<TmpDimension<<endl;
+      if ((std::streampos)TmpDimension==(std::streampos)Length/(std::streampos)sizeof(double))
 	cout << "This could be a real vector!"<<endl;
       exit(1);
     }

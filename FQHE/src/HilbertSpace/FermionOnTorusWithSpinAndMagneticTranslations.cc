@@ -1538,7 +1538,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::GenerateStates()
 	  else
 	    {
 	      TmpStateArrayFlag[0] = false;
-	      --TmpNbr;	      
+	      --TmpNbr;
 	    }
 	  for (int j = 1; j < CurrentNbrState; ++j)
 	    {
@@ -1574,7 +1574,11 @@ int FermionOnTorusWithSpinAndMagneticTranslations::GenerateStates()
   unsigned long TmpState;
   unsigned long TmpState2;
   int TmpSignature;
+  unsigned long TmpReorderingSignUp;
+  unsigned long TmpReorderingSignDown;
   unsigned long TmpReorderingSign;
+  int TmpNbrParticleUp;
+  int TmpNbrParticleDown;
   int TmpNbrParticle;
   for (int i = 0; i <maxHighestBit; ++i) 
     {
@@ -1585,6 +1589,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::GenerateStates()
 	  bool* TmpStateArrayFlag = TmpStateDescriptionFlag[i];
 	  for (int j = 0; j < CurrentNbrState; ++j)
 	    {
+	      // old code:
 	      if (TmpStateArrayFlag[j] == true)
 		{
 		  this->StateDescription[Pos] = TmpStateArray[j];
@@ -1617,9 +1622,63 @@ int FermionOnTorusWithSpinAndMagneticTranslations::GenerateStates()
 			    }			  
 			}
 		    }
-		  this->ReorderingSign[Pos] = TmpReorderingSign;
+		  // do not assign this result, just keep for comparison
+		  // this->ReorderingSign[Pos] = TmpReorderingSign;
+		  // ++Pos;
+		}
+	      // end old code
+	      // new code:
+	      if (TmpStateArrayFlag[j] == true)
+		{
+		  this->StateDescription[Pos] = TmpStateArray[j];
+		  this->StateHighestBit[Pos] = i;
+		  this->NbrStateInOrbit[Pos] = this->FindNumberXTranslation(this->StateDescription[Pos]);		  
+		  TmpState = this->StateDescription[Pos];
+		  TmpSignature = 0;
+		  TmpReorderingSignUp = (unsigned long) 0;
+		  TmpReorderingSignDown = (unsigned long) 0;
+		  if (((this->NbrFermionsUp & 1) == 0)||((this->NbrFermionsDown & 1) == 0))
+		    {
+		      for (int k = 1; k <= this->NbrStateInOrbit[Pos]; ++k)
+			{
+			  TmpState2 = TmpState & this->MomentumMask;
+			  TmpState =  (TmpState >> this->StateShift) | (TmpState2 << this->ComplementaryStateShift);
+			  TmpNbrParticleUp = 0;
+			  TmpNbrParticleDown = 0;
+			  for (int l = 0; l < this->StateShift; l+=2)
+			    {
+			      if (TmpState2 & 0x1ul)
+				++TmpNbrParticleDown;
+			      if (TmpState2 & 0x2ul)
+				++TmpNbrParticleUp;
+			      TmpState2 >>= 2;
+			    }
+			  if ((TmpNbrParticleUp & 1)&&((this->NbrFermionsUp & 1) == 0))
+			    {			 
+			      TmpReorderingSignUp |= (((TmpReorderingSignUp << 1) & (((unsigned long) 0x1) << k))) ^ (((unsigned long) 0x1) << k);
+			      ++TmpSignature;
+			    }
+			  else
+			    {
+			      TmpReorderingSignUp |= ((TmpReorderingSignUp << 1) & (((unsigned long) 0x1) << k));
+			    }
+			  if ((TmpNbrParticleDown & 1)&&((this->NbrFermionsDown & 1) == 0))
+			    {			 
+			      TmpReorderingSignDown |= (((TmpReorderingSignDown << 1) & (((unsigned long) 0x1) << k))) ^ (((unsigned long) 0x1) << k);
+			      ++TmpSignature;
+			    }
+			  else
+			    {
+			      TmpReorderingSignDown |= ((TmpReorderingSignDown << 1) & (((unsigned long) 0x1) << k));
+			    }			  
+
+			}
+		    }
+		  this->ReorderingSign[Pos] = TmpReorderingSignUp^TmpReorderingSignDown;
+		  // cout << "old: "<<TmpReorderingSign<<", new: "<<this->ReorderingSign[Pos]<<endl;
 		  ++Pos;
 		}
+	      
 	    }
 	  delete[] TmpStateArray;
 	  delete[] TmpStateArrayFlag;

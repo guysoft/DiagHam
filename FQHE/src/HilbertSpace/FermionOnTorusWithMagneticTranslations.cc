@@ -662,6 +662,26 @@ ostream& FermionOnTorusWithMagneticTranslations::PrintState (ostream& Str, int s
   return Str;
 }
 
+#include <string>
+using std::string;
+
+string convBase(unsigned long v, long base)
+{
+  string digits = "0123456789abcdef";
+  string result;
+  if((base < 2) || (base > 16)) {
+    result = "Error: base out of range.";
+  }
+  else {
+    do {
+      result = digits[v % base] + result;
+      v /= base;
+    }
+    while(v);
+  }
+  return result;
+}
+
 // generate all states corresponding to the constraints
 // 
 // return value = hilbert space dimension
@@ -775,12 +795,15 @@ int FermionOnTorusWithMagneticTranslations::GenerateStates()
 		  TmpState = this->StateDescription[Pos];
 		  TmpSignature = 0;
 		  TmpReorderingSign = (unsigned long) 0;
+		  cout << "Reordering sign for "<<convBase(this->StateDescription[Pos],2)
+		       << " with "<<this->NbrStateInOrbit[Pos]<<" orbits"<<endl;
 		  if ((this->NbrFermions & 1) == 0)
 		    {
 		      for (int k = 1; k <= this->NbrStateInOrbit[Pos]; ++k)
 			{
 			  TmpState2 = TmpState & this->MomentumMask;
 			  TmpState =  (TmpState >> this->StateShift) | (TmpState2 << this->ComplementaryStateShift);
+			  cout << "Translation "<<k<<" "<<convBase(TmpState,2)<<endl;
 			  TmpNbrParticle = 0;
 			  for (int l = 0; l < this->StateShift; ++l)
 			    {
@@ -789,13 +812,16 @@ int FermionOnTorusWithMagneticTranslations::GenerateStates()
 			      TmpState2 >>= 1;
 			    }
 			  if (TmpNbrParticle & 1)
-			    {			 
+			    {
 			      TmpReorderingSign |= (((TmpReorderingSign << 1) & (((unsigned long) 0x1) << k))) ^ (((unsigned long) 0x1) << k);
+			      cout << "odd number translated: signs: "<<convBase(TmpReorderingSign,2)<<endl;
+
 			      ++TmpSignature;
 			    }
 			  else
 			    {
 			      TmpReorderingSign |= ((TmpReorderingSign << 1) & (((unsigned long) 0x1) << k));
+			      cout << "even number translated: signs: "<<convBase(TmpReorderingSign,2)<<endl;
 			    }			  
 			}
 		    }
