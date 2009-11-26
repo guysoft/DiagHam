@@ -51,12 +51,15 @@ class ParticleOnSphereProjectorHamiltonian : public AbstractQHEOnSphereNBodyInte
 
  protected:
 
-  // vector state describing the projector
-  RealVector ProjectorState;
+
+  // number of projectors
+  int NbrProjectors;
+  // vector states describing each projector
+  RealVector* ProjectorStates;
   // number of particles for the projector state
   int ProjectorNbrParticles;
-  // space associated to the projector state
-  ParticleOnSphere* ProjectorSpace;
+  // spaces associated to the projector states
+  ParticleOnSphere** ProjectorSpaces;
   
 
  public:
@@ -83,6 +86,24 @@ class ParticleOnSphereProjectorHamiltonian : public AbstractQHEOnSphereNBodyInte
 				       AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
 				       char* precalculationFileName = 0);
 
+  // constructor from multiple projectors
+  //
+  // particles = Hilbert space associated to the system
+  // nbrParticles = number of particles
+  // lzmax = maximum Lz value reached by a particle in the state
+  // projectorState = states describing each projector
+  // projectorSpace = spaces associated to the projector states
+  // projectorNbrParticles = number of projectors
+  // projectorNbrParticles = number of particles for the projector state
+  // l2Factor = multiplicative factor in front of an additional L^2 operator in the Hamiltonian (0 if none)
+  // architecture = architecture to use for precalculation
+  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+  // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
+  // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
+  ParticleOnSphereProjectorHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
+				       RealVector* projectorStates, ParticleOnSphere** projectorSpaces, int NbrProjectors, int projectorNbrParticles, double l2Factor, 
+				       AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, 
+				       char* precalculationFileName);
 
   // destructor
   //

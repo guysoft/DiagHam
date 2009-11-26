@@ -19,6 +19,8 @@
 
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
 
+#include "GeneralTools/MultiColumnASCIIFile.h"
+
 #include "Options/Options.h"
 
 #include "GeneralTools/ConfigurationParser.h"
@@ -62,6 +64,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-lz", "twice the inital momentum projection for the system", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of lz value to evaluate", -1);
   (*SystemGroup) += new  SingleStringOption ('\n', "projector-state", "file describing the projector state");
+  (*SystemGroup) += new  SingleStringOption ('\n', "multiple-projectors", "one column formatted file giving the list of projector states");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing an optional 2-body interaction in terms of the pseudo-potential");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
@@ -111,26 +114,84 @@ int main(int argc, char** argv)
   char* OutputNameLz = new char [256 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
   sprintf (OutputNameLz, "bosons_%s_n_%d_2s_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax);
 
-  if (Manager.GetString("projector-state") == 0)
+  if ((Manager.GetString("projector-state") == 0) && (Manager.GetString("multiple-projectors") == 0))
     {
       cout << "a projetor state has to be provided" << endl;
       return 0;
     }
+
+  int NbrProjectors = 1;
   int ProjectorNbrParticles = 0;
   int ProjectorLzMax = 0;
   int ProjectorTotalLz = 0;
+  BosonOnSphereShort** ProjectorSpaces;  
+  RealVector* ProjectorStates;
   bool ProjectorFermionFlag = true;
-  if (FQHEOnSphereFindSystemInfoFromVectorFileName(Manager.GetString("projector-state"), ProjectorNbrParticles, ProjectorLzMax, ProjectorTotalLz, ProjectorFermionFlag) == false)
+  if (Manager.GetString("projector-state") != 0)
     {
-      cout << "can't parse information from " << Manager.GetString("projector-state") << endl;
-      return 0;
+      if (FQHEOnSphereFindSystemInfoFromVectorFileName(Manager.GetString("projector-state"), ProjectorNbrParticles, ProjectorLzMax, ProjectorTotalLz, ProjectorFermionFlag) == false)
+	{
+	  cout << "can't parse information from " << Manager.GetString("projector-state") << endl;
+	  return 0;
+	}
+      ProjectorSpaces = new BosonOnSphereShort*[NbrProjectors];
+      ProjectorStates = new RealVector[NbrProjectors];
+      ProjectorSpaces[0] = new BosonOnSphereShort(ProjectorNbrParticles, ProjectorTotalLz, ProjectorLzMax);
+      if (ProjectorStates[0].ReadVector(Manager.GetString("projector-state")) == false)
+	{
+	  cout << "error while reading " << Manager.GetString("projector-state") << endl;
+	  return -1;
+	}
     }
-  BosonOnSphereShort* ProjectorSpace = new BosonOnSphereShort(ProjectorNbrParticles, ProjectorTotalLz, ProjectorLzMax);
-  RealVector ProjectorState;
-  if (ProjectorState.ReadVector(Manager.GetString("projector-state")) == false)
+  else
     {
-      cout << "error while reading " << Manager.GetString("projector-state") << endl;
-      return -1;
+      MultiColumnASCIIFile Description;
+      if (Description.Parse(Manager.GetString("multiple-projectors")) == false)
+	{
+	  Description.DumpErrors(cout);
+	  return -1;
+	}
+      NbrProjectors = Description.GetNbrLines();
+      ProjectorSpaces = new BosonOnSphereShort*[NbrProjectors];
+      ProjectorStates = new RealVector[NbrProjectors];
+      if (FQHEOnSphereFindSystemInfoFromVectorFileName(Description(0, 0), ProjectorNbrParticles, ProjectorLzMax, ProjectorTotalLz, ProjectorFermionFlag) == false)
+	{
+	  cout << "can't parse information from " << Description(0, 0) << endl;
+	  return 0;
+	}
+      if (ProjectorStates[0].ReadVector(Description(0, 0)) == false)
+	{
+	  cout << "error while reading " << Description(0, 0) << endl;
+	  return -1;
+	}
+      ProjectorSpaces[0] = new BosonOnSphereShort(ProjectorNbrParticles, ProjectorTotalLz, ProjectorLzMax);
+      cout << ProjectorTotalLz << endl;
+      int TmpProjectorNbrParticles = 0;
+      int TmpProjectorLzMax = 0;
+      for (int i = 1; i < NbrProjectors; ++i)
+	{
+	  int TmpProjectorTotalLz = 0;
+	  if (FQHEOnSphereFindSystemInfoFromVectorFileName(Description(0, i), TmpProjectorNbrParticles, TmpProjectorLzMax, TmpProjectorTotalLz, ProjectorFermionFlag) == false)
+	    {
+	      cout << "can't parse information from " << Description(0, i) << endl;
+	      return 0;
+	    }
+	  cout << TmpProjectorTotalLz << endl;
+	  if (TmpProjectorNbrParticles != ProjectorNbrParticles)
+	    {
+	      cout << "error number of particles in " << Description(0, i) << " does not match the one in " << Description(0, 0) << endl;	      
+	    }
+	  if (ProjectorLzMax != TmpProjectorLzMax)
+	    {
+	      cout << "error number of flux quanta in " << Description(0, i) << " does not match the one in " << Description(0, 0) << endl;	      
+	    }
+	  ProjectorSpaces[i] = new BosonOnSphereShort(ProjectorNbrParticles, TmpProjectorTotalLz, ProjectorLzMax);
+ 	  if (ProjectorStates[i].ReadVector(Description(0, i)) == false)
+	    {
+	      cout << "error while reading " << Description(0, i) << endl;
+	      return -1;
+	    }
+	}
     }
 
   int Max = (LzMax * NbrParticles);
@@ -158,7 +219,8 @@ int main(int argc, char** argv)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
       if (Manager.GetString("interaction-file") == 0)
 	{
-	  Hamiltonian = new ParticleOnSphereProjectorHamiltonian(Space, NbrParticles, LzMax, ProjectorState, ProjectorSpace, ProjectorNbrParticles,
+	  Hamiltonian = new ParticleOnSphereProjectorHamiltonian(Space, NbrParticles, LzMax, ProjectorStates, (ParticleOnSphere**) ProjectorSpaces, 
+								 NbrProjectors, ProjectorNbrParticles,
 								 ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),
 								 Architecture.GetArchitecture(), 
 								 Memory, DiskCacheFlag,
@@ -185,8 +247,8 @@ int main(int argc, char** argv)
 	      return -1;	  
 	    }
 	  AbstractQHEOnSphereHamiltonian** TmpHamiltonians = new AbstractQHEOnSphereHamiltonian*[2];
-	  TmpHamiltonians[0] = new ParticleOnSphereProjectorHamiltonian(Space, NbrParticles, LzMax, ProjectorState, 
-									ProjectorSpace, ProjectorNbrParticles,
+	  TmpHamiltonians[0] = new ParticleOnSphereProjectorHamiltonian(Space, NbrParticles, LzMax, ProjectorStates, 
+									(ParticleOnSphere**) ProjectorSpaces, NbrProjectors, ProjectorNbrParticles,
 									((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),
 									Architecture.GetArchitecture(), 
 									Memory, DiskCacheFlag,

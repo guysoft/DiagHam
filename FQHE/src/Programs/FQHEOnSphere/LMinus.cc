@@ -22,7 +22,7 @@
 #include "Tools/FQHESpectrum/QHEOnSphereLzSortedSpectrum.h"
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
 
-#include "HilbertSpace/BosonOnSphere.h"
+#include "HilbertSpace/BosonOnSphereShort.h"
 #include "HilbertSpace/FermionOnSphere.h"
 #include "HilbertSpace/FermionOnSphereUnlimited.h"
 
@@ -142,15 +142,15 @@ int main(int argc, char** argv)
     }
   else
     {
-      IntialSpace = new BosonOnSphere(NbrParticles, Lz, LzMax);
+      IntialSpace = new BosonOnSphereShort(NbrParticles, Lz, LzMax);
     }
   for (int i = 1; i <= NbrLMinus; ++i)
     {
-      if (Lz - (2 * i) < - LzMax)
-	{
-	  cout << "Cannot apply LMinus more than "<<i-1<<" times"<<endl;
-	  exit(-1);
-	}
+//       if (Lz - (2 * i) < - LzMax)
+// 	{
+// 	  cout << "Cannot apply LMinus more than "<<i-1<<" times"<<endl;
+// 	  exit(-1);
+// 	}
       cout << "Creating space for Lz="<<Lz - (2 * i)<<"/2"<<endl;
       if (FermionFlag == true)
 	{
@@ -176,7 +176,7 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  TargetSpace = new BosonOnSphere(NbrParticles, Lz - (2 * i), LzMax);
+	  TargetSpace = new BosonOnSphereShort(NbrParticles, Lz - (2 * i), LzMax);
 	}
       IntialSpace->SetTargetSpace(TargetSpace);
       TargetVector = RealVector(TargetSpace->GetHilbertSpaceDimension(), true);
