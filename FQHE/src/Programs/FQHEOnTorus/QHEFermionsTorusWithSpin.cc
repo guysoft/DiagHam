@@ -68,10 +68,11 @@ int main(int argc, char** argv)
   double XRatio = NbrFermions / 4.0;
   if (Manager.GetDouble("ratio")>0.0)
     XRatio=Manager.GetDouble("ratio");
-  
+
+  int Min = 0;
   int Max = MaxMomentum;
-  if (argc >= 4)
-    Max = atoi (argv[3]);
+  if (Manager.GetInteger("x-momentum")>0)
+    cout << "x-momentum is not used for the moment"<<endl;
   ofstream File;
 //  File.open(OutputNameLz, ios::binary | ios::out);
 //  int Max = ((MaxMomentum - NbrFermions) * NbrFermions);
@@ -80,6 +81,7 @@ int main(int argc, char** argv)
 //  NbrFermions = 3;
 //  XRatio = 1.0;
 //  MaxMomentum = 3;
+  cout << "Max="<<Max<<", MaxMomentum="<<MaxMomentum<<endl;
   double Zeeman = 0.0;
   double ZeemanMax = 0.0;
   int NbrIter = 1;

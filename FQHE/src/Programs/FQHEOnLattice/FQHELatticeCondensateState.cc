@@ -1,5 +1,9 @@
 #include "HilbertSpace/BosonOnLattice.h"
 #include "HilbertSpace/HardCoreBosonOnLattice.h"
+#include "HilbertSpace/BosonOnLatticeGeneric.h"
+#include "HilbertSpace/HardCoreBosonOnLatticeGeneric.h"
+
+#include "Tools/FQHESpectrum/LatticePhases.h"
 
 #include "Operator/ParticleOnLatticeOneBodyOperator.h"
 
@@ -233,6 +237,7 @@ int main(int argc, char** argv)
   ArchitectureManager Architecture;
 
   Manager += SystemGroup;
+  LatticePhases::AddOptionGroup(&Manager);
   Architecture.AddOptionGroup(&Manager);
   Manager += PrecalculationGroup;
   Manager += MiscGroup;
@@ -292,28 +297,62 @@ int main(int argc, char** argv)
   bool Statistics=false;
   bool HardCore=false;
   int NbrBosonsCondensate=0;
-  
-  
-  if (FQHEOnLatticeFindSystemInfoFromVectorFileName(CondensateFile, NbrBosonsCondensate, Lx, Ly, Interaction, NbrFluxQuanta, TmpI, Statistics, HardCore) == false)
+  bool GenericLattice=false;
+  int NbrSites=0;
+  int NbrSubLattices=1;
+  LatticePhases *Lattice = NULL;
+  if ((Manager.GetString("lattice-definition")!=NULL)||(FQHEOnLatticeHaveGeneralLattice(CondensateFile)))
     {
-      cout<<"Please use standard file-names, or indicate all system parameters!"<<endl;
-      exit(1);
+      GenericLattice=true;
+      if (Manager.GetString("lattice-definition")==NULL)
+	{
+	  cout << "Please indicate the file with the lattice-definition for this vector"<<endl;
+	  exit(1);
+	}
+      // get the lattice geometry
+      Lattice = new LatticePhases();
+      NbrSites = Lattice->GetNbrSites();
+      Lx = Lattice->GetLatticeLength(0);
+      Ly = Lattice->GetLatticeLength(1);
+      NbrSubLattices = Lattice->GetNbrSubLattices();
+      char* LatticeName = Lattice->GeometryString();
+      bool HaveContFlux;
+      double ContFlux;
+      if (strstr(CondensateFile, LatticeName)==0)
+	{
+	  cout << "The given lattice parameters do not coincide with the filename, verify lattice definition, and repetition of unit cells"<<endl;
+	}
+      delete [] LatticeName;
+      if (FQHEOnLatticeFindSystemInfoFromGeneralVectorFileName(CondensateFile, NbrBosonsCondensate, Interaction, NbrFluxQuanta, TmpI, Statistics, HardCore, HaveContFlux, ContFlux) == false)
+	{
+	  cout<<"Please use standard file-names, or indicate all necessary system parameters!"<<endl;
+	  exit(1);
+	}
+      
     }
-
+  else
+    {
+      if (FQHEOnLatticeFindSystemInfoFromVectorFileName(CondensateFile, NbrBosonsCondensate, Lx, Ly, Interaction, NbrFluxQuanta, TmpI, Statistics, HardCore) == false)
+	{
+	  cout<<"Please use standard file-names, or indicate all system parameters!"<<endl;
+	  exit(1);
+	}
+      NbrSites = Lx*Ly;
+    }
   HardCore=(HardCore||Manager.GetBoolean("hard-core"));
-
   if (Manager.GetBoolean("no-hard-core"))
     HardCore=false;
 
   if (NbrBosons==0) NbrBosons=NbrBosonsCondensate;
 
   cout << "Calculating Gutzwiller state for "<<NbrBosons<<" bosons on a lattice with geometry"<<endl;
-  cout << "Lx="<<Lx<<", Ly="<<Ly<<", N_phi="<<NbrFluxQuanta;
+  cout << "Lx="<<Lx<<", Ly="<<Ly<<", NbrSubLattices="<<NbrSubLattices<<", N_phi="<<NbrFluxQuanta;
   if (HardCore)
     cout <<" and hardcore interactions."<<endl;
   else
     cout << endl;
 
+  
   ComplexVector CondensateState;
   RealVector UnoccupiedNorms;
   RealVector GeneralParameters;
@@ -332,6 +371,11 @@ int main(int argc, char** argv)
     {
       if (Manager.GetString("alt-input")!=NULL)
 	{
+	  if (GenericLattice)
+	    {
+	      cout << "General lattice mode does not support alternative input method"<<endl;
+	      exit(1);
+	    }
 	  MultiColumnASCIIFile Parser(' ');
 
 	  if (Parser.Parse(CondensateFile)==false)
@@ -345,14 +389,14 @@ int main(int argc, char** argv)
 	      cout<<"Error: Four columns, [ x y theta phi ] expected in condensate file !"<<endl;
 	      exit(1);
 	    }
-	  if (Parser.GetNbrLines()!=Lx*Ly)
+	  if (Parser.GetNbrLines()!=NbrSites)
 	    {
 	      cout<<"Error: Wrong number of lines in condensate file !"<<endl;
 	      exit(1);
 	    }
 
-	  CondensateState.Resize(Lx*Ly);
-	  UnoccupiedNorms.Resize(Lx*Ly);
+	  CondensateState.Resize(NbrSites);
+	  UnoccupiedNorms.Resize(NbrSites);
 
 	  int *x = Parser.GetAsIntegerArray(0);
 	  int *y = Parser.GetAsIntegerArray(1);
@@ -362,7 +406,7 @@ int main(int argc, char** argv)
 
 	  ParticleOnLattice *Space = new BosonOnLattice(1, Lx, Ly, NbrFluxQuanta, MemorySpace);
 
-	  int Dim=Lx*Ly;
+	  int Dim=NbrSites;
 	  Complex Tmp;
 	  if (Manager.GetInteger("alt-format")==0)
 	    {
@@ -408,22 +452,30 @@ int main(int argc, char** argv)
 	      cout<<"Could not read condensate state!"<<endl;
 	      exit(1);
 	    }
-	  if (CondensateState.GetVectorDimension()!=Lx*Ly)
+	  if (CondensateState.GetVectorDimension()!=NbrSites)
 	    {
 	      cout<<"Number of sites in condensate does not match the lattice Lx="<<Lx<<", Ly="<<Ly<<"!"<<endl;
 	      exit(1);
 	    }
-	  UnoccupiedNorms.Resize(Lx*Ly);
-	  for (int i=0; i<Lx*Ly; ++i) UnoccupiedNorms[i]=0.0;
+	  UnoccupiedNorms.Resize(NbrSites);
+	  for (int i=0; i<NbrSites; ++i) UnoccupiedNorms[i]=0.0;
 	}
     }  
   
 
   ParticleOnLattice* Space;
-  if (HardCore)
-    Space =new HardCoreBosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
-  else Space = new BosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
-
+  if (GenericLattice)
+    {
+      if (HardCore)
+	Space = new HardCoreBosonOnLatticeGeneric(NbrBosons, Lattice, NbrFluxQuanta, MemorySpace);
+      else Space = new BosonOnLatticeGeneric(NbrBosons, Lattice, NbrFluxQuanta, MemorySpace);
+    }
+  else
+    {
+      if (HardCore)
+	Space =new HardCoreBosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
+      else Space = new BosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
+    }
   if (GutzwillerFile!=0)
     {
       GutzwillerOnLatticeWaveFunction GutzwillerState(NbrBosons, HardCore, Space, &GeneralParameters);

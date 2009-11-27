@@ -128,7 +128,7 @@ int main(int argc, char** argv)
   int NbrSites=0;
   int NbrSubLattices=1;
   LatticePhases *Lattice = NULL;
-  if (FQHEOnLatticeHaveGeneralLattice(VectorFiles[0]))
+  if ((Manager.GetString("lattice-definition")!=NULL)||(FQHEOnLatticeHaveGeneralLattice(VectorFiles[0])))
     {
       GenericLattice=true;
       if (Manager.GetString("lattice-definition")==NULL)

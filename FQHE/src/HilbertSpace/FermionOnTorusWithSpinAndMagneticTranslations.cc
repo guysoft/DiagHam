@@ -1674,7 +1674,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::GenerateStates()
 
 			}
 		    }
-		  this->ReorderingSign[Pos] = TmpReorderingSignUp^TmpReorderingSignDown;
+		  this->ReorderingSign[Pos] = TmpReorderingSign;// TmpReorderingSignUp^TmpReorderingSignDown;
 		  // cout << "old: "<<TmpReorderingSign<<", new: "<<this->ReorderingSign[Pos]<<endl;
 		  ++Pos;
 		}

@@ -2021,17 +2021,17 @@ bool ComplexVector::ReadVector (const char* fileName)
       return false;
     }
 
-  std::streampos ZeroPos, MaxPos;
+  (std::streampos) ZeroPos, MaxPos;
   File.seekg (0, ios::beg);
   ZeroPos = File.tellg();
   File.seekg (0, ios::end);
   MaxPos = File.tellg ();
   
-  std::streampos Length = MaxPos-ZeroPos-sizeof(int);  
+  (std::streampos) Length = MaxPos-ZeroPos-sizeof(int);  
   File.seekg (0, ios::beg);
   int TmpDimension;
   ReadLittleEndian(File, TmpDimension);
-  // test: (TmpDimension<INT_MAX/sizeof(double))&&
+  // maybe add additional test: (TmpDimension<INT_MAX/sizeof(double))&&
   if (((std::streampos)Length/(std::streampos)sizeof(double)<(std::streampos)TmpDimension))
     {      
       cout << "Error reading complex vector "<<fileName<<": estimated length "<<(std::streampos)Length/(2*sizeof(double))<<" vs dimension "<<TmpDimension<<endl;

@@ -66,6 +66,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption('n',"no-hard-core","Do not use Hilbert-space of hard-core bosons (overriding detection from filename)");
 
   (*SystemGroup) += new BooleanOption  ('\n', "density", "plot density insted of density-density correlation", false);
+  (*SystemGroup) += new BooleanOption  ('\n', "fluctuations", "plot local density fluctuations", false);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);  
   (*MiscGroup) += new BooleanOption  ('g', "gnuplot", "format output for gnuplot, and make plot");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -81,7 +82,8 @@ int main(int argc, char** argv)
   int NbrVectors;
   char** VectorFiles = Manager.GetStrings("states",NbrVectors);
 
-  bool DensityFlag = ((BooleanOption*) Manager["density"])->GetBoolean();
+  bool DensityFlag = Manager.GetBoolean("density");
+  bool FluctuationFlag = Manager.GetBoolean("fluctuations");
 
   if (NbrVectors==0)
     {
@@ -156,10 +158,18 @@ int main(int argc, char** argv)
 	  return -1;      
 	}
       VectorDimension=State.GetVectorDimension();
-      char* OutputNameCorr = new char [10 + strlen (VectorFiles[i])];
+      char* OutputNameCorr = new char [64 + strlen (VectorFiles[i])];
       char* ending;
       if ((ending=strstr(VectorFiles[i],".vec"))!=0)
-	strncpy(OutputNameCorr, VectorFiles[i], ending-VectorFiles[i]);
+	{
+	  char *last;
+	  while ((last=strstr(ending+3,".vec"))!=0)
+	    {
+	      ending = last;
+	    }
+	  strncpy(OutputNameCorr, VectorFiles[i], ending-VectorFiles[i]);
+	  OutputNameCorr[ending-VectorFiles[i]]='\0';
+	}
       else
 	strcpy(OutputNameCorr, VectorFiles[i]);
       if (ReferenceSite!=0)
@@ -173,10 +183,14 @@ int main(int argc, char** argv)
 	  sprintf (PlotNameCmd, "%s.gp", OutputNameCorr);
 	  sprintf (PlotNamePS, "%s.ps", OutputNameCorr);
 	}
-      if (DensityFlag == false)
-	sprintf (OutputNameCorr, "%s.rho_rho.dat", OutputNameCorr);
-      else
-	sprintf (OutputNameCorr, "%s.rho.dat", OutputNameCorr);
+      if (FluctuationFlag == false)
+	{
+	  if (DensityFlag == false)
+	    sprintf (OutputNameCorr, "%s.rho_rho.dat", OutputNameCorr);
+	  else
+	    sprintf (OutputNameCorr, "%s.rho.dat", OutputNameCorr);
+	}
+      else sprintf (OutputNameCorr, "%s.sigma_rho.dat", OutputNameCorr);
       
 	
       cout << "<in  "<<VectorFiles[i]<<endl<<">out "<<OutputNameCorr<<endl;
@@ -208,12 +222,83 @@ int main(int argc, char** argv)
       Complex Tmp;
       int CellPosition[2];
       RealVector SitePosition;
-      if (DensityFlag == false)
+      if (FluctuationFlag == false)
 	{
-	  File << "# density-density correlation for " << VectorFiles[i]<< endl;
+	  if (DensityFlag == false)
+	    {
+	      File << "# density-density correlation for " << VectorFiles[i]<< endl;
+	      File << "# x\ty\tg"<< endl;
+	      ParticleOnLatticeOneBodyOperator Operator0 (Space, ReferenceSite, ReferenceSite);
+	      Complex Zero=Operator0.MatrixElement(State, State);
+	      for (int x = 0; x < Lx; ++x)
+		{
+		  for (int y = 0; y < Ly; ++y)
+		    {
+		      for (int Sub=0; Sub<NbrSubLattices; ++Sub)
+			{
+			  int q=Space->EncodeQuantumNumber(x, y, Sub, Tmp);
+			  ParticleOnLatticeDensityDensityOperator Operator (Space, q, ReferenceSite);
+			  double ME;
+			  if (q==ReferenceSite)
+			    ME = Real(Zero)*Real(Zero);
+			  else
+			    ME=Real(Operator.MatrixElement(State, State));
+			  double X,Y;
+			  if (GenericLattice)
+			    {
+			      CellPosition[0]=x;
+			      CellPosition[1]=y;
+			      SitePosition = Lattice->GetSitePosition(CellPosition,Sub);
+			      X=SitePosition[0];
+			      Y=SitePosition[1];
+			    }
+			  else
+			    {
+			      X=(double)x;
+			      Y=(double)y;
+			    }
+		      
+			  File << X << "\t" << Y << "\t" << ME << endl;
+			}
+		    }
+		  if (Plot) File << endl;
+		}
+	    }
+	  else
+	    {
+	      File << "# density-profile for " << VectorFiles[i]<< endl;
+	      File << "# x\ty\tg"<< endl;
+	      for (int x = 0; x < Lx; ++x)
+		{
+		  for (int y = 0; y < Ly; ++y)
+		    for (int Sub=0; Sub<NbrSubLattices; ++Sub)
+		      {
+			int q=Space->EncodeQuantumNumber(x, y, Sub, Tmp);
+			ParticleOnLatticeOneBodyOperator Operator (Space, q, q);
+			double X,Y;
+			if (GenericLattice)
+			  {
+			    CellPosition[0]=x;
+			    CellPosition[1]=y;
+			    SitePosition = Lattice->GetSitePosition(CellPosition,Sub);
+			    X=SitePosition[0];
+			    Y=SitePosition[1];
+			  }
+			else
+			  {
+			    X=(double)x;
+			    Y=(double)y;
+			  }
+			File << X << "\t" << Y << "\t" << Real(Operator.MatrixElement(State, State)) << endl;		  
+		      }
+		  if (Plot) File << endl;
+		}
+	    }
+	}
+      else
+	{
+	  File << "# local density fluctuations for " << VectorFiles[i]<< endl;
 	  File << "# x\ty\tg"<< endl;
-	  ParticleOnLatticeOneBodyOperator Operator0 (Space, ReferenceSite, ReferenceSite);
-	  Complex Zero=Operator0.MatrixElement(State, State);
 	  for (int x = 0; x < Lx; ++x)
 	    {
 	      for (int y = 0; y < Ly; ++y)
@@ -221,12 +306,10 @@ int main(int argc, char** argv)
 		  for (int Sub=0; Sub<NbrSubLattices; ++Sub)
 		    {
 		      int q=Space->EncodeQuantumNumber(x, y, Sub, Tmp);
-		      ParticleOnLatticeDensityDensityOperator Operator (Space, q, ReferenceSite);
-		      double ME;
-		      if (q==ReferenceSite)
-			ME = Real(Zero)*Real(Zero);
-		      else
-			ME=Real(Operator.MatrixElement(State, State));
+		      ParticleOnLatticeOneBodyOperator OperatorN (Space, q, q);
+		      ParticleOnLatticeDensityDensityOperator OperatorNSqr (Space, q, q);
+		      double N=Real(OperatorN.MatrixElement(State, State));
+		      double NSqr=Real(OperatorNSqr.MatrixElement(State, State));
 		      double X,Y;
 		      if (GenericLattice)
 			{
@@ -242,39 +325,9 @@ int main(int argc, char** argv)
 			  Y=(double)y;
 			}
 		      
-		      File << X << "\t" << Y << "\t" << ME << endl;
+		      File << X << "\t" << Y << "\t" << NSqr+N*(1-N) << endl;
 		    }
 		}
-	      if (Plot) File << endl;
-	    }
-	}
-      else
-	{
-	  File << "# density-profile for " << VectorFiles[i]<< endl;
-	  File << "# x\t<\tg"<< endl;
-	  for (int x = 0; x < Lx; ++x)
-	    {
-	      for (int y = 0; y < Ly; ++y)
-		for (int Sub=0; Sub<NbrSubLattices; ++Sub)
-		  {
-		    int q=Space->EncodeQuantumNumber(x, y, Sub, Tmp);
-		    ParticleOnLatticeOneBodyOperator Operator (Space, q, q);
-		    double X,Y;
-		    if (GenericLattice)
-		      {
-			CellPosition[0]=x;
-			CellPosition[1]=y;
-			SitePosition = Lattice->GetSitePosition(CellPosition,Sub);
-			X=SitePosition[0];
-			Y=SitePosition[1];
-		      }
-		    else
-		      {
-			X=(double)x;
-			Y=(double)y;
-		      }
-		    File << X << "\t" << Y << "\t" << Real(Operator.MatrixElement(State, State)) << endl;		  
-		  }
 	      if (Plot) File << endl;
 	    }
 	}
