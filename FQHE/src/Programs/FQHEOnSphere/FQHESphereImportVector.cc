@@ -36,6 +36,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption ('b', "basis", "description of basis in which vector is formatted");
   (*SystemGroup) += new SingleIntegerOption  ('z', "lz-value", "twice the total lz value", 0);
   (*SystemGroup) += new SingleStringOption ('o', "output-state", "use this name for the output vector state instead of standard terminology");
+  (*SystemGroup) += new BooleanOption  ('r', "reverse", "reverse order of states");
+  (*MiscGroup) += new BooleanOption  ('v', "verbose", "give a lot of output");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   Manager.StandardProceedings(argv, argc, cout);
@@ -44,6 +46,7 @@ int main(int argc, char** argv)
   int NbrParticles = Manager.GetInteger("nbr-particles");
   int LzMax = Manager.GetInteger("lzmax");
   int Lz = Manager.GetInteger("lz-value");
+  bool Verbose = Manager.GetBoolean("verbose");
 
   ifstream InputFile;
   if (Manager.GetString("state")!=0)
@@ -103,7 +106,8 @@ int main(int argc, char** argv)
 		  int pos=0, NToBeFound=NbrParticles;
 		  unsigned int State=0x0l;
 		  double Coefficient=1.0, TmpCoeff;
-		  cout << Descriptor << " : " << endl;
+		  if (Verbose)
+		    cout << Descriptor << " : " << endl;
 		  while ((pos<LzMax+1)&&(NToBeFound>0))
 		    {
 		      if (Descriptor[pos]=='1')
@@ -128,8 +132,11 @@ int main(int argc, char** argv)
 		  cout << "LzMax does not correspond to given basis - please check your entry!"<<endl;
 		  exit(-1);
 		}
-	      cout << Index << "\t" << Descriptor << "\t->"<<Signs[Index]<<"*'"<<Map[Index]<<"' : ";
-	      Space->PrintState(cout, Map[Index]) << endl;
+	      if (Verbose)
+		{
+		  cout << Index << "\t" << Descriptor << "\t->"<<Signs[Index]<<"*'"<<Map[Index]<<"' : ";
+		  Space->PrintState(cout, Map[Index]) << endl;
+		}
 	    }	  
 	  LastIndex=Index;	  
 	}
@@ -151,7 +158,13 @@ int main(int argc, char** argv)
 	  }
     }
   else
-    for (int i=0; i<Space->GetHilbertSpaceDimension(); ++i) Map[i]=i;
+    {
+      int Dim=Space->GetHilbertSpaceDimension();
+      if (Manager.GetBoolean("reverse"))
+	for (int i=0; i<Space->GetHilbertSpaceDimension(); ++i) Map[i]=Dim-1-i;
+      else
+	for (int i=0; i<Space->GetHilbertSpaceDimension(); ++i) Map[i]=i;
+    }
   
 
   RealVector ResultingVector(Space->GetHilbertSpaceDimension());
@@ -182,7 +195,8 @@ int main(int argc, char** argv)
 	    Sign = Signs[Index];
 	  std::istringstream LineStream(NextLine);
 	  LineStream >> Value;
-	  cout << Index << "\t" << Value << endl;
+	  if (Verbose)
+	    cout << Index << "\t" << Value << endl;
 	  ResultingVector[Map[Index]]=Sign*Value;
 	  Index++;
 	}
