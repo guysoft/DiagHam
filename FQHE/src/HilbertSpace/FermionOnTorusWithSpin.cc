@@ -335,7 +335,7 @@ AbstractQuantumNumber* FermionOnTorusWithSpin::GetQuantumNumber (int index)
   else
     {
       double Coef;
-      this->SumAudAu(index, Coef);
+      this->SumAduAu(index, Coef);
       TmpList += new SzQuantumNumber (2 * this->NbrFermions - ((int) Coef));
     }    
   if (this->MomentumConstraintFlag == true)
@@ -391,7 +391,7 @@ AbstractHilbertSpace* FermionOnTorusWithSpin::ExtractSubspace (AbstractQuantumNu
       int Count = 0;
       for (int i = 0; i < this->HilbertSpaceDimension; ++i)
 	{
-	  this->SumAudAu(i, Coef);
+	  this->SumAduAu(i, Coef);
 	  if (Coef == Sz)
 	    {
 	      SubspaceStateDescription[Count] = this->StateDescription[i];
@@ -451,7 +451,7 @@ AbstractHilbertSpace* FermionOnTorusWithSpin::ExtractSubspace (AbstractQuantumNu
 	  int SubspaceHilbertSpaceDimension = 0;
 	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
 	    {
-	      this->SumAudAu(i, Coef);
+	      this->SumAduAu(i, Coef);
 	      if ((Coef == Sz) && (this->GetMomentumValue(i) == Momentum))
 		{
 		  TmpConvArray[SubspaceHilbertSpaceDimension] = i;
@@ -515,7 +515,7 @@ AbstractHilbertSpace* FermionOnTorusWithSpin::ExtractSubspace (AbstractQuantumNu
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int FermionOnTorusWithSpin::SumAudAu (int index, double& coefficient)
+int FermionOnTorusWithSpin::SumAduAu (int index, double& coefficient)
 {
   int StateMaxMomentum = this->StateMaxMomentum[index];
   unsigned int State = this->StateDescription[index];
@@ -555,7 +555,7 @@ int FermionOnTorusWithSpin::SumAddAd (int index, double& coefficient)
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int FermionOnTorusWithSpin::AudAu (int index, int m, double& coefficient)
+int FermionOnTorusWithSpin::AduAu (int index, int m, double& coefficient)
 {
   int StateMaxMomentum = this->StateMaxMomentum[index];
   unsigned int State = this->StateDescription[index];
@@ -598,7 +598,7 @@ int FermionOnTorusWithSpin::AddAd (int index, int m, double& coefficient)
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int FermionOnTorusWithSpin::AudAudAuAu (int index, int m1, int m2, int n1, int n2, double& coefficient)
+int FermionOnTorusWithSpin::AduAduAuAu (int index, int m1, int m2, int n1, int n2, double& coefficient)
 {
   int StateMaxMomentum = this->StateMaxMomentum[index];
   unsigned int State = this->StateDescription[index];
@@ -1051,7 +1051,7 @@ int FermionOnTorusWithSpin::AddAddAuAu (int index, int m1, int m2, int n1, int n
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int FermionOnTorusWithSpin::AudAudAdAd (int index, int m1, int m2, int n1, int n2, double& coefficient)
+int FermionOnTorusWithSpin::AduAduAdAd (int index, int m1, int m2, int n1, int n2, double& coefficient)
 {
   int StateMaxMomentum = this->StateMaxMomentum[index];
   unsigned int State = this->StateDescription[index];
@@ -1205,7 +1205,7 @@ int FermionOnTorusWithSpin::AudAudAdAd (int index, int m1, int m2, int n1, int n
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int FermionOnTorusWithSpin::AudAudAuAd (int index, int m1, int m2, int n1, int n2, double& coefficient)
+int FermionOnTorusWithSpin::AduAduAuAd (int index, int m1, int m2, int n1, int n2, double& coefficient)
 {
   int StateMaxMomentum = this->StateMaxMomentum[index];
   unsigned int State = this->StateDescription[index];
@@ -1359,7 +1359,7 @@ int FermionOnTorusWithSpin::AudAudAuAd (int index, int m1, int m2, int n1, int n
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int FermionOnTorusWithSpin::AddAudAuAu (int index, int m1, int m2, int n1, int n2, double& coefficient)
+int FermionOnTorusWithSpin::AddAduAuAu (int index, int m1, int m2, int n1, int n2, double& coefficient)
 {
   int StateMaxMomentum = this->StateMaxMomentum[index];
   unsigned int State = this->StateDescription[index];
@@ -1667,7 +1667,7 @@ int FermionOnTorusWithSpin::AddAddAdAu (int index, int m1, int m2, int n1, int n
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int FermionOnTorusWithSpin::AudAddAdAd (int index, int m1, int m2, int n1, int n2, double& coefficient)
+int FermionOnTorusWithSpin::AduAddAdAd (int index, int m1, int m2, int n1, int n2, double& coefficient)
 {
   int StateMaxMomentum = this->StateMaxMomentum[index];
   unsigned int State = this->StateDescription[index];
@@ -1821,7 +1821,7 @@ int FermionOnTorusWithSpin::AudAddAdAd (int index, int m1, int m2, int n1, int n
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int FermionOnTorusWithSpin::AudAddAuAd (int index, int m1, int m2, int n1, int n2, double& coefficient)
+int FermionOnTorusWithSpin::AduAddAuAd (int index, int m1, int m2, int n1, int n2, double& coefficient)
 {
   int StateMaxMomentum = this->StateMaxMomentum[index];
   unsigned int State = this->StateDescription[index];

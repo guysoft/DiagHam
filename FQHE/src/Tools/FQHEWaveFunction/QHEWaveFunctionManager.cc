@@ -412,7 +412,8 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 		}
 	      bool conventions = Options->GetBoolean("pair-compatibility");
 	      int pairWave = this->Options->GetInteger("pair-wave");
-	      PairedCFOnSphereWithSpinWaveFunction* rst = new PairedCFOnSphereWithSpinWaveFunction(N, LL, pairWave, false, 0.0, Coefficients, conventions, 2);	      
+	      cout << "attention: (hardwired) testing conjugate down spin mode"<<endl;
+	      PairedCFOnSphereWithSpinWaveFunction* rst = new PairedCFOnSphereWithSpinWaveFunction(N, LL, pairWave, false, 0.0, Coefficients, conventions, 2, true);
 	      rst->AdaptAverageMCNorm();
 	      delete [] Coefficients;
 	      return rst;

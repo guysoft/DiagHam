@@ -302,6 +302,14 @@ class FermionOnSphere :  public ParticleOnSphere
   // return value = index of the destination state 
   virtual long AdA (long index, int m, int n, double& coefficient);
 
+  // apply creation operator to a word, using the conventions
+  // for state-coding and quantum numbers of this space
+  // state = word to be acted upon
+  // m = Lz value of particle to be added
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  virtual unsigned long Ad (unsigned long state, int m, double& coefficient);
+
+
   // check whether HilbertSpace implements ordering of operators
   //
   virtual bool HaveOrder ();
@@ -411,6 +419,13 @@ class FermionOnSphere :  public ParticleOnSphere
   // stateDescription = string describing the state
   // return value = corresponding index, -1 if an error occured
   virtual int FindStateIndex(char* stateDescription);
+
+  // carefully test whether state is in Hilbert-space and find corresponding state index
+  //
+  // stateDescription = unsigned integer describing the state
+  // highestBit = maximum nonzero bit reached by a particle in the state (can be given negative, if not known)
+  // return value = corresponding index, or dimension of space, if not found
+  int CarefulFindStateIndex(unsigned long stateDescription, int lzMax);
 
   // convert a fermionic state to its monomial representation
   //

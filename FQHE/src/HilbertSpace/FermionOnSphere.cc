@@ -37,6 +37,7 @@
 #include "FunctionBasis/AbstractFunctionBasis.h"
 #include "GeneralTools/Endian.h"
 #include "GeneralTools/StringTools.h"
+#include "GeneralTools/UnsignedIntegerTools.h"
 #include "MathTools/FactorialCoefficient.h" 
 
 #include <math.h>
@@ -761,6 +762,36 @@ long FermionOnSphere::AdA (long index, int m, int n, double& coefficient)
   return this->TargetSpace->FindStateIndex(TmpState, NewLzMax);
 }
 
+// apply creation operator to a word, using the conventions
+// for state-coding and quantum numbers of this space
+// state = word to be acted upon
+// m = Lz value of particle to be added
+// coefficient = reference on the double where the multiplicative factor has to be stored
+unsigned long FermionOnSphere::Ad (unsigned long state, int m, double& coefficient)
+{
+  if ((state & (0x1ul << m)) != 0)
+    {
+      coefficient=0.0;
+      return 0x0l;
+    }
+  int NewLzMax = getHighestBit(state)-1;
+  coefficient = 1.0;
+  if (m > NewLzMax)
+    NewLzMax = m;
+  else
+    {
+      coefficient *= this->SignLookUpTable[(state >> m) & this->SignLookUpTableMask[m]];
+      coefficient *= this->SignLookUpTable[(state >> (m + 16))  & this->SignLookUpTableMask[m + 16]];
+#ifdef  __64_BITS__
+      coefficient *= this->SignLookUpTable[(state >> (m + 32)) & this->SignLookUpTableMask[m + 32]];
+      coefficient *= this->SignLookUpTable[(state >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
+#endif
+    }
+  state |= (0x1ul << m);
+  return state;
+}
+
+
 // check whether HilbertSpace implements ordering of operators
 //
 bool FermionOnSphere::HaveOrder ()
@@ -853,6 +884,41 @@ int FermionOnSphere::FindStateIndex(char* stateDescription)
     --TmpLzMax;
   return this->FindStateIndex(TmpState, TmpLzMax);
 }
+
+// carefully test whether state is in Hilbert-space and find corresponding state index
+//
+// stateDescription = unsigned integer describing the state
+// highestBit = maximum nonzero bit reached by a particle in the state (can be given negative, if not known)
+// return value = corresponding index, or dimension of space, if not found
+int FermionOnSphere::CarefulFindStateIndex(unsigned long stateDescription, int lzMax)
+{
+   if (bitcount(stateDescription)!=this->NbrFermions)
+    {
+      return this->HilbertSpaceDimension;
+    }
+  if (lzMax<0)
+    {
+      lzMax = getHighestBit(stateDescription)-1;
+    }
+  if (lzMax >= LzMax+1)
+    {
+      return this->HilbertSpaceDimension;
+    }
+  int Index = this->FindStateIndex(stateDescription, lzMax);  
+  if (this->StateDescription[Index] == stateDescription)
+    return Index;
+  else
+    {
+      cout << "Unexpected situation in CarefulFindStateIndex!"<<endl;
+      for (int i=0; i<HilbertSpaceDimension; ++i)
+	if (this->StateDescription[i] == stateDescription)
+	  cout << "Element now found at i="<<i<<", "<<this->StateDescription[i]
+	       <<"="<<stateDescription<<"!"<<endl;      
+      return this->HilbertSpaceDimension;
+    }
+
+}
+
 
 // print a given State
 //

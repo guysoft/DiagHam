@@ -210,47 +210,47 @@ Complex ParticleOnTorusCoulombWithSpinHamiltonian::MatrixElement (ComplexVector&
   return Complex();
 }
 
-// multiply a vector by the current hamiltonian and store result in another vector
-// low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// return value = reference on vectorwhere result has been stored
+// // multiply a vector by the current hamiltonian and store result in another vector
+// // low level function (no architecture optimization)
+// //
+// // vSource = vector to be multiplied
+// // vDestination = vector where result has to be stored
+// // return value = reference on vectorwhere result has been stored
 
-RealVector& ParticleOnTorusCoulombWithSpinHamiltonian::LowLevelMultiply(RealVector& vSource, RealVector& vDestination) 
-{
-  return this->LowLevelMultiply(vSource, vDestination, 0, this->Particles->GetHilbertSpaceDimension());
-}
+// RealVector& ParticleOnTorusCoulombWithSpinHamiltonian::LowLevelMultiply(RealVector& vSource, RealVector& vDestination) 
+// {
+//   return this->LowLevelMultiply(vSource, vDestination, 0, this->Particles->GetHilbertSpaceDimension());
+// }
 
-// multiply a vector by the current hamiltonian for a given range of indices 
-// and store result in another vector, low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// firstComponent = index of the first component to evaluate
-// nbrComponent = number of components to evaluate
-// return value = reference on vector where result has been stored
+// // multiply a vector by the current hamiltonian for a given range of indices 
+// // and store result in another vector, low level function (no architecture optimization)
+// //
+// // vSource = vector to be multiplied
+// // vDestination = vector where result has to be stored
+// // firstComponent = index of the first component to evaluate
+// // nbrComponent = number of components to evaluate
+// // return value = reference on vector where result has been stored
 
-RealVector& ParticleOnTorusCoulombWithSpinHamiltonian::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
-									int firstComponent, int nbrComponent) 
-{
-  int LastComponent = firstComponent + nbrComponent;
-  for (int i = firstComponent; i < LastComponent; ++i)
-    vDestination[i] = 0.0;
-  return this->LowLevelAddMultiply(vSource, vDestination, firstComponent, nbrComponent);
-}
+// RealVector& ParticleOnTorusCoulombWithSpinHamiltonian::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
+// 									int firstComponent, int nbrComponent) 
+// {
+//   int LastComponent = firstComponent + nbrComponent;
+//   for (int i = firstComponent; i < LastComponent; ++i)
+//     vDestination[i] = 0.0;
+//   return this->LowLevelAddMultiply(vSource, vDestination, firstComponent, nbrComponent);
+// }
 
-// multiply a vector by the current hamiltonian for a given range of indices 
-// and add result to another vector, low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector at which result has to be added
-// return value = reference on vectorwhere result has been stored
+// // multiply a vector by the current hamiltonian for a given range of indices 
+// // and add result to another vector, low level function (no architecture optimization)
+// //
+// // vSource = vector to be multiplied
+// // vDestination = vector at which result has to be added
+// // return value = reference on vectorwhere result has been stored
 
-RealVector& ParticleOnTorusCoulombWithSpinHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination)
-{
-  return this->LowLevelAddMultiply(vSource, vDestination, 0, this->Particles->GetHilbertSpaceDimension());
-}
+// RealVector& ParticleOnTorusCoulombWithSpinHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination)
+// {
+//   return this->LowLevelAddMultiply(vSource, vDestination, 0, this->Particles->GetHilbertSpaceDimension());
+// }
 
 // multiply a vector by the current hamiltonian for a given range of indices 
 // and add result to another vector, low level function (no architecture optimization)
@@ -275,6 +275,7 @@ RealVector& ParticleOnTorusCoulombWithSpinHamiltonian::LowLevelAddMultiply(RealV
       int m3;
       int m4;
       double TmpInteraction;
+      double TmpInterLayerInteraction;
       int ReducedNbrInteractionFactors = this->NbrInteractionFactors - 1;
       for (int j = 0; j < ReducedNbrInteractionFactors; ++j) 
 	{
@@ -283,26 +284,27 @@ RealVector& ParticleOnTorusCoulombWithSpinHamiltonian::LowLevelAddMultiply(RealV
 	  m3 = this->M3Value[j];
 	  m4 = this->M4Value[j];
 	  TmpInteraction = this->InteractionFactors[j];
+	  TmpInterLayerInteraction = this->InterLayerInteractionFactors[j];
 	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
-	      Index = this->Particles->AudAudAuAu(i, m1, m2, m3, m4, Coefficient);
+	      Index = this->Particles->AduAduAuAu(i, m1, m2, m3, m4, Coefficient);
 	      if (Index < this->Particles->GetHilbertSpaceDimension())
 		vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
 	      Index = this->Particles->AddAddAdAd(i, m1, m2, m3, m4, Coefficient);
 	      if (Index < this->Particles->GetHilbertSpaceDimension())
 		vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
-	      Index = this->Particles->AudAddAuAd(i, m1, m2, m3, m4, Coefficient);
+	      Index = this->Particles->AduAddAuAd(i, m1, m2, m3, m4, Coefficient);
 	      if (Index < this->Particles->GetHilbertSpaceDimension())
-		vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
-	      Index = this->Particles->AudAddAuAd(i, m2, m1, m3, m4, Coefficient);
+		vDestination[Index] += Coefficient * TmpInterLayerInteraction * vSource[i];
+	      Index = this->Particles->AduAddAuAd(i, m2, m1, m3, m4, Coefficient);
 	      if (Index < this->Particles->GetHilbertSpaceDimension())
-		vDestination[Index] -= Coefficient * TmpInteraction * vSource[i];
-	      Index = this->Particles->AudAddAuAd(i, m1, m2, m4, m3, Coefficient);
+		vDestination[Index] -= Coefficient * TmpInterLayerInteraction * vSource[i];
+	      Index = this->Particles->AduAddAuAd(i, m1, m2, m4, m3, Coefficient);
 	      if (Index < this->Particles->GetHilbertSpaceDimension())
-		vDestination[Index] -= Coefficient * TmpInteraction * vSource[i];
-	      Index = this->Particles->AudAddAuAd(i, m2, m1, m4, m3, Coefficient);
+		vDestination[Index] -= Coefficient * TmpInterLayerInteraction * vSource[i];
+	      Index = this->Particles->AduAddAuAd(i, m2, m1, m4, m3, Coefficient);
 	      if (Index < this->Particles->GetHilbertSpaceDimension())
-		vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
+		vDestination[Index] += Coefficient * TmpInterLayerInteraction * vSource[i];
 	    }
 	}
       m1 = this->M1Value[ReducedNbrInteractionFactors];
@@ -310,27 +312,28 @@ RealVector& ParticleOnTorusCoulombWithSpinHamiltonian::LowLevelAddMultiply(RealV
       m3 = this->M3Value[ReducedNbrInteractionFactors];
       m4 = this->M4Value[ReducedNbrInteractionFactors];
       TmpInteraction = this->InteractionFactors[ReducedNbrInteractionFactors];
+      TmpInterLayerInteraction = this->InterLayerInteractionFactors[ReducedNbrInteractionFactors];
       for (int i = firstComponent; i < LastComponent; ++i)
 	{
-	  Index = this->Particles->AudAudAuAu(i, m1, m2, m3, m4, Coefficient);
+	  Index = this->Particles->AduAduAuAu(i, m1, m2, m3, m4, Coefficient);
 	  if (Index < this->Particles->GetHilbertSpaceDimension())
 	    vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
 	  Index = this->Particles->AddAddAdAd(i, m1, m2, m3, m4, Coefficient);
 	  if (Index < this->Particles->GetHilbertSpaceDimension())
 	    vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
-	  Index = this->Particles->AudAddAuAd(i, m1, m2, m3, m4, Coefficient);
+	  Index = this->Particles->AduAddAuAd(i, m1, m2, m3, m4, Coefficient);
 	  if (Index < this->Particles->GetHilbertSpaceDimension())
-	    vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
-	  Index = this->Particles->AudAudAuAd(i, m2, m1, m3, m4, Coefficient);
+	    vDestination[Index] += Coefficient * TmpInterLayerInteraction * vSource[i];
+	  Index = this->Particles->AduAddAuAd(i, m2, m1, m3, m4, Coefficient);
 	  if (Index < this->Particles->GetHilbertSpaceDimension())
-	    vDestination[Index] -= Coefficient * TmpInteraction * vSource[i];
-	  Index = this->Particles->AudAddAuAd(i, m1, m2, m4, m3, Coefficient);
+	    vDestination[Index] -= Coefficient * TmpInterLayerInteraction * vSource[i];
+	  Index = this->Particles->AduAddAuAd(i, m1, m2, m4, m3, Coefficient);
 	  if (Index < this->Particles->GetHilbertSpaceDimension())
-	    vDestination[Index] -= Coefficient * TmpInteraction * vSource[i];
-	  Index = this->Particles->AudAddAuAd(i, m2, m1, m4, m3, Coefficient);
+	    vDestination[Index] -= Coefficient * TmpInterLayerInteraction * vSource[i];
+	  Index = this->Particles->AduAddAuAd(i, m2, m1, m4, m3, Coefficient);
 	  if (Index < this->Particles->GetHilbertSpaceDimension())
-	    vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
-	  this->Particles->SumAudAu(i, Coefficient);
+	    vDestination[Index] += Coefficient * TmpInterLayerInteraction * vSource[i];
+	  this->Particles->SumAduAu(i, Coefficient);
 	  vDestination[i] += (Shift + 2.0 * this->MagneticG * Coefficient) * vSource[i];
 	}
     }
@@ -352,72 +355,13 @@ RealVector& ParticleOnTorusCoulombWithSpinHamiltonian::LowLevelAddMultiply(RealV
 	      cout << "error " << i << " " << TmpIndexArray[j] << " " << TmpNbrInteraction << endl;
 	    else
 	      vDestination[TmpIndexArray[j]] += TmpCoefficientArray[j] * Coefficient;
-	  this->Particles->SumAudAu(i, Coefficient);
+	  this->Particles->SumAduAu(i, Coefficient);
 	  vDestination[i] += (Shift + 2.0 * this->MagneticG * Coefficient) * vSource[i];
 	}
    }
   return vDestination;
 }
 
-// multiply a vector by the current hamiltonian and store result in another vector
-// low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// return value = reference on vectorwhere result has been stored
-
-ComplexVector& ParticleOnTorusCoulombWithSpinHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination) 
-{
-  return this->LowLevelMultiply(vSource, vDestination, 0, this->Particles->GetHilbertSpaceDimension());
-}
-
-// multiply a vector by the current hamiltonian for a given range of indices 
-// and store result in another vector, low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// firstComponent = index of the first component to evaluate
-// nbrComponent = number of components to evaluate
-// return value = reference on vector where result has been stored
-
-ComplexVector& ParticleOnTorusCoulombWithSpinHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-								   int firstComponent, int nbrComponent)
-{
-  int LastComponent = firstComponent + nbrComponent;
-  for (int i = firstComponent; i < LastComponent; ++i)
-    {
-      vDestination.Re(i) = 0.0;
-      vDestination.Im(i) = 0.0;
-    }
-  return this->LowLevelAddMultiply(vSource, vDestination, firstComponent, nbrComponent);
-}
-
-// multiply a vector by the current hamiltonian for a given range of indices 
-// and add result to another vector, low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector at which result has to be added
-// return value = reference on vectorwhere result has been stored
-
-ComplexVector& ParticleOnTorusCoulombWithSpinHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination)
-{
-  return this->LowLevelAddMultiply(vSource, vDestination, 0, this->Particles->GetHilbertSpaceDimension());
-}
-
-// multiply a vector by the current hamiltonian for a given range of indices 
-// and add result to another vector, low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector at which result has to be added
-// firstComponent = index of the first component to evaluate
-// nbrComponent = number of components to evaluate
-// return value = reference on vector where result has been stored
-
-ComplexVector& ParticleOnTorusCoulombWithSpinHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-								      int firstComponent, int nbrComponent)
-{
-  return vDestination;
-}
  
 // return a list of left interaction operators
 //
@@ -484,6 +428,7 @@ void ParticleOnTorusCoulombWithSpinHamiltonian::EvaluateInteractionFactors()
       this->M3Value = new int [Pos];
       this->M4Value = new int [Pos];
       this->InteractionFactors = new double [Pos];
+      this->InterLayerInteractionFactors = new double [Pos];
       cout << "nbr interaction = " << Pos << endl;
       Pos = 0;
       MaxCoefficient *= MACHINE_PRECISION;
@@ -502,6 +447,11 @@ void ParticleOnTorusCoulombWithSpinHamiltonian::EvaluateInteractionFactors()
 		  if  (fabs(TmpCoefficient[Pos]) > MaxCoefficient)
 		    {
 		      this->InteractionFactors[this->NbrInteractionFactors] = TmpCoefficient[Pos];
+		      this->InterLayerInteractionFactors[this->NbrInteractionFactors]
+			= (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, LayerSeparation)
+			   + this->EvaluateInteractionCoefficient(m2, m1, m4, m3, LayerSeparation)
+			   - this->EvaluateInteractionCoefficient(m1, m2, m4, m3, LayerSeparation)
+			   - this->EvaluateInteractionCoefficient(m2, m1, m3, m4, LayerSeparation));
 		      this->M1Value[this->NbrInteractionFactors] = m1;
 		      this->M2Value[this->NbrInteractionFactors] = m2;
 		      this->M3Value[this->NbrInteractionFactors] = m3;
@@ -562,6 +512,7 @@ void ParticleOnTorusCoulombWithSpinHamiltonian::EvaluateInteractionFactors()
       this->M3Value = new int [Pos];
       this->M4Value = new int [Pos];
       this->InteractionFactors = new double [Pos];
+      this->InterLayerInteractionFactors = new double [Pos];
       cout << "nbr interaction = " << Pos << endl;
       Pos = 0;
       MaxCoefficient *= MACHINE_PRECISION;
@@ -580,6 +531,32 @@ void ParticleOnTorusCoulombWithSpinHamiltonian::EvaluateInteractionFactors()
 		  if (fabs(TmpCoefficient[Pos]) > MaxCoefficient)
 		    {
 		      this->InteractionFactors[this->NbrInteractionFactors] = TmpCoefficient[Pos];
+		      if (m3 > m4)
+			{
+			  if (m1 != m2)
+			    {
+			      this->InterLayerInteractionFactors[this->NbrInteractionFactors] 
+				= (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, LayerSeparation)
+				   + this->EvaluateInteractionCoefficient(m2, m1, m4, m3, LayerSeparation)
+				   + this->EvaluateInteractionCoefficient(m1, m2, m4, m3, LayerSeparation)
+				   + this->EvaluateInteractionCoefficient(m2, m1, m3, m4, LayerSeparation));
+			    }
+			  else
+			    this->InterLayerInteractionFactors[this->NbrInteractionFactors] 
+			      = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, LayerSeparation)
+				 + this->EvaluateInteractionCoefficient(m1, m2, m4, m3, LayerSeparation));
+			}
+		      else
+			if (m3 == m4)
+			  {
+			    if (m1 != m2)
+			      this->InterLayerInteractionFactors[this->NbrInteractionFactors]
+				= (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, LayerSeparation)
+				   + this->EvaluateInteractionCoefficient(m2, m1, m3, m4, LayerSeparation));
+			    else
+			      this->InterLayerInteractionFactors[this->NbrInteractionFactors]
+				= this->EvaluateInteractionCoefficient(m1, m2, m3, m4, LayerSeparation);
+			  }
 		      this->M1Value[this->NbrInteractionFactors] = m1;
 		      this->M2Value[this->NbrInteractionFactors] = m2;
 		      this->M3Value[this->NbrInteractionFactors] = m3;
@@ -727,18 +704,23 @@ double ParticleOnTorusCoulombWithSpinHamiltonian::EvaluateWignerCrystalEnergy ()
 
 double ParticleOnTorusCoulombWithSpinHamiltonian::MisraFunction (double n, double x)
 {
+  int Count=0;
   int NbrSubdivision = 100000;
   double PreviousSum = this->PartialMisraFunction(n, x, 0.0, 1.0, NbrSubdivision);
   double NewSum = PreviousSum;
   PreviousSum *= 2.0;
-  while ((fabs(PreviousSum - NewSum) / PreviousSum) > MACHINE_PRECISION)
+  while (((fabs(PreviousSum - NewSum) / PreviousSum) > MACHINE_PRECISION) && (Count<5))
     {
+      if ((fabs(PreviousSum - NewSum) / PreviousSum) < 1e-11)
+	++Count;
       PreviousSum = NewSum;
       NbrSubdivision += 10000;
       NewSum = this->PartialMisraFunction(n, x, 0.0, 1.0, NbrSubdivision);
+      //cout << " PreviousSum = " << PreviousSum << "   NewSum = " << NewSum << "  diff="<<PreviousSum-NewSum<<endl;
     }
   return 2.0 * (sqrt(M_PI * 0.25 / x) - NewSum);
 }
+
 
 // evaluate part of the integral needed in the Misra function (integral of t^n exp (-xt) between min and max)
 //
@@ -793,7 +775,7 @@ int ParticleOnTorusCoulombWithSpinHamiltonian::FastMultiplicationMemory()
       m4 = this->M4Value[j];
       for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); ++i)
 	{
-	  Index = this->Particles->AudAudAuAu(i, m1, m2, m3, m4, Coefficient);
+	  Index = this->Particles->AduAduAuAu(i, m1, m2, m3, m4, Coefficient);
  	  if (Index < this->Particles->GetHilbertSpaceDimension())
  	    {
 	      ++memory;
@@ -805,25 +787,25 @@ int ParticleOnTorusCoulombWithSpinHamiltonian::FastMultiplicationMemory()
 	      ++memory;
 	      ++this->NbrInteractionPerComponent[i];
 	    }
-	  Index = this->Particles->AudAddAuAd(i, m1, m2, m3, m4, Coefficient);
+	  Index = this->Particles->AduAddAuAd(i, m1, m2, m3, m4, Coefficient);
 	  if (Index < this->Particles->GetHilbertSpaceDimension())
 	    {
 	      ++memory;
 	      ++this->NbrInteractionPerComponent[i];
 	    }
-	  Index = this->Particles->AudAddAuAd(i, m2, m1, m3, m4, Coefficient);
+	  Index = this->Particles->AduAddAuAd(i, m2, m1, m3, m4, Coefficient);
 	  if (Index < this->Particles->GetHilbertSpaceDimension())
 	    {
 	      ++memory;
 	      ++this->NbrInteractionPerComponent[i];
 	    }
-	  Index = this->Particles->AudAddAuAd(i, m1, m2, m4, m3, Coefficient);
+	  Index = this->Particles->AduAddAuAd(i, m1, m2, m4, m3, Coefficient);
 	  if (Index < this->Particles->GetHilbertSpaceDimension())
 	    {
 	      ++memory;
 	      ++this->NbrInteractionPerComponent[i];
 	    }
-	  Index = this->Particles->AudAddAuAd(i, m2, m1, m4, m3, Coefficient);
+	  Index = this->Particles->AduAddAuAd(i, m2, m1, m4, m3, Coefficient);
 	  if (Index < this->Particles->GetHilbertSpaceDimension())
 	    {
 	      ++memory;
@@ -865,7 +847,7 @@ void ParticleOnTorusCoulombWithSpinHamiltonian::EnableFastMultiplication()
 	  m2 = this->M2Value[j];
 	  m3 = this->M3Value[j];
 	  m4 = this->M4Value[j];
-	  Index = this->Particles->AudAudAuAu(i, m1, m2, m3, m4, Coefficient);
+	  Index = this->Particles->AduAduAuAu(i, m1, m2, m3, m4, Coefficient);
 	  if (Index < this->Particles->GetHilbertSpaceDimension())
 	    {
 	      TmpIndexArray[Pos] = Index;
@@ -879,32 +861,32 @@ void ParticleOnTorusCoulombWithSpinHamiltonian::EnableFastMultiplication()
 	      TmpCoefficientArray[Pos] = Coefficient * this->InteractionFactors[j];
 	      ++Pos;
 	    }
-	  Index = this->Particles->AudAddAuAd(i, m1, m2, m3, m4, Coefficient);
+	  Index = this->Particles->AduAddAuAd(i, m1, m2, m3, m4, Coefficient);
 	  if (Index < this->Particles->GetHilbertSpaceDimension())
 	    {
 	      TmpIndexArray[Pos] = Index;
-	      TmpCoefficientArray[Pos] = Coefficient * this->InteractionFactors[j];
+	      TmpCoefficientArray[Pos] = Coefficient * this->InterLayerInteractionFactors[j];
 	      ++Pos;
 	    }
-	  Index = this->Particles->AudAddAuAd(i, m2, m1, m3, m4, Coefficient);
+	  Index = this->Particles->AduAddAuAd(i, m2, m1, m3, m4, Coefficient);
 	  if (Index < this->Particles->GetHilbertSpaceDimension())
 	    {
 	      TmpIndexArray[Pos] = Index;
-	      TmpCoefficientArray[Pos] = -Coefficient * this->InteractionFactors[j];
+	      TmpCoefficientArray[Pos] = -Coefficient * this->InterLayerInteractionFactors[j];
 	      ++Pos;
 	    }
-	  Index = this->Particles->AudAddAuAd(i, m1, m2, m4, m3, Coefficient);
+	  Index = this->Particles->AduAddAuAd(i, m1, m2, m4, m3, Coefficient);
 	  if (Index < this->Particles->GetHilbertSpaceDimension())
 	    {
 	      TmpIndexArray[Pos] = Index;
-	      TmpCoefficientArray[Pos] = -Coefficient * this->InteractionFactors[j];
+	      TmpCoefficientArray[Pos] = -Coefficient * this->InterLayerInteractionFactors[j];
 	      ++Pos;
 	    }
-	  Index = this->Particles->AudAddAuAd(i, m2, m1, m4, m3, Coefficient);
+	  Index = this->Particles->AduAddAuAd(i, m2, m1, m4, m3, Coefficient);
 	  if (Index < this->Particles->GetHilbertSpaceDimension())
 	    {
 	      TmpIndexArray[Pos] = Index;
-	      TmpCoefficientArray[Pos] = Coefficient * this->InteractionFactors[j];
+	      TmpCoefficientArray[Pos] = Coefficient * this->InterLayerInteractionFactors[j];
 	      ++Pos;
 	    }
 	}

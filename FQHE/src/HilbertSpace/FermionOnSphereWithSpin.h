@@ -460,6 +460,11 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // return value = quare normalization
   double JackSqrNormalization (RealVector& outputVector, long minIndex, long nbrComponents);
 
+  // particle hole conjugate the spin down electrons, only (valid for N_phi=2N-1)
+  // source: input state vector
+  // target: output state vector
+  virtual void ParticleHoleConjugateDownSpins(RealVector &source, RealVector &target);
+
  protected:
 
   // find state index
@@ -546,6 +551,7 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // initialStateDown = array where the monomial spin down representation is stored
   // return value = state in its fermionic representation
   virtual unsigned long ConvertFromMonomial(int* initialStateUp, int* initialStateDown);
+
 
 };
 

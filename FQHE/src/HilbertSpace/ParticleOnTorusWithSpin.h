@@ -66,7 +66,7 @@ class ParticleOnTorusWithSpin :  public AbstractHilbertSpace
   // index = index of the state on which the operator has to be applied
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  virtual int SumAudAu (int index, double& coefficient) = 0;
+  virtual int SumAduAu (int index, double& coefficient) = 0;
 
   // apply sum_m ad^+_m ad_m operator to a given state
   //
@@ -81,7 +81,7 @@ class ParticleOnTorusWithSpin :  public AbstractHilbertSpace
   // m = index for density operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  virtual int AudAu (int index, int m, double& coefficient) = 0;
+  virtual int AduAu (int index, int m, double& coefficient) = 0;
 
   // apply ad^+_m ad_m operator to a given state
   //
@@ -100,7 +100,7 @@ class ParticleOnTorusWithSpin :  public AbstractHilbertSpace
   // n2 = second index for annihilation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  virtual int AudAudAuAu (int index, int m1, int m2, int n1, int n2, double& coefficient) = 0;
+  virtual int AduAduAuAu (int index, int m1, int m2, int n1, int n2, double& coefficient) = 0;
 
   // apply ad^+_m1 ad^+_m2 ad_n1 ad_n2 operator to a given state (with m1+m2=n1+n2[MaxMomentum])
   //
@@ -133,7 +133,7 @@ class ParticleOnTorusWithSpin :  public AbstractHilbertSpace
   // n2 = second index for annihilation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  virtual int AudAudAdAd (int index, int m1, int m2, int n1, int n2, double& coefficient) = 0;
+  virtual int AduAduAdAd (int index, int m1, int m2, int n1, int n2, double& coefficient) = 0;
 
   // apply au^+_m1 au^+_m2 au_n1 ad_n2 operator to a given state (with m1+m2=n1+n2[MaxMomentum])
   //
@@ -144,7 +144,7 @@ class ParticleOnTorusWithSpin :  public AbstractHilbertSpace
   // n2 = second index for annihilation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  virtual int AudAudAuAd (int index, int m1, int m2, int n1, int n2, double& coefficient) = 0;
+  virtual int AduAduAuAd (int index, int m1, int m2, int n1, int n2, double& coefficient) = 0;
 
   // apply ad^+_m1 au^+_m2 au_n1 au_n2 operator to a given state (with m1+m2=n1+n2[MaxMomentum])
   //
@@ -155,7 +155,7 @@ class ParticleOnTorusWithSpin :  public AbstractHilbertSpace
   // n2 = second index for annihilation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  virtual int AddAudAuAu (int index, int m1, int m2, int n1, int n2, double& coefficient) = 0;
+  virtual int AddAduAuAu (int index, int m1, int m2, int n1, int n2, double& coefficient) = 0;
 
   // apply ad^+_m1 ad^+_m2 ad_n1 au_n2 operator to a given state (with m1+m2=n1+n2[MaxMomentum])
   //
@@ -177,7 +177,7 @@ class ParticleOnTorusWithSpin :  public AbstractHilbertSpace
   // n2 = second index for annihilation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  virtual int AudAddAdAd (int index, int m1, int m2, int n1, int n2, double& coefficient) = 0;
+  virtual int AduAddAdAd (int index, int m1, int m2, int n1, int n2, double& coefficient) = 0;
 
   // apply au^+_m1 ad^+_m2 au_n1 ad_n2 operator to a given state (with m1+m2=n1+n2[MaxMomentum])
   //
@@ -188,7 +188,7 @@ class ParticleOnTorusWithSpin :  public AbstractHilbertSpace
   // n2 = second index for annihilation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  virtual int AudAddAuAd (int index, int m1, int m2, int n1, int n2, double& coefficient) = 0;
+  virtual int AduAddAuAd (int index, int m1, int m2, int n1, int n2, double& coefficient) = 0;
 
 };
 

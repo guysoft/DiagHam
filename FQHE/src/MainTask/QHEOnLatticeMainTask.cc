@@ -551,7 +551,7 @@ int QHEOnLatticeMainTask::ExecuteMainTask()
 		if (this->EvaluateEigenvectors == true)
 		  //Lanczos = new ComplexBasicLanczosAlgorithmWithGroundState(this->Architecture, this->MaxNbrIterLanczos);// replaced by more elaborate algorithm with fast-disk option -> still need to check that one
 		  {
-		    cout << "Using un-tested ComplexBasicLanczosAlgorithmWithGroundStateFastDisk!"<<endl;
+		    cout << "Using ComplexBasicLanczosAlgorithmWithGroundStateFastDisk"<<endl;
 		    Lanczos = new ComplexBasicLanczosAlgorithmWithGroundStateFastDisk(this->Architecture, this->MaxNbrIterLanczos , this->FastDiskFlag, this->ResumeFastDiskFlag);
 		  }
 		else

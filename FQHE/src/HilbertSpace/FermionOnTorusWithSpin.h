@@ -169,7 +169,7 @@ class FermionOnTorusWithSpin :  public ParticleOnTorusWithSpin
   // index = index of the state on which the operator has to be applied
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int SumAudAu (int index, double& coefficient);
+  int SumAduAu (int index, double& coefficient);
 
   // apply sum_m ad^+_m ad_m operator to a given state
   //
@@ -184,7 +184,7 @@ class FermionOnTorusWithSpin :  public ParticleOnTorusWithSpin
   // m = index for density operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int AudAu (int index, int m, double& coefficient);
+  int AduAu (int index, int m, double& coefficient);
 
   // apply ad^+_m ad_m operator to a given state
   //
@@ -203,7 +203,7 @@ class FermionOnTorusWithSpin :  public ParticleOnTorusWithSpin
   // n2 = second index for annihilation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int AudAudAuAu (int index, int m1, int m2, int n1, int n2, double& coefficient);
+  int AduAduAuAu (int index, int m1, int m2, int n1, int n2, double& coefficient);
 
   // apply ad^+_m1 ad^+_m2 ad_n1 ad_n2 operator to a given state (with m1+m2=n1+n2[MaxMomentum])
   //
@@ -236,7 +236,7 @@ class FermionOnTorusWithSpin :  public ParticleOnTorusWithSpin
   // n2 = second index for annihilation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int AudAudAdAd (int index, int m1, int m2, int n1, int n2, double& coefficient);
+  int AduAduAdAd (int index, int m1, int m2, int n1, int n2, double& coefficient);
 
   // apply au^+_m1 au^+_m2 au_n1 ad_n2 operator to a given state (with m1+m2=n1+n2[MaxMomentum])
   //
@@ -247,7 +247,7 @@ class FermionOnTorusWithSpin :  public ParticleOnTorusWithSpin
   // n2 = second index for annihilation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int AudAudAuAd (int index, int m1, int m2, int n1, int n2, double& coefficient);
+  int AduAduAuAd (int index, int m1, int m2, int n1, int n2, double& coefficient);
 
   // apply ad^+_m1 au^+_m2 au_n1 au_n2 operator to a given state (with m1+m2=n1+n2[MaxMomentum])
   //
@@ -258,7 +258,7 @@ class FermionOnTorusWithSpin :  public ParticleOnTorusWithSpin
   // n2 = second index for annihilation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int AddAudAuAu (int index, int m1, int m2, int n1, int n2, double& coefficient);
+  int AddAduAuAu (int index, int m1, int m2, int n1, int n2, double& coefficient);
 
   // apply ad^+_m1 ad^+_m2 ad_n1 au_n2 operator to a given state (with m1+m2=n1+n2[MaxMomentum])
   //
@@ -280,7 +280,7 @@ class FermionOnTorusWithSpin :  public ParticleOnTorusWithSpin
   // n2 = second index for annihilation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int AudAddAdAd (int index, int m1, int m2, int n1, int n2, double& coefficient);
+  int AduAddAdAd (int index, int m1, int m2, int n1, int n2, double& coefficient);
 
   // apply au^+_m1 ad^+_m2 au_n1 ad_n2 operator to a given state (with m1+m2=n1+n2[MaxMomentum])
   //
@@ -291,7 +291,7 @@ class FermionOnTorusWithSpin :  public ParticleOnTorusWithSpin
   // n2 = second index for annihilation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int AudAddAuAd (int index, int m1, int m2, int n1, int n2, double& coefficient);
+  int AduAddAuAd (int index, int m1, int m2, int n1, int n2, double& coefficient);
 
   // print a given State
   //

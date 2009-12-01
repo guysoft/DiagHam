@@ -157,6 +157,18 @@ int ParticleOnSphere::AdAdAdAdAAAA (int index, int m1, int m2, int m3, int m4, i
   return ProdAdProdA(index, TmpM, TmpN, 4, coefficient);
 }
 
+// apply creation operator to a word, using the conventions
+// for state-coding and quantum numbers of this space
+// state = word to be acted upon
+// m = Lz value of particle to be added
+// coefficient = reference on the double where the multiplicative factor has to be stored
+unsigned long ParticleOnSphere::Ad (unsigned long state, int m, double& coefficient)
+{
+  cout << "Attention: calling placeholder function ParticleOnSphereWithSpin::Ad - please override in inherited class!" <<endl;
+  return 0x0l;
+}
+
+
 // apply a_n1 a_n2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next AdAd call
 //
 // index = index of the state on which the operator has to be applied

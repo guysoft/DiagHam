@@ -65,7 +65,7 @@ PairedCFOnSphereWithSpinWaveFunction::PairedCFOnSphereWithSpinWaveFunction()
 PairedCFOnSphereWithSpinWaveFunction::PairedCFOnSphereWithSpinWaveFunction(int nbrParticles, int nbrLandauLevels,
 									   int nbrEffectiveFlux, bool haveBosons, 
 							   double bosonCoefficient, double * givenCFCoefficients,
-							   bool correctPrefactors, int jastrowPower)
+									   bool correctPrefactors, int jastrowPower, bool conjugateDown)
 {
   if (nbrParticles&1)
     {
@@ -76,9 +76,14 @@ PairedCFOnSphereWithSpinWaveFunction::PairedCFOnSphereWithSpinWaveFunction(int n
   this->NbrLandauLevels = nbrLandauLevels;
   this->NbrParameters = this->NbrLandauLevels+1; // inherited field
   this->AbsEffectiveFlux = abs(nbrEffectiveFlux);
-  this->HaveBosons = haveBosons;  
+  this->HaveBosons = haveBosons;
+  this->ConjugateDownSpins = conjugateDown;
+  cout << "NbrEffectiveFlux="<<nbrEffectiveFlux<<endl;
   this->Orbitals1 = new JainCFOnSphereOrbitals(NbrParticlesPerLayer, nbrLandauLevels, nbrEffectiveFlux, jastrowPower);
-  this->Orbitals2 = new JainCFOnSphereOrbitals(NbrParticlesPerLayer, nbrLandauLevels, nbrEffectiveFlux, jastrowPower);
+  if (this->ConjugateDownSpins)
+    this->Orbitals2 = new JainCFOnSphereOrbitals(NbrParticlesPerLayer, nbrLandauLevels, nbrEffectiveFlux-2, jastrowPower);
+  else
+    this->Orbitals2 = new JainCFOnSphereOrbitals(NbrParticlesPerLayer, nbrLandauLevels, nbrEffectiveFlux, jastrowPower);
   this->BosonCoefficient=bosonCoefficient;
   this->TrialParameters= new double [NbrParameters];
   for (int i=0; i<NbrLandauLevels; ++i) this->TrialParameters[i] = givenCFCoefficients[i];
@@ -587,25 +592,50 @@ void PairedCFOnSphereWithSpinWaveFunction::EvaluateTables()
 	}
     }
 
-
-  // evaluate sums over orbitals m for each LL:
-  for (int i=0;i<this->NbrParticlesPerLayer;i++)
-    for(int j=0;j<this->NbrParticlesPerLayer;j++)
-      {
-	alpha=0;
-	for (int n=0;n<this->NbrLandauLevels;n++)
+  if (ConjugateDownSpins)
+    {
+      // evaluate sums over orbitals m for each LL:
+      for (int i=0;i<this->NbrParticlesPerLayer;i++)
+	for(int j=0;j<this->NbrParticlesPerLayer;j++)
 	  {
-	    tmp=0.0;
-	    offset=2*n*(n+this->AbsEffectiveFlux+1)+this->AbsEffectiveFlux;	    
-	    for (int m2=-AbsEffectiveFlux-2*n; m2<=AbsEffectiveFlux+2*n;m2+=2)
+	    alpha=0;
+	    for (int n=0;n<this->NbrLandauLevels;n++)
 	      {
-		//offset-alpha gives Phi[] with -m 
-		tmp+=this->fsgn((m2+AbsEffectiveFlux)/2)*OrbitalValues1[alpha][i]*OrbitalValues2[offset-alpha][j];
+		tmp=0.0;
+		offset=2*n*(n+this->AbsEffectiveFlux+1)+this->AbsEffectiveFlux;    
+		for (int m2=-AbsEffectiveFlux-2*n; m2<=AbsEffectiveFlux+2*n;m2+=2)
+		  {
+		    //offset-alpha gives Phi[] with -m 
+		    tmp+=/*this->fsgn((m2+AbsEffectiveFlux)/2)* */ OrbitalValues1[alpha][i]*OrbitalValues2[/*offset-*/alpha][j];
 
-		//cout << "matching up " << alpha << " with " << offset-alpha<<" sign: "<<this->fsgn((m2+AbsEffectiveFlux)/2)<<endl;
-		alpha++;
+		    //cout << "matching up " << alpha << " with " << offset-alpha<<" sign: "<<this->fsgn((m2+AbsEffectiveFlux)/2)<<endl;
+		    alpha++;
+		  }
+		this->gAlpha[n][i*this->NbrParticlesPerLayer+j] = tmp;
 	      }
-	    this->gAlpha[n][i*this->NbrParticlesPerLayer+j] = tmp;
 	  }
-      }
+    }
+  else
+    {
+      // evaluate sums over orbitals m for each LL:
+      for (int i=0;i<this->NbrParticlesPerLayer;i++)
+	for(int j=0;j<this->NbrParticlesPerLayer;j++)
+	  {
+	    alpha=0;
+	    for (int n=0;n<this->NbrLandauLevels;n++)
+	      {
+		tmp=0.0;
+		offset=2*n*(n+this->AbsEffectiveFlux+1)+this->AbsEffectiveFlux;    
+		for (int m2=-AbsEffectiveFlux-2*n; m2<=AbsEffectiveFlux+2*n;m2+=2)
+		  {
+		    //offset-alpha gives Phi[] with -m 
+		    tmp+=this->fsgn((m2+AbsEffectiveFlux)/2)*OrbitalValues1[alpha][i]*OrbitalValues2[offset-alpha][j];
+
+		    //cout << "matching up " << alpha << " with " << offset-alpha<<" sign: "<<this->fsgn((m2+AbsEffectiveFlux)/2)<<endl;
+		    alpha++;
+		  }
+		this->gAlpha[n][i*this->NbrParticlesPerLayer+j] = tmp;
+	      }
+	  }
+    }
 }

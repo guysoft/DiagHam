@@ -76,6 +76,9 @@ class PairedCFOnSphereWithSpinWaveFunction: public Abstract1DComplexTrialFunctio
   ComplexMatrix OrbitalValues1;
   ComplexMatrix OrbitalValues2;
 
+  // flag indicating whether to use conjugated wavefunction for down spins
+  bool ConjugateDownSpins;
+
   // single-particle Jastrow factors
   Complex *J11;
   Complex *J12;
@@ -118,7 +121,7 @@ class PairedCFOnSphereWithSpinWaveFunction: public Abstract1DComplexTrialFunctio
   // jastrowPower = power to which the Jastrow factor has to be raised
   PairedCFOnSphereWithSpinWaveFunction(int nbrParticlesPerLayer, int nbrLandauLevels, int nbrEffectiveFlux, bool haveBosons,
 				       double bosonCoefficient, double * cfCoefficients, bool correctPrefactors=false,
-				       int jastrowPower=2);
+				       int jastrowPower=2, bool conjugateDown = false);
 
   // copy constructor
   //

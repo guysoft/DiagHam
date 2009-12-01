@@ -1259,7 +1259,6 @@ int FermionOnSphereWithSpin::CarefulFindStateIndex(unsigned long stateDescriptio
 	       <<"="<<stateDescription<<"!"<<endl;      
       return this->HilbertSpaceDimension;
     }
-
 }
 
 // find state index
@@ -2458,4 +2457,37 @@ double FermionOnSphereWithSpin::JackSqrNormalization (RealVector& outputVector, 
   delete[] TmpMonomialUp;
   delete[] TmpMonomialDown;
   return SqrNorm;
+}
+
+// particle hole conjugate the spin down electrons, only (valid for N_phi=2N-1)
+// source: input state vector
+// target: output state vector
+void FermionOnSphereWithSpin::ParticleHoleConjugateDownSpins(RealVector &source, RealVector &target)
+{
+  if (this->NbrLzValue!=2*NbrFermionsDown)
+    {
+      cout << "ParticleHoleConjugateDownSpins only defined for half filled down spins"<<endl;
+      exit(1);
+    }
+  if (source.GetVectorDimension()!=this->HilbertSpaceDimension)
+    {
+      cout << "Input vector does not match Hilbert space dimension"<<endl;
+      exit(1);
+    }
+  target.ResizeAndClean(this->HilbertSpaceDimension);
+  unsigned long DownMask=0x0ul;
+  unsigned long TmpState;
+  int CurrentHighestBit, Index;
+  for (int i=0; i<NbrLzValue; ++i)
+    DownMask |= 0x1ul<<(i<<1);
+  for (int i=0; i<this->HilbertSpaceDimension; ++i)
+    {
+      TmpState = this->StateDescription[i];
+      TmpState ^= DownMask;
+      CurrentHighestBit = (LzMax<<1) + 1;
+      while ((TmpState & (0x1ul << CurrentHighestBit)) == 0x0ul)
+	--CurrentHighestBit;  
+      Index = this->FindStateIndex(TmpState,CurrentHighestBit);
+      target[Index]=source[i];
+    }
 }

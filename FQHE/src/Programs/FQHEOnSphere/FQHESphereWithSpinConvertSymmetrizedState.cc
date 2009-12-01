@@ -49,6 +49,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('f', "fermion", "use fermionic statistic (override autodetection from input file name)");
   (*SystemGroup) += new BooleanOption  ('b', "boson", "use bosonic statistics (override autodetection from input file name)");
   (*SystemGroup) += new BooleanOption  ('r', "symmetrize", "symmetrize state (instead of unsymmetrizing it)");
+  (*SystemGroup) += new BooleanOption  ('\n', "conjugate-down", "particle-hole conjugate down spins only");
   (*SystemGroup) += new BooleanOption  ('\n', "lzsymmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0, override auto-detection from file name)");
   (*SystemGroup) += new BooleanOption  ('\n', "szsymmetrized-basis", "use Sz <-> -Sz symmetrized version of the basis (only valid if total-sz=0, override auto-detection from file name)");
   (*SystemGroup) += new BooleanOption  ('\n', "minus-szparity", "select the  Sz <-> -Sz symmetric sector with negative parity");
@@ -125,6 +126,33 @@ int main(int argc, char** argv)
       return -1;      
     }
 
+  if (Manager.GetBoolean("conjugate-down"))
+    {
+      #ifdef __64_BITS__
+      if (LzMax <= 31)
+#else
+	if (LzMax <= 15)
+#endif
+	  {
+	    FermionOnSphereWithSpin MainSpace(NbrParticles, TotalLz, LzMax, TotalSz);
+	    RealVector Destination;
+	    MainSpace.ParticleHoleConjugateDownSpins(State,Destination);
+	    char *OutputName=Manager.GetString("output-file");
+	    if (OutputName==NULL)
+	      {
+		OutputName= new char[strlen(Manager.GetString("input-file"))+10];
+		sprintf(OutputName,"%s.qhd",Manager.GetString("input-file"));
+	      }
+	    Destination.WriteVector(OutputName);
+	    cout << "Down particle conjugated state written to "<<OutputName<<endl;
+	    exit(0);
+	  }
+	else
+	  {
+	    cout << "Cannot represent state in a single word"<<endl;
+	    exit(1);
+	  }
+    } 
 
   if (Statistics == true)
     {

@@ -122,7 +122,7 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
   virtual int ProdAdProdA (int index, int* m, int* n, int nbrIndices, double& coefficient);
-
+  
   // apply a_n1 a_n2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AdAd call
   //
   // index = index of the state on which the operator has to be applied
@@ -186,6 +186,13 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
   virtual long AdA (long index, int m, int n, double& coefficient);
+
+  // apply creation operator to a word, using the conventions
+  // for state-coding and quantum numbers of this space
+  // state = word to be acted upon
+  // m = Lz value of particle to be added
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  virtual unsigned long Ad (unsigned long state, int m, double& coefficient);
 
   // check whether HilbertSpace implements ordering of operators
   //
