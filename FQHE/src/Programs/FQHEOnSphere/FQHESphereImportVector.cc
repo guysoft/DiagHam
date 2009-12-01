@@ -3,14 +3,11 @@
 #include "HilbertSpace/BosonOnSphere.h"
 #include "HilbertSpace/FermionOnSphere.h"
 #include "HilbertSpace/FermionOnSphereUnlimited.h"
-#include "HilbertSpace/ParticleOnSphereWithSpin.h"
-#include "HilbertSpace/FermionOnSphereWithSU4Spin.h"
-#include "HilbertSpace/FermionOnSphereWithSU3Spin.h"
-#include "HilbertSpace/FermionOnSphereWithSpin.h"
 
 #include "Options/Options.h"
 
 #include <iostream>
+#include <cstring>
 #include <stdlib.h>
 #include <math.h>
 #include <fstream>
@@ -24,7 +21,7 @@ using std::ifstream;
 
 int main(int argc, char** argv)
 {
-  OptionManager Manager ("FQHESphereWithSpinImportVector" , "0.01");
+  OptionManager Manager ("FQHESphereImportVector" , "0.01");
 
   ParticleOnSphereManager ParticleManager(true, false, 2);
   ParticleManager.AddOptionGroup(&Manager);

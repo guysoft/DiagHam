@@ -45,6 +45,7 @@
 
 #include <math.h>
 #include <bitset>
+#include <cstdlib>
 #include <fstream>
 
 using std::cout;
