@@ -23,7 +23,7 @@ int main(int argc, char** argv)
 {
   OptionManager Manager ("FQHESphereImportVector" , "0.01");
 
-  ParticleOnSphereManager ParticleManager(true, false, 2);
+  ParticleOnSphereManager ParticleManager(true, false, 1);
   ParticleManager.AddOptionGroup(&Manager);
   
   OptionGroup* MiscGroup = new OptionGroup ("misc options");

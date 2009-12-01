@@ -149,7 +149,7 @@ void ParticleOnSphereManager::AddOptionGroup(OptionManager* manager, const char*
 	  (*SystemGroup) += new SingleStringOption  ('\n', "reference-state", "reference state to start the Haldane algorithm from (can be laughlin, pfaffian or readrezayi3)", "laughlin");
 	(*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
 	if (this->BosonFlag == false)
-	  (*SystemGroup) += new BooleanOption  ('\n', "unnormalized-basis", "do not normalized Fock states"); 
+	  (*SystemGroup) += new BooleanOption  ('\n', "unnormalized-basis", "do not normalize Fock states"); 
 	if (this->FermionFlag == true)
 	  (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);	
 	(*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the haldane or symmetrized bases)",0);
