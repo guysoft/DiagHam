@@ -6,7 +6,7 @@
 
 #include "Options/Options.h"
 
-#include "GeneralTools/FileNameTools.h"
+#include "GeneralTools/FilenameTools.h"
 
 #include <iostream>
 #include <cstring>
@@ -203,7 +203,7 @@ int main(int argc, char** argv)
       OutputFile.open(OutputName,ios::out);
       OutputFile.precision(15);
       for (int i=0; i<Space->GetHilbertSpaceDimension(); ++i)
-	OutputFile<<InputVector[Map[i]];
+	OutputFile<<InputVector[Map[i]]<<endl;
       OutputFile.close();
       delete [] OutputName;
     }

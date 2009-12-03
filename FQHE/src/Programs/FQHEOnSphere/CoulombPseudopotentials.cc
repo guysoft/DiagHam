@@ -49,6 +49,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleDoubleOption ('d', "layer-separation", "assume finite layer separation",0.0);
 
   (*SystemGroup) += new  SingleDoubleOption ('t', "layer-thickness", "assume finite layer thickness",0.0);
+  (*SystemGroup) += new MultipleIntegerOption ('\n', "rescale", "rescale separation and thickness for a particular number of particles, filling factor and shift (4 arguments N,p,q,Sigma)",',');
   
   (*SystemGroup) += new  SingleStringOption ('\n', "profile-type", "type of density-profile (1=infiniteWell, 2=Fang-Howard, 3=infiniteWellExc)","1");
 
@@ -83,6 +84,29 @@ int main(int argc, char** argv)
       return 0;
     }
 
+
+  bool Rescale=false;
+  double NewScale=1.0;
+  int NbrParticles=1, FillingP=1, FillingQ=1, ShiftSigma=0;
+  {
+    int TmpLength;
+    int *ScaleParams=Manager.GetIntegers("rescale",TmpLength);
+    if (TmpLength>0)
+      {
+	if (TmpLength!=4)
+	  {
+	    cout << "error: --rescale requires 4 parameters: NbrParticles,FillingP,FillingQ,ShiftSigma"<<endl;
+	    exit(1);
+	  }
+	Rescale=true;
+	NbrParticles=ScaleParams[0];
+	FillingP=ScaleParams[1];
+	FillingQ=ScaleParams[2];
+	ShiftSigma=ScaleParams[3];
+	NewScale=sqrt((double)NbrParticles/((double)NbrParticles-(double)FillingP/(double)FillingQ*ShiftSigma));
+      }
+  }
+
   if (((BooleanOption*) Manager["graphene-bilayer"])->GetBoolean() == false)
    {
     int LandauLevel = ((SingleIntegerOption*) Manager["landau-level"])->GetInteger();
@@ -103,11 +127,29 @@ int main(int argc, char** argv)
 	  {
 	    if (Manager.GetDouble("layer-thickness")>0.0)
 	      {
-	        if (layerSeparation==0.0)
-		  OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_t_%layer-thickness%_%profile-type%.dat");
-	        else
-		  OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_t_%layer-thickness%_d_%layer-separation%_%profile-type%.dat");
-	      }
+		if (Rescale)
+		  {
+		    char* FormatString=new char[1024];
+		    if (layerSeparation==0.0)
+		      {
+			sprintf(FormatString,"pseudopotential_coulomb_l_%%landau-level%%_2s_%%nbr-flux%%_t_%%layer-thickness%%_%%profile-type%%_scale_N_%d_nu_%d_%d_S_%d.dat", NbrParticles, FillingP, FillingQ, ShiftSigma);
+			OutputFile = Manager.GetFormattedString(FormatString);
+		      }
+		    else
+		      {
+			sprintf(FormatString,"pseudopotential_coulomb_l_%%landau-level%%_2s_%%nbr-flux%%_t_%%layer-thickness%%_%%profile-type%%_scale_N_%d_nu_%d_%d_S_%d.dat", NbrParticles, FillingP, FillingQ, ShiftSigma);
+			OutputFile = Manager.GetFormattedString(FormatString);
+		      }
+		    delete [] FormatString;
+		  }
+		else
+		  {
+		    if (layerSeparation==0.0)
+		      OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_t_%layer-thickness%_%profile-type%.dat");
+		    else
+		      OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_t_%layer-thickness%_d_%layer-separation%_%profile-type%.dat");
+		  }
+	      }	    
 	    else
 	      {	      
 	        if ((Manager.GetDouble("add-v0")==0.0)&&(Manager.GetDouble("add-v1")==0.0))
@@ -115,7 +157,17 @@ int main(int argc, char** argv)
 		    if (layerSeparation==0.0)
 		      OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%.dat");
   		    else
-		      OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_d_%layer-separation%.dat");
+		      {
+			if (Rescale)
+			  {
+			    char* FormatString=new char[1024];
+			    sprintf(FormatString,"pseudopotential_coulomb_l_%%landau-level%%_2s_%%nbr-flux%%_d_%%layer-separation%%_scale_N_%d_nu_%d_%d_S_%d.dat", NbrParticles, FillingP, FillingQ, ShiftSigma);
+			    OutputFile = Manager.GetFormattedString(FormatString);
+			    delete [] FormatString;
+			  }
+			else
+			  OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_d_%layer-separation%.dat");
+		      }
 		  }
 	        else
 		  {
@@ -124,21 +176,51 @@ int main(int argc, char** argv)
 		        if (layerSeparation==0.0)
 			  OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_w_%add-v1%.dat");
 		        else
-			  OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_d_%layer-separation%_w_%add-v1%.dat");
+			  {
+			    if (Rescale)
+			      {
+				char* FormatString=new char[1024];
+				sprintf(FormatString,"pseudopotential_coulomb_l_%%landau-level%%_2s_%%nbr-flux%%_d_%%layer-separation%%_w_%%add-v1%%_scale_N_%d_nu_%d_%d_S_%d.dat", NbrParticles, FillingP, FillingQ, ShiftSigma);
+				OutputFile = Manager.GetFormattedString(FormatString);
+				delete [] FormatString;
+			      }
+			    else
+			      OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_d_%layer-separation%_w_%add-v1%.dat");
+			  }
 		      }
 		    else if (Manager.GetDouble("add-v1")==0.0)
 		      {
 		        if (layerSeparation==0.0)
 			  OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_v_%add-v0%.dat");
 		        else
-			  OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_d_%layer-separation%_v_%add-v0%.dat");
+			  {
+			    if (Rescale)
+			      {
+				char* FormatString=new char[1024];
+				sprintf(FormatString,"pseudopotential_coulomb_l_%%landau-level%%_2s_%%nbr-flux%%_d_%%layer-separation%%_w_%%add-v0%%_scale_N_%d_nu_%d_%d_S_%d.dat", NbrParticles, FillingP, FillingQ, ShiftSigma);
+				OutputFile = Manager.GetFormattedString(FormatString);
+				delete [] FormatString;
+			      }
+			    else
+			      OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_d_%layer-separation%_v_%add-v0%.dat");
+			  }
 		      }
 		    else
 		      {
 		        if (layerSeparation==0.0)
 			  OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_v_%add-v0%_w_%add-v1%.dat");
 		        else
-			  OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_d_%layer-separation%_v_%add-v0%_w_%add-v1%.dat");
+			  {
+			    if (Rescale)
+			      {
+				char* FormatString=new char[1024];
+				sprintf(FormatString,"pseudopotential_coulomb_l_%%landau-level%%_2s_%%nbr-flux%%_d_%%layer-separation%%_w_%%add-v0%%_w_%%add-v1%%_scale_N_%d_nu_%d_%d_S_%d.dat", NbrParticles, FillingP, FillingQ, ShiftSigma);
+				OutputFile = Manager.GetFormattedString(FormatString);
+				delete [] FormatString;
+			      }
+			    else
+			      OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_d_%layer-separation%_v_%add-v0%_w_%add-v1%.dat");
+			  }
 		      }
 		  }
 	      }
@@ -153,30 +235,30 @@ int main(int argc, char** argv)
         double* Pseudopotentials;
     if (Manager.GetDouble("layer-thickness")>0.0)
       {      
-        AbstractZDensityProfile *Profile = AbstractZDensityProfile::CreateZDensityProfile(Manager.GetString("profile-type"),Manager.GetDouble("layer-thickness"));
+        AbstractZDensityProfile *Profile = AbstractZDensityProfile::CreateZDensityProfile(Manager.GetString("profile-type"),Manager.GetDouble("layer-thickness")*NewScale);
         AbstractZDensityProfile *OtherProfile=NULL;
         if (Manager.GetString("other-profile")!=NULL)
-	  OtherProfile = AbstractZDensityProfile::CreateZDensityProfile(Manager.GetString("other-profile"),Manager.GetDouble("layer-thickness"));
+	  OtherProfile = AbstractZDensityProfile::CreateZDensityProfile(Manager.GetString("other-profile"),Manager.GetDouble("layer-thickness")*NewScale);
         if (Manager.GetBoolean("no-interpolation"))
 	  Pseudopotentials = EvaluateFiniteWidthPseudoPotentialsNoInterpolation(NbrFlux, LandauLevel, Profile,
 							    /*, points=200 */ Manager.GetInteger("profile-points"),
 							    /*, multiplier=5.0 */ Manager.GetDouble("profile-multiplier"),
-							    Manager.GetDouble("layer-separation"), OtherProfile,
+							    Manager.GetDouble("layer-separation")*NewScale, OtherProfile,
 								Manager.GetDouble("tolerance"));
         else
 	  Pseudopotentials = EvaluateFiniteWidthPseudoPotentials(NbrFlux, LandauLevel, Profile,
 							    /*, points=200 */ Manager.GetInteger("profile-points"),
 							    /*, multiplier=5.0 */ Manager.GetDouble("profile-multiplier"),
-							       Manager.GetDouble("layer-separation"), OtherProfile,
+							       Manager.GetDouble("layer-separation")*NewScale, OtherProfile,
 							       Manager.GetDouble("tolerance"));
       }
     else
       {
-        Pseudopotentials = EvaluatePseudopotentials(NbrFlux, LandauLevel, layerSeparation, true);
+        Pseudopotentials = EvaluatePseudopotentials(NbrFlux, LandauLevel, layerSeparation*NewScale, true);
   
         if (((BooleanOption*) Manager["relativistic-fermions"])->GetBoolean() == true)
 	  {
-	    double* PseudopotentialsNMinus1 = EvaluatePseudopotentials(NbrFlux, LandauLevel - 1, layerSeparation, true);
+	    double* PseudopotentialsNMinus1 = EvaluatePseudopotentials(NbrFlux, LandauLevel - 1, layerSeparation*NewScale, true);
 	    for (int i = 0; i <= MaxMomentum; ++i)
 	      Pseudopotentials[i] = 0.5 * (Pseudopotentials[i] + PseudopotentialsNMinus1[i]);
 	    delete[] PseudopotentialsNMinus1;
@@ -199,15 +281,23 @@ int main(int argc, char** argv)
         File << endl
 	   << "# in the Landau level N=" << LandauLevel << " for 2S=" << NbrFlux << " flux quanta" << endl;
         if (layerSeparation != 0.0)
-	  File << "# with finite layer separation d=" << layerSeparation << endl;
+	  {
+	    if (Rescale)
+	      File << "# with effective finite layer separation d=" << layerSeparation << " (rescaled by "<<NewScale<<")"<<endl;
+	    else
+	      File << "# with finite layer separation d=" << layerSeparation << endl;
+	  }
         if (Manager.GetDouble("layer-thickness") > 0.0)
 	  {
-	    File << "# with finite layer width W=" << Manager.GetDouble("layer-thickness") << endl;
+	    if (Rescale)
+	      File << "# with finite layer at effective width W=" << Manager.GetDouble("layer-thickness") << " (rescaled by "<<NewScale<<")"<<endl;
+	    else
+	      File << "# with finite layer width W=" << Manager.GetDouble("layer-thickness") << endl;
 	    if (Manager.GetString("other-profile")!=NULL)
 	      File << "# for type1 = "<<AbstractZDensityProfile::DensityProfileName(Manager.GetString("profile-type"))
 		 << " and type2 = "<<AbstractZDensityProfile::DensityProfileName(Manager.GetString("other-profile"))<< endl;
 	    else
-	      File << "# and type: "<<AbstractZDensityProfile::DensityProfileName(Manager.GetString("profile-type"))<<endl;
+	      File << "# and type: "<<AbstractZDensityProfile::DensityProfileName(Manager.GetString("profile-type"))<<endl;	    
 	  }
         if (OneBodyPotentials != 0)
 	  {
@@ -263,10 +353,18 @@ int main(int argc, char** argv)
         cout << endl
 	   << "# in the Landau level N=" << LandauLevel << " for 2S=" << NbrFlux << " flux quanta" << endl;
         if (layerSeparation != 0.0)
-	  cout << "# with finite layer separation d=" << layerSeparation << endl;
+	  {
+	    if (Rescale)
+	      cout << "# with effective finite layer separation d=" << layerSeparation << " (rescaled by "<<NewScale<<")"<<endl;
+	    else
+	      cout << "# with finite layer separation d=" << layerSeparation << endl;
+	  }
         if (Manager.GetDouble("layer-thickness") > 0.0)
 	  {
-	    cout << "# with finite layer width W=" << Manager.GetDouble("layer-thickness") << endl;
+	    if (Rescale)
+	      cout << "# with finite layer at effective width W=" << Manager.GetDouble("layer-thickness") << " (rescaled by "<<NewScale<<")"<<endl;
+	    else
+	      cout << "# with finite layer width W=" << Manager.GetDouble("layer-thickness") << endl;
 	    cout << "# and type: "<<AbstractZDensityProfile::DensityProfileName(Manager.GetString("profile-type"))<<endl;
 	  }
         if (OneBodyPotentials != 0)
@@ -301,10 +399,18 @@ int main(int argc, char** argv)
         File << endl
 	   << "# in the Landau level N=" << LandauLevel << " for 2S=" << NbrFlux << " flux quanta" << endl;
         if (layerSeparation != 0.0)
-	  File << "# with finite layer separation d=" << layerSeparation << endl;
+	  {
+	    if (Rescale)
+	      cout << "# with effective finite layer separation d=" << layerSeparation << " (rescaled by "<<NewScale<<")"<<endl;
+	    else
+	      File << "# with finite layer separation d=" << layerSeparation << endl;
+	  }
         if (Manager.GetDouble("layer-thickness") > 0.0)
 	  {
-	    File << "# with finite layer width W=" << Manager.GetDouble("layer-thickness") << endl;
+	    if (Rescale)
+	      File << "# with finite layer az effective width W=" << Manager.GetDouble("layer-thickness") << " (rescaled by "<<NewScale<<")"<<endl;
+	    else
+	      File << "# with finite layer width W=" << Manager.GetDouble("layer-thickness") << endl;
 	    File << "# and type: "<<AbstractZDensityProfile::DensityProfileName(Manager.GetString("profile-type"))<<endl;
 	  }      
         if (Manager.GetDouble("add-v0")!=0.0)
