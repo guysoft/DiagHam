@@ -6,6 +6,8 @@
 
 #include "Options/Options.h"
 
+#include "GeneralTools/FileNameTools.h"
+
 #include <iostream>
 #include <cstring>
 #include <stdlib.h>
