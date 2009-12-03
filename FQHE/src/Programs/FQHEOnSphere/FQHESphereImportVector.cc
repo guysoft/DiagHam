@@ -37,19 +37,19 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('z', "lz-value", "twice the total lz value", 0);
   (*SystemGroup) += new SingleStringOption ('o', "output-state", "use this name for the output vector state instead of standard terminology");
   (*SystemGroup) += new BooleanOption  ('r', "reverse", "reverse order of states");
+  (*SystemGroup) += new BooleanOption  ('e', "export", "export the into ascii format");
   (*MiscGroup) += new BooleanOption  ('v', "verbose", "give a lot of output");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   Manager.StandardProceedings(argv, argc, cout);
 
-  
   int NbrParticles = Manager.GetInteger("nbr-particles");
   int LzMax = Manager.GetInteger("lzmax");
   int Lz = Manager.GetInteger("lz-value");
   bool Verbose = Manager.GetBoolean("verbose");
 
   ifstream InputFile;
-  if (Manager.GetString("state")!=0)
+  if ((Manager.GetString("state")!=0)&&(!Manager.GetBoolean("export")))
     {
       InputFile.open(Manager.GetString("state"), ios::in);
       if (!InputFile.is_open())
@@ -58,19 +58,34 @@ int main(int argc, char** argv)
 	  exit(-1);	    
 	}
     }
-  else if (Manager.GetString("raw-state")!=0)
-    {
-      InputFile.open(Manager.GetString("raw-state"), ios::binary | ios::in);
-      if (!InputFile.is_open())
-	{
-	  cout << "Could not open binary-file with vector description!"<<endl;
-	  exit(-1);	    
-	}      
-    }
   else
     {
-      cout << "Require a state vector in ascii or raw format!"<<endl;
-      exit(1);
+      if (Manager.GetBoolean("export"))
+	{
+	  InputFile.open(Manager.GetString("state"), ios::binary | ios::in);
+	  if (!InputFile.is_open())
+	    {
+	      cout << "Could not open input vector!"<<endl;
+	      exit(-1);	    
+	    }
+	}
+      else
+	{
+	  if (Manager.GetString("raw-state")!=0)
+	    {
+	      InputFile.open(Manager.GetString("raw-state"), ios::binary | ios::in);
+	      if (!InputFile.is_open())
+		{
+		  cout << "Could not open binary-file with vector description!"<<endl;
+		  exit(-1);	    
+		}      
+	    }
+	  else
+	    {
+	      cout << "Require a state vector in ascii or raw format!"<<endl;
+	      exit(1);
+	    }
+	}
     }
 
 
@@ -165,68 +180,93 @@ int main(int argc, char** argv)
       else
 	for (int i=0; i<Space->GetHilbertSpaceDimension(); ++i) Map[i]=i;
     }
-  
 
-  RealVector ResultingVector(Space->GetHilbertSpaceDimension());
-
-  char *OutputName = Manager.GetString("output-state");
-  
-  if (OutputName==NULL)
+  if (Manager.GetBoolean("export"))
     {
-      OutputName = new char[512];
-      if (Manager.GetString("state")!=NULL)
-	sprintf(OutputName,"fermions_sphere_import-%s_n_%d_2s_%d_lz_%d.vec",
-		Manager.GetString("state"), NbrParticles, LzMax, Lz);
-      else if (Manager.GetString("raw-state")!=NULL)
-	sprintf(OutputName,"fermions_sphere_import-%s_n_%d_2s_%d_lz_%d.vec",
-		Manager.GetString("raw-state"), NbrParticles, LzMax, Lz);
-	
-    }
-
-  if (Manager.GetString("state")!=0)
-    {
-      // int VIndex, VLastIndex=-1;
-      char NextLine[256];
-      double Value, Sign=1.0;
-      int Index=0;
-      while (InputFile.getline(NextLine,256))
+      InputFile.close();
+      RealVector InputVector;
+      if (InputVector.ReadVector(Manager.GetString("state"))==false)
 	{
-	  if (Signs)
-	    Sign = Signs[Index];
-	  std::istringstream LineStream(NextLine);
-	  LineStream >> Value;
-	  if (Verbose)
-	    cout << Index << "\t" << Value << endl;
-	  ResultingVector[Map[Index]]=Sign*Value;
-	  Index++;
-	}
-    }
-  else if (Manager.GetString("raw-state")!=0)
-    {
-      double *InputVector = new double[Space->GetHilbertSpaceDimension()];
-      int header;
-      InputFile.read ((char*)&header, sizeof(int));      
-      if (header/sizeof(double)!=Space->GetHilbertSpaceDimension())
-	{
-	  cout<<"Apparent problem with reading input vector"<<endl;
+	  cout << "Could not read input vector"<<endl;
 	  exit(1);
-	}	  
-      InputFile.read ((char*)InputVector, Space->GetHilbertSpaceDimension()*sizeof(double));
-      for (int i=0; i<10; ++i) cout << "Input["<<i<<"]="<<InputVector[i]<<endl;
-      if (Signs!=NULL)
-	for (int i=0; i<Space->GetHilbertSpaceDimension(); ++i)
-	  ResultingVector[Map[i]]=Signs[i]*InputVector[i];
-      else
-	for (int i=0; i<Space->GetHilbertSpaceDimension(); ++i)
-	  ResultingVector[Map[i]]=InputVector[i];
+	}
+      char *OutputName = Manager.GetString("output-state");
+      if (OutputName==NULL)
+	{
+	  OutputName = ReplaceExtensionToFileName(Manager.GetString("state"), "vec", "txt");
+	  if (OutputName==NULL)
+	    OutputName = AddExtensionToFileName(Manager.GetString("state"), "txt");
+	}
+      ofstream OutputFile;
+      OutputFile.open(OutputName,ios::out);
+      OutputFile.precision(15);
+      for (int i=0; i<Space->GetHilbertSpaceDimension(); ++i)
+	OutputFile<<InputVector[Map[i]];
+      OutputFile.close();
+      delete [] OutputName;
     }
-  else
+  else // regular import
     {
-      cout << "An error occurred"<<endl;
-      exit(1);
+      RealVector ResultingVector(Space->GetLargeHilbertSpaceDimension());
+
+      char *OutputName = Manager.GetString("output-state");
+  
+      if (OutputName==NULL)
+	{
+	  OutputName = new char[512];
+	  if (Manager.GetString("state")!=NULL)
+	    sprintf(OutputName,"fermions_sphere_import-%s_n_%d_2s_%d_lz_%d.vec",
+		    Manager.GetString("state"), NbrParticles, LzMax, Lz);
+	  else if (Manager.GetString("raw-state")!=NULL)
+	    sprintf(OutputName,"fermions_sphere_import-%s_n_%d_2s_%d_lz_%d.vec",
+		    Manager.GetString("raw-state"), NbrParticles, LzMax, Lz);
+	
+	}
+
+      if (Manager.GetString("state")!=0)
+	{
+	  // int VIndex, VLastIndex=-1;
+	  char NextLine[256];
+	  double Value, Sign=1.0;
+	  int Index=0;
+	  while (InputFile.getline(NextLine,256))
+	    {
+	      if (Signs)
+		Sign = Signs[Index];
+	      std::istringstream LineStream(NextLine);
+	      LineStream >> Value;
+	      if (Verbose)
+		cout << Index << "\t" << Value << endl;
+	      ResultingVector[Map[Index]]=Sign*Value;
+	      Index++;
+	    }
+	}
+      else if (Manager.GetString("raw-state")!=0)
+	{
+	  double *InputVector = new double[Space->GetHilbertSpaceDimension()];
+	  int header;
+	  InputFile.read ((char*)&header, sizeof(int));      
+	  if (header/sizeof(double)!=Space->GetHilbertSpaceDimension())
+	    {
+	      cout<<"Apparent problem with reading input vector"<<endl;
+	      exit(1);
+	    }	  
+	  InputFile.read ((char*)InputVector, Space->GetHilbertSpaceDimension()*sizeof(double));
+	  for (int i=0; i<10; ++i) cout << "Input["<<i<<"]="<<InputVector[i]<<endl;
+	  if (Signs!=NULL)
+	    for (int i=0; i<Space->GetHilbertSpaceDimension(); ++i)
+	      ResultingVector[Map[i]]=Signs[i]*InputVector[i];
+	  else
+	    for (int i=0; i<Space->GetHilbertSpaceDimension(); ++i)
+	      ResultingVector[Map[i]]=InputVector[i];
+	}
+      else
+	{
+	  cout << "An error occurred"<<endl;
+	  exit(1);
+	}
+
+      ResultingVector.WriteVector(OutputName);
+      delete [] OutputName;
     }
-
-  ResultingVector.WriteVector(OutputName);
-
-  delete [] OutputName;
 }

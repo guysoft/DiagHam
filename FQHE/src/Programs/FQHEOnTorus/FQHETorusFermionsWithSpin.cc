@@ -10,7 +10,7 @@
 #include "Hamiltonian/ParticleOnTorusCoulombWithSpinHamiltonian.h"
 //#include "Hamiltonian/ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian.h"
 
-#include "Lanczosalgorithm/ComplexBasicLanczosAlgorithm.h"
+#include "LanczosAlgorithm/ComplexBasicLanczosAlgorithm.h"
 #include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithm.h"
 #include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithDiskStorage.h"
 #include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage.h"

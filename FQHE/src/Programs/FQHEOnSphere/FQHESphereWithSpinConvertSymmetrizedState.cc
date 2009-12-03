@@ -23,8 +23,9 @@
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
 
 #include <iostream>
-#include <stdlib.h>
-#include <math.h>
+#include <cstring>
+#include <cstdlib>
+#include <cmath>
 #include <fstream>
 
 using std::cout;

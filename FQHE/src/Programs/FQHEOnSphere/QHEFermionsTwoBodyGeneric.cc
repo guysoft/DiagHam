@@ -288,7 +288,7 @@ int main(int argc, char** argv)
 	{
 	  AbstractHamiltonian* L2Projector =
 	    new ParticleOnSphereL2Hamiltonian(Space, NbrParticles, LzMax, L, 
-					      Architecture.GetArchitecture(), 1.0);
+					      Architecture.GetArchitecture(), 1.0, ((long)Manager.GetInteger("l2-memory"))<<20);
 	  L2Projector->ShiftHamiltonian(-0.25*(double)L*(L+2.0));
 	  Projectors[NbrProjectors++]=L2Projector;
 	}
