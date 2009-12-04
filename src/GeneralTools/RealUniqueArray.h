@@ -33,10 +33,11 @@
 
 #include "config.h"
 
-#include "MainTask/AbstractMainTask.h"
 #include "GeneralTools/GarbageFlag.h"
 
 #include <iostream>
+
+#include <pthread.h>
 
 
 using std::ofstream;

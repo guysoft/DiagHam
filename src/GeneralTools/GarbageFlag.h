@@ -31,6 +31,9 @@
 #ifndef GARBAGEFLAG_H
 #define GARBAGEFLAG_H
 
+#include "config.h"
+
+#include <pthread.h>
 
 class GarbageFlag
 {
@@ -38,6 +41,11 @@ class GarbageFlag
  private:
  
   int* Counter;
+
+#ifdef __SMP__
+  pthread_mutex_t *FlagMutex;
+#endif
+
 
  public:
 

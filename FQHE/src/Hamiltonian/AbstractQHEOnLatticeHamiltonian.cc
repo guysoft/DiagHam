@@ -2767,16 +2767,32 @@ void AbstractQHEOnLatticeHamiltonian::EnableFastMultiplicationWithDiskStorage(ch
 void AbstractQHEOnLatticeHamiltonian::PartialEnableFastMultiplication(int firstComponent, int nbrComponent)
 {
   int LastComponent = nbrComponent + firstComponent;
- ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
+  ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
 
-  long TotalPos = ((firstComponent - this->PrecalculationShift - 1) / this->FastMultiplicationStep) + 1;
-  int InitalPos = ((firstComponent - 1) / this->FastMultiplicationStep) + 1;
-  InitalPos *= this->FastMultiplicationStep;
-  for (int i = InitalPos; i < LastComponent; i += this->FastMultiplicationStep)
+  firstComponent -= this->PrecalculationShift;
+  LastComponent -= this->PrecalculationShift;
+  long Pos = firstComponent / this->FastMultiplicationStep; 
+  int PosMod = firstComponent % this->FastMultiplicationStep;
+  if (PosMod != 0)
     {
-      this->EvaluateFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[TotalPos], 
-						this->InteractionPerComponentCoefficientIndex[TotalPos], TotalPos);
+      ++Pos;
+      PosMod = this->FastMultiplicationStep - PosMod;
     }
+  for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
+    {
+      this->EvaluateFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
+ 						this->InteractionPerComponentCoefficientIndex[Pos], Pos);
+    }
+
+ 
+//   long TotalPos = ((firstComponent - this->PrecalculationShift - 1) / this->FastMultiplicationStep) + 1;
+//   int InitalPos = ((firstComponent - 1) / this->FastMultiplicationStep) + 1;
+//   InitalPos *= this->FastMultiplicationStep;
+//   for (int i = InitalPos; i < LastComponent; i += this->FastMultiplicationStep)
+//     {
+//       this->EvaluateFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[TotalPos], 
+// 						this->InteractionPerComponentCoefficientIndex[TotalPos], TotalPos);
+//     }
   
   delete TmpParticles;
 }

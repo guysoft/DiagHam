@@ -155,7 +155,7 @@ bool AbstractQHEOnSphereHamiltonian::IsHermitian()
 //
 bool AbstractQHEOnSphereHamiltonian::IsConjugate()
 {
-  return false;
+  return true;
 }
 
 // symmetrize interaction factors to enable hermitian matrix multiplication
@@ -293,7 +293,6 @@ bool AbstractQHEOnSphereHamiltonian::HermitianSymmetrizeInteractionFactors()
 	}
       if (this->NbrM12Indices!=TmpNbrM12Values)
 	{
-	  cout << "reducing unused M1,M2"<<endl;
 	  int **NewM3Values=new int*[TmpNbrM12Values];
 	  int *NewNbrM3Values=new int[TmpNbrM12Values];
 	  Pos = 0;
@@ -561,7 +560,6 @@ RealVector& AbstractQHEOnSphereHamiltonian::LowLevelAddMultiplyPartialFastMultip
       PosMod = this->FastMultiplicationStep - PosMod;
     }
   int l =  PosMod + firstComponent + this->PrecalculationShift;
-  cout << "firstComponent="<<firstComponent<<" Pos="<<Pos<<" PosMod="<<PosMod<<endl; 
   for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
     {
       TmpNbrInteraction = this->NbrInteractionPerComponent[Pos];
@@ -1427,7 +1425,6 @@ RealVector& AbstractQHEOnSphereHamiltonian::ConjugateLowLevelAddMultiplyPartialF
       PosMod = this->FastMultiplicationStep - PosMod;
     }
   int l =  PosMod + firstComponent + this->PrecalculationShift;
-  cout << "firstComponent="<<firstComponent<<" PosMod="<<PosMod<<endl;
   for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
     {
       TmpNbrInteraction = this->NbrInteractionPerComponent[Pos];
@@ -3108,6 +3105,7 @@ bool AbstractQHEOnSphereHamiltonian::GetLoadBalancing(int nbrTasks, long* &segme
 	{
 	  if (LoadBalancingArray!=0)
 	    delete [] LoadBalancingArray;
+	  long *SegmentSize = new long[nbrTasks];
 	  this->LoadBalancingArray = new long[nbrTasks+1];
 	  this->NbrBalancedTasks=nbrTasks;
 	  long TmpNbrElement=0;
@@ -3122,17 +3120,20 @@ bool AbstractQHEOnSphereHamiltonian::GetLoadBalancing(int nbrTasks, long* &segme
 	      TmpNbrElement+=NbrInteractionPerComponent[i];
 	      if (TmpNbrElement>TmpNbrPerSegment)
 		{
+		  SegmentSize[Pos]=TmpNbrElement;
 		  LoadBalancingArray[Pos+1]=MinIndex+i*this->FastMultiplicationStep;
 		  TmpNbrElement=0;
 		  ++Pos;
 		}
 	    }
 	  LoadBalancingArray[nbrTasks]=MaxIndex+1;
-
-	  cout << "LoadBalancingArray=["<<LoadBalancingArray[1]-LoadBalancingArray[0];
-	  for (int i=2; i<=nbrTasks; ++i)
-	    cout <<" "<<LoadBalancingArray[i]-LoadBalancingArray[i-1];
+	  SegmentSize[nbrTasks-1]=TmpNbrElement;
+	  
+	  cout << "LoadBalancingArray=[ ("<<LoadBalancingArray[1]-LoadBalancingArray[0]<<", "<<SegmentSize[0]<<")";
+	  for (int i=1; i<nbrTasks; ++i)
+	    cout <<" ("<<LoadBalancingArray[i+1]-LoadBalancingArray[i]<<", "<<SegmentSize[i]<<")";
 	  cout << "]"<< endl;
+	  delete [] SegmentSize;
 	}
     }
   else

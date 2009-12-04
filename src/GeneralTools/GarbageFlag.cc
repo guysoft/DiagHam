@@ -39,6 +39,9 @@
 GarbageFlag::GarbageFlag()
 {
   this->Counter = 0;
+#ifdef __SMP__
+  this->FlagMutex = 0;
+#endif
 }
 
 // copy constructor
@@ -47,9 +50,25 @@ GarbageFlag::GarbageFlag()
 
 GarbageFlag::GarbageFlag(const GarbageFlag& flag)
 {
-  this->Counter = flag.Counter;
-  if (this->Counter != 0)
-    (*(this->Counter))++;
+  if (flag.Counter != 0)
+    {
+#ifdef __SMP__
+      pthread_mutex_lock(flag.FlagMutex);
+      this->FlagMutex = flag.FlagMutex;
+#endif
+      this->Counter = flag.Counter;
+      (*(this->Counter))++;
+#ifdef __SMP__
+      pthread_mutex_unlock(this->FlagMutex);
+#endif
+    }
+  else
+    {
+#ifdef __SMP__
+      this->FlagMutex = NULL;
+#endif
+      this->Counter = NULL;
+    }
 }
 
 // destructor
@@ -59,13 +78,24 @@ GarbageFlag::~GarbageFlag()
 {
   if (this->Counter != 0)
     {
+#ifdef __SMP__
+      pthread_mutex_lock(this->FlagMutex);
+#endif
       if ((*(this->Counter)) == 1)
 	{
-	  (*(this->Counter))--;
 	  delete this->Counter;
+#ifdef __SMP__
+	  pthread_mutex_destroy(this->FlagMutex);
+	  delete this->FlagMutex;
+#endif
 	}
       else
-	(*(this->Counter))--;
+	{
+	  (*(this->Counter))--;
+#ifdef __SMP__
+	  pthread_mutex_unlock(this->FlagMutex);
+#endif
+	}
     }
 }
  
@@ -77,13 +107,45 @@ GarbageFlag::~GarbageFlag()
 GarbageFlag& GarbageFlag::operator = (const GarbageFlag& flag)
 {
   if (this->Counter != 0)
-    if ((*(this->Counter)) == 1)
-      delete this->Counter;
-    else
-      (*(this->Counter))--;
-  this->Counter = flag.Counter;
-  if (this->Counter != 0)
-    (*(this->Counter))++;
+    {
+#ifdef __SMP__
+      pthread_mutex_lock(this->FlagMutex);
+#endif
+      if ((*(this->Counter)) == 1)
+	{
+	  delete this->Counter;
+#ifdef __SMP__
+	  pthread_mutex_destroy(this->FlagMutex);
+	  delete this->FlagMutex;
+#endif
+	}
+      else
+	{
+	  (*(this->Counter))--;
+#ifdef __SMP__
+	  pthread_mutex_unlock(this->FlagMutex);
+#endif
+	}
+    }
+  if (flag.Counter!=0)
+    {
+#ifdef __SMP__
+      pthread_mutex_lock(flag.FlagMutex);
+#endif
+      this->FlagMutex = flag.FlagMutex;
+      this->Counter = flag.Counter;
+      (*(this->Counter))++;
+#ifdef __SMP__
+      pthread_mutex_unlock(this->FlagMutex);
+#endif
+    }
+  else
+    {
+#ifdef __SMP__
+      this->FlagMutex = NULL;
+#endif
+      this->Counter = NULL;
+    }
   return *this;
 }
 
@@ -93,12 +155,36 @@ GarbageFlag& GarbageFlag::operator = (const GarbageFlag& flag)
 void GarbageFlag::Initialize ()
 {
   if (this->Counter != 0)
-    if ((*(this->Counter)) == 1)
-      delete this->Counter;
-    else
-      (*(this->Counter))--;
-    this->Counter = new int;
-  (*(this->Counter)) = 1;    
+    {
+#ifdef __SMP__
+      pthread_mutex_lock(this->FlagMutex);
+#endif
+      if ((*(this->Counter)) == 1)
+	{
+	  delete this->Counter;
+#ifdef __SMP__
+	  pthread_mutex_destroy(this->FlagMutex);
+	  delete this->FlagMutex;
+#endif
+	}
+      else
+	{
+	  (*(this->Counter))--;
+#ifdef __SMP__
+	  pthread_mutex_unlock(this->FlagMutex);
+#endif
+	}
+#ifdef __SMP__
+    }
+  this->FlagMutex = new pthread_mutex_t;
+  pthread_mutex_init(this->FlagMutex, NULL);
+  pthread_mutex_lock(this->FlagMutex);
+#endif
+  this->Counter = new int;
+  (*(this->Counter)) = 1;
+#ifdef __SMP__
+  pthread_mutex_unlock(this->FlagMutex);
+#endif
 }
 
 // test if datas are shared
