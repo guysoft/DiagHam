@@ -155,7 +155,7 @@ bool AbstractQHEOnSphereHamiltonian::IsHermitian()
 //
 bool AbstractQHEOnSphereHamiltonian::IsConjugate()
 {
-  return true;
+  return false;
 }
 
 // symmetrize interaction factors to enable hermitian matrix multiplication
@@ -561,6 +561,7 @@ RealVector& AbstractQHEOnSphereHamiltonian::LowLevelAddMultiplyPartialFastMultip
       PosMod = this->FastMultiplicationStep - PosMod;
     }
   int l =  PosMod + firstComponent + this->PrecalculationShift;
+  cout << "firstComponent="<<firstComponent<<" Pos="<<Pos<<" PosMod="<<PosMod<<endl; 
   for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
     {
       TmpNbrInteraction = this->NbrInteractionPerComponent[Pos];
@@ -1426,6 +1427,7 @@ RealVector& AbstractQHEOnSphereHamiltonian::ConjugateLowLevelAddMultiplyPartialF
       PosMod = this->FastMultiplicationStep - PosMod;
     }
   int l =  PosMod + firstComponent + this->PrecalculationShift;
+  cout << "firstComponent="<<firstComponent<<" PosMod="<<PosMod<<endl;
   for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
     {
       TmpNbrInteraction = this->NbrInteractionPerComponent[Pos];
@@ -2312,7 +2314,8 @@ RealVector& AbstractQHEOnSphereHamiltonian::HermitianLowLevelAddMultiplyPartialF
       TmpCoefficientArray = this->InteractionPerComponentCoefficient[Pos];
       Coefficient = vSource[l];
       for (j = 0; j < TmpNbrInteraction; ++j)
-	{ 
+	{
+	  // xxx segfault here: reading non-initialized
 	  vDestination[TmpIndexArray[j]] +=  TmpCoefficientArray[j] * Coefficient;
 	  TmpSum +=  TmpCoefficientArray[j] * vSource[TmpIndexArray[j]];
 	}
@@ -3387,14 +3390,30 @@ void AbstractQHEOnSphereHamiltonian::PartialEnableFastMultiplication(int firstCo
   int LastComponent = nbrComponent + firstComponent;
   ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
 
-  long TotalPos = ((firstComponent - this->PrecalculationShift - 1) / this->FastMultiplicationStep) + 1;
-  int InitalPos = ((firstComponent - 1) / this->FastMultiplicationStep) + 1;
-  InitalPos *= this->FastMultiplicationStep;
-  for (int i = InitalPos; i < LastComponent; i += this->FastMultiplicationStep)
+  firstComponent -= this->PrecalculationShift;
+  LastComponent -= this->PrecalculationShift;
+  long Pos = firstComponent / this->FastMultiplicationStep; 
+  int PosMod = firstComponent % this->FastMultiplicationStep;
+  if (PosMod != 0)
     {
-      this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[TotalPos], 
-							 this->InteractionPerComponentCoefficient[TotalPos], TotalPos);
+      ++Pos;
+      PosMod = this->FastMultiplicationStep - PosMod;
     }
+  for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
+    {
+      this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
+							 this->InteractionPerComponentCoefficient[Pos], Pos);
+    }
+
+//   long TotalPos = ((firstComponent - this->PrecalculationShift - 1) / this->FastMultiplicationStep) + 1;
+//   int InitialPos = ((firstComponent - 1) / this->FastMultiplicationStep) + 1;
+//   InitialPos *= this->FastMultiplicationStep;
+//   cout << "PartialEnableFastMultiplication: TotalPos="<<TotalPos<<", InitialPos="<<InitialPos<<endl;
+//   for (int i = InitialPos; i < LastComponent; i += this->FastMultiplicationStep)
+//     {
+//       this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[TotalPos], 
+// 							 this->InteractionPerComponentCoefficient[TotalPos], TotalPos);
+//     }
   
   delete TmpParticles;
 }

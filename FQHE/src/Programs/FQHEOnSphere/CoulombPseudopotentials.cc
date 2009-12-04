@@ -104,6 +104,7 @@ int main(int argc, char** argv)
 	FillingQ=ScaleParams[2];
 	ShiftSigma=ScaleParams[3];
 	NewScale=sqrt((double)NbrParticles/((double)NbrParticles-(double)FillingP/(double)FillingQ*ShiftSigma));
+	cout << "Rescaling layer separation and thickness with scale factor: "<<NewScale<<endl;
       }
   }
 
