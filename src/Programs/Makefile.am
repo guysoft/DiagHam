@@ -48,11 +48,11 @@ ResizeLanczos_LDADD=-L$(top_builddir)/src/Vector -L$(top_builddir)/src/Matrix -L
 
 GenericOverlap_DEPENDENCIES= $(top_builddir)/src/Vector/libVector.a  $(top_builddir)/src/Options/libOptions.a
 
-GenericOverlap_LDADD= -L$(top_builddir)/src/Vector  -L$(top_builddir)/src/Options -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/Output -lVector -lOptions -lGeneralTools -lOutput
+GenericOverlap_LDADD= -L$(top_builddir)/src/Vector  -L$(top_builddir)/src/Options -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/Output -lVector -lOptions -lGeneralTools -lOutput @THREAD_LIBS@
 
 VectorBinary2Ascii_DEPENDENCIES= $(top_builddir)/src/Vector/libVector.a  $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/GeneralTools/libGeneralTools.a
 
-VectorBinary2Ascii_LDADD= -L$(top_builddir)/src/Vector  -L$(top_builddir)/src/Options -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/Output -lVector -lOptions -lGeneralTools -lOutput
+VectorBinary2Ascii_LDADD= -L$(top_builddir)/src/Vector  -L$(top_builddir)/src/Options -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/Output -lVector -lOptions -lGeneralTools -lOutput @THREAD_LIBS@
 
 ReplayLanczos_DEPENDENCIES=$(top_builddir)/src/Architecture/libArchitecture.a $(top_builddir)/src/Architecture/ArchitectureOperation/libArchitectureOperation.a $(top_builddir)/src/LanczosAlgorithm/libLanczosAlgorithm.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Options/libOptions.a
 
@@ -72,7 +72,7 @@ GenerateRandomNumbers_LDADD=-L$(top_builddir)/src/Vector -L$(top_builddir)/src/M
 
 BuildSuperPosition_DEPENDENCIES= $(top_builddir)/src/Vector/libVector.a  $(top_builddir)/src/Options/libOptions.a
 
-BuildSuperPosition_LDADD= -L$(top_builddir)/src/Vector  -L$(top_builddir)/src/Options -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/Output -lVector -lOptions -lGeneralTools -lOutput @BZ2_LIBS@
+BuildSuperPosition_LDADD= -L$(top_builddir)/src/Vector  -L$(top_builddir)/src/Options -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/Output -lVector -lOptions -lGeneralTools -lOutput @BZ2_LIBS@ @THREAD_LIBS@
 
 ReorthogonalizeVectorSet_DEPENDENCIES=$(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Options/libOptions.a
 
@@ -80,7 +80,7 @@ ReorthogonalizeVectorSet_LDADD=-L$(top_builddir)/src/Vector -L$(top_builddir)/sr
 
 MergeMCHistories_DEPENDENCIES=$(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/MainTask/libMainTask.a $(top_builddir)/src/MathTools/NumericalAnalysis/libNumericalAnalysis.a $(top_builddir)/src/MathTools/RandomNumber/libRandomNumber.a $(top_builddir)/src/MCObservables/libMCObservables.a
 
-MergeMCHistories_LDADD=-L$(top_builddir)/src/Vector/  -L$(top_builddir)/src/Matrix/  -L$(top_builddir)/src/Output/  -L$(top_builddir)/src/GeneralTools/  -L$(top_builddir)/src/MathTools/ -L$(top_builddir)/src/Options/ -L$(top_builddir)/src/MathTools/NumericalAnalysis/ -L$(top_builddir)/src/MathTools/RandomNumber/ -L$(top_builddir)/src/MainTask -L$(top_builddir)/src/MCObservables/ -lMCObservables -lVector -lMatrix -lOutput -lGeneralTools -lMathTools -lOptions -lMainTask -lNumericalAnalysis -lRandomNumber 
+MergeMCHistories_LDADD=-L$(top_builddir)/src/Vector/  -L$(top_builddir)/src/Matrix/  -L$(top_builddir)/src/Output/  -L$(top_builddir)/src/GeneralTools/  -L$(top_builddir)/src/MathTools/ -L$(top_builddir)/src/Options/ -L$(top_builddir)/src/MathTools/NumericalAnalysis/ -L$(top_builddir)/src/MathTools/RandomNumber/ -L$(top_builddir)/src/MainTask -L$(top_builddir)/src/MCObservables/ -lMCObservables -lVector -lMatrix -lOutput -lGeneralTools -lMathTools -lOptions -lMainTask -lNumericalAnalysis -lRandomNumber @THREAD_LIBS@
 
 NormalizeVector_DEPENDENCIES=$(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Options/libOptions.a
 
@@ -100,8 +100,8 @@ CountingZero_LDADD=-L$(top_builddir)/src/Vector -L$(top_builddir)/src/Matrix -L$
 
 VectorAscii2Binary_DEPENDENCIES= $(top_builddir)/src/Vector/libVector.a  $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/GeneralTools/libGeneralTools.a
 
-VectorAscii2Binary_LDADD=-L$(top_builddir)/src/Vector  -L$(top_builddir)/src/Options -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/Output -lVector -lOptions -lGeneralTools -lOutput  @BZ2_LIBS@ 
+VectorAscii2Binary_LDADD=-L$(top_builddir)/src/Vector  -L$(top_builddir)/src/Options -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/Output -lVector -lOptions -lGeneralTools -lOutput  @BZ2_LIBS@ @THREAD_LIBS@
 
 MatrixElement_DEPENDENCIES= $(top_builddir)/src/Vector/libVector.a  $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/GeneralTools/libGeneralTools.a
 
-MatrixElement_LDADD= -L$(top_builddir)/src/Vector  -L$(top_builddir)/src/Options -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/Output -L$(top_builddir)/src/GeneralTools/ -lVector -lOptions -lGeneralTools -lOutput
+MatrixElement_LDADD= -L$(top_builddir)/src/Vector  -L$(top_builddir)/src/Options -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/Output -L$(top_builddir)/src/GeneralTools/ -lVector -lOptions -lGeneralTools -lOutput @THREAD_LIBS@
