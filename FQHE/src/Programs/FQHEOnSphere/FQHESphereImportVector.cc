@@ -35,6 +35,7 @@ int main(int argc, char** argv)
   Manager += OutputGroup;
   Manager += MiscGroup;
   (*SystemGroup) += new SingleStringOption ('\0', "state", "vector to import in ascii format");
+  (*SystemGroup) += new SingleStringOption ('\0', "raw-state", "vector to import in FORTRAN binary format");
   (*SystemGroup) += new SingleStringOption ('b', "basis", "description of basis in which vector is formatted");
   (*SystemGroup) += new SingleIntegerOption  ('z', "lz-value", "twice the total lz value", 0);
   (*SystemGroup) += new SingleStringOption ('o', "output-state", "use this name for the output vector state instead of standard terminology");

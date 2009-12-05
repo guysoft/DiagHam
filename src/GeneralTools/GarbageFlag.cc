@@ -27,6 +27,7 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
+#include "config.h"
 
 #include "GeneralTools/GarbageFlag.h"
 
@@ -43,6 +44,7 @@ GarbageFlag::GarbageFlag()
   this->FlagMutex = 0;
 #endif
 }
+
 
 // copy constructor
 //

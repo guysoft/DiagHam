@@ -2035,7 +2035,7 @@ bool ComplexVector::ReadVector (const char* fileName)
   if (((std::streampos)Length/(std::streampos)sizeof(double)<(std::streampos)TmpDimension))
     {      
       cout << "Error reading complex vector "<<fileName<<": estimated length "<<(std::streampos)Length/(2*sizeof(double))<<" vs dimension "<<TmpDimension<<endl;
-      if ((std::streampos)TmpDimension==(std::streampos)Length/(std::streampos)sizeof(double))
+      if ((long)TmpDimension==(long)Length/(long)sizeof(double))
 	cout << "This could be a real vector!"<<endl;
       exit(1);
     }
