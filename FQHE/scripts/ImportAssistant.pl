@@ -8,10 +8,11 @@ use Math::Complex;
 
 
 # hardwire which state to look at
-my $Program="FQHELatticeImportVector";
+my $Program="FQHESphereImportVector";
 my $Extension="";
 
 my $Format="";
+my $OutputFormat="";
 my $Reverse="--reverse";
 my $InputType="--raw-state";
 my $TargetDirectory="./";
@@ -44,6 +45,19 @@ while( (defined($ARGV[0])&&$ARGV[0] =~ /^-/ ))
 	  {
 	    shift(@ARGV);
 	    $Format = $ARGV[0];
+	  }
+      }
+    if ( $ARGV[0] =~ /-o/ )
+      {
+	if (length($ARGV[0])>2)
+	  {
+	    $OutputFormat = $ARGV[0];
+	    $OutputFormat =~ s/-o//;
+	  }
+	else
+	  {
+	    shift(@ARGV);
+	    $OutputFormat = $ARGV[0];
 	  }
       }
     if ( $ARGV[0] =~ /-n/ )
@@ -94,7 +108,7 @@ my $TmpFile;
 foreach $TmpFile (@ARGV)
   {
     print ("Importing vector ".$TmpFile."\n");
-    &ImportVector($TmpFile, $Format);
+    &ImportVector($TmpFile, $Format, $OutputFormat);
   }
 
 # calculate gauge and prepare output for plotting
@@ -105,6 +119,7 @@ sub ImportVector
   {
     my $ImportFile = $_[0];
     my $Format = $_[1];
+    my $OutputFormat = $_[2];
 
     $Format =~ /(.*)NN(.*)SS(.*)/;
     my $FormatBeg = $1;
@@ -123,8 +138,14 @@ sub ImportVector
 	$InputFileName =~ /$FormatBeg(\d+)$FormatMid(\d+)$FormatEnd/;
 	my $NbrParticles = $1;
 	my $NbrFlux = $2;
-	
-	my $Command = "$Program$Extension $Reverse $InputType -p $NbrParticles -l $NbrFlux";
+	my $OutputString="";
+	if (($OutputFormat =~ m/NN/ )&&($OutputFormat =~ m/SS/ ))
+	  {
+	    $OutputString = "-o $OutputFormat";
+	    $OutputString =~ s#NN#$NbrParticles#;
+	    $OutputString =~ s#SS#$NbrFlux#;
+	  }
+	my $Command = "$Program$Extension $Reverse $InputType $ImportFile -p $NbrParticles -l $NbrFlux $OutputString";
 	print ("Import command: ".$Command."\n");
 	system($Command);
       }

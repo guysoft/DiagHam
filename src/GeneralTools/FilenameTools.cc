@@ -199,15 +199,16 @@ void ExtractPathAndFileName (const char* input, char* &path, char* &fileName)
       path = new char[3];
       sprintf(path,"./");
       fileName = new char[strlen(input)+1];
-      sprintf(fileName,input);
+      strcpy(fileName,input);
     }
   else
     {
+      TmpFile+=1;
       long TmpLength = strlen(input) - strlen(TmpFile);
       path = new char[TmpLength + 1];
       strncpy(path, input, TmpLength);
       fileName = new char[strlen(TmpFile) + 1];
-      sprintf(fileName,TmpFile);
+      strcpy(fileName,TmpFile);
     }
 }
 

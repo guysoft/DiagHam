@@ -236,6 +236,11 @@ int main(int argc, char** argv)
 	      delete [] FileName;
 	    }
 	}
+      else
+	{
+	  OutputName = new char[strlen(Manager.GetString("output-state")+1)];
+	  strcpy(OutputName,Manager.GetString("output-state"));
+	}
 
       if (Manager.GetString("state")!=0)
 	{
@@ -279,7 +284,7 @@ int main(int argc, char** argv)
 	  cout << "An error occurred"<<endl;
 	  exit(1);
 	}
-
+      cout << "Writing vector "<<OutputName<<endl;
       ResultingVector.WriteVector(OutputName);
       delete [] OutputName;
     }
