@@ -35,7 +35,7 @@ int main(int argc, char** argv)
   Manager += OutputGroup;
   Manager += MiscGroup;
   (*SystemGroup) += new SingleStringOption ('\0', "state", "vector to import in ascii format");
-  (*SystemGroup) += new SingleStringOption ('\0', "raw-state", "vector to import in FORTRAN binary format");
+  (*SystemGroup) += new SingleStringOption ('\n', "raw-state", "vector to import in FORTRAN binary format");
   (*SystemGroup) += new SingleStringOption ('b', "basis", "description of basis in which vector is formatted");
   (*SystemGroup) += new SingleIntegerOption  ('z', "lz-value", "twice the total lz value", 0);
   (*SystemGroup) += new SingleStringOption ('o', "output-state", "use this name for the output vector state instead of standard terminology");
@@ -218,12 +218,23 @@ int main(int argc, char** argv)
 	{
 	  OutputName = new char[512];
 	  if (Manager.GetString("state")!=NULL)
-	    sprintf(OutputName,"fermions_sphere_import-%s_n_%d_2s_%d_lz_%d.vec",
-		    Manager.GetString("state"), NbrParticles, LzMax, Lz);
+	    {
+	      char *Path, *FileName;
+	      ExtractPathAndFileName (Manager.GetString("state"), Path, FileName);
+	      sprintf(OutputName,"fermions_sphere_import-%s_n_%d_2s_%d_lz_%d.vec",
+		      FileName, NbrParticles, LzMax, Lz);
+	      delete [] Path;
+	      delete [] FileName;
+	    }
 	  else if (Manager.GetString("raw-state")!=NULL)
-	    sprintf(OutputName,"fermions_sphere_import-%s_n_%d_2s_%d_lz_%d.vec",
-		    Manager.GetString("raw-state"), NbrParticles, LzMax, Lz);
-	
+	    {
+	      char *Path, *FileName;
+	      ExtractPathAndFileName (Manager.GetString("raw-state"), Path, FileName);
+	      sprintf(OutputName,"fermions_sphere_import-%s_n_%d_2s_%d_lz_%d.vec",
+		      FileName, NbrParticles, LzMax, Lz);
+	      delete [] Path;
+	      delete [] FileName;
+	    }
 	}
 
       if (Manager.GetString("state")!=0)
