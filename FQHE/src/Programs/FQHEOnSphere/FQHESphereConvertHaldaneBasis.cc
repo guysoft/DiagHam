@@ -36,8 +36,10 @@ int main(int argc, char** argv)
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* OutputGroup = new OptionGroup ("output options");
+  OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
   Manager += SystemGroup;
   Manager += OutputGroup;
+  Manager += PrecalculationGroup;
   Manager += MiscGroup;
   (*SystemGroup) += new SingleStringOption  ('\0', "input-file", "input state file name");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-state", "reference state to start the Haldane algorithm from (can be laughlin, pfaffian or readrezayi3)", "laughlin");
@@ -49,6 +51,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('r', "reverse", "convert a state from the n-body basis to the Haldane basis");
   (*SystemGroup) += new BooleanOption  ('f', "fermion", "use fermionic statistic (override autodetection from input file name)");
   (*SystemGroup) += new BooleanOption  ('b', "boson", "use bosonic statistics (override autodetection from input file name)");
+  (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the non-symmetric Haldane basis)",0);
+  (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the non-symmetric Haldane basis)",0);
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (removing any occurence of haldane_)");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -194,8 +198,19 @@ int main(int argc, char** argv)
 
       if (SymmetrizedBasis == false)
 	{
-	  FermionOnSphereHaldaneBasis InitialSpace(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);
-	  if ((ReverseFlag == false) && (InitialSpace.GetHilbertSpaceDimension() != State.GetVectorDimension()))
+	  FermionOnSphereHaldaneBasis *InitialSpace;
+	  if (Manager.GetString("load-hilbert") != 0)
+	    InitialSpace = new FermionOnSphereHaldaneBasis(Manager.GetString("load-hilbert"));
+	  else
+	    {
+	      InitialSpace = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);
+	      if (Manager.GetString("save-hilbert") != 0)
+		{
+		  InitialSpace->WriteHilbertSpace(Manager.GetString("save-hilbert"));
+		  return 0;
+		}
+	    }
+	  if ((ReverseFlag == false) && (InitialSpace->GetHilbertSpaceDimension() != State.GetVectorDimension()))
 	    {
 	      cout << "dimension mismatch between Hilbert space and input state" << endl;
 	    }
@@ -206,14 +221,15 @@ int main(int argc, char** argv)
 	    }	    
 	  RealVector OutputState;
 	  if (ReverseFlag == false)
-	    OutputState = InitialSpace.ConvertToNbodyBasis(State, TargetSpace);
+	    OutputState = InitialSpace->ConvertToNbodyBasis(State, TargetSpace);
 	  else
-	    OutputState = InitialSpace.ConvertFromNbodyBasis(State, TargetSpace);
+	    OutputState = InitialSpace->ConvertFromNbodyBasis(State, TargetSpace);
 	  if (OutputState.WriteVector(OutputFileName) == false)
 	    {
 	      cout << "error while writing output state " << OutputFileName << endl;
 	      return -1;
-	    }	  
+	    }
+	  delete InitialSpace;
 	}
       else
 	{
@@ -281,18 +297,30 @@ int main(int argc, char** argv)
        if ((NbrFluxQuanta + NbrParticles - 1) < 31)	
 #endif
 	 {
-	   BosonOnSphereHaldaneBasisShort InitialSpace (NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);	  
+	   BosonOnSphereHaldaneBasisShort *InitialSpace;
+	   if (Manager.GetString("load-hilbert") != 0)
+	     InitialSpace = new BosonOnSphereHaldaneBasisShort(Manager.GetString("load-hilbert"));
+	   else
+	     {
+	       InitialSpace = new BosonOnSphereHaldaneBasisShort(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);	  
+	       if (Manager.GetString("save-hilbert") != 0)
+		 {
+		   InitialSpace->WriteHilbertSpace(Manager.GetString("save-hilbert"));
+		   return 0;
+		 }
+	     }
 	   BosonOnSphereShort TargetSpace(NbrParticles, TotalLz, NbrFluxQuanta);
 	   RealVector OutputState;
 	   if (ReverseFlag == false)
-	     OutputState = InitialSpace.ConvertToNbodyBasis(State, TargetSpace);
+	     OutputState = InitialSpace->ConvertToNbodyBasis(State, TargetSpace);
  	   else
- 	     OutputState = InitialSpace.ConvertFromNbodyBasis(State, TargetSpace);
+ 	     OutputState = InitialSpace->ConvertFromNbodyBasis(State, TargetSpace);
 	   if (OutputState.WriteVector(OutputFileName) == false)
 	     {
 	       cout << "error while writing output state " << OutputFileName << endl;
 	       return -1;
-	     }	  
+	     }
+	   delete InitialSpace;
 	 }
    }
 }

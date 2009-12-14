@@ -50,7 +50,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('f', "fermion", "use fermionic statistic (override autodetection from input file name)");
   (*SystemGroup) += new BooleanOption  ('b', "boson", "use bosonic statistics (override autodetection from input file name)");
   (*SystemGroup) += new BooleanOption  ('r', "symmetrize", "symmetrize state (instead of unsymmetrizing it)");
-  (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (removing any occurence of haldane_)");
+  (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (removing any occurence of lzsym_)");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -72,6 +72,26 @@ int main(int argc, char** argv)
   if (IsFile(((SingleStringOption*) Manager["input-file"])->GetString()) == false)
     {
       cout << "can't open file " << ((SingleStringOption*) Manager["input-file"])->GetString() << endl;
+    }
+
+  char* OutputFileName = 0;
+  if (Manager.GetString("output-file") != 0)
+    {
+      OutputFileName = new char [strlen(Manager.GetString("output-file")) + 1];
+      strcpy (OutputFileName, Manager.GetString("output-file"));
+    }
+  else
+    {
+      char* InputFileName = Manager.GetString("input-file"); 
+      char* TagPosition = strcasestr(InputFileName, "lzsym_");
+      if (TagPosition == 0)
+	{
+	  cout << "no default output name can be built from " << InputFileName << endl;
+	  return -1;
+	}
+      OutputFileName = new char [strlen(InputFileName) - 5];
+      strncpy (OutputFileName, InputFileName, TagPosition - InputFileName);
+      strcpy (OutputFileName + (TagPosition - InputFileName), TagPosition + 6);
     }
 
   int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger(); 
@@ -139,9 +159,9 @@ int main(int argc, char** argv)
 		      }
 		    OutputState = InitialSpace.ConvertToNbodyBasis(State, TargetSpace);
 		  }
-		if (OutputState.WriteVector(((SingleStringOption*) Manager["output-file"])->GetString()) == false)
+		if (OutputState.WriteVector(OutputFileName) == false)
 		  {
-		    cout << "error while writing output state " << ((SingleStringOption*) Manager["output-file"])->GetString() << endl;
+		    cout << "error while writing output state " << OutputFileName << endl;
 		    return -1;
 		  }
 	      }
@@ -172,9 +192,9 @@ int main(int argc, char** argv)
 			}
 		      OutputState = InitialSpace.ConvertToNbodyBasis(State, TargetSpace);
 		    }
-		  if (OutputState.WriteVector(((SingleStringOption*) Manager["output-file"])->GetString()) == false)
+		  if (OutputState.WriteVector(OutputFileName) == false)
 		    {
-		      cout << "error while writing output state " << ((SingleStringOption*) Manager["output-file"])->GetString() << endl;
+		      cout << "error while writing output state " << OutputFileName << endl;
 		      return -1;
 		    }
 		}
@@ -270,9 +290,9 @@ int main(int argc, char** argv)
 		      }
 		    OutputState = InitialSpace.ConvertToHaldaneNbodyBasis(State, TargetSpace);
 		  }
-		if (OutputState.WriteVector(((SingleStringOption*) Manager["output-file"])->GetString()) == false)
+		if (OutputState.WriteVector(OutputFileName) == false)
 		  {
-		    cout << "error while writing output state " << ((SingleStringOption*) Manager["output-file"])->GetString() << endl;
+		    cout << "error while writing output state " << OutputFileName << endl;
 		    return -1;
 		  }
 	      }
@@ -305,9 +325,9 @@ int main(int argc, char** argv)
 			}
 		      OutputState = InitialSpace.ConvertToHaldaneNbodyBasis(State, TargetSpace);
 		    }
-		  if (OutputState.WriteVector(((SingleStringOption*) Manager["output-file"])->GetString()) == false)
+		  if (OutputState.WriteVector(OutputFileName) == false)
 		    {
-		      cout << "error while writing output state " << ((SingleStringOption*) Manager["output-file"])->GetString() << endl;
+		      cout << "error while writing output state " << OutputFileName << endl;
 		      return -1;
 		    }
 		}
@@ -345,9 +365,9 @@ int main(int argc, char** argv)
 		  }
 		OutputState = InitialSpace.ConvertToNbodyBasis(State, TargetSpace);
 	      }
-	    if (OutputState.WriteVector(((SingleStringOption*) Manager["output-file"])->GetString()) == false)
+	    if (OutputState.WriteVector(OutputFileName) == false)
 	      {
-		cout << "error while writing output state " << ((SingleStringOption*) Manager["output-file"])->GetString() << endl;
+		cout << "error while writing output state " << OutputFileName << endl;
 		return -1;
 	      }
 	  }
@@ -376,9 +396,9 @@ int main(int argc, char** argv)
 		  }
 		OutputState = InitialSpace.ConvertToNbodyBasis(State, TargetSpace);
 	      }
-	    if (OutputState.WriteVector(((SingleStringOption*) Manager["output-file"])->GetString()) == false)
+	    if (OutputState.WriteVector(OutputFileName) == false)
 	      {
-		cout << "error while writing output state " << ((SingleStringOption*) Manager["output-file"])->GetString() << endl;
+		cout << "error while writing output state " << OutputFileName << endl;
 		return -1;
 	      }
 	  }      

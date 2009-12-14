@@ -93,7 +93,7 @@ int main(int argc, char** argv)
       return 0;
     }
 
-  if ((OutputTxtFileName == 0) && (OutputFileName == 0))
+  if ((OutputTxtFileName == 0) && (OutputFileName == 0) && (Manager.GetString("save-hilbert")==0))
     {
       cout << "error, an output file (binary or text) has to be provided" << endl;
       return 0;
