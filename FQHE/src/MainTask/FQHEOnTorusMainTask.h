@@ -36,6 +36,8 @@
 
 #include "MainTask/QHEOnDiskMainTask.h"
 
+#include <iostream>
+using std::ofstream;
 
 class AbstractQHEHamiltonian;
 class AbstractHilbertSpace;
@@ -53,6 +55,11 @@ class FQHEOnTorusMainTask: public QHEOnDiskMainTask
   int KyValue;
   // flag if only the Ky quantum number is fixed   
   bool KyOnlyFlag;
+
+  // flag indicating whether multiplicity of state is known
+  bool MultiplicityFlag;
+  // value of multiplicity
+  int Multiplicity;
 
  public:
 
@@ -78,6 +85,19 @@ class FQHEOnTorusMainTask: public QHEOnDiskMainTask
   // 
   // return value = 0 if no error occurs, else return error code
   int ExecuteMainTask();
+
+  // set a kx-value
+  void SetKxValue(int kxValue) {this->KyOnlyFlag=false; this->KxValue=kxValue;}
+
+  // set a kx-value
+  void SetMultiplicity(int multiplicity) {this->MultiplicityFlag=true; this->Multiplicity=multiplicity;}
+
+  // write a line of output to the results file
+  //
+  // file = stream to write to
+  // value = numerical value to be printed after columns for flux and momentum (if defined)
+  // terminate = indicate if line should be terminated with endl
+  void WriteResult(ofstream& file, double value, bool terminate=true);
 
 };
 

@@ -102,7 +102,7 @@ class OptionManager
   // argumentValues = string array of arguments
   // nbrArgument = number of arguments in argumentValues array
   // output = reference on output stream used to display errors  
-  void StandardProceedings(char** argumentValues, int nbrArgument, ostream& output);
+  void StandardProceedings(char** argumentValues, int nbrArgument, ostream& output = std::cout);
 
   // print the options and their values in the current group
   //  

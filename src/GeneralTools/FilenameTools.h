@@ -102,4 +102,22 @@ char* ReplaceExtensionToFileName(char* fileName, const char* oldExtension, const
 
 char* RemoveExtensionFromFileName(char* fileName, const char* oldExtension);
 
+
+// get unique filename by appending a counter to a requested name, if necessary
+// baseName = main part of the file name (initial part, excluding a final dot)
+// optExtension = optional extension to add after the counter (including the initial dot)
+// minCounter = optional minimum value of the counter
+// return value = unique file name formed as baseName.[Count]optExtension
+//
+char* GetUniqueFileName(const char* baseName, const char* optExtension = NULL, int minCounter = 0);
+
+// get unique filename by appending a counter to a requested name, if necessary
+// baseName = main part of the file name (initial part, excluding a final dot)
+// minCounter = provide minimum value of the counter and return the actual counter used in filename
+// optExtension = optional extension to add after the counter (including the initial dot)
+// return value = unique file name formed as baseName.[Count]optExtension
+//
+char* GetUniqueFileName(const char* baseName, int & minCounter, const char* optExtension = NULL);
+
+
 #endif

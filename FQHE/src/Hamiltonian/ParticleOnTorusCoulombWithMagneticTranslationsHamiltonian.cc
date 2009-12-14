@@ -65,7 +65,8 @@ double MySqrArg;
 // maxMomentum = maximum Lz value reached by a particle in the state
 // xMomentum = momentum in the x direction (modulo GCD of nbrParticles and maxMomentum)
 // ratio = ratio between the width in the x direction and the width in the y direction
-// landauLevel = landauLevel to be simulated
+// haveCoulomb = flag indicating whether a coulomb term is present
+// landauLevel = landauLevel to be simulated (GaAs (>=0) or graphene (<0))
 // nbrPseudopotentials = number of pseudopotentials indicated
 // pseudopotentials = pseudopotential coefficients
 // architecture = architecture to use for precalculation
@@ -74,7 +75,7 @@ double MySqrArg;
 
 ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian(ParticleOnTorusWithMagneticTranslations* particles, 
 														     int nbrParticles, int maxMomentum, 
-														     int xMomentum, double ratio, int landauLevel, int nbrPseudopotentials, double* pseudopotentials,
+														     int xMomentum, double ratio, bool haveCoulomb, int landauLevel, int nbrPseudopotentials, double* pseudopotentials,
 														     AbstractArchitecture* architecture, int memory, 
 														     char* precalculationFileName)
 {
@@ -101,8 +102,21 @@ ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::ParticleOnTorusCoulom
       this->Pseudopotentials = NULL;
       this->LaguerreM=NULL;
     }
-  this->LaguerreN=LaguerrePolynomial(this->LandauLevel);
-  //cout << this->LaguerreN<<endl;
+  this->HaveCoulomb=haveCoulomb;
+  if (HaveCoulomb)
+    {
+      if (this->LandauLevel>=0)
+	{
+	  // simple coulomb interactions
+	  this->FormFactor=LaguerrePolynomial(this->LandauLevel);
+	}
+      else
+	{
+	  // coulomb interactions in graphene
+	  this->FormFactor=0.5*(LaguerrePolynomial(abs(this->LandauLevel))+LaguerrePolynomial(abs(this->LandauLevel)-1));
+	}
+    }
+  cout << "FormFactor="<<this->FormFactor<<endl;
   //this->WignerEnergy = this->EvaluateWignerCrystalEnergy() / 2.0;
   double WignerEnergy = 0.0;
   this->Architecture = architecture;
@@ -358,11 +372,11 @@ double ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::GetVofQ(double
 {
   double Result;
   double Q2=2.0*Q2_half;
-  if ((this->LandauLevel>-1)&&(Q2_half!=0.0))
+  if ((this->HaveCoulomb)&&(Q2_half!=0.0))
     {
-      //cout << "branch 1 : Ln="<<this->LaguerreN.GetValue(Q2_half)<<" Ln2="<<GETSQR(this->LaguerreN(Q2_half))<<", exp="<<exp(-Q2_half)<<" 1/Q="<<1.0/sqrt(Q2)<<" ";
-      //this->LaguerreN.PrintValue(cout, Q2_half)<<" ";
-      Result=GETSQR(this->LaguerreN(Q2_half)) / sqrt(Q2);
+      //cout << "branch 1 : Ln="<<this->FormFactor.GetValue(Q2_half)<<" Ln2="<<GETSQR(this->FormFactor(Q2_half))<<", exp="<<exp(-Q2_half)<<" 1/Q="<<1.0/sqrt(Q2)<<" ";
+      //this->FormFactor.PrintValue(cout, Q2_half)<<" ";
+      Result=GETSQR(this->FormFactor(Q2_half)) / sqrt(Q2);
     }
   else
     Result=0.0;

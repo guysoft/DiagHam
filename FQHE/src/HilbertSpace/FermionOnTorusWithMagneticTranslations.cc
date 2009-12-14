@@ -795,15 +795,15 @@ int FermionOnTorusWithMagneticTranslations::GenerateStates()
 		  TmpState = this->StateDescription[Pos];
 		  TmpSignature = 0;
 		  TmpReorderingSign = (unsigned long) 0;
-		  cout << "Reordering sign for "<<convBase(this->StateDescription[Pos],2)
-		       << " with "<<this->NbrStateInOrbit[Pos]<<" orbits"<<endl;
+		  // cout << "Reordering sign for "<<convBase(this->StateDescription[Pos],2)
+		  //      << " with "<<this->NbrStateInOrbit[Pos]<<" orbits"<<endl;
 		  if ((this->NbrFermions & 1) == 0)
 		    {
 		      for (int k = 1; k <= this->NbrStateInOrbit[Pos]; ++k)
 			{
 			  TmpState2 = TmpState & this->MomentumMask;
 			  TmpState =  (TmpState >> this->StateShift) | (TmpState2 << this->ComplementaryStateShift);
-			  cout << "Translation "<<k<<" "<<convBase(TmpState,2)<<endl;
+			  // cout << "Translation "<<k<<" "<<convBase(TmpState,2)<<endl;
 			  TmpNbrParticle = 0;
 			  for (int l = 0; l < this->StateShift; ++l)
 			    {
@@ -814,14 +814,14 @@ int FermionOnTorusWithMagneticTranslations::GenerateStates()
 			  if (TmpNbrParticle & 1)
 			    {
 			      TmpReorderingSign |= (((TmpReorderingSign << 1) & (((unsigned long) 0x1) << k))) ^ (((unsigned long) 0x1) << k);
-			      cout << "odd number translated: signs: "<<convBase(TmpReorderingSign,2)<<endl;
+			      // cout << "odd number translated: signs: "<<convBase(TmpReorderingSign,2)<<endl;
 
 			      ++TmpSignature;
 			    }
 			  else
 			    {
 			      TmpReorderingSign |= ((TmpReorderingSign << 1) & (((unsigned long) 0x1) << k));
-			      cout << "even number translated: signs: "<<convBase(TmpReorderingSign,2)<<endl;
+			      // cout << "even number translated: signs: "<<convBase(TmpReorderingSign,2)<<endl;
 			    }			  
 			}
 		    }

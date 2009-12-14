@@ -64,6 +64,7 @@ class ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian : public Abstrac
   // maxMomentum = maximum Lz value reached by a particle in the state
   // xMomentum = momentum in the x direction (modulo GCD of nbrBosons and maxMomentum)
   // ratio = ratio between the width in the x direction and the width in the y direction
+  // haveCoulomb = flag indicating whether a coulomb term is present
   // landauLevel = landauLevel to be simulated
   // nbrPseudopotentials = number of pseudopotentials indicated
   // pseudopotentials = pseudopotential coefficients
@@ -71,7 +72,7 @@ class ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian : public Abstrac
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
   ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian(ParticleOnTorusWithMagneticTranslations* particles, int nbrParticles, int maxMomentum, int xMomentum,
-							    double ratio, int landauLevel, int nbrPseudopotentials, double* pseudopotentials, AbstractArchitecture* architecture, int memory = -1, char* precalculationFileName = 0);
+							    double ratio, bool haveCoulomb, int landauLevel, int nbrPseudopotentials, double* pseudopotentials, AbstractArchitecture* architecture, int memory = -1, char* precalculationFileName = 0);
 
   // destructor
   //
@@ -159,8 +160,11 @@ class ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian : public Abstrac
   // pseudopotential coefficients
   double *Pseudopotentials;
 
-  // Laguerre polynomial for the Landau level
-  Polynomial LaguerreN;
+  // flag indicating whether Coulomb part is present
+  bool HaveCoulomb;
+
+  // form factor of the interaction (a single Laguerre polynomial for the Landau levels of GaAs)
+  Polynomial FormFactor;
   
   // Laguerre polynomial for the pseudopotentials
   Polynomial *LaguerreM;

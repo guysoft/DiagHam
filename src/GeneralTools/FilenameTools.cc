@@ -310,3 +310,52 @@ char* RemoveExtensionFromFileName(char* fileName, const char* oldExtension)
   TmpFileName[TmpLength2]='\0';
   return TmpFileName;
 }
+
+
+
+
+// get unique filename by appending a counter to a requested name, if necessary
+// baseName = main part of the file name (initial part, excluding a final dot)
+// optExtension = optional extension to add after the counter (including the initial dot)
+// minCounter = optional minimum value of the counter
+// return value = unique file name formed as baseName.[Count]optExtension
+
+char* GetUniqueFileName(const char* baseName, const char* optExtension, int minCounter)
+{
+  return GetUniqueFileName(baseName, minCounter, optExtension);
+}
+
+
+// get unique filename by appending a counter to a requested name, if necessary
+// baseName = main part of the file name (initial part, excluding a final dot)
+// minCounter = provide minimum value of the counter and return the actual counter used in filename
+// optExtension = optional extension to add after the counter (including the initial dot)
+// return value = unique file name formed as baseName.[Count]optExtension
+//
+char* GetUniqueFileName(const char* baseName, int & minCounter, const char* optExtension)
+{
+  char *TheExtension;
+  if (optExtension!=NULL)
+    {
+      TheExtension = new char[strlen(optExtension)+1];
+      strcpy(TheExtension, optExtension);
+    }
+  else
+    {
+      TheExtension = new char[2];
+      strcpy(TheExtension, "");
+    }
+  char *UniqueFileName = new char[strlen(baseName)+strlen(TheExtension)+10];
+  sprintf(UniqueFileName,"%s.%d%s", baseName, minCounter++, TheExtension);
+  std::ifstream testExistant(UniqueFileName,std::ios::in);
+  while (testExistant.is_open())
+    {
+      testExistant.close();
+      sprintf(UniqueFileName,"%s.%d%s", baseName, minCounter++, TheExtension);
+      testExistant.open(UniqueFileName,std::ios::in);
+    }
+  delete [] TheExtension;
+  std::ofstream TouchIt(UniqueFileName,std::ios::out);
+  TouchIt.close();
+  return UniqueFileName;
+}
