@@ -357,5 +357,6 @@ char* GetUniqueFileName(const char* baseName, int & minCounter, const char* optE
   delete [] TheExtension;
   std::ofstream TouchIt(UniqueFileName,std::ios::out);
   TouchIt.close();
+  --minCounter;
   return UniqueFileName;
 }

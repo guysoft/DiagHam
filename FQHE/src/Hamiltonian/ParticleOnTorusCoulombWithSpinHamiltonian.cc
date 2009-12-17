@@ -62,7 +62,7 @@ using std::ostream;
 // magneticG = magnetic coupling constant times magnetic field 
 
 ParticleOnTorusCoulombWithSpinHamiltonian::ParticleOnTorusCoulombWithSpinHamiltonian(ParticleOnTorusWithSpin* particles, int nbrParticles, int maxMomentum,
-										     double ratio, double magneticG, double layerSeparation)
+										     double ratio, double magneticG, double layerSeparation, long memory)
 {
   this->Particles = particles;
   this->MaxMomentum = maxMomentum;
@@ -73,25 +73,32 @@ ParticleOnTorusCoulombWithSpinHamiltonian::ParticleOnTorusCoulombWithSpinHamilto
   this->Ratio = ratio;
   this->InvRatio = 1.0 / ratio;
   this->LayerSeparation=layerSeparation;
-  this->WignerEnergy = this->EvaluateWignerCrystalEnergy() / 2.0;
+  if (particles->GetHilbertSpaceDimension()>0)
+    this->WignerEnergy = this->EvaluateWignerCrystalEnergy() / 2.0;
+  else this->WignerEnergy = 0;
   cout << "Wigner Energy = " << WignerEnergy << endl;
   this->EvaluateInteractionFactors();
-  int FastMultiplicationMemoryNeededMo = this->FastMultiplicationMemory();
-#ifdef __DEBUG__
-  cout << "fast = " << FastMultiplicationMemoryNeededMo << endl;
-#endif
-  if (FastMultiplicationMemoryNeededMo < (1 << 30))
+  if (memory > 0)
     {
+      int FastMultiplicationMemoryNeededMo = this->FastMultiplicationMemory();
 #ifdef __DEBUG__
-      cout << "enable fast multiplication" << endl;
+      cout << "fast = " << FastMultiplicationMemoryNeededMo << endl;
 #endif
-      this->EnableFastMultiplication();
+      if (FastMultiplicationMemoryNeededMo < memory)
+	{
+#ifdef __DEBUG__
+	  cout << "enable fast multiplication" << endl;
+#endif
+	  this->EnableFastMultiplication();
+	}
+      else
+	{
+	  this->FastMultiplicationFlag = false;
+	  delete[] this->NbrInteractionPerComponent;
+	}
     }
   else
-    {
-      this->FastMultiplicationFlag = false;
-      delete[] this->NbrInteractionPerComponent;
-    }
+    this->FastMultiplicationFlag = false;
 }
 
 // destructor

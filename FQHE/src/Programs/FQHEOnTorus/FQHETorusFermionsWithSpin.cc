@@ -66,7 +66,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('l', "max-momentum", "maximum momentum for a single particle", 18);
   (*SystemGroup) += new SingleIntegerOption  ('s', "total-spin", "total spin of the system", 0);
   (*SystemGroup) += new SingleIntegerOption  ('y', "y-momentum", "constraint on the total momentum in the y direction (negative if none)", -1);
-  (*SystemGroup) += new SingleDoubleOption   ('r', "ratio", 
+  (*SystemGroup) += new SingleDoubleOption   ('R', "ratio", 
 					      "ratio between lengths along the x and y directions (-1 if has to be taken equal to nbr-particles/4)", -1.0);
   (*SystemGroup) += new SingleDoubleOption   ('d', "layerSeparation", 
 					      "for bilayer simulations: layer separation in magnetic lengths", 0.0);
@@ -174,7 +174,7 @@ NbrFermions,MaxMomentum, TotalSpin, XRatio);
 	
 	AbstractHamiltonian* Hamiltonian = // new ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian
 	  new ParticleOnTorusCoulombWithSpinHamiltonian(&TotalSpace, NbrFermions, MaxMomentum, XRatio,
-								    /*Zeeman*/ 0.0, LayerSeparation);
+							/*Zeeman*/ 0.0, LayerSeparation, Memory);
 
 
 	char* EigenvectorName = 0;

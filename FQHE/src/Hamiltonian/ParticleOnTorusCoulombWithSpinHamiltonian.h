@@ -105,7 +105,7 @@ class ParticleOnTorusCoulombWithSpinHamiltonian : public AbstractHamiltonian
   // maxMomentum = maximum Lz value reached by a particle in the state
   // ratio = ratio between the width in the x direction and the width in the y direction
   // magneticG = magnetic coupling constant times magnetic field 
-  ParticleOnTorusCoulombWithSpinHamiltonian(ParticleOnTorusWithSpin* particles, int nbrParticles, int maxMomentum, double ratio, double magneticG = 0.0, double layerSeparation=0.0);
+  ParticleOnTorusCoulombWithSpinHamiltonian(ParticleOnTorusWithSpin* particles, int nbrParticles, int maxMomentum, double ratio, double magneticG = 0.0, double layerSeparation=0.0, long memory=0);
 
   // destructor
   //

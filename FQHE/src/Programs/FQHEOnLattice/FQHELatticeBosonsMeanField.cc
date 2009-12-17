@@ -41,7 +41,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('F', "potential-name", "descriptor of external single particle potential (if in use)","");
   
   (*OptimizationGroup) += new SingleDoubleOption('\n', "tolerance", "tolerance for variational parameters in condensate",1e-6);
-  (*OptimizationGroup) += new SingleIntegerOption('\n', "nbr-iter", "number of iterations for optimization",10000);
+  (*OptimizationGroup) += new SingleIntegerOption('i', "nbr-iter", "number of iterations for optimization",10000);
+  (*OptimizationGroup) += new SingleStringOption('\n', "parameters", "file with initial parameters");
+  
   (*MiscGroup) += new SingleStringOption  ('o', "output-file", "redirect output to this file",NULL);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -92,27 +94,41 @@ int main(int argc, char** argv)
   char* ParameterName = GetUniqueFileName(BaseName,Counter,".par");
 
   RealVector *InitialParameters = NULL;
+
+  if (Manager.GetString("parameters")!=NULL)
+    {
+      InitialParameters = new RealVector;
+      if (InitialParameters->ReadVector(Manager.GetString("parameters"))==false)
+	{
+	  cout << "Could not read vector of initial parameters" <<Manager.GetString("parameters")<<endl;
+	  exit(1);
+	}
+    }
   
   GrossPitaevskiiOnLatticeState MeanFieldState(NbrSites, Manager.GetString("potential-file"), Manager.GetString("interaction-file"), Lattice, InitialParameters);
+  MeanFieldState.SetChemicalPotential(ChemicalPotential);
   if (InitialParameters==NULL)
     MeanFieldState.SetToRandomPhase();
   int MaxEval = 2*NbrSites*Manager.GetInteger("nbr-iter");
   double Energy=MeanFieldState.Optimize(Manager.GetDouble("tolerance"), MaxEval);
   RealVector Parameters=MeanFieldState.GetVariationalParameters();
   Parameters.WriteVector(ParameterName);
-  cout << "Found mean field state with energy: "<<Energy<<endl<<ParameterName<<endl;
+  cout << "Found mean field state with energy: "<<Energy<<" and density "<< MeanFieldState.GetNbrParticles()/NbrSites<<endl<<ParameterName<<endl;
   ofstream File ( OutputName, ios::app );
+  File.precision(10);
   if (Counter==0)
-    File << "#Count\tEnergy\tParameters"<<endl;
-  File << Counter << "\t" << Energy;
+    File << "#Count\tE_tot\tDensity\tE_int\tParameters"<<endl;
+  File << Counter << "\t" << Energy << "\t" << MeanFieldState.GetNbrParticles()/NbrSites << "\t" << Energy/MeanFieldState.GetNbrParticles() - ChemicalPotential;
+  File.precision(nearbyint(-log(Manager.GetDouble("tolerance"))/log(10)));
   for (int i=0; i<Parameters.GetVectorDimension(); ++i)
     File << "\t" << Parameters[i];
-  File << ParameterName << endl;
+  File << "\t" << ParameterName << endl;
   delete [] BaseName;
   delete [] OutputName;
   delete [] ParameterName;
   delete Lattice;
   delete [] LatticeName;
-  delete [] OutputName;
+  if (InitialParameters != NULL)
+    delete InitialParameters;
   return 0;
 }

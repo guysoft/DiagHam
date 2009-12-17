@@ -144,7 +144,7 @@ void GrossPitaevskiiOnLatticeState::SetToRandomPhase(double amplitude)
 // get expectation value of the energy
 double GrossPitaevskiiOnLatticeState::GetEnergy()
 {
-  double Result=0.0;
+  Complex Result=0.0;
   double rho;
   double IntegratedDensity=0.0;
   for (int i=0; i<NbrSites; ++i)
@@ -156,15 +156,17 @@ double GrossPitaevskiiOnLatticeState::GetEnergy()
     }
   for (int i=0; i<NbrInteractionFactors; ++i)
     {
-      Result+=Real(InteractionFactors[i].Re*Conj(VariationalCoefficients[Q1Value[i]])*Conj(VariationalCoefficients[Q2Value[i]])*
+      Result+=(InteractionFactors[i]*Conj(VariationalCoefficients[Q1Value[i]])*Conj(VariationalCoefficients[Q2Value[i]])*
 		   VariationalCoefficients[Q3Value[i]]*VariationalCoefficients[Q4Value[i]]);
     }
   for (int i=0; i<NbrHoppingTerms; ++i)
     {
-      Result+=Real(HoppingTerms[i]*Conj(VariationalCoefficients[KineticQf[i]])*VariationalCoefficients[KineticQi[i]]);
+      Result+=(HoppingTerms[i]*Conj(VariationalCoefficients[KineticQf[i]])*VariationalCoefficients[KineticQi[i]]);
     }
+  //cout << "Interaction Energy="<<Result;
   Result+=this->ChemicalPotential*IntegratedDensity;
-  return Result;
+  //cout << " density="<<IntegratedDensity <<" chem pot" <<this->ChemicalPotential<<" final Energy="<<Result<<endl;
+  return Result.Re;
 }
 
 // get the total number of particles corresponding to the last configuration
@@ -318,7 +320,7 @@ void GrossPitaevskiiOnLatticeState::EvaluateInteractionFactors()
 	  exit(1);
 	}
       MultiColumnASCIIFile Parser;
-      if ((Parser.Parse(this->OneParticleTerms))&&((Parser.GetNbrColumns()==5)||(Parser.GetNbrColumns()==6)))
+      if ((Parser.Parse(this->TwoParticleTerms))&&((Parser.GetNbrColumns()==5)||(Parser.GetNbrColumns()==6)))
 	{
 	  this->NbrInteractionFactors = Parser.GetNbrLines();
 	  this->InteractionFactors = new Complex[NbrInteractionFactors];
