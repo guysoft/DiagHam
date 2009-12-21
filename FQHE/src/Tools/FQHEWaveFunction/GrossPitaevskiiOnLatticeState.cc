@@ -46,6 +46,10 @@ using std::endl;
 
 using std::ostream;
 
+#ifdef HAVE_GSL
+#include "gsl/gsl_multimin.h"
+#endif
+
 // switch for debugging output:
 //#define DEBUG_OUTPUT
 
@@ -57,7 +61,8 @@ using std::ostream;
 // nbrStates = number of quantum states
 // oneParticleTerms = file describing single particle terms
 // twoParticleTerms = file describing two-particle terms
-GrossPitaevskiiOnLatticeState::GrossPitaevskiiOnLatticeState(int nbrStates, const char* oneParticleTerms, const char* twoParticleTerms, LatticePhases *latticeGeometry, RealVector *variationalParameters)
+// wavefunction = initial wavefunction
+GrossPitaevskiiOnLatticeState::GrossPitaevskiiOnLatticeState(int nbrStates, const char* oneParticleTerms, const char* twoParticleTerms, LatticePhases *latticeGeometry, ComplexVector *wavefunction)
 {
   if (oneParticleTerms!=NULL)
     {
@@ -74,18 +79,20 @@ GrossPitaevskiiOnLatticeState::GrossPitaevskiiOnLatticeState(int nbrStates, cons
   this->LatticeGeometry=latticeGeometry;
   this->NbrSites = nbrStates;
   this->EvaluateInteractionFactors();
-  if (variationalParameters!=NULL)
+  if (wavefunction!=NULL)
     {
-      this->VariationalParameters = RealVector(*variationalParameters,true);
-      if (variationalParameters->GetVectorDimension()!=2*NbrSites)
+      if (wavefunction->GetVectorDimension()!=NbrSites)
 	{
 	  cout << "Attention, inconsistent number of variational parameters"<<endl;
-	  this->VariationalParameters.Resize(2*NbrSites);
-	}
+	}      	  
+      this->VariationalParameters.Resize(2*NbrSites);
+      this->ImportWaveFunction(*wavefunction);
+      
     }
   else
     this->VariationalParameters = RealVector(2*NbrSites);
-  VariationalCoefficients.Resize(2*NbrSites);
+  VariationalCoefficients.Resize(NbrSites);
+  EnergyDerivatives.Resize(2*NbrSites);
   timeval RandomTime;
   gettimeofday (&(RandomTime), 0);
   this->RandomNumbers = new NumRecRandomGenerator(RandomTime.tv_sec);
@@ -115,6 +122,38 @@ GrossPitaevskiiOnLatticeState::~GrossPitaevskiiOnLatticeState()
   if (this->TwoParticleTerms!=NULL)
     delete [] this->TwoParticleTerms;
 
+}
+
+
+// get the wavefunction corresponding to the current parameters
+// return = complex vector of local amplitudes and phases
+ComplexVector GrossPitaevskiiOnLatticeState::GetWaveFunction()
+{
+  ComplexVector WF(NbrSites);
+  double rho;
+  for (int s=0; s<NbrSites; ++s)
+    {
+      rho=VariationalParameters[2*s];
+      rho*=rho;
+      WF[s]=Polar(rho,VariationalParameters[2*s+1]);
+    }
+  return WF;
+}
+
+// get the wavefunction corresponding to the current parameters
+// wavefunction = complex vector of local amplitudes and phases to be imported
+void GrossPitaevskiiOnLatticeState::ImportWaveFunction(ComplexVector & wavefunction)
+{
+  if (wavefunction.GetVectorDimension()!=NbrSites)
+    {
+      cout << "Wrong number of sites: cannot import wavefunction"<<endl;
+      exit(1);
+    }
+  for (int i=0; i<NbrSites; ++i)
+    {
+      VariationalParameters[2*i]=sqrt(Norm(wavefunction[i]));
+      VariationalParameters[2*i+1] = Arg(wavefunction[i]);
+    }
 }
 
 
@@ -152,7 +191,7 @@ double GrossPitaevskiiOnLatticeState::GetEnergy()
       rho=VariationalParameters[2*i];
       rho*=rho;
       VariationalCoefficients[i]=Polar(rho,VariationalParameters[2*i+1]);
-      IntegratedDensity+=rho*rho;
+      IntegratedDensity+=SqrNorm(VariationalCoefficients[i]);
     }
   for (int i=0; i<NbrInteractionFactors; ++i)
     {
@@ -164,10 +203,94 @@ double GrossPitaevskiiOnLatticeState::GetEnergy()
       Result+=(HoppingTerms[i]*Conj(VariationalCoefficients[KineticQf[i]])*VariationalCoefficients[KineticQi[i]]);
     }
   //cout << "Interaction Energy="<<Result;
-  Result+=this->ChemicalPotential*IntegratedDensity;
+  Result-=this->ChemicalPotential*IntegratedDensity;
   //cout << " density="<<IntegratedDensity <<" chem pot" <<this->ChemicalPotential<<" final Energy="<<Result<<endl;
   return Result.Re;
 }
+
+// get expectation value of the energy; write to internal vector EnergyDerivatives
+void GrossPitaevskiiOnLatticeState::EvaluateEnergyDerivatives()
+{
+  double rho;
+  Complex M_I=Complex(0.0,1.0);
+  for (int i=0; i<NbrSites; ++i)
+    {
+      rho=VariationalParameters[2*i];
+      rho*=rho;
+      VariationalCoefficients[i]=Polar(rho,VariationalParameters[2*i+1]);
+    }
+  EnergyDerivatives.ClearVector();
+  for (int s=0; s<NbrSites; ++s)
+    {
+      for (int i=0; i<NbrInteractionFactors; ++i)
+	{
+	  if (s==Q1Value[i])
+	    {
+	      EnergyDerivatives[2*s]+=2.0*VariationalParameters[2*s]*(InteractionFactors[i]*Polar(1.0,-VariationalParameters[2*s+1])*
+								      Conj(VariationalCoefficients[Q2Value[i]])*
+								      VariationalCoefficients[Q3Value[i]]*
+								      VariationalCoefficients[Q4Value[i]]);
+	      EnergyDerivatives[2*s+1]-=M_I*(InteractionFactors[i]*Conj(VariationalCoefficients[Q1Value[i]])*
+				       Conj(VariationalCoefficients[Q2Value[i]])*
+				       VariationalCoefficients[Q3Value[i]]*VariationalCoefficients[Q4Value[i]]);
+	    }
+	  if (s==Q2Value[i])
+	    {
+	      EnergyDerivatives[2*s]+=2.0*VariationalParameters[2*s]*(InteractionFactors[i]*Polar(1.0,-VariationalParameters[2*s+1])*
+							      Conj(VariationalCoefficients[Q1Value[i]])*
+							      VariationalCoefficients[Q3Value[i]]*
+							      VariationalCoefficients[Q4Value[i]]);
+	      EnergyDerivatives[2*s+1]-=M_I*(InteractionFactors[i]*Conj(VariationalCoefficients[Q1Value[i]])*
+				       Conj(VariationalCoefficients[Q2Value[i]])*
+				       VariationalCoefficients[Q3Value[i]]*VariationalCoefficients[Q4Value[i]]);
+	      
+	    }
+	  if (s==Q3Value[i])
+	    {
+	      EnergyDerivatives[2*s]+=2.0*VariationalParameters[2*s]*(InteractionFactors[i]*Polar(1.0,VariationalParameters[2*s+1])*
+							      Conj(VariationalCoefficients[Q1Value[i]])*
+							      Conj(VariationalCoefficients[Q2Value[i]])*
+							      VariationalCoefficients[Q4Value[i]]);
+	      EnergyDerivatives[2*s+1]+=M_I*(InteractionFactors[i]*Conj(VariationalCoefficients[Q1Value[i]])*
+				       Conj(VariationalCoefficients[Q2Value[i]])*
+				       VariationalCoefficients[Q3Value[i]]*VariationalCoefficients[Q4Value[i]]);
+	    }
+	  if (s==Q4Value[i])
+	    {
+	      EnergyDerivatives[2*s]+=2.0*VariationalParameters[2*s]*(InteractionFactors[i]*Polar(1.0,VariationalParameters[2*s+1])*
+							      Conj(VariationalCoefficients[Q1Value[i]])*
+							      Conj(VariationalCoefficients[Q2Value[i]])*
+							      VariationalCoefficients[Q3Value[i]]);
+	      EnergyDerivatives[2*s+1]+=M_I*(InteractionFactors[i]*Conj(VariationalCoefficients[Q1Value[i]])*
+				       Conj(VariationalCoefficients[Q2Value[i]])*
+				       VariationalCoefficients[Q3Value[i]]*VariationalCoefficients[Q4Value[i]]);
+	    }
+	}
+      for (int i=0; i<NbrHoppingTerms; ++i)
+	{
+	  if (s==KineticQi[i])
+	    {
+	      EnergyDerivatives[2*s]+=2.0*VariationalParameters[2*s]*(HoppingTerms[i]*Conj(VariationalCoefficients[KineticQf[i]])*
+							      Polar(1.0,VariationalParameters[2*s+1]));
+	      
+	      EnergyDerivatives[2*s+1]+=M_I*HoppingTerms[i]*Conj(VariationalCoefficients[KineticQf[i]])*VariationalCoefficients[KineticQi[i]];
+	    }
+	  if (s==KineticQf[i])
+	    {
+	      EnergyDerivatives[2*s]+=2.0*VariationalParameters[2*s]*(HoppingTerms[i]*VariationalCoefficients[KineticQi[i]]*
+							      Polar(1.0,-VariationalParameters[2*s+1]));
+	      EnergyDerivatives[2*s+1]-=M_I*HoppingTerms[i]*Conj(VariationalCoefficients[KineticQf[i]])*VariationalCoefficients[KineticQi[i]];
+	    }
+	}
+      EnergyDerivatives[2*s]-=4.0*VariationalParameters[2*s]*this->ChemicalPotential*VariationalParameters[2*s]*VariationalParameters[2*s];
+    }
+
+//     cout << "Test derivatives: "<<endl<< EnergyDerivatives;
+//     exit(1);
+}
+
+
+
 
 // get the total number of particles corresponding to the last configuration
 double GrossPitaevskiiOnLatticeState::GetNbrParticles()
@@ -224,6 +347,104 @@ double GrossPitaevskiiOnLatticeState::Optimize(double tolerance, int maxIter)
   delete [] Work;
   return Result;
   
+}
+
+double GrossPitaevskiiOnLatticeStateGSLTarget_F(const gsl_vector *v, void *params)
+{
+  GrossPitaevskiiOnLatticeState* Object=(GrossPitaevskiiOnLatticeState*)params;
+  RealVector TmpV= Object->GetVariationalParameters();
+  for (int i=0; i<2*Object->GetNbrSites(); ++i)
+    TmpV[i]=gsl_vector_get(v, i);
+  return Object->GetEnergy();
+}
+
+void GrossPitaevskiiOnLatticeStateGSLTarget_dF(const gsl_vector *v, void *params, gsl_vector *df)
+{
+  GrossPitaevskiiOnLatticeState* Object=(GrossPitaevskiiOnLatticeState*)params;
+  RealVector TmpV= Object->GetVariationalParameters();
+  int N=2*Object->GetNbrSites();
+  for (int i=0; i<N; ++i)
+    TmpV[i]=gsl_vector_get(v, i);
+  Object->EvaluateEnergyDerivatives();
+  for (int i=0; i<N; ++i)
+    gsl_vector_set(df, i, Object->GetEnergyDerivative(i));
+}
+
+void GrossPitaevskiiOnLatticeStateGSLTarget_FdF (const gsl_vector *x, void *params, double *f, gsl_vector *df)
+{
+  GrossPitaevskiiOnLatticeState* Object=(GrossPitaevskiiOnLatticeState*)params;
+  RealVector TmpV= Object->GetVariationalParameters();
+  int N=2*Object->GetNbrSites();
+  for (int i=0; i<N; ++i)
+    TmpV[i]=gsl_vector_get(x, i);
+  *f = Object->GetEnergy();
+  Object->EvaluateEnergyDerivatives();
+  for (int i=0; i<N; ++i)
+    gsl_vector_set(df, i, Object->GetEnergyDerivative(i));
+}
+
+
+
+double GrossPitaevskiiOnLatticeState::GradientOptimize(double targetGradient, int maxIter, double initialStep, double lineMinParameter)
+{
+#ifdef HAVE_GSL
+  size_t iter = 0;
+  int status;
+  
+  int EffectiveNbrVariationalParameters = 2*NbrSites;
+  
+  const gsl_multimin_fdfminimizer_type *GSLMinimizerType;
+  gsl_multimin_fdfminimizer *GSLMinimizer;
+  
+  gsl_vector *FunctionParameters;
+  gsl_multimin_function_fdf TargetFunction;
+
+  TargetFunction.n = EffectiveNbrVariationalParameters;
+  TargetFunction.f = &GrossPitaevskiiOnLatticeStateGSLTarget_F;
+  TargetFunction.df = &GrossPitaevskiiOnLatticeStateGSLTarget_dF;
+  TargetFunction.fdf = &GrossPitaevskiiOnLatticeStateGSLTarget_FdF;
+  TargetFunction.params = this;
+
+  /* Starting point, x = (5,7) */
+  FunctionParameters = gsl_vector_alloc (EffectiveNbrVariationalParameters);
+  for (int i=0; i<EffectiveNbrVariationalParameters; ++i)
+    gsl_vector_set (FunctionParameters, i, this->VariationalParameters[i]);
+  
+  //GSLMinimizerType = gsl_multimin_fdfminimizer_conjugate_fr; // Fletcher-Reeves
+  //GSLMinimizerType = gsl_multimin_fdfminimizer_conjugate_pr; // Polak-Ribiere
+  GSLMinimizerType = gsl_multimin_fdfminimizer_vector_bfgs2; // Broyden-Fletcher-Goldfarb-Shanno
+  GSLMinimizer = gsl_multimin_fdfminimizer_alloc (GSLMinimizerType, EffectiveNbrVariationalParameters);
+  
+  gsl_multimin_fdfminimizer_set (GSLMinimizer, &TargetFunction, FunctionParameters, initialStep, lineMinParameter);
+  
+  do
+    {
+      iter++;
+      status = gsl_multimin_fdfminimizer_iterate (GSLMinimizer);
+      if (status)
+	break;
+      status = gsl_multimin_test_gradient (GSLMinimizer->gradient, targetGradient);
+      if (status == GSL_SUCCESS)
+	cout << "Minimum found after "<<iter<< " steps"<<endl;
+      if ((iter<20)
+	  || ((iter<1000)&&(iter%10==0))
+	  || (iter%100==0))
+	cout << ".";
+      cout.flush();
+    }
+  while (status == GSL_CONTINUE && iter < (size_t)maxIter);
+
+  if (iter == (size_t)maxIter)
+    {
+      cout << " max. number of iterations";
+    }
+  gsl_multimin_fdfminimizer_free (GSLMinimizer);
+  gsl_vector_free (FunctionParameters);
+  cout << endl;
+#else
+  cout << "GrossPitaevskiiOnLatticeState::GradientOptimize requires the GSL libraries"<<endl;
+#endif
+  return this->GetEnergy();
 }
 
 

@@ -81,6 +81,9 @@ class GrossPitaevskiiOnLatticeState
   // variational parameters
   RealVector VariationalParameters;
 
+  // derivative of the energy
+  ComplexVector EnergyDerivatives;
+
   // internal coefficients
   ComplexVector VariationalCoefficients;
 
@@ -101,7 +104,8 @@ class GrossPitaevskiiOnLatticeState
   // nbrStates = number of quantum states
   // oneParticleTerms = file describing single particle terms
   // twoParticleTerms = file describing two-particle terms
-  GrossPitaevskiiOnLatticeState(int nbrStates, const char* oneParticleTerms, const char* twoParticleTerms, LatticePhases *latticeGeometry = NULL, RealVector *variationalParameters=NULL);
+  // wavefunction = initial wavefunction
+  GrossPitaevskiiOnLatticeState(int nbrStates, const char* oneParticleTerms, const char* twoParticleTerms, LatticePhases *latticeGeometry = NULL, ComplexVector *wavefunction=NULL);
 
   // destructor
   //
@@ -111,6 +115,14 @@ class GrossPitaevskiiOnLatticeState
   // return = state
   RealVector & GetVariationalParameters() {return this->VariationalParameters;}
 
+  // get the wavefunction corresponding to the current parameters
+  // return = complex vector of local amplitudes and phases
+  ComplexVector GetWaveFunction();
+
+  // get the wavefunction corresponding to the current parameters
+  // wavefunction = complex vector of local amplitudes and phases to be imported
+  void ImportWaveFunction(ComplexVector & wavefunction);
+  
   // set trial parameters
   void SetVariationalParameters(RealVector &variationalParameters);
 
@@ -124,14 +136,30 @@ class GrossPitaevskiiOnLatticeState
   // get expectation value of the energy
   double GetEnergy();
 
+  // get expectation value of the energy; write to internal vector EnergyDerivatives
+  void EvaluateEnergyDerivatives();
+
+  // access derivatives from last evaluation
+  // index = index of parameter
+  double GetEnergyDerivative(int index) {return this->EnergyDerivatives[index].Re;}
+
   // get the total number of particles corresponding to the last configuration
   double GetNbrParticles();
 
+  // get number of sites
+  int GetNbrSites(){return NbrSites;}
+  
   // optimize wavefunction starting from present settings of VariationalParameters
   // tolerance = final tolerance on the variational parameters
   // maxIter = maximal number of function evaluations
   //
   double Optimize(double tolerance, int maxIter);
+
+  // optimize wavefunction starting from present settings of VariationalParameters using a gradient routine from gsl
+  // tolerance = final tolerance on the variational parameters
+  // maxIter = maximal number of function evaluations
+  //
+  double GradientOptimize(double targetGradient, int maxIter, double initialStep=0.01, double lineMinParameter=1e-4);
 
  private:
 

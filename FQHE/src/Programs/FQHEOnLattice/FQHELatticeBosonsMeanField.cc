@@ -39,7 +39,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('E', "interaction-name", "descriptor of external interaction (if in use)","ext");
   (*SystemGroup) += new SingleStringOption  ('f', "potential-file", "use definition of one-body interactions from a file");
   (*SystemGroup) += new SingleStringOption  ('F', "potential-name", "descriptor of external single particle potential (if in use)","");
-  
+
+  (*OptimizationGroup) += new BooleanOption('\n', "gradient", "Use optimization based on gradients");
   (*OptimizationGroup) += new SingleDoubleOption('\n', "tolerance", "tolerance for variational parameters in condensate",1e-6);
   (*OptimizationGroup) += new SingleIntegerOption('i', "nbr-iter", "number of iterations for optimization",10000);
   (*OptimizationGroup) += new SingleStringOption('\n', "parameters", "file with initial parameters");
@@ -93,11 +94,11 @@ int main(int argc, char** argv)
   int Counter=0;
   char* ParameterName = GetUniqueFileName(BaseName,Counter,".par");
 
-  RealVector *InitialParameters = NULL;
+  ComplexVector *InitialParameters = NULL;
 
   if (Manager.GetString("parameters")!=NULL)
     {
-      InitialParameters = new RealVector;
+      InitialParameters = new ComplexVector;
       if (InitialParameters->ReadVector(Manager.GetString("parameters"))==false)
 	{
 	  cout << "Could not read vector of initial parameters" <<Manager.GetString("parameters")<<endl;
@@ -110,15 +111,20 @@ int main(int argc, char** argv)
   if (InitialParameters==NULL)
     MeanFieldState.SetToRandomPhase();
   int MaxEval = 2*NbrSites*Manager.GetInteger("nbr-iter");
-  double Energy=MeanFieldState.Optimize(Manager.GetDouble("tolerance"), MaxEval);
+  double Energy;
+  if (Manager.GetBoolean("gradient"))
+    Energy=MeanFieldState.GradientOptimize(Manager.GetDouble("tolerance"), MaxEval, /*initialStep*/ 0.01, /*lineMinPar*/ Manager.GetDouble("tolerance")/10.0);
+  else
+    Energy=MeanFieldState.Optimize(Manager.GetDouble("tolerance"), MaxEval);
+  ComplexVector WaveFunction=MeanFieldState.GetWaveFunction();
   RealVector Parameters=MeanFieldState.GetVariationalParameters();
-  Parameters.WriteVector(ParameterName);
+  WaveFunction.WriteVector(ParameterName);
   cout << "Found mean field state with energy: "<<Energy<<" and density "<< MeanFieldState.GetNbrParticles()/NbrSites<<endl<<ParameterName<<endl;
   ofstream File ( OutputName, ios::app );
   File.precision(10);
   if (Counter==0)
     File << "#Count\tE_tot\tDensity\tE_int\tParameters"<<endl;
-  File << Counter << "\t" << Energy << "\t" << MeanFieldState.GetNbrParticles()/NbrSites << "\t" << Energy/MeanFieldState.GetNbrParticles() - ChemicalPotential;
+  File << Counter << "\t" << Energy << "\t" << MeanFieldState.GetNbrParticles()/NbrSites << "\t" << Energy/MeanFieldState.GetNbrParticles() + ChemicalPotential;
   File.precision(nearbyint(-log(Manager.GetDouble("tolerance"))/log(10)));
   for (int i=0; i<Parameters.GetVectorDimension(); ++i)
     File << "\t" << Parameters[i];
