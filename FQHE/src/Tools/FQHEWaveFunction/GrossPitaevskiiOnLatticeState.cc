@@ -349,6 +349,7 @@ double GrossPitaevskiiOnLatticeState::Optimize(double tolerance, int maxIter)
   
 }
 
+#ifdef HAVE_GSL
 double GrossPitaevskiiOnLatticeStateGSLTarget_F(const gsl_vector *v, void *params)
 {
   GrossPitaevskiiOnLatticeState* Object=(GrossPitaevskiiOnLatticeState*)params;
@@ -382,7 +383,7 @@ void GrossPitaevskiiOnLatticeStateGSLTarget_FdF (const gsl_vector *x, void *para
   for (int i=0; i<N; ++i)
     gsl_vector_set(df, i, Object->GetEnergyDerivative(i));
 }
-
+#endif
 
 
 double GrossPitaevskiiOnLatticeState::GradientOptimize(double targetGradient, int maxIter, double initialStep, double lineMinParameter)
