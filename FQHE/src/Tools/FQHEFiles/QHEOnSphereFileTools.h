@@ -34,6 +34,14 @@
 #include "config.h"
 
 
+// try to guess internal symmetry group from file name
+//
+// su2Flag = reference on the flag that indicates if the internal symmetry group is SU(2)
+// su3Flag = reference on the flag that indicates if the internal symmetry group is SU(3)
+// su4Flag = reference on the flag that indicates if the internal symmetry group is SU(4)
+// return value = true if no error occured
+bool FQHEOnSphereFindInternalSymmetryGroupFromFileName(char* filename, bool& su2Flag, bool& su3Flag, bool& su4Flag);
+
 // try to guess system information from file name
 //
 // filename = file name

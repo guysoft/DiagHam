@@ -112,14 +112,7 @@ int main(int argc, char** argv)
   bool SU4SymmetryFlag = false;
 
   char* StateFileName = ((SingleStringOption*) Manager["state"])->GetString();
-  if (strstr(StateFileName, "_su2_"))
-    SU2SymmetryFlag = true;
-  else
-    if (strstr(StateFileName, "_su3_"))
-      SU3SymmetryFlag = true;
-    else
-      if (strstr(StateFileName, "_su4_"))
-	SU4SymmetryFlag = true;
+  FQHEOnSphereFindInternalSymmetryGroupFromFileName(StateFileName, SU2SymmetryFlag, SU3SymmetryFlag, SU4SymmetryFlag);
 
   if (((BooleanOption*) Manager["su2-spin"])->GetBoolean() == true)
     SU2SymmetryFlag = true;

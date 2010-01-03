@@ -119,7 +119,7 @@ int main(int argc, char** argv)
       cout << "no Spectrum defined in " << ((SingleStringOption*) Manager["input-file"])->GetString() << endl;
       return -1;     
     }
-  QHEOnSphereLzSortedSpectrum Spectrum (OverlapDefinition["Spectrum"]);
+  FQHEOnSphereLzSortedSpectrum Spectrum (OverlapDefinition["Spectrum"]);
   if (Spectrum.IsSpectrumValid() == false)
     {
       cout << "Spectrum " << OverlapDefinition["Spectrum"] << " is unreadable or is not valid" << endl;

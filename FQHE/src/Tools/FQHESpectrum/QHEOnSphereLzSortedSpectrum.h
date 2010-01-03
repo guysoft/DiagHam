@@ -28,8 +28,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef QHEONSPHERELZSORTEDSPECTRUM_H
-#define QHEONSPHERELZSORTEDSPECTRUM_H
+#ifndef FQHEONSPHERELZSORTEDSPECTRUM_H
+#define FQHEONSPHERELZSORTEDSPECTRUM_H
 
 
 #include "config.h"
@@ -40,7 +40,7 @@
 using std::ostream;
 
 
-class QHEOnSphereLzSortedSpectrum
+class FQHEOnSphereLzSortedSpectrum
 {
 
  protected:
@@ -77,17 +77,17 @@ class QHEOnSphereLzSortedSpectrum
   // fermionicFlag = fermionic statistics flag (true if the system if fermionic)
   // fileName = name of the file that contains the spectrum datas
   // error = relative error that has to be used to test if two energies are degenerated 
-  QHEOnSphereLzSortedSpectrum (int nbrParticles, int lzMax, bool fermionicFlag, char* fileName, double error = 1e-13);
+  FQHEOnSphereLzSortedSpectrum (int nbrParticles, int lzMax, bool fermionicFlag, char* fileName, double error = 1e-13);
 
   // constructor from a file, retrieving other informations from its name
   // 
   // fileName = name of the file that contains the spectrum datas
   // error = relative error that has to be used to test if two energies are degenerated 
-  QHEOnSphereLzSortedSpectrum (char* fileName, double error = 1e-13);
+  FQHEOnSphereLzSortedSpectrum (char* fileName, double error = 1e-13);
   
   // destructor
   //
-  ~QHEOnSphereLzSortedSpectrum ();
+  ~FQHEOnSphereLzSortedSpectrum ();
 
   // test if read spectrum is valid
   //
@@ -100,6 +100,18 @@ class QHEOnSphereLzSortedSpectrum
   // index = index of the state corresponding energy  (absolute index i.e. the one that doesn't take degeneracy into account)
   // return value = degeneracy (-1 if an error occured)
   int GetDegeneracy (int lz, int index);
+
+  // get energy value
+  //
+  // lz = twice the value of the total Lz
+  // index = index of the state corresponding energy  (absolute index i.e. the one that doesn't take degeneracy into account)
+  // return value = energy value
+  double GetEnergy (int lz, int index);
+
+  // get the highest Lz value avalailable within the spectrum
+  // 
+  // return value = twice the highest Lz value
+  int GetMaxLzValue ();
 
   // print spectrum
   //
@@ -116,15 +128,6 @@ class QHEOnSphereLzSortedSpectrum
   // return value = true if no error occurs
   bool ParseSpectrumFile(char* fileName);
 
-  // get system information from a formatted spectrum file name 
-  //
-  // fileName = name of the file that contains spectrum datas (can include partial of full path)
-  // nbrParticles = reference on the variable where the number of particles has to be stored
-  // lzMax = reference on the variable where the twice the maximum Lz value reached by a particle has to be stored
-  // fermionicFlag = reference on the variable where the fermionic statistics flag (true if the system if fermionic) has to be stored
-  // return value = true if no error occurs (aka all values have been successfully retrieved)
-  bool RetrieveInformationFromName(char* fileName, int& nbrParticles, int& lzMax, bool& fermionicFlag);
-  
 };
 
 // get degeneracy of a given energy
@@ -133,12 +136,23 @@ class QHEOnSphereLzSortedSpectrum
 // index = index of the state corresponding energy  (absolute index i.e. the one that doesn't take degeneracy into account)
 // return value = degeneracy (-1 if an error occured)
 
-inline int QHEOnSphereLzSortedSpectrum::GetDegeneracy (int lz, int index)
+inline int FQHEOnSphereLzSortedSpectrum::GetDegeneracy (int lz, int index)
 {
   if (((lz >> 1) <= MaxTotalLz) && (index < this->NbrEnergies[lz >> 1]))
     return this->Degeneracy[lz >> 1][this->ConvertionTable[lz >> 1][index]];
   else
     return -1;
+}
+
+// get energy value
+//
+// lz = twice the value of the total Lz
+// index = index of the state corresponding energy  (absolute index i.e. the one that doesn't take degeneracy into account)
+// return value = energy value
+
+inline double FQHEOnSphereLzSortedSpectrum::GetEnergy (int lz, int index)
+{
+  return this->Spectrum[lz >> 1][this->ConvertionTable[lz >> 1][index]];
 }
 
 #endif

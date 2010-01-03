@@ -435,9 +435,9 @@ void ParticleOnSphereGenericThreeBodyHamiltonian::EvaluateInteractionFactors()
 	  int Lim = this->NbrSortedIndicesPerSum[3][MinSum];
 	  if (Lim > 0)
 	    {
-	      cout << "--------------------------------------------" << endl;
- 	      cout << "index sum = " << MinSum << endl;
-	      cout << "--------------------------------------------" << endl;
+// 	      cout << "--------------------------------------------" << endl;
+//  	      cout << "index sum = " << MinSum << endl;
+// 	      cout << "--------------------------------------------" << endl;
  	      int* TmpNIndices2 = this->SortedIndicesPerSum[3][MinSum];
 	      int TmpMaxRealtiveMonentum = 20;
 	      if (this->MaxRelativeAngularMomentum <= TmpMaxRealtiveMonentum)
@@ -446,16 +446,16 @@ void ParticleOnSphereGenericThreeBodyHamiltonian::EvaluateInteractionFactors()
 	      while (abs((TmpSum * 2) - (3 * this->LzMax)) > ((3 * this->LzMax) - (2 * TmpMaxRealtiveMonentum)))
 		--TmpMaxRealtiveMonentum;
 	      double** TmpProjectorCoefficients = new double* [TmpMaxRealtiveMonentum + 1];
-	      cout << "V^3_3 : " << endl;
+//	      cout << "V^3_3 : " << endl;
 	      if (this->ThreeBodyPseudoPotential[3] != 0.0)
 		TmpProjectorCoefficients[3] = this->ComputeProjectorCoefficients(6, 1, TmpNIndices2, Lim);
-	      cout << "--------------------------------------------" << endl;
+//	      cout << "--------------------------------------------" << endl;
 	      for (int i = 5; i <= TmpMaxRealtiveMonentum; ++i)  
 		if (this->ThreeBodyPseudoPotential[i] != 0.0)
 		  {
-		    cout << "V^3_" << i << " : " << endl;
+//		    cout << "V^3_" << i << " : " << endl;
 		    TmpProjectorCoefficients[i] = this->ComputeProjectorCoefficients(2 * i, 1, TmpNIndices2, Lim);
-		    cout << "--------------------------------------------" << endl;
+//		    cout << "--------------------------------------------" << endl;
  		  }
 	      for (int i = 0; i < Lim; ++i)
 		{
@@ -851,7 +851,7 @@ double* ParticleOnSphereGenericThreeBodyHamiltonian::ComputeProjectorCoefficient
 	  Tmp2 += (Clebsh.GetCoefficient(((indices[0] << 1) - this->LzMax), ((indices[1] << 1)- this->LzMax), j) *
 		   ClebshArray[j].GetCoefficient(Sum, ((indices[2] << 1) - this->LzMax), JValue));
 	}
-      cout << indices[0] << " " << indices[1] << " " << indices[2] << " : " << Tmp2 << endl;
+//      cout << indices[0] << " " << indices[1] << " " << indices[2] << " : " << Tmp2 << endl;
       Sum = ((indices[1] + indices[2]) << 1)  - (2 * this->LzMax);
       TmpMinJ = MinJ;
       if (TmpMinJ < abs(Sum))
@@ -864,7 +864,7 @@ double* ParticleOnSphereGenericThreeBodyHamiltonian::ComputeProjectorCoefficient
 	  Tmp2 += (Clebsh.GetCoefficient(((indices[1] << 1) - this->LzMax), ((indices[2] << 1)- this->LzMax), j) *
                   ClebshArray[j].GetCoefficient(Sum, ((indices[0] << 1) - this->LzMax), JValue));
 	}
-      cout << indices[1] << " " << indices[2] << " " << indices[0] << " : " << Tmp2 << endl;
+//      cout << indices[1] << " " << indices[2] << " " << indices[0] << " : " << Tmp2 << endl;
       Sum = ((indices[2] + indices[0]) << 1)  - (2 * this->LzMax);
       TmpMinJ = MinJ;
       if (TmpMinJ < abs(Sum))
@@ -877,7 +877,7 @@ double* ParticleOnSphereGenericThreeBodyHamiltonian::ComputeProjectorCoefficient
 	  Tmp2 += (Clebsh.GetCoefficient(((indices[2] << 1) - this->LzMax), ((indices[0] << 1)- this->LzMax), j) *
                   ClebshArray[j].GetCoefficient(Sum, ((indices[1] << 1) - this->LzMax), JValue));
 	}
-      cout << indices[2] << " " << indices[0] << " " << indices[1] << " : " << Tmp2 << endl;
+//      cout << indices[2] << " " << indices[0] << " " << indices[1] << " : " << Tmp2 << endl;
       TmpCoefficients[i] = Tmp;
       indices += 3;
     }

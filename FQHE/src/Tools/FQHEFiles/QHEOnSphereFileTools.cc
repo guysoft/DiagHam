@@ -39,6 +39,29 @@ using std::cout;
 using std::endl;
 
 
+// try to guess internal symmetry group from file name
+//
+// su2Flag = reference on the flag that indicates if the internal symmetry group is SU(2)
+// su3Flag = reference on the flag that indicates if the internal symmetry group is SU(3)
+// su4Flag = reference on the flag that indicates if the internal symmetry group is SU(4)
+// return value = true if no error occured
+
+bool FQHEOnSphereFindInternalSymmetryGroupFromFileName(char* filename, bool& su2Flag, bool& su3Flag, bool& su4Flag)
+{
+  su2Flag = false;
+  su3Flag = false;
+  su4Flag = false;
+  if (strstr(filename, "_su2_"))
+    su2Flag = true;
+  else
+    if (strstr(filename, "_su3_"))
+      su3Flag = true;
+    else
+      if (strstr(filename, "_su4_"))
+	su4Flag = true;
+  return true;
+}
+
 // try to guess system information from file name
 //
 // filename = file name

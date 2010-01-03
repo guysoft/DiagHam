@@ -19,7 +19,6 @@
 
 #include "Operator/ParticleOnSphereLMinusOperator.h"
 
-#include "Tools/FQHESpectrum/QHEOnSphereLzSortedSpectrum.h"
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
 
 #include "HilbertSpace/BosonOnSphereShort.h"
@@ -85,7 +84,7 @@ int main(int argc, char** argv)
     {
       return -1;
     }
-  if (((SingleStringOption*) Manager["statistics"])->GetString() != 0)
+  if ((((SingleStringOption*) Manager["statistics"])->GetString()) != 0)
     if ((strcmp ("fermions", ((SingleStringOption*) Manager["statistics"])->GetString()) == 0))
       {
 	FermionFlag = true;

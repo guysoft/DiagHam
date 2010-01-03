@@ -29,7 +29,11 @@
 
 
 #include "config.h"
+
 #include "Tools/FQHESpectrum/QHEOnSphereLzSortedSpectrum.h"
+#include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
+
+#include "GeneralTools/MultiColumnASCIIFile.h"
 
 #include <fstream>
 #include <cmath>
@@ -51,7 +55,7 @@ using std::cout;
 // fileName = name of the file that contains the spectrum datas
 // error = relative error that has to be used to test if two energies are degenerated 
 
-QHEOnSphereLzSortedSpectrum::QHEOnSphereLzSortedSpectrum (int nbrParticles, int lzMax, bool fermionicFlag, char* fileName, double error)
+FQHEOnSphereLzSortedSpectrum::FQHEOnSphereLzSortedSpectrum (int nbrParticles, int lzMax, bool fermionicFlag, char* fileName, double error)
 {
   this->NbrParticles = nbrParticles;
   this->LzMax = lzMax;
@@ -87,9 +91,12 @@ QHEOnSphereLzSortedSpectrum::QHEOnSphereLzSortedSpectrum (int nbrParticles, int 
 // fileName = name of the file that contains the spectrum datas
 // error = relative error that has to be used to test if two energies are degenerated 
 
-QHEOnSphereLzSortedSpectrum::QHEOnSphereLzSortedSpectrum (char* fileName, double error)
+FQHEOnSphereLzSortedSpectrum::FQHEOnSphereLzSortedSpectrum (char* fileName, double error)
 {
-  if (this->RetrieveInformationFromName(fileName, this->NbrParticles, this->LzMax, this->FermionicFlag) == true)
+  this->NbrParticles = 0;
+  this->LzMax = 0;
+  this->FermionicFlag = false;
+  if (FQHEOnSphereFindSystemInfoFromFileName(fileName, this->NbrParticles, this->LzMax, this->FermionicFlag) == true)
     {
       this->Error = error;
       if (this->FermionicFlag == true)
@@ -125,7 +132,7 @@ QHEOnSphereLzSortedSpectrum::QHEOnSphereLzSortedSpectrum (char* fileName, double
 // destructor
 //
 
-QHEOnSphereLzSortedSpectrum::~QHEOnSphereLzSortedSpectrum ()
+FQHEOnSphereLzSortedSpectrum::~FQHEOnSphereLzSortedSpectrum ()
 {
   if (this->NbrParticles != 0)
     {
@@ -150,7 +157,7 @@ QHEOnSphereLzSortedSpectrum::~QHEOnSphereLzSortedSpectrum ()
 //
 // retur value = true if the spectrum has been read and is valid
 
-bool QHEOnSphereLzSortedSpectrum::IsSpectrumValid()
+bool FQHEOnSphereLzSortedSpectrum::IsSpectrumValid()
 {
   if (this->NbrParticles != 0)
     return true;
@@ -158,33 +165,48 @@ bool QHEOnSphereLzSortedSpectrum::IsSpectrumValid()
     return false;
 }
 
+// get the highest Lz value avalailable within the spectrum
+// 
+// return value = twice the highest Lz value
+
+int FQHEOnSphereLzSortedSpectrum::GetMaxLzValue ()
+{
+  int TmpLz = this->MaxTotalLz;
+  while ((TmpLz > 0) && (this->NbrEnergies[TmpLz >> 1] == 0))
+    --TmpLz;
+  TmpLz <<= 1;
+  if (((this->NbrParticles * this->LzMax) & 1) != 0)
+    ++TmpLz;
+  return TmpLz;
+}
+
 // parse spectrum content from a file 
 //
 // fileName = name of the file that contains spectrum datas
 // return value = true if no error occurs
 
-bool QHEOnSphereLzSortedSpectrum::ParseSpectrumFile(char* fileName)
+bool FQHEOnSphereLzSortedSpectrum::ParseSpectrumFile(char* fileName)
 {
-  ifstream File;
-  File.open(fileName, ios::binary | ios::in);
-  if (!File.is_open())
+  MultiColumnASCIIFile Spectrum;
+  if (Spectrum.Parse(fileName) == false)
     {
+      Spectrum.DumpErrors(cout);
       return false;
-    } 
+    }
 
-  File.seekg(0, ios::end);
-  long FileSize = File.tellg();
-  File.seekg(0, ios::beg);
-  int TmpLzValue;
-  double Dummy;
-  while ((File.tellg() < FileSize) && (File.tellg() >= 0))
+  long TotalNbrEnergies = Spectrum.GetNbrLines();
+  int* TmpLzValues = Spectrum.GetAsIntegerArray(0);
+  double* TmpEnergies = Spectrum.GetAsDoubleArray(1);
+
+  int TmpLzValue = 0;
+  double TmpEnergy = 0.0;
+
+  for (long i = 0l; i < TotalNbrEnergies; ++i)
     {
-      File >> TmpLzValue >> Dummy;
+      TmpLzValue = TmpLzValues[i];
       if ((TmpLzValue <= this->MaxTotalLz) && (TmpLzValue >= 0))
 	this->NbrEnergies[TmpLzValue]++;
-      TmpLzValue = -1;
     } 
-  File.close();
 
   for (int i = 0; i <= this->MaxTotalLz; ++i)
     {
@@ -197,24 +219,23 @@ bool QHEOnSphereLzSortedSpectrum::ParseSpectrumFile(char* fileName)
 	}
     }
   
-  ifstream File2;
-  File2.open(fileName, ios::binary | ios::in);
-  while ((File2.tellg() < FileSize) && (File2.tellg() >= 0))
+  for (long i = 0l; i < TotalNbrEnergies; ++i)
     {
-      File2 >> TmpLzValue >> Dummy;
+      TmpLzValue = TmpLzValues[i];
+      TmpEnergy = TmpEnergies[i];
       if ((TmpLzValue <= this->MaxTotalLz) && (TmpLzValue >= 0))
 	{
 	  if (this->NbrEnergies[TmpLzValue] == 0)
 	    {
-	      this->Spectrum[TmpLzValue][0] = Dummy;
+	      this->Spectrum[TmpLzValue][0] = TmpEnergy;
 	      this->Degeneracy[TmpLzValue][0] = 1;
 	      this->ConvertionTable[TmpLzValue][0] = 0;
 	      this->NbrEnergies[TmpLzValue]++;
 	    }
 	  else
 	    {
-	      double Diff = fabs(this->Spectrum[TmpLzValue][this->NbrDistinctEnergies[TmpLzValue]] - Dummy);
-	      if ((Diff < (this->Error * fabs(Dummy))) || (Diff < this->Error))
+	      double Diff = fabs(this->Spectrum[TmpLzValue][this->NbrDistinctEnergies[TmpLzValue]] - TmpEnergy);
+	      if ((Diff < (this->Error * fabs(TmpEnergy))) || (Diff < this->Error))
 		{
 		  this->Degeneracy[TmpLzValue][this->NbrDistinctEnergies[TmpLzValue]]++;
 		  this->ConvertionTable[TmpLzValue][this->NbrEnergies[TmpLzValue]] = this->NbrDistinctEnergies[TmpLzValue];
@@ -222,7 +243,7 @@ bool QHEOnSphereLzSortedSpectrum::ParseSpectrumFile(char* fileName)
 	      else
 		{
 		  this->NbrDistinctEnergies[TmpLzValue]++;
-		  this->Spectrum[TmpLzValue][this->NbrDistinctEnergies[TmpLzValue]] = Dummy;
+		  this->Spectrum[TmpLzValue][this->NbrDistinctEnergies[TmpLzValue]] = TmpEnergy;
 		  this->Degeneracy[TmpLzValue][this->NbrDistinctEnergies[TmpLzValue]] = 1;
 		  this->ConvertionTable[TmpLzValue][this->NbrEnergies[TmpLzValue]] = this->NbrDistinctEnergies[TmpLzValue];
 		}
@@ -232,54 +253,13 @@ bool QHEOnSphereLzSortedSpectrum::ParseSpectrumFile(char* fileName)
       TmpLzValue = -1;
     } 
  
-  File2.close();
-
   for (int i = 0; i <= this->MaxTotalLz; ++i)
     if (this->NbrEnergies[i] > 0)
       this->NbrDistinctEnergies[i]++;
 
-  return true;
-}
+  delete[] TmpLzValues;
+  delete[] TmpEnergies;
 
-// get system information from a formatted spectrum file name 
-//
-// fileName = name of the file that contains spectrum datas (can include partial of full path)
-// nbrParticles = reference on the variable where the number of particles has to be stored
-// lzMax = reference on the variable where the maximum Lz value reached by a particle has to be stored
-// fermionicFlag = reference on the variable where the fermionic statistics flag (true if the system if fermionic) has to be stored
-// return value = true if no error occurs (aka all values have been successfully retrieved)
-
-bool QHEOnSphereLzSortedSpectrum::RetrieveInformationFromName(char* fileName, int& nbrParticles, int& lzMax, bool& fermionicFlag)
-{
-  int End = strlen(fileName);
-  int Start = End;
-  while ((Start > 0) && (fileName[Start] != '/'))
-    --Start;
-  fileName += Start;
-  char* TmpString = strstr (fileName, "fermions");
-  if (TmpString == 0)
-    fermionicFlag = false;
-  else
-    fermionicFlag = true;
-  TmpString = strstr (fileName, "_n_");
-  if (TmpString == 0)
-    return false;
-  TmpString += 3;
-  char* TmpError;
-  nbrParticles = strtol(TmpString, &TmpError, 0);
-  if (TmpError == TmpString)
-    {
-      return false;
-    }
-  TmpString = strstr (fileName, "_2s_");
-  if (TmpString == 0)
-    return false;
-  TmpString += 4;
-  lzMax = strtol(TmpString, &TmpError, 0);
-  if (TmpError == TmpString)
-    {
-      return false;
-    }
   return true;
 }
 
@@ -289,7 +269,7 @@ bool QHEOnSphereLzSortedSpectrum::RetrieveInformationFromName(char* fileName, in
 // showDegeneracy = true if degeneracy has to be written
 // return value = reference on the output stream
 
-ostream& QHEOnSphereLzSortedSpectrum::PrintSpectrum (ostream& str, bool showDegeneracy)
+ostream& FQHEOnSphereLzSortedSpectrum::PrintSpectrum (ostream& str, bool showDegeneracy)
 {
   if (this->NbrParticles != 0)
     {
