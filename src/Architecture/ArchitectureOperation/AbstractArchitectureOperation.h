@@ -37,6 +37,8 @@
 #include "Architecture/SMPArchitecture.h"
 #include "Architecture/SimpleMPIArchitecture.h"
 
+class MonoProcessorArchitecture;
+
 
 class AbstractArchitectureOperation
 {
@@ -96,6 +98,12 @@ class AbstractArchitectureOperation
   
  protected:
 
+  // apply operation for mono processor architecture
+  //
+  // architecture = pointer to the architecture
+  // return value = true if no error occurs
+  virtual bool ArchitectureDependentApplyOperation(MonoProcessorArchitecture* architecture);
+  
   // apply operation for SMP architecture
   //
   // architecture = pointer to the architecture

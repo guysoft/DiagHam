@@ -56,6 +56,8 @@ bool AbstractArchitectureOperation::ApplyOperation(AbstractArchitecture* archite
 {
   switch (architecture->GetArchitectureID())
     {
+    case AbstractArchitecture::MonoProcessor:
+      return this->ArchitectureDependentApplyOperation((MonoProcessorArchitecture*) architecture);
     case AbstractArchitecture::SMP:
       return this->ArchitectureDependentApplyOperation((SMPArchitecture*) architecture);
     case AbstractArchitecture::SimpleMPI:
@@ -65,6 +67,16 @@ bool AbstractArchitectureOperation::ApplyOperation(AbstractArchitecture* archite
     default:
       return this->RawApplyOperation();
     }
+}
+  
+// apply operation for mono processor architecture
+//
+// architecture = pointer to the architecture
+// return value = true if no error occurs
+
+bool  AbstractArchitectureOperation::ArchitectureDependentApplyOperation(MonoProcessorArchitecture* architecture)
+{
+  return this->RawApplyOperation();
 }
   
 // apply operation for SMP architecture
