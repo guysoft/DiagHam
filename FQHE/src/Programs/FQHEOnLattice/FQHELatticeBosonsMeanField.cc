@@ -143,10 +143,10 @@ int main(int argc, char** argv)
 	Energy=MeanFieldState.Optimize(Manager.GetDouble("tolerance"), MaxEval);
       RealVector Parameters=MeanFieldState.GetVariationalParameters();
       bool Recorded=false;
-      for (int k=0; k<NbrFound && Recorded==false; ++k)
+      ComplexVector TmpWaveFunction=MeanFieldState.GetWaveFunction();
+      for (int k=0; (k<NbrFound) && (Recorded==false); ++k)
 	if (Energy <= LowestEnergies[k])
 	  {
-	    ComplexVector TmpWaveFunction=MeanFieldState.GetWaveFunction();
 	    if (Norm(TmpWaveFunction*OptimalWaveFunctions[k])>IdentityThreshold*TmpWaveFunction.Norm()*OptimalWaveFunctions[k].Norm())
 	      { // same configuration: simply replace with the one of lower energy
 		OptimalWaveFunctions[k]=TmpWaveFunction;
@@ -160,11 +160,11 @@ int main(int argc, char** argv)
 		  {
 		    LowestEnergies[NbrFound]=LowestEnergies[NbrFound-1];
 		    OptimalWaveFunctions[NbrFound]=OptimalWaveFunctions[NbrFound-1];
-		    UpperLimit=NbrFound;
+		    UpperLimit=NbrFound-1;
 		    NbrFound++;
 		  }
-		else UpperLimit = NbrToSave;
-		for (int s=k+1; s<UpperLimit; ++s)
+		else UpperLimit = NbrToSave-1;
+		for (int s=UpperLimit; s>k; --s)
 		  {
 		    LowestEnergies[s]=LowestEnergies[s-1];
 		    OptimalWaveFunctions[s]=OptimalWaveFunctions[s-1];
@@ -174,6 +174,11 @@ int main(int argc, char** argv)
 		Recorded=true;
 	      }
 	    }
+	else
+	  {
+	    if (Norm(TmpWaveFunction*OptimalWaveFunctions[k])>IdentityThreshold*TmpWaveFunction.Norm()*OptimalWaveFunctions[k].Norm())
+	      Recorded=true;
+	  }
       if ((Recorded==false)&&(NbrFound<NbrToSave))
 	{
 	  OptimalWaveFunctions[NbrFound]=MeanFieldState.GetWaveFunction();
@@ -209,6 +214,7 @@ int main(int argc, char** argv)
 	  VectorField.open(FieldName,ios::out);
 	  if (Counter==0)
 	    SelectFile << "#Count\tE_tot\tFilename"<<endl;
+	  SelectFile.precision(12);
 	  SelectFile << Counter << "\t" << LowestEnergies[i] << "\t" << ParameterName << endl;
 	  OptimalWaveFunctions[i].WriteVector(ParameterName);
 	  for (int s=0; s<NbrSites; ++s)

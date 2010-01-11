@@ -61,6 +61,7 @@ $UnitCells[0]=3;
 $UnitCells[1]=2;
 my $DisplayHelp=0;
 my $AllElements=0;
+my $KeepFiles=0;
 my $UseExtrapolateAnalytical=1;
 my $NonZeroThreshold = 1e-6;
 my $SolenoidCmd="";
@@ -91,6 +92,10 @@ while( (defined($ARGV[0])&&$ARGV[0] =~ /^-/ ))
     if ( $ARGV[0] =~ /-h/ )
       {
 	$DisplayHelp=1;
+      }
+    if ( $ARGV[0] =~ /-k/ )
+      {
+	$KeepFiles=1;
       }
     if ( $ARGV[0] =~ /-u/ )
       {
@@ -202,6 +207,7 @@ if ($DisplayHelp)
     print("option -C: indicate length in x- and y-directions\n");
     print("       -p: strength of pinning potential (default: 0.001)\n");
     print("       -d: name of directory to generate files in (default: ./dice_Lx_Ly)\n");
+    print("       -k: keep intermediate files on disk\n");
     print("       -u: ratio of U6 to U3 on 6-fold and 3-fold connected sites of dice lattice\n");
     print("       -a: include all matrix elements, ignoring obvious symmetries\n");
     print("       -s: use solenoid fluxes (s_x,s_y)\n");
@@ -339,13 +345,13 @@ for (my $Index1=0; $Index1<$NbrSites; ++$Index1)
 		    my @OutputLines = split(/\n/,$Output);
 		    chomp (@OutputLines);
 		    my $TmpLength = $#OutputLines+1;
-		    
+		
 		    # print ("Output for element $Index1 $Index2 $Index3 $Index4:\n");
 		    # for (my $i=0; $i<$TmpLength; ++$i)
 		    #   {
 		    #     print ($OutputLines[$i]."\n");
 		    #   }
-		    
+		
 		    #get matrix element for U3:
 		    my @Complex3 = split(/ /,$OutputLines[0]);
 		    #print ("$OutputLines[0] read as $Complex3[0]+I*$Complex3[1]\n");
@@ -384,6 +390,12 @@ for (my $Index1=0; $Index1<$NbrSites; ++$Index1)
   }
 close (MATRIX);
 
+if ($KeepFiles==0)
+  {
+    system ("rm DiceDoubledPhases_S*_V_-".abs($Trapping)."_on_$UnitCells[0]x$UnitCells[1].dat");
+    system ("rm bosons_lattice_dice_doubled_S*_V_-".abs($Trapping)."_".$UnitCells[0]."x".$UnitCells[1]."_n_1_hardcore".$SolenoidStr."_q_"
+	    .(3*$NbrCells)."*");
+  }
 
 
 # get coordinate of trapping site
