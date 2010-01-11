@@ -44,14 +44,21 @@ int main(int argc, char** argv)
   (*OptimizationGroup) += new SingleDoubleOption('\n', "tolerance", "tolerance for variational parameters in condensate",1e-6);
   (*OptimizationGroup) += new SingleIntegerOption('i', "nbr-iter", "number of iterations for optimization",10000);
   (*OptimizationGroup) += new SingleStringOption('\n', "parameters", "file with initial parameters");
-  
-  (*MiscGroup) += new SingleStringOption  ('o', "output-file", "redirect output to this file",NULL);
+
+  (*OptimizationGroup) += new SingleIntegerOption('a', "nbr-attempts", "number of separate attempts to optimize a configuration",1);
+  (*OptimizationGroup) += new SingleIntegerOption('s', "nbr-save", "maximum number of (distinct) configurations to be saved",10);
+  (*OptimizationGroup) += new SingleDoubleOption('\n', "overlap-same", "overlap above which two conf's are considered identical", 0.99);
+  (*MiscGroup) += new SingleStringOption  ('o', "output-file", "redirect output to this file", NULL);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   Manager.StandardProceedings(argv, argc, cout);
   
   double ChemicalPotential = Manager.GetDouble("mu");
 
+  int NbrAttempts = Manager.GetInteger("nbr-attempts");
+  int NbrToSave = Manager.GetInteger("nbr-save");
+  double IdentityThreshold = Manager.GetDouble("overlap-same");
+  
   if ((Manager.GetString("interaction-file")==NULL)&&(Manager.GetString("potential-file")==NULL))
     {
       cout << "An external definition of the hopping or interaction matrix elements is required. Use option -e and/or -f"<<endl;
@@ -91,12 +98,10 @@ int main(int argc, char** argv)
     }
 
   char* BaseName = RemoveExtensionFromFileName(OutputName,".dat");
-  int Counter=0;
-  char* ParameterName = GetUniqueFileName(BaseName,Counter,".par");
 
   ComplexVector *InitialParameters = NULL;
 
-  if (Manager.GetString("parameters")!=NULL)
+  if ((Manager.GetString("parameters")!=NULL)&&(NbrAttempts==1))
     {
       InitialParameters = new ComplexVector;
       if (InitialParameters->ReadVector(Manager.GetString("parameters"))==false)
@@ -105,33 +110,124 @@ int main(int argc, char** argv)
 	  exit(1);
 	}
     }
-  
-  GrossPitaevskiiOnLatticeState MeanFieldState(NbrSites, Manager.GetString("potential-file"), Manager.GetString("interaction-file"), Lattice, InitialParameters);
-  MeanFieldState.SetChemicalPotential(ChemicalPotential);
-  if (InitialParameters==NULL)
-    MeanFieldState.SetToRandomPhase();
-  int MaxEval = 2*NbrSites*Manager.GetInteger("nbr-iter");
-  double Energy;
-  if (Manager.GetBoolean("gradient"))
-    Energy=MeanFieldState.GradientOptimize(Manager.GetDouble("tolerance"), MaxEval, /*initialStep*/ 0.01, /*lineMinPar*/ Manager.GetDouble("tolerance")/10.0);
+
+  ofstream File;
+  ifstream TestFile;
+  TestFile.open(OutputName, ios::in);
+  if (TestFile.is_open())
+    {
+      TestFile.close();
+      File.open(OutputName, ios::app );
+    }
   else
-    Energy=MeanFieldState.Optimize(Manager.GetDouble("tolerance"), MaxEval);
-  ComplexVector WaveFunction=MeanFieldState.GetWaveFunction();
-  RealVector Parameters=MeanFieldState.GetVariationalParameters();
-  WaveFunction.WriteVector(ParameterName);
-  cout << "Found mean field state with energy: "<<Energy<<" and density "<< MeanFieldState.GetNbrParticles()/NbrSites<<endl<<ParameterName<<endl;
-  ofstream File ( OutputName, ios::app );
-  File.precision(10);
-  if (Counter==0)
-    File << "#Count\tE_tot\tDensity\tE_int\tParameters"<<endl;
-  File << Counter << "\t" << Energy << "\t" << MeanFieldState.GetNbrParticles()/NbrSites << "\t" << Energy/MeanFieldState.GetNbrParticles() + ChemicalPotential;
-  File.precision(nearbyint(-log(Manager.GetDouble("tolerance"))/log(10)));
-  for (int i=0; i<Parameters.GetVectorDimension(); ++i)
-    File << "\t" << Parameters[i];
-  File << "\t" << ParameterName << endl;
+    {
+      File.open(OutputName, ios::out );
+      File << "#E_tot\tDensity\tE_int\tParameters"<<endl;
+    }
+    
+  ComplexVector *OptimalWaveFunctions = new ComplexVector[NbrToSave];
+  int NbrFound=0;
+  double *LowestEnergies = new double[NbrToSave];
+  
+  for (int i=0; i<NbrAttempts; ++i)
+    {
+      GrossPitaevskiiOnLatticeState MeanFieldState(NbrSites, Manager.GetString("potential-file"), Manager.GetString("interaction-file"), Lattice, InitialParameters);
+      MeanFieldState.SetChemicalPotential(ChemicalPotential);
+      if (InitialParameters==NULL)
+	MeanFieldState.SetToRandomPhase();
+      int MaxEval = 2*NbrSites*Manager.GetInteger("nbr-iter");
+      double Energy;
+      if (Manager.GetBoolean("gradient"))
+	Energy=MeanFieldState.GradientOptimize(Manager.GetDouble("tolerance"), MaxEval, /*initialStep*/ 0.01, /*lineMinPar*/ Manager.GetDouble("tolerance")/10.0);
+      else
+	Energy=MeanFieldState.Optimize(Manager.GetDouble("tolerance"), MaxEval);
+      RealVector Parameters=MeanFieldState.GetVariationalParameters();
+      bool Recorded=false;
+      for (int k=0; k<NbrFound && Recorded==false; ++k)
+	if (Energy <= LowestEnergies[k])
+	  {
+	    ComplexVector TmpWaveFunction=MeanFieldState.GetWaveFunction();
+	    if (Norm(TmpWaveFunction*OptimalWaveFunctions[k])>IdentityThreshold*TmpWaveFunction.Norm()*OptimalWaveFunctions[k].Norm())
+	      { // same configuration: simply replace with the one of lower energy
+		OptimalWaveFunctions[k]=TmpWaveFunction;
+		LowestEnergies[k] = Energy;
+		Recorded=true;
+	      }
+	    else
+	      {
+		int UpperLimit;
+		if (NbrFound < NbrToSave)
+		  {
+		    LowestEnergies[NbrFound]=LowestEnergies[NbrFound-1];
+		    OptimalWaveFunctions[NbrFound]=OptimalWaveFunctions[NbrFound-1];
+		    UpperLimit=NbrFound;
+		    NbrFound++;
+		  }
+		else UpperLimit = NbrToSave;
+		for (int s=k+1; s<UpperLimit; ++s)
+		  {
+		    LowestEnergies[s]=LowestEnergies[s-1];
+		    OptimalWaveFunctions[s]=OptimalWaveFunctions[s-1];
+		  }
+		OptimalWaveFunctions[k]=TmpWaveFunction;
+		LowestEnergies[k] = Energy;
+		Recorded=true;
+	      }
+	    }
+      if ((Recorded==false)&&(NbrFound<NbrToSave))
+	{
+	  OptimalWaveFunctions[NbrFound]=MeanFieldState.GetWaveFunction();
+	  LowestEnergies[NbrFound] = Energy;
+	  ++NbrFound;
+	}
+      
+      cout << "Found mean field state with energy: "<<Energy<<" and density "<< MeanFieldState.GetNbrParticles()/NbrSites<<endl;
+
+      File.precision(10);
+      File << Energy << "\t" << MeanFieldState.GetNbrParticles()/NbrSites << "\t" << Energy/MeanFieldState.GetNbrParticles() + ChemicalPotential;
+      File.precision(nearbyint(-log(Manager.GetDouble("tolerance"))/log(10)));
+      for (int i=0; i<Parameters.GetVectorDimension(); ++i)
+	File << "\t" << Parameters[i];
+      File << endl;
+    }
+  File.close();
+
+  if (NbrAttempts>1)
+    {
+      char* SelectedName = AddExtensionToFileName(BaseName,"select.dat");
+      ofstream SelectFile ( SelectedName, ios::app );
+      int CellPosition[2];
+      int Sub;
+      RealVector SitePosition;
+
+      for (int i=0; i<NbrFound; ++i)
+	{
+	  int Counter=0;
+	  char* ParameterName = GetUniqueFileName(BaseName,Counter,".par");
+	  char* FieldName = ReplaceExtensionToFileName(ParameterName,"par","wf");
+	  ofstream VectorField;
+	  VectorField.open(FieldName,ios::out);
+	  if (Counter==0)
+	    SelectFile << "#Count\tE_tot\tFilename"<<endl;
+	  SelectFile << Counter << "\t" << LowestEnergies[i] << "\t" << ParameterName << endl;
+	  OptimalWaveFunctions[i].WriteVector(ParameterName);
+	  for (int s=0; s<NbrSites; ++s)
+	    {
+	      Lattice->GetSiteCoordinates(s, CellPosition, Sub);
+	      SitePosition = Lattice->GetSitePosition(CellPosition,Sub);
+	      VectorField << SitePosition[0] << "\t" << SitePosition[1]
+			  << "\t" << (OptimalWaveFunctions[i])[s].Re
+			  << "\t" << (OptimalWaveFunctions[i])[s].Im << endl;
+	    }
+	  VectorField.close();
+	  delete [] ParameterName;
+	}
+      SelectFile.close();
+      delete [] SelectedName;
+    }
+
   delete [] BaseName;
   delete [] OutputName;
-  delete [] ParameterName;
   delete Lattice;
   delete [] LatticeName;
   if (InitialParameters != NULL)

@@ -302,50 +302,81 @@ for (my $Index1=0; $Index1<$NbrSites; ++$Index1)
 	      }
 	    for (my $Index4=0; $Index4<$UpperBound4; ++$Index4)
 	      {
-		# call MatrixElement evaluator: 4,3: creation operators, 2,1 annihilation operators
-		my $Command = "$MatrixProgram -c --gauge --quiet --interaction $InteractionFile ".GetLocalWavefunction($Index4)." "
-		  .GetLocalWavefunction($Index3)." ".GetLocalWavefunction($Index2)." ".GetLocalWavefunction($Index1);
-		my $Output = `$Command`;
-		my @OutputLines = split(/\n/,$Output);
-		chomp (@OutputLines);
-		my $TmpLength = $#OutputLines+1;
-		
-		# print ("Output for element $Index1 $Index2 $Index3 $Index4:\n");
-		# for (my $i=0; $i<$TmpLength; ++$i)
-		#   {
-		#     print ($OutputLines[$i]."\n");
-		#   }
-		
-		#get matrix element for U3:
-		my @Complex3 = split(/ /,$OutputLines[0]);
-		#print ("$OutputLines[0] read as $Complex3[0]+I*$Complex3[1]\n");
-		my $RoundedMultiples3="";
-		if ($UseExtrapolateAnalytical==1)
+		# test whether matrix element can be non-zero:
+		my $X1;
+		my $Y1;
+		my $X2;
+		my $Y2;
+		my $X3;
+		my $Y3;
+		my $X4;
+		my $Y4;
+		$X1 = ($Index1/2)%$UnitCells[0];
+		$Y1 = ($Index1/2)/$UnitCells[0];
+		$X2 = ($Index2/2)%$UnitCells[0];
+		$Y2 = ($Index2/2)/$UnitCells[0];
+		$X3 = ($Index3/2)%$UnitCells[0];
+		$Y3 = ($Index3/2)/$UnitCells[0];
+		$X4 = ($Index4/2)%$UnitCells[0];
+		$Y4 = ($Index4/2)/$UnitCells[0];
+		if ( ((abs($X1-$X2)<2)||(abs($X1-$X2)>$UnitCells[0]-2))
+		     && ((abs($X1-$X3)<2)||(abs($X1-$X3)>$UnitCells[0]-2))
+		     && ((abs($X1-$X4)<2)||(abs($X1-$X4)>$UnitCells[0]-2))
+		     && ((abs($X2-$X3)<2)||(abs($X2-$X3)>$UnitCells[0]-2))
+		     && ((abs($X2-$X4)<2)||(abs($X2-$X4)>$UnitCells[0]-2))
+		     && ((abs($X3-$X4)<2)||(abs($X3-$X4)>$UnitCells[0]-2))
+		     && ((abs($Y1-$Y2)<2)||(abs($Y1-$Y2)>$UnitCells[1]-2))
+		     && ((abs($Y1-$Y3)<2)||(abs($Y1-$Y3)>$UnitCells[1]-2))
+		     && ((abs($Y1-$Y4)<2)||(abs($Y1-$Y4)>$UnitCells[1]-2))
+		     && ((abs($Y2-$Y3)<2)||(abs($Y2-$Y3)>$UnitCells[1]-2))
+		     && ((abs($Y2-$Y4)<2)||(abs($Y2-$Y4)>$UnitCells[1]-2))
+		     && ((abs($Y3-$Y4)<2)||(abs($Y3-$Y4)>$UnitCells[1]-2)) )
 		  {
-		    ExtrapolateToAnalyticalValue($Complex3[0],$Complex3[1],$RoundedMultiples3);
-		  }
-		#get matrix element for U6:
-		my @Complex6 = split(/ /,$OutputLines[1]);
-		my $RoundedMultiples6="";
-		if ($UseExtrapolateAnalytical==1)
-		  {
-		    ExtrapolateToAnalyticalValue($Complex6[0],$Complex6[1],$RoundedMultiples6);
-		  }
-		my $Real = $Complex3[0]+$RatioU*$Complex6[0];
-		if (abs($Real)<1e-8)
-		  {
-		    $Real=0.0;
-		  }
-		my $Imag = $Complex3[1]+$RatioU*$Complex6[1];
-		if (abs($Imag)<1e-8)
-		  {
-		    $Imag=0.0;
-		  }
-		if (((abs($Real)>0.0)||(abs($Imag)>0.0))&&($Real*$Real+$Imag*$Imag>1e-12))
-		  {
-		    printf("$Index1 $Index2 $Index3 $Index4 ".$Real." ".$Imag." "
-			   .$RoundedMultiples3." ".$RoundedMultiples6."\n");
-		    printf MATRIX ("$Index1 $Index2 $Index3 $Index4 ".$Real." ".$Imag."\n"); #." ".$RoundedMultiples3." ".$RoundedMultiples6."\n");
+		    # call MatrixElement evaluator: 4,3: creation operators, 2,1 annihilation operators
+		    my $Command = "$MatrixProgram -c --gauge --quiet --interaction $InteractionFile ".GetLocalWavefunction($Index4)." "
+		      .GetLocalWavefunction($Index3)." ".GetLocalWavefunction($Index2)." ".GetLocalWavefunction($Index1);
+		    my $Output = `$Command`;
+		    my @OutputLines = split(/\n/,$Output);
+		    chomp (@OutputLines);
+		    my $TmpLength = $#OutputLines+1;
+		    
+		    # print ("Output for element $Index1 $Index2 $Index3 $Index4:\n");
+		    # for (my $i=0; $i<$TmpLength; ++$i)
+		    #   {
+		    #     print ($OutputLines[$i]."\n");
+		    #   }
+		    
+		    #get matrix element for U3:
+		    my @Complex3 = split(/ /,$OutputLines[0]);
+		    #print ("$OutputLines[0] read as $Complex3[0]+I*$Complex3[1]\n");
+		    my $RoundedMultiples3="";
+		    if ($UseExtrapolateAnalytical==1)
+		      {
+			ExtrapolateToAnalyticalValue($Complex3[0],$Complex3[1],$RoundedMultiples3);
+		      }
+		    #get matrix element for U6:
+		    my @Complex6 = split(/ /,$OutputLines[1]);
+		    my $RoundedMultiples6="";
+		    if ($UseExtrapolateAnalytical==1)
+		      {
+			ExtrapolateToAnalyticalValue($Complex6[0],$Complex6[1],$RoundedMultiples6);
+		      }
+		    my $Real = $Complex3[0]+$RatioU*$Complex6[0];
+		    if (abs($Real)<1e-8)
+		      {
+			$Real=0.0;
+		      }
+		    my $Imag = $Complex3[1]+$RatioU*$Complex6[1];
+		    if (abs($Imag)<1e-8)
+		      {
+			$Imag=0.0;
+		      }
+		    if (((abs($Real)>0.0)||(abs($Imag)>0.0))&&($Real*$Real+$Imag*$Imag>1e-12))
+		      {
+			printf("$Index1 $Index2 $Index3 $Index4 ".$Real." ".$Imag." "
+			       .$RoundedMultiples3." ".$RoundedMultiples6."\n");
+			printf MATRIX ("$Index1 $Index2 $Index3 $Index4 ".$Real." ".$Imag."\n"); #." ".$RoundedMultiples3." ".$RoundedMultiples6."\n");
+		      }
 		  }
 	      }
 	  }
