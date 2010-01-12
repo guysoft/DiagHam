@@ -180,6 +180,17 @@ void GrossPitaevskiiOnLatticeState::SetToRandomPhase(double amplitude)
     }
 }
 
+// set parameters to a uniform initial distribution (constant phase)
+// amplitude = amplitude determining the density
+void GrossPitaevskiiOnLatticeState::SetToUniformState(double amplitude)
+{
+  for (int i=0; i<NbrSites; ++i)
+    {
+      this->VariationalParameters[2*i]=sqrt(amplitude);
+      this->VariationalParameters[2*i+1]=0.0;
+    }
+}
+
 // get expectation value of the energy
 double GrossPitaevskiiOnLatticeState::GetEnergy()
 {
@@ -412,8 +423,8 @@ double GrossPitaevskiiOnLatticeState::GradientOptimize(double targetGradient, in
     gsl_vector_set (FunctionParameters, i, this->VariationalParameters[i]);
   
   //GSLMinimizerType = gsl_multimin_fdfminimizer_conjugate_fr; // Fletcher-Reeves
-  //GSLMinimizerType = gsl_multimin_fdfminimizer_conjugate_pr; // Polak-Ribiere
-  GSLMinimizerType = gsl_multimin_fdfminimizer_vector_bfgs2; // Broyden-Fletcher-Goldfarb-Shanno
+  GSLMinimizerType = gsl_multimin_fdfminimizer_conjugate_pr; // Polak-Ribiere
+  //GSLMinimizerType = gsl_multimin_fdfminimizer_vector_bfgs2; // Broyden-Fletcher-Goldfarb-Shanno
   GSLMinimizer = gsl_multimin_fdfminimizer_alloc (GSLMinimizerType, EffectiveNbrVariationalParameters);
   
   gsl_multimin_fdfminimizer_set (GSLMinimizer, &TargetFunction, FunctionParameters, initialStep, lineMinParameter);

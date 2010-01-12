@@ -133,6 +133,10 @@ class GrossPitaevskiiOnLatticeState
   // amplitude = amplitude determining the density
   void SetToRandomPhase(double amplitude=1.0);
 
+  // set parameters to a uniform initial distribution (constant phase)
+  // amplitude = amplitude determining the density
+  void SetToUniformState(double amplitude=1.0);
+
   // get expectation value of the energy
   double GetEnergy();
 

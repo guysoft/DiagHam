@@ -69,6 +69,7 @@ my $SolenoidStr="";
 my $HaveSolenoid=0;
 my $SolenoidX=0;
 my $SolenoidY=0;
+my $VectorsOnly=0;
 
 while( (defined($ARGV[0])&&$ARGV[0] =~ /^-/ ))
   {
@@ -97,6 +98,11 @@ while( (defined($ARGV[0])&&$ARGV[0] =~ /^-/ ))
       {
 	$KeepFiles=1;
       }
+    if ( $ARGV[0] =~ /-v/ )
+      {
+	$VectorsOnly=1;
+      }
+
     if ( $ARGV[0] =~ /-u/ )
       {
 	if (length($ARGV[0])>2)
@@ -211,6 +217,7 @@ if ($DisplayHelp)
     print("       -u: ratio of U6 to U3 on 6-fold and 3-fold connected sites of dice lattice\n");
     print("       -a: include all matrix elements, ignoring obvious symmetries\n");
     print("       -s: use solenoid fluxes (s_x,s_y)\n");
+    print("       -v: calculate vectors only\n");
     print("       -z: threshold above which elements are considered as non-zero\n");
     exit(1);
   }
@@ -285,6 +292,20 @@ my $InteractionFile = "DeltaInteraction_$UnitCells[0]x$UnitCells[1].dat";
 open (DEFINITION, ">$InteractionFile");
 print DEFINITION ($Interaction);
 close (DEFINITION);
+
+
+# test if we are done after calculating vectors
+if ( $VectorsOnly == 1)
+  {
+    if ($KeepFiles==0)
+      {
+	system ("rm DiceDoubledPhases_S*_V_-".abs($Trapping)."_on_$UnitCells[0]x$UnitCells[1].dat");
+	system ("rm bosons_lattice_dice_doubled_S*_V_-".abs($Trapping)."_".$UnitCells[0]."x".$UnitCells[1]."_n_1_hardcore".$SolenoidStr."_q_"
+		.(3*$NbrCells).".dat");
+      }
+    print ("Done calculating vectors\n");
+    exit(0);
+  }
 
 my $MatrixFile = "MatrixElements_Delta_u_".$RatioU."_".$UnitCells[0]."x".$UnitCells[1].$SolenoidStr.".dat";
 open (MATRIX, ">$MatrixFile");

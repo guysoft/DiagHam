@@ -171,6 +171,9 @@ class LatticePhases
   // access lattice extension in d-th direction
   int GetLatticeLength(int direction){return this->PeriodicRep[direction];}
 
+  // access lattice vector
+  RealVector &GetLatticeVector(int direction){return this->LatticeVectors[direction];}
+  
   // access lattice extension in d-th direction
   int GetNbrSubLattices(){return this->NbrSitesPerCell;}
 
