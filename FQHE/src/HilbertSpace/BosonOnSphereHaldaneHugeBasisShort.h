@@ -107,6 +107,11 @@ class BosonOnSphereHaldaneHugeBasisShort :  public BosonOnSphereShort
   // return value = true if no error occured
   virtual bool WriteHilbertSpace (char* fileName);
 
+  // check if disk is used to store the Hilbert space
+  //
+  // return value = true if disk storage is used
+  bool CheckDiskStorage();
+
   // print a given State using the monomial notation
   //
   // Str = reference on current output stream 
@@ -133,6 +138,14 @@ class BosonOnSphereHaldaneHugeBasisShort :  public BosonOnSphereShort
   // partialSave = save partial results in a given vector file
   // return value = decomposition of the corresponding Jack polynomial on the unnormalized hugebasis
   RealVector& GenerateSymmetrizedJackPolynomial(RealVector& jack, double alpha, long minIndex = 0l, long maxIndex = 0l, char* partialSave = 0);
+
+  // create the Jack polynomial decomposition corresponding to the root partition assuming the resulting state is invariant under the Lz<->-Lz symmetry and using sparse storage
+  //
+  // alpha = value of the Jack polynomial alpha coefficient
+  // partialSave = save partial results in a given vector file
+  // minIndex = start computing the Jack polynomial from the minIndex-th component
+  // maxIndex = stop  computing the Jack polynomial up to the maxIndex-th component (0 if it has to be computed up to the end)
+  virtual void GenerateSymmetrizedJackPolynomialSparse(double alpha, char* partialSave, long minIndex = 0l, long maxIndex = 0l);
 
   // convert a state such that its components are now expressed in the unnormalized basis
   //
@@ -190,4 +203,12 @@ class BosonOnSphereHaldaneHugeBasisShort :  public BosonOnSphereShort
 
 };
 
+// check if disk is used to store the Hilbert space
+//
+// return value = true if disk storage is used
+
+inline  bool BosonOnSphereHaldaneHugeBasisShort::CheckDiskStorage()
+{
+  return this->FermionHugeBasis->CheckDiskStorage();
+}
 #endif

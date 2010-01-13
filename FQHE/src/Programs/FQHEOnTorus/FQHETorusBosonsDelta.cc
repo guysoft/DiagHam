@@ -2,6 +2,7 @@
 #include "Matrix/RealSymmetricMatrix.h"
 
 #include "HilbertSpace/BosonOnTorus.h"
+#include "HilbertSpace/BosonOnTorusShort.h"
 #include "HilbertSpace/SubspaceSpaceConverter.h"
 
 #include "Hamiltonian/ParticleOnTorusCoulombHamiltonian.h"
@@ -118,7 +119,20 @@ int main(int argc, char** argv)
     {     
       cout << "----------------------------------------------------------------" << endl;
       cout << " Ratio = " << XRatio << endl;
-      BosonOnTorus* Space = new BosonOnTorus(NbrParticles, MaxMomentum, Momentum);
+
+      ParticleOnTorus* Space = 0;
+#ifdef  __64_BITS__
+      if ((MaxMomentum + NbrParticles - 1) < 63)
+#else
+	if ((MaxMomentum + NbrParticles - 1) < 1)	
+#endif
+	  {
+	    Space = new BosonOnTorusShort(NbrParticles, MaxMomentum, Momentum);	    
+	  }
+	else
+	  {
+	    Space = new BosonOnTorus(NbrParticles, MaxMomentum, Momentum);
+	  }
       cout << " Hilbert space dimension = " << Space->GetHilbertSpaceDimension() << endl;
 
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());

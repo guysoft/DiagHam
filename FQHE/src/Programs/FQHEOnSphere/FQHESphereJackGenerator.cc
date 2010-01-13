@@ -57,6 +57,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption ('\n', "huge-fulldim", "indicate the full Hilbert space dimension (i.e. without squeezing) when using huge Hilbert space (0 if it has to be computed)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "file-size", "maximum file size (in MBytes) when using huge mode", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
+  (*SystemGroup) += new BooleanOption ('\n', "disk-storage", "use disk storage in huge mode both for the Hilbert space and vectors");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "large-memory", "maximum memory (in kBytes) that can allocated for precalculations when using huge mode", 1);
   (*SystemGroup) += new BooleanOption  ('\n', "check-singularity", "display configurations which may produce singularities");
   (*OutputGroup) += new SingleStringOption ('o', "bin-output", "output the Jack polynomial decomposition into a binary file");
@@ -151,37 +152,59 @@ int main(int argc, char** argv)
 	    }
 	  InitialSpace = new BosonOnSphereHaldaneHugeBasisShort (Manager.GetString("load-hilbert"), Manager.GetInteger("memory"));
 	  cout << "dimension = " << InitialSpace->GetLargeHilbertSpaceDimension() << endl;
-	  RealVector OutputState;
-	  if (Manager.GetString("initial-state") == 0)
-	    OutputState = RealVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
-	  else
-	    if (OutputState.ReadVector(Manager.GetString("initial-state")) == false)
-	      {
-		cout << "can't open " << Manager.GetString("initial-state") << endl;
-		return -1;
-	      }
-	  if (SymmetrizedBasis == false)    
-	    InitialSpace->GenerateJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex, OutputFileName);
-	  else
-	    InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex, OutputFileName);
-	  
-	  if (Manager.GetBoolean("normalize"))
-            InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);
-	  if (OutputTxtFileName != 0)
+	  bool DiskStorageFlag = InitialSpace->CheckDiskStorage();	  
+	  if (DiskStorageFlag == true)
 	    {
-	      ofstream File;
-	      File.open(OutputTxtFileName, ios::binary | ios::out);
-	      File.precision(14);
-	      for (long i = 0; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
-		{
-		  File << OutputState[i] << " ";
-		  InitialSpace->PrintStateMonomial(File, i) << endl;
-		}
-	      File.close();
+	      cout << "using disk storage for the Hilbert space and output state, some options might be disabled" << endl;
 	    }
-	  if (OutputFileName != 0)
+	  if (Manager.GetBoolean("disk-storage") == true)
+	    DiskStorageFlag = true;
+	  if (DiskStorageFlag == false)
 	    {
-	      OutputState.WriteVector(OutputFileName);
+	      RealVector OutputState;
+	      if (Manager.GetString("initial-state") == 0)
+		OutputState = RealVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
+	      else
+		if (OutputState.ReadVector(Manager.GetString("initial-state")) == false)
+		  {
+		    cout << "can't open " << Manager.GetString("initial-state") << endl;
+		    return -1;
+		  }
+	      if (SymmetrizedBasis == false)    
+		InitialSpace->GenerateJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex, OutputFileName);
+	      else
+		InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex, OutputFileName);
+	      
+	      if (Manager.GetBoolean("normalize"))
+		InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);
+	      if (OutputTxtFileName != 0)
+		{
+		  ofstream File;
+		  File.open(OutputTxtFileName, ios::binary | ios::out);
+		  File.precision(14);
+		  for (long i = 0; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
+		    {
+		      File << OutputState[i] << " ";
+		      InitialSpace->PrintStateMonomial(File, i) << endl;
+		    }
+		  File.close();
+		}
+	      if (OutputFileName != 0)
+		{
+		  OutputState.WriteVector(OutputFileName);
+		}
+	    }
+	  else
+	    {
+	      if (OutputFileName == 0)
+		{
+		  cout << "an binary output file name has to be provided when using disk storage mode" << endl;
+		  return -1;
+		}
+// 	      if (SymmetrizedBasis == false)    
+// 		InitialSpace->GenerateJackPolynomialSparse(Alpha, OutputFileName, MinIndex, MaxIndex);
+// 	      else
+	      InitialSpace->GenerateSymmetrizedJackPolynomialSparse(Alpha, OutputFileName, MinIndex, MaxIndex);
 	    }
 	  return 0;
 	}
@@ -262,36 +285,53 @@ int main(int argc, char** argv)
 		      return 0;
 		    }
 		}
-	      RealVector OutputState;
-	      if (Manager.GetString("initial-state") == 0)
-		OutputState = RealVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
-	      else
-		if (OutputState.ReadVector(Manager.GetString("initial-state")) == false)
-		  {
-		    cout << "can't open " << Manager.GetString("initial-state") << endl;
-		    return -1;
-		  }
-	      if (SymmetrizedBasis == false)    
-		InitialSpace->GenerateJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex, OutputFileName);
-	      else
-		InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex, OutputFileName);
-	      if (Manager.GetBoolean("normalize"))
-		InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);
-	      if (OutputTxtFileName != 0)
+	      bool DiskStorageFlag = InitialSpace->CheckDiskStorage();	  
+	      if (DiskStorageFlag == true)
 		{
-		  ofstream File;
-		  File.open(OutputTxtFileName, ios::binary | ios::out);
-		  File.precision(14);
-		  for (long i = 0; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
-		    {
-		      File << OutputState[i] << " ";
-		      InitialSpace->PrintStateMonomial(File, i) << endl;
-		    }
-		  File.close();
+		  cout << "using disk storage for the Hilbert space and output state, some options might be disabled" << endl;
 		}
-	      if (OutputFileName != 0)
+	      if (Manager.GetBoolean("disk-storage") == true)
+		DiskStorageFlag = true;
+	      if (DiskStorageFlag == false)
 		{
-		  OutputState.WriteVector(OutputFileName);
+		  RealVector OutputState;
+		  if (Manager.GetString("initial-state") == 0)
+		    OutputState = RealVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
+		  else
+		    if (OutputState.ReadVector(Manager.GetString("initial-state")) == false)
+		      {
+			cout << "can't open " << Manager.GetString("initial-state") << endl;
+			return -1;
+		      }
+		  if (SymmetrizedBasis == false)    
+		    InitialSpace->GenerateJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex, OutputFileName);
+		  else
+		    InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex, OutputFileName);
+		  if (Manager.GetBoolean("normalize"))
+		    InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);
+		  if (OutputTxtFileName != 0)
+		    {
+		      ofstream File;
+		      File.open(OutputTxtFileName, ios::binary | ios::out);
+		      File.precision(14);
+		      for (long i = 0; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
+			{
+			  File << OutputState[i] << " ";
+			  InitialSpace->PrintStateMonomial(File, i) << endl;
+			}
+		      File.close();
+		    }
+		  if (OutputFileName != 0)
+		    {
+		      OutputState.WriteVector(OutputFileName);
+		    }
+		}
+	      else
+		{
+		  //		  if (SymmetrizedBasis == false)    
+		  //		    InitialSpace->GenerateJackPolynomialSparse(OutputState, Alpha, MinIndex, MaxIndex);
+		  //		  else
+		  InitialSpace->GenerateSymmetrizedJackPolynomialSparse(Alpha, OutputFileName, MinIndex, MaxIndex);
 		}
 	      return 0;
 	    }

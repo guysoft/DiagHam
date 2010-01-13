@@ -212,6 +212,11 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // return value = true if no error occured
   bool WriteHilbertSpace (char* fileName);
 
+  // check if disk is used to store the Hilbert space
+  //
+  // return value = true if disk storage is used
+  bool CheckDiskStorage();
+
   // get the particle statistic 
   //
   // return value = particle statistic
@@ -356,6 +361,14 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
   virtual RealVector& GenerateSymmetrizedJackPolynomial(RealVector& jack, double alpha, long minIndex = 0l, long maxIndex = 0l, char* partialSave = 0);
 
+  // create the Jack polynomial decomposition corresponding to the root partition assuming the resulting state is invariant under the Lz<->-Lz symmetry and using sparse storage
+  //
+  // alpha = value of the Jack polynomial alpha coefficient
+  // partialSave = save partial results in a given vector file
+  // minIndex = start computing the Jack polynomial from the minIndex-th component
+  // maxIndex = stop  computing the Jack polynomial up to the maxIndex-th component (0 if it has to be computed up to the end)
+  virtual void GenerateSymmetrizedJackPolynomialSparse(double alpha, char* partialSave, long minIndex, long maxIndex);
+
   // create the Jack polynomial decomposition corresponding to the root partition, using an optimized version of the code
   //
   // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
@@ -443,9 +456,8 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
 
   // generate look-up table associated to current Hilbert space assuming a huge basis
   // 
-  // fileName = name of the binary file
   // memory = memory size that can be allocated for the look-up table
-  void GenerateLookUpTableHugeBasis(char* fileName, unsigned long memory);
+  void GenerateLookUpTableHugeBasis(unsigned long memory);
 
   // generate all states corresponding to the constraints
   // 
@@ -615,6 +627,15 @@ inline unsigned long FermionOnSphereHaldaneHugeBasis::ConvertFromMonomial(int* i
     TmpState |= 0x1ul << initialState[j];
   return TmpState;
  }
+
+// check if disk is used to store the Hilbert space
+//
+// return value = true if disk storage is used
+
+inline  bool FermionOnSphereHaldaneHugeBasis::CheckDiskStorage()
+{
+  return (this->StateDescription == 0);
+}
 
 #endif
 

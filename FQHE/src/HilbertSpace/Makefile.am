@@ -83,4 +83,6 @@ FermionOnSphereWithSpinHaldaneLargeBasis.cc \
 BosonOnSphereTwoLandauLevels.cc \
 FermionOnSphereWithSpinHaldaneLargeBasis.cc \
 SingleBosonOnLatticeGeneric.cc \
-FermionOnTorusWithSpinNew.cc
+FermionOnTorusWithSpinNew.cc \
+BosonOnTorusShort.cc \
+BosonOnCylinderShort.cc

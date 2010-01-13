@@ -42,6 +42,7 @@
 
 
 #include <math.h>
+#include <cstring>
 #include <fstream>
 
 
@@ -433,13 +434,31 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
       this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
       for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
 	ReadLittleEndian(File, this->StateDescription[i]);
+      File.close();
     }
   else 
     {
+      File.close();
+      this->HilbertSpaceFileName = new char[strlen(fileName) + 1];
+      strcpy (this->HilbertSpaceFileName, fileName);
+      this->FileHeaderSize = (4 * sizeof(int)) + (2 * sizeof(long));
       this->StateDescription = 0;
-      this->GenerateLookUpTableHugeBasis(fileName, memoryHilbert);
+      this->SparseHilbertSpaceDimension = memoryHilbert << 17;
+      this->GenerateLookUpTableHugeBasis(memoryHilbert);
+      ifstream FileHilbert;
+      FileHilbert.open(this->HilbertSpaceFileName, ios::binary | ios::in);
+      FileHilbert.seekg (this->FileHeaderSize, ios::beg);
+      for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+	{
+	  unsigned long MaxRoot;
+	  ReadLittleEndian(FileHilbert, MaxRoot);	  
+	  cout << hex << MaxRoot << dec << endl;
+	  long TmpIndex = this->FindStateIndexSparse(MaxRoot);
+	  if (TmpIndex != i)
+	    cout << TmpIndex << " " << i << endl;
+	}
+      cout << "done" << endl;
     }
-  File.close();
 
 #ifdef __64_BITS__
   this->InvertShift = 32 - ((this->LzMax + 1) >> 1);
@@ -1320,16 +1339,15 @@ void FermionOnSphereHaldaneHugeBasis::GenerateLookUpTable(unsigned long memory)
 
 // generate look-up table associated to current Hilbert space assuming a huge basis
 // 
-// fileName = name of the binary file
 // memory = memory size that can be allocated for the look-up table
 
-void FermionOnSphereHaldaneHugeBasis::GenerateLookUpTableHugeBasis(char* fileName, unsigned long memory)
+void FermionOnSphereHaldaneHugeBasis::GenerateLookUpTableHugeBasis(unsigned long memory)
 {
   ifstream File;
-  File.open(fileName, ios::binary | ios::in);
+  File.open(this->HilbertSpaceFileName, ios::binary | ios::in);
   if (!File.is_open())
     {
-      cout << "can't open the file: " << fileName << endl;
+      cout << "can't open the file: " << this->HilbertSpaceFileName << endl;
       this->HilbertSpaceDimension = 0;
       return;
     }
@@ -1342,10 +1360,10 @@ void FermionOnSphereHaldaneHugeBasis::GenerateLookUpTableHugeBasis(char* fileNam
       File.seekg (this->SparseHilbertSpaceChunckSize << 3, ios::cur);
     }
   File.close();
-  File.open(fileName, ios::binary | ios::in);
+  File.open(this->HilbertSpaceFileName, ios::binary | ios::in);
   if (!File.is_open())
     {
-      cout << "can't open the file: " << fileName << endl;
+      cout << "can't open the file: " << this->HilbertSpaceFileName << endl;
       this->HilbertSpaceDimension = 0;
       return;
     }
@@ -1674,6 +1692,150 @@ RealVector& FermionOnSphereHaldaneHugeBasis::GenerateSymmetrizedJackPolynomial(R
   cout << endl;
 
   return jack;
+}
+
+// create the Jack polynomial decomposition corresponding to the root partition assuming the resulting state is invariant under the Lz<->-Lz symmetry and using sparse storage
+//
+// alpha = value of the Jack polynomial alpha coefficient
+// partialSave = save partial results in a given vector file
+// minIndex = start computing the Jack polynomial from the minIndex-th component
+// maxIndex = stop  computing the Jack polynomial up to the maxIndex-th component (0 if it has to be computed up to the end)
+
+void FermionOnSphereHaldaneHugeBasis::GenerateSymmetrizedJackPolynomialSparse(double alpha, char* partialSave, long minIndex, long maxIndex)
+{
+  if ((maxIndex <= 0) || (maxIndex >= this->LargeHilbertSpaceDimension))
+    maxIndex = this->LargeHilbertSpaceDimension - 1l;
+  double TmpComponent = 1.0;
+  if (minIndex <= 0)
+    {
+      ofstream File;
+      File.open(partialSave, ios::binary | ios::out);
+      WriteLittleEndian(File, this->HilbertSpaceDimension);  
+      if (this->HilbertSpaceDimension == -1)
+	WriteLittleEndian(File, this->LargeHilbertSpaceDimension);  
+      WriteLittleEndian(File, TmpComponent);  
+      File.close();
+    }
+  TmpComponent = 0.0;
+   
+  double InvAlpha =  2.0 * (1.0 - alpha) / alpha;
+
+  int* TmpMonomial = new int [this->NbrFermions];
+  int* TmpMonomial2 = new int [this->NbrFermions];
+  
+  ifstream FileHilbert;
+  FileHilbert.open(this->HilbertSpaceFileName, ios::binary | ios::in);
+  FileHilbert.seekg (this->FileHeaderSize, ios::beg);
+  
+  double RhoRoot = 0.0;
+  unsigned long MaxRoot = 0x0ul;
+  ReadLittleEndian(FileHilbert, MaxRoot);
+  this->ConvertToMonomial(MaxRoot, TmpMonomial);
+  for (int j = 0; j < this->NbrFermions; ++j)
+    RhoRoot += TmpMonomial[j] * (TmpMonomial[j] - InvAlpha * ((double) j));
+  int ReducedNbrFermions = this->NbrFermions - 1;  
+  double SymSign = 1.0;
+  if ((((this->NbrFermions * ReducedNbrFermions) >> 1) & 1) != 0)
+    SymSign = -1.0;
+
+  if (minIndex <= 0l)
+    minIndex = 1l;
+  else
+    FileHilbert.seekg ((minIndex - 1l) * sizeof(unsigned long) , ios::cur);
+  for (long i = minIndex; i <= maxIndex; ++i)
+    {
+      double Rho = 0.0;
+      unsigned long CurrentPartition = 0x0ul;
+      ReadLittleEndian (FileHilbert, CurrentPartition);
+      unsigned long TmpSymState = this->GetSymmetricState(CurrentPartition);
+      if (TmpSymState <= CurrentPartition)
+	{
+	  this->ConvertToMonomial(CurrentPartition, TmpMonomial);
+	  for (int j = 0; j < this->NbrFermions; ++j)
+	    Rho += TmpMonomial[j] * (TmpMonomial[j] - InvAlpha * ((double) j));
+	  double Coefficient = 0.0;
+	  ifstream FileVector;
+	  FileVector.open(partialSave, ios::binary | ios::in);
+	  for (int j1 = 0; j1 < ReducedNbrFermions; ++j1)
+	    for (int j2 = j1 + 1; j2 < this->NbrFermions; ++j2)
+	      {
+		double Diff = (double) (TmpMonomial[j1] - TmpMonomial[j2]);
+		unsigned int Max = TmpMonomial[j2];
+		unsigned long TmpState = 0x0ul;
+		int Tmpj1 = j1;
+		int Tmpj2 = j2;
+		for (int l = 0; l < this->NbrFermions; ++l)
+		  TmpMonomial2[l] = TmpMonomial[l];	    
+		double Sign = 1.0;
+		for (unsigned int k = 1; (k <= Max) && (TmpState < MaxRoot); ++k)
+		  {
+		    ++TmpMonomial2[Tmpj1];
+		    --TmpMonomial2[Tmpj2];
+		    while ((Tmpj1 > 0) && (TmpMonomial2[Tmpj1] >= TmpMonomial2[Tmpj1 - 1]))
+		      {
+			unsigned long Tmp = TmpMonomial2[Tmpj1 - 1];
+			TmpMonomial2[Tmpj1 - 1] = TmpMonomial2[Tmpj1];
+			TmpMonomial2[Tmpj1] = Tmp;
+			--Tmpj1;
+			Sign *= -1.0; 
+		      }
+		    while ((Tmpj2 < ReducedNbrFermions) && (TmpMonomial2[Tmpj2] <= TmpMonomial2[Tmpj2 + 1]))
+		      {
+			unsigned long Tmp = TmpMonomial2[Tmpj2 + 1];
+			TmpMonomial2[Tmpj2 + 1] = TmpMonomial2[Tmpj2];
+			TmpMonomial2[Tmpj2] = Tmp;
+			++Tmpj2;
+			Sign *= -1.0; 
+		      }
+		    if ((TmpMonomial2[Tmpj1] != TmpMonomial2[Tmpj1 + 1]) && (TmpMonomial2[Tmpj2] != TmpMonomial2[Tmpj2 - 1]))
+		      {
+			TmpState = this->ConvertFromMonomial(TmpMonomial2);
+			if ((TmpState <= MaxRoot) && (TmpState > CurrentPartition))
+			  {
+			    long TmpIndex = this->FindStateIndexSparse(TmpState);
+			    if (TmpIndex < this->LargeHilbertSpaceDimension)
+			      {
+				FileVector.seekg ((TmpIndex * sizeof(double)) + 12l, ios::beg);			    
+				ReadLittleEndian (FileVector, TmpComponent);
+				Coefficient += Sign * Diff * TmpComponent;
+			      }
+			  }
+		      }
+		  }
+	      }
+	  FileVector.close();
+	  
+	  Coefficient *= InvAlpha;
+	  Coefficient /= (RhoRoot - Rho);
+	  ofstream File;
+	  File.open(partialSave, ios::binary | ios::out | ios::app);
+	  WriteLittleEndian(File, Coefficient);
+	  File.close();
+	}
+      else
+	{
+	  long TmpIndex = this->FindStateIndexSparse(TmpSymState);
+	  ifstream FileVector;
+	  FileVector.open(partialSave, ios::binary | ios::in);
+	  FileVector.seekg ((TmpIndex * sizeof(double)) + 12l, ios::beg);			    
+	  ReadLittleEndian (FileVector, TmpComponent);
+	  FileVector.close();
+	  TmpComponent *= SymSign;
+	  ofstream File;
+	  File.open(partialSave, ios::binary | ios::out | ios::app);
+	  WriteLittleEndian(File, TmpComponent);
+	  File.close();
+	}
+      if ((i & 0x3fffl) == 0l)
+	{
+	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
+	  cout.flush();
+	}
+    }
+  delete[] TmpMonomial;
+  cout << endl;
+  FileHilbert.close();
+
 }
 
 // create the Jack polynomial decomposition corresponding to the root partition, using an optimized version of the code

@@ -6,9 +6,10 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                           class of bosons on torus                         //
+//               class of bosons on torusfor system size such that            //
+//         LzMax + NbrBosons - 1 < 63 or 31 (64 bits or 32bits systems)       //
 //                                                                            //
-//                        last modification : 03/09/2002                      //
+//                        last modification : 08/12/2009                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,8 +29,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef BOSONONTORUS_H
-#define BOSONONTORUS_H
+#ifndef BOSONONTORUSSHORT_H
+#define BOSONONTORUSSHORT_H
 
 
 #include "config.h"
@@ -39,7 +40,7 @@
 #include <iostream>
 
 
-class BosonOnTorus :  public ParticleOnTorus
+class BosonOnTorusShort :  public ParticleOnTorus
 {
 
   // number of bosons
@@ -58,79 +59,52 @@ class BosonOnTorus :  public ParticleOnTorus
   int GCDMaxMomentum;
 
   // array describing each state
-  int** StateDescription;
+  unsigned long* StateDescription;
   // array giving maximum Lz value reached for a boson in a given state
   int* StateMaxMomentum;
 
-  // multiplicative factors used during key construction
-  int* KeyMultiplicationTable;
-  // keys associated to each state
-  int* Keys;
-  // indicate position of the first state with a given number of boson having a given maximum Lz value
-  int* MomentumMaxPosition;
-
-  // indicates how many different states are store for each sector (a sector is given by its lzmax and the number of bosons that are at lzmax)
-  int* KeyInvertSectorSize;
-  // 
-  int** KeyInvertTable;
-  //
-  int** KeyInvertTableNbrIndices;
-  //
-  int*** KeyInvertIndices;
+  // maximum shift used for searching a position in the look-up table
+  int MaximumLookUpShift;
+  // memory used for the look-up table in a given lzmax sector
+  unsigned long LookUpTableMemorySize;
+  // shift used in each lzmax sector
+  int* LookUpTableShift;
+  // look-up table with two entries : the first one used lzmax value of the state an the second 
+  int** LookUpTable;
 
   // temporary state used when applying operators
-  int* TemporaryState;
-
+  unsigned long* TemporaryState;
+  int TemporaryStateMaxMomentum;
+  
  public:
 
   // basic constructor
   // 
   // nbrBosons = number of bosons
   // maxMomentum = momentum maximum value for a boson
-  BosonOnTorus (int nbrBosons, int maxMomentum);
+  BosonOnTorusShort (int nbrBosons, int maxMomentum);
 
   // constructor with a constraint of the total momentum of states
   // 
   // nbrBosons = number of bosons
   // maxMomentum = momentum maximum value for a boson
   // momentumConstraint = index of the momentum orbit
-  BosonOnTorus (int nbrBosons, int maxMomentum, int momentumConstraint);
-
-  // constructor from full datas (with no constraint on the total momentum)
-  // 
-  // nbrBosons = number of bosons
-  // maxMomentum = momentum maximum value for a boson
-  // hilbertSpaceDimension = Hilbert space dimension
-  // stateDescription = array describing each state
-  // stateMaxMomentum = array giving maximum Lz value reached for a fermion in a given state
-  BosonOnTorus (int nbrBosons, int maxMomentum, int hilbertSpaceDimension, 
-		int** stateDescription, int* stateMaxMomentum);
-
-  // constructor from full datas
-  // 
-  // nbrBosons = number of bosons
-  // maxMomentum = momentum maximum value for a boson
-  // momentumConstraint = index of the momentum orbit
-  // hilbertSpaceDimension = Hilbert space dimension
-  // stateDescription = array describing each state
-  // stateMaxMomentum = array giving maximum Lz value reached for a boson in a given state
-  BosonOnTorus (int nbrBosons, int maxMomentum, int momentumConstraint, int hilbertSpaceDimension, 
-		int** stateDescription, int* stateMaxMomentum);
+  BosonOnTorusShort (int nbrBosons, int maxMomentum, int momentumConstraint);
 
   // copy constructor (without duplicating datas)
   //
   // bosons = reference on the hilbert space to copy to copy
-  BosonOnTorus(const BosonOnTorus& bosons);
+  BosonOnTorusShort(const BosonOnTorusShort& bosons);
 
   // destructor
   //
-  ~BosonOnTorus ();
+  ~BosonOnTorusShort ();
 
   // assignement (without duplicating datas)
   //
   // bosons = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space
-  BosonOnTorus& operator = (const BosonOnTorus& bosons);
+  BosonOnTorusShort& operator = (const BosonOnTorusShort& bosons);
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -208,14 +182,29 @@ class BosonOnTorus :  public ParticleOnTorus
   // return value = density matrix of the subsytem  (return a wero dimension matrix if the density matrix is equal to zero)
   virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int subsytemSize, int nbrBosonSector, int kySector, RealVector& groundState);
 
- private:
+ protected:
+
+  // convert a bosonic state into its fermionic counterpart
+  //
+  // initialState = reference on the array where initialbosonic  state is stored
+  // initialStateLzMax = reference on the initial bosonic state maximum Lz value
+  // return value = corresponding fermionic state
+  unsigned long BosonToFermion(unsigned long*& initialState, int& initialStateLzMax);
+
+  // convert a fermionic state into its bosonic  counterpart
+  //
+  // initialState = initial fermionic state
+  // initialStateLzMax = initial fermionic state maximum Lz value
+  // finalState = reference on the array where the bosonic state has to be stored
+  // finalStateLzMax = reference on the integer where the bosonic state maximum Lz value has to be stored
+  void FermionToBoson(unsigned long initialState, int initialStateLzMax, unsigned long*& finalState, int& finalStateLzMax);
 
   // find state index
   //
   // stateDescription = array describing the state
   // lzmax = maximum Lz value reached by a boson in the state
   // return value = corresponding index
-  int FindStateIndex(int* stateDescription, int lzmax);
+  int FindStateIndex(unsigned long stateDescription, int lzmax);
 
   // evaluate Hilbert space dimension
   //
@@ -224,18 +213,20 @@ class BosonOnTorus :  public ParticleOnTorus
   // return value = Hilbert space dimension
   int EvaluateHilbertSpaceDimension(int nbrBosons, int maxMomentum);
 
+  // evaluate Hilbert space dimension
+  //
+  // nbrBosons = number of bosons
+  // maxMomentum = momentum maximum value for a boson in the state
+  // currentMaxMomentum = momentum maximum value for bosons that are still to be placed
+  // currentMomentum = current value of the momentum
+  // return value = Hilbert space dimension
+  long EvaluateHilbertSpaceDimension(int nbrBosons, int maxMomentum, int currentMaxMomentum, int currentMomentum);
+
   // generate look-up table associated to current Hilbert space
   // 
   // memeory = memory size that can be allocated for the look-up table
   void GenerateLookUpTable(int memory);
 
-  // generate look-up table associated to current Hilbert space
-  // 
-  // stateDescription = array describing the state
-  // lzmax = maximum Lz value reached by a boson in the state
-  // return value = key associated to the state
-  int GenerateKey(int* stateDescription, int lzmax);
-    
   // generate all states corresponding to the constraints
   // 
   // nbrBosons = number of bosons
@@ -261,9 +252,65 @@ class BosonOnTorus :  public ParticleOnTorus
 //
 // return value = particle statistic
 
-inline int BosonOnTorus::GetParticleStatistic()
+inline int BosonOnTorusShort::GetParticleStatistic()
 {
   return ParticleOnTorus::BosonicStatistic;
+}
+
+// convert a bosonic state into its fermionic counterpart
+//
+// initialState = reference on the array where initialbosonic  state is stored
+// initialStateLzMax = reference on the initial bosonic state maximum Lz value
+// return value = corresponding fermionic state
+
+inline unsigned long BosonOnTorusShort::BosonToFermion(unsigned long*& initialState, int& initialStateLzMax)
+{
+  unsigned long TmpState = 0x0ul;
+  unsigned long Shift = 0;
+  for (int i = 0; i <= initialStateLzMax; ++i)
+    {
+      TmpState |= ((1ul << initialState[i]) - 1ul) << Shift;
+      Shift += initialState[i];
+      ++Shift;
+    }
+  return TmpState;
+}
+
+// convert a fermionic state into its bosonic  counterpart
+//
+// initialState = initial fermionic state
+// initialStateLzMax = initial fermionic state maximum Lz value
+// finalState = reference on the array where the bosonic state has to be stored
+// finalStateLzMax = reference on the integer where the bosonic state maximum Lz value has to be stored
+
+inline void BosonOnTorusShort::FermionToBoson(unsigned long initialState, int initialStateLzMax, unsigned long*& finalState, int& finalStateLzMax)
+{
+  finalStateLzMax = 0;
+  while (initialStateLzMax >= 0)
+    {
+      unsigned long TmpState = (~initialState - 1ul) ^ (~initialState);
+      TmpState &= ~(TmpState >> 1);
+#ifdef  __64_BITS__
+      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaaaaaaaaaul) != 0);
+      TmpPower |= ((TmpState & 0xccccccccccccccccul) != 0) << 1;
+      TmpPower |= ((TmpState & 0xf0f0f0f0f0f0f0f0ul) != 0) << 2;
+      TmpPower |= ((TmpState & 0xff00ff00ff00ff00ul) != 0) << 3;      
+      TmpPower |= ((TmpState & 0xffff0000ffff0000ul) != 0) << 4;      
+      TmpPower |= ((TmpState & 0xffffffff00000000ul) != 0) << 5;      
+#else
+      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaul) != 0);
+      TmpPower |= ((TmpState & 0xccccccccul) != 0) << 1;
+      TmpPower |= ((TmpState & 0xf0f0f0f0ul) != 0) << 2;
+      TmpPower |= ((TmpState & 0xff00ff00ul) != 0) << 3;      
+      TmpPower |= ((TmpState & 0xffff0000ul) != 0) << 4;      
+#endif
+      finalState[finalStateLzMax] = (unsigned long) TmpPower;
+      ++TmpPower;
+      initialState >>= TmpPower;
+      ++finalStateLzMax;
+      initialStateLzMax -= TmpPower;
+    }
+  --finalStateLzMax;
 }
 
 #endif

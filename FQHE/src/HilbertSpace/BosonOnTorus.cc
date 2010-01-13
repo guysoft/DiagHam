@@ -56,6 +56,7 @@ BosonOnTorus::BosonOnTorus (int nbrBosons, int maxMomentum)
   this->NbrLzValue = this->MaxMomentum + 1;
   this->MomentumConstraintFlag = false;
 
+  this->TemporaryState = new int [this->MaxMomentum + 1];
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->MaxMomentum);
   cout << "dim = " << this->HilbertSpaceDimension << endl;
   this->Flag.Initialize();
@@ -93,6 +94,7 @@ BosonOnTorus::BosonOnTorus (int nbrBosons, int maxMomentum, int momentumConstrai
   this->MomentumConstraint = momentumConstraint;
   this->MomentumConstraintFlag = true;
   this->GCDMaxMomentum = FindGCD(this->NbrBosons, this->MaxMomentum);
+  this->TemporaryState = new int [this->MaxMomentum + 1];
 
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->MaxMomentum);
   cout << "dim = " << this->HilbertSpaceDimension << endl;
@@ -133,6 +135,7 @@ BosonOnTorus::BosonOnTorus (int nbrBosons, int maxMomentum, int hilbertSpaceDime
   this->NbrLzValue = this->MaxMomentum + 1;
   this->MomentumConstraintFlag = false;
   this->HilbertSpaceDimension = hilbertSpaceDimension;
+  this->TemporaryState = new int [this->MaxMomentum + 1];
   this->Flag.Initialize();
   this->StateDescription = stateDescription;
   this->StateMaxMomentum = stateMaxMomentum;
@@ -171,6 +174,7 @@ BosonOnTorus::BosonOnTorus (int nbrBosons, int maxMomentum, int momentumConstrai
   this->MomentumConstraint = momentumConstraint;
   this->MomentumConstraintFlag = true;
   this->HilbertSpaceDimension = hilbertSpaceDimension;
+  this->TemporaryState = new int [this->MaxMomentum + 1];
   this->Flag.Initialize();
   this->StateDescription = stateDescription;
   this->StateMaxMomentum = stateMaxMomentum;
@@ -203,6 +207,7 @@ BosonOnTorus::BosonOnTorus(const BosonOnTorus& bosons)
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
   this->StateDescription = bosons.StateDescription;
   this->StateMaxMomentum = bosons.StateMaxMomentum;
+  this->TemporaryState = new int [this->MaxMomentum + 1];
   this->Flag = bosons.Flag;
 }
 
@@ -237,6 +242,7 @@ BosonOnTorus::~BosonOnTorus ()
       delete[] this->KeyInvertTableNbrIndices;
       delete[] this->KeyInvertIndices;
     }
+  delete[] this->TemporaryState;
 }
 
 // assignement (without duplicating datas)
@@ -252,6 +258,7 @@ BosonOnTorus& BosonOnTorus::operator = (const BosonOnTorus& bosons)
 	delete[] this->StateDescription[i];
       delete[] this->StateDescription;
       delete[] this->StateMaxMomentum;
+      delete[] this->TemporaryState;
     }
   this->NbrBosons = bosons.NbrBosons;
   this->IncNbrBosons = bosons.IncNbrBosons;
@@ -260,6 +267,7 @@ BosonOnTorus& BosonOnTorus::operator = (const BosonOnTorus& bosons)
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
   this->StateDescription = bosons.StateDescription;
   this->StateMaxMomentum = bosons.StateMaxMomentum;
+  this->TemporaryState = new int [this->MaxMomentum + 1];
   this->Flag = bosons.Flag;
   return *this;
 }
@@ -391,24 +399,22 @@ int BosonOnTorus::AdAdAA (int index, int m1, int m2, int n1, int n2, double& coe
   if (NewLzMax < m2)
     NewLzMax = m2;
   int i = 0;
-  int* TemporaryState = new int [NewLzMax + 1];
   for (; i <= CurrentLzMax; ++i)
-    TemporaryState[i] = State[i];
+    this->TemporaryState[i] = State[i];
   for (; i <= NewLzMax; ++i)
-    TemporaryState[i] = 0;
-  coefficient = TemporaryState[n2];
-  --TemporaryState[n2];
-  coefficient *= TemporaryState[n1];
-  --TemporaryState[n1];
-  ++TemporaryState[m2];
-  coefficient *= TemporaryState[m2];
-  ++TemporaryState[m1];
-  coefficient *= TemporaryState[m1];
+    this->TemporaryState[i] = 0;
+  coefficient = this->TemporaryState[n2];
+  --this->TemporaryState[n2];
+  coefficient *= this->TemporaryState[n1];
+  --this->TemporaryState[n1];
+  ++this->TemporaryState[m2];
+  coefficient *= this->TemporaryState[m2];
+  ++this->TemporaryState[m1];
+  coefficient *= this->TemporaryState[m1];
   coefficient = sqrt(coefficient);
-  while (TemporaryState[NewLzMax] == 0)
+  while (this->TemporaryState[NewLzMax] == 0)
     --NewLzMax;
-  int DestIndex = this->FindStateIndex(TemporaryState, NewLzMax);
-  delete[] TemporaryState;
+  int DestIndex = this->FindStateIndex(this->TemporaryState, NewLzMax);
   return DestIndex;
 }
 
@@ -950,3 +956,96 @@ int BosonOnTorus::EvaluateHilbertSpaceDimension(int nbrBosons, int maxMomentum)
   return Dimension.GetIntegerValue();
 }
 
+// evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Lz sector and fixed number of particles
+// 
+// subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax to -Lzmax+subsytemSize-1)
+// nbrBosonSector = number of particles that belong to the subsytem 
+// groundState = reference on the total system ground state
+// kySector = Ky sector in which the density matrix has to be evaluated 
+// return value = density matrix of the subsytem  (return a wero dimension matrix if the density matrix is equal to zero)
+
+RealSymmetricMatrix BosonOnTorus::EvaluatePartialDensityMatrix (int subsytemSize, int nbrBosonSector, int kySector, RealVector& groundState)
+{
+  if (subsytemSize <= 0)
+    {
+      if ((kySector == 0) && (nbrBosonSector == 0))
+	{
+	  RealSymmetricMatrix TmpDensityMatrix(1);
+	  TmpDensityMatrix.SetMatrixElement(0, 0, 1.0);
+	  return TmpDensityMatrix;
+	}
+      else
+	{
+	  RealSymmetricMatrix TmpDensityMatrix;
+	  return TmpDensityMatrix;	  
+	}
+    }
+  if (subsytemSize > this->MaxMomentum)
+    {
+      if ((kySector == this->MomentumConstraint) && (nbrBosonSector == this->NbrBosons))
+	{
+	  RealSymmetricMatrix TmpDensityMatrix(this->HilbertSpaceDimension);
+	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	    for (int j = i; j < this->HilbertSpaceDimension; ++j)
+	      TmpDensityMatrix.SetMatrixElement(i, j, groundState[i] * groundState[j]);
+	}
+      else
+	{
+	  RealSymmetricMatrix TmpDensityMatrix;
+	  return TmpDensityMatrix;	  
+	}
+    }
+
+  long TmpNbrNonZeroElements = 0;
+  BosonOnTorus TmpDestinationHilbertSpace(nbrBosonSector, subsytemSize - 1, kySector);
+  cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
+  RealSymmetricMatrix TmpDensityMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
+  BosonOnTorus TmpHilbertSpace(this->NbrBosons - nbrBosonSector, this->MaxMomentum - subsytemSize, 0);
+  int* TmpStatePosition = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+  int* TmpStatePosition2 = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+
+  for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
+    {
+      int Pos = 0;
+      for (int i = 0; i <= TmpHilbertSpace.StateMaxMomentum[MinIndex]; ++i)
+	this->TemporaryState[i] = TmpHilbertSpace.StateDescription[MinIndex][i];
+      for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
+	{
+
+// 	  unsigned long TmpState = TmpDestinationHilbertSpace.FermionBasis->StateDescription[j] | TmpComplementaryState;
+// 	  int TmpLzMax = this->FermionBasis->LzMax;
+// 	  while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
+// 	    --TmpLzMax;
+// 	  int TmpPos = this->FermionBasis->FindStateIndex(TmpState, TmpLzMax);
+// 	  if (TmpPos != this->HilbertSpaceDimension)
+// 	    {
+// 	      TmpStatePosition[Pos] = TmpPos;
+// 	      TmpStatePosition2[Pos] = j;
+// 	      ++Pos;
+// 	    }
+	}
+
+      if (Pos != 0)
+	{
+	  ++TmpNbrNonZeroElements;
+	  for (int j = 0; j < Pos; ++j)
+	    {
+	      int Pos2 = TmpStatePosition2[j];
+	      double TmpValue = groundState[TmpStatePosition[j]];
+	      for (int k = 0; k < Pos; ++k)
+		if (TmpStatePosition2[k] >= Pos2)
+		TmpDensityMatrix.AddToMatrixElement(Pos2, TmpStatePosition2[k], TmpValue * groundState[TmpStatePosition[k]]);
+	    }
+	}
+    }
+  
+  delete[] TmpStatePosition2;
+  delete[] TmpStatePosition;
+  if (TmpNbrNonZeroElements > 0)	
+    return TmpDensityMatrix;
+  else
+    {
+      RealSymmetricMatrix TmpDensityMatrixZero;
+      return TmpDensityMatrixZero;
+    }
+}
