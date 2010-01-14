@@ -119,6 +119,15 @@ class BosonOnSphereHaldaneHugeBasisShort :  public BosonOnSphereShort
   // return value = reference on current output stream 
   virtual ostream& PrintStateMonomial (ostream& Str, int state);
 
+  // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Lz sector and fixed number of particles
+  // 
+  // subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax to -Lzmax+subsytemSize-1)
+  // nbrBosonSector = number of particles that belong to the subsytem 
+  // groundState = reference on the total system ground state
+  // lzSector = Lz sector in which the density matrix has to be evaluated 
+  // return value = density matrix of the subsytem  (return a wero dimension matrix if the density matrix is equal to zero)
+  virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int subsytemSize, int nbrBosonSector, int lzSector, RealVector& groundState);
+
   // create the Jack polynomial decomposition corresponding to the root partition
   //
   // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized hugebasis will be stored
