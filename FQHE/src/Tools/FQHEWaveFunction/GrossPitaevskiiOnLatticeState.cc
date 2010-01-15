@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 //                                                                            //
 //                                                                            //
 //                            DiagHam  version 0.01                           //
@@ -62,7 +62,7 @@ using std::ostream;
 // oneParticleTerms = file describing single particle terms
 // twoParticleTerms = file describing two-particle terms
 // wavefunction = initial wavefunction
-GrossPitaevskiiOnLatticeState::GrossPitaevskiiOnLatticeState(int nbrStates, const char* oneParticleTerms, const char* twoParticleTerms, LatticePhases *latticeGeometry, ComplexVector *wavefunction)
+GrossPitaevskiiOnLatticeState::GrossPitaevskiiOnLatticeState(int nbrStates, const char* oneParticleTerms, const char* twoParticleTerms, LatticePhases *latticeGeometry, ComplexVector *wavefunction, AbstractRandomNumberGenerator *randomGenerator)
 {
   if (oneParticleTerms!=NULL)
     {
@@ -93,9 +93,18 @@ GrossPitaevskiiOnLatticeState::GrossPitaevskiiOnLatticeState(int nbrStates, cons
     this->VariationalParameters = RealVector(2*NbrSites);
   VariationalCoefficients.Resize(NbrSites);
   EnergyDerivatives.Resize(2*NbrSites);
-  timeval RandomTime;
-  gettimeofday (&(RandomTime), 0);
-  this->RandomNumbers = new NumRecRandomGenerator(RandomTime.tv_sec);
+  if (randomGenerator!=NULL)
+    {
+      this->RandomNumbers = randomGenerator;
+      ExternalGenerator=true;
+    }
+  else
+    {
+      timeval RandomTime;
+      gettimeofday (&(RandomTime), 0);
+      this->RandomNumbers = new NumRecRandomGenerator(RandomTime.tv_sec);
+      ExternalGenerator=false;
+    }
   this->ChemicalPotential=1.0;
 }
 
@@ -121,6 +130,8 @@ GrossPitaevskiiOnLatticeState::~GrossPitaevskiiOnLatticeState()
     delete [] this->OneParticleTerms;
   if (this->TwoParticleTerms!=NULL)
     delete [] this->TwoParticleTerms;
+  if (ExternalGenerator==false)
+    delete this->RandomNumbers;
 
 }
 
@@ -169,13 +180,16 @@ void GrossPitaevskiiOnLatticeState::SetVariationalParameters(RealVector &variati
 
 // set parameters to a random initial distribution (random phase)
 // amplitude = amplitude determining the density
-void GrossPitaevskiiOnLatticeState::SetToRandomPhase(double amplitude)
+void GrossPitaevskiiOnLatticeState::SetToRandomPhase(double amplitude, bool randomAmplitude)
 {
   Complex TmpC;
   
   for (int i=0; i<NbrSites; ++i)
     {
-      this->VariationalParameters[2*i]=sqrt(amplitude);
+      if (randomAmplitude)
+	this->VariationalParameters[2*i]=sqrt(amplitude*RandomNumbers->GetRealRandomNumber());
+      else
+	this->VariationalParameters[2*i]=sqrt(amplitude);
       this->VariationalParameters[2*i+1]=2.0*M_PI*RandomNumbers->GetRealRandomNumber();
     }
 }
@@ -458,6 +472,78 @@ double GrossPitaevskiiOnLatticeState::GradientOptimize(double targetGradient, in
 #endif
   return this->GetEnergy();
 }
+
+
+double GrossPitaevskiiOnLatticeState::SimplexOptimize(double targetSize, int maxIter, double initialStep)
+{
+#ifdef HAVE_GSL
+  size_t iter = 0;
+  int status;
+  
+  int EffectiveNbrVariationalParameters = 2*NbrSites;
+  
+  const gsl_multimin_fminimizer_type *GSLMinimizerType;
+  gsl_multimin_fminimizer *GSLMinimizer;
+  
+  gsl_vector *FunctionParameters;
+  gsl_multimin_function TargetFunction;
+
+  TargetFunction.n = EffectiveNbrVariationalParameters;
+  TargetFunction.f = &GrossPitaevskiiOnLatticeStateGSLTarget_F;
+  TargetFunction.params = this;
+
+  /* Starting point, x = (5,7) */
+  FunctionParameters = gsl_vector_alloc (EffectiveNbrVariationalParameters);
+  for (int i=0; i<EffectiveNbrVariationalParameters; ++i)
+    gsl_vector_set (FunctionParameters, i, this->VariationalParameters[i]);
+
+  gsl_vector *StepSizes;
+  StepSizes = gsl_vector_alloc (EffectiveNbrVariationalParameters);
+  for (int i=0; i<NbrSites; ++i)
+    {
+      gsl_vector_set (StepSizes, 2*i, 20.0*(this->VariationalParameters[i])+initialStep);
+      gsl_vector_set (StepSizes, 2*i+1, 4.0*M_PI);
+    }
+  
+  GSLMinimizerType = gsl_multimin_fminimizer_nmsimplex2;
+
+  GSLMinimizer = gsl_multimin_fminimizer_alloc (GSLMinimizerType, EffectiveNbrVariationalParameters);
+  
+  gsl_multimin_fminimizer_set (GSLMinimizer, &TargetFunction, FunctionParameters, StepSizes);
+  
+  do
+    {
+      iter++;
+      status = gsl_multimin_fminimizer_iterate (GSLMinimizer);
+      if (status)
+	break;
+      double size = gsl_multimin_fminimizer_size (GSLMinimizer);
+      status = gsl_multimin_test_size (size, 1e-2);
+
+      if (status == GSL_SUCCESS)
+	cout << "Minimum found after "<<iter<< " steps"<<endl;
+      if ((iter<20)
+	  || ((iter<1000)&&(iter%10==0))
+	  || (iter%100==0))
+	cout << ".";
+      cout.flush();
+    }
+  while (status == GSL_CONTINUE && iter < (size_t)maxIter);
+
+  if (iter == (size_t)maxIter)
+    {
+      cout << " max. number of iterations";
+    }
+  gsl_multimin_fminimizer_free (GSLMinimizer);
+  gsl_vector_free (FunctionParameters);
+  gsl_vector_free (StepSizes);
+  cout << endl;
+#else
+  cout << "GrossPitaevskiiOnLatticeState::SimplexOptimize requires the GSL libraries"<<endl;
+#endif
+  return this->GetEnergy();
+}
+
 
 
 // evaluate all interaction factors

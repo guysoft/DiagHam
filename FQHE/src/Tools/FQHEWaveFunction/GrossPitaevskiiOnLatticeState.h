@@ -93,6 +93,9 @@ class GrossPitaevskiiOnLatticeState
   // random number generator
   AbstractRandomNumberGenerator *RandomNumbers;
 
+  // flag for external random number generator
+  bool ExternalGenerator;
+
   // value of the chemical potential
   double ChemicalPotential;
 
@@ -105,7 +108,8 @@ class GrossPitaevskiiOnLatticeState
   // oneParticleTerms = file describing single particle terms
   // twoParticleTerms = file describing two-particle terms
   // wavefunction = initial wavefunction
-  GrossPitaevskiiOnLatticeState(int nbrStates, const char* oneParticleTerms, const char* twoParticleTerms, LatticePhases *latticeGeometry = NULL, ComplexVector *wavefunction=NULL);
+  // randomGenerator = external random number generator
+  GrossPitaevskiiOnLatticeState(int nbrStates, const char* oneParticleTerms, const char* twoParticleTerms, LatticePhases *latticeGeometry = NULL, ComplexVector *wavefunction=NULL, AbstractRandomNumberGenerator *randomGenerator=NULL);
 
   // destructor
   //
@@ -131,7 +135,7 @@ class GrossPitaevskiiOnLatticeState
 
   // set parameters to a random initial distribution (random phase)
   // amplitude = amplitude determining the density
-  void SetToRandomPhase(double amplitude=1.0);
+  void SetToRandomPhase(double amplitude=1.0, bool randomAmplitude=false);
 
   // set parameters to a uniform initial distribution (constant phase)
   // amplitude = amplitude determining the density
@@ -160,10 +164,12 @@ class GrossPitaevskiiOnLatticeState
   double Optimize(double tolerance, int maxIter);
 
   // optimize wavefunction starting from present settings of VariationalParameters using a gradient routine from gsl
-  // tolerance = final tolerance on the variational parameters
+  // targetGradient = final tolerance on the gradient of the energy
   // maxIter = maximal number of function evaluations
   //
   double GradientOptimize(double targetGradient, int maxIter, double initialStep=0.01, double lineMinParameter=1e-4);
+
+  double SimplexOptimize(double targetSize, int maxIter, double initialStep=1.0);
 
  private:
 

@@ -1,6 +1,6 @@
 #include "Tools/FQHESpectrum/LatticePhases.h"
 #include "Tools/FQHEWaveFunction/GrossPitaevskiiOnLatticeState.h"
-
+#include "MathTools/RandomNumber/NumRecRandomGenerator.h"
 #include "GeneralTools/FilenameTools.h"
 
 #include "Options/Options.h"
@@ -43,10 +43,12 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('F', "potential-name", "descriptor of external single particle potential (if in use)","");
 
   (*OptimizationGroup) += new BooleanOption('\n', "gradient", "Use optimization based on gradients");
+  (*OptimizationGroup) += new BooleanOption('\n', "simplex", "Use optimization based on a simplex method");
   (*OptimizationGroup) += new SingleDoubleOption('\n', "tolerance", "tolerance for variational parameters in condensate",1e-6);
   (*OptimizationGroup) += new SingleIntegerOption('i', "nbr-iter", "number of iterations for optimization",10000);
   (*OptimizationGroup) += new SingleStringOption('\n', "parameters", "file with initial parameters");
   (*OptimizationGroup) += new BooleanOption('u', "uniform", "start from a uniform vector field configuration (first attempt only)");
+  (*OptimizationGroup) += new BooleanOption('r', "random-amplitude", "randomize phases and amplitudes");
 
   (*OptimizationGroup) += new SingleIntegerOption('a', "nbr-attempts", "number of separate attempts to optimize a configuration",1);
   (*OptimizationGroup) += new SingleIntegerOption('s', "nbr-save", "maximum number of (distinct) configurations to be saved",10);
@@ -229,6 +231,8 @@ int main(int argc, char** argv)
 		VectorField << SitePosition2[0] << "\t" << SitePosition2[1]
 			    << "\t" << RelativePosition[0] << "\t" << RelativePosition[1]<<endl;
 
+		cout << s << " " << Neighbors[n] << " " << Arg(Conj(ResultingState[NbrSites-s-1])*ResultingState[NbrSites-Neighbors[n]-1]*Polar(1.0, -2.0*M_PI*FluxDensity*Phases[n])) << " "<< -PeriodicTranslations[n][0] << " " << -PeriodicTranslations[n][1] << endl;
+
 		
 	      }
 	}
@@ -303,22 +307,29 @@ int main(int argc, char** argv)
   ComplexVector *OptimalWaveFunctions = new ComplexVector[NbrToSave];
   int NbrFound=0;
   double *LowestEnergies = new double[NbrToSave];
-  
+  timeval RandomTime;
+  gettimeofday (&(RandomTime), 0);
+  NumRecRandomGenerator *RandomNumberGenerator = new NumRecRandomGenerator(RandomTime.tv_sec);
+
   for (int i=0; i<NbrAttempts; ++i)
     {
-      GrossPitaevskiiOnLatticeState MeanFieldState(NbrSites, Manager.GetString("potential-file"), Manager.GetString("interaction-file"), Lattice, InitialParameters);
+      GrossPitaevskiiOnLatticeState MeanFieldState(NbrSites, Manager.GetString("potential-file"), Manager.GetString("interaction-file"), Lattice, InitialParameters, RandomNumberGenerator);
       MeanFieldState.SetChemicalPotential(ChemicalPotential);
       if (InitialParameters==NULL)
 	if ((Uniform)&&(i==0))
 	  MeanFieldState.SetToUniformState();
-	else
-	  MeanFieldState.SetToRandomPhase();
+	else	  
+	  MeanFieldState.SetToRandomPhase(1.0,Manager.GetBoolean("random-amplitude"));
       int MaxEval = 2*NbrSites*Manager.GetInteger("nbr-iter");
       double Energy;
       if (Manager.GetBoolean("gradient"))
 	Energy=MeanFieldState.GradientOptimize(Manager.GetDouble("tolerance"), MaxEval, /*initialStep*/ 0.01, /*lineMinPar*/ Manager.GetDouble("tolerance")/10.0);
       else
-	Energy=MeanFieldState.Optimize(Manager.GetDouble("tolerance"), MaxEval);
+	
+	if (Manager.GetBoolean("simplex"))
+	  Energy=MeanFieldState.GradientOptimize(Manager.GetDouble("tolerance"), MaxEval, 1.0);
+	else
+	  Energy=MeanFieldState.Optimize(Manager.GetDouble("tolerance"), MaxEval);
       RealVector Parameters=MeanFieldState.GetVariationalParameters();
       bool Recorded=false;
       ComplexVector TmpWaveFunction=MeanFieldState.GetWaveFunction();
@@ -416,5 +427,6 @@ int main(int argc, char** argv)
   delete [] LatticeName;
   if (InitialParameters != NULL)
     delete InitialParameters;
+  delete RandomNumberGenerator;
   return 0;
 }
