@@ -448,15 +448,180 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
       ifstream FileHilbert;
       FileHilbert.open(this->HilbertSpaceFileName, ios::binary | ios::in);
       FileHilbert.seekg (this->FileHeaderSize, ios::beg);
-      for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+      unsigned long CurrentPartition;
+      ReadLittleEndian(FileHilbert, CurrentPartition);	  
+      unsigned long Mask = ((1l << ((this->LzMax / 2) + 2)) - 1l) << (this->LzMax / 2);
+      CurrentPartition &= Mask;
+      long Count = 1l;
+      long TotalCount = 1l;
+      for (long i = 1; i < this->LargeHilbertSpaceDimension; ++i)
 	{
 	  unsigned long MaxRoot;
 	  ReadLittleEndian(FileHilbert, MaxRoot);	  
-	  cout << hex << MaxRoot << dec << endl;
-	  long TmpIndex = this->FindStateIndexSparse(MaxRoot);
-	  if (TmpIndex != i)
-	    cout << TmpIndex << " " << i << endl;
+	  if (CurrentPartition == (MaxRoot & Mask))
+	    {
+	      Count++;
+	    }
+	  else
+	    {
+//	      cout << hex << CurrentPartition << dec << " " << Count << " " << i << endl;
+	      CurrentPartition = (MaxRoot & Mask);
+	      Count = 1l;
+	      TotalCount++;
+	    }	  
+// 	  cout << hex << MaxRoot << dec << endl;
+// 	  long TmpIndex = this->FindStateIndexSparse(MaxRoot);
+// 	  if (TmpIndex != i)
+// 	    cout << TmpIndex << " " << i << endl;
 	}
+      FileHilbert.close();
+
+      cout << "TotalCount = "  << TotalCount << endl;      
+      int TmpNbrOne[] = {  
+	0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 
+	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
+	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
+	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
+	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
+	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
+	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
+	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
+	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
+	4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8};
+      int TmpSumOccupation[] = {
+	0, 0, 1, 1, 2, 2, 3, 3, 3, 3, 4, 4, 5, 5, 6, 6,
+	4, 4, 5, 5, 6, 6, 7, 7, 7, 7, 8, 8, 9, 9, 10, 10,
+	5, 5, 6, 6, 7, 7, 8, 8, 8, 8, 9, 9, 10, 10, 11, 11,
+	9, 9, 10, 10, 11, 11, 12, 12, 12, 12, 13, 13, 14, 14, 15, 15,
+	6, 6, 7, 7, 8, 8, 9, 9, 9, 9, 10, 10, 11, 11, 12, 12,
+	10, 10, 11, 11, 12, 12, 13, 13, 13, 13, 14, 14, 15, 15, 16, 16,
+	11, 11, 12, 12, 13, 13, 14, 14, 14, 14, 15, 15, 16, 16, 17, 17,
+	15, 15, 16, 16, 17, 17, 18, 18, 18, 18, 19, 19, 20, 20, 21, 21,
+	7, 7, 8, 8, 9, 9, 10, 10, 10, 10, 11, 11, 12, 12, 13, 13,
+	11, 11, 12, 12, 13, 13, 14, 14, 14, 14, 15, 15, 16, 16, 17, 17,
+	12, 12, 13, 13, 14, 14, 15, 15, 15, 15, 16, 16, 17, 17, 18, 18,
+	16, 16, 17, 17, 18, 18, 19, 19, 19, 19, 20, 20, 21, 21, 22, 22,
+	13, 13, 14, 14, 15, 15, 16, 16, 16, 16, 17, 17, 18, 18, 19, 19,
+	17, 17, 18, 18, 19, 19, 20, 20, 20, 20, 21, 21, 22, 22, 23, 23,
+	18, 18, 19, 19, 20, 20, 21, 21, 21, 21, 22, 22, 23, 23, 24, 24,
+	22, 22, 23, 23, 24, 24, 25, 25, 25, 25, 26, 26, 27, 27, 28, 28};
+      long** SectorSize = new long* [this->NbrFermions];
+      int TmpMaxTotalLz = 400;
+      for (int i = 0; i < this->NbrFermions; ++i)
+	{
+	  SectorSize[i] = new long [TmpMaxTotalLz];
+	  for (int j = 0; j < TmpMaxTotalLz; ++j)
+	    SectorSize[i][j] = 0;
+	}
+      
+      FileHilbert.open(this->HilbertSpaceFileName, ios::binary | ios::in);
+      FileHilbert.seekg (this->FileHeaderSize, ios::beg);
+      TotalCount = 0;
+      ReadLittleEndian(FileHilbert, CurrentPartition);	  
+      CurrentPartition &= Mask;
+      int TmpNbrFermions = 0;
+      int TmpTotalLz = 0;
+      int TmpPartialNbrOne = 0;
+      TmpPartialNbrOne = TmpNbrOne[CurrentPartition & 0xffl];
+      TmpNbrFermions = TmpPartialNbrOne;
+      TmpTotalLz = TmpSumOccupation[CurrentPartition & 0xffl];
+      TmpPartialNbrOne = TmpNbrOne[(CurrentPartition >> 8) & 0xffl];
+      TmpNbrFermions += TmpPartialNbrOne;
+      TmpTotalLz += TmpSumOccupation[(CurrentPartition >> 8) & 0xffl];
+      TmpTotalLz += TmpPartialNbrOne << 3;
+      TmpPartialNbrOne = TmpNbrOne[(CurrentPartition >> 16) & 0xffl];
+      TmpNbrFermions += TmpPartialNbrOne;
+      TmpTotalLz += TmpSumOccupation[(CurrentPartition >> 16) & 0xffl];
+      TmpTotalLz += TmpPartialNbrOne << 4;
+      TmpPartialNbrOne = TmpNbrOne[(CurrentPartition >> 24) & 0xffl];
+      TmpNbrFermions += TmpPartialNbrOne;
+      TmpTotalLz += TmpSumOccupation[(CurrentPartition >> 24) & 0xffl];
+      TmpTotalLz += TmpPartialNbrOne * 24;
+#ifdef  __64_BITS__
+      TmpPartialNbrOne = TmpNbrOne[(CurrentPartition >> 32) & 0xffl];
+      TmpNbrFermions += TmpPartialNbrOne;
+      TmpTotalLz += TmpSumOccupation[(CurrentPartition >> 32) & 0xffl];
+      TmpTotalLz += TmpPartialNbrOne << 5;
+      TmpPartialNbrOne = TmpNbrOne[(CurrentPartition >> 40) & 0xffl];
+      TmpNbrFermions += TmpPartialNbrOne;
+      TmpTotalLz += TmpSumOccupation[(CurrentPartition >> 40) & 0xffl];
+      TmpTotalLz += TmpPartialNbrOne * 40;
+      TmpPartialNbrOne = TmpNbrOne[(CurrentPartition >> 48) & 0xffl];
+      TmpNbrFermions += TmpPartialNbrOne;
+      TmpTotalLz += TmpSumOccupation[(CurrentPartition >> 48) & 0xffl];
+      TmpTotalLz += TmpPartialNbrOne * 48;
+      TmpPartialNbrOne = TmpNbrOne[(CurrentPartition >> 56) & 0xffl];      
+      TmpNbrFermions += TmpPartialNbrOne;
+      TmpTotalLz += TmpSumOccupation[(CurrentPartition >> 56) & 0xffl];
+      TmpTotalLz += TmpPartialNbrOne * 56;
+#endif
+      for (long i = 1; i < this->LargeHilbertSpaceDimension; ++i)
+	{
+	  unsigned long MaxRoot;
+	  ReadLittleEndian(FileHilbert, MaxRoot);	  
+	  if (CurrentPartition == (MaxRoot & Mask))
+	    {
+	      Count++;
+	    }
+	  else
+	    {
+//	      cout << hex << CurrentPartition << dec << " " << Count << " " << TmpTotalLz << " " << TmpNbrFermions <<  endl;
+	      if (SectorSize[TmpNbrFermions][TmpTotalLz] == 0l)
+		{
+		  SectorSize[TmpNbrFermions][TmpTotalLz] = Count;
+		}
+	      CurrentPartition = (MaxRoot & Mask);
+	      TmpPartialNbrOne = TmpNbrOne[CurrentPartition & 0xffl];
+	      TmpNbrFermions = TmpPartialNbrOne;
+	      TmpTotalLz = TmpSumOccupation[CurrentPartition & 0xffl];
+	      TmpPartialNbrOne = TmpNbrOne[(CurrentPartition >> 8) & 0xffl];
+	      TmpNbrFermions += TmpPartialNbrOne;
+	      TmpTotalLz += TmpSumOccupation[(CurrentPartition >> 8) & 0xffl];
+	      TmpTotalLz += TmpPartialNbrOne << 3;
+	      TmpPartialNbrOne = TmpNbrOne[(CurrentPartition >> 16) & 0xffl];
+	      TmpNbrFermions += TmpPartialNbrOne;
+	      TmpTotalLz += TmpSumOccupation[(CurrentPartition >> 16) & 0xffl];
+	      TmpTotalLz += TmpPartialNbrOne << 4;
+	      TmpPartialNbrOne = TmpNbrOne[(CurrentPartition >> 24) & 0xffl];
+	      TmpNbrFermions += TmpPartialNbrOne;
+	      TmpTotalLz += TmpSumOccupation[(CurrentPartition >> 24) & 0xffl];
+	      TmpTotalLz += TmpPartialNbrOne * 24;
+#ifdef  __64_BITS__
+	      TmpPartialNbrOne = TmpNbrOne[(CurrentPartition >> 32) & 0xffl];
+	      TmpNbrFermions += TmpPartialNbrOne;
+	      TmpTotalLz += TmpSumOccupation[(CurrentPartition >> 32) & 0xffl];
+	      TmpTotalLz += TmpPartialNbrOne << 5;
+	      TmpPartialNbrOne = TmpNbrOne[(CurrentPartition >> 40) & 0xffl];
+	      TmpNbrFermions += TmpPartialNbrOne;
+	      TmpTotalLz += TmpSumOccupation[(CurrentPartition >> 40) & 0xffl];
+	      TmpTotalLz += TmpPartialNbrOne * 40;
+	      TmpPartialNbrOne = TmpNbrOne[(CurrentPartition >> 48) & 0xffl];
+	      TmpNbrFermions += TmpPartialNbrOne;
+	      TmpTotalLz += TmpSumOccupation[(CurrentPartition >> 48) & 0xffl];
+	      TmpTotalLz += TmpPartialNbrOne * 48;
+	      TmpPartialNbrOne = TmpNbrOne[(CurrentPartition >> 56) & 0xffl];      
+	      TmpNbrFermions += TmpPartialNbrOne;
+	      TmpTotalLz += TmpSumOccupation[(CurrentPartition >> 56) & 0xffl];
+	      TmpTotalLz += TmpPartialNbrOne * 56;
+#endif
+	      Count = 1l;
+	      TotalCount++;
+	    }	  
+	}
+      FileHilbert.close();
+      long SumSector = 0l;
+      for (int i = 0; i < this->NbrFermions; ++i)
+	{
+	  for (int j = 0; j < TmpMaxTotalLz; ++j)
+	    SumSector += SectorSize[i][j];
+	}
+      cout << SumSector << " " << (((SumSector + TotalCount) * 100.0) / ((double) this->LargeHilbertSpaceDimension)) << endl;
       cout << "done" << endl;
     }
 
@@ -924,18 +1089,20 @@ long FermionOnSphereHaldaneHugeBasis::FindStateIndexSparse(unsigned long stateDe
   long PosMax = this->SparseHilbertSpaceDimension;
   long PosMin = 0l;
   long PosMid = (PosMin + PosMax) >> 1;
-  unsigned long CurrentState = this->SparseHilbertSpaceDescription[PosMid];
+  cout << PosMin << " " << PosMax << " " << hex << stateDescription << dec << endl;
+  unsigned long CurrentState;
   while ((PosMax - PosMin) > 1)
     {
-      if (CurrentState > stateDescription)
-	PosMax = PosMid;
-      else
-	PosMin = PosMid;
-      PosMid = (PosMin + PosMax) >> 1;
       CurrentState = this->SparseHilbertSpaceDescription[PosMid];
+      if (CurrentState > stateDescription)
+	PosMin = PosMid;
+      else
+	PosMax = PosMid;
+      PosMid = (PosMin + PosMax) >> 1;
     }
   unsigned long* TmpBuffer;
   long TmpBufferSize;
+  cout << PosMin << " " << PosMax << " " << hex << stateDescription << dec << endl;
   this->LoadSparseBuffer(PosMin, TmpBuffer, PosMax);
   PosMin *= this->SparseHilbertSpaceChunckSize;
   long PosMin2 = 0l;
@@ -945,9 +1112,9 @@ long FermionOnSphereHaldaneHugeBasis::FindStateIndexSparse(unsigned long stateDe
   while ((PosMax != PosMid) && (CurrentState != stateDescription))
     {
       if (CurrentState > stateDescription)
-	PosMax = PosMid;
-      else
 	PosMin2 = PosMid;
+      else
+	PosMax = PosMid;
       PosMid = (PosMin2 + PosMax) >> 1;
       CurrentState = TmpBuffer[PosMid];
     }
@@ -1353,6 +1520,7 @@ void FermionOnSphereHaldaneHugeBasis::GenerateLookUpTableHugeBasis(unsigned long
     }
   File.seekg (this->FileHeaderSize, ios::beg);
   this->SparseHilbertSpaceChunckSize = this->LargeHilbertSpaceDimension / this->SparseHilbertSpaceDimension;
+  this->SparseHilbertSpaceRemainderChunckSize = this->LargeHilbertSpaceDimension % this->SparseHilbertSpaceDimension;
   this->SparseHilbertSpaceDescription = new unsigned long [this->SparseHilbertSpaceDimension + 1l];
   for (long i = 0; i < this->SparseHilbertSpaceDimension; ++i)
     {

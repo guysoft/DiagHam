@@ -7,6 +7,7 @@
 #include "HilbertSpace/BosonOnSphereShort.h"
 #include "HilbertSpace/BosonOnSphereSymmetricBasisShort.h"
 #include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
+#include "HilbertSpace/BosonOnSphereHaldaneHugeBasisShort.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -55,6 +56,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the system (override autodetection from input file name if greater or equal to zero)", -1);
+  (*SystemGroup) += new BooleanOption  ('\n', "huge-basis", "use huge Hilbert space support");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "min-la", "minimum size of the subsystem whose entropy has to be evaluated", 1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "max-la", "maximum size of the subsystem whose entropy has to be evaluated (0 if equal to half the total system size)", 0);
   (*SystemGroup) += new SingleStringOption  ('\n', "degenerated-groundstate", "single column file describing a degenerated ground state");
@@ -96,7 +99,6 @@ int main(int argc, char** argv)
     }
 
 
-  bool HaldaneBasisFlag = ((BooleanOption*) Manager["haldane"])->GetBoolean();
   bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
   int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger(); 
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger(); 
@@ -176,61 +178,72 @@ int main(int argc, char** argv)
 	if ((LzMax + NbrParticles - 1) < 31)	
 #endif
 	  {
-	    if (Manager.GetBoolean("haldane") == false)
+	    if (Manager.GetBoolean("huge-basis") == true)
 	      {
-		if ((SymmetrizedBasis == false) || (TotalLz != 0))
-		  Spaces[i] = new BosonOnSphereShort (NbrParticles, TotalLz[i], LzMax);
-		else
+		if (Manager.GetString("load-hilbert") == 0)
 		  {
-		    Spaces[i] = new BosonOnSphereShort (NbrParticles, TotalLz[i], LzMax);
-		    BosonOnSphereSymmetricBasisShort TmpSpace(NbrParticles, LzMax);
-		    RealVector OutputState = TmpSpace.ConvertToNbodyBasis(GroundStates[i], *((BosonOnSphereShort*) Spaces[i]));
-		    GroundStates[i] = OutputState;
+		    cout << "error : huge basis mode requires to save and load the Hilbert space" << endl;
+		    return -1;
 		  }
+		Spaces[i] = new  BosonOnSphereHaldaneHugeBasisShort (Manager.GetString("load-hilbert"), Manager.GetInteger("memory"));
 	      }
 	    else
 	      {
-		int* ReferenceState = 0;
-		if (((SingleStringOption*) Manager["reference-file"])->GetString() == 0)
+		if (Manager.GetBoolean("haldane") == false)
 		  {
-		    cout << "error, a reference file is needed" << endl;
-		    return 0;
+		    if ((SymmetrizedBasis == false) || (TotalLz != 0))
+		      Spaces[i] = new BosonOnSphereShort (NbrParticles, TotalLz[i], LzMax);
+		    else
+		      {
+			Spaces[i] = new BosonOnSphereShort (NbrParticles, TotalLz[i], LzMax);
+			BosonOnSphereSymmetricBasisShort TmpSpace(NbrParticles, LzMax);
+			RealVector OutputState = TmpSpace.ConvertToNbodyBasis(GroundStates[i], *((BosonOnSphereShort*) Spaces[i]));
+			GroundStates[i] = OutputState;
+		      }
 		  }
-		ConfigurationParser ReferenceStateDefinition;
-		if (ReferenceStateDefinition.Parse(((SingleStringOption*) Manager["reference-file"])->GetString()) == false)
-		  {
-		    ReferenceStateDefinition.DumpErrors(cout) << endl;
-		    return 0;
-		  }
-		if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", NbrParticles) == false) || (NbrParticles <= 0))
-		  {
-		    cout << "NbrParticles is not defined or as a wrong value" << endl;
-		    return 0;
-		  }
-		if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", LzMax) == false) || (LzMax < 0))
-		  {
-		    cout << "LzMax is not defined or as a wrong value" << endl;
-		    return 0;
-		  }
-		int MaxNbrLz;
-		if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
-		  {
-		    cout << "error while parsing ReferenceState in " << ((SingleStringOption*) Manager["reference-file"])->GetString() << endl;
-		    return 0;     
-		  }
-		if (MaxNbrLz != (LzMax + 1))
-		  {
-		    cout << "wrong LzMax value in ReferenceState" << endl;
-		    return 0;     
-		  }
-		if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
-		  Spaces[i] = new BosonOnSphereHaldaneBasisShort(((SingleStringOption*) Manager["load-hilbert"])->GetString());
 		else
 		  {
-		    Spaces[i] = new BosonOnSphereHaldaneBasisShort(NbrParticles, TotalLz[i], LzMax, ReferenceState);	  
+		    int* ReferenceState = 0;
+		    if (((SingleStringOption*) Manager["reference-file"])->GetString() == 0)
+		      {
+			cout << "error, a reference file is needed" << endl;
+			return 0;
+		      }
+		    ConfigurationParser ReferenceStateDefinition;
+		    if (ReferenceStateDefinition.Parse(((SingleStringOption*) Manager["reference-file"])->GetString()) == false)
+		      {
+			ReferenceStateDefinition.DumpErrors(cout) << endl;
+			return 0;
+		      }
+		    if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", NbrParticles) == false) || (NbrParticles <= 0))
+		      {
+			cout << "NbrParticles is not defined or as a wrong value" << endl;
+			return 0;
+		      }
+		    if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", LzMax) == false) || (LzMax < 0))
+		      {
+			cout << "LzMax is not defined or as a wrong value" << endl;
+			return 0;
+		      }
+		    int MaxNbrLz;
+		    if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
+		      {
+			cout << "error while parsing ReferenceState in " << ((SingleStringOption*) Manager["reference-file"])->GetString() << endl;
+			return 0;     
+		      }
+		    if (MaxNbrLz != (LzMax + 1))
+		      {
+			cout << "wrong LzMax value in ReferenceState" << endl;
+			return 0;     
+		      }
+		    if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
+		      Spaces[i] = new BosonOnSphereHaldaneBasisShort(((SingleStringOption*) Manager["load-hilbert"])->GetString());
+		    else
+		      {
+			Spaces[i] = new BosonOnSphereHaldaneBasisShort(NbrParticles, TotalLz[i], LzMax, ReferenceState);	  
+		      }
 		  }
 	      }
-
 	  }
 	else
 	  {
@@ -244,8 +257,8 @@ int main(int argc, char** argv)
 		GroundStates[i] = OutputState;
 	      }
 	  }
-      
-      if (Spaces[i]->GetHilbertSpaceDimension() != GroundStates[i].GetVectorDimension())
+
+      if (Spaces[i]->GetLargeHilbertSpaceDimension() != GroundStates[i].GetLargeVectorDimension())
 	{
 	  cout << "dimension mismatch between Hilbert space and ground state" << endl;
 	  return 0;
