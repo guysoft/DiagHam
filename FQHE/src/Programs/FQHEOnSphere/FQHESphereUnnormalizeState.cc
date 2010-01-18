@@ -237,7 +237,7 @@ int main(int argc, char** argv)
      OutputBasis->ConvertToUnnormalizedMonomial(OutputState, Manager.GetInteger("normalization"), SymmetryFactor);
   
 
-  cout << OutputBasis->GetHilbertSpaceDimension() << " " << OutputState.GetVectorDimension() << endl;
+  cout << OutputBasis->GetLargeHilbertSpaceDimension() << " " << OutputState.GetLargeVectorDimension() << endl;
   if (OutputTxtFileName != 0)
     {
       ofstream File;

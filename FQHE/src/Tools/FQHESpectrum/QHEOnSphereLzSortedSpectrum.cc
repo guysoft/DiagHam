@@ -172,8 +172,10 @@ bool FQHEOnSphereLzSortedSpectrum::IsSpectrumValid()
 int FQHEOnSphereLzSortedSpectrum::GetMaxLzValue ()
 {
   int TmpLz = this->MaxTotalLz;
-  while ((TmpLz > 0) && (this->NbrEnergies[TmpLz >> 1] == 0))
-    --TmpLz;
+  while ((TmpLz > 0) && (this->NbrEnergies[TmpLz] == 0))
+    {
+      --TmpLz;  
+    }
   TmpLz <<= 1;
   if (((this->NbrParticles * this->LzMax) & 1) != 0)
     ++TmpLz;

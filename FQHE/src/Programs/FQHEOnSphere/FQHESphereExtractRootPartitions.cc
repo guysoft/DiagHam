@@ -119,7 +119,7 @@ int main(int argc, char** argv)
       cout << "Spectrum " << Manager.GetString("input-file") << " is unreadable or is not valid" << endl;
       return -1;           
     }
-  
+
   int TotalMaxLz = Spectrum.GetMaxLzValue();
   int MaxLzValue = 0;
   if ((TotalMaxLz & 1) != 0)

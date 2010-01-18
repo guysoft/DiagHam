@@ -889,6 +889,11 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::ConvertToUnnormalizedMonomial(Re
 	    Coefficient *= sqrt(Factorial.GetNumericalValue());
 	  }
 	state[i] *= Coefficient;
+      if ((i & 0x3fffl) == 0l)
+	{
+	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
+	  cout.flush();
+	}
       }
   return state;
 }
@@ -985,6 +990,11 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::ConvertFromUnnormalizedMonomial(
 	    Coefficient *= sqrt(Factorial.GetNumericalValue());
 	  }
 	state[i] *= Coefficient;
+	if ((i & 0x3fffl) == 0l)
+	  {
+	    cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
+	    cout.flush();
+	  }
       }
   state /= state.Norm();
   return state;
