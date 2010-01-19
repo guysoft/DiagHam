@@ -451,6 +451,8 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
       unsigned long CurrentPartition;
       ReadLittleEndian(FileHilbert, CurrentPartition);	  
       unsigned long Mask = ((1l << ((this->LzMax / 2) + 2)) - 1l) << (this->LzMax / 2);
+      int RootSuffixShift = LzMax / 2;
+      unsigned long SectorMask = (1l << RootSuffixShift) - 1l;
       CurrentPartition &= Mask;
       long Count = 1l;
       long TotalCount = 1l;
@@ -511,11 +513,14 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
 	17, 17, 18, 18, 19, 19, 20, 20, 20, 20, 21, 21, 22, 22, 23, 23,
 	18, 18, 19, 19, 20, 20, 21, 21, 21, 21, 22, 22, 23, 23, 24, 24,
 	22, 22, 23, 23, 24, 24, 25, 25, 25, 25, 26, 26, 27, 27, 28, 28};
+      long NbrRootSuffix = 1l;
       long** SectorSize = new long* [this->NbrFermions];
+      unsigned int*** Sectors = new unsigned int**[this->NbrFermions];
       int TmpMaxTotalLz = 400;
       for (int i = 0; i < this->NbrFermions; ++i)
 	{
 	  SectorSize[i] = new long [TmpMaxTotalLz];
+	  Sectors[i] = new unsigned int*[TmpMaxTotalLz];
 	  for (int j = 0; j < TmpMaxTotalLz; ++j)
 	    SectorSize[i][j] = 0;
 	}
@@ -572,6 +577,7 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
 	  else
 	    {
 //	      cout << hex << CurrentPartition << dec << " " << Count << " " << TmpTotalLz << " " << TmpNbrFermions <<  endl;
+	      ++NbrRootSuffix;
 	      if (SectorSize[TmpNbrFermions][TmpTotalLz] == 0l)
 		{
 		  SectorSize[TmpNbrFermions][TmpTotalLz] = Count;
@@ -615,13 +621,128 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
 	    }	  
 	}
       FileHilbert.close();
+
       long SumSector = 0l;
       for (int i = 0; i < this->NbrFermions; ++i)
 	{
 	  for (int j = 0; j < TmpMaxTotalLz; ++j)
-	    SumSector += SectorSize[i][j];
+	    {
+	      SumSector += SectorSize[i][j];
+	      Sectors[i][j] = new unsigned int [SectorSize[i][j]];
+	      SectorSize[i][j] = 0l;
+	    }
 	}
-      cout << SumSector << " " << (((SumSector + TotalCount) * 100.0) / ((double) this->LargeHilbertSpaceDimension)) << endl;
+      unsigned int* RootSuffix = new unsigned int[NbrRootSuffix];
+      unsigned int** RootSuffixSectorPositions = new unsigned int*[NbrRootSuffix];
+      NbrRootSuffix = 1;
+      FileHilbert.open(this->HilbertSpaceFileName, ios::binary | ios::in);
+      FileHilbert.seekg (this->FileHeaderSize, ios::beg);
+      TotalCount = 0;
+      ReadLittleEndian(FileHilbert, CurrentPartition);	  
+      unsigned int* CurrentSector = Sectors[TmpNbrFermions][TmpTotalLz];
+      CurrentSector[0] = CurrentPartition & SectorMask;
+      CurrentPartition &= Mask;
+      RootSuffix[0] = (unsigned int) (CurrentPartition >> RootSuffixShift);
+      TmpPartialNbrOne = TmpNbrOne[CurrentPartition & 0xffl];
+      TmpNbrFermions = TmpPartialNbrOne;
+      TmpTotalLz = TmpSumOccupation[CurrentPartition & 0xffl];
+      TmpPartialNbrOne = TmpNbrOne[(CurrentPartition >> 8) & 0xffl];
+      TmpNbrFermions += TmpPartialNbrOne;
+      TmpTotalLz += TmpSumOccupation[(CurrentPartition >> 8) & 0xffl];
+      TmpTotalLz += TmpPartialNbrOne << 3;
+      TmpPartialNbrOne = TmpNbrOne[(CurrentPartition >> 16) & 0xffl];
+      TmpNbrFermions += TmpPartialNbrOne;
+      TmpTotalLz += TmpSumOccupation[(CurrentPartition >> 16) & 0xffl];
+      TmpTotalLz += TmpPartialNbrOne << 4;
+      TmpPartialNbrOne = TmpNbrOne[(CurrentPartition >> 24) & 0xffl];
+      TmpNbrFermions += TmpPartialNbrOne;
+      TmpTotalLz += TmpSumOccupation[(CurrentPartition >> 24) & 0xffl];
+      TmpTotalLz += TmpPartialNbrOne * 24;
+#ifdef  __64_BITS__
+      TmpPartialNbrOne = TmpNbrOne[(CurrentPartition >> 32) & 0xffl];
+      TmpNbrFermions += TmpPartialNbrOne;
+      TmpTotalLz += TmpSumOccupation[(CurrentPartition >> 32) & 0xffl];
+      TmpTotalLz += TmpPartialNbrOne << 5;
+      TmpPartialNbrOne = TmpNbrOne[(CurrentPartition >> 40) & 0xffl];
+      TmpNbrFermions += TmpPartialNbrOne;
+      TmpTotalLz += TmpSumOccupation[(CurrentPartition >> 40) & 0xffl];
+      TmpTotalLz += TmpPartialNbrOne * 40;
+      TmpPartialNbrOne = TmpNbrOne[(CurrentPartition >> 48) & 0xffl];
+      TmpNbrFermions += TmpPartialNbrOne;
+      TmpTotalLz += TmpSumOccupation[(CurrentPartition >> 48) & 0xffl];
+      TmpTotalLz += TmpPartialNbrOne * 48;
+      TmpPartialNbrOne = TmpNbrOne[(CurrentPartition >> 56) & 0xffl];      
+      TmpNbrFermions += TmpPartialNbrOne;
+      TmpTotalLz += TmpSumOccupation[(CurrentPartition >> 56) & 0xffl];
+      TmpTotalLz += TmpPartialNbrOne * 56;
+#endif
+      for (long i = 1; i < this->LargeHilbertSpaceDimension; ++i)
+	{
+	  unsigned long MaxRoot;
+	  ReadLittleEndian(FileHilbert, MaxRoot);	  
+	  if (CurrentPartition == (MaxRoot & Mask))
+	    {
+	      if (CurrentSector != 0)
+		{
+		  CurrentSector[Count] = (unsigned int) (MaxRoot & SectorMask);
+		  ++Count;
+		}
+	    }
+	  else
+	    {
+	      RootSuffix[NbrRootSuffix] = (unsigned int) (MaxRoot >> RootSuffixShift);
+	      if (CurrentSector != 0)
+		{
+		  SectorSize[TmpNbrFermions][TmpTotalLz] = Count;
+		}
+	      CurrentPartition = (MaxRoot & Mask);
+	      TmpPartialNbrOne = TmpNbrOne[CurrentPartition & 0xffl];
+	      TmpNbrFermions = TmpPartialNbrOne;
+	      TmpTotalLz = TmpSumOccupation[CurrentPartition & 0xffl];
+	      TmpPartialNbrOne = TmpNbrOne[(CurrentPartition >> 8) & 0xffl];
+	      TmpNbrFermions += TmpPartialNbrOne;
+	      TmpTotalLz += TmpSumOccupation[(CurrentPartition >> 8) & 0xffl];
+	      TmpTotalLz += TmpPartialNbrOne << 3;
+	      TmpPartialNbrOne = TmpNbrOne[(CurrentPartition >> 16) & 0xffl];
+	      TmpNbrFermions += TmpPartialNbrOne;
+	      TmpTotalLz += TmpSumOccupation[(CurrentPartition >> 16) & 0xffl];
+	      TmpTotalLz += TmpPartialNbrOne << 4;
+	      TmpPartialNbrOne = TmpNbrOne[(CurrentPartition >> 24) & 0xffl];
+	      TmpNbrFermions += TmpPartialNbrOne;
+	      TmpTotalLz += TmpSumOccupation[(CurrentPartition >> 24) & 0xffl];
+	      TmpTotalLz += TmpPartialNbrOne * 24;
+#ifdef  __64_BITS__
+	      TmpPartialNbrOne = TmpNbrOne[(CurrentPartition >> 32) & 0xffl];
+	      TmpNbrFermions += TmpPartialNbrOne;
+	      TmpTotalLz += TmpSumOccupation[(CurrentPartition >> 32) & 0xffl];
+	      TmpTotalLz += TmpPartialNbrOne << 5;
+	      TmpPartialNbrOne = TmpNbrOne[(CurrentPartition >> 40) & 0xffl];
+	      TmpNbrFermions += TmpPartialNbrOne;
+	      TmpTotalLz += TmpSumOccupation[(CurrentPartition >> 40) & 0xffl];
+	      TmpTotalLz += TmpPartialNbrOne * 40;
+	      TmpPartialNbrOne = TmpNbrOne[(CurrentPartition >> 48) & 0xffl];
+	      TmpNbrFermions += TmpPartialNbrOne;
+	      TmpTotalLz += TmpSumOccupation[(CurrentPartition >> 48) & 0xffl];
+	      TmpTotalLz += TmpPartialNbrOne * 48;
+	      TmpPartialNbrOne = TmpNbrOne[(CurrentPartition >> 56) & 0xffl];      
+	      TmpNbrFermions += TmpPartialNbrOne;
+	      TmpTotalLz += TmpSumOccupation[(CurrentPartition >> 56) & 0xffl];
+	      TmpTotalLz += TmpPartialNbrOne * 56;
+#endif
+	      if (SectorSize[TmpNbrFermions][TmpTotalLz] == 0)
+		{
+		  CurrentSector = Sectors[TmpNbrFermions][TmpTotalLz];
+		}
+	      else
+		{
+		  CurrentSector = 0;
+		}
+	      RootSuffixSectorPositions[NbrRootSuffix] = Sectors[TmpNbrFermions][TmpTotalLz];
+	      ++NbrRootSuffix;
+	    }	  
+	}
+      FileHilbert.close();
+      cout << "Factorization ratio = " << (((SumSector + TotalCount) * 100.0) / ((double) this->LargeHilbertSpaceDimension)) << endl;
       cout << "done" << endl;
     }
 
