@@ -133,7 +133,7 @@ Complex HalperinOnSphereWaveFunction::operator ()(RealVector& x)
 	  for (int j = i + 1; j < this->TotalNbrParticles; ++j)
 	    WaveFunction *=  Factor * ((TmpU * this->VCoordinates[j]) - (TmpV * this->UCoordinates[j]));
 	}
-      for (int i = 0; i < this->M1Index; ++i)
+      for (int i = 0; i < this->M2Index; ++i)
 	TotalWaveFunction *= WaveFunction;
     }
   if (this->NIndex > 0)

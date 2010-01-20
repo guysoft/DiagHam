@@ -628,7 +628,10 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
 	  for (int j = 0; j < TmpMaxTotalLz; ++j)
 	    {
 	      SumSector += SectorSize[i][j];
-	      Sectors[i][j] = new unsigned int [SectorSize[i][j]];
+	      if (SectorSize[i][j] != 0l)
+		Sectors[i][j] = new unsigned int [SectorSize[i][j]];
+	      else
+		Sectors[i][j] = 0;
 	      SectorSize[i][j] = 0l;
 	    }
 	}
@@ -639,8 +642,7 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
       FileHilbert.seekg (this->FileHeaderSize, ios::beg);
       TotalCount = 0;
       ReadLittleEndian(FileHilbert, CurrentPartition);	  
-      unsigned int* CurrentSector = Sectors[TmpNbrFermions][TmpTotalLz];
-      CurrentSector[0] = CurrentPartition & SectorMask;
+      unsigned long MaxRoot = CurrentPartition;
       CurrentPartition &= Mask;
       RootSuffix[0] = (unsigned int) (CurrentPartition >> RootSuffixShift);
       TmpPartialNbrOne = TmpNbrOne[CurrentPartition & 0xffl];
@@ -675,10 +677,11 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
       TmpNbrFermions += TmpPartialNbrOne;
       TmpTotalLz += TmpSumOccupation[(CurrentPartition >> 56) & 0xffl];
       TmpTotalLz += TmpPartialNbrOne * 56;
+      unsigned int* CurrentSector = Sectors[TmpNbrFermions][TmpTotalLz];
+      CurrentSector[0] = MaxRoot & SectorMask;
 #endif
       for (long i = 1; i < this->LargeHilbertSpaceDimension; ++i)
 	{
-	  unsigned long MaxRoot;
 	  ReadLittleEndian(FileHilbert, MaxRoot);	  
 	  if (CurrentPartition == (MaxRoot & Mask))
 	    {
@@ -729,9 +732,12 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
 	      TmpTotalLz += TmpSumOccupation[(CurrentPartition >> 56) & 0xffl];
 	      TmpTotalLz += TmpPartialNbrOne * 56;
 #endif
+	      Count = 0;
 	      if (SectorSize[TmpNbrFermions][TmpTotalLz] == 0)
 		{
 		  CurrentSector = Sectors[TmpNbrFermions][TmpTotalLz];
+		  CurrentSector[Count] = (unsigned int) (MaxRoot & SectorMask);
+		  ++Count;
 		}
 	      else
 		{
