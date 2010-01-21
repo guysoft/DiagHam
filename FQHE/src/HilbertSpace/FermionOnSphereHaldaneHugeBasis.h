@@ -165,6 +165,26 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // temporary buffers used to store part of the Hilbert space
   unsigned long** SparseBuffers;
 
+  // hilbert space description in fatorized mode
+  //list of root suffix
+  unsigned int* RootSuffix;
+  // pointer to compatible root prefix for each root suffix
+  unsigned int** RootSuffixSectorPositions;
+  // size of root prefix list
+  long* RootSuffixSectorSize;
+  // shift used to extract the root suffix
+  int RootSuffixShift;
+  // mask to extract root prefix
+  unsigned long RootPrefixMask;
+  // number of root  sufix
+  long NbrRootSuffix;
+  // position offset (in the total Hilbert space) corresponding to each suffix
+  long* RootSuffixOffset;
+  // array of prefix list
+  unsigned int** PrefixSectors;
+  // number of prefix sector
+  long NbrPrefixSector;
+
  public:
 
   // basic constructor
@@ -424,6 +444,12 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // stateDescription = unsigned integer describing the state
   // return value = corresponding index
   long FindStateIndexSparse(unsigned long stateDescription);
+
+  // find state index when hilbert space storage is based on factorized algorithm
+  //
+  // stateDescription = unsigned integer describing the state
+  // return value = corresponding index
+  long FindStateIndexFactorized(unsigned long stateDescription);
 
   // evaluate upper bound for the Haldane basis
   //

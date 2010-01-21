@@ -451,8 +451,8 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
       unsigned long CurrentPartition;
       ReadLittleEndian(FileHilbert, CurrentPartition);	  
       unsigned long Mask = ((1l << ((this->LzMax / 2) + 2)) - 1l) << (this->LzMax / 2);
-      int RootSuffixShift = LzMax / 2;
-      unsigned long SectorMask = (1l << RootSuffixShift) - 1l;
+      this->RootSuffixShift = LzMax / 2;
+      this->RootPrefixMask = (1l << this->RootSuffixShift) - 1l;
       CurrentPartition &= Mask;
       long Count = 1l;
       long TotalCount = 1l;
@@ -513,16 +513,19 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
 	17, 17, 18, 18, 19, 19, 20, 20, 20, 20, 21, 21, 22, 22, 23, 23,
 	18, 18, 19, 19, 20, 20, 21, 21, 21, 21, 22, 22, 23, 23, 24, 24,
 	22, 22, 23, 23, 24, 24, 25, 25, 25, 25, 26, 26, 27, 27, 28, 28};
-      long NbrRootSuffix = 1l;
-      long** SectorSize = new long* [this->NbrFermions];
-      unsigned int*** Sectors = new unsigned int**[this->NbrFermions];
+      this->NbrRootSuffix = 1l;
+      long** SectorSize = new long* [this->NbrFermions + 1];
+      unsigned int*** Sectors = new unsigned int**[this->NbrFermions + 1];
       int TmpMaxTotalLz = 400;
-      for (int i = 0; i < this->NbrFermions; ++i)
+      for (int i = 0; i <= this->NbrFermions; ++i)
 	{
-	  SectorSize[i] = new long [TmpMaxTotalLz];
-	  Sectors[i] = new unsigned int*[TmpMaxTotalLz];
-	  for (int j = 0; j < TmpMaxTotalLz; ++j)
-	    SectorSize[i][j] = 0;
+	  SectorSize[i] = new long [TmpMaxTotalLz + 1];
+	  Sectors[i] = new unsigned int*[TmpMaxTotalLz +1];
+	  for (int j = 0; j <= TmpMaxTotalLz; ++j)
+	    {
+	      SectorSize[i][j] = 0l;
+	      Sectors[i][j] = 0;
+	    }
 	}
       
       FileHilbert.open(this->HilbertSpaceFileName, ios::binary | ios::in);
@@ -576,8 +579,7 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
 	    }
 	  else
 	    {
-//	      cout << hex << CurrentPartition << dec << " " << Count << " " << TmpTotalLz << " " << TmpNbrFermions <<  endl;
-	      ++NbrRootSuffix;
+	      ++this->NbrRootSuffix;
 	      if (SectorSize[TmpNbrFermions][TmpTotalLz] == 0l)
 		{
 		  SectorSize[TmpNbrFermions][TmpTotalLz] = Count;
@@ -620,31 +622,43 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
 	      TotalCount++;
 	    }	  
 	}
+      if (SectorSize[TmpNbrFermions][TmpTotalLz] == 0l)
+	{
+	  SectorSize[TmpNbrFermions][TmpTotalLz] = Count;
+	}
       FileHilbert.close();
 
       long SumSector = 0l;
-      for (int i = 0; i < this->NbrFermions; ++i)
+      this->NbrPrefixSector = 0l;
+      for (int i = 0; i <= this->NbrFermions; ++i)
 	{
-	  for (int j = 0; j < TmpMaxTotalLz; ++j)
+	  for (int j = 0; j <= TmpMaxTotalLz; ++j)
 	    {
 	      SumSector += SectorSize[i][j];
 	      if (SectorSize[i][j] != 0l)
-		Sectors[i][j] = new unsigned int [SectorSize[i][j]];
+		{
+		  Sectors[i][j] = new unsigned int [SectorSize[i][j]];
+		  ++this->NbrPrefixSector;
+		}
 	      else
 		Sectors[i][j] = 0;
 	      SectorSize[i][j] = 0l;
 	    }
 	}
-      unsigned int* RootSuffix = new unsigned int[NbrRootSuffix];
-      unsigned int** RootSuffixSectorPositions = new unsigned int*[NbrRootSuffix];
-      NbrRootSuffix = 1;
+      this->PrefixSectors = new unsigned int* [this->NbrPrefixSector];
+      this->RootSuffix = new unsigned int[this->NbrRootSuffix];
+      this->RootSuffixSectorPositions = new unsigned int*[this->NbrRootSuffix];
+      this->RootSuffixOffset = new long [this->NbrRootSuffix];
+      this->RootSuffixSectorSize = new long [this->NbrRootSuffix];
+      this->NbrRootSuffix = 1;
       FileHilbert.open(this->HilbertSpaceFileName, ios::binary | ios::in);
       FileHilbert.seekg (this->FileHeaderSize, ios::beg);
       TotalCount = 0;
       ReadLittleEndian(FileHilbert, CurrentPartition);	  
       unsigned long MaxRoot = CurrentPartition;
       CurrentPartition &= Mask;
-      RootSuffix[0] = (unsigned int) (CurrentPartition >> RootSuffixShift);
+      this->RootSuffix[0] = (unsigned int) (CurrentPartition >> this->RootSuffixShift);
+      this->RootSuffixOffset[0] = 0l;
       TmpPartialNbrOne = TmpNbrOne[CurrentPartition & 0xffl];
       TmpNbrFermions = TmpPartialNbrOne;
       TmpTotalLz = TmpSumOccupation[CurrentPartition & 0xffl];
@@ -677,9 +691,11 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
       TmpNbrFermions += TmpPartialNbrOne;
       TmpTotalLz += TmpSumOccupation[(CurrentPartition >> 56) & 0xffl];
       TmpTotalLz += TmpPartialNbrOne * 56;
-      unsigned int* CurrentSector = Sectors[TmpNbrFermions][TmpTotalLz];
-      CurrentSector[0] = MaxRoot & SectorMask;
 #endif
+      unsigned int* CurrentSector = Sectors[TmpNbrFermions][TmpTotalLz];
+      CurrentSector[0] = MaxRoot & this->RootPrefixMask;
+      this->RootSuffixSectorSize[0] = SectorSize[TmpNbrFermions][TmpTotalLz];
+      Count = 1;
       for (long i = 1; i < this->LargeHilbertSpaceDimension; ++i)
 	{
 	  ReadLittleEndian(FileHilbert, MaxRoot);	  
@@ -687,13 +703,13 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
 	    {
 	      if (CurrentSector != 0)
 		{
-		  CurrentSector[Count] = (unsigned int) (MaxRoot & SectorMask);
+		  CurrentSector[Count] = (unsigned int) (MaxRoot & this->RootPrefixMask);
 		  ++Count;
 		}
 	    }
 	  else
 	    {
-	      RootSuffix[NbrRootSuffix] = (unsigned int) (MaxRoot >> RootSuffixShift);
+	      this->RootSuffix[this->NbrRootSuffix] = (unsigned int) (MaxRoot >> this->RootSuffixShift);
 	      if (CurrentSector != 0)
 		{
 		  SectorSize[TmpNbrFermions][TmpTotalLz] = Count;
@@ -736,20 +752,41 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
 	      if (SectorSize[TmpNbrFermions][TmpTotalLz] == 0)
 		{
 		  CurrentSector = Sectors[TmpNbrFermions][TmpTotalLz];
-		  CurrentSector[Count] = (unsigned int) (MaxRoot & SectorMask);
+		  CurrentSector[Count] = (unsigned int) (MaxRoot & this->RootPrefixMask);
 		  ++Count;
 		}
 	      else
 		{
 		  CurrentSector = 0;
 		}
-	      RootSuffixSectorPositions[NbrRootSuffix] = Sectors[TmpNbrFermions][TmpTotalLz];
-	      ++NbrRootSuffix;
+	      this->RootSuffixSectorPositions[this->NbrRootSuffix] = Sectors[TmpNbrFermions][TmpTotalLz];
+	      this->RootSuffixSectorSize[this->NbrRootSuffix] = SectorSize[TmpNbrFermions][TmpTotalLz];
+	      this->RootSuffixOffset[this->NbrRootSuffix] = i;
+	      ++this->NbrRootSuffix;
 	    }	  
 	}
+      if (CurrentSector != 0)
+	{
+	  SectorSize[TmpNbrFermions][TmpTotalLz] = Count;
+	}
       FileHilbert.close();
-      cout << "Factorization ratio = " << (((SumSector + TotalCount) * 100.0) / ((double) this->LargeHilbertSpaceDimension)) << endl;
-      cout << "done" << endl;
+      this->NbrPrefixSector = 0l;
+      for (int i = 0; i <= this->NbrFermions; ++i)
+	{
+	  for (int j = 0; j <= TmpMaxTotalLz; ++j)
+	    {
+	      if (SectorSize[i][j] != 0l)
+		{
+		  this->PrefixSectors[this->NbrPrefixSector] = Sectors[i][j];
+		  this->NbrPrefixSector++;
+		}
+	    }
+	  delete[] Sectors[i];
+	  delete[] SectorSize[i];
+	}
+      delete[] Sectors;
+      delete[] SectorSize;	  
+      cout << "Factorization ratio = " << (((SumSector + TotalCount) * 100.0) / ((double) this->LargeHilbertSpaceDimension)) << "%" << endl;
     }
 
 #ifdef __64_BITS__
@@ -1204,6 +1241,65 @@ long FermionOnSphereHaldaneHugeBasis::FindStateIndexMemory(unsigned long stateDe
       return this->LargeHilbertSpaceDimension;
     else
       return PosMin;
+}
+
+// find state index when hilbert space storage is based on factorized algorithm
+//
+// stateDescription = unsigned integer describing the state
+// return value = corresponding index
+
+long FermionOnSphereHaldaneHugeBasis::FindStateIndexFactorized(unsigned long stateDescription)
+{
+  unsigned int TmpSuffix = (unsigned int) (stateDescription >> this->RootSuffixShift);
+  long PosMax = 0l;
+  long PosMin = this->NbrRootSuffix - 1l;
+  long PosMid = (PosMin + PosMax) >> 1;
+  unsigned int CurrentState = this->RootSuffix[PosMid];
+  while ((PosMax != PosMid) && (CurrentState != TmpSuffix))
+    {
+      if (CurrentState > TmpSuffix)
+	{
+	  PosMax = PosMid;
+	}
+      else
+	{
+	  PosMin = PosMid;
+	} 
+      PosMid = (PosMin + PosMax) >> 1;
+      CurrentState = this->RootSuffix[PosMid];
+    }
+  long TmpSuffixPos = PosMin;
+  if (CurrentState == TmpSuffix)
+    TmpSuffixPos = PosMid;
+  else
+    if ((this->RootSuffix[PosMin] != TmpSuffix) && (this->RootSuffix[PosMax] != TmpSuffix))
+      return this->LargeHilbertSpaceDimension;
+  TmpSuffix = (unsigned int) (stateDescription & this->RootPrefixMask);
+  PosMax = 0l;
+  PosMin = this->RootSuffixSectorSize[TmpSuffixPos] - 1l;
+  PosMid = (PosMin + PosMax) >> 1;
+  unsigned int* TmpPrefixSector = this->PrefixSectors[TmpSuffixPos];
+  CurrentState = TmpPrefixSector[PosMid];
+  while ((PosMax != PosMid) && (CurrentState != TmpSuffix))
+    {
+      if (CurrentState > TmpSuffix)
+	{
+	  PosMax = PosMid;
+	}
+      else
+	{
+	  PosMin = PosMid;
+	} 
+      PosMid = (PosMin + PosMax) >> 1;
+      CurrentState = TmpPrefixSector[PosMid];
+    }
+  if (CurrentState == TmpSuffix)
+    return PosMid + this->RootSuffixOffset[TmpSuffixPos];
+  else
+    if ((TmpPrefixSector[PosMin] != TmpSuffix) && (TmpPrefixSector[PosMax] != TmpSuffix))
+      return this->LargeHilbertSpaceDimension;
+    else
+      return PosMin + this->RootSuffixOffset[TmpSuffixPos];      
 }
 
 // find state index when hilbert space storage is based on sparse algorithm
