@@ -505,7 +505,8 @@ double GrossPitaevskiiOnLatticeState::SimplexOptimize(double targetSize, int max
       gsl_vector_set (StepSizes, 2*i+1, 4.0*M_PI);
     }
   
-  GSLMinimizerType = gsl_multimin_fminimizer_nmsimplex2;
+  GSLMinimizerType = gsl_multimin_fminimizer_nmsimplex;
+  // GSLMinimizerType = gsl_multimin_fminimizer_nmsimplex2;
 
   GSLMinimizer = gsl_multimin_fminimizer_alloc (GSLMinimizerType, EffectiveNbrVariationalParameters);
   

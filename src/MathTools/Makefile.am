@@ -13,7 +13,8 @@ JacobiThetaFunction.cc \
 WignerSmallDMatrix.cc \
 ThreeJSymbol.cc \
 PartialThreeJSymbol.cc \
-KCombinations.cc 
+KCombinations.cc \
+JacobiPolynomials.cc
 
 
 # LaguerreFunction.cc
