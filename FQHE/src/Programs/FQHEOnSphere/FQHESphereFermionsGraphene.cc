@@ -102,6 +102,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of lz value to evaluate", -1);
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "zeeman-field", "value for the Zeeman field that couples to the Sz quantum number", 0.0);
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
 
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 0);
@@ -130,6 +131,7 @@ int main(int argc, char** argv)
   int SzTotal = ((SingleIntegerOption*) Manager["total-sz"])->GetInteger();
   int IsoSzTotal = ((SingleIntegerOption*) Manager["total-isosz"])->GetInteger();
   int TotalEntanglement = ((SingleIntegerOption*) Manager["total-entanglement"])->GetInteger();
+  double Zeeman = ((SingleDoubleOption*) Manager["zeeman-field"])->GetDouble();
 
   long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
   unsigned long MemorySpace = ((unsigned long) ((SingleIntegerOption*) Manager["fast-search"])->GetInteger()) << 20;
@@ -526,7 +528,7 @@ int main(int argc, char** argv)
         Memory = Architecture.GetArchitecture()->GetLocalMemory();
 
       AbstractQHEHamiltonian* Hamiltonian;      
-      Hamiltonian = new ParticleOnSphereWithSU4SpinGenericHamiltonian(Space, NbrFermions, LzMax, PseudoPotentials, 
+      Hamiltonian = new ParticleOnSphereWithSU4SpinGenericHamiltonian(Space, NbrFermions, LzMax, PseudoPotentials, Zeeman,
 								       Architecture.GetArchitecture(), Memory, onDiskCacheFlag, LoadPrecalculationFileName);
       Hamiltonian->ShiftHamiltonian(Shift);
       if (SavePrecalculationFileName != 0)

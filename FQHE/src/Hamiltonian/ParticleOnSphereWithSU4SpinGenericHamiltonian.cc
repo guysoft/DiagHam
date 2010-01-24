@@ -66,7 +66,7 @@ using std::ostream;
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
 ParticleOnSphereWithSU4SpinGenericHamiltonian::ParticleOnSphereWithSU4SpinGenericHamiltonian(ParticleOnSphereWithSU4Spin* particles, int nbrParticles, int lzmax, 
-											     double** pseudoPotential, 
+											     double** pseudoPotential, double zeeman,
 											     AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, 
 											     char* precalculationFileName)
 {
@@ -88,6 +88,22 @@ ParticleOnSphereWithSU4SpinGenericHamiltonian::ParticleOnSphereWithSU4SpinGeneri
   this->OneBodyInteractionFactorsumum = 0;
   this->OneBodyInteractionFactorsdpdp = 0;
   this->OneBodyInteractionFactorsdmdm = 0;
+ 
+  if (zeeman != 0.0)
+   {
+    this->OneBodyTermFlag = true;
+    this->OneBodyInteractionFactorsupup = new double [this->NbrLzValue];
+    this->OneBodyInteractionFactorsumum = new double [this->NbrLzValue];
+    this->OneBodyInteractionFactorsdpdp = new double [this->NbrLzValue];
+    this->OneBodyInteractionFactorsdmdm = new double [this->NbrLzValue];
+    for (int j = 0; j <= this->LzMax; ++j)
+    { 
+     this->OneBodyInteractionFactorsupup[j] = - zeeman;
+     this->OneBodyInteractionFactorsumum[j] = - zeeman;
+     this->OneBodyInteractionFactorsdpdp[j] = zeeman;
+     this->OneBodyInteractionFactorsdmdm[j] = zeeman;	
+    }
+   }
   this->EvaluateInteractionFactors();
   this->HamiltonianShift = 0.0;
   long MinIndex;
