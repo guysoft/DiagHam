@@ -132,8 +132,8 @@ GarbageFlag& GarbageFlag::operator = (const GarbageFlag& flag)
     {
 #ifdef __SMP__
       pthread_mutex_lock(flag.FlagMutex);
-#endif
       this->FlagMutex = flag.FlagMutex;
+#endif
       this->Counter = flag.Counter;
       (*(this->Counter))++;
 #ifdef __SMP__
