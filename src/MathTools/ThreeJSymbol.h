@@ -40,7 +40,6 @@
 
 
 #include "config.h"
-#include "GeneralTools/GarbageFlag.h"
 
 #include <iostream>
 
@@ -48,8 +47,32 @@
 using std::ostream;
 
 
-class ThreeJSymbol : public ClebschGordanCoefficients
+class ThreeJSymbol
 {
+ protected:
+
+  // first angular momentum (twice the value to avoid half integer value)
+  int J1;
+  // second angular momentum (twice the value to avoid half integer value)
+  int J2;
+
+  // Clebsch Gordan coefficient array accessed as Coefficients[j1 + m1][j2 + m2][j3]
+  double*** Coefficients;
+  // minimum j value in each sector of given m1 and m2
+  int** JMin;
+  // garbage flag associated to coefficient array
+  GarbageFlag Flag;
+
+
+  // position associated to the projection of first angular momentum for current iterator
+  int M1;
+  // position associated to the projection of second angular momentum for current iterator
+  int M2;
+  // resulting angular momentum for current iterator  
+  int J;
+  // position associated to the resulting angular momentum  for current iterator  
+  int CurrentPosition;
+
  public:
   // default constructor
   //
@@ -97,6 +120,10 @@ class ThreeJSymbol : public ClebschGordanCoefficients
   // return value = false if no coefficient has been returned
   bool Iterate(int& j, double& coefficient);
 
+  // return the values of the angular momenta that have been coupled
+  int GetJ1(){return this->J1;}
+  int GetJ2(){return this->J2;}
+
   // print a particular coefficient (without testing if m1, m2 and j are valid)
   //
   // str = reference on output stream
@@ -108,6 +135,34 @@ class ThreeJSymbol : public ClebschGordanCoefficients
 
  protected:
   
+  // evaluate all Clebsch Gordan coefficients using Schulten Gordon recursion algorithm
+  //
+  void EvaluateClebschGordanCoefficients();
+
+  // evaluate C coefficient needed during the recursion
+  //
+  // m1 = projection of first angular momentum 
+  // m2 = projection of second angular momentum   
+  // j = resulting angular momentum
+  // return value = corresponding D coefficient
+  double CCoefficient (int m1, int m2, int j);
+  
+  // evaluate D coefficient needed during the recursion
+  //
+  // m1 = projection of first angular momentum 
+  // m2 = projection of second angular momentum   
+  // j = resulting angular momentum
+  // return value = corresponding D coefficient
+  double DCoefficient (int m1, int m2, int j);
+
+  // main part of the recursion algorithm
+  //
+  // m1 = projection of first angular momentum 
+  // m2Min = minimum value for the projection of second angular momentum   
+  // m2Max = maximum value for the projection of second angular momentum   
+  // j = resulting angular momentum
+  void RecursionAlgorithm (int m1, int m2Min, int m2Max, int j);
+
   // Apply prefactors to convert Clebsch-Gordon Coefficient to a 3J symbol
   void ApplyThreeJPrefactors();
   

@@ -14,7 +14,9 @@ WignerSmallDMatrix.cc \
 ThreeJSymbol.cc \
 PartialThreeJSymbol.cc \
 KCombinations.cc \
-JacobiPolynomials.cc
+JacobiPolynomials.cc \
+MonopoleHarmonics.cc
+
 
 
 # LaguerreFunction.cc

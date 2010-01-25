@@ -71,10 +71,10 @@ PartialThreeJSymbol::PartialThreeJSymbol(int j1, int j2, int m3, ThreeJSymbol *f
   if ((fullSymbol==NULL)||(fullSymbol->GetJ1()!=j1)||(fullSymbol->GetJ2()!=j2))
     {
       ThreeJSymbol *TmpSymbol = new ThreeJSymbol(j1, j2);
-      this->InitializeTable(*TmpSymbol);
+      this->InitializeTable(TmpSymbol);
       delete TmpSymbol;
     }
-  else this->InitializeTable(*fullSymbol);
+  else this->InitializeTable(fullSymbol);
 }
   
 // constructor
@@ -105,10 +105,10 @@ PartialThreeJSymbol::PartialThreeJSymbol(int j1, int j2, int m3, int minM1, int 
   if ((fullSymbol==NULL)||(fullSymbol->GetJ1()!=j1)||(fullSymbol->GetJ2()!=j2))
     {
       ThreeJSymbol *TmpSymbol = new ThreeJSymbol(j1, j2);
-      this->InitializeTable(*TmpSymbol);
+      this->InitializeTable(TmpSymbol);
       delete TmpSymbol;
     }
-  else this->InitializeTable(*fullSymbol);
+  else this->InitializeTable(fullSymbol);
 }
 
 
@@ -250,7 +250,7 @@ ostream& PartialThreeJSymbol::PrintCoefficient (ostream& str, int m1, int j)
 // initialize tables, copying values from provided 3J symbol
 // fullSymbol = 3J symbol at j1, j2
 //
-void PartialThreeJSymbol::InitializeTable(ThreeJSymbol &fullSymbol)
+void PartialThreeJSymbol::InitializeTable(ThreeJSymbol *fullSymbol)
 {  
   this->J3Min=(J1-J2>0 ? J1-J2 : J2-J1);
   if (this->J3Min<M3) this->J3Min=M3;
@@ -272,7 +272,7 @@ void PartialThreeJSymbol::InitializeTable(ThreeJSymbol &fullSymbol)
       this->Coefficients[pos] = new double[NbrJ3];
       for (int pos2=0, j3=this->J3Min; pos2<NbrJ3; ++pos2, j3+=2)
 	{
-	  this->Coefficients[pos][pos2]=fullSymbol.GetCoefficient(m1, -M3-m1, j3);
+	  this->Coefficients[pos][pos2]=fullSymbol->GetCoefficient(m1, -M3-m1, j3);
 	}
     }
 }

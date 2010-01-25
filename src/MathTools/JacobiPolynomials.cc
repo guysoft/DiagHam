@@ -9,10 +9,6 @@ using std::endl;
 using std::floor;
 
 
-// maximum number of iterations before convergence has to be reached
-#define ITERMAX 500
-
-
 // default constructor
 //
 JacobiPolynomials::JacobiPolynomials()

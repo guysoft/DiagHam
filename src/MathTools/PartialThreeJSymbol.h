@@ -155,7 +155,7 @@ class PartialThreeJSymbol
   // initialize tables, copying values from provided 3J symbol
   // fullSymbol = 3J symbol at j1, j2
   //
-  void InitializeTable(ThreeJSymbol &fullSymbol);
+  void InitializeTable(ThreeJSymbol *fullSymbol);
   
 };
 
