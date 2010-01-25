@@ -44,6 +44,7 @@
 
 #include <math.h>
 #include <fstream>
+#include <sys/time.h>
 
 
 using std::cout;
@@ -124,11 +125,22 @@ BosonOnSphereHaldaneHugeBasisShort::BosonOnSphereHaldaneHugeBasisShort (int nbrB
 
 BosonOnSphereHaldaneHugeBasisShort::BosonOnSphereHaldaneHugeBasisShort (char* fileName, unsigned long memoryHilbert)
 {
+  timeval TotalStartingTime;
+  gettimeofday (&(TotalStartingTime), 0);
+
   this->FermionBasis = 0;
   this->FermionHugeBasis = new FermionOnSphereHaldaneHugeBasis(fileName, memoryHilbert);
   this->HilbertSpaceDimension = this->FermionHugeBasis->GetHilbertSpaceDimension();
   this->LargeHilbertSpaceDimension = this->FermionHugeBasis->GetLargeHilbertSpaceDimension();
   
+  timeval TotalEndingTime;
+  gettimeofday (&(TotalEndingTime), 0);
+  double Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);
+  cout << "Hilbert space factorization done in " << Dt << "s" <<endl;
+ 
+  gettimeofday (&(TotalStartingTime), 0);
+
   ifstream FileHilbert;
   FileHilbert.open(this->FermionHugeBasis->HilbertSpaceFileName, ios::binary | ios::in);
   FileHilbert.seekg (this->FermionHugeBasis->FileHeaderSize, ios::beg);
@@ -141,6 +153,11 @@ BosonOnSphereHaldaneHugeBasisShort::BosonOnSphereHaldaneHugeBasisShort (char* fi
 	cout << i << " " << hex << CurrentPartition << " " << this->FermionHugeBasis->GetStateFactorized(i) << dec << endl;
     }
   FileHilbert.close();
+
+  gettimeofday (&(TotalEndingTime), 0);
+  Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);
+  cout << "Hilbert space consistency check done in " << Dt << "s" <<endl;
 
   this->NbrBosons = this->FermionHugeBasis->NbrFermions;
   this->IncNbrBosons = this->NbrBosons + 1;

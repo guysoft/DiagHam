@@ -1737,7 +1737,7 @@ void FermionOnSphereHaldaneHugeBasis::GenerateLookUpTable(unsigned long memory)
 
 void FermionOnSphereHaldaneHugeBasis::GenerateLookUpTableFactorized()
 {
-  int TmpLookUpSize = 10;
+  int TmpLookUpSize = 20;
   this->SuffixLookUpTableShift = this->LzMax + 1 - this->RootSuffixShift - TmpLookUpSize;
   if (this->SuffixLookUpTableShift < 0)
     {
@@ -1748,6 +1748,7 @@ void FermionOnSphereHaldaneHugeBasis::GenerateLookUpTableFactorized()
     {
       this->SuffixLookUpTableSize = 1 << TmpLookUpSize;
     }
+  cout << "look up size " <<  this->SuffixLookUpTableSize << endl;
   this->SuffixLookUpTable = new long [this->SuffixLookUpTableSize + 1];
   unsigned int TmpSuffix = this->RootSuffix[0] >> this->SuffixLookUpTableShift;  
   unsigned int CurrentSuffix = this->SuffixLookUpTableSize;
