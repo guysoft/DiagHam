@@ -429,12 +429,43 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
   ReadLittleEndian(File, this->LzMax);
   ReadLittleEndian(File, this->TotalLz);
   ReadLittleEndian(File, this->ReferenceState);
+#ifdef __64_BITS__
+  this->InvertShift = 32 - ((this->LzMax + 1) >> 1);
+#else
+  this->InvertShift = 16 - ((this->LzMax + 1 ) >> 1);
+#endif
+  if ((this->LzMax & 1) == 0)
+    this->InvertUnshift = this->InvertShift - 1;
+  else
+    this->InvertUnshift = this->InvertShift;
+
+  this->TargetSpace = this;
+  this->NbrLzValue = this->LzMax + 1;
+  this->MaximumSignLookUp = 16;
+  this->IncNbrFermions = this->NbrFermions + 1;
+  this->Flag.Initialize();  
   if ((this->LargeHilbertSpaceDimension << 3) < (memoryHilbert << 20))
     {
       this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
       for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
 	ReadLittleEndian(File, this->StateDescription[i]);
       File.close();
+      this->GenerateLookUpTable(memory);
+#ifdef __DEBUG__
+      unsigned long UsedMemory = 0l;
+      UsedMemory += ((unsigned long) this->LargeHilbertSpaceDimension) * (sizeof(unsigned long) + sizeof(int));
+      UsedMemory += this->NbrLzValue * sizeof(int);
+      UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
+      UsedMemory +=  (1 << this->MaximumSignLookUp) * sizeof(double);
+      cout << "memory requested for Hilbert space = ";
+      if (UsedMemory >= 1024)
+	if (UsedMemory >= 1048576)
+	  cout << (UsedMemory >> 20) << "Mo" << endl;
+	else
+	  cout << (UsedMemory >> 10) << "ko" <<  endl;
+      else
+	cout << UsedMemory << endl;
+#endif
     }
   else 
     {
@@ -444,7 +475,7 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
       this->FileHeaderSize = (4 * sizeof(int)) + (2 * sizeof(long));
       this->StateDescription = 0;
       this->SparseHilbertSpaceDimension = memoryHilbert << 17;
-      this->GenerateLookUpTableHugeBasis(memoryHilbert);
+//      this->GenerateLookUpTableHugeBasis(memoryHilbert);
       ifstream FileHilbert;
       FileHilbert.open(this->HilbertSpaceFileName, ios::binary | ios::in);
       FileHilbert.seekg (this->FileHeaderSize, ios::beg);
@@ -648,9 +679,8 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
       this->PrefixSectors = new unsigned int* [this->NbrPrefixSector];
       this->RootSuffix = new unsigned int[this->NbrRootSuffix];
       this->RootSuffixSectorPositions = new unsigned int*[this->NbrRootSuffix];
-      this->RootSuffixOffset = new long [this->NbrRootSuffix];
+      this->RootSuffixOffset = new long [this->NbrRootSuffix + 1];
       this->RootSuffixSectorSize = new long [this->NbrRootSuffix];
-      this->NbrRootSuffix = 1;
       FileHilbert.open(this->HilbertSpaceFileName, ios::binary | ios::in);
       FileHilbert.seekg (this->FileHeaderSize, ios::beg);
       TotalCount = 0;
@@ -694,7 +724,8 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
 #endif
       unsigned int* CurrentSector = Sectors[TmpNbrFermions][TmpTotalLz];
       CurrentSector[0] = MaxRoot & this->RootPrefixMask;
-      this->RootSuffixSectorSize[0] = SectorSize[TmpNbrFermions][TmpTotalLz];
+      this->RootSuffixSectorPositions[0] = CurrentSector;
+      this->NbrRootSuffix = 0;
       Count = 1;
       for (long i = 1; i < this->LargeHilbertSpaceDimension; ++i)
 	{
@@ -709,6 +740,15 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
 	    }
 	  else
 	    {
+	      if (CurrentSector == 0)
+		{
+		  this->RootSuffixSectorSize[this->NbrRootSuffix] = SectorSize[TmpNbrFermions][TmpTotalLz];
+		}
+	      else
+		{
+		  this->RootSuffixSectorSize[this->NbrRootSuffix] = Count;
+		}
+	      ++this->NbrRootSuffix;
 	      this->RootSuffix[this->NbrRootSuffix] = (unsigned int) (MaxRoot >> this->RootSuffixShift);
 	      if (CurrentSector != 0)
 		{
@@ -760,15 +800,16 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
 		  CurrentSector = 0;
 		}
 	      this->RootSuffixSectorPositions[this->NbrRootSuffix] = Sectors[TmpNbrFermions][TmpTotalLz];
-	      this->RootSuffixSectorSize[this->NbrRootSuffix] = SectorSize[TmpNbrFermions][TmpTotalLz];
 	      this->RootSuffixOffset[this->NbrRootSuffix] = i;
-	      ++this->NbrRootSuffix;
 	    }	  
 	}
       if (CurrentSector != 0)
 	{
 	  SectorSize[TmpNbrFermions][TmpTotalLz] = Count;
 	}
+      this->RootSuffixSectorSize[this->NbrRootSuffix] = SectorSize[TmpNbrFermions][TmpTotalLz];
+      ++this->NbrRootSuffix;
+      this->RootSuffixOffset[this->NbrRootSuffix] = this->RootSuffixOffset[this->NbrRootSuffix - 1l];
       FileHilbert.close();
       this->NbrPrefixSector = 0l;
       for (int i = 0; i <= this->NbrFermions; ++i)
@@ -787,42 +828,7 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
       delete[] Sectors;
       delete[] SectorSize;	  
       cout << "Factorization ratio = " << (((SumSector + TotalCount) * 100.0) / ((double) this->LargeHilbertSpaceDimension)) << "%" << endl;
-    }
-
-#ifdef __64_BITS__
-  this->InvertShift = 32 - ((this->LzMax + 1) >> 1);
-#else
-  this->InvertShift = 16 - ((this->LzMax + 1 ) >> 1);
-#endif
-  if ((this->LzMax & 1) == 0)
-    this->InvertUnshift = this->InvertShift - 1;
-  else
-    this->InvertUnshift = this->InvertShift;
-
-  this->TargetSpace = this;
-  this->NbrLzValue = this->LzMax + 1;
-  this->MaximumSignLookUp = 16;
-  this->IncNbrFermions = this->NbrFermions + 1;
-  this->Flag.Initialize();  
-
-  if (this->StateDescription != 0)
-    {
-      this->GenerateLookUpTable(memory);
-#ifdef __DEBUG__
-      unsigned long UsedMemory = 0l;
-      UsedMemory += ((unsigned long) this->LargeHilbertSpaceDimension) * (sizeof(unsigned long) + sizeof(int));
-      UsedMemory += this->NbrLzValue * sizeof(int);
-      UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
-      UsedMemory +=  (1 << this->MaximumSignLookUp) * sizeof(double);
-      cout << "memory requested for Hilbert space = ";
-      if (UsedMemory >= 1024)
-	if (UsedMemory >= 1048576)
-	  cout << (UsedMemory >> 20) << "Mo" << endl;
-	else
-	  cout << (UsedMemory >> 10) << "ko" <<  endl;
-      else
-	cout << UsedMemory << endl;
-#endif
+      this->GenerateLookUpTableFactorized();
     }
 }
 
@@ -1251,10 +1257,11 @@ long FermionOnSphereHaldaneHugeBasis::FindStateIndexMemory(unsigned long stateDe
 long FermionOnSphereHaldaneHugeBasis::FindStateIndexFactorized(unsigned long stateDescription)
 {
   unsigned int TmpSuffix = (unsigned int) (stateDescription >> this->RootSuffixShift);
-  long PosMax = 0l;
-  long PosMin = this->NbrRootSuffix - 1l;
+  unsigned int CurrentState = TmpSuffix >> this->SuffixLookUpTableShift;
+  long PosMax = this->SuffixLookUpTable[TmpSuffix];//0l;
+  long PosMin = this->SuffixLookUpTable[TmpSuffix + 1];//this->NbrRootSuffix - 1l;
   long PosMid = (PosMin + PosMax) >> 1;
-  unsigned int CurrentState = this->RootSuffix[PosMid];
+  CurrentState = this->RootSuffix[PosMid];
   while ((PosMax != PosMid) && (CurrentState != TmpSuffix))
     {
       if (CurrentState > TmpSuffix)
@@ -1268,18 +1275,23 @@ long FermionOnSphereHaldaneHugeBasis::FindStateIndexFactorized(unsigned long sta
       PosMid = (PosMin + PosMax) >> 1;
       CurrentState = this->RootSuffix[PosMid];
     }
+//  cout << PosMin << " " << PosMid << " " << PosMax << endl;
   long TmpSuffixPos = PosMin;
   if (CurrentState == TmpSuffix)
     TmpSuffixPos = PosMid;
   else
     if ((this->RootSuffix[PosMin] != TmpSuffix) && (this->RootSuffix[PosMax] != TmpSuffix))
       return this->LargeHilbertSpaceDimension;
+//  cout << CurrentState << " " << TmpSuffix << endl;
   TmpSuffix = (unsigned int) (stateDescription & this->RootPrefixMask);
   PosMax = 0l;
   PosMin = this->RootSuffixSectorSize[TmpSuffixPos] - 1l;
   PosMid = (PosMin + PosMax) >> 1;
-  unsigned int* TmpPrefixSector = this->PrefixSectors[TmpSuffixPos];
+//  cout << "TmpSuffixPos = " << TmpSuffixPos << endl;
+  unsigned int* TmpPrefixSector = this->RootSuffixSectorPositions[TmpSuffixPos];
   CurrentState = TmpPrefixSector[PosMid];
+//  cout << PosMin << " " << PosMid << " " << PosMax << endl;
+//  cout << CurrentState << " " << TmpSuffix << endl;
   while ((PosMax != PosMid) && (CurrentState != TmpSuffix))
     {
       if (CurrentState > TmpSuffix)
@@ -1300,6 +1312,34 @@ long FermionOnSphereHaldaneHugeBasis::FindStateIndexFactorized(unsigned long sta
       return this->LargeHilbertSpaceDimension;
     else
       return PosMin + this->RootSuffixOffset[TmpSuffixPos];      
+}
+
+// get a state description from its index when hilbert space storage is based on factorized algorithm
+//
+// index = state index
+// return value = unsigned integer describing the state
+
+unsigned long FermionOnSphereHaldaneHugeBasis::GetStateFactorized(long index)
+{
+  long PosMax = 0l;
+  long PosMin = this->NbrRootSuffix;
+  long PosMid = (PosMin + PosMax) >> 1;
+  long CurrentIndex = this->RootSuffixOffset[PosMid];
+  while ((PosMin - PosMax) > 1l)
+    {
+      if (CurrentIndex <= index)
+	{
+	  PosMax = PosMid;
+	}
+      else
+	{
+	  PosMin = PosMid;
+	} 
+      PosMid = (PosMin + PosMax) >> 1;
+      CurrentIndex = this->RootSuffixOffset[PosMid];
+    }
+//  cout << PosMin << " " << PosMid << " " << PosMax << endl;
+  return ((((unsigned long) this->RootSuffix[PosMax]) << this->RootSuffixShift) | ((unsigned long) this->RootSuffixSectorPositions[PosMax][index - this->RootSuffixOffset[PosMax]]));
 }
 
 // find state index when hilbert space storage is based on sparse algorithm
@@ -1688,6 +1728,61 @@ void FermionOnSphereHaldaneHugeBasis::GenerateLookUpTable(unsigned long memory)
       --CurrentLookUpTableValue;
     }
   TmpLookUpTable[0] = this->LargeHilbertSpaceDimension - 1l;
+  this->GenerateSignLookUpTable();
+}
+
+// generate look-up table associated to current Hilbert space in factorized mode
+// 
+
+void FermionOnSphereHaldaneHugeBasis::GenerateLookUpTableFactorized()
+{
+  int TmpLookUpSize = 10;
+  this->SuffixLookUpTableShift = this->LzMax + 1 - this->RootSuffixShift - TmpLookUpSize;
+  if (this->SuffixLookUpTableShift < 0)
+    {
+      this->SuffixLookUpTableShift = 0;
+      this->SuffixLookUpTableSize = 1 << (TmpLookUpSize + this->SuffixLookUpTableShift);
+    }
+  else
+    {
+      this->SuffixLookUpTableSize = 1 << TmpLookUpSize;
+    }
+  this->SuffixLookUpTable = new long [this->SuffixLookUpTableSize + 1];
+  unsigned int TmpSuffix = this->RootSuffix[0] >> this->SuffixLookUpTableShift;  
+  unsigned int CurrentSuffix = this->SuffixLookUpTableSize;
+  while (CurrentSuffix > TmpSuffix)
+    {
+      this->SuffixLookUpTable[CurrentSuffix] = 0;
+      --CurrentSuffix;
+    }
+  long Pos = this->NbrRootSuffix - 1l;
+  this->SuffixLookUpTable[CurrentSuffix] = Pos;
+  for (long i = 0l; i < this->NbrRootSuffix; ++i)
+    {
+      TmpSuffix = this->RootSuffix[i] >> this->SuffixLookUpTableShift;
+      if (TmpSuffix != CurrentSuffix)
+	{
+	  while (CurrentSuffix > TmpSuffix)
+	    {
+	      this->SuffixLookUpTable[CurrentSuffix] = i;
+	      --CurrentSuffix;
+	    }
+	  this->SuffixLookUpTable[CurrentSuffix] = i;
+	}
+    }
+  while (CurrentSuffix >= 0)
+    {
+      this->SuffixLookUpTable[CurrentSuffix] = this->NbrRootSuffix - 1l;
+      --CurrentSuffix;
+    }
+  this->GenerateSignLookUpTable();
+}
+
+// generate look-up table for sign calculation
+// 
+
+void FermionOnSphereHaldaneHugeBasis::GenerateSignLookUpTable()
+{
   // look-up tables for evaluating sign when applying creation/annihilation operators
   int Size = 1 << this->MaximumSignLookUp;
   this->SignLookUpTable = new double [Size];
@@ -1727,45 +1822,6 @@ void FermionOnSphereHaldaneHugeBasis::GenerateLookUpTable(unsigned long memory)
 #endif
 }
 
-// generate look-up table associated to current Hilbert space assuming a huge basis
-// 
-// memory = memory size that can be allocated for the look-up table
-
-void FermionOnSphereHaldaneHugeBasis::GenerateLookUpTableHugeBasis(unsigned long memory)
-{
-  ifstream File;
-  File.open(this->HilbertSpaceFileName, ios::binary | ios::in);
-  if (!File.is_open())
-    {
-      cout << "can't open the file: " << this->HilbertSpaceFileName << endl;
-      this->HilbertSpaceDimension = 0;
-      return;
-    }
-  File.seekg (this->FileHeaderSize, ios::beg);
-  this->SparseHilbertSpaceChunckSize = this->LargeHilbertSpaceDimension / this->SparseHilbertSpaceDimension;
-  this->SparseHilbertSpaceRemainderChunckSize = this->LargeHilbertSpaceDimension % this->SparseHilbertSpaceDimension;
-  this->SparseHilbertSpaceDescription = new unsigned long [this->SparseHilbertSpaceDimension + 1l];
-  for (long i = 0; i < this->SparseHilbertSpaceDimension; ++i)
-    {
-      ReadLittleEndian(File, this->SparseHilbertSpaceDescription[i]);
-      File.seekg (this->SparseHilbertSpaceChunckSize << 3, ios::cur);
-    }
-  File.close();
-  File.open(this->HilbertSpaceFileName, ios::binary | ios::in);
-  if (!File.is_open())
-    {
-      cout << "can't open the file: " << this->HilbertSpaceFileName << endl;
-      this->HilbertSpaceDimension = 0;
-      return;
-    }
-  File.seekg (this->FileHeaderSize, ios::beg);
-  File.seekg ((this->LargeHilbertSpaceDimension - 1l) << 3, ios::beg);
-  ReadLittleEndian(File, this->SparseHilbertSpaceDescription[this->SparseHilbertSpaceDimension]);
-  --this->SparseHilbertSpaceDescription[this->SparseHilbertSpaceDimension];
-  this->SparseHilbertSpaceBufferIndices = new int [this->SparseHilbertSpaceDimension];
-  for (long i = 0; i < this->SparseHilbertSpaceDimension; ++i)
-    this->SparseHilbertSpaceBufferIndices[i] = -1;
-}
 
 // evaluate Hilbert space dimension
 //

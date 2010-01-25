@@ -1094,7 +1094,14 @@ void FermionOnSphere::GenerateLookUpTable(unsigned long memory)
   /*  for (unsigned long j = 0; j <= this->LookUpTableMemorySize; ++j)
     cout << TmpLookUpTable[j] << " ";
     cout << endl << "-------------------------------------------" << endl;*/
-  
+  this->GenerateSignLookUpTable();
+}
+
+// generate look-up table for sign calculation
+// 
+
+void FermionOnSphere::GenerateSignLookUpTable()
+{
   // look-up tables for evaluating sign when applying creation/annihilation operators
   int Size = 1 << this->MaximumSignLookUp;
   this->SignLookUpTable = new double [Size];
@@ -1133,6 +1140,7 @@ void FermionOnSphere::GenerateLookUpTable(unsigned long memory)
     this->SignLookUpTableMask[i] = (unsigned long) 0;
 #endif
 }
+
 
 // evaluate Hilbert space dimension
 //

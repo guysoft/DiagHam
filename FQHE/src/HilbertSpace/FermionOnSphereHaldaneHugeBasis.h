@@ -184,6 +184,12 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   unsigned int** PrefixSectors;
   // number of prefix sector
   long NbrPrefixSector;
+  // 
+  long* SuffixLookUpTable;
+  // 
+  int SuffixLookUpTableSize;
+  // 
+  int SuffixLookUpTableShift;
 
  public:
 
@@ -451,6 +457,12 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // return value = corresponding index
   long FindStateIndexFactorized(unsigned long stateDescription);
 
+  // get a state description from its index when hilbert space storage is based on factorized algorithm
+  //
+  // index = state index
+  // return value = unsigned integer describing the state
+  unsigned long GetStateFactorized(long index);
+
   // evaluate upper bound for the Haldane basis
   //
   // nbrFermions = number of fermions
@@ -480,10 +492,18 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // memeory = memory size that can be allocated for the look-up table
   virtual void GenerateLookUpTable(unsigned long memory);
 
+  // generate look-up table for sign calculation
+  // 
+  virtual void GenerateSignLookUpTable();
+
   // generate look-up table associated to current Hilbert space assuming a huge basis
   // 
   // memory = memory size that can be allocated for the look-up table
-  void GenerateLookUpTableHugeBasis(unsigned long memory);
+//  void GenerateLookUpTableHugeBasis(unsigned long memory);
+
+  // generate look-up table associated to current Hilbert space in factorized mode
+  // 
+  void GenerateLookUpTableFactorized();
 
   // generate all states corresponding to the constraints
   // 
