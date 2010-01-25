@@ -41,8 +41,8 @@ MonopoleHarmonics::MonopoleHarmonics(int twoQ, int maxOrderN, int twoM)
   this->NormPrefactor = new double[MaxOrderN+1];
   
   this->InitializeNorms();
-  int maxDegreeP = MaxOrderN + (abs(ChargeTwoQ)-MomentumTwoM)/2;
-  this->JacobiOffset = (abs(ChargeTwoQ)-MomentumTwoM)/2;
+  int maxDegreeP = MaxOrderN + ((ChargeTwoQ<0?-ChargeTwoQ:ChargeTwoQ)-MomentumTwoM)/2;
+  this->JacobiOffset = ((ChargeTwoQ<0?-ChargeTwoQ:ChargeTwoQ)-MomentumTwoM)/2;
   this->Jacobi = new JacobiPolynomials(maxDegreeP, (-ChargeTwoQ+MomentumTwoM)/2,(ChargeTwoQ+MomentumTwoM)/2 );
 }
 
@@ -60,7 +60,7 @@ MonopoleHarmonics::MonopoleHarmonics (const MonopoleHarmonics& p)
   this->NormPrefactor = new double[MaxOrderN+1];
   for (int i=0; i<=MaxOrderN; ++i)
     this->NormPrefactor[i]=p.NormPrefactor[i];
-  int maxDegreeP = MaxOrderN + (abs(ChargeTwoQ)-MomentumTwoM)/2;
+  int maxDegreeP = MaxOrderN + ((ChargeTwoQ<0?-ChargeTwoQ:ChargeTwoQ)-MomentumTwoM)/2;
   this->Jacobi = new JacobiPolynomials(maxDegreeP, (-ChargeTwoQ+MomentumTwoM)/2,(ChargeTwoQ+MomentumTwoM)/2 );
   this->JacobiOffset = p.JacobiOffset;
   this->LastArgument = p.LastArgument;
@@ -122,7 +122,7 @@ ostream& MonopoleHarmonics::PrintValues(ostream &str, double x)
 // initialize recursion coefficients
 void MonopoleHarmonics::InitializeNorms()
 {
-  int AbsTwoQ=abs(ChargeTwoQ);
+  int AbsTwoQ=(ChargeTwoQ<0?-ChargeTwoQ:ChargeTwoQ);
   FactorialCoefficient Factor;
   for (int n=0; n<=MaxOrderN; ++n)
     {
