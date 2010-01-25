@@ -33,7 +33,6 @@
 
 #include <iostream>
 
-
 // default constructor
 //
 
@@ -176,8 +175,8 @@ void GarbageFlag::Initialize ()
 	  pthread_mutex_unlock(this->FlagMutex);
 #endif
 	}
-#ifdef __SMP__
     }
+#ifdef __SMP__
   this->FlagMutex = new pthread_mutex_t;
   pthread_mutex_init(this->FlagMutex, NULL);
   pthread_mutex_lock(this->FlagMutex);
