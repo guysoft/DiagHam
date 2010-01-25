@@ -1258,9 +1258,10 @@ long FermionOnSphereHaldaneHugeBasis::FindStateIndexFactorized(unsigned long sta
 {
   unsigned int TmpSuffix = (unsigned int) (stateDescription >> this->RootSuffixShift);
   unsigned int CurrentState = TmpSuffix >> this->SuffixLookUpTableShift;
-  long PosMax = this->SuffixLookUpTable[TmpSuffix];//0l;
-  long PosMin = this->SuffixLookUpTable[TmpSuffix + 1];//this->NbrRootSuffix - 1l;
+  long PosMax = this->SuffixLookUpTable[CurrentState + 1];//0l;
+  long PosMin = this->SuffixLookUpTable[CurrentState];//this->NbrRootSuffix - 1l;
   long PosMid = (PosMin + PosMax) >> 1;
+  //  cout << PosMin << " " << PosMid << " " << PosMax << " " << TmpSuffix << " " << this->SuffixLookUpTableSize << endl;
   CurrentState = this->RootSuffix[PosMid];
   while ((PosMax != PosMid) && (CurrentState != TmpSuffix))
     {
@@ -1752,11 +1753,10 @@ void FermionOnSphereHaldaneHugeBasis::GenerateLookUpTableFactorized()
   unsigned int CurrentSuffix = this->SuffixLookUpTableSize;
   while (CurrentSuffix > TmpSuffix)
     {
-      this->SuffixLookUpTable[CurrentSuffix] = 0;
+      this->SuffixLookUpTable[CurrentSuffix] = 0l;
       --CurrentSuffix;
     }
-  long Pos = this->NbrRootSuffix - 1l;
-  this->SuffixLookUpTable[CurrentSuffix] = Pos;
+  this->SuffixLookUpTable[CurrentSuffix] = 0l;
   for (long i = 0l; i < this->NbrRootSuffix; ++i)
     {
       TmpSuffix = this->RootSuffix[i] >> this->SuffixLookUpTableShift;
@@ -1770,11 +1770,12 @@ void FermionOnSphereHaldaneHugeBasis::GenerateLookUpTableFactorized()
 	  this->SuffixLookUpTable[CurrentSuffix] = i;
 	}
     }
-  while (CurrentSuffix >= 0)
+  while (CurrentSuffix > 0)
     {
       this->SuffixLookUpTable[CurrentSuffix] = this->NbrRootSuffix - 1l;
       --CurrentSuffix;
     }
+  this->SuffixLookUpTable[0] = this->NbrRootSuffix - 1l;
   this->GenerateSignLookUpTable();
 }
 
