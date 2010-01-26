@@ -725,19 +725,17 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse
     }
   TmpComponent = 0.0;
 
+  ofstream OutputFile;
+  OuputFile.open(partialSave, ios::binary | ios::out | ios::app);
+
   double InvAlpha =  2.0 / alpha;
 
   unsigned long* TmpMonomial = new unsigned long [this->NbrBosons];
   unsigned long* TmpMonomial2 = new unsigned long [this->NbrBosons];
 
-  ifstream FileHilbert;
-  FileHilbert.open(this->FermionHugeBasis->HilbertSpaceFileName, ios::binary | ios::in);
-  FileHilbert.seekg (this->FermionHugeBasis->FileHeaderSize, ios::beg);
-  
   double RhoRoot = 0.0;
   unsigned long MaxRoot = 0x0ul;
   MaxRoot = this->FermionHugeBasis->GetStateFactorized(0l);
-//  ReadLittleEndian(FileHilbert, MaxRoot);
   int TmpLzMax = this->FermionHugeBasis->LzMax;
   while (((MaxRoot >> TmpLzMax) & 0x1ul) == 0ul)
     --TmpLzMax;
@@ -754,7 +752,6 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse
       double Rho = 0.0;
       unsigned long CurrentPartition = 0x0ul;
       CurrentPartition = this->FermionHugeBasis->GetStateFactorized(i);
-//      ReadLittleEndian (FileHilbert, CurrentPartition);
       unsigned long TmpSymState = this->FermionHugeBasis->GetSymmetricState(CurrentPartition);
       if (TmpSymState <= CurrentPartition)
 	{
@@ -814,10 +811,7 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse
 //	  FileVector.close();
 	  Coefficient *= InvAlpha;
 	  Coefficient /= (RhoRoot - Rho);
-//	  ofstream File;
-// 	  File.open(partialSave, ios::binary | ios::out | ios::app);
-// 	  WriteLittleEndian(File, Coefficient);
-// 	  File.close();
+ 	  WriteLittleEndian(OutputFile, Coefficient);
 	  TmpVector[i] = Coefficient;
 	}
       else
@@ -829,10 +823,7 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse
 // 	  ReadLittleEndian (FileVector, TmpComponent);
 // 	  FileVector.close();
 	  TmpComponent = TmpVector[TmpIndex];
-//	  ofstream File;
-// 	  File.open(partialSave, ios::binary | ios::out | ios::app);
-// 	  WriteLittleEndian(File, TmpComponent);
-// 	  File.close();
+ 	  WriteLittleEndian(OutputFile, TmpComponent); 	  
 	  TmpVector[i] = TmpComponent;
 	}
       if ((i & 0x3fffl) == 0l)
@@ -841,7 +832,8 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse
 	  cout.flush();
 	}
     }
-  TmpVector.WriteVector(partialSave);
+  OutputFile.close();
+//  TmpVector.WriteVector(partialSave);
   delete[] TmpMonomial;
   cout << endl;
 }
