@@ -150,7 +150,7 @@ BosonOnSphereHaldaneHugeBasisShort::BosonOnSphereHaldaneHugeBasisShort (char* fi
       ReadLittleEndian(FileHilbert, CurrentPartition);
       if (i != this->FermionHugeBasis->FindStateIndexFactorized(CurrentPartition))
 //      if (CurrentPartition != this->FermionHugeBasis->GetStateFactorized(i))
-	cout << i << " " << hex << CurrentPartition << " " << this->FermionHugeBasis->GetStateFactorized(i) << dec << endl;
+	cout << i << " " << this->FermionHugeBasis->FindStateIndexFactorized(CurrentPartition) << " " << hex << CurrentPartition << " " << this->FermionHugeBasis->GetStateFactorized(i) << dec << endl;
     }
   FileHilbert.close();
 
@@ -726,7 +726,7 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse
   TmpComponent = 0.0;
 
   ofstream OutputFile;
-  OuputFile.open(partialSave, ios::binary | ios::out | ios::app);
+  OutputFile.open(partialSave, ios::binary | ios::out | ios::app);
 
   double InvAlpha =  2.0 / alpha;
 

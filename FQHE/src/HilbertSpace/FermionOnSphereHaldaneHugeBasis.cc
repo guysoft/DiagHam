@@ -475,41 +475,12 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
       this->FileHeaderSize = (4 * sizeof(int)) + (2 * sizeof(long));
       this->StateDescription = 0;
       this->SparseHilbertSpaceDimension = memoryHilbert << 17;
-//      this->GenerateLookUpTableHugeBasis(memoryHilbert);
-      ifstream FileHilbert;
-      FileHilbert.open(this->HilbertSpaceFileName, ios::binary | ios::in);
-      FileHilbert.seekg (this->FileHeaderSize, ios::beg);
       unsigned long CurrentPartition;
-      ReadLittleEndian(FileHilbert, CurrentPartition);	  
       unsigned long Mask = ((1l << ((this->LzMax / 2) + 2)) - 1l) << (this->LzMax / 2);
       this->RootSuffixShift = LzMax / 2;
       this->RootPrefixMask = (1l << this->RootSuffixShift) - 1l;
       CurrentPartition &= Mask;
       long Count = 1l;
-      long TotalCount = 1l;
-      for (long i = 1; i < this->LargeHilbertSpaceDimension; ++i)
-	{
-	  unsigned long MaxRoot;
-	  ReadLittleEndian(FileHilbert, MaxRoot);	  
-	  if (CurrentPartition == (MaxRoot & Mask))
-	    {
-	      Count++;
-	    }
-	  else
-	    {
-//	      cout << hex << CurrentPartition << dec << " " << Count << " " << i << endl;
-	      CurrentPartition = (MaxRoot & Mask);
-	      Count = 1l;
-	      TotalCount++;
-	    }	  
-// 	  cout << hex << MaxRoot << dec << endl;
-// 	  long TmpIndex = this->FindStateIndexSparse(MaxRoot);
-// 	  if (TmpIndex != i)
-// 	    cout << TmpIndex << " " << i << endl;
-	}
-      FileHilbert.close();
-
-      cout << "TotalCount = "  << TotalCount << endl;      
       int TmpNbrOne[] = {  
 	0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 
 	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
@@ -547,7 +518,7 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
       this->NbrRootSuffix = 1l;
       long** SectorSize = new long* [this->NbrFermions + 1];
       unsigned int*** Sectors = new unsigned int**[this->NbrFermions + 1];
-      int TmpMaxTotalLz = 400;
+      int TmpMaxTotalLz = ((this->LzMax / 2) + 1) * this->NbrFermions - ((this->NbrFermions * (this->NbrFermions - 1)) / 2);
       for (int i = 0; i <= this->NbrFermions; ++i)
 	{
 	  SectorSize[i] = new long [TmpMaxTotalLz + 1];
@@ -558,12 +529,12 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
 	      Sectors[i][j] = 0;
 	    }
 	}
-      
+
+      ifstream FileHilbert;      
       FileHilbert.open(this->HilbertSpaceFileName, ios::binary | ios::in);
       FileHilbert.seekg (this->FileHeaderSize, ios::beg);
-      TotalCount = 0;
       ReadLittleEndian(FileHilbert, CurrentPartition);	  
-      CurrentPartition &= Mask;
+      CurrentPartition >>= this->RootSuffixShift;
       int TmpNbrFermions = 0;
       int TmpTotalLz = 0;
       int TmpPartialNbrOne = 0;
@@ -604,7 +575,7 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
 	{
 	  unsigned long MaxRoot;
 	  ReadLittleEndian(FileHilbert, MaxRoot);	  
-	  if (CurrentPartition == (MaxRoot & Mask))
+	  if (CurrentPartition == (MaxRoot >> this->RootSuffixShift))
 	    {
 	      Count++;
 	    }
@@ -615,7 +586,7 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
 		{
 		  SectorSize[TmpNbrFermions][TmpTotalLz] = Count;
 		}
-	      CurrentPartition = (MaxRoot & Mask);
+	      CurrentPartition = (MaxRoot >> this->RootSuffixShift);
 	      TmpPartialNbrOne = TmpNbrOne[CurrentPartition & 0xffl];
 	      TmpNbrFermions = TmpPartialNbrOne;
 	      TmpTotalLz = TmpSumOccupation[CurrentPartition & 0xffl];
@@ -650,7 +621,6 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
 	      TmpTotalLz += TmpPartialNbrOne * 56;
 #endif
 	      Count = 1l;
-	      TotalCount++;
 	    }	  
 	}
       if (SectorSize[TmpNbrFermions][TmpTotalLz] == 0l)
@@ -658,6 +628,7 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
 	  SectorSize[TmpNbrFermions][TmpTotalLz] = Count;
 	}
       FileHilbert.close();
+      cout << "TotalCount = "  << this->NbrRootSuffix << endl;      
 
       long SumSector = 0l;
       this->NbrPrefixSector = 0l;
@@ -683,11 +654,10 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
       this->RootSuffixSectorSize = new long [this->NbrRootSuffix];
       FileHilbert.open(this->HilbertSpaceFileName, ios::binary | ios::in);
       FileHilbert.seekg (this->FileHeaderSize, ios::beg);
-      TotalCount = 0;
       ReadLittleEndian(FileHilbert, CurrentPartition);	  
       unsigned long MaxRoot = CurrentPartition;
-      CurrentPartition &= Mask;
-      this->RootSuffix[0] = (unsigned int) (CurrentPartition >> this->RootSuffixShift);
+      CurrentPartition >>= this->RootSuffixShift;
+      this->RootSuffix[0] = (unsigned int) CurrentPartition;
       this->RootSuffixOffset[0] = 0l;
       TmpPartialNbrOne = TmpNbrOne[CurrentPartition & 0xffl];
       TmpNbrFermions = TmpPartialNbrOne;
@@ -730,7 +700,7 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
       for (long i = 1; i < this->LargeHilbertSpaceDimension; ++i)
 	{
 	  ReadLittleEndian(FileHilbert, MaxRoot);	  
-	  if (CurrentPartition == (MaxRoot & Mask))
+	  if (CurrentPartition == (MaxRoot >> this->RootSuffixShift))
 	    {
 	      if (CurrentSector != 0)
 		{
@@ -754,7 +724,7 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
 		{
 		  SectorSize[TmpNbrFermions][TmpTotalLz] = Count;
 		}
-	      CurrentPartition = (MaxRoot & Mask);
+	      CurrentPartition = (MaxRoot >> this->RootSuffixShift);
 	      TmpPartialNbrOne = TmpNbrOne[CurrentPartition & 0xffl];
 	      TmpNbrFermions = TmpPartialNbrOne;
 	      TmpTotalLz = TmpSumOccupation[CurrentPartition & 0xffl];
@@ -827,7 +797,7 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
 	}
       delete[] Sectors;
       delete[] SectorSize;	  
-      cout << "Factorization ratio = " << (((SumSector + TotalCount) * 100.0) / ((double) this->LargeHilbertSpaceDimension)) << "%" << endl;
+      cout << "Factorization ratio = " << (((SumSector + this->NbrRootSuffix) * 100.0) / ((double) this->LargeHilbertSpaceDimension)) << "%" << endl;
       this->GenerateLookUpTableFactorized();
     }
 }
