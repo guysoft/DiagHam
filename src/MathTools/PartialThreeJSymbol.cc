@@ -30,9 +30,9 @@
 
 #include "config.h"
 #include "MathTools/PartialThreeJSymbol.h"
-
-#include <stdlib.h>
-#include <math.h>
+#include "GeneralTools/Endian.h"
+#include <cstdlib>
+#include <cmath>
 
 using std::cout;
 using std::endl;
@@ -246,6 +246,103 @@ ostream& PartialThreeJSymbol::PrintCoefficient (ostream& str, int m1, int j)
   str << " > = " << this->Coefficients[TmpPos1][(j - this->J3Min) >> 1];
   return str;
 }
+
+
+// operator overloads to write to a stream
+ofstream& operator << (ofstream& str, const PartialThreeJSymbol& threeJ)
+{
+  char Marker='a';
+  WriteLittleEndian(str,Marker);
+  WriteLittleEndian(str,threeJ.J1);
+  cout << "Writing J1="<<threeJ.J1<<endl;
+  WriteLittleEndian(str,threeJ.J2);
+  WriteLittleEndian(str,threeJ.M3);
+  WriteLittleEndian(str,threeJ.NbrJ3);
+  WriteLittleEndian(str,threeJ.J3Min);
+  WriteLittleEndian(str,threeJ.MinM1);
+  WriteLittleEndian(str,threeJ.MaxM1);
+  WriteLittleEndian(str,threeJ.NbrM1);
+  cout << "Writing NbrM1="<<threeJ.NbrM1<<endl;
+
+  for (int pos=0, m1=threeJ.MinM1; pos<threeJ.NbrM1; ++pos, m1+=2)
+    for (int pos2=0, j3=threeJ.J3Min; pos2<threeJ.NbrJ3; ++pos2, j3+=2)
+      WriteLittleEndian(str,threeJ.Coefficients[pos][pos2]);
+  Marker='z';
+  WriteLittleEndian(str,Marker);
+  return str;
+}
+
+
+// operator overloads to read from a stream
+ifstream& operator >> (ifstream& str, PartialThreeJSymbol& threeJ)
+{
+  char Marker;
+  ReadLittleEndian(str,Marker);
+  if (Marker != 'a')
+    {
+      cout << "Cannot read 3J symbol from this position"<<endl;
+      exit(1);
+    }
+  if ((threeJ.Flag.Shared() == false) && (threeJ.Flag.Used() == true))
+    {
+      for (int i = 0; i < threeJ.NbrM1; ++i)
+	{
+	  delete[] threeJ.Coefficients[i];
+	}
+      delete[] threeJ.Coefficients;
+    }
+  int J1, J2, M3, NbrJ3, J3Min, MinM1, MaxM1, NbrM1;
+  ReadLittleEndian(str,J1);
+  cout << "Read J1="<<J1<<endl;
+  ReadLittleEndian(str,J2);
+  ReadLittleEndian(str,M3);
+  ReadLittleEndian(str,NbrJ3);
+  ReadLittleEndian(str,J3Min);
+  ReadLittleEndian(str,MinM1);
+  ReadLittleEndian(str,MaxM1);
+  ReadLittleEndian(str,NbrM1);
+  cout << "Read NbrM1="<<NbrM1<<endl;
+
+  threeJ.J1=J1;
+  threeJ.J2=J2;
+  threeJ.M3=M3;
+  threeJ.NbrJ3=NbrJ3;
+  threeJ.J3Min=J3Min;
+  threeJ.MinM1=MinM1;
+  threeJ.MaxM1=MaxM1;
+  threeJ.NbrM1=NbrM1;
+  
+  threeJ.Coefficients = new double*[threeJ.NbrM1];
+  
+  for (int pos=0, m1=threeJ.MinM1; pos<threeJ.NbrM1; ++pos, m1+=2)
+    {
+      threeJ.Coefficients[pos] = new double[threeJ.NbrJ3];
+      for (int pos2=0, j3=threeJ.J3Min; pos2<threeJ.NbrJ3; ++pos2, j3+=2)
+	ReadLittleEndian(str,threeJ.Coefficients[pos][pos2]);
+    }
+  ReadLittleEndian(str,Marker);
+  if (Marker != 'z')
+    {
+      cout << "Error: Problem with block size of 3J symbol"<<endl;
+      exit(1);
+    }
+  threeJ.CurrentPosition = -1;
+  threeJ.Flag.Initialize();
+  return str;
+}
+
+
+// pointer-friendly I/O functions
+void PartialThreeJSymbol::WriteSymbol(ofstream& str)
+{
+  str << *this;
+}
+
+void PartialThreeJSymbol::ReadSymbol(ifstream& str)
+{
+  str >> *this;
+}
+
 
 // initialize tables, copying values from provided 3J symbol
 // fullSymbol = 3J symbol at j1, j2

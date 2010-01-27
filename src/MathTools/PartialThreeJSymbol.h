@@ -31,9 +31,8 @@
 #include "config.h"
 #include "MathTools/ThreeJSymbol.h"
 
-#include <stdlib.h>
-#include <math.h>
-
+#include <cstdlib>
+#include <cmath>
 
 #ifndef PARTIALTHREEJSYMBOL_H
 #define PARTIALTHREEJSYMBOL_H
@@ -46,6 +45,8 @@
 
 
 using std::ostream;
+using std::ofstream;
+using std::ifstream;
 
 
 class PartialThreeJSymbol
@@ -150,6 +151,15 @@ class PartialThreeJSymbol
   // j = resulting angular momentum
   // return value = reference on output stream
   ostream& PrintCoefficient (ostream& str, int m1, int j);
+
+
+  // operator overloads to read from and write to a stream
+  friend ofstream& operator << (ofstream& str, const PartialThreeJSymbol& threeJ);
+  friend ifstream& operator >> (ifstream& str, PartialThreeJSymbol& threeJ);
+
+  // pointer-friendly I/O functions
+  void WriteSymbol(ofstream& str);
+  void ReadSymbol(ifstream& str);
 
  protected:
   // initialize tables, copying values from provided 3J symbol
