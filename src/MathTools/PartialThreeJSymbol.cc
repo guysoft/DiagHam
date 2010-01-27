@@ -254,7 +254,6 @@ ofstream& operator << (ofstream& str, const PartialThreeJSymbol& threeJ)
   char Marker='a';
   WriteLittleEndian(str,Marker);
   WriteLittleEndian(str,threeJ.J1);
-  cout << "Writing J1="<<threeJ.J1<<endl;
   WriteLittleEndian(str,threeJ.J2);
   WriteLittleEndian(str,threeJ.M3);
   WriteLittleEndian(str,threeJ.NbrJ3);
@@ -262,7 +261,6 @@ ofstream& operator << (ofstream& str, const PartialThreeJSymbol& threeJ)
   WriteLittleEndian(str,threeJ.MinM1);
   WriteLittleEndian(str,threeJ.MaxM1);
   WriteLittleEndian(str,threeJ.NbrM1);
-  cout << "Writing NbrM1="<<threeJ.NbrM1<<endl;
 
   for (int pos=0, m1=threeJ.MinM1; pos<threeJ.NbrM1; ++pos, m1+=2)
     for (int pos2=0, j3=threeJ.J3Min; pos2<threeJ.NbrJ3; ++pos2, j3+=2)
@@ -291,27 +289,16 @@ ifstream& operator >> (ifstream& str, PartialThreeJSymbol& threeJ)
 	}
       delete[] threeJ.Coefficients;
     }
-  int J1, J2, M3, NbrJ3, J3Min, MinM1, MaxM1, NbrM1;
-  ReadLittleEndian(str,J1);
-  cout << "Read J1="<<J1<<endl;
-  ReadLittleEndian(str,J2);
-  ReadLittleEndian(str,M3);
-  ReadLittleEndian(str,NbrJ3);
-  ReadLittleEndian(str,J3Min);
-  ReadLittleEndian(str,MinM1);
-  ReadLittleEndian(str,MaxM1);
-  ReadLittleEndian(str,NbrM1);
-  cout << "Read NbrM1="<<NbrM1<<endl;
 
-  threeJ.J1=J1;
-  threeJ.J2=J2;
-  threeJ.M3=M3;
-  threeJ.NbrJ3=NbrJ3;
-  threeJ.J3Min=J3Min;
-  threeJ.MinM1=MinM1;
-  threeJ.MaxM1=MaxM1;
-  threeJ.NbrM1=NbrM1;
-  
+  ReadLittleEndian(str,threeJ.J1);
+  ReadLittleEndian(str,threeJ.J2);
+  ReadLittleEndian(str,threeJ.M3);
+  ReadLittleEndian(str,threeJ.NbrJ3);
+  ReadLittleEndian(str,threeJ.J3Min);
+  ReadLittleEndian(str,threeJ.MinM1);
+  ReadLittleEndian(str,threeJ.MaxM1);
+  ReadLittleEndian(str,threeJ.NbrM1);
+
   threeJ.Coefficients = new double*[threeJ.NbrM1];
   
   for (int pos=0, m1=threeJ.MinM1; pos<threeJ.NbrM1; ++pos, m1+=2)
