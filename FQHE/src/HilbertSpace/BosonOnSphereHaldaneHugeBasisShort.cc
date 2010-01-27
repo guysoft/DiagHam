@@ -747,6 +747,8 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse
     minIndex = 1;
   RealVector TmpVector (this->LargeHilbertSpaceDimension, true);
   TmpVector[0l] = 1.0;
+  //  ifstream FileVector;
+  //  FileVector.open(partialSave, ios::binary | ios::in);
   for (long i = minIndex; i <= maxIndex; ++i)
     {
       double Rho = 0.0;
@@ -763,6 +765,7 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse
 	  double Coefficient = 0.0;
 //	  ifstream FileVector;
 //	  FileVector.open(partialSave, ios::binary | ios::in);
+	  long MinDist = 0l;
 	  for (int j1 = 0; j1 < ReducedNbrBosons; ++j1)
 	    for (int j2 = j1 + 1; j2 < this->NbrBosons; ++j2)
 	      {
@@ -798,6 +801,8 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse
 			long TmpIndex = this->FermionHugeBasis->FindStateIndexFactorized(TmpState);
 			if (TmpIndex < this->LargeHilbertSpaceDimension)
 			  {
+			    if ((i - TmpIndex) > MinDist)
+			      MinDist = i - TmpIndex;
 // 			    FileVector.open(partialSave, ios::binary | ios::in);
 // 			    FileVector.seekg ((TmpIndex * sizeof(double)) + 12l, ios::beg);			    
 // 			    ReadLittleEndian (FileVector, TmpComponent);
@@ -817,21 +822,22 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse
       else
 	{
 	  long TmpIndex = this->FermionHugeBasis->FindStateIndexFactorized(TmpSymState);
-//	  ifstream FileVector;
-// 	  FileVector.open(partialSave, ios::binary | ios::in);
-// 	  FileVector.seekg ((TmpIndex * sizeof(double)) + 12l, ios::beg);			    
-// 	  ReadLittleEndian (FileVector, TmpComponent);
-// 	  FileVector.close();
+	  //	  ifstream FileVector;
+	  // 	  FileVector.open(partialSave, ios::binary | ios::in);
+	  // 	  FileVector.seekg ((TmpIndex * sizeof(double)) + 12l, ios::beg);			    
+	  // 	  ReadLittleEndian (FileVector, TmpComponent);
+	  // 	  FileVector.close();
 	  TmpComponent = TmpVector[TmpIndex];
  	  WriteLittleEndian(OutputFile, TmpComponent); 	  
 	  TmpVector[i] = TmpComponent;
 	}
       if ((i & 0x3fffl) == 0l)
-	{
-	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
-	  cout.flush();
-	}
+      	{
+      	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
+      	  cout.flush();
+      	}
     }
+  //  FileVector.close();
   OutputFile.close();
 //  TmpVector.WriteVector(partialSave);
   delete[] TmpMonomial;
