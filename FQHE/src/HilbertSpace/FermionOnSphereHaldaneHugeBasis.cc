@@ -1285,6 +1285,77 @@ long FermionOnSphereHaldaneHugeBasis::FindStateIndexFactorized(unsigned long sta
       return PosMin + this->RootSuffixOffset[TmpSuffixPos];      
 }
 
+// find multiple state indices when hilbert space storage is based on factorized algorithm
+//
+// stateDescriptions = array of unsigned integer describing the states (state has to be sorted from the largest to the smallest one)
+// nbrStates = number of states to process
+// indices = array where state indices will be stored
+
+void FermionOnSphereHaldaneHugeBasis::FindMultipleStateIndexFactorized(unsigned long* stateDescriptions, int nbrStates, long* indices)
+{
+  unsigned int TmpSuffix = (unsigned int) (stateDescriptions[0] >> this->RootSuffixShift);
+  unsigned int CurrentState = TmpSuffix >> this->SuffixLookUpTableShift;
+  long PosMax = this->SuffixLookUpTable[CurrentState + 1];//0l;
+  long PosMin = this->SuffixLookUpTable[CurrentState];//this->NbrRootSuffix - 1l;
+  long PosMid = (PosMin + PosMax) >> 1;
+  CurrentState = this->RootSuffix[PosMid];
+  while ((PosMax != PosMid) && (CurrentState != TmpSuffix))
+    {
+      if (CurrentState > TmpSuffix)
+	{
+	  PosMax = PosMid;
+	}
+      else
+	{
+	  PosMin = PosMid;
+	} 
+      PosMid = (PosMin + PosMax) >> 1;
+      CurrentState = this->RootSuffix[PosMid];
+    }
+  long TmpSuffixPos = PosMin;
+  if (CurrentState == TmpSuffix)
+    TmpSuffixPos = PosMid;
+  else
+    if ((this->RootSuffix[PosMin] != TmpSuffix) && (this->RootSuffix[PosMax] != TmpSuffix))
+      indices[0] = this->LargeHilbertSpaceDimension;
+  TmpSuffix = (unsigned int) (stateDescriptions[0] & this->RootPrefixMask);
+  PosMax = 0l;
+  PosMin = this->RootSuffixSectorSize[TmpSuffixPos] - 1l;
+  PosMid = (PosMin + PosMax) >> 1;
+  unsigned int* TmpPrefixSector = this->RootSuffixSectorPositions[TmpSuffixPos];
+  CurrentState = TmpPrefixSector[PosMid];
+  while ((PosMax != PosMid) && (CurrentState != TmpSuffix))
+    {
+      if (CurrentState > TmpSuffix)
+	{
+	  PosMax = PosMid;
+	}
+      else
+	{
+	  PosMin = PosMid;
+	} 
+      PosMid = (PosMin + PosMax) >> 1;
+      CurrentState = TmpPrefixSector[PosMid];
+    }
+  if (CurrentState == TmpSuffix)
+    indices[0] = PosMid + this->RootSuffixOffset[TmpSuffixPos];
+  else
+    if ((TmpPrefixSector[PosMin] != TmpSuffix) && (TmpPrefixSector[PosMax] != TmpSuffix))
+      indices[0] = this->LargeHilbertSpaceDimension;
+    else
+      indices[0] = PosMin + this->RootSuffixOffset[TmpSuffixPos];      
+  for (int i = 1; i < nbrStates; ++i)
+    {
+      unsigned int TmpSuffix2 = (unsigned int) (stateDescriptions[0] >> this->RootSuffixShift);
+      if (TmpSuffix == TmpSuffix2)
+	{
+	}
+      else
+	{
+	}
+    }
+}
+
 // get a state description from its index when hilbert space storage is based on factorized algorithm
 //
 // index = state index

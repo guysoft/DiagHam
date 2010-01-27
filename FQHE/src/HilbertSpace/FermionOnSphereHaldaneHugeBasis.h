@@ -457,6 +457,13 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // return value = corresponding index
   long FindStateIndexFactorized(unsigned long stateDescription);
 
+  // find multiple state indices when hilbert space storage is based on factorized algorithm
+  //
+  // stateDescriptions = array of unsigned integer describing the states (states have to be sorted from the largest to the smallest one)
+  // nbrStates = number of states to process
+  // indices = array where state indices will be stored
+  void FindMultipleStateIndexFactorized(unsigned long* stateDescriptions, int nbrStates, long* indices);
+
   // get a state description from its index when hilbert space storage is based on factorized algorithm
   //
   // index = state index

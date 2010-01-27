@@ -815,33 +815,40 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse
 		  }
 	      }
 //	  FileVector.close();
+	  SortArrayDownOrdering(TmpStateArray, TmpComponentArray, NbrComputedComponents);
+	  ifstream FileVector;
+	  FileVector.open(partialSave, ios::binary | ios::in);
+	  FileVector.seekg (12l, ios::beg);
+	  long TmpStep = 0l;
 	  for (int j = 0; j < NbrComputedComponents; ++j)
 	    {
-	      //	      if ((j > 0) && (TmpStateArray[j - 1] < TmpStateArray[j]))
-	      //		cout << "error" << TmpStateArray[j - 1] << " " << TmpStateArray[j] << endl;
 	      long TmpIndex = this->FermionHugeBasis->FindStateIndexFactorized(TmpStateArray[j]);
 	      if (TmpIndex < this->LargeHilbertSpaceDimension)
-		{
-		  TmpComponent = TmpVector[TmpIndex] ;
+		{		  
+		  //		  TmpComponent = TmpVector[TmpIndex] ;
+		  FileVector.seekg (((TmpIndex - TmpStep) * sizeof(double)), ios::cur);
+		  ReadLittleEndian (FileVector, TmpComponent);
+		  TmpStep = TmpIndex + 8l;
 		  Coefficient += TmpComponentArray[j] * TmpComponent;
-		}
+		}	      
 	    }
+	  FileVector.close();
 	  Coefficient *= InvAlpha;
 	  Coefficient /= (RhoRoot - Rho);
  	  WriteLittleEndian(OutputFile, Coefficient);
-	  TmpVector[i] = Coefficient;
+	  //	  TmpVector[i] = Coefficient;
 	}
       else
 	{
 	  long TmpIndex = this->FermionHugeBasis->FindStateIndexFactorized(TmpSymState);
-	  //	  ifstream FileVector;
-	  // 	  FileVector.open(partialSave, ios::binary | ios::in);
-	  // 	  FileVector.seekg ((TmpIndex * sizeof(double)) + 12l, ios::beg);			    
-	  // 	  ReadLittleEndian (FileVector, TmpComponent);
-	  // 	  FileVector.close();
-	  TmpComponent = TmpVector[TmpIndex];
+	  ifstream FileVector;
+	  FileVector.open(partialSave, ios::binary | ios::in);
+	  FileVector.seekg ((TmpIndex * sizeof(double)) + 12l, ios::beg);			    
+	  ReadLittleEndian (FileVector, TmpComponent);
+	  FileVector.close();
+	  //	  TmpComponent = TmpVector[TmpIndex];
  	  WriteLittleEndian(OutputFile, TmpComponent); 	  
-	  TmpVector[i] = TmpComponent;
+	  //	  TmpVector[i] = TmpComponent;
 	}
       if ((i & 0x3fffl) == 0l)
       	{
