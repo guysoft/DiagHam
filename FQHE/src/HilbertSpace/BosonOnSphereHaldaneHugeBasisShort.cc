@@ -45,12 +45,14 @@
 #include <math.h>
 #include <fstream>
 #include <sys/time.h>
+#include <stdlib.h>
 
 
 using std::cout;
 using std::endl;
 using std::ofstream;
 using std::ifstream;
+using std::fstream;
 using std::ios;
 
 
@@ -139,25 +141,38 @@ BosonOnSphereHaldaneHugeBasisShort::BosonOnSphereHaldaneHugeBasisShort (char* fi
     ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);
   cout << "Hilbert space factorization done in " << Dt << "s" <<endl;
  
-  gettimeofday (&(TotalStartingTime), 0);
+//  gettimeofday (&(TotalStartingTime), 0);
 
-  ifstream FileHilbert;
-  FileHilbert.open(this->FermionHugeBasis->HilbertSpaceFileName, ios::binary | ios::in);
-  FileHilbert.seekg (this->FermionHugeBasis->FileHeaderSize, ios::beg);
-  unsigned long CurrentPartition;
-  for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
-    {
-      ReadLittleEndian(FileHilbert, CurrentPartition);
-      if (i != this->FermionHugeBasis->FindStateIndexFactorized(CurrentPartition))
-//      if (CurrentPartition != this->FermionHugeBasis->GetStateFactorized(i))
-	cout << i << " " << this->FermionHugeBasis->FindStateIndexFactorized(CurrentPartition) << " " << hex << CurrentPartition << " " << this->FermionHugeBasis->GetStateFactorized(i) << dec << endl;
-    }
-  FileHilbert.close();
+//   ifstream FileHilbert;
+//   FileHilbert.open(this->FermionHugeBasis->HilbertSpaceFileName, ios::binary | ios::in);
+//   FileHilbert.seekg (this->FermionHugeBasis->FileHeaderSize, ios::beg);
+//   unsigned long CurrentPartition;
+//   for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+//     {
+//       ReadLittleEndian(FileHilbert, CurrentPartition);
+//       if (i != this->FermionHugeBasis->FindStateIndexFactorized(CurrentPartition))
+// //      if (CurrentPartition != this->FermionHugeBasis->GetStateFactorized(i))
+// 	cout << i << " " << this->FermionHugeBasis->FindStateIndexFactorized(CurrentPartition) << " " << hex << CurrentPartition << " " << this->FermionHugeBasis->GetStateFactorized(i) << dec << endl;
+//     }
+//   FileHilbert.close();
 
-  gettimeofday (&(TotalEndingTime), 0);
-  Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
-    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);
-  cout << "Hilbert space consistency check done in " << Dt << "s" <<endl;
+//   long Test = 5;
+//   long TmpShift = 470;
+//   long TmpStep = 5;
+//   unsigned long* TmpStateArray = new unsigned long [Test];
+//   long* TmpIndexArray = new long[Test];
+//   for (long i = 0; i < Test; ++i)
+//     TmpStateArray[i] = this->FermionHugeBasis->GetStateFactorized((i * TmpStep) + TmpShift);
+//   this->FermionHugeBasis->FindMultipleStateIndexFactorized(TmpStateArray, Test, TmpIndexArray);
+//   for (long i = 0; i < Test; ++i)
+//     if (((i * TmpStep) + TmpShift) != TmpIndexArray[i])
+//       cout << ((i * TmpStep) + TmpShift) << " : " << TmpIndexArray[i] << " " << endl;
+ 
+//   gettimeofday (&(TotalEndingTime), 0);
+//   Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+//     ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);
+//   cout << "Hilbert space consistency check done in " << Dt << "s" <<endl;
+//  exit(0) ;
 
   this->NbrBosons = this->FermionHugeBasis->NbrFermions;
   this->IncNbrBosons = this->NbrBosons + 1;
@@ -707,26 +722,40 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomia
 // partialSave = save partial results in a given vector file
 // minIndex = start computing the Jack polynomial from the minIndex-th component
 // maxIndex = stop  computing the Jack polynomial up to the maxIndex-th component (0 if it has to be computed up to the end)
+// memory = amount of memory (in bytes) allowed for temporary vector storage (0 if 
 
-void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse(double alpha, char* partialSave, long minIndex, long maxIndex)
+void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse(double alpha, char* partialSave, long minIndex, long maxIndex, long memory)
 {
   if ((maxIndex <= 0) || (maxIndex >= this->LargeHilbertSpaceDimension))
     maxIndex = this->LargeHilbertSpaceDimension - 1l;
   double TmpComponent = 1.0;
+  long FileShift = 4l;
   if (minIndex <= 0)
     {
       ofstream File;
       File.open(partialSave, ios::binary | ios::out);
       WriteLittleEndian(File, this->HilbertSpaceDimension);  
       if (this->HilbertSpaceDimension == -1)
-	WriteLittleEndian(File, this->LargeHilbertSpaceDimension);  
+	{
+	  WriteLittleEndian(File, this->LargeHilbertSpaceDimension);  
+	  FileShift = 12l;
+	}
       WriteLittleEndian(File, TmpComponent);  
       File.close();
     }
   TmpComponent = 0.0;
+  
+  memory >>= 3;
+  if ((memory > this->LargeHilbertSpaceDimension) || (memory <= 0))
+    {
+      cout << "vector does not require temporary disk storage" << endl;
+      memory = this->LargeHilbertSpaceDimension;
+    }
+  double* TmpVectorBuffer = new double [memory];
+  long BufferGlobalIndex = 0l;
 
-  ofstream OutputFile;
-  OutputFile.open(partialSave, ios::binary | ios::out | ios::app);
+  fstream OutputFile;
+  OutputFile.open(partialSave, ios::in | ios::binary | ios::out);
 
   double InvAlpha =  2.0 / alpha;
 
@@ -745,14 +774,15 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse
   int ReducedNbrBosons = this->NbrBosons - 1;
   if (minIndex <= 0)
     minIndex = 1;
-  RealVector TmpVector (this->LargeHilbertSpaceDimension, true);
-  TmpVector[0l] = 1.0;
-  //  ifstream FileVector;
-  //  FileVector.open(partialSave, ios::binary | ios::in);
+  TmpVectorBuffer[0l] = 1.0;
   int MaxArraySize = ((this->NbrBosons * (this->NbrBosons - 1)) / 2) * (this->LzMax + 1);
   unsigned long* TmpStateArray = new unsigned long [MaxArraySize];
   long* TmpIndexArray = new long [MaxArraySize];
   double* TmpComponentArray = new double [MaxArraySize];
+  timeval TotalStartingTime;
+  timeval TotalEndingTime;
+  gettimeofday (&(TotalStartingTime), 0);
+
   for (long i = minIndex; i <= maxIndex; ++i)
     {
       double Rho = 0.0;
@@ -767,8 +797,6 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse
 	  for (int j = 0; j < this->NbrBosons; ++j)
 	    Rho += TmpMonomial[j] * (TmpMonomial[j] - 1.0 - InvAlpha * ((double) j));
 	  double Coefficient = 0.0;
-//	  ifstream FileVector;
-//	  FileVector.open(partialSave, ios::binary | ios::in);
 	  int NbrComputedComponents = 0;
 	  for (int j1 = 0; j1 < ReducedNbrBosons; ++j1)
 	    for (int j2 = j1 + 1; j2 < this->NbrBosons; ++j2)
@@ -805,58 +833,108 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse
 			TmpComponentArray[NbrComputedComponents] = Diff;
 			TmpStateArray[NbrComputedComponents] = TmpState;
 			++NbrComputedComponents;
-// 			long TmpIndex = this->FermionHugeBasis->FindStateIndexFactorized(TmpState);
-// 			if (TmpIndex < this->LargeHilbertSpaceDimension)
-// 			  {
-// 			    // 			    TmpComponent = TmpVector[TmpIndex] ;
-// // 			    Coefficient += Diff * TmpComponent;
-// 			  }
 		      }
 		  }
 	      }
-//	  FileVector.close();
-	  SortArrayDownOrdering(TmpStateArray, TmpComponentArray, NbrComputedComponents);
-	  ifstream FileVector;
-	  FileVector.open(partialSave, ios::binary | ios::in);
-	  FileVector.seekg (12l, ios::beg);
-	  long TmpStep = 0l;
+
+//        this sorted algorithm is slower then the unsorted one
+//
+// 	  SortArrayDownOrdering(TmpStateArray, TmpComponentArray, NbrComputedComponents);
+// 	  this->FermionHugeBasis->FindMultipleStateIndexFactorized(TmpStateArray, NbrComputedComponents, TmpIndexArray);
+// 	  long TmpStep = 0l;
+// 	  OutputFile.seekg (FileShift, ios::beg);
+// 	  for (int j = 0; j < NbrComputedComponents; ++j)
+// 	    {
+// 	      long TmpIndex = TmpIndexArray[j];
+// 	      if (TmpIndex < this->LargeHilbertSpaceDimension)
+// 		{		  
+// 		  if (TmpIndex < BufferGlobalIndex)
+// 		    {
+// 		      long TmpIndex2 = this->FermionHugeBasis->FindStateIndexFactorized(this->FermionHugeBasis->GetSymmetricState(TmpStateArray[j]));
+// 		      if ((TmpIndex2 >= BufferGlobalIndex) && (TmpIndex2 < i))
+// 			{
+// 			  TmpComponent = TmpVectorBuffer[TmpIndex2 % memory];
+// 			}
+// 		      else
+// 			{
+// 			  OutputFile.seekg (((TmpIndex - TmpStep) * sizeof(double)), ios::cur);
+// 			  TmpStep = TmpIndex + 1l;
+// 			  ReadLittleEndian (OutputFile, TmpComponent);
+// 			}
+// 		    }
+// 		  else
+// 		    {
+// 		      TmpComponent = TmpVectorBuffer[TmpIndex % memory];
+// 		    }
+// 		  Coefficient += TmpComponentArray[j] * TmpComponent;
+// 		}	      
+// 	    }
+
+
 	  for (int j = 0; j < NbrComputedComponents; ++j)
 	    {
 	      long TmpIndex = this->FermionHugeBasis->FindStateIndexFactorized(TmpStateArray[j]);
 	      if (TmpIndex < this->LargeHilbertSpaceDimension)
 		{		  
-		  //		  TmpComponent = TmpVector[TmpIndex] ;
-		  FileVector.seekg (((TmpIndex - TmpStep) * sizeof(double)), ios::cur);
-		  ReadLittleEndian (FileVector, TmpComponent);
-		  TmpStep = TmpIndex + 8l;
+		  if (TmpIndex < BufferGlobalIndex)
+		    {
+		      long TmpIndex2 = this->FermionHugeBasis->FindStateIndexFactorized(this->FermionHugeBasis->GetSymmetricState(TmpStateArray[j]));
+		      if ((TmpIndex2 >= BufferGlobalIndex) && (TmpIndex2 < i))
+			{
+			  TmpComponent = TmpVectorBuffer[TmpIndex2 % memory];
+			}
+		      else
+			{
+			  OutputFile.seekg ((TmpIndex * sizeof(double)) + FileShift, ios::beg);
+			  ReadLittleEndian (OutputFile, TmpComponent);
+			}
+		    }
+		  else
+		    {
+		      TmpComponent = TmpVectorBuffer[TmpIndex % memory];
+		    }
 		  Coefficient += TmpComponentArray[j] * TmpComponent;
 		}	      
 	    }
-	  FileVector.close();
+
+
 	  Coefficient *= InvAlpha;
 	  Coefficient /= (RhoRoot - Rho);
+	  OutputFile.seekg (0, ios::end);
  	  WriteLittleEndian(OutputFile, Coefficient);
-	  //	  TmpVector[i] = Coefficient;
+	  if (i >= memory)
+	    ++BufferGlobalIndex;
+	  TmpVectorBuffer[i % memory] = Coefficient;
 	}
       else
 	{
 	  long TmpIndex = this->FermionHugeBasis->FindStateIndexFactorized(TmpSymState);
-	  ifstream FileVector;
-	  FileVector.open(partialSave, ios::binary | ios::in);
-	  FileVector.seekg ((TmpIndex * sizeof(double)) + 12l, ios::beg);			    
-	  ReadLittleEndian (FileVector, TmpComponent);
-	  FileVector.close();
-	  //	  TmpComponent = TmpVector[TmpIndex];
+	  if (TmpIndex < BufferGlobalIndex)
+	    {
+	      OutputFile.seekg ((TmpIndex * sizeof(double)) + FileShift, ios::beg);
+	      ReadLittleEndian (OutputFile, TmpComponent);
+	    }
+	  else
+	    {
+	      TmpComponent = TmpVectorBuffer[TmpIndex % memory];
+	    }
+	  OutputFile.seekg (0, ios::end);
  	  WriteLittleEndian(OutputFile, TmpComponent); 	  
-	  //	  TmpVector[i] = TmpComponent;
+	  if (i >= memory)
+	    ++BufferGlobalIndex;
+	  TmpVectorBuffer[i % memory] = TmpComponent;
 	}
       if ((i & 0x3fffl) == 0l)
       	{
-      	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
+	  gettimeofday (&(TotalEndingTime), 0);
+     	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
       	  cout.flush();
+	  double Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+	    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);
+	  cout << "done in " << Dt << " s" << endl;
+	  gettimeofday (&(TotalStartingTime), 0);
       	}
     }
-  //  FileVector.close();
   OutputFile.close();
   delete[] TmpMonomial;
   delete[] TmpStateArray;

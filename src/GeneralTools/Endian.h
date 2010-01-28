@@ -32,7 +32,54 @@
 
 using std::ofstream;
 using std::ifstream;
+using std::fstream;
 
+
+// function to read Little Endian encoded variable from a file
+//
+// file = reference on the input file stream
+// var = reference on the variable to store the result
+
+template<class ClassName>
+void ReadLittleEndian (fstream& file, ClassName& var)
+{
+  file.read ((char*) &var, sizeof(ClassName));
+#ifdef __BIGENDIAN__
+  ClassName TmpVar = var;
+  unsigned char* TmpBin1 = (unsigned char*) &var;
+  unsigned char* TmpBin2 = (unsigned char*) &TmpVar;
+  int max = sizeof(ClassName) >> 1;
+  for (int i = 0; i < max; i++)
+    {
+      TmpBin1[i] = TmpBin2[sizeof(ClassName) - i -1];
+      TmpBin1[sizeof(ClassName) - i -1] = TmpBin2[i];
+    }
+#endif
+}
+
+// function to write Little Endian encoded variable from a file using 
+//
+// file = reference on the output file stream
+// var = reference on the variable to store the result
+
+template<class ClassName>
+void WriteLittleEndian (fstream& file, ClassName& var)
+{
+#ifdef __BIGENDIAN__
+  ClassName TmpVar = var;
+  unsigned char* TmpBin2 = (unsigned char*) &var;
+  unsigned char* TmpBin1 = (unsigned char*) &TmpVar;
+  int max = sizeof(ClassName) >> 1;
+  for (int i = 0; i < max; i++)
+    {
+      TmpBin1[i] = TmpBin2[sizeof(ClassName) - i -1];
+      TmpBin1[sizeof(ClassName) - i -1] = TmpBin2[i];
+    }
+  file.write ((char*) &TmpVar, sizeof(ClassName));
+#else
+  file.write ((char*) &var, sizeof(ClassName));
+#endif
+}
 
 // function to read Little Endian encoded variable from a file
 //

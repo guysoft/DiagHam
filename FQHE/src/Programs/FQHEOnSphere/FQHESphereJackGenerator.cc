@@ -57,6 +57,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption ('\n', "huge-fulldim", "indicate the full Hilbert space dimension (i.e. without squeezing) when using huge Hilbert space (0 if it has to be computed)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "file-size", "maximum file size (in MBytes) when using huge mode", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
+  (*SystemGroup) += new SingleIntegerOption  ('\n' ,"huge-vector", "maximum memory (in MBytes) that can allocated for buffering vector when using huge mode", 100);
   (*SystemGroup) += new BooleanOption ('\n', "disk-storage", "use disk storage in huge mode both for the Hilbert space and vectors");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "large-memory", "maximum memory (in kBytes) that can allocated for precalculations when using huge mode", 1);
   (*SystemGroup) += new BooleanOption  ('\n', "check-singularity", "display configurations which may produce singularities");
@@ -204,7 +205,7 @@ int main(int argc, char** argv)
 // 	      if (SymmetrizedBasis == false)    
 // 		InitialSpace->GenerateJackPolynomialSparse(Alpha, OutputFileName, MinIndex, MaxIndex);
 // 	      else
-	      InitialSpace->GenerateSymmetrizedJackPolynomialSparse(Alpha, OutputFileName, MinIndex, MaxIndex);
+	      InitialSpace->GenerateSymmetrizedJackPolynomialSparse(Alpha, OutputFileName, MinIndex, MaxIndex, Manager.GetInteger("huge-vector") << 20);
 	    }
 	  return 0;
 	}

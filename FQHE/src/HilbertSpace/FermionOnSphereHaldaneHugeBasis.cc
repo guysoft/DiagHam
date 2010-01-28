@@ -1231,7 +1231,6 @@ long FermionOnSphereHaldaneHugeBasis::FindStateIndexFactorized(unsigned long sta
   long PosMax = this->SuffixLookUpTable[CurrentState + 1];//0l;
   long PosMin = this->SuffixLookUpTable[CurrentState];//this->NbrRootSuffix - 1l;
   long PosMid = (PosMin + PosMax) >> 1;
-  //  cout << PosMin << " " << PosMid << " " << PosMax << " " << TmpSuffix << " " << this->SuffixLookUpTableSize << endl;
   CurrentState = this->RootSuffix[PosMid];
   while ((PosMax != PosMid) && (CurrentState != TmpSuffix))
     {
@@ -1246,23 +1245,18 @@ long FermionOnSphereHaldaneHugeBasis::FindStateIndexFactorized(unsigned long sta
       PosMid = (PosMin + PosMax) >> 1;
       CurrentState = this->RootSuffix[PosMid];
     }
-//  cout << PosMin << " " << PosMid << " " << PosMax << endl;
   long TmpSuffixPos = PosMin;
   if (CurrentState == TmpSuffix)
     TmpSuffixPos = PosMid;
   else
     if ((this->RootSuffix[PosMin] != TmpSuffix) && (this->RootSuffix[PosMax] != TmpSuffix))
       return this->LargeHilbertSpaceDimension;
-//  cout << CurrentState << " " << TmpSuffix << endl;
   TmpSuffix = (unsigned int) (stateDescription & this->RootPrefixMask);
   PosMax = 0l;
   PosMin = this->RootSuffixSectorSize[TmpSuffixPos] - 1l;
   PosMid = (PosMin + PosMax) >> 1;
-//  cout << "TmpSuffixPos = " << TmpSuffixPos << endl;
   unsigned int* TmpPrefixSector = this->RootSuffixSectorPositions[TmpSuffixPos];
   CurrentState = TmpPrefixSector[PosMid];
-//  cout << PosMin << " " << PosMid << " " << PosMax << endl;
-//  cout << CurrentState << " " << TmpSuffix << endl;
   while ((PosMax != PosMid) && (CurrentState != TmpSuffix))
     {
       if (CurrentState > TmpSuffix)
@@ -1295,9 +1289,14 @@ void FermionOnSphereHaldaneHugeBasis::FindMultipleStateIndexFactorized(unsigned 
 {
   unsigned int TmpSuffix = (unsigned int) (stateDescriptions[0] >> this->RootSuffixShift);
   unsigned int CurrentState = TmpSuffix >> this->SuffixLookUpTableShift;
-  long PosMax = this->SuffixLookUpTable[CurrentState + 1];//0l;
-  long PosMin = this->SuffixLookUpTable[CurrentState];//this->NbrRootSuffix - 1l;
+  long PosMax = this->SuffixLookUpTable[CurrentState + 1];
+  long PosMin = this->SuffixLookUpTable[CurrentState];
   long PosMid = (PosMin + PosMax) >> 1;
+  long PosPrefixMax = 0l;
+  long PosPrefixMin = 0l;
+  long PosPrefixMid = 0l;
+  unsigned int* TmpPrefixSector = 0;
+  unsigned int TmpPrefix = 0;
   CurrentState = this->RootSuffix[PosMid];
   while ((PosMax != PosMid) && (CurrentState != TmpSuffix))
     {
@@ -1313,45 +1312,157 @@ void FermionOnSphereHaldaneHugeBasis::FindMultipleStateIndexFactorized(unsigned 
       CurrentState = this->RootSuffix[PosMid];
     }
   long TmpSuffixPos = PosMin;
-  if (CurrentState == TmpSuffix)
-    TmpSuffixPos = PosMid;
-  else
-    if ((this->RootSuffix[PosMin] != TmpSuffix) && (this->RootSuffix[PosMax] != TmpSuffix))
-      indices[0] = this->LargeHilbertSpaceDimension;
-  TmpSuffix = (unsigned int) (stateDescriptions[0] & this->RootPrefixMask);
-  PosMax = 0l;
-  PosMin = this->RootSuffixSectorSize[TmpSuffixPos] - 1l;
-  PosMid = (PosMin + PosMax) >> 1;
-  unsigned int* TmpPrefixSector = this->RootSuffixSectorPositions[TmpSuffixPos];
-  CurrentState = TmpPrefixSector[PosMid];
-  while ((PosMax != PosMid) && (CurrentState != TmpSuffix))
+  if ((this->RootSuffix[PosMin] != TmpSuffix) && (this->RootSuffix[PosMax] != TmpSuffix))
     {
-      if (CurrentState > TmpSuffix)
+      TmpSuffixPos = PosMid;
+      indices[0] = this->LargeHilbertSpaceDimension;
+    }
+  else
+    {
+      if (CurrentState == TmpSuffix)
+	TmpSuffixPos = PosMid;
+      TmpPrefix = (unsigned int) (stateDescriptions[0] & this->RootPrefixMask);
+      PosPrefixMax = 0l;
+      PosPrefixMin = this->RootSuffixSectorSize[TmpSuffixPos] - 1l;
+      PosPrefixMid = (PosPrefixMin + PosPrefixMax) >> 1;
+      TmpPrefixSector = this->RootSuffixSectorPositions[TmpSuffixPos];
+      CurrentState = TmpPrefixSector[PosPrefixMid];
+      while ((PosPrefixMax != PosPrefixMid) && (CurrentState != TmpPrefix))
 	{
-	  PosMax = PosMid;
+	  if (CurrentState > TmpPrefix)
+	    {
+	      PosPrefixMax = PosPrefixMid;
+	    }
+	  else
+	    {
+	      PosPrefixMin = PosPrefixMid;
+	    } 
+	  PosPrefixMid = (PosPrefixMin + PosPrefixMax) >> 1;
+	  CurrentState = TmpPrefixSector[PosPrefixMid];
+	}
+      if (CurrentState == TmpPrefix)
+	{
+	  indices[0] = PosPrefixMid + this->RootSuffixOffset[TmpSuffixPos];
 	}
       else
-	{
-	  PosMin = PosMid;
-	} 
-      PosMid = (PosMin + PosMax) >> 1;
-      CurrentState = TmpPrefixSector[PosMid];
+	if ((TmpPrefixSector[PosPrefixMin] != TmpPrefix) && (TmpPrefixSector[PosPrefixMax] != TmpPrefix))
+	  indices[0] = this->LargeHilbertSpaceDimension;
+	else
+	  {
+	    PosPrefixMax = PosPrefixMin;
+	    indices[0] = PosPrefixMin + this->RootSuffixOffset[TmpSuffixPos];      
+	  }
     }
-  if (CurrentState == TmpSuffix)
-    indices[0] = PosMid + this->RootSuffixOffset[TmpSuffixPos];
-  else
-    if ((TmpPrefixSector[PosMin] != TmpSuffix) && (TmpPrefixSector[PosMax] != TmpSuffix))
-      indices[0] = this->LargeHilbertSpaceDimension;
-    else
-      indices[0] = PosMin + this->RootSuffixOffset[TmpSuffixPos];      
   for (int i = 1; i < nbrStates; ++i)
     {
-      unsigned int TmpSuffix2 = (unsigned int) (stateDescriptions[0] >> this->RootSuffixShift);
+      unsigned int TmpSuffix2 = (unsigned int) (stateDescriptions[i] >> this->RootSuffixShift);
       if (TmpSuffix == TmpSuffix2)
 	{
+	  if (TmpPrefixSector != 0)
+	    {
+	      PosPrefixMin = this->RootSuffixSectorSize[TmpSuffixPos] - 1l;
+	      PosPrefixMid = (PosPrefixMin + PosPrefixMax) >> 1;
+	      TmpPrefix = (unsigned int) (stateDescriptions[i] & this->RootPrefixMask);
+	      CurrentState = TmpPrefixSector[PosPrefixMid];
+	      while ((PosPrefixMax != PosPrefixMid) && (CurrentState != TmpPrefix))
+		{
+		  if (CurrentState > TmpPrefix)
+		    {
+		      PosPrefixMax = PosPrefixMid;
+		    }
+		  else
+		    {
+		      PosPrefixMin = PosPrefixMid;
+		    } 
+		  PosPrefixMid = (PosPrefixMin + PosPrefixMax) >> 1;
+		  CurrentState = TmpPrefixSector[PosPrefixMid];
+		}
+	      if (CurrentState == TmpPrefix)
+		{
+		  indices[i] = PosPrefixMid + this->RootSuffixOffset[TmpSuffixPos];
+		}
+	      else
+		{
+		  PosPrefixMax = PosPrefixMid;
+		  if ((TmpPrefixSector[PosPrefixMin] != TmpPrefix) && (TmpPrefixSector[PosPrefixMax] != TmpPrefix))
+		    {
+		      indices[i] = this->LargeHilbertSpaceDimension;
+		    }
+		  else
+		    {
+		      indices[i] = PosPrefixMin + this->RootSuffixOffset[TmpSuffixPos];      
+		    }	  
+		}
+	    }
+	  else
+	    indices[i] = this->LargeHilbertSpaceDimension;
 	}
       else
 	{
+	  TmpSuffix = TmpSuffix2;
+	  CurrentState = TmpSuffix >> this->SuffixLookUpTableShift;
+	  PosMin = this->SuffixLookUpTable[CurrentState + 1];
+	  if (PosMin > PosMax)
+	    PosMax = PosMin;
+	  PosMin = this->SuffixLookUpTable[CurrentState];
+	  PosMid = (PosMin + PosMax) >> 1;
+	  CurrentState = this->RootSuffix[PosMid];
+	  while ((PosMax != PosMid) && (CurrentState != TmpSuffix))
+	    {
+	      if (CurrentState > TmpSuffix)
+		{
+		  PosMax = PosMid;
+		}
+	      else
+		{
+		  PosMin = PosMid;
+		} 
+	      PosMid = (PosMin + PosMax) >> 1;
+	      CurrentState = this->RootSuffix[PosMid];
+	    }
+	  TmpSuffixPos = PosMin;
+	  if ((this->RootSuffix[PosMin] != TmpSuffix) && (this->RootSuffix[PosMax] != TmpSuffix))
+	    {
+	      TmpSuffixPos = PosMid;
+	      TmpPrefixSector = 0;
+	      indices[i] = this->LargeHilbertSpaceDimension;
+	    }
+	  else
+	    {
+	      if (CurrentState == TmpSuffix)
+		TmpSuffixPos = PosMid;
+	      TmpPrefix = (unsigned int) (stateDescriptions[i] & this->RootPrefixMask);
+	      PosPrefixMax = 0l;
+	      PosPrefixMin = this->RootSuffixSectorSize[TmpSuffixPos] - 1l;
+	      PosPrefixMid = (PosPrefixMin + PosPrefixMax) >> 1;
+	      TmpPrefixSector = this->RootSuffixSectorPositions[TmpSuffixPos];
+	      CurrentState = TmpPrefixSector[PosPrefixMid];
+	      while ((PosPrefixMax != PosPrefixMid) && (CurrentState != TmpPrefix))
+		{
+		  if (CurrentState > TmpPrefix)
+		    {
+		      PosPrefixMax = PosPrefixMid;
+		    }
+		  else
+		    {
+		      PosPrefixMin = PosPrefixMid;
+		    } 
+		  PosPrefixMid = (PosPrefixMin + PosPrefixMax) >> 1;
+		  CurrentState = TmpPrefixSector[PosPrefixMid];
+		}
+	      if (CurrentState == TmpPrefix)
+		{
+		  indices[i] = PosPrefixMid + this->RootSuffixOffset[TmpSuffixPos];
+		}
+	      else
+		if ((TmpPrefixSector[PosPrefixMin] != TmpPrefix) && (TmpPrefixSector[PosPrefixMax] != TmpPrefix))
+		  indices[i] = this->LargeHilbertSpaceDimension;
+		else
+		  {
+		    PosPrefixMax = PosPrefixMin;
+		    indices[i] = PosPrefixMin + this->RootSuffixOffset[TmpSuffixPos];      
+		  }
+	    }
 	}
     }
 }
