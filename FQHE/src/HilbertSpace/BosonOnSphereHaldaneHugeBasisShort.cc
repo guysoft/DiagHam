@@ -774,6 +774,7 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse
   TmpVectorBuffer[0l] = 1.0;
   int MaxArraySize = ((this->NbrBosons * (this->NbrBosons - 1)) / 2) * (this->LzMax + 1);
   long NbrBlocks = 10;
+  long DisplayStep = (this->LargeHilbertSpaceDimension / (1000 * NbrBlocks)) * NbrBlocks;
   long** TmpIndexArray = new long* [NbrBlocks];
   double** TmpComponentArray = new double* [NbrBlocks];
   unsigned long** TmpStateArray = new unsigned long* [NbrBlocks]; 
@@ -789,7 +790,7 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse
   timeval TotalEndingTime;
   gettimeofday (&(TotalStartingTime), 0);
 
-  for (long i = minIndex; i <= maxIndex; i += NbrBlocks)
+  for (long i = minIndex; i <= maxIndex;)
     {
       long TmpMaxIndex = i + NbrBlocks - 1l;
       long LimNbrBlocks = NbrBlocks;
@@ -838,6 +839,7 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse
 	      if (i >= memory)
 		++BufferGlobalIndex;
 	      TmpVectorBuffer[i % memory] = Coefficient;
+	      ++i;
 	    }
 	  else
 	    {
@@ -856,17 +858,18 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse
 	      if (i >= memory)
 		++BufferGlobalIndex;
 	      TmpVectorBuffer[i % memory] = TmpComponent;
+	      ++i;
 	    }
 	}
-      if ((i & 0x3fffl) == 0l)
+      if ((i & DisplayStep) == 0l)
       	{
-	  gettimeofday (&(TotalEndingTime), 0);
+	  //	  gettimeofday (&(TotalEndingTime), 0);
      	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
       	  cout.flush();
-	  double Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
-	    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);
-	  cout << "done in " << Dt << " s" << endl;
-	  gettimeofday (&(TotalStartingTime), 0);
+	  //	  double Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+	  //	    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);
+	  //	  cout << "done in " << Dt << " s" << endl;
+	  //	  gettimeofday (&(TotalStartingTime), 0);
       	}
     }
   OutputFile.close();
