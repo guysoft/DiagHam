@@ -57,6 +57,11 @@ class BosonOnSphereHaldaneHugeBasisShort :  public BosonOnSphereShort
   // the fermionic huge Hilbert space associated to the bosonic one
   FermionOnSphereHaldaneHugeBasis* FermionHugeBasis;
 
+  // temporary array to store monomial representation
+  unsigned long* TemporaryMonomial;
+  unsigned long* TemporaryMonomial2;
+
+
  public:
 
   // default constructor
@@ -210,6 +215,17 @@ class BosonOnSphereHaldaneHugeBasisShort :  public BosonOnSphereShort
   // nbrComponents = number of indices to compute (0 if they all have to be computed from minIndex)
   // return value = quare normalization 
   virtual double JackSqrNormalization (RealVector& outputVector, long minIndex = 0l, long nbrComponents = 0l);
+
+ protected :
+  
+  // core part of the Jack generator using the Lz<->-Lz symmetry and the factorized algorithm
+  //
+  // alpha = value of the Jack polynomial alpha coefficient
+  // partialSave = save partial results in a given vector file
+  // minIndex = start computing the Jack polynomial from the minIndex-th component
+  // maxIndex = stop  computing the Jack polynomial up to the maxIndex-th component (0 if it has to be computed up to the end)
+  // memory = amount of memory (in bytes) allowed for temporary vector storage (0 if   
+  virtual void GenerateSymmetrizedJackPolynomialFactorizedCore(double invAlpha, unsigned long maxRoot, long minIndex, long maxIndex, unsigned long** stateArray, double** componentArray, long** indexArray, int* nbrComputedComponents, double* rhoArray);
 
 };
 
