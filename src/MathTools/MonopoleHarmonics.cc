@@ -42,6 +42,8 @@ MonopoleHarmonics::MonopoleHarmonics(int twoQ, int maxOrderN, int twoM)
   
   this->InitializeNorms();
   int maxDegreeP = MaxOrderN + ((ChargeTwoQ<0?-ChargeTwoQ:ChargeTwoQ)-MomentumTwoM)/2;
+  if (maxDegreeP<0)
+    maxDegreeP = 0;
   this->JacobiOffset = ((ChargeTwoQ<0?-ChargeTwoQ:ChargeTwoQ)-MomentumTwoM)/2;
   this->Jacobi = new JacobiPolynomials(maxDegreeP, (-ChargeTwoQ+MomentumTwoM)/2,(ChargeTwoQ+MomentumTwoM)/2 );
 }
@@ -85,7 +87,9 @@ MonopoleHarmonics::~MonopoleHarmonics ()
 // return = function value of P_n(x)
 double MonopoleHarmonics::GetValue(int n, double x)
 {
-  double XFactor = std::pow(1.0-x,(MomentumTwoM-ChargeTwoQ)/2.0)*std::pow(1.0+x,(MomentumTwoM+ChargeTwoQ)/2.0);
+  if ((n>0)&&((x==1.0)||(x==-1.0)))
+    return 0.0;
+  double XFactor = std::pow(1.0-x,(MomentumTwoM-ChargeTwoQ)/4.0)*std::pow(1.0+x,(MomentumTwoM+ChargeTwoQ)/4.0);
   double JacobiValue = Jacobi->GetValue(JacobiOffset+n,x);
   return NormPrefactor[n] * JacobiValue * XFactor;
 }
@@ -96,12 +100,26 @@ double MonopoleHarmonics::GetValue(int n, double x)
 // return = function value of P_n(x)
 double * MonopoleHarmonics::GetValues(double x)
 {
-  double XFactor = std::pow(1.0-x,(MomentumTwoM-ChargeTwoQ)/4.0)*std::pow(1.0+x,(MomentumTwoM+ChargeTwoQ)/4.0);
-  double *JacobiValues = Jacobi->GetValues(x);
-  for (int i=0; i<=MaxOrderN; ++i)
+
+  if ((x==1.0)||(x==-1.0))
     {
-      FunctionValues[i] = NormPrefactor[i] * JacobiValues[JacobiOffset+i] * XFactor;
-      cout << "NormPrefactor["<<i<<"]="<<NormPrefactor[i]<<" ,JacobiValues["<<JacobiOffset+i<<"]="<<JacobiValues[JacobiOffset+i]<<" Xfx="<<XFactor<<endl;
+      FunctionValues[0] = NormPrefactor[0];
+      for (int i=1; i<=MaxOrderN; ++i)
+	FunctionValues[i]=0.0;
+    }
+  else
+    {
+      double XFactor = std::pow(1.0-x,(MomentumTwoM-ChargeTwoQ)/4.0)*std::pow(1.0+x,(MomentumTwoM+ChargeTwoQ)/4.0);
+      double *JacobiValues = Jacobi->GetValues(x);
+      int minN=(JacobiOffset>0?0:-JacobiOffset);
+      for (int i=0; i<minN; ++i)
+	FunctionValues[i] = 0.0;
+      for (int i=minN; i<=MaxOrderN; ++i)
+	{
+	  FunctionValues[i] = NormPrefactor[i] * JacobiValues[JacobiOffset+i] * XFactor;
+	  //cout << "NormPrefactor["<<i<<"]="<<NormPrefactor[i]<<" ,JacobiValues["<<JacobiOffset+i<<", "<< (-ChargeTwoQ+MomentumTwoM)/2
+	  //     << ", " << (ChargeTwoQ+MomentumTwoM)/2 <<"; "<<x<<"]="<<JacobiValues[JacobiOffset+i]<<" Xfx="<<XFactor<<endl;
+	}
     }
   return FunctionValues;
 }

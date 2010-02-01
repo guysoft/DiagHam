@@ -462,11 +462,13 @@ long FermionSU2ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, 
       || ((((2 * lzMax + nbrFermions + 1 - totalSpin) * nbrFermions) >> 1) < totalLz))
     return 0l;
     
-  if (nbrFermions == 1) 
-    if (lzMax >= totalLz)
-      return 1l;
-    else
-      return 0l;
+  if (nbrFermions == 1)
+    {
+      if (lzMax >= totalLz)
+	return 1l;
+      else
+	return 0l;
+    }
 
   if ((lzMax == 0)  && (totalLz != 0))
     return 0l;
@@ -501,12 +503,13 @@ long FermionSU2SU2ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMa
       || ((((2 * lzMax + nbrFermions + 1 - totalSpin) * nbrFermions) >> 1) < totalLz) || ((((2 * lzMax + nbrFermions + 1 - totalIsospin) * nbrFermions) >> 1) < totalLz))
     return 0l;
     
-  if (nbrFermions == 1) 
-    if (lzMax >= totalLz)
-      return 1l;
-    else
-      return 0l;
-
+  if (nbrFermions == 1)
+    {
+      if (lzMax >= totalLz)
+	return 1l;
+      else
+	return 0l;
+    }
   if ((lzMax == 0)  && (totalLz != 0))
     return 0l;
 
@@ -597,14 +600,16 @@ long FermionSU4ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, 
       || ((((2 * lzMax + nbrFermions + 1 - totalIsospin) * nbrFermions) >> 1) < totalLz)
       || ((((2 * lzMax + nbrFermions + 1 - totalEntanglement) * nbrFermions) >> 1) < totalLz))
     return 0l;
-    
+  
   if ((nbrFermions == 0) && (totalLz == 0) && (totalSpin == 0) && (totalIsospin == 0) && (totalEntanglement == 0))
     return 1l;
-  if (nbrFermions == 1) 
-    if ((lzMax >= totalLz) && (totalEntanglement != (totalSpin ^ totalIsospin)))
-      return 1l;
-    else
-      return 0l;
+  if (nbrFermions == 1)
+    {
+      if ((lzMax >= totalLz) && (totalEntanglement != (totalSpin ^ totalIsospin)))
+	return 1l;
+      else
+	return 0l;
+    }
 
   if ((lzMax == 0)  && (totalLz != 0))
     return 0l;
@@ -696,11 +701,13 @@ long FermionSU3ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, 
     return 0l;
   if ((nbrFermions == 0) && (totalLz == 0))
     return 1l;
-  if (nbrFermions == 1) 
-    if (lzMax >= totalLz)
-      return 1l;
-    else
-      return 0l;
+  if (nbrFermions == 1)
+    {
+      if (lzMax >= totalLz)
+	return 1l;
+      else
+	return 0l;
+    }
   unsigned long Tmp = 0l;
   if (nbrFermions >= 3)
     {

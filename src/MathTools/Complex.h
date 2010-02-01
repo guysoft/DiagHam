@@ -45,12 +45,6 @@
 using std::ostream;
 
 
-class Complex;
-
-//define i
-Complex I();
-
-
 class Complex
 {
 
@@ -173,7 +167,7 @@ public:
   friend Complex pow (const double y,const Complex& z);
 
 //define i
-  friend Complex I();
+  friend inline Complex I();
 
   // Output Stream overload
   //
@@ -469,6 +463,14 @@ inline Complex& Complex::AddMultiply(const Complex& z, double x)
   this->Im+=z.Im*x;
   return *this;
 }
+
+//define i
+
+inline Complex I()
+{
+  return Complex(0.0, 1.0);
+}
+
   
 
 // basic mathematical functions
@@ -632,13 +634,6 @@ inline Complex pow (const Complex& z, const Complex& y)
   if (y == Complex (0.0, 0.0))
     return Complex (0.0, 0.0);
   return exp(y * ln(z));
-}
-
-//define i
-
-inline Complex I()
-{
-  return Complex(0.0, 1.0);
 }
 
 // Output Stream overload

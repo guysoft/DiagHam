@@ -24,6 +24,9 @@ JacobiPolynomials::JacobiPolynomials()
   this->CNMinusOne = NULL;
   this->A1Zero = 0.5*(this->ParameterA-this->ParameterB);
   this->A1One = 0.5*(this->ParameterA+this->ParameterB)+1.0;
+  this->ExplicitExpansionPrefactors=new double*[MaxDegreeN+1];
+  for (int i=0; i<=MaxDegreeN; ++i)
+    this->ExplicitExpansionPrefactors [i] = NULL; 
   this->LastN = -1;
 
 }
@@ -36,6 +39,11 @@ JacobiPolynomials::JacobiPolynomials()
 // precision = required precision
 JacobiPolynomials::JacobiPolynomials(int maxDegreeN, double a, double b)
 {
+  if (maxDegreeN<0)
+    {
+      cout << "JacobiPolynomials not implemented for negative degree n"<<endl;
+      exit(1);
+    }
   this->ParameterA=a;
   this->ParameterB=b;
   this->MaxDegreeN=maxDegreeN;
@@ -49,6 +57,9 @@ JacobiPolynomials::JacobiPolynomials(int maxDegreeN, double a, double b)
   this->FunctionValues[0]=1.0;
   this->A1Zero = 0.5*(this->ParameterA-this->ParameterB);
   this->A1One = 0.5*(this->ParameterA+this->ParameterB)+1.0;
+  this->ExplicitExpansionPrefactors=new double*[MaxDegreeN+1];
+  for (int i=0; i<=MaxDegreeN; ++i)
+    this->ExplicitExpansionPrefactors [i] = NULL; 
 
   this->InitializeRecursion();
 
@@ -80,6 +91,18 @@ JacobiPolynomials::JacobiPolynomials (const JacobiPolynomials& p)
 	  this->CNMinusOne[i] = p.CNMinusOne[i];
 	}
     }
+  this->ExplicitExpansionPrefactors=new double*[MaxDegreeN+1];
+  for (int i=0; i<=MaxDegreeN; ++i)
+    if (p.ExplicitExpansionPrefactors [i] != NULL)
+      {
+	this->ExplicitExpansionPrefactors[i]=new double[i+1];
+	for (int j=0; j<=i; ++j)
+	  this->ExplicitExpansionPrefactors[i][j]=p.ExplicitExpansionPrefactors[i][j];
+      }
+    else
+      {
+	this->ExplicitExpansionPrefactors[i]=NULL;
+      }
 
   this->A1Zero = 0.5*(this->ParameterA-this->ParameterB);
   this->A1One = 0.5*(this->ParameterA+this->ParameterB)+1.0;
@@ -99,6 +122,10 @@ JacobiPolynomials::~JacobiPolynomials ()
       delete [] this->CNLinear;
       delete [] this->CNMinusOne;
     }
+  for (int i=0; i<=MaxDegreeN; ++i)
+    if (this->ExplicitExpansionPrefactors [i] != NULL)
+      delete [] this->ExplicitExpansionPrefactors[i];
+  delete [] this->ExplicitExpansionPrefactors;
   delete [] this->FunctionValues;
 }
 
@@ -159,14 +186,27 @@ void JacobiPolynomials::RunRecursion(int &limitN, double x)
       limitN=this->MaxDegreeN;
     }
   for (int n=2; n<=limitN; ++n)
-    this->FunctionValues[n] = ((CNConst[n-2] + CNLinear[n-2]*x)*this->FunctionValues[n-1] - CNMinusOne[n-2]*this->FunctionValues[n-2])/CNPlusOne[n-2];
+    {
+      if (fabs(CNPlusOne[n-2])>1e-12)
+	{
+	  double A = (CNConst[n-2] + CNLinear[n-2]*x)*this->FunctionValues[n-1];
+	  double B = CNMinusOne[n-2]*this->FunctionValues[n-2];
+	  double C=A-B;
+	  if (fabs(fabs(C)-fabs(A))<1e-8)
+	    this->FunctionValues[n] = this->GetExplicitFunctionValue(n,x);
+	  else
+	    this->FunctionValues[n] = C/CNPlusOne[n-2];
+	}
+      else
+	{
+	  this->FunctionValues[n] = this->GetExplicitFunctionValue(n,x);
+	}
+    }
 }
-
 
 // initialize recursion coefficients
 void JacobiPolynomials::InitializeRecursion()
 {
-  FactorialCoefficient Pochammer;
   double SumAB = this->ParameterA+this->ParameterB;
   for (int n=1; n<this->MaxDegreeN; ++n)
     {
@@ -175,4 +215,59 @@ void JacobiPolynomials::InitializeRecursion()
       CNLinear[n-1] = (2.0*n+SumAB)*(2.0*n+SumAB+1.0)*(2.0*n+SumAB+2.0);
       CNMinusOne[n-1] = 2.0*(n+this->ParameterA)*(n+this->ParameterB)*(2.0*n+SumAB+2.0);
     }
+}
+
+// get the value of the function from a direct series expansion rather than recursively
+// n = degree (must be <=MaxDegreeN)
+// x = argument
+// return = function value of P_n(x)
+double JacobiPolynomials::GetExplicitFunctionValue(int n, double x)
+{
+  if (ExplicitExpansionPrefactors[n]==NULL)
+    {
+      if ((fabs(this->ParameterA-nearbyint(this->ParameterA))>1e-12)||(fabs(this->ParameterB-nearbyint(this->ParameterB))>1e-12))
+	{
+	  cout << "Cannot perform explicit evaluation except for integer values of alpha and beta in JacobiPolynomial"<<endl;
+	  exit(1);
+	}
+      int A=(int)nearbyint(this->ParameterA);
+      int B=(int)nearbyint(this->ParameterB);
+      FactorialCoefficient Prefactor;
+      this->ExplicitExpansionPrefactors[n]=new double[n+1];
+      for (int m=0; m<-B; ++m)
+	this->ExplicitExpansionPrefactors[n][m]=0.0;
+      for (int m=n+A+1; m<=n; ++m)
+	this->ExplicitExpansionPrefactors[n][m]=0.0;
+      int minM=(B>=0?0:-B);
+      int maxM=(A>=0?n:n+A);
+      for (int m=minM; m<=maxM; ++m)
+	{
+	  Prefactor.SetToOne();
+
+	  Prefactor.FactorialMultiply(n+A);
+	  Prefactor.FactorialDivide(n+A-m);
+	  Prefactor.FactorialDivide(m);
+
+	  Prefactor.FactorialMultiply(n+B);
+	  Prefactor.FactorialDivide(n-m);
+	  Prefactor.FactorialDivide(B+m);
+
+	  Prefactor.Power2Divide(n);
+
+	  this->ExplicitExpansionPrefactors[n][m]=Prefactor.GetNumericalValue();
+	}
+    }
+  double Result=0.0;
+  for (int m=0; m<=n; ++m)
+    {
+      double XMinus1=x-1.0;
+      double Term=1.0;
+      for (int k=0; k<n-m; ++k)
+	Term*=XMinus1;
+      double XPlus1=x+1.0;
+      for (int k=0; k<m; ++k)
+	Term*=XPlus1;
+      Result+=Term*this->ExplicitExpansionPrefactors[n][m];
+    }
+  return Result;
 }

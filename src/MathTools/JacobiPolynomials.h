@@ -44,7 +44,6 @@ using std::ostream;
 
 class JacobiPolynomials
 {
-
  private:
 
   // conjugation parameters alpha, beta
@@ -69,6 +68,9 @@ class JacobiPolynomials
   // array holding the function values of the degree n functions for the last argument
   double LastArgument;
   double *FunctionValues;
+
+  // table of prefactors for explicit expansion
+  double **ExplicitExpansionPrefactors;
 
   // (optional) last degree requested
   int LastN;
@@ -102,6 +104,12 @@ class JacobiPolynomials
   // x = argument
   // return = function value of P_n(x)
   double GetValue(int n, double x);
+
+  // get the value of the function from a direct series expansion rather than recursively
+  // n = degree (must be <=MaxDegreeN)
+  // x = argument
+  // return = function value of P_n(x)
+  double GetExplicitFunctionValue(int n, double x);
 
   // get the value of the function for a given coordinate z
   //
