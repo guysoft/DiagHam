@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <cmath>
+#include <cstdlib>
 
 using std::cout;
 using std::endl;
