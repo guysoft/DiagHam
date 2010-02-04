@@ -61,6 +61,7 @@ class BosonOnSphereHaldaneHugeBasisShort :  public BosonOnSphereShort
   unsigned long* TemporaryMonomial;
   unsigned long* TemporaryMonomial2;
 
+  friend class FQHESphereJackGeneratorOperation;
 
  public:
 
@@ -220,11 +221,16 @@ class BosonOnSphereHaldaneHugeBasisShort :  public BosonOnSphereShort
   
   // core part of the Jack generator using the Lz<->-Lz symmetry and the factorized algorithm
   //
-  // alpha = value of the Jack polynomial alpha coefficient
+  // invAlpha = inverse of the Jack polynomial alpha coefficient
+  // maxRoot = root partition (in fermionic binary representation)
   // partialSave = save partial results in a given vector file
   // minIndex = start computing the Jack polynomial from the minIndex-th component
   // maxIndex = stop  computing the Jack polynomial up to the maxIndex-th component (0 if it has to be computed up to the end)
-  // memory = amount of memory (in bytes) allowed for temporary vector storage (0 if   
+  // indexArray = array where state indices are stored
+  // stateArray = array use to store computed state description
+  // componentArray = array where computed component numerical factors are stored
+  // nbrComputedComponentArray = number of connected components associated to each state through the Jack generator
+  // rhoArray = rho factor associated to each state
   virtual void GenerateSymmetrizedJackPolynomialFactorizedCore(double invAlpha, unsigned long maxRoot, long minIndex, long maxIndex, unsigned long** stateArray, double** componentArray, long** indexArray, int* nbrComputedComponents, double* rhoArray);
 
 };

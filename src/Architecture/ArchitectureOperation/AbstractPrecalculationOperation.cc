@@ -49,6 +49,27 @@ void AbstractPrecalculationOperation::SetIndicesRange (const int& firstComponent
 {
   this->FirstComponent = firstComponent;
   this->NbrComponent = nbrComponent;
+  this->LargeFirstComponent = (long) firstComponent;
+  this->LargeNbrComponent = (long) nbrComponent;
+}
+
+// set range of indices
+// 
+// firstComponent = index of the first component
+// nbrComponent = number of component
+
+void AbstractPrecalculationOperation::SetIndicesRange (const long& firstComponent, const long& nbrComponent)
+{
+  this->LargeFirstComponent = firstComponent;
+  this->LargeNbrComponent = nbrComponent;
+  if (this->LargeFirstComponent < (1l << 30))
+    this->FirstComponent = (int) this->LargeFirstComponent;    
+  else
+    this->FirstComponent = 0;
+  if (this->LargeNbrComponent < (1l << 30))
+    this->NbrComponent = (int) this->LargeNbrComponent;    
+  else
+    this->NbrComponent = 0;
 }
 
 // apply operation for SMP architecture
@@ -58,8 +79,8 @@ void AbstractPrecalculationOperation::SetIndicesRange (const int& firstComponent
 
 bool AbstractPrecalculationOperation::ArchitectureDependentApplyOperation(SMPArchitecture* architecture)
 {
-  int Step = this->NbrComponent / architecture->GetNbrThreads();
-  int TmpFirstComponent = this->FirstComponent;
+  long Step = this->LargeNbrComponent / ((long) architecture->GetNbrThreads());
+  long TmpFirstComponent = this->LargeFirstComponent;
   int ReducedNbrThreads = architecture->GetNbrThreads() - 1;
   AbstractPrecalculationOperation** TmpOperations = new AbstractPrecalculationOperation* [architecture->GetNbrThreads()];
   for (int i = 0; i < ReducedNbrThreads; ++i)
@@ -70,7 +91,7 @@ bool AbstractPrecalculationOperation::ArchitectureDependentApplyOperation(SMPArc
       TmpFirstComponent += Step;
     }
   TmpOperations[ReducedNbrThreads] = (AbstractPrecalculationOperation*) this->Clone();
-  TmpOperations[ReducedNbrThreads]->SetIndicesRange(TmpFirstComponent, this->NbrComponent + this->FirstComponent - TmpFirstComponent);  
+  TmpOperations[ReducedNbrThreads]->SetIndicesRange(TmpFirstComponent, this->LargeNbrComponent + this->LargeFirstComponent - TmpFirstComponent);  
   architecture->SetThreadOperation(TmpOperations[ReducedNbrThreads], ReducedNbrThreads);
   architecture->SendJobs();
   for (int i = 0; i < architecture->GetNbrThreads(); ++i)
@@ -91,7 +112,7 @@ bool AbstractPrecalculationOperation::ArchitectureDependentApplyOperation(Simple
   long TmpMinimumIndex = 0;
   long TmpMaximumIndex = 0;
   architecture->GetTypicalRange(TmpMinimumIndex, TmpMaximumIndex);
-  this->SetIndicesRange((int) TmpMinimumIndex, (int) (TmpMaximumIndex - TmpMinimumIndex + 1));
+  this->SetIndicesRange(TmpMinimumIndex, (TmpMaximumIndex - TmpMinimumIndex + 1));
   if (architecture->GetLocalArchitecture()->GetArchitectureID() == AbstractArchitecture::SMP)
     this->ArchitectureDependentApplyOperation((SMPArchitecture*) architecture->GetLocalArchitecture());
   else

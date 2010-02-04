@@ -68,7 +68,8 @@ class AbstractArchitectureOperation
       QHEParticleWaveFunction = 0x800,
       MainTask = 0x1000,
       VectorOperatorMultiply=0x2000,
-      QHEComplexVectorConversion=0x4000
+      QHEComplexVectorConversion=0x4000,
+      FQHESphereJackGenerator = 0x8000
     };
 
   // destructor

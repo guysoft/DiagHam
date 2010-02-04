@@ -4,4 +4,5 @@ noinst_LIBRARIES=libQHEArchitectureOperation.a
 
 libQHEArchitectureOperation_a_SOURCES=QHEParticlePrecalculationOperation.cc \
 QHEParticleWaveFunctionOperation.cc \
-FQHEDiskQuasiholePropagatorOperation.cc
+FQHEDiskQuasiholePropagatorOperation.cc \
+FQHESphereJackGeneratorOperation.cc

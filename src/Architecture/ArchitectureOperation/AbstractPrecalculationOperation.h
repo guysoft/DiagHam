@@ -45,6 +45,10 @@ class AbstractPrecalculationOperation: public AbstractArchitectureOperation
   int FirstComponent;
   // number of component 
   int NbrComponent;
+  // index of the first component (if long numbers are required)
+  int LargeFirstComponent;
+  // number of component  (if long numbers are required)
+  int LargeNbrComponent;
 
  public:
   
@@ -57,6 +61,12 @@ class AbstractPrecalculationOperation: public AbstractArchitectureOperation
   // firstComponent = index of the first component
   // nbrComponent = number of component
   virtual void SetIndicesRange (const int& firstComponent, const int& nbrComponent);
+
+  // set range of indices
+  // 
+  // firstComponent = index of the first component
+  // nbrComponent = number of component
+  virtual void SetIndicesRange (const long& firstComponent, const long& nbrComponent);
 
   // get hilbert space dimension
   // 
