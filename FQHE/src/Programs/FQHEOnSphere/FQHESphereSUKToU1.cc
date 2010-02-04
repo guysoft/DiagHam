@@ -167,7 +167,7 @@ int main(int argc, char** argv)
 	      cout << ((SingleStringOption*) Manager["statistics"])->GetString() << " is an undefined statistics" << endl;
 	    }
 	}
-    }2
+    }
   int Parity = TotalLz & 1;
   if (Parity != ((NbrParticles * LzMax) & 1))
     {
