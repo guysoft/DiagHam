@@ -95,18 +95,6 @@ class FQHESphereJackGeneratorOperation: public AbstractPrecalculationOperation
   // return value = pointer to cloned operation
   AbstractArchitectureOperation* Clone();
   
-  // set range of indices
-  // 
-  // firstComponent = index of the first component
-  // nbrComponent = number of component
-  void SetIndicesRange (const int& firstComponent, const int& nbrComponent);
-
-  // set range of indices
-  // 
-  // firstComponent = index of the first component
-  // nbrComponent = number of component
-  void SetIndicesRange (const long& firstComponent, const long& nbrComponent);
-
   // get hilbert space dimension
   // 
   // return value = hilbert space dimension  
@@ -114,6 +102,12 @@ class FQHESphereJackGeneratorOperation: public AbstractPrecalculationOperation
 
  protected:
 
+  // apply operation for SMP architecture
+  //
+  // architecture = pointer to the architecture
+  // return value = true if no error occurs
+  virtual bool ArchitectureDependentApplyOperation(SMPArchitecture* architecture);
+  
   // apply operation (architecture independent)
   //
   // return value = true if no error occurs

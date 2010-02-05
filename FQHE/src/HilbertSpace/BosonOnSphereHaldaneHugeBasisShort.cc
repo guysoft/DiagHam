@@ -41,6 +41,8 @@
 #include "MathTools/BinomialCoefficients.h"
 #include "MathTools/FactorialCoefficient.h" 
 #include "GeneralTools/Endian.h"
+#include "Architecture/AbstractArchitecture.h"
+#include "Architecture/ArchitectureOperation/FQHESphereJackGeneratorOperation.h"
 
 #include <math.h>
 #include <fstream>
@@ -720,12 +722,13 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomia
 // create the Jack polynomial decomposition corresponding to the root partition assuming the resulting state is invariant under the Lz<->-Lz symmetry and using sparse storage
 //
 // alpha = value of the Jack polynomial alpha coefficient
+// architecture = architecture to use for precalculation
 // partialSave = save partial results in a given vector file
 // minIndex = start computing the Jack polynomial from the minIndex-th component
 // maxIndex = stop  computing the Jack polynomial up to the maxIndex-th component (0 if it has to be computed up to the end)
 // memory = amount of memory (in bytes) allowed for temporary vector storage (0 if 
 
-void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse(double alpha, char* partialSave, long minIndex, long maxIndex, long memory)
+void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse(double alpha, AbstractArchitecture* architecture, char* partialSave, long minIndex, long maxIndex, long memory)
 {
   if ((maxIndex <= 0) || (maxIndex >= this->LargeHilbertSpaceDimension))
     maxIndex = this->LargeHilbertSpaceDimension - 1l;
@@ -786,6 +789,8 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse
       TmpComponentArray[j] = new double [MaxArraySize];
       TmpStateArray[j] = new unsigned long [MaxArraySize];
     }
+  FQHESphereJackGeneratorOperation Operation(this, InvAlpha, MaxRoot, TmpIndexArray, TmpStateArray, TmpComponentArray, TmpRhoArray, TmpNbrComputedComponentArray);
+
   timeval TotalStartingTime;
   timeval TotalEndingTime;
   gettimeofday (&(TotalStartingTime), 0);
@@ -799,7 +804,9 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse
 	  LimNbrBlocks = NbrBlocks - (TmpMaxIndex - maxIndex);
 	  TmpMaxIndex = maxIndex;
 	}
-      this->GenerateSymmetrizedJackPolynomialFactorizedCore(InvAlpha, MaxRoot, i, TmpMaxIndex, TmpStateArray, TmpComponentArray, TmpIndexArray, TmpNbrComputedComponentArray, TmpRhoArray);
+      Operation.SetIndicesRange(i, LimNbrBlocks);
+      Operation.ApplyOperation(architecture);
+      //      this->GenerateSymmetrizedJackPolynomialFactorizedCore(InvAlpha, MaxRoot, i, TmpMaxIndex, TmpStateArray, TmpComponentArray, TmpIndexArray, TmpNbrComputedComponentArray, TmpRhoArray);
 
       for (long k = 0l; k < LimNbrBlocks; ++k)
 	{

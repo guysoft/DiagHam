@@ -21,6 +21,9 @@
 #include "GeneralTools/FilenameTools.h"
 #include "GeneralTools/ConfigurationParser.h"
 
+#include "Architecture/ArchitectureManager.h"
+#include "Architecture/AbstractArchitecture.h"
+
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
 
 #include <iostream>
@@ -40,9 +43,13 @@ int main(int argc, char** argv)
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* OutputGroup = new OptionGroup ("output options");
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
+
+  ArchitectureManager Architecture;
+
   Manager += SystemGroup;
   Manager += OutputGroup;
   Manager += PrecalculationGroup;
+  Architecture.AddOptionGroup(&Manager);
   Manager += MiscGroup;
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
   (*SystemGroup) += new SingleDoubleOption  ('a', "alpha", "alpha coefficient of the Jack polynomial", -2.0);
@@ -205,7 +212,7 @@ int main(int argc, char** argv)
 // 	      if (SymmetrizedBasis == false)    
 // 		InitialSpace->GenerateJackPolynomialSparse(Alpha, OutputFileName, MinIndex, MaxIndex);
 // 	      else
-	      InitialSpace->GenerateSymmetrizedJackPolynomialSparse(Alpha, OutputFileName, MinIndex, MaxIndex, Manager.GetInteger("huge-vector") << 20);
+	      InitialSpace->GenerateSymmetrizedJackPolynomialSparse(Alpha,Architecture.GetArchitecture(), OutputFileName, MinIndex, MaxIndex, Manager.GetInteger("huge-vector") << 20);
 	    }
 	  return 0;
 	}
