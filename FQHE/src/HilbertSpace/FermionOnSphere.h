@@ -595,6 +595,7 @@ inline void FermionOnSphere::GetMonomial(long index, unsigned long*& finalState)
   this->ConvertToMonomial(this->StateDescription[index], finalState);
 }
 
+
 // convert a fermionic state to its monomial representation
 //
 // initialState = initial fermionic state in its fermionic representation
@@ -607,6 +608,7 @@ inline void FermionOnSphere::ConvertToMonomial(unsigned long initialState, unsig
     if (((initialState >> j) & 1ul) != 0ul)
       finalState[Index++] = (unsigned long) j;
 }
+
 
 // convert a fermionic state from its monomial representation
 //
