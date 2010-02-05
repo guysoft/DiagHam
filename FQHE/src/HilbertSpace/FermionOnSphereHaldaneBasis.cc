@@ -405,6 +405,7 @@ FermionOnSphereHaldaneBasis::~FermionOnSphereHaldaneBasis ()
 {
 }
 
+
 // assignement (without duplicating datas)
 //
 // fermions = reference on the hilbert space to copy to copy
