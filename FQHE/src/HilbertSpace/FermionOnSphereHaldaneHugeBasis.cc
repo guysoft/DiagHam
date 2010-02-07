@@ -77,6 +77,20 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermion
   this->NbrLzValue = this->LzMax + 1;
   this->SizeLimit = maxFileSize << 17;
   this->HilbertSpaceDimension = 0;
+
+  this->NbrPrefixSector = 0;
+  this->NbrRootSuffix = 0;
+  this->RootSuffixShift = 0;
+  this->RootPrefixMask = 0x0ul;
+  this->PrefixSectors = 0;
+  this->RootSuffix = 0;
+  this->RootSuffixSectorPositions = 0;
+  this->RootSuffixOffset = 0;
+  this->RootSuffixSectorSize = 0;
+  this->SuffixLookUpTable = 0;
+  this->SuffixLookUpTableSize = 0;
+  this->SuffixLookUpTableShift = 0;
+
   this->ReferenceState = 0x0l;
   this->SymmetricFlag = symmetricFlag;
   this->MaximumSignLookUp = 16;
@@ -446,6 +460,18 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
   this->Flag.Initialize();  
   if ((this->LargeHilbertSpaceDimension << 3) < (memoryHilbert << 20))
     {
+      this->NbrPrefixSector = 0;
+      this->NbrRootSuffix = 0;
+      this->RootSuffixShift = 0;
+      this->RootPrefixMask = 0x0ul;
+      this->PrefixSectors = 0;
+      this->RootSuffix = 0;
+      this->RootSuffixSectorPositions = 0;
+      this->RootSuffixOffset = 0;
+      this->RootSuffixSectorSize = 0;
+      this->SuffixLookUpTable = 0;
+      this->SuffixLookUpTableSize = 0;
+      this->SuffixLookUpTableShift = 0;
       this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
       for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
 	ReadLittleEndian(File, this->StateDescription[i]);
@@ -819,6 +845,8 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(const FermionOn
   this->StateDescription = fermions.StateDescription;
   this->LzMax = fermions.LzMax;
   this->NbrLzValue = fermions.NbrLzValue;
+  this->InvertShift = fermions.InvertShift;
+  this->InvertUnshift = fermions.InvertUnshift;
   this->Flag = fermions.Flag;
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
@@ -829,6 +857,18 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(const FermionOn
   this->StateDescriptionBuffers = fermions.StateDescriptionBuffers;
   this->StateDescriptionFileNames = fermions.StateDescriptionFileNames;
   this->StateDescriptionFileSizes = fermions.StateDescriptionFileSizes;
+  this->NbrPrefixSector  = fermions.NbrPrefixSector;
+  this->NbrRootSuffix  = fermions.NbrRootSuffix;
+  this->RootSuffixShift  = fermions.RootSuffixShift;
+  this->RootPrefixMask  = fermions.RootPrefixMask;
+  this->PrefixSectors  = fermions.PrefixSectors;
+  this->RootSuffix  = fermions.RootSuffix;
+  this->RootSuffixSectorPositions  = fermions.RootSuffixSectorPositions;
+  this->RootSuffixOffset  = fermions.RootSuffixOffset;
+  this->RootSuffixSectorSize  = fermions.RootSuffixSectorSize;
+  this->SuffixLookUpTable  = fermions.SuffixLookUpTable;
+  this->SuffixLookUpTableSize  = fermions.SuffixLookUpTableSize;
+  this->SuffixLookUpTableShift  = fermions.SuffixLookUpTableShift;
 }
 
 // destructor
@@ -884,11 +924,25 @@ FermionOnSphereHaldaneHugeBasis& FermionOnSphereHaldaneHugeBasis::operator = (co
   this->StateDescription = fermions.StateDescription;
   this->LzMax = fermions.LzMax;
   this->NbrLzValue = fermions.NbrLzValue;
+  this->InvertShift = fermions.InvertShift;
+  this->InvertUnshift = fermions.InvertUnshift;
   this->Flag = fermions.Flag;
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
   this->KeepStateFlag = fermions.KeepStateFlag;
+  this->NbrPrefixSector  = fermions.NbrPrefixSector;
+  this->NbrRootSuffix  = fermions.NbrRootSuffix;
+  this->RootSuffixShift  = fermions.RootSuffixShift;
+  this->RootPrefixMask  = fermions.RootPrefixMask;
+  this->PrefixSectors  = fermions.PrefixSectors;
+  this->RootSuffix  = fermions.RootSuffix;
+  this->RootSuffixSectorPositions  = fermions.RootSuffixSectorPositions;
+  this->RootSuffixOffset  = fermions.RootSuffixOffset;
+  this->RootSuffixSectorSize  = fermions.RootSuffixSectorSize;
+  this->SuffixLookUpTable  = fermions.SuffixLookUpTable;
+  this->SuffixLookUpTableSize  = fermions.SuffixLookUpTableSize;
+  this->SuffixLookUpTableShift  = fermions.SuffixLookUpTableShift;
   return *this;
 }
 
@@ -1088,7 +1142,10 @@ int FermionOnSphereHaldaneHugeBasis::ProdAd (int* m, int nbrIndices, double& coe
 
 double FermionOnSphereHaldaneHugeBasis::AdA (int index, int m)
 {
-  return 0;
+  if ((this->GetStateFactorized((long) index) & (0x1ul << m)) != 0ul)
+    return 1.0;
+  else
+    return 0.0;
 }
 
 // apply a^+_m a_m operator to a given state 
@@ -1099,7 +1156,10 @@ double FermionOnSphereHaldaneHugeBasis::AdA (int index, int m)
 
 double FermionOnSphereHaldaneHugeBasis::AdA (long index, int m)
 {
-  return 0;
+  if ((this->GetStateFactorized(index) & (0x1ul << m)) != 0ul)
+    return 1.0;
+  else
+    return 0.0;
 }
 
 // apply a^+_m a_n operator to a given state 

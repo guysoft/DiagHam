@@ -184,11 +184,11 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   unsigned int** PrefixSectors;
   // number of prefix sector
   long NbrPrefixSector;
-  // 
+  //  look-up table used to speed-up suffix search
   long* SuffixLookUpTable;
-  // 
+  // suffix look-up table size
   int SuffixLookUpTableSize;
-  // 
+  // shift to apply to a suffix to extract the key 
   int SuffixLookUpTableShift;
 
  public:

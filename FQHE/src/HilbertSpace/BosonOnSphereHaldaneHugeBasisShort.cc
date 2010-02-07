@@ -726,9 +726,10 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomia
 // partialSave = save partial results in a given vector file
 // minIndex = start computing the Jack polynomial from the minIndex-th component
 // maxIndex = stop  computing the Jack polynomial up to the maxIndex-th component (0 if it has to be computed up to the end)
-// memory = amount of memory (in bytes) allowed for temporary vector storage (0 if 
+// memory = amount of memory (in bytes) allowed for temporary vector storage (0 if the whole vector has to be stored in memory)
+// memoryBlock = amount of memory (in bytes) allowed for precomputing state indices  (0 if the whole vector has to be stored in memory)
 
-void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse(double alpha, AbstractArchitecture* architecture, char* partialSave, long minIndex, long maxIndex, long memory)
+void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse(double alpha, AbstractArchitecture* architecture, char* partialSave, long minIndex, long maxIndex, long memory, long memoryBlock)
 {
   if ((maxIndex <= 0) || (maxIndex >= this->LargeHilbertSpaceDimension))
     maxIndex = this->LargeHilbertSpaceDimension - 1l;
@@ -776,7 +777,16 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse
     minIndex = 1;
   TmpVectorBuffer[0l] = 1.0;
   int MaxArraySize = ((this->NbrBosons * (this->NbrBosons - 1)) / 2) * (this->LzMax + 1);
-  long NbrBlocks = 10;
+  long NbrBlocks =  memoryBlock / (((2l* sizeof (long)) + (sizeof(double))) * MaxArraySize);
+  if (NbrBlocks == 0)
+    {
+      NbrBlocks = 100000;
+    }
+  if (NbrBlocks > this->LargeHilbertSpaceDimension)
+    {
+      NbrBlocks = (this->LargeHilbertSpaceDimension >> 1) + 1;
+    }
+  cout << "number of precalculation blocks = " << NbrBlocks << endl;
   long DisplayStep = (this->LargeHilbertSpaceDimension / (1000 * NbrBlocks)) * NbrBlocks;
   long** TmpIndexArray = new long* [NbrBlocks];
   double** TmpComponentArray = new double* [NbrBlocks];

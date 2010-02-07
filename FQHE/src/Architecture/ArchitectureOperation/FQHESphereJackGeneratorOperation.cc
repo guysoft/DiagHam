@@ -60,6 +60,8 @@ FQHESphereJackGeneratorOperation::FQHESphereJackGeneratorOperation (ParticleOnSp
   this->LargeNbrComponent = space->GetLargeHilbertSpaceDimension();
   this->HilbertSpace = (ParticleOnSphere*) space->Clone();
   this->OperationType = AbstractArchitectureOperation::FQHESphereJackGenerator;
+  this->LocalOperations = 0;
+  this->NbrLocalOperations = 0;
 }
 
 // copy constructor 
@@ -82,6 +84,8 @@ FQHESphereJackGeneratorOperation::FQHESphereJackGeneratorOperation(const FQHESph
   this->LargeNbrComponent = operation.LargeNbrComponent;
   this->HilbertSpace = (ParticleOnSphere*) operation.HilbertSpace->Clone();
   this->OperationType = AbstractArchitectureOperation::FQHESphereJackGenerator;
+  this->LocalOperations = 0;
+  this->NbrLocalOperations = 0;
 }
   
 // destructor
@@ -89,6 +93,14 @@ FQHESphereJackGeneratorOperation::FQHESphereJackGeneratorOperation(const FQHESph
 
 FQHESphereJackGeneratorOperation::~FQHESphereJackGeneratorOperation()
 {
+  if (this->LocalOperations != 0)
+    {
+      for (int i = 0; i < this->NbrLocalOperations; ++i)
+	{
+	  delete this->LocalOperations[i];
+	}
+      delete[] this->LocalOperations;
+    }
   delete this->HilbertSpace;
 }
   
@@ -122,26 +134,25 @@ bool FQHESphereJackGeneratorOperation::ArchitectureDependentApplyOperation(SMPAr
 {
   long Step = this->LargeNbrComponent / ((long) architecture->GetNbrThreads());
   long TmpFirstComponent = this->LargeFirstComponent;
-  int ReducedNbrThreads = architecture->GetNbrThreads() - 1;
-  FQHESphereJackGeneratorOperation** TmpOperations = new FQHESphereJackGeneratorOperation* [architecture->GetNbrThreads()];
+  if (this->LocalOperations == 0)
+    {
+      this->NbrLocalOperations = architecture->GetNbrThreads();
+      this->LocalOperations = new FQHESphereJackGeneratorOperation* [this->NbrLocalOperations];
+      for (int i = 0; i < this->NbrLocalOperations; ++i)
+	this->LocalOperations[i] = (FQHESphereJackGeneratorOperation*) this->Clone();
+    }
+  int ReducedNbrThreads = this->NbrLocalOperations - 1;
   for (int i = 0; i < ReducedNbrThreads; ++i)
     {
-      TmpOperations[i] = (FQHESphereJackGeneratorOperation*) this->Clone();
-      TmpOperations[i]->LocalShift = TmpFirstComponent - this->LargeFirstComponent;
-      TmpOperations[i]->SetIndicesRange(TmpFirstComponent, Step);
-      architecture->SetThreadOperation(TmpOperations[i], i);
+      this->LocalOperations[i]->LocalShift = TmpFirstComponent - this->LargeFirstComponent;
+      this->LocalOperations[i]->SetIndicesRange(TmpFirstComponent, Step);
+      architecture->SetThreadOperation(this->LocalOperations[i], i);
       TmpFirstComponent += Step;
     }
-  TmpOperations[ReducedNbrThreads] = (FQHESphereJackGeneratorOperation*) this->Clone();
-  TmpOperations[ReducedNbrThreads]->SetIndicesRange(TmpFirstComponent, this->LargeNbrComponent + this->LargeFirstComponent - TmpFirstComponent);  
-  TmpOperations[ReducedNbrThreads]->LocalShift = TmpFirstComponent - this->LargeFirstComponent;
-  architecture->SetThreadOperation(TmpOperations[ReducedNbrThreads], ReducedNbrThreads);
+  this->LocalOperations[ReducedNbrThreads]->SetIndicesRange(TmpFirstComponent, this->LargeNbrComponent + this->LargeFirstComponent - TmpFirstComponent);  
+  this->LocalOperations[ReducedNbrThreads]->LocalShift = TmpFirstComponent - this->LargeFirstComponent;
+  architecture->SetThreadOperation(this->LocalOperations[ReducedNbrThreads], ReducedNbrThreads);
   architecture->SendJobs();
-  for (int i = 0; i < architecture->GetNbrThreads(); ++i)
-    {
-      delete TmpOperations[i];
-    }
-  delete[] TmpOperations;
   return true;
 }
   

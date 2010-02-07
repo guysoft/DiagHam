@@ -67,6 +67,11 @@ class FQHESphereJackGeneratorOperation: public AbstractPrecalculationOperation
   // number of connected components associated to each state through the Jack generator
   int* NbrComputedComponentArray;
 
+  // a temporary array to store copies of operations in SMP mode
+  FQHESphereJackGeneratorOperation** LocalOperations;
+  // number of operation copies
+  int NbrLocalOperations;
+
  public:
   
   // constructor 
