@@ -899,6 +899,14 @@ class RealVector : public Vector
   // return value = true if no error occurs
   bool ReadVector (const char* fileName);
 
+  // read vector from a file, only within a given range of indices
+  //
+  // fileName = name of the file where the vector has to be read
+  // minIndex = index of the first component to read
+  // maxIndex = index of the last component to read
+  // return value = true if no error occurs
+  bool ReadVector (const char* fileName, long minIndex, long maxIndex);
+
   // Output Stream overload
   //
   // str = reference on output stream

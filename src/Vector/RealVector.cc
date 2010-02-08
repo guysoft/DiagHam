@@ -3460,6 +3460,66 @@ bool RealVector::ReadVector (const char* fileName)
   return true;
 }
 
+// read vector from a file, only within a given range of indices
+//
+// fileName = name of the file where the vector has to be read
+// minIndex = index of the first component to read
+// maxIndex = index of the last component to read
+// return value = true if no error occurs
+
+bool RealVector::ReadVector (const char* fileName, long minIndex, long maxIndex)
+{
+  ifstream File;
+  File.open(fileName, ios::binary | ios::in);
+  if (!File.is_open())
+    {
+      cout << "Cannot open the file: " << fileName << endl;
+      return false;
+    }
+  
+  unsigned ZeroPos, MaxPos;
+  File.seekg (0, ios::beg);
+  ZeroPos = File.tellg();
+  File.seekg (0, ios::end);
+  MaxPos = File.tellg ();
+
+  unsigned Length = MaxPos-ZeroPos-sizeof(int);  
+  File.seekg (0, ios::beg);
+  int TmpDimension;
+  ReadLittleEndian(File, TmpDimension);
+
+  if (TmpDimension > 0)
+    {
+      if (Length/sizeof(double)>(unsigned)TmpDimension)
+	{      
+	  cout << "Error reading real vector "<<fileName<<": estimated length "<<Length/sizeof(double)<<" vs dimension "<<TmpDimension<<endl;
+	  if ((unsigned)TmpDimension*2==Length/sizeof(double))
+	    cout << "This could be a complex vector!"<<endl;
+	  exit(1);
+	}
+      if (maxIndex >= this->Dimension)
+	maxIndex = this->Dimension - 1;
+      
+      this->Resize(maxIndex - minIndex + 1);
+      File.seekg (minIndex * sizeof(double), ios::cur);    
+      for (int i = 0; i < this->Dimension; ++i)
+	ReadLittleEndian(File, this->Components[i]);
+    }
+  else
+    {
+      long TmpLargeDimension;
+      ReadLittleEndian(File, TmpLargeDimension);
+      if (maxIndex >= TmpLargeDimension)
+	maxIndex = TmpLargeDimension - 1l;
+      this->Resize(TmpLargeDimension);
+      File.seekg (minIndex * sizeof(double), ios::cur);    
+      for (long i = 0; i < this->LargeDimension; ++i)
+	ReadLittleEndian(File, this->Components[i]);
+    }
+  File.close();
+  return true;
+}
+
 // input file stream overload
 //
 // file = reference on input file stream
