@@ -164,9 +164,10 @@ class BosonOnSphereHaldaneHugeBasisShort :  public BosonOnSphereShort
   // partialSave = save partial results in a given vector file
   // minIndex = start computing the Jack polynomial from the minIndex-th component
   // maxIndex = stop  computing the Jack polynomial up to the maxIndex-th component (0 if it has to be computed up to the end)
-  // memory = amount of memory (in bytes) allowed for temporary vector storage (0 if 
-  // memoryBlock = amount of memory (in bytes) allowed for precomputing state indices  (0 if the whole vector has to be stored in memory)
-  virtual void GenerateSymmetrizedJackPolynomialSparse(double alpha, AbstractArchitecture* architecture, char* partialSave, long minIndex = 0l, long maxIndex = 0l, long memory = 0l, long memoryBlock = 0l);
+  // memory = amount of memory (in bytes) allowed for temporary vector storage (0 if the whole vector has to be stored in memory)
+  // memoryBlock = amount of memory (in bytes) allowed for precomputing state indices
+  // resumeFlag = true if the calculation has to be resumed from a previous one (assuming partialSave contains already computed components)
+  virtual void GenerateSymmetrizedJackPolynomialSparse(double alpha, AbstractArchitecture* architecture, char* partialSave, long minIndex = 0l, long maxIndex = 0l, long memory = 0l, long memoryBlock = 0l, bool resumeFlag = false);
 
   // convert a state such that its components are now expressed in the unnormalized basis
   //

@@ -119,18 +119,20 @@ int ChiralExchangeOperator::GetHilbertSpaceDimension ()
   return this->Collection->GetHilbertSpaceDimension();
 }
 
-// evaluate matrix element
+// evaluate part of the matrix element, within a given of indices
 //
 // V1 = vector to left multiply with current matrix
 // V2 = vector to right multiply with current matrix
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
 // return value = corresponding matrix element
 
-Complex ChiralExchangeOperator::MatrixElement (RealVector& V1, RealVector& V2)
+Complex ChiralExchangeOperator::MatrixElement (RealVector& V1, RealVector& V2, long firstComponent, long nbrComponent)
 {
   double Element = 0.0;
   int TmpIndex;
-  int Dim = this->Collection->GetHilbertSpaceDimension();
-  for (int i = 0; i < Dim; ++i)
+  int Dim = (int) (firstComponent + nbrComponent);
+  for (int i = (int) firstComponent; i < Dim; ++i)
     {
       TmpIndex =  this->Collection->CyclicSpinPermutation(i, S1, S2, S3);
       Element += V1[TmpIndex] * V2[i];
@@ -140,16 +142,6 @@ Complex ChiralExchangeOperator::MatrixElement (RealVector& V1, RealVector& V2)
   return Element;
 }
 
-// evaluate matrix element
-//
-// V1 = vector to left multiply with current matrix
-// V2 = vector to right multiply with current matrix
-// return value = corresponding matrix element
-
-Complex ChiralExchangeOperator::MatrixElement (ComplexVector& V1, ComplexVector& V2)
-{
-  return Complex();
-}
 
 // multiply a vector by the current operator for a given range of indices 
 // and store result in another vector

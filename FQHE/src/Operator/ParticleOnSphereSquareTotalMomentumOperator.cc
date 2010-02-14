@@ -160,19 +160,21 @@ int ParticleOnSphereSquareTotalMomentumOperator::GetHilbertSpaceDimension ()
   return this->Particle->GetHilbertSpaceDimension();
 }
   
-// evaluate matrix element
+// evaluate part of the matrix element, within a given of indices
 //
 // V1 = vector to left multiply with current matrix
 // V2 = vector to right multiply with current matrix
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
 // return value = corresponding matrix element
 
-Complex ParticleOnSphereSquareTotalMomentumOperator::MatrixElement (RealVector& V1, RealVector& V2)
+Complex ParticleOnSphereSquareTotalMomentumOperator::MatrixElement (RealVector& V1, RealVector& V2, long firstComponent, long nbrComponent)
 {
-  int Dim = this->Particle->GetHilbertSpaceDimension();
+  int Dim = (int) (firstComponent + nbrComponent);
   double Element = 0.0;
   int Index = 0;
   double Coefficient = 0.0;
-  for (int i = 0; i < Dim; ++i)
+  for (int i = (int) firstComponent; i < Dim; ++i)
     {
       double* TmpTwoBodyCoefficients = this->TwoBodyCoefficients;
       for (int j = 0; j < this->LzMax; ++j)
@@ -193,17 +195,6 @@ Complex ParticleOnSphereSquareTotalMomentumOperator::MatrixElement (RealVector& 
   return Complex(Element);
 }
   
-// evaluate matrix element
-//
-// V1 = vector to left multiply with current matrix
-// V2 = vector to right multiply with current matrix
-// return value = corresponding matrix element
-
-Complex ParticleOnSphereSquareTotalMomentumOperator::MatrixElement (ComplexVector& V1, ComplexVector& V2)
-{
-  return Complex();
-}
-   
 // multiply a vector by the current operator for a given range of indices 
 // and add result to another vector
 //

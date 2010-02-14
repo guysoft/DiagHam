@@ -116,20 +116,23 @@ int ParticleOnSphereSquareTotalIsospinOperator::GetHilbertSpaceDimension ()
   return this->Particle->GetHilbertSpaceDimension();
 }
   
-// evaluate matrix element
+// evaluate part of the matrix element, within a given of indices
 //
 // V1 = vector to left multiply with current matrix
 // V2 = vector to right multiply with current matrix
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
 // return value = corresponding matrix element
 
-Complex ParticleOnSphereSquareTotalIsospinOperator::MatrixElement (RealVector& V1, RealVector& V2)
+Complex ParticleOnSphereSquareTotalIsospinOperator::MatrixElement (RealVector& V1, RealVector& V2, long firstComponent, long nbrComponent)
 {
-  int Dim = this->Particle->GetHilbertSpaceDimension();
+  int Dim = (int) (firstComponent + nbrComponent);
+  int FullDim = this->Particle->GetHilbertSpaceDimension();
   double Element = 0.0;
   int Index = 0;
   double Coefficient = 0.0;
   double Coefficient2 = 0.0;
-  for (int i = 0; i < Dim; ++i)
+  for (int i = (int) firstComponent; i < Dim; ++i)
     {
       for (int j = 0; j <= this->LzMax; ++j)
 	for (int  k = 0; k <= this->LzMax; ++k)
@@ -138,28 +141,28 @@ Complex ParticleOnSphereSquareTotalIsospinOperator::MatrixElement (RealVector& V
 	    if (Coefficient != 0.0)
 	      {
 		Index = this->Particle->AdupAdum(j, k, Coefficient2);
-		if (Index != Dim)
+		if (Index != FullDim)
 		  Element += V1[Index] * V2[i] * Coefficient * Coefficient2;		  
 	      }
 	    Coefficient = this->Particle->AdpAdm(i, k, j);
 	    if (Coefficient != 0.0)
 	      {
 		Index = this->Particle->AddpAddm(j, k, Coefficient2);
-		if (Index != Dim)
+		if (Index != FullDim)
 		  Element += V1[Index] * V2[i] * Coefficient * Coefficient2;		  
 	      }
 	    Coefficient = this->Particle->AumAdp(i, k, j);
 	    if (Coefficient != 0.0)
 	      {
 		Index = this->Particle->AdupAddm(k, j, Coefficient2);
-		if (Index != Dim)
+		if (Index != FullDim)
 		  Element -= V1[Index] * V2[i] * Coefficient * Coefficient2;		  
 	      }
 	    Coefficient = this->Particle->AupAdm(i, k, j);
 	    if (Coefficient != 0.0)
 	      {
 		Index = this->Particle->AdumAddp(k, j, Coefficient2);
-		if (Index != Dim)
+		if (Index != FullDim)
 		  Element -= V1[Index] * V2[i] * Coefficient * Coefficient2;		
 	      }
 	  }
@@ -168,17 +171,6 @@ Complex ParticleOnSphereSquareTotalIsospinOperator::MatrixElement (RealVector& V
   return Complex(Element);
 }
   
-// evaluate matrix element
-//
-// V1 = vector to left multiply with current matrix
-// V2 = vector to right multiply with current matrix
-// return value = corresponding matrix element
-
-Complex ParticleOnSphereSquareTotalIsospinOperator::MatrixElement (ComplexVector& V1, ComplexVector& V2)
-{
-  return Complex();
-}
-   
 // multiply a vector by the current operator for a given range of indices 
 // and add result to another vector
 //

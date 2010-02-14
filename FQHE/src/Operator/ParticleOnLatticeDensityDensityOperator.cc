@@ -130,43 +130,49 @@ int ParticleOnLatticeDensityDensityOperator::GetHilbertSpaceDimension ()
   return this->Particle->GetHilbertSpaceDimension();
 }
   
-// evaluate matrix element
+// evaluate part of the matrix element, within a given of indices
 //
 // V1 = vector to left multiply with current matrix
 // V2 = vector to right multiply with current matrix
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
 // return value = corresponding matrix element
 
-Complex ParticleOnLatticeDensityDensityOperator::MatrixElement (RealVector& V1, RealVector& V2)
+Complex ParticleOnLatticeDensityDensityOperator::MatrixElement (RealVector& V1, RealVector& V2, long firstComponent, long nbrComponent)
 {
-  int Dim = this->Particle->GetHilbertSpaceDimension();
+  int Dim = (int) (firstComponent + nbrComponent);
+  int FullDim = this->Particle->GetHilbertSpaceDimension();
   double Coefficient = 0.0;
   double Element = 0.0;
   int Index;
-  for (int i = 0; i < Dim; ++i)
+  for (int i = (int) firstComponent; i < Dim; ++i)
     {
       Index = ((BosonOnLattice*)(this->Particle))->AdAdAA(i, this->CreationIndex1, this->CreationIndex2, this->AnnihilationIndex1, this->AnnihilationIndex2, Coefficient);
-      if (Index != Dim)
+      if (Index != FullDim)
 	Element += V1[Index] * V2[i] * Coefficient;      
     }
   return Complex(Element);
 }
-  
-// evaluate matrix element
+
+// evaluate part of the matrix element, within a given of indices
 //
 // V1 = vector to left multiply with current matrix
 // V2 = vector to right multiply with current matrix
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
 // return value = corresponding matrix element
 
-Complex ParticleOnLatticeDensityDensityOperator::MatrixElement (ComplexVector& V1, ComplexVector& V2)
+Complex ParticleOnLatticeDensityDensityOperator::MatrixElement (ComplexVector& V1, ComplexVector& V2, long firstComponent, long nbrComponent)
 {
-  int Dim = this->Particle->GetHilbertSpaceDimension();
+  int Dim = (int) (firstComponent + nbrComponent);
+  int FullDim = this->Particle->GetHilbertSpaceDimension();
   double Coefficient = 0.0;
   Complex Element = 0.0;
   int Index;
-  for (int i = 0; i < Dim; ++i)
+  for (int i = (int) firstComponent; i < Dim; ++i)
     {
       Index = this->Particle->AdAdAA(i, this->CreationIndex1, this->CreationIndex2, this->AnnihilationIndex1, this->AnnihilationIndex2, Coefficient);
-      if (Index != Dim)
+      if (Index != FullDim)
 	Element += Conj(V1[Index]) * V2[i] * Coefficient;      
     }
   return Element;

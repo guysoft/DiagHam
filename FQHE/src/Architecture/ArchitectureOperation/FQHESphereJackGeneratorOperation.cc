@@ -43,8 +43,10 @@
 // componentArray = array where computed component numerical factors are stored
 // rhoArray = rho factor associated to each state
 // nbrComputedComponentArray = number of connected components associated to each state through the Jack generator
+// fermionicFlag = true if we are dealing with fermions
+// symmetricFlag = true if the state is Lz<->-Lz symmetric
 
-FQHESphereJackGeneratorOperation::FQHESphereJackGeneratorOperation (ParticleOnSphere* space, double invAlpha, unsigned long rootPartition, long** indexArray, unsigned long** stateArray, double** componentArray, double* rhoArray, int* nbrComputedComponentArray)
+FQHESphereJackGeneratorOperation::FQHESphereJackGeneratorOperation (ParticleOnSphere* space, double invAlpha, unsigned long rootPartition, long** indexArray, unsigned long** stateArray, double** componentArray, double* rhoArray, int* nbrComputedComponentArray, bool fermionicFlag, bool symmetricFlag)
 {
   this->InvAlpha = invAlpha;
   this->RootPartition = rootPartition;
@@ -59,6 +61,8 @@ FQHESphereJackGeneratorOperation::FQHESphereJackGeneratorOperation (ParticleOnSp
   this->LargeFirstComponent = 0;
   this->LargeNbrComponent = space->GetLargeHilbertSpaceDimension();
   this->HilbertSpace = (ParticleOnSphere*) space->Clone();
+  this->FermionicFlag = fermionicFlag;
+  this->SymmetricFlag = symmetricFlag;
   this->OperationType = AbstractArchitectureOperation::FQHESphereJackGenerator;
   this->LocalOperations = 0;
   this->NbrLocalOperations = 0;
@@ -83,6 +87,8 @@ FQHESphereJackGeneratorOperation::FQHESphereJackGeneratorOperation(const FQHESph
   this->LargeFirstComponent = operation.LargeFirstComponent;
   this->LargeNbrComponent = operation.LargeNbrComponent;
   this->HilbertSpace = (ParticleOnSphere*) operation.HilbertSpace->Clone();
+  this->FermionicFlag = operation.FermionicFlag;
+  this->SymmetricFlag = operation.SymmetricFlag;
   this->OperationType = AbstractArchitectureOperation::FQHESphereJackGenerator;
   this->LocalOperations = 0;
   this->NbrLocalOperations = 0;

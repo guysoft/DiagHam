@@ -727,15 +727,16 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomia
 // minIndex = start computing the Jack polynomial from the minIndex-th component
 // maxIndex = stop  computing the Jack polynomial up to the maxIndex-th component (0 if it has to be computed up to the end)
 // memory = amount of memory (in bytes) allowed for temporary vector storage (0 if the whole vector has to be stored in memory)
-// memoryBlock = amount of memory (in bytes) allowed for precomputing state indices  (0 if the whole vector has to be stored in memory)
+// memoryBlock = amount of memory (in bytes) allowed for precomputing state indices
+// resumeFlag = true if the calculation has to be resumed from a previous one (assuming partialSave contains already computed components)
 
-void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse(double alpha, AbstractArchitecture* architecture, char* partialSave, long minIndex, long maxIndex, long memory, long memoryBlock)
+void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse(double alpha, AbstractArchitecture* architecture, char* partialSave, long minIndex, long maxIndex, long memory, long memoryBlock, bool resumeFlag)
 {
   if ((maxIndex <= 0) || (maxIndex >= this->LargeHilbertSpaceDimension))
     maxIndex = this->LargeHilbertSpaceDimension - 1l;
   double TmpComponent = 1.0;
   long FileShift = 4l;
-  if (minIndex <= 0)
+  if ((minIndex <= 0) && (resumeFlag == false))
     {
       ofstream File;
       File.open(partialSave, ios::binary | ios::out);
@@ -759,8 +760,6 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse
   double* TmpVectorBuffer = new double [memory];
   long BufferGlobalIndex = 0l;
 
-  fstream OutputFile;
-  OutputFile.open(partialSave, ios::in | ios::binary | ios::out);
 
   double InvAlpha =  2.0 / alpha;
 
@@ -799,7 +798,14 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse
       TmpComponentArray[j] = new double [MaxArraySize];
       TmpStateArray[j] = new unsigned long [MaxArraySize];
     }
-  FQHESphereJackGeneratorOperation Operation(this, InvAlpha, MaxRoot, TmpIndexArray, TmpStateArray, TmpComponentArray, TmpRhoArray, TmpNbrComputedComponentArray);
+  FQHESphereJackGeneratorOperation Operation(this, InvAlpha, MaxRoot, TmpIndexArray, TmpStateArray, TmpComponentArray, TmpRhoArray, TmpNbrComputedComponentArray, false, true);
+
+  if (resumeFlag == true)
+    {
+    }
+
+  fstream OutputFile;
+  OutputFile.open(partialSave, ios::in | ios::binary | ios::out);
 
   timeval TotalStartingTime;
   timeval TotalEndingTime;

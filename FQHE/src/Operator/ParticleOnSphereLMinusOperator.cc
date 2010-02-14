@@ -117,21 +117,23 @@ int ParticleOnSphereLMinusOperator::GetHilbertSpaceDimension ()
   return this->Particle->GetHilbertSpaceDimension();
 }
   
-// evaluate matrix element
+// evaluate part of the matrix element, within a given of indices
 //
 // V1 = vector to left multiply with current matrix
 // V2 = vector to right multiply with current matrix
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
 // return value = corresponding matrix element
 
-Complex ParticleOnSphereLMinusOperator::MatrixElement (RealVector& V1, RealVector& V2)
+Complex ParticleOnSphereLMinusOperator::MatrixElement (RealVector& V1, RealVector& V2, long firstComponent, long nbrComponent)
 {
-  int Dim = this->Particle->GetHilbertSpaceDimension();
+  int Dim = firstComponent + nbrComponent;
   int TargetDim = this->Particle->GetTargetHilbertSpaceDimension();
   double Element = 0.0;
   int Index = 0;
   double Coefficient = 0.0;
   double Tmp;
-  for (int i = 0; i < Dim; ++i)
+  for (int i = firstComponent; i < Dim; ++i)
     {
       Tmp = V2[i];
       for (int j = 1; j <= this->LzMax; ++j)
@@ -146,17 +148,6 @@ Complex ParticleOnSphereLMinusOperator::MatrixElement (RealVector& V1, RealVecto
   return Complex(Element);
 }
   
-// evaluate matrix element
-//
-// V1 = vector to left multiply with current matrix
-// V2 = vector to right multiply with current matrix
-// return value = corresponding matrix element
-
-Complex ParticleOnSphereLMinusOperator::MatrixElement (ComplexVector& V1, ComplexVector& V2)
-{
-  return Complex();
-}
-   
 // multiply a vector by the current operator for a given range of indices 
 // and store result in another vector
 //

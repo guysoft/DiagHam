@@ -113,21 +113,21 @@ void ParticleOnLatticeTranslationOperator::SetTranslationComponents(int rx, int 
 }
 
 
-
-  
-// evaluate matrix element
+// evaluate part of the matrix element, within a given of indices
 //
 // V1 = vector to left multiply with current matrix
 // V2 = vector to right multiply with current matrix
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
 // return value = corresponding matrix element
 
-Complex ParticleOnLatticeTranslationOperator::MatrixElement (RealVector& V1, RealVector& V2)
+Complex ParticleOnLatticeTranslationOperator::MatrixElement (RealVector& V1, RealVector& V2, long firstComponent, long nbrComponent)
 {
-  int Dim = this->Particle->GetHilbertSpaceDimension();
+  int Dim = firstComponent + nbrComponent;
   Complex TranslationPhase;  
   Complex Element = 0.0;
   int Index;
-  for (int i = 0; i < Dim; ++i)
+  for (int i = firstComponent; i < Dim; ++i)
     {
       Index = this->Particle->TranslateState(i, this->Rx, this->Ry, TranslationPhase);      
       Element += V1[Index] * V2[i] * TranslationPhase;
@@ -135,14 +135,21 @@ Complex ParticleOnLatticeTranslationOperator::MatrixElement (RealVector& V1, Rea
   return Element;
 }
 
-
-Complex ParticleOnLatticeTranslationOperator::MatrixElement (ComplexVector& V1, ComplexVector& V2)
+// evaluate part of the matrix element, within a given of indices
+//
+// V1 = vector to left multiply with current matrix
+// V2 = vector to right multiply with current matrix
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = corresponding matrix element
+  
+Complex ParticleOnLatticeTranslationOperator::MatrixElement (ComplexVector& V1, ComplexVector& V2, long firstComponent, long nbrComponent)
 {
-  int Dim = this->Particle->GetHilbertSpaceDimension();
+  int Dim = (int) (firstComponent + nbrComponent);
   Complex TranslationPhase;
   Complex Element = 0.0;
   int Index;
-  for (int i = 0; i < Dim; ++i)
+  for (int i = (int) firstComponent; i < Dim; ++i)
     {
       Index = this->Particle->TranslateState(i, this->Rx, this->Ry, TranslationPhase);
       Element += Conj(V1[Index]) * V2[i] * TranslationPhase;
@@ -161,13 +168,13 @@ Complex ParticleOnLatticeTranslationOperator::MatrixElement (ComplexVector& V1, 
 
 ComplexVector& ParticleOnLatticeTranslationOperator::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent)
 {
-  int Last = firstComponent + nbrComponent;
+  int Last = (int) (firstComponent + nbrComponent);
   int Index;
   Complex TranslationPhase;
   vDestination.ClearVector();
   //std::cout << "R=("<<Rx<<", "<<Ry<<")"<<std::endl<<vSource<<std::endl<<"Norm:"<<vSource.Norm()<<std::endl;
   std::cout.precision(8);
-  for (int i = firstComponent; i < Last; ++i)
+  for (int i = (int) firstComponent; i < Last; ++i)
     {
       Index = this->Particle->TranslateState(i, this->Rx, this->Ry, TranslationPhase);      
       //std::cout << "Translated("<<i<<")="<<TranslationPhase<<"* ["<<Index<<"]"<<std::endl;

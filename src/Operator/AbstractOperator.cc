@@ -126,6 +126,54 @@ Matrix* AbstractOperator::GetOperator ()
   return TmpH;
 }
   
+// evaluate matrix element
+//
+// V1 = vector to left multiply with current matrix
+// V2 = vector to right multiply with current matrix
+// return value = corresponding matrix element
+
+Complex AbstractOperator::MatrixElement (RealVector& V1, RealVector& V2)
+{
+  return this->MatrixElement(V1, V2, 0l, V1.GetLargeVectorDimension());
+}
+
+// evaluate part of the matrix element, within a given of indices
+//
+// V1 = vector to left multiply with current matrix
+// V2 = vector to right multiply with current matrix
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = corresponding matrix element
+
+Complex AbstractOperator::MatrixElement (RealVector& V1, RealVector& V2, long firstComponent, long nbrComponent)
+{
+  return Complex();
+}
+
+// evaluate matrix element
+//
+// V1 = vector to left multiply with current matrix
+// V2 = vector to right multiply with current matrix
+// return value = corresponding matrix element
+
+Complex AbstractOperator::MatrixElement (ComplexVector& V1, ComplexVector& V2)
+{
+  return this->MatrixElement(V1, V2, 0l, V1.GetLargeVectorDimension());
+}
+
+// evaluate part of the matrix element, within a given of indices
+//
+// V1 = vector to left multiply with current matrix
+// V2 = vector to right multiply with current matrix
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = corresponding matrix element
+
+Complex MatrixElement (ComplexVector& V1, ComplexVector& V2, long firstComponent, long nbrComponent)
+{
+  return Complex();
+}
+
 // multiply a vector by the current operator and store result in another vector
 //
 // vSource = vector to be multiplied

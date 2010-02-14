@@ -108,21 +108,23 @@ int ParticleOnSphereDensityOperator::GetHilbertSpaceDimension ()
   return this->Particle->GetHilbertSpaceDimension();
 }
   
-// evaluate matrix element
+// evaluate part of the matrix element, within a given of indices
 //
 // V1 = vector to left multiply with current matrix
 // V2 = vector to right multiply with current matrix
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
 // return value = corresponding matrix element
 
-Complex ParticleOnSphereDensityOperator::MatrixElement (RealVector& V1, RealVector& V2)
+Complex ParticleOnSphereDensityOperator::MatrixElement (RealVector& V1, RealVector& V2, long firstComponent, long nbrComponent)
 {
   double Element = 0.0;
   if (((int) this->Particle->GetLargeHilbertSpaceDimension()) == this->Particle->GetHilbertSpaceDimension())
     {
+      int Dim = firstComponent + nbrComponent;
       if (this->OperatorIndexDagger == this->OperatorIndex)
 	{
-	  int Dim = this->Particle->GetHilbertSpaceDimension();
-	  for (int i = 0; i < Dim; ++i)
+	  for (int i = firstComponent; i < Dim; ++i)
 	    {
 	      Element += V1[i] * V2[i] * this->Particle->AdA(i, this->OperatorIndex);
 	    }
@@ -131,8 +133,7 @@ Complex ParticleOnSphereDensityOperator::MatrixElement (RealVector& V1, RealVect
 	{
 	  int TmpIndex;
 	  double TmpCoefficient = 0.0;
-	  int Dim = this->Particle->GetHilbertSpaceDimension();
-	  for (int i = 0; i < Dim; ++i)
+	  for (int i = firstComponent; i < Dim; ++i)
 	    {
 	      TmpIndex =  this->Particle->AdA(i, this->OperatorIndexDagger, this->OperatorIndex, TmpCoefficient);
 	      if (TmpCoefficient != 0.0)
@@ -142,10 +143,10 @@ Complex ParticleOnSphereDensityOperator::MatrixElement (RealVector& V1, RealVect
     }
   else
     {
+      long Dim = firstComponent + nbrComponent;
       if (this->OperatorIndexDagger == this->OperatorIndex)
 	{
-	  long Dim = this->Particle->GetLargeHilbertSpaceDimension();
-	  for (long i = 0l; i < Dim; ++i)
+	  for (long i = firstComponent; i < Dim; ++i)
 	    {
 	      Element += V1[i] * V2[i] * this->Particle->AdA(i, this->OperatorIndex);
 	    }
@@ -154,8 +155,7 @@ Complex ParticleOnSphereDensityOperator::MatrixElement (RealVector& V1, RealVect
 	{
 	  int TmpIndex;
 	  double TmpCoefficient = 0.0;
-	  long Dim = this->Particle->GetLargeHilbertSpaceDimension();
-	  for (long i = 0; i < Dim; ++i)
+	  for (long i = firstComponent; i < Dim; ++i)
 	    {
 	      TmpIndex =  this->Particle->AdA(i, this->OperatorIndexDagger, this->OperatorIndex, TmpCoefficient);
 	      if (TmpCoefficient != 0.0)
@@ -166,17 +166,6 @@ Complex ParticleOnSphereDensityOperator::MatrixElement (RealVector& V1, RealVect
   return Complex(Element);
 }
   
-// evaluate matrix element
-//
-// V1 = vector to left multiply with current matrix
-// V2 = vector to right multiply with current matrix
-// return value = corresponding matrix element
-
-Complex ParticleOnSphereDensityOperator::MatrixElement (ComplexVector& V1, ComplexVector& V2)
-{
-  return Complex();
-}
-   
 // multiply a vector by the current operator for a given range of indices 
 // and store result in another vector
 //

@@ -49,6 +49,12 @@ class FQHESphereJackGeneratorOperation: public AbstractPrecalculationOperation
   // pointer to the Hilbert space
   ParticleOnSphere* HilbertSpace;
 
+  // true if we are dealing with fermions
+  bool FermionicFlag;
+  // true if the state is Lz<->-Lz symmetric
+  bool SymmetricFlag;
+
+
   // inverse of the Jack polynomial alpha coefficient
   double InvAlpha;
   // root partition (in fermionic binary representation)
@@ -84,7 +90,9 @@ class FQHESphereJackGeneratorOperation: public AbstractPrecalculationOperation
   // componentArray = array where computed component numerical factors are stored
   // rhoArray = rho factor associated to each state
   // nbrComputedComponentArray = number of connected components associated to each state through the Jack generator
-  FQHESphereJackGeneratorOperation(ParticleOnSphere* space, double invAlpha, unsigned long rootPartition, long** indexArray, unsigned long** stateArray, double** componentArray, double* rhoArray, int* nbrComputedComponentArray);
+  // fermionicFlag = true if we are dealing with fermions
+  // symmetricFlag = true if the state is Lz<->-Lz symmetric
+  FQHESphereJackGeneratorOperation(ParticleOnSphere* space, double invAlpha, unsigned long rootPartition, long** indexArray, unsigned long** stateArray, double** componentArray, double* rhoArray, int* nbrComputedComponentArray, bool fermionicFlag = false, bool symmetricFlag = false);
 
   // copy constructor 
   //

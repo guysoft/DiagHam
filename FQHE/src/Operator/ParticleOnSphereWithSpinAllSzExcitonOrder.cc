@@ -102,28 +102,6 @@ int ParticleOnSphereWithSpinAllSzExcitonOrder::GetHilbertSpaceDimension ()
   return this->Particle->GetHilbertSpaceDimension();
 }
  
-// evaluate matrix element
-//
-// V1 = vector to left multiply with current matrix
-// V2 = vector to right multiply with current matrix
-// return value = corresponding matrix element
-
-Complex ParticleOnSphereWithSpinAllSzExcitonOrder::MatrixElement (RealVector& V1, RealVector& V2)
-{
-  return Complex();
-}
-  
-// evaluate matrix element
-//
-// V1 = vector to left multiply with current matrix
-// V2 = vector to right multiply with current matrix
-// return value = corresponding matrix element
-
-Complex ParticleOnSphereWithSpinAllSzExcitonOrder::MatrixElement (ComplexVector& V1, ComplexVector& V2)
-{
-  return Complex();
-}
-
 // Get exciton order parameter <c^*_up,n c^*_down,0 c_up,o c_down,n>
 //
 // vSource = groundstate vector

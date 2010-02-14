@@ -47,24 +47,41 @@ int main(int argc, char** argv)
       cout << "see man page for option syntax or type VectorBinary2Ascii -h" << endl;
       return -1;
     }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
     }
 
-  if (((SingleStringOption*) Manager["input-vector"])->GetString() == 0)
+  if (Manager.GetString("input-vector") == 0)
     {
       cout << "VectorBinary2Ascii requires an input file" << endl << "see man page for option syntax or type VectorBinary2Ascii -h" << endl;
       return -1;
     }
   RealVector State;
-  if (State.ReadVector (((SingleStringOption*) Manager["input-vector"])->GetString()) == false)
+  long TmpVectorDimension = State.ReadVectorDimension(Manager.GetString("input-vector"));
+  long MinValue = 0l;
+  if (Manager.GetInteger("min-range") > 0l)
     {
-      cout << "can't open vector file " << ((SingleStringOption*) Manager["input-vector"])->GetString() << endl;
+      if (Manager.GetInteger("min-range") < TmpVectorDimension)
+	MinValue = Manager.GetInteger("min-range");      
+    }
+  else
+    {
+      long Tmp = TmpVectorDimension + Manager.GetInteger("min-range");
+      if ((Tmp >= 0) && (Tmp < TmpVectorDimension))
+	MinValue = Tmp;
+    }
+  long MaxValue = TmpVectorDimension;
+  if ((Manager.GetInteger("max-range") < TmpVectorDimension) && (Manager.GetInteger("max-range") > MinValue))
+    MaxValue = Manager.GetInteger("max-range");
+  
+  if (State.ReadVector (Manager.GetString("input-vector"), MinValue, MaxValue) == false)
+    {
+      cout << "can't open vector file " << Manager.GetString("input-vector") << endl;
       return -1;      
     }
-  if ((((SingleStringOption*) Manager["output-vector"])->GetString() == 0) && (Manager.GetBoolean("std-output") == false))
+  if ((Manager.GetString("output-vector") == 0) && (Manager.GetBoolean("std-output") == false))
     {
       cout << "VectorBinary2Ascii requires an output file" << endl << "see man page for option syntax or type VectorBinary2Ascii -h" << endl;
       return -1;
@@ -73,47 +90,25 @@ int main(int argc, char** argv)
   if (Manager.GetBoolean("std-output") == false)
     {
       ofstream File;
-      File.open(((SingleStringOption*) Manager["output-vector"])->GetString(), ios::out);
+      File.open(Manager.GetString("output-vector"), ios::out);
       File.precision(14);
-      long MinValue = 0l;
-      if ((Manager.GetInteger("min-range") > 0l) && (Manager.GetInteger("min-range") < State.GetLargeVectorDimension()))
-	MinValue = Manager.GetInteger("min-range");
-      long MaxValue = State.GetLargeVectorDimension(); 
-      if ((Manager.GetInteger("max-range") < State.GetLargeVectorDimension()) && (Manager.GetInteger("max-range") > MinValue))
-	MaxValue = Manager.GetInteger("max-range");
-      
       if (((BooleanOption*) Manager["add-index"])->GetBoolean() == true)
 	for (long i = MinValue; i < MaxValue; ++i)
-	  File << i << " " << State[i] << endl;
+	  File << i << " " << State[(i - MinValue)] << endl;
       else
 	for (long i = MinValue; i < MaxValue; ++i)
-	  File << State[i] << endl;
+	  File << State[(i - MinValue)] << endl;
       File.close();
     }
   else
     {
       cout.precision(14);
-      long MinValue = 0l;
-      if (Manager.GetInteger("min-range") > 0l)
-	{
-	  if (Manager.GetInteger("min-range") < State.GetLargeVectorDimension())
-	    MinValue = Manager.GetInteger("min-range");      
-	}
-      else
-	{
-	  long Tmp = State.GetLargeVectorDimension() + Manager.GetInteger("min-range");
-	  if ((Tmp >= 0) && (Tmp < State.GetLargeVectorDimension()))
-	    MinValue = Tmp;
-	}
-      long MaxValue = State.GetLargeVectorDimension();
-      if ((Manager.GetInteger("max-range") < State.GetLargeVectorDimension()) && (Manager.GetInteger("max-range") > MinValue))
-        MaxValue = Manager.GetInteger("max-range");
       if (Manager.GetBoolean("add-index") == true)
         for (long i = MinValue; i < MaxValue; ++i)
-          cout << i << " " << State[i] << endl;
+          cout << i << " " << State[(i - MinValue)] << endl;
       else
         for (long i = MinValue; i < MaxValue; ++i)
-          cout << State[i] << endl;
+          cout << State[(i - MinValue)] << endl;
     }
   return 0;
 }

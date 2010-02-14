@@ -107,30 +107,21 @@ int PeriodicAnisotropicMagnetizationOperator::GetHilbertSpaceDimension ()
   return this->Chain->GetHilbertSpaceDimension();
 }
 
-// evaluate matrix element
+// evaluate part of the matrix element, within a given of indices
 //
 // V1 = vector to left multiply with current matrix
 // V2 = vector to right multiply with current matrix
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
 // return value = corresponding matrix element
 
-Complex PeriodicAnisotropicMagnetizationOperator::MatrixElement (RealVector& V1, RealVector& V2)
-{
-  return Complex();
-}
-
-// evaluate matrix element
-//
-// V1 = vector to left multiply with current matrix
-// V2 = vector to right multiply with current matrix
-// return value = corresponding matrix element
-
-Complex PeriodicAnisotropicMagnetizationOperator::MatrixElement (ComplexVector& V1, ComplexVector& V2)
+Complex PeriodicAnisotropicMagnetizationOperator::MatrixElement (ComplexVector& V1, ComplexVector& V2, long firstComponent, long nbrComponent)
 {
   double x = 0.0;
   double y = 0.0;
   double coef;
   int pos;
-  int dim = this->Chain->GetHilbertSpaceDimension();
+  int dim = (int) (firstComponent + nbrComponent);
   double TmpCoef1;
   double TmpCoef2;
   double Tmpx;
@@ -140,7 +131,7 @@ Complex PeriodicAnisotropicMagnetizationOperator::MatrixElement (ComplexVector& 
       if (this->SzFactor[j] != 0)
 	{
 	  TmpCoef1 = this->SzFactor[j];
-	  for (int i = 0; i < dim; ++i)
+	  for (int i = (int) firstComponent; i < dim; ++i)
 	    {	 	    
 	      pos = this->Chain->Szi(j, i, coef);
 	      if (pos != dim)
@@ -155,7 +146,7 @@ Complex PeriodicAnisotropicMagnetizationOperator::MatrixElement (ComplexVector& 
 	{
 	  TmpCoef1 = this->SpFactorRe[j];
 	  TmpCoef2 = this->SpFactorIm[j];
-	  for (int i = 0; i < dim; ++i)
+	  for (int i = (int) firstComponent; i < dim; ++i)
 	    {	 	    
 	      pos = this->Chain->Spi(j, i, coef);
 	      if (pos != dim)

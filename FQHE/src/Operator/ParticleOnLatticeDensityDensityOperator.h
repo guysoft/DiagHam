@@ -103,21 +103,24 @@ class ParticleOnLatticeDensityDensityOperator : public AbstractOperator
   // return value = corresponding matrix elementdimension
   int GetHilbertSpaceDimension ();
   
-  // evaluate matrix element
+  // evaluate part of the matrix element, within a given of indices
   //
   // V1 = vector to left multiply with current matrix
   // V2 = vector to right multiply with current matrix
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
   // return value = corresponding matrix element
-  Complex MatrixElement (RealVector& V1, RealVector& V2);
-  
-  // evaluate matrix element
+  Complex MatrixElement (RealVector& V1, RealVector& V2, long firstComponent, long nbrComponent);
+
+  // evaluate part of the matrix element, within a given of indices
   //
   // V1 = vector to left multiply with current matrix
   // V2 = vector to right multiply with current matrix
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
   // return value = corresponding matrix element
-  Complex MatrixElement (ComplexVector& V1, ComplexVector& V2);
-
-
+  Complex MatrixElement (ComplexVector& V1, ComplexVector& V2, long firstComponent, long nbrComponent);
+   
   // multiply a vector by the current operator for a given range of indices 
   // and store result in another vector
   //

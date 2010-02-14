@@ -3463,8 +3463,8 @@ bool RealVector::ReadVector (const char* fileName)
 // read vector from a file, only within a given range of indices
 //
 // fileName = name of the file where the vector has to be read
-// minIndex = index of the first component to read
-// maxIndex = index of the last component to read
+// minIndex = index of the first component to read (if negative, start from the end of vector)
+// maxIndex = index of the last component to read (negative or zero is considered as the last component)
 // return value = true if no error occurs
 
 bool RealVector::ReadVector (const char* fileName, long minIndex, long maxIndex)
@@ -3497,10 +3497,11 @@ bool RealVector::ReadVector (const char* fileName, long minIndex, long maxIndex)
 	    cout << "This could be a complex vector!"<<endl;
 	  exit(1);
 	}
-      if (maxIndex >= this->Dimension)
-	maxIndex = this->Dimension - 1;
-      
-      this->Resize(maxIndex - minIndex + 1);
+      if ((maxIndex >= TmpDimension) || (maxIndex <= 0l))
+	maxIndex = TmpDimension - 1;
+      if (minIndex < 0l)      
+	minIndex += TmpDimension;
+      this->Resize(maxIndex - minIndex + 1l);
       File.seekg (minIndex * sizeof(double), ios::cur);    
       for (int i = 0; i < this->Dimension; ++i)
 	ReadLittleEndian(File, this->Components[i]);
@@ -3509,15 +3510,44 @@ bool RealVector::ReadVector (const char* fileName, long minIndex, long maxIndex)
     {
       long TmpLargeDimension;
       ReadLittleEndian(File, TmpLargeDimension);
-      if (maxIndex >= TmpLargeDimension)
+      if ((maxIndex >= TmpLargeDimension) || (maxIndex <= 0l))
 	maxIndex = TmpLargeDimension - 1l;
-      this->Resize(TmpLargeDimension);
+      if (minIndex < 0l)      
+	minIndex += TmpLargeDimension;
+      this->Resize(maxIndex - minIndex + 1l);
       File.seekg (minIndex * sizeof(double), ios::cur);    
       for (long i = 0; i < this->LargeDimension; ++i)
 	ReadLittleEndian(File, this->Components[i]);
     }
   File.close();
   return true;
+}
+
+// read vector dimension from a file, without loading the full vector 
+//
+// fileName = name of the file where the vector has to be read
+// return value = vector dimension
+
+long RealVector::ReadVectorDimension (const char* fileName)
+{
+  ifstream File;
+  File.open(fileName, ios::binary | ios::in);
+  if (!File.is_open())
+    {
+      cout << "Cannot open the file: " << fileName << endl;
+      return false;
+    }
+  int TmpDimension;
+  ReadLittleEndian(File, TmpDimension);
+  if (TmpDimension > 0)
+    {
+      File.close();
+      return ((long) TmpDimension);
+    }
+  long TmpLargeDimension = 0l;
+  ReadLittleEndian(File, TmpLargeDimension);
+  File.close();
+  return TmpLargeDimension;
 }
 
 // input file stream overload

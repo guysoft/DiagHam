@@ -138,15 +138,18 @@ int ParticleOnSphereWithSU4DensityDensityOperator::GetHilbertSpaceDimension ()
   return this->Particle->GetHilbertSpaceDimension();
 }
   
-// evaluate matrix element
+// evaluate part of the matrix element, within a given of indices
 //
 // V1 = vector to left multiply with current matrix
 // V2 = vector to right multiply with current matrix
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
 // return value = corresponding matrix element
 
-Complex ParticleOnSphereWithSU4DensityDensityOperator::MatrixElement (RealVector& V1, RealVector& V2)
+Complex ParticleOnSphereWithSU4DensityDensityOperator::MatrixElement (RealVector& V1, RealVector& V2, long firstComponent, long nbrComponent)
 {
-  int Dim = this->Particle->GetHilbertSpaceDimension();
+  int Dim = (int) (firstComponent + nbrComponent);
+  int FullDim = this->Particle->GetHilbertSpaceDimension();
   double Coefficient = 0.0;
   double Coefficient2 = 0.0;
   double Element = 0.0;
@@ -155,13 +158,13 @@ Complex ParticleOnSphereWithSU4DensityDensityOperator::MatrixElement (RealVector
     {
     case 0x0000 :
       {
-	for (int i = 0; i < Dim; ++i)
+	for (int i = (int) firstComponent; i < Dim; ++i)
 	  {
 	    Coefficient = this->Particle->AupAup(i, this->AnnihilationMomentumIndex1, this->AnnihilationMomentumIndex2);
 	    if (Coefficient != 0.0)
 	      {
 		int Index = this->Particle->AdupAdup(this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient2);
-		if (Index != Dim)
+		if (Index != FullDim)
 		  Element += V1[Index] * V2[i] * Coefficient * Coefficient2;      
 	      }
 	  }
@@ -169,13 +172,13 @@ Complex ParticleOnSphereWithSU4DensityDensityOperator::MatrixElement (RealVector
       }
     case 0x0101 :
       {
-	for (int i = 0; i < Dim; ++i)
+	for (int i = (int) firstComponent; i < Dim; ++i)
 	  {
 	    Coefficient = this->Particle->AupAum(i, this->AnnihilationMomentumIndex1, this->AnnihilationMomentumIndex2);
 	    if (Coefficient != 0.0)
 	      {
 		int Index = this->Particle->AdupAdum(this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient2);
-		if (Index != Dim)
+		if (Index != FullDim)
 		  Element += V1[Index] * V2[i] * Coefficient * Coefficient2;      
 	      }
 	  }
@@ -183,13 +186,13 @@ Complex ParticleOnSphereWithSU4DensityDensityOperator::MatrixElement (RealVector
       }
     case 0x0202 :
       {
-	for (int i = 0; i < Dim; ++i)
+	for (int i = (int) firstComponent; i < Dim; ++i)
 	  {
 	    Coefficient = this->Particle->AupAdp(i, this->AnnihilationMomentumIndex1, this->AnnihilationMomentumIndex2);
 	    if (Coefficient != 0.0)
 	      {
 		int Index = this->Particle->AdupAddp(this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient2);
-		if (Index != Dim)
+		if (Index != FullDim)
 		  Element += V1[Index] * V2[i] * Coefficient * Coefficient2;      
 	      }
 	  }
@@ -197,13 +200,13 @@ Complex ParticleOnSphereWithSU4DensityDensityOperator::MatrixElement (RealVector
       }
     case 0x0303 :
       {
-	for (int i = 0; i < Dim; ++i)
+	for (int i = (int) firstComponent; i < Dim; ++i)
 	  {
 	    Coefficient = this->Particle->AupAdm(i, this->AnnihilationMomentumIndex1, this->AnnihilationMomentumIndex2);
 	    if (Coefficient != 0.0)
 	      {
 		int Index = this->Particle->AdupAddm(this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient2);
-		if (Index != Dim)
+		if (Index != FullDim)
 		  Element += V1[Index] * V2[i] * Coefficient * Coefficient2;      
 	      }
 	  }
@@ -211,13 +214,13 @@ Complex ParticleOnSphereWithSU4DensityDensityOperator::MatrixElement (RealVector
       }
     case 0x1111 :
       {
-	for (int i = 0; i < Dim; ++i)
+	for (int i = (int) firstComponent; i < Dim; ++i)
 	  {
 	    Coefficient = this->Particle->AumAum(i, this->AnnihilationMomentumIndex1, this->AnnihilationMomentumIndex2);
 	    if (Coefficient != 0.0)
 	      {
 		int Index = this->Particle->AdumAdum(this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient2);
-		if (Index != Dim)
+		if (Index != FullDim)
 		  Element += V1[Index] * V2[i] * Coefficient * Coefficient2;      
 	      }
 	  }
@@ -225,13 +228,13 @@ Complex ParticleOnSphereWithSU4DensityDensityOperator::MatrixElement (RealVector
       }
     case 0x1212 :
       {
-	for (int i = 0; i < Dim; ++i)
+	for (int i = (int) firstComponent; i < Dim; ++i)
 	  {
 	    Coefficient = this->Particle->AumAdp(i, this->AnnihilationMomentumIndex1, this->AnnihilationMomentumIndex2);
 	    if (Coefficient != 0.0)
 	      {
 		int Index = this->Particle->AdumAddp(this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient2);
-		if (Index != Dim)
+		if (Index != FullDim)
 		  Element += V1[Index] * V2[i] * Coefficient * Coefficient2;      
 	      }
 	  }
@@ -239,13 +242,13 @@ Complex ParticleOnSphereWithSU4DensityDensityOperator::MatrixElement (RealVector
       }
     case 0x1313 :
       {
-	for (int i = 0; i < Dim; ++i)
+	for (int i = (int) firstComponent; i < Dim; ++i)
 	  {
 	    Coefficient = this->Particle->AumAdm(i, this->AnnihilationMomentumIndex1, this->AnnihilationMomentumIndex2);
 	    if (Coefficient != 0.0)
 	      {
 		int Index = this->Particle->AdumAddm(this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient2);
-		if (Index != Dim)
+		if (Index != FullDim)
 		  Element += V1[Index] * V2[i] * Coefficient * Coefficient2;      
 	      }
 	  }
@@ -253,13 +256,13 @@ Complex ParticleOnSphereWithSU4DensityDensityOperator::MatrixElement (RealVector
       }
     case 0x2222 :
       {
-	for (int i = 0; i < Dim; ++i)
+	for (int i = (int) firstComponent; i < Dim; ++i)
 	  {
 	    Coefficient = this->Particle->AdpAdp(i, this->AnnihilationMomentumIndex1, this->AnnihilationMomentumIndex2);
 	    if (Coefficient != 0.0)
 	      {
 		int Index = this->Particle->AddpAddp(this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient2);
-		if (Index != Dim)
+		if (Index != FullDim)
 		  Element += V1[Index] * V2[i] * Coefficient * Coefficient2;      
 	      }
 	  }
@@ -267,13 +270,13 @@ Complex ParticleOnSphereWithSU4DensityDensityOperator::MatrixElement (RealVector
       }
     case 0x2323 :
       {
-	for (int i = 0; i < Dim; ++i)
+	for (int i = (int) firstComponent; i < Dim; ++i)
 	  {
 	    Coefficient = this->Particle->AdpAdm(i, this->AnnihilationMomentumIndex1, this->AnnihilationMomentumIndex2);
 	    if (Coefficient != 0.0)
 	      {
 		int Index = this->Particle->AddpAddm(this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient2);
-		if (Index != Dim)
+		if (Index != FullDim)
 		  Element += V1[Index] * V2[i] * Coefficient * Coefficient2;      
 	      }
 	  }
@@ -281,13 +284,13 @@ Complex ParticleOnSphereWithSU4DensityDensityOperator::MatrixElement (RealVector
       }
     case 0x3333 :
       {
-	for (int i = 0; i < Dim; ++i)
+	for (int i = (int) firstComponent; i < Dim; ++i)
 	  {
 	    Coefficient = this->Particle->AdmAdm(i, this->AnnihilationMomentumIndex1, this->AnnihilationMomentumIndex2);
 	    if (Coefficient != 0.0)
 	      {
 		int Index = this->Particle->AddmAddm(this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient2);
-		if (Index != Dim)
+		if (Index != FullDim)
 		  Element += V1[Index] * V2[i] * Coefficient * Coefficient2;      
 	      }
 	  }
@@ -297,17 +300,6 @@ Complex ParticleOnSphereWithSU4DensityDensityOperator::MatrixElement (RealVector
   return Complex(this->SignFactor * Element);
 }
   
-// evaluate matrix element
-//
-// V1 = vector to left multiply with current matrix
-// V2 = vector to right multiply with current matrix
-// return value = corresponding matrix element
-
-Complex ParticleOnSphereWithSU4DensityDensityOperator::MatrixElement (ComplexVector& V1, ComplexVector& V2)
-{
-  return Complex();
-}
-   
 // multiply a vector by the current operator for a given range of indices 
 // and store result in another vector
 //
