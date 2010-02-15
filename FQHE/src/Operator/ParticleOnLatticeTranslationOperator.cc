@@ -121,7 +121,7 @@ void ParticleOnLatticeTranslationOperator::SetTranslationComponents(int rx, int 
 // nbrComponent = number of components to evaluate
 // return value = corresponding matrix element
 
-Complex ParticleOnLatticeTranslationOperator::MatrixElement (RealVector& V1, RealVector& V2, long firstComponent, long nbrComponent)
+Complex ParticleOnLatticeTranslationOperator::PartialMatrixElement (RealVector& V1, RealVector& V2, long firstComponent, long nbrComponent)
 {
   int Dim = firstComponent + nbrComponent;
   Complex TranslationPhase;  
@@ -143,7 +143,7 @@ Complex ParticleOnLatticeTranslationOperator::MatrixElement (RealVector& V1, Rea
 // nbrComponent = number of components to evaluate
 // return value = corresponding matrix element
   
-Complex ParticleOnLatticeTranslationOperator::MatrixElement (ComplexVector& V1, ComplexVector& V2, long firstComponent, long nbrComponent)
+Complex ParticleOnLatticeTranslationOperator::PartialMatrixElement (ComplexVector& V1, ComplexVector& V2, long firstComponent, long nbrComponent)
 {
   int Dim = (int) (firstComponent + nbrComponent);
   Complex TranslationPhase;

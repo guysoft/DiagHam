@@ -124,7 +124,7 @@ int ParticleOnSphereSquareTotalSpinOperator::GetHilbertSpaceDimension ()
 // nbrComponent = number of components to evaluate
 // return value = corresponding matrix element
 
-Complex ParticleOnSphereSquareTotalSpinOperator::MatrixElement (RealVector& V1, RealVector& V2, long firstComponent, long nbrComponent)
+Complex ParticleOnSphereSquareTotalSpinOperator::PartialMatrixElement (RealVector& V1, RealVector& V2, long firstComponent, long nbrComponent)
 {
   int Dim = (int) (firstComponent + nbrComponent);
   int FullDim = this->Particle->GetHilbertSpaceDimension();

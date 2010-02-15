@@ -194,7 +194,7 @@ void ParticleOnLatticeFluxOperator::SetCellPosition (int posx, int posy, int sub
 // nbrComponent = number of components to evaluate
 // return value = corresponding matrix element
 
-Complex ParticleOnLatticeFluxOperator::MatrixElement (RealVector& V1, RealVector& V2, long firstComponent, long nbrComponent)
+Complex ParticleOnLatticeFluxOperator::PartialMatrixElement (RealVector& V1, RealVector& V2, long firstComponent, long nbrComponent)
 {
   int Dim = firstComponent + nbrComponent;
   int FullDim = this->Particle->GetHilbertSpaceDimension();  
@@ -221,7 +221,7 @@ Complex ParticleOnLatticeFluxOperator::MatrixElement (RealVector& V1, RealVector
 // nbrComponent = number of components to evaluate
 // return value = corresponding matrix element
 
-Complex ParticleOnLatticeFluxOperator::MatrixElement (ComplexVector& V1, ComplexVector& V2, long firstComponent, long nbrComponent)
+Complex ParticleOnLatticeFluxOperator::PartialMatrixElement (ComplexVector& V1, ComplexVector& V2, long firstComponent, long nbrComponent)
 {
   int Dim = (int) (firstComponent + nbrComponent);
   int FullDim = this->Particle->GetHilbertSpaceDimension();

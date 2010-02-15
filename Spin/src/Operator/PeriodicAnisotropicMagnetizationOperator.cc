@@ -115,7 +115,7 @@ int PeriodicAnisotropicMagnetizationOperator::GetHilbertSpaceDimension ()
 // nbrComponent = number of components to evaluate
 // return value = corresponding matrix element
 
-Complex PeriodicAnisotropicMagnetizationOperator::MatrixElement (ComplexVector& V1, ComplexVector& V2, long firstComponent, long nbrComponent)
+Complex PeriodicAnisotropicMagnetizationOperator::PartialMatrixElement (ComplexVector& V1, ComplexVector& V2, long firstComponent, long nbrComponent)
 {
   double x = 0.0;
   double y = 0.0;

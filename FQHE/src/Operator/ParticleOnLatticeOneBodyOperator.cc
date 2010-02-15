@@ -124,7 +124,7 @@ void ParticleOnLatticeOneBodyOperator::SetCreationAnnihilationIndex (int creatio
 // nbrComponent = number of components to evaluate
 // return value = corresponding matrix element
 
-Complex ParticleOnLatticeOneBodyOperator::MatrixElement (RealVector& V1, RealVector& V2, long firstComponent, long nbrComponent)
+Complex ParticleOnLatticeOneBodyOperator::PartialMatrixElement (RealVector& V1, RealVector& V2, long firstComponent, long nbrComponent)
 {
   int Dim = (int) (firstComponent + nbrComponent);
   int FullDim = this->Particle->GetHilbertSpaceDimension();
@@ -148,7 +148,7 @@ Complex ParticleOnLatticeOneBodyOperator::MatrixElement (RealVector& V1, RealVec
 // nbrComponent = number of components to evaluate
 // return value = corresponding matrix element
   
-Complex ParticleOnLatticeOneBodyOperator::MatrixElement (ComplexVector& V1, ComplexVector& V2, long firstComponent, long nbrComponent)
+Complex ParticleOnLatticeOneBodyOperator::PartialMatrixElement (ComplexVector& V1, ComplexVector& V2, long firstComponent, long nbrComponent)
 {
   int Dim = (int) (firstComponent + nbrComponent);
   int FullDim = this->Particle->GetHilbertSpaceDimension();

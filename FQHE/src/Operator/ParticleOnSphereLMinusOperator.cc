@@ -125,7 +125,7 @@ int ParticleOnSphereLMinusOperator::GetHilbertSpaceDimension ()
 // nbrComponent = number of components to evaluate
 // return value = corresponding matrix element
 
-Complex ParticleOnSphereLMinusOperator::MatrixElement (RealVector& V1, RealVector& V2, long firstComponent, long nbrComponent)
+Complex ParticleOnSphereLMinusOperator::PartialMatrixElement (RealVector& V1, RealVector& V2, long firstComponent, long nbrComponent)
 {
   int Dim = firstComponent + nbrComponent;
   int TargetDim = this->Particle->GetTargetHilbertSpaceDimension();

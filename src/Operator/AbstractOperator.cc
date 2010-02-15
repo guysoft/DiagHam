@@ -134,7 +134,7 @@ Matrix* AbstractOperator::GetOperator ()
 
 Complex AbstractOperator::MatrixElement (RealVector& V1, RealVector& V2)
 {
-  return this->MatrixElement(V1, V2, 0l, V1.GetLargeVectorDimension());
+  return this->PartialMatrixElement(V1, V2, 0l, V1.GetLargeVectorDimension());
 }
 
 // evaluate part of the matrix element, within a given of indices
@@ -145,7 +145,7 @@ Complex AbstractOperator::MatrixElement (RealVector& V1, RealVector& V2)
 // nbrComponent = number of components to evaluate
 // return value = corresponding matrix element
 
-Complex AbstractOperator::MatrixElement (RealVector& V1, RealVector& V2, long firstComponent, long nbrComponent)
+Complex AbstractOperator::PartialMatrixElement (RealVector& V1, RealVector& V2, long firstComponent, long nbrComponent)
 {
   return Complex();
 }
@@ -158,7 +158,7 @@ Complex AbstractOperator::MatrixElement (RealVector& V1, RealVector& V2, long fi
 
 Complex AbstractOperator::MatrixElement (ComplexVector& V1, ComplexVector& V2)
 {
-  return this->MatrixElement(V1, V2, 0l, V1.GetLargeVectorDimension());
+  return this->PartialMatrixElement(V1, V2, 0l, V1.GetLargeVectorDimension());
 }
 
 // evaluate part of the matrix element, within a given of indices
@@ -169,7 +169,7 @@ Complex AbstractOperator::MatrixElement (ComplexVector& V1, ComplexVector& V2)
 // nbrComponent = number of components to evaluate
 // return value = corresponding matrix element
 
-Complex MatrixElement (ComplexVector& V1, ComplexVector& V2, long firstComponent, long nbrComponent)
+Complex AbstractOperator::PartialMatrixElement (ComplexVector& V1, ComplexVector& V2, long firstComponent, long nbrComponent)
 {
   return Complex();
 }
