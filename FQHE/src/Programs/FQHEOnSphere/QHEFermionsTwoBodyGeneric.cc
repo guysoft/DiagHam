@@ -206,6 +206,7 @@ int main(int argc, char** argv)
     {
       cout << "Lz="<<L<<endl;
       ParticleOnSphere* Space = (FermionOnSphere*) ParticleManager.GetHilbertSpace(L);
+      if (Space==0) return 0; // happens if we wrote the Hilbert space to disk, for instance!
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       AbstractQHEHamiltonian* Hamiltonian = 0;
       double Shift=0.0;

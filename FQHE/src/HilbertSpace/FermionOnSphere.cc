@@ -905,7 +905,7 @@ int FermionOnSphere::CarefulFindStateIndex(unsigned long stateDescription, int l
       return this->HilbertSpaceDimension;
     }
   int Index = this->FindStateIndex(stateDescription, lzMax);  
-  if (this->StateDescription[Index] == stateDescription)
+  if ((Index<this->HilbertSpaceDimension)&&(this->StateDescription[Index] == stateDescription))
     return Index;
   else
     {
@@ -913,7 +913,7 @@ int FermionOnSphere::CarefulFindStateIndex(unsigned long stateDescription, int l
       for (int i=0; i<HilbertSpaceDimension; ++i)
 	if (this->StateDescription[i] == stateDescription)
 	  cout << "Element now found at i="<<i<<", "<<this->StateDescription[i]
-	       <<"="<<stateDescription<<"!"<<endl;      
+	       <<"="<<stateDescription<<"!"<<endl;
       return this->HilbertSpaceDimension;
     }
 

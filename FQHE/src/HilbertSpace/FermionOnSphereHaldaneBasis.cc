@@ -376,7 +376,10 @@ FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis (char* fileName, unsign
 
 FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis(const FermionOnSphereHaldaneBasis& fermions)
 {
-  this->TargetSpace = this;
+  if (fermions.TargetSpace != ((FermionOnSphere*)&fermions))
+    this->TargetSpace = fermions.TargetSpace;
+  else
+    this->TargetSpace = this;
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;
@@ -424,7 +427,7 @@ FermionOnSphereHaldaneBasis& FermionOnSphereHaldaneBasis::operator = (const Ferm
 	delete[] this->LookUpTable[i];
       delete[] this->LookUpTable;
     }
-  if (this->TargetSpace != &fermions)
+  if (fermions.TargetSpace != ((FermionOnSphere*)&fermions))
     this->TargetSpace = fermions.TargetSpace;
   else
     this->TargetSpace = this;
@@ -528,7 +531,7 @@ AbstractHilbertSpace* FermionOnSphereHaldaneBasis::ExtractSubspace (AbstractQuan
 
 void FermionOnSphereHaldaneBasis::SetTargetSpace(ParticleOnSphere* targetSpace)
 {
-  this->TargetSpace = (FermionOnSphereHaldaneBasis*) targetSpace;
+  this->TargetSpace = (FermionOnSphere*) targetSpace;
 }
 
 // return Hilbert space dimension of the target space
@@ -825,11 +828,14 @@ double FermionOnSphereHaldaneBasis::AdA (int index, int m)
 // n = index of the annihilation operator
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
-  
+#include <bitset>
+using std::bitset;
 int FermionOnSphereHaldaneBasis::AdA (int index, int m, int n, double& coefficient)
 {
   int StateLzMax = this->StateLzMax[index];
   unsigned long State = this->StateDescription[index];
+  bitset<32> b=State;
+  cout << "AdA("<<m<<", "<<n<<") "<<b<<"->";
   if ((n > StateLzMax) || ((State & (((unsigned long) (0x1)) << n)) == 0))
     {
       coefficient = 0.0;
@@ -866,6 +872,13 @@ int FermionOnSphereHaldaneBasis::AdA (int index, int m, int n, double& coefficie
 #endif
     }
   TmpState |= (((unsigned long) (0x1)) << m);
+  b=TmpState;
+  cout << "searching "<< b;
+  cout << " " << this->TargetSpace->CarefulFindStateIndex(TmpState, -1)<<endl;
+
+  b=this->TargetSpace->StateDescription[0];
+  cout << "comparing target state description [0]="<<b<<endl; 
+
   return this->TargetSpace->FindStateIndex(TmpState, NewLzMax);
 }
 

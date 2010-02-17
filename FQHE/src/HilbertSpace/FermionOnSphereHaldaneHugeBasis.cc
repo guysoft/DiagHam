@@ -836,7 +836,10 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
 
 FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(const FermionOnSphereHaldaneHugeBasis& fermions)
 {
-  this->TargetSpace = this;
+  if (fermions.TargetSpace != &fermions)
+    this->TargetSpace = fermions.TargetSpace;
+  else
+    this->TargetSpace = this;
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;
@@ -912,7 +915,7 @@ FermionOnSphereHaldaneHugeBasis& FermionOnSphereHaldaneHugeBasis::operator = (co
       delete[] this->SignLookUpTable;
       delete[] this->SignLookUpTableMask;
     }
-  if (this->TargetSpace != &fermions)
+  if (fermions.TargetSpace != &fermions)
     this->TargetSpace = fermions.TargetSpace;
   else
     this->TargetSpace = this;

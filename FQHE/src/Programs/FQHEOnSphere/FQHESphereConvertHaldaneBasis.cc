@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include "Vector/RealVector.h"
 
 #include "HilbertSpace/FermionOnSphere.h"

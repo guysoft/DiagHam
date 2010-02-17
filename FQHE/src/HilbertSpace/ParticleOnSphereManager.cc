@@ -383,6 +383,7 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceU1(int totalLz)
 		     if (this->Options->GetString("save-hilbert") != 0)
 		       {
 			 ((FermionOnSphereHaldaneBasis*) Space)->WriteHilbertSpace(this->Options->GetString("save-hilbert"));
+			 cout << "Wrote hilbert space "<<this->Options->GetString("save-hilbert")<<" of dimension d="<<Space->GetHilbertSpaceDimension()<<endl;
 			 return 0;
 		       }
 		   }

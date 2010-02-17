@@ -206,7 +206,7 @@ FermionOnSphereWithSpin& FermionOnSphereWithSpin::operator = (const FermionOnSph
       delete[] this->StateDescription;
       delete[] this->StateHighestBit;
     }
-  if (this->TargetSpace != &fermions)
+  if (fermions.TargetSpace != &fermions)
     this->TargetSpace = fermions.TargetSpace;
   else
     this->TargetSpace = this;

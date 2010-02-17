@@ -56,6 +56,10 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('s', "statistics", "particle statistics (boson or fermion, try to guess it from file name if not defined)");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lm", "number of time the L- operator has to be applied", 1);
 
+  (*SystemGroup) += new SingleStringOption  ('\n', "input-reference", "use a haldane basis with the given reference file for the input file");
+  (*SystemGroup) += new SingleStringOption  ('\n', "output-reference", "use a haldane basis with the given reference file for the output file");
+
+
   (*DataGroup) += new SingleStringOption  ('i', "input-file", "input vector file name");
   (*DataGroup) += new SingleStringOption  ('o', "output-file", "output vector file name");
 

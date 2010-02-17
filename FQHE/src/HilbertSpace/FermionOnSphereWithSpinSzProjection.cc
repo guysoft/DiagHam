@@ -71,7 +71,10 @@ FermionOnSphereWithSpinSzProjection::FermionOnSphereWithSpinSzProjection (int nb
 // fermions = reference on the hilbert space to copy to copy
 FermionOnSphereWithSpinSzProjection::FermionOnSphereWithSpinSzProjection(const FermionOnSphereWithSpinSzProjection& fermions)
 {
-  this->TargetSpace = this;  
+  if (fermions.TargetSpace != &fermions)
+    this->TargetSpace = fermions.TargetSpace;
+  else
+    this->TargetSpace = this;
   this->Flag=fermions.Flag;
   this->FullSpace = fermions.FullSpace;
   this->SzProjectionValue = fermions.SzProjectionValue;
@@ -103,7 +106,7 @@ FermionOnSphereWithSpinSzProjection& FermionOnSphereWithSpinSzProjection::operat
   this->FullSpace = fermions.FullSpace;
   this->SzProjectionValue = fermions.SzProjectionValue;
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
-  if (this->TargetSpace != &fermions)
+  if (fermions.TargetSpace != &fermions)
     this->TargetSpace = fermions.TargetSpace;
   else
     this->TargetSpace = this;

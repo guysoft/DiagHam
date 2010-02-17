@@ -12,13 +12,14 @@
 #include "Options/SingleIntegerOption.h"
 #include "Options/SingleDoubleOption.h"
 #include "Options/SingleStringOption.h"
+#include "Options/MultipleStringOption.h"
 
 #include "GeneralTools/ConfigurationParser.h"
 #include "GeneralTools/FilenameTools.h"
 
 #include <iostream>
 #include <cstring>
-#include <stdlib.h>
+#include <cstdlib>
 #include <math.h>
 #include <sys/time.h>
 #include <stdio.h>
@@ -41,9 +42,11 @@ int main(int argc, char** argv)
 
   Manager += SystemGroup;
   Manager += MiscGroup;
-
+  
   (*SystemGroup) += new  SingleStringOption ('b', "basis", "name of the file that contains the vector files of the orthonormalized input basis (InputBasis) and the files of the vectors to orthonalize upon (OrthogonalBasis)");
-  (*SystemGroup) += new SingleDoubleOption ('\n', "error", "bound above which vectors are consider as linearly independent", 1e-10);
+  (*SystemGroup) += new  MultipleStringOption ('o', "ortho-basis", "alternative input for orthogonal basis vectors(overrides basis file)");
+  (*SystemGroup) += new  MultipleStringOption ('i', "input-basis", "alternative input for known input basis vectors");
+  (*SystemGroup) += new SingleDoubleOption ('\n', "error", "bound above which vectors are considered as linearly independent", 1e-10);
   (*SystemGroup) += new  SingleStringOption ('\n', "vector-prefix", "prefix to use for each vector of the basis", "vector");
 
 
@@ -64,31 +67,53 @@ int main(int argc, char** argv)
   char* VectorPrefix = ((SingleStringOption*) Manager["vector-prefix"])->GetString();
   double Error = ((SingleDoubleOption*) Manager["error"])->GetDouble();
 
-  ConfigurationParser ReducedBasis;
-  if (ReducedBasis.Parse(BasisDescription) == false)
-    {
-      ReducedBasis.DumpErrors(cout) << endl;
-      return -1;
-    }
   int NbrInputVectors;
   char** InputVectorFileNames;
-  if (ReducedBasis.GetAsStringArray("InputBasis", ' ', InputVectorFileNames, NbrInputVectors) == false)
-    {
-      cout << "Input basis vectors are not defined or have a wrong value in " << BasisDescription << endl;
-      return -1;
-    }
-
   int NbrOrthogonalVectors;
   char** OrthogonalVectorFileNames;
-  if (ReducedBasis.GetAsStringArray("OrthogonalBasis", ' ', OrthogonalVectorFileNames, NbrOrthogonalVectors) == false)
-    {
-      cout << "Orthogonal basis vectors are not defined or have a wrong value in " << BasisDescription << endl;
-      return -1;
-    }  
+  bool AddRandomVector=false;
+  char* DirectoryName;
 
-  RealVector* InputBasis = new RealVector[NbrInputVectors];
-  char* DirectoryName = ReducedBasis["Directory"];
+  if ((OrthogonalVectorFileNames=Manager.GetStrings("ortho-basis",NbrOrthogonalVectors))==NULL)
+    {
+      ConfigurationParser ReducedBasis;
+      if (BasisDescription==NULL)
+	{
+	  cout << "Input of either --ortho-basis or --basis is required!"<<endl;
+	  exit(1);
+	}
+      if (ReducedBasis.Parse(BasisDescription) == false)
+	{
+	  ReducedBasis.DumpErrors(cout) << endl;
+	  return -1;
+	}
+      if (ReducedBasis.GetAsStringArray("OrthogonalBasis", ' ', OrthogonalVectorFileNames, NbrOrthogonalVectors) == false)
+	{
+	  cout << "Orthogonal basis vectors are not defined or have a wrong value in " << BasisDescription << endl;
+	  return -1;
+	}
+      
+      if (ReducedBasis.GetAsStringArray("InputBasis", ' ', InputVectorFileNames, NbrInputVectors) == false)
+	{
+	  cout << "Input basis vectors are not defined or have a wrong value in " << BasisDescription << endl;
+	  return -1;
+	}
+      DirectoryName = ReducedBasis["Directory"];
+    }
+  else
+    {
+      if ((InputVectorFileNames=Manager.GetStrings("input-basis",NbrInputVectors))==NULL)
+	{
+	  NbrInputVectors=0;
+	  AddRandomVector=true;
+	}
+      DirectoryName = new char[4];
+      sprintf(DirectoryName,"./");
+    }
+      
+  RealVector* InputBasis = new RealVector[NbrInputVectors+1];
   char* TmpName;
+  long Dimension=0;
   for (int i = 0; i < NbrInputVectors; ++i)
     {
       TmpName = InputVectorFileNames[i];
@@ -109,8 +134,21 @@ int main(int argc, char** argv)
 	}
       if (DirectoryName != 0)
 	delete[] TmpName;
+      long TmpDimension;
+      if (InputBasis[i].IsLargeVector())
+	TmpDimension = InputBasis[i].GetLargeVectorDimension();
+      else
+	TmpDimension = InputBasis[i].GetVectorDimension();
+      if (Dimension==0)
+	Dimension=TmpDimension;
+      else
+	if (TmpDimension!=Dimension)
+	  {
+	    cout << "Attention, vector "<<TmpName<<" has the wrong dimension"<<endl;
+	    exit(1);
+	  }
     }
-
+  
   RealVector* OrthogonalBasis = new RealVector[NbrOrthogonalVectors];
   for (int i = 0; i < NbrOrthogonalVectors; ++i)
     {
@@ -134,8 +172,34 @@ int main(int argc, char** argv)
 
       if (DirectoryName != 0)
 	delete[] TmpName;
-    }
+      long TmpDimension;
+      if (InputBasis[i].IsLargeVector())
+	TmpDimension = OrthogonalBasis[i].GetLargeVectorDimension();
+      else
+	TmpDimension = OrthogonalBasis[i].GetVectorDimension();
+      if (Dimension==0)
+	Dimension=TmpDimension;
+      else
+	if (TmpDimension!=Dimension)
+	  {
+	    cout << "Attention, vector "<<TmpName<<" has the wrong dimension"<<endl;
+	    exit(1);
+	  }
 
+    }
+  if (Dimension==0)
+    {
+      cout << "Error: No input basis or orthogonal basis vectors found"<<endl;
+      exit(1);
+    }
+  if (AddRandomVector)
+    {
+      InputBasis[NbrInputVectors].Resize(Dimension);
+      for (int i = 0; i < Dimension; i++)
+	InputBasis[NbrInputVectors][i] = (rand() - 32767) * 0.5;
+      InputBasis[NbrInputVectors] /= InputBasis[NbrInputVectors].Norm();
+      ++NbrInputVectors;
+    }
   double* Coefficients = new double[NbrOrthogonalVectors];
   for (int i = 0; i < NbrInputVectors; ++i)
     {
@@ -186,7 +250,8 @@ int main(int argc, char** argv)
 
   if (DirectoryName != 0)
     delete[] DirectoryName;
-  for (int j = 0; j < NbrInputVectors; ++j)
+  int Offset = (AddRandomVector?1:0);
+  for (int j = 0; j < NbrInputVectors-Offset; ++j)
     delete[] InputVectorFileNames[j];
   delete[] InputVectorFileNames;
   return 0;

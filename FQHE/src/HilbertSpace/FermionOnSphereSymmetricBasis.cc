@@ -201,7 +201,10 @@ FermionOnSphereSymmetricBasis::FermionOnSphereSymmetricBasis (char* fileName, un
 
 FermionOnSphereSymmetricBasis::FermionOnSphereSymmetricBasis(const FermionOnSphereSymmetricBasis& fermions)
 {
-  this->TargetSpace = this;
+  if (fermions.TargetSpace != &fermions)
+    this->TargetSpace = fermions.TargetSpace;
+  else
+    this->TargetSpace = this;
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;
@@ -259,7 +262,7 @@ FermionOnSphereSymmetricBasis& FermionOnSphereSymmetricBasis::operator = (const 
 	delete[] this->LookUpTable[i];
       delete[] this->LookUpTable;
     }
-  if (this->TargetSpace != &fermions)
+  if (fermions.TargetSpace != &fermions)
     this->TargetSpace = fermions.TargetSpace;
   else
     this->TargetSpace = this;

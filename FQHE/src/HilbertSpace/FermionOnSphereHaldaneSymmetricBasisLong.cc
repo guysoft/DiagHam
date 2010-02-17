@@ -325,7 +325,10 @@ FermionOnSphereHaldaneSymmetricBasisLong::FermionOnSphereHaldaneSymmetricBasisLo
 
 FermionOnSphereHaldaneSymmetricBasisLong::FermionOnSphereHaldaneSymmetricBasisLong(const FermionOnSphereHaldaneSymmetricBasisLong& fermions)
 {
-  this->TargetSpace = this;
+  if (fermions.TargetSpace != &fermions)
+    this->TargetSpace = fermions.TargetSpace;
+  else
+    this->TargetSpace = this;
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;
@@ -372,7 +375,7 @@ FermionOnSphereHaldaneSymmetricBasisLong& FermionOnSphereHaldaneSymmetricBasisLo
 	delete[] this->LookUpTable[i];
       delete[] this->LookUpTable;
     }
-  if (this->TargetSpace != &fermions)
+  if (fermions.TargetSpace != &fermions)
     this->TargetSpace = fermions.TargetSpace;
   else
     this->TargetSpace = this;

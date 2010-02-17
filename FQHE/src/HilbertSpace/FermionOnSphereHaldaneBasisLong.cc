@@ -298,7 +298,10 @@ FermionOnSphereHaldaneBasisLong::FermionOnSphereHaldaneBasisLong (char* fileName
 
 FermionOnSphereHaldaneBasisLong::FermionOnSphereHaldaneBasisLong(const FermionOnSphereHaldaneBasisLong& fermions)
 {
-  this->TargetSpace = this;
+  if (fermions.TargetSpace != &fermions)
+    this->TargetSpace = fermions.TargetSpace;
+  else
+    this->TargetSpace = this;
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;
@@ -343,7 +346,7 @@ FermionOnSphereHaldaneBasisLong& FermionOnSphereHaldaneBasisLong::operator = (co
 	delete[] this->LookUpTable[i];
       delete[] this->LookUpTable;
     }
-  if (this->TargetSpace != &fermions)
+  if (fermions.TargetSpace != &fermions)
     this->TargetSpace = fermions.TargetSpace;
   else
     this->TargetSpace = this;

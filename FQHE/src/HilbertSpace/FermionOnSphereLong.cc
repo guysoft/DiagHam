@@ -100,7 +100,10 @@ FermionOnSphereLong::FermionOnSphereLong (int nbrFermions, int totalLz, int lzMa
 
 FermionOnSphereLong::FermionOnSphereLong(const FermionOnSphereLong& fermions)
 {
-  this->TargetSpace = this;
+  if (fermions.TargetSpace != &fermions)
+    this->TargetSpace = fermions.TargetSpace;
+  else
+    this->TargetSpace = this;
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;
@@ -155,7 +158,7 @@ FermionOnSphereLong& FermionOnSphereLong::operator = (const FermionOnSphereLong&
 	delete[] this->LookUpTable[i];
       delete[] this->LookUpTable;
     }
-  if (this->TargetSpace != &fermions)
+  if (fermions.TargetSpace != &fermions)
     this->TargetSpace = fermions.TargetSpace;
   else
     this->TargetSpace = this;
