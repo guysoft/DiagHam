@@ -76,6 +76,18 @@ int main(int argc, char** argv)
       return -1;
     }
   
+  
+  int* Paddings = 0;
+  if (InputVectors(6, 0) != 0)
+    {
+      Paddings = InputVectors.GetAsIntegerArray(6);
+    }
+  else
+    {
+      Paddings = new int [InputVectors.GetNbrLines()];
+      for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
+	Paddings[i] = Padding;
+    }
   int LeftNbrParticles = 0;
   int LeftLzMax = 0;
   int LeftTotalLz = 0;
@@ -97,7 +109,7 @@ int main(int argc, char** argv)
     }
 
   NbrParticles = RightNbrParticles + LeftNbrParticles;
-  LzMax = RightLzMax + LeftLzMax + Padding;
+  LzMax = RightLzMax + LeftLzMax + Paddings[0];
   TotalLz = 0;
   char* OutputFileName = 0;
   if (Manager.GetString("output-file") != 0)
@@ -249,7 +261,7 @@ int main(int argc, char** argv)
 	}
 
 
-      OutputBasis->FuseStates(OutputState, LeftVector, RightVector, Padding, LeftBasis, RightBasis, SymmetrizedBasis);
+      OutputBasis->FuseStates(OutputState, LeftVector, RightVector, Paddings[i], LeftBasis, RightBasis, SymmetrizedBasis);
       delete RightBasis;
       delete LeftBasis;      
     }
