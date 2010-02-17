@@ -802,6 +802,72 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse
 
   if (resumeFlag == true)
     {
+      cout << "consistency check" << endl;
+      ifstream File;
+      File.open(partialSave, ios::binary | ios::in);
+      File.seekg (0, ios::end);
+      long TmpResumePos = File.tellg();
+      File.close();
+      TmpResumePos -= FileShift;
+      TmpResumePos /= sizeof(double); 	
+      long TmpResumeMinPos = TmpResumePos - NbrBlocks;
+      long LimNbrBlocks = NbrBlocks;
+      if (TmpResumeMinPos < 0l)
+	{
+	  TmpResumeMinPos = 0l;
+	  LimNbrBlocks = TmpResumePos - TmpResumeMinPos + 1;
+	}
+      long TmpMaxIndex = TmpResumeMinPos + NbrBlocks - 1l;
+      if (TmpMaxIndex > maxIndex)
+	{
+	  LimNbrBlocks = NbrBlocks - (TmpMaxIndex - maxIndex);
+	  TmpMaxIndex = maxIndex;
+	}
+      if (LimNbrBlocks > 0)
+	{
+	  Operation.SetIndicesRange(TmpResumeMinPos, LimNbrBlocks);
+	  Operation.ApplyOperation(architecture);
+	  ifstream OutputFile;
+	  OutputFile.open(partialSave, ios::binary | ios::in);
+	  double RefCoefficient = 0.0;
+
+	  for (long k = 0l; k < LimNbrBlocks; ++k)
+	    {
+	      File.seekg (FileShift + (TmpResumeMinPos * sizeof(double)), ios::beg);
+	      ReadLittleEndian(OutputFile, RefCoefficient);
+	      double Coefficient = 0.0;
+	      if (TmpNbrComputedComponentArray[k] >= 0)
+		{
+		  for (int j = 0; j < TmpNbrComputedComponentArray[k]; ++j)
+		    {
+		      long TmpIndex = TmpIndexArray[k][j];
+		      if (TmpIndex < this->LargeHilbertSpaceDimension)
+			{		  
+			  OutputFile.seekg ((TmpIndex * sizeof(double)) + FileShift, ios::beg);
+			  ReadLittleEndian (OutputFile, TmpComponent);
+			  Coefficient += TmpComponentArray[k][j] * TmpComponent;
+			}	      	    
+		    }		  
+		  Coefficient *= InvAlpha;
+		  Coefficient /= (RhoRoot - TmpRhoArray[k]);
+		}
+	      else
+		{
+		  long TmpIndex = TmpIndexArray[k][0];
+		  OutputFile.seekg ((TmpIndex * sizeof(double)) + FileShift, ios::beg);
+		  ReadLittleEndian (OutputFile, Coefficient);
+		}
+	      if (Coefficient != RefCoefficient)
+		{
+		  cout << "error, invalid Jack : component " << TmpResumeMinPos << " is " << RefCoefficient << ", should be " << Coefficient << endl;
+		  OutputFile.close();
+		  return;
+		}
+	      ++TmpResumeMinPos;
+	    }
+	  OutputFile.close();
+	}
+      cout << "consistency check done, resuming calculation now" << endl;
     }
 
   fstream OutputFile;
@@ -822,8 +888,6 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse
 	}
       Operation.SetIndicesRange(i, LimNbrBlocks);
       Operation.ApplyOperation(architecture);
-      //      this->GenerateSymmetrizedJackPolynomialFactorizedCore(InvAlpha, MaxRoot, i, TmpMaxIndex, TmpStateArray, TmpComponentArray, TmpIndexArray, TmpNbrComputedComponentArray, TmpRhoArray);
-
       for (long k = 0l; k < LimNbrBlocks; ++k)
 	{
 	  if (TmpNbrComputedComponentArray[k] >= 0)
@@ -985,6 +1049,85 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialFactor
 	{
 	  nbrComputedComponents[i - minIndex] = -1;
 	   TmpIndexArray[0] = this->FermionHugeBasis->FindStateIndexFactorized(TmpSymState);
+	}
+    }
+}
+
+// core part of the Jack generator using the factorized algorithm
+//
+// invAlpha = inverse of the Jack polynomial alpha coefficient
+// maxRoot = root partition (in fermionic binary representation)
+// partialSave = save partial results in a given vector file
+// minIndex = start computing the Jack polynomial from the minIndex-th component
+// maxIndex = stop  computing the Jack polynomial up to the maxIndex-th component (0 if it has to be computed up to the end)
+// indexArray = array where state indices are stored
+// stateArray = array use to store computed state description
+// componentArray = array where computed component numerical factors are stored
+// nbrComputedComponentArray = number of connected components associated to each state through the Jack generator
+// rhoArray = rho factor associated to each state
+
+void BosonOnSphereHaldaneHugeBasisShort::GenerateJackPolynomialFactorizedCore(double invAlpha, unsigned long maxRoot, long minIndex, long maxIndex, unsigned long** stateArray, double** componentArray, long** indexArray, int* nbrComputedComponents, double* rhoArray)
+{
+  int TmpLzMax = this->FermionHugeBasis->LzMax;
+  int ReducedNbrBosons = this->NbrBosons - 1;
+  for (long i = minIndex; i <= maxIndex; ++i)
+    {
+      unsigned long* TmpStateArray = stateArray[i - minIndex];
+      double* TmpComponentArray = componentArray[i - minIndex];
+      long* TmpIndexArray = indexArray[i - minIndex];
+      double Rho = 0.0;
+      unsigned long CurrentPartition = 0x0ul;
+      CurrentPartition = this->FermionHugeBasis->GetStateFactorized(i);
+      unsigned long TmpSymState = this->FermionHugeBasis->GetSymmetricState(CurrentPartition);
+      while (((CurrentPartition >> TmpLzMax) & 0x1ul) == 0ul)
+	--TmpLzMax;
+      this->ConvertToMonomial(CurrentPartition, TmpLzMax, this->TemporaryMonomial);
+      for (int j = 0; j < this->NbrBosons; ++j)
+	Rho += this->TemporaryMonomial[j] * (this->TemporaryMonomial[j] - 1.0 - invAlpha * ((double) j));
+      rhoArray[i - minIndex] = Rho;
+      int NbrComputedComponents = 0;
+      for (int j1 = 0; j1 < ReducedNbrBosons; ++j1)
+	for (int j2 = j1 + 1; j2 < this->NbrBosons; ++j2)
+	  {
+	    double Diff = (double) (this->TemporaryMonomial[j1] - this->TemporaryMonomial[j2]);
+	    unsigned int Max = this->TemporaryMonomial[j2];
+	    unsigned long TmpState = 0x0ul;
+	    int Tmpj1 = j1;
+	    int Tmpj2 = j2;
+	    for (int l = 0; l < this->NbrBosons; ++l)
+	      this->TemporaryMonomial2[l] = this->TemporaryMonomial[l];	    
+	    for (unsigned int k = 1; (k <= Max) && (TmpState < maxRoot); ++k)
+	      {
+		++this->TemporaryMonomial2[Tmpj1];
+		--this->TemporaryMonomial2[Tmpj2];
+		Diff += 2.0;
+		while ((Tmpj1 > 0) && (this->TemporaryMonomial2[Tmpj1] > this->TemporaryMonomial2[Tmpj1 - 1]))
+		  {
+		    unsigned long Tmp = this->TemporaryMonomial2[Tmpj1 - 1];
+		    this->TemporaryMonomial2[Tmpj1 - 1] = this->TemporaryMonomial2[Tmpj1];
+		    this->TemporaryMonomial2[Tmpj1] = Tmp;
+		    --Tmpj1;
+		  }
+		while ((Tmpj2 < ReducedNbrBosons) && (this->TemporaryMonomial2[Tmpj2] < this->TemporaryMonomial2[Tmpj2 + 1]))
+		  {
+		    unsigned long Tmp = this->TemporaryMonomial2[Tmpj2 + 1];
+		    this->TemporaryMonomial2[Tmpj2 + 1] = this->TemporaryMonomial2[Tmpj2];
+		    this->TemporaryMonomial2[Tmpj2] = Tmp;
+		    ++Tmpj2;
+		  }
+		TmpState = this->ConvertFromMonomial(this->TemporaryMonomial2);
+		if ((TmpState <= maxRoot) && (TmpState > CurrentPartition))
+		  {
+		    TmpComponentArray[NbrComputedComponents] = Diff;
+		    TmpStateArray[NbrComputedComponents] = TmpState;
+		    ++NbrComputedComponents;
+		  }
+	      }
+	  }
+      nbrComputedComponents[i - minIndex] = NbrComputedComponents;
+      for (int j = 0; j < NbrComputedComponents; ++j)
+	{
+	  TmpIndexArray[j] = this->FermionHugeBasis->FindStateIndexFactorized(TmpStateArray[j]);
 	}
     }
 }
