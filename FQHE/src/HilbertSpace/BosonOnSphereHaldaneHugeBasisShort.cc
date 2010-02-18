@@ -865,6 +865,17 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse
 		}
 	      ++TmpResumeMinPos;
 	    }
+	  TmpResumeMinPos = TmpResumePos - memory;
+	  if (TmpResumeMinPos < 0l)
+	    TmpResumeMinPos = 0l;
+	  BufferGlobalIndex = TmpResumeMinPos;
+	  OutputFile.seekg ((TmpResumeMinPos * sizeof(double)) + FileShift, ios::beg);
+	  double TmpComponent;
+	  for (; TmpResumeMinPos < TmpResumePos; ++TmpResumeMinPos)
+	    {	      
+	      ReadLittleEndian (OutputFile, TmpComponent);
+	      TmpVectorBuffer[TmpResumeMinPos % memory] = TmpComponent;	      
+	    }
 	  OutputFile.close();
 	}
       cout << "consistency check done, resuming calculation now" << endl;

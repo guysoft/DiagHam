@@ -5,6 +5,9 @@
 #include "Operator/ParticleOnSphereDensityDensityOperator.h"
 #include "Operator/ParticleOnSphereDensityOperator.h"
 #include "FunctionBasis/ParticleOnSphereFunctionBasis.h"
+#include "FunctionBasis/ParticleOnSphereGenericLLFunctionBasis.h"
+
+#include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -16,6 +19,8 @@
 #include "Options/SingleIntegerOption.h"
 #include "Options/SingleDoubleOption.h"
 #include "Options/SingleStringOption.h"
+
+#include "GeneralTools/FilenameTools.h"
 
 #include <iostream>
 #include <cstring>
@@ -54,6 +59,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 7);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 12);
   (*SystemGroup) += new SingleIntegerOption  ('z', "lz-value", "twice the lz value corresponding to the eigenvector", 0, true, 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "landau-level", "index of the Landau level (0 being the LLL)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
   (*SystemGroup) += new BooleanOption  ('\n', "huge-basis", "use huge Hilbert space support");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
@@ -84,26 +90,37 @@ int main(int argc, char** argv)
       return 0;
     }
 
-  int NbrBosons = Manager.GetInteger("nbr-particles");
+  int NbrParticles = Manager.GetInteger("nbr-particles");
   int LzMax = Manager.GetInteger("lzmax");
-  int Lz = Manager.GetInteger("lz-value");
+  int TotalLz = Manager.GetInteger("lz-value");
+  int LandauLevel = Manager.GetInteger("landau-level");
   int NbrPoints = Manager.GetInteger("nbr-points");
-  if (Manager.GetString("state") == 0)
+  bool DensityFlag = Manager.GetBoolean("density");
+  bool ChordFlag = Manager.GetBoolean("chord");
+  bool CoefficientOnlyFlag = Manager.GetBoolean("coefficients-only");
+  bool Statistics = true;
+  if (Manager.GetString("eigenstate") == 0)
     {
       cout << "FQHESphereBosonsCorrelation requires a state" << endl;
       return -1;
     }
-  RealVector State;
-  char* OutputNameCorr = new char [256 + strlen (Manager.GetString("interaction-name"))];
-
-  BosonOnSphere Space (NbrBosons, Lz, LzMax);
-  ParticleOnSphereFunctionBasis Basis(LzMax);
-
-  for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
+ if (FQHEOnSphereFindSystemInfoFromVectorFileName(Manager.GetString("eigenstate"),
+						  NbrParticles, LzMax, TotalLz, Statistics) == false)
     {
-      Space.PrintState(cout, i) << endl;
+      cout << "error while retrieving system parameters from file name " << Manager.GetString("eigenstate") << endl;
+      return -1;
     }
-  return 0;
+
+  RealVector State;
+
+  ParticleOnSphere* Space = 0;
+  Space = new BosonOnSphere (NbrParticles, TotalLz, LzMax);
+
+  AbstractFunctionBasis* Basis;
+  if (LandauLevel == 0)
+    Basis = new ParticleOnSphereFunctionBasis(LzMax);
+  else
+    Basis = new ParticleOnSphereGenericLLFunctionBasis(LzMax - (2 * LandauLevel), LandauLevel);
 
   Complex Sum (0.0, 0.0);
   Complex Sum2 (0.0, 0.0);
@@ -111,14 +128,21 @@ int main(int argc, char** argv)
   RealVector Value(2, true);
   double X = 0.0;
   double XInc = M_PI / ((double) NbrPoints);
-  Complex* PrecalculatedValues = new Complex [LzMax + 1];
-	  
-  for (int i = 0; i <= LzMax; ++i)
-    {
-      Basis.GetFunctionValue(Value, TmpValue, LzMax);
-      ParticleOnSphereDensityDensityOperator Operator (&Space, i, LzMax, i, LzMax);
-      PrecalculatedValues[i] = Operator.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
-    }
+
+  Complex* PrecalculatedValues = new Complex [LzMax + 1];	  
+  if (DensityFlag == false)
+    for (int i = 0; i <= LzMax; ++i)
+      {
+	Basis->GetFunctionValue(Value, TmpValue, LzMax);
+	ParticleOnSphereDensityDensityOperator Operator (Space, i, LzMax, i, LzMax);
+	PrecalculatedValues[i] = Operator.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
+      }
+  else
+    for (int i = 0; i <= LzMax; ++i)
+      {
+	ParticleOnSphereDensityOperator Operator (Space, i);
+	PrecalculatedValues[i] = Operator.MatrixElement(State, State);
+      }
 
   ofstream File;
   File.precision(14);

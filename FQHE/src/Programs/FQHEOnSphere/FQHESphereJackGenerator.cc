@@ -56,6 +56,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0) to speed up calculations");
   (*SystemGroup) += new BooleanOption  ('\n', "sym-storage", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0), both for speed and storage");
   (*SystemGroup) += new SingleStringOption  ('\n', "initial-state", "use an optional state where some of the components have already been computed, improving computation time");
+  (*SystemGroup) += new BooleanOption  ('\n', "resume", "resume Jack calculation (only available in huge mode)");
   (*SystemGroup) += new SingleIntegerOption ('\n', "min-index", "compute the Jack polynomial from the min-index-th component (require an initial state)", 0l);
   (*SystemGroup) += new SingleIntegerOption ('\n', "max-index", "compute the Jack polynomial from the max-index-th component (require an initial state, 0 if it has computed up to the end)", 0l);
   (*SystemGroup) += new BooleanOption  ('\n', "fermion", "compute the slater decomposition of the Jack polynomial times Vandermonde");
@@ -213,7 +214,7 @@ int main(int argc, char** argv)
 // 	      if (SymmetrizedBasis == false)    
 // 		InitialSpace->GenerateJackPolynomialSparse(Alpha, OutputFileName, MinIndex, MaxIndex);
 // 	      else
-	      InitialSpace->GenerateSymmetrizedJackPolynomialSparse(Alpha,Architecture.GetArchitecture(), OutputFileName, MinIndex, MaxIndex, Manager.GetInteger("huge-vector") << 20, Manager.GetInteger("huge-blocks") << 20);
+	      InitialSpace->GenerateSymmetrizedJackPolynomialSparse(Alpha,Architecture.GetArchitecture(), OutputFileName, MinIndex, MaxIndex, Manager.GetInteger("huge-vector") << 20, Manager.GetInteger("huge-blocks") << 20, Manager.GetBoolean("resume"));
 	    }
 	  return 0;
 	}
