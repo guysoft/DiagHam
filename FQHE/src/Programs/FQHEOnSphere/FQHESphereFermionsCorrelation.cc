@@ -67,11 +67,11 @@ int main(int argc, char** argv)
   Manager += OutputGroup;
   Manager += MiscGroup;
 
+  (*SystemGroup) += new SingleStringOption  ('e', "eigenstate", "name of the file containing the eigenstate");
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the system (override autodetection from input file name if greater or equal to zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "landau-level", "index of the Landau level (0 being the LLL)", 0);
-  (*SystemGroup) += new SingleStringOption  ('e', "eigenstate", "name of the file containing the eigenstate");
   (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
   (*SystemGroup) += new BooleanOption  ('\n', "huge-basis", "use huge Hilbert space support");
   (*SystemGroup) += new BooleanOption  ('\n', "large-basis", "use large Hilbert space support (i.e. handle non-squeezed Hilbert space larger than 2^31 without hard-drive storage)");
@@ -98,40 +98,40 @@ int main(int argc, char** argv)
       return -1;
     }
   
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
     }
 
-  int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
-  int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
-  int TotalLz = ((SingleIntegerOption*) Manager["total-lz"])->GetInteger();
-  int LandauLevel = ((SingleIntegerOption*) Manager["landau-level"])->GetInteger();
-  int NbrPoints = ((SingleIntegerOption*) Manager["nbr-points"])->GetInteger();
-  unsigned long MemorySpace = ((unsigned long) ((SingleIntegerOption*) Manager["fast-search"])->GetInteger()) << 20;
-  bool DensityFlag = ((BooleanOption*) Manager["density"])->GetBoolean();
-  bool ChordFlag = ((BooleanOption*) Manager["chord"])->GetBoolean();
-  bool HaldaneBasisFlag = ((BooleanOption*) Manager["haldane"])->GetBoolean();
-  bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
-  bool CoefficientOnlyFlag = ((BooleanOption*) Manager["coefficients-only"])->GetBoolean();
+  int NbrParticles = Manager.GetInteger("nbr-particles");
+  int LzMax = Manager.GetInteger("lzmax");
+  int TotalLz = Manager.GetInteger("total-lz");
+  int LandauLevel = Manager.GetInteger("landau-level");
+  int NbrPoints = Manager.GetInteger("nbr-points");
+  unsigned long MemorySpace = ((unsigned long) Manager.GetInteger("fast-search")) << 20;
+  bool DensityFlag = Manager.GetBoolean("density");
+  bool ChordFlag = Manager.GetBoolean("chord");
+  bool HaldaneBasisFlag = Manager.GetBoolean("haldane");
+  bool SymmetrizedBasis = Manager.GetBoolean("symmetrized-basis");
+  bool CoefficientOnlyFlag = Manager.GetBoolean("coefficients-only");
   bool Statistics = true;
- if (FQHEOnSphereFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["eigenstate"])->GetString(),
+ if (FQHEOnSphereFindSystemInfoFromVectorFileName(Manager.GetString("eigenstate"),
 						  NbrParticles, LzMax, TotalLz, Statistics) == false)
     {
-      cout << "error while retrieving system parameters from file name " << ((SingleStringOption*) Manager["eigenstate"])->GetString() << endl;
+      cout << "error while retrieving system parameters from file name " << Manager.GetString("eigenstate") << endl;
       return -1;
     }
 
-  if (((SingleStringOption*) Manager["eigenstate"])->GetString() == 0)
+  if (Manager.GetString("eigenstate") == 0)
     {
       cout << "FQHESphereFermionsCorrelation requires a state" << endl;
       return -1;
     }
   RealVector State;
-  if (State.ReadVector (((SingleStringOption*) Manager["eigenstate"])->GetString()) == false)
+  if (State.ReadVector (Manager.GetString("eigenstate")) == false)
     {
-      cout << "can't open vector file " << ((SingleStringOption*) Manager["eigenstate"])->GetString() << endl;
+      cout << "can't open vector file " << Manager.GetString("eigenstate") << endl;
       return -1;      
     }
 
@@ -149,13 +149,13 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
-		Space = new FermionOnSphereSymmetricBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+	      if (Manager.GetString("load-hilbert") != 0)
+		Space = new FermionOnSphereSymmetricBasis(Manager.GetString("load-hilbert"), MemorySpace);
 	      else
 		Space = new FermionOnSphereSymmetricBasis(NbrParticles, LzMax, MemorySpace);
-	      if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+	      if (Manager.GetString("save-hilbert") != 0)
 		{
-		  ((FermionOnSphereSymmetricBasis*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+		  ((FermionOnSphereSymmetricBasis*) Space)->WriteHilbertSpace(Manager.GetString("save-hilbert"));
 		  return 0;
 		}
 	    }
@@ -170,13 +170,13 @@ int main(int argc, char** argv)
 		  Space = new FermionOnSphereLong(NbrParticles, TotalLz, LzMax, MemorySpace);
 		else
 		  {
-		    if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
-		      Space = new FermionOnSphereSymmetricBasisLong(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		    if (Manager.GetString("load-hilbert") != 0)
+		      Space = new FermionOnSphereSymmetricBasisLong(Manager.GetString("load-hilbert"), MemorySpace);
 		    else
 		      Space = new FermionOnSphereSymmetricBasisLong(NbrParticles, LzMax, MemorySpace);
-		    if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+		    if (Manager.GetString("save-hilbert") != 0)
 		      {
-			((FermionOnSphereSymmetricBasisLong*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+			((FermionOnSphereSymmetricBasisLong*) Space)->WriteHilbertSpace(Manager.GetString("save-hilbert"));
 			return 0;
 		      }
 		  }
@@ -187,7 +187,7 @@ int main(int argc, char** argv)
   else
     {
       int* ReferenceState = 0;
-      if (((SingleStringOption*) Manager["reference-file"])->GetString() == 0)
+      if (Manager.GetString("reference-file") == 0)
 	{
 	  return -1;
 	}
@@ -235,13 +235,13 @@ int main(int argc, char** argv)
 		    if (LzMax <= 30)
 #endif
 		      {
-			if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
-			  Space = new FermionOnSphereHaldaneBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+			if (Manager.GetString("load-hilbert") != 0)
+			  Space = new FermionOnSphereHaldaneBasis(Manager.GetString("load-hilbert"), MemorySpace);
 			else
 			  Space = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, LzMax, ReferenceState, MemorySpace);
-			if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+			if (Manager.GetString("save-hilbert") != 0)
 			  {
-			    ((FermionOnSphereHaldaneBasis*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+			    ((FermionOnSphereHaldaneBasis*) Space)->WriteHilbertSpace(Manager.GetString("save-hilbert"));
 			    return 0;
 			  }
 		      }
@@ -252,13 +252,13 @@ int main(int argc, char** argv)
 			if (LzMax <= 62)
 #endif
 			  {
-			    if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
-			      Space = new FermionOnSphereHaldaneBasisLong(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+			    if (Manager.GetString("load-hilbert") != 0)
+			      Space = new FermionOnSphereHaldaneBasisLong(Manager.GetString("load-hilbert"), MemorySpace);
 			    else
 			      Space = new FermionOnSphereHaldaneBasisLong(NbrParticles, TotalLz, LzMax, ReferenceState, MemorySpace);
-			    if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+			    if (Manager.GetString("save-hilbert") != 0)
 			      {
-				((FermionOnSphereHaldaneBasisLong*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+				((FermionOnSphereHaldaneBasisLong*) Space)->WriteHilbertSpace(Manager.GetString("save-hilbert"));
 				return 0;
 			      }
 			  }	       
@@ -273,13 +273,13 @@ int main(int argc, char** argv)
 	    if (LzMax <= 30)
 #endif
 	      {
-		if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
-		  Space = new FermionOnSphereHaldaneSymmetricBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		if (Manager.GetString("load-hilbert") != 0)
+		  Space = new FermionOnSphereHaldaneSymmetricBasis(Manager.GetString("load-hilbert"), MemorySpace);
 		else
 		  Space = new FermionOnSphereHaldaneSymmetricBasis(NbrParticles, LzMax, ReferenceState, MemorySpace);
-		if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+		if (Manager.GetString("save-hilbert") != 0)
 		  {
-		    ((FermionOnSphereHaldaneSymmetricBasis*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+		    ((FermionOnSphereHaldaneSymmetricBasis*) Space)->WriteHilbertSpace(Manager.GetString("save-hilbert"));
 			 return 0;
 		  }
 	      }
@@ -290,13 +290,13 @@ int main(int argc, char** argv)
 		if (LzMax <= 62)
 #endif
 		  {
-		    if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
-		      Space = new FermionOnSphereHaldaneSymmetricBasisLong(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		    if (Manager.GetString("load-hilbert") != 0)
+		      Space = new FermionOnSphereHaldaneSymmetricBasisLong(Manager.GetString("load-hilbert"), MemorySpace);
 		    else
 		      Space = new FermionOnSphereHaldaneSymmetricBasisLong(NbrParticles, LzMax, ReferenceState, MemorySpace);
-		    if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+		    if (Manager.GetString("save-hilbert") != 0)
 		      {
-			((FermionOnSphereHaldaneSymmetricBasisLong*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+			((FermionOnSphereHaldaneSymmetricBasisLong*) Space)->WriteHilbertSpace(Manager.GetString("save-hilbert"));
 			return 0;
 		      }
 		  }
@@ -334,8 +334,8 @@ int main(int argc, char** argv)
       }
   ofstream File;
   File.precision(14);
-  if (((SingleStringOption*) Manager["output-file"])->GetString() != 0)
-    File.open(((SingleStringOption*) Manager["output-file"])->GetString(), ios::binary | ios::out);
+  if (Manager.GetString("output-file") != 0)
+    File.open(Manager.GetString("output-file"), ios::binary | ios::out);
   else
     {
       char* TmpFileName = 0;
@@ -358,23 +358,20 @@ int main(int argc, char** argv)
       File.open(TmpFileName, ios::binary | ios::out);
       delete[] TmpFileName;
     }
-  if (CoefficientOnlyFlag == true)
-    {
-      if (DensityFlag == true)      
-	File << "# density correlation coefficients for " << ((SingleStringOption*) Manager["eigenstate"])->GetString() << endl;
-      else
-	File << "# density-density correlation coefficients for " << ((SingleStringOption*) Manager["eigenstate"])->GetString() << endl;
-      File << "#" << endl << "# (l+S)    n_l" << endl;
-      for (int i = 0; i <= LzMax; ++i)
-	File << i << " " << PrecalculatedValues[i]<< endl;
-    }
+  if (DensityFlag == true)      
+    File << "# density correlation coefficients for " << Manager.GetString("eigenstate") << endl;
   else
+    File << "# density-density correlation coefficients for " << Manager.GetString("eigenstate") << endl;
+  File << "#" << endl << "# (l+S)    n_l" << endl;
+  for (int i = 0; i <= LzMax; ++i)
+    File << i << " " << PrecalculatedValues[i]<< endl;
+  if (CoefficientOnlyFlag == false)
     {
       double Factor1 = (16.0 * M_PI * M_PI) / ((double) (NbrParticles * NbrParticles));
       if (DensityFlag == true)
 	Factor1 = 1.0;//4.0 * M_PI;
       double Factor2;
-      if (((BooleanOption*) Manager["radians"])->GetBoolean() == true)
+      if (Manager.GetBoolean("radians") == true)
 	Factor2 = 1.0;
       else
 	Factor2 = sqrt (0.5 * LzMax);

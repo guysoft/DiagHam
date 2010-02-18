@@ -47,9 +47,9 @@ class AbstractScalarSumOperation: public AbstractArchitectureOperation
   // number of component 
   int NbrComponent;
   // index of the first component (if long numbers are required)
-  int LargeFirstComponent;
+  long LargeFirstComponent;
   // number of component  (if long numbers are required)
-  int LargeNbrComponent;
+  long LargeNbrComponent;
   // complex scalar used to store the results
   Complex Scalar;
   // array complex scalars used to store the results in case of multiple scalar sum evaluation

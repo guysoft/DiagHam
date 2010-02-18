@@ -36,64 +36,65 @@ int main(int argc, char** argv)
   cout.precision(14);
 
   // some running options and help
-  OptionManager Manager ("QHEBosonsCorrelation" , "0.01");
+  OptionManager Manager ("FQHESphereBosonsCorrelation" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
+  OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
+  OptionGroup* OutputGroup = new OptionGroup ("output options");
 
   ArchitectureManager Architecture;
 
   Manager += SystemGroup;
   Architecture.AddOptionGroup(&Manager);
+  Manager += PrecalculationGroup;
+  Manager += OutputGroup;
   Manager += MiscGroup;
 
+  (*SystemGroup) += new SingleStringOption  ('e', "eigenstate", "name of the file containing the eigenstate");
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 7);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 12);
   (*SystemGroup) += new SingleIntegerOption  ('z', "lz-value", "twice the lz value corresponding to the eigenvector", 0, true, 0);
-  (*SystemGroup) += new SingleStringOption  ('s', "state", "name of the file containing the eigenstate");
-  (*SystemGroup) += new SingleStringOption  ('i', "interaction-name", "name of the interaction (used for output file name)", "delta");
-  (*SystemGroup) += new SingleStringOption ('a', "add-filename", "add a string with additional informations to the output file name(just before the .dat extension)");
+  (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
+  (*SystemGroup) += new BooleanOption  ('\n', "huge-basis", "use huge Hilbert space support");
+  (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
+  (*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-points", "number of point to evaluate", 1000);
   (*SystemGroup) += new BooleanOption  ('r', "radians", "set units to radians instead of magnetic lengths", false);
+  (*SystemGroup) += new BooleanOption  ('c', "chord", "use chord distance instead of distance on the sphere", false);
+  (*SystemGroup) += new BooleanOption  ('\n', "density", "plot density insted of density-density correlation", false);
+  (*SystemGroup) += new BooleanOption  ('\n', "coefficients-only", "only compute the one or two body coefficients that are requested to evaluate the density-density correlation", false);
+  (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
+  (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "huge-memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
+  (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "large-memory", "maximum memory (in kBytes) that can allocated for precalculations when using huge mode", 1);
+  (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the Haldane basis)",0);
+  (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
+  (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with rhorho extension");
   
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type QHEBosonsCorrelation -h" << endl;
+      cout << "see man page for option syntax or type FQHESphereBosonsCorrelation -h" << endl;
       return -1;
     }
   
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
     }
 
-  int NbrBosons = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
-  int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
-  int Lz = ((SingleIntegerOption*) Manager["lz-value"])->GetInteger();
-  int NbrPoints = ((SingleIntegerOption*) Manager["nbr-points"])->GetInteger();
-  if (((SingleStringOption*) Manager["state"])->GetString() == 0)
+  int NbrBosons = Manager.GetInteger("nbr-particles");
+  int LzMax = Manager.GetInteger("lzmax");
+  int Lz = Manager.GetInteger("lz-value");
+  int NbrPoints = Manager.GetInteger("nbr-points");
+  if (Manager.GetString("state") == 0)
     {
-      cout << "QHEBosonsCorrelation requires a state" << endl;
+      cout << "FQHESphereBosonsCorrelation requires a state" << endl;
       return -1;
     }
   RealVector State;
-//   if (State.ReadVector (((SingleStringOption*) Manager["state"])->GetString()) == false)
-//     {
-//       cout << "can't open vector file " << ((SingleStringOption*) Manager["state"])->GetString() << endl;
-//       return -1;      
-//     }
-   char* OutputNameCorr = new char [256 + strlen (((SingleStringOption*) Manager["interaction-name"])->GetString())];
-//   if (((SingleStringOption*) Manager["add-filename"])->GetString() == 0)
-//     {
-//       sprintf (OutputNameCorr, "bosons_%s_n_%d_2s_%d.rho_rho.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrBosons, LzMax);
-//     }
-//   else
-//     {
-//       sprintf (OutputNameCorr, "bosons_%s_n_%d_2s_%d_%s.rho_rho.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrBosons, LzMax,
-// 	       ((SingleStringOption*) Manager["add-filename"])->GetString());
-//     }
+  char* OutputNameCorr = new char [256 + strlen (Manager.GetString("interaction-name"))];
 
   BosonOnSphere Space (NbrBosons, Lz, LzMax);
   ParticleOnSphereFunctionBasis Basis(LzMax);
@@ -118,32 +119,68 @@ int main(int argc, char** argv)
       ParticleOnSphereDensityDensityOperator Operator (&Space, i, LzMax, i, LzMax);
       PrecalculatedValues[i] = Operator.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
     }
+
   ofstream File;
   File.precision(14);
-  File.open(OutputNameCorr, ios::binary | ios::out);
-  double Factor1 = (16.0 * M_PI * M_PI) / ((double) (NbrBosons * NbrBosons));
-  double Factor2;
-    if (((BooleanOption*) Manager["radians"])->GetBoolean() == true)
-    Factor2 = 1.0;
+  if (Manager.GetString("output-file") != 0)
+    File.open(Manager.GetString("output-file"), ios::binary | ios::out);
   else
-    Factor2 = sqrt (0.5 * LzMax );
-  for (int x = 0; x < NbrPoints; ++x)
     {
-      Value[0] = X;
-      int Pos = 0;
-      Sum = 0.0;
-      for (int i = 0; i <= LzMax; ++i)
+      char* TmpFileName = 0;
+      if (DensityFlag == false)
 	{
-	  Basis.GetFunctionValue(Value, TmpValue, i);
-	  Sum += PrecalculatedValues[Pos] * (Conj(TmpValue) * TmpValue);
-	  ++Pos;
+	  if (Manager.GetBoolean("coefficients-only"))
+	    TmpFileName = ReplaceExtensionToFileName(Manager.GetString("eigenstate"), "vec", "rhorho-c");
+	  else
+	    TmpFileName = ReplaceExtensionToFileName(Manager.GetString("eigenstate"), "vec", "rhorho");
 	}
-      File << (X * Factor2) << " " << Norm(Sum)  * Factor1 << endl;
-      X += XInc;
+      else
+	{
+	    TmpFileName = ReplaceExtensionToFileName(Manager.GetString("eigenstate"), "vec", "rho");
+	}
+      if (TmpFileName == 0)
+	{
+	  cout << "no vec extension was find in " << Manager.GetString("eigenstate") << " file name" << endl;
+	  return 0;
+	}
+      File.open(TmpFileName, ios::binary | ios::out);
+      delete[] TmpFileName;
+    }
+  if (DensityFlag == true)      
+    File << "# density correlation coefficients for " << Manager.GetString("eigenstate") << endl;
+  else
+    File << "# density-density correlation coefficients for " << Manager.GetString("eigenstate") << endl;
+  File << "#" << endl << "# (l+S)    n_l" << endl;
+  for (int i = 0; i <= LzMax; ++i)
+    File << i << " " << PrecalculatedValues[i]<< endl;
+  if (CoefficientOnlyFlag == false)
+    {
+      double Factor1 = (16.0 * M_PI * M_PI) / ((double) (NbrParticles * NbrParticles));
+      if (DensityFlag == true)
+	Factor1 = 1.0;//4.0 * M_PI;
+      double Factor2;
+      if (Manager.GetBoolean("radians") == true)
+	Factor2 = 1.0;
+      else
+	Factor2 = sqrt (0.5 * LzMax);
+      for (int x = 0; x < NbrPoints; ++x)
+	{
+	  Value[0] = X;
+	  Sum = 0.0;
+	  for (int i = 0; i <= LzMax; ++i)
+	    {
+	      Basis->GetFunctionValue(Value, TmpValue, i);
+	      Sum += PrecalculatedValues[i] * (Conj(TmpValue) * TmpValue);
+	    }
+	  if (ChordFlag == false)
+	    File << (X * Factor2) << " " << (Norm(Sum)  * Factor1) << endl;
+	  else
+	    File << (2.0 * Factor2 * sin (X * 0.5)) << " " << Norm(Sum)  * Factor1 << endl;
+	  X += XInc;
+	}
     }
   File.close();
-
-  delete[] OutputNameCorr;	  
+ 
   delete[] PrecalculatedValues;
 
   return 0;

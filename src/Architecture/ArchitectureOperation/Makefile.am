@@ -15,4 +15,5 @@ AbstractPrecalculationOperation.cc \
 AbstractScalarSumOperation.cc \
 MainTaskOperation.cc \
 AbstractArchitectureOperationManager.cc \
-ArchitectureBaseOperationManager.cc
+ArchitectureBaseOperationManager.cc \
+OperatorMatrixElementOperation.cc

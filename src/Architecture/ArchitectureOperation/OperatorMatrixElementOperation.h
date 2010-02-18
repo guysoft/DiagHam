@@ -34,9 +34,11 @@
 
 #include "config.h"
 #include "Architecture/ArchitectureOperation/AbstractScalarSumOperation.h"
-#include "Vector/Vector.h"
 #include "Vector/RealVector.h"
-#include "Matrix/RealMatrix.h"
+#include "Vector/ComplexVector.h"
+
+
+class AbstractOperator;
 
 
 class OperatorMatrixElementOperation: public AbstractScalarSumOperation
@@ -44,63 +46,35 @@ class OperatorMatrixElementOperation: public AbstractScalarSumOperation
 
  protected:
 
-  // index of the first component of each partial scalar product
-  int FirstComponent;
-  // number of component to take into account for each partial scalar product
-  int NbrComponents;
+  // array of vectors to use for the right hand side of the matrix element
+  RealVector RealRightVector;
+  // pointer to the vector to use for the left hand side of the matrix element
+  RealVector RealLeftVector;  
 
-  // number of scalar products
-  int NbrScalarProduct;
+  // array of vectors to use for the right hand side of the matrix element
+  ComplexVector ComplexRightVector;
+  // pointer to the vector to use for the left hand side of the matrix element
+  ComplexVector ComplexLeftVector;  
 
-  // strategy used to do the scalar products
-  int Strategy;
+  // operator which has to be evaluated
+  AbstractOperator* Operator;
 
-  // array containing the scalar products
-  double* ScalarProducts;
-
-  // array of vectors to use for the right hand side of the scalar product
-  RealVector* RightVectors;
-  // array of pointers to the vectors to use for the right hand side of the scalar product
-  RealVector** RightVectorsByPointers;
-  // real matrix where vectors to use for the right hand side of the scalar product are stored (can be used instead of RightVectors)
-  RealMatrix RightVectorMatrix;
-
-  // pointer to the vector to use for the left hand side of the scalar product
-  RealVector* LeftVector;  
 
  public:
 
-  enum StrategyType
-    {
-      // each process achieves part of each scalar product
-      VectorSubdivision = 0x01,
-      // each process achieves full scalar product for a given group of vectors
-      GroupSubdivision = 0x02
-    };
-  
   // constructor 
   //
-  // leftVector = pointer to the vector to use for the left hand side of the scalar product
-  // rightVectors = array of vectors to use for the right hand side of the scalar product
-  // nbrScalarProduct = number of scalar products that have to be evaluated
-  // scalarProducts = array where scalar products have to be stored
-  OperatorMatrixElementOperation(RealVector* leftVector, RealVector* rightVectors, int nbrScalarProduct, double* scalarProducts);
+  // oper = operator which has to be evaluated  
+  // leftVector = pointer to the vector to use for the left hand side of the matrix element
+  // rightVector = pointer to the vector to use for the right hand side of the matrix element
+  OperatorMatrixElementOperation(AbstractOperator* oper, RealVector& leftVector, RealVector& rightVectors);
 
   // constructor 
   //
-  // leftVector = pointer to the vector to use for the left hand side of the scalar product
-  // rightVectors = array of pointers to the vectors to use for the right hand side of the scalar product
-  // nbrScalarProduct = number of scalar products that have to be evaluated
-  // scalarProducts = array where scalar products have to be stored
-  OperatorMatrixElementOperation(RealVector* leftVector, RealVector** rightVectors, int nbrScalarProduct, double* scalarProducts);
-
-  // constructor 
-  //
-  // leftVector = pointer to the vector to use for the left hand side of the scalar product
-  // rightVectors = real matrix where vectors to use for the right hand side of the scalar product are stored
-  // nbrScalarProduct = number of scalar products that have to be evaluated
-  // scalarProducts = array where scalar products have to be stored
-  OperatorMatrixElementOperation(RealVector* leftVector, RealMatrix& rightVectors, int nbrScalarProduct, double* scalarProducts);
+  // oper = operator which has to be evaluated  
+  // leftVector = pointer to the vector to use for the left hand side of the matrix element
+  // rightVector = pointer to the vector to use for the right hand side of the matrix element
+  OperatorMatrixElementOperation(AbstractOperator* oper, ComplexVector& leftVector, ComplexVector& rightVectors);
 
   // copy constructor 
   //

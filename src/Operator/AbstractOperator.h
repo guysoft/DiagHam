@@ -149,10 +149,9 @@ class AbstractOperator
   // vDestination = vector where result has to be stored
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
-  // return value = reference on vector where result has been stored
-  
-  Vector& Multiply(Vector& vSource, Vector& vDestination, 
-		   int firstComponent, int nbrComponent);
+  // return value = reference on vector where result has been stored  
+  virtual Vector& Multiply(Vector& vSource, Vector& vDestination, 
+			   int firstComponent, int nbrComponent);
 
 
   // multiply a vector by the current operator and store result in another vector

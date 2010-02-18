@@ -398,7 +398,7 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 			      this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
 			      File << " " << ((TmpEigenvector * Q[j]) - this->EnergyShift);
 			    }
-			  double TmpMomentum = Oper.MatrixElement(Q[j], Q[j]).Re;
+			  double TmpMomentum = ((AbstractOperator*) &Oper)->MatrixElement(Q[j], Q[j]).Re;
 			  File << " "  << TmpMomentum << " " << (0.5 * (sqrt ((4.0 * TmpMomentum) + 1.0) - 1.0)) << endl;
 			}
 		    }
