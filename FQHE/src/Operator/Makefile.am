@@ -17,4 +17,6 @@ ParticleOnLatticeDensityDensityOperator.cc \
 ParticleOnLatticeFluxOperator.cc \
 ParticleOnSphereWithSpinDensityOperator.cc \
 ParticleOnSphereWithSpinLMinusOperator.cc \
-ParticleOnSphereWithSpinAllSzExcitonOrder.cc
+ParticleOnSphereWithSpinAllSzExcitonOrder.cc \
+ParticleOnSphereWithSpinAllSzDensityOddChannel.cc \
+ParticleOnSphereWithSpinAllSzDensityDensityOddChannel.cc

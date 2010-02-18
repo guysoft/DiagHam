@@ -2,6 +2,10 @@
 
 #include "Vector/RealVector.h"
 
+#include "HilbertSpace/ParticleOnSphereManager.h"
+
+#include "FunctionBasis/ParticleOnSphereFunctionBasis.h"
+
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
 #include "Options/AbstractOption.h"
@@ -20,6 +24,8 @@
 
 #include "Operator/ParticleOnSphereSquareTotalMomentumOperator.h"
 #include "Operator/ParticleOnSphereWithSpinAllSzExcitonOrder.h"
+#include "Operator/ParticleOnSphereWithSpinAllSzDensityOddChannel.h"
+#include "Operator/ParticleOnSphereWithSpinAllSzDensityDensityOddChannel.h"
 
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
 
@@ -65,6 +71,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "statistics", "particle statistics (bosons or fermions, try to guess it from file name if not defined)");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
   (*SystemGroup) += new BooleanOption  ('\n', "exciton-order", "calculate exciton order correlation for bilayer with all Sz components");
+  (*SystemGroup) += new BooleanOption  ('\n', "oddchannel-correlation", "calculate density-density correlation for odd channel");
+  (*SystemGroup) += new BooleanOption  ('\n', "oddchannel-density", "calculate density for odd channel");
+  (*SystemGroup) += new BooleanOption  ('\n', "radians", "set units to radians instead of magnetic lengths", false);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "orbital-separation", "separation between orbitals (exciton order only)", 1); 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -220,6 +229,130 @@ int main(int argc, char** argv)
 	  double meanSxvalue = Space->MeanSxValue(State);
 	  cout<< "Mean value <Sx> in the state: "<<endl;
 	  cout<< meanSxvalue<<endl;
+
+	  if (Manager.GetBoolean("oddchannel-correlation"))
+           {
+	     	int NbrPoints = 1000; 
+//********************************************************************************************
+  		cout << Space->GetHilbertSpaceDimension() << endl;
+
+		AbstractFunctionBasis* Basis;
+   		Basis = new ParticleOnSphereFunctionBasis(LzMax); 
+ 		Complex Sum (0.0, 0.0);
+  		Complex Sum2 (0.0, 0.0);
+  		Complex TmpValue;
+  		RealVector Value(2, true);
+  		double X = 0.0;
+  		double XInc = M_PI / ((double) NbrPoints);
+
+  		Complex* PrecalculatedValues = new Complex [LzMax + 1];
+  		for (int i = 0; i <= LzMax; ++i)
+      		 {
+		   Basis->GetFunctionValue(Value, TmpValue, LzMax);
+	           ParticleOnSphereWithSpinAllSzDensityDensityOddChannel Operator (Space, i, LzMax, i, LzMax);
+	           PrecalculatedValues[i] = Operator.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
+                 }
+		
+  		cout.precision(14);
+		double NbrParticlesOddChannel = (0.5 * NbrParticles - meanSxvalue );
+      		double Factor1 = (16.0 * M_PI * M_PI) / (NbrParticlesOddChannel * NbrParticlesOddChannel);
+      		double Factor2 = 1.0;		
+      		if (((BooleanOption*) Manager["radians"])->GetBoolean() == true)
+		  Factor2 = 1.0;
+      		else
+		  Factor2 = sqrt (0.5 * LzMax);
+
+      		for (int x = 0; x < NbrPoints; ++x)
+		 {
+	  	   Value[0] = X;
+	  	   Sum = 0.0;
+	  	   for (int i = 0; i <= LzMax; ++i)
+	    	     {
+	      		Basis->GetFunctionValue(Value, TmpValue, i);
+	      		Sum += PrecalculatedValues[i] * (Conj(TmpValue) * TmpValue);
+	             }
+	           //if (ChordFlag == false)
+	            cout << (X * Factor2) << " " << Norm(Sum)  << endl;
+	           //else
+	           // cout << (2.0 * Factor2 * sin (X * 0.5)) << " " << Norm(Sum)  * Factor1 << endl;
+	           X += XInc;
+	         }
+ 
+  		delete[] PrecalculatedValues;
+
+//********************************************************************************************
+           }
+
+	  if (Manager.GetBoolean("oddchannel-density"))
+           {
+	     	int NbrPoints = 1000; 
+//********************************************************************************************
+  		cout << Space->GetHilbertSpaceDimension() << endl;
+
+		AbstractFunctionBasis* Basis;
+   		Basis = new ParticleOnSphereFunctionBasis(LzMax); 
+ 		Complex Sum (0.0, 0.0);
+  		Complex Sum2 (0.0, 0.0);
+  		Complex TmpValue;
+  		RealVector Value(2, true);
+  		double X = 0.0;
+  		double XInc = M_PI / ((double) NbrPoints);
+
+  		double* DensityValues = new double [NbrPoints];
+  		double* CoordinateValues = new double [NbrPoints];
+
+
+  		Complex* PrecalculatedValues = new Complex [LzMax + 1];
+
+  		for (int i = 0; i <= LzMax; ++i)
+      		 {
+	           ParticleOnSphereWithSpinAllSzDensityOddChannel Operator (Space, i, i);
+	           PrecalculatedValues[i] = Operator.MatrixElement(State, State);
+                 }
+		
+  		cout.precision(14);
+      		double Factor1 = (16.0 * M_PI * M_PI) / ((double) (NbrParticles * NbrParticles));
+      		double Factor2 = 1.0;		
+      		if (((BooleanOption*) Manager["radians"])->GetBoolean() == true)
+		  Factor2 = 1.0;
+      		else
+		  Factor2 = sqrt (0.5 * LzMax);
+
+      		for (int x = 0; x < NbrPoints; ++x)
+		 {
+	  	   Value[0] = X;
+	  	   Sum = 0.0;
+	  	   for (int i = 0; i <= LzMax; ++i)
+	    	     {
+	      		Basis->GetFunctionValue(Value, TmpValue, i);
+	      		Sum += PrecalculatedValues[i] * (Conj(TmpValue) * TmpValue);
+	             }
+	           //if (ChordFlag == false)
+	            cout << (X * Factor2) << " " << Norm(Sum) << endl;
+		    CoordinateValues[x] = X * Factor2;
+		    DensityValues[x] = Norm(Sum);
+	           //else
+	           // cout << (2.0 * Factor2 * sin (X * 0.5)) << " " << Norm(Sum)  * Factor1 << endl;
+	           X += XInc;
+	         }
+ 
+  		delete[] PrecalculatedValues;
+
+		double NbrParticlesOddChannel = (0.5 * NbrParticles - meanSxvalue );
+
+ 		double IntegralRho = 0.0;
+ 		for (int i = 1; i < NbrPoints; ++i)
+		 {
+     		   IntegralRho += ((sin(CoordinateValues[i - 1]) * DensityValues[i - 1]) + (sin(CoordinateValues[i]) * DensityValues[i])) * (CoordinateValues[i] - CoordinateValues[i - 1]);
+                   //cout << XValues[i] << " " << (Integral * Factor) << endl;
+   		 }
+		cout << "NbrParticles Odd Channel : "<<NbrParticlesOddChannel<<" Odd channel density^2 "<< (NbrParticlesOddChannel * NbrParticlesOddChannel / (16.0 * M_PI * M_PI)) << " Integral of rho "<<IntegralRho * M_PI<<endl;
+
+		delete[] CoordinateValues;
+		delete[] DensityValues;
+//********************************************************************************************
+           }
+	
 	
 	delete Space;
     }
