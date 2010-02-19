@@ -115,7 +115,6 @@ Complex ParticleOnSphereWithSpinAllSzDensityDensityOddChannel::MatrixElement (Re
   if ( (m != this->CreationMomentumIndex1) || (Q != this->CreationMomentumIndex2) )
    {
     cout << "error: difference in indices " << endl;
-    exit(1);
    }
 
   for (int i = 0; i < Dim; ++i)
@@ -299,7 +298,6 @@ Complex ParticleOnSphereWithSpinAllSzDensityDensityOddChannel::MatrixElement (Co
 
 RealVector& ParticleOnSphereWithSpinAllSzDensityDensityOddChannel::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, int firstComponent, int nbrComponent)
 {
-/*
   int Last = firstComponent + nbrComponent;;
   int Dim = this->Particle->GetHilbertSpaceDimension();
   double Coefficient = 0.0;
@@ -310,210 +308,164 @@ RealVector& ParticleOnSphereWithSpinAllSzDensityDensityOddChannel::LowLevelMulti
   if ( (m != this->CreationMomentumIndex1) || (Q != this->CreationMomentumIndex2) )
    {
     cout << "error: difference in indices " << endl;
-    exit(1);
    }
 
-  //UpUpUpUp
-  Sign = 1.0;
-  for (int i = firstComponent; i < Last; ++i)
-  {
-   Coefficient = this->Particle->AuAu(i, m, Q);
-   if (Coefficient != 0.0)
-     {
-       int Index = this->Particle->AduAdu(m, Q, Coefficient2);
-	if (Index != Dim)
-	  vDestination[Index] = Sign * vSource[i] * Coefficient * Coefficient2;
-     }
-   }
-  //UpUpUpDown
-  Sign = -1.0;
-  for (int i = firstComponent; i < Last; ++i)
-  {
-   Coefficient = this->Particle->AuAd(i, m, Q);
-   if (Coefficient != 0.0)
-     {
-       int Index = this->Particle->AduAdu(m, Q, Coefficient2);
-	if (Index != Dim)
-	  vDestination[Index] = Sign * vSource[i] * Coefficient * Coefficient2;
-     }
-   }
-  //UpUpDownUp
-  Sign = 1.0;
-  for (int i = firstComponent; i < Last; ++i)
-  {
-   Coefficient = this->Particle->AuAd(i, Q, m);
-   if (Coefficient != 0.0)
-     {
-       int Index = this->Particle->AduAdu(m, Q, Coefficient2);
-	if (Index != Dim)
-	  vDestination[Index] = Sign * vSource[i] * Coefficient * Coefficient2;
-     }
-   }
-  //UpUpDownDown
-  Sign = 1.0;
-  for (int i = firstComponent; i < Last; ++i)
-  {
-   Coefficient = this->Particle->AdAd(i, m, Q);
-   if (Coefficient != 0.0)
-     {
-       int Index = this->Particle->AduAdu(m, Q, Coefficient2);
-	if (Index != Dim)
-	  vDestination[Index] = Sign * vSource[i] * Coefficient * Coefficient2;
-     }
-   }
-  //******************************************
-  //UpDownUpUp
-  Sign = -1.0;
-  for (int i = firstComponent; i < Last; ++i)
-  {
-   Coefficient = this->Particle->AuAu(i, m, Q);
-   if (Coefficient != 0.0)
-     {
-       int Index = this->Particle->AduAdd(m, Q, Coefficient2);
-	if (Index != Dim)
-	  vDestination[Index] = Sign * vSource[i] * Coefficient * Coefficient2;
-     }
-   }
-  //UpDownUpDown
-  Sign = 1.0;
-  for (int i = firstComponent; i < Last; ++i)
-  {
-   Coefficient = this->Particle->AuAd(i, m, Q);
-   if (Coefficient != 0.0)
-     {
-       int Index = this->Particle->AduAdd(m, Q, Coefficient2);
-	if (Index != Dim)
-	  vDestination[Index] = Sign * vSource[i] * Coefficient * Coefficient2;
-     }
-   }
-  //UpDownDownUp
-  Sign = -1.0;
-  for (int i = firstComponent; i < Last; ++i)
-  {
-   Coefficient = this->Particle->AuAd(i, Q, m);
-   if (Coefficient != 0.0)
-     {
-       int Index = this->Particle->AduAdd(m, Q, Coefficient2);
-	if (Index != Dim)
-	  vDestination[Index] = Sign * vSource[i] * Coefficient * Coefficient2;
-     }
-   }
-  //UpDownDownDown
-  Sign = -1.0;
-  for (int i = firstComponent; i < Last; ++i)
-  {
-   Coefficient = this->Particle->AdAd(i, m, Q);
-   if (Coefficient != 0.0)
-     {
-       int Index = this->Particle->AduAdd(m, Q, Coefficient2);
-	if (Index != Dim)
-	  vDestination[Index] = Sign * vSource[i] * Coefficient * Coefficient2;
-     }
-   }
-   //******************************************
-  //DownUpUpUp
-  Sign = 1.0;
-  for (int i = firstComponent; i < Last; ++i)
-  {
-   Coefficient = this->Particle->AuAu(i, m, Q);
-   if (Coefficient != 0.0)
-     {
-       int Index = this->Particle->AduAdd(Q, m, Coefficient2);
-	if (Index != Dim)
-	  vDestination[Index] = Sign * vSource[i] * Coefficient * Coefficient2;
-     }
-   }
-  //DownUpUpDown
-  Sign = -1.0;
-  for (int i = firstComponent; i < Last; ++i)
-  {
-   Coefficient = this->Particle->AuAd(i, m, Q);
-   if (Coefficient != 0.0)
-     {
-       int Index = this->Particle->AduAdd(Q, m, Coefficient2);
-	if (Index != Dim)
-	  vDestination[Index] = Sign * vSource[i] * Coefficient * Coefficient2;
-     }
-   }
-  //DownUpDownUp
-  Sign = 1.0;
-  for (int i = firstComponent; i < Last; ++i)
-  {
-   Coefficient = this->Particle->AuAd(i, Q, m);
-   if (Coefficient != 0.0)
-     {
-       int Index = this->Particle->AduAdd(Q, m, Coefficient2);
-	if (Index != Dim)
-	  vDestination[Index] = Sign * vSource[i] * Coefficient * Coefficient2;
-     }
-   }
-  //DownUpDownDown
-  Sign = 1.0;
-  for (int i = firstComponent; i < Last; ++i)
-  {
-   Coefficient = this->Particle->AdAd(i, m, Q);
-   if (Coefficient != 0.0)
-     {
-       int Index = this->Particle->AduAdd(Q, m, Coefficient2);
-	if (Index != Dim)
-	  vDestination[Index] = Sign * vSource[i] * Coefficient * Coefficient2;
-     }
-   }
-   //**************************************
-  //DownDownUpUp
-  Sign = 1.0;
-  for (int i = firstComponent; i < Last; ++i)
-  {
-   Coefficient = this->Particle->AuAu(i, m, Q);
-   if (Coefficient != 0.0)
-     {
-       int Index = this->Particle->AddAdd(m, Q, Coefficient2);
-	if (Index != Dim)
-	  vDestination[Index] = Sign * vSource[i] * Coefficient * Coefficient2;
-     }
-   }
-  //DownDownUpDown
-  Sign = -1.0;
-  for (int i = firstComponent; i < Last; ++i)
-  {
-   Coefficient = this->Particle->AuAd(i, m, Q);
-   if (Coefficient != 0.0)
-     {
-       int Index = this->Particle->AddAdd(m, Q, Coefficient2);
-	if (Index != Dim)
-	  vDestination[Index] = Sign * vSource[i] * Coefficient * Coefficient2;
-     }
-   }
-  //DownDownDownUp
-  Sign = 1.0;
-  for (int i = firstComponent; i < Last; ++i)
-  {
-   Coefficient = this->Particle->AuAd(i, Q, m);
-   if (Coefficient != 0.0)
-     {
-       int Index = this->Particle->AddAdd(m, Q, Coefficient2);
-	if (Index != Dim)
-	  vDestination[Index] = Sign * vSource[i] * Coefficient * Coefficient2;
-     }
-   }
-  //DownDownDownDown
-  Sign = 1.0;
-  for (int i = firstComponent; i < Last; ++i)
-  {
-   Coefficient = this->Particle->AdAd(i, m, Q);
-   if (Coefficient != 0.0)
-     {
-       int Index = this->Particle->AddAdd(m, Q, Coefficient2);
-	if (Index != Dim)
-	  vDestination[Index] = Sign * vSource[i] * Coefficient * Coefficient2;
-     }
-   }
+  for (int i = 0; i < Dim; ++i)
+   {
 
+//****************** UP UP *************************
+     //UpUpUpUp
+     Coefficient = this->Particle->AuAu(i, m, Q);
+     if (Coefficient != 0.0)
+       {
+	 int Index = this->Particle->AduAdu(m, Q, Coefficient2);
+	 if (Index != Dim)
+	  vDestination[Index] = 0.25 * vSource[i] * Coefficient * Coefficient2;
+        }
 
+     //UpUpUpDown
+     Coefficient = this->Particle->AuAd(i, m, Q);
+     if (Coefficient != 0.0)
+       {
+	 int Index = this->Particle->AduAdu(m, Q, Coefficient2);
+	 if (Index != Dim)
+	  vDestination[Index] = -0.25 * vSource[i] * Coefficient * Coefficient2;
+        }
+
+     //UpUpDownUp
+     Coefficient = this->Particle->AuAd(i, Q, m);
+     if (Coefficient != 0.0)
+       {
+	 int Index = this->Particle->AduAdu(m, Q, Coefficient2);
+	 if (Index != Dim)
+	  vDestination[Index] = 0.25 * vSource[i] * Coefficient * Coefficient2;
+        }
+
+     //UpUpDownDown
+     Coefficient = this->Particle->AdAd(i, m, Q);
+     if (Coefficient != 0.0)
+       {
+	 int Index = this->Particle->AduAdu(m, Q, Coefficient2);
+	 if (Index != Dim)
+	  vDestination[Index] = 0.25 * vSource[i] * Coefficient * Coefficient2;
+        }
+
+//****************** UP DOWN *************************
+
+     //UpDownUpUp
+     Coefficient = this->Particle->AuAu(i, m, Q);
+     if (Coefficient != 0.0)
+       {
+	 int Index = this->Particle->AduAdd(m, Q, Coefficient2);
+	 if (Index != Dim)
+	  vDestination[Index] = -0.25 * vSource[i] * Coefficient * Coefficient2;
+        }
+
+     //UpDownUpDown
+     Coefficient = this->Particle->AuAd(i, m, Q);
+     if (Coefficient != 0.0)
+       {
+	 int Index = this->Particle->AduAdd(m, Q, Coefficient2);
+	 if (Index != Dim)
+	  vDestination[Index] = 0.25 * vSource[i] * Coefficient * Coefficient2;
+        }
+
+     //UpDownDownUp
+     Coefficient = this->Particle->AuAd(i, Q, m);
+     if (Coefficient != 0.0)
+       {
+	 int Index = this->Particle->AduAdd(m, Q, Coefficient2);
+	 if (Index != Dim)
+	  vDestination[Index] = -0.25 * vSource[i] * Coefficient * Coefficient2;
+        }
+
+     //UpDownDownDown
+     Coefficient = this->Particle->AdAd(i, m, Q);
+     if (Coefficient != 0.0)
+       {
+	 int Index = this->Particle->AduAdd(m, Q, Coefficient2);
+	 if (Index != Dim)
+	  vDestination[Index] = -0.25 * vSource[i] * Coefficient * Coefficient2;
+        }
+
+//****************** DOWN UP *************************
+
+     //DownUpUpUp
+     Coefficient = this->Particle->AuAu(i, m, Q);
+     if (Coefficient != 0.0)
+       {
+	 int Index = this->Particle->AduAdd(Q, m, Coefficient2);
+	 if (Index != Dim)
+	  vDestination[Index] = 0.25 * vSource[i] * Coefficient * Coefficient2;
+        }
+
+     //DownUpUpDown
+     Coefficient = this->Particle->AuAd(i, m, Q);
+     if (Coefficient != 0.0)
+       {
+	 int Index = this->Particle->AduAdd(Q, m, Coefficient2);
+	 if (Index != Dim)
+	  vDestination[Index] = -0.25 * vSource[i] * Coefficient * Coefficient2;
+        }
+
+     //DownUpDownUp
+     Coefficient = this->Particle->AuAd(i, Q, m);
+     if (Coefficient != 0.0)
+       {
+	 int Index = this->Particle->AduAdd(Q, m, Coefficient2);
+	 if (Index != Dim)
+	  vDestination[Index] = 0.25 * vSource[i] * Coefficient * Coefficient2;
+        }
+
+     //DownUpDownDown
+     Coefficient = this->Particle->AdAd(i, m, Q);
+     if (Coefficient != 0.0)
+       {
+	 int Index = this->Particle->AduAdd(Q, m, Coefficient2);
+	 if (Index != Dim)
+	  vDestination[Index] = 0.25 * vSource[i] * Coefficient * Coefficient2;
+        }
+
+//****************** DOWN DOWN *************************
+
+     //DownDownUpUp
+     Coefficient = this->Particle->AuAu(i, m, Q);
+     if (Coefficient != 0.0)
+       {
+	 int Index = this->Particle->AddAdd(m, Q, Coefficient2);
+	 if (Index != Dim)
+	  vDestination[Index] = 0.25 * vSource[i] * Coefficient * Coefficient2;
+        }
+
+     //DownDownUpDown
+     Coefficient = this->Particle->AuAd(i, m, Q);
+     if (Coefficient != 0.0)
+       {
+	 int Index = this->Particle->AddAdd(m, Q, Coefficient2);
+	 if (Index != Dim)
+	  vDestination[Index] = -0.25 * vSource[i] * Coefficient * Coefficient2;
+        }
+
+     //DownDownDownUp
+     Coefficient = this->Particle->AuAd(i, Q, m);
+     if (Coefficient != 0.0)
+       {
+	 int Index = this->Particle->AddAdd(m, Q, Coefficient2);
+	 if (Index != Dim)
+	  vDestination[Index] = 0.25 * vSource[i] * Coefficient * Coefficient2;
+        }
+
+     //DownDownDownDown
+     Coefficient = this->Particle->AdAd(i, m, Q);
+     if (Coefficient != 0.0)
+       {
+	 int Index = this->Particle->AddAdd(m, Q, Coefficient2);
+	 if (Index != Dim)
+	  vDestination[Index] = 0.25 * vSource[i] * Coefficient * Coefficient2;
+        }
+
+   }
+ 
   return vDestination;
-*/
-  cout<< "Using low level multiply... exiting" <<endl;
-  exit(1);
-
 }
 
