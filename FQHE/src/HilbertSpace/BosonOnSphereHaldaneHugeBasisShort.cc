@@ -736,6 +736,8 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse
     maxIndex = this->LargeHilbertSpaceDimension - 1l;
   double TmpComponent = 1.0;
   long FileShift = 4l;
+  if (this->HilbertSpaceDimension == -1)
+    FileShift = 12l;
   if ((minIndex <= 0) && (resumeFlag == false))
     {
       ofstream File;
@@ -744,7 +746,6 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse
       if (this->HilbertSpaceDimension == -1)
 	{
 	  WriteLittleEndian(File, this->LargeHilbertSpaceDimension);  
-	  FileShift = 12l;
 	}
       WriteLittleEndian(File, TmpComponent);  
       File.close();
@@ -802,14 +803,13 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse
 
   if (resumeFlag == true)
     {
-      cout << "consistency check" << endl;
       ifstream File;
       File.open(partialSave, ios::binary | ios::in);
       File.seekg (0, ios::end);
       long TmpResumePos = File.tellg();
       File.close();
       TmpResumePos -= FileShift;
-      TmpResumePos /= sizeof(double); 	
+      TmpResumePos /= sizeof(double); 	      
       long TmpResumeMinPos = TmpResumePos - NbrBlocks;
       long LimNbrBlocks = NbrBlocks;
       if (TmpResumeMinPos < 0l)
@@ -825,6 +825,7 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse
 	}
       if (LimNbrBlocks > 0)
 	{
+	  cout << "consistency check, " << TmpResumePos << " components have already been computed, checking the last " << LimNbrBlocks << " ones" << endl;      
 	  Operation.SetIndicesRange(TmpResumeMinPos, LimNbrBlocks);
 	  Operation.ApplyOperation(architecture);
 	  ifstream OutputFile;
@@ -833,7 +834,7 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse
 
 	  for (long k = 0l; k < LimNbrBlocks; ++k)
 	    {
-	      File.seekg (FileShift + (TmpResumeMinPos * sizeof(double)), ios::beg);
+	      OutputFile.seekg (FileShift + (TmpResumeMinPos * sizeof(double)), ios::beg);
 	      ReadLittleEndian(OutputFile, RefCoefficient);
 	      double Coefficient = 0.0;
 	      if (TmpNbrComputedComponentArray[k] >= 0)
@@ -879,6 +880,7 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse
 	  OutputFile.close();
 	}
       cout << "consistency check done, resuming calculation now" << endl;
+      minIndex = TmpResumePos;
     }
 
   fstream OutputFile;
