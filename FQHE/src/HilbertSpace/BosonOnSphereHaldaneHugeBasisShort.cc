@@ -1091,7 +1091,6 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateJackPolynomialFactorizedCore(do
       double Rho = 0.0;
       unsigned long CurrentPartition = 0x0ul;
       CurrentPartition = this->FermionHugeBasis->GetStateFactorized(i);
-      unsigned long TmpSymState = this->FermionHugeBasis->GetSymmetricState(CurrentPartition);
       while (((CurrentPartition >> TmpLzMax) & 0x1ul) == 0ul)
 	--TmpLzMax;
       this->ConvertToMonomial(CurrentPartition, TmpLzMax, this->TemporaryMonomial);

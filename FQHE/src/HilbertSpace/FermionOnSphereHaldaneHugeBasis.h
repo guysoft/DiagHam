@@ -44,6 +44,7 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
 {
 
   friend class BosonOnSphereHaldaneHugeBasisShort;
+  friend class FQHESphereJackGeneratorOperation;
 
  protected:
 
@@ -190,6 +191,11 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   int SuffixLookUpTableSize;
   // shift to apply to a suffix to extract the key 
   int SuffixLookUpTableShift;
+
+  // temporary array to store monomial representation
+  unsigned long* TemporaryMonomial;
+  unsigned long* TemporaryMonomial2;
+
 
  public:
 
@@ -567,13 +573,13 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // initialState = initial bosonic state in its fermionic representation
   // initialStateLzMax = initial bosonic state maximum Lz value
   // finalState = reference on the array where the monomial representation has to be stored
-  virtual void ConvertToMonomial(unsigned long initialState, int*& finalState);
+  virtual void ConvertToMonomial(unsigned long initialState, unsigned long*& finalState);
 
   // convert a bosonic state from its monomial representation
   //
   // initialState = array where the monomial representation is stored
   // return value = bosonic state in its fermionic representation
-  virtual unsigned long ConvertFromMonomial(int* initialState);
+  virtual unsigned long ConvertFromMonomial(unsigned long* initialState);
 
   // find squeezed partitions that are connected throught the Jack calculation algorithm
   //
@@ -585,6 +591,34 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // rootPartition = Jack root partition
   virtual void GetConnectedSqueezedPartitions(long nbrPartitions, long* partitionIndices, int* nbrConnectedPartitions, 
 					      long** connectedPartitionIndices, double** factors, unsigned long rootPartition);
+
+  // core part of the Jack generator using the Lz<->-Lz symmetry and the factorized algorithm
+  //
+  // invAlpha = inverse of the Jack polynomial alpha coefficient
+  // maxRoot = root partition (in fermionic binary representation)
+  // partialSave = save partial results in a given vector file
+  // minIndex = start computing the Jack polynomial from the minIndex-th component
+  // maxIndex = stop  computing the Jack polynomial up to the maxIndex-th component (0 if it has to be computed up to the end)
+  // indexArray = array where state indices are stored
+  // stateArray = array use to store computed state description
+  // componentArray = array where computed component numerical factors are stored
+  // nbrComputedComponentArray = number of connected components associated to each state through the Jack generator
+  // rhoArray = rho factor associated to each state
+  void GenerateSymmetrizedJackPolynomialFactorizedCore(double invAlpha, unsigned long maxRoot, long minIndex, long maxIndex, unsigned long** stateArray, double** componentArray, long** indexArray, int* nbrComputedComponents, double* rhoArray);
+
+  // core part of the Jack generator using the factorized algorithm
+  //
+  // invAlpha = inverse of the Jack polynomial alpha coefficient
+  // maxRoot = root partition (in fermionic binary representation)
+  // partialSave = save partial results in a given vector file
+  // minIndex = start computing the Jack polynomial from the minIndex-th component
+  // maxIndex = stop  computing the Jack polynomial up to the maxIndex-th component (0 if it has to be computed up to the end)
+  // indexArray = array where state indices are stored
+  // stateArray = array use to store computed state description
+  // componentArray = array where computed component numerical factors are stored
+  // nbrComputedComponentArray = number of connected components associated to each state through the Jack generator
+  // rhoArray = rho factor associated to each state
+  void GenerateJackPolynomialFactorizedCore(double invAlpha, unsigned long maxRoot, long minIndex, long maxIndex, unsigned long** stateArray, double** componentArray, long** indexArray, int* nbrComputedComponents, double* rhoArray);
 
 };
 
@@ -660,12 +694,12 @@ inline unsigned long FermionOnSphereHaldaneHugeBasis::GetSymmetricState (unsigne
 // initialStateLzMax = initial bosonic state maximum Lz value
 // finalState = reference on the array where the monomial representation has to be stored
 
-inline void FermionOnSphereHaldaneHugeBasis::ConvertToMonomial(unsigned long initialState, int*& finalState)
+inline void FermionOnSphereHaldaneHugeBasis::ConvertToMonomial(unsigned long initialState, unsigned long*& finalState)
 {
   int Index = 0;
   for (int j = this->LzMax; j >= 0; --j)
     if (((initialState >> j) & 1ul) != 0ul)
-      finalState[Index++] = j;
+      finalState[Index++] = (unsigned long) j;
 }
 
 // convert a bosonic state from its monomial representation
@@ -673,7 +707,7 @@ inline void FermionOnSphereHaldaneHugeBasis::ConvertToMonomial(unsigned long ini
 // initialState = array where the monomial representation is stored
 // return value = bosonic state in its fermionic representation
 
-inline unsigned long FermionOnSphereHaldaneHugeBasis::ConvertFromMonomial(int* initialState)
+inline unsigned long FermionOnSphereHaldaneHugeBasis::ConvertFromMonomial(unsigned long* initialState)
 {
   unsigned long TmpState = 0x0ul;  
   for (int j = 0; j < this->NbrFermions; ++j)

@@ -46,9 +46,9 @@ class AbstractPrecalculationOperation: public AbstractArchitectureOperation
   // number of component 
   int NbrComponent;
   // index of the first component (if long numbers are required)
-  int LargeFirstComponent;
+  long LargeFirstComponent;
   // number of component  (if long numbers are required)
-  int LargeNbrComponent;
+  long LargeNbrComponent;
 
  public:
   

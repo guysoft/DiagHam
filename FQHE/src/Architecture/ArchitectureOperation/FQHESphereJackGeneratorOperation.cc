@@ -31,6 +31,7 @@
 #include "config.h"
 #include "Architecture/ArchitectureOperation/FQHESphereJackGeneratorOperation.h"
 #include "HilbertSpace/BosonOnSphereHaldaneHugeBasisShort.h"
+#include "HilbertSpace/FermionOnSphereHaldaneHugeBasis.h"
 
 
 // constructor 
@@ -125,8 +126,28 @@ AbstractArchitectureOperation* FQHESphereJackGeneratorOperation::Clone()
 
 bool FQHESphereJackGeneratorOperation::RawApplyOperation()
 {
-
-  ((BosonOnSphereHaldaneHugeBasisShort*) this->HilbertSpace)->GenerateSymmetrizedJackPolynomialFactorizedCore(this->InvAlpha, this->RootPartition, this->LargeFirstComponent, this->LargeFirstComponent + this->LargeNbrComponent - 1, this->StateArray + this->LocalShift, this->ComponentArray + this->LocalShift, this->IndexArray + this->LocalShift, this->NbrComputedComponentArray + this->LocalShift, this->RhoArray + this->LocalShift);
+  if (this->FermionicFlag == false)
+    {
+      if (this->SymmetricFlag == true)
+	{
+	  ((BosonOnSphereHaldaneHugeBasisShort*) this->HilbertSpace)->GenerateSymmetrizedJackPolynomialFactorizedCore(this->InvAlpha, this->RootPartition, this->LargeFirstComponent, this->LargeFirstComponent + this->LargeNbrComponent - 1, this->StateArray + this->LocalShift, this->ComponentArray + this->LocalShift, this->IndexArray + this->LocalShift, this->NbrComputedComponentArray + this->LocalShift, this->RhoArray + this->LocalShift);
+	}
+      else
+	{
+	  ((BosonOnSphereHaldaneHugeBasisShort*) this->HilbertSpace)->GenerateJackPolynomialFactorizedCore(this->InvAlpha, this->RootPartition, this->LargeFirstComponent, this->LargeFirstComponent + this->LargeNbrComponent - 1, this->StateArray + this->LocalShift, this->ComponentArray + this->LocalShift, this->IndexArray + this->LocalShift, this->NbrComputedComponentArray + this->LocalShift, this->RhoArray + this->LocalShift);
+	}
+    }
+  else
+    {
+      if (this->SymmetricFlag == true)
+	{
+	  ((FermionOnSphereHaldaneHugeBasis*) this->HilbertSpace)->GenerateSymmetrizedJackPolynomialFactorizedCore(this->InvAlpha, this->RootPartition, this->LargeFirstComponent, this->LargeFirstComponent + this->LargeNbrComponent - 1, this->StateArray + this->LocalShift, this->ComponentArray + this->LocalShift, this->IndexArray + this->LocalShift, this->NbrComputedComponentArray + this->LocalShift, this->RhoArray + this->LocalShift);
+	}
+      else
+	{
+	  ((FermionOnSphereHaldaneHugeBasis*) this->HilbertSpace)->GenerateJackPolynomialFactorizedCore(this->InvAlpha, this->RootPartition, this->LargeFirstComponent, this->LargeFirstComponent + this->LargeNbrComponent - 1, this->StateArray + this->LocalShift, this->ComponentArray + this->LocalShift, this->IndexArray + this->LocalShift, this->NbrComputedComponentArray + this->LocalShift, this->RhoArray + this->LocalShift);
+	}
+    }
   return true;
 }
 
