@@ -62,6 +62,10 @@ class ParticleOnSphereGenericThreeBodyHamiltonian : public AbstractQHEOnSphereNB
   // array with the pseudo-potentials (ordered such that the last element corresponds to the delta interaction)
   double* PseudoPotential;
 
+  // array with the onebody potentials 
+  double* OneBodyPotentials;
+
+
  public:
 
   // default constructor
@@ -77,32 +81,14 @@ class ParticleOnSphereGenericThreeBodyHamiltonian : public AbstractQHEOnSphereNB
   //                            taking into account of additional degeneracy for relative momentum greater than 5 for bosons (8 for fermions)
   // maxRelativeAngularMomentum =  maxixmum relative angular momentum that is used in ThreeBodyPseudoPotential
   // l2Factor = multiplicative factor in front of an additional L^2 operator in the Hamiltonian (0 if none)
+  // pseudoPotential = array of two-body pseudopotentials (optional)
+  // onebodyPotential = array of one-body potentials (optional)
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
   ParticleOnSphereGenericThreeBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
-					      double* threeBodyPseudoPotential, int maxRelativeAngularMomentum, double l2Factor, 
-					      AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
-					      char* precalculationFileName = 0);
-
-  // constructor from datas with a fully-defined two body interaction
-  //
-  // particles = Hilbert space associated to the system
-  // nbrParticles = number of particles
-  // lzmax = maximum Lz value reached by a particle in the state
-  // threeBodyPseudoPotential = array with the three-body pseudo-potentials sorted with respect to the relative angular momentum, 
-  //                            taking into account of additional degeneracy for relative momentum greater than 5 for bosons (8 for fermions)
-  // maxRelativeAngularMomentum =  maxixmum relative angular momentum that is used in ThreeBodyPseudoPotential
-  // l2Factor = multiplicative factor in front of an additional L^2 operator in the Hamiltonian (0 if none)
-  // pseudoPotential = array with the pseudo-potentials (ordered such that the first element corresponds to the delta interaction)
-  // architecture = architecture to use for precalculation
-  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
-  // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnSphereGenericThreeBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
-					      double* threeBodyPseudoPotential, int maxRelativeAngularMomentum,
-					      double l2Factor, double* pseudoPotential, 
+					      double* threeBodyPseudoPotential, int maxRelativeAngularMomentum, double l2Factor, double* pseudoPotential, double* onebodyPotentials,
 					      AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
 					      char* precalculationFileName = 0);
 

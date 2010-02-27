@@ -70,7 +70,6 @@ class AbstractQHEOnSphereNBodyInteractionHamiltonian : public AbstractQHEOnSpher
   // flag to indicate a fully defined (i.e with pseudo-potentials) two body interaction
   bool FullTwoBodyFlag;
 
-  
   // number of group of annihilation operator indices per n-body interaction
   long* NbrNIndices;
   // annihilation operator indices for each n-body interaction (first index for the  n-body interaction type, second index is a linearilized index on group of annihilation indices)
@@ -96,6 +95,12 @@ class AbstractQHEOnSphereNBodyInteractionHamiltonian : public AbstractQHEOnSpher
   // ask if Hamiltonian implements methods applying the conjugate of the Hamiltonian
   //
   virtual bool IsConjugate();
+
+  // get the preferred distribution over parallel execution in N tasks for parallel Hamiltonian-Vector multiplication
+  // nbrThreads = number of threads requested
+  // segmentIndices = array returning the reference to an array of the first index of each of the segments
+  //
+  //virtual bool GetLoadBalancing(int nbrTasks, long* &segmentIndices);
 
 
   // multiply a vector by the current hamiltonian for a given range of indices 
@@ -200,7 +205,7 @@ class AbstractQHEOnSphereNBodyInteractionHamiltonian : public AbstractQHEOnSpher
   // coefficientArray = array of the numerical coefficients related to the indexArray
   // position = reference on the current position in arrays indexArray and coefficientArray
   void EvaluateMNNBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index, int nbodyIndex, 
-						  int* indexArray, double* coefficientArray, long& position);
+						  int* indexArray, double* coefficientArray, int& position);
 
 };
 
@@ -362,7 +367,7 @@ inline void AbstractQHEOnSphereNBodyInteractionHamiltonian::EvaluateMNNBodyAddMu
 // position = reference on the current position in arrays indexArray and coefficientArray
 
 inline void AbstractQHEOnSphereNBodyInteractionHamiltonian::EvaluateMNNBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index, int nbodyIndex, 
-												       int* indexArray, double* coefficientArray, long& position)
+												       int* indexArray, double* coefficientArray, int& position)
 {
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;

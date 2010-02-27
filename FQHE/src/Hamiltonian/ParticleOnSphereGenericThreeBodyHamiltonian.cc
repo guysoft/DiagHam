@@ -51,135 +51,7 @@ ParticleOnSphereGenericThreeBodyHamiltonian::ParticleOnSphereGenericThreeBodyHam
 {
 }
 
-// constructor from default datas
-//
-// particles = Hilbert space associated to the system
-// nbrParticles = number of particles
-// lzmax = maximum Lz value reached by a particle in the state
-// threeBodyPseudoPotential = array with the three-body pseudo-potentials sorted with respect to the relative angular momentum, 
-//                            taking into account of additional degeneracy for relative momentum greater than 5 for bosons (8 for fermions)
-// maxRelativeAngularMomentum =  maxixmum relative angular momentum that is used in ThreeBodyPseudoPotential
-// l2Factor = multiplicative factor in front of an additional L^2 operator in the Hamiltonian (0 if none)
-// architecture = architecture to use for precalculation
-// memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-// onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
-// precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-
-ParticleOnSphereGenericThreeBodyHamiltonian::ParticleOnSphereGenericThreeBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
-											 double* threeBodyPseudoPotential, int maxRelativeAngularMomentum, double l2Factor, 
-											 AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, 
-											 char* precalculationFileName)
-{
-  this->Particles = particles;
-  this->LzMax = lzmax;
-  this->NbrLzValue = this->LzMax + 1;
-  this->NbrParticles = nbrParticles;
-
-  this->OneBodyTermFlag = false;
-  this->FullTwoBodyFlag = false;
-  this->MaxNBody = 3;
-
-  this->NBodyFlags = new bool [this->MaxNBody + 1];
-  this->NBodyInteractionFactors = new double** [this->MaxNBody + 1];
-  this->NbrSortedIndicesPerSum = new int* [this->MaxNBody + 1];
-  this->SortedIndicesPerSum = new int** [this->MaxNBody + 1];
-  this->MinSumIndices = new int [this->MaxNBody + 1];
-  this->MaxSumIndices = new int [this->MaxNBody + 1];
-  this->NBodySign = new double[this->MaxNBody + 1];
-
-  this->NbrNIndices = new long[this->MaxNBody + 1];
-  this->NIndices = new int*[this->MaxNBody + 1];
-  this->NbrMIndices = new long*[this->MaxNBody + 1];
-  this->MIndices = new int**[this->MaxNBody + 1];
-  this->MNNBodyInteractionFactors = new double**[this->MaxNBody + 1];
-
-  for (int k = 0; k <= this->MaxNBody; ++k)
-    {
-      this->MinSumIndices[k] = 1;
-      this->MaxSumIndices[k] = 0;      
-      this->NBodyFlags[k] = false;
-      this->NBodySign[k] = 1.0;
-      if ((this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic) && ((k & 1) == 0))
-	{
-	  this->NBodySign[k] = -1.0;
-	}
-      this->NbrNIndices[k] = 0;
-      this->NIndices[k] = 0;
-      this->NbrMIndices[k] = 0;
-      this->MIndices[k] = 0;
-      this->MNNBodyInteractionFactors[k] = 0;
-    }
-
-  this->MaxRelativeAngularMomentum = maxRelativeAngularMomentum;
-  this->NbrThreeBodyPseudoPotential = maxRelativeAngularMomentum + 1;
-  this->ThreeBodyPseudoPotential = new double[this->NbrThreeBodyPseudoPotential];
-  for (int i = 0; i < this->NbrThreeBodyPseudoPotential; ++i)
-    this->ThreeBodyPseudoPotential[i] = threeBodyPseudoPotential[i];
-
-  this->NBodyFlags[3] = true;
-  this->Architecture = architecture;
-  this->EvaluateInteractionFactors();
-  this->HamiltonianShift = 0.0;
-  long MinIndex;
-  long MaxIndex;
-  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
-  this->PrecalculationShift = (int) MinIndex;  
-  this->DiskStorageFlag = onDiskCacheFlag;
-  this->Memory = memory;
-  if (precalculationFileName == 0)
-    {
-      if (memory > 0)
-	{
-	  long TmpMemory = this->FastMultiplicationMemory(memory);
-	  if (TmpMemory < 1024)
-	    cout  << "fast = " <<  TmpMemory << "b ";
-	  else
-	    if (TmpMemory < (1 << 20))
-	      cout  << "fast = " << (TmpMemory >> 10) << "kb ";
-	    else
-	  if (TmpMemory < (1 << 30))
-	    cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
-	  else
-	    {
-	      cout  << "fast = " << (TmpMemory >> 30) << ".";
-	      TmpMemory -= ((TmpMemory >> 30) << 30);
-	      TmpMemory *= 100l;
-	      TmpMemory >>= 30;
-	      if (TmpMemory < 10l)
-		cout << "0";
-	      cout  << TmpMemory << " Gb ";
-	    }
-	  if (this->DiskStorageFlag == false)
-	    {
-	      this->EnableFastMultiplication();
-	    }
-	  else
-	    {
-	      char* TmpFileName = this->Architecture->GetTemporaryFileName();
-	      this->EnableFastMultiplicationWithDiskStorage(TmpFileName);	      
-	      delete[] TmpFileName;
-	    }
-	}
-      else
-	{
-	  this->FastMultiplicationFlag = false;
-	}
-    }
-  else
-    this->LoadPrecalculation(precalculationFileName);
-
-  if (l2Factor != 0.0)
-    {
-      this->L2Operator = new ParticleOnSphereL2Hamiltonian(this->Particles, this->NbrParticles, this->LzMax, this->Particles->GetLzValue() , this->Architecture, l2Factor); 
-    }
-  else
-    {
-      this->L2Operator = 0;
-    }
-
-}
-
-// constructor from datas with a fully-defined two body interaction
+// constructor from datas with three-body interaction and optional two-body and one-body
 //
 // particles = Hilbert space associated to the system
 // nbrParticles = number of particles
@@ -189,14 +61,14 @@ ParticleOnSphereGenericThreeBodyHamiltonian::ParticleOnSphereGenericThreeBodyHam
 // maxRelativeAngularMomentum =  maxixmum relative angular momentum that is used in ThreeBodyPseudoPotential
 // l2Factor = multiplicative factor in front of an additional L^2 operator in the Hamiltonian (0 if none)
 // pseudoPotential = array with the pseudo-potentials (ordered such that the first element corresponds to the delta interaction)
+// onebodyPotential = array with the one-body potentials
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-
 ParticleOnSphereGenericThreeBodyHamiltonian::ParticleOnSphereGenericThreeBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
 											 double* threeBodyPseudoPotential, int maxRelativeAngularMomentum,
-											 double l2Factor, double* pseudoPotential, 
+											 double l2Factor, double* pseudoPotential, double* onebodyPotentials,
 											 AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, 
 											 char* precalculationFileName)
 {
@@ -204,12 +76,13 @@ ParticleOnSphereGenericThreeBodyHamiltonian::ParticleOnSphereGenericThreeBodyHam
   this->LzMax = lzmax;
   this->NbrLzValue = this->LzMax + 1;
   this->NbrParticles = nbrParticles;
-
+  this->FullTwoBodyFlag = false;
   if (pseudoPotential != 0)
     {
       this->PseudoPotential = new double [this->NbrLzValue];
       for (int i = 0; i < this->NbrLzValue; ++i)
 	this->PseudoPotential[i] = pseudoPotential[this->LzMax - i];
+      cout << "Setting up two-body potential" << endl;
       this->FullTwoBodyFlag = true;
     }
   else
@@ -218,7 +91,19 @@ ParticleOnSphereGenericThreeBodyHamiltonian::ParticleOnSphereGenericThreeBodyHam
     }
 
   this->OneBodyTermFlag = false;
-  this->FullTwoBodyFlag = true;
+  if (onebodyPotentials != 0)
+    {
+      this->OneBodyPotentials = new double [this->NbrLzValue];
+      for (int i = 0; i < this->NbrLzValue; ++i)
+	this->OneBodyPotentials[i] = onebodyPotentials[this->LzMax - i];
+      cout << "Setting up one-body potential" << endl;
+      this->OneBodyTermFlag = true;
+    }
+  else
+    {
+      this->OneBodyTermFlag = false;
+    }
+
   this->MaxNBody = 3;
   this->NBodyFlags = new bool [this->MaxNBody + 1];
   this->NBodyInteractionFactors = new double** [this->MaxNBody + 1];
@@ -233,10 +118,6 @@ ParticleOnSphereGenericThreeBodyHamiltonian::ParticleOnSphereGenericThreeBodyHam
   this->NbrMIndices = new long*[this->MaxNBody + 1];
   this->MIndices = new int**[this->MaxNBody + 1];
   this->MNNBodyInteractionFactors = new double**[this->MaxNBody + 1];
-
-  this->PseudoPotential = new double [this->NbrLzValue];
-  for (int i = 0; i < this->NbrLzValue; ++i)
-    this->PseudoPotential[i] = pseudoPotential[this->LzMax - i];
 
   this->MaxRelativeAngularMomentum = maxRelativeAngularMomentum;
   this->NbrThreeBodyPseudoPotential = maxRelativeAngularMomentum;
@@ -362,6 +243,13 @@ ParticleOnSphereGenericThreeBodyHamiltonian::~ParticleOnSphereGenericThreeBodyHa
       delete[] this->M2Value;
       delete[] this->M3Value;
       delete[] this->PseudoPotential;
+    }
+  if (this->OneBodyTermFlag == true)
+    {
+      delete[] this->OneBodyInteractionFactors;
+      delete[] this->OneBodyPotentials;
+      delete[] this->OneBodyMValues;
+      delete[] this->OneBodyNValues;
     }
 }
 
@@ -803,6 +691,37 @@ void ParticleOnSphereGenericThreeBodyHamiltonian::EvaluateInteractionFactors()
 		  ++Pos;
 		}
 	    }
+	}
+    }
+  if (this->OneBodyTermFlag == true)
+    {
+      this->NbrOneBodyInteractionFactors = 0;
+      for (int i = 0; i <= this->LzMax; ++i)
+	if (this->OneBodyPotentials[i] != 0)
+	  ++this->NbrOneBodyInteractionFactors;
+      if (this->NbrOneBodyInteractionFactors != 0)
+	{
+	  double Sign = 1.0;
+	  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+	    Sign = -1.0;
+	  this->OneBodyMValues = new int[this->NbrOneBodyInteractionFactors];
+	  this->OneBodyNValues = new int[this->NbrOneBodyInteractionFactors];
+	  this->OneBodyInteractionFactors = new double[this->NbrOneBodyInteractionFactors];
+	  this->NbrOneBodyInteractionFactors = 0;
+	  for (int i = 0; i <= this->LzMax; ++i)
+	    if (this->OneBodyPotentials[i] != 0)
+	      {
+		this->OneBodyMValues[this->NbrOneBodyInteractionFactors] = i;
+		this->OneBodyNValues[this->NbrOneBodyInteractionFactors] = i;
+		cout << this->OneBodyPotentials[i] << endl;
+		this->OneBodyInteractionFactors[this->NbrOneBodyInteractionFactors] = this->OneBodyPotentials[i] * Sign;
+		++this->NbrOneBodyInteractionFactors;
+	      }	  
+	}
+      else
+	{
+	  delete[] this->OneBodyPotentials;
+	  this->OneBodyTermFlag = false;
 	}
     }
 }
