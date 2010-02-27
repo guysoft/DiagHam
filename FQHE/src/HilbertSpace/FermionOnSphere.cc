@@ -2078,7 +2078,7 @@ RealVector& FermionOnSphere::ConvertToUnnormalizedMonomial(RealVector& state, lo
 	    }
 	  while (Index2 < this->NbrFermions)
 	    {
-	      Coefficient *= SqrtCoefficients[TmpMonomialReference[Index2]];
+	      Coefficient *= SqrtCoefficients[TmpMonomial[Index2]];
 	      ++Index2;
 	    }
 	  state[i] *= Coefficient;
@@ -2139,7 +2139,7 @@ RealVector& FermionOnSphere::ConvertToUnnormalizedMonomial(RealVector& state, lo
 	    }
 	  while (Index2 < this->NbrFermions)
 	    {
-	      Coefficient *= SqrtCoefficients[TmpMonomialReference[Index2]];
+	      Coefficient *= SqrtCoefficients[TmpMonomial[Index2]];
 	      ++Index2;
 	    }
 	  state[i] *= Coefficient;
@@ -2230,7 +2230,7 @@ RealVector& FermionOnSphere::ConvertFromUnnormalizedMonomial(RealVector& state, 
 	    }
 	  while (Index2 < this->NbrFermions)
 	    {
-	      Coefficient *= SqrtCoefficients[TmpMonomialReference[Index2]];
+	      Coefficient *= SqrtCoefficients[TmpMonomial[Index2]];
 	      ++Index2;
 	    }
 	  state[i] *= Coefficient;
@@ -2292,7 +2292,7 @@ RealVector& FermionOnSphere::ConvertFromUnnormalizedMonomial(RealVector& state, 
 	    }
 	  while (Index2 < this->NbrFermions)
 	    {
-	      Coefficient *= SqrtCoefficients[TmpMonomialReference[Index2]];
+	      Coefficient *= SqrtCoefficients[TmpMonomial[Index2]];
 	      ++Index2;
 	    }
 	  state[i] *= Coefficient;

@@ -176,6 +176,13 @@ void Matrix::ResizeAndClean (int nbrRow, int nbrColumn)
   this->NbrColumn = nbrColumn;
 }
 
+// put all matrix elements to zero
+//
+
+void Matrix::ClearMatrix ()
+{
+}
+
 #ifdef USE_HILBERT_SPACE
 // project matrix into a given subspace
 //

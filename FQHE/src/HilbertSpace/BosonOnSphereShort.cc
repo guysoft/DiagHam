@@ -892,7 +892,7 @@ RealVector& BosonOnSphereShort::ConvertToUnnormalizedMonomial(RealVector& state,
 	  }
 	while (Index2 < this->NbrBosons)
 	  {
-	    Coefficient *= SqrtCoefficients[TmpMonomialReference[Index2]];
+	    Coefficient *= SqrtCoefficients[TmpMonomial[Index2]];
 	    ++Index2;
 	  }
 	if (symmetryFactor == true)
@@ -973,7 +973,7 @@ RealVector& BosonOnSphereShort::ConvertFromUnnormalizedMonomial(RealVector& stat
 	      }
 	    while (Index2 < this->NbrBosons)
 	      {
-		Coefficient *= SqrtCoefficients[TmpMonomialReference[Index2]];
+		Coefficient *= SqrtCoefficients[TmpMonomial[Index2]];
 		++Index2;
 	      }
 	    Factorial = ReferenceFactorial;

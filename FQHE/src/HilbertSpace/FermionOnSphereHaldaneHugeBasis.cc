@@ -39,11 +39,14 @@
 #include "GeneralTools/ListIterator.h"
 #include "GeneralTools/Endian.h"
 #include "MathTools/FactorialCoefficient.h" 
+#include "Architecture/AbstractArchitecture.h"
+#include "Architecture/ArchitectureOperation/FQHESphereJackGeneratorOperation.h"
 
 
 #include <math.h>
 #include <cstring>
 #include <fstream>
+#include <sys/time.h>
 
 
 using std::cout;
@@ -2363,36 +2366,49 @@ RealVector& FermionOnSphereHaldaneHugeBasis::GenerateSymmetrizedJackPolynomial(R
 // create the Jack polynomial decomposition corresponding to the root partition assuming the resulting state is invariant under the Lz<->-Lz symmetry and using sparse storage
 //
 // alpha = value of the Jack polynomial alpha coefficient
+// architecture = architecture to use for precalculation
 // partialSave = save partial results in a given vector file
 // minIndex = start computing the Jack polynomial from the minIndex-th component
 // maxIndex = stop  computing the Jack polynomial up to the maxIndex-th component (0 if it has to be computed up to the end)
+// memory = amount of memory (in bytes) allowed for temporary vector storage (0 if the whole vector has to be stored in memory)
+// memoryBlock = amount of memory (in bytes) allowed for precomputing state indices
+// resumeFlag = true if the calculation has to be resumed from a previous one (assuming partialSave contains already computed components)
 
-void FermionOnSphereHaldaneHugeBasis::GenerateSymmetrizedJackPolynomialSparse(double alpha, char* partialSave, long minIndex, long maxIndex)
+void FermionOnSphereHaldaneHugeBasis::GenerateSymmetrizedJackPolynomialSparse(double alpha, AbstractArchitecture* architecture, char* partialSave, long minIndex, long maxIndex, long memory, long memoryBlock, bool resumeFlag)
 {
   if ((maxIndex <= 0) || (maxIndex >= this->LargeHilbertSpaceDimension))
     maxIndex = this->LargeHilbertSpaceDimension - 1l;
   double TmpComponent = 1.0;
-  if (minIndex <= 0)
+  long FileShift = 4l;
+  if (this->HilbertSpaceDimension == -1)
+    FileShift = 12l;
+  if ((minIndex <= 0) && (resumeFlag == false))
     {
       ofstream File;
       File.open(partialSave, ios::binary | ios::out);
       WriteLittleEndian(File, this->HilbertSpaceDimension);  
       if (this->HilbertSpaceDimension == -1)
-	WriteLittleEndian(File, this->LargeHilbertSpaceDimension);  
+	{
+	  WriteLittleEndian(File, this->LargeHilbertSpaceDimension);  
+	}
       WriteLittleEndian(File, TmpComponent);  
       File.close();
     }
   TmpComponent = 0.0;
    
+  memory >>= 3;
+  if ((memory > this->LargeHilbertSpaceDimension) || (memory <= 0))
+    {
+      cout << "vector does not require temporary disk storage" << endl;
+      memory = this->LargeHilbertSpaceDimension;
+    }
+  double* TmpVectorBuffer = new double [memory];
+  long BufferGlobalIndex = 0l;
+
   double InvAlpha =  2.0 * (1.0 - alpha) / alpha;
 
-  ifstream FileHilbert;
-  FileHilbert.open(this->HilbertSpaceFileName, ios::binary | ios::in);
-  FileHilbert.seekg (this->FileHeaderSize, ios::beg);
-  
   double RhoRoot = 0.0;
-  unsigned long MaxRoot = 0x0ul;
-  ReadLittleEndian(FileHilbert, MaxRoot);
+  unsigned long MaxRoot = this->GetStateFactorized(0l);;
   this->ConvertToMonomial(MaxRoot, this->TemporaryMonomial);
   for (int j = 0; j < this->NbrFermions; ++j)
     RhoRoot += this->TemporaryMonomial[j] * (this->TemporaryMonomial[j] - InvAlpha * ((double) j));
@@ -2401,103 +2417,221 @@ void FermionOnSphereHaldaneHugeBasis::GenerateSymmetrizedJackPolynomialSparse(do
   if ((((this->NbrFermions * ReducedNbrFermions) >> 1) & 1) != 0)
     SymSign = -1.0;
 
-  if (minIndex <= 0l)
-    minIndex = 1l;
-  else
-    FileHilbert.seekg ((minIndex - 1l) * sizeof(unsigned long) , ios::cur);
-  for (long i = minIndex; i <= maxIndex; ++i)
+  if (minIndex <= 0)
+    minIndex = 1;
+  TmpVectorBuffer[0l] = 1.0;
+  int MaxArraySize = ((this->NbrFermions * (this->NbrFermions - 1)) / 2) * (this->LzMax + 1);
+  long NbrBlocks =  memoryBlock / (((2l* sizeof (long)) + (sizeof(double))) * MaxArraySize);
+  if (NbrBlocks == 0)
     {
-      double Rho = 0.0;
-      unsigned long CurrentPartition = 0x0ul;
-      ReadLittleEndian (FileHilbert, CurrentPartition);
-      unsigned long TmpSymState = this->GetSymmetricState(CurrentPartition);
-      if (TmpSymState <= CurrentPartition)
-	{
-	  this->ConvertToMonomial(CurrentPartition, this->TemporaryMonomial);
-	  for (int j = 0; j < this->NbrFermions; ++j)
-	    Rho += this->TemporaryMonomial[j] * (this->TemporaryMonomial[j] - InvAlpha * ((double) j));
-	  double Coefficient = 0.0;
-	  ifstream FileVector;
-	  FileVector.open(partialSave, ios::binary | ios::in);
-	  for (int j1 = 0; j1 < ReducedNbrFermions; ++j1)
-	    for (int j2 = j1 + 1; j2 < this->NbrFermions; ++j2)
-	      {
-		double Diff = (double) (this->TemporaryMonomial[j1] - this->TemporaryMonomial[j2]);
-		unsigned int Max = this->TemporaryMonomial[j2];
-		unsigned long TmpState = 0x0ul;
-		int Tmpj1 = j1;
-		int Tmpj2 = j2;
-		for (int l = 0; l < this->NbrFermions; ++l)
-		  this->TemporaryMonomial2[l] = this->TemporaryMonomial[l];	    
-		double Sign = 1.0;
-		for (unsigned int k = 1; (k <= Max) && (TmpState < MaxRoot); ++k)
-		  {
-		    ++this->TemporaryMonomial2[Tmpj1];
-		    --this->TemporaryMonomial2[Tmpj2];
-		    while ((Tmpj1 > 0) && (this->TemporaryMonomial2[Tmpj1] >= this->TemporaryMonomial2[Tmpj1 - 1]))
-		      {
-			unsigned long Tmp = this->TemporaryMonomial2[Tmpj1 - 1];
-			this->TemporaryMonomial2[Tmpj1 - 1] = this->TemporaryMonomial2[Tmpj1];
-			this->TemporaryMonomial2[Tmpj1] = Tmp;
-			--Tmpj1;
-			Sign *= -1.0; 
-		      }
-		    while ((Tmpj2 < ReducedNbrFermions) && (this->TemporaryMonomial2[Tmpj2] <= this->TemporaryMonomial2[Tmpj2 + 1]))
-		      {
-			unsigned long Tmp = this->TemporaryMonomial2[Tmpj2 + 1];
-			this->TemporaryMonomial2[Tmpj2 + 1] = this->TemporaryMonomial2[Tmpj2];
-			this->TemporaryMonomial2[Tmpj2] = Tmp;
-			++Tmpj2;
-			Sign *= -1.0; 
-		      }
-		    if ((this->TemporaryMonomial2[Tmpj1] != this->TemporaryMonomial2[Tmpj1 + 1]) && (this->TemporaryMonomial2[Tmpj2] != this->TemporaryMonomial2[Tmpj2 - 1]))
-		      {
-			TmpState = this->ConvertFromMonomial(this->TemporaryMonomial2);
-			if ((TmpState <= MaxRoot) && (TmpState > CurrentPartition))
-			  {
-			    long TmpIndex = this->FindStateIndexSparse(TmpState);
-			    if (TmpIndex < this->LargeHilbertSpaceDimension)
-			      {
-				FileVector.seekg ((TmpIndex * sizeof(double)) + 12l, ios::beg);			    
-				ReadLittleEndian (FileVector, TmpComponent);
-				Coefficient += Sign * Diff * TmpComponent;
-			      }
-			  }
-		      }
-		  }
-	      }
-	  FileVector.close();
-	  
-	  Coefficient *= InvAlpha;
-	  Coefficient /= (RhoRoot - Rho);
-	  ofstream File;
-	  File.open(partialSave, ios::binary | ios::out | ios::app);
-	  WriteLittleEndian(File, Coefficient);
-	  File.close();
-	}
-      else
-	{
-	  long TmpIndex = this->FindStateIndexSparse(TmpSymState);
-	  ifstream FileVector;
-	  FileVector.open(partialSave, ios::binary | ios::in);
-	  FileVector.seekg ((TmpIndex * sizeof(double)) + 12l, ios::beg);			    
-	  ReadLittleEndian (FileVector, TmpComponent);
-	  FileVector.close();
-	  TmpComponent *= SymSign;
-	  ofstream File;
-	  File.open(partialSave, ios::binary | ios::out | ios::app);
-	  WriteLittleEndian(File, TmpComponent);
-	  File.close();
-	}
-      if ((i & 0x3fffl) == 0l)
-	{
-	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
-	  cout.flush();
-	}
+      NbrBlocks = 100000;
     }
-  cout << endl;
-  FileHilbert.close();
+  if (NbrBlocks > this->LargeHilbertSpaceDimension)
+    {
+      NbrBlocks = (this->LargeHilbertSpaceDimension >> 1) + 1;
+    }
+  cout << "number of precalculation blocks = " << NbrBlocks << endl;
+  long DisplayStep = (this->LargeHilbertSpaceDimension / (1000 * NbrBlocks)) * NbrBlocks;
+  long** TmpIndexArray = new long* [NbrBlocks];
+  double** TmpComponentArray = new double* [NbrBlocks];
+  unsigned long** TmpStateArray = new unsigned long* [NbrBlocks]; 
+  double* TmpRhoArray = new double [NbrBlocks];
+  int* TmpNbrComputedComponentArray = new int [NbrBlocks];
+  for (int j = 0; j < NbrBlocks; ++j)
+    {
+      TmpIndexArray[j] = new long [MaxArraySize];
+      TmpComponentArray[j] = new double [MaxArraySize];
+      TmpStateArray[j] = new unsigned long [MaxArraySize];
+    }
+  FQHESphereJackGeneratorOperation Operation(this, InvAlpha, MaxRoot, TmpIndexArray, TmpStateArray, TmpComponentArray, TmpRhoArray, TmpNbrComputedComponentArray, true, true);
 
+  if (resumeFlag == true)
+    {
+      ifstream File;
+      File.open(partialSave, ios::binary | ios::in);
+      File.seekg (0, ios::end);
+      long TmpResumePos = File.tellg();
+      File.close();
+      TmpResumePos -= FileShift;
+      TmpResumePos /= sizeof(double); 	      
+      long TmpResumeMinPos = TmpResumePos - NbrBlocks;
+      long LimNbrBlocks = NbrBlocks;
+      if (TmpResumeMinPos < 0l)
+	{
+	  TmpResumeMinPos = 0l;
+	  LimNbrBlocks = TmpResumePos - TmpResumeMinPos + 1;
+	}
+      long TmpMaxIndex = TmpResumeMinPos + NbrBlocks - 1l;
+      if (TmpMaxIndex > maxIndex)
+	{
+	  LimNbrBlocks = NbrBlocks - (TmpMaxIndex - maxIndex);
+	  TmpMaxIndex = maxIndex;
+	}
+      if (LimNbrBlocks > 0)
+	{
+	  cout << "consistency check, " << TmpResumePos << " components have already been computed, checking the last " << LimNbrBlocks << " ones" << endl;      
+	  Operation.SetIndicesRange(TmpResumeMinPos, LimNbrBlocks);
+	  Operation.ApplyOperation(architecture);
+	  ifstream OutputFile;
+	  OutputFile.open(partialSave, ios::binary | ios::in);
+	  double RefCoefficient = 0.0;
+
+	  for (long k = 0l; k < LimNbrBlocks; ++k)
+	    {
+	      OutputFile.seekg (FileShift + (TmpResumeMinPos * sizeof(double)), ios::beg);
+	      ReadLittleEndian(OutputFile, RefCoefficient);
+	      double Coefficient = 0.0;
+	      if (TmpNbrComputedComponentArray[k] >= 0)
+		{
+		  for (int j = 0; j < TmpNbrComputedComponentArray[k]; ++j)
+		    {
+		      long TmpIndex = TmpIndexArray[k][j];
+		      if (TmpIndex < this->LargeHilbertSpaceDimension)
+			{		  
+			  OutputFile.seekg ((TmpIndex * sizeof(double)) + FileShift, ios::beg);
+			  ReadLittleEndian (OutputFile, TmpComponent);
+			  Coefficient += TmpComponentArray[k][j] * TmpComponent;
+			}	      	    
+		    }		  
+		  Coefficient *= InvAlpha;
+		  Coefficient /= (RhoRoot - TmpRhoArray[k]);
+		}
+	      else
+		{
+		  long TmpIndex = TmpIndexArray[k][0];
+		  OutputFile.seekg ((TmpIndex * sizeof(double)) + FileShift, ios::beg);
+		  ReadLittleEndian (OutputFile, Coefficient);
+		  Coefficient *= SymSign;
+		}
+	      if (Coefficient != RefCoefficient)
+		{
+		  cout << "error, invalid Jack : component " << TmpResumeMinPos << " is " << RefCoefficient << ", should be " << Coefficient << endl;
+		  OutputFile.close();
+		  return;
+		}
+	      ++TmpResumeMinPos;
+	    }
+	  TmpResumeMinPos = TmpResumePos - memory;
+	  if (TmpResumeMinPos < 0l)
+	    TmpResumeMinPos = 0l;
+	  BufferGlobalIndex = TmpResumeMinPos;
+	  OutputFile.seekg ((TmpResumeMinPos * sizeof(double)) + FileShift, ios::beg);
+	  double TmpComponent;
+	  for (; TmpResumeMinPos < TmpResumePos; ++TmpResumeMinPos)
+	    {	      
+	      ReadLittleEndian (OutputFile, TmpComponent);
+	      TmpVectorBuffer[TmpResumeMinPos % memory] = TmpComponent;	      
+	    }
+	  OutputFile.close();
+	}
+      cout << "consistency check done, resuming calculation now" << endl;
+      minIndex = TmpResumePos;
+    }
+
+  fstream OutputFile;
+  OutputFile.open(partialSave, ios::in | ios::binary | ios::out);
+
+  timeval TotalStartingTime;
+  timeval TotalEndingTime;
+  gettimeofday (&(TotalStartingTime), 0);
+
+
+  for (long i = minIndex; i <= maxIndex;)
+    {
+      long TmpMaxIndex = i + NbrBlocks - 1l;
+      long LimNbrBlocks = NbrBlocks;
+      if (TmpMaxIndex > maxIndex)
+	{
+	  LimNbrBlocks = NbrBlocks - (TmpMaxIndex - maxIndex);
+	  TmpMaxIndex = maxIndex;
+	}
+      Operation.SetIndicesRange(i, LimNbrBlocks);
+      Operation.ApplyOperation(architecture);
+ 
+      for (long k = 0l; k < LimNbrBlocks; ++k)
+	{
+	  if (TmpNbrComputedComponentArray[k] >= 0)
+	    {
+	      double Coefficient = 0.0;
+	      for (int j = 0; j < TmpNbrComputedComponentArray[k]; ++j)
+		{
+		  long TmpIndex = TmpIndexArray[k][j];
+		  if (TmpIndex < this->LargeHilbertSpaceDimension)
+		    {		  
+		      if (TmpIndex < BufferGlobalIndex)
+			{
+			  long TmpIndex2 = this->FindStateIndexFactorized(this->GetSymmetricState(TmpStateArray[k][j]));
+			  if ((TmpIndex2 >= BufferGlobalIndex) && (TmpIndex2 < i))
+			    {
+			      TmpComponent = TmpVectorBuffer[TmpIndex2 % memory];
+			      TmpComponent *= SymSign;
+			    }
+			  else
+			    {
+			      OutputFile.seekg ((TmpIndex * sizeof(double)) + FileShift, ios::beg);
+			      ReadLittleEndian (OutputFile, TmpComponent);
+			    }
+			}
+		      else
+			{
+			  TmpComponent = TmpVectorBuffer[TmpIndex % memory];
+			}
+		      Coefficient += TmpComponentArray[k][j] * TmpComponent;
+		    }	      	    
+		}
+ 
+	      Coefficient *= InvAlpha;
+	      Coefficient /= (RhoRoot - TmpRhoArray[k]);
+	      OutputFile.seekg (0, ios::end);
+	      WriteLittleEndian(OutputFile, Coefficient);
+	      if (i >= memory)
+		++BufferGlobalIndex;
+	      TmpVectorBuffer[i % memory] = Coefficient;
+	      if (i == 1070l)
+		cout << "check" << endl;
+	      ++i;
+	    }
+	  else
+	    {
+	      long TmpIndex = TmpIndexArray[k][0];
+	      if (TmpIndex < BufferGlobalIndex)
+		{
+		  OutputFile.seekg ((TmpIndex * sizeof(double)) + FileShift, ios::beg);
+		  ReadLittleEndian (OutputFile, TmpComponent);
+		}
+	      else
+		{
+		  TmpComponent = TmpVectorBuffer[TmpIndex % memory];
+		}
+	      TmpComponent *= SymSign;
+	      OutputFile.seekg (0, ios::end);
+	      WriteLittleEndian(OutputFile, TmpComponent); 	  
+	      if (i <= 1070l)
+		cout << "chock " << i << " " << TmpComponent << " " << SymSign << endl;
+	      if (i >= memory)
+		++BufferGlobalIndex;
+	      TmpVectorBuffer[i % memory] = TmpComponent;
+	      ++i;
+	    }
+	}
+      OutputFile.close();
+      return;
+      if ((i & DisplayStep) == 0l)
+      	{
+	  //	  gettimeofday (&(TotalEndingTime), 0);
+     	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
+      	  cout.flush();
+	  //	  double Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+	  //	    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);
+	  //	  cout << "done in " << Dt << " s" << endl;
+	  //	  gettimeofday (&(TotalStartingTime), 0);
+      	}
+    }
+  OutputFile.close();
+  delete[] TmpStateArray;
+  delete[] TmpIndexArray;
+  delete[] TmpComponentArray;
+  cout << endl;
 }
 
 // core part of the Jack generator using the Lz<->-Lz symmetry and the factorized algorithm
@@ -2568,13 +2702,9 @@ void FermionOnSphereHaldaneHugeBasis::GenerateSymmetrizedJackPolynomialFactorize
 			TmpState = this->ConvertFromMonomial(this->TemporaryMonomial2);
 			if ((TmpState <= maxRoot) && (TmpState > CurrentPartition))
 			  {
-			    long TmpIndex = this->FindStateIndexMemory(TmpState, this->TemporaryMonomial2[0]);
-			    if (TmpIndex < this->LargeHilbertSpaceDimension)
-			      {
-				TmpComponentArray[NbrComputedComponents] = Sign * Diff;
-				TmpStateArray[NbrComputedComponents] = TmpState;
-				++NbrComputedComponents;
-			      }
+			    TmpComponentArray[NbrComputedComponents] = Sign * Diff;
+			    TmpStateArray[NbrComputedComponents] = TmpState;
+			    ++NbrComputedComponents;
 			  }
 		      }
 		  }
@@ -2658,7 +2788,7 @@ void FermionOnSphereHaldaneHugeBasis::GenerateJackPolynomialFactorizedCore(doubl
 		    TmpState = this->ConvertFromMonomial(this->TemporaryMonomial2);
 		    if ((TmpState <= maxRoot) && (TmpState > CurrentPartition))
 		      {
-			long TmpIndex = this->FindStateIndexMemory(TmpState, this->TemporaryMonomial2[0]);
+			long TmpIndex = this->FindStateIndexFactorized(TmpState);
 			if (TmpIndex < this->LargeHilbertSpaceDimension)
 			  {
 			    TmpComponentArray[NbrComputedComponents] = Diff;

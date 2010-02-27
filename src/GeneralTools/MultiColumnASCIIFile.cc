@@ -245,6 +245,23 @@ char* MultiColumnASCIIFile::operator ()(int column, int line)
     return this->Data[column][line];
 }
 
+// get a column converting it to strings
+//
+// column = column index
+// return value = reference on the array where the read values have to be stored (allocation is done by the method itself, de-allocation has to be done by hand)
+
+char** MultiColumnASCIIFile::GetAsStringArray (int column)
+{
+  char** TmpStrings = new char*[this->NbrLines];
+  char** TmpASCIIColumn = this->Data[column];
+  for (int i = 0; i < this->NbrLines; ++i)
+    {
+      TmpStrings[i] = new char [strlen(TmpASCIIColumn[i]) + 1];
+      strcpy (TmpStrings[i], TmpASCIIColumn[i]);
+    }
+  return TmpStrings;
+}
+
 // get a column converting it to integer
 //
 // column = column index

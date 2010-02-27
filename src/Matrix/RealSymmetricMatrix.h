@@ -170,6 +170,10 @@ class RealSymmetricMatrix : public Matrix
   // nbrColumn = new number of columns
   void ResizeAndClean (int nbrRow, int nbrColumn);
 
+  // put all matrix elements to zero
+  //
+  void ClearMatrix ();
+
   // copy matrix
   //
   // M = matrix to copy
@@ -258,6 +262,13 @@ class RealSymmetricMatrix : public Matrix
   // M = matrix to add to current matrix
   // return value = reference on current matrix
   RealSymmetricMatrix& operator += (const RealSymmetricMatrix& M);
+
+  // multiply a matrix with a real number and add it to another matrix
+  //
+  // x = multiplicative factor 
+  // M = matrix to add to current matrix
+  // return value = reference on current matrix
+  RealSymmetricMatrix& MultiplyAndAdd (const double& x, const RealSymmetricMatrix& M);
 
   // add two matrices where the right one is a real tridiagonal symmetric matrix
   //

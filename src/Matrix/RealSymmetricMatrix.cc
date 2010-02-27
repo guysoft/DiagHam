@@ -576,6 +576,24 @@ void RealSymmetricMatrix::ResizeAndClean (int nbrRow, int nbrColumn)
   *(this->OffDiagonalGarbageFlag) = 1;
 }
 
+// put all matrix elements to zero
+//
+
+void RealSymmetricMatrix::ClearMatrix ()
+{
+  int Pos = 0;
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      this->DiagonalElements[i] = 0.0;
+      for (int j = 0; j < i; ++j)
+	{
+	  this->OffDiagonalElements[Pos] = 0.0;
+	  ++Pos;
+	}
+      Pos += this->Increment;
+    }
+}
+
 // copy matrix
 //
 // M = matrix to copy
@@ -836,6 +854,33 @@ RealSymmetricMatrix& RealSymmetricMatrix::operator += (const RealSymmetricMatrix
     {
       for (int j = i; j < ReducedNbr; j++)
 	this->OffDiagonalElements[k++] += M.OffDiagonalElements[k2++];
+      k += this->Increment;
+      k2 += M.Increment;
+    }
+  return *this;
+}
+
+// multiply a matrix with a real number and add it to another matrix
+//
+// x = multiplicative factor 
+// M = matrix to add to current matrix
+// return value = reference on current matrix
+
+RealSymmetricMatrix& RealSymmetricMatrix::MultiplyAndAdd (const double& x, const RealSymmetricMatrix& M) 
+{
+  if (this->NbrRow == 0)
+    return *this;
+  int ReducedNbr = M.NbrRow - 1;
+  for (int i = 0; i < M.NbrRow; i++)
+    {
+      this->DiagonalElements[i] += x * M.DiagonalElements[i];
+    }
+  int k = 0;
+  int k2 = 0;  
+  for (int i = 0; i < ReducedNbr; i++)
+    {
+      for (int j = i; j < ReducedNbr; j++)
+	this->OffDiagonalElements[k++] += x * M.OffDiagonalElements[k2++];
       k += this->Increment;
       k2 += M.Increment;
     }

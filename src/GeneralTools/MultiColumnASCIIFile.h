@@ -95,6 +95,13 @@ class MultiColumnASCIIFile
   // return value = string corresponding to the requested element (null pointer if out of range)
   char* operator ()(int column, int line);
 
+
+  // get a column converting it to strings
+  //
+  // column = column index
+  // return value = reference on the array where the read values have to be stored (allocation is done by the method itself, de-allocation has to be done by hand)
+  char** GetAsStringArray (int column);
+
   // get a column converting it to integer
   //
   // column = column index

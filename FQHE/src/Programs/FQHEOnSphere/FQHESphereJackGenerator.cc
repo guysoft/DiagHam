@@ -208,7 +208,7 @@ int main(int argc, char** argv)
 	    {
 	      if (OutputFileName == 0)
 		{
-		  cout << "an binary output file name has to be provided when using disk storage mode" << endl;
+		  cout << "a binary output file name has to be provided when using disk storage mode" << endl;
 		  return -1;
 		}
 // 	      if (SymmetrizedBasis == false)    
@@ -338,10 +338,10 @@ int main(int argc, char** argv)
 		}
 	      else
 		{
-		  //		  if (SymmetrizedBasis == false)    
-		  //		    InitialSpace->GenerateJackPolynomialSparse(OutputState, Alpha, MinIndex, MaxIndex);
+//		  if (SymmetrizedBasis == false)    
+//		    InitialSpace->GenerateJackPolynomialSparse(OutputState, Alpha, MinIndex, MaxIndex);
 		  //		  else
-		  InitialSpace->GenerateSymmetrizedJackPolynomialSparse(Alpha, OutputFileName, MinIndex, MaxIndex);
+		  InitialSpace->GenerateSymmetrizedJackPolynomialSparse(Alpha, Architecture.GetArchitecture(), OutputFileName, MinIndex, MaxIndex, Manager.GetInteger("huge-vector") << 20, Manager.GetInteger("huge-blocks") << 20, Manager.GetBoolean("resume"));
 		}
 	      return 0;
 	    }

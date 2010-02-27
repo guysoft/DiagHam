@@ -178,6 +178,10 @@ class Matrix
   // nbrColumn = new number of columns
   virtual void ResizeAndClean (int nbrRow, int nbrColumn);
 
+  // put all matrix elements to zero
+  //
+  virtual void ClearMatrix ();
+
   // return reference on real part of a given matrix element
   //
   // i = line position
