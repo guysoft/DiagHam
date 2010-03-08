@@ -25,6 +25,8 @@
 #include <stdlib.h>
 #include <math.h>
 #include <fstream>
+#include <string.h>
+
 
 using std::cout;
 using std::endl;
