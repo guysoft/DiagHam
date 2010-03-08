@@ -100,6 +100,7 @@ int main(int argc, char** argv)
   bool DiskCacheFlag = ((BooleanOption*) Manager["disk-cache"])->GetBoolean();
   bool FirstRun = true;
   double* PseudoPotentials = 0;
+  double* OneBodyPotentials = 0; 
   if (((SingleStringOption*) Manager["interaction-file"])->GetString() == 0)
     {
       cout << "an interaction file has to be provided" << endl;
@@ -123,6 +124,14 @@ int main(int argc, char** argv)
 	{
 	  cout << "Invalid number of pseudo-potentials" << endl;
 	  return -1;	  
+	}
+      if (InteractionDefinition.GetAsDoubleArray("Onebodypotentials", ' ', OneBodyPotentials, TmpNbrPseudoPotentials) == true)
+	{
+	  if (TmpNbrPseudoPotentials != (LzMax +1))
+	    {
+	      cout << "Invalid number of pseudo-potentials" << endl;
+	      return -1;	  
+	    }
 	}
     }
 
@@ -150,11 +159,20 @@ int main(int argc, char** argv)
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
       AbstractQHEOnSphereHamiltonian* Hamiltonian = 0;
-      Hamiltonian = new ParticleOnSphereGenericHamiltonian(Space, NbrBosons, LzMax, PseudoPotentials,
+
+      if (OneBodyPotentials == 0)
+        Hamiltonian = new ParticleOnSphereGenericHamiltonian(Space, NbrBosons, LzMax, PseudoPotentials,
 							   ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),
 							   Architecture.GetArchitecture(), 
 							   Memory, DiskCacheFlag,
 							   LoadPrecalculationFileName);
+      else
+        Hamiltonian = new ParticleOnSphereGenericHamiltonian(Space, NbrBosons, LzMax, PseudoPotentials, OneBodyPotentials, 
+							   ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),
+							   Architecture.GetArchitecture(), 
+							   Memory, DiskCacheFlag,
+							   LoadPrecalculationFileName);
+
       double Shift = - 0.5 * ((double) (NbrBosons * NbrBosons)) / (0.5 * ((double) LzMax));
       Hamiltonian->ShiftHamiltonian(Shift);
       char* EigenvectorName = 0;
