@@ -1,6 +1,11 @@
 #include "Vector/RealVector.h"
 
+#include "HilbertSpace/ParticleOnSphereManager.h"
 #include "HilbertSpace/BosonOnSphere.h"
+#include "HilbertSpace/BosonOnSphereSymmetricBasis.h"
+#include "HilbertSpace/BosonOnSphereShort.h"
+#include "HilbertSpace/BosonOnSphereSymmetricBasisShort.h"
+
 
 #include "Operator/ParticleOnSphereDensityDensityOperator.h"
 #include "Operator/ParticleOnSphereDensityOperator.h"
@@ -48,6 +53,8 @@ int main(int argc, char** argv)
   OptionGroup* OutputGroup = new OptionGroup ("output options");
 
   ArchitectureManager Architecture;
+  ParticleOnSphereManager ParticleManager(false, true, 1);
+  ParticleManager.AddOptionGroup(&Manager);
 
   Manager += SystemGroup;
   Architecture.AddOptionGroup(&Manager);
@@ -58,12 +65,14 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('e', "eigenstate", "name of the file containing the eigenstate");
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 7);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 12);
-  (*SystemGroup) += new SingleIntegerOption  ('z', "lz-value", "twice the lz value corresponding to the eigenvector", 0, true, 0);
+  //(*SystemGroup) += new SingleIntegerOption  ('z', "lz-value", "twice the lz value corresponding to the eigenvector", 0, true, 0);
+  (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the system (override autodetection from input file name if greater or equal to zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "landau-level", "index of the Landau level (0 being the LLL)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
   (*SystemGroup) += new BooleanOption  ('\n', "huge-basis", "use huge Hilbert space support");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
   (*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
+  (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-points", "number of point to evaluate", 1000);
   (*SystemGroup) += new BooleanOption  ('r', "radians", "set units to radians instead of magnetic lengths", false);
   (*SystemGroup) += new BooleanOption  ('c', "chord", "use chord distance instead of distance on the sphere", false);
@@ -92,18 +101,16 @@ int main(int argc, char** argv)
 
   int NbrParticles = Manager.GetInteger("nbr-particles");
   int LzMax = Manager.GetInteger("lzmax");
-  int TotalLz = Manager.GetInteger("lz-value");
+  int TotalLz = Manager.GetInteger("total-lz");
   int LandauLevel = Manager.GetInteger("landau-level");
   int NbrPoints = Manager.GetInteger("nbr-points");
+  unsigned long MemorySpace = ((unsigned long) Manager.GetInteger("fast-search")) << 20;
   bool DensityFlag = Manager.GetBoolean("density");
   bool ChordFlag = Manager.GetBoolean("chord");
+  bool HaldaneBasisFlag = Manager.GetBoolean("haldane");
+  bool SymmetrizedBasis = Manager.GetBoolean("symmetrized-basis");
   bool CoefficientOnlyFlag = Manager.GetBoolean("coefficients-only");
   bool Statistics = true;
-  if (Manager.GetString("eigenstate") == 0)
-    {
-      cout << "FQHESphereBosonsCorrelation requires a state" << endl;
-      return -1;
-    }
  if (FQHEOnSphereFindSystemInfoFromVectorFileName(Manager.GetString("eigenstate"),
 						  NbrParticles, LzMax, TotalLz, Statistics) == false)
     {
@@ -111,10 +118,22 @@ int main(int argc, char** argv)
       return -1;
     }
 
+  if (Manager.GetString("eigenstate") == 0)
+    {
+      cout << "FQHESphereFermionsCorrelation requires a state" << endl;
+      return -1;
+    }
   RealVector State;
+  if (State.ReadVector (Manager.GetString("eigenstate")) == false)
+    {
+      cout << "can't open vector file " << Manager.GetString("eigenstate") << endl;
+      return -1;      
+    }
 
-  ParticleOnSphere* Space = 0;
-  Space = new BosonOnSphere (NbrParticles, TotalLz, LzMax);
+
+  ParticleOnSphere* Space = ParticleManager.GetHilbertSpace(TotalLz);
+  cout << Space->GetHilbertSpaceDimension() << endl;
+
 
   AbstractFunctionBasis* Basis;
   if (LandauLevel == 0)
