@@ -2444,24 +2444,29 @@ RealSymmetricMatrix FermionOnSphereWithSpin::EvaluatePartialDensityMatrix (int s
 	}
     }
 
+  int NbrFermionsComplementarySector = this->NbrFermions - nbrFermionSector;
   int ShiftedTotalLz = (this->TotalLz + this->NbrFermions * this->LzMax) >> 1;
   int ShiftedLzSector = (lzSector + nbrFermionSector * (subsytemSize - 1)) >> 1;
-  int ShiftedLzComplementarySector = ShiftedTotalLz - ShiftedLzSector;
+  int ShiftedLzComplementarySector = ShiftedTotalLz - ShiftedLzSector - (NbrFermionsComplementarySector * subsytemSize);
   int SzComplementarySector = this->TotalSpin - szSector;
-  int NbrFermionsComplementarySector = this->NbrFermions - nbrFermionSector;
 
   if (subsytemSize == 1)
     {
       if (lzSector == 0)
 	{
+	  int NbrFermionsSectorUp = (nbrFermionSector + szSector) >> 1;
+	  int NbrFermionsSectorDown = (nbrFermionSector - szSector) >> 1;
 	  double TmpValue = 0.0;
- 	  FermionOnSphereWithSpin TmpHilbertSpace(NbrFermionsComplementarySector, 2 * ShiftedLzComplementarySector - (NbrFermionsComplementarySector * (this->LzMax + subsytemSize)), this->LzMax - subsytemSize, SzComplementarySector);
+ 	  FermionOnSphereWithSpin TmpHilbertSpace(NbrFermionsComplementarySector, 2 * ShiftedLzComplementarySector - (NbrFermionsComplementarySector * (this->LzMax - subsytemSize)), this->LzMax - subsytemSize, SzComplementarySector);
 	  unsigned long  TmpState2 = 0x0;
-	  for (int i = 0; i < nbrFermionSector; ++i)
-	    TmpState2 |= 0x1ul << i;
+	  if (NbrFermionsSectorUp != 0)
+	    TmpState2 |= 0x2ul;
+	  if (NbrFermionsSectorDown != 0)
+	    TmpState2 |= 0x1ul;
+	  
 	  for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
 	    {
-	      unsigned long TmpState = (TmpHilbertSpace.StateDescription[MinIndex] << subsytemSize) | TmpState2;
+	      unsigned long TmpState = (TmpHilbertSpace.StateDescription[MinIndex] << (subsytemSize << 1)) | TmpState2;
 	      int TmpLzMax = 2 * this->LzMax + 1;
 	      while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
 		--TmpLzMax;
@@ -2485,10 +2490,10 @@ RealSymmetricMatrix FermionOnSphereWithSpin::EvaluatePartialDensityMatrix (int s
       if (lzSector == 0)
 	{
 	  double TmpValue = 0;
- 	  FermionOnSphereWithSpin TmpHilbertSpace(NbrFermionsComplementarySector, 2 * ShiftedLzComplementarySector - (NbrFermionsComplementarySector * (this->LzMax + subsytemSize)), this->LzMax - subsytemSize, SzComplementarySector);
+ 	  FermionOnSphereWithSpin TmpHilbertSpace(NbrFermionsComplementarySector, 2 * ShiftedLzComplementarySector - (NbrFermionsComplementarySector * (this->LzMax - subsytemSize)), this->LzMax - subsytemSize, SzComplementarySector);
 	  for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
 	    {
-	      unsigned long TmpState = TmpHilbertSpace.StateDescription[MinIndex] << subsytemSize;
+	      unsigned long TmpState = TmpHilbertSpace.StateDescription[MinIndex] << (subsytemSize << 1);
 	      int TmpLzMax = 2 * this->LzMax + 1;
 	      while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
 		--TmpLzMax;
@@ -2509,10 +2514,14 @@ RealSymmetricMatrix FermionOnSphereWithSpin::EvaluatePartialDensityMatrix (int s
   if (nbrFermionSector == 1)
     {
       double TmpValue = 0.0;
-      FermionOnSphereWithSpin TmpHilbertSpace(NbrFermionsComplementarySector, 2 * ShiftedLzComplementarySector - (NbrFermionsComplementarySector * (this->LzMax + subsytemSize)), this->LzMax - subsytemSize, SzComplementarySector);
+      FermionOnSphereWithSpin TmpHilbertSpace(NbrFermionsComplementarySector, (2 * ShiftedLzComplementarySector) - (NbrFermionsComplementarySector * (this->LzMax - subsytemSize)), this->LzMax - subsytemSize, SzComplementarySector);
+      unsigned long TmpMask = 0x2l;
+      if (szSector < 0)
+	TmpMask = 0x1l;
+      TmpMask <<= ShiftedLzSector << 1;
       for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
 	{
-	  unsigned long TmpState = (TmpHilbertSpace.StateDescription[MinIndex] << subsytemSize) | (0x1ul << ShiftedLzSector);
+	  unsigned long TmpState = (TmpHilbertSpace.StateDescription[MinIndex] << (subsytemSize << 1)) | TmpMask;
 	  int TmpLzMax = 2 * this->LzMax + 1;
 	  while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
 	    --TmpLzMax;
@@ -2552,12 +2561,12 @@ RealSymmetricMatrix FermionOnSphereWithSpin::EvaluatePartialDensityMatrix (int s
   int* TmpStatePosition2 = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
   long TmpNbrNonZeroElements = 0;
 
-  FermionOnSphereWithSpin TmpHilbertSpace(NbrFermionsComplementarySector, 2 * ShiftedLzComplementarySector - (NbrFermionsComplementarySector * (this->LzMax + subsytemSize)), this->LzMax - subsytemSize, SzComplementarySector);
+  FermionOnSphereWithSpin TmpHilbertSpace(NbrFermionsComplementarySector, 2 * ShiftedLzComplementarySector - (NbrFermionsComplementarySector * (this->LzMax - subsytemSize)), this->LzMax - subsytemSize, SzComplementarySector);
 
   for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
     {
       int Pos = 0;
-      unsigned long TmpComplementaryState = TmpHilbertSpace.StateDescription[MinIndex] << subsytemSize;
+      unsigned long TmpComplementaryState = TmpHilbertSpace.StateDescription[MinIndex] << (subsytemSize << 1);
       for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
 	{
 	  unsigned long TmpState = TmpDestinationHilbertSpace.StateDescription[j] | TmpComplementaryState;

@@ -38,6 +38,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('o', "output", "output name for the entanglement spectrum (default name replace density-matrix full.ent extension with la_x_na_y.entspec)");
   (*SystemGroup) += new SingleDoubleOption  ('e', "eigenvalue-error", "lowest acceptable reduced density matrix eignvalue", 1e-14);  
   (*SystemGroup) += new BooleanOption ('\n', "show-minmaxlza", "show minimum an maximum Lz value that can be reached");
+  (*SystemGroup) += new BooleanOption ('\n', "show-counting", "show degeneracy counting for each Lz value");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -98,8 +99,9 @@ int main(int argc, char** argv)
   int* LaValues = DensityMatrix.GetAsIntegerArray(0);
   int* NaValues = DensityMatrix.GetAsIntegerArray(1);
   int* LzValues = DensityMatrix.GetAsIntegerArray(2);
-  double MinLza = 1e300;
-  double MaxLza = -MinLza; 
+  int* LzaValueArray = 0;
+  int MinLza = 1 << 30;
+  int MaxLza = -MinLza; 
   long Index = 0l;
   long MaxIndex = DensityMatrix.GetNbrLines();
   while ((Index < MaxIndex) && (LaValues[Index] != NbrOrbitalsInPartition))
@@ -132,17 +134,31 @@ int main(int argc, char** argv)
 	      File << "# la na lz shifted_lz lambda -log(lambda)" << endl;
 	      if (NbrParticlesInPartition == 0)
 		{
+		  int TmpIndex = Index;
 		  while ((Index < MaxIndex) && (LaValues[Index] == NbrOrbitalsInPartition))
 		    {
 		      double Tmp = Coefficients[Index];
 		      if (Tmp > Error)
 			{
-			  double TmpLza = (-0.5 * (LzValues[Index] + ((NbrOrbitalsInPartition - 1 - NbrFluxQuanta) * NaValues[Index])));
-			  File << NbrOrbitalsInPartition << " " << NaValues[Index] << " " << LzValues[Index] << " " <<  TmpLza<< " " << Tmp << " " << (-log(Tmp)) << endl;
+			  int TmpLza = (- (LzValues[Index] + ((NbrOrbitalsInPartition - 1 - NbrFluxQuanta) * NaValues[Index])));
+			  File << NbrOrbitalsInPartition << " " << NaValues[Index] << " " << LzValues[Index] << " " <<  (0.5 * TmpLza) << " " << Tmp << " " << (-log(Tmp)) << endl;
 			  if (TmpLza < MinLza)
 			    MinLza = TmpLza;
 			  if (TmpLza > MaxLza)
 			    MaxLza = TmpLza;
+			}
+		      ++Index;
+		    }
+		  LzaValueArray = new int[(MaxLza - MinLza + 1) >> 1];
+		  for (int i = MinLza; i <= MaxLza; i += 2)
+		    LzaValueArray[(i - MinLza) >> 1] = 0; 
+		  Index = TmpIndex;
+		  while ((Index < MaxIndex) && (LaValues[Index] == NbrOrbitalsInPartition))
+		    {
+		      if (Coefficients[Index] > Error)
+			{
+			  int TmpLza = (- (LzValues[Index] + ((NbrOrbitalsInPartition - 1 - NbrFluxQuanta) * NaValues[Index])));
+			  LzaValueArray[(TmpLza - MinLza) >> 1]++; 
 			}
 		      ++Index;
 		    }
@@ -153,14 +169,15 @@ int main(int argc, char** argv)
 		    ++Index;
 		  if (Index < MaxIndex)
 		    {
-		      double Shift = ((NbrOrbitalsInPartition - 1 - NbrFluxQuanta) * NbrParticlesInPartition);
+		      int TmpIndex = Index;
+		      int Shift = ((NbrOrbitalsInPartition - 1 - NbrFluxQuanta) * NbrParticlesInPartition);
 		      while ((Index < MaxIndex) && (LaValues[Index] == NbrOrbitalsInPartition) && (NaValues[Index] == NbrParticlesInPartition))
 			{
 			  double Tmp = Coefficients[Index];
 			  if (Tmp > Error)
 			    {
-			      double TmpLza = (-0.5 * (LzValues[Index] + Shift));
-			      File << NbrOrbitalsInPartition << " " << NbrParticlesInPartition << " " << LzValues[Index] << " " << TmpLza << " " << Tmp << " " << (-log(Tmp)) << endl;
+			      int TmpLza = (-(LzValues[Index] + Shift));
+			      File << NbrOrbitalsInPartition << " " << NbrParticlesInPartition << " " << LzValues[Index] << " " << (0.5 * TmpLza) << " " << Tmp << " " << (-log(Tmp)) << endl;
 			      if (TmpLza < MinLza)
 				MinLza = TmpLza;
 			      if (TmpLza > MaxLza)
@@ -168,6 +185,19 @@ int main(int argc, char** argv)
 			    }
 			  ++Index;
 			}	      
+		      LzaValueArray = new int[(MaxLza - MinLza + 1) >> 1];
+		      for (int i = MinLza; i <= MaxLza; i += 2)
+			LzaValueArray[(i - MinLza) >> 1] = 0; 
+		      Index = TmpIndex;
+		      while ((Index < MaxIndex) && (LaValues[Index] == NbrOrbitalsInPartition) && (NaValues[Index] == NbrParticlesInPartition))
+			{
+			  if (Coefficients[Index] > Error)
+			    {
+			      int TmpLza = (-(LzValues[Index] + Shift));
+			      LzaValueArray[(TmpLza - MinLza) >> 1]++; 
+			    }
+			  ++Index;
+			}
 		    }
 		  else
 		    {
@@ -211,8 +241,8 @@ int main(int argc, char** argv)
 		      double Tmp = Coefficients[Index];
 		      if (Tmp > Error)
 			{
-			  double TmpLza = (-0.5 * (LzValues[Index] + ((NbrOrbitalsInPartition - 1 - NbrFluxQuanta) * NaValues[Index])));
-			  File << NbrOrbitalsInPartition << " " << TotalSzInPartition << " " << NaValues[Index] << " " << LzValues[Index] << " " <<  TmpLza<< " " << Tmp << " " << (-log(Tmp)) << endl;
+			  int TmpLza = (-(LzValues[Index] + ((NbrOrbitalsInPartition - 1 - NbrFluxQuanta) * NaValues[Index])));
+			  File << NbrOrbitalsInPartition << " " << TotalSzInPartition << " " << NaValues[Index] << " " << LzValues[Index] << " " <<  (0.5 * TmpLza) << " " << Tmp << " " << (-log(Tmp)) << endl;
 			  if (TmpLza < MinLza)
 			    MinLza = TmpLza;
 			  if (TmpLza > MaxLza)
@@ -233,8 +263,8 @@ int main(int argc, char** argv)
 			  double Tmp = Coefficients[Index];
 			  if (Tmp > Error)
 			    {
-			      double TmpLza = (-0.5 * (LzValues[Index] + Shift));
-			      File << NbrOrbitalsInPartition << " " << TotalSzInPartition << " " << NbrParticlesInPartition << " " << LzValues[Index] << " " << TmpLza << " " << Tmp << " " << (-log(Tmp)) << endl;
+			      int TmpLza = (-(LzValues[Index] + Shift));
+			      File << NbrOrbitalsInPartition << " " << TotalSzInPartition << " " << NbrParticlesInPartition << " " << LzValues[Index] << " " << (0.5 * TmpLza) << " " << Tmp << " " << (-log(Tmp)) << endl;
 			      if (TmpLza < MinLza)
 				MinLza = TmpLza;
 			      if (TmpLza > MaxLza)
@@ -268,6 +298,15 @@ int main(int argc, char** argv)
     {
       cout << "min Lza = " << MinLza << endl;
       cout << "max Lza = " << MaxLza << endl;
+    }
+
+  if ((Manager.GetBoolean("show-counting")) && (LzaValueArray != 0))
+    {
+      cout << "degeneracy counting : " << endl;
+      for (int i = MinLza; i <= MaxLza; i += 2)
+	{
+	  cout << (0.5 * i) << " " << LzaValueArray[(i - MinLza) >> 1] << endl; 
+	}
     }
 
   return 0;

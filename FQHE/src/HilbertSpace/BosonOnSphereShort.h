@@ -336,6 +336,24 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // return value = twice the Lz component
   virtual int GetLzValue(int j=0);
 
+  // compute all Kostka coefficients for a given Schur polynomial 
+  //
+  // index = index of the partition that describe the Schur polynomial 
+  // kostkaVector = vector where kostka numbers will be stored
+  // return value = number of kostka coefficients
+  virtual long KostkaForOneSchur(long index, RealVector& kostkaVector);
+    
+  // divide a set of fermionic vectors by a Jastrow factor to get their bosonic counterpart
+  //
+  // sourceVector = array of fermionic statesc be divided by a jastrow factor
+  // outputVector = array of where bosonic states will be stored
+  // firstComponent = index of the first component to transform 
+  // nbrComponent = number of components to compute
+  // nbrStates  = number of states to handle
+  virtual void DivideByJastrow(RealVector * sourceVector, RealVector* OutputVector, long firstComponent, long nbrComponent, int nbrStates);
+
+  virtual void FuseParticlesInState(RealVector& firstState, RealVector& outputVector, BosonOnSphereShort* finalSpace, long minIndex = 0l, long nbrComponents = 0l);
+	
 
  protected:
 
@@ -373,6 +391,17 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // initialState = array where the monomial representation is stored
   // return value = bosonic state in its fermionic representation
   unsigned long ConvertFromMonomial(unsigned long* initialState);
+
+  // fuse particles two by two in a given monomial
+  //
+  // index = monomial index
+  // finalSpace = space where the fused state lies
+  // weigthVector = weigths of each fused component
+  // indicesVector = indices of each fused component
+  // return value = number of generated components when fusing
+  virtual int FuseParticlesInMonomial(long index, BosonOnSphereShort* finalSpace, long* weigthVector, unsigned long* indicesVector);
+	
+  virtual int GeneratePairs(unsigned long* Monomial, long* weigthVector, unsigned long* indicesVector, unsigned long* FinalMonomial, int reste, int compteur, BosonOnSphereShort * finalSpace);
 
 };
 

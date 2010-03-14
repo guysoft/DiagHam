@@ -31,6 +31,7 @@
 
 #include "config.h"
 #include "HilbertSpace/BosonOnSphereShort.h"
+#include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
 #include "HilbertSpace/BosonOnSphere.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
@@ -40,6 +41,7 @@
 #include "MathTools/BinomialCoefficients.h"
 #include "MathTools/FactorialCoefficient.h" 
 #include "GeneralTools/StringTools.h"
+#include "GeneralTools/ArrayTools.h"
 
 #include <math.h>
 #include <stdlib.h>
@@ -1221,4 +1223,179 @@ double BosonOnSphereShort::JackSqrNormalization (RealVector& outputVector, long 
 int BosonOnSphereShort::GetLzValue(int j)
 {
   return this->TotalLz;
+}
+
+// compute all Kostka coefficients for a given Schur polynomial 
+//
+// index = index of the partition that describe the Schur polynomial 
+// kostkaVector = vector where kostka numbers will be stored
+// return value = number of kostka coefficients
+
+long BosonOnSphereShort::KostkaForOneSchur(long index, RealVector& kostkaVector)
+{	
+  unsigned long * InitialState = new unsigned long[this->NbrLzValue];
+  int finalStateLzMax;
+  this->FermionToBoson(this->FermionBasis->StateDescription[index], this->FermionBasis->StateLzMax[index], InitialState, finalStateLzMax);
+  int* ReferenceState = new int[this->NbrLzValue];
+  for(int i = 0; i <= finalStateLzMax; i++)
+    {
+      ReferenceState[i] = (int) InitialState[i];
+    }
+  for(int i = finalStateLzMax + 1; i < this->NbrLzValue; i++)
+    {
+      ReferenceState[i] = 0;
+    }
+  BosonOnSphereHaldaneBasisShort* SqueezedSpace = new BosonOnSphereHaldaneBasisShort(this->NbrBosons, this->TotalLz, this->LzMax, 
+										     ReferenceState);
+  RealVector JackVector(SqueezedSpace->GetHilbertSpaceDimension(), true);
+  SqueezedSpace->GenerateJackPolynomial(JackVector, 1.0);
+  int Dimension = SqueezedSpace->GetHilbertSpaceDimension();
+  
+  for (int i = 0; i < Dimension; i++)
+    {
+      int TmpLzMax = this->LzMax + this->NbrBosons - 1;
+      unsigned long TmpState = SqueezedSpace->FermionBasis->StateDescription[i];
+      while ((TmpState >> TmpLzMax) == 0x0ul)
+	--TmpLzMax;
+      kostkaVector[this->FermionBasis->FindStateIndex(TmpState, TmpLzMax)] = JackVector[i];
+    }
+  delete SqueezedSpace;
+  delete[] ReferenceState;
+  return Dimension;
+}
+
+// divide a set of fermionic vectors by a Jastrow factor to get their bosonic counterpart
+//
+// sourceVector = array of fermionic statesc be divided by a jastrow factor
+// outputVector = array of where bosonic states will be stored
+// firstComponent = index of the first component to transform 
+// nbrComponent = number of components to compute
+// nbrStates  = number of states to handle
+
+void BosonOnSphereShort::DivideByJastrow(RealVector* sourceVector, RealVector* OutputVector, long firstComponent,
+					 long nbrComponent, int nbrStates)
+{
+  long IndiceMax = firstComponent + nbrComponent;
+  RealVector KostkaVector (this->GetHilbertSpaceDimension(), true);
+  for(long i = firstComponent; i < IndiceMax; i++)
+    {
+      this->KostkaForOneSchur(i,KostkaVector);
+      for(long j = i; j < this->GetHilbertSpaceDimension(); j++)
+	{
+	  for(int k = 0; k < nbrStates; k++)	
+	    OutputVector[k][j] += sourceVector[k][i] * KostkaVector[j];
+	}
+      KostkaVector.ClearVector();
+    }
+}
+
+void BosonOnSphereShort::FuseParticlesInState(RealVector& firstState, RealVector& outputVector, BosonOnSphereShort* finalSpace, 
+					      long minIndex, long nbrComponents)
+{
+  long MaxIndex= minIndex + nbrComponents;  
+  if (nbrComponents == 0l)
+    MaxIndex = finalSpace->GetLargeHilbertSpaceDimension();
+  long* WeigthVector = new long[finalSpace->GetLargeHilbertSpaceDimension()];
+  unsigned long* IndicesVector = new unsigned long[finalSpace->GetLargeHilbertSpaceDimension()];
+  for(long Index = minIndex; Index < MaxIndex; Index++)
+    {
+      int Size = this->FuseParticlesInMonomial(Index, finalSpace, WeigthVector, IndicesVector);
+      for(int i = 0; i < Size; i++)
+	{
+	  int TmpLzMax = finalSpace->LzMax + finalSpace->NbrBosons - 1;
+	  while ((IndicesVector[i] >> TmpLzMax) == 0x0ul)
+	    --TmpLzMax;
+	  outputVector[finalSpace->FermionBasis->FindStateIndex(IndicesVector[i], TmpLzMax)] += firstState[Index] * WeigthVector[i];
+	}
+    }
+}
+
+// fuse particles two by two in a given monomial
+//
+// index = monomial index
+// finalSpace = space where the fused state lies
+// weigthVector = weigths of each fused component
+// indicesVector = indices of each fused component
+// return value = number of generated components when fusing
+
+int BosonOnSphereShort::FuseParticlesInMonomial(long index, BosonOnSphereShort* finalSpace, long* weigthVector, unsigned long* indicesVector)
+{
+  FactorialCoefficient Coefficient;
+  Coefficient.SetToOne();
+  Coefficient.Power2Multiply(finalSpace->NbrBosons);
+  this->FermionToBoson(this->FermionBasis->StateDescription[index], this->FermionBasis->StateLzMax[index], this->TemporaryState, this->TemporaryStateLzMax);
+  unsigned long* TmpMonomial = new unsigned long[this->NbrBosons];
+  unsigned long* FinalMonomial = new unsigned long[finalSpace->NbrBosons];
+  this->GetMonomial(index,TmpMonomial);
+  int Size = 0;
+  Size = this->GeneratePairs(TmpMonomial, weigthVector, indicesVector, FinalMonomial, this->NbrBosons, 0, finalSpace);
+  for(int l = 0; l <= TemporaryStateLzMax; l++)
+    {
+      Coefficient.FactorialDivide(this->TemporaryState[l]);		
+    }
+  FactorialCoefficient Coefficient1;
+  for(int i = 0; i < Size; i++)
+    {
+      Coefficient1 = Coefficient;
+      int TmpLzMax = finalSpace->LzMax + finalSpace->NbrBosons - 1;
+      while ((indicesVector[i] >> TmpLzMax) == 0x0ul)
+	--TmpLzMax;
+      finalSpace->FermionToBoson(indicesVector[i], TmpLzMax, finalSpace->TemporaryState, finalSpace->TemporaryStateLzMax);
+      for(int p = 0; p <= finalSpace->TemporaryStateLzMax; p++)
+	{
+	  Coefficient1.FactorialMultiply(finalSpace->TemporaryState[p]);
+	}
+      if(weigthVector[i] < 0)
+	{
+	  Coefficient1 *= (-weigthVector[i]);
+	  weigthVector[i] = (-Coefficient1.GetIntegerValue());
+	}
+      else
+	{
+	  Coefficient1 *= weigthVector[i];
+	  weigthVector[i] = Coefficient1.GetIntegerValue();
+	}
+    }
+  return Size;
+}
+	
+int BosonOnSphereShort::GeneratePairs(unsigned long* Monomial, long* weigthVector, unsigned long* indicesVector, unsigned long* FinalMonomial, int remainder, int count, BosonOnSphereShort* finalSpace)
+{
+  if(remainder == 0)
+    {
+      unsigned long* TMonomial = new unsigned long[finalSpace->NbrBosons];
+      for(int pll = 0; pll < finalSpace->NbrBosons; pll++)
+	TMonomial[pll] = FinalMonomial[pll];
+      SortArrayDownOrdering(TMonomial,finalSpace->NbrBosons);
+      unsigned long Result = finalSpace->ConvertFromMonomial(TMonomial);
+      for(int k = 0; k < count; k++)
+	{
+	  if(Result == indicesVector[k])
+	    {
+	      weigthVector[k]++;
+	      return 0;
+	    }
+	}
+      indicesVector[count] = Result;
+      weigthVector[count] = 1l;
+      return 1;
+    }
+  for(int i = 1; i < remainder; i++)
+    {
+      FinalMonomial[finalSpace->NbrBosons - (remainder / 2)] = Monomial[0] + Monomial[i];
+      unsigned long* TmpMonomial = new unsigned long[remainder - 2];
+      for(int j = 0; j < (i - 1); j++)
+	{
+	  TmpMonomial[j] = Monomial[j+1];
+	}
+      for(int j = i; j < (remainder - 1); j++)
+	{
+	  TmpMonomial[j - 1] = Monomial[j + 1];
+	}
+      if(remainder == 2)
+	count += this->GeneratePairs(TmpMonomial, weigthVector, indicesVector, FinalMonomial, remainder - 2, count, finalSpace);
+      else
+	count = this->GeneratePairs(TmpMonomial, weigthVector, indicesVector, FinalMonomial, remainder - 2, count, finalSpace);
+    }
+  return count;
 }
