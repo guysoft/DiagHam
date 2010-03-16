@@ -867,7 +867,14 @@ class RealVector : public Vector
   // step = distance to the next coordinate (1 means to take the folowing)
   // return value = return corresponding subvector
   RealVector Extract(int firstCoordinate, int lastCoordinate, int step = 1);
-  
+
+  // get a serie of components
+  //
+  // indices = array where component indices are stored
+  // nbrIndices = number of components to retrieve
+  // components = array where retrieved components will be stored
+  virtual void GetMultipleComponents(long* indices, long nbrIndices, double* components);
+
   // Merge a subvector into a given vector
   //
   // V = vector to merge

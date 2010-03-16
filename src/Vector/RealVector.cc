@@ -3275,6 +3275,18 @@ RealVector RealVector::Extract(int FirstCoordinate, int LastCoordinate, int Step
   return TmpV ; 
 }
   
+// get a serie of components
+//
+// indices = array where component indices are stored
+// nbrIndices = number of components to retrieve
+// components = array where retrieved components will be stored
+
+void RealVector::GetMultipleComponents(long* indices, long nbrIndices, double* components)
+{
+  for (long i = 0l; i < nbrIndices; ++i)
+    components[i] = this->Components[indices[i]];
+}
+
 // Merge a subvector into a given vector
 //
 // V = vector to merge

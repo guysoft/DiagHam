@@ -41,44 +41,6 @@
 #include <iostream>
 
 
-#ifdef __128_BIT_LONGLONG__
-#define FERMION_SPHERE_LONG_SYMMETRIC_BIT  (((ULONGLONG) 0x8000000000000000) << 64)
-#define FERMION_SPHERE_LONG_SYMMETRIC_MASK ((((ULONGLONG) 0x7fffffffffffffff) << 64) | ((ULONGLONG) 0xffffffffffffffff))
-#else
-#define FERMION_SPHERE_LONG_SYMMETRIC_BIT  (((ULONGLONG) 0x80000000) << 32)
-#define FERMION_SPHERE_LONG_SYMMETRIC_MASK ((((ULONGLONG) 0x7fffffff) << 32) | ((ULONGLONG) 0xffffffff))
-#endif
-
-
-
-// precalculation table used to invert a state
-//
-
-static ULONGLONG FermionOnSphereSymmetricBasisInvertTableLong[] = {0x0ul, 0x80ul, 0x40ul, 0xc0ul, 0x20ul, 0xa0ul, 0x60ul, 0xe0ul, 0x10ul, 0x90ul, 0x50ul, 
-								   0xd0ul, 0x30ul, 0xb0ul, 0x70ul, 0xf0ul, 0x8ul, 0x88ul, 0x48ul, 0xc8ul, 0x28ul, 0xa8ul, 
-								   0x68ul, 0xe8ul, 0x18ul, 0x98ul, 0x58ul, 0xd8ul, 0x38ul, 0xb8ul, 0x78ul, 0xf8ul, 0x4ul, 
-								   0x84ul, 0x44ul, 0xc4ul, 0x24ul, 0xa4ul, 0x64ul, 0xe4ul, 0x14ul, 0x94ul, 0x54ul, 0xd4ul, 
-								   0x34ul, 0xb4ul, 0x74ul, 0xf4ul, 0xcul, 0x8cul, 0x4cul, 0xccul, 0x2cul, 0xacul, 0x6cul, 
-								   0xecul, 0x1cul, 0x9cul, 0x5cul, 0xdcul, 0x3cul, 0xbcul, 0x7cul, 0xfcul, 0x2ul, 0x82ul, 
-								   0x42ul, 0xc2ul, 0x22ul, 0xa2ul, 0x62ul, 0xe2ul, 0x12ul, 0x92ul, 0x52ul, 0xd2ul, 0x32ul, 
-								   0xb2ul, 0x72ul, 0xf2ul, 0xaul, 0x8aul, 0x4aul, 0xcaul, 0x2aul, 0xaaul, 0x6aul, 0xeaul, 
-								   0x1aul, 0x9aul, 0x5aul, 0xdaul, 0x3aul, 0xbaul, 0x7aul, 0xfaul, 0x6ul, 0x86ul, 0x46ul, 
-								   0xc6ul, 0x26ul, 0xa6ul, 0x66ul, 0xe6ul, 0x16ul, 0x96ul, 0x56ul, 0xd6ul, 0x36ul, 0xb6ul, 
-								   0x76ul, 0xf6ul, 0xeul, 0x8eul, 0x4eul, 0xceul, 0x2eul, 0xaeul, 0x6eul, 0xeeul, 0x1eul, 
-								   0x9eul, 0x5eul, 0xdeul, 0x3eul, 0xbeul, 0x7eul, 0xfeul, 0x1ul, 0x81ul, 0x41ul, 0xc1ul, 
-								   0x21ul, 0xa1ul, 0x61ul, 0xe1ul, 0x11ul, 0x91ul, 0x51ul, 0xd1ul, 0x31ul, 0xb1ul, 0x71ul, 
-								   0xf1ul, 0x9ul, 0x89ul, 0x49ul, 0xc9ul, 0x29ul, 0xa9ul, 0x69ul, 0xe9ul, 0x19ul, 0x99ul, 
-								   0x59ul, 0xd9ul, 0x39ul, 0xb9ul, 0x79ul, 0xf9ul, 0x5ul, 0x85ul, 0x45ul, 0xc5ul, 0x25ul, 
-								   0xa5ul, 0x65ul, 0xe5ul, 0x15ul, 0x95ul, 0x55ul, 0xd5ul, 0x35ul, 0xb5ul, 0x75ul, 0xf5ul, 
-								   0xdul, 0x8dul, 0x4dul, 0xcdul, 0x2dul, 0xadul, 0x6dul, 0xedul, 0x1dul, 0x9dul, 0x5dul, 
-								   0xddul, 0x3dul, 0xbdul, 0x7dul, 0xfdul, 0x3ul, 0x83ul, 0x43ul, 0xc3ul, 0x23ul, 0xa3ul, 
-								   0x63ul, 0xe3ul, 0x13ul, 0x93ul, 0x53ul, 0xd3ul, 0x33ul, 0xb3ul, 0x73ul, 0xf3ul, 0xbul, 
-								   0x8bul, 0x4bul, 0xcbul, 0x2bul, 0xabul, 0x6bul, 0xebul, 0x1bul, 0x9bul, 0x5bul, 0xdbul, 
-								   0x3bul, 0xbbul, 0x7bul, 0xfbul, 0x7ul, 0x87ul, 0x47ul, 0xc7ul, 0x27ul, 0xa7ul, 0x67ul, 
-								   0xe7ul, 0x17ul, 0x97ul, 0x57ul, 0xd7ul, 0x37ul, 0xb7ul, 0x77ul, 0xf7ul, 0xful, 0x8ful, 
-								   0x4ful, 0xcful, 0x2ful, 0xaful, 0x6ful, 0xeful, 0x1ful, 0x9ful, 0x5ful, 0xdful, 0x3ful, 
-								   0xbful, 0x7ful, 0xfful};
-
 
 class FermionOnSphereSymmetricBasisLong :  public FermionOnSphereLong
 {
@@ -278,16 +240,16 @@ class FermionOnSphereSymmetricBasisLong :  public FermionOnSphereLong
   // return value = corresponding index
   virtual int FindStateIndex(ULONGLONG stateDescription, int lzmax);
 
+  // get symmetry of a given state 
+  //
+  // initialState = referennce state whose symmetry has to be computed
+  virtual void GetStateSymmetry (ULONGLONG& initialState);
+
   // get canonical expression of a given state
   //
   // initialState = state that has to be converted to its canonical expression
   // return value = corresponding canonical state
   virtual ULONGLONG GetCanonicalState (ULONGLONG initialState);
-
-  // get symmetry of a given state 
-  //
-  // initialState = referennce state whose symmetry has to be computed
-  virtual void GetStateSymmetry (ULONGLONG& initialState);
 
   // get canonical expression of a given state and its symmetry
   //
@@ -296,6 +258,46 @@ class FermionOnSphereSymmetricBasisLong :  public FermionOnSphereLong
   virtual ULONGLONG GetSignedCanonicalState (ULONGLONG initialState);
 
 };
+
+// get symmetry of a given state 
+//
+// initialState = reference on the state whose symmetry has to be computed
+
+inline void FermionOnSphereSymmetricBasisLong::GetStateSymmetry (ULONGLONG& initialState)
+{
+  initialState <<= this->InvertShift;
+#ifdef __128_BIT_LONGLONG__
+  ULONGLONG TmpState = FermionOnSphereSymmetricBasisInvertTableLong[initialState & ((ULONGLONG) 0xfful)] << 120;
+  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 8) & ((ULONGLONG) 0xfful)] << 112;
+  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 16) & ((ULONGLONG) 0xfful)] << 104;
+  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 24) & ((ULONGLONG) 0xfful)] << 96;
+  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 32) & ((ULONGLONG) 0xfful)] << 88;
+  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 40) & ((ULONGLONG) 0xfful)] << 80;
+  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 48) & ((ULONGLONG) 0xfful)] << 72;
+  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 56) & ((ULONGLONG) 0xfful)] << 64; 
+  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 64) & ((ULONGLONG) 0xfful)] << 56;
+  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 72) & ((ULONGLONG) 0xfful)] << 48;
+  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 80) & ((ULONGLONG) 0xfful)] << 40;
+  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 88) & ((ULONGLONG) 0xfful)] << 32;
+  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 96) & ((ULONGLONG) 0xfful)] << 24;
+  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 104) & ((ULONGLONG) 0xfful)] << 16;
+  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 112) & ((ULONGLONG) 0xfful)] << 8;
+  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[initialState >> 120]; 
+#else
+  ULONGLONG TmpState = FermionOnSphereSymmetricBasisInvertTableLong[initialState & ((ULONGLONG) 0xfful)] << 56;
+  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 8) & ((ULONGLONG) 0xfful)] << 48;
+  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 16) & ((ULONGLONG) 0xfful)] << 40;
+  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 24) & ((ULONGLONG) 0xfful)] << 32;
+  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 32) & ((ULONGLONG) 0xfful)] << 24;
+  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 40) & ((ULONGLONG) 0xfful)] << 16;
+  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 48) & ((ULONGLONG) 0xfful)] << 8;
+  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[initialState >> 56];  
+#endif
+  initialState >>= this->InvertShift;
+  TmpState >>= this->InvertUnshift;
+  if (TmpState != initialState)    
+    initialState |= FERMION_SPHERE_LONG_SYMMETRIC_BIT;
+}
 
 // get canonical expression of a given state
 //
@@ -338,46 +340,6 @@ inline ULONGLONG FermionOnSphereSymmetricBasisLong::GetCanonicalState (ULONGLONG
     return TmpState;
   else
     return initialState;
-}
-
-// get symmetry of a given state 
-//
-// initialState = reference on the state whose symmetry has to be computed
-
-inline void FermionOnSphereSymmetricBasisLong::GetStateSymmetry (ULONGLONG& initialState)
-{
-  initialState <<= this->InvertShift;
-#ifdef __128_BIT_LONGLONG__
-  ULONGLONG TmpState = FermionOnSphereSymmetricBasisInvertTableLong[initialState & ((ULONGLONG) 0xfful)] << 120;
-  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 8) & ((ULONGLONG) 0xfful)] << 112;
-  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 16) & ((ULONGLONG) 0xfful)] << 104;
-  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 24) & ((ULONGLONG) 0xfful)] << 96;
-  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 32) & ((ULONGLONG) 0xfful)] << 88;
-  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 40) & ((ULONGLONG) 0xfful)] << 80;
-  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 48) & ((ULONGLONG) 0xfful)] << 72;
-  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 56) & ((ULONGLONG) 0xfful)] << 64; 
-  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 64) & ((ULONGLONG) 0xfful)] << 56;
-  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 72) & ((ULONGLONG) 0xfful)] << 48;
-  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 80) & ((ULONGLONG) 0xfful)] << 40;
-  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 88) & ((ULONGLONG) 0xfful)] << 32;
-  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 96) & ((ULONGLONG) 0xfful)] << 24;
-  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 104) & ((ULONGLONG) 0xfful)] << 16;
-  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 112) & ((ULONGLONG) 0xfful)] << 8;
-  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[initialState >> 120]; 
-#else
-  ULONGLONG TmpState = FermionOnSphereSymmetricBasisInvertTableLong[initialState & ((ULONGLONG) 0xfful)] << 56;
-  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 8) & ((ULONGLONG) 0xfful)] << 48;
-  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 16) & ((ULONGLONG) 0xfful)] << 40;
-  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 24) & ((ULONGLONG) 0xfful)] << 32;
-  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 32) & ((ULONGLONG) 0xfful)] << 24;
-  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 40) & ((ULONGLONG) 0xfful)] << 16;
-  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[(initialState >> 48) & ((ULONGLONG) 0xfful)] << 8;
-  TmpState |= FermionOnSphereSymmetricBasisInvertTableLong[initialState >> 56];  
-#endif
-  initialState >>= this->InvertShift;
-  TmpState >>= this->InvertUnshift;
-  if (TmpState != initialState)    
-    initialState |= FERMION_SPHERE_LONG_SYMMETRIC_BIT;
 }
 
 // get canonical expression of a given state and its symmetry

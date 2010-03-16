@@ -147,9 +147,9 @@ int main(int argc, char** argv)
 	  int* ReferenceState = 0;
 	  if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, TmpMaxMomentum, ReferenceState) == false)
 	    return -1;
-// 	  if (Manager.GetString("load-hilbert") != 0)
-// 	    OutputBasis = new BosonOnDiskHaldaneBasisShort(Manager.GetString("load-hilbert"));	  
-// 	  else
+ 	  if (Manager.GetString("load-hilbert") != 0)
+ 	    OutputBasis = new BosonOnDiskHaldaneBasisShort(Manager.GetString("load-hilbert"));	  
+ 	  else
 	    OutputBasis = new BosonOnDiskHaldaneBasisShort(NbrParticles, TotalLz, TmpMaxMomentum, ReferenceState);	  
 	}
     }

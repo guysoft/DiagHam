@@ -8,6 +8,8 @@
 #include "HilbertSpace/BosonOnSphereSymmetricBasisShort.h"
 #include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
 #include "HilbertSpace/BosonOnSphereHaldaneHugeBasisShort.h"
+#include "HilbertSpace/BosonOnSphereLong.h"
+#include "HilbertSpace/BosonOnSphereHaldaneBasisLong.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -248,7 +250,7 @@ int main(int argc, char** argv)
 	else
 	  {
 	    if ((SymmetrizedBasis == false) || (TotalLz != 0))
-	      Spaces[i] = new BosonOnSphere (NbrParticles, TotalLz[i], LzMax);
+	      Spaces[i] = new BosonOnSphereLong (NbrParticles, TotalLz[i], LzMax);
 	    else
 	      {
 		Spaces[i] = new BosonOnSphere (NbrParticles, TotalLz[i], LzMax);

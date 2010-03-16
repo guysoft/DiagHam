@@ -52,6 +52,12 @@ class BosonOnDiskHaldaneBasisShort :  public BosonOnSphereHaldaneBasisShort
   // referenceState = array that describes the reference state to start from
   BosonOnDiskHaldaneBasisShort (int nbrBosons, int totalLz, int lzMax, int* referenceState);
 
+  // constructor from a binary file that describes the Hilbert space
+  //
+  // fileName = name of the binary file
+  // memory = amount of memory granted for precalculations
+  BosonOnDiskHaldaneBasisShort (char* fileName);
+
   // copy constructor (without duplicating datas)
   //
   // bosons = reference on the hilbert space to copy to copy

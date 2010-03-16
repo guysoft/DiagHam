@@ -99,6 +99,38 @@ BosonOnDiskHaldaneBasisShort::BosonOnDiskHaldaneBasisShort (int nbrBosons, int t
 
 }
 
+// constructor from a binary file that describes the Hilbert space
+//
+// fileName = name of the binary file
+// memory = amount of memory granted for precalculations
+
+BosonOnDiskHaldaneBasisShort::BosonOnDiskHaldaneBasisShort (char* fileName)
+{
+  this->FermionBasis = new FermionOnSphereHaldaneBasis(fileName);
+  this->HilbertSpaceDimension = this->FermionBasis->GetHilbertSpaceDimension();
+  this->LargeHilbertSpaceDimension = this->FermionBasis->GetLargeHilbertSpaceDimension();
+
+  this->NbrBosons = this->FermionBasis->NbrFermions;
+  this->IncNbrBosons = this->NbrBosons + 1;
+  this->TotalLz = this->FermionBasis->TotalLz;
+  this->LzMax = this->FermionBasis->LzMax - this->NbrBosons + 1;
+  this->ShiftedTotalLz = (this->TotalLz + this->NbrBosons * this->LzMax) >> 1;
+  this->NbrLzValue = this->LzMax + 1;
+
+  this->TemporaryState = new unsigned long [this->NbrLzValue];
+  this->ProdATemporaryState = new unsigned long [this->NbrLzValue];
+  this->Flag.Initialize();
+  int TmpLzMax = this->LzMax;
+
+  if (this->ShiftedTotalLz < TmpLzMax)
+    {
+      TmpLzMax = this->ShiftedTotalLz;	  
+    }
+  this->KeptCoordinates = new int;
+  (*(this->KeptCoordinates)) = -1;
+  this->Minors = 0;
+}
+
 // copy constructor (without duplicating datas)
 //
 // bosons = reference on the hilbert space to copy to copy
