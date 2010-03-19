@@ -397,6 +397,32 @@ FactorialCoefficient& FactorialCoefficient::PartialFactorialDivide (long start, 
   return *this;
 }
 
+// multiply the coefficient by a binomial coefficient
+// 
+// x = binomial major index
+// y = binomial minor index
+// return value = reference on current coefficient
+
+FactorialCoefficient& FactorialCoefficient::MultiplyDivide (long x, long y)
+{
+  this->PartialFactorialMultiply(y + 1, x);
+  this->FactorialDivide(y);  
+  return *this;
+}
+
+// divide the coefficient by a binomial coefficient
+// 
+// x = binomial major index
+// y = binomial minor index
+// return value = reference on current coefficient
+  
+FactorialCoefficient& FactorialCoefficient::BinomialDivide (long x, long y)
+{
+  this->PartialFactorialDivide(y + 1, x);
+  this->FactorialMultiply(y);  
+  return *this;
+}
+
 // return numerical value associated to the coefficient
 //
 // return value = numerical value associated to the coefficient

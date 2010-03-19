@@ -17,6 +17,7 @@
 #include "GeneralTools/ConfigurationParser.h"
 #include "GeneralTools/ArrayTools.h"
 #include "GeneralTools/FilenameTools.h"
+#include "GeneralTools/MultiColumnASCIIFile.h"
 
 #include "Operator/ParticleOnSphereSquareTotalMomentumOperator.h"
 
@@ -69,6 +70,7 @@ int main(int argc, char** argv)
   Manager += MainGroup;
  
   (*MainGroup) += new SingleStringOption  ('\0', "input-file", "name of the file which contains the spectrum");
+  (*MainGroup) += new SingleStringOption  ('\n', "eigenstate-list", "use a list of eigenstates instead of extracting the information from the spectrm");
   (*MainGroup) += new SingleDoubleOption  ('\n', "energy-error", "energy below which a state is considered as a zero energy states", 1e-10);
   (*MainGroup) += new SingleDoubleOption  ('\n', "component-error", "value below which norm of a vector component is assumed to be zero", 1e-8);
   (*MainGroup) += new SingleIntegerOption  ('\n', "output-precision", "numerical display precision", 14, true, 2, true, 14);
@@ -87,9 +89,9 @@ int main(int argc, char** argv)
       return 0;
     }
 
-  if(Manager.GetString("input-file") == 0)
+  if ((Manager.GetString("input-file") == 0) && (Manager.GetString("eigenstate-list") == 0))
     {
-      cout << "no input spectrum" << endl << "see man page for option syntax or type FQHESphereExtractRootPartitions -h" << endl;
+      cout << "no input spectrum nor eigenstate list" << endl << "see man page for option syntax or type FQHESphereExtractRootPartitions -h" << endl;
       return -1;
     }
 
@@ -106,37 +108,66 @@ int main(int argc, char** argv)
   int TotalY = 0;
   int TotalIz = 0;
   int TotalPz = 0;
-  if (FQHEOnSphereFindSystemInfoFromFileName(Manager.GetString("input-file"), NbrParticles, NbrFluxQuanta, FermionFlag) == false)
-    {
-      cout << "can't retrieve system information form file name " << Manager.GetString("input-file") << endl;
-	return -1;
-    }
-  FQHEOnSphereFindInternalSymmetryGroupFromFileName(Manager.GetString("input-file"), SU2SpinFlag, SU3SpinFlag, SU4SpinFlag);
-
-  FQHEOnSphereLzSortedSpectrum Spectrum (Manager.GetString("input-file"), EnergyError);
-  if (Spectrum.IsSpectrumValid() == false)
-    {
-      cout << "Spectrum " << Manager.GetString("input-file") << " is unreadable or is not valid" << endl;
-      return -1;           
-    }
-
-  int TotalMaxLz = Spectrum.GetMaxLzValue();
+  int TotalMaxLz = 0;
   int MaxLzValue = 0;
-  if ((TotalMaxLz & 1) != 0)
-    MaxLzValue = 1;
-  int* LzDegeneracy = new int[TotalMaxLz + 1];
+  int MinLzValue = 0;
+  int* LzDegeneracy = 0;
   long TotalNbrZeroEnergyStates = 0l;
-  while ((MaxLzValue <= TotalMaxLz) && (fabs(Spectrum.GetEnergy(MaxLzValue, 0)) < EnergyError))
+
+  if (Manager.GetString("input-file") != 0)
     {
-//      cout << MaxLzValue << " " << Spectrum.GetEnergy(MaxLzValue, 0) << endl;
-      LzDegeneracy[MaxLzValue / 2] = Spectrum.GetDegeneracy(MaxLzValue, 0);
-      if (MaxLzValue == 0)
-	TotalNbrZeroEnergyStates += LzDegeneracy[MaxLzValue / 2];
-      else
-	TotalNbrZeroEnergyStates += 2l * LzDegeneracy[MaxLzValue / 2];
-      MaxLzValue += 2;
+      if (FQHEOnSphereFindSystemInfoFromFileName(Manager.GetString("input-file"), NbrParticles, NbrFluxQuanta, FermionFlag) == false)
+	{
+	  cout << "can't retrieve system information form file name " << Manager.GetString("input-file") << endl;
+	  return -1;
+	}
+
+      FQHEOnSphereFindInternalSymmetryGroupFromFileName(Manager.GetString("input-file"), SU2SpinFlag, SU3SpinFlag, SU4SpinFlag);    
+      FQHEOnSphereLzSortedSpectrum Spectrum (Manager.GetString("input-file"), EnergyError);
+      if (Spectrum.IsSpectrumValid() == false)
+	{
+	  cout << "Spectrum " << Manager.GetString("input-file") << " is unreadable or is not valid" << endl;
+	  return -1;           
+	}
+      TotalMaxLz = Spectrum.GetMaxLzValue();
+      if ((TotalMaxLz & 1) != 0)
+	MaxLzValue = 1;
+      LzDegeneracy = new int[TotalMaxLz + 1];
+      while ((MaxLzValue <= TotalMaxLz) && (fabs(Spectrum.GetEnergy(MaxLzValue, 0)) < EnergyError))
+	{
+	  LzDegeneracy[MaxLzValue / 2] = Spectrum.GetDegeneracy(MaxLzValue, 0);
+	  if (MaxLzValue == 0)
+	    TotalNbrZeroEnergyStates += LzDegeneracy[MaxLzValue / 2];
+	  else
+	    TotalNbrZeroEnergyStates += 2l * LzDegeneracy[MaxLzValue / 2];
+	  MaxLzValue += 2;
+	}
+      MaxLzValue -= 2;
+      MinLzValue = (MaxLzValue & 1);
     }
-  MaxLzValue -= 2;
+  else
+    {
+      MultiColumnASCIIFile EigenstateListFile;
+      if (EigenstateListFile.Parse(Manager.GetString("eigenstate-list")) == false)
+	{
+	  EigenstateListFile.DumpErrors(cout);
+	  return -1;
+	}
+      if (FQHEOnSphereFindSystemInfoFromVectorFileName(EigenstateListFile(0,0), NbrParticles, NbrFluxQuanta, MaxLzValue, FermionFlag) == false)
+	{
+	  cout << "can't retrieve system information form file name " << EigenstateListFile(0,0) << endl;
+	  return -1;
+	}
+      FQHEOnSphereFindInternalSymmetryGroupFromFileName(EigenstateListFile(0,0), SU2SpinFlag, SU3SpinFlag, SU4SpinFlag);          
+      MinLzValue = MaxLzValue;
+      TotalMaxLz = (MaxLzValue - MinLzValue) >> 1;
+      LzDegeneracy = new int[TotalMaxLz + 1];
+      TotalNbrZeroEnergyStates = EigenstateListFile.GetNbrLines();
+      for (int i = 0 ; i < TotalMaxLz; ++i)
+	LzDegeneracy[i] = 0;
+      LzDegeneracy[TotalMaxLz] = TotalNbrZeroEnergyStates;
+    }
+      
   if (TotalNbrZeroEnergyStates == 0l)
     {
       cout << "Spectrum " << Manager.GetString("input-file") << " does not contain any zero energy state" << endl;      
@@ -146,7 +177,10 @@ int main(int argc, char** argv)
   char* OutputFileName = Manager.GetString("output");
   if (OutputFileName == 0)
     {
-      OutputFileName = ReplaceExtensionToFileName (Manager.GetString("input-file"), "dat" , "root");
+      if (Manager.GetString("input-file") != 0)
+	OutputFileName = ReplaceExtensionToFileName (Manager.GetString("input-file"), "dat" , "root");
+      else
+	OutputFileName = ReplaceExtensionToFileName (Manager.GetString("eigenstate-list"), "dat" , "root");
     }
   ofstream File;
   File.open(OutputFileName, ios::out);
@@ -163,12 +197,17 @@ int main(int argc, char** argv)
   File << endl << endl << "-----------------------------------------" << endl;
   cout << endl << endl << "-----------------------------------------" << endl;
 
-  char* BaseFileName = RemoveExtensionFromFileName(Manager.GetString("input-file"), "dat");
-  char* TmpFileName = new char [strlen(BaseFileName) + 256]; 
-  BaseFileName[strlen(BaseFileName) - 1] = '\0';
-  
+  char* BaseFileName = 0;
+  char* TmpFileName = 0;
+  if (Manager.GetString("input-file") != 0)
+    {
+      RemoveExtensionFromFileName(Manager.GetString("input-file"), "dat");
+      TmpFileName = new char [strlen(BaseFileName) + 256]; 
+      BaseFileName[strlen(BaseFileName) - 1] = '\0';
+    }
 
-  for (int TotalLz = (MaxLzValue & 1); TotalLz <= MaxLzValue; TotalLz += 2)
+
+  for (int TotalLz = MinLzValue; TotalLz <= MaxLzValue; TotalLz += 2)
     {
       if ((TotalMaxLz & 1) != 0)
 	{
@@ -178,15 +217,35 @@ int main(int argc, char** argv)
 	{
 	  File << "Lz = " << (TotalLz  >> 1) << " : " << endl;
 	}      
-      int TmpNbrStates = LzDegeneracy[TotalLz >> 1];
+      int TmpNbrStates = LzDegeneracy[(TotalLz  - MinLzValue) >> 1];
       RealVector* TmpVectors = new RealVector[TmpNbrStates];
-      for (int j = 0; j < TmpNbrStates; ++j)
+      if (Manager.GetString("input-file") != 0)
 	{
-	  sprintf (TmpFileName, "%s_%d.%d.vec", BaseFileName, TotalLz, j);
- 	  if (TmpVectors[j].ReadVector(TmpFileName) == false)
+	  for (int j = 0; j < TmpNbrStates; ++j)
 	    {
-	      cout << "error while reading " << TmpFileName << endl;
+	      sprintf (TmpFileName, "%s_%d.%d.vec", BaseFileName, TotalLz, j);
+	      if (TmpVectors[j].ReadVector(TmpFileName) == false)
+		{
+		  cout << "error while reading " << TmpFileName << endl;
+		  return -1;
+		}
+	    }
+	}
+      else
+	{
+	  MultiColumnASCIIFile EigenstateListFile;
+	  if (EigenstateListFile.Parse(Manager.GetString("eigenstate-list")) == false)
+	    {
+	      EigenstateListFile.DumpErrors(cout);
 	      return -1;
+	    }
+	  for (int j = 0; j < TmpNbrStates; ++j)
+	    {
+	      if (TmpVectors[j].ReadVector(EigenstateListFile(0, j)) == false)
+		{
+		  cout << "error while reading " << EigenstateListFile(0, j) << endl;
+		  return -1;
+		}
 	    }
 	}
       int* RootPositions = new int [TmpNbrStates];

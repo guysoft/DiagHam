@@ -146,6 +146,20 @@ class FactorialCoefficient
   // return value = reference on current coefficient
   FactorialCoefficient& PartialFactorialDivide (long start, long end);
 
+  // multiply the coefficient by a binomial coefficient
+  // 
+  // x = binomial major index
+  // y = binomial minor index
+  // return value = reference on current coefficient
+  FactorialCoefficient& MultiplyDivide (long x, long y);
+
+  // divide the coefficient by a binomial coefficient
+  // 
+  // x = binomial major index
+  // y = binomial minor index
+  // return value = reference on current coefficient
+  FactorialCoefficient& BinomialDivide (long x, long y);
+  
   // return integer value associated to the coefficient numerator (0 if the coefficient can't be cast into an integer)
   //
   // return value = numerical value associated to the coefficient numerator  
