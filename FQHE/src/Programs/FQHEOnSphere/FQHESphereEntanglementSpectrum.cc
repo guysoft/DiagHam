@@ -311,6 +311,13 @@ int main(int argc, char** argv)
       
       int* NaValues = DensityMatrix.GetAsIntegerArray(0);
       int* LzValues = DensityMatrix.GetAsIntegerArray(1);
+      double* LValues = 0;
+      double* L2Values = 0;
+      if (DensityMatrix.GetNbrColumns() > 3)
+	{
+	   L2Values = DensityMatrix.GetAsDoubleArray(3);
+	   LValues = DensityMatrix.GetAsDoubleArray(4);
+	}
       long Index = 0l;
       long MaxIndex = DensityMatrix.GetNbrLines();
       while ((Index < MaxIndex) && (NaValues[Index] != NbrParticlesInPartition))
@@ -336,7 +343,12 @@ int main(int argc, char** argv)
 	  ofstream File;
 	  File.open(OutputFileName, ios::out);
 	  File.precision(14);
-	  File << "# na lz lambda -log(lambda)" << endl;
+	  File << "# na lz lambda -log(lambda)";
+	  if (LValues != 0)
+	    {
+	      File << " L^2 L";
+	    }
+	  File << endl;
 	  int TmpIndex = Index;
 	  while ((Index < MaxIndex) && (NaValues[Index] == NbrParticlesInPartition))
 	    {
@@ -344,7 +356,12 @@ int main(int argc, char** argv)
 	      if (Tmp > Error)
 		{
 		  int TmpLza = LzValues[Index];
-		  File << NbrParticlesInPartition << " " << (0.5 * TmpLza) << " " << Tmp << " " << (-log(Tmp)) << endl;
+		  File << NbrParticlesInPartition << " " << (0.5 * TmpLza) << " " << Tmp << " " << (-log(Tmp));
+		  if (LValues != 0)
+		    {
+		      File << " " << L2Values[Index] << " " << LValues[Index];
+		    }
+		  File << endl;
 		  if (TmpLza < MinLza)
 		    MinLza = TmpLza;
 		  if (TmpLza > MaxLza)
