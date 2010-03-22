@@ -909,6 +909,7 @@ RealSymmetricMatrix  BosonOnSphereShort::EvaluatePartialDensityMatrixParticlePar
 	      for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
 		if (this->TemporaryState[k] > 1)
 		  Factorial.FactorialMultiply(this->TemporaryState[k]);
+	      Factorial.BinomialDivide(this->NbrBosons, nbrBosonSector);
 	      TmpValue += groundState[TmpPos] * groundState[TmpPos] * (Factorial.GetNumericalValue());	
 	    }
 	}

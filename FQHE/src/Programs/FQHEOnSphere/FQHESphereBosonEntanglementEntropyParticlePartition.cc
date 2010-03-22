@@ -1,6 +1,7 @@
 #include "Vector/RealVector.h"
 #include "Matrix/RealSymmetricMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
+#include "Matrix/RealMatrix.h"
 
 #include "HilbertSpace/BosonOnSphere.h"
 #include "HilbertSpace/BosonOnSphereSymmetricBasis.h"
@@ -17,6 +18,8 @@
 #include "Options/BooleanOption.h"
 #include "Options/SingleIntegerOption.h"
 #include "Options/SingleStringOption.h"
+
+#include "Operator/ParticleOnSphereSquareTotalMomentumOperator.h"
 
 #include "GeneralTools/ArrayTools.h"
 #include "GeneralTools/FilenameTools.h"
@@ -60,6 +63,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "min-na", "minimum size of the particles whose entropy has to be evaluated", 1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "max-na", "maximum size of the particles whose entropy has to be evaluated (0 if equal to half the total system size)", 0);
   (*SystemGroup) += new SingleStringOption  ('\n', "degenerated-groundstate", "single column file describing a degenerated ground state");
+  (*SystemGroup) += new BooleanOption  ('\n', "compute-lvalue", "compute the L value of each reduced density matrix eigenstate");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with partent extension");
   (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
@@ -104,12 +108,19 @@ int main(int argc, char** argv)
   bool LapackFlag = Manager.GetBoolean("use-lapack");
 #endif
   char* DensityMatrixFileName = Manager.GetString("density-matrix");
+  bool ComputeLValueFlag = Manager.GetBoolean("compute-lvalue");
   int* TotalLz = 0;
   bool Statistics = true;
   int NbrSpaces = 1;
   ParticleOnSphere** Spaces = 0;
   RealVector* GroundStates = 0;
   char** GroundStateFiles = 0;
+
+  if ((ComputeLValueFlag == true) && (DensityMatrixFileName == 0))
+    {
+      cout << "compute-lvalue only valid when density-matrix is activated" << endl;
+      return - 1;
+    }
 
   if (Manager.GetString("degenerated-groundstate") == 0)
     {
@@ -239,7 +250,10 @@ int main(int argc, char** argv)
     {
       ofstream DensityMatrixFile;
       DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out); 
-      DensityMatrixFile << "#  N    Lz    lambda" << endl;
+      DensityMatrixFile << "#  N    Lz    lambda";
+      if (ComputeLValueFlag == true)
+	DensityMatrixFile << " L^2 L";
+      DensityMatrixFile << endl;
       DensityMatrixFile.close();
     }
 
@@ -289,22 +303,48 @@ int main(int argc, char** argv)
 	  if (PartialDensityMatrix.GetNbrRow() > 1)
 	    {
 	      RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
-#ifdef __LAPACK__
-	      if (LapackFlag == true)
-		PartialDensityMatrix.LapackDiagonalize(TmpDiag);
-	      else
-		PartialDensityMatrix.Diagonalize(TmpDiag);
-#else
-	      PartialDensityMatrix.Diagonalize(TmpDiag);
-#endif		  
-	      TmpDiag.SortMatrixDownOrder();
-	      if (DensityMatrixFileName != 0)
+	      if (ComputeLValueFlag == false)
 		{
+#ifdef __LAPACK__
+		  if (LapackFlag == true)
+		    PartialDensityMatrix.LapackDiagonalize(TmpDiag);
+		  else
+		    PartialDensityMatrix.Diagonalize(TmpDiag);
+#else
+		  PartialDensityMatrix.Diagonalize(TmpDiag);
+#endif		  
+		  TmpDiag.SortMatrixDownOrder();
+		  if (DensityMatrixFileName != 0)
+		    {
+		      ofstream DensityMatrixFile;
+		      DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
+		      DensityMatrixFile.precision(14);
+		      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+			DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpDiag[i] << endl;
+		      DensityMatrixFile.close();
+		    }
+		}
+	      else
+		{
+		  RealMatrix TmpEigenstates(PartialDensityMatrix.GetNbrRow(),
+					    PartialDensityMatrix.GetNbrRow(), true);
+		  for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+		    TmpEigenstates[i][i] = 1.0;
+		  PartialDensityMatrix.LapackDiagonalize(TmpDiag, TmpEigenstates);
+		  TmpDiag.SortMatrixDownOrder(TmpEigenstates);
+		  BosonOnSphereShort TmpDestinationHilbertSpace(SubsystemNbrParticles, SubsystemTotalLz, LzMax);
+		  ParticleOnSphereSquareTotalMomentumOperator OperMomentum (&TmpDestinationHilbertSpace, LzMax);
 		  ofstream DensityMatrixFile;
 		  DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
 		  DensityMatrixFile.precision(14);
 		  for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
-		    DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpDiag[i] << endl;
+		    {
+		      double TmpSqrMomentum = (OperMomentum.MatrixElement(TmpEigenstates[i], TmpEigenstates[i])).Re;
+		      double TmpMomentum = 0.0;
+		      if (TmpSqrMomentum > 0.0)
+			TmpMomentum = (0.5 * (sqrt ((4.0 * TmpSqrMomentum) + 1.0) - 1.0));
+		      DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpDiag[i] << " " << TmpSqrMomentum << " " << TmpMomentum << endl;
+		    }
 		  DensityMatrixFile.close();
 		}
 	      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
@@ -325,14 +365,34 @@ int main(int argc, char** argv)
 		    ofstream DensityMatrixFile;
 		    DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
 		    DensityMatrixFile.precision(14);
-		    DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpValue << endl;
+		    if (ComputeLValueFlag == false)
+		      {
+			DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpValue << endl;
+		      }
+		    else		      
+		      {
+			if (SubsystemNbrParticles == 1)
+			  DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpValue << " " << ((LzMax * (LzMax + 2)) / 4.0) << " " << (LzMax / 2.0) << endl;
+			else
+			  {
+			    BosonOnSphereShort TmpDestinationHilbertSpace(SubsystemNbrParticles, SubsystemTotalLz, LzMax);
+			    ParticleOnSphereSquareTotalMomentumOperator OperMomentum (&TmpDestinationHilbertSpace, LzMax);
+			    RealVector TmpEigenstate(1);
+			    TmpEigenstate[0] = 1.0;
+			    double TmpSqrMomentum = (OperMomentum.MatrixElement(TmpEigenstate, TmpEigenstate)).Re;
+			    double TmpMomentum = 0.0;
+			    if (TmpSqrMomentum > 0.0)
+			      TmpMomentum = (0.5 * (sqrt ((4.0 * TmpSqrMomentum) + 1.0) - 1.0));
+			    DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpValue << " " << TmpSqrMomentum << " " << TmpMomentum << endl;
+			  }
+		      }
 		    DensityMatrixFile.close();
 		  }		  
-		  if (TmpValue > 1e-14)
-		    {
-		      EntanglementEntropy += TmpValue * log(TmpValue);
-		      DensitySum += TmpValue;
-		    }
+		if (TmpValue > 1e-14)
+		  {
+		    EntanglementEntropy += TmpValue * log(TmpValue);
+		    DensitySum += TmpValue;
+		  }
 	      }
 	}
       File << SubsystemNbrParticles << " " << (-EntanglementEntropy) << " " << DensitySum << " " << (1.0 - DensitySum) << endl;
