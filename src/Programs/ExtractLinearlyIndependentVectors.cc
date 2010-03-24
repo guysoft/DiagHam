@@ -55,14 +55,14 @@ int main(int argc, char** argv)
       cout << "see man page for option syntax or type ExtractLinearlyIndependentVectors -h" << endl;
       return -1;
     }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
     }
 
-  char* BasisDescription = ((SingleStringOption*) Manager["basis"])->GetString();  
-  char* VectorPrefix = ((SingleStringOption*) Manager["vector-prefix"])->GetString();
+  char* BasisDescription = Manager.GetString("basis");  
+  char* VectorPrefix = Manager.GetString("vector-prefix");
   double Error = ((SingleDoubleOption*) Manager["error"])->GetDouble();
 
   ConfigurationParser ReducedBasis;
@@ -112,7 +112,7 @@ int main(int argc, char** argv)
   RealTriDiagonalSymmetricMatrix TmpTriDiag (NbrVectors);
 
 
-  if (((BooleanOption*) Manager["check-only"])->GetBoolean() == true)	
+  if (Manager.GetBoolean("check-only") == true)	
     {
       HRep.Householder(TmpTriDiag, 1e-7);
       TmpTriDiag.Diagonalize();
@@ -150,7 +150,7 @@ int main(int argc, char** argv)
 		    TmpVector[k] += TmpEigenvector[i][j] * Basis[j][k];
 		  }
 	      TmpVector /= TmpVector.Norm();
-	      sprintf (OutputVectorFileName, "%s_%d.vec", VectorPrefix, Count);
+	      sprintf (OutputVectorFileName, "%s%d.vec", VectorPrefix, Count);
 	      TmpVector.WriteVector(OutputVectorFileName);
 	      Count++;
 	    }
