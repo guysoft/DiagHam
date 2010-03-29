@@ -3,14 +3,15 @@
 #include "Matrix/RealDiagonalMatrix.h"
 #include "Matrix/RealMatrix.h"
 
-#include "HilbertSpace/BosonOnSphere.h"
-#include "HilbertSpace/BosonOnSphereSymmetricBasis.h"
-#include "HilbertSpace/BosonOnSphereShort.h"
-#include "HilbertSpace/BosonOnSphereSymmetricBasisShort.h"
-#include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
-#include "HilbertSpace/BosonOnSphereHaldaneHugeBasisShort.h"
-#include "HilbertSpace/BosonOnSphereLong.h"
-#include "HilbertSpace/BosonOnSphereHaldaneBasisLong.h"
+#include "HilbertSpace/FermionOnSphere.h"
+#include "HilbertSpace/FermionOnSphereSymmetricBasis.h"
+#include "HilbertSpace/FermionOnSphereUnlimited.h"
+#include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
+#include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasis.h"
+#include "HilbertSpace/FermionOnSphereLong.h"
+#include "HilbertSpace/FermionOnSphereHaldaneBasisLong.h"
+#include "HilbertSpace/FermionOnSphereSymmetricBasisLong.h"
+#include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasisLong.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -66,6 +67,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "compute-lvalue", "compute the L value of each reduced density matrix eigenstate");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with partent extension");
   (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
+  (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
@@ -74,7 +76,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHESphereBosonEntanglementEntropyParticlePartition -h" << endl;
+      cout << "see man page for option syntax or type FQHESphereEntanglementEntropyParticlePartition -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)
@@ -104,6 +106,7 @@ int main(int argc, char** argv)
 
   int NbrParticles = Manager.GetInteger("nbr-particles"); 
   int LzMax = Manager.GetInteger("lzmax"); 
+  unsigned long MemorySpace = Manager.GetInteger("fast-search") << 20;
 #ifdef __LAPACK__
   bool LapackFlag = Manager.GetBoolean("use-lapack");
 #endif
@@ -156,9 +159,9 @@ int main(int argc, char** argv)
 	  cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
 	  return -1;
 	}
-      if (Statistics == true)
+      if (Statistics == false)
 	{
-	  cout << GroundStateFiles[i] << " is not a bosonic state" << endl;
+	  cout << GroundStateFiles[i] << " is not a fermionic state" << endl;
 	  return -1;
 	}
       if (((NbrParticles * LzMax) & 1) != (TotalLz[i] & 1))
@@ -181,65 +184,84 @@ int main(int argc, char** argv)
   Spaces = new ParticleOnSphere* [NbrSpaces];
   for (int i = 0; i < NbrSpaces; ++i)
     {
-#ifdef  __64_BITS__
-      if ((LzMax + NbrParticles - 1) < 63)
+      if (Manager.GetBoolean("haldane") == false)
+	{
+#ifdef __64_BITS__
+	  if (LzMax <= 63)
 #else
-	if ((LzMax + NbrParticles - 1) < 31)	
+	    if (LzMax <= 31)
 #endif
-	  {
-	    if (Manager.GetBoolean("haldane") == false)
 	      {
-		Spaces[i] = new BosonOnSphereShort (NbrParticles, TotalLz[i], LzMax);
+		Spaces[i] = new FermionOnSphere(NbrParticles, TotalLz[i], LzMax, MemorySpace);
 	      }
 	    else
-	      {
-		int* ReferenceState = 0;
-		if (Manager.GetString("reference-file") == 0)
+#ifdef __128_BIT_LONGLONG__
+	      if (LzMax <= 126)
+#else
+		if (LzMax <= 62)
+#endif
 		  {
-		    cout << "error, a reference file is needed" << endl;
-		    return 0;
+		    Spaces[i] = new FermionOnSphereLong(NbrParticles, TotalLz[i], LzMax, MemorySpace);
 		  }
-		ConfigurationParser ReferenceStateDefinition;
-		if (ReferenceStateDefinition.Parse(Manager.GetString("reference-file")) == false)
-		  {
-		    ReferenceStateDefinition.DumpErrors(cout) << endl;
-		    return 0;
-		  }
-		if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", NbrParticles) == false) || (NbrParticles <= 0))
-		  {
-		    cout << "NbrParticles is not defined or as a wrong value" << endl;
-		    return 0;
-		  }
-		if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", LzMax) == false) || (LzMax < 0))
-		  {
-		    cout << "LzMax is not defined or as a wrong value" << endl;
-		    return 0;
-		  }
-		int MaxNbrLz;
-		if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
-		  {
-		    cout << "error while parsing ReferenceState in " << Manager.GetString("reference-file") << endl;
-		    return 0;     
-		  }
-		if (MaxNbrLz != (LzMax + 1))
-		  {
-		    cout << "wrong LzMax value in ReferenceState" << endl;
-		    return 0;     
-		  }
-		if (Manager.GetString("load-hilbert") != 0)
-		  Spaces[i] = new BosonOnSphereHaldaneBasisShort(Manager.GetString("load-hilbert"));
 		else
-		  {
-		    Spaces[i] = new BosonOnSphereHaldaneBasisShort(NbrParticles, TotalLz[i], LzMax, ReferenceState);	  
-		  }
+		  Spaces[i] = new FermionOnSphereUnlimited(NbrParticles, TotalLz[i], LzMax, MemorySpace);
+	}
+      else
+	{
+	  int* ReferenceState = 0;
+	  ConfigurationParser ReferenceStateDefinition;
+	  if (ReferenceStateDefinition.Parse(Manager.GetString("reference-file")) == false)
+	    {
+	      ReferenceStateDefinition.DumpErrors(cout) << endl;
+	      return -1;
+	    }
+	  if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", NbrParticles) == false) || (NbrParticles <= 0))
+	    {
+	      cout << "NbrParticles is not defined or as a wrong value" << endl;
+	      return -1;
+	    }
+	  if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", LzMax) == false) || (LzMax <= 0))
+	    {
+	      cout << "LzMax is not defined or as a wrong value" << endl;
+	      return -1;
+	    }
+	  int MaxNbrLz;
+	  if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
+	    {
+	      cout << "error while parsing ReferenceState in " << Manager.GetString("reference-file") << endl;
+	      return -1;     
+	    }
+	  if (MaxNbrLz != (LzMax + 1))
+	    {
+	      cout << "wrong LzMax value in ReferenceState" << endl;
+	      return -1;     
+	    }
+#ifdef __64_BITS__
+	  if (LzMax <= 62)
+#else
+	    if (LzMax <= 30)
+#endif
+	      {
+		if (Manager.GetString("load-hilbert") != 0)
+		  Spaces[i] = new FermionOnSphereHaldaneBasis(Manager.GetString("load-hilbert"), MemorySpace);
+		else
+		  Spaces[i] = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz[i], LzMax, ReferenceState, MemorySpace);
 	      }
-	  }
-	else
-	  {
-	    Spaces[i] = new BosonOnSphereLong (NbrParticles, TotalLz[i], LzMax);
-	  }
+	    else
+#ifdef __128_BIT_LONGLONG__
+	      if (LzMax <= 126)
+#else
+		if (LzMax <= 62)
+#endif
+		  {
+		    if (Manager.GetString("load-hilbert") != 0)
+		      Spaces[i] = new FermionOnSphereHaldaneBasisLong(Manager.GetString("load-hilbert"), MemorySpace);
+		    else
+		      Spaces[i] = new FermionOnSphereHaldaneBasisLong(NbrParticles, TotalLz[i], LzMax, ReferenceState, MemorySpace);
+		  } 
+	}
       
-      if (Spaces[i]->GetLargeHilbertSpaceDimension() != GroundStates[i].GetLargeVectorDimension())
+      if (Spaces[i]->GetHilbertSpaceDimension() != GroundStates[i].GetVectorDimension())
 	{
 	  cout << "dimension mismatch between Hilbert space and ground state" << endl;
 	  return 0;
@@ -284,7 +306,7 @@ int main(int argc, char** argv)
       double EntanglementEntropy = 0.0;
       double DensitySum = 0.0;
 
-      int SubsystemMaxTotalLz = SubsystemNbrParticles * LzMax;
+      int SubsystemMaxTotalLz = SubsystemNbrParticles * LzMax - (SubsystemNbrParticles * (SubsystemNbrParticles + 1));
 
       int SubsystemTotalLz = -SubsystemMaxTotalLz; 
       //      SubsystemTotalLz = -8;
@@ -332,7 +354,7 @@ int main(int argc, char** argv)
 		    TmpEigenstates[i][i] = 1.0;
 		  PartialDensityMatrix.LapackDiagonalize(TmpDiag, TmpEigenstates);
 		  TmpDiag.SortMatrixDownOrder(TmpEigenstates);
-		  BosonOnSphereShort TmpDestinationHilbertSpace(SubsystemNbrParticles, SubsystemTotalLz, LzMax);
+		  FermionOnSphere TmpDestinationHilbertSpace(SubsystemNbrParticles, SubsystemTotalLz, LzMax);
 		  ParticleOnSphereSquareTotalMomentumOperator OperMomentum (&TmpDestinationHilbertSpace, LzMax);
 		  ofstream DensityMatrixFile;
 		  DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
@@ -375,7 +397,7 @@ int main(int argc, char** argv)
 			  DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpValue << " " << ((LzMax * (LzMax + 2)) / 4.0) << " " << (LzMax / 2.0) << endl;
 			else
 			  {
-			    BosonOnSphereShort TmpDestinationHilbertSpace(SubsystemNbrParticles, SubsystemTotalLz, LzMax);
+			    FermionOnSphere TmpDestinationHilbertSpace(SubsystemNbrParticles, SubsystemTotalLz, LzMax);
 			    ParticleOnSphereSquareTotalMomentumOperator OperMomentum (&TmpDestinationHilbertSpace, LzMax);
 			    RealVector TmpEigenstate(1);
 			    TmpEigenstate[0] = 1.0;

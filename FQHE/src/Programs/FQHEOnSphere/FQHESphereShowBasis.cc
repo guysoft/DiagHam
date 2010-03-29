@@ -9,6 +9,7 @@
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
 #include "HilbertSpace/BosonOnSphereWithSpin.h"
 #include "HilbertSpace/FermionOnSphereWithSpinAllSz.h"
+#include "HilbertSpace/FermionOnSphereTwoLandauLevels.h"
 
 #include "MathTools/ClebschGordanCoefficients.h"
 #include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
@@ -56,6 +57,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "total-tz", "twice the quantum number of the system associated to the Tz generator (only useful in su(3) mode)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "total-y", "three time the quantum number of the system associated to the Y generator (only useful in su(3) mode)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "su4-spin", "consider particles with SU(4) spin");
+  (*SystemGroup) += new BooleanOption  ('\n', "2-ll", "consider particles within two Landau levels");
   (*SystemGroup) += new SingleIntegerOption  ('i', "total-isosz", "twice the z component of the total isospin of the system (only usefull in su(4) mode)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('e', "total-entanglement", "twice the projection of the total spin-isopsin entanglement of the system (only usefull in su(4) mode)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
@@ -73,27 +75,28 @@ int main(int argc, char** argv)
       cout << "see man page for option syntax or type FQHESphereShowBasis -h" << endl;
       return -1;
     }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
     }
 
-  int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger(); 
-  int NbrFluxQuanta = ((SingleIntegerOption*) Manager["nbr-flux"])->GetInteger(); 
-  int TotalLz = ((SingleIntegerOption*) Manager["lz-value"])->GetInteger();
-  int TotalTz = ((SingleIntegerOption*) Manager["total-tz"])->GetInteger();
-  int TotalY = ((SingleIntegerOption*) Manager["total-y"])->GetInteger();
-  bool SU2SpinFlag = ((BooleanOption*) Manager["su2-spin"])->GetBoolean();
-  bool AllSzFlag = ((BooleanOption*) Manager["all-sz"])->GetBoolean();
-  bool AddIndex = ((BooleanOption*) Manager["add-index"])->GetBoolean();
-  bool AddSzValue = ((BooleanOption*) Manager["add-szvalue"])->GetBoolean();
-  bool SU3SpinFlag = ((BooleanOption*) Manager["su3-spin"])->GetBoolean();
-  bool SU4SpinFlag = ((BooleanOption*) Manager["su4-spin"])->GetBoolean();
-  int TotalSz = ((SingleIntegerOption*) Manager["total-sz"])->GetInteger();
-  int TotalIz = ((SingleIntegerOption*) Manager["total-isosz"])->GetInteger();
-  int TotalPz = ((SingleIntegerOption*) Manager["total-entanglement"])->GetInteger();
-  bool HaldaneBasisFlag = ((BooleanOption*) Manager["haldane"])->GetBoolean();
+  int NbrParticles = Manager.GetInteger("nbr-particles"); 
+  int NbrFluxQuanta = Manager.GetInteger("nbr-flux"); 
+  int TotalLz = Manager.GetInteger("lz-value");
+  int TotalTz = Manager.GetInteger("total-tz");
+  int TotalY = Manager.GetInteger("total-y");
+  bool SU2SpinFlag = Manager.GetBoolean("su2-spin");
+  bool AllSzFlag = Manager.GetBoolean("all-sz");
+  bool AddIndex = Manager.GetBoolean("add-index");
+  bool AddSzValue = Manager.GetBoolean("add-szvalue");
+  bool SU3SpinFlag = Manager.GetBoolean("su3-spin");
+  bool SU4SpinFlag = Manager.GetBoolean("su4-spin");
+  bool TwoLLFlag = Manager.GetBoolean("2-ll");
+  int TotalSz = Manager.GetInteger("total-sz");
+  int TotalIz = Manager.GetInteger("total-isosz");
+  int TotalPz = Manager.GetInteger("total-entanglement");
+  bool HaldaneBasisFlag = Manager.GetBoolean("haldane");
     
   if (((NbrParticles * NbrFluxQuanta) & 1) != (TotalLz & 1)) 
     {
@@ -102,7 +105,7 @@ int main(int argc, char** argv)
     }
 
   ParticleOnSphere* Space = 0;
-  if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
+  if (Manager.GetBoolean("boson") == true)
     {
       if (SU2SpinFlag == false)
 	{
@@ -125,7 +128,7 @@ int main(int argc, char** argv)
     }
   else
     {
-      if ((SU2SpinFlag == false) && (SU3SpinFlag == false) && (SU4SpinFlag == false) && (AllSzFlag == false))
+      if ((SU2SpinFlag == false) && (SU3SpinFlag == false) && (SU4SpinFlag == false) && (AllSzFlag == false) && (TwoLLFlag == false))
 	{
 	  if (HaldaneBasisFlag == false)
 	    {
@@ -161,6 +164,9 @@ int main(int argc, char** argv)
 	   else
 	    if (SU4SpinFlag == true)
 	      Space = new FermionOnSphereWithSU4Spin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz, TotalIz, TotalPz);	    
+	    else
+	      if (TwoLLFlag == true)
+		Space = new FermionOnSphereTwoLandauLevels(NbrParticles, TotalLz, NbrFluxQuanta + 2, NbrFluxQuanta);	    
     }
   
   if (Manager.GetString("get-index") != 0)
@@ -181,12 +187,12 @@ int main(int argc, char** argv)
 
   ofstream File;
   char* OutputFileName = 0;
-  if (((BooleanOption*) Manager["save-disk"])->GetBoolean() == true)
+  if (Manager.GetBoolean("save-disk") == true)
     {
-      if (((SingleStringOption*) Manager["output-file"])->GetString() == 0)
+      if (Manager.GetString("output-file") == 0)
 	{
 	  OutputFileName = new char[512];
-	  if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
+	  if (Manager.GetBoolean("boson") == true)
 	    if ((SU2SpinFlag == false) && (SU4SpinFlag == false))
 	      sprintf (OutputFileName, "bosons_sphere_n_%d_2s_%d_lz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz);
 	    else
@@ -198,12 +204,9 @@ int main(int argc, char** argv)
 		else
 		  sprintf (OutputFileName, "bosons_sphere_su4_n_%d_2s_%d_lz_%d_sz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz, TotalSz);
 	  else
-	    if ((SU2SpinFlag == false) && (SU4SpinFlag == false))
-	      sprintf (OutputFileName, "fermions_sphere_n_%d_2s_%d_lz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz);
+	    if (SU2SpinFlag == true)
+	      sprintf (OutputFileName, "fermions_sphere_n_%d_2s_%d_lz_%d_sz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz, TotalSz);
 	    else
-	      if (SU2SpinFlag == true)
-		sprintf (OutputFileName, "fermions_sphere_n_%d_2s_%d_lz_%d_sz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz, TotalSz);
-	     else
 	      if (AllSzFlag == true)
 		sprintf (OutputFileName, "fermions_sphere_n_%d_2s_%d_lz_%d_allsz.basis", NbrParticles, NbrFluxQuanta, TotalLz);
 	      else
@@ -212,11 +215,16 @@ int main(int argc, char** argv)
 		else
 		  if (SU4SpinFlag == true)
 		    sprintf (OutputFileName, "fermions_sphere_su4_n_%d_2s_%d_lz_%d_sz_%d_iz_%d_pz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz, TotalSz, TotalIz, TotalPz);
+		  else
+		    if (TwoLLFlag == true)
+		      sprintf (OutputFileName, "fermions_sphere_2ll_n_%d_2s_%d_lz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz);
+		    else
+		      sprintf (OutputFileName, "fermions_sphere_n_%d_2s_%d_lz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz);
 	}
       else
 	{
-	  OutputFileName = new char[strlen(((SingleStringOption*) Manager["output-file"])->GetString()) + 1];
-	  strcpy (OutputFileName, ((SingleStringOption*) Manager["output-file"])->GetString());
+	  OutputFileName = new char[strlen(Manager.GetString("output-file")) + 1];
+	  strcpy (OutputFileName, Manager.GetString("output-file"));
 	}
       File.open(OutputFileName, ios::binary | ios::out);
       if (!File.is_open())
@@ -228,8 +236,8 @@ int main(int argc, char** argv)
     }
   else
     cout.precision(14);
-  if (((SingleStringOption*) Manager["state"])->GetString() == 0)
-    if (((BooleanOption*) Manager["save-disk"])->GetBoolean() == true)
+  if (Manager.GetString("state") == 0)
+    if (Manager.GetBoolean("save-disk") == true)
       for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 	{
 	  if (AddIndex == true) 
@@ -254,9 +262,9 @@ int main(int argc, char** argv)
        double WeightHiddenComponents = 0.0;
        double Normalization = 0.0;
        RealVector State;
-       if (State.ReadVector(((SingleStringOption*) Manager["state"])->GetString()) == false)
+       if (State.ReadVector(Manager.GetString("state")) == false)
 	 {
-	   cout << "error while reading " << ((SingleStringOption*) Manager["state"])->GetString() << endl;
+	   cout << "error while reading " << Manager.GetString("state") << endl;
 	   return -1;
 	 }
        if (Space->GetHilbertSpaceDimension() != State.GetVectorDimension())
@@ -267,7 +275,7 @@ int main(int argc, char** argv)
        if (((SingleDoubleOption*) Manager["hide-component"])->GetDouble() > 0.0)
 	 {
 	   double Error = ((SingleDoubleOption*) Manager["hide-component"])->GetDouble();
-	   if (((BooleanOption*) Manager["save-disk"])->GetBoolean() == true)
+	   if (Manager.GetBoolean("save-disk") == true)
 	     {
 	       for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 		 {
@@ -311,7 +319,7 @@ int main(int argc, char** argv)
 	 {             
 	   if (Manager.GetBoolean("variance"))
 	     {
-	       if (((BooleanOption*) Manager["save-disk"])->GetBoolean() == true)
+	       if (Manager.GetBoolean("save-disk") == true)
 		 for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 		   Space->PrintState(File, i) << " : " << Space->StateVariance(i) << " " << State[i] << " " << i <<endl;	   
 	       else
@@ -320,7 +328,7 @@ int main(int argc, char** argv)
 	     }
 	   else
 	     {
-	       if (((BooleanOption*) Manager["save-disk"])->GetBoolean() == true)
+	       if (Manager.GetBoolean("save-disk") == true)
 		 for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 		   Space->PrintState(File, i) << " : " << State[i] << endl;	   
 	       else
