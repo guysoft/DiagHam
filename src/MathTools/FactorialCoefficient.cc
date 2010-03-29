@@ -418,7 +418,7 @@ FactorialCoefficient& FactorialCoefficient::MultiplyDivide (long x, long y)
   
 FactorialCoefficient& FactorialCoefficient::BinomialDivide (long x, long y)
 {
-  this->PartialFactorialDivide(y + 1, x);
+  this->PartialFactorialDivide(x - y + 1, x);
   this->FactorialMultiply(y);  
   return *this;
 }
