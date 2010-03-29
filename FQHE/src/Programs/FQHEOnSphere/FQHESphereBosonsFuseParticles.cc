@@ -27,14 +27,15 @@
 #include "MathTools/BinomialCoefficients.h"
 
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
+#include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
+#include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
+
 
 #include <iostream>
 #include <stdlib.h>
 #include <math.h>
 #include <fstream>
 
-#include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
-#include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
 
 using std::cout;
 using std::endl;
@@ -139,7 +140,7 @@ int main(int argc, char** argv)
   
   RealVector OutputVector(FinalSpace->GetHilbertSpaceDimension(),true);
   
-  OutputBasis->FuseParticlesinStates(GroundState, OutputVector, 0, OutputBasis->GetHilbertSpaceDimension(), FinalSpace);
+  OutputBasis->FuseParticlesInState(GroundState, OutputVector, FinalSpace, 0, OutputBasis->GetHilbertSpaceDimension());
   OutputVector.WriteVector(OutputFileName);
   if(OutputTxtFileName != 0)
     {
