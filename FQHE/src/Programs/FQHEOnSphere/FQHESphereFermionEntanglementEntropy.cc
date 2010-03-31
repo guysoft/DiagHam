@@ -86,32 +86,32 @@ int main(int argc, char** argv)
       cout << "see man page for option syntax or type FQHESphereEntanglementEntropy -h" << endl;
       return -1;
     }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
     }
 
-  if ((((SingleStringOption*) Manager["ground-file"])->GetString() == 0) && (Manager.GetString("degenerated-groundstate") == 0))
+  if ((Manager.GetString("ground-file") == 0) && (Manager.GetString("degenerated-groundstate") == 0))
     {
       cout << "error, a ground state file should be provided. See man page for option syntax or type FQHESphereEntanglementEntropy -h" << endl;
       return -1;
     }
 
-  bool HaldaneBasisFlag = ((BooleanOption*) Manager["haldane"])->GetBoolean();
-  bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
-  bool NoEigenvalueSortFlag = ((BooleanOption*) Manager["no-sort"])->GetBoolean();
-  int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger(); 
-  int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger(); 
-  unsigned long MemorySpace = ((unsigned long) ((SingleIntegerOption*) Manager["fast-search"])->GetInteger()) << 20;
+  bool HaldaneBasisFlag = Manager.GetBoolean("haldane");
+  bool SymmetrizedBasis = Manager.GetBoolean("symmetrized-basis");
+  bool NoEigenvalueSortFlag = Manager.GetBoolean("no-sort");
+  int NbrParticles = Manager.GetInteger("nbr-particles"); 
+  int LzMax = Manager.GetInteger("lzmax"); 
+  unsigned long MemorySpace = ((unsigned long) Manager.GetInteger("fast-search")) << 20;
 #ifdef __LAPACK__
-  bool LapackFlag = ((BooleanOption*) Manager["use-lapack"])->GetBoolean();
+  bool LapackFlag = Manager.GetBoolean("use-lapack");
 #endif
-  char* DensityMatrixFileName = ((SingleStringOption*) Manager["density-matrix"])->GetString();
-  bool EigenstateFlag = ((BooleanOption*) Manager["density-eigenstate"])->GetBoolean();
-  int FilterNa = ((SingleIntegerOption*) Manager["na-eigenstate"])->GetInteger();
-  int FilterLza = ((SingleIntegerOption*) Manager["lza-eigenstate"])->GetInteger();
-  int NbrEigenstates = ((SingleIntegerOption*) Manager["nbr-eigenstates"])->GetInteger();
+  char* DensityMatrixFileName = Manager.GetString("density-matrix");
+  bool EigenstateFlag = Manager.GetBoolean("density-eigenstate");
+  int FilterNa = Manager.GetInteger("na-eigenstate");
+  int FilterLza = Manager.GetInteger("lza-eigenstate");
+  int NbrEigenstates = Manager.GetInteger("nbr-eigenstates");
   int* TotalLz = 0;
   bool Statistics = true;
   int NbrSpaces = 1;
@@ -119,17 +119,17 @@ int main(int argc, char** argv)
   RealVector* GroundStates = 0;
   char** GroundStateFiles = 0;
 
-  if (((SingleStringOption*) Manager["degenerated-groundstate"])->GetString() == 0)
+  if (Manager.GetString("degenerated-groundstate") == 0)
     {
       GroundStateFiles = new char* [1];
       TotalLz = new int[1];
-      GroundStateFiles[0] = new char [strlen(((SingleStringOption*) Manager["ground-file"])->GetString()) + 1];
-      strcpy (GroundStateFiles[0], ((SingleStringOption*) Manager["ground-file"])->GetString());      
+      GroundStateFiles[0] = new char [strlen(Manager.GetString("ground-file")) + 1];
+      strcpy (GroundStateFiles[0], Manager.GetString("ground-file"));      
     }
   else
     {
       MultiColumnASCIIFile DegeneratedFile;
-      if (DegeneratedFile.Parse(((SingleStringOption*) Manager["degenerated-groundstate"])->GetString()) == false)
+      if (DegeneratedFile.Parse(Manager.GetString("degenerated-groundstate")) == false)
 	{
 	  DegeneratedFile.DumpErrors(cout);
 	  return -1;
@@ -213,23 +213,23 @@ int main(int argc, char** argv)
       else
 	{
 	  int* ReferenceState = 0;
-	  if (((SingleStringOption*) Manager["reference-file"])->GetString() == 0)
+	  if (Manager.GetString("reference-file") == 0)
 	    {
 	      ReferenceState = new int[LzMax + 1];
 	      for (int i = 0; i <= LzMax; ++i)
 		ReferenceState[i] = 0;
-	      if (strcasecmp(((SingleStringOption*) Manager["reference-state"])->GetString(), "laughlin") == 0)
+	      if (strcasecmp(Manager.GetString("reference-state"), "laughlin") == 0)
 		for (int i = 0; i <= LzMax; i += 3)
 		  ReferenceState[i] = 1;
 	      else
-		if (strcasecmp(((SingleStringOption*) Manager["reference-state"])->GetString(), "pfaffian") == 0)
+		if (strcasecmp(Manager.GetString("reference-state"), "pfaffian") == 0)
 		  for (int i = 0; i <= LzMax; i += 4)
 		    {
 		      ReferenceState[i] = 1;
 		      ReferenceState[i + 1] = 1;
 		    }
 		else
-		  if (strcasecmp(((SingleStringOption*) Manager["reference-state"])->GetString(), "readrezayi3") == 0)
+		  if (strcasecmp(Manager.GetString("reference-state"), "readrezayi3") == 0)
 		    for (int i = 0; i <= LzMax; i += 5)
 		      {
 			ReferenceState[i] = 1;
@@ -238,14 +238,14 @@ int main(int argc, char** argv)
 		      }
 		  else
 		    {
-		      cout << "unknown reference state " << ((SingleStringOption*) Manager["reference-state"])->GetString() << endl;
+		      cout << "unknown reference state " << Manager.GetString("reference-state") << endl;
 		      return -1;
 		    }
 	    }
 	  else
 	    {
 	      ConfigurationParser ReferenceStateDefinition;
-	      if (ReferenceStateDefinition.Parse(((SingleStringOption*) Manager["reference-file"])->GetString()) == false)
+	      if (ReferenceStateDefinition.Parse(Manager.GetString("reference-file")) == false)
 		{
 		  ReferenceStateDefinition.DumpErrors(cout) << endl;
 		  return -1;
@@ -263,7 +263,7 @@ int main(int argc, char** argv)
 	      int MaxNbrLz;
 	      if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
 		{
-		  cout << "error while parsing ReferenceState in " << ((SingleStringOption*) Manager["reference-file"])->GetString() << endl;
+		  cout << "error while parsing ReferenceState in " << Manager.GetString("reference-file") << endl;
 		  return -1;     
 		}
 	      if (MaxNbrLz != (LzMax + 1))
@@ -278,13 +278,13 @@ int main(int argc, char** argv)
 	    if (LzMax <= 30)
 #endif
 	      {
-		if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
-		  Spaces[i] = new FermionOnSphereHaldaneBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		if (Manager.GetString("load-hilbert") != 0)
+		  Spaces[i] = new FermionOnSphereHaldaneBasis(Manager.GetString("load-hilbert"), MemorySpace);
 		else
 		  Spaces[i] = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz[i], LzMax, ReferenceState, MemorySpace);
-		if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+		if (Manager.GetString("save-hilbert") != 0)
 		  {
-		    ((FermionOnSphereHaldaneBasis*) Spaces[i])->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+		    ((FermionOnSphereHaldaneBasis*) Spaces[i])->WriteHilbertSpace(Manager.GetString("save-hilbert"));
 		    return 0;
 		  }
 		if ((SymmetrizedBasis == true) && (TotalLz == 0))
@@ -301,13 +301,13 @@ int main(int argc, char** argv)
 		if (LzMax <= 62)
 #endif
 		  {
-		    if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
-		      Spaces[i] = new FermionOnSphereHaldaneBasisLong(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		    if (Manager.GetString("load-hilbert") != 0)
+		      Spaces[i] = new FermionOnSphereHaldaneBasisLong(Manager.GetString("load-hilbert"), MemorySpace);
 		    else
 		      Spaces[i] = new FermionOnSphereHaldaneBasisLong(NbrParticles, TotalLz[i], LzMax, ReferenceState, MemorySpace);
-		    if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+		    if (Manager.GetString("save-hilbert") != 0)
 		      {
-			((FermionOnSphereHaldaneBasisLong*) Spaces[i])->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+			((FermionOnSphereHaldaneBasisLong*) Spaces[i])->WriteHilbertSpace(Manager.GetString("save-hilbert"));
 			return 0;
 		      }
 		    if ((SymmetrizedBasis == true) && (TotalLz == 0))
@@ -335,8 +335,8 @@ int main(int argc, char** argv)
     }
 
   ofstream File;
-  if (((SingleStringOption*) Manager["output-file"])->GetString() != 0)
-    File.open(((SingleStringOption*) Manager["output-file"])->GetString(), ios::binary | ios::out);
+  if (Manager.GetString("output-file") != 0)
+    File.open(Manager.GetString("output-file"), ios::binary | ios::out);
   else
     {
       char* TmpFileName;
@@ -354,13 +354,13 @@ int main(int argc, char** argv)
   int MeanSubsystemSize = LzMax >> 1;
   if ((LzMax & 1) != 0)
     ++MeanSubsystemSize;
-  if (((SingleIntegerOption*) Manager["max-la"])->GetInteger() > 0)
+  if (Manager.GetInteger("max-la") > 0)
     {
-      MeanSubsystemSize = ((SingleIntegerOption*) Manager["max-la"])->GetInteger();
+      MeanSubsystemSize = Manager.GetInteger("max-la");
       if (MeanSubsystemSize > LzMax)
 	MeanSubsystemSize = LzMax;
     }
-  int SubsystemSize = ((SingleIntegerOption*) Manager["min-la"])->GetInteger();
+  int SubsystemSize = Manager.GetInteger("min-la");
   if (SubsystemSize < 1)
     SubsystemSize = 1;
 
