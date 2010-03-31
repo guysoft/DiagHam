@@ -64,6 +64,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "max-na", "maximum size of the particles whose entropy has to be evaluated (0 if equal to half the total system size)", 0);
   (*SystemGroup) += new SingleStringOption  ('\n', "degenerated-groundstate", "single column file describing a degenerated ground state");
   (*SystemGroup) += new BooleanOption  ('\n', "compute-lvalue", "compute the L value of each reduced density matrix eigenstate");
+  (*SystemGroup) += new BooleanOption  ('\n', "largest-lz", "only compute the largest block of the reduced density matrix (Lz=0 or 1/2)");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with partent extension");
   (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
   (*OutputGroup) += new BooleanOption ('\n', "density-eigenstate", "compute the eigenstates of the reduced density matrix");
@@ -113,6 +114,7 @@ int main(int argc, char** argv)
   char* DensityMatrixFileName = Manager.GetString("density-matrix");
   bool ComputeLValueFlag = Manager.GetBoolean("compute-lvalue");
   bool EigenstateFlag = Manager.GetBoolean("density-eigenstate");
+  bool LargestLSector = Manager.GetBoolean("largest-lz");
   int FilterLza = Manager.GetInteger("lza-eigenstate");
   int NbrEigenstates = Manager.GetInteger("nbr-eigenstates");
   int* TotalLz = 0;
@@ -293,8 +295,19 @@ int main(int argc, char** argv)
       int SubsystemMaxTotalLz = SubsystemNbrParticles * LzMax;
 
       int SubsystemTotalLz = -SubsystemMaxTotalLz; 
-      //      SubsystemTotalLz = -8;
-      //      SubsystemMaxTotalLz = -8;
+      if (LargestLSector == true)
+	{
+	  if (((LzMax * NbrParticles) & 1) == 0)
+	    {
+	      SubsystemTotalLz = 0;
+	      SubsystemMaxTotalLz = 0;
+	    }
+	  else
+	    {
+	      SubsystemTotalLz = 1;
+	      SubsystemMaxTotalLz = 1;
+	    }
+	}
       for (; SubsystemTotalLz <= SubsystemMaxTotalLz; SubsystemTotalLz += 2)
 	{
 	  cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Lz=" << SubsystemTotalLz << endl;
