@@ -349,7 +349,14 @@ int main(int argc, char** argv)
 					    PartialDensityMatrix.GetNbrRow(), true);
 		  for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
 		    TmpEigenstates[i][i] = 1.0;
-		  PartialDensityMatrix.LapackDiagonalize(TmpDiag, TmpEigenstates);
+#ifdef __LAPACK__
+		  if (LapackFlag == true)
+		    PartialDensityMatrix.LapackDiagonalize(TmpDiag, TmpEigenstates);
+		  else
+		    PartialDensityMatrix.Diagonalize(TmpDiag, TmpEigenstates);
+#else
+		  PartialDensityMatrix.Diagonalize(TmpDiag, TmpEigenstates);
+#endif
 		  TmpDiag.SortMatrixDownOrder(TmpEigenstates);
 		  BosonOnSphereShort TmpDestinationHilbertSpace(SubsystemNbrParticles, SubsystemTotalLz, LzMax);
 		  ParticleOnSphereSquareTotalMomentumOperator OperMomentum (&TmpDestinationHilbertSpace, LzMax);
