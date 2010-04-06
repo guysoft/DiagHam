@@ -38,6 +38,7 @@ int main(int argc, char** argv)
   // some running options and help
   OptionManager Manager ("GenericHamiltonianDiagonalization" , "0.01");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
+  OptionGroup* OutputGroup = new OptionGroup ("output options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
 
@@ -47,10 +48,14 @@ int main(int argc, char** argv)
   Manager += SystemGroup;
   Architecture.AddOptionGroup(&Manager);
   Lanczos.AddOptionGroup(&Manager);
+  Manager += OutputGroup;
   Manager += ToolsGroup;
   Manager += MiscGroup;
 
   (*SystemGroup) += new  SingleStringOption ('\0', "hamiltonian", "text file where the hamiltonian matrix elements are stored");
+  (*SystemGroup) += new  BooleanOption ('\n', "fortran", "assume indices are 1-based instead of 0-based (i.e. fortran index convention)");
+  (*SystemGroup) += new  SingleIntegerOption ('\n', "skip-lines", "skip the first n-tf lines of the input file", 0);
+  (*OutputGroup) += new SingleStringOption ('o', "output-file", "prefix to use for output file names", "dummy");
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -79,12 +84,12 @@ int main(int argc, char** argv)
       return -1;
     }
 
-  FileBasedHamiltonian Hamiltonian (Manager.GetString("hamiltonian"), 0, false, true);
+  FileBasedHamiltonian Hamiltonian (Manager.GetString("hamiltonian"), 0, false, Manager.GetBoolean("fortran"), Manager.GetInteger("skip-lines"));
 
   char* CommentLine = new char [strlen(Manager.GetString("hamiltonian")) + 256];
-  sprintf (CommentLine, "eigenvalues of %s", Manager.GetString("hamiltonian"));
+  sprintf (CommentLine, "eigenvalues of %s\n #", Manager.GetString("hamiltonian"));
 
-  GenericRealMainTask Task(&Manager, Hamiltonian.GetHilbertSpace(), &Lanczos, &Hamiltonian, " ", CommentLine, 0.0, "toto");
+  GenericRealMainTask Task(&Manager, Hamiltonian.GetHilbertSpace(), &Lanczos, &Hamiltonian, " ", CommentLine, 0.0,  Manager.GetString("output-file"));
   MainTaskOperation TaskOperation (&Task);
   TaskOperation.ApplyOperation(Architecture.GetArchitecture());
 

@@ -50,12 +50,14 @@ using std::endl;
 // elementColumnIndex = index of the column where matrix elements are stored
 // symmetricFlag = hamiltonian is stored using only the upper or lower triangular part
 // fortranIndices = indicates that indices use fortran convention (i.e. 1 based)
+// nbrSkippedLines = number of lines to skip in the input file
 
-FileBasedHamiltonian::FileBasedHamiltonian(char* fileName, int elementColumnIndex, bool symmetricFlag, bool fortranIndices)
+FileBasedHamiltonian::FileBasedHamiltonian(char* fileName, int elementColumnIndex, bool symmetricFlag, bool fortranIndices, int nbrSkippedLines)
 {
   this->NbrElements = GetFileNbrLines(fileName);
   this->SymmetricStorageFlag = symmetricFlag;
   this->HamiltonianShift = 0.0;
+  this->NbrElements -= nbrSkippedLines;
   if (this->NbrElements > 0)
     {
       this->RowIndices = new int [this->NbrElements];
@@ -63,13 +65,23 @@ FileBasedHamiltonian::FileBasedHamiltonian(char* fileName, int elementColumnInde
       this->MatrixElements = new double [this->NbrElements];
       ifstream File;
       File.open(fileName, ios::binary | ios::in);
+      if (nbrSkippedLines > 0)
+	{
+	  
+	  char TmpChar;
+	  while (nbrSkippedLines > 0)
+	    {
+	      File.read(&TmpChar, 1);
+	      if (TmpChar == '\n')
+		--nbrSkippedLines;
+	    }
+	}
       switch (elementColumnIndex)
 	{
 	case 0:
 	  for (long i = 0; i < this->NbrElements; ++i)
 	    {
 	      File >> this->MatrixElements[i] >> this->ColumnIndices[i] >> this->RowIndices[i];
-	      cout << this->ColumnIndices[i] << " " << this->RowIndices[i] << " " << this->MatrixElements[i] << endl;
 	    }
 	  break;
 	case 1:
@@ -80,13 +92,12 @@ FileBasedHamiltonian::FileBasedHamiltonian(char* fileName, int elementColumnInde
 	  for (long i = 0; i < this->NbrElements; ++i)
 	    {
 	      File >> this->ColumnIndices[i] >> this->RowIndices[i] >> this->MatrixElements[i];
-	      cout << this->ColumnIndices[i] << " " << this->RowIndices[i] << " " << this->MatrixElements[i] << endl;
 	    }
 	  break;
 	}
       File.close();
 
-      cout << "this->NbrElements " << this->NbrElements << endl;
+      cout << "nbr read matrix elements = " << this->NbrElements << endl;
       int HamiltonianDimension = 0;
       if (fortranIndices == true)
 	{

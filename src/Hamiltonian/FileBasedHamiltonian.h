@@ -77,8 +77,8 @@ class FileBasedHamiltonian : public AbstractHamiltonian
   // elementColumnIndex = index of the column where matrix elements are stored
   // symmetricFlag = hamiltonian is stored using only the upper or lower triangular part
   // fortranIndices = indicates that indices use fortran convention (i.e. 1 based)
-  FileBasedHamiltonian(char* fileName, int elementColumnIndex = 0, bool symmetricFlag = false, bool fortranIndices = false);
-
+  // nbrSkippedLines = number of lines to skip in the input file
+  FileBasedHamiltonian(char* fileName, int elementColumnIndex = 0, bool symmetricFlag = false, bool fortranIndices = false, int nbrSkippedLines = 0);
 
   // destructor
   //
