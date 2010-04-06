@@ -126,7 +126,12 @@ GenericRealMainTask::GenericRealMainTask(OptionManager* options, AbstractHilbert
       this->SizeBlockLanczos = options->GetInteger("block-size");
     }
   this->VectorMemory = options->GetInteger("nbr-vector");
-  this->SavePrecalculationFileName = options->GetString("save-precalculation");
+  if ((*options)["save-precalculation"] != 0)
+    {
+      this->SavePrecalculationFileName = options->GetString("save-precalculation");
+    }
+  else
+    this->SavePrecalculationFileName = 0;
   this->FullReorthogonalizationFlag = options->GetBoolean("force-reorthogonalize");
   this->EvaluateEigenvectors = options->GetBoolean("eigenstate");
   this->EigenvectorConvergence = options->GetBoolean("eigenstate-convergence");
@@ -277,7 +282,8 @@ int GenericRealMainTask::ExecuteMainTask()
     {
       this->Hamiltonian->SavePrecalculation(this->SavePrecalculationFileName);
     }
-  if (this->Hamiltonian->GetHilbertSpaceDimension()==0) return 0;
+  if (this->Hamiltonian->GetHilbertSpaceDimension() == 0)
+    return 0;
   if (this->Hamiltonian->GetHilbertSpaceDimension() < this->FullDiagonalizationLimit)
     {
       RealSymmetricMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension(), true);

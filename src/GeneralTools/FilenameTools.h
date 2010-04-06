@@ -120,4 +120,10 @@ char* GetUniqueFileName(const char* baseName, const char* optExtension = NULL, i
 char* GetUniqueFileName(const char* baseName, int & minCounter, const char* optExtension = NULL);
 
 
+// compute the number of lines in a text file
+//
+// fileName = text file name 
+// return value = number of lines 
+long GetFileNbrLines (char* fileName);
+
 #endif

@@ -36,6 +36,13 @@
 
 #include <cstring>
 #include <cstdlib>
+#include <iostream>
+#include <fstream>
+
+using std::cout;
+using std::endl;
+using std::ifstream;
+
 
 // list all files or directories that obey a given pattern (that can include relative/absolute path) /to/directory/patternxxxsuffix where xxx is an integer
 //
@@ -359,4 +366,48 @@ char* GetUniqueFileName(const char* baseName, int & minCounter, const char* optE
   TouchIt.close();
   --minCounter;
   return UniqueFileName;
+}
+
+// compute the number of lines in a text file
+//
+// fileName = text file name 
+// return value = number of lines 
+
+long GetFileNbrLines (char* fileName)
+{
+  ifstream File;
+  File.open(fileName, ios::binary | ios::in);
+  if (!File.is_open())
+    {
+      cout << "error : cannot open file " <<  fileName << endl;
+      return -1;
+    }
+  File.seekg(0, ios::end);
+  long Size = File.tellg();
+  long Size2 = Size & (~255l);
+  File.seekg(0, ios::beg);
+  char* TmpBuffer = new char [256];
+  
+  long NbrLines = 0l;
+  for (long i = 0; i < Size2; i += 256l)
+    {
+      File.read(TmpBuffer, 256l);
+      for (int j = 0; j < 256; ++ j)
+	if (TmpBuffer[j] == '\n')
+	  ++NbrLines;
+    }
+  Size &= 255l;
+  if (Size > 0)
+    {
+      File.read(TmpBuffer, Size);
+      for (int j = 0; j < Size; ++ j)
+	if (TmpBuffer[j] == '\n')
+	  ++NbrLines;
+    }
+  else
+    Size = 256;
+  if (TmpBuffer[Size - 1] != '\n')
+    ++NbrLines;
+  delete[] TmpBuffer;
+  return NbrLines;
 }

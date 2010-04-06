@@ -177,6 +177,77 @@ int FixedSplitLine(char* string, char** array, int nbrElements, char separator)
   return NbrElements;
 }
 
+// split a line using a given separator and requesting a fixed number of elements, without taking care of memory allocation 
+//
+// string = string to split
+// array = pointer on the array to use to store elements
+// nbrElements = number of elements to retrieve 
+// separator = character which is used as separator between columns 
+//             if \s (i.e \t or space) is used, then any number of consecutive \s or \t are identify as one separator
+// stringMaxSize = string maximum size that can be used in array
+// return value = number of elements in the line (should be equal if no error occured)
+
+int FixedSplitLine(char* string, char** array, int nbrElements, char separator, int stringMaxSize)
+{
+  stringMaxSize--;
+  char* End = string;
+  int NbrElements = 0;
+  long TmpLength;
+  if ((separator == ' ') || (separator == '\t'))
+    while (((*End) != '\0') && ((*End) != '\n'))
+      {
+	if (((*End) == ' ') || ((*End) == '\t'))
+	  {
+	    if (NbrElements < nbrElements)
+	      {
+		TmpLength = End - string;
+		if (stringMaxSize > TmpLength)
+		  {
+		    strncpy (array[NbrElements], string, TmpLength);
+		    array[NbrElements][TmpLength] = '\0';
+		  }
+		else
+		  {
+		    strncpy (array[NbrElements], string, stringMaxSize);
+		    array[NbrElements][stringMaxSize] = '\0';
+		  }
+	      }
+	    ++NbrElements;
+	    while ((((*End) != '\0') && ((*End) != '\n')) && (((*End) == ' ') || ((*End) == '\t')))
+	      ++End;
+	    string = End;
+	  }
+	else
+	  ++End;
+      }
+  else
+    while (((*End) != '\0') && ((*End) != '\n'))
+      {
+	if ((*End) == separator)
+	  {
+	    if (NbrElements < nbrElements)
+	      {
+		TmpLength = End - string;
+		array[NbrElements] = new char [TmpLength + 1];
+		strncpy (array[NbrElements], string, TmpLength);
+		array[NbrElements][TmpLength] = '\0';
+	      }
+	    ++NbrElements;
+	    string = End + 1;
+	  }
+	++End;
+      }
+  if (NbrElements < nbrElements)
+    {
+      TmpLength = End - string;
+      array[NbrElements] = new char [TmpLength + 1];
+      strncpy (array[NbrElements], string, TmpLength);
+      array[NbrElements][TmpLength] = '\0';
+    }
+  ++NbrElements;	
+  return NbrElements;
+}
+
 // clean a line from useless comments and spaces
 // 
 // line = pointer to the line to clean
