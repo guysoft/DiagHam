@@ -30,6 +30,8 @@
 
 #include "config.h"
 
+#include "LanczosAlgorithm/LanczosManager.h"
+
 #include "Architecture/AbstractArchitecture.h"
 
 #include "LanczosAlgorithm/AbstractLanczosAlgorithm.h"
@@ -40,7 +42,15 @@
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithmWithDiskStorage.h"
 #include "LanczosAlgorithm/FullReorthogonalizedBlockLanczosAlgorithm.h"
 #include "LanczosAlgorithm/BasicLanczosAlgorithmWithGroundStateDiskStorage.h"
-#include "LanczosAlgorithm/LanczosManager.h"
+
+#include "LanczosAlgorithm/ComplexBasicLanczosAlgorithm.h"
+#include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithDiskStorage.h"
+#include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithGroundState.h"
+#include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithEigenstates.h"
+#include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithGroundStateFastDisk.h"
+#include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithm.h"
+#include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage.h"
+
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -49,6 +59,11 @@
 #include "Options/SingleIntegerOption.h"
 #include "Options/SingleStringOption.h"
 #include "Options/SingleDoubleOption.h"
+
+
+#include <iostream>
+using std::cout;
+using std::endl;
 
 
 // default constructor
@@ -167,6 +182,38 @@ AbstractLanczosAlgorithm* LanczosManager::GetLanczosAlgorithm(AbstractArchitectu
 		}
 	      else
 		this->LanczosAlgorithm = new FullReorthogonalizedLanczosAlgorithmWithDiskStorage (architecture, NbrEigenvalue, VectorMemory, MaxNbrIterLanczos);
+	    }
+	}
+      else
+	{
+	  if ((NbrEigenvalue == 1) && (FullReorthogonalizationFlag == false))
+	    {
+	      if (DiskFlag == false)
+		if (EvaluateEigenvectors == true)
+		  {
+		    cout << "Using ComplexBasicLanczosAlgorithmWithGroundStateFastDisk"<<endl;
+		    this->LanczosAlgorithm = new ComplexBasicLanczosAlgorithmWithGroundStateFastDisk(architecture, MaxNbrIterLanczos , FastDiskFlag, ResumeFastDiskFlag);
+		  }
+		else
+		  this->LanczosAlgorithm = new ComplexBasicLanczosAlgorithm(architecture, NbrEigenvalue, MaxNbrIterLanczos);
+	      else
+		if (EvaluateEigenvectors == true)
+		  {
+		    cout << "Complex Lanczos Algorithm with GroundState and Disk Storage not implemented!"<<endl;
+		    exit(1);
+		    //this->LanczosAlgorithm = new ComplexBasicLanczosAlgorithmWithGroundStateDiskStorage(architecture, NbrIterLanczos, MaxNbrIterLanczos);
+		  }
+		else
+		  this->LanczosAlgorithm = new ComplexBasicLanczosAlgorithmWithDiskStorage(architecture, NbrEigenvalue, MaxNbrIterLanczos);
+	    }
+	  else
+	    {
+	      if (DiskFlag == false)
+		{
+		  this->LanczosAlgorithm = new FullReorthogonalizedComplexLanczosAlgorithm (architecture, NbrEigenvalue, MaxNbrIterLanczos);
+		}
+	      else
+		this->LanczosAlgorithm = new FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage (architecture, NbrEigenvalue, VectorMemory, MaxNbrIterLanczos);
 	    }
 	}
     }

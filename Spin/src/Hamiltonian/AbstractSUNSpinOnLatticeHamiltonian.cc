@@ -1555,7 +1555,7 @@ void AbstractSUNSpinOnLatticeHamiltonian::EnableFastMultiplication()
   for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
     {
       TmpInteractionPerComponent = this->NbrRealInteractionPerComponent[TotalPos];
-      if (HaveComplexInteractions)
+      if ((HaveComplexInteractions)||(NbrCyclicPermutations>0))
 	TmpInteractionPerComponent+=this->NbrComplexInteractionPerComponent[TotalPos];
       this->InteractionPerComponentIndex[TotalPos] = new int [TmpInteractionPerComponent];
       this->InteractionPerComponentCoefficientIndex[TotalPos] = new unsigned short [TmpInteractionPerComponent];      
@@ -1673,7 +1673,7 @@ void AbstractSUNSpinOnLatticeHamiltonian::PartialEnableFastMultiplication(int fi
   for (int i = Min; i < Max; ++i)
     {
       TmpInteractionPerComponent = this->NbrRealInteractionPerComponent[i];
-      if (HaveComplexInteractions)
+      if ((HaveComplexInteractions)||(NbrCyclicPermutations>0))
 	TmpInteractionPerComponent+=this->NbrComplexInteractionPerComponent[i];
       this->InteractionPerComponentIndex[i] = new int [TmpInteractionPerComponent];
       this->InteractionPerComponentCoefficientIndex[i] = new unsigned short [TmpInteractionPerComponent];      
@@ -1711,6 +1711,30 @@ void AbstractSUNSpinOnLatticeHamiltonian::PartialEnableFastMultiplication(int fi
 	      s2 = this->PermutationJ[p];
 	      TmpComplexInteraction = this->ComplexPermutationPrefactors[f];	  
 	      Index = TmpSpins->SpinPermutation(i, s1, s2);
+	      if (Index < Dim)
+		{
+		  TmpIndexArray[PosC] = Index;
+		  tmpElementPos = ComplexInteractionCoefficients.InsertElement(TmpComplexInteraction);
+		  if (tmpElementPos > USHRT_MAX )
+		    {
+		      cout << "Error: too many different complex matrix elements for fast storage"<<endl;
+		      exit(1);
+		    }
+		  TmpCoefficientIndexArray[PosC] = (unsigned short) tmpElementPos;
+		  ++PosC;
+		}
+	    }
+	}
+      if (NbrCyclicPermutations>0)
+	{
+	  int *s,l;
+	  Complex TmpComplexInteraction;
+	  for (int p=0; p<NbrCyclicPermutations; ++p)
+	    {
+	      s = this->CyclicPermutationIndices[p];
+	      l = this->CyclicPermutationLength[p];
+	      TmpComplexInteraction = this->CyclicPermutationPrefactors[p];
+	      Index = TmpSpins->CyclicSpinPermutation(i, l, s);
 	      if (Index < Dim)
 		{
 		  TmpIndexArray[PosC] = Index;

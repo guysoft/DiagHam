@@ -47,7 +47,7 @@ using std::endl;
 //#define VERBOSE
 
 // testing flag;
-#define TESTING
+//#define TESTING
 
 
 // bitset only needed in testing mode
