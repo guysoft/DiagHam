@@ -38,16 +38,19 @@ int main(int argc, char** argv)
   OptionManager Manager ("ExtractLinearlyIndependentVectors" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
+  OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
 
   Manager += SystemGroup;
+  Manager += ToolsGroup;
   Manager += MiscGroup;
 
   (*SystemGroup) += new  SingleStringOption ('b', "basis", "name of the file that contains the vector files used to describe the basis");
   (*SystemGroup) += new BooleanOption ('\n', "check-only", "check how many vectors are linearly independent without extracting the basis");
   (*SystemGroup) += new SingleDoubleOption ('\n', "error", "bound above which vectors are consider as linearly independent", 1e-10);
   (*SystemGroup) += new  SingleStringOption ('\n', "vector-prefix", "prefix to use for each vector of the basis", "vector");
-
-
+#ifdef __LAPACK__
+  (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
+#endif
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -109,19 +112,24 @@ int main(int argc, char** argv)
     for (int j = 0; j < NbrVectors; ++j)
       HRep(i ,j) = Basis[j] * Basis[i];
 
-  RealTriDiagonalSymmetricMatrix TmpTriDiag (NbrVectors);
+  RealDiagonalMatrix TmpDiag (NbrVectors);
 
 
   if (Manager.GetBoolean("check-only") == true)	
     {
-      HRep.Householder(TmpTriDiag, 1e-7);
-      TmpTriDiag.Diagonalize();
-      TmpTriDiag.SortMatrixUpOrder();
+#ifdef __LAPACK__
+      if (Manager.GetBoolean("use-lapack") == true)
+	HRep.LapackDiagonalize(TmpDiag);
+      else
+	HRep.Diagonalize(TmpDiag);
+#else
+      HRep.Diagonalize(TmpDiag);
+#endif		  
       int Count = 0;
       for (int i = 0; i < NbrVectors; ++i)
 	{
-	  cout << TmpTriDiag.DiagonalElement(i) << " ";
-	  if (fabs( TmpTriDiag.DiagonalElement(i)) > Error)
+	  cout << TmpDiag[i] << " ";
+	  if (fabs(TmpDiag[i]) > Error)
 	    Count++;
 	}
       cout << endl;
@@ -132,16 +140,21 @@ int main(int argc, char** argv)
       RealMatrix TmpEigenvector (NbrVectors, NbrVectors, true);	      
       for (int l = 0; l < NbrVectors; ++l)
 	TmpEigenvector(l, l) = 1.0;
-      HRep.Householder(TmpTriDiag, 1e-7, TmpEigenvector);
-      TmpTriDiag.Diagonalize(TmpEigenvector);
-      TmpTriDiag.SortMatrixUpOrder(TmpEigenvector);
+#ifdef __LAPACK__
+      if (Manager.GetBoolean("use-lapack") == true)
+	HRep.LapackDiagonalize(TmpDiag, TmpEigenvector);
+      else
+	HRep.Diagonalize(TmpDiag, TmpEigenvector);
+#else
+      HRep.Diagonalize(TmpDiag, TmpEigenvector);
+#endif
       char* OutputVectorFileName = new char [strlen(VectorPrefix) + 32];
       int TmpDimension = Basis[0].GetVectorDimension();
       int Count = 0;
       for (int i = 0; i < NbrVectors; ++i)
 	{
-	  cout << TmpTriDiag.DiagonalElement(i) << " ";
-	  if (fabs( TmpTriDiag.DiagonalElement(i)) > Error)
+	  cout << TmpDiag[i] << " ";
+	  if (fabs(TmpDiag[i]) > Error)
 	    {
 	      RealVector TmpVector (TmpDimension, true);
 	      for (int j = 0; j < NbrVectors; ++j)
