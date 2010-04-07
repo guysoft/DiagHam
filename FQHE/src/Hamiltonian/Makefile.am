@@ -63,4 +63,5 @@ ProjectedQHEHamiltonian.cc \
 ParticleOnSphereGenericFourBodyHamiltonian.cc \
 ParticleOnSphereGenericFiveBodyHamiltonian.cc \
 ParticleOnSphereProjectorHamiltonian.cc \
-ParticleOnLatticeExternalHamiltonian.cc
+ParticleOnLatticeExternalHamiltonian.cc \
+ParticleOnSphereTwoLandauLevelL2Hamiltonian.cc
