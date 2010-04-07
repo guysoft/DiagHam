@@ -60,7 +60,7 @@
 #include "Options/SingleStringOption.h"
 #include "Options/SingleDoubleOption.h"
 
-
+#include <cstdlib>
 #include <iostream>
 using std::cout;
 using std::endl;
@@ -136,7 +136,7 @@ AbstractLanczosAlgorithm* LanczosManager::GetLanczosAlgorithm(AbstractArchitectu
 {
   if ((this->Options != 0) && (this->LanczosAlgorithm == 0))
     {      
-      bool ResumeFlag = ((BooleanOption*) (*(this->Options))["resume"])->GetBoolean();
+      // bool ResumeFlag = ((BooleanOption*) (*(this->Options))["resume"])->GetBoolean();
       bool DiskFlag = ((BooleanOption*) (*(this->Options))["disk"])->GetBoolean();
       int MaxNbrIterLanczos = ((SingleIntegerOption*) (*(this->Options))["iter-max"])->GetInteger();
       int NbrIterLanczos = ((SingleIntegerOption*) (*(this->Options))["nbr-iter"])->GetInteger();
@@ -145,9 +145,9 @@ AbstractLanczosAlgorithm* LanczosManager::GetLanczosAlgorithm(AbstractArchitectu
       bool SizeBlockLanczos = ((SingleIntegerOption*) (*(this->Options))["block-size"])->GetInteger();
       bool VectorMemory = ((SingleIntegerOption*) (*(this->Options))["nbr-vector"])->GetInteger();
       bool EvaluateEigenvectors = ((BooleanOption*) (*(this->Options))["eigenstate"])->GetBoolean();
-      char* InitialVectorFileName = ((SingleStringOption*) (*(this->Options))["initial-vector"])->GetString();
-      bool PartialLanczos = ((BooleanOption*) (*(this->Options))["partial-lanczos"])->GetBoolean();
-      double LanczosPrecision = ((SingleDoubleOption*) (*(this->Options))["lanczos-precision"])->GetDouble();
+      //char* InitialVectorFileName = ((SingleStringOption*) (*(this->Options))["initial-vector"])->GetString();
+      //bool PartialLanczos = ((BooleanOption*) (*(this->Options))["partial-lanczos"])->GetBoolean();
+      //double LanczosPrecision = ((SingleDoubleOption*) (*(this->Options))["lanczos-precision"])->GetDouble();
       bool FastDiskFlag = ((BooleanOption*) (*(this->Options))["fast-disk"])->GetBoolean();
       bool ResumeFastDiskFlag = ((BooleanOption*) (*(this->Options))["resume-fastdisk"])->GetBoolean();
       bool FullReorthogonalizationFlag = ((BooleanOption*) (*(this->Options))["force-reorthogonalize"])->GetBoolean();
