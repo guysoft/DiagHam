@@ -14,3 +14,4 @@ NeighborsAcrossBoundary1_0 = 0,0
 NeighborsAcrossBoundary-1_0 = 0,0
 NeighborsAcrossBoundary1_-1 = 0,0
 NeighborsAcrossBoundary-1_1 = 0,0
+Plaquettes = 0,1,0 | 0,0,1

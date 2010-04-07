@@ -62,6 +62,7 @@ using std::ostream;
 AbstractSUNSpinOnLatticeHamiltonian::AbstractSUNSpinOnLatticeHamiltonian()
 {
   this->NbrPermutationTerms = 0;
+  this->NbrCyclicPermutations = 0;
 }
 
 // destructor
@@ -95,6 +96,14 @@ AbstractSUNSpinOnLatticeHamiltonian::~AbstractSUNSpinOnLatticeHamiltonian()
       delete[] this->PermutationI;
       delete[] this->PermutationJ;
     }
+  if (this->NbrCyclicPermutations != 0)
+    {
+      delete[] this->CyclicPermutationPrefactors;
+      delete[] this->CyclicPermutationLength;
+      for (int i=0; i<this->NbrCyclicPermutations; ++i)
+	delete[] this->CyclicPermutationIndices[i];
+      delete[] this->CyclicPermutationIndices;
+    }
 }
 
 // set Hilbert space
@@ -108,6 +117,14 @@ void AbstractSUNSpinOnLatticeHamiltonian::SetHilbertSpace (AbstractHilbertSpace*
       delete[] this->PermutationPrefactors;
       delete[] this->PermutationI;
       delete[] this->PermutationJ;
+    }
+  if (this->NbrCyclicPermutations != 0)
+    {
+      delete[] this->CyclicPermutationPrefactors;
+      delete[] this->CyclicPermutationLength;
+      for (int i=0; i<this->NbrCyclicPermutations; ++i)
+	delete[] this->CyclicPermutationIndices[i];
+      delete[] this->CyclicPermutationIndices;
     }
   this->Spins = (GenericSUNSpinCollection*) hilbertSpace;
   this->EvaluateInteractionTerms();
@@ -264,6 +281,10 @@ RealVector& AbstractSUNSpinOnLatticeHamiltonian::LowLevelAddMultiply(RealVector&
   int ReducedNbrPermutationTerms = NbrPermutationTerms-1;
   if (this->FastMultiplicationFlag == false)
     {
+      if (this->HaveComplexInteractions)
+	{
+	  cout << "Attention, this is a complex Hamiltonian applied to RealVectors."<<endl;
+	}
       int Index;
       int s1;
       int s2;
@@ -867,7 +888,7 @@ RealVector* AbstractSUNSpinOnLatticeHamiltonian::LowLevelMultipleAddMultiplyDisk
 
 ComplexVector& AbstractSUNSpinOnLatticeHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination) 
 {
-  return vDestination;
+  return this->LowLevelMultiply(vSource, vDestination, 0, this->Spins->GetHilbertSpaceDimension());
 }
 
 // multiply a vector by the current hamiltonian for a given range of indices 
@@ -882,7 +903,8 @@ ComplexVector& AbstractSUNSpinOnLatticeHamiltonian::LowLevelMultiply(ComplexVect
 ComplexVector& AbstractSUNSpinOnLatticeHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 							 int firstComponent, int nbrComponent)
 {
-  return vDestination;
+  vDestination.ClearVector();
+  return this->LowLevelAddMultiply(vSource, vDestination, firstComponent, nbrComponent);
 }
 
 // multiply a vector by the current hamiltonian for a given range of indices 
@@ -894,7 +916,7 @@ ComplexVector& AbstractSUNSpinOnLatticeHamiltonian::LowLevelMultiply(ComplexVect
 
 ComplexVector& AbstractSUNSpinOnLatticeHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination)
 {
-  return vDestination;
+  return this->LowLevelAddMultiply(vSource, vDestination, 0, this->Spins->GetHilbertSpaceDimension());
 }
 
 // multiply a vector by the current hamiltonian for a given range of indices 
@@ -908,8 +930,356 @@ ComplexVector& AbstractSUNSpinOnLatticeHamiltonian::LowLevelAddMultiply(ComplexV
 ComplexVector& AbstractSUNSpinOnLatticeHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 								      int firstComponent, int nbrComponent)
 {
+  int LastComponent = firstComponent + nbrComponent;
+  int Dim = this->Spins->GetHilbertSpaceDimension();
+  int ReducedNbrPermutationTerms = NbrPermutationTerms-1;
+  if (this->FastMultiplicationFlag == false)
+    {
+      int Index;
+      int s1;
+      int s2;
+      double TmpInteraction;
+      double TmpInteractionRe;
+      double TmpInteractionIm;
+      GenericSUNSpinCollection* TmpSpins = (GenericSUNSpinCollection*) this->Spins->Clone();
+      if (HaveComplexInteractions)
+	{
+	  int ReducedNbrComplexPermutationTerms = NbrComplexPermutationTerms-1;
+	  for (int p=0; p<ReducedNbrComplexPermutationTerms; ++p)
+	    {
+	      s1 = this->PermutationI[p];
+	      s2 = this->PermutationJ[p];
+	      TmpInteractionRe = this->ComplexPermutationPrefactors[p].Re;
+	      TmpInteractionIm = this->ComplexPermutationPrefactors[p].Im;
+	      for (int i = firstComponent; i < LastComponent; ++i)
+		{
+		  Index = TmpSpins->SpinPermutation(i, s1, s2);
+		  if (Index < Dim)
+		    {
+		      vDestination.Re(Index) += TmpInteractionRe * vSource[i].Re - TmpInteractionIm * vSource[i].Im;
+		      vDestination.Im(Index) += TmpInteractionIm * vSource[i].Re + TmpInteractionRe * vSource[i].Im;
+		    }
+		}
+	    }
+	  s1 = this->PermutationI[ReducedNbrComplexPermutationTerms];
+	  s2 = this->PermutationJ[ReducedNbrComplexPermutationTerms];
+	  TmpInteractionRe = this->ComplexPermutationPrefactors[ReducedNbrComplexPermutationTerms].Re;
+	  TmpInteractionIm = this->ComplexPermutationPrefactors[ReducedNbrComplexPermutationTerms].Im;
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      Index = TmpSpins->SpinPermutation(i, s1, s2);
+	      if (Index < Dim)
+		{
+		  vDestination.Re(Index) += TmpInteractionRe * vSource[i].Re - TmpInteractionIm * vSource[i].Im;
+		  vDestination.Im(Index) += TmpInteractionIm * vSource[i].Re + TmpInteractionRe * vSource[i].Im;
+		}
+	      vDestination.Re(i) += this->HamiltonianShift * vSource[i].Re;
+	      vDestination.Im(i) += this->HamiltonianShift * vSource[i].Im;
+	    }
+	}
+      
+      for (int p=0; p<ReducedNbrPermutationTerms; ++p)
+	{
+	  s1 = this->PermutationI[p];
+	  s2 = this->PermutationJ[p];
+	  TmpInteraction = this->PermutationPrefactors[p];
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      Index = TmpSpins->SpinPermutation(i, s1, s2);
+	      if (Index < Dim)
+		{
+		  vDestination.Re(Index) += TmpInteraction * vSource[i].Re;
+		  vDestination.Im(Index) += TmpInteraction * vSource[i].Im;
+		}
+	    }
+	}
+      if (NbrPermutationTerms>0)
+	{
+	  s1 = this->PermutationI[ReducedNbrPermutationTerms];
+	  s2 = this->PermutationJ[ReducedNbrPermutationTerms];
+	  TmpInteraction = this->PermutationPrefactors[ReducedNbrPermutationTerms];
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      Index = TmpSpins->SpinPermutation(i, s1, s2);
+	      if (Index < Dim)
+		{
+		  vDestination.Re(Index) += TmpInteraction * vSource[i].Re;
+		  vDestination.Im(Index) += TmpInteraction * vSource[i].Im;
+		}
+	      vDestination.Re(i) += this->HamiltonianShift * vSource[i].Re;
+	      vDestination.Im(i) += this->HamiltonianShift * vSource[i].Im;
+	    }
+	}
+      else
+	{
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      vDestination.Re(i) += this->HamiltonianShift * vSource[i].Re;
+	      vDestination.Im(i) += this->HamiltonianShift * vSource[i].Im;
+	    }
+	}
+      // complex cyclic permutations
+      int *s,l;
+      for (int p=0; p<NbrCyclicPermutations; ++p)
+	{
+	  s = this->CyclicPermutationIndices[p];
+	  l = this->CyclicPermutationLength[p];
+	  TmpInteractionRe = this->CyclicPermutationPrefactors[p].Re;
+	  TmpInteractionIm = this->CyclicPermutationPrefactors[p].Im;
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      Index = TmpSpins->CyclicSpinPermutation(i, l, s);
+	      if (Index < Dim)
+		{
+		  vDestination.Re(Index) += TmpInteractionRe * vSource[i].Re - TmpInteractionIm * vSource[i].Im;
+		  vDestination.Re(Index) += TmpInteractionRe * vSource[i].Im + TmpInteractionIm * vSource[i].Re;
+		}
+	    }
+	}
+      delete TmpSpins;
+    }
+  else // fast calculation enabled
+    {
+      if (this->FastMultiplicationStep == 1)
+	{
+	  int* TmpIndexArray;
+	  unsigned short* TmpCoefficientIndexArray;
+	  double TmpRe;
+	  double TmpIm;
+	  Complex *TmpCPtr;
+	  unsigned short TmpNbrRealInteraction;
+	  unsigned short TmpNbrComplexInteraction;
+	  int k = firstComponent;
+	  firstComponent -= this->PrecalculationShift;
+	  LastComponent -= this->PrecalculationShift;
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      TmpNbrRealInteraction = this->NbrRealInteractionPerComponent[i];
+	      TmpNbrComplexInteraction = this->NbrComplexInteractionPerComponent[i];
+	      TmpIndexArray = this->InteractionPerComponentIndex[i];
+	      TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[i];
+	      TmpRe = vSource[k].Re;
+	      TmpIm = vSource[k].Im;
+	      int Pos=0;
+	      for (; Pos < TmpNbrRealInteraction; ++Pos)
+		{
+		  vDestination.Re(TmpIndexArray[Pos]) +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]]*TmpRe;
+		  vDestination.Im(TmpIndexArray[Pos]) +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]]*TmpIm;
+		}
+	      for (int j=0; j < TmpNbrComplexInteraction; ++j, ++Pos)
+		{
+		  TmpCPtr= &(ComplexInteractionCoefficients[TmpCoefficientIndexArray[Pos]]);
+		  vDestination.Re(TmpIndexArray[Pos]) +=  TmpCPtr->Re*TmpRe-TmpCPtr->Im*TmpIm;
+		  vDestination.Im(TmpIndexArray[Pos]) +=  TmpCPtr->Re*TmpIm+TmpCPtr->Im*TmpRe;		  
+		}
+	      vDestination.Re(k) += this->HamiltonianShift * TmpRe;
+	      vDestination.Im(k) += this->HamiltonianShift * TmpIm;	      
+	      ++k;
+	    }
+	}
+      else
+	{
+	  if (this->DiskStorageFlag == false)
+	    {
+	      this->LowLevelAddMultiplyPartialFastMultiply(vSource, vDestination, firstComponent, nbrComponent);
+	    }
+	  else
+	    {
+	      this->LowLevelAddMultiplyDiskStorage(vSource, vDestination, firstComponent, nbrComponent);
+	    }
+	}
+    }
   return vDestination;
 }
+
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and add result to another vector, low level function (no architecture optimization)
+// using partial fast multiply option
+//
+// vSource = vector to be multiplied
+// vDestination = vector at which result has to be added
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+ComplexVector& AbstractSUNSpinOnLatticeHamiltonian::LowLevelAddMultiplyPartialFastMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+										   int firstComponent, int nbrComponent)
+{
+  int LastComponent = firstComponent + nbrComponent;
+  int Dim = this->Spins->GetHilbertSpaceDimension();
+  double TmpRe;
+  double TmpIm;
+  Complex *TmpCPtr;
+  GenericSUNSpinCollection* TmpSpins = (GenericSUNSpinCollection*) this->Spins->Clone();
+  int* TmpIndexArray;
+  short unsigned int* TmpCoefficientIndexArray;
+  int TmpNbrRealInteraction;
+  int TmpNbrComplexInteraction;
+  double TmpInteractionRe;
+  double TmpInteractionIm;
+  firstComponent -= this->PrecalculationShift;
+  LastComponent -= this->PrecalculationShift;
+  int Pos = firstComponent / this->FastMultiplicationStep; 
+  int PosMod = firstComponent % this->FastMultiplicationStep;
+  if (PosMod != 0)
+    {
+      ++Pos;
+      PosMod = this->FastMultiplicationStep - PosMod;
+    }
+  int l =  PosMod + firstComponent + this->PrecalculationShift;
+  for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
+    {
+      TmpNbrRealInteraction = this->NbrRealInteractionPerComponent[Pos];
+      TmpNbrComplexInteraction = this->NbrComplexInteractionPerComponent[Pos];
+      TmpIndexArray = this->InteractionPerComponentIndex[Pos];
+      TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[Pos];
+      TmpRe = vSource[l].Re;
+      TmpIm = vSource[l].Im;
+      int Pos2=0;
+      for (; Pos2 < TmpNbrRealInteraction; ++Pos2)
+	{
+	  vDestination.Re(TmpIndexArray[Pos2]) +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos2]]*TmpRe;
+	  vDestination.Im(TmpIndexArray[Pos2]) +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos2]]*TmpIm;
+	}
+      for (int j=0; j < TmpNbrComplexInteraction; ++j, ++Pos2)
+	{
+	  TmpCPtr= &(ComplexInteractionCoefficients[TmpCoefficientIndexArray[Pos2]]);
+	  vDestination.Re(TmpIndexArray[Pos2]) +=  TmpCPtr->Re*TmpRe-TmpCPtr->Im*TmpIm;
+	  vDestination.Im(TmpIndexArray[Pos2]) +=  TmpCPtr->Re*TmpIm+TmpCPtr->Im*TmpRe;		  
+	}
+      vDestination.Re(l) += this->HamiltonianShift * TmpRe;
+      vDestination.Im(l) += this->HamiltonianShift * TmpIm;	      
+      l += this->FastMultiplicationStep;
+      ++Pos;
+    }
+  int Index;
+  int s1;
+  int s2;
+  double TmpInteraction;
+  firstComponent += this->PrecalculationShift;
+  LastComponent += this->PrecalculationShift;
+  int ReducedNbrPermutationTerms=NbrPermutationTerms-1;
+  for (int k = 0; k < this->FastMultiplicationStep; ++k)
+    if (PosMod != k)
+      {
+	if (HaveComplexInteractions)
+	{
+	  int ReducedNbrComplexPermutationTerms = NbrComplexPermutationTerms-1;
+	  for (int p=0; p<ReducedNbrComplexPermutationTerms; ++p)
+	    {
+	      s1 = this->PermutationI[p];
+	      s2 = this->PermutationJ[p];
+	      TmpInteractionRe = this->ComplexPermutationPrefactors[p].Re;
+	      TmpInteractionIm = this->ComplexPermutationPrefactors[p].Im;
+	      for (int i = firstComponent+k; i < LastComponent; i += this->FastMultiplicationStep)
+		{
+		  Index = TmpSpins->SpinPermutation(i, s1, s2);
+		  if (Index < Dim)
+		    {
+		      vDestination.Re(Index) += TmpInteractionRe * vSource[i].Re - TmpInteractionIm * vSource[i].Im;
+		      vDestination.Im(Index) += TmpInteractionIm * vSource[i].Re + TmpInteractionRe * vSource[i].Im;
+		    }
+		}
+	    }
+	  s1 = this->PermutationI[ReducedNbrComplexPermutationTerms];
+	  s2 = this->PermutationJ[ReducedNbrComplexPermutationTerms];
+	  TmpInteractionRe = this->ComplexPermutationPrefactors[ReducedNbrComplexPermutationTerms].Re;
+	  TmpInteractionIm = this->ComplexPermutationPrefactors[ReducedNbrComplexPermutationTerms].Im;
+	  for (int i = firstComponent+k; i < LastComponent; i += this->FastMultiplicationStep)
+	    {
+	      Index = TmpSpins->SpinPermutation(i, s1, s2);
+	      if (Index < Dim)
+		{
+		  vDestination.Re(Index) += TmpInteractionRe * vSource[i].Re - TmpInteractionIm * vSource[i].Im;
+		  vDestination.Im(Index) += TmpInteractionIm * vSource[i].Re + TmpInteractionRe * vSource[i].Im;
+		}
+	      vDestination.Re(i) += this->HamiltonianShift * vSource[i].Re;
+	      vDestination.Im(i) += this->HamiltonianShift * vSource[i].Im;
+	    }
+	}
+      
+      for (int p=0; p<ReducedNbrPermutationTerms; ++p)
+	{
+	  s1 = this->PermutationI[p];
+	  s2 = this->PermutationJ[p];
+	  TmpInteraction = this->PermutationPrefactors[p];
+	  for (int i = firstComponent+k; i < LastComponent; i += this->FastMultiplicationStep)
+	    {
+	      Index = TmpSpins->SpinPermutation(i, s1, s2);
+	      if (Index < Dim)
+		{
+		  vDestination.Re(Index) += TmpInteraction * vSource[i].Re;
+		  vDestination.Im(Index) += TmpInteraction * vSource[i].Im;
+		}
+	    }
+	}
+      if (NbrPermutationTerms>0)
+	{
+	  s1 = this->PermutationI[ReducedNbrPermutationTerms];
+	  s2 = this->PermutationJ[ReducedNbrPermutationTerms];
+	  TmpInteraction = this->PermutationPrefactors[ReducedNbrPermutationTerms];
+	  for (int i = firstComponent+k; i < LastComponent; i += this->FastMultiplicationStep)
+	    {
+	      Index = TmpSpins->SpinPermutation(i, s1, s2);
+	      if (Index < Dim)
+		{
+		  vDestination.Re(Index) += TmpInteraction * vSource[i].Re;
+		  vDestination.Im(Index) += TmpInteraction * vSource[i].Im;
+		}
+	      vDestination.Re(i) += this->HamiltonianShift * vSource[i].Re;
+	      vDestination.Im(i) += this->HamiltonianShift * vSource[i].Im;
+	    }
+	}
+      else
+	{
+	  for (int i = firstComponent+k; i < LastComponent; i += this->FastMultiplicationStep)
+	    {
+	      vDestination.Re(i) += this->HamiltonianShift * vSource[i].Re;
+	      vDestination.Im(i) += this->HamiltonianShift * vSource[i].Im;
+	    }
+	}
+      // complex cyclic permutations
+      int *s,l;
+      for (int p=0; p<NbrCyclicPermutations; ++p)
+	{
+	  s = this->CyclicPermutationIndices[p];
+	  l = this->CyclicPermutationLength[p];
+	  TmpInteractionRe = this->CyclicPermutationPrefactors[p].Re;
+	  TmpInteractionIm = this->CyclicPermutationPrefactors[p].Im;
+	  for (int i = firstComponent+k; i < LastComponent; i += this->FastMultiplicationStep)
+	    {
+	      Index = TmpSpins->CyclicSpinPermutation(i, l, s);
+	      if (Index < Dim)
+		{
+		  vDestination.Re(Index) += TmpInteractionRe * vSource[i].Re - TmpInteractionIm * vSource[i].Im;
+		  vDestination.Re(Index) += TmpInteractionRe * vSource[i].Im + TmpInteractionIm * vSource[i].Re;
+		}
+	    }
+	}
+      }
+  delete TmpSpins;
+  return vDestination;
+}
+
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and add result to another vector, low level function (no architecture optimization)
+// using disk storage option
+//
+// vSource = vector to be multiplied
+// vDestination = vector at which result has to be added
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+ComplexVector& AbstractSUNSpinOnLatticeHamiltonian::LowLevelAddMultiplyDiskStorage(ComplexVector& vSource, ComplexVector& vDestination, 
+										   int firstComponent, int nbrComponent)
+{
+  cout << "Attention, disk storage not implemented in AbstractSUNSpinOnLatticeHamiltonian"<<endl;
+  return vDestination;
+}
+
+
  
 // return a list of left interaction operators
 //
@@ -953,7 +1323,7 @@ long AbstractSUNSpinOnLatticeHamiltonian::FastMultiplicationMemory(long allowedM
   // 1 x array of int* InteractionPerComponentIndex
   // 1 x array of unsigned short* InteractionPerComponentCoefficientIndex
   int StoragePerBasisState;
-  if (this->HaveComplexInteractions)
+  if ((this->HaveComplexInteractions) || (NbrCyclicPermutations>0))
     StoragePerBasisState = (2*sizeof (unsigned short) + sizeof (int*) + sizeof(unsigned short*));
   else
     StoragePerBasisState = (sizeof (unsigned short) + sizeof (int*) + sizeof(unsigned short*));
@@ -966,7 +1336,7 @@ long AbstractSUNSpinOnLatticeHamiltonian::FastMultiplicationMemory(long allowedM
   for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
     this->NbrRealInteractionPerComponent[i] = 0x0;
   this->NbrComplexInteractionPerComponent = NULL;
-  if (this->HaveComplexInteractions)
+  if ((this->HaveComplexInteractions)||(NbrCyclicPermutations>0))
     {
       this->NbrComplexInteractionPerComponent = new unsigned short [EffectiveHilbertSpaceDimension];   
       for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
@@ -983,7 +1353,7 @@ long AbstractSUNSpinOnLatticeHamiltonian::FastMultiplicationMemory(long allowedM
   Operation.ApplyOperation(this->Architecture);
 
   long Memory = 0;
-  if (this->HaveComplexInteractions)    
+  if ((this->HaveComplexInteractions)||(NbrCyclicPermutations>0))
     for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
       {
 	Memory += this->NbrRealInteractionPerComponent[i];
@@ -1017,7 +1387,7 @@ long AbstractSUNSpinOnLatticeHamiltonian::FastMultiplicationMemory(long allowedM
 	  // elements, which is assumed small (maybe need to add an estimate, at least, again!)
 	  TmpMemory = AllowedMemory - StoragePerBasisState * ReducedSpaceDimension;
 	  Memory = 0;
-	  if (this->HaveComplexInteractions)
+	  if ((this->HaveComplexInteractions)||(NbrCyclicPermutations>0))
 	    for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
 	      {
 		Memory += this->NbrRealInteractionPerComponent[i];
@@ -1034,10 +1404,10 @@ long AbstractSUNSpinOnLatticeHamiltonian::FastMultiplicationMemory(long allowedM
 	  int TotalReducedSpaceDimension = ReducedSpaceDimension;
 	  unsigned short* TmpNbrRealInteractionPerComponent = new unsigned short [TotalReducedSpaceDimension];
 	  unsigned short* TmpNbrComplexInteractionPerComponent = NULL;
-	  if (this->HaveComplexInteractions)
+	  if ((this->HaveComplexInteractions)||(NbrCyclicPermutations>0))
 	    TmpNbrComplexInteractionPerComponent = new unsigned short [TotalReducedSpaceDimension];	  
 	  int Pos = 0;
-	  if (this->HaveComplexInteractions)
+	  if ((this->HaveComplexInteractions)||(NbrCyclicPermutations>0))
 	    for (int i = 0; i < ReducedSpaceDimension; ++i)
 	      {
 		TmpNbrRealInteractionPerComponent[i] = this->NbrRealInteractionPerComponent[Pos];
@@ -1051,7 +1421,7 @@ long AbstractSUNSpinOnLatticeHamiltonian::FastMultiplicationMemory(long allowedM
 		Pos += this->FastMultiplicationStep;
 	      }
 	  delete[] this->NbrRealInteractionPerComponent;
-	  if (this->HaveComplexInteractions)
+	  if ((this->HaveComplexInteractions)||(NbrCyclicPermutations>0))
 	    delete[] this->NbrComplexInteractionPerComponent;
 	  this->NbrRealInteractionPerComponent = TmpNbrRealInteractionPerComponent;
 	  this->NbrComplexInteractionPerComponent = TmpNbrComplexInteractionPerComponent;
@@ -1104,7 +1474,6 @@ long AbstractSUNSpinOnLatticeHamiltonian::PartialFastMultiplicationMemory(int fi
 	    }
 	}
     }
-
   if (this->HaveComplexInteractions)
     {
       Complex TmpComplexInteraction;
@@ -1117,6 +1486,26 @@ long AbstractSUNSpinOnLatticeHamiltonian::PartialFastMultiplicationMemory(int fi
 	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
 	      Index = TmpSpins->SpinPermutation(i, s1, s2);
+	      if (Index < Dim)
+		{
+		  ++Memory;		
+		  ++this->NbrComplexInteractionPerComponent[i - this->PrecalculationShift];		  
+		}
+	    }
+	}
+    }
+  if (NbrCyclicPermutations>0)
+    {
+      int *s,l;
+      Complex TmpComplexInteraction;
+      for (int p=0; p<NbrCyclicPermutations; ++p)
+	{
+	  s = this->CyclicPermutationIndices[p];
+	  l = this->CyclicPermutationLength[p];
+	  TmpComplexInteraction = this->CyclicPermutationPrefactors[p];
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      Index = TmpSpins->CyclicSpinPermutation(i, l, s);
 	      if (Index < Dim)
 		{
 		  ++Memory;		
@@ -1204,6 +1593,30 @@ void AbstractSUNSpinOnLatticeHamiltonian::EnableFastMultiplication()
 	      s2 = this->PermutationJ[p];
 	      TmpComplexInteraction = this->ComplexPermutationPrefactors[f];	  
 	      Index = TmpSpins->SpinPermutation(i, s1, s2);
+	      if (Index < Dim)
+		{
+		  TmpIndexArray[PosC] = Index;
+		  tmpElementPos = ComplexInteractionCoefficients.InsertElement(TmpComplexInteraction);
+		  if (tmpElementPos > USHRT_MAX )
+		    {
+		      cout << "Error: too many different complex matrix elements for fast storage"<<endl;
+		      exit(1);
+		    }
+		  TmpCoefficientIndexArray[PosC] = (unsigned short) tmpElementPos;
+		  ++PosC;
+		}
+	    }
+	}
+      if (NbrCyclicPermutations>0)
+	{
+	  int *s,l;
+	  Complex TmpComplexInteraction;
+	  for (int p=0; p<NbrCyclicPermutations; ++p)
+	    {
+	      s = this->CyclicPermutationIndices[p];
+	      l = this->CyclicPermutationLength[p];
+	      TmpComplexInteraction = this->CyclicPermutationPrefactors[p];
+	      Index = TmpSpins->CyclicSpinPermutation(i, l, s);
 	      if (Index < Dim)
 		{
 		  TmpIndexArray[PosC] = Index;

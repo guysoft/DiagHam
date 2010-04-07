@@ -175,7 +175,6 @@ RealVector& ParticleOnSphereLMinusOperator::LowLevelMultiply(RealVector& vSource
       for (int j = 1; j <= this->LzMax; ++j)
 	{
 	  Index = this->Particle->AdA(i, j - 1, j, Coefficient);
-	  cout << "LMinus index="<<Index<<endl;
 	  if (Index < TargetDim)
 	    {
 	      vDestination[Index] += Tmp * Coefficient * this->Coefficients[j];		  

@@ -43,7 +43,8 @@ class SUNSpinOnLatticeQuadraticHamiltonian : public AbstractSUNSpinOnLatticeHami
   // definitions of the underlying lattice
   LatticeConnections *Lattice;
   
-  
+  // prefactor of cyclic permutation terms
+  double CyclicPrefactor;
  public:
   // constructor
   // space = Hilbert space for problem
@@ -51,10 +52,11 @@ class SUNSpinOnLatticeQuadraticHamiltonian : public AbstractSUNSpinOnLatticeHami
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
+  // cyclic = prefactor of optional cyclic permutations around plaquettes
   //
   SUNSpinOnLatticeQuadraticHamiltonian(GenericSUNSpinCollection *space, LatticeConnections *lattice, 
 				       AbstractArchitecture* architecture, long memory = -1,
-				       char* precalculationFileName = 0);
+				       char* precalculationFileName = 0, double cyclic = 0.0);
 
   // destructor
   //
@@ -69,37 +71,8 @@ class SUNSpinOnLatticeQuadraticHamiltonian : public AbstractSUNSpinOnLatticeHami
   //
   // return value = corresponding matrix elementdimension
   int GetHilbertSpaceDimension ();
+
   
-  // shift Hamiltonian from a given energy
-  //
-  // shift = shift value
-  void ShiftHamiltonian (double shift);
-
-  // evaluate matrix element
-  //
-  // V1 = vector to left multiply with current matrix
-  // V2 = vector to right multiply with current matrix
-  // return value = corresponding matrix element
-  Complex MatrixElement (RealVector& V1, RealVector& V2);
-  
-  // evaluate matrix element
-  //
-  // V1 = vector to left multiply with current matrix
-  // V2 = vector to right multiply with current matrix
-  // return value = corresponding matrix element
-  Complex MatrixElement (ComplexVector& V1, ComplexVector& V2);
-
-  // return a list of left interaction operators
-  //
-  // return value = list of left interaction operators
-  List<Matrix*> LeftInteractionOperators();  
-
-  // return a list of right interaction operators 
-  //
-  // return value = list of right interaction operators
-  List<Matrix*> RightInteractionOperators();  
-
-
  protected:
 
   // evaluate all interaction factors

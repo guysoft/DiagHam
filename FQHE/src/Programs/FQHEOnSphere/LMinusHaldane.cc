@@ -129,8 +129,8 @@ int main(int argc, char** argv)
     }
 	
   long MemorySpace = 9l << 20;
-  ParticleOnSphere* InputSpace;
-  ParticleOnSphere* TargetSpace;
+  ParticleOnSphere* InputSpace=0;
+  ParticleOnSphere* TargetSpace=0;
   cout << "Creating input space...";
   if (Manager.GetString("input-reference")!=NULL)
     {
@@ -342,6 +342,8 @@ int main(int argc, char** argv)
     }
   ParticleOnSphereLMinusOperator LMinus(InputSpace, TotalLz, LzMax);
   LMinus.Multiply(InitialVector, TargetVector);
+//   double Norm =TargetVector.Norm();
+//   cout << "Target norm = "<<Norm <<endl;
   TargetVector/=TargetVector.Norm();
 
   char *OutputName;

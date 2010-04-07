@@ -39,8 +39,10 @@ using std::cout;
 using std::endl;
 
 // verbosity flag
-//#define VERBOSE
+#define VERBOSE
 
+// testing flag (even more verbose)
+//#define TESTING
 
 
 // generate the object using options from Option Manager
@@ -272,17 +274,27 @@ LatticeConnections::LatticeConnections()
     }  
   
   this->Neighbors = new int*[NbrSites];
+  this->NeighborShift = new int**[NbrSites];
   this->NbrNeighbors = new int[NbrSites];
   for (int i=0; i<NbrSites; ++i)
     this->NbrNeighbors[i] = 0;
   int *TmpNeighbors = new int[NbrNeighborCells*NbrSites];
-  
+  int **TmpNeighborShift = new int*[NbrNeighborCells*NbrSites];
+  for (int i=0; i<NbrNeighborCells*NbrSites; ++i)
+    {
+      TmpNeighborShift[i]=new int[Dimension];
+      for (int j=0; j<Dimension; ++j)
+	TmpNeighborShift[i][j]=0;
+    }
+
   this->NbrCells = this->PeriodicRep[0];
   for (int d=1; d<Dimension; ++d)
     this->NbrCells *= this->PeriodicRep[d];
 
   int *CellCoordinates = new int[Dimension];
   int *CellCoordinates2 = new int[Dimension];
+  int *Translation3 = new int[Dimension];
+  
   for (int c=0; c<NbrCells; ++c)
     {
       this->GetCellCoordinates(c, CellCoordinates);
@@ -308,6 +320,8 @@ LatticeConnections::LatticeConnections()
 		  cout << "... is neighbor"<<endl;
 #endif
 		  TmpNeighbors[NbrNeighbors[Site1]]=Site2;
+		  for (int r=0; r<Dimension; ++r)
+		    TmpNeighborShift[NbrNeighbors[Site1]][r]=0;
 		  ++NbrNeighbors[Site1];
 		}
 #ifdef VERBOSE
@@ -315,25 +329,36 @@ LatticeConnections::LatticeConnections()
 #endif
 	      for (int d=0; d<NbrNeighborCells; ++d)
 		{
-		  if ((*(NeighborsAcrossBoundary[d]))(i,j)!=0.0)
+		  if (((*(NeighborsAcrossBoundary[d]))(i,j))!=0.0)
 		    {
 		      for (int k=0; k<Dimension; ++k)
 			CellCoordinates2[k]=CellCoordinates[k]+NeighborCells[d][k];
-		      Site3 = this->GetSiteNumber(CellCoordinates2, j);
+		      Site3 = this->GetSiteNumber(CellCoordinates2, j, Translation3);
 #ifdef VERBOSE
 		      cout << "additional neighbor from NeigborCell "<<d<<" at "<<
 			CellCoordinates2[0]<<", "<<CellCoordinates2[1]<<", "<<j<<" : Site 3="<<Site3<<endl;
 #endif
 		      TmpNeighbors[NbrNeighbors[Site1]]=Site3;
+		      for (int r=0; r<Dimension; ++r)
+			TmpNeighborShift[NbrNeighbors[Site1]][r]=Translation3[r]/PeriodicRep[r];
 		      ++NbrNeighbors[Site1];
 		    }
 		}	      
 	    }
 	  if (NbrNeighbors[Site1]>0)
-	    Neighbors[Site1] = new int[NbrNeighbors[Site1]];
+	    {
+	      Neighbors[Site1] = new int[NbrNeighbors[Site1]];
+	      NeighborShift[Site1] = new int*[NbrNeighbors[Site1]];
+	      for (int k=0; k<NbrNeighbors[Site1]; ++k)
+		NeighborShift[Site1][k] = new int[Dimension];
+	    }
 	  else Neighbors[Site1] = NULL;
 	  for (int k=0; k<NbrNeighbors[Site1]; ++k)
-	    Neighbors[Site1][k] = TmpNeighbors[k];
+	    {
+	      Neighbors[Site1][k] = TmpNeighbors[k];
+	      for (int r=0; r<Dimension; ++r)
+		NeighborShift[Site1][k][r]=TmpNeighborShift[k][r];
+	    }
 	}
     }
 
@@ -349,7 +374,7 @@ LatticeConnections::LatticeConnections()
       for (int k=1; k<NbrNeighbors[i]; ++k) cout <<" "<<Neighbors[i][k];
       cout << endl;
 #endif
-      this->ArraySort(Neighbors[i], NbrNeighbors[i]);
+      this->ArraySort2(Neighbors[i], NbrNeighbors[i],NeighborShift[i]);
 #ifdef VERBOSE
       cout <<  "sorted = "<<Neighbors[i][0];      
       for (int k=1; k<NbrNeighbors[i]; ++k) cout <<" "<<Neighbors[i][k];
@@ -376,6 +401,70 @@ LatticeConnections::LatticeConnections()
 #endif
     }
 
+  // determine structure of plaquettes
+  char ***PlaquetteString;
+  int NbrPlaquettePerCell;
+  if (LatticeDefinition["Plaquettes"]!=NULL)
+    {
+      if (Dimension!=2)
+	{
+	  cout << "Plaquettes are defined only in 2D lattices."<<endl;
+	  exit(1);
+	}
+      cout << "Assigning plaquettes"<<endl;
+      if (LatticeDefinition.GetAsStringMultipleArray ("Plaquettes", '|', ',', PlaquetteString, NbrPlaquettePerCell, NbrValues)==false)
+	{
+	  cout << "error while parsing Plaquettes in " << this->Options->GetString("lattice-definition") << endl;
+	  exit(-1);
+	}
+      double *v=new double[Dimension+1];
+      this->NbrPlaquettes = NbrPlaquettePerCell * NbrCells;
+      this->NbrPlaquetteSpins = new int[NbrPlaquettes];
+      this->PlaquetteSpins = new int*[NbrPlaquettes];
+      int NbrAssigned=0;
+      for (int p=0; p<NbrPlaquettePerCell; ++p)
+	{
+	  int s;
+	  if (NbrValues[p]!=1+Dimension)
+	    {
+	      cout << "error while decoding Plaquettes in " << this->Options->GetString("lattice-definition") << endl;
+	      cout << "Indicate site that plaquette is attached to and direction of first neighbor site in lattice vectors: "
+		   << "NeighborsInCell = s1,vx1,vy1 | s2,vx2,vy2 | ..."<<endl;
+	      exit(-1);
+	    }
+	  s=strtod(PlaquetteString[p][0], NULL);
+	  for (int i=1; i<=Dimension; ++i)
+	    v[i-1]=strtod(PlaquetteString[p][i], NULL);
+	  if ((s<0)||(s>=NbrSitesPerCell))
+	    {
+	      cout << "Attention: sublattice index "<<s<<" out of range, ignoring plaquette ("<<s<<", "<<v[0]<<", "<<v[1]<<")."<<endl;
+	    }
+	  for (int c=0; c<NbrCells; ++c)
+	    {
+	      int Origin = this->GetSiteNumber(c,s);
+	      this->PlaquetteSpins[NbrAssigned]=this->DeterminePlaquetteSpins(Origin,v,this->NbrPlaquetteSpins[NbrAssigned]);
+	      ++NbrAssigned;
+	    }
+	}
+      for (int i=0; i<NbrPairs; ++i)
+	{
+	  for (int j=0; j<NbrValues[i]; ++j)
+	    delete [] PlaquetteString[i][j];
+	  delete [] PlaquetteString[i];
+	}
+      delete [] NbrValues;
+      delete [] PlaquetteString;
+    }
+  
+//   // plaquettes of the lattice, with indices going counterclockwise
+//   // number of plaquettes
+//   int NbrPlaquettes;
+//   // number of spins on plaquette
+//   int *NbrPlaquetteSpins;
+//   // spins involved in each plaquette
+//   int **PlaquetteSpins;
+
+
   cout << "LatticeConnections created"<<endl;
 
   for (int d=0; d<NbrNeighborCells; ++d)
@@ -383,8 +472,12 @@ LatticeConnections::LatticeConnections()
   delete [] NeighborsAcrossBoundary;
   delete [] CellCoordinates;
   delete [] CellCoordinates2;
+  delete [] Translation3;
   delete [] FieldName;
   delete [] TmpNeighbors;
+  for (int i=0; i<NbrNeighborCells*NbrSites; ++i)
+    delete [] TmpNeighborShift[i];
+  delete [] TmpNeighborShift;
 }
 
 // destructor
@@ -398,10 +491,17 @@ LatticeConnections::~LatticeConnections()
 	{
 	  if (this->Neighbors[i]!=NULL)
 	    delete [] this->Neighbors[i];
+	  if (this->Neighbors[i]!=NULL)
+	    {
+	      for (int j=0; j<NbrNeighbors[i]; ++j)
+		delete [] NeighborShift[i][j];
+	      delete [] NeighborShift[i];
+	    }
 	  if (this->Partners[i]!=NULL)
 	    delete [] this->Partners[i];
 	}      
       delete [] this->Neighbors;
+      delete [] NeighborShift;
       delete [] this->Partners;
       delete [] this->NbrNeighbors;
       delete [] this->NbrPartners;
@@ -411,6 +511,48 @@ LatticeConnections::~LatticeConnections()
       delete [] this->Descriptor;
     }
 }
+
+
+// request address of partners of site
+// nbrSite = number of site whose partners to request
+// nbrNeighbors = number of partners found
+// Neighbors = array to partner sites
+// phases = values of phase for tunnelling matrix element
+// periodicTranslations = translations into the fundamental domain
+void LatticeConnections::GetNeighbors(int nbrSite, int &nbrNeighbors, int * &neighbors, int **&periodicTranslations)
+{
+  if ((nbrSite>-1)&&(nbrSite<NbrSites))
+    {
+      neighbors = this->Neighbors[nbrSite];
+      nbrNeighbors = this->NbrNeighbors[nbrSite];
+      periodicTranslations = this->NeighborShift[nbrSite];
+    }
+  else
+    {
+      nbrNeighbors = 0;
+      neighbors = NULL;
+    }
+}
+
+// get spins of a given plaquette
+// nbrPlaquette = number of plaquette
+// spins = returns spins involved in plaquette
+// nbrSpins = returns number of spins in plaquette
+void LatticeConnections::GetPlaquetteSpins(int nbrPlaquette, int * &spins, int &nbrSpins)
+{
+  if ((nbrPlaquette>=0) && (nbrPlaquette<NbrPlaquettes))
+    {
+      spins = PlaquetteSpins[nbrPlaquette];
+      nbrSpins = NbrPlaquetteSpins[nbrPlaquette];
+    }
+  else
+    {
+      spins = NULL;
+      nbrSpins = 0;
+    }
+}
+
+
 
 
 // get cell coordinates given the number of the unit cell
@@ -444,6 +586,22 @@ void LatticeConnections::GetSiteCoordinates(int nbrSite, int *cellCoordinates, i
   cellCoordinates[Dimension-1] = (nbrSite/Divisor)%this->PeriodicRep[Dimension-1];
 }
 
+// retrieve the position of a given site
+// cellCoordinates = resulting coordinates, has to be reserved prior to call
+// sublattice = resulting sublattice  
+RealVector LatticeConnections::GetSitePosition(int *cellCoordinates, int sublattice)
+{
+  RealVector Position(this->Dimension,true);
+  for (int i=0; i<Dimension; ++i)
+    {
+      Position.AddLinearCombination((double)cellCoordinates[i],LatticeVectors[i]);
+    }
+  Position.AddLinearCombination(1.0,SubLatticeVectors[sublattice]);
+  // cout << "Position of site "<<cellCoordinates[0]<<", "<<cellCoordinates[1]<<", "<<sublattice<<endl<<Position;
+  return Position;
+}
+
+
 
 // get number of a site in cell nbrCell
 // cellCoordinates = coordinates of cell to be addressed
@@ -460,6 +618,27 @@ int LatticeConnections::GetSiteNumber(int *cellCoordinates, int sublattice)
   Result+=sublattice;
   return Result%NbrSites;
 }
+
+// get number of a site in cell nbrCell, and return translation vector back into the simulation cell
+// cellCoordinates = coordinates of cell to be addressed
+// sublattice = sublattice index
+// translation = vector of tranlation back into simulation cell
+int LatticeConnections::GetSiteNumber(int *cellCoordinates, int sublattice, int *translation)
+{
+#ifdef DEBUG_OUTPUT
+  cout << "Periodizing entry"<<Dimension-1<<endl;
+#endif
+  int Result=this->Periodize(cellCoordinates[Dimension-1], Dimension-1, translation[Dimension-1]);
+  for (int i=Dimension-2; i>-1; --i)
+    {
+      Result*=this->PeriodicRep[i];
+      Result+=this->Periodize(cellCoordinates[i], i, translation[i]);
+    }
+  Result*=NbrSitesPerCell;
+  Result+=sublattice;
+  return Result%NbrSites;
+}
+
 
 
 // request address of partners of site
@@ -535,4 +714,181 @@ void LatticeConnections::ArraySort(int* array, int length)
 	}
       inc = round(inc / 2.2);
     }
+}
+
+
+// simple sort algorithm
+// array = integer array to be sorted
+// length = length of array
+// array2 = auxiliary array to be permuted in the same way
+void LatticeConnections::ArraySort2(int* array, int length, int **array2)
+{
+  int inc = round(length/2.0);
+  int tmpI;
+  int *tmpI2;
+  while (inc > 0)
+    {
+      for (int i = inc; i< length; ++i)
+	{
+	  tmpI = array[i];
+	  tmpI2 = array2[i];
+	  int j = i;
+	  while ((j>=inc) && ( array[j-inc] < tmpI) )
+	    {
+	      array[j] = array[j - inc];
+	      array2[j] = array2[j - inc];
+	      j = j - inc;
+	    }
+	  array[j] = tmpI;
+	  array2[j] = tmpI2;
+	}
+      inc = round(inc / 2.2);
+    }
+}
+
+// find spins within a plaquette of the lattice
+int *LatticeConnections::DeterminePlaquetteSpins(int origin, double *vec, int &length)
+{
+#ifdef TESTING
+  cout << "Calling LatticeConnections(origin="<<origin<<", vec="<<vec[0]<<", "<<vec[1]<<")"<<endl;
+#endif
+  RealVector LastPosition;
+  RealVector NextPosition;
+  int *CellCoordinates = new int[Dimension];
+  int Subl;
+  GetSiteCoordinates(origin, CellCoordinates, Subl);
+  LastPosition = this->GetSitePosition(CellCoordinates, Subl);
+  // find first neighbor
+  RealVector OldDirection(Dimension,true);
+  RealVector NewDirection(Dimension);
+  for (int i=0; i<Dimension; ++i)
+    OldDirection.AddLinearCombination(vec[i], LatticeVectors[i]);
+  OldDirection/=OldDirection.Norm();
+  int TmpNbrNeighbors;
+  int *TmpNeighbors;
+  int **TmpTranslations;
+  int *NewPlaquetteSpins =  new int[NbrSites];
+  NewPlaquetteSpins[0]=origin;
+  int NewNbrPlaquetteSpins=1;
+  RealVector TotalOffset(Dimension,true);
+
+  // find second site
+  this->GetNeighbors(origin, TmpNbrNeighbors, TmpNeighbors, TmpTranslations);
+  for(int i=0; i<TmpNbrNeighbors; ++i)
+    {
+      GetSiteCoordinates(TmpNeighbors[i], CellCoordinates, Subl);
+      NextPosition = this->GetSitePosition(CellCoordinates, Subl);
+#ifdef TESTING
+      cout << "0 Connection: "<<origin<<"->"<<TmpNeighbors[i]<<" dest:";
+#endif
+      for (int j=0; j<Dimension; ++j)
+	{
+	  NextPosition.AddLinearCombination(-(double)TmpTranslations[i][j]*GetLatticeLength(j),LatticeVectors[j]);
+	}
+#ifdef TESTING
+      cout <<endl<<NextPosition;
+#endif
+      NewDirection.Copy(NextPosition);
+      NewDirection.AddLinearCombination(-1.0, LastPosition);
+      TotalOffset.Copy(NewDirection);
+      NewDirection/=NewDirection.Norm();
+#ifdef TESTING
+      cout << "0 Comparing: NewDir"<<endl<<NewDirection<<"OldDir"<<endl<<OldDirection<<endl;
+#endif
+      if (OldDirection*NewDirection>0.99)
+	{
+	  NewPlaquetteSpins[1]=TmpNeighbors[i];
+	  ++NewNbrPlaquetteSpins;
+	  break;
+	}
+    }
+  OldDirection.Copy(NewDirection);
+#ifdef TESTING
+  cout << "Origin="<<origin<<", Spin1="<<NewPlaquetteSpins[1]<<endl;
+#endif
+  // iterate to close plaquette
+  while(TotalOffset.Norm()>1e-6)
+    {
+      GetSiteCoordinates(NewPlaquetteSpins[NewNbrPlaquetteSpins-1], CellCoordinates, Subl);
+      LastPosition = this->GetSitePosition(CellCoordinates, Subl);
+
+      this->GetNeighbors(NewPlaquetteSpins[NewNbrPlaquetteSpins-1], TmpNbrNeighbors, TmpNeighbors, TmpTranslations);
+      double MinScalar=1.0;
+      int MinIndex=-1;
+      for(int i=0; i<TmpNbrNeighbors; ++i)
+	{
+	  GetSiteCoordinates(TmpNeighbors[i], CellCoordinates, Subl);
+	  NextPosition = this->GetSitePosition(CellCoordinates, Subl);
+#ifdef TESTING
+	  cout << "Connection: "<<NewPlaquetteSpins[NewNbrPlaquetteSpins-1]<<"->"<<TmpNeighbors[i]<<" translated:";
+#endif
+	  for (int j=0; j<Dimension; ++j)
+	    {
+#ifdef TESTING
+	      cout << " "<<TmpTranslations[i][j];
+#endif
+	      NextPosition.AddLinearCombination(-(double)TmpTranslations[i][j]*GetLatticeLength(j),LatticeVectors[j]);
+	    }
+#ifdef TESTING
+	  cout <<endl<<"Coordinates:"<<endl<<NextPosition;
+#endif
+	  NewDirection.Copy(NextPosition);
+	  NewDirection.AddLinearCombination(-1.0, LastPosition);
+	  NewDirection/=NewDirection.Norm();
+	  double MyScalar=OldDirection*NewDirection;
+	  //cout << "0 Comparing: NewDir"<<endl<<NewDirection<<"OldDir"<<endl<<OldDirection<<endl;
+	  if (MyScalar>-0.99)
+	    if (OldDirection[1]*NewDirection[0]-OldDirection[0]*NewDirection[1]<0.0)
+	      if (MyScalar<MinScalar)
+		{
+		  //cout << "New Minimum"<<endl;
+		  MinScalar=MyScalar;
+		  MinIndex=i;
+		}
+	}
+#ifdef TESTING
+      if (MinIndex>=0)
+	cout << "Next site: "<<TmpNeighbors[MinIndex]<<endl;
+      else
+	{
+	  cout << "error: no further site found"<<endl;
+	}
+#endif
+      GetSiteCoordinates(TmpNeighbors[MinIndex], CellCoordinates, Subl);
+      NextPosition = this->GetSitePosition(CellCoordinates, Subl);
+#ifdef TESTING
+      cout << "Connection: "<<origin<<"->"<<TmpNeighbors[MinIndex]<<" translated:";
+#endif
+      for (int j=0; j<Dimension; ++j)
+	{
+#ifdef TESTING
+	  cout << " "<<TmpTranslations[MinIndex][j];
+#endif
+	  NextPosition.AddLinearCombination(-(double)TmpTranslations[MinIndex][j]*GetLatticeLength(j),LatticeVectors[j]);
+	}
+#ifdef TESTING
+      cout <<endl<<"NextPosition:"<<endl<<NextPosition;
+#endif
+      OldDirection.Copy(NextPosition);
+      OldDirection.AddLinearCombination(-1.0, LastPosition);
+      TotalOffset.AddLinearCombination(1.0,OldDirection);
+      OldDirection/=OldDirection.Norm();
+#ifdef TESTING
+      cout << "Spin"<<NewNbrPlaquetteSpins<<"="<<TmpNeighbors[MinIndex]<<endl;
+      cout << "TotalOffset="<<endl<<TotalOffset;
+#endif
+      NewPlaquetteSpins[NewNbrPlaquetteSpins]=TmpNeighbors[MinIndex];
+      ++NewNbrPlaquetteSpins;
+    }
+  --NewNbrPlaquetteSpins;
+  length = NewNbrPlaquetteSpins;
+  int *Result=new int[length];
+  for (int i=0; i<length; ++i)
+    Result[i]=NewPlaquetteSpins[i];
+  cout << "New Plaquette: "<<Result[0];
+  for (int i=1; i<length; ++i)
+    cout << " " <<Result[i];
+  cout << endl;
+  delete [] NewPlaquetteSpins;
+  return Result;
 }

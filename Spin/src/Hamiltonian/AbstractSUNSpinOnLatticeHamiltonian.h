@@ -75,6 +75,15 @@ class AbstractSUNSpinOnLatticeHamiltonian : public AbstractSUNSpinHamiltonian
   int* PermutationI;
   int* PermutationJ;
 
+  // terms for cyclic permutations
+  int NbrCyclicPermutations;
+  // spin indices of cycles
+  int** CyclicPermutationIndices;
+  // length of cycle
+  int* CyclicPermutationLength;
+  // prefactors
+  Complex* CyclicPermutationPrefactors;
+
   // shift to apply to go from precalculation index to the corresponding index in the HilbertSpace
   int PrecalculationShift;
   // amount of memory (in bytes) that can be used to store precalculated matrix elements
@@ -303,6 +312,31 @@ class AbstractSUNSpinOnLatticeHamiltonian : public AbstractSUNSpinHamiltonian
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
   virtual RealVector& LowLevelAddMultiplyDiskStorage(RealVector& vSource, RealVector& vDestination, 
+						     int firstComponent, int nbrComponent);
+
+    // multiply a vector by the current hamiltonian for a given range of indices 
+  // and add result to another vector, low level function (no architecture optimization)
+  // using partial fast multiply option
+  //
+  // vSource = vector to be multiplied
+  // vDestination = vector at which result has to be added
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = reference on vector where result has been stored
+  
+  virtual ComplexVector& LowLevelAddMultiplyPartialFastMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+								int firstComponent, int nbrComponent);
+
+  // multiply a vector by the current hamiltonian for a given range of indices 
+  // and add result to another vector, low level function (no architecture optimization)
+  // using disk storage option
+  //
+  // vSource = vector to be multiplied
+  // vDestination = vector at which result has to be added
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = reference on vector where result has been stored
+  virtual ComplexVector& LowLevelAddMultiplyDiskStorage(ComplexVector& vSource, ComplexVector& vDestination, 
 						     int firstComponent, int nbrComponent);
 
   // multiply a et of vectors by the current hamiltonian for a given range of indices 

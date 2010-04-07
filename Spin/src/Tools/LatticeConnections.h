@@ -80,13 +80,24 @@ class LatticeConnections
   int **Neighbors;
   // number of neighbors for spin i
   int *NbrNeighbors;
+  // array indicating shift of sites around periodic boundaries in the different dimensions (site,neighborIdx,dimension)
+  int ***NeighborShift;
 
+  
   // reduced encoding of the pairs which are interacting
   // such that Partner[i]>i
   int **Partners;
   // number of partners for spin i
   int *NbrPartners;
 
+  // plaquettes of the lattice, with indices going counterclockwise
+  // number of plaquettes
+  int NbrPlaquettes;
+  // number of spins on plaquette
+  int *NbrPlaquetteSpins;
+  // spins involved in each plaquette
+  int **PlaquetteSpins;
+    
  public:
 
   // generate the object using options from Option Manager
@@ -96,6 +107,13 @@ class LatticeConnections
   // destructor
   //
   ~LatticeConnections();
+
+  // request address of partners of site
+  // nbrSite = number of site whose partners to request
+  // nbrNeighbors = number of partners found
+  // Neighbors = array to partner sites
+  // periodicTranslations = translations into the fundamental domain
+  void GetNeighbors(int nbrSite, int &nbrNeighbors, int * &neighbors, int **&periodicTranslations);
 
   // get cell coordinates given the number of the unit cell
   // nbrCell = cell to be looked up
@@ -107,6 +125,11 @@ class LatticeConnections
   // cellCoordinates = resulting coordinates, has to be reserved prior to call
   // sublattice = resulting sublattice
   void GetSiteCoordinates(int nbrSite, int *cellCoordinates, int &sublattice);
+
+  // retrieve the position of a given site
+  // cellCoordinates = resulting coordinates, has to be reserved prior to call
+  // sublattice = resulting sublattice  
+  RealVector GetSitePosition(int *cellCoordinates, int sublattice);
   
   // get number of a site in cell nbrCell
   // nbrCell = cell to be addressed
@@ -117,6 +140,12 @@ class LatticeConnections
   // cellCoordinates = coordinates of cell to be addressed
   // sublattice = sublattice index
   int GetSiteNumber(int *cellCoordinates, int sublattice);
+
+  // get number of a site in cell nbrCell, and return translation vector back into the simulation cell
+  // cellCoordinates = coordinates of cell to be addressed
+  // sublattice = sublattice index
+  // translation = vector of tranlation back into simulation cell
+  int GetSiteNumber(int *cellCoordinates, int sublattice, int *translation);
 
   // request total number of sites
   //
@@ -137,6 +166,12 @@ class LatticeConnections
   // nbrPartners = number of partners found
   void GetPartners(int nbrSite, int * &partners, int &nbrPartners);
 
+  // get number of plaquettes
+  int GetNbrPlaquettes(){return this->NbrPlaquettes;}
+
+  // get spins of a given plaquette
+  void GetPlaquetteSpins(int nbrPlaquette, int * &spins, int &nbrSpins);
+  
   // get a string describing the lattice geometry
   // 
   char *GeometryString();
@@ -155,10 +190,28 @@ class LatticeConnections
   // length = length of array
   void ArraySort(int* array, int length);
 
+  // simple sort algorithm
+  // array = integer array to be sorted
+  // length = length of array
+  void ArraySort2(int* array, int length, int** array2);
+
   // periodize index within fundamental interval along direction d
   // coordinate = number to periodize
   // dimension = index of dimension
   inline int Periodize(int coordinate, int dimension);
+
+  // periodize index within fundamental interval along direction d
+  // coordinate = number to periodize
+  // dimension = index of dimension
+  // shift = translation of coordinate necessary to end up in unit cell
+  inline int Periodize(int coordinate, int dimension, int &shift);  
+
+
+  // find spins within a plaquette of the lattice
+  // origin = number of spin where plaquette originates
+  // vec = coordinates in lattice vectors of direction
+  // length = number of spins in plaquette
+  int *DeterminePlaquetteSpins(int origin, double *vec, int & length);
   
 };
 
@@ -180,5 +233,25 @@ int LatticeConnections::Periodize(int coordinate, int dimension)
     coordinate += (coordinate/PeriodicRep[dimension] + 1)*PeriodicRep[dimension];
   return coordinate%PeriodicRep[dimension];
 }
+
+// periodize index within fundamental interval along direction d
+// coordinate = number to periodize
+// dimension = index of dimension
+// shift = translation of coordinate necessary to end up in unit cell, in units of lattice vectors
+int LatticeConnections::Periodize(int coordinate, int dimension, int &shift)
+{
+  int result;
+  shift=0;
+  //std::cout << "Raw value: "<<coordinate;
+  if (coordinate<0)
+    {
+      shift = (coordinate/PeriodicRep[dimension] + 1)*PeriodicRep[dimension];
+      coordinate += shift;
+    }
+  shift += (result=(coordinate%PeriodicRep[dimension])) - coordinate;
+  //std::cout << ", shift="<<shift<<", result="<<result<<std::endl;
+  return result;
+}
+
 
 #endif

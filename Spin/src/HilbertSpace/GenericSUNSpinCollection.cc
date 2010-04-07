@@ -46,10 +46,15 @@ using std::endl;
 // verbosity flag
 //#define VERBOSE
 
+// testing flag;
+#define TESTING
 
-// #include <bitset>
-// using std::bitset;
 
+// bitset only needed in testing mode
+#ifdef TESTING
+#include <bitset>
+using std::bitset;
+#endif
 
 // create Hilbert-space for a collection of spins
 // levelN = level of SU(N) symmetry
@@ -265,6 +270,7 @@ int GenericSUNSpinCollection::CyclicSpinPermutation(int index, int s1, int s2, i
   State &= (~0ul ^ (MASK<<CurrentPos));
   State |= (CurrentSpin<<LastPos);
 
+  LastPos=CurrentPos;
   CurrentPos=BITS*s1;
   CurrentSpin = ((State>>(s1*BITS))&MASK);
   State &= (~0ul ^ (MASK<<CurrentPos));
@@ -286,13 +292,21 @@ int GenericSUNSpinCollection::CyclicSpinPermutation(int index, int s1, int s2, i
 int GenericSUNSpinCollection::CyclicSpinPermutation(int index, int numS, int *si)
 {
   unsigned long State = this->StateDescription[index];
-//   bitset<32> b = State;
-//   cout << "P["<<s1<<", "<<s2<<", "<<b<<"] = ";
+#ifdef TESTING
+  bitset<32> b = State;
+  cout << "P["<<si[0];
+  for (int i=1; i<numS; ++i)
+    cout <<", "<<si[i];
+  cout <<"; "<< b<< "] = ?"<<endl;
+#endif
   int *spinPt=&(si[numS-1]);
-  int LastPos=BITS* *spinPt;
+  int LastPos=BITS* (*spinPt);
   unsigned BufferedSpin = ((State>>(*spinPt*BITS))&MASK);
   State &= (~0ul ^ (MASK<<LastPos));
-
+#ifdef TESTING
+  cout << "Buffered spin ("<<si[numS-1] <<"): "<< BufferedSpin <<endl;
+  b=State; 
+#endif
   int CurrentPos=0;
   unsigned CurrentSpin;
   for (int n=numS-2; n>=0; --n)
@@ -300,13 +314,25 @@ int GenericSUNSpinCollection::CyclicSpinPermutation(int index, int numS, int *si
       --spinPt;
       CurrentPos = BITS* *spinPt;
       CurrentSpin = ((State>>(*spinPt *BITS))&MASK);
+#ifdef TESTING
+      cout << "now moving spin "<<*spinPt<<endl;
+      cout << "value: "<<CurrentSpin<<endl;
+#endif
       State &= (~0ul ^ (MASK<<CurrentPos));
       State |= (CurrentSpin<<LastPos);
+      LastPos = CurrentPos;
+#ifdef TESTING
+      b=State; 
+      cout << "moved:        "<<b<<endl;
+#endif
     }
 
   State |= (BufferedSpin<<CurrentPos);
-//   b=State;
-//   cout << b << endl;
+  
+#ifdef TESTING
+  b=State;
+  cout <<"final state:  "<< b << endl;
+#endif
   return this->FindStateIndex(State);
 }
 

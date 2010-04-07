@@ -46,8 +46,8 @@
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-//
-SUNSpinOnLatticeQuadraticHamiltonian::SUNSpinOnLatticeQuadraticHamiltonian(GenericSUNSpinCollection *space, LatticeConnections *lattice, AbstractArchitecture* architecture, long memory, char* precalculationFileName)
+// cyclic = prefactor of optional cyclic permutations around plaquettes
+SUNSpinOnLatticeQuadraticHamiltonian::SUNSpinOnLatticeQuadraticHamiltonian(GenericSUNSpinCollection *space, LatticeConnections *lattice, AbstractArchitecture* architecture, long memory, char* precalculationFileName, double cyclic)
 { 
   this->Spins = space;
   this->Lattice = lattice;
@@ -55,6 +55,7 @@ SUNSpinOnLatticeQuadraticHamiltonian::SUNSpinOnLatticeQuadraticHamiltonian(Gener
   this->FastMultiplicationFlag = false;
   this->HamiltonianShift = 0.0;
   this->Architecture = architecture;
+  this->CyclicPrefactor = cyclic;
   this->EvaluateInteractionTerms();
   long MinIndex;
   long MaxIndex;
@@ -103,63 +104,6 @@ int SUNSpinOnLatticeQuadraticHamiltonian::GetHilbertSpaceDimension ()
   return this->Spins->GetHilbertSpaceDimension();
 }
 
-// shift Hamiltonian from a given energy
-//
-// shift = shift value
-
-void SUNSpinOnLatticeQuadraticHamiltonian::ShiftHamiltonian (double shift)
-{
-}
-  
-// evaluate matrix element
-//
-// V1 = vector to left multiply with current matrix
-// V2 = vector to right multiply with current matrix
-// return value = corresponding matrix element
-
-Complex SUNSpinOnLatticeQuadraticHamiltonian::MatrixElement (RealVector& V1, RealVector& V2) 
-{
-  double x = 0.0;
-  int dim = this->Spins->GetHilbertSpaceDimension();
-  for (int i = 0; i < dim; i++)
-    {
-    }
-  return Complex(x);
-}
-  
-// evaluate matrix element
-//
-// V1 = vector to left multiply with current matrix
-// V2 = vector to right multiply with current matrix
-// return value = corresponding matrix element
-
-Complex SUNSpinOnLatticeQuadraticHamiltonian::MatrixElement (ComplexVector& V1, ComplexVector& V2) 
-{
-  return Complex();
-}
-
-// return a list of left interaction operators
-//
-// return value = list of left interaction operators
-
-List<Matrix*> SUNSpinOnLatticeQuadraticHamiltonian::LeftInteractionOperators()
-{
-  List<Matrix*> TmpList;
-  return TmpList;
-}
-
-// return a list of right interaction operators
-//
-// return value = list of right interaction operators
-
-List<Matrix*> SUNSpinOnLatticeQuadraticHamiltonian::RightInteractionOperators()
-{
-  List<Matrix*> TmpList;
-  return TmpList;
-}
-
-
-
 
 // evaluate all interaction factors
 //   
@@ -188,6 +132,29 @@ void SUNSpinOnLatticeQuadraticHamiltonian::EvaluateInteractionTerms()
 	  this->PermutationJ[Pos]=Partners[p];
 	  this->PermutationPrefactors[Pos]=1.0;
 	  ++Pos;
+	}
+    }
+  if (fabs(this->CyclicPrefactor>0.0))
+    {
+      this->NbrCyclicPermutations = 2*this->Lattice->GetNbrPlaquettes();
+      if (this->NbrCyclicPermutations==0)
+	{
+	  cout << "Attention, no plaquettes defined for this lattice!"<<endl;
+	  return;
+	}
+      this->CyclicPermutationPrefactors = new Complex[NbrCyclicPermutations];
+      this->CyclicPermutationLength = new int[NbrCyclicPermutations];
+      this->CyclicPermutationIndices = new int*[NbrCyclicPermutations];
+      for (int i=0; i<NbrCyclicPermutations>>1; ++i)
+	{
+	  this->Lattice->GetPlaquetteSpins(i, CyclicPermutationIndices[2*i], CyclicPermutationLength[2*i]);
+	  this->CyclicPermutationLength[2*i+1]=this->CyclicPermutationLength[2*i];
+	  int l=this->CyclicPermutationLength[2*i+1];
+	  this->CyclicPermutationIndices[2*i+1]=new int[l];
+	  for (int k=0; k<l; ++k)
+	    this->CyclicPermutationIndices[2*i+1][k]=this->CyclicPermutationIndices[2*i][l-1-k];
+	  this->CyclicPermutationPrefactors[2*i] = Complex(0.0, this->CyclicPrefactor);
+	  this->CyclicPermutationPrefactors[2*i+1] = Complex(0.0, -this->CyclicPrefactor);
 	}
     }
 }

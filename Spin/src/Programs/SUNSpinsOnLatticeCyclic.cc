@@ -14,7 +14,7 @@
 
 #include "GeneralTools/FilenameTools.h"
 
-#include "MainTask/GenericRealMainTask.h"
+#include "MainTask/GenericComplexMainTask.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -90,7 +90,7 @@ int main(int argc, char** argv)
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
 
   ArchitectureManager Architecture;
-  LanczosManager Lanczos(false);  
+  LanczosManager Lanczos(true);  
   Manager += SystemGroup;
   LatticeConnections::AddOptionGroup(&Manager);
   Architecture.AddOptionGroup(&Manager);
@@ -101,6 +101,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('N', "level-n", "level of SU(N) symmetry group", 3);
   (*SystemGroup) += new MultipleIntegerOption  ('t', "cartan", "eigenvalues of the generators of the cartan algebra",',');
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-sectors", "number of cartan-sectors to be calculated", 1);
+  (*SystemGroup) += new SingleDoubleOption  ('c', "cyclic", "prefactor of cyclic permutation operators around plaquettes", 1.0);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
@@ -121,6 +122,7 @@ int main(int argc, char** argv)
   int NbrCartan;
   int *CartanQuantumNumbers;
   int **AllCartanQuantumNumbers=NULL;
+  double CyclicTerms = Manager.GetDouble("cyclic");
   CartanQuantumNumbers = Manager.GetIntegers("cartan",NbrCartan);  
   cout << "NbrCartan="<<NbrCartan<<", NbrSectors="<<NbrSectors <<endl;
   LatticeConnections *Lattice = new LatticeConnections();
@@ -177,8 +179,8 @@ int main(int argc, char** argv)
   
   char *Geometry=Lattice->GeometryString();
   char *OutputFileName = new char[100];
-  
-  sprintf (OutputFileName, "spins_SU%d_%s_n_%d_c", LevelN, Geometry, NbrSpins);
+
+  sprintf (OutputFileName, "spins_SU%d_%s_cyc_%g_n_%d_c", LevelN, Geometry, CyclicTerms, NbrSpins);
 
   // if there is a single set of cartan quantum-numbers -> add to filename
   if (NbrSectors==1)
@@ -206,20 +208,20 @@ int main(int argc, char** argv)
     
     AbstractSUNSpinHamiltonian *Hamiltonian =
       new SUNSpinOnLatticeQuadraticHamiltonian(Space, Lattice, Architecture.GetArchitecture(),
-					       Memory, LoadPrecalculationFileName);
+					       Memory, LoadPrecalculationFileName, CyclicTerms);
 
 
     char* EigenvectorName = 0;
     if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
       {
 	EigenvectorName = new char [64];
-	sprintf (EigenvectorName, "spins_SU%d_%s_n_%d_c", LevelN, Geometry, NbrSpins);
+	sprintf (EigenvectorName, "spins_SU%d_%s_cyc_%g_n_%d_c", LevelN, Geometry, CyclicTerms, NbrSpins);
 	for (int n=0; n < LevelN-1; ++n)
 	  sprintf(EigenvectorName,"%s_%d", EigenvectorName, CartanQuantumNumbers[n]);
       }
 
-    GenericRealMainTask Task (&Manager, Space, &Lanczos, Hamiltonian, SubspaceStr, SubspaceLegend,
-			      Shift, OutputFileName, FirstRun, EigenvectorName);
+    GenericComplexMainTask Task (&Manager, Space, &Lanczos, Hamiltonian, SubspaceStr, SubspaceLegend,
+				 Shift, OutputFileName, FirstRun, EigenvectorName);
     MainTaskOperation TaskOperation (&Task);
     TaskOperation.ApplyOperation(Architecture.GetArchitecture());
 

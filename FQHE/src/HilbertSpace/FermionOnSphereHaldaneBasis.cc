@@ -828,14 +828,10 @@ double FermionOnSphereHaldaneBasis::AdA (int index, int m)
 // n = index of the annihilation operator
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
-#include <bitset>
-using std::bitset;
 int FermionOnSphereHaldaneBasis::AdA (int index, int m, int n, double& coefficient)
 {
   int StateLzMax = this->StateLzMax[index];
   unsigned long State = this->StateDescription[index];
-  bitset<32> b=State;
-  cout << "AdA("<<m<<", "<<n<<") "<<b<<"->";
   if ((n > StateLzMax) || ((State & (((unsigned long) (0x1)) << n)) == 0))
     {
       coefficient = 0.0;
@@ -872,13 +868,6 @@ int FermionOnSphereHaldaneBasis::AdA (int index, int m, int n, double& coefficie
 #endif
     }
   TmpState |= (((unsigned long) (0x1)) << m);
-  b=TmpState;
-  cout << "searching "<< b;
-  cout << " " << this->TargetSpace->CarefulFindStateIndex(TmpState, -1)<<endl;
-
-  b=this->TargetSpace->StateDescription[0];
-  cout << "comparing target state description [0]="<<b<<endl; 
-
   return this->TargetSpace->FindStateIndex(TmpState, NewLzMax);
 }
 
