@@ -237,3 +237,57 @@ RealVector& FileBasedHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealV
   return vDestination;
 }
 
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and add result to another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors at which result has to be added
+// nbrVectors = number of vectors that have to be evaluated together
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = pointer to the array of vectors where result has been stored
+
+RealVector* FileBasedHamiltonian::LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, int firstComponent, int nbrComponent)
+{
+  long StartingIndex = 0;
+  long LastIndex = this->NbrElements - 1;
+  long MidIndex = 0;
+  while ((LastIndex - StartingIndex) > 1)
+    {      
+      MidIndex = (LastIndex + StartingIndex) >> 1;
+      if (this->RowIndices[MidIndex] <= firstComponent)
+	StartingIndex = MidIndex;
+      else
+	LastIndex = MidIndex;
+    }
+  if (this->RowIndices[LastIndex] == firstComponent)
+    StartingIndex = LastIndex;
+  while ((StartingIndex >= 0) && (this->RowIndices[StartingIndex] == firstComponent))
+    --StartingIndex;
+  if (StartingIndex < 0)
+    StartingIndex = 0;
+  int LastComponent = firstComponent + nbrComponent;
+  double TmpMatrixElement;
+  int InputIndex;
+  int OutputIndex;
+  while ((StartingIndex < this->NbrElements) && (this->RowIndices[StartingIndex] < LastComponent))
+    {
+      TmpMatrixElement = this->MatrixElements[StartingIndex];
+      InputIndex = this->RowIndices[StartingIndex];
+      OutputIndex = this->ColumnIndices[StartingIndex];
+      for (int k= 0; k < nbrVectors; ++k)
+	vDestinations[k][OutputIndex] += TmpMatrixElement * vSources[k][InputIndex];
+      ++StartingIndex;
+    }
+  if (this->HamiltonianShift != 0.0)
+    {
+      for (int k= 0; k < nbrVectors; ++k)
+	{
+	  RealVector& TmpDestination = vDestinations[k];
+	  RealVector& TmpSource = vSources[k];
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    TmpDestination[i] += this->HamiltonianShift * TmpSource[i];
+	}
+    }
+  return vDestinations;
+}
