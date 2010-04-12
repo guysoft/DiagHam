@@ -121,15 +121,15 @@ int main(int argc, char** argv)
       cout << " Ratio = " << XRatio << endl;
 
       ParticleOnTorus* Space = 0;
-#ifdef  __64_BITS__
-      if ((MaxMomentum + NbrParticles - 1) < 63)
-#else
-	if ((MaxMomentum + NbrParticles - 1) < 1)	
-#endif
-	  {
-	    Space = new BosonOnTorusShort(NbrParticles, MaxMomentum, Momentum);	    
-	  }
-	else
+// #ifdef  __64_BITS__
+//       if ((MaxMomentum + NbrParticles - 1) < 63)
+// #else
+// 	if ((MaxMomentum + NbrParticles - 1) < 1)	
+// #endif
+// 	  {
+// 	    Space = new BosonOnTorusShort(NbrParticles, MaxMomentum, Momentum);	    
+// 	  }
+// 	else
 	  {
 	    Space = new BosonOnTorus(NbrParticles, MaxMomentum, Momentum);
 	  }

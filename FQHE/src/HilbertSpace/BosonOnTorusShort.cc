@@ -464,6 +464,7 @@ int BosonOnTorusShort::GenerateStates(int nbrBosons, int maxMomentum, int curren
 void BosonOnTorusShort::GenerateLookUpTable(int memory)
 {
   // evaluate look-up table size
+  this->NbrLzValue =  this->MaxMomentum + this->NbrBosons;
   memory /= (sizeof(int*) * this->NbrLzValue);
   this->MaximumLookUpShift = 1;
   while (memory > 0)

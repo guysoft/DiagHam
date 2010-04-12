@@ -326,7 +326,7 @@ double ParticleOnTorusDeltaHamiltonian::EvaluateInteractionCoefficient(int m1, i
   double N1;
   double Q2;
   double Precision;
-//  cout << "new coef====================================" << m1 << " "  << m2 << " "  << m3 << " "  << m4 << endl;
+//  cout << "coef " << m1 << " "  << m2 << " "  << m3 << " "  << m4 << " : ";
   while ((fabs(Sum) + fabs(Coefficient)) != fabs(Sum))
     {
       N1 = 1.0;
@@ -377,6 +377,7 @@ double ParticleOnTorusDeltaHamiltonian::EvaluateInteractionCoefficient(int m1, i
       Sum += Coefficient;
       N2 -= this->MaxMomentum;
     }
+//  cout << Sum << endl;
   return (Sum / (4.0 * M_PI * this->MaxMomentum));
 }
 
