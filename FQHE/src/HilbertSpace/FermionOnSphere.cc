@@ -2041,7 +2041,7 @@ RealSymmetricMatrix  FermionOnSphere::EvaluatePartialDensityMatrixParticlePartit
   if (nbrFermionSector == 1)
     {
       double TmpValue = 0.0;
-      FermionOnSphere TmpHilbertSpace(this->NbrFermions - 1, -lzSector, this->LzMax);
+      FermionOnSphere TmpHilbertSpace(this->NbrFermions - 1, this->TotalLz - lzSector, this->LzMax);
       unsigned long ShiftedLzVSector = (lzSector + this->LzMax) >> 1;
       unsigned long TmpMask = 0x1ul << ShiftedLzVSector;
       unsigned long TmpMask2 = (0x1ul << ShiftedLzVSector) - 1ul;
@@ -2057,7 +2057,7 @@ RealSymmetricMatrix  FermionOnSphere::EvaluatePartialDensityMatrixParticlePartit
 	      int TmpPos = this->FindStateIndex(TmpState, TmpLzMax);
 	      if (TmpPos != this->HilbertSpaceDimension)
  		{
-		  TmpValue += groundState[TmpPos] * groundState[TmpPos] * TmpInvBinomial;	
+		  TmpValue += groundState[TmpPos] * groundState[TmpPos];// * TmpInvBinomial;	
 		}
 	    }
 	}
@@ -2074,7 +2074,7 @@ RealSymmetricMatrix  FermionOnSphere::EvaluatePartialDensityMatrixParticlePartit
   int* TmpStatePosition2 = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
   double* TmpStateCoefficient = new double [TmpDestinationHilbertSpace.HilbertSpaceDimension];
   long TmpNbrNonZeroElements = 0;
-  FermionOnSphere TmpHilbertSpace(ComplementaryNbrFermionSector, -lzSector, this->LzMax);
+  FermionOnSphere TmpHilbertSpace(ComplementaryNbrFermionSector, this->TotalLz - lzSector, this->LzMax);
   TmpInvBinomial = sqrt(TmpInvBinomial);
 
   for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    

@@ -306,11 +306,12 @@ int main(int argc, char** argv)
       double EntanglementEntropy = 0.0;
       double DensitySum = 0.0;
 
+      int ComplementarySubsystemNbrParticles = NbrParticles - SubsystemNbrParticles;
       int SubsystemMaxTotalLz = SubsystemNbrParticles * LzMax - (SubsystemNbrParticles * (SubsystemNbrParticles + 1));
-
+      int ComplementaryMaxTotalLz = ComplementarySubsystemNbrParticles * LzMax - (ComplementarySubsystemNbrParticles * (ComplementarySubsystemNbrParticles + 1));
+      while (SubsystemMaxTotalLz > ComplementaryMaxTotalLz)
+	SubsystemMaxTotalLz -= 2;
       int SubsystemTotalLz = -SubsystemMaxTotalLz; 
-      //      SubsystemTotalLz = -8;
-      //      SubsystemMaxTotalLz = -8;
       for (; SubsystemTotalLz <= SubsystemMaxTotalLz; SubsystemTotalLz += 2)
 	{
 	  cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Lz=" << SubsystemTotalLz << endl;

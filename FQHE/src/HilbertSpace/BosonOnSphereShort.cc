@@ -875,7 +875,7 @@ RealSymmetricMatrix  BosonOnSphereShort::EvaluatePartialDensityMatrixParticlePar
       double TmpValue = 0.0;
       unsigned long* TmpMonomial1 = new unsigned long [ComplementaryNbrBosonSector];
       unsigned long* TmpMonomial3 = new unsigned long [this->NbrBosons];
-      BosonOnSphereShort TmpHilbertSpace(this->NbrBosons - 1, -lzSector, this->LzMax);
+      BosonOnSphereShort TmpHilbertSpace(this->NbrBosons - 1, this->TotalLz - lzSector, this->LzMax);
       unsigned long ShiftedLzVSector = (lzSector + this->LzMax) >> 1;
       FactorialCoefficient Factorial;
       for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
@@ -931,7 +931,7 @@ RealSymmetricMatrix  BosonOnSphereShort::EvaluatePartialDensityMatrixParticlePar
   unsigned long* TmpMonomial2 = new unsigned long [nbrBosonSector];
   unsigned long* TmpMonomial1 = new unsigned long [ComplementaryNbrBosonSector];
   unsigned long* TmpMonomial3 = new unsigned long [this->NbrBosons];
-  BosonOnSphereShort TmpHilbertSpace(ComplementaryNbrBosonSector, -lzSector, this->LzMax);
+  BosonOnSphereShort TmpHilbertSpace(ComplementaryNbrBosonSector, this->TotalLz - lzSector, this->LzMax);
   FactorialCoefficient Factorial;
 
   for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
