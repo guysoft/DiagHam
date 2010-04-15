@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                         class of particle on a torus                       //
+//     set of functions used to managed files related to QHE on torus         //
 //                                                                            //
-//                        last modification : 18/07/2002                      //
+//                        last modification : 12/04/2010                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,27 +28,30 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
+#ifndef FQHEONTORUSFILETOOLS_H
+#define FQHEONTORUSFILETOOLS_H
+
 #include "config.h"
-#include "HilbertSpace/ParticleOnTorus.h"
 
 
-// virtual destructor
+// try to guess system information from file name
 //
+// filename = file name
+// nbrParticles = reference to the number of particles (grab it only if initial value is 0)
+// kyMax = reference to the maximum momentum for a single particle (grab it only if initial value is 0)
+// statistics = reference to flag for fermionic statistics (true for fermion, false fro bosons, grab it only if initial value is true)
+// return value = true if no error occured
+bool FQHEOnTorusFindSystemInfoFromFileName(char* filename, int& nbrParticles, int& kyMax, bool& statistics);
 
-ParticleOnTorus::~ParticleOnTorus ()
-{
-}
+// try to guess system information from file name
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles (grab it only if initial value is 0)
+// kyMax = reference to the maximum momentum for a single particle (grab it only if initial value is 0)
+// ky = reference to the y projection of the angular momentum (grab it only if initial value is 0)
+// statistics = reference to flag for fermionic statistics (true for fermion, false for bosons, grab it only if initial value is true)
+// return value = true if no error occured
+bool FQHEOnTorusFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& kyMax, int& ky, bool& statistics);
 
 
-// evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Ky sector.
-// 
-// nbrBosonSector = number of particles that belong to the subsytem 
-// kySector = Ky sector in which the density matrix has to be evaluated 
-// groundState = reference on the total system ground state
-// return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
-
-RealSymmetricMatrix ParticleOnTorus::EvaluatePartialDensityMatrixParticlePartition (int nbrBosonSector, int kySector, RealVector& groundState)
-{
-  RealSymmetricMatrix TmpDensityMatrix;
-  return TmpDensityMatrix;
-}
+#endif

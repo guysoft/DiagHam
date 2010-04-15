@@ -34,6 +34,7 @@
 
 #include "config.h"
 #include "HilbertSpace/AbstractHilbertSpace.h"
+#include "Matrix/RealSymmetricMatrix.h"
 
 #include <iostream>
 
@@ -88,6 +89,14 @@ class ParticleOnTorus :  public AbstractHilbertSpace
   // M = matrix where representation has to be stored
   // return value = corresponding matrix
   virtual Matrix& Ad (int i, Matrix& M) = 0;
+
+  // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Ky sector.
+  // 
+  // nbrBosonSector = number of particles that belong to the subsytem 
+  // kySector = Ky sector in which the density matrix has to be evaluated 
+  // groundState = reference on the total system ground state
+  // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+  virtual RealSymmetricMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrBosonSector, int kySector, RealVector& groundState);
 
 };
 

@@ -6,4 +6,5 @@ libQHEFiles_a_SOURCES=QHEOnSphereFileTools.cc \
 QHEOnLatticeFileTools.cc \
 FQHEOnDiskFileTools.cc \
 FQHESqueezedBasisTools.cc \
-FQHESpherePseudopotentialTools.cc
+FQHESpherePseudopotentialTools.cc \
+FQHEOnTorusFileTools.cc

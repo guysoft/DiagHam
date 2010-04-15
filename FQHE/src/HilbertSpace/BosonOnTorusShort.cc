@@ -41,6 +41,8 @@
 
 using std::cout;
 using std::endl;
+using std::hex;
+using std::dec;
 
 
 // basic constructor
@@ -52,23 +54,24 @@ BosonOnTorusShort::BosonOnTorusShort (int nbrBosons, int maxMomentum)
 {
   this->NbrBosons = nbrBosons;
   this->IncNbrBosons = this->NbrBosons + 1;
-  this->MaxMomentum = maxMomentum;
-  this->NbrLzValue = this->MaxMomentum + 1;
-  this->MomentumConstraintFlag = false;
+  this->KyMax = maxMomentum;
+  this->NbrKyValue = this->KyMax + 1;
+  this->TotalKyFlag = false;
 
-  this->TemporaryState = new unsigned long [this->MaxMomentum + 1];
-  this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->MaxMomentum);
+  this->TemporaryState = new unsigned long [this->KyMax + 1];
+  this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->KyMax);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   cout << "dim = " << this->HilbertSpaceDimension << endl;
   this->Flag.Initialize();
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
-  this->StateMaxMomentum = new int [this->HilbertSpaceDimension];
-  cout << this->GenerateStates(this->NbrBosons, this->MaxMomentum - 1, this->MaxMomentum - 1, 0) << endl;
+  this->StateKyMax = new int [this->HilbertSpaceDimension];
+  cout << this->GenerateStates(this->NbrBosons, this->KyMax - 1, this->KyMax - 1, 0) << endl;
   this->GenerateLookUpTable(0);
 #ifdef __DEBUG__
   unsigned long UsedMemory = 0;
   UsedMemory += ((unsigned long) this->HilbertSpaceDimension) * (sizeof(unsigned long) + sizeof(int));
-  UsedMemory += this->NbrLzValue * sizeof(int);
-  UsedMemory += this->NbrLzValue * ((unsigned long) this->LookUpTableMemorySize) * sizeof(int);
+  UsedMemory += this->NbrKyValue * sizeof(int);
+  UsedMemory += this->NbrKyValue * ((unsigned long) this->LookUpTableMemorySize) * sizeof(int);
   cout << "memory requested for Hilbert space = ";
   if (UsedMemory >= 1024)
     if (UsedMemory >= 1048576)
@@ -90,25 +93,26 @@ BosonOnTorusShort::BosonOnTorusShort (int nbrBosons, int maxMomentum, int moment
 {
   this->NbrBosons = nbrBosons;
   this->IncNbrBosons = this->NbrBosons + 1;
-  this->MaxMomentum = maxMomentum;
-  this->NbrLzValue = this->MaxMomentum + 1;
-  this->MomentumConstraint = momentumConstraint;
-  this->MomentumConstraintFlag = true;
-  this->GCDMaxMomentum = FindGCD(this->NbrBosons, this->MaxMomentum);
-  this->TemporaryState = new unsigned long [this->MaxMomentum + 1];
+  this->KyMax = maxMomentum;
+  this->NbrKyValue = this->KyMax + 1;
+  this->TotalKy = momentumConstraint;
+  this->TotalKyFlag = true;
+  this->GCDKyMax = FindGCD(this->NbrBosons, this->KyMax);
+  this->TemporaryState = new unsigned long [this->KyMax + 1];
 
-  this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->MaxMomentum);
+  this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->KyMax);
   cout << "dim = " << this->HilbertSpaceDimension << endl;
   this->Flag.Initialize();
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
-  this->StateMaxMomentum = new int [this->HilbertSpaceDimension];
-  this->HilbertSpaceDimension = this->GenerateStates(this->NbrBosons, this->MaxMomentum - 1, this->MaxMomentum - 1, 0, 0);
+  this->StateKyMax = new int [this->HilbertSpaceDimension];
+  this->HilbertSpaceDimension = this->GenerateStates(this->NbrBosons, this->KyMax - 1, this->KyMax - 1, 0, 0);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   this->GenerateLookUpTable(1000000);
 #ifdef __DEBUG__
   unsigned long UsedMemory = 0;
   UsedMemory += ((unsigned long) this->HilbertSpaceDimension) * (sizeof(unsigned long) + sizeof(int));
-  UsedMemory += this->NbrLzValue * sizeof(int);
-  UsedMemory += this->NbrLzValue * ((unsigned long) this->LookUpTableMemorySize) * sizeof(int);
+  UsedMemory += this->NbrKyValue * sizeof(int);
+  UsedMemory += this->NbrKyValue * ((unsigned long) this->LookUpTableMemorySize) * sizeof(int);
   cout << "memory requested for Hilbert space = ";
   if (UsedMemory >= 1024)
     if (UsedMemory >= 1048576)
@@ -128,12 +132,13 @@ BosonOnTorusShort::BosonOnTorusShort(const BosonOnTorusShort& bosons)
 {
   this->NbrBosons = bosons.NbrBosons;
   this->IncNbrBosons = bosons.IncNbrBosons;
-  this->MaxMomentum = bosons.MaxMomentum;
-  this->NbrLzValue = bosons.NbrLzValue;
+  this->KyMax = bosons.KyMax;
+  this->NbrKyValue = bosons.NbrKyValue;
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = this->LargeHilbertSpaceDimension;
   this->StateDescription = bosons.StateDescription;
-  this->StateMaxMomentum = bosons.StateMaxMomentum;
-  this->TemporaryState = new unsigned long [this->MaxMomentum + 1];
+  this->StateKyMax = bosons.StateKyMax;
+  this->TemporaryState = new unsigned long [this->KyMax + 1];
   this->Flag = bosons.Flag;
 }
 
@@ -145,7 +150,7 @@ BosonOnTorusShort::~BosonOnTorusShort ()
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
       delete[] this->StateDescription;
-      delete[] this->StateMaxMomentum;
+      delete[] this->StateKyMax;
     }
   delete[] this->TemporaryState;
 }
@@ -160,17 +165,18 @@ BosonOnTorusShort& BosonOnTorusShort::operator = (const BosonOnTorusShort& boson
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
       delete[] this->StateDescription;
-      delete[] this->StateMaxMomentum;
+      delete[] this->StateKyMax;
       delete[] this->TemporaryState;
     }
   this->NbrBosons = bosons.NbrBosons;
   this->IncNbrBosons = bosons.IncNbrBosons;
-  this->MaxMomentum = bosons.MaxMomentum;
-  this->NbrLzValue = bosons.NbrLzValue;
+  this->KyMax = bosons.KyMax;
+  this->NbrKyValue = bosons.NbrKyValue;
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = this->LargeHilbertSpaceDimension;
   this->StateDescription = bosons.StateDescription;
-  this->StateMaxMomentum = bosons.StateMaxMomentum;
-  this->TemporaryState = new unsigned long [this->MaxMomentum + 1];
+  this->StateKyMax = bosons.StateKyMax;
+  this->TemporaryState = new unsigned long [this->KyMax + 1];
   this->Flag = bosons.Flag;
   return *this;
 }
@@ -191,13 +197,13 @@ AbstractHilbertSpace* BosonOnTorusShort::Clone()
 
 int BosonOnTorusShort::GetMomentumValue(int index)
 {
-  this->FermionToBoson(this->StateDescription[index], this->StateMaxMomentum[index]  + this->NbrBosons - 1, this->TemporaryState, this->TemporaryStateMaxMomentum);
+  this->FermionToBoson(this->StateDescription[index], this->StateKyMax[index]  + this->NbrBosons - 1, this->TemporaryState, this->TemporaryStateKyMax);
   int Momentum = 0;
-  for (int i = 0; i <= this->TemporaryStateMaxMomentum; ++i)
+  for (int i = 0; i <= this->TemporaryStateKyMax; ++i)
     {
       Momentum += (this->TemporaryState[i] * i);
     }
-  return (Momentum % this->MaxMomentum);
+  return (Momentum % this->KyMax);
 }
 
 // return a list of all possible quantum numbers 
@@ -207,13 +213,13 @@ int BosonOnTorusShort::GetMomentumValue(int index)
 List<AbstractQuantumNumber*> BosonOnTorusShort::GetQuantumNumbers ()
 {
   List<AbstractQuantumNumber*> TmpList;
-  if (this->MomentumConstraintFlag == false)
+  if (this->TotalKyFlag == false)
     {
-      for (int i = 0; i < this->MaxMomentum; ++i)
-	TmpList += new PeriodicMomentumQuantumNumber (i, this->MaxMomentum);
+      for (int i = 0; i < this->KyMax; ++i)
+	TmpList += new PeriodicMomentumQuantumNumber (i, this->KyMax);
     }
   else
-    TmpList += new PeriodicMomentumQuantumNumber (this->MomentumConstraint, this->MaxMomentum);
+    TmpList += new PeriodicMomentumQuantumNumber (this->TotalKy, this->KyMax);
   return TmpList;
 }
 
@@ -224,12 +230,12 @@ List<AbstractQuantumNumber*> BosonOnTorusShort::GetQuantumNumbers ()
 
 AbstractQuantumNumber* BosonOnTorusShort::GetQuantumNumber (int index)
 {
-  if (this->MomentumConstraintFlag == false)
+  if (this->TotalKyFlag == false)
     {
-      return  new PeriodicMomentumQuantumNumber (this->GetMomentumValue(index), this->MaxMomentum);
+      return  new PeriodicMomentumQuantumNumber (this->GetMomentumValue(index), this->KyMax);
     }
   else
-    return new PeriodicMomentumQuantumNumber (this->MomentumConstraint, this->MaxMomentum);
+    return new PeriodicMomentumQuantumNumber (this->TotalKy, this->KyMax);
 }
 
 // extract subspace with a fixed quantum number
@@ -256,13 +262,13 @@ AbstractHilbertSpace* BosonOnTorusShort::ExtractSubspace (AbstractQuantumNumber&
 
 int BosonOnTorusShort::AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient)
 {
-  int CurrentLzMax = this->StateMaxMomentum[index];
+  int CurrentLzMax = this->StateKyMax[index];
   if ((n1 > CurrentLzMax) || (n2 > CurrentLzMax))
     {
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
     }    
-  this->FermionToBoson(this->StateDescription[index], CurrentLzMax + this->NbrBosons - 1, this->TemporaryState, this->TemporaryStateMaxMomentum);
+  this->FermionToBoson(this->StateDescription[index], CurrentLzMax + this->NbrBosons - 1, this->TemporaryState, this->TemporaryStateKyMax);
   if ((n1 > CurrentLzMax) || (n2 > CurrentLzMax) || (this->TemporaryState[n1] == 0) || (this->TemporaryState[n2] == 0) || ((n1 == n2) && (this->TemporaryState[n1] == 1)))
     {
       coefficient = 0.0;
@@ -286,7 +292,7 @@ int BosonOnTorusShort::AdAdAA (int index, int m1, int m2, int n1, int n2, double
   coefficient = sqrt(coefficient);
   while (this->TemporaryState[NewLzMax] == 0x0ul)
     --NewLzMax;
-  return this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateMaxMomentum), NewLzMax + this->NbrBosons - 1);
+  return this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateKyMax), NewLzMax + this->NbrBosons - 1);
 }
 
 // return matrix representation of the annihilation operator a_i
@@ -351,76 +357,77 @@ int BosonOnTorusShort::FindStateIndex(unsigned long stateDescription, int lzmax)
 
 ostream& BosonOnTorusShort::PrintState (ostream& Str, int state)
 {
-  int Max = this->StateMaxMomentum[state];
-  this->FermionToBoson(this->StateDescription[state], Max + this->NbrBosons - 1, this->TemporaryState, this->TemporaryStateMaxMomentum);
+  int Max = this->StateKyMax[state];
+  this->FermionToBoson(this->StateDescription[state], Max + this->NbrBosons - 1, this->TemporaryState, this->TemporaryStateKyMax);
   int i = 0;
-  for (; i <= Max; ++i)
+  for (; i <= this->TemporaryStateKyMax; ++i)
     Str << this->TemporaryState[i] << " ";
-  for (; i < this->MaxMomentum; ++i)
+  for (; i < this->KyMax; ++i)
     Str << "0 ";
-  return Str;
+  Str << "| " <<  this->TemporaryStateKyMax;
+ return Str;
 }
 
 // generate all states corresponding to the constraints
 // 
 // nbrBosons = number of bosons
 // maxMomentum = momentum maximum value for a fermion in the state
-// currentMaxMomentum = momentum maximum value for fermions that are still to be placed
+// currentKyMax = momentum maximum value for fermions that are still to be placed
 // pos = position in StateDescription array where to store states
 // return value = position from which new states have to be stored
 
-int BosonOnTorusShort::GenerateStates(int nbrBosons, int maxMomentum, int currentMaxMomentum, int pos)
+int BosonOnTorusShort::GenerateStates(int nbrBosons, int maxMomentum, int currentKyMax, int pos)
 {
-  if ((nbrBosons == 0) || (currentMaxMomentum < 0))
+  if ((nbrBosons == 0) || (currentKyMax < 0))
     {
       return pos;
     }
-  if (currentMaxMomentum == 0)
+  if (currentKyMax == 0)
     {
       this->StateDescription[pos] = 0ul;      
       this->StateDescription[pos] = ((1ul << (nbrBosons + 1)) - 1ul);
-      this->StateMaxMomentum[pos] = maxMomentum;
+      this->StateKyMax[pos] = maxMomentum;
       return pos + 1;
     }
 
   this->StateDescription[pos] = 0ul;
-  this->StateMaxMomentum[pos] = maxMomentum;
+  this->StateKyMax[pos] = maxMomentum;
   ++pos;
 
   int TmpNbrBosons = 1;
-  int ReducedCurrentMaxMomentum = currentMaxMomentum - 1;
+  int ReducedCurrentKyMax = currentKyMax - 1;
   int TmpPos = pos;
   while (TmpNbrBosons < nbrBosons)
     {
-      unsigned long Mask = ((0x1ul << (nbrBosons - TmpNbrBosons)) - 0x1ul) << (currentMaxMomentum + TmpNbrBosons - 1);
-      TmpPos = this->GenerateStates(TmpNbrBosons, maxMomentum, ReducedCurrentMaxMomentum, pos);
+      unsigned long Mask = ((0x1ul << (nbrBosons - TmpNbrBosons)) - 0x1ul) << (currentKyMax + TmpNbrBosons - 1);
+      TmpPos = this->GenerateStates(TmpNbrBosons, maxMomentum, ReducedCurrentKyMax, pos);
       for (; pos <TmpPos; ++pos)
 	this->StateDescription[pos] |= Mask;
       ++TmpNbrBosons;
     }
-  if (maxMomentum == currentMaxMomentum)
-    return this->GenerateStates(nbrBosons, ReducedCurrentMaxMomentum, ReducedCurrentMaxMomentum, pos);
+  if (maxMomentum == currentKyMax)
+    return this->GenerateStates(nbrBosons, ReducedCurrentKyMax, ReducedCurrentKyMax, pos);
   else
-    return this->GenerateStates(nbrBosons, maxMomentum, ReducedCurrentMaxMomentum, pos);
+    return this->GenerateStates(nbrBosons, maxMomentum, ReducedCurrentKyMax, pos);
 }
 
 // generate all states corresponding to the constraints
 // 
 // nbrBosons = number of bosons
 // maxMomentum = momentum maximum value for a boson in the state
-// currentMaxMomentum = momentum maximum value for bosons that are still to be placed
+// currentKyMax = momentum maximum value for bosons that are still to be placed
 // pos = position in StateDescription array where to store states
 // currentMomentum = current value of the momentum
 // return value = position from which new states have to be stored
 
-int BosonOnTorusShort::GenerateStates(int nbrBosons, int maxMomentum, int currentMaxMomentum, int pos, int currentMomentum)
+int BosonOnTorusShort::GenerateStates(int nbrBosons, int maxMomentum, int currentKyMax, int pos, int currentMomentum)
 {
   if (nbrBosons == 0)
     {
-      if ((currentMomentum % this->MaxMomentum) == this->MomentumConstraint)
+      if ((currentMomentum % this->KyMax) == this->TotalKy)
 	{
 	  this->StateDescription[pos] = 0x0ul;
-	  this->StateMaxMomentum[pos] = maxMomentum;
+	  this->StateKyMax[pos] = maxMomentum;
 	  return pos + 1;
 	}
       else
@@ -428,12 +435,12 @@ int BosonOnTorusShort::GenerateStates(int nbrBosons, int maxMomentum, int curren
 	  return pos;
 	}
     }
-  if (currentMaxMomentum == 0)
+  if (currentKyMax == 0)
     {
-      if ((currentMomentum % this->MaxMomentum) == this->MomentumConstraint)
+      if ((currentMomentum % this->KyMax) == this->TotalKy)
 	{
-	  this->StateDescription[pos] = ((0x1ul << nbrBosons) - 0x1ul) << currentMaxMomentum;
-	  this->StateMaxMomentum[pos] = maxMomentum;
+	  this->StateDescription[pos] = ((0x1ul << nbrBosons) - 0x1ul) << currentKyMax;
+	  this->StateKyMax[pos] = maxMomentum;
 	  return pos + 1;
 	}
       else
@@ -441,20 +448,20 @@ int BosonOnTorusShort::GenerateStates(int nbrBosons, int maxMomentum, int curren
     }
 
   int TmpNbrBosons = 0;
-  int ReducedCurrentMaxMomentum = currentMaxMomentum - 1;
+  int ReducedCurrentKyMax = currentKyMax - 1;
   int TmpPos = pos;
   while (TmpNbrBosons < nbrBosons)
     {
-      TmpPos = this->GenerateStates(TmpNbrBosons, maxMomentum, ReducedCurrentMaxMomentum, pos, currentMomentum + (nbrBosons - TmpNbrBosons) * currentMaxMomentum);
-      unsigned long Mask = ((0x1ul << (nbrBosons - TmpNbrBosons)) - 0x1ul) << (currentMaxMomentum + TmpNbrBosons - 1);
+      TmpPos = this->GenerateStates(TmpNbrBosons, maxMomentum, ReducedCurrentKyMax, pos, currentMomentum + (nbrBosons - TmpNbrBosons) * currentKyMax);
+      unsigned long Mask = ((0x1ul << (nbrBosons - TmpNbrBosons)) - 0x1ul) << (currentKyMax + TmpNbrBosons - 1);
       for (; pos <TmpPos; ++pos)
 	this->StateDescription[pos] |= Mask;
       ++TmpNbrBosons;
     }
-  if (maxMomentum == currentMaxMomentum)
-    return this->GenerateStates(nbrBosons, ReducedCurrentMaxMomentum, ReducedCurrentMaxMomentum, pos, currentMomentum);
+  if (maxMomentum == currentKyMax)
+    return this->GenerateStates(nbrBosons, ReducedCurrentKyMax, ReducedCurrentKyMax, pos, currentMomentum);
   else
-    return this->GenerateStates(nbrBosons, maxMomentum, ReducedCurrentMaxMomentum, pos, currentMomentum);
+    return this->GenerateStates(nbrBosons, maxMomentum, ReducedCurrentKyMax, pos, currentMomentum);
 }
 
 // generate look-up table associated to current Hilbert space
@@ -464,24 +471,24 @@ int BosonOnTorusShort::GenerateStates(int nbrBosons, int maxMomentum, int curren
 void BosonOnTorusShort::GenerateLookUpTable(int memory)
 {
   // evaluate look-up table size
-  this->NbrLzValue =  this->MaxMomentum + this->NbrBosons;
-  memory /= (sizeof(int*) * this->NbrLzValue);
+  int TmpNbrKyValue =  this->KyMax + this->NbrBosons;
+  memory /= (sizeof(int*) * TmpNbrKyValue);
   this->MaximumLookUpShift = 1;
   while (memory > 0)
     {
       memory >>= 1;
       ++this->MaximumLookUpShift;
     }
-  if (this->MaximumLookUpShift > this->NbrLzValue)
-    this->MaximumLookUpShift = this->NbrLzValue;
+  if (this->MaximumLookUpShift > TmpNbrKyValue)
+    this->MaximumLookUpShift = TmpNbrKyValue;
   this->LookUpTableMemorySize = 1 << this->MaximumLookUpShift;
 
   // construct  look-up tables for searching states
-  this->LookUpTable = new int* [this->NbrLzValue];
-  this->LookUpTableShift = new int [this->NbrLzValue];
-  for (int i = 0; i < this->NbrLzValue; ++i)
+  this->LookUpTable = new int* [TmpNbrKyValue];
+  this->LookUpTableShift = new int [TmpNbrKyValue];
+  for (int i = 0; i < TmpNbrKyValue; ++i)
     this->LookUpTable[i] = new int [this->LookUpTableMemorySize + 1];
-  int CurrentLzMax = this->MaxMomentum + this->NbrBosons - 1;
+  int CurrentLzMax = this->KyMax + this->NbrBosons - 1;
   while ((this->StateDescription[0] >> CurrentLzMax) == 0x0ul)
     --CurrentLzMax;
   int* TmpLookUpTable = this->LookUpTable[CurrentLzMax];
@@ -568,15 +575,15 @@ int BosonOnTorusShort::EvaluateHilbertSpaceDimension(int nbrBosons, int maxMomen
 //
 // nbrBosons = number of bosons
 // maxMomentum = momentum maximum value for a boson in the state
-// currentMaxMomentum = momentum maximum value for bosons that are still to be placed
+// currentKyMax = momentum maximum value for bosons that are still to be placed
 // currentMomentum = current value of the momentum
 // return value = Hilbert space dimension
 
-long BosonOnTorusShort::EvaluateHilbertSpaceDimension(int nbrBosons, int maxMomentum, int currentMaxMomentum, int currentMomentum)
+long BosonOnTorusShort::EvaluateHilbertSpaceDimension(int nbrBosons, int maxMomentum, int currentKyMax, int currentMomentum)
 {
   if (nbrBosons == 0)
     {
-      if ((currentMomentum % this->MaxMomentum) == this->MomentumConstraint)
+      if ((currentMomentum % this->KyMax) == this->TotalKy)
 	{
 	  return 1l;
 	}
@@ -585,9 +592,9 @@ long BosonOnTorusShort::EvaluateHilbertSpaceDimension(int nbrBosons, int maxMome
 	  return 0l;
 	}
     }
-  if (currentMaxMomentum == 0)
+  if (currentKyMax == 0)
     {
-      if ((currentMomentum % this->MaxMomentum) == this->MomentumConstraint)
+      if ((currentMomentum % this->KyMax) == this->TotalKy)
 	{
 	  return 1l;
 	}
@@ -596,17 +603,17 @@ long BosonOnTorusShort::EvaluateHilbertSpaceDimension(int nbrBosons, int maxMome
     }
 
   int TmpNbrBosons = 0;
-  int ReducedCurrentMaxMomentum = currentMaxMomentum - 1;
+  int ReducedCurrentKyMax = currentKyMax - 1;
   long TmpNbrStates = 0l;
   while (TmpNbrBosons < nbrBosons)
     {
-     TmpNbrStates += this->GenerateStates(TmpNbrBosons, maxMomentum, ReducedCurrentMaxMomentum, currentMomentum + (nbrBosons - TmpNbrBosons) * currentMaxMomentum);
+     TmpNbrStates += this->GenerateStates(TmpNbrBosons, maxMomentum, ReducedCurrentKyMax, currentMomentum + (nbrBosons - TmpNbrBosons) * currentKyMax);
      ++TmpNbrBosons;
     }
-  if (maxMomentum == currentMaxMomentum)
-    return TmpNbrStates + this->GenerateStates(nbrBosons, ReducedCurrentMaxMomentum, ReducedCurrentMaxMomentum, currentMomentum);
+  if (maxMomentum == currentKyMax)
+    return TmpNbrStates + this->GenerateStates(nbrBosons, ReducedCurrentKyMax, ReducedCurrentKyMax, currentMomentum);
   else
-    return TmpNbrStates + this->GenerateStates(nbrBosons, maxMomentum, ReducedCurrentMaxMomentum, currentMomentum);
+    return TmpNbrStates + this->GenerateStates(nbrBosons, maxMomentum, ReducedCurrentKyMax, currentMomentum);
 }
 
 // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Lz sector and fixed number of particles
@@ -633,9 +640,9 @@ RealSymmetricMatrix BosonOnTorusShort::EvaluatePartialDensityMatrix (int subsyte
 	  return TmpDensityMatrix;	  
 	}
     }
-  if (subsytemSize > this->MaxMomentum)
+  if (subsytemSize > this->KyMax)
     {
-      if ((kySector == this->MomentumConstraint) && (nbrBosonSector == this->NbrBosons))
+      if ((kySector == this->TotalKy) && (nbrBosonSector == this->NbrBosons))
 	{
 	  RealSymmetricMatrix TmpDensityMatrix(this->HilbertSpaceDimension);
 	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
@@ -653,23 +660,23 @@ RealSymmetricMatrix BosonOnTorusShort::EvaluatePartialDensityMatrix (int subsyte
   BosonOnTorusShort TmpDestinationHilbertSpace(nbrBosonSector, subsytemSize - 1, kySector);
   cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
   RealSymmetricMatrix TmpDensityMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
-  BosonOnTorusShort TmpHilbertSpace(this->NbrBosons - nbrBosonSector, this->MaxMomentum - subsytemSize, 0);
+  BosonOnTorusShort TmpHilbertSpace(this->NbrBosons - nbrBosonSector, this->KyMax - subsytemSize, 0);
   int* TmpStatePosition = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
   int* TmpStatePosition2 = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
 
   for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
     {
       int Pos = 0;
-      //      for (int i = 0; i <= TmpHilbertSpace.StateMaxMomentum[MinIndex]; ++i)
+      //      for (int i = 0; i <= TmpHilbertSpace.StateKyMax[MinIndex]; ++i)
       //	this->TemporaryState[i] = TmpHilbertSpace.StateDescription[MinIndex][i];
       for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
 	{
 
 // 	  unsigned long TmpState = TmpDestinationHilbertSpace.FermionBasis->StateDescription[j] | TmpComplementaryState;
-// 	  int TmpLzMax = this->FermionBasis->LzMax;
-// 	  while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
-// 	    --TmpLzMax;
-// 	  int TmpPos = this->FermionBasis->FindStateIndex(TmpState, TmpLzMax);
+// 	  int TmpKyMax = this->FermionBasis->KyMax;
+// 	  while (((TmpState >> TmpKyMax) & 0x1ul) == 0x0ul)
+// 	    --TmpKyMax;
+// 	  int TmpPos = this->FermionBasis->FindStateIndex(TmpState, TmpKyMax);
 // 	  if (TmpPos != this->HilbertSpaceDimension)
 // 	    {
 // 	      TmpStatePosition[Pos] = TmpPos;
@@ -694,6 +701,222 @@ RealSymmetricMatrix BosonOnTorusShort::EvaluatePartialDensityMatrix (int subsyte
   
   delete[] TmpStatePosition2;
   delete[] TmpStatePosition;
+  if (TmpNbrNonZeroElements > 0)	
+    return TmpDensityMatrix;
+  else
+    {
+      RealSymmetricMatrix TmpDensityMatrixZero;
+      return TmpDensityMatrixZero;
+    }
+}
+
+// evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Ky sector.
+// 
+// nbrBosonSector = number of particles that belong to the subsytem 
+// kySector = Ky sector in which the density matrix has to be evaluated 
+// groundState = reference on the total system ground state
+// return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+
+RealSymmetricMatrix  BosonOnTorusShort::EvaluatePartialDensityMatrixParticlePartition (int nbrBosonSector, int kySector, RealVector& groundState)
+{  
+  if (nbrBosonSector == 0)
+    {
+      if (kySector == 0)
+	{
+	  RealSymmetricMatrix TmpDensityMatrix(1);
+	  TmpDensityMatrix.SetMatrixElement(0, 0, 1.0);
+	  return TmpDensityMatrix;
+	}
+      else
+	{
+	  RealSymmetricMatrix TmpDensityMatrix;
+	  return TmpDensityMatrix;	  
+	}
+    }
+
+  if (nbrBosonSector == this->NbrBosons)
+    {
+      if (kySector == this->TotalKy)
+	{
+	  RealSymmetricMatrix TmpDensityMatrix(1);
+	  TmpDensityMatrix.SetMatrixElement(0, 0, 1.0);
+	  return TmpDensityMatrix;
+	}
+      else
+	{
+	  RealSymmetricMatrix TmpDensityMatrix;
+	  return TmpDensityMatrix;	  
+	}
+    }
+
+  int ComplementaryNbrBosonSector = this->NbrBosons - nbrBosonSector;
+  int ComplementaryKySector = this->TotalKy - kySector;
+  if (ComplementaryKySector < 0)
+    ComplementaryKySector += this->KyMax;
+
+  if (nbrBosonSector == 1)
+    {
+      double TmpValue = 0.0;
+      unsigned long* TmpMonomial1 = new unsigned long [ComplementaryNbrBosonSector];
+      unsigned long* TmpMonomial3 = new unsigned long [this->NbrBosons];
+      cout << "ComplementaryKySector = " << ComplementaryKySector << endl;
+      BosonOnTorusShort TmpHilbertSpace(this->NbrBosons - 1, this->KyMax, ComplementaryKySector);
+      unsigned long ShiftedLzVSector = kySector;
+      FactorialCoefficient Factorial;
+      for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
+	TmpHilbertSpace.PrintState(cout, MinIndex) << " | " << TmpHilbertSpace.StateKyMax[MinIndex] << " | " << hex << TmpHilbertSpace.StateDescription[MinIndex] << dec << endl;
+      for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
+	{
+	  cout << hex << TmpHilbertSpace.StateDescription[MinIndex] << dec << " " << TmpHilbertSpace.StateKyMax[MinIndex] << endl;
+	  TmpHilbertSpace.FermionToBoson(TmpHilbertSpace.StateDescription[MinIndex], TmpHilbertSpace.StateKyMax[MinIndex] + TmpHilbertSpace.NbrBosons - 1, TmpHilbertSpace.TemporaryState, TmpHilbertSpace.TemporaryStateKyMax);
+	  TmpHilbertSpace.ConvertToMonomial(TmpHilbertSpace.StateDescription[MinIndex], TmpHilbertSpace.TemporaryStateKyMax + TmpHilbertSpace.NbrBosons - 1, TmpMonomial1);
+	  int TmpIndex2 = 0;
+	  int TmpIndex4 = 0;
+	  for (int i = 0; i < ComplementaryNbrBosonSector; ++i)
+	    cout << TmpMonomial1[i] << " ";
+	  cout << endl;
+	  while ((TmpIndex2 < ComplementaryNbrBosonSector) && (TmpMonomial1[TmpIndex2] >= kySector))
+	    {
+	      TmpMonomial3[TmpIndex4] = TmpMonomial1[TmpIndex2];
+	      ++TmpIndex2;
+	      ++TmpIndex4;		  
+	    }
+	  TmpMonomial3[TmpIndex4] = kySector;
+	  ++TmpIndex4;
+	  while (TmpIndex2 < ComplementaryNbrBosonSector)
+	    {
+	      TmpMonomial3[TmpIndex4] = TmpMonomial1[TmpIndex2];
+	      ++TmpIndex2;
+	      ++TmpIndex4;		  
+	    }
+	  unsigned long TmpState = this->ConvertFromMonomial(TmpMonomial3);
+	  int TmpPos = this->FindStateIndex(TmpState, TmpMonomial3[0] + this->NbrBosons - 1);
+	  if (TmpPos != this->HilbertSpaceDimension)
+	    {
+	      this->FermionToBoson(TmpState, TmpMonomial3[0] + this->NbrBosons - 1, this->TemporaryState, this->TemporaryStateKyMax);
+	      Factorial.SetToOne();
+	      for (int k = 0; k <= TmpHilbertSpace.TemporaryStateKyMax; ++k)
+		if (TmpHilbertSpace.TemporaryState[k] > 1)
+		  Factorial.FactorialDivide(TmpHilbertSpace.TemporaryState[k]);
+	      for (int k = 0; k <= this->TemporaryStateKyMax; ++k)
+		if (this->TemporaryState[k] > 1)
+		  Factorial.FactorialMultiply(this->TemporaryState[k]);
+	      Factorial.BinomialDivide(this->NbrBosons, nbrBosonSector);
+	      TmpValue += groundState[TmpPos] * groundState[TmpPos] * (Factorial.GetNumericalValue());	
+	    }
+	}
+      
+      RealSymmetricMatrix TmpDensityMatrix(1);
+      TmpDensityMatrix.SetMatrixElement(0, 0, TmpValue);
+      return TmpDensityMatrix;
+    }
+
+
+  BosonOnTorusShort TmpDestinationHilbertSpace(nbrBosonSector, this->KyMax, kySector);
+  cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
+  RealSymmetricMatrix TmpDensityMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
+  int* TmpStatePosition = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+  int* TmpStatePosition2 = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+  double* TmpStateCoefficient = new double [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+  long TmpNbrNonZeroElements = 0;
+  unsigned long* TmpMonomial2 = new unsigned long [nbrBosonSector];
+  unsigned long* TmpMonomial1 = new unsigned long [ComplementaryNbrBosonSector];
+  unsigned long* TmpMonomial3 = new unsigned long [this->NbrBosons];
+  BosonOnTorusShort TmpHilbertSpace(ComplementaryNbrBosonSector, this->KyMax, ComplementaryKySector);
+  FactorialCoefficient Factorial;
+
+  for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
+    {
+      int Pos = 0;
+      cout << hex << TmpHilbertSpace.StateDescription[MinIndex] << dec << " " << TmpHilbertSpace.StateKyMax[MinIndex] << endl;
+      TmpHilbertSpace.ConvertToMonomial(TmpHilbertSpace.StateDescription[MinIndex], TmpHilbertSpace.StateKyMax[MinIndex] + ComplementaryNbrBosonSector - 1 , TmpMonomial1);
+      for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
+	{
+	  TmpDestinationHilbertSpace.ConvertToMonomial(TmpDestinationHilbertSpace.StateDescription[j], TmpDestinationHilbertSpace.StateKyMax[j], TmpMonomial2);
+
+	  int TmpIndex2 = 0;
+	  int TmpIndex3 = 0;
+	  int TmpIndex4 = 0;
+	  while ((TmpIndex2 < ComplementaryNbrBosonSector) && (TmpIndex3 < nbrBosonSector)) 
+	    {
+	      while ((TmpIndex2 < ComplementaryNbrBosonSector) && (TmpMonomial2[TmpIndex3] <= TmpMonomial1[TmpIndex2]))
+		{
+		  TmpMonomial3[TmpIndex4] = TmpMonomial1[TmpIndex2];
+		  ++TmpIndex2;
+		  ++TmpIndex4;		  
+		}
+	      if (TmpIndex2 < ComplementaryNbrBosonSector)
+		{
+		  while ((TmpIndex3 < nbrBosonSector) && (TmpMonomial1[TmpIndex2] <= TmpMonomial2[TmpIndex3]))
+		    {
+		      TmpMonomial3[TmpIndex4] = TmpMonomial2[TmpIndex3];
+		      ++TmpIndex3;
+		      ++TmpIndex4;		  
+		    }
+		}
+	    }
+	  while (TmpIndex2 < ComplementaryNbrBosonSector)
+	    {
+	      TmpMonomial3[TmpIndex4] = TmpMonomial1[TmpIndex2];
+	      ++TmpIndex2;
+	      ++TmpIndex4;		  
+	    }
+	  while (TmpIndex3 < nbrBosonSector)
+	    {
+	      TmpMonomial3[TmpIndex4] = TmpMonomial2[TmpIndex3];
+	      ++TmpIndex3;
+	      ++TmpIndex4;		  
+	    }
+
+	  unsigned long TmpState = this->ConvertFromMonomial(TmpMonomial3);
+	  int TmpPos = this->FindStateIndex(TmpState, TmpMonomial3[0] + this->NbrBosons - 1);
+	  if (TmpPos != this->HilbertSpaceDimension)
+	    {
+ 	      TmpHilbertSpace.FermionToBoson(TmpHilbertSpace.StateDescription[MinIndex], TmpHilbertSpace.StateKyMax[MinIndex], TmpHilbertSpace.TemporaryState, TmpHilbertSpace.TemporaryStateKyMax);
+ 	      Factorial.SetToOne();
+ 	      for (int k = 0; k <= TmpHilbertSpace.TemporaryStateKyMax; ++k)
+		{
+		  if (TmpHilbertSpace.TemporaryState[k] > 1)
+		    Factorial.FactorialDivide(TmpHilbertSpace.TemporaryState[k]);
+		}
+  	      TmpDestinationHilbertSpace.FermionToBoson(TmpDestinationHilbertSpace.StateDescription[j], TmpDestinationHilbertSpace.StateKyMax[j], TmpDestinationHilbertSpace.TemporaryState, TmpDestinationHilbertSpace.TemporaryStateKyMax);
+  	      for (int k = 0; k <= TmpDestinationHilbertSpace.TemporaryStateKyMax; ++k)
+		{
+		  if (TmpDestinationHilbertSpace.TemporaryState[k] > 1)
+		    Factorial.FactorialDivide(TmpDestinationHilbertSpace.TemporaryState[k]);
+		}
+ 	      this->FermionToBoson(TmpState, TmpMonomial3[0] + this->NbrBosons - 1, this->TemporaryState, this->TemporaryStateKyMax);
+ 	      for (int k = 0; k <= this->TemporaryStateKyMax; ++k)
+		if (this->TemporaryState[k] > 1)
+ 		  Factorial.FactorialMultiply(this->TemporaryState[k]);
+	      Factorial.BinomialDivide(this->NbrBosons, nbrBosonSector);
+	      TmpStatePosition[Pos] = TmpPos;
+	      TmpStatePosition2[Pos] = j;
+	      TmpStateCoefficient[Pos] = sqrt(Factorial.GetNumericalValue());
+	      ++Pos;
+	    }
+	}
+      if (Pos != 0)
+	{
+	  ++TmpNbrNonZeroElements;
+	  for (int j = 0; j < Pos; ++j)
+	    {
+	      int Pos2 = TmpStatePosition2[j];
+	      double TmpValue = groundState[TmpStatePosition[j]] * TmpStateCoefficient[j];
+	      for (int k = 0; k < Pos; ++k)
+		if (TmpStatePosition2[k] >= Pos2)
+		  {
+		    TmpDensityMatrix.AddToMatrixElement(Pos2, TmpStatePosition2[k], TmpValue * groundState[TmpStatePosition[k]] * TmpStateCoefficient[k]);
+		  }
+	    }
+	}
+    }
+  delete[] TmpStatePosition2;
+  delete[] TmpStatePosition;
+  delete[] TmpStateCoefficient;
+  delete[] TmpMonomial1;
+  delete[] TmpMonomial2;
+  delete[] TmpMonomial3;
   if (TmpNbrNonZeroElements > 0)	
     return TmpDensityMatrix;
   else

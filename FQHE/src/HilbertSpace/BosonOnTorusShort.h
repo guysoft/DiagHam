@@ -48,20 +48,20 @@ class BosonOnTorusShort :  public ParticleOnTorus
   // number of bosons plus 1
   int IncNbrBosons;
   // maximum momentum value reached by a boson
-  int MaxMomentum;
-  // number of Lz values in a state
-  int NbrLzValue;
+  int KyMax;
+  // number of Ky values in a state
+  int NbrKyValue;
 
   // index of the momentum orbit
-  int MomentumConstraint;
+  int TotalKy;
   // index of the momentum orbit
-  bool MomentumConstraintFlag;
-  int GCDMaxMomentum;
+  bool TotalKyFlag;
+  int GCDKyMax;
 
   // array describing each state
   unsigned long* StateDescription;
   // array giving maximum Lz value reached for a boson in a given state
-  int* StateMaxMomentum;
+  int* StateKyMax;
 
   // maximum shift used for searching a position in the look-up table
   int MaximumLookUpShift;
@@ -74,7 +74,7 @@ class BosonOnTorusShort :  public ParticleOnTorus
 
   // temporary state used when applying operators
   unsigned long* TemporaryState;
-  int TemporaryStateMaxMomentum;
+  int TemporaryStateKyMax;
   
  public:
 
@@ -217,10 +217,10 @@ class BosonOnTorusShort :  public ParticleOnTorus
   //
   // nbrBosons = number of bosons
   // maxMomentum = momentum maximum value for a boson in the state
-  // currentMaxMomentum = momentum maximum value for bosons that are still to be placed
+  // currentKyMax = momentum maximum value for bosons that are still to be placed
   // currentMomentum = current value of the momentum
   // return value = Hilbert space dimension
-  long EvaluateHilbertSpaceDimension(int nbrBosons, int maxMomentum, int currentMaxMomentum, int currentMomentum);
+  long EvaluateHilbertSpaceDimension(int nbrBosons, int maxMomentum, int currentKyMax, int currentMomentum);
 
   // generate look-up table associated to current Hilbert space
   // 
@@ -231,20 +231,55 @@ class BosonOnTorusShort :  public ParticleOnTorus
   // 
   // nbrBosons = number of bosons
   // maxMomentum = momentum maximum value for a boson in the state
-  // currentMaxMomentum = momentum maximum value for bosons that are still to be placed
+  // currentKyMax = momentum maximum value for bosons that are still to be placed
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  int GenerateStates(int nbrBosons, int maxMomentum, int currentMaxMomentum, int pos);
+  int GenerateStates(int nbrBosons, int maxMomentum, int currentKyMax, int pos);
 
   // generate all states corresponding to the constraints
   // 
   // nbrBosons = number of bosons
   // maxMomentum = momentum maximum value for a boson in the state
-  // currentMaxMomentum = momentum maximum value for bosons that are still to be placed
+  // currentKyMax = momentum maximum value for bosons that are still to be placed
   // pos = position in StateDescription array where to store states
   // currentMomentum = current value of the momentum
   // return value = position from which new states have to be stored
-  int GenerateStates(int nbrBosons, int maxMomentum, int currentMaxMomentum, int pos, int currentMomentum);
+  int GenerateStates(int nbrBosons, int maxMomentum, int currentKyMax, int pos, int currentMomentum);
+
+  // convert a bosonic state to its monomial representation
+  //
+  // initialState = initial  bosonic state
+  // initialStateLzMax = initial bosonic state maximum Ky value
+  // finalState = reference on the array where the monomial representation has to be stored
+  void ConvertToMonomial(unsigned long* initialState, int initialStateKyMax, unsigned long*& finalState);
+
+  // convert a bosonic state to its monomial representation
+  //
+  // initialState = initial bosonic state in its fermionic representation
+  // initialStateLzMax = initial bosonic state maximum Lz value
+  // finalState = reference on the array where the monomial representation has to be stored
+  void ConvertToMonomial(unsigned long initialState, int initialStateLzMax, unsigned long*& finalState);
+
+  // convert a bosonic state from its monomial representation
+  //
+  // initialState = array where the monomial representation is stored
+  // finalState = bosonic state
+  // return value = maximum Ky value reached by a particle
+  int ConvertFromMonomial(unsigned long* initialState, unsigned long*& finalState);
+
+  // convert a bosonic state from its monomial representation
+  //
+  // initialState = array where the monomial representation is stored
+  // return value = bosonic state in its fermionic representation
+  unsigned long ConvertFromMonomial(unsigned long* initialState);
+
+  // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Ky sector.
+  // 
+  // nbrBosonSector = number of particles that belong to the subsytem 
+  // kySector = Ky sector in which the density matrix has to be evaluated 
+  // groundState = reference on the total system ground state
+  // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+  RealSymmetricMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrBosonSector, int kySector, RealVector& groundState);
 
 };
 
@@ -311,6 +346,74 @@ inline void BosonOnTorusShort::FermionToBoson(unsigned long initialState, int in
       initialStateLzMax -= TmpPower;
     }
   --finalStateLzMax;
+}
+
+// convert a bosonic state to its monomial representation
+//
+// initialState = initial  bosonic state
+// initialStateKyMax = initial bosonic state maximum Ky value
+// finalState = reference on the array where the monomial representation has to be stored
+
+inline void BosonOnTorusShort::ConvertToMonomial(unsigned long* initialState, int initialStateKyMax, unsigned long*& finalState)
+{
+  int Index = 0;
+  for (int i = initialStateKyMax; i >= 0; --i)
+    for (unsigned long j = 0ul; j < initialState[i]; ++j)
+      finalState[Index++] = i;
+}
+
+// convert a bosonic state to its monomial representation
+//
+// initialState = initial bosonic state in its fermionic representation
+// initialStateKyMax = initial bosonic state maximum Ky value
+// finalState = reference on the array where the monomial representation has to be stored
+
+inline void BosonOnTorusShort::ConvertToMonomial(unsigned long initialState, int initialStateKyMax, unsigned long*& finalState)
+{
+  int Index = 0;
+  int TmpKy = initialStateKyMax - this->NbrBosons + 1;
+  while (initialStateKyMax >= 0)
+    {
+      while ((initialStateKyMax >= 0) && (((initialState >> initialStateKyMax) & 0x1ul) != 0x0ul))
+	{
+	  finalState[Index++] = TmpKy;
+	  --initialStateKyMax;
+	}
+      while ((initialStateKyMax >= 0) && (((initialState >> initialStateKyMax) & 0x1ul) == 0x0ul))
+	{
+	  --TmpKy;
+	  --initialStateKyMax;
+	}
+    }
+}
+
+// convert a bosonic state from its monomial representation
+//
+// initialState = array where the monomial representation is stored
+// finalState = bosonic state
+// return value = maximum Ky value reached by a particle
+
+inline int BosonOnTorusShort::ConvertFromMonomial(unsigned long* initialState, unsigned long*& finalState)
+{
+  int TmpKyMax = initialState[0]; 
+  for (int i = 0; i < TmpKyMax; ++i)
+    finalState[i] = 0ul;
+  for (int i = 0; i < this->NbrBosons; ++i)
+    finalState[initialState[i]]++;
+  return TmpKyMax;
+}
+
+// convert a bosonic state from its monomial representation
+//
+// initialState = array where the monomial representation is stored
+// return value = bosonic state in its fermionic representation
+
+inline unsigned long BosonOnTorusShort::ConvertFromMonomial(unsigned long* initialState)
+{
+  unsigned long Tmp = 0x0ul;
+  for (int i = 0; i < this->NbrBosons; ++i)
+    Tmp |= 0x1ul << (initialState[i] + ((unsigned long) (this->NbrBosons - i)) - 1ul);
+  return Tmp;
 }
 
 #endif
