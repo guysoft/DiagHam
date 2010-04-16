@@ -214,7 +214,7 @@ int main(int argc, char** argv)
       double EntanglementEntropy = 0.0;
       double DensitySum = 0.0;
 
-      int SubsystemMaxTotalKy = KyMax;
+      int SubsystemMaxTotalKy = KyMax - 1;
 
       int SubsystemTotalKy = 0; 
       for (; SubsystemTotalKy <= SubsystemMaxTotalKy; ++SubsystemTotalKy)

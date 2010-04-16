@@ -121,7 +121,7 @@ int main(int argc, char** argv)
 	{
 	  if (Manager.GetBoolean("boson") == true)
 	    {
-	      BosonOnTorusShort Space (NbrParticles, NbrFluxQuanta, y);
+	      BosonOnTorus Space (NbrParticles, NbrFluxQuanta, y);
 	      cout << " (k_y = " << y << ") : " << endl;
 	      for (int i = 0; i <  Space.GetHilbertSpaceDimension(); ++i)
 		Space.PrintState(cout, i) << endl;

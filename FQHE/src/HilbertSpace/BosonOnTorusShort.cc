@@ -364,7 +364,7 @@ ostream& BosonOnTorusShort::PrintState (ostream& Str, int state)
     Str << this->TemporaryState[i] << " ";
   for (; i < this->KyMax; ++i)
     Str << "0 ";
-  Str << "| " <<  this->TemporaryStateKyMax;
+  Str << "| " <<  this->TemporaryStateKyMax << " | " << hex << this->StateDescription[state] << dec;
  return Str;
 }
 
@@ -753,6 +753,8 @@ RealSymmetricMatrix  BosonOnTorusShort::EvaluatePartialDensityMatrixParticlePart
   int ComplementaryKySector = this->TotalKy - kySector;
   if (ComplementaryKySector < 0)
     ComplementaryKySector += this->KyMax;
+  if (ComplementaryKySector >= this->KyMax)
+    ComplementaryKySector -= this->KyMax;
 
   if (nbrBosonSector == 1)
     {
@@ -767,14 +769,10 @@ RealSymmetricMatrix  BosonOnTorusShort::EvaluatePartialDensityMatrixParticlePart
 	TmpHilbertSpace.PrintState(cout, MinIndex) << " | " << TmpHilbertSpace.StateKyMax[MinIndex] << " | " << hex << TmpHilbertSpace.StateDescription[MinIndex] << dec << endl;
       for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
 	{
-	  cout << hex << TmpHilbertSpace.StateDescription[MinIndex] << dec << " " << TmpHilbertSpace.StateKyMax[MinIndex] << endl;
 	  TmpHilbertSpace.FermionToBoson(TmpHilbertSpace.StateDescription[MinIndex], TmpHilbertSpace.StateKyMax[MinIndex] + TmpHilbertSpace.NbrBosons - 1, TmpHilbertSpace.TemporaryState, TmpHilbertSpace.TemporaryStateKyMax);
 	  TmpHilbertSpace.ConvertToMonomial(TmpHilbertSpace.StateDescription[MinIndex], TmpHilbertSpace.TemporaryStateKyMax + TmpHilbertSpace.NbrBosons - 1, TmpMonomial1);
 	  int TmpIndex2 = 0;
 	  int TmpIndex4 = 0;
-	  for (int i = 0; i < ComplementaryNbrBosonSector; ++i)
-	    cout << TmpMonomial1[i] << " ";
-	  cout << endl;
 	  while ((TmpIndex2 < ComplementaryNbrBosonSector) && (TmpMonomial1[TmpIndex2] >= kySector))
 	    {
 	      TmpMonomial3[TmpIndex4] = TmpMonomial1[TmpIndex2];
