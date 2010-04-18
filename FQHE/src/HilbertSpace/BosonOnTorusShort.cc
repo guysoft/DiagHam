@@ -61,7 +61,6 @@ BosonOnTorusShort::BosonOnTorusShort (int nbrBosons, int maxMomentum)
   this->TemporaryState = new unsigned long [this->KyMax + 1];
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->KyMax);
   this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
-  cout << "dim = " << this->HilbertSpaceDimension << endl;
   this->Flag.Initialize();
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
   this->StateKyMax = new int [this->HilbertSpaceDimension];
@@ -101,7 +100,6 @@ BosonOnTorusShort::BosonOnTorusShort (int nbrBosons, int maxMomentum, int moment
   this->TemporaryState = new unsigned long [this->KyMax + 1];
 
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->KyMax);
-  cout << "dim = " << this->HilbertSpaceDimension << endl;
   this->Flag.Initialize();
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
   this->StateKyMax = new int [this->HilbertSpaceDimension];
@@ -364,7 +362,6 @@ ostream& BosonOnTorusShort::PrintState (ostream& Str, int state)
     Str << this->TemporaryState[i] << " ";
   for (; i < this->KyMax; ++i)
     Str << "0 ";
-  Str << "| " <<  this->TemporaryStateKyMax << " | " << hex << this->StateDescription[state] << dec;
  return Str;
 }
 

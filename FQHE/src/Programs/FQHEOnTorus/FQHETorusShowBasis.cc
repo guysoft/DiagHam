@@ -38,6 +38,7 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 4);
   (*SystemGroup) += new SingleIntegerOption  ('q', "nbr-flux", "number of flux quanta", 8);
+  (*SystemGroup) += new SingleIntegerOption ('y', "ky-momentum", "the total momentum along the y axis (negative if all ky sectors have to be displayed)", -1);
   (*SystemGroup) += new BooleanOption  ('\n', "fermion", "use fermionic statistic instead of bosonic statistic");
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "no-translation", "do not consider magnetic translation (only trivial translations along one axis)");
@@ -117,11 +118,18 @@ int main(int argc, char** argv)
     }
   else
     {
-      for (int y = 0; y < NbrFluxQuanta; ++y)
+      int MinKy = 0;
+      int MaxKy = NbrFluxQuanta;
+      if (Manager.GetInteger("ky-momentum") >= 0)
+	{
+	  MinKy = Manager.GetInteger("ky-momentum") % NbrFluxQuanta;
+	  MaxKy = MinKy + 1;
+	}
+      for (int y = MinKy; y < MaxKy; ++y)
 	{
 	  if (Manager.GetBoolean("boson") == true)
 	    {
-	      BosonOnTorus Space (NbrParticles, NbrFluxQuanta, y);
+	      BosonOnTorusShort Space (NbrParticles, NbrFluxQuanta, y);
 	      cout << " (k_y = " << y << ") : " << endl;
 	      for (int i = 0; i <  Space.GetHilbertSpaceDimension(); ++i)
 		Space.PrintState(cout, i) << endl;
