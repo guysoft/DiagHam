@@ -307,7 +307,7 @@ int main(int argc, char** argv)
       double DensitySum = 0.0;
 
       int ComplementarySubsystemNbrParticles = NbrParticles - SubsystemNbrParticles;
-      int SubsystemMaxTotalLz = SubsystemNbrParticles * LzMax - (SubsystemNbrParticles * (SubsystemNbrParticles + 1));
+      int SubsystemMaxTotalLz = SubsystemNbrParticles * LzMax - (SubsystemNbrParticles * (SubsystemNbrParticles - 1));
       int ComplementaryMaxTotalLz = ComplementarySubsystemNbrParticles * LzMax - (ComplementarySubsystemNbrParticles * (ComplementarySubsystemNbrParticles + 1));
       while (SubsystemMaxTotalLz > ComplementaryMaxTotalLz)
 	SubsystemMaxTotalLz -= 2;

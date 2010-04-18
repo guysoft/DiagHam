@@ -149,11 +149,6 @@ int main(int argc, char** argv)
 	  cout << GroundStateFiles[i] << " is not a bosonic state" << endl;
 	  return -1;
 	}
-      if (((NbrParticles * KyMax) & 1) != (TotalKy[i] & 1))
-	{
-	  cout << "incompatible values for nbr-particles, nbr-flux and total-ky for ground state file " << GroundStateFiles[i] << endl;
-	  return -1;
-	}
     }
 
 

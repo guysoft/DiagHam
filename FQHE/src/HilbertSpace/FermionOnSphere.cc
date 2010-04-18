@@ -2057,7 +2057,7 @@ RealSymmetricMatrix  FermionOnSphere::EvaluatePartialDensityMatrixParticlePartit
 	      int TmpPos = this->FindStateIndex(TmpState, TmpLzMax);
 	      if (TmpPos != this->HilbertSpaceDimension)
  		{
-		  TmpValue += groundState[TmpPos] * groundState[TmpPos];// * TmpInvBinomial;	
+		  TmpValue += groundState[TmpPos] * groundState[TmpPos] * TmpInvBinomial;	
 		}
 	    }
 	}
@@ -2114,9 +2114,9 @@ RealSymmetricMatrix  FermionOnSphere::EvaluatePartialDensityMatrixParticlePartit
 		      --Pos2;
 		    }
  		  if ((Sign & 0x1ul) == 0x0ul)		  
- 		    Coefficient *= TmpInvBinomial;
+ 		    Coefficient *= 1.0;//TmpInvBinomial;
  		  else
- 		    Coefficient *= -TmpInvBinomial;
+ 		    Coefficient *= -1.0;//TmpInvBinomial;
 		  TmpStatePosition[Pos] = TmpPos;
 		  TmpStatePosition2[Pos] = j;
 		  TmpStateCoefficient[Pos] = Coefficient;
