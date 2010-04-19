@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//             class of fermions on sphere using the Haldane basis            //
+//             class of fermions on sphere without fixed total Lz             //
 //                                                                            //
-//                        last modification : 06/07/2006                      //
+//                        last modification : 19/04/2010                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -53,11 +53,10 @@ class FermionOnSphereFull :  public FermionOnSphere
   // basic constructor
   // 
   // nbrFermions = number of fermions
-  // totalLz = reference on twice the momentum total value, totalLz will be recomputed from referenceState and stored in totalLz
   // lzMax = maximum Lz value reached by a fermion
   // memory = amount of memory granted for precalculations
   // referenceState = array that describes the reference state to start from
-  FermionOnSphereFull (int nbrFermions, int lzMax);
+  FermionOnSphereFull (int nbrFermions, int lzMax, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
@@ -79,14 +78,27 @@ class FermionOnSphereFull :  public FermionOnSphere
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
 
+  // apply a^+_m a_m operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation and annihilation operator
+  // return value = coefficient obtained when applying a^+_m a_m
+  double AdA (int index, int m);
+
  protected:
+
+  // evaluate Hilbert space dimension
+  //
+  // nbrFermions = number of fermions
+  // lzMax = momentum maximum value for a fermion
+  // return value = Hilbert space dimension
+  long EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax);
 
   // generate all states (i.e. all possible skew symmetric polynomials)
   // 
   // nbrFermions = number of fermions
   // lzMax = momentum maximum value for a fermion
   // currentLzMax = momentum maximum value for fermions that are still to be placed
-  // totalLz = momentum total value
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
   virtual long GenerateStates(int nbrFermions, int lzMax, int currentLzMax, long pos);

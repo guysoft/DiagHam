@@ -87,4 +87,5 @@ FermionOnTorusWithSpinNew.cc \
 BosonOnTorusShort.cc \
 BosonOnCylinderShort.cc \
 BosonOnSphereLong.cc \
-BosonOnSphereHaldaneBasisLong.cc
+BosonOnSphereHaldaneBasisLong.cc \
+FermionOnSphereFull.cc

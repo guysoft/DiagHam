@@ -65,8 +65,12 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "max-na", "maximum size of the particles whose entropy has to be evaluated (0 if equal to half the total system size)", 0);
   (*SystemGroup) += new SingleStringOption  ('\n', "degenerated-groundstate", "single column file describing a degenerated ground state");
   (*SystemGroup) += new BooleanOption  ('\n', "compute-lvalue", "compute the L value of each reduced density matrix eigenstate");
+  (*SystemGroup) += new BooleanOption  ('\n', "largest-lz", "only compute the largest block of the reduced density matrix (Lz=0 or 1/2)");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with partent extension");
   (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
+  (*OutputGroup) += new BooleanOption ('\n', "density-eigenstate", "compute the eigenstates of the reduced density matrix");
+  (*OutputGroup) += new SingleIntegerOption  ('\n', "lza-eigenstate", "compute the eigenstates of the reduced density matrix only for a subsystem with a fixed total Lz value", 0);
+  (*OutputGroup) += new SingleIntegerOption  ('\n', "nbr-eigenstates", "number of reduced density matrix eigenstates to compute (0 if all)", 0);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
 #ifdef __LAPACK__
@@ -112,6 +116,10 @@ int main(int argc, char** argv)
 #endif
   char* DensityMatrixFileName = Manager.GetString("density-matrix");
   bool ComputeLValueFlag = Manager.GetBoolean("compute-lvalue");
+  bool EigenstateFlag = Manager.GetBoolean("density-eigenstate");
+  bool LargestLSector = Manager.GetBoolean("largest-lz");
+  int FilterLza = Manager.GetInteger("lza-eigenstate");
+  int NbrEigenstates = Manager.GetInteger("nbr-eigenstates");
   int* TotalLz = 0;
   bool Statistics = true;
   int NbrSpaces = 1;
@@ -312,6 +320,19 @@ int main(int argc, char** argv)
       while (SubsystemMaxTotalLz > ComplementaryMaxTotalLz)
 	SubsystemMaxTotalLz -= 2;
       int SubsystemTotalLz = -SubsystemMaxTotalLz; 
+      if (LargestLSector == true)
+	{
+	  if (((LzMax * NbrParticles) & 1) == 0)
+	    {
+	      SubsystemTotalLz = 0;
+	      SubsystemMaxTotalLz = 0;
+	    }
+	  else
+	    {
+	      SubsystemTotalLz = 1;
+	      SubsystemMaxTotalLz = 1;
+	    }
+	}
       for (; SubsystemTotalLz <= SubsystemMaxTotalLz; SubsystemTotalLz += 2)
 	{
 	  cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Lz=" << SubsystemTotalLz << endl;
@@ -367,6 +388,7 @@ int main(int argc, char** argv)
 		  ofstream DensityMatrixFile;
 		  DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
 		  DensityMatrixFile.precision(14);
+		  char* TmpEigenstateName = new char[512];
 		  for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
 		    {
 		      double TmpSqrMomentum = (OperMomentum.MatrixElement(TmpEigenstates[i], TmpEigenstates[i])).Re;
@@ -374,7 +396,15 @@ int main(int argc, char** argv)
 		      if (TmpSqrMomentum > 0.0)
 			TmpMomentum = (0.5 * (sqrt ((4.0 * TmpSqrMomentum) + 1.0) - 1.0));
 		      DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpDiag[i] << " " << TmpSqrMomentum << " " << TmpMomentum << endl;
+		      if ((EigenstateFlag == true) && (FilterLza == SubsystemTotalLz) && ((NbrEigenstates == 0) || (NbrEigenstates > i)))
+			{
+			  sprintf (TmpEigenstateName,
+				   "fermions_particlereduceddensity_na_%d_n_%d_2s_%d_lz_%d.%d.vec",
+				   SubsystemNbrParticles, NbrParticles, LzMax, SubsystemTotalLz, i);
+			  TmpEigenstates[i].WriteVector(TmpEigenstateName);
+			}
 		    }
+		  delete[] TmpEigenstateName;
 		  DensityMatrixFile.close();
 		}
 	      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
