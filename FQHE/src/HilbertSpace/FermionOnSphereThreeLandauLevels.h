@@ -3,12 +3,13 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2001-2002 Nicolas Regnault                  //
+//                   Copyright (C) 2001-2005 Nicolas Regnault                 //
 //                                                                            //
 //                                                                            //
-//             class of fermions on sphere without fixed total Lz             //
+//                  class of fermions on sphere including three               //
+//                                  Landau levels                             //
 //                                                                            //
-//                        last modification : 19/04/2010                      //
+//                        last modification : 20/04/2010                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,83 +29,79 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef FERMIONONSPHEREFULL_H
-#define FERMIONONSPHEREFULL_H
+#ifndef FERMIONONSPHERETHREELANDAULEVELS_H
+#define FERMIONONSPHERETHREELANDAULEVELS_H
 
 
 #include "config.h"
-#include "HilbertSpace/FermionOnSphere.h"
+#include "HilbertSpace/FermionOnSphereWithSU3Spin.h"
 
 #include <iostream>
 
 
+class FermionOnSphere;
 
-class FermionOnSphereFull :  public FermionOnSphere
+
+class FermionOnSphereThreeLandauLevels : public FermionOnSphereWithSU3Spin
 {
 
  protected:
 
-  // array that contains the total Lz of each state
-  int* TotalLzValues;
 
  public:
 
   // default constructor
-  //
-  FermionOnSphereFull();
+  // 
+  FermionOnSphereThreeLandauLevels ();
 
   // basic constructor
   // 
   // nbrFermions = number of fermions
-  // lzMax = maximum Lz value reached by a fermion
+  // totalLz = twice the momentum total value
+  // lzMax = twice the maximum Lz value reached by a fermion
   // memory = amount of memory granted for precalculations
-  // referenceState = array that describes the reference state to start from
-  FermionOnSphereFull (int nbrFermions, int lzMax, unsigned long memory = 10000000);
+  FermionOnSphereThreeLandauLevels (int nbrFermions, int totalLz, int lzMax, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
-  FermionOnSphereFull(const FermionOnSphereFull& fermions);
+  FermionOnSphereThreeLandauLevels(const FermionOnSphereThreeLandauLevels& fermions);
 
   // destructor
   //
-  virtual ~FermionOnSphereFull ();
+  virtual ~FermionOnSphereThreeLandauLevels ();
 
   // assignement (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space
-  FermionOnSphereFull& operator = (const FermionOnSphereFull& fermions);
+  FermionOnSphereThreeLandauLevels& operator = (const FermionOnSphereThreeLandauLevels& fermions);
 
   // clone Hilbert space (without duplicating datas)
   //
   // return value = pointer to cloned Hilbert space
-  AbstractHilbertSpace* Clone();
+  virtual AbstractHilbertSpace* Clone();
 
-  // apply a^+_m a_m operator to a given state 
-  //
-  // index = index of the state on which the operator has to be applied
-  // m = index of the creation and annihilation operator
-  // return value = coefficient obtained when applying a^+_m a_m
-  double AdA (int index, int m);
-
- protected:
+  protected:
 
   // evaluate Hilbert space dimension
   //
   // nbrFermions = number of fermions
+  // nbrFluxQuanta = number of flux quanta
   // lzMax = momentum maximum value for a fermion
+  // totalLz = momentum total value
   // return value = Hilbert space dimension
-  long EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax);
+  virtual long ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int nbrFluxQuanta, int lzMax, int totalLz);
 
-  // generate all states (i.e. all possible skew symmetric polynomials)
+  // generate all states corresponding to the constraints
   // 
   // nbrFermions = number of fermions
-  // lzMax = momentum maximum value for a fermion
-  // currentLzMax = momentum maximum value for fermions that are still to be placed
+  // nbrFluxQuanta = number of flux quanta
+  // lzMax = momentum maximum value for a fermion in the state
+  // totalLz = momentum total value
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  virtual long GenerateStates(int nbrFermions, int lzMax, int currentLzMax, long pos);
+  virtual long GenerateStates(int nbrFermions, int nbrFluxQuanta, int lzMax, int totalLz, long pos);
 
 };
 

@@ -10,6 +10,7 @@
 #include "HilbertSpace/BosonOnSphereWithSpin.h"
 #include "HilbertSpace/FermionOnSphereWithSpinAllSz.h"
 #include "HilbertSpace/FermionOnSphereTwoLandauLevels.h"
+#include "HilbertSpace/FermionOnSphereThreeLandauLevels.h"
 
 #include "MathTools/ClebschGordanCoefficients.h"
 #include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
@@ -58,6 +59,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "total-y", "three time the quantum number of the system associated to the Y generator (only useful in su(3) mode)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "su4-spin", "consider particles with SU(4) spin");
   (*SystemGroup) += new BooleanOption  ('\n', "2-ll", "consider particles within two Landau levels");
+  (*SystemGroup) += new BooleanOption  ('\n', "3-ll", "consider particles within two Landau levels");
   (*SystemGroup) += new SingleIntegerOption  ('i', "total-isosz", "twice the z component of the total isospin of the system (only usefull in su(4) mode)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('e', "total-entanglement", "twice the projection of the total spin-isopsin entanglement of the system (only usefull in su(4) mode)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
@@ -93,6 +95,7 @@ int main(int argc, char** argv)
   bool SU3SpinFlag = Manager.GetBoolean("su3-spin");
   bool SU4SpinFlag = Manager.GetBoolean("su4-spin");
   bool TwoLLFlag = Manager.GetBoolean("2-ll");
+  bool ThreeLLFlag = Manager.GetBoolean("3-ll");
   int TotalSz = Manager.GetInteger("total-sz");
   int TotalIz = Manager.GetInteger("total-isosz");
   int TotalPz = Manager.GetInteger("total-entanglement");
@@ -128,7 +131,7 @@ int main(int argc, char** argv)
     }
   else
     {
-      if ((SU2SpinFlag == false) && (SU3SpinFlag == false) && (SU4SpinFlag == false) && (AllSzFlag == false) && (TwoLLFlag == false))
+      if ((SU2SpinFlag == false) && (SU3SpinFlag == false) && (SU4SpinFlag == false) && (AllSzFlag == false) && (TwoLLFlag == false) && (ThreeLLFlag == false))
 	{
 	  if (HaldaneBasisFlag == false)
 	    {
@@ -167,6 +170,9 @@ int main(int argc, char** argv)
 	    else
 	      if (TwoLLFlag == true)
 		Space = new FermionOnSphereTwoLandauLevels(NbrParticles, TotalLz, NbrFluxQuanta + 2, NbrFluxQuanta);	    
+	      else
+		if (ThreeLLFlag == true)
+		  Space = new FermionOnSphereThreeLandauLevels(NbrParticles, TotalLz, NbrFluxQuanta);	    
     }
   
   if (Manager.GetString("get-index") != 0)
@@ -219,7 +225,10 @@ int main(int argc, char** argv)
 		    if (TwoLLFlag == true)
 		      sprintf (OutputFileName, "fermions_sphere_2ll_n_%d_2s_%d_lz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz);
 		    else
-		      sprintf (OutputFileName, "fermions_sphere_n_%d_2s_%d_lz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz);
+		      if (ThreeLLFlag == true)
+			sprintf (OutputFileName, "fermions_sphere_3ll_n_%d_2s_%d_lz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz);
+		      else
+			sprintf (OutputFileName, "fermions_sphere_n_%d_2s_%d_lz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz);
 	}
       else
 	{

@@ -100,6 +100,15 @@ long FermionSU3ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, 
 // return value = Hilbert space dimension
 long Fermion2LLShiftedEvaluateFullHilbertSpaceDimension(int nbrFermions, int nbrFluxQuanta, int lzMax, int totalLz);
 
+// evaluate Hilbert space dimension for fermions in two Landau levels
+//
+// nbrFermions = number of fermions
+// nbrFluxQuanta = number of flux quanta
+// lzMax = momentum maximum value for a fermion
+// totalLz = momentum total value
+// return value = Hilbert space dimension
+long Fermion3LLShiftedEvaluateFullHilbertSpaceDimension(int nbrFermions, int nbrFluxQuanta, int lzMax, int totalLz);
+
 // save dimensions in a given file
 //
 // outputFileName = output file name
@@ -146,6 +155,14 @@ ostream& FermionSU4WriteDimension(ostream& output, int nbrParticles, int nbrFlux
 // return value = reference on the output stream
 ostream& Fermion2LLWriteDimension(ostream& output, int nbrParticles, int nbrFluxQuanta);
 
+// save dimensions in a given output stream for fermions in 2 Landau levels
+//
+// output = reference on the output stream
+// nbrParticles = number of particles
+// nbrFluxQuanta = number of flux quanta
+// return value = reference on the output stream
+ostream& Fermion3LLWriteDimension(ostream& output, int nbrParticles, int nbrFluxQuanta);
+
 
 int main(int argc, char** argv)
 {
@@ -165,6 +182,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "su2su2-spin", "consider particles with SU(2)xSU(2) spin");
   (*SystemGroup) += new BooleanOption  ('\n', "su4-spin", "consider particles with SU(4) spin");
   (*SystemGroup) += new BooleanOption  ('\n', "2-ll", "consider particles within two Landau levels");
+  (*SystemGroup) += new BooleanOption  ('\n', "3-ll", "consider particles within three Landau levels");
   (*SystemGroup) += new BooleanOption  ('\n', "ground-only", "get the dimension only for the largest subspace");
   (*SystemGroup) += new BooleanOption ('\n', "use-files", "use dimension files that have been previously generated to increase speed. Files must be in current directory and obey the statistics_sphere_n_nbrparticles_q_nbrfluxquanta.dim naming convention");
   (*OutputGroup) += new BooleanOption  ('\n', "save-disk", "save output on disk");
@@ -188,7 +206,7 @@ int main(int argc, char** argv)
   if (((NbrParticles * NbrFluxQuanta) & 1) != 0)
     LzMin = 1;
   if ((Manager.GetBoolean("su4-spin") == false) && (Manager.GetBoolean("su2-spin") == false) && 
-      (Manager.GetBoolean("su3-spin") == false) && (Manager.GetBoolean("su2su2-spin") == false) && (Manager.GetBoolean("2-ll") == false))
+      (Manager.GetBoolean("su3-spin") == false) && (Manager.GetBoolean("su2su2-spin") == false) && (Manager.GetBoolean("2-ll") == false) && (Manager.GetBoolean("3-ll") == false))
     {
       if (Manager.GetBoolean("ground-only") == true)
 	{
@@ -439,6 +457,51 @@ int main(int argc, char** argv)
 		}
 	      else
 		Fermion2LLWriteDimension (cout, NbrParticles, NbrFluxQuanta);
+	    }
+	}
+      return 0;
+    }
+  if (Manager.GetBoolean("3-ll") == true)
+    {
+      if (Manager.GetBoolean("boson") == true)
+	{
+	  cout << "3 Landau level mode not yet available" << endl;	
+	  return -1;
+	}
+      else
+	{
+	  if (NbrParticles > ((3 * NbrFluxQuanta) + 9))
+	    {
+	      cout << "error : number of flux quanta is too low" << endl;
+	      return -1;
+	    }
+	  if (Manager.GetBoolean("ground-only") == true)
+	    {
+	      cout << Fermion3LLShiftedEvaluateFullHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, NbrFluxQuanta + 4, (LzMin + ((NbrFluxQuanta + 4) * NbrParticles)) >> 1) << endl;
+	    }
+	  else
+	    {
+	      if (Manager.GetBoolean("save-disk") == true)
+		{
+		  char* OutputFileName = 0;
+		  if (Manager.GetString("output-file") == 0)
+		    {
+		      OutputFileName = new char[256];
+		      sprintf (OutputFileName, "fermions_sphere_3ll_n_%d_2s_%d.dim", NbrParticles, NbrFluxQuanta);
+		    }
+		  else
+		    {
+		      OutputFileName = new char[strlen(Manager.GetString("output-file")) + 1];
+		      strcpy (OutputFileName, Manager.GetString("output-file"));
+		    }		  
+		  ofstream File;
+		  File.open(OutputFileName, ios::binary | ios::out);
+		  Fermion3LLWriteDimension(File, NbrParticles, NbrFluxQuanta);
+		  File.close();
+		  delete[] OutputFileName;
+		}
+	      else
+		Fermion3LLWriteDimension (cout, NbrParticles, NbrFluxQuanta);
 	    }
 	}
       return 0;
@@ -850,6 +913,66 @@ long Fermion2LLShiftedEvaluateFullHilbertSpaceDimension(int nbrFermions, int nbr
   return Tmp;
 }
 
+// evaluate Hilbert space dimension for fermions in three Landau levels
+//
+// nbrFermions = number of fermions
+// nbrFluxQuanta = number of flux quanta
+// lzMax = momentum maximum value for a fermion
+// totalLz = momentum total value
+// return value = Hilbert space dimension
+
+long Fermion3LLShiftedEvaluateFullHilbertSpaceDimension(int nbrFermions, int nbrFluxQuanta, int lzMax, int totalLz)
+{
+  if ((nbrFermions < 0) || (totalLz < 0))
+    return 0l;
+  if ((nbrFermions == 0) && (totalLz == 0))
+    return 1l;
+  if (lzMax < 0) 
+    return 0l;
+    
+  if (nbrFermions == 1) 
+    {
+      long Tmp = 0l;
+      if (lzMax >= totalLz)
+	{
+	  if (((nbrFluxQuanta + 4) >= totalLz) && (totalLz >= 0))
+	    ++Tmp;
+	  if (((nbrFluxQuanta + 3) >= totalLz) && (totalLz >= 1))
+	    ++Tmp;
+	  if (((nbrFluxQuanta + 2) >= totalLz) && (totalLz >= 2))
+	    ++Tmp;
+	}
+      return Tmp;
+    }
+
+  if ((lzMax == 0) && (totalLz != 0))
+    return 0l;
+
+  long Tmp = 0l;
+  if ((lzMax <= (nbrFluxQuanta + 4)) && (lzMax >= 0))
+    {
+      if ((lzMax <= (nbrFluxQuanta + 3)) && (lzMax >= 1))
+	{
+	  if ((lzMax <= (nbrFluxQuanta + 2)) && (lzMax >= 2))
+	    Tmp += Fermion3LLShiftedEvaluateFullHilbertSpaceDimension(nbrFermions - 3, nbrFluxQuanta, lzMax - 1, totalLz - (3 * lzMax));
+	  Tmp += Fermion3LLShiftedEvaluateFullHilbertSpaceDimension(nbrFermions - 2, nbrFluxQuanta, lzMax - 1, totalLz - (2 * lzMax));
+	}
+      if ((lzMax <= (nbrFluxQuanta + 2)) && (lzMax >= 2))
+	Tmp += Fermion3LLShiftedEvaluateFullHilbertSpaceDimension(nbrFermions - 2, nbrFluxQuanta, lzMax - 1, totalLz - (2 * lzMax));
+      Tmp += Fermion3LLShiftedEvaluateFullHilbertSpaceDimension(nbrFermions - 1, nbrFluxQuanta, lzMax - 1, totalLz - lzMax);
+    }
+  if ((lzMax <= (nbrFluxQuanta + 3)) && (lzMax >= 1))
+    {
+      if ((lzMax <= (nbrFluxQuanta + 2)) && (lzMax >= 2))
+	Tmp += Fermion3LLShiftedEvaluateFullHilbertSpaceDimension(nbrFermions - 2, nbrFluxQuanta, lzMax - 1, totalLz - (2 * lzMax));
+      Tmp += Fermion3LLShiftedEvaluateFullHilbertSpaceDimension(nbrFermions - 1, nbrFluxQuanta, lzMax - 1, totalLz - lzMax);
+    }
+  if ((lzMax <= (nbrFluxQuanta + 2)) && (lzMax >= 2))    
+    Tmp += Fermion3LLShiftedEvaluateFullHilbertSpaceDimension(nbrFermions - 1, nbrFluxQuanta, lzMax - 1, totalLz - lzMax);
+  Tmp += Fermion3LLShiftedEvaluateFullHilbertSpaceDimension(nbrFermions, nbrFluxQuanta, lzMax - 1, totalLz);
+  return Tmp;
+}
+
 
 // evaluate Hilbert space dimension using previously generated Hilbert space dimension files (or compute them if they don't exist)
 //
@@ -1067,6 +1190,48 @@ ostream& Fermion2LLWriteDimension(ostream& output, int nbrParticles, int nbrFlux
   long* LzDimension = new long [((Max - Min) >> 1) + 1];
   for (int Lz = Min; Lz <= Max; Lz += 2)
     LzDimension[(Lz - Min) >> 1] = Fermion2LLShiftedEvaluateFullHilbertSpaceDimension(nbrParticles, nbrFluxQuanta, nbrFluxQuanta + 2, (Lz + (nbrParticles * (nbrFluxQuanta + 2))) >> 1);
+  for (int Lz = Min; Lz < Max; Lz += 2)
+    output << Lz << " " << LzDimension[(Lz - Min) >> 1] << " " 
+	   << (LzDimension[(Lz - Min) >> 1] - LzDimension[((Lz - Min) >> 1) + 1]) << endl;
+    output << Max << " " << LzDimension[(Max - Min) >> 1] << " " 
+	   << LzDimension[(Max - Min) >> 1] << endl;
+  delete[] LzDimension;
+  return output;
+}
+
+// save dimensions in a given output stream for fermions in 3 Landau levels
+//
+// output = reference on the output stream
+// nbrParticles = number of particles
+// nbrFluxQuanta = number of flux quanta
+// return value = reference on the output stream
+
+ostream& Fermion3LLWriteDimension(ostream& output, int nbrParticles, int nbrFluxQuanta)
+{
+  output << "# Hilbert space dimension in each L and Lz sector for " << nbrParticles << " fermions" << endl;
+  output << "# in three Landau levels on the sphere geometry with " << nbrFluxQuanta << " flux quanta" << endl;
+  output << "#" << endl << "#  dimensions for each subspaces with the following convention " << endl 
+	 << "# (twice the total Lz/L value) (dimension of the subspace with fixed Lz) (dimension of the subspace with fixed L, Lz=L)" << endl << endl;
+  int Min = (nbrParticles * nbrFluxQuanta) & 1;
+  int TmpNbrParticle1 = (nbrParticles + 3) / 3;
+  int TmpNbrParticle2 = (nbrParticles - TmpNbrParticle1 + 1) / 2;
+  int TmpNbrParticle3 = nbrParticles - TmpNbrParticle1 - TmpNbrParticle2;
+  while (TmpNbrParticle3 > (nbrFluxQuanta + 1))
+    {
+      --TmpNbrParticle3;
+      ++TmpNbrParticle2;
+    }
+  while (TmpNbrParticle2 > (nbrFluxQuanta + 3))
+    {
+      --TmpNbrParticle2;
+      ++TmpNbrParticle1;
+    }
+  int Max = (((nbrFluxQuanta - TmpNbrParticle3 + 1) * TmpNbrParticle3)
+	     + ((nbrFluxQuanta + 2 - TmpNbrParticle2 + 1) * TmpNbrParticle2)
+	     + ((nbrFluxQuanta + 4 - TmpNbrParticle1 + 1) * TmpNbrParticle1));
+  long* LzDimension = new long [((Max - Min) >> 1) + 1];
+  for (int Lz = Min; Lz <= Max; Lz += 2)
+    LzDimension[(Lz - Min) >> 1] = Fermion3LLShiftedEvaluateFullHilbertSpaceDimension(nbrParticles, nbrFluxQuanta, nbrFluxQuanta + 4, (Lz + (nbrParticles * (nbrFluxQuanta + 4))) >> 1);
   for (int Lz = Min; Lz < Max; Lz += 2)
     output << Lz << " " << LzDimension[(Lz - Min) >> 1] << " " 
 	   << (LzDimension[(Lz - Min) >> 1] - LzDimension[((Lz - Min) >> 1) + 1]) << endl;

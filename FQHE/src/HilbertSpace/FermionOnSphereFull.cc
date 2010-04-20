@@ -130,6 +130,7 @@ FermionOnSphereFull::FermionOnSphereFull(const FermionOnSphereFull& fermions)
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;
+  this->TotalLzValues = fermions.TotalLzValues;
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
   this->LargeHilbertSpaceDimension = fermions.LargeHilbertSpaceDimension;
   this->StateDescription = fermions.StateDescription;

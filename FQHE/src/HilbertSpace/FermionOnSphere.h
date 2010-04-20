@@ -93,6 +93,7 @@ class FermionOnSphere :  public ParticleOnSphere
   friend class BosonOnSphereHaldaneBasisShort;
   friend class BosonOnSphereHaldaneHugeBasisShort;
   friend class BosonOnSphereBernevigBasisShort;
+  friend class BosonOnSphereFullShort;
 
   friend class BosonOnDiskHaldaneBasisShort;
 
