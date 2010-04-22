@@ -55,6 +55,8 @@ class BosonOnSphereShort :  public ParticleOnSphere
   friend class BosonOnSphereHaldaneSymmetricBasisShort;
   friend class BosonOnSphereHaldaneHugeBasisShort;
 
+  friend class BosonOnSphereFullShort;
+
  protected:
 
   // the fermionic Hilbert space associated to the bosonic one

@@ -97,7 +97,17 @@ FermionOnSphereFull::FermionOnSphereFull (int nbrFermions, int lzMax, unsigned l
 
   this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
   this->StateLzMax = new int [this->LargeHilbertSpaceDimension];
+  this->TotalLzValues = new int [this->LargeHilbertSpaceDimension];
   this->GenerateStates(this->NbrFermions, this->LzMax, this->LzMax, 0);
+  for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+    {
+      unsigned long TmpState = this->StateDescription[i];
+      int TmpTotalLz = 0;
+      for (int j = this->StateLzMax[i]; j >=0; --j)
+	TmpTotalLz += j * ((int) ((TmpState >> j) & 0x1ul));
+      this->TotalLzValues[i] = (TmpTotalLz << 1) - (this->NbrFermions * this->LzMax) ;
+    }
+
   this->GenerateLookUpTable(memory);
 
 #ifdef __DEBUG__
@@ -184,6 +194,7 @@ FermionOnSphereFull& FermionOnSphereFull::operator = (const FermionOnSphereFull&
   this->LargeHilbertSpaceDimension = fermions.LargeHilbertSpaceDimension;
   this->StateDescription = fermions.StateDescription;
   this->StateLzMax = fermions.StateLzMax;
+  this->TotalLzValues = fermions.TotalLzValues;
   this->LzMax = fermions.LzMax;
   this->NbrLzValue = fermions.NbrLzValue;
   this->Flag = fermions.Flag;

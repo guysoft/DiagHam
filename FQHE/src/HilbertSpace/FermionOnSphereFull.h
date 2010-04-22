@@ -42,6 +42,8 @@
 class FermionOnSphereFull :  public FermionOnSphere
 {
 
+  friend class BosonOnSphereFullShort;
+
  protected:
 
   // array that contains the total Lz of each state

@@ -215,45 +215,48 @@ double BosonOnSphereFullShort::AdA (long index, int m)
 
 // evaluate a density matrix of a subsystem of the whole system described |left><right|. The density matrix is only evaluated for a fixed number of particles
 // 
-// subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax to -Lzmax+subsytemSize-1)
-// nbrBosonSector = number of particles that belong to the subsytem 
+// densityMatrix = reference on the temporary storage for the reduced density matrix
 // leftSpace = Hilbert space associated to the left state 
 // leftState = reference on the left state
 // rightSpace = Hilbert space associated to the right state 
 // rightState = reference on the right state
-// return value = density matrix of the subsytem  (return a wero dimension matrix if the density matrix is equal to zero)
+// return value = reference on the reduced density matrix of the subsytem 
 
-RealMatrix BosonOnSphereFullShort::EvaluatePartialDensityMatrix (int subsytemSize, int nbrBosonSector, BosonOnSphereShort* leftSpace, RealVector& leftState, BosonOnSphereShort* rightSpace, RealVector& rightState)
+RealMatrix& BosonOnSphereFullShort::EvaluatePartialDensityMatrix (RealMatrix& densityMatrix, BosonOnSphereShort* leftSpace, RealVector& leftState, BosonOnSphereShort* rightSpace, RealVector& rightState)
 {
-//   if (subsytemSize <= 0)
-//     {
-//       if (nbrBosonSector == 0)
-// 	{
-// 	  RealSymmetricMatrix TmpDensityMatrix(1);
-// 	  TmpDensityMatrix.SetMatrixElement(0, 0, 1.0);
-// 	  return TmpDensityMatrix;
-// 	}
-//       else
-// 	{
-// 	  RealSymmetricMatrix TmpDensityMatrix;
-// 	  return TmpDensityMatrix;	  
-// 	}
-//     }
-//   if (subsytemSize > this->LzMax)
-//     {
-//       if ((lzSector == this->TotalLz) && (nbrBosonSector == this->NbrBosons))
-// 	{
-// 	  RealSymmetricMatrix TmpDensityMatrix(this->HilbertSpaceDimension);
-// 	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-// 	    for (int j = i; j < this->HilbertSpaceDimension; ++j)
-// 	      TmpDensityMatrix.SetMatrixElement(i, j, groundState[i] * groundState[j]);
-// 	}
-//       else
-// 	{
-// 	  RealSymmetricMatrix TmpDensityMatrix;
-// 	  return TmpDensityMatrix;	  
-// 	}
-//     }
+  if (this->LzMax <= 0)
+    {
+      if (this->NbrBosons == 0)
+	{
+	  densityMatrix.SetMatrixElement(0, 0, 1.0);
+	  return densityMatrix;
+	}
+      else
+	{
+	  return densityMatrix;	  
+	}
+    }
+  FermionOnSphereFull* TmpSpace = (FermionOnSphereFull*) this->FermionBasis;
+  if (this->LzMax >= leftSpace->LzMax)
+    {
+      if (this->NbrBosons == leftSpace->NbrBosons)
+	{
+	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	    if (TmpSpace->TotalLzValues[i] == leftSpace->TotalLz)
+	      {
+		for (int j = 0; j < this->HilbertSpaceDimension; ++j)
+		  {
+		    if (TmpSpace->TotalLzValues[j] == rightSpace->TotalLz)
+		      densityMatrix.SetMatrixElement(i, j, leftState[i] * rightState[j]);
+		  }
+	      }
+	  return densityMatrix;	  
+	}
+      else
+	{
+	  return densityMatrix;	  
+	}
+    }
 
 //   int ShiftedTotalLz = (this->TotalLz + this->NbrBosons * this->LzMax) >> 1;
 //   int ShiftedLzSector = (lzSector + nbrBosonSector * (subsytemSize - 1)) >> 1;
@@ -410,7 +413,6 @@ RealMatrix BosonOnSphereFullShort::EvaluatePartialDensityMatrix (int subsytemSiz
 //     return TmpDensityMatrix;
 //   else
 //     {
-  RealMatrix TmpDensityMatrixZero;
-  return TmpDensityMatrixZero;
+  return densityMatrix;
 //     }
 }

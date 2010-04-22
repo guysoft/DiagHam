@@ -107,14 +107,13 @@ class BosonOnSphereFullShort :  public BosonOnSphereShort
 
   // evaluate a density matrix of a subsystem of the whole system described |left><right|. The density matrix is only evaluated for a fixed number of particles
   // 
-  // subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax to -Lzmax+subsytemSize-1)
-  // nbrBosonSector = number of particles that belong to the subsytem 
+  // densityMatrix = reference on the temporary storage for the reduced density matrix
   // leftSpace = Hilbert space associated to the left state 
   // leftState = reference on the left state
   // rightSpace = Hilbert space associated to the right state 
   // rightState = reference on the right state
-  // return value = density matrix of the subsytem  (return a wero dimension matrix if the density matrix is equal to zero)
-  virtual RealMatrix EvaluatePartialDensityMatrix (int subsytemSize, int nbrBosonSector, BosonOnSphereShort* leftSpace, RealVector& leftState, BosonOnSphereShort* rightSpace, RealVector& rightState);
+  // return value = reference on the reduced density matrix of the subsytem 
+  virtual RealMatrix& EvaluatePartialDensityMatrix (RealMatrix& densityMatrix, BosonOnSphereShort* leftSpace, RealVector& leftState, BosonOnSphereShort* rightSpace, RealVector& rightState);
 
 
  protected:
