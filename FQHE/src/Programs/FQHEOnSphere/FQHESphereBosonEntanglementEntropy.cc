@@ -1,6 +1,7 @@
 #include "Vector/RealVector.h"
 #include "Matrix/RealSymmetricMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
+#include "Matrix/RealMatrix.h"
 
 #include "HilbertSpace/BosonOnSphere.h"
 #include "HilbertSpace/BosonOnSphereSymmetricBasis.h"
@@ -64,7 +65,12 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "max-la", "maximum size of the subsystem whose entropy has to be evaluated (0 if equal to half the total system size)", 0);
   (*SystemGroup) += new SingleStringOption  ('\n', "degenerated-groundstate", "single column file describing a degenerated ground state");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with ent extension");
-  (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
+  (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices to a given file");
+  (*OutputGroup) += new BooleanOption ('\n', "density-eigenstate", "compute the eigenstates of the reduced density matrix");
+  (*OutputGroup) += new SingleIntegerOption  ('\n', "na-eigenstate", "compute the eigenstates of the reduced density matrix only for a subsystem with a fixed number of particles", 0);
+  (*OutputGroup) += new SingleIntegerOption  ('\n', "lza-eigenstate", "compute the eigenstates of the reduced density matrix only for a subsystem with a fixed total Lz value", 0);
+  (*OutputGroup) += new SingleIntegerOption  ('\n', "nbr-eigenstates", "number of reduced density matrix eigenstates to compute (0 if all)", 0);
+  (*OutputGroup) += new SingleStringOption ('\n', "full-densitymatrix", "store full density matrices to a given file");
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
@@ -108,6 +114,10 @@ int main(int argc, char** argv)
   bool LapackFlag = ((BooleanOption*) Manager["use-lapack"])->GetBoolean();
 #endif
   char* DensityMatrixFileName = ((SingleStringOption*) Manager["density-matrix"])->GetString();
+  bool EigenstateFlag = Manager.GetBoolean("density-eigenstate");
+  int FilterNa = Manager.GetInteger("na-eigenstate");
+  int FilterLza = Manager.GetInteger("lza-eigenstate");
+  int NbrEigenstates = Manager.GetInteger("nbr-eigenstates");
   int* TotalLz = 0;
   bool Statistics = true;
   int NbrSpaces = 1;
@@ -335,14 +345,83 @@ int main(int argc, char** argv)
 		    }
 		if (NbrSpaces > 1)
 		  PartialDensityMatrix /= ((double) NbrSpaces);
+		if ((Manager.GetString("full-densitymatrix") != 0) && (FilterNa == SubsystemNbrParticles) && (FilterLza = SubsystemTotalLz))
+		  {
+		    ofstream FullDensityMatrixFile;
+		    FullDensityMatrixFile.open(Manager.GetString("full-densitymatrix"), ios::binary | ios::out | ios::app); 
+		    FullDensityMatrixFile << PartialDensityMatrix;
+		    FullDensityMatrixFile.close();
+		  }
 		if (PartialDensityMatrix.GetNbrRow() > 1)
 		  {
 		    RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
 #ifdef __LAPACK__
 		    if (LapackFlag == true)
-		      PartialDensityMatrix.LapackDiagonalize(TmpDiag);
+		      {
+			if ((EigenstateFlag == true) && (FilterNa == SubsystemNbrParticles)
+			    && (FilterLza == SubsystemTotalLz ))
+			  {
+			      RealMatrix TmpEigenstates(PartialDensityMatrix.GetNbrRow(),
+							PartialDensityMatrix.GetNbrRow(), true);
+			      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+				TmpEigenstates[i][i] = 1.0;
+			      PartialDensityMatrix.LapackDiagonalize(TmpDiag, TmpEigenstates);
+			      TmpDiag.SortMatrixDownOrder(TmpEigenstates);
+			      char* TmpEigenstateName = new char[512];
+			      int MaxNbrEigenstates = NbrEigenstates;
+			      if (NbrEigenstates == 0)
+				MaxNbrEigenstates = PartialDensityMatrix.GetNbrRow();
+			      for (int i = 0; i < MaxNbrEigenstates; ++i)
+				{
+				  if (TmpDiag[i] > 1e-14)
+				    {
+				      sprintf (TmpEigenstateName,
+					       "bosons_sphere_density_n_%d_2s_%d_lz_%d_la_%d_na_%d_lza_%d.%d.vec",
+					       NbrParticles, LzMax, TotalLz[0], SubsystemSize,
+					       SubsystemNbrParticles, SubsystemTotalLz, i);
+				      TmpEigenstates[i].WriteVector(TmpEigenstateName);
+				    }
+				}
+			      delete[] TmpEigenstateName;
+			  }
+			else
+			  {
+			    PartialDensityMatrix.LapackDiagonalize(TmpDiag);
+			  }
+		      }
 		    else
-		      PartialDensityMatrix.Diagonalize(TmpDiag);
+		      {
+			if ((EigenstateFlag == true) && (FilterNa == SubsystemNbrParticles)
+			    && (FilterLza == SubsystemTotalLz ))
+			  {
+			    RealMatrix TmpEigenstates(PartialDensityMatrix.GetNbrRow(),
+						      PartialDensityMatrix.GetNbrRow(), true);
+			    for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+			      TmpEigenstates[i][i] = 1.0;
+			    PartialDensityMatrix.Diagonalize(TmpDiag, TmpEigenstates, Manager.GetDouble("diag-precision"));
+			    TmpDiag.SortMatrixDownOrder(TmpEigenstates);
+			    char* TmpEigenstateName = new char[512];
+			    int MaxNbrEigenstates = NbrEigenstates;
+			    if (NbrEigenstates == 0)
+			      MaxNbrEigenstates = PartialDensityMatrix.GetNbrRow();
+			    for (int i = 0; i < MaxNbrEigenstates; ++i)
+			      {
+				if (TmpDiag[i] > 1e-14)
+				  {
+				    sprintf (TmpEigenstateName,
+					     "bosons_sphere_density_n_%d_2s_%d_lz_%d_la_%d_na_%d_lza_%d.%d.vec",
+					     NbrParticles, LzMax, TotalLz[0], SubsystemSize,
+					     SubsystemNbrParticles, SubsystemTotalLz, i);
+				    TmpEigenstates[i].WriteVector(TmpEigenstateName);
+				  }
+			      }
+			    delete[] TmpEigenstateName;
+			  }
+			else
+			  {
+			    PartialDensityMatrix.Diagonalize(TmpDiag);
+			  }
+		      }
 #else
 		    PartialDensityMatrix.Diagonalize(TmpDiag);
 #endif		  
