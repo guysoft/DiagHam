@@ -39,7 +39,9 @@
 #include "Options/SingleStringOption.h"
 #include "Options/SingleDoubleOption.h"
 
+
 #include "HilbertSpace/FermionOnSphere.h"
+#include "HilbertSpace/FermionOnSphereEfficient.h"
 #include "HilbertSpace/FermionOnSphereSymmetricBasis.h"
 #include "HilbertSpace/FermionOnSphereUnlimited.h"
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
@@ -151,7 +153,10 @@ void ParticleOnSphereManager::AddOptionGroup(OptionManager* manager, const char*
 	if (this->BosonFlag == false)
 	  (*SystemGroup) += new BooleanOption  ('\n', "unnormalized-basis", "do not normalize Fock states"); 
 	if (this->FermionFlag == true)
-	  (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);	
+	  {
+	    (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
+	    (*PrecalculationGroup) += new BooleanOption  ('\n', "use-efficient", "use exhaustive search table");
+	  }
 	(*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the haldane or symmetrized bases)",0);
 	(*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the haldane or symmetrized bases)",0);
       }
@@ -268,7 +273,12 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceU1(int totalLz)
 	  if (LzMax <= 30)
 #endif
 	    if ((SymmetrizedBasis == false) || (totalLz != 0))
-	      Space = new FermionOnSphere(NbrParticles, totalLz, LzMax, MemorySpace);
+	      {
+		if (this->Options->GetBoolean("use-efficient"))
+		  Space = new FermionOnSphereEfficient(NbrParticles, totalLz, LzMax, MemorySpace);
+		else
+		  Space = new FermionOnSphere(NbrParticles, totalLz, LzMax, MemorySpace);
+	      }
 	    else
 	      {
 		if (this->Options->GetString("load-hilbert") != 0)

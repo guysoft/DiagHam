@@ -326,11 +326,27 @@ char* DumpTextFile(const char* fileName, const char* header, const char* footer)
   return TmpBuffer;
 }
 
+
 // print the given memory size in b, kb, Mb, or Gb
 // str = stream to write to
 // bytes = size in bytes
 // return = reference on stream
 ostream& PrintMemorySize(ostream &str, int bytes)
+{
+  if (bytes>0)
+    return PrintMemorySize(str, (unsigned) bytes);
+  else
+    {
+      str << "-";
+      return PrintMemorySize(str, (unsigned)(-bytes));
+    }
+}
+
+// print the given memory size in b, kb, Mb, or Gb
+// str = stream to write to
+// bytes = size in bytes
+// return = reference on stream
+ostream& PrintMemorySize(ostream &str, unsigned bytes)
 {
   if (bytes >= 1024)
     if (bytes >= 1048576)
@@ -351,11 +367,26 @@ ostream& PrintMemorySize(ostream &str, int bytes)
 // return = reference on stream
 ostream& PrintMemorySize(ostream &str, long bytes)
 {
+  if (bytes>0)
+    return PrintMemorySize(str, (unsigned long) bytes);
+  else
+    {
+      str << "-";
+      return PrintMemorySize(str, (unsigned long)(-bytes));
+    }
+}
+
+// print the given memory size in b, kb, Mb, or Gb
+// str = stream to write to
+// bytes = size in bytes
+// return = reference on stream
+ostream& PrintMemorySize(ostream &str, unsigned long bytes)
+{
   if (bytes >= 1024)
     if (bytes >= 1048576)
       if (bytes >= 1073741824)
 #ifdef __64_BITS__
-	if (bytes >= (0x1l<<40))
+	if (bytes >= (0x1ul<<40))
 	  str << (bytes >> 40) << "To";
 	else
 #endif

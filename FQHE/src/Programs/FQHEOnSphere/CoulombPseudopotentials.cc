@@ -47,7 +47,7 @@ int main(int argc, char** argv)
 
 
   (*SystemGroup) += new  SingleDoubleOption ('d', "layer-separation", "assume finite layer separation",0.0);
-
+  
   (*SystemGroup) += new  SingleDoubleOption ('t', "layer-thickness", "assume finite layer thickness",0.0);
   (*SystemGroup) += new MultipleIntegerOption ('\n', "rescale", "rescale separation and thickness for a particular number of particles, filling factor and shift (4 arguments N,p,q,Sigma)",',');
   
@@ -60,12 +60,13 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleDoubleOption ('\n', "profile-multiplier", "multiplier for number of integration points",1.0);
   (*SystemGroup) += new  SingleDoubleOption ('\n', "tolerance", "relative tolerance to be achieved in numerical integrations",1e-8);
 
-  (*SystemGroup) += new  BooleanOption ('n', "no-interpolation","do not use interpolation for finite width calculations");
+  (*SystemGroup) += new  BooleanOption ('\n', "no-interpolation","do not use interpolation for finite width calculations");
 
   (*SystemGroup) += new  BooleanOption ('n', "nbody", "add n-body potentials");
   (*SystemGroup) += new  MultipleDoubleOption ('p', "nbody-potentials", "values of n-body potentials to be added (separated by ','",',');
   (*SystemGroup) += new SingleDoubleOption ('v', "add-v0", "add some amount to v_0",0.0);
   (*SystemGroup) += new SingleDoubleOption ('w', "add-v1", "add some amount to v_1",0.0);
+  (*SystemGroup) += new SingleDoubleOption ('k', "kappa", "add three-body terms for Landau-level mixing according to Bishara-Nayak",0.0);
 
   (*SystemGroup) += new BooleanOption  ('\n', "tab", "output a table with the results in columns (extension .tab)");
   (*SystemGroup) += new SingleStringOption  ('o', "output", "output file name (default is pseudopotential_coulomb_l_x_2s_y[_v_xxx_w_yyy].dat)");
@@ -107,14 +108,14 @@ int main(int argc, char** argv)
 	cout << "Rescaling layer separation and thickness with scale factor: "<<NewScale<<endl;
       }
   }
-
-  if (((BooleanOption*) Manager["graphene-bilayer"])->GetBoolean() == false)
-   {
-    int LandauLevel = ((SingleIntegerOption*) Manager["landau-level"])->GetInteger();
-    int NbrFlux = ((SingleIntegerOption*) Manager["nbr-flux"])->GetInteger();
-    double layerSeparation = Manager.GetDouble("layer-separation");
-    int MaxMomentum = NbrFlux + (LandauLevel << 1);
   
+  if (((BooleanOption*) Manager["graphene-bilayer"])->GetBoolean() == false)
+    {
+      int LandauLevel = ((SingleIntegerOption*) Manager["landau-level"])->GetInteger();
+      int NbrFlux = ((SingleIntegerOption*) Manager["nbr-flux"])->GetInteger();
+      double layerSeparation = Manager.GetDouble("layer-separation");
+      int MaxMomentum = NbrFlux + (LandauLevel << 1);
+      
     char* OutputFile;
     ((SingleDoubleOption*)Manager["add-v0"])->SetStringFormat("%g");
     ((SingleDoubleOption*)Manager["add-v1"])->SetStringFormat("%g");
@@ -150,7 +151,7 @@ int main(int argc, char** argv)
 		    else
 		      OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_t_%layer-thickness%_d_%layer-separation%_%profile-type%.dat");
 		  }
-	      }	    
+	      }
 	    else
 	      {	      
 	        if ((Manager.GetDouble("add-v0")==0.0)&&(Manager.GetDouble("add-v1")==0.0))
@@ -270,6 +271,26 @@ int main(int argc, char** argv)
       OneBodyPotentials = EvaluateOneBodyPotentials(NbrFlux, LandauLevel, 
 						  ((SingleDoubleOption*) Manager["north-potential"])->GetDouble(),
 						  ((SingleDoubleOption*) Manager["south-potential"])->GetDouble());
+    if (fabs(Manager.GetDouble("kappa"))>0.0)
+      {
+	double kappa=Manager.GetDouble("kappa");
+	if (LandauLevel==0)
+	  {
+	    Pseudopotentials[0]+= -0.1032*kappa;
+	    Pseudopotentials[1]+= -0.0053*kappa;
+	    Pseudopotentials[2]+= -0.0012*kappa;
+	    Pseudopotentials[3]+= -0.0004*kappa;
+	    Pseudopotentials[4]+= -0.0002*kappa;
+	  }
+	else if (LandauLevel==1)
+	  {
+	    Pseudopotentials[0]+= -0.0325*kappa;
+	    Pseudopotentials[1]+= 0.0042*kappa;
+	    Pseudopotentials[2]+= -0.0174*kappa;
+	    Pseudopotentials[3]+= 0.0023*kappa;
+	    Pseudopotentials[4]+= -0.0034*kappa;
+	  }
+      }
 
     if (((BooleanOption*) Manager["std-output"])->GetBoolean() == false)
       {
@@ -342,7 +363,27 @@ int main(int argc, char** argv)
 	        File << "Weights = 0 0 0";
 	      }
 	  }
-      
+	if (fabs(Manager.GetDouble("kappa"))>0.0)
+	  {
+	    int LandauLevel = Manager.GetInteger("landau-level");
+	    double kappa=Manager.GetDouble("kappa");
+	    if (LandauLevel==0)
+	      {
+		File << "ThreeBodyPotentials = 0 0 0 "<<-0.0181*kappa<<" 0 "<<0.0033*kappa<<" "<<-0.0107*kappa<<" ";
+		File <<0.0059*kappa<<" "<<-0.0048*kappa<<endl;
+	      }
+	    else if (LandauLevel==1)
+	      {
+		File << "ThreeBodyPotentials = 0 0 0 "<<-0.0147*kappa<<" 0 "<<-0.0054*kappa<<" "<<0.0099*kappa<<" ";
+		File <<0.0005*kappa<<" "<<-0.0009*kappa<<endl;
+	      }
+	    else
+	      {
+		File << "#LL mixing not known for LandauLevel="<<LandauLevel<<endl;
+	      }
+	    File << "NormalizeThreeBody = true"<<endl;
+	  }
+
         File.close();
       }
     else
@@ -373,6 +414,7 @@ int main(int argc, char** argv)
 	    cout << "# with two impurities (V_north = " << ((SingleDoubleOption*) Manager["north-potential"])->GetDouble() 
 	       << " and V_south = " << ((SingleDoubleOption*) Manager["south-potential"])->GetDouble() << ")" << endl;
 	  }
+	// xxx cout << "
         cout << "#" << endl
 	   << "# Pseudopotentials = V_0 V_1 ..." << endl << endl
 	   << "Pseudopotentials =";
@@ -386,7 +428,45 @@ int main(int argc, char** argv)
 	      cout << " " << OneBodyPotentials[i];
 	    cout << endl;
 	  }
-      }  
+	if (Manager.GetBoolean("nbody"))
+	  {
+	    int Length;
+	    double *potentials = Manager.GetDoubles("nbody-potentials",Length);
+	    if (potentials != 0)
+	      {
+	        cout << endl << "NbrNBody = "<<Length-1<<endl;
+	        cout << "Weights =";
+	        for (int i=0; i<Length; ++i)
+		  cout <<" "<<potentials[i];
+	        cout <<endl;
+	      }
+	    else
+	      {
+	        cout << endl << "NbrNBody = 2"<<endl;
+	        cout << "Weights = 0 0 0";
+	      }
+	  }
+	if (fabs(Manager.GetDouble("kappa"))>0.0)
+	  {
+	    int LandauLevel = Manager.GetInteger("landau-level");
+	    double kappa=Manager.GetDouble("kappa");
+	    if (LandauLevel==0)
+	      {
+		cout << "ThreeBodyPotentials = 0 0 0 "<<-0.0181*kappa<<" 0 "<<0.0033*kappa<<" "<<-0.0107*kappa<<" ";
+		cout <<0.0059*kappa<<" "<<-0.0048*kappa<<endl;
+	      }
+	    else if (LandauLevel==1)
+	      {
+		cout << "ThreeBodyPotentials = 0 0 0 "<<-0.0147*kappa<<" 0 "<<-0.0054*kappa<<" "<<0.0099*kappa<<" ";
+		cout <<0.0005*kappa<<" "<<-0.0009*kappa<<endl;
+	      }
+	    else
+	      {
+		cout << "#LL mixing not known for LandauLevel="<<LandauLevel<<endl;
+	      }
+	    cout << "NormalizeThreeBody = true"<<endl;
+	  }
+      }
 
     if (Manager.GetBoolean("tab"))
       {

@@ -65,6 +65,9 @@ class ParticleOnSphereGenericThreeBodyHamiltonian : public AbstractQHEOnSphereNB
   // array with the onebody potentials 
   double* OneBodyPotentials;
 
+  // flag whether to use normalized n-body eigenstates as the reference potentials
+  bool NormalizeFlag;
+
 
  public:
 
@@ -87,10 +90,11 @@ class ParticleOnSphereGenericThreeBodyHamiltonian : public AbstractQHEOnSphereNB
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
+  // normalizePPs = use normalized n-body eigenstates as the reference potentials
   ParticleOnSphereGenericThreeBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
 					      double* threeBodyPseudoPotential, int maxRelativeAngularMomentum, double l2Factor, double* pseudoPotential, double* onebodyPotentials,
 					      AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
-					      char* precalculationFileName = 0);
+					      char* precalculationFileName = 0, bool normalizePPs = false);
 
   // destructor
   //

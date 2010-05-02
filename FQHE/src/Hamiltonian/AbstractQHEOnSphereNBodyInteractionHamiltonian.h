@@ -254,7 +254,7 @@ inline void AbstractQHEOnSphereNBodyInteractionHamiltonian::EvaluateMNNBodyAddMu
     {
       long TmpNbrNIndices = this->NbrNIndices[nbodyIndex];
       int* TmpNIndices = this->NIndices[nbodyIndex];
-      for (long j = 0; j < TmpNbrNIndices; ++j)
+       for (long j = 0; j < TmpNbrNIndices; ++j)
 	{
 	  double Coefficient3 = particles->ProdA(index, TmpNIndices, nbodyIndex);
 	  if (Coefficient3 != 0.0)

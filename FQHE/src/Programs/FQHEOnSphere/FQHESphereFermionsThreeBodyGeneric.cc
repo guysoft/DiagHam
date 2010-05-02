@@ -9,6 +9,7 @@
 #include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasisLong.h"
 
 #include "Hamiltonian/ParticleOnSphereGenericThreeBodyHamiltonian.h"
+#include "Hamiltonian/ParticleOnSphereL2Hamiltonian.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -87,6 +88,7 @@ int main(int argc, char** argv)
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
   (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
+  (*MiscGroup) += new SingleStringOption('\n', "energy-expectation", "name of the file containing the state vector, whose energy expectation value shall be calculated");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -105,6 +107,7 @@ int main(int argc, char** argv)
   int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
   long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
+  if (Manager.GetString("energy-expectation") != 0 ) Memory = 0x0l;
   int InitialLz = ((SingleIntegerOption*) Manager["initial-lz"])->GetInteger();
   int NbrLz = ((SingleIntegerOption*) Manager["nbr-lz"])->GetInteger();
   bool HaldaneBasisFlag = ((BooleanOption*) Manager["haldane"])->GetBoolean();
@@ -116,6 +119,7 @@ int main(int argc, char** argv)
   double* PseudoPotentials = 0;
   double* OneBodyPotentials = 0;
   double* ThreeBodyPotentials = 0;
+  bool Normalize3Body = 0;
   int TmpNbrThreeBodyPseudoPotentials = 0;
   if (((SingleStringOption*) Manager["interaction-file"])->GetString() == 0)
     {
@@ -135,6 +139,8 @@ int main(int argc, char** argv)
 	  cout << "ThreebodyPseudopotentials are not defined or has a wrong value in " << ((SingleStringOption*) Manager["interaction-file"])->GetString() << endl;
 	  return -1;
 	}
+      if (InteractionDefinition["NormalizeThreeBody"]!=NULL)
+	InteractionDefinition.GetAsBoolean("NormalizeThreeBody",Normalize3Body);
       int TmpNbrPseudoPotentials;
       if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials", ' ', PseudoPotentials, TmpNbrPseudoPotentials) == true)
 	{
@@ -365,12 +371,60 @@ int main(int argc, char** argv)
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
       Hamiltonian = new ParticleOnSphereGenericThreeBodyHamiltonian(Space, NbrParticles, LzMax, ThreeBodyPotentials, TmpNbrThreeBodyPseudoPotentials - 1,
-								      ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(), PseudoPotentials, OneBodyPotentials,
+								    ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(), PseudoPotentials, OneBodyPotentials,
 								      Architecture.GetArchitecture(), 
-								      Memory, DiskCacheFlag,
-								      LoadPrecalculationFileName);
+								    Memory, DiskCacheFlag,
+								    LoadPrecalculationFileName, Normalize3Body);
 
       double Shift = - 0.5 * ((double) (NbrParticles * NbrParticles)) / (0.5 * ((double) LzMax));
+      if (Manager.GetString("energy-expectation") != 0 )
+	{
+	  char* StateFileName = Manager.GetString("energy-expectation");
+	  if (IsFile(StateFileName) == false)
+	    {
+	      cout << "state " << StateFileName << " does not exist or can't be opened" << endl;
+	      return -1;           
+	    }
+	  RealVector State;
+	  if (State.ReadVector(StateFileName) == false)
+	    {
+	      cout << "error while reading " << StateFileName << endl;
+	      return -1;
+	    }
+	  if (State.GetVectorDimension()!=Space->GetHilbertSpaceDimension())
+	    {
+	      cout << "error: vector and Hilbert-space have unequal dimensions"<<endl;
+	      return -1;
+	    }
+	  RealVector TmpState(Space->GetHilbertSpaceDimension());
+	  VectorHamiltonianMultiplyOperation Operation (Hamiltonian, &State, &TmpState);
+	  Operation.ApplyOperation(Architecture.GetArchitecture());
+	  double EnergyValue = State*TmpState;
+	  cout << "< Energy > = "<<EnergyValue<<endl;
+	  if (false)
+	  {
+	    AbstractQHEOnSphereHamiltonian* L2Operator = new ParticleOnSphereL2Hamiltonian(Space, NbrParticles, LzMax, L, 
+											 Architecture.GetArchitecture(), 1.0,
+											 0x250ul << 20,
+											   false, false, NULL);
+	    RealVector TmpState2(Space->GetHilbertSpaceDimension());
+	    RealVector TmpStateA(Space->GetHilbertSpaceDimension());
+	    RealVector TmpState2A(Space->GetHilbertSpaceDimension());
+	    VectorHamiltonianMultiplyOperation Operation2 (L2Operator, &State, &TmpState2);
+	    Operation2.ApplyOperation(Architecture.GetArchitecture());
+	    VectorHamiltonianMultiplyOperation Operation3 (L2Operator, &TmpState, &TmpStateA);
+	    Operation3.ApplyOperation(Architecture.GetArchitecture());
+	    VectorHamiltonianMultiplyOperation Operation4 (Hamiltonian, &TmpState2, &TmpState2A);
+	    Operation4.ApplyOperation(Architecture.GetArchitecture());
+	    TmpStateA/=TmpStateA.Norm();
+	    TmpState2A/=TmpState2A.Norm();
+	    double Overlap = TmpState2A*TmpStateA;
+	    cout << "< Overlap > = "<<Overlap<<endl;
+	  }
+	  cout << "< shifted energy > = "<<EnergyValue + Shift<<endl;
+	  return 0;
+	}
+
       Hamiltonian->ShiftHamiltonian(Shift);
       char* EigenvectorName = 0;
       if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	

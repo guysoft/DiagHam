@@ -88,6 +88,7 @@ BosonOnTorusShort.cc \
 BosonOnCylinderShort.cc \
 BosonOnSphereLong.cc \
 BosonOnSphereHaldaneBasisLong.cc \
+FermionOnSphereEfficient.cc \
 FermionOnSphereFull.cc \
 BosonOnSphereFullShort.cc \
 FermionOnSphereThreeLandauLevels.cc

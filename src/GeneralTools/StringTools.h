@@ -85,9 +85,10 @@ char* DumpTextFile(const char* fileName, const char* header, const char* footer)
 // bytes = size in bytes
 // return = reference on stream
 ostream& PrintMemorySize(ostream &str, int bytes);
+ostream& PrintMemorySize(ostream &str, unsigned bytes);
 // overload for long argument
 ostream& PrintMemorySize(ostream &str, long bytes);
-
+ostream& PrintMemorySize(ostream &str, unsigned long bytes);
 
 
 
