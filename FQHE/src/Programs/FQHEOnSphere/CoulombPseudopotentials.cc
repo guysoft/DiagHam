@@ -121,35 +121,34 @@ int main(int argc, char** argv)
     ((SingleDoubleOption*)Manager["add-v1"])->SetStringFormat("%g");
     ((SingleDoubleOption*)Manager["layer-thickness"])->SetStringFormat("%g");
     ((SingleDoubleOption*)Manager["layer-separation"])->SetStringFormat("%g");
+    ((SingleDoubleOption*)Manager["kappa"])->SetStringFormat("%g");
     if (((SingleStringOption*) Manager["output"])->GetString() == 0l)
       {
         if (((BooleanOption*) Manager["relativistic-fermions"])->GetBoolean() == true)
 	  OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_relativistic_l_%landau-level%_2s_%nbr-flux%.dat");
         else
 	  {
+	    char* BaseString = new char[512];
+	    if (Manager.GetDouble("kappa")>0.0)
+	      BaseString = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_k_%kappa%");	      
+	    else
+	      BaseString = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%");
+	    char* FormatString=new char[1024];
 	    if (Manager.GetDouble("layer-thickness")>0.0)
 	      {
 		if (Rescale)
 		  {
-		    char* FormatString=new char[1024];
 		    if (layerSeparation==0.0)
-		      {
-			sprintf(FormatString,"pseudopotential_coulomb_l_%%landau-level%%_2s_%%nbr-flux%%_t_%%layer-thickness%%_%%profile-type%%_scale_N_%d_nu_%d_%d_S_%d.dat", NbrParticles, FillingP, FillingQ, ShiftSigma);
-			OutputFile = Manager.GetFormattedString(FormatString);
-		      }
+		      sprintf(FormatString,"%s_t_%%layer-thickness%%_%%profile-type%%_scale_N_%d_nu_%d_%d_S_%d.dat", BaseString, NbrParticles, FillingP, FillingQ, ShiftSigma);
 		    else
-		      {
-			sprintf(FormatString,"pseudopotential_coulomb_l_%%landau-level%%_2s_%%nbr-flux%%_t_%%layer-thickness%%_%%profile-type%%_scale_N_%d_nu_%d_%d_S_%d.dat", NbrParticles, FillingP, FillingQ, ShiftSigma);
-			OutputFile = Manager.GetFormattedString(FormatString);
-		      }
-		    delete [] FormatString;
+		      sprintf(FormatString,"%s_t_%%layer-thickness%%_%%profile-type%%_scale_N_%d_nu_%d_%d_S_%d.dat", BaseString, NbrParticles, FillingP, FillingQ, ShiftSigma);
 		  }
 		else
 		  {
 		    if (layerSeparation==0.0)
-		      OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_t_%layer-thickness%_%profile-type%.dat");
+		      sprintf(FormatString,"%s_t_%%layer-thickness%%_%%profile-type%%.dat",BaseString);
 		    else
-		      OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_t_%layer-thickness%_d_%layer-separation%_%profile-type%.dat");
+		      sprintf(FormatString,"%s_t_%%layer-thickness%%_d_%%layer-separation%%_%%profile-type%%.dat", BaseString);
 		  }
 	      }
 	    else
@@ -157,18 +156,15 @@ int main(int argc, char** argv)
 	        if ((Manager.GetDouble("add-v0")==0.0)&&(Manager.GetDouble("add-v1")==0.0))
 		  {
 		    if (layerSeparation==0.0)
-		      OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%.dat");
+		      sprintf(FormatString,"%s.dat",BaseString);
   		    else
 		      {
 			if (Rescale)
 			  {
-			    char* FormatString=new char[1024];
-			    sprintf(FormatString,"pseudopotential_coulomb_l_%%landau-level%%_2s_%%nbr-flux%%_d_%%layer-separation%%_scale_N_%d_nu_%d_%d_S_%d.dat", NbrParticles, FillingP, FillingQ, ShiftSigma);
-			    OutputFile = Manager.GetFormattedString(FormatString);
-			    delete [] FormatString;
+			    sprintf(FormatString, "%s_d_%%layer-separation%%_scale_N_%d_nu_%d_%d_S_%d.dat", BaseString, NbrParticles, FillingP, FillingQ, ShiftSigma);
 			  }
 			else
-			  OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_d_%layer-separation%.dat");
+			  sprintf(FormatString, "%s_d_%%layer-separation%%.dat", BaseString);
 		      }
 		  }
 	        else
@@ -176,56 +172,50 @@ int main(int argc, char** argv)
 		    if (Manager.GetDouble("add-v0")==0.0)
 		      {
 		        if (layerSeparation==0.0)
-			  OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_w_%add-v1%.dat");
+			  sprintf(FormatString, "%s_w_%%add-v1%%.dat", BaseString);
 		        else
 			  {
 			    if (Rescale)
 			      {
-				char* FormatString=new char[1024];
-				sprintf(FormatString,"pseudopotential_coulomb_l_%%landau-level%%_2s_%%nbr-flux%%_d_%%layer-separation%%_w_%%add-v1%%_scale_N_%d_nu_%d_%d_S_%d.dat", NbrParticles, FillingP, FillingQ, ShiftSigma);
-				OutputFile = Manager.GetFormattedString(FormatString);
-				delete [] FormatString;
+				sprintf(FormatString,"%s_d_%%layer-separation%%_w_%%add-v1%%_scale_N_%d_nu_%d_%d_S_%d.dat", BaseString, NbrParticles, FillingP, FillingQ, ShiftSigma);
 			      }
 			    else
-			      OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_d_%layer-separation%_w_%add-v1%.dat");
+			      sprintf(FormatString,"%s_d_%%layer-separation%%_w_%%add-v1%%.dat", BaseString);
 			  }
 		      }
 		    else if (Manager.GetDouble("add-v1")==0.0)
 		      {
 		        if (layerSeparation==0.0)
-			  OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_v_%add-v0%.dat");
+			  sprintf(FormatString,"%s_v_%%add-v0%%.dat", BaseString);
 		        else
 			  {
 			    if (Rescale)
 			      {
-				char* FormatString=new char[1024];
-				sprintf(FormatString,"pseudopotential_coulomb_l_%%landau-level%%_2s_%%nbr-flux%%_d_%%layer-separation%%_w_%%add-v0%%_scale_N_%d_nu_%d_%d_S_%d.dat", NbrParticles, FillingP, FillingQ, ShiftSigma);
-				OutputFile = Manager.GetFormattedString(FormatString);
-				delete [] FormatString;
+				sprintf(FormatString,"%s_d_%%layer-separation%%_w_%%add-v0%%_scale_N_%d_nu_%d_%d_S_%d.dat", BaseString, NbrParticles, FillingP, FillingQ, ShiftSigma);
 			      }
 			    else
-			      OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_d_%layer-separation%_v_%add-v0%.dat");
+			      sprintf(FormatString,"%s_d_%%layer-separation%%_v_%%add-v0%%.dat", BaseString);
 			  }
 		      }
 		    else
 		      {
 		        if (layerSeparation==0.0)
-			  OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_v_%add-v0%_w_%add-v1%.dat");
+			  sprintf(FormatString,"%s_v_%%add-v0%%_w_%%add-v1%%.dat", BaseString);
 		        else
 			  {
 			    if (Rescale)
 			      {
-				char* FormatString=new char[1024];
-				sprintf(FormatString,"pseudopotential_coulomb_l_%%landau-level%%_2s_%%nbr-flux%%_d_%%layer-separation%%_w_%%add-v0%%_w_%%add-v1%%_scale_N_%d_nu_%d_%d_S_%d.dat", NbrParticles, FillingP, FillingQ, ShiftSigma);
-				OutputFile = Manager.GetFormattedString(FormatString);
-				delete [] FormatString;
+				sprintf(FormatString,"%s_d_%%layer-separation%%_w_%%add-v0%%_w_%%add-v1%%_scale_N_%d_nu_%d_%d_S_%d.dat", BaseString, NbrParticles, FillingP, FillingQ, ShiftSigma);
 			      }
 			    else
-			      OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_d_%layer-separation%_v_%add-v0%_w_%add-v1%.dat");
+			      sprintf(FormatString,"%s_d_%%layer-separation%%_v_%%add-v0%%_w_%%add-v1%%.dat",BaseString);
 			  }
 		      }
 		  }
 	      }
+	    OutputFile = Manager.GetFormattedString(FormatString);
+	    delete [] FormatString;
+	    delete [] BaseString;
 	  }
       }
     else
