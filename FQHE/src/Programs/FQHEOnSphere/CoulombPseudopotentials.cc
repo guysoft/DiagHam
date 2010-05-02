@@ -359,12 +359,12 @@ int main(int argc, char** argv)
 	    double kappa=Manager.GetDouble("kappa");
 	    if (LandauLevel==0)
 	      {
-		File << "ThreeBodyPotentials = 0 0 0 "<<-0.0181*kappa<<" 0 "<<0.0033*kappa<<" "<<-0.0107*kappa<<" ";
+		File << "ThreebodyPseudopotentials = 0 0 0 "<<-0.0181*kappa<<" 0 "<<0.0033*kappa<<" "<<-0.0107*kappa<<" ";
 		File <<0.0059*kappa<<" "<<-0.0048*kappa<<endl;
 	      }
 	    else if (LandauLevel==1)
 	      {
-		File << "ThreeBodyPotentials = 0 0 0 "<<-0.0147*kappa<<" 0 "<<-0.0054*kappa<<" "<<0.0099*kappa<<" ";
+		File << "ThreebodyPseudopotentials = 0 0 0 "<<-0.0147*kappa<<" 0 "<<-0.0054*kappa<<" "<<0.0099*kappa<<" ";
 		File <<0.0005*kappa<<" "<<-0.0009*kappa<<endl;
 	      }
 	    else
@@ -442,12 +442,12 @@ int main(int argc, char** argv)
 	    double kappa=Manager.GetDouble("kappa");
 	    if (LandauLevel==0)
 	      {
-		cout << "ThreeBodyPotentials = 0 0 0 "<<-0.0181*kappa<<" 0 "<<0.0033*kappa<<" "<<-0.0107*kappa<<" ";
+		cout << "ThreebodyPseudopotentials = 0 0 0 "<<-0.0181*kappa<<" 0 "<<0.0033*kappa<<" "<<-0.0107*kappa<<" ";
 		cout <<0.0059*kappa<<" "<<-0.0048*kappa<<endl;
 	      }
 	    else if (LandauLevel==1)
 	      {
-		cout << "ThreeBodyPotentials = 0 0 0 "<<-0.0147*kappa<<" 0 "<<-0.0054*kappa<<" "<<0.0099*kappa<<" ";
+		cout << "ThreebodyPseudopotentials = 0 0 0 "<<-0.0147*kappa<<" 0 "<<-0.0054*kappa<<" "<<0.0099*kappa<<" ";
 		cout <<0.0005*kappa<<" "<<-0.0009*kappa<<endl;
 	      }
 	    else
