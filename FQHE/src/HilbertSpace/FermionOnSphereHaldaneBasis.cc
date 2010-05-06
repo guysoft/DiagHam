@@ -399,6 +399,8 @@ FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis(const FermionOnSphereHa
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
   this->SymmetricReferenceState =  fermions.SymmetricReferenceState;
+  this->InvertShift = fermions.InvertShift;
+  this->InvertUnshift = fermions.InvertUnshift;
 }
 
 // destructor
@@ -440,6 +442,8 @@ FermionOnSphereHaldaneBasis& FermionOnSphereHaldaneBasis::operator = (const Ferm
   this->StateLzMax = fermions.StateLzMax;
   this->LzMax = fermions.LzMax;
   this->NbrLzValue = fermions.NbrLzValue;
+  this->InvertShift = fermions.InvertShift;
+  this->InvertUnshift = fermions.InvertUnshift;
   this->ReferenceState = fermions.ReferenceState;
   this->Flag = fermions.Flag;
   this->MaximumLookUpShift = fermions.MaximumLookUpShift;

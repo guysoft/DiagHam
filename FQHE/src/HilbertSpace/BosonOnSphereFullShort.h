@@ -36,6 +36,7 @@
 
 #include "config.h"
 #include "HilbertSpace/BosonOnSphereShort.h"
+#include "HilbertSpace/FermionOnSphereFull.h"
 #include "Matrix/RealMatrix.h"
 
 #include <iostream>
@@ -119,6 +120,17 @@ class BosonOnSphereFullShort :  public BosonOnSphereShort
  protected:
 
 };
+
+// get Lz component of a component
+//
+// j = index of the component in Hilbert space
+// return value = twice the Lz component
+
+inline int BosonOnSphereFullShort::GetLzValue(int j)
+{
+  return ((FermionOnSphereFull*) this->FermionBasis)->TotalLzValues[j];
+}
+
 
 #endif
 

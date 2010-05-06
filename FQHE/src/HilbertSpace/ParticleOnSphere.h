@@ -176,7 +176,7 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // index = index of the state on which the operator has to be applied
   // m = index of the creation and annihilation operator
   // return value = coefficient obtained when applying a^+_m a_m
-  virtual double AdA (long index, int m) = 0;
+  virtual double AdA (long index, int m);
 
   // apply a^+_m a_n operator to a given state 
   //

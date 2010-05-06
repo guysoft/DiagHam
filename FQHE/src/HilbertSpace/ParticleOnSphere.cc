@@ -248,6 +248,17 @@ int ParticleOnSphere::AdA (int index, int m, int n, double& coefficient)
     }
 }
 
+// apply a^+_m a_m operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation and annihilation operator
+// return value = coefficient obtained when applying a^+_m a_m
+
+double ParticleOnSphere::AdA (long index, int m)
+{
+  return this->LargeHilbertSpaceDimension;
+}
+
 // apply a^+_m a_n operator to a given state 
 //
 // index = index of the state on which the operator has to be applied

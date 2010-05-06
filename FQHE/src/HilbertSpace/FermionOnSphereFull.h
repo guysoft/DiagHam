@@ -83,6 +83,12 @@ class FermionOnSphereFull :  public FermionOnSphere
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
 
+  // get Lz component of a component
+  //
+  // j = index of the component in Hilbert space
+  // return value = twice the Lz component
+  virtual int GetLzValue(int j = 0);
+
   // apply a^+_m a_m operator to a given state 
   //
   // index = index of the state on which the operator has to be applied
@@ -109,6 +115,16 @@ class FermionOnSphereFull :  public FermionOnSphere
   virtual long GenerateStates(int nbrFermions, int lzMax, int currentLzMax, long pos);
 
 };
+
+// get Lz component of a component
+//
+// j = index of the component in Hilbert space
+// return value = twice the Lz component
+
+inline int FermionOnSphereFull::GetLzValue(int j)
+{
+  return this->TotalLzValues[j];
+}
 
 
 #endif

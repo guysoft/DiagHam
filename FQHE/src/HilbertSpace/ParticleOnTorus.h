@@ -33,7 +33,8 @@
 
 
 #include "config.h"
-#include "HilbertSpace/AbstractHilbertSpace.h"
+#include "HilbertSpace/AbstractQHEParticle.h"
+#include "HilbertSpace/ParticleOnSphere.h"
 #include "Matrix/RealSymmetricMatrix.h"
 
 #include <iostream>
@@ -45,17 +46,12 @@ using std::ostream;
 class Matrix;
 
 
-class ParticleOnTorus :  public AbstractHilbertSpace
+class ParticleOnTorus :  public ParticleOnSphere
+			 //AbstractQHEParticle
 {
 
  public:
 
-  enum 
-    {
-      BosonicStatistic = 0x1,
-      FermionicStatistic = 0x2,
-    };
-  
   // virtual destructor
   //
   virtual ~ParticleOnTorus ();

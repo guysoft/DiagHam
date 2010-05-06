@@ -89,30 +89,30 @@ int main(int argc, char** argv)
       cout << "see man page for option syntax or type FQHESphereBosonsProjectorHamiltonian -h" << endl;
       return -1;
     }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
     }
 
 
-  bool GroundFlag = ((BooleanOption*) Manager["ground"])->GetBoolean();
-  int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
-  int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
-  long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
-  int InitialLz = ((SingleIntegerOption*) Manager["initial-lz"])->GetInteger();
-  int NbrLz = ((SingleIntegerOption*) Manager["nbr-lz"])->GetInteger();
-  bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
-  char* LoadPrecalculationFileName = ((SingleStringOption*) Manager["load-precalculation"])->GetString();  
-  bool DiskCacheFlag = ((BooleanOption*) Manager["disk-cache"])->GetBoolean();
+  bool GroundFlag = Manager.GetBoolean("ground");
+  int NbrParticles = Manager.GetInteger("nbr-particles");
+  int LzMax = Manager.GetInteger("lzmax");
+  long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
+  int InitialLz = Manager.GetInteger("initial-lz");
+  int NbrLz = Manager.GetInteger("nbr-lz");
+  bool SymmetrizedBasis = Manager.GetBoolean("symmetrized-basis");
+  char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");  
+  bool DiskCacheFlag = Manager.GetBoolean("disk-cache");
   bool FirstRun = true;
   double* PseudoPotentials = 0;
   // double* OneBodyPotentials = 0;
   double* FourBodyPotentials = 0;
   int TmpNbrFourBodyPseudoPotentials = 0;
 
-  char* OutputNameLz = new char [256 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
-  sprintf (OutputNameLz, "bosons_%s_n_%d_2s_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax);
+  char* OutputNameLz = new char [256 + strlen(Manager.GetString("interaction-name"))];
+  sprintf (OutputNameLz, "bosons_%s_n_%d_2s_%d_lz.dat", Manager.GetString("interaction-name"), NbrParticles, LzMax);
 
   if ((Manager.GetString("projector-state") == 0) && (Manager.GetString("multiple-projectors") == 0))
     {
@@ -230,7 +230,7 @@ int main(int argc, char** argv)
 	{
 	  ConfigurationParser InteractionDefinition;
 	  double* PseudoPotentials = 0;
-	  if (InteractionDefinition.Parse(((SingleStringOption*) Manager["interaction-file"])->GetString()) == false)
+	  if (InteractionDefinition.Parse(Manager.GetString("interaction-file")) == false)
 	    {
 	      InteractionDefinition.DumpErrors(cout) << endl;
 	      return -1;
@@ -238,7 +238,7 @@ int main(int argc, char** argv)
 	  int TmpNbrPseudoPotentials;
 	  if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials", ' ', PseudoPotentials, TmpNbrPseudoPotentials) == false)
 	    {
-	      cout << "Weights is not defined or as a wrong value in " << ((SingleStringOption*) Manager["interaction-file"])->GetString() << endl;
+	      cout << "Weights is not defined or as a wrong value in " << Manager.GetString("interaction-file") << endl;
 	      return -1;
 	    }
 	  if (TmpNbrPseudoPotentials != (LzMax +1))
@@ -266,10 +266,10 @@ int main(int argc, char** argv)
       double Shift = - 0.5 * ((double) (NbrParticles * NbrParticles)) / (0.5 * ((double) LzMax));
       Hamiltonian->ShiftHamiltonian(Shift);
       char* EigenvectorName = 0;
-      if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
+      if (Manager.GetBoolean("eigenstate") == true)	
 	{
 	  EigenvectorName = new char [64];
-	  sprintf (EigenvectorName, "bosons_%s_n_%d_2s_%d_lz_%d", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax, L);
+	  sprintf (EigenvectorName, "bosons_%s_n_%d_2s_%d_lz_%d", Manager.GetString("interaction-name"), NbrParticles, LzMax, L);
 	}
       
       QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);

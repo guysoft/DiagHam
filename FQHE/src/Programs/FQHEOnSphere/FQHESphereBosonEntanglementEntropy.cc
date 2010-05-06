@@ -82,38 +82,38 @@ int main(int argc, char** argv)
       cout << "see man page for option syntax or type FQHESphereBosonEntanglementEntropy -h" << endl;
       return -1;
     }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
     }
 
-  if ((((SingleStringOption*) Manager["ground-file"])->GetString() == 0) && (((SingleStringOption*) Manager["degenerated-groundstate"])->GetString() == 0))
+  if ((Manager.GetString("ground-file") == 0) && (Manager.GetString("degenerated-groundstate") == 0))
     {
       cout << "error, a ground state file should be provided. See man page for option syntax or type FQHESphereEntanglementEntropy -h" << endl;
       return -1;
     }
-  if ((((SingleStringOption*) Manager["ground-file"])->GetString() != 0) && 
-      (IsFile(((SingleStringOption*) Manager["ground-file"])->GetString()) == false))
+  if ((Manager.GetString("ground-file") != 0) && 
+      (IsFile(Manager.GetString("ground-file")) == false))
     {
-      cout << "can't open file " << ((SingleStringOption*) Manager["ground-file"])->GetString() << endl;
+      cout << "can't open file " << Manager.GetString("ground-file") << endl;
       return -1;
     }
-  if ((((SingleStringOption*) Manager["degenerated-groundstate"])->GetString() != 0) && 
-      (IsFile(((SingleStringOption*) Manager["degenerated-groundstate"])->GetString()) == false))
+  if ((Manager.GetString("degenerated-groundstate") != 0) && 
+      (IsFile(Manager.GetString("degenerated-groundstate")) == false))
     {
-      cout << "can't open file " << ((SingleStringOption*) Manager["degenerated-groundstate"])->GetString() << endl;
+      cout << "can't open file " << Manager.GetString("degenerated-groundstate") << endl;
       return -1;
     }
 
 
-  bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
-  int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger(); 
-  int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger(); 
+  bool SymmetrizedBasis = Manager.GetBoolean("symmetrized-basis");
+  int NbrParticles = Manager.GetInteger("nbr-particles"); 
+  int LzMax = Manager.GetInteger("lzmax"); 
 #ifdef __LAPACK__
-  bool LapackFlag = ((BooleanOption*) Manager["use-lapack"])->GetBoolean();
+  bool LapackFlag = Manager.GetBoolean("use-lapack");
 #endif
-  char* DensityMatrixFileName = ((SingleStringOption*) Manager["density-matrix"])->GetString();
+  char* DensityMatrixFileName = Manager.GetString("density-matrix");
   bool EigenstateFlag = Manager.GetBoolean("density-eigenstate");
   int FilterNa = Manager.GetInteger("na-eigenstate");
   int FilterLza = Manager.GetInteger("lza-eigenstate");
@@ -125,17 +125,17 @@ int main(int argc, char** argv)
   RealVector* GroundStates = 0;
   char** GroundStateFiles = 0;
 
-  if (((SingleStringOption*) Manager["degenerated-groundstate"])->GetString() == 0)
+  if (Manager.GetString("degenerated-groundstate") == 0)
     {
       GroundStateFiles = new char* [1];
       TotalLz = new int[1];
-      GroundStateFiles[0] = new char [strlen(((SingleStringOption*) Manager["ground-file"])->GetString()) + 1];
-      strcpy (GroundStateFiles[0], ((SingleStringOption*) Manager["ground-file"])->GetString());      
+      GroundStateFiles[0] = new char [strlen(Manager.GetString("ground-file")) + 1];
+      strcpy (GroundStateFiles[0], Manager.GetString("ground-file"));      
     }
   else
     {
       MultiColumnASCIIFile DegeneratedFile;
-      if (DegeneratedFile.Parse(((SingleStringOption*) Manager["degenerated-groundstate"])->GetString()) == false)
+      if (DegeneratedFile.Parse(Manager.GetString("degenerated-groundstate")) == false)
 	{
 	  DegeneratedFile.DumpErrors(cout);
 	  return -1;
@@ -216,13 +216,13 @@ int main(int argc, char** argv)
 		else
 		  {
 		    int* ReferenceState = 0;
-		    if (((SingleStringOption*) Manager["reference-file"])->GetString() == 0)
+		    if (Manager.GetString("reference-file") == 0)
 		      {
 			cout << "error, a reference file is needed" << endl;
 			return 0;
 		      }
 		    ConfigurationParser ReferenceStateDefinition;
-		    if (ReferenceStateDefinition.Parse(((SingleStringOption*) Manager["reference-file"])->GetString()) == false)
+		    if (ReferenceStateDefinition.Parse(Manager.GetString("reference-file")) == false)
 		      {
 			ReferenceStateDefinition.DumpErrors(cout) << endl;
 			return 0;
@@ -240,7 +240,7 @@ int main(int argc, char** argv)
 		    int MaxNbrLz;
 		    if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
 		      {
-			cout << "error while parsing ReferenceState in " << ((SingleStringOption*) Manager["reference-file"])->GetString() << endl;
+			cout << "error while parsing ReferenceState in " << Manager.GetString("reference-file") << endl;
 			return 0;     
 		      }
 		    if (MaxNbrLz != (LzMax + 1))
@@ -248,8 +248,8 @@ int main(int argc, char** argv)
 			cout << "wrong LzMax value in ReferenceState" << endl;
 			return 0;     
 		      }
-		    if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
-		      Spaces[i] = new BosonOnSphereHaldaneBasisShort(((SingleStringOption*) Manager["load-hilbert"])->GetString());
+		    if (Manager.GetString("load-hilbert") != 0)
+		      Spaces[i] = new BosonOnSphereHaldaneBasisShort(Manager.GetString("load-hilbert"));
 		    else
 		      {
 			Spaces[i] = new BosonOnSphereHaldaneBasisShort(NbrParticles, TotalLz[i], LzMax, ReferenceState);	  
@@ -286,8 +286,8 @@ int main(int argc, char** argv)
     }
 
   ofstream File;
-  if (((SingleStringOption*) Manager["output-file"])->GetString() != 0)
-    File.open(((SingleStringOption*) Manager["output-file"])->GetString(), ios::binary | ios::out);
+  if (Manager.GetString("output-file") != 0)
+    File.open(Manager.GetString("output-file"), ios::binary | ios::out);
   else
     {
       char* TmpFileName = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", "ent");
@@ -304,13 +304,13 @@ int main(int argc, char** argv)
   int MeanSubsystemSize = LzMax >> 1;
   if ((LzMax & 1) != 0)
     ++MeanSubsystemSize;
-  if (((SingleIntegerOption*) Manager["max-la"])->GetInteger() > 0)
+  if (Manager.GetInteger("max-la") > 0)
     {
-      MeanSubsystemSize = ((SingleIntegerOption*) Manager["max-la"])->GetInteger();
+      MeanSubsystemSize = Manager.GetInteger("max-la");
       if (MeanSubsystemSize > LzMax)
 	MeanSubsystemSize = LzMax;
     }
-  int SubsystemSize = ((SingleIntegerOption*) Manager["min-la"])->GetInteger();
+  int SubsystemSize = Manager.GetInteger("min-la");
   if (SubsystemSize < 1)
     SubsystemSize = 1;
   BinomialCoefficients Coefs(MeanSubsystemSize + NbrParticles - 1);

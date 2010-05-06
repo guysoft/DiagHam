@@ -32,7 +32,6 @@
 
 #include "config.h"
 #include "HilbertSpace/BosonOnSphereFullShort.h"
-#include "HilbertSpace/FermionOnSphereFull.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
 #include "Matrix/ComplexMatrix.h"
@@ -224,6 +223,7 @@ double BosonOnSphereFullShort::AdA (long index, int m)
 
 RealMatrix& BosonOnSphereFullShort::EvaluatePartialDensityMatrix (RealMatrix& densityMatrix, BosonOnSphereShort* leftSpace, RealVector& leftState, BosonOnSphereShort* rightSpace, RealVector& rightState)
 {
+  densityMatrix.ClearMatrix();
   if (this->LzMax <= 0)
     {
       if (this->NbrBosons == 0)
@@ -257,162 +257,52 @@ RealMatrix& BosonOnSphereFullShort::EvaluatePartialDensityMatrix (RealMatrix& de
 	  return densityMatrix;	  
 	}
     }
-
-//   int ShiftedTotalLz = (this->TotalLz + this->NbrBosons * this->LzMax) >> 1;
-//   int ShiftedLzSector = (lzSector + nbrBosonSector * (subsytemSize - 1)) >> 1;
-//   int ShiftedLzComplementarySector = ShiftedTotalLz - ShiftedLzSector;
-//   int NbrBosonsComplementarySector = this->NbrBosons - nbrBosonSector;
-//   if ((ShiftedLzComplementarySector < (NbrBosonsComplementarySector * subsytemSize)) || (ShiftedLzComplementarySector > (NbrBosonsComplementarySector * (this->LzMax))))
-//     {
-//       RealSymmetricMatrix TmpDensityMatrix;
-//       return TmpDensityMatrix;	  
-//     }
-
-//   if (subsytemSize == 1)
-//     {
-//       if (lzSector == 0)
-// 	{
-// 	  double TmpValue = 0.0;
-//  	  BosonOnSphereShort TmpHilbertSpace(this->NbrBosons - nbrBosonSector, 2 * ShiftedLzComplementarySector - ((this->NbrBosons - nbrBosonSector) * (this->LzMax + subsytemSize)), this->LzMax - subsytemSize);
-// 	  unsigned long  TmpState2 = 0x0;
-// 	  for (int i = 0; i < nbrBosonSector; ++i)
-// 	    TmpState2 |= 0x1ul << i;
-// 	  for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
-// 	    {
-// 	      unsigned long TmpState = TmpHilbertSpace.FermionBasis->StateDescription[MinIndex] << (subsytemSize + nbrBosonSector) | TmpState2;
-// 	      int TmpLzMax = this->FermionBasis->LzMax;
-// 	      while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
-// 		--TmpLzMax;
-// 	      int TmpPos = this->FermionBasis->FindStateIndex(TmpState, TmpLzMax);
-// 	      if (TmpPos != this->HilbertSpaceDimension)
-// 		TmpValue += groundState[TmpPos] * groundState[TmpPos];	
-// 	    }
-
-// 	  RealSymmetricMatrix TmpDensityMatrix(1);
-// 	  TmpDensityMatrix.SetMatrixElement(0, 0, TmpValue);
-// 	  return TmpDensityMatrix;
-// 	}
-//       else
-// 	{
-// 	  RealSymmetricMatrix TmpDensityMatrix;
-// 	  return TmpDensityMatrix;	  
-// 	}      
-//     }
-
-//   if (nbrBosonSector == 0)
-//     {
-//       if (lzSector == 0)
-// 	{
-// 	  double TmpValue = 0;
-//  	  BosonOnSphereShort TmpHilbertSpace(this->NbrBosons - nbrBosonSector, 2 * ShiftedLzComplementarySector - ((this->NbrBosons - nbrBosonSector) * (this->LzMax + subsytemSize)), this->LzMax - subsytemSize);
-// 	  for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
-// 	    {
-// 	      unsigned long TmpState = TmpHilbertSpace.FermionBasis->StateDescription[MinIndex] << (subsytemSize + nbrBosonSector);
-// 	      int TmpLzMax = this->FermionBasis->LzMax;
-// 	      while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
-// 		--TmpLzMax;
-// 	      int TmpPos = this->FermionBasis->FindStateIndex(TmpState, TmpLzMax);
-// 	      if (TmpPos != this->HilbertSpaceDimension)
-// 		TmpValue += groundState[TmpPos] * groundState[TmpPos];	
-// 	    }	  RealSymmetricMatrix TmpDensityMatrix(1);
-// 	  TmpDensityMatrix.SetMatrixElement(0, 0, TmpValue);
-// 	  return TmpDensityMatrix;
-// 	}
-//       else
-// 	{
-// 	  RealSymmetricMatrix TmpDensityMatrix;
-// 	  return TmpDensityMatrix;	  
-// 	}
-//     }
-
-//   int MinIndex = 0;
-//   int MaxIndex = this->HilbertSpaceDimension - 1;
-//   if (nbrBosonSector == 1)
-//     {
-//       double TmpValue = 0.0;
-//       BosonOnSphereShort TmpHilbertSpace(this->NbrBosons - nbrBosonSector, 2 * ShiftedLzComplementarySector - ((this->NbrBosons - nbrBosonSector) * (this->LzMax + subsytemSize)), this->LzMax - subsytemSize);
-//       for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
-// 	{
-// 	  unsigned long TmpState = TmpHilbertSpace.FermionBasis->StateDescription[MinIndex] << (subsytemSize + nbrBosonSector) | (0x1ul << ShiftedLzSector);
-// 	  int TmpLzMax = this->FermionBasis->LzMax;
-// 	  while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
-// 	    --TmpLzMax;
-// 	  int TmpPos = this->FermionBasis->FindStateIndex(TmpState, TmpLzMax);
-// 	  if (TmpPos != this->HilbertSpaceDimension)
-// 	    TmpValue += groundState[TmpPos] * groundState[TmpPos];	
-// 	}
-//       RealSymmetricMatrix TmpDensityMatrix(1, true);
-//       TmpDensityMatrix.SetMatrixElement(0, 0, TmpValue);	    
-//       return TmpDensityMatrix;
-//     }
-//   if (NbrBosonsComplementarySector == 0)
-//     {
-//       if (ShiftedLzComplementarySector != 0)
-// 	{
-// 	  RealSymmetricMatrix TmpDensityMatrix;
-// 	  return TmpDensityMatrix;	  
-// 	}
-//       BosonOnSphere TmpDestinationHilbertSpace(nbrBosonSector, lzSector, subsytemSize - 1);
-//       cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
-//       RealSymmetricMatrix TmpDensityMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
-//       MinIndex = this->HilbertSpaceDimension - TmpDestinationHilbertSpace.HilbertSpaceDimension;
-//       double TmpValue;
-//       for (int i = 0; i < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++i)
-// 	{
-// 	  TmpValue = groundState[MinIndex + i];
-// 	  for (int j = i; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
-// 	    TmpDensityMatrix.SetMatrixElement(i, j, TmpValue * groundState[MinIndex + j]);
-// 	}
-//       return TmpDensityMatrix;
-//     }
-
-
-//   BosonOnSphereShort TmpDestinationHilbertSpace(nbrBosonSector, lzSector, subsytemSize - 1);
-//   cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
-//   RealSymmetricMatrix TmpDensityMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
-//   int* TmpStatePosition = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
-//   int* TmpStatePosition2 = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
-//   long TmpNbrNonZeroElements = 0;
-
-//   BosonOnSphereShort TmpHilbertSpace(this->NbrBosons - nbrBosonSector, 2 * ShiftedLzComplementarySector - ((this->NbrBosons - nbrBosonSector) * (this->LzMax + subsytemSize)), this->LzMax - subsytemSize);
-
-//   for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
-//     {
-//       int Pos = 0;
-//       unsigned long TmpComplementaryState = TmpHilbertSpace.FermionBasis->StateDescription[MinIndex] << (subsytemSize + nbrBosonSector);
-//       for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
-// 	{
-// 	  unsigned long TmpState = TmpDestinationHilbertSpace.FermionBasis->StateDescription[j] | TmpComplementaryState;
-// 	  int TmpLzMax = this->FermionBasis->LzMax;
-// 	  while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
-// 	    --TmpLzMax;
-// 	  int TmpPos = this->FermionBasis->FindStateIndex(TmpState, TmpLzMax);
-// 	  if (TmpPos != this->HilbertSpaceDimension)
-// 	    {
-// 	      TmpStatePosition[Pos] = TmpPos;
-// 	      TmpStatePosition2[Pos] = j;
-// 	      ++Pos;
-// 	    }
-// 	}
-//       if (Pos != 0)
-// 	{
-// 	  ++TmpNbrNonZeroElements;
-// 	  for (int j = 0; j < Pos; ++j)
-// 	    {
-// 	      int Pos2 = TmpStatePosition2[j];
-// 	      double TmpValue = groundState[TmpStatePosition[j]];
-// 	      for (int k = 0; k < Pos; ++k)
-// 		if (TmpStatePosition2[k] >= Pos2)
-// 		TmpDensityMatrix.AddToMatrixElement(Pos2, TmpStatePosition2[k], TmpValue * groundState[TmpStatePosition[k]]);
-// 	    }
-// 	}
-//     }
-//   delete[] TmpStatePosition2;
-//   delete[] TmpStatePosition;
-//   if (TmpNbrNonZeroElements > 0)	
-//     return TmpDensityMatrix;
-//   else
-//     {
+  
+  long TmpNbrNonZeroElements = 0;
+  int ShiftedLeftSpaceTotalLz = (leftSpace->TotalLz + (leftSpace->LzMax * leftSpace->NbrBosons)) >> 1;
+  int ShiftedRightSpaceTotalLz = (rightSpace->TotalLz + (rightSpace->LzMax * rightSpace->NbrBosons)) >> 1;
+  for (int CurrentLeftLzSector = 0; CurrentLeftLzSector < 0; CurrentLeftLzSector += 2)
+    {
+      int UnshiftedCurrentLeftLzSector = (CurrentLeftLzSector << 1) - (this->NbrBosons * this->LzMax);
+      cout << "processing Lz=" <<  UnshiftedCurrentLeftLzSector << " sector" << endl;
+      BosonOnSphereShort TmpLeftDestinationHilbertSpace(this->NbrBosons, UnshiftedCurrentLeftLzSector, this->LzMax);
+      int ComplementarySubsystemLzMax = leftSpace->LzMax - this->LzMax - 1;
+      int ComplementaryNbrBosons = leftSpace->NbrBosons - this->NbrBosons;
+      BosonOnSphereShort TmpHilbertSpace(ComplementaryNbrBosons, ((ShiftedLeftSpaceTotalLz - CurrentLeftLzSector) << 1) - (ComplementarySubsystemLzMax * ComplementaryNbrBosons), ComplementarySubsystemLzMax);
+      int ShiftedCurrentRightLzSector = ShiftedRightSpaceTotalLz - CurrentLeftLzSector;
+      BosonOnSphereShort TmpRightDestinationHilbertSpace(this->NbrBosons, (ShiftedCurrentRightLzSector << 1) - (this->NbrBosons * this->LzMax), this->LzMax);
+      for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
+	{
+	  int Pos = 0;
+	  unsigned long TmpComplementaryState = TmpHilbertSpace.FermionBasis->StateDescription[MinIndex] << (this->LzMax + 1 + this->NbrBosons);
+	  for (int j = 0; j < TmpLeftDestinationHilbertSpace.HilbertSpaceDimension; ++j)
+	    {
+	      unsigned long TmpLeftState = TmpLeftDestinationHilbertSpace.FermionBasis->StateDescription[j] | TmpComplementaryState;
+	      int TmpLzMax = TmpLeftDestinationHilbertSpace.FermionBasis->LzMax;
+	      while (((TmpLeftState >> TmpLzMax) & 0x1ul) == 0x0ul)
+		--TmpLzMax;
+	      int TmpPos = TmpLeftDestinationHilbertSpace.FermionBasis->FindStateIndex(TmpLeftState, TmpLzMax);
+	      if (TmpPos != TmpLeftDestinationHilbertSpace.HilbertSpaceDimension)
+		{
+		  double TmpCoefficient = leftState[TmpPos];
+		  int TmpIndex = this->FermionBasis->FindStateIndex(TmpLeftDestinationHilbertSpace.FermionBasis->StateDescription[j], TmpLeftDestinationHilbertSpace.FermionBasis->StateLzMax[j]);
+		  for (int k = 0; k < TmpRightDestinationHilbertSpace.HilbertSpaceDimension; ++k)
+		    {
+		      unsigned long TmpRightState = TmpRightDestinationHilbertSpace.FermionBasis->StateDescription[k] | TmpComplementaryState;
+		      TmpLzMax = TmpRightDestinationHilbertSpace.FermionBasis->LzMax;
+		      while (((TmpRightState >> TmpLzMax) & 0x1ul) == 0x0ul)
+			--TmpLzMax;
+		      int TmpPos2 = TmpRightDestinationHilbertSpace.FermionBasis->FindStateIndex(TmpRightState, TmpLzMax);
+		      if (TmpPos2 != TmpRightDestinationHilbertSpace.HilbertSpaceDimension)
+			{
+			  int TmpIndex2 = this->FermionBasis->FindStateIndex(TmpRightDestinationHilbertSpace.FermionBasis->StateDescription[k], TmpRightDestinationHilbertSpace.FermionBasis->StateLzMax[k]);
+			  densityMatrix.AddToMatrixElement(TmpIndex, TmpIndex2, TmpCoefficient * rightState[TmpPos2]);
+			  ++TmpNbrNonZeroElements;
+			}
+		    }
+		}
+ 	    }
+ 	}
+     }
   return densityMatrix;
-//     }
 }

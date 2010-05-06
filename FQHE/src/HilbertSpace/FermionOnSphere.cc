@@ -76,6 +76,15 @@ FermionOnSphere::FermionOnSphere (int nbrFermions, int totalLz, int lzMax, unsig
   this->TotalLz = totalLz;
   this->LzMax = lzMax;
   this->NbrLzValue = this->LzMax + 1;
+#ifdef __64_BITS__
+  this->InvertShift = 32 - ((this->LzMax + 1) >> 1);
+#else
+  this->InvertShift = 16 - ((this->LzMax + 1 ) >> 1);
+#endif
+  if ((this->LzMax & 1) == 0)
+    this->InvertUnshift = this->InvertShift - 1;
+  else
+    this->InvertUnshift = this->InvertShift;
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz);
   if (this->LargeHilbertSpaceDimension >= (1l << 30))
     this->HilbertSpaceDimension = 0;
@@ -131,6 +140,8 @@ FermionOnSphere::FermionOnSphere(const FermionOnSphere& fermions)
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
+  this->InvertShift = fermions.InvertShift;
+  this->InvertUnshift = fermions.InvertUnshift;
 }
 
 // destructor
@@ -186,6 +197,8 @@ FermionOnSphere& FermionOnSphere::operator = (const FermionOnSphere& fermions)
   this->StateLzMax = fermions.StateLzMax;
   this->LzMax = fermions.LzMax;
   this->NbrLzValue = fermions.NbrLzValue;
+  this->InvertShift = fermions.InvertShift;
+  this->InvertUnshift = fermions.InvertUnshift;
   this->Flag = fermions.Flag;
   this->MaximumLookUpShift = fermions.MaximumLookUpShift;
   this->LookUpTableMemorySize = fermions.LookUpTableMemorySize;
