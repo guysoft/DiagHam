@@ -43,6 +43,8 @@
 class BosonOnTorusShort :  public ParticleOnTorus
 {
 
+ protected:
+
   // number of bosons
   int NbrBosons;
   // number of bosons plus 1
@@ -77,6 +79,10 @@ class BosonOnTorusShort :  public ParticleOnTorus
   int TemporaryStateKyMax;
   
  public:
+
+  // default constructor
+  // 
+  BosonOnTorusShort ();
 
   // basic constructor
   // 

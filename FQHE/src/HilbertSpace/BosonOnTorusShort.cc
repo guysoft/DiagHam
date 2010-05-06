@@ -45,6 +45,13 @@ using std::hex;
 using std::dec;
 
 
+// default constructor
+// 
+
+BosonOnTorusShort::BosonOnTorusShort ()
+{
+}
+
 // basic constructor
 // 
 // nbrBosons = number of bosons
