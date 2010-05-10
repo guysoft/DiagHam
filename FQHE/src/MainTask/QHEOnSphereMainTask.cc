@@ -267,13 +267,19 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
     {
       this->ProjectorPrecision = options->GetDouble("projector-precision");
     }
-  else this->ProjectorPrecision = 10.0*this->LanczosPrecision;
+  else 
+    this->ProjectorPrecision = 10.0 * this->LanczosPrecision;
   if ((*options)["restart-projection"] != 0)
     {
       this->RestartProjection = options->GetBoolean("restart-projection");
     }
-  else this->RestartProjection = false;
-  
+  else 
+    this->RestartProjection = false;
+  this->PartialEigenstateFlag = 0;
+  if (((*options)["partial-eigenstate"] != 0) && (this->EvaluateEigenvectors == true))
+    {
+      this->PartialEigenstateFlag = options->GetInteger("partial-eigenstate");
+    }  
 }  
  
 // destructor
@@ -670,6 +676,25 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 	      TotalCurrentTime.tv_sec = TotalEndingTime.tv_sec;
 	    }
 	  cout << endl;
+	  if ((this->PartialEigenstateFlag > 0) && ((CurrentNbrIterLanczos % (this->PartialEigenstateFlag * this->SizeBlockLanczos)) == 0))
+	    {
+	      RealVector* Eigenvectors = (RealVector*) Lanczos->GetEigenstates(this->NbrEigenvalue);
+	      if (Eigenvectors != 0)
+		{
+		  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 32];
+		  for (int i = 0; i < this->NbrEigenvalue; ++i)
+		    {
+		      sprintf (TmpVectorName, "%s.%d.part.%d.vec", this->EigenvectorFileName, i, CurrentNbrIterLanczos);		  
+		      Eigenvectors[i].WriteVector(TmpVectorName);
+		    }
+		  delete[] TmpVectorName;
+		  delete[] Eigenvectors;
+		}
+	      else
+		{
+		  cout << "eigenvectors can't be computed" << endl;
+		}
+	    }
 	}
       if ((Lanczos->TestConvergence() == true) && (CurrentNbrIterLanczos == 0))
 	{

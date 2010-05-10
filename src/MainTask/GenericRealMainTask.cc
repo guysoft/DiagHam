@@ -224,6 +224,11 @@ GenericRealMainTask::GenericRealMainTask(OptionManager* options, AbstractHilbert
       this->FastDiskFlag = false;
       this->ResumeFastDiskFlag = false;
     }
+  this->PartialEigenstateFlag = 0;
+  if (((*options)["partial-eigenstate"] != 0) && (this->EvaluateEigenvectors == true))
+    {
+      this->PartialEigenstateFlag = options->GetInteger("partial-eigenstate");
+    }
   this->FirstRun = firstRun;
 }
  
@@ -498,6 +503,25 @@ int GenericRealMainTask::ExecuteMainTask()
 	      TotalCurrentTime.tv_sec = TotalEndingTime.tv_sec;
 	    }
 	  cout << endl;
+	  if ((this->PartialEigenstateFlag > 0) && ((CurrentNbrIterLanczos % (this->PartialEigenstateFlag * this->SizeBlockLanczos)) == 0))
+	    {
+	      RealVector* Eigenvectors = (RealVector*) Lanczos->GetEigenstates(this->NbrEigenvalue);
+	      if (Eigenvectors != 0)
+		{
+		  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 32];
+		  for (int i = 0; i < this->NbrEigenvalue; ++i)
+		    {
+		      sprintf (TmpVectorName, "%s.%d.part.%d.vec", this->EigenvectorFileName, i, CurrentNbrIterLanczos);		  
+		      Eigenvectors[i].WriteVector(TmpVectorName);
+		    }
+		  delete[] TmpVectorName;
+		  delete[] Eigenvectors;
+		}
+	      else
+		{
+		  cout << "eigenvectors can't be computed" << endl;
+		}
+	    }
 	}
       if ((Lanczos->TestConvergence() == true) && (CurrentNbrIterLanczos == 0))
 	{

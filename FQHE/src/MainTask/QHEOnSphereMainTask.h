@@ -140,6 +140,9 @@ class QHEOnSphereMainTask: public AbstractMainTask
   // flag for restarting projection
   bool RestartProjection;
 
+  // flag that indicate if eigenstates have to be computed and saved at a given frequency
+  int PartialEigenstateFlag;
+
  public:
 
   // constructor
