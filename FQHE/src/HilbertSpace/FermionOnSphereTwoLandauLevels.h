@@ -35,6 +35,7 @@
 
 #include "config.h"
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
+#include "HilbertSpace/BosonOnSphereShort.h"
 
 #include <iostream>
 
@@ -234,6 +235,60 @@ class FermionOnSphereTwoLandauLevels :  public FermionOnSphereWithSpin
   // return value = resluting SU(2) state
   virtual RealVector ForgeSU2FromU1(RealVector& upState, FermionOnSphere& upStateSpace, RealVector& downState, FermionOnSphere& downStateSpace);
 
+  // compute the projection of the product of a Slater determinant and a monomial 
+  // 
+  // slater = array where the slater is stored in its monomial representation
+  // monomial = array where the monomial is stored in its monomial representation
+  // variable = reference on the array where the indice of fermions in the second Landau level is stored
+  // nbrVariable = number of fermions in the second Landau level
+  // finalStates = array where the obtained states are stored in their fermionic representation
+  // weigth = array where the coefficients for each obtained state are stored
+  // finalSpace = pointer to the final HilbertSpace
+  // return value = number of different obtained states	
+  virtual unsigned int MonomialsTimesSlaterProjection(unsigned long* slater,unsigned long* monomial,unsigned long* variable,int nbrVariable, unsigned long*& finalStates, double*& weigth, FermionOnSphere* finalSpace);
+	
+  // compute the projection of the product of a bosonic state and a fermionic state
+  //
+  // bosonState = real vector where the bosonic state is stored
+  // fermionState = real vector where the fermionic state is stored
+  // outputVector = real vector where the result has to be stored
+  // finalStates = array where the obtained states are stored in their fermionic representation
+  // weigth = array where the coefficients for each obtained state are stored
+  // bosonSpace = pointer to the bosonic Hilbert space
+  // finalSpace = pointer to the final Hilbert space
+  // firstComponent = first component to be computed
+  // nbrComponent = number of components to be computed	
+  virtual void BosonicStateTimeFermionicState(RealVector& bosonState, RealVector& fermionState, RealVector& outputVector, unsigned long* finalStates, double* weigth,BosonOnSphereShort* bosonSpace,
+					      FermionOnSphere* finalSpace, int firstComponent,int nbrComponent);
+	
+  // compute the projection of the product of a bosonic state and a fermionic state using the lz->-lz symmetry
+  //
+  // bosonState = real vector where the bosonic state is stored
+  // fermionState = real vector where the fermionic state is stored
+  // outputVector = real vector where the result has to be stored
+  // finalStates = array where the obtained states are stored in their fermionic representation
+  // weigth = array where the coefficients for each obtained state are stored
+  // bosonSpace = pointer to the bosonic Hilbert space
+  // finalSpace = pointer to the final Hilbert space
+  // firstComponent = first component to be computed
+  // nbrComponent = number of components to be computed  
+  virtual void BosonicStateTimeFermionicStateSymmetric(RealVector& bosonState, RealVector& fermionState, RealVector& outputVector,unsigned long* finalStates, double* weigth,BosonOnSphereShort* bosonSpace,
+						       FermionOnSphere* finalSpace, int firstComponent,int nbrComponent);
+	
+  // compute the product of a bosonic state and a fermionic state belonging in two Landau levels
+  //
+  // bosonState = real vector where the bosonic state is stored
+  // fermionState = real vector where the fermionic state is stored
+  // outputVector = real vector where the result has to be stored
+  // finalStates = array where the obtained states are stored in their fermionic representation
+  // weigth = array where the coefficients for each obtained state are stored
+  // bosonSpace = pointer to the bosonic Hilbert space
+  // finalSpace = pointer to the final Hilbert space
+  // firstComponent = first component to be computed
+  // nbrComponent = number of components to be computed	
+  virtual void BosonicStateTimeFermionicState(RealVector& bosonState, RealVector& fermionState, RealVector& outputVector, unsigned long* finalStates, double* weigth, BosonOnSphereShort* bosonSpace,
+					      FermionOnSphereTwoLandauLevels* finalSpace, int firstComponent, int nbrComponent);
+
  protected:
 
   // evaluate Hilbert space dimension
@@ -272,7 +327,148 @@ class FermionOnSphereTwoLandauLevels :  public FermionOnSphereWithSpin
   // return value = position from which new states have to be stored
   virtual long GenerateFullStates(int nbrFermions, int lzMax, int totalLz, long pos);
 
+  // convert a fermionic state to its monomial representation
+  //
+  // state = initial fermionic state in its fermionic representation
+  // monomial = reference on the array where the monomial representation has to be stored  
+  virtual void ConvertToMonomial(unsigned long state , unsigned long*& monomial);
+	
+  // convert a fermionic state from its monomial representation
+  //
+  // monomial = the array where the monomial representation is stored
+  // return value = fermionic state in its fermionic representation  
+  virtual  unsigned long ConvertFromMonomial(unsigned long* monomial);
+	
+  // convert a fermionic state to its monomial representation
+  //
+  // index = place in StateDescription of the fermionic state
+  // monomial = reference on the array where the monomial representation has to be stored  
+  virtual void ConvertToMonomial(int index, unsigned long*& monomial);
+		
+  // convert a fermionic state to its monomial variable representation
+  //
+  // state = initial fermionic state in its fermionic representation
+  // slater = reference on the array where the monomial representation has to be stored
+  // nbrVariable = number of fermions in the second Landau level
+  // variable = reference on the array where the indice of fermions in the second Landau level has to be stored  
+  virtual void ConvertToMonomialVariable(unsigned long state, unsigned long*& slater,int& nbrVariable, unsigned long *& variable);
+	
+  // generate the different states that appear in the product of a monomial and a Slater determinant in the two Landau levels
+  //
+  // finalStates = array where the obtained states has to be stored in their fermionic representation
+  // weigth = array where the coefficients for each obtained state has to be stored
+  // slater = array where the Slater determinant is stored in its monomial representation
+  // state = array where the obtained state is stored in its monomial representation
+  // slaterSpace = pointer to the Hilbert Space which the Slater determinant belongs to
+  // index = index of the particle being examinate
+  // nbrNonZero = number of different obtained states
+  // coef = coefficient of the state being generate	
+  virtual void GeneratesDifferentState(unsigned long* finalStates,double* weigth,unsigned long* slater,unsigned long* state,FermionOnSphereTwoLandauLevels * slaterSpace, int index, unsigned int& nbrNonZero,
+				       double coef);
+	
+  // compute the product of a monomial and a Slater determinant belonging in two Landau levels
+  // 
+  // slater = array where the slater is stored in its monomial representation
+  // monomial = array where the monomial is stored in its monomial representation
+  // finalStates = array where the obtained states are stored in their fermionic representation
+  // weigth = array where the coefficients for each obtained state are stored
+  // finalSpace = pointer to the final HilbertSpace
+  // return value = number of different obtained states
+  virtual unsigned int MonomialsTimesSlater(unsigned long* slater,unsigned long* monomial, unsigned long * & finalStates, double * & weigth,FermionOnSphereTwoLandauLevels * finalSpace);
+	
 };
+
+// convert a fermionic state to its monomial representation
+//
+// index = place in StateDescription of the fermionic state
+// monomial = reference on the array where the monomial representation has to be stored
+
+inline void FermionOnSphereTwoLandauLevels::ConvertToMonomial(int index , unsigned long*& monomial)
+{
+  this->ConvertToMonomial(this->StateDescription[index],monomial);
+}
+
+// convert a fermionic state to its monomial representation
+//
+// state = initial fermionic state in its fermionic representation
+// monomial = reference on the array where the monomial representation has to be stored
+
+inline void FermionOnSphereTwoLandauLevels::ConvertToMonomial(unsigned long state , unsigned long*& monomial)
+{
+  int Pos=0;
+  for(int i= 2 * this->LzMax + 1; i > 0; --i)
+    {
+      if (((state >> i) & 0x1ul) != 0x0ul)
+	{
+	  monomial[Pos] = i;
+	  ++Pos;
+	}
+    }
+}
+
+// convert a fermionic state from its monomial representation
+//
+// monomial = the array where the monomial representation is stored
+// return value = fermionic state in its fermionic representation
+
+inline unsigned long FermionOnSphereTwoLandauLevels::ConvertFromMonomial(unsigned long* monomial)
+{
+  unsigned long TmpState = 0x0ul;
+  for (int i = 0; i < this->NbrFermions; i++)
+    {
+      TmpState |= 0x1ul << monomial[i];
+    }
+  return TmpState;
+}
+
+// convert a fermionic state to its monomial variable representation
+//
+// state = initial fermionic state in its fermionic representation
+// slater = reference on the array where the monomial representation has to be stored
+// nbrVariable = number of fermions in the second Landau level
+// variable = reference on the array where the indice of fermions in the second Landau level has to be stored
+
+inline void FermionOnSphereTwoLandauLevels::ConvertToMonomialVariable(unsigned long state, unsigned long*& slater,int & nbrVariable,unsigned long *& variable)
+{
+  unsigned long Tmp;
+  int Pos=0;
+  for(int i= this->LzMax; i >= 0;i--)
+    {
+      Tmp=  ((state >> (i << 1)) & 0x3ul);
+      switch (Tmp)
+	{
+	case 0x1l: 
+	  {
+	    slater[Pos]=i;
+	    Pos++;
+	    break;
+	  }
+	case 0x2l:
+	  {
+	    slater[Pos]=i;
+	    variable[nbrVariable]=Pos;
+	    nbrVariable++;
+	    Pos++;
+	    break;
+	  }
+	case 0x3l:
+	  {
+	    slater[Pos]=i;
+	    variable[nbrVariable]=Pos;
+	    nbrVariable++;
+	    Pos++;
+	    slater[Pos]=i;
+	    Pos++;
+	    break;
+	  }
+	  break;
+	default : 
+	  {
+	    break;
+	  }
+	}
+    }
+}
 
 #endif
 

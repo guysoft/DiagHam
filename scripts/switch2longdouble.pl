@@ -50,6 +50,7 @@ sub SwitchToLongDouble
 	    $TmpLine =~ s/exp2\s*\(/exp2l\(/mg;
 	    $TmpLine =~ s/log\s*\(/logl\(/mg;
 	    $TmpLine =~ s/sqrt\s*\(/sqrtl\(/mg;
+	    $TmpLine =~ s/\%lf/\%Lf/mg;
 	    $TmpLine =~ s/cout\.precision\(14\)/cout\.precision\(18\)/mg;
 	  }
 	$TmpFile .= $TmpLine;

@@ -79,26 +79,26 @@ int main(int argc, char** argv)
       return -1;
     }
   
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
     }
 
-  if(((SingleStringOption*) Manager["state"])->GetString() == 0)
+  if(Manager.GetString("state") == 0)
     {
       cout << "no input state " << endl << "see man page for option syntax or type FQHESphereSUKToU1 -h" << endl;
       return -1;
     }
 
-  int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
-  int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
-  int TotalLz = ((SingleIntegerOption*) Manager["total-lz"])->GetInteger();
-  int TotalSz = ((SingleIntegerOption*) Manager["total-sz"])->GetInteger();
-  int TotalIsoSz = ((SingleIntegerOption*) Manager["total-isosz"])->GetInteger();
-  int TotalEntanglement = ((SingleIntegerOption*) Manager["total-entanglement"])->GetInteger();
-  int TotalTz = ((SingleIntegerOption*) Manager["total-tz"])->GetInteger();
-  int TotalY = ((SingleIntegerOption*) Manager["total-y"])->GetInteger();
+  int NbrParticles = Manager.GetInteger("nbr-particles");
+  int LzMax = Manager.GetInteger("lzmax");
+  int TotalLz = Manager.GetInteger("total-lz");
+  int TotalSz = Manager.GetInteger("total-sz");
+  int TotalIsoSz = Manager.GetInteger("total-isosz");
+  int TotalEntanglement = Manager.GetInteger("total-entanglement");
+  int TotalTz = Manager.GetInteger("total-tz");
+  int TotalY = Manager.GetInteger("total-y");
   bool SzSymmetrizedBasis = false;
   bool SzMinusParity = false;
   bool TzSymmetrizedBasis = false;
@@ -111,19 +111,19 @@ int main(int argc, char** argv)
   bool SU3SymmetryFlag = false;
   bool SU4SymmetryFlag = false;
 
-  char* StateFileName = ((SingleStringOption*) Manager["state"])->GetString();
+  char* StateFileName = Manager.GetString("state");
   FQHEOnSphereFindInternalSymmetryGroupFromFileName(StateFileName, SU2SymmetryFlag, SU3SymmetryFlag, SU4SymmetryFlag);
 
-  if (((BooleanOption*) Manager["su2-spin"])->GetBoolean() == true)
+  if (Manager.GetBoolean("su2-spin") == true)
     SU2SymmetryFlag = true;
   else
-    if (((BooleanOption*) Manager["su3-spin"])->GetBoolean() == true)
+    if (Manager.GetBoolean("su3-spin") == true)
       SU3SymmetryFlag = true;
     else
-      if (((BooleanOption*) Manager["su4-spin"])->GetBoolean() == true)
+      if (Manager.GetBoolean("su4-spin") == true)
 	SU4SymmetryFlag = true;
 
-  if (((SingleStringOption*) Manager["statistics"])->GetString() == 0)
+  if (Manager.GetString("statistics") == 0)
     FermionFlag = true;
   if (NbrParticles==0)
     {
@@ -131,40 +131,40 @@ int main(int argc, char** argv)
 	if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(StateFileName, NbrParticles, LzMax, TotalLz, TotalSz, SzSymmetrizedBasis, SzMinusParity, 
 								 LzSymmetrizedBasis, LzMinusParity, FermionFlag) == false)
 	  {
-	    cout << "error while retrieving system informations from file name " << ((SingleStringOption*) Manager["state"])->GetString() << endl;
+	    cout << "error while retrieving system informations from file name " << Manager.GetString("state") << endl;
 	    return -1;
 	  }
       if (SU3SymmetryFlag == true)
 	if (FQHEOnSphereWithSU3SpinFindSystemInfoFromVectorFileName(StateFileName, NbrParticles, LzMax, TotalLz, TotalTz, TotalY, TzSymmetrizedBasis, TzMinusParity, 
 								    YSymmetrizedBasis, LzSymmetrizedBasis, LzMinusParity, FermionFlag) == false)
 	  {
-	    cout << "error while retrieving system informations from file name " << ((SingleStringOption*) Manager["state"])->GetString() << endl;
+	    cout << "error while retrieving system informations from file name " << Manager.GetString("state") << endl;
 	    return -1;
 	  }
       if (SU4SymmetryFlag == true)
-	if (FQHEOnSphereWithSU4SpinFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["state"])->GetString(), NbrParticles, LzMax, TotalLz, 
+	if (FQHEOnSphereWithSU4SpinFindSystemInfoFromVectorFileName(Manager.GetString("state"), NbrParticles, LzMax, TotalLz, 
 								    TotalLz, TotalIsoSz, TotalEntanglement, FermionFlag) == false)
 	  {
-	    cout << "error while retrieving system informations from file name " << ((SingleStringOption*) Manager["state"])->GetString() << endl;
+	    cout << "error while retrieving system informations from file name " << Manager.GetString("state") << endl;
 	    return -1;
 	  }
     }
   cout << "N=" << NbrParticles << "  LzMax=" << LzMax << "  TotalLz=" << TotalLz << endl;
-  if (((SingleStringOption*) Manager["statistics"])->GetString() != 0)
+  if (Manager.GetString("statistics") != 0)
     {
-      if ((strcmp ("fermions", ((SingleStringOption*) Manager["statistics"])->GetString()) == 0))
+      if ((strcmp ("fermions", Manager.GetString("statistics")) == 0))
 	{
 	  FermionFlag = true;
 	}
       else
 	{
-	  if ((strcmp ("fermions", ((SingleStringOption*) Manager["statistics"])->GetString()) == 0))
+	  if ((strcmp ("fermions", Manager.GetString("statistics")) == 0))
 	    {
 	      FermionFlag = false;
 	    }
 	  else
 	    {
-	      cout << ((SingleStringOption*) Manager["statistics"])->GetString() << " is an undefined statistics" << endl;
+	      cout << Manager.GetString("statistics") << " is an undefined statistics" << endl;
 	    }
 	}
     }
@@ -189,8 +189,8 @@ int main(int argc, char** argv)
 
 
   long MemorySpace = 9l << 20;
-  char* OutputName = new char [512 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
-  sprintf (OutputName, "fermions_sphere_%s_n_%d_2s_%d_lz_%d.0.vec", ((SingleStringOption*) Manager["interaction-name"])->GetString(), 
+  char* OutputName = new char [512 + strlen(Manager.GetString("interaction-name"))];
+  sprintf (OutputName, "fermions_sphere_%s_n_%d_2s_%d_lz_%d.0.vec", Manager.GetString("interaction-name"), 
 	   NbrParticles, LzMax, TotalLz);
   if (FermionFlag == true)
     {

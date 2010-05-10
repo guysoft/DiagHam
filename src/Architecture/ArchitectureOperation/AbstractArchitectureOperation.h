@@ -72,7 +72,8 @@ class AbstractArchitectureOperation
       QHEComplexVectorConversion=0x4000,
       FQHESphereJackGenerator = 0x8000,
       FQHESphereJastrowMultiplication = 0x8001,
-      FQHESphereJastrowDivision = 0x8002
+      FQHESphereJastrowDivision = 0x8002,
+      FQHESphereMonomialsTimesSlaterProjection = 0x8003
     };
 
   // destructor

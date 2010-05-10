@@ -937,4 +937,289 @@ ClassName* SmartMergeArrayListIntoArray(List<ClassName*>& arrayList, List<long>&
   return TmpArray;
 }
 
+// down ordering array sort using quick sort, counting the number of permutations and apply the same sort on another array
+//
+// array = pointer to the array
+// ulArray = pointer to the unsigned long second array to sort in the same way as array
+// nbrValue = nbr of value in the array
+// nbrPermutation = reference on the number of permutation that have to be done
+
+template <class ClassName>
+void SortArrayDownOrdering(ClassName* array,unsigned long* ulArray, long nbrValue, int& nbrPermutation)
+{
+  switch (nbrValue)
+    {
+    case 0:
+      return;
+    case 1:
+      return;
+    case 2:
+      {
+	if (array[0] < array[1])
+	  {
+	    ClassName TmpElement = array[0];
+	    array[0] = array[1];
+	    array[1] = TmpElement;
+	    unsigned long TmpElement2=ulArray[0];
+	    ulArray[0] = ulArray[1];
+	    ulArray[1] = TmpElement2;
+	    nbrPermutation++;
+	  }
+	return;
+      }
+      break;
+    case 3:
+      {
+	ClassName TmpElement;
+	unsigned long TmpElement2;
+	if (array[0] < array[1])
+	  {
+	    TmpElement = array[0];
+	    array[0] = array[1];
+	    array[1] = TmpElement;
+	    nbrPermutation++;
+	    TmpElement2=ulArray[0];
+	    ulArray[0] = ulArray[1];
+	    ulArray[1] = TmpElement2;
+	  }
+	if (array[1] < array[2])
+	  {
+	    TmpElement = array[1];
+	    array[1] = array[2];
+	    array[2] = TmpElement;
+	    nbrPermutation++;
+	    TmpElement2=ulArray[1];
+	    ulArray[1] = ulArray[2];
+	    ulArray[2] = TmpElement2;
+	  }
+	if (array[0] < array[1])
+	  {
+	    TmpElement = array[0];
+	    array[0] = array[1];
+	    array[1] = TmpElement;
+	    nbrPermutation++;
+	    TmpElement2=ulArray[0];
+	    ulArray[0] = ulArray[1];
+	    ulArray[1] = TmpElement2;
+	  }
+	return;
+      }
+      break;
+    default:
+      {
+	int j = nbrValue - 1;
+	int i = nbrValue >> 1;
+	ClassName TmpElement;
+	unsigned long TmpElement2;
+	if (array[0] <  array[i])
+	  {
+	    TmpElement = array[i];
+	    array[i] = array[0];
+	    array[0] = TmpElement;
+	    nbrPermutation++;
+	    TmpElement2=ulArray[i];
+	    ulArray[i] = ulArray[0];
+	    ulArray[0] = TmpElement2;
+	  }
+	if (array[i] <  array[j])
+	  {
+	    TmpElement = array[i];
+	    array[i] = array[j];
+	    array[j] = TmpElement;
+	    nbrPermutation++;
+	    TmpElement2=ulArray[i];
+	    ulArray[i] = ulArray[j];
+	    ulArray[j] = TmpElement2;
+	  }
+	if (array[0] <  array[i])
+	  {
+	    TmpElement = array[i];
+	    array[i] = array[0];
+	    array[0] = TmpElement;
+	    nbrPermutation++;
+	    TmpElement2=ulArray[i];
+	    ulArray[i] = ulArray[0];
+	    ulArray[0] = TmpElement2;
+	  }
+	--j;
+	ClassName Pivot;
+	unsigned long Pivot2;
+	if((i==j)||(array[i]==array[j]))
+	  {
+	    Pivot = array[i];
+	    Pivot2=ulArray[i];
+	  }
+	else
+	  {
+	    Pivot = array[i];
+	    array[i] = array[j];
+	    array[j] = Pivot;
+	    nbrPermutation++;
+	    Pivot2=ulArray[i];
+	    ulArray[i] = ulArray[j];
+	    ulArray[j] = Pivot2;
+	  }
+	i = 0;
+	while (true)
+	  {
+	    while (array[++i] > Pivot);
+	    while (array[--j] < Pivot);
+	    if (i < j)
+	      {
+		TmpElement = array[i];
+		array[i] = array[j];
+		array[j] = TmpElement;
+		nbrPermutation++;
+		TmpElement2=ulArray[i];
+		ulArray[i] = ulArray[j];
+		ulArray[j] = TmpElement2;
+	      }
+	    else
+	      break;
+	  }
+	if(((nbrValue - 2)==i)||(array[nbrValue - 2]==array[i]))
+	  ;
+	else
+	  {
+	    array[nbrValue - 2] = array[i];
+	    array[i] = Pivot;
+	    nbrPermutation++;
+	    ulArray[nbrValue - 2] = ulArray[i];
+	    ulArray[i] = Pivot2;
+	  }
+	SortArrayDownOrdering(array,ulArray, i,nbrPermutation);
+	SortArrayDownOrdering(&(array[i + 1]),&(ulArray[i + 1]), nbrValue - i - 1,nbrPermutation);
+      }
+    }
+  return;
+}
+
+// find an element in an array, if found add c to the corresponding weight in weight array, if not found insert the element and set the weight to c
+//
+// element = element to find
+// array = array where to search 
+// weight = weight array
+// nbrValue = number of values in array
+// c = weight to add
+// return value = number of inserted value
+
+template <class ClassName>
+int SearchInArrayAndSetWeight(ClassName element, ClassName*& array, long*& weigth, unsigned long nbrValue, long c)
+{
+  int StartIndex = 0;
+  int EndIndex = nbrValue;
+  int MidIndex;
+   
+  while((EndIndex - StartIndex) > 1)
+    {
+       
+      MidIndex = (StartIndex + EndIndex) >> 1;
+       
+      if(array[MidIndex] == element)
+        {
+	  weigth[MidIndex] += c;
+	  return 0;
+        }
+       
+      if(array[MidIndex] > element)
+	EndIndex = MidIndex;
+      else
+	StartIndex = MidIndex;
+    }
+   
+  if(array[StartIndex] == element)
+    {
+      weigth[StartIndex] += c;
+      return 0;
+    }
+   
+  nbrValue += 2;
+  ClassName TmpElement;
+  ClassName TmpElement1;
+  long TmpWeigth;
+  long TmpWeigth1;
+   
+  if(array[StartIndex]<element)
+    StartIndex++;
+   
+  TmpElement = array[StartIndex];
+  TmpWeigth = weigth[StartIndex];
+  array[StartIndex] = element;
+  weigth[StartIndex] = c;
+  for (unsigned int i = StartIndex + 1; i < nbrValue; ++i)
+    {
+      TmpElement1 = array[i];
+      TmpWeigth1 = weigth[i];
+      array[i] = TmpElement;
+      weigth[i] = TmpWeigth;
+      TmpElement = TmpElement1;
+      TmpWeigth = TmpWeigth1;
+    }
+  return 1;
+}
+
+// find an element in an array, if found add c to the corresponding weight in weight array, if not found insert the element and set the weight to c
+//
+// element = element to find
+// array = array where to search 
+// weight = weight array
+// nbrValue = number of values in array
+// c = weight to add
+// return value = number of inserted value
+
+template <class ClassName>
+int SearchInArrayAndSetWeight(ClassName element, ClassName*& array, double*& weigth, unsigned long nbrValue, double c)
+{
+  int StartIndex = 0;
+  int EndIndex = nbrValue;
+  int MidIndex;
+   
+  while((EndIndex - StartIndex) > 1)
+    {
+       
+      MidIndex = (StartIndex + EndIndex) >> 1;
+       
+      if(array[MidIndex] == element)
+        {
+	  weigth[MidIndex] += c;
+	  return 0;
+        }
+       
+      if(array[MidIndex] > element)
+	EndIndex = MidIndex;
+      else
+	StartIndex = MidIndex;
+    }
+   
+  if(array[StartIndex] == element)
+    {
+      weigth[StartIndex] += c;
+      return 0;
+    }
+   
+  nbrValue += 2;
+  ClassName TmpElement;
+  ClassName TmpElement1;
+  long TmpWeigth;
+  long TmpWeigth1;
+   
+  if(array[StartIndex]<element)
+    StartIndex++;
+   
+  TmpElement = array[StartIndex];
+  TmpWeigth = weigth[StartIndex];
+  array[StartIndex] = element;
+  weigth[StartIndex] = c;
+  for (unsigned int i = StartIndex + 1; i < nbrValue; ++i)
+    {
+      TmpElement1 = array[i];
+      TmpWeigth1 = weigth[i];
+      array[i] = TmpElement;
+      weigth[i] = TmpWeigth;
+      TmpElement = TmpElement1;
+      TmpWeigth = TmpWeigth1;
+    }
+  return 1;
+}
+
 #endif

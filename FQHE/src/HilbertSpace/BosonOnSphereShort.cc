@@ -1596,3 +1596,152 @@ int BosonOnSphereShort::GeneratePairs(unsigned long* Monomial, long* weigthVecto
     }
   return count;
 }
+
+
+// symmetrized a product of two uncoupled states 
+//
+// outputVector = reference on the vector which will contain the symmetrozed state
+// leftVector = reference on the vector associated to the first color
+// rightVector = reference on the vector associated to the second color
+// leftSpace = pointer to the Hilbert space of the first color
+// rightSpace = pointer to the Hilbert space of the second color
+// unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+// return value = symmetrized state
+
+RealVector BosonOnSphereShort::SymmetrizeU1U1State (RealVector& leftVector, RealVector& rightVector, 
+						    BosonOnSphereShort* leftSpace, BosonOnSphereShort* rightSpace, bool unnormalizedBasisFlag)
+{
+  RealVector SymmetrizedVector (this->LargeHilbertSpaceDimension);
+  FactorialCoefficient Factorial1;
+  FactorialCoefficient Factorial2;
+  if (unnormalizedBasisFlag == true)
+    {
+      for (long i = 0l; i < leftSpace->LargeHilbertSpaceDimension; ++i)
+	{
+	  this->FermionToBoson(leftSpace->FermionBasis->StateDescription[i], leftSpace->FermionBasis->StateLzMax[i], 
+			       leftSpace->TemporaryState, leftSpace->TemporaryStateLzMax);
+	  for (int k = leftSpace->TemporaryStateLzMax + 1;  k <= leftSpace->LzMax; ++k)
+	    leftSpace->TemporaryState[k] = 0;
+	  double TmpCoefficient = leftVector[i];
+	  Factorial1.SetToOne();
+	  Factorial1.Power2Divide(leftSpace->NbrBosons);
+	  for (int k = 0; k <= leftSpace->TemporaryStateLzMax; ++k)
+	    if (leftSpace->TemporaryState[k] > 1)
+	      Factorial1.FactorialDivide(leftSpace->TemporaryState[k]);
+	  
+	  for (long j = 0l; j < rightSpace->LargeHilbertSpaceDimension; ++j)
+	    {
+	      this->FermionToBoson(rightSpace->FermionBasis->StateDescription[j], rightSpace->FermionBasis->StateLzMax[j], 
+				   rightSpace->TemporaryState, rightSpace->TemporaryStateLzMax);
+	      int k = 0;
+	      for (; k <= rightSpace->TemporaryStateLzMax; ++k)
+		this->TemporaryState[k] = leftSpace->TemporaryState[k] + rightSpace->TemporaryState[k];
+	      this->TemporaryStateLzMax = rightSpace->TemporaryStateLzMax;
+	      if (leftSpace->TemporaryStateLzMax > rightSpace->TemporaryStateLzMax)
+		{
+		  for (; k <= leftSpace->TemporaryStateLzMax; ++k)
+		    this->TemporaryState[k] = leftSpace->TemporaryState[k];
+		  this->TemporaryStateLzMax = leftSpace->TemporaryStateLzMax;
+		}
+	      int TmpPos = this->FermionBasis->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax), this->TemporaryStateLzMax + this->NbrBosons - 1);
+	      if (TmpPos < this->HilbertSpaceDimension)
+		{
+		  Factorial2 = Factorial1;
+		  for (k = 0; k <= rightSpace->TemporaryStateLzMax; ++k)
+		    if (rightSpace->TemporaryState[k] > 1)
+		      Factorial2.FactorialDivide(rightSpace->TemporaryState[k]);
+		  for (k = 0; k <= this->TemporaryStateLzMax; ++k)
+		    if (this->TemporaryState[k] > 1)
+		      Factorial2.FactorialMultiply(this->TemporaryState[k]);	      
+		  SymmetrizedVector[TmpPos] += Factorial2.GetNumericalValue() * TmpCoefficient * rightVector[j];
+		}
+	    }
+	}
+    }
+  else
+    {
+      for (long i = 0l; i < leftSpace->LargeHilbertSpaceDimension; ++i)
+	{
+	  this->FermionToBoson(leftSpace->FermionBasis->StateDescription[i], leftSpace->FermionBasis->StateLzMax[i], 
+			       leftSpace->TemporaryState, leftSpace->TemporaryStateLzMax);
+	  for (int k = leftSpace->TemporaryStateLzMax + 1;  k <= leftSpace->LzMax; ++k)
+	    leftSpace->TemporaryState[k] = 0;
+	  double TmpCoefficient = leftVector[i];
+	  Factorial1.SetToOne();
+	  Factorial1.Power2Divide(this->NbrBosons);
+	  for (int k = 0; k <= leftSpace->TemporaryStateLzMax; ++k)
+	    if (leftSpace->TemporaryState[k] > 1)
+	      Factorial1.FactorialDivide(leftSpace->TemporaryState[k]);
+	  
+	  for (long j = 0l; j < rightSpace->LargeHilbertSpaceDimension; ++j)
+	    {
+	      this->FermionToBoson(rightSpace->FermionBasis->StateDescription[j], rightSpace->FermionBasis->StateLzMax[j], 
+				   rightSpace->TemporaryState, rightSpace->TemporaryStateLzMax);
+	      int k = 0;
+	      for (; k <= rightSpace->TemporaryStateLzMax; ++k)
+		this->TemporaryState[k] = leftSpace->TemporaryState[k] + rightSpace->TemporaryState[k];
+	      this->TemporaryStateLzMax = rightSpace->TemporaryStateLzMax;
+	      if (leftSpace->TemporaryStateLzMax > rightSpace->TemporaryStateLzMax)
+		{
+		  for (; k <= leftSpace->TemporaryStateLzMax; ++k)
+		    this->TemporaryState[k] = leftSpace->TemporaryState[k];
+		  this->TemporaryStateLzMax = leftSpace->TemporaryStateLzMax;
+		}
+	      int TmpPos = this->FermionBasis->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax), this->TemporaryStateLzMax + this->NbrBosons - 1);
+	      if (TmpPos < this->HilbertSpaceDimension)
+		{
+		  Factorial2 = Factorial1;
+		  for (k = 0; k <= rightSpace->TemporaryStateLzMax; ++k)
+		    if (rightSpace->TemporaryState[k] > 1)
+		      Factorial2.FactorialDivide(rightSpace->TemporaryState[k]);
+		  for (k = 0; k <= this->TemporaryStateLzMax; ++k)
+		    if (this->TemporaryState[k] > 1)
+		      Factorial2.FactorialMultiply(this->TemporaryState[k]);	      
+		  SymmetrizedVector[TmpPos] += 1.0 / (sqrt(Factorial2.GetNumericalValue())) * TmpCoefficient * rightVector[j];
+		}
+	    }
+	}
+//       for (long i = 0l; i < leftSpace->LargeHilbertSpaceDimension; ++i)
+// 	{
+// 	  this->FermionToBoson(leftSpace->FermionBasis->StateDescription[i], leftSpace->FermionBasis->StateLzMax[i], 
+// 			       leftSpace->TemporaryState, leftSpace->TemporaryStateLzMax);
+// 	  for (int k = leftSpace->TemporaryStateLzMax + 1;  k <= leftSpace->LzMax; ++k)
+// 	    leftSpace->TemporaryState[k] = 0;
+// 	  double TmpCoefficient = leftVector[i];
+// 	  Factorial1.SetToOne();
+// 	  Factorial1.Power2Multiply(leftSpace->NbrBosons);
+// 	  for (int k = 0; k <= leftSpace->TemporaryStateLzMax; ++k)
+// 	    if (leftSpace->TemporaryState[k] > 1)
+// 	      Factorial1.FactorialMultiply(leftSpace->TemporaryState[k]);
+	  
+// 	  for (long j = 0l; j < rightSpace->LargeHilbertSpaceDimension; ++j)
+// 	    {
+// 	      this->FermionToBoson(rightSpace->FermionBasis->StateDescription[j], rightSpace->FermionBasis->StateLzMax[j], 
+// 				   rightSpace->TemporaryState, rightSpace->TemporaryStateLzMax);
+// 	      int k = 0;
+// 	      for (; k <= rightSpace->TemporaryStateLzMax; ++k)
+// 		this->TemporaryState[k] = leftSpace->TemporaryState[k] + rightSpace->TemporaryState[k];
+// 	      this->TemporaryStateLzMax = rightSpace->TemporaryStateLzMax;
+// 	      if (leftSpace->TemporaryStateLzMax > rightSpace->TemporaryStateLzMax)
+// 		{
+// 		  for (; k <= leftSpace->TemporaryStateLzMax; ++k)
+// 		    this->TemporaryState[k] = leftSpace->TemporaryState[k];
+// 		  this->TemporaryStateLzMax = leftSpace->TemporaryStateLzMax;
+// 		}
+// 	      int TmpPos = this->FermionBasis->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax), this->TemporaryStateLzMax + this->NbrBosons - 1);
+// 	      if (TmpPos < this->HilbertSpaceDimension)
+// 		{
+// 		  Factorial2 = Factorial1;
+// 		  for (k = 0; k <= rightSpace->TemporaryStateLzMax; ++k)
+// 		    if (rightSpace->TemporaryState[k] > 1)
+// 		      Factorial2.FactorialMultiply(rightSpace->TemporaryState[k]);
+// 		  for (k = 0; k <= this->TemporaryStateLzMax; ++k)
+// 		    if (this->TemporaryState[k] > 1)
+// 		      Factorial2.FactorialDivide(this->TemporaryState[k]);	      
+// 		  SymmetrizedVector[TmpPos] += sqrt(Factorial2.GetNumericalValue()) * TmpCoefficient * rightVector[j];
+// 		}
+// 	    }
+// 	}
+    }
+  return SymmetrizedVector;
+}

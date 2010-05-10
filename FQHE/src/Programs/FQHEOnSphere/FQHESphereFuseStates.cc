@@ -56,7 +56,7 @@ int main(int argc, char** argv)
       cout << "see man page for option syntax or type FQHESphereFuseStates -h" << endl;
       return -1;
     }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
@@ -68,7 +68,7 @@ int main(int argc, char** argv)
   int Padding = Manager.GetInteger("padding");
   bool HaldaneBasisFlag = Manager.GetBoolean("haldane");
   char* OutputTxtFileName = Manager.GetString("txt-output");
-  bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
+  bool SymmetrizedBasis = Manager.GetBoolean("symmetrized-basis");
   MultiColumnASCIIFile InputVectors;
   if (InputVectors.Parse(Manager.GetString("input-states")) == false)
     {

@@ -7,4 +7,5 @@ QHEParticleWaveFunctionOperation.cc \
 FQHEDiskQuasiholePropagatorOperation.cc \
 FQHESphereJackGeneratorOperation.cc \
 FQHESphereJastrowMultiplicationOperation.cc \
-FQHESphereJastrowDivisionOperation.cc
+FQHESphereJastrowDivisionOperation.cc \
+FQHESphereMonomialsTimesSlaterProjectionOperation.cc
