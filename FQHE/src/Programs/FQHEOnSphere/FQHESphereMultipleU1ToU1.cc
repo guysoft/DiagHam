@@ -220,7 +220,8 @@ int main(int argc, char** argv)
     {
       TargetSpace = new BosonOnSphereShort(NbrParticles1 + NbrParticles2, TotalLz1 + TotalLz2, NbrFluxQuanta2);	       
     }
-  
+
+
   RealVector OutputState = TargetSpace->SymmetrizeU1U1State(State1, State2, Space1, Space2, Manager.GetBoolean("unnormalized-basis"));
   if (OutputState.WriteVector(OutputFileName) == false)
     {
