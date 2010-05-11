@@ -1490,13 +1490,18 @@ unsigned int FermionOnSphereTwoLandauLevels::MonomialsTimesSlaterProjection(unsi
   unsigned long TmpState = 0;
   bool Bool = true;
   double Coef = 1.0;
-  double InverseLzMaxUp = 1.0 / ((double)this->LzMaxUp);
-  double InverseFinalLzMaxUp = 1.0 / ((double) (2+finalSpace->LzMax));
+  long TmpLzMaxUp = this->LzMaxUp;
+  long TmpFinalLzMaxUp = 2l + finalSpace->LzMax;
+  double InverseFactor = 1.0 / (((double) TmpLzMaxUp) * ((double) TmpFinalLzMaxUp));
   for (int i = 0; i < this->NbrFermions ; i++)
     State[i] = slater[i] + monomial[i];
-  for(int k = 0 ; k < nbrVariable; k++)
+  for(int k = 0 ; (k < nbrVariable) && (Coef != 0.0); k++)
     {
-      Coef *= -(((double)slater[variable[k]]*InverseLzMaxUp)-((double)State[variable[k]]*InverseFinalLzMaxUp));
+      long Numerator = -(slater[variable[k]] * TmpFinalLzMaxUp) + (State[variable[k]] * TmpLzMaxUp);
+      if (Numerator == 0l)
+	Coef = 0.0;
+      else
+	Coef *= ((double) Numerator) * InverseFactor;
     }
   
   unsigned long Mask;
@@ -1508,17 +1513,17 @@ unsigned int FermionOnSphereTwoLandauLevels::MonomialsTimesSlaterProjection(unsi
 	  Mask=(1ul << (State[i]-1));
 	  if ( (TmpState & Mask) != 0ul)
 	    Bool = false;
-	  unsigned long TmpState = TmpState & (Mask - 1ul);
+	  unsigned long TmpState2 = TmpState & (Mask - 1ul);
 #ifdef _64_BITS__
-	  TmpState ^= TmpState >> 32;
+	  TmpState2 ^= TmpState2 >> 32;
 #endif
-	  TmpState ^= TmpState >> 16;
-	  TmpState ^= TmpState >> 8;
-	  TmpState ^= TmpState >> 4;
-	  TmpState ^= TmpState >> 2;
-	  TmpState ^= TmpState >> 1;
-	  Sign ^= TmpState;
-	  TmpState|=Mask;
+	  TmpState2 ^= TmpState2 >> 16;
+	  TmpState2 ^= TmpState2 >> 8;
+	  TmpState2 ^= TmpState2 >> 4;
+	  TmpState2 ^= TmpState2 >> 2;
+	  TmpState2 ^= TmpState2 >> 1;
+	  Sign ^= TmpState2;
+	  TmpState |= Mask;
 	}
       if(Bool)
 	{
@@ -1533,11 +1538,15 @@ unsigned int FermionOnSphereTwoLandauLevels::MonomialsTimesSlaterProjection(unsi
 	{
 	  State[i] = slater[i] + monomial[i];
 	}
-      for(int k = 0; k < nbrVariable; k++)
+      for(int k = 0; (k < nbrVariable) && (Coef != 0.0); k++)
 	{
-	  Coef *= -(((double)slater[variable[k]]*InverseLzMaxUp)-((double)State[variable[k]]*InverseFinalLzMaxUp));
+	  long Numerator = -(slater[variable[k]] * TmpFinalLzMaxUp) + (State[variable[k]] * TmpLzMaxUp);
+	  if (Numerator == 0l)
+	    Coef = 0.0;
+	  else
+	    Coef *= ((double) Numerator) * InverseFactor;
 	}
-      if( Coef != 0 )
+      if (Coef != 0.0)
 	{
 	  Bool = true;
 	  TmpState = 0ul;
@@ -1547,16 +1556,16 @@ unsigned int FermionOnSphereTwoLandauLevels::MonomialsTimesSlaterProjection(unsi
 	      Mask = (1ul << (State[i] - 1));
 	      if((TmpState&Mask) != 0)
 		Bool=false;
-	      unsigned long TmpState = TmpState & (Mask - 1ul);
+	      unsigned long TmpState2 = TmpState & (Mask - 1ul);
 #ifdef  __64_BITS__
-	      TmpState ^= TmpState >> 32;
+	      TmpState2 ^= TmpState2 >> 32;
 #endif	
-	      TmpState ^= TmpState >> 16;
-	      TmpState ^= TmpState >> 8;
-	      TmpState ^= TmpState >> 4;
-	      TmpState ^= TmpState >> 2;
-	      TmpState ^= TmpState >> 1;
-	      Sign ^= TmpState;
+	      TmpState2 ^= TmpState2 >> 16;
+	      TmpState2 ^= TmpState2 >> 8;
+	      TmpState2 ^= TmpState2 >> 4;
+	      TmpState2 ^= TmpState2 >> 2;
+	      TmpState2 ^= TmpState2 >> 1;
+	      Sign ^= TmpState2;
 	      TmpState |= Mask;
 	    }
 	  if(Bool)

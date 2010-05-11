@@ -424,7 +424,7 @@ unsigned int FermionOnSphereThreeLandauLevels::MonomialsTimesSlaterProjection(un
   double C = 1.0;
   long PowerIn;
   long PowerOut;
-  long Numerateur;
+  long Numerator;
   long AlphaIn = this->LzMax * (this->LzMax-1);
   long AlphaOut = (finalSpace->LzMax+4) * (finalSpace->LzMax+3);
   for (int i = 0; i < this->NbrFermions ; i++)
@@ -435,20 +435,20 @@ unsigned int FermionOnSphereThreeLandauLevels::MonomialsTimesSlaterProjection(un
       PowerOut = (long) State[variable[k]>>1];
       if((variable[k] & 0x1ul) == 0ul)
 	{
-	  Numerateur=(PowerIn-0x1ul)*(0x2ul+finalSpace->LzMax)-(PowerOut-0x1ul)*(this->LzMax-0x2ul);
-	  if(Numerateur == 0x0l)
+	  Numerator=(PowerIn-0x1ul)*(0x2ul+finalSpace->LzMax)-(PowerOut-0x1ul)*(this->LzMax-0x2ul);
+	  if(Numerator == 0x0l)
 	    C = 0.0;
 	  else
-	    C *= ((double)Numerateur / (double)((this->LzMax-0x2ul)*(0x2ul+finalSpace->LzMax)));
+	    C *= ((double)Numerator / (double)((this->LzMax-0x2ul)*(0x2ul+finalSpace->LzMax)));
 	}
       else
 	{
-	  Numerateur= ((AlphaOut*PowerIn*(PowerIn-0x1ul)-AlphaIn*PowerOut*(PowerOut-0x1ul))*(0x2ul+finalSpace->LzMax)-
+	  Numerator= ((AlphaOut*PowerIn*(PowerIn-0x1ul)-AlphaIn*PowerOut*(PowerOut-0x1ul))*(0x2ul+finalSpace->LzMax)-
 		       ((this->LzMax-1)*(2*PowerIn-this->LzMax)*AlphaOut-(finalSpace->LzMax+3)*(2*PowerOut-(finalSpace->LzMax+0x4ul))*AlphaIn)*(PowerOut-0x1ul));
-	  if(Numerateur == 0x0l)
+	  if(Numerator == 0x0l)
 	    C = 0.0;
 	  else
-	    C*=((double)Numerateur/(double)(AlphaOut*(0x2ul+finalSpace->LzMax)));
+	    C*=((double)Numerator/(double)(AlphaOut*(0x2ul+finalSpace->LzMax)));
 	}
     }
   unsigned long Mask;
@@ -460,16 +460,16 @@ unsigned int FermionOnSphereThreeLandauLevels::MonomialsTimesSlaterProjection(un
 	  Mask = (1ul << (State[i]-0x2ul));
 	  if ( (TmpState&Mask) != 0ul)
 	    Bool = false;
-	  unsigned long TmpState = TmpState&(Mask-0x1ul);
+	  unsigned long TmpState2 = TmpState&(Mask-0x1ul);
 	  #ifdef _64_BITS__
-	  TmpState ^= TmpState >> 32;
+	  TmpState2 ^= TmpState2 >> 32;
 	  #endif
-	  TmpState ^= TmpState >> 16;
-	  TmpState ^= TmpState >> 8;
-	  TmpState ^= TmpState >> 4;
-	  TmpState ^= TmpState >> 2;
-	  TmpState ^= TmpState >> 1;
-	  Sign ^= TmpState;
+	  TmpState2 ^= TmpState2 >> 16;
+	  TmpState2 ^= TmpState2 >> 8;
+	  TmpState2 ^= TmpState2 >> 4;
+	  TmpState2 ^= TmpState2 >> 2;
+	  TmpState2 ^= TmpState2 >> 1;
+	  Sign ^= TmpState2;
 	  TmpState|=Mask;
 	}
       if(Bool)
@@ -491,20 +491,20 @@ unsigned int FermionOnSphereThreeLandauLevels::MonomialsTimesSlaterProjection(un
 	  PowerOut = (long) State[variable[k]>>1];
 	  if((variable[k] & 0x1ul) == 0ul)
 	    {
-	      Numerateur = (PowerIn-0x1ul)*(0x2ul+finalSpace->LzMax) - (PowerOut-0x1ul)*(this->LzMax-0x2ul);
-	      if(Numerateur == 0x0l)
+	      Numerator = (PowerIn-0x1ul)*(0x2ul+finalSpace->LzMax) - (PowerOut-0x1ul)*(this->LzMax-0x2ul);
+	      if(Numerator == 0x0l)
 		C=0.0;
 	      else
-		C *= ((double)Numerateur/(double)((this->LzMax-0x2ul)*(0x2ul+finalSpace->LzMax)));
+		C *= ((double)Numerator/(double)((this->LzMax-0x2ul)*(0x2ul+finalSpace->LzMax)));
 	    }
 	  else
 	    {
-	      Numerateur= ((AlphaOut*PowerIn*(PowerIn-0x1ul)-AlphaIn*PowerOut*(PowerOut-0x1ul))*(0x2ul+finalSpace->LzMax) - 
+	      Numerator= ((AlphaOut*PowerIn*(PowerIn-0x1ul)-AlphaIn*PowerOut*(PowerOut-0x1ul))*(0x2ul+finalSpace->LzMax) - 
 			   ((this->LzMax-1)*(2*PowerIn-this->LzMax)*AlphaOut-(finalSpace->LzMax+3)*(2*PowerOut-(finalSpace->LzMax+0x4ul))*AlphaIn)*(PowerOut-0x1ul));
-	      if(Numerateur==0x0l)
+	      if(Numerator==0x0l)
 		C = 0.0;
 	      else
-		C *= ((double)Numerateur / (double)(AlphaOut*(2+finalSpace->LzMax)));
+		C *= ((double)Numerator / (double)(AlphaOut*(2+finalSpace->LzMax)));
 	    }
 	}
       if (C != 0.0)
@@ -517,16 +517,16 @@ unsigned int FermionOnSphereThreeLandauLevels::MonomialsTimesSlaterProjection(un
 	      Mask = (1ul << (State[i]-0x2ul));
 	      if((TmpState&Mask) != 0)
 		Bool=false;
-	      unsigned long TmpState=TmpState&(Mask-0x1ul);
+	      unsigned long TmpState2 = TmpState&(Mask-0x1ul);
 #ifdef  __64_BITS__
-	      TmpState ^= TmpState >> 32;
+	      TmpState2 ^= TmpState2 >> 32;
 #endif
-	      TmpState ^= TmpState >> 16;
-	      TmpState ^= TmpState >> 8;
-	      TmpState ^= TmpState >> 4;
-	      TmpState ^= TmpState >> 2;
-	      TmpState ^= TmpState >> 1;
-	      Sign ^= TmpState;
+	      TmpState2 ^= TmpState2 >> 16;
+	      TmpState2 ^= TmpState2 >> 8;
+	      TmpState2 ^= TmpState2 >> 4;
+	      TmpState2 ^= TmpState2 >> 2;
+	      TmpState2 ^= TmpState2 >> 1;
+	      Sign ^= TmpState2;
 	      TmpState|=Mask;
 	    }
 	  if(Bool)

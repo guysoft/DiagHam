@@ -1106,6 +1106,13 @@ void SortArrayDownOrdering(ClassName* array,unsigned long* ulArray, long nbrValu
 template <class ClassName>
 int SearchInArrayAndSetWeight(ClassName element, ClassName*& array, long*& weigth, unsigned long nbrValue, long c)
 {
+  if (nbrValue == 0)
+    {
+      array[0] = element;
+      weigth[0] = c;
+      return 1;
+    }
+
   int StartIndex = 0;
   int EndIndex = nbrValue;
   int MidIndex;
@@ -1133,7 +1140,7 @@ int SearchInArrayAndSetWeight(ClassName element, ClassName*& array, long*& weigt
       return 0;
     }
    
-  nbrValue += 2;
+  ++nbrValue;
   ClassName TmpElement;
   ClassName TmpElement1;
   long TmpWeigth;
@@ -1170,6 +1177,13 @@ int SearchInArrayAndSetWeight(ClassName element, ClassName*& array, long*& weigt
 template <class ClassName>
 int SearchInArrayAndSetWeight(ClassName element, ClassName*& array, double*& weigth, unsigned long nbrValue, double c)
 {
+  if (nbrValue == 0)
+    {
+      array[0] = element;
+      weigth[0] = c;
+      return 1;
+    }
+
   int StartIndex = 0;
   int EndIndex = nbrValue;
   int MidIndex;
@@ -1197,11 +1211,11 @@ int SearchInArrayAndSetWeight(ClassName element, ClassName*& array, double*& wei
       return 0;
     }
    
-  nbrValue += 2;
+  ++nbrValue;
   ClassName TmpElement;
   ClassName TmpElement1;
-  long TmpWeigth;
-  long TmpWeigth1;
+  double TmpWeigth;
+  double TmpWeigth1;
    
   if(array[StartIndex]<element)
     StartIndex++;
