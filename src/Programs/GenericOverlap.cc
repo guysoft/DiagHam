@@ -35,6 +35,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "conjugate", "Conjugate the second (complex) number");
   (*SystemGroup) += new BooleanOption  ('\n', "discard-sign", "compute sum_i |v1_i * v2_i| instead of sum_i v1_i * v2_i");
   (*SystemGroup) += new BooleanOption  ('x', "no-cross", "calculate only overlap of 1st vector with all others");
+  (*SystemGroup) += new BooleanOption  ('\n', "sum", "sum all computed overlaps");
   (*SystemGroup) += new BooleanOption  ('\n', "no-square", "calculate only the scalar products");
   (*SystemGroup) += new BooleanOption  ('n', "normalize", "normalize vectors before calculating any overlaps");
   (*SystemGroup) += new BooleanOption  ('d', "dimension", "show vector dimension");
@@ -74,6 +75,7 @@ int main(int argc, char** argv)
   int MaxVectors=(Manager.GetBoolean("no-cross")?1:NbrVectors);
 
   bool HaveComplex=Manager.GetBoolean("complex");
+  double TotalOverlap = 0.0;
   
   if (HaveComplex)
     {      
@@ -116,6 +118,7 @@ int main(int argc, char** argv)
 		else
 		  for (int i=0; i<State1.GetVectorDimension(); ++i)
 		    sp+= Conj(State1[i])*State2[i];
+	      TotalOverlap += SqrNorm(sp);
 	      if (Scalar==false)
 		{
 		  if (QuietFlag == false)
@@ -169,7 +172,7 @@ int main(int argc, char** argv)
 		  sp+=fabs(State1[i]*State2[i]);
 	      else
 		sp = State1 *State2 ;
-	      
+	      TotalOverlap += SqrNorm(sp);
 	      if (Scalar==false)
 		{
 		  if (QuietFlag == false)
@@ -188,4 +191,12 @@ int main(int argc, char** argv)
 	    }
 	}
     }
+  if (Manager.GetBoolean("sum") == true)
+    {
+      if (QuietFlag == false)
+	cout << "Total overlap = " << TotalOverlap << endl;
+      else
+	cout << TotalOverlap << endl;
+    }
+  return 0;
 }

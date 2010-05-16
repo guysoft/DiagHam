@@ -147,7 +147,7 @@ class FQHESphereMonomialsTimesSlaterProjectionOperation : public AbstractArchite
   //
   // architecture = pointer to the architecture
   // return value = true if no error occurs
-  //bool ArchitectureDependentApplyOperation(SimpleMPIArchitecture* architecture);
+  bool ArchitectureDependentApplyOperation(SimpleMPIArchitecture* architecture);
   
 };
 

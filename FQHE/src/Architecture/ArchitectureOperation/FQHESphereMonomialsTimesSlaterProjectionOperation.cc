@@ -185,8 +185,6 @@ bool FQHESphereMonomialsTimesSlaterProjectionOperation::ArchitectureDependentApp
   int Step = (int) this->NbrComponent / (this->NbrStage*architecture->GetNbrThreads());
   int TmpFirstComponent = this->FirstComponent;
   int ReducedNbrThreads = architecture->GetNbrThreads() - 1;
-  cout <<"Nombre Proceseurs :  "<< architecture->GetNbrThreads()<<endl;
-  cout <<"this->NbrComponent = "<<this->NbrComponent<<endl;
   char* OutputFileName = "temporary_projection_vector.vec";
   char* LogFile = "projection.dat";
   FQHESphereMonomialsTimesSlaterProjectionOperation** TmpOperations = new FQHESphereMonomialsTimesSlaterProjectionOperation* [architecture->GetNbrThreads()];
@@ -213,6 +211,8 @@ bool FQHESphereMonomialsTimesSlaterProjectionOperation::ArchitectureDependentApp
 	  TmpOperations[i]->OutputVector->ClearVector();
 	}
       architecture->SendJobs();
+      cout << TmpFirstComponent << " /  " << this->NbrComponent << " (" << ((TmpFirstComponent * 100) / this->NbrComponent) << "%)                   \r";
+      cout.flush();
       for (int i = 1; i < architecture->GetNbrThreads(); ++i)
 	{
 	  (*(this->OutputVector)) += (*(TmpOperations[i]->OutputVector));
@@ -252,61 +252,22 @@ bool FQHESphereMonomialsTimesSlaterProjectionOperation::ArchitectureDependentApp
 // architecture = pointer to the architecture
 // return value = true if no error occurs
 
-/*bool SchurDecompositionOperation::ArchitectureDependentApplyOperation(SimpleMPIArchitecture* architecture)
+bool FQHESphereMonomialsTimesSlaterProjectionOperation::ArchitectureDependentApplyOperation(SimpleMPIArchitecture* architecture)
 {
 #ifdef __MPI__
    if (architecture->IsMasterNode())
      {
-       if (architecture->RequestOperation(this->OperationType) == false)
- 	{
- 	  return false;
- 	}
-       architecture->ScatterVector(this->SourceVector);
-       architecture->BroadcastVectorType(this->DestinationVector);  
+       this->OutputVector->ClearVector();
+       int* TmpRange[2];
      }
-   long TmpMinimumIndex = 0;
-   long TmpMaximumIndex = 0;
-   architecture->GetTypicalRange(TmpMinimumIndex, TmpMaximumIndex);
-   this->FirstComponent = (int) TmpMinimumIndex;  
-   this->NbrComponent = (int) (TmpMaximumIndex - TmpMinimumIndex + 1l);
-   timeval TotalStartingTime;
-   if (architecture->VerboseMode())
-     gettimeofday (&TotalStartingTime, 0);
-   if (architecture->GetLocalArchitecture()->GetArchitectureID() == AbstractArchitecture::SMP)
-     this->ArchitectureDependentApplyOperation((SMPArchitecture*) architecture->GetLocalArchitecture());
    else
-     this->RawApplyOperation();
-   if (architecture->VerboseMode())
-	 {
-       timeval TotalEndingTime;
-       gettimeofday (&TotalEndingTime, 0);
-       double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 
-		     (((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));		      
-       char TmpString[256];
-       sprintf (TmpString, "SchurDecompositionOperation core operation done in %.3f seconds", Dt);
-       architecture->AddToLog(TmpString);
-     }
-   if ((architecture->IsMasterNode()) && (architecture->VerboseMode()))
-     gettimeofday (&TotalStartingTime, 0);
-   architecture->SumVector(*(this->DestinationVector));
-   if ((architecture->IsMasterNode()) && (architecture->VerboseMode()))
      {
-       timeval TotalEndingTime;
-       gettimeofday (&TotalEndingTime, 0);
-       double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 
-		     (((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));		      
-       char TmpString[256];
-       sprintf (TmpString, "SchurDecompositionOperation sum operation done in %.3f seconds", Dt);
-       architecture->AddToLog(TmpString, true);
+       this->OutputVector->ClearVector();
+       int* TmpRange[2];
+       
      }
-   if (architecture->IsMasterNode() == false)
-     {
-       delete this->DestinationVector;
-       delete this->SourceVector;
-     }
-
   return true;
 #else
   return this->RawApplyOperation();
 #endif
-}*/
+}
