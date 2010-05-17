@@ -91,4 +91,5 @@ BosonOnSphereHaldaneBasisLong.cc \
 FermionOnSphereEfficient.cc \
 FermionOnSphereFull.cc \
 BosonOnSphereFullShort.cc \
-FermionOnSphereThreeLandauLevels.cc
+FermionOnSphereThreeLandauLevels.cc \
+BosonOnSphereWithSpinAllSz.cc

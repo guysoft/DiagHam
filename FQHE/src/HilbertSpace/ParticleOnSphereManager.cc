@@ -78,6 +78,7 @@
 #include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
 
 #include "HilbertSpace/BosonOnSphereWithSpin.h"
+#include "HilbertSpace/BosonOnSphereWithSpinAllSz.h"
 
 #include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
 
@@ -172,6 +173,11 @@ void ParticleOnSphereManager::AddOptionGroup(OptionManager* manager, const char*
 	    (*SystemGroup) += new BooleanOption  ('\n', "minus-lzparity", "select the  Lz <-> -Lz symmetric sector with negative parity");
 	    (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
 	    (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
+	  }
+	else
+	  {
+	    // boson options
+	    (*SystemGroup) += new BooleanOption  ('\n', "all-sz", "use Hilbert-space with all values of sz");
 	  }
 	(*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
 	(*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the haldane or symmetrized bases)",0);
@@ -724,8 +730,16 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU2(int totalLz)
       ParticleOnSphereWithSpin* Space = 0;
       int NbrBosons = this->Options->GetInteger("nbr-particles");
       int LzMax = this->Options->GetInteger("lzmax");
-      int SzTotal = this->Options->GetInteger("total-sz");
-      Space = new BosonOnSphereWithSpin(NbrBosons, totalLz, LzMax, SzTotal);
+      if (this->Options->GetBoolean("all-sz"))
+	{
+	  unsigned long MemorySpace = ((unsigned long) this->Options->GetInteger("fast-search")) << 20;
+	  Space = new BosonOnSphereWithSpinAllSz(NbrBosons, totalLz, LzMax, MemorySpace);
+	}
+      else
+	{
+	  int SzTotal = this->Options->GetInteger("total-sz");
+	  Space = new BosonOnSphereWithSpin(NbrBosons, totalLz, LzMax, SzTotal);
+	}
       return Space;
     }
   return 0;
