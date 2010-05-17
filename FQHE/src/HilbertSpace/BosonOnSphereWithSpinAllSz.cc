@@ -80,7 +80,9 @@ BosonOnSphereWithSpinAllSz::BosonOnSphereWithSpinAllSz (int nbrBosons, int total
     {
       TmpLzMax = this->ShiftedTotalLz;	  
     }
-  int TmpDim = this->GenerateStates(this->NbrBosons, LzMax, (LzMax<<1)+1, this->ShiftedTotalLz, 0);
+  int StartLzMax = (LzMax<<1)+1;
+  cout << "StartLzMax="<<StartLzMax<<endl;
+  int TmpDim = this->GenerateStates(this->NbrBosons, LzMax, StartLzMax, this->ShiftedTotalLz, 0);
   if (TmpDim!=this->HilbertSpaceDimension)
     cout << "Count inconsistent: "<<TmpDim<<" vs " << this->HilbertSpaceDimension<<endl;
   this->GenerateLookUpTable(memory);
@@ -94,21 +96,13 @@ BosonOnSphereWithSpinAllSz::BosonOnSphereWithSpinAllSz (int nbrBosons, int total
 //     }
 
 #ifdef __DEBUG__
-  int UsedMemory = 0;
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-    UsedMemory += (this->StateLzMax[i] + 1) * sizeof(int) + sizeof(int*);
-  UsedMemory += (this->TotalLz + 1) * sizeof(int);
-  UsedMemory += this->HilbertSpaceDimension * sizeof(int);
-  UsedMemory += ((this->TotalLz + 1) * this->IncNbrBosons) * sizeof(int);
-  UsedMemory += this->HilbertSpaceDimension * sizeof(int);
-/*  cout << "memory requested for Hilbert space = ";
-  if (UsedMemory >= 1024)
-    if (UsedMemory >= 1048576)
-      cout << (UsedMemory >> 20) << "Mo" << endl;
-    else
-      cout << (UsedMemory >> 10) << "ko" <<  endl;
-  else
-    cout << UsedMemory << endl;*/
+  long UsedMemory = 0;
+  UsedMemory += 2*this->HilbertSpaceDimension * sizeof(unsigned long);  // StateDescriptionUp/Down
+  UsedMemory += this->HilbertSpaceDimension * sizeof(unsigned); // StateInfo
+  // 
+  UsedMemory += this->NbrTensoredElements * (sizeof(unsigned long) + 2*sizeof(unsigned) + sizeof(int));  // TensoredElements, UpSpinLookUpTable  , DownSpinLookUpTable, TensoredLzMax
+  UsedMemory += (this->TotalLz + this->NbrBosons) * (LookUpTableMemorySize+1) * sizeof(int); // LookUpTableShift, LookUpTable
+  PrintMemorySize(cout, UsedMemory);
 #endif
 }
 
@@ -137,6 +131,10 @@ BosonOnSphereWithSpinAllSz::BosonOnSphereWithSpinAllSz(const BosonOnSphereWithSp
   this->TensoredElements = bosons.TensoredElements;
   this->TensoredLzMax = bosons.TensoredLzMax;
   this->NbrTensoredElements = bosons.NbrTensoredElements;
+  this->MaximumLookUpShift = bosons.MaximumLookUpShift;
+  this->LookUpTableMemorySize = bosons.LookUpTableMemorySize;
+  this->LookUpTableShift = bosons.LookUpTableShift;
+  this->LookUpTable = bosons.LookUpTable;
   this->Flag = bosons.Flag;
   this->KeptCoordinates = bosons.KeptCoordinates;
   this->Minors = bosons.Minors;
@@ -166,13 +164,19 @@ BosonOnSphereWithSpinAllSz::~BosonOnSphereWithSpinAllSz ()
       delete[] this->TensoredLzMax;
       delete[] this->UpSpinLookUpTable;
       delete[] this->DownSpinLookUpTable;
-      
       if (this->StateLzMaxUp!=NULL)
 	delete[] this->StateLzMaxUp;
       if (this->StateLzMaxDown!=NULL)
 	delete[] this->StateLzMaxDown;
       if (this->StateNbrUp!=NULL)
 	delete[] this->StateNbrUp;
+      if (this->LookUpTableShift != 0)
+	{
+	  delete[] this->LookUpTableShift;
+	  for (int i = 0; i < this->NbrLzValue; ++i)
+	    delete[] this->LookUpTable[i];
+	  delete[] this->LookUpTable;
+	}
       if (this->Minors != 0)
 	{
 	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
@@ -208,7 +212,10 @@ BosonOnSphereWithSpinAllSz& BosonOnSphereWithSpinAllSz::operator = (const BosonO
       delete[] this->TensoredLzMax;
       delete[] this->UpSpinLookUpTable;
       delete[] this->DownSpinLookUpTable;
-
+      delete[] this->LookUpTableShift;
+      for (int i = 0; i < this->NbrLzValue; ++i)
+	delete[] this->LookUpTable[i];
+      delete[] this->LookUpTable;
       if (this->StateLzMaxUp!=NULL)
 	delete[] this->StateLzMaxUp;
       if (this->StateLzMaxDown!=NULL)
@@ -242,6 +249,10 @@ BosonOnSphereWithSpinAllSz& BosonOnSphereWithSpinAllSz::operator = (const BosonO
   this->TensoredElements = bosons.TensoredElements;
   this->TensoredLzMax = bosons.TensoredLzMax;
   this->NbrTensoredElements = bosons.NbrTensoredElements;
+  this->MaximumLookUpShift = bosons.MaximumLookUpShift;
+  this->LookUpTableMemorySize = bosons.LookUpTableMemorySize;
+  this->LookUpTableShift = bosons.LookUpTableShift;
+  this->LookUpTable = bosons.LookUpTable;
   this->Flag = bosons.Flag;
   this->KeptCoordinates = bosons.KeptCoordinates;
   this->Minors = bosons.Minors;
@@ -416,7 +427,6 @@ double BosonOnSphereWithSpinAllSz::AuAu (int index, int n1, int n2)
   int CurrentLzMaxUp, CurrentLzMaxDown;
   this->FermionToBoson(this->StateDescriptionUp[index], this->StateDescriptionDown[index], this->StateInfo[index],
 		       ProdATemporaryState, CurrentLzMaxUp, CurrentLzMaxDown, ProdATemporaryStateNbrUp);
-  PrintState(cout, index) << ", (AuAu) ProdATemporaryStateNbrUp="<<ProdATemporaryStateNbrUp<<endl;
   if ((n1 > CurrentLzMaxUp) || (n2 > CurrentLzMaxUp) || ((ProdATemporaryState[n1] >> 16) == 0)
       || ((ProdATemporaryState[n2] >> 16) == 0) || ((n1 == n2) && ((ProdATemporaryState[n1] >> 16) == 1)))
     return 0.0;
@@ -711,8 +721,8 @@ int BosonOnSphereWithSpinAllSz::FindStateIndex(unsigned* stateDescription, unsig
   unsigned long FinalStateDown;
   int LzMaxUp, LzMaxDown;
   this->BosonToFermion(FinalStateUp, FinalStateDown, LzMaxUp, LzMaxDown, stateDescription, nbrUp);
-  cout << "up: "<< hex << FinalStateUp << dec << " deduced lzmax="<<LzMaxUp<<endl;
-  cout << "down: "<< hex << FinalStateDown << dec << " deduced lzmax="<<LzMaxDown<<endl;
+  //  cout << "up: "<< hex << FinalStateUp << dec << " deduced lzmax="<<LzMaxUp<<endl;
+  //  cout << "down: "<< hex << FinalStateDown << dec << " deduced lzmax="<<LzMaxDown<<endl;
   return FindStateIndex(FinalStateUp, FinalStateDown, LzMaxUp, LzMaxDown);
 }
 
@@ -1577,6 +1587,7 @@ void BosonOnSphereWithSpinAllSz::InitializeWaveFunctionEvaluation (bool timeCohe
 }
 
 
+/*
 // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Lz sector and fixed number of particles
 // 
 // subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax to -Lzmax+subsytemSize-1)
@@ -1813,143 +1824,6 @@ RealSymmetricMatrix  BosonOnSphereWithSpinAllSz::EvaluatePartialDensityMatrix (i
       return TmpDensityMatrixZero;
     }
 }
+*/
 
-
-
-// convert a fermionic state into its bosonic counterpart
-//
-// initialState = initial fermionic state
-// initialStateLzMax = initial fermionic state maximum Lz value
-// finalState = reference on the array where the bosonic state has to be stored
-// finalStateLzMax = reference on the integer where the bosonic state maximum Lz value has to be stored
-
-/* inline */ void BosonOnSphereWithSpinAllSz::FermionToBoson(unsigned long initialStateUp, unsigned long initialStateDown, unsigned initialInfo, unsigned*& finalState, int &finalStateLzMaxUp, int &finalStateLzMaxDown, unsigned& finalStateNbrUp)
-{
-  cout << "initialStateUp =" << initialStateUp << ", initialStateDown="<<initialStateDown<<endl;
-  finalStateLzMaxUp = 0;
-  int InitialStateLzMax = initialInfo >> 20;
-  while (InitialStateLzMax >= 0)
-    {
-      unsigned long TmpState = (~initialStateUp - 1ul) ^ (~initialStateUp);
-      TmpState &= ~(TmpState >> 1);
-//      cout << hex << initialState << "  " << TmpState << dec << endl;
-#ifdef  __64_BITS__
-      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaaaaaaaaaul) != 0);
-      TmpPower |= ((TmpState & 0xccccccccccccccccul) != 0) << 1;
-      TmpPower |= ((TmpState & 0xf0f0f0f0f0f0f0f0ul) != 0) << 2;
-      TmpPower |= ((TmpState & 0xff00ff00ff00ff00ul) != 0) << 3;      
-      TmpPower |= ((TmpState & 0xffff0000ffff0000ul) != 0) << 4;      
-      TmpPower |= ((TmpState & 0xffffffff00000000ul) != 0) << 5;      
-#else
-      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaul) != 0);
-      TmpPower |= ((TmpState & 0xccccccccul) != 0) << 1;
-      TmpPower |= ((TmpState & 0xf0f0f0f0ul) != 0) << 2;
-      TmpPower |= ((TmpState & 0xff00ff00ul) != 0) << 3;      
-      TmpPower |= ((TmpState & 0xffff0000ul) != 0) << 4;      
-#endif
-//      cout << TmpPower << endl;
-      cout << "initialStateLzMaxUp="<<InitialStateLzMax<<" - setting finalState["<<finalStateLzMaxUp<<"]="<<TmpPower<<endl;
-      finalState[finalStateLzMaxUp] = TmpPower << 16;
-      ++TmpPower;
-      initialStateUp >>= TmpPower;
-      ++finalStateLzMaxUp;
-      InitialStateLzMax -= TmpPower;
-    }
-
-  cout << "FinalStateUp =";
-  for (int i=0; i<=LzMax; ++i)
-    cout << " " << (finalState[i] >> 16);
-  cout << endl;
-  
-  for (int i=finalStateLzMaxUp; i<NbrLzValue; ++i)
-    finalState[i]=0;
-  finalStateLzMaxDown = 0;
-  InitialStateLzMax = (initialInfo >> 10)&0x03ff;
-  while (InitialStateLzMax > 0)
-    {
-      unsigned long TmpState = (~initialStateDown - 1ul) ^ (~initialStateDown);
-      TmpState &= ~(TmpState >> 1);
-//      cout << hex << initialState << "  " << TmpState << dec << endl;
-#ifdef  __64_BITS__
-      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaaaaaaaaaul) != 0);
-      TmpPower |= ((TmpState & 0xccccccccccccccccul) != 0) << 1;
-      TmpPower |= ((TmpState & 0xf0f0f0f0f0f0f0f0ul) != 0) << 2;
-      TmpPower |= ((TmpState & 0xff00ff00ff00ff00ul) != 0) << 3;      
-      TmpPower |= ((TmpState & 0xffff0000ffff0000ul) != 0) << 4;      
-      TmpPower |= ((TmpState & 0xffffffff00000000ul) != 0) << 5;      
-#else
-      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaul) != 0);
-      TmpPower |= ((TmpState & 0xccccccccul) != 0) << 1;
-      TmpPower |= ((TmpState & 0xf0f0f0f0ul) != 0) << 2;
-      TmpPower |= ((TmpState & 0xff00ff00ul) != 0) << 3;      
-      TmpPower |= ((TmpState & 0xffff0000ul) != 0) << 4;      
-#endif
-//      cout << TmpPower << endl;
-      finalState[finalStateLzMaxDown] |= TmpPower;
-      ++TmpPower;
-      initialStateDown >>= TmpPower;
-      ++finalStateLzMaxDown;
-      InitialStateLzMax -= TmpPower;
-    }
-  cout << "FinalStateDown =";
-  for (int i=0; i<=LzMax; ++i)
-    cout << " " << (finalState[i]& 0xffff);
-  cout << endl;
-
-}
-
-// find state index
-//
-// stateDescription = array describing the state
-// lzmax = maximum Lz value reached by a boson in the state
-// return value = corresponding index
-/* inline */ int BosonOnSphereWithSpinAllSz::FindStateIndex(unsigned long stateDescriptionUp, unsigned long stateDescriptionDown, int lzMaxUp, int lzMaxDown)
-{
-  cout << "FindStateIndex: "<<hex<<stateDescriptionUp<<" "<<stateDescriptionDown<<" " <<dec << lzMaxUp <<" "<<lzMaxDown;
-  cout << " "<<this->FindTensoredIndex(stateDescriptionUp, lzMaxUp);
-  cout << " " <<this->FindTensoredIndex(stateDescriptionDown, lzMaxDown)<<endl;
-  int Base = this->UpSpinLookUpTable[this->FindTensoredIndex(stateDescriptionUp, lzMaxUp)];
-  int Offset = this->DownSpinLookUpTable[this->FindTensoredIndex(stateDescriptionDown, lzMaxDown)];
-  return Base+Offset;
-}
-
-// find index of a tensored configuration
-//
-// stateDescription = array describing the state
-// lzmax = maximum Lz value reached by a boson in the state
-// return value = corresponding index
-/* inline */ unsigned BosonOnSphereWithSpinAllSz::FindTensoredIndex(unsigned long elementDescription, int lzmax)
-{
-  // long PosMax = this->NbrTensoredElements-1; 
-  long PosMin = elementDescription >> this->LookUpTableShift[lzmax];
-  //long PosMin = 0;
-  long PosMax = this->LookUpTable[lzmax][PosMin];
-  PosMin = this->LookUpTable[lzmax][PosMin + 1];
-
-  cout << "Initial propositions searching "<<std::hex<<elementDescription<<std::dec<<" with lzMax="<<lzmax<<
-    " PosMax="<<PosMax<<" PosMin="<<PosMin<<endl;
-  long PosMid = (PosMin + PosMax + 1) >> 1;
-  unsigned long CurrentElement = this->TensoredElements[PosMid];
-  while ((PosMax != PosMid) && (CurrentElement != elementDescription))
-    {
-      if (CurrentElement > elementDescription)
-	{
-	  PosMin = PosMid;
-	}
-      else
-	{
-	  PosMax = PosMid;
-	} 
-      PosMid = (PosMin + PosMax + 1) >> 1;
-      CurrentElement = this->TensoredElements[PosMid];
-    }
-  if (CurrentElement == elementDescription)
-    {
-      return PosMid;
-    }
-  else
-    {
-      return PosMin;
-    }
-}
 
