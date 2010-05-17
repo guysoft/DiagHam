@@ -606,3 +606,6 @@ double FermionOnSphereWithSpinAllSz::MeanSzValue(RealVector& state)
 
   return (FinalState*state);
 }
+
+
+
