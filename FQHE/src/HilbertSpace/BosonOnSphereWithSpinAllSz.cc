@@ -347,24 +347,23 @@ int BosonOnSphereWithSpinAllSz::AddAduAdAu (int index, int m1, int m2, int n1, i
 
 int BosonOnSphereWithSpinAllSz::AduAdu (int m1, int m2, double& coefficient)
 {
-  int i = 0;
-  for (; i < this->NbrLzValue; ++i)
+  for (int i = 0; i < this->NbrLzValue; ++i)
     this->TemporaryState[i] = this->ProdATemporaryState[i];
   this->TemporaryState[m2] += 0x10000;
   coefficient = (this->TemporaryState[m2] >> 16);
   this->TemporaryState[m1] += 0x10000;
   coefficient *= (this->TemporaryState[m1] >> 16);
   coefficient = sqrt(coefficient);
-  int NewLzSzMax = this->LzMax;
-  while (this->TemporaryState[NewLzSzMax] == 0)
-    --NewLzSzMax;
-  if (this->TemporaryState[NewLzSzMax]&0xffff0000)
-    {
-      NewLzSzMax<<=1;
-      NewLzSzMax+=1;
-    }
-  else NewLzSzMax<<=1;
-  return this->FindStateIndex(this->TemporaryState, NewLzSzMax);
+//   int NewLzSzMax = this->LzMax;
+//   while (this->TemporaryState[NewLzSzMax] == 0)
+//     --NewLzSzMax;
+//   if (this->TemporaryState[NewLzSzMax]&0xffff0000)
+//     {
+//       NewLzSzMax<<=1;
+//       NewLzSzMax+=1;
+//     }
+//   else NewLzSzMax<<=1;
+  return this->FindStateIndex(this->TemporaryState, ProdATemporaryStateNbrUp + 2);
 }
 
 // apply a^+_m1_d a^+_m2_d operator to the state produced using AdAd method (without destroying it)
@@ -376,24 +375,14 @@ int BosonOnSphereWithSpinAllSz::AduAdu (int m1, int m2, double& coefficient)
 
 int BosonOnSphereWithSpinAllSz::AddAdd (int m1, int m2, double& coefficient)
 {
-  int i = 0;
-  for (; i < this->NbrLzValue; ++i)
+  for (int i = 0; i < this->NbrLzValue; ++i)
     this->TemporaryState[i] = this->ProdATemporaryState[i];
   ++this->TemporaryState[m2];
   coefficient = (this->TemporaryState[m2] & 0xffff);
   ++this->TemporaryState[m1];
   coefficient *= (this->TemporaryState[m1] & 0xffff);
   coefficient = sqrt(coefficient);
-  int NewLzSzMax = this->LzMax;
-  while (this->TemporaryState[NewLzSzMax] == 0)
-    --NewLzSzMax;  
-  if (this->TemporaryState[NewLzSzMax]&0xffff0000)
-    {
-      NewLzSzMax<<=1;
-      NewLzSzMax+=1;
-    }
-  else NewLzSzMax<<=1;
-  return this->FindStateIndex(this->TemporaryState, NewLzSzMax);
+  return this->FindStateIndex(this->TemporaryState, ProdATemporaryStateNbrUp);
 }
 
 // apply a^+_m1_u a^+_m2_d operator to the state produced using AuAd method (without destroying it)
@@ -405,24 +394,14 @@ int BosonOnSphereWithSpinAllSz::AddAdd (int m1, int m2, double& coefficient)
 
 int BosonOnSphereWithSpinAllSz::AduAdd (int m1, int m2, double& coefficient)
 {
-  int i = 0;
-  for (; i < this->NbrLzValue; ++i)
+  for (int i = 0; i < this->NbrLzValue; ++i)
     this->TemporaryState[i] = this->ProdATemporaryState[i];
   ++this->TemporaryState[m2];
   coefficient = (this->TemporaryState[m2] & 0xffff);
   this->TemporaryState[m1] += 0x10000;
   coefficient *= (this->TemporaryState[m1] >> 16);
   coefficient = sqrt(coefficient);
-  int NewLzSzMax = this->LzMax;
-  while (this->TemporaryState[NewLzSzMax] == 0)
-    --NewLzSzMax;  
-  if (this->TemporaryState[NewLzSzMax]&0xffff0000)
-    {
-      NewLzSzMax<<=1;
-      NewLzSzMax+=1;
-    }
-  else NewLzSzMax<<=1;    
-  return this->FindStateIndex(this->TemporaryState, NewLzSzMax);
+  return this->FindStateIndex(this->TemporaryState, ProdATemporaryStateNbrUp + 1);
 }
 
 // apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdu call
@@ -434,12 +413,11 @@ int BosonOnSphereWithSpinAllSz::AduAdd (int m1, int m2, double& coefficient)
 
 double BosonOnSphereWithSpinAllSz::AuAu (int index, int n1, int n2)
 {
-  unsigned Info = this->StateInfo[index];
-  int CurrentLzMax = Info>>20;
-  this->FermionToBoson(this->StateDescriptionUp[index], this->StateDescriptionDown[index], CurrentLzMax, (Info >> 10)&0x03ff,
-		       Info&0x03ff, ProdATemporaryState, ProdATemporaryStateNbrUp);
-    
-  if ((n1 > CurrentLzMax) || (n2 > CurrentLzMax) || ((ProdATemporaryState[n1] >> 16) == 0)
+  int CurrentLzMaxUp, CurrentLzMaxDown;
+  this->FermionToBoson(this->StateDescriptionUp[index], this->StateDescriptionDown[index], this->StateInfo[index],
+		       ProdATemporaryState, CurrentLzMaxUp, CurrentLzMaxDown, ProdATemporaryStateNbrUp);
+  PrintState(cout, index) << ", (AuAu) ProdATemporaryStateNbrUp="<<ProdATemporaryStateNbrUp<<endl;
+  if ((n1 > CurrentLzMaxUp) || (n2 > CurrentLzMaxUp) || ((ProdATemporaryState[n1] >> 16) == 0)
       || ((ProdATemporaryState[n2] >> 16) == 0) || ((n1 == n2) && ((ProdATemporaryState[n1] >> 16) == 1)))
     return 0.0;
   double Coefficient = (this->ProdATemporaryState[n2] >> 16);
@@ -460,12 +438,11 @@ double BosonOnSphereWithSpinAllSz::AuAu (int index, int n1, int n2)
 
 double BosonOnSphereWithSpinAllSz::AdAd (int index, int n1, int n2)
 {
-  unsigned Info = this->StateInfo[index];
-  int CurrentLzMax = (Info>>10)&0x03ff;
-  this->FermionToBoson(this->StateDescriptionUp[index], this->StateDescriptionDown[index], Info >> 20, CurrentLzMax,
-		       Info&0x03ff, ProdATemporaryState, ProdATemporaryStateNbrUp);
+  int CurrentLzMaxUp, CurrentLzMaxDown;
+  this->FermionToBoson(this->StateDescriptionUp[index], this->StateDescriptionDown[index], this->StateInfo[index],
+		       ProdATemporaryState, CurrentLzMaxUp, CurrentLzMaxDown, ProdATemporaryStateNbrUp);
 
-  if ((n1 > CurrentLzMax) || (n2 > CurrentLzMax) || ((ProdATemporaryState[n1] & 0xffff) == 0)
+  if ((n1 > CurrentLzMaxDown) || (n2 > CurrentLzMaxDown) || ((ProdATemporaryState[n1] & 0xffff) == 0)
       || ((ProdATemporaryState[n2] & 0xffff) == 0) || ((n1 == n2) && ((ProdATemporaryState[n1] & 0xffff) == 1)))
     return 0.0;
   double Coefficient = (this->ProdATemporaryState[n2] & 0xffff);
@@ -484,11 +461,9 @@ double BosonOnSphereWithSpinAllSz::AdAd (int index, int n1, int n2)
 
 double BosonOnSphereWithSpinAllSz::AuAd (int index, int n1, int n2)
 {
-  unsigned Info = this->StateInfo[index];
-  int CurrentLzMaxUp = Info>>20;
-  int CurrentLzMaxDown = (Info>>10)&0x03ff;
-  this->FermionToBoson(this->StateDescriptionUp[index], this->StateDescriptionDown[index], CurrentLzMaxUp, CurrentLzMaxDown,
-		       Info&0x03ff, ProdATemporaryState, ProdATemporaryStateNbrUp);
+  int CurrentLzMaxUp, CurrentLzMaxDown;
+  this->FermionToBoson(this->StateDescriptionUp[index], this->StateDescriptionDown[index], this->StateInfo[index],
+		       ProdATemporaryState, CurrentLzMaxUp, CurrentLzMaxDown, ProdATemporaryStateNbrUp);
 
   if ((n1 > CurrentLzMaxUp) || (n2 > CurrentLzMaxDown) || ((ProdATemporaryState[n1] >> 16) == 0)
       || ((ProdATemporaryState[n2] & 0xffff) == 0))
@@ -511,29 +486,24 @@ double BosonOnSphereWithSpinAllSz::AuAd (int index, int n1, int n2)
 
 double BosonOnSphereWithSpinAllSz::ProdA (int index, int* n, int* spinIndices, int nbrIndices)
 {
-  unsigned Info = this->StateInfo[index];
-  int CurrentLzMaxUp = Info>>20;
-  int CurrentLzMaxDown = (Info>>10)&0x03ff;
-  this->FermionToBoson(this->StateDescriptionUp[index], this->StateDescriptionDown[index], CurrentLzMaxUp, CurrentLzMaxDown,
-		       Info&0x03ff, ProdATemporaryState, ProdATemporaryStateNbrUp);
-
-  int CurrentLzMax = std::max(CurrentLzMaxUp, CurrentLzMaxDown);
+  int CurrentLzMaxUp, CurrentLzMaxDown;
+  this->FermionToBoson(this->StateDescriptionUp[index], this->StateDescriptionDown[index], this->StateInfo[index],
+		       ProdATemporaryState, CurrentLzMaxUp, CurrentLzMaxDown, ProdATemporaryStateNbrUp);
+  
   int TmpCoefficient = 1;
   for (int i = nbrIndices - 1; i >= 0; --i)
     {
-      if (n[i] > CurrentLzMax)
-	return 0.0;
       unsigned& Tmp = this->ProdATemporaryState[n[i]];
       if (spinIndices[i] == 0)
 	{
-	  if ((Tmp & 0xffff) == 0)
+	  if ((n[i]>CurrentLzMaxDown)||((Tmp & 0xffff) == 0))
 	    return 0.0;
 	  TmpCoefficient *= (Tmp & 0xffff);
 	  --Tmp;
 	}
       else
 	{
-	  if ((Tmp >> 16) == 0)
+	  if ((n[i]>CurrentLzMaxUp)||((Tmp >> 16) == 0))
 	    return 0.0;
 	  TmpCoefficient *= (Tmp >> 16);
 	  Tmp -= 0x10000;
@@ -559,6 +529,7 @@ int BosonOnSphereWithSpinAllSz::ProdAd (int* m, int* spinIndices, int nbrIndices
       this->TemporaryState[i] = this->ProdATemporaryState[i];
     }
   int TmpCoefficient = 1;
+  int TemporaryStateNbrUp = ProdATemporaryStateNbrUp;
   for (i = 0; i < nbrIndices; ++i)
     if (spinIndices[i] == 0)
       {
@@ -569,18 +540,10 @@ int BosonOnSphereWithSpinAllSz::ProdAd (int* m, int* spinIndices, int nbrIndices
       {
 	this->TemporaryState[m[i]] += 0x10000;
 	TmpCoefficient *= (this->TemporaryState[m[i]] >> 16);
+	++TemporaryStateNbrUp;
       }
   coefficient = sqrt((double) TmpCoefficient);
-  int NewLzSzMax = this->LzMax;
-  while (this->TemporaryState[NewLzSzMax] == 0)
-    --NewLzSzMax;
-  if (this->TemporaryState[NewLzSzMax]&0xffff0000)
-    {
-      NewLzSzMax<<=1;
-      NewLzSzMax+=1;
-    }
-  else NewLzSzMax<<=1;
-  return this->FindStateIndex(this->TemporaryState, NewLzSzMax);
+  return this->FindStateIndex(this->TemporaryState, TemporaryStateNbrUp);
 }
 
 
@@ -592,9 +555,18 @@ int BosonOnSphereWithSpinAllSz::ProdAd (int* m, int* spinIndices, int nbrIndices
 
 double BosonOnSphereWithSpinAllSz::AduAu (int index, int m)
 {
-  if ((int)(this->StateInfo[index]>>20)>>1 < m)  
+  unsigned Info = this->StateInfo[index];
+  unsigned TemporaryStateNbrUp = Info&0x03ff;
+  int CurrentLzMaxUp = Info>>20 - TemporaryStateNbrUp + (TemporaryStateNbrUp!=0);
+  if (CurrentLzMaxUp < m)
     return 0.0;
-  return (double) ((this->StateDescription[index][m] >> 16));  
+  else
+    {
+      int CurrentLzMaxDown;
+      this->FermionToBoson(this->StateDescriptionUp[index], this->StateDescriptionDown[index], Info,
+			   TemporaryState, CurrentLzMaxUp, CurrentLzMaxDown, TemporaryStateNbrUp);
+      return (double) ((this->TemporaryState[m] >> 16));
+    }
 }
 
 // apply a^+_m_u a_m_u operator to a given state  (only spin up)
@@ -605,9 +577,18 @@ double BosonOnSphereWithSpinAllSz::AduAu (int index, int m)
 
 double BosonOnSphereWithSpinAllSz::AddAd (int index, int m)
 {
-  if ((int)((this->StateInfo[index]>>10)&0x03ffu)>>1 < m)
+  unsigned Info = this->StateInfo[index];
+  unsigned TemporaryStateNbrUp = Info & 0x03ff;	
+  int CurrentLzMaxDown = ((Info>>10)&0x03ff) - NbrBosons + TemporaryStateNbrUp + (TemporaryStateNbrUp!=(unsigned)NbrBosons);
+  if (CurrentLzMaxDown < m)
     return 0.0;
-  return (double) ((this->StateDescription[index][m] & 0xffff));  
+  else
+    {
+      int CurrentLzMaxUp;
+      this->FermionToBoson(this->StateDescriptionUp[index], this->StateDescriptionDown[index], Info,
+			   TemporaryState, CurrentLzMaxUp, CurrentLzMaxDown, TemporaryStateNbrUp);
+      return (double) ((this->TemporaryState[m] & 0xffff));
+    }
 }
 
 // apply a^+_m_u a_n_u operator to a given state 
@@ -619,35 +600,22 @@ double BosonOnSphereWithSpinAllSz::AddAd (int index, int m)
 // return value = index of the destination state 
 int BosonOnSphereWithSpinAllSz::AduAu (int index, int m, int n, double& coefficient)
 {
-  int CurrentLzMax = (this->StateInfo[index]>>20)>>1;
-  unsigned* State = this->StateDescription[index];
-  if ((n > CurrentLzMax) || ((State[n] >> 16) == 0)) // || ((State[n] & 0xffff) == 0)) // shift for up, mask for down
+  int CurrentLzMaxUp, CurrentLzMaxDown;
+  unsigned TemporaryStateNbrUp;
+  this->FermionToBoson(this->StateDescriptionUp[index], this->StateDescriptionDown[index], this->StateInfo[index],
+		       TemporaryState, CurrentLzMaxUp, CurrentLzMaxDown, TemporaryStateNbrUp);
+
+  if ((n > CurrentLzMaxUp) || ((TemporaryState[n] >> 16) == 0)) // || ((State[n] & 0xffff) == 0)) // shift for up, mask for down
     {
       return 0.0;
     }
-  int i = 0;
-  for (; i <= CurrentLzMax; ++i)
-    this->TemporaryState[i] = State[i];
-  // double Coefficient = (this->TemporaryState[n] & 0xffff);
-  // --this->TemporaryState[n];
   double TmpCoefficient = (this->TemporaryState[n] >> 16);
   this->TemporaryState[n] -= 0x10000;
-
-  //this->TemporaryState[m]+= 0x10000;
-  //TmpCoefficient *= (this->TemporaryState[m] & 0xffff);
+  
   this->TemporaryState[m] += 0x10000;
   TmpCoefficient *= (this->TemporaryState[m] >> 16);
   coefficient *= sqrt(TmpCoefficient);
-  int NewLzSzMax = this->LzMax;
-  while (this->TemporaryState[NewLzSzMax] == 0)
-    --NewLzSzMax;
-  if (this->TemporaryState[NewLzSzMax]&0xffff0000)
-    {
-      NewLzSzMax<<=1;
-      NewLzSzMax+=1;
-    }
-  else NewLzSzMax<<=1;
-  return this->FindStateIndex(this->TemporaryState, NewLzSzMax);
+  return this->FindStateIndex(this->TemporaryState, TemporaryStateNbrUp);
 }
 
 // apply a^+_m_d a_n_d operator to a given state 
@@ -659,31 +627,22 @@ int BosonOnSphereWithSpinAllSz::AduAu (int index, int m, int n, double& coeffici
 // return value = index of the destination state 
 int BosonOnSphereWithSpinAllSz::AddAd (int index, int m, int n, double& coefficient)
 {
-  int CurrentLzMax = ((this->StateInfo[index]>>10)&0x03ffu)>>1;
-  unsigned* State = this->StateDescription[index];  
-  if ((n > CurrentLzMax) || ((State[n] & 0xffff) == 0)) // || ((State[n] & 0xffff) == 0)) // shift for up, mask for down
+  int CurrentLzMaxUp, CurrentLzMaxDown;
+  unsigned TemporaryStateNbrUp;
+  this->FermionToBoson(this->StateDescriptionUp[index], this->StateDescriptionDown[index], this->StateInfo[index],
+		       TemporaryState, CurrentLzMaxUp, CurrentLzMaxDown, TemporaryStateNbrUp);
+
+  if ((n > CurrentLzMaxDown) || ((TemporaryState[n] & 0xffff) == 0)) // || ((State[n] & 0xffff) == 0)) // shift for up, mask for down
     {
       return 0.0;
     }
-  int i = 0;
-  for (; i <= CurrentLzMax; ++i)
-    this->TemporaryState[i] = State[i];
   double TmpCoefficient = (this->TemporaryState[n] & 0xffff);
   --this->TemporaryState[n];
 
   ++this->TemporaryState[m];
   TmpCoefficient *= (this->TemporaryState[m] & 0xffff);  
   coefficient *= sqrt(TmpCoefficient);
-  int NewLzSzMax = this->LzMax;
-  while (this->TemporaryState[NewLzSzMax] == 0)
-    --NewLzSzMax;
-  if (this->TemporaryState[NewLzSzMax]&0xffff0000)
-    {
-      NewLzSzMax<<=1;
-      NewLzSzMax+=1;
-    }
-  else NewLzSzMax<<=1;
-  return this->FindStateIndex(this->TemporaryState, NewLzSzMax);
+  return this->FindStateIndex(this->TemporaryState, TemporaryStateNbrUp);
 }
 
 // apply a^+_m_u a_n_d operator to a given state 
@@ -695,31 +654,22 @@ int BosonOnSphereWithSpinAllSz::AddAd (int index, int m, int n, double& coeffici
 // return value = index of the destination state 
 int BosonOnSphereWithSpinAllSz::AduAd (int index, int m, int n, double& coefficient)
 {
-  int CurrentLzMax = ((this->StateInfo[index]>>10)&0x03ffu)>>1;
-  unsigned* State = this->StateDescription[index];
-  if ((n > CurrentLzMax) || ((State[n] & 0xffff) == 0)) // || ((State[n] & 0xffff) == 0)) // shift for up, mask for down
+  int CurrentLzMaxUp, CurrentLzMaxDown;
+  unsigned TemporaryStateNbrUp;
+  this->FermionToBoson(this->StateDescriptionUp[index], this->StateDescriptionDown[index], this->StateInfo[index],
+		       TemporaryState, CurrentLzMaxUp, CurrentLzMaxDown, TemporaryStateNbrUp);
+
+  if ((n > CurrentLzMaxDown) || ((TemporaryState[n] & 0xffff) == 0)) // || ((State[n] & 0xffff) == 0)) // shift for up, mask for down
     {
       return 0.0;
     }
-  int i = 0;
-  for (; i <= CurrentLzMax; ++i)
-    this->TemporaryState[i] = State[i];
   double TmpCoefficient = (this->TemporaryState[n] & 0xffff);
   --this->TemporaryState[n];
   
   this->TemporaryState[m] += 0x10000;
   TmpCoefficient *= (this->TemporaryState[m] >> 16);
   coefficient *= sqrt(TmpCoefficient);
-  int NewLzSzMax = this->LzMax;
-  while (this->TemporaryState[NewLzSzMax] == 0)
-    --NewLzSzMax;
-  if (this->TemporaryState[NewLzSzMax]&0xffff0000)
-    {
-      NewLzSzMax<<=1;
-      NewLzSzMax+=1;
-    }
-  else NewLzSzMax<<=1;
-  return this->FindStateIndex(this->TemporaryState, NewLzSzMax);
+  return this->FindStateIndex(this->TemporaryState, TemporaryStateNbrUp + 1);
 }
 
 // apply a^+_m_d a_n_u operator to a given state 
@@ -731,31 +681,21 @@ int BosonOnSphereWithSpinAllSz::AduAd (int index, int m, int n, double& coeffici
 // return value = index of the destination state 
 int BosonOnSphereWithSpinAllSz::AddAu (int index, int m, int n, double& coefficient)
 {
-  int CurrentLzMax = (this->StateInfo[index]>>20)>>1;
-  unsigned* State = this->StateDescription[index];
-  if ((n > CurrentLzMax) || ((State[n] >> 16) == 0)) // || ((State[n] & 0xffff) == 0)) // shift for up, mask for down
+  int CurrentLzMaxUp, CurrentLzMaxDown;
+  unsigned TemporaryStateNbrUp;
+  this->FermionToBoson(this->StateDescriptionUp[index], this->StateDescriptionDown[index], this->StateInfo[index],
+		       TemporaryState, CurrentLzMaxUp, CurrentLzMaxDown, TemporaryStateNbrUp);
+  if ((n > CurrentLzMaxUp) || ((TemporaryState[n] >> 16) == 0)) // || ((State[n] & 0xffff) == 0)) // shift for up, mask for down
     {
       return 0.0;
     }
-  int i = 0;
-  for (; i <= CurrentLzMax; ++i)
-    this->TemporaryState[i] = State[i];
   double TmpCoefficient = (this->TemporaryState[n] >> 16);
   this->TemporaryState[n] -= 0x10000;
   
   ++this->TemporaryState[m];
   TmpCoefficient *= (this->TemporaryState[m]) & 0xffff;
   coefficient *= sqrt(TmpCoefficient);
-  int NewLzSzMax = this->LzMax;
-  while (this->TemporaryState[NewLzSzMax] == 0)
-    --NewLzSzMax;
-  if (this->TemporaryState[NewLzSzMax]&0xffff0000)
-    {
-      NewLzSzMax<<=1;
-      NewLzSzMax+=1;
-    }
-  else NewLzSzMax<<=1;
-  return this->FindStateIndex(this->TemporaryState, NewLzSzMax);
+  return this->FindStateIndex(this->TemporaryState, TemporaryStateNbrUp - 1);
 }
 
 
@@ -771,6 +711,8 @@ int BosonOnSphereWithSpinAllSz::FindStateIndex(unsigned* stateDescription, unsig
   unsigned long FinalStateDown;
   int LzMaxUp, LzMaxDown;
   this->BosonToFermion(FinalStateUp, FinalStateDown, LzMaxUp, LzMaxDown, stateDescription, nbrUp);
+  cout << "up: "<< hex << FinalStateUp << dec << " deduced lzmax="<<LzMaxUp<<endl;
+  cout << "down: "<< hex << FinalStateDown << dec << " deduced lzmax="<<LzMaxDown<<endl;
   return FindStateIndex(FinalStateUp, FinalStateDown, LzMaxUp, LzMaxDown);
 }
 
@@ -861,15 +803,16 @@ int BosonOnSphereWithSpinAllSz::GetLzValue(int j)
 ostream& BosonOnSphereWithSpinAllSz::PrintState (ostream& Str, int state)
 {
   unsigned* TmpState = this->StateDescription[state];
-  int Max = std::max((this->StateInfo[state]>>10)&0x03ff,(this->StateInfo[state]>>20)&0x03ff);
   int i = 0;
   Str << (TmpState[i]>>16) << "u " << (TmpState[i]&0xffff)<<"d";
-  for (i=1; i <= Max; ++i)
+  for (i=1; i <= LzMax; ++i)
     Str << " | "<< (TmpState[i]>>16) << "u " << (TmpState[i]&0xffff)<<"d";
-  for (; i <= this->LzMax; ++i)
-    Str << " | 0u 0d";
+  //  for (; i <= this->LzMax; ++i)
+  //    Str << " | 0u 0d";
   Str << "  lzmaxU = " <<((this->StateInfo[state]>>20)&0x03ffu)<< "  lzMaxD = "<< ((this->StateInfo[state]>>10)&0x03ffu)
-      << "  nbrUp = " << (this->StateInfo[state]&0x03ffu) <<"  position = " << FindStateIndex(TmpState, this->StateInfo[state]&0x03ffu);
+      << "  nbrUp = " << (this->StateInfo[state]&0x03ffu) <<"  position = ";
+  Str.flush();
+  Str << FindStateIndex(TmpState, this->StateInfo[state]&0x03ffu);
   return Str;
 }
 
@@ -1022,7 +965,13 @@ void BosonOnSphereWithSpinAllSz::GenerateLookUpTable(int memory)
   unsigned *TmpBlockStart = new unsigned[this->HilbertSpaceDimension];
   for (int i=0; i<this->HilbertSpaceDimension; ++i)
     {
-      this->StateInfo[i]=(this->StateLzMaxUp[i]<<20) | (this->StateLzMaxDown[i]<<10) | this->StateNbrUp[i];
+      CurrentStateNbrUp = this->StateNbrUp[i];
+      LzMaxUp = this->StateLzMaxUp[i] + CurrentStateNbrUp;
+      if (CurrentStateNbrUp!=0) --LzMaxUp;
+      LzMaxDown = this->StateLzMaxDown[i] + NbrBosons - CurrentStateNbrUp;
+      if (CurrentStateNbrUp!=NbrBosons) --LzMaxDown;
+
+      this->StateInfo[i]=(LzMaxUp<<20) | (LzMaxDown<<10) | this->StateNbrUp[i];
       this->BosonToFermion(this->StateDescriptionUp[i], this->StateDescriptionDown[i], LzMaxUp, LzMaxDown,
 			   this->StateDescription[i], (this->StateNbrUp[i]));
 #ifdef TESTING
@@ -1159,15 +1108,15 @@ void BosonOnSphereWithSpinAllSz::GenerateLookUpTable(int memory)
   // deduce final lookup structure
   unsigned Index;
   int DownElementLzMax;
-  int LzOffset;
+  // int LzOffset;
   LastUp = ~0x0ul;
   unsigned SectorCount=0;
   for (int i=0; i<this->HilbertSpaceDimension; ++i)
     {
       DownElementLzMax = (this->StateInfo[i] >> 10) & 0x03ffu;
-      LzOffset = NbrBosons - (this->StateInfo[i] & 0x03ffu) - 1; 
-      if (LzOffset >-1)
-	DownElementLzMax += LzOffset ;
+//       LzOffset = NbrBosons - (this->StateInfo[i] & 0x03ffu) - 1; 
+//       if (LzOffset >-1)
+// 	DownElementLzMax += LzOffset ;
       cout << "Call search "<< std::hex << this->StateDescriptionDown[i] <<std::dec<< " with lzmax=" << DownElementLzMax << endl;
       Index = this->FindTensoredIndex(this->StateDescriptionDown[i], DownElementLzMax);
       if (TensoredElements[Index]==this->StateDescriptionDown[i])
@@ -1197,21 +1146,27 @@ void BosonOnSphereWithSpinAllSz::GenerateLookUpTable(int memory)
 	}
       //++this->DownSpinLookUpTable[Index];
     }
+#ifdef TESTING
   for (unsigned i=0; i<(unsigned)this->HilbertSpaceDimension; ++i)
     {
       Info = this->StateInfo[i];
       CurrentStateNbrUp = Info&0x03ff;
-      LzMaxUp = (Info>>20)+CurrentStateNbrUp-(CurrentStateNbrUp!=0);
-      LzMaxDown = ((Info>>10)&0x03ff) + NbrBosons - CurrentStateNbrUp - (CurrentStateNbrUp!=NbrBosons);
+      LzMaxUp = (Info>>20); // +CurrentStateNbrUp-(CurrentStateNbrUp!=0);
+      LzMaxDown = ((Info>>10)&0x03ff); // + NbrBosons - CurrentStateNbrUp - (CurrentStateNbrUp!=NbrBosons);
       Index = this->FindStateIndex(this->StateDescriptionUp[i], this->StateDescriptionDown[i], LzMaxUp, LzMaxDown);
-#ifdef TESTING
       if (Index != i)
 	cout << "Error in state "<<i<<" base: " << this->UpSpinLookUpTable[this->FindTensoredIndex(StateDescriptionUp[i], LzMaxUp)]
 	     << " Offset: "<<this->DownSpinLookUpTable[this->FindTensoredIndex(StateDescriptionDown[i], LzMaxDown)] << endl;
       else
 	cout << "State "<<i<<" found"<<endl;
-#endif
+      Index = this->FindStateIndex(this->StateDescription[i], CurrentStateNbrUp);
+      if (Index != i)
+	cout << "2 - Error in state "<<i<<" base: " << this->UpSpinLookUpTable[this->FindTensoredIndex(StateDescriptionUp[i], LzMaxUp)]
+	     << " Offset: "<<this->DownSpinLookUpTable[this->FindTensoredIndex(StateDescriptionDown[i], LzMaxDown)] << endl;
+      else
+	cout << "State "<<i<<" found again"<<endl;
     }
+#endif
 
 }
 

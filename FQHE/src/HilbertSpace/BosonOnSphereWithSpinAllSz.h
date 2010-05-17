@@ -42,6 +42,7 @@
 using std::cout;
 using std::endl;
 using std::hex;
+using std::dec;
 
 
 class BosonOnSphereWithSpinAllSz :  public ParticleOnSphereWithSpin
@@ -464,11 +465,14 @@ class BosonOnSphereWithSpinAllSz :  public ParticleOnSphereWithSpin
 
   // convert a bosonic state into its fermionic counterpart
   //
+  // finalStateUp = return value of bit-coded state of up-bosons
+  // finalStateDown = return value of bit-coded state of down-bosons
+  // finalLzMaxUp = highest bit in fermionic coding finalStateUp
+  // finalLzMaxDown = highest bit in fermionic coding finalStateDown
   // initialState = reference on the array where initialbosonic  state is stored
   // initialStateNbrUp = reference on the number of up-bosons in initial state maximum Lz value
-  // return value = corresponding fermionic state
   
-  void BosonToFermion(unsigned long &finalStateUp, unsigned long &finalStateDown, int &LzMaxUp, int &LzMaxDown, unsigned*& initialState, unsigned& initialStateNbrUp);
+  void BosonToFermion(unsigned long &finalStateUp, unsigned long &finalStateDown, int &finalLzMaxUp, int &finalLzMaxDown, unsigned*& initialState, unsigned& initialStateNbrUp);
 
 
   // convert a fermionic state into its bosonic counterpart
@@ -478,7 +482,7 @@ class BosonOnSphereWithSpinAllSz :  public ParticleOnSphereWithSpin
   // finalState = reference on the array where the bosonic state has to be stored
   // finalStateLzMax = reference on the integer where the bosonic state maximum Lz value has to be stored
   
-  void FermionToBoson(unsigned long initialStateUp, unsigned long initialStateDown, unsigned initialStateLzMaxUp, unsigned initialStateLzMaxDown, unsigned initialStateNbrUp, unsigned*& finalState, unsigned& finalStateNbrUp);
+  void FermionToBoson(unsigned long initialStateUp, unsigned long initialStateDown, unsigned initialInfo, unsigned*& finalState, int &finalStateLzMaxUp, int &finalStateLzMaxDown, unsigned& finalStateNbrUp);
 
   // sort an array and reflect permutations in auxiliary array
   //
@@ -505,18 +509,26 @@ inline int BosonOnSphereWithSpinAllSz::GetParticleStatistic()
 
 // convert a bosonic state into its fermionic counterpart
 //
+// finalStateUp = return value of bit-coded state of up-bosons
+// finalStateDown = return value of bit-coded state of down-bosons
+// finalLzMaxUp = highest bit in fermionic coding finalStateUp
+// finalLzMaxDown = highest bit in fermionic coding finalStateDown
 // initialState = reference on the array where initialbosonic  state is stored
-// initialStateLzMax = reference on the initial bosonic state maximum Lz value
-// return value = corresponding fermionic state
+// initialStateNbrUp = reference on the number of up-bosons in initial state maximum Lz value
 
-inline void BosonOnSphereWithSpinAllSz::BosonToFermion(unsigned long &finalStateUp, unsigned long &finalStateDown, int &lzMaxUp, int &lzMaxDown, unsigned*& initialState, unsigned& initialStateNbrUp)
+inline void BosonOnSphereWithSpinAllSz::BosonToFermion(unsigned long &finalStateUp, unsigned long &finalStateDown, int &finalLzMaxUp, int &finalLzMaxDown, unsigned*& initialState, unsigned& initialStateNbrUp)
 {
+  cout << "NbrUp="<<initialStateNbrUp <<", InitialState = |";
+  for (int i=0; i<=LzMax; ++i)
+    cout << " " << (initialState[i] >> 16)<< "u "<< (initialState[i] & 0xffff)<<"d |";
+  cout << endl;
+
   finalStateUp = 0x0ul;
   unsigned ShiftUp = 0;
   finalStateDown = 0x0ul;
   unsigned ShiftDown = 0;
-  lzMaxUp = 0;
-  lzMaxDown = 0;
+  finalLzMaxUp = 0;
+  finalLzMaxDown = 0;
   int RemainingNbrUp=initialStateNbrUp;
   int RemainingNbrDown=NbrBosons-initialStateNbrUp;
   int TmpUp, TmpDown;
@@ -528,16 +540,16 @@ inline void BosonOnSphereWithSpinAllSz::BosonToFermion(unsigned long &finalState
       ShiftUp += TmpUp;
       RemainingNbrUp -= TmpUp;
       ++ShiftUp;
-      lzMaxUp = (TmpUp>0)*i+(TmpUp==0)*lzMaxUp;
+      finalLzMaxUp = (TmpUp>0)*i+(TmpUp==0)*finalLzMaxUp;
       finalStateDown |= ((1ul << TmpDown) - 1ul) << ShiftDown;
       ShiftDown += TmpDown;
       RemainingNbrDown -= TmpDown;
       ++ShiftDown;
-      lzMaxDown = (TmpUp>0)*i+(TmpUp==0)*lzMaxUp;
+      finalLzMaxDown = (TmpDown>0)*i+(TmpDown==0)*finalLzMaxDown;
     }
-  lzMaxUp += initialStateNbrUp-(initialStateNbrUp!=0);
-  lzMaxDown += this->NbrBosons - initialStateNbrUp - (initialStateNbrUp!=(unsigned)this->NbrBosons);
-  //this->PrintState(cout, initialState) << " " << std::hex << finalStateUp << " " << finalStateDown << std::dec << endl;
+  finalLzMaxUp += initialStateNbrUp-(initialStateNbrUp!=0);
+  finalLzMaxDown += this->NbrBosons - initialStateNbrUp - 1 + (initialStateNbrUp==(unsigned)this->NbrBosons);
+  this->PrintState(cout, initialState) << " " << std::hex << finalStateUp << " " << finalStateDown << std::dec << " " << finalLzMaxUp <<" " << finalLzMaxDown<<endl;
   //finalStateUp|=initialStateNbrUp<<(8*sizeof(unsigned long)-5);
   //finalStateDown|=(NbrBosons-initialStateNbrUp)<<(8*sizeof(unsigned long)-5);
   return;
@@ -550,10 +562,12 @@ inline void BosonOnSphereWithSpinAllSz::BosonToFermion(unsigned long &finalState
 // finalState = reference on the array where the bosonic state has to be stored
 // finalStateLzMax = reference on the integer where the bosonic state maximum Lz value has to be stored
 
-inline void BosonOnSphereWithSpinAllSz::FermionToBoson(unsigned long initialStateUp, unsigned long initialStateDown, unsigned initialStateLzMaxUp, unsigned initialStateLzMaxDown, unsigned initialStateNbrUp, unsigned*& finalState, unsigned& finalStateNbrUp)
+inline void BosonOnSphereWithSpinAllSz::FermionToBoson(unsigned long initialStateUp, unsigned long initialStateDown, unsigned initialInfo, unsigned*& finalState, int &finalStateLzMaxUp, int &finalStateLzMaxDown, unsigned& finalStateNbrUp)
 {
-  int finalStateLzMax = 0;
-  while (initialStateLzMaxUp >= 0)
+  cout << "initialStateUp =" << initialStateUp << ", initialStateDown="<<initialStateDown<<endl;
+  finalStateLzMaxUp = 0;
+  int InitialStateLzMax = initialInfo >> 20;
+  while (InitialStateLzMax >= 0)
     {
       unsigned long TmpState = (~initialStateUp - 1ul) ^ (~initialStateUp);
       TmpState &= ~(TmpState >> 1);
@@ -573,16 +587,24 @@ inline void BosonOnSphereWithSpinAllSz::FermionToBoson(unsigned long initialStat
       TmpPower |= ((TmpState & 0xffff0000ul) != 0) << 4;      
 #endif
 //      cout << TmpPower << endl;
-      finalState[finalStateLzMax] = TmpPower << 16;
+      cout << "initialStateLzMaxUp="<<InitialStateLzMax<<" - setting finalState["<<finalStateLzMaxUp<<"]="<<TmpPower<<endl;
+      finalState[finalStateLzMaxUp] = TmpPower << 16;
       ++TmpPower;
       initialStateUp >>= TmpPower;
-      ++finalStateLzMax;
-      initialStateLzMaxUp -= TmpPower;
+      ++finalStateLzMaxUp;
+      InitialStateLzMax -= TmpPower;
     }
-  for (unsigned i=finalStateLzMax; i<initialStateLzMaxDown; ++i)
+
+  cout << "FinalStateUp =";
+  for (int i=0; i<finalStateLzMaxUp; ++i)
+    cout << " " << (finalState[i] >> 16);
+  cout << endl;
+  
+  for (int i=finalStateLzMaxUp; i<NbrLzValue; ++i)
     finalState[i]=0;
-  finalStateLzMax = 0;
-  while (initialStateLzMaxDown >= 0)
+  finalStateLzMaxDown = 0;
+  InitialStateLzMax = (initialInfo >> 10)&0x03ff;
+  while (InitialStateLzMax > 0)
     {
       unsigned long TmpState = (~initialStateDown - 1ul) ^ (~initialStateDown);
       TmpState &= ~(TmpState >> 1);
@@ -602,11 +624,17 @@ inline void BosonOnSphereWithSpinAllSz::FermionToBoson(unsigned long initialStat
       TmpPower |= ((TmpState & 0xffff0000ul) != 0) << 4;      
 #endif
 //      cout << TmpPower << endl;
-      finalState[finalStateLzMax] |= TmpPower;
+      finalState[finalStateLzMaxDown] |= TmpPower;
       ++TmpPower;
       initialStateDown >>= TmpPower;
-      initialStateLzMaxDown -= TmpPower;
+      ++finalStateLzMaxDown;
+      InitialStateLzMax -= TmpPower;
     }
+  cout << "FinalStateDown =";
+  for (int i=0; i<finalStateLzMaxDown; ++i)
+    cout << " " << (finalState[i]& 0xffff);
+  cout << endl;
+
 }
 
 // find state index
@@ -616,6 +644,9 @@ inline void BosonOnSphereWithSpinAllSz::FermionToBoson(unsigned long initialStat
 // return value = corresponding index
 inline int BosonOnSphereWithSpinAllSz::FindStateIndex(unsigned long stateDescriptionUp, unsigned long stateDescriptionDown, int lzMaxUp, int lzMaxDown)
 {
+  cout << "FindStateIndex: "<<hex<<stateDescriptionUp<<" "<<stateDescriptionDown<<" " <<dec << lzMaxUp <<" "<<lzMaxDown;
+  cout << " "<<this->FindTensoredIndex(stateDescriptionUp, lzMaxUp);
+  cout << " " <<this->FindTensoredIndex(stateDescriptionDown, lzMaxDown)<<endl;
   int Base = this->UpSpinLookUpTable[this->FindTensoredIndex(stateDescriptionUp, lzMaxUp)];
   int Offset = this->DownSpinLookUpTable[this->FindTensoredIndex(stateDescriptionDown, lzMaxDown)];
   return Base+Offset;
