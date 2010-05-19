@@ -62,6 +62,9 @@ class ParticleOnSphereWithSpinS2Hamiltonian : public AbstractQHEOnSphereWithSpin
   // multiplicative factor in front of the L^2 operator in the Hamiltonian
   double S2Factor;
 
+  // flag indicating whether Sz needs to be evaluated
+  bool FixedSz;
+
  public:
 
   // constructor from default datas
@@ -76,9 +79,11 @@ class ParticleOnSphereWithSpinS2Hamiltonian : public AbstractQHEOnSphereWithSpin
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
+  // fixedSz = flag indicating whether Sz needs to be evaluated
   ParticleOnSphereWithSpinS2Hamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, int totalLz, int totalSz,
-					AbstractArchitecture* architecture, double s2Factor = 1.0, long memory = -1, 
-					bool onDiskCacheFlag = false, char* precalculationFileName = 0);
+					AbstractArchitecture* architecture, double s2Factor = 1.0, long memory = -1,
+					bool onDiskCacheFlag = false, char* precalculationFileName = 0, 
+					bool fixedSz = true);
 
   // destructor
   //

@@ -246,13 +246,14 @@ int main(int argc, char** argv)
 	      
 	      if (((SingleDoubleOption*) Manager["s2-factor"])->GetDouble() != 0.0)
 		Hamiltonian->AddS2(L, SzTotal, Manager.GetDouble("s2-factor"),
-				   ((unsigned long)Manager.GetInteger("s2-memory")) << 20);
+				   ((unsigned long)Manager.GetInteger("s2-memory")) << 20, !Manager.GetBoolean("all-sz"));
 	    }
 	  else
 	    Hamiltonian = new ParticleOnSphereWithSpinS2Hamiltonian(Space, NbrBosons, LzMax, L*LSign, SzTotal,
 								    Architecture.GetArchitecture(),
 								      Manager.GetDouble("s2-factor"),
-						      ((unsigned long)Manager.GetInteger("s2-memory")) << 20);
+								    ((unsigned long)Manager.GetInteger("s2-memory")) << 20,
+								    false, NULL, !Manager.GetBoolean("all-sz"));
 	}
       else // full Hamiltonian
 	{

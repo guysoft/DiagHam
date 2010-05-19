@@ -44,6 +44,8 @@
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/QHEParticlePrecalculationOperation.h"
 
+#include "GeneralTools/StringTools.h"
+
 #include <iostream>
 #include <sys/time.h>
 
@@ -120,24 +122,7 @@ ParticleOnSphereQuantumWellHamiltonian::ParticleOnSphereQuantumWellHamiltonian(P
       if (memory > 0)
 	{
 	  long TmpMemory = this->FastMultiplicationMemory(memory);
-	  if (TmpMemory < 1024)
-	    cout  << "fast = " <<  TmpMemory << "b ";
-	  else
-	    if (TmpMemory < (1 << 20))
-	      cout  << "fast = " << (TmpMemory >> 10) << "kb ";
-	    else
-	  if (TmpMemory < (1 << 30))
-	    cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
-	  else
-	    {
-	      cout  << "fast = " << (TmpMemory >> 30) << ".";
-	      TmpMemory -= ((TmpMemory >> 30) << 30);
-	      TmpMemory *= 100l;
-	      TmpMemory >>= 30;
-	      if (TmpMemory < 10l)
-		cout << "0";
-	      cout  << TmpMemory << " Gb ";
-	    }
+	  PrintMemorySize(cout, TmpMemory);
 	  if (this->DiskStorageFlag == false)
 	    {
 	      this->EnableFastMultiplication();
@@ -255,164 +240,6 @@ List<Matrix*> ParticleOnSphereQuantumWellHamiltonian::RightInteractionOperators(
 
 void ParticleOnSphereQuantumWellHamiltonian::EvaluateInteractionFactors()
 {
-// this part of the code has been tested and is working (27/07/2007) but seems slower than the other method. This part is kept for testing purpose only
-
-//   this->NbrIntraSectorSums = 0;
-//   this->NbrInterSectorSums = 0;
-//   int Lim;
-//   int Min;
-//   int Pos = 0;
-//   ClebschGordanCoefficients Clebsch (this->LzMax, this->LzMax);
-//   int J = 2 * this->LzMax - 2;
-//   int m4;
-//   double ClebschCoef;
-//   double* TmpCoefficientupup = new double [this->NbrLzValue * this->NbrLzValue * this->NbrLzValue];
-//   double* TmpCoefficientdowndown = new double [this->NbrLzValue * this->NbrLzValue * this->NbrLzValue];
-//   double* TmpCoefficientupdown = new double [this->NbrLzValue * this->NbrLzValue * this->NbrLzValue];
-
-//   int Sign = 1;
-//   if (this->LzMax & 1)
-//     Sign = 0;
-//   double MaxCoefficient = 0.0;
-
-//   for (int m1 = -this->LzMax; m1 <= this->LzMax; m1 += 2)
-//     for (int m2 =  -this->LzMax; m2 < m1; m2 += 2)
-//       {
-// 	Lim = m1 + m2 + this->LzMax;
-// 	if (Lim > this->LzMax)
-// 	  Lim = this->LzMax;
-// 	Min = m1 + m2 - this->LzMax;
-// 	if (Min < -this->LzMax)
-// 	  Min = -this->LzMax;
-// 	for (int m3 = Min; m3 <= Lim; m3 += 2)
-// 	  {
-// 	    Clebsch.InitializeCoefficientIterator(m1, m2);
-// 	    m4 = m1 + m2 - m3;
-// 	    TmpCoefficientupup[Pos] = 0.0;
-// 	    TmpCoefficientdowndown[Pos] = 0.0;
-// 	    while (Clebsch.Iterate(J, ClebschCoef))
-// 	      {
-// 		if (((J >> 1) & 1) == Sign)
-// 		  {
-// 		    TmpCoefficientupup[Pos] += this->PseudoPotentials[0][J >> 1] * ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
-// 		    TmpCoefficientdowndown[Pos] += this->PseudoPotentials[1][J >> 1] * ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
-// 		  }
-// 	      }
-// 	    ++Pos;
-// 	  }
-//       }
-
-//   this->M12InteractionFactorsupup = new double [Pos];
-//   this->M12InteractionFactorsdowndown = new double [Pos];
-
-//   Pos = 0;
-//   for (int m1 = -this->LzMax; m1 <= this->LzMax; m1 += 2)
-//     for (int m2 =  -this->LzMax; m2 <= this->LzMax; m2 += 2)
-//       {
-// 	Lim = m1 + m2 + this->LzMax;
-// 	if (Lim > this->LzMax)
-// 	  Lim = this->LzMax;
-// 	Min = m1 + m2 - this->LzMax;
-// 	if (Min < -this->LzMax)
-// 	  Min = -this->LzMax;
-// 	for (int m3 = Min; m3 <= Lim; m3 += 2)
-// 	  {
-// 	    Clebsch.InitializeCoefficientIterator(m1, m2);
-// 	    m4 = m1 + m2 - m3;
-// 	    TmpCoefficientupdown[Pos] = 0.0;
-// 	    while (Clebsch.Iterate(J, ClebschCoef))
-// 	      {
-// 		TmpCoefficientupdown[Pos] += this->PseudoPotentials[2][J >> 1] * ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
-// 	      }
-// 	    ++Pos;
-// 	  }
-//       }
-//   this->M12InteractionFactorsupdown = new double [Pos];
-  
-//   this->NbrM12IntraIndices = (this->NbrLzValue * (this->NbrLzValue - 1)) / 2;
-//   this->M1IntraValue = new int [this->NbrM12IntraIndices];
-//   this->M2IntraValue = new int [this->NbrM12IntraIndices];
-//   this->NbrM3IntraValues = new int [this->NbrM12IntraIndices];
-//   this->M3IntraValues = new int* [this->NbrM12IntraIndices];
-//   int TotalIndex = 0;
-//   Pos = 0;
-//   int TmpNbrInteractionFactors = 0;
-//   double Factor = - 4.0;
-//   for (int m1 = 0; m1 < this->NbrLzValue; ++m1)
-//     for (int m2 = 0; m2 < m1; ++m2)
-//       {
-// 	Lim = m1 + m2;
-// 	if (Lim > this->LzMax)
-// 	  Lim = this->LzMax;
-// 	Min = m1 + m2 - this->LzMax;
-// 	if (Min < 0)
-// 	  Min = 0;
-// 	this->M1IntraValue[TotalIndex] = m1;
-// 	this->M2IntraValue[TotalIndex] = m2;	    
-// 	this->NbrM3IntraValues[TotalIndex] = 0;
-// 	for (int m3 = Min; m3 <= Lim; ++m3)
-// 	  if ((2 * m3) > (m1 + m2))
-// 	    ++this->NbrM3IntraValues[TotalIndex];
-// 	if (this->NbrM3IntraValues[TotalIndex] > 0)
-// 	  {
-// 	    this->M3IntraValues[TotalIndex] = new int [this->NbrM3IntraValues[TotalIndex]];
-// 	    int TmpIndex = 0;
-// 	    for (int m3 = Min; m3 <= Lim; ++m3)
-// 	      {
-// 		if ((2 * m3) > (m1 + m2))
-// 		  {
-// 		    this->M3IntraValues[TotalIndex][TmpIndex] = m3;
-// 		    this->M12InteractionFactorsupup[TmpNbrInteractionFactors] = Factor * TmpCoefficientupup[Pos];
-// 		    this->M12InteractionFactorsdowndown[TmpNbrInteractionFactors] = Factor * TmpCoefficientdowndown[Pos];
-// 		    ++TmpIndex;
-// 		    ++TmpNbrInteractionFactors;
-// 		  }
-// 		++Pos;
-// 	      }
-// 	  }
-// 	++TotalIndex;
-//       }
-
-//   this->NbrM12InterIndices = (this->NbrLzValue * this->NbrLzValue);
-//   this->M1InterValue = new int [this->NbrM12InterIndices];
-//   this->M2InterValue = new int [this->NbrM12InterIndices];
-//   this->NbrM3InterValues = new int [this->NbrM12InterIndices];
-//   this->M3InterValues = new int* [this->NbrM12InterIndices];
-//   Factor = -2.0;
-//   Pos = 0;
-//   TotalIndex = 0;
-//   TmpNbrInteractionFactors = 0;
-//   for (int m1 = 0; m1 < this->NbrLzValue; ++m1)
-//     for (int m2 = 0; m2 < this->NbrLzValue; ++m2)
-//       {
-// 	Lim = m1 + m2;
-// 	if (Lim > this->LzMax)
-// 	  Lim = this->LzMax;
-// 	Min = m1 + m2 - this->LzMax;
-// 	if (Min < 0)
-// 	  Min = 0;
-// 	this->M1InterValue[TotalIndex] = m1;
-// 	this->M2InterValue[TotalIndex] = m2;	    
-// 	this->NbrM3InterValues[TotalIndex] = 0;
-// 	for (int m3 = Min; m3 <= Lim; ++m3)
-// 	  ++this->NbrM3InterValues[TotalIndex];
-// 	if (this->NbrM3InterValues[TotalIndex] > 0)
-// 	  {
-// 	    this->M3InterValues[TotalIndex] = new int [this->NbrM3InterValues[TotalIndex]];
-// 	    int TmpIndex = 0;
-// 	    for (int m3 = Min; m3 <= Lim; ++m3)
-// 	      {
-// 		this->M3InterValues[TotalIndex][TmpIndex] = m3;
-// 		this->M12InteractionFactorsupdown[TmpNbrInteractionFactors] = Factor * TmpCoefficientupdown[Pos];
-// 		++TmpNbrInteractionFactors;
-// 		++TmpIndex;
-// 		++Pos;
-// 	      }
-// 	  }
-// 	++TotalIndex;
-//       }
-
-
   // int Lim;
   // int Min;
   // int Pos = 0;
@@ -449,7 +276,7 @@ void ParticleOnSphereQuantumWellHamiltonian::EvaluateInteractionFactors()
 	++this->NbrInterSectorIndicesPerSum[(m1 + m2)];
       }
 
-//FERMIONS ONLY
+//FERMIONS
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
 
@@ -664,10 +491,227 @@ void ParticleOnSphereQuantumWellHamiltonian::EvaluateInteractionFactors()
 //*********************************************************************************************************
 
     }
-  else
+  else // bosons
     {
-    }
+      //INTRA
+      this->NbrIntraSectorSums = 2 * this->LzMax+1;
+      this->NbrIntraSectorIndicesPerSum = new int[this->NbrIntraSectorSums];
+      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
+	this->NbrIntraSectorIndicesPerSum[i] = 0;      
+      for (int m1 = 0; m1 <= this->LzMax; ++m1)
+	for (int m2 = m1; m2 <= this->LzMax; ++m2)
+	  ++this->NbrIntraSectorIndicesPerSum[(m1 + m2)];
+      this->IntraSectorIndicesPerSum = new int* [this->NbrIntraSectorSums];
+      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
+	{
+	  this->IntraSectorIndicesPerSum[i] = new int[2 * this->NbrIntraSectorIndicesPerSum[i]];      
+	  this->NbrIntraSectorIndicesPerSum[i] = 0;
+	}
+      for (int m1 = 0; m1 <= this->LzMax; ++m1)
+	for (int m2 = m1; m2 <= this->LzMax; ++m2)
+	  {
+	    this->IntraSectorIndicesPerSum[m1 + m2][this->NbrIntraSectorIndicesPerSum[m1 + m2] << 1] = m1;
+	    this->IntraSectorIndicesPerSum[m1 + m2][1 + (this->NbrIntraSectorIndicesPerSum[m1 + m2] << 1)] = m2;
+	    ++this->NbrIntraSectorIndicesPerSum[m1 + m2];
+	  }
 
+      this->InteractionFactorsupup = new double* [this->NbrIntraSectorSums];
+      this->InteractionFactorsdowndown = new double* [this->NbrIntraSectorSums];
+      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
+	{
+	  this->InteractionFactorsupup[i] = new double[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
+	  this->InteractionFactorsdowndown[i] = new double[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
+	  int Index = 0;
+	  for (int j1 = 0; j1 < this->NbrIntraSectorIndicesPerSum[i]; ++j1)
+	    {
+	      int m1 = (this->IntraSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMax;
+	      int m2 = (this->IntraSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMax;
+	      for (int j2 = 0; j2 < this->NbrIntraSectorIndicesPerSum[i]; ++j2)
+		{
+		  int m3 = (this->IntraSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMax;
+		  int m4 = (this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMax;
+		  Clebsch.InitializeCoefficientIterator(m1, m2);
+		  this->InteractionFactorsupup[i][Index] = 0.0;
+		  this->InteractionFactorsdowndown[i][Index] = 0.0;
+		  while (Clebsch.Iterate(J, ClebschCoef))
+		    {
+		      if (((J >> 1) & 1) != Sign)
+			{
+			  TmpCoefficient = ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
+			  this->InteractionFactorsupup[i][Index] += this->PseudoPotentials[0][J >> 1] * TmpCoefficient;
+			  this->InteractionFactorsdowndown[i][Index] += this->PseudoPotentials[1][J >> 1] * TmpCoefficient;
+			}
+		    }
+		  if (m1 != m2)
+		    {
+		      this->InteractionFactorsupup[i][Index] *= 2.0;
+		      this->InteractionFactorsdowndown[i][Index] *= 2.0;
+		    }
+		  if (m3 != m4)
+		    {
+		      this->InteractionFactorsupup[i][Index] *= 2.0;
+		      this->InteractionFactorsdowndown[i][Index] *= 2.0;
+		    }
+		  this->InteractionFactorsupup[i][Index] *= -1.0;
+		  this->InteractionFactorsdowndown[i][Index] *= -1.0;
+
+		  TotalNbrInteractionFactors += 2;
+		  ++Index;
+		}
+	    }
+       }
+
+//FILL IN INTER
+
+      this->InteractionFactorsupdown = new double* [this->NbrInterSectorSums];
+      for (int i = 0; i < this->NbrInterSectorSums; ++i)
+	{
+	  this->InteractionFactorsupdown[i] = new double[this->NbrInterSectorIndicesPerSum[i] * this->NbrInterSectorIndicesPerSum[i]];
+	  int Index = 0;
+	  for (int j1 = 0; j1 < this->NbrInterSectorIndicesPerSum[i]; ++j1)
+	    {
+	      double Factor = 2.0;
+	      int m1 = (this->InterSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMax;
+	      int m2 = (this->InterSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMax;
+	      for (int j2 = 0; j2 < this->NbrInterSectorIndicesPerSum[i]; ++j2)
+		{
+		  int m3 = (this->InterSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMax;
+		  int m4 = (this->InterSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMax;
+		  Clebsch.InitializeCoefficientIterator(m1, m2);
+		  this->InteractionFactorsupdown[i][Index] = 0.0;
+		  while (Clebsch.Iterate(J, ClebschCoef))
+		    {
+		      TmpCoefficient = ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
+		      this->InteractionFactorsupdown[i][Index] += this->PseudoPotentials[2][J >> 1] * TmpCoefficient;
+		    }
+		  this->InteractionFactorsupdown[i][Index] *= -Factor;
+		  ++TotalNbrInteractionFactors;
+		  ++Index;
+		}
+	    }
+	}
+
+//*********************************************************************************************************
+//********************************     M I X E D     T E R M S ***********************************************
+//*********************************************************************************************************
+// Mixed term indices that have the same structure as intra terms
+
+    this->NbrMixedIntraSectorSums = 2 * this->LzMax + 1;
+      this->NbrMixedIntraSectorIndicesPerSum = new int[this->NbrMixedIntraSectorSums];
+      for (int i = 0; i < this->NbrMixedIntraSectorSums; ++i)
+	this->NbrMixedIntraSectorIndicesPerSum[i] = 0;      
+      for (int m1 = 0; m1 <= this->LzMax; ++m1)
+	for (int m2 = m1; m2 <= this->LzMax; ++m2)
+	  ++this->NbrMixedIntraSectorIndicesPerSum[m1 + m2];
+      this->MixedIntraSectorIndicesPerSum = new int* [this->NbrMixedIntraSectorSums];
+      for (int i = 0; i < this->NbrMixedIntraSectorSums; ++i)
+	{
+	  this->MixedIntraSectorIndicesPerSum[i] = new int[2 * this->NbrMixedIntraSectorIndicesPerSum[i]];      
+	  this->NbrMixedIntraSectorIndicesPerSum[i] = 0;
+	}
+      for (int m1 = 0; m1 <= this->LzMax; ++m1)
+	for (int m2 = m1; m2 <= this->LzMax; ++m2)
+	  {
+	    this->MixedIntraSectorIndicesPerSum[m1 + m2][this->NbrMixedIntraSectorIndicesPerSum[m1 + m2] << 1] = m1;
+	    this->MixedIntraSectorIndicesPerSum[m1 + m2][1 + (this->NbrMixedIntraSectorIndicesPerSum[m1 + m2] << 1)] = m2;
+	    ++this->NbrMixedIntraSectorIndicesPerSum[m1 + m2];
+	  }
+
+//Fill in the matrix elements
+
+      this->InteractionFactorsmixedintra= new double* [this->NbrMixedIntraSectorSums];
+      for (int i = 0; i < this->NbrMixedIntraSectorSums; ++i)
+	{
+	  this->InteractionFactorsmixedintra[i] = new double[this->NbrMixedIntraSectorIndicesPerSum[i] * this->NbrMixedIntraSectorIndicesPerSum[i]];
+	  int Index = 0;
+	  for (int j1 = 0; j1 < this->NbrMixedIntraSectorIndicesPerSum[i]; ++j1)
+	    {
+	      int m1 = (this->MixedIntraSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMax;
+	      int m2 = (this->MixedIntraSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMax;
+	      for (int j2 = 0; j2 < this->NbrMixedIntraSectorIndicesPerSum[i]; ++j2)
+		{
+		  int m3 = (this->MixedIntraSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMax;
+		  int m4 = (this->MixedIntraSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMax;
+		  Clebsch.InitializeCoefficientIterator(m1, m2);
+		  this->InteractionFactorsmixedintra[i][Index] = 0.0;
+		  while (Clebsch.Iterate(J, ClebschCoef))
+		    {
+		      if (((J >> 1) & 1) != Sign)
+			{
+			  TmpCoefficient = ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
+			  this->InteractionFactorsmixedintra[i][Index] += this->PseudoPotentials[3][J >> 1] * TmpCoefficient;
+			}
+		    }
+		  if (m1 != m2)
+		    this->InteractionFactorsmixedintra[i][Index] *= 2.0;
+		  if (m3 != m4)
+		    this->InteractionFactorsmixedintra[i][Index] *= 2.0;
+		  this->InteractionFactorsmixedintra[i][Index] *= -1.0;
+		  TotalNbrInteractionFactors += 2;
+		  ++Index;
+		}
+	    }
+        }
+
+
+//Mixed term indices that have the same structure as inter terms
+
+
+    this->NbrMixedInterSectorSums = 2 * this->LzMax + 1;
+    this->NbrMixedInterSectorIndicesPerSum = new int[this->NbrMixedInterSectorSums];
+    for (int i = 0; i < this->NbrMixedInterSectorSums; ++i)
+     this->NbrMixedInterSectorIndicesPerSum[i] = 0;
+    for (int m1 = 0; m1 <= this->LzMax; ++m1)
+     for (int m2 = 0; m2 <= this->LzMax; ++m2)
+       ++this->NbrMixedInterSectorIndicesPerSum[m1 + m2];      
+    this->MixedInterSectorIndicesPerSum = new int* [this->NbrMixedInterSectorSums];
+    for (int i = 0; i < this->NbrMixedInterSectorSums; ++i)
+     {
+       this->MixedInterSectorIndicesPerSum[i] = new int[2 * this->NbrMixedInterSectorIndicesPerSum[i]];      
+       this->NbrMixedInterSectorIndicesPerSum[i] = 0;
+     }
+    for (int m1 = 0; m1 <= this->LzMax; ++m1)
+      for (int m2 = 0; m2 <= this->LzMax; ++m2)
+       {
+	 this->MixedInterSectorIndicesPerSum[(m1 + m2)][this->NbrMixedInterSectorIndicesPerSum[(m1 + m2)] << 1] = m1;
+	 this->MixedInterSectorIndicesPerSum[(m1 + m2)][1 + (this->NbrMixedInterSectorIndicesPerSum[(m1 + m2)] << 1)] = m2;
+	 ++this->NbrMixedInterSectorIndicesPerSum[(m1 + m2)];
+       }
+
+
+//Fill in the matrix elements
+
+
+      this->InteractionFactorsmixedinter = new double* [this->NbrMixedInterSectorSums];
+      for (int i = 0; i < this->NbrMixedInterSectorSums; ++i)
+	{
+	  this->InteractionFactorsmixedinter[i] = new double[this->NbrMixedInterSectorIndicesPerSum[i] * this->NbrMixedInterSectorIndicesPerSum[i]];
+	  int Index = 0;
+	  for (int j1 = 0; j1 < this->NbrMixedInterSectorIndicesPerSum[i]; ++j1)
+	    {
+	      double Factor = 2.0;
+	      int m1 = (this->MixedInterSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMax;
+	      int m2 = (this->MixedInterSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMax;
+	      for (int j2 = 0; j2 < this->NbrMixedInterSectorIndicesPerSum[i]; ++j2)
+		{
+		  int m3 = (this->MixedInterSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMax;
+		  int m4 = (this->MixedInterSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMax;
+		  Clebsch.InitializeCoefficientIterator(m1, m2);
+		  this->InteractionFactorsmixedinter[i][Index] = 0.0;
+		  while (Clebsch.Iterate(J, ClebschCoef))
+		    {
+		      TmpCoefficient = ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
+		      this->InteractionFactorsmixedinter[i][Index] += this->PseudoPotentials[3][J >> 1] * TmpCoefficient;
+		    }
+		  //For bosons, the sign of the Factor is probably same as UpDown case
+		  this->InteractionFactorsmixedinter[i][Index] *= -Factor;
+		  ++TotalNbrInteractionFactors;
+		  ++Index;
+		}
+	    }
+	}
+
+    }
 
  cout << "nbr interaction = " << TotalNbrInteractionFactors << endl;
  cout << "====================================" << endl;

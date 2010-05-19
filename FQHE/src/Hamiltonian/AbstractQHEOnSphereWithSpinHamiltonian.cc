@@ -137,9 +137,9 @@ bool AbstractQHEOnSphereWithSpinHamiltonian::IsConjugate()
 // factor = factor in front of the S^2
 // memory = amount of memory that can be used for S^2  precalculations 
 
-void AbstractQHEOnSphereWithSpinHamiltonian::AddS2 (int totalLz, int totalSz, double factor, long memory)
+void AbstractQHEOnSphereWithSpinHamiltonian::AddS2 (int totalLz, int totalSz, double factor, long memory, bool fixedSz)
 {
-  this->S2Hamiltonian = new ParticleOnSphereWithSpinS2Hamiltonian((ParticleOnSphereWithSpin*)this->Particles, this->NbrParticles, this->LzMax, totalLz, totalSz, this->Architecture, factor, memory);
+  this->S2Hamiltonian = new ParticleOnSphereWithSpinS2Hamiltonian((ParticleOnSphereWithSpin*)this->Particles, this->NbrParticles, this->LzMax, totalLz, totalSz, this->Architecture, factor, memory, false, NULL, fixedSz);
 }
 
 // add an additional L^2 term to the Hamiltonian

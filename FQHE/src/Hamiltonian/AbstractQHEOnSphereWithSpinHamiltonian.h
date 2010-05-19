@@ -38,8 +38,8 @@
 #include "Hamiltonian/AbstractQHEOnSphereHamiltonian.h"
 
 #include <iostream>
-
-
+using std::cout;
+using std::endl;
 using std::ostream;
 
 
@@ -159,8 +159,9 @@ class AbstractQHEOnSphereWithSpinHamiltonian : public AbstractQHEOnSphereHamilto
   // totalLz = twice the projected momentum total value
   // totalSz = twice the projected spin total value
   // factor = factor in front of the S^2
-  // memory = amount of memory that can be used for S^2  precalculations 
-  void AddS2 (int totalLz, int totalSz, double factor = 1.0, long memory = 0l);
+  // memory = amount of memory that can be used for S^2  precalculations
+  // fixedSz = flag indicating whether Sz needs to be evaluated
+  void AddS2 (int totalLz, int totalSz, double factor = 1.0, long memory = 0l, bool fixedSz = true);
 
   // add an additional L^2 term to the Hamiltonian
   //
@@ -377,7 +378,7 @@ inline void AbstractQHEOnSphereWithSpinHamiltonian::EvaluateMNTwoBodyAddMultiply
 	      for (int m3 = 0; m3 < TmpNbrM3Values; ++m3)
 		{
 		  Index = particles->AduAdu(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
-		  if (Index < Dim)			
+		  if (Index < Dim)
 		    vDestination[Index] += Coefficient * this->M12InteractionFactorsupup[ReducedNbrInteractionFactors] * Coefficient2;
 		  ++ReducedNbrInteractionFactors;
 		}
@@ -398,7 +399,7 @@ inline void AbstractQHEOnSphereWithSpinHamiltonian::EvaluateMNTwoBodyAddMultiply
 	      for (int m3 = 0; m3 < TmpNbrM3Values; ++m3)
 		{
 		  Index = particles->AddAdd(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
-		  if (Index < Dim)			
+		  if (Index < Dim)
 		    vDestination[Index] += Coefficient * this->M12InteractionFactorsdowndown[ReducedNbrInteractionFactors] * Coefficient2;
 		  ++ReducedNbrInteractionFactors;
 		}
@@ -419,7 +420,7 @@ inline void AbstractQHEOnSphereWithSpinHamiltonian::EvaluateMNTwoBodyAddMultiply
 	      for (int m3 = 0; m3 < TmpNbrM3Values; ++m3)
 		{
 		  Index = particles->AduAdd(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
-		  if (Index < Dim)			
+		  if (Index < Dim)
 		    vDestination[Index] += Coefficient * this->M12InteractionFactorsupdown[ReducedNbrInteractionFactors] * Coefficient2;
 		  ++ReducedNbrInteractionFactors;
 		}

@@ -396,6 +396,6 @@ ostream& PrintMemorySize(ostream &str, unsigned long bytes)
     else
       str << (bytes >> 10) << "ko";
   else
-    str << bytes;
+    str << bytes <<"o";
   return str;
 }
