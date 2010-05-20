@@ -340,6 +340,16 @@ AC_MSG_RESULT([${HAVE_DEBUG}])
 AC_MSG_CHECKING(whether we are using profile mode)
 AC_MSG_RESULT([${HAVE_PROFILE}])
 
+dnl force use of -m64 option
+
+AC_ARG_ENABLE(m64, [AC_HELP_STRING([--enable-m64],[force -m64 mode])], [HAVE_FORCEM64=$enableval
+CXXFLAGS="${CXXFLAGS} -m64"
+],[HAVE_FORCEM64=no])
+
+AC_MSG_CHECKING(whether we are forcing -m64 mode)
+AC_MSG_RESULT([${HAVE_FORCEM64}])
+
+
 dnl check which packages to compile
 
 AC_ARG_ENABLE(quantumdots, [AC_HELP_STRING([--enable-quantumdots],[enable the quantum dot package])], [HAVE_QUANTUMDOTS=yes
