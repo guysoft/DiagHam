@@ -45,9 +45,9 @@ using std::endl;
 // optionDescription = string describing option (used for -h option)
 // separator = character used to separate single entries on the command line
 // altSeparator = character used to separate entries in output
-// minValueFlag = flag to indicates an double minimum value
+// minValueFlag = flag to indicates a double minimum value
 // minValue = double minimum value (no minimum value if greater or equal to maxValue) 
-// maxValueFlag = flag to indicates an double maximum value
+// maxValueFlag = flag to indicates a double maximum value
 // maxValue = double maximum value (no maximum value if lower or equal to minValue) 
 
 MultipleDoubleOption::MultipleDoubleOption(char optionCode, const char* optionName, const char* optionDescription,

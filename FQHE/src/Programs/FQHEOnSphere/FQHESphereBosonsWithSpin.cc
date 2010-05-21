@@ -107,7 +107,8 @@ int main(int argc, char** argv)
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
-  (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
+  (*ToolsGroup) += new BooleanOption  ('\n', "show-space", "show detail of states in the Hilbert-space");
+  (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the Hamiltonian");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -229,8 +230,9 @@ int main(int argc, char** argv)
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
         Memory = Architecture.GetArchitecture()->GetLocalMemory();
-      for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-	Space->PrintState(cout, i) << endl;
+      if (Manager.GetBoolean("show-space"))
+	for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+	  Space->PrintState(cout, i) << endl;
 
       AbstractQHEOnSphereWithSpinHamiltonian* Hamiltonian;
 

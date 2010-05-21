@@ -44,9 +44,9 @@ using std::endl;
 // optionName = string corresponding to option name
 // optionDescription = string describing option (used for -h option)
 // defaultValue = double default value 
-// minValueFlag = flag to indicates an double minimum value
+// minValueFlag = flag to indicates a double minimum value
 // minValue = double minimum value (no minimum value if greater or equal to maxValue) 
-// maxValueFlag = flag to indicates an double maximum value
+// maxValueFlag = flag to indicates a double maximum value
 // maxValue = double maximum value (no maximum value if lower or equal to minValue) 
 
 SingleDoubleOption::SingleDoubleOption(char optionCode, const char* optionName, const char* optionDescription, double defaultValue, 
@@ -184,7 +184,7 @@ ostream& SingleDoubleOption::PrintError (ostream& output)
 	output << "option -" << this->OptionName;
 	if ((this->OptionCode != '\n') && (this->OptionCode != '\0'))
 	  output << " (-" << this->OptionCode <<")";
-	output << " needs an double as argument" << endl;
+	output << " needs a double as argument" << endl;
       }
       break;
     case SingleDoubleOption::NoDouble:
@@ -200,14 +200,14 @@ ostream& SingleDoubleOption::PrintError (ostream& output)
 	output << "option -" << this->OptionName;
 	if ((this->OptionCode != '\n') && (this->OptionCode != '\0'))
 	  output << " (-" << this->OptionCode <<")";
-	output << " needs an double lower than " << this->MaxValue << " as argument" << endl;
+	output << " needs a double lower than " << this->MaxValue << " as argument" << endl;
       }
       break;
     case SingleDoubleOption::Lower:
       {
 	if ((this->OptionCode != '\n') && (this->OptionCode != '\0'))
 	  output << " (-" << this->OptionCode <<")";
-	output << " needs an double greater than " << this->MinValue << " as argument" << endl;
+	output << " needs a double greater than " << this->MinValue << " as argument" << endl;
       }
       break;
     }

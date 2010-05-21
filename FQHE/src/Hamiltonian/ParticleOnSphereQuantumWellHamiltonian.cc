@@ -122,7 +122,8 @@ ParticleOnSphereQuantumWellHamiltonian::ParticleOnSphereQuantumWellHamiltonian(P
       if (memory > 0)
 	{
 	  long TmpMemory = this->FastMultiplicationMemory(memory);
-	  PrintMemorySize(cout, TmpMemory);
+	  cout  << "fast = ";
+	  PrintMemorySize(cout, TmpMemory)<<endl;
 	  if (this->DiskStorageFlag == false)
 	    {
 	      this->EnableFastMultiplication();
