@@ -259,10 +259,9 @@ bool FQHESphereMonomialsTimesSlaterProjectionOperation::ArchitectureDependentApp
      {
        this->OutputVector->ClearVector();
        RealVector* TmpVector = (RealVector*) this->OutputVector->EmptyClone(true);
-       int Step = (int) this->NbrComponent / (this->NbrStage * architecture->GetNbrThreads());
+       int Step = (int) this->NbrComponent / (this->NbrStage * architecture->GetNbrSlaveNodes());
        int TmpFirstComponent = this->FirstComponent;
-       int ReducedNbrThreads = architecture->GetNbrThreads() - 1;
-       int* TmpRange[2];
+       int TmpRange[2];
        int TmpNbrSlaves = architecture->GetNbrSlaveNodes();
        int TmpSlaveID = 0;
        for (int i = 0; (i < TmpNbrSlaves) && (Step >= 0); ++i)
@@ -275,17 +274,17 @@ bool FQHESphereMonomialsTimesSlaterProjectionOperation::ArchitectureDependentApp
 	 }
        while ((Step > 0) && ((TmpSlaveID = architecture->WaitAnySlave())))
 	 {
-	   architecture->SumVector(this->OutputVector);
+	   architecture->SumVector(*(this->OutputVector));
 	 }
        while ((TmpNbrSlaves > 0) && ((TmpSlaveID = architecture->WaitAnySlave())))
 	 {
 	   --TmpNbrSlaves;
-	   architecture->SumVector(this->OutputVector);
+	   architecture->SumVector(*(this->OutputVector));
 	 }
      }
    else
      {
-       int* TmpRange[2];
+       int TmpRange[2];
        int TmpNbrElement = 0;
        while ((architecture->ReceiveFromMaster(TmpRange, TmpNbrElement) == true) && (TmpRange[1] > 0))
 	 {
@@ -296,7 +295,7 @@ bool FQHESphereMonomialsTimesSlaterProjectionOperation::ArchitectureDependentApp
 	   else
 	     this->RawApplyOperation();
 	   architecture->SendDone();
-	   architecture->SumVector(this->OutputVector);
+	   architecture->SumVector(*(this->OutputVector));
 	 }
      }
   return true;

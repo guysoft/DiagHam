@@ -369,7 +369,7 @@ int main(int argc, char** argv)
 		}
 	      ++Index;
 	    }
-	  LzaValueArray = new int[(MaxLza - MinLza + 1) >> 1];
+	  LzaValueArray = new int[((MaxLza - MinLza ) >> 1) + 1];
 	  for (int i = MinLza; i <= MaxLza; i += 2)
 	    LzaValueArray[(i - MinLza) >> 1] = 0; 
 	  Index = TmpIndex;
