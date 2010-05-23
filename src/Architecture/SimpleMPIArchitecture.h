@@ -112,6 +112,11 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // return value = true if the local node is the master node
   virtual bool IsMasterNode();
   
+  // indicate how many slave nodes are available
+  //
+  // return value = number of slave nodes
+  virtual int GetNbrSlaveNodes();
+
   // get the architecture used on the local MPI node
   //
   // return value = pointer to the local architecture
@@ -135,6 +140,16 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // return value = true if no error occured
   virtual bool SendAcknowledge (bool acknowledge = true);
 
+  // wait for a slave to send the done signal
+  //
+  // return value = id of the slave that send the done signal
+  virtual int WaitAnySlave ();
+
+  // send done signal to the master node 
+  //
+  // return value = true if no error occured
+  virtual bool SendDone ();
+
   // broadcast an integer from master node to slave nodes
   // 
   // value = integer to broadcast
@@ -147,6 +162,21 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // nbrValues = number of element in the array
   // return value = true if no error occured
   virtual bool BroadcastToSlaves(int* values, int nbrValues);
+
+  // send an integer array from master node to a given slave node
+  // 
+  // slaveID = slave ID
+  // values = array of integesr to broadcast
+  // nbrValues = number of element in the array
+  // return value = true if no error occured
+  virtual bool SendToSlaves(int slaveID, int* values, int nbrValues);
+
+  // receive an integer array from master node to the current slave node
+  // 
+  // values = array of integesr to broadcast
+  // nbrValues = number of element in the array
+  // return value = true if no error occured
+  virtual bool ReceiveFromMaster(int* values, int& nbrValues);
 
   // broadcast a double from master node to slave nodes
   // 
@@ -291,6 +321,15 @@ inline Vector& SimpleMPIArchitecture::ReassembleVector(Vector& vector)
 #else
   return vector;
 #endif
+}
+
+// indicate how many nodes are available
+//
+// return value = number of nodes
+
+inline int SimpleMPIArchitecture::GetNbrSlaveNodes()
+{
+  return (this->NbrMPINodes - 1);
 }
 
 #endif

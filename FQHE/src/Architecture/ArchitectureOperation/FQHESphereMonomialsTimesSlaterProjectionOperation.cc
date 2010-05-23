@@ -258,13 +258,46 @@ bool FQHESphereMonomialsTimesSlaterProjectionOperation::ArchitectureDependentApp
    if (architecture->IsMasterNode())
      {
        this->OutputVector->ClearVector();
+       RealVector* TmpVector = (RealVector*) this->OutputVector->EmptyClone(true);
+       int Step = (int) this->NbrComponent / (this->NbrStage * architecture->GetNbrThreads());
+       int TmpFirstComponent = this->FirstComponent;
+       int ReducedNbrThreads = architecture->GetNbrThreads() - 1;
        int* TmpRange[2];
+       int TmpNbrSlaves = architecture->GetNbrSlaveNodes();
+       int TmpSlaveID = 0;
+       for (int i = 0; (i < TmpNbrSlaves) && (Step >= 0); ++i)
+	 {
+	   TmpRange[0] = TmpFirstComponent;
+	   TmpRange[1] = Step;
+	   TmpFirstComponent += Step;
+	   if (TmpFirstComponent >= (this->FirstComponent +this->NbrComponent))
+	     Step = this->FirstComponent + this->NbrComponent - TmpFirstComponent;
+	 }
+       while ((Step > 0) && ((TmpSlaveID = architecture->WaitAnySlave())))
+	 {
+	   architecture->SumVector(this->OutputVector);
+	 }
+       while ((TmpNbrSlaves > 0) && ((TmpSlaveID = architecture->WaitAnySlave())))
+	 {
+	   --TmpNbrSlaves;
+	   architecture->SumVector(this->OutputVector);
+	 }
      }
    else
      {
-       this->OutputVector->ClearVector();
        int* TmpRange[2];
-       
+       int TmpNbrElement = 0;
+       while ((architecture->ReceiveFromMaster(TmpRange, TmpNbrElement) == true) && (TmpRange[1] > 0))
+	 {
+	   this->OutputVector->ClearVector();
+	   this->SetIndicesRange(TmpRange[0], TmpRange[1]); 
+	   if (architecture->GetLocalArchitecture()->GetArchitectureID() == AbstractArchitecture::SMP)
+	     this->ArchitectureDependentApplyOperation((SMPArchitecture*) architecture->GetLocalArchitecture());
+	   else
+	     this->RawApplyOperation();
+	   architecture->SendDone();
+	   architecture->SumVector(this->OutputVector);
+	 }
      }
   return true;
 #else
