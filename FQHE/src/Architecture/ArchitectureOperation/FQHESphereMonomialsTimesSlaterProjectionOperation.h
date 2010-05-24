@@ -58,8 +58,8 @@ class FQHESphereMonomialsTimesSlaterProjectionOperation : public AbstractArchite
   // pointer to the initial Fermionic HilbertSpace
   ParticleOnSphere * FermionSpace;
   
-  // pointer to the initial Bosonic HilbertSpace
-  BosonOnSphereShort * BosonSpace;
+  // pointer to the initial lowest Landau level HilbertSpace
+  ParticleOnSphere * LLLSpace;
   
   // RealVector where the result will be store
   RealVector * OutputVector;
@@ -68,7 +68,7 @@ class FQHESphereMonomialsTimesSlaterProjectionOperation : public AbstractArchite
   RealVector * FermionVector;
   
   // RealVector where the bosonic state is stored
-  RealVector * BosonVector;
+  RealVector * LLLVector;
   
   // table useful in the calculations
   unsigned long * FinalStates;
@@ -88,6 +88,9 @@ class FQHESphereMonomialsTimesSlaterProjectionOperation : public AbstractArchite
   //true if the lz->-lz symmetry is used
   bool Symmetry;
   
+  //true if the initial lll HilbertSpace is bosonic
+  bool BosonFlag;
+  
   // number of part in which the initial bosonic vector will be separated
   int NbrStage;
 
@@ -97,7 +100,7 @@ class FQHESphereMonomialsTimesSlaterProjectionOperation : public AbstractArchite
   //
   // Space = pointer to the HilbertSpace to use
   // fileName = name of the file where the kostka number will be store
-  FQHESphereMonomialsTimesSlaterProjectionOperation(ParticleOnSphere* fermionSpace, BosonOnSphereShort* bosonSpace, ParticleOnSphere* finalSpace, RealVector* fermionVector, RealVector* bosonVector, 
+  FQHESphereMonomialsTimesSlaterProjectionOperation(ParticleOnSphere* fermionSpace, ParticleOnSphere* lllSpace, ParticleOnSphere* finalSpace, RealVector* fermionVector, RealVector* lllVector, 
 						    RealVector* outputVector, int resume, int nbrComponent, bool projection, int step, bool flag3LL, bool symmetry);
   
   // copy constructor 

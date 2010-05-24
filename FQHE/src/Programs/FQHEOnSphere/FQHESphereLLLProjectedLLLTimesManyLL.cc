@@ -82,6 +82,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "min-component", "the min component", 0);
   (*SystemGroup) += new SingleIntegerOption ('\n', "nbr-components", "the number of component computed", 0);
   (*SystemGroup) += new SingleIntegerOption ('\n',"step", "number of time the Bosonic will be divided in",1);
+  (*SystemGroup) += new SingleStringOption  ('\n', "lll-state", "name of the file corresponding to the state in the LLL");
   (*OutputGroup) += new BooleanOption ('\n', "normalize", "express the projected state in the normalized basis");
   (*OutputGroup) += new SingleStringOption ('o', "bin-output", "output the Jack polynomial decomposition into a binary file");
   (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the Jack polynomial decomposition into a text file");
@@ -100,12 +101,12 @@ int main(int argc, char** argv)
       return 0;
     }
   
-  int NbrBoson=0;
-  int LzMaxBoson=0;
-  int TotalLzBoson=0;
-  int NbrFermion=0;
-  int LzMaxFermion=0;
-  int TotalLzFermion=0;
+  int LLLNbrParticles = 0;
+  int LLLLzMax = 0;
+  int LLLTotalLz = 0;
+  int NbrFermion = 0;
+  int LzMaxFermion = 0;
+  int TotalLzFermion = 0;
   bool FermionFlag = false;
   int Step = Manager.GetInteger("step");
   bool HaldaneBasisFlag = Manager.GetBoolean("haldane");
@@ -115,26 +116,27 @@ int main(int argc, char** argv)
   bool Resume = Manager.GetBoolean("resume");
   int MinComponent = Manager.GetInteger("min-component");
   int NbrComponents = Manager.GetInteger("nbr-components");
-  char* BosonFileName = Manager.GetString("boson");
+  char* LLLFileName = Manager.GetString("lll-state");
   char* FermionFileName = Manager.GetString("fermion");
   bool Flag3LL =  Manager.GetBoolean("3-ll");
   bool Symmetric = Manager.GetBoolean("symmetric");
+  bool LLLFermionFlag = true;
   
   
-  if (BosonFileName == 0)
+  if (LLLFileName == 0)
     {
-      cout << "error, a bosonic state file should be provided. See man page for option syntax or type FQHESphereLLLProjectedLLLTimesManyLL -h" << endl;
+      cout << "error, a lowest Landau level state file should be provided. See man page for option syntax or type FQHESphereLLLProjectedLLLTimesManyLL -h" << endl;
       return -1;
     }
-  
+
   if (FermionFileName == 0)
     {
       cout << "error, a fermionic state file should be provided. See man page for option syntax or type FQHESphereLLLProjectedLLLTimesManyLL -h" << endl;
       return -1;
     }
   
-  if (FQHEOnSphereFindSystemInfoFromVectorFileName(BosonFileName, NbrBoson,LzMaxBoson,TotalLzBoson, FermionFlag) == false)
-    {		
+  if (FQHEOnSphereFindSystemInfoFromVectorFileName(LLLFileName, LLLNbrParticles, LLLLzMax, LLLTotalLz, LLLFermionFlag) == false)
+    {
       return -1;
     }
   
@@ -144,23 +146,23 @@ int main(int argc, char** argv)
       return -1;
     }
   
-  if(NbrBoson!=NbrFermion)
+ if (LLLNbrParticles != NbrFermion)
     {
-      cout << "The number of bosons and of fermions must be the same" <<endl;
+      cout << "The number of particles in the two states must be the same" <<endl;
       return -1;
     }
-  
-  int Parity = TotalLzBoson & 1;
-  if (Parity != ((NbrBoson * LzMaxBoson) & 1))
+
+  int Parity = LLLTotalLz & 1;
+  if (Parity != ((LLLNbrParticles * LLLLzMax) & 1))
     {
       cout << "Lz and (NbrParticles * LzMax) must have the parity" << endl;
       return -1;
     }
-  
-  
-  if (IsFile(BosonFileName) == false)
+
+
+  if (IsFile(LLLFileName) == false)
     {
-      cout << "state " << BosonFileName << " does not exist or can't be opened" << endl;
+      cout << "state " << LLLFileName << " does not exist or can't be opened" << endl;
       return -1;
     }
   if (IsFile(FermionFileName) == false)
@@ -169,89 +171,149 @@ int main(int argc, char** argv)
       return -1;
     }
   
-  RealVector BosonState;
-  if (BosonState.ReadVector (BosonFileName) == false)
+  RealVector LLLState;
+  if (LLLState.ReadVector (LLLFileName) == false)
     {
-      cout << "can't open vector file " << BosonFileName << endl;
-      return -1;      
+      cout << "can't open vector file " << LLLFileName << endl;
+      return -1;
     }
-  
-  BosonOnSphereShort* BosonSpace = 0;
-  
-  if(HaldaneBasisFlag==false)
+ ParticleOnSphere* LLLSpace = 0;
+
+  if (LLLFermionFlag == false)
     {
+      if(HaldaneBasisFlag == false)
+        {
 #ifdef  __64_BITS__
-      if((LzMaxBoson + NbrBoson - 1) < 63)
+          if((LLLLzMax + LLLNbrParticles - 1) < 63)
 #else
-	if ((LzMaxBoson + NbrBoson - 1) < 31)	
+            if ((LLLLzMax + LLLNbrParticles - 1) < 31)
 #endif
-	  {
-	    BosonSpace = new BosonOnSphereShort (NbrBoson, TotalLzBoson, LzMaxBoson);
-	  }
+              {
+                LLLSpace = new BosonOnSphereShort (LLLNbrParticles, LLLTotalLz, LLLLzMax);
+              }
+        }
+      else
+        {
+          int* ReferenceState = 0;
+          if (Manager.GetString("reference-file") == 0)
+            {
+              cout << "error, a reference file is needed for bosons in Haldane basis" << endl;
+              return -1;
+            }
+          ConfigurationParser ReferenceStateDefinition;
+          if (ReferenceStateDefinition.Parse(Manager.GetString("reference-file")) == false)
+            {
+              ReferenceStateDefinition.DumpErrors(cout) << endl;
+              return -1;
+            }
+          if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", LLLNbrParticles) == false) || (LLLNbrParticles <= 0))
+            {
+              cout << "NbrParticles is not defined or as a wrong value" << endl;
+              return -1;
+            }
+      if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", LLLLzMax) == false) || (LLLLzMax < 0))
+        {
+          cout << "LzMax is not defined or as a wrong value" << endl;
+          return -1;
+        }
+      int MaxNbrLz;
+      if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
+        {
+          cout << "error while parsing ReferenceState in " << Manager.GetString("reference-file") << endl;
+          return -1;
+        }
+      if (MaxNbrLz != (LLLLzMax + 1))
+        {
+          cout << "wrong LzMax value in ReferenceState" << endl;
+          return -1;
+        }
+#ifdef  __64_BITS__
+      if (LLLLzMax  < 63)
+#else
+        if (LLLLzMaxBoson  < 31)
+#endif
+          LLLSpace = new BosonOnSphereHaldaneBasisShort (LLLNbrParticles,LLLTotalLz, LLLLzMax, ReferenceState);
+        }
     }
   else
     {
-      int* ReferenceState = 0;
-      if (Manager.GetString("reference-file") == 0)
-	{
-	  cout << "error, a reference file is needed for bosons in Haldane basis" << endl;
-	  return -1;
-	}
-      ConfigurationParser ReferenceStateDefinition;
-      if (ReferenceStateDefinition.Parse(Manager.GetString("reference-file")) == false)
-	{
-	  ReferenceStateDefinition.DumpErrors(cout) << endl;
-	  return -1;
-	}
-      if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", NbrBoson) == false) || (NbrBoson <= 0))
-	{
-	  cout << "NbrParticles is not defined or as a wrong value" << endl;
-	  return -1;
-	}
-      if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", LzMaxBoson) == false) || (LzMaxBoson < 0))
-	{
-	  cout << "LzMax is not defined or as a wrong value" << endl;
-	  return 0;
-	}
-      int MaxNbrLz;
-      if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
-	{
-	  cout << "error while parsing ReferenceState in " << Manager.GetString("reference-file") << endl;
-	  return -1;     
-	}
-      if (MaxNbrLz != (LzMaxBoson + 1))
-	{
-	  cout << "wrong LzMax value in ReferenceState" << endl;
-	  return -1;
-	}
-#ifdef  __64_BITS__
-      if (LzMaxBoson  < 63)
+      if (HaldaneBasisFlag == false)
+        {
+#ifdef __64_BITS__
+          if (LLLLzMax <= 63)
 #else
-	if (LzMaxBoson  < 31)	
+            if (LLLLzMax <= 31)
 #endif
-	  BosonSpace = new BosonOnSphereHaldaneBasisShort(NbrBoson,TotalLzBoson, LzMaxBoson, ReferenceState);
+              {
+                LLLSpace = new FermionOnSphere (LLLNbrParticles,LLLTotalLz,LLLLzMax);
+              }
+            else
+              {
+                cout << "This lowest Landau level space requires FermionOnSphereLong class for which this kind of calculation is not available"<<endl;
+                return -1;
+              }
+        }
+      else
+        {
+          int * ReferenceState = 0;
+          ConfigurationParser ReferenceStateDefinition;
+          if (ReferenceStateDefinition.Parse(Manager.GetString("reference-file")) == false)
+            {
+              ReferenceStateDefinition.DumpErrors(cout) << endl;
+              return -1;
+            }
+          if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", LLLNbrParticles) == \
+               false) || (LLLNbrParticles <= 0))
+            {
+              cout << "NbrParticles is not defined or as a wrong value" << endl;
+              return -1;
+            }
+          if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", LLLLzMax) == false) || (LLLLzMax < 0))
+                {
+                  cout << "LzMax is not defined or as a wrong value" << endl;
+                  return 0;
+                }
+          int MaxNbrLz;
+          if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
+            {
+              cout << "error while parsing ReferenceState in " << Manager.GetString("reference-file") << endl;
+              return -1;
+            }
+          if (MaxNbrLz != (LLLLzMax + 1))
+            {
+              cout << "wrong LzMax value in ReferenceState" << endl;
+              return -1;
+            }
+#ifdef  __64_BITS__
+          if (LLLLzMax  < 63)
+#else
+            if (LLLLzMaxBoson  < 31)
+#endif
+              LLLSpace = new FermionOnSphereHaldaneBasis (LLLNbrParticles,LLLTotalLz, LLLLzMax, ReferenceState);
+        }
     }
-  
-  if (BosonSpace->GetHilbertSpaceDimension() != BosonState.GetVectorDimension())
+
+  if (LLLSpace->GetHilbertSpaceDimension() != LLLState.GetVectorDimension())
     {
-      cout << "Number of rows of the bosonic vector is not equal to the Hilbert space dimension!"<<endl;;
+      cout << "Number of rows of the LLL vector is not equal to the Hilbert space dimension!"<<endl;;
       return -1;
     }
-  if (Step>BosonSpace->GetHilbertSpaceDimension())
+  if (Step > LLLSpace->GetHilbertSpaceDimension())
     {
-      cout << " The bosonic space cannot be divided in less than 1 dimension space"<<endl;
+      cout << " The LLL space cannot be divided in less than 1 dimension space"<<endl;
       return -1;
     }
+
   ParticleOnSphere * SpaceLL=0;
   int LzMaxUp = LzMaxFermion + 2;
   int LzMaxDown = LzMaxFermion;
   if(Flag3LL==true)
     {
-      SpaceLL = new FermionOnSphereThreeLandauLevels (NbrBoson, TotalLzFermion,LzMaxFermion);
+      SpaceLL = new FermionOnSphereThreeLandauLevels (LLLNbrParticles, TotalLzFermion, LzMaxFermion);
     }
   else
     {
-      SpaceLL = new FermionOnSphereTwoLandauLevels (NbrBoson, TotalLzFermion, LzMaxUp, LzMaxDown);
+      SpaceLL = new FermionOnSphereTwoLandauLevels (LLLNbrParticles, TotalLzFermion, LzMaxUp, LzMaxDown);
     }
   RealVector FermionState;
   
@@ -266,15 +328,22 @@ int main(int argc, char** argv)
       cout <<"Number of rows of the fermionic vector is not equal to the Hilbert space dimension!" <<endl;
       return -1;
     }
-  
+
   ParticleOnSphere * FinalSpace;
-  if(Projection)
+  if (LLLFermionFlag == false)
     {
-      FinalSpace = new FermionOnSphere (NbrBoson, TotalLzFermion, LzMaxDown+LzMaxBoson);
+      if(Projection)
+        {
+          FinalSpace = new FermionOnSphere (LLLNbrParticles, TotalLzFermion, LzMaxDown + LLLLzMax);
+        }
+      else
+        FinalSpace = new FermionOnSphereTwoLandauLevels (LLLNbrParticles, TotalLzFermion, LzMaxUp + LLLLzMax, LzMaxDown + LLLLzMax);
     }
   else
-    FinalSpace = new FermionOnSphereTwoLandauLevels (NbrBoson, TotalLzFermion, LzMaxUp+LzMaxBoson, LzMaxDown+LzMaxBoson);
-  
+    {
+      FinalSpace = new BosonOnSphereShort (LLLNbrParticles, TotalLzFermion, LzMaxDown + LLLLzMax);
+    }
+
   RealVector * OutputVector = 0;
   if(Resume)
     {
@@ -317,7 +386,7 @@ int main(int argc, char** argv)
     {
       OutputVector = new RealVector(FinalSpace->GetHilbertSpaceDimension(),true);
     }
-  FQHESphereMonomialsTimesSlaterProjectionOperation Operation(SpaceLL, BosonSpace, FinalSpace, &FermionState, &BosonState,OutputVector, MinComponent, NbrComponents, Projection, 
+  FQHESphereMonomialsTimesSlaterProjectionOperation Operation(SpaceLL, LLLSpace, FinalSpace, &FermionState, &LLLState, OutputVector, MinComponent, NbrComponents, Projection, 
 							      Step, Flag3LL, Symmetric);																
   Operation.ApplyOperation(Architecture.GetArchitecture());
   

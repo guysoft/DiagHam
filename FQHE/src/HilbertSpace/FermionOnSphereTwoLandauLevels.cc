@@ -39,6 +39,7 @@
 #include "Vector/RealVector.h"
 #include "FunctionBasis/AbstractFunctionBasis.h"
 #include "MathTools/BinomialCoefficients.h"
+#include "MathTools/FactorialCoefficient.h"
 #include "GeneralTools/UnsignedIntegerTools.h"
 #include "GeneralTools/ArrayTools.h"
 
@@ -1577,4 +1578,237 @@ unsigned int FermionOnSphereTwoLandauLevels::MonomialsTimesSlaterProjection(unsi
     }
   delete [] State;
   return NbrNonZero;
+}
+
+// compute the projection of the product of a bosonic state and a fermionic state
+//
+// lllFermionState = real vector where the lowest Landau level fermionic state is stored
+// fermionState = real vector where the two Landau level fermionic state is stored
+// outputVector = real vector where the result has to be stored
+// finalStates = array where the obtained states are stored in their fermionic representation
+// weigth = array where the coefficients for each obtained state are stored
+// lllFermionSpace = pointer to the lowest Landau level Hilbert space
+// finalSpace = pointer to the final Hilbert space
+// firstComponent = first component to be computed
+// nbrComponent = number of components to be computed
+
+void FermionOnSphereTwoLandauLevels::LLLFermionicStateTimeFermionicState(RealVector& lllFermionState, RealVector& fermionState, RealVector& outputVector, unsigned long* finalStates, double* weigth, 
+									 FermionOnSphere* lllFermionSpace,BosonOnSphereShort* finalSpace, int firstComponent,int nbrComponent)
+{
+        unsigned long* LLLSlater = new unsigned long[this->NbrFermions];
+        unsigned long* Slater = new unsigned long[this->NbrFermions];
+        int NbrMax = firstComponent+nbrComponent;
+        int NbrVariable = 0;
+        FactorialCoefficient Coefficient;
+        unsigned long* Variable = new unsigned long[this->NbrFermions];
+        for (int j = 0; j < this->HilbertSpaceDimension; j++)
+        {
+                if(fermionState[j] != 0)
+                {
+                        NbrVariable=0;
+                        this->ConvertToMonomialVariable(this->StateDescription[j], Slater, NbrVariable, Variable);
+                        for (int i = firstComponent; i < NbrMax; i++)
+                        {
+                                if(lllFermionState[i] != 0)
+                                {
+                                        lllFermionSpace->GetMonomial(i, LLLSlater);
+                                        unsigned int Limit=this->SlaterTimesSlaterProjection(Slater,LLLSlater,Variable,NbrVariable,finalStates,weigth,finalSpace);
+                                        for (unsigned int Index=0; Index<Limit;Index++)
+                                        {
+                                                int FTmpLzMax = finalSpace->LzMax+this->NbrFermions-1;
+                                                while (((finalStates[Index] >> FTmpLzMax) & 0x1ul) == 0x0ul)
+                                                        --FTmpLzMax;
+                                                finalSpace->FermionToBoson(finalStates[Index],FTmpLzMax,finalSpace->TemporaryState,finalSpace->TemporaryStateLzMax);
+                                                Coefficient.SetToOne();
+                                                for(int p=0;p<finalSpace->TemporaryStateLzMax+1;p++)
+                                                {
+                                                        Coefficient.FactorialMultiply(finalSpace->TemporaryState[p]);
+                                                }
+                                                outputVector[finalSpace->FermionBasis->FindStateIndex(finalStates[Index],FTmpLzMax)] += lllFermionState[i]*fermionState[j]*weigth[Index]*Coefficient.GetIntegerValue();
+                                        }
+                                }
+                        }
+                }
+        }
+}
+
+
+
+
+
+// compute the projection of the product of a bosonic state and a fermionic state using lz->-lz symmetry
+//
+// lllFermionState = real vector where the lowest Landau level fermionic state is stored
+// fermionState = real vector where the two Landau level fermionic state is stored
+// outputVector = real vector where the result has to be stored
+// finalStates = array where the obtained states are stored in their fermionic representation
+// weigth = array where the coefficients for each obtained state are stored
+// lllFermionSpace = pointer to the lowest Landau level Hilbert space
+// finalSpace = pointer to the final Hilbert space
+// firstComponent = first component to be computed
+// nbrComponent = number of components to be computed
+
+void FermionOnSphereTwoLandauLevels::LLLFermionicStateTimeFermionicStateSymmetric(RealVector& lllFermionState, RealVector& fermionState, RealVector& outputVector, unsigned long* finalStates, double* weigth,
+										  FermionOnSphere* lllFermionSpace, BosonOnSphereShort* finalSpace, int firstComponent, int nbrComponent)
+{
+  unsigned long* LLLSlater = new unsigned long[this->NbrFermions];
+  unsigned long* Slater = new unsigned long[this->NbrFermions];
+  int NbrMax = firstComponent+nbrComponent;
+  int NbrVariable = 0;
+  unsigned long* Variable = new unsigned long[this->NbrFermions];
+  FactorialCoefficient coefficient;
+  for (int j = 0 ; j < this->HilbertSpaceDimension ; j++)
+    {
+      if(fermionState[j] != 0)
+	{
+	  NbrVariable = 0;
+	  this->ConvertToMonomialVariable(this->StateDescription[j], Slater, NbrVariable, Variable);
+	  for (int i = firstComponent ; i < NbrMax ; i++)
+	    {
+	      if(lllFermionState[i]!=0)
+		{
+		  unsigned long TmpState=lllFermionSpace->GetSymmetricState(lllFermionSpace->StateDescription[i]);
+		  int TmpLzMax = lllFermionSpace->LzMax;
+		  while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
+		    --TmpLzMax;
+		  if(lllFermionSpace->FindStateIndex(TmpState,TmpLzMax) > i)
+		    {
+		      lllFermionSpace->GetMonomial(i,LLLSlater);
+		      unsigned int Limit = this->SlaterTimesSlaterProjection(Slater, LLLSlater, Variable, NbrVariable, finalStates, weigth, finalSpace);
+		      for (unsigned int Index=0; Index < Limit;Index++)
+			{
+			  int FTmpLzMax = finalSpace->LzMax+this->NbrFermions-1;
+			  while (((finalStates[Index] >> FTmpLzMax) & 0x1ul) == 0x0ul)
+			    --FTmpLzMax;
+			  finalSpace->FermionToBoson(finalStates[Index], FTmpLzMax, finalSpace->TemporaryState, finalSpace->TemporaryStateLzMax);
+			  coefficient.SetToOne();
+			  for(int p = 0;p < (finalSpace->TemporaryStateLzMax + 1); p++)
+			    {
+			      coefficient.FactorialMultiply(finalSpace->TemporaryState[p]);
+			    }
+			  outputVector[finalSpace->FermionBasis->FindStateIndex(finalStates[Index], FTmpLzMax)] += lllFermionState[i] * fermionState[j] * weigth[Index] * coefficient.GetIntegerValue();
+			  unsigned long TmpState = finalSpace->FermionBasis->GetSymmetricState(finalStates[Index]);
+			  FTmpLzMax = finalSpace->LzMax + this->NbrFermions - 1;
+			  while (((TmpState >> FTmpLzMax) & 0x1ul) == 0x0ul)
+			    --FTmpLzMax;
+			  finalSpace->FermionToBoson(finalStates[Index], FTmpLzMax, finalSpace->TemporaryState, finalSpace->TemporaryStateLzMax);
+			  coefficient.SetToOne();
+			  for(int p = 0;p < (finalSpace->TemporaryStateLzMax + 1); p++)
+			    {
+			      coefficient.FactorialMultiply(finalSpace->TemporaryState[p]);
+			    }
+			  outputVector[finalSpace->FermionBasis->FindStateIndex(TmpState,FTmpLzMax)] += lllFermionState[i] * fermionState[j] * weigth[Index] * coefficient.GetIntegerValue();
+			}
+		    }
+		  if(lllFermionSpace->FindStateIndex(TmpState,TmpLzMax) == i)
+		    {
+		      lllFermionSpace->GetMonomial(i, LLLSlater);
+		      unsigned int Limit = this->SlaterTimesSlaterProjection(Slater, LLLSlater, Variable, NbrVariable, finalStates, weigth, finalSpace);
+		      for (unsigned int Index=  0; Index < Limit; Index++)
+			{
+			  int FTmpLzMax = finalSpace->LzMax+this->NbrFermions-1;
+			  while (((finalStates[Index] >> FTmpLzMax) & 0x1ul) == 0x0ul)
+			    --FTmpLzMax;
+			  finalSpace->FermionToBoson(finalStates[Index], FTmpLzMax, finalSpace->TemporaryState, finalSpace->TemporaryStateLzMax);
+			  coefficient.SetToOne();
+			  for(int p = 0; p < (finalSpace->TemporaryStateLzMax + 1); p++)
+			    {
+			      coefficient.FactorialMultiply(finalSpace->TemporaryState[p]);
+			    }			  
+			  outputVector[finalSpace->FermionBasis->FindStateIndex(finalStates[Index],FTmpLzMax)] += lllFermionState[i] * fermionState[j] * weigth[Index] * coefficient.GetIntegerValue();
+			}
+		    }
+		}
+	    }
+	}
+    }
+}
+
+
+// compute the product and the projection of a Slater determinant in the LLL and a Slater determinant in two Landau levels
+//
+// slater = array where the slater determinant in the two landau levels is stored in its monomial representation
+// lllslater = array where the slater determinant in the LLL is stored in its monomial representation
+// variable = reference on the array where the indice of fermions in the second Landau level is stored
+// nbrVariable = number of fermions in the second Landau level
+// finalStates = array where the obtained states are stored in their fermionic representation
+// weigth = array where the coefficients for each obtained state are stored
+// finalSpace = pointer to the final HilbertSpace
+// return value = number of different obtained states
+
+unsigned int FermionOnSphereTwoLandauLevels::SlaterTimesSlaterProjection(unsigned long* slater,unsigned long* lllslater,unsigned long * variable,int nbrVariable, unsigned long*& finalStates,
+									 double*& weigth, BosonOnSphereShort* finalSpace)
+{
+  unsigned int NbrStates = 0;
+  unsigned long * State = new unsigned long[this->NbrFermions];
+  unsigned long TmpState = 0ul;
+  double Coef = 1.0;
+  long TmpLzMaxUp = this->LzMaxUp;
+  long TmpFinalLzMaxUp = 2l + finalSpace->LzMax;
+  double InverseFactor = 1.0 / (((double) TmpLzMaxUp) * ((double) TmpFinalLzMaxUp));
+  for (int i = 0; i < this->NbrFermions ; i++)
+    State[i] = slater[i] + lllslater[i];
+  for(int k = 0 ; (k < nbrVariable) && (Coef != 0.0); k++)
+    {
+      long Numerator = -(slater[variable[k]] * TmpFinalLzMaxUp) + (State[variable[k]] * TmpLzMaxUp);
+      if (Numerator == 0l)
+	Coef = 0.0;
+      else
+	Coef *= ((double) Numerator) * InverseFactor;
+    }
+  
+  unsigned long Mask=0ul;
+  unsigned long Sign = 0ul;
+  if(Coef != 0.0)
+    {
+      for (int i=0; (i < this->NbrFermions);i++)
+	{
+	  State[i]--;
+	}
+      NbrStates += SearchInArrayAndSetWeight(finalSpace->ConvertFromMonomial(State), finalStates, weigth, NbrStates, Coef);
+    }
+  while (std::prev_permutation(lllslater, lllslater + this->NbrFermions))
+    {
+      Coef = 1.0;
+      for(int i = 0 ; i < this->NbrFermions; i++)
+	State[i] = slater[i] + lllslater[i];
+      for(int k = 0 ; (k < nbrVariable) && (Coef != 0.0); k++)
+	{
+	  long Numerator = -(slater[variable[k]] * TmpFinalLzMaxUp) + (State[variable[k]] * TmpLzMaxUp);
+	  if (Numerator == 0l)
+	    Coef = 0.0;
+	  else
+	    Coef *= ((double) Numerator) * InverseFactor;
+	}
+      if( Coef != 0.0 )
+	{
+	  TmpState = 0ul;
+	  Sign = 0ul;
+	  for (int i=0; (i < this->NbrFermions);i++)
+	    {
+	      State[i]--;
+	      Mask = (1ul << lllslater[i]);
+	      unsigned long TmpState2 = TmpState & (Mask - 1ul);
+#ifdef  __64_BITS__
+	      TmpState2 ^= TmpState2 >> 32;
+#endif
+	      TmpState2 ^= TmpState2 >> 16;
+	      TmpState2 ^= TmpState2 >> 8;
+	      TmpState2 ^= TmpState2 >> 4;
+	      TmpState2 ^= TmpState2 >> 2;
+	      TmpState2 ^= TmpState2 >> 1;
+	      Sign ^= TmpState2;
+	      TmpState |= Mask;
+	    }
+	  SortArrayDownOrdering(State,this->NbrFermions);
+	  ((Sign & 0x1ul) == 0ul)?:Coef*=-1.0;
+	  NbrStates += SearchInArrayAndSetWeight(finalSpace->ConvertFromMonomial(State), finalStates, weigth, NbrStates, Coef);
+	}
+    }
+  delete [] State;
+
+  return NbrStates;
+// original line was
+//  return NbrNonZero;
+
 }
