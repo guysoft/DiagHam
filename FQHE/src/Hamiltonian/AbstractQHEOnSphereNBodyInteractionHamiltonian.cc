@@ -1036,7 +1036,7 @@ long AbstractQHEOnSphereNBodyInteractionHamiltonian::PartialFastMultiplicationMe
 	  {
 	    int m1 = this->OneBodyMValues[j];
 	    int m2 = this->OneBodyNValues[j];
-	    Index = this->Particles->AdA(i, m1, m2, Coefficient);
+	    Index = TmpParticles->AdA(i, m1, m2, Coefficient);
 	    if (Index < this->Particles->GetHilbertSpaceDimension())
 	     {
 	       ++Memory;
