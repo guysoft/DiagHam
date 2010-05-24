@@ -93,14 +93,17 @@ AbstractQHEOnSphereQuantumWellHamiltonian::~AbstractQHEOnSphereQuantumWellHamilt
       delete[] this->MixedIntraSectorIndicesPerSum;
       delete[] this->InteractionFactorsmixedintra;
 
-      delete[] this->NbrMixedInterSectorIndicesPerSum;
-      for (int i = 0; i < this->NbrMixedInterSectorSums; ++i)
+      if (NbrMixedInterSectorSums!=0)
 	{
-	  delete[] this->MixedInterSectorIndicesPerSum[i];
-	  delete[] this->InteractionFactorsmixedinter[i];
+	  delete[] this->NbrMixedInterSectorIndicesPerSum;
+	  for (int i = 0; i < this->NbrMixedInterSectorSums; ++i)
+	    {
+	      delete[] this->MixedInterSectorIndicesPerSum[i];
+	      delete[] this->InteractionFactorsmixedinter[i];
+	    }
+	  delete[] this->MixedInterSectorIndicesPerSum;
+	  delete[] this->InteractionFactorsmixedinter;
 	}
-      delete[] this->MixedInterSectorIndicesPerSum;
-      delete[] this->InteractionFactorsmixedinter;
 
 //*********************************************************************************************************
 //********************************     M I X E D     T E R M S ***********************************************

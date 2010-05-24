@@ -29,7 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "Hamiltonian/ParticleOnSphereQuantumWellHamiltonian.h"
+#include "Hamiltonian/ParticleOnSphereEffectiveLatticeHamiltonian.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
@@ -61,6 +61,7 @@ using std::ostream;
 // nbrParticles = number of particles
 // lzmax = maximum Lz value reached by a particle in the state
 // architecture = architecture to use for precalculation
+// alpha = parameter encoding deviation of flux-density from half filling on the lattice
 // pseudoPotential = array with the pseudo-potentials (sorted such that the first element corresponds to the delta interaction)
 //                   first index refered to the spin sector (sorted as up-up, down-down, up-down)
 // onebodyPotentialUpUp =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin up, null pointer if none
@@ -70,7 +71,7 @@ using std::ostream;
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
-ParticleOnSphereQuantumWellHamiltonian::ParticleOnSphereQuantumWellHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, double** pseudoPotential, double* onebodyPotentialUpUp, double* onebodyPotentialDownDown, double* onebodyPotentialUpDown, AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, char* precalculationFileName)
+ParticleOnSphereEffectiveLatticeHamiltonian::ParticleOnSphereEffectiveLatticeHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, double alpha, double** pseudoPotential, double* onebodyPotentialUpUp, double* onebodyPotentialDownDown, double* onebodyPotentialUpDown, AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, char* precalculationFileName)
 {
   this->Particles = particles;
   this->LzMax = lzmax;
@@ -79,14 +80,22 @@ ParticleOnSphereQuantumWellHamiltonian::ParticleOnSphereQuantumWellHamiltonian(P
   this->FastMultiplicationFlag = false;
   this->OneBodyTermFlag = false;
   this->Architecture = architecture;
+  this->Alpha = alpha;
   this->PseudoPotentials = new double* [4];
   this->L2Hamiltonian = 0;
   this->S2Hamiltonian = 0;
+  if (pseudoPotential!=NULL)
+    HaveOtherMixed=true;
+  else
+    HaveOtherMixed=false;
   for (int j = 0; j < 4; ++j)
     {
       this->PseudoPotentials[j] = new double [this->NbrLzValue];
       for (int i = 0; i < this->NbrLzValue; ++i)
-	this->PseudoPotentials[j][i] = pseudoPotential[j][this->LzMax - i];
+	if (pseudoPotential!=NULL)
+	  this->PseudoPotentials[j][i] = pseudoPotential[j][this->LzMax - i];
+	else
+	  this->PseudoPotentials[j][i] = 0.0;
     }
   this->EvaluateInteractionFactors();
   this->HamiltonianShift = 0.0;
@@ -144,7 +153,7 @@ ParticleOnSphereQuantumWellHamiltonian::ParticleOnSphereQuantumWellHamiltonian(P
 // destructor
 //
 
-ParticleOnSphereQuantumWellHamiltonian::~ParticleOnSphereQuantumWellHamiltonian() 
+ParticleOnSphereEffectiveLatticeHamiltonian::~ParticleOnSphereEffectiveLatticeHamiltonian() 
 {
   for (int j = 0; j < 4; ++j)
     delete[] this->PseudoPotentials[j];
@@ -155,7 +164,7 @@ ParticleOnSphereQuantumWellHamiltonian::~ParticleOnSphereQuantumWellHamiltonian(
 //
 // hilbertSpace = pointer to Hilbert space to use
 
-void ParticleOnSphereQuantumWellHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
+void ParticleOnSphereEffectiveLatticeHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
 {
   delete[] this->InteractionFactors;
   this->Particles = (ParticleOnSphere*) hilbertSpace;
@@ -166,7 +175,7 @@ void ParticleOnSphereQuantumWellHamiltonian::SetHilbertSpace (AbstractHilbertSpa
 //
 // return value = pointer to used Hilbert space
 
-AbstractHilbertSpace* ParticleOnSphereQuantumWellHamiltonian::GetHilbertSpace ()
+AbstractHilbertSpace* ParticleOnSphereEffectiveLatticeHamiltonian::GetHilbertSpace ()
 {
   return this->Particles;
 }
@@ -175,7 +184,7 @@ AbstractHilbertSpace* ParticleOnSphereQuantumWellHamiltonian::GetHilbertSpace ()
 //
 // return value = corresponding matrix elementdimension
 
-int ParticleOnSphereQuantumWellHamiltonian::GetHilbertSpaceDimension ()
+int ParticleOnSphereEffectiveLatticeHamiltonian::GetHilbertSpaceDimension ()
 {
   return this->Particles->GetHilbertSpaceDimension();
 }
@@ -184,7 +193,7 @@ int ParticleOnSphereQuantumWellHamiltonian::GetHilbertSpaceDimension ()
 //
 // shift = shift value
 
-void ParticleOnSphereQuantumWellHamiltonian::ShiftHamiltonian (double shift)
+void ParticleOnSphereEffectiveLatticeHamiltonian::ShiftHamiltonian (double shift)
 {
   this->HamiltonianShift = shift;
 }
@@ -195,7 +204,7 @@ void ParticleOnSphereQuantumWellHamiltonian::ShiftHamiltonian (double shift)
 // V2 = vector to right multiply with current matrix
 // return value = corresponding matrix element
 
-Complex ParticleOnSphereQuantumWellHamiltonian::MatrixElement (RealVector& V1, RealVector& V2) 
+Complex ParticleOnSphereEffectiveLatticeHamiltonian::MatrixElement (RealVector& V1, RealVector& V2) 
 {
   double x = 0.0;
   int dim = this->Particles->GetHilbertSpaceDimension();
@@ -211,7 +220,7 @@ Complex ParticleOnSphereQuantumWellHamiltonian::MatrixElement (RealVector& V1, R
 // V2 = vector to right multiply with current matrix
 // return value = corresponding matrix element
 
-Complex ParticleOnSphereQuantumWellHamiltonian::MatrixElement (ComplexVector& V1, ComplexVector& V2) 
+Complex ParticleOnSphereEffectiveLatticeHamiltonian::MatrixElement (ComplexVector& V1, ComplexVector& V2) 
 {
   return Complex();
 }
@@ -220,7 +229,7 @@ Complex ParticleOnSphereQuantumWellHamiltonian::MatrixElement (ComplexVector& V1
 //
 // return value = list of left interaction operators
 
-List<Matrix*> ParticleOnSphereQuantumWellHamiltonian::LeftInteractionOperators()
+List<Matrix*> ParticleOnSphereEffectiveLatticeHamiltonian::LeftInteractionOperators()
 {
   List<Matrix*> TmpList;
   return TmpList;
@@ -230,7 +239,7 @@ List<Matrix*> ParticleOnSphereQuantumWellHamiltonian::LeftInteractionOperators()
 //
 // return value = list of right interaction operators
 
-List<Matrix*> ParticleOnSphereQuantumWellHamiltonian::RightInteractionOperators()
+List<Matrix*> ParticleOnSphereEffectiveLatticeHamiltonian::RightInteractionOperators()
 {
   List<Matrix*> TmpList;
   return TmpList;
@@ -239,23 +248,23 @@ List<Matrix*> ParticleOnSphereQuantumWellHamiltonian::RightInteractionOperators(
 // evaluate all interaction factors
 //   
 
-void ParticleOnSphereQuantumWellHamiltonian::EvaluateInteractionFactors()
+void ParticleOnSphereEffectiveLatticeHamiltonian::EvaluateInteractionFactors()
 {
   // int Lim;
   // int Min;
   // int Pos = 0;
   ClebschGordanCoefficients Clebsch (this->LzMax, this->LzMax);
-  int J = 2 * this->LzMax - 2;
   // int m4;
   double ClebschCoef;
   long TotalNbrInteractionFactors = 0;
-
+  int J;
+  
   int Sign = 1;
   if (this->LzMax & 1)
     Sign = 0;
   double TmpCoefficient = 0.0;
 
-//INTER
+  //INTER
   this->NbrInterSectorSums = 2 * this->LzMax + 1;
   this->NbrInterSectorIndicesPerSum = new int[this->NbrInterSectorSums];
   for (int i = 0; i < this->NbrInterSectorSums; ++i)
@@ -277,11 +286,10 @@ void ParticleOnSphereQuantumWellHamiltonian::EvaluateInteractionFactors()
 	++this->NbrInterSectorIndicesPerSum[(m1 + m2)];
       }
 
-//FERMIONS
+  //FERMIONS  *** this code is not really used for lattices, as we first considered bosons
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
-
-//INTRA
+      //INTRA
       this->NbrIntraSectorSums = 2 * this->LzMax - 1;
       this->NbrIntraSectorIndicesPerSum = new int[this->NbrIntraSectorSums];
       for (int i = 0; i < this->NbrIntraSectorSums; ++i)
@@ -336,9 +344,9 @@ void ParticleOnSphereQuantumWellHamiltonian::EvaluateInteractionFactors()
 		  ++Index;
 		}
 	    }
-       }
+	}
 
-//FILL IN INTER
+      //FILL IN INTER
 
       this->InteractionFactorsupdown = new double* [this->NbrInterSectorSums];
       for (int i = 0; i < this->NbrInterSectorSums; ++i)
@@ -368,12 +376,12 @@ void ParticleOnSphereQuantumWellHamiltonian::EvaluateInteractionFactors()
 	    }
 	}
 
-//*********************************************************************************************************
-//********************************     M I X E D     T E R M S ***********************************************
-//*********************************************************************************************************
-// Mixed term indices that have the same structure as intra terms
+      //************************************************************************************************************
+      //********************************     M I X E D     T E R M S ***********************************************
+      //************************************************************************************************************
+      // Mixed term indices that have the same structure as intra terms
 
-     this->NbrMixedIntraSectorSums = 2 * this->LzMax - 1;
+      this->NbrMixedIntraSectorSums = 2 * this->LzMax - 1;
       this->NbrMixedIntraSectorIndicesPerSum = new int[this->NbrMixedIntraSectorSums];
       for (int i = 0; i < this->NbrMixedIntraSectorSums; ++i)
 	this->NbrMixedIntraSectorIndicesPerSum[i] = 0;      
@@ -394,7 +402,7 @@ void ParticleOnSphereQuantumWellHamiltonian::EvaluateInteractionFactors()
 	    ++this->NbrMixedIntraSectorIndicesPerSum[(m1 + m2) - 1];
 	  }
 
-//Fill in the matrix elements
+      //Fill in the matrix elements
 
       this->InteractionFactorsmixedintra= new double* [this->NbrMixedIntraSectorSums];
       for (int i = 0; i < this->NbrMixedIntraSectorSums; ++i)
@@ -427,32 +435,32 @@ void ParticleOnSphereQuantumWellHamiltonian::EvaluateInteractionFactors()
         }
 
 
-//Mixed term indices that have the same structure as inter terms
+      //Mixed term indices that have the same structure as inter terms
 
 
-    this->NbrMixedInterSectorSums = 2 * this->LzMax + 1;
-    this->NbrMixedInterSectorIndicesPerSum = new int[this->NbrMixedInterSectorSums];
-    for (int i = 0; i < this->NbrMixedInterSectorSums; ++i)
-     this->NbrMixedInterSectorIndicesPerSum[i] = 0;
-    for (int m1 = 0; m1 <= this->LzMax; ++m1)
-     for (int m2 = 0; m2 <= this->LzMax; ++m2)
-       ++this->NbrMixedInterSectorIndicesPerSum[m1 + m2];      
-    this->MixedInterSectorIndicesPerSum = new int* [this->NbrMixedInterSectorSums];
-    for (int i = 0; i < this->NbrMixedInterSectorSums; ++i)
-     {
-       this->MixedInterSectorIndicesPerSum[i] = new int[2 * this->NbrMixedInterSectorIndicesPerSum[i]];      
-       this->NbrMixedInterSectorIndicesPerSum[i] = 0;
-     }
-    for (int m1 = 0; m1 <= this->LzMax; ++m1)
-      for (int m2 = 0; m2 <= this->LzMax; ++m2)
-       {
-	 this->MixedInterSectorIndicesPerSum[(m1 + m2)][this->NbrMixedInterSectorIndicesPerSum[(m1 + m2)] << 1] = m1;
-	 this->MixedInterSectorIndicesPerSum[(m1 + m2)][1 + (this->NbrMixedInterSectorIndicesPerSum[(m1 + m2)] << 1)] = m2;
-	 ++this->NbrMixedInterSectorIndicesPerSum[(m1 + m2)];
-       }
+      this->NbrMixedInterSectorSums = 2 * this->LzMax + 1;
+      this->NbrMixedInterSectorIndicesPerSum = new int[this->NbrMixedInterSectorSums];
+      for (int i = 0; i < this->NbrMixedInterSectorSums; ++i)
+	this->NbrMixedInterSectorIndicesPerSum[i] = 0;
+      for (int m1 = 0; m1 <= this->LzMax; ++m1)
+	for (int m2 = 0; m2 <= this->LzMax; ++m2)
+	  ++this->NbrMixedInterSectorIndicesPerSum[m1 + m2];      
+      this->MixedInterSectorIndicesPerSum = new int* [this->NbrMixedInterSectorSums];
+      for (int i = 0; i < this->NbrMixedInterSectorSums; ++i)
+	{
+	  this->MixedInterSectorIndicesPerSum[i] = new int[2 * this->NbrMixedInterSectorIndicesPerSum[i]];      
+	  this->NbrMixedInterSectorIndicesPerSum[i] = 0;
+	}
+      for (int m1 = 0; m1 <= this->LzMax; ++m1)
+	for (int m2 = 0; m2 <= this->LzMax; ++m2)
+	  {
+	    this->MixedInterSectorIndicesPerSum[(m1 + m2)][this->NbrMixedInterSectorIndicesPerSum[(m1 + m2)] << 1] = m1;
+	    this->MixedInterSectorIndicesPerSum[(m1 + m2)][1 + (this->NbrMixedInterSectorIndicesPerSum[(m1 + m2)] << 1)] = m2;
+	    ++this->NbrMixedInterSectorIndicesPerSum[(m1 + m2)];
+	  }
 
 
-//Fill in the matrix elements
+      //Fill in the matrix elements
 
 
       this->InteractionFactorsmixedinter = new double* [this->NbrMixedInterSectorSums];
@@ -487,9 +495,9 @@ void ParticleOnSphereQuantumWellHamiltonian::EvaluateInteractionFactors()
 
 
 
-//*********************************************************************************************************
-//********************************     M I X E D     T E R M S ***********************************************
-//*********************************************************************************************************
+      //*********************************************************************************************************
+      //********************************     M I X E D     T E R M S ***********************************************
+      //*********************************************************************************************************
 
     }
   else // bosons
@@ -541,6 +549,11 @@ void ParticleOnSphereQuantumWellHamiltonian::EvaluateInteractionFactors()
 			  TmpCoefficient = ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
 			  this->InteractionFactorsupup[i][Index] += this->PseudoPotentials[0][J >> 1] * TmpCoefficient;
 			  this->InteractionFactorsdowndown[i][Index] += this->PseudoPotentials[1][J >> 1] * TmpCoefficient;
+			  if (J==2*LzMax) // Delta interactions on lattice
+			    {
+			      this->InteractionFactorsupup[i][Index] += 1.0 * TmpCoefficient;
+			      this->InteractionFactorsdowndown[i][Index] += 1.0 * TmpCoefficient;
+			    }
 			}
 		    }
 		  if (m1 != m2)
@@ -557,9 +570,9 @@ void ParticleOnSphereQuantumWellHamiltonian::EvaluateInteractionFactors()
 		  ++Index;
 		}
 	    }
-       }
+	}
 
-//FILL IN INTER
+      //FILL IN INTER
 
       this->InteractionFactorsupdown = new double* [this->NbrInterSectorSums];
       for (int i = 0; i < this->NbrInterSectorSums; ++i)
@@ -581,6 +594,8 @@ void ParticleOnSphereQuantumWellHamiltonian::EvaluateInteractionFactors()
 		    {
 		      TmpCoefficient = ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
 		      this->InteractionFactorsupdown[i][Index] += this->PseudoPotentials[2][J >> 1] * TmpCoefficient;
+		      if (J==2*LzMax) // Delta interactions on lattice  - twice strengts
+			this->InteractionFactorsupdown[i][Index] += 2.0 * TmpCoefficient;
 		    }
 		  this->InteractionFactorsupdown[i][Index] *= Factor;
 		  ++TotalNbrInteractionFactors;
@@ -588,13 +603,13 @@ void ParticleOnSphereQuantumWellHamiltonian::EvaluateInteractionFactors()
 		}
 	    }
 	}
-
-//*********************************************************************************************************
-//********************************     M I X E D     T E R M S ***********************************************
-//*********************************************************************************************************
-// Mixed term indices that have the same structure as intra terms
-
-    this->NbrMixedIntraSectorSums = 2 * this->LzMax + 1;
+      
+      //************************************************************************************************************ /
+      //********************************     M I X E D     T E R M S *********************************************** /
+      //************************************************************************************************************ /
+      // Mixed term indices that have the same structure as intra terms
+	      
+      this->NbrMixedIntraSectorSums = 2 * this->LzMax + 1;
       this->NbrMixedIntraSectorIndicesPerSum = new int[this->NbrMixedIntraSectorSums];
       for (int i = 0; i < this->NbrMixedIntraSectorSums; ++i)
 	this->NbrMixedIntraSectorIndicesPerSum[i] = 0;      
@@ -615,7 +630,7 @@ void ParticleOnSphereQuantumWellHamiltonian::EvaluateInteractionFactors()
 	    ++this->NbrMixedIntraSectorIndicesPerSum[m1 + m2];
 	  }
 
-//Fill in the matrix elements
+      //Fill in the matrix elements
 
       this->InteractionFactorsmixedintra= new double* [this->NbrMixedIntraSectorSums];
       for (int i = 0; i < this->NbrMixedIntraSectorSums; ++i)
@@ -638,6 +653,8 @@ void ParticleOnSphereQuantumWellHamiltonian::EvaluateInteractionFactors()
 			{
 			  TmpCoefficient = ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
 			  this->InteractionFactorsmixedintra[i][Index] += this->PseudoPotentials[3][J >> 1] * TmpCoefficient;
+			  if (J==2*LzMax) // anomalous terms arising from effective lattice model in V0 channel
+			    this->InteractionFactorsmixedintra[i][Index] += M_PI*this->Alpha/2.0 * TmpCoefficient;
 			}
 		    }
 		  if (m1 != m2)
@@ -649,68 +666,71 @@ void ParticleOnSphereQuantumWellHamiltonian::EvaluateInteractionFactors()
 		}
 	    }
         }
-
-
-//Mixed term indices that have the same structure as inter terms
-
-
-    this->NbrMixedInterSectorSums = 2 * this->LzMax + 1;
-    this->NbrMixedInterSectorIndicesPerSum = new int[this->NbrMixedInterSectorSums];
-    for (int i = 0; i < this->NbrMixedInterSectorSums; ++i)
-     this->NbrMixedInterSectorIndicesPerSum[i] = 0;
-    for (int m1 = 0; m1 <= this->LzMax; ++m1)
-     for (int m2 = 0; m2 <= this->LzMax; ++m2)
-       ++this->NbrMixedInterSectorIndicesPerSum[m1 + m2];      
-    this->MixedInterSectorIndicesPerSum = new int* [this->NbrMixedInterSectorSums];
-    for (int i = 0; i < this->NbrMixedInterSectorSums; ++i)
-     {
-       this->MixedInterSectorIndicesPerSum[i] = new int[2 * this->NbrMixedInterSectorIndicesPerSum[i]];      
-       this->NbrMixedInterSectorIndicesPerSum[i] = 0;
-     }
-    for (int m1 = 0; m1 <= this->LzMax; ++m1)
-      for (int m2 = 0; m2 <= this->LzMax; ++m2)
-       {
-	 this->MixedInterSectorIndicesPerSum[(m1 + m2)][this->NbrMixedInterSectorIndicesPerSum[(m1 + m2)] << 1] = m1;
-	 this->MixedInterSectorIndicesPerSum[(m1 + m2)][1 + (this->NbrMixedInterSectorIndicesPerSum[(m1 + m2)] << 1)] = m2;
-	 ++this->NbrMixedInterSectorIndicesPerSum[(m1 + m2)];
-       }
-
-
-//Fill in the matrix elements
-
-
-      this->InteractionFactorsmixedinter = new double* [this->NbrMixedInterSectorSums];
-      for (int i = 0; i < this->NbrMixedInterSectorSums; ++i)
+      
+      if (this->HaveOtherMixed)
 	{
-	  this->InteractionFactorsmixedinter[i] = new double[this->NbrMixedInterSectorIndicesPerSum[i] * this->NbrMixedInterSectorIndicesPerSum[i]];
-	  int Index = 0;
-	  for (int j1 = 0; j1 < this->NbrMixedInterSectorIndicesPerSum[i]; ++j1)
+	  //Mixed term indices that have the same structure as inter terms
+	  this->NbrMixedInterSectorSums = 2 * this->LzMax + 1;
+	  this->NbrMixedInterSectorIndicesPerSum = new int[this->NbrMixedInterSectorSums];
+	  for (int i = 0; i < this->NbrMixedInterSectorSums; ++i)
+	    this->NbrMixedInterSectorIndicesPerSum[i] = 0;
+	  for (int m1 = 0; m1 <= this->LzMax; ++m1)
+	    for (int m2 = 0; m2 <= this->LzMax; ++m2)
+	      ++this->NbrMixedInterSectorIndicesPerSum[m1 + m2];      
+	  this->MixedInterSectorIndicesPerSum = new int* [this->NbrMixedInterSectorSums];
+	  for (int i = 0; i < this->NbrMixedInterSectorSums; ++i)
 	    {
-	      double Factor = 2.0;
-	      int m1 = (this->MixedInterSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMax;
-	      int m2 = (this->MixedInterSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMax;
-	      for (int j2 = 0; j2 < this->NbrMixedInterSectorIndicesPerSum[i]; ++j2)
+	      this->MixedInterSectorIndicesPerSum[i] = new int[2 * this->NbrMixedInterSectorIndicesPerSum[i]];      
+	      this->NbrMixedInterSectorIndicesPerSum[i] = 0;
+	    }
+	  for (int m1 = 0; m1 <= this->LzMax; ++m1)
+	    for (int m2 = 0; m2 <= this->LzMax; ++m2)
+	      {
+		this->MixedInterSectorIndicesPerSum[(m1 + m2)][this->NbrMixedInterSectorIndicesPerSum[(m1 + m2)] << 1] = m1;
+		this->MixedInterSectorIndicesPerSum[(m1 + m2)][1 + (this->NbrMixedInterSectorIndicesPerSum[(m1 + m2)] << 1)] = m2;
+		++this->NbrMixedInterSectorIndicesPerSum[(m1 + m2)];
+	      }
+
+
+	  //Fill in the matrix elements
+
+
+	  this->InteractionFactorsmixedinter = new double* [this->NbrMixedInterSectorSums];
+	  for (int i = 0; i < this->NbrMixedInterSectorSums; ++i)
+	    {
+	      this->InteractionFactorsmixedinter[i] = new double[this->NbrMixedInterSectorIndicesPerSum[i] * this->NbrMixedInterSectorIndicesPerSum[i]];
+	      int Index = 0;
+	      for (int j1 = 0; j1 < this->NbrMixedInterSectorIndicesPerSum[i]; ++j1)
 		{
-		  int m3 = (this->MixedInterSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMax;
-		  int m4 = (this->MixedInterSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMax;
-		  Clebsch.InitializeCoefficientIterator(m1, m2);
-		  this->InteractionFactorsmixedinter[i][Index] = 0.0;
-		  while (Clebsch.Iterate(J, ClebschCoef))
+		  double Factor = 2.0;
+		  int m1 = (this->MixedInterSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMax;
+		  int m2 = (this->MixedInterSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMax;
+		  for (int j2 = 0; j2 < this->NbrMixedInterSectorIndicesPerSum[i]; ++j2)
 		    {
-		      TmpCoefficient = ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
-		      this->InteractionFactorsmixedinter[i][Index] += this->PseudoPotentials[3][J >> 1] * TmpCoefficient;
+		      int m3 = (this->MixedInterSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMax;
+		      int m4 = (this->MixedInterSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMax;
+		      Clebsch.InitializeCoefficientIterator(m1, m2);
+		      this->InteractionFactorsmixedinter[i][Index] = 0.0;
+		      while (Clebsch.Iterate(J, ClebschCoef))
+			{
+			  TmpCoefficient = ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
+			  this->InteractionFactorsmixedinter[i][Index] += this->PseudoPotentials[3][J >> 1] * TmpCoefficient;
+			}
+		      //For bosons, the sign of the Factor is probably same as UpDown case
+		      this->InteractionFactorsmixedinter[i][Index] *= Factor;
+		      ++TotalNbrInteractionFactors;
+		      ++Index;
 		    }
-		  //For bosons, the sign of the Factor is probably same as UpDown case
-		  this->InteractionFactorsmixedinter[i][Index] *= Factor;
-		  ++TotalNbrInteractionFactors;
-		  ++Index;
 		}
 	    }
 	}
-
+      else
+	{
+	  this->NbrMixedInterSectorSums = 0;
+	}
     }
 
- cout << "nbr interaction = " << TotalNbrInteractionFactors << endl;
- cout << "====================================" << endl;
+  cout << "nbr interaction = " << TotalNbrInteractionFactors << endl;
+  cout << "====================================" << endl;
 }
 

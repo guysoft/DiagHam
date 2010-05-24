@@ -531,7 +531,7 @@ int FermionOnSphereEfficient::AdAd (int m1, int m2, double& coefficient)
 #endif
     } 
   TmpState |= (((unsigned long) (0x1)) << m1);
-  return this->FindStateIndex(TmpState);
+  return this->TargetSpace->FindStateIndex(TmpState);
 }
 
 // apply a^+_m a_m operator to a given state 
@@ -721,20 +721,7 @@ int FermionOnSphereEfficient::FindStateIndex(unsigned long stateDescription)
 {
   int Result = HighBitLookUpTable[stateDescription>>this->HighBitLookUpShift];
   Result += LowBitLookUpTable[stateDescription&this->LowBitMask];
-
-  // for testing
-  if (this->StateDescription[Result] != stateDescription)
-    {
-      cout << "Error in FindStateIndex!"<<endl;
-      for (int i=0; i<HilbertSpaceDimension; ++i)
-	if (this->StateDescription[i] == stateDescription)
-	  cout << "Element now found at i="<<i<<", "<<this->StateDescription[i]
-	       <<"="<<stateDescription<<"!"<<endl;
-      return this->HilbertSpaceDimension;
-    }
-  
   return Result;
-  
 }
 
 
