@@ -1465,8 +1465,15 @@ void ProjectedLanczosAlgorithmWithGroundState::ReadVector(RealVector &vec, int i
     VectorFlags = ProjectorLanczosVectorFlags[index];
   if (VectorFlags==0)
     {
-      cout << "Error: cannot retrieve vector "<<index<<" for "<<(mainLanczos?"main":"internal")<<" Lanczos!"<<endl;
-      exit(-1);
+      if ((index==0) && (this->DiskFlag==false))
+	{
+	  vec.Copy(this->InitialState);
+	}
+      else
+	{
+	  cout << "Error: cannot retrieve vector "<<index<<" for "<<(mainLanczos?"main":"internal")<<" Lanczos!"<<endl;
+	  exit(-1);
+	}
     }
   if (VectorFlags & SavedInMemory)
     {
