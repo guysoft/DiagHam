@@ -268,7 +268,7 @@ Vector* FullReorthogonalizedLanczosAlgorithmWithDiskStorage::GetEigenstates(int 
 	  this->LanczosVectors[1 + j].ReadVector(TmpVectorName);
 	}
       AddRealLinearCombinationOperation Operation (&(Eigenstates[i]), &(this->LanczosVectors[1]), MaxPos, &(TmpCoefficents[1 + (k * ReducedMaxNbrVector)]));
-      Operation.ApplyOperation(this->Architecture);
+      //      Operation.ApplyOperation(this->Architecture);
       Operation.ApplyOperation(this->Architecture);
       Eigenstates[i] /= Eigenstates[i].Norm();
     }

@@ -10,4 +10,5 @@ UnsignedIntegerTools.cc \
 RealUniqueArray.cc \
 ComplexUniqueArray.cc \
 SmallIntegerArray.cc \
-StringTools.cc
+StringTools.cc \
+BitMarkers.cc

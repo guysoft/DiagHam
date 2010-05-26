@@ -51,6 +51,7 @@
 #include "LanczosAlgorithm/BasicBlockLanczosAlgorithm.h"
 #include "LanczosAlgorithm/BasicLanczosAlgorithmWithGroundStateDiskStorage.h"
 #include "LanczosAlgorithm/ProjectedLanczosAlgorithmWithGroundState.h"
+#include "LanczosAlgorithm/ProjectedReorthogonalizedLanczosAlgorithmDiskStorage.h"
 
 #include "Options/OptionManager.h"
 #include "Options/AbstractOption.h"
@@ -561,14 +562,37 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 		}
 	      else
 		{
-		  cout << "Using FullReorthogonalizedLanczosAlgorithm"<<endl;
-		  Lanczos = new FullReorthogonalizedLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
+		  if (this->NbrProjectors>0)
+		    {
+		      cout << "Info: projected reorthogonalized Lanczos currently defaults to disk usage"<<endl;
+		      cout << "Using ProjectedReorthogonalizedLanczosAlgorithmDiskStorage"<<endl;
+		      Lanczos = new ProjectedReorthogonalizedLanczosAlgorithmDiskStorage(this->Architecture, this->NbrEigenvalue,
+											 this->MaxNbrIterLanczos, this->NbrProjectorStorage,
+											 this->ProjectorIterMax, this->ProjectorPrecision,
+											 this->RestartProjection);
+		    }
+		  else
+		    {
+		      cout << "Using FullReorthogonalizedLanczosAlgorithm"<<endl;
+		      Lanczos = new FullReorthogonalizedLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
+		    }
 		}
 	    }
 	  else
 	    {
-	      cout << "Using FullReorthogonalizedLanczosAlgorithmWithDiskStorage"<<endl;
-	      Lanczos = new FullReorthogonalizedLanczosAlgorithmWithDiskStorage (this->Architecture, this->NbrEigenvalue, this->VectorMemory, this->MaxNbrIterLanczos);
+	      if (this->NbrProjectors>0)
+		{
+		  cout << "Using ProjectedReorthogonalizedLanczosAlgorithmDiskStorage"<<endl;
+		  Lanczos = new ProjectedReorthogonalizedLanczosAlgorithmDiskStorage(this->Architecture, this->NbrEigenvalue,
+										     this->MaxNbrIterLanczos, this->NbrProjectorStorage,
+										     this->ProjectorIterMax, this->ProjectorPrecision,
+										     this->RestartProjection);
+		}
+	      else
+		{
+		  cout << "Using FullReorthogonalizedLanczosAlgorithmWithDiskStorage"<<endl;
+		  Lanczos = new FullReorthogonalizedLanczosAlgorithmWithDiskStorage (this->Architecture, this->NbrEigenvalue, this->VectorMemory, this->MaxNbrIterLanczos);
+		}
 	    }
 	}
       if (this->LanczosReorthogonalization != 0)

@@ -358,7 +358,7 @@ Vector& ProjectedLanczosAlgorithmWithGroundState::GetGroundState()
 	{
 	  TmpComponents[j] = TmpEigenvector(j, 0);
 	}
-
+      
       if (this->DiskFlag == false)
 	{
 	  double* TmpCoefficient = new double[2];
@@ -368,7 +368,38 @@ Vector& ProjectedLanczosAlgorithmWithGroundState::GetGroundState()
 	  this->V3.AddLinearCombination(-this->TridiagonalizedMatrix.DiagonalElement(0), this->InitialState);
 	  this->ExternalOrthogonalization(this->V3);
 	  this->V3 /= this->V3.Norm();
+
+	  // apply projector here
+	  // (V2 already saved as initial vector)
+	  // swap V1, V3
+	  {
+	    RealVector TmpV (this->V1);
+	    this->V1 = this->V3;
+	    this->V3 = TmpV; 
+	  }
+	  //cout << "Line "<<__LINE__<<": V1="<<endl<<V1;
+	  bool RequireReorthogonalization = false;
+	  for (int p=0; p<NbrProjectors; ++p)
+	    RequireReorthogonalization |= this->ProjectVector(p);
+	  // swap V1, V2
+	  {
+	    RealVector TmpV (this->V1);
+	    this->V1 = this->V3;
+	    this->V3 = TmpV; 
+	  }
 	  this->V2.Copy(this->InitialState);
+	  
+	  // orthogonalizing again, if needed
+	  if (RequireReorthogonalization)
+	    {
+	      double NewScalarProd = this->V2 * this->V3;
+	      this->V3.AddLinearCombination(-NewScalarProd, this->V2);
+	      this->ExternalOrthogonalization(this->V3);
+	      this->V3 /= this->V3.Norm();
+	    }
+	  this->Swap1Index = -1;
+	  this->Swap2Index = -1;
+	  this->SaveVector(V3,1,true,true);		  
 	  this->GroundState.AddLinearCombination(TmpComponents[1], this->V3);
 	  for (int i = 2; i < this->DiagonalizedMatrix.GetNbrRow(); ++i)
 	    {
@@ -381,9 +412,40 @@ Vector& ProjectedLanczosAlgorithmWithGroundState::GetGroundState()
 	      TmpCoefficient[1] = -this->TridiagonalizedMatrix.DiagonalElement(i - 1);
 	      AddRealLinearCombinationOperation Operation4 (&(this->V1),  TmpVector, 2, TmpCoefficient);
 	      Operation4.ApplyOperation(this->Architecture);
-	      delete[] TmpVector;
 	      this->ExternalOrthogonalization(this->V1);
 	      this->V1 /= this->V1.Norm();
+
+	      bool RequireReorthogonalization = false;
+	      for (int p=0; p<NbrProjectors; ++p)
+		RequireReorthogonalization |= this->ProjectVector(p);
+	      this->ReadVector(V2,i-2);
+	      this->ReadVector(V3,i-1);
+	      // end projector
+	  
+	      // reorthogonalize once more, if needed:
+	      if (RequireReorthogonalization)
+		{
+		  // recalculate scalar products
+		  RealVector* TmpVectorScalarProduct[2];
+		  double TmpScalarProduct[2];
+		  TmpVectorScalarProduct[0] = &(this->V1);
+		  TmpVectorScalarProduct[1] = &(this->V2);
+		  MultipleRealScalarProductOperation Operation (&(this->V3), TmpVectorScalarProduct, 2, TmpScalarProduct);
+		  Operation.ApplyOperation(this->Architecture);
+		  // perform subtractions
+		  TmpVector[0] = this->V1;
+		  TmpVector[1] = this->V2;
+		  TmpCoefficient[0] = -TmpScalarProduct[0];
+		  TmpCoefficient[1] = -TmpScalarProduct[1];
+		  AddRealLinearCombinationOperation Operation1 (&(this->V3),  TmpVector, 2, TmpCoefficient);
+		  Operation1.ApplyOperation(this->Architecture);	  
+		  this->ExternalOrthogonalization(this->V3);
+		  this->V3 /= this->V3.Norm();
+		}
+	      delete[] TmpVector;
+	  
+	      this->SaveVector(V1, i, true, true);
+	      
 	      this->GroundState.AddLinearCombination(TmpComponents[i], this->V1);
 	      RealVector TmpV (this->V2);
 	      this->V2 = this->V3;
@@ -507,6 +569,7 @@ void ProjectedLanczosAlgorithmWithGroundState::RunLanczosAlgorithm (int nbrIter)
 	      // cout << "calling this->SaveVector(V2,"<<i<<") on line "<<__LINE__<<endl;
 	      this->SaveVector(V2, i-1); // do not need copy here, once more
 	    }
+
 	  // swap V1, V3
 	  {
 	    RealVector TmpV (this->V1);
@@ -615,8 +678,6 @@ bool ProjectedLanczosAlgorithmWithGroundState::TestConvergence ()
     return false;
 }
 
-
-// #include "InternalReorthogonalizedLanczosAlgorithm.h"
 
 // project the vector stored in V1 to the groundstate of the given Projector number
 // nbrProjector = number of projector to use for this run
@@ -1468,6 +1529,7 @@ void ProjectedLanczosAlgorithmWithGroundState::ReadVector(RealVector &vec, int i
       if ((index==0) && (this->DiskFlag==false))
 	{
 	  vec.Copy(this->InitialState);
+	  return;
 	}
       else
 	{
