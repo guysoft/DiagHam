@@ -54,9 +54,11 @@ class ProjectedReorthogonalizedLanczosAlgorithmDiskStorage : public AbstractLanc
   // Array of pointers to vectors that should be orthogonalized with
   RealVector** OrthogonalizationSet;
 
-  int MaximumNumberIteration;
+  // index of current iteration
   int Index;
+  // Garbage flag
   GarbageFlag Flag;
+  // last groundstate obtained
   RealVector GroundState;
 
   // number of wanted eigenvalues
@@ -85,7 +87,7 @@ class ProjectedReorthogonalizedLanczosAlgorithmDiskStorage : public AbstractLanc
 
   // Index for number of iterations for internal projector operations
   int InternalIndex;
-
+  
   // value of the last estimate of the projector groundstate at the previous internal Lanczos iteration
   double PreviousProjectorGroundstate;
   double ProjectorGroundstate;

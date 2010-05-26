@@ -82,6 +82,10 @@ class GarbageFlag
   // return value = true if datas are used
   bool Used ();
 
+  // test routine to check for SMP compatibility
+  //
+  bool ThreadSafe ();
+
 };
 
 #endif

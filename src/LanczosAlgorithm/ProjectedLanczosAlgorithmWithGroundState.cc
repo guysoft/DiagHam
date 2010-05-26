@@ -1217,8 +1217,8 @@ bool ProjectedLanczosAlgorithmWithGroundState::SaveVector(RealVector &vec, int i
 			  exit(-1);
 			}
 		      // mark state as forgotten from memory
-		      MainLanczosVectorFlags[index]&= ~SavedInMemory;
-		      MainLanczosVectorFlags[index]&= ~VectorIndexMask;
+		      MainLanczosVectorFlags[MinIndex]&= ~SavedInMemory;
+		      MainLanczosVectorFlags[MinIndex]&= ~VectorIndexMask;
 		      VectorStorageFlags[MinPos] = StorageFlag;
 		      if (keepOriginal)
 			{
@@ -1551,6 +1551,13 @@ void ProjectedLanczosAlgorithmWithGroundState::ReadVector(RealVector &vec, int i
 	  LanczosVectorStorage[StoragePos]=TmpV;
 	  if (LanczosVectorStorage[StoragePos].GetVectorDimension()==0) // in case vector was deleted, recreate space
 	    LanczosVectorStorage[StoragePos].Resize(this->Hamiltonian->GetHilbertSpaceDimension());
+	  // note changes in memory
+	  VectorFlags &= ~SavedInMemory;
+	  VectorFlags &= ~VectorIndexMask;
+	  if (mainLanczos == true)
+	    MainLanczosVectorFlags[index] = VectorFlags;
+	  else
+	    ProjectorLanczosVectorFlags[index] = VectorFlags;
 	}
     }
   else if (VectorFlags & SavedOnDisk)

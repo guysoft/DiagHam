@@ -33,6 +33,9 @@
 
 #include <iostream>
 
+using std::cout;
+using std::endl;
+
 // default constructor
 //
 
@@ -213,4 +216,15 @@ bool GarbageFlag::Used ()
     return false;
   else
     return true;
+}
+
+bool GarbageFlag::ThreadSafe ()
+{
+#ifdef __SMP__
+  cout << "GarbageFlag is thread-safe"<<endl;
+  return true;
+#else
+  cout << "GarbageFlag is NOT thread-safe"<<endl;
+  return false;
+#endif
 }
