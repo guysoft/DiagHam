@@ -111,7 +111,7 @@ ProjectedLanczosAlgorithmWithGroundState::ProjectedLanczosAlgorithmWithGroundSta
     }
   else
     {
-      this->ProjectorIterMax=MainIterMax=1<<8;
+      this->ProjectorIterMax=1<<8;
       this->InternalTridiagonalizedMatrix = RealTriDiagonalSymmetricMatrix();
       this->InternalDiagonalizedMatrix = RealTriDiagonalSymmetricMatrix();
     }

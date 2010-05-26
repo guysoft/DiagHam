@@ -57,7 +57,7 @@ using std::ios;
 // maxIter = an approximation of maximal number of iteration
 // strongConvergence = flag indicating if the convergence test has to be done on the latest wanted eigenvalue (false) or all the wanted eigenvalue (true) 
 
-ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::ProjectedReorthogonalizedLanczosAlgorithmDiskStorage(AbstractArchitecture* architecture, 
+ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::ProjectedReorthogonalizedLanczosAlgorithmDiskStorage(AbstractHamiltonian** projectors, int nbrProjectors, AbstractArchitecture* architecture, 
 													   int nbrEigenvalue, int maxIter, int nbrStorageVectors, int projectorIterMax,
 													   double projectorPrecision, bool restartProjection, bool strongConvergence)
 {
@@ -90,6 +90,28 @@ ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::ProjectedReorthogonalizedL
     this->PreviousWantedEigenvalues[i] = 0.0;
   this->EigenvaluePrecision = MACHINE_PRECISION;
   this->EigenvectorPrecision = 0.0;
+  // projector fields:
+  this->Projectors=projectors;
+  this->NbrProjectors=nbrProjectors;
+  this->InternalIndex=0;
+  if (projectorIterMax > 0)
+    {
+      this->ProjectorIterMax=projectorIterMax;
+      this->InternalTridiagonalizedMatrix = RealTriDiagonalSymmetricMatrix(ProjectorIterMax, true);
+      this->InternalDiagonalizedMatrix = RealTriDiagonalSymmetricMatrix(ProjectorIterMax);
+    }
+  else
+    {
+      this->ProjectorIterMax=1<<8;
+      this->InternalTridiagonalizedMatrix = RealTriDiagonalSymmetricMatrix();
+      this->InternalDiagonalizedMatrix = RealTriDiagonalSymmetricMatrix();
+    }
+  this->ProjectorPrecision=MACHINE_PRECISION;
+  if (projectorPrecision != 0.0)
+    this->ProjectorPrecision = projectorPrecision;
+  this->RestartProjection = restartProjection;
+  this->PreviousProjectorGroundstate=0.0;
+  
   // initialize storage
   MainLanczosVectorFlags = new int[MainIterMax];
   for (int i=0; i< MainIterMax; ++i)
@@ -166,7 +188,8 @@ ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::~ProjectedReorthogonalized
       delete [] this->VectorStorageFlags;
       delete [] this->MainLanczosVectorFlags;
       delete [] this->ProjectorLanczosVectorFlags;
-      delete [] this->LanczosVectorStorage;
+      if (NbrStorageVectors>0)
+	delete [] this->LanczosVectorStorage;
       delete [] this->OrthogonalizationSet;
     }
   delete [] TmpOutputName;
@@ -197,6 +220,7 @@ void ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::InitializeLanczosAlgo
   // project initial vector
   for (int p=0; p<NbrProjectors; ++p)
     this->ProjectVector(p);
+  cout << "calling this->SaveVector(V1,0) on line "<<__LINE__<<endl;
   this->SaveVector(this->V1,0,true,true);
   this->Index = 0;
   this->TridiagonalizedMatrix.Resize(0, 0);
@@ -226,6 +250,7 @@ void ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::InitializeLanczosAlgo
   // project initial vector
   for (int p=0; p<NbrProjectors; ++p)
     this->ProjectVector(p);
+  cout << "calling this->SaveVector(V1,0) on line "<<__LINE__<<endl;
   this->SaveVector(this->V1,0,true,true);
 
   this->Index = 0;
@@ -370,7 +395,8 @@ void ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::RunLanczosAlgorithm (
 	RealVector TmpV (this->V1);
 	this->V1 = this->V2;
 	this->V2 = TmpV; 
-      }      
+      }
+      cout << "calling this->ReadVector(V1,0) on line "<<__LINE__<<endl;
       this->ReadVector(V1,0);      
       
       // end projector
@@ -382,7 +408,7 @@ void ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::RunLanczosAlgorithm (
 	  this->V2.AddLinearCombination(-NewScalarProd, this->V1);
 	  this->V2 /= this->V2.Norm();
 	}
-      
+      cout << "calling this->SaveVector(V2,1) on line "<<__LINE__<<endl;
       this->SaveVector(V2,1,true,true);
       // ============ end step 0->1 ===========
       // begin step 1->2
@@ -430,7 +456,11 @@ void ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::RunLanczosAlgorithm (
 	this->V1 = this->V3;
 	this->V3 = TmpV; 
       }
+      cout << "calling this->ReadVector(V1,"<<i-2<<") on line "<<__LINE__<< " flags="
+	   <<std::hex<<MainLanczosVectorFlags[i-2]<<std::dec<<endl;
       this->ReadVector(V1,i-2);
+      cout << "calling this->ReadVector(V2,"<<i-1<<") on line "<<__LINE__<<" flags="
+	   <<std::hex<<MainLanczosVectorFlags[i-2]<<std::dec<<endl;
       this->ReadVector(V2,i-1);
       // end projector
 	  
@@ -453,7 +483,7 @@ void ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::RunLanczosAlgorithm (
 	  this->V3 /= this->V3.Norm();
 	}
       delete[] TmpVector;
-      
+      cout << "calling this->SaveVector(V3,"<<i<<") on line "<<__LINE__<<endl;
       this->SaveVector(V3, i, true, true);
       this->WriteState();
 
@@ -466,7 +496,7 @@ void ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::RunLanczosAlgorithm (
       this->Index++;
       VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->V2, &this->V3);
       Operation1.ApplyOperation(this->Architecture);
-
+      cout << "calling this->ReadVector(V1,"<<i-1<<") on line "<<__LINE__<<endl;
       this->ReadVector(V1,i-1);
       RealVector* TmpVectorScalarProduct[2];
       TmpVectorScalarProduct[0] = &(this->V1);
@@ -652,8 +682,7 @@ void ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::FullReorthogonalisati
 	  {
 	    OrthogonalizationSet[CollectionSize] = &(LanczosVectorStorage[i]);
 	    ++CollectionSize;
-	    ProjectorLanczosVectorFlags[VectorStorageFlags[i] & StorageIndexMask] &= ~SavedInMemory;
-	    ProjectorLanczosVectorFlags[VectorStorageFlags[i] & StorageIndexMask] &= ~VectorIndexMask;
+	    ProjectorLanczosVectorFlags[VectorStorageFlags[i] & VectorIndexMask] = 0;
 	    --NbrStoredInternal;
 	    VectorStorageFlags[i]=Empty;
 	  }
@@ -774,11 +803,12 @@ bool ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::RunProjectorLanczosAl
 	  return true;
 	}
       // running internal Lanczos -> save starting vector, now
+      cout << "calling this->SaveVector(V1,0, interal) on line "<<__LINE__<<endl;
       this->SaveVector(V1, 0, false, true); // need to keep V1 in process
       this->V2.AddLinearCombination(-this->InternalTridiagonalizedMatrix.DiagonalElement(this->InternalIndex), 
 				    this->V1);
       this->V2 /= this->V2.Norm();
-      // cout << "calling this->SaveVector(V2,"<<1<<",false,true) on line "<<__LINE__<<endl;
+       cout << "calling this->SaveVector(V2,"<<1<<",false,true) on line "<<__LINE__<<endl;
       this->SaveVector(V2, 1, false, true); // need to keep V2 in process, here
       // it may be necessary to resize V3 if this vector has been dropped earlier in main lanczos
       if (V3.GetVectorDimension()==0)
@@ -807,7 +837,7 @@ bool ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::RunProjectorLanczosAl
       Operation4.ApplyOperation(this->Architecture);
       delete[] TmpVector;
       this->V3 /= this->V3.Norm();
-      // cout << "calling this->SaveVector(V3,"<<i<<",false) on line "<<__LINE__<<endl;
+      cout << "calling this->SaveVector(V3,"<<i<<",false) on line "<<__LINE__<<endl;
       this->SaveVector(V3, i, false, true); // need V3 in process
       
       if (false) // hardwired option "fast-disk" which forgets one of the vectors at this point to save memory
@@ -953,7 +983,7 @@ void ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::ProjectorDiagonalize 
 // mainLanczos = flag indicating whether vector is part of main lanczos algorithm
 // keepOriginal = flag indicating whether original vector needs to be kept in place
 // return = true on success
-bool ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::SaveVectorTest(RealVector &vec, int index, bool mainLanczos, bool keepOriginal)
+bool ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::SaveVector(RealVector &vec, int index, bool mainLanczos, bool keepOriginal)
 {
   int StorageFlag=index & StorageIndexMask;
   int VectorFlag=0;
@@ -991,7 +1021,7 @@ bool ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::SaveVectorTest(RealVe
 // index = vector index in Lanczos routine
 // mainLanczos = flag indicating whether vector is part of main lanczos algorithm
 // keepCopy = flag indicating whether the saved vector still needs to be kept in memory after reloading
-void ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::ReadVectorTest(RealVector &vec, int index, bool mainLanczos, bool keepCopy)
+void ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::ReadVector(RealVector &vec, int index, bool mainLanczos, bool keepCopy)
 {
   int VectorFlags;
   if (mainLanczos == true)
@@ -1022,7 +1052,7 @@ void ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::ReadVectorTest(RealVe
 // mainLanczos = flag indicating whether vector is part of main lanczos algorithm
 // keepOriginal = flag indicating whether original vector needs to be kept in place
 // return = true on success
-bool ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::SaveVector(RealVector &vec, int index, bool mainLanczos, bool keepOriginal)
+bool ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::SaveVectorTest(RealVector &vec, int index, bool mainLanczos, bool keepOriginal)
 {
   int StorageFlag=index & StorageIndexMask;
   int VectorFlag=0;
@@ -1030,7 +1060,7 @@ bool ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::SaveVector(RealVector
   if (mainLanczos==true)
     {
       StorageFlag |= MainLanczosVector;
-
+      
       // always write to disk here
       sprintf(TmpOutputName,"vector.%d",index);
       if (MainLanczosVectorFlags[index] & SavedOnDisk)
@@ -1093,7 +1123,7 @@ bool ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::SaveVector(RealVector
 			  ++NbrStoredMain;
 			  --NbrStoredInternal;
 			  // mark state as forgotten
-			  int TmpIndex = (VectorStorageFlags[i]&VectorIndexMask);
+			  int TmpIndex = (VectorStorageFlags[i]&StorageIndexMask);
 			  ProjectorLanczosVectorFlags[TmpIndex]=0;
 			  VectorStorageFlags[i] = StorageFlag;
 			  if (keepOriginal)
@@ -1290,7 +1320,7 @@ bool ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::SaveVector(RealVector
 // index = vector index in Lanczos routine
 // mainLanczos = flag indicating whether vector is part of main lanczos algorithm
 // keepCopy = flag indicating whether the saved vector still needs to be kept in memory after reloading
-void ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::ReadVector(RealVector &vec, int index, bool mainLanczos, bool keepCopy)
+void ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::ReadVectorTest(RealVector &vec, int index, bool mainLanczos, bool keepCopy)
 {
   int VectorFlags;
   if (mainLanczos == true)

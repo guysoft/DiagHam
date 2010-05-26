@@ -566,7 +566,8 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 		    {
 		      cout << "Info: projected reorthogonalized Lanczos currently defaults to disk usage"<<endl;
 		      cout << "Using ProjectedReorthogonalizedLanczosAlgorithmDiskStorage"<<endl;
-		      Lanczos = new ProjectedReorthogonalizedLanczosAlgorithmDiskStorage(this->Architecture, this->NbrEigenvalue,
+		      Lanczos = new ProjectedReorthogonalizedLanczosAlgorithmDiskStorage(this->Projectors, this->NbrProjectors,
+											 this->Architecture, this->NbrEigenvalue,
 											 this->MaxNbrIterLanczos, this->NbrProjectorStorage,
 											 this->ProjectorIterMax, this->ProjectorPrecision,
 											 this->RestartProjection);
@@ -583,7 +584,8 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 	      if (this->NbrProjectors>0)
 		{
 		  cout << "Using ProjectedReorthogonalizedLanczosAlgorithmDiskStorage"<<endl;
-		  Lanczos = new ProjectedReorthogonalizedLanczosAlgorithmDiskStorage(this->Architecture, this->NbrEigenvalue,
+		  Lanczos = new ProjectedReorthogonalizedLanczosAlgorithmDiskStorage(this->Projectors, this->NbrProjectors,
+										     this->Architecture, this->NbrEigenvalue,
 										     this->MaxNbrIterLanczos, this->NbrProjectorStorage,
 										     this->ProjectorIterMax, this->ProjectorPrecision,
 										     this->RestartProjection);

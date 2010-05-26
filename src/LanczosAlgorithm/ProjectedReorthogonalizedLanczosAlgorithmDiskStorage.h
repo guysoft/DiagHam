@@ -145,12 +145,17 @@ class ProjectedReorthogonalizedLanczosAlgorithmDiskStorage : public AbstractLanc
 
   // default constructor
   //
+  // projectors = operators to use for projection after each application of the Hamiltonian
+  // nbrProjectors = number of separate projectors
   // architecture = architecture to use for matrix operations
   // nbrEigenvalue = number of wanted eigenvalues
-  // maxNbrVectors = number of vector that can be allocated at the same time in local memory (null if all vectors have to be stored in local memory)
   // maxIter = an approximation of maximal number of iteration
+  // nbrStorageVectors = number of vectors that can be held in memory (in addition to minimum of 3)
+  // projectorIterMax = max number of iterations before restarting internal projector lanczos
+  // projectorPrecision = precision required for projector operations
+  // restartProjection = flag indicating whether projection should be restarted in precision not reached
   // strongConvergence = flag indicating if the convergence test has to be done on the latest wanted eigenvalue (false) or all the wanted eigenvalue (true) 
-  ProjectedReorthogonalizedLanczosAlgorithmDiskStorage(AbstractArchitecture* architecture, int nbrEigenvalue, int maxIter, int nbrStorageVectors, int projectorIterMax, double projectorPrecision, bool restartProjection, bool strongConvergence = false);
+  ProjectedReorthogonalizedLanczosAlgorithmDiskStorage(AbstractHamiltonian** projectors, int nbrProjectors, AbstractArchitecture* architecture, int nbrEigenvalue, int maxIter, int nbrStorageVectors = 0, int projectorIterMax = 100, double projectorPrecision = 1e-13, bool restartProjection = false, bool strongConvergence = false);
 
   // copy constructor
   //
