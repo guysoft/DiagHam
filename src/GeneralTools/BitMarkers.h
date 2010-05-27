@@ -88,7 +88,7 @@ class BitMarkers
 inline void BitMarkers::MarkBit(unsigned bitIndex)
 {
   unsigned int * pt = this->MarkerArray+(bitIndex>>5);
-  (*pt) = (*pt) | (0x1u <<(bitIndex&0x1fu));
+  (*pt) |= (0x1u <<(bitIndex&0x1fu));
 }
 
 // request if bit is not marked
@@ -126,7 +126,7 @@ inline bool BitMarkers::HaveMarkedAll()
   else
     {
       Test32 = (1u<<(Length&0x1fu))-1;
-      if (this->MarkerArray[NbrWords] !=Test32) return false;
+      if (this->MarkerArray[NbrWords-1] !=Test32) return false;
       else return true;
     }
 }

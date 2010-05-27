@@ -50,6 +50,11 @@ using std::endl;
 using std::ios;
 
 
+// flag switching whether to deallocate one vector upon application of the Hamiltonian in the main lanczos iteration
+//#define DEALLOCATE_AT_H
+
+
+
 // default constructor
 //
 // architecture = architecture to use for matrix operations
@@ -83,8 +88,6 @@ ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::ProjectedReorthogonalizedL
     }
   this->Architecture = architecture;
   this->Flag.Initialize();
-  // testing:
-  this->Flag.ThreadSafe();
   this->StrongConvergenceFlag = strongConvergence;
   this->PreviousLastWantedEigenvalue = 0.0;
   this->PreviousWantedEigenvalues = new double [this->NbrEigenvalue];
@@ -121,12 +124,8 @@ ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::ProjectedReorthogonalizedL
   ProjectorLanczosVectorFlags = new int[ProjectorIterMax];
   for (int i=0; i< ProjectorIterMax; ++i)
     ProjectorLanczosVectorFlags[i]=0;
-  cout << "MainIterMax="<<MainIterMax<<", ProjectorIterMax="<<ProjectorIterMax<<endl;
-
-
   this->NbrStorageVectors = nbrStorageVectors;
   this->LanczosVectorStorage = new RealVector[NbrStorageVectors];
-  this->OrthogonalizationSet = new RealVector*[2+NbrStorageVectors];
 
   this->VectorStorageFlags = new int[NbrStorageVectors];
   for (int i=0; i< NbrStorageVectors; ++i)
@@ -136,7 +135,14 @@ ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::ProjectedReorthogonalizedL
   this->Swap1Index = -1;
   this->Swap2Index = -1;
   this->VectorMarkers = BitMarkers(this->MainIterMax);
-  TmpOutputName = new char[50];
+  this->TmpOutputName = new char[50];
+  // various temporary arrays for RunLanczosAlgorithm
+  this->OrthogonalizationSet = new RealVector*[2+NbrStorageVectors];
+  this->OrthogonalizationCoef = new double[2+NbrStorageVectors];
+  this->TmpCoefficient = new double[2];
+  this->TmpScalarProduct = new double[2];
+  this->TmpVectorArray = new RealVector[2];
+  this->TmpVectorPtrArray = new RealVector*[2];
 }
 
 // copy constructor
@@ -173,10 +179,14 @@ ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::ProjectedReorthogonalizedL
   this->VectorStorageFlags = algorithm.VectorStorageFlags;
   this->NbrStoredMain = algorithm.NbrStoredMain;
   this->NbrStoredInternal = algorithm.NbrStoredInternal;
-  this->OrthogonalizationSet = algorithm.OrthogonalizationSet;
   this->VectorMarkers = algorithm.VectorMarkers;
-  TmpOutputName = new char[50];
-
+  this->TmpOutputName = new char[50];
+  this->OrthogonalizationSet = new RealVector*[2+NbrStorageVectors];
+  this->OrthogonalizationCoef = new double[2+NbrStorageVectors];
+  this->TmpCoefficient = new double[2];
+  this->TmpScalarProduct = new double[2];
+  this->TmpVectorArray = new RealVector[2];
+  this->TmpVectorPtrArray = new RealVector*[2];
 }
 
 // destructor
@@ -193,9 +203,14 @@ ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::~ProjectedReorthogonalized
       delete [] this->ProjectorLanczosVectorFlags;
       if (NbrStorageVectors>0)
 	delete [] this->LanczosVectorStorage;
-      delete [] this->OrthogonalizationSet;
     }
   delete [] TmpOutputName;
+  delete [] this->OrthogonalizationSet;
+  delete [] this->OrthogonalizationCoef;  
+  delete [] this->TmpCoefficient;
+  delete [] this->TmpScalarProduct;
+  delete [] this->TmpVectorArray;
+  delete [] this->TmpVectorPtrArray;
 }
 
 // initialize Lanczos algorithm with a random vector
@@ -223,7 +238,7 @@ void ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::InitializeLanczosAlgo
   // project initial vector
   for (int p=0; p<NbrProjectors; ++p)
     this->ProjectVector(p);
-  cout << "calling this->SaveVector(V1,0) on line "<<__LINE__<<endl;
+  //cout << "calling this->SaveVector(V1,0) on line "<<__LINE__<<endl;
   this->SaveVector(this->V1,0,true,true);
   this->Index = 0;
   this->TridiagonalizedMatrix.Resize(0, 0);
@@ -253,7 +268,7 @@ void ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::InitializeLanczosAlgo
   // project initial vector
   for (int p=0; p<NbrProjectors; ++p)
     this->ProjectVector(p);
-  cout << "calling this->SaveVector(V1,0) on line "<<__LINE__<<endl;
+  //cout << "calling this->SaveVector(V1,0) on line "<<__LINE__<<endl;
   this->SaveVector(this->V1,0,true,true);
 
   this->Index = 0;
@@ -399,7 +414,7 @@ void ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::RunLanczosAlgorithm (
 	this->V1 = this->V2;
 	this->V2 = TmpV; 
       }
-      cout << "calling this->ReadVector(V1,0) on line "<<__LINE__<<endl;
+      //cout << "calling this->ReadVector(V1,0) on line "<<__LINE__<<endl;
       this->ReadVector(V1,0);      
       
       // end projector
@@ -411,7 +426,7 @@ void ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::RunLanczosAlgorithm (
 	  this->V2.AddLinearCombination(-NewScalarProd, this->V1);
 	  this->V2 /= this->V2.Norm();
 	}
-      cout << "calling this->SaveVector(V2,1) on line "<<__LINE__<<endl;
+      //cout << "calling this->SaveVector(V2,1) on line "<<__LINE__<<endl;
       this->SaveVector(V2,1,true,true);
       // ============ end step 0->1 ===========
       // begin step 1->2
@@ -429,13 +444,11 @@ void ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::RunLanczosAlgorithm (
   double TmpScalarProduct[2];
   for (int i = this->Index + 2; i < Dimension; i++)
     {
-      RealVector* TmpVector = new RealVector[2];
-      
-      TmpVector[0] = this->V1;
-      TmpVector[1] = this->V2;
+      TmpVectorArray[0] = this->V1;
+      TmpVectorArray[1] = this->V2;
       TmpCoefficient[0] = -this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index);
       TmpCoefficient[1] = -this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1);
-      AddRealLinearCombinationOperation Operation4 (&(this->V3),  TmpVector, 2, TmpCoefficient);
+      AddRealLinearCombinationOperation Operation4 (&(this->V3),  TmpVectorArray, 2, TmpCoefficient);
       Operation4.ApplyOperation(this->Architecture);	  
       this->V3 /= this->V3.Norm();
       
@@ -459,11 +472,9 @@ void ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::RunLanczosAlgorithm (
 	this->V1 = this->V3;
 	this->V3 = TmpV; 
       }
-      cout << "calling this->ReadVector(V1,"<<i-2<<") on line "<<__LINE__<< " flags="
-	   <<std::hex<<MainLanczosVectorFlags[i-2]<<std::dec<<endl;
+      //cout << "calling this->ReadVector(V1,"<<i-2<<") on line "<<__LINE__<< " flags="<<std::hex<<MainLanczosVectorFlags[i-2]<<std::dec<<endl;
       this->ReadVector(V1,i-2);
-      cout << "calling this->ReadVector(V2,"<<i-1<<") on line "<<__LINE__<<" flags="
-	   <<std::hex<<MainLanczosVectorFlags[i-1]<<std::dec<<endl;
+      //cout << "calling this->ReadVector(V2,"<<i-1<<") on line "<<__LINE__<<" flags="<<std::hex<<MainLanczosVectorFlags[i-1]<<std::dec<<endl;
       this->ReadVector(V2,i-1);
       // end projector
 	  
@@ -471,45 +482,50 @@ void ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::RunLanczosAlgorithm (
       if (RequireReorthogonalization)
 	{
 	  // recalculate scalar products
-	  RealVector* TmpVectorScalarProduct[2];
-	  TmpVectorScalarProduct[0] = &(this->V1);
-	  TmpVectorScalarProduct[1] = &(this->V2);
-	  MultipleRealScalarProductOperation Operation (&(this->V3), TmpVectorScalarProduct, 2, TmpScalarProduct);
+	  RealVector* TmpVectorPtrArray[2];
+	  TmpVectorPtrArray[0] = &(this->V1);
+	  TmpVectorPtrArray[1] = &(this->V2);
+	  MultipleRealScalarProductOperation Operation (&(this->V3), TmpVectorPtrArray, 2, TmpScalarProduct);
 	  Operation.ApplyOperation(this->Architecture);
 	  // perform subtractions
-	  TmpVector[0] = this->V1;
-	  TmpVector[1] = this->V2;
+	  TmpVectorArray[0] = this->V1;
+	  TmpVectorArray[1] = this->V2;
 	  TmpCoefficient[0] = -TmpScalarProduct[0];
 	  TmpCoefficient[1] = -TmpScalarProduct[1];
-	  AddRealLinearCombinationOperation Operation1 (&(this->V3),  TmpVector, 2, TmpCoefficient);
+	  AddRealLinearCombinationOperation Operation1 (&(this->V3),  TmpVectorArray, 2, TmpCoefficient);
 	  Operation1.ApplyOperation(this->Architecture);	  
 	  this->V3 /= this->V3.Norm();
 	}
-      delete[] TmpVector;
-      cout << "calling this->SaveVector(V3,"<<i<<") on line "<<__LINE__<<endl;
+      //cout << "calling this->SaveVector(V3,"<<i<<") on line "<<__LINE__<<endl;
       this->SaveVector(V3, i, true, true);
       this->WriteState();
 
-      {
-	RealVector TmpV (this->V2);
-	this->V2 = this->V3;
-	this->V3 = TmpV;	  
-	this->V1 = RealVector();
-      }
+#ifdef DEALLOCATE_AT_H
+      RealVector TmpV (this->V2);
+      this->V2 = this->V3;
+      this->V3 = TmpV;	  
+      this->V1 = RealVector();
+#else
+      RealVector TmpV (this->V1);
+      this->V1 = this->V2;
+      this->V2 = this->V3;
+      this->V3 = TmpV;
+#endif
       this->Index++;
       VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->V2, &this->V3);
       Operation1.ApplyOperation(this->Architecture);
-      cout << "calling this->ReadVector(V1,"<<i-1<<") on line "<<__LINE__<<endl;
+#ifdef DEALLOCATE_AT_H
+      //cout << "calling this->ReadVector(V1,"<<i-1<<") on line "<<__LINE__<<endl;
       this->ReadVector(V1,i-1);
-      RealVector* TmpVectorScalarProduct[2];
-      TmpVectorScalarProduct[0] = &(this->V1);
-      TmpVectorScalarProduct[1] = &(this->V2);
-      MultipleRealScalarProductOperation Operation2 (&(this->V3), TmpVectorScalarProduct, 2, TmpScalarProduct);
+#endif
+      RealVector* TmpVectorPtrArray[2];
+      TmpVectorPtrArray[0] = &(this->V1);
+      TmpVectorPtrArray[1] = &(this->V2);
+      MultipleRealScalarProductOperation Operation2 (&(this->V3), TmpVectorPtrArray, 2, TmpScalarProduct);
       Operation2.ApplyOperation(this->Architecture);
       this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) = TmpScalarProduct[0];
       this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1) = TmpScalarProduct[1];
     }
-  delete[] TmpCoefficient;
   
   if (this->PreviousLastWantedEigenvalue != 0.0)
     {
@@ -652,13 +668,12 @@ void ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::FullReorthogonalisati
   int VectorFlags;
   int CollectionSize=0;
   VectorMarkers.ResetMarked();
-  double* TmpCoef = new double [nbrStep+1];
   for (int i=0; i<nbrStep; ++i)
     {
       VectorFlags = MainLanczosVectorFlags[i];
       if (VectorFlags & SavedInMemory)
 	{
-	  cout << "Orthogonalizing from memory with state "<<i<<endl;
+	  //cout << "Orthogonalizing from memory with state "<<i<<endl;
 	  VectorMarkers.MarkBit(i);
 	  OrthogonalizationSet[CollectionSize]=&(LanczosVectorStorage[VectorFlags & VectorIndexMask]);
 	  ++CollectionSize;
@@ -666,11 +681,11 @@ void ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::FullReorthogonalisati
     }
   if (CollectionSize>0) // found any vectors in memory?
     {
-      MultipleRealScalarProductOperation Operation (&(this->V1), OrthogonalizationSet, CollectionSize, TmpCoef);
+      MultipleRealScalarProductOperation Operation (&(this->V1), OrthogonalizationSet, CollectionSize, OrthogonalizationCoef);
       Operation.ApplyOperation(this->Architecture);
       for (int j = 0; j < CollectionSize; j++)
-	TmpCoef[j] *= -1.0;
-      AddRealLinearCombinationOperation Operation2 (&(this->V1), OrthogonalizationSet, CollectionSize, TmpCoef);
+	OrthogonalizationCoef[j] *= -1.0;
+      AddRealLinearCombinationOperation Operation2 (&(this->V1), OrthogonalizationSet, CollectionSize, OrthogonalizationCoef);
       Operation2.ApplyOperation(this->Architecture);
     }
   // treat remaining vectors
@@ -679,20 +694,25 @@ void ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::FullReorthogonalisati
   OrthogonalizationSet[1] = &(this->V3);
   CollectionSize=2;
   // claim additional storage from any storage of internal vectors
-  if (NbrStoredInternal>0)
+  if (NbrStorageVectors-NbrStoredMain>0)
     {
-      cout << "May claim " << NbrStoredInternal << " internal vectors!"<<endl;
-      
+      //cout << "May claim " << NbrStorageVectors-NbrStoredMain << " empty/internal vectors!"<<endl;
       for (int i=0; i<NbrStorageVectors; ++i)
 	{
 	  if (VectorStorageFlags[i] & ProjectorLanczosVector)
 	    {
-	      cout << "claiming vector: "<<i<<endl;
+	      //cout << "claiming internal vector: "<<i<<" with dimension "<<LanczosVectorStorage[i].GetVectorDimension()<<endl;
 	      OrthogonalizationSet[CollectionSize] = &(LanczosVectorStorage[i]);
-	      ++CollectionSize;
+	      ++CollectionSize;	      
 	      ProjectorLanczosVectorFlags[VectorStorageFlags[i] & VectorIndexMask] = 0;
 	      --NbrStoredInternal;
 	      VectorStorageFlags[i]=Empty;
+	    }
+	  else if (VectorStorageFlags[i]==Empty)
+	    {
+	      //cout << "claiming empty vector: "<<i<<" with dimension "<<LanczosVectorStorage[i].GetVectorDimension()<<endl;
+	      OrthogonalizationSet[CollectionSize] = &(LanczosVectorStorage[i]);
+	      ++CollectionSize;
 	    }
 	}
     }
@@ -707,11 +727,11 @@ void ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::FullReorthogonalisati
 	}
       if (CollectionIndex==CollectionSize)
 	{
-	  MultipleRealScalarProductOperation Operation (&(this->V1), OrthogonalizationSet, CollectionSize, TmpCoef);
+	  MultipleRealScalarProductOperation Operation (&(this->V1), OrthogonalizationSet, CollectionSize, OrthogonalizationCoef);
 	  Operation.ApplyOperation(this->Architecture);
 	  for (int j = 0; j < CollectionSize; j++)
-	    TmpCoef[j] *= -1.0;
-	  AddRealLinearCombinationOperation Operation2 (&(this->V1), OrthogonalizationSet, CollectionSize, TmpCoef);
+	    OrthogonalizationCoef[j] *= -1.0;
+	  AddRealLinearCombinationOperation Operation2 (&(this->V1), OrthogonalizationSet, CollectionSize, OrthogonalizationCoef);
 	  Operation2.ApplyOperation(this->Architecture);
 	  CollectionIndex=0;
 	}
@@ -719,11 +739,11 @@ void ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::FullReorthogonalisati
     }
   if (CollectionIndex>0)
     {
-      MultipleRealScalarProductOperation Operation (&(this->V1), OrthogonalizationSet, CollectionIndex, TmpCoef);
+      MultipleRealScalarProductOperation Operation (&(this->V1), OrthogonalizationSet, CollectionIndex, OrthogonalizationCoef);
       Operation.ApplyOperation(this->Architecture);
       for (int j = 0; j < CollectionSize; j++)
-	TmpCoef[j] *= -1.0;
-      AddRealLinearCombinationOperation Operation2 (&(this->V1), OrthogonalizationSet, CollectionIndex, TmpCoef);
+	OrthogonalizationCoef[j] *= -1.0;
+      AddRealLinearCombinationOperation Operation2 (&(this->V1), OrthogonalizationSet, CollectionIndex, OrthogonalizationCoef);
       Operation2.ApplyOperation(this->Architecture);
       CollectionIndex=0;
     }
@@ -783,7 +803,7 @@ bool ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::TestProjectorConverge
 {
   if ( (fabs(this->InternalDiagonalizedMatrix.DiagonalElement(0)) < this->ProjectorPrecision) ||
        (fabs(this->InternalDiagonalizedMatrix.DiagonalElement(0) - this->PreviousProjectorGroundstate) < 
-	(this->ProjectorPrecision * fabs(this->InternalDiagonalizedMatrix.DiagonalElement(0)))))
+	(this->ProjectorPrecision * fabs(this->InternalDiagonalizedMatrix.DiagonalElement(0))) ) )
     return true;
   else
     return false;
@@ -832,19 +852,14 @@ bool ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::RunProjectorLanczosAl
       Dimension = this->InternalTridiagonalizedMatrix.GetNbrRow() + nbrIter;
       this->InternalTridiagonalizedMatrix.Resize(Dimension, Dimension);
     }
-  double* TmpCoefficient = new double[2];
-  double TmpScalarProduct[2];
   for (int i = this->InternalIndex + 2; i < Dimension; i++)
     {
-      RealVector* TmpVector = new RealVector[2];
-
-      TmpVector[0] = this->V1;
-      TmpVector[1] = this->V2;
+      TmpVectorArray[0] = this->V1;
+      TmpVectorArray[1] = this->V2;
       TmpCoefficient[0] = -this->InternalTridiagonalizedMatrix.UpperDiagonalElement(this->InternalIndex);
       TmpCoefficient[1] = -this->InternalTridiagonalizedMatrix.DiagonalElement(this->InternalIndex + 1);
-      AddRealLinearCombinationOperation Operation4 (&(this->V3),  TmpVector, 2, TmpCoefficient);
+      AddRealLinearCombinationOperation Operation4 (&(this->V3),  TmpVectorArray, 2, TmpCoefficient);
       Operation4.ApplyOperation(this->Architecture);
-      delete[] TmpVector;
       this->V3 /= this->V3.Norm();
       //cout << "calling this->SaveVector(V3,"<<i<<",false) on line "<<__LINE__<<endl;
       this->SaveVector(V3, i, false, true); // need V3 in process
@@ -872,15 +887,13 @@ bool ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::RunProjectorLanczosAl
 	{
 	  this->ReadVector(V1, i-1, false); // reread vector, and keep a copy
 	}
-      RealVector* TmpVectorScalarProduct[2];
-      TmpVectorScalarProduct[0] = &(this->V1);
-      TmpVectorScalarProduct[1] = &(this->V2);
-      MultipleRealScalarProductOperation Operation2 (&(this->V3), TmpVectorScalarProduct, 2, TmpScalarProduct);
+      TmpVectorPtrArray[0] = &(this->V1);
+      TmpVectorPtrArray[1] = &(this->V2);
+      MultipleRealScalarProductOperation Operation2 (&(this->V3), TmpVectorPtrArray, 2, TmpScalarProduct);
       Operation2.ApplyOperation(this->Architecture);
       this->InternalTridiagonalizedMatrix.UpperDiagonalElement(this->InternalIndex) = TmpScalarProduct[0];
       this->InternalTridiagonalizedMatrix.DiagonalElement(this->InternalIndex + 1) = TmpScalarProduct[1];
     }
-  delete[] TmpCoefficient;
   if (this->PreviousProjectorGroundstate != 0.0)
     {
       this->PreviousProjectorGroundstate = this->InternalDiagonalizedMatrix.DiagonalElement(0);

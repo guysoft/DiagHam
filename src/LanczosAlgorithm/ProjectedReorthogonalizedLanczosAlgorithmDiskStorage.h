@@ -50,10 +50,7 @@ class ProjectedReorthogonalizedLanczosAlgorithmDiskStorage : public AbstractLanc
   RealVector V1;
   RealVector V2;
   RealVector V3;
-
-  // Array of pointers to vectors that should be orthogonalized with
-  RealVector** OrthogonalizationSet;
-
+  
   // index of current iteration
   int Index;
   // Garbage flag
@@ -142,6 +139,15 @@ class ProjectedReorthogonalizedLanczosAlgorithmDiskStorage : public AbstractLanc
   // temporary array for filenames
   char *TmpOutputName;
 
+  
+  // Array of pointers to vectors that should be orthogonalized with
+  RealVector** OrthogonalizationSet;
+// various temporary arrays used in calculation
+  double *TmpCoefficient;
+  double *TmpScalarProduct;
+  double *OrthogonalizationCoef;
+  RealVector *TmpVectorArray;
+  RealVector **TmpVectorPtrArray;
 
  public:
 

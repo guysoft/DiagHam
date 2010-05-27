@@ -564,7 +564,7 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 		{
 		  if (this->NbrProjectors>0)
 		    {
-		      cout << "Info: projected reorthogonalized Lanczos currently defaults to disk usage"<<endl;
+		      cout << "Info: projected reorthogonalized Lanczos defaults to using disk storage"<<endl;
 		      cout << "Using ProjectedReorthogonalizedLanczosAlgorithmDiskStorage"<<endl;
 		      Lanczos = new ProjectedReorthogonalizedLanczosAlgorithmDiskStorage(this->Projectors, this->NbrProjectors,
 											 this->Architecture, this->NbrEigenvalue,
