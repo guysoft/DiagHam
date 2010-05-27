@@ -119,6 +119,11 @@ char* GetUniqueFileName(const char* baseName, const char* optExtension = NULL, i
 //
 char* GetUniqueFileName(const char* baseName, int & minCounter, const char* optExtension = NULL);
 
+// test if file with given filename already exists, and if so, back it up
+// fileName = filename to save
+// optExtension = optional extension to add to backups (with leading dot, augmented by counter)
+// return = number of existing backup files (-1 if no backup required)
+int BackUpFile(const char* fileName, const char* optExtension = ".bak");
 
 // compute the number of lines in a text file
 //

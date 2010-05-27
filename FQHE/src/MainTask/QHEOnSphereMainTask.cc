@@ -316,6 +316,7 @@ int QHEOnSphereMainTask::ExecuteMainTask()
   ofstream File;
   if (this->FirstRun == true)
     {
+      BackUpFile(this->OutputFileName);
       File.open(this->OutputFileName, ios::binary | ios::out);
       this->FirstRun = false;
       File << "# Lz E";

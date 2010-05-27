@@ -368,6 +368,56 @@ char* GetUniqueFileName(const char* baseName, int & minCounter, const char* optE
   return UniqueFileName;
 }
 
+
+// test if file with given filename already exists, and if so, back it up
+// fileName = filename to save
+// optExtension = optional extension to add to backups (with leading dot, augmented by counter)
+//
+// returns = number of existing backup files (-1 if no backup required)
+//
+int BackUpFile(const char* fileName, const char* optExtension)
+{
+  int BackupCounter=-1;
+  std::ifstream testExistant(fileName,std::ios::in);
+  if (testExistant.is_open())
+    {
+      testExistant.close();
+      char *BackupFileName;
+      char *Extension;
+      BackupCounter = 0;
+      if (optExtension!=NULL)
+	{
+	  BackupFileName = new char[strlen(fileName)+strlen(optExtension)+5];
+	  Extension = new char[strlen(optExtension)+5];
+	  strcpy(Extension,optExtension);
+	}
+      else
+	{
+	  BackupFileName = new char[strlen(fileName)+5];
+	  Extension = new char[2];
+	  sprintf(Extension,"");
+	}
+      sprintf(BackupFileName, "%s%s", fileName, Extension);
+      testExistant.open(BackupFileName,std::ios::in);
+      while (testExistant.is_open())
+	{
+	  testExistant.close();
+	  ++BackupCounter;
+	  sprintf(BackupFileName, "%s%s%d", fileName, Extension, BackupCounter);
+	  testExistant.open(BackupFileName,std::ios::in);
+	}
+      testExistant.close();
+      if ( rename(fileName, BackupFileName) != 0)
+	{
+	  cout << "Problem backing up existing file "<<fileName<<endl;
+	}
+      delete [] Extension;
+      delete [] BackupFileName;
+    }
+  return BackupCounter;
+}
+
+
 // compute the number of lines in a text file
 //
 // fileName = text file name 

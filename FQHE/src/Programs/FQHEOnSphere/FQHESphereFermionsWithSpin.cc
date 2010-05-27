@@ -289,14 +289,14 @@ int main(int argc, char** argv)
 	if (Manager.GetDouble("s2-factor") != 0.0)
 	  sprintf(ExtraTerms,"_s2_%g",Manager.GetDouble("s2-factor"));
       if (Manager.GetBoolean("project-l2"))
-	sprintf(ExtraTerms,"%s_Pl2", ExtraTerms);
+	{
+	  sprintf(ExtraTerms,"%s_Pl2", ExtraTerms);
+	}
       if (Manager.GetBoolean("project-s2"))
-	sprintf(ExtraTerms,"%s_Ps2", ExtraTerms);
+	{
+	  sprintf(ExtraTerms,"%s_Ps2", ExtraTerms);
+	}
     }
-  
-  sprintf (OutputNameLz, "fermions_sphere_su2_%s%s_n_%d_2s_%d_sz_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), ExtraTerms,
-	   NbrFermions, LzMax, SzTotal);
-
   int Max = (((LzMax - NbrUp + 1) * NbrUp) + ((LzMax - NbrDown + 1) * NbrDown));
   cout << "maximum Lz value = " << Max << endl;
 
@@ -316,6 +316,12 @@ int main(int argc, char** argv)
       if (L + (2 * (NbrLz - 1)) < Max)
 	Max = L + (2 * (NbrLz - 1));
     }
+
+  if (NbrLz==1) 
+    sprintf (OutputNameLz, "fermions_sphere_su2_%s%s_n_%d_2s_%d_sz_%d_lz_%d.dat", Manager.GetString("interaction-name"), ExtraTerms, NbrFermions, LzMax, SzTotal, L);
+  else
+    sprintf (OutputNameLz, "fermions_sphere_su2_%s%s_n_%d_2s_%d_sz_%d_lz.dat", Manager.GetString("interaction-name"), ExtraTerms, NbrFermions, LzMax, SzTotal);
+  
   for (; L <= Max; L += 2)
     {
       double Shift = -10.0;
