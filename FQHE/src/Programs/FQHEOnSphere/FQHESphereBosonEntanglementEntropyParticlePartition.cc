@@ -293,7 +293,6 @@ int main(int argc, char** argv)
       double DensitySum = 0.0;
 
       int SubsystemMaxTotalLz = SubsystemNbrParticles * LzMax;
-
       int SubsystemTotalLz = -SubsystemMaxTotalLz; 
       if (LargestLSector == true)
 	{
