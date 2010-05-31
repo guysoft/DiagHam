@@ -100,6 +100,8 @@ class FermionOnSphere :  public ParticleOnSphere
 
   friend class BosonOnDiskShort;
 
+  friend class BosonOnTorusShort;
+
   friend class PairedCFOnSphereThreeEightsState;
 
   friend class ParticleOnSphereProjectorHamiltonian;
