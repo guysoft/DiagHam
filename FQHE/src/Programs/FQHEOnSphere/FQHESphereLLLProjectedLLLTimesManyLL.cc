@@ -230,7 +230,7 @@ int main(int argc, char** argv)
 #ifdef  __64_BITS__
       if (LLLLzMax  < 63)
 #else
-        if (LLLLzMaxBoson  < 31)
+        if (LLLLzMax  < 31)
 #endif
           LLLSpace = new BosonOnSphereHaldaneBasisShort (LLLNbrParticles,LLLTotalLz, LLLLzMax, ReferenceState);
         }
@@ -287,7 +287,7 @@ int main(int argc, char** argv)
 #ifdef  __64_BITS__
           if (LLLLzMax  < 63)
 #else
-            if (LLLLzMaxBoson  < 31)
+            if (LLLLzMax  < 31)
 #endif
               LLLSpace = new FermionOnSphereHaldaneBasis (LLLNbrParticles,LLLTotalLz, LLLLzMax, ReferenceState);
         }
