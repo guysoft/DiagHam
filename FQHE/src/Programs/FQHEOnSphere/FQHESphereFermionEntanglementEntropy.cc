@@ -12,6 +12,7 @@
 #include "HilbertSpace/FermionOnSphereHaldaneBasisLong.h"
 #include "HilbertSpace/FermionOnSphereSymmetricBasisLong.h"
 #include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasisLong.h"
+#include "HilbertSpace/FermionOnSphereHaldaneHugeBasis.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -62,6 +63,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the system (override autodetection from input file name if greater or equal to zero)", -1);
+  (*SystemGroup) += new BooleanOption  ('\n', "huge-basis", "use huge Hilbert space support");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "min-la", "minimum size of the subsystem whose entropy has to be evaluated", 1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "max-la", "maximum size of the subsystem whose entropy has to be evaluated (0 if equal to half the total system size)", 0);
   (*SystemGroup) += new SingleStringOption  ('\n', "degenerated-groundstate", "single column file describing a degenerated ground state");
@@ -176,149 +179,160 @@ int main(int argc, char** argv)
   Spaces = new ParticleOnSphere* [NbrSpaces];
   for (int i = 0; i < NbrSpaces; ++i)
     {
-      if (HaldaneBasisFlag == false)
+      if (Manager.GetBoolean("huge-basis") == true)
 	{
+	  if (Manager.GetString("load-hilbert") == 0)
+	    {
+	      cout << "error : huge basis mode requires to save and load the Hilbert space" << endl;
+	      return -1;
+	    }
+	  Spaces[i] = new  FermionOnSphereHaldaneHugeBasis (Manager.GetString("load-hilbert"), Manager.GetInteger("memory"));
+	}
+      else
+	{
+	  if (HaldaneBasisFlag == false)
+	    {
 #ifdef __64_BITS__
-	  if (LzMax <= 63)
+	      if (LzMax <= 63)
 #else
-	    if (LzMax <= 31)
-#endif
-	      {
-		Spaces[i] = new FermionOnSphere(NbrParticles, TotalLz[i], LzMax, MemorySpace);
-		if ((SymmetrizedBasis == true) && (TotalLz[i] == 0))
-		  {
-		    FermionOnSphereSymmetricBasis TmpSpace(NbrParticles, LzMax, MemorySpace);
-		    RealVector OutputState = TmpSpace.ConvertToNbodyBasis(GroundStates[i], *((FermionOnSphere*) Spaces[i]));
-		    GroundStates[i] = OutputState;
-		  }
-	      }
-	    else
-#ifdef __128_BIT_LONGLONG__
-	      if (LzMax <= 126)
-#else
-		if (LzMax <= 62)
+		if (LzMax <= 31)
 #endif
 		  {
-		    Spaces[i] = new FermionOnSphereLong(NbrParticles, TotalLz[i], LzMax, MemorySpace);
+		    Spaces[i] = new FermionOnSphere(NbrParticles, TotalLz[i], LzMax, MemorySpace);
 		    if ((SymmetrizedBasis == true) && (TotalLz[i] == 0))
 		      {
-			FermionOnSphereSymmetricBasisLong TmpSpace(NbrParticles, LzMax, MemorySpace);
-			RealVector OutputState = TmpSpace.ConvertToNbodyBasis(GroundStates[i], *((FermionOnSphereLong*) Spaces[i]));
+			FermionOnSphereSymmetricBasis TmpSpace(NbrParticles, LzMax, MemorySpace);
+			RealVector OutputState = TmpSpace.ConvertToNbodyBasis(GroundStates[i], *((FermionOnSphere*) Spaces[i]));
 			GroundStates[i] = OutputState;
 		      }
 		  }
 		else
-		  Spaces[i] = new FermionOnSphereUnlimited(NbrParticles, TotalLz[i], LzMax, MemorySpace);
-	}
-      else
-	{
-	  int* ReferenceState = 0;
-	  if (Manager.GetString("reference-file") == 0)
-	    {
-	      ReferenceState = new int[LzMax + 1];
-	      for (int i = 0; i <= LzMax; ++i)
-		ReferenceState[i] = 0;
-	      if (strcasecmp(Manager.GetString("reference-state"), "laughlin") == 0)
-		for (int i = 0; i <= LzMax; i += 3)
-		  ReferenceState[i] = 1;
-	      else
-		if (strcasecmp(Manager.GetString("reference-state"), "pfaffian") == 0)
-		  for (int i = 0; i <= LzMax; i += 4)
-		    {
-		      ReferenceState[i] = 1;
-		      ReferenceState[i + 1] = 1;
-		    }
-		else
-		  if (strcasecmp(Manager.GetString("reference-state"), "readrezayi3") == 0)
-		    for (int i = 0; i <= LzMax; i += 5)
+#ifdef __128_BIT_LONGLONG__
+		  if (LzMax <= 126)
+#else
+		    if (LzMax <= 62)
+#endif
 		      {
-			ReferenceState[i] = 1;
-			ReferenceState[i + 1] = 1;
-			ReferenceState[i + 2] = 1;
+			Spaces[i] = new FermionOnSphereLong(NbrParticles, TotalLz[i], LzMax, MemorySpace);
+			if ((SymmetrizedBasis == true) && (TotalLz[i] == 0))
+			  {
+			    FermionOnSphereSymmetricBasisLong TmpSpace(NbrParticles, LzMax, MemorySpace);
+			    RealVector OutputState = TmpSpace.ConvertToNbodyBasis(GroundStates[i], *((FermionOnSphereLong*) Spaces[i]));
+			    GroundStates[i] = OutputState;
+			  }
 		      }
-		  else
-		    {
-		      cout << "unknown reference state " << Manager.GetString("reference-state") << endl;
-		      return -1;
-		    }
+		    else
+		      Spaces[i] = new FermionOnSphereUnlimited(NbrParticles, TotalLz[i], LzMax, MemorySpace);
 	    }
 	  else
 	    {
-	      ConfigurationParser ReferenceStateDefinition;
-	      if (ReferenceStateDefinition.Parse(Manager.GetString("reference-file")) == false)
+	      int* ReferenceState = 0;
+	      if (Manager.GetString("reference-file") == 0)
 		{
-		  ReferenceStateDefinition.DumpErrors(cout) << endl;
-		  return -1;
+		  ReferenceState = new int[LzMax + 1];
+		  for (int i = 0; i <= LzMax; ++i)
+		    ReferenceState[i] = 0;
+		  if (strcasecmp(Manager.GetString("reference-state"), "laughlin") == 0)
+		    for (int i = 0; i <= LzMax; i += 3)
+		      ReferenceState[i] = 1;
+		  else
+		    if (strcasecmp(Manager.GetString("reference-state"), "pfaffian") == 0)
+		      for (int i = 0; i <= LzMax; i += 4)
+			{
+			  ReferenceState[i] = 1;
+			  ReferenceState[i + 1] = 1;
+			}
+		    else
+		      if (strcasecmp(Manager.GetString("reference-state"), "readrezayi3") == 0)
+			for (int i = 0; i <= LzMax; i += 5)
+			  {
+			    ReferenceState[i] = 1;
+			    ReferenceState[i + 1] = 1;
+			    ReferenceState[i + 2] = 1;
+			  }
+		      else
+			{
+			  cout << "unknown reference state " << Manager.GetString("reference-state") << endl;
+			  return -1;
+			}
 		}
-	      if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", NbrParticles) == false) || (NbrParticles <= 0))
+	      else
 		{
-		  cout << "NbrParticles is not defined or as a wrong value" << endl;
-		  return -1;
+		  ConfigurationParser ReferenceStateDefinition;
+		  if (ReferenceStateDefinition.Parse(Manager.GetString("reference-file")) == false)
+		    {
+		      ReferenceStateDefinition.DumpErrors(cout) << endl;
+		      return -1;
+		    }
+		  if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", NbrParticles) == false) || (NbrParticles <= 0))
+		    {
+		      cout << "NbrParticles is not defined or as a wrong value" << endl;
+		      return -1;
+		    }
+		  if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", LzMax) == false) || (LzMax <= 0))
+		    {
+		      cout << "LzMax is not defined or as a wrong value" << endl;
+		      return -1;
+		    }
+		  int MaxNbrLz;
+		  if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
+		    {
+		      cout << "error while parsing ReferenceState in " << Manager.GetString("reference-file") << endl;
+		      return -1;     
+		    }
+		  if (MaxNbrLz != (LzMax + 1))
+		    {
+		      cout << "wrong LzMax value in ReferenceState" << endl;
+		      return -1;     
+		    }
 		}
-	      if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", LzMax) == false) || (LzMax <= 0))
-		{
-		  cout << "LzMax is not defined or as a wrong value" << endl;
-		  return -1;
-		}
-	      int MaxNbrLz;
-	      if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
-		{
-		  cout << "error while parsing ReferenceState in " << Manager.GetString("reference-file") << endl;
-		  return -1;     
-		}
-	      if (MaxNbrLz != (LzMax + 1))
-		{
-		  cout << "wrong LzMax value in ReferenceState" << endl;
-		  return -1;     
-		}
-	    }
 #ifdef __64_BITS__
-	  if (LzMax <= 62)
+	      if (LzMax <= 62)
 #else
-	    if (LzMax <= 30)
-#endif
-	      {
-		if (Manager.GetString("load-hilbert") != 0)
-		  Spaces[i] = new FermionOnSphereHaldaneBasis(Manager.GetString("load-hilbert"), MemorySpace);
-		else
-		  Spaces[i] = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz[i], LzMax, ReferenceState, MemorySpace);
-		if (Manager.GetString("save-hilbert") != 0)
-		  {
-		    ((FermionOnSphereHaldaneBasis*) Spaces[i])->WriteHilbertSpace(Manager.GetString("save-hilbert"));
-		    return 0;
-		  }
-		if ((SymmetrizedBasis == true) && (TotalLz == 0))
-		  {
-		    FermionOnSphereHaldaneSymmetricBasis TmpSpace(NbrParticles, LzMax, ReferenceState, MemorySpace);
-		    RealVector OutputState = TmpSpace.ConvertToHaldaneNbodyBasis(GroundStates[i], * ((FermionOnSphereHaldaneBasis*) Spaces[i]));
-		    GroundStates[i] = OutputState;
-		  }
-	      }
-	    else
-#ifdef __128_BIT_LONGLONG__
-	      if (LzMax <= 126)
-#else
-		if (LzMax <= 62)
+		if (LzMax <= 30)
 #endif
 		  {
 		    if (Manager.GetString("load-hilbert") != 0)
-		      Spaces[i] = new FermionOnSphereHaldaneBasisLong(Manager.GetString("load-hilbert"), MemorySpace);
+		      Spaces[i] = new FermionOnSphereHaldaneBasis(Manager.GetString("load-hilbert"), MemorySpace);
 		    else
-		      Spaces[i] = new FermionOnSphereHaldaneBasisLong(NbrParticles, TotalLz[i], LzMax, ReferenceState, MemorySpace);
+		      Spaces[i] = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz[i], LzMax, ReferenceState, MemorySpace);
 		    if (Manager.GetString("save-hilbert") != 0)
 		      {
-			((FermionOnSphereHaldaneBasisLong*) Spaces[i])->WriteHilbertSpace(Manager.GetString("save-hilbert"));
+			((FermionOnSphereHaldaneBasis*) Spaces[i])->WriteHilbertSpace(Manager.GetString("save-hilbert"));
 			return 0;
 		      }
 		    if ((SymmetrizedBasis == true) && (TotalLz == 0))
 		      {
-			FermionOnSphereHaldaneSymmetricBasisLong TmpSpace(NbrParticles, LzMax, ReferenceState, MemorySpace);
-			RealVector OutputState = TmpSpace.ConvertToHaldaneNbodyBasis(GroundStates[i], * ((FermionOnSphereHaldaneBasisLong*) Spaces[i]));
+			FermionOnSphereHaldaneSymmetricBasis TmpSpace(NbrParticles, LzMax, ReferenceState, MemorySpace);
+			RealVector OutputState = TmpSpace.ConvertToHaldaneNbodyBasis(GroundStates[i], * ((FermionOnSphereHaldaneBasis*) Spaces[i]));
 			GroundStates[i] = OutputState;
 		      }
-		  } 
+	      }
+		else
+#ifdef __128_BIT_LONGLONG__
+		  if (LzMax <= 126)
+#else
+		    if (LzMax <= 62)
+#endif
+		      {
+			if (Manager.GetString("load-hilbert") != 0)
+			  Spaces[i] = new FermionOnSphereHaldaneBasisLong(Manager.GetString("load-hilbert"), MemorySpace);
+			else
+			  Spaces[i] = new FermionOnSphereHaldaneBasisLong(NbrParticles, TotalLz[i], LzMax, ReferenceState, MemorySpace);
+			if (Manager.GetString("save-hilbert") != 0)
+			  {
+			    ((FermionOnSphereHaldaneBasisLong*) Spaces[i])->WriteHilbertSpace(Manager.GetString("save-hilbert"));
+			    return 0;
+			  }
+			if ((SymmetrizedBasis == true) && (TotalLz == 0))
+			  {
+			    FermionOnSphereHaldaneSymmetricBasisLong TmpSpace(NbrParticles, LzMax, ReferenceState, MemorySpace);
+			    RealVector OutputState = TmpSpace.ConvertToHaldaneNbodyBasis(GroundStates[i], * ((FermionOnSphereHaldaneBasisLong*) Spaces[i]));
+			    GroundStates[i] = OutputState;
+			  }
+		      } 
+	    }
 	}
-      
       if (Spaces[i]->GetHilbertSpaceDimension() != GroundStates[i].GetVectorDimension())
 	{
 	  cout << "dimension mismatch between Hilbert space and ground state" << endl;

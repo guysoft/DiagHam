@@ -390,10 +390,7 @@ RealSymmetricMatrix  BosonOnSphereHaldaneHugeBasisShort::EvaluatePartialDensityM
 	  for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
 	    {
 	      unsigned long TmpState = TmpHilbertSpace.FermionBasis->StateDescription[MinIndex] << (subsytemSize + nbrBosonSector) | TmpState2;
-	      int TmpLzMax = this->FermionHugeBasis->LzMax;
-	      while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
-		--TmpLzMax;
-	      long TmpPos = this->FermionHugeBasis->FindStateIndexMemory(TmpState, TmpLzMax);
+	      long TmpPos = this->FermionHugeBasis->FindStateIndexFactorized(TmpState);
 	      if (TmpPos != this->LargeHilbertSpaceDimension)
 		TmpValue += groundState[TmpPos] * groundState[TmpPos];	
 	    }
@@ -417,10 +414,7 @@ RealSymmetricMatrix  BosonOnSphereHaldaneHugeBasisShort::EvaluatePartialDensityM
 	  for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
 	    {
 	      unsigned long TmpState = TmpHilbertSpace.FermionBasis->StateDescription[MinIndex] << (subsytemSize + nbrBosonSector);
-	      int TmpLzMax = this->FermionHugeBasis->LzMax;
-	      while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
-		--TmpLzMax;
-	      long TmpPos = this->FermionHugeBasis->FindStateIndexMemory(TmpState, TmpLzMax);
+	      long TmpPos = this->FermionHugeBasis->FindStateIndexFactorized(TmpState);
 	      if (TmpPos != this->LargeHilbertSpaceDimension)
 		TmpValue += groundState[TmpPos] * groundState[TmpPos];	
 	    }	  RealSymmetricMatrix TmpDensityMatrix(1);
@@ -444,10 +438,7 @@ RealSymmetricMatrix  BosonOnSphereHaldaneHugeBasisShort::EvaluatePartialDensityM
       for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
 	{
 	  unsigned long TmpState = TmpHilbertSpace.FermionBasis->StateDescription[MinIndex] << (subsytemSize + nbrBosonSector) | (0x1ul << ShiftedLzSector);
-	  int TmpLzMax = this->FermionHugeBasis->LzMax;
-	  while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
-	    --TmpLzMax;
-	  long TmpPos = this->FermionHugeBasis->FindStateIndexMemory(TmpState, TmpLzMax);
+	  long TmpPos = this->FermionHugeBasis->FindStateIndexFactorized(TmpState);
 	  if (TmpPos != this->LargeHilbertSpaceDimension)
 	    TmpValue += groundState[TmpPos] * groundState[TmpPos];	
 	}
@@ -496,10 +487,7 @@ RealSymmetricMatrix  BosonOnSphereHaldaneHugeBasisShort::EvaluatePartialDensityM
       for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
 	{
 	  unsigned long TmpState = TmpDestinationHilbertSpace.FermionBasis->StateDescription[j] | TmpComplementaryState;
-	  int TmpLzMax = this->FermionHugeBasis->LzMax;
-	  while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
-	    --TmpLzMax;
-	  long TmpPos = this->FermionHugeBasis->FindStateIndexMemory(TmpState, TmpLzMax);
+	  long TmpPos = this->FermionHugeBasis->FindStateIndexFactorized(TmpState);
 	  if (TmpPos != this->LargeHilbertSpaceDimension)
 	    {
 	      TmpStatePosition[Pos] = TmpPos;
@@ -1245,8 +1233,7 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::ConvertToUnnormalizedMonomial(Re
 
 RealVector& BosonOnSphereHaldaneHugeBasisShort::ConvertFromUnnormalizedMonomial(RealVector& state, long reference, bool symmetryFactor)
 {
-  double Factor = state[reference];
-  state[reference] = 1.0;
+  double Factor = 1.0;
   int TmpLzMax = this->FermionHugeBasis->LzMax;
   unsigned long TmpState = this->FermionHugeBasis->StateDescription[reference];
    while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)

@@ -126,7 +126,9 @@ GenericComplexMainTask::GenericComplexMainTask(OptionManager* options, AbstractH
       this->SizeBlockLanczos = options->GetInteger("block-size");
     }
   this->VectorMemory = options->GetInteger("nbr-vector");
-  this->SavePrecalculationFileName = options->GetString("save-precalculation");
+  this->SavePrecalculationFileName = 0;
+  if ((*options)["save-precalculation"] != 0)
+    this->SavePrecalculationFileName = options->GetString("save-precalculation");
   this->FullReorthogonalizationFlag = options->GetBoolean("force-reorthogonalize");
   this->EvaluateEigenvectors = options->GetBoolean("eigenstate");
   this->EigenvectorConvergence = options->GetBoolean("eigenstate-convergence");

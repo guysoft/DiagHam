@@ -30,6 +30,7 @@
 
 #include "config.h"
 #include "HilbertSpace/FermionOnSphereHaldaneHugeBasis.h"
+#include "HilbertSpace/FermionOnSphere.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
 #include "Matrix/ComplexMatrix.h"
@@ -1305,6 +1306,8 @@ long FermionOnSphereHaldaneHugeBasis::FindStateIndexFactorized(unsigned long sta
 {
   unsigned int TmpSuffix = (unsigned int) (stateDescription >> this->RootSuffixShift);
   unsigned int CurrentState = TmpSuffix >> this->SuffixLookUpTableShift;
+  if (CurrentState >= this->SuffixLookUpTableSize)
+    return this->LargeHilbertSpaceDimension;
   long PosMax = this->SuffixLookUpTable[CurrentState + 1];//0l;
   long PosMin = this->SuffixLookUpTable[CurrentState];//this->NbrRootSuffix - 1l;
   long PosMid = (PosMin + PosMax) >> 1;
@@ -3021,3 +3024,469 @@ int FermionOnSphereHaldaneHugeBasis::GetLzValue(int j)
 {
   return this->TotalLz;
 }
+
+// evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Lz sector and fixed number of particles
+// 
+// subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax to -Lzmax+subsytemSize-1)
+// nbrFermionSector = number of particles that belong to the subsytem 
+// groundState = reference on the total system ground state
+// lzSector = Lz sector in which the density matrix has to be evaluated 
+// return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+
+RealSymmetricMatrix  FermionOnSphereHaldaneHugeBasis::EvaluatePartialDensityMatrix (int subsytemSize, int nbrFermionSector, int lzSector, RealVector& groundState)
+{  
+  if (subsytemSize <= 0)
+    {
+      if ((lzSector == 0) && (nbrFermionSector == 0))
+	{
+	  RealSymmetricMatrix TmpDensityMatrix(1);
+	  TmpDensityMatrix.SetMatrixElement(0, 0, 1.0);
+	  return TmpDensityMatrix;
+	}
+      else
+	{
+	  RealSymmetricMatrix TmpDensityMatrix;
+	  return TmpDensityMatrix;	  
+	}
+    }
+  if (subsytemSize > this->LzMax)
+    {
+      if ((lzSector == this->TotalLz) && (nbrFermionSector == this->NbrFermions))
+	{
+	  RealSymmetricMatrix TmpDensityMatrix(this->LargeHilbertSpaceDimension);
+	  for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+	    for (long j = i; j < this->LargeHilbertSpaceDimension; ++j)
+	      TmpDensityMatrix.SetMatrixElement(i, j, groundState[i] * groundState[j]);
+	}
+      else
+	{
+	  RealSymmetricMatrix TmpDensityMatrix;
+	  return TmpDensityMatrix;	  
+	}
+    }
+
+  int ShiftedTotalLz = (this->TotalLz + this->NbrFermions * this->LzMax) >> 1;
+  int ShiftedLzSector = (lzSector + nbrFermionSector * (subsytemSize - 1)) >> 1;
+  int ShiftedLzComplementarySector = ShiftedTotalLz - ShiftedLzSector;
+  int NbrFermionsComplementarySector = this->NbrFermions - nbrFermionSector;
+  if ((ShiftedLzComplementarySector < (NbrFermionsComplementarySector * subsytemSize)) || (ShiftedLzComplementarySector > (NbrFermionsComplementarySector * (this->LzMax))))
+    {
+      RealSymmetricMatrix TmpDensityMatrix;
+      return TmpDensityMatrix;	  
+    }
+
+  if (subsytemSize == 1)
+    {
+      if (lzSector == 0)
+	{
+	  double TmpValue = 0.0;
+ 	  FermionOnSphere TmpHilbertSpace(this->NbrFermions - nbrFermionSector, 2 * ShiftedLzComplementarySector - ((this->NbrFermions - nbrFermionSector) * (this->LzMax + subsytemSize)), this->LzMax - subsytemSize);
+	  unsigned long  TmpState2 = 0x0;
+	  for (int i = 0; i < nbrFermionSector; ++i)
+	    TmpState2 |= 0x1ul << i;
+	  for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
+	    {
+	      unsigned long TmpState = (TmpHilbertSpace.StateDescription[MinIndex] << subsytemSize) | TmpState2;
+	      long TmpPos = this->FindStateIndexFactorized(TmpState);
+	      if (TmpPos != this->LargeHilbertSpaceDimension)
+		TmpValue += groundState[TmpPos] * groundState[TmpPos];	
+	    }
+
+	  RealSymmetricMatrix TmpDensityMatrix(1);
+	  TmpDensityMatrix.SetMatrixElement(0, 0, TmpValue);
+	  return TmpDensityMatrix;
+	}
+      else
+	{
+	  RealSymmetricMatrix TmpDensityMatrix;
+	  return TmpDensityMatrix;	  
+	}      
+    }
+  if (nbrFermionSector == 0)
+    {
+      if (lzSector == 0)
+	{
+	  double TmpValue = 0;
+ 	  FermionOnSphere TmpHilbertSpace(this->NbrFermions - nbrFermionSector, 2 * ShiftedLzComplementarySector - ((this->NbrFermions - nbrFermionSector) * (this->LzMax + subsytemSize)), this->LzMax - subsytemSize);
+	  for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
+	    {
+	      unsigned long TmpState = TmpHilbertSpace.StateDescription[MinIndex] << subsytemSize;
+	      long TmpPos = this->FindStateIndexFactorized(TmpState);
+	      if (TmpPos != this->LargeHilbertSpaceDimension)
+		TmpValue += groundState[TmpPos] * groundState[TmpPos];	
+	    }	  RealSymmetricMatrix TmpDensityMatrix(1);
+	  TmpDensityMatrix.SetMatrixElement(0, 0, TmpValue);
+	  return TmpDensityMatrix;
+	}
+      else
+	{
+	  RealSymmetricMatrix TmpDensityMatrix;
+	  return TmpDensityMatrix;	  
+	}
+    }
+
+  int TmpComplementarySubsystemLzMax = this->LzMax - subsytemSize;
+  long MinIndex = 0l;
+  long MaxIndex = this->LargeHilbertSpaceDimension - 1l;
+  if (nbrFermionSector == 1)
+    {
+      double TmpValue = 0.0;
+      FermionOnSphere TmpHilbertSpace(this->NbrFermions - nbrFermionSector, 2 * ShiftedLzComplementarySector - ((this->NbrFermions - nbrFermionSector) * (this->LzMax + subsytemSize)), this->LzMax - subsytemSize);
+      for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
+	{
+	  unsigned long TmpState = (TmpHilbertSpace.StateDescription[MinIndex] << subsytemSize) | (0x1ul << ShiftedLzSector);
+	  long TmpPos = this->FindStateIndexFactorized(TmpState);
+	  if (TmpPos != this->LargeHilbertSpaceDimension)
+	    TmpValue += groundState[TmpPos] * groundState[TmpPos];	
+	}
+      RealSymmetricMatrix TmpDensityMatrix(1, true);
+      TmpDensityMatrix.SetMatrixElement(0, 0, TmpValue);	    
+      return TmpDensityMatrix;
+    }
+  if (NbrFermionsComplementarySector == 0)
+    {
+      if (ShiftedLzComplementarySector != 0)
+	{
+	  RealSymmetricMatrix TmpDensityMatrix;
+	  return TmpDensityMatrix;	  
+	}
+      FermionOnSphere TmpDestinationHilbertSpace(nbrFermionSector, lzSector, subsytemSize - 1);
+      cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
+      RealSymmetricMatrix TmpDensityMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
+      MinIndex = this->LargeHilbertSpaceDimension - TmpDestinationHilbertSpace.HilbertSpaceDimension;
+      double TmpValue;
+      for (int i = 0; i < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++i)
+	{
+	  TmpValue = groundState[MinIndex + i];
+	  for (int j = i; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
+	    TmpDensityMatrix.SetMatrixElement(i, j, TmpValue * groundState[MinIndex + j]);
+	}
+      return TmpDensityMatrix;
+    }
+
+
+  int TmpNbrFermions;
+  int TmpTotalLz;
+  int TmpIndex;
+  FermionOnSphere TmpDestinationHilbertSpace(nbrFermionSector, lzSector, subsytemSize - 1);
+  cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
+  RealSymmetricMatrix TmpDensityMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
+  long* TmpStatePosition = new long [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+  int* TmpStatePosition2 = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+  long TmpNbrNonZeroElements = 0;
+
+  FermionOnSphere TmpHilbertSpace(this->NbrFermions - nbrFermionSector, 2 * ShiftedLzComplementarySector - ((this->NbrFermions - nbrFermionSector) * (this->LzMax + subsytemSize)), this->LzMax - subsytemSize);
+
+  for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
+    {
+      int Pos = 0;
+      unsigned long TmpComplementaryState = TmpHilbertSpace.StateDescription[MinIndex] << subsytemSize;
+      for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
+	{
+	  unsigned long TmpState = TmpDestinationHilbertSpace.StateDescription[j] | TmpComplementaryState;
+	  long TmpPos = this->FindStateIndexFactorized(TmpState);
+	  if (TmpPos != this->LargeHilbertSpaceDimension)
+	    {
+	      TmpStatePosition[Pos] = TmpPos;
+	      TmpStatePosition2[Pos] = j;
+	      ++Pos;
+	    }
+	}
+      if (Pos != 0)
+	{
+	  ++TmpNbrNonZeroElements;
+	  for (int j = 0; j < Pos; ++j)
+	    {
+	      int Pos2 = TmpStatePosition2[j];
+	      double TmpValue = groundState[TmpStatePosition[j]];
+	      for (int k = 0; k < Pos; ++k)
+		if (TmpStatePosition2[k] >= Pos2)
+		TmpDensityMatrix.AddToMatrixElement(Pos2, TmpStatePosition2[k], TmpValue * groundState[TmpStatePosition[k]]);
+	    }
+	}
+    }
+  delete[] TmpStatePosition2;
+  delete[] TmpStatePosition;
+  if (TmpNbrNonZeroElements > 0)	
+    return TmpDensityMatrix;
+  else
+    {
+      RealSymmetricMatrix TmpDensityMatrixZero;
+      return TmpDensityMatrixZero;
+    }
+}
+
+// convert a state such that its components are now expressed in the unnormalized basis
+//
+// state = reference to the state to convert
+// reference = set which component as to be normalized to 1
+// symmetryFactor = if true also remove the symmetry factors
+// return value = converted state
+
+RealVector& FermionOnSphereHaldaneHugeBasis::ConvertToUnnormalizedMonomial(RealVector& state, long reference, bool symmetryFactor)
+{
+  double* SqrtCoefficients = new double [this->LzMax + 1];
+  BinomialCoefficients Binomials(this->LzMax);
+  if (reference >= 0l)
+    {
+      int* TmpMonomialReference = new int [this->NbrFermions];
+      int* TmpMonomial = new int [this->NbrFermions];
+      double Factor = 1.0 / state[reference];
+      double* InvSqrtCoefficients = new double [this->LzMax + 1];
+      for (int k = 0; k <= this->LzMax; ++k)
+	{
+	  SqrtCoefficients[k] = sqrt(Binomials.GetNumericalCoefficient(this->LzMax, k));
+	  InvSqrtCoefficients[k] = 1.0 / SqrtCoefficients[k];
+	}
+      unsigned long TmpState = this->StateDescription[reference];
+      int Index = 0;
+      for (int j = this->LzMax; j >= 0; --j)
+	if (((TmpState >> j) & 1ul) != 0ul)
+	  TmpMonomialReference[Index++] = j;
+      for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+	{
+	  Index = 0;
+	  TmpState = this->StateDescription[i];
+	  for (int j = this->LzMax; j >= 0; --j)
+	    if (((TmpState >> j) & 1ul) != 0ul)
+	      TmpMonomial[Index++] = j;
+	  int Index1 = 0;
+	  int Index2 = 0;
+	  double Coefficient = Factor;
+	  while ((Index1 < this->NbrFermions) && (Index2 < this->NbrFermions))
+	    {
+	      while ((Index1 < this->NbrFermions) && (TmpMonomialReference[Index1] > TmpMonomial[Index2]))
+		{
+		  Coefficient *= InvSqrtCoefficients[TmpMonomialReference[Index1]];
+		  ++Index1;
+		}
+	      while ((Index1 < this->NbrFermions) && (Index2 < this->NbrFermions) && (TmpMonomialReference[Index1] == TmpMonomial[Index2]))
+		{
+		  ++Index1;
+		  ++Index2;
+		}
+	      while ((Index2 < this->NbrFermions) && (TmpMonomialReference[Index1] < TmpMonomial[Index2]))
+		{
+		  Coefficient *= SqrtCoefficients[TmpMonomial[Index2]];
+		  ++Index2;
+		}	  
+	    }
+	  while (Index1 < this->NbrFermions)
+	    {
+	      Coefficient *= InvSqrtCoefficients[TmpMonomialReference[Index1]];
+	      ++Index1;
+	    }
+	  while (Index2 < this->NbrFermions)
+	    {
+	      Coefficient *= SqrtCoefficients[TmpMonomial[Index2]];
+	      ++Index2;
+	    }
+	  state[i] *= Coefficient;
+	}
+      state[reference] = 1.0;
+      delete[] InvSqrtCoefficients;
+      delete[] TmpMonomialReference;
+      delete[] TmpMonomial;
+   }
+  else
+    {
+      int* TmpMonomialReference = new int [this->NbrFermions];
+      int* TmpMonomial = new int [this->NbrFermions];
+      double Factor = 1.0;
+      double* InvSqrtCoefficients = new double [this->LzMax + 1];
+      for (int k = 0; k <= this->LzMax; ++k)
+	{
+	  SqrtCoefficients[k] = sqrt(Binomials.GetNumericalCoefficient(this->LzMax, k));
+	  InvSqrtCoefficients[k] = 1.0 / SqrtCoefficients[k];
+	}
+      unsigned long TmpState = this->StateDescription[0l];
+      int Index = 0;
+      for (int j = this->LzMax; j >= 0; --j)
+	if (((TmpState >> j) & 1ul) != 0ul)
+	  TmpMonomialReference[Index++] = j;
+      for (long i = 0l; i < this->LargeHilbertSpaceDimension; ++i)
+	{
+	  Index = 0;
+	  TmpState = this->StateDescription[i];
+	  for (int j = this->LzMax; j >= 0; --j)
+	    if (((TmpState >> j) & 1ul) != 0ul)
+	      TmpMonomial[Index++] = j;
+	  int Index1 = 0;
+	  int Index2 = 0;
+	  double Coefficient = Factor;
+	  while ((Index1 < this->NbrFermions) && (Index2 < this->NbrFermions))
+	    {
+	      while ((Index1 < this->NbrFermions) && (TmpMonomialReference[Index1] > TmpMonomial[Index2]))
+		{
+		  Coefficient *= InvSqrtCoefficients[TmpMonomialReference[Index1]];
+		  ++Index1;
+		}
+	      while ((Index1 < this->NbrFermions) && (Index2 < this->NbrFermions) && (TmpMonomialReference[Index1] == TmpMonomial[Index2]))
+		{
+		  ++Index1;
+		  ++Index2;
+		}
+	      while ((Index2 < this->NbrFermions) && (TmpMonomialReference[Index1] < TmpMonomial[Index2]))
+		{
+		  Coefficient *= SqrtCoefficients[TmpMonomial[Index2]];
+		  ++Index2;
+		}	  
+	    }
+	  while (Index1 < this->NbrFermions)
+	    {
+	      Coefficient *= InvSqrtCoefficients[TmpMonomialReference[Index1]];
+	      ++Index1;
+	    }
+	  while (Index2 < this->NbrFermions)
+	    {
+	      Coefficient *= SqrtCoefficients[TmpMonomial[Index2]];
+	      ++Index2;
+	    }
+	  state[i] *= Coefficient;
+	}
+      delete[] InvSqrtCoefficients;
+      delete[] TmpMonomialReference;
+      delete[] TmpMonomial;
+   }
+  delete[] SqrtCoefficients;
+  return state;
+}
+
+// convert a state such that its components are now expressed in the normalized basis
+//
+// state = reference to the state to convert
+// reference = set which component has been normalized to 1
+// symmetryFactor = if true also add the symmetry factors
+// return value = converted state
+
+RealVector& FermionOnSphereHaldaneHugeBasis::ConvertFromUnnormalizedMonomial(RealVector& state, long reference, bool symmetryFactor)
+{
+  BinomialCoefficients Binomials(this->LzMax);
+  double* SqrtCoefficients = new double [this->LzMax + 1];
+  if (reference >= 0l)
+    {
+      int* TmpMonomialReference = new int [this->NbrFermions];
+      int* TmpMonomial = new int [this->NbrFermions];
+      double Factor = 1.0;
+      double* SqrtCoefficients = new double [this->LzMax + 1];
+      double* InvSqrtCoefficients = new double [this->LzMax + 1];
+      for (int k = 0; k <= this->LzMax; ++k)
+	{
+	  InvSqrtCoefficients[k] = sqrt(Binomials.GetNumericalCoefficient(this->LzMax, k));
+	  SqrtCoefficients[k] = 1.0 / InvSqrtCoefficients[k];
+	}
+      unsigned long TmpState = this->StateDescription[reference];
+      int Index = 0;
+      for (int j = this->LzMax; j >= 0; --j)
+	if (((TmpState >> j) & 1ul) != 0ul)
+	  TmpMonomialReference[Index++] = j;
+      for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+	{
+	  Index = 0;
+	  TmpState = this->StateDescription[i];
+	  for (int j = this->LzMax; j >= 0; --j)
+	    if (((TmpState >> j) & 1ul) != 0ul)
+	      TmpMonomial[Index++] = j;
+	  int Index1 = 0;
+	  int Index2 = 0;
+	  double Coefficient = Factor;
+	  while ((Index1 < this->NbrFermions) && (Index2 < this->NbrFermions))
+	    {
+	      while ((Index1 < this->NbrFermions) && (TmpMonomialReference[Index1] > TmpMonomial[Index2]))
+		{
+		  Coefficient *= InvSqrtCoefficients[TmpMonomialReference[Index1]];
+		  ++Index1;
+		}
+	      while ((Index1 < this->NbrFermions) && (Index2 < this->NbrFermions) && (TmpMonomialReference[Index1] == TmpMonomial[Index2]))
+		{
+		  ++Index1;
+		  ++Index2;
+		}
+	      while ((Index2 < this->NbrFermions) && (TmpMonomialReference[Index1] < TmpMonomial[Index2]))
+		{
+		  Coefficient *= SqrtCoefficients[TmpMonomial[Index2]];
+		  ++Index2;
+		}	  
+	    }
+	  while (Index1 < this->NbrFermions)
+	    {
+	      Coefficient *= InvSqrtCoefficients[TmpMonomialReference[Index1]];
+	      ++Index1;
+	    }
+	  while (Index2 < this->NbrFermions)
+	    {
+	      Coefficient *= SqrtCoefficients[TmpMonomial[Index2]];
+	      ++Index2;
+	    }
+	  state[i] *= Coefficient;
+	}
+      delete[] TmpMonomialReference;
+      delete[] TmpMonomial;
+      delete[] InvSqrtCoefficients;
+      state /= state.Norm();
+    }
+  else
+    {
+      int* TmpMonomialReference = new int [this->NbrFermions];
+      int* TmpMonomial = new int [this->NbrFermions];
+      double Factor = 1.0;
+      double* SqrtCoefficients = new double [this->LzMax + 1];
+      double* InvSqrtCoefficients = new double [this->LzMax + 1];
+      for (int k = 0; k <= this->LzMax; ++k)
+	{
+	  InvSqrtCoefficients[k] = sqrt(Binomials.GetNumericalCoefficient(this->LzMax, k));
+	  SqrtCoefficients[k] = 1.0 / InvSqrtCoefficients[k];
+	}
+      unsigned long TmpState = this->StateDescription[0l];
+      int Index = 0;
+      for (int j = this->LzMax; j >= 0; --j)
+	if (((TmpState >> j) & 1ul) != 0ul)
+	  TmpMonomialReference[Index++] = j;
+      for (long i = 1l; i < this->LargeHilbertSpaceDimension; ++i)
+	{
+	  Index = 0;
+	  TmpState = this->StateDescription[i];
+	  for (int j = this->LzMax; j >= 0; --j)
+	    if (((TmpState >> j) & 1ul) != 0ul)
+	      TmpMonomial[Index++] = j;
+	  int Index1 = 0;
+	  int Index2 = 0;
+	  double Coefficient = Factor;
+	  while ((Index1 < this->NbrFermions) && (Index2 < this->NbrFermions))
+	    {
+	      while ((Index1 < this->NbrFermions) && (TmpMonomialReference[Index1] > TmpMonomial[Index2]))
+		{
+		  Coefficient *= InvSqrtCoefficients[TmpMonomialReference[Index1]];
+		  ++Index1;
+		}
+	      while ((Index1 < this->NbrFermions) && (Index2 < this->NbrFermions) && (TmpMonomialReference[Index1] == TmpMonomial[Index2]))
+		{
+		  ++Index1;
+		  ++Index2;
+		}
+	      while ((Index2 < this->NbrFermions) && (TmpMonomialReference[Index1] < TmpMonomial[Index2]))
+		{
+		  Coefficient *= SqrtCoefficients[TmpMonomial[Index2]];
+		  ++Index2;
+		}	  
+	    }
+	  while (Index1 < this->NbrFermions)
+	    {
+	      Coefficient *= InvSqrtCoefficients[TmpMonomialReference[Index1]];
+	      ++Index1;
+	    }
+	  while (Index2 < this->NbrFermions)
+	    {
+	      Coefficient *= SqrtCoefficients[TmpMonomial[Index2]];
+	      ++Index2;
+	    }
+	  state[i] *= Coefficient;
+	}
+      delete[] TmpMonomialReference;
+      delete[] TmpMonomial;
+      delete[] InvSqrtCoefficients;
+    }
+  delete[] SqrtCoefficients;
+  return state;
+}
+

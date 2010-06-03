@@ -40,6 +40,7 @@
 #include <iostream>
 
 
+using std::cout;
 using std::endl;
 using std::ostream;
 
@@ -202,23 +203,23 @@ RealVector& SpinChainHamiltonian::LowLevelMultiply(RealVector& vSource, RealVect
   double coef;
   int pos;
   int MaxPos = this->NbrSpin - 1;
-  for (int i = firstComponent; i < LastComponent; ++i)
-    vDestination[i] = this->SzSzContributions[i] * vSource[i];
+  vDestination.ClearVector();
   for (int i = firstComponent; i < LastComponent; ++i)
     {
-
+      double TmpValue = vSource[i];
+      vDestination[i] += this->SzSzContributions[i] * TmpValue;
       // J part of Hamiltonian      
       for (int j = 0; j < MaxPos; ++j)
 	{
 	  pos = this->Chain->SmiSpj(j, j + 1, i, coef);
 	  if (pos != dim)
 	    {
-	      vDestination[pos] += this->HalfJ[j] * coef * vSource[i];
+	      vDestination[pos] += this->HalfJ[j] * coef * TmpValue;
 	    }
 	  pos = this->Chain->SmiSpj(j + 1, j, i, coef);
 	  if (pos != dim)
 	    {
-	      vDestination[pos] += this->HalfJ[j] * coef * vSource[i];
+	      vDestination[pos] += this->HalfJ[j] * coef * TmpValue;
 	    }
 	}
     }
@@ -255,22 +256,21 @@ RealVector& SpinChainHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealV
   int pos;
   int MaxPos = this->NbrSpin - 1;
   for (int i = firstComponent; i < LastComponent; ++i)
-    vDestination[i] += this->SzSzContributions[i] * vSource[i];
-  for (int i = firstComponent; i < LastComponent; ++i)
     {
-
+      double TmpValue = vSource[i];
+      vDestination[i] += this->SzSzContributions[i] * TmpValue;
       // J part of Hamiltonian      
       for (int j = 0; j < MaxPos; ++j)
 	{
 	  pos = this->Chain->SmiSpj(j, j + 1, i, coef);
 	  if (pos != dim)
 	    {
-	      vDestination[pos] += this->HalfJ[j] * coef * vSource[i];
+	      vDestination[pos] += this->HalfJ[j] * coef * TmpValue;
 	    }
 	  pos = this->Chain->SmiSpj(j + 1, j, i, coef);
 	  if (pos != dim)
 	    {
-	      vDestination[pos] += this->HalfJ[j] * coef * vSource[i];
+	      vDestination[pos] += this->HalfJ[j] * coef * TmpValue;
 	    }
 	}
     }
