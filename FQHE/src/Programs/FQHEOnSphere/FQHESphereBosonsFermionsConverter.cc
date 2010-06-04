@@ -110,6 +110,8 @@ int main(int argc, char** argv)
 	{
 	  return -1;
 	}
+      if (FermionFlag[i] == true)
+	LzMax[i] -= NbrParticles[i] - 1;
     }
   
   for(int i = 1; i < NbrVectors; i++)
@@ -154,7 +156,7 @@ int main(int argc, char** argv)
 	      strncpy (TmpPos, VectorFiles[i] + 9, TmpPos2 - VectorFiles[i] - 9);
 	      TmpPos += TmpPos2 - VectorFiles[i] - 9;
 	      TmpPos2 = strstr(VectorFiles[i], "_lz_");
-	      sprintf (TmpPos, "_n_%d_2s_%d%s", NbrParticles[i], LzMax[i] - NbrParticles[i] + 1, TmpPos2);
+	      sprintf (TmpPos, "_n_%d_2s_%d%s", NbrParticles[i], LzMax[i], TmpPos2);
 	    }
 	  else
 	    {
