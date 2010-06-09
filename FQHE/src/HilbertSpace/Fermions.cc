@@ -36,6 +36,8 @@
 #include "QuantumNumber/SzQuantumNumber.h"
 #include "QuantumNumber/NumberParticleQuantumNumber.h"
 #include "QuantumNumber/VectorQuantumNumber.h"
+#include "MathTools/IntegerAlgebraTools.h"
+
 #include <iostream>
 
 
@@ -45,20 +47,6 @@ using std::endl;
 
 #define MAX_HILBERTSPACE_DIMENSION 32768
 
-
-// find gcd
-//
-// m = first number
-// n = second number
-// return value = gcd of m and n
-int FindGCD (int m, int n);
-
-// recurrence for gcd
-//
-// m = first number
-// n = second number
-// return value = gcd of m and n
-int gcd (int m, int n);
 
 // default constructor
 //
@@ -704,36 +692,3 @@ ostream& Fermions::PrintState (ostream& Str, int state)
   return Str;
 }
 
-// find gcd
-//
-// m = first number
-// n = second number
-// return value = gcd of m and n
-
-int FindGCD (int m, int n)
-{
-  if (m < 0)
-    m = -m;
-  if (n < 0)
-    n = -n;
-  if (m == n)
-    return n;
-  if (m < n)
-    return gcd(m, n);
-  else
-    return gcd(n ,m);
-}
- 
-// recurrence for gcd
-//
-// m = first number
-// n = second number
-// return value = gcd of m and n
-
-int gcd (int m, int n)
-{
-  if (m == 0)
-    return n;
-  else
-    return gcd ((n % m), m);
-}                                                                                                                         
