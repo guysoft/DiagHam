@@ -56,6 +56,11 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // targetSpace = pointer to the target space
   virtual void SetTargetSpace(ParticleOnSphere* targetSpace);
 
+  // set a different target space (for all basic operations)
+  //
+  // targetSpace = pointer to the target space
+  virtual void SetTargetSpace(ParticleOnSphereWithSpin* targetSpace);
+
   // return Hilbert space dimension of the target space
   //
   // return value = Hilbert space dimension

@@ -47,6 +47,14 @@ ParticleOnSphereWithSpin::~ParticleOnSphereWithSpin ()
 // targetSpace = pointer to the target space
 void ParticleOnSphereWithSpin::SetTargetSpace(ParticleOnSphere* targetSpace)
 {
+  this->SetTargetSpace((ParticleOnSphereWithSpin*) targetSpace);
+}
+
+// set a different target space (for all basic operations)
+//
+// targetSpace = pointer to the target space
+void ParticleOnSphereWithSpin::SetTargetSpace(ParticleOnSphereWithSpin* targetSpace)
+{
 }
 
 // return Hilbert space dimension of the target space

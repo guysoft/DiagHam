@@ -166,7 +166,7 @@ Complex ParticleOnSphereWithSpinLMinusOperator::PartialMatrixElement (RealVector
 RealVector& ParticleOnSphereWithSpinLMinusOperator::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
 							     int firstComponent, int nbrComponent)
 {
-  int Last = firstComponent + nbrComponent;;
+  int Last = firstComponent + nbrComponent;
   int Index = 0;
   double Coefficient = 0.0;
   int TargetDim = this->Particle->GetTargetHilbertSpaceDimension();

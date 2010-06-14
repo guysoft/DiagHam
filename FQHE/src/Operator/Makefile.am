@@ -19,4 +19,6 @@ ParticleOnSphereWithSpinDensityOperator.cc \
 ParticleOnSphereWithSpinLMinusOperator.cc \
 ParticleOnSphereWithSpinAllSzExcitonOrder.cc \
 ParticleOnSphereWithSpinAllSzDensityOddChannel.cc \
-ParticleOnSphereWithSpinAllSzDensityDensityOddChannel.cc
+ParticleOnSphereWithSpinAllSzDensityDensityOddChannel.cc \
+ParticleOnSphereWithSpinLPlusUpOperator.cc \
+ParticleOnSphereWithSpinLPlusOperator.cc

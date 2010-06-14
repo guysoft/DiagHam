@@ -326,7 +326,7 @@ int FermionOnSphere::AdAdAA (int index, int m1, int m2, int n1, int n2, double& 
       || ((State & (((unsigned long) (0x1)) << n2)) == 0) || (n1 == n2) || (m1 == m2))
     {
       coefficient = 0.0;
-      return this->HilbertSpaceDimension;
+      return this->TargetSpace->HilbertSpaceDimension;
     }
   int NewLzMax = StateLzMax;
   unsigned long TmpState = State;
@@ -353,7 +353,7 @@ int FermionOnSphere::AdAdAA (int index, int m1, int m2, int n1, int n2, double& 
   if ((TmpState & (((unsigned long) (0x1)) << m2))!= 0)
     {
       coefficient = 0.0;
-      return this->HilbertSpaceDimension;
+      return this->TargetSpace->HilbertSpaceDimension;
     }
   if (m2 > NewLzMax)
     {
@@ -372,7 +372,7 @@ int FermionOnSphere::AdAdAA (int index, int m1, int m2, int n1, int n2, double& 
   if ((TmpState & (((unsigned long) (0x1)) << m1))!= 0)
     {
       coefficient = 0.0;
-      return this->HilbertSpaceDimension;
+      return this->TargetSpace->HilbertSpaceDimension;
     }
   if (m1 > NewLzMax)
     {
@@ -410,19 +410,19 @@ int FermionOnSphere::ProdAdProdA (int index, int* m, int* n, int nbrIndices, dou
       if ((n[i] > StateLzMax) || ((State & (((unsigned long) (0x1)) << n[i])) == 0))
 	{
 	  coefficient = 0.0;
-	  return this->HilbertSpaceDimension;
+	  return this->TargetSpace->HilbertSpaceDimension;
 	}
       for (int j = i + 1; j <= nbrIndices; ++j)
 	if ((n[i] == n[j]) || (m[i] == m[j]))
 	  {
 	    coefficient = 0.0;
-	    return this->HilbertSpaceDimension; 	    
+	    return this->TargetSpace->HilbertSpaceDimension; 	    
 	  }
     }
   if (n[nbrIndices] > StateLzMax)
     {
       coefficient = 0.0;
-      return this->HilbertSpaceDimension;
+      return this->TargetSpace->HilbertSpaceDimension;
     }
 
   int NewLzMax = StateLzMax;
@@ -450,7 +450,7 @@ int FermionOnSphere::ProdAdProdA (int index, int* m, int* n, int nbrIndices, dou
       if ((TmpState & (((unsigned long) (0x1)) << Index))!= 0)
 	{
 	  coefficient = 0.0;
-	  return this->HilbertSpaceDimension;
+	  return this->TargetSpace->HilbertSpaceDimension;
 	}
       if (Index > NewLzMax)
 	{
@@ -560,7 +560,7 @@ int FermionOnSphere::ProdAd (int* m, int nbrIndices, double& coefficient)
       if ((TmpState & (0x1l << Index)) != 0)
 	{
 	  coefficient = 0.0;
-	  return this->HilbertSpaceDimension;
+	  return this->TargetSpace->HilbertSpaceDimension;
 	}
       if (Index > NewLzMax)
 	{
@@ -593,7 +593,7 @@ int FermionOnSphere::AdAd (int m1, int m2, double& coefficient)
   if ((TmpState & (((unsigned long) (0x1)) << m2))!= 0)
     {
       coefficient = 0.0;
-      return this->HilbertSpaceDimension;
+      return this->TargetSpace->HilbertSpaceDimension;
     }
   int NewLzMax = this->ProdALzMax;
   coefficient = 1.0;
@@ -612,7 +612,7 @@ int FermionOnSphere::AdAd (int m1, int m2, double& coefficient)
   if ((TmpState & (((unsigned long) (0x1)) << m1))!= 0)
     {
       coefficient = 0.0;
-      return this->HilbertSpaceDimension;
+      return this->TargetSpace->HilbertSpaceDimension;
     }
   if (m1 > NewLzMax)
     NewLzMax = m1;
@@ -688,7 +688,7 @@ int FermionOnSphere::AdA (int index, int m, int n, double& coefficient)
   if ((n > StateLzMax) || ((State & (((unsigned long) (0x1)) << n)) == 0))
     {
       coefficient = 0.0;
-      return this->HilbertSpaceDimension;
+      return this->TargetSpace->HilbertSpaceDimension;
     }
   int NewLzMax = StateLzMax;
   unsigned long TmpState = State;
@@ -705,7 +705,7 @@ int FermionOnSphere::AdA (int index, int m, int n, double& coefficient)
   if ((TmpState & (((unsigned long) (0x1)) << m))!= 0)
     {
       coefficient = 0.0;
-      return this->HilbertSpaceDimension;
+      return this->TargetSpace->HilbertSpaceDimension;
     }
   if (m > NewLzMax)
     {

@@ -12,6 +12,8 @@
 #include "GeneralTools/FilenameTools.h"
 
 #include "Operator/ParticleOnSphereWithSpinLMinusOperator.h"
+#include "Operator/ParticleOnSphereWithSpinLPlusOperator.h"
+#include "Operator/ParticleOnSphereWithSpinLPlusUpOperator.h"
 
 #include "Tools/FQHESpectrum/QHEOnSphereLzSortedSpectrum.h"
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
@@ -51,10 +53,12 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('z', "lz", "twice the total lz value of the system for the initial state", 0);
   (*SystemGroup) += new SingleStringOption  ('S', "statistics", "particle statistics (boson or fermion, try to guess it from file name if not defined)");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lm", "number of time the L- operator has to be applied", 1);
+  (*SystemGroup) += new BooleanOption  ('\n', "lplus", "apply L+ operator instead of L-");
+  (*SystemGroup) += new BooleanOption  ('\n', "up-only", "apply operator affecting up-spins only");
 
   (*DataGroup) += new SingleStringOption  ('i', "input-file", "input vector file name");
   (*DataGroup) += new SingleStringOption  ('o', "output-file", "output vector file name");
-
+  
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   Manager.StandardProceedings(argv, argc, cout);
@@ -97,7 +101,7 @@ int main(int argc, char** argv)
       cout << "Lz and (NbrParticles * LzMax) must have the same parity" << endl;
       return -1;           
     }
-  if (NbrParticles&1 != TotalSz&1)
+  if ((NbrParticles&1) != (TotalSz&1))
     {
       cout << "Sz and NbrParticles must have the same parity" << endl;
       return -1;
@@ -144,46 +148,111 @@ int main(int argc, char** argv)
     {
       InitialSpace = new BosonOnSphereWithSpin(NbrParticles, Lz, LzMax, TotalSz);
     }
-  for (int i = 1; i <= NbrLMinus; ++i)
+  if (Manager.GetBoolean("lplus")==false)
     {
-      if (FermionFlag == true)
+      for (int i = 1; i <= NbrLMinus; ++i)
 	{
+	  if (FermionFlag == true)
+	    {
 #ifdef __64_BITS__
-	  if (LzMax <= 31)
-	    {
-	      TargetSpace = new FermionOnSphereWithSpin(NbrParticles, Lz - (2 * i), LzMax, TotalSz, MemorySpace);
-	    }
-	  else
-	    {
-	      // TargetSpace = new FermionOnSphereUnlimited(NbrParticles, Lz, LzMax - (2 * i), TotalSz, MemorySpace);
-	      cout << "Fermions with Spin not defined yet for LzMax > 31"<<endl;
-	      exit(-1);
-	    }
+	      if (LzMax <= 31)
+		{
+		  TargetSpace = new FermionOnSphereWithSpin(NbrParticles, Lz - (2 * i), LzMax, TotalSz, MemorySpace);
+		}
+	      else
+		{
+		  // TargetSpace = new FermionOnSphereUnlimited(NbrParticles, Lz, LzMax - (2 * i), TotalSz, MemorySpace);
+		  cout << "Fermions with Spin not defined yet for LzMax > 31"<<endl;
+		  exit(-1);
+		}
 #else
-	  if (LzMax <= 15)
-	    {
-	      TargetSpace = new FermionOnSphereWithSpin(NbrParticles, Lz - (2 * i), LzMax, TotalSz, MemorySpace);
+	      if (LzMax <= 15)
+		{
+		  TargetSpace = new FermionOnSphereWithSpin(NbrParticles, Lz - (2 * i), LzMax, TotalSz, MemorySpace);
+		}
+	      else
+		{
+		  // TargetSpace = new FermionOnSphereUnlimited(NbrParticles, Lz, LzMax - (2 * i), TotalSz, MemorySpace);
+		  cout << "Fermions with Spin not defined yet for LzMax > 15, consider using a 64 bit machine!"<<endl;
+		  exit(-1);
+		}
+#endif
 	    }
 	  else
 	    {
-	      // TargetSpace = new FermionOnSphereUnlimited(NbrParticles, Lz, LzMax - (2 * i), TotalSz, MemorySpace);
-	      cout << "Fermions with Spin not defined yet for LzMax > 15, consider using a 64 bit machine!"<<endl;
+	      TargetSpace = new BosonOnSphereWithSpin(NbrParticles, Lz - (2 * i), LzMax, TotalSz);
+	    }
+	  InitialSpace->SetTargetSpace(TargetSpace);
+	  TargetVector = RealVector(TargetSpace->GetHilbertSpaceDimension());
+	  if (TargetSpace->GetHilbertSpaceDimension()!=InitialSpace->GetTargetHilbertSpaceDimension())
+	    {
+	      cout << "Problem with setting target space"<<endl;
 	      exit(-1);
 	    }
-#endif
+	  ParticleOnSphereWithSpinLMinusOperator LMinus(InitialSpace, Lz - (2 * i) + 2, LzMax);
+	  LMinus.Multiply(InitialVector, TargetVector);
+	  delete InitialSpace;
+	  InitialSpace = TargetSpace;
+	  InitialVector = TargetVector;
+	  InitialVector/=InitialVector.Norm();
 	}
-      else
+    }
+  else // LPlus - mode
+    {
+      for (int i = 1; i <= NbrLMinus; ++i)
 	{
-	  TargetSpace = new BosonOnSphereWithSpin(NbrParticles, Lz - (2 * i), LzMax, TotalSz);
+	  if (FermionFlag == true)
+	    {
+#ifdef __64_BITS__
+	      if (LzMax <= 31)
+		{
+		  TargetSpace = new FermionOnSphereWithSpin(NbrParticles, Lz + (2 * i), LzMax, TotalSz, MemorySpace);
+		}
+	      else
+		{
+		  // TargetSpace = new FermionOnSphereUnlimited(NbrParticles, Lz, LzMax + (2 * i), TotalSz, MemorySpace);
+		  cout << "Fermions with Spin not defined yet for LzMax > 31"<<endl;
+		  exit(-1);
+		}
+#else
+	      if (LzMax <= 15)
+		{
+		  TargetSpace = new FermionOnSphereWithSpin(NbrParticles, Lz + (2 * i), LzMax, TotalSz, MemorySpace);
+		}
+	      else
+		{
+		  // TargetSpace = new FermionOnSphereUnlimited(NbrParticles, Lz, LzMax + (2 * i), TotalSz, MemorySpace);
+		  cout << "Fermions with Spin not defined yet for LzMax > 15, consider using a 64 bit machine!"<<endl;
+		  exit(-1);
+		}
+#endif
+	    }
+	  else
+	    {
+	      TargetSpace = new BosonOnSphereWithSpin(NbrParticles, Lz + (2 * i), LzMax, TotalSz);
+	    }
+	  InitialSpace->SetTargetSpace(TargetSpace);
+	  TargetVector = RealVector(TargetSpace->GetHilbertSpaceDimension());
+	  if (TargetSpace->GetHilbertSpaceDimension()!=InitialSpace->GetTargetHilbertSpaceDimension())
+	    {
+	      cout << "Problem with setting target space"<<endl;
+	      exit(-1);
+	    }
+	  if (Manager.GetBoolean("up-only"))
+	    {
+	      ParticleOnSphereWithSpinLPlusUpOperator LPlusUp(InitialSpace, Lz + (2 * i) - 2, LzMax);
+	      LPlusUp.Multiply(InitialVector, TargetVector);
+	    }
+	  else
+	    {
+	      ParticleOnSphereWithSpinLPlusOperator LPlus(InitialSpace, Lz + (2 * i) - 2, LzMax);
+	      LPlus.Multiply(InitialVector, TargetVector);
+	    }
+	  delete InitialSpace;
+	  InitialSpace = TargetSpace;
+	  InitialVector = TargetVector;
+	  InitialVector/=InitialVector.Norm();
 	}
-      InitialSpace->SetTargetSpace(TargetSpace);
-      TargetVector = RealVector(TargetSpace->GetHilbertSpaceDimension());
-      ParticleOnSphereWithSpinLMinusOperator LMinus(InitialSpace, Lz - (2 * i) + 2, LzMax);
-      LMinus.Multiply(InitialVector, TargetVector);
-      delete InitialSpace;
-      InitialSpace = TargetSpace;
-      InitialVector = TargetVector;
-      InitialVector/=InitialVector.Norm();
     }
   char *OutputName;
   if (Manager.GetString("output-file")!=NULL)
