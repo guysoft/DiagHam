@@ -110,6 +110,7 @@ AddRealLinearCombinationOperation::AddRealLinearCombinationOperation(const AddRe
   this->Coefficients = operation.Coefficients;
   this->OperationType = AbstractArchitectureOperation::AddRealLinearCombination;
   this->SourceVector = operation.SourceVector;
+  this->SourceVectorByPointers = operation.SourceVectorByPointers;
   this->DestinationVector = operation.DestinationVector;  
   this->SourceVectorMatrix = operation.SourceVectorMatrix;
 }

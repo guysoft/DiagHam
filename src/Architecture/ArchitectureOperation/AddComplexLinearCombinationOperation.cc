@@ -176,6 +176,7 @@ AddComplexLinearCombinationOperation::AddComplexLinearCombinationOperation(const
   this->RealCoefficients = operation.RealCoefficients;
   this->OperationType = AbstractArchitectureOperation::AddComplexLinearCombination;
   this->SourceVector = operation.SourceVector;
+  this->SourceVectorByPointers = operation.SourceVectorByPointers;
   this->DestinationVector = operation.DestinationVector;  
   this->SourceVectorMatrix = operation.SourceVectorMatrix;
 }
