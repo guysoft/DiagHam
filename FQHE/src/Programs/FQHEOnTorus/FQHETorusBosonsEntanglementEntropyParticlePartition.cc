@@ -228,9 +228,69 @@ int main(int argc, char** argv)
 	      RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
 #ifdef __LAPACK__
 	      if (LapackFlag == true)
-		PartialDensityMatrix.LapackDiagonalize(TmpDiag);
+		{
+		  if ((EigenstateFlag == true) && (FilterKya == SubsystemTotalKy))
+		    {
+		      RealMatrix TmpEigenstates(PartialDensityMatrix.GetNbrRow(),
+						PartialDensityMatrix.GetNbrRow(), true);
+		      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+			TmpEigenstates[i][i] = 1.0;
+		      PartialDensityMatrix.LapackDiagonalize(TmpDiag, TmpEigenstates);
+		      TmpDiag.SortMatrixDownOrder(TmpEigenstates);
+		      char* TmpEigenstateName = new char[512];
+		      int MaxNbrEigenstates = NbrEigenstates;
+		      if (NbrEigenstates == 0)
+			MaxNbrEigenstates = PartialDensityMatrix.GetNbrRow();
+		      for (int i = 0; i < MaxNbrEigenstates; ++i)
+			{
+			  if (TmpDiag[i] > 1e-14)
+			    {
+			      sprintf (TmpEigenstateName,
+				       "bosons_torus_kysym_density_n_%d_2s_%d_ky_%d_na_%d_kya_%d.%d.vec",
+				       NbrParticles, KyMax, TotalKy[0], 
+				       SubsystemNbrParticles, SubsystemTotalKy, i);
+			      TmpEigenstates[i].WriteVector(TmpEigenstateName);
+			    }
+			}
+		      delete[] TmpEigenstateName;
+		    }
+		  else
+		    {
+		      PartialDensityMatrix.LapackDiagonalize(TmpDiag);
+		    }
+		}
 	      else
-		PartialDensityMatrix.Diagonalize(TmpDiag);
+		{
+		  if ((EigenstateFlag == true) && (FilterKya == SubsystemTotalKy))
+		    {
+		      RealMatrix TmpEigenstates(PartialDensityMatrix.GetNbrRow(),
+						PartialDensityMatrix.GetNbrRow(), true);
+		      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+			TmpEigenstates[i][i] = 1.0;
+		      PartialDensityMatrix.Diagonalize(TmpDiag, TmpEigenstates, Manager.GetDouble("diag-precision"));
+		      TmpDiag.SortMatrixDownOrder(TmpEigenstates);
+		      char* TmpEigenstateName = new char[512];
+		      int MaxNbrEigenstates = NbrEigenstates;
+		      if (NbrEigenstates == 0)
+			MaxNbrEigenstates = PartialDensityMatrix.GetNbrRow();
+		      for (int i = 0; i < MaxNbrEigenstates; ++i)
+			{
+			  if (TmpDiag[i] > 1e-14)
+			    {
+			      sprintf (TmpEigenstateName,
+				       "bosons_torus_kysym_density_n_%d_2s_%d_ky_%d_na_%d_kya_%d.%d.vec",
+				       NbrParticles, KyMax, TotalKy[0], 
+				       SubsystemNbrParticles, SubsystemTotalKy, i);
+			      TmpEigenstates[i].WriteVector(TmpEigenstateName);
+			    }
+			}
+		      delete[] TmpEigenstateName;
+		    }
+		  else
+		    {
+		      PartialDensityMatrix.Diagonalize(TmpDiag);
+		    }
+		}
 #else
 	      PartialDensityMatrix.Diagonalize(TmpDiag);
 #endif		  

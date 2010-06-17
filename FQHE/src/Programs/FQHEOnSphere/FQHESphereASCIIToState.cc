@@ -1,10 +1,14 @@
 #include "HilbertSpace/BosonOnSphere.h"
+#include "HilbertSpace/BosonOnSphereShort.h"
+#include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
+
 #include "HilbertSpace/FermionOnSphere.h"
 #include "HilbertSpace/FermionOnSphereUnlimited.h"
 #include "HilbertSpace/ParticleOnSphereWithSpin.h"
 #include "HilbertSpace/FermionOnSphereWithSU4Spin.h"
 #include "HilbertSpace/FermionOnSphereWithSU3Spin.h"
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
+#include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
 
 #include "MathTools/ClebschGordanCoefficients.h"
 
@@ -19,6 +23,7 @@
 #include "GeneralTools/MultiColumnASCIIFile.h"
 #include "GeneralTools/StringTools.h"
 #include "GeneralTools/FilenameTools.h"
+#include "GeneralTools/ConfigurationParser.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -44,6 +49,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('l', "nbr-flux", "number of flux quanta", 20);
   (*SystemGroup) += new SingleIntegerOption  ('z', "lz-value", "twice the total lz value", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
+  (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
+  (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
   (*SystemGroup) += new BooleanOption  ('\n', "su2-spin", "consider particles with SU(2) spin");
   (*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the z component of the total spin of the system (only useful in su(2)/su(4) mode)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "su3-spin", "consider particles with SU(2) spin");
@@ -53,6 +60,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('i', "total-isosz", "twice the z component of the total isospin of the system (only usefull in su(4) mode)", 0);
   (*SystemGroup) += new SingleStringOption ('\0', "ascii-state", "name of the input ASCII description of the state (should use the same convention than FQHESphereShowBasis output)");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of trying to replace .txt extension with .vec or appending .vec extension");
+  (*SystemGroup) += new BooleanOption  ('\n', "no-normalization", "do not normalize the final state");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -60,27 +68,27 @@ int main(int argc, char** argv)
       cout << "see man page for option syntax or type FQHESphereASCIIToState -h" << endl;
       return -1;
     }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
     }
   
-  if (((SingleStringOption*) Manager["ascii-state"])->GetString() == 0)
+  if (Manager.GetString("ascii-state") == 0)
     {
       cout << "An input file has to be provided" << endl;
       return -1;
     }
 
-  int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger(); 
-  int NbrFluxQuanta = ((SingleIntegerOption*) Manager["nbr-flux"])->GetInteger(); 
-  int TotalLz = ((SingleIntegerOption*) Manager["lz-value"])->GetInteger();
-  int TotalTz = ((SingleIntegerOption*) Manager["total-tz"])->GetInteger();
-  int TotalY = ((SingleIntegerOption*) Manager["total-y"])->GetInteger();
-  bool SU2SpinFlag = ((BooleanOption*) Manager["su2-spin"])->GetBoolean();
-  bool SU3SpinFlag = ((BooleanOption*) Manager["su3-spin"])->GetBoolean();
-  bool SU4SpinFlag = ((BooleanOption*) Manager["su4-spin"])->GetBoolean();
-  int TotalSz = ((SingleIntegerOption*) Manager["total-sz"])->GetInteger();
+  int NbrParticles = Manager.GetInteger("nbr-particles"); 
+  int NbrFluxQuanta = Manager.GetInteger("nbr-flux"); 
+  int TotalLz = Manager.GetInteger("lz-value");
+  int TotalTz = Manager.GetInteger("total-tz");
+  int TotalY = Manager.GetInteger("total-y");
+  bool SU2SpinFlag = Manager.GetBoolean("su2-spin");
+  bool SU3SpinFlag = Manager.GetBoolean("su3-spin");
+  bool SU4SpinFlag = Manager.GetBoolean("su4-spin");
+  int TotalSz = Manager.GetInteger("total-sz");
     
   if (((NbrParticles * NbrFluxQuanta) & 1) != (TotalLz & 1)) 
     {
@@ -89,7 +97,7 @@ int main(int argc, char** argv)
     }
 
   MultiColumnASCIIFile InputFile(':');
-  if (InputFile.Parse(((SingleStringOption*) Manager["ascii-state"])->GetString()) == false)
+  if (InputFile.Parse(Manager.GetString("ascii-state")) == false)
     {
       InputFile.DumpErrors(cout) << endl;
       return -1;
@@ -102,34 +110,114 @@ int main(int argc, char** argv)
     }
 
   ParticleOnSphere* Space = 0;
-  if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
+  if (Manager.GetBoolean("boson") == true)
     {
-      Space = new BosonOnSphere(NbrParticles, TotalLz, NbrFluxQuanta);
+      if (Manager.GetBoolean("haldane") == false)
+	{
+	  Space = new BosonOnSphereShort(NbrParticles, TotalLz, NbrFluxQuanta);
+	}
+      else
+	{
+	  int* ReferenceState = 0;
+	  if (Manager.GetString("reference-file") == 0)
+	    {
+	      cout << "error, a reference file is needed" << endl;
+	      return 0;
+	    }
+	  ConfigurationParser ReferenceStateDefinition;
+	  if (ReferenceStateDefinition.Parse(Manager.GetString("reference-file")) == false)
+	    {
+	      ReferenceStateDefinition.DumpErrors(cout) << endl;
+	      return 0;
+	    }
+	  if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", NbrParticles) == false) || (NbrParticles <= 0))
+	    {
+	      cout << "NbrParticles is not defined or as a wrong value" << endl;
+	      return 0;
+	    }
+	  if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", NbrFluxQuanta) == false) || (NbrFluxQuanta < 0))
+	    {
+	      cout << "LzMax is not defined or as a wrong value" << endl;
+	      return 0;
+	    }
+	  int MaxNbrLz;
+	  if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
+	    {
+	      cout << "error while parsing ReferenceState in " << Manager.GetString("reference-file") << endl;
+	      return 0;     
+	    }
+	  if (MaxNbrLz != (NbrFluxQuanta + 1))
+	    {
+	      cout << "wrong LzMax value in ReferenceState" << endl;
+	      return 0;     
+	    }
+	   Space = new BosonOnSphereHaldaneBasisShort(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);	  
+	}
     }
   else
     {
       if ((SU2SpinFlag == false) && (SU3SpinFlag == false) && (SU4SpinFlag == false))
 	{
+	  if (Manager.GetBoolean("haldane") == false)
+	    {
 #ifdef __64_BITS__
-	  if (NbrFluxQuanta <= 63)
-	    Space = new FermionOnSphere(NbrParticles, TotalLz, NbrFluxQuanta);
-	  else
-	    Space = new FermionOnSphereUnlimited(NbrParticles, TotalLz, NbrFluxQuanta);
+	      if (NbrFluxQuanta <= 63)
+		Space = new FermionOnSphere(NbrParticles, TotalLz, NbrFluxQuanta);
+	      else
+		Space = new FermionOnSphereUnlimited(NbrParticles, TotalLz, NbrFluxQuanta);
 #else
-	  if (NbrFluxQuanta <= 31)
-	    Space = new FermionOnSphere(NbrParticles, TotalLz, NbrFluxQuanta);
-	  else
-	    Space = new FermionOnSphereUnlimited(NbrParticles, TotalLz, NbrFluxQuanta);
+	      if (NbrFluxQuanta <= 31)
+		Space = new FermionOnSphere(NbrParticles, TotalLz, NbrFluxQuanta);
+	      else
+		Space = new FermionOnSphereUnlimited(NbrParticles, TotalLz, NbrFluxQuanta);
 #endif
+	    }
+	  else
+	    {
+	      int* ReferenceState = 0;
+	      if (Manager.GetString("reference-file") == 0)
+		{
+		  cout << "error, a reference file is needed" << endl;
+	      return 0;
+		}
+	      ConfigurationParser ReferenceStateDefinition;
+	      if (ReferenceStateDefinition.Parse(Manager.GetString("reference-file")) == false)
+		{
+		  ReferenceStateDefinition.DumpErrors(cout) << endl;
+		  return 0;
+		}
+	      if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", NbrParticles) == false) || (NbrParticles <= 0))
+		{
+		  cout << "NbrParticles is not defined or as a wrong value" << endl;
+		  return 0;
+		}
+	      if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", NbrFluxQuanta) == false) || (NbrFluxQuanta < 0))
+		{
+		  cout << "LzMax is not defined or as a wrong value" << endl;
+		  return 0;
+		}
+	      int MaxNbrLz;
+	      if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
+		{
+		  cout << "error while parsing ReferenceState in " << Manager.GetString("reference-file") << endl;
+		  return 0;     
+		}
+	      if (MaxNbrLz != (NbrFluxQuanta + 1))
+		{
+		  cout << "wrong LzMax value in ReferenceState" << endl;
+		  return 0;     
+		}
+	      Space = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);	  
+	    }
 	}
       else
- 	if (SU2SpinFlag == true)
+	if (SU2SpinFlag == true)
 	  Space = new FermionOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
 	else
- 	if (SU3SpinFlag == true)
-	  Space = new FermionOnSphereWithSU3Spin(NbrParticles, TotalLz, NbrFluxQuanta, TotalTz, TotalY);	  
+	  if (SU3SpinFlag == true)
+	    Space = new FermionOnSphereWithSU3Spin(NbrParticles, TotalLz, NbrFluxQuanta, TotalTz, TotalY);	  
     }
-
+  
   RealVector State (Space->GetHilbertSpaceDimension(), true);
 
   for (int i = 0; i < InputFile.GetNbrLines(); ++i)
@@ -146,14 +234,15 @@ int main(int argc, char** argv)
 	  cout << "warning , invalid state |" <<  TmpString << ">" << endl;
 	}
     }
-  State /= State.Norm();
+  if (Manager.GetBoolean("no-normalization") == false)
+    State /= State.Norm();
 
-  char* OutputFile = ((SingleStringOption*) Manager["output-file"])->GetString();
+  char* OutputFile = Manager.GetString("output-file");
   if (OutputFile == 0)
     {
-      OutputFile = ReplaceExtensionToFileName(((SingleStringOption*) Manager["ascii-state"])->GetString(), "txt", "vec");
+      OutputFile = ReplaceExtensionToFileName(Manager.GetString("ascii-state"), "txt", "vec");
       if (OutputFile == 0)
-	OutputFile = AddExtensionToFileName(((SingleStringOption*) Manager["ascii-state"])->GetString(), "vec");
+	OutputFile = AddExtensionToFileName(Manager.GetString("ascii-state"), "vec");
     }
   State.WriteVector(OutputFile);
 

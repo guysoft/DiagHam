@@ -29,6 +29,7 @@ int main(int argc, char** argv)
   SingleIntegerOption LColumnOption ('\n', "meanl-column", "index of the column that contains mean L value. If negative, use only the energy to guess the L value.", -1);
   BooleanOption LValidityOption ('\n', "check-meanl", "check if the L mean value is valid (i.e. is an integer up to a given error bar and compatible with the Lz value).");
   SingleDoubleOption LErrorOption ('\n', "meanl-error", "allowed error on the L mean value", 1e-10);
+  BooleanOption LSortOption ('\n', "sort-l", "sort l values from the smallest to the largest one");
   List<AbstractOption*> OptionList;
   OptionList += &HelpOption;
   OptionList += &InputFileOption;
@@ -37,6 +38,7 @@ int main(int argc, char** argv)
   OptionList += &LColumnOption;
   OptionList += &LValidityOption;
   OptionList += &LErrorOption;
+  OptionList += &LSortOption;
   if (ProceedOptions(argv, argc, OptionList) == false)
     {
       cout << "see man page for option syntax or type LzToL -h" << endl;
@@ -257,13 +259,26 @@ int main(int argc, char** argv)
 	      ++TotalPos;
 	    }
 	}      
-      for (int i = NbrValue - 1; i >= 0; --i)
+      if (LSortOption.GetBoolean() == false)
 	{
-	  if (Dimensions[i] > 0)
-	    for (int j = 0; j < Dimensions[i]; ++j)
+	  for (int i = NbrValue - 1; i >= 0; --i)
+	    {
+	      if (Dimensions[i] > 0)
+		for (int j = 0; j < Dimensions[i]; ++j)
 	      cout << i << " " << Eigenvalues[i][j] << endl;
-	  delete[] Eigenvalues[i];
-	}     
+	      delete[] Eigenvalues[i];
+	    }     
+	}
+      else
+	{
+	  for (int i = 0; i < NbrValue; --i)
+	    {
+	      if (Dimensions[i] > 0)
+		for (int j = 0; j < Dimensions[i]; ++j)
+	      cout << i << " " << Eigenvalues[i][j] << endl;
+	      delete[] Eigenvalues[i];
+	    }     
+	}
       delete[] FullLValues;
     }
   delete[] FullEigenvalues;

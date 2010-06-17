@@ -1,6 +1,8 @@
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 
+#include "GeneralTools/MultiColumnASCIIFile.h"
+
 #include "Options/Options.h"
 
 #include <iostream>
@@ -29,6 +31,7 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
 
   (*SystemGroup) += new MultipleStringOption  ('\0', "states", "names of the vector files obtained using exact diagonalization");
+  (*SystemGroup) += new SingleStringOption  ('\n', "state-list", "provide the names of the vector using a single column formatted text file");
   
   (*SystemGroup) += new BooleanOption  ('c', "complex", "Assume vectors consist of complex numbers");
   (*SystemGroup) += new BooleanOption  ('s', "scalar-product", "Get the scalar product, not the overlap");
@@ -58,9 +61,47 @@ int main(int argc, char** argv)
   bool Scalar = Manager.GetBoolean("scalar-product");
   
   int NbrVectors;
-  char** VectorFiles = Manager.GetStrings("states",NbrVectors);
+  char** VectorFiles = 0;
 
-  if (NbrVectors<2)
+  if (Manager.GetString("state-list") == 0)
+    {
+      VectorFiles = Manager.GetStrings("states", NbrVectors);
+    }
+  else
+    {
+      MultiColumnASCIIFile Description;
+      if (Description.Parse(Manager.GetString("state-list")) == false)
+	{
+	  Description.DumpErrors(cout);
+	  return -1;
+	}      
+      if (Description.GetNbrColumns() < 1)
+	{
+	  cout << "wrong number of columns in " << Manager.GetString("state-list") << endl;
+	  return -1;
+	}
+      if (Manager.GetStrings("states", NbrVectors) != 0)
+	{
+	  int TmpNbrVectors1 = 0;
+	  char** TmpVectorFiles1 =  Manager.GetStrings("states", TmpNbrVectors1);
+	  char** TmpVectorFiles2 = Description.GetAsStringArray(0);
+	  int TmpNbrVectors2 = Description.GetNbrLines();
+	  NbrVectors = TmpNbrVectors1 + TmpNbrVectors2;
+	  VectorFiles = new char* [NbrVectors];
+	  for (int i = 0; i < TmpNbrVectors1; ++i)
+	    VectorFiles[i] = TmpVectorFiles1[i];
+	  for (int i = 0; i < TmpNbrVectors2; ++i)
+	    VectorFiles[i + TmpNbrVectors1] = TmpVectorFiles2[i];
+	  delete[] TmpVectorFiles2;
+	}
+      else
+	{
+	  VectorFiles = Description.GetAsStringArray(0);
+	  NbrVectors = Description.GetNbrLines();
+	}
+    }
+
+  if (NbrVectors < 2)
     {
       cout << "At least two vector files are required!"<<endl;
       exit(1);

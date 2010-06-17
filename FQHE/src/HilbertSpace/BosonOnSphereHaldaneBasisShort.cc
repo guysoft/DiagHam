@@ -278,55 +278,62 @@ RealVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(RealVector& j
 
   for (long i = 1; i < this->LargeHilbertSpaceDimension; ++i)
     {
-      double Rho = 0.0;
-      unsigned long CurrentPartition = this->FermionBasis->StateDescription[i];
-      this->ConvertToMonomial(CurrentPartition, this->FermionBasis->StateLzMax[i], TmpMonomial);
-      for (int j = 0; j < this->NbrBosons; ++j)
-	Rho += TmpMonomial[j] * (TmpMonomial[j] - 1.0 - InvAlpha * ((double) j));
-      double Coefficient = 0.0;
-      for (int j1 = 0; j1 < ReducedNbrBosons; ++j1)
-	for (int j2 = j1 + 1; j2 < this->NbrBosons; ++j2)
-	  {
-	    double Diff = (double) (TmpMonomial[j1] - TmpMonomial[j2]);
-	    unsigned int Max = TmpMonomial[j2];
-	    unsigned long TmpState = 0x0ul;
-	    int Tmpj1 = j1;
-	    int Tmpj2 = j2;
-	    for (int l = 0; l < this->NbrBosons; ++l)
-	      TmpMonomial2[l] = TmpMonomial[l];	    
-	    for (unsigned int k = 1; (k <= Max) && (TmpState < MaxRoot); ++k)
+      if (jack[i] == 0.0)
+	{
+	  double Rho = 0.0;
+	  unsigned long CurrentPartition = this->FermionBasis->StateDescription[i];
+	  this->ConvertToMonomial(CurrentPartition, this->FermionBasis->StateLzMax[i], TmpMonomial);
+	  for (int j = 0; j < this->NbrBosons; ++j)
+	    Rho += TmpMonomial[j] * (TmpMonomial[j] - 1.0 - InvAlpha * ((double) j));
+	  double Coefficient = 0.0;
+	  for (int j1 = 0; j1 < ReducedNbrBosons; ++j1)
+	    for (int j2 = j1 + 1; j2 < this->NbrBosons; ++j2)
 	      {
-		++TmpMonomial2[Tmpj1];
-		--TmpMonomial2[Tmpj2];
-		Diff += 2.0;
-		while ((Tmpj1 > 0) && (TmpMonomial2[Tmpj1] > TmpMonomial2[Tmpj1 - 1]))
+		double Diff = (double) (TmpMonomial[j1] - TmpMonomial[j2]);
+		unsigned int Max = TmpMonomial[j2];
+		unsigned long TmpState = 0x0ul;
+		int Tmpj1 = j1;
+		int Tmpj2 = j2;
+		for (int l = 0; l < this->NbrBosons; ++l)
+		  TmpMonomial2[l] = TmpMonomial[l];	    
+		for (unsigned int k = 1; (k <= Max) && (TmpState < MaxRoot); ++k)
 		  {
-		    unsigned long Tmp = TmpMonomial2[Tmpj1 - 1];
-		    TmpMonomial2[Tmpj1 - 1] = TmpMonomial2[Tmpj1];
-		    TmpMonomial2[Tmpj1] = Tmp;
-		    --Tmpj1;
-		  }
-                while ((Tmpj2 < ReducedNbrBosons) && (TmpMonomial2[Tmpj2] < TmpMonomial2[Tmpj2 + 1]))
-                  {
-                    unsigned long Tmp = TmpMonomial2[Tmpj2 + 1];
-                    TmpMonomial2[Tmpj2 + 1] = TmpMonomial2[Tmpj2];
-                    TmpMonomial2[Tmpj2] = Tmp;
-                    ++Tmpj2;
-                  }
-		TmpState = this->ConvertFromMonomial(TmpMonomial2);
-		if ((TmpState <= MaxRoot) && (TmpState > CurrentPartition))
-		  {
-		    long TmpIndex = this->FermionBasis->FindStateIndex(TmpState, TmpMonomial2[0] + ReducedNbrBosons);
-		    if (TmpIndex < this->HilbertSpaceDimension)
-		      Coefficient += Diff * jack[TmpIndex];
+		    ++TmpMonomial2[Tmpj1];
+		    --TmpMonomial2[Tmpj2];
+		    Diff += 2.0;
+		    while ((Tmpj1 > 0) && (TmpMonomial2[Tmpj1] > TmpMonomial2[Tmpj1 - 1]))
+		      {
+			unsigned long Tmp = TmpMonomial2[Tmpj1 - 1];
+			TmpMonomial2[Tmpj1 - 1] = TmpMonomial2[Tmpj1];
+			TmpMonomial2[Tmpj1] = Tmp;
+			--Tmpj1;
+		      }
+		    while ((Tmpj2 < ReducedNbrBosons) && (TmpMonomial2[Tmpj2] < TmpMonomial2[Tmpj2 + 1]))
+		      {
+			unsigned long Tmp = TmpMonomial2[Tmpj2 + 1];
+			TmpMonomial2[Tmpj2 + 1] = TmpMonomial2[Tmpj2];
+			TmpMonomial2[Tmpj2] = Tmp;
+			++Tmpj2;
+		      }
+		    TmpState = this->ConvertFromMonomial(TmpMonomial2);
+		    if ((TmpState <= MaxRoot) && (TmpState > CurrentPartition))
+		      {
+			long TmpIndex = this->FermionBasis->FindStateIndex(TmpState, TmpMonomial2[0] + ReducedNbrBosons);
+			if (TmpIndex < this->HilbertSpaceDimension)
+			  Coefficient += Diff * jack[TmpIndex];
+		      }
 		  }
 	      }
-	  }
-      jack[i] = Coefficient * InvAlpha / (RhoRoot - Rho);
+	  jack[i] = Coefficient * InvAlpha / (RhoRoot - Rho);
+	}
+      else
+	{
+	  cout << "toto" << endl;
+	}
       if ((i & 0xffl) == 0l)
 	{
-	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
-	  cout.flush();
+	  //	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
+	  //	  cout.flush();
 	}
     }
   delete[] TmpMonomial;
