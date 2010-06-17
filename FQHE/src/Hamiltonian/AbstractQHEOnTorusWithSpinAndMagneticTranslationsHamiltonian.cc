@@ -63,8 +63,7 @@ using std::ostream;
 //
 
 AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::~AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian()
-{
-  
+{  
 }
 
 // set Hilbert space

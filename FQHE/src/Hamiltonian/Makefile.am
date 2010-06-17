@@ -66,3 +66,4 @@ ParticleOnSphereProjectorHamiltonian.cc \
 ParticleOnLatticeExternalHamiltonian.cc \
 ParticleOnSphereTwoLandauLevelL2Hamiltonian.cc \
 ParticleOnSphereEffectiveLatticeHamiltonian.cc
+

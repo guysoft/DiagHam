@@ -520,6 +520,16 @@ RealVector ParticleOnSphere::TruncateStateWithPatternConstraint(RealVector& inpu
   return TmpVector;
 }
 
+// request whether state with given index satisfies a general Pauli exclusion principle
+// index = state index
+// pauliK = number of particles allowed in consecutive orbitals
+// pauliR = number of consecutive orbitals
+bool ParticleOnSphere::HasPauliExclusions(int index, int pauliK, int pauliR)
+{
+  return false;
+}
+
+
 // get Lz component of a component
 //
 // j = index of the component in Hilbert space

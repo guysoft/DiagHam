@@ -255,6 +255,10 @@ int main(int argc, char** argv)
 		      cout << "wrong LzMax value in ReferenceState" << endl;
 		      return -1;     
 		    }
+		  cout << "Reference =";
+		  for (int i=0; i<=LzMax; ++i)
+		    cout << " " << ReferenceState[i];
+		  cout << endl;
 		}
 	      if (SymmetrizedBasis == false)
 		{

@@ -737,7 +737,7 @@ RealSymmetricMatrix  BosonOnSphereShort::EvaluatePartialDensityMatrix (int subsy
     }
 
   int MinIndex = 0;
-  int MaxIndex = this->HilbertSpaceDimension - 1;
+  // int MaxIndex = this->HilbertSpaceDimension - 1;
   if (nbrBosonSector == 1)
     {
       double TmpValue = 0.0;
@@ -1710,4 +1710,24 @@ RealVector BosonOnSphereShort::SymmetrizeU1U1State (RealVector& leftVector, Real
       SymmetrizedVector /= SymmetrizedVector.Norm();
     }
   return SymmetrizedVector;
+}
+
+// request whether state with given index satisfies a general Pauli exclusion principle
+// index = state index
+// pauliK = number of particles allowed in consecutive orbitals
+// pauliR = number of consecutive orbitals
+bool BosonOnSphereShort::HasPauliExclusions(int index, int pauliK, int pauliR)
+{
+  this->FermionToBoson(this->FermionBasis->StateDescription[index], this->FermionBasis->StateLzMax[index], this->TemporaryState, this->TemporaryStateLzMax);
+  int Max = this->TemporaryStateLzMax + 2 - pauliR;
+  
+  for (int m = 0; m < Max; ++m)
+    {
+      int Count = TemporaryState[m];
+      for (int Offset = 1; Offset < pauliR; ++Offset)
+	Count += TemporaryState[m + Offset];
+      if (Count > pauliK)
+	return false;
+    }
+  return true;
 }

@@ -429,6 +429,12 @@ class BosonOnSphereShort :  public ParticleOnSphere
 	
   virtual int GeneratePairs(unsigned long* Monomial, long* weigthVector, unsigned long* indicesVector, unsigned long* FinalMonomial, int reste, int compteur, BosonOnSphereShort * finalSpace);
 
+  // request whether state with given index satisfies a general Pauli exclusion principle
+  // index = state index
+  // pauliK = number of particles allowed in consecutive orbitals
+  // pauliR = number of consecutive orbitals
+  virtual bool HasPauliExclusions(int index, int pauliK, int pauliR);
+
 };
 
 // get the particle statistic 

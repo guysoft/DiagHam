@@ -250,9 +250,9 @@ int main(int argc, char** argv)
 
   if (DirectoryName != 0)
     delete[] DirectoryName;
-  int Offset = (AddRandomVector?1:0);
-  for (int j = 0; j < NbrInputVectors-Offset; ++j)
-    delete[] InputVectorFileNames[j];
-  delete[] InputVectorFileNames;
+//   int Offset = (AddRandomVector?1:0);
+//   for (int j = 0; j < NbrInputVectors-Offset; ++j)
+//     delete[] InputVectorFileNames[j];
+//   delete[] InputVectorFileNames;
   return 0;
 }
