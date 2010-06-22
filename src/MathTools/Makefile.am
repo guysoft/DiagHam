@@ -15,8 +15,8 @@ ThreeJSymbol.cc \
 PartialThreeJSymbol.cc \
 KCombinations.cc \
 JacobiPolynomials.cc \
-MonopoleHarmonics.cc
-
+MonopoleHarmonics.cc \
+NSphereParameters.cc
 
 
 # LaguerreFunction.cc

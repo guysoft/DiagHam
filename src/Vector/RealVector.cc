@@ -124,7 +124,7 @@ RealVector::RealVector(long size, bool zeroFlag)
 
 // constructor from an array of doubles
 //
-// array = array of doubles with real in even position and imaginary part in odd position
+// array = array of doubles to become Components of vector
 // size = Vector Dimension
  
 RealVector::RealVector(double* array, int size)
@@ -133,6 +133,33 @@ RealVector::RealVector(double* array, int size)
   this->TrueDimension = this->Dimension;
   this->LargeDimension = (long) size;
   this->LargeTrueDimension = this->LargeDimension;
+  this->Components = array;
+  this->Flag.Initialize();
+  this->VectorId = 0;
+}
+
+
+// constructor from an array of doubles
+//
+// array = array of doubles to become Components of vector
+// size = Vector Dimension
+ 
+RealVector::RealVector(double* array, long size)
+{
+  this->LargeDimension = size;
+  this->LargeTrueDimension = this->LargeDimension;
+  #ifdef  __64_BITS__
+  if (this->LargeDimension < (1l << 31))
+    this->Dimension = (int) size;
+  else
+    {
+      this->Dimension = -1;
+      this->VectorType |= Vector::LargeData;
+    }
+#else
+  this->Dimension = (int) size;
+#endif
+  this->TrueDimension = this->Dimension;
   this->Components = array;
   this->Flag.Initialize();
   this->VectorId = 0;
@@ -194,6 +221,7 @@ RealVector::RealVector(const ComplexVector& vector)
   this->VectorId = 0;
   if (this->Dimension > 0)
     {
+      this->Flag.Initialize();
       this->Components = new double[this->Dimension + 1];
       for (int i = 0; i < this->Dimension; ++i)
 	{
@@ -201,8 +229,17 @@ RealVector::RealVector(const ComplexVector& vector)
 	}
     }
   else
-    this->Components = 0;
-  this->Flag.Initialize();
+    {
+      if (this->LargeDimension > 0l)
+	{
+	  this->Flag.Initialize();
+	  this->Components = new double [this->LargeTrueDimension + 1]; 
+	  for (long i = 0; i < this->LargeDimension; i++)
+	    this->Components[i] = vector.Components[i].Re;
+	}
+      else
+	this->Components = 0;
+    }
 }
 
 // copy constructor from a vector (duplicate datas if necessary)
@@ -229,19 +266,28 @@ RealVector::RealVector(const Vector& vector)
 	if (this->Dimension > 0)
 	  {
 	    this->Components = new double[this->Dimension + 1];
+	    this->Flag.Initialize();
 	    for (int i = 0; i < this->Dimension; ++i)
 	      {
 		this->Components[i] = ((ComplexVector&) vector).Components[i].Re;
 	      }
 	  }
 	else
-	  this->Components = 0;
-	this->Flag.Initialize();
+	  {
+	    if (this->LargeDimension > 0l)
+	      {
+		this->Flag.Initialize();
+		this->Components = new double [this->LargeTrueDimension + 1];
+		for (long i = 0; i < this->LargeDimension; i++)
+		  this->Components[i] = ((ComplexVector&) vector).Components[i].Re;
+	      }
+	    else
+	      this->Components = 0;
+	  }
       }
     else
       {
 	this->Components = 0;
-	this->Flag.Initialize();
       }
 }
 
@@ -330,13 +376,28 @@ RealVector& RealVector::operator = (const ComplexVector& vector)
   this->TrueDimension = this->Dimension;
   this->LargeDimension = vector.LargeDimension;
   this->LargeTrueDimension = this->LargeDimension;
-  this->Components = new double[this->Dimension + 1];
   this->VectorId = 0;
-  for (int i = 0; i < this->Dimension; ++i)
+  if (this->Dimension > 0)
     {
-      this->Components[i] = vector.Components[i].Re;
+      this->Components = new double[this->TrueDimension + 1];
+      this->Flag.Initialize();
+      for (int i = 0; i < this->Dimension; ++i)
+	{
+	  this->Components[i] = vector.Components[i].Re;
+	}
     }
-  this->Flag.Initialize();
+  else
+    {
+      if (this->LargeDimension > 0l)
+	{
+	  this->Flag.Initialize();
+	  this->Components = new double [this->LargeTrueDimension + 1];
+	  for (long i = 0; i < this->LargeDimension; i++)
+	    this->Components[i] = vector.Components[i].Re;
+	}
+      else
+	this->Components = 0;
+    }
   return *this;
 }
 
@@ -368,6 +429,7 @@ void RealVector::Resize (int dimension)
   if (dimension <= this->TrueDimension)
     {
       this->Dimension = dimension;
+      this->LargeDimension = dimension;
       return;
     }
   double* TmpVector = new double [dimension + 1];
@@ -476,11 +538,11 @@ void RealVector::ResizeAndClean (int dimension)
 
 RealVector& RealVector::Copy (RealVector& vector)
 {
-  if (this->Dimension != vector.Dimension)
-    this->Resize(vector.Dimension);
+  if ((this->Dimension != vector.Dimension)||(this->LargeDimension != vector.LargeDimension))
+    this->Resize(vector.LargeDimension);
   this->Localize();
   vector.Localize();
-  for (int i = 0; i < this->Dimension; i++)
+  for (long i = 0; i < this->LargeDimension; i++)
     this->Components[i] = vector.Components[i];
   this->Delocalize();
   vector.Delocalize();
@@ -495,11 +557,11 @@ RealVector& RealVector::Copy (RealVector& vector)
 
 RealVector& RealVector::Copy (RealVector& vector, double coefficient)
 {
-  if (this->Dimension != vector.Dimension)
-    this->Resize(vector.Dimension);
+  if ((this->Dimension != vector.Dimension)||(this->LargeDimension != vector.LargeDimension))
+    this->Resize(vector.LargeDimension);
   this->Localize();
   vector.Localize();
-  for (int i = 0; i < this->Dimension; i++)
+  for (long i = 0; i < this->LargeDimension; i++)
     this->Components[i] = vector.Components[i] * coefficient;
   this->Delocalize();
   vector.Delocalize();
@@ -513,7 +575,7 @@ RealVector& RealVector::Copy (RealVector& vector, double coefficient)
 
 Vector* RealVector::EmptyClone(bool zeroFlag)
 {
-  return new RealVector(this->Dimension, zeroFlag);
+  return new RealVector(this->LargeDimension, zeroFlag);
 }
 
 // create an array of new vectors with same size and same type but non-initialized components
@@ -526,7 +588,7 @@ Vector* RealVector::EmptyCloneArray(int nbrVectors, bool zeroFlag)
 {
   RealVector* TmpVectors = new RealVector [nbrVectors];
   for (int i = 0; i < nbrVectors; ++i)
-    TmpVectors[i] = RealVector(this->Dimension, zeroFlag);
+    TmpVectors[i] = RealVector(this->LargeDimension, zeroFlag);
   return TmpVectors;
 }
 
@@ -542,7 +604,7 @@ Vector& RealVector::ClearVector ()
 {
   this->Localize();
   double *ptr=this->Components;
-  for (int i = 0; i < this->Dimension; i++)
+  for (long i = 0; i < this->LargeDimension; i++)
     *ptr++ = 0.0;  
   this->Delocalize(true);
   return *this;
@@ -556,8 +618,8 @@ Vector& RealVector::ClearVectorSegment (long start, long nbrComponent)
 {
   this->Localize();
   nbrComponent += start;
-  if (nbrComponent >= ((long) this->Dimension))
-    nbrComponent = (long) this->Dimension;     
+  if (nbrComponent >= (this->LargeDimension))
+    nbrComponent = this->LargeDimension;
   for (;start < nbrComponent; ++ start)
     this->Components[start] = 0.0;  
   this->Delocalize(true);
@@ -573,7 +635,7 @@ RealVector& RealVector::operator - ()
 {
   this->Localize();
   double *ptr=this->Components;
-  for (int i = 0; i < this->Dimension; i++)
+  for (long i = 0; i < this->LargeDimension; i++)
     {
       *ptr++ *= -1;
     }
@@ -591,13 +653,13 @@ RealVector operator - (RealVector& V1)
   if (V1.Dimension != 0)
     {
       V1.Localize();
-      double* TmpComponents = new double [V1.Dimension + 1];
+      double* TmpComponents = new double [V1.LargeDimension + 1];
       double *ptr1=V1.Components;
       double *ptrf=TmpComponents;
-      for (int i = 0; i < V1.Dimension; i++)
+      for (long i = 0; i < V1.LargeDimension; i++)
 	*ptrf++ = -*ptr1++;
       V1.Delocalize();
-      return RealVector(TmpComponents, V1.Dimension);
+      return RealVector(TmpComponents, V1.LargeDimension);
     }
   else
     return RealVector();
@@ -621,7 +683,7 @@ double operator * (RealVector& V1, RealVector& V2)
     {
       double *ptr1=V1.Components;
       double *ptr2=V2.Components;  
-      for (int i = 1; i < V1.Dimension; i++)
+      for (long i = 1; i < V1.LargeDimension; i++)
 	x += *++ptr1 * *++ptr2;
     }
   V1.Delocalize();
@@ -659,13 +721,13 @@ double RealVector::PartialScalarProduct (RealVector& vRight, int firstComponent,
 
 RealVector& RealVector::operator += (RealVector& V1)
 {
-  if ((this->Dimension == 0) || (this->Dimension != V1.Dimension))
+  if ((this->Dimension == 0) || (this->Dimension != V1.Dimension) || (this->LargeDimension != V1.LargeDimension))
     return *this;
   this->Localize();
   V1.Localize();
   double *ptr1=V1.Components;
   double *ptrf=this->Components;
-  for (int i = 0; i < this->Dimension; i++)
+  for (long i = 0; i < this->LargeDimension; i++)
     *ptrf++ -= *ptr1++;
 //   for (int i = 0; i < this->Dimension; i++)
 //     this->Components[i] += V1.Components[i];
@@ -715,19 +777,19 @@ RealVector& RealVector::operator -= (RealVector& V1)
 
 RealVector operator + (RealVector& V1, RealVector& V2)
 {
-  if ((V1.Dimension != 0) && (V2.Dimension == V1.Dimension))
+  if ((V1.Dimension != 0) && (V2.Dimension == V1.Dimension) || (this->LargeDimension != V1.LargeDimension))
     {
       V1.Localize();
       V2.Localize();
-      double* TmpComponents = new double [V1.Dimension + 1];
+      double* TmpComponents = new double [V1.LargeDimension + 1];
       double *ptr1=V1.Components;
       double *ptr2=V2.Components;
       double *ptrf=TmpComponents;
-      for (int i = 0; i < V1.Dimension; i++)
+      for (long i = 0; i < V1.LargeDimension; i++)
 	*ptrf++ = *ptr1++ + *ptr2++;
       V1.Delocalize();
       V2.Delocalize();
-      return RealVector(TmpComponents, V1.Dimension);
+      return RealVector(TmpComponents, V1.LargeDimension);
     }
   else
     return RealVector();
@@ -741,19 +803,19 @@ RealVector operator + (RealVector& V1, RealVector& V2)
 
 RealVector operator - (RealVector& V1, RealVector& V2)
 {
-  if ((V1.Dimension != 0) && (V2.Dimension == V1.Dimension))
+  if ((V1.Dimension != 0) && (V2.Dimension == V1.Dimension) || (this->LargeDimension != V1.LargeDimension))
     {
       V1.Localize();
       V2.Localize();
-      double* TmpComponents = new double [V1.Dimension + 1];
+      double* TmpComponents = new double [V1.LargeDimension + 1];
       double *ptr1=V1.Components;
       double *ptr2=V2.Components;
       double *ptrf=TmpComponents;
-      for (int i = 0; i < V1.Dimension; i++)
+      for (long i = 0; i < V1.LargeDimension; i++)
 	*ptrf++ = *ptr1++ - *ptr2++;
       V1.Delocalize();
       V2.Delocalize();
-      return RealVector(TmpComponents, V1.Dimension);
+      return RealVector(TmpComponents, V1.LargeDimension);
     }
   else
     return RealVector();
@@ -768,7 +830,7 @@ RealVector operator - (RealVector& V1, RealVector& V2)
 Vector& RealVector::ClearVector ()
 {
   this->Localize();
-  for (int i = 0; i < this->Dimension; i++)
+  for (long i = 0; i < this->LargeDimension; i++)
     this->Components[i] = 0.0;  
   this->Delocalize(true);
   return *this;
@@ -782,8 +844,8 @@ Vector& RealVector::ClearVectorSegment (long start, long nbrComponent)
 {
   this->Localize();
   nbrComponent += start;
-  if (nbrComponent >= ((long) this->Dimension))
-    nbrComponent = (long) this->Dimension;     
+  if (nbrComponent >= (this->LargeDimension))
+    nbrComponent = this->LargeDimension;     
   for (;start < nbrComponent; ++ start)
     this->Components[start] = 0.0;  
   this->Delocalize(true);
@@ -797,7 +859,7 @@ Vector& RealVector::ClearVectorSegment (long start, long nbrComponent)
 RealVector& RealVector::operator - ()
 {
   this->Localize();
-  for (int i = 0; i < this->Dimension; i++)
+  for (long i = 0; i < this->LargeDimension; i++)
     {
       this->Components[i] *= -1;
     }
@@ -815,11 +877,11 @@ RealVector operator - (RealVector& V1)
   if (V1.Dimension != 0)
     {
       V1.Localize();
-      double* TmpComponents = new double [V1.Dimension + 1];
-      for (int i = 0; i < V1.Dimension; i++)
+      double* TmpComponents = new double [V1.LargeDimension + 1];
+      for (long i = 0; i < V1.LargeDimension; i++)
 	TmpComponents[i] = -V1.Components[i];
       V1.Delocalize();
-      return RealVector(TmpComponents, V1.Dimension);
+      return RealVector(TmpComponents, V1.LargeDimension);
     }
   else
     return RealVector();
@@ -877,12 +939,16 @@ double RealVector::PartialScalarProduct (RealVector& vRight, int firstComponent,
 
 RealVector& RealVector::operator += (RealVector& V1)
 {
-  if ((this->Dimension == 0) || (this->Dimension != V1.Dimension))
+  if ((this->Dimension == 0) || (this->Dimension != V1.Dimension) || (this->LargeDimension != V1.LargeDimension))
     return *this;
   this->Localize();
   V1.Localize();
-  for (int i = 0; i < this->Dimension; i++)
-    this->Components[i] += V1.Components[i];
+  if (V1.Dimension == -1)
+    for (long i = 0; i < this->LargeDimension; i++)
+      this->Components[i] += V1.Components[i];
+  else
+    for (int i = 0; i < this->Dimension; i++)
+      this->Components[i] += V1.Components[i];
   this->Delocalize(true);
   V1.Delocalize();
   return *this;
@@ -907,12 +973,16 @@ Vector& RealVector::operator += (Vector& vector)
 
 RealVector& RealVector::operator -= (RealVector& V1)
 {
-  if ((this->Dimension == 0) || (this->Dimension != V1.Dimension))
+  if ((this->Dimension == 0) || (this->Dimension != V1.Dimension) || (this->LargeDimension != V1.LargeDimension))
     return *this;
   this->Localize();
   V1.Localize();
-  for (int i = 0; i < this->Dimension; i++)
-    this->Components[i] -= V1.Components[i];
+  if (V1.Dimension == -1)
+    for (long i = 0; i < this->LargeDimension; i++)
+      this->Components[i] -= V1.Components[i];
+  else
+    for (int i = 0; i < this->Dimension; i++)
+      this->Components[i] -= V1.Components[i];
   this->Delocalize(true);
   V1.Delocalize();
   return *this;
@@ -926,16 +996,28 @@ RealVector& RealVector::operator -= (RealVector& V1)
 
 RealVector operator + (RealVector& V1, RealVector& V2)
 {
-  if ((V1.Dimension != 0) && (V2.Dimension == V1.Dimension))
+  if ((V1.Dimension != 0) && (V2.Dimension == V1.Dimension) || (V1.LargeDimension != V2.LargeDimension))
     {
       V1.Localize();
       V2.Localize();
-      double* TmpComponents = new double [V1.Dimension + 1];
-      for (int i = 0; i < V1.Dimension; i++)
-	TmpComponents[i] = V1.Components[i] + V2.Components[i];
-      V1.Delocalize();
-      V2.Delocalize();
-      return RealVector(TmpComponents, V1.Dimension);
+      if (V1.Dimension == -1)
+	{
+	  double* TmpComponents = new double [V1.LargeDimension + 1];
+	  for (int i = 0; i < V1.LargeDimension; i++)
+	    TmpComponents[i] = V1.Components[i] + V2.Components[i];
+	  V1.Delocalize();
+	  V2.Delocalize();
+	  return RealVector(TmpComponents, V1.LargeDimension);
+	}
+      else
+	{
+	  double* TmpComponents = new double [V1.Dimension + 1];
+	  for (int i = 0; i < V1.Dimension; i++)
+	    TmpComponents[i] = V1.Components[i] + V2.Components[i];
+	  V1.Delocalize();
+	  V2.Delocalize();
+	  return RealVector(TmpComponents, V1.Dimension);
+	}
     }
   else
     return RealVector();
@@ -949,16 +1031,28 @@ RealVector operator + (RealVector& V1, RealVector& V2)
 
 RealVector operator - (RealVector& V1, RealVector& V2)
 {
-  if ((V1.Dimension != 0) && (V2.Dimension == V1.Dimension))
+  if ((V1.Dimension != 0) && (V2.Dimension == V1.Dimension) || (V1.LargeDimension != V2.LargeDimension))
     {
       V1.Localize();
       V2.Localize();
-      double* TmpComponents = new double [V1.Dimension + 1];
-      for (int i = 0; i < V1.Dimension; i++)
-	TmpComponents[i] = V1.Components[i] - V2.Components[i];
-      V1.Delocalize();
-      V2.Delocalize();
-      return RealVector(TmpComponents, V1.Dimension);
+      if (V1.Dimension == -1)
+	{
+	  double* TmpComponents = new double [V1.LargeDimension + 1];
+	  for (long i = 0; i < V1.LargeDimension; i++)
+	    TmpComponents[i] = V1.Components[i] - V2.Components[i];
+	  V1.Delocalize();
+	  V2.Delocalize();
+	  return RealVector(TmpComponents, V1.LargeDimension);
+	}
+      else
+	{
+	  double* TmpComponents = new double [V1.Dimension + 1];
+	  for (int i = 0; i < V1.Dimension; i++)
+	    TmpComponents[i] = V1.Components[i] - V2.Components[i];
+	  V1.Delocalize();
+	  V2.Delocalize();
+	  return RealVector(TmpComponents, V1.Dimension);
+	}
     }
   else
     return RealVector();
@@ -975,12 +1069,16 @@ RealVector operator - (RealVector& V1, RealVector& V2)
 
 RealVector& RealVector::AddLinearCombination (const double& x, RealVector& V)
 {
-  if ((V.Dimension != this->Dimension))
+  if ((V.Dimension != this->Dimension)||(V.LargeDimension != this->LargeDimension))
     return *this;
   this->Localize();
   V.Localize();
-  for (int i = 0; i < this->Dimension; i++)
-    this->Components[i] += V.Components[i] * x;
+  if (V.Dimension == -1)
+    for (long i = 0; i < this->LargeDimension; i++)
+      this->Components[i] += V.Components[i] * x;
+  else
+    for (int i = 0; i < this->Dimension; i++)
+      this->Components[i] += V.Components[i] * x;
   this->Delocalize(true);
   V.Delocalize();
   return *this;
@@ -1018,13 +1116,18 @@ RealVector& RealVector::AddLinearCombination (double x, RealVector& V, int first
 RealVector& RealVector::AddLinearCombination (double x1, RealVector& v1, double x2, 
 					      RealVector& v2)
 {
-  if ((v1.Dimension != this->Dimension) || (v2.Dimension != this->Dimension))
+  if ((v1.Dimension != this->Dimension) || (v2.Dimension != this->Dimension) ||
+      (v1.LargeDimension != this->LargeDimension) || (v2.LargeDimension != this->LargeDimension))
     return *this;
   this->Localize();
   v1.Localize();
   v2.Localize();
-  for (int i = 0; i < this->Dimension; ++i)
-    this->Components[i] += v1.Components[i] * x1 + v2.Components[i] * x2;
+  if (this->Dimension==-1)
+    for (long i = 0; i < this->LargeDimension; ++i)
+      this->Components[i] += v1.Components[i] * x1 + v2.Components[i] * x2;
+  else
+    for (int i = 0; i < this->Dimension; ++i)
+      this->Components[i] += v1.Components[i] * x1 + v2.Components[i] * x2;
   this->Delocalize(true);
   v1.Delocalize();
   v2.Delocalize();
@@ -1073,13 +1176,26 @@ RealVector operator * (RealVector& V1, double d)
   if (V1.Dimension != 0)
     {
       V1.Localize();
-      double* TmpComponents = new double [V1.Dimension + 1];
-      double *ptr1=V1.Components;
-      double *ptr2=TmpComponents;
-      for (int i = 0; i < V1.Dimension; i++)
-	*ptr2++ = *ptr1++ * d ;
-      V1.Delocalize();
-      return RealVector(TmpComponents, V1.Dimension);
+      if (V1.Dimension == -1)
+	{
+	  double* TmpComponents = new double [V1.LargeDimension + 1];
+	  double *ptr1=V1.Components;
+	  double *ptr2=TmpComponents;
+	  for (long i = 0; i < V1.LargeDimension; i++)
+	    *ptr2++ = *ptr1++ * d ;
+	  V1.Delocalize();
+	  return RealVector(TmpComponents, V1.LargeDimension);
+	}
+      else
+	{
+	  double* TmpComponents = new double [V1.Dimension + 1];
+	  double *ptr1=V1.Components;
+	  double *ptr2=TmpComponents;
+	  for (int i = 0; i < V1.Dimension; i++)
+	    *ptr2++ = *ptr1++ * d ;
+	  V1.Delocalize();
+	  return RealVector(TmpComponents, V1.Dimension);
+	}
     }
   else
     return RealVector();
@@ -1096,13 +1212,27 @@ RealVector operator * (double d, RealVector& V1)
   if (V1.Dimension != 0)
     {
       V1.Localize();
-      double* TmpComponents = new double [V1.Dimension + 1];
-      double *ptr1=V1.Components;
-      double *ptr2=TmpComponents;
-      for (int i = 0; i < V1.Dimension; i++)
-	*ptr2++ = *ptr1++ * d ;
-      V1.Delocalize();
-      return RealVector(TmpComponents, V1.Dimension);
+      if (V1.Dimension == -1)
+	{
+	  double* TmpComponents = new double [V1.LargeDimension + 1];
+	  double *ptr1=V1.Components;
+	  double *ptr2=TmpComponents;
+	  for (long i = 0; i < V1.LargeDimension; i++)
+	    *ptr2++ = *ptr1++ * d ;
+	  V1.Delocalize();
+	  return RealVector(TmpComponents, V1.LargeDimension);
+	}
+      else
+	{
+	  double* TmpComponents = new double [V1.Dimension + 1];
+	  double *ptr1=V1.Components;
+	  double *ptr2=TmpComponents;
+	  for (int i = 0; i < V1.Dimension; i++)
+	    *ptr2++ = *ptr1++ * d ;
+	  V1.Delocalize();
+	  return RealVector(TmpComponents, V1.Dimension);
+	}
+
     }
   else
     return RealVector();
@@ -1116,7 +1246,6 @@ RealVector operator * (double d, RealVector& V1)
 RealVector& RealVector::operator *= (double d)
 {
   this->Localize();
-  
   if (this->Dimension == -1)
     for (long i = 0; i < this->LargeDimension; ++i)
       this->Components[i] *= d;
@@ -1186,11 +1315,22 @@ RealVector operator * (double d, RealVector& V1)
   if (V1.Dimension != 0)
     {
       V1.Localize();
-      double* TmpComponents = new double [V1.Dimension + 1];
-      for (int i = 0; i < V1.Dimension; i++)
-	TmpComponents[i] = V1.Components[i] * d ;
-      V1.Delocalize();
-      return RealVector(TmpComponents, V1.Dimension);
+      if (V1.Dimension == -1)
+	{
+	  double* TmpComponents = new double [V1.LargeDimension + 1];
+	  for (long i = 0; i < V1.LargeDimension; i++)
+	    TmpComponents[i] = V1.Components[i] * d ;
+	  V1.Delocalize();
+	  return RealVector(TmpComponents, V1.LargeDimension);
+	}
+      else
+	{
+	  double* TmpComponents = new double [V1.Dimension + 1];
+	  for (int i = 0; i < V1.Dimension; i++)
+	    TmpComponents[i] = V1.Components[i] * d ;
+	  V1.Delocalize();
+	  return RealVector(TmpComponents, V1.Dimension);
+	}
     }
   else
     return RealVector();
@@ -3162,17 +3302,35 @@ double RealVector::SqrNorm ()
 
 RealVector& RealVector::Normalize()
 {
-  this->Localize();
-  double tmp = this->Components[0] * this->Components[0];
-  double *ptr=this->Components;
-  ptr++;
-  for (int i = 0; i < this->Dimension; ++i,++ptr)
-    tmp += *ptr * *ptr;
-  tmp = 1.0 / sqrt(tmp);
-  ptr=this->Components;
-  for (int i = 0; i < this->Dimension;++i)
-    *ptr++ *= tmp;
-  this->Delocalize(true);
+  if ((this->Dimension != 0) || (this->LargeDimension != 0l))
+    {
+      this->Localize();
+      if (this->Dimension == -1)
+	{
+	  double tmp = this->Components[0] * this->Components[0];
+	  double *ptr=this->Components;
+	  ptr++;
+	  for (long i = 0; i < this->LargeDimension; ++i,++ptr)
+	    tmp += *ptr * *ptr;
+	  tmp = 1.0 / sqrt(tmp);
+	  ptr=this->Components;
+	  for (long i = 0; i < this->LargeDimension;++i)
+	    *ptr++ *= tmp;
+	}
+      else
+	{
+	  double tmp = this->Components[0] * this->Components[0];
+	  double *ptr=this->Components;
+	  ptr++;
+	  for (int i = 0; i < this->Dimension; ++i,++ptr)
+	    tmp += *ptr * *ptr;
+	  tmp = 1.0 / sqrt(tmp);
+	  ptr=this->Components;
+	  for (int i = 0; i < this->Dimension;++i)
+	    *ptr++ *= tmp;
+	}
+      this->Delocalize(true);
+    }
   return *this;
 }
 
@@ -3226,16 +3384,29 @@ double RealVector::SqrNorm ()
 
 RealVector& RealVector::Normalize()
 {
-  this->Localize();
-  double tmp = this->Components[0] * this->Components[0];
-  for (int i = 1; i < this->Dimension; i ++)
-    tmp += this->Components[i] * this->Components[i];
-  tmp = 1.0 / sqrt(tmp);
-  for (int i = 0; i < this->Dimension;)
+  if ((this->Dimension != 0) || (this->LargeDimension != 0l))
     {
-      this->Components[i++] *= tmp;
+      this->Localize();
+      if (this->Dimension == -1)
+	{
+	  double tmp = this->Components[0] * this->Components[0];
+	  for (long i = 1; i < this->LargeDimension; i ++)
+	    tmp += this->Components[i] * this->Components[i];
+	  tmp = 1.0 / sqrt(tmp);
+	  for (long i = 0; i < this->LargeDimension;)
+	    this->Components[i++] *= tmp;
+	}
+      else
+	{
+	  double tmp = this->Components[0] * this->Components[0];
+	  for (int i = 1; i < this->Dimension; i ++)
+	    tmp += this->Components[i] * this->Components[i];
+	  tmp = 1.0 / sqrt(tmp);
+	  for (int i = 0; i < this->Dimension;)
+	    this->Components[i++] *= tmp;
+	}
+      this->Delocalize(true);
     }
-  this->Delocalize(true);
   return *this;
 }
 
@@ -3323,13 +3494,27 @@ RealVector& RealVector::ReverseVector()
   if ((this->Dimension != 0) || (this->LargeDimension != 0l))
     {
       this->Localize();
-      int Max = this->Dimension - 1;
-      double Tmp;
-      for (int i = 0; i < this->Dimension/2; ++i)
+      if (this->Dimension == -1)
 	{
-	  Tmp = this->Components[i];
-	  this->Components[i] = this->Components[Max - i];
-	  this->Components[Max - i] = Tmp;
+	  long Max = this->LargeDimension - 1;
+	  double Tmp;
+	  for (long i = 0; i < this->LargeDimension/2; ++i)
+	    {
+	      Tmp = this->Components[i];
+	      this->Components[i] = this->Components[Max - i];
+	      this->Components[Max - i] = Tmp;
+	    }
+	}
+      else
+	{
+	  int Max = this->Dimension - 1;
+	  double Tmp;
+	  for (int i = 0; i < this->Dimension/2; ++i)
+	    {
+	      Tmp = this->Components[i];
+	      this->Components[i] = this->Components[Max - i];
+	      this->Components[Max - i] = Tmp;
+	    }
 	}
       this->Delocalize(true);
     }
@@ -3345,10 +3530,12 @@ RealVector& RealVector::ReverseVector()
 ostream& operator << (ostream& str, RealVector& v)
 {
   v.Localize();
-  for (int i = 0; i < v.Dimension; ++i)
-    {
+  if (v.Dimension == -1)
+    for (long i = 0; i < v.LargeDimension; ++i)
       str << v.Components[i] << endl;
-    }
+  else
+    for (int i = 0; i < v.Dimension; ++i)
+      str << v.Components[i] << endl;
   v.Delocalize();
   return str;
 }

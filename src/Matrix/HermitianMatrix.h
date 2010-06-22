@@ -56,6 +56,7 @@ class HermitianMatrix : public Matrix
 
   friend class RealVector;
   friend class ComplexVector;
+  friend class ComplexMatrix;
   friend class SingleParticle;
 
  protected:

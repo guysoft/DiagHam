@@ -117,9 +117,15 @@ class RealVector : public Vector
 
   // constructor from an array of doubles
   //
-  // array = array of doubles with real in even position and imaginary part in odd position
+  // array = array of doubles to become Components of vector
   // size = Vector Dimension  
   RealVector(double* array, int size);
+
+  // constructor from an array of doubles
+  //
+  // array = array of doubles to become Components of vector
+  // size = Vector Dimension
+  RealVector(double* array, long size);
 
   // copy constructor
   //

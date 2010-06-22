@@ -499,6 +499,12 @@ class FermionOnSphere :  public ParticleOnSphere
   // return value = twice the Lz component
   virtual int GetLzValue(int j=0);
 
+  // request whether state with given index satisfies a general Pauli exclusion principle
+  // index = state index
+  // pauliK = number of particles allowed in consecutive orbitals
+  // pauliR = number of consecutive orbitals
+  virtual bool HasPauliExclusions(int index, int pauliK, int pauliR);
+
 
  protected:
 

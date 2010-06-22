@@ -1733,8 +1733,8 @@ RealDiagonalMatrix& HermitianMatrix::LapackDiagonalize (RealDiagonalMatrix& M, d
     }
   
   int Information = 0;  
-  char* Jobz = "N";
-  char* UpperLower = "U";
+  const char* Jobz = "N";
+  const char* UpperLower = "U";
   int TotalIndex = 0;
   for (int j = 0; j < this->NbrRow; ++j)
     {

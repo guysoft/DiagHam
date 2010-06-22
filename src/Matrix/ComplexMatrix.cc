@@ -738,7 +738,7 @@ ComplexMatrix operator / (const ComplexMatrix& M, double x)
   return ComplexMatrix(TmpColumns, M.NbrRow);
 }
 
-// add two matrices
+// add another complex matrices
 //
 // M = matrix to add to current matrix
 // return value = reference on current matrix
@@ -751,6 +751,64 @@ ComplexMatrix& ComplexMatrix::operator += (const ComplexMatrix& M)
     this->Columns[i] += M.Columns[i];
   return *this;
 }
+
+// add another hermitian matrices
+//
+// M = matrix to add to current matrix
+// return value = reference on current matrix
+
+ComplexMatrix& ComplexMatrix::operator += (const HermitianMatrix& M) 
+{
+  if ((this->NbrColumn != M.NbrColumn) || (this->NbrRow != M.NbrRow))
+    return *this;
+  Complex TmpC;
+  for (int i = 0; i < this->NbrColumn; ++i)
+    {
+      this->Columns[i][i] += M.DiagonalElements[i];
+      for (int j = i+1; j < this->NbrColumn; ++j)
+	{
+	  M.GetMatrixElement(i, j, TmpC);
+	  this->Columns[i][j] += TmpC;
+	  this->Columns[j][i] += Conj(TmpC);
+	}
+    }
+  return *this;
+}
+
+// add a linear combination of another complex matrix
+// x = prefactor for added terms
+// M = added matrix
+ComplexMatrix& ComplexMatrix::AddLinearCombination(const Complex &x, const ComplexMatrix &M)
+{
+  if ((this->NbrColumn != M.NbrColumn) || (this->NbrRow != M.NbrRow))
+    return *this;
+  for (int i = 0; i < this->NbrColumn; i++)
+    this->Columns[i].AddLinearCombination(x,M.Columns[i]);
+  return *this;
+}
+
+// add a linear combination of another complex matrix
+// x = prefactor for added terms
+// M = added matrix
+ComplexMatrix& ComplexMatrix::AddLinearCombination(const Complex &x, const HermitianMatrix &M)
+{
+  if ((this->NbrColumn != M.NbrColumn) || (this->NbrRow != M.NbrRow))
+    return *this;
+  Complex TmpC;
+  for (int i = 0; i < this->NbrColumn; ++i)
+    {
+      this->Columns[i][i] += x*M.DiagonalElements[i];
+      for (int j = i+1; j < this->NbrColumn; ++j)
+	{
+	  M.GetMatrixElement(i, j, TmpC);
+	  this->Columns[i][j] += x*TmpC;
+	  this->Columns[j][i] += x*Conj(TmpC);
+	}
+    }
+  return *this;
+}
+
+
 
 // add two matrices where the right one is a real tridiagonal symmetric matrix
 //

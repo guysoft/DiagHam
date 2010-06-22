@@ -2679,3 +2679,24 @@ int FermionOnSphere::GetLzValue(int j)
 {
   return this->TotalLz;
 }
+
+// request whether state with given index satisfies a general Pauli exclusion principle
+// index = state index
+// pauliK = number of particles allowed in consecutive orbitals
+// pauliR = number of consecutive orbitals
+bool FermionOnSphere::HasPauliExclusions(int index, int pauliK, int pauliR)
+{
+  unsigned long TmpState = this->StateDescription[index];
+  int TmpLzMax = this->StateLzMax[index];
+  unsigned long Mask = (0x1ul<<pauliR)-1;
+  unsigned long Sequence;
+  int Max = TmpLzMax + 2 - pauliR;
+  
+  for (int m = 0; m < Max; ++m)
+    {
+      Sequence = TmpState & (Mask << m);
+      if (bitcount(Sequence) > pauliK)
+	return false;
+    }
+  return true;
+}

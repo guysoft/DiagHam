@@ -161,6 +161,16 @@ class ComplexMatrix : public Matrix
   // x = value to add to matrix element
   void AddToMatrixElement(int i, int j, const Complex& x);
 
+  // add a linear combination of another complex matrix
+  // x = prefactor for added terms
+  // M = added matrix
+  ComplexMatrix& AddLinearCombination(const Complex &x, const ComplexMatrix &M);
+
+  // add a linear combination of another complex matrix
+  // x = prefactor for added terms
+  // M = added matrix
+  ComplexMatrix& AddLinearCombination(const Complex &x, const HermitianMatrix &M);
+
   // get reference to a given column
   //
   // i = column position
@@ -256,11 +266,17 @@ class ComplexMatrix : public Matrix
   // return value = division result
   friend ComplexMatrix operator / (const ComplexMatrix& M, double x);
 
-  // add two matrices
+  // add another complex matrices
   //
   // M = matrix to add to current matrix
   // return value = reference on current matrix
   ComplexMatrix& operator += (const ComplexMatrix& M);
+
+  // add another hermitian matrices
+  //
+  // M = matrix to add to current matrix
+  // return value = reference on current matrix
+  ComplexMatrix& operator += (const HermitianMatrix& M);
 
   // add two matrices where the right one is a real tridiagonal symmetric matrix
   //

@@ -62,4 +62,5 @@ SkyrmionOnSphereWaveFunction.cc \
 CFOnSphereWithSpinPartonTunnellingWaveFunction.cc \
 FQHESphereProductWaveFunction.cc \
 GutzwillerOnLatticeWaveFunction.cc \
-GrossPitaevskiiOnLatticeState.cc
+GrossPitaevskiiOnLatticeState.cc \
+MaximallyCondensedStateOnLattice.cc

@@ -3,7 +3,11 @@
 #include "HilbertSpace/BosonOnLatticeGeneric.h"
 #include "HilbertSpace/HardCoreBosonOnLatticeGeneric.h"
 
+#include "GeneralTools/FilenameTools.h"
+
 #include "Tools/FQHESpectrum/LatticePhases.h"
+#include "Tools/FQHEFiles/QHEOnLatticeFileTools.h"
+#include "Tools/FQHEWaveFunction/MaximallyCondensedStateOnLattice.h"
 
 #include "Operator/ParticleOnLatticeOneBodyOperator.h"
 #include "Operator/ParticleOnLatticeTranslationOperator.h"
@@ -20,8 +24,6 @@
 #include "Matrix/RealDiagonalMatrix.h"
 
 #include "MathTools/IntegerAlgebraTools.h"
-
-#include "Tools/FQHEFiles/QHEOnLatticeFileTools.h"
 
 #include "Options/Options.h"
 
@@ -100,6 +102,7 @@ int main(int argc, char** argv)
     (*SystemGroup) += new BooleanOption  ('\n', "normalize-phase", "change phase to make largest absolute value real and positive");
   (*OutputGroup) += new SingleDoubleOption  ('\n', "display-threshold", "only display values larger than threshold",0.0);
   (*MiscGroup) += new SingleIntegerOption ('\n', "nbr-density", "number of density matrix eigenstates to be written out",1);
+  (*MiscGroup) += new BooleanOption  ('\n', "equal", "only use equal weight superpositions of two vectors");  
   (*MiscGroup) += new SingleIntegerOption ('s',"superpositions","in case of two input vectors, number of values for phase in superpositions",12);
   (*MiscGroup) += new BooleanOption  ('V', "verbose", "give additional output");  
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -265,7 +268,7 @@ int main(int argc, char** argv)
   ParticleOnLatticeOneBodyOperator *DensityOperator= new ParticleOnLatticeOneBodyOperator(Space);
 
   cout<< "========= Analysis of density matrix ========"<<endl;
-  
+ 
   int DensityMatrixDimension = NbrSites*NbrVectors;
   HermitianMatrix Rho(DensityMatrixDimension);  
 
@@ -378,93 +381,122 @@ int main(int argc, char** argv)
       delete [] RhoVecOut;
     }  
 
-  if (NbrVectors==2)
+  if (NbrVectors>=2)
     {
-      int DensityMatrixDimension2 = NbrSites;
-      RealDiagonalMatrix M2;	  
-      HermitianMatrix Rho2(DensityMatrixDimension2);
-      cout << "====== Analysing superpositions of form |1> + e^(i phi) |2> ======" << endl;
-      ComplexVector Superposition = ComplexVector(Vectors[0].GetVectorDimension());
-      ComplexVector *EigenStates = new ComplexVector[Manager.GetInteger("superpositions")];      
-      int Max1=-1, Max2=-1;
-      double MaxVal1=0.0, MaxVal2=0.0;      
+      if ((NbrVectors==2)||(Manager.GetBoolean("equal")))
+	{
+	  int DensityMatrixDimension2 = NbrSites;
+	  RealDiagonalMatrix M2;  
+	  HermitianMatrix Rho2(DensityMatrixDimension2);
+	  cout << "====== Analysing superpositions of form |1> + e^(i phi) |2> ======" << endl;
+	  ComplexVector Superposition = ComplexVector(Vectors[0].GetVectorDimension());
+	  ComplexVector *EigenStates = new ComplexVector[Manager.GetInteger("superpositions")];      
+	  int Max1=-1, Max2=-1;
+	  double MaxVal1=0.0, MaxVal2=0.0;      
       
-      for (int k=0; k<Manager.GetInteger("superpositions");++k)
-	{	  
-	  Complex Phase = Polar(sqrt(0.5),(2.0*M_PI*k)/Manager.GetInteger("superpositions"));
-	  Superposition.Copy(Vectors[0],sqrt(0.5));
-	  Superposition.AddLinearCombination (Phase, Vectors[1]);
-	  Superposition /= Superposition.Norm();
-	  for (int CreationX=0; CreationX<Lx; ++CreationX)
-	    for (int CreationY=0; CreationY<Ly; ++CreationY)
-	      for (int CreationSub=0; CreationSub<NbrSubLattices; ++CreationSub)
-		{
-		  CreationIndex = Space->EncodeQuantumNumber(CreationX, CreationY, CreationSub, Tmp);	
-		  for (int AnnihilationX=0; AnnihilationX<Lx; ++AnnihilationX)
-		    for (int AnnihilationY=0; AnnihilationY<Ly; ++AnnihilationY)
-		      for (int AnnihilationSub=0; AnnihilationSub<NbrSubLattices; ++AnnihilationSub)
-			{
-			  AnnihilationIndex = Space->EncodeQuantumNumber(AnnihilationX, AnnihilationY, AnnihilationSub, Tmp);
-			  DensityOperator->SetCreationAnnihilationIndex(CreationIndex,AnnihilationIndex);
-			  // calculate possible matrix elements in subspace of vectors
-			  if (CreationIndex <= AnnihilationIndex)
+	  for (int k=0; k<Manager.GetInteger("superpositions");++k)
+	    {	  
+	      Complex Phase = Polar(sqrt(0.5),(2.0*M_PI*k)/Manager.GetInteger("superpositions"));
+	      Superposition.Copy(Vectors[0],sqrt(0.5));
+	      Superposition.AddLinearCombination (Phase, Vectors[1]);
+	      Superposition /= Superposition.Norm();
+	      for (int CreationX=0; CreationX<Lx; ++CreationX)
+		for (int CreationY=0; CreationY<Ly; ++CreationY)
+		  for (int CreationSub=0; CreationSub<NbrSubLattices; ++CreationSub)
+		    {
+		      CreationIndex = Space->EncodeQuantumNumber(CreationX, CreationY, CreationSub, Tmp);	
+		      for (int AnnihilationX=0; AnnihilationX<Lx; ++AnnihilationX)
+			for (int AnnihilationY=0; AnnihilationY<Ly; ++AnnihilationY)
+			  for (int AnnihilationSub=0; AnnihilationSub<NbrSubLattices; ++AnnihilationSub)
 			    {
-			      Tmp=DensityOperator->MatrixElement(Superposition, Superposition);
-			      Rho2.SetMatrixElement(CreationIndex, AnnihilationIndex, Tmp);
+			      AnnihilationIndex = Space->EncodeQuantumNumber(AnnihilationX, AnnihilationY, AnnihilationSub, Tmp);
+			      DensityOperator->SetCreationAnnihilationIndex(CreationIndex,AnnihilationIndex);
+			      // calculate possible matrix elements in subspace of vectors
+			      if (CreationIndex <= AnnihilationIndex)
+				{
+				  Tmp=DensityOperator->MatrixElement(Superposition, Superposition);
+				  Rho2.SetMatrixElement(CreationIndex, AnnihilationIndex, Tmp);
+				}
 			    }
-			}
+		    }
+	      Rho2.Diagonalize(M2, Q, 1e-10, 250);
+	      cout << "EV's["<<2*k<<"/"<<Manager.GetInteger("superpositions")<<"pi] = " << M2[DensityMatrixDimension2-1] << ", "
+		   <<M2[DensityMatrixDimension2-2] <<", "<<M2[DensityMatrixDimension2-3]<<endl;
+	      EigenStates[k].Resize(DensityMatrixDimension2);
+	      for (int i=0; i<DensityMatrixDimension2; ++i)
+		Q.GetMatrixElement(i,DensityMatrixDimension2-1,EigenStates[k][DensityMatrixDimension2-1-i]);
+	      if (M2[DensityMatrixDimension2-1]>=MaxVal1-1e-8)
+		{
+		  MaxVal2=MaxVal1;
+		  Max2=Max1;
+		  MaxVal1 = M2[DensityMatrixDimension2-1];
+		  Max1=k;
 		}
-	  Rho2.Diagonalize(M2, Q, 1e-10, 250);
-	  cout << "EV's["<<2*k<<"/"<<Manager.GetInteger("superpositions")<<"pi] = " << M2[DensityMatrixDimension2-1] << ", "
-	       <<M2[DensityMatrixDimension2-2] <<", "<<M2[DensityMatrixDimension2-3]<<endl;
-	  EigenStates[k].Resize(DensityMatrixDimension2);
-	  for (int i=0; i<DensityMatrixDimension2; ++i)
-	    Q.GetMatrixElement(i,DensityMatrixDimension2-1,EigenStates[k][DensityMatrixDimension2-1-i]);
-	  if (M2[DensityMatrixDimension2-1]>=MaxVal1-1e-8)
+	    }
+      
+	  char *RhoVecOut = new char[strlen(VectorFiles[0])+50];
+      
+	  if (Max1>=0)
 	    {
-	      MaxVal2=MaxVal1;
-	      Max2=Max1;
-	      MaxVal1 = M2[DensityMatrixDimension2-1];
-	      Max1=k;
+	      sprintf(RhoVecOut,"%s-2a.dm",VectorFiles[0]);
+	      cout << "Writing density matrix eigenstate for EV["<<2*Max1<<"/"<<Manager.GetInteger("superpositions")<<"pi] to "<<RhoVecOut<<endl;
+	      EigenStates[Max1].WriteVector(RhoVecOut);
+	      if (Manager.GetBoolean("save-vectors"))
+		{	      
+		  sprintf(RhoVecOut,"%s-2a.vec",VectorFiles[0]);
+		  cout << "Writing superposition Vec["<<2*Max1<<"/"<<Manager.GetInteger("superpositions")<<"pi] to "<<RhoVecOut<<endl;
+		  Complex Phase = Polar(sqrt(0.5),(2.0*M_PI*Max1)/Manager.GetInteger("superpositions"));
+		  Superposition.Copy(Vectors[0],sqrt(0.5));
+		  Superposition.AddLinearCombination (Phase, Vectors[1]);
+		  Superposition/=Superposition.Norm();
+		  Superposition.WriteVector(RhoVecOut);
+		}
 	    }
+	  if (Max2>=0)
+	    {
+	      sprintf(RhoVecOut,"%s-2b.dm",VectorFiles[0]);
+	      cout << "Writing density matrix eigenstate for EV["<<2*Max2<<"/"<<Manager.GetInteger("superpositions")<<"pi] to "<<RhoVecOut<<endl;
+	      EigenStates[Max2].WriteVector(RhoVecOut);
+	      if (Manager.GetBoolean("save-vectors"))
+		{	      
+		  sprintf(RhoVecOut,"%s-2b.vec",VectorFiles[0]);
+		  cout << "Writing superposition Vec["<<2*Max2<<"/"<<Manager.GetInteger("superpositions")<<"pi] to "<<RhoVecOut<<endl;
+		  Complex Phase = Polar(sqrt(0.5),(2.0*M_PI*Max2)/Manager.GetInteger("superpositions"));
+		  Superposition.Copy(Vectors[0],sqrt(0.5));
+		  Superposition.AddLinearCombination (Phase, Vectors[1]);
+		  Superposition/=Superposition.Norm();
+		  Superposition.WriteVector(RhoVecOut);
+		}
+	    }
+	  delete [] EigenStates;
+	  delete [] RhoVecOut;
 	}
-      
-      char *RhoVecOut = new char[strlen(VectorFiles[0])+50];
-      
-      if (Max1>=0)
+      else  // study general superpositions of n vectors
 	{
-	  sprintf(RhoVecOut,"%s-2a.dm",VectorFiles[0]);
-	  cout << "Writing density matrix eigenstate for EV["<<2*Max1<<"/"<<Manager.GetInteger("superpositions")<<"pi] to "<<RhoVecOut<<endl;
-	  EigenStates[Max1].WriteVector(RhoVecOut);
+	  MaximallyCondensedStateOnLattice * BestCondensate
+	    = new MaximallyCondensedStateOnLattice(Architecture.GetArchitecture(), NbrVectors, Vectors, Space, Lx, Ly, NbrSubLattices);
+	  BestCondensate->Optimize(Manager.GetDouble("opt-tolerance"), Manager.GetInteger("max-iter"));
+	  ComplexVector Parameters = BestCondensate->GetVariationalParameters();
+	  cout << "Found condensate: "<< Parameters[0] << " |0>";
+	  for (int i=0; i<NbrVectors; ++i)
+	    cout << " + " << Parameters[i] << " |"<<i<<">";
+	  cout << endl;
+	  cout << "with EV[0]_max = "<<GetDensityMatrixEigenvalue()<<endl;
 	  if (Manager.GetBoolean("save-vectors"))
-	    {	      
-	      sprintf(RhoVecOut,"%s-2a.vec",VectorFiles[0]);
-	      cout << "Writing superposition Vec["<<2*Max1<<"/"<<Manager.GetInteger("superpositions")<<"pi] to "<<RhoVecOut<<endl;
-	      Complex Phase = Polar(sqrt(0.5),(2.0*M_PI*Max1)/Manager.GetInteger("superpositions"));
-	      Superposition.Copy(Vectors[0],sqrt(0.5));
-	      Superposition.AddLinearCombination (Phase, Vectors[1]);
-	      Superposition/=Superposition.Norm();
-	      Superposition.WriteVector(RhoVecOut);
+	    {
+	      char *OldBase = RemoveExtensionFromFileName(VectorFiles[0],".vec");
+	      char *OutputName = new char[strlen(OldBase)+20];
+	      sprintf(OutputName,"%s.opt_v%d.vec",OldBase,NbrVectors);
+	      char *ActualName = GetUniqueFileName(OutputName);
+	      ComplexVector CondensedState = BestCondensate->GetWaveFunction();
+	      cout << "Writing optimized condensate state: "<<ActualName<<endl;
+	      CondensedState.WriteVector(ActualName);
+	      delete [] OldBase;
+	      delete [] OutputName;
+	      delete [] ActualName;
+	      delete BestCondensate;
 	    }
 	}
-      if (Max2>=0)
-	{
-	  sprintf(RhoVecOut,"%s-2b.dm",VectorFiles[0]);
-	  cout << "Writing density matrix eigenstate for EV["<<2*Max2<<"/"<<Manager.GetInteger("superpositions")<<"pi] to "<<RhoVecOut<<endl;
-	  EigenStates[Max2].WriteVector(RhoVecOut);
-	  if (Manager.GetBoolean("save-vectors"))
-	    {	      
-	      sprintf(RhoVecOut,"%s-2b.vec",VectorFiles[0]);
-	      cout << "Writing superposition Vec["<<2*Max2<<"/"<<Manager.GetInteger("superpositions")<<"pi] to "<<RhoVecOut<<endl;
-	      Complex Phase = Polar(sqrt(0.5),(2.0*M_PI*Max2)/Manager.GetInteger("superpositions"));
-	      Superposition.Copy(Vectors[0],sqrt(0.5));
-	      Superposition.AddLinearCombination (Phase, Vectors[1]);
-	      Superposition/=Superposition.Norm();
-	      Superposition.WriteVector(RhoVecOut);
-	    }
-	}
-      delete [] EigenStates;
-      delete [] RhoVecOut;
     }
 
   if (NbrVectors>1)
