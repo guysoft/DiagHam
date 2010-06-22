@@ -50,6 +50,8 @@ ComplexVector::ComplexVector()
   this->Dimension = 0;
   this->VectorId = 0;
   this->TrueDimension = this->Dimension;
+  this->LargeDimension = 0l;
+  this->LargeTrueDimension = 0l;
   this->VectorType = Vector::ComplexDatas;
 }
 
@@ -63,14 +65,48 @@ ComplexVector::ComplexVector(int size, bool zeroFlag)
   this->Dimension = size;
   this->TrueDimension = this->Dimension;
   this->Flag.Initialize();
+  this->LargeDimension = (long) size;
+  this->LargeTrueDimension = this->LargeDimension;
   this->Components = new Complex [this->Dimension];
   this->VectorType = Vector::ComplexDatas;
   this->VectorId = 0;
   if (zeroFlag == true)
     for (int i = 0; i < this->Dimension; ++i)
       this->Components[i] = 0.0;
-
 }
+
+// constructor for an empty real vector bigger than 2^31
+//
+// size = Vector Dimension 
+// zeroFlag = true if all coordinates have to be set to zero
+
+ComplexVector::ComplexVector(long size, bool zeroFlag)
+{
+  this->VectorType = Vector::ComplexDatas;
+  this->LargeDimension = size;
+  this->LargeTrueDimension = this->LargeDimension;
+#ifdef  __64_BITS__
+  if (this->LargeDimension < (1l << 31))
+    this->Dimension = (int) size;
+  else
+    {
+      this->Dimension = -1;
+      this->VectorType |= Vector::LargeData;
+    }
+#else
+  this->Dimension = (int) size;
+#endif
+  this->TrueDimension = this->Dimension;
+  this->Components = new Complex [this->LargeDimension + 1]; 
+  this->Flag.Initialize();
+  this->VectorId = 0;
+  if (zeroFlag == true)
+    for (long i = 0l; i < this->LargeDimension; i++)
+      {
+	this->Components[i] = 0.0;
+      }
+}
+
 
 // constructor from arrays of doubles
 //
@@ -82,11 +118,48 @@ ComplexVector::ComplexVector(double* real, double* imaginary, int size)
 {
   this->Flag.Initialize();
   this->Dimension = size;
+  this->LargeDimension = (long) size;
+  this->LargeTrueDimension = this->LargeDimension;
   this->VectorType = Vector::ComplexDatas;
   this->VectorId = 0;
   this->TrueDimension = this->Dimension;
   this->Components = new Complex [this->Dimension];
   for (int i = 0; i < this->Dimension; ++i)
+    {
+      this->Components[i].Re = real[i];
+      this->Components[i].Im = imaginary[i];
+    }
+  // delete [] real;
+  // delete [] imaginary;
+}
+
+// constructor from large arrays of doubles
+//
+// real = array of doubles corresponding to real part
+// imaginary = array of doubles corresponding to imaginary part
+// size = Vector Dimension 
+
+ComplexVector::ComplexVector(double* real, double* imaginary, long size) 
+{
+  this->Flag.Initialize();
+  this->LargeDimension = size;
+  this->LargeTrueDimension = this->LargeDimension;
+#ifdef  __64_BITS__
+  if (this->LargeDimension < (1l << 31))
+    this->Dimension = (int) size;
+  else
+    {
+      this->Dimension = -1;
+      this->VectorType |= Vector::LargeData;
+    }
+#else
+  this->Dimension = (int) size;
+#endif
+  this->VectorType = Vector::ComplexDatas;
+  this->VectorId = 0;
+  this->TrueDimension = this->Dimension;
+  this->Components = new Complex [this->LargeDimension];
+  for (int i = 0; i < this->LargeDimension; ++i)
     {
       this->Components[i].Re = real[i];
       this->Components[i].Im = imaginary[i];
@@ -103,6 +176,34 @@ ComplexVector::ComplexVector(Complex *components, int size)
 {
   this->Flag.Initialize();
   this->Dimension = size;
+  this->LargeDimension = (long) size;
+  this->LargeTrueDimension = this->LargeDimension;
+  this->VectorType = Vector::ComplexDatas;
+  this->VectorId = 0;
+  this->TrueDimension = this->Dimension;
+  this->Components = components;
+}
+
+// constructor from large Complex array
+//
+// components = array of Complex values
+// size = Vector Dimension 
+ComplexVector::ComplexVector(Complex *components, long size)
+{
+  this->Flag.Initialize();
+  this->LargeDimension = size;
+  this->LargeTrueDimension = this->LargeDimension;
+#ifdef  __64_BITS__
+  if (this->LargeDimension < (1l << 31))
+    this->Dimension = (int) size;
+  else
+    {
+      this->Dimension = -1;
+      this->VectorType |= Vector::LargeData;
+    }
+#else
+  this->Dimension = (int) size;
+#endif
   this->VectorType = Vector::ComplexDatas;
   this->VectorId = 0;
   this->TrueDimension = this->Dimension;
@@ -118,11 +219,12 @@ ComplexVector::ComplexVector(const ComplexVector& vector, bool duplicateFlag)
 {
   this->Dimension = vector.Dimension;
   this->TrueDimension = vector.TrueDimension;
+  this->LargeDimension = vector.LargeDimension;
+  this->LargeTrueDimension = vector.LargeTrueDimension;
   this->VectorType = Vector::ComplexDatas;
   this->VectorId = vector.VectorId;
   if (vector.Dimension == 0)
     {
-      this->Flag.Initialize();
       this->Components = 0;
     }
   else
@@ -133,10 +235,26 @@ ComplexVector::ComplexVector(const ComplexVector& vector, bool duplicateFlag)
       }
     else
       {
-	this->Flag.Initialize();
-	this->Components = new Complex [this->TrueDimension];
-	for (int i = 0; i < this->Dimension; i++)
-	  this->Components[i] = vector.Components[i];
+	if (this->Dimension > 0)
+	{
+	  this->Flag.Initialize();
+	  this->Components = new Complex [this->TrueDimension + 1]; 
+	  for (int i = 0; i < this->Dimension; ++i)
+	    this->Components[i] = vector.Components[i];
+	}
+      else
+	{
+	  if (this->LargeDimension > 0l)
+	    {
+	      this->Flag.Initialize();
+	      this->Components = new Complex [this->LargeTrueDimension + 1]; 
+	      for (long i = 0; i < this->LargeDimension; ++i)
+		this->Components[i] = vector.Components[i];
+	      this->VectorType |= Vector::LargeData;
+	    }
+	  else
+	    this->Components = 0;
+	}
       }
 }
 
@@ -149,20 +267,43 @@ ComplexVector::ComplexVector(const RealVector& vector, bool duplicateFlag)
 {
   this->Dimension = vector.Dimension;
   this->TrueDimension = vector.TrueDimension;
+  this->LargeDimension = vector.LargeDimension;
+  this->LargeTrueDimension = vector.LargeTrueDimension;
   this->VectorType = Vector::ComplexDatas;
   this->VectorId = 0;
   if (vector.Dimension == 0)
     {
-      this->Flag.Initialize();
       this->Components = 0;
     }
   else
-    {
-      this->Flag.Initialize();
-      this->Components = new Complex [this->Dimension];
-      for (int i = 0; i < this->Dimension; ++i)
-	this->Components[i] = vector.Components[i];
-    }
+    if (duplicateFlag == false)
+      {
+	this->Flag.Initialize();
+	this->Components = new Complex [this->TrueDimension + 1];
+      }
+    else
+      {
+	if (this->Dimension > 0)
+	{
+	  this->Flag.Initialize();
+	  this->Components = new Complex [this->TrueDimension + 1]; 
+	  for (int i = 0; i < this->Dimension; ++i)
+	    this->Components[i] = vector.Components[i];
+	}
+      else
+	{
+	  if (this->LargeDimension > 0l)
+	    {
+	      this->Flag.Initialize();
+	      this->Components = new Complex [this->LargeTrueDimension + 1]; 
+	      for (long i = 0; i < this->LargeDimension; ++i)
+		this->Components[i] = vector.Components[i];
+	      this->VectorType |= Vector::LargeData;
+	    }
+	  else
+	    this->Components = 0;
+	}
+      }
 }
 
 
@@ -197,6 +338,9 @@ ComplexVector::ComplexVector(MPI::Intracomm& communicator, int id, bool broadcas
 	  communicator.Recv(this->Components, 2 * this->Dimension, MPI::DOUBLE, id, 1);   
       }
   this->TrueDimension = this->Dimension;
+  this->LargeDimension = (long) this->Dimension;
+  this->LargeTrueDimension = (long) this->TrueDimension;
+
   this->Flag.Initialize();
 }
 
@@ -207,11 +351,10 @@ ComplexVector::ComplexVector(MPI::Intracomm& communicator, int id, bool broadcas
 
 ComplexVector::~ComplexVector () 
 {
-  if ((this->Components != 0) && (this->Flag.Used() == true))
-    if (this->Flag.Shared() == false)
-      {
-	delete[] this->Components;
-      }
+  if ((this->Components != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
+    {
+      delete[] this->Components;
+    }
 }
 
 // assignement
@@ -221,15 +364,16 @@ ComplexVector::~ComplexVector ()
 
 ComplexVector& ComplexVector::operator = (const ComplexVector& vector) 
 {
-  if ((this->Components != 0) && (this->Flag.Used() == true))
-    if (this->Flag.Shared() == false)
-      {
-	delete[] this->Components;
-      }
+  if ((this->Components != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
+    {
+      delete[] this->Components;
+    }
   this->Flag = vector.Flag;
   this->Components = vector.Components;
   this->Dimension = vector.Dimension;
   this->TrueDimension = vector.TrueDimension;
+  this->LargeDimension = vector.LargeDimension;
+  this->LargeTrueDimension = vector.LargeTrueDimension;
   this->VectorId = vector.VectorId;
   return *this;
 }
@@ -243,13 +387,15 @@ void ComplexVector::Resize (int dimension)
   if (dimension <= this->TrueDimension)
     {
       this->Dimension = dimension;
+      this->LargeDimension = (long) dimension;
+      this->VectorType &= ~Vector::LargeData;
       return;
     }
   Complex* TmpVector = new Complex [dimension];
   int i = 0;
   for (; i < this->Dimension; ++i)
     TmpVector[i] = this->Components[i];
-  if ((this->Components != 0) && (this->Flag.Used() == true))
+  if ((this->Components != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     if (this->Flag.Shared() == false)
       {
 	delete[] this->Components;
@@ -257,8 +403,66 @@ void ComplexVector::Resize (int dimension)
   this->Flag.Initialize();
   this->Dimension = dimension;
   this->TrueDimension = dimension;
+  this->LargeDimension = (long) dimension;
+  this->LargeTrueDimension = (long) dimension;
   this->Components = TmpVector;
 }
+
+// Resize long vector
+//
+// dimension = new dimension
+
+void ComplexVector::Resize (long dimension)
+{
+  if (dimension <= this->LargeTrueDimension)
+    {
+      this->LargeDimension = dimension;
+#ifdef  __64_BITS__
+      if (this->LargeDimension < (1l << 31))
+	{
+	  this->Dimension = (int) this->LargeDimension;
+	  this->VectorType &= ~Vector::LargeData;
+	}
+      else
+	{
+	  this->Dimension = -1;
+	  this->VectorType |= Vector::LargeData;
+	}
+#else
+      this->Dimension = (int) this->LargeDimension;
+#endif
+      return;
+    }
+  Complex* TmpVector = new Complex [dimension + 1l];
+  for (long i = 0; i < this->LargeDimension; i++)
+    TmpVector[i] = this->Components[i];
+  if ((this->Components != NULL) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
+    {
+      delete[] this->Components;
+    }
+  this->LargeDimension = dimension;
+  this->LargeTrueDimension = dimension;
+#ifdef  __64_BITS__
+  if (this->LargeDimension < (1l << 31))
+    {
+      this->Dimension = (int) this->LargeDimension;
+      this->TrueDimension = (int) this->LargeTrueDimension;
+    }
+  else
+    {
+      this->Dimension = -1;
+      this->TrueDimension = -1;
+      this->VectorType |= Vector::LargeData;
+    }
+#else
+  this->Dimension = (int) this->LargeDimension;
+  this->TrueDimension = (int) this->LargeTrueDimension;
+#endif
+  this->Components = TmpVector;
+  this->Flag = GarbageFlag();
+  this->Flag.Initialize();
+}
+
 
 // Resize vector and set to zero all components that have been added
 //
@@ -268,9 +472,11 @@ void ComplexVector::ResizeAndClean (int dimension)
 {
   if (dimension <= this->TrueDimension)
     {
-      this->Dimension = dimension;
       for (int i = this->Dimension; i < dimension; ++i)
-	this->Components[i] = 0.0;  
+	this->Components[i] = 0.0;
+      this->Dimension = dimension;
+      this->LargeDimension = (long) dimension;
+      this->VectorType &= ~Vector::LargeData;
       return;
     }
   Complex* TmpVector = new Complex [dimension];
@@ -278,8 +484,9 @@ void ComplexVector::ResizeAndClean (int dimension)
   for (; i < this->Dimension; ++i)
     TmpVector[i] = this->Components[i];
   for (; i < dimension; i++)
-    TmpVector[i] = 0.0;  
-  if ((this->Components != 0) && (this->Flag.Used() == true))
+    TmpVector[i] = 0.0;
+  this->VectorType &= ~Vector::LargeData;
+  if ((this->Components != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     if (this->Flag.Shared() == false)
       {
 	delete[] this->Components;
@@ -287,8 +494,72 @@ void ComplexVector::ResizeAndClean (int dimension)
   this->Flag.Initialize();
   this->Dimension = dimension;
   this->TrueDimension = dimension;
+  this->LargeDimension = dimension;
+  this->LargeTrueDimension = dimension;
   this->Components = TmpVector;
 }
+
+
+// Resize long vector and set to zero all components that have been added
+//
+// dimension = new dimension
+
+void ComplexVector::ResizeAndClean (long dimension)
+{
+  if (dimension <= this->LargeTrueDimension)
+    {
+      for (long i = this->LargeDimension; i < dimension; ++i)
+	this->Components[i] = 0.0;
+      this->LargeDimension = dimension;
+#ifdef  __64_BITS__
+      if (this->LargeDimension < (1l << 31))
+	{
+	  this->Dimension = (int) this->LargeDimension;
+	  this->VectorType &= ~Vector::LargeData;
+	}
+      else
+	{
+	  this->Dimension = -1;
+	  this->VectorType |= Vector::LargeData;
+	}
+#else
+      this->Dimension = (int) this->LargeDimension;
+#endif
+      return;
+    }
+  Complex* TmpVector = new Complex [dimension + 1l];
+  for (long i = 0; i < this->LargeDimension; ++i)
+    TmpVector[i] = this->Components[i];
+  for (long i = this->LargeDimension; i < dimension; ++i)
+    TmpVector[i] = 0.0;
+  if ((this->Components != NULL) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
+    {
+      delete[] this->Components;
+    }
+  this->LargeDimension = dimension;
+  this->LargeTrueDimension = dimension;
+#ifdef  __64_BITS__
+  if (this->LargeDimension < (1l << 31))
+    {
+      this->Dimension = (int) this->LargeDimension;
+      this->TrueDimension = (int) this->LargeTrueDimension;
+      this->VectorType &= ~Vector::LargeData;
+    }
+  else
+    {
+      this->Dimension = -1;
+      this->TrueDimension = -1;
+      this->VectorType |= Vector::LargeData;
+    }
+#else
+  this->Dimension = (int) this->LargeDimension;
+  this->TrueDimension = (int) this->LargeTrueDimension;
+#endif
+  this->Components = TmpVector;
+  this->Flag = GarbageFlag();
+  this->Flag.Initialize();
+}
+
 
 // assignement from a real vector
 //
@@ -297,20 +568,26 @@ void ComplexVector::ResizeAndClean (int dimension)
 
 ComplexVector& ComplexVector::operator = (const RealVector& vector) 
 {
-  if ((this->Components != 0) && (this->Flag.Used() == true))
-    if (this->Flag.Shared() == false)
-      {
-	delete[] this->Components;
-      }
+  if ((this->Components != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
+    {
+      delete[] this->Components;
+    }
   this->Dimension = vector.Dimension;
   this->TrueDimension = this->Dimension;
+  this->LargeDimension = vector.LargeDimension;
+  this->LargeTrueDimension = this->LargeTrueDimension;
   if (vector.Dimension == 0)
     {
       this->Components = 0;
     }
-  this->Components = new Complex [this->Dimension];
-  for (int i = 0; i < this->Dimension; ++i)
-    this->Components[i] = vector.Components[i];
+  else
+    {
+      this->Flag.Initialize();
+      this->Components = new Complex [this->LargeDimension];
+      for (long i = 0; i < this->LargeDimension; ++i)
+	this->Components[i] = vector.Components[i];
+    }
+  this->VectorType = Vector::ComplexDatas | (vector.VectorType & Vector::LargeData);
   return *this;
 }
 
@@ -322,11 +599,11 @@ ComplexVector& ComplexVector::operator = (const RealVector& vector)
 
 ComplexVector& ComplexVector::Copy (ComplexVector& vector)
 {
-  if (this->Dimension != vector.Dimension)
-    this->Resize(vector.Dimension);
+  if ((this->Dimension != vector.Dimension)||(this->LargeDimension != vector.LargeDimension))
+    this->Resize(vector.LargeDimension);
   Complex *Ci=this->Components;
   Complex *Cj=vector.Components;
-  for (int i = 0; i < this->Dimension; i++, Ci++, Cj++)
+  for (long i = 0; i < this->LargeDimension; ++i, ++Ci, ++Cj)
     {
       Ci->Re = Cj->Re;
       Ci->Im = Cj->Im;
@@ -341,11 +618,11 @@ ComplexVector& ComplexVector::Copy (ComplexVector& vector)
 
 ComplexVector& ComplexVector::Copy (ComplexVector& vector, double coefficient)
 {
-  if (this->Dimension != vector.Dimension)
-    this->Resize(vector.Dimension);
+  if ((this->Dimension != vector.Dimension)||(this->LargeDimension != vector.LargeDimension))
+    this->Resize(vector.LargeDimension);
   Complex *Ci=this->Components;
   Complex *Cj=vector.Components;
-  for (int i = 0; i < this->Dimension; i++, Ci++, Cj++)
+  for (long i = 0; i < this->LargeDimension; ++i, ++Ci, ++Cj)
     {
       Ci->Re = Cj->Re * coefficient;
       Ci->Im = Cj->Im * coefficient;
@@ -361,9 +638,9 @@ ComplexVector& ComplexVector::Copy (ComplexVector& vector, double coefficient)
 
 ComplexVector& ComplexVector::Copy (ComplexVector& vector, const Complex& coefficient)
 {
-  if (this->Dimension != vector.Dimension)
-    this->Resize(vector.Dimension);
-  for (int i = 0; i < this->Dimension; i++)
+  if ((this->Dimension != vector.Dimension)||(this->LargeDimension != vector.LargeDimension))
+    this->Resize(vector.LargeDimension);
+  for (long i = 0; i < this->LargeDimension; ++i)
     {
       this->Components[i].Re = vector.Components[i].Re * coefficient.Re - vector.Components[i].Im * coefficient.Im;
       this->Components[i].Im = vector.Components[i].Re * coefficient.Im + vector.Components[i].Im * coefficient.Re;
@@ -391,7 +668,7 @@ Vector* ComplexVector::EmptyCloneArray(int nbrVectors, bool zeroFlag)
 {
   ComplexVector* TmpVectors = new ComplexVector [nbrVectors];
   for (int i = 0; i < nbrVectors; ++i)
-    TmpVectors[i] = ComplexVector(this->Dimension, zeroFlag);
+    TmpVectors[i] = ComplexVector(this->LargeDimension, zeroFlag);
   return TmpVectors;
 }
 
@@ -401,7 +678,7 @@ Vector* ComplexVector::EmptyCloneArray(int nbrVectors, bool zeroFlag)
 
 Vector& ComplexVector::ClearVector ()
 {
-  for (int i = 0; i < this->Dimension; i++)
+  for (long i = 0; i < this->LargeDimension; ++i)
     this->Components[i] = 0.0;  
   return *this;
 }
@@ -428,7 +705,7 @@ Vector& ComplexVector::ClearVectorSegment (long start, long nbrComponent)
 
 ComplexVector& ComplexVector::operator - () 
 {
-  for (int i = 0; i < this->Dimension; ++i)
+  for (long i = 0; i < this->LargeDimension; ++i)
     this->Components[i] *= -1;        
   return *this;
 }
@@ -440,14 +717,14 @@ ComplexVector& ComplexVector::operator - ()
 
 ComplexVector operator - (const ComplexVector& V1) 
 {
-  if (V1.Dimension > 0)
+  if (V1.Dimension != 0)
     {
-      Complex* TmpComponents = new Complex [V1.Dimension];
-      for (int i = 0; i < V1.Dimension; ++i)
+      Complex* TmpComponents = new Complex [V1.LargeDimension];
+      for (long i = 0; i < V1.LargeDimension; ++i)
 	{
 	  TmpComponents[i] = -V1.Components[i];
 	}
-      return ComplexVector(TmpComponents, V1.Dimension);
+      return ComplexVector(TmpComponents, V1.LargeDimension);
     }
   else
     return ComplexVector();
@@ -461,14 +738,14 @@ ComplexVector operator - (const ComplexVector& V1)
 
 Complex operator * (const ComplexVector& V1, const ComplexVector& V2) 
 {
-  int min = V1.Dimension;
-  if (min > V2.Dimension)
-    min = V2.Dimension;
+  long min = V1.LargeDimension;
+  if (min > V2.LargeDimension)
+    min = V2.LargeDimension;
   if (min == 0)
     return Complex();
   Complex tmp (V1.Components[0].Re * V2.Components[0].Re + V1.Components[0].Im * V2.Components[0].Im, 
 	       V1.Components[0].Re * V2.Components[0].Im - V1.Components[0].Im * V2.Components[0].Re);
-  for (int i = 1; i < min; ++i)
+  for (long i = 1; i < min; ++i)
     {
       tmp.Re += V1.Components[i].Re * V2.Components[i].Re + V1.Components[i].Im * V2.Components[i].Im;
       tmp.Im += V1.Components[i].Re * V2.Components[i].Im - V1.Components[i].Im * V2.Components[i].Re;
@@ -484,11 +761,11 @@ Complex operator * (const ComplexVector& V1, const ComplexVector& V2)
 
 Complex operator * (const ComplexVector& V1, const RealVector& V2) 
 {
-  int min = V1.Dimension;
-  if (min > V2.Dimension)
-    min = V2.Dimension;
+  long min = V1.LargeDimension;
+  if (min > V2.LargeDimension)
+    min = V2.LargeDimension;
   Complex tmp (V1.Components[0].Re * V2.Components[0], - V1.Components[0].Im * V2.Components[0]);
-  for (int i = 1; i < min; ++i)
+  for (long i = 1; i < min; ++i)
     {
       tmp.Re += V1.Components[i].Re * V2.Components[i];
       tmp.Im -= V1.Components[i].Im * V2.Components[i];
@@ -504,11 +781,11 @@ Complex operator * (const ComplexVector& V1, const RealVector& V2)
 
 Complex operator * (const RealVector& V1, const ComplexVector& V2) 
 {
-  int min = V1.Dimension;
-  if (min > V2.Dimension)
-    min = V2.Dimension;
+  long min = V1.LargeDimension;
+  if (min > V2.LargeDimension)
+    min = V2.LargeDimension;
   Complex tmp (V1.Components[0] * V2.Components[0].Re, V2.Components[0].Im * V1.Components[0]);
-  for (int i = 1; i < min; i++)
+  for (long i = 1; i < min; ++i)
     {
       tmp.Re += V2.Components[i].Re * V1.Components[i];
       tmp.Im += V2.Components[i].Im * V1.Components[i];
@@ -550,9 +827,9 @@ Complex ComplexVector::PartialScalarProduct (const ComplexVector& vRight, int fi
 
 ComplexVector& ComplexVector::operator += (ComplexVector& V1) 
 {
-  if ((this->Dimension == 0) || (this->Dimension != V1.Dimension))
+  if ((this->Dimension == 0) || (this->Dimension != V1.Dimension) || (this->LargeDimension != V1.LargeDimension))
     return *this;
-  for (int i = 0; i < this->Dimension; ++i)
+  for (long i = 0; i < this->LargeDimension; ++i)
     this->Components[i] += V1.Components[i];
   return *this;
 }
@@ -564,9 +841,9 @@ ComplexVector& ComplexVector::operator += (ComplexVector& V1)
 
 ComplexVector& ComplexVector::operator += (RealVector& V1) 
 {
-  if ((this->Dimension == 0) || (this->Dimension != V1.Dimension))
+  if ((this->Dimension == 0) || (this->Dimension != V1.Dimension) || (this->LargeDimension != V1.LargeDimension))
     return *this;
-  for (int i = 0; i < this->Dimension; ++i)
+  for (long i = 0; i < this->LargeDimension; ++i)
     this->Components[i].Re += V1.Components[i];
   return *this;
 }
@@ -593,12 +870,12 @@ Vector& ComplexVector::operator += (Vector& vector)
 
 ComplexVector& ComplexVector::AddLinearCombination (double x, const ComplexVector& V) 
 {
-  if ((this->Dimension == 0) || (this->Dimension != V.Dimension))
+  if ((this->Dimension == 0) || (this->Dimension != V.Dimension) || (this->LargeDimension != V.LargeDimension))
     {
       cout << "Wrong vector dimension!"<<endl;
       return *this;
     }
-  for (int i = 0; i < this->Dimension; ++i)
+  for (long i = 0; i < this->LargeDimension; ++i)
     {
       this->Components[i].AddMultiply(V.Components[i], x);
     }
@@ -631,9 +908,9 @@ ComplexVector& ComplexVector::AddLinearCombination (double x, const ComplexVecto
 
 ComplexVector& ComplexVector::AddLinearCombination (const Complex& x, const ComplexVector& V) 
 {
-  if ((this->Dimension == 0) || (this->Dimension != V.Dimension))
+  if ((this->Dimension == 0) || (this->Dimension != V.Dimension) || (this->LargeDimension != V.LargeDimension))
     return *this;
-  for (int i = 0; i < this->Dimension; ++i)
+  for (long i = 0; i < this->LargeDimension; ++i)
     {
       this->Components[i].Re += x.Re * V.Components[i].Re - x.Im * V.Components[i].Im;
       this->Components[i].Im += x.Re * V.Components[i].Im + x.Im * V.Components[i].Re;
@@ -671,9 +948,10 @@ ComplexVector& ComplexVector::AddLinearCombination (const Complex& x, const Comp
 ComplexVector& ComplexVector::AddLinearCombination (double x1, const ComplexVector& v1, double x2, 
 						    const ComplexVector& v2)
 {
-  if ((this->Dimension == 0) || (this->Dimension != v1.Dimension) || (this->Dimension != v2.Dimension))
+  if ((this->Dimension == 0) || (this->Dimension != v1.Dimension) || (this->Dimension != v2.Dimension)
+      || (this->LargeDimension != v1.LargeDimension) || (this->LargeDimension != v2.LargeDimension))
     return *this;
-  for (int i = 0; i < this->Dimension; ++i)
+  for (long i = 0; i < this->LargeDimension; ++i)
     {
       this->Components[i].Re += x1 * v1.Components[i].Re + x2 * v2.Components[i].Re;
       this->Components[i].Im += x1 * v1.Components[i].Im + x2 * v2.Components[i].Im;
@@ -717,9 +995,10 @@ ComplexVector& ComplexVector::AddLinearCombination (double x1, const ComplexVect
 ComplexVector& ComplexVector::AddLinearCombination (const Complex& x1, const ComplexVector& v1, const Complex& x2, 
 						    const ComplexVector& v2)
 {
-  if ((this->Dimension == 0) || (this->Dimension != v1.Dimension) || (this->Dimension != v2.Dimension))
+  if ((this->Dimension == 0) || (this->Dimension != v1.Dimension) || (this->Dimension != v2.Dimension)
+      || (this->LargeDimension != v1.LargeDimension) || (this->LargeDimension != v2.LargeDimension))
     return *this;
-  for (int i = 0; i < this->Dimension; ++i)
+  for (long i = 0; i < this->LargeDimension; ++i)
     {
       this->Components[i].Re += x1.Re * v1.Components[i].Re  - x1.Im * v1.Components[i].Im 
 	+ x2.Re * v2.Components[i].Re - x2.Im * v2.Components[i].Im;
@@ -763,9 +1042,9 @@ ComplexVector& ComplexVector::AddLinearCombination (const Complex& x1, const Com
 
 ComplexVector& ComplexVector::operator -= (const ComplexVector& V1) 
 {
-  if ((this->Dimension == 0) || (this->Dimension != V1.Dimension))
+  if ((this->Dimension == 0) || (this->Dimension != V1.Dimension) || (this->LargeDimension != V1.LargeDimension))
     return *this;
-  for (int i = 0; i < this->Dimension; ++i)
+  for (long i = 0; i < this->LargeDimension; ++i)
     {
       this->Components[i] -= V1.Components[i];
     }
@@ -779,9 +1058,9 @@ ComplexVector& ComplexVector::operator -= (const ComplexVector& V1)
 
 ComplexVector& ComplexVector::operator -= (const RealVector& V1) 
 {
-  if ((this->Dimension == 0) || (this->Dimension != V1.Dimension))
+  if ((this->Dimension == 0) || (this->Dimension != V1.Dimension) || (this->LargeDimension != V1.LargeDimension))
     return *this;
-  for (int i = 0; i < this->Dimension; i++)
+  for (long i = 0; i < this->LargeDimension; ++i)
     {
       this->Components[i].Re -= V1.Components[i];
     }
@@ -796,15 +1075,28 @@ ComplexVector& ComplexVector::operator -= (const RealVector& V1)
 
 ComplexVector operator + (const ComplexVector& V1, const ComplexVector& V2) 
 {
-  if ((V1.Dimension != 0) && (V2.Dimension == V1.Dimension))
+  if ((V1.Dimension != 0) && (V2.Dimension == V1.Dimension) && (V2.LargeDimension == V1.LargeDimension))
     {
-      Complex* TmpComponents = new Complex [V1.Dimension];
-      for (int i = 0; i < V1.Dimension; ++i)
+      if (V1.VectorType & Vector::LargeData)
 	{
-	  TmpComponents[i].Re = V1.Components[i].Re + V2.Components[i].Re;
-	  TmpComponents[i].Im = V1.Components[i].Im + V2.Components[i].Im;
+	  Complex* TmpComponents = new Complex [V1.LargeDimension];
+	  for (long i = 0; i < V1.LargeDimension; ++i)
+	    {
+	      TmpComponents[i].Re = V1.Components[i].Re + V2.Components[i].Re;
+	      TmpComponents[i].Im = V1.Components[i].Im + V2.Components[i].Im;
+	    }
+	  return ComplexVector(TmpComponents, V1.LargeDimension);
 	}
-      return ComplexVector(TmpComponents, V1.Dimension);
+      else
+	{
+	  Complex* TmpComponents = new Complex [V1.Dimension];
+	  for (int i = 0; i < V1.Dimension; ++i)
+	    {
+	      TmpComponents[i].Re = V1.Components[i].Re + V2.Components[i].Re;
+	      TmpComponents[i].Im = V1.Components[i].Im + V2.Components[i].Im;
+	    }
+	  return ComplexVector(TmpComponents, V1.Dimension);
+	}
     }
   else
     return ComplexVector();
@@ -818,15 +1110,28 @@ ComplexVector operator + (const ComplexVector& V1, const ComplexVector& V2)
 
 ComplexVector operator + (const RealVector& V1, const ComplexVector& V2) 
 {
-  if ((V1.Dimension != 0) && (V2.Dimension == V1.Dimension))
+  if ((V1.Dimension != 0) && (V2.Dimension == V1.Dimension) && (V2.LargeDimension == V1.LargeDimension))
     {
-      Complex* TmpComponents = new Complex [V1.Dimension];
-      for (int i = 0; i < V1.Dimension; ++i)
+      if (V1.VectorType & Vector::LargeData)
 	{
-	  TmpComponents[i].Re = V1.Components[i] + V2.Components[i].Re;
-	  TmpComponents[i].Im = V2.Components[i].Im;
+	  Complex* TmpComponents = new Complex [V1.LargeDimension];
+	  for (long i = 0; i < V1.LargeDimension; ++i)
+	    {
+	      TmpComponents[i].Re = V1.Components[i] + V2.Components[i].Re;
+	      TmpComponents[i].Im = V2.Components[i].Im;
+	    }
+	  return ComplexVector(TmpComponents, V1.LargeDimension);
 	}
-      return ComplexVector(TmpComponents, V1.Dimension);
+      else
+	{
+	  Complex* TmpComponents = new Complex [V1.Dimension];
+	  for (int i = 0; i < V1.Dimension; ++i)
+	    {
+	      TmpComponents[i].Re = V1.Components[i] + V2.Components[i].Re;
+	      TmpComponents[i].Im = V2.Components[i].Im;
+	    }
+	  return ComplexVector(TmpComponents, V1.Dimension);
+	}
     }
   else
     return ComplexVector();
@@ -840,15 +1145,28 @@ ComplexVector operator + (const RealVector& V1, const ComplexVector& V2)
 
 ComplexVector operator + (const ComplexVector& V1, const RealVector& V2) 
 {
-  if ((V1.Dimension != 0) && (V2.Dimension == V1.Dimension))
+  if ((V1.Dimension != 0) && (V2.Dimension == V1.Dimension) && (V2.LargeDimension == V1.LargeDimension))
     {
-      Complex* TmpComponents = new Complex [V1.Dimension];
-      for (int i = 0; i < V1.Dimension; ++i)
+      if (V1.VectorType & Vector::LargeData)
 	{
-	  TmpComponents[i].Re = V2.Components[i] + V1.Components[i].Re;
-	  TmpComponents[i].Im = V1.Components[i].Im;
+	  Complex* TmpComponents = new Complex [V1.LargeDimension];
+	  for (long i = 0; i < V1.LargeDimension; ++i)
+	    {
+	      TmpComponents[i].Re = V2.Components[i] + V1.Components[i].Re;
+	      TmpComponents[i].Im = V1.Components[i].Im;
+	    }
+	  return ComplexVector(TmpComponents, V1.LargeDimension);
 	}
-      return ComplexVector(TmpComponents, V1.Dimension);
+      else
+	{
+	  Complex* TmpComponents = new Complex [V1.Dimension];
+	  for (int i = 0; i < V1.Dimension; ++i)
+	    {
+	      TmpComponents[i].Re = V2.Components[i] + V1.Components[i].Re;
+	      TmpComponents[i].Im = V1.Components[i].Im;
+	    }
+	  return ComplexVector(TmpComponents, V1.Dimension);
+	}
     }
   else
     return ComplexVector();
@@ -862,15 +1180,28 @@ ComplexVector operator + (const ComplexVector& V1, const RealVector& V2)
 
 ComplexVector operator - (const ComplexVector& V1, const ComplexVector& V2) 
 {
-  if ((V1.Dimension != 0) && (V2.Dimension == V1.Dimension))
+  if ((V1.Dimension != 0) && (V2.Dimension == V1.Dimension) && (V2.LargeDimension == V1.LargeDimension))
     {
-      Complex* TmpComponents = new Complex [V1.Dimension];
-      for (int i = 0; i < V1.Dimension; ++i)
+      if (V1.VectorType & Vector::LargeData)
 	{
-	  TmpComponents[i].Re = V1.Components[i].Re - V2.Components[i].Re;
-	  TmpComponents[i].Im = V1.Components[i].Im - V2.Components[i].Im;
+	  Complex* TmpComponents = new Complex [V1.LargeDimension];
+	  for (long i = 0; i < V1.LargeDimension; ++i)
+	    {
+	      TmpComponents[i].Re = V1.Components[i].Re - V2.Components[i].Re;
+	      TmpComponents[i].Im = V1.Components[i].Im - V2.Components[i].Im;
+	    }
+	  return ComplexVector(TmpComponents, V1.LargeDimension);
 	}
-      return ComplexVector(TmpComponents, V1.Dimension);
+      else
+	{
+	  Complex* TmpComponents = new Complex [V1.Dimension];
+	  for (int i = 0; i < V1.Dimension; ++i)
+	    {
+	      TmpComponents[i].Re = V1.Components[i].Re - V2.Components[i].Re;
+	      TmpComponents[i].Im = V1.Components[i].Im - V2.Components[i].Im;
+	    }
+	  return ComplexVector(TmpComponents, V1.Dimension);
+	}
     }
   else
     return ComplexVector();
@@ -884,15 +1215,28 @@ ComplexVector operator - (const ComplexVector& V1, const ComplexVector& V2)
 
 ComplexVector operator - (const RealVector& V1, const ComplexVector& V2) 
 {
-  if ((V1.Dimension != 0) && (V2.Dimension == V1.Dimension))
+  if ((V1.Dimension != 0) && (V2.Dimension == V1.Dimension) && (V2.LargeDimension == V1.LargeDimension))
     {
-      Complex* TmpComponents = new Complex [V1.Dimension];
-      for (int i = 0; i < V1.Dimension; ++i)
+      if (V1.VectorType & Vector::LargeData)
 	{
-	  TmpComponents[i].Re = V1.Components[i] - V2.Components[i].Re;
-	  TmpComponents[i].Im = -V2.Components[i].Im;
+	  Complex* TmpComponents = new Complex [V1.LargeDimension];
+	  for (long i = 0; i < V1.LargeDimension; ++i)
+	    {
+	      TmpComponents[i].Re = V1.Components[i] - V2.Components[i].Re;
+	      TmpComponents[i].Im = -V2.Components[i].Im;
+	    }
+	  return ComplexVector(TmpComponents, V1.LargeDimension);
 	}
-      return ComplexVector(TmpComponents, V1.Dimension);
+      else
+	{
+	  Complex* TmpComponents = new Complex [V1.Dimension];
+	  for (int i = 0; i < V1.Dimension; ++i)
+	    {
+	      TmpComponents[i].Re = V1.Components[i] - V2.Components[i].Re;
+	      TmpComponents[i].Im = -V2.Components[i].Im;
+	    }
+	  return ComplexVector(TmpComponents, V1.Dimension);
+	}
     }
   else
     return ComplexVector();
@@ -906,15 +1250,28 @@ ComplexVector operator - (const RealVector& V1, const ComplexVector& V2)
 
 ComplexVector operator - (const ComplexVector& V1, const RealVector& V2) 
 {
-  if ((V1.Dimension != 0) && (V2.Dimension == V1.Dimension))
+  if ((V1.Dimension != 0) && (V2.Dimension == V1.Dimension) && (V2.LargeDimension == V1.LargeDimension))
     {
-      Complex* TmpComponents = new Complex [V1.Dimension];
-      for (int i = 0; i < V1.Dimension; ++i)
+      if (V1.VectorType & Vector::LargeData)
 	{
-	  TmpComponents[i].Re = V1.Components[i].Re - V2.Components[i];
-	  TmpComponents[i].Im = V1.Components[i].Im;
+	  Complex* TmpComponents = new Complex [V1.LargeDimension];
+	  for (long i = 0; i < V1.LargeDimension; ++i)
+	    {
+	      TmpComponents[i].Re = V1.Components[i].Re - V2.Components[i];
+	      TmpComponents[i].Im = V1.Components[i].Im;
+	    }
+	  return ComplexVector(TmpComponents, V1.LargeDimension);
 	}
-      return ComplexVector(TmpComponents, V1.Dimension);
+      else
+	{
+	  Complex* TmpComponents = new Complex [V1.Dimension];
+	  for (int i = 0; i < V1.Dimension; ++i)
+	    {
+	      TmpComponents[i].Re = V1.Components[i].Re - V2.Components[i];
+	      TmpComponents[i].Im = V1.Components[i].Im;
+	    }
+	  return ComplexVector(TmpComponents, V1.Dimension);
+	}
     }
   else
     return ComplexVector();
@@ -930,12 +1287,26 @@ ComplexVector operator * (const ComplexVector& V1, double d)
 {
   if (V1.Dimension != 0)
     {
-      Complex* TmpComponents = new Complex [V1.Dimension];
-      for (int i = 0; i < V1.Dimension; ++i)
+      if (V1.VectorType&Vector::LargeData)
 	{
-	  TmpComponents[i].AddMultiply(V1.Components[i], d);
+	  Complex* TmpComponents = new Complex [V1.LargeDimension];
+	  for (long i = 0; i < V1.LargeDimension; ++i)
+	    {
+	      TmpComponents[i].Re=V1.Components[i].Re*d;
+	      TmpComponents[i].Im=V1.Components[i].Im*d;
+	    }
+	  return ComplexVector(TmpComponents, V1.LargeDimension);
 	}
-      return ComplexVector(TmpComponents, V1.Dimension);
+      else
+	{
+	  Complex* TmpComponents = new Complex [V1.Dimension];
+	  for (int i = 0; i < V1.Dimension; ++i)
+	    {
+	      TmpComponents[i].Re=V1.Components[i].Re*d;
+	      TmpComponents[i].Im=V1.Components[i].Im*d;
+	    }
+	  return ComplexVector(TmpComponents, V1.Dimension);
+	}
     }
   else
     return ComplexVector();
@@ -951,13 +1322,26 @@ ComplexVector operator * (const ComplexVector& V1, const Complex& d)
 {
   if (V1.Dimension != 0)
     {
-      Complex* TmpComponents = new Complex [V1.Dimension];
-      for (int i = 0; i < V1.Dimension; ++i)
+      if (V1.VectorType&Vector::LargeData)
 	{
-	  TmpComponents[i].Re = V1.Components[i].Re* d.Re - V1.Components[i].Im * d.Im;
-	  TmpComponents[i].Im = V1.Components[i].Im * d.Re + V1.Components[i].Re* d.Im;
+	  Complex* TmpComponents = new Complex [V1.LargeDimension];
+	  for (long i = 0; i < V1.LargeDimension; ++i)
+	    {
+	      TmpComponents[i].Re = V1.Components[i].Re* d.Re - V1.Components[i].Im * d.Im;
+	      TmpComponents[i].Im = V1.Components[i].Im * d.Re + V1.Components[i].Re* d.Im;
+	    }
+	  return ComplexVector(TmpComponents, V1.LargeDimension);
 	}
-      return ComplexVector(TmpComponents, V1.Dimension);
+      else
+	{
+	  Complex* TmpComponents = new Complex [V1.Dimension];
+	  for (int i = 0; i < V1.Dimension; ++i)
+	    {
+	      TmpComponents[i].Re = V1.Components[i].Re* d.Re - V1.Components[i].Im * d.Im;
+	      TmpComponents[i].Im = V1.Components[i].Im * d.Re + V1.Components[i].Re* d.Im;
+	    }
+	  return ComplexVector(TmpComponents, V1.Dimension);
+	}
     }
   else
     return ComplexVector();
@@ -973,12 +1357,26 @@ ComplexVector operator * (double d, const ComplexVector& V1)
 {
   if (V1.Dimension != 0)
     {
-      Complex* TmpComponents = new Complex [V1.Dimension];
-      for (int i = 0; i < V1.Dimension; ++i)
+      if (V1.VectorType&Vector::LargeData)
 	{
-	  TmpComponents[i].AddMultiply(V1.Components[i], d);
+	  Complex* TmpComponents = new Complex [V1.LargeDimension];
+	  for (long i = 0; i < V1.LargeDimension; ++i)
+	    {
+	      TmpComponents[i].Re=V1.Components[i].Re * d;
+	      TmpComponents[i].Im=V1.Components[i].Im * d;
+	    }
+	  return ComplexVector(TmpComponents, V1.LargeDimension);
 	}
-      return ComplexVector(TmpComponents, V1.Dimension);
+      else
+	{
+	  Complex* TmpComponents = new Complex [V1.Dimension];
+	  for (int i = 0; i < V1.Dimension; ++i)
+	    {
+	      TmpComponents[i].Re=V1.Components[i].Re * d;
+	      TmpComponents[i].Im=V1.Components[i].Im * d;
+	    }
+	  return ComplexVector(TmpComponents, V1.Dimension);
+	}
     }
   else
     return ComplexVector();
@@ -994,13 +1392,26 @@ ComplexVector operator * (const Complex& d, const ComplexVector& V1)
 {
   if (V1.Dimension != 0)
     {
-      Complex* TmpComponents = new Complex [V1.Dimension];
-      for (int i = 0; i < V1.Dimension; ++i)
+      if (V1.VectorType&Vector::LargeData)
 	{
-	  TmpComponents[i].Re = V1.Components[i].Re* d.Re - V1.Components[i].Im * d.Im;
-	  TmpComponents[i].Im = V1.Components[i].Im * d.Re + V1.Components[i].Re* d.Im;
+	  Complex* TmpComponents = new Complex [V1.LargeDimension];
+	  for (long i = 0; i < V1.LargeDimension; ++i)
+	    {
+	      TmpComponents[i].Re = V1.Components[i].Re* d.Re - V1.Components[i].Im * d.Im;
+	      TmpComponents[i].Im = V1.Components[i].Im * d.Re + V1.Components[i].Re* d.Im;
+	    }
+	  return ComplexVector(TmpComponents, V1.LargeDimension);
 	}
-      return ComplexVector(TmpComponents, V1.Dimension);
+      else
+	{
+	  Complex* TmpComponents = new Complex [V1.Dimension];
+	  for (int i = 0; i < V1.Dimension; ++i)
+	    {
+	      TmpComponents[i].Re = V1.Components[i].Re* d.Re - V1.Components[i].Im * d.Im;
+	      TmpComponents[i].Im = V1.Components[i].Im * d.Re + V1.Components[i].Re* d.Im;
+	    }
+	  return ComplexVector(TmpComponents, V1.Dimension);
+	}
     }
   else
     return ComplexVector();
@@ -1013,7 +1424,7 @@ ComplexVector operator * (const Complex& d, const ComplexVector& V1)
 
 ComplexVector& ComplexVector::operator *= (double d) 
 {
-  for (int i = 0; i < this->Dimension; ++i)
+  for (long i = 0; i < this->LargeDimension; ++i)
     this->Components[i] *= d;  
   return *this;
 }
@@ -1026,7 +1437,7 @@ ComplexVector& ComplexVector::operator *= (double d)
 ComplexVector& ComplexVector::operator /= (double d) 
 {
   d = 1.0 / d;
-  for (int i = 0; i < this->Dimension; i++)
+  for (long i = 0; i < this->LargeDimension; ++i)
     this->Components[i] *= d;  
   return *this;
 }
@@ -1039,7 +1450,7 @@ ComplexVector& ComplexVector::operator /= (double d)
 ComplexVector& ComplexVector::operator *= (const Complex& d) 
 {
   double tmp;
-  for (int i = 0; i < this->Dimension; ++i)
+  for (long i = 0; i < this->LargeDimension; ++i)
     {
       tmp = d.Re * this->Components[i].Re - d.Im * this->Components[i].Im;
       this->Components[i].Im *= d.Re;
@@ -1060,7 +1471,7 @@ ComplexVector& ComplexVector::operator /= (const Complex& d)
   double dRe = d.Re * fac;
   double dIm = - d.Im * fac;  
   double tmp;
-  for (int i = 0; i < this->Dimension; i += 2)
+  for (long i = 0; i < this->LargeDimension; ++i)
     {
       tmp = dRe * this->Components[i].Re - dIm * this->Components[i].Im;
       this->Components[i].Im *= dRe;
@@ -1077,8 +1488,8 @@ ComplexVector& ComplexVector::operator /= (const Complex& d)
 
 ComplexVector& ComplexVector::operator *= (const RealMatrix&  M)
 {
-  if ((this->Dimension == 0) || (this->Dimension != M.NbrColumn))
-    return *this;
+  if ((this->Dimension <= 0) || (this->Dimension != M.NbrColumn))
+      return *this;
   Complex* tmp = new Complex [M.NbrRow];
   for (int i = 0; i < M.NbrRow; ++i)
     {
@@ -1090,7 +1501,7 @@ ComplexVector& ComplexVector::operator *= (const RealMatrix&  M)
 	  tmp[i].Im += M.Columns[j].Components[i] * this->Components[j].Im;
 	}      
     }
-  if ((this->Components != 0) && (this->Flag.Used() == true))
+  if ((this->Components != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     if (this->Flag.Shared() == false)
       {
 	delete[] this->Components;
@@ -1109,7 +1520,7 @@ ComplexVector& ComplexVector::operator *= (const RealMatrix&  M)
 
 ComplexVector& ComplexVector::operator *= (const ComplexMatrix&  M)
 {
-  if ((this->Dimension == 0) || (this->Dimension != M.NbrColumn))
+  if ((this->Dimension <= 0) || (this->Dimension != M.NbrColumn))
     return *this;
   Complex* tmp = new Complex [M.NbrRow];
   for (int i = 0; i < M.NbrRow; ++i)
@@ -1124,7 +1535,7 @@ ComplexVector& ComplexVector::operator *= (const ComplexMatrix&  M)
 			M.Columns[j].Components[i].Im * this->Components[j].Re);
 	}      
     }
-  if ((this->Components != 0) && (this->Flag.Used() == true))
+  if ((this->Components != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     if (this->Flag.Shared() == false)
       {
 	delete[] this->Components;
@@ -1143,10 +1554,10 @@ ComplexVector& ComplexVector::operator *= (const ComplexMatrix&  M)
 
 ComplexVector& ComplexVector::operator &= (const ComplexMatrix&  M)
 {
-  if ((this->Dimension == 0) || (this->Dimension != M.NbrRow))
+  if ((this->Dimension <= 0) || (this->Dimension != M.NbrRow))
     return *this; 
   Complex* tmp = new Complex [M.NbrRow];  
-  for (int i = 0; i < M.NbrColumn; i++)
+  for (int i = 0; i < M.NbrColumn; ++i)
     {
       tmp[i].Re = 0.0;
       tmp[i].Im = 0.0;
@@ -1158,7 +1569,7 @@ ComplexVector& ComplexVector::operator &= (const ComplexMatrix&  M)
 			M.Columns[j].Components[i].Im * this->Components[j].Re);
 	}      
     }
-  if ((this->Components != 0) && (this->Flag.Used() == true))
+  if ((this->Components != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     if (this->Flag.Shared() == false)
       {
 	delete[] this->Components;
@@ -1177,7 +1588,7 @@ ComplexVector& ComplexVector::operator &= (const ComplexMatrix&  M)
 
 ComplexVector& ComplexVector::operator *= (const HermitianMatrix&  M)
 {
-  if ((this->Dimension == 0) || (this->Dimension != M.NbrRow))
+  if ((this->Dimension <= 0) || (this->Dimension != M.NbrRow))
     return *this;
   Complex* tmp = new Complex [M.NbrRow];
   for (int i = 0; i < M.NbrRow; ++i)
@@ -1205,7 +1616,7 @@ ComplexVector& ComplexVector::operator *= (const HermitianMatrix&  M)
 	  ++pos;
 	}
     }
-  if ((this->Components != 0) && (this->Flag.Used() == true))
+  if ((this->Components != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     if (this->Flag.Shared() == false)
       {
 	delete[] this->Components;
@@ -1223,7 +1634,7 @@ ComplexVector& ComplexVector::operator *= (const HermitianMatrix&  M)
 
 ComplexVector& ComplexVector::operator *= (const ComplexTriDiagonalHermitianMatrix&  M)
 {
-  if ((this->Dimension == 0) || (this->Dimension != M.NbrRow))
+  if ((this->Dimension <= 0) || (this->Dimension != M.NbrRow))
     return *this;
   int ReducedDim = this->Dimension - 1;
   Complex Tmp1 (this->Components[0].Re, this->Components[0].Im);
@@ -1234,7 +1645,7 @@ ComplexVector& ComplexVector::operator *= (const ComplexTriDiagonalHermitianMatr
   this->Components[0].Im *= M.DiagonalElements[0];
   this->Components[0].Im += this->Components[1].Im * M.RealUpperDiagonalElements[0]
     + this->Components[1].Re * M.ImaginaryUpperDiagonalElements[0];
-  for (int i = 1; i < ReducedDim; i++)
+  for (int i = 1; i < ReducedDim; ++i)
     {
       Tmp2 = Complex (this->Components[i].Re, this->Components[i].Im);
       this->Components[i].Re *= M.DiagonalElements[i];
@@ -1263,7 +1674,7 @@ ComplexVector& ComplexVector::operator *= (const ComplexTriDiagonalHermitianMatr
 
 ComplexVector& ComplexVector::operator *= (const RealTriDiagonalSymmetricMatrix&  M)
 {
-  if ((this->Dimension == 0) || (this->Dimension != M.NbrRow))
+  if ((this->Dimension <= 0) || (this->Dimension != M.NbrRow))
     return *this;
   int ReducedDim = this->Dimension - 1;
   Complex Tmp1 (this->Components[0].Re, this->Components[1].Im);
@@ -1272,7 +1683,7 @@ ComplexVector& ComplexVector::operator *= (const RealTriDiagonalSymmetricMatrix&
   this->Components[0].Re += this->Components[1].Re * M.UpperDiagonalElements[0];
   this->Components[0].Im *= M.DiagonalElements[0];
   this->Components[0].Im += this->Components[1].Im * M.UpperDiagonalElements[0];
-  for (int i = 1; i < ReducedDim; i++)
+  for (int i = 1; i < ReducedDim; ++i)
     {
       Tmp2 = Complex (this->Components[i].Re, this->Components[i].Im);
       this->Components[i].Re *= M.DiagonalElements[i];
@@ -1298,7 +1709,7 @@ ComplexVector& ComplexVector::operator *= (const RealTriDiagonalSymmetricMatrix&
 
 ComplexVector& ComplexVector::Multiply (const HermitianMatrix&  M, ComplexVector& V)
 {
-  if ((this->Dimension == 0) || (V.Dimension != M.NbrColumn) || (this->Dimension != M.NbrRow))
+  if ((this->Dimension <= 0) || (V.Dimension != M.NbrColumn) || (this->Dimension != M.NbrRow))
     return *this;
   for (int i = 0; i < this->Dimension; ++i)
     {
@@ -1339,7 +1750,7 @@ ComplexVector& ComplexVector::Multiply (const HermitianMatrix&  M, ComplexVector
 ComplexVector& ComplexVector::Multiply (const HermitianMatrix&  M, ComplexVector& V, int sourceStart, 
 					int sourceNbrComponent)
 {
-  if ((this->Dimension == 0) || (V.Dimension < (sourceNbrComponent + sourceStart)) || (this->Dimension != M.NbrRow))
+  if ((this->Dimension <= 0) || (V.Dimension < (sourceNbrComponent + sourceStart)) || (this->Dimension != M.NbrRow))
     return *this;
   int Last = sourceStart + sourceNbrComponent;
   int Inc1 =  this->Dimension - sourceNbrComponent + M.Increment - 2;
@@ -1426,7 +1837,7 @@ ComplexVector& ComplexVector::Multiply (const HermitianMatrix&  M, ComplexVector
 
 ComplexVector& ComplexVector::AddMultiply (const HermitianMatrix&  M, ComplexVector& V)
 {
-  if ((this->Dimension == 0) || (V.Dimension != M.NbrColumn) || (this->Dimension != M.NbrRow))
+  if ((this->Dimension <= 0) || (V.Dimension != M.NbrColumn) || (this->Dimension != M.NbrRow))
     return *this;
   for (int i = 0; i < this->Dimension; ++i)
     {
@@ -1467,7 +1878,7 @@ ComplexVector& ComplexVector::AddMultiply (const HermitianMatrix&  M, ComplexVec
 ComplexVector& ComplexVector::AddMultiply (const HermitianMatrix&  M, ComplexVector& V, int sourceStart, 
 					   int sourceNbrComponent)
 {
-  if ((this->Dimension == 0) || (V.Dimension < (sourceNbrComponent + sourceStart)) || (this->Dimension != M.NbrRow))
+  if ((this->Dimension <= 0) || (V.Dimension < (sourceNbrComponent + sourceStart)) || (this->Dimension != M.NbrRow))
     return *this;
   int Last = sourceStart + sourceNbrComponent;
   int Inc1 =  this->Dimension - sourceNbrComponent + M.Increment - 2;
@@ -1554,7 +1965,7 @@ ComplexVector& ComplexVector::AddMultiply (const HermitianMatrix&  M, ComplexVec
 
 ComplexVector& ComplexVector::Multiply (const RealMatrix&  M, ComplexVector& V)
 {
-  if ((this->Dimension == 0) || (this->Dimension != M.NbrRow))
+  if ((this->Dimension <= 0) || (this->Dimension != M.NbrRow))
     return *this;
   if (V.Dimension != M.NbrColumn)
     V.Resize(M.NbrRow);
@@ -1579,7 +1990,7 @@ ComplexVector& ComplexVector::Multiply (const RealMatrix&  M, ComplexVector& V)
 
 ComplexVector& ComplexVector::Multiply (const ComplexMatrix&  M, ComplexVector& V)
 {
-  if ((this->Dimension == 0) || (this->Dimension != M.NbrRow))
+  if ((this->Dimension <= 0) || (this->Dimension != M.NbrRow))
     return *this;
   if (V.Dimension != M.NbrColumn)
     V.Resize(M.NbrColumn);
@@ -1783,7 +2194,7 @@ double ComplexVector::Norm()
   if (this->Dimension == 0)
     return 0.0;
   double tmp = this->Components[0].Re * this->Components[0].Re + this->Components[0].Im * this->Components[0].Im;
-  for (int i = 1; i  < this->Dimension; ++i)
+  for (long i = 1; i  < this->LargeDimension; ++i)
     tmp += this->Components[i].Re * this->Components[i].Re + this->Components[i].Im * this->Components[i].Im;
   return sqrt(tmp);
 }
@@ -1797,7 +2208,7 @@ double ComplexVector::SqrNorm ()
   if (this->Dimension == 0)
     return 0.0;
   double tmp = this->Components[0].Re * this->Components[0].Re + this->Components[0].Im * this->Components[0].Im;
-  for (int i = 2; i  < this->Dimension; ++i)
+  for (long i = 1; i  < this->LargeDimension; ++i)
     tmp += this->Components[i].Re * this->Components[i].Re + this->Components[i].Im * this->Components[i].Im;
   return tmp;
 }
@@ -1811,10 +2222,17 @@ ComplexVector& ComplexVector::Normalize()
   if (this->Dimension == 0)
     return *this;
   double tmp = this->Components[0].Re * this->Components[0].Re + this->Components[0].Im * this->Components[0].Im;
-  for (int i = 2; i  < this->Dimension; ++i)
+  for (int i = 1; i  < this->Dimension; ++i)
     tmp += this->Components[i].Re * this->Components[i].Re + this->Components[i].Im * this->Components[i].Im;
   tmp = 1.0 / sqrt(tmp);
-  for (int i = 0; i < this->Dimension; ++i)
+  if (this->Dimension == -1)
+    for (long i = 0; i < this->LargeDimension; ++i)
+      {
+	this->Components[i].Re *= tmp;
+	this->Components[i].Im *= tmp;
+      }
+  else
+    for (int i = 0; i < this->Dimension; ++i)
     {
       this->Components[i].Re *= tmp;
       this->Components[i].Im *= tmp;
@@ -1855,7 +2273,7 @@ ComplexVector ComplexVector::Extract(int firstCoordinate, int lastCoordinate, in
 
 ComplexVector& ComplexVector::Merge(const ComplexVector& V, int firstCoordinate, int step) 
 {
-  if ((this->Dimension == 0) || (V.Dimension == 0))
+  if ((this->Dimension <= 0) || (V.Dimension <= 0))
     return *this;
   int Max = firstCoordinate + (V.Dimension * step);
   if (Max > this->Dimension)
@@ -1878,7 +2296,7 @@ ComplexVector& ComplexVector::Merge(const ComplexVector& V, int firstCoordinate,
 
 ComplexVector& ComplexVector::Merge(const RealVector& V, int firstCoordinate, int step) 
 {
-  if ((this->Dimension == 0) || (V.Dimension == 0))
+  if ((this->Dimension <= 0) || (V.Dimension <= 0))
     return *this;
   int Max = firstCoordinate + (V.Dimension * step);
   if (Max > this->Dimension)
@@ -1898,16 +2316,30 @@ ComplexVector& ComplexVector::Merge(const RealVector& V, int firstCoordinate, in
 
 ComplexVector& ComplexVector::ReverseVector()
 {
-  if (this->Dimension != 0)
+  if ((this->Dimension != 0) || (this->LargeDimension != 0l))
     {
       this->Localize();
-      int Max = this->Dimension - 1;
-      Complex Tmp;
-      for (int i = 0; i < this->Dimension/2; ++i)
+      if (this->Dimension == -1)
 	{
-	  Tmp = this->Components[i];
-	  this->Components[i] = this->Components[Max - i];
-	  this->Components[Max - i] = Tmp;
+	  long Max = this->LargeDimension - 1;
+	  Complex Tmp;
+	  for (long i = 0; i < this->LargeDimension/2; ++i)
+	    {
+	      Tmp = this->Components[i];
+	      this->Components[i] = this->Components[Max - i];
+	      this->Components[Max - i] = Tmp;
+	    }
+	}
+      else
+	{
+	  int Max = this->Dimension - 1;
+	  Complex Tmp;
+	  for (int i = 0; i < this->Dimension/2; ++i)
+	    {
+	      Tmp = this->Components[i];
+	      this->Components[i] = this->Components[Max - i];
+	      this->Components[Max - i] = Tmp;
+	    }
 	}
       this->Delocalize(true);
     }
@@ -1920,18 +2352,32 @@ ComplexVector& ComplexVector::ReverseVector()
 
 ostream& operator << (ostream& Str, const ComplexVector& P)
 {
-  for (int i = 0; i < P.Dimension; ++i)
-    {
-      Str << P.Components[i].Re;
-      if (P.Components[i].Im < 0.0)
-	Str << P.Components[i].Im << "i    ";
-      else
-	if (P.Components[i].Im != 0.0)
-	  Str << "+" << P.Components[i].Im << "i    ";
+  if (P.Dimension == -1)
+    for (long i = 0; i < P.LargeDimension; ++i)
+      {
+	Str << P.Components[i].Re;
+	if (P.Components[i].Im < 0.0)
+	  Str << P.Components[i].Im << "i    ";
 	else
-	  Str << "    ";
-      Str << endl;
-    }
+	  if (P.Components[i].Im != 0.0)
+	    Str << "+" << P.Components[i].Im << "i    ";
+	  else
+	    Str << "    ";
+	Str << endl;
+      }
+  else
+    for (int i = 0; i < P.Dimension; ++i)
+      {
+	Str << P.Components[i].Re;
+	if (P.Components[i].Im < 0.0)
+	  Str << P.Components[i].Im << "i    ";
+	else
+	  if (P.Components[i].Im != 0.0)
+	    Str << "+" << P.Components[i].Im << "i    ";
+	  else
+	    Str << "    ";
+	Str << endl;
+      }
   return Str;
 }
 
@@ -1945,8 +2391,8 @@ ostream& operator << (ostream& Str, const ComplexVector& P)
 MathematicaOutput& operator << (MathematicaOutput& Str, const ComplexVector& v)
 {
   Str << "{";
-  int i = 0;
-  for (; i < (v.Dimension - 1); ++i)
+  long i = 0;
+  for (; i < (v.LargeDimension - 1); ++i)
     {
       Str << v.Components[i].Re;
       if (v.Components[i].Im < 0.0)
@@ -1979,11 +2425,21 @@ bool ComplexVector::WriteVector (const char* fileName)
   ofstream File;
   File.open(fileName, ios::binary | ios::out);
   WriteLittleEndian(File, this->Dimension);
-  for (int i = 0; i < this->Dimension; ++i)
+  if (this->Dimension == -1)
     {
-      WriteLittleEndian(File, this->Components[i].Re);
-      WriteLittleEndian(File, this->Components[i].Im);
+      WriteLittleEndian(File, this->LargeDimension);
+      for (long i = 0; i < this->LargeDimension; ++i)
+	{
+	  WriteLittleEndian(File, this->Components[i].Re);
+	  WriteLittleEndian(File, this->Components[i].Im);
+	}
     }
+  else
+    for (int i = 0; i < this->Dimension; ++i)
+      {
+	WriteLittleEndian(File, this->Components[i].Re);
+	WriteLittleEndian(File, this->Components[i].Im);
+      }
   File.close();
   return true;
 }
@@ -1998,10 +2454,20 @@ bool ComplexVector::WriteAsciiVector (const char* fileName)
   ofstream File;
   File.precision(14);
   File.open(fileName, ios::binary | ios::out);
-  int ReducedDimension = this->Dimension - 1;
-  for (int i = 0; i < ReducedDimension; ++i)
-    File << this->Components[i].Re << " " << this->Components[i].Im << " ";
-  File << this->Components[ReducedDimension].Re << " " << this->Components[ReducedDimension].Im << endl;  
+  if (this->Dimension == -1)
+    {
+      long ReducedDimension = this->LargeDimension - 1;
+      for (long i = 0; i < ReducedDimension; ++i)
+	File << this->Components[i].Re << " " << this->Components[i].Im << " ";
+      File << this->Components[ReducedDimension].Re << " " << this->Components[ReducedDimension].Im << endl;
+    }
+  else
+    {
+      int ReducedDimension = this->Dimension - 1;
+      for (int i = 0; i < ReducedDimension; ++i)
+	File << this->Components[i].Re << " " << this->Components[i].Im << " ";
+      File << this->Components[ReducedDimension].Re << " " << this->Components[ReducedDimension].Im << endl;
+    }
   File.close();
   return true;
 }
@@ -2031,23 +2497,142 @@ bool ComplexVector::ReadVector (const char* fileName)
   File.seekg (0, ios::beg);
   int TmpDimension;
   ReadLittleEndian(File, TmpDimension);
-  // maybe add additional test: (TmpDimension<INT_MAX/sizeof(double))&&
-  if (((std::streampos)Length/(std::streampos)sizeof(double)<(std::streampos)TmpDimension))
-    {      
-      cout << "Error reading complex vector "<<fileName<<": estimated length "<<(std::streampos)Length/(2*sizeof(double))<<" vs dimension "<<TmpDimension<<endl;
-      if ((long)TmpDimension==(long)Length/(long)sizeof(double))
-	cout << "This could be a real vector!"<<endl;
-      exit(1);
-    }
 
-  this->Resize(TmpDimension);
-  for (int i = 0; i < this->Dimension; ++i)
+  if (TmpDimension > 0)
     {
-      ReadLittleEndian(File, this->Components[i].Re);
-      ReadLittleEndian(File, this->Components[i].Im);
+      if (((std::streampos)Length/(std::streampos)sizeof(double)<(std::streampos)TmpDimension))
+	{      
+	  cout << "Error reading complex vector "<<fileName<<": estimated length "<<(std::streampos)Length/(2*sizeof(double))<<" vs dimension "<<TmpDimension<<endl;
+	  if ((long)TmpDimension==(long)Length/(long)sizeof(double))
+	    cout << "This could be a real vector!"<<endl;
+	  exit(1);
+	}
+      this->Resize(TmpDimension);
+      for (int i = 0; i < this->Dimension; ++i)
+	{
+	  ReadLittleEndian(File, this->Components[i].Re);
+	  ReadLittleEndian(File, this->Components[i].Im);
+	}
+    }
+  else
+    {
+      long TmpLargeDimension;
+      ReadLittleEndian(File, TmpLargeDimension);
+      
+      if ((((std::streampos)Length-(std::streampos)sizeof(long))/(std::streampos)sizeof(double)<(std::streampos)TmpLargeDimension))
+	{      
+	  cout << "Error reading complex vector "<<fileName<<": estimated length "<<Length/(2*sizeof(double))<<" vs dimension "<<TmpDimension<<endl;
+	  if ((long)TmpDimension==(long)Length/(long)sizeof(double))
+	    cout << "This could be a real vector!"<<endl;
+	  exit(1);
+	}
+      
+      this->Resize(TmpLargeDimension);
+      for (long i = 0; i < this->LargeDimension; ++i)
+	{
+	  ReadLittleEndian(File, this->Components[i].Re);
+	  ReadLittleEndian(File, this->Components[i].Im);
+	}
     }
   File.close();
   return true;
+}
+
+
+// read vector from a file, only within a given range of indices
+//
+// fileName = name of the file where the vector has to be read
+// minIndex = index of the first component to read (if negative, start from the end of vector)
+// maxIndex = index of the last component to read (negative or zero is considered as the last component)
+// return value = true if no error occurs
+
+bool ComplexVector::ReadVector (const char* fileName, long minIndex, long maxIndex)
+{
+  ifstream File;
+  File.open(fileName, ios::binary | ios::in);
+  if (!File.is_open())
+    {
+      cout << "Cannot open the file: " << fileName << endl;
+      return false;
+    }
+  
+  std::streampos ZeroPos, MaxPos;
+  File.seekg (0, ios::beg);
+  ZeroPos = File.tellg();
+  File.seekg (0, ios::end);
+  MaxPos = File.tellg ();
+
+  std::streampos Length = MaxPos-ZeroPos-sizeof(int);  
+  File.seekg (0, ios::beg);
+  int TmpDimension;
+  ReadLittleEndian(File, TmpDimension);
+
+  if (TmpDimension > 0)
+    {
+      if (Length/(std::streampos)sizeof(double)>(std::streampos)TmpDimension)
+	{      
+	  cout << "Error reading real vector "<<fileName<<": estimated length "<<Length/sizeof(double)<<" vs dimension "<<TmpDimension<<endl;
+	  if ((unsigned)TmpDimension*2==Length/sizeof(double))
+	    cout << "This could be a complex vector!"<<endl;
+	  exit(1);
+	}
+      if ((maxIndex >= TmpDimension) || (maxIndex <= 0l))
+	maxIndex = TmpDimension - 1;
+      if (minIndex < 0l)      
+	minIndex += TmpDimension;
+      this->Resize(maxIndex - minIndex + 1l);
+      File.seekg (minIndex * sizeof(double), ios::cur);    
+      for (int i = 0; i < this->Dimension; ++i)
+	{
+	  ReadLittleEndian(File, this->Components[i].Re);
+	  ReadLittleEndian(File, this->Components[i].Im);
+	}
+    }
+  else
+    {
+      long TmpLargeDimension;
+      ReadLittleEndian(File, TmpLargeDimension);
+      if ((maxIndex >= TmpLargeDimension) || (maxIndex <= 0l))
+	maxIndex = TmpLargeDimension - 1l;
+      if (minIndex < 0l)      
+	minIndex += TmpLargeDimension;
+      this->Resize(maxIndex - minIndex + 1l);
+      File.seekg (minIndex * sizeof(double), ios::cur);    
+      for (long i = 0; i < this->LargeDimension; ++i)
+	{
+	  ReadLittleEndian(File, this->Components[i].Re);
+	  ReadLittleEndian(File, this->Components[i].Im);
+	}
+    }
+  File.close();
+  return true;
+}
+
+// read vector dimension from a file, without loading the full vector 
+//
+// fileName = name of the file where the vector has to be read
+// return value = vector dimension
+
+long ComplexVector::ReadVectorDimension (const char* fileName)
+{
+  ifstream File;
+  File.open(fileName, ios::binary | ios::in);
+  if (!File.is_open())
+    {
+      cout << "Cannot open the file: " << fileName << endl;
+      return false;
+    }
+  int TmpDimension;
+  ReadLittleEndian(File, TmpDimension);
+  if (TmpDimension > 0)
+    {
+      File.close();
+      return ((long) TmpDimension);
+    }
+  long TmpLargeDimension = 0l;
+  ReadLittleEndian(File, TmpLargeDimension);
+  File.close();
+  return TmpLargeDimension;
 }
 
 #ifdef __MPI__

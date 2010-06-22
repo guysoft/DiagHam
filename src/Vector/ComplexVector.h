@@ -92,19 +92,40 @@ class ComplexVector : public Vector
   // size = Vector Dimension 
   // zeroFlag = true if all coordinates have to be set to zero
   ComplexVector(int size, bool zeroFlag = false);
+
+  
+  // constructor for an empty real vector bigger than 2^31
+  //
+  // size = Vector Dimension 
+  // zeroFlag = true if all coordinates have to be set to zero
+  ComplexVector(long size, bool zeroFlag);
+
   
   // constructor from arrays of doubles
   //
   // real = array of doubles corresponding to real part
   // imaginary = array of doubles corresponding to imaginary part
   // size = Vector Dimension 
-  ComplexVector(double* real, double* imaginary, int size) ;
+  ComplexVector(double* real, double* imaginary, int size);
+
+  // constructor from large arrays of doubles
+  //
+  // real = array of doubles corresponding to real part
+  // imaginary = array of doubles corresponding to imaginary part
+  // size = Vector Dimension 
+  ComplexVector(double* real, double* imaginary, long size);
 
   // constructor from Complex array
   //
   // components = array of Complex values
   // size = Vector Dimension 
-  ComplexVector(Complex *components, int size) ;
+  ComplexVector(Complex *components, int size);
+
+  // constructor from large Complex array
+  //
+  // components = array of Complex values
+  // size = Vector Dimension 
+  ComplexVector(Complex *components, long size);
 
   // copy constructor
   //
@@ -148,10 +169,21 @@ class ComplexVector : public Vector
   // dimension = new dimension
   void Resize (int dimension);
 
+  // Resize long vector
+  //
+  // dimension = new dimension
+  
+  void Resize (long dimension);
+
   // Resize vector and set to zero all components that have been added
   //
   // dimension = new dimension
   void ResizeAndClean (int dimension);
+
+  // Resize long vector and set to zero all components that have been added
+  //
+  // dimension = new dimension
+  void ResizeAndClean (long dimension);
 
   // copy a vector into another
   //
@@ -684,6 +716,22 @@ class ComplexVector : public Vector
   // fileName = name of the file where the vector has to be read
   // return value = true if no error occurs
   bool ReadVector (const char* fileName);
+
+  // read vector from a file, only within a given range of indices
+  //
+  // fileName = name of the file where the vector has to be read
+  // minIndex = index of the first component to read (if negative, start from the end of vector)
+  // maxIndex = index of the last component to read (negative or zero is considered as the last component)
+  // return value = true if no error occurs
+  bool ReadVector (const char* fileName, long minIndex, long maxIndex);
+
+  // read vector dimension from a file, without loading the full vector 
+  //
+  // fileName = name of the file where the vector has to be read
+  // return value = vector dimension
+  
+  long ReadVectorDimension (const char* fileName);
+
 
   // Output Stream overload
   //

@@ -3623,13 +3623,13 @@ bool RealVector::ReadVector (const char* fileName)
       return false;
     }
   
-  unsigned ZeroPos, MaxPos;
+  std::streampos ZeroPos, MaxPos;
   File.seekg (0, ios::beg);
   ZeroPos = File.tellg();
   File.seekg (0, ios::end);
   MaxPos = File.tellg ();
 
-  unsigned Length = MaxPos-ZeroPos-sizeof(int);  
+  std::streampos Length = MaxPos-ZeroPos-sizeof(int);  
   File.seekg (0, ios::beg);
   int TmpDimension;
   ReadLittleEndian(File, TmpDimension);
