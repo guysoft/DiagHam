@@ -154,8 +154,8 @@ Complex ParticleOnSphereDensityDensityOperator::PartialMatrixElement (RealVector
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-RealVector& ParticleOnSphereDensityDensityOperator::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
-								     int firstComponent, int nbrComponent)
+RealVector& ParticleOnSphereDensityDensityOperator::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+									int firstComponent, int nbrComponent)
 {
   int Dim = this->Particle->GetHilbertSpaceDimension();
   int Last = firstComponent + nbrComponent;;
@@ -165,7 +165,7 @@ RealVector& ParticleOnSphereDensityDensityOperator::LowLevelMultiply(RealVector&
     {
       Index = this->Particle->AdAdAA(i, this->CreationIndex1, this->CreationIndex2, this->AnnihilationIndex1, this->AnnihilationIndex2, Coefficient);
       if (Index != Dim)
-	vDestination[Index] = vSource[i] * Coefficient;
+	vDestination[Index] += vSource[i] * Coefficient;
     }
   return vDestination;
 }

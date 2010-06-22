@@ -125,7 +125,7 @@ Complex ParticlePolarizationOperator::PartialMatrixElement (RealVector& V1, Real
 // return value = reference on vector where result has been stored
 
 RealVector& ParticlePolarizationOperator::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
-							   int firstComponent, int nbrComponent)
+							      int firstComponent, int nbrComponent)
 {
   int Last = firstComponent + nbrComponent;;
   double Factor = 2.0 / ((double) this->NbrParticle);
@@ -134,6 +134,29 @@ RealVector& ParticlePolarizationOperator::LowLevelMultiply(RealVector& vSource, 
     {
       this->Particle->SumAudAu(i, Coefficient);
       vDestination[i] = vSource[i] * (Factor * Coefficient - 1.0);
+    }
+  return vDestination;
+}
+
+// multiply a vector by the current operator for a given range of indices 
+// and store result in another vector
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+RealVector& ParticlePolarizationOperator::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+							      int firstComponent, int nbrComponent)
+{
+  int Last = firstComponent + nbrComponent;;
+  double Factor = 2.0 / ((double) this->NbrParticle);
+  double Coefficient = 0.0;
+  for (int i = firstComponent; i < Last; ++i)
+    {
+      this->Particle->SumAudAu(i, Coefficient);
+      vDestination[i] += vSource[i] * (Factor * Coefficient - 1.0);
     }
   return vDestination;
 }							       

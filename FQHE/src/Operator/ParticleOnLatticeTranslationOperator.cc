@@ -166,14 +166,13 @@ Complex ParticleOnLatticeTranslationOperator::PartialMatrixElement (ComplexVecto
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-ComplexVector& ParticleOnLatticeTranslationOperator::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent)
+ComplexVector& ParticleOnLatticeTranslationOperator::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent)
 {
   int Last = (int) (firstComponent + nbrComponent);
   int Index;
   Complex TranslationPhase;
-  vDestination.ClearVector();
   //std::cout << "R=("<<Rx<<", "<<Ry<<")"<<std::endl<<vSource<<std::endl<<"Norm:"<<vSource.Norm()<<std::endl;
-  std::cout.precision(8);
+  //std::cout.precision(8);
   for (int i = (int) firstComponent; i < Last; ++i)
     {
       Index = this->Particle->TranslateState(i, this->Rx, this->Ry, TranslationPhase);      

@@ -140,6 +140,9 @@ class MaximallyCondensedStateOnLattice
 
   // get last density matrix eigenvalue
   double GetDensityMatrixEigenvalue(){return this->LastMaximumEV;}
+
+  // randomize trial parameters
+  void RandomizeVariationalParameters();
   
   // set trial parameters
   void SetVariationalParameters(RealVector &variationalParameters);

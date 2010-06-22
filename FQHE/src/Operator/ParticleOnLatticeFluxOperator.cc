@@ -249,7 +249,7 @@ Complex ParticleOnLatticeFluxOperator::PartialMatrixElement (ComplexVector& V1, 
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-ComplexVector& ParticleOnLatticeFluxOperator::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent)
+ComplexVector& ParticleOnLatticeFluxOperator::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent)
 {
   int Dim = this->Particle->GetHilbertSpaceDimension();
   int Last = firstComponent + nbrComponent;;
@@ -262,8 +262,8 @@ ComplexVector& ParticleOnLatticeFluxOperator::LowLevelMultiply(ComplexVector& vS
 	  Index = this->Particle->AdA(i, this->CreationIndices[k], this->AnnihilationIndices[k], Coefficient);
 	  if ((Index<Dim)&&(Coefficient!=0.0))
 	    {
-	      vDestination[Index].Re = vSource[i].Re * Coefficient * Coefficients[k].Re - vSource[i].Im * Coefficient * Coefficients[k].Im;
-	      vDestination[Index].Im = vSource[i].Im * Coefficient * Coefficients[k].Re + vSource[i].Re * Coefficient * Coefficients[k].Im;
+	      vDestination[Index].Re += vSource[i].Re * Coefficient * Coefficients[k].Re - vSource[i].Im * Coefficient * Coefficients[k].Im;
+	      vDestination[Index].Im += vSource[i].Im * Coefficient * Coefficients[k].Re + vSource[i].Re * Coefficient * Coefficients[k].Im;
 	    }
 	}
     }

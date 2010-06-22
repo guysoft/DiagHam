@@ -102,8 +102,11 @@ int main(int argc, char** argv)
     (*SystemGroup) += new BooleanOption  ('\n', "normalize-phase", "change phase to make largest absolute value real and positive");
   (*OutputGroup) += new SingleDoubleOption  ('\n', "display-threshold", "only display values larger than threshold",0.0);
   (*MiscGroup) += new SingleIntegerOption ('\n', "nbr-density", "number of density matrix eigenstates to be written out",1);
-  (*MiscGroup) += new BooleanOption  ('\n', "equal", "only use equal weight superpositions of two vectors");  
+  (*MiscGroup) += new BooleanOption  ('\n', "equal", "only use equal weight superpositions of two vectors");
   (*MiscGroup) += new SingleIntegerOption ('s',"superpositions","in case of two input vectors, number of values for phase in superpositions",12);
+  (*MiscGroup) += new SingleIntegerOption ('\n',"max-iter","maximum number of iterations for optimizing condensate fraction",100);
+  (*MiscGroup) += new SingleDoubleOption ('\n',"opt-tolerance","tolerance for optimizing condensate fraction",1e-4);
+  (*MiscGroup) += new BooleanOption  ('\n', "opt-random", "start optimization from a randomized initial condition");
   (*MiscGroup) += new BooleanOption  ('V', "verbose", "give additional output");  
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
@@ -383,7 +386,7 @@ int main(int argc, char** argv)
 
   if (NbrVectors>=2)
     {
-      if ((NbrVectors==2)||(Manager.GetBoolean("equal")))
+      if ((NbrVectors==2)&&(Manager.GetBoolean("equal")))
 	{
 	  int DensityMatrixDimension2 = NbrSites;
 	  RealDiagonalMatrix M2;  
@@ -475,11 +478,16 @@ int main(int argc, char** argv)
 	{
 	  MaximallyCondensedStateOnLattice * BestCondensate
 	    = new MaximallyCondensedStateOnLattice(Architecture.GetArchitecture(), NbrVectors, Vectors, Space, Lx, Ly, NbrSubLattices);
+	  if (Manager.GetBoolean("opt-random"))
+	    BestCondensate->RandomizeVariationalParameters();
+	  cout << "Optimization in subspace"<<endl;
+	  for (int n=0; n<NbrVectors; ++n)
+	    cout << "|"<<n<<" > = "<<VectorFiles[n]<<endl;
 	  BestCondensate->Optimize(Manager.GetDouble("opt-tolerance"), Manager.GetInteger("max-iter"));
 	  ComplexVector Parameters = BestCondensate->GetVariationalParameters();
-	  cout << "Found condensate: "<< Parameters[0] << " |0>";
-	  for (int i=0; i<NbrVectors; ++i)
-	    cout << " + " << Parameters[i] << " |"<<i<<">";
+	  cout << "Found condensate: "<< Norm(Parameters[0]) << " |0>";
+	  for (int i=1; i<NbrVectors; ++i)
+	    cout << " + " << Norm(Parameters[i]) << " exp(I*"<<Arg(Parameters[i]) <<") |"<<i<<" >";
 	  cout << endl;
 	  cout << "with EV[0]_max = "<<BestCondensate->GetDensityMatrixEigenvalue()<<endl;
 	  if (Manager.GetBoolean("save-vectors"))

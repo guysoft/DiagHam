@@ -125,8 +125,8 @@ class ParticleOnLatticeTranslationOperator : public AbstractOperator
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  ComplexVector& LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-				  int firstComponent, int nbrComponent);
+  ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+				     int firstComponent, int nbrComponent);
   
 };
 

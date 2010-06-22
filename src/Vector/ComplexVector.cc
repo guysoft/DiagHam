@@ -655,7 +655,10 @@ ComplexVector& ComplexVector::Copy (ComplexVector& vector, const Complex& coeffi
 
 Vector* ComplexVector::EmptyClone(bool zeroFlag)
 {
-  return new ComplexVector(this->Dimension, zeroFlag);
+  if (this->Dimension == -1)
+    return new ComplexVector(this->LargeDimension, zeroFlag);
+  else
+    return new ComplexVector(this->Dimension, zeroFlag);
 }
 
 // create an array of new vectors with same size and same type but non-initialized components

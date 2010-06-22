@@ -157,18 +157,14 @@ Complex ParticleOnSphereLMinusOperator::PartialMatrixElement (RealVector& V1, Re
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-RealVector& ParticleOnSphereLMinusOperator::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
-							     int firstComponent, int nbrComponent)
+RealVector& ParticleOnSphereLMinusOperator::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+								int firstComponent, int nbrComponent)
 {
   int Last = firstComponent + nbrComponent;
   int Index = 0;
   double Coefficient = 0.0;
   int TargetDim = this->Particle->GetTargetHilbertSpaceDimension();
   double Tmp;
-  for (int i = 0; i < TargetDim; ++i)
-    {
-      vDestination[i] = 0.0;
-    }
   for (int i = firstComponent; i < Last; ++i)
     {
       Tmp = vSource[i];

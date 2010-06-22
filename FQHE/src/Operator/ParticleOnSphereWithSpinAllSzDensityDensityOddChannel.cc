@@ -296,7 +296,7 @@ Complex ParticleOnSphereWithSpinAllSzDensityDensityOddChannel::MatrixElement (Co
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-RealVector& ParticleOnSphereWithSpinAllSzDensityDensityOddChannel::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, int firstComponent, int nbrComponent)
+RealVector& ParticleOnSphereWithSpinAllSzDensityDensityOddChannel::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, int firstComponent, int nbrComponent)
 {
   int Last = firstComponent + nbrComponent;;
   int Dim = this->Particle->GetHilbertSpaceDimension();
@@ -306,10 +306,10 @@ RealVector& ParticleOnSphereWithSpinAllSzDensityDensityOddChannel::LowLevelMulti
   int m = this->AnnihilationMomentumIndex1;
   int Q = this->AnnihilationMomentumIndex2;
   if ( (m != this->CreationMomentumIndex1) || (Q != this->CreationMomentumIndex2) )
-   {
-    cout << "error: difference in indices " << endl;
-   }
-
+    {
+      cout << "error: difference in indices " << endl;
+    }
+  
   for (int i = 0; i < Dim; ++i)
    {
 
@@ -320,7 +320,7 @@ RealVector& ParticleOnSphereWithSpinAllSzDensityDensityOddChannel::LowLevelMulti
        {
 	 int Index = this->Particle->AduAdu(m, Q, Coefficient2);
 	 if (Index != Dim)
-	  vDestination[Index] = 0.25 * vSource[i] * Coefficient * Coefficient2;
+	  vDestination[Index] += 0.25 * vSource[i] * Coefficient * Coefficient2;
         }
 
      //UpUpUpDown
@@ -329,7 +329,7 @@ RealVector& ParticleOnSphereWithSpinAllSzDensityDensityOddChannel::LowLevelMulti
        {
 	 int Index = this->Particle->AduAdu(m, Q, Coefficient2);
 	 if (Index != Dim)
-	  vDestination[Index] = -0.25 * vSource[i] * Coefficient * Coefficient2;
+	  vDestination[Index] += -0.25 * vSource[i] * Coefficient * Coefficient2;
         }
 
      //UpUpDownUp
@@ -338,7 +338,7 @@ RealVector& ParticleOnSphereWithSpinAllSzDensityDensityOddChannel::LowLevelMulti
        {
 	 int Index = this->Particle->AduAdu(m, Q, Coefficient2);
 	 if (Index != Dim)
-	  vDestination[Index] = 0.25 * vSource[i] * Coefficient * Coefficient2;
+	  vDestination[Index] += 0.25 * vSource[i] * Coefficient * Coefficient2;
         }
 
      //UpUpDownDown
@@ -347,7 +347,7 @@ RealVector& ParticleOnSphereWithSpinAllSzDensityDensityOddChannel::LowLevelMulti
        {
 	 int Index = this->Particle->AduAdu(m, Q, Coefficient2);
 	 if (Index != Dim)
-	  vDestination[Index] = 0.25 * vSource[i] * Coefficient * Coefficient2;
+	  vDestination[Index] += 0.25 * vSource[i] * Coefficient * Coefficient2;
         }
 
 //****************** UP DOWN *************************
@@ -358,7 +358,7 @@ RealVector& ParticleOnSphereWithSpinAllSzDensityDensityOddChannel::LowLevelMulti
        {
 	 int Index = this->Particle->AduAdd(m, Q, Coefficient2);
 	 if (Index != Dim)
-	  vDestination[Index] = -0.25 * vSource[i] * Coefficient * Coefficient2;
+	  vDestination[Index] += -0.25 * vSource[i] * Coefficient * Coefficient2;
         }
 
      //UpDownUpDown
@@ -367,7 +367,7 @@ RealVector& ParticleOnSphereWithSpinAllSzDensityDensityOddChannel::LowLevelMulti
        {
 	 int Index = this->Particle->AduAdd(m, Q, Coefficient2);
 	 if (Index != Dim)
-	  vDestination[Index] = 0.25 * vSource[i] * Coefficient * Coefficient2;
+	  vDestination[Index] += 0.25 * vSource[i] * Coefficient * Coefficient2;
         }
 
      //UpDownDownUp
@@ -376,7 +376,7 @@ RealVector& ParticleOnSphereWithSpinAllSzDensityDensityOddChannel::LowLevelMulti
        {
 	 int Index = this->Particle->AduAdd(m, Q, Coefficient2);
 	 if (Index != Dim)
-	  vDestination[Index] = -0.25 * vSource[i] * Coefficient * Coefficient2;
+	  vDestination[Index] += -0.25 * vSource[i] * Coefficient * Coefficient2;
         }
 
      //UpDownDownDown
@@ -385,7 +385,7 @@ RealVector& ParticleOnSphereWithSpinAllSzDensityDensityOddChannel::LowLevelMulti
        {
 	 int Index = this->Particle->AduAdd(m, Q, Coefficient2);
 	 if (Index != Dim)
-	  vDestination[Index] = -0.25 * vSource[i] * Coefficient * Coefficient2;
+	  vDestination[Index] += -0.25 * vSource[i] * Coefficient * Coefficient2;
         }
 
 //****************** DOWN UP *************************
@@ -396,7 +396,7 @@ RealVector& ParticleOnSphereWithSpinAllSzDensityDensityOddChannel::LowLevelMulti
        {
 	 int Index = this->Particle->AduAdd(Q, m, Coefficient2);
 	 if (Index != Dim)
-	  vDestination[Index] = 0.25 * vSource[i] * Coefficient * Coefficient2;
+	  vDestination[Index] += 0.25 * vSource[i] * Coefficient * Coefficient2;
         }
 
      //DownUpUpDown
@@ -405,7 +405,7 @@ RealVector& ParticleOnSphereWithSpinAllSzDensityDensityOddChannel::LowLevelMulti
        {
 	 int Index = this->Particle->AduAdd(Q, m, Coefficient2);
 	 if (Index != Dim)
-	  vDestination[Index] = -0.25 * vSource[i] * Coefficient * Coefficient2;
+	  vDestination[Index] += -0.25 * vSource[i] * Coefficient * Coefficient2;
         }
 
      //DownUpDownUp
@@ -414,7 +414,7 @@ RealVector& ParticleOnSphereWithSpinAllSzDensityDensityOddChannel::LowLevelMulti
        {
 	 int Index = this->Particle->AduAdd(Q, m, Coefficient2);
 	 if (Index != Dim)
-	  vDestination[Index] = 0.25 * vSource[i] * Coefficient * Coefficient2;
+	  vDestination[Index] += 0.25 * vSource[i] * Coefficient * Coefficient2;
         }
 
      //DownUpDownDown
@@ -423,7 +423,7 @@ RealVector& ParticleOnSphereWithSpinAllSzDensityDensityOddChannel::LowLevelMulti
        {
 	 int Index = this->Particle->AduAdd(Q, m, Coefficient2);
 	 if (Index != Dim)
-	  vDestination[Index] = 0.25 * vSource[i] * Coefficient * Coefficient2;
+	  vDestination[Index] += 0.25 * vSource[i] * Coefficient * Coefficient2;
         }
 
 //****************** DOWN DOWN *************************
@@ -434,7 +434,7 @@ RealVector& ParticleOnSphereWithSpinAllSzDensityDensityOddChannel::LowLevelMulti
        {
 	 int Index = this->Particle->AddAdd(m, Q, Coefficient2);
 	 if (Index != Dim)
-	  vDestination[Index] = 0.25 * vSource[i] * Coefficient * Coefficient2;
+	  vDestination[Index] += 0.25 * vSource[i] * Coefficient * Coefficient2;
         }
 
      //DownDownUpDown
@@ -443,7 +443,7 @@ RealVector& ParticleOnSphereWithSpinAllSzDensityDensityOddChannel::LowLevelMulti
        {
 	 int Index = this->Particle->AddAdd(m, Q, Coefficient2);
 	 if (Index != Dim)
-	  vDestination[Index] = -0.25 * vSource[i] * Coefficient * Coefficient2;
+	  vDestination[Index] += -0.25 * vSource[i] * Coefficient * Coefficient2;
         }
 
      //DownDownDownUp
@@ -452,7 +452,7 @@ RealVector& ParticleOnSphereWithSpinAllSzDensityDensityOddChannel::LowLevelMulti
        {
 	 int Index = this->Particle->AddAdd(m, Q, Coefficient2);
 	 if (Index != Dim)
-	  vDestination[Index] = 0.25 * vSource[i] * Coefficient * Coefficient2;
+	  vDestination[Index] += 0.25 * vSource[i] * Coefficient * Coefficient2;
         }
 
      //DownDownDownDown
@@ -461,7 +461,7 @@ RealVector& ParticleOnSphereWithSpinAllSzDensityDensityOddChannel::LowLevelMulti
        {
 	 int Index = this->Particle->AddAdd(m, Q, Coefficient2);
 	 if (Index != Dim)
-	  vDestination[Index] = 0.25 * vSource[i] * Coefficient * Coefficient2;
+	  vDestination[Index] += 0.25 * vSource[i] * Coefficient * Coefficient2;
         }
 
    }

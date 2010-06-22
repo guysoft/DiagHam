@@ -25,6 +25,7 @@ NSphereParameters::NSphereParameters(int dim, bool isComplex)
   if (IsComplex)
     {
       this->NbrParameters=2*dim-2;
+      this->RealCoordinates.Resize(dim);
       this->ComplexCoordinates.Resize(dim);
     }
   else
@@ -32,7 +33,8 @@ NSphereParameters::NSphereParameters(int dim, bool isComplex)
       this->NbrParameters=dim-1;
       this->RealCoordinates.Resize(dim);
     }
-  this->Parameters.ResizeAndClean(NbrParameters);
+  this->Parameters.Resize(NbrParameters);
+  this->Parameters.ClearVector();
   this->CosTable = new double[NbrParameters];
   this->SinTable = new double[NbrParameters];
   for (int i=0; i<NbrParameters; ++i)
@@ -61,8 +63,11 @@ NSphereParameters& NSphereParameters::operator = (const NSphereParameters& spher
 {
   if (this->NbrParameters!=sphere.NbrParameters)
     {
-      delete [] CosTable;
-      delete [] SinTable;
+      if (this->Dimension!=0)
+	{
+	  delete [] CosTable;
+	  delete [] SinTable;
+	}
       this->CosTable = new double[sphere.NbrParameters];
       this->SinTable = new double[sphere.NbrParameters];
     }
@@ -91,13 +96,12 @@ void NSphereParameters::SetParameters(double *parameters)
 	  this->SinTable[i]=sin(parameters[i]);
 	}
     }
-  this->RealCoordinates[Dimension-1]=1.0;
   for (int i=0; i<Dimension-1; ++i)
-    {
-      this->RealCoordinates[i]=CosTable[i];
-      for (int j=i+1; j<Dimension; ++i)
-	this->RealCoordinates[i]*=SinTable[j-1];
-    }
+    this->RealCoordinates[i]=CosTable[i];
+  this->RealCoordinates[Dimension-1]=1.0;
+  for (int i=1; i<Dimension; ++i)
+    for (int j=0; j<i; ++j)
+      this->RealCoordinates[i]*=SinTable[j];
   if (this->IsComplex)
     {
       this->ComplexCoordinates[0]=this->RealCoordinates[0];

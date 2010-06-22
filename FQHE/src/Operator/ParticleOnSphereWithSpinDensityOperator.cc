@@ -170,8 +170,8 @@ Complex ParticleOnSphereWithSpinDensityOperator::PartialMatrixElement (RealVecto
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-RealVector& ParticleOnSphereWithSpinDensityOperator::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
-								      int firstComponent, int nbrComponent)
+RealVector& ParticleOnSphereWithSpinDensityOperator::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+									 int firstComponent, int nbrComponent)
 {
   int Last = firstComponent + nbrComponent;;
   int Dim = this->Particle->GetHilbertSpaceDimension();
@@ -185,7 +185,7 @@ RealVector& ParticleOnSphereWithSpinDensityOperator::LowLevelMultiply(RealVector
 	  {
 	    int Index = this->Particle->AddAd(i, this->CreationMomentumIndex, this->AnnihilationMomentumIndex, Coefficient);
 	    if (Index != Dim)
-	      vDestination[Index] = vSource[i] * Coefficient;      
+	      vDestination[Index] += vSource[i] * Coefficient;      
 	  }
       }
       break;
@@ -195,7 +195,7 @@ RealVector& ParticleOnSphereWithSpinDensityOperator::LowLevelMultiply(RealVector
 	  {
 	    int Index = this->Particle->AduAu(i, this->CreationMomentumIndex, this->AnnihilationMomentumIndex, Coefficient);
 	    if (Index != Dim)
-	      vDestination[Index] = vSource[i] * Coefficient;      
+	      vDestination[Index] += vSource[i] * Coefficient;      
 	  }
 	break;
       }
@@ -205,7 +205,7 @@ RealVector& ParticleOnSphereWithSpinDensityOperator::LowLevelMultiply(RealVector
 	  {
 	    int Index = this->Particle->AddAu(i, this->CreationMomentumIndex, this->AnnihilationMomentumIndex, Coefficient);
 	    if (Index != Dim)
-	      vDestination[Index] = vSource[i] * Coefficient;      
+	      vDestination[Index] += vSource[i] * Coefficient;      
 	  }
  	break;
      }
@@ -215,7 +215,7 @@ RealVector& ParticleOnSphereWithSpinDensityOperator::LowLevelMultiply(RealVector
 	  {
 	    int Index = this->Particle->AduAd(i, this->CreationMomentumIndex, this->AnnihilationMomentumIndex, Coefficient);
 	    if (Index != Dim)
-	      vDestination[Index] = vSource[i] * Coefficient;      
+	      vDestination[Index] += vSource[i] * Coefficient;      
 	  }
 	break;
       }

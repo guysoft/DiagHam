@@ -173,7 +173,7 @@ Complex ParticleOnLatticeOneBodyOperator::PartialMatrixElement (ComplexVector& V
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-ComplexVector& ParticleOnLatticeOneBodyOperator::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent)
+ComplexVector& ParticleOnLatticeOneBodyOperator::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent)
 {
   int Dim = this->Particle->GetHilbertSpaceDimension();
   int Last = firstComponent + nbrComponent;;
@@ -184,8 +184,8 @@ ComplexVector& ParticleOnLatticeOneBodyOperator::LowLevelMultiply(ComplexVector&
       Index = this->Particle->AdA(i, this->CreationIndex, this->AnnihilationIndex, Coefficient);
       if ((Index<Dim)&&(Coefficient!=0.0))
 	{
-	  vDestination[Index].Re = vSource[i].Re * Coefficient;
-	  vDestination[Index].Im = vSource[i].Im * Coefficient;
+	  vDestination[Index].Re += vSource[i].Re * Coefficient;
+	  vDestination[Index].Im += vSource[i].Im * Coefficient;
 	}
     }
   return vDestination;

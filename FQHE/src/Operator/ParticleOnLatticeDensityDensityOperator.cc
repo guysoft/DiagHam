@@ -186,9 +186,9 @@ Complex ParticleOnLatticeDensityDensityOperator::PartialMatrixElement (ComplexVe
 // firstComponent = index of the first component to evaluate
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
-ComplexVector& ParticleOnLatticeDensityDensityOperator::LowLevelMultiply(ComplexVector& vSource,
-									 ComplexVector& vDestination, 
-									 int firstComponent, int nbrComponent)
+ComplexVector& ParticleOnLatticeDensityDensityOperator::LowLevelAddMultiply(ComplexVector& vSource,
+									    ComplexVector& vDestination, 
+									    int firstComponent, int nbrComponent)
 {
   int Dim = this->Particle->GetHilbertSpaceDimension();
   int Last = firstComponent + nbrComponent;;
@@ -198,7 +198,7 @@ ComplexVector& ParticleOnLatticeDensityDensityOperator::LowLevelMultiply(Complex
     {
       Index = this->Particle->AdAdAA(i, this->CreationIndex1, this->CreationIndex2, this->AnnihilationIndex1, this->AnnihilationIndex2, Coefficient);
       if (Index != Dim)
-	vDestination[Index] = vSource[i] * Coefficient;
+	vDestination[Index] += vSource[i] * Coefficient;
     }
   return vDestination;
 }

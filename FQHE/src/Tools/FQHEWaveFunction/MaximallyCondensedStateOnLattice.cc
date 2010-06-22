@@ -16,6 +16,9 @@ using std::cout;
 using std::endl;
 
 
+// flag for testing mode
+//#define TESTING
+
 // constructor for contact interactions on a square lattice
 //
 // nbrStates = number of quantum states
@@ -56,6 +59,8 @@ MaximallyCondensedStateOnLattice::MaximallyCondensedStateOnLattice(AbstractArchi
   this->M.Resize(DensityMatrixDimension,DensityMatrixDimension);
   this->Q.Resize(DensityMatrixDimension,DensityMatrixDimension); 
 
+  this->EvaluateDensityMatrices();
+  
   if (randomGenerator!=NULL)
     {
       this->RandomNumbers = randomGenerator;
@@ -99,6 +104,18 @@ void MaximallyCondensedStateOnLattice::SetVariationalParameters(RealVector &vari
   this->SphereParametrization.SetParameters(&(variationalParameters[0]));
 }
 
+// randomize trial parameters
+void MaximallyCondensedStateOnLattice::RandomizeVariationalParameters()
+{
+  int i=0;
+  for (; i<VariationalParameters.GetVectorDimension()/2; ++i)
+    VariationalParameters[i]=M_PI*RandomNumbers->GetRealRandomNumber();
+  for (; i<VariationalParameters.GetVectorDimension(); ++i)
+    VariationalParameters[i]=2.0*M_PI*RandomNumbers->GetRealRandomNumber();
+  this->SphereParametrization.SetParameters(&(VariationalParameters[0]));
+}
+
+
 // get the wavefunction corresponding to the current parameters
 // return = complex vector of local amplitudes and phases
 ComplexVector MaximallyCondensedStateOnLattice::GetWaveFunction()
@@ -120,7 +137,6 @@ double MaximallyCondensedStateOnLattice::Optimize(double tolerance, int maxIter)
 {
   double InitialStepSize=1.0;
   int EffectiveNbrVariationalParameters = SphereParametrization.GetNbrParameters();
-  cout << "Starting Optimization ";
   this->NbrEvaluations=0;
   int NbrPoints = 2 * EffectiveNbrVariationalParameters + 1;
   int rnf;
@@ -133,7 +149,7 @@ double MaximallyCondensedStateOnLattice::Optimize(double tolerance, int maxIter)
   MaximallyCondensedStateOnLattice *TargetObject=this;
   Result = NewUOA::newuoa(EffectiveNbrVariationalParameters, NbrPoints, x, InitialStepSize,
 			  tolerance, &rnf, maxIter, Work, TargetObject, TargetFunction);
-  cout << endl << "total: "<<NbrEvaluations<< " evaluations"<<endl;
+  cout << "total: "<<NbrEvaluations<< " evaluations"<<endl;
   delete [] Work;
   return Result;
 }
@@ -155,7 +171,7 @@ double MaximallyCondensedStateOnLattice::EvaluateCondensateFraction(int nbrParam
   this->SetVariationalParameters(this->VariationalParameters);
   Complex TmpC;
   Complex TmpC2;
-  this->CurrentDensityMatrix.ResizeAndClean(DensityMatrixDimension,DensityMatrixDimension);
+  this->CurrentDensityMatrix.ClearMatrix();
   this->ResultingParameters = SphereParametrization.GetComplexCoordinates();
   for (int n=0; n<NbrVectors; ++n)
     {
@@ -188,6 +204,7 @@ double MaximallyCondensedStateOnLattice::EvaluateCondensateFraction(int nbrParam
 	  CurrentHermitianMatrix.SetMatrixElement(i,j,TmpC);
 	}
     }
+  ++this->NbrEvaluations;
   CurrentHermitianMatrix.Diagonalize(M, Q, 1e-12, 1000);
   this->LastMaximumEV = M[DensityMatrixDimension-1];
   return this->LastMaximumEV;
@@ -203,6 +220,60 @@ void MaximallyCondensedStateOnLattice::EvaluateDensityMatrices()
   int CreationIndex, AnnihilationIndex;
   TargetVector.Resize(Vectors[0].GetVectorDimension());
   ParticleOnLatticeOneBodyOperator *DensityOperator= new ParticleOnLatticeOneBodyOperator(this->Space);
+#ifdef TESTING
+  // inefficient implementation, for testing
+  for (int n=0; n<NbrVectors; ++n)
+    for (int m=0; m<NbrVectors; ++m)
+      {
+	for (int CreationX=0; CreationX<this->Lx; ++CreationX)
+	  for (int CreationY=0; CreationY<this->Ly; ++CreationY)
+	    for (int CreationSub=0; CreationSub<this->NbrSubLattices; ++CreationSub)
+	      {
+		CreationIndex = Space->EncodeQuantumNumber(CreationX, CreationY, CreationSub, Tmp);	
+		for (int AnnihilationX=0; AnnihilationX<this->Lx; ++AnnihilationX)
+		  for (int AnnihilationY=0; AnnihilationY<this->Ly; ++AnnihilationY)
+		    for (int AnnihilationSub=0; AnnihilationSub<this->NbrSubLattices; ++AnnihilationSub)
+		      {
+			AnnihilationIndex = Space->EncodeQuantumNumber(AnnihilationX, AnnihilationY, AnnihilationSub, Tmp);
+			DensityOperator->SetCreationAnnihilationIndex(CreationIndex,AnnihilationIndex);
+			Tmp=DensityOperator->MatrixElement(Vectors[m], Vectors[n]);
+			CurrentDensityMatrix.SetMatrixElement(CreationIndex, AnnihilationIndex, Tmp);
+		      }
+	      }
+	cout << "<"<<m<<"|rho|"<<n<<">="<<endl<<CurrentDensityMatrix;
+      }
+
+  
+  ComplexVector TmpV1 (Vectors[0].GetVectorDimension(), true);
+  ComplexVector TmpV2 (Vectors[0].GetVectorDimension(), true);
+
+  ComplexMatrix TmpMatrix(Vectors[0].GetVectorDimension(),Vectors[0].GetVectorDimension());
+  for (int CreationX=0; CreationX<this->Lx; ++CreationX)
+    for (int CreationY=0; CreationY<this->Ly; ++CreationY)
+      for (int CreationSub=0; CreationSub<this->NbrSubLattices; ++CreationSub)
+	{
+	  CreationIndex = Space->EncodeQuantumNumber(CreationX, CreationY, CreationSub, Tmp);	
+	  for (int AnnihilationX=0; AnnihilationX<this->Lx; ++AnnihilationX)
+	    for (int AnnihilationY=0; AnnihilationY<this->Ly; ++AnnihilationY)
+	      for (int AnnihilationSub=0; AnnihilationSub<this->NbrSubLattices; ++AnnihilationSub)
+		{
+		  AnnihilationIndex = Space->EncodeQuantumNumber(AnnihilationX, AnnihilationY, AnnihilationSub, Tmp);
+		  DensityOperator->SetCreationAnnihilationIndex(CreationIndex,AnnihilationIndex);
+		  for (int i = 0; i < Vectors[0].GetVectorDimension(); i++)
+		    {
+		      TmpV1[i] = Complex(1.0, 0.0);
+		      DensityOperator->Multiply(TmpV1, TmpV2);
+		      for (int j = 0; j < Vectors[0].GetVectorDimension(); j++)
+			TmpMatrix.SetMatrixElement(i, j, TmpV2[j]);
+		      TmpV1[i] = Complex(0.0, 0.0);
+		    }
+		  cout << "Density operator (A^+_"<<CreationIndex<<" A_"<<AnnihilationIndex<<")="<<endl<<TmpMatrix<<endl;
+		}
+	}
+  for (int n=0; n<NbrVectors; ++n)
+    cout << "Vector["<<n<<"]="<<endl<<Vectors[n]<<endl;
+#endif
+  
   for (int n=0; n<NbrVectors; ++n)
     {
       for (int CreationX=0; CreationX<this->Lx; ++CreationX)
@@ -221,6 +292,13 @@ void MaximallyCondensedStateOnLattice::EvaluateDensityMatrices()
 		      Operation.ApplyOperation(this->Architecture);
 		      MultipleComplexScalarProductOperation Operation2(&TargetVector, Vectors, NbrVectors, ScalarProducts);
 		      Operation2.ApplyOperation(this->Architecture);
+#ifdef TESTING
+		      cout << "Checking operator multiplication: "<<endl;
+		      cout << TargetVector<<endl;
+		      for (int m=0; m<NbrVectors; ++m)
+			cout << "A^+_"<<CreationIndex<<" A_"<<AnnihilationIndex<<": Scalar Product ("<<n<<","<<m<<")="
+			     <<ScalarProducts[m]<<endl;
+#endif
 		      for (int m=0; m<n; ++m)
 			OffDiagonalDensityMatrices[(NbrVectors-1)*n+m].
 			  SetMatrixElement(CreationIndex, AnnihilationIndex, Conj(ScalarProducts[m]));
@@ -231,6 +309,18 @@ void MaximallyCondensedStateOnLattice::EvaluateDensityMatrices()
 		    }
 	    }
     }
+#ifdef TESTING
+  cout << "Diagonal matrices: "<<endl;
+  for (int n=0; n<NbrVectors; ++n)
+    cout << "<"<<n<<"|rho|"<<n<<">="<<endl<<DiagonalDensityMatrices[n];
+  cout << "Off-diagonal matrices: "<<endl;
+  for (int n=1; n<NbrVectors; ++n)
+    for (int m=0; m<n; ++m)
+      {
+	cout << "<"<<m<<"|rho|"<<n<<">="<<endl<<OffDiagonalDensityMatrices[(NbrVectors-1)*n+m];
+	cout << "<"<<n<<"|rho|"<<m<<">="<<endl<<OffDiagonalDensityMatrices[(NbrVectors-1)*m+n-1];
+      }
+#endif
   delete [] ScalarProducts;
   delete DensityOperator;
 }

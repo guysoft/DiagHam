@@ -151,7 +151,7 @@ Complex ParticleOnSphereNBodyOperator::PartialMatrixElement (RealVector& V1, Rea
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-RealVector& ParticleOnSphereNBodyOperator::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
+RealVector& ParticleOnSphereNBodyOperator::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
 							    int firstComponent, int nbrComponent)
 {
   int Last = firstComponent + nbrComponent;;
@@ -160,7 +160,7 @@ RealVector& ParticleOnSphereNBodyOperator::LowLevelMultiply(RealVector& vSource,
   for (int i = firstComponent; i < Last; ++i)
     {
       Index = this->Particle->ProdAdProdA(i, this->CreationIndices, this->AnnihilationIndices, this->NbrNBody, Coefficient);
-      vDestination[Index] = vSource[i] * Coefficient;
+      vDestination[Index] += vSource[i] * Coefficient;
     }
   return vDestination;
 }

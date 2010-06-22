@@ -189,6 +189,11 @@ class ComplexMatrix : public Matrix
   // nbrColumn = new number of columns
   void ResizeAndClean (int nbrRow, int nbrColumn);
 
+  // Set all entries in matrix to zero
+  //
+  void ClearMatrix ();
+
+
   // add two matrices
   //
   // M1 = first matrix

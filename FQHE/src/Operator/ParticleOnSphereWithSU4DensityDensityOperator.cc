@@ -309,8 +309,8 @@ Complex ParticleOnSphereWithSU4DensityDensityOperator::PartialMatrixElement (Rea
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-RealVector& ParticleOnSphereWithSU4DensityDensityOperator::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
-									    int firstComponent, int nbrComponent)
+RealVector& ParticleOnSphereWithSU4DensityDensityOperator::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+									       int firstComponent, int nbrComponent)
 {
   int Last = firstComponent + nbrComponent;;
   int Dim = this->Particle->GetHilbertSpaceDimension();
@@ -328,7 +328,7 @@ RealVector& ParticleOnSphereWithSU4DensityDensityOperator::LowLevelMultiply(Real
 	      {
 		int Index = this->Particle->AdupAdup(this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient2);
 		if (Index != Dim)
-		  vDestination[Index] = this->SignFactor * vSource[i] * Coefficient * Coefficient2;
+		  vDestination[Index] += this->SignFactor * vSource[i] * Coefficient * Coefficient2;
 	      }
 	  }
 	break;
@@ -342,7 +342,7 @@ RealVector& ParticleOnSphereWithSU4DensityDensityOperator::LowLevelMultiply(Real
 	      {
 		int Index = this->Particle->AdupAdum(this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient2);
 		if (Index != Dim)
-		  vDestination[Index] = this->SignFactor * vSource[i] * Coefficient * Coefficient2;
+		  vDestination[Index] += this->SignFactor * vSource[i] * Coefficient * Coefficient2;
 	      }
 	  }
 	break;
@@ -356,7 +356,7 @@ RealVector& ParticleOnSphereWithSU4DensityDensityOperator::LowLevelMultiply(Real
 	      {
 		int Index = this->Particle->AdupAddp(this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient2);
 		if (Index != Dim)
-		  vDestination[Index] = this->SignFactor * vSource[i] * Coefficient * Coefficient2;
+		  vDestination[Index] += this->SignFactor * vSource[i] * Coefficient * Coefficient2;
 	      }
 	  }
 	break;
@@ -370,7 +370,7 @@ RealVector& ParticleOnSphereWithSU4DensityDensityOperator::LowLevelMultiply(Real
 	      {
 		int Index = this->Particle->AdupAddm(this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient2);
 		if (Index != Dim)
-		  vDestination[Index] = this->SignFactor * vSource[i] * Coefficient * Coefficient2;
+		  vDestination[Index] += this->SignFactor * vSource[i] * Coefficient * Coefficient2;
 	      }
 	  }
 	break;
@@ -384,7 +384,7 @@ RealVector& ParticleOnSphereWithSU4DensityDensityOperator::LowLevelMultiply(Real
 	      {
 		int Index = this->Particle->AdumAdum(this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient2);
 		if (Index != Dim)
-		  vDestination[Index] = this->SignFactor * vSource[i] * Coefficient * Coefficient2;
+		  vDestination[Index] += this->SignFactor * vSource[i] * Coefficient * Coefficient2;
 	      }
 	  }
 	break;
@@ -398,7 +398,7 @@ RealVector& ParticleOnSphereWithSU4DensityDensityOperator::LowLevelMultiply(Real
 	      {
 		int Index = this->Particle->AdumAddp(this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient2);
 		if (Index != Dim)
-		  vDestination[Index] = this->SignFactor * vSource[i] * Coefficient * Coefficient2;
+		  vDestination[Index] += this->SignFactor * vSource[i] * Coefficient * Coefficient2;
 	      }
 	  }
 	break;
@@ -412,7 +412,7 @@ RealVector& ParticleOnSphereWithSU4DensityDensityOperator::LowLevelMultiply(Real
 	      {
 		int Index = this->Particle->AdumAddm(this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient2);
 		if (Index != Dim)
-		  vDestination[Index] = this->SignFactor * vSource[i] * Coefficient * Coefficient2;
+		  vDestination[Index] += this->SignFactor * vSource[i] * Coefficient * Coefficient2;
 	      }
 	  }
 	break;
@@ -426,7 +426,7 @@ RealVector& ParticleOnSphereWithSU4DensityDensityOperator::LowLevelMultiply(Real
 	      {
 		int Index = this->Particle->AddpAddp(this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient2);
 		if (Index != Dim)
-		  vDestination[Index] = this->SignFactor * vSource[i] * Coefficient * Coefficient2;
+		  vDestination[Index] += this->SignFactor * vSource[i] * Coefficient * Coefficient2;
 	      }
 	  }
 	break;
@@ -440,7 +440,7 @@ RealVector& ParticleOnSphereWithSU4DensityDensityOperator::LowLevelMultiply(Real
 	      {
 		int Index = this->Particle->AddpAddm(this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient2);
 		if (Index != Dim)
-		  vDestination[Index] = this->SignFactor * vSource[i] * Coefficient * Coefficient2;
+		  vDestination[Index] += this->SignFactor * vSource[i] * Coefficient * Coefficient2;
 	      }
 	  }
 	break;
@@ -454,7 +454,7 @@ RealVector& ParticleOnSphereWithSU4DensityDensityOperator::LowLevelMultiply(Real
 	      {
 		int Index = this->Particle->AddmAddm(this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient2);
 		if (Index != Dim)
-		  vDestination[Index] = this->SignFactor * vSource[i] * Coefficient * Coefficient2;
+		  vDestination[Index] += this->SignFactor * vSource[i] * Coefficient * Coefficient2;
 	      }
 	  }
 	break;

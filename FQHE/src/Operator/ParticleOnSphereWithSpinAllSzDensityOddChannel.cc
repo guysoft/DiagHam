@@ -161,7 +161,7 @@ Complex ParticleOnSphereWithSpinAllSzDensityOddChannel::MatrixElement (ComplexVe
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-RealVector& ParticleOnSphereWithSpinAllSzDensityOddChannel::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, int firstComponent, int nbrComponent)
+RealVector& ParticleOnSphereWithSpinAllSzDensityOddChannel::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, int firstComponent, int nbrComponent)
 {
   int Last = firstComponent + nbrComponent;
   int Index;

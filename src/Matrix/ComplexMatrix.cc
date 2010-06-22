@@ -416,6 +416,16 @@ void ComplexMatrix::ResizeAndClean (int nbrRow, int nbrColumn)
   return;
 }
 
+// Set all entries in matrix to zero
+//
+
+void ComplexMatrix::ClearMatrix ()
+{
+  for (int i = 0; i < this->NbrColumn; i++)
+    this->Columns[i].ClearVector();
+  return;
+}
+
 // add two matrices
 //
 // M1 = first matrix

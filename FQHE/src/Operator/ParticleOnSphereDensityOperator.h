@@ -112,8 +112,8 @@ class ParticleOnSphereDensityOperator : public AbstractOperator
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
-			       int firstComponent, int nbrComponent);
+  RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+				  int firstComponent, int nbrComponent);
   
 };
 

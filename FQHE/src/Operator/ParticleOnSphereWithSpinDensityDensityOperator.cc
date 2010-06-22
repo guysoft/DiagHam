@@ -206,7 +206,7 @@ Complex ParticleOnSphereWithSpinDensityDensityOperator::PartialMatrixElement (Re
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-RealVector& ParticleOnSphereWithSpinDensityDensityOperator::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
+RealVector& ParticleOnSphereWithSpinDensityDensityOperator::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
 									     int firstComponent, int nbrComponent)
 {
   int Last = firstComponent + nbrComponent;;
@@ -225,7 +225,7 @@ RealVector& ParticleOnSphereWithSpinDensityDensityOperator::LowLevelMultiply(Rea
 	      {
 		int Index = this->Particle->AduAdu(this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient2);
 		if (Index != Dim)
-		  vDestination[Index] = this->SignFactor * vSource[i] * Coefficient * Coefficient2;
+		  vDestination[Index] += this->SignFactor * vSource[i] * Coefficient * Coefficient2;
 	      }
 	  }
 	break;
@@ -239,7 +239,7 @@ RealVector& ParticleOnSphereWithSpinDensityDensityOperator::LowLevelMultiply(Rea
 	      {
 		int Index = this->Particle->AduAdd(this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient2);
 		if (Index != Dim)
-		  vDestination[Index] = this->SignFactor * vSource[i] * Coefficient * Coefficient2;
+		  vDestination[Index] += this->SignFactor * vSource[i] * Coefficient * Coefficient2;
 	      }
 	  }
 	break;
@@ -253,7 +253,7 @@ RealVector& ParticleOnSphereWithSpinDensityDensityOperator::LowLevelMultiply(Rea
 	      {
 		int Index = this->Particle->AddAdd(this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient2);
 		if (Index != Dim)
-		  vDestination[Index] = this->SignFactor * vSource[i] * Coefficient * Coefficient2;
+		  vDestination[Index] += this->SignFactor * vSource[i] * Coefficient * Coefficient2;
 	      }
 	  }
 	break;
