@@ -481,7 +481,7 @@ int main(int argc, char** argv)
 	  for (int i=0; i<NbrVectors; ++i)
 	    cout << " + " << Parameters[i] << " |"<<i<<">";
 	  cout << endl;
-	  cout << "with EV[0]_max = "<<GetDensityMatrixEigenvalue()<<endl;
+	  cout << "with EV[0]_max = "<<BestCondensate->GetDensityMatrixEigenvalue()<<endl;
 	  if (Manager.GetBoolean("save-vectors"))
 	    {
 	      char *OldBase = RemoveExtensionFromFileName(VectorFiles[0],".vec");

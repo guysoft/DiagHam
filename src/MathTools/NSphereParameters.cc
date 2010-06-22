@@ -69,9 +69,9 @@ NSphereParameters& NSphereParameters::operator = (const NSphereParameters& spher
   this->Dimension=sphere.Dimension;
   this->IsComplex=sphere.IsComplex;
   this->NbrParameters=sphere.NbrParameters;
-  this->ComplexCoordinates.Copy(sphere.ComplexCoordinates);
-  this->RealCoordinates.Copy(sphere.RealCoordinates);
-  this->Parameters.Copy(sphere.Parameters);
+  this->ComplexCoordinates=ComplexVector(sphere.ComplexCoordinates,true);
+  this->RealCoordinates= RealVector(sphere.RealCoordinates,true);
+  this->Parameters=RealVector(sphere.Parameters,true);
   for (int i=0; i<NbrParameters; ++i)
     {
       this->CosTable[i] = sphere.CosTable[i];
