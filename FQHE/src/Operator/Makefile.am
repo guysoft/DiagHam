@@ -21,4 +21,5 @@ ParticleOnSphereWithSpinAllSzExcitonOrder.cc \
 ParticleOnSphereWithSpinAllSzDensityOddChannel.cc \
 ParticleOnSphereWithSpinAllSzDensityDensityOddChannel.cc \
 ParticleOnSphereWithSpinLPlusUpOperator.cc \
-ParticleOnSphereWithSpinLPlusOperator.cc
+ParticleOnSphereWithSpinLPlusOperator.cc \
+ParticleOnLatticeMomentumOperator.cc

@@ -114,6 +114,15 @@ int PeriodicMomentumQuantumNumber::GetMomentum ()
   return this->Momentum;
 }
 
+// Get momentum
+//
+// return value = momentum
+
+int PeriodicMomentumQuantumNumber::GetPeriod () 
+{
+  return this->Period;
+}
+
 // add a quantum nunber to the current one
 //
 // number = quantum number to add 

@@ -103,6 +103,7 @@ SMPArchitecture::~SMPArchitecture()
 {
 #ifdef __SMP__
   delete[] this->Threads;
+  delete[] this->ThreadParameters;
 #endif
   if (this->LogFile != 0)
     delete[] this->LogFile;

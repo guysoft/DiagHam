@@ -204,13 +204,14 @@ ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::~ProjectedReorthogonalized
       if (NbrStorageVectors>0)
 	delete [] this->LanczosVectorStorage;
     }
-  delete [] TmpOutputName;
+  delete [] this->PreviousWantedEigenvalues;
   delete [] this->OrthogonalizationSet;
   delete [] this->OrthogonalizationCoef;  
   delete [] this->TmpCoefficient;
   delete [] this->TmpScalarProduct;
   delete [] this->TmpVectorArray;
   delete [] this->TmpVectorPtrArray;
+  delete [] TmpOutputName;
 }
 
 // initialize Lanczos algorithm with a random vector
@@ -894,6 +895,7 @@ bool ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::RunProjectorLanczosAl
       this->InternalTridiagonalizedMatrix.UpperDiagonalElement(this->InternalIndex) = TmpScalarProduct[0];
       this->InternalTridiagonalizedMatrix.DiagonalElement(this->InternalIndex + 1) = TmpScalarProduct[1];
     }
+  delete [] TmpCoefficient;
   if (this->PreviousProjectorGroundstate != 0.0)
     {
       this->PreviousProjectorGroundstate = this->InternalDiagonalizedMatrix.DiagonalElement(0);

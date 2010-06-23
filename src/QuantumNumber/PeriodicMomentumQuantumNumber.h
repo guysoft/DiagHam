@@ -94,6 +94,12 @@ class PeriodicMomentumQuantumNumber : public AbstractQuantumNumber
   // return value = momentum
   int GetMomentum ();
 
+  // Get period
+  //
+  // return value = Period
+  int GetPeriod ();
+
+
   // add a quantum nunber to the current one
   //
   // number = quantum number to add 

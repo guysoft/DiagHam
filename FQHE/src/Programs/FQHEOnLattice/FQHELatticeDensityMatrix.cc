@@ -10,6 +10,7 @@
 #include "Tools/FQHEWaveFunction/MaximallyCondensedStateOnLattice.h"
 
 #include "Operator/ParticleOnLatticeOneBodyOperator.h"
+#include "Operator/ParticleOnLatticeMomentumOperator.h"
 #include "Operator/ParticleOnLatticeTranslationOperator.h"
 
 #include "Architecture/ArchitectureManager.h"
@@ -105,9 +106,10 @@ int main(int argc, char** argv)
   (*MiscGroup) += new BooleanOption  ('\n', "joint", "evaluate joint density matrix for multiple vectors");
   (*MiscGroup) += new BooleanOption  ('\n', "equal", "only use equal weight superpositions of two vectors");
   (*MiscGroup) += new SingleIntegerOption ('s',"superpositions","in case of two input vectors, number of values for phase in superpositions",12);
-  (*MiscGroup) += new SingleIntegerOption ('\n',"max-iter","maximum number of iterations for optimizing condensate fraction",100);
+  (*MiscGroup) += new SingleIntegerOption ('\n',"max-iter","maximum number of iterations for optimizing condensate fraction",250);
   (*MiscGroup) += new SingleDoubleOption ('\n',"opt-tolerance","tolerance for optimizing condensate fraction",1e-4);
   (*MiscGroup) += new BooleanOption  ('\n', "opt-random", "start optimization from a randomized initial condition");
+  (*MiscGroup) += new BooleanOption  ('\n', "expansion", "obtain expansion image of state(s)");
   (*MiscGroup) += new BooleanOption  ('V', "verbose", "give additional output");  
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
@@ -543,9 +545,39 @@ int main(int argc, char** argv)
 	  cout << "Sum-EV["<<i<<"] = " << M2[DensityMatrixDimension2-1-i] << endl;
     }
 
+  if (Manager.GetBoolean("expansion"))
+    {
+      ComplexVector TmpState(VectorDimension);
+      ParticleOnLatticeMomentumOperator *MomentumOperator = new ParticleOnLatticeMomentumOperator(Space, Lx, Ly, NbrSubLattices);
+      char *DataFileName = new char[strlen(VectorFiles[0])+20];
+      for (int n=0; n<NbrVectors; ++n)
+	{
+	  sprintf(DataFileName,"%s.exp",VectorFiles[n]);
+	  ofstream DataFile(DataFileName);
+	  DataFile << "# kx\tky\trho"<<endl;
+	  for (int kx=0; kx<Lx; ++kx)
+	    for (int ky=0; ky<Ly; ++ky)
+	      {
+		MomentumOperator->SetMomentum(kx,ky);
+		VectorOperatorMultiplyOperation Operation (MomentumOperator, &(Vectors[n]), &TmpState);
+		Operation.ApplyOperation(Architecture.GetArchitecture());
+		if (kx<=Lx/2)
+		  DataFile << (2.0*kx*M_PI)/Lx;
+		else
+		  DataFile << (2.0*(kx-Lx)*M_PI)/Lx;
+		if (ky<=Ly/2)
+		  DataFile << "\t" << (2.0*ky*M_PI)/Ly;
+		else
+		  DataFile << "\t" << (2.0*(ky-Ly)*M_PI)/Ly;
+		DataFile << "\t" << (Vectors[n]*TmpState) << endl;
+	      }
+	  DataFile.close();
+	}
+      delete [] DataFileName;
+    }
   
   // stop here if we have a generic lattice -> translations as of yet not implemented
-  if (GenericLattice) exit(0);    
+  if (GenericLattice) exit(0);
 
   cout<< "====== Analysis of momentum eigenvalues ====="<<endl;
 

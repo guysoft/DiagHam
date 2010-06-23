@@ -104,6 +104,8 @@ AbstractQHEOnSphereHamiltonian::~AbstractQHEOnSphereHamiltonian()
       delete[] this->NbrInteractionPerComponent;
       this->FastMultiplicationFlag = false;
     }
+  if (this->LoadBalancingArray!=NULL)
+    delete [] this->LoadBalancingArray;
 }
 
 // set Hilbert space

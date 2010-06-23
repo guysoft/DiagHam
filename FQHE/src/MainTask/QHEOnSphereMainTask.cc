@@ -99,18 +99,16 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
 					 AbstractQHEHamiltonian* hamiltonian, int lValue, double shift, char* outputFileName,
 					 bool firstRun, char* eigenvectorFileName, int lzMax, AbstractHamiltonian** projectors, int nbrProjectors)
 {
-  this->OutputFileName = new char [strlen(outputFileName) + 1];
-  strncpy(this->OutputFileName, outputFileName, strlen(outputFileName));
-  this->OutputFileName[strlen(outputFileName)] = '\0';
+  this->OutputFileName = new char [strlen(outputFileName) + 2];
+  strcpy(this->OutputFileName, outputFileName);
   if (eigenvectorFileName == 0)
     {
       this->EigenvectorFileName = 0;
     }
   else
     {
-      this->EigenvectorFileName = new char [strlen(eigenvectorFileName) + 1];
-      strncpy(this->EigenvectorFileName, eigenvectorFileName, strlen(eigenvectorFileName));
-      this->EigenvectorFileName[strlen(eigenvectorFileName)] = '\0';
+      this->EigenvectorFileName = new char [strlen(eigenvectorFileName) + 2];
+      strcpy(this->EigenvectorFileName, eigenvectorFileName);
     }
   this->Hamiltonian = hamiltonian;
   this->Space = space;

@@ -34,6 +34,7 @@
 #include "HilbertSpace/BosonOnLattice.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/NumberParticleQuantumNumber.h"
+#include "QuantumNumber/PeriodicMomentumQuantumNumber.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Vector/RealVector.h"
 #include "FunctionBasis/AbstractFunctionBasis.h"
@@ -285,6 +286,7 @@ List<AbstractQuantumNumber*> BosonOnLatticeKy::GetQuantumNumbers ()
 {
   List<AbstractQuantumNumber*> TmpList;
   TmpList += new NumberParticleQuantumNumber(this->NbrBosons);
+  TmpList += new PeriodicMomentumQuantumNumber(this->Ky, this->Kmax);
   return TmpList;
 }
 
