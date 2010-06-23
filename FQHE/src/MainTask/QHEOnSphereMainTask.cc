@@ -100,7 +100,7 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
 					 bool firstRun, char* eigenvectorFileName, int lzMax, AbstractHamiltonian** projectors, int nbrProjectors)
 {
   this->OutputFileName = new char [strlen(outputFileName) + 2];
-  strcpy(this->OutputFileName, outputFileName);
+  sprintf(this->OutputFileName, "%s", outputFileName);
   if (eigenvectorFileName == 0)
     {
       this->EigenvectorFileName = 0;
@@ -108,7 +108,7 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
   else
     {
       this->EigenvectorFileName = new char [strlen(eigenvectorFileName) + 2];
-      strcpy(this->EigenvectorFileName, eigenvectorFileName);
+      sprintf(this->EigenvectorFileName, "%s", eigenvectorFileName);
     }
   this->Hamiltonian = hamiltonian;
   this->Space = space;
@@ -960,12 +960,13 @@ void QHEOnSphereMainTask::DiagonalizeInHilbertSubspace(char* subspaceDescription
 #endif
       if (this->EvaluateEigenvectors == true)
 	{
+	  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
 	  for (int j = 0; j < TmpHilbertSpaceDimension; ++j)
 	    {
-	      char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
 	      sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, j);
 	      Basis[j].WriteVector(TmpVectorName);
 	    }
+	  delete [] TmpVectorName;
 	}
     }
   else

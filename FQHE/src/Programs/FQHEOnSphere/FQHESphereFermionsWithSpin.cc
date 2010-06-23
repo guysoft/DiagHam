@@ -269,7 +269,7 @@ int main(int argc, char** argv)
 	}
     }
 
-  char* OutputNameLz = new char [512 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
+  char* OutputNameLz = new char [512 + strlen(Manager.GetString("interaction-name"))];
   char* ExtraTerms = new char[50];
   ExtraTerms[0]='\0';
   if (Manager.GetBoolean("project-l2-s2"))

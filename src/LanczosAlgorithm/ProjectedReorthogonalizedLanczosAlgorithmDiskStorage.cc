@@ -441,7 +441,6 @@ void ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::RunLanczosAlgorithm (
       Dimension = this->TridiagonalizedMatrix.GetNbrRow() + nbrIter;
       this->TridiagonalizedMatrix.Resize(Dimension, Dimension);
     }
-  double* TmpCoefficient = new double[2];
   double TmpScalarProduct[2];
   for (int i = this->Index + 2; i < Dimension; i++)
     {
@@ -895,7 +894,6 @@ bool ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::RunProjectorLanczosAl
       this->InternalTridiagonalizedMatrix.UpperDiagonalElement(this->InternalIndex) = TmpScalarProduct[0];
       this->InternalTridiagonalizedMatrix.DiagonalElement(this->InternalIndex + 1) = TmpScalarProduct[1];
     }
-  delete [] TmpCoefficient;
   if (this->PreviousProjectorGroundstate != 0.0)
     {
       this->PreviousProjectorGroundstate = this->InternalDiagonalizedMatrix.DiagonalElement(0);
