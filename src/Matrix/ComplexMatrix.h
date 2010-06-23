@@ -164,6 +164,16 @@ class ComplexMatrix : public Matrix
   // add a linear combination of another complex matrix
   // x = prefactor for added terms
   // M = added matrix
+  ComplexMatrix& AddLinearCombination(double x, const ComplexMatrix &M);
+
+  // add a linear combination of another complex matrix
+  // x = prefactor for added terms
+  // M = added matrix
+  ComplexMatrix& AddLinearCombination(double x, const HermitianMatrix &M);
+
+  // add a linear combination of another complex matrix
+  // x = prefactor for added terms
+  // M = added matrix
   ComplexMatrix& AddLinearCombination(const Complex &x, const ComplexMatrix &M);
 
   // add a linear combination of another complex matrix

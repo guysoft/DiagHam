@@ -102,6 +102,7 @@ int main(int argc, char** argv)
     (*SystemGroup) += new BooleanOption  ('\n', "normalize-phase", "change phase to make largest absolute value real and positive");
   (*OutputGroup) += new SingleDoubleOption  ('\n', "display-threshold", "only display values larger than threshold",0.0);
   (*MiscGroup) += new SingleIntegerOption ('\n', "nbr-density", "number of density matrix eigenstates to be written out",1);
+  (*MiscGroup) += new BooleanOption  ('\n', "joint", "evaluate joint density matrix for multiple vectors");
   (*MiscGroup) += new BooleanOption  ('\n', "equal", "only use equal weight superpositions of two vectors");
   (*MiscGroup) += new SingleIntegerOption ('s',"superpositions","in case of two input vectors, number of values for phase in superpositions",12);
   (*MiscGroup) += new SingleIntegerOption ('\n',"max-iter","maximum number of iterations for optimizing condensate fraction",100);
@@ -274,116 +275,119 @@ int main(int argc, char** argv)
  
   int DensityMatrixDimension = NbrSites*NbrVectors;
   HermitianMatrix Rho(DensityMatrixDimension);  
-
   Complex Tmp;
   int CreationIndex, AnnihilationIndex, TotalIndexI, TotalIndexJ;  
-  for (int CreationX=0; CreationX<Lx; ++CreationX)
-    for (int CreationY=0; CreationY<Ly; ++CreationY)
-      for (int CreationSub=0; CreationSub<NbrSubLattices; ++CreationSub)
-	{
-	  CreationIndex = Space->EncodeQuantumNumber(CreationX, CreationY, CreationSub, Tmp);
-	  for (int AnnihilationX=0; AnnihilationX<Lx; ++AnnihilationX)
-	    for (int AnnihilationY=0; AnnihilationY<Ly; ++AnnihilationY)
-	      for (int AnnihilationSub=0; AnnihilationSub<NbrSubLattices; ++AnnihilationSub)
-		{
-		  AnnihilationIndex = Space->EncodeQuantumNumber(AnnihilationX, AnnihilationY, AnnihilationSub, Tmp);
-		  DensityOperator->SetCreationAnnihilationIndex(CreationIndex,AnnihilationIndex);
-		  // calculate possible matrix elements in subspace of vectors
-		  for (int numVector=0; numVector<NbrVectors; ++numVector)
-		    for (int numVector2=0; numVector2<NbrVectors; ++numVector2)
-		      {
-			TotalIndexI = CreationIndex+numVector*NbrSites;
-			TotalIndexJ = AnnihilationIndex+numVector2*NbrSites;
-			if (TotalIndexI<=TotalIndexJ)
-			  {
-			    Tmp=DensityOperator->MatrixElement(Vectors[numVector], Vectors[numVector2]);
-			    Rho.SetMatrixElement(TotalIndexI,TotalIndexJ,Tmp);
-			  }
-		      }
-		}
-	}
-  
-  //cout << "Matrix="<<endl<<Rho<<endl;
-  // calculate eigenvalues & vectors of Rho
   double dynamics = Manager.GetDouble("dynamic-range");
   RealDiagonalMatrix M;
   ComplexMatrix Q;  
-  Rho.Diagonalize(M, Q, 1e-12, 1000);
-  for (int i=0; i<DensityMatrixDimension; ++i)
-    if (fabs(M[DensityMatrixDimension-1-i])>dynamics*M[DensityMatrixDimension-1])
-      cout << "EV["<<i<<"] = " << M[DensityMatrixDimension-1-i] << endl;
-  //cout << "Transition Matrix: "<<endl<<Q<<endl;
-  cout << "First Eigenvector: "<<endl;
-  Complex TmpC;
-  for (int i=0; i<DensityMatrixDimension; ++i)
-    {      
-      Q.GetMatrixElement(i,DensityMatrixDimension-1,TmpC);
-      cout << TmpC.Re << "+I*" << TmpC.Im << endl;
-    }
 
-  if (NbrVectors==1)
+  if ((NbrVectors==1)||(Manager.GetBoolean("joint")))
     {
-      // write eigenstate of density matrix in basis of Hilbert-space
-      char *RhoVecOut = new char[strlen(VectorFiles[0])+10];
-      ComplexVector EigenState(DensityMatrixDimension);
-      for (int s=0; s<Manager.GetInteger("nbr-density"); ++s)
-	{
-	  sprintf(RhoVecOut,"%s.dm%d",VectorFiles[0],s);
-      
-	  for (int i=0; i<DensityMatrixDimension; ++i)
+      for (int CreationX=0; CreationX<Lx; ++CreationX)
+	for (int CreationY=0; CreationY<Ly; ++CreationY)
+	  for (int CreationSub=0; CreationSub<NbrSubLattices; ++CreationSub)
 	    {
-	      Q.GetMatrixElement(i,DensityMatrixDimension-1-s,EigenState[DensityMatrixDimension-1-i]);
-	    }
-	  if (Manager.GetBoolean("normalize-phase"))
-	    {
-	      double MaxNorm=0.0;
-	      int MaxIndex=0;
-	      for (int i = 0; i < EigenState.GetVectorDimension();++i)
-		{
-		  if (Norm(EigenState[i])>MaxNorm)
+	      CreationIndex = Space->EncodeQuantumNumber(CreationX, CreationY, CreationSub, Tmp);
+	      for (int AnnihilationX=0; AnnihilationX<Lx; ++AnnihilationX)
+		for (int AnnihilationY=0; AnnihilationY<Ly; ++AnnihilationY)
+		  for (int AnnihilationSub=0; AnnihilationSub<NbrSubLattices; ++AnnihilationSub)
 		    {
-		      MaxNorm=Norm(EigenState[i]);
-		      MaxIndex=i;
+		      AnnihilationIndex = Space->EncodeQuantumNumber(AnnihilationX, AnnihilationY, AnnihilationSub, Tmp);
+		      DensityOperator->SetCreationAnnihilationIndex(CreationIndex,AnnihilationIndex);
+		      // calculate possible matrix elements in subspace of vectors
+		      for (int numVector=0; numVector<NbrVectors; ++numVector)
+			for (int numVector2=0; numVector2<NbrVectors; ++numVector2)
+			  {
+			    TotalIndexI = CreationIndex+numVector*NbrSites;
+			    TotalIndexJ = AnnihilationIndex+numVector2*NbrSites;
+			    if (TotalIndexI<=TotalIndexJ)
+			      {
+				Tmp=DensityOperator->MatrixElement(Vectors[numVector], Vectors[numVector2]);
+				Rho.SetMatrixElement(TotalIndexI,TotalIndexJ,Tmp);
+			      }
+			  }
 		    }
-		}
-	      EigenState *= Polar(1.0,-Arg(EigenState[MaxIndex]));
 	    }
-	  EigenState.WriteVector(RhoVecOut);
-	  if (Manager.GetBoolean("plot-density"))
-	    {
-	      sprintf(RhoVecOut,"%s.dm%d.dat",VectorFiles[0],s);
-	      ofstream DataFile(RhoVecOut);
-	      DataFile << "# X\tY\tv_x\tv_y"<<endl;
-	      int CellPosition[2];
-	      RealVector SitePosition;
-	      for (int x=0; x<Lx; ++x)
-		for (int y=0; y<Ly; ++y)
-		  for (int Sub=0; Sub<NbrSubLattices; ++Sub)
-		  {
-		    int q = Space->EncodeQuantumNumber(x, y, Sub, Tmp);
-		    double X,Y;
-		    if (GenericLattice)
-		      {
-			CellPosition[0]=x;
-			CellPosition[1]=y;
-			SitePosition = Lattice->GetSitePosition(CellPosition,Sub);
-			X=SitePosition[0];
-			Y=SitePosition[1];
-		      }
-		    else
-		      {
-			X=(double)x;
-			Y=(double)y;
-		      }
-		    DataFile << X<<"\t"<<Y<<"\t"<<EigenState[DensityMatrixDimension-1-q].Re<<"\t"<<EigenState[DensityMatrixDimension-1-q].Im<<endl;
-		  }
-	      DataFile.close();
-	    }
-		
+      
+      //cout << "Matrix="<<endl<<Rho<<endl;
+      // calculate eigenvalues & vectors of Rho
+      Rho.Diagonalize(M, Q, 1e-12, 1000);
+      for (int i=0; i<DensityMatrixDimension; ++i)
+	if (fabs(M[DensityMatrixDimension-1-i])>dynamics*M[DensityMatrixDimension-1])
+	  cout << "EV["<<i<<"] = " << M[DensityMatrixDimension-1-i] << endl;
+      //cout << "Transition Matrix: "<<endl<<Q<<endl;
+      cout << "First Eigenvector: "<<endl;
+      Complex TmpC;
+      for (int i=0; i<DensityMatrixDimension; ++i)
+	{      
+	  Q.GetMatrixElement(i,DensityMatrixDimension-1,TmpC);
+	  cout << TmpC.Re << "+I*" << TmpC.Im << endl;
 	}
-      delete [] RhoVecOut;
-    }  
-
+      
+      if (NbrVectors==1)
+	{
+	  // write eigenstate of density matrix in basis of Hilbert-space
+	  char *RhoVecOut = new char[strlen(VectorFiles[0])+10];
+	  ComplexVector EigenState(DensityMatrixDimension);
+	  for (int s=0; s<Manager.GetInteger("nbr-density"); ++s)
+	    {
+	      sprintf(RhoVecOut,"%s.dm%d",VectorFiles[0],s);
+	      
+	      for (int i=0; i<DensityMatrixDimension; ++i)
+		{
+		  Q.GetMatrixElement(i,DensityMatrixDimension-1-s,EigenState[DensityMatrixDimension-1-i]);
+		}
+	      if (Manager.GetBoolean("normalize-phase"))
+		{
+		  double MaxNorm=0.0;
+		  int MaxIndex=0;
+		  for (int i = 0; i < EigenState.GetVectorDimension();++i)
+		    {
+		      if (Norm(EigenState[i])>MaxNorm)
+			{
+			  MaxNorm=Norm(EigenState[i]);
+			  MaxIndex=i;
+			}
+		    }
+		  EigenState *= Polar(1.0,-Arg(EigenState[MaxIndex]));
+		}
+	      EigenState.WriteVector(RhoVecOut);
+	      if (Manager.GetBoolean("plot-density"))
+		{
+		  sprintf(RhoVecOut,"%s.dm%d.dat",VectorFiles[0],s);
+		  ofstream DataFile(RhoVecOut);
+		  DataFile << "# X\tY\tv_x\tv_y"<<endl;
+		  int CellPosition[2];
+		  RealVector SitePosition;
+		  for (int x=0; x<Lx; ++x)
+		    for (int y=0; y<Ly; ++y)
+		      for (int Sub=0; Sub<NbrSubLattices; ++Sub)
+			{
+			  int q = Space->EncodeQuantumNumber(x, y, Sub, Tmp);
+			  double X,Y;
+			  if (GenericLattice)
+			    {
+			      CellPosition[0]=x;
+			      CellPosition[1]=y;
+			      SitePosition = Lattice->GetSitePosition(CellPosition,Sub);
+			      X=SitePosition[0];
+			      Y=SitePosition[1];
+			    }
+			  else
+			    {
+			      X=(double)x;
+			      Y=(double)y;
+			    }
+			  DataFile << X<<"\t"<<Y<<"\t"<<EigenState[DensityMatrixDimension-1-q].Re<<"\t"<<EigenState[DensityMatrixDimension-1-q].Im<<endl;
+			}
+		  DataFile.close();
+		}
+	      
+	    }
+	  delete [] RhoVecOut;
+	}  
+    }
+      
   if (NbrVectors>=2)
     {
       if ((NbrVectors==2)&&(Manager.GetBoolean("equal")))

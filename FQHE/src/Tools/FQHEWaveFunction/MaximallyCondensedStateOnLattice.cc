@@ -178,7 +178,7 @@ double MaximallyCondensedStateOnLattice::EvaluateCondensateFraction(int nbrParam
       for (int m=0; m<n; ++m)
 	CurrentDensityMatrix.AddLinearCombination(this->ResultingParameters[n]*Conj(this->ResultingParameters[m]),
 					   OffDiagonalDensityMatrices[(NbrVectors-1)*n+m]);
-      CurrentDensityMatrix.AddLinearCombination(SqrNorm(this->ResultingParameters[n]),DiagonalDensityMatrices[n]);
+      CurrentDensityMatrix.AddLinearCombination(this->ResultingParameters[n]*Conj(this->ResultingParameters[n]),DiagonalDensityMatrices[n]);
       for (int m=n+1; m<NbrVectors; ++m)
 	CurrentDensityMatrix.AddLinearCombination(this->ResultingParameters[n]*Conj(this->ResultingParameters[m]),
 					   OffDiagonalDensityMatrices[(NbrVectors-1)*n+m-1]);
@@ -207,7 +207,7 @@ double MaximallyCondensedStateOnLattice::EvaluateCondensateFraction(int nbrParam
   ++this->NbrEvaluations;
   CurrentHermitianMatrix.Diagonalize(M, Q, 1e-12, 1000);
   this->LastMaximumEV = M[DensityMatrixDimension-1];
-  return this->LastMaximumEV;
+  return -this->LastMaximumEV;
 }
 
 // evaluate all interaction factors

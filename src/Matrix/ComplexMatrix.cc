@@ -788,6 +788,39 @@ ComplexMatrix& ComplexMatrix::operator += (const HermitianMatrix& M)
 // add a linear combination of another complex matrix
 // x = prefactor for added terms
 // M = added matrix
+ComplexMatrix& ComplexMatrix::AddLinearCombination(double x, const ComplexMatrix &M)
+{
+  if ((this->NbrColumn != M.NbrColumn) || (this->NbrRow != M.NbrRow))
+    return *this;
+  for (int i = 0; i < this->NbrColumn; i++)
+    this->Columns[i].AddLinearCombination(x,M.Columns[i]);
+  return *this;
+}
+
+// add a linear combination of another complex matrix
+// x = prefactor for added terms
+// M = added matrix
+ComplexMatrix& ComplexMatrix::AddLinearCombination(double x, const HermitianMatrix &M)
+{
+  if ((this->NbrColumn != M.NbrColumn) || (this->NbrRow != M.NbrRow))
+    return *this;
+  Complex TmpC;
+  for (int i = 0; i < this->NbrColumn; ++i)
+    {
+      this->Columns[i][i] += x*M.DiagonalElements[i];
+      for (int j = i+1; j < this->NbrColumn; ++j)
+	{
+	  M.GetMatrixElement(i, j, TmpC);
+	  this->Columns[j][i] += x*TmpC;
+	  this->Columns[i][j] += x*Conj(TmpC);
+	}
+    }
+  return *this;
+}
+
+// add a linear combination of another complex matrix
+// x = prefactor for added terms
+// M = added matrix
 ComplexMatrix& ComplexMatrix::AddLinearCombination(const Complex &x, const ComplexMatrix &M)
 {
   if ((this->NbrColumn != M.NbrColumn) || (this->NbrRow != M.NbrRow))
@@ -811,8 +844,8 @@ ComplexMatrix& ComplexMatrix::AddLinearCombination(const Complex &x, const Hermi
       for (int j = i+1; j < this->NbrColumn; ++j)
 	{
 	  M.GetMatrixElement(i, j, TmpC);
-	  this->Columns[i][j] += x*TmpC;
-	  this->Columns[j][i] += x*Conj(TmpC);
+	  this->Columns[j][i] += x*TmpC;
+	  this->Columns[i][j] += x*Conj(TmpC);
 	}
     }
   return *this;
