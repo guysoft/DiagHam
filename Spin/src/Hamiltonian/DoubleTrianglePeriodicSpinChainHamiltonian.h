@@ -6,9 +6,10 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//               class of double triangle spin chain  hamiltonian             //
+//                 class of double triangle spin chain  hamiltonian           //
+//                       with periodic boundary conditions                    //
 //                                                                            //
-//                        last modification : 13/12/2001                      //
+//                        last modification : 19/06/2010                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,8 +29,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef DOUBLETRIANGLESPINCHAINHAMILTONIAN_H
-#define DOUBLETRIANGLESPINCHAINHAMILTONIAN_H
+#ifndef DOUBLETRIANGLEPERIODICSPINCHAINHAMILTONIAN_H
+#define DOUBLETRIANGLEPERIODICSPINCHAINHAMILTONIAN_H
 
 
 #include "config.h"
@@ -44,21 +45,25 @@ using std::ostream;
 class MathematicaOutput;
 
 
-class DoubleTriangleSpinChainHamiltonian : public AbstractHamiltonian
+class DoubleTrianglePeriodicSpinChainHamiltonian : public AbstractHamiltonian
 {
 
  protected:
   
+  // pointer to the Hilbert space
   AbstractSpinChain* Chain;
 
+  // nearest neighbour coupling constant and half its value
   double J1;
   double HalfJ1;
+  // second nearest neighbour coupling constant and half its value
   double J2;
   double HalfJ2;
 
+  // number of spins
   int NbrSpin;
-  int NbrTriangle;
 
+  // temporary stoage for the Hamiltonian diagonal elements
   double* SzSzContributions;
 
  public:
@@ -66,20 +71,20 @@ class DoubleTriangleSpinChainHamiltonian : public AbstractHamiltonian
   // constructor from default datas
   //
   // chain = reference on Hilbert space of the associated system
-  // nbrTriangle = number of triangles
+  // nbrSpin = number of spins
   // j1 = nearest neighbour coupling constant
   // j2 = second nearest neighbour coupling constant
-  DoubleTriangleSpinChainHamiltonian(AbstractSpinChain* chain, int nbrTriangle, double j1, double j2);
+  DoubleTrianglePeriodicSpinChainHamiltonian(AbstractSpinChain* chain, int nbrSpin, double j1, double j2);
 
   // destructor
   //
-  ~DoubleTriangleSpinChainHamiltonian();
+  ~DoubleTrianglePeriodicSpinChainHamiltonian();
 
   // set chain
   // 
   // chain = pointer on Hilbert space of the associated system
   // return value = reference on current Hamiltonian
-  DoubleTriangleSpinChainHamiltonian& SetChain(AbstractSpinChain* chain);
+  DoubleTrianglePeriodicSpinChainHamiltonian& SetChain(AbstractSpinChain* chain);
 
   // set Hilbert space
   //
@@ -101,33 +106,29 @@ class DoubleTriangleSpinChainHamiltonian : public AbstractHamiltonian
   // shift = shift value
   void ShiftHamiltonian (double shift);
 
-  // evaluate matrix element
-  //
-  // V1 = vector to left multiply with current matrix
-  // V2 = vector to right multiply with current matrix
-  // return value = corresponding matrix element
-  Complex MatrixElement (RealVector& V1, RealVector& V2);
-  
-  // multiply a vector by the current hamiltonian for a given range of idinces 
-  // and store result in another vector, low level function (no architecture optimization)
+  // multiply a vector by the current hamiltonian for a given range of indices 
+  // and add result to another vector, low level function (no architecture optimization)
   //
   // vSource = vector to be multiplied
-  // vDestination = vector where result has to be stored
+  // vDestination = vector at which result has to be added
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
-		       int firstComponent, int nbrComponent);
+  RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+				  int firstComponent, int nbrComponent);
 
-  // return a list of left interaction operators
+  // multiply a set of vectors by the current hamiltonian for a given range of indices 
+  // and add result to another set of vectors, low level function (no architecture optimization)
   //
-  // return value = list of left interaction operators
-  List<Matrix*> LeftInteractionOperators();  
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors at which result has to be added
+  // nbrVectors = number of vectors that have to be evaluated together
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = pointer to the array of vectors where result has been stored
+  RealVector* LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors,
+					  int firstComponent, int nbrComponent);
 
-  // return a list of right interaction operators 
-  //
-  // return value = list of right interaction operators
-  List<Matrix*> RightInteractionOperators();  
 
  private:
  

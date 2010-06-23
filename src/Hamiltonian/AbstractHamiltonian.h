@@ -163,14 +163,14 @@ class AbstractHamiltonian
   // V1 = vector to left multiply with current matrix
   // V2 = vector to right multiply with current matrix
   // return value = corresponding matrix element
-  virtual Complex MatrixElement (RealVector& V1, RealVector& V2) = 0;
+  virtual Complex MatrixElement (RealVector& V1, RealVector& V2);
   
   // evaluate matrix element
   //
   // V1 = vector to left multiply with current matrix
   // V2 = vector to right multiply with current matrix
   // return value = corresponding matrix element
-  virtual Complex MatrixElement (ComplexVector& V1, ComplexVector& V2) = 0;
+  virtual Complex MatrixElement (ComplexVector& V1, ComplexVector& V2);
 
   // multiply a vector by the current hamiltonian and store result in another vector
   // low level function (no architecture optimization)

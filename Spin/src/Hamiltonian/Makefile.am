@@ -24,5 +24,5 @@ SpinChainHamiltonianWithTranslations.cc \
 NDMAPSpinChainHamiltonian.cc \
 AbstractSUNSpinHamiltonian.cc \
 AbstractSUNSpinOnLatticeHamiltonian.cc \
-SUNSpinOnLatticeQuadraticHamiltonian.cc
-
+SUNSpinOnLatticeQuadraticHamiltonian.cc \
+DoubleTrianglePeriodicSpinChainHamiltonian.cc

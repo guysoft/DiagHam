@@ -926,6 +926,20 @@ int Spin1Chain::SmiSzj (int i, int j, int state, double& coefficient)
   return this->HilbertSpaceDimension;
 }
 
+// translate a state assuming the system have periodic boundary conditions (increasing the site index)
+//
+// nbrTranslations = number of translations to apply
+// state = index of the state to translate 
+// return value = index of resulting state
+
+int Spin1Chain::TranslateState (int nbrTranslations, int state)
+{
+  unsigned long TmpState = this->ChainDescription[state];
+  TmpState = (((TmpState & (0x3ul << ((this->ChainLength - nbrTranslations) - 1ul)) << 1) << nbrTranslations)
+	      | (TmpState >> ((this->ChainLength - nbrTranslations) << 1)));
+  return this->FindStateIndex(TmpState);
+}
+
 // extract subspace with a fixed quantum number
 //
 // q = quantum number value

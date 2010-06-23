@@ -1,4 +1,4 @@
-SUBDIRS=
+SUBDIRS=SpinFiles
 
 noinst_LIBRARIES=libSpinTools.a
 

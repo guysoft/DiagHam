@@ -34,6 +34,7 @@
 
 #include "config.h"
 #include "HilbertSpace/AbstractSpinChain.h"
+#include "Matrix/RealSymmetricMatrix.h"
 
 #include <iostream>
 
@@ -57,11 +58,12 @@ class Spin1_2Chain : public AbstractSpinChain
   int LookUpPosition;
   int LookUpTableSize;
 
+  // array describing each n-nody state 
+  unsigned long* StateDescription;
+
  public:
 
-  unsigned long* ChainDescription;
 
- 
   // default constructor
   //
   Spin1_2Chain ();
@@ -248,6 +250,13 @@ class Spin1_2Chain : public AbstractSpinChain
   // return value = index of resulting state
   int SmiSzj (int i, int j, int state, double& coefficient);
 
+  // translate a state assuming the system have periodic boundary conditions (increasing the site index)
+  //
+  // nbrTranslations = number of translations to apply
+  // state = index of the state to translate 
+  // return value = index of resulting state
+  int TranslateState (int nbrTranslations, int state);
+
   // extract subspace with a fixed quantum number
   //
   // q = quantum number value
@@ -267,6 +276,13 @@ class Spin1_2Chain : public AbstractSpinChain
   // state = ID of the state to print
   // return value = reference on current output stream 
   ostream& PrintState (ostream& Str, int state);
+
+  // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition.
+  // 
+  // nbrSpinUp = number of spin up that belong to the subsytem 
+  // groundState = reference on the total system ground state
+  // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+  RealSymmetricMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrSpinUpSector, RealVector& groundState);
 
  private:
 

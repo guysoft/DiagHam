@@ -146,6 +146,34 @@ Matrix* AbstractHamiltonian::GetHamiltonian ()
   return TmpH;
 }
   
+// evaluate matrix element
+//
+// V1 = vector to left multiply with current matrix
+// V2 = vector to right multiply with current matrix
+// return value = corresponding matrix element
+
+Complex AbstractHamiltonian::MatrixElement (RealVector& V1, RealVector& V2)
+{
+  RealVector TmpVector (V2.GetVectorDimension(), true);
+  this->LowLevelMultiply(V2, TmpVector);
+  Complex Tmp = V1 * TmpVector;
+  return Tmp;
+}
+  
+// evaluate matrix element
+//
+// V1 = vector to left multiply with current matrix
+// V2 = vector to right multiply with current matrix
+// return value = corresponding matrix element
+
+Complex AbstractHamiltonian::MatrixElement (ComplexVector& V1, ComplexVector& V2)
+{
+  ComplexVector TmpVector (V2.GetVectorDimension(), true);
+  this->LowLevelMultiply(V2, TmpVector);
+  Complex Tmp = V1 * TmpVector;
+  return Tmp;
+}
+
 // multiply a vector by the current hamiltonian and store result in another vector
 // low level function (no architecture optimization)
 //
@@ -1646,7 +1674,7 @@ Vector& AbstractHamiltonian::Multiply(Vector& vSource, Vector& vDestination)
 Vector& AbstractHamiltonian::Multiply(Vector& vSource, Vector& vDestination, 
 				      int firstComponent, int nbrComponent)
 {
-  if ((vSource.GetVectorType() & Vector::DataTypeMask) != (vDestination.GetVectorType() & Vector::DataTypeMask))
+   if ((vSource.GetVectorType() & Vector::DataTypeMask) != (vDestination.GetVectorType() & Vector::DataTypeMask))
     return vDestination;
   if ((vSource.GetVectorType() & Vector::DataTypeMask) == Vector::RealDatas)
     {

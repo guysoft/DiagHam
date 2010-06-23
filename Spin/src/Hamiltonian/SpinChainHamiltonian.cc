@@ -56,10 +56,36 @@ SpinChainHamiltonian::SpinChainHamiltonian(AbstractSpinChain* chain, int nbrSpin
   this->Chain = chain;
   this->NbrSpin = nbrSpin;
   this->J = new double [this->NbrSpin - 1];
+  this->Jz = new double [this->NbrSpin - 1];
   this->HalfJ = new double [this->NbrSpin - 1];
   for (int i = 0; i < (this->NbrSpin - 1); i++)
     {
       this->J[i] = j[i];
+      this->Jz[i] = j[i];
+      this->HalfJ[i] = j[i] * 0.5;
+    }
+  this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
+  this->EvaluateDiagonalMatrixElements();
+}
+
+// constructor from default datas
+//
+// chain = reference on Hilbert space of the associated system
+// nbrSpin = number of spin
+// j = array containing coupling constants between spins along x and z
+// jz = array containing coupling constants between spins along z
+
+SpinChainHamiltonian::SpinChainHamiltonian(AbstractSpinChain* chain, int nbrSpin, double* j, double* jz)
+{
+  this->Chain = chain;
+  this->NbrSpin = nbrSpin;
+  this->J = new double [this->NbrSpin - 1];
+  this->Jz = new double [this->NbrSpin - 1];
+  this->HalfJ = new double [this->NbrSpin - 1];
+  for (int i = 0; i < (this->NbrSpin - 1); i++)
+    {
+      this->J[i] = j[i];
+      this->Jz[i] = jz[i];
       this->HalfJ[i] = j[i] * 0.5;
     }
   this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
@@ -72,6 +98,7 @@ SpinChainHamiltonian::SpinChainHamiltonian(AbstractSpinChain* chain, int nbrSpin
 SpinChainHamiltonian::~SpinChainHamiltonian() 
 {
   delete[] this->J;
+  delete[] this->Jz;
   delete[] this->HalfJ;
   delete[] this->SzSzContributions;
 }
@@ -387,7 +414,7 @@ void SpinChainHamiltonian::EvaluateDiagonalMatrixElements()
       this->SzSzContributions[i] = 0.0;
       for (int j = 0; j < (this->NbrSpin - 1); j++)
 	{
-	  this->SzSzContributions[i] += this->J[j] * this->Chain->SziSzj(j, j + 1, i);
+	  this->SzSzContributions[i] += this->Jz[j] * this->Chain->SziSzj(j, j + 1, i);
 	}
     }
 }

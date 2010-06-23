@@ -225,6 +225,13 @@ class Spin1Chain : public AbstractSpinChain
   // return value = index of resulting state
   int SmiSzj (int i, int j, int state, double& coefficient);
 
+  // translate a state assuming the system have periodic boundary conditions (increasing the site index)
+  //
+  // nbrTranslations = number of translations to apply
+  // state = index of the state to translate 
+  // return value = index of resulting state
+  int TranslateState (int nbrTranslations, int state);
+
   // extract subspace with a fixed quantum number
   //
   // q = quantum number value

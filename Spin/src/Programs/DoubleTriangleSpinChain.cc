@@ -2,7 +2,7 @@
 #include "Matrix/RealSymmetricMatrix.h"
 #include "Matrix/RealMatrix.h"
 
-#include "Hamiltonian/SpinChainHamiltonian.h"
+#include "Hamiltonian/DoubleTrianglePeriodicSpinChainHamiltonian.h"
 
 #include "HilbertSpace/Spin1_2Chain.h"
 #include "HilbertSpace/Spin1Chain.h"
@@ -38,7 +38,7 @@ int main(int argc, char** argv)
   cout.precision(14); 
 
   // some running options and help
-  OptionManager Manager ("GenericOpenSpinChain" , "0.01");
+  OptionManager Manager ("DoubleTriangleSpinChain" , "0.01");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
   OptionGroup* OutputGroup = new OptionGroup ("output options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
@@ -58,8 +58,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleIntegerOption ('p', "nbr-spin", "number of spins", 10);
   (*SystemGroup) += new  SingleIntegerOption ('\n', "initial-sz", "twice the initial sz sector that has to computed", 0);
   (*SystemGroup) += new  SingleIntegerOption ('\n', "nbr-sz", "number of sz value to evaluate (0 for all sz sectors)", 0);
-  (*SystemGroup) += new  SingleDoubleOption ('j', "j-value", "isotropic coupling constant value", 1.0);
-  (*SystemGroup) += new  SingleDoubleOption ('z', "djz-value", "delta compare to the coupling constant value along z", 0.0);
+  (*SystemGroup) += new  SingleDoubleOption ('j', "j1-value", "nearest neighbourg coupling constant value", 1.0);
+  (*SystemGroup) += new  SingleDoubleOption ('g', "j2-value", "second nearest neighbourg coupling constant value", 0.5);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -68,7 +68,7 @@ int main(int argc, char** argv)
   
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type GenericOpenSpinChain -h" << endl;
+      cout << "see man page for option syntax or type DoubleTriangleSpinChain -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)
@@ -79,29 +79,19 @@ int main(int argc, char** argv)
 
   int SpinValue = Manager.GetInteger("spin");
   int NbrSpins = Manager.GetInteger("nbr-spin");
-
+  if ((NbrSpins & 1) != 0)
+    {
+      cout << "the number of spin has to be even" << endl;
+      return -1;
+    }
   char* OutputFileName = new char [512];
   char* CommentLine = new char [512];
-  if ((SpinValue & 1) == 0)
-    {
-      sprintf (OutputFileName, "spin_%d_openchain_n_%d", (SpinValue / 2), NbrSpins);
-      sprintf (CommentLine, " open spin %d chain with %d sites \n# 2Sz ", (SpinValue / 2), NbrSpins);
-    }
-  else
-    {
-      sprintf (OutputFileName, "spin_%d_2_openchain_n_%d", SpinValue, NbrSpins);
-      sprintf (CommentLine, " open spin %d/2 chain with %d sites \n# 2Sz", SpinValue, NbrSpins);
-    }
+  double J1Value = Manager.GetDouble("j1-value");
+  double J2Value = Manager.GetDouble("j2-value");
+  sprintf (OutputFileName, "spin_%d_doubletrianglechain_j1_%f_j2_%f_n_%d", SpinValue, J1Value, J2Value, NbrSpins);
+  sprintf (CommentLine, " double triangle spin %d / 2 chain with %d sites j1=%f j2=%f \n# 2Sz ", SpinValue, NbrSpins, J1Value, J2Value);
   char* FullOutputFileName = new char [strlen(OutputFileName)+ 16];
   sprintf (FullOutputFileName, "%s.dat", OutputFileName);
-  double* JValues = new double [NbrSpins - 1];
-  JValues[0] = Manager.GetDouble("j-value");
-  for (int i = 1; i < (NbrSpins - 1); ++i)
-    JValues[i] = JValues[0];
-  double* JzValues = new double [NbrSpins - 1];
-  double TmpDeltaJz = Manager.GetDouble("djz-value");
-  for (int i = 0; i < (NbrSpins - 1); ++i)
-    JzValues[i] = JValues[i] + TmpDeltaJz;
 
   int MaxSzValue = NbrSpins * SpinValue;
   int InitalSzValue = MaxSzValue & 1;
@@ -135,7 +125,7 @@ int main(int argc, char** argv)
 	  }
 	}
       
-      SpinChainHamiltonian Hamiltonian (Chain, NbrSpins, JValues, JzValues);
+      DoubleTrianglePeriodicSpinChainHamiltonian Hamiltonian (Chain, NbrSpins, J1Value, J2Value);
       char* TmpSzString = new char[64];
       sprintf (TmpSzString, "%d", InitalSzValue);
       char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
