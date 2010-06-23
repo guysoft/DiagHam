@@ -419,7 +419,7 @@ int main(int argc, char** argv)
       char* EigenvectorName = 0;
       if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
 	{
-	  EigenvectorName = new char [120];
+	  EigenvectorName = new char [512];
 	  sprintf (EigenvectorName, "fermions_sphere_su2_%s%s_n_%d_2s_%d_sz_%d_lz_%d",
 		   ((SingleStringOption*) Manager["interaction-name"])->GetString(), ExtraTerms,
 		   NbrFermions, LzMax, SzTotal, L);

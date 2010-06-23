@@ -99,7 +99,7 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
 					 AbstractQHEHamiltonian* hamiltonian, int lValue, double shift, char* outputFileName,
 					 bool firstRun, char* eigenvectorFileName, int lzMax, AbstractHamiltonian** projectors, int nbrProjectors)
 {
-  this->OutputFileName = new char [strlen(outputFileName) + 2];
+  this->OutputFileName = new char [strlen(outputFileName) + 16];
   sprintf(this->OutputFileName, "%s", outputFileName);
   if (eigenvectorFileName == 0)
     {
@@ -107,7 +107,7 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
     }
   else
     {
-      this->EigenvectorFileName = new char [strlen(eigenvectorFileName) + 2];
+      this->EigenvectorFileName = new char [strlen(eigenvectorFileName) + 16];
       sprintf(this->EigenvectorFileName, "%s", eigenvectorFileName);
     }
   this->Hamiltonian = hamiltonian;
