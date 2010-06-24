@@ -68,7 +68,7 @@ SMPArchitecture::SMPArchitecture(int nbrThreads, char* logFile)
   if (logFile != 0)
     {
       this->VerboseModeFlag = true;
-      this->LogFile = new char [strlen(logFile) + 1];
+      this->LogFile = new char [strlen(logFile) + 8];
       strcpy (this->LogFile, logFile);
       ofstream File;
       File.open(this->LogFile, ios::out);
