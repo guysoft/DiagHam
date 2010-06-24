@@ -108,9 +108,14 @@ long  AbstractQHEOnTorusNBodyInteractionHamiltonian::GetAllSkewSymmetricIndices 
 	    }
 	}
     }
-
-  int MaxSum = (((nbrValues - 1) * nbrValues) - ((nbrIndices - 1) * (nbrIndices - 2)))/ 2;
-  int MinSum = (nbrIndices * (nbrIndices - 1)) / 2;
+  
+  for (int i = 0; i < NbrElements; ++i)
+    {
+      Sum[i] = (Sum[i] % nbrValues);
+    }
+  
+  int MaxSum = (nbrValues - 1);
+  int MinSum = 0;
   nbrSortedIndicesPerSum = new int [MaxSum + 1];
   sortedIndicesPerSum = new int* [MaxSum + 1];
   for (int i = 0; i <= MaxSum; ++i)
@@ -156,8 +161,7 @@ long  AbstractQHEOnTorusNBodyInteractionHamiltonian::GetAllSkewSymmetricIndices 
 // return value = total number of index groups
 
 long AbstractQHEOnTorusNBodyInteractionHamiltonian::GetAllSymmetricIndices (int nbrValues, int nbrIndices, int*& nbrSortedIndicesPerSum, 
-									    int**& sortedIndicesPerSum,
-									    double**& sortedIndicesPerSumSymmetryFactor)
+									    int**& sortedIndicesPerSum, double**& sortedIndicesPerSumSymmetryFactor)
 {
   long** DimensionSymmetricGroup;
   if (nbrValues >= nbrIndices)
@@ -165,7 +169,7 @@ long AbstractQHEOnTorusNBodyInteractionHamiltonian::GetAllSymmetricIndices (int 
   else
     DimensionSymmetricGroup = GetIrreducibleRepresentationDimensionSymmetricGroup(nbrIndices);
   long NbrElements = DimensionSymmetricGroup[nbrValues][nbrIndices];
-
+  
   int** Indices = new int* [NbrElements];
   int* Sum = new int [NbrElements];
   int Max;
@@ -210,8 +214,13 @@ long AbstractQHEOnTorusNBodyInteractionHamiltonian::GetAllSymmetricIndices (int 
 	    }
 	}
     }
-
-  int MaxSum = (nbrValues - 1) * nbrIndices;
+  
+  for (int i = 0; i < NbrElements; ++i)
+    {
+      Sum[i] = (Sum[i] % nbrValues);
+    }
+		
+  int MaxSum = nbrValues - 1;
   long* TmpPos = new long [MaxSum + 1];
   nbrSortedIndicesPerSum = new int [MaxSum + 1];
   sortedIndicesPerSum = new int* [MaxSum + 1];
@@ -239,6 +248,7 @@ long AbstractQHEOnTorusNBodyInteractionHamiltonian::GetAllSymmetricIndices (int 
 	  sortedIndicesPerSum[Pos][TmpPos[Pos]] = TmpIndices[j];
 	  ++TmpPos[Pos];
 	}
+      
       double& SymmetryFactor = sortedIndicesPerSumSymmetryFactor[Pos][Max];
       SymmetryFactor = 1.0;
       for (int j = 1; j < nbrIndices; ++j)
@@ -257,7 +267,7 @@ long AbstractQHEOnTorusNBodyInteractionHamiltonian::GetAllSymmetricIndices (int 
       SymmetryFactor = 1.0 / SymmetryFactor;
       ++nbrSortedIndicesPerSum[Pos];
     }
-
+			       
   delete[] TmpPos;
   delete[] Sum;
   delete[]Indices;
@@ -266,4 +276,3 @@ long AbstractQHEOnTorusNBodyInteractionHamiltonian::GetAllSymmetricIndices (int 
   delete[] DimensionSymmetricGroup;
   return NbrElements;
 }
-

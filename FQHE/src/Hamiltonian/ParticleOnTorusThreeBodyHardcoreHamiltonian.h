@@ -3,11 +3,11 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2001-2004 Nicolas Regnault                  //
+//                 Copyright (C) 2001-2004 Antoine Sterdyniak                 //
 //                                                                            //
 //                                                                            //
-//       class of hamiltonian associated to particles on a torus with        //
-//                          generic 3-body interaction                        //
+//       class of hamiltonian associated to particles on a torus with         //
+//                          hardcore 3-body interaction                       //
 //                                                                            //
 //                        last modification : 04/06/2010                      //
 //                                                                            //
@@ -46,7 +46,7 @@ using std::ostream;
 class ClebschGordanCoefficients;
 
 
-class ParticleOnTorusGenericThreeBodyHamiltonian : public AbstractQHEOnTorusNBodyInteractionHamiltonian
+class ParticleOnTorusThreeBodyHardcoreHamiltonian : public AbstractQHEOnTorusNBodyInteractionHamiltonian
 {
 
  protected:
@@ -58,7 +58,7 @@ class ParticleOnTorusGenericThreeBodyHamiltonian : public AbstractQHEOnTorusNBod
 
   // default constructor
   //
-  ParticleOnTorusGenericThreeBodyHamiltonian();
+  ParticleOnTorusThreeBodyHardcoreHamiltonian();
 
   // constructor from default datas
   //
@@ -69,27 +69,48 @@ class ParticleOnTorusGenericThreeBodyHamiltonian : public AbstractQHEOnTorusNBod
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnTorusGenericThreeBodyHamiltonian(ParticleOnTorus* particles, int nbrParticles, int lzmax,
-					     AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
-					     char* precalculationFileName = 0);
+  ParticleOnTorusThreeBodyHardcoreHamiltonian(ParticleOnTorus* particles, int nbrParticles, int lzmax,double ratio,
+					      AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
+					      char* precalculationFileName = 0);
 
   // destructor
   //
-  ~ParticleOnTorusGenericThreeBodyHamiltonian();
-
+  ~ParticleOnTorusThreeBodyHardcoreHamiltonian();
+  
   // clone hamiltonian without duplicating datas
   //
   // return value = pointer to cloned hamiltonian
   AbstractHamiltonian* Clone ();
 
-
+	
+  // set Hilbert space
+  //
+  // hilbertSpace = pointer to Hilbert space to use
+  void SetHilbertSpace (AbstractHilbertSpace* hilbertSpace);
+  
+  // shift Hamiltonian from a given energy
+  //
+  // shift = shift value
+  void ShiftHamiltonian (double shift);
+  
+  // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a+_m3 a_n1 a_n2 a_n3 coupling term
+  //
+  // m1 = first creation operator index
+  // m2 = second creation operator index
+  // m3 = third creation operator index
+  // n1 = first annihilation operator index
+  // n2 = second annihilation operator index
+  // n3 = thrid annihilation operator index
+  //
+  // return value = numerical coefficient  
+  virtual double EvaluateInteractionCoefficient(int m1, int m2, int m3, int n1,int n2, int n3);
+  
  protected:
  
   // evaluate all interaction factors
   //   
   virtual void EvaluateInteractionFactors();
-
-
+	
 };
 
 #endif

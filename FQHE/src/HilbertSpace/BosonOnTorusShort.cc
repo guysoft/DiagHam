@@ -323,6 +323,176 @@ Matrix& BosonOnTorusShort::Ad (int i, Matrix& M)
   return M;
 }
 
+// apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
+//
+// index = index of the state on which the operator has to be applied
+// n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
+// nbrIndices = number of creation (or annihilation) operators
+// return value =  multiplicative factor 
+
+double BosonOnTorusShort::ProdA (int index, int* n, int nbrIndices)
+{
+  this->FermionToBoson(this->StateDescription[index], this->StateKyMax[index]  + this->NbrBosons - 1, this->ProdATemporaryState, this->ProdATemporaryStateKyMax);
+  int TmpCoefficient = 1;
+  for (int i = nbrIndices - 1; i >= 0; --i)
+    {
+      if (n[i] > this->ProdATemporaryStateKyMax)
+	return 0.0;
+      unsigned long& Tmp = this->ProdATemporaryState[n[i]];
+      if (Tmp == 0)
+	return 0.0;
+      TmpCoefficient *= Tmp;
+      --Tmp;
+    }
+  for (int i = this->ProdATemporaryStateKyMax + 1; i < this->NbrKyValue; ++i)
+    this->ProdATemporaryState[i] = 0;
+  return sqrt((double) TmpCoefficient);
+}
+
+// apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
+//
+// m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+// nbrIndices = number of creation (or annihilation) operators
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int BosonOnTorusShort::ProdAd (int* m, int nbrIndices, double& coefficient)
+{
+  this->TemporaryStateKyMax=this->ProdATemporaryStateKyMax;
+  for (int i = 0; i < this->NbrKyValue; ++i)
+    this->TemporaryState[i] = this->ProdATemporaryState[i];
+  
+  int TmpCoefficient = 1;
+  for (int i = 0; i < nbrIndices; ++i)
+    {
+      if(m[i]>this->TemporaryStateKyMax)
+	this->TemporaryStateKyMax=m[i];
+      TmpCoefficient *= ++this->TemporaryState[m[i]];
+    }
+  coefficient = sqrt((double) TmpCoefficient);
+  while (this->TemporaryState[this->TemporaryStateKyMax] == 0)
+    --this->TemporaryStateKyMax;
+  return this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateKyMax), this->TemporaryStateKyMax + this->NbrBosons -1 );
+}
+
+// apply a^+_m a_m operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation and annihilation operator
+// return value = coefficient obtained when applying a^+_m a_m
+
+double BosonOnTorusShort::AdA (int index, int m)
+{
+  this->FermionToBoson(this->StateDescription[index], this->StateKyMax[index]  + this->NbrBosons - 1, this->TemporaryState, this->TemporaryStateKyMax);
+  if (this->TemporaryStateKyMax < m)  
+    return 0.0;
+  return (double) (this->TemporaryState[m]);  
+}
+
+
+// apply a^+_m a_n operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int BosonOnTorusShort::AdA (int index, int m, int n, double& coefficient)
+{
+  this->FermionToBoson(this->StateDescription[index], this->StateKyMax[index], this->TemporaryState, this->TemporaryStateKyMax);
+  if ((this->TemporaryStateKyMax < n)  || (this->TemporaryState[n] == 0))
+    { 
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;      
+    }
+  coefficient = (double) this->TemporaryState[n];
+  --this->TemporaryState[n];
+  if ((this->TemporaryStateKyMax == n) && (this->TemporaryState[n] == 0))
+    {
+      while (this->TemporaryState[this->TemporaryStateKyMax] == 0)
+	--this->TemporaryStateKyMax;
+    }
+  if (this->TemporaryStateKyMax < m) 
+    {
+      for (int i = this->TemporaryStateKyMax + 1; i <= m; ++i)
+	this->TemporaryState[i] = 0;
+      this->TemporaryStateKyMax = m;
+    }
+  ++this->TemporaryState[m];
+  coefficient *= (double) this->TemporaryState[m];
+  coefficient = sqrt(coefficient);  
+  return this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateKyMax), this->TemporaryStateKyMax + this->NbrBosons - 1);
+}
+
+// apply a^+_m1 a^+_m2 operator to the state produced using AA method (without destroying it)
+//
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int BosonOnTorusShort::AdAd (int m1, int m2, double& coefficient)
+{
+  for (int i = 0; i < this->NbrKyValue; ++i)
+    this->TemporaryState[i] = this->ProdATemporaryState[i];
+  ++this->TemporaryState[m2];
+  coefficient = this->TemporaryState[m2];
+  ++this->TemporaryState[m1];
+  coefficient *= this->TemporaryState[m1];
+  coefficient = sqrt(coefficient);
+  this->TemporaryStateKyMax = this->KyMax;
+  while (this->TemporaryState[this->TemporaryStateKyMax] == 0)
+    --this->TemporaryStateKyMax;
+  return this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateKyMax), this->TemporaryStateKyMax + this->NbrBosons - 1);
+}
+
+// apply a_n1 a_n2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next AdAd call
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator
+// n2 = second index for annihilation operator
+// return value =  multiplicative factor 
+
+double BosonOnTorusShort::AA (int index, int n1, int n2)
+{
+  this->FermionToBoson(this->StateDescription[index], this->StateKyMax[index], this->ProdATemporaryState, this->ProdATemporaryStateKyMax);
+  if ((n1 > this->ProdATemporaryStateKyMax) || (n2 > this->ProdATemporaryStateKyMax) || 
+      (this->ProdATemporaryState[n1] == 0) || (this->ProdATemporaryState[n2] == 0) || ((n1 == n2) && (this->ProdATemporaryState[n1] == 1)))
+    {
+      return 0.0;
+    }
+  double Coefficient = this->ProdATemporaryState[n2];
+  --this->ProdATemporaryState[n2];
+  Coefficient *= this->ProdATemporaryState[n1];
+  --this->ProdATemporaryState[n1];
+  for (int i = this->ProdATemporaryStateKyMax + 1; i < this->NbrKyValue; ++i)
+    this->ProdATemporaryState[i] = 0ul;
+  return sqrt(Coefficient);
+}
+
+// print a given State using the monomial notation
+//
+// Str = reference on current output stream 
+// state = ID of the state to print
+// return value = reference on current output stream 
+
+ostream& BosonOnTorusShort::PrintStateMonomial (ostream& Str, int state)
+{
+  unsigned long* TmpMonomial = new unsigned long [this->NbrBosons];
+  cout << this->StateDescription[state] << endl;
+  this->ConvertToMonomial(this->StateDescription[state], this->StateKyMax[state] + this->NbrBosons - 1, TmpMonomial);
+  Str << "[";
+  if (TmpMonomial[0] != 0)
+    Str << TmpMonomial[0];
+  for (int i = 1; (i < this->NbrBosons) && (TmpMonomial[i] > 0); ++i)
+    Str << "," << TmpMonomial[i];
+  Str << "]";
+  delete[] TmpMonomial;
+  return Str;
+}
+
+
 // find state index
 //
 // stateDescription = array describing the state
@@ -768,7 +938,6 @@ RealSymmetricMatrix  BosonOnTorusShort::EvaluatePartialDensityMatrixParticlePart
       unsigned long* TmpMonomial3 = new unsigned long [this->NbrBosons];
       cout << "ComplementaryKySector = " << ComplementaryKySector << endl;
       BosonOnTorusShort TmpHilbertSpace(this->NbrBosons - 1, this->KyMax, ComplementaryKySector);
-      unsigned long ShiftedLzVSector = kySector;
       FactorialCoefficient Factorial;
 //       for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
 // 	TmpHilbertSpace.PrintState(cout, MinIndex) << " | " << TmpHilbertSpace.StateKyMax[MinIndex] << " | " << hex << TmpHilbertSpace.StateDescription[MinIndex] << dec << endl;

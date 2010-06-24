@@ -3,11 +3,11 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2001-2004 Nicolas Regnault                  //
+//                 Copyright (C) 2001-2004 Antoine Sterdyniak                 //
 //                                                                            //
 //                                                                            //
-//        class of hamiltonian associated to particles on a torus with        //
-//                          generic 3-body interaction                        //
+//       class of hamiltonian associated to particles on a torus with         //
+//                          hardcore 3-body interaction                       //
 //                                                                            //
 //                        last modification : 04/06/2010                      //
 //                                                                            //
@@ -30,7 +30,7 @@
 
 
 #include "config.h"
-#include "Hamiltonian/ParticleOnTorusGenericThreeBodyHamiltonian.h"
+#include "Hamiltonian/ParticleOnTorusThreeBodyHardcoreHamiltonian.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "MathTools/ClebschGordanCoefficients.h"
   
@@ -46,7 +46,7 @@ using std::endl;
 // default constructor
 //
 
-ParticleOnTorusGenericThreeBodyHamiltonian::ParticleOnTorusGenericThreeBodyHamiltonian()
+ParticleOnTorusThreeBodyHardcoreHamiltonian::ParticleOnTorusThreeBodyHardcoreHamiltonian()
 {
 }
 
@@ -60,7 +60,7 @@ ParticleOnTorusGenericThreeBodyHamiltonian::ParticleOnTorusGenericThreeBodyHamil
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
-ParticleOnTorusGenericThreeBodyHamiltonian::ParticleOnTorusGenericThreeBodyHamiltonian(ParticleOnTorus* particles, int nbrParticles, int lzmax, 
+ParticleOnTorusThreeBodyHardcoreHamiltonian::ParticleOnTorusThreeBodyHardcoreHamiltonian(ParticleOnTorus* particles, int nbrParticles, int lzmax, double ratio,
 										       AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, 
 										       char* precalculationFileName)
 {
@@ -68,35 +68,9 @@ ParticleOnTorusGenericThreeBodyHamiltonian::ParticleOnTorusGenericThreeBodyHamil
   this->LzMax = lzmax;
   this->NbrLzValue = this->LzMax + 1;
   this->NbrParticles = nbrParticles;
-  this->FullTwoBodyFlag = false;
-  if (pseudoPotential != 0)
-    {
-      this->PseudoPotential = new double [this->NbrLzValue];
-      for (int i = 0; i < this->NbrLzValue; ++i)
-	this->PseudoPotential[i] = pseudoPotential[this->LzMax - i];
-      cout << "Setting up two-body potential" << endl;
-      this->FullTwoBodyFlag = true;
-    }
-  else
-    {
-      this->FullTwoBodyFlag = false;
-    }
-
-  this->OneBodyTermFlag = false;
-  if (onebodyPotentials != 0)
-    {
-      this->OneBodyPotentials = new double [this->NbrLzValue];
-      for (int i = 0; i < this->NbrLzValue; ++i)
-	this->OneBodyPotentials[i] = onebodyPotentials[this->LzMax - i];
-      cout << "Setting up one-body potential" << endl;
-      this->OneBodyTermFlag = true;
-    }
-  else
-    {
-      this->OneBodyTermFlag = false;
-    }
-
   this->MaxNBody = 3;
+  this->Ratio = ratio;
+  this->InvRatio = 1.0 / ratio;
   this->NBodyFlags = new bool [this->MaxNBody + 1];
   this->NBodyInteractionFactors = new double** [this->MaxNBody + 1];
   this->NbrSortedIndicesPerSum = new int* [this->MaxNBody + 1];
@@ -104,20 +78,13 @@ ParticleOnTorusGenericThreeBodyHamiltonian::ParticleOnTorusGenericThreeBodyHamil
   this->MinSumIndices = new int [this->MaxNBody + 1];
   this->MaxSumIndices = new int [this->MaxNBody + 1];
   this->NBodySign = new double[this->MaxNBody + 1];
-
   this->NbrNIndices = new long[this->MaxNBody + 1];
   this->NIndices = new int*[this->MaxNBody + 1];
   this->NbrMIndices = new long*[this->MaxNBody + 1];
   this->MIndices = new int**[this->MaxNBody + 1];
   this->MNNBodyInteractionFactors = new double**[this->MaxNBody + 1];
-
-  this->MaxRelativeAngularMomentum = maxRelativeAngularMomentum;
-  this->NbrThreeBodyPseudoPotential = maxRelativeAngularMomentum;
-  this->ThreeBodyPseudoPotential = new double[this->NbrThreeBodyPseudoPotential + 1];
-  for (int i = 0; i <= this->NbrThreeBodyPseudoPotential; ++i)
-    this->ThreeBodyPseudoPotential[i] = threeBodyPseudoPotential[i];
-  this->NormalizeFlag=normalizePPs;
-
+  this->OneBodyTermFlag = false;
+  this->FullTwoBodyFlag = false;
   for (int k = 0; k <= this->MaxNBody; ++k)
     {
       this->MinSumIndices[k] = 1;
@@ -131,6 +98,7 @@ ParticleOnTorusGenericThreeBodyHamiltonian::ParticleOnTorusGenericThreeBodyHamil
   this->Architecture = architecture;
   this->EvaluateInteractionFactors();
   this->HamiltonianShift = 0.0;
+  this->L2Operator = 0;
   long MinIndex;
   long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
@@ -148,10 +116,10 @@ ParticleOnTorusGenericThreeBodyHamiltonian::ParticleOnTorusGenericThreeBodyHamil
 	    if (TmpMemory < (1 << 20))
 	      cout  << "fast = " << (TmpMemory >> 10) << "kb ";
 	    else
-	  if (TmpMemory < (1 << 30))
-	    cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
-	  else
-	    cout  << "fast = " << (TmpMemory >> 30) << "Gb ";
+	      if (TmpMemory < (1 << 30))
+		cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
+	      else
+		cout  << "fast = " << (TmpMemory >> 30) << "Gb ";
 	  if (this->DiskStorageFlag == false)
 	    {
 	      this->EnableFastMultiplication();
@@ -170,20 +138,12 @@ ParticleOnTorusGenericThreeBodyHamiltonian::ParticleOnTorusGenericThreeBodyHamil
     }
   else
     this->LoadPrecalculation(precalculationFileName);
-  if (l2Factor != 0.0)
-    {
-      this->L2Operator = new ParticleOnTorusL2Hamiltonian(this->Particles, this->NbrParticles, this->LzMax, this->Particles->GetLzValue() , this->Architecture, l2Factor);
-    }
-  else
-    {
-      this->L2Operator = 0;
-    }
 }
 
 // destructor
 //
 
-ParticleOnTorusGenericThreeBodyHamiltonian::~ParticleOnTorusGenericThreeBodyHamiltonian()
+ParticleOnTorusThreeBodyHardcoreHamiltonian::~ParticleOnTorusThreeBodyHardcoreHamiltonian()
 {
   for (int k = 1; k <= this->MaxNBody; ++k)
     if (this->NBodyFlags[k] == true)
@@ -211,14 +171,13 @@ ParticleOnTorusGenericThreeBodyHamiltonian::~ParticleOnTorusGenericThreeBodyHami
 	    delete[] this->MNNBodyInteractionFactors[k];
 	  }
       }
-
+  
   delete[] this->NbrNIndices;
   delete[] this->NIndices;
   delete[] this->NbrMIndices;
   delete[] this->MIndices;
   delete[] this->MNNBodyInteractionFactors;
-  delete[] this->ThreeBodyPseudoPotential;
-
+  
   delete[] this->NBodyFlags;
   delete[] this->NBodyInteractionFactors;
   delete[] this->SortedIndicesPerSum;
@@ -226,82 +185,60 @@ ParticleOnTorusGenericThreeBodyHamiltonian::~ParticleOnTorusGenericThreeBodyHami
   delete[] this->MinSumIndices;
   delete[] this->MaxSumIndices;
   delete[] this->NBodySign;
-  if (this->L2Operator != 0)
-    delete this->L2Operator;
-  if (this->FullTwoBodyFlag == true)
-    {
-      delete[] this->InteractionFactors;
-      delete[] this->M1Value;
-      delete[] this->M2Value;
-      delete[] this->M3Value;
-      delete[] this->PseudoPotential;
-    }
-  if (this->OneBodyTermFlag == true)
-    {
-      delete[] this->OneBodyInteractionFactors;
-      delete[] this->OneBodyPotentials;
-      delete[] this->OneBodyMValues;
-      delete[] this->OneBodyNValues;
-    }
 }
 
 // clone hamiltonian without duplicating datas
 //
 // return value = pointer to cloned hamiltonian
 
-AbstractHamiltonian* ParticleOnTorusGenericThreeBodyHamiltonian::Clone ()
+AbstractHamiltonian* ParticleOnTorusThreeBodyHardcoreHamiltonian::Clone ()
 {
   return 0;
 }
 
+// set Hilbert space
+//
+// hilbertSpace = pointer to Hilbert space to use
+
+void ParticleOnTorusThreeBodyHardcoreHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
+{
+  delete[] this->InteractionFactors;
+  if (this->FastMultiplicationFlag == true)
+    {
+      for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); ++i)
+	{
+	  delete[] this->InteractionPerComponentIndex[i];
+	  delete[] this->InteractionPerComponentCoefficient[i];
+	}
+      delete[] this->InteractionPerComponentIndex;
+      delete[] this->InteractionPerComponentCoefficient;
+      delete[] this->NbrInteractionPerComponent;
+    }
+  this->Particles = (ParticleOnTorus*) hilbertSpace;
+  this->EvaluateInteractionFactors();
+}
+
+// shift Hamiltonian from a given energy
+//
+// shift = shift value
+
+void ParticleOnTorusThreeBodyHardcoreHamiltonian::ShiftHamiltonian (double shift)
+{
+  this->HamiltonianShift = shift;
+}
 
 // evaluate all interaction factors
 //   
 
-void ParticleOnTorusGenericThreeBodyHamiltonian::EvaluateInteractionFactors()
+void ParticleOnTorusThreeBodyHardcoreHamiltonian::EvaluateInteractionFactors()
 {
-  double* TmpNormalizationCoeffients = new double[this->NbrLzValue];
-  double TmpFactor = ((double) this->NbrLzValue) / (4.0 * M_PI);
-  double TmpBinomial = 1.0;
-  TmpNormalizationCoeffients[0] = sqrt (TmpBinomial * TmpFactor);
-  for (int i = 1; i < this->NbrLzValue; ++i)
-    {
-      TmpBinomial *= this->LzMax - ((double) i) + 1.0;
-      TmpBinomial /= ((double) i);
-      TmpNormalizationCoeffients[i] = sqrt (TmpBinomial * TmpFactor);
-    }
   if (this->Particles->GetParticleStatistic() == ParticleOnTorus::FermionicStatistic)
     {
     }
   else
     {
       this->MinSumIndices[3] = 0;
-      this->MaxSumIndices[3] = this->LzMax * 3;
-      double* TmpInteractionCoeffients = new double[this->MaxSumIndices[3] + 1];
-      double Coefficient;
-      TmpInteractionCoeffients[0] = 1.0;
-      TmpInteractionCoeffients[1] = 1.0;
-      for (int i = 2; i <= this->MaxSumIndices[3]; ++i)
-	{
-	  Coefficient = 1.0;
-	  for (int j = 1; j < i; ++j)
-	    {
-	      double Coefficient2 = TmpInteractionCoeffients[j];
-	      TmpInteractionCoeffients[j] += Coefficient;
-	      Coefficient = Coefficient2;
-	    }
-	  TmpInteractionCoeffients[i] = 1.0;
-	}
-      Coefficient = 4.0 * M_PI / (((double) this->MaxSumIndices[3]) + 1.0);
-      double Radius = 2.0 / ((double) this->LzMax);
-      for (int i = 2; i <= 3; ++i)
-	{
-	  Coefficient *= (double) (i * i);	  
-	  Coefficient *= Radius;
-	}
-      for (int i = 0; i <= this->MaxSumIndices[3]; ++i)
-	TmpInteractionCoeffients[i] = sqrt(Coefficient / TmpInteractionCoeffients[i]);
-      
+      this->MaxSumIndices[3] = this->LzMax;
       double** SortedIndicesPerSumSymmetryFactor;
       GetAllSymmetricIndices(this->NbrLzValue, 3, this->NbrSortedIndicesPerSum[3], this->SortedIndicesPerSum[3],
 			     SortedIndicesPerSumSymmetryFactor);
@@ -310,30 +247,20 @@ void ParticleOnTorusGenericThreeBodyHamiltonian::EvaluateInteractionFactors()
       long TmpNbrNIndices = 0;
       for (int MinSum = 0; MinSum <= this->MaxSumIndices[3]; ++MinSum)
 	TmpNbrNIndices += this->NbrSortedIndicesPerSum[3][MinSum];
+      cout <<"TmpNbrNIndices = "<<TmpNbrNIndices<<endl;
       this->NbrNIndices[3] = TmpNbrNIndices;
       this->NIndices[3] = new int[TmpNbrNIndices * 3];
       this->NbrMIndices[3] = new long[TmpNbrNIndices];
       this->MIndices[3] = new int*[TmpNbrNIndices];
       this->MNNBodyInteractionFactors[3] = new double* [TmpNbrNIndices];
-      TmpNbrNIndices = 0;	 
+      TmpNbrNIndices = 0;
       int* TmpNIndices = this->NIndices[3];
       for (int MinSum = 0; MinSum <= this->MaxSumIndices[3]; ++MinSum)
 	{
 	  int Lim = this->NbrSortedIndicesPerSum[3][MinSum];
 	  double* TmpSymmetryFactors = SortedIndicesPerSumSymmetryFactor[MinSum];
 	  int* TmpNIndices2 = this->SortedIndicesPerSum[3][MinSum];
-	  int TmpMaxRelativeMomentum = 10;
-	  if (this->MaxRelativeAngularMomentum <= TmpMaxRelativeMomentum)
-	    TmpMaxRelativeMomentum = this->MaxRelativeAngularMomentum;
-	  int TmpSum = TmpNIndices2[0] + TmpNIndices2[1] + TmpNIndices2[2];
-	  while (((3 * this->LzMax) - TmpMaxRelativeMomentum)  < TmpSum)
-	    --TmpMaxRelativeMomentum;
-	  double** TmpProjectorCoefficients = new double* [TmpMaxRelativeMomentum + 1];
-	  if (this->ThreeBodyPseudoPotential[0] != 0.0)
-	    TmpProjectorCoefficients[0] = this->ComputeProjectorCoefficients(0, 1, TmpNIndices2, Lim);
-	  for (int i = 2; i <= TmpMaxRelativeMomentum; ++i)  
-	    if (this->ThreeBodyPseudoPotential[i] != 0.0)
-	      TmpProjectorCoefficients[i] = this->ComputeProjectorCoefficients(2 * i, 1, TmpNIndices2, Lim);
+	  
 	  for (int i = 0; i < Lim; ++i)
 	    {
 	      this->NbrMIndices[3][TmpNbrNIndices] = Lim;		    
@@ -344,22 +271,59 @@ void ParticleOnTorusGenericThreeBodyHamiltonian::EvaluateInteractionFactors()
 	      double* TmpInteraction = this->MNNBodyInteractionFactors[3][TmpNbrNIndices];
 	      for (int j = 0; j < Lim; ++j)
 		{
-		  double Coefficient2 = TmpSymmetryFactors[j];
+		  double& TmpInteraction2 = TmpInteraction[j];
+		  
+		  TmpInteraction2 = 0.0;
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[0],TmpMIndices2[1],TmpMIndices2[2],TmpNIndices2[0],TmpNIndices2[1],TmpNIndices2[2]);
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[0],TmpMIndices2[1],TmpMIndices2[2],TmpNIndices2[0],TmpNIndices2[2],TmpNIndices2[1]);
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[0],TmpMIndices2[1],TmpMIndices2[2],TmpNIndices2[1],TmpNIndices2[0],TmpNIndices2[2]);
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[0],TmpMIndices2[1],TmpMIndices2[2],TmpNIndices2[1],TmpNIndices2[2],TmpNIndices2[0]);
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[0],TmpMIndices2[1],TmpMIndices2[2],TmpNIndices2[2],TmpNIndices2[0],TmpNIndices2[1]);
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[0],TmpMIndices2[1],TmpMIndices2[2],TmpNIndices2[2],TmpNIndices2[1],TmpNIndices2[0]);
+		  
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[0],TmpMIndices2[2],TmpMIndices2[1],TmpNIndices2[0],TmpNIndices2[1],TmpNIndices2[2]);
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[0],TmpMIndices2[2],TmpMIndices2[1],TmpNIndices2[0],TmpNIndices2[2],TmpNIndices2[1]);
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[0],TmpMIndices2[2],TmpMIndices2[1],TmpNIndices2[1],TmpNIndices2[0],TmpNIndices2[2]);
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[0],TmpMIndices2[2],TmpMIndices2[1],TmpNIndices2[1],TmpNIndices2[2],TmpNIndices2[0]);
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[0],TmpMIndices2[2],TmpMIndices2[1],TmpNIndices2[2],TmpNIndices2[0],TmpNIndices2[1]);
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[0],TmpMIndices2[2],TmpMIndices2[1],TmpNIndices2[2],TmpNIndices2[1],TmpNIndices2[0]);
+		  
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[1],TmpMIndices2[0],TmpMIndices2[2],TmpNIndices2[0],TmpNIndices2[1],TmpNIndices2[2]);
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[1],TmpMIndices2[0],TmpMIndices2[2],TmpNIndices2[0],TmpNIndices2[2],TmpNIndices2[1]);
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[1],TmpMIndices2[0],TmpMIndices2[2],TmpNIndices2[1],TmpNIndices2[0],TmpNIndices2[2]);
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[1],TmpMIndices2[0],TmpMIndices2[2],TmpNIndices2[1],TmpNIndices2[2],TmpNIndices2[0]);
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[1],TmpMIndices2[0],TmpMIndices2[2],TmpNIndices2[2],TmpNIndices2[0],TmpNIndices2[1]);
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[1],TmpMIndices2[0],TmpMIndices2[2],TmpNIndices2[2],TmpNIndices2[1],TmpNIndices2[0]);
+		  
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[1],TmpMIndices2[2],TmpMIndices2[0],TmpNIndices2[0],TmpNIndices2[1],TmpNIndices2[2]);
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[1],TmpMIndices2[2],TmpMIndices2[0],TmpNIndices2[0],TmpNIndices2[2],TmpNIndices2[1]);
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[1],TmpMIndices2[2],TmpMIndices2[0],TmpNIndices2[1],TmpNIndices2[0],TmpNIndices2[2]);
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[1],TmpMIndices2[2],TmpMIndices2[0],TmpNIndices2[1],TmpNIndices2[2],TmpNIndices2[0]);
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[1],TmpMIndices2[2],TmpMIndices2[0],TmpNIndices2[2],TmpNIndices2[0],TmpNIndices2[1]);
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[1],TmpMIndices2[2],TmpMIndices2[0],TmpNIndices2[2],TmpNIndices2[1],TmpNIndices2[0]);
+		  
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[2],TmpMIndices2[0],TmpMIndices2[1],TmpNIndices2[0],TmpNIndices2[1],TmpNIndices2[2]);
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[2],TmpMIndices2[0],TmpMIndices2[1],TmpNIndices2[0],TmpNIndices2[2],TmpNIndices2[1]);
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[2],TmpMIndices2[0],TmpMIndices2[1],TmpNIndices2[1],TmpNIndices2[0],TmpNIndices2[2]);
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[2],TmpMIndices2[0],TmpMIndices2[1],TmpNIndices2[1],TmpNIndices2[2],TmpNIndices2[0]);
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[2],TmpMIndices2[0],TmpMIndices2[1],TmpNIndices2[2],TmpNIndices2[0],TmpNIndices2[1]);
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[2],TmpMIndices2[0],TmpMIndices2[1],TmpNIndices2[2],TmpNIndices2[1],TmpNIndices2[0]);
+		  
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[2],TmpMIndices2[1],TmpMIndices2[0],TmpNIndices2[0],TmpNIndices2[1],TmpNIndices2[2]);
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[2],TmpMIndices2[1],TmpMIndices2[0],TmpNIndices2[0],TmpNIndices2[2],TmpNIndices2[1]);
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[2],TmpMIndices2[1],TmpMIndices2[0],TmpNIndices2[1],TmpNIndices2[0],TmpNIndices2[2]);
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[2],TmpMIndices2[1],TmpMIndices2[0],TmpNIndices2[1],TmpNIndices2[2],TmpNIndices2[0]);
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[2],TmpMIndices2[1],TmpMIndices2[0],TmpNIndices2[2],TmpNIndices2[0],TmpNIndices2[1]);
+		  TmpInteraction2 += this->EvaluateInteractionCoefficient(TmpMIndices2[2],TmpMIndices2[1],TmpMIndices2[0],TmpNIndices2[2],TmpNIndices2[1],TmpNIndices2[0]);
+		  
+		  TmpInteraction2 *= TmpSymmetryFactors[i] * TmpSymmetryFactors[j];
+		  
 		  for (int l = 0; l < 3; ++l)
 		    {
-		      Coefficient2 *= TmpNormalizationCoeffients[(*TmpMIndices2)];		    
 		      (*TmpMIndices) = (*TmpMIndices2);			
 		      ++TmpMIndices;
 		      ++TmpMIndices2;
-		    }			
-		  double& TmpInteraction2 = TmpInteraction[j];
-		  TmpInteraction2 = 0.0;
-		  if (this->ThreeBodyPseudoPotential[0] != 0.0)
-		    TmpInteraction2 += this->ThreeBodyPseudoPotential[0] * TmpProjectorCoefficients[0][i] * TmpProjectorCoefficients[0][j];
-		  for (int k = 2; k <= TmpMaxRelativeMomentum; ++k)  
-		    if (this->ThreeBodyPseudoPotential[k] != 0.0)
-		      TmpInteraction2 += this->ThreeBodyPseudoPotential[k] * TmpProjectorCoefficients[k][i] * TmpProjectorCoefficients[k][j];
-		  TmpInteraction2 *= TmpSymmetryFactors[i] * TmpSymmetryFactors[j];
+		    }
 		}
 	      for (int j = 0; j < 3; ++j)
 		{
@@ -368,21 +332,329 @@ void ParticleOnTorusGenericThreeBodyHamiltonian::EvaluateInteractionFactors()
 		  ++TmpNIndices2;
 		}
 	      ++TmpNbrNIndices;
-	    }		
-	  if (this->ThreeBodyPseudoPotential[0] != 0.0)
-	    delete[] TmpProjectorCoefficients[0];
-	  for (int i = 2; i <= TmpMaxRelativeMomentum; ++i)  
-	    if (this->ThreeBodyPseudoPotential[i] != 0.0)
-	      delete[] TmpProjectorCoefficients[i];
-	  delete[] TmpProjectorCoefficients;		
+	    }
 	}
       for (int MinSum = 0; MinSum <= this->MaxSumIndices[3]; ++MinSum)
 	{
 	  delete[] SortedIndicesPerSumSymmetryFactor[MinSum];
 	}
       delete[] SortedIndicesPerSumSymmetryFactor;
-      delete[] TmpInteractionCoeffients;
     }
-  delete[] TmpNormalizationCoeffients;
 }
 
+// evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a+_m3 a_n1 a_n2 a_n3 coupling term
+//
+// m1 = first creation operator index
+// m2 = second creation operator index
+// m3 = third creation operator index
+// n1 = first annihilation operator index
+// n2 = second annihilation operator index
+// n3 = thrid annihilation operator index
+//
+// return value = numerical coefficient
+
+double ParticleOnTorusThreeBodyHardcoreHamiltonian::EvaluateInteractionCoefficient(int m1, int m2, int m3, int n1,int n2, int n3)
+{
+  double DoubleNbrLzValue = (double) this->NbrLzValue;
+  double PIOnM = M_PI / DoubleNbrLzValue ;
+  double ResultNy2 = 0.0;
+  double ResultNy1 = 0.0;
+  double ResultNx2 = 0.0;
+  double ResultNx1 = 0.0;
+  double Nx1;
+  double Nx2;
+  double Q1;
+  double Q2;
+  double Q3;
+  double Q4;
+  double Q5;
+  double IniNy1 = (double) (m1 - n3);
+  double Ny1 = IniNy1;
+  double IniNy2 = (double) (n1 - m3);
+  double Ny2 = IniNy2;
+  double PremFactor1 = ((2.0 * ((double) (m1 - n2))) - Ny2)* PIOnM;
+  double PremFactor2 = ((2.0 * ((double) (n2 - m3))) - Ny1) * PIOnM;
+  double Factor1 = PremFactor1;
+  double Factor2 = PremFactor2;
+  double Precision = 1.0;
+  double Precision1 = 1.0;
+  double Coefficient = 1.0;
+  double Coefficient1 = 1.0;
+  double Coefficient2 = 1.0;
+  //cout << "coef " << m1 << " "  << m2 << " "  << m3 << " "  << n1 << " "<< n2 << " "<< n3 << endl;
+  
+  while ((fabs(ResultNy2) + fabs(Coefficient)) != fabs(ResultNy2))
+    {
+      Q1 = this->Ratio * Ny2 * Ny2;
+      if (Ny2 != 0.0)
+	Coefficient = exp(- PIOnM * Q1);
+      else
+	Coefficient = 1.0;
+      ResultNy1 = 0.0;
+      Ny1 = IniNy1;
+      Factor2 = PremFactor2;
+      Coefficient1 = 1.0;
+      while ((fabs(ResultNy1) + fabs(Coefficient1)) != fabs(ResultNy1))
+	{
+	  Q2 = this->Ratio * Ny1 * (Ny1 - Ny2);
+	  if ((Ny1 == 0.0)||(Ny1 == Ny2))
+	    Coefficient1 = 1.0;
+	  else
+	    Coefficient1 = exp(- PIOnM * Q2);
+	  
+	  
+	  ResultNx2 = 1.0 ; // Nx1 = 0 Nx2 = 0
+	  Precision1 = ResultNx2 ;
+	  Nx2 = 1.0;
+	  while ((fabs(ResultNx2) + Precision1) != fabs(ResultNx2)) // Nx1 = 0 Nx2!=0
+	    {
+	      Q5 = this->InvRatio * Nx2 * Nx2;
+	      Precision1 = 2.0 * exp(- PIOnM * Q5);
+	      ResultNx2 += Precision1 * cos (Nx2 * Factor2);
+	      Nx2 += 1.0;
+	    }
+	  ResultNx1 = ResultNx2;
+	  Nx1 = 1.0;
+	  Coefficient2 = 1.0;
+	  while ((fabs(ResultNx1) + fabs(Coefficient2)) != fabs(ResultNx1))
+	    {
+	      ResultNx2 =  2.0 * cos(Nx1 * Factor1); // Nx1 != 0 Nx2=0
+	      Q3 = this->InvRatio * Nx1 * Nx1;
+	      Coefficient2 = exp(- PIOnM * Q3);
+	      Precision = 2.0;
+	      Precision1 = 2.0;
+	      Nx2 = 1.0;
+	      while ((fabs(ResultNx2) + Precision + Precision1) != fabs(ResultNx2))// Nx1 != 0 Nx2!=0
+		{
+		  Q4 = this->InvRatio * Nx2 * (Nx2 - Nx1);
+		  Q5 = this->InvRatio * Nx2 * (Nx2 + Nx1);
+		  if (Nx1 == Nx2)
+		    Precision = 2.0;
+		  else
+		    Precision = 2.0 * exp(- PIOnM * Q4);
+		  Precision1 = 2.0 * exp(- PIOnM * Q5);
+		  ResultNx2 += (Precision * cos (Nx1 * Factor1 + Nx2 * Factor2) + Precision1 * cos(Nx1 * Factor1 - Nx2 * Factor2));
+		  Nx2 += 1.0;
+		}
+	      ResultNx1 += Coefficient2 * ResultNx2;
+	      Nx1 += 1.0;
+	    }
+	  ResultNy1 += ResultNx1 * Coefficient1; 
+	  Factor2 -= M_PI;
+	  Ny1 += DoubleNbrLzValue;
+	}
+      ResultNy2 += ResultNy1 * Coefficient;
+      Factor1 -= M_PI;
+      Ny2 += DoubleNbrLzValue;
+    }
+  
+  Ny2 = IniNy2 - DoubleNbrLzValue;
+  Factor1 = PremFactor1 + M_PI;
+  Factor2 = PremFactor2;
+  Coefficient = 1.0;
+  
+  while ((fabs(ResultNy2) + fabs(Coefficient)) != fabs(ResultNy2))
+    {
+      Q1 = this->Ratio * Ny2 * Ny2;
+      if (Ny2 != 0.0)
+	Coefficient = exp(- PIOnM * Q1);
+      else
+	Coefficient = 1.0;
+      ResultNy1 = 0.0;
+      Ny1 = IniNy1;
+      Factor2 = PremFactor2;
+      Coefficient1 = 1.0;
+      while ((fabs(ResultNy1) + fabs(Coefficient1)) != fabs(ResultNy1))
+	{
+	  Q2 = this->Ratio * Ny1 * (Ny1 - Ny2);
+	  if ((Ny1 == 0.0)||(Ny1 == Ny2))
+	    Coefficient1 = 1.0;
+	  else
+	    Coefficient1 = exp(- PIOnM * Q2);
+	  ResultNx2 = 1.0 ; // Nx1 = 0 Nx2=0
+	  Precision1 = ResultNx2 ;
+	  Nx2 = 1.0;
+	  while ((fabs(ResultNx2) + Precision1) != fabs(ResultNx2)) // Nx1 = 0 Nx2!=0
+	    {
+	      Q5 = this->InvRatio * Nx2 * Nx2;
+	      Precision1 = 2.0 * exp(- PIOnM * Q5);
+	      ResultNx2 += Precision1 * cos (Nx2 * Factor2);
+	      Nx2 += 1.0;
+	    }
+	  ResultNx1 = ResultNx2;
+	  Nx1 = 1.0;
+	  Coefficient2 = 1.0;
+	  while ((fabs(ResultNx1) + fabs(Coefficient2)) != fabs(ResultNx1))
+	    {
+	      ResultNx2 = 2.0 * cos (Nx1 * Factor1); // Nx1 != 0 Nx2=0
+	      Q3 = this->InvRatio * Nx1 * Nx1;
+	      Coefficient2 = exp(- PIOnM * Q3);
+	      Precision = 2.0;
+	      Precision1 = 2.0;
+	      Nx2 = 1.0;
+	      while ((fabs(ResultNx2) + Precision + Precision1) != fabs(ResultNx2))// Nx1 != 0 Nx2!=0
+		{
+		  Q4 = this->InvRatio * Nx2 * (Nx2 - Nx1);
+		  Q5 = this->InvRatio * Nx2 * (Nx2 + Nx1);
+		  if (Nx1 == Nx2)
+		    Precision = 2.0;
+		  else
+		    Precision = 2.0 * exp(- PIOnM * Q4);
+		  Precision1 = 2.0 * exp(- PIOnM * Q5);
+		  ResultNx2 += (Precision * cos (Nx1 * Factor1 + Nx2 * Factor2) + Precision1 * cos(Nx1 * Factor1 - Nx2 * Factor2));
+		  Nx2 += 1.0;
+		}
+	      ResultNx1 += Coefficient2* ResultNx2;
+	      Nx1 += 1.0;
+	    }
+	  ResultNy1 += ResultNx1 * Coefficient1;
+	  Factor2 -= M_PI;
+	  Ny1 += DoubleNbrLzValue;
+	}
+      ResultNy2 += ResultNy1 * Coefficient;
+      Factor1 += M_PI;
+      Ny2 -= DoubleNbrLzValue;
+    }
+  
+  Ny2 = IniNy2;
+  Factor1 = PremFactor1;
+  Factor2 = PremFactor2 + M_PI;
+  
+  Coefficient = 1.0;
+  while ((fabs(ResultNy2) + fabs(Coefficient)) != fabs(ResultNy2))
+    {
+      Q1 = this->Ratio * Ny2 * Ny2;
+      if (Ny2 != 0.0)
+	Coefficient = exp(- PIOnM * Q1);
+      else
+	Coefficient = 1.0;
+      
+      Ny1 = IniNy1 - DoubleNbrLzValue;
+      Factor2 = PremFactor2 + M_PI;
+      ResultNy1 = 0.0;
+      Coefficient1 = 1.0;
+      while ((fabs(ResultNy1) + fabs(Coefficient1)) != fabs(ResultNy1))
+	{
+	  Q2 = this->Ratio * Ny1 * (Ny1 - Ny2);
+	  if ((Ny1 == 0.0)||(Ny1 == Ny2))
+	    Coefficient1 = 1.0;
+	  else
+	    Coefficient1 = exp(- PIOnM * Q2);
+	  
+	  ResultNx2 = 1.0 ; // Nx1 = 0 Nx2=0
+	  Precision1 = ResultNx2 ;
+	  Nx2 = 1.0;
+	  while ((fabs(ResultNx2) + Precision1) != fabs(ResultNx2)) // Nx1 = 0 Nx2!=0
+	    {
+	      Q5 = this->InvRatio * Nx2 * Nx2;
+	      Precision1 = 2.0 * exp(- PIOnM * Q5);
+	      ResultNx2 += Precision1 * cos (Nx2 * Factor2);
+	      Nx2 += 1.0;
+	    }
+	  ResultNx1 = ResultNx2;
+	  Nx1 = 1.0;
+	  Coefficient2 = 1.0;
+	  while ((fabs(ResultNx1) + fabs(Coefficient2)) != fabs(ResultNx1))
+	    {
+	      ResultNx2 = 2.0 * cos (Nx1 * Factor1); // Nx1 != 0 Nx2=0
+	      Q3 = this->InvRatio * Nx1 * Nx1;
+	      Coefficient2 = exp(- PIOnM * Q3);
+	      Precision = 2.0;
+	      Precision1 = 2.0;
+	      Nx2 = 1.0;
+	      while ((fabs(ResultNx2) + Precision + Precision1) != fabs(ResultNx2))// Nx1 != 0 Nx2!=0
+		{
+		  Q4 = this->InvRatio * Nx2 * (Nx2 - Nx1);
+		  Q5 = this->InvRatio * Nx2 * (Nx2 + Nx1);
+		  if (Nx1 == Nx2)
+		    Precision = 2.0;
+		  else
+		    Precision = 2.0 * exp(- PIOnM * Q4);
+		  Precision1 = 2.0 * exp(- PIOnM * Q5);
+		  ResultNx2 += (Precision * cos (Nx1 * Factor1 + Nx2 * Factor2) + Precision1 * cos(Nx1 * Factor1 - Nx2 * Factor2));
+		  Nx2 += 1.0;
+		}
+	      ResultNx1 += Coefficient2 * ResultNx2;
+	      Nx1 += 1.0;
+	    }
+	  ResultNy1 += ResultNx1 * Coefficient1; 
+	  Factor2 += M_PI;
+	  Ny1 -= DoubleNbrLzValue;
+	}
+      ResultNy2 += ResultNy1 * Coefficient;
+      Factor1 -= M_PI;
+      Ny2 += DoubleNbrLzValue;
+    }
+  
+  Ny2 = IniNy2 - DoubleNbrLzValue;
+  Factor1 = PremFactor1 + M_PI;
+  Factor2 = PremFactor2 + M_PI;
+  
+  Coefficient = 1.0;	
+  while ((fabs(ResultNy2) + fabs(Coefficient)) != fabs(ResultNy2))
+    {
+      Q1 = this->Ratio * Ny2 * Ny2;
+      if (Ny2 != 0.0)
+	Coefficient = exp(- PIOnM * Q1);
+      else
+	Coefficient = 1.0;
+      
+      Ny1 = IniNy1 - DoubleNbrLzValue;
+      Factor2 = PremFactor2 + M_PI;
+      ResultNy1 = 0.0;
+      Coefficient1 = 1.0;
+      while ((fabs(ResultNy1) + fabs(Coefficient1)) != fabs(ResultNy1))
+		{
+		  Q2 = this->Ratio * Ny1 * (Ny1 - Ny2);
+		  if ((Ny1 == 0.0)||(Ny1 == Ny2))
+		    Coefficient1 = 1.0;
+		  else
+		    Coefficient1 = exp(- PIOnM * Q2);
+		  
+		  ResultNx2 = 1.0 ; // Nx1 = 0 Nx2=0
+		  Precision1 = ResultNx2 ;
+		  Nx2 = 1.0;
+		  while ((fabs(ResultNx2) + Precision1) != fabs(ResultNx2)) // Nx1 = 0 Nx2!=0
+		    {
+		      Q5 = this->InvRatio * Nx2 * Nx2;
+		      Precision1 = 2.0 * exp(- PIOnM * Q5);
+		      ResultNx2 += Precision1 * cos (Nx2 * Factor2);
+		      Nx2 += 1.0;
+		    }
+		  ResultNx1 = ResultNx2;
+		  Nx1 = 1.0;
+		  Coefficient2 = 1.0;
+		  while ((fabs(ResultNx1) + fabs(Coefficient2)) != fabs(ResultNx1))
+		    {
+		      ResultNx2 = 2.0 * cos (Nx1 * Factor1); // Nx1 != 0 Nx2=0
+		      Q3 = this->InvRatio * Nx1 * Nx1;
+		      Coefficient2 = exp(- PIOnM * Q3);
+		      Precision = 2.0;
+		      Precision1 = 2.0;
+		      Nx2 = 1.0;
+		      while ((fabs(ResultNx2) + Precision + Precision1) != fabs(ResultNx2))// Nx1 != 0 Nx2!=0
+			{
+			  Q4 = this->InvRatio * Nx2 * (Nx2 - Nx1);
+			  Q5 = this->InvRatio * Nx2 * (Nx2 + Nx1);
+			  if (Nx1 == Nx2)
+			    Precision = 2.0;
+			  else
+			    Precision = 2.0 * exp(- PIOnM * Q4);
+			  Precision1 = 2.0 * exp(- PIOnM * Q5);
+			  ResultNx2 += (Precision * cos (Nx1 * Factor1 + Nx2 * Factor2) + Precision1 * cos(Nx1 * Factor1 - Nx2 * Factor2));
+			  Nx2 += 1.0;
+			}
+		      ResultNx1 += Coefficient2* ResultNx2;
+		      Nx1 += 1.0;
+		    }
+		  ResultNy1 += ResultNx1 * Coefficient1; 
+		  Factor2 += M_PI;
+		  Ny1 -= DoubleNbrLzValue;
+		}
+      ResultNy2 += ResultNy1 * Coefficient;
+      Factor1 += M_PI;
+      Ny2 -= DoubleNbrLzValue;
+    }
+  
+  return (ResultNy2 / (24.0 * (M_PI * DoubleNbrLzValue)*(M_PI * DoubleNbrLzValue)));
+}

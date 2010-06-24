@@ -45,16 +45,25 @@ using std::endl;
 
 class AbstractQHEOnTorusNBodyInteractionHamiltonian : public AbstractQHEOnSphereNBodyInteractionHamiltonian
 {
-
-
+  
+ protected:
+  
+  
+  // ratio between the width in the x direction and the width in the y direction
+  double Ratio;
+  // ratio between the width in the y direction and the width in the x direction
+  double InvRatio;
+  
+		
  public:
 
   // destructor
   //
   virtual ~AbstractQHEOnTorusNBodyInteractionHamiltonian() = 0;
-
+  
  protected:
  
+	 
   // get all indices needed to characterize a completly skew symmetric tensor, ordered by the sum of the indices
   //
   // nbrValues = number of different values an index can have
@@ -75,7 +84,7 @@ class AbstractQHEOnTorusNBodyInteractionHamiltonian : public AbstractQHEOnSphere
   // return value = total number of index groups
   virtual long GetAllSymmetricIndices (int nbrValues, int nbrIndices, int*& nbrSortedIndicesPerSum, int**& sortedIndicesPerSum,
 				       double**& sortedIndicesPerSumSymmetryFactor);
-
+  
 };
 
 #endif
