@@ -107,6 +107,7 @@ VectorOperatorMultiplyOperation::~VectorOperatorMultiplyOperation()
 
 void VectorOperatorMultiplyOperation::SetIndicesRange (const int& firstComponent, const int& nbrComponent)
 {
+  cout << "Setting indices "<<firstComponent<<" +"<<nbrComponent<<endl;
   this->FirstComponent = firstComponent;
   this->NbrComponent = nbrComponent;
 }

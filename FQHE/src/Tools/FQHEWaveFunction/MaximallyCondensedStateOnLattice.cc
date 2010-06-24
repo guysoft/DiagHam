@@ -41,6 +41,7 @@ MaximallyCondensedStateOnLattice::MaximallyCondensedStateOnLattice(AbstractArchi
   this->LastMaximumEV = 0.0;
   this->SphereParametrization= NSphereParameters(nbrStates,true);
   this->VariationalParameters.Resize(this->SphereParametrization.GetNbrParameters());
+  this->VariationalParameters.ClearVector();
 
   this->DensityMatrixDimension = Lx * Ly * NbrSubLattices;
 
