@@ -62,6 +62,8 @@ Spin1_2ChainWithTranslations::Spin1_2ChainWithTranslations ()
   this->ChainDescription = 0;
   this->ChainLength = 0;
   this->Momentum = 0;
+  this->StateMask = 0x0ul;
+  this->StateShift = 0;
   this->ComplementaryStateShift = 0;
   this->Sz = 0;
   this->FixedSpinProjectionFlag = false;
@@ -74,15 +76,18 @@ Spin1_2ChainWithTranslations::Spin1_2ChainWithTranslations ()
 //
 // chainLength = number of spin 1
 // momemtum = total momentum of each state
+// translationStep = indicates the step for an elementary translation
 // memorySize = memory size in bytes allowed for look-up table
 // memorySlice = maximum amount of memory that can be allocated to partially evalauted the states
 
-Spin1_2ChainWithTranslations::Spin1_2ChainWithTranslations (int chainLength, int momentum, int memorySize, int memorySlice) 
+Spin1_2ChainWithTranslations::Spin1_2ChainWithTranslations (int chainLength, int momentum, int translationStep, int memorySize, int memorySlice) 
 {
   this->Flag.Initialize();
   this->ChainLength = chainLength;
   this->FixedSpinProjectionFlag = false;
-  this->ComplementaryStateShift = (this->ChainLength - 1) << 1;
+  this->ComplementaryStateShift = this->ChainLength - translationStep;
+  this->StateMask = (0x1ul << translationStep) - 1ul;
+  this->StateShift = translationStep;
   this->Momentum = momentum;
 
   memorySize /= sizeof(long);
@@ -96,24 +101,28 @@ Spin1_2ChainWithTranslations::Spin1_2ChainWithTranslations (int chainLength, int
 
   this->CreatePrecalculationTable();
   this->HilbertSpaceDimension = this->GenerateStates (memorySlice >> 3);
-  this->CreateLookUpTable();
+  if (this->HilbertSpaceDimension > 0)
+    this->CreateLookUpTable();
 }
 
 // constructor for Hilbert space corresponding to a given total spin projection Sz
 //
 // chainLength = number of spin 1
 // momemtum = total momentum of each state
+// translationStep = indicates the step for an elementary translation
 // sz = twice the value of total Sz component
 // memorySize = memory size in bytes allowed for look-up table
 // memorySlice = maximum amount of memory that can be allocated to partially evalauted the states
 
-Spin1_2ChainWithTranslations::Spin1_2ChainWithTranslations (int chainLength, int momentum, int sz, int memorySize, int memorySlice) 
+Spin1_2ChainWithTranslations::Spin1_2ChainWithTranslations (int chainLength, int momentum, int translationStep, int sz, int memorySize, int memorySlice) 
 {
   this->Flag.Initialize();
   this->ChainLength = chainLength;
   this->Sz = sz;
   this->FixedSpinProjectionFlag = true;
-  this->ComplementaryStateShift = (this->ChainLength - 1) << 1;
+  this->ComplementaryStateShift = this->ChainLength - translationStep;
+  this->StateMask = (0x1ul << translationStep) - 1ul;
+  this->StateShift = translationStep;
   this->Momentum = momentum;
 
   memorySize /= sizeof(long);
@@ -127,7 +136,8 @@ Spin1_2ChainWithTranslations::Spin1_2ChainWithTranslations (int chainLength, int
 
   this->CreatePrecalculationTable();
   this->HilbertSpaceDimension = this->GenerateStates (this->Sz, memorySlice >> 3);
-  this->CreateLookUpTable();
+  if (this->HilbertSpaceDimension > 0)
+    this->CreateLookUpTable();
 }
 
 // constructor from pre-constructed datas
@@ -142,8 +152,8 @@ Spin1_2ChainWithTranslations::Spin1_2ChainWithTranslations (int chainLength, int
 // complementaryStateShift = shift to apply to move the spin from one end to the other one
 
 Spin1_2ChainWithTranslations::Spin1_2ChainWithTranslations (int hilbertSpaceDimension, unsigned long* chainDescription, int chainLength, 
-							int momentum, int sz, bool fixedQuantumNumberFlag, int lookUpTableShift, 
-							int complementaryStateShift)
+							    int momentum, int sz, bool fixedQuantumNumberFlag, int lookUpTableShift, 
+							    int complementaryStateShift)
 {
   this->Flag.Initialize();
   this->ComplementaryStateShift = complementaryStateShift;
@@ -179,6 +189,9 @@ Spin1_2ChainWithTranslations::Spin1_2ChainWithTranslations (const Spin1_2ChainWi
       this->CompatibilityWithMomentum = chain.CompatibilityWithMomentum;
       this->RescalingFactors = chain.RescalingFactors;
       this->NbrStateInOrbit = chain.NbrStateInOrbit;
+      this->StateMask = chain.StateMask;
+      this->StateShift = chain.StateShift;
+      this->ComplementaryStateShift = chain.ComplementaryStateShift;
     }
   else
     {
@@ -194,6 +207,9 @@ Spin1_2ChainWithTranslations::Spin1_2ChainWithTranslations (const Spin1_2ChainWi
       this->CompatibilityWithMomentum = 0;
       this->RescalingFactors = 0;
       this->NbrStateInOrbit = 0;
+      this->StateMask = 0x0ul;
+      this->StateShift = 0;
+      this->ComplementaryStateShift = 0;
     }
 }
 
@@ -202,7 +218,7 @@ Spin1_2ChainWithTranslations::Spin1_2ChainWithTranslations (const Spin1_2ChainWi
 
 Spin1_2ChainWithTranslations::~Spin1_2ChainWithTranslations () 
 {
-  if ((this->ChainLength != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
+  if ((this->ChainLength != 0) && (this->HilbertSpaceDimension > 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
       delete[] this->ChainDescription;
       delete[] this->LookUpTable;
@@ -223,7 +239,7 @@ Spin1_2ChainWithTranslations::~Spin1_2ChainWithTranslations ()
 
 Spin1_2ChainWithTranslations& Spin1_2ChainWithTranslations::operator = (const Spin1_2ChainWithTranslations& chain)
 {
-  if ((this->ChainLength != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
+  if ((this->ChainLength != 0) && (this->HilbertSpaceDimension > 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
       delete[] this->ChainDescription;
       delete[] this->LookUpTable;
@@ -250,6 +266,9 @@ Spin1_2ChainWithTranslations& Spin1_2ChainWithTranslations::operator = (const Sp
       this->CompatibilityWithMomentum = chain.CompatibilityWithMomentum;
       this->RescalingFactors = chain.RescalingFactors;
       this->NbrStateInOrbit = chain.NbrStateInOrbit;
+      this->StateMask = chain.StateMask;
+      this->StateShift = chain.StateShift;
+      this->ComplementaryStateShift = chain.ComplementaryStateShift;
    }
   else
     {
@@ -265,6 +284,9 @@ Spin1_2ChainWithTranslations& Spin1_2ChainWithTranslations::operator = (const Sp
       this->CompatibilityWithMomentum = 0;
       this->RescalingFactors = 0;
       this->NbrStateInOrbit = 0;
+      this->StateMask = 0x0ul;
+      this->StateShift = 0;
+      this->ComplementaryStateShift = 0;
     }
   return *this;
 }
@@ -658,10 +680,12 @@ AbstractHilbertSpace* Spin1_2ChainWithTranslations::ExtractSubspace (AbstractQua
   if (this->Momentum != ((PeriodicMomentumQuantumNumber*) (((VectorQuantumNumber&) q)[0]))->GetMomentum())
     return 0;
   if (this->FixedSpinProjectionFlag == true)
-    if (this->Sz != ((SzQuantumNumber*) (((VectorQuantumNumber&) q)[1]))->GetSz())
-      return 0;
-    else
-      return this;
+    {
+      if (this->Sz != ((SzQuantumNumber*) (((VectorQuantumNumber&) q)[1]))->GetSz())
+	return 0;
+      else
+	return this;
+    }
   int TmpSz = ((SzQuantumNumber*) (((VectorQuantumNumber&) q)[1]))->GetSz();
   if ((TmpSz < (-2 * this->ChainLength)) || (TmpSz > (2 * this->ChainLength)))
     return 0;
@@ -691,73 +715,6 @@ AbstractHilbertSpace* Spin1_2ChainWithTranslations::ExtractSubspace (AbstractQua
 					 this->LookUpTableShift, this->ComplementaryStateShift);
 }
 
-// find the canonical form of a state
-//
-// stateDescription = state description
-// nbrTranslation = reference on a integer where the number of translations needed to obtain the canonical form  will be stored
-// return value = canonical form of the state
-
-inline unsigned long Spin1_2ChainWithTranslations::FindCanonicalForm(unsigned long stateDescription, int& nbrTranslation)
-{
-  nbrTranslation = 0;
-  unsigned long CanonicalState = stateDescription;
-  int index = 1;  
-  while (index < this->ChainLength)
-    {
-      stateDescription = (stateDescription >> 2) | ((stateDescription & 0x3) << this->ComplementaryStateShift);
-      if (stateDescription < CanonicalState)
-	{
-	  CanonicalState = stateDescription;
-	  nbrTranslation = index;
-	}
-      ++index;
-    }
-  return CanonicalState;
-}
-
-// find the canonical form of a state and find how many translations are needed to obtain the same state
-//
-// stateDescription = state description
-// nbrTranslation = reference on a integer where the number of translations needed to obtain the canonical form  will be stored
-// nbrTranslationToIdentity = reference on the number of translation needed to obtain the same state
-// return value = canonical form of the state
-
-inline unsigned long Spin1_2ChainWithTranslations::FindCanonicalForm(unsigned long stateDescription, int& nbrTranslation, int& nbrTranslationToIdentity)
-{
-  nbrTranslation = 0;
-  nbrTranslationToIdentity = 1;
-  unsigned long CanonicalState = stateDescription;
-  unsigned long ReferenceState = stateDescription;
-  stateDescription = (stateDescription >> 2) | ((stateDescription & 0x3) << this->ComplementaryStateShift);
-  while ((ReferenceState != stateDescription) && (nbrTranslationToIdentity < this->ChainLength))
-    {
-      if (stateDescription < CanonicalState)
-	{
-	  CanonicalState = stateDescription;
-	  nbrTranslation = nbrTranslationToIdentity;
-	}
-      stateDescription = (stateDescription >> 2) | ((stateDescription & 0x3) << this->ComplementaryStateShift);
-      ++nbrTranslationToIdentity;
-    }
-  return CanonicalState;
-}
-
-// find how many translations are needed to obtain the same state
-//
-// stateDescription = unsigned integer describing the state
-// return value = number of translation needed to obtain the same state
-
-inline int Spin1_2ChainWithTranslations::FindNumberTranslation(unsigned long stateDescription)
-{
-  unsigned long TmpState = (stateDescription >> 2) | ((stateDescription & 0x3) << this->ComplementaryStateShift);
-  int index = 1;  
-  while (TmpState != stateDescription)
-    {
-      TmpState = (TmpState >> 2) | ((TmpState & 0x3) << this->ComplementaryStateShift);
-      ++index;
-    }
-  return index;
-}
 
 // find state index
 //

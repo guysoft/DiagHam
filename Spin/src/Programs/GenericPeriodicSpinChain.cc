@@ -110,7 +110,7 @@ int main(int argc, char** argv)
 	  switch (SpinValue)
 	    {
 	    case 1 :
-	      Chain = new Spin1_2ChainWithTranslations (NbrSpins, Momentum, InitalSzValue, 1000000, 1000000);
+	      Chain = new Spin1_2ChainWithTranslations (NbrSpins, Momentum, 1, InitalSzValue, 1000000, 1000000);
 	      break;
 	    case 2 :
 	      Chain = new Spin1ChainWithTranslations (NbrSpins, Momentum, InitalSzValue, 1000000, 1000000);
@@ -124,19 +124,23 @@ int main(int argc, char** argv)
 		return -1;
 	      }
 	    }
-	  
-	  SpinChainHamiltonianWithTranslations Hamiltonian (Chain, NbrSpins, JValue);
-	  char* TmpSzString = new char[64];
-	  sprintf (TmpSzString, "%d %d", InitalSzValue, Momentum);
-	  char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
-	  sprintf (TmpEigenstateString, "%s_sz_%d_k_%d", OutputFileName, InitalSzValue, Momentum);
-	  GenericComplexMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
-				      FirstRun, TmpEigenstateString);
-	  MainTaskOperation TaskOperation (&Task);
-	  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
-	  FirstRun = false;
+
+	  if (Chain->GetHilbertSpaceDimension() > 0)
+	    {
+	      cout << "Sz = " << InitalSzValue << ", K = " << Momentum << endl; 
+	      SpinChainHamiltonianWithTranslations Hamiltonian (Chain, NbrSpins, JValue);
+	      char* TmpSzString = new char[64];
+	      sprintf (TmpSzString, "%d %d", InitalSzValue, Momentum);
+	      char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
+	      sprintf (TmpEigenstateString, "%s_sz_%d_k_%d", OutputFileName, InitalSzValue, Momentum);
+	      GenericComplexMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
+					  FirstRun, TmpEigenstateString);
+	      MainTaskOperation TaskOperation (&Task);
+	      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+	      FirstRun = false;
+	      delete[] TmpSzString;
+	    }
 	  delete Chain;
-	  delete[] TmpSzString;
 	}
     }
   return 0;

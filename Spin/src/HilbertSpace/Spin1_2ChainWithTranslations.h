@@ -62,8 +62,12 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   //  total sz component (if fixed)
   int Sz;
   
+  // shift to apply to move a group spin using an elementary translation
+  int StateShift;
   // shift to apply to move the spin from one end to the other one
   int ComplementaryStateShift;
+  // mask to apply to get a group of spins
+  unsigned long StateMask;
 
   // shift to apply to a state to obtain an index to the look-up table 
   int LookUpTableShift;
@@ -83,17 +87,19 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   //
   // chainLength = number of spin
   // momemtum = total momentum of each state
+  // translationStep = indicates the step for an elementary translation
   // memorySize = memory size in bytes allowed for look-up table
   // memorySlice = maximum amount of memory that can be allocated to partially evalauted the states
-  Spin1_2ChainWithTranslations (int chainLength, int momentum, int memorySize, int memorySlice);
+  Spin1_2ChainWithTranslations (int chainLength, int momentum, int translationStep, int memorySize, int memorySlice);
 
   // constructor for complete Hilbert space corresponding to a given total spin projection Sz
   //
   // chainLength = number of spin 1
   // momemtum = total momentum of each state
+  // translationStep = indicates the step for an elementary translation
   // sz = twice the value of total Sz component
   // memorySize = memory size in bytes allowed for look-up table
-  Spin1_2ChainWithTranslations (int chainLength, int momentum, int sz, int memorySize, int memorySlice);
+  Spin1_2ChainWithTranslations (int chainLength, int momentum, int translationStep, int sz, int memorySize, int memorySlice);
 
   // copy constructor (without duplicating datas)
   //
@@ -279,7 +285,7 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   // return value = twice spin projection on (Oz)
   int GetTotalSz (unsigned long stateDescription);
 
- // find the canonical form of a state
+  // find the canonical form of a state
   //
   // state = state description
   // nbrTranslation = reference on a integer where the number of translations needed to obtain the canonical form  will be stored
@@ -345,6 +351,74 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
 inline int Spin1_2ChainWithTranslations::GetMomentum()
 {
   return this->Momentum;
+}
+
+// find the canonical form of a state
+//
+// stateDescription = state description
+// nbrTranslation = reference on a integer where the number of translations needed to obtain the canonical form  will be stored
+// return value = canonical form of the state
+
+inline unsigned long Spin1_2ChainWithTranslations::FindCanonicalForm(unsigned long stateDescription, int& nbrTranslation)
+{
+  nbrTranslation = 0;
+  unsigned long CanonicalState = stateDescription;
+  int index = 1;  
+  while (index < this->ChainLength)
+    {
+      stateDescription = (stateDescription >> this->StateShift) | ((stateDescription & this->StateMask) << this->ComplementaryStateShift);
+      if (stateDescription < CanonicalState)
+	{
+	  CanonicalState = stateDescription;
+	  nbrTranslation = index;
+	}
+      ++index;
+    }
+  return CanonicalState;
+}
+
+// find the canonical form of a state and find how many translations are needed to obtain the same state
+//
+// stateDescription = state description
+// nbrTranslation = reference on a integer where the number of translations needed to obtain the canonical form  will be stored
+// nbrTranslationToIdentity = reference on the number of translation needed to obtain the same state
+// return value = canonical form of the state
+
+inline unsigned long Spin1_2ChainWithTranslations::FindCanonicalForm(unsigned long stateDescription, int& nbrTranslation, int& nbrTranslationToIdentity)
+{
+  nbrTranslation = 0;
+  nbrTranslationToIdentity = 1;
+  unsigned long CanonicalState = stateDescription;
+  unsigned long ReferenceState = stateDescription;
+  stateDescription = (stateDescription >> this->StateShift) | ((stateDescription & this->StateMask) << this->ComplementaryStateShift);
+  while ((ReferenceState != stateDescription) && (nbrTranslationToIdentity < this->ChainLength))
+    {
+      if (stateDescription < CanonicalState)
+	{
+	  CanonicalState = stateDescription;
+	  nbrTranslation = nbrTranslationToIdentity;
+	}
+      stateDescription = (stateDescription >> this->StateShift) | ((stateDescription & this->StateMask) << this->ComplementaryStateShift);
+      ++nbrTranslationToIdentity;
+    }
+  return CanonicalState;
+}
+
+// find how many translations are needed to obtain the same state
+//
+// stateDescription = unsigned integer describing the state
+// return value = number of translation needed to obtain the same state
+
+inline int Spin1_2ChainWithTranslations::FindNumberTranslation(unsigned long stateDescription)
+{
+  unsigned long TmpState = (stateDescription >> this->StateShift) | ((stateDescription & this->StateMask) << this->ComplementaryStateShift);
+  int index = 1;  
+  while (TmpState != stateDescription)
+    {
+      TmpState = (TmpState >> this->StateShift) | ((TmpState & this->StateMask) << this->ComplementaryStateShift);
+      ++index;
+    }
+  return index;
 }
 
 #endif
