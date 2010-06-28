@@ -6,8 +6,12 @@
 #include "HilbertSpace/FermionOnSphere.h"
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
 #include "HilbertSpace/FermionOnSphereWithSpinLong.h"
+#include "HilbertSpace/FermionOnSphereWithSpinHaldaneBasis.h"
+#include "HilbertSpace/FermionOnSphereWithSpinHaldaneBasisLong.h"
+#include "HilbertSpace/FermionOnSphereWithSpinHaldaneLargeBasis.h"
 
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
+#include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -42,10 +46,12 @@ int main(int argc, char** argv)
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* OutputGroup = new OptionGroup ("output options");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
+  OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
 
   Manager += SystemGroup;
   Manager += OutputGroup;
   Manager += ToolsGroup;
+  Manager += PrecalculationGroup;
   Manager += MiscGroup;
   
   (*SystemGroup) += new SingleStringOption  ('\0', "input-file", "name of the file describing the system ground state");
@@ -65,6 +71,7 @@ int main(int argc, char** argv)
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
   (*ToolsGroup) += new SingleDoubleOption  ('\n', "diag-precision", "convergence precision in non LAPACK mode", 1e-7);
 #endif
+  (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -110,31 +117,49 @@ int main(int argc, char** argv)
   int NbrParticlesDown = (NbrParticles - TotalSz) >> 1;
   ParticleOnSphereWithSpin* Space = 0;
   
+  if (Manager.GetBoolean("haldane") == false)
+    {
 #ifdef __64_BITS__
-  if (LzMax <= 31)
+      if (LzMax <= 31)
 #else
-    if (LzMax <= 15)
+	if (LzMax <= 15)
 #endif
-      {
-	Space = new FermionOnSphereWithSpin  (NbrParticles, TotalLz, LzMax, TotalSz);
-      }
-    else
-      {
+	  {
+	    Space = new FermionOnSphereWithSpin  (NbrParticles, TotalLz, LzMax, TotalSz);
+	  }
+	else
+	  {
 #ifdef __128_BIT_LONGLONG__
-	if (LzMax <= 63)
+	    if (LzMax <= 63)
 #else
-	  if (LzMax <= 31)
+	      if (LzMax <= 31)
 #endif
-	    {
-	      Space = new FermionOnSphereWithSpinLong (NbrParticles, TotalLz, LzMax, TotalSz);
-	    }
-	  else
-	    {
-	      cout << "States of this Hilbert space cannot be represented in a single word." << endl;
-	      return 0;
-	    }	
-      }
-  
+		{
+		  Space = new FermionOnSphereWithSpinLong (NbrParticles, TotalLz, LzMax, TotalSz);
+		}
+	      else
+		{
+		  cout << "States of this Hilbert space cannot be represented in a single word." << endl;
+		  return 0;
+		}	
+	  }
+    }
+  else
+    {
+      int** ReferenceStates = 0;
+      int NbrReferenceStates;
+      if (((SingleStringOption*) Manager["reference-file"])->GetString() == 0)
+	{
+	  cout << "error, a reference file is needed" << endl;
+	  return 0;
+	}
+      if (FQHEGetRootPartitionSU2(Manager.GetString("reference-file"), NbrParticles, LzMax, ReferenceStates, NbrReferenceStates) == false)
+	{
+	  cout << "error while parsing " << Manager.GetString("reference-file") << endl;	      
+	  return 0;
+	}
+      Space = new FermionOnSphereWithSpinHaldaneBasis(NbrParticles, TotalLz, LzMax, TotalSz, ReferenceStates, NbrReferenceStates); 
+    }
   
   RealVector GroundState;
   if (GroundState.ReadVector (FileName) == false)

@@ -280,12 +280,12 @@ int BosonOnTorusShort::AdAdAA (int index, int m1, int m2, int n1, int n2, double
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
     }
-  int NewLzMax = CurrentLzMax;
-  if (NewLzMax < m1)
-    NewLzMax = m1;
-  if (NewLzMax < m2)
-    NewLzMax = m2;
-  for (int i = CurrentLzMax + 1; i <= NewLzMax; ++i)
+  this->TemporaryStateKyMax = CurrentLzMax;
+  if (this->TemporaryStateKyMax < m1)
+    this->TemporaryStateKyMax = m1;
+  if (this->TemporaryStateKyMax < m2)
+    this->TemporaryStateKyMax = m2;
+  for (int i = CurrentLzMax + 1; i <= this->TemporaryStateKyMax; ++i)
     this->TemporaryState[i] = 0;
   coefficient = this->TemporaryState[n2];
   --this->TemporaryState[n2];
@@ -296,9 +296,9 @@ int BosonOnTorusShort::AdAdAA (int index, int m1, int m2, int n1, int n2, double
   ++this->TemporaryState[m1];
   coefficient *= this->TemporaryState[m1];
   coefficient = sqrt(coefficient);
-  while (this->TemporaryState[NewLzMax] == 0x0ul)
-    --NewLzMax;
-  return this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateKyMax), NewLzMax + this->NbrBosons - 1);
+  while (this->TemporaryState[this->TemporaryStateKyMax] == 0x0ul)
+    --this->TemporaryStateKyMax;
+  return this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateKyMax), this->TemporaryStateKyMax + this->NbrBosons - 1);
 }
 
 // return matrix representation of the annihilation operator a_i

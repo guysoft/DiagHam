@@ -216,17 +216,15 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      int* SzaValues = DensityMatrix.GetAsIntegerArray(2);
-	      while ((Index < MaxIndex) && (SzaValues[Index] != TotalSzInPartition))
-		++Index;
-	      if (Index < MaxIndex)
+	      if (((TotalSzInPartition ^ NbrParticlesInPartition) & 1) == 0)
 		{
+		  int* SzaValues = DensityMatrix.GetAsIntegerArray(3);
 		  double* Coefficients = DensityMatrix.GetAsDoubleArray(4);
 		  char* OutputFileName = Manager.GetString("output");
 		  if (OutputFileName == 0)
 		    {
 		      char* TmpExtension = new char[256];
-		      sprintf(TmpExtension, "la_%d_na_%d_sza_%d_.entspec", NbrOrbitalsInPartition, NbrParticlesInPartition, TotalSzInPartition);
+		      sprintf(TmpExtension, "la_%d_na_%d_sza_%d.entspec", NbrOrbitalsInPartition, NbrParticlesInPartition, TotalSzInPartition);
 		      if (strcasestr(Manager.GetString("density-matrix"), "bz2") == 0)
 			{
 			  OutputFileName = ReplaceExtensionToFileName(Manager.GetString("density-matrix"), "full.ent", TmpExtension);
@@ -240,37 +238,23 @@ int main(int argc, char** argv)
 		  File.open(OutputFileName, ios::out);
 		  File.precision(14);
 		  File << "# la sza na lz shifted_lz lambda -log(lambda)" << endl;
-		  if (NbrParticlesInPartition == 0)
+		  
+		  while ((Index < MaxIndex) && (NaValues[Index] != NbrParticlesInPartition))
+		    ++Index;
+		  if (Index < MaxIndex)
 		    {
-		      while ((Index < MaxIndex) && (LaValues[Index] == NbrOrbitalsInPartition))
-			{
-			  double Tmp = Coefficients[Index];
-			  if (Tmp > Error)
-			    {
-			      int TmpLza = (-(LzValues[Index] + ((NbrOrbitalsInPartition - 1 - NbrFluxQuanta) * NaValues[Index])));
-			      File << NbrOrbitalsInPartition << " " << TotalSzInPartition << " " << NaValues[Index] << " " << LzValues[Index] << " " <<  (0.5 * TmpLza) << " " << Tmp << " " << (-log(Tmp)) << endl;
-			      if (TmpLza < MinLza)
-				MinLza = TmpLza;
-			      if (TmpLza > MaxLza)
-				MaxLza = TmpLza;
-			    }
-			  ++Index;
-			}
-		    }
-		  else
-		    {
-		      while ((Index < MaxIndex) && (NaValues[Index] != NbrParticlesInPartition))
+		      while ((Index < MaxIndex) && (SzaValues[Index] != TotalSzInPartition))
 			++Index;
 		      if (Index < MaxIndex)
 			{
 			  double Shift = ((NbrOrbitalsInPartition - 1 - NbrFluxQuanta) * NbrParticlesInPartition);
-			  while ((Index < MaxIndex) && (LaValues[Index] == NbrOrbitalsInPartition) && (NaValues[Index] == NbrParticlesInPartition))
+			  while ((Index < MaxIndex) && (LaValues[Index] == NbrOrbitalsInPartition) && (NaValues[Index] == NbrParticlesInPartition) && (SzaValues[Index] == TotalSzInPartition))
 			    {
 			      double Tmp = Coefficients[Index];
 			      if (Tmp > Error)
 				{
 				  int TmpLza = (-(LzValues[Index] + Shift));
-				  File << NbrOrbitalsInPartition << " " << TotalSzInPartition << " " << NbrParticlesInPartition << " " << LzValues[Index] << " " << (0.5 * TmpLza) << " " << Tmp << " " << (-log(Tmp)) << endl;
+				  File << LaValues[Index] << " " << SzaValues[Index] << " " << NaValues[Index] << " " << LzValues[Index] << " " <<  (0.5 * TmpLza) << " " << Tmp << " " << (-log(Tmp)) << endl;
 				  if (TmpLza < MinLza)
 				    MinLza = TmpLza;
 				  if (TmpLza > MaxLza)
@@ -281,9 +265,14 @@ int main(int argc, char** argv)
 			}
 		      else
 			{
-			  cout << "error, no entanglement spectrum can be computed from current data (invalid number of particles)" << endl;	      
+			  cout << "error, no entanglement spectrum can be computed from current data (invalid Sz value)" << endl;
 			  return -1;
 			}
+		    }
+		  else
+		    {
+		      cout << "error, no entanglement spectrum can be computed from current data (invalid number of particles)" << endl;	      
+		      return -1;
 		    }
 		  File.close();
 		}
