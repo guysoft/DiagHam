@@ -164,7 +164,7 @@ int main(int argc, char** argv)
   for (int i = 0; i < NbrSpaces; ++i)
     {
       Spaces[i] = new BosonOnTorusShort (NbrParticles, KyMax, TotalKy[i]);
-      
+      cout << NbrParticles << " " <<  KyMax << " " << TotalKy[i] << endl;
       if (Spaces[i]->GetLargeHilbertSpaceDimension() != GroundStates[i].GetLargeVectorDimension())
 	{
 	  cout << "dimension mismatch between Hilbert space (" << Spaces[i]->GetLargeHilbertSpaceDimension() << ") and ground state (" << GroundStates[i].GetLargeVectorDimension() << ") " << endl;
@@ -227,7 +227,13 @@ int main(int argc, char** argv)
 	      for (int i = 1; i < NbrSpaces; ++i)
 		{
 		  RealSymmetricMatrix TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrix(SubsystemSize, SubsystemNbrParticles, SubsystemTotalKy, GroundStates[i]);
-		  PartialDensityMatrix += TmpMatrix;
+		  if (TmpMatrix.GetNbrRow() > 0)
+		    {
+		      if (PartialDensityMatrix.GetNbrRow() == 0)
+			PartialDensityMatrix = TmpMatrix;
+		      else
+			PartialDensityMatrix += TmpMatrix;
+		    }
 		}
 	      if (NbrSpaces > 1)
 		PartialDensityMatrix /= ((double) NbrSpaces);
