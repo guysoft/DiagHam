@@ -69,8 +69,14 @@ class SpinChainHamiltonianWithTranslations : public AbstractHamiltonian
   double* CosinusTable;
   //array containing all the sinus that are needed when computing matrix elements
   double* SinusTable;
+  //array containing all the complex phase that are needed when computing matrix elements
+  Complex* ExponentialTable;
 
  public:
+
+  // default constructor
+  //
+  SpinChainHamiltonianWithTranslations();
 
   // constructor from default datas
   //
@@ -125,14 +131,14 @@ class SpinChainHamiltonianWithTranslations : public AbstractHamiltonian
   // V1 = vector to left multiply with current matrix
   // V2 = vector to right multiply with current matrix
   // return value = corresponding matrix element
-  Complex MatrixElement (RealVector& V1, RealVector& V2);
+  virtual Complex MatrixElement (RealVector& V1, RealVector& V2);
   
   // evaluate matrix element
   //
   // V1 = vector to left multiply with current matrix
   // V2 = vector to right multiply with current matrix
   // return value = corresponding matrix element
-  Complex MatrixElement (ComplexVector& V1, ComplexVector& V2);
+  virtual Complex MatrixElement (ComplexVector& V1, ComplexVector& V2);
 
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and store result in another vector, low level function (no architecture optimization)
@@ -142,8 +148,8 @@ class SpinChainHamiltonianWithTranslations : public AbstractHamiltonian
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  ComplexVector& LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-				  int firstComponent, int nbrComponent);
+  virtual ComplexVector& LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+					  int firstComponent, int nbrComponent);
 
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)
@@ -153,8 +159,8 @@ class SpinChainHamiltonianWithTranslations : public AbstractHamiltonian
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-				     int firstComponent, int nbrComponent);
+  virtual ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+					     int firstComponent, int nbrComponent);
  
   // return a list of left interaction operators
   //
@@ -180,7 +186,7 @@ class SpinChainHamiltonianWithTranslations : public AbstractHamiltonian
   // return value = reference on output stream
   friend MathematicaOutput& operator << (MathematicaOutput& Str, SpinChainHamiltonianWithTranslations& H);
 
- private:
+ protected:
  
   // evaluate all cosinus/sinus that are needed when computing matrix elements
   //

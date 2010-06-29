@@ -34,8 +34,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/AbstractSpinChain.h"
-#include "Hamiltonian/AbstractHamiltonian.h"
+#include "Hamiltonian/SpinChainHamiltonianWithTranslations.h"
 
 
 #include <iostream>
@@ -45,14 +44,11 @@ using std::ostream;
 class MathematicaOutput;
 
 
-class DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian : public AbstractHamiltonian
+class DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian : public SpinChainHamiltonianWithTranslations
 {
 
  protected:
   
-  // pointer to the Hilbert space
-  AbstractSpinChain* Chain;
-
   // nearest neighbour coupling constant and half its value
   double J1;
   double HalfJ1;
@@ -60,18 +56,8 @@ class DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian : public Abstrac
   double J2;
   double HalfJ2;
 
-  // number of spins
-  int NbrSpin;
   // number of triangles
   int NbrTriangles;
-
-  // temporary stoage for the Hamiltonian diagonal elements
-  double* SzSzContributions;
-
-  //array containing all the cosinus that are needed when computing matrix elements
-  double* CosinusTable;
-  //array containing all the sinus that are needed when computing matrix elements
-  double* SinusTable;
 
  public:
 
@@ -81,7 +67,7 @@ class DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian : public Abstrac
   // nbrSpin = number of spins
   // j1 = nearest neighbour coupling constant
   // j2 = second nearest neighbour coupling constant
-  DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian(AbstractSpinChain* chain, int nbrSpin, double j1, double j2);
+  DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian(AbstractSpinChainWithTranslations* chain, int nbrSpin, double j1, double j2);
 
   // destructor
   //
@@ -91,7 +77,7 @@ class DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian : public Abstrac
   // 
   // chain = pointer on Hilbert space of the associated system
   // return value = reference on current Hamiltonian
-  DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian& SetChain(AbstractSpinChain* chain);
+  DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian& SetChain(AbstractSpinChainWithTranslations* chain);
 
   // set Hilbert space
   //
@@ -121,8 +107,8 @@ class DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian : public Abstrac
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-				     int firstComponent, int nbrComponent);
+  virtual ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+					     int firstComponent, int nbrComponent);
 
   // multiply a set of vectors by the current hamiltonian for a given range of indices 
   // and add result to another set of vectors, low level function (no architecture optimization)
@@ -133,19 +119,19 @@ class DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian : public Abstrac
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = pointer to the array of vectors where result has been stored
-  ComplexVector* LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors,
-					     int firstComponent, int nbrComponent);
+  virtual ComplexVector* LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors,
+						     int firstComponent, int nbrComponent);
 
 
- private:
+ protected :
  
   // evaluate all matrix elements
   //   
-  void EvaluateDiagonalMatrixElements();
+  virtual void EvaluateDiagonalMatrixElements();
 
   // evaluate all cosinus/sinus that are needed when computing matrix elements
   //
-  void EvaluateCosinusTable();
+  virtual void EvaluateCosinusTable();
 
 };
 

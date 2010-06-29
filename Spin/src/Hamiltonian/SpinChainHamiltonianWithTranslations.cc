@@ -45,6 +45,13 @@ using std::endl;
 using std::ostream;
 
 
+// default constructor
+//
+
+SpinChainHamiltonianWithTranslations::SpinChainHamiltonianWithTranslations()
+{
+}
+
 // constructor from default datas
 //
 // chain = reference on Hilbert space of the associated system
@@ -71,6 +78,7 @@ SpinChainHamiltonianWithTranslations::~SpinChainHamiltonianWithTranslations()
   delete[] this->SzSzContributions;
   delete[] this->CosinusTable;
   delete[] this->SinusTable;
+  delete[] this->ExponentialTable;
 }
 
 // set Hilbert space
@@ -372,11 +380,14 @@ void SpinChainHamiltonianWithTranslations::EvaluateCosinusTable()
 {
   this->CosinusTable = new double [this->NbrSpin];
   this->SinusTable = new double [this->NbrSpin];
+  this->ExponentialTable = new Complex [this->NbrSpin];
   double Coef = 2.0 * M_PI / ((double) this->NbrSpin) * ((double) this->Chain->GetMomentum());
   for (int i = 0; i < this->NbrSpin ; ++i)
     {
       this->CosinusTable[i] = cos(Coef * ((double) i));
       this->SinusTable[i] = sin(Coef * ((double) i));
+      this->ExponentialTable[i].Re = this->CosinusTable[i];
+      this->ExponentialTable[i].Im = this->SinusTable[i];
     }
 }
 

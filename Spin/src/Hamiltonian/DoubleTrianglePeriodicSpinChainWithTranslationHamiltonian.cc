@@ -52,7 +52,7 @@ using std::ostream;
 // j1 = nearest neighbour coupling constant
 // j2 = second nearest neighbour coupling constant
 
-DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian::DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian(AbstractSpinChain* chain, int nbrSpin, double j1, double j2)
+DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian::DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian(AbstractSpinChainWithTranslations* chain, int nbrSpin, double j1, double j2)
 {
   this->Chain = chain;
   this->NbrSpin = nbrSpin;
@@ -81,7 +81,7 @@ DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian::~DoubleTrianglePeriod
 void DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
 {
   delete[] this->SzSzContributions;
-  this->Chain = (AbstractSpinChain*) hilbertSpace;
+  this->Chain = (AbstractSpinChainWithTranslations*) hilbertSpace;
   this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
   this->EvaluateDiagonalMatrixElements();
 }
@@ -100,7 +100,7 @@ AbstractHilbertSpace* DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian:
 // chain = reference on Hilbert space of the associated system
 // return value = reference on current Hamiltonian
 
-DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian& DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian::SetChain(AbstractSpinChain* chain)
+DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian& DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian::SetChain(AbstractSpinChainWithTranslations* chain)
 {  
   delete[] this->SzSzContributions;
   this->Chain = chain;
@@ -138,101 +138,167 @@ void DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian::ShiftHamiltonian
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-RealVector& DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
-									    int firstComponent, int nbrComponent) 
+ComplexVector& DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+											      int firstComponent, int nbrComponent) 
 {
   int dim = firstComponent + nbrComponent;
   int Dimension =  this->Chain->GetHilbertSpaceDimension();
-  double coef;
+  double Coef;
+  int NbrTranslations;
   int pos;
   int SpinPos = 0;
   int ReducedNbrSpin = this->NbrSpin - 2;
+  Complex TmpZ;
   for (int i = firstComponent; i < dim; i++)
     {
       SpinPos = 0;
-      double TmpCoefficient =  vSource[i];
+      Complex TmpCoefficient =  vSource[i];
       for (; SpinPos < ReducedNbrSpin; SpinPos += 2)
 	{
-	  pos = this->Chain->SmiSpj(SpinPos, SpinPos + 1, i, coef);
+	  pos = this->Chain->SmiSpj(SpinPos, SpinPos + 1, i, Coef, NbrTranslations);
 	  if (pos != Dimension)
 	    {
-	      vDestination[pos] += this->HalfJ1 * coef * TmpCoefficient;
+	      Coef *= this->HalfJ1;
+	      TmpZ = this->ExponentialTable[NbrTranslations];
+	      TmpZ *= TmpCoefficient;
+	      TmpZ *= Coef;
+	      vDestination[pos] += TmpZ;
 	    }
-	  pos = this->Chain->SmiSpj(SpinPos + 1, SpinPos, i, coef);
+	  pos = this->Chain->SmiSpj(SpinPos + 1, SpinPos, i, Coef, NbrTranslations);
 	  if (pos != Dimension)
 	    {
-	      vDestination[pos] += this->HalfJ1 * coef * TmpCoefficient;
+	      Coef *= this->HalfJ1;
+	      TmpZ = this->ExponentialTable[NbrTranslations];
+	      TmpZ *= TmpCoefficient;
+	      TmpZ *= Coef;
+	      vDestination[pos] += TmpZ;
 	    }
-	  pos = this->Chain->SmiSpj(SpinPos + 1, SpinPos + 2, i, coef);
+	  pos = this->Chain->SmiSpj(SpinPos + 1, SpinPos + 2, i, Coef, NbrTranslations);
 	  if (pos != Dimension)
 	    {
-	      vDestination[pos] += this->HalfJ1 * coef * TmpCoefficient;
+	      Coef *= this->HalfJ1;
+	      TmpZ = this->ExponentialTable[NbrTranslations];
+	      TmpZ *= TmpCoefficient;
+	      TmpZ *= Coef;
+	      vDestination[pos] += TmpZ;
 	    }
-	  pos = this->Chain->SmiSpj(SpinPos + 2, SpinPos + 1, i, coef);
+	  pos = this->Chain->SmiSpj(SpinPos + 2, SpinPos + 1, i, Coef, NbrTranslations);
 	  if (pos != Dimension)
 	    {
-	      vDestination[pos] += this->HalfJ1 * coef * TmpCoefficient;
+	      Coef *= this->HalfJ1;
+	      TmpZ = this->ExponentialTable[NbrTranslations];
+	      TmpZ *= TmpCoefficient;
+	      TmpZ *= Coef;
+	      vDestination[pos] += TmpZ;
 	    }
-	  pos = this->Chain->SmiSpj(SpinPos, SpinPos + 2, i, coef);
+	  pos = this->Chain->SmiSpj(SpinPos, SpinPos + 2, i, Coef, NbrTranslations);
 	  if (pos != Dimension)
 	    {
-	      vDestination[pos] += this->HalfJ2 * coef * TmpCoefficient;
+	      Coef *= this->HalfJ2;
+	      TmpZ = this->ExponentialTable[NbrTranslations];
+	      TmpZ *= TmpCoefficient;
+	      TmpZ *= Coef;
+	      vDestination[pos] += TmpZ;
 	    }
-	  pos = this->Chain->SmiSpj(SpinPos + 2, SpinPos, i, coef);
+	  pos = this->Chain->SmiSpj(SpinPos + 2, SpinPos, i, Coef, NbrTranslations);
 	  if (pos != Dimension)
 	    {
-	      vDestination[pos] += this->HalfJ2 * coef * TmpCoefficient;
+	      Coef *= this->HalfJ2;
+	      TmpZ = this->ExponentialTable[NbrTranslations];
+	      TmpZ *= TmpCoefficient;
+	      TmpZ *= Coef;
+	      vDestination[pos] += TmpZ;
 	    }
-	  pos = this->Chain->SmiSpj(SpinPos + 1, SpinPos + 3, i, coef);
+	  pos = this->Chain->SmiSpj(SpinPos + 1, SpinPos + 3, i, Coef, NbrTranslations);
 	  if (pos != Dimension)
 	    {
-	      vDestination[pos] += this->HalfJ2 * coef * TmpCoefficient;
+	      Coef *= this->HalfJ2;
+	      TmpZ = this->ExponentialTable[NbrTranslations];
+	      TmpZ *= TmpCoefficient;
+	      TmpZ *= Coef;
+	      vDestination[pos] += TmpZ;
 	    }
-	  pos = this->Chain->SmiSpj(SpinPos + 3, SpinPos + 1, i, coef);
+	  pos = this->Chain->SmiSpj(SpinPos + 3, SpinPos + 1, i, Coef, NbrTranslations);
 	  if (pos != Dimension)
 	    {
-	      vDestination[pos] += this->HalfJ2 * coef * TmpCoefficient;
+	      Coef *= this->HalfJ2;
+	      TmpZ = this->ExponentialTable[NbrTranslations];
+	      TmpZ *= TmpCoefficient;
+	      TmpZ *= Coef;
+	      vDestination[pos] += TmpZ;
 	    }
 	}
-      pos = this->Chain->SmiSpj(SpinPos, SpinPos + 1, i, coef);
+      pos = this->Chain->SmiSpj(SpinPos, SpinPos + 1, i, Coef, NbrTranslations);
       if (pos != Dimension)
 	{
-	  vDestination[pos] += this->HalfJ1 * coef * TmpCoefficient;
+	  Coef *= this->HalfJ1;
+	  TmpZ = this->ExponentialTable[NbrTranslations];
+	  TmpZ *= TmpCoefficient;
+	  TmpZ *= Coef;
+	  vDestination[pos] += TmpZ;
 	}
-      pos = this->Chain->SmiSpj(SpinPos + 1, SpinPos, i, coef);
+      pos = this->Chain->SmiSpj(SpinPos + 1, SpinPos, i, Coef, NbrTranslations);
       if (pos != Dimension)
 	{
-	  vDestination[pos] += this->HalfJ1 * coef * TmpCoefficient;
+	  Coef *= this->HalfJ1;
+	  TmpZ = this->ExponentialTable[NbrTranslations];
+	  TmpZ *= TmpCoefficient;
+	  TmpZ *= Coef;
+	  vDestination[pos] += TmpZ;
 	}
-      pos = this->Chain->SmiSpj(SpinPos + 1, 0, i, coef);
+      pos = this->Chain->SmiSpj(SpinPos + 1, 0, i, Coef, NbrTranslations);
       if (pos != Dimension)
 	{
-	  vDestination[pos] += this->HalfJ1 * coef * TmpCoefficient;
+	  Coef *= this->HalfJ1;
+	  TmpZ = this->ExponentialTable[NbrTranslations];
+	  TmpZ *= TmpCoefficient;
+	  TmpZ *= Coef;
+	  vDestination[pos] += TmpZ;
 	}
-      pos = this->Chain->SmiSpj(0, SpinPos + 1, i, coef);
+      pos = this->Chain->SmiSpj(0, SpinPos + 1, i, Coef, NbrTranslations);
       if (pos != Dimension)
 	{
-	  vDestination[pos] += this->HalfJ1 * coef * TmpCoefficient;
+	  Coef *= this->HalfJ1;
+	  TmpZ = this->ExponentialTable[NbrTranslations];
+	  TmpZ *= TmpCoefficient;
+	  TmpZ *= Coef;
+	  vDestination[pos] += TmpZ;
 	}
-      pos = this->Chain->SmiSpj(SpinPos, 0, i, coef);
+      pos = this->Chain->SmiSpj(SpinPos, 0, i, Coef, NbrTranslations);
       if (pos != Dimension)
 	{
-	  vDestination[pos] += this->HalfJ2 * coef * TmpCoefficient;
+	  Coef *= this->HalfJ2;
+	  TmpZ = this->ExponentialTable[NbrTranslations];
+	  TmpZ *= TmpCoefficient;
+	  TmpZ *= Coef;
+	  vDestination[pos] += TmpZ;
 	}
-      pos = this->Chain->SmiSpj(0, SpinPos, i, coef);
+      pos = this->Chain->SmiSpj(0, SpinPos, i, Coef, NbrTranslations);
       if (pos != Dimension)
 	{
-	  vDestination[pos] += this->HalfJ2 * coef * TmpCoefficient;
+	  Coef *= this->HalfJ2;
+	  TmpZ = this->ExponentialTable[NbrTranslations];
+	  TmpZ *= TmpCoefficient;
+	  TmpZ *= Coef;
+	  vDestination[pos] += TmpZ;
 	}
-      pos = this->Chain->SmiSpj(SpinPos + 1, 1, i, coef);
+      pos = this->Chain->SmiSpj(SpinPos + 1, 1, i, Coef, NbrTranslations);
       if (pos != Dimension)
 	{
-	  vDestination[pos] += this->HalfJ2 * coef * TmpCoefficient;
+	  Coef *= this->HalfJ2;
+	  TmpZ = this->ExponentialTable[NbrTranslations];
+	  TmpZ *= TmpCoefficient;
+	  TmpZ *= Coef;
+	  vDestination[pos] += TmpZ;
 	}
-      pos = this->Chain->SmiSpj(1, SpinPos + 1, i, coef);
+      pos = this->Chain->SmiSpj(1, SpinPos + 1, i, Coef, NbrTranslations);
       if (pos != Dimension)
 	{
-	  vDestination[pos] += this->HalfJ2 * coef * TmpCoefficient;
+	  Coef *= this->HalfJ2;
+	  TmpZ = this->ExponentialTable[NbrTranslations];
+	  TmpZ *= TmpCoefficient;
+	  TmpZ *= Coef;
+	  vDestination[pos] += TmpZ;
 	}
       vDestination[i] += this->SzSzContributions[i] * TmpCoefficient;
     }
@@ -249,16 +315,17 @@ RealVector& DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian::LowLevelA
 // nbrComponent = number of components to evaluate
 // return value = pointer to the array of vectors where result has been stored
 
-RealVector* DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian::LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors,
-							     int firstComponent, int nbrComponent)
+ComplexVector* DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian::LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors,
+												      int firstComponent, int nbrComponent)
 {
   int dim = firstComponent + nbrComponent;
   int Dimension =  this->Chain->GetHilbertSpaceDimension();
-  double coef;
+  double Coef;
+  int NbrTranslations;
   int pos;
   int SpinPos = 0;
   int ReducedNbrSpin = this->NbrSpin - 2;
-  double* TmpCoefficients = new double [nbrVectors];
+  Complex* TmpCoefficients = new Complex [nbrVectors];
   for (int i = firstComponent; i < dim; i++)
     {
       SpinPos = 0;
@@ -266,102 +333,102 @@ RealVector* DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian::LowLevelM
 	TmpCoefficients[j] =  vSources[j][i];
       for (; SpinPos < ReducedNbrSpin; SpinPos += 2)
 	{
-	  pos = this->Chain->SmiSpj(SpinPos, SpinPos + 1, i, coef);
+	  pos = this->Chain->SmiSpj(SpinPos, SpinPos + 1, i, Coef, NbrTranslations);
 	  if (pos != Dimension)
 	    {
 	      for (int j = 0; j <  nbrVectors; ++j)
-		vDestinations[j][pos] += this->HalfJ1 * coef * TmpCoefficients[j];
+		vDestinations[j][pos] += this->HalfJ1 * Coef * TmpCoefficients[j];
 	    }
-	  pos = this->Chain->SmiSpj(SpinPos + 1, SpinPos, i, coef);
+	  pos = this->Chain->SmiSpj(SpinPos + 1, SpinPos, i, Coef, NbrTranslations);
 	  if (pos != Dimension)
 	    {
 	      for (int j = 0; j <  nbrVectors; ++j)
-		vDestinations[j][pos] += this->HalfJ1 * coef * TmpCoefficients[j];
+		vDestinations[j][pos] += this->HalfJ1 * Coef * TmpCoefficients[j];
 	    }
-	  pos = this->Chain->SmiSpj(SpinPos + 1, SpinPos + 2, i, coef);
+	  pos = this->Chain->SmiSpj(SpinPos + 1, SpinPos + 2, i, Coef, NbrTranslations);
 	  if (pos != Dimension)
 	    {
 	      for (int j = 0; j <  nbrVectors; ++j)
-		vDestinations[j][pos] += this->HalfJ1 * coef * TmpCoefficients[j];
+		vDestinations[j][pos] += this->HalfJ1 * Coef * TmpCoefficients[j];
 	    }
-	  pos = this->Chain->SmiSpj(SpinPos + 2, SpinPos + 1, i, coef);
+	  pos = this->Chain->SmiSpj(SpinPos + 2, SpinPos + 1, i, Coef, NbrTranslations);
 	  if (pos != Dimension)
 	    {
 	      for (int j = 0; j <  nbrVectors; ++j)
-		vDestinations[j][pos] += this->HalfJ1 * coef * TmpCoefficients[j];
+		vDestinations[j][pos] += this->HalfJ1 * Coef * TmpCoefficients[j];
 	    }
-	  pos = this->Chain->SmiSpj(SpinPos, SpinPos + 2, i, coef);
+	  pos = this->Chain->SmiSpj(SpinPos, SpinPos + 2, i, Coef, NbrTranslations);
 	  if (pos != Dimension)
 	    {
 	      for (int j = 0; j <  nbrVectors; ++j)
-		vDestinations[j][pos] += this->HalfJ2 * coef * TmpCoefficients[j];
+		vDestinations[j][pos] += this->HalfJ2 * Coef * TmpCoefficients[j];
 	    }
-	  pos = this->Chain->SmiSpj(SpinPos + 2, SpinPos, i, coef);
+	  pos = this->Chain->SmiSpj(SpinPos + 2, SpinPos, i, Coef, NbrTranslations);
 	  if (pos != Dimension)
 	    {
 	      for (int j = 0; j <  nbrVectors; ++j)
-		vDestinations[j][pos] += this->HalfJ2 * coef * TmpCoefficients[j];
+		vDestinations[j][pos] += this->HalfJ2 * Coef * TmpCoefficients[j];
 	    }
-	  pos = this->Chain->SmiSpj(SpinPos + 1, SpinPos + 3, i, coef);
+	  pos = this->Chain->SmiSpj(SpinPos + 1, SpinPos + 3, i, Coef, NbrTranslations);
 	  if (pos != Dimension)
 	    {
 	      for (int j = 0; j <  nbrVectors; ++j)
-		vDestinations[j][pos] += this->HalfJ2 * coef * TmpCoefficients[j];
+		vDestinations[j][pos] += this->HalfJ2 * Coef * TmpCoefficients[j];
 	    }
-	  pos = this->Chain->SmiSpj(SpinPos + 3, SpinPos + 1, i, coef);
+	  pos = this->Chain->SmiSpj(SpinPos + 3, SpinPos + 1, i, Coef, NbrTranslations);
 	  if (pos != Dimension)
 	    {
 	      for (int j = 0; j <  nbrVectors; ++j)
-		vDestinations[j][pos] += this->HalfJ2 * coef * TmpCoefficients[j];
+		vDestinations[j][pos] += this->HalfJ2 * Coef * TmpCoefficients[j];
 	    }
 	}
-      pos = this->Chain->SmiSpj(SpinPos, SpinPos + 1, i, coef);
+      pos = this->Chain->SmiSpj(SpinPos, SpinPos + 1, i, Coef, NbrTranslations);
       if (pos != Dimension)
 	{
 	  for (int j = 0; j <  nbrVectors; ++j)
-	    vDestinations[j][pos] += this->HalfJ1 * coef * TmpCoefficients[j];
+	    vDestinations[j][pos] += this->HalfJ1 * Coef * TmpCoefficients[j];
 	}
-      pos = this->Chain->SmiSpj(SpinPos + 1, SpinPos, i, coef);
+      pos = this->Chain->SmiSpj(SpinPos + 1, SpinPos, i, Coef, NbrTranslations);
       if (pos != Dimension)
 	{
 	  for (int j = 0; j <  nbrVectors; ++j)
-	    vDestinations[j][pos] += this->HalfJ1 * coef * TmpCoefficients[j];
+	    vDestinations[j][pos] += this->HalfJ1 * Coef * TmpCoefficients[j];
 	}
-      pos = this->Chain->SmiSpj(SpinPos + 1, 0, i, coef);
+      pos = this->Chain->SmiSpj(SpinPos + 1, 0, i, Coef, NbrTranslations);
       if (pos != Dimension)
 	{
 	  for (int j = 0; j <  nbrVectors; ++j)
-	    vDestinations[j][pos] += this->HalfJ1 * coef * TmpCoefficients[j];
+	    vDestinations[j][pos] += this->HalfJ1 * Coef * TmpCoefficients[j];
 	}
-      pos = this->Chain->SmiSpj(0, SpinPos + 1, i, coef);
+      pos = this->Chain->SmiSpj(0, SpinPos + 1, i, Coef, NbrTranslations);
       if (pos != Dimension)
 	{
 	  for (int j = 0; j <  nbrVectors; ++j)
-	    vDestinations[j][pos] += this->HalfJ1 * coef * TmpCoefficients[j];
+	    vDestinations[j][pos] += this->HalfJ1 * Coef * TmpCoefficients[j];
 	}
-      pos = this->Chain->SmiSpj(SpinPos, 0, i, coef);
+      pos = this->Chain->SmiSpj(SpinPos, 0, i, Coef, NbrTranslations);
       if (pos != Dimension)
 	{
 	  for (int j = 0; j <  nbrVectors; ++j)
-	    vDestinations[j][pos] += this->HalfJ2 * coef * TmpCoefficients[j];
+	    vDestinations[j][pos] += this->HalfJ2 * Coef * TmpCoefficients[j];
 	}
-      pos = this->Chain->SmiSpj(0, SpinPos, i, coef);
+      pos = this->Chain->SmiSpj(0, SpinPos, i, Coef, NbrTranslations);
       if (pos != Dimension)
 	{
 	  for (int j = 0; j <  nbrVectors; ++j)
-	    vDestinations[j][pos] += this->HalfJ2 * coef * TmpCoefficients[j];
+	    vDestinations[j][pos] += this->HalfJ2 * Coef * TmpCoefficients[j];
 	}
-      pos = this->Chain->SmiSpj(SpinPos + 1, 1, i, coef);
+      pos = this->Chain->SmiSpj(SpinPos + 1, 1, i, Coef, NbrTranslations);
       if (pos != Dimension)
 	{
 	  for (int j = 0; j <  nbrVectors; ++j)
-	    vDestinations[j][pos] += this->HalfJ2 * coef * TmpCoefficients[j];
+	    vDestinations[j][pos] += this->HalfJ2 * Coef * TmpCoefficients[j];
 	}
-      pos = this->Chain->SmiSpj(1, SpinPos + 1, i, coef);
+      pos = this->Chain->SmiSpj(1, SpinPos + 1, i, Coef, NbrTranslations);
       if (pos != Dimension)
 	{
 	  for (int j = 0; j <  nbrVectors; ++j)
-	    vDestinations[j][pos] += this->HalfJ2 * coef * TmpCoefficients[j];
+	    vDestinations[j][pos] += this->HalfJ2 * Coef * TmpCoefficients[j];
 	}
       for (int j = 0; j <  nbrVectors; ++j)
 	vDestinations[j][i] += this->SzSzContributions[i] * TmpCoefficients[j];
@@ -407,10 +474,13 @@ void DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian::EvaluateCosinusT
 {
   this->CosinusTable = new double [this->NbrTriangles];
   this->SinusTable = new double [this->NbrTriangles];
+  this->ExponentialTable = new Complex [this->NbrTriangles];
   double Coef = 2.0 * M_PI / ((double) this->NbrTriangles) * ((double) this->Chain->GetMomentum());
   for (int i = 0; i < this->NbrTriangles; ++i)
     {
       this->CosinusTable[i] = cos(Coef * ((double) i));
       this->SinusTable[i] = sin(Coef * ((double) i));
+      this->ExponentialTable[i].Re = this->CosinusTable[i];
+      this->ExponentialTable[i].Im = this->SinusTable[i];
     }
 }
