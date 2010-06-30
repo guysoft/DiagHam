@@ -40,7 +40,7 @@
 class FermionOnDisk:  public FermionOnSphere
 {
 
-
+  friend class FermionOnTorus;
 
  public:
 

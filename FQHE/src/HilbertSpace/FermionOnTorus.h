@@ -34,6 +34,7 @@
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnTorus.h"
+#include "Matrix/RealSymmetricMatrix.h"
 
 
 class FermionOnTorus :  public ParticleOnTorus
@@ -44,19 +45,19 @@ class FermionOnTorus :  public ParticleOnTorus
   // number of fermions plus 1
   int IncNbrFermions;
   // maximum momentum value reached by a fermion
-  int MaxMomentum;
+  int KyMax;
   // number of Lz values in a state
   int NbrLzValue;
 
   // index of the momentum orbit
-  int MomentumConstraint;
+  int TotalKy;
   // index of the momentum orbit
-  bool MomentumConstraintFlag;
+  bool TotalKyFlag;
 
   // array describing each state
   unsigned long* StateDescription;
   // array giving maximum Lz value reached for a fermion in a given state
-  int* StateMaxMomentum;
+  int* StateKyMax;
 
   // maximum shift used for searching a position in the look-up table
   int MaximumLookUpShift;
@@ -95,9 +96,9 @@ class FermionOnTorus :  public ParticleOnTorus
   // maxMomentum = momentum maximum value for a fermion
   // hilbertSpaceDimension = Hilbert space dimension
   // stateDescription = array describing each state
-  // stateMaxMomentum = array giving maximum Lz value reached for a fermion in a given state
+  // stateKyMax = array giving maximum Lz value reached for a fermion in a given state
   FermionOnTorus (int nbrFermions, int maxMomentum, int hilbertSpaceDimension, 
-		  unsigned long* stateDescription, int* stateMaxMomentum);
+		  unsigned long* stateDescription, int* stateKyMax);
 
   // constructor from full datas
   // 
@@ -106,9 +107,9 @@ class FermionOnTorus :  public ParticleOnTorus
   // momentumConstraint = index of the momentum orbit
   // hilbertSpaceDimension = Hilbert space dimension
   // stateDescription = array describing each state
-  // stateMaxMomentum = array giving maximum Lz value reached for a fermion in a given state
+  // stateKyMax = array giving maximum Lz value reached for a fermion in a given state
   FermionOnTorus (int nbrFermions, int maxMomentum, int momentumConstraint, int hilbertSpaceDimension, 
-		  unsigned long* stateDescription, int* stateMaxMomentum);
+		  unsigned long* stateDescription, int* stateKyMax);
 
   // copy constructor (without duplicating datas)
   //
@@ -160,7 +161,7 @@ class FermionOnTorus :  public ParticleOnTorus
   AbstractHilbertSpace* ExtractSubspace (AbstractQuantumNumber& q, 
 					 SubspaceSpaceConverter& converter);
 
-  // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2[MaxMomentum])
+  // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2[KyMax])
   //
   // index = index of the state on which the operator has to be applied
   // m1 = first index for creation operator
@@ -199,6 +200,15 @@ class FermionOnTorus :  public ParticleOnTorus
   // return value = reference on current output stream 
   ostream& PrintState (ostream& Str, int state);
 
+  // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Lz sector and fixed number of particles
+  // 
+  // subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax to -Lzmax+subsytemSize-1)
+  // nbrBosonSector = number of particles that belong to the subsytem 
+  // groundState = reference on the total system ground state
+  // kySector = Ky sector in which the density matrix has to be evaluated 
+  // return value = density matrix of the subsytem  (return a wero dimension matrix if the density matrix is equal to zero)
+  virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int subsytemSize, int nbrBosonSector, int kySector, RealVector& groundState);
+
  private:
 
   // find state index
@@ -224,21 +234,21 @@ class FermionOnTorus :  public ParticleOnTorus
   // 
   // nbrFermions = number of fermions
   // maxMomentum = momentum maximum value for a fermion
-  // currentMaxMomentum = momentum maximum value for fermions that are still to be placed
+  // currentKyMax = momentum maximum value for fermions that are still to be placed
   // totalLz = momentum total value
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  int GenerateStates(int nbrFermions, int maxMomentum, int currentMaxMomentum, int pos);
+  int GenerateStates(int nbrFermions, int maxMomentum, int currentKyMax, int pos);
 
   // generate all states corresponding to the constraints
   // 
   // nbrFermions = number of fermions
   // maxMomentum = momentum maximum value for a fermion in the state
-  // currentMaxMomentum = momentum maximum value for fermions that are still to be placed
+  // currentKyMax = momentum maximum value for fermions that are still to be placed
   // pos = position in StateDescription array where to store states
   // currentMomentum = current value of the momentum
   // return value = position from which new states have to be stored
-  int GenerateStates(int nbrFermions, int maxMomentum, int currentMaxMomentum, int pos, int currentMomentum);
+  int GenerateStates(int nbrFermions, int maxMomentum, int currentKyMax, int pos, int currentMomentum);
 
 };
 
