@@ -67,4 +67,5 @@ ParticleOnLatticeExternalHamiltonian.cc \
 ParticleOnSphereTwoLandauLevelL2Hamiltonian.cc \
 ParticleOnSphereEffectiveLatticeHamiltonian.cc \
 AbstractQHEOnTorusNBodyInteractionHamiltonian.cc \
-ParticleOnTorusThreeBodyHardcoreHamiltonian.cc 
+ParticleOnTorusThreeBodyHardcoreHamiltonian.cc \
+ParticleOnTorusLaplacianDeltaHamiltonian.cc
