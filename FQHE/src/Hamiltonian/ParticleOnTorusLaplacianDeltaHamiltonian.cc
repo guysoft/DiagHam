@@ -332,18 +332,18 @@ double ParticleOnTorusLaplacianDeltaHamiltonian::EvaluateInteractionCoefficient(
       Q2 = this->Ratio * N2 * N2;
       if (N2 != 0.0)
 	{
-	  Coefficient = exp(- PIOnM * Q2) * (1.0 - Q2);
+	  Coefficient = exp(- PIOnM * Q2) * (- Q2);
 	  Precision = Coefficient;
 	}
        else
  	{
 	  Precision = 1.0;
-	  Coefficient = 1.0;
+	  Coefficient = 0.0;
 	}
       while ((fabs(Coefficient) + Precision) != fabs(Coefficient))
 	{
 	  Q2 = this->InvRatio * N1 * N1 + this->Ratio * N2 * N2;
-	  Precision = 2.0 * exp(- PIOnM * Q2) * (1.0 - Q2);
+	  Precision = 2.0 * exp(- PIOnM * Q2) * (- Q2);
 	  Coefficient += Precision * cos (N1 * Factor);
 	  N1 += 1.0;
 	}
@@ -358,18 +358,18 @@ double ParticleOnTorusLaplacianDeltaHamiltonian::EvaluateInteractionCoefficient(
       Q2 = this->Ratio * N2 * N2;
       if (N2 != 0.0)
 	{
-	  Coefficient = exp(- PIOnM * Q2) * (1.0 - Q2);
+	  Coefficient = exp(- PIOnM * Q2) * (- Q2);
 	  Precision = Coefficient;
 	}
        else
  	{
 	  Precision = 1.0;
-	  Coefficient = 1.0;
+	  Coefficient = 0.0;
 	}
       while ((fabs(Coefficient) + Precision) != fabs(Coefficient))
 	{
 	  Q2 = this->InvRatio * N1 * N1 + this->Ratio * N2 * N2;
-	  Precision = 2.0 *  exp(- PIOnM * Q2) * (1.0 - Q2);
+	  Precision = 2.0 *  exp(- PIOnM * Q2) * (- Q2);
 	  Coefficient += Precision * cos (N1 * Factor);
 	  N1 += 1.0;
 	}

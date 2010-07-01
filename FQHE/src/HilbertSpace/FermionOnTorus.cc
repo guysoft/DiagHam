@@ -387,14 +387,6 @@ AbstractHilbertSpace* FermionOnTorus::ExtractSubspace (AbstractQuantumNumber& q,
 
 int FermionOnTorus::AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient)
 {
-/*  m1 += this->KyMax;
-  m1 >>= 1;
-  m2 += this->KyMax;
-  m2 >>= 1;
-  n1 += this->KyMax;
-  n1 >>= 1;
-  n2 += this->KyMax;
-  n2 >>= 1;*/
   int StateKyMax = this->StateKyMax[index];
   unsigned long State = this->StateDescription[index];
   if ((n1 > StateKyMax) || (n2 > StateKyMax) || ((State & (((unsigned long) (0x1)) << n1)) == 0) || 
