@@ -95,13 +95,29 @@ int main(int argc, char** argv)
   double J2Value = Manager.GetDouble("j2-value");
   if (Manager.GetBoolean("no-translations") == true)
     {
-      sprintf (OutputFileName, "spin_%d_doubletrianglechain_j1_%f_j2_%f_n_%d", SpinValue, J1Value, J2Value, NbrSpins);
-      sprintf (CommentLine, " double triangle spin %d / 2 chain with %d sites j1=%f j2=%f \n# 2Sz ", SpinValue, NbrSpins, J1Value, J2Value);
+      if ((SpinValue & 1) == 0)
+	{
+	  sprintf (OutputFileName, "spin_%d_doubletrianglechain_j1_%f_j2_%f_n_%d", (SpinValue / 2), J1Value, J2Value, NbrSpins);
+	  sprintf (CommentLine, " double triangle spin %d / 2 chain with %d sites j1=%f j2=%f \n# 2Sz ", (SpinValue / 2), NbrSpins, J1Value, J2Value);
+	}
+      else
+	{
+	  sprintf (OutputFileName, "spin_%d_2_doubletrianglechain_j1_%f_j2_%f_n_%d", SpinValue, J1Value, J2Value, NbrSpins);
+	  sprintf (CommentLine, " double triangle spin %d / 2 chain with %d sites j1=%f j2=%f \n# 2Sz ", SpinValue, NbrSpins, J1Value, J2Value);
+	}
     }
   else
     {
-      sprintf (OutputFileName, "spin_%d_translations_doubletrianglechain_j1_%f_j2_%f_n_%d", SpinValue, J1Value, J2Value, NbrSpins);
-      sprintf (CommentLine, " double triangle spin %d / 2 chain with tanslations and %d sites j1=%f j2=%f \n# 2Sz K ", SpinValue, NbrSpins, J1Value, J2Value);
+      if ((SpinValue & 1) == 0)
+	{
+	  sprintf (OutputFileName, "spin_%d_translations_doubletrianglechain_j1_%f_j2_%f_n_%d", (SpinValue / 2), J1Value, J2Value, NbrSpins);
+	  sprintf (CommentLine, " double triangle spin %d chain with tanslations and %d sites j1=%f j2=%f \n# 2Sz K ", (SpinValue / 2), NbrSpins, J1Value, J2Value);
+	}
+      else
+	{
+	  sprintf (OutputFileName, "spin_%d_2_translations_doubletrianglechain_j1_%f_j2_%f_n_%d", SpinValue, J1Value, J2Value, NbrSpins);
+	  sprintf (CommentLine, " double triangle spin %d / 2 chain with tanslations and %d sites j1=%f j2=%f \n# 2Sz K ", SpinValue, NbrSpins, J1Value, J2Value);
+	}
     }
   char* FullOutputFileName = new char [strlen(OutputFileName)+ 16];
   sprintf (FullOutputFileName, "%s.dat", OutputFileName);
@@ -164,7 +180,7 @@ int main(int argc, char** argv)
 	      switch (SpinValue)
 		{
 		case 1 :
-		  Chain = new Spin1_2ChainWithTranslations (NbrSpins, InitialKValue, 1, InitalSzValue, 1000000);
+		  Chain = new Spin1_2ChainWithTranslations (NbrSpins, InitialKValue, 2, InitalSzValue, 1000000, 1000000);
 		  break;
 		case 2 :
 		  Chain = new Spin1ChainWithTranslations (NbrSpins, InitialKValue, InitalSzValue, 1000000);
@@ -178,9 +194,13 @@ int main(int argc, char** argv)
 		    return -1;
 		  }
 		}
+// 	      for (int i = 0; i < Chain->GetHilbertSpaceDimension(); ++i)
+// 		Chain->PrintState (cout, i) << endl;
+// 	      return 0;
 	      if (Chain->GetHilbertSpaceDimension() > 0)
 		{
 		  DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian Hamiltonian (Chain, NbrSpins, J1Value, J2Value);
+		  cout << Hamiltonian << endl;
 		  char* TmpSzString = new char[64];
 		  sprintf (TmpSzString, "%d %d", InitalSzValue, InitialKValue);
 		  char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];

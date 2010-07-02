@@ -43,6 +43,7 @@
 
 using std::endl;
 using std::ostream;
+using std::cout;
 
 
 // constructor from default datas
@@ -482,5 +483,6 @@ void DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian::EvaluateCosinusT
       this->SinusTable[i] = sin(Coef * ((double) i));
       this->ExponentialTable[i].Re = this->CosinusTable[i];
       this->ExponentialTable[i].Im = this->SinusTable[i];
+      cout << i << " : " << this->ExponentialTable[i] << endl;
     }
 }
