@@ -56,6 +56,7 @@ FermionOnTorus::FermionOnTorus (int nbrFermions, int maxMomentum)
   this->KyMax = maxMomentum;
   this->NbrLzValue = this->KyMax + 1;
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->KyMax);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   this->Flag.Initialize();
   this->TotalKy = 0;
   this->TotalKyFlag = false;
@@ -100,7 +101,7 @@ FermionOnTorus::FermionOnTorus (int nbrFermions, int maxMomentum, int momentumCo
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
   this->StateKyMax = new int [this->HilbertSpaceDimension];
   this->HilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->KyMax - 1, this->KyMax - 1, 0, 0);
-  cout << this->HilbertSpaceDimension << endl;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   this->MaximumSignLookUp = 16;
   this->GenerateLookUpTable(1000000);
 #ifdef __DEBUG__
@@ -129,6 +130,7 @@ FermionOnTorus::FermionOnTorus(const FermionOnTorus& fermions)
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = this->LargeHilbertSpaceDimension;
   this->StateDescription = fermions.StateDescription;
   this->StateKyMax = fermions.StateKyMax;
   this->KyMax = fermions.KyMax;
@@ -158,6 +160,7 @@ FermionOnTorus::FermionOnTorus (int nbrFermions, int maxMomentum, int hilbertSpa
   this->NbrLzValue = this->KyMax + 1;
   this->TotalKyFlag = false;
   this->HilbertSpaceDimension = hilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   this->Flag.Initialize();
   this->StateDescription = stateDescription;
   this->StateKyMax = stateKyMax;
@@ -199,6 +202,7 @@ FermionOnTorus::FermionOnTorus (int nbrFermions, int maxMomentum, int momentumCo
   this->TotalKy = momentumConstraint;
   this->TotalKyFlag = true;
   this->HilbertSpaceDimension = hilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   this->Flag.Initialize();
   this->StateDescription = stateDescription;
   this->StateKyMax = stateKyMax;
@@ -261,6 +265,7 @@ FermionOnTorus& FermionOnTorus::operator = (const FermionOnTorus& fermions)
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = this->LargeHilbertSpaceDimension;
   this->StateDescription = fermions.StateDescription;
   this->StateKyMax = fermions.StateKyMax;
   this->KyMax = fermions.KyMax;
@@ -455,7 +460,6 @@ int FermionOnTorus::AdAdAA (int index, int m1, int m2, int n1, int n2, double& c
 #endif
     }
   TmpState |= (((unsigned long) (0x1)) << m1);
-//  cout << hex << TmpState << dec << endl;
   return this->FindStateIndex(TmpState, NewKyMax);
 }
 
@@ -565,11 +569,8 @@ int FermionOnTorus::FindStateIndex(unsigned long stateDescription, int maxMoment
 {
 //  int Pos = 0;
   int Pos = this->LookUpTable[maxMomentum][stateDescription >> this->LookUpTableShift[maxMomentum]];
-//  cout << maxMomentum << " " << hex << stateDescription << dec << " " << this->LookUpTableShift[maxMomentum] << Pos << endl;
   while (this->StateDescription[Pos] != stateDescription)
     ++Pos;
-/*  if (this->StateKyMax[Pos] != maxMomentum)
-    cout << "error !!! " << maxMomentum << " " << this->StateKyMax[Pos] << " " << hex << stateDescription << dec << " " << Pos << endl;*/
   return Pos;
 }
 
@@ -635,7 +636,6 @@ int FermionOnTorus::GenerateStates(int nbrFermions, int maxMomentum, int current
 {
   if ((nbrFermions == 0) || (nbrFermions > (currentKyMax + 1)))
     return pos;
-//  cout << nbrFermions << " " << maxMomentum << " " << currentKyMax << " " << pos << " " << currentMomentum << endl;
   if (nbrFermions == 1)
     {
       int i = this->TotalKy - (currentMomentum % this->KyMax);
@@ -873,10 +873,11 @@ RealSymmetricMatrix FermionOnTorus::EvaluatePartialDensityMatrix (int subsytemSi
   int* TmpStatePosition2 = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
   
   int ComplementaryTotalKy = this->TotalKy - kySector - ((this->NbrFermions - nbrFermionSector) * subsytemSize);
-  while (ComplementaryTotalKy < 0)
+  int ComplementaryMinTotalKy = ((this->NbrFermions - nbrFermionSector) * (this->NbrFermions - nbrFermionSector - 1)) / 2;
+  while (ComplementaryTotalKy < ComplementaryMinTotalKy)
     ComplementaryTotalKy += this->KyMax;
-  ComplementaryTotalKy = ComplementaryTotalKy % this->KyMax;
-  int ComplementaryMaxTotalKy = (this->KyMax - subsytemSize - 1) * (this->NbrFermions - nbrFermionSector);    
+  //  ComplementaryTotalKy = ComplementaryTotalKy % this->KyMax;
+  int ComplementaryMaxTotalKy = ((2 * (this->KyMax - subsytemSize - 1) + 1 - (this->NbrFermions - nbrFermionSector)) * (this->NbrFermions - nbrFermionSector)) / 2;    
 
   while (ComplementaryTotalKy <= ComplementaryMaxTotalKy)
     {

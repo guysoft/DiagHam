@@ -65,8 +65,9 @@ BosonOnTorusShort::BosonOnTorusShort (int nbrBosons, int maxMomentum)
   this->KyMax = maxMomentum;
   this->NbrKyValue = this->KyMax + 1;
   this->TotalKyFlag = false;
-
   this->TemporaryState = new unsigned long [this->KyMax + 1];
+  this->ProdATemporaryState = new unsigned long [this->KyMax + 1];
+
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->KyMax);
   this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   this->Flag.Initialize();
@@ -106,6 +107,7 @@ BosonOnTorusShort::BosonOnTorusShort (int nbrBosons, int maxMomentum, int moment
   this->TotalKyFlag = true;
   this->GCDKyMax = FindGCD(this->NbrBosons, this->KyMax);
   this->TemporaryState = new unsigned long [this->KyMax + 1];
+  this->ProdATemporaryState = new unsigned long [this->KyMax + 1];
 
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->KyMax);
   this->Flag.Initialize();
@@ -146,6 +148,8 @@ BosonOnTorusShort::BosonOnTorusShort(const BosonOnTorusShort& bosons)
   this->StateKyMax = bosons.StateKyMax;
   this->TemporaryState = new unsigned long [this->KyMax + 1];
   this->Flag = bosons.Flag;
+  this->TemporaryState = new unsigned long [this->KyMax + 1];
+  this->ProdATemporaryState = new unsigned long [this->KyMax + 1];
 }
 
 // destructor
@@ -159,6 +163,7 @@ BosonOnTorusShort::~BosonOnTorusShort ()
       delete[] this->StateKyMax;
     }
   delete[] this->TemporaryState;
+  delete[] this->ProdATemporaryState;
 }
 
 // assignement (without duplicating datas)
@@ -172,8 +177,9 @@ BosonOnTorusShort& BosonOnTorusShort::operator = (const BosonOnTorusShort& boson
     {
       delete[] this->StateDescription;
       delete[] this->StateKyMax;
-      delete[] this->TemporaryState;
     }
+  delete[] this->TemporaryState;
+  delete[] this->ProdATemporaryState;
   this->NbrBosons = bosons.NbrBosons;
   this->IncNbrBosons = bosons.IncNbrBosons;
   this->KyMax = bosons.KyMax;
@@ -183,6 +189,7 @@ BosonOnTorusShort& BosonOnTorusShort::operator = (const BosonOnTorusShort& boson
   this->StateDescription = bosons.StateDescription;
   this->StateKyMax = bosons.StateKyMax;
   this->TemporaryState = new unsigned long [this->KyMax + 1];
+  this->ProdATemporaryState = new unsigned long [this->KyMax + 1];
   this->Flag = bosons.Flag;
   return *this;
 }

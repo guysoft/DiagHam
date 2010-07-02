@@ -143,7 +143,7 @@ int main(int argc, char** argv)
 	  cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
 	  return -1;
 	}
-      if (Statistics == true)
+      if (Statistics == false)
 	{
 	  cout << GroundStateFiles[i] << " is not a fermionic state" << endl;
 	  return -1;
@@ -216,10 +216,10 @@ int main(int argc, char** argv)
       double EntanglementEntropy = 0.0;
       double DensitySum = 0.0;
       long TmpDensityMatrixEigenvaluePosition = 0;
-      for (int SubsystemNbrParticles = 0; SubsystemNbrParticles <= NbrParticles; ++SubsystemNbrParticles)
+      for (int SubsystemNbrParticles = 0; SubsystemNbrParticles <= SubsystemSize; ++SubsystemNbrParticles)
 	{
-	  int SubsystemMaxTotalKy = (SubsystemSize - 1) * SubsystemNbrParticles;
-	  int SubsystemTotalKy = 0; 
+	  int SubsystemTotalKy = (SubsystemNbrParticles * (SubsystemNbrParticles - 1)) / 2; 
+	  int SubsystemMaxTotalKy = (SubsystemSize - 1) * SubsystemNbrParticles - SubsystemTotalKy;
 	  for (; SubsystemTotalKy <= SubsystemMaxTotalKy; ++SubsystemTotalKy)
 	    {
 	      cout << "processing subsystem size=" << SubsystemSize << "  subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Ky=" << SubsystemTotalKy << endl;
