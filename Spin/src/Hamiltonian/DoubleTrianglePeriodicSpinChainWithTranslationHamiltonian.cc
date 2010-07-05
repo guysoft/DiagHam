@@ -72,7 +72,6 @@ DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian::DoubleTrianglePeriodi
 
 DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian::~DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian() 
 {
-  delete[] this->SzSzContributions;
 }
 
 // set Hilbert space
@@ -473,16 +472,26 @@ void DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian::EvaluateDiagonal
 
 void DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian::EvaluateCosinusTable()
 {
-  this->CosinusTable = new double [this->NbrTriangles];
-  this->SinusTable = new double [this->NbrTriangles];
-  this->ExponentialTable = new Complex [this->NbrTriangles];
-  double Coef = 2.0 * M_PI / ((double) this->NbrTriangles) * ((double) this->Chain->GetMomentum());
-  for (int i = 0; i < this->NbrTriangles; ++i)
+  this->CosinusTable = new double [this->NbrSpin];
+  this->SinusTable = new double [this->NbrSpin];
+  this->ExponentialTable = new Complex [this->NbrSpin];
+  double Coef = (2.0 * M_PI / (double) this->NbrSpin) * ((double) this->Chain->GetMomentum());
+  for (int i = 0; i < this->NbrSpin; ++i)
     {
       this->CosinusTable[i] = cos(Coef * ((double) i));
       this->SinusTable[i] = sin(Coef * ((double) i));
       this->ExponentialTable[i].Re = this->CosinusTable[i];
       this->ExponentialTable[i].Im = this->SinusTable[i];
-      cout << i << " : " << this->ExponentialTable[i] << endl;
-    }
+    }  
+  // this->CosinusTable = new double [this->NbrTriangles];
+//   this->SinusTable = new double [this->NbrTriangles];
+//   this->ExponentialTable = new Complex [this->NbrTriangles];
+//   double Coef = (2.0 * M_PI / (double) this->NbrTriangles) * ((double) this->Chain->GetMomentum());
+//   for (int i = 0; i < this->NbrTriangles; ++i)
+//     {
+//       this->CosinusTable[i] = cos(Coef * ((double) i));
+//       this->SinusTable[i] = sin(Coef * ((double) i));
+//       this->ExponentialTable[i].Re = this->CosinusTable[i];
+//       this->ExponentialTable[i].Im = this->SinusTable[i];
+//     }
 }

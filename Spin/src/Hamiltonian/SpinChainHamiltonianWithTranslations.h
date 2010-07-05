@@ -141,17 +141,6 @@ class SpinChainHamiltonianWithTranslations : public AbstractHamiltonian
   virtual Complex MatrixElement (ComplexVector& V1, ComplexVector& V2);
 
   // multiply a vector by the current hamiltonian for a given range of indices 
-  // and store result in another vector, low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector where result has to be stored
-  // firstComponent = index of the first component to evaluate
-  // nbrComponent = number of components to evaluate
-  // return value = reference on vector where result has been stored
-  virtual ComplexVector& LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-					  int firstComponent, int nbrComponent);
-
-  // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)
   //
   // vSource = vector to be multiplied

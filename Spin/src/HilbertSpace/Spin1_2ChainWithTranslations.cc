@@ -223,7 +223,8 @@ Spin1_2ChainWithTranslations::~Spin1_2ChainWithTranslations ()
       delete[] this->ChainDescription;
       delete[] this->LookUpTable;
       delete[] this->CompatibilityWithMomentum;
-      for (int i = 1; i <= this->ChainLength; ++i)
+      int TmpPeriodicity = this->ChainLength / this->StateShift;
+      for (int i = 1; i <= TmpPeriodicity; ++i)
 	{
 	  delete[] this->RescalingFactors[i];
 	} 
@@ -244,7 +245,8 @@ Spin1_2ChainWithTranslations& Spin1_2ChainWithTranslations::operator = (const Sp
       delete[] this->ChainDescription;
       delete[] this->LookUpTable;
       delete[] this->CompatibilityWithMomentum;
-      for (int i = 1; i <= this->ChainLength; ++i)
+      int TmpPeriodicity = this->ChainLength / this->StateShift;
+      for (int i = 1; i <= TmpPeriodicity; ++i)
 	{
 	  delete[] this->RescalingFactors[i];
 	} 
@@ -863,18 +865,19 @@ int Spin1_2ChainWithTranslations::GenerateStates(int sz, long memorySlice)
 
 void Spin1_2ChainWithTranslations::CreatePrecalculationTable()
 {
-  this->CompatibilityWithMomentum = new bool [this->ChainLength + 1];
-  for (int i = 0; i <= this->ChainLength; ++i)
-    if (((i * this->Momentum) % this->ChainLength) == 0)
+  int TmpPeriodicity = this->ChainLength / this->StateShift;
+  this->CompatibilityWithMomentum = new bool [TmpPeriodicity + 1];
+  for (int i = 0; i <= TmpPeriodicity; ++i)
+    if (((i * this->Momentum) % TmpPeriodicity) == 0)
       this->CompatibilityWithMomentum[i] = true;
     else
       this->CompatibilityWithMomentum[i] = false;
 
-  this->RescalingFactors = new double* [this->ChainLength + 1];
-  for (int i = 1; i <= this->ChainLength; ++i)
+  this->RescalingFactors = new double* [TmpPeriodicity + 1];
+  for (int i = 1; i <= TmpPeriodicity; ++i)
     {
-      this->RescalingFactors[i] = new double [this->ChainLength + 1];
-      for (int j = 1; j <= this->ChainLength; ++j)
+      this->RescalingFactors[i] = new double [TmpPeriodicity + 1];
+      for (int j = 1; j <= TmpPeriodicity; ++j)
 	{
 	  this->RescalingFactors[i][j] = sqrt (((double) i) / ((double) j));
 	}

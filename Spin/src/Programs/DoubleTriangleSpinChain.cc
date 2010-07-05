@@ -174,16 +174,16 @@ int main(int argc, char** argv)
     {
       for (; InitalSzValue <= MaxSzValue; InitalSzValue +=2)
 	{
-	  for (int InitialKValue = 0; InitialKValue < (NbrSpins / 2); ++InitialKValue)
+	  for (int InitialKValue = 0; InitialKValue < NbrSpins; ++InitialKValue)
 	    {
 	      AbstractSpinChainWithTranslations* Chain = 0;
 	      switch (SpinValue)
 		{
 		case 1 :
-		  Chain = new Spin1_2ChainWithTranslations (NbrSpins, InitialKValue, 2, InitalSzValue, 1000000, 1000000);
+		  Chain = new Spin1_2ChainWithTranslations (NbrSpins, InitialKValue, 1, InitalSzValue, 1000000, 1000000);
 		  break;
 		case 2 :
-		  Chain = new Spin1ChainWithTranslations (NbrSpins, InitialKValue, InitalSzValue, 1000000);
+		  Chain = new Spin1ChainWithTranslations (NbrSpins, InitialKValue, InitalSzValue, 1000000, 1000000);
 		  break;
 		default :
 		  {
@@ -194,13 +194,10 @@ int main(int argc, char** argv)
 		    return -1;
 		  }
 		}
-// 	      for (int i = 0; i < Chain->GetHilbertSpaceDimension(); ++i)
-// 		Chain->PrintState (cout, i) << endl;
-// 	      return 0;
 	      if (Chain->GetHilbertSpaceDimension() > 0)
 		{
+		  cout << "2Sz=" <<  InitalSzValue << " K=" << InitialKValue << " dim=" << Chain->GetHilbertSpaceDimension() << endl;
 		  DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian Hamiltonian (Chain, NbrSpins, J1Value, J2Value);
-		  cout << Hamiltonian << endl;
 		  char* TmpSzString = new char[64];
 		  sprintf (TmpSzString, "%d %d", InitalSzValue, InitialKValue);
 		  char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
