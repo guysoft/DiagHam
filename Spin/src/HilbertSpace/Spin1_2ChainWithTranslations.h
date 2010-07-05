@@ -34,6 +34,7 @@
 
 #include "config.h"
 #include "HilbertSpace/AbstractSpinChainWithTranslations.h"
+#include "Matrix/HermitianMatrix.h"
 
 #include <iostream>
 
@@ -75,7 +76,7 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   long* LookUpTable;
 
   // array describing each state
-  unsigned long* ChainDescription;
+  unsigned long* StateDescription;
 
  public:
 
@@ -277,7 +278,15 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   // return value = reference on current output stream 
   ostream& PrintState (ostream& Str, int state);
 
- private:
+  // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition.
+  // 
+  // nbrSpinUp = number of spin up that belong to the subsytem 
+  // kSector = momentum of the subsystem
+  // groundState = reference on the total system ground state
+  // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+  HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrSpinUpSector, int kSector, RealVector& groundState);
+
+ protected:
 
   // return value of twice spin projection on (Oz) for a given state
   //

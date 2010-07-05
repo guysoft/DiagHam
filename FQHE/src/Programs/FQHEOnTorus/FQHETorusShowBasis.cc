@@ -37,7 +37,7 @@ int main(int argc, char** argv)
   Manager += OutputGroup;
   Manager += MiscGroup;
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 4);
-  (*SystemGroup) += new SingleIntegerOption  ('q', "nbr-flux", "number of flux quanta", 8);
+  (*SystemGroup) += new SingleIntegerOption  ('l', "nbr-flux", "number of flux quanta", 8);
   (*SystemGroup) += new SingleIntegerOption ('y', "ky-momentum", "the total momentum along the y axis (negative if all ky sectors have to be displayed)", -1);
   (*SystemGroup) += new BooleanOption  ('\n', "fermion", "use fermionic statistic instead of bosonic statistic");
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
@@ -131,9 +131,39 @@ int main(int argc, char** argv)
 	    {
 	      BosonOnTorusShort Space (NbrParticles, NbrFluxQuanta, y);
 	      cout << " (k_y = " << y << ") : " << endl;
-	      for (int i = 0; i <  Space.GetHilbertSpaceDimension(); ++i)
-		Space.PrintState(cout, i) << endl;
-	      cout << endl;
+	      if (Manager.GetString("state") == 0)
+		{
+		  for (int i = 0; i <  Space.GetHilbertSpaceDimension(); ++i)
+		    Space.PrintState(cout, i) << endl;
+		  cout << endl;
+		}
+	      else
+		{
+		  int NbrHiddenComponents = 0;
+		  double WeightHiddenComponents = 0.0;
+		  double Normalization = 0.0;
+		  RealVector State;
+		  if (State.ReadVector(Manager.GetString("state")) == false)
+		    {
+		      cout << "error while reading " << Manager.GetString("state") << endl;
+		      return -1;
+		    }
+		  if (Space.GetHilbertSpaceDimension() != State.GetVectorDimension())
+		    {
+		      cout << "dimension mismatch between the state (" << State.GetVectorDimension() << ") and the Hilbert space (" << Space.GetHilbertSpaceDimension() << ")" << endl;
+		      return -1;
+		    }
+		  if (Manager.GetDouble("hide-component") > 0.0)
+		    {
+		      double Error = Manager.GetDouble("hide-component");
+		      for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
+			if (Norm(State[i]) > Error)
+			  Space.PrintState(cout, i) << " : "  << State[i] << endl;;
+		    }
+		  else
+		    for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
+		      Space.PrintState(cout, i) << " : "  << State[i] << endl;;
+		}
 	    }
 	  else
 	    {
