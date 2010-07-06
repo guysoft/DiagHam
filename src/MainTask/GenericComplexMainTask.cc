@@ -289,8 +289,44 @@ int GenericComplexMainTask::ExecuteMainTask()
 #ifdef __LAPACK__
 	  if (this->LapackFlag == true)
 	    {
-	      cout << "Need to implement diagonalization with Lapack for complex matrices..." << endl;
-	      exit(1);
+	      RealDiagonalMatrix TmpDiag (this->Hamiltonian->GetHilbertSpaceDimension());
+	      if (this->EvaluateEigenvectors == false)
+		{
+		  HRep.LapackDiagonalize(TmpDiag);
+		  for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
+		    this->WriteResult(File, TmpDiag[j] - this->EnergyShift);
+		}
+	      else
+		{
+		  ComplexMatrix Q(this->Hamiltonian->GetHilbertSpaceDimension(), this->Hamiltonian->GetHilbertSpaceDimension());
+		  HRep.LapackDiagonalize(TmpDiag, Q);
+		  if (this->EvaluateEigenvectors == true)
+		    {
+		      char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
+		      ComplexVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
+		      for (int j = 0; j < this->NbrEigenvalue; ++j)
+			{
+			  this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
+			  sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, j);
+			  Q[j].WriteVector(TmpVectorName);
+			  cout << ((TmpEigenvector * Q[j]) - this->EnergyShift) << " " << endl;		  
+			}
+		      cout << endl;			  
+		      delete[] TmpVectorName;
+		    }
+		  
+		  for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
+		    {
+		      this->WriteResult(File,TmpDiag[j] - this->EnergyShift, false);
+		      if (this->ComputeEnergyFlag == true)
+			{
+			  ComplexVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
+			  this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
+			  File << " " << ((TmpEigenvector * Q[j]) - this->EnergyShift);
+			}
+		      File << endl;
+		    }
+		}
 	    }
 	  else
 	    {

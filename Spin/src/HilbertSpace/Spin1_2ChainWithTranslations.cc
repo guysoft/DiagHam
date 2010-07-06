@@ -30,6 +30,7 @@
 
 
 #include "HilbertSpace/Spin1_2ChainWithTranslations.h"
+#include "MathTools/Complex.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealMatrix.h"
 #include "HilbertSpace/SubspaceSpaceConverter.h"
