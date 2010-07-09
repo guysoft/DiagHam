@@ -213,8 +213,9 @@ int main(int argc, char** argv)
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
   
   AbstractQHEOnLatticeHamiltonian* Hamiltonian;
-  Hamiltonian = new ParticleOnLatticeDeltaHamiltonian(Space, NbrBosons, Lx, Ly, NbrFluxQuanta, ContactU,
-						      ReverseHopping, Delta, Random, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName, !Manager.GetBoolean("no-hermitian"));
+  Hamiltonian = new ParticleOnLatticeDeltaHamiltonian(Space, NbrBosons, Lx, Ly, NbrFluxQuanta, ContactU, ReverseHopping, Delta,
+						      Random, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName,
+						      !Manager.GetBoolean("no-hermitian"));
 
   if (Manager.GetString("energy-expectation") != 0 )
 	{

@@ -923,10 +923,16 @@ int HardCoreBosonOnLattice::GenerateStates(int nbrBosons,int nbrStates)
   int presentHighestBit=nbrBosons-1;    
   this->StateHighestBit[countdown] = presentHighestBit;
   this->StateDescription[countdown--]=smallestOne(nbrBosons);
+  int MaxHighestBit;
+#ifdef __64_BITS__
+  MaxHighestBit=63;
+#else
+  MaxHighestBit=31;
+#endif
   while (countdown>-1)
     {      
       this->StateDescription[countdown]=nextone(this->StateDescription[countdown+1]);
-      if (this->StateDescription[countdown] & (0x1ul << (presentHighestBit+1)))
+      if ((presentHighestBit<MaxHighestBit) && (this->StateDescription[countdown] & (0x1ul << (presentHighestBit+1))))
 	++presentHighestBit;
       this->StateHighestBit[countdown]=presentHighestBit;
       --countdown;
@@ -957,7 +963,13 @@ void HardCoreBosonOnLattice::GenerateLookUpTable(unsigned long memory)
   if (this->MaximumLookUpShift > this->NbrStates)
     this->MaximumLookUpShift = this->NbrStates;
   this->LookUpTableMemorySize = 1 << this->MaximumLookUpShift;
-
+#ifdef __64_BITS__
+  if (this->MaximumLookUpShift==64)
+    cout << "Attention: LookUpTable overflow"<<endl;
+#else  
+  if (this->MaximumLookUpShift==32)
+    cout << "Attention: LookUpTable overflow"<<endl;
+#endif
   // construct  look-up tables for searching states
   this->LookUpTable = new int* [this->NbrStates];
   this->LookUpTableShift = new int [this->NbrStates];

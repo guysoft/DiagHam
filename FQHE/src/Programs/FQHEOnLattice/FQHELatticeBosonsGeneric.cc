@@ -35,8 +35,6 @@ using std::ofstream;
 
 #include "Matrix/ComplexMatrix.h"
 
-// switch for debug output
-//#define DEBUG_OUTPUT
 
 // store imaginary Hamiltonian into a complex matrix
 //
@@ -135,6 +133,7 @@ int main(int argc, char** argv)
   (*MiscGroup) += new SingleDoubleOption('\n', "tolerance", "tolerance for variational parameters in condensate",1e-6);
   (*MiscGroup) += new SingleStringOption('\n', "energy-expectation", "name of the file containing the state vector, whose energy expectation value shall be calculated");
   (*MiscGroup) += new SingleStringOption  ('o', "output-file", "redirect output to this file",NULL);
+  (*MiscGroup) += new BooleanOption  ('\n', "test-hamiltonian", "test hermiticity of Hamiltonian");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   Manager.StandardProceedings(argv, argc, cout);
@@ -295,60 +294,64 @@ int main(int argc, char** argv)
 	}
 
 //   // testing Hamiltonian:
-#ifdef DEBUG_OUTPUT
-  if (Hamiltonian->GetHilbertSpaceDimension()>5000)
-    {
-      cout << "Attention, debug mode of FQHELatticeBosonsGeneric run for large Hilbert-space"<<endl;
-    }
-  else
-    {
-      ComplexMatrix HRe(Hamiltonian->GetHilbertSpaceDimension(),Hamiltonian->GetHilbertSpaceDimension());
-      ComplexMatrix HIm(Hamiltonian->GetHilbertSpaceDimension(),Hamiltonian->GetHilbertSpaceDimension());
-      GetHamiltonian(Hamiltonian,HRe);
-      GetHamiltonianIm(Hamiltonian,HIm);
-      Complex one, two, M_I(0.0,1.0);
-      for (int i=0; i<Hamiltonian->GetHilbertSpaceDimension(); ++i)
-	for (int j=0; j<Hamiltonian->GetHilbertSpaceDimension(); ++j)
+  if (Manager.GetBoolean("test-hamiltonian"))    
+    if (Hamiltonian->GetHilbertSpaceDimension()>5000)
+      {
+	cout << "Attention, debug mode of FQHELatticeBosonsGeneric run for large Hilbert-space"<<endl;
+      }
+    else
+      {
+	ComplexMatrix HRe(Hamiltonian->GetHilbertSpaceDimension(),Hamiltonian->GetHilbertSpaceDimension());
+	ComplexMatrix HIm(Hamiltonian->GetHilbertSpaceDimension(),Hamiltonian->GetHilbertSpaceDimension());
+	GetHamiltonian(Hamiltonian,HRe);
+	GetHamiltonianIm(Hamiltonian,HIm);
+	Complex one, two, M_I(0.0,1.0);
+	for (int i=0; i<Hamiltonian->GetHilbertSpaceDimension(); ++i)
+	  for (int j=0; j<Hamiltonian->GetHilbertSpaceDimension(); ++j)
+	    {
+	      HRe.GetMatrixElement(i,j,one);
+	      HIm.GetMatrixElement(i,j,two);
+	      one*=M_I;
+	      if (Norm(one-two)>1e-10)
+		cout << "Discrepancy in "<<i<<", "<<j<<": "<<one << " vs " << two << endl;
+	    }
+	cout << "HRe="<<endl<<HRe;
+	for (int i=0; i<Hamiltonian->GetHilbertSpaceDimension(); ++i)
 	  {
-	    HRe.GetMatrixElement(i,j,one);
-	    HIm.GetMatrixElement(i,j,two);
-	    one*=M_I;
-	    if (Norm(one-two)>1e-10)
-	      cout << "Discrepancy in "<<i<<", "<<j<<": "<<one << " vs " << two << endl;
-	  }
-      cout << "HRe="<<endl<<HRe;
-      for (int i=0; i<Hamiltonian->GetHilbertSpaceDimension(); ++i)
-	for (int j=0; j<i; ++j)
-	  {
-	    HRe.GetMatrixElement(i,j,one);
-	    HRe.GetMatrixElement(j,i,two);
-	    if (Norm(one-Conj(two))>1e-10)
-	      cout << "Matrix not hermitian in "<<i<<", "<<j<<": "<<one << " vs " << two << endl;
+	    HRe.GetMatrixElement(i,i,one);
+	    if (Norm(one.Im)>1e-10)
+	      cout << "Matrix not hermitian in "<<i<<", "<<i<<": "<<one << endl;
+	    for (int j=0; j<i; ++j)
+	      {
+		HRe.GetMatrixElement(i,j,one);
+		HRe.GetMatrixElement(j,i,two);
+		if (Norm(one-Conj(two))>1e-10)
+		  cout << "Matrix not hermitian in "<<i<<", "<<j<<": "<<one << " vs " << two << endl;
+	      }
 	  }
 
-      ComplexVector TmpV1a (Hamiltonian->GetHilbertSpaceDimension(), true);
-      ComplexVector TmpV1b (Hamiltonian->GetHilbertSpaceDimension(), true);
-      ComplexVector TmpV2a (Hamiltonian->GetHilbertSpaceDimension(), true);
-      ComplexVector TmpV2b (Hamiltonian->GetHilbertSpaceDimension(), true);
-      for (int i = 0; i < Hamiltonian->GetHilbertSpaceDimension(); i++)
-	{
-	  TmpV1a.Re(i) = (rand() - 32767) * 0.5;
-	  TmpV1a.Im(i) = (rand() - 32767) * 0.5;
-	}
-      TmpV1a /= TmpV1a.Norm();
-      TmpV1b = TmpV1a*M_I;
-      Hamiltonian->LowLevelMultiply(TmpV1a, TmpV2a);
-      Hamiltonian->LowLevelMultiply(TmpV1b, TmpV2b);
-      for (int j=0; j<Hamiltonian->GetHilbertSpaceDimension(); ++j)
-	{
-	  one = TmpV2a[j];
-	  two = TmpV2b[j];
-	  one = one*M_I;
-	  if (Norm(one-two)>1e-10)
-	    cout << "Discrepancy in "<<j<<": "<<one << " vs " << two << endl;
-	}
-    }
-#endif
+	ComplexVector TmpV1a (Hamiltonian->GetHilbertSpaceDimension(), true);
+	ComplexVector TmpV1b (Hamiltonian->GetHilbertSpaceDimension(), true);
+	ComplexVector TmpV2a (Hamiltonian->GetHilbertSpaceDimension(), true);
+	ComplexVector TmpV2b (Hamiltonian->GetHilbertSpaceDimension(), true);
+	for (int i = 0; i < Hamiltonian->GetHilbertSpaceDimension(); i++)
+	  {
+	    TmpV1a.Re(i) = (rand() - 32767) * 0.5;
+	    TmpV1a.Im(i) = (rand() - 32767) * 0.5;
+	  }
+	TmpV1a /= TmpV1a.Norm();
+	TmpV1b = TmpV1a*M_I;
+	Hamiltonian->LowLevelMultiply(TmpV1a, TmpV2a);
+	Hamiltonian->LowLevelMultiply(TmpV1b, TmpV2b);
+	for (int j=0; j<Hamiltonian->GetHilbertSpaceDimension(); ++j)
+	  {
+	    one = TmpV2a[j];
+	    two = TmpV2b[j];
+	    one = one*M_I;
+	    if (Norm(one-two)>1e-10)
+	      cout << "Discrepancy in "<<j<<": "<<one << " vs " << two << endl;
+	  }
+      }
 
   for (int iter=0; iter<NbrFluxValues; ++iter, ++NbrFluxQuanta)
     {

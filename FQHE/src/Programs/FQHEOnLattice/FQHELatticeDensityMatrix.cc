@@ -273,7 +273,9 @@ int main(int argc, char** argv)
 
   ParticleOnLatticeOneBodyOperator *DensityOperator= new ParticleOnLatticeOneBodyOperator(Space);
 
-  cout<< "========= Analysis of density matrix ========"<<endl;
+  cout<< "========= Analysis of ";
+  if (NbrVectors>1) cout << "extended ";
+  cout <<"density matrix ========"<<endl;
  
   int DensityMatrixDimension = NbrSites*NbrVectors;
   HermitianMatrix Rho(DensityMatrixDimension);  
@@ -310,6 +312,45 @@ int main(int argc, char** argv)
 			  }
 		    }
 	    }
+
+      if (NbrVectors > 1)
+	{
+	  ComplexMatrix Block1(NbrSites, NbrSites);
+	  ComplexMatrix Block2(NbrSites, NbrSites);
+	  ComplexMatrix Rst1(NbrSites, NbrSites);
+	  ComplexMatrix Rst2(NbrSites, NbrSites);
+	  for (int i=0; i<NbrVectors; ++i)
+	    {
+	      for (int k=0; k<NbrSites; ++k)
+		for (int l=0; l<NbrSites; ++l)
+		  Block1.SetMatrixElement(k,l,Rho(i*NbrSites+k,i*NbrSites+l));
+	      for (int j=0; j<NbrVectors; ++j)
+		{
+		  if (j==i) ++j;
+		  if (j>=NbrVectors) break;
+		  for (int k=0; k<NbrSites; ++k)
+		    for (int l=0; l<NbrSites; ++l)
+		      Block2.SetMatrixElement(k,l,Rho(i*NbrSites+k,j*NbrSites+l));
+		  // 		  cout << "Block1="<<endl<<Block1;
+		  // 		  cout << "Block2="<<endl<<Block2;
+		  Rst1 = Block1*Block2;
+		  //		  cout << "1*2="<<endl<<Rst1;
+		  Rst2 = Block2*Block1;
+		  //		  cout << "2*1="<<endl<<Rst2;
+		  Rst1 -= Rst2;
+		  //		  cout << "1*2-2*1="<<endl<<Rst1;
+		  bool NonZero = false;
+		  for (int k=0; k<NbrSites; ++k)
+		    for (int l=0; l<NbrSites; ++l)
+		      if (Norm(Rst1[k][l])>1e-12)
+			NonZero = true;
+		  if (NonZero == true)
+		    cout << "Blocks ("<<i<<"," <<i<<"), ("<<i<<", "<<j<<") do NOT commute"<<endl;
+		  else
+		    cout << "Blocks ("<<i<<"," <<i<<"), ("<<i<<", "<<j<<") commute"<<endl;
+		}
+	    }
+	}
       
       //cout << "Matrix="<<endl<<Rho<<endl;
       // calculate eigenvalues & vectors of Rho

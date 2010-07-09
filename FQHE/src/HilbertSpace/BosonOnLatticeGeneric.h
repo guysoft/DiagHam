@@ -157,7 +157,7 @@ class BosonOnLatticeGeneric : public ParticleOnLattice
   // return value = number of sites
   virtual int GetNbrSites();
 
-  // check whether HilbertSpace impaements ordering of operators
+  // check whether HilbertSpace implements ordering of operators
   //
   virtual bool HaveOrder ();
   
