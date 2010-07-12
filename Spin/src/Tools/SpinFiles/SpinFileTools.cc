@@ -145,3 +145,46 @@ bool SpinFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz
     }
   return true;
 }
+
+// try to guess system information from file name
+//
+// filename = file name
+// nbrSpins = reference to the number of spins
+// sz = reference to twice the Sz value
+// spin = reference to twice the spin value per site
+// momentum = reference on the momentum
+// return value = true if no error occured
+
+bool SpinFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz, int& spin, int& momentum)
+{
+  if (SpinFindSystemInfoFromVectorFileName(filename, nbrSpins, sz, spin) == false)
+    return false;
+  char* StrMomentum;
+
+  StrMomentum = strstr(filename, "_k_");
+  if (StrMomentum != 0)
+    {
+      StrMomentum += 4;
+      int SizeString = 0;
+      if (StrMomentum[SizeString] == '-')
+	++SizeString;
+      while ((StrMomentum[SizeString] != '\0') && (StrMomentum[SizeString] != '_') && (StrMomentum[SizeString] >= '0') 
+	     && (StrMomentum[SizeString] <= '9'))
+	++SizeString;
+      if ((StrMomentum[SizeString] == '_') && (SizeString != 0))
+	{
+	  StrMomentum[SizeString] = '\0';
+	  momentum = atoi(StrMomentum);
+	  StrMomentum[SizeString] = '_';
+	  StrMomentum += SizeString;
+	}
+      else
+	StrMomentum = 0;
+    }
+  if (StrMomentum == 0)
+    {
+      cout << "can't guess momentum from file name " << filename << endl;
+      return false;            
+    }
+  return true;
+}

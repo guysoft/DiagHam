@@ -51,4 +51,14 @@ bool SpinFindSystemInfoFromFileName(char* filename, int& nbrSpins, int& spin);
 // return value = true if no error occured
 bool SpinFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz, int& spin);
 
+// try to guess system information from file name
+//
+// filename = file name
+// nbrSpins = reference to the number of spins 
+// sz = reference to twice the Sz value
+// spin = reference to twice the spin value per site
+// momentum = reference on the momentum
+// return value = true if no error occured
+bool SpinFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz, int& spin, int& momentum);
+
 #endif

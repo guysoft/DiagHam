@@ -72,8 +72,8 @@ class FermionOnSphereWithSpinHaldaneBasisLong :  public FermionOnSphereWithSpinL
   // nbrRootPartitions = number of root partitions
   // memory = amount of memory granted for precalculations
   FermionOnSphereWithSpinHaldaneBasisLong (int nbrFermions, int& totalLz, int lzMax, int& totalSpin, 
-				       int** rootPartitions, int nbrRootPartitions, 
-				       unsigned long memory = 10000000);
+					   int** rootPartitions, int nbrRootPartitions, 
+					   unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //

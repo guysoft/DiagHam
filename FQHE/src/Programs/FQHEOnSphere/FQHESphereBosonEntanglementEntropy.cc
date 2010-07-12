@@ -63,6 +63,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "min-la", "minimum size of the subsystem whose entropy has to be evaluated", 1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "max-la", "maximum size of the subsystem whose entropy has to be evaluated (0 if equal to half the total system size)", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "shift-la", "index of the first orbital that is part of the subsystem whose entropy has to be evaluated (0 is the orbital at the north pole)", 0);
+  (*SystemGroup) += new BooleanOption  ('\n', "stripe-subsystem", "use a stripe center around the equator as the subsystem");
   (*SystemGroup) += new SingleStringOption  ('\n', "degenerated-groundstate", "single column file describing a degenerated ground state");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with ent extension");
   (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices to a given file");
@@ -118,6 +120,7 @@ int main(int argc, char** argv)
   int FilterNa = Manager.GetInteger("na-eigenstate");
   int FilterLza = Manager.GetInteger("lza-eigenstate");
   int NbrEigenstates = Manager.GetInteger("nbr-eigenstates");
+  int ShiftLa = Manager.GetInteger("shift-la");
   int* TotalLz = 0;
   bool Statistics = true;
   int NbrSpaces = 1;
@@ -335,12 +338,16 @@ int main(int argc, char** argv)
 	  for (; SubsystemTotalLz <= SubsystemMaxTotalLz; SubsystemTotalLz += 2)
 // 	    if (((TotalLz[0] - (SubsystemTotalLz + ((LzMax - SubsystemSize + 1) * SubsystemNbrParticles))) <= (LzMax * (NbrParticles - SubsystemNbrParticles))) || (NbrSpaces > 1))
 	      {
+		if (Manager.GetBoolean("stripe-subsystem") == true)
+		  {
+		    ShiftLa = (LzMax - SubsystemSize + 1) >> 1;
+		  }
 		cout << "processing subsystem size=" << SubsystemSize << "  subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Lz=" << SubsystemTotalLz << endl;
-		RealSymmetricMatrix PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrix(SubsystemSize, SubsystemNbrParticles, SubsystemTotalLz, GroundStates[0]);
+		RealSymmetricMatrix PartialDensityMatrix = Spaces[0]->EvaluateShiftedPartialDensityMatrix(SubsystemSize, ShiftLa, SubsystemNbrParticles, SubsystemTotalLz, GroundStates[0]);
 		for (int i = 1; i < NbrSpaces; ++i)
 //		  if ((TotalLz[i] - (SubsystemTotalLz + ((LzMax - SubsystemSize + 1) * SubsystemNbrParticles))) <= (LzMax * (NbrParticles - SubsystemNbrParticles)))
 		    {
-		      RealSymmetricMatrix TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrix(SubsystemSize, SubsystemNbrParticles, SubsystemTotalLz, GroundStates[i]);
+		      RealSymmetricMatrix TmpMatrix = Spaces[i]->EvaluateShiftedPartialDensityMatrix(SubsystemSize, ShiftLa, SubsystemNbrParticles, SubsystemTotalLz, GroundStates[i]);
 		      PartialDensityMatrix += TmpMatrix;
 		    }
 		if (NbrSpaces > 1)
