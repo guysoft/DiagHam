@@ -52,9 +52,6 @@ class ParticleOnLatticeFluxOperator : public AbstractOperator
   int *AnnihilationIndices;
   // prefactors (phases) of operators
   Complex *Coefficients;
-
-  // garbage flag
-  GarbageFlag Flag;
   
  public:
   

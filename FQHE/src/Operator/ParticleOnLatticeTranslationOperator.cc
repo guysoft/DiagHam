@@ -41,7 +41,7 @@
 // ry = y-component of the desired translation
 ParticleOnLatticeTranslationOperator::ParticleOnLatticeTranslationOperator(ParticleOnLattice* particle, int rx, int ry)
 {
-  this->Particle = (ParticleOnLattice*) (particle->Clone());
+  this->Particle = particle;
   this->Rx=rx;
   this->Ry=ry;  
 }
@@ -52,7 +52,7 @@ ParticleOnLatticeTranslationOperator::ParticleOnLatticeTranslationOperator(Parti
  
 ParticleOnLatticeTranslationOperator::ParticleOnLatticeTranslationOperator(const ParticleOnLatticeTranslationOperator& oper)
 {
-  this->Particle = (ParticleOnLattice*) (oper.Particle->Clone());
+  this->Particle = oper.Particle;
   this->Rx=oper.Rx;
   this->Ry=oper.Ry;
 }
@@ -62,7 +62,6 @@ ParticleOnLatticeTranslationOperator::ParticleOnLatticeTranslationOperator(const
 
 ParticleOnLatticeTranslationOperator::~ParticleOnLatticeTranslationOperator()
 {
-  delete this->Particle;
 }
   
   
@@ -124,14 +123,16 @@ void ParticleOnLatticeTranslationOperator::SetTranslationComponents(int rx, int 
 Complex ParticleOnLatticeTranslationOperator::PartialMatrixElement (RealVector& V1, RealVector& V2, long firstComponent, long nbrComponent)
 {
   int Dim = firstComponent + nbrComponent;
+  ParticleOnLattice* TmpParticle = (ParticleOnLattice*) this->Particle->Clone();
   Complex TranslationPhase;  
   Complex Element = 0.0;
   int Index;
   for (int i = firstComponent; i < Dim; ++i)
     {
-      Index = this->Particle->TranslateState(i, this->Rx, this->Ry, TranslationPhase);      
+      Index = TmpParticle->TranslateState(i, this->Rx, this->Ry, TranslationPhase);      
       Element += V1[Index] * V2[i] * TranslationPhase;
     }
+  delete TmpParticle;
   return Element;
 }
 
@@ -146,14 +147,16 @@ Complex ParticleOnLatticeTranslationOperator::PartialMatrixElement (RealVector& 
 Complex ParticleOnLatticeTranslationOperator::PartialMatrixElement (ComplexVector& V1, ComplexVector& V2, long firstComponent, long nbrComponent)
 {
   int Dim = (int) (firstComponent + nbrComponent);
+  ParticleOnLattice* TmpParticle = (ParticleOnLattice*) this->Particle->Clone();
   Complex TranslationPhase;
   Complex Element = 0.0;
   int Index;
   for (int i = (int) firstComponent; i < Dim; ++i)
     {
-      Index = this->Particle->TranslateState(i, this->Rx, this->Ry, TranslationPhase);
+      Index = TmpParticle->TranslateState(i, this->Rx, this->Ry, TranslationPhase);
       Element += Conj(V1[Index]) * V2[i] * TranslationPhase;
     }
+  delete TmpParticle;
   return Element; 
 }
    
@@ -170,12 +173,13 @@ ComplexVector& ParticleOnLatticeTranslationOperator::LowLevelAddMultiply(Complex
 {
   int Last = (int) (firstComponent + nbrComponent);
   int Index;
+  ParticleOnLattice* TmpParticle = (ParticleOnLattice*) this->Particle->Clone();
   Complex TranslationPhase;
   //std::cout << "R=("<<Rx<<", "<<Ry<<")"<<std::endl<<vSource<<std::endl<<"Norm:"<<vSource.Norm()<<std::endl;
   //std::cout.precision(8);
   for (int i = (int) firstComponent; i < Last; ++i)
     {
-      Index = this->Particle->TranslateState(i, this->Rx, this->Ry, TranslationPhase);      
+      Index = TmpParticle->TranslateState(i, this->Rx, this->Ry, TranslationPhase);      
       //std::cout << "Translated("<<i<<")="<<TranslationPhase<<"* ["<<Index<<"]"<<std::endl;
       
       //std::cout << "Source("<<i<<")="<<Norm(vSource[i])<<", Target("<<Index<<")="<<Norm(vSource[Index])<<" d="<<(Arg(vSourc e[i]/vSource[Index]))/M_PI<<"pi, TranslationPhase="<<Arg(TranslationPhase)/M_PI<<"pi"<<std::endl;
@@ -186,6 +190,7 @@ ComplexVector& ParticleOnLatticeTranslationOperator::LowLevelAddMultiply(Complex
       vDestination.Im(i) += vSource[Index].Re * TranslationPhase.Im + vSource[Index].Im * TranslationPhase.Re;
     }
   //std::cout << vDestination<<std::endl<<"Norm:"<<vDestination.Norm()<<std::endl;
+  delete TmpParticle;
   return vDestination;
 }
 

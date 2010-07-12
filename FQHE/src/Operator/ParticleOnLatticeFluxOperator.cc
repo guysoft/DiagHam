@@ -45,7 +45,7 @@ using std::endl;
 // cellNumber = cell number where current operator is centered
 ParticleOnLatticeFluxOperator::ParticleOnLatticeFluxOperator(ParticleOnLattice* particle, int cellNumber)
 {
-  this->Particle = (ParticleOnLattice*) (particle->Clone());
+  this->Particle = particle;
   this->CreationIndices = new int[8];
   this->AnnihilationIndices = new int[8];
   this->Coefficients = new Complex[8];
@@ -61,7 +61,7 @@ ParticleOnLatticeFluxOperator::ParticleOnLatticeFluxOperator(ParticleOnLattice* 
 // posx, posy = coordinates of cell where current operator is centered
 ParticleOnLatticeFluxOperator::ParticleOnLatticeFluxOperator(ParticleOnLattice* particle, int posx, int posy, int sublattice)
 {
-  this->Particle = (ParticleOnLattice*) (particle->Clone());
+  this->Particle = particle;
   this->CreationIndices = new int[8];
   this->AnnihilationIndices = new int[8];
   this->Coefficients = new Complex[8];
@@ -74,7 +74,7 @@ ParticleOnLatticeFluxOperator::ParticleOnLatticeFluxOperator(ParticleOnLattice* 
  
 ParticleOnLatticeFluxOperator::ParticleOnLatticeFluxOperator(const ParticleOnLatticeFluxOperator& oper)
 {
-  this->Particle = (ParticleOnLattice*) (oper.Particle->Clone());
+  this->Particle = oper.Particle;
   this->CreationIndices = oper.CreationIndices;
   this->AnnihilationIndices = oper.AnnihilationIndices;
   this->Flag = oper.Flag;
@@ -90,7 +90,6 @@ ParticleOnLatticeFluxOperator::~ParticleOnLatticeFluxOperator()
       delete [] CreationIndices;
       delete [] AnnihilationIndices;
     }
-  delete this->Particle;
 }
   
   
@@ -197,7 +196,8 @@ void ParticleOnLatticeFluxOperator::SetCellPosition (int posx, int posy, int sub
 Complex ParticleOnLatticeFluxOperator::PartialMatrixElement (RealVector& V1, RealVector& V2, long firstComponent, long nbrComponent)
 {
   int Dim = firstComponent + nbrComponent;
-  int FullDim = this->Particle->GetHilbertSpaceDimension();  
+  int FullDim = this->Particle->GetHilbertSpaceDimension();
+  ParticleOnLattice* TmpParticle = (ParticleOnLattice*) this->Particle->Clone();
   double Coefficient = 0.0;
   double Element = 0.0;
   int Index;
@@ -205,11 +205,12 @@ Complex ParticleOnLatticeFluxOperator::PartialMatrixElement (RealVector& V1, Rea
     {
       for (int k=0; k<8; ++k)
 	{
-	  Index = this->Particle->AdA(i, this->CreationIndices[k], this->AnnihilationIndices[k], Coefficient);
+	  Index = TmpParticle->AdA(i, this->CreationIndices[k], this->AnnihilationIndices[k], Coefficient);
 	  if ((Index<FullDim)&&(Coefficient!=0.0))
 	    Element += V1[Index] * V2[i] * Coefficient * Coefficients[k].Re;
 	}
     }
+  delete TmpParticle;
   return Complex(Element);
 }
 
@@ -225,6 +226,7 @@ Complex ParticleOnLatticeFluxOperator::PartialMatrixElement (ComplexVector& V1, 
 {
   int Dim = (int) (firstComponent + nbrComponent);
   int FullDim = this->Particle->GetHilbertSpaceDimension();
+  ParticleOnLattice* TmpParticle = (ParticleOnLattice*) this->Particle->Clone();
   double Coefficient = 0.0;
   Complex Element;
   int Index;
@@ -232,11 +234,12 @@ Complex ParticleOnLatticeFluxOperator::PartialMatrixElement (ComplexVector& V1, 
     {
       for (int k=0; k<8; ++k)
 	{
-	  Index = this->Particle->AdA(i, this->CreationIndices[k], this->AnnihilationIndices[k], Coefficient);
+	  Index = TmpParticle->AdA(i, this->CreationIndices[k], this->AnnihilationIndices[k], Coefficient);
 	  if ((Index<FullDim)&&(Coefficient!=0.0))
 	    Element += (Conj(V1[Index]) * V2[i] * Coefficient*Coefficients[k]);
 	}
     }
+  delete TmpParticle;
   return Element; 
 }
    
@@ -252,6 +255,7 @@ Complex ParticleOnLatticeFluxOperator::PartialMatrixElement (ComplexVector& V1, 
 ComplexVector& ParticleOnLatticeFluxOperator::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent)
 {
   int Dim = this->Particle->GetHilbertSpaceDimension();
+  ParticleOnLattice* TmpParticle = (ParticleOnLattice*) this->Particle->Clone();
   int Last = firstComponent + nbrComponent;;
   int Index;
   double Coefficient = 0.0;
@@ -259,7 +263,7 @@ ComplexVector& ParticleOnLatticeFluxOperator::LowLevelAddMultiply(ComplexVector&
     {
       for (int k=0; k<8; ++k)
 	{
-	  Index = this->Particle->AdA(i, this->CreationIndices[k], this->AnnihilationIndices[k], Coefficient);
+	  Index = TmpParticle->AdA(i, this->CreationIndices[k], this->AnnihilationIndices[k], Coefficient);
 	  if ((Index<Dim)&&(Coefficient!=0.0))
 	    {
 	      vDestination[Index].Re += vSource[i].Re * Coefficient * Coefficients[k].Re - vSource[i].Im * Coefficient * Coefficients[k].Im;
@@ -267,6 +271,7 @@ ComplexVector& ParticleOnLatticeFluxOperator::LowLevelAddMultiply(ComplexVector&
 	    }
 	}
     }
+  delete TmpParticle;
   return vDestination;
 }
 

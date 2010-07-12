@@ -45,7 +45,7 @@
 ParticleOnLatticeOneBodyOperator::ParticleOnLatticeOneBodyOperator(ParticleOnLattice* particle,
 								   int creationIndex, int annihilationIndex)
 {
-  this->Particle = (ParticleOnLattice*) (particle->Clone());
+  this->Particle = particle;
   this->CreationIndex = creationIndex;
   this->AnnihilationIndex = annihilationIndex;
 }
@@ -56,7 +56,7 @@ ParticleOnLatticeOneBodyOperator::ParticleOnLatticeOneBodyOperator(ParticleOnLat
  
 ParticleOnLatticeOneBodyOperator::ParticleOnLatticeOneBodyOperator(const ParticleOnLatticeOneBodyOperator& oper)
 {
-  this->Particle = (ParticleOnLattice*) (oper.Particle->Clone());
+  this->Particle = oper.Particle;
   this->CreationIndex = oper.CreationIndex;
   this->AnnihilationIndex = oper.AnnihilationIndex;
 }
@@ -66,7 +66,6 @@ ParticleOnLatticeOneBodyOperator::ParticleOnLatticeOneBodyOperator(const Particl
 
 ParticleOnLatticeOneBodyOperator::~ParticleOnLatticeOneBodyOperator()
 {
-  delete this->Particle;
 }
   
   
@@ -128,15 +127,17 @@ Complex ParticleOnLatticeOneBodyOperator::PartialMatrixElement (RealVector& V1, 
 {
   int Dim = (int) (firstComponent + nbrComponent);
   int FullDim = this->Particle->GetHilbertSpaceDimension();
+  ParticleOnLattice* TmpParticle = (ParticleOnLattice*) this->Particle->Clone();
   double Coefficient = 0.0;
   double Element = 0.0;
   int Index;
   for (int i = (int) firstComponent; i < Dim; ++i)
     {
-      Index = this->Particle->AdA(i, this->CreationIndex, this->AnnihilationIndex, Coefficient);
+      Index = TmpParticle->AdA(i, this->CreationIndex, this->AnnihilationIndex, Coefficient);
       if ((Index<FullDim)&&(Coefficient!=0.0))
 	Element += V1[Index] * V2[i] * Coefficient;
     }
+  delete TmpParticle;
   return Complex(Element);
 }
 
@@ -152,15 +153,17 @@ Complex ParticleOnLatticeOneBodyOperator::PartialMatrixElement (ComplexVector& V
 {
   int Dim = (int) (firstComponent + nbrComponent);
   int FullDim = this->Particle->GetHilbertSpaceDimension();
+  ParticleOnLattice* TmpParticle = (ParticleOnLattice*) this->Particle->Clone();
   double Coefficient = 0.0;
   Complex Element;
   int Index;
   for (int i = (int) firstComponent; i < Dim; ++i)
     {
-      Index = this->Particle->AdA(i, this->CreationIndex, this->AnnihilationIndex, Coefficient);
+      Index = TmpParticle->AdA(i, this->CreationIndex, this->AnnihilationIndex, Coefficient);
       if ((Index<FullDim)&&(Coefficient!=0.0))
 	Element += (Conj(V1[Index]) * V2[i] * Coefficient);
     }
+  delete TmpParticle;
   return Element; 
 }   
   
@@ -176,18 +179,20 @@ Complex ParticleOnLatticeOneBodyOperator::PartialMatrixElement (ComplexVector& V
 ComplexVector& ParticleOnLatticeOneBodyOperator::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent)
 {
   int Dim = this->Particle->GetHilbertSpaceDimension();
+  ParticleOnLattice* TmpParticle = (ParticleOnLattice*) this->Particle->Clone();
   int Last = firstComponent + nbrComponent;;
   int Index;
   double Coefficient = 0.0;
   for (int i = firstComponent; i < Last; ++i)
     {
-      Index = this->Particle->AdA(i, this->CreationIndex, this->AnnihilationIndex, Coefficient);
+      Index = TmpParticle->AdA(i, this->CreationIndex, this->AnnihilationIndex, Coefficient);
       if ((Index<Dim)&&(Coefficient!=0.0))
 	{
 	  vDestination[Index].Re += vSource[i].Re * Coefficient;
 	  vDestination[Index].Im += vSource[i].Im * Coefficient;
 	}
     }
+  delete TmpParticle;
   return vDestination;
 }
 

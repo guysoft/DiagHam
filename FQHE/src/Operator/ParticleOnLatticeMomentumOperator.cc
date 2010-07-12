@@ -57,7 +57,7 @@ using std::cos;
 ParticleOnLatticeMomentumOperator::ParticleOnLatticeMomentumOperator(ParticleOnLattice* particle, int lx, int ly, int subl,
 								     int momentumX, int momentumY)
 {
-  this->Particle = (ParticleOnLattice*) (particle->Clone());
+  this->Particle = particle;
   this->Lx = lx;
   this->Ly = ly;
   this->NbrSubLattices = subl;
@@ -125,11 +125,15 @@ ParticleOnLatticeMomentumOperator::ParticleOnLatticeMomentumOperator(ParticleOnL
  
 ParticleOnLatticeMomentumOperator::ParticleOnLatticeMomentumOperator(const ParticleOnLatticeMomentumOperator& oper)
 {
-  this->Particle = (ParticleOnLattice*) (oper.Particle->Clone());
+  this->Particle = oper.Particle;
   this->MomentumX = oper.MomentumX;
   this->MomentumY = oper.MomentumY;
   this->Lx = oper.Lx;
   this->Ly = oper.Ly;
+  this->NbrSubLattices = oper.NbrSubLattices;
+  this->NbrTerms = oper.NbrTerms;
+  this->CreationIndices = oper.CreationIndices;
+  this->AnnihilationIndices = oper.AnnihilationIndices;
   this->PhaseTableRe = oper.PhaseTableRe;
   this->PhaseTableIm = oper.PhaseTableIm;
   this->Flag = oper.Flag;
@@ -140,11 +144,12 @@ ParticleOnLatticeMomentumOperator::ParticleOnLatticeMomentumOperator(const Parti
 
 ParticleOnLatticeMomentumOperator::~ParticleOnLatticeMomentumOperator()
 {
-  delete this->Particle;
-  if (((this->Lx*this->Ly) != 0) && (this->Flag.Used() == true) && (this->Flag.Shared() == false))
+  if (((this->NbrTerms) != 0) && (this->Flag.Used() == true) && (this->Flag.Shared() == false))
     {
       delete [] this->PhaseTableRe;
       delete [] this->PhaseTableIm;
+      delete [] this->CreationIndices;
+      delete [] this->AnnihilationIndices;
     }
 }
   
@@ -244,6 +249,7 @@ Complex ParticleOnLatticeMomentumOperator::PartialMatrixElement (RealVector& V1,
 {
   int Dim = (int) (firstComponent + nbrComponent);
   int FullDim = this->Particle->GetHilbertSpaceDimension();
+  ParticleOnLattice* TmpParticle = (ParticleOnLattice*) this->Particle->Clone();
   double Coefficient = 0.0;
   Complex Element = 0.0;
   int Index;
@@ -251,7 +257,7 @@ Complex ParticleOnLatticeMomentumOperator::PartialMatrixElement (RealVector& V1,
     {
       for (int j=0; j<NbrTerms; ++j)
 	{
-	  Index = this->Particle->AdA(i, this->CreationIndices[j], this->AnnihilationIndices[j], Coefficient);
+	  Index = TmpParticle->AdA(i, this->CreationIndices[j], this->AnnihilationIndices[j], Coefficient);
 	  if ((Index<FullDim)&&(Coefficient!=0.0))
 	    {
 	      Coefficient *= V1[Index] * V2[i];
@@ -260,6 +266,7 @@ Complex ParticleOnLatticeMomentumOperator::PartialMatrixElement (RealVector& V1,
 	    }
 	}
     }
+  delete TmpParticle;
   return Element;
 }
 
@@ -275,6 +282,7 @@ Complex ParticleOnLatticeMomentumOperator::PartialMatrixElement (ComplexVector& 
 {
   int Dim = (int) (firstComponent + nbrComponent);
   int FullDim = this->Particle->GetHilbertSpaceDimension();
+  ParticleOnLattice* TmpParticle = (ParticleOnLattice*) this->Particle->Clone();
   double Coefficient = 0.0;
   Complex Element;
   int Index;
@@ -282,11 +290,12 @@ Complex ParticleOnLatticeMomentumOperator::PartialMatrixElement (ComplexVector& 
     {
       for (int j=0; j<NbrTerms; ++j)
 	{
-	  Index = this->Particle->AdA(i, this->CreationIndices[j], this->AnnihilationIndices[j], Coefficient);
+	  Index = TmpParticle->AdA(i, this->CreationIndices[j], this->AnnihilationIndices[j], Coefficient);
 	  if ((Index<FullDim)&&(Coefficient!=0.0))
 	    Element += (Conj(V1[Index]) * Complex(PhaseTableRe[j], PhaseTableIm[j]) * V2[i] * Coefficient);
 	}
     }
+  delete TmpParticle;
   return Element; 
 }   
   
@@ -302,14 +311,15 @@ Complex ParticleOnLatticeMomentumOperator::PartialMatrixElement (ComplexVector& 
 ComplexVector& ParticleOnLatticeMomentumOperator::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent)
 {
   int Dim = this->Particle->GetHilbertSpaceDimension();
-  int Last = firstComponent + nbrComponent;;
+  ParticleOnLattice* TmpParticle = (ParticleOnLattice*) this->Particle->Clone();
+  int Last = firstComponent + nbrComponent;
   int Index;
   double Coefficient = 0.0;
   for (int i = firstComponent; i < Last; ++i)
     {
       for (int j=0; j<NbrTerms; ++j)
 	{
-	  Index = this->Particle->AdA(i, this->CreationIndices[j], this->AnnihilationIndices[j], Coefficient);
+	  Index = TmpParticle->AdA(i, this->CreationIndices[j], this->AnnihilationIndices[j], Coefficient);
 	  if ((Index<Dim)&&(Coefficient!=0.0))
 	    {
 	      vDestination[Index].Re += (vSource[i].Re * PhaseTableRe[j] - vSource[i].Im * PhaseTableIm[j]) * Coefficient;
@@ -317,6 +327,7 @@ ComplexVector& ParticleOnLatticeMomentumOperator::LowLevelAddMultiply(ComplexVec
 	    }
 	}
     }
+  delete TmpParticle;
   return vDestination;
 }
 

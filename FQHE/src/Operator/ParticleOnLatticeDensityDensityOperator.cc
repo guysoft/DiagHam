@@ -49,7 +49,7 @@ using std::endl;
 // siteIndex2 = index of second site to be considered
 ParticleOnLatticeDensityDensityOperator::ParticleOnLatticeDensityDensityOperator(ParticleOnLattice* particle, int siteIndex1, int siteIndex2)
 {
-  this->Particle = (ParticleOnLattice*) (particle->Clone());
+  this->Particle = particle;
   this->CreationIndex1 = siteIndex1;
   this->CreationIndex2 = siteIndex2;
   this->AnnihilationIndex1 = siteIndex2;
@@ -70,7 +70,7 @@ ParticleOnLatticeDensityDensityOperator::ParticleOnLatticeDensityDensityOperator
 										 int creationIndex1, int creationIndex2,
 										 int annihilationIndex1, int annihilationIndex2)
 {
-  this->Particle = (ParticleOnLattice*) (particle->Clone());
+  this->Particle = particle;
   this->CreationIndex1 = creationIndex1;
   this->CreationIndex2 = creationIndex2;
   this->AnnihilationIndex1 = annihilationIndex1;
@@ -79,7 +79,7 @@ ParticleOnLatticeDensityDensityOperator::ParticleOnLatticeDensityDensityOperator
 
 ParticleOnLatticeDensityDensityOperator::ParticleOnLatticeDensityDensityOperator(const ParticleOnLatticeDensityDensityOperator& oper)
 {
-  this->Particle = (ParticleOnLattice*) (oper.Particle->Clone());
+  this->Particle = oper.Particle;
   this->CreationIndex1 = this->CreationIndex1;
   this->CreationIndex2 = this->CreationIndex2;
   this->AnnihilationIndex1 = this->AnnihilationIndex1;
@@ -142,15 +142,17 @@ Complex ParticleOnLatticeDensityDensityOperator::PartialMatrixElement (RealVecto
 {
   int Dim = (int) (firstComponent + nbrComponent);
   int FullDim = this->Particle->GetHilbertSpaceDimension();
+  ParticleOnLattice* TmpParticle = (ParticleOnLattice*) this->Particle->Clone();
   double Coefficient = 0.0;
   double Element = 0.0;
   int Index;
   for (int i = (int) firstComponent; i < Dim; ++i)
     {
-      Index = ((BosonOnLattice*)(this->Particle))->AdAdAA(i, this->CreationIndex1, this->CreationIndex2, this->AnnihilationIndex1, this->AnnihilationIndex2, Coefficient);
+      Index = TmpParticle->AdAdAA(i, this->CreationIndex1, this->CreationIndex2, this->AnnihilationIndex1, this->AnnihilationIndex2, Coefficient);
       if (Index != FullDim)
 	Element += V1[Index] * V2[i] * Coefficient;      
     }
+  delete TmpParticle;
   return Complex(Element);
 }
 
@@ -166,15 +168,17 @@ Complex ParticleOnLatticeDensityDensityOperator::PartialMatrixElement (ComplexVe
 {
   int Dim = (int) (firstComponent + nbrComponent);
   int FullDim = this->Particle->GetHilbertSpaceDimension();
+  ParticleOnLattice* TmpParticle = (ParticleOnLattice*) this->Particle->Clone();
   double Coefficient = 0.0;
   Complex Element = 0.0;
   int Index;
   for (int i = (int) firstComponent; i < Dim; ++i)
     {
-      Index = this->Particle->AdAdAA(i, this->CreationIndex1, this->CreationIndex2, this->AnnihilationIndex1, this->AnnihilationIndex2, Coefficient);
+      Index = TmpParticle->AdAdAA(i, this->CreationIndex1, this->CreationIndex2, this->AnnihilationIndex1, this->AnnihilationIndex2, Coefficient);
       if (Index != FullDim)
 	Element += Conj(V1[Index]) * V2[i] * Coefficient;      
     }
+  delete TmpParticle;
   return Element;
 }
 
@@ -191,15 +195,17 @@ ComplexVector& ParticleOnLatticeDensityDensityOperator::LowLevelAddMultiply(Comp
 									    int firstComponent, int nbrComponent)
 {
   int Dim = this->Particle->GetHilbertSpaceDimension();
-  int Last = firstComponent + nbrComponent;;
+  ParticleOnLattice* TmpParticle = (ParticleOnLattice*) this->Particle->Clone();
+  int Last = firstComponent + nbrComponent;
   int Index;
   double Coefficient = 0.0;
   for (int i = firstComponent; i < Last; ++i)
     {
-      Index = this->Particle->AdAdAA(i, this->CreationIndex1, this->CreationIndex2, this->AnnihilationIndex1, this->AnnihilationIndex2, Coefficient);
+      Index = TmpParticle->AdAdAA(i, this->CreationIndex1, this->CreationIndex2, this->AnnihilationIndex1, this->AnnihilationIndex2, Coefficient);
       if (Index != Dim)
 	vDestination[Index] += vSource[i] * Coefficient;
     }
+  delete TmpParticle;
   return vDestination;
 }
   
