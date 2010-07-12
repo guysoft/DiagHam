@@ -590,7 +590,7 @@ int main(int argc, char** argv)
     {
       ComplexVector TmpState(VectorDimension);
       ParticleOnLatticeMomentumOperator *MomentumOperator = new ParticleOnLatticeMomentumOperator(Space, Lx, Ly, NbrSubLattices);
-      char *DataFileName = new char[strlen(VectorFiles[0])+20];
+      char *DataFileName = new char[24+strlen(VectorFiles[0])];
       for (int n=0; n<NbrVectors; ++n)
 	{
 	  sprintf(DataFileName,"%s.exp",VectorFiles[n]);
@@ -610,7 +610,8 @@ int main(int argc, char** argv)
 		  DataFile << "\t" << (2.0*ky*M_PI)/Ly;
 		else
 		  DataFile << "\t" << (2.0*(ky-Ly)*M_PI)/Ly;
-		DataFile << "\t" << (Vectors[n]*TmpState) << endl;
+		DataFile << "\t" << (Vectors[n]*TmpState).Re << endl;
+		// DataFile << "\t" << (Vectors[n]*TmpState).Im << endl;
 	      }
 	  DataFile.close();
 	}

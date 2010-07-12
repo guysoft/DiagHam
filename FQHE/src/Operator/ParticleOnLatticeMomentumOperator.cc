@@ -110,6 +110,7 @@ ParticleOnLatticeMomentumOperator::ParticleOnLatticeMomentumOperator(ParticleOnL
 	}
     }
   this->NbrTerms *= this->NbrSubLattices;
+  this->NbrTerms *= this->NbrTerms;
   this->CreationIndices = new int[NbrTerms];
   this->AnnihilationIndices = new int[NbrTerms];
   this->PhaseTableRe = new double[NbrTerms];
@@ -196,8 +197,8 @@ void ParticleOnLatticeMomentumOperator::SetMomentum (int momentumX, int momentum
       while (momentumY<0) momentumY+=Ly;
       this->MomentumX = momentumX%Lx;
       this->MomentumY = momentumY%Ly;
-      double Kx=2.0*M_PI/Lx;
-      double Ky=2.0*M_PI/Ly;
+      double Kx=this->MomentumX*2.0*M_PI/Lx;
+      double Ky=this->MomentumY*2.0*M_PI/Ly;
       int CreationIndex, AnnihilationIndex;
       Complex Tmp;
       int Pos=0;
@@ -214,7 +215,7 @@ void ParticleOnLatticeMomentumOperator::SetMomentum (int momentumX, int momentum
 		      CreationIndices[Pos] = CreationIndex;
 		      AnnihilationIndices[Pos] = AnnihilationIndex;
 		      PhaseTableRe[Pos]=cos(Kx*(xi-xf)+Ky*(yi-yf));
-		      PhaseTableRe[Pos]=sin(Kx*(xi-xf)+Ky*(yi-yf));
+		      PhaseTableIm[Pos]=sin(Kx*(xi-xf)+Ky*(yi-yf));
 		      ++Pos;
 		    }
 	    }
@@ -244,7 +245,7 @@ Complex ParticleOnLatticeMomentumOperator::PartialMatrixElement (RealVector& V1,
   int Dim = (int) (firstComponent + nbrComponent);
   int FullDim = this->Particle->GetHilbertSpaceDimension();
   double Coefficient = 0.0;
-  double Element = 0.0;
+  Complex Element = 0.0;
   int Index;
   for (int i = (int) firstComponent; i < Dim; ++i)
     {
@@ -252,10 +253,14 @@ Complex ParticleOnLatticeMomentumOperator::PartialMatrixElement (RealVector& V1,
 	{
 	  Index = this->Particle->AdA(i, this->CreationIndices[j], this->AnnihilationIndices[j], Coefficient);
 	  if ((Index<FullDim)&&(Coefficient!=0.0))
-	    Element += V1[Index] * V2[i] * Coefficient;
+	    {
+	      Coefficient *= V1[Index] * V2[i];
+	      Element.Re += PhaseTableRe[j] * Coefficient;
+	      Element.Im += PhaseTableIm[j] * Coefficient;
+	    }
 	}
     }
-  return Complex(Element);
+  return Element;
 }
 
 // evaluate part of the matrix element, within a given of indices
@@ -279,7 +284,7 @@ Complex ParticleOnLatticeMomentumOperator::PartialMatrixElement (ComplexVector& 
 	{
 	  Index = this->Particle->AdA(i, this->CreationIndices[j], this->AnnihilationIndices[j], Coefficient);
 	  if ((Index<FullDim)&&(Coefficient!=0.0))
-	    Element += (Conj(V1[Index]) * V2[i] * Coefficient);
+	    Element += (Conj(V1[Index]) * Complex(PhaseTableRe[j], PhaseTableIm[j]) * V2[i] * Coefficient);
 	}
     }
   return Element; 
@@ -307,8 +312,8 @@ ComplexVector& ParticleOnLatticeMomentumOperator::LowLevelAddMultiply(ComplexVec
 	  Index = this->Particle->AdA(i, this->CreationIndices[j], this->AnnihilationIndices[j], Coefficient);
 	  if ((Index<Dim)&&(Coefficient!=0.0))
 	    {
-	      vDestination[Index].Re += vSource[i].Re * Coefficient;
-	      vDestination[Index].Im += vSource[i].Im * Coefficient;
+	      vDestination[Index].Re += (vSource[i].Re * PhaseTableRe[j] - vSource[i].Im * PhaseTableIm[j]) * Coefficient;
+	      vDestination[Index].Im += (vSource[i].Im * PhaseTableRe[j] + vSource[i].Re * PhaseTableIm[j]) * Coefficient;
 	    }
 	}
     }
