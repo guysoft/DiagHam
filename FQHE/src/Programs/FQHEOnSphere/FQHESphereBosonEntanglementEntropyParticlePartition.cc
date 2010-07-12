@@ -419,6 +419,17 @@ int main(int argc, char** argv)
 			    if (TmpSqrMomentum > 0.0)
 			      TmpMomentum = (0.5 * (sqrt ((4.0 * TmpSqrMomentum) + 1.0) - 1.0));
 			    DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpValue << " " << TmpSqrMomentum << " " << TmpMomentum << endl;
+			    if ((EigenstateFlag == true) && ((Manager.GetBoolean("lza-filter") == false) || (FilterLza == SubsystemTotalLz)) && ((NbrEigenstates == 0) || (NbrEigenstates > 0)))
+			      {
+				char* TmpEigenstateName = new char[512];
+				RealVector TmpEigenstate(1);
+				TmpEigenstate[0] = 1.0;
+				sprintf (TmpEigenstateName,
+					 "bosons_particlereduceddensity_na_%d_n_%d_2s_%d_lz_%d.0.vec",
+					 SubsystemNbrParticles, NbrParticles, LzMax, SubsystemTotalLz);
+				TmpEigenstate.WriteVector(TmpEigenstateName);
+				delete[] TmpEigenstateName;
+			      }
 			  }
 		      }
 		    DensityMatrixFile.close();
