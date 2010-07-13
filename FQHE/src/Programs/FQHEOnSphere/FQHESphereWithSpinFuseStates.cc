@@ -311,9 +311,9 @@ ParticleOnSphereWithSpin* InitializeHilbertSpaceFromFuseData(MultiColumnASCIIFil
   int leftLzMax = 0;
   int leftTotalLz = 0;
   int leftTotalSz = 0;
-  bool Statistics = false;
-  if (FQHEOnSphereFindSystemInfoFromVectorFileName(inputVectors(fileNameIndex, rowIndex),
-						   leftNbrParticles, leftLzMax, leftTotalLz, Statistics) == false)
+  bool Statistics = true;
+  if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(inputVectors(fileNameIndex, rowIndex),
+							   leftNbrParticles, leftLzMax, leftTotalLz, leftTotalSz, Statistics) == false)
     {
       cout << "error while retrieving system parameters from left state name " << inputVectors(0, rowIndex) << endl;
       return 0;
@@ -321,7 +321,7 @@ ParticleOnSphereWithSpin* InitializeHilbertSpaceFromFuseData(MultiColumnASCIIFil
   ParticleOnSphereWithSpin* LeftBasis = 0;
   if (Statistics == false)
     {
-      cout << "error : bosons are not supported" << endl;
+      cout << "error : bosons are not supported (" << inputVectors(0, rowIndex) << ")" <<endl;
       return 0;
     }
   else

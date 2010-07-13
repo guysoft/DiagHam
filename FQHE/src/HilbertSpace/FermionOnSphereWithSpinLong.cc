@@ -1342,3 +1342,65 @@ RealSymmetricMatrix FermionOnSphereWithSpinLong::EvaluatePartialDensityMatrixSpi
   return TmpDensityMatrix;
 }
 
+// fuse two states which belong to different Hilbert spaces 
+//
+// outputVector = reference on the vector which will contain the fused states (without zeroing components which do not occur in the fusion)
+// leftVector = reference on the vector whose Hilbert space will be fuse to the left
+// rightVector = reference on the vector whose Hilbert space will be fuse to the right
+// padding = number of unoccupied one body states that have to be inserted between the fused left and right spaces
+// leftSpace = point to the Hilbert space that will be fuse to the left
+// rightSpace = point to the Hilbert space that will be fuse to the right
+// symmetrizedFlag = assume that the target state has to be invariant under the Lz<->-Lz symmetry
+// return value = reference on the fused state
+
+RealVector& FermionOnSphereWithSpinLong::FuseStates (RealVector& outputVector, RealVector& leftVector, RealVector& rightVector, int padding, 
+						     ParticleOnSphere* leftSpace, ParticleOnSphere* rightSpace,
+						     bool symmetrizedFlag)
+{
+  FermionOnSphereWithSpinLong* LeftSpace = (FermionOnSphereWithSpinLong*) leftSpace;
+  FermionOnSphereWithSpinLong* RightSpace = (FermionOnSphereWithSpinLong*) rightSpace;
+  int StateShift = RightSpace->LzMax + padding + 1;
+  for (long i = 0; i <  LeftSpace->LargeHilbertSpaceDimension; ++i)
+    {
+      ULONGLONG TmpState1 = LeftSpace->StateDescription[i] << StateShift;
+      double Coefficient = leftVector[i];
+      int TmpLzMax = this->LzMax;
+      while ((TmpState1 >> TmpLzMax) == 0x0ul)
+	--TmpLzMax;
+      if (symmetrizedFlag == false)
+	{
+	  for (long j = 0; j < RightSpace->LargeHilbertSpaceDimension; ++j)
+	    {
+	      ULONGLONG TmpState2 = RightSpace->StateDescription[j];
+	      TmpState2 |= TmpState1;
+	      double Coefficient2 = Coefficient;
+	      Coefficient2 *= rightVector[j];	  
+	      int TmpIndex = this->FindStateIndex(TmpState2, TmpLzMax);
+	      outputVector[TmpIndex] = Coefficient2;
+	    }
+	}
+      else
+	{
+// 	  for (long j = 0; j < RightSpace->LargeHilbertSpaceDimension; ++j)
+// 	    {
+// 	      ULONGLONG TmpState2 = RightSpace->StateDescription[j];
+// 	      TmpState2 |= TmpState1;
+// 	      double Coefficient2 = Coefficient;
+// 	      Coefficient2 *= rightVector[j];	  
+// 	      int TmpIndex = this->FindStateIndex(TmpState2, TmpLzMax);
+// 	      outputVector[TmpIndex] = Coefficient2;
+// 	      ULONGLONG TmpState3 = this->GetSymmetricState(TmpState2);
+// 	      if (TmpState3 != TmpState2)
+// 		{
+// 		  int TmpLzMax2 = this->LzMax;
+// 		  while ((TmpState3 >> TmpLzMax2) == 0x0ul)
+// 		    --TmpLzMax2;
+// 		  TmpIndex = this->FindStateIndex(TmpState3, TmpLzMax2);
+// 		  outputVector[TmpIndex] = Coefficient2;      
+// 		}
+// 	    }
+	}
+    }
+  return outputVector;
+}
+

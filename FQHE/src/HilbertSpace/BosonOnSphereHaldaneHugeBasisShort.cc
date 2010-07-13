@@ -1147,7 +1147,7 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::ConvertToUnnormalizedMonomial(Re
   double Factor = 1.0 / state[reference];
   state[reference] = 1.0;
   int TmpLzMax = this->FermionHugeBasis->LzMax;
-  unsigned long TmpState = this->FermionHugeBasis->StateDescription[reference];
+  unsigned long TmpState = this->FermionHugeBasis->GetStateFactorized(reference);
    while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
     --TmpLzMax;
   this->ConvertToMonomial(TmpState, TmpLzMax, this->TemporaryMonomial2);
@@ -1169,7 +1169,7 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::ConvertToUnnormalizedMonomial(Re
   for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
     if (i != reference)
       {
-	TmpState = this->FermionHugeBasis->StateDescription[i];
+	TmpState = this->FermionHugeBasis->GetStateFactorized(i);
 	while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
 	  --TmpLzMax;
 	this->ConvertToMonomial(TmpState, TmpLzMax, this->TemporaryMonomial);
@@ -1235,7 +1235,7 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::ConvertFromUnnormalizedMonomial(
 {
   double Factor = 1.0;
   int TmpLzMax = this->FermionHugeBasis->LzMax;
-  unsigned long TmpState = this->FermionHugeBasis->StateDescription[reference];
+  unsigned long TmpState = this->FermionHugeBasis->GetStateFactorized(reference);
    while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
     --TmpLzMax;
    this->ConvertToMonomial(TmpState, TmpLzMax, this->TemporaryMonomial2);
@@ -1257,7 +1257,7 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::ConvertFromUnnormalizedMonomial(
   for (long i = 0l; i < this->LargeHilbertSpaceDimension; ++i)
     if (i != reference)
       {
-	TmpState = this->FermionHugeBasis->StateDescription[i];
+	TmpState = this->FermionHugeBasis->GetStateFactorized(i);
 	while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
 	--TmpLzMax;
 	this->ConvertToMonomial(TmpState, TmpLzMax, this->TemporaryMonomial);
