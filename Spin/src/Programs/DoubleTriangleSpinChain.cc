@@ -64,7 +64,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleIntegerOption ('\n', "nbr-sz", "number of sz value to evaluate (0 for all sz sectors)", 0);
   (*SystemGroup) += new  SingleDoubleOption ('j', "j1-value", "nearest neighbourg coupling constant value", 1.0);
   (*SystemGroup) += new  SingleDoubleOption ('g', "j2-value", "second nearest neighbourg coupling constant value", 0.5);
-  (*SystemGroup) += new BooleanOption  ('\n', "no-translations", "do not use translations");
+  (*SystemGroup) += new  SingleDoubleOption ('\n', "djz1-value", "delta added to the nearest neighbourg coupling constant value along z", 0.0);
+  (*SystemGroup) += new  SingleDoubleOption ('\n', "djz2-value", "delta added to the second nearest neighbourg coupling constant value along z", 0.0);
+  (*SystemGroup) += new BooleanOption  ('\n', "no-translations", "do not use translation symmetry");
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -93,30 +95,32 @@ int main(int argc, char** argv)
   char* CommentLine = new char [512];
   double J1Value = Manager.GetDouble("j1-value");
   double J2Value = Manager.GetDouble("j2-value");
+  double DJz1Value = Manager.GetDouble("djz1-value");
+  double DJz2Value = Manager.GetDouble("djz2-value");
   if (Manager.GetBoolean("no-translations") == true)
     {
       if ((SpinValue & 1) == 0)
 	{
-	  sprintf (OutputFileName, "spin_%d_doubletrianglechain_j1_%f_j2_%f_n_%d", (SpinValue / 2), J1Value, J2Value, NbrSpins);
-	  sprintf (CommentLine, " double triangle spin %d / 2 chain with %d sites j1=%f j2=%f \n# 2Sz ", (SpinValue / 2), NbrSpins, J1Value, J2Value);
+	  sprintf (OutputFileName, "spin_%d_doubletrianglechain_j1_%f_j2_%f_djz1_%f_djz2_%f_n_%d", (SpinValue / 2), J1Value, J2Value, DJz1Value, DJz2Value, NbrSpins);
+	  sprintf (CommentLine, " double triangle spin %d / 2 chain with %d sites j1=%f j2=%f djz1=%f djz2=%f \n# 2Sz ", (SpinValue / 2), NbrSpins, J1Value, J2Value, DJz1Value, DJz2Value);
 	}
       else
 	{
-	  sprintf (OutputFileName, "spin_%d_2_doubletrianglechain_j1_%f_j2_%f_n_%d", SpinValue, J1Value, J2Value, NbrSpins);
-	  sprintf (CommentLine, " double triangle spin %d / 2 chain with %d sites j1=%f j2=%f \n# 2Sz ", SpinValue, NbrSpins, J1Value, J2Value);
+	  sprintf (OutputFileName, "spin_%d_2_doubletrianglechain_j1_%f_j2_%f_djz1_%f_djz2_%f_n_%d", SpinValue, J1Value, J2Value, DJz1Value, DJz2Value, NbrSpins);
+	  sprintf (CommentLine, " double triangle spin %d / 2 chain with %d sites j1=%f j2=%f djz1=%f djz2=%f \n# 2Sz ", SpinValue, NbrSpins, J1Value, J2Value, DJz1Value, DJz2Value);
 	}
     }
   else
     {
       if ((SpinValue & 1) == 0)
 	{
-	  sprintf (OutputFileName, "spin_%d_translations_doubletrianglechain_j1_%f_j2_%f_n_%d", (SpinValue / 2), J1Value, J2Value, NbrSpins);
-	  sprintf (CommentLine, " double triangle spin %d chain with tanslations and %d sites j1=%f j2=%f \n# 2Sz K ", (SpinValue / 2), NbrSpins, J1Value, J2Value);
+	  sprintf (OutputFileName, "spin_%d_translations_doubletrianglechain_j1_%f_j2_%f_djz1_%f_djz2_%f_n_%d", (SpinValue / 2), J1Value, J2Value, DJz1Value, DJz2Value, NbrSpins);
+	  sprintf (CommentLine, " double triangle spin %d chain with tanslations and %d sites j1=%f j2=%f djz1=%f djz2=%f \n# 2Sz K ", (SpinValue / 2), NbrSpins, J1Value, J2Value, DJz1Value, DJz2Value);
 	}
       else
 	{
-	  sprintf (OutputFileName, "spin_%d_2_translations_doubletrianglechain_j1_%f_j2_%f_n_%d", SpinValue, J1Value, J2Value, NbrSpins);
-	  sprintf (CommentLine, " double triangle spin %d / 2 chain with tanslations and %d sites j1=%f j2=%f \n# 2Sz K ", SpinValue, NbrSpins, J1Value, J2Value);
+	  sprintf (OutputFileName, "spin_%d_2_translations_doubletrianglechain_j1_%f_j2_%f_djz1_%f_djz2_%f_n_%d", SpinValue, J1Value, J2Value, DJz1Value, DJz2Value, NbrSpins);
+	  sprintf (CommentLine, " double triangle spin %d / 2 chain with tanslations and %d sites j1=%f j2=%f djz1=%f djz2=%f \n# 2Sz K ", SpinValue, NbrSpins, J1Value, J2Value, DJz1Value, DJz2Value);
 	}
     }
   char* FullOutputFileName = new char [strlen(OutputFileName)+ 16];
@@ -156,7 +160,7 @@ int main(int argc, char** argv)
 	      }
 	    }
 	  
-	  DoubleTrianglePeriodicSpinChainHamiltonian Hamiltonian (Chain, NbrSpins, J1Value, J2Value);
+	  DoubleTrianglePeriodicSpinChainHamiltonian Hamiltonian (Chain, NbrSpins, J1Value, J2Value, DJz1Value, DJz2Value);
 	  char* TmpSzString = new char[64];
 	  sprintf (TmpSzString, "%d", InitalSzValue);
 	  char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
@@ -197,7 +201,7 @@ int main(int argc, char** argv)
 	      if (Chain->GetHilbertSpaceDimension() > 0)
 		{
 		  cout << "2Sz=" <<  InitalSzValue << " K=" << InitialKValue << " dim=" << Chain->GetHilbertSpaceDimension() << endl;
-		  DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian Hamiltonian (Chain, NbrSpins, J1Value, J2Value);
+		  DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian Hamiltonian (Chain, NbrSpins, J1Value, J2Value, DJz1Value, DJz2Value);
 		  char* TmpSzString = new char[64];
 		  sprintf (TmpSzString, "%d %d", InitalSzValue, InitialKValue);
 		  char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];

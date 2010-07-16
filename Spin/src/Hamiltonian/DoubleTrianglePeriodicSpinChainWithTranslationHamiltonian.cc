@@ -52,8 +52,10 @@ using std::cout;
 // nbrSpin = number of spins
 // j1 = nearest neighbour coupling constant
 // j2 = second nearest neighbour coupling constant
+// djz1 = constant added to the nearest neighbour constant between spins along z
+// djz2 = constant added to the second nearest neighbour constant between spins along z
 
-DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian::DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian(AbstractSpinChainWithTranslations* chain, int nbrSpin, double j1, double j2)
+DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian::DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian(AbstractSpinChainWithTranslations* chain, int nbrSpin, double j1, double j2, double djz1, double djz2)
 {
   this->Chain = chain;
   this->NbrSpin = nbrSpin;
@@ -62,6 +64,8 @@ DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian::DoubleTrianglePeriodi
   this->HalfJ1 = this->J1 * 0.5;;
   this->J2 = j2;
   this->HalfJ2 = this->J2 * 0.5;;
+  this->Jz1 = this->J1 + djz1;
+  this->Jz2 = this->J2 + djz2;
   this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
   this->EvaluateDiagonalMatrixElements();
   this->EvaluateCosinusTable();
@@ -455,15 +459,15 @@ void DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian::EvaluateDiagonal
        Tmp = 0.0;
        for (; SpinPos < ReducedNbrSpin; SpinPos += 2)
 	 {
-	   Tmp += this->J1 * (this->Chain->SziSzj(SpinPos, SpinPos + 1, i) + 
-			      this->Chain->SziSzj(SpinPos + 1, SpinPos + 2, i));
-	   Tmp += this->J2 * (this->Chain->SziSzj(SpinPos, SpinPos + 2, i) + 
-			      this->Chain->SziSzj(SpinPos + 1, SpinPos + 3, i));
+	   Tmp += this->Jz1 * (this->Chain->SziSzj(SpinPos, SpinPos + 1, i) + 
+			       this->Chain->SziSzj(SpinPos + 1, SpinPos + 2, i));
+	   Tmp += this->Jz2 * (this->Chain->SziSzj(SpinPos, SpinPos + 2, i) + 
+			       this->Chain->SziSzj(SpinPos + 1, SpinPos + 3, i));
 	 }
-       this->SzSzContributions[i] += this->J1 * (this->Chain->SziSzj(SpinPos, SpinPos + 1, i)
-						 + this->Chain->SziSzj(SpinPos + 1, 0, i));
-      this->SzSzContributions[i] += this->J2 * (this->Chain->SziSzj(SpinPos, 0, i)
-						+ this->Chain->SziSzj(SpinPos + 1, 1, i));      
+       this->SzSzContributions[i] += this->Jz1 * (this->Chain->SziSzj(SpinPos, SpinPos + 1, i)
+						  + this->Chain->SziSzj(SpinPos + 1, 0, i));
+       this->SzSzContributions[i] += this->Jz2 * (this->Chain->SziSzj(SpinPos, 0, i)
+						  + this->Chain->SziSzj(SpinPos + 1, 1, i));      
     }
 }
 

@@ -56,6 +56,11 @@ class DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian : public SpinCha
   double J2;
   double HalfJ2;
 
+  // nearest neighbour constant between spins along z
+  double Jz1;
+  // second nearest neighbour constant between spins along z
+  double Jz2;
+
   // number of triangles
   int NbrTriangles;
 
@@ -67,7 +72,9 @@ class DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian : public SpinCha
   // nbrSpin = number of spins
   // j1 = nearest neighbour coupling constant
   // j2 = second nearest neighbour coupling constant
-  DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian(AbstractSpinChainWithTranslations* chain, int nbrSpin, double j1, double j2);
+  // djz1 = constant added to the nearest neighbour constant between spins along z
+  // djz2 = constant added to the second nearest neighbour constant between spins along z
+  DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian(AbstractSpinChainWithTranslations* chain, int nbrSpin, double j1, double j2, double djz1, double djz2);
 
   // destructor
   //
