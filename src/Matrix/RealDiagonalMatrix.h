@@ -281,6 +281,12 @@ class RealDiagonalMatrix : public Matrix
   // return value = reference on current Matrix
   RealDiagonalMatrix& SortMatrixUpOrder(ComplexMatrix& matrix);
 
+  // evaluate matrix rank
+  //
+  // accuracy = numerical accuracy used to define linearly dependence 
+  // return value = rank
+  int Rank(double accuracy);
+
   // Output Stream overload
   //
   // Str = reference on output stream

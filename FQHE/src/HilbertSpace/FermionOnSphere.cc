@@ -2499,10 +2499,11 @@ RealVector& FermionOnSphere::ConvertFromUnnormalizedMonomial(RealVector& state, 
 // leftSpace = point to the Hilbert space that will be fuse to the left
 // rightSpace = point to the Hilbert space that will be fuse to the right
 // symmetrizedFlag = assume that the target state has to be invariant under the Lz<->-Lz symmetry
+// coefficient = optional multiplicative factor to apply to the fused state 
 // return value = reference on the fused state
 
 RealVector& FermionOnSphere::FuseStates (RealVector& outputVector, RealVector& leftVector, RealVector& rightVector, int padding, 
-				 ParticleOnSphere* leftSpace, ParticleOnSphere* rightSpace, bool symmetrizedFlag)
+					 ParticleOnSphere* leftSpace, ParticleOnSphere* rightSpace, bool symmetrizedFlag, double coefficient)
 {
   FermionOnSphere* LeftSpace = (FermionOnSphere*) leftSpace;
   FermionOnSphere* RightSpace = (FermionOnSphere*) rightSpace;
@@ -2510,7 +2511,7 @@ RealVector& FermionOnSphere::FuseStates (RealVector& outputVector, RealVector& l
   for (long i = 0; i <  LeftSpace->LargeHilbertSpaceDimension; ++i)
     {
       unsigned long TmpState1 = LeftSpace->StateDescription[i] << StateShift;
-      double Coefficient = leftVector[i];
+      double Coefficient = coefficient * leftVector[i];
       int TmpLzMax = this->LzMax;
       while ((TmpState1 >> TmpLzMax) == 0x0ul)
 	--TmpLzMax;

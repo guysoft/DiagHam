@@ -716,6 +716,24 @@ RealDiagonalMatrix& RealDiagonalMatrix::SortMatrixUpOrder(ComplexMatrix& matrix)
   return *this;
 }
 
+// evaluate matrix rank
+//
+// accuracy = numerical accuracy used to define linearly dependence 
+// return value = rank
+
+int RealDiagonalMatrix::Rank(double accuracy)
+{
+  if (this->NbrRow == 0)
+    return 0;
+  int Rank = 0;
+  for (int i = 0; i < this->NbrRow; i++)
+    {
+      if(this->DiagonalElements[i] > accuracy)
+        ++Rank;
+    }
+   return Rank;
+ }
+
 // Output Stream overload
 //
 // Str = reference on output stream

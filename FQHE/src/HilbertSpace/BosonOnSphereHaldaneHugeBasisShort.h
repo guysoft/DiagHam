@@ -194,10 +194,11 @@ class BosonOnSphereHaldaneHugeBasisShort :  public BosonOnSphereShort
   // leftSpace = point to the Hilbert space that will be fuse to the left
   // rightSpace = point to the Hilbert space that will be fuse to the right
   // symmetrizedFlag = assume that the target state has to be invariant under the Lz<->-Lz symmetry
+  // coefficient = optional multiplicative factor to apply to the fused state 
   // return value = reference on the fused state
   RealVector& FuseStates (RealVector& outputVector, RealVector& leftVector, RealVector& rightVector, int padding, 
 			  ParticleOnSphere* leftSpace, ParticleOnSphere* rightSpace,
-			  bool symmetrizedFlag);
+			  bool symmetrizedFlag = false, double coefficient = 1.0);
 
   // use product rule to produce part of the components of a system from a smaller one
   //

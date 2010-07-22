@@ -944,6 +944,325 @@ RealSymmetricMatrix BosonOnSphereShort::EvaluateShiftedPartialDensityMatrix (int
     }
 }
 
+// Compute the column dimension of the orbital entanglement matrix of 2 cuts - Column dimension being the hilbert space of B and C which are traced out
+//
+// SizeB = number of orbitals in part B, i.e. in the cap around Lzmax/2.
+// SizeA = number of orbitals in the bulk of the sphere 
+// NbrBosonsA = number of particles that belong to A
+// groundState = reference on the total system ground state
+// LzA = Lz sector of A in which the density matrix has to be evaluated as measured on a sphere with only A
+// return value = the column dimension of the oem of 2 cuts (returns 0 if there is a probem/there is no hilbert space)
+
+long BosonOnSphereShort::Compute2CutEntanglementMatrixColumnDimension (int SizeB, int SizeA, int NbrBosonsA, int LzA, RealVector& groundState)
+{
+  int ShiftedTotalLz = (this->TotalLz + this->NbrBosons * this->LzMax) >> 1;
+  //Lz of A on a disk
+  int ShiftedLzA = (LzA + NbrBosonsA * (SizeA-1) ) >> 1;
+  long ColumnDim = 0;
+  long DimA;
+  int SizeC = this->LzMax +1 -SizeA -SizeB;
+  
+  BosonOnSphereShort TmpHilbertSpaceA(NbrBosonsA, LzA, SizeA - 1);
+  
+  if(NbrBosonsA>0)
+    {
+      DimA = TmpHilbertSpaceA.HilbertSpaceDimension;
+    }
+  else 
+    if(NbrBosonsA==0)
+      DimA=1;
+    else
+      {
+	cout<<"The number of bosons in A is negative!";
+	return 0; 
+      }
+  for(int NbrBosonsB=0; NbrBosonsB <= (this->NbrBosons - NbrBosonsA); NbrBosonsB++)
+    {
+      int ShiftedLzBMax= (SizeB-1)*NbrBosonsB;
+      int NbrBosonsC = this->NbrBosons - NbrBosonsA - NbrBosonsB;
+      int ShiftedLzCMin = ShiftedTotalLz - (ShiftedLzA + SizeB*NbrBosonsA) - ShiftedLzBMax - (SizeA+SizeB)*NbrBosonsC;
+      if(ShiftedLzCMin > (SizeC-1)*NbrBosonsC)
+	continue;
+      int ShiftedLzCMax = ShiftedTotalLz - (ShiftedLzA + SizeB*NbrBosonsA) - (SizeA+SizeB)*NbrBosonsC;
+      if(ShiftedLzCMax<0)
+	continue;
+      for(int ShiftedLzB=0; ShiftedLzB <= (SizeB-1)*NbrBosonsB; ShiftedLzB++)
+	{
+	  //2*Lz of B when only B is on a sphere
+	  long DimB, DimC;
+	  int SphereLzB = (ShiftedLzB<<1) - ( NbrBosonsB* (SizeB-1) );
+	  
+	  //Lz of C on a disk  
+	  int ShiftedLzC = ShiftedTotalLz - (ShiftedLzA + SizeB*NbrBosonsA) - ShiftedLzB - (SizeA+SizeB)*NbrBosonsC;
+	  
+	  if( (ShiftedLzC<0) || (ShiftedLzC > (SizeC-1)*NbrBosonsC) )
+	    {
+	      continue;
+	    }
+	  
+	  BosonOnSphereShort *TmpHilbertSpaceB=0;
+	  if(NbrBosonsB>0)
+	    {
+	      TmpHilbertSpaceB= new BosonOnSphereShort (NbrBosonsB, SphereLzB, SizeB - 1 );
+	      DimB = TmpHilbertSpaceB->GetHilbertSpaceDimension();
+	    }
+	  else 
+	    if(NbrBosonsB==0)
+	      DimB=1;
+	    else
+	      {
+		cout<<"The number of bosons in B is negative!";
+		return 0; 
+	      }
+	  
+	  
+	  //2*Lz of C when only C is on a sphere  
+	  int SphereLzC = (ShiftedLzC<<1) - ( NbrBosonsC* (SizeC-1) );
+	  BosonOnSphereShort *TmpHilbertSpaceC = 0;  
+	  
+	  if(NbrBosonsC>0)
+	    {
+	      TmpHilbertSpaceC = new BosonOnSphereShort (NbrBosonsC, SphereLzC, SizeC - 1 );
+	      DimC = TmpHilbertSpaceC->GetHilbertSpaceDimension();
+	    }
+	  else 
+	    if(NbrBosonsC==0)
+	      DimC=1;
+	    else
+	      {
+		cout<<"The number of bosons in C is negative!";
+		return 0; 
+	      }
+	  for ( long i=0; i<DimB ; ++i)
+	    {
+	      for ( long j=0; j<DimC ; ++j)
+		{
+		  //Shifting the C Hilbert space element left
+		  unsigned long TmpStateC, TmpStateB;
+		  if(NbrBosonsC>0)
+		    TmpStateC= TmpHilbertSpaceC->FermionBasis->StateDescription[j] << (SizeA + SizeB + NbrBosonsA + NbrBosonsB);
+		  else
+		    TmpStateC = 0;
+		  
+		  if(NbrBosonsB>0)	
+		    TmpStateB = TmpHilbertSpaceB->FermionBasis->StateDescription[i];
+		  else
+		    TmpStateB = 0;
+		  
+		  for ( long k=0; k<DimA ; ++k)
+		    {
+		      unsigned long TmpStateA;
+		      if(NbrBosonsA>0)	
+			TmpStateA = TmpHilbertSpaceA.FermionBasis->StateDescription[k] << (SizeB + NbrBosonsB);
+		      else
+			TmpStateA = 0;
+		      
+		      unsigned long TmpFullState = (TmpStateB | TmpStateA) | TmpStateC;
+		      
+		      int TmpLzMax = this->FermionBasis->LzMax;
+		      while (((TmpFullState >> TmpLzMax) & 0x1ul) == 0x0ul)
+			--TmpLzMax;
+		      int TmpPos = this->FermionBasis->FindStateIndex(TmpFullState, TmpLzMax);
+		      
+		      if (TmpPos != this->HilbertSpaceDimension)
+			{
+			  ColumnDim++;
+			  break;
+			}
+		    }
+		  
+		}
+            }
+	  
+	  //Finishing the braces of the big loop running over possible NbrParticlesB and ShiftedLzB		
+	  if(NbrBosonsC>0)
+	    delete TmpHilbertSpaceC;
+          if(NbrBosonsB>0)
+	    delete TmpHilbertSpaceB;
+	  
+	}
+    }
+  return ColumnDim;         
+}
+  			
+// evaluate a density matrix with 2 cuts of the whole system described by the RealVector groundState. The reduced density matrix is evaluated for a given Lz sector and number of particles
+//
+// SizeB = number of orbitals in part B, i.e. in the cap around Lzmax/2.
+// SizeA = number of orbitals in the bulk of the sphere 
+// NbrBosonsA = number of particles that belong to A
+// groundState = reference on the total system ground state
+// LzA = Lz sector of A in which the density matrix has to be evaluated as measured on a sphere with only A
+// return value = density matrix of the subsytem (return a zero dimension matrix if the density matrix is equal to zero)
+
+RealSymmetricMatrix BosonOnSphereShort::Evaluate2CutReducedDensityMatrix (int SizeB, int SizeA, int NbrBosonsA, int LzA, RealVector& groundState)
+{
+  //Lz of full ground state on a disk
+  int ShiftedTotalLz = (this->TotalLz + this->NbrBosons * this->LzMax) >> 1;
+  //Lz of A on a disk
+  int ShiftedLzA = (LzA + NbrBosonsA * (SizeA-1) ) >> 1;
+  //Make a Hilbert Space for A of dimension DimA only if there are some bosons in it
+  long DimA;
+  int SizeC = this->LzMax +1 -SizeA -SizeB;
+  
+  BosonOnSphereShort TmpHilbertSpaceA(NbrBosonsA, LzA, SizeA - 1);
+  
+  if(NbrBosonsA > 0)
+    {
+      DimA = TmpHilbertSpaceA.HilbertSpaceDimension;
+    }
+  else 
+    if(NbrBosonsA==0)
+      DimA=1;
+    else
+      {
+	cout<<"The number of bosons in A is negative!";
+	RealSymmetricMatrix TmpDensityMatrixZero;
+	return TmpDensityMatrixZero; 
+      }
+  RealSymmetricMatrix TmpDensityMatrix(DimA, true);
+  
+  int* TmpFullStatePosition = new int [DimA];
+  int* TmpStateAPosition = new int [DimA];
+  int TmpNonZeroElements = 0;
+  
+  for(int NbrBosonsB=0; NbrBosonsB <= (this->NbrBosons - NbrBosonsA); NbrBosonsB++)
+    {
+      int ShiftedLzBMax= (SizeB-1)*NbrBosonsB;
+      int NbrBosonsC = this->NbrBosons - NbrBosonsA - NbrBosonsB;
+      int ShiftedLzCMin = ShiftedTotalLz - (ShiftedLzA + SizeB*NbrBosonsA) - ShiftedLzBMax - (SizeA+SizeB)*NbrBosonsC;
+      if(ShiftedLzCMin > (SizeC-1)*NbrBosonsC)
+	continue;
+      int ShiftedLzCMax = ShiftedTotalLz - (ShiftedLzA + SizeB*NbrBosonsA) - (SizeA+SizeB)*NbrBosonsC;
+      if(ShiftedLzCMax<0)
+	continue;
+      
+      for(int ShiftedLzB=0; ShiftedLzB <= ShiftedLzBMax; ShiftedLzB++)
+	{
+	  //2*Lz of B when only B is on a sphere
+	  long DimB, DimC;
+	  int SphereLzB = (ShiftedLzB<<1) - ( NbrBosonsB* (SizeB-1) );
+	  
+	  //Lz of C on a disk  
+	  int ShiftedLzC = ShiftedTotalLz - (ShiftedLzA + SizeB*NbrBosonsA) - ShiftedLzB - (SizeA+SizeB)*NbrBosonsC;
+	  
+	  if( (ShiftedLzC<0) || (ShiftedLzC > (SizeC-1)*NbrBosonsC) )
+	    {
+	      cout<<"No part C on a disk possible for values of NbrBosonsB="<<NbrBosonsB<<" and ShiftedLzB="<<ShiftedLzB<<endl;
+	      continue;
+	    }
+	  BosonOnSphereShort *TmpHilbertSpaceB=0;
+	  if(NbrBosonsB>0) 
+	    {
+	      TmpHilbertSpaceB= new BosonOnSphereShort (NbrBosonsB, SphereLzB, SizeB - 1 );
+	      DimB = TmpHilbertSpaceB->GetHilbertSpaceDimension();
+	    }
+	  else 
+	    if(NbrBosonsB==0)
+	      DimB=1;
+	    else
+	      {
+		cout<<"The number of bosons in B is negative!";
+		RealSymmetricMatrix TmpDensityMatrixZero;
+		return TmpDensityMatrixZero; 
+	      }
+	  
+	  //2*Lz of C when only C is on a sphere  
+	  int SphereLzC = (ShiftedLzC<<1) - ( NbrBosonsC* (SizeC-1) );
+	  BosonOnSphereShort *TmpHilbertSpaceC = 0;  
+	  
+	  if(NbrBosonsC>0)
+	    {
+	      TmpHilbertSpaceC = new BosonOnSphereShort (NbrBosonsC, SphereLzC, SizeC - 1 );
+	      DimC = TmpHilbertSpaceC->GetHilbertSpaceDimension();
+	    }
+	  else 
+	    if(NbrBosonsC==0)
+	      DimC=1;
+	    else
+	      {
+		cout<<"The number of bosons in C is negative!";
+		RealSymmetricMatrix TmpDensityMatrixZero;
+		return TmpDensityMatrixZero; 
+	      }
+	  for (long i = 0; i < DimB ; ++i)
+	    {
+	      for ( long j = 0; j < DimC ; ++j)
+		{
+		  //Shifting the C Hilbert space element left
+		  unsigned long TmpStateC, TmpStateB;
+		  if(NbrBosonsC>0)
+		    TmpStateC= TmpHilbertSpaceC->FermionBasis->StateDescription[j] << (SizeA + SizeB + NbrBosonsA + NbrBosonsB);
+		  else
+		    TmpStateC = 0;
+		  
+		  if(NbrBosonsB>0)	
+		    TmpStateB = TmpHilbertSpaceB->FermionBasis->StateDescription[i];
+		  else
+		    TmpStateB = 0;
+		  int Pos=0;
+		  
+		  for ( long k=0; k<DimA ; ++k)
+		    {
+		      unsigned long TmpStateA;
+		      if(NbrBosonsA>0)	
+			TmpStateA = TmpHilbertSpaceA.FermionBasis->StateDescription[k] << (SizeB + NbrBosonsB);
+		      else
+			TmpStateA = 0;
+		      
+		      unsigned long TmpFullState = (TmpStateB | TmpStateA) | TmpStateC;
+		      
+		      int TmpLzMax = this->FermionBasis->LzMax;
+		      while (((TmpFullState >> TmpLzMax) & 0x1ul) == 0x0ul)
+			--TmpLzMax;
+		      int TmpPos = this->FermionBasis->FindStateIndex(TmpFullState, TmpLzMax);
+		      
+		      if (TmpPos != this->HilbertSpaceDimension)
+			{
+			  //this->PrintState(cout,TmpPos)<<" "<<groundState[TmpPos]<<" " << k<<endl;
+			  TmpFullStatePosition[Pos] = TmpPos;
+			  //cout<<TmpPos<<endl;
+			  TmpStateAPosition[Pos] = k;
+			  ++Pos;
+			}
+		    }
+		  
+		  if(Pos!=0)
+		    {
+		      //Then for the given B and C, we have some contribution to the reduced density matrix
+		      ++TmpNonZeroElements;
+		      for(long k=0; k<Pos; k++)
+			{
+			  long RowA=TmpStateAPosition[k];
+			  double coeff_k=groundState[TmpFullStatePosition[k]];
+			  for(long m=0; m<Pos; m++) 
+			    if (TmpStateAPosition[m] >= RowA)
+			      TmpDensityMatrix.AddToMatrixElement(RowA,TmpStateAPosition[m],coeff_k*groundState[TmpFullStatePosition[m]]);
+			  //cout<<"trying to set something"<<coeff_k;
+			}
+		    }
+		  
+		}
+	    }
+	  //Finishing the braces of the big loop running over possible NbrParticlesB and ShiftedLzB		
+  		  if(NbrBosonsC>0)
+		    delete TmpHilbertSpaceC;
+		  if(NbrBosonsB>0)
+		    delete TmpHilbertSpaceB;
+		  
+	}
+    }
+  
+  delete[] TmpStateAPosition;
+  delete[] TmpFullStatePosition;
+  if (TmpNonZeroElements > 0)	
+    return TmpDensityMatrix;
+  else
+    {
+      RealSymmetricMatrix TmpDensityMatrixZero;
+      return TmpDensityMatrixZero;
+    }
+}
+
 // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Lz sector.
 // 
 // nbrBosonSector = number of particles that belong to the subsytem 
@@ -1329,11 +1648,12 @@ RealVector& BosonOnSphereShort::ConvertFromUnnormalizedMonomial(RealVector& stat
 // leftSpace = point to the Hilbert space that will be fuse to the left
 // rightSpace = point to the Hilbert space that will be fuse to the right
 // symmetrizedFlag = assume that the target state has to be invariant under the Lz<->-Lz symmetry
+// coefficient = optional multiplicative factor to apply to the fused state 
 // return value = reference on the fused state
 
 RealVector& BosonOnSphereShort::FuseStates (RealVector& outputVector, RealVector& leftVector, RealVector& rightVector, int padding, 
 					   ParticleOnSphere* leftSpace, ParticleOnSphere* rightSpace,
-					   bool symmetrizedFlag)
+					    bool symmetrizedFlag, double coefficient)
 {
   BosonOnSphereShort* LeftSpace = (BosonOnSphereShort*) leftSpace;
   BosonOnSphereShort* RightSpace = (BosonOnSphereShort*) rightSpace;
@@ -1341,7 +1661,7 @@ RealVector& BosonOnSphereShort::FuseStates (RealVector& outputVector, RealVector
   for (long i = 0; i <  LeftSpace->LargeHilbertSpaceDimension; ++i)
     {
       unsigned long TmpState1 = LeftSpace->FermionBasis->StateDescription[i] << StateShift;
-      double Coefficient = leftVector[i];
+      double Coefficient = coefficient * leftVector[i];
       int TmpLzMax = this->FermionBasis->LzMax;
       while ((TmpState1 >> TmpLzMax) == 0x0ul)
 	--TmpLzMax;
@@ -1831,6 +2151,7 @@ RealVector BosonOnSphereShort::SymmetrizeU1U1State (RealVector& leftVector, Real
 // index = state index
 // pauliK = number of particles allowed in consecutive orbitals
 // pauliR = number of consecutive orbitals
+
 bool BosonOnSphereShort::HasPauliExclusions(int index, int pauliK, int pauliR)
 {
   this->FermionToBoson(this->FermionBasis->StateDescription[index], this->FermionBasis->StateLzMax[index], this->TemporaryState, this->TemporaryStateLzMax);

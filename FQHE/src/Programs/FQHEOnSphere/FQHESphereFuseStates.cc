@@ -88,6 +88,17 @@ int main(int argc, char** argv)
       for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
 	Paddings[i] = Padding;
     }
+ double* Coefficients = 0;
+  if (InputVectors(7, 0) != 0)
+    {
+      Coefficients = InputVectors.GetAsDoubleArray(6);
+    }
+  else
+    {
+      Coefficients = new double [InputVectors.GetNbrLines()];
+      for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
+	Coefficients[i] = 1.0;
+    }
   int LeftNbrParticles = 0;
   int LeftLzMax = 0;
   int LeftTotalLz = 0;

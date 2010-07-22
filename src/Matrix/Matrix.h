@@ -217,6 +217,12 @@ class Matrix
   // return value = matrix determinant 
   virtual double Det ();
 
+  // evaluate matrix rank
+  //
+  // accuracy = numerical accuracy used to define linearly dependence 
+  // return value = rank
+  virtual int Rank(double accuracy);
+
   // Output Stream overload
   //
   // str = reference on output stream

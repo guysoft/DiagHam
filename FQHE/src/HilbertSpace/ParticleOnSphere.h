@@ -261,8 +261,8 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // lzSector = Lz sector in which the density matrix has to be evaluated 
   // return value = density matrix of the subsytem
   virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int subsytemSize, int nbrFermionSector, int lzSector, RealVector& groundState);
-
- // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Lz sector and fixed number of particle. The geometrical cut is a stripe.
+  
+  // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Lz sector and fixed number of particle. The geometrical cut is a stripe.
   // 
   // subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax+shitedCut to -Lzmax+shitedCut+subsytemSize-1)
   // shiftedCut = first orbital belonging to the subsystem (with angular momentum -Lzmax+shitedCut)
@@ -333,9 +333,10 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // leftSpace = point to the Hilbert space that will be fuse to the left
   // rightSpace = point to the Hilbert space that will be fuse to the right
   // symmetrizedFlag = assume that the target state has to be invariant under the Lz<->-Lz symmetry
+  // coefficient = optional multiplicative factor to apply to the fused state 
   // return value = reference on the fused state
   virtual RealVector& FuseStates (RealVector& outputVector, RealVector& leftVector, RealVector& rightVector, int padding, 
-				 ParticleOnSphere* leftSpace, ParticleOnSphere* rightSpace, bool symmetrizedFlag = false);
+				  ParticleOnSphere* leftSpace, ParticleOnSphere* rightSpace, bool symmetrizedFlag = false, double coefficient = 1.0);
 
   // use product rule to produce part of the components of a system from a smaller one
   //

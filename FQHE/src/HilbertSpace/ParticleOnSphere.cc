@@ -480,10 +480,11 @@ ostream& ParticleOnSphere::PrintStateMonomial (ostream& Str, int state)
 // leftSpace = point to the Hilbert space that will be fuse to the left
 // rightSpace = point to the Hilbert space that will be fuse to the right
 // symmetrizedFlag = assume that the target state has to be invariant under the Lz<->-Lz symmetry
+// coefficient = optional multiplicative factor to apply to the fused state 
 // return value = reference on the fused state
 
 RealVector& ParticleOnSphere::FuseStates (RealVector& outputVector, RealVector& leftVector, RealVector& rightVector, int padding, 
-				 ParticleOnSphere* leftSpace, ParticleOnSphere* rightSpace, bool symmetrizedFlag)
+					  ParticleOnSphere* leftSpace, ParticleOnSphere* rightSpace, bool symmetrizedFlag, double coefficient)
 {
   return outputVector;
 }

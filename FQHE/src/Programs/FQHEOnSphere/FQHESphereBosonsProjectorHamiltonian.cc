@@ -166,10 +166,10 @@ int main(int argc, char** argv)
 	}
       ProjectorSpaces[0] = new BosonOnSphereShort(ProjectorNbrParticles, ProjectorTotalLz, ProjectorLzMax);
       cout << ProjectorTotalLz << endl;
-      int TmpProjectorNbrParticles = 0;
-      int TmpProjectorLzMax = 0;
       for (int i = 1; i < NbrProjectors; ++i)
 	{
+	  int TmpProjectorNbrParticles = 0;
+	  int TmpProjectorLzMax = 0;
 	  int TmpProjectorTotalLz = 0;
 	  if (FQHEOnSphereFindSystemInfoFromVectorFileName(Description(0, i), TmpProjectorNbrParticles, TmpProjectorLzMax, TmpProjectorTotalLz, ProjectorFermionFlag) == false)
 	    {

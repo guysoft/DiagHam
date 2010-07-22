@@ -1332,11 +1332,12 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::ConvertFromUnnormalizedMonomial(
 // leftSpace = point to the Hilbert space that will be fuse to the left
 // rightSpace = point to the Hilbert space that will be fuse to the right
 // symmetrizedFlag = assume that the target state has to be invariant under the Lz<->-Lz symmetry
+// coefficient = optional multiplicative factor to apply to the fused state 
 // return value = reference on the fused state
 
 RealVector& BosonOnSphereHaldaneHugeBasisShort::FuseStates (RealVector& outputVector, RealVector& leftVector, RealVector& rightVector, int padding, 
 							    ParticleOnSphere* leftSpace, ParticleOnSphere* rightSpace,
-							    bool symmetrizedFlag)
+							    bool symmetrizedFlag, double coefficient)
 {
   BosonOnSphereShort* LeftSpace = (BosonOnSphereShort*) leftSpace;
   BosonOnSphereShort* RightSpace = (BosonOnSphereShort*) rightSpace;
@@ -1345,7 +1346,7 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::FuseStates (RealVector& outputVe
   for (long i = 0; i <  LeftSpace->LargeHilbertSpaceDimension; ++i)
     {
       unsigned long TmpState1 = LeftSpace->FermionBasis->StateDescription[i] << StateShift;
-      double Coefficient = leftVector[i];
+      double Coefficient = coefficient * leftVector[i];
       if (symmetrizedFlag == false)
 	{
 	  for (long j = 0; j < RightSpace->LargeHilbertSpaceDimension; ++j)

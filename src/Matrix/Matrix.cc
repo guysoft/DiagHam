@@ -431,3 +431,13 @@ bool Matrix::ReadMatrix (char* fileName)
   return true;
 }
 
+// evaluate matrix rank
+//
+// accuracy = numerical accuracy used to define linearly dependence 
+// return value = rank
+
+int Matrix::Rank(double accuracy)
+{
+  cout << "warning : rank calculation is not implemented for this type of matrix" << endl;
+  return 0;
+}

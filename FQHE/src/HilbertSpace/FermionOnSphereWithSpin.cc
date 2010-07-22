@@ -2868,11 +2868,12 @@ void FermionOnSphereWithSpin::ParticleHoleConjugateDownSpins(RealVector &source,
 // leftSpace = point to the Hilbert space that will be fuse to the left
 // rightSpace = point to the Hilbert space that will be fuse to the right
 // symmetrizedFlag = assume that the target state has to be invariant under the Lz<->-Lz symmetry
+// coefficient = optional multiplicative factor to apply to the fused state 
 // return value = reference on the fused state
 
 RealVector& FermionOnSphereWithSpin::FuseStates (RealVector& outputVector, RealVector& leftVector, RealVector& rightVector, int padding, 
 						 ParticleOnSphere* leftSpace, ParticleOnSphere* rightSpace,
-						 bool symmetrizedFlag)
+						 bool symmetrizedFlag, double coefficient)
 {
   FermionOnSphereWithSpin* LeftSpace = (FermionOnSphereWithSpin*) leftSpace;
   FermionOnSphereWithSpin* RightSpace = (FermionOnSphereWithSpin*) rightSpace;
@@ -2880,7 +2881,7 @@ RealVector& FermionOnSphereWithSpin::FuseStates (RealVector& outputVector, RealV
   for (long i = 0; i <  LeftSpace->LargeHilbertSpaceDimension; ++i)
     {
       unsigned long TmpState1 = LeftSpace->StateDescription[i] << StateShift;
-      double Coefficient = leftVector[i];
+      double Coefficient = coefficient * leftVector[i];
       int TmpLzMax = 2 * this->LzMax + 1;
       while ((TmpState1 >> TmpLzMax) == 0x0ul)
 	--TmpLzMax;
