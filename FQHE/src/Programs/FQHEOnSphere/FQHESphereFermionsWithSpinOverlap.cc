@@ -68,7 +68,7 @@ int main(int argc, char** argv)
   cout.precision(14);
 
   // some running options and help
-  OptionManager Manager ("QHEFermionsWithSpinOverlap" , "0.01");
+  OptionManager Manager ("FQHESphereFermionsWithSpinOverlap" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* MonteCarloGroup = new OptionGroup ("Monte Carlo options");
@@ -122,10 +122,10 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type QHEFermionsWithSpinOverlap -h" << endl;
+      cout << "see man page for option syntax or type FQHESphereFermionsWithSpinOverlap -h" << endl;
       return -1;
     }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
@@ -138,17 +138,17 @@ int main(int argc, char** argv)
     }
 
   bool UseTrial = Manager.GetBoolean("use-trial");
-  int NbrFermions = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
-  int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
-  int SzTotal = ((SingleIntegerOption*) Manager["SzTotal"])->GetInteger();
-  int NbrIter = ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();  
+  int NbrFermions = Manager.GetInteger("nbr-particles");
+  int LzMax = Manager.GetInteger("lzmax");
+  int SzTotal = Manager.GetInteger("SzTotal");
+  int NbrIter = Manager.GetInteger("nbr-iter");  
   int NbrWarmUpIter = Manager.GetInteger("nbr-warmup-iter");
   
   int NbrFermionsUp = (NbrFermions+SzTotal)/2;
   int NbrFermionsDown = (NbrFermions-SzTotal)/2;
 
-  bool LzSymmetrizedBasis = false; // ((BooleanOption*) Manager["lzsymmetrized-basis"])->GetBoolean();
-  bool SzSymmetrizedBasis = false; // ((BooleanOption*) Manager["szsymmetrized-basis"])->GetBoolean();
+  bool LzSymmetrizedBasis = false; // Manager.GetBoolean("lzsymmetrized-basis");
+  bool SzSymmetrizedBasis = false; // Manager.GetBoolean("szsymmetrized-basis");
   unsigned long MemorySpace = ((unsigned long) Manager.GetInteger("fast-search")) << 20;
 
   if (NbrFermionsUp+NbrFermionsDown!=NbrFermions)
@@ -224,10 +224,10 @@ int main(int argc, char** argv)
 
   AbstractRandomNumberGenerator* RandomNumber = 0;
 
-  if (((SingleStringOption*) Manager["random-file"])->GetString() != 0)
+  if (Manager.GetString("random-file") != 0)
     {
-      RandomNumber = new FileRandomNumberGenerator(((SingleStringOption*) Manager["random-file"])->GetString(), (unsigned long)((NbrWarmUpIter + NbrIter) * 4.33) + 2000, 
-						     ((SingleIntegerOption*) Manager["random-seek"])->GetInteger());
+      RandomNumber = new FileRandomNumberGenerator(Manager.GetString("random-file"), (unsigned long)((NbrWarmUpIter + NbrIter) * 4.33) + 2000, 
+						     Manager.GetInteger("random-seek"));
     }
   else
     {
@@ -326,26 +326,26 @@ int main(int argc, char** argv)
 	    if (LzSymmetrizedBasis == false)
 	      {
 		if (Manager.GetString("load-hilbert") == 0)
-		  Space = new FermionOnSphereWithSpinSzSymmetry(NbrFermions, 0, LzMax, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(), MemorySpace);
+		  Space = new FermionOnSphereWithSpinSzSymmetry(NbrFermions, 0, LzMax, Manager.GetBoolean("minus-szparity"), MemorySpace);
 		else
 		  Space = new FermionOnSphereWithSpinSzSymmetry(Manager.GetString("load-hilbert"), MemorySpace);
 	      }
 	    else
 	      if (Manager.GetString("load-hilbert") == 0)
 		{
-		  Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrFermions, LzMax, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(),
-								  ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean(), MemorySpace);
+		  Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrFermions, LzMax, Manager.GetBoolean("minus-szparity"),
+								  Manager.GetBoolean("minus-lzparity"), MemorySpace);
 		}
 	      else
 		Space = new FermionOnSphereWithSpinLzSzSymmetry(Manager.GetString("load-hilbert"), MemorySpace);
 	  else
 	    if (Manager.GetString("load-hilbert") == 0)
-	      Space = new FermionOnSphereWithSpinLzSymmetry(NbrFermions, LzMax, SzTotal, ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean(), MemorySpace);
+	      Space = new FermionOnSphereWithSpinLzSymmetry(NbrFermions, LzMax, SzTotal, Manager.GetBoolean("minus-lzparity"), MemorySpace);
 	    else
 	      Space = new FermionOnSphereWithSpinLzSymmetry(Manager.GetString("load-hilbert"), MemorySpace);	      
-	  if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+	  if (Manager.GetString("save-hilbert") != 0)
 	    {
-	      ((FermionOnSphereWithSpinLzSzSymmetry*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+	      ((FermionOnSphereWithSpinLzSzSymmetry*) Space)->WriteHilbertSpace(Manager.GetString("save-hilbert"));
 	      return 0;
 	    }
 	}

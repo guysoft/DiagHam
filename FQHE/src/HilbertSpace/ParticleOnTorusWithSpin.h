@@ -33,7 +33,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/AbstractHilbertSpace.h"
+#include "HilbertSpace/ParticleOnSphereWithSpin.h"
 
 #include <iostream>
 
@@ -41,7 +41,7 @@
 using std::ostream;
 
 
-class ParticleOnTorusWithSpin :  public AbstractHilbertSpace
+class ParticleOnTorusWithSpin :  public ParticleOnSphereWithSpin
 {
 
  public:

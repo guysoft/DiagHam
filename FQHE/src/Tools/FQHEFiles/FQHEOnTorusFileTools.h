@@ -37,21 +37,31 @@
 // try to guess system information from file name
 //
 // filename = file name
-// nbrParticles = reference to the number of particles (grab it only if initial value is 0)
-// kyMax = reference to the maximum momentum for a single particle (grab it only if initial value is 0)
-// statistics = reference to flag for fermionic statistics (true for fermion, false fro bosons, grab it only if initial value is true)
+// nbrParticles = reference to the number of particles
+// kyMax = reference to the maximum momentum for a single particle
+// statistics = reference to flag for fermionic statistics
 // return value = true if no error occured
 bool FQHEOnTorusFindSystemInfoFromFileName(char* filename, int& nbrParticles, int& kyMax, bool& statistics);
 
 // try to guess system information from file name
 //
 // filename = vector file name
-// nbrParticles = reference to the number of particles (grab it only if initial value is 0)
-// kyMax = reference to the maximum momentum for a single particle (grab it only if initial value is 0)
-// ky = reference to the y projection of the angular momentum (grab it only if initial value is 0)
-// statistics = reference to flag for fermionic statistics (true for fermion, false for bosons, grab it only if initial value is true)
+// nbrParticles = reference to the number of particles 
+// kyMax = reference to the maximum momentum for a single particle
+// ky = reference to the y projection of the angular momentum
+// statistics = reference to flag for fermionic statistics
 // return value = true if no error occured
 bool FQHEOnTorusFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& kyMax, int& ky, bool& statistics);
 
+// try to guess system information from file name for system suth an SU(2) degree of freedom
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles
+// kyMax = reference to the maximum momentum for a single particle
+// ky = reference to the y projection of the angular momentum
+// sz = reference to twice the z projection of the total spin
+// statistics = reference to flag for fermionic statistics
+// return value = true if no error occured
+bool FQHEOnTorusWithSpinFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& kyMax, int& ky, int& sz, bool& statistics);
 
 #endif

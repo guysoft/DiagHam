@@ -1780,7 +1780,7 @@ ostream& FermionOnTorusWithSpinNew::PrintState (ostream& Str, int state)
   for (int i = 0; i < this->MaxMomentum; ++i)
     Str << ((TmpState >> 2*i) & ((unsigned long) 0x1)) << ((TmpState >> 2*i+1) & ((unsigned long) 0x1)) << " ";
 //   Str << "  (" << hex << this->ReorderingSign[state] << dec << ")";
-//   Str << " " << this->FindStateIndex(this->StateDescription[state], this->StateHighestBit[state]);
+   Str << " " << this->FindStateIndex(this->StateDescription[state], this->StateHighestBit[state]);
 //   if (this->FindStateIndex(this->StateDescription[state], this->StateHighestBit[state]) != state)
 //     {
 //       Str << "  error";

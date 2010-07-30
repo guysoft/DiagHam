@@ -1308,7 +1308,7 @@ ostream& FermionOnSphereWithSpin::PrintState (ostream& Str, int state)
 {
   unsigned long TmpState = this->StateDescription[state];
   unsigned long Tmp;
-  for (int i = this->NbrLzValue-1; i >=0 ; --i)
+  for (int i = 0; i < this->NbrLzValue; ++i)
     {
       Tmp = ((TmpState >> (i << 1)) & ((unsigned long) 0x3));
       if (Tmp == 0x1l)
@@ -1319,10 +1319,6 @@ ostream& FermionOnSphereWithSpin::PrintState (ostream& Str, int state)
 	Str << "X ";
       else Str << "0 ";
     }
-//  Str << " value = "<<TmpState;
-//  Str << " position = " << this->FindStateIndex(TmpState, this->StateHighestBit[state]);
-//   if (state !=  this->FindStateIndex(TmpState, this->StateHighestBit[state]))
-//         Str << " error! ";
   return Str;
 }
 

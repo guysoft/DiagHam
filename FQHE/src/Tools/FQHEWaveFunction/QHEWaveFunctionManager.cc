@@ -59,6 +59,8 @@
 #include "Tools/FQHEWaveFunction/HundRuleCFStates.h"
 #include "Tools/FQHEWaveFunction/HundRuleBilayerSinglet.h"
 #include "Tools/FQHEWaveFunction/CFOnSphereWithSpinPartonTunnellingWaveFunction.h"
+#include "Tools/FQHEWaveFunction/FQHESphereSymmetrizedSU2ToU1WaveFunction.h"
+#include "Tools/FQHEWaveFunction/SU4HalperinOnSphereWaveFunction.h"
 #include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
 #include "MathTools/NumericalAnalysis/AntisymmetrizedComplexFunction.h"
 
@@ -170,6 +172,7 @@ ostream& QHEWaveFunctionManager::ShowAvalaibleWaveFunctions (ostream& str)
 	  str << "  * 1s : Spin-singlet state at filling one" << endl;
 	  str << "  * 2-3s : Spin-singlet state at filling two-thirds" << endl;
 	  str << "  * 2-3up : Spin-unpolarized composite fermion state at two-third filling" << endl;
+	  str << "  * nass : non-abelian spin singlet state" << endl;
 	  str << "  * pairedcf : paired composite fermion wave function at flux 2N_1-1" << endl;	  
 	  str << "  * pairedcfcb : paired composite fermion wave function at flux 2N_1-1 with CB component" << endl;
 	  str << "  * pairedcfs : paired composite fermion spin singlet wave function at flux 2N-2" << endl;	  
@@ -616,6 +619,16 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	      int N= this->Options->GetInteger("nbr-particles");
 	      TwoThirdUnpolarizedCF* rst = new TwoThirdUnpolarizedCF(N);
 	      rst->AdaptAverageMCNorm();
+	      return rst;
+	    }
+	  if ((strcmp (this->Options->GetString("test-wavefunction"), "nass") == 0))
+	    {
+	      int N = this->Options->GetInteger("nbr-particles");
+	      Abstract1DComplexFunctionOnSphere* BaseFunction = new SU4HalperinOnSphereWaveFunction(N >> 2, N >> 2, N >> 2, N >> 2, 
+												    2, 2, 2, 2, 
+												    1, 0, 0);
+	      FQHESphereSymmetrizedSU2ToU1WaveFunction* rst = new FQHESphereSymmetrizedSU2ToU1WaveFunction (N >> 1, N >>1, BaseFunction, true);
+	      //	      rst->AdaptAverageMCNorm();
 	      return rst;
 	    }
 	}

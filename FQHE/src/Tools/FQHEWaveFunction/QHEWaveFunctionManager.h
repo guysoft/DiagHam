@@ -87,6 +87,7 @@ class QHEWaveFunctionManager
       OneS = 0x100000,
       TwoThirdsS = 0x200000,
       TwoThirdsUnpolarized = 0x200001,
+      NASS = 0x200002,
       HaldaneRezayi = 0x400000,
       ExtendedHalperin = 0x800000,
       HundRuleSinglet = 0xf00000,

@@ -7,6 +7,7 @@
 
 
 #include "Hamiltonian/ParticleOnTorusThreeBodyHardcoreHamiltonian.h"
+#include "Hamiltonian/ParticleOnTorusHaffnianHamiltonian.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -71,6 +72,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
+  (*SystemGroup) += new BooleanOption  ('\n', "haffnian", "use the haffnian three-body hamiltonian instead of the hardcore three-body hamiltonian");
 
   (*PrecalculationGroup) += new BooleanOption ('\n', "disk-cache", "use disk cache for fast multiplication", false);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
@@ -104,7 +106,14 @@ int main(int argc, char** argv)
   bool FirstRun = true;
   
   char* OutputNameLz = new char [256];
-  sprintf (OutputNameLz, "bosons_torus_kysym_threebodydelta_n_%d_2s_%d_ratio_%f.dat", NbrParticles, MaxMomentum, XRatio);
+  if (Manager.GetBoolean("haffnian") == false)
+    {
+      sprintf (OutputNameLz, "bosons_torus_kysym_threebodydelta_n_%d_2s_%d_ratio_%f.dat", NbrParticles, MaxMomentum, XRatio);
+    }
+  else
+    {
+      sprintf (OutputNameLz, "bosons_torus_kysym_haffnian_n_%d_2s_%d_ratio_%f.dat", NbrParticles, MaxMomentum, XRatio);
+    }
   ofstream File;
   File.open(OutputNameLz, ios::binary | ios::out);
   File.precision(14);
@@ -124,7 +133,7 @@ int main(int argc, char** argv)
 #ifdef  __64_BITS__
       if ((MaxMomentum + NbrParticles - 1) < 63)
 #else
-	if ((MaxMomentum + NbrParticles - 1) < 1)	
+	if ((MaxMomentum + NbrParticles - 1) < 31)	
 #endif
 	  {
 	    Space = new BosonOnTorusShort(NbrParticles, MaxMomentum, Momentum);	    
@@ -140,15 +149,29 @@ int main(int argc, char** argv)
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
       
-      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnTorusThreeBodyHardcoreHamiltonian(Space, NbrParticles, MaxMomentum - 1, XRatio, Architecture.GetArchitecture(), Memory);
-
+      AbstractQHEHamiltonian* Hamiltonian = 0;
+      if (Manager.GetBoolean("haffnian") == false)
+	{
+	  Hamiltonian = new ParticleOnTorusThreeBodyHardcoreHamiltonian(Space, NbrParticles, MaxMomentum - 1, XRatio, Architecture.GetArchitecture(), Memory);
+	}
+      else
+	{
+	  Hamiltonian = new ParticleOnTorusHaffnianHamiltonian(Space, NbrParticles, MaxMomentum - 1, XRatio, Architecture.GetArchitecture(), Memory);
+	}
       double Shift = -10.0;
       Hamiltonian->ShiftHamiltonian(Shift);
       char* EigenvectorName = 0;
       if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
 	{
 	  EigenvectorName = new char [256];
-	  sprintf (EigenvectorName, "bosons_torus_kysym_threebodydelta_n_%d_2s_%d_ratio_%f_ky_%d", NbrParticles, MaxMomentum, XRatio, Momentum);
+	  if (Manager.GetBoolean("haffnian") == false)
+	    {
+	      sprintf (EigenvectorName, "bosons_torus_kysym_threebodydelta_n_%d_2s_%d_ratio_%f_ky_%d", NbrParticles, MaxMomentum, XRatio, Momentum);
+	    }
+	  else
+	    {
+	      sprintf (EigenvectorName, "bosons_torus_kysym_haffnian_n_%d_2s_%d_ratio_%f_ky_%d", NbrParticles, MaxMomentum, XRatio, Momentum);
+	    }
 	}
       FQHEOnTorusMainTask Task (&Manager, Space, Hamiltonian, Momentum, Shift, OutputNameLz, FirstRun, EigenvectorName);
       MainTaskOperation TaskOperation (&Task);

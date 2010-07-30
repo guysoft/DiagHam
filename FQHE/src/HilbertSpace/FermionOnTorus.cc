@@ -643,7 +643,7 @@ int FermionOnTorus::GenerateStates(int nbrFermions, int maxMomentum, int current
 	i += this->KyMax;
       for (; i <= currentKyMax; i += this->KyMax)
 	{
-	  this->StateDescription[pos] = ((unsigned long) 1) << i;
+	  this->StateDescription[pos] = 0x1ul << i;
 	  this->StateKyMax[pos] = maxMomentum;
 	  ++pos;
 	}
@@ -651,7 +651,7 @@ int FermionOnTorus::GenerateStates(int nbrFermions, int maxMomentum, int current
     }
   int ReducedCurrentKyMax = currentKyMax - 1;
   int TmpPos = this->GenerateStates(nbrFermions - 1, maxMomentum, ReducedCurrentKyMax, pos, currentMomentum + currentKyMax);
-  unsigned long Mask = ((unsigned long) 1) << currentKyMax;
+  unsigned long Mask = 0x1ul << currentKyMax;
   for (int i = pos; i < TmpPos; i++)
     this->StateDescription[i] |= Mask;
   if (maxMomentum == currentKyMax)

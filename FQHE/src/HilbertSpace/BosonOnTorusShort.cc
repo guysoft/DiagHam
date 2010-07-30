@@ -150,6 +150,9 @@ BosonOnTorusShort::BosonOnTorusShort(const BosonOnTorusShort& bosons)
   this->Flag = bosons.Flag;
   this->TemporaryState = new unsigned long [this->KyMax + 1];
   this->ProdATemporaryState = new unsigned long [this->KyMax + 1];
+  this->LookUpTableMemorySize = bosons.LookUpTableMemorySize;
+  this->LookUpTableShift = bosons.LookUpTableShift;
+  this->LookUpTable = bosons.LookUpTable;
 }
 
 // destructor
@@ -190,6 +193,9 @@ BosonOnTorusShort& BosonOnTorusShort::operator = (const BosonOnTorusShort& boson
   this->StateKyMax = bosons.StateKyMax;
   this->TemporaryState = new unsigned long [this->KyMax + 1];
   this->ProdATemporaryState = new unsigned long [this->KyMax + 1];
+  this->LookUpTableMemorySize = bosons.LookUpTableMemorySize;
+  this->LookUpTableShift = bosons.LookUpTableShift;
+  this->LookUpTable = bosons.LookUpTable;
   this->Flag = bosons.Flag;
   return *this;
 }
@@ -379,7 +385,7 @@ int BosonOnTorusShort::ProdAd (int* m, int nbrIndices, double& coefficient)
   coefficient = sqrt((double) TmpCoefficient);
   while (this->TemporaryState[this->TemporaryStateKyMax] == 0)
     --this->TemporaryStateKyMax;
-  return this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateKyMax), this->TemporaryStateKyMax + this->NbrBosons -1 );
+  return this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateKyMax), this->TemporaryStateKyMax + this->NbrBosons - 1);
 }
 
 // apply a^+_m a_m operator to a given state 

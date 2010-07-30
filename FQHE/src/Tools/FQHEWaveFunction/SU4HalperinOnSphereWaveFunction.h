@@ -33,13 +33,13 @@
 
 
 #include "config.h"
-#include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
+#include "MathTools/NumericalAnalysis/Abstract1DComplexFunctionOnSphere.h"
 
 
 class ConfigurationParser;
 
 
-class SU4HalperinOnSphereWaveFunction: public Abstract1DComplexFunction
+class SU4HalperinOnSphereWaveFunction: public Abstract1DComplexFunctionOnSphere
 {
 
  protected:
@@ -76,9 +76,6 @@ class SU4HalperinOnSphereWaveFunction: public Abstract1DComplexFunction
   // power of the cross spin-isospin part (i.e (z_up -z_dm) and (z_um -z_dp))
   int NCrossSpinIsospinIndex;
   
-  // temporary arrays used during wave function evaluation
-  Complex* UCoordinates;
-  Complex* VCoordinates;
 
  public:
 
@@ -126,9 +123,11 @@ class SU4HalperinOnSphereWaveFunction: public Abstract1DComplexFunction
   //                                     the following 2*nbrSpinDownIsospinPlusParticles coordinates correspond to the position of spin down - isposin plus particles,
   //                                     the other coordinates obey to the same scheme for isospin minus)
   //
-  // x = point where the function has to be evaluated
-  // return value = function value at x  
-  Complex operator ()(RealVector& x);
+  // uv = ensemble of spinor variables on sphere describing point
+  //      where function has to be evaluated
+  //      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
+  // return value = function value at (uv)
+  Complex CalculateFromSpinorVariables(ComplexVector& uv);
 
 };
 

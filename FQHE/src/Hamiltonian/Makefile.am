@@ -68,4 +68,7 @@ ParticleOnSphereTwoLandauLevelL2Hamiltonian.cc \
 ParticleOnSphereEffectiveLatticeHamiltonian.cc \
 AbstractQHEOnTorusNBodyInteractionHamiltonian.cc \
 ParticleOnTorusThreeBodyHardcoreHamiltonian.cc \
-ParticleOnTorusLaplacianDeltaHamiltonian.cc
+AbstractQHEOnTorusWithSpinHamiltonian.cc \
+ParticleOnTorusLaplacianDeltaHamiltonian.cc \
+ParticleOnTorusWithSpinLaplacianDeltaHamiltonian.cc \
+ParticleOnTorusHaffnianHamiltonian.cc

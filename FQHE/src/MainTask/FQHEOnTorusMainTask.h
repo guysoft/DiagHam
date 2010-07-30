@@ -92,12 +92,20 @@ class FQHEOnTorusMainTask: public QHEOnDiskMainTask
   // set a kx-value
   void SetMultiplicity(int multiplicity) {this->MultiplicityFlag=true; this->Multiplicity=multiplicity;}
 
+ protected:
+  
   // write a line of output to the results file
   //
   // file = stream to write to
   // value = numerical value to be printed after columns for flux and momentum (if defined)
   // terminate = indicate if line should be terminated with endl
   void WriteResult(ofstream& file, double value, bool terminate=true);
+
+  // do the Hamiltonian diagonalization in a given Hilbert subspace
+  //
+  // subspaceDescription = name of the file that contains the vector files used to describe the Hilbert subspace
+  // file = reference on the output file stream where eigenvalues have to be stored
+  void DiagonalizeInHilbertSubspace(char* subspaceDescription, ofstream& file);
 
 };
 

@@ -47,7 +47,6 @@ class Matrix;
 
 
 class ParticleOnTorus :  public ParticleOnSphere
-			 //AbstractQHEParticle
 {
 
  public:
