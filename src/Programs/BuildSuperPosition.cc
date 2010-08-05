@@ -198,7 +198,22 @@ int main(int argc, char** argv)
 	      cout << "can't open file " << Description(0, 0) << endl;
 	      return -1;	      
 	    }
-	  double* Coefficients = Description.GetAsDoubleArray(1);
+	  double* CoefficientsRe = Description.GetAsDoubleArray(1);
+	  double* CoefficientsIm = Description.GetAsDoubleArray(2);
+	  Complex* Coefficients = new Complex[Description.GetNbrLines()];
+	  if (CoefficientsIm!=NULL)
+	    {
+	      for (int i = 0; i < Description.GetNbrLines(); ++i)
+		Coefficients[i]=Complex(CoefficientsRe[i],CoefficientsIm[i]);
+	      delete [] CoefficientsRe;
+	      delete [] CoefficientsIm;
+	    }
+	  else
+	    {
+	      for (int i = 0; i < Description.GetNbrLines(); ++i)
+		Coefficients[i]=Complex(CoefficientsRe[i]);
+	      delete [] CoefficientsRe;
+	    }
 	  Result *= Coefficients[0];
  	  for (int i = 1; i < Description.GetNbrLines(); ++i)
 	    {
@@ -207,11 +222,12 @@ int main(int argc, char** argv)
 		{
 		  cout << "can't open file " << Description(0, i) << endl;
 		  return -1;	      	    
-		}	      
+		}
 	      Result.AddLinearCombination(Coefficients[i], TmpVector);
 	    }
 	  Result /= Result.Norm();
 	  Result.WriteVector(Manager.GetString("output"));
+	  delete [] Coefficients;
 	}
       else
 	{
@@ -236,6 +252,7 @@ int main(int argc, char** argv)
 	  if (!Manager.GetBoolean("no-normalize"))
 	    Result /= Result.Norm();
 	  Result.WriteVector(Manager.GetString("output"));
+	  delete [] Coefficients;
 	}
     }
 }
