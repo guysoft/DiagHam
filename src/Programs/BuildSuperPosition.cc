@@ -205,16 +205,14 @@ int main(int argc, char** argv)
 	    {
 	      for (int i = 0; i < Description.GetNbrLines(); ++i)
 		Coefficients[i]=Complex(CoefficientsRe[i],CoefficientsIm[i]);
-	      delete [] CoefficientsRe;
-	      delete [] CoefficientsIm;
 	    }
 	  else
 	    {
 	      for (int i = 0; i < Description.GetNbrLines(); ++i)
 		Coefficients[i]=Complex(CoefficientsRe[i]);
-	      delete [] CoefficientsRe;
 	    }
 	  Result *= Coefficients[0];
+	  cout << "d*Vector1 = "<<Result<<endl;
  	  for (int i = 1; i < Description.GetNbrLines(); ++i)
 	    {
 	      ComplexVector TmpVector;
@@ -224,6 +222,7 @@ int main(int argc, char** argv)
 		  return -1;	      	    
 		}
 	      Result.AddLinearCombination(Coefficients[i], TmpVector);
+	      cout << "+d*Vector"<<i<<" = "<<Result<<endl;
 	    }
 	  Result /= Result.Norm();
 	  Result.WriteVector(Manager.GetString("output"));

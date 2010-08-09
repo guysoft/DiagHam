@@ -105,6 +105,12 @@ class BosonOnLatticeGeneric : public ParticleOnLattice
   unsigned long* ProdATemporaryState;
   int ProdATemporaryStateHighestBit;
 
+  // fields for translations routine
+  int *CurrentTranslation;
+
+  int *CurrentMappings;
+  Complex* CurrentTranslationPhases;
+
  public:
 
   // default constructor

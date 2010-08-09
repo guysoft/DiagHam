@@ -772,6 +772,48 @@ double* LatticePhases::GetOneParticlePotentials(int &nbrPotentials, int* &positi
   return OneParticlePotentials;
 }
 
+// get mapping of lattice sites under translations by multiples of the lattice vectors
+// t = vector indicating translations in units of lattice vectors
+// mappings = mapping of site numbers under this translation
+// phases = eventual phases picked up by this translation operator
+// solenoidFlux = solenoid fluxes in each period of lattice
+void LatticePhases::GetTranslations(int *t, int* mappings, Complex *phases, double* solenoidFlux)
+{
+  int *CellCoordinates = new int[Dimension];
+  int *Translation = new int[Dimension];
+  int Sublattice;
+  for (int i=0; i<NbrSites; ++i)
+    {
+      this->GetSiteCoordinates(i, CellCoordinates, Sublattice);
+      for (int j=0; j<Dimension; ++j)
+	CellCoordinates[j]+=t[j];
+      mappings[i]=this->GetSiteNumber(CellCoordinates, Sublattice, Translation);
+      if (this->HaveGauge)
+	phases[i]=GetTranslationPhaseFromGauge(i, mappings[i], Translation);
+      else
+	{
+	  phases[i]=1.0;
+	  for (int j=0; j<Dimension; ++j)
+	    {
+	      //	      if (Translation[j]!=0)
+	      //		cout <<"Translating ["<<i<<"] in "<<j<<": "<<Translation[j]<<" div: " << solenoidFlux[j]*(Translation[j]/PeriodicRep[j])<<endl;
+	      if (abs(Translation[j])/PeriodicRep[j]>0)
+		phases[i] *= Polar(1.0,solenoidFlux[j]*(Translation[j]/PeriodicRep[j]));
+	    }
+	}
+    }
+#ifdef DEBUG_OUTPUT
+  cout << "Translating general lattice by "<<t[0]<<", "<<t[1]<<endl;
+  for (int i=0; i<NbrSites; ++i)
+    {
+      cout << i<< " -> " << mappings[i];
+      if (Norm(phases[i]-1.0)>1e-6)
+	cout << " (phase: "<<Arg(phases[i])<<")";
+      cout << endl;
+    }
+#endif
+}
+
 
 
 
@@ -898,6 +940,78 @@ double LatticePhases::GetTunnellingPhaseFromGauge(int s1, int s2, int *cellTrans
 #ifdef DEBUG_OUTPUT
 	  cout << ", after corrections"<<Result<<endl;
 #endif
+	}
+      else
+	{
+	  cout << "Need to define LatticePhases::GetTunnellingPhaseFromGauge for dimension d>2"<<endl;
+	}
+      delete [] S1Coordinates;
+      delete [] S2Coordinates;
+      return Result;
+    }
+  else
+    return 0.0;
+}
+
+
+// calculate the tunnelling phase between two given sites from the gauge
+// s1 = start site
+// s2 = end site
+// cellTranslation = indicating whether translation across a boundary ocurred
+// return = relative phase
+double LatticePhases::GetTranslationPhaseFromGauge(int s1, int s2, int *cellTranslation)
+{
+  if (this->HaveGauge)
+    {
+      double Result=0.0;
+      // calculate site coordinates
+      int *S1Coordinates = new int[this->Dimension];
+      int *S2Coordinates = new int[this->Dimension];
+      int S1Sublattice, S2Sublattice;
+      this->GetSiteCoordinates(s1, S1Coordinates, S1Sublattice);
+      this->GetSiteCoordinates(s2, S2Coordinates, S2Sublattice);
+      RealVector Position1(this->Dimension,true);
+      RealVector Position2(this->Dimension,true);      
+      RealVector Translation(this->Dimension,true);
+      for (int i=0; i<Dimension; ++i)
+	{
+	  Position1.AddLinearCombination((double)S1Coordinates[i],LatticeVectors[i]);
+	  Position2.AddLinearCombination((double)S2Coordinates[i],LatticeVectors[i]);
+	  if (cellTranslation!=NULL)
+	    Translation.AddLinearCombination((double)cellTranslation[i],LatticeVectors[i]);
+	}      
+      Position2.AddLinearCombination(-1.0,Translation);
+      RealVector CellPosition2(this->Dimension);
+      CellPosition2.Copy(Position2);
+      Position1.AddLinearCombination(1.0,SubLatticeVectors[S1Sublattice]);
+      Position2.AddLinearCombination(1.0,SubLatticeVectors[S2Sublattice]);
+      CellPosition2.AddLinearCombination(1.0,SubLatticeVectors[S2Sublattice]);
+      
+      if (this->Dimension==2)
+	{
+	  if (Translation.SqrNorm()>1e-14)
+	    {
+	      if (Translation[0]>0.0)
+		{
+		  // translate in x-direction first:
+		  double MagneticTranslation =(GaugeAxy*Translation[0]+GaugeAyy*Translation[1])*CellPosition2[1]; // (CellPosition2[1]+0.5*Translation[1]);
+		  // then translate in y-direction
+		  MagneticTranslation+=(GaugeAxx*Translation[0]+GaugeAyx*Translation[1])*(CellPosition2[0]+Translation[0]); // (CellPosition2[0]+Translation[0]+0.5*Translation[0]);
+		  
+		  Result += MagneticTranslation;
+#ifdef DEBUG_OUTPUT
+		  cout << ", magnetic translation: "<<MagneticTranslation;
+#endif
+		}
+	      else
+		{
+		  // translate in y-direction first:
+		  double MagneticTranslation =(GaugeAxx*Translation[0]+GaugeAyx*Translation[1])*CellPosition2[0]; // (CellPosition2[0]+0.5*Translation[0]);
+		  // translate in x-direction first:
+		  MagneticTranslation+= (GaugeAxy*Translation[0]+GaugeAyy*Translation[1])*(CellPosition2[1]+Translation[1]); // (CellPosition2[1]+Translation[1]+0.5*Translation[1]);
+		  Result += MagneticTranslation;
+		}
+	    }
 	}
       else
 	{

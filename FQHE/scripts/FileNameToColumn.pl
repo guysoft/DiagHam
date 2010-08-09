@@ -165,7 +165,7 @@ sub ParseExpressions
 	    if ( $Format =~ m/%f/ )
 	      {
 		# print ("Recognized floating point replacement ".@$ReplacementString[$i]." ");
-		$Format =~ s/%f/\(-*\\d*\[\\.\]*\\d*\)/;
+		$Format =~ s/%f/\(-*\\d*\[\\.\]*\\d*e*-*\\d*\)/;
 		# print ("perl format: ".$Format."\n");
 		$Recognized=1;
 		++$Count;

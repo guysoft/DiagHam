@@ -87,6 +87,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('y', "ly", "length in y-direction of given lattice", 0);
   (*SystemGroup) += new SingleIntegerOption  ('q', "flux", "number of flux quanta piercing the lattice", 0);
   (*SystemGroup) += new SingleDoubleOption  ('Q', "cont-flux", "multiples of flux quanta piercing the lattice", 0.0);
+  (*SystemGroup) += new MultipleDoubleOption  ('s', "solenoid-flux", "twist in periodic boundary conditions phi_x[,phi_y])",',');
   (*SystemGroup) += new BooleanOption('c',"hard-core","Use Hilbert-space of hard-core bosons");
   (*SystemGroup) += new BooleanOption('n',"no-hard-core","Do not use Hilbert-space of hard-core bosons (overriding detection from filename)");
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
@@ -105,11 +106,12 @@ int main(int argc, char** argv)
   (*MiscGroup) += new SingleIntegerOption ('\n', "nbr-density", "number of density matrix eigenstates to be written out",1);
   (*MiscGroup) += new BooleanOption  ('\n', "joint", "evaluate joint density matrix for multiple vectors");
   (*MiscGroup) += new BooleanOption  ('\n', "equal", "only use equal weight superpositions of two vectors");
-  (*MiscGroup) += new SingleIntegerOption ('s',"superpositions","in case of two input vectors, number of values for phase in superpositions",12);
+  (*MiscGroup) += new SingleIntegerOption ('u',"superpositions","in case of two input vectors, number of values for phase in superpositions",12);
   (*MiscGroup) += new SingleIntegerOption ('\n',"max-iter","maximum number of iterations for optimizing condensate fraction",250);
   (*MiscGroup) += new SingleDoubleOption ('\n',"opt-tolerance","tolerance for optimizing condensate fraction",1e-4);
   (*MiscGroup) += new BooleanOption  ('\n', "opt-random", "start optimization from a randomized initial condition");
   (*MiscGroup) += new BooleanOption  ('\n', "expansion", "obtain expansion image of state(s)");
+  (*MiscGroup) += new BooleanOption  ('\n', "no-momenta", "do not calculate momentum of states");
   (*MiscGroup) += new BooleanOption  ('V', "verbose", "give additional output");  
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
@@ -119,6 +121,15 @@ int main(int argc, char** argv)
   int Lx = Manager.GetInteger("lx");
   int Ly = Manager.GetInteger("ly");
   int NbrFluxQuanta = Manager.GetInteger("flux");
+  double SolenoidX=0.0, SolenoidY=0.0;
+  {
+    int tmpI;
+    double *Fluxes=Manager.GetDoubles("solenoid-flux", tmpI);
+    if (tmpI>0) SolenoidX=Fluxes[0];
+    if (tmpI>1) SolenoidY=Fluxes[1];
+    if (tmpI>0) delete [] Fluxes;
+  }
+
   unsigned long MemorySpace = ((unsigned long) Manager.GetInteger("fast-search")) << 20;
 
   int NbrVectors;
@@ -205,14 +216,14 @@ int main(int argc, char** argv)
   if (GenericLattice)
     {
       if (HardCore)
-	Space = new HardCoreBosonOnLatticeGeneric(NbrBosons, Lattice, NbrFluxQuanta, MemorySpace);
-      else Space = new BosonOnLatticeGeneric(NbrBosons, Lattice, NbrFluxQuanta, MemorySpace);
+	Space = new HardCoreBosonOnLatticeGeneric(NbrBosons, Lattice, NbrFluxQuanta, MemorySpace, SolenoidX, SolenoidY);
+      else Space = new BosonOnLatticeGeneric(NbrBosons, Lattice, NbrFluxQuanta, MemorySpace, SolenoidX, SolenoidY);
     }
   else
     {
       if (HardCore)
-	Space =new HardCoreBosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
-      else Space = new BosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
+	Space =new HardCoreBosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace, SolenoidX, SolenoidY);
+      else Space = new BosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace, SolenoidX, SolenoidY);
     }
 
   if (VectorDimension != Space->GetHilbertSpaceDimension())
@@ -261,7 +272,11 @@ int main(int argc, char** argv)
 	      {
 		Space->PrintState(cout, i);
 		cout.precision(5);
-		cout <<" :  "<<Vectors[v][i];
+		cout <<" :  "<<Vectors[v][i].Re;
+		if (Vectors[v][i].Im>0)
+		  cout << "+"<<Vectors[v][i].Im<<"I";
+		else
+		  cout << "-"<<-Vectors[v][i].Im<<"I";
 		cout <<" -- "<<Norm(Vectors[v][i])<<" "<<Arg(Vectors[v][i])/M_PI<<endl;
 		cout.precision(14);
 	      }
@@ -619,7 +634,7 @@ int main(int argc, char** argv)
     }
   
   // stop here if we have a generic lattice -> translations as of yet not implemented
-  if (GenericLattice) exit(0);
+  if (Manager.GetBoolean("no-momenta")) exit(0);
 
   cout<< "====== Analysis of momentum eigenvalues ====="<<endl;
 
@@ -645,7 +660,10 @@ int main(int argc, char** argv)
 	    TrRep.SetMatrixElement(j,i,TmpState[j]);
 	}
       
-      cout << "Representation of T_x"<<endl<<TrRep<<endl;
+      if (GenericLattice)
+	cout << "Representation of T_(1)"<<endl<<TrRep<<endl;
+      else
+	cout << "Representation of T_x"<<endl<<TrRep<<endl;
     }
   
   
@@ -659,25 +677,28 @@ int main(int argc, char** argv)
   int r=NbrFluxQuanta/FluxModulo;
   int t=Lx*Ly/FluxModulo;
 
-  while ((((Ly*n1)%t)!=0) && (n1<Lx)) ++n1;
-  while ((((Lx*n2)%t)!=0) && (n2<Ly)) ++n2;
-
-  if ((Lx%n1)!=0)
-    cout << "Extending range of n1 to Lx"<<endl;
-  if ((Ly%n2)!=0)
-    cout << "Extending range of n2 to Ly"<<endl;
-
-  if (((n1*n2*NbrFluxQuanta)%t) != 0)
+  if (!GenericLattice)
     {
-      cout << "Cannot resolve translations: Brillouin zone trivial?"<<endl;
-      n1=Lx;
-      n2=Ly;
+      while ((((Ly*n1)%t)!=0) && (n1<Lx)) ++n1;
+      while ((((Lx*n2)%t)!=0) && (n2<Ly)) ++n2;
+      
+      if ((Lx%n1)!=0)
+	cout << "Extending range of n1 to Lx"<<endl;
+      if ((Ly%n2)!=0)
+	cout << "Extending range of n2 to Ly"<<endl;
+      
+      if (((n1*n2*NbrFluxQuanta)%t) != 0)
+	{
+	  cout << "Cannot resolve translations: Brillouin zone trivial?"<<endl;
+	  n1=Lx;
+	  n2=Ly;
+	}
+      
+      while ((r*NbrBosons*n1*n2*Degeneracy)%t != 0) ++Degeneracy;
+      
+      cout << "N_phi = "<<r<<"/"<<t<<endl;
+      cout << "n1="<<n1<<", n2="<<n2<<", global degeneracy: "<<Degeneracy<<endl;
     }
-
-  while ((r*NbrBosons*n1*n2*Degeneracy)%t != 0) ++Degeneracy;
-  
-  cout << "N_phi = "<<r<<"/"<<t<<endl;
-  cout << "n1="<<n1<<", n2="<<n2<<", global degeneracy: "<<Degeneracy<<endl;
 
   int RemainingDegeneracy=Degeneracy;
 

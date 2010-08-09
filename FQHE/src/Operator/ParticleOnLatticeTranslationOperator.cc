@@ -37,8 +37,8 @@
 // constructor from default datas
 //
 // particle = hilbert space associated to the particles
-// rx = x-component of the desired translation
-// ry = y-component of the desired translation
+// rx = x-component of the desired translation (generally: multiples of first lattice vector)
+// ry = y-component of the desired translation (generally: multiples of second lattice vector)
 ParticleOnLatticeTranslationOperator::ParticleOnLatticeTranslationOperator(ParticleOnLattice* particle, int rx, int ry)
 {
   this->Particle = particle;

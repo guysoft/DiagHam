@@ -99,6 +99,11 @@ BosonOnLatticeGeneric::BosonOnLatticeGeneric (int nbrBosons, LatticePhases *latt
   this->ProdATemporaryState = new unsigned long [this->NbrStates];
   this->Flag.Initialize();
 
+  this->CurrentTranslation = new int[2];
+  this->CurrentMappings = new int[NbrStates]; 
+  this->CurrentTranslationPhases = new Complex[NbrStates];
+
+
 #ifdef DEBUG_OUTPUT
   for (int i=0; i<this->HilbertSpaceDimension; ++i)
     {
@@ -146,6 +151,16 @@ BosonOnLatticeGeneric::BosonOnLatticeGeneric(const BosonOnLatticeGeneric& bosons
       TmpTranslations[i]=0;
       TmpCoordinates[i]=0;
     }
+  this->CurrentTranslation = new int[2];
+  this->CurrentTranslation[0]=bosons.CurrentTranslation[0];
+  this->CurrentTranslation[1]=bosons.CurrentTranslation[1];
+  this->CurrentMappings = new int[NbrStates]; 
+  this->CurrentTranslationPhases = new Complex[NbrStates];
+  for (int i=0; i<NbrStates; ++i)
+    {
+      this->CurrentMappings[i] = bosons.CurrentMappings[i];
+      this->CurrentTranslationPhases[i] = bosons.CurrentTranslationPhases[i];
+    }
 }
 
 // destructor
@@ -161,6 +176,9 @@ BosonOnLatticeGeneric::~BosonOnLatticeGeneric ()
       delete[] this->ProdATemporaryState;
       delete[] this->TmpTranslations;
       delete[] this->TmpCoordinates;
+      delete[] this->CurrentTranslation;
+      delete[] this->CurrentMappings;
+      delete[] this->CurrentTranslationPhases;
     }
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
@@ -191,6 +209,9 @@ BosonOnLatticeGeneric& BosonOnLatticeGeneric::operator = (const BosonOnLatticeGe
       delete[] this->ProdATemporaryState;
       delete[] this->TmpTranslations;
       delete[] this->TmpCoordinates;
+      delete[] this->CurrentTranslation;
+      delete[] this->CurrentMappings;
+      delete[] this->CurrentTranslationPhases;
     }
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
@@ -230,6 +251,16 @@ BosonOnLatticeGeneric& BosonOnLatticeGeneric::operator = (const BosonOnLatticeGe
     {
       TmpTranslations[i]=0;
       TmpCoordinates[i]=0;
+    }
+  this->CurrentTranslation = new int[2];
+  this->CurrentTranslation[0]=bosons.CurrentTranslation[0];
+  this->CurrentTranslation[1]=bosons.CurrentTranslation[1];
+  this->CurrentMappings = new int[NbrStates]; 
+  this->CurrentTranslationPhases = new Complex[NbrStates];
+  for (int i=0; i<NbrStates; ++i)
+    {
+      this->CurrentMappings[i] = bosons.CurrentMappings[i];
+      this->CurrentTranslationPhases[i] = bosons.CurrentTranslationPhases[i];
     }
   return *this;
 }
@@ -725,15 +756,20 @@ void BosonOnLatticeGeneric::ListQuantumNumbers(int index, int *quantumNumbers)
 // return value = index of translated state
 int BosonOnLatticeGeneric::TranslateState(int index, int shiftX, int shiftY, Complex &translationPhase)
 {
-  cout << "Need to implement BosonOnLatticeGeneric::TranslateState"<<endl;
-  return 0;
-  /* 
+  if ((this->CurrentTranslation[0]!=shiftX)||(this->CurrentTranslation[1]!=shiftY))
+    {
+      double SolenoidFluxes[2];
+      SolenoidFluxes[0]=this->SolenoidX;
+      SolenoidFluxes[1]=this->SolenoidY;
+      this->CurrentTranslation[0]=shiftX;
+      this->CurrentTranslation[1]=shiftY;
+      this->LatticeGeometry->GetTranslations(this->CurrentTranslation, this->CurrentMappings,
+					     this->CurrentTranslationPhases, SolenoidFluxes);
+    }
   this->FermionToBoson(this->HardCoreBasis->StateDescription[index], this->HardCoreBasis->StateHighestBit[index], this->TemporaryState, this->TemporaryStateHighestBit);
   int BosonsLeft=this->NbrBosons;
   int Q=TemporaryStateHighestBit;
-  int OldX, OldY, OldSl;
   int NewQ;
-  int CountYCoordinates=0; // total phase is shiftX * sum_i y_i in Landau gauge
   Complex PeriodicPhase;
   Complex CumulatedPhase=1.0;
   //cout << "TS:";
@@ -744,12 +780,10 @@ int BosonOnLatticeGeneric::TranslateState(int index, int shiftX, int shiftY, Com
   this->ShiftedState[0]=0;
   while ((Q>-1) && (BosonsLeft>0))
     {
-      if (this->TemporaryState[Q]!=0)
+      if (this->TemporaryState[Q]>0)
 	{
-	  this->DecodeQuantumNumber(Q,OldX, OldY, OldSl);
-	  CountYCoordinates+=this->TemporaryState[Q]*OldY;
-	  NewQ=this->EncodeQuantumNumber(OldX+shiftX, OldY+shiftY, OldSl, PeriodicPhase);
-	  //cout << "PeriodicPhase for shift ("<<OldX<<","<<OldY<<")->("<<OldX+shiftX<<","<<OldY+shiftY<<")="<< PeriodicPhase<<endl;
+	  NewQ=CurrentMappings[Q];
+	  PeriodicPhase=CurrentTranslationPhases[Q];
 	  for (unsigned i=0; i<this->TemporaryState[Q]; ++i) CumulatedPhase*=PeriodicPhase;
 	  if (NewQ>ShiftedStateHighestBit)
 	    {
@@ -762,17 +796,10 @@ int BosonOnLatticeGeneric::TranslateState(int index, int shiftX, int shiftY, Com
 	}
       --Q;
     }
-  // verify sign of phase!
-  //cout << "TranslationPhase for shift by ("<<shiftX<<","<<shiftY<<")="<<Polar(1.0, 2.0*M_PI*FluxDensity*shiftX*CountYCoordinates)<<endl;
-  translationPhase = Polar(1.0, 2.0*M_PI*FluxDensity*shiftX*CountYCoordinates)* Conj(CumulatedPhase);
-  //cout<<"Cumulated Phase="<<Arg(CumulatedPhase)/M_PI<<"pi"<<endl;
-  //cout << "NS:";
-  //for (int i=0; i<=ShiftedStateHighestBit; ++i)
-  //  cout << " "<<ShiftedState[i];
-  //cout << endl;
+  translationPhase = Conj(CumulatedPhase);
   return this->HardCoreBasis->FindStateIndex(this->BosonToFermion(this->ShiftedState, this->ShiftedStateHighestBit), this->ShiftedStateHighestBit + this->NbrBosons - 1);
-  */
 }
+
 
 // find whether there is a translation vector from state i to state f
 // i = index of initial state

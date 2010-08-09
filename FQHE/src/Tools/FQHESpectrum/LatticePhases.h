@@ -35,6 +35,7 @@
 #include "config.h"
 #include "Options/OptionManager.h"
 #include "Matrix/RealMatrix.h"
+#include "MathTools/Complex.h"
 
 #include <iostream>
 
@@ -201,6 +202,12 @@ class LatticePhases
   // return = relative phase
   double GetTunnellingPhaseFromGauge(int s1, int s2, int *cellTranslation=NULL);
 
+  // calculate the magnetic translation phase between two given sites from the gauge
+  // s1 = start site
+  // s2 = end site
+  // return = relative phase
+  double GetTranslationPhaseFromGauge(int s1, int s2, int *cellTranslation=NULL);
+
   // get a string describing the lattice geometry
   // 
   char *GeometryString();
@@ -211,6 +218,12 @@ class LatticePhases
   // request single-particle potentials 
   double* GetOneParticlePotentials(int &nbrPotentials, int* &positions);
 
+  // get mapping of lattice sites under translations by multiples of the lattice vectors
+  // t = vector indicating translations in units of lattice vectors
+  // mappings = mapping of site numbers under this translation
+  // phases = eventual phases picked up by this translation operator
+  // solenoidFlux = solenoid fluxes in each period of lattice
+  void GetTranslations(int *t, int* mappings, Complex *phases, double* solenoidFlux);
   
   // add an option group containing all options related to the LatticeGeometry options
   //
