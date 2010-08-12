@@ -304,8 +304,14 @@ class BosonOnLatticeGeneric : public ParticleOnLattice
   // shiftX = length of translation in x-direction
   // shiftY = length of translation in y-direction
   // translationPhase = returns phase inccurred by translation
+  // gaugePhases = phases of a gauge transform that was applied previously to the state
   // return value = index of translated state
   virtual int TranslateState(int index, int shiftX, int shiftY, Complex &translationPhase);
+
+  // version with non-standard boundary conditions
+  // translationX = array: Exp (i*[k]) gives the phase applied for positive crossing of cell boundary for state with k=y*NbrSubLattices + s
+  // translationY = array: Exp (i*[k]) gives the phase applied for positive crossing of cell boundary for state with k=x*NbrSubLattices + s
+  virtual int TranslateState(int index, int shiftX, int shiftY, Complex &translationPhase, double *translationX, double *translationY);
 
   // find whether there is a translation vector from state i to state f
   // i = index of initial state
@@ -315,6 +321,10 @@ class BosonOnLatticeGeneric : public ParticleOnLattice
   // return value = final state can be reached by translation
   virtual bool IsTranslation(int i, int f, int &shiftX, int &shiftY);
 
+  // apply a gauge transformation
+  // phases = phases in array ordered according to the quantum number q
+  // input = vector that has to be transformed according to that gauge
+  virtual ComplexVector& GaugeTransformVector(double *phases, ComplexVector& input);
 
   // print a given State
   //

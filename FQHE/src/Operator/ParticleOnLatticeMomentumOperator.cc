@@ -55,7 +55,7 @@ using std::cos;
 // momentumX = X-component of the momentum
 // momentumY = Y-component of the momentum
 ParticleOnLatticeMomentumOperator::ParticleOnLatticeMomentumOperator(ParticleOnLattice* particle, int lx, int ly, int subl,
-								     int momentumX, int momentumY)
+								     int momentumX, int momentumY, double offsetX, double offsetY)
 {
   this->Particle = particle;
   this->Lx = lx;
@@ -194,7 +194,9 @@ int ParticleOnLatticeMomentumOperator::GetHilbertSpaceDimension ()
 // change values of momentum represented
 // momentumX = X-component of the momentum
 // momentumY = Y-component of the momentum
-void ParticleOnLatticeMomentumOperator::SetMomentum (int momentumX, int momentumY)
+// offsetX = absolute offset of momentum values along x-axis
+// offsetY = absolute offset of momentum values along y-axis
+void ParticleOnLatticeMomentumOperator::SetMomentum (int momentumX, int momentumY, double offsetX, double offsetY)
 {
   if (this->Particle->GetHilbertSpaceAdditionalSymmetry()==ParticleOnLattice::NoSymmetry)
     {
@@ -202,8 +204,8 @@ void ParticleOnLatticeMomentumOperator::SetMomentum (int momentumX, int momentum
       while (momentumY<0) momentumY+=Ly;
       this->MomentumX = momentumX%Lx;
       this->MomentumY = momentumY%Ly;
-      double Kx=this->MomentumX*2.0*M_PI/Lx;
-      double Ky=this->MomentumY*2.0*M_PI/Ly;
+      double Kx=this->MomentumX*2.0*M_PI/Lx+offsetX;
+      double Ky=this->MomentumY*2.0*M_PI/Ly+offsetY;
       int CreationIndex, AnnihilationIndex;
       Complex Tmp;
       int Pos=0;

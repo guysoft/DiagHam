@@ -105,6 +105,14 @@ class HardCoreBosonOnLatticeGeneric :  public ParticleOnLattice
   int* TmpTranslations;
 
 
+  // fields for translations routine
+  int *CurrentTranslation;
+  
+  int *CurrentMappings;
+  Complex* CurrentTranslationPhases;
+
+
+
  public:
 
   enum 

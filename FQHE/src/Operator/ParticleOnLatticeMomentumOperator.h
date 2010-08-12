@@ -73,7 +73,9 @@ class ParticleOnLatticeMomentumOperator : public AbstractOperator
   // subl = number of sublattices
   // momentumX = X-component of the momentum
   // momentumY = Y-component of the momentum
-  ParticleOnLatticeMomentumOperator(ParticleOnLattice* particle, int lx, int ly, int subl = 1, int momentumX=0, int momentumY=0);
+  // offsetX = absolute offset of momentum values along x-axis
+  // offsetY = absolute offset of momentum values along y-axis
+  ParticleOnLatticeMomentumOperator(ParticleOnLattice* particle, int lx, int ly, int subl = 1, int momentumX=0, int momentumY=0, double offsetX=0.0, double offsetY=0.0);
 
   // copy constructor
   //
@@ -107,8 +109,10 @@ class ParticleOnLatticeMomentumOperator : public AbstractOperator
   // change values of momentum represented
   // momentumX = X-component of the momentum
   // momentumY = Y-component of the momentum
-  void SetMomentum (int momentumX, int momentumY);
-  
+  // offsetX = absolute offset of momentum values along x-axis
+  // offsetY = absolute offset of momentum values along y-axis
+  void SetMomentum (int momentumX, int momentumY, double offsetX=0.0, double offsetY=0.0);
+
   // evaluate part of the matrix element, within a given of indices
   //
   // V1 = vector to left multiply with current matrix

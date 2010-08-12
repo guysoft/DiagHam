@@ -176,6 +176,15 @@ void ParticleOnLattice::ListQuantumNumbers(int index, int *quantumNumbers)
 }
 
 
+// apply a gauge transformation
+// phases = phases in array ordered according to the quantum number q
+// input = vector that has to be transformed according to that gauge
+ComplexVector& ParticleOnLattice::GaugeTransformVector(double *phases, ComplexVector& input)
+{
+  cout << "Ignoring gauge transform: method needs XXXOnLattice::GaugeTransformVector needs to be implemented!"<<endl;
+  return input;
+}
+
 // conversion to generic (full) many-body representation in real-space basis
 // state: many-body state in Ky-momentum basis
 // nbodyBasis: full Hilbert-space in real-space representation

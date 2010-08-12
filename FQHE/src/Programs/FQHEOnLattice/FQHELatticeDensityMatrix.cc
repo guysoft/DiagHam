@@ -111,6 +111,8 @@ int main(int argc, char** argv)
   (*MiscGroup) += new SingleDoubleOption ('\n',"opt-tolerance","tolerance for optimizing condensate fraction",1e-4);
   (*MiscGroup) += new BooleanOption  ('\n', "opt-random", "start optimization from a randomized initial condition");
   (*MiscGroup) += new BooleanOption  ('\n', "expansion", "obtain expansion image of state(s)");
+  (*MiscGroup) += new SingleIntegerOption ('\n',"apply-gauge","Apply a gauge-transform before calculating expansion image - 1:doubled->Dali");
+  (*MiscGroup) += new MultipleDoubleOption  ('\n', "exp-offset", "apply offset of momentum values for Fourier-Transform O_x,O_y)",',');
   (*MiscGroup) += new BooleanOption  ('\n', "no-momenta", "do not calculate momentum of states");
   (*MiscGroup) += new BooleanOption  ('V', "verbose", "give additional output");  
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -147,6 +149,8 @@ int main(int argc, char** argv)
   bool GenericLattice=false;
   int NbrSites=0;
   int NbrSubLattices=1;
+  bool HaveContFlux = false;
+  double ContFlux =0.0;
   LatticePhases *Lattice = NULL;
   if ((Manager.GetString("lattice-definition")!=NULL)||(FQHEOnLatticeHaveGeneralLattice(VectorFiles[0])))
     {
@@ -163,8 +167,6 @@ int main(int argc, char** argv)
       Ly = Lattice->GetLatticeLength(1);
       NbrSubLattices = Lattice->GetNbrSubLattices();
       char* LatticeName = Lattice->GeometryString();
-      bool HaveContFlux;
-      double ContFlux;
       if (strstr(VectorFiles[0], LatticeName)==0)
 	{
 	  cout << "The given lattice parameters do not coincide with the filename, verify lattice definition, and repetition of unit cells"<<endl;
@@ -605,6 +607,62 @@ int main(int argc, char** argv)
     {
       ComplexVector TmpState(VectorDimension);
       ParticleOnLatticeMomentumOperator *MomentumOperator = new ParticleOnLatticeMomentumOperator(Space, Lx, Ly, NbrSubLattices);
+      double *GaugeTransform = NULL;
+      int Q;
+      // apply gauge transformations
+      if (Manager.GetInteger("apply-gauge")!=0)
+	{
+	  GaugeTransform = new double[NbrSites];
+	  //	  TranslationsX = new double[Ly*NbrSubLattices];
+	  //	  TranslationsY = new double[Lx*NbrSubLattices];
+	  
+	  switch (Manager.GetInteger("apply-gauge"))
+	    {    
+	    case 1:
+	      if (!HaveContFlux)
+		{
+		  cout << "Gauge #1 is written for a continuous staggered flux square lattice!"<<endl;
+		  exit(1);
+		}
+	      for (int x=0; x<Lx; ++x)
+		for (int y=0; y<Ly; ++y)
+		  {
+		    Q = Space->EncodeQuantumNumber(x, y, 0, Tmp);
+		    GaugeTransform[Q] = M_PI*ContFlux*x;
+		    Q = Space->EncodeQuantumNumber(x, y, 1, Tmp);
+		    GaugeTransform[Q] = -M_PI*ContFlux*x;
+		  }
+// 	      for (int i=0; i<Ly; ++i)
+// 		{
+// 		  TranslationsX[2*i]=Lx*M_PI*ContFlux;
+// 		  TranslationsX[2*i+1]=-Lx*M_PI*ContFlux;
+// 		}
+// 	      for (int i=0; i<Lx*NbrSubLattices; ++i) TranslationsY[i]=0.0;
+	      break;
+	    default:
+	      cout << "No gauge transform is associated with this code"<<endl;
+	      for (int i=0; i<NbrSites; ++i) GaugeTransform[i]=0.0;
+// 	      for (int i=0; i<Ly*NbrSubLattices; ++i) TranslationsX[i]=0.0;
+// 	      for (int i=0; i<Lx*NbrSubLattices; ++i) TranslationsY[i]=0.0;
+	      break;
+	    }
+	  for (int n=0; n<NbrVectors; ++n)
+	    Space->GaugeTransformVector(GaugeTransform, Vectors[n]);
+	}
+
+      double OffsetX=0.0, OffsetY=0.0;
+      if (Manager.GetDoubles("exp-offset")!=NULL)
+	{
+	  int Length;
+	  double *TmpD = Manager.GetDoubles("exp-offset", Length);
+	  if (Length!=2)
+	    {
+	      cout << "--exp-offset needs to momentum offsets OffsetX,OffsetY"<<endl;
+	      exit(1);
+	    }
+	  OffsetX=TmpD[0];
+	  OffsetY=TmpD[1];
+	}
       char *DataFileName = new char[24+strlen(VectorFiles[0])];
       for (int n=0; n<NbrVectors; ++n)
 	{
@@ -614,7 +672,7 @@ int main(int argc, char** argv)
 	  for (int kx=0; kx<Lx; ++kx)
 	    for (int ky=0; ky<Ly; ++ky)
 	      {
-		MomentumOperator->SetMomentum(kx,ky);
+		MomentumOperator->SetMomentum(kx,ky,OffsetX,OffsetY);
 		VectorOperatorMultiplyOperation Operation (MomentumOperator, &(Vectors[n]), &TmpState);
 		Operation.ApplyOperation(Architecture.GetArchitecture());
 		if (kx<=Lx/2)
@@ -827,6 +885,21 @@ int main(int argc, char** argv)
 	  for (int j=0; j<NbrVectors;++j)
 	    TmpState.AddLinearCombination(Conj(EVecXY[i][j]),Vectors[j]);
 	  TmpState/=TmpState.Norm();
+	  if (Manager.GetBoolean("normalize-phase"))
+	    {
+//	      double MaxNorm=0.0;
+	      int MaxIndex=0;
+// 	      for (int i = 0; i < TmpState.GetVectorDimension();++i)
+// 		{
+// 		  if (Norm(TmpState[i])>MaxNorm)
+// 		    {
+// 		      MaxNorm=Norm(TmpState[i]);
+// 		      MaxIndex=i;
+// 		    }
+// 		}
+	      TmpState *= Polar(1.0,-Arg(TmpState[MaxIndex]));
+	    }
+
 	  cout << "Vector-"<<i<<"="<<vectorName<<endl;
 	  TmpState.WriteVector(vectorName);
 	}

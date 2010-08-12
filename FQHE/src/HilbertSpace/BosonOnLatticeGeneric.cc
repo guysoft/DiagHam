@@ -754,6 +754,18 @@ void BosonOnLatticeGeneric::ListQuantumNumbers(int index, int *quantumNumbers)
 // shiftY = length of translation in y-direction
 // translationPhase = returns phase inccurred by translation
 // return value = index of translated state
+int BosonOnLatticeGeneric::TranslateState(int index, int shiftX, int shiftY, Complex &translationPhase,
+					  double *translationX, double *translationY)
+{
+  cout << "Need to implement translation with non-standard boundary conditions for BosonOnLatticeGeneric::TranslateState!"<<endl;
+  return this->TranslateState(index, shiftX, shiftY, translationPhase);
+}
+
+// translate a state by a multiple of the lattice vectors
+// shiftX = length of translation in x-direction
+// shiftY = length of translation in y-direction
+// translationPhase = returns phase inccurred by translation
+// return value = index of translated state
 int BosonOnLatticeGeneric::TranslateState(int index, int shiftX, int shiftY, Complex &translationPhase)
 {
   if ((this->CurrentTranslation[0]!=shiftX)||(this->CurrentTranslation[1]!=shiftY))
@@ -829,6 +841,30 @@ bool BosonOnLatticeGeneric::IsTranslation(int i, int f, int &shiftX, int &shiftY
   delete [] count;
   return true;
 }
+
+// apply a gauge transformation
+// phases = phases in array ordered according to the quantum number q
+// input = vector that has to be transformed according to that gauge
+ComplexVector& BosonOnLatticeGeneric::GaugeTransformVector(double *phases, ComplexVector& input)
+{
+  double CumulatedPhase;
+  for (int i=0; i<this->HilbertSpaceDimension; ++i)
+    {
+      this->FermionToBoson(this->HardCoreBasis->StateDescription[i], this->HardCoreBasis->StateHighestBit[i], this->TemporaryState, this->TemporaryStateHighestBit);
+      CumulatedPhase=0.0;
+      int BosonsLeft=this->NbrBosons;
+      int Q=TemporaryStateHighestBit;
+      while ((Q>-1) && (BosonsLeft>0))
+	{
+	  if (this->TemporaryState[Q]>0)
+	    CumulatedPhase+=this->TemporaryState[Q]*phases[Q];
+	  --Q;
+	}
+      input[i]*=Polar(1.0, CumulatedPhase);
+    }
+  return input;
+}
+
 
 
 // print a given State

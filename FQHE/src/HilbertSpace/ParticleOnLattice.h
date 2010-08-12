@@ -220,6 +220,12 @@ class ParticleOnLattice :  public AbstractQHEParticle
   // return value = final state can be reached by translation
   virtual bool IsTranslation(int i, int f, int &shiftX, int &shiftY) = 0;
 
+  // apply a gauge transformation
+  // phases = phases in array ordered according to the quantum number q
+  // input = vector that has to be transformed according to that gauge
+  virtual ComplexVector& GaugeTransformVector(double *phases, ComplexVector& input);
+  
+
   // conversion to generic (full) many-body representation in real-space basis
   // state: many-body state in Ky-momentum basis
   // nbodyBasis: full Hilbert-space in real-space representation
