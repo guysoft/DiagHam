@@ -1,4 +1,5 @@
 #include "Vector/RealVector.h"
+#include "Vector/ComplexVector.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -39,6 +40,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "min-range", "display vector starting from a given component (is negative, start couting from the last component) from ", 0l);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "max-range", "display vector up to a given component (0 if up to the end)", 0l);
   (*SystemGroup) += new BooleanOption  ('s', "std-output", "use standard output instead of an output file");
+  (*SystemGroup) += new BooleanOption  ('c', "complex", "indicate that the input vector has complex coefficients");
+  (*SystemGroup) += new BooleanOption  ('\n', "two-columns", "output complex vectors as a two column formatted text file");
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -58,57 +61,142 @@ int main(int argc, char** argv)
       cout << "VectorBinary2Ascii requires an input file" << endl << "see man page for option syntax or type VectorBinary2Ascii -h" << endl;
       return -1;
     }
-  RealVector State;
-  long TmpVectorDimension = State.ReadVectorDimension(Manager.GetString("input-vector"));
-  long MinValue = 0l;
-  if (Manager.GetInteger("min-range") > 0l)
-    {
-      if (Manager.GetInteger("min-range") < TmpVectorDimension)
-	MinValue = Manager.GetInteger("min-range");      
-    }
-  else
-    {
-      long Tmp = TmpVectorDimension + Manager.GetInteger("min-range");
-      if ((Tmp >= 0) && (Tmp < TmpVectorDimension))
-	MinValue = Tmp;
-    }
-  long MaxValue = TmpVectorDimension;
-  if ((Manager.GetInteger("max-range") < TmpVectorDimension) && (Manager.GetInteger("max-range") > MinValue))
-    MaxValue = Manager.GetInteger("max-range");
-  
-  if (State.ReadVector (Manager.GetString("input-vector"), MinValue, MaxValue) == false)
-    {
-      cout << "can't open vector file " << Manager.GetString("input-vector") << endl;
-      return -1;      
-    }
-  if ((Manager.GetString("output-vector") == 0) && (Manager.GetBoolean("std-output") == false))
-    {
-      cout << "VectorBinary2Ascii requires an output file" << endl << "see man page for option syntax or type VectorBinary2Ascii -h" << endl;
-      return -1;
-    }
 
-  if (Manager.GetBoolean("std-output") == false)
+  if (Manager.GetBoolean("complex") == false)
     {
-      ofstream File;
-      File.open(Manager.GetString("output-vector"), ios::out);
-      File.precision(14);
-      if (((BooleanOption*) Manager["add-index"])->GetBoolean() == true)
-	for (long i = MinValue; i < MaxValue; ++i)
-	  File << i << " " << State[(i - MinValue)] << endl;
+      RealVector State;
+      long TmpVectorDimension = State.ReadVectorDimension(Manager.GetString("input-vector"));
+      long MinValue = 0l;
+      if (Manager.GetInteger("min-range") > 0l)
+	{
+	  if (Manager.GetInteger("min-range") < TmpVectorDimension)
+	MinValue = Manager.GetInteger("min-range");      
+	}
       else
-	for (long i = MinValue; i < MaxValue; ++i)
-	  File << State[(i - MinValue)] << endl;
-      File.close();
+	{
+	  long Tmp = TmpVectorDimension + Manager.GetInteger("min-range");
+	  if ((Tmp >= 0) && (Tmp < TmpVectorDimension))
+	    MinValue = Tmp;
+	}
+      long MaxValue = TmpVectorDimension;
+      if ((Manager.GetInteger("max-range") < TmpVectorDimension) && (Manager.GetInteger("max-range") > MinValue))
+	MaxValue = Manager.GetInteger("max-range");
+      
+      if (State.ReadVector (Manager.GetString("input-vector"), MinValue, MaxValue) == false)
+	{
+	  cout << "can't open vector file " << Manager.GetString("input-vector") << endl;
+	  return -1;      
+	}
+      if ((Manager.GetString("output-vector") == 0) && (Manager.GetBoolean("std-output") == false))
+	{
+	  cout << "VectorBinary2Ascii requires an output file" << endl << "see man page for option syntax or type VectorBinary2Ascii -h" << endl;
+	  return -1;
+	}
+      
+      if (Manager.GetBoolean("std-output") == false)
+	{
+	  ofstream File;
+	  File.open(Manager.GetString("output-vector"), ios::out);
+	  File.precision(14);
+	  if (((BooleanOption*) Manager["add-index"])->GetBoolean() == true)
+	    for (long i = MinValue; i < MaxValue; ++i)
+	      File << i << " " << State[(i - MinValue)] << endl;
+	  else
+	    for (long i = MinValue; i < MaxValue; ++i)
+	      File << State[(i - MinValue)] << endl;
+	  File.close();
+	}
+      else
+	{
+	  cout.precision(14);
+	  if (Manager.GetBoolean("add-index") == true)
+	    for (long i = MinValue; i < MaxValue; ++i)
+	      cout << i << " " << State[(i - MinValue)] << endl;
+	  else
+	    for (long i = MinValue; i < MaxValue; ++i)
+	      cout << State[(i - MinValue)] << endl;
+	}
+      return 0;
     }
   else
     {
-      cout.precision(14);
-      if (Manager.GetBoolean("add-index") == true)
-        for (long i = MinValue; i < MaxValue; ++i)
-          cout << i << " " << State[(i - MinValue)] << endl;
+      cout << "complex " << endl;
+      ComplexVector State;
+      long TmpVectorDimension = State.ReadVectorDimension(Manager.GetString("input-vector"));
+      long MinValue = 0l;
+      if (Manager.GetInteger("min-range") > 0l)
+	{
+	  if (Manager.GetInteger("min-range") < TmpVectorDimension)
+	MinValue = Manager.GetInteger("min-range");      
+	}
       else
-        for (long i = MinValue; i < MaxValue; ++i)
-          cout << State[(i - MinValue)] << endl;
+	{
+	  long Tmp = TmpVectorDimension + Manager.GetInteger("min-range");
+	  if ((Tmp >= 0) && (Tmp < TmpVectorDimension))
+	    MinValue = Tmp;
+	}
+      long MaxValue = TmpVectorDimension;
+      if ((Manager.GetInteger("max-range") < TmpVectorDimension) && (Manager.GetInteger("max-range") > MinValue))
+	MaxValue = Manager.GetInteger("max-range");
+      
+      if (State.ReadVector (Manager.GetString("input-vector"), MinValue, MaxValue) == false)
+	{
+	  cout << "can't open vector file " << Manager.GetString("input-vector") << endl;
+	  return -1;      
+	}
+      if ((Manager.GetString("output-vector") == 0) && (Manager.GetBoolean("std-output") == false))
+	{
+	  cout << "VectorBinary2Ascii requires an output file" << endl << "see man page for option syntax or type VectorBinary2Ascii -h" << endl;
+	  return -1;
+	}
+      
+      if (Manager.GetBoolean("std-output") == false)
+	{
+	  ofstream File;
+	  File.open(Manager.GetString("output-vector"), ios::out);
+	  File.precision(14);
+	  if (Manager.GetBoolean("two-columns") == false)
+	    {
+	      if (((BooleanOption*) Manager["add-index"])->GetBoolean() == true)
+		for (long i = MinValue; i < MaxValue; ++i)
+		  File << i << " " << State[(i - MinValue)] << endl;
+	      else
+		for (long i = MinValue; i < MaxValue; ++i)
+		  File << State[(i - MinValue)] << endl;
+	    }
+	  else
+	    {
+	      if (((BooleanOption*) Manager["add-index"])->GetBoolean() == true)
+		for (long i = MinValue; i < MaxValue; ++i)
+		  File << i << " " << State[(i - MinValue)].Re << " " << State[(i - MinValue)].Im << endl;
+	      else
+		for (long i = MinValue; i < MaxValue; ++i)
+		  File << State[(i - MinValue)].Re << " " << State[(i - MinValue)].Im << endl;
+	    }
+	  File.close();
+	}
+      else
+	{
+	  cout.precision(14);
+	  if (Manager.GetBoolean("two-columns") == false)
+	    {
+	      if (Manager.GetBoolean("add-index") == true)
+		for (long i = MinValue; i < MaxValue; ++i)
+		  cout << i << " " << State[(i - MinValue)] << endl;
+	      else
+		for (long i = MinValue; i < MaxValue; ++i)
+		  cout << State[(i - MinValue)] << endl;
+	    }
+	  else
+	    {
+	      if (Manager.GetBoolean("add-index") == true)
+		for (long i = MinValue; i < MaxValue; ++i)
+		  cout << i << " " << State[(i - MinValue)].Re << " " << State[(i - MinValue)].Im << endl;
+	      else
+		for (long i = MinValue; i < MaxValue; ++i)
+		  cout << State[(i - MinValue)].Re << " " << State[(i - MinValue)].Im << endl;
+	    }
+	}
+      return 0;
     }
-  return 0;
 }

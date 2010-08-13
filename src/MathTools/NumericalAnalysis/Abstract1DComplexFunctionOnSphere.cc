@@ -70,3 +70,4 @@ unsigned Abstract1DComplexFunctionOnSphere::GetProperties()
 {
   return Abstract1DComplexFunction::Basic | Abstract1DComplexFunction::OnSphere;
 }
+

@@ -2572,11 +2572,11 @@ bool ComplexVector::ReadVector (const char* fileName, long minIndex, long maxInd
 
   if (TmpDimension > 0)
     {
-      if (Length/(std::streampos)sizeof(double)>(std::streampos)TmpDimension)
+      if (Length/(std::streampos)sizeof(double) < (std::streampos)TmpDimension)
 	{      
-	  cout << "Error reading real vector "<<fileName<<": estimated length "<<Length/sizeof(double)<<" vs dimension "<<TmpDimension<<endl;
+	  cout << "Error reading complex vector " <<fileName <<": estimated length " << Length/ (2 * sizeof(double)) << " vs dimension " << TmpDimension << endl;
 	  if ((unsigned)TmpDimension*2==Length/sizeof(double))
-	    cout << "This could be a complex vector!"<<endl;
+	    cout << "This could be a real vector!"<<endl;
 	  exit(1);
 	}
       if ((maxIndex >= TmpDimension) || (maxIndex <= 0l))
