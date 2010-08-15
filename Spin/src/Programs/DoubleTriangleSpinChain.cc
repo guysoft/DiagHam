@@ -201,6 +201,8 @@ int main(int argc, char** argv)
 	      if (Chain->GetHilbertSpaceDimension() > 0)
 		{
 		  cout << "2Sz=" <<  InitalSzValue << " K=" << InitialKValue << " dim=" << Chain->GetHilbertSpaceDimension() << endl;
+		  for (int i = 0; i < Chain->GetHilbertSpaceDimension(); ++i)
+		    Chain->PrintState(cout, i) << endl;
 		  DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian Hamiltonian (Chain, NbrSpins, J1Value, J2Value, DJz1Value, DJz2Value);
 		  char* TmpSzString = new char[64];
 		  sprintf (TmpSzString, "%d %d", InitalSzValue, InitialKValue);

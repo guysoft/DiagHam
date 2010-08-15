@@ -287,15 +287,19 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // return value = density matrix of the subsytem  (return a wero dimension matrix if the density matrix is equal to zero)
   virtual RealSymmetricMatrix EvaluateShiftedPartialDensityMatrix (int subsytemSize, int nbrShiftedOrbitals, int nbrBosonSector, int lzSector, RealVector& groundState);
   
-  // Compute the column dimension of the orbital entanglement matrix of 2 cuts - Column dimension being the hilbert space of B and C which are traced out
-  //
+  // Compute the row and column dimension of the orbital entanglement matrix of 2 cuts counting only those rows/columns that are not completely zero
+  // Also returns from the set of indices in the reduced density matrix corresponding to rows with atleast one non-zero entry
+  // Columns contain the hilbert space of B and C which are traced out
   // SizeB = number of orbitals in part B, i.e. in the cap around Lzmax/2.
   // SizeA = number of orbitals in the bulk of the sphere 
   // NbrBosonsA = number of particles that belong to A
   // groundState = reference on the total system ground state
   // LzA = Lz sector of A in which the density matrix has to be evaluated as measured on a sphere with only A
-  // return value = the column dimension of the oem of 2 cuts (returns 0 if there is a probem/there is no hilbert space)  
-  long Compute2CutEntanglementMatrixColumnDimension (int SizeB, int SizeA, int NbrBosonsA, int LzA, RealVector& groundState);
+  // return value = pointer with the 1st element being the row dimension
+  // 2nd element is the column dimension of the oem 
+  // 3rd element onward gives the positions of the rows in the oem/reduced density matrix which are not filled with 0's
+  // (returns 0 if there is a probem/there is no hilbert space) 
+  long* Compute2CutEntanglementMatrixDimensions (int SizeB, int SizeA, int NbrBosonsA, int LzA, RealVector& groundState);
   
   // evaluate a density matrix with 2 cuts of the whole system described by the RealVector groundState. The reduced density matrix is evaluated for a given Lz sector and number of particles
   //

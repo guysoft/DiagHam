@@ -778,10 +778,10 @@ double ParticleOnTorusHaffnianHamiltonian::EvaluateInteractionCoefficient(int m1
 
 double ParticleOnTorusHaffnianHamiltonian::FourierTransformedInteraction(double q21, double q22, double q23)
 {
-  return 1.0;
   double Tmp = q21 * q22 * (q21 + q22);
   Tmp += q21 * q23 * (q21 + q23);
   Tmp += q22 * q23 * (q22 + q23);
+  Tmp = 0.0;
   Tmp -= q21 * q22 * q23 * (q21 + q22 + q23);
   return Tmp;
 }

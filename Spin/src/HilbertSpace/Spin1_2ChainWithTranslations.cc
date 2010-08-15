@@ -46,6 +46,8 @@
 
 using std::cout;
 using std::endl;
+using std::hex;
+using std::dec;
 
 
 #define M_SQRT3 1.73205080756888
@@ -753,15 +755,16 @@ ostream& Spin1_2ChainWithTranslations::PrintState (ostream& Str, int state)
 {
   if (state >= this->HilbertSpaceDimension)    
     return Str;
-  unsigned long Mask = 0x00000001;
+  unsigned long Mask = 0x1ul;
   for (int k = 0; k < this->ChainLength; k++)    
     {
-      if ((this->StateDescription[state] & Mask) == 0x00000000)
+      if ((this->StateDescription[state] & Mask) == 0x0ul)
 	Str << "- ";
       else
 	Str << "+ ";
       Mask <<= 1;
     }
+  Str << " " << hex << this->StateDescription[state] << dec;
   return Str;
 }
 

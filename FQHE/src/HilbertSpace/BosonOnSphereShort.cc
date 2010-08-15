@@ -944,21 +944,27 @@ RealSymmetricMatrix BosonOnSphereShort::EvaluateShiftedPartialDensityMatrix (int
     }
 }
 
-// Compute the column dimension of the orbital entanglement matrix of 2 cuts - Column dimension being the hilbert space of B and C which are traced out
-//
+// Compute the row and column dimension of the orbital entanglement matrix of 2 cuts counting only those rows/columns that are not completely zero
+// Also returns from the set of indices in the reduced density matrix corresponding to rows with atleast one non-zero entry
+// Columns contain the hilbert space of B and C which are traced out
 // SizeB = number of orbitals in part B, i.e. in the cap around Lzmax/2.
 // SizeA = number of orbitals in the bulk of the sphere 
 // NbrBosonsA = number of particles that belong to A
 // groundState = reference on the total system ground state
 // LzA = Lz sector of A in which the density matrix has to be evaluated as measured on a sphere with only A
-// return value = the column dimension of the oem of 2 cuts (returns 0 if there is a probem/there is no hilbert space)
+// return value = pointer with the 1st element being the row dimension
+//                2nd element is the column dimension of the oem 
+//                3rd element onward gives the positions of the rows in the oem/reduced density matrix which are not filled with 0's
+//                (returns 0 if there is a probem/there is no hilbert space)
 
-long BosonOnSphereShort::Compute2CutEntanglementMatrixColumnDimension (int SizeB, int SizeA, int NbrBosonsA, int LzA, RealVector& groundState)
+long* BosonOnSphereShort::Compute2CutEntanglementMatrixDimensions (int SizeB, int SizeA, int NbrBosonsA, int LzA, RealVector& groundState)
 {
+  //Lz of full ground state on a disk
   int ShiftedTotalLz = (this->TotalLz + this->NbrBosons * this->LzMax) >> 1;
   //Lz of A on a disk
   int ShiftedLzA = (LzA + NbrBosonsA * (SizeA-1) ) >> 1;
-  long ColumnDim = 0;
+  
+  
   long DimA;
   int SizeC = this->LzMax +1 -SizeA -SizeB;
   
@@ -976,6 +982,18 @@ long BosonOnSphereShort::Compute2CutEntanglementMatrixColumnDimension (int SizeB
 	cout<<"The number of bosons in A is negative!";
 	return 0; 
       }
+  int* TmpIsSqueezedStateA = new int [DimA];
+  //Initialize it
+  
+  long* Dims = new long [2+DimA];
+  long PosninDims = 2;
+  Dims[0] =0;
+  Dims[1] =0;
+  for(long i=0; i<DimA; i++)
+    {
+      TmpIsSqueezedStateA[i] = 0;
+      Dims[2+i] =0;
+    }
   for(int NbrBosonsB=0; NbrBosonsB <= (this->NbrBosons - NbrBosonsA); NbrBosonsB++)
     {
       int ShiftedLzBMax= (SizeB-1)*NbrBosonsB;
@@ -986,7 +1004,10 @@ long BosonOnSphereShort::Compute2CutEntanglementMatrixColumnDimension (int SizeB
       int ShiftedLzCMax = ShiftedTotalLz - (ShiftedLzA + SizeB*NbrBosonsA) - (SizeA+SizeB)*NbrBosonsC;
       if(ShiftedLzCMax<0)
 	continue;
-      for(int ShiftedLzB=0; ShiftedLzB <= (SizeB-1)*NbrBosonsB; ShiftedLzB++)
+      int ShiftedLzBTemp = ShiftedTotalLz - (ShiftedLzA + SizeB*NbrBosonsA) - (this->LzMax)*NbrBosonsC;
+      int ShiftedLzBMin = (ShiftedLzBTemp > 0) ? ShiftedLzBTemp : 0;
+      int ShiftedLzBPossMax = (ShiftedLzCMax < ShiftedLzBMax) ? ShiftedLzCMax : ShiftedLzBMax;
+      for(int ShiftedLzB=ShiftedLzBMin; ShiftedLzB <= ShiftedLzBPossMax; ShiftedLzB++)
 	{
 	  //2*Lz of B when only B is on a sphere
 	  long DimB, DimC;
@@ -997,6 +1018,7 @@ long BosonOnSphereShort::Compute2CutEntanglementMatrixColumnDimension (int SizeB
 	  
 	  if( (ShiftedLzC<0) || (ShiftedLzC > (SizeC-1)*NbrBosonsC) )
 	    {
+	      //cout<<"No part C on a disk possible for values of NbrBosonsB="<<NbrBosonsB<<" and ShiftedLzB="<<ShiftedLzB<<endl;
 	      continue;
 	    }
 	  
@@ -1048,7 +1070,7 @@ long BosonOnSphereShort::Compute2CutEntanglementMatrixColumnDimension (int SizeB
 		    TmpStateB = TmpHilbertSpaceB->FermionBasis->StateDescription[i];
 		  else
 		    TmpStateB = 0;
-		  
+		  int Pos = 0;
 		  for ( long k=0; k<DimA ; ++k)
 		    {
 		      unsigned long TmpStateA;
@@ -1064,10 +1086,20 @@ long BosonOnSphereShort::Compute2CutEntanglementMatrixColumnDimension (int SizeB
 			--TmpLzMax;
 		      int TmpPos = this->FermionBasis->FindStateIndex(TmpFullState, TmpLzMax);
 		      
-		      if (TmpPos != this->HilbertSpaceDimension)
+		      if ((TmpPos != this->HilbertSpaceDimension) && ( groundState[TmpPos] != 0) )
 			{
-			  ColumnDim++;
-			  break;
+			  if(Pos ==0)
+			    {
+			      Dims[1]++;
+			      Pos++;
+			    }
+			  if(TmpIsSqueezedStateA[k] == 0)
+			    {  
+			      TmpIsSqueezedStateA[k] = 1;
+			      Dims[PosninDims] = k;
+			      PosninDims++;
+			      Dims[0]++;
+			    }
 			}
 		    }
 		  
@@ -1082,8 +1114,11 @@ long BosonOnSphereShort::Compute2CutEntanglementMatrixColumnDimension (int SizeB
 	  
 	}
     }
-  return ColumnDim;         
+  
+  delete [] TmpIsSqueezedStateA; 
+  return Dims;            
 }
+  			
   			
 // evaluate a density matrix with 2 cuts of the whole system described by the RealVector groundState. The reduced density matrix is evaluated for a given Lz sector and number of particles
 //
