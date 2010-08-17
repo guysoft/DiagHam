@@ -99,7 +99,7 @@ int main(int argc, char** argv)
   double VectorError = Manager.GetDouble("component-error");
   int NbrFluxQuanta = 0;
   int NbrParticles = 0;
-  bool FermionFlag = false;
+  bool FermionFlag = true;
   bool SU2SpinFlag = false;
   bool SU3SpinFlag = false;
   bool SU4SpinFlag = false;

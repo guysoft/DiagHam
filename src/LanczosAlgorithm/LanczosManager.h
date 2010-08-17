@@ -82,9 +82,32 @@ class LanczosManager
   // return = true if object deleted
   bool FreeLanczosAlgorithm();
 
-  
+  // set Lanczos to complex algorithms
+  //
+  void SetComplexAlgorithms();
+
+  // set Lanczos to real algorithms
+  //
+  void SetRealAlgorithms();
 
 };
+
+// set Lanczos to complex algorithms
+//
+
+inline void LanczosManager::SetComplexAlgorithms()
+{
+  this->ComplexFlag = true;
+}
+
+// set Lanczos to real algorithms
+//
+
+inline void LanczosManager::SetRealAlgorithms()
+{
+  this->ComplexFlag = false;
+}
+
 
 #endif
 

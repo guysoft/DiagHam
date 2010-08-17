@@ -57,6 +57,7 @@ Spin1_2Chain::Spin1_2Chain ()
   this->Flag.Initialize();
   this->ChainLength = 0;
   this->HilbertSpaceDimension = 0;
+  this->LargeHilbertSpaceDimension = 0l;
   this->Sz = 0;
   this->StateDescription = 0;
   this->LookUpTable = 0;
@@ -96,7 +97,8 @@ Spin1_2Chain::Spin1_2Chain (int chainLength, int memorySize)
   this->LookUpTable = new int [this->LookUpTableSize];
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
   this->StateDescription[0] = 0xffffffff; 
-  this->HilbertSpaceDimension = this->GenerateStates (0, 0, this->StateDescription[0]);
+  this->LargeHilbertSpaceDimension = this->GenerateStates (0, 0, this->StateDescription[0]);
+  this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
 }
 
 // constructor for complete Hilbert space with a given total spin projection Sz
@@ -133,7 +135,8 @@ Spin1_2Chain::Spin1_2Chain (int chainLength, int sz, int memorySize)
   this->LookUpTable = new int [this->LookUpTableSize];
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
   this->StateDescription[0] = 0xffffffff; 
-  this->HilbertSpaceDimension = this->GenerateStates (0, 0, 0xffffffff, this->ChainLength);
+  this->LargeHilbertSpaceDimension = this->GenerateStates (0, 0, 0xffffffff, this->ChainLength);
+  this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
 }
 
 // constructor from pre-constructed datas
@@ -158,6 +161,7 @@ Spin1_2Chain::Spin1_2Chain (int hilbertSpaceDimension, unsigned long* chainDescr
   this->LookUpPosition = lookUpPosition;
   this->LookUpTableSize = lookUpTableSize;
   this->HilbertSpaceDimension = hilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension =  this->HilbertSpaceDimension;
   this->StateDescription = chainDescription;
   this->Sz = sz;
   this->FixedQuantumNumberFlag = fixedQuantumNumberFlag;
@@ -175,22 +179,26 @@ Spin1_2Chain::Spin1_2Chain (const Spin1_2Chain& chain)
     {
       this->ChainLength = chain.ChainLength;
       this->HilbertSpaceDimension = chain.HilbertSpaceDimension;
+      this->LargeHilbertSpaceDimension = chain.LargeHilbertSpaceDimension;
       this->Sz = chain.Sz;
       this->StateDescription = chain.StateDescription;
       this->LookUpTable = chain.LookUpTable;
       this->LookUpTableMask = chain.LookUpTableMask;
       this->LookUpPosition = chain.LookUpPosition;
-      
+      this->LookUpTableSize = chain.LookUpTableSize;
+      this->FixedQuantumNumberFlag = chain.FixedQuantumNumberFlag;      
     }
   else
     {
       this->ChainLength = 0;
       this->HilbertSpaceDimension = 0;
+      this->LargeHilbertSpaceDimension = 0;
       this->Sz = 0;
       this->StateDescription = 0;
       this->LookUpTable = 0;
       this->LookUpTableMask = 0;
       this->LookUpPosition = 0;
+      this->LookUpTableSize = 0;
     }
 }
 
@@ -221,11 +229,14 @@ Spin1_2Chain& Spin1_2Chain::operator = (const Spin1_2Chain& chain)
     {
       this->ChainLength = chain.ChainLength;
       this->HilbertSpaceDimension = chain.HilbertSpaceDimension;
+      this->LargeHilbertSpaceDimension = chain.LargeHilbertSpaceDimension;
       this->Sz = chain.Sz;
       this->StateDescription = chain.StateDescription;
       this->LookUpTable = chain.LookUpTable;
       this->LookUpTableMask = chain.LookUpTableMask;
       this->LookUpPosition = chain.LookUpPosition;
+      this->LookUpTableSize = chain.LookUpTableSize;
+      this->FixedQuantumNumberFlag = chain.FixedQuantumNumberFlag;      
     }
   else
     {
@@ -454,7 +465,7 @@ Matrix& Spin1_2Chain::Sxi (int i, Matrix& M)
       State = tmpState;
       tmpState >>= i;
       tmpState &= 0x00000001;
-      if (tmpState == 0)
+      if (tmpState == 0x0ul)
 	M(this->FindStateIndex(State | Mask), j) = 0.5;
       else
 	M(this->FindStateIndex(State & NotMask), j) = 0.5;
@@ -483,7 +494,7 @@ Matrix& Spin1_2Chain::Syi (int i, Matrix& M)
       State = tmpState;
       tmpState >>= i;
       tmpState &= 0x00000001;
-      if (tmpState == 0)
+      if (tmpState == 0x0ul)
 	M(this->FindStateIndex(State | Mask), j) = 0.5;
       else
 	M(this->FindStateIndex(State & NotMask), j) = -0.5;
@@ -509,7 +520,7 @@ Matrix& Spin1_2Chain::Szi (int i, Matrix& M)
       State = tmpState;
       tmpState >>= i;
       tmpState &= 0x1ul;
-      if (tmpState == 0)
+      if (tmpState == 0x0ul)
 	M(j, j) = -0.5;
       else
 	M(j, j) = 0.5;
@@ -638,11 +649,11 @@ int Spin1_2Chain::SmiSpj (int i, int j, int state, double& coefficient)
 	}
       else
 	{
-	  coefficient = 0;
+	  coefficient = 0.0;
 	  return this->HilbertSpaceDimension;
 	}
     }
-  if (tmpState == 0)
+  if (tmpState == 0x0ul)
     {
       coefficient = -0.25;
       return state;
@@ -678,13 +689,13 @@ int Spin1_2Chain::SpiSpj (int i, int j, int state, double& coefficient)
 	}
       else
 	{
-	  coefficient = 0;
+	  coefficient = 0.0;
 	  return this->HilbertSpaceDimension;
 	}
     }
   if (tmpState == 0x0ul)
     {
-      coefficient = 0;
+      coefficient = 0.0;
       return this->HilbertSpaceDimension;
     }
   return this->HilbertSpaceDimension;
@@ -718,13 +729,13 @@ int Spin1_2Chain::SmiSmj (int i, int j, int state, double& coefficient)
 	}
       else
 	{
-	  coefficient = 0;
+	  coefficient = 0.0;
 	  return this->HilbertSpaceDimension;
 	}
     }
-  if (tmpState == 0)
+  if (tmpState == 0x0ul)
     {
-      coefficient = 0;
+      coefficient = 0.0;
       return this->HilbertSpaceDimension;
     }
   return this->HilbertSpaceDimension;
@@ -758,7 +769,7 @@ int Spin1_2Chain::SpiSzj (int i, int j, int state, double& coefficient)
     }
   else
     {
-      coefficient = 0;
+      coefficient = 0.0;
       return this->HilbertSpaceDimension;
     }
   return this->HilbertSpaceDimension;

@@ -48,6 +48,9 @@ using std::cout;
 using std::endl;
 
 
+// special flag to track the method used in matrix-vector multiplication, for debugging purpose only
+// #define __DEBUG_MATRIXVECTOR_MULT__
+
 // destructor
 //
 
@@ -183,6 +186,9 @@ Complex AbstractHamiltonian::MatrixElement (ComplexVector& V1, ComplexVector& V2
 
 RealVector& AbstractHamiltonian::LowLevelMultiply(RealVector& vSource, RealVector& vDestination)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector& AbstractHamiltonian::LowLevelMultiply(RealVector& vSource, RealVector& vDestination)" << endl;
+#endif
   if (this->IsHermitian())
     return this->HermitianLowLevelMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
   else
@@ -201,6 +207,10 @@ RealVector& AbstractHamiltonian::LowLevelMultiply(RealVector& vSource, RealVecto
 RealVector& AbstractHamiltonian::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
 						  int firstComponent, int nbrComponent) 
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector& AbstractHamiltonian::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, " << endl
+       << "						  int firstComponent, int nbrComponent) " << endl;
+#endif
   vDestination.ClearVector();
   return this->LowLevelAddMultiply(vSource, vDestination, firstComponent, nbrComponent);
 }
@@ -224,7 +234,12 @@ RealVector& AbstractHamiltonian::LowLevelMultiply(RealVector& vSource, RealVecto
 						  int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
 						  int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
 {
-  cout << "Attention, using dummy method AbstractHamiltonian::LowLevelMultiply"<<endl;
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector& AbstractHamiltonian::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, " << endl
+       << "						  int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent," << endl
+       << "						  int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)" << endl;
+#endif
+  cout << "Attention, using dummy method AbstractHamiltonian::LowLevelMultiply (RealVector&, RealVector&)"<<endl;
   return vDestination;
 }
 
@@ -237,6 +252,9 @@ RealVector& AbstractHamiltonian::LowLevelMultiply(RealVector& vSource, RealVecto
 
 RealVector& AbstractHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector& AbstractHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination)" << endl;
+#endif
   return this->LowLevelAddMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
 }
 
@@ -252,6 +270,10 @@ RealVector& AbstractHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVe
 RealVector& AbstractHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
 						     int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector& AbstractHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, " << endl
+       << "						     int firstComponent, int nbrComponent)" << endl;
+#endif
   return this->LowLevelAddMultiply(vSource, vDestination, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
 }
 
@@ -274,7 +296,12 @@ RealVector& AbstractHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVe
 						     int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
 						     int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
 {
-  cout << "Attention, using dummy method AbstractHamiltonian::LowLevelAddMultiply"<<endl;
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector& AbstractHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, " << endl
+       << "						     int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent," << endl
+       << "						     int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)" << endl;
+#endif
+  cout << "Attention, using dummy method AbstractHamiltonian::LowLevelAddMultiply (RealVector& , RealVector& )"<<endl;
   return vDestination;
 }
 
@@ -288,6 +315,9 @@ RealVector& AbstractHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVe
 
 RealVector* AbstractHamiltonian::LowLevelMultipleMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector* AbstractHamiltonian::LowLevelMultipleMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors)" << endl;
+#endif
   if (this->IsHermitian())
     return this->HermitianLowLevelMultipleMultiply(vSources, vDestinations, nbrVectors, 0, this->GetHilbertSpaceDimension());
   else
@@ -307,6 +337,10 @@ RealVector* AbstractHamiltonian::LowLevelMultipleMultiply(RealVector* vSources, 
 RealVector* AbstractHamiltonian::LowLevelMultipleMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
                                                                      int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector* AbstractHamiltonian::LowLevelMultipleMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, " << endl
+       << "                                                                     int firstComponent, int nbrComponent)" << endl;
+#endif
   for (int i = 0; i < nbrVectors; ++i)
     vDestinations[i].ClearVector();
   return LowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, nbrComponent);
@@ -332,6 +366,11 @@ RealVector* AbstractHamiltonian::LowLevelMultipleMultiply(RealVector* vSources, 
 							  int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
 							  int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector* AbstractHamiltonian::LowLevelMultipleMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, " << endl
+       << "							  int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent," << endl
+       << "							  int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)" << endl;
+#endif
   for (int i = 0; i < nbrVectors; ++i)
     this->LowLevelMultiply(vSources[i], vDestinations[i], sourceStart, sourceStep, sourceShift, sourceNbrComponent, sourceNbrComponent, 
 			   destinationStep, destinationShift, destinationNbrComponent);
@@ -348,6 +387,9 @@ RealVector* AbstractHamiltonian::LowLevelMultipleMultiply(RealVector* vSources, 
 
 RealVector* AbstractHamiltonian::LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector* AbstractHamiltonian::LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors)" << endl;
+#endif
   return this->LowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, 0, this->GetHilbertSpaceDimension());
 }
 
@@ -364,6 +406,10 @@ RealVector* AbstractHamiltonian::LowLevelMultipleAddMultiply(RealVector* vSource
 RealVector* AbstractHamiltonian::LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors,
 							     int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector* AbstractHamiltonian::LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors," << endl
+       << "							     int firstComponent, int nbrComponent)" << endl;
+#endif
   return this->LowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
 }
  
@@ -387,6 +433,16 @@ RealVector* AbstractHamiltonian::LowLevelMultipleAddMultiply(RealVector* vSource
 							     int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
 							     int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector* AbstractHamiltonian::LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors," << endl
+       << "							     int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent," << endl
+       << "							     int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)" << endl;
+#endif
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "entering RealVector* AbstractHamiltonian::LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors," << endl
+       << "							                 int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent," << endl
+       << "							                 int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)" << endl;
+#endif
   for (int i = 0; i < nbrVectors; ++i)
     this->LowLevelAddMultiply(vSources[i], vDestinations[i], sourceStart, sourceStep, sourceShift, sourceNbrComponent, sourceNbrComponent, 
 			      destinationStep, destinationShift, destinationNbrComponent);
@@ -402,6 +458,9 @@ RealVector* AbstractHamiltonian::LowLevelMultipleAddMultiply(RealVector* vSource
 
 ComplexVector& AbstractHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector& AbstractHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination)" << endl;
+#endif
   if (this->IsHermitian())
     return this->HermitianLowLevelMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
   else
@@ -421,6 +480,10 @@ ComplexVector& AbstractHamiltonian::LowLevelMultiply(ComplexVector& vSource, Com
 ComplexVector& AbstractHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 						     int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector& AbstractHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, " << endl
+       << "						     int firstComponent, int nbrComponent)" << endl;
+#endif
   vDestination.ClearVector();
   return this->LowLevelAddMultiply(vSource, vDestination, firstComponent, nbrComponent);
 }
@@ -444,7 +507,12 @@ ComplexVector& AbstractHamiltonian::LowLevelMultiply(ComplexVector& vSource, Com
 						     int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
 						     int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
 {
-  cout << "Attention, using dummy method AbstractHamiltonian::LowLevelMultiply"<<endl;
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector& AbstractHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, " << endl
+       << "						     int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent," << endl
+       << "						     int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)" << endl;
+#endif
+  cout << "Attention, using dummy method AbstractHamiltonian::LowLevelMultiply (ComplexVector&, ComplexVector&)"<<endl;
   return vDestination;
 }
 
@@ -457,6 +525,9 @@ ComplexVector& AbstractHamiltonian::LowLevelMultiply(ComplexVector& vSource, Com
 
 ComplexVector& AbstractHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector& AbstractHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination)" << endl;
+#endif
   return this->LowLevelAddMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
 }
 
@@ -472,6 +543,10 @@ ComplexVector& AbstractHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, 
 ComplexVector& AbstractHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 							int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector& AbstractHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, " << endl
+       << "							int firstComponent, int nbrComponent)" << endl;
+#endif
   return this->LowLevelAddMultiply(vSource, vDestination, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
 }
 
@@ -494,7 +569,12 @@ ComplexVector& AbstractHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, 
 							int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
 							int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
 {
-  cout << "Attention, using dummy method AbstractHamiltonian::LowLevelAddMultiply"<<endl;
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector& AbstractHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, " << endl
+       << "							int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent," << endl
+       << "							int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)" << endl;
+#endif
+  cout << "Attention, using dummy method AbstractHamiltonian::LowLevelAddMultiply (ComplexVector&, ComplexVector&)"<<endl;
   return vDestination;
 }
 
@@ -508,6 +588,9 @@ ComplexVector& AbstractHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, 
 
 ComplexVector* AbstractHamiltonian::LowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector* AbstractHamiltonian::LowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors)" << endl;
+#endif
   if (this->IsHermitian())
     return this->HermitianLowLevelMultipleMultiply(vSources, vDestinations, nbrVectors, 0, this->GetHilbertSpaceDimension());
   else
@@ -527,6 +610,10 @@ ComplexVector* AbstractHamiltonian::LowLevelMultipleMultiply(ComplexVector* vSou
 ComplexVector* AbstractHamiltonian::LowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
 							     int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector* AbstractHamiltonian::LowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, " << endl
+       << "							     int firstComponent, int nbrComponent)" << endl;
+#endif
   for (int i = 0; i < nbrVectors; ++i)
     vDestinations[i].ClearVector();
   return this->LowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, nbrComponent);
@@ -552,6 +639,11 @@ ComplexVector* AbstractHamiltonian::LowLevelMultipleMultiply(ComplexVector* vSou
 							     int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
 							     int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector* AbstractHamiltonian::LowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, " << endl
+       << "							     int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent," << endl
+       << "							     int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)" << endl;
+#endif
   for (int i = 0; i < nbrVectors; ++i)
     this->LowLevelMultiply(vSources[i], vDestinations[i], sourceStart, sourceStep, sourceShift, sourceNbrComponent, sourceNbrComponent, 
 			   destinationStep, destinationShift, destinationNbrComponent);
@@ -568,6 +660,9 @@ ComplexVector* AbstractHamiltonian::LowLevelMultipleMultiply(ComplexVector* vSou
 
 ComplexVector* AbstractHamiltonian::LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector* AbstractHamiltonian::LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors)" << endl;
+#endif
   return this->LowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, 0, this->GetHilbertSpaceDimension());
 }
 
@@ -584,6 +679,10 @@ ComplexVector* AbstractHamiltonian::LowLevelMultipleAddMultiply(ComplexVector* v
 ComplexVector* AbstractHamiltonian::LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
 								int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector* AbstractHamiltonian::LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, " << endl
+       << "								int firstComponent, int nbrComponent)" << endl;
+#endif
   return this->LowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
 }
  
@@ -608,6 +707,11 @@ ComplexVector* AbstractHamiltonian::LowLevelMultipleAddMultiply(ComplexVector* v
 								int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
 								int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector* AbstractHamiltonian::LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, " << endl
+       << "								int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent," << endl
+       << "								int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)" << endl;
+#endif
   for (int i = 0; i < nbrVectors; ++i)
     this->LowLevelAddMultiply(vSources[i], vDestinations[i], sourceStart, sourceStep, sourceShift, sourceNbrComponent, sourceNbrComponent, 
 			      destinationStep, destinationShift, destinationNbrComponent);
@@ -626,6 +730,9 @@ ComplexVector* AbstractHamiltonian::LowLevelMultipleAddMultiply(ComplexVector* v
 
 RealVector& AbstractHamiltonian::ConjugateLowLevelMultiply(RealVector& vSource, RealVector& vDestination)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector& AbstractHamiltonian::ConjugateLowLevelMultiply(RealVector& vSource, RealVector& vDestination)" << endl;
+#endif
   return this->ConjugateLowLevelMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
 }
 
@@ -641,6 +748,10 @@ RealVector& AbstractHamiltonian::ConjugateLowLevelMultiply(RealVector& vSource, 
 RealVector& AbstractHamiltonian::ConjugateLowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
 							   int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector& AbstractHamiltonian::ConjugateLowLevelMultiply(RealVector& vSource, RealVector& vDestination, " << endl
+       << "							   int firstComponent, int nbrComponent)" << endl;
+#endif
   vDestination.ClearVectorSegment((long)firstComponent, (long)nbrComponent);
   return this->ConjugateLowLevelAddMultiply(vSource, vDestination, firstComponent, nbrComponent);
 }
@@ -664,7 +775,12 @@ RealVector& AbstractHamiltonian::ConjugateLowLevelMultiply(RealVector& vSource, 
 						  int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
 						  int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
 {
-  cout << "Attention, using dummy method AbstractHamiltonian::ConjugateLowLevelMultiply"<<endl;
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector& AbstractHamiltonian::ConjugateLowLevelMultiply(RealVector& vSource, RealVector& vDestination, " << endl
+       << "						  int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent," << endl
+       << "						  int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)" << endl;
+#endif
+  cout << "Attention, using dummy method AbstractHamiltonian::ConjugateLowLevelMultiply (RealVector&, RealVector&)"<<endl;
   return vDestination;
 }
 
@@ -677,6 +793,9 @@ RealVector& AbstractHamiltonian::ConjugateLowLevelMultiply(RealVector& vSource, 
 
 RealVector& AbstractHamiltonian::ConjugateLowLevelAddMultiply(RealVector& vSource, RealVector& vDestination)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector& AbstractHamiltonian::ConjugateLowLevelAddMultiply(RealVector& vSource, RealVector& vDestination)" << endl;
+#endif
   return this->ConjugateLowLevelAddMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
 }
 
@@ -692,6 +811,10 @@ RealVector& AbstractHamiltonian::ConjugateLowLevelAddMultiply(RealVector& vSourc
 RealVector& AbstractHamiltonian::ConjugateLowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
 						     int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector& AbstractHamiltonian::ConjugateLowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, " << endl
+       << "						     int firstComponent, int nbrComponent)" << endl;
+#endif
   return this->ConjugateLowLevelAddMultiply(vSource, vDestination, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
 }
 
@@ -714,7 +837,12 @@ RealVector& AbstractHamiltonian::ConjugateLowLevelAddMultiply(RealVector& vSourc
 						     int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
 						     int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
 {
-  cout << "Attention, using dummy method AbstractHamiltonian::ConjugateLowLevelAddMultiply"<<endl;
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector& AbstractHamiltonian::ConjugateLowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, " << endl
+       << "						     int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent," << endl
+       << "						     int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)" << endl;
+#endif
+  cout << "Attention, using dummy method AbstractHamiltonian::ConjugateLowLevelAddMultiply (RealVector&, RealVector&)"<<endl;
   return vDestination;
 }
 
@@ -728,6 +856,9 @@ RealVector& AbstractHamiltonian::ConjugateLowLevelAddMultiply(RealVector& vSourc
 
 RealVector* AbstractHamiltonian::ConjugateLowLevelMultipleMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector* AbstractHamiltonian::ConjugateLowLevelMultipleMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors)" << endl;
+#endif
   return this->ConjugateLowLevelMultipleMultiply(vSources, vDestinations, nbrVectors, 0, this->GetHilbertSpaceDimension());
 }
 
@@ -744,6 +875,10 @@ RealVector* AbstractHamiltonian::ConjugateLowLevelMultipleMultiply(RealVector* v
 RealVector* AbstractHamiltonian::ConjugateLowLevelMultipleMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
 							  int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector* AbstractHamiltonian::ConjugateLowLevelMultipleMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, " << endl
+       << "							  int firstComponent, int nbrComponent)" << endl;
+#endif
   for (int i = 0; i < nbrVectors; ++i)
     vDestinations[i].ClearVector();
   return ConjugateLowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, nbrComponent);
@@ -769,6 +904,11 @@ RealVector* AbstractHamiltonian::ConjugateLowLevelMultipleMultiply(RealVector* v
 							  int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
 							  int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector* AbstractHamiltonian::ConjugateLowLevelMultipleMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, " << endl
+       << "							  int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent," << endl
+       << "							  int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)" << endl;
+#endif
   for (int i = 0; i < nbrVectors; ++i)
     this->ConjugateLowLevelMultiply(vSources[i], vDestinations[i], sourceStart, sourceStep, sourceShift, sourceNbrComponent, sourceNbrComponent, 
 			   destinationStep, destinationShift, destinationNbrComponent);
@@ -785,6 +925,9 @@ RealVector* AbstractHamiltonian::ConjugateLowLevelMultipleMultiply(RealVector* v
 
 RealVector* AbstractHamiltonian::ConjugateLowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector* AbstractHamiltonian::ConjugateLowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors)" << endl;
+#endif
   return this->ConjugateLowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, 0, this->GetHilbertSpaceDimension());
 }
 
@@ -801,6 +944,10 @@ RealVector* AbstractHamiltonian::ConjugateLowLevelMultipleAddMultiply(RealVector
 RealVector* AbstractHamiltonian::ConjugateLowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors,
 							     int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector* AbstractHamiltonian::ConjugateLowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors," << endl
+       << "							     int firstComponent, int nbrComponent)" << endl;
+#endif
   return this->ConjugateLowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
 }
  
@@ -824,6 +971,11 @@ RealVector* AbstractHamiltonian::ConjugateLowLevelMultipleAddMultiply(RealVector
 							     int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
 							     int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector* AbstractHamiltonian::ConjugateLowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors," << endl
+       << "							     int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent," << endl
+       << "							     int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)" << endl;
+#endif
   for (int i = 0; i < nbrVectors; ++i)
     this->ConjugateLowLevelAddMultiply(vSources[i], vDestinations[i], sourceStart, sourceStep, sourceShift, sourceNbrComponent, sourceNbrComponent, 
 			      destinationStep, destinationShift, destinationNbrComponent);
@@ -839,6 +991,9 @@ RealVector* AbstractHamiltonian::ConjugateLowLevelMultipleAddMultiply(RealVector
 
 ComplexVector& AbstractHamiltonian::ConjugateLowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector& AbstractHamiltonian::ConjugateLowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination)" << endl;
+#endif
   return this->ConjugateLowLevelMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
 }
 
@@ -853,8 +1008,12 @@ ComplexVector& AbstractHamiltonian::ConjugateLowLevelMultiply(ComplexVector& vSo
 // return value = reference on vector where result has been stored
 
 ComplexVector& AbstractHamiltonian::ConjugateLowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-						     int firstComponent, int nbrComponent)
+							      int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector& AbstractHamiltonian::ConjugateLowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, " << endl
+       << "							      int firstComponent, int nbrComponent)" << endl;
+#endif
   vDestination.ClearVectorSegment((long)firstComponent, (long)nbrComponent);
   return this->ConjugateLowLevelAddMultiply(vSource, vDestination, firstComponent, nbrComponent);
 }
@@ -875,10 +1034,15 @@ ComplexVector& AbstractHamiltonian::ConjugateLowLevelMultiply(ComplexVector& vSo
 // return value = reference on vector where result has been stored
 
 ComplexVector& AbstractHamiltonian::ConjugateLowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-						     int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
-						     int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
+							      int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
+							      int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
 {
-  cout << "Attention, using dummy method AbstractHamiltonian::ConjugateLowLevelMultiply"<<endl;
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector& AbstractHamiltonian::ConjugateLowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, " << endl
+       << "							      int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent," << endl
+       << "							      int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)" << endl;
+#endif
+  cout << "Attention, using dummy method AbstractHamiltonian::ConjugateLowLevelMultiply (ComplexVector&, ComplexVector&)"<<endl;
   return vDestination;
 }
 
@@ -891,6 +1055,9 @@ ComplexVector& AbstractHamiltonian::ConjugateLowLevelMultiply(ComplexVector& vSo
 
 ComplexVector& AbstractHamiltonian::ConjugateLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector& AbstractHamiltonian::ConjugateLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination)" << endl;
+#endif
   return this->ConjugateLowLevelAddMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
 }
 
@@ -906,6 +1073,10 @@ ComplexVector& AbstractHamiltonian::ConjugateLowLevelAddMultiply(ComplexVector& 
 ComplexVector& AbstractHamiltonian::ConjugateLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 							int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector& AbstractHamiltonian::ConjugateLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, " << endl
+       << "							int firstComponent, int nbrComponent)" << endl;
+#endif
   return this->ConjugateLowLevelAddMultiply(vSource, vDestination, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
 }
 
@@ -928,7 +1099,12 @@ ComplexVector& AbstractHamiltonian::ConjugateLowLevelAddMultiply(ComplexVector& 
 							int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
 							int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
 {
-  cout << "Attention, using dummy method AbstractHamiltonian::ConjugateLowLevelAddMultiply"<<endl;
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector& AbstractHamiltonian::ConjugateLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, " << endl
+       << "							int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent," << endl
+       << "							int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)" << endl;
+#endif
+  cout << "Attention, using dummy method AbstractHamiltonian::ConjugateLowLevelAddMultiply (ComplexVector& , ComplexVector& )"<<endl;
   return vDestination;
 }
 
@@ -942,6 +1118,9 @@ ComplexVector& AbstractHamiltonian::ConjugateLowLevelAddMultiply(ComplexVector& 
 
 ComplexVector* AbstractHamiltonian::ConjugateLowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector* AbstractHamiltonian::ConjugateLowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors)" << endl;
+#endif
   return this->ConjugateLowLevelMultipleMultiply(vSources, vDestinations, nbrVectors, 0, this->GetHilbertSpaceDimension());
 }
 
@@ -956,8 +1135,12 @@ ComplexVector* AbstractHamiltonian::ConjugateLowLevelMultipleMultiply(ComplexVec
 // return value = pointer to the array of vectors where result has been stored
 
 ComplexVector* AbstractHamiltonian::ConjugateLowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
-							     int firstComponent, int nbrComponent)
+								      int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector* AbstractHamiltonian::ConjugateLowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, " << endl
+       << "								      int firstComponent, int nbrComponent)" << endl;
+#endif
   for (int i=0; i<nbrVectors; ++i)
     vDestinations[i].ClearVectorSegment((long)firstComponent, (long)nbrComponent);
   return this->ConjugateLowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, nbrComponent);
@@ -980,9 +1163,14 @@ ComplexVector* AbstractHamiltonian::ConjugateLowLevelMultipleMultiply(ComplexVec
 // return value = pointer to the array of vectors where result has been stored
 
 ComplexVector* AbstractHamiltonian::ConjugateLowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
-							     int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
-							     int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
+								      int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
+								      int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector* AbstractHamiltonian::ConjugateLowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, " << endl
+       << "								      int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent," << endl
+       << "								      int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)" << endl;
+#endif
   for (int i = 0; i < nbrVectors; ++i)
     this->ConjugateLowLevelMultiply(vSources[i], vDestinations[i], sourceStart, sourceStep, sourceShift, sourceNbrComponent, sourceNbrComponent, 
 				    destinationStep, destinationShift, destinationNbrComponent);
@@ -999,6 +1187,9 @@ ComplexVector* AbstractHamiltonian::ConjugateLowLevelMultipleMultiply(ComplexVec
 
 ComplexVector* AbstractHamiltonian::ConjugateLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector* AbstractHamiltonian::ConjugateLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors)" << endl;
+#endif
   return this->ConjugateLowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, 0, this->GetHilbertSpaceDimension());
 }
 
@@ -1013,8 +1204,12 @@ ComplexVector* AbstractHamiltonian::ConjugateLowLevelMultipleAddMultiply(Complex
 // return value = pointer to the array of vectors where result has been stored
 
 ComplexVector* AbstractHamiltonian::ConjugateLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
-								int firstComponent, int nbrComponent)
+									 int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector* AbstractHamiltonian::ConjugateLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, " << endl
+       << "									 int firstComponent, int nbrComponent)" << endl;
+#endif
   return this->ConjugateLowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
 }
  
@@ -1036,9 +1231,14 @@ ComplexVector* AbstractHamiltonian::ConjugateLowLevelMultipleAddMultiply(Complex
 // return value = pointer to the array of vectors where result has been stored
 
 ComplexVector* AbstractHamiltonian::ConjugateLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
-								int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
-								int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
+									 int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
+									 int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector* AbstractHamiltonian::ConjugateLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, " << endl
+       << "									 int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent," << endl
+       << "									 int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)" << endl;
+#endif
   for (int i = 0; i < nbrVectors; ++i)
     this->ConjugateLowLevelAddMultiply(vSources[i], vDestinations[i], sourceStart, sourceStep, sourceShift, sourceNbrComponent, sourceNbrComponent, 
 			      destinationStep, destinationShift, destinationNbrComponent);
@@ -1056,6 +1256,9 @@ ComplexVector* AbstractHamiltonian::ConjugateLowLevelMultipleAddMultiply(Complex
 
 RealVector& AbstractHamiltonian::HermitianLowLevelMultiply(RealVector& vSource, RealVector& vDestination)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector& AbstractHamiltonian::HermitianLowLevelMultiply(RealVector& vSource, RealVector& vDestination)" << endl;
+#endif
   return this->HermitianLowLevelMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
 }
 
@@ -1071,6 +1274,10 @@ RealVector& AbstractHamiltonian::HermitianLowLevelMultiply(RealVector& vSource, 
 RealVector& AbstractHamiltonian::HermitianLowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
 						  int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector& AbstractHamiltonian::HermitianLowLevelMultiply(RealVector& vSource, RealVector& vDestination, " << endl
+       << "						  int firstComponent, int nbrComponent)" << endl;
+#endif
   vDestination.ClearVector();
   return this->HermitianLowLevelAddMultiply(vSource, vDestination, firstComponent, nbrComponent);
 }
@@ -1095,7 +1302,12 @@ RealVector& AbstractHamiltonian::HermitianLowLevelMultiply(RealVector& vSource, 
 						  int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
 						  int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
 {
-  cout << "Attention, using dummy method AbstractHamiltonian::HermitianowLevelMultiply"<<endl;
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector& AbstractHamiltonian::HermitianLowLevelMultiply(RealVector& vSource, RealVector& vDestination, " << endl
+       << "						  int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent," << endl
+       << "						  int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)" << endl;
+#endif
+  cout << "Attention, using dummy method AbstractHamiltonian::HermitianowLevelMultiply (RealVector&, RealVector&)"<<endl;
   return vDestination;
 }
 
@@ -1108,6 +1320,9 @@ RealVector& AbstractHamiltonian::HermitianLowLevelMultiply(RealVector& vSource, 
 
 RealVector& AbstractHamiltonian::HermitianLowLevelAddMultiply(RealVector& vSource, RealVector& vDestination)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector& AbstractHamiltonian::HermitianLowLevelAddMultiply(RealVector& vSource, RealVector& vDestination)" << endl;
+#endif
   return this->HermitianLowLevelAddMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
 }
 
@@ -1123,6 +1338,10 @@ RealVector& AbstractHamiltonian::HermitianLowLevelAddMultiply(RealVector& vSourc
 RealVector& AbstractHamiltonian::HermitianLowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
 						     int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector& AbstractHamiltonian::HermitianLowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, " << endl
+       << "						     int firstComponent, int nbrComponent)" << endl;
+#endif
   return this->HermitianLowLevelAddMultiply(vSource, vDestination, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
 }
 
@@ -1145,7 +1364,12 @@ RealVector& AbstractHamiltonian::HermitianLowLevelAddMultiply(RealVector& vSourc
 						     int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
 						     int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
 {
-  cout << "Attention, using dummy method AbstractHamiltonian::HermitianLowLevelAddMultiply"<<endl;
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector& AbstractHamiltonian::HermitianLowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, " << endl
+       << "						     int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent," << endl
+       << "						     int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)" << endl;
+#endif
+  cout << "Attention, using dummy method AbstractHamiltonian::HermitianLowLevelAddMultiply (RealVector& , RealVector& )"<<endl;
   return vDestination;
 }
 
@@ -1159,6 +1383,9 @@ RealVector& AbstractHamiltonian::HermitianLowLevelAddMultiply(RealVector& vSourc
 
 RealVector* AbstractHamiltonian::HermitianLowLevelMultipleMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector* AbstractHamiltonian::HermitianLowLevelMultipleMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors)" << endl;
+#endif
   return this->HermitianLowLevelMultipleMultiply(vSources, vDestinations, nbrVectors, 0, this->GetHilbertSpaceDimension());
 }
 
@@ -1175,6 +1402,10 @@ RealVector* AbstractHamiltonian::HermitianLowLevelMultipleMultiply(RealVector* v
 RealVector* AbstractHamiltonian::HermitianLowLevelMultipleMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
 							  int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector* AbstractHamiltonian::HermitianLowLevelMultipleMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, " << endl
+       << "							  int firstComponent, int nbrComponent)" << endl;
+#endif
   for (int i = 0; i < nbrVectors; ++i)
     vDestinations[i].ClearVector();
   return HermitianLowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, nbrComponent);
@@ -1200,6 +1431,11 @@ RealVector* AbstractHamiltonian::HermitianLowLevelMultipleMultiply(RealVector* v
 							  int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
 							  int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector* AbstractHamiltonian::HermitianLowLevelMultipleMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, " << endl
+       << "							  int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent," << endl
+       << "							  int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)" << endl;
+#endif
   for (int i = 0; i < nbrVectors; ++i)
     this->HermitianLowLevelMultiply(vSources[i], vDestinations[i], sourceStart, sourceStep, sourceShift, sourceNbrComponent, sourceNbrComponent, 
 			   destinationStep, destinationShift, destinationNbrComponent);
@@ -1216,6 +1452,9 @@ RealVector* AbstractHamiltonian::HermitianLowLevelMultipleMultiply(RealVector* v
 
 RealVector* AbstractHamiltonian::HermitianLowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector* AbstractHamiltonian::HermitianLowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors)" << endl;
+#endif
   return this->HermitianLowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, 0, this->GetHilbertSpaceDimension());
 }
 
@@ -1232,6 +1471,10 @@ RealVector* AbstractHamiltonian::HermitianLowLevelMultipleAddMultiply(RealVector
 RealVector* AbstractHamiltonian::HermitianLowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors,
 							     int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector* AbstractHamiltonian::HermitianLowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors," << endl
+       << "							     int firstComponent, int nbrComponent)" << endl;
+#endif
   return this->HermitianLowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
 }
  
@@ -1255,6 +1498,11 @@ RealVector* AbstractHamiltonian::HermitianLowLevelMultipleAddMultiply(RealVector
 							     int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
 							     int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "RealVector* AbstractHamiltonian::HermitianLowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors," << endl
+       << "							     int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent," << endl
+       << "							     int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)" << endl;
+#endif
   for (int i = 0; i < nbrVectors; ++i)
     this->HermitianLowLevelAddMultiply(vSources[i], vDestinations[i], sourceStart, sourceStep, sourceShift, sourceNbrComponent, sourceNbrComponent, 
 			      destinationStep, destinationShift, destinationNbrComponent);
@@ -1270,6 +1518,9 @@ RealVector* AbstractHamiltonian::HermitianLowLevelMultipleAddMultiply(RealVector
 
 ComplexVector& AbstractHamiltonian::HermitianLowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector& AbstractHamiltonian::HermitianLowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination)" << endl;
+#endif
   return this->HermitianLowLevelMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
 }
 
@@ -1286,6 +1537,10 @@ ComplexVector& AbstractHamiltonian::HermitianLowLevelMultiply(ComplexVector& vSo
 ComplexVector& AbstractHamiltonian::HermitianLowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 						     int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector& AbstractHamiltonian::HermitianLowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, " << endl
+       << "						     int firstComponent, int nbrComponent)" << endl;
+#endif
   vDestination.ClearVector();
   return this->HermitianLowLevelAddMultiply(vSource, vDestination, firstComponent, nbrComponent);
 }
@@ -1309,7 +1564,12 @@ ComplexVector& AbstractHamiltonian::HermitianLowLevelMultiply(ComplexVector& vSo
 						     int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
 						     int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
 {
-  cout << "Attention, using dummy method AbstractHamiltonian::HermitianLowLevelMultiply"<<endl;
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector& AbstractHamiltonian::HermitianLowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, " << endl
+       << "						     int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent," << endl
+       << "						     int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)" << endl;
+#endif
+  cout << "Attention, using dummy method AbstractHamiltonian::HermitianLowLevelMultiply (ComplexVector& , ComplexVector& )"<<endl;
   return vDestination;
 }
 
@@ -1322,6 +1582,9 @@ ComplexVector& AbstractHamiltonian::HermitianLowLevelMultiply(ComplexVector& vSo
 
 ComplexVector& AbstractHamiltonian::HermitianLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector& AbstractHamiltonian::HermitianLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination)" << endl;
+#endif
   return this->HermitianLowLevelAddMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
 }
 
@@ -1337,6 +1600,10 @@ ComplexVector& AbstractHamiltonian::HermitianLowLevelAddMultiply(ComplexVector& 
 ComplexVector& AbstractHamiltonian::HermitianLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 							int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector& AbstractHamiltonian::HermitianLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, " << endl
+       << "							int firstComponent, int nbrComponent)" << endl;
+#endif
   return this->HermitianLowLevelAddMultiply(vSource, vDestination, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
 }
 
@@ -1359,7 +1626,12 @@ ComplexVector& AbstractHamiltonian::HermitianLowLevelAddMultiply(ComplexVector& 
 							int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
 							int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
 {
-  cout << "Attention, using dummy method AbstractHamiltonian::HermitianLowLevelAddMultiply"<<endl;
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector& AbstractHamiltonian::HermitianLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, " << endl
+       << "							int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent," << endl
+       << "							int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)" << endl;
+#endif
+  cout << "Attention, using dummy method AbstractHamiltonian::HermitianLowLevelAddMultiply (ComplexVector& , ComplexVector& )"<<endl;
   return vDestination;
 }
 
@@ -1373,6 +1645,9 @@ ComplexVector& AbstractHamiltonian::HermitianLowLevelAddMultiply(ComplexVector& 
 
 ComplexVector* AbstractHamiltonian::HermitianLowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector* AbstractHamiltonian::HermitianLowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors)" << endl;
+#endif
   return this->HermitianLowLevelMultipleMultiply(vSources, vDestinations, nbrVectors, 0, this->GetHilbertSpaceDimension());
 }
 
@@ -1389,6 +1664,10 @@ ComplexVector* AbstractHamiltonian::HermitianLowLevelMultipleMultiply(ComplexVec
 ComplexVector* AbstractHamiltonian::HermitianLowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
 							     int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector* AbstractHamiltonian::HermitianLowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, " << endl
+       << "							     int firstComponent, int nbrComponent)" << endl;
+#endif
   for (int i=0; i<nbrVectors; ++i)
     vDestinations[i].ClearVector();
   return this->HermitianLowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, nbrComponent);
@@ -1414,6 +1693,11 @@ ComplexVector* AbstractHamiltonian::HermitianLowLevelMultipleMultiply(ComplexVec
 							     int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
 							     int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector* AbstractHamiltonian::HermitianLowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, " << endl
+       << "							     int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent," << endl
+       << "							     int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)" << endl;
+#endif
   for (int i = 0; i < nbrVectors; ++i)
     this->HermitianLowLevelMultiply(vSources[i], vDestinations[i], sourceStart, sourceStep, sourceShift, sourceNbrComponent, sourceNbrComponent, 
 			   destinationStep, destinationShift, destinationNbrComponent);
@@ -1430,6 +1714,9 @@ ComplexVector* AbstractHamiltonian::HermitianLowLevelMultipleMultiply(ComplexVec
 
 ComplexVector* AbstractHamiltonian::HermitianLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector* AbstractHamiltonian::HermitianLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors)" << endl;
+#endif
   return this->HermitianLowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, 0, this->GetHilbertSpaceDimension());
 }
 
@@ -1446,6 +1733,10 @@ ComplexVector* AbstractHamiltonian::HermitianLowLevelMultipleAddMultiply(Complex
 ComplexVector* AbstractHamiltonian::HermitianLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
 								int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector* AbstractHamiltonian::HermitianLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, " << endl
+       << "								int firstComponent, int nbrComponent)" << endl;
+#endif
   return this->HermitianLowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
 }
  
@@ -1470,6 +1761,11 @@ ComplexVector* AbstractHamiltonian::HermitianLowLevelMultipleAddMultiply(Complex
 								int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
 								int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "ComplexVector* AbstractHamiltonian::HermitianLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, " << endl
+       << "								int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent," << endl
+       << "								int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)" << endl;
+#endif
   for (int i = 0; i < nbrVectors; ++i)
     this->HermitianLowLevelAddMultiply(vSources[i], vDestinations[i], sourceStart, sourceStep, sourceShift, sourceNbrComponent, sourceNbrComponent, 
 			      destinationStep, destinationShift, destinationNbrComponent);
@@ -1645,6 +1941,10 @@ bool AbstractHamiltonian::IsConjugate()
 
 Vector& AbstractHamiltonian::Multiply(Vector& vSource, Vector& vDestination)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "Vector& AbstractHamiltonian::Multiply(Vector& vSource, Vector& vDestination)" << endl;
+  cout << "Vector types :  source = " << vSource.GetVectorType()  << "  destination = " << vDestination.GetVectorType() << endl;
+#endif
   if ((vSource.GetVectorType() & Vector::DataTypeMask) != (vDestination.GetVectorType() & Vector::DataTypeMask))
     {
       return vDestination;
@@ -1674,6 +1974,11 @@ Vector& AbstractHamiltonian::Multiply(Vector& vSource, Vector& vDestination)
 Vector& AbstractHamiltonian::Multiply(Vector& vSource, Vector& vDestination, 
 				      int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "Vector& AbstractHamiltonian::Multiply(Vector& vSource, Vector& vDestination, " << endl
+       << "				      int firstComponent, int nbrComponent)" << endl;
+  cout << "Vector types :  source = " << vSource.GetVectorType()  << "  destination = " << vDestination.GetVectorType() << endl;
+#endif
    if ((vSource.GetVectorType() & Vector::DataTypeMask) != (vDestination.GetVectorType() & Vector::DataTypeMask))
     return vDestination;
   if ((vSource.GetVectorType() & Vector::DataTypeMask) == Vector::RealDatas)
@@ -1696,6 +2001,9 @@ Vector& AbstractHamiltonian::Multiply(Vector& vSource, Vector& vDestination,
 
 Vector& AbstractHamiltonian::ConjugateMultiply(Vector& vSource, Vector& vDestination)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "Vector& AbstractHamiltonian::ConjugateMultiply(Vector& vSource, Vector& vDestination)" << endl;
+#endif
   if ((vSource.GetVectorType() & Vector::DataTypeMask) != (vDestination.GetVectorType() & Vector::DataTypeMask))
     {
       return vDestination;
@@ -1725,6 +2033,10 @@ Vector& AbstractHamiltonian::ConjugateMultiply(Vector& vSource, Vector& vDestina
 Vector& AbstractHamiltonian::ConjugateMultiply(Vector& vSource, Vector& vDestination, 
 				      int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "Vector& AbstractHamiltonian::ConjugateMultiply(Vector& vSource, Vector& vDestination, " << endl
+       << "				      int firstComponent, int nbrComponent)" << endl;
+#endif
   if ((vSource.GetVectorType() & Vector::DataTypeMask) != (vDestination.GetVectorType() & Vector::DataTypeMask))
     return vDestination;
   if ((vSource.GetVectorType() & Vector::DataTypeMask) == Vector::RealDatas)
@@ -1747,6 +2059,9 @@ Vector& AbstractHamiltonian::ConjugateMultiply(Vector& vSource, Vector& vDestina
 
 Vector& AbstractHamiltonian::HermitianMultiply(Vector& vSource, Vector& vDestination)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "Vector& AbstractHamiltonian::HermitianMultiply(Vector& vSource, Vector& vDestination)" << endl;
+#endif
   if ((vSource.GetVectorType() & Vector::DataTypeMask) != (vDestination.GetVectorType() & Vector::DataTypeMask))
     {
       return vDestination;
@@ -1776,6 +2091,10 @@ Vector& AbstractHamiltonian::HermitianMultiply(Vector& vSource, Vector& vDestina
 Vector& AbstractHamiltonian::HermitianMultiply(Vector& vSource, Vector& vDestination, 
 				      int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "Vector& AbstractHamiltonian::HermitianMultiply(Vector& vSource, Vector& vDestination, " << endl
+       << "				      int firstComponent, int nbrComponent)" << endl;
+#endif
   if ((vSource.GetVectorType() & Vector::DataTypeMask) != (vDestination.GetVectorType() & Vector::DataTypeMask))
     return vDestination;
   if ((vSource.GetVectorType() & Vector::DataTypeMask) == Vector::RealDatas)
@@ -1798,6 +2117,9 @@ Vector& AbstractHamiltonian::HermitianMultiply(Vector& vSource, Vector& vDestina
 
 Vector& AbstractHamiltonian::AddMultiply(Vector& vSource, Vector& vDestination)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "Vector& AbstractHamiltonian::AddMultiply(Vector& vSource, Vector& vDestination)" << endl;
+#endif
   if ((vSource.GetVectorType() & Vector::DataTypeMask) != (vDestination.GetVectorType() & Vector::DataTypeMask))
     {
       return vDestination;
@@ -1827,6 +2149,10 @@ Vector& AbstractHamiltonian::AddMultiply(Vector& vSource, Vector& vDestination)
 Vector& AbstractHamiltonian::AddMultiply(Vector& vSource, Vector& vDestination, 
 					 int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "Vector& AbstractHamiltonian::AddMultiply(Vector& vSource, Vector& vDestination, " << endl
+       << "					 int firstComponent, int nbrComponent)" << endl;
+#endif
   if ((vSource.GetVectorType() & Vector::DataTypeMask) != (vDestination.GetVectorType() & Vector::DataTypeMask))
     return vDestination;
   if ((vSource.GetVectorType() & Vector::DataTypeMask) == Vector::RealDatas)
@@ -1848,6 +2174,9 @@ Vector& AbstractHamiltonian::AddMultiply(Vector& vSource, Vector& vDestination,
 
 Vector* AbstractHamiltonian::MultipleMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "Vector* AbstractHamiltonian::MultipleMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors)" << endl;
+#endif
   if (vSources[0].GetVectorType() != vDestinations[0].GetVectorType())
     return vDestinations;
   for (int i = 1; i < nbrVectors; ++i)
@@ -1875,6 +2204,10 @@ Vector* AbstractHamiltonian::MultipleMultiply(Vector* vSources, Vector* vDestina
 Vector* AbstractHamiltonian::MultipleMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors, 
 					      int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "Vector* AbstractHamiltonian::MultipleMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors, " << endl
+       << "					      int firstComponent, int nbrComponent)" << endl;
+#endif
   if (vSources[0].GetVectorType() != vDestinations[0].GetVectorType())
     return vDestinations;
   cout << "check 0" << endl;
@@ -1904,6 +2237,9 @@ Vector* AbstractHamiltonian::MultipleMultiply(Vector* vSources, Vector* vDestina
 
 Vector* AbstractHamiltonian::MultipleAddMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "Vector* AbstractHamiltonian::MultipleAddMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors)" << endl;
+#endif
   if (vSources[0].GetVectorType() != vDestinations[0].GetVectorType())
     return vDestinations;
   for (int i = 1; i < nbrVectors; ++i)
@@ -1932,6 +2268,10 @@ Vector* AbstractHamiltonian::MultipleAddMultiply(Vector* vSources, Vector* vDest
 Vector* AbstractHamiltonian::MultipleAddMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors,
 						 int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "Vector* AbstractHamiltonian::MultipleAddMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors," << endl
+       << "						 int firstComponent, int nbrComponent)" << endl;
+#endif
   if (vSources[0].GetVectorType() != vDestinations[0].GetVectorType())
     return vDestinations;
   for (int i = 1; i < nbrVectors; ++i)
@@ -1956,6 +2296,9 @@ Vector* AbstractHamiltonian::MultipleAddMultiply(Vector* vSources, Vector* vDest
 
 Vector& AbstractHamiltonian::ConjugateAddMultiply(Vector& vSource, Vector& vDestination)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "Vector& AbstractHamiltonian::ConjugateAddMultiply(Vector& vSource, Vector& vDestination)" << endl;
+#endif
   if ((vSource.GetVectorType() & Vector::DataTypeMask) != (vDestination.GetVectorType() & Vector::DataTypeMask))
     {
       return vDestination;
@@ -1985,6 +2328,10 @@ Vector& AbstractHamiltonian::ConjugateAddMultiply(Vector& vSource, Vector& vDest
 Vector& AbstractHamiltonian::ConjugateAddMultiply(Vector& vSource, Vector& vDestination, 
 					 int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "Vector& AbstractHamiltonian::ConjugateAddMultiply(Vector& vSource, Vector& vDestination, " << endl
+       << "					 int firstComponent, int nbrComponent)" << endl;
+#endif
   if ((vSource.GetVectorType() & Vector::DataTypeMask) != (vDestination.GetVectorType() & Vector::DataTypeMask))
     return vDestination;
   if ((vSource.GetVectorType() & Vector::DataTypeMask) == Vector::RealDatas)
@@ -2006,6 +2353,9 @@ Vector& AbstractHamiltonian::ConjugateAddMultiply(Vector& vSource, Vector& vDest
 
 Vector* AbstractHamiltonian::ConjugateMultipleMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "Vector* AbstractHamiltonian::ConjugateMultipleMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors)" << endl;
+#endif
   if (vSources[0].GetVectorType() != vDestinations[0].GetVectorType())
     return vDestinations;
   for (int i = 1; i < nbrVectors; ++i)
@@ -2033,6 +2383,10 @@ Vector* AbstractHamiltonian::ConjugateMultipleMultiply(Vector* vSources, Vector*
 Vector* AbstractHamiltonian::ConjugateMultipleMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors, 
 					      int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "Vector* AbstractHamiltonian::ConjugateMultipleMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors, " << endl
+       << "					      int firstComponent, int nbrComponent)" << endl;
+#endif
   if (vSources[0].GetVectorType() != vDestinations[0].GetVectorType())
     return vDestinations;
   cout << "check 0" << endl;
@@ -2062,6 +2416,9 @@ Vector* AbstractHamiltonian::ConjugateMultipleMultiply(Vector* vSources, Vector*
 
 Vector* AbstractHamiltonian::ConjugateMultipleAddMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "Vector* AbstractHamiltonian::ConjugateMultipleAddMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors)" << endl;
+#endif
   if (vSources[0].GetVectorType() != vDestinations[0].GetVectorType())
     return vDestinations;
   for (int i = 1; i < nbrVectors; ++i)
@@ -2090,6 +2447,10 @@ Vector* AbstractHamiltonian::ConjugateMultipleAddMultiply(Vector* vSources, Vect
 Vector* AbstractHamiltonian::ConjugateMultipleAddMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors,
 						 int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "Vector* AbstractHamiltonian::ConjugateMultipleAddMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors," << endl
+       << "						 int firstComponent, int nbrComponent)" << endl;
+#endif
   if (vSources[0].GetVectorType() != vDestinations[0].GetVectorType())
     return vDestinations;
   for (int i = 1; i < nbrVectors; ++i)
@@ -2116,6 +2477,9 @@ Vector* AbstractHamiltonian::ConjugateMultipleAddMultiply(Vector* vSources, Vect
 
 Vector& AbstractHamiltonian::HermitianAddMultiply(Vector& vSource, Vector& vDestination)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "Vector& AbstractHamiltonian::HermitianAddMultiply(Vector& vSource, Vector& vDestination)" << endl;
+#endif
   if ((vSource.GetVectorType() & Vector::DataTypeMask) != (vDestination.GetVectorType() & Vector::DataTypeMask))
     {
       return vDestination;
@@ -2145,6 +2509,10 @@ Vector& AbstractHamiltonian::HermitianAddMultiply(Vector& vSource, Vector& vDest
 Vector& AbstractHamiltonian::HermitianAddMultiply(Vector& vSource, Vector& vDestination, 
 					 int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "Vector& AbstractHamiltonian::HermitianAddMultiply(Vector& vSource, Vector& vDestination, " << endl
+       << "					 int firstComponent, int nbrComponent)" << endl;
+#endif
   if ((vSource.GetVectorType() & Vector::DataTypeMask) != (vDestination.GetVectorType() & Vector::DataTypeMask))
     return vDestination;
   if ((vSource.GetVectorType() & Vector::DataTypeMask) == Vector::RealDatas)
@@ -2166,6 +2534,9 @@ Vector& AbstractHamiltonian::HermitianAddMultiply(Vector& vSource, Vector& vDest
 
 Vector* AbstractHamiltonian::HermitianMultipleMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "Vector* AbstractHamiltonian::HermitianMultipleMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors)" << endl;
+#endif
   if (vSources[0].GetVectorType() != vDestinations[0].GetVectorType())
     return vDestinations;
   for (int i = 1; i < nbrVectors; ++i)
@@ -2193,6 +2564,10 @@ Vector* AbstractHamiltonian::HermitianMultipleMultiply(Vector* vSources, Vector*
 Vector* AbstractHamiltonian::HermitianMultipleMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors, 
 					      int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "Vector* AbstractHamiltonian::HermitianMultipleMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors, " << endl
+       << "					      int firstComponent, int nbrComponent)" << endl;
+#endif
   if (vSources[0].GetVectorType() != vDestinations[0].GetVectorType())
     return vDestinations;
   cout << "check 0" << endl;
@@ -2222,6 +2597,9 @@ Vector* AbstractHamiltonian::HermitianMultipleMultiply(Vector* vSources, Vector*
 
 Vector* AbstractHamiltonian::HermitianMultipleAddMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "Vector* AbstractHamiltonian::HermitianMultipleAddMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors)" << endl;
+#endif
   if (vSources[0].GetVectorType() != vDestinations[0].GetVectorType())
     return vDestinations;
   for (int i = 1; i < nbrVectors; ++i)
@@ -2250,6 +2628,10 @@ Vector* AbstractHamiltonian::HermitianMultipleAddMultiply(Vector* vSources, Vect
 Vector* AbstractHamiltonian::HermitianMultipleAddMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors,
 						 int firstComponent, int nbrComponent)
 {
+#ifdef __DEBUG_MATRIXVECTOR_MULT__
+  cout << "Vector* AbstractHamiltonian::HermitianMultipleAddMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors," << endl
+       << "						 int firstComponent, int nbrComponent)" << endl;
+#endif
   if (vSources[0].GetVectorType() != vDestinations[0].GetVectorType())
     return vDestinations;
   for (int i = 1; i < nbrVectors; ++i)

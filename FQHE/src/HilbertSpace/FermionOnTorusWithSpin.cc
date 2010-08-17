@@ -234,7 +234,7 @@ int FermionOnTorusWithSpin::GenerateStates(int nbrFermions, int maxMomentum, int
 	  currentMaxMomentum &= ~0x1;
 	  for (; i <= currentMaxMomentum; i += (this->NbrLzValue << 1))
 	    {
-	      this->StateDescription[pos] = 1 << i;
+	      this->StateDescription[pos] = 0x1l << i;
 	      this->StateHighestBit[pos] = maxMomentum >> 1;
 	      ++pos;
 	    }
@@ -252,7 +252,7 @@ int FermionOnTorusWithSpin::GenerateStates(int nbrFermions, int maxMomentum, int
 	    }
 	  for (; i <= currentMaxMomentum; i += (this->NbrLzValue << 1))
 	    {
-	      this->StateDescription[pos] = 1 << i;
+	      this->StateDescription[pos] = 0x1l << i;
 	      this->StateHighestBit[pos] = maxMomentum >> 1;
 	      ++pos;
 	    }
@@ -266,7 +266,7 @@ int FermionOnTorusWithSpin::GenerateStates(int nbrFermions, int maxMomentum, int
   else
     ReducedCurrentTotalSpinMomentum -= 1;
   int TmpPos = this->GenerateStates(nbrFermions - 1, maxMomentum, ReducedCurrentMaxMomentum, pos, ReducedCurrentTotalSpinMomentum, currentMomentum + (currentMaxMomentum >> 1));
-  unsigned int Mask = 1 << currentMaxMomentum;
+  unsigned long Mask = 0x1l << currentMaxMomentum;
   for (int i = pos; i < TmpPos; ++i)
     this->StateDescription[i] |= Mask;
   if (maxMomentum == currentMaxMomentum)

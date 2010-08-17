@@ -49,7 +49,7 @@ int main(int argc, char** argv)
   OptionGroup* SystemGroup = new OptionGroup ("system options");
 
   ArchitectureManager Architecture;
-  LanczosManager Lanczos(false);
+  LanczosManager Lanczos(true);
 
   Manager += SystemGroup;
   Architecture.AddOptionGroup(&Manager);
@@ -99,6 +99,7 @@ int main(int argc, char** argv)
   double DJz2Value = Manager.GetDouble("djz2-value");
   if (Manager.GetBoolean("no-translations") == true)
     {
+      Lanczos.SetRealAlgorithms();
       if ((SpinValue & 1) == 0)
 	{
 	  sprintf (OutputFileName, "spin_%d_doubletrianglechain_j1_%f_j2_%f_djz1_%f_djz2_%f_n_%d", (SpinValue / 2), J1Value, J2Value, DJz1Value, DJz2Value, NbrSpins);
@@ -112,6 +113,7 @@ int main(int argc, char** argv)
     }
   else
     {
+      Lanczos.SetComplexAlgorithms();
       if ((SpinValue & 1) == 0)
 	{
 	  sprintf (OutputFileName, "spin_%d_translations_doubletrianglechain_j1_%f_j2_%f_djz1_%f_djz2_%f_n_%d", (SpinValue / 2), J1Value, J2Value, DJz1Value, DJz2Value, NbrSpins);
@@ -201,8 +203,8 @@ int main(int argc, char** argv)
 	      if (Chain->GetHilbertSpaceDimension() > 0)
 		{
 		  cout << "2Sz=" <<  InitalSzValue << " K=" << InitialKValue << " dim=" << Chain->GetHilbertSpaceDimension() << endl;
-		  for (int i = 0; i < Chain->GetHilbertSpaceDimension(); ++i)
-		    Chain->PrintState(cout, i) << endl;
+// 		  for (int i = 0; i < Chain->GetHilbertSpaceDimension(); ++i)
+// 		    Chain->PrintState(cout, i) << endl;
 		  DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian Hamiltonian (Chain, NbrSpins, J1Value, J2Value, DJz1Value, DJz2Value);
 		  char* TmpSzString = new char[64];
 		  sprintf (TmpSzString, "%d %d", InitalSzValue, InitialKValue);

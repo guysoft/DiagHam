@@ -329,19 +329,13 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
 				int momentum, int sz, bool fixedQuantumNumberFlag, int lookUpTableShift, 
 				int complementaryStateShift);
 
-  // generate all states with no constraint on total Sz
-  //
-  // memorySlice = maximum amount of memory (in unsigned long unit) that can be allocated to partially evalauted the states
-  // return value = number of generated states
-  int GenerateStates(long memorySlice);
-
   // generate all states with constraint on total Sz
   //
-  // sz = twice the sz value
-  // memorySlice = maximum amount of memory (in unsigned long unit) that can be allocated to partially evalauted the states
-  // return value = number of generated states
-  int GenerateStates(int sz, long memorySlice);
-
+  // position = current position in the Hilbert space basis
+  // sitePosition = largest sit position that has to be filled 
+  // currentNbrSpinUp = number of spin to put in each state
+  // return value = new current position in the Hilbert space basis
+  long GenerateStates(long position, int sitePosition, int currentNbrSpinUp);
 
   // create precalculation tables
   //
@@ -350,6 +344,13 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   // create look-up table used to speed up index search
   //
   void CreateLookUpTable();
+
+  // evaluate Hilbert space dimension
+  //
+  // nbrSpins = number of spins
+  // sz = twice the z projection of the total momentum
+  // return value = Hilbert space dimension
+  long EvaluateHilbertSpaceDimension(int nbrSpins, int szMax);
 
 };
 

@@ -32,7 +32,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "min-range", "compare vectors starting from a given component (is negative, start couting from the last component) from ", 0l);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "max-range", "compare vectors up to a given component (0 if up to the end)", 0l);
   (*SystemGroup) += new SingleDoubleOption  ('e', "error", "rounding error", 0.0);
-  
+  (*SystemGroup) +=  new BooleanOption  ('\n', "discard-zero", "do not compare components if the one the first start is strictly zero");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -90,29 +90,57 @@ int main(int argc, char** argv)
     MaxValue = Manager.GetInteger("max-range");
   double Error = Manager.GetDouble("error");
 
+  bool DiscardZero = Manager.GetBoolean("discard-zero");
   long Count = 0l;
   if (Error == 0.0)
     {
-      for (long i = MinValue; i < MaxValue; ++i)
+      if (DiscardZero == false)
 	{
-	  if (State1[i] != State2[i])
+	  for (long i = MinValue; i < MaxValue; ++i)
 	    {
-	      cout << i << " : " << State1[i] << " " << State2[i] << endl;
-	      ++Count;
+	      if (State1[i] != State2[i])
+		{
+		  cout << i << " : " << State1[i] << " " << State2[i] << endl;
+		  ++Count;
+		}
+	    }
+	}
+      else
+	{
+	  for (long i = MinValue; i < MaxValue; ++i)
+	    {
+	      if ((State1[i] != 0.0) && (State1[i] != State2[i]))
+		{
+		  cout << i << " : " << State1[i] << " " << State2[i] << endl;
+		  ++Count;
+		}
 	    }
 	}
     }
   else
     {
-      for (long i = MinValue; i < MaxValue; ++i)
+      if (DiscardZero == false)
 	{
-	  if ((fabs(State1[i] - State2[i]) > Error) && (fabs(State1[i] - State2[i]) > (Error * fabs(State1[i]))))
+	  for (long i = MinValue; i < MaxValue; ++i)
 	    {
-	      cout << i << " : " << State1[i] << " " << State2[i] << endl;
-	      ++Count;
+	      if ((fabs(State1[i] - State2[i]) > Error) && (fabs(State1[i] - State2[i]) > (Error * fabs(State1[i]))))
+		{
+		  cout << i << " : " << State1[i] << " " << State2[i] << endl;
+		  ++Count;
+		}
 	    }
 	}
-      
+      else
+	{
+	  for (long i = MinValue; i < MaxValue; ++i)
+	    {
+	      if ((State1[i] != 0.0) && ((fabs(State1[i] - State2[i]) > Error) && (fabs(State1[i] - State2[i]) > (Error * fabs(State1[i])))))
+		{
+		  cout << i << " : " << State1[i] << " " << State2[i] << endl;
+		  ++Count;
+		}
+	    }
+	}
     }
   cout << "total number of different components : " << Count << " / " << State1.GetLargeVectorDimension() << endl;
   return 0;
