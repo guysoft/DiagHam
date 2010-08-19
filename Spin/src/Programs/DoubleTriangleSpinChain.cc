@@ -62,6 +62,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleIntegerOption ('p', "nbr-spin", "number of spins", 10);
   (*SystemGroup) += new  SingleIntegerOption ('\n', "initial-sz", "twice the initial sz sector that has to computed", 0);
   (*SystemGroup) += new  SingleIntegerOption ('\n', "nbr-sz", "number of sz value to evaluate (0 for all sz sectors)", 0);
+  (*SystemGroup) += new  SingleIntegerOption ('\n', "fixed-k", "compute only a given single k sector (all if negative)", -1);
   (*SystemGroup) += new  SingleDoubleOption ('j', "j1-value", "nearest neighbourg coupling constant value", 1.0);
   (*SystemGroup) += new  SingleDoubleOption ('g', "j2-value", "second nearest neighbourg coupling constant value", 0.5);
   (*SystemGroup) += new  SingleDoubleOption ('\n', "djz1-value", "delta added to the nearest neighbourg coupling constant value along z", 0.0);
@@ -180,7 +181,14 @@ int main(int argc, char** argv)
     {
       for (; InitalSzValue <= MaxSzValue; InitalSzValue +=2)
 	{
-	  for (int InitialKValue = 0; InitialKValue < NbrSpins; ++InitialKValue)
+	  int MaxKValue = NbrSpins;
+	  int InitialKValue = 0;
+	  if (Manager.GetInteger("fixed-k") >= 0)
+	    {
+	      InitialKValue = Manager.GetInteger("fixed-k") % NbrSpins;
+	      MaxKValue = InitialKValue;
+	    }
+	  for (; InitialKValue < MaxKValue; ++InitialKValue)
 	    {
 	      AbstractSpinChainWithTranslations* Chain = 0;
 	      switch (SpinValue)
