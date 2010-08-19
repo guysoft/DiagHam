@@ -121,11 +121,14 @@ int main(int argc, char** argv)
   ParticleOnSphere** Spaces = 0;
   RealVector* GroundStates = 0;
   char** GroundStateFiles = 0;
+  double* Weights =0;
 
   if (Manager.GetString("degenerated-groundstate") == 0)
     {
       GroundStateFiles = new char* [1];
       TotalLz = new int[1];
+      Weights = new double[1];
+      Weights[0] = 1.0;
       GroundStateFiles[0] = new char [strlen(Manager.GetString("ground-file")) + 1];
       strcpy (GroundStateFiles[0], Manager.GetString("ground-file"));      
     }
@@ -144,6 +147,16 @@ int main(int argc, char** argv)
 	 {
 	   GroundStateFiles[i] = new char [strlen(DegeneratedFile(0, i)) + 1];
 	   strcpy (GroundStateFiles[i], DegeneratedFile(0, i));      	   
+	 }
+       if (DegeneratedFile.GetNbrColumns() > 1)
+	 {
+	   Weights = DegeneratedFile.GetAsDoubleArray(1);
+	 }
+       else
+	 {
+	   Weights = new double[NbrSpaces];
+	   for (int i = 0; i < NbrSpaces; ++i)
+	     Weights[i] = 1.0;
 	 }
     }
   for (int i = 0; i < NbrSpaces; ++i)
@@ -412,6 +425,8 @@ int main(int argc, char** argv)
 		  {
 		    cout << "processing subsystem size=" << SubsystemSize << "  subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Lz=" << SubsystemTotalLz << endl;
 		    RealSymmetricMatrix TmpPartialDensityMatrix = Spaces[i]->EvaluatePartialDensityMatrix(SubsystemSize, SubsystemNbrParticles, SubsystemTotalLz, GroundStates[i]);
+		    if (Weights[i] != 1.0)
+		      TmpPartialDensityMatrix *= Weights[i];
 		    if (PartialDensityMatrix.GetNbrRow() == 0)
 		      PartialDensityMatrix = TmpPartialDensityMatrix;
 		    else
@@ -585,7 +600,7 @@ int main(int argc, char** argv)
 	  DensitySum = 0.0;
 	  cout << "sorting density matrix eigenvalues and computing entanglement entropy" << endl;
 	  SortArrayDownOrdering(TmpDensityMatrixEigenvalues, TmpDensityMatrixEigenvaluePosition);
-	  unsigned TmpPos = 0;
+	  long TmpPos = 0;
 	  for (; (TmpPos < TmpDensityMatrixEigenvaluePosition) && (DensitySum < 1.0); ++TmpPos)
 	    {
 	      if (TmpDensityMatrixEigenvalues[TmpPos] > 1e-14)
