@@ -71,6 +71,21 @@ int ParticleOnSphere::GetHilbertSpaceAdditionalSymmetry()
   return ParticleOnSphere::NoSymmetry;
 }
 
+// apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2), safe version i.e. works with any numbers of particles
+//
+// index = index of the state on which the operator has to be applied
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// n1 = first index for annihilation operator
+// n2 = second index for annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphere::AdAdAASafe (int index, int m1, int m2, int n1, int n2, double& coefficient)
+{
+  return this->AdAdAA(index, m1, m2, n1, n2, coefficient);
+}
+
 // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
 //
 // index = index of the state on which the operator has to be applied

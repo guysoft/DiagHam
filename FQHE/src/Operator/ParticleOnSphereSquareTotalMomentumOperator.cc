@@ -180,7 +180,7 @@ Complex ParticleOnSphereSquareTotalMomentumOperator::PartialMatrixElement (RealV
       for (int j = 0; j < this->LzMax; ++j)
 	for (int  k = 1; k <= this->LzMax; ++k)
 	  {
-	    Index = this->Particle->AdAdAA(i, k - 1, j + 1, k, j, Coefficient);
+	    Index = this->Particle->AdAdAASafe(i, k - 1, j + 1, k, j, Coefficient);
 	    if (Index != this->Particle->GetHilbertSpaceDimension())
 	      {
 		Element += V1[Index] * V2[i] * Coefficient * (*TmpTwoBodyCoefficients);		  

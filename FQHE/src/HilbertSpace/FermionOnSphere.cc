@@ -333,8 +333,8 @@ int FermionOnSphere::AdAdAA (int index, int m1, int m2, int n1, int n2, double& 
 {
   int StateLzMax = this->StateLzMax[index];
   unsigned long State = this->StateDescription[index];
-  if ((n1 > StateLzMax) || (n2 > StateLzMax) || ((State & (((unsigned long) (0x1)) << n1)) == 0) 
-      || ((State & (((unsigned long) (0x1)) << n2)) == 0) || (n1 == n2) || (m1 == m2))
+  if ((n1 > StateLzMax) || (n2 > StateLzMax) || ((State & (0x1ul << n1)) == 0) 
+      || ((State & (0x1ul << n2)) == 0) || (n1 == n2) || (m1 == m2))
     {
       coefficient = 0.0;
       return this->TargetSpace->HilbertSpaceDimension;
@@ -347,9 +347,9 @@ int FermionOnSphere::AdAdAA (int index, int m1, int m2, int n1, int n2, double& 
   coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 32)) & this->SignLookUpTableMask[n2 + 32]];
   coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 48)) & this->SignLookUpTableMask[n2 + 48]];
 #endif
-  TmpState &= ~(((unsigned long) (0x1)) << n2);
+  TmpState &= ~(0x1ul << n2);
   if (NewLzMax == n2)
-    while ((TmpState >> NewLzMax) == 0)
+    while ((TmpState >> NewLzMax) == 0ul)
       --NewLzMax;
   coefficient *= this->SignLookUpTable[(TmpState >> n1) & this->SignLookUpTableMask[n1]];
   coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 16))  & this->SignLookUpTableMask[n1 + 16]];
@@ -357,11 +357,11 @@ int FermionOnSphere::AdAdAA (int index, int m1, int m2, int n1, int n2, double& 
   coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 32)) & this->SignLookUpTableMask[n1 + 32]];
   coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
 #endif
-  TmpState &= ~(((unsigned long) (0x1)) << n1);
+  TmpState &= ~(0x1ul << n1);
   if (NewLzMax == n1)
-    while ((TmpState >> NewLzMax) == 0)
+    while ((TmpState >> NewLzMax) == 0x0ul)
       --NewLzMax;
-  if ((TmpState & (((unsigned long) (0x1)) << m2))!= 0)
+  if ((TmpState & (0x1ul << m2)) != 0x0ul)
     {
       coefficient = 0.0;
       return this->TargetSpace->HilbertSpaceDimension;
@@ -379,8 +379,8 @@ int FermionOnSphere::AdAdAA (int index, int m1, int m2, int n1, int n2, double& 
       coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 48)) & this->SignLookUpTableMask[m2 + 48]];
 #endif
     }
-  TmpState |= (((unsigned long) (0x1)) << m2);
-  if ((TmpState & (((unsigned long) (0x1)) << m1))!= 0)
+  TmpState |= (0x1ul << m2);
+  if ((TmpState & (0x1ul << m1)) != 0x0ul)
     {
       coefficient = 0.0;
       return this->TargetSpace->HilbertSpaceDimension;
@@ -398,7 +398,90 @@ int FermionOnSphere::AdAdAA (int index, int m1, int m2, int n1, int n2, double& 
       coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
 #endif
     }
-  TmpState |= (((unsigned long) (0x1)) << m1);
+  TmpState |= (0x1ul << m1);
+  return this->TargetSpace->FindStateIndex(TmpState, NewLzMax);
+}
+
+// apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2), safe version i.e. works with any numbers of particles
+//
+// index = index of the state on which the operator has to be applied
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// n1 = first index for annihilation operator
+// n2 = second index for annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int FermionOnSphere::AdAdAASafe (int index, int m1, int m2, int n1, int n2, double& coefficient)
+{
+  int StateLzMax = this->StateLzMax[index];
+  unsigned long State = this->StateDescription[index];
+  if ((n1 > StateLzMax) || (n2 > StateLzMax) || ((State & (0x1ul << n1)) == 0) 
+      || ((State & (0x1ul << n2)) == 0) || (n1 == n2) || (m1 == m2))
+    {
+      coefficient = 0.0;
+      return this->TargetSpace->HilbertSpaceDimension;
+    }
+  int NewLzMax = StateLzMax;
+  unsigned long TmpState = State;
+  coefficient = this->SignLookUpTable[(TmpState >> n2) & this->SignLookUpTableMask[n2]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 16))  & this->SignLookUpTableMask[n2 + 16]];
+#ifdef  __64_BITS__
+  coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 32)) & this->SignLookUpTableMask[n2 + 32]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 48)) & this->SignLookUpTableMask[n2 + 48]];
+#endif
+  TmpState &= ~(0x1ul << n2);
+  if (NewLzMax == n2)
+    while (((TmpState >> NewLzMax) == 0ul) && (NewLzMax > 0))
+      --NewLzMax;
+  coefficient *= this->SignLookUpTable[(TmpState >> n1) & this->SignLookUpTableMask[n1]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 16))  & this->SignLookUpTableMask[n1 + 16]];
+#ifdef  __64_BITS__
+  coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 32)) & this->SignLookUpTableMask[n1 + 32]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
+#endif
+  TmpState &= ~(0x1ul << n1);
+  if (NewLzMax == n1)
+    while (((TmpState >> NewLzMax) == 0x0ul) && (NewLzMax > 0))
+      --NewLzMax;
+  if ((TmpState & (0x1ul << m2)) != 0x0ul)
+    {
+      coefficient = 0.0;
+      return this->TargetSpace->HilbertSpaceDimension;
+    }
+  if (m2 > NewLzMax)
+    {
+      NewLzMax = m2;
+    }
+  else
+    {
+      coefficient *= this->SignLookUpTable[(TmpState >> m2) & this->SignLookUpTableMask[m2]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 16))  & this->SignLookUpTableMask[m2 + 16]];
+#ifdef  __64_BITS__
+      coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 32)) & this->SignLookUpTableMask[m2 + 32]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 48)) & this->SignLookUpTableMask[m2 + 48]];
+#endif
+    }
+  TmpState |= (0x1ul << m2);
+  if ((TmpState & (0x1ul << m1)) != 0x0ul)
+    {
+      coefficient = 0.0;
+      return this->TargetSpace->HilbertSpaceDimension;
+    }
+  if (m1 > NewLzMax)
+    {
+      NewLzMax = m1;
+    }
+  else
+    {      
+      coefficient *= this->SignLookUpTable[(TmpState >> m1) & this->SignLookUpTableMask[m1]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 16))  & this->SignLookUpTableMask[m1 + 16]];
+#ifdef  __64_BITS__
+      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 32)) & this->SignLookUpTableMask[m1 + 32]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
+#endif
+    }
+  TmpState |= (0x1ul << m1);
   return this->TargetSpace->FindStateIndex(TmpState, NewLzMax);
 }
 

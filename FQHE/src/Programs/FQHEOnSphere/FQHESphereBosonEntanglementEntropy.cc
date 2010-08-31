@@ -128,6 +128,7 @@ int main(int argc, char** argv)
   RealVector* GroundStates = 0;
   char** GroundStateFiles = 0;
   double* Weights =0;
+  bool WeightFlag = false;
   if (Manager.GetString("degenerated-groundstate") == 0)
     {
       GroundStateFiles = new char* [1];
@@ -156,6 +157,7 @@ int main(int argc, char** argv)
        if (DegeneratedFile.GetNbrColumns() > 1)
 	 {
 	   Weights = DegeneratedFile.GetAsDoubleArray(1);
+	   WeightFlag = true;
 	 }
        else
 	 {
@@ -356,16 +358,16 @@ int main(int argc, char** argv)
 		}
 	      cout << "processing subsystem size=" << SubsystemSize << "  subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Lz=" << SubsystemTotalLz << endl;
 	      RealSymmetricMatrix PartialDensityMatrix = Spaces[0]->EvaluateShiftedPartialDensityMatrix(SubsystemSize, ShiftLa, SubsystemNbrParticles, SubsystemTotalLz, GroundStates[0]);
-	      if (Weights[0] != 1.0)
+	      if (WeightFlag == true)
 		PartialDensityMatrix *= Weights[0];
 	      for (int i = 1; i < NbrSpaces; ++i)
 		{
 		  RealSymmetricMatrix TmpMatrix = Spaces[i]->EvaluateShiftedPartialDensityMatrix(SubsystemSize, ShiftLa, SubsystemNbrParticles, SubsystemTotalLz, GroundStates[i]);
-		  if (Weights[i] != 1.0)
+		  if (WeightFlag == true)
 		    TmpMatrix *= Weights[i];
 		  PartialDensityMatrix += TmpMatrix;
 		}
-	      if (NbrSpaces > 1)
+	      if ((NbrSpaces > 1) && (WeightFlag == false))
 		PartialDensityMatrix /= ((double) NbrSpaces);
 	      if ((Manager.GetString("full-densitymatrix") != 0) && (FilterNa == SubsystemNbrParticles) && (FilterLza = SubsystemTotalLz))
 		{
