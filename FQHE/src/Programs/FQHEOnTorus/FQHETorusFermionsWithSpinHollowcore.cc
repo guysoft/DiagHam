@@ -102,12 +102,17 @@ int main(int argc, char** argv)
   char* SavePrecalculationFileName = Manager.GetString("save-precalculation");
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
 
+  if ((TotalSpin & 1) != (NbrFermions & 1))
+    {
+      TotalSpin &= ~1;
+      TotalSpin |= (NbrFermions & 1);
+    }
+
   char* OutputFileName = new char [512];
   sprintf (OutputFileName, "fermions_torus_su2_kysym_hollowcore_n_%d_2s_%d_sz_%d_ratio_%f.dat", NbrFermions, MaxMomentum, TotalSpin, XRatio);
   ofstream File;
   File.open(OutputFileName, ios::binary | ios::out);
   File.precision(14);
-
 
   int MomentumModulo = FindGCD(NbrFermions, MaxMomentum);
   int YMaxMomentum;

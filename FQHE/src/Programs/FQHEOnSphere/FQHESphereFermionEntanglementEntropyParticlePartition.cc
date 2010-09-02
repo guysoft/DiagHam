@@ -316,7 +316,8 @@ int main(int argc, char** argv)
 
       int ComplementarySubsystemNbrParticles = NbrParticles - SubsystemNbrParticles;
       int SubsystemMaxTotalLz = SubsystemNbrParticles * LzMax - (SubsystemNbrParticles * (SubsystemNbrParticles - 1));
-      int ComplementaryMaxTotalLz = ComplementarySubsystemNbrParticles * LzMax - (ComplementarySubsystemNbrParticles * (ComplementarySubsystemNbrParticles + 1));
+      int ComplementaryMaxTotalLz = ComplementarySubsystemNbrParticles * LzMax - (ComplementarySubsystemNbrParticles * (ComplementarySubsystemNbrParticles - 1));
+      cout << "SubsystemMaxTotalLz = " << SubsystemMaxTotalLz << "    ComplementaryMaxTotalLz = " << ComplementaryMaxTotalLz << endl;
       while (SubsystemMaxTotalLz > ComplementaryMaxTotalLz)
 	SubsystemMaxTotalLz -= 2;
       int SubsystemTotalLz = -SubsystemMaxTotalLz; 
@@ -333,6 +334,7 @@ int main(int argc, char** argv)
 	      SubsystemMaxTotalLz = 1;
 	    }
 	}
+      cout << "SubsystemMaxTotalLz = " << SubsystemMaxTotalLz << "    ComplementaryMaxTotalLz = " << ComplementaryMaxTotalLz << endl;
       for (; SubsystemTotalLz <= SubsystemMaxTotalLz; SubsystemTotalLz += 2)
 	{
 	  cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Lz=" << SubsystemTotalLz << endl;
