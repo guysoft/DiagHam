@@ -127,6 +127,14 @@ class BosonOnSphereHaldaneBasisShort :  public BosonOnSphereShort
   // return value = vector with non-zero component being rho factor of possible singular coefficients
   virtual RealVector& CheckPossibleSingularCoefficientsInJackPolynomial(RealVector& jack, double alpha, double error);
   
+  // check partitions that may lead to singular coefficient in a given Jack polynomial decomposition
+  //
+  // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
+  // alpha = value of the Jack polynomial alpha coefficient
+  // error = error when comparing two rho values
+  // return value = vector with non-zero component being rho factor of possible singular coefficients
+  virtual void CheckMaximumConnectedStateInJackPolynomial();
+  
 };
 
 #endif

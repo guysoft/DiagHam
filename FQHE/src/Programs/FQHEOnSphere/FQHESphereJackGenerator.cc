@@ -72,6 +72,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "disk-storage", "use disk storage in huge mode both for the Hilbert space and vectors");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "large-memory", "maximum memory (in kBytes) that can allocated for precalculations when using huge mode", 1);
   (*SystemGroup) += new BooleanOption  ('\n', "check-singularity", "display configurations which may produce singularities");
+  (*SystemGroup) += new BooleanOption  ('\n', "check-connected", "display lowest configuration connected to each squeezed paritition");
   (*OutputGroup) += new SingleStringOption ('o', "bin-output", "output the Jack polynomial decomposition into a binary file");
   (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the Jack polynomial decomposition into a text file");
   (*OutputGroup) += new BooleanOption ('n', "normalize", "express the Jack polynomial in the normalized basis");
@@ -250,6 +251,11 @@ int main(int argc, char** argv)
 		    InitialSpace->PrintStateMonomial(cout, i) << " = ";
 		    InitialSpace->PrintState(cout, i) << endl;
 		  }
+	      return 0;
+	    }
+	  if (Manager.GetBoolean("check-connected") == true)
+	    {
+	      ((BosonOnSphereHaldaneBasisShort*) InitialSpace)->CheckMaximumConnectedStateInJackPolynomial();
 	      return 0;
 	    }
 	  if (Manager.GetString("initial-state") == 0)

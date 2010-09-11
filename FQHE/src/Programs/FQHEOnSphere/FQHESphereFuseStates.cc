@@ -91,7 +91,7 @@ int main(int argc, char** argv)
  double* Coefficients = 0;
   if (InputVectors(7, 0) != 0)
     {
-      Coefficients = InputVectors.GetAsDoubleArray(6);
+      Coefficients = InputVectors.GetAsDoubleArray(7);
     }
   else
     {
@@ -272,7 +272,7 @@ int main(int argc, char** argv)
 	}
 
 
-      OutputBasis->FuseStates(OutputState, LeftVector, RightVector, Paddings[i], LeftBasis, RightBasis, SymmetrizedBasis);
+      OutputBasis->FuseStates(OutputState, LeftVector, RightVector, Paddings[i], LeftBasis, RightBasis, SymmetrizedBasis, Coefficients[i]);
       delete RightBasis;
       delete LeftBasis;      
     }

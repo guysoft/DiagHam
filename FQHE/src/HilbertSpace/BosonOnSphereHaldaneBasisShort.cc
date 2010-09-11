@@ -467,3 +467,69 @@ RealVector& BosonOnSphereHaldaneBasisShort::CheckPossibleSingularCoefficientsInJ
   return jack;
 }
   
+// check partitions that may lead to singular coefficient in a given Jack polynomial decomposition
+//
+// jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
+// alpha = value of the Jack polynomial alpha coefficient
+// error = error when comparing two rho values
+// return value = vector with non-zero component being rho factor of possible singular coefficients
+
+void BosonOnSphereHaldaneBasisShort::CheckMaximumConnectedStateInJackPolynomial()
+{
+  unsigned long* TmpMonomial = new unsigned long [this->NbrBosons];
+  unsigned long* TmpMonomial2 = new unsigned long [this->NbrBosons];
+  unsigned long MaxRoot = this->FermionBasis->StateDescription[0];
+  int ReducedNbrBosons = this->NbrBosons - 1;
+  long LargestDistance = 0;
+  for (long i = 1; i < this->LargeHilbertSpaceDimension; ++i)
+    {
+      unsigned long CurrentPartition = this->FermionBasis->StateDescription[i];
+      this->ConvertToMonomial(CurrentPartition, this->FermionBasis->StateLzMax[i], TmpMonomial);
+      long MinIndex = this->LargeHilbertSpaceDimension;
+      for (int j1 = 0; j1 < ReducedNbrBosons; ++j1)
+	for (int j2 = j1 + 1; j2 < this->NbrBosons; ++j2)
+	  {
+	    unsigned int Max = TmpMonomial[j2];
+	    unsigned long TmpState = 0x0ul;
+	    int Tmpj1 = j1;
+	    int Tmpj2 = j2;
+	    for (int l = 0; l < this->NbrBosons; ++l)
+	      TmpMonomial2[l] = TmpMonomial[l];	    
+	    for (unsigned int k = 1; (k <= Max) && (TmpState < MaxRoot); ++k)
+	      {
+		++TmpMonomial2[Tmpj1];
+		--TmpMonomial2[Tmpj2];
+		while ((Tmpj1 > 0) && (TmpMonomial2[Tmpj1] > TmpMonomial2[Tmpj1 - 1]))
+		  {
+		    unsigned long Tmp = TmpMonomial2[Tmpj1 - 1];
+		    TmpMonomial2[Tmpj1 - 1] = TmpMonomial2[Tmpj1];
+		    TmpMonomial2[Tmpj1] = Tmp;
+		    --Tmpj1;
+		  }
+		while ((Tmpj2 < ReducedNbrBosons) && (TmpMonomial2[Tmpj2] < TmpMonomial2[Tmpj2 + 1]))
+		  {
+		    unsigned long Tmp = TmpMonomial2[Tmpj2 + 1];
+		    TmpMonomial2[Tmpj2 + 1] = TmpMonomial2[Tmpj2];
+		    TmpMonomial2[Tmpj2] = Tmp;
+		    ++Tmpj2;
+		  }
+		TmpState = this->ConvertFromMonomial(TmpMonomial2);
+		if ((TmpState <= MaxRoot) && (TmpState > CurrentPartition))
+		  {
+		    long TmpIndex = this->FermionBasis->FindStateIndex(TmpState, TmpMonomial2[0] + ReducedNbrBosons);
+		    if ((TmpIndex < this->HilbertSpaceDimension) && (TmpIndex < MinIndex))
+		      {
+			MinIndex = TmpIndex;
+		      }
+		  }
+	      }
+	  }
+      //      this->PrintState(cout, i) << " : " << MinIndex << endl;
+      if ((MinIndex < this->LargeHilbertSpaceDimension) && (LargestDistance < (i - MinIndex)))
+	{
+	  LargestDistance = (i - MinIndex);
+	}
+    }
+  cout << "largest distance = " << LargestDistance << "   (" << ((LargestDistance * 100.0) / ((double) this->LargeHilbertSpaceDimension))<< "%,  dim = " << this->LargeHilbertSpaceDimension << ")" << endl; 
+}
+  
