@@ -34,6 +34,7 @@
 #include <cstring>
 #include <stdlib.h>
 #include <math.h>
+#include <sys/time.h>
 #include <fstream>
 
 using std::cout;
@@ -66,6 +67,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "compute-lvalue", "compute the L value of each reduced density matrix eigenstate");
   (*SystemGroup) += new BooleanOption  ('\n', "largest-lz", "only compute the largest block of the reduced density matrix (Lz=0 or 1/2)");
   (*SystemGroup) += new BooleanOption  ('\n', "positive-lz", "only compute the positive Lz sectors");
+  (*SystemGroup) += new BooleanOption  ('\n', "show-time", "show time required for each operation");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with partent extension");
   (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
   (*OutputGroup) += new BooleanOption ('\n', "density-eigenstate", "compute the eigenstates of the reduced density matrix");
@@ -120,6 +122,7 @@ int main(int argc, char** argv)
   bool PositiveLzSectors = Manager.GetBoolean("positive-lz");
   int FilterLza = Manager.GetInteger("lza-eigenstate");
   int NbrEigenstates = Manager.GetInteger("nbr-eigenstates");
+  bool ShowTimeFlag = Manager.GetBoolean("show-time");
   int* TotalLz = 0;
   bool Statistics = true;
   int NbrSpaces = 1;
@@ -324,6 +327,12 @@ int main(int argc, char** argv)
       for (; SubsystemTotalLz <= SubsystemMaxTotalLz; SubsystemTotalLz += 2)
 	{
 	  cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Lz=" << SubsystemTotalLz << endl;
+	  timeval TotalStartingTime;
+	  timeval TotalEndingTime;
+	  if (ShowTimeFlag == true)
+	    {
+	      gettimeofday (&(TotalStartingTime), 0);
+	    }
 	  RealSymmetricMatrix PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[0]);
 	  for (int i = 1; i < NbrSpaces; ++i)
 	    {
@@ -332,8 +341,19 @@ int main(int argc, char** argv)
 	    }
 	  if (NbrSpaces > 1)
 	    PartialDensityMatrix /= ((double) NbrSpaces);
+	  if (ShowTimeFlag == true)
+	    {
+	      gettimeofday (&(TotalEndingTime), 0);
+	      double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+				    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
+	      cout << "reduced density matrix evaluated in " << Dt << "s" << endl;
+	    }
 	  if (PartialDensityMatrix.GetNbrRow() > 1)
 	    {
+	      if (ShowTimeFlag == true)
+		{
+		  gettimeofday (&(TotalStartingTime), 0);
+		}
 	      RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
 	      if (ComputeLValueFlag == false)
 		{
@@ -402,6 +422,13 @@ int main(int argc, char** argv)
 		      EntanglementEntropy += TmpDiag[i] * log(TmpDiag[i]);
 		      DensitySum +=TmpDiag[i];
 		    }
+		}
+	      if (ShowTimeFlag == true)
+		{
+		  gettimeofday (&(TotalEndingTime), 0);
+		  double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+					((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
+		  cout << "diagonalization done in " << Dt << "s" << endl;
 		}
 	    }
 	  else

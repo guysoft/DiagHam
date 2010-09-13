@@ -80,7 +80,7 @@ int main(int argc, char** argv)
       cout << "see man page for option syntax or type CoulombPseudopotentials -h" << endl;
       return -1;
     }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
@@ -110,10 +110,10 @@ int main(int argc, char** argv)
       }
   }
   
-  if (((BooleanOption*) Manager["graphene-bilayer"])->GetBoolean() == false)
+  if (Manager.GetBoolean("graphene-bilayer") == false)
     {
-      int LandauLevel = ((SingleIntegerOption*) Manager["landau-level"])->GetInteger();
-      int NbrFlux = ((SingleIntegerOption*) Manager["nbr-flux"])->GetInteger();
+      int LandauLevel = Manager.GetInteger("landau-level");
+      int NbrFlux = Manager.GetInteger("nbr-flux");
       double layerSeparation = Manager.GetDouble("layer-separation");
       int MaxMomentum = NbrFlux + (LandauLevel << 1);
       
@@ -123,9 +123,9 @@ int main(int argc, char** argv)
       ((SingleDoubleOption*)Manager["layer-thickness"])->SetStringFormat("%g");
       ((SingleDoubleOption*)Manager["layer-separation"])->SetStringFormat("%g");
       ((SingleDoubleOption*)Manager["kappa"])->SetStringFormat("%g");
-      if (((SingleStringOption*) Manager["output"])->GetString() == 0l)
+      if (Manager.GetString("output") == 0l)
 	{
-	  if (((BooleanOption*) Manager["relativistic-fermions"])->GetBoolean() == true)
+	  if (Manager.GetBoolean("relativistic-fermions") == true)
 	    OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_relativistic_l_%landau-level%_2s_%nbr-flux%.dat");
 	  else
 	    {
@@ -228,8 +228,8 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  OutputFile = new char [strlen(((SingleStringOption*) Manager["output"])->GetString()) + 1];
-	  strcpy (OutputFile, ((SingleStringOption*) Manager["output"])->GetString());
+	  OutputFile = new char [strlen(Manager.GetString("output")) + 1];
+	  strcpy (OutputFile, Manager.GetString("output"));
 	}
     
       double* Pseudopotentials;
@@ -266,7 +266,7 @@ int main(int argc, char** argv)
 	    {
 	      Pseudopotentials = EvaluatePseudopotentials(NbrFlux, LandauLevel, layerSeparation*NewScale, true);
   
-	      if (((BooleanOption*) Manager["relativistic-fermions"])->GetBoolean() == true)
+	      if (Manager.GetBoolean("relativistic-fermions") == true)
 		{
 		  double* PseudopotentialsNMinus1 = EvaluatePseudopotentials(NbrFlux, LandauLevel - 1, layerSeparation*NewScale, true);
 		  for (int i = 0; i <= MaxMomentum; ++i)
@@ -274,7 +274,7 @@ int main(int argc, char** argv)
 		  delete[] PseudopotentialsNMinus1;
 		}
 	    }
-	  if (((BooleanOption*) Manager["add-impurities"])->GetBoolean() == true)
+	  if (Manager.GetBoolean("add-impurities") == true)
 	    OneBodyPotentials = EvaluateOneBodyPotentials(NbrFlux, LandauLevel, 
 							  ((SingleDoubleOption*) Manager["north-potential"])->GetDouble(),
 							  ((SingleDoubleOption*) Manager["south-potential"])->GetDouble());
@@ -300,13 +300,13 @@ int main(int argc, char** argv)
 	    }
 	}
 
-      if (((BooleanOption*) Manager["std-output"])->GetBoolean() == false)
+      if (Manager.GetBoolean("std-output") == false)
 	{
 	  ofstream File;
 	  File.open(OutputFile, ios::binary | ios::out);
 	  File.precision(14);
 	  File << "# pseudopotentials on the sphere for coulomb interaction ";
-	  if (((BooleanOption*) Manager["relativistic-fermions"])->GetBoolean() == true)
+	  if (Manager.GetBoolean("relativistic-fermions") == true)
 	    File << " for relativistic fermions";
 	  File << endl
 	       << "# in the Landau level N=" << LandauLevel << " for 2S=" << NbrFlux << " flux quanta" << endl;
@@ -398,7 +398,7 @@ int main(int argc, char** argv)
 	{
 	  cout.precision(14);
 	  cout << "# pseudopotentials on the sphere for coulomb interaction ";
-	  if (((BooleanOption*) Manager["relativistic-fermions"])->GetBoolean() == true)
+	  if (Manager.GetBoolean("relativistic-fermions") == true)
 	    cout << " for relativistic fermions";
 	  cout << endl
 	       << "# in the Landau level N=" << LandauLevel << " for 2S=" << NbrFlux << " flux quanta" << endl;
@@ -483,7 +483,7 @@ int main(int argc, char** argv)
 	  File.open(TabFileName, ios::binary | ios::out);
 	  File.precision(14);
 	  File << "# pseudopotentials on the sphere for coulomb interaction ";
-	  if (((BooleanOption*) Manager["relativistic-fermions"])->GetBoolean() == true)
+	  if (Manager.GetBoolean("relativistic-fermions") == true)
 	    File << " for relativistic fermions";
 	  File << endl
 	       << "# in the Landau level N=" << LandauLevel << " for 2S=" << NbrFlux << " flux quanta" << endl;
@@ -520,11 +520,11 @@ int main(int argc, char** argv)
     }
   else //Calculate pseudopotentials for graphene bilayer
     {
-      int NbrFlux = ((SingleIntegerOption*) Manager["nbr-flux"])->GetInteger();
-      int LLIndex1 = ((SingleIntegerOption*) Manager["l1"])->GetInteger();
-      int LLIndex2 = ((SingleIntegerOption*) Manager["l2"])->GetInteger();
-      int LLIndex3 = ((SingleIntegerOption*) Manager["l3"])->GetInteger();
-      int LLIndex4 = ((SingleIntegerOption*) Manager["l4"])->GetInteger();
+      int NbrFlux = Manager.GetInteger("nbr-flux");
+      int LLIndex1 = Manager.GetInteger("l1");
+      int LLIndex2 = Manager.GetInteger("l2");
+      int LLIndex3 = Manager.GetInteger("l3");
+      int LLIndex4 = Manager.GetInteger("l4");
 
       if ((LLIndex1<0) || (LLIndex1>1) || (LLIndex2<0) || (LLIndex2>1) || (LLIndex3<0) || (LLIndex3>1) || (LLIndex4<0) || (LLIndex4>1) )
 	{
@@ -539,12 +539,12 @@ int main(int argc, char** argv)
 
       char* OutputFile;
 
-      if (((SingleStringOption*) Manager["output"])->GetString() == 0l)
+      if (Manager.GetString("output") == 0l)
 	OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_llmixing_2s_%nbr-flux%_l1_%l1_l2_%l2_l3_%l3_l4_%l4.dat");
       else
 	{
-	  OutputFile = new char [strlen(((SingleStringOption*) Manager["output"])->GetString()) + 1];
-	  strcpy (OutputFile, ((SingleStringOption*) Manager["output"])->GetString());
+	  OutputFile = new char [strlen(Manager.GetString("output")) + 1];
+	  strcpy (OutputFile, Manager.GetString("output"));
 	}
 
 
