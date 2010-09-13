@@ -162,12 +162,14 @@ double* FQHEDiskCoulombPseudopotentialLLL (int lzMax)
   double* TmpPseudopotentials = new double [lzMax];
   double Gamma1 = sqrt(M_PI);
   double Gamma2 = 1.0;
-  TmpPseudopotentials[0] = 0.5 * Gamma1 / Gamma2;
+  TmpPseudopotentials[0] = Gamma1 / Gamma2;
   for (int i = 1; i <= lzMax; ++i)
     {
-      Gamma1 *= ((double) i) - 0.5;
-      Gamma2 *= (double) i; 
-      TmpPseudopotentials[i] = 0.5 * Gamma1 / Gamma2;      
+      TmpPseudopotentials[i] = TmpPseudopotentials[i - 1] * ((((double) i) - 0.5) / ((double) i));      
+    }
+  for (int i = 1; i <= lzMax; ++i)
+    {
+      TmpPseudopotentials[i] *= 0.5;      
     }
   return TmpPseudopotentials;
 }
@@ -180,16 +182,16 @@ double* FQHEDiskCoulombPseudopotentialLLL (int lzMax)
 double* FQHEDiskCoulombPseudopotential2LL (int lzMax)
 {
   double* TmpPseudopotentials = new double [lzMax];
-  double Gamma1 = sqrt(M_PI);
-  double Gamma2 = 2.0;
   TmpPseudopotentials[0] = 11.0 * sqrt(M_PI) / 32.0;
   TmpPseudopotentials[1] = 15.0 * sqrt(M_PI) / 64.0;
-  TmpPseudopotentials[2] = 65.0 * sqrt(M_PI) / 256.0;
+  TmpPseudopotentials[2] = sqrt(M_PI) / 2.0;
   for (int i = 3; i <= lzMax; ++i)
     {
-      Gamma1 *= ((double) i) - 2.5;
-      Gamma2 *= (double) i; 
-      TmpPseudopotentials[i] = (8.0 * ((double) i) - 11.0) * (8.0 * ((double) i) - 3.0)  * Gamma1 / (128.0 * Gamma2);      
+      TmpPseudopotentials[i] = TmpPseudopotentials[i - 1] * (((double) i) - 2.5) / ((double) i);      
+    }
+  for (int i = 2; i <= lzMax; ++i)
+    {
+      TmpPseudopotentials[i] *= (8.0 * ((double) i) - 11.0) * (8.0 * ((double) i) - 3.0)  / 128.0;      
     }
   return TmpPseudopotentials;
 }
