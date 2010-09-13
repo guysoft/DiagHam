@@ -46,11 +46,17 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleIntegerOption  ('l', "landau-level", "index of the Landau level (0 for the lowest Landau level)", 0, true, 0);
   (*SystemGroup) += new SingleIntegerOption  ('s', "lz-max", "maximum Lz angular momentum that has to be evaluated", 8);
+
+  (*SystemGroup) += new SingleIntegerOption  ('b', "boundary-lz", "Lz value where boundary potential sets in", 12);
+  (*SystemGroup) += new SingleDoubleOption  ('c', "confinement", "strength of confinement potential", 0.0);
+  ((SingleDoubleOption*)Manager["confinement"])->SetStringFormat("%g");
+  
   (*SystemGroup) += new SingleStringOption  ('o', "output", "output file name (default is pseudopotential_coulomb_l_x_2s_y[_v_xxx_w_yyy].dat)");
+  
   (*SystemGroup) += new BooleanOption ('\n', "std-output", "use standard output instead of an output file");
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
-
+  
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
       cout << "see man page for option syntax or type FQHEDiskCoulombPseudopotentials -h" << endl;
@@ -70,7 +76,11 @@ int main(int argc, char** argv)
 
   if (Manager.GetString("output") == 0l)
     {
-      OutputFile = Manager.GetFormattedString("pseudopotential_disk_coulomb_l_%landau-level%_2s_%lz-max%.dat");
+      
+      if (Manager.GetDouble("confinement")!=0.0)
+	OutputFile = Manager.GetFormattedString("pseudopotential_disk_coulomb_l_%landau-level%_2s_%lz-max%_b_%boundary-lz%_c_%confinement%.dat");
+      else
+	OutputFile = Manager.GetFormattedString("pseudopotential_disk_coulomb_l_%landau-level%_2s_%lz-max%.dat");
     }
   else
     {
@@ -107,7 +117,24 @@ int main(int argc, char** argv)
 	   << "Pseudopotentials =";
       for (int i = 0; i <= MaxMomentum; ++i)
 	File << " " << Pseudopotentials[i];
+      File << endl;
+	  
+      if (Manager.GetDouble("confinement")!=0.0)
+	{
+	  int BoundaryM = Manager.GetInteger("boundary-lz");
+	  double Confinement = Manager.GetDouble("confinement");
+	  File << "#" << endl
+	   << "# Onebodypotentials = U_0 U_1 ..." << endl << endl
+	   << "Onebodypotentials =";
+	  for (int i=0; i<=BoundaryM; ++i)
+	    File << " 0";
+	  for (int i=BoundaryM+1; i<= MaxMomentum; ++i)
+	    File << " " << Confinement * (sqrt((double)i)-sqrt((double)BoundaryM))*(sqrt((double)i)-sqrt((double)BoundaryM));
+	  File << endl;
+	}
+
       File.close();
+
     }
   else
     {
