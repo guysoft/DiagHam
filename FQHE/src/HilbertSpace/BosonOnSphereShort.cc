@@ -1402,21 +1402,30 @@ RealSymmetricMatrix  BosonOnSphereShort::EvaluatePartialDensityMatrixParticlePar
   int* TmpStatePosition2 = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
   double* TmpStateCoefficient = new double [TmpDestinationHilbertSpace.HilbertSpaceDimension];
   long TmpNbrNonZeroElements = 0;
-  unsigned long* TmpMonomial2 = new unsigned long [nbrBosonSector];
+  unsigned long* TmpMonomial2 = 0;
   unsigned long* TmpMonomial1 = new unsigned long [ComplementaryNbrBosonSector];
   unsigned long* TmpMonomial3 = new unsigned long [this->NbrBosons];
 
   BosonOnSphereShort TmpHilbertSpace(ComplementaryNbrBosonSector, this->TotalLz - lzSector, this->LzMax);
   FactorialCoefficient Factorial;
-
+  unsigned long** TmpDestinationHilbertSpaceOccupationNumbers = new unsigned long* [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+  unsigned long** TmpDestinationHilbertSpaceMonomial = new unsigned long* [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+  int* TmpDestinationHilbertSpaceLzMax = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+  for (int i = 0; i < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++i)
+    {
+      TmpDestinationHilbertSpaceOccupationNumbers[i] = new unsigned long [this->NbrLzValue];
+      TmpDestinationHilbertSpaceMonomial = new unsigned long* [nbrBosonSector];
+      TmpDestinationHilbertSpace.FermionToBoson(TmpDestinationHilbertSpace.FermionBasis->StateDescription[i], TmpDestinationHilbertSpace.FermionBasis->StateLzMax[i], TmpDestinationHilbertSpaceOccupationNumbers[i], TmpDestinationHilbertSpaceLzMax[i]);
+      TmpDestinationHilbertSpace.ConvertToMonomial(TmpDestinationHilbertSpace.FermionBasis->StateDescription[i], TmpDestinationHilbertSpace.FermionBasis->StateLzMax[i], TmpDestinationHilbertSpaceMonomial[i]);
+    }
   for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
     {
       int Pos = 0;
       TmpHilbertSpace.ConvertToMonomial(TmpHilbertSpace.FermionBasis->StateDescription[MinIndex], TmpHilbertSpace.FermionBasis->StateLzMax[MinIndex], TmpMonomial1);
+      TmpHilbertSpace.FermionToBoson(TmpHilbertSpace.FermionBasis->StateDescription[MinIndex], TmpHilbertSpace.FermionBasis->StateLzMax[MinIndex], TmpHilbertSpace.TemporaryState, TmpHilbertSpace.TemporaryStateLzMax);
       for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
 	{
-	  TmpDestinationHilbertSpace.ConvertToMonomial(TmpDestinationHilbertSpace.FermionBasis->StateDescription[j], TmpDestinationHilbertSpace.FermionBasis->StateLzMax[j], TmpMonomial2);
-
+	  TmpMonomial2 = TmpDestinationHilbertSpaceMonomial[j];
 	  int TmpIndex2 = 0;
 	  int TmpIndex3 = 0;
 	  int TmpIndex4 = 0;
@@ -1456,14 +1465,16 @@ RealSymmetricMatrix  BosonOnSphereShort::EvaluatePartialDensityMatrixParticlePar
 	  if (TmpPos != this->HilbertSpaceDimension)
 	    {
  	      Factorial.SetToOne();
- 	      TmpHilbertSpace.FermionToBoson(TmpHilbertSpace.FermionBasis->StateDescription[MinIndex], TmpHilbertSpace.FermionBasis->StateLzMax[MinIndex], TmpHilbertSpace.TemporaryState, TmpHilbertSpace.TemporaryStateLzMax);
  	      for (int k = 0; k <= TmpHilbertSpace.TemporaryStateLzMax; ++k)
  		if (TmpHilbertSpace.TemporaryState[k] > 1)
  		  Factorial.FactorialDivide(TmpHilbertSpace.TemporaryState[k]);
-  	      TmpDestinationHilbertSpace.FermionToBoson(TmpDestinationHilbertSpace.FermionBasis->StateDescription[j], TmpDestinationHilbertSpace.FermionBasis->StateLzMax[j], TmpDestinationHilbertSpace.TemporaryState, TmpDestinationHilbertSpace.TemporaryStateLzMax);
-  	      for (int k = 0; k <= TmpDestinationHilbertSpace.TemporaryStateLzMax; ++k)
-  		if (TmpDestinationHilbertSpace.TemporaryState[k] > 1)
-  		  Factorial.FactorialDivide(TmpDestinationHilbertSpace.TemporaryState[k]);
+
+	      unsigned long* TmpOccupationNumber = TmpDestinationHilbertSpaceOccupationNumbers[j];
+	      int TmpLzMax = TmpDestinationHilbertSpaceLzMax[j];
+  	      for (int k = 0; k <= TmpLzMax; ++k)
+  		if (TmpOccupationNumber[k] > 1)
+  		  Factorial.FactorialDivide(TmpOccupationNumber[k]);
+
  	      this->FermionToBoson(TmpState, TmpMonomial3[0] + this->NbrBosons - 1, this->TemporaryState, this->TemporaryStateLzMax);
  	      for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
  		if (this->TemporaryState[k] > 1)
@@ -1490,6 +1501,14 @@ RealSymmetricMatrix  BosonOnSphereShort::EvaluatePartialDensityMatrixParticlePar
 	    }
 	}
     }
+  for (int i = 0; i < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++i)
+    {
+      delete[] TmpDestinationHilbertSpaceOccupationNumbers[i];
+      delete[] TmpDestinationHilbertSpaceMonomial[i];
+    }
+  delete[] TmpDestinationHilbertSpaceOccupationNumbers;
+  delete[] TmpDestinationHilbertSpaceLzMax;
+  delete[] TmpDestinationHilbertSpaceMonomial;
   delete[] TmpStatePosition2;
   delete[] TmpStatePosition;
   delete[] TmpStateCoefficient;
