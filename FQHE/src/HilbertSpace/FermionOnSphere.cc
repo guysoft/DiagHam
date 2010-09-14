@@ -2788,3 +2788,25 @@ bool FermionOnSphere::HasPauliExclusions(int index, int pauliK, int pauliR)
     }
   return true;
 }
+
+// transform a vector belonging to this vector space in the lz->-lz
+//
+// finalSpace = the space obtained after the lz->-lz operation
+// initialVector = vector on which the operation will be apply
+// return value = vector resulting of the operation
+
+RealVector FermionOnSphere::GetLzSymmetricVector(ParticleOnSphere* finalSpace, RealVector& initialVector)
+{
+  FermionOnSphere* TmpFinalState = (FermionOnSphere*) finalSpace;
+  RealVector TmpVector(this->LargeHilbertSpaceDimension, true);
+  for(long i = 0 ; i < this->LargeHilbertSpaceDimension ; i++)
+    {
+      unsigned long Tmp = this->GetSymmetricState(this->StateDescription[i]);
+      int TmpLzMax = this->LzMax;
+      while (((Tmp >> TmpLzMax) & 0x1ul) == 0x0ul)
+	--TmpLzMax;
+      TmpVector[TmpFinalState->FindStateIndex(Tmp, TmpLzMax)] = initialVector[i];
+    }
+  return TmpVector;
+}
+

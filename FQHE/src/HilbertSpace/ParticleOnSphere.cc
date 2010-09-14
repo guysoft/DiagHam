@@ -579,3 +579,15 @@ int ParticleOnSphere::GetSzValue(int j)
 {
   return 0;
 } 
+
+// transform a vector belonging to this vector space in the lz->-lz
+//
+// finalSpace = the space obtained after the lz->-lz operation
+// initialVector = vector on which the operation will be apply
+// return value = vector resulting of the operation
+
+RealVector ParticleOnSphere::GetLzSymmetricVector(ParticleOnSphere* finalSpace, RealVector& initialVector)
+{
+  RealVector Tmp (this->LargeHilbertSpaceDimension, true);
+  return Tmp;
+}

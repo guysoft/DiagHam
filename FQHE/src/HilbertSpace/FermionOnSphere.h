@@ -517,6 +517,13 @@ class FermionOnSphere :  public ParticleOnSphere
   // pauliR = number of consecutive orbitals
   virtual bool HasPauliExclusions(int index, int pauliK, int pauliR);
 
+  // transform a vector belonging to this vector space in the lz->-lz
+  //
+  // finalSpace = the space obtained after the lz->-lz operation
+  // initialVector = vector on which the operation will be apply
+  // return value = vector resulting of the operation
+  virtual RealVector GetLzSymmetricVector(ParticleOnSphere* finalSpace, RealVector& initialVector);
+
 
  protected:
 
