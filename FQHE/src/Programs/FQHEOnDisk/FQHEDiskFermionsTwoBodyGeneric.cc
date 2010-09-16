@@ -185,6 +185,13 @@ int main(int argc, char** argv)
 	      cout << "Invalid number of pseudo-potentials" << endl;
 	      return -1;	  
 	    }
+	  else
+	    {
+	      cout << "One-body potentials read: OneBodyPotentials= ";
+	      for (int i=0; i<TmpNbrPseudoPotentials; ++i)
+		cout << " " << OneBodyPotentials[i];
+	      cout <<endl;
+	    }
 	}
     }
 
@@ -246,7 +253,7 @@ int main(int argc, char** argv)
 							   Memory, DiskCacheFlag,
 							   LoadPrecalculationFileName);
       else
-	Hamiltonian = new ParticleOnDiskGenericHamiltonian(Space, NbrParticles, TmpMaxMomentum, PseudoPotentials, OneBodyPotentials,
+	Hamiltonian = new ParticleOnDiskGenericHamiltonian(Space, NbrParticles, TmpMaxMomentum, PseudoPotentials, OneBodyPotentials, MMax,
 							   Architecture.GetArchitecture(), 
 							   Memory, DiskCacheFlag,
 							   LoadPrecalculationFileName);
