@@ -34,11 +34,11 @@
 #include "Architecture/AbstractArchitecture.h"
 #include "MathTools/ClebschGordanCoefficients.h"
 #include "Hamiltonian/ParticleOnSphereL2Hamiltonian.h"
+#include "MathTools/FactorialCoefficient.h"
   
 #include <stdio.h>
 #include <iostream>
 #include <stdlib.h>
-
 
 using std::cout;
 using std::endl;
@@ -737,10 +737,28 @@ double* ParticleOnDiskGenericThreeBodyHamiltonian::ComputeProjectorCoefficients(
 	TmpCoefficients[i] = 0.0;
       return TmpCoefficients;
     }
+ 
+  for (int i=0; i<nbrIndexSets; ++i)
+    {
+      FactorialCoefficient Coeff;
+      int m1 = indices[3*i], m2=indices[1+3*i], m3=indices[2+3*i];
+      Coeff.SetToOne();
+      Coeff.FactorialMultiply(m1+m2+m3-1);
+      Coeff.FactorialDivide(m1);
+      Coeff.FactorialDivide(m2);
+      Coeff.FactorialDivide(m3);
+      Coeff.Power2Divide(1);
+      Coeff.PowerNDivide(3,m1+m2+m3);
+      TmpCoefficients[i] = m1*m2*(m1-m2)+m2*m3*(m2-m3)+m1*m3*(m3-m1);
+      TmpCoefficients[i] *= sqrt(Coeff.GetNumericalValue());
+    }
+  
+  /*
 
   int MaxJ = 2 * this->LzMax;
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     MaxJ -= 2;
+
   ClebschGordanCoefficients Clebsh (this->LzMax, this->LzMax);
   ClebschGordanCoefficients* ClebshArray = new ClebschGordanCoefficients[MaxJ + 1];
   int MinJ = JValue - this->LzMax;
@@ -806,6 +824,7 @@ double* ParticleOnDiskGenericThreeBodyHamiltonian::ComputeProjectorCoefficients(
       else
 	cout << "Attention: cannot normalize 3-body pseudopotential with relative angular momentum "<<relativeMomentum<<endl;
     }
+  */
   return TmpCoefficients;
 }
 

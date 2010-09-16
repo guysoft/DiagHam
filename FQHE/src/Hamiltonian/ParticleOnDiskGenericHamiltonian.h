@@ -85,10 +85,11 @@ class ParticleOnDiskGenericHamiltonian : public AbstractQHEOnSphereHamiltonian
   // architecture = architecture to use for precalculation
   // pseudoPotential = array with the pseudo-potentials (ordered such that the first element corresponds to the delta interaction, V_m=\int d^2r r^2m V(r) e^(-r^2/8) )
   // oneBodyPotentials = array with the coefficient in front of each one body term (ordered such that the first element corresponds to the one of a+_-s a_-s)
+  // mMax = maximum momentum for single orbitals
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnDiskGenericHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzMax, double* pseudoPotential, double* oneBodyPotentials,
+  ParticleOnDiskGenericHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzMax, double* pseudoPotential, double* oneBodyPotentials, int mMax,
 				   AbstractArchitecture* architecture, long memory = -1,
 				   bool onDiskCacheFlag = false, char* precalculationFileName = 0);
 

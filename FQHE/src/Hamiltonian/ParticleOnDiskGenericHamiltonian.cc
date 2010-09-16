@@ -136,11 +136,12 @@ ParticleOnDiskGenericHamiltonian::ParticleOnDiskGenericHamiltonian(ParticleOnSph
 // architecture = architecture to use for precalculation
 // pseudoPotential = array with the pseudo-potentials (ordered such that the first element corresponds to the delta interaction, V_m=\int d^2r r^2m V(r) e^(-r^2/8) )
 // oneBodyPotentials = array with the coefficient in front of each one body term (ordered such that the first element corresponds to the one of a+_-s a_-s)
+// mMax = maximum momentum for single orbitals
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
-ParticleOnDiskGenericHamiltonian::ParticleOnDiskGenericHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzMax, double* pseudoPotential, double* oneBodyPotentials,
+ParticleOnDiskGenericHamiltonian::ParticleOnDiskGenericHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzMax, double* pseudoPotential, double* oneBodyPotentials, int mMax, 
 								   AbstractArchitecture* architecture, long memory,
 								   bool onDiskCacheFlag, char* precalculationFileName)
 {
@@ -154,8 +155,9 @@ ParticleOnDiskGenericHamiltonian::ParticleOnDiskGenericHamiltonian(ParticleOnSph
   for (int i = 0; i <= (2 * this->LzMax); ++i)
     this->PseudoPotential[i] = pseudoPotential[i];
   this->OneBodyTermFlag = true;
-  this->OneBodyPotentials = new double [this->NbrLzValue];
-  for (int i = 0; i < this->NbrLzValue; ++i)
+  this->NbrOneBodyInteractionFactors = mMax+1;
+  this->OneBodyPotentials = new double [this->NbrOneBodyInteractionFactors];
+  for (int i = 0; i < this->NbrOneBodyInteractionFactors; ++i)
     this->OneBodyPotentials[i] = oneBodyPotentials[i];
   this->EvaluateInteractionFactors();
   this->HamiltonianShift = 0.0;
@@ -496,8 +498,9 @@ void ParticleOnDiskGenericHamiltonian::EvaluateInteractionFactors()
     }
   if (this->OneBodyTermFlag == true)
     {
+      int TmpMaxInteractionFactors = this->NbrOneBodyInteractionFactors;
       this->NbrOneBodyInteractionFactors = 0;
-      for (int i = 0; i <= this->LzMax; ++i)
+      for (int i = 0; i < TmpMaxInteractionFactors; ++i)
 	if (this->OneBodyPotentials[i] != 0)
 	  ++this->NbrOneBodyInteractionFactors;
       if (this->NbrOneBodyInteractionFactors != 0)
@@ -509,7 +512,7 @@ void ParticleOnDiskGenericHamiltonian::EvaluateInteractionFactors()
 	  this->OneBodyNValues = new int[this->NbrOneBodyInteractionFactors];
 	  this->OneBodyInteractionFactors = new double[this->NbrOneBodyInteractionFactors];
 	  this->NbrOneBodyInteractionFactors = 0;
-	  for (int i = 0; i <= this->LzMax; ++i)
+	  for (int i = 0; i < TmpMaxInteractionFactors; ++i)
 	    if (this->OneBodyPotentials[i] != 0)
 	      {
 		this->OneBodyMValues[this->NbrOneBodyInteractionFactors] = i;
@@ -517,7 +520,8 @@ void ParticleOnDiskGenericHamiltonian::EvaluateInteractionFactors()
 		cout << this->OneBodyPotentials[i] << endl;
 		this->OneBodyInteractionFactors[this->NbrOneBodyInteractionFactors] = this->OneBodyPotentials[i] * Sign;
 		++this->NbrOneBodyInteractionFactors;
-	      }	  
+	      }
+	  cout << "nbr one-body interaction = "<<NbrOneBodyInteractionFactors<<endl;
 	}
       else
 	{
