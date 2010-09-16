@@ -3,7 +3,7 @@
 #include "HilbertSpace/FermionOnDiskHaldaneBasis.h"
 #include "HilbertSpace/FermionOnDiskLong.h"
 
-#include "Hamiltonian/ParticleOnDiskGenericHamiltonian.h"
+#include "Hamiltonian/ParticleOnDiskGenericThreeBodyHamiltonian.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -38,7 +38,7 @@ int main(int argc, char** argv)
   cout.precision(14);
 
   // some running options and help
-  OptionManager Manager ("FQHEDiskFermionsTwoBodyGeneric" , "0.01");
+  OptionManager Manager ("FQHEDiskFermionsThreeBodyGeneric" , "0.01");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
@@ -81,7 +81,7 @@ int main(int argc, char** argv)
   
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHEDiskFermionsTwoBodyGeneric -h" << endl;
+      cout << "see man page for option syntax or type FQHEDiskFermionsThreeBodyGeneric -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)
@@ -107,6 +107,8 @@ int main(int argc, char** argv)
   bool FirstRun = true;
   double* PseudoPotentials = 0;
   double* OneBodyPotentials = 0;
+  double* ThreeBodyPotentials = 0;
+  int TmpNbrThreeBodyPseudoPotentials = 0;
 
   int* ReferenceState = 0;
   if (HaldaneBasisFlag == true)
@@ -157,26 +159,29 @@ int main(int argc, char** argv)
 	  InteractionDefinition.DumpErrors(cout) << endl;
 	  return -1;
 	}
-      int TmpNbrPseudoPotentials;
-      if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials", ' ', PseudoPotentials, TmpNbrPseudoPotentials) == false)
+      if (InteractionDefinition.GetAsDoubleArray("ThreebodyPseudopotentials", ' ', ThreeBodyPotentials, TmpNbrThreeBodyPseudoPotentials) == false)
 	{
-	  cout << "Weights is not defined or has a wrong value in " << Manager.GetString("interaction-file") << endl;
+	  cout << "ThreebodyPseudopotentials are not defined or has a wrong value in " << Manager.GetString("interaction-file") << endl;
 	  return -1;
 	}
+      int TmpNbrPseudoPotentials;
       int TmpMax = 2 * ForceMaxMomentum;
       if (ForceMaxMomentum < 0)
 	TmpMax = 2 * MMax;
-      if (TmpNbrPseudoPotentials < (TmpMax +1))
-	{	  
-	  cout << "warning : not enougth pseudo-potentials, higher relative monentum pseudo potentials will be set to zero" << endl;
-	  double* TmpPseudoPotentials = new double [TmpMax + 1];
-	  int i = 0;
-	  for (; i < TmpNbrPseudoPotentials; ++i)
-	    TmpPseudoPotentials[i] = PseudoPotentials[i];
-	  for (; i <= TmpMax; ++i)
-	    TmpPseudoPotentials[i] = 0.0;	    
-	  delete[] PseudoPotentials;
-	  PseudoPotentials = TmpPseudoPotentials;
+      if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials", ' ', PseudoPotentials, TmpNbrPseudoPotentials) == true)
+	{
+	  if (TmpNbrPseudoPotentials < (TmpMax +1))
+	    {	  
+	      cout << "warning : not enougth pseudo-potentials, higher relative monentum pseudo potentials will be set to zero" << endl;
+	      double* TmpPseudoPotentials = new double [TmpMax + 1];
+	      int i = 0;
+	      for (; i < TmpNbrPseudoPotentials; ++i)
+		TmpPseudoPotentials[i] = PseudoPotentials[i];
+	      for (; i <= TmpMax; ++i)
+		TmpPseudoPotentials[i] = 0.0;	    
+	      delete[] PseudoPotentials;
+	      PseudoPotentials = TmpPseudoPotentials;
+	    }
 	}
       if (InteractionDefinition.GetAsDoubleArray("Onebodypotentials", ' ', OneBodyPotentials, TmpNbrPseudoPotentials) == true)
 	{
@@ -240,16 +245,11 @@ int main(int argc, char** argv)
       AbstractQHEOnSphereHamiltonian* Hamiltonian = 0;
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
-      if (OneBodyPotentials == 0)
-	Hamiltonian = new ParticleOnDiskGenericHamiltonian(Space, NbrParticles, TmpMaxMomentum, PseudoPotentials,
-							   Architecture.GetArchitecture(), 
-							   Memory, DiskCacheFlag,
-							   LoadPrecalculationFileName);
-      else
-	Hamiltonian = new ParticleOnDiskGenericHamiltonian(Space, NbrParticles, TmpMaxMomentum, PseudoPotentials, OneBodyPotentials,
-							   Architecture.GetArchitecture(), 
-							   Memory, DiskCacheFlag,
-							   LoadPrecalculationFileName);
+      Hamiltonian = new ParticleOnDiskGenericThreeBodyHamiltonian(Space, NbrParticles, TmpMaxMomentum, ThreeBodyPotentials, TmpNbrThreeBodyPseudoPotentials - 1,
+								  PseudoPotentials, OneBodyPotentials,
+								  Architecture.GetArchitecture(), 
+								  Memory, DiskCacheFlag,
+								  LoadPrecalculationFileName);
       double Shift = - 0.5 * ((double) (NbrParticles * NbrParticles)) / (0.5 * ((double) MMax));
       Hamiltonian->ShiftHamiltonian(Shift);
       char* EigenvectorName = 0;
