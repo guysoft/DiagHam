@@ -1,4 +1,6 @@
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
+#include "Matrix/RealDiagonalMatrix.h"
+#include "Matrix/RealBandDiagonalSymmetricMatrix.h"
 #include "Matrix/RealMatrix.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
@@ -10,6 +12,11 @@
 #include "Options/SingleIntegerOption.h"
 #include "Options/SingleDoubleOption.h"
 #include "Options/SingleStringOption.h"
+
+#include "Architecture/ArchitectureManager.h"
+#include "Architecture/AbstractArchitecture.h"
+
+#include "Architecture/ArchitectureOperation/AddRealLinearCombinationOperation.h"
 
 #include "GeneralTools/Endian.h"
 
@@ -31,9 +38,14 @@ int main(int argc, char** argv)
 
   OptionManager Manager ("ReplayFastLanczos" , "0.01");
   OptionGroup* LanczosGroup  = new OptionGroup ("Lanczos options");
+  OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
 
+  ArchitectureManager Architecture;
+
   Manager += LanczosGroup;
+  Architecture.AddOptionGroup(&Manager);
+  Manager += ToolsGroup;
   Manager += MiscGroup;
 
   (*LanczosGroup) += new SingleDoubleOption ('p', "lanczos-precision", "define Lanczos precision for eigenvalues (0 if automatically defined by the program)", 0);  
@@ -43,6 +55,9 @@ int main(int argc, char** argv)
   (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-iter", "set a new number of lanczos iteration (0 if the one of the lanczos.dat has to be kept)", 0);
   (*LanczosGroup) += new BooleanOption ('c', "complex-lanczos", "indicate whether a complex Lanczos algorithm was used");
   (*LanczosGroup) += new BooleanOption  ('\n', "block-lanczos", "use block Lanczos algorithm", false);
+#ifdef __LAPACK__
+  (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
+#endif
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -50,7 +65,7 @@ int main(int argc, char** argv)
       cout << "see man page for option syntax or type ReplayFastLanczos -h" << endl;
       return -1;
     }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
@@ -58,9 +73,10 @@ int main(int argc, char** argv)
 
 
   double Shift = ((SingleDoubleOption*) Manager["lanczos-shift"])->GetDouble();
-  bool EigenstateFlag = ((BooleanOption*) Manager["eigenstate"])->GetBoolean();
-  int NbrIter = ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();
-  bool BlockLanczosFlag = ((BooleanOption*) Manager["block-lanczos"])->GetBoolean();  
+  bool EigenstateFlag = Manager.GetBoolean("eigenstate");
+  int NbrIter = Manager.GetInteger("nbr-iter");
+  bool BlockLanczosFlag = Manager.GetBoolean("block-lanczos");  
+  bool LapackFlag = Manager.GetBoolean("use-lapack");  
 
   int LanczosIndex;
   double PreviousLastWantedEigenvalue;
@@ -69,7 +85,7 @@ int main(int argc, char** argv)
 
   char *OutputName;
 
-  if (Manager.GetString("ground-filename")!=NULL)
+  if (Manager.GetString("ground-filename") != NULL)
     {
       OutputName = new char[strlen(Manager.GetString("ground-filename"))+16];
       sprintf(OutputName,"%s",Manager.GetString("ground-filename"));
@@ -177,21 +193,112 @@ int main(int argc, char** argv)
 	  ReadLittleEndian(File, PreviousLastWantedEigenvalue);
 	  ReadLittleEndian(File, MaximumNumberIteration);
 	  ReadLittleEndian(File, TmpDimension);
-	  //       TridiagonalizedMatrix.Resize(TmpDimension, TmpDimension);
-	  //       --TmpDimension;
-	  //       int TwiceBlockSize = 2 * this->BlockSize;
-	  //       int TmpMax = TmpDimension - TwiceBlockSize;
-	  //       for (int i = 0; i < TmpMax; ++i)    
-	  // 	{    
-	  // 	  for (int j = 0; j < TwiceBlockSize; ++j)
-	  // 	    ReadLittleEndian(File, this->TridiagonalizedMatrix(i, i + j));
-	  // 	}  
-	  //       for (int i = TmpMax; i < TmpDimension; ++i)    
-	  // 	{    
-	  // 	  for (int j = TmpMax + 1; j < TmpDimension; ++j)
-	  // 	    ReadLittleEndian(File, this->TridiagonalizedMatrix(i, j));
-	  // 	}  
+
+	  int TwiceBlockSize = 2 * BlockSize;
+	  int TmpMax = TmpDimension - TwiceBlockSize;
+
+	  RealBandDiagonalSymmetricMatrix ReducedMatrix(TmpDimension, BlockSize, true);
+	  RealBandDiagonalSymmetricMatrix TemporaryReducedMatrix (TmpDimension, BlockSize, true);
+	  RealTriDiagonalSymmetricMatrix TridiagonalizedMatrix (TmpDimension, true);
+	  RealTriDiagonalSymmetricMatrix DiagonalizedMatrix (TmpDimension, true);
+	  for (int i = 0; i < TmpMax; ++i)    
+	    {    
+	      for (int j = 0; j < TwiceBlockSize; ++j)
+		ReadLittleEndian(File, ReducedMatrix(i, i + j));
+	    }  
+	  for (int i = TmpMax; i < TmpDimension; ++i)    
+	    {    
+	      for (int j = TmpMax + 1; j < TmpDimension; ++j)
+		ReadLittleEndian(File, ReducedMatrix(i, j));
+	    }  
 	  File.close();  
+
+	  int Dimension = ReducedMatrix.GetNbrRow();
+	  TemporaryReducedMatrix.Copy(ReducedMatrix);
+#ifdef __LAPACK__
+	  if (LapackFlag == true)
+	    {
+	      RealDiagonalMatrix TmpDiag (TemporaryReducedMatrix.GetNbrColumn());
+	      TemporaryReducedMatrix.LapackDiagonalize(TmpDiag);
+	      DiagonalizedMatrix.Resize(TemporaryReducedMatrix.GetNbrColumn(), TemporaryReducedMatrix.GetNbrColumn());
+	      for (int i = 0; i < TemporaryReducedMatrix.GetNbrColumn(); ++i)
+		DiagonalizedMatrix.DiagonalElement(i) = TmpDiag[i];
+	    }
+	  else
+	    {
+#endif
+	      TemporaryReducedMatrix.Tridiagonalize(DiagonalizedMatrix, 1e-7);
+	      DiagonalizedMatrix.Diagonalize();
+#ifdef __LAPACK__
+	    }
+#endif
+	  if (EigenstateFlag == true)
+	    {
+	      RealVector* LanczosVectors = new RealVector [3 * BlockSize];
+	      RealVector* Eigenstates = new RealVector [BlockSize];
+	      RealMatrix TmpEigenvector (ReducedMatrix.GetNbrRow(), ReducedMatrix.GetNbrRow(), true);
+	      for (int i = 0; i < ReducedMatrix.GetNbrRow(); ++i)
+		TmpEigenvector(i, i) = 1.0;
+	      
+	      RealTriDiagonalSymmetricMatrix SortedDiagonalizedMatrix (ReducedMatrix.GetNbrRow());
+	      TemporaryReducedMatrix.Copy(ReducedMatrix);
+#ifdef __LAPACK__
+	      if (LapackFlag == true)
+		{
+		  RealDiagonalMatrix TmpDiag (SortedDiagonalizedMatrix.GetNbrColumn());
+		  TemporaryReducedMatrix.LapackDiagonalize(TmpDiag, TmpEigenvector);
+		  for (int i = 0; i < SortedDiagonalizedMatrix.GetNbrColumn(); ++i)
+		    SortedDiagonalizedMatrix.DiagonalElement(i) = TmpDiag[i];
+		}
+	      else
+		{
+#endif
+		  TemporaryReducedMatrix.Tridiagonalize(SortedDiagonalizedMatrix, 1e-7, TmpEigenvector);
+		  SortedDiagonalizedMatrix.Diagonalize(TmpEigenvector);
+#ifdef __LAPACK__
+		}
+#endif
+	      SortedDiagonalizedMatrix.SortMatrixUpOrder(TmpEigenvector);
+
+	      double* TmpCoefficents = new double [BlockSize];
+	      char* TmpVectorName = new char [256];
+	      for (int i = 0; i < BlockSize; ++i)
+		{
+		  for (int j = 0; j < BlockSize; ++j)
+		    {
+		      sprintf(TmpVectorName, "vector.%d", j);
+		      LanczosVectors[j].ReadVector(TmpVectorName);
+		    }
+		  Eigenstates[i].Copy(LanczosVectors[0], TmpEigenvector(0, i));
+		  for (int j = 1; j < BlockSize; ++j)
+		    TmpCoefficents[j - 1] = TmpEigenvector(j, i);	  
+		  AddRealLinearCombinationOperation Operation (&(Eigenstates[i]), &(LanczosVectors[1]), BlockSize - 1,  TmpCoefficents);
+		  Operation.ApplyOperation(Architecture.GetArchitecture());
+		}       
+	      for (int i = 1; i < LanczosIndex; ++i)
+		{
+		  for (int j = 0; j < BlockSize; ++j)
+		    {
+		      sprintf(TmpVectorName, "vector.%d", ((i * BlockSize) + j));
+		      LanczosVectors[j].ReadVector(TmpVectorName);
+		    }
+		  for (int k = 0; k < BlockSize; ++k)
+		    {
+		      for (int j = 0; j < BlockSize; ++j)
+			TmpCoefficents[j] = TmpEigenvector((i * BlockSize) + j, k);	  
+		      AddRealLinearCombinationOperation Operation (&(Eigenstates[k]), LanczosVectors, BlockSize,  TmpCoefficents);
+		      Operation.ApplyOperation(Architecture.GetArchitecture());
+		    }
+		  cout << i << "/" << LanczosIndex << "           \r";
+		  cout.flush();
+		}
+	      delete[] TmpVectorName;
+	    
+	      for (int i = 0; i < BlockSize; ++i)
+		Eigenstates[i] /= Eigenstates[i].Norm();
+	      cout << endl;
+	      delete[] TmpCoefficents;
+	    }
 	}
     }
   else // have complex Lanczos data
