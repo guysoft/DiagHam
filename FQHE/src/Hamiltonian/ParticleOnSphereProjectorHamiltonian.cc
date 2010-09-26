@@ -165,7 +165,7 @@ ParticleOnSphereProjectorHamiltonian::ParticleOnSphereProjectorHamiltonian(Parti
 
   if (l2Factor != 0.0)
     {
-      this->L2Operator = new ParticleOnSphereL2Hamiltonian(this->Particles, this->NbrParticles, this->LzMax, this->Particles->GetLzValue() , this->Architecture, l2Factor); 
+      this->L2Operator = new ParticleOnSphereL2Hamiltonian(this->Particles, this->NbrParticles, this->LzMax, this->Particles->GetLzValue() , this->Architecture, l2Factor, memory); 
     }
   else
     {

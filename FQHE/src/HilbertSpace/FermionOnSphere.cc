@@ -2607,6 +2607,8 @@ RealVector& FermionOnSphere::FuseStates (RealVector& outputVector, RealVector& l
 	      double Coefficient2 = Coefficient;
 	      Coefficient2 *= rightVector[j];	  
 	      int TmpIndex = this->FindStateIndex(TmpState2, TmpLzMax);
+// 	      if (TmpIndex == this->HilbertSpaceDimension)
+// 		cout << "error : " << hex << TmpState2 << dec << " " << Coefficient << " " << Coefficient2 << " " << TmpIndex << endl;
 	      outputVector[TmpIndex] = Coefficient2;
 	    }
 	}

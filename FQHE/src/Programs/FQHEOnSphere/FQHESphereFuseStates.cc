@@ -184,6 +184,13 @@ int main(int argc, char** argv)
 
   for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
     {
+      LeftNbrParticles = 0;
+      LeftLzMax = 0;
+      LeftTotalLz = 0;
+      Statistics = true;
+      RightNbrParticles = 0;
+      RightLzMax = 0;
+      RightTotalLz = 0;
       if (FQHEOnSphereFindSystemInfoFromVectorFileName(InputVectors(0, i),
 						       LeftNbrParticles, LeftLzMax, LeftTotalLz, Statistics) == false)
 	{
@@ -271,6 +278,8 @@ int main(int argc, char** argv)
 	  return -1;      
 	}
 
+
+      cout << "local padding = " <<  Paddings[i] << "  local coeffcient = " << Coefficients[i] << endl;
 
       OutputBasis->FuseStates(OutputState, LeftVector, RightVector, Paddings[i], LeftBasis, RightBasis, SymmetrizedBasis, Coefficients[i]);
       delete RightBasis;

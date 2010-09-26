@@ -1346,43 +1346,94 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::FuseStates (RealVector& outputVe
   for (long i = 0; i <  LeftSpace->LargeHilbertSpaceDimension; ++i)
     {
       unsigned long TmpState1 = LeftSpace->FermionBasis->StateDescription[i] << StateShift;
+      int TmpLzMax = this->FermionHugeBasis->LzMax;
+      while ((TmpState1 >> TmpLzMax) == 0x0ul)
+	--TmpLzMax;
       double Coefficient = coefficient * leftVector[i];
       if (symmetrizedFlag == false)
 	{
-	  for (long j = 0; j < RightSpace->LargeHilbertSpaceDimension; ++j)
+	  if (this->FermionHugeBasis->CheckDiskStorage() == true)
 	    {
-	      unsigned long TmpState2 = RightSpace->FermionBasis->StateDescription[j];
-	      TmpState2 |= TmpState1;
-	      double Coefficient2 = Coefficient;
-	      Coefficient2 *= rightVector[j];	  
-	      long TmpIndex = this->FermionHugeBasis->FindStateIndexFactorized(TmpState2);
-	      double& TmpCoef = outputVector[TmpIndex];
-	      if (TmpCoef == 0.0)
-		++Count;
-	      TmpCoef = Coefficient2;
+	      for (long j = 0; j < RightSpace->LargeHilbertSpaceDimension; ++j)
+		{
+		  unsigned long TmpState2 = RightSpace->FermionBasis->StateDescription[j];
+		  TmpState2 |= TmpState1;
+		  double Coefficient2 = Coefficient;
+		  Coefficient2 *= rightVector[j];	  
+		  long TmpIndex = this->FermionHugeBasis->FindStateIndexFactorized(TmpState2);
+		  double& TmpCoef = outputVector[TmpIndex];
+		  if (TmpCoef == 0.0)
+		    ++Count;
+		  TmpCoef = Coefficient2;
+		}
+	    }
+	  else
+	    {
+	      for (long j = 0; j < RightSpace->LargeHilbertSpaceDimension; ++j)
+		{
+		  unsigned long TmpState2 = RightSpace->FermionBasis->StateDescription[j];
+		  TmpState2 |= TmpState1;
+		  double Coefficient2 = Coefficient;
+		  Coefficient2 *= rightVector[j];	  
+		  long TmpIndex = this->FermionHugeBasis->FindStateIndexMemory(TmpState2, TmpLzMax);
+		  double& TmpCoef = outputVector[TmpIndex];
+		  if (TmpCoef == 0.0)
+		    ++Count;
+		  TmpCoef = Coefficient2;
+		}
 	    }
 	}
       else
 	{
-	  for (long j = 0; j < RightSpace->LargeHilbertSpaceDimension; ++j)
+	  if (this->FermionHugeBasis->CheckDiskStorage() == true)
 	    {
-	      unsigned long TmpState2 = RightSpace->FermionBasis->StateDescription[j];
-	      TmpState2 |= TmpState1;
-	      double Coefficient2 = Coefficient;
-	      Coefficient2 *= rightVector[j];	  
-	      long TmpIndex = this->FermionHugeBasis->FindStateIndexFactorized(TmpState2);
-	      double& TmpCoef = outputVector[TmpIndex];
-	      if (TmpCoef == 0.0)
-		++Count;
-	      TmpCoef = Coefficient2;
-	      unsigned long TmpState3 = this->FermionHugeBasis->GetSymmetricState(TmpState2);
-	      if (TmpState3 != TmpState2)
+	      for (long j = 0; j < RightSpace->LargeHilbertSpaceDimension; ++j)
 		{
-		  TmpIndex = this->FermionHugeBasis->FindStateIndexFactorized(TmpState3);
-		  double& TmpCoef2 = outputVector[TmpIndex];
-                  if (TmpCoef2 == 0.0)
-                    ++Count;
-                  TmpCoef2 = Coefficient2;
+		  unsigned long TmpState2 = RightSpace->FermionBasis->StateDescription[j];
+		  TmpState2 |= TmpState1;
+		  double Coefficient2 = Coefficient;
+		  Coefficient2 *= rightVector[j];	  
+		  long TmpIndex = this->FermionHugeBasis->FindStateIndexFactorized(TmpState2);
+		  double& TmpCoef = outputVector[TmpIndex];
+		  if (TmpCoef == 0.0)
+		    ++Count;
+		  TmpCoef = Coefficient2;
+		  unsigned long TmpState3 = this->FermionHugeBasis->GetSymmetricState(TmpState2);
+		  if (TmpState3 != TmpState2)
+		    {
+		      TmpIndex = this->FermionHugeBasis->FindStateIndexFactorized(TmpState3);
+		      double& TmpCoef2 = outputVector[TmpIndex];
+		      if (TmpCoef2 == 0.0)
+			++Count;
+		      TmpCoef2 = Coefficient2;
+		    }
+		}
+	    }
+	  else
+	    {
+	      for (long j = 0; j < RightSpace->LargeHilbertSpaceDimension; ++j)
+		{
+		  unsigned long TmpState2 = RightSpace->FermionBasis->StateDescription[j];
+		  TmpState2 |= TmpState1;
+		  double Coefficient2 = Coefficient;
+		  Coefficient2 *= rightVector[j];	  
+		  long TmpIndex = this->FermionHugeBasis->FindStateIndexMemory(TmpState2, TmpLzMax);
+		  double& TmpCoef = outputVector[TmpIndex];
+		  if (TmpCoef == 0.0)
+		    ++Count;
+		  TmpCoef = Coefficient2;
+		  unsigned long TmpState3 = this->FermionHugeBasis->GetSymmetricState(TmpState2);
+		  if (TmpState3 != TmpState2)
+		    {
+		      int TmpLzMax2 = this->FermionHugeBasis->LzMax;
+		      while ((TmpState3 >> TmpLzMax2) == 0x0ul)
+			--TmpLzMax2;
+		      TmpIndex = this->FermionHugeBasis->FindStateIndexMemory(TmpState3, TmpLzMax2);
+		      double& TmpCoef2 = outputVector[TmpIndex];
+		      if (TmpCoef2 == 0.0)
+			++Count;
+		      TmpCoef2 = Coefficient2;
+		    }
 		}
 	    }
 	}
