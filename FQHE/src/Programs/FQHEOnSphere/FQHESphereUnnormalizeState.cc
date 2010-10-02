@@ -2,6 +2,7 @@
 
 #include "HilbertSpace/FermionOnSphere.h"
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
+#include "HilbertSpace/FermionOnSphereHaldaneHugeBasis.h"
 #include "HilbertSpace/BosonOnSphereShort.h"
 #include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
 #include "HilbertSpace/BosonOnSphereHaldaneHugeBasisShort.h"
@@ -143,17 +144,29 @@ int main(int argc, char** argv)
     {
       if (SU2Flag == false)
 	{
-	  if (HaldaneBasisFlag == false)
-	    OutputBasis = new FermionOnSphere(NbrParticles, TotalLz, LzMax);
+	  if (Manager.GetBoolean("huge-basis") == true)
+	    {
+	      if (Manager.GetString("load-hilbert") == 0)
+		{
+		  cout << "error : huge basis mode requires to save and load the Hilbert space" << endl;
+		  return -1;
+		}
+	      OutputBasis = new FermionOnSphereHaldaneHugeBasis (Manager.GetString("load-hilbert"), Manager.GetInteger("memory"));
+	    }
 	  else
 	    {
-	      int* ReferenceState = 0;
-	      if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, LzMax, ReferenceState) == false)
-		return -1;
-	      if (Manager.GetString("load-hilbert") != 0)
-		OutputBasis = new FermionOnSphereHaldaneBasis(Manager.GetString("load-hilbert"));	  
+	      if (HaldaneBasisFlag == false)
+		OutputBasis = new FermionOnSphere(NbrParticles, TotalLz, LzMax);
 	      else
-		OutputBasis = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, LzMax, ReferenceState);
+		{
+		  int* ReferenceState = 0;
+		  if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, LzMax, ReferenceState) == false)
+		    return -1;
+		  if (Manager.GetString("load-hilbert") != 0)
+		    OutputBasis = new FermionOnSphereHaldaneBasis(Manager.GetString("load-hilbert"));	  
+		  else
+		    OutputBasis = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, LzMax, ReferenceState);
+		}
 	    }
 	}
       else
