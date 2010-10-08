@@ -87,6 +87,7 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 10);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 9);
+  (*SystemGroup) += new SingleIntegerOption  ('z', "LzTotal", "twice the z component of the total angular momentum of the system", 0);  
   (*SystemGroup) += new SingleIntegerOption  ('s', "SzTotal", "twice the z component of the total spin of the system", 0);
   (*SystemGroup) += new SingleStringOption  ('\n', "exact-state", "name of the file containing the vector obtained using exact diagonalization");
   (*SystemGroup) += new BooleanOption  ('\n', "use-trial", "calculate overlap against a known trial state");
@@ -140,6 +141,7 @@ int main(int argc, char** argv)
   bool UseTrial = Manager.GetBoolean("use-trial");
   int NbrFermions = Manager.GetInteger("nbr-particles");
   int LzMax = Manager.GetInteger("lzmax");
+  int LzTotal = Manager.GetInteger("LzTotal");
   int SzTotal = Manager.GetInteger("SzTotal");
   int NbrIter = Manager.GetInteger("nbr-iter");  
   int NbrWarmUpIter = Manager.GetInteger("nbr-warmup-iter");
@@ -302,7 +304,7 @@ int main(int argc, char** argv)
 	      {
 		if (State.GetVectorDimension()>0)
 		  {
-		    Space = new FermionOnSphereWithSpin(NbrFermions, 0, LzMax, SzTotal, MemorySpace);
+		    Space = new FermionOnSphereWithSpin(NbrFermions, LzTotal, LzMax, SzTotal, MemorySpace);
 		  }
 	      }
 	    else
@@ -326,18 +328,25 @@ int main(int argc, char** argv)
 	    if (LzSymmetrizedBasis == false)
 	      {
 		if (Manager.GetString("load-hilbert") == 0)
-		  Space = new FermionOnSphereWithSpinSzSymmetry(NbrFermions, 0, LzMax, Manager.GetBoolean("minus-szparity"), MemorySpace);
+		  Space = new FermionOnSphereWithSpinSzSymmetry(NbrFermions, LzTotal, LzMax, Manager.GetBoolean("minus-szparity"), MemorySpace);
 		else
 		  Space = new FermionOnSphereWithSpinSzSymmetry(Manager.GetString("load-hilbert"), MemorySpace);
 	      }
 	    else
-	      if (Manager.GetString("load-hilbert") == 0)
-		{
-		  Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrFermions, LzMax, Manager.GetBoolean("minus-szparity"),
-								  Manager.GetBoolean("minus-lzparity"), MemorySpace);
-		}
-	      else
-		Space = new FermionOnSphereWithSpinLzSzSymmetry(Manager.GetString("load-hilbert"), MemorySpace);
+	      {
+		if (LzTotal != 0)
+		  {
+		    cout << "Lz symmetry is available only for Lz=0 subspace"<<endl;
+		    exit(1);
+		  }
+		if (Manager.GetString("load-hilbert") == 0)
+		  {
+		    Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrFermions, LzMax, Manager.GetBoolean("minus-szparity"),
+								    Manager.GetBoolean("minus-lzparity"), MemorySpace);
+		  }
+		else
+		  Space = new FermionOnSphereWithSpinLzSzSymmetry(Manager.GetString("load-hilbert"), MemorySpace);
+	      }
 	  else
 	    if (Manager.GetString("load-hilbert") == 0)
 	      Space = new FermionOnSphereWithSpinLzSymmetry(NbrFermions, LzMax, SzTotal, Manager.GetBoolean("minus-lzparity"), MemorySpace);
