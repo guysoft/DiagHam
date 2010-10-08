@@ -659,6 +659,44 @@ int FermionOnSphereWithSpinLzSymmetry::AddAduAdAu (int index, int m1, int m2, in
 
 }
 
+// flip all spins of a given state
+// 
+// index = index of the state on which the operator has to be applied
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int FermionOnSphereWithSpinLzSymmetry::SzToMinusSz (int index, double& coefficient)
+{
+  coefficient = 1.0;
+  unsigned long TmpState = this->StateDescription[index];
+  unsigned long TmpState2 = 0x0ul;
+  for (int j = 0; j <= this->LzMax; ++j)
+    {
+      switch (TmpState & 0x3ul)
+	{
+	case 0x3ul:	  
+	  {
+	    coefficient *= -1.0;
+	    TmpState2 |= 0x3ul << (j << 1);
+	  }
+	  break;
+	case 0x2ul:
+	  {
+	    TmpState2 |= 0x1ul << (j << 1);
+	  }
+	  break;
+	case 0x1ul:
+	  {
+	    TmpState2 |= 0x2ul << (j << 1);
+	  }
+	  break;
+	}
+      TmpState >>= 2;
+    }
+  return this->SymmetrizeAdAdResult(TmpState2, coefficient);
+}
+
+
 // evaluate wave function in real space using a given basis and only for agiven range of components
 //
 // state = vector corresponding to the state in the Fock basis

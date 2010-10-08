@@ -271,6 +271,13 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // return value = index of the destination state 
   virtual int ProdAd (int* m, int spinIndices, int nbrIndices, double& coefficient);
 
+  // flip all spins of a given state
+  // 
+  // index = index of the state on which the operator has to be applied
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int SzToMinusSz (int index, double& coefficient);
+
   // carefully test whether state is in Hilbert-space and find corresponding state index
   //
   // stateDescription = unsigned integer describing the state

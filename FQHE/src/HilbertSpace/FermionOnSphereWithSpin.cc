@@ -1217,7 +1217,9 @@ int FermionOnSphereWithSpin::ProdAd (int* m, int spinIndices, int nbrIndices, do
 }
 
 // get the variance of the state
+//
 // index = index of state to consider
+
 int FermionOnSphereWithSpin::StateVariance (int index)
 {
   int MyStateHighestBit = this->StateHighestBit[index];
@@ -1229,6 +1231,45 @@ int FermionOnSphereWithSpin::StateVariance (int index)
   return var;
 }
 
+// flip all spins of a given state
+// 
+// index = index of the state on which the operator has to be applied
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int FermionOnSphereWithSpin::SzToMinusSz (int index, double& coefficient)
+{
+  coefficient = 1.0;
+  unsigned long TmpState = this->StateDescription[index];
+  unsigned long TmpState2 = 0x0ul;
+  for (int j = 0; j <= this->LzMax; ++j)
+    {
+      switch (TmpState & 0x3ul)
+	{
+	case 0x3ul:	  
+	  {
+	    coefficient *= -1.0;
+	    TmpState2 |= 0x3ul << (j << 1);
+	  }
+	  break;
+	case 0x2ul:
+	  {
+	    TmpState2 |= 0x1ul << (j << 1);
+	  }
+	  break;
+	case 0x1ul:
+	  {
+	    TmpState2 |= 0x2ul << (j << 1);
+	  }
+	  break;
+	}
+      TmpState >>= 2;
+    }
+  int TmpLzMax = 2 * this->LzMax + 1;
+  while (((TmpState2 >> TmpLzMax) & 0x1ul) == 0x0ul)
+    --TmpLzMax;
+  return this->TargetSpace->FindStateIndex(TmpState2, TmpLzMax);
+}
 
 
 // carefully test whether state is in Hilbert-space and find corresponding state index

@@ -1229,6 +1229,18 @@ int FermionOnSphereWithSpinLzSzSymmetry::ProdAd (int* m, int spinIndices, int nb
   return this->SymmetrizeAdAdResult(TmpState, coefficient);
 }
 
+// flip all spins of a given state
+// 
+// index = index of the state on which the operator has to be applied
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int FermionOnSphereWithSpinLzSzSymmetry::SzToMinusSz (int index, double& coefficient)
+{
+  coefficient = this->SzParitySign;
+  return index;
+}
+
 // find state index
 //
 // stateDescription = unsigned integer describing the state

@@ -484,3 +484,14 @@ RealSymmetricMatrix ParticleOnSphereWithSpin::EvaluatePartialDensityMatrix (int 
   RealSymmetricMatrix TmpMatrix;
   return TmpMatrix;
 }
+
+// flip all spins of a given state
+// 
+// index = index of the state on which the operator has to be applied
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSpin::SzToMinusSz (int index, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}

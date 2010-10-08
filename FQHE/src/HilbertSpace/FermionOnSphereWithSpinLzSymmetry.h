@@ -142,6 +142,13 @@ class FermionOnSphereWithSpinLzSymmetry :  public FermionOnSphereWithSpinLzSzSym
   // return value = index of the destination state 
   virtual int AddAduAdAu (int index, int m1, int m2, int n1, int n2, double& coefficient);
 
+  // flip all spins of a given state
+  // 
+  // index = index of the state on which the operator has to be applied
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int SzToMinusSz (int index, double& coefficient);
+
   // evaluate wave function in real space using a given basis and only for agiven range of components
   //
   // state = vector corresponding to the state in the Fock basis
