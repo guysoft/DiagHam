@@ -92,4 +92,5 @@ FermionOnSphereEfficient.cc \
 FermionOnSphereFull.cc \
 BosonOnSphereFullShort.cc \
 FermionOnSphereThreeLandauLevels.cc \
-BosonOnSphereWithSpinAllSz.cc
+BosonOnSphereWithSpinAllSz.cc \
+FermionOnSphereFourLandauLevels.cc

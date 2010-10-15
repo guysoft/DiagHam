@@ -49,6 +49,31 @@ using std::hex;
 using std::dec;
 
 
+// default constructor
+//
+
+FermionOnSphereWithSU4Spin::FermionOnSphereWithSU4Spin()
+{
+  this->HilbertSpaceDimension = 0;
+  this->NbrFermions = 0;
+  this->IncNbrFermions = 0;
+  this->TotalLz = 0;
+  this->LzMax = 0;
+  this->NbrLzValue = 0;
+  this->TotalSpin = 0;
+  this->TotalIsospin = 0;
+  this->TotalEntanglement = 0;
+  this->StateDescription = 0;
+  this->StateHighestBit = 0;
+  this->MaximumLookUpShift = 0;
+  this->LookUpTableMemorySize = 0;
+  this->LookUpTableShift = 0;
+  this->LookUpTable = 0;  
+  this->SignLookUpTable = 0;
+  this->SignLookUpTableMask = 0;
+  this->MaximumSignLookUp = 0;
+}
+
 // basic constructor
 // 
 // nbrFermions = number of fermions

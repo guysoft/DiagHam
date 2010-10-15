@@ -45,6 +45,8 @@ class FermionOnSphereWithSpin;
 class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
 {
 
+ protected:
+
   // number of fermions
   int NbrFermions;
   // number of fermions plus 1
@@ -89,6 +91,10 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   int ProdALzMax;
 
  public:
+
+  // default constructor
+  //
+  FermionOnSphereWithSU4Spin();
 
   // basic constructor
   // 
@@ -381,7 +387,7 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // return value = resulting SU(2) state
   virtual RealVector ForgeSU2FromSU4(RealVector& state, FermionOnSphereWithSpin& su2Space);
 
-  private:
+  protected:
 
   // find state index
   //

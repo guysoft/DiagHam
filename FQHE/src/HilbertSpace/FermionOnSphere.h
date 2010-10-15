@@ -90,6 +90,7 @@ class FermionOnSphere :  public ParticleOnSphere
   friend class FermionOnSphereWithSpinSqueezedBasis;
   friend class FermionOnSphereTwoLandauLevels;
   friend class FermionOnSphereThreeLandauLevels;
+  friend class FermionOnSphereFourLandauLevels;
 
   friend class BosonOnSphereShort;
   friend class BosonOnSphereHaldaneBasisShort;
