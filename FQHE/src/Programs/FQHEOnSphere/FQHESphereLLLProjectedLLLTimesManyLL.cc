@@ -6,6 +6,7 @@
 #include "HilbertSpace/FermionOnSphere.h"
 #include "HilbertSpace/FermionOnSphereTwoLandauLevels.h"
 #include "HilbertSpace/FermionOnSphereThreeLandauLevels.h"
+#include "HilbertSpace/FermionOnSphereFourLandauLevels.h"
 #include "HilbertSpace/FermionOnSphereSymmetricBasis.h"
 #include "HilbertSpace/FermionOnSphereUnlimited.h"
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
@@ -78,6 +79,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n',"projection","the state will be projected into the LLL");
   (*SystemGroup) += new BooleanOption ('\n', "resume", "the last calcul will be resumed from its last save step");
   (*SystemGroup) += new BooleanOption  ('\n', "3-ll", "consider particles within three Landau levels");
+  (*SystemGroup) += new BooleanOption  ('\n', "4-ll", "consider particles within four Landau levels");
   (*SystemGroup) += new BooleanOption  ('\n', "symmetric", "Lz->-Lz symmetry used");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "min-component", "the min component", 0);
   (*SystemGroup) += new SingleIntegerOption ('\n', "nbr-components", "the number of component computed", 0);
@@ -118,7 +120,11 @@ int main(int argc, char** argv)
   int NbrComponents = Manager.GetInteger("nbr-components");
   char* LLLFileName = Manager.GetString("lll-state");
   char* FermionFileName = Manager.GetString("fermion");
-  bool Flag3LL =  Manager.GetBoolean("3-ll");
+  int NbrLL = 2;
+  if (Manager.GetBoolean("3-ll") == true)
+    NbrLL = 3;
+  if (Manager.GetBoolean("4-ll") == true)
+    NbrLL = 4;
   bool Symmetric = Manager.GetBoolean("symmetric");
   bool LLLFermionFlag = true;
   
@@ -307,14 +313,19 @@ int main(int argc, char** argv)
   ParticleOnSphere * SpaceLL=0;
   int LzMaxUp = LzMaxFermion + 2;
   int LzMaxDown = LzMaxFermion;
-  if(Flag3LL==true)
+  switch (NbrLL)
     {
-      SpaceLL = new FermionOnSphereThreeLandauLevels (LLLNbrParticles, TotalLzFermion, LzMaxFermion);
-    }
-  else
-    {
+    case 2:
       SpaceLL = new FermionOnSphereTwoLandauLevels (LLLNbrParticles, TotalLzFermion, LzMaxUp, LzMaxDown);
+      break;
+    case 3:
+      SpaceLL = new FermionOnSphereThreeLandauLevels (LLLNbrParticles, TotalLzFermion, LzMaxFermion);
+      break;
+    case 4:
+      SpaceLL = new FermionOnSphereFourLandauLevels (LLLNbrParticles, TotalLzFermion, LzMaxFermion);
+      break;
     }
+
   RealVector FermionState;
   
   if (FermionState.ReadVector (FermionFileName) == false)
@@ -387,7 +398,7 @@ int main(int argc, char** argv)
       OutputVector = new RealVector(FinalSpace->GetHilbertSpaceDimension(),true);
     }
   FQHESphereMonomialsTimesSlaterProjectionOperation Operation(SpaceLL, LLLSpace, FinalSpace, &FermionState, &LLLState, OutputVector, MinComponent, NbrComponents, Projection, 
-							      Step, Flag3LL, Symmetric);																
+							      Step, NbrLL, Symmetric);																
   Operation.ApplyOperation(Architecture.GetArchitecture());
   
   if(NbrComponents+MinComponent!=FinalSpace->GetHilbertSpaceDimension())

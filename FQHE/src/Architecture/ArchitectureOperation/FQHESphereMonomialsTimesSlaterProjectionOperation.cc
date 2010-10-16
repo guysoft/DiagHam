@@ -35,6 +35,8 @@
 #include "Architecture/SimpleMPIArchitecture.h"
 #include "HilbertSpace/FermionOnSphere.h"
 #include "HilbertSpace/FermionOnSphereTwoLandauLevels.h"
+#include "HilbertSpace/FermionOnSphereThreeLandauLevels.h"
+#include "HilbertSpace/FermionOnSphereFourLandauLevels.h"
 
 
 
@@ -53,10 +55,11 @@ class BosonOnSphereShort;
 //
 // space = pointer to the HilbertSpace
 // fileName = file where the kostka Numbers will be stored
+// nbrLL = number of Landau levels
 
 FQHESphereMonomialsTimesSlaterProjectionOperation::FQHESphereMonomialsTimesSlaterProjectionOperation(ParticleOnSphere* fermionSpace, ParticleOnSphere* lllSpace, ParticleOnSphere* finalSpace, 
 										 RealVector* fermionVector, RealVector* lllVector, RealVector* outputVector, int resume, int nbrComponent, 
-										 bool projection , int step, bool flag3LL, bool symmetry)
+										 bool projection , int step, int nbrLL, bool symmetry)
 {
   this->FirstComponent = resume;
   if(nbrComponent==0)
@@ -69,17 +72,17 @@ FQHESphereMonomialsTimesSlaterProjectionOperation::FQHESphereMonomialsTimesSlate
   this->OperationType = AbstractArchitectureOperation::FQHESphereMonomialsTimesSlaterProjection;
   this->FermionVector = fermionVector;
   this->LLLVector = lllVector; 
-  this->OutputVector= outputVector;
-  this->Projection=projection;
-  this->NbrStage=step;
-  this->Flag3LL=flag3LL;
+  this->OutputVector = outputVector;
+  this->Projection = projection;
+  this->NbrStage = step;
+  this->NbrLL = nbrLL;
   this->Symmetry = symmetry;
   this->FinalStates = new unsigned long [finalSpace->GetHilbertSpaceDimension()];
   this->Weigth = new double [finalSpace->GetHilbertSpaceDimension()];
   if(lllSpace->GetParticleStatistic() == ParticleOnSphere::BosonicStatistic)
-    this->BosonFlag=true;
+    this->BosonFlag = true;
   else
-    this->BosonFlag=false;
+    this->BosonFlag = false;
 }
 
 // copy constructor 
@@ -97,13 +100,13 @@ FQHESphereMonomialsTimesSlaterProjectionOperation::FQHESphereMonomialsTimesSlate
   this->FermionVector = operation.FermionVector;
   this->LLLVector = operation.LLLVector;
   this->OutputVector = operation.OutputVector;
-  this->Projection=operation.Projection;
-  this->NbrStage=operation.NbrStage;
-  this->Flag3LL=operation.Flag3LL;
+  this->Projection = operation.Projection;
+  this->NbrStage = operation.NbrStage;
+  this->NbrLL = operation.NbrLL;
   this->Symmetry=operation.Symmetry;
   this->FinalStates = new unsigned long [operation.FinalSpace->GetHilbertSpaceDimension()];
   this->Weigth = new double [operation.FinalSpace->GetHilbertSpaceDimension()];
-  this->BosonFlag=operation.BosonFlag;
+  this->BosonFlag = operation.BosonFlag;
 }
   
 // destructor
@@ -154,14 +157,25 @@ bool FQHESphereMonomialsTimesSlaterProjectionOperation::RawApplyOperation()
 {
   timeval TotalStartingTime;
   gettimeofday (&TotalStartingTime, 0);
-  if(this->BosonFlag==true)
+  if(this->BosonFlag == true)
     {
-      if(this->Flag3LL==true)
+      if (this->NbrLL > 2)
 	{
-	  ((FermionOnSphereThreeLandauLevels *)this->FermionSpace)->BosonicStateTimeFermionicState(*(this->LLLVector), *(this->FermionVector), *(this->OutputVector),
-												   this->FinalStates, this->Weigth, (BosonOnSphereShort*) this->LLLSpace, 
-												   (FermionOnSphere*)this->FinalSpace,
-												   this->FirstComponent, this->NbrComponent);
+	  switch (this->NbrLL)
+	    {
+	    case 3:
+	      ((FermionOnSphereThreeLandauLevels *)this->FermionSpace)->BosonicStateTimeFermionicState(*(this->LLLVector), *(this->FermionVector), *(this->OutputVector),
+												     this->FinalStates, this->Weigth, (BosonOnSphereShort*) this->LLLSpace, 
+												     (FermionOnSphere*)this->FinalSpace,
+												     this->FirstComponent, this->NbrComponent);
+	      break;
+	    case 4:
+	      ((FermionOnSphereFourLandauLevels *)this->FermionSpace)->BosonicStateTimeFermionicState(*(this->LLLVector), *(this->FermionVector), *(this->OutputVector),
+												      this->FinalStates, this->Weigth, (BosonOnSphereShort*) this->LLLSpace, 
+												      (FermionOnSphere*)this->FinalSpace,
+												      this->FirstComponent, this->NbrComponent);
+	      break;
+	    }
 	}
       else
 	{

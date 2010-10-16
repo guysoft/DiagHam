@@ -19,6 +19,7 @@
 #include "Options/BooleanOption.h"
 #include "Options/SingleIntegerOption.h"
 #include "Options/SingleStringOption.h"
+#include "Options/SingleDoubleOption.h"
 
 #include "Operator/ParticleOnSphereSquareTotalMomentumOperator.h"
 
@@ -66,6 +67,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "degenerated-groundstate", "single column file describing a degenerated ground state");
   (*SystemGroup) += new BooleanOption  ('\n', "compute-lvalue", "compute the L value of each reduced density matrix eigenstate");
   (*SystemGroup) += new BooleanOption  ('\n', "largest-lz", "only compute the largest block of the reduced density matrix (Lz=0 or 1/2)");
+  (*SystemGroup) += new BooleanOption  ('\n', "realspace-cut", "use real space partition instead of particle partition");
+  (*SystemGroup) += new SingleDoubleOption ('\n', "realspace-angle", "inclination angle that defines the real space parition (in degrees)", 90);
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with partent extension");
   (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
   (*OutputGroup) += new BooleanOption ('\n', "density-eigenstate", "compute the eigenstates of the reduced density matrix");
@@ -80,7 +83,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHESphereEntanglementEntropyParticlePartition -h" << endl;
+      cout << "see man page for option syntax or type FQHESphereFermionEntanglementEntropyParticlePartition -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)
@@ -91,7 +94,7 @@ int main(int argc, char** argv)
 
   if ((Manager.GetString("ground-file") == 0) && (Manager.GetString("degenerated-groundstate") == 0))
     {
-      cout << "error, a ground state file should be provided. See man page for option syntax or type FQHESphereEntanglementEntropyParticlePartition -h" << endl;
+      cout << "error, a ground state file should be provided. See man page for option syntax or type FQHESphereFermionEntanglementEntropyParticlePartition -h" << endl;
       return -1;
     }
   if ((Manager.GetString("ground-file") != 0) && 
@@ -118,6 +121,7 @@ int main(int argc, char** argv)
   bool ComputeLValueFlag = Manager.GetBoolean("compute-lvalue");
   bool EigenstateFlag = Manager.GetBoolean("density-eigenstate");
   bool LargestLSector = Manager.GetBoolean("largest-lz");
+  bool RealSpaceCut = Manager.GetBoolean("realspace-cut");
   int FilterLza = Manager.GetInteger("lza-eigenstate");
   int NbrEigenstates = Manager.GetInteger("nbr-eigenstates");
   int* TotalLz = 0;
@@ -321,7 +325,7 @@ int main(int argc, char** argv)
       while (SubsystemMaxTotalLz > ComplementaryMaxTotalLz)
 	SubsystemMaxTotalLz -= 2;
       int SubsystemTotalLz = -SubsystemMaxTotalLz; 
-      if (LargestLSector == true)
+      if ((LargestLSector == true) && (RealSpaceCut == false))
 	{
 	  if (((LzMax * NbrParticles) & 1) == 0)
 	    {
@@ -338,10 +342,18 @@ int main(int argc, char** argv)
       for (; SubsystemTotalLz <= SubsystemMaxTotalLz; SubsystemTotalLz += 2)
 	{
 	  cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Lz=" << SubsystemTotalLz << endl;
-	  RealSymmetricMatrix PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[0]);
+	  RealSymmetricMatrix PartialDensityMatrix;
+	  if (RealSpaceCut == false)
+	    PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[0]);
+	  else
+	    PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixRealSpacePartition(SubsystemNbrParticles, SubsystemTotalLz, Manager.GetDouble("realspace-angle"), GroundStates[0]);
 	  for (int i = 1; i < NbrSpaces; ++i)
 	    {
-	      RealSymmetricMatrix TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[i]);
+	      RealSymmetricMatrix TmpMatrix;
+	      if (RealSpaceCut == false)
+		TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[i]);
+	      else
+		TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixRealSpacePartition(SubsystemNbrParticles, SubsystemTotalLz,  Manager.GetDouble("realspace-angle"), GroundStates[i]);
 	      PartialDensityMatrix += TmpMatrix;
 	    }
 	  if (NbrSpaces > 1)

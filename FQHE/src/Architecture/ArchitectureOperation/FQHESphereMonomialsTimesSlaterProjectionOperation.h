@@ -82,8 +82,8 @@ class FQHESphereMonomialsTimesSlaterProjectionOperation : public AbstractArchite
   //true if the result vector is to be normalized
   bool Normalize;
   
-  //true if the initial fermionic state is in 3 Landau levels
-  bool Flag3LL;
+  // number of Landau levels
+  int NbrLL;
   
   //true if the lz->-lz symmetry is used
   bool Symmetry;
@@ -100,8 +100,9 @@ class FQHESphereMonomialsTimesSlaterProjectionOperation : public AbstractArchite
   //
   // Space = pointer to the HilbertSpace to use
   // fileName = name of the file where the kostka number will be store
+  // nbrLL = number of Landau levels
   FQHESphereMonomialsTimesSlaterProjectionOperation(ParticleOnSphere* fermionSpace, ParticleOnSphere* lllSpace, ParticleOnSphere* finalSpace, RealVector* fermionVector, RealVector* lllVector, 
-						    RealVector* outputVector, int resume, int nbrComponent, bool projection, int step, bool flag3LL, bool symmetry);
+						    RealVector* outputVector, int resume, int nbrComponent, bool projection, int step, int nbrLL, bool symmetry);
   
   // copy constructor 
   //

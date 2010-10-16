@@ -110,6 +110,13 @@ class FermionOnSphereFourLandauLevels : public FermionOnSphereWithSU4Spin
   virtual unsigned int MonomialsTimesSlaterProjection(unsigned long* slater, unsigned long* monomial, unsigned long* variable, int nbrVariable, unsigned long*& finalStates, 
 						      double*& weigth, FermionOnSphere* finalSpace);
   
+  // print a given State
+  //
+  // Str = reference on current output stream 
+  // state = ID of the state to print
+  // return value = reference on current output stream 
+  ostream& PrintState (ostream& Str, int state);
+
  protected:
 
   // evaluate Hilbert space dimension
@@ -150,80 +157,181 @@ class FermionOnSphereFourLandauLevels : public FermionOnSphereWithSU4Spin
 
 inline void FermionOnSphereFourLandauLevels::ConvertToMonomialVariable(unsigned long state, unsigned long*& slater, int& nbrVariable, unsigned long*& variable)
 {
-  unsigned long Tmp;
-  int TmpPos=0;
-  for(int i=this->LzMax;i>=0;i--)
+  int TmpPos = 0;
+  for(int i = this->LzMax; i >= 0; i--)
     {
-      Tmp=((state >> (3*i)) & ((unsigned long) 0x7));
-      switch (Tmp)
+      switch ((state >> (i << 2)) & 0xful)
 	{
-	case 0x1l: 
+	case 0x1ul: 
 	  {
-	    slater[TmpPos]=i;
+	    slater[TmpPos] = i;
 	    TmpPos++;
-	    break;
 	  }
-	case 0x2l:
+	  break;
+	case 0x2ul:
 	  {
-	    slater[TmpPos]=i;
-	    variable[nbrVariable]=2*TmpPos;
+	    slater[TmpPos] = i;
+	    variable[nbrVariable] = 4 * TmpPos;
 	    nbrVariable++;
 	    TmpPos++;
-	    break;
 	  }
-	case 0x3l:
+	  break;
+	case 0x3ul:
 	  {
-	    slater[TmpPos]=i;
-	    variable[nbrVariable]=2*TmpPos;
+	    slater[TmpPos] = i;
+	    variable[nbrVariable] = 4 * TmpPos;
 	    nbrVariable++;
 	    TmpPos++;
-	    slater[TmpPos]=i;
+	    slater[TmpPos] = i;
 	    TmpPos++;
-	    break;
 	  }
-	case 0x4l: 
+	  break;
+	case 0x4ul: 
 	  {
-	    slater[TmpPos]=i;
-	    variable[nbrVariable]=2*TmpPos+0x01ul;
+	    slater[TmpPos] = i;
+	    variable[nbrVariable]= 4 * TmpPos + 1;
 	    nbrVariable++;
 	    TmpPos++;
-	    break;
 	  }
-	case 0x5l:
+	  break;
+	case 0x5ul:
 	  {
-	    slater[TmpPos]=i;
-	    variable[nbrVariable]=2*TmpPos+0x01ul;
+	    slater[TmpPos] = i;
+	    variable[nbrVariable] = 4 * TmpPos + 1;
 	    nbrVariable++;
 	    TmpPos++;
-	    slater[TmpPos]=i;
+	    slater[TmpPos] = i;
 	    TmpPos++;
-	    break;
 	  }
-	case 0x6l:
+	  break;
+	case 0x6ul:
 	  {
-	    slater[TmpPos]=i;
-	    variable[nbrVariable]=2*TmpPos+0x01ul;
+	    slater[TmpPos] = i;
+	    variable[nbrVariable] = 4 * TmpPos + 1;
 	    nbrVariable++;
 	    TmpPos++;
-	    slater[TmpPos]=i;
-	    variable[nbrVariable]=2*TmpPos;
+	    slater[TmpPos] = i;
+	    variable[nbrVariable] = 4 * TmpPos;
 	    nbrVariable++;
 	    TmpPos++;
-	    break;
 	  }
-	case 0x7l:
+	  break;
+	case 0x7ul:
 	  {
-	    slater[TmpPos]=i;
-	    variable[nbrVariable]=2*TmpPos+0x01ul;
+	    slater[TmpPos] = i;
+	    variable[nbrVariable] = 4 * TmpPos + 1;
 	    nbrVariable++;
 	    TmpPos++;
-	    slater[TmpPos]=i;
-	    variable[nbrVariable]=2*TmpPos;
+	    slater[TmpPos] = i;
+	    variable[nbrVariable] = 4 * TmpPos;
 	    nbrVariable++;
 	    TmpPos++;
-	    slater[TmpPos]=i;
+	    slater[TmpPos] = i;
 	    TmpPos++;
-	    break;
+	  }
+	  break;
+	case 0x8ul:
+	  {
+	    slater[TmpPos] = i;
+	    variable[nbrVariable] = 4 * TmpPos + 2;
+	    nbrVariable++;
+	    TmpPos++;
+	  }
+	  break;
+	case 0x9ul:
+	  {
+	    slater[TmpPos] = i;
+	    variable[nbrVariable] = 4 * TmpPos + 2;
+	    nbrVariable++;
+	    TmpPos++;
+	    slater[TmpPos] = i;
+	    TmpPos++;
+	  }
+	  break;
+	case 0xaul:
+	  {
+	    slater[TmpPos] = i;
+	    variable[nbrVariable] = 4 * TmpPos + 2;
+	    nbrVariable++;
+	    TmpPos++;
+	    slater[TmpPos] = i;
+	    variable[nbrVariable] = 4 * TmpPos;
+	    nbrVariable++;
+	    TmpPos++;
+	  }
+	  break;
+	case 0xbul:
+	  {
+	    slater[TmpPos] = i;
+	    variable[nbrVariable] = 4 * TmpPos + 2;
+	    nbrVariable++;
+	    TmpPos++;
+	    slater[TmpPos] = i;
+	    variable[nbrVariable] = 4 * TmpPos;
+	    nbrVariable++;
+	    TmpPos++;
+	    slater[TmpPos] = i;
+	    TmpPos++;
+	  }
+	  break;
+	case 0xcul:
+	  {
+	    slater[TmpPos] = i;
+	    variable[nbrVariable] = 4 * TmpPos + 2;
+	    nbrVariable++;
+	    TmpPos++;
+	    slater[TmpPos] = i;
+	    variable[nbrVariable] = 4 * TmpPos + 1;
+	    nbrVariable++;
+	    TmpPos++;
+	  }
+	  break;
+	case 0xdul:
+	  {
+	    slater[TmpPos] = i;
+	    variable[nbrVariable] = 4 * TmpPos + 2;
+	    nbrVariable++;
+	    TmpPos++;
+	    slater[TmpPos] = i;
+	    variable[nbrVariable] = 4 * TmpPos + 1;
+	    nbrVariable++;
+	    TmpPos++;
+	    slater[TmpPos] = i;
+	    TmpPos++;
+	  }
+	  break;
+	case 0xeul:
+	  {
+	    slater[TmpPos] = i;
+	    variable[nbrVariable] = 4 * TmpPos + 2;
+	    nbrVariable++;
+	    TmpPos++;
+	    slater[TmpPos] = i;
+	    variable[nbrVariable] = 4 * TmpPos + 1;
+	    nbrVariable++;
+	    TmpPos++;
+	    slater[TmpPos] = i;
+	    variable[nbrVariable] = 4 * TmpPos;
+	    nbrVariable++;
+	    TmpPos++;
+	  }
+	  break;
+	case 0xful:
+	  {
+	    slater[TmpPos] = i;
+	    variable[nbrVariable] = 4 * TmpPos + 2;
+	    nbrVariable++;
+	    TmpPos++;
+	    slater[TmpPos] = i;
+	    variable[nbrVariable] = 4 * TmpPos + 1;
+	    nbrVariable++;
+	    TmpPos++;
+	    slater[TmpPos] = i;
+	    variable[nbrVariable] = 4 * TmpPos;
+	    nbrVariable++;
+	    TmpPos++;
+	    slater[TmpPos] = i;
+	    TmpPos++;
 	  }
 	  break;
 	default : 

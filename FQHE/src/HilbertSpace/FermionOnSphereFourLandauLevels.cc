@@ -73,7 +73,7 @@ FermionOnSphereFourLandauLevels::FermionOnSphereFourLandauLevels (int nbrFermion
   this->TotalSpin = 0;
   this->TotalIsospin = 0;
   this->TotalEntanglement = 0;
-  this->LzMax = lzMax + 4;
+  this->LzMax = lzMax + 6;
   this->NbrLzValue = this->LzMax + 1;
   this->MaximumSignLookUp = 16;
   this->Flag.Initialize();
@@ -227,22 +227,22 @@ long FermionOnSphereFourLandauLevels::GenerateStates(int nbrFermions, int nbrFlu
 	{
 	  if (((nbrFluxQuanta + 6) >= totalLz) && (totalLz >= 0))
 	    {
-	      this->StateDescription[pos] = 0x8ul << (totalLz * 3);
+	      this->StateDescription[pos] = 0x8ul << (totalLz << 2);
 	      ++pos;
 	    }
 	  if (((nbrFluxQuanta + 5) >= totalLz) && (totalLz >= 1))
 	    {
-	      this->StateDescription[pos] = 0x4ul << (totalLz * 3);
+	      this->StateDescription[pos] = 0x4ul << (totalLz << 2);
 	      ++pos;
 	    }
 	  if (((nbrFluxQuanta + 4) >= totalLz) && (totalLz >= 2))
 	    {
-	      this->StateDescription[pos] = 0x2ul << (totalLz * 3);
+	      this->StateDescription[pos] = 0x2ul << (totalLz << 2);
 	      ++pos;
 	    }
 	  if (((nbrFluxQuanta + 3) >= totalLz) && (totalLz >= 3))
 	    {
-	      this->StateDescription[pos] = 0x1ul << (totalLz * 3);
+	      this->StateDescription[pos] = 0x1ul << (totalLz << 2);
 	      ++pos;
 	    }
 	}
@@ -463,6 +463,41 @@ long FermionOnSphereFourLandauLevels::ShiftedEvaluateHilbertSpaceDimension(int n
   return Tmp;
 }
 
+// print a given State
+//
+// Str = reference on current output stream 
+// state = ID of the state to print
+// return value = reference on current output stream 
+
+ostream& FermionOnSphereFourLandauLevels::PrintState (ostream& Str, int state)
+{
+  unsigned long TmpState = this->StateDescription[state];
+  unsigned long Tmp;
+  Str << " | ";
+  for (int i = this->NbrLzValue-1; i >=0 ; --i)
+    {
+      Tmp = ((TmpState >> (i << 2)) & ((unsigned long) 0xful));
+      if (Tmp & 0x8ul)
+	Str << "4 ";
+      else
+	Str << "0 ";
+      if (Tmp & 0x4ul)
+	Str << "3 ";
+      else
+	Str << "0 ";
+      if (Tmp & 0x2ul)
+	Str << "2 ";
+      else
+	Str << "0 ";
+      if (Tmp & 0x1ul)
+	Str << "1 ";
+      else
+	Str << "0 ";
+      Str << "| ";
+    }
+  return Str;
+}
+
 // compute the projection of the product of a bosonic state and a fermionic state
 //
 // bosonState = real vector where the bosonic state is stored
@@ -483,23 +518,23 @@ void FermionOnSphereFourLandauLevels::BosonicStateTimeFermionicState(RealVector&
   int NbrMax = firstComponent+nbrComponent;
   int NbrVariable=0;
   unsigned long* Variable = new unsigned long[this->NbrFermions];
-  for (int j=0; j<this->HilbertSpaceDimension;j++)
+  for (int j = 0; j < this->HilbertSpaceDimension; j++)
     {
       if(fermionState[j]!=0)
 	{
 	  this->ConvertToMonomialVariable(this->StateDescription[j], Slater,NbrVariable,Variable);
-	  for (int i=firstComponent;i<NbrMax;i++)
+	  for (int i = firstComponent; i < NbrMax; i++)
 	    {
 	      if(bosonState[i]!=0)
 		{
 		  bosonSpace->GetMonomial(i,Monomial);
-		  unsigned int Limit=this->MonomialsTimesSlaterProjection(Slater,Monomial,Variable,NbrVariable,finalStates,weigth,finalSpace);
-		  for (unsigned int Index=0; Index<Limit;Index++)
+		  unsigned int Limit = this->MonomialsTimesSlaterProjection(Slater,Monomial,Variable,NbrVariable,finalStates,weigth,finalSpace);
+		  for (unsigned int Index = 0; Index < Limit; Index++)
 		    {
 		      int TmpLzMax = finalSpace->LzMax;
 		      while (((finalStates[Index] >> TmpLzMax) & 0x1ul) == 0x0ul)
 			--TmpLzMax;
-		      outputVector[finalSpace->FindStateIndex(finalStates[Index],TmpLzMax)]+=bosonState[i]*fermionState[j]*weigth[Index];
+		      outputVector[finalSpace->FindStateIndex(finalStates[Index],TmpLzMax)] += bosonState[i] * fermionState[j] * weigth[Index];
 		    }
 		}
 	    }
@@ -643,3 +678,4 @@ unsigned int FermionOnSphereFourLandauLevels::MonomialsTimesSlaterProjection(uns
   delete [] State;
   return NbrNonZero;
 }
+
