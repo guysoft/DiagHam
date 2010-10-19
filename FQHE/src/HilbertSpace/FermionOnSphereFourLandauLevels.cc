@@ -272,7 +272,7 @@ long FermionOnSphereFourLandauLevels::GenerateStates(int nbrFermions, int nbrFlu
 	      for (; pos < TmpPos; ++pos)
 		this->StateDescription[pos] |= Mask;
 	    }
-	  if ((lzMax <= (nbrFluxQuanta + 4)) && (lzMax >= 2))
+	  if ((lzMax <= (nbrFluxQuanta + 3)) && (lzMax >= 3))
 	    {
 	      TmpPos = this->GenerateStates(nbrFermions - 3, nbrFluxQuanta, lzMax - 1, totalLz - (3 * lzMax), pos);
 	      Mask = 0xdul << (lzMax << 2);
@@ -326,7 +326,7 @@ long FermionOnSphereFourLandauLevels::GenerateStates(int nbrFermions, int nbrFlu
 	  for (; pos < TmpPos; ++pos)
 	    this->StateDescription[pos] |= Mask;
 	}
-      if ((lzMax <= (nbrFluxQuanta + 4)) && (lzMax >= 2))
+      if ((lzMax <= (nbrFluxQuanta + 3)) && (lzMax >= 3))
 	{
 	  TmpPos = this->GenerateStates(nbrFermions - 2, nbrFluxQuanta, lzMax - 1, totalLz - (2 * lzMax), pos);
 	  Mask = 0x5ul << (lzMax << 2);

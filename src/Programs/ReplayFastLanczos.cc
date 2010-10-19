@@ -194,13 +194,14 @@ int main(int argc, char** argv)
 	  ReadLittleEndian(File, MaximumNumberIteration);
 	  ReadLittleEndian(File, TmpDimension);
 
+	  cout << "number of wanted eigenvalues : " << NbrEigenvalue << endl;
+	  cout << "block size : " << BlockSize << endl;
+	  cout << "number of iterations : " << LanczosIndex << endl;
+	  cout << "matrix size : " << TmpDimension << endl;
 	  int TwiceBlockSize = 2 * BlockSize;
 	  int TmpMax = TmpDimension - TwiceBlockSize;
 
 	  RealBandDiagonalSymmetricMatrix ReducedMatrix(TmpDimension, BlockSize, true);
-	  RealBandDiagonalSymmetricMatrix TemporaryReducedMatrix (TmpDimension, BlockSize, true);
-	  RealTriDiagonalSymmetricMatrix TridiagonalizedMatrix (TmpDimension, true);
-	  RealTriDiagonalSymmetricMatrix DiagonalizedMatrix (TmpDimension, true);
 	  for (int i = 0; i < TmpMax; ++i)    
 	    {    
 	      for (int j = 0; j < TwiceBlockSize; ++j)
@@ -214,26 +215,18 @@ int main(int argc, char** argv)
 	  File.close();  
 
 	  int Dimension = ReducedMatrix.GetNbrRow();
+	  if ((NbrIter > 0) && ((NbrIter * BlockSize) <Dimension ))
+	    {
+	      Dimension = NbrIter * BlockSize;
+	      ReducedMatrix.Resize(Dimension, Dimension);
+	    }
+	  RealBandDiagonalSymmetricMatrix TemporaryReducedMatrix (TmpDimension, BlockSize, true);
+	  RealTriDiagonalSymmetricMatrix TridiagonalizedMatrix (TmpDimension, true);
+	  RealTriDiagonalSymmetricMatrix DiagonalizedMatrix (TmpDimension, true);
 	  TemporaryReducedMatrix.Copy(ReducedMatrix);
-#ifdef __LAPACK__
-	  if (LapackFlag == true)
-	    {
-	      RealDiagonalMatrix TmpDiag (TemporaryReducedMatrix.GetNbrColumn());
-	      TemporaryReducedMatrix.LapackDiagonalize(TmpDiag);
-	      DiagonalizedMatrix.Resize(TemporaryReducedMatrix.GetNbrColumn(), TemporaryReducedMatrix.GetNbrColumn());
-	      for (int i = 0; i < TemporaryReducedMatrix.GetNbrColumn(); ++i)
-		DiagonalizedMatrix.DiagonalElement(i) = TmpDiag[i];
-	    }
-	  else
-	    {
-#endif
-	      TemporaryReducedMatrix.Tridiagonalize(DiagonalizedMatrix, 1e-7);
-	      DiagonalizedMatrix.Diagonalize();
-#ifdef __LAPACK__
-	    }
-#endif
 	  if (EigenstateFlag == true)
 	    {
+	      cout << "diagonalizing matrix"  << endl;
 	      RealVector* LanczosVectors = new RealVector [3 * BlockSize];
 	      RealVector* Eigenstates = new RealVector [BlockSize];
 	      RealMatrix TmpEigenvector (ReducedMatrix.GetNbrRow(), ReducedMatrix.GetNbrRow(), true);
@@ -260,6 +253,7 @@ int main(int argc, char** argv)
 #endif
 	      SortedDiagonalizedMatrix.SortMatrixUpOrder(TmpEigenvector);
 
+	      cout << "computing ground states"  << endl;
 	      double* TmpCoefficents = new double [BlockSize];
 	      char* TmpVectorName = new char [256];
 	      for (int i = 0; i < BlockSize; ++i)
@@ -275,7 +269,7 @@ int main(int argc, char** argv)
 		  AddRealLinearCombinationOperation Operation (&(Eigenstates[i]), &(LanczosVectors[1]), BlockSize - 1,  TmpCoefficents);
 		  Operation.ApplyOperation(Architecture.GetArchitecture());
 		}       
-	      for (int i = 1; i < LanczosIndex; ++i)
+	      for (int i = 1; i < NbrIter; ++i)
 		{
 		  for (int j = 0; j < BlockSize; ++j)
 		    {
@@ -292,12 +286,40 @@ int main(int argc, char** argv)
 		  cout << i << "/" << LanczosIndex << "           \r";
 		  cout.flush();
 		}
-	      delete[] TmpVectorName;
+	      cout << endl;
 	    
 	      for (int i = 0; i < BlockSize; ++i)
-		Eigenstates[i] /= Eigenstates[i].Norm();
-	      cout << endl;
+		{
+		  Eigenstates[i] /= Eigenstates[i].Norm();
+		  sprintf(TmpVectorName, "groundvector.%d.vec", i);
+		  Eigenstates[i].WriteVector(TmpVectorName);
+		  cout << SortedDiagonalizedMatrix.DiagonalElement(i) << endl;
+		}
+	      delete[] TmpVectorName;
 	      delete[] TmpCoefficents;
+	    }
+	  else
+	    {
+#ifdef __LAPACK__
+	      if (LapackFlag == true)
+		{
+		  RealDiagonalMatrix TmpDiag (TemporaryReducedMatrix.GetNbrColumn());
+		  TemporaryReducedMatrix.LapackDiagonalize(TmpDiag);
+		  DiagonalizedMatrix.Resize(TemporaryReducedMatrix.GetNbrColumn(), TemporaryReducedMatrix.GetNbrColumn());
+		  for (int i = 0; i < TemporaryReducedMatrix.GetNbrColumn(); ++i)
+		    DiagonalizedMatrix.DiagonalElement(i) = TmpDiag[i];
+		}
+	      else
+		{
+#endif
+		  TemporaryReducedMatrix.Tridiagonalize(DiagonalizedMatrix, 1e-7);
+		  DiagonalizedMatrix.Diagonalize();
+#ifdef __LAPACK__
+		}
+#endif
+	      DiagonalizedMatrix.SortMatrixUpOrder();
+	      for (int i = 0; i < NbrEigenvalue; ++i)
+		cout << DiagonalizedMatrix.DiagonalElement(i) << endl;
 	    }
 	}
     }
