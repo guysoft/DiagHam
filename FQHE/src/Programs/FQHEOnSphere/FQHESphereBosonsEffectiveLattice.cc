@@ -2,6 +2,10 @@
 // *			     Bosons on lattice near n_phi=1/2                                          * //
 // ***************************************************************************************************** //
 
+#include "config.h"
+
+#include "Options/Options.h"
+
 #include "HilbertSpace/AbstractQHEParticle.h"
 #include "HilbertSpace/BosonOnSphereWithSpinAllSz.h"
 #include "Hamiltonian/ParticleOnSphereEffectiveLatticeHamiltonian.h"
@@ -11,8 +15,6 @@
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
 
 #include "MainTask/QHEOnSphereMainTask.h"
-
-#include "Options/Options.h"
 
 #include "GeneralTools/ConfigurationParser.h"
 
@@ -48,8 +50,8 @@ int main(int argc, char** argv)
 
   ArchitectureManager Architecture;
     
-  Architecture.AddOptionGroup(&Manager);
   Manager += SystemGroup;
+  Architecture.AddOptionGroup(&Manager);
   Manager += LanczosGroup;
   Manager += PrecalculationGroup;
   Manager += ToolsGroup;
