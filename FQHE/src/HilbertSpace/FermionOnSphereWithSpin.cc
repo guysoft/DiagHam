@@ -2389,7 +2389,11 @@ RealSymmetricMatrix FermionOnSphereWithSpin::EvaluatePartialDensityMatrixSpinSep
   RealSymmetricMatrix TmpDensityMatrix(TmpHilbertSpaceUp.HilbertSpaceDimension);
   
   
-  unsigned int perm[TmpHilbertSpaceUp.HilbertSpaceDimension][TmpHilbertSpaceDown.HilbertSpaceDimension];
+  unsigned int **perm;
+
+  perm = new unsigned int*[TmpHilbertSpaceUp.HilbertSpaceDimension];
+  for (int i=0; i<TmpHilbertSpaceUp.HilbertSpaceDimension; ++i)
+    perm[i] = new unsigned int[TmpHilbertSpaceDown.HilbertSpaceDimension];
   
   for(int i =0;i< TmpHilbertSpaceUp.HilbertSpaceDimension;i++)
     {
@@ -2439,6 +2443,11 @@ RealSymmetricMatrix FermionOnSphereWithSpin::EvaluatePartialDensityMatrixSpinSep
 	  TmpDensityMatrix.SetMatrixElement(i,j,Coefficient);
 	}
     }
+
+  for (int i=0; i<TmpHilbertSpaceUp.HilbertSpaceDimension; ++i)
+    delete [] perm[i];
+  delete [] perm;
+  
   return TmpDensityMatrix;
 }
 
