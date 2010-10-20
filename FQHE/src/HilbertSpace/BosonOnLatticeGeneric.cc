@@ -386,7 +386,7 @@ unsigned long BosonOnLatticeGeneric::Ad (unsigned long state, int q, double& coe
   else
     {
       ++this->TemporaryState[q];
-      coefficient = sqrt(this->TemporaryState[q]);
+      coefficient = sqrt((double)this->TemporaryState[q]);
     }
   return this->BosonToFermion(this->TemporaryState, this->TemporaryStateHighestBit);
 }

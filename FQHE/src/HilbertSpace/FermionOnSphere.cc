@@ -1302,6 +1302,9 @@ Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& po
   Complex Value;
   Complex Tmp;
   RealVector TmpCoordinates(2);
+  double *VectorNorms = new double[LzMax];
+  for (int i = 0; i <= this->LzMax; ++i)
+    VectorNorms[i]=0.0;
   int Pos;
   int Lz;
   for (int j = 0; j < this->NbrFermions; ++j)
@@ -1313,8 +1316,12 @@ Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& po
 	  basis.GetFunctionValue(TmpCoordinates, Tmp, i);
 	  Functions[j].Re(i) = Tmp.Re;
 	  Functions[j].Im(i) = Tmp.Im;
+	  VectorNorms[i] += SqrNorm(Tmp);
 	}
     }
+  for (int i = 0; i <= this->LzMax; ++i)
+    VectorNorms[i] = sqrt(VectorNorms[i]);
+  double MaxNorm;
   double Factor = 1.0;
   for (int i = 2; i <= this->NbrFermions; ++i)
     Factor *= (double) i;
@@ -1326,12 +1333,14 @@ Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& po
       Pos = 0;
       Lz = 0;
       TmpStateDescription = this->StateDescription[k];
+      MaxNorm = 1.0;
       while (Pos < this->NbrFermions)
 	{
 	  if ((TmpStateDescription & ((unsigned long) 1)) == ((unsigned long) 1))
 	    {
 	      Indices[Pos] = Lz;
 	      ++Pos;
+	      MaxNorm *= VectorNorms[Lz];
 	    }
 	  ++Lz;
 	  TmpStateDescription >>= 1;
@@ -1354,6 +1363,12 @@ Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& po
       // can calculate with lapack for a regular ComplexMatrix by Complex SlaterDet = Slater.LapackDeterminant();
 
       Complex SlaterDet = Slater.Determinant();
+      if (Norm(SlaterDet) > MaxNorm)
+	{
+	  cout << "Problem with determinant calculation for component "<<k<<endl;
+	  return Complex(0.0);
+	}
+
       Value += SlaterDet * (state[k] * Factor);
     }
   delete [] Indices;
@@ -1371,7 +1386,7 @@ Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& po
 // nbrComponent = number of components to evaluate
 
 void FermionOnSphere::EvaluateWaveFunctions (RealVector* states, int nbrStates, RealVector& position, AbstractFunctionBasis& basis,
-					     Complex* waveFuntions, int firstComponent, int nbrComponent)
+					     Complex* waveFunctions, int firstComponent, int nbrComponent)
 {
   // fields used by EvaluateWaveFunction
 #ifdef __LAPACK__
@@ -1385,11 +1400,14 @@ void FermionOnSphere::EvaluateWaveFunctions (RealVector* states, int nbrStates, 
   int* Indices = new int [this->NbrFermions];
   
   for (int i = 0; i < nbrStates; ++i)
-    waveFuntions[i] = 0.0;
+    waveFunctions[i] = 0.0;
   Complex Tmp;
   RealVector TmpCoordinates(2);
   int Pos;
   int Lz;
+  double *VectorNorms = new double[LzMax];
+  for (int i = 0; i <= this->LzMax; ++i)
+    VectorNorms[i]=0.0;
   for (int j = 0; j < this->NbrFermions; ++j)
     {
       TmpCoordinates[0] = position[j << 1];
@@ -1399,12 +1417,16 @@ void FermionOnSphere::EvaluateWaveFunctions (RealVector* states, int nbrStates, 
 	  basis.GetFunctionValue(TmpCoordinates, Tmp, i);
 	  Functions[j].Re(i) = Tmp.Re;
 	  Functions[j].Im(i) = Tmp.Im;
+	  VectorNorms[i] += SqrNorm(Tmp);
 	}
     }
+  for (int i = 0; i <= this->LzMax; ++i)
+    VectorNorms[i] = sqrt(VectorNorms[i]);
   double Factor = 1.0;
   for (int i = 2; i <= this->NbrFermions; ++i)
     Factor *= (double) i;
   Factor = 1.0 / sqrt(Factor);
+  double MaxNorm;
   unsigned long TmpStateDescription;
   int LastComponent = firstComponent + nbrComponent;
   for (int k = firstComponent; k < LastComponent; ++k)
@@ -1412,12 +1434,14 @@ void FermionOnSphere::EvaluateWaveFunctions (RealVector* states, int nbrStates, 
       Pos = 0;
       Lz = 0;
       TmpStateDescription = this->StateDescription[k];
+      MaxNorm = 1.0;
       while (Pos < this->NbrFermions)
 	{
 	  if ((TmpStateDescription & ((unsigned long) 1)) == ((unsigned long) 1))
 	    {
 	      Indices[Pos] = Lz;
 	      ++Pos;
+	      MaxNorm *= VectorNorms[Lz];
 	    }
 	  ++Lz;
 	  TmpStateDescription >>= 1;
@@ -1440,9 +1464,16 @@ void FermionOnSphere::EvaluateWaveFunctions (RealVector* states, int nbrStates, 
       // can calculate with lapack for a regular ComplexMatrix by Complex SlaterDet = Slater.LapackDeterminant();
 
       Complex SlaterDet = Slater.Determinant();
+      if (Norm(SlaterDet) > MaxNorm)
+	{
+	  cout << "Problem with determinant calculation for component "<<k<<endl;
+	  for (int i = 0; i < nbrStates; ++i)
+	    waveFunctions[i] = 0.0;
+	  return;
+	}
       SlaterDet *= Factor;
       for (int i = 0; i < nbrStates; ++i)
-	waveFuntions[i] += SlaterDet * states[i][k];
+	waveFunctions[i] += SlaterDet * states[i][k];
     }
   delete [] Indices;
 }
@@ -2144,7 +2175,7 @@ RealSymmetricMatrix  FermionOnSphere::EvaluatePartialDensityMatrixParticlePartit
       FermionOnSphere TmpHilbertSpace(this->NbrFermions - 1, this->TotalLz - lzSector, this->LzMax);
       unsigned long ShiftedLzVSector = (lzSector + this->LzMax) >> 1;
       unsigned long TmpMask = 0x1ul << ShiftedLzVSector;
-      unsigned long TmpMask2 = (0x1ul << ShiftedLzVSector) - 1ul;
+      //unsigned long TmpMask2 = (0x1ul << ShiftedLzVSector) - 1ul;
       for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
 	{
 	  unsigned long TmpState = TmpHilbertSpace.StateDescription[MinIndex];

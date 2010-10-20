@@ -393,7 +393,7 @@ unsigned long BosonOnLatticeKy::Ad (unsigned long state, int q, double &coeffici
   else
     {
       ++this->TemporaryState[q];
-      coefficient = sqrt(this->TemporaryState[q]);
+      coefficient = sqrt((double)this->TemporaryState[q]);
     }
   return this->BosonToFermion(this->TemporaryState, this->TemporaryStateHighestBit);
 
@@ -1298,7 +1298,7 @@ void BosonOnLatticeKy::ExpandBasisState (int nbrOperators, int *quantumNumbers, 
   int Index;
   unsigned long ResultingState;
   int cK, K, N, S, Subl, TargetQ;
-  double NewFactor = sqrt(1.0/(double)Kmax);
+  double NewFactor = sqrt((double)1.0/(double)Kmax);
   double AdFactor;
   Complex TranslationPhase;
   this->DecodeQuantumNumber(quantumNumbers[nbrOperators-1], N, cK, Subl);
