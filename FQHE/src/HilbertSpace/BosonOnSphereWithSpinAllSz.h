@@ -38,6 +38,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <algorithm>
 
 using std::cout;
 using std::endl;
