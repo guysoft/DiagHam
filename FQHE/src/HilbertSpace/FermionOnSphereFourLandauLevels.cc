@@ -613,7 +613,7 @@ unsigned int FermionOnSphereFourLandauLevels::MonomialsTimesSlaterProjection(uns
 	}
       if(Bool)
 	{
-	  ((Sign & 0x1ul) == 0ul)?:C*=-1.0;
+	  if ((Sign & 0x1ul)) C*=-1.0;
 	  NbrNonZero += SearchInArrayAndSetWeight(TmpState, finalStates, weigth, NbrNonZero, C);
 	}
     }
@@ -670,7 +670,7 @@ unsigned int FermionOnSphereFourLandauLevels::MonomialsTimesSlaterProjection(uns
 	    }
 	  if(Bool)
 	    {
-	      ((Sign & 0x1ul) == 0ul)?:C*=-1.0;
+	      if (Sign & 0x1ul) C*=-1.0;
 	      NbrNonZero += SearchInArrayAndSetWeight(TmpState,finalStates,weigth,NbrNonZero,C);
 	    }
 	}
