@@ -1283,7 +1283,7 @@ RealSymmetricMatrix FermionOnSphereWithSpinLong::EvaluatePartialDensityMatrixSpi
   
   
   unsigned int **perm;
-  perm = new unsigned int[TmpHilbertSpaceUp.HilbertSpaceDimension];
+  perm = new unsigned int*[TmpHilbertSpaceUp.HilbertSpaceDimension];
   for (int i=0; i<TmpHilbertSpaceUp.HilbertSpaceDimension; ++i)
     perm[i]= new unsigned int[TmpHilbertSpaceDown.HilbertSpaceDimension];
   
