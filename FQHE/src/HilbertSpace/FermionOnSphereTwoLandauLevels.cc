@@ -1528,7 +1528,8 @@ unsigned int FermionOnSphereTwoLandauLevels::MonomialsTimesSlaterProjection(unsi
 	}
       if(Bool)
 	{
-	  ((Sign & 0x1ul) == 0ul)?:Coef*=-1.0;
+	  //((Sign & 0x1ul) == 0ul)?:Coef*=-1.0;
+	  if ((Sign & 0x1ul) == 0ul) Coef*=-1.0;
 	  NbrNonZero+=SearchInArrayAndSetWeight(TmpState,finalStates,weigth,NbrNonZero,Coef);
 	}
     }
@@ -1571,7 +1572,9 @@ unsigned int FermionOnSphereTwoLandauLevels::MonomialsTimesSlaterProjection(unsi
 	    }
 	  if(Bool)
 	    {
-	      ((Sign & 0x1ul) == 0ul)?:Coef*=-1.0;
+	      //((Sign & 0x1ul) == 0ul)?:Coef*=-1.0;
+	      if ((Sign & 0x1ul) == 0ul)
+		Coef*=-1.0;
 	      NbrNonZero += SearchInArrayAndSetWeight(TmpState,finalStates,weigth,NbrNonZero,Coef);
 	    }
 	}
@@ -1801,7 +1804,8 @@ unsigned int FermionOnSphereTwoLandauLevels::SlaterTimesSlaterProjection(unsigne
 	      TmpState |= Mask;
 	    }
 	  SortArrayDownOrdering(State,this->NbrFermions);
-	  ((Sign & 0x1ul) == 0ul)?:Coef*=-1.0;
+	  // ((Sign & 0x1ul) == 0ul)?:Coef*=-1.0;
+	  if ((Sign & 0x1ul) == 0ul)?:Coef*=-1.0;
 	  NbrStates += SearchInArrayAndSetWeight(finalSpace->ConvertFromMonomial(State), finalStates, weigth, NbrStates, Coef);
 	}
     }

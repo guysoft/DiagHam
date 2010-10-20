@@ -39,6 +39,7 @@
 #include "HilbertSpace/BosonOnSphere.h"
 #include "HilbertSpace/BosonOnSphereWithSpin.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdlib>
 
