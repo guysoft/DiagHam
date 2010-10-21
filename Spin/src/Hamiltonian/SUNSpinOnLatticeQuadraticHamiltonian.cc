@@ -134,7 +134,7 @@ void SUNSpinOnLatticeQuadraticHamiltonian::EvaluateInteractionTerms()
 	  ++Pos;
 	}
     }
-  if (fabs(this->CyclicPrefactor>0.0))
+  if (fabs((double)this->CyclicPrefactor)>0.0)
     {
       this->NbrCyclicPermutations = 2*this->Lattice->GetNbrPlaquettes();
       if (this->NbrCyclicPermutations==0)
