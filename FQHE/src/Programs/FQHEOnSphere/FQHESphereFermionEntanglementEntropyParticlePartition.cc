@@ -67,6 +67,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "degenerated-groundstate", "single column file describing a degenerated ground state");
   (*SystemGroup) += new BooleanOption  ('\n', "compute-lvalue", "compute the L value of each reduced density matrix eigenstate");
   (*SystemGroup) += new BooleanOption  ('\n', "largest-lz", "only compute the largest block of the reduced density matrix (Lz=0 or 1/2)");
+  (*SystemGroup) += new BooleanOption  ('\n', "positive-lz", "only compute the positive Lz sectors");
   (*SystemGroup) += new BooleanOption  ('\n', "realspace-cut", "use real space partition instead of particle partition");
   (*SystemGroup) += new SingleDoubleOption ('\n', "realspace-angle", "inclination angle that defines the real space parition (in degrees)", 90);
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with partent extension");
@@ -121,6 +122,7 @@ int main(int argc, char** argv)
   bool ComputeLValueFlag = Manager.GetBoolean("compute-lvalue");
   bool EigenstateFlag = Manager.GetBoolean("density-eigenstate");
   bool LargestLSector = Manager.GetBoolean("largest-lz");
+  bool PositiveLzSectors = Manager.GetBoolean("positive-lz");
   bool RealSpaceCut = Manager.GetBoolean("realspace-cut");
   int FilterLza = Manager.GetInteger("lza-eigenstate");
   int NbrEigenstates = Manager.GetInteger("nbr-eigenstates");
@@ -336,6 +338,17 @@ int main(int argc, char** argv)
 	    {
 	      SubsystemTotalLz = 1;
 	      SubsystemMaxTotalLz = 1;
+	    }
+	}
+      if (PositiveLzSectors == true)
+	{
+	  if (((LzMax * NbrParticles) & 1) == 0)
+	    {
+	      SubsystemTotalLz = 0;
+	    }
+	  else
+	    {
+	      SubsystemTotalLz = 1;
 	    }
 	}
       cout << "SubsystemMaxTotalLz = " << SubsystemMaxTotalLz << "    ComplementaryMaxTotalLz = " << ComplementaryMaxTotalLz << endl;
