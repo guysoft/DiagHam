@@ -30,7 +30,8 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleStringOption  ('i', "input-vector", "name of the file containing the input vector");
   (*SystemGroup) += new SingleStringOption  ('o', "output-vector", "name of the file where the output vector has to be stored");
-  (*SystemGroup) += new BooleanOption  ('c', "complex", "run for a complex vector");
+  (*SystemGroup) += new SingleDoubleOption  ('p', "phase", "phase (in radian unit)", 0.0);
+  (*SystemGroup) += new BooleanOption  ('\n', "pi-unit", "the phase is expressed in pi unit instead of radian unit"); 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -38,76 +39,53 @@ int main(int argc, char** argv)
       cout << "see man page for option syntax or type VectorPhaseMultiply -h" << endl;
       return -1;
     }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
     }
 
-  
-
-  if (Manager.GetBoolean("complex"))
+  if (Manager.GetString("input-vector") == 0)
     {
-      ComplexVector State;
-      if (State.ReadVector (Manager.GetString("vector")) == false)
-	{
-	  cout << "can't open vector file " << Manager.GetString("vector") << endl;
-	  return -1;      
-	}
-      if (Manager.GetBoolean("normalize-phase"))
-	{
-	  double MaxNorm=0.0;
-	  int MaxIndex=0;
-	  for (int i = 0; i < State.GetVectorDimension();++i)
-	    {
-	      if (Norm(State[i])>MaxNorm)
-		{
-		  MaxNorm=Norm(State[i]);
-		  MaxIndex=i;
-		}
-	    }
-	  cout << "MaxNorm="<<MaxNorm<<", correcting phase with "<<Polar(1.0,-Arg(State[MaxIndex]))<<endl;
-	  State *= Polar(1.0,-Arg(State[MaxIndex]));
-	  cout << endl<<State;
-	}
-      if (Manager.GetBoolean("careful-normalize"))
-	{
-	  cout << "Attention, careful-normalize is not implemented yet for complex numbers" << endl;
-	}
-      State /= State.Norm();
+      cout << "no input file" << endl;
+    }
+  if (Manager.GetString("output-vector") == 0)
+    {
+      cout << "no output file" << endl;
+    }
 
-      if (State.WriteVector (Manager.GetString("vector")) == false)
-	{
-	  cout << "can't overwrite vector file " << Manager.GetString("vector") << endl;
-	  return -1;
-	}
+  Complex Phase;
+  if (Manager.GetBoolean("pi-unit"))  
+    {
+      Phase.Re = cos (M_PI * Manager.GetDouble("phase"));
+      Phase.Im = sin (M_PI * Manager.GetDouble("phase"));
     }
   else
     {
-      RealVector State;
-      if (State.ReadVector (Manager.GetString("vector")) == false)
+      Phase.Re = cos (Manager.GetDouble("phase"));
+      Phase.Im = sin (Manager.GetDouble("phase"));
+    }
+
+  RealVector InputVector1;
+  if (InputVector1.ReadVectorTest(Manager.GetString("input-vector")))  
+    {
+      if (InputVector1.ReadVector(Manager.GetString("input-vector")) == false)
 	{
-	  cout << "can't open vector file " << Manager.GetString("vector") << endl;
-	  return -1;      
-	}
-      
-      if (Manager.GetBoolean("careful-normalize") == false)
-	{
-	  State /= State.Norm();
-	}
-      else
-	{
-	  long double Norm = 0.0;
-	  for (long i = 0l; i < State.GetLargeVectorDimension();++i)
-	    Norm += ((long double) State[i]) * ((long double) State[i]);
-	  Norm = sqrtl(Norm);
-	  State /= (double) Norm;      
-	}
-      if (State.WriteVector (Manager.GetString("vector")) == false)
-	{
-	  cout << "can't overwrite vector file " << Manager.GetString("vector") << endl;
 	  return -1;
 	}
+      ComplexVector OutputVector (InputVector1);
+      OutputVector *= Phase;
+      OutputVector.WriteVector(Manager.GetString("output-vector"));
+    }
+  else
+    {
+      ComplexVector OutputVector;
+      if (OutputVector.ReadVector(Manager.GetString("input-vector")) == false)
+	{
+	  return -1;
+	}
+      OutputVector *= Phase;
+      OutputVector.WriteVector(Manager.GetString("output-vector"));
     }
   return 0;
 }

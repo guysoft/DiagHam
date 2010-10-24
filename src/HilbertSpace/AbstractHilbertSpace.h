@@ -85,13 +85,13 @@ class AbstractHilbertSpace
   // return a list of all possible quantum numbers 
   //
   // return value = pointer to corresponding quantum number
-  virtual List<AbstractQuantumNumber*> GetQuantumNumbers () = 0;
+  virtual List<AbstractQuantumNumber*> GetQuantumNumbers ();
 
   // return quantum number associated to a given state
   //
   // index = index of the state
   // return value = pointer to corresponding quantum number
-  virtual AbstractQuantumNumber* GetQuantumNumber (int index) = 0;
+  virtual AbstractQuantumNumber* GetQuantumNumber (int index);
 
   // get information about any additional symmetry of the Hilbert space
   //
@@ -104,7 +104,7 @@ class AbstractHilbertSpace
   // converter = reference on subspace-space converter to use
   // return value = pointer to the new subspace
   virtual AbstractHilbertSpace* ExtractSubspace (AbstractQuantumNumber& q, 
-						 SubspaceSpaceConverter& converter) = 0;
+						 SubspaceSpaceConverter& converter);
 
   // write the entire Hilbert-space basis to the given stream
   // Str = stream to write on

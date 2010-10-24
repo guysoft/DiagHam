@@ -926,6 +926,12 @@ class RealVector : public Vector
   // return value = vector dimension
   long ReadVectorDimension (const char* fileName);
 
+  // test if a vector can be read from a file (matching the right type), without loading the full vector 
+  //
+  // fileName = name of the file where the vector has to be read
+  // return value = true if the vector can be read
+  bool ReadVectorTest (const char* fileName);
+
   // Output Stream overload
   //
   // str = reference on output stream

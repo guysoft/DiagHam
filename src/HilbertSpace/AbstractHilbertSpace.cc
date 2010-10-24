@@ -42,6 +42,7 @@ AbstractHilbertSpace::~AbstractHilbertSpace ()
 // get information about any additional symmetry of the Hilbert space
 //
 // return value = symmetry id  
+
 int AbstractHilbertSpace::GetHilbertSpaceAdditionalSymmetry()
 {
   return 0; // universal coding for no symmetry
@@ -49,10 +50,44 @@ int AbstractHilbertSpace::GetHilbertSpaceAdditionalSymmetry()
 
 
 // write the entire Hilbert-space basis to the given stream
+//
 // Str = stream to write on
+
 ostream& AbstractHilbertSpace::ShowBasis (ostream& Str)
 {
   for (int i=0; i<this->GetHilbertSpaceDimension(); ++i)
     this->PrintState(Str,i)<<std::endl;
   return Str;
+}
+
+// return a list of all possible quantum numbers 
+//
+// return value = pointer to corresponding quantum number
+
+List<AbstractQuantumNumber*> AbstractHilbertSpace::GetQuantumNumbers ()
+{
+  List<AbstractQuantumNumber*> TmpList;
+  return TmpList;
+}
+
+// return quantum number associated to a given state
+//
+// index = index of the state
+// return value = pointer to corresponding quantum number
+
+AbstractQuantumNumber* AbstractHilbertSpace::GetQuantumNumber (int index)
+{
+  return 0;
+}
+
+// extract subspace with a fixed quantum number
+//
+// q = quantum number value
+// converter = reference on subspace-space converter to use
+// return value = pointer to the new subspace
+
+AbstractHilbertSpace* AbstractHilbertSpace::ExtractSubspace (AbstractQuantumNumber& q, 
+							     SubspaceSpaceConverter& converter)
+{
+  return 0;
 }

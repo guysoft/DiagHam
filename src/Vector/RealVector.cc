@@ -996,7 +996,7 @@ RealVector& RealVector::operator -= (RealVector& V1)
 
 RealVector operator + (RealVector& V1, RealVector& V2)
 {
-  if ((V1.Dimension != 0) && (V2.Dimension == V1.Dimension) || (V1.LargeDimension != V2.LargeDimension))
+  if (((V1.Dimension != 0) && (V2.Dimension == V1.Dimension)) || (V1.LargeDimension == V2.LargeDimension))
     {
       V1.Localize();
       V2.Localize();
@@ -1031,7 +1031,7 @@ RealVector operator + (RealVector& V1, RealVector& V2)
 
 RealVector operator - (RealVector& V1, RealVector& V2)
 {
-  if ((V1.Dimension != 0) && (V2.Dimension == V1.Dimension) || (V1.LargeDimension != V2.LargeDimension))
+  if (((V1.Dimension != 0) && (V2.Dimension == V1.Dimension)) || (V1.LargeDimension == V2.LargeDimension))
     {
       V1.Localize();
       V2.Localize();
@@ -3747,6 +3747,57 @@ long RealVector::ReadVectorDimension (const char* fileName)
   ReadLittleEndian(File, TmpLargeDimension);
   File.close();
   return TmpLargeDimension;
+}
+
+// test if a vector can be read from a file (matching the right type), without loading the full vector 
+//
+// fileName = name of the file where the vector has to be read
+// return value = true if the vector can be read
+
+bool RealVector::ReadVectorTest (const char* fileName)
+{
+  ifstream File;
+  File.open(fileName, ios::binary | ios::in);
+  if (!File.is_open())
+    {
+      cout << "Cannot open the file: " << fileName << endl;
+      return false;
+    }
+  
+  std::streampos ZeroPos, MaxPos;
+  File.seekg (0, ios::beg);
+  ZeroPos = File.tellg();
+  File.seekg (0, ios::end);
+  MaxPos = File.tellg ();
+
+  long Length = (long) (MaxPos - ZeroPos) - sizeof(int);  
+  File.seekg (0, ios::beg);
+  int TmpDimension;
+  ReadLittleEndian(File, TmpDimension);
+
+  if (TmpDimension > 0)
+    {
+      File.close();
+      Length /= sizeof(double);
+      if (Length == ((long) TmpDimension))
+	return true;
+      else
+	return false;
+    }
+  else
+    {
+      long TmpLargeDimension;
+      ReadLittleEndian(File, TmpLargeDimension);
+      File.close();
+      Length -= sizeof (long);
+      Length /= sizeof(double);
+      if (Length == TmpLargeDimension)
+	return true;
+      else
+	return false;
+    }
+  File.close();
+  return false;
 }
 
 // input file stream overload

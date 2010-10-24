@@ -376,4 +376,5 @@ inline void Vector::Delocalize(bool transfertFlag)
 }
 
 
+
 #endif
