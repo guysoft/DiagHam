@@ -389,24 +389,31 @@ void HermitianMatrix::AddToMatrixElement(int i, int j, double x)
 
 void HermitianMatrix::AddToMatrixElement(int i, int j, const Complex& x)
 {
-  if ((i == j) || (i >= this->NbrRow) || (j >= this->NbrColumn))
+  if ((i >= this->NbrRow) || (j >= this->NbrColumn))
     return;
   else
     {
-      if (i > j)
+      if (i == j)
 	{
-	  int tmp = j;
-	  j = i;
-	  i = tmp;
-	  j -= i * (i - 2 * this->NbrRow - this->Increment + 3) / 2 + 1;
-	  this->RealOffDiagonalElements[j] += x.Re;
-	  this->ImaginaryOffDiagonalElements[j] -= x.Im;	        
+	  this->DiagonalElements[i] += x.Re;
 	}
       else
 	{
-	  j -= i * (i - 2 * this->NbrRow - this->Increment + 3) / 2 + 1;
-	  this->RealOffDiagonalElements[j] += x.Re;
-	  this->ImaginaryOffDiagonalElements[j] += x.Im;	        
+	  if (i > j)
+	    {
+	      int tmp = j;
+	      j = i;
+	      i = tmp;
+	      j -= i * (i - 2 * this->NbrRow - this->Increment + 3) / 2 + 1;
+	      this->RealOffDiagonalElements[j] += x.Re;
+	      this->ImaginaryOffDiagonalElements[j] -= x.Im;	        
+	    }
+	  else
+	    {
+	      j -= i * (i - 2 * this->NbrRow - this->Increment + 3) / 2 + 1;
+	      this->RealOffDiagonalElements[j] += x.Re;
+	      this->ImaginaryOffDiagonalElements[j] += x.Im;	        
+	    }
 	}
     }
 }

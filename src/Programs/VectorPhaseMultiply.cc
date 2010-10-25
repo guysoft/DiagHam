@@ -73,7 +73,7 @@ int main(int argc, char** argv)
 	{
 	  return -1;
 	}
-      ComplexVector OutputVector (InputVector1);
+      ComplexVector OutputVector (InputVector1, true);
       OutputVector *= Phase;
       OutputVector.WriteVector(Manager.GetString("output-vector"));
     }

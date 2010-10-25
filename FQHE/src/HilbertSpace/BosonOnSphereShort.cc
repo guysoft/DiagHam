@@ -1016,7 +1016,9 @@ HermitianMatrix BosonOnSphereShort::EvaluatePartialDensityMatrix (int subsytemSi
 	      Complex TmpValue = Conj(groundState[TmpStatePosition[j]]);
 	      for (int k = 0; k < Pos; ++k)
 		if (TmpStatePosition2[k] >= Pos2)
-		TmpDensityMatrix.AddToMatrixElement(Pos2, TmpStatePosition2[k], TmpValue * groundState[TmpStatePosition[k]]);
+		  {
+		    TmpDensityMatrix.AddToMatrixElement(Pos2, TmpStatePosition2[k], TmpValue * groundState[TmpStatePosition[k]]);
+		  }
 	    }
 	}
     }
