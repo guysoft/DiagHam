@@ -558,7 +558,7 @@ int main(int argc, char** argv)
 					{
 					  sprintf (TmpEigenstateName,
 						   "fermions_sphere_density_n_%d_2s_%d_lz_%d_la_%d_na_%d_lza_%d.%d.vec",
-						   NbrParticles, LzMax, TotalLz, SubsystemSize,
+						   NbrParticles, LzMax, TotalLz[0], SubsystemSize,
 						   SubsystemNbrParticles, SubsystemTotalLz, i);
 					  TmpEigenstates[i].WriteVector(TmpEigenstateName);
 					}
@@ -722,7 +722,7 @@ int main(int argc, char** argv)
 				}
 			      else
 				{
-				  RealMatrix TmpEigenstates(PartialDensityMatrix.GetNbrRow(),
+				  Complex TmpEigenstates(PartialDensityMatrix.GetNbrRow(),
 							    PartialDensityMatrix.GetNbrRow(), true);
 				  for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
 				    TmpEigenstates[i][i] = 1.0;
@@ -738,7 +738,7 @@ int main(int argc, char** argv)
 					{
 					  sprintf (TmpEigenstateName,
 						   "fermions_sphere_density_n_%d_2s_%d_lz_%d_la_%d_na_%d_lza_%d.%d.vec",
-						   NbrParticles, LzMax, TotalLz, SubsystemSize,
+						   NbrParticles, LzMax, TotalLz[0], SubsystemSize,
 						   SubsystemNbrParticles, SubsystemTotalLz, i);
 					  TmpEigenstates[i].WriteVector(TmpEigenstateName);
 					}
