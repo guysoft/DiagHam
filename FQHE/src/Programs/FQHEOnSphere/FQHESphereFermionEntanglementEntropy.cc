@@ -722,8 +722,8 @@ int main(int argc, char** argv)
 				}
 			      else
 				{
-				  Complex TmpEigenstates(PartialDensityMatrix.GetNbrRow(),
-							    PartialDensityMatrix.GetNbrRow(), true);
+				  ComplexMatrix TmpEigenstates(PartialDensityMatrix.GetNbrRow(),
+							       PartialDensityMatrix.GetNbrRow(), true);
 				  for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
 				    TmpEigenstates[i][i] = 1.0;
 				  PartialDensityMatrix.Diagonalize(TmpDiag, TmpEigenstates, Manager.GetDouble("diag-precision"));
