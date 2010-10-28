@@ -2486,7 +2486,7 @@ RealSymmetricMatrix  FermionOnSphere::EvaluatePartialDensityMatrixParticlePartit
 
 // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using real space partition. The density matrix is only evaluated in a given Lz sector.
 // 
-// nbrBosonSector = number of particles that belong to the subsytem 
+// nbrFermionSector = number of particles that belong to the subsytem 
 // lzSector = Lz sector in which the density matrix has to be evaluated 
 // theta =  inclination angle defining the cut
 // groundState = reference on the total system ground state
