@@ -315,10 +315,12 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // 
   // nbrBosonSector = number of particles that belong to the subsytem 
   // lzSector = Lz sector in which the density matrix has to be evaluated 
-  // theta =  inclination angle defining the cut
+  // phiRange = The angle traced in the \hat{phi} direction between the 2 longitudes defining the cut in degrees
+  // thetaTop =  inclination angle defining one edge of the cut in degrees
+  // thetaBottom = inclination angle defining the bottom edge of the cut. thetaBottom>thetaTop in degrees
   // groundState = reference on the total system ground state
   // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
-  virtual RealSymmetricMatrix EvaluatePartialDensityMatrixRealSpacePartition (int nbrBosonSector, int lzSector, double theta, RealVector& groundState);
+  virtual RealSymmetricMatrix EvaluatePartialDensityMatrixRealSpacePartition (int nbrBosonSector, int lzSector, double thetaTop, double thetaBottom, double phiRange, RealVector& groundState);
 
   // compute part of the Schmidt decomposition, allowing cut in the reduced denisty matrix eigenvalue space
   // 

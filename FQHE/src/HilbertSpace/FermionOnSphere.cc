@@ -2488,11 +2488,13 @@ RealSymmetricMatrix  FermionOnSphere::EvaluatePartialDensityMatrixParticlePartit
 // 
 // nbrFermionSector = number of particles that belong to the subsytem 
 // lzSector = Lz sector in which the density matrix has to be evaluated 
-// theta =  inclination angle defining the cut
+// phiRange = The angle traced in the \hat{phi} direction between the 2 longitudes defining the cut in degrees
+// thetaTop =  inclination angle defining one edge of the cut in degrees
+// thetaBottom = inclination angle defining the bottom edge of the cut. thetaBottom>thetaTop in degrees
 // groundState = reference on the total system ground state
 // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
 
-RealSymmetricMatrix FermionOnSphere::EvaluatePartialDensityMatrixRealSpacePartition (int nbrFermionSector, int lzSector, double theta, RealVector& groundState)
+RealSymmetricMatrix FermionOnSphere::EvaluatePartialDensityMatrixRealSpacePartition (int nbrFermionSector, int lzSector,  double theta_top, double theta_bot, double phi_range, RealVector& groundState)
 {
   if (nbrFermionSector == 0)
     {
