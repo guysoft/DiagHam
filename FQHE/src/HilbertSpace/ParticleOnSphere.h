@@ -439,6 +439,15 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // return value = vector resulting of the operation
   virtual RealVector GetLzSymmetricVector(ParticleOnSphere* finalSpace, RealVector& initialVector);
 
+  // evaluate coeffecicents requested to compute the real space partition
+  //
+  // lzMax = twice the maximum angular momentum
+  // thetaTop = inclination angle defining one edge of the cut in radians
+  // thetaBottom = inclination angle defining the bottom edge of the cut. thetaBottom>thetaTop in radians
+  // incompleteBetaThetaTop = reference on the pointer to the array (allocation done by the method) where the top part coefficients will be stored
+  // incompleteBetaThetaBotton = reference on the pointer to the array (allocation done by the method) where the bottom part coefficients will be stored
+  virtual void EvaluatePartialDensityMatrixRealSpacePartitionCoefficient(int lzMax, double thetaTop, double thetaBottom, double*& incompleteBetaThetaTop, double*& incompleteBetaThetaBottom);
+
 };
 
 #endif

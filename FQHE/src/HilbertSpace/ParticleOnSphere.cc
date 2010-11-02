@@ -471,6 +471,55 @@ RealSymmetricMatrix ParticleOnSphere::EvaluatePartialDensityMatrixRealSpaceParti
   return PartialDensityMatrix;
 }
 
+// evaluate coeffecicents requested to compute the real space partition
+//
+// lzMax = twice the maximum angular momentum
+// thetaTop = inclination angle defining one edge of the cut in radians
+// thetaBottom = inclination angle defining the bottom edge of the cut. thetaBottom>thetaTop in radians
+// incompleteBetaThetaTop = reference on the pointer to the array (allocation done by the method) where the top part coefficients will be stored
+// incompleteBetaThetaBotton = reference on the pointer to the array (allocation done by the method) where the bottom part coefficients will be stored
+
+void ParticleOnSphere::EvaluatePartialDensityMatrixRealSpacePartitionCoefficient(int lzMax, double thetaTop, double thetaBottom, double*& incompleteBetaThetaTop, double*& incompleteBetaThetaBottom)
+{
+  double * LogFactorialsNphi = new double[lzMax +2];
+  LogFactorialsNphi[0] = 0.0;
+  LogFactorialsNphi[1] = 0.0;
+  for (int i = 2 ; i < lzMax+2; ++i)
+    LogFactorialsNphi[i] = LogFactorialsNphi[i - 1] + log((double) i); 
+  
+  
+  double LogSinThetaTop = 0;
+  
+  if (thetaTop > 1e-10)
+    LogSinThetaTop = 2.0*log(sin(thetaTop/2.));
+  
+  double LogCosThetaTop = 2.0*log(cos(thetaTop/2.));
+  
+  double LogSinThetaBot = 2.0*log(sin(thetaBottom/2.));
+  double LogCosThetaBot = 2.0*log(cos(thetaBottom/2.));
+  
+  // Compute the incomplete beta function for x=sin^2(thetaTop/2) and x=sin^2(thetaBottom/2)
+  incompleteBetaThetaTop = new double[lzMax + 1];
+  incompleteBetaThetaBottom = new double[lzMax + 1];
+  if ( thetaTop < 1e-10)
+    incompleteBetaThetaTop [lzMax] = 0.0;
+  else
+    incompleteBetaThetaTop [lzMax] = exp((lzMax+1)*LogSinThetaTop);
+  incompleteBetaThetaBottom [lzMax] =  exp((lzMax+1)*LogSinThetaBot);
+  
+  for (int i=lzMax-1 ; i>= 0; --i)
+    {
+      if (thetaTop < 1e-10)
+	incompleteBetaThetaTop[i] = 0.0;
+      else
+	incompleteBetaThetaTop[i] = exp(LogFactorialsNphi[lzMax+1] - LogFactorialsNphi[i+1] - LogFactorialsNphi[lzMax-i] + (i+1.0)*LogSinThetaTop + (lzMax - i)*LogCosThetaTop) + incompleteBetaThetaTop[i+1] ;
+      
+      incompleteBetaThetaBottom[i] = exp(LogFactorialsNphi[lzMax+1] - LogFactorialsNphi[i+1] - LogFactorialsNphi[lzMax-i] + (i+1.0)*LogSinThetaBot + (lzMax - i)*LogCosThetaBot) + incompleteBetaThetaBottom[i+1] ;
+    }
+  delete [] LogFactorialsNphi;
+}
+
+
 // compute part of the Schmidt decomposition, allowing cut in the reduced denisty matrix eigenvalue space
 // 
 // subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax to -Lzmax+subsytemSize-1)

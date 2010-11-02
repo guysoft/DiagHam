@@ -1857,21 +1857,42 @@ RealSymmetricMatrix  BosonOnSphereShort::EvaluatePartialDensityMatrixParticlePar
 
 RealSymmetricMatrix BosonOnSphereShort::EvaluatePartialDensityMatrixRealSpacePartition (int nbrBosonSector, int lzSector, double thetaTop, double thetaBottom, double phiRange, RealVector& groundState)
 {
-  if ( (thetaBottom <= thetaTop) || (phiRange <= 0.0) )
+  if ((thetaBottom <= thetaTop) || (phiRange <= 0.0))
     {
       RealSymmetricMatrix TmpDensityMatrixZero;
       return TmpDensityMatrixZero;
     }
+
   thetaTop *= M_PI / 180.0;
   thetaBottom *= M_PI / 180.0;
   phiRange /= 360.0;
+  
+  double* IncompleteBetaThetaTop = 0;
+  double* IncompleteBetaThetaBottom = 0;
+
+  this->EvaluatePartialDensityMatrixRealSpacePartitionCoefficient(this->LzMax, thetaTop, thetaBottom, IncompleteBetaThetaTop, IncompleteBetaThetaBottom);
 
   if (nbrBosonSector == 0)
     {
       if (lzSector == 0)
 	{
+	  unsigned long* TmpMonomial1 = new unsigned long [this->NbrBosons];
+	  double TmpValue = 0.0;
+	  for (int MinIndex = 0; MinIndex < this->HilbertSpaceDimension; ++MinIndex)    
+	    {
+	      this->ConvertToMonomial(this->FermionBasis->StateDescription[MinIndex], this->FermionBasis->StateLzMax[MinIndex], TmpMonomial1);
+	      double FormFactor = 0.0;
+	      for (int i=0; i < this->NbrBosons; i++)
+		FormFactor += log(1.0 - IncompleteBetaThetaBottom[TmpMonomial1[i]] + IncompleteBetaThetaTop[TmpMonomial1[i]] + (1.0 - phiRange) * (IncompleteBetaThetaBottom[TmpMonomial1[i]] - IncompleteBetaThetaTop[TmpMonomial1[i]]) );
+	      FormFactor = exp(FormFactor);
+	      TmpValue += groundState[MinIndex] * groundState[MinIndex] * FormFactor;	
+	    }
 	  RealSymmetricMatrix TmpDensityMatrix(1);
-	  TmpDensityMatrix.SetMatrixElement(0, 0, 1.0);
+	  TmpDensityMatrix.SetMatrixElement(0, 0, TmpValue); 
+	  
+	  delete[] IncompleteBetaThetaTop;
+	  delete[] IncompleteBetaThetaBottom;
+	  delete[] TmpMonomial1;
 	  return TmpDensityMatrix;
 	}
       else
@@ -1885,8 +1906,29 @@ RealSymmetricMatrix BosonOnSphereShort::EvaluatePartialDensityMatrixRealSpacePar
     {
       if (lzSector == this->TotalLz)
 	{
-	  RealSymmetricMatrix TmpDensityMatrix(1);
-	  TmpDensityMatrix.SetMatrixElement(0, 0, 1.0);
+	  RealSymmetricMatrix TmpDensityMatrix(this->HilbertSpaceDimension, true);
+	  unsigned long* TmpMonomial1 = new unsigned long [this->NbrBosons];
+	  double* TmpStateCoefficient = new double [this->HilbertSpaceDimension];
+	  for( int i = 0; i < this->HilbertSpaceDimension; i++)
+	    {
+	      TmpStateCoefficient[i] = 0.5 * this->NbrBosons * log(phiRange);
+	      this->ConvertToMonomial(this->FermionBasis->StateDescription[i], this->FermionBasis->StateLzMax[i], TmpMonomial1);
+	      for( int j=0; j<this->NbrBosons; j++)
+		{
+		  TmpStateCoefficient [i] += 0.5*log( IncompleteBetaThetaBottom[TmpMonomial1[j]] - IncompleteBetaThetaTop[TmpMonomial1[j]]);
+		}
+	      TmpStateCoefficient[i] = exp(TmpStateCoefficient[i]);
+	    }
+	  
+	  for(int pos1 = 0; pos1 < this->HilbertSpaceDimension; pos1++)
+	    for(int pos2 = pos1; pos2 < this->HilbertSpaceDimension; pos2++)
+	      {
+		TmpDensityMatrix.SetMatrixElement(pos1, pos2, groundState[pos1]*groundState[pos2]*TmpStateCoefficient[pos1]*TmpStateCoefficient[pos2]);
+	      }
+	  delete[] TmpMonomial1;
+	  delete[] TmpStateCoefficient;
+	  delete[] IncompleteBetaThetaTop;
+	  delete[] IncompleteBetaThetaBottom;
 	  return TmpDensityMatrix;
 	}
       else
@@ -1905,11 +1947,16 @@ RealSymmetricMatrix BosonOnSphereShort::EvaluatePartialDensityMatrixRealSpacePar
       unsigned long* TmpMonomial3 = new unsigned long [this->NbrBosons];
       BosonOnSphereShort TmpHilbertSpace(this->NbrBosons - 1, this->TotalLz - lzSector, this->LzMax);
       unsigned long ShiftedLzVSector = (lzSector + this->LzMax) >> 1;
+      double TmpStateCoefficient = phiRange * (IncompleteBetaThetaBottom[ShiftedLzVSector] - IncompleteBetaThetaTop[ShiftedLzVSector]);
       FactorialCoefficient Factorial;
       for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
 	{
 	  TmpHilbertSpace.ConvertToMonomial(TmpHilbertSpace.FermionBasis->StateDescription[MinIndex], TmpHilbertSpace.FermionBasis->StateLzMax[MinIndex], TmpMonomial1);
 	  TmpHilbertSpace.FermionToBoson(TmpHilbertSpace.FermionBasis->StateDescription[MinIndex], TmpHilbertSpace.FermionBasis->StateLzMax[MinIndex], TmpHilbertSpace.TemporaryState, TmpHilbertSpace.TemporaryStateLzMax);
+	  double FormFactor = 0.0;
+	  for (int i = 0; i < ComplementaryNbrBosonSector; i++)
+	    FormFactor += log(1.0 - IncompleteBetaThetaBottom[TmpMonomial1[i]] + IncompleteBetaThetaTop[TmpMonomial1[i]] + (1.0 - phiRange) * (IncompleteBetaThetaBottom[TmpMonomial1[i]] - IncompleteBetaThetaTop[TmpMonomial1[i]]));
+	  FormFactor = exp(FormFactor);
 	  int TmpIndex2 = 0;
 	  int TmpIndex4 = 0;
 	  while ((TmpIndex2 < ComplementaryNbrBosonSector) && (TmpMonomial1[TmpIndex2] >= ShiftedLzVSector))
@@ -1938,13 +1985,16 @@ RealSymmetricMatrix BosonOnSphereShort::EvaluatePartialDensityMatrixRealSpacePar
 	      for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
 		if (this->TemporaryState[k] > 1)
 		  Factorial.FactorialMultiply(this->TemporaryState[k]);
-	      Factorial.BinomialDivide(this->NbrBosons, nbrBosonSector);
-	      TmpValue += groundState[TmpPos] * groundState[TmpPos] * (Factorial.GetNumericalValue());	
+	      TmpValue += groundState[TmpPos] * groundState[TmpPos] * (Factorial.GetNumericalValue()) * FormFactor * TmpStateCoefficient;	
 	    }
 	}
       
       RealSymmetricMatrix TmpDensityMatrix(1);
       TmpDensityMatrix.SetMatrixElement(0, 0, TmpValue);
+      delete[] IncompleteBetaThetaTop;
+      delete[] IncompleteBetaThetaBottom;
+      delete [] TmpMonomial1;
+      delete [] TmpMonomial3;
       return TmpDensityMatrix;
     }
 
@@ -1971,40 +2021,6 @@ RealSymmetricMatrix BosonOnSphereShort::EvaluatePartialDensityMatrixRealSpacePar
   LogFactorials[1] = 0.0;
   for (int i = 2 ; i <= this->NbrBosons; ++i)
     LogFactorials[i] = LogFactorials[i - 1] + log((double) i); 
-  double TmpLogBinomial = LogFactorials[this->NbrBosons] - LogFactorials[ComplementaryNbrBosonSector] - LogFactorials[nbrBosonSector];
-
-  // Compute log(Binomial(Nphi+1,x) ) for x=1..Nphi+1
-  double * LogFactorialsNphi = new double[this->LzMax +2];
-  LogFactorialsNphi[0] = 0.0;
-  LogFactorialsNphi[1] = 0.0;
-  for (int i = 2 ; i < this->LzMax+2; ++i)
-    LogFactorialsNphi[i] = LogFactorialsNphi[i - 1] + log((double) i); 
-  
-  
-  double LogSinThetaTop = 2.0 * log(sin(thetaTop / 2.0));
-  double LogCosThetaTop = 2.0 * log(cos(thetaTop / 2.0));
-  
-  double LogSinThetaBot = 2.0 * log(sin(thetaBottom / 2.0));
-  double LogCosThetaBot = 2.0 * log(cos(thetaBottom / 2.0));
-  
-  // Compute the incomplete beta function for x=sin^2(thetaTop/2) and x=sin^2(thetaBottom/2)
-  double* IncompleteBetaThetaTop = new double[this->LzMax + 1];
-  double* IncompleteBetaThetaBot = new double[this->LzMax + 1];
-  if (thetaTop < 1e-10)
-    IncompleteBetaThetaTop [this->LzMax] = 0.0;
-  else
-    IncompleteBetaThetaTop [this->LzMax] = exp((this->LzMax + 1) * LogSinThetaTop);  
-  IncompleteBetaThetaBot [this->LzMax] = exp((this->LzMax + 1) * LogSinThetaBot);  
-  for (int i=this->LzMax-1 ; i>= 0; --i)
-    {
-      if (thetaTop < 1e-10)
-	IncompleteBetaThetaTop[i] = 0.0;
-      else
-	IncompleteBetaThetaTop[i] = exp(LogFactorialsNphi[this->LzMax+1] - LogFactorialsNphi[i+1] - LogFactorialsNphi[this->LzMax-i] + (i+1.0) * LogSinThetaTop + (this->LzMax - i) * LogCosThetaTop) + IncompleteBetaThetaTop[i+1] ;      
-      IncompleteBetaThetaBot[i] = exp(LogFactorialsNphi[this->LzMax+1] - LogFactorialsNphi[i+1] - LogFactorialsNphi[this->LzMax-i] + (i+1.0) * LogSinThetaBot + (this->LzMax - i) * LogCosThetaBot) + IncompleteBetaThetaBot[i+1] ;
-    }  
-  delete [] LogFactorialsNphi;
-
 
   BosonOnSphereShort TmpHilbertSpace(ComplementaryNbrBosonSector, this->TotalLz - lzSector, this->LzMax);
   FactorialCoefficient Factorial;
@@ -2033,7 +2049,7 @@ RealSymmetricMatrix BosonOnSphereShort::EvaluatePartialDensityMatrixRealSpacePar
       
       for( int j=0; j<nbrBosonSector; j++)
 	{
-	  TmpStateCoefficient [i] += 0.5 * log( IncompleteBetaThetaBot[TmpDestinationHilbertSpaceMonomial[i][j]] - IncompleteBetaThetaTop[TmpDestinationHilbertSpaceMonomial[i][j]]);
+	  TmpStateCoefficient [i] += 0.5 * log( IncompleteBetaThetaBottom[TmpDestinationHilbertSpaceMonomial[i][j]] - IncompleteBetaThetaTop[TmpDestinationHilbertSpaceMonomial[i][j]]);
 	}
       TmpStateCoefficient[i] = exp(TmpStateCoefficient[i]);
     }
@@ -2044,7 +2060,7 @@ RealSymmetricMatrix BosonOnSphereShort::EvaluatePartialDensityMatrixRealSpacePar
       TmpHilbertSpace.ConvertToMonomial(TmpHilbertSpace.FermionBasis->StateDescription[MinIndex], TmpHilbertSpace.FermionBasis->StateLzMax[MinIndex], TmpMonomial1);
       double FormFactor = 0.0;
       for (int i=0; i < ComplementaryNbrBosonSector; i++)
-	FormFactor += log(1.0 - IncompleteBetaThetaBot[TmpMonomial1[i]] + IncompleteBetaThetaTop[TmpMonomial1[i]] + (1.0 - phiRange) * (IncompleteBetaThetaBot[TmpMonomial1[i]] - IncompleteBetaThetaTop[TmpMonomial1[i]]) );
+	FormFactor += log(1.0 - IncompleteBetaThetaBottom[TmpMonomial1[i]] + IncompleteBetaThetaTop[TmpMonomial1[i]] + (1.0 - phiRange) * (IncompleteBetaThetaBottom[TmpMonomial1[i]] - IncompleteBetaThetaTop[TmpMonomial1[i]]) );
       FormFactor = exp(FormFactor);
       TmpHilbertSpace.FermionToBoson(TmpHilbertSpace.FermionBasis->StateDescription[MinIndex], TmpHilbertSpace.FermionBasis->StateLzMax[MinIndex], TmpHilbertSpace.TemporaryState, TmpHilbertSpace.TemporaryStateLzMax);
       double TmpHilbertSpaceFactorial = 0.0;
@@ -2095,7 +2111,7 @@ RealSymmetricMatrix BosonOnSphereShort::EvaluatePartialDensityMatrixRealSpacePar
 	      double TmpFactorial = 0.0;	      
 	      for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
 		TmpFactorial += LogFactorials[this->TemporaryState[k]];
-	      TmpFactorial -= TmpHilbertSpaceFactorial + TmpDestinationLogFactorials[j] + TmpLogBinomial;
+	      TmpFactorial -= TmpHilbertSpaceFactorial + TmpDestinationLogFactorials[j];
 	      TmpFactorial *= 0.5; 
 	      
 	      TmpStatePosition[Pos] = TmpPos;
