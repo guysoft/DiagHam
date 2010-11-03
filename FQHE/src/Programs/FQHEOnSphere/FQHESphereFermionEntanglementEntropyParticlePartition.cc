@@ -314,8 +314,19 @@ int main(int argc, char** argv)
 
   int MaxSubsystemNbrParticles = (NbrParticles >> 1) + (NbrParticles & 1);
   if (Manager.GetInteger("max-na") > 0)
-    MaxSubsystemNbrParticles = Manager.GetInteger("max-na");
+    {
+      MaxSubsystemNbrParticles = Manager.GetInteger("max-na");
+    }
+  else
+    {
+      if (RealSpaceCut == true)
+	MaxSubsystemNbrParticles = NbrParticles;
+    }
   int SubsystemNbrParticles = Manager.GetInteger("min-na");
+  if ((RealSpaceCut == true) && (SubsystemNbrParticles == 1))
+    {
+      SubsystemNbrParticles = 0;
+    }
 
   for (; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
     {
