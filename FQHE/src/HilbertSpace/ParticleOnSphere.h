@@ -36,6 +36,7 @@
 #include "MathTools/Complex.h"
 #include "HilbertSpace/AbstractQHEParticle.h"
 #include "Matrix/RealSymmetricMatrix.h"
+#include "Matrix/RealMatrix.h"
 #include "Matrix/HermitianMatrix.h"
 
 
@@ -321,6 +322,14 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // groundState = reference on the total system ground state
   // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
   virtual RealSymmetricMatrix EvaluatePartialDensityMatrixRealSpacePartition (int nbrBosonSector, int lzSector, double thetaTop, double thetaBottom, double phiRange, RealVector& groundState);
+
+  // evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state, using particle partition. The entanglement matrix is only evaluated in a given Lz sector.
+  // 
+  // nbrBosonSector = number of particles that belong to the subsytem 
+  // lzSector = Lz sector in which the density matrix has to be evaluated 
+  // groundState = reference on the total system ground state
+  // return value = entanglement matrix of the subsytem (return a wero dimension matrix if the entanglement matrix is equal to zero)
+  virtual RealMatrix EvaluatePartialEntanglementMatrixParticlePartition (int nbrBosonSector, int lzSector, RealVector& groundState);
 
   // compute part of the Schmidt decomposition, allowing cut in the reduced denisty matrix eigenvalue space
   // 

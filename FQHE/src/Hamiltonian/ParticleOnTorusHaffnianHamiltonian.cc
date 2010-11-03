@@ -765,7 +765,7 @@ double ParticleOnTorusHaffnianHamiltonian::EvaluateInteractionCoefficient(int m1
       ResultNy2 += ResultNy1 * Coefficient;
       Factor1 += M_PI;
       Ny2 -= DoubleNbrLzValue;
-    }
+     }
   return (ResultNy2 / (24.0 * (M_PI * DoubleNbrLzValue)*(M_PI * DoubleNbrLzValue)));
 }
 
@@ -781,7 +781,6 @@ double ParticleOnTorusHaffnianHamiltonian::FourierTransformedInteraction(double 
   double Tmp = q21 * q22 * (q21 + q22);
   Tmp += q21 * q23 * (q21 + q23);
   Tmp += q22 * q23 * (q22 + q23);
-  Tmp = 0.0;
   Tmp -= q21 * q22 * q23 * (q21 + q22 + q23);
   return Tmp;
 }

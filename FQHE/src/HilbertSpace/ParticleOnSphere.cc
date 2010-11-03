@@ -471,6 +471,19 @@ RealSymmetricMatrix ParticleOnSphere::EvaluatePartialDensityMatrixRealSpaceParti
   return PartialDensityMatrix;
 }
 
+// evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state, using particle partition. The entanglement matrix is only evaluated in a given Lz sector.
+// 
+// nbrBosonSector = number of particles that belong to the subsytem 
+// lzSector = Lz sector in which the density matrix has to be evaluated 
+// groundState = reference on the total system ground state
+// return value = entanglement matrix of the subsytem (return a wero dimension matrix if the entanglement matrix is equal to zero)
+
+RealMatrix ParticleOnSphere::EvaluatePartialEntanglementMatrixParticlePartition (int nbrBosonSector, int lzSector, RealVector& groundState)
+{
+  RealMatrix PartialEntanglementMatrix;
+  return PartialEntanglementMatrix;  
+}
+
 // evaluate coeffecicents requested to compute the real space partition
 //
 // lzMax = twice the maximum angular momentum
