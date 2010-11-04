@@ -122,14 +122,19 @@ int main(int argc, char** argv)
   bool FermionFlag = false;
   if (Manager.GetString("statistics") == 0)
     FermionFlag = true;
-  if ((NbrParticles==0)&&(!Manager.GetBoolean("all-sz")))
-    if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(Manager.GetString("state"), NbrParticles, LzMax, TotalLz, TotalSz, SzSymmetrizedBasis, SzMinusParity, 
+  int TmpTotalSz=TotalSz;
+  if (Manager.GetBoolean("all-sz"))
+    TmpTotalSz=-1;
+  if (NbrParticles==0)
+    if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(Manager.GetString("state"), NbrParticles, LzMax, TotalLz, TmpTotalSz, SzSymmetrizedBasis, SzMinusParity, 
 							     LzSymmetrizedBasis, LzMinusParity, FermionFlag) == false)
       {
 	return -1;
       }
     else
       {
+	if (!Manager.GetBoolean("all-sz"))
+	  TotalSz=TmpTotalSz;
 	if (Manager.GetBoolean("show-extracted") == true)
 	  {
 	    cout << "N=" << NbrParticles << "  LzMax=" << LzMax << "  TotalLz=" << TotalLz << "  TotalSz=" << TotalSz;
