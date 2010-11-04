@@ -476,12 +476,54 @@ RealSymmetricMatrix ParticleOnSphere::EvaluatePartialDensityMatrixRealSpaceParti
 // nbrBosonSector = number of particles that belong to the subsytem 
 // lzSector = Lz sector in which the density matrix has to be evaluated 
 // groundState = reference on the total system ground state
+// removeBinomialCoefficient = remove additional binomial coefficient in case the particle entanglement matrix has to be used for real space cut
 // return value = entanglement matrix of the subsytem (return a wero dimension matrix if the entanglement matrix is equal to zero)
 
-RealMatrix ParticleOnSphere::EvaluatePartialEntanglementMatrixParticlePartition (int nbrBosonSector, int lzSector, RealVector& groundState)
+RealMatrix ParticleOnSphere::EvaluatePartialEntanglementMatrixParticlePartition (int nbrBosonSector, int lzSector, RealVector& groundState, bool removeBinomialCoefficient)
 {
   RealMatrix PartialEntanglementMatrix;
   return PartialEntanglementMatrix;  
+}
+
+// evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Lz sector
+// and computed from precalculated entanglement matrix
+// 
+// nbrBosonSector = number of particles that belong to the subsytem 
+// lzSector = Lz sector in which the density matrix has to be evaluated 
+// entanglementMatrix = reference on the entanglement matrix
+// return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+
+RealSymmetricMatrix ParticleOnSphere::EvaluatePartialDensityMatrixParticlePartitionFromEntanglementMatrix (int nbrBosonSector, int lzSector, RealMatrix& entanglementMatrix)
+{
+  RealSymmetricMatrix PartialDensityMatrix(entanglementMatrix.GetNbrRow(), true);
+  for (int i = 0; i < entanglementMatrix.GetNbrRow(); ++i)
+    {
+      for (int j = i; j < entanglementMatrix.GetNbrRow(); ++j)
+	{
+	  for (int k = 0; k < entanglementMatrix.GetNbrColumn(); ++k)
+	    {
+	      PartialDensityMatrix.AddToMatrixElement(i, j, entanglementMatrix(i, k) * entanglementMatrix(j, k));
+	    }
+	}
+    }
+  return PartialDensityMatrix;
+}
+
+// evaluate a density matrix of a subsystem of the whole system described by a given ground state, using real space partition. The density matrix is only evaluated in a given Lz sector.
+// and computed from precalculated entanglement matrix
+// 
+// nbrBosonSector = number of particles that belong to the subsytem 
+// lzSector = Lz sector in which the density matrix has to be evaluated 
+// phiRange = The angle traced in the \hat{phi} direction between the 2 longitudes defining the cut in degrees
+// thetaTop =  inclination angle defining one edge of the cut in degrees
+// thetaBottom = inclination angle defining the bottom edge of the cut. thetaBottom>thetaTop in degrees
+// entanglementMatrix = reference on the entanglement matrix
+// return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+
+RealSymmetricMatrix ParticleOnSphere::EvaluatePartialDensityMatrixRealSpacePartitionFromEntanglementMatrix (int nbrBosonSector, int lzSector, double thetaTop, double thetaBottom, double phiRange, RealMatrix& entanglementMatrix)
+{
+  RealSymmetricMatrix PartialDensityMatrix(entanglementMatrix.GetNbrRow(), true);
+  return PartialDensityMatrix;
 }
 
 // evaluate coeffecicents requested to compute the real space partition
@@ -507,9 +549,11 @@ void ParticleOnSphere::EvaluatePartialDensityMatrixRealSpacePartitionCoefficient
     LogSinThetaTop = 2.0*log(sin(thetaTop/2.));
   
   double LogCosThetaTop = 2.0*log(cos(thetaTop/2.));
-  
+  	
   double LogSinThetaBot = 2.0*log(sin(thetaBottom/2.));
-  double LogCosThetaBot = 2.0*log(cos(thetaBottom/2.));
+  double LogCosThetaBot = 0;
+  if (thetaBottom < (179 + 1e-10))
+	LogCosThetaBot = 2.0*log(cos(thetaBottom/2.));
   
   // Compute the incomplete beta function for x=sin^2(thetaTop/2) and x=sin^2(thetaBottom/2)
   incompleteBetaThetaTop = new double[lzMax + 1];
@@ -518,7 +562,10 @@ void ParticleOnSphere::EvaluatePartialDensityMatrixRealSpacePartitionCoefficient
     incompleteBetaThetaTop [lzMax] = 0.0;
   else
     incompleteBetaThetaTop [lzMax] = exp((lzMax+1)*LogSinThetaTop);
-  incompleteBetaThetaBottom [lzMax] =  exp((lzMax+1)*LogSinThetaBot);
+  if( thetaBottom < (179 + 1e-10) )
+	incompleteBetaThetaBottom [lzMax] =  exp((lzMax+1)*LogSinThetaBot);
+  else
+	incompleteBetaThetaBottom [lzMax] = 1.0;  
   
   for (int i=lzMax-1 ; i>= 0; --i)
     {
@@ -526,9 +573,11 @@ void ParticleOnSphere::EvaluatePartialDensityMatrixRealSpacePartitionCoefficient
 	incompleteBetaThetaTop[i] = 0.0;
       else
 	incompleteBetaThetaTop[i] = exp(LogFactorialsNphi[lzMax+1] - LogFactorialsNphi[i+1] - LogFactorialsNphi[lzMax-i] + (i+1.0)*LogSinThetaTop + (lzMax - i)*LogCosThetaTop) + incompleteBetaThetaTop[i+1] ;
-      
-      incompleteBetaThetaBottom[i] = exp(LogFactorialsNphi[lzMax+1] - LogFactorialsNphi[i+1] - LogFactorialsNphi[lzMax-i] + (i+1.0)*LogSinThetaBot + (lzMax - i)*LogCosThetaBot) + incompleteBetaThetaBottom[i+1] ;
-    }
+      if (thetaBottom < (179 + 1e-10) )
+	incompleteBetaThetaBottom[i] = exp(LogFactorialsNphi[lzMax+1] - LogFactorialsNphi[i+1] - LogFactorialsNphi[lzMax-i] + (i+1.0)*LogSinThetaBot + (lzMax - i)*LogCosThetaBot) + incompleteBetaThetaBottom[i+1] ;
+	  else
+	incompleteBetaThetaBottom[i] = 1.0;
+	}
   delete [] LogFactorialsNphi;
 }
 

@@ -342,6 +342,7 @@ RealVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(RealVector& j
   return jack;
 }
 
+
 // create the Jack polynomial decomposition corresponding to the root partition assuming the resulting state is invariant under the Lz<->-Lz symmetry
 //
 // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored

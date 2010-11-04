@@ -107,6 +107,13 @@ class RealMatrix : public Matrix
   // retrun value = pointer on new matrix 
   Matrix* Clone ();
 
+  // get a matrix element (real part if complex)
+  //
+  // i = line position
+  // j = column position
+  // x = reference on the variable where to store the requested matrix element
+  void GetMatrixElement(int i, int j, double& x) const;
+
   // set a matrix element
   //
   // i = line position
@@ -320,6 +327,17 @@ class RealMatrix : public Matrix
 #endif
 
 };
+
+// get a matrix element (real part if complex)
+//
+// i = line position
+// j = column position
+// x = reference on the variable where to store the requested matrix element
+
+inline void RealMatrix::GetMatrixElement(int i, int j, double& x) const
+{
+  x = this->Columns[j].Components[i];
+}
 
 // get reference of a given matrix element
 //
