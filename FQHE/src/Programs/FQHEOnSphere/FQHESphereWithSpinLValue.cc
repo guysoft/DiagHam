@@ -33,7 +33,10 @@
 #include "HilbertSpace/FermionOnSphereWithSpinLzSzSymmetryLong.h"
 #include "HilbertSpace/FermionOnSphereWithSpinSzSymmetryLong.h"
 #include "HilbertSpace/FermionOnSphereWithSpinLzSymmetryLong.h"
+#include "HilbertSpace/FermionOnSphereWithSpinAllSz.h"
+#include "HilbertSpace/FermionOnSphereWithSpinAllSzLzSymmetry.h"
 #include "HilbertSpace/BosonOnSphereWithSpin.h"
+#include "HilbertSpace/BosonOnSphereWithSpinAllSz.h"
 
 #include "Hamiltonian/ParticleOnSphereWithSpinL2Hamiltonian.h"
 #include "Hamiltonian/ParticleOnSphereWithSpinS2Hamiltonian.h"
@@ -72,6 +75,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle (0 if it has to be guessed from file name)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total lz value of the system (0 if it has to be guessed from file name)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the z component of the total spin of the system (0 if it has to be guessed from file name)", 0);
+  (*SystemGroup) += new BooleanOption  ('A', "all-sz", "assume a hilbert space including all sz values");
   (*SystemGroup) += new SingleStringOption  ('\n', "statistics", "particle statistics (bosons or fermions, try to guess it from file name if not defined)");
   (*SystemGroup) += new BooleanOption  ('\n', "no-spin", "do not compute the S^2 value of the state");
   (*SystemGroup) += new BooleanOption  ('\n', "no-szparity", "do not compute the parity under the Sz<->-Sz symmetry");
@@ -118,7 +122,7 @@ int main(int argc, char** argv)
   bool FermionFlag = false;
   if (Manager.GetString("statistics") == 0)
     FermionFlag = true;
-  if (NbrParticles==0)
+  if ((NbrParticles==0)&&(!Manager.GetBoolean("all-sz")))
     if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(Manager.GetString("state"), NbrParticles, LzMax, TotalLz, TotalSz, SzSymmetrizedBasis, SzMinusParity, 
 							     LzSymmetrizedBasis, LzMinusParity, FermionFlag) == false)
       {
@@ -164,7 +168,7 @@ int main(int argc, char** argv)
 	FermionFlag = true;
       }
     else
-      if ((strcmp ("fermions", Manager.GetString("statistics")) == 0))
+      if ((strcmp ("bosons", Manager.GetString("statistics")) == 0))
 	{
 	  FermionFlag = false;
 	}
@@ -197,8 +201,15 @@ int main(int argc, char** argv)
   ParticleOnSphereWithSpin* Space;
   if (FermionFlag == true)
     {
-      if ((SzSymmetrizedBasis == false) && (LzSymmetrizedBasis == false))
+      if (Manager.GetBoolean("all-sz"))
 	{
+	  if (LzSymmetrizedBasis == false)
+	    Space = new FermionOnSphereWithSpinAllSz (NbrParticles, TotalLz, LzMax, MemorySpace);
+	  else
+	    Space = new FermionOnSphereWithSpinAllSzLzSymmetry (NbrParticles, LzMax, LzMinusParity, MemorySpace);
+	}
+      else if ((SzSymmetrizedBasis == false) && (LzSymmetrizedBasis == false))
+	  {
 #ifdef __64_BITS__
 	  if (LzMax <= 31)
 #else
@@ -223,7 +234,7 @@ int main(int argc, char** argv)
 		      return -1;
 		    }	
 	      }
-	}
+	  }
       else
 	{
 #ifdef __128_BIT_LONGLONG__
@@ -302,11 +313,14 @@ int main(int argc, char** argv)
 		      else
 			Space = new FermionOnSphereWithSpinLzSymmetryLong(Manager.GetString("load-hilbert"), MemorySpace);	      
 		    }
-	}      
+	}
     }
   else
     {
-      Space = new BosonOnSphereWithSpin(NbrParticles, TotalLz, LzMax, TotalSz);
+      if (Manager.GetBoolean("all-sz"))
+	Space = new BosonOnSphereWithSpinAllSz (NbrParticles, TotalLz, LzMax, MemorySpace);
+      else
+	Space = new BosonOnSphereWithSpin(NbrParticles, TotalLz, LzMax, TotalSz);
     }
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
   
@@ -325,7 +339,8 @@ int main(int argc, char** argv)
        << "<L> = " << RawTmpAngularMomentum << endl;
   if (Manager.GetBoolean("no-spin") == false)
     {
-      ParticleOnSphereWithSpinS2Hamiltonian Hamiltonian2 (Space, NbrParticles, LzMax, TotalLz, TotalSz, Architecture.GetArchitecture(), 1.0, 0);
+      bool fixedSz = !(Manager.GetBoolean("all-sz"));
+      ParticleOnSphereWithSpinS2Hamiltonian Hamiltonian2 (Space, NbrParticles, LzMax, TotalLz, TotalSz, Architecture.GetArchitecture(), 1.0, 0, fixedSz);
       VectorHamiltonianMultiplyOperation Operation2 (&Hamiltonian2, &State, &TmpState);
       Operation2.ApplyOperation(Architecture.GetArchitecture());
       L2Value = TmpState * State;
