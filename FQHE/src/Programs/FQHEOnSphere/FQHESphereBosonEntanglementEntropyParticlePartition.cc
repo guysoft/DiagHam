@@ -613,6 +613,10 @@ int main(int argc, char** argv)
     {
       if (Manager.GetBoolean("check-size") == true)
 	{
+	  long MaxEntanglementMatrix = 0;
+	  long MaxEntanglementMatrixRow = 0;
+	  long MaxEntanglementMatrixColumn = 0;
+	  long MaxDensityMatrix = 0;
 	  long Size = 0l;
 	  for (; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
 	    {
@@ -644,12 +648,27 @@ int main(int argc, char** argv)
 		}
 	      for (; SubsystemTotalLz <= SubsystemMaxTotalLz; SubsystemTotalLz += 2)
 		{
-		  Size += BosonEvaluateHilbertSpaceDimension(SubsystemNbrParticles, LzMax, SubsystemTotalLz) * BosonEvaluateHilbertSpaceDimension(NbrParticles - SubsystemNbrParticles, LzMax, TotalLz[0] - SubsystemTotalLz);
+		  long SizeA = BosonEvaluateHilbertSpaceDimension(SubsystemNbrParticles, LzMax, SubsystemTotalLz);
+		  long SizeB = BosonEvaluateHilbertSpaceDimension(NbrParticles - SubsystemNbrParticles, LzMax, TotalLz[0] - SubsystemTotalLz);
+		  Size += SizeA * SizeB;
+		  if (MaxEntanglementMatrix < (SizeA * SizeB))
+		    {
+		      MaxEntanglementMatrix = (SizeA * SizeB);
+		      MaxEntanglementMatrixRow = SizeA;
+		      MaxEntanglementMatrixColumn = SizeB;		      
+		    }
+		  if (MaxDensityMatrix < SizeA)
+		    {
+		      MaxDensityMatrix = SizeA;
+		    }
 		}
 	    }
 	  Size <<= 3;
 	  cout << "total required storage = ";
 	  PrintMemorySize(cout, Size) << endl;    
+	  cout << "largest file size = ";
+	  PrintMemorySize(cout, MaxEntanglementMatrix << 3) << "(matrix  " << MaxEntanglementMatrixRow << "x" << MaxEntanglementMatrixColumn << ")" << endl;
+	  cout << "largest density matrix = " << MaxDensityMatrix << "x" << MaxDensityMatrix << endl;
 	  return 0;
 	}
       bool EntanglementMatrixForRealCut = Manager.GetBoolean("matrix-realcut");
