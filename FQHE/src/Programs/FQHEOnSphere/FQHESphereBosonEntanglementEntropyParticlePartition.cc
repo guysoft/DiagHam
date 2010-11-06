@@ -302,7 +302,7 @@ int main(int argc, char** argv)
 	MaxSubsystemNbrParticles = NbrParticles;
     }
   int SubsystemNbrParticles = Manager.GetInteger("min-na");
-  if ((RealSpaceCut == true) && (SubsystemNbrParticles == 1))
+  if (((RealSpaceCut == true) || (EntanglementMatrixForRealCut == true)) && (SubsystemNbrParticles == 1))
     {
       SubsystemNbrParticles = 0;
     }
@@ -464,14 +464,22 @@ int main(int argc, char** argv)
 		      else
 			{
 			  if ((2 * SubsystemNbrParticles) <= NbrParticles)
-			    PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixRealSpacePartitionFromEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), TmpEntanglementMatrix);
+			    {
+			      if (SubsystemNbrParticles != 0)
+				PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixRealSpacePartitionFromEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), TmpEntanglementMatrix);
+			      else
+				PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixRealSpacePartition(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), GroundStates[0]);
+			    }
 			  else
-			    PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixRealSpacePartitionFromEntanglementMatrix(NbrParticles - SubsystemNbrParticles, TotalLz[0] - SubsystemTotalLz, Manager.GetDouble("realspace-theta-bot"), 180.0, Manager.GetDouble("realspace-phi-range"), TmpEntanglementMatrix);
+			    {
+			      if (SubsystemNbrParticles != NbrParticles)
+				PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixRealSpacePartitionFromEntanglementMatrix(NbrParticles - SubsystemNbrParticles, TotalLz[0] - SubsystemTotalLz, Manager.GetDouble("realspace-theta-bot"), 180.0, Manager.GetDouble("realspace-phi-range"), TmpEntanglementMatrix);
+			      else
+				PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixRealSpacePartition(NbrParticles - SubsystemNbrParticles, TotalLz[0] - SubsystemTotalLz, Manager.GetDouble("realspace-theta-bot"), 180.0, Manager.GetDouble("realspace-phi-range"), GroundStates[0]);
+			    }
 			}
 		    }		  
 		}
-	      if (PartialDensityMatrix.GetNbrRow() > 0)
-		cout << PartialDensityMatrix << endl;
 	      if (ShowTimeFlag == true)
 		{
 		  gettimeofday (&(TotalEndingTime), 0);
@@ -679,7 +687,6 @@ int main(int argc, char** argv)
 	  cout << "largest density matrix = " << MaxDensityMatrix << "x" << MaxDensityMatrix << endl;
 	  return 0;
 	}
-      bool EntanglementMatrixForRealCut = Manager.GetBoolean("matrix-realcut");
       for (; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
 	{
 	  int SubsystemMaxTotalLz = SubsystemNbrParticles * LzMax;

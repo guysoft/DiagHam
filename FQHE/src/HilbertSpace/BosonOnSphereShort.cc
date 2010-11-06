@@ -1857,7 +1857,7 @@ RealSymmetricMatrix  BosonOnSphereShort::EvaluatePartialDensityMatrixParticlePar
 
 RealSymmetricMatrix BosonOnSphereShort::EvaluatePartialDensityMatrixRealSpacePartition (int nbrBosonSector, int lzSector, double thetaTop, double thetaBottom, double phiRange, RealVector& groundState)
 {
-  if ((thetaBottom <= thetaTop) || (phiRange <= 0.0))
+  if ((abs(lzSector) > (nbrBosonSector * this->LzMax)) || (thetaBottom <= thetaTop) || (phiRange <= 0.0))
     {
       RealSymmetricMatrix TmpDensityMatrixZero;
       return TmpDensityMatrixZero;
@@ -2171,7 +2171,7 @@ RealMatrix BosonOnSphereShort::EvaluatePartialEntanglementMatrixParticlePartitio
     {
       if (lzSector == 0)
 	{
-	  RealMatrix TmpEntanglementMatrix(1, this->HilbertSpaceDimension);
+	  RealMatrix TmpEntanglementMatrix(1, this->HilbertSpaceDimension, true);
 	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
 	    TmpEntanglementMatrix.SetMatrixElement(0, i, groundState[i]);
 	  return TmpEntanglementMatrix;

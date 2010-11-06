@@ -553,7 +553,7 @@ void ParticleOnSphere::EvaluatePartialDensityMatrixRealSpacePartitionCoefficient
   double LogSinThetaBot = 2.0*log(sin(thetaBottom/2.));
   double LogCosThetaBot = 0;
   if (thetaBottom < (179 + 1e-10))
-	LogCosThetaBot = 2.0*log(cos(thetaBottom/2.));
+    LogCosThetaBot = 2.0*log(cos(thetaBottom/2.));
   
   // Compute the incomplete beta function for x=sin^2(thetaTop/2) and x=sin^2(thetaBottom/2)
   incompleteBetaThetaTop = new double[lzMax + 1];
@@ -561,23 +561,23 @@ void ParticleOnSphere::EvaluatePartialDensityMatrixRealSpacePartitionCoefficient
   if ( thetaTop < 1e-10)
     incompleteBetaThetaTop [lzMax] = 0.0;
   else
-    incompleteBetaThetaTop [lzMax] = exp((lzMax+1)*LogSinThetaTop);
+    incompleteBetaThetaTop [lzMax] = exp((lzMax + 1.0) * LogSinThetaTop);
   if( thetaBottom < (179 + 1e-10) )
-	incompleteBetaThetaBottom [lzMax] =  exp((lzMax+1)*LogSinThetaBot);
+    incompleteBetaThetaBottom [lzMax] =  exp((lzMax + 1.0) * LogSinThetaBot);
   else
-	incompleteBetaThetaBottom [lzMax] = 1.0;  
+    incompleteBetaThetaBottom [lzMax] = 1.0;  
   
-  for (int i=lzMax-1 ; i>= 0; --i)
+  for (int i = lzMax - 1; i >=  0; --i)
     {
       if (thetaTop < 1e-10)
 	incompleteBetaThetaTop[i] = 0.0;
       else
-	incompleteBetaThetaTop[i] = exp(LogFactorialsNphi[lzMax+1] - LogFactorialsNphi[i+1] - LogFactorialsNphi[lzMax-i] + (i+1.0)*LogSinThetaTop + (lzMax - i)*LogCosThetaTop) + incompleteBetaThetaTop[i+1] ;
+	incompleteBetaThetaTop[i] = exp(LogFactorialsNphi[lzMax+1] - LogFactorialsNphi[i+1] - LogFactorialsNphi[lzMax-i] + (i + 1.0)*LogSinThetaTop + (lzMax - i)*LogCosThetaTop) + incompleteBetaThetaTop[i+1] ;
       if (thetaBottom < (179 + 1e-10) )
-	incompleteBetaThetaBottom[i] = exp(LogFactorialsNphi[lzMax+1] - LogFactorialsNphi[i+1] - LogFactorialsNphi[lzMax-i] + (i+1.0)*LogSinThetaBot + (lzMax - i)*LogCosThetaBot) + incompleteBetaThetaBottom[i+1] ;
-	  else
+	incompleteBetaThetaBottom[i] = exp(LogFactorialsNphi[lzMax+1] - LogFactorialsNphi[i+1] - LogFactorialsNphi[lzMax-i] + (i + 1.0)*LogSinThetaBot + (lzMax - i)*LogCosThetaBot) + incompleteBetaThetaBottom[i+1] ;
+      else
 	incompleteBetaThetaBottom[i] = 1.0;
-	}
+    }
   delete [] LogFactorialsNphi;
 }
 
