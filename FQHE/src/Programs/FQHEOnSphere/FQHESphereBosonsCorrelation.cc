@@ -1,4 +1,5 @@
 #include "Vector/RealVector.h"
+#include "Vector/ComplexVector.h"
 
 #include "HilbertSpace/ParticleOnSphereManager.h"
 #include "HilbertSpace/BosonOnSphere.h"
@@ -123,13 +124,11 @@ int main(int argc, char** argv)
       cout << "FQHESphereFermionsCorrelation requires a state" << endl;
       return -1;
     }
-  RealVector State;
-  if (State.ReadVector (Manager.GetString("eigenstate")) == false)
+  if (IsFile(Manager.GetString("eigenstate")) == false)
     {
-      cout << "can't open vector file " << Manager.GetString("eigenstate") << endl;
+      cout << "can't find vector file " << Manager.GetString("eigenstate") << endl;
       return -1;      
     }
-
 
   ParticleOnSphere* Space = ParticleManager.GetHilbertSpace(TotalLz);
   cout << Space->GetHilbertSpaceDimension() << endl;
@@ -149,19 +148,50 @@ int main(int argc, char** argv)
   double XInc = M_PI / ((double) NbrPoints);
 
   Complex* PrecalculatedValues = new Complex [LzMax + 1];	  
-  if (DensityFlag == false)
-    for (int i = 0; i <= LzMax; ++i)
-      {
-	Basis->GetFunctionValue(Value, TmpValue, LzMax);
-	ParticleOnSphereDensityDensityOperator Operator (Space, i, LzMax, i, LzMax);
-	PrecalculatedValues[i] = Operator.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
-      }
+  RealVector State;
+  if (State.ReadVectorTest(Manager.GetString("eigenstate")) == true)
+    {
+      if (State.ReadVector (Manager.GetString("eigenstate")) == false)
+	{
+	  cout << "can't open vector file " << Manager.GetString("eigenstate") << endl;
+	  return -1;      
+	}
+      if (DensityFlag == false)
+	for (int i = 0; i <= LzMax; ++i)
+	  {
+	    Basis->GetFunctionValue(Value, TmpValue, LzMax);
+	    ParticleOnSphereDensityDensityOperator Operator (Space, i, LzMax, i, LzMax);
+	    PrecalculatedValues[i] = Operator.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
+	  }
+      else
+	for (int i = 0; i <= LzMax; ++i)
+	  {
+	    ParticleOnSphereDensityOperator Operator (Space, i);
+	    PrecalculatedValues[i] = Operator.MatrixElement(State, State);
+	  }
+    }
   else
-    for (int i = 0; i <= LzMax; ++i)
-      {
-	ParticleOnSphereDensityOperator Operator (Space, i);
-	PrecalculatedValues[i] = Operator.MatrixElement(State, State);
-      }
+    {
+      ComplexVector ComplexState;
+      if (ComplexState.ReadVector (Manager.GetString("eigenstate")) == false)
+	{
+	  cout << "can't open vector file " << Manager.GetString("eigenstate") << endl;
+	  return -1;      
+	}
+      if (DensityFlag == false)
+	for (int i = 0; i <= LzMax; ++i)
+	  {
+	    Basis->GetFunctionValue(Value, TmpValue, LzMax);
+	    ParticleOnSphereDensityDensityOperator Operator (Space, i, LzMax, i, LzMax);
+	    PrecalculatedValues[i] = Operator.MatrixElement(ComplexState, ComplexState) * TmpValue * Conj(TmpValue);
+	  }
+      else
+	for (int i = 0; i <= LzMax; ++i)
+	  {
+	    ParticleOnSphereDensityOperator Operator (Space, i);
+	    PrecalculatedValues[i] = Operator.MatrixElement(ComplexState, ComplexState);
+	  }
+    }
 
   ofstream File;
   File.precision(14);
@@ -194,8 +224,16 @@ int main(int argc, char** argv)
   else
     File << "# density-density correlation coefficients for " << Manager.GetString("eigenstate") << endl;
   File << "#" << endl << "# (l+S)    n_l" << endl;
-  for (int i = 0; i <= LzMax; ++i)
-    File << i << " " << PrecalculatedValues[i]<< endl;
+  if (CoefficientOnlyFlag == false)
+    {
+      for (int i = 0; i <= LzMax; ++i)
+	File << "# " << i << " " << PrecalculatedValues[i]<< endl;
+    }
+  else
+    {
+      for (int i = 0; i <= LzMax; ++i)
+	File << i << " " << PrecalculatedValues[i]<< endl;
+    }
   if (CoefficientOnlyFlag == false)
     {
       double Factor1 = (16.0 * M_PI * M_PI) / ((double) (NbrParticles * NbrParticles));

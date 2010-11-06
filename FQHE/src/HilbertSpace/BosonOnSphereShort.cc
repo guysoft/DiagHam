@@ -2221,7 +2221,7 @@ RealMatrix BosonOnSphereShort::EvaluatePartialEntanglementMatrixParticlePartitio
     LogFactorials[i] = LogFactorials[i - 1] + log((double) i); 
   double TmpLogBinomial = LogFactorials[this->NbrBosons] - LogFactorials[ComplementaryNbrBosonSector] - LogFactorials[nbrBosonSector];
   if (removeBinomialCoefficient == true)
-    TmpLogBinomial = 1.0;
+    TmpLogBinomial = 0.0;
 
   BosonOnSphereShort TmpHilbertSpace(ComplementaryNbrBosonSector, this->TotalLz - lzSector, this->LzMax);
   FactorialCoefficient Factorial;

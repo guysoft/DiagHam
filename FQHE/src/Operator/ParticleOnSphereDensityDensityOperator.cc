@@ -171,3 +171,71 @@ RealVector& ParticleOnSphereDensityDensityOperator::LowLevelAddMultiply(RealVect
 }
   
 
+// evaluate part of the matrix element, within a given of indices
+//
+// V1 = vector to left multiply with current matrix
+// V2 = vector to right multiply with current matrix
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = corresponding matrix element
+
+Complex ParticleOnSphereDensityDensityOperator::PartialMatrixElement (ComplexVector& V1, ComplexVector& V2, long firstComponent, long nbrComponent)
+{
+  if (this->Particle->GetHilbertSpaceDimension() > 0)
+    {
+      int Dim = firstComponent + nbrComponent;
+      int FullDim = this->Particle->GetHilbertSpaceDimension();
+      double Coefficient = 0.0;
+      Complex Element = 0.0;
+      int Index;
+      for (int i = firstComponent; i < Dim; ++i)
+	{
+	  Index = this->Particle->AdAdAA(i, this->CreationIndex1, this->CreationIndex2, this->AnnihilationIndex1, this->AnnihilationIndex2, Coefficient);
+	  if (Index != FullDim)
+	    Element += Conj(V1[Index]) * V2[i] * Coefficient;      
+	}
+      return Complex(Element);
+    }
+  else
+    {
+      long Dim = firstComponent + nbrComponent;
+      long FullDim = this->Particle->GetLargeHilbertSpaceDimension();
+      double Coefficient = 0.0;
+      Complex Element = 0.0;
+      long Index;
+      for (long i = firstComponent; i < Dim; ++i)
+	{
+	  Index = this->Particle->AdAdAA(i, this->CreationIndex1, this->CreationIndex2, this->AnnihilationIndex1, this->AnnihilationIndex2, Coefficient);
+	  if (Index != FullDim)
+	    Element += Conj(V1[Index]) * V2[i] * Coefficient;      
+	}
+      return Complex(Element);
+    }
+}
+  
+// multiply a vector by the current operator for a given range of indices 
+// and store result in another vector
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+ComplexVector& ParticleOnSphereDensityDensityOperator::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+									   int firstComponent, int nbrComponent)
+{
+  int Dim = this->Particle->GetHilbertSpaceDimension();
+  int Last = firstComponent + nbrComponent;;
+  int Index;
+  double Coefficient = 0.0;
+  for (int i = firstComponent; i < Last; ++i)
+    {
+      Index = this->Particle->AdAdAA(i, this->CreationIndex1, this->CreationIndex2, this->AnnihilationIndex1, this->AnnihilationIndex2, Coefficient);
+      if (Index != Dim)
+	vDestination[Index] += vSource[i] * Coefficient;
+    }
+  return vDestination;
+}
+  
+

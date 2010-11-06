@@ -383,7 +383,7 @@ int main(int argc, char** argv)
 		    PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[0]);
 		  else
 		    {
-		      if (SubsystemNbrParticles <= (NbrParticles / 2))
+		      if ((2 * SubsystemNbrParticles) <= NbrParticles)
 			{
 			  PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixRealSpacePartition(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), GroundStates[0]);
 			}
@@ -395,7 +395,7 @@ int main(int argc, char** argv)
 			    }
 			  else
 			    {
-			      PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixRealSpacePartition(NbrParticles - SubsystemNbrParticles, -SubsystemTotalLz, Manager.GetDouble("realspace-theta-bot"), 180.0, Manager.GetDouble("realspace-phi-range"), GroundStates[0]);		    
+			      PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixRealSpacePartition(NbrParticles - SubsystemNbrParticles, TotalLz[0] - SubsystemTotalLz, Manager.GetDouble("realspace-theta-bot"), 180.0, Manager.GetDouble("realspace-phi-range"), GroundStates[0]);		    
 			    }
 			}
 		    }
@@ -408,7 +408,7 @@ int main(int argc, char** argv)
 			}
 		      else
 			{
-			  if (SubsystemNbrParticles <= (NbrParticles / 2))
+			  if ((2 * SubsystemNbrParticles) <= NbrParticles)
 			    {
 			      TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixRealSpacePartition(SubsystemNbrParticles, SubsystemTotalLz, Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), GroundStates[i]);
 			    }
@@ -420,7 +420,7 @@ int main(int argc, char** argv)
 				}
 			      else
 				{
-				  TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixRealSpacePartition(NbrParticles - SubsystemNbrParticles, -SubsystemTotalLz, Manager.GetDouble("realspace-theta-bot"), 180.0, Manager.GetDouble("realspace-phi-range"), GroundStates[i]);
+				  TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixRealSpacePartition(NbrParticles - SubsystemNbrParticles, TotalLz[i] - SubsystemTotalLz, Manager.GetDouble("realspace-theta-bot"), 180.0, Manager.GetDouble("realspace-phi-range"), GroundStates[i]);
 				}
 			    }
 			}
@@ -432,9 +432,12 @@ int main(int argc, char** argv)
 	      else
 		{
 		  char* TmpExtension = new char[256];
-		  if (EntanglementMatrixForRealCut == true)
+		  if (RealSpaceCut == true)
 		    {
-		      sprintf (TmpExtension, "pem_realcut_na_%d_lza_%d.mat", SubsystemNbrParticles, SubsystemTotalLz);
+		      if ((2 * SubsystemNbrParticles) <= NbrParticles)
+			sprintf (TmpExtension, "pem_realcut_na_%d_lza_%d.mat", SubsystemNbrParticles, SubsystemTotalLz);
+		      else
+			sprintf (TmpExtension, "pem_realcut_na_%d_lza_%d.mat", NbrParticles - SubsystemNbrParticles, TotalLz[0] - SubsystemTotalLz);
 		    }
 		  else
 		    {
@@ -460,10 +463,15 @@ int main(int argc, char** argv)
 			}
 		      else
 			{
-			  PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixRealSpacePartitionFromEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), TmpEntanglementMatrix);
+			  if ((2 * SubsystemNbrParticles) <= NbrParticles)
+			    PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixRealSpacePartitionFromEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), TmpEntanglementMatrix);
+			  else
+			    PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixRealSpacePartitionFromEntanglementMatrix(NbrParticles - SubsystemNbrParticles, TotalLz[0] - SubsystemTotalLz, Manager.GetDouble("realspace-theta-bot"), 180.0, Manager.GetDouble("realspace-phi-range"), TmpEntanglementMatrix);
 			}
 		    }		  
 		}
+	      if (PartialDensityMatrix.GetNbrRow() > 0)
+		cout << PartialDensityMatrix << endl;
 	      if (ShowTimeFlag == true)
 		{
 		  gettimeofday (&(TotalEndingTime), 0);
