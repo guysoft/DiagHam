@@ -277,6 +277,18 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // return value = density matrix of the subsytem  (return a wero dimension matrix if the density matrix is equal to zero)
   virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int subsytemSize, int nbrBosonSector, int lzSector, RealVector& groundState);
 
+// reconstruct a state that contains only a certain subset of Schmidt eigenvalues of the given ground state
+// subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax to -Lzmax+subsytemSize-1)
+// nbrBosonSector = number of particles that belong to the subsytem 
+// lzSector = Lz sector in which the density matrix has to be evaluated 
+// eigenvalueCut = only keep Schmidt levels that are larger than e^{-eigenvalueCut}
+// groundState = reference on the total system ground state
+// rebuiltSchmitGroundState = reference on the final state
+// diagonalizedDensityMatrix = set of density matrix (Schmidt) eigenvalues
+// transformationMatrix = the "truncation" matrix that connects the coefficients  (in the N-body basis) of the ground state and the final (truncated) state
+// return value = reconstructed ground state vector
+   virtual RealVector&  EvaluatePartialSchmidtDecomposition (int subsytemSize, int nbrBosonSector, int lzSector, double eigenvalueCut, RealVector& groundState, RealVector& rebuiltSchmidtGroundState, RealDiagonalMatrix& diagonalizedDensityMatrix, RealMatrix& transformationMatrix);
+
   // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Lz sector and fixed number of particles
   // 
   // subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax to -Lzmax+subsytemSize-1)
