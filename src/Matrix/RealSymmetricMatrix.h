@@ -90,7 +90,9 @@ class RealSymmetricMatrix : public Matrix
 
   // constructor from a real matrix Q (new matrix = Qt * Q)
   //
-  RealSymmetricMatrix(const RealMatrix& Q);
+  // Q = reference on the real matrix
+  // transpose = true if Q has to be transposed first (i.e new matrix = Q * Qt)
+  RealSymmetricMatrix(const RealMatrix& Q, bool transpose = false);
 
   // copy constructor (without duplicating datas)
   //

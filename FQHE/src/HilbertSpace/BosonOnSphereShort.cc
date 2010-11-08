@@ -2558,8 +2558,6 @@ RealSymmetricMatrix BosonOnSphereShort::EvaluatePartialDensityMatrixRealSpacePar
   int ComplementaryNbrBosonSector = this->NbrBosons - nbrBosonSector;
   BosonOnSphereShort TmpDestinationHilbertSpace(nbrBosonSector, lzSector, this->LzMax);
   cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
-  RealSymmetricMatrix TmpDensityMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
-  double* TmpStateCoefficient = new double [TmpDestinationHilbertSpace.HilbertSpaceDimension];
   unsigned long* TmpMonomial1 = new unsigned long [ComplementaryNbrBosonSector];
   unsigned long* TmpMonomial3 = new unsigned long [this->NbrBosons];
 
@@ -2571,31 +2569,28 @@ RealSymmetricMatrix BosonOnSphereShort::EvaluatePartialDensityMatrixRealSpacePar
       Tmp = 0.5 * nbrBosonSector * log(phiRange);      
       for( int j = 0; j < nbrBosonSector; j++)
 	{
-	  Tmp += 0.5 * log( IncompleteBetaThetaBottom[TmpMonomial3[j]] - IncompleteBetaThetaTop[TmpMonomial3[j]]);
+	  Tmp += log( IncompleteBetaThetaBottom[TmpMonomial3[j]] - IncompleteBetaThetaTop[TmpMonomial3[j]]);
 	}
-      TmpStateCoefficient[i] = exp(Tmp);
+      Tmp = exp(0.5 * Tmp);
+      for (int j = 0; j < TmpHilbertSpace.HilbertSpaceDimension; ++j)          
+	entanglementMatrix(i, j) *= Tmp;      
     }
-
+  
   for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
     {
       TmpHilbertSpace.ConvertToMonomial(TmpHilbertSpace.FermionBasis->StateDescription[MinIndex], TmpHilbertSpace.FermionBasis->StateLzMax[MinIndex], TmpMonomial1);
       double FormFactor = 0.0;
       for (int i=0; i < ComplementaryNbrBosonSector; i++)
 	FormFactor += log(1.0 - IncompleteBetaThetaBottom[TmpMonomial1[i]] + IncompleteBetaThetaTop[TmpMonomial1[i]] + (1.0 - phiRange) * (IncompleteBetaThetaBottom[TmpMonomial1[i]] - IncompleteBetaThetaTop[TmpMonomial1[i]]) );
-      FormFactor = exp(FormFactor);
+      FormFactor = exp(0.5 * FormFactor);
       for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
-	{
-	  double Tmp = entanglementMatrix(j, MinIndex) * FormFactor * TmpStateCoefficient[j];
-	  for (int k = j; k < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++k)
-	    {
-	      TmpDensityMatrix.AddToMatrixElement(j, k, Tmp * entanglementMatrix(k, MinIndex) * TmpStateCoefficient[k]);
-	    }
-	}
+	entanglementMatrix(j, MinIndex) *= FormFactor; 
     }
-  delete[] TmpStateCoefficient;
+     
   delete[] TmpMonomial1;
   delete[] TmpMonomial3;
 
+  RealSymmetricMatrix TmpDensityMatrix(entanglementMatrix, true);
   return TmpDensityMatrix;
 }
 

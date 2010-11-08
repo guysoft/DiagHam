@@ -138,11 +138,21 @@ RealSymmetricMatrix::RealSymmetricMatrix(double* diagonal, double* offDiagonal, 
 
 // constructor from a real matrix Q (new matrix = Qt * Q)
 //
+// Q = reference on the real matrix
+// transpose = true if Q has to be transposed first (i.e new matrix = Q * Qt)
 
-RealSymmetricMatrix::RealSymmetricMatrix(const RealMatrix& Q)
+RealSymmetricMatrix::RealSymmetricMatrix(const RealMatrix& Q, bool transpose)
 {
-  this->NbrRow = Q.NbrColumn;
-  this->NbrColumn = Q.NbrColumn;
+  if (transpose == false)
+    {
+      this->NbrRow = Q.NbrColumn;
+      this->NbrColumn = Q.NbrColumn;
+    }
+  else
+    {
+      this->NbrRow = Q.NbrRow;
+      this->NbrColumn = Q.NbrRow;
+    }
   this->TrueNbrRow = this->NbrRow;
   this->TrueNbrColumn = this->NbrColumn;
   this->Increment = (this->TrueNbrRow - this->NbrRow);
@@ -154,17 +164,43 @@ RealSymmetricMatrix::RealSymmetricMatrix(const RealMatrix& Q)
   this->DiagonalElements = new double [this->NbrRow];
   this->OffDiagonalElements = new double [(this->NbrRow * (this->NbrRow - 1)) / 2];
   int pos = 0;
-  for (int i = 0; i < this->NbrRow; i++)
+  if (transpose == false)
     {
-      this->DiagonalElements[i] = Q.Columns[i][0] * Q.Columns[0][i];
-      for (int k = 1; k < Q.NbrColumn; k++)
-	this->DiagonalElements[i] += Q.Columns[i][k] * Q.Columns[k][i];
-      for (int j = i + 1; j < this->NbrRow; j++)
+      for (int i = 0; i < this->NbrRow; i++)
 	{
-	  this->OffDiagonalElements[pos] = Q.Columns[j][0] * Q.Columns[0][i];
-	  for (int k = 1; k < Q.NbrColumn; k++)
-	    this->OffDiagonalElements[pos] += Q.Columns[j][k] * Q.Columns[k][i];
-	  pos++;
+	  this->DiagonalElements[i] = Q.Columns[i][0] * Q.Columns[i][0];
+	  for (int k = 1; k < Q.NbrRow; k++)
+	    this->DiagonalElements[i] += Q.Columns[i][k] * Q.Columns[i][k];
+	  for (int j = i + 1; j < this->NbrRow; j++)
+	    {
+	      this->OffDiagonalElements[pos] = Q.Columns[j][0] * Q.Columns[i][0];
+	      for (int k = 1; k < Q.NbrRow; k++)
+		this->OffDiagonalElements[pos] += Q.Columns[j][k] * Q.Columns[i][k];
+	      pos++; 
+	    }
+	}
+    }
+  else
+    {      
+      int TmpSize = (this->NbrRow * (this->NbrRow - 1)) / 2;
+      for (int i = 0; i < TmpSize; ++i)
+	this->OffDiagonalElements[i] = 0.0;
+      for (int i = 0; i < this->NbrRow; i++)
+	this->DiagonalElements[i] = 0.0;
+      for (int k = 0; k < Q.NbrColumn; k++)
+	{
+	  RealVector& TmpVector =  Q.Columns[k];
+	  pos = 0;
+	  for (int i = 0; i < this->NbrRow; i++)
+	    {
+	      double Tmp = TmpVector[i];
+	      this->DiagonalElements[i] += Tmp * TmpVector[i];
+	      for (int j = i + 1; j < this->NbrRow; j++)
+		{
+		  this->OffDiagonalElements[pos] +=  Tmp * TmpVector[j];
+		    
+		}
+	    }
 	}
     }
 }

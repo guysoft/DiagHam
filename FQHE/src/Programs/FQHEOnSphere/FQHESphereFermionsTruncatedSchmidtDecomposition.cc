@@ -287,19 +287,24 @@ int main(int argc, char** argv)
 #endif
 		PartialDensityMatrix.Diagonalize(TmpDiag, TmpEigenstates);	      
 	      TmpDiag.SortMatrixDownOrder(TmpEigenstates);
+	      double TmpDensitySum = 0.0;
+	      double TmpTruncatedDensitySum = 0.0;
 	      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
 		{
-		  if (TmpDiag[i] > 1e-14)
+		  if (TmpDiag[i] > 0.0)
 		    {
 		      EntanglementEntropy += TmpDiag[i] * log(TmpDiag[i]);
-		      DensitySum += TmpDiag[i];
+		      TmpDensitySum += TmpDiag[i];
 		    }
 		  if (TmpDiag[i] > EigenvalueCutOff)
 		    {
 		      TruncatedEntanglementEntropy += TmpDiag[i] * log(TmpDiag[i]);
-		      TruncatedDensitySum += TmpDiag[i];			
-		    }		    
+		      TmpTruncatedDensitySum += TmpDiag[i];			
+		    }	
 		}
+	      DensitySum += TmpDensitySum;
+	      TruncatedDensitySum += TmpTruncatedDensitySum;
+	      cout << "trace truncation in the sector Na=" <<  SubsystemNbrParticles << "  Lza=" << SubsystemTotalLz << " : " << TmpTruncatedDensitySum << " (no truncation = " << TmpDensitySum << ")" << endl;
 	      Space->EvaluatePartialSchmidtDecomposition(SubsystemSize, SubsystemNbrParticles, SubsystemTotalLz, EigenvalueCutOff,
 							 GroundState, SchmidtDecomposedState, TmpDiag, TmpEigenstates);
 	    }
@@ -307,16 +312,21 @@ int main(int argc, char** argv)
 	    if (PartialDensityMatrix.GetNbrRow() == 1)
 	      {
 		double TmpValue = PartialDensityMatrix(0,0);
-		if (TmpValue > 1e-14)
+		double TmpDensitySum = 0.0;
+		double TmpTruncatedDensitySum = 0.0;
+		if (TmpValue > 0.0)
 		  {
 		    EntanglementEntropy += TmpValue * log(TmpValue);
-		    DensitySum += TmpValue;
+		    TmpDensitySum += TmpValue;
 		  }
 		if (TmpValue > EigenvalueCutOff)
 		  {
 		    TruncatedEntanglementEntropy += TmpValue * log(TmpValue);
-		    TruncatedDensitySum += TmpValue;			
+		    TmpTruncatedDensitySum += TmpValue;			
 		  }		    
+		DensitySum += TmpDensitySum;
+		TruncatedDensitySum += TmpTruncatedDensitySum;
+		cout << "trace truncation in the sector Na=" <<  SubsystemNbrParticles << "  Lza=" << SubsystemTotalLz << " : " << TmpTruncatedDensitySum << " (no truncation = " << TmpDensitySum << ")" << endl;
 		RealDiagonalMatrix TmpDiag (1);
 		RealMatrix TmpEigenstates(1, 1);
 		TmpEigenstates(0, 0) = 1.0;
