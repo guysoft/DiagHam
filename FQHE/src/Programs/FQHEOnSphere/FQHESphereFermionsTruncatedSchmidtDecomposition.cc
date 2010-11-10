@@ -304,7 +304,7 @@ int main(int argc, char** argv)
 		}
 	      DensitySum += TmpDensitySum;
 	      TruncatedDensitySum += TmpTruncatedDensitySum;
-	      cout << "trace truncation in the sector Na=" <<  SubsystemNbrParticles << "  Lza=" << SubsystemTotalLz << " : " << TmpTruncatedDensitySum << " (no truncation = " << TmpDensitySum << ")" << endl;
+	      cout << "trace truncation in the sector Na=" <<  SubsystemNbrParticles << "  Lza=" << SubsystemTotalLz << " : " << TmpTruncatedDensitySum << " (no truncation = " << TmpDensitySum << ", error  = " << (TmpDensitySum - TmpTruncatedDensitySum) << ")" << endl;
 	      Space->EvaluatePartialSchmidtDecomposition(SubsystemSize, SubsystemNbrParticles, SubsystemTotalLz, EigenvalueCutOff,
 							 GroundState, SchmidtDecomposedState, TmpDiag, TmpEigenstates);
 	    }
@@ -326,7 +326,7 @@ int main(int argc, char** argv)
 		  }		    
 		DensitySum += TmpDensitySum;
 		TruncatedDensitySum += TmpTruncatedDensitySum;
-		cout << "trace truncation in the sector Na=" <<  SubsystemNbrParticles << "  Lza=" << SubsystemTotalLz << " : " << TmpTruncatedDensitySum << " (no truncation = " << TmpDensitySum << ")" << endl;
+		cout << "trace truncation in the sector Na=" <<  SubsystemNbrParticles << "  Lza=" << SubsystemTotalLz << " : " << TmpTruncatedDensitySum << " (no truncation = " << TmpDensitySum << ", error  = " << (TmpDensitySum - TmpTruncatedDensitySum) << ")" << endl;
 		RealDiagonalMatrix TmpDiag (1);
 		RealMatrix TmpEigenstates(1, 1);
 		TmpEigenstates(0, 0) = 1.0;

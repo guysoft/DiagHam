@@ -52,6 +52,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "normalization", "indicates which component should be set to one", 0l);
   (*SystemGroup) += new BooleanOption  ('\n', "symmetry-factor", "do not remove(add) the symmetry factor when (un)normalizing");
+  (*SystemGroup) += new BooleanOption  ('\n', "conformal-limit", "indicate that the input state is in the conformal limit basis instead of the unnormalized basis");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "name of the unnormalized vector that will be generated");
   (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the vector into a text file");
   (*OutputGroup) += new BooleanOption ('\n', "txt-separatespin", "for the text output, use the sign convention which separates spins");
@@ -245,7 +246,16 @@ int main(int argc, char** argv)
     }
 
    if (Manager.GetBoolean("normalize"))
-     OutputBasis->ConvertFromUnnormalizedMonomial(OutputState, Manager.GetInteger("normalization"), SymmetryFactor);
+     {
+       if (Manager.GetBoolean("conformal-limit") == false)
+	 {
+	   OutputBasis->ConvertFromUnnormalizedMonomial(OutputState, Manager.GetInteger("normalization"), SymmetryFactor);
+	 }
+       else
+	 {
+	   OutputBasis->ConvertFromConformalLimit(OutputState, Manager.GetInteger("normalization"));
+	 }
+     }
    else
      OutputBasis->ConvertToUnnormalizedMonomial(OutputState, Manager.GetInteger("normalization"), SymmetryFactor);
   

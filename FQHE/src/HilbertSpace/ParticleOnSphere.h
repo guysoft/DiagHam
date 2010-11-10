@@ -387,8 +387,15 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // state = reference to the state to convert
   // reference = set which component has been normalized to 1
    // symmetryFactor = if true also add the symmetry factors
- // return value = converted state
+  // return value = converted state
   virtual RealVector& ConvertFromUnnormalizedMonomial(RealVector& state, long reference = 0, bool symmetryFactor = true);
+
+  // convert a state such that its components, given in the conformal limit,  are now expressed in the normalized basis
+  //
+  // state = reference to the state to convert
+  // reference = set which component has been normalized to 1
+  // return value = converted state
+  virtual RealVector& ConvertFromConformalLimit(RealVector& state, long reference);
 
   // print a given State using the monomial notation
   //

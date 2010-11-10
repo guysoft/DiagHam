@@ -635,6 +635,18 @@ RealVector& ParticleOnSphere::ConvertFromUnnormalizedMonomial(RealVector& state,
   return state;
 }
 
+// convert a state such that its components, given in the conformal limit,  are now expressed in the normalized basis
+//
+// state = reference to the state to convert
+// reference = set which component has been normalized to 1
+// return value = converted state
+
+RealVector& ParticleOnSphere::ConvertFromConformalLimit(RealVector& state, long reference)
+{
+  return this->ConvertFromUnnormalizedMonomial(state, reference, false);
+}
+
+
 // print a given State using the monomial notation
 //
 // Str = reference on current output stream 
