@@ -785,7 +785,7 @@ HermitianMatrix& HermitianMatrix::operator += (const HermitianMatrix& M)
     {
       this->DiagonalElements[i] += M.DiagonalElements[i];
     }
-  int max = (this->NbrRow - 1) * this->NbrRow;
+  int max = ((this->NbrRow - 1) * this->NbrRow) >> 1;
   for (int i = 0; i < max; ++i)
     {
       this->RealOffDiagonalElements[i] += M.RealOffDiagonalElements[i];
