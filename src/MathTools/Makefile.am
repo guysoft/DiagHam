@@ -16,7 +16,8 @@ PartialThreeJSymbol.cc \
 KCombinations.cc \
 JacobiPolynomials.cc \
 MonopoleHarmonics.cc \
-NSphereParameters.cc
+NSphereParameters.cc \
+Rational.cc
 
 
 # LaguerreFunction.cc

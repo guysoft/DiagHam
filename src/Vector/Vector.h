@@ -78,6 +78,7 @@ class Vector
       RealDatas = 0x01,
       ComplexDatas = 0x02,      
       RealPtrDatas = 0x04,
+      RationalData = 0x08,
       DataTypeMask = 0x0f,
       NonLocalDatas = 0x10,
       DistributedDatas = 0x20,

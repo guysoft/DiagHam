@@ -8,6 +8,6 @@ Vector.cc \
 DelocalizedRealVector.cc \
 RealPtrVector.cc \
 PartialRealVector.cc \
-PartialComplexVector.cc
-
+PartialComplexVector.cc \
+RationalVector.cc
 
