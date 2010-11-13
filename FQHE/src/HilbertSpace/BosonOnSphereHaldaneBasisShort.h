@@ -37,6 +37,7 @@
 #include "config.h"
 #include "HilbertSpace/BosonOnSphereShort.h"
 #include "Matrix/RealSymmetricMatrix.h"
+#include "Vector/RationalVector.h"
 
 #include <iostream>
 
@@ -112,6 +113,14 @@ class BosonOnSphereHaldaneBasisShort :  public BosonOnSphereShort
   // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
   virtual RealVector& GenerateJackPolynomial(RealVector& jack, double alpha);
 
+  // create the Jack polynomial decomposition corresponding to the root partition, assuming only rational numbers occur
+  //
+  // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
+  // alphaNumerator = numerator of the Jack polynomial alpha coefficient
+  // alphaDenominator = numerator of the Jack polynomial alpha coefficient
+  // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
+  virtual RationalVector& GenerateJackPolynomial(RationalVector& jack, long alphaNumerator, long alphaDenominator);
+
   // create the Jack polynomial decomposition corresponding to the root partition assuming the resulting state is invariant under the Lz<->-Lz symmetry
   //
   // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
@@ -126,6 +135,14 @@ class BosonOnSphereHaldaneBasisShort :  public BosonOnSphereShort
   // error = error when comparing two rho values
   // return value = vector with non-zero component being rho factor of possible singular coefficients
   virtual RealVector& CheckPossibleSingularCoefficientsInJackPolynomial(RealVector& jack, double alpha, double error);
+  
+  // check partitions that may lead to singular coefficient in a given Jack polynomial decomposition, assuming only rational numbers occur
+  //
+  // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
+  // alphaNumerator = numerator of the Jack polynomial alpha coefficient
+  // alphaDenominator = numerator of the Jack polynomial alpha coefficient
+  // return value = vector with non-zero component being rho factor of possible singular coefficients
+  virtual RationalVector& CheckPossibleSingularCoefficientsInJackPolynomial(RationalVector& jack, long alphaNumerator, long alphaDenominator);
   
   // check partitions that may lead to singular coefficient in a given Jack polynomial decomposition
   //

@@ -342,6 +342,18 @@ RealVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(RealVector& j
   return jack;
 }
 
+// create the Jack polynomial decomposition corresponding to the root partition, assuming only rational numbers occur
+//
+// jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
+// alphaNumerator = numerator of the Jack polynomial alpha coefficient
+// alphaDenominator = numerator of the Jack polynomial alpha coefficient
+// return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
+
+RationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(RationalVector& jack, long alphaNumerator, long alphaDenominator)
+{
+  return jack;
+}
+
 
 // create the Jack polynomial decomposition corresponding to the root partition assuming the resulting state is invariant under the Lz<->-Lz symmetry
 //
@@ -465,6 +477,18 @@ RealVector& BosonOnSphereHaldaneBasisShort::CheckPossibleSingularCoefficientsInJ
       }
   delete[] TmpMonomial;
 
+  return jack;
+}
+  
+// check partitions that may lead to singular coefficient in a given Jack polynomial decomposition, assuming only rational numbers occur
+//
+// jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
+// alphaNumerator = numerator of the Jack polynomial alpha coefficient
+// alphaDenominator = numerator of the Jack polynomial alpha coefficient
+// return value = vector with non-zero component being rho factor of possible singular coefficients
+
+RationalVector& BosonOnSphereHaldaneBasisShort::CheckPossibleSingularCoefficientsInJackPolynomial(RationalVector& jack, long alphaNumerator, long alphaDenominator)
+{
   return jack;
 }
   

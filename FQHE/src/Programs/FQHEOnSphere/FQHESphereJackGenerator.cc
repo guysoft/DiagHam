@@ -1,4 +1,5 @@
 #include "Vector/RealVector.h"
+#include "Vector/RationalVector.h"
 
 #include "HilbertSpace/FermionOnSphere.h"
 #include "HilbertSpace/FermionOnSphereSymmetricBasis.h"
@@ -55,6 +56,9 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
   (*SystemGroup) += new SingleDoubleOption  ('a', "alpha", "alpha coefficient of the Jack polynomial", -2.0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "alpha-numerator", "numerator of the alpha coefficient of the Jack polynomial (enable in rational mode)", -2);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "alpha-denominator", "denominator of the alpha coefficient of the Jack polynomial (enable in rational mode)", 1);
+  (*SystemGroup) += new BooleanOption  ('\n', "rational" , "use rational numbers instead of double precision floating point numbers");
   (*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0) to speed up calculations");
   (*SystemGroup) += new BooleanOption  ('\n', "sym-storage", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0), both for speed and storage");
   (*SystemGroup) += new SingleStringOption  ('\n', "initial-state", "use an optional state where some of the components have already been computed, improving computation time");
@@ -85,7 +89,7 @@ int main(int argc, char** argv)
       cout << "see man page for option syntax or type FQHESphereJackGenerator -h" << endl;
       return -1;
     }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
@@ -93,11 +97,13 @@ int main(int argc, char** argv)
 
   int NbrParticles = 0; 
   int NbrFluxQuanta = 0; 
-  bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
+  bool SymmetrizedBasis = Manager.GetBoolean("symmetrized-basis");
   double Alpha = ((SingleDoubleOption*) Manager["alpha"])->GetDouble();
+  long AlphaDenominator = Manager.GetInteger("alpha-denominator");
+  long AlphaNumerator = Manager.GetInteger("alpha-numerator");
   int TotalLz = 0;
-  char* OutputFileName = ((SingleStringOption*) Manager["bin-output"])->GetString();
-  char* OutputTxtFileName = ((SingleStringOption*) Manager["txt-output"])->GetString();
+  char* OutputFileName = Manager.GetString("bin-output");
+  char* OutputTxtFileName = Manager.GetString("txt-output");
 
   long MinIndex = Manager.GetInteger("min-index");
   long MaxIndex = Manager.GetInteger("max-index");
@@ -114,13 +120,13 @@ int main(int argc, char** argv)
     }
 
   int* ReferenceState = 0;
-  if (((SingleStringOption*) Manager["reference-file"])->GetString() == 0)
+  if (Manager.GetString("reference-file") == 0)
     {
       cout << "error, a reference file is needed" << endl;
       return 0;
     }
   ConfigurationParser ReferenceStateDefinition;
-  if (ReferenceStateDefinition.Parse(((SingleStringOption*) Manager["reference-file"])->GetString()) == false)
+  if (ReferenceStateDefinition.Parse(Manager.GetString("reference-file")) == false)
     {
       ReferenceStateDefinition.DumpErrors(cout) << endl;
       return 0;
@@ -138,7 +144,7 @@ int main(int argc, char** argv)
   int MaxNbrLz;
   if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
     {
-      cout << "error while parsing ReferenceState in " << ((SingleStringOption*) Manager["reference-file"])->GetString() << endl;
+      cout << "error while parsing ReferenceState in " << Manager.GetString("reference-file") << endl;
       return 0;     
     }
   if (MaxNbrLz != (NbrFluxQuanta + 1))
@@ -172,19 +178,23 @@ int main(int argc, char** argv)
 	    }
 	  if (Manager.GetBoolean("disk-storage") == true)
 	    DiskStorageFlag = true;
-	  if (DiskStorageFlag == false)
+	  if ((DiskStorageFlag == false) && (Manager.GetBoolean("rational") == false))
 	    {
 	      RealVector OutputState;
-	      if (Manager.GetString("initial-state") == 0)
-		OutputState = RealVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
+	      if (Manager.GetString("initial-state") == 0) 
+		{
+		  OutputState = RealVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
+		}
 	      else
 		if (OutputState.ReadVector(Manager.GetString("initial-state")) == false)
 		  {
 		    cout << "can't open " << Manager.GetString("initial-state") << endl;
 		    return -1;
 		  }
-	      if (SymmetrizedBasis == false)    
-		InitialSpace->GenerateJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex, OutputFileName);
+	      if (SymmetrizedBasis == false) 
+		{
+		  InitialSpace->GenerateJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex, OutputFileName);
+		}
 	      else
 		InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex, OutputFileName);
 	      
@@ -213,11 +223,14 @@ int main(int argc, char** argv)
 		{
 		  cout << "a binary output file name has to be provided when using disk storage mode" << endl;
 		  return -1;
+		    }
+	      if (SymmetrizedBasis == false)    
+		{
+		  // 		InitialSpace->GenerateJackPolynomialSparse(Alpha, OutputFileName, MinIndex, MaxIndex);
+		  cout << "disk storage mode only activated in symmetrized basis mode" << endl;
 		}
-// 	      if (SymmetrizedBasis == false)    
-// 		InitialSpace->GenerateJackPolynomialSparse(Alpha, OutputFileName, MinIndex, MaxIndex);
-// 	      else
-	      InitialSpace->GenerateSymmetrizedJackPolynomialSparse(Alpha,Architecture.GetArchitecture(), OutputFileName, MinIndex, MaxIndex, Manager.GetInteger("huge-vector") << 20, Manager.GetInteger("huge-blocks") << 20, Manager.GetBoolean("resume"));
+	      else
+		InitialSpace->GenerateSymmetrizedJackPolynomialSparse(Alpha,Architecture.GetArchitecture(), OutputFileName, MinIndex, MaxIndex, Manager.GetInteger("huge-vector") << 20, Manager.GetInteger("huge-blocks") << 20, Manager.GetBoolean("resume"));
 	    }
 	  return 0;
 	}
@@ -239,56 +252,106 @@ int main(int argc, char** argv)
 		  return 0;
 		}
 	    }
-	  RealVector OutputState;
-	  if (Manager.GetBoolean("check-singularity") == true)
+	  if (Manager.GetBoolean("rational") == false)
 	    {
-	      OutputState = RealVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
-	      InitialSpace->CheckPossibleSingularCoefficientsInJackPolynomial(OutputState, Alpha, 1e-14);
-	      cout << "partitions that may lead to singular coefficients : " << endl;
-	      for (long i = 1l; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
-		if (OutputState[i] != 0.0)
-		  {
-		    InitialSpace->PrintStateMonomial(cout, i) << " = ";
-		    InitialSpace->PrintState(cout, i) << endl;
-		  }
-	      return 0;
-	    }
-	  if (Manager.GetBoolean("check-connected") == true)
-	    {
-	      ((BosonOnSphereHaldaneBasisShort*) InitialSpace)->CheckMaximumConnectedStateInJackPolynomial();
-	      return 0;
-	    }
-	  if (Manager.GetString("initial-state") == 0)
-	    OutputState = RealVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
-	  else
-	    if (OutputState.ReadVector(Manager.GetString("initial-state")) == false)
-	      {
-		cout << "can't open " << Manager.GetString("initial-state") << endl;
-		return -1;
-	      }
-	  if (Manager.GetBoolean("normalize"))
-	    InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);
-	  if (SymmetrizedBasis == false)    
-	    InitialSpace->GenerateJackPolynomial(OutputState, Alpha);
-	  else
-	    InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, Alpha);
-	  if (Manager.GetBoolean("normalize"))
-	    InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);      
-	  if (OutputTxtFileName != 0)
-	    {
-	      ofstream File;
-	      File.open(OutputTxtFileName, ios::binary | ios::out);
-	      File.precision(14);
-	      for (long i = 0; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
+	      RealVector OutputState;
+	      if (Manager.GetBoolean("check-singularity") == true)
 		{
-		  File << OutputState[i] << " ";
-		  InitialSpace->PrintStateMonomial(File, i) << endl;
+		  OutputState = RealVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
+		  InitialSpace->CheckPossibleSingularCoefficientsInJackPolynomial(OutputState, Alpha, 1e-14);
+		  cout << "partitions that may lead to singular coefficients : " << endl;
+		  for (long i = 1l; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
+		    if (OutputState[i] != 0.0)
+		      {
+			InitialSpace->PrintStateMonomial(cout, i) << " = ";
+			InitialSpace->PrintState(cout, i) << endl;
+		      }
+		  return 0;
 		}
-	      File.close();
+	      if (Manager.GetBoolean("check-connected") == true)
+		{
+		  ((BosonOnSphereHaldaneBasisShort*) InitialSpace)->CheckMaximumConnectedStateInJackPolynomial();
+		  return 0;
+		}
+	      if (Manager.GetString("initial-state") == 0)
+		OutputState = RealVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
+	      else
+		if (OutputState.ReadVector(Manager.GetString("initial-state")) == false)
+		  {
+		    cout << "can't open " << Manager.GetString("initial-state") << endl;
+		    return -1;
+		  }
+	      if (Manager.GetBoolean("normalize"))
+		InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);
+	      if (SymmetrizedBasis == false)    
+		InitialSpace->GenerateJackPolynomial(OutputState, Alpha);
+	      else
+		InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, Alpha);
+	      if (Manager.GetBoolean("normalize"))
+		InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);      
+	      if (OutputTxtFileName != 0)
+		{
+		  ofstream File;
+		  File.open(OutputTxtFileName, ios::binary | ios::out);
+		  File.precision(14);
+		  for (long i = 0; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
+		    {
+		      File << OutputState[i] << " ";
+		      InitialSpace->PrintStateMonomial(File, i) << endl;
+		    }
+		  File.close();
+		}
+	      if (OutputFileName != 0)
+		{
+		  OutputState.WriteVector(OutputFileName);
+		}
 	    }
-	  if (OutputFileName != 0)
+	  else
 	    {
-	      OutputState.WriteVector(OutputFileName);
+	      RationalVector OutputState;
+	      if (Manager.GetBoolean("check-singularity") == true)
+		{
+		  OutputState = RationalVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
+		  InitialSpace->CheckPossibleSingularCoefficientsInJackPolynomial(OutputState, AlphaNumerator, AlphaDenominator);
+		  cout << "partitions that may lead to singular coefficients : " << endl;
+// 		  for (long i = 1l; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
+// 		    if (OutputState[i] != 0.0)
+// 		      {
+// 			InitialSpace->PrintStateMonomial(cout, i) << " = ";
+// 			InitialSpace->PrintState(cout, i) << endl;
+// 		      }
+		  return 0;
+		}
+	      if (Manager.GetString("initial-state") == 0)
+		OutputState = RationalVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
+	      else
+		if (OutputState.ReadVector(Manager.GetString("initial-state")) == false)
+		  {
+		    cout << "can't open " << Manager.GetString("initial-state") << endl;
+		    return -1;
+		  }
+	      if (SymmetrizedBasis == false)    
+		InitialSpace->GenerateJackPolynomial(OutputState, AlphaNumerator, AlphaDenominator);
+	      if (Manager.GetBoolean("normalize"))
+		{
+		  cout << "calculations have been done with rational numbers, normalization will not be done" << endl;
+		}
+	      if (OutputTxtFileName != 0)
+		{
+		  ofstream File;
+		  File.open(OutputTxtFileName, ios::binary | ios::out);
+		  File.precision(14);
+		  for (long i = 0; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
+		    {
+// 		      File << OutputState[i] << " ";
+		      InitialSpace->PrintStateMonomial(File, i) << endl;
+		    }
+		  File.close();
+		}
+	      if (OutputFileName != 0)
+		{
+		  OutputState.WriteVector(OutputFileName);
+		}
 	    }
 	}
       else
