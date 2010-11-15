@@ -53,8 +53,7 @@ RationalVector::RationalVector()
   this->LargeDimension = 0l;
   this->LargeTrueDimension = 0l;
   this->VectorId = 0;
-  this->Numerators = 0;
-  this->Denominators = 0;
+  this->Components = 0;
 }
 
 // default constructor for an empty vector
@@ -70,24 +69,8 @@ RationalVector::RationalVector(int size, bool zeroFlag)
   this->LargeDimension = (long) size;
   this->LargeTrueDimension = (long) size;
   this->VectorId = 0;
-  this->Numerators = new long [this->LargeDimension];
-  this->Denominators = new long [this->LargeDimension];
+  this->Components = new Rational [this->LargeDimension];
   this->Flag.Initialize();
-  if (zeroFlag == true)
-    {
-      for (long i = 0l; i < this->LargeTrueDimension; ++i)
-	{
-	  this->Numerators[i] = 0l;
-	  this->Denominators[i] = 1l;
-	}
-    }
-  else
-    {
-      for (long i = 0l; i < this->LargeTrueDimension; ++i)
-	{
-	  this->Denominators[i] = 1l;
-	}
-    }
 }
 
 // constructor for an empty rational vector bigger than 2^31
@@ -112,24 +95,39 @@ RationalVector::RationalVector(long size, bool zeroFlag)
   this->Dimension = (int) size;
 #endif
   this->TrueDimension = this->Dimension;
-  this->Numerators = new long [this->LargeDimension];
-  this->Denominators = new long [this->LargeDimension];
+  this->Components = new Rational [this->LargeDimension];
   this->Flag.Initialize();
-  if (zeroFlag == true)
-    {
-      for (long i = 0l; i < this->LargeTrueDimension; ++i)
-	{
-	  this->Numerators[i] = 0l;
-	  this->Denominators[i] = 1l;
-	}
-    }
+}
+
+// constructor from integer arrays
+//
+// numerators = numerator array 
+// denominators = denominator array
+// size = vector Dimension 
+
+RationalVector::RationalVector(long* numerators, long* denominators, long size)  
+{
+  this->VectorType = Vector::RationalData;
+  this->LargeDimension = size;
+  this->LargeTrueDimension = this->LargeDimension;
+#ifdef  __64_BITS__
+  if (this->LargeDimension < (1l << 31))
+    this->Dimension = (int) size;
   else
     {
-      for (long i = 0l; i < this->LargeTrueDimension; ++i)
-	{
-	  this->Denominators[i] = 1l;
-	}
+      this->Dimension = -1;
+      this->VectorType |= Vector::LargeData;
     }
+#else
+  this->Dimension = (int) size;
+#endif
+  this->TrueDimension = this->Dimension;
+  this->Components = new Rational [this->LargeDimension];
+  for (long i = 0l; i < this->LargeDimension; ++i)
+    {
+      this->Components[i] = Rational(numerators[i], denominators[i]);
+    }
+  this->Flag.Initialize();
 }
 
 // copy constructor
@@ -147,8 +145,7 @@ RationalVector::RationalVector(const RationalVector& vector, bool duplicateFlag)
   this->LargeTrueDimension = vector.LargeTrueDimension;
   if (duplicateFlag == false)
     {
-      this->Numerators = vector.Numerators;
-      this->Denominators = vector.Denominators;
+      this->Components = vector.Components;
       this->Flag = vector.Flag;
     }
   else
@@ -156,12 +153,10 @@ RationalVector::RationalVector(const RationalVector& vector, bool duplicateFlag)
       if (vector.Dimension > 0)
 	{
 	  this->Flag.Initialize();
-	  this->Numerators = new long [this->TrueDimension + 1]; 
-	  this->Denominators = new long [this->TrueDimension + 1]; 
+	  this->Components = new Rational [this->TrueDimension + 1]; 
 	  for (int i = 0; i < this->Dimension; i++)
 	    {
-	      this->Numerators[i] = vector.Numerators[i];
-	      this->Denominators[i] = vector.Denominators[i];
+	      this->Components[i] = vector.Components[i];
 	    }
 	}
       else
@@ -169,18 +164,15 @@ RationalVector::RationalVector(const RationalVector& vector, bool duplicateFlag)
 	  if (this->LargeDimension > 0l)
 	    {
 	      this->Flag.Initialize();
-	      this->Numerators = new long [this->LargeTrueDimension + 1]; 
-	      this->Denominators = new long [this->LargeTrueDimension + 1]; 
+	      this->Components = new  Rational[this->LargeTrueDimension + 1]; 
 	      for (long i = 0; i < this->LargeDimension; i++)
 		{
-		  this->Numerators[i] = vector.Numerators[i];
-		  this->Denominators[i] = vector.Denominators[i];
+		  this->Components[i] = vector.Components[i];
 		}
 	    }
 	  else
 	    {
-	      this->Numerators = 0;
-	      this->Denominators = 0;
+	      this->Components = 0;
 	    }
 	}
     }
@@ -193,8 +185,7 @@ RationalVector::~RationalVector ()
 {
   if (((this->Dimension != 0) || (this->LargeDimension != 0l)) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
-      delete[] this->Numerators;
-      delete[] this->Denominators;
+      delete[] this->Components;
     }
 }
 
@@ -214,20 +205,16 @@ void RationalVector::Resize (int dimension)
   this->TrueDimension = dimension;
   this->LargeDimension = dimension;
   this->LargeTrueDimension = dimension;
-  long* TmpNumerators = new long [this->TrueDimension + 1];
-  long* TmpDenominators = new long [this->TrueDimension + 1];
+  Rational* TmpComponents = new Rational [this->TrueDimension + 1];
   for (int i = 0; i < this->Dimension; i++)
     {
-      TmpNumerators[i] = this->Numerators[i];
-      TmpDenominators[i] = this->Denominators[i];
+      TmpComponents[i] = this->Components[i];
     }
   if ((this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
-      delete[] this->Numerators;
-      delete[] this->Denominators;
+      delete[] this->Components;
     }
-  this->Numerators = TmpNumerators;
-  this->Denominators = TmpDenominators;
+  this->Components = TmpComponents;
   this->Flag = GarbageFlag();
   this->Flag.Initialize();
 }
@@ -244,17 +231,14 @@ void RationalVector::ResizeAndClean (int dimension)
       this->LargeDimension = dimension;
       return;
     }
-  long* TmpNumerators = new long [dimension + 1];
-  long* TmpDenominators = new long [dimension + 1];
+  Rational* TmpComponents = new Rational [dimension + 1];
   for (int i = 0; i < this->Dimension; i++)
     {
-      TmpNumerators[i] = this->Numerators[i];
-      TmpDenominators[i] = this->Denominators[i];
+      TmpComponents[i] = this->Components[i];
     }
   for (int i = this->Dimension; i < dimension; i++)
     {
-      TmpNumerators[i] = 0l;
-      TmpDenominators[i] = 1l;
+      TmpComponents[i] = 0l;
     }
   this->Dimension = dimension;
   this->TrueDimension = dimension;
@@ -262,11 +246,9 @@ void RationalVector::ResizeAndClean (int dimension)
   this->LargeTrueDimension = dimension;
   if ((this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
-      delete[] this->Numerators;
-      delete[] this->Denominators;
+      delete[] this->Components;
     }
-  this->Numerators = TmpNumerators;
-  this->Denominators = TmpDenominators;
+  this->Components = TmpComponents;
   this->Flag = GarbageFlag();
   this->Flag.Initialize();
 }
@@ -279,8 +261,7 @@ Vector& RationalVector::ClearVector ()
 {
   for (long i = 0l; i < this->LargeTrueDimension; ++i)
     {
-      this->Numerators[i] = 0l;
-      this->Denominators[i] = 1l;
+      this->Components[i] = 0l;
     }
   return *this;
 }
@@ -295,8 +276,7 @@ Vector& RationalVector::ClearVectorSegment (long start, long nbrComponent)
   nbrComponent += start;
   for (; start < nbrComponent; ++start)
     {
-      this->Numerators[start] = 0l;
-      this->Denominators[start] = 1l;
+      this->Components[start] = 0l;
     }
   return *this;
 }
@@ -341,15 +321,13 @@ bool RationalVector::WriteVector (const char* fileName)
       WriteLittleEndian(File, this->LargeDimension);
       for (long i = 0; i < this->LargeDimension; ++i)
 	{
-	  WriteLittleEndian(File, this->Numerators[i]);
-	  WriteLittleEndian(File, this->Denominators[i]);
+	  this->Components[i].Write(File);
 	}
     }
   else
     for (int i = 0; i < this->Dimension; ++i)
       {
-	WriteLittleEndian(File, this->Numerators[i]);
-	WriteLittleEndian(File, this->Denominators[i]);
+	this->Components[i].Write(File);
       }
   File.close();
   this->Delocalize();
@@ -371,15 +349,15 @@ bool RationalVector::WriteAsciiVector (const char* fileName)
     {
       long ReducedDimension = this->LargeDimension - 1;
       for (long i = 0; i < ReducedDimension; ++i)
-	File << this->Numerators[i] << " " << this->Denominators[i] << "  ";
-      File << this->Numerators[ReducedDimension] << " " << this->Denominators[ReducedDimension] << endl;  
+	File << this->Components[i].Num() << " " << this->Components[i].Den() << "  ";
+      File << this->Components[ReducedDimension].Num() << " " << this->Components[ReducedDimension].Den() << endl;  
     }
   else
     {
-      int ReducedDimension = this->LargeDimension - 1;
+      int ReducedDimension = this->Dimension - 1;
       for (int i = 0; i < ReducedDimension; ++i)
-	File << this->Numerators[i] << " " << this->Denominators[i] << "  ";
-      File << this->Numerators[ReducedDimension] << " " << this->Denominators[ReducedDimension] << endl;  
+	File << this->Components[i].Num() << " " << this->Components[i].Den() << "  ";
+      File << this->Components[ReducedDimension].Num() << " " << this->Components[ReducedDimension].Den() << endl;  
     }
   File.close();
   this->Delocalize();
@@ -424,8 +402,7 @@ bool RationalVector::ReadVector (const char* fileName)
       this->Resize(TmpDimension);
       for (int i = 0; i < this->Dimension; ++i)
 	{
-	  ReadLittleEndian(File, this->Numerators[i]);
-	  ReadLittleEndian(File, this->Denominators[i]);
+	  this->Components[i].Read(File);
 	}
     }
   else
@@ -435,8 +412,7 @@ bool RationalVector::ReadVector (const char* fileName)
       this->Resize(TmpLargeDimension);
       for (long i = 0; i < this->LargeDimension; ++i)
 	{
-	  ReadLittleEndian(File, this->Numerators[i]);
-	  ReadLittleEndian(File, this->Denominators[i]);
+	  this->Components[i].Read(File);
 	}
     }
   File.close();
@@ -488,8 +464,7 @@ bool RationalVector::ReadVector (const char* fileName, long minIndex, long maxIn
       File.seekg (minIndex * sizeof(double), ios::cur);    
       for (int i = 0; i < this->Dimension; ++i)
 	{
-	  ReadLittleEndian(File, this->Numerators[i]);
-	  ReadLittleEndian(File, this->Denominators[i]);
+	  this->Components[i].Read(File);
 	}
     }
   else
@@ -504,8 +479,7 @@ bool RationalVector::ReadVector (const char* fileName, long minIndex, long maxIn
       File.seekg (minIndex * sizeof(double), ios::cur);    
       for (long i = 0; i < this->LargeDimension; ++i)
 	{
-	  ReadLittleEndian(File, this->Numerators[i]);
-	  ReadLittleEndian(File, this->Denominators[i]);
+	  this->Components[i].Read(File);
 	}
     }
   File.close();
@@ -599,11 +573,6 @@ bool RationalVector::ReadVectorTest (const char* fileName)
 ostream& operator << (ostream& str, RationalVector& v)
 {
   for (long i = 0; i < v.LargeDimension; ++i)
-    {
-      if (v.Denominators[i] == 1l)
-	str << v.Numerators[i] << endl;
-      else
-	str << v.Numerators[i] << "/" << v.Denominators[i] << endl;
-    }
+    str << v.Components[i] << endl;
   return str;
 }

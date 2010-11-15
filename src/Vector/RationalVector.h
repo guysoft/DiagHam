@@ -35,6 +35,7 @@
 #include "config.h"
 #include "Vector/Vector.h"
 #include "GeneralTools/GarbageFlag.h"
+#include "MathTools/Rational.h"
 
 #include <iostream>
 
@@ -51,10 +52,8 @@ class RationalVector : public Vector
 
  protected:
 
-  // array for the numerators
-  long* Numerators;
-  // array for the denominators
-  long* Denominators;
+  // array for the vector components
+  Rational* Components;
 
   // garbage flag to avoid data duplication
   GarbageFlag Flag;
@@ -76,6 +75,13 @@ class RationalVector : public Vector
   // size = Vector Dimension 
   // zeroFlag = true if all coordinates have to be set to zero
   RationalVector(long size, bool zeroFlag = false);
+
+  // constructor from integer arrays
+  //
+  // numerators = numerator array 
+  // denominators = denominator array
+  // size = vector Dimension 
+  RationalVector(long* numerators, long* denominators, long size);
 
   // copy constructor
   //
@@ -121,29 +127,39 @@ class RationalVector : public Vector
   // return value = pointer to the array of new vectors
   virtual Vector* EmptyCloneArray(int nbrVectors, bool zeroFlag = false);
 
-  // get the numerator of a given component
-  // 
-  // index = component index
-  // return value = reference on the denominator
-  long& Num(int index);
+  // return vector i-th coordinate (without testing if position is valid)
+  //
+  // i = coordinate position
+  virtual Rational& operator [] (int i);
+
+  // return vector i-th coordinate (without testing if position is valid)
+  //
+  // i = coordinate position
+  virtual Rational& operator [] (long i);
 
   // get the numerator of a given component
   // 
   // index = component index
-  // return value = reference on the denominator
-  long& Num(long index);
+  // return value = denominator
+  long Num(int index);
+
+  // get the numerator of a given component
+  // 
+  // index = component index
+  // return value = denominator
+  long Num(long index);
 
   // get the denominator of a given component
   // 
   // index = component index
-  // return value = reference on the denominator
-  long& Den(int index);
+  // return value = denominator
+  long Den(int index);
 
   // get the denominator of a given component
   // 
   // index = component index
-  // return value = reference on the denominator
-  long& Den(long index);
+  // return value = denominator
+  long Den(long index);
 
   // write vector in a file 
   //
@@ -183,54 +199,72 @@ class RationalVector : public Vector
   // return value = true if the vector can be read
   bool ReadVectorTest (const char* fileName);
 
-  // Output Stream overload
+  // Output stream overload
   //
   // str = reference on output stream
   // v = vector to print
-  // return value = referenceint GetNumSites(){return this->NSites;} on output stream
+  // return value = reference on output stream
   friend ostream& operator << (ostream& str, RationalVector& v);
 
 };
  
 
-// get the numerator of a given component
-// 
-// index = component index
-// return value = reference on the denominator
+// return vector i-th coordinate (without testing if position is valid)
+//
+// i = coordinate position
 
-inline long& RationalVector::Num(int index)
+inline Rational& RationalVector::operator [] (int i)
 {
-  return this->Numerators[index];
+  return this->Components[i];
+}
+
+// return vector i-th coordinate (without testing if position is valid)
+//
+// i = coordinate position
+
+inline Rational& RationalVector::operator [] (long i)
+{
+  return this->Components[i];
 }
 
 // get the numerator of a given component
 // 
 // index = component index
-// return value = reference on the denominator
+// return value = denominator
 
-inline long& RationalVector::Num(long index)
+inline long RationalVector::Num(int index)
 {
-  return this->Numerators[index];
+  return this->Components[index].Num();
+}
+
+// get the numerator of a given component
+// 
+// index = component index
+// return value = denominator
+
+inline long RationalVector::Num(long index)
+{
+  return  this->Components[index].Num();
 }
 
 // get the denominator of a given component
 // 
 // index = component index
-// return value = reference on the denominator
+// return value = denominator
 
-inline long& RationalVector::Den(int index)
+inline long RationalVector::Den(int index)
 {
-  return this->Denominators[index];
+  return  this->Components[index].Den();
 }
 
 // get the denominator of a given component
 // 
 // index = component index
-// return value = reference on the denominator
+// return value = denominator
 
-inline long& RationalVector::Den(long index)
+inline long RationalVector::Den(long index)
 {
-  return this->Denominators[index];
+  return this->Components[index].Den();
 }
 
 #endif

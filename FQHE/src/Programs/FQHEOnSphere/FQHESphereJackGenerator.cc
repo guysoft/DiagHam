@@ -56,8 +56,8 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
   (*SystemGroup) += new SingleDoubleOption  ('a', "alpha", "alpha coefficient of the Jack polynomial", -2.0);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "alpha-numerator", "numerator of the alpha coefficient of the Jack polynomial (enable in rational mode)", -2);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "alpha-denominator", "denominator of the alpha coefficient of the Jack polynomial (enable in rational mode)", 1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "numerator-alpha", "numerator of the alpha coefficient of the Jack polynomial (enable in rational mode)", -2);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "denominator-alpha", "denominator of the alpha coefficient of the Jack polynomial (enable in rational mode)", 1);
   (*SystemGroup) += new BooleanOption  ('\n', "rational" , "use rational numbers instead of double precision floating point numbers");
   (*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0) to speed up calculations");
   (*SystemGroup) += new BooleanOption  ('\n', "sym-storage", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0), both for speed and storage");
@@ -99,8 +99,8 @@ int main(int argc, char** argv)
   int NbrFluxQuanta = 0; 
   bool SymmetrizedBasis = Manager.GetBoolean("symmetrized-basis");
   double Alpha = ((SingleDoubleOption*) Manager["alpha"])->GetDouble();
-  long AlphaDenominator = Manager.GetInteger("alpha-denominator");
-  long AlphaNumerator = Manager.GetInteger("alpha-numerator");
+  long AlphaDenominator = Manager.GetInteger("denominator-alpha");
+  long AlphaNumerator = Manager.GetInteger("numerator-alpha");
   int TotalLz = 0;
   char* OutputFileName = Manager.GetString("bin-output");
   char* OutputTxtFileName = Manager.GetString("txt-output");
@@ -311,7 +311,7 @@ int main(int argc, char** argv)
 	      RationalVector OutputState;
 	      if (Manager.GetBoolean("check-singularity") == true)
 		{
-		  OutputState = RationalVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
+		  OutputState = RationalVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);		  
 		  InitialSpace->CheckPossibleSingularCoefficientsInJackPolynomial(OutputState, AlphaNumerator, AlphaDenominator);
 		  cout << "partitions that may lead to singular coefficients : " << endl;
 // 		  for (long i = 1l; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
@@ -343,7 +343,7 @@ int main(int argc, char** argv)
 		  File.precision(14);
 		  for (long i = 0; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
 		    {
-// 		      File << OutputState[i] << " ";
+ 		      File << OutputState[i] << " ";
 		      InitialSpace->PrintStateMonomial(File, i) << endl;
 		    }
 		  File.close();

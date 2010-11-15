@@ -30,14 +30,10 @@
 
 #include "config.h"
 #include "MathTools/Rational.h"
+#include "GeneralTools/Endian.h"
 
 #include <iostream>
 
-
-  // numerator
-  long Numerator;
-  // denominator
-  long Denominator;
 
 // default constructor 
 //
@@ -81,7 +77,7 @@ Rational::~Rational()
 // rational = rational coefficient to assign
 // return value = reference on current rational coefficient
 
-Rational& Rational::operator = (Rational& rational)
+Rational& Rational::operator = (const Rational& rational)
 {
   this->Numerator = rational.Numerator;
   this->Denominator = rational.Denominator;
@@ -111,6 +107,258 @@ Rational& Rational::SetToOne()
   return *this;
 }
 
+// add two rational numbers
+//
+// x = first rational
+// y = second rational
+// return value = sum
+
+Rational operator + (const Rational& x, const Rational& y)
+{
+  Rational Tmp;
+  Tmp.Numerator = (x.Numerator * y.Denominator) + (y.Numerator * x.Denominator);
+  Tmp.Denominator = x.Denominator * y.Denominator;
+  Tmp.Simplify();
+  return Tmp;
+}
+
+// add a rational number and an integer
+//
+// x = rational number
+// y = integer
+// return value = sum
+
+Rational operator + (const Rational& x, long y)
+{
+  Rational Tmp;
+  Tmp.Numerator = x.Numerator + (y * x.Denominator);
+  Tmp.Denominator = x.Denominator;
+  Tmp.Simplify();
+  return Tmp;
+}
+
+// add a rational number and an integer
+//
+// y = rational number
+// x = integer
+// return value = sum
+
+Rational operator + (long y, const Rational& x)
+{
+  Rational Tmp;
+  Tmp.Numerator = x.Numerator + (y * x.Denominator);
+  Tmp.Denominator = x.Denominator;
+  Tmp.Simplify();
+  return Tmp;
+}
+
+// substract an rational number to another
+//
+// x = first rational
+// y = second rational
+// return value = substraction
+
+Rational operator - (const Rational& x, const Rational& y)
+{
+  Rational Tmp;
+  Tmp.Numerator = (x.Numerator * y.Denominator) - (y.Numerator * x.Denominator);
+  Tmp.Denominator = x.Denominator * y.Denominator;
+  Tmp.Simplify();
+  return Tmp;
+}
+
+// substract an integer to a rational number
+//
+// x = rational number
+// y = integer
+// return value = substraction
+
+Rational operator - (const Rational& x, long y)
+{
+  Rational Tmp;
+  Tmp.Numerator = x.Numerator - (y * x.Denominator);
+  Tmp.Denominator = x.Denominator;
+  Tmp.Simplify();
+  return Tmp;
+}
+
+// substract a rational number to an integer
+//
+// y = integer
+// x = rational number
+// return value = substraction
+
+Rational operator - (long y, const Rational& x)
+{
+  Rational Tmp;
+  Tmp.Numerator = (y * x.Denominator) - x.Numerator;
+  Tmp.Denominator = x.Denominator;
+  Tmp.Simplify();
+  return Tmp;
+}
+
+// multiply two rational numbers
+//
+// x = first rational
+// y = second rational
+// return value = product
+
+Rational operator * (const Rational& x, const Rational& y)
+{
+  Rational Tmp = x;
+  long Tmp2 = y.Numerator;
+  long Tmp3 = Tmp.FindGCD(Tmp2, Tmp.Denominator);
+  long Tmp4 = y.Denominator;
+  long Tmp5 = Tmp.FindGCD(Tmp4, Tmp.Numerator);
+  Tmp.Denominator /= Tmp3;
+  Tmp2 /= Tmp3;
+  Tmp.Numerator /= Tmp5;
+  Tmp4 /= Tmp5;
+  Tmp.Numerator *= Tmp2;
+  Tmp.Denominator *= Tmp4;
+  return Tmp;
+}
+
+// multiply a rational number and an integer
+//
+// x = rational number
+// y = integer
+// return value = product
+
+Rational operator * (const Rational& x, long y)
+{
+  Rational Tmp = x;
+  long Tmp2 = Tmp.FindGCD(y, Tmp.Denominator);
+  Tmp.Denominator /= Tmp2;
+  y /= Tmp2;
+  Tmp.Numerator *= y;
+  return Tmp;
+}
+
+// multiply a rational number and an integer
+//
+// y = rational number
+// x = integer
+// return value = product
+
+Rational operator * (long y, const Rational& x)
+{
+  Rational Tmp = x;
+  long Tmp2 = Tmp.FindGCD(y, Tmp.Denominator);
+  Tmp.Denominator /= Tmp2;
+  y /= Tmp2;
+  Tmp.Numerator *= y;
+  return Tmp;
+}
+
+// divide two rational numbers
+//
+// x = first rational
+// y = second rational
+// return value = division
+
+Rational operator / (const Rational& x, const Rational& y)
+{
+  Rational Tmp = x;
+  long Tmp2 = y.Denominator;
+  long Tmp3 = Tmp.FindGCD(Tmp2, Tmp.Denominator);
+  long Tmp4 = y.Numerator;
+  long Tmp5 = Tmp.FindGCD(Tmp4, Tmp.Numerator);
+  Tmp.Denominator /= Tmp3;
+  Tmp2 /= Tmp3;
+  Tmp.Numerator /= Tmp5;
+  Tmp4 /= Tmp5;
+  Tmp.Numerator *= Tmp2;
+  Tmp.Denominator *= Tmp4;
+  return Tmp;
+}
+
+// divide a rational number ny an integer
+//
+// x = rational number
+// y = integer
+// return value = division
+
+Rational operator / (const Rational& x, long y)
+{
+  Rational Tmp (x);
+  long Tmp2 = Tmp.FindGCD(y, Tmp.Numerator);
+  Tmp.Numerator /= Tmp2;
+  y /= Tmp2;
+  Tmp.Denominator *= y;
+  return Tmp;
+}
+
+// divide an integer ny a rational number
+//
+// y = rational number
+// x = integer
+// return value = division
+
+Rational operator / (long y, const Rational& x)
+{
+  Rational Tmp;
+  Tmp.Denominator = x.Numerator;
+  Tmp.Numerator = x.Denominator;
+  long Tmp2 = Tmp.FindGCD(y, Tmp.Denominator);
+  Tmp.Denominator /= Tmp2;
+  y /= Tmp2;
+  Tmp.Numerator *= y;
+  return Tmp;
+}
+
+// add a rational
+//
+// x = rational to use
+// return value = reference on current coefficient
+
+Rational& Rational::operator += (const  Rational& x)
+{
+  this->Numerator *= x.Denominator;
+  this->Numerator += x.Numerator * this->Denominator;
+  this->Denominator *= x.Denominator;
+  this->Simplify();  
+  return *this;
+}
+
+// add an integer
+//
+// x = integer to use
+// return value = reference on current coefficient
+
+Rational& Rational::operator += (long x)
+{
+  this->Numerator += x * this->Denominator;
+  this->Simplify();
+  return *this;
+}
+ 
+// substract a rational
+//
+// x = rational to use
+// return value = reference on current coefficient
+
+Rational& Rational::operator -= (const  Rational& x)
+{
+  this->Numerator *= x.Denominator;
+  this->Numerator -= x.Numerator * this->Denominator;
+  this->Denominator *= x.Denominator;
+  this->Simplify();  
+  return *this;
+}
+
+// substract an integer
+//
+// x = integer to use
+// return value = reference on current coefficient
+
+Rational& Rational::operator -= (long x)
+{
+  this->Numerator -= x * this->Denominator;
+  this->Simplify();
+  return *this;
+}
+
 // multiply by an integer
 //
 // x = integer to use
@@ -123,6 +371,22 @@ Rational& Rational::operator *= (long x)
   this->Denominator /= Tmp;
   this->Numerator *= x;
   return *this;
+}
+
+// multiply by a rational
+//
+// x = rational to use
+// return value = reference on current coefficient
+
+Rational& Rational::operator *= (const Rational& x)
+{
+  long Tmp = this->FindGCD(this->Numerator, x.Denominator);
+  long Tmp2 = this->FindGCD(x.Numerator, this->Denominator);
+  this->Numerator /= Tmp;
+  this->Denominator /= Tmp2;
+  this->Numerator *=  x.Numerator / Tmp2;
+  this->Denominator *= x.Denominator / Tmp;
+  return *this;     
 }
 
 // divide by an integer
@@ -139,17 +403,68 @@ Rational& Rational::operator /= (long y)
   return *this;
 }
 
-
-// find greatest common divider (recurisive part of the method)
+// divide by a rational
 //
-// m = first integer  
-// n = second integer (must be greater than m)
-// return value = GCD
+// x = rational to use
+// return value = reference on current coefficient
 
-long Rational::RecursiveFindGCD(long m, long n)
+Rational& Rational::operator /= (const Rational& x)
 {
-  if (m == 0)
-    return n;
+  long Tmp = this->FindGCD(this->Numerator, x.Numerator);
+  long Tmp2 = this->FindGCD(x.Denominator, this->Denominator);
+  this->Numerator /= Tmp;
+  this->Denominator /= Tmp2;
+  this->Numerator *=  x.Denominator / Tmp2;
+  this->Denominator *= x.Numerator / Tmp;
+  return *this;     
+}
+
+// Output stream overload
+//
+// str = reference on output stream
+// x = rational to print
+// return value = reference on output stream
+
+ostream& operator << (ostream& str, Rational& x)
+{
+  if (x.Denominator > 0l)
+    {
+      if (x.Denominator == 1l)
+	str << x.Numerator;
+      else
+	str << x.Numerator << "/" << x.Denominator;
+    }
   else
-    return this->FindGCD ((n % m), m);
+    {
+      if (x.Denominator == -1l)
+	str << (-x.Numerator);
+      else
+	str << (-x.Numerator) << "/" << (-x.Denominator);
+    }
+  return str;
+}
+
+
+// write a rational in binary mode
+//
+// file = reference on the output file stream
+// return value = reference on the output file stream
+
+ofstream& Rational::Write(ofstream& file)
+{
+  WriteLittleEndian(file, this->Numerator);
+  WriteLittleEndian(file, this->Denominator);
+  return file;
+}
+
+// read a rational in binary mode
+//
+// file = reference on the output file stream
+// return value = reference on the output file stream
+
+ifstream& Rational::Read(ifstream& file)
+{
+  ReadLittleEndian(file, this->Numerator);
+  ReadLittleEndian(file, this->Denominator);
+  return file;
 }

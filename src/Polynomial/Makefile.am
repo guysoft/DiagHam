@@ -6,4 +6,5 @@ libPolynomial_a_SOURCES=Polynomial.cc \
 ComplexPolynomial.cc \
 IntegerPolynomial.cc \
 QDeformedBinomialCoefficients.cc \
-SpecialPolynomial.cc
+SpecialPolynomial.cc \
+RationalPolynomial.cc

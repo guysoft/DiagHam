@@ -1,4 +1,5 @@
 #include "Vector/RealVector.h"
+#include "Vector/RationalVector.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -37,6 +38,7 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleStringOption  ('i', "input-vector", "name of the file containing the ASCII vector");
   (*SystemGroup) += new SingleStringOption  ('o', "output-vector", "name of the file where the vector will be stored in binary");
+  (*SystemGroup) += new BooleanOption  ('r', "rational", "indicate that the input vector has rational coefficients");
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -45,19 +47,19 @@ int main(int argc, char** argv)
       cout << "see man page for option syntax or type VectorAscii2Binary -h" << endl;
       return -1;
     }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
     }
 
-  if (((SingleStringOption*) Manager["input-vector"])->GetString() == 0)
+  if (Manager.GetString("input-vector") == 0)
     {
       cout << "VectorAscii2Binary requires an input file" << endl << "see man page for option syntax or type VectorAscii2Binary -h" << endl;
       return -1;
     }
 
-  if ((((SingleStringOption*) Manager["output-vector"])->GetString() == 0) && (Manager.GetBoolean("std-output") == false))
+  if ((Manager.GetString("output-vector") == 0) && (Manager.GetBoolean("std-output") == false))
     {
       cout << "VectorAscii2Binary requires an output file" << endl << "see man page for option syntax or type VectorAscii2Binary -h" << endl;
       return -1;
@@ -70,14 +72,30 @@ int main(int argc, char** argv)
       return -1;
     }
 
-  double* TmpData = AsciiVector.GetAsDoubleArray(0);
-  if (TmpData == 0)
+  if (Manager.GetBoolean("rational") == false)
     {
-      AsciiVector.DumpErrors(cout) << endl;
-      return -1;     
+      double* TmpData = AsciiVector.GetAsDoubleArray(0);
+      if (TmpData == 0)
+	{
+	  AsciiVector.DumpErrors(cout) << endl;
+	  return -1;     
+	}
+      RealVector BinaryVector(TmpData, AsciiVector.GetNbrLines());
+      BinaryVector.WriteVector(Manager.GetString("output-vector"));
     }
-  RealVector BinaryVector(TmpData, AsciiVector.GetNbrLines());
-  BinaryVector.WriteVector(Manager.GetString("output-vector"));
+  else
+    {
+      long* TmpNumerators = AsciiVector.GetAsLongArray(0);
+      long* TmpDenominators = AsciiVector.GetAsLongArray(1);
+      if ((TmpNumerators == 0) || (TmpDenominators == 0))
+	{
+	  AsciiVector.DumpErrors(cout) << endl;
+	  return -1;     
+	}
+      RationalVector BinaryVector(TmpNumerators, TmpDenominators, AsciiVector.GetNbrLines());
+      BinaryVector.WriteVector(Manager.GetString("output-vector"));
+    }
+
  
   return 0;
 }
