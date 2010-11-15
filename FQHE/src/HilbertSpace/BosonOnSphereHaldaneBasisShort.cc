@@ -37,6 +37,7 @@
 #include "Vector/RealVector.h"
 #include "FunctionBasis/AbstractFunctionBasis.h"
 #include "GeneralTools/ArrayTools.h"
+#include "Polynomial/RationalPolynomial.h"
 
 #include <math.h>
 
@@ -347,9 +348,11 @@ RealVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(RealVector& j
 // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
 // alphaNumerator = numerator of the Jack polynomial alpha coefficient
 // alphaDenominator = numerator of the Jack polynomial alpha coefficient
+// symbolicDepth = use symbolic calculation to solve singular values if non zero, if greater than zero it will use symbolic calculation up to a given depth (below that depth it will rely on numerical calculation),
+//                 -1 if the symbolic calculation has to be done up to the point the singular value problem has been solved
 // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
 
-RationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(RationalVector& jack, long alphaNumerator, long alphaDenominator)
+RationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(RationalVector& jack, long alphaNumerator, long alphaDenominator, int symbolicDepth)
 {
   jack[0] = 1l;
   Rational InvAlpha (2l * alphaDenominator, alphaNumerator);
@@ -377,49 +380,81 @@ RationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(RationalV
 	    Rho += TmpMonomial[j] * ((TmpMonomial[j] - 1l) - InvAlpha * ((long) j));
 	  if (Rho == RhoRoot)
 	    {
-	      cout << "warning : singular value detected at position " << i << ", skipping the rest of the calculation" << endl;
-	      return jack;
+	      if (symbolicDepth == 0)
+		{
+		  cout << "warning : singular value detected at position " << i << ", skipping the rest of the calculation" << endl;
+		  return jack;
+		}
+	      int Depth = 1;
+	      bool FullSymbolicFlag = false;
+	      bool SolvedFlag = false;
+	      while (((Depth <= symbolicDepth) || (symbolicDepth < 0)) && (SolvedFlag == false) && (FullSymbolicFlag == false))
+		{
+		  RationalPolynomial TmpNumerator;
+		  RationalPolynomial TmpDenominator;
+		  FullSymbolicFlag = this->GenerateSingleJackPolynomialCoefficient(jack, i, TmpNumerator, TmpDenominator, Depth);
+		  Rational Tmp = TmpNumerator.PolynomialEvaluate(InvAlpha);
+		  if (Tmp.Num() == 0l)
+		    {
+		      TmpNumerator.MonomialDivision(InvAlpha);
+		      Tmp = TmpNumerator.PolynomialEvaluate(InvAlpha);
+		      Tmp /= TmpDenominator.PolynomialEvaluate(InvAlpha);
+		      jack[i] = (Tmp * InvAlpha) / (RhoRoot - Rho);
+		      SolvedFlag = true;
+		    }
+		  ++Depth;
+		}
+	      if (SolvedFlag == false)
+		{
+		  if (FullSymbolicFlag == true)
+		    cout << "warning : singular value detected at position " << i << ", skipping the rest of the calculation" << endl;
+		  return jack;
+
+		}
 	    }
-	  Rational Coefficient = 0;
-	  for (int j1 = 0; j1 < ReducedNbrBosons; ++j1)
-	    for (int j2 = j1 + 1; j2 < this->NbrBosons; ++j2)
-	      {
-		long Diff = (long) (TmpMonomial[j1] - TmpMonomial[j2]);
-		unsigned int Max = TmpMonomial[j2];
-		unsigned long TmpState = 0x0ul;
-		int Tmpj1 = j1;
-		int Tmpj2 = j2;
-		for (int l = 0; l < this->NbrBosons; ++l)
-		  TmpMonomial2[l] = TmpMonomial[l];	    
-		for (unsigned int k = 1; (k <= Max) && (TmpState < MaxRoot); ++k)
+	  else
+	    {
+	      Rational Coefficient = 0;
+	      for (int j1 = 0; j1 < ReducedNbrBosons; ++j1)
+		for (int j2 = j1 + 1; j2 < this->NbrBosons; ++j2)
 		  {
-		    ++TmpMonomial2[Tmpj1];
-		    --TmpMonomial2[Tmpj2];
-		    Diff += 2l;
-		    while ((Tmpj1 > 0) && (TmpMonomial2[Tmpj1] > TmpMonomial2[Tmpj1 - 1]))
+		    long Diff = (long) (TmpMonomial[j1] - TmpMonomial[j2]);
+		    unsigned int Max = TmpMonomial[j2];
+		    unsigned long TmpState = 0x0ul;
+		    int Tmpj1 = j1;
+		    int Tmpj2 = j2;
+		    for (int l = 0; l < this->NbrBosons; ++l)
+		      TmpMonomial2[l] = TmpMonomial[l];	    
+		    for (unsigned int k = 1; (k <= Max) && (TmpState < MaxRoot); ++k)
 		      {
-			unsigned long Tmp = TmpMonomial2[Tmpj1 - 1];
-			TmpMonomial2[Tmpj1 - 1] = TmpMonomial2[Tmpj1];
-			TmpMonomial2[Tmpj1] = Tmp;
-			--Tmpj1;
-		      }
-		    while ((Tmpj2 < ReducedNbrBosons) && (TmpMonomial2[Tmpj2] < TmpMonomial2[Tmpj2 + 1]))
-		      {
-			unsigned long Tmp = TmpMonomial2[Tmpj2 + 1];
-			TmpMonomial2[Tmpj2 + 1] = TmpMonomial2[Tmpj2];
-			TmpMonomial2[Tmpj2] = Tmp;
-			++Tmpj2;
-		      }
-		    TmpState = this->ConvertFromMonomial(TmpMonomial2);
-		    if ((TmpState <= MaxRoot) && (TmpState > CurrentPartition))
-		      {
-			long TmpIndex = this->FermionBasis->FindStateIndex(TmpState, TmpMonomial2[0] + ReducedNbrBosons);
-			if (TmpIndex < this->HilbertSpaceDimension)
-			  Coefficient += Diff * jack[TmpIndex];
+			++TmpMonomial2[Tmpj1];
+			--TmpMonomial2[Tmpj2];
+			Diff += 2l;
+			while ((Tmpj1 > 0) && (TmpMonomial2[Tmpj1] > TmpMonomial2[Tmpj1 - 1]))
+			  {
+			    unsigned long Tmp = TmpMonomial2[Tmpj1 - 1];
+			    TmpMonomial2[Tmpj1 - 1] = TmpMonomial2[Tmpj1];
+			    TmpMonomial2[Tmpj1] = Tmp;
+			    --Tmpj1;
+			  }
+			while ((Tmpj2 < ReducedNbrBosons) && (TmpMonomial2[Tmpj2] < TmpMonomial2[Tmpj2 + 1]))
+			  {
+			    unsigned long Tmp = TmpMonomial2[Tmpj2 + 1];
+			    TmpMonomial2[Tmpj2 + 1] = TmpMonomial2[Tmpj2];
+			    TmpMonomial2[Tmpj2] = Tmp;
+			    ++Tmpj2;
+			  }
+			TmpState = this->ConvertFromMonomial(TmpMonomial2);
+			if ((TmpState <= MaxRoot) && (TmpState > CurrentPartition))
+			  {
+			    long TmpIndex = this->FermionBasis->FindStateIndex(TmpState, TmpMonomial2[0] + ReducedNbrBosons);
+			    if (TmpIndex < this->HilbertSpaceDimension)
+			      Coefficient += Diff * jack[TmpIndex];
+			  }
 		      }
 		  }
-	      }
-	  jack[i] = (Coefficient * InvAlpha) / (RhoRoot - Rho);
+	      jack[i] = (Coefficient * InvAlpha) / (RhoRoot - Rho);
+	    }
 	}
       if ((i & 0xffffl) == 0l)
 	{
@@ -430,6 +465,97 @@ RationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(RationalV
   delete[] TmpMonomial;
   cout << endl;
   return jack;
+}
+
+// compute a single coefficient of the Jack polynomial decomposition corresponding to the root partition, assuming only rational numbers occur and using (partial symbolic calculation)
+//
+// jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
+// index = index of the component to compute
+// numerator = reference on the polynomial where the numerator has to be stored
+// denominator = reference on the polynomial where the denominator has to be stored
+// depth = depth in the recurrence describing up to which point the symbolic calculation has to be performed 
+// return value = true if a fully symbolic calculation has been performed
+
+bool BosonOnSphereHaldaneBasisShort::GenerateSingleJackPolynomialCoefficient(RationalVector& jack, long index, RationalPolynomial& numerator, RationalPolynomial& denominator, int depth)
+{
+//   Rational InvAlpha (2l * alphaDenominator, alphaNumerator);
+
+//   unsigned long* TmpMonomial = new unsigned long [this->NbrBosons];
+//   unsigned long* TmpMonomial2 = new unsigned long [this->NbrBosons];
+
+//   Rational RhoRoot = 0l;
+//   unsigned long MaxRoot = this->FermionBasis->StateDescription[0];
+//   this->ConvertToMonomial(MaxRoot, this->FermionBasis->StateLzMax[0], TmpMonomial);
+//   for (int j = 0; j < this->NbrBosons; ++j)
+//     {
+//       RhoRoot += TmpMonomial[j] * ((TmpMonomial[j] - 1l) - InvAlpha * ((long) j));
+//     }
+//   int ReducedNbrBosons = this->NbrBosons - 1;
+
+//   for (long i = 1; i < this->LargeHilbertSpaceDimension; ++i)
+//     {
+//       if (jack[i].Num() == 0l)
+// 	{
+// 	  Rational Rho = 0l;
+// 	  unsigned long CurrentPartition = this->FermionBasis->StateDescription[i];
+// 	  this->ConvertToMonomial(CurrentPartition, this->FermionBasis->StateLzMax[i], TmpMonomial);
+// 	  for (int j = 0; j < this->NbrBosons; ++j)
+// 	    Rho += TmpMonomial[j] * ((TmpMonomial[j] - 1l) - InvAlpha * ((long) j));
+// 	  if (Rho == RhoRoot)
+// 	    {
+// 	      cout << "warning : singular value detected at position " << i << ", skipping the rest of the calculation" << endl;
+// 	      return jack;
+// 	    }
+// 	  Rational Coefficient = 0;
+// 	  for (int j1 = 0; j1 < ReducedNbrBosons; ++j1)
+// 	    for (int j2 = j1 + 1; j2 < this->NbrBosons; ++j2)
+// 	      {
+// 		long Diff = (long) (TmpMonomial[j1] - TmpMonomial[j2]);
+// 		unsigned int Max = TmpMonomial[j2];
+// 		unsigned long TmpState = 0x0ul;
+// 		int Tmpj1 = j1;
+// 		int Tmpj2 = j2;
+// 		for (int l = 0; l < this->NbrBosons; ++l)
+// 		  TmpMonomial2[l] = TmpMonomial[l];	    
+// 		for (unsigned int k = 1; (k <= Max) && (TmpState < MaxRoot); ++k)
+// 		  {
+// 		    ++TmpMonomial2[Tmpj1];
+// 		    --TmpMonomial2[Tmpj2];
+// 		    Diff += 2l;
+// 		    while ((Tmpj1 > 0) && (TmpMonomial2[Tmpj1] > TmpMonomial2[Tmpj1 - 1]))
+// 		      {
+// 			unsigned long Tmp = TmpMonomial2[Tmpj1 - 1];
+// 			TmpMonomial2[Tmpj1 - 1] = TmpMonomial2[Tmpj1];
+// 			TmpMonomial2[Tmpj1] = Tmp;
+// 			--Tmpj1;
+// 		      }
+// 		    while ((Tmpj2 < ReducedNbrBosons) && (TmpMonomial2[Tmpj2] < TmpMonomial2[Tmpj2 + 1]))
+// 		      {
+// 			unsigned long Tmp = TmpMonomial2[Tmpj2 + 1];
+// 			TmpMonomial2[Tmpj2 + 1] = TmpMonomial2[Tmpj2];
+// 			TmpMonomial2[Tmpj2] = Tmp;
+// 			++Tmpj2;
+// 		      }
+// 		    TmpState = this->ConvertFromMonomial(TmpMonomial2);
+// 		    if ((TmpState <= MaxRoot) && (TmpState > CurrentPartition))
+// 		      {
+// 			long TmpIndex = this->FermionBasis->FindStateIndex(TmpState, TmpMonomial2[0] + ReducedNbrBosons);
+// 			if (TmpIndex < this->HilbertSpaceDimension)
+// 			  Coefficient += Diff * jack[TmpIndex];
+// 		      }
+// 		  }
+// 	      }
+// 	  jack[i] = (Coefficient * InvAlpha) / (RhoRoot - Rho);
+// 	}
+//       if ((i & 0xffffl) == 0l)
+// 	{
+// 	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
+// 	  cout.flush();
+// 	}
+//     }
+//   delete[] TmpMonomial;
+//   cout << endl;
+  return false;
 }
 
 

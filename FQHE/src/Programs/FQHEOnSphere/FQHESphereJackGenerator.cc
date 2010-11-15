@@ -77,6 +77,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "large-memory", "maximum memory (in kBytes) that can allocated for precalculations when using huge mode", 1);
   (*SystemGroup) += new BooleanOption  ('\n', "check-singularity", "display configurations which may produce singularities");
   (*SystemGroup) += new BooleanOption  ('\n', "check-connected", "display lowest configuration connected to each squeezed paritition");
+  (*SystemGroup) += new BooleanOption  ('\n', "use-symbolic", "use symbolic calculation to solve singular coefficient (only available in rational mode)");
   (*OutputGroup) += new SingleStringOption ('o', "bin-output", "output the Jack polynomial decomposition into a binary file");
   (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the Jack polynomial decomposition into a text file");
   (*OutputGroup) += new BooleanOption ('n', "normalize", "express the Jack polynomial in the normalized basis");
@@ -104,6 +105,11 @@ int main(int argc, char** argv)
   int TotalLz = 0;
   char* OutputFileName = Manager.GetString("bin-output");
   char* OutputTxtFileName = Manager.GetString("txt-output");
+  int SymbolicDepth = 0;
+  if (Manager.GetBoolean("use-symbolic") == true)
+    {
+      SymbolicDepth = -1;
+    }
 
   long MinIndex = Manager.GetInteger("min-index");
   long MaxIndex = Manager.GetInteger("max-index");
