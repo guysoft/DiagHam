@@ -216,6 +216,12 @@ public:
   RationalPolynomial& operator *= (const Rational& d);
   RationalPolynomial& operator *= (const RationalPolynomial& P);
 
+  // Divide polynomial by a monomial (z - z0) using Horner scheme
+  //
+  // z0 = monomial root
+  // return value = result of polynomial division
+  RationalPolynomial MonomialDivision (const Rational& z0);
+
   // shift all powers from a given value
   //
   // shift = shift to apply

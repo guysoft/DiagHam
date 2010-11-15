@@ -744,6 +744,24 @@ RationalPolynomial& RationalPolynomial::ShiftPowers(int shift)
   return *this;
 }
 
+// Divide polynomial by a monomial (z - z0) using Horner scheme
+//
+// z0 = monomial root
+// return value = result of polynomial division
+
+RationalPolynomial RationalPolynomial::MonomialDivision (const Rational& z0)
+{
+  if (this->Coefficient != 0)
+    {
+      Rational* Coef1 = new Rational [this->Degree];
+      Coef1[this->Degree - 1] = this->Coefficient[this->Degree];
+      for (int i = this->Degree - 1; i > 0; i--)
+	Coef1[i - 1] = (Coef1[i] * z0) + this->Coefficient[i];
+      return RationalPolynomial(this->Degree - 1, Coef1, true);  
+    }
+  return RationalPolynomial();
+}
+
 // Output Stream overload
 //
 
