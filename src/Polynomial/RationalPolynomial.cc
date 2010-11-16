@@ -472,7 +472,7 @@ RationalPolynomial operator + (const RationalPolynomial& P1, const RationalPolyn
 	for (int i = P1.Degree; i >= 0; i--)
 	  Coef[i] = P1.Coefficient[i] + P2.Coefficient[i];
 	int i = P1.Degree;
-	while ((Coef[i] == 0l) && (i!=0)) i--;
+	while ((Coef[i].Num() == 0l) && (i!=0)) i--;
 	if (i == P1.Degree)
 	  return RationalPolynomial(P2.Degree, Coef, true);
 	else 
@@ -514,7 +514,7 @@ RationalPolynomial operator - (const RationalPolynomial& P1, const RationalPolyn
 	for (int i = P1.Degree; i >= 0; i--)
 	  Coef[i] = P1.Coefficient[i] - P2.Coefficient[i];
 	int i = P1.Degree;
-	while ((Coef[i] == 0l) && (i != 0)) 
+	while ((Coef[i].Num() == 0l) && (i != 0)) 
 	  i--;
 	if (i == P1.Degree)
 	  return RationalPolynomial(P2.Degree, Coef, true);
@@ -607,7 +607,7 @@ RationalPolynomial& RationalPolynomial::operator += (const RationalPolynomial& P
       for (int i = 0; i <= this->Degree; i++)
 	this->Coefficient[i] += P.Coefficient[i];
       int i = this->Degree;
-      while ((i > 0) && (this->Coefficient[i] == 0l))
+      while ((i > 0) && (this->Coefficient[i].Num() == 0l))
 	i--;
       if (i != this->Degree)
 	{
@@ -662,7 +662,7 @@ RationalPolynomial& RationalPolynomial::operator -= (const RationalPolynomial& P
       for (int i = 0; i <= this->Degree; i++)
 	this->Coefficient[i] -= P.Coefficient[i];
       int i = this->Degree;
-      while ((i > 0) && (this->Coefficient[i] == 0l))
+      while ((i > 0) && (this->Coefficient[i].Num() == 0l))
 	i--;
       if (i != this->Degree)
 	{
