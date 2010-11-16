@@ -597,7 +597,7 @@ RationalPolynomial& RationalPolynomial::operator += (const RationalPolynomial& P
 	TmpCoef[i] = this->Coefficient[i] + P.Coefficient[i];
       for (int i = this->Degree + 1; i <= P.Degree; i++)
 	TmpCoef[i] = P.Coefficient[i];
-      delete this->Coefficient;
+      delete[] this->Coefficient;
       this->Coefficient = TmpCoef;
       this->Degree = P.Degree;
       return *this;      
@@ -728,6 +728,26 @@ RationalPolynomial& RationalPolynomial::operator *= (const RationalPolynomial& P
 	  delete[] this->Root;
 	  this->RootFlag = false;
 	}
+    }
+  return *this;
+}
+
+RationalPolynomial& RationalPolynomial::operator /= (const Rational& d)
+{
+  if (this->Coefficient != 0)
+    {
+      for (int i = 0; i <= this->Degree; i++)
+	this->Coefficient[i] /= d;
+    }
+  return *this;
+}
+
+RationalPolynomial& RationalPolynomial::operator /= (long d)
+{
+  if (this->Coefficient != 0)
+    {
+      for (int i = 0; i <= this->Degree; i++)
+	this->Coefficient[i] /= d;
     }
   return *this;
 }

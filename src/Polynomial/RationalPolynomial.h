@@ -216,6 +216,8 @@ public:
   RationalPolynomial& operator *= (const Rational& d);
   RationalPolynomial& operator *= (long d);
   RationalPolynomial& operator *= (const RationalPolynomial& P);
+  RationalPolynomial& operator /= (const Rational& d);
+  RationalPolynomial& operator /= (long d);
 
   // Divide polynomial by a monomial (z - z0) using Horner scheme
   //

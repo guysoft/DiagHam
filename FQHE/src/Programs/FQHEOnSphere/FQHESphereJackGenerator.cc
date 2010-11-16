@@ -287,8 +287,6 @@ int main(int argc, char** argv)
 		    cout << "can't open " << Manager.GetString("initial-state") << endl;
 		    return -1;
 		  }
-	      if (Manager.GetBoolean("normalize"))
-		InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);
 	      if (SymmetrizedBasis == false)    
 		InitialSpace->GenerateJackPolynomial(OutputState, Alpha);
 	      else

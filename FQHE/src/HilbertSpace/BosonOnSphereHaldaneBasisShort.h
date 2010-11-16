@@ -136,6 +136,16 @@ class BosonOnSphereHaldaneBasisShort :  public BosonOnSphereShort
   // return value = true if a fully symbolic calculation has been performed
   virtual bool GenerateSingleJackPolynomialCoefficient(RationalVector& jack, long index, RationalPolynomial& numerator, RationalPolynomial& denominator, int depth);
 
+  // compute a single coefficient of the Jack polynomial decomposition corresponding to the root partition, assuming only rational numbers occur and using (partial symbolic calculation)
+  //
+  // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
+  // index = index of the component to compute
+  // numerator = reference on the polynomial where the numerator has to be stored
+  // denominator = reference on the polynomial where the denominator has to be stored
+  // depth = depth in the recurrence describing up to which point the symbolic calculation has to be performed 
+  // return value = true if a fully symbolic calculation has been performed
+  bool GenerateSingleJackPolynomialCoefficient(RationalVector& jack, long index, RationalPolynomial* numerators, RationalPolynomial* denominators, Rational* roots);
+
   // create the Jack polynomial decomposition corresponding to the root partition assuming the resulting state is invariant under the Lz<->-Lz symmetry
   //
   // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
