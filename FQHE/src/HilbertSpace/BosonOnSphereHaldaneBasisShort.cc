@@ -609,14 +609,14 @@ bool BosonOnSphereHaldaneBasisShort::GenerateSingleJackPolynomialCoefficient(Rat
       denominator = RationalPolynomial(1);
       numerator[0] = 0l;
       numerator[1] = 0l;
-      Rational Tmp2;
+      Rational Tmp2 = 1l / (RhoRootInvAlphaCoef - RhoInvAlphaCoef);
       for (int i = 0; i < NbrConnected; ++i)
 	{
-	  numerator[1] += jack[ConnectedIndices[i]] * ConnectedCoefficients[i];
+	  numerator[1] += (jack[ConnectedIndices[i]] * ConnectedCoefficients[i]) * Tmp2;
 	  cout << "computing contribution to " << index << " from component " << ConnectedIndices[i] << " at depth " << depth << ", no symbolic calculation " << endl;
 	}
-      denominator[0] = RhoRootConstCoef - RhoConstCoef;
-      denominator[1] = RhoRootInvAlphaCoef - RhoInvAlphaCoef;
+      denominator[0] = (RhoRootConstCoef - RhoConstCoef) * Tmp2;
+      denominator[1] = 1l;
     }
   else
     {
@@ -626,15 +626,16 @@ bool BosonOnSphereHaldaneBasisShort::GenerateSingleJackPolynomialCoefficient(Rat
       for (int i = 0; i < NbrConnected; ++i)
         {
 	  bool TmpFlag = this->GenerateSingleJackPolynomialCoefficient(jack, ConnectedIndices[i], TmpNumerators[i], TmpDenominators[i], depth - 1);
-	  cout << "computing contribution to " << index << " component " << i << " at depth " << depth << endl;
-	  cout << TmpNumerators[i] << endl;
-	  cout << TmpDenominators[i] << endl;
+	  cout << "computing contribution to " << index << " component " << ConnectedIndices[i] << " at depth " << depth << endl;
+	  cout << "numerator = " << TmpNumerators[i] << endl;
+	  cout << "denominator = " << TmpDenominators[i] << endl;
 	  if (TmpFlag == false)
 	    SymbolicFlag = TmpFlag;
 	}
       denominator = RationalPolynomial(1);
-      denominator[0] = RhoRootConstCoef - RhoConstCoef;
-      denominator[1] = RhoRootInvAlphaCoef - RhoInvAlphaCoef;
+      Rational Tmp2 = 1l / (RhoRootInvAlphaCoef - RhoInvAlphaCoef);
+      denominator[0] = (RhoRootConstCoef - RhoConstCoef) * Tmp2;
+      denominator[1] = 1l;
       for (int i = 0; i < NbrConnected; ++i)
         {
 	  denominator *= TmpDenominators[i];
@@ -653,6 +654,7 @@ bool BosonOnSphereHaldaneBasisShort::GenerateSingleJackPolynomialCoefficient(Rat
 	  numerator += TmpNumerators[i];
 	}
       numerator.ShiftPowers(1);
+      numerator *= Tmp2;
     }
   delete[] TmpMonomial;
   delete[] TmpMonomial2;
