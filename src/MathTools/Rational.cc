@@ -35,6 +35,10 @@
 #include <iostream>
 
 
+using std::cout;
+using std::endl;
+
+
 // default constructor 
 //
 

@@ -320,12 +320,13 @@ int main(int argc, char** argv)
 		  OutputState = RationalVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);		  
 		  InitialSpace->CheckPossibleSingularCoefficientsInJackPolynomial(OutputState, AlphaNumerator, AlphaDenominator);
 		  cout << "partitions that may lead to singular coefficients : " << endl;
-// 		  for (long i = 1l; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
-// 		    if (OutputState[i] != 0.0)
-// 		      {
-// 			InitialSpace->PrintStateMonomial(cout, i) << " = ";
-// 			InitialSpace->PrintState(cout, i) << endl;
-// 		      }
+		  Rational Zero = 0l;
+ 		  for (long i = 1l; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
+ 		    if (OutputState[i] != Zero)
+ 		      {
+ 			InitialSpace->PrintStateMonomial(cout, i) << " = ";
+ 			InitialSpace->PrintState(cout, i) << endl;
+ 		      }
 		  return 0;
 		}
 	      if (Manager.GetString("initial-state") == 0)
@@ -337,7 +338,7 @@ int main(int argc, char** argv)
 		    return -1;
 		  }
 	      if (SymmetrizedBasis == false)    
-		InitialSpace->GenerateJackPolynomial(OutputState, AlphaNumerator, AlphaDenominator);
+		InitialSpace->GenerateJackPolynomial(OutputState, AlphaNumerator, AlphaDenominator, SymbolicDepth);
 	      if (Manager.GetBoolean("normalize"))
 		{
 		  cout << "calculations have been done with rational numbers, normalization will not be done" << endl;

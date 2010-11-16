@@ -687,6 +687,16 @@ RationalPolynomial& RationalPolynomial::operator *= (const Rational& d)
   return *this;
 }
 
+RationalPolynomial& RationalPolynomial::operator *= (long d)
+{
+  if (this->Coefficient != 0)
+    {
+      for (int i = 0; i <= this->Degree; i++)
+	this->Coefficient[i] *= d;
+    }
+  return *this;
+}
+
 RationalPolynomial& RationalPolynomial::operator *= (const RationalPolynomial& P)
 {
   if (this->Coefficient != 0)
