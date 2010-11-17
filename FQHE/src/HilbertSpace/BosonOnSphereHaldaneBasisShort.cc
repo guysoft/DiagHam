@@ -386,43 +386,42 @@ RationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(RationalV
 	    Rho += TmpMonomial[j] * ((TmpMonomial[j] - 1l) - InvAlpha * ((long) j));
 	  if (Rho == RhoRoot)
 	    {
-	      if (symbolicDepth == 0)
-		{
-		  cout << "warning : singular value detected at position " << i << ", skipping the rest of the calculation" << endl;
-		  return jack;
-		}
-	      int Depth = -1;//-1;
-	      bool FullSymbolicFlag = false;
-	      bool SolvedFlag = false;
-	      //	      while (((Depth <= symbolicDepth) || (symbolicDepth < 0)) && (SolvedFlag == false) && (FullSymbolicFlag == false))
-		{
-// 		  RationalPolynomial TmpNumerator;
-// 		  RationalPolynomial TmpDenominator;		  
-// 		  FullSymbolicFlag = this->GenerateSingleJackPolynomialCoefficient(jack, i, TmpNumerator, TmpDenominator, Depth);
-		  FullSymbolicFlag = this->GenerateSingleJackPolynomialCoefficient(jack, i, TmpNumerators, TmpDenominators, Roots);
+// 	      if (symbolicDepth == 0)
+// 		{
+// 		  cout << "warning : singular value detected at position " << i << ", skipping the rest of the calculation" << endl;
+// 		  return jack;
+// 		}
+// 	      int Depth = -1;//-1;
+ 	      bool FullSymbolicFlag = false;
+ 	      bool SolvedFlag = false;
+// 	      //	      while (((Depth <= symbolicDepth) || (symbolicDepth < 0)) && (SolvedFlag == false) && (FullSymbolicFlag == false))
+// 		{
+// // 		  RationalPolynomial TmpNumerator;
+// // 		  RationalPolynomial TmpDenominator;		  
+// // 		  FullSymbolicFlag = this->GenerateSingleJackPolynomialCoefficient(jack, i, TmpNumerator, TmpDenominator, Depth);
+// 		  FullSymbolicFlag = this->GenerateSingleJackPolynomialCoefficient(jack, i, TmpNumerators, TmpDenominators, Roots);
 		  Rational Tmp = TmpNumerators[i].PolynomialEvaluate(InvAlpha);
+		  Tmp /= TmpDenominators[i].PolynomialEvaluate(InvAlpha);
 		  cout << "--------------------------------" << endl
 		       << "result = " << endl;
 		  cout << TmpNumerators[i] << endl;
 		  cout << TmpDenominators[i] << endl;
-		  cout << Tmp.Num() << endl;
-		  if (Tmp.Num() == 0l)
-		    {
-		      cout << TmpNumerators[i] << endl;
-		      cout << TmpDenominators[i] << endl;
-		      TmpNumerators[i].MonomialDivision(InvAlpha);
-		      TmpDenominators[i].MonomialDivision(InvAlpha);
-		      Tmp = TmpNumerators[i].PolynomialEvaluate(InvAlpha);
-		      Tmp /= TmpDenominators[i].PolynomialEvaluate(InvAlpha);
+		  cout << Tmp.Num() << endl;		  
+// 		  if (Tmp.Num() == 0l)
+// 		    {
+// 		      TmpNumerators[i].MonomialDivision(InvAlpha);
+// 		      TmpDenominators[i].MonomialDivision(InvAlpha);
+// 		      Tmp = TmpNumerators[i].PolynomialEvaluate(InvAlpha);
+// 		      Tmp /= TmpDenominators[i].PolynomialEvaluate(InvAlpha);
 		      jack[i] = Tmp;
 		      SolvedFlag = true;
-		    }
-		  ++Depth;
-		}
+		      //		    }
+// 		  ++Depth;
+// 		}
 	      if (SolvedFlag == false)
 		{
-		  if (FullSymbolicFlag == true)
-		    cout << "warning : singular value detected at position " << i << ", skipping the rest of the calculation" << endl;
+		  //		  if (FullSymbolicFlag == true)
+		  cout << "warning : singular value detected at position " << i << ", skipping the rest of the calculation" << endl;
 		  return jack;
 
 		}
@@ -838,66 +837,58 @@ bool BosonOnSphereHaldaneBasisShort::GenerateSingleJackPolynomialCoefficient(Rat
 	}
     }
 
-  denominators[index] = RationalPolynomial(1);
-  Rational Tmp2 = (RhoRootInvAlphaCoef - RhoInvAlphaCoef);
-  denominators[index][0] = (RhoRootConstCoef - RhoConstCoef);// * Tmp2;
-  denominators[index][1] = Tmp2;
-  numerators[index] = RationalPolynomial();
-  for (int i = 0; i < NbrConnected; ++i)
+  numerators[index] = numerators[ConnectedIndices[0]];
+  denominators[index] = denominators[ConnectedIndices[0]];
+  numerators[index] *= ConnectedCoefficients[0];
+  for (int i = 1; i < NbrConnected; ++i)
     {
-      RationalPolynomial TmpNumerator = numerators[ConnectedIndices[i]];
-      for (int j= 0; j < NbrConnected; ++j)
+      if (index == 20)
 	{
-	  if (i != j)
-	    {
-	      TmpNumerator *= denominators[ConnectedIndices[j]];
-	    }
+	  cout << ConnectedIndices[i] << " " << ConnectedCoefficients[i] << endl;
+	  cout << "num=" << numerators[index] << endl;
+	  cout << "den=" << denominators[index] << endl;
 	}
+      RationalPolynomial TmpNumerator = numerators[ConnectedIndices[i]];
+      TmpNumerator *= denominators[index];
       TmpNumerator *= ConnectedCoefficients[i];
+      numerators[index] *= denominators[ConnectedIndices[i]];
       numerators[index] += TmpNumerator;
       denominators[index] *= denominators[ConnectedIndices[i]];
-      cout << numerators[index] << endl;
-      for (int i = 1l; i < index; ++i)
+       for (int j = 1l; j < index; ++j)
 	{
-	  if (roots[i].Den() != 0l)
+	  if (roots[j].Den() != 0l)
 	    {
-	      cout << roots[i] << endl;
-	      Rational Tmp4 = numerators[index].PolynomialEvaluate(roots[i]);
-	      if (Tmp4.Num() == 0l)
+	      Rational Tmp4 = numerators[index].PolynomialEvaluate(roots[j]);	
+	      Rational Tmp5 = denominators[index].PolynomialEvaluate(roots[j]);
+	      if ((Tmp4.Num() == 0l) && (Tmp5.Num() == 0l))
 		{
-		  cout << "root found" << endl;
-		  numerators[index].MonomialDivision(roots[i]);
-		  denominators[index].MonomialDivision(roots[i]);
+		  numerators[index] = numerators[index].MonomialDivision(roots[j]);
+		  denominators[index] = denominators[index].MonomialDivision(roots[j]);
 		}
 	    }
-	}
+ 	}
     }
+
   numerators[index].ShiftPowers(1);
 
-//   for (int i = 1l; i < index; ++i)
-//     {
-//       if (roots[i].Den() != 0l)
-// 	{
-// 	  Rational Tmp4 = numerators[index].PolynomialEvaluate(roots[i]);
-// 	  if (Tmp4.Num() == 0l)
-// 	    {
-// 	      numerators[index].MonomialDivision(roots[i]);
-// 	      denominators[index].MonomialDivision(roots[i]);
-// 	    }
-// 	}
-//     }
+  Rational Tmp2 = (RhoRootInvAlphaCoef - RhoInvAlphaCoef);
 
   if (Tmp2.Num() != 0l)
     {
-      denominators[index] /= Tmp2;
       numerators[index] /= Tmp2;
       Rational Tmp3 = RhoRootConstCoef - RhoConstCoef;
       Tmp3 /= -Tmp2;
       Rational Tmp4 = numerators[index].PolynomialEvaluate(Tmp3);
       if (Tmp4.Num() == 0l)
 	{
-	  numerators[index].MonomialDivision(Tmp3);
-	  denominators[index].MonomialDivision(Tmp3);
+	  numerators[index] = numerators[index].MonomialDivision(Tmp3);
+	}
+      else
+	{
+	  RationalPolynomial TmpDenominator(1);
+	  TmpDenominator[0] = -Tmp3;
+	  TmpDenominator[1] = 1l;
+	  denominators[index] *= TmpDenominator;
 	}
       roots[index] = Tmp3;
     }
@@ -906,7 +897,6 @@ bool BosonOnSphereHaldaneBasisShort::GenerateSingleJackPolynomialCoefficient(Rat
       Tmp2 = (RhoRootConstCoef - RhoConstCoef);
       if (Tmp2.Num() != 0)
 	{
-	  denominators[index] /= Tmp2;
 	  numerators[index] /= Tmp2;
 	}
       roots[index] = Rational(0l, 0l);
