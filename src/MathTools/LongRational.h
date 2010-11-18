@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                          class of rational numbers                         //
+//                    class of rational numbers using long long               //
 //                                                                            //
-//                        last modification : 12/11/2010                      //
+//                        last modification : 17/11/2010                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,8 +28,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef RATIONAL_H
-#define RATIONAL_H
+#ifndef LONGRATIONAL_H
+#define LONGRATIONAL_H
 
 
 #include "config.h"
@@ -43,205 +43,205 @@ using std::ofstream;
 using std::ifstream;
 
 
-class Rational
+class LongRational
 {
 
  private:
 
   // numerator
-  long Numerator;
+  LONGLONG Numerator;
   // denominator
-  long Denominator;
+  LONGLONG Denominator;
 
  public:
 
   // default constructor 
   //
-  Rational();
+  LongRational();
 
   // constructor from an integer
   //
   // x = value to assign to the rational coefficient
-  Rational(long x);  
+  LongRational(long x);  
 
   // constructor from a rational number
   //
   // x = numerator to assign to the rational coefficient
   // y = denominator to assign to the rational coefficient
-  Rational(long x, long y);  
+  LongRational(long x, long y);  
 
   // destructor
   //
-  ~Rational();
+  ~LongRational();
 
   // assignement
   //
   // rational = rational coefficient to assign
   // return value = reference on current rational coefficient
-  Rational& operator = (const Rational& rational);
+  LongRational& operator = (const LongRational& rational);
 
   // assignement from integer number
   //
   // x = interger to assign
   // return value = reference on current rational coefficient
-  Rational& operator = (long x);
+  LongRational& operator = (long x);
 
   // set the coefficient to one
   //
   // return value = reference on current coefficient
-  Rational& SetToOne();
+  LongRational& SetToOne();
 
   // compute the opposit number
   //
   // x = first rational
   // return value = ooposit number
-  friend Rational operator - (const Rational& x);
+  friend LongRational operator - (const LongRational& x);
 
   // add two rational numbers
   //
   // x = first rational
   // y = second rational
   // return value = sum
-  friend Rational operator + (const Rational& x, const Rational& y);
+  friend LongRational operator + (const LongRational& x, const LongRational& y);
 
   // add a rational number and an integer
   //
   // x = rational number
   // y = integer
   // return value = sum
-  friend Rational operator + (const Rational& x, long y);
+  friend LongRational operator + (const LongRational& x, long y);
 
   // add a rational number and an integer
   //
   // y = rational number
   // x = integer
   // return value = sum
-  friend Rational operator + (long y, const Rational& x);
+  friend LongRational operator + (long y, const LongRational& x);
 
   // substract an rational number to another
   //
   // x = first rational
   // y = second rational
   // return value = substraction
-  friend Rational operator - (const Rational& x, const Rational& y);
+  friend LongRational operator - (const LongRational& x, const LongRational& y);
 
   // substract an integer to a rational number
   //
   // x = rational number
   // y = integer
   // return value = substraction
-  friend Rational operator - (const Rational& x, long y);
+  friend LongRational operator - (const LongRational& x, long y);
 
   // substract a rational number to an integer
   //
   // y = integer
   // x = rational number
   // return value = substraction
-  friend Rational operator - (long y, const Rational& x);
+  friend LongRational operator - (long y, const LongRational& x);
 
   // multiply two rational numbers
   //
   // x = first rational
   // y = second rational
   // return value = product
-  friend Rational operator * (const Rational& x, const Rational& y);
+  friend LongRational operator * (const LongRational& x, const LongRational& y);
 
   // multiply a rational number and an integer
   //
   // x = rational number
   // y = integer
   // return value = product
-  friend Rational operator * (const Rational& x, long y);
+  friend LongRational operator * (const LongRational& x, long y);
 
   // multiply a rational number and an integer
   //
   // y = rational number
   // x = integer
   // return value = product
-  friend Rational operator * (long y, const Rational& x);
+  friend LongRational operator * (long y, const LongRational& x);
 
   // divide two rational numbers
   //
   // x = first rational
   // y = second rational
   // return value = division
-  friend Rational operator / (const Rational& x, const Rational& y);
+  friend LongRational operator / (const LongRational& x, const LongRational& y);
 
   // divide a rational number by an integer
   //
   // x = rational number
   // y = integer
   // return value = division
-  friend Rational operator / (const Rational& x, long y);
+  friend LongRational operator / (const LongRational& x, long y);
 
   // divide an integer by a rational number
   //
   // y = rational number
   // x = integer
   // return value = division
-  friend Rational operator / (long y, const Rational& x);
+  friend LongRational operator / (long y, const LongRational& x);
 
   // add a rational
   //
   // x = rational to use
   // return value = reference on current coefficient
-  Rational& operator += (const  Rational& x);
+  LongRational& operator += (const  LongRational& x);
 
   // add an integer
   //
   // x = integer to use
   // return value = reference on current coefficient
-  Rational& operator += (long x);
+  LongRational& operator += (long x);
 
   // substract a rational
   //
   // x = rational to use
   // return value = reference on current coefficient
-  Rational& operator -= (const  Rational& x);
+  LongRational& operator -= (const  LongRational& x);
 
   // substract an integer
   //
   // x = integer to use
   // return value = reference on current coefficient
-  Rational& operator -= (long x);
+  LongRational& operator -= (long x);
 
   // multiply by an integer
   //
   // x = integer to use
   // return value = reference on current coefficient
-  Rational& operator *= (long x);
+  LongRational& operator *= (long x);
 
   // multiply by a rational
   //
   // x = rational to use
   // return value = reference on current coefficient
-  Rational& operator *= (const Rational& x);
+  LongRational& operator *= (const LongRational& x);
 
   // divide by an integer
   //
   // y = integer to use
   // return value = reference on current coefficient
-  Rational& operator /= (long y);
+  LongRational& operator /= (long y);
 
   // divide by a rational
   //
   // x = rational to use
   // return value = reference on current coefficient
-  Rational& operator /= (const Rational& x);
+  LongRational& operator /= (const LongRational& x);
 
   // test is two rational numbers are identical
   // 
   // x = first rational number
   // y = first rational number
   // return value = true if the two numbers are identical
-  friend bool operator == (const Rational& x, const Rational& y);
+  friend bool operator == (const LongRational& x, const LongRational& y);
 
   // test is two rational numbers are different
   // 
   // x = first rational number
   // y = first rational number
   // return value = true if the two numbers are different
-  friend bool operator != (const Rational& x, const Rational& y);
+  friend bool operator != (const LongRational& x, const LongRational& y);
 
   // return integer value associated to the coefficient numerator (0 if the coefficient can't be cast into an integer)
   //
@@ -263,7 +263,7 @@ class Rational
   // str = reference on output stream
   // x = rational to print
   // return value = reference on output stream
-  friend ostream& operator << (ostream& str, Rational& x);
+  friend ostream& operator << (ostream& str, LongRational& x);
 
   // write a rational in binary mode
   //
@@ -297,7 +297,7 @@ class Rational
 //
 // return value = numerical coefficient
 
-inline long Rational::Num()
+inline long LongRational::Num()
 {
   return this->Numerator;
 }
@@ -306,7 +306,7 @@ inline long Rational::Num()
 //
 // return value = numerical value associated to the coefficient denominator
 
-inline long Rational::Den()
+inline long LongRational::Den()
 {
   return this->Denominator;
 }
@@ -315,7 +315,7 @@ inline long Rational::Den()
 //
 // return value = numerical value associated to the coefficient
 
-inline double Rational::GetNumericalValue()
+inline double LongRational::GetNumericalValue()
 {
   return (((double) this->Numerator) / ((double) this->Denominator));
 }
@@ -323,14 +323,11 @@ inline double Rational::GetNumericalValue()
 // Simplify the current rational number
 //
 
-inline void Rational::Simplify()
+inline void LongRational::Simplify()
 {
   long Tmp = this->FindGCD(this->Numerator, this->Denominator);
-  if (Tmp != 0l)
-    {
-      this->Numerator /= Tmp;
-      this->Denominator /= Tmp;
-    } 
+  this->Numerator /= Tmp;
+  this->Denominator /= Tmp;
 }
 
 // find greatest common divider
@@ -339,7 +336,7 @@ inline void Rational::Simplify()
 // n = second integer (must be greater than m)
 // return value = GCD
 
-inline long Rational::FindGCD(long m, long n)
+inline long LongRational::FindGCD(long m, long n)
 {
   long Tmp;
   while (n != 0l)
@@ -357,7 +354,7 @@ inline long Rational::FindGCD(long m, long n)
 // y = first rational number
 // return value = true if the two numbers are identical
 
-inline bool operator == (const Rational& x, const Rational& y)
+inline bool operator == (const LongRational& x, const LongRational& y)
 {
   if (((x.Numerator == y.Numerator) && (x.Denominator == y.Denominator)) || ((x.Numerator == -y.Numerator) && (x.Denominator == -y.Denominator)))
     return true;
@@ -372,7 +369,7 @@ inline bool operator == (const Rational& x, const Rational& y)
 // y = first rational number
 // return value = true if the two numbers are different
 
-inline bool operator != (const Rational& x, const Rational& y)
+inline bool operator != (const LongRational& x, const LongRational& y)
 {
   if (((x.Numerator != y.Numerator) || (x.Denominator != y.Denominator)) && ((x.Numerator != -y.Numerator) || (x.Denominator != -y.Denominator)))
     return true;
@@ -385,9 +382,9 @@ inline bool operator != (const Rational& x, const Rational& y)
 // x = first rational
 // return value = ooposit number
 
-inline Rational operator - (const Rational& x)
+inline LongRational operator - (const LongRational& x)
 {
-  Rational Tmp(x);
+  LongRational Tmp(x);
   Tmp.Numerator *= -1l;
   return Tmp;
 }

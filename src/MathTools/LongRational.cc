@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                          class of rational numbers                         //
+//                    class of rational numbers using long long               //
 //                                                                            //
-//                        last modification : 12/11/2010                      //
+//                        last modification : 17/11/2010                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,7 +29,7 @@
 
 
 #include "config.h"
-#include "MathTools/Rational.h"
+#include "MathTools/LongRational.h"
 #include "GeneralTools/Endian.h"
 
 #include <iostream>
@@ -42,7 +42,7 @@ using std::endl;
 // default constructor 
 //
 
-Rational::Rational()
+LongRational::LongRational()
 {
   this->Numerator = 0l;
   this->Denominator = 1l;
@@ -52,7 +52,7 @@ Rational::Rational()
 //
 // x = value to assign to the rational coefficient
 
-Rational::Rational(long x)  
+LongRational::LongRational(long x)  
 {
   this->Numerator = x;
   this->Denominator = 1l;
@@ -63,7 +63,7 @@ Rational::Rational(long x)
 // x = numerator to assign to the rational coefficient
 // y = denominator to assign to the rational coefficient
 
-Rational::Rational(long x, long y)  
+LongRational::LongRational(long x, long y)  
 {
   this->Numerator = x;
   this->Denominator = y;
@@ -72,7 +72,7 @@ Rational::Rational(long x, long y)
 // destructor
 //
 
-Rational::~Rational()
+LongRational::~LongRational()
 {
 }
 
@@ -81,7 +81,7 @@ Rational::~Rational()
 // rational = rational coefficient to assign
 // return value = reference on current rational coefficient
 
-Rational& Rational::operator = (const Rational& rational)
+LongRational& LongRational::operator = (const LongRational& rational)
 {
   this->Numerator = rational.Numerator;
   this->Denominator = rational.Denominator;
@@ -93,7 +93,7 @@ Rational& Rational::operator = (const Rational& rational)
 // x = interger to assign
 // return value = reference on current rational coefficient
 
-Rational& Rational::operator = (long x)
+LongRational& LongRational::operator = (long x)
 {
   this->Numerator = x;
   this->Denominator = 1.0;
@@ -104,7 +104,7 @@ Rational& Rational::operator = (long x)
 //
 // return value = reference on current coefficient
 
-Rational& Rational::SetToOne()
+LongRational& LongRational::SetToOne()
 {
   this->Numerator = 1l;
   this->Denominator = 1l;
@@ -117,9 +117,9 @@ Rational& Rational::SetToOne()
 // y = second rational
 // return value = sum
 
-Rational operator + (const Rational& x, const Rational& y)
+LongRational operator + (const LongRational& x, const LongRational& y)
 {
-  Rational Tmp;
+  LongRational Tmp;
   Tmp.Numerator = (x.Numerator * y.Denominator) + (y.Numerator * x.Denominator);
   Tmp.Denominator = x.Denominator * y.Denominator;
   Tmp.Simplify();
@@ -132,9 +132,9 @@ Rational operator + (const Rational& x, const Rational& y)
 // y = integer
 // return value = sum
 
-Rational operator + (const Rational& x, long y)
+LongRational operator + (const LongRational& x, long y)
 {
-  Rational Tmp;
+  LongRational Tmp;
   Tmp.Numerator = x.Numerator + (y * x.Denominator);
   Tmp.Denominator = x.Denominator;
   Tmp.Simplify();
@@ -147,9 +147,9 @@ Rational operator + (const Rational& x, long y)
 // x = integer
 // return value = sum
 
-Rational operator + (long y, const Rational& x)
+LongRational operator + (long y, const LongRational& x)
 {
-  Rational Tmp;
+  LongRational Tmp;
   Tmp.Numerator = x.Numerator + (y * x.Denominator);
   Tmp.Denominator = x.Denominator;
   Tmp.Simplify();
@@ -162,9 +162,9 @@ Rational operator + (long y, const Rational& x)
 // y = second rational
 // return value = substraction
 
-Rational operator - (const Rational& x, const Rational& y)
+LongRational operator - (const LongRational& x, const LongRational& y)
 {
-  Rational Tmp;
+  LongRational Tmp;
   Tmp.Numerator = (x.Numerator * y.Denominator) - (y.Numerator * x.Denominator);
   Tmp.Denominator = x.Denominator * y.Denominator;
   Tmp.Simplify();
@@ -177,9 +177,9 @@ Rational operator - (const Rational& x, const Rational& y)
 // y = integer
 // return value = substraction
 
-Rational operator - (const Rational& x, long y)
+LongRational operator - (const LongRational& x, long y)
 {
-  Rational Tmp;
+  LongRational Tmp;
   Tmp.Numerator = x.Numerator - (y * x.Denominator);
   Tmp.Denominator = x.Denominator;
   Tmp.Simplify();
@@ -192,9 +192,9 @@ Rational operator - (const Rational& x, long y)
 // x = rational number
 // return value = substraction
 
-Rational operator - (long y, const Rational& x)
+LongRational operator - (long y, const LongRational& x)
 {
-  Rational Tmp;
+  LongRational Tmp;
   Tmp.Numerator = (y * x.Denominator) - x.Numerator;
   Tmp.Denominator = x.Denominator;
   Tmp.Simplify();
@@ -207,9 +207,9 @@ Rational operator - (long y, const Rational& x)
 // y = second rational
 // return value = product
 
-Rational operator * (const Rational& x, const Rational& y)
+LongRational operator * (const LongRational& x, const LongRational& y)
 {
-  Rational Tmp = x;
+  LongRational Tmp = x;
   long Tmp2 = y.Numerator;
   long Tmp3 = Tmp.FindGCD(Tmp2, Tmp.Denominator);
   long Tmp4 = y.Denominator;
@@ -229,9 +229,9 @@ Rational operator * (const Rational& x, const Rational& y)
 // y = integer
 // return value = product
 
-Rational operator * (const Rational& x, long y)
+LongRational operator * (const LongRational& x, long y)
 {
-  Rational Tmp = x;
+  LongRational Tmp = x;
   long Tmp2 = Tmp.FindGCD(y, Tmp.Denominator);
   Tmp.Denominator /= Tmp2;
   y /= Tmp2;
@@ -245,9 +245,9 @@ Rational operator * (const Rational& x, long y)
 // x = integer
 // return value = product
 
-Rational operator * (long y, const Rational& x)
+LongRational operator * (long y, const LongRational& x)
 {
-  Rational Tmp = x;
+  LongRational Tmp = x;
   long Tmp2 = Tmp.FindGCD(y, Tmp.Denominator);
   Tmp.Denominator /= Tmp2;
   y /= Tmp2;
@@ -261,9 +261,9 @@ Rational operator * (long y, const Rational& x)
 // y = second rational
 // return value = division
 
-Rational operator / (const Rational& x, const Rational& y)
+LongRational operator / (const LongRational& x, const LongRational& y)
 {
-  Rational Tmp = x;
+  LongRational Tmp = x;
   long Tmp2 = y.Denominator;
   long Tmp3 = Tmp.FindGCD(Tmp2, Tmp.Denominator);
   long Tmp4 = y.Numerator;
@@ -283,9 +283,9 @@ Rational operator / (const Rational& x, const Rational& y)
 // y = integer
 // return value = division
 
-Rational operator / (const Rational& x, long y)
+LongRational operator / (const LongRational& x, long y)
 {
-  Rational Tmp (x);
+  LongRational Tmp (x);
   long Tmp2 = Tmp.FindGCD(y, Tmp.Numerator);
   Tmp.Numerator /= Tmp2;
   y /= Tmp2;
@@ -299,9 +299,9 @@ Rational operator / (const Rational& x, long y)
 // x = integer
 // return value = division
 
-Rational operator / (long y, const Rational& x)
+LongRational operator / (long y, const LongRational& x)
 {
-  Rational Tmp;
+  LongRational Tmp;
   Tmp.Denominator = x.Numerator;
   Tmp.Numerator = x.Denominator;
   long Tmp2 = Tmp.FindGCD(y, Tmp.Denominator);
@@ -316,12 +316,12 @@ Rational operator / (long y, const Rational& x)
 // x = rational to use
 // return value = reference on current coefficient
 
-Rational& Rational::operator += (const  Rational& x)
+LongRational& LongRational::operator += (const  LongRational& x)
 {
   this->Numerator *= x.Denominator;
   this->Numerator += x.Numerator * this->Denominator;
   this->Denominator *= x.Denominator;
-  cout << this->Numerator << " " <<  this->Denominator << endl;
+//  cout << this->Numerator << " " <<  this->Denominator << " " << sizeof (__int128_t) << endl;
   this->Simplify();  
   return *this;
 }
@@ -331,7 +331,7 @@ Rational& Rational::operator += (const  Rational& x)
 // x = integer to use
 // return value = reference on current coefficient
 
-Rational& Rational::operator += (long x)
+LongRational& LongRational::operator += (long x)
 {
   this->Numerator += x * this->Denominator;
   this->Simplify();
@@ -343,7 +343,7 @@ Rational& Rational::operator += (long x)
 // x = rational to use
 // return value = reference on current coefficient
 
-Rational& Rational::operator -= (const  Rational& x)
+LongRational& LongRational::operator -= (const  LongRational& x)
 {
   this->Numerator *= x.Denominator;
   this->Numerator -= x.Numerator * this->Denominator;
@@ -357,7 +357,7 @@ Rational& Rational::operator -= (const  Rational& x)
 // x = integer to use
 // return value = reference on current coefficient
 
-Rational& Rational::operator -= (long x)
+LongRational& LongRational::operator -= (long x)
 {
   this->Numerator -= x * this->Denominator;
   this->Simplify();
@@ -369,7 +369,7 @@ Rational& Rational::operator -= (long x)
 // x = integer to use
 // return value = reference on current coefficient
 
-Rational& Rational::operator *= (long x)
+LongRational& LongRational::operator *= (long x)
 {
   long Tmp = this->FindGCD(x, this->Denominator);
   x /= Tmp;
@@ -383,7 +383,7 @@ Rational& Rational::operator *= (long x)
 // x = rational to use
 // return value = reference on current coefficient
 
-Rational& Rational::operator *= (const Rational& x)
+LongRational& LongRational::operator *= (const LongRational& x)
 {
   long Tmp = this->FindGCD(this->Numerator, x.Denominator);
   long Tmp2 = this->FindGCD(x.Numerator, this->Denominator);
@@ -399,7 +399,7 @@ Rational& Rational::operator *= (const Rational& x)
 // y = integer to use
 // return value = reference on current coefficient
 
-Rational& Rational::operator /= (long y)
+LongRational& LongRational::operator /= (long y)
 {
   long Tmp = this->FindGCD(y, this->Denominator);
   y /= Tmp;
@@ -413,7 +413,7 @@ Rational& Rational::operator /= (long y)
 // x = rational to use
 // return value = reference on current coefficient
 
-Rational& Rational::operator /= (const Rational& x)
+LongRational& LongRational::operator /= (const LongRational& x)
 {
   long Tmp = this->FindGCD(this->Numerator, x.Numerator);
   long Tmp2 = this->FindGCD(x.Denominator, this->Denominator);
@@ -430,22 +430,22 @@ Rational& Rational::operator /= (const Rational& x)
 // x = rational to print
 // return value = reference on output stream
 
-ostream& operator << (ostream& str, Rational& x)
+ostream& operator << (ostream& str, LongRational& x)
 {
-  if (x.Denominator > 0l)
-    {
-      if (x.Denominator == 1l)
-	str << x.Numerator;
-      else
-	str << x.Numerator << "/" << x.Denominator;
-    }
-  else
-    {
-      if (x.Denominator == -1l)
-	str << (-x.Numerator);
-      else
-	str << (-x.Numerator) << "/" << (-x.Denominator);
-    }
+   if (x.Denominator > 0l)
+     {
+       if (x.Denominator == 1l)
+ 	str << x.Numerator;
+       else
+ 	str << x.Numerator << "/" << x.Denominator;
+     }
+   else
+     {
+       if (x.Denominator == -1l)
+ 	str << (-x.Numerator);
+       else
+ 	str << (-x.Numerator) << "/" << (-x.Denominator);
+     }
   return str;
 }
 
@@ -455,7 +455,7 @@ ostream& operator << (ostream& str, Rational& x)
 // file = reference on the output file stream
 // return value = reference on the output file stream
 
-ofstream& Rational::Write(ofstream& file)
+ofstream& LongRational::Write(ofstream& file)
 {
   WriteLittleEndian(file, this->Numerator);
   WriteLittleEndian(file, this->Denominator);
@@ -467,7 +467,7 @@ ofstream& Rational::Write(ofstream& file)
 // file = reference on the output file stream
 // return value = reference on the output file stream
 
-ifstream& Rational::Read(ifstream& file)
+ifstream& LongRational::Read(ifstream& file)
 {
   ReadLittleEndian(file, this->Numerator);
   ReadLittleEndian(file, this->Denominator);

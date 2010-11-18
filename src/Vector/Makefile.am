@@ -9,5 +9,6 @@ DelocalizedRealVector.cc \
 RealPtrVector.cc \
 PartialRealVector.cc \
 PartialComplexVector.cc \
-RationalVector.cc
+RationalVector.cc \
+LongRationalVector.cc
 

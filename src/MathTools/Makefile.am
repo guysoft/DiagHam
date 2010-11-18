@@ -17,7 +17,8 @@ KCombinations.cc \
 JacobiPolynomials.cc \
 MonopoleHarmonics.cc \
 NSphereParameters.cc \
-Rational.cc
+Rational.cc \
+LongRational.cc
 
 
 # LaguerreFunction.cc

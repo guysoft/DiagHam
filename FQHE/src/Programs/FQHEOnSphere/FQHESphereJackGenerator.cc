@@ -1,5 +1,6 @@
 #include "Vector/RealVector.h"
 #include "Vector/RationalVector.h"
+#include "Vector/LongRationalVector.h"
 
 #include "HilbertSpace/FermionOnSphere.h"
 #include "HilbertSpace/FermionOnSphereSymmetricBasis.h"
@@ -78,6 +79,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "check-singularity", "display configurations which may produce singularities");
   (*SystemGroup) += new BooleanOption  ('\n', "check-connected", "display lowest configuration connected to each squeezed paritition");
   (*SystemGroup) += new BooleanOption  ('\n', "use-symbolic", "use symbolic calculation to solve singular coefficient (only available in rational mode)");
+  (*SystemGroup) += new BooleanOption  ('\n', "use-longlong", "use 128bit(64bits) integers instead of 64bits(32bits) integers in rational mode");
   (*OutputGroup) += new SingleStringOption ('o', "bin-output", "output the Jack polynomial decomposition into a binary file");
   (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the Jack polynomial decomposition into a text file");
   (*OutputGroup) += new BooleanOption ('n', "normalize", "express the Jack polynomial in the normalized basis");
@@ -312,50 +314,87 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      RationalVector OutputState;
-	      if (Manager.GetBoolean("check-singularity") == true)
+	      if (Manager.GetBoolean("use-longlong") == false)
 		{
-		  OutputState = RationalVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);		  
-		  InitialSpace->CheckPossibleSingularCoefficientsInJackPolynomial(OutputState, AlphaNumerator, AlphaDenominator);
-		  cout << "partitions that may lead to singular coefficients : " << endl;
-		  Rational Zero = 0l;
- 		  for (long i = 1l; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
- 		    if (OutputState[i] != Zero)
- 		      {
- 			InitialSpace->PrintStateMonomial(cout, i) << " = ";
- 			InitialSpace->PrintState(cout, i) << endl;
- 		      }
-		  return 0;
-		}
-	      if (Manager.GetString("initial-state") == 0)
-		OutputState = RationalVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
-	      else
-		if (OutputState.ReadVector(Manager.GetString("initial-state")) == false)
-		  {
-		    cout << "can't open " << Manager.GetString("initial-state") << endl;
-		    return -1;
-		  }
-	      if (SymmetrizedBasis == false)    
-		InitialSpace->GenerateJackPolynomial(OutputState, AlphaNumerator, AlphaDenominator, SymbolicDepth);
-	      if (Manager.GetBoolean("normalize"))
-		{
-		  cout << "calculations have been done with rational numbers, normalization will not be done" << endl;
-		}
-	      if (OutputTxtFileName != 0)
-		{
-		  ofstream File;
-		  File.open(OutputTxtFileName, ios::binary | ios::out);
-		  File.precision(14);
-		  for (long i = 0; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
+		  RationalVector OutputState;
+		  if (Manager.GetBoolean("check-singularity") == true)
 		    {
- 		      File << OutputState[i] << " ";
-		      InitialSpace->PrintStateMonomial(File, i) << endl;
+		      OutputState = RationalVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);		  
+		      InitialSpace->CheckPossibleSingularCoefficientsInJackPolynomial(OutputState, AlphaNumerator, AlphaDenominator);
+		      cout << "partitions that may lead to singular coefficients : " << endl;
+		      Rational Zero = 0l;
+		      for (long i = 1l; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
+			if (OutputState[i] != Zero)
+			  {
+			    InitialSpace->PrintStateMonomial(cout, i) << " = ";
+			    InitialSpace->PrintState(cout, i) << endl;
+			  }
+		      return 0;
 		    }
-		  File.close();
+		  if (Manager.GetString("initial-state") == 0)
+		    OutputState = RationalVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
+		  else
+		    if (OutputState.ReadVector(Manager.GetString("initial-state")) == false)
+		      {
+			cout << "can't open " << Manager.GetString("initial-state") << endl;
+			return -1;
+		      }
+		  if (SymmetrizedBasis == false)    
+		    InitialSpace->GenerateJackPolynomial(OutputState, AlphaNumerator, AlphaDenominator, SymbolicDepth);
+		  if (Manager.GetBoolean("normalize"))
+		    {
+		      cout << "calculations have been done with rational numbers, normalization will not be done" << endl;
+		    }
+		  if (OutputTxtFileName != 0)
+		    {
+		      ofstream File;
+		      File.open(OutputTxtFileName, ios::binary | ios::out);
+		      File.precision(14);
+		      for (long i = 0; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
+			{
+			  File << OutputState[i] << " ";
+			  InitialSpace->PrintStateMonomial(File, i) << endl;
+			}
+		      File.close();
+		    }
+		  if (OutputFileName != 0)
+		    {
+		      OutputState.WriteVector(OutputFileName);
+		    }
 		}
-	      if (OutputFileName != 0)
+	      else
 		{
-		  OutputState.WriteVector(OutputFileName);
+		  LongRationalVector OutputState;
+		  if (Manager.GetString("initial-state") == 0)
+		    OutputState = LongRationalVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
+		  else
+		    if (OutputState.ReadVector(Manager.GetString("initial-state")) == false)
+		      {
+			cout << "can't open " << Manager.GetString("initial-state") << endl;
+			return -1;
+		      }
+		  if (SymmetrizedBasis == false)    
+		    InitialSpace->GenerateJackPolynomial(OutputState, AlphaNumerator, AlphaDenominator, SymbolicDepth);
+		  if (Manager.GetBoolean("normalize"))
+		    {
+		      cout << "calculations have been done with rational numbers, normalization will not be done" << endl;
+		    }
+		  if (OutputTxtFileName != 0)
+		    {
+		      ofstream File;
+		      File.open(OutputTxtFileName, ios::binary | ios::out);
+		      File.precision(14);
+		      for (long i = 0; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
+			{
+			  File << OutputState[i] << " ";
+			  InitialSpace->PrintStateMonomial(File, i) << endl;
+			}
+		      File.close();
+		    }
+		  if (OutputFileName != 0)
+		    {
+		      OutputState.WriteVector(OutputFileName);
+		    }
 		}
 	    }
 	}

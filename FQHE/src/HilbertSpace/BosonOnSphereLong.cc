@@ -1111,7 +1111,7 @@ RealVector& BosonOnSphereLong::ProductRules (RealVector& outputVector, RealVecto
   OutputPattern |= InputPattern << (addedPatterSize + NbrParticlesAddedPattern);
   OutputPattern <<= (InputSpace->FermionBasis->LzMax - (commonPatterSize + NbrParticlesCommonPattern) + 2);
   InputPattern <<= (InputSpace->FermionBasis->LzMax - (commonPatterSize + NbrParticlesCommonPattern) + 2); 
-  cout << hex << InputMask << " " << OutputPattern << " " << InputPattern << dec << endl;
+//  cout << hex << InputMask << " " << OutputPattern << " " << InputPattern << dec << endl;
   int OutputLzMax = this->FermionBasis->LzMax;
   while (((OutputPattern >> OutputLzMax) & ((ULONGLONG) 0x1ul)) == ((ULONGLONG) 0x0ul))
     --OutputLzMax;

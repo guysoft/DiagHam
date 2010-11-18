@@ -145,6 +145,8 @@ typedef struct { doublereal r, i; } doublecomplex;
 
 #define LONGLONG long long
 #define ULONGLONG unsigned long long
+//#define LONGLONG __int128_t
+//#define ULONGLONG __uint128_t
 
 // package option
 //

@@ -7,4 +7,5 @@ ComplexPolynomial.cc \
 IntegerPolynomial.cc \
 QDeformedBinomialCoefficients.cc \
 SpecialPolynomial.cc \
-RationalPolynomial.cc
+RationalPolynomial.cc \
+LongRationalPolynomial.cc
