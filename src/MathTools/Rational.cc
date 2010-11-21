@@ -321,7 +321,6 @@ Rational& Rational::operator += (const  Rational& x)
   this->Numerator *= x.Denominator;
   this->Numerator += x.Numerator * this->Denominator;
   this->Denominator *= x.Denominator;
-  cout << this->Numerator << " " <<  this->Denominator << endl;
   this->Simplify();  
   return *this;
 }
