@@ -43,6 +43,7 @@ LongRationalPolynomial::LongRationalPolynomial ()
 {
   this->Degree = 0;
   this->Coefficient = 0;
+  this->RationalRoots = 0;
   this->RootFlag = false; 
 }
  
@@ -57,7 +58,7 @@ LongRationalPolynomial::LongRationalPolynomial (int degree)
   for (int i = 0; i <= this->Degree; ++i)
     this->Coefficient[i] = 0l;
   this->RootFlag = false; 
-  
+  this->RationalRoots = 0;  
 }
 
 // constructor from raw datas
@@ -76,6 +77,34 @@ LongRationalPolynomial::LongRationalPolynomial (int degree, LongRational* coeffi
       this->Coefficient = new LongRational [this->Degree + 1];
       for (int i = 0; i <= this->Degree; i++)
 	this->Coefficient[i] = coefficients[i];
+    }
+  this->RootFlag = false;
+  this->RationalRoots = 0;
+}
+
+// constructor from raw datas, including all rational roots
+//
+// degree = polynomial degree
+// coefficients = coefficients array ( first element is associated to the -power term)
+// roots = array where the roots are stored
+// flag = true if coefficient and root arrays have to be used directly and not duplicated
+
+LongRationalPolynomial::LongRationalPolynomial (int degree, LongRational* coefficients, LongRational* roots, bool flag)
+{
+  this->Degree = degree;
+  if (flag == true)
+    {
+      this->Coefficient = coefficients;
+      this->RationalRoots = roots;
+    }
+  else
+    {
+      this->Coefficient = new LongRational [this->Degree + 1];
+      for (int i = 0; i <= this->Degree; i++)
+	this->Coefficient[i] = coefficients[i];
+      this->RationalRoots = new LongRational [this->Degree];
+      for (int i = 0; i < this->Degree; i++)
+	this->RationalRoots[i] = roots[i];
     }
   this->RootFlag = false;
 }
@@ -100,12 +129,23 @@ LongRationalPolynomial::LongRationalPolynomial (const LongRationalPolynomial& P)
 	  for (int i = 0; i < this->NbrRoot; i++)
 	    this->Root[i] = P.Root[i];
 	}
+      if (P.RationalRoots == 0)
+	{
+	  this->RationalRoots = 0;
+	}
+      else
+	{
+	  this->RationalRoots = new LongRational [this->Degree];
+	  for (int i = 0; i < this->Degree; ++i)
+	    this->RationalRoots[i] = P.RationalRoots[i];
+	}
     }
   else
     {
       this->Degree = 0;
       this->Coefficient = 0;
       this->RootFlag = false; 
+      this->RationalRoots = 0;
     }
 }
 
@@ -119,6 +159,7 @@ LongRationalPolynomial::LongRationalPolynomial (const LongRationalPolynomial& P1
 {
   this->RootFlag = false; 
   this->Degree = P2.Degree + degree;
+  this->RationalRoots = 0;
   if (P2.Coefficient == 0)
     {
       if (P1.Coefficient == 0)
@@ -170,6 +211,8 @@ LongRationalPolynomial::~LongRationalPolynomial()
     delete[] this->Root;
   if (this->Coefficient != 0)
     delete[] this->Coefficient;
+  if (this->RationalRoots != 0)
+    delete[] this->RationalRoots;
 }
 
 // assignement
@@ -180,6 +223,8 @@ LongRationalPolynomial& LongRationalPolynomial::operator = (const LongRationalPo
     delete[] this->Coefficient;
   if ((this->RootFlag == true) && (this->NbrRoot != 0))
     delete[] this->Root;
+  if (this->RationalRoots != 0)
+    delete[] this->RationalRoots;
   this->Degree = P.Degree;
   this->RootFlag = P.RootFlag;
   if (P.Coefficient != 0)
@@ -199,6 +244,16 @@ LongRationalPolynomial& LongRationalPolynomial::operator = (const LongRationalPo
       for (int i = 0; i < this->NbrRoot; i++)
 	this->Root[i] = P.Root[i];
     }
+  if (P.RationalRoots == 0)
+    {
+      this->RationalRoots = 0;
+    }
+  else
+    {
+      this->RationalRoots = new LongRational [this->Degree];
+      for (int i = 0; i < this->Degree; ++i)
+	this->RationalRoots[i] = P.RationalRoots[i];
+    }
   return *this;
 }
 
@@ -212,10 +267,18 @@ LongRational LongRationalPolynomial::PolynomialEvaluate (const LongRational& x)
   if (this->Coefficient != 0)
     {
       LongRational Res = this->Coefficient[this->Degree];
-      for (int i = this->Degree - 1 ; i >= 0; i--)
+      if (this->RationalRoots == 0)
 	{
-	  Res *= x;
-	  Res += this->Coefficient[i];
+	  for (int i = this->Degree - 1 ; i >= 0; i--)
+	    {
+	      Res *= x;
+	      Res += this->Coefficient[i];
+	    }
+	}
+      else
+	{
+	  for (int i = this->Degree - 1 ; i >= 0; i--)
+	    Res *= (x - this->RationalRoots[i]);
 	}
       return Res;
     }
@@ -472,7 +535,7 @@ LongRationalPolynomial operator + (const LongRationalPolynomial& P1, const LongR
 	for (int i = P1.Degree; i >= 0; i--)
 	  Coef[i] = P1.Coefficient[i] + P2.Coefficient[i];
 	int i = P1.Degree;
-	while ((Coef[i].Num() == 0l) && (i!=0)) i--;
+	while ((Coef[i]== 0l) && (i!=0)) i--;
 	if (i == P1.Degree)
 	  return LongRationalPolynomial(P2.Degree, Coef, true);
 	else 
@@ -514,7 +577,7 @@ LongRationalPolynomial operator - (const LongRationalPolynomial& P1, const LongR
 	for (int i = P1.Degree; i >= 0; i--)
 	  Coef[i] = P1.Coefficient[i] - P2.Coefficient[i];
 	int i = P1.Degree;
-	while ((Coef[i].Num() == 0l) && (i != 0)) 
+	while ((Coef[i]== 0l) && (i != 0)) 
 	  i--;
 	if (i == P1.Degree)
 	  return LongRationalPolynomial(P2.Degree, Coef, true);
@@ -542,6 +605,18 @@ LongRationalPolynomial operator * (const LongRationalPolynomial& P1, const LongR
   for (int i = P2.Degree - 1; i >= 0; i--)
     for (int j = P1.Degree; j >= 0; j--)
       Coef[i+j] += P1.Coefficient[j] * P2.Coefficient[i];
+  if (P1.RationalRoots != 0)
+    {
+      if (P2.RationalRoots != 0)
+	{
+	  LongRational* TmpRationalRoots = new LongRational[Deg];
+	  for (int j = 0; j < P1.Degree; ++j)
+	    TmpRationalRoots[j] = P1.RationalRoots[j];
+	  for (int j = 0; j < P2.Degree; ++j)
+	    TmpRationalRoots[P1.Degree + j] = P2.RationalRoots[j];
+	  return LongRationalPolynomial(Deg, Coef, TmpRationalRoots, true);
+	}
+    }
   return LongRationalPolynomial(Deg, Coef, true);
 }
 
@@ -607,7 +682,7 @@ LongRationalPolynomial& LongRationalPolynomial::operator += (const LongRationalP
       for (int i = 0; i <= this->Degree; i++)
 	this->Coefficient[i] += P.Coefficient[i];
       int i = this->Degree;
-      while ((i > 0) && (this->Coefficient[i].Num() == 0l))
+      while ((i > 0) && (this->Coefficient[i]== 0l))
 	i--;
       if (i != this->Degree)
 	{
@@ -662,7 +737,7 @@ LongRationalPolynomial& LongRationalPolynomial::operator -= (const LongRationalP
       for (int i = 0; i <= this->Degree; i++)
 	this->Coefficient[i] -= P.Coefficient[i];
       int i = this->Degree;
-      while ((i > 0) && (this->Coefficient[i].Num() == 0l))
+      while ((i > 0) && (this->Coefficient[i] == 0l))
 	i--;
       if (i != this->Degree)
 	{
@@ -722,6 +797,35 @@ LongRationalPolynomial& LongRationalPolynomial::operator *= (const LongRationalP
 	}
       delete[] this->Coefficient;
       this->Coefficient = Coef;
+      if (this->RationalRoots != 0)
+	{
+	  if (P.RationalRoots != 0)
+	    {
+	      LongRational* TmpRationalRoots = new LongRational[Deg];
+	      for (int j = 0; j < this->Degree; ++j)
+		TmpRationalRoots[j] = this->RationalRoots[j];
+	      for (int j = 0; j < P.Degree; ++j)
+		TmpRationalRoots[this->Degree + j] = P.RationalRoots[j];
+	      delete[] this->RationalRoots;
+	      this->RationalRoots = TmpRationalRoots;
+	    }
+	  else
+	    {
+	      delete[] this->RationalRoots;
+	      this->RationalRoots = 0;
+	    }
+	}
+      else
+	{
+	  if ((this->Degree == 0) && (P.RationalRoots != 0))
+	    {
+	      this->RationalRoots = new LongRational[Deg];
+	      for (int j = 0; j < Deg; ++j)
+		{
+		  this->RationalRoots[j] = P.RationalRoots[j];
+		}
+	    }
+	}
       this->Degree = Deg;
       if (this->RootFlag == true)
 	{
@@ -787,7 +891,57 @@ LongRationalPolynomial LongRationalPolynomial::MonomialDivision (const LongRatio
       Coef1[this->Degree - 1] = this->Coefficient[this->Degree];
       for (int i = this->Degree - 1; i > 0; i--)
 	Coef1[i - 1] = (Coef1[i] * z0) + this->Coefficient[i];
-      return LongRationalPolynomial(this->Degree - 1, Coef1, true);  
+      if (this->RationalRoots == 0)
+	{
+	  return LongRationalPolynomial(this->Degree - 1, Coef1, true);  
+	}
+      else
+	{
+	  LongRational* TmpRoots = new LongRational [this->Degree - 1];
+	  int i = 0;
+	  for (; (i < this->Degree) && (this->RationalRoots[i] != z0); ++i)
+	    {
+	      TmpRoots[i] = this->RationalRoots[i];
+	    }
+	  ++i;
+	  for (; i < this->Degree; ++i)
+	    {
+	      TmpRoots[i - 1] = this->RationalRoots[i];
+	    }
+	  return LongRationalPolynomial(this->Degree - 1, Coef1, TmpRoots, true);  
+	}
+   }
+  return LongRationalPolynomial();
+}
+
+// Multiply polynomial by a monomial (z - z0)
+//
+// z0 = monomial root
+// return value = result of polynomial multiplication
+
+LongRationalPolynomial LongRationalPolynomial::MonomialMultiplication (const LongRational& z0)
+{
+  if (this->Coefficient != 0)
+    {
+      LongRational* Coef1 = new LongRational [this->Degree + 2];
+      Coef1[this->Degree + 1] = this->Coefficient[this->Degree];
+      for (int i = this->Degree - 1; i >= 0; i--)
+	Coef1[i + 1] = this->Coefficient[i] - (this->Coefficient[i + 1] * z0);
+      Coef1[0] = - (z0 * this->Coefficient[0]);
+      if ((this->RationalRoots == 0) && (this->Degree > 0))
+	{
+	  return LongRationalPolynomial(this->Degree + 1, Coef1, true);  
+	}
+      else
+	{
+	  LongRational* TmpRoots = new LongRational [this->Degree + 1];
+	  for (int i = 0; i < this->Degree; ++i)
+	    {
+	      TmpRoots[i] = this->RationalRoots[i];
+	    }
+	  TmpRoots[this->Degree] = z0;
+	  return LongRationalPolynomial(this->Degree + 1, Coef1, TmpRoots, true);  
+	}
     }
   return LongRationalPolynomial();
 }
@@ -799,6 +953,16 @@ ostream& operator << (ostream& Str, const LongRationalPolynomial& P)
 {
   if (P.Coefficient != 0)
     {
+      if (P.RationalRoots != 0)
+	{
+	  if (P.Coefficient[P.Degree] != 1l)
+	    Str << P.Coefficient[P.Degree];
+	  for (int i = 0; i < P.Degree; i++)
+	    {
+	      Str << "(q - " << P.RationalRoots[i] << ")";
+	    }
+	  return Str;  
+	}
       if ((P.RootFlag == true) && (P.NbrRoot != 0))
 	{
 	  Str << P.Root[P.Degree];

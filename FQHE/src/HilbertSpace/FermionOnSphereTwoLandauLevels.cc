@@ -1817,3 +1817,39 @@ unsigned int FermionOnSphereTwoLandauLevels::SlaterTimesSlaterProjection(unsigne
 //  return NbrNonZero;
 
 }
+
+// compute the number of particles in each Landau level
+//
+// state = ID of the state to handle
+// LLOccupationConfiguration = array where the decomposition will be store
+
+void  FermionOnSphereTwoLandauLevels::LandauLevelOccupationNumber(int state, int* lLOccupationConfiguration)
+{
+  unsigned long State = this->StateDescription[state];
+  for(int i = this->LzMax; i>=0; i--)
+    {
+      switch ((State >> (i << 1)) & 0x3ul)
+	{
+	case 0x1ul:
+	  {
+	    lLOccupationConfiguration[0]++;
+	  }
+	  break;
+	case 0x2ul:
+	  {
+	    lLOccupationConfiguration[1]++;
+	  }
+	  break;
+	case 0x3ul:
+	  {
+	    lLOccupationConfiguration[0]++;
+	    lLOccupationConfiguration[1]++;
+	  }
+	  break;
+	default :
+	  {
+	    break;
+	  }
+	}
+    }
+}

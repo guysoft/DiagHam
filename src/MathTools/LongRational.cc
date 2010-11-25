@@ -38,6 +38,423 @@
 using std::cout;
 using std::endl;
 
+#ifdef __GMP__
+
+
+// default constructor 
+//
+
+LongRational::LongRational()
+{
+  mpq_init(this->Value);
+}
+
+// constructor from an integer
+//
+// x = value to assign to the rational coefficient
+
+LongRational::LongRational(long x)  
+{
+  mpq_init(this->Value);
+  mpq_set_si (this->Value, x ,1ul);
+}
+
+// constructor from a rational number
+//
+// x = numerator to assign to the rational coefficient
+// y = denominator to assign to the rational coefficient
+
+LongRational::LongRational(long x, long y)  
+{
+  mpq_init(this->Value);
+  if (y >= 0l)
+    mpq_set_si (this->Value, x ,(unsigned long) y);
+  else
+    mpq_set_si (this->Value, -x ,(unsigned long) (-y));  
+  mpq_canonicalize(this->Value);
+}
+
+// copy constructor from a rational number
+//
+// x =  rational coefficient to copy
+
+LongRational::LongRational(const LongRational& x)
+{
+  mpq_init(this->Value);
+  mpq_set (this->Value, x.Value);
+}
+
+// destructor
+//
+
+LongRational::~LongRational()
+{
+  mpq_clear(this->Value);
+}
+
+// assignement
+//
+// rational = rational coefficient to assign
+// return value = reference on current rational coefficient
+
+LongRational& LongRational::operator = (const LongRational& rational)
+{
+  mpq_set(this->Value, rational.Value);
+  return *this;
+}
+
+// assignement from integer number
+//
+// x = interger to assign
+// return value = reference on current rational coefficient
+
+LongRational& LongRational::operator = (long x)
+{
+  mpq_set_si (this->Value, x ,1ul);
+  return *this;
+}
+
+// set the coefficient to one
+//
+// return value = reference on current coefficient
+
+LongRational& LongRational::SetToOne()
+{
+  mpq_set_si (this->Value, 1l ,1ul);
+  return *this;
+}
+
+// add two rational numbers
+//
+// x = first rational
+// y = second rational
+// return value = sum
+
+LongRational operator + (const LongRational& x, const LongRational& y)
+{
+  LongRational Tmp;
+  mpq_add(Tmp.Value, x.Value, y.Value);
+  return Tmp;
+}
+
+// add a rational number and an integer
+//
+// x = rational number
+// y = integer
+// return value = sum
+
+LongRational operator + (const LongRational& x, long y)
+{
+  LongRational Tmp;
+  mpq_t Tmp2;
+  mpq_init(Tmp2);
+  mpq_set_si (Tmp2, y ,1ul);
+  mpq_add(Tmp.Value, x.Value, Tmp2);  
+  mpq_clear(Tmp2);  
+  return Tmp;
+}
+
+// add a rational number and an integer
+//
+// y = rational number
+// x = integer
+// return value = sum
+
+LongRational operator + (long y, const LongRational& x)
+{
+  LongRational Tmp;
+  mpq_t Tmp2;
+  mpq_init(Tmp2);
+  mpq_set_si (Tmp2, y ,1ul);
+  mpq_add(Tmp.Value, x.Value, Tmp2);  
+  mpq_clear(Tmp2);  
+  return Tmp;
+}
+
+// substract an rational number to another
+//
+// x = first rational
+// y = second rational
+// return value = substraction
+
+LongRational operator - (const LongRational& x, const LongRational& y)
+{
+  LongRational Tmp;
+  mpq_sub(Tmp.Value, x.Value, y.Value);
+  return Tmp;
+}
+
+// substract an integer to a rational number
+//
+// x = rational number
+// y = integer
+// return value = substraction
+
+LongRational operator - (const LongRational& x, long y)
+{
+  LongRational Tmp;
+  mpq_t Tmp2;
+  mpq_init(Tmp2);
+  mpq_set_si (Tmp2, y ,1ul);
+  mpq_sub(Tmp.Value, x.Value, Tmp2);  
+  mpq_clear(Tmp2);  
+  return Tmp;
+}
+
+// substract a rational number to an integer
+//
+// y = integer
+// x = rational number
+// return value = substraction
+
+LongRational operator - (long y, const LongRational& x)
+{
+  LongRational Tmp;
+  mpq_t Tmp2;
+  mpq_init(Tmp2);
+  mpq_set_si (Tmp2, y ,1ul);
+  mpq_sub(Tmp.Value, x.Value, Tmp2);  
+  mpq_clear(Tmp2);  
+  mpq_neg(Tmp.Value, Tmp.Value);
+  return Tmp;
+}
+
+// multiply two rational numbers
+//
+// x = first rational
+// y = second rational
+// return value = product
+
+LongRational operator * (const LongRational& x, const LongRational& y)
+{
+  LongRational Tmp;
+  mpq_mul(Tmp.Value, x.Value, y.Value);
+  return Tmp;
+}
+
+// multiply a rational number and an integer
+//
+// x = rational number
+// y = integer
+// return value = product
+
+LongRational operator * (const LongRational& x, long y)
+{
+  LongRational Tmp;
+  mpq_t Tmp2;
+  mpq_init(Tmp2);
+  mpq_set_si (Tmp2, y ,1ul);
+  mpq_mul(Tmp.Value, x.Value, Tmp2);  
+  mpq_clear(Tmp2);  
+  return Tmp;
+}
+
+// multiply a rational number and an integer
+//
+// y = rational number
+// x = integer
+// return value = product
+
+LongRational operator * (long y, const LongRational& x)
+{
+  LongRational Tmp;
+  mpq_t Tmp2;
+  mpq_init(Tmp2);
+  mpq_set_si (Tmp2, y ,1ul);
+  mpq_mul(Tmp.Value, x.Value, Tmp2);  
+  mpq_clear(Tmp2);  
+  return Tmp;
+}
+
+// divide two rational numbers
+//
+// x = first rational
+// y = second rational
+// return value = division
+
+LongRational operator / (const LongRational& x, const LongRational& y)
+{
+  LongRational Tmp;
+  mpq_div(Tmp.Value, x.Value, y.Value);
+  return Tmp;
+}
+
+// divide a rational number ny an integer
+//
+// x = rational number
+// y = integer
+// return value = division
+
+LongRational operator / (const LongRational& x, long y)
+{
+  LongRational Tmp;
+  mpq_t Tmp2;
+  mpq_init(Tmp2);
+  mpq_set_si (Tmp2, y ,1ul);
+  mpq_div(Tmp.Value, x.Value, Tmp2);  
+  mpq_clear(Tmp2);  
+  return Tmp;
+}
+
+// divide an integer ny a rational number
+//
+// y = rational number
+// x = integer
+// return value = division
+
+LongRational operator / (long y, const LongRational& x)
+{
+  LongRational Tmp;
+  mpq_t Tmp2;
+  mpq_init(Tmp2);
+  mpq_set_si (Tmp2, y ,1ul);
+  mpq_div(Tmp.Value, Tmp2, x.Value);  
+  mpq_clear(Tmp2);  
+  return Tmp;
+}
+
+// add a rational
+//
+// x = rational to use
+// return value = reference on current coefficient
+
+LongRational& LongRational::operator += (const  LongRational& x)
+{
+  mpq_add(this->Value, this->Value, x.Value);  
+  return *this;
+}
+
+// add an integer
+//
+// x = integer to use
+// return value = reference on current coefficient
+
+LongRational& LongRational::operator += (long x)
+{
+  mpq_t Tmp;
+  mpq_init(Tmp);
+  mpq_set_si (Tmp, x, 1ul);
+  mpq_add(this->Value, this->Value, Tmp);  
+  mpq_clear(Tmp);  
+  return *this;
+}
+ 
+// substract a rational
+//
+// x = rational to use
+// return value = reference on current coefficient
+
+LongRational& LongRational::operator -= (const  LongRational& x)
+{
+  mpq_sub(this->Value, this->Value, x.Value);  
+  return *this;
+}
+
+// substract an integer
+//
+// x = integer to use
+// return value = reference on current coefficient
+
+LongRational& LongRational::operator -= (long x)
+{
+  mpq_t Tmp;
+  mpq_init(Tmp);
+  mpq_set_si (Tmp, x, 1ul);
+  mpq_sub(this->Value, this->Value, Tmp);  
+  mpq_clear(Tmp);  
+  return *this;
+}
+
+// multiply by an integer
+//
+// x = integer to use
+// return value = reference on current coefficient
+
+LongRational& LongRational::operator *= (long x)
+{
+  mpq_t Tmp;
+  mpq_init(Tmp);
+  mpq_set_si (Tmp, x, 1ul);
+  mpq_mul(this->Value, this->Value, Tmp);  
+  mpq_clear(Tmp);  
+  return *this;
+}
+
+// multiply by a rational
+//
+// x = rational to use
+// return value = reference on current coefficient
+
+LongRational& LongRational::operator *= (const LongRational& x)
+{
+  mpq_mul(this->Value, this->Value, x.Value);  
+  return *this;
+}
+
+// divide by an integer
+//
+// y = integer to use
+// return value = reference on current coefficient
+
+LongRational& LongRational::operator /= (long y)
+{
+  mpq_t Tmp;
+  mpq_init(Tmp);
+  mpq_set_si (Tmp, y, 1ul);
+  mpq_div(this->Value, this->Value, Tmp);  
+  mpq_clear(Tmp);  
+  return *this;
+}
+
+// divide by a rational
+//
+// x = rational to use
+// return value = reference on current coefficient
+
+LongRational& LongRational::operator /= (const LongRational& x)
+{
+  mpq_div(this->Value, this->Value, x.Value);  
+  return *this;
+}
+
+// Output stream overload
+//
+// str = reference on output stream
+// x = rational to print
+// return value = reference on output stream
+
+ostream& operator << (ostream& str, LongRational& x)
+{
+  str << x.Value;
+  return str;
+}
+
+
+// write a rational in binary mode
+//
+// file = reference on the output file stream
+// return value = reference on the output file stream
+
+ofstream& LongRational::Write(ofstream& file)
+{
+//   WriteLittleEndian(file, this->Numerator);
+//   WriteLittleEndian(file, this->Denominator);
+  return file;
+}
+
+// read a rational in binary mode
+//
+// file = reference on the output file stream
+// return value = reference on the output file stream
+
+ifstream& LongRational::Read(ifstream& file)
+{
+//   ReadLittleEndian(file, this->Numerator);
+//   ReadLittleEndian(file, this->Denominator);
+  return file;
+}
+
+#else
 
 // default constructor 
 //
@@ -67,6 +484,16 @@ LongRational::LongRational(long x, long y)
 {
   this->Numerator = x;
   this->Denominator = y;
+}
+
+// copy constructor from a rational number
+//
+// x =  rational coefficient to copy
+
+LongRational::LongRational(const LongRational& x)
+{
+  this->Numerator = x.Numerator;
+  this->Denominator = x.Denominator;
 }
 
 // destructor
@@ -321,7 +748,6 @@ LongRational& LongRational::operator += (const  LongRational& x)
   this->Numerator *= x.Denominator;
   this->Numerator += x.Numerator * this->Denominator;
   this->Denominator *= x.Denominator;
-//  cout << this->Numerator << " " <<  this->Denominator << " " << sizeof (__int128_t) << endl;
   this->Simplify();  
   return *this;
 }
@@ -473,3 +899,5 @@ ifstream& LongRational::Read(ifstream& file)
   ReadLittleEndian(file, this->Denominator);
   return file;
 }
+
+#endif

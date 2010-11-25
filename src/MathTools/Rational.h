@@ -38,6 +38,8 @@
 #include <fstream>
 
 
+using std::cout;
+using std::endl;
 using std::ostream;
 using std::ofstream;
 using std::ifstream;
@@ -236,12 +238,54 @@ class Rational
   // return value = true if the two numbers are identical
   friend bool operator == (const Rational& x, const Rational& y);
 
+  // test is a rational number is equal to an integer number
+  // 
+  // x = rational number
+  // y = integer number
+  // return value = true if the two numbers are identical
+  friend bool operator == (const Rational& x, long y);
+
+  // test is a rational number is equal to an integer number
+  // 
+  // x = rational number
+  // y = integer number
+  // return value = true if the two numbers are identical
+  friend bool operator == (long y, const Rational& x);
+
   // test is two rational numbers are different
   // 
   // x = first rational number
   // y = first rational number
   // return value = true if the two numbers are different
   friend bool operator != (const Rational& x, const Rational& y);
+
+  // test is a rational number is different from a given integer number
+  // 
+  // x = rational number
+  // y = integer number
+  // return value = true if the two numbers are different
+  friend bool operator != (const Rational& x, long y);
+
+  // test is a rational number is different from a given integer number
+  // 
+  // x = rational number
+  // y = integer number
+  // return value = true if the two numbers are different
+  friend bool operator != (long y, const Rational& x);
+
+  // test is a rational number is less than integer number
+  // 
+  // x = rational number
+  // y = integer number
+  // return value = true if the rational number is less than the integer number
+  friend bool operator < (const Rational& x, long y);
+
+  // test is a rational number is greater than integer number
+  // 
+  // x = rational number
+  // y = integer number
+  // return value = true if the rational number is greater than the integer number
+  friend bool operator > (const Rational& x, long y);
 
   // return integer value associated to the coefficient numerator (0 if the coefficient can't be cast into an integer)
   //
@@ -326,11 +370,8 @@ inline double Rational::GetNumericalValue()
 inline void Rational::Simplify()
 {
   long Tmp = this->FindGCD(this->Numerator, this->Denominator);
-  if (Tmp != 0l)
-    {
-      this->Numerator /= Tmp;
-      this->Denominator /= Tmp;
-    } 
+  this->Numerator /= Tmp;
+  this->Denominator /= Tmp;
 }
 
 // find greatest common divider
@@ -365,6 +406,33 @@ inline bool operator == (const Rational& x, const Rational& y)
     return false;    
 }
 
+// test is a rational number is equal to an integer number
+// 
+// x = rational number
+// y = integer number
+// return value = true if the two numbers are identical
+
+inline bool operator == (const Rational& x, long y)
+{
+  if (((x.Denominator == 1l) && (x.Numerator == y)) || ((x.Denominator == -1l) && (x.Numerator == -y)))
+    return true;    
+  else
+    return false;
+}
+
+// test is a rational number is equal to an integer number
+// 
+// x = rational number
+// y = integer number
+// return value = true if the two numbers are identical
+
+inline bool operator == (long y, const Rational& x)
+{
+  if (((x.Denominator == 1l) && (x.Numerator == y)) || ((x.Denominator == -1l) && (x.Numerator == -y)))
+    return true;    
+  else
+    return false;
+}
 
 // test is two rational numbers are different
 // 
@@ -375,6 +443,62 @@ inline bool operator == (const Rational& x, const Rational& y)
 inline bool operator != (const Rational& x, const Rational& y)
 {
   if (((x.Numerator != y.Numerator) || (x.Denominator != y.Denominator)) && ((x.Numerator != -y.Numerator) || (x.Denominator != -y.Denominator)))
+    return true;
+  else
+    return false;    
+}
+
+// test is a rational number is different from a given integer number
+// 
+// x = rational number
+// y = integer number
+// return value = true if the two numbers are different
+
+inline bool operator != (const Rational& x, long y)
+{
+  if (((x.Denominator == 1l) && (x.Numerator == y)) || ((x.Denominator == -1l) && (x.Numerator == -y)))
+    return false;
+  else
+    return true;    
+}
+
+// test is a rational number is different from a given integer number
+// 
+// x = rational number
+// y = integer number
+// return value = true if the two numbers are different
+
+inline bool operator != (long y, const Rational& x)
+{
+  if (((x.Denominator == 1l) && (x.Numerator == y)) || ((x.Denominator == -1l) && (x.Numerator == -y)))
+    return false;
+  else
+    return true;    
+}
+
+// test is a rational number is less than integer number
+// 
+// x = rational number
+// y = integer number
+// return value = true if the rational number is less than the integer number
+
+inline bool operator < (const Rational& x, long y)
+{
+  if (((x.Denominator > 0l) && (x.Numerator < (y * x.Denominator))) || ((x.Denominator < 0l) && (x.Numerator > (y * x.Denominator))))
+    return true;
+  else
+    return false;    
+}
+
+// test is a rational number is greater than integer number
+// 
+// x = rational number
+// y = integer number
+// return value = true if the rational number is greater than the integer number
+
+inline bool operator > (const Rational& x, long y)
+{
+  if (((x.Denominator > 0l) && (x.Numerator > (y * x.Denominator))) || ((x.Denominator < 0l) && (x.Numerator < (y * x.Denominator))))
     return true;
   else
     return false;    

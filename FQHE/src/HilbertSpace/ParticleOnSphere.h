@@ -486,6 +486,13 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // incompleteBetaThetaBotton = reference on the pointer to the array (allocation done by the method) where the bottom part coefficients will be stored
   virtual void EvaluatePartialDensityMatrixRealSpacePartitionCoefficient(int lzMax, double thetaTop, double thetaBottom, double*& incompleteBetaThetaTop, double*& incompleteBetaThetaBottom);
 
+  // compute the number of particles in each Landau level
+  //
+  // state = ID of the state to handle
+  // lLOccupationConfiguration = array where the decomposition will be store
+  virtual void LandauLevelOccupationNumber(int state, int* lLOccupationConfiguration);
+
+
 };
 
 #endif

@@ -76,6 +76,7 @@
 #include "HilbertSpace/BosonOnSphereShort.h"
 #include "HilbertSpace/BosonOnSphereSymmetricBasisShort.h"
 #include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
+#include "HilbertSpace/BosonOnSphereHaldaneSymmetricBasisShort.h"
 
 #include "HilbertSpace/BosonOnSphereWithSpin.h"
 #include "HilbertSpace/BosonOnSphereWithSpinAllSz.h"
@@ -257,12 +258,12 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpace(int totalLz)
 
 ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceU1(int totalLz)
 {
+  bool SymmetrizedBasis = this->Options->GetBoolean("symmetrized-basis");
+  int NbrParticles = this->Options->GetInteger("nbr-particles");
+  int LzMax = this->Options->GetInteger("lzmax");
+  bool HaldaneBasisFlag = this->Options->GetBoolean("haldane");
   if (this->BosonFlag == false)
     {
-      int NbrParticles = this->Options->GetInteger("nbr-particles");
-      int LzMax = this->Options->GetInteger("lzmax");
-      bool HaldaneBasisFlag = this->Options->GetBoolean("haldane");
-      bool SymmetrizedBasis = this->Options->GetBoolean("symmetrized-basis");
       bool UnnormalizedBasis = this->Options->GetBoolean("unnormalized-basis");
       unsigned long MemorySpace = ((unsigned long) this->Options->GetInteger("fast-search")) << 20;
       ParticleOnSphere* Space = 0;
@@ -462,30 +463,27 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceU1(int totalLz)
     }
   else
     {
-      int NbrBosons = this->Options->GetInteger("nbr-particles");
-      int LzMax = this->Options->GetInteger("lzmax");
-      bool HaldaneBasisFlag = this->Options->GetBoolean("haldane");
       ParticleOnSphere* Space = 0;
       if (HaldaneBasisFlag == false)
 	{
 	  bool SymmetrizedBasis = this->Options->GetBoolean("symmetrized-basis");
 #ifdef  __64_BITS__
-	  if ((LzMax + NbrBosons - 1) < 63)
+	  if ((LzMax + NbrParticles - 1) < 63)
 #else
-	    if ((LzMax + NbrBosons - 1) < 31)	
+	    if ((LzMax + NbrParticles - 1) < 31)	
 #endif
 	      {
 		if ((SymmetrizedBasis == false) || (totalLz != 0))
-		  Space = new BosonOnSphereShort(NbrBosons, totalLz, LzMax);
+		  Space = new BosonOnSphereShort(NbrParticles, totalLz, LzMax);
 		else
-		  Space = new BosonOnSphereSymmetricBasisShort(NbrBosons, LzMax);
+		  Space = new BosonOnSphereSymmetricBasisShort(NbrParticles, LzMax);
 	      }
 	    else
 	      {
 		if ((SymmetrizedBasis == false) || (totalLz != 0))
-		  Space = new BosonOnSphere (NbrBosons, totalLz, LzMax);
+		  Space = new BosonOnSphere (NbrParticles, totalLz, LzMax);
 		else
-		  Space = new BosonOnSphereSymmetricBasis(NbrBosons, LzMax);
+		  Space = new BosonOnSphereSymmetricBasis(NbrParticles, LzMax);
 	      }
 	}
       else 
@@ -502,7 +500,7 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceU1(int totalLz)
 	      ReferenceStateDefinition.DumpErrors(cout) << endl;
 	      return 0;
 	    }
-	  if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", NbrBosons) == false) || (NbrBosons <= 0))
+	  if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", NbrParticles) == false) || (NbrParticles <= 0))
 	    {
 	      cout << "NbrParticles is not defined or as a wrong value" << endl;
 	      return 0;
@@ -523,12 +521,46 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceU1(int totalLz)
 	      cout << "wrong LzMax value in ReferenceState" << endl;
 	      return 0;     
 	    }
+	  if (SymmetrizedBasis == false)
+	     {
 #ifdef  __64_BITS__
-	  if ((LzMax + NbrBosons - 1) < 63)
+	       if ((LzMax + NbrParticles - 1) < 63)
 #else
-	    if ((LzMax + NbrBosons - 1) < 31)	
+		 if ((LzMax + NbrParticles - 1) < 31)	
 #endif
-	      Space = new BosonOnSphereHaldaneBasisShort(NbrBosons, totalLz, LzMax, ReferenceState);	  
+		   {
+		     if (this->Options->GetString("load-hilbert") != 0)
+		       Space = new BosonOnSphereHaldaneBasisShort(this->Options->GetString("load-hilbert"));
+		     else
+		       Space = new BosonOnSphereHaldaneBasisShort(NbrParticles, totalLz, LzMax, ReferenceState);
+		     if (this->Options->GetString("save-hilbert") != 0)
+		       {
+			 ((BosonOnSphereHaldaneBasisShort*) Space)->WriteHilbertSpace(this->Options->GetString("save-hilbert"));
+			 cout << "Wrote hilbert space "<<this->Options->GetString("save-hilbert")<<" of dimension d="<<Space->GetHilbertSpaceDimension()<<endl;
+			 return 0;
+		       }
+		   }
+	     }
+	  else
+	    {
+#ifdef  __64_BITS__
+	      if ((LzMax + NbrParticles - 1) < 62)
+#else
+		if ((LzMax + NbrParticles - 1) < 30)	
+#endif
+		  {
+		    if (this->Options->GetString("load-hilbert") != 0)
+		      Space = new BosonOnSphereHaldaneSymmetricBasisShort(this->Options->GetString("load-hilbert"));
+		    else
+		      Space = new BosonOnSphereHaldaneSymmetricBasisShort(NbrParticles, LzMax, ReferenceState);
+		    if (this->Options->GetString("save-hilbert") != 0)
+		      {
+			((BosonOnSphereHaldaneSymmetricBasisShort*) Space)->WriteHilbertSpace(this->Options->GetString("save-hilbert"));
+			cout << "Wrote hilbert space "<<this->Options->GetString("save-hilbert")<<" of dimension d="<<Space->GetHilbertSpaceDimension()<<endl;
+			return 0;
+		      }
+		  }
+	    }
 	}
       return Space;
     }

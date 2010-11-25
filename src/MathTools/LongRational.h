@@ -37,6 +37,9 @@
 #include <iostream>
 #include <fstream>
 
+#ifdef __GMP__
+#include <gmp.h>
+#endif
 
 using std::ostream;
 using std::ofstream;
@@ -48,10 +51,16 @@ class LongRational
 
  private:
 
+#ifdef __GMP__
+  // GMP rational number
+  mpq_t Value;
+#else
   // numerator
   LONGLONG Numerator;
   // denominator
   LONGLONG Denominator;
+
+#endif
 
  public:
 
@@ -69,6 +78,11 @@ class LongRational
   // x = numerator to assign to the rational coefficient
   // y = denominator to assign to the rational coefficient
   LongRational(long x, long y);  
+
+  // copy constructor from a rational number
+  //
+  // x =  rational coefficient to copy
+  LongRational(const LongRational& x);  
 
   // destructor
   //
@@ -243,6 +257,68 @@ class LongRational
   // return value = true if the two numbers are different
   friend bool operator != (const LongRational& x, const LongRational& y);
 
+#ifdef __GMP__
+
+  // test is a rational number is equal to an integer number
+  // 
+  // x = rational number
+  // y = integer number
+  // return value = true if the two numbers are identical
+  friend bool operator == (const LongRational& x, long y);
+
+  // test is a rational number is equal to an integer number
+  // 
+  // y = integer number
+  // x = rational number
+  // return value = true if the two numbers are identical
+  friend bool operator == ( long y, const LongRational& x);
+
+  // test is a rational number is different from a given integer number
+  // 
+  // x = rational number
+  // y = integer number
+  // return value = true if the two numbers are different
+  friend bool operator != (const LongRational& x, long y);
+
+  // test is a rational number is different from a given integer number
+  // 
+  // x = rational number
+  // y = integer number
+  // return value = true if the two numbers are different
+  friend bool operator != (long y, const LongRational& x);
+
+#else
+
+  // test is a rational number is equal to an integer number
+  // 
+  // x = rational number
+  // y = integer number
+  // return value = true if the two numbers are identical
+  friend bool operator == (const LongRational& x, LONGLONG y);
+
+  // test is a rational number is equal to an integer number
+  // 
+  // y = integer number
+  // x = rational number
+  // return value = true if the two numbers are identical
+  friend bool operator == (LONGLONG y, const LongRational& x);
+
+  // test is a rational number is different from a given integer number
+  // 
+  // x = rational number
+  // y = integer number
+  // return value = true if the two numbers are different
+  friend bool operator != (const LongRational& x, LONGLONG y);
+
+  // test is a rational number is different from a given integer number
+  // 
+  // x = rational number
+  // y = integer number
+  // return value = true if the two numbers are different
+  friend bool operator != (LONGLONG y, const LongRational& x);
+
+#endif
+
   // return integer value associated to the coefficient numerator (0 if the coefficient can't be cast into an integer)
   //
   // return value = numerical coefficient
@@ -283,15 +359,136 @@ class LongRational
   //
   void Simplify();
 
+#ifndef __GMP__
+
   // find greatest common divider
   //
   // m = first integer  
   // n = second integer (must be greater than m)
   // return value = GCD
-  long FindGCD(long m, long n);
+  long FindGCD(LONGLONG m, LONGLONG n);
 
+#endif
 
 };
+
+#ifdef __GMP__
+
+// return integer value associated to the coefficient numerator (0 if the coefficient can't be cast into an integer)
+//
+// return value = numerical coefficient
+
+inline long LongRational::Num()
+{
+  return 0l;
+}
+
+// return integer value associated to the coefficient denominator (0 if the coefficient can't be cast into an integer)
+//
+// return value = numerical value associated to the coefficient denominator
+
+inline long LongRational::Den()
+{
+  return 0l;
+}
+
+// return numerical value associated to the coefficient
+//
+// return value = numerical value associated to the coefficient
+
+inline double LongRational::GetNumericalValue()
+{
+  return mpq_get_d(this->Value);
+}
+
+// Simplify the current rational number
+//
+
+inline void LongRational::Simplify()
+{
+  mpq_canonicalize(this->Value);
+}
+
+// test is two rational numbers are identical
+// 
+// x = first rational number
+// y = first rational number
+// return value = true if the two numbers are identical
+
+inline bool operator == (const LongRational& x, const LongRational& y)
+{
+  return mpq_equal(x.Value, y .Value);
+}
+
+// test is a rational number is equal to an integer number
+// 
+// x = rational number
+// y = integer number
+// return value = true if the two numbers are identical
+
+inline bool operator == (const LongRational& x, long y)
+{
+  return (mpq_cmp_si (x.Value, y, 1ul) == 0);
+}
+
+// test is a rational number is equal to an integer number
+// 
+// y = integer number
+// x = rational number
+// return value = true if the two numbers are identical
+
+inline bool operator == ( long y, const LongRational& x)
+{
+  return (mpq_cmp_si (x.Value, y, 1ul) == 0);
+}
+
+
+// test is two rational numbers are different
+// 
+// x = first rational number
+// y = first rational number
+// return value = true if the two numbers are different
+
+inline bool operator != (const LongRational& x, const LongRational& y)
+{
+  return !(mpq_equal(x.Value, y .Value));
+}
+
+// test is a rational number is different from a given integer number
+// 
+// x = rational number
+// y = integer number
+// return value = true if the two numbers are different
+
+inline bool operator != (const LongRational& x, long y)
+{
+  return (mpq_cmp_si (x.Value, y, 1ul) != 0);
+}
+
+// test is a rational number is different from a given integer number
+// 
+// x = rational number
+// y = integer number
+// return value = true if the two numbers are different
+
+inline bool operator != (long y, const LongRational& x)
+{
+  return (mpq_cmp_si (x.Value, y, 1ul) != 0);
+}
+
+// compute the opposit number
+//
+// x = first rational
+// return value = ooposit number
+
+inline LongRational operator - (const LongRational& x)
+{
+  LongRational Tmp(x);
+  mpq_neg(Tmp.Value, Tmp.Value);
+  return Tmp;
+}
+
+#else
 
 // return integer value associated to the coefficient numerator (0 if the coefficient can't be cast into an integer)
 //
@@ -336,9 +533,9 @@ inline void LongRational::Simplify()
 // n = second integer (must be greater than m)
 // return value = GCD
 
-inline long LongRational::FindGCD(long m, long n)
+inline long LongRational::FindGCD(LONGLONG m, LONGLONG n)
 {
-  long Tmp;
+  LONGLONG Tmp;
   while (n != 0l)
     {
       Tmp = n;
@@ -377,6 +574,62 @@ inline bool operator != (const LongRational& x, const LongRational& y)
     return false;    
 }
 
+// test is a rational number is equal to an integer number
+// 
+// x = rational number
+// y = integer number
+// return value = true if the two numbers are identical
+
+inline bool operator == (const LongRational& x, LONGLONG y)
+{
+  if (((x.Denominator == 1l) && (x.Numerator == y)) || ((x.Denominator == -1l) && (x.Numerator == -y)))
+    return true;    
+  else
+    return false;
+}
+
+// test is a rational number is equal to an integer number
+// 
+// x = rational number
+// y = integer number
+// return value = true if the two numbers are identical
+
+inline bool operator == (LONGLONG y, const LongRational& x)
+{
+  if (((x.Denominator == 1l) && (x.Numerator == y)) || ((x.Denominator == -1l) && (x.Numerator == -y)))
+    return true;    
+  else
+    return false;
+}
+
+// test is a rational number is different from a given integer number
+// 
+// x = rational number
+// y = integer number
+// return value = true if the two numbers are different
+
+inline bool operator != (const LongRational& x, LONGLONG y)
+{
+  if (((x.Denominator == 1l) && (x.Numerator == y)) || ((x.Denominator == -1l) && (x.Numerator == -y)))
+    return false;
+  else
+    return true;    
+}
+
+// test is a rational number is different from a given integer number
+// 
+// x = rational number
+// y = integer number
+// return value = true if the two numbers are different
+
+inline bool operator != (LONGLONG y, const LongRational& x)
+{
+  if (((x.Denominator == 1l) && (x.Numerator == y)) || ((x.Denominator == -1l) && (x.Numerator == -y)))
+    return false;
+  else
+    return true;    
+}
+
 // compute the opposit number
 //
 // x = first rational
@@ -389,6 +642,7 @@ inline LongRational operator - (const LongRational& x)
   return Tmp;
 }
 
+#endif
 
 #endif
 

@@ -72,60 +72,60 @@ int main(int argc, char** argv)
       return -1;
     }
   
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
     }
 
-  if(((SingleStringOption*) Manager["up-state"])->GetString() == 0)
+  if(Manager.GetString("up-state") == 0)
     {
       cout << "no input state for the spin up part" << endl << "see man page for option syntax or type FQHESphereU1ToSU2 -h" << endl;
       return -1;
     }
-  if(((SingleStringOption*) Manager["down-state"])->GetString() == 0)
+  if(Manager.GetString("down-state") == 0)
     {
       cout << "no input state for the spin down part" << endl << "see man page for option syntax or type FQHESphereU1ToSU2 -h" << endl;
       return -1;
     }
 
-  int UpNbrParticles = ((SingleIntegerOption*) Manager["up-nbrparticles"])->GetInteger();
-  int DownNbrParticles = ((SingleIntegerOption*) Manager["down-nbrparticles"])->GetInteger();
-  int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
-  int UpTotalLz = ((SingleIntegerOption*) Manager["up-totallz"])->GetInteger();
-  int DownTotalLz = ((SingleIntegerOption*) Manager["down-totallz"])->GetInteger();
+  int UpNbrParticles = Manager.GetInteger("up-nbrparticles");
+  int DownNbrParticles = Manager.GetInteger("down-nbrparticles");
+  int LzMax = Manager.GetInteger("lzmax");
+  int UpTotalLz = Manager.GetInteger("up-totallz");
+  int DownTotalLz = Manager.GetInteger("down-totallz");
   bool FermionFlag = false;
-  if (((SingleStringOption*) Manager["statistics"])->GetString() == 0)
+  if (Manager.GetString("statistics") == 0)
     FermionFlag = true;
   if (UpNbrParticles==0)
     {
-      if (FQHEOnSphereFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["up-state"])->GetString(), UpNbrParticles, LzMax, UpTotalLz, FermionFlag) == false)
+      if (FQHEOnSphereFindSystemInfoFromVectorFileName(Manager.GetString("up-state"), UpNbrParticles, LzMax, UpTotalLz, FermionFlag) == false)
 	{
 	  return -1;
 	}      
     }
   if (DownNbrParticles==0)
     {
-      if (FQHEOnSphereFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["down-state"])->GetString(), DownNbrParticles, LzMax, DownTotalLz, FermionFlag) == false)
+      if (FQHEOnSphereFindSystemInfoFromVectorFileName(Manager.GetString("down-state"), DownNbrParticles, LzMax, DownTotalLz, FermionFlag) == false)
 	{
 	  return -1;
 	}
       
     }
   int SzTotal = UpNbrParticles - DownNbrParticles;
-  if (((SingleStringOption*) Manager["statistics"])->GetString() != 0)
-    if ((strcmp ("fermions", ((SingleStringOption*) Manager["statistics"])->GetString()) == 0))
+  if (Manager.GetString("statistics") != 0)
+    if ((strcmp ("fermions", Manager.GetString("statistics")) == 0))
       {
 	FermionFlag = true;
       }
     else
-      if ((strcmp ("fermions", ((SingleStringOption*) Manager["statistics"])->GetString()) == 0))
+      if ((strcmp ("fermions", Manager.GetString("statistics")) == 0))
 	{
 	  FermionFlag = false;
 	}
       else
 	{
-	  cout << ((SingleStringOption*) Manager["statistics"])->GetString() << " is an undefined statistics" << endl;
+	  cout << Manager.GetString("statistics") << " is an undefined statistics" << endl;
 	}  
   int UpParity = UpTotalLz & 1;
   if (UpParity != ((UpNbrParticles * LzMax) & 1))
@@ -140,7 +140,7 @@ int main(int argc, char** argv)
       return -1;           
     }
 
-  char* UpStateFileName = ((SingleStringOption*) Manager["up-state"])->GetString();
+  char* UpStateFileName = Manager.GetString("up-state");
   if (IsFile(UpStateFileName) == false)
     {
       cout << "state " << UpStateFileName << " does not exist or can't be opened" << endl;
@@ -152,7 +152,7 @@ int main(int argc, char** argv)
       cout << "error while reading " << UpStateFileName << endl;
       return -1;
     }
-  char* DownStateFileName = ((SingleStringOption*) Manager["down-state"])->GetString();
+  char* DownStateFileName = Manager.GetString("down-state");
   if (IsFile(DownStateFileName) == false)
     {
       cout << "state " << DownStateFileName << " does not exist or can't be opened" << endl;
@@ -203,8 +203,8 @@ int main(int argc, char** argv)
       return -1;
     }
   RealVector OutputState = ((FermionOnSphereWithSpin*) SU2Space)->ForgeSU2FromU1(UpState, *(FermionOnSphere*)UpSpace, DownState, *(FermionOnSphere*)DownSpace);
-  char* OutputName = new char [512 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
-  sprintf (OutputName, "fermions_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz_%d.0.vec", ((SingleStringOption*) Manager["interaction-name"])->GetString(), 
+  char* OutputName = new char [512 + strlen(Manager.GetString("interaction-name"))];
+  sprintf (OutputName, "fermions_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz_%d.0.vec", Manager.GetString("interaction-name"), 
 	   (UpNbrParticles + DownNbrParticles), LzMax, SzTotal, (UpTotalLz + DownTotalLz));
 
   OutputState.WriteVector(OutputName);

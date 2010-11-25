@@ -6,6 +6,9 @@
 /* define if we are using bzip2 library */
 #undef HAVE_BZ2
 
+/* define if we are using gmp library */
+#undef HAVE_GMP
+
 /* define if we are using GSL libraries */
 #undef HAVE_GSL
 

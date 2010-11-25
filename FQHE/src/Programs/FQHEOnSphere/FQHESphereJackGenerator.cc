@@ -79,7 +79,11 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "check-singularity", "display configurations which may produce singularities");
   (*SystemGroup) += new BooleanOption  ('\n', "check-connected", "display lowest configuration connected to each squeezed paritition");
   (*SystemGroup) += new BooleanOption  ('\n', "use-symbolic", "use symbolic calculation to solve singular coefficient (only available in rational mode)");
+#ifdef __GMP__
+  (*SystemGroup) += new BooleanOption  ('\n', "use-gmp", "use arbitrary precision integers instead of fixed precision integers in rational mode");
+#else
   (*SystemGroup) += new BooleanOption  ('\n', "use-longlong", "use 128bit(64bits) integers instead of 64bits(32bits) integers in rational mode");
+#endif
   (*OutputGroup) += new SingleStringOption ('o', "bin-output", "output the Jack polynomial decomposition into a binary file");
   (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the Jack polynomial decomposition into a text file");
   (*OutputGroup) += new BooleanOption ('n', "normalize", "express the Jack polynomial in the normalized basis");
@@ -314,7 +318,11 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
+#ifdef __GMP__
+	      if (Manager.GetBoolean("use-gmp") == false)
+#else
 	      if (Manager.GetBoolean("use-longlong") == false)
+#endif
 		{
 		  RationalVector OutputState;
 		  if (Manager.GetBoolean("check-singularity") == true)

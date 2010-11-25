@@ -317,6 +317,12 @@ class FermionOnSphereTwoLandauLevels :  public FermionOnSphereWithSpin
   virtual void LLLFermionicStateTimeFermionicStateSymmetric(RealVector& lllFermionState, RealVector& fermionState, RealVector& outputVector, unsigned long* finalStates, double* weigth,
 							    FermionOnSphere* lllFermionSpace, BosonOnSphereShort* finalSpace, int firstComponent, int nbrComponent);
 
+  // compute the number of particles in each Landau level
+  //
+  // state = ID of the state to handle
+  // lLOccupationConfiguration = array where the decomposition will be store
+  virtual void LandauLevelOccupationNumber(int state, int* lLOccupationConfiguration);
+
  protected:
 
   // evaluate Hilbert space dimension

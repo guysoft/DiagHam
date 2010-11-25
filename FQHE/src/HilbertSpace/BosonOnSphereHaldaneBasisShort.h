@@ -142,31 +142,19 @@ class BosonOnSphereHaldaneBasisShort :  public BosonOnSphereShort
   //
   // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
   // index = index of the component to compute
-  // numerator = reference on the polynomial where the numerator has to be stored
-  // denominator = reference on the polynomial where the denominator has to be stored
-  // depth = depth in the recurrence describing up to which point the symbolic calculation has to be performed 
+  // numerators = array of polynomials attached to each coefficient numerator
+  // denominators = array of polynomials attached to each coefficient denominator
   // return value = true if a fully symbolic calculation has been performed
-  virtual bool GenerateSingleJackPolynomialCoefficient(RationalVector& jack, long index, RationalPolynomial& numerator, RationalPolynomial& denominator, int depth);
+  bool GenerateSingleJackPolynomialCoefficient(RationalVector& jack, long index, RationalPolynomial* numerators, RationalPolynomial* denominators);
 
   // compute a single coefficient of the Jack polynomial decomposition corresponding to the root partition, assuming only rational numbers occur and using (partial symbolic calculation)
   //
   // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
   // index = index of the component to compute
-  // numerator = reference on the polynomial where the numerator has to be stored
-  // denominator = reference on the polynomial where the denominator has to be stored
-  // depth = depth in the recurrence describing up to which point the symbolic calculation has to be performed 
+  // numerators = array of polynomials attached to each coefficient numerator
+  // denominators = array of polynomials attached to each coefficient denominator
   // return value = true if a fully symbolic calculation has been performed
-  bool GenerateSingleJackPolynomialCoefficient(RationalVector& jack, long index, RationalPolynomial* numerators, RationalPolynomial* denominators, Rational* roots);
-
-  // compute a single coefficient of the Jack polynomial decomposition corresponding to the root partition, assuming only rational numbers occur and using (partial symbolic calculation)
-  //
-  // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
-  // index = index of the component to compute
-  // numerator = reference on the polynomial where the numerator has to be stored
-  // denominator = reference on the polynomial where the denominator has to be stored
-  // depth = depth in the recurrence describing up to which point the symbolic calculation has to be performed 
-  // return value = true if a fully symbolic calculation has been performed
-  bool GenerateSingleJackPolynomialCoefficient(LongRationalVector& jack, long index, LongRationalPolynomial* numerators, LongRationalPolynomial* denominators, LongRational* roots);
+  bool GenerateSingleJackPolynomialCoefficient(LongRationalVector& jack, long index, LongRationalPolynomial* numerators, LongRationalPolynomial* denominators);
 
   // create the Jack polynomial decomposition corresponding to the root partition assuming the resulting state is invariant under the Lz<->-Lz symmetry
   //

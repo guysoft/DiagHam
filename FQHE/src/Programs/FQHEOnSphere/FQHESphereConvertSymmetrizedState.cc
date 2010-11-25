@@ -58,20 +58,20 @@ int main(int argc, char** argv)
       cout << "see man page for option syntax or type FQHESphereConvertSymmetrizedState -h" << endl;
       return -1;
     }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
     }
 
-  if (((SingleStringOption*) Manager["input-file"])->GetString() == 0)
+  if (Manager.GetString("input-file") == 0)
     {
       cout << "error, one input file should be provided. See man page for option syntax or type FQHESphereConvertSymmetrizedState -h" << endl;
       return -1;
     }
-  if (IsFile(((SingleStringOption*) Manager["input-file"])->GetString()) == false)
+  if (IsFile(Manager.GetString("input-file")) == false)
     {
-      cout << "can't open file " << ((SingleStringOption*) Manager["input-file"])->GetString() << endl;
+      cout << "can't open file " << Manager.GetString("input-file") << endl;
     }
 
   char* OutputFileName = 0;
@@ -94,20 +94,20 @@ int main(int argc, char** argv)
       strcpy (OutputFileName + (TagPosition - InputFileName), TagPosition + 6);
     }
 
-  int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger(); 
-  int NbrFluxQuanta = ((SingleIntegerOption*) Manager["nbr-flux"])->GetInteger(); 
-  bool SymmetrizeFlag = ((BooleanOption*) Manager["symmetrize"])->GetBoolean();
+  int NbrParticles = Manager.GetInteger("nbr-particles"); 
+  int NbrFluxQuanta = Manager.GetInteger("nbr-flux"); 
+  bool SymmetrizeFlag = Manager.GetBoolean("symmetrize");
   bool Statistics = true;
   int TotalLz = 0;
-  if (FQHEOnSphereFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["input-file"])->GetString(),
+  if (FQHEOnSphereFindSystemInfoFromVectorFileName(Manager.GetString("input-file"),
 						   NbrParticles, NbrFluxQuanta, TotalLz, Statistics) == false)
     {
-      cout << "error while retrieving system parameters from file name " << ((SingleStringOption*) Manager["input-file"])->GetString() << endl;
+      cout << "error while retrieving system parameters from file name " << Manager.GetString("input-file") << endl;
       return -1;
     }
-  if ((((BooleanOption*) Manager["boson"])->GetBoolean() == true) || (((BooleanOption*) Manager["fermion"])->GetBoolean() == true))
+  if ((Manager.GetBoolean("boson") == true) || (Manager.GetBoolean("fermion") == true))
     {
-      if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
+      if (Manager.GetBoolean("boson") == true)
 	Statistics = false;
       else
 	Statistics = true;
@@ -119,16 +119,16 @@ int main(int argc, char** argv)
     }
 
   RealVector State;
-  if (State.ReadVector (((SingleStringOption*) Manager["input-file"])->GetString()) == false)
+  if (State.ReadVector (Manager.GetString("input-file")) == false)
     {
-      cout << "can't open vector file " << ((SingleStringOption*) Manager["input-file"])->GetString() << endl;
+      cout << "can't open vector file " << Manager.GetString("input-file") << endl;
       return -1;      
     }
 
 
   if (Statistics == true)
     {
-      if (((BooleanOption*) Manager["haldane"])->GetBoolean() == false)
+      if (Manager.GetBoolean("haldane") == false)
 	{
 	  RealVector OutputState;
 #ifdef __64_BITS__
@@ -202,23 +202,23 @@ int main(int argc, char** argv)
       else
 	{
 	  int* ReferenceState = 0;
-	  if (((SingleStringOption*) Manager["reference-file"])->GetString() == 0)
+	  if (Manager.GetString("reference-file") == 0)
 	    {
 	      ReferenceState = new int[NbrFluxQuanta + 1];
 	      for (int i = 0; i <= NbrFluxQuanta; ++i)
 		ReferenceState[i] = 0;
-	      if (strcasecmp(((SingleStringOption*) Manager["reference-state"])->GetString(), "laughlin") == 0)
+	      if (strcasecmp(Manager.GetString("reference-state"), "laughlin") == 0)
 		for (int i = 0; i <= NbrFluxQuanta; i += 3)
 		  ReferenceState[i] = 1;
 	      else
-		if (strcasecmp(((SingleStringOption*) Manager["reference-state"])->GetString(), "pfaffian") == 0)
+		if (strcasecmp(Manager.GetString("reference-state"), "pfaffian") == 0)
 		  for (int i = 0; i <= NbrFluxQuanta; i += 4)
 		    {
 		      ReferenceState[i] = 1;
 		      ReferenceState[i + 1] = 1;
 		    }
 		else
-		  if (strcasecmp(((SingleStringOption*) Manager["reference-state"])->GetString(), "readrezayi3") == 0)
+		  if (strcasecmp(Manager.GetString("reference-state"), "readrezayi3") == 0)
 		    for (int i = 0; i <= NbrFluxQuanta; i += 5)
 		      {
 			ReferenceState[i] = 1;
@@ -227,14 +227,14 @@ int main(int argc, char** argv)
 		      }
 		  else
 		    {
-		      cout << "unknown reference state " << ((SingleStringOption*) Manager["reference-state"])->GetString() << endl;
+		      cout << "unknown reference state " << Manager.GetString("reference-state") << endl;
 		      return -1;
 		    }
 	    }
 	  else
 	    {
 	      ConfigurationParser ReferenceStateDefinition;
-	      if (ReferenceStateDefinition.Parse(((SingleStringOption*) Manager["reference-file"])->GetString()) == false)
+	      if (ReferenceStateDefinition.Parse(Manager.GetString("reference-file")) == false)
 		{
 		  ReferenceStateDefinition.DumpErrors(cout) << endl;
 		  return -1;
@@ -252,7 +252,7 @@ int main(int argc, char** argv)
 	      int MaxNbrLz;
 	      if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
 		{
-		  cout << "error while parsing ReferenceState in " << ((SingleStringOption*) Manager["reference-file"])->GetString() << endl;
+		  cout << "error while parsing ReferenceState in " << Manager.GetString("reference-file") << endl;
 		  return -1;     
 		}
 	      if (MaxNbrLz != (NbrFluxQuanta + 1))

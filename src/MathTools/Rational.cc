@@ -120,8 +120,15 @@ Rational& Rational::SetToOne()
 Rational operator + (const Rational& x, const Rational& y)
 {
   Rational Tmp;
-  Tmp.Numerator = (x.Numerator * y.Denominator) + (y.Numerator * x.Denominator);
-  Tmp.Denominator = x.Denominator * y.Denominator;
+  long Tmp2 = Tmp.FindGCD(x.Numerator, y.Denominator) ;
+  long Tmp3 = Tmp.FindGCD(y.Numerator, x.Denominator) ;
+  long Tmp4 = Tmp.FindGCD(Tmp2, Tmp3);
+  Tmp.Numerator = ((x.Numerator / Tmp4) * (y.Denominator / Tmp4)) + ((y.Numerator / Tmp4) * (x.Denominator / Tmp4));  
+  Tmp.Numerator *= Tmp4;
+  Tmp.Numerator *= Tmp4;
+  Tmp.Denominator = x.Denominator;
+  Tmp.Simplify();  
+  Tmp.Denominator *= y.Denominator;
   Tmp.Simplify();
   return Tmp;
 }
@@ -166,7 +173,9 @@ Rational operator - (const Rational& x, const Rational& y)
 {
   Rational Tmp;
   Tmp.Numerator = (x.Numerator * y.Denominator) - (y.Numerator * x.Denominator);
-  Tmp.Denominator = x.Denominator * y.Denominator;
+  Tmp.Denominator = x.Denominator;
+  Tmp.Simplify();
+  Tmp.Denominator *= y.Denominator;
   Tmp.Simplify();
   return Tmp;
 }
@@ -320,8 +329,9 @@ Rational& Rational::operator += (const  Rational& x)
 {
   this->Numerator *= x.Denominator;
   this->Numerator += x.Numerator * this->Denominator;
+  this->Simplify() ;
   this->Denominator *= x.Denominator;
-  this->Simplify();  
+  this->Simplify() ;
   return *this;
 }
 
@@ -346,6 +356,7 @@ Rational& Rational::operator -= (const  Rational& x)
 {
   this->Numerator *= x.Denominator;
   this->Numerator -= x.Numerator * this->Denominator;
+  this->Simplify();  
   this->Denominator *= x.Denominator;
   this->Simplify();  
   return *this;

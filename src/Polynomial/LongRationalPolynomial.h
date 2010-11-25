@@ -60,6 +60,8 @@ private:
   bool RootFlag;
   // array where roots are stored
   Complex* Root;
+  // array where rational roots are stored (only available if all roots are known)
+  LongRational* RationalRoots;
 
 public:
 
@@ -78,6 +80,14 @@ public:
   // coefficients = coefficients array ( first element is associated to the -power term)
   // flag = true if coefficients array has to be used directly and not duplicated
   LongRationalPolynomial (int degree, LongRational* coefficients, bool flag = true);
+
+  // constructor from raw datas, including all rational roots
+  //
+  // degree = polynomial degree
+  // coefficients = coefficients array ( first element is associated to the -power term)
+  // roots = array where the roots are stored
+  // flag = true if coefficient and root arrays have to be used directly and not duplicated
+  LongRationalPolynomial (int degree, LongRational* coefficients, LongRational* roots, bool flag = true);
 
   // copy constructor
   //
@@ -201,6 +211,12 @@ public:
   // refine root value 
   void RefineRoot (double Epsilon, int MaxIter);
 
+  // Return the n-th raional root 
+  //
+  // n = index of the root 
+  // return value = n-th root
+  inline LongRational PolynomialRationalRoot (int n);
+
   // arithmetic operators
   friend LongRationalPolynomial operator - (const LongRationalPolynomial& P);
   friend LongRationalPolynomial operator + (const LongRationalPolynomial& P1, const LongRationalPolynomial& P2);
@@ -224,6 +240,12 @@ public:
   // z0 = monomial root
   // return value = result of polynomial division
   LongRationalPolynomial MonomialDivision (const LongRational& z0);
+
+  // Multiply polynomial by a monomial (z - z0)
+  //
+  // z0 = monomial root
+  // return value = result of polynomial multiplication
+  LongRationalPolynomial MonomialMultiplication (const LongRational& z0);
 
   // shift all powers from a given value
   //
@@ -281,6 +303,16 @@ inline LongRational LongRationalPolynomial::PolynomialCoefficient (int n)
 inline Complex LongRationalPolynomial::PolynomialRoot (int n) 
 {
   return this->Root[n];
+}
+
+// Return the n-th raional root 
+//
+// n = index of the root 
+// return value = n-th root
+
+inline LongRational LongRationalPolynomial::PolynomialRationalRoot (int n) 
+{
+  return this->RationalRoots[n];
 }
 
 // return reference on the coefficient corresponding to the nth-degree

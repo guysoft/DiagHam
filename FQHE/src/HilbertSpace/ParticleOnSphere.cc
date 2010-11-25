@@ -763,3 +763,12 @@ RealVector ParticleOnSphere::GetLzSymmetricVector(ParticleOnSphere* finalSpace, 
   RealVector Tmp (this->LargeHilbertSpaceDimension, true);
   return Tmp;
 }
+
+// compute the number of particles in each Landau level
+//
+// state = ID of the state to handle
+// lLOccupationConfiguration = array where the decomposition will be store
+
+void ParticleOnSphere::LandauLevelOccupationNumber(int state, int* lLOccupationConfiguration)
+{
+}

@@ -87,6 +87,11 @@ typedef struct { doublereal r, i; } doublecomplex;
 #define __BZ2LIB__
 #endif
 
+// GMP flag
+#ifdef HAVE_GMP
+#define __GMP__
+#endif
+
 // architecture dependant options
 //
 

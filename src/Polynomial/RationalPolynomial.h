@@ -60,6 +60,8 @@ private:
   bool RootFlag;
   // array where roots are stored
   Complex* Root;
+  // array where rational roots are stored (only available if all roots are known)
+  Rational* RationalRoots;
 
 public:
 
@@ -78,6 +80,14 @@ public:
   // coefficients = coefficients array ( first element is associated to the -power term)
   // flag = true if coefficients array has to be used directly and not duplicated
   RationalPolynomial (int degree, Rational* coefficients, bool flag = true);
+
+  // constructor from raw datas, including all rational roots
+  //
+  // degree = polynomial degree
+  // coefficients = coefficients array ( first element is associated to the -power term)
+  // roots = array where the roots are stored
+  // flag = true if coefficient and root arrays have to be used directly and not duplicated
+  RationalPolynomial (int degree, Rational* coefficients, Rational* roots, bool flag = true);
 
   // copy constructor
   //
@@ -192,6 +202,12 @@ public:
   // return value = coefficient
   Rational PolynomialCoefficient (int n);
 
+  // Return the n-th raional root 
+  //
+  // n = index of the root 
+  // return value = n-th root
+  inline Rational PolynomialRationalRoot (int n);
+
   // Return the n-th root (with root(n-1) <= root(n))
   //
   // n = index of the root (0 being root with the lowest modulus)
@@ -224,6 +240,12 @@ public:
   // z0 = monomial root
   // return value = result of polynomial division
   RationalPolynomial MonomialDivision (const Rational& z0);
+
+  // Multiply polynomial by a monomial (z - z0)
+  //
+  // z0 = monomial root
+  // return value = result of polynomial multiplication
+  RationalPolynomial MonomialMultiplication (const Rational& z0);
 
   // shift all powers from a given value
   //
@@ -281,6 +303,16 @@ inline Rational RationalPolynomial::PolynomialCoefficient (int n)
 inline Complex RationalPolynomial::PolynomialRoot (int n) 
 {
   return this->Root[n];
+}
+
+// Return the n-th raional root 
+//
+// n = index of the root 
+// return value = n-th root
+
+inline Rational RationalPolynomial::PolynomialRationalRoot (int n) 
+{
+  return this->RationalRoots[n];
 }
 
 // return reference on the coefficient corresponding to the nth-degree
