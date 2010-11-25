@@ -567,8 +567,8 @@ LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(LongR
 	      jack[i] = (Coefficient * InvAlpha) / (RhoRoot - Rho);
 	      //	      LongRational TmpR = TmpNumerators[i].PolynomialEvaluate(InvAlpha) / TmpDenominators[i].PolynomialEvaluate(InvAlpha);
 	      //	      cout << jack[i] << " " << TmpR << " ";
-	      cout << jack[i] << " ";
-	      this->PrintStateMonomial(cout, i) << endl;
+	      //	      cout << jack[i] << " ";
+	      //	      this->PrintStateMonomial(cout, i) << endl;
 	    }
 	}
       if ((i & 0xffffl) == 0l)
@@ -937,6 +937,7 @@ bool BosonOnSphereHaldaneBasisShort::GenerateSingleJackPolynomialCoefficient(Lon
   numerators[index] = numerators[ConnectedIndices[0]];
   denominators[index] = denominators[ConnectedIndices[0]];
   numerators[index] *= ConnectedCoefficients[0];
+  LongRational Tmp4;
   for (int i = 1; i < NbrConnected; ++i)
     {
       LongRationalPolynomial TmpNumerator = numerators[ConnectedIndices[i]];
@@ -947,7 +948,7 @@ bool BosonOnSphereHaldaneBasisShort::GenerateSingleJackPolynomialCoefficient(Lon
       denominators[index] *= denominators[ConnectedIndices[i]];
       for (int j = 0; j < denominators[index].GetPolynomialDegree(); ++j)
 	{
-	  LongRational Tmp4 = numerators[index].PolynomialEvaluate(denominators[index].PolynomialRationalRoot(j));	
+	  Tmp4 = numerators[index].PolynomialEvaluate(denominators[index].PolynomialRationalRoot(j));	
 	  if (Tmp4 == 0l)
 	    {
 	      numerators[index] = numerators[index].MonomialDivision(denominators[index].PolynomialRationalRoot(j));
@@ -965,7 +966,7 @@ bool BosonOnSphereHaldaneBasisShort::GenerateSingleJackPolynomialCoefficient(Lon
       numerators[index] /= Tmp2;
       LongRational Tmp3 = RhoRootConstCoef - RhoConstCoef;
       Tmp3 /= -Tmp2;
-      LongRational Tmp4 = numerators[index].PolynomialEvaluate(Tmp3);
+      Tmp4 = numerators[index].PolynomialEvaluate(Tmp3);
       if (Tmp4 == 0l)
 	{
 	  numerators[index] = numerators[index].MonomialDivision(Tmp3);

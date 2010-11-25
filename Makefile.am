@@ -1,2 +1,2 @@
 SUBDIRS=Base src $(MAYBE_QUANTUMDOTS) $(MAYBE_SPIN) $(MAYBE_FQHE) $(MAYBE_ANYONS)
-DIST_SUBDIRS=Base src QuantumDots Spin FQHE Anyons
+DIST_SUBDIRS=Base src QuantumDots Spin FQHE
