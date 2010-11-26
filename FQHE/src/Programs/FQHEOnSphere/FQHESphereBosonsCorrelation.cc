@@ -49,17 +49,15 @@ int main(int argc, char** argv)
   // some running options and help
   OptionManager Manager ("FQHESphereBosonsCorrelation" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
-  OptionGroup* SystemGroup = new OptionGroup ("system options");
-  OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
   OptionGroup* OutputGroup = new OptionGroup ("output options");
 
   ArchitectureManager Architecture;
   ParticleOnSphereManager ParticleManager(false, true, 1);
   ParticleManager.AddOptionGroup(&Manager);
 
-  Manager += SystemGroup;
   Architecture.AddOptionGroup(&Manager);
-  Manager += PrecalculationGroup;
+  OptionGroup* SystemGroup = Manager.GetOptionGroup("system options");
+  OptionGroup* PrecalculationGroup = Manager.GetOptionGroup("precalculation options");
   Manager += OutputGroup;
   Manager += MiscGroup;
 
@@ -112,8 +110,8 @@ int main(int argc, char** argv)
   bool SymmetrizedBasis = Manager.GetBoolean("symmetrized-basis");
   bool CoefficientOnlyFlag = Manager.GetBoolean("coefficients-only");
   bool Statistics = true;
- if (FQHEOnSphereFindSystemInfoFromVectorFileName(Manager.GetString("eigenstate"),
-						  NbrParticles, LzMax, TotalLz, Statistics) == false)
+  if (FQHEOnSphereFindSystemInfoFromVectorFileName(Manager.GetString("eigenstate"),
+						   NbrParticles, LzMax, TotalLz, Statistics) == false)
     {
       cout << "error while retrieving system parameters from file name " << Manager.GetString("eigenstate") << endl;
       return -1;
@@ -131,7 +129,8 @@ int main(int argc, char** argv)
     }
 
   ParticleOnSphere* Space = ParticleManager.GetHilbertSpace(TotalLz);
-  cout << Space->GetHilbertSpaceDimension() << endl;
+  cout << "N=" << NbrParticles << ", LzMax=" << LzMax << ", TotalLz=" << TotalLz << endl;
+  cout << "dim = " << Space->GetHilbertSpaceDimension() << endl;
 
 
   AbstractFunctionBasis* Basis;

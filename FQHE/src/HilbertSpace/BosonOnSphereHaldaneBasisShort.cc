@@ -127,6 +127,7 @@ BosonOnSphereHaldaneBasisShort::BosonOnSphereHaldaneBasisShort (char* fileName)
   this->ShiftedTotalLz = (this->TotalLz + this->NbrBosons * this->LzMax) >> 1;
   this->NbrLzValue = this->LzMax + 1;
 
+  this->TargetSpace = this;
   this->TemporaryState = new unsigned long [this->NbrLzValue];
   this->ProdATemporaryState = new unsigned long [this->NbrLzValue];
   this->Flag.Initialize();
