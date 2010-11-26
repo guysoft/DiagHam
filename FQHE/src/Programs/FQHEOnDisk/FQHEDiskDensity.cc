@@ -42,10 +42,12 @@ int main(int argc, char** argv)
   OptionManager Manager ("FQHEDiskDensity" , "0.01");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* PlotOptionGroup = new OptionGroup ("plot options");  
+  OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
 
   Manager += SystemGroup;
   Manager += PlotOptionGroup;
+  Manager += PrecalculationGroup;
   Manager += MiscGroup;
 
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles (overriding the one found in the vector file name if greater than 0)", 0);
@@ -58,7 +60,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
   (*SystemGroup) += new BooleanOption  ('\n', "coefficients-only", "only compute the one body coefficients that are requested to evaluate the density profile", false);
 
-  (*PlotOptionGroup) += new SingleStringOption ('\n', "output", "output file name", 0);
+  (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
+
+  (*PlotOptionGroup) += new SingleStringOption ('\n', "output", "output file name (default output name replace the .vec extension of the input file with .rho.dat)", 0);
   (*PlotOptionGroup) += new SingleIntegerOption ('\n', "nbr-samples", "number of samples in radial direction", 1000, true, 10);
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -68,42 +72,42 @@ int main(int argc, char** argv)
       cout << "see man page for option syntax or type FQHEDiskDensity -h" << endl;
       return -1;
     }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
     }
-  if (((SingleStringOption*) Manager["state"])->GetString() == 0)
+  if (Manager.GetString("state") == 0)
     {
       cout << "QHEBosonsCorrelation requires a state" << endl;
       return -1;
     }
 
-  int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
-  int TotalLz = ((SingleIntegerOption*) Manager["momentum"])->GetInteger();
-  int ForceMaxMomentum = ((SingleIntegerOption*) Manager["force-maxmomentum"])->GetInteger();
-  bool CoefficientOnlyFlag = ((BooleanOption*) Manager["coefficients-only"])->GetBoolean();
-  bool HaldaneBasisFlag = ((BooleanOption*) Manager["haldane"])->GetBoolean();
-  char* OutputName = ((SingleStringOption*) Manager["output"])->GetString();
-  int NbrSamples = ((SingleIntegerOption*) Manager["nbr-samples"])->GetInteger();
+  int NbrParticles = Manager.GetInteger("nbr-particles");
+  int TotalLz = Manager.GetInteger("momentum");
+  int ForceMaxMomentum = Manager.GetInteger("force-maxmomentum");
+  bool CoefficientOnlyFlag = Manager.GetBoolean("coefficients-only");
+  bool HaldaneBasisFlag = Manager.GetBoolean("haldane");
+  char* OutputName = Manager.GetString("output");
+  int NbrSamples = Manager.GetInteger("nbr-samples");
   bool Statistics = true;
 
-  if (FQHEOnDiskFindSystemInfoFromFileName(((SingleStringOption*) Manager["state"])->GetString(), NbrParticles, ForceMaxMomentum, TotalLz, Statistics) == false)
+  if (FQHEOnDiskFindSystemInfoFromFileName(Manager.GetString("state"), NbrParticles, ForceMaxMomentum, TotalLz, Statistics) == false)
     {
       return -1;      
     }
-  if ((((BooleanOption*) Manager["boson"])->GetBoolean() == true) || (((BooleanOption*) Manager["fermion"])->GetBoolean() == true))
+  if ((Manager.GetBoolean("boson") == true) || (Manager.GetBoolean("fermion") == true))
     {
-      if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
+      if (Manager.GetBoolean("boson") == true)
         Statistics = false;
       else
         Statistics = true;
     }
   
   RealVector State;
-  if (State.ReadVector (((SingleStringOption*) Manager["state"])->GetString()) == false)
+  if (State.ReadVector (Manager.GetString("state")) == false)
     {
-      cout << "can't open vector file " << ((SingleStringOption*) Manager["state"])->GetString() << endl;
+      cout << "can't open vector file " << Manager.GetString("state") << endl;
       return -1;      
     }
 
@@ -145,7 +149,7 @@ int main(int argc, char** argv)
     {
       int* ReferenceState = 0;
       ConfigurationParser ReferenceStateDefinition;
-      if (ReferenceStateDefinition.Parse(((SingleStringOption*) Manager["reference-file"])->GetString()) == false)
+      if (ReferenceStateDefinition.Parse(Manager.GetString("reference-file")) == false)
 	{
 	  ReferenceStateDefinition.DumpErrors(cout) << endl;
 	  return -1;
@@ -164,7 +168,7 @@ int main(int argc, char** argv)
       int MaxNbrLz;
       if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
 	{
-	  cout << "error while parsing ReferenceState in " << ((SingleStringOption*) Manager["reference-file"])->GetString() << endl;
+	  cout << "error while parsing ReferenceState in " << Manager.GetString("reference-file") << endl;
 	  return -1;     
 	}
       if (MaxNbrLz != (ForceMaxMomentum + 1))
@@ -177,7 +181,10 @@ int main(int argc, char** argv)
 	TotalLz += i * ReferenceState[i];
       if (Statistics == true)
 	{
-	  Space = new FermionOnDiskHaldaneBasis (NbrParticles, TotalLz, ForceMaxMomentum, ReferenceState);
+	  if (Manager.GetString("load-hilbert") == 0)
+	    Space = new FermionOnDiskHaldaneBasis (NbrParticles, TotalLz, ForceMaxMomentum, ReferenceState);
+	  else
+	    Space = new FermionOnDiskHaldaneBasis (Manager.GetString("load-hilbert"));
 	}
       else
 	{
@@ -186,7 +193,10 @@ int main(int argc, char** argv)
 #else
 	    if ((ForceMaxMomentum + NbrParticles - 1) < 31)	
 #endif
-	      Space = new BosonOnDiskHaldaneBasisShort(NbrParticles, TotalLz, ForceMaxMomentum, ReferenceState);
+	      if (Manager.GetString("load-hilbert") == 0)
+		Space = new BosonOnDiskHaldaneBasisShort(NbrParticles, TotalLz, ForceMaxMomentum, ReferenceState);
+	      else
+		Space = new BosonOnDiskHaldaneBasisShort(Manager.GetString("load-hilbert"));
 	}
     }
 
@@ -208,7 +218,7 @@ int main(int argc, char** argv)
   ofstream File;
   File.precision(14);
   if (OutputName == 0)
-    OutputName = ReplaceExtensionToFileName(((SingleStringOption*) Manager["state"])->GetString(), "vec", "rho.dat");
+    OutputName = ReplaceExtensionToFileName(Manager.GetString("state"), "vec", "rho.dat");
   File.open(OutputName, ios::binary | ios::out);
   if (CoefficientOnlyFlag == false)
     {
@@ -232,7 +242,7 @@ int main(int argc, char** argv)
     }
   else
     {
-      File << "# density coefficients for " << ((SingleStringOption*) Manager["state"])->GetString() << endl;
+      File << "# density coefficients for " << Manager.GetString("state") << endl;
       if (PrecalculatedValues[TmpMaxMomentum].Re != 0.0)
 	{
 	  File << "#" << endl << "# m    n_m    (n_m / n_Nphi)" << endl;
