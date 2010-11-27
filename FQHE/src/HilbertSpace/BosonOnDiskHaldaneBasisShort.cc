@@ -62,6 +62,7 @@ BosonOnDiskHaldaneBasisShort::BosonOnDiskHaldaneBasisShort (int nbrBosons, int t
     this->LzMax = totalLz;
   else
     this->LzMax = lzMax;
+  this->TargetSpace = this;
   this->ShiftedTotalLz = this->TotalLz;
   this->TotalLz = (this->TotalLz << 1) - (this->NbrBosons * this->LzMax);
   this->NbrLzValue = this->LzMax + 1;
@@ -82,6 +83,7 @@ BosonOnDiskHaldaneBasisShort::BosonOnDiskHaldaneBasisShort (int nbrBosons, int t
   this->FermionBasis = new FermionOnSphereHaldaneBasis(nbrBosons, totalLz, this->LzMax + nbrBosons - 1, TmpReferenceState);
   delete[] TmpReferenceState;
   this->HilbertSpaceDimension = this->FermionBasis->GetHilbertSpaceDimension();
+  this->LargeHilbertSpaceDimension = this->FermionBasis->GetLargeHilbertSpaceDimension();
 
   this->TemporaryState = new unsigned long [this->NbrLzValue];
   this->ProdATemporaryState = new unsigned long [this->NbrLzValue];
@@ -109,6 +111,7 @@ BosonOnDiskHaldaneBasisShort::BosonOnDiskHaldaneBasisShort (char* fileName)
   this->FermionBasis = new FermionOnSphereHaldaneBasis(fileName);
   this->HilbertSpaceDimension = this->FermionBasis->GetHilbertSpaceDimension();
   this->LargeHilbertSpaceDimension = this->FermionBasis->GetLargeHilbertSpaceDimension();
+  this->TargetSpace = this;
 
   this->NbrBosons = this->FermionBasis->NbrFermions;
   this->IncNbrBosons = this->NbrBosons + 1;
@@ -137,6 +140,14 @@ BosonOnDiskHaldaneBasisShort::BosonOnDiskHaldaneBasisShort (char* fileName)
 
 BosonOnDiskHaldaneBasisShort::BosonOnDiskHaldaneBasisShort(const BosonOnDiskHaldaneBasisShort& bosons)
 {
+  if (bosons.TargetSpace != &bosons)
+    {
+      this->TargetSpace = (BosonOnSphereShort*) bosons.TargetSpace->Clone();
+    }
+  else
+    {
+      this->TargetSpace = this;
+    }
   this->NbrBosons = bosons.NbrBosons;
   this->IncNbrBosons = bosons.IncNbrBosons;
   this->TotalLz = bosons.TotalLz;
@@ -144,6 +155,7 @@ BosonOnDiskHaldaneBasisShort::BosonOnDiskHaldaneBasisShort(const BosonOnDiskHald
   this->LzMax = bosons.LzMax;
   this->NbrLzValue = this->LzMax + 1;
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = bosons.LargeHilbertSpaceDimension;
   this->Flag = bosons.Flag;
   this->FermionBasis = (FermionOnSphereHaldaneBasis*) bosons.FermionBasis->Clone();
   this->Minors = bosons.Minors;
@@ -179,12 +191,21 @@ BosonOnDiskHaldaneBasisShort& BosonOnDiskHaldaneBasisShort::operator = (const Bo
 	}
       delete this->KeptCoordinates;
     }
+  if (bosons.TargetSpace != &bosons)
+    {
+      this->TargetSpace = (BosonOnSphereShort*) bosons.TargetSpace->Clone();
+    }
+  else
+    {
+      this->TargetSpace = this;
+    }
   this->NbrBosons = bosons.NbrBosons;
   this->IncNbrBosons = bosons.IncNbrBosons;
   this->TotalLz = bosons.TotalLz;
   this->ShiftedTotalLz = bosons. ShiftedTotalLz;
   this->LzMax = bosons.LzMax;
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = bosons.LargeHilbertSpaceDimension;
   this->Flag = bosons.Flag;
   this->FermionBasis = (FermionOnSphereHaldaneBasis*) bosons.FermionBasis->Clone();
   this->KeptCoordinates = bosons.KeptCoordinates;
@@ -269,6 +290,7 @@ RealVector& BosonOnDiskHaldaneBasisShort::ConvertToUnnormalizedMonomial(RealVect
 	      Factorial.FactorialMultiply(this->TemporaryState[k]);
 	  Coefficient *= sqrt(Factorial.GetNumericalValue());
 	}
+
       state[i] *= Coefficient;
     }
   return state;
@@ -285,17 +307,16 @@ RealVector& BosonOnDiskHaldaneBasisShort::ConvertFromUnnormalizedMonomial(RealVe
 {
   unsigned long* TmpMonomialReference = new unsigned long [this->NbrBosons];
   unsigned long* TmpMonomial = new unsigned long [this->NbrBosons];
-  double Factor = state[reference];
-  state[reference] = 1.0;
+  double Factor = 1.0;
   this->ConvertToMonomial(this->FermionBasis->StateDescription[reference], this->FermionBasis->StateLzMax[reference], TmpMonomialReference);
   double* SqrtCoefficients = new double [this->LzMax + 1];
   double* InvSqrtCoefficients = new double [this->LzMax + 1];
   SqrtCoefficients[0] = 1.0;
   InvSqrtCoefficients[0] = 1.0;
-  for (int k = 0; k <= this->LzMax; ++k)
+  for (int k = 1; k <= this->LzMax; ++k)
     {
-      InvSqrtCoefficients[k] = sqrt((double) k) * InvSqrtCoefficients[k - 1];
-      SqrtCoefficients[k] = 1.0 / InvSqrtCoefficients[k];
+      SqrtCoefficients[k] = sqrt((double) k) * SqrtCoefficients[k - 1];
+      InvSqrtCoefficients[k] = 1.0 / SqrtCoefficients[k];
     }
   FactorialCoefficient ReferenceFactorial;
   FactorialCoefficient Factorial;
@@ -304,7 +325,7 @@ RealVector& BosonOnDiskHaldaneBasisShort::ConvertFromUnnormalizedMonomial(RealVe
   for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
     if (this->TemporaryState[k] > 1)
       ReferenceFactorial.FactorialMultiply(this->TemporaryState[k]);
-  for (int i = 1; i < this->HilbertSpaceDimension; ++i)
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     {
       this->ConvertToMonomial(this->FermionBasis->StateDescription[i], this->FermionBasis->StateLzMax[i], TmpMonomial);
       int Index1 = 0;
