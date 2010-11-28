@@ -306,6 +306,203 @@ bool BosonOnSphereHaldaneHugeBasisShort::WriteHilbertSpace (char* fileName)
   return this->FermionHugeBasis->WriteHilbertSpace(fileName);
 }
 
+// apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
+//
+// index = index of the state on which the operator has to be applied
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// n1 = first index for annihilation operator
+// n2 = second index for annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int BosonOnSphereHaldaneHugeBasisShort::AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient)
+{
+  unsigned long TmpState = this->FermionHugeBasis->GetStateFactorized((long) index);
+  int TmpLzMax = this->FermionHugeBasis->LzMax;
+  while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
+    --TmpLzMax;
+  this->FermionToBoson(TmpState, TmpLzMax, 
+		       this->TemporaryState, this->TemporaryStateLzMax);
+  if ((n1 > this->TemporaryStateLzMax) || (n2 > this->TemporaryStateLzMax) || (this->TemporaryState[n1] == 0) || (this->TemporaryState[n2] == 0) || ((n1 == n2) && (this->TemporaryState[n1] == 1)))
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }
+  for (int i = this->TemporaryStateLzMax + 1; i < this->NbrLzValue; ++i)
+    this->TemporaryState[i] = 0ul;
+  coefficient = this->TemporaryState[n2];
+  --this->TemporaryState[n2];
+  coefficient *= this->TemporaryState[n1];
+  --this->TemporaryState[n1];
+  ++this->TemporaryState[m2];
+  coefficient *= this->TemporaryState[m2];
+  ++this->TemporaryState[m1];
+  coefficient *= this->TemporaryState[m1];
+  coefficient = sqrt(coefficient);
+  this->TemporaryStateLzMax = this->LzMax;
+  while (this->TemporaryState[this->TemporaryStateLzMax] == 0)
+    --this->TemporaryStateLzMax;
+  return this->FermionHugeBasis->FindStateIndexFactorized(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax));
+}
+
+// apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
+//
+// index = index of the state on which the operator has to be applied
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// n1 = first index for annihilation operator
+// n2 = second index for annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+long BosonOnSphereHaldaneHugeBasisShort::AdAdAA (long index, int m1, int m2, int n1, int n2, double& coefficient)
+{
+  unsigned long TmpState = this->FermionHugeBasis->GetStateFactorized(index);
+  int TmpLzMax = this->FermionHugeBasis->LzMax;
+  while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
+    --TmpLzMax;
+  this->FermionToBoson(TmpState, TmpLzMax, 
+		       this->TemporaryState, this->TemporaryStateLzMax);
+  if ((n1 > this->TemporaryStateLzMax) || (n2 > this->TemporaryStateLzMax) || (this->TemporaryState[n1] == 0) || (this->TemporaryState[n2] == 0) || ((n1 == n2) && (this->TemporaryState[n1] == 1)))
+    {
+      coefficient = 0.0;
+      return this->LargeHilbertSpaceDimension;
+    }
+  for (int i = this->TemporaryStateLzMax + 1; i < this->NbrLzValue; ++i)
+    this->TemporaryState[i] = 0ul;
+  coefficient = this->TemporaryState[n2];
+  --this->TemporaryState[n2];
+  coefficient *= this->TemporaryState[n1];
+  --this->TemporaryState[n1];
+  ++this->TemporaryState[m2];
+  coefficient *= this->TemporaryState[m2];
+  ++this->TemporaryState[m1];
+  coefficient *= this->TemporaryState[m1];
+  coefficient = sqrt(coefficient);
+  this->TemporaryStateLzMax = this->LzMax;
+  while (this->TemporaryState[this->TemporaryStateLzMax] == 0)
+    --this->TemporaryStateLzMax;
+  return this->FermionHugeBasis->FindStateIndexFactorized(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax));
+}
+
+// apply Prod_i a^+_mi Prod_i a_ni operator to a given state (with Sum_i  mi= Sum_i ni)
+//
+// index = index of the state on which the operator has to be applied
+// m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+// n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
+// nbrIndices = number of creation (or annihilation) operators
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int BosonOnSphereHaldaneHugeBasisShort::ProdAdProdA (int index, int* m, int* n, int nbrIndices, double& coefficient)
+{
+  return 0;
+}
+
+// apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
+//
+// index = index of the state on which the operator has to be applied
+// n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
+// nbrIndices = number of creation (or annihilation) operators
+// return value =  multiplicative factor 
+
+double BosonOnSphereHaldaneHugeBasisShort::ProdA (int index, int* n, int nbrIndices)
+{
+  return 0;
+}
+
+// apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
+//
+// m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+// nbrIndices = number of creation (or annihilation) operators
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int BosonOnSphereHaldaneHugeBasisShort::ProdAd (int* m, int nbrIndices, double& coefficient)
+{
+  return 0;
+}
+
+// apply a^+_m a_m operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation and annihilation operator
+// return value = coefficient obtained when applying a^+_m a_m
+
+double BosonOnSphereHaldaneHugeBasisShort::AdA (int index, int m)
+{
+  unsigned long TmpState = this->FermionHugeBasis->GetStateFactorized((long) index);
+  int TmpLzMax = this->FermionHugeBasis->LzMax;
+  while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
+    --TmpLzMax;
+  this->FermionToBoson(TmpState, TmpLzMax, 
+		       this->TemporaryState, this->TemporaryStateLzMax);
+  if (this->TemporaryStateLzMax < m)  
+    return 0.0;
+  return (double) (this->TemporaryState[m]);  
+}
+
+// apply a^+_m a_m operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation and annihilation operator
+// return value = coefficient obtained when applying a^+_m a_m
+
+double BosonOnSphereHaldaneHugeBasisShort::AdA (long index, int m)
+{
+  unsigned long TmpState = this->FermionHugeBasis->GetStateFactorized(index);
+  int TmpLzMax = this->FermionHugeBasis->LzMax;
+  while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
+    --TmpLzMax;
+  this->FermionToBoson(TmpState, TmpLzMax, 
+		       this->TemporaryState, this->TemporaryStateLzMax);
+  if (this->TemporaryStateLzMax < m)  
+    return 0.0;
+  return (double) (this->TemporaryState[m]);  
+}
+
+// apply a^+_m a_n operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+  
+int BosonOnSphereHaldaneHugeBasisShort::AdA (int index, int m, int n, double& coefficient)
+{
+  unsigned long TmpState = this->FermionHugeBasis->GetStateFactorized((long) index);
+  int TmpLzMax = this->FermionHugeBasis->LzMax;
+  while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
+    --TmpLzMax;
+  this->FermionToBoson(TmpState, TmpLzMax, 
+		       this->TemporaryState, this->TemporaryStateLzMax);
+  if ((this->TemporaryStateLzMax < n)  || (this->TemporaryState[n] == 0))
+    { 
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;      
+    }
+  coefficient = (double) this->TemporaryState[n];
+  --this->TemporaryState[n];
+  if ((this->TemporaryStateLzMax == n) && (this->TemporaryState[n] == 0))
+    {
+      while (this->TemporaryState[this->TemporaryStateLzMax] == 0)
+	--this->TemporaryStateLzMax;
+    }
+  if (this->TemporaryStateLzMax < m) 
+    {
+      for (int i = this->TemporaryStateLzMax + 1; i <= m; ++i)
+	this->TemporaryState[i] = 0;
+      this->TemporaryStateLzMax = m;
+    }
+  ++this->TemporaryState[m];
+  coefficient *= (double) this->TemporaryState[m];
+  coefficient = sqrt(coefficient);  
+  return this->FermionHugeBasis->FindStateIndexFactorized(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax));
+  return 0;
+}
+
 // print a given State using the monomial notation
 //
 // Str = reference on current output stream 

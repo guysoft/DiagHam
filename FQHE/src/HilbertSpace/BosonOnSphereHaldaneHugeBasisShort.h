@@ -121,6 +121,77 @@ class BosonOnSphereHaldaneHugeBasisShort :  public BosonOnSphereShort
   // return value = true if disk storage is used
   bool CheckDiskStorage();
 
+  // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
+  //
+  // index = index of the state on which the operator has to be applied
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient);
+
+  // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
+  //
+  // index = index of the state on which the operator has to be applied
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual long AdAdAA (long index, int m1, int m2, int n1, int n2, double& coefficient);
+
+  // apply Prod_i a^+_mi Prod_i a_ni operator to a given state (with Sum_i  mi= Sum_i ni)
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+  // n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
+  // nbrIndices = number of creation (or annihilation) operators
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int ProdAdProdA (int index, int* m, int* n, int nbrIndices, double& coefficient);
+
+  // apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
+  // nbrIndices = number of creation (or annihilation) operators
+  // return value =  multiplicative factor 
+  virtual double ProdA (int index, int* n, int nbrIndices);
+
+  // apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
+  //
+  // m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+  // nbrIndices = number of creation (or annihilation) operators
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int ProdAd (int* m, int nbrIndices, double& coefficient);
+
+  // apply a^+_m a_m operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation and annihilation operator
+  // return value = coefficient obtained when applying a^+_m a_m
+  virtual double AdA (int index, int m);
+
+  // apply a^+_m a_m operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation and annihilation operator
+  // return value = coefficient obtained when applying a^+_m a_m
+  virtual double AdA (long index, int m);
+
+  // apply a^+_m a_n operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AdA (int index, int m, int n, double& coefficient);
+
   // print a given State using the monomial notation
   //
   // Str = reference on current output stream 

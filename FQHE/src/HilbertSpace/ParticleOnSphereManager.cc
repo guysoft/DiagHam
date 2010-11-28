@@ -51,6 +51,7 @@
 #include "HilbertSpace/FermionOnSphereSymmetricBasisLong.h"
 #include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasisLong.h"
 #include "HilbertSpace/FermionOnSphereUnnormalizedBasis.h"
+#include "HilbertSpace/FermionOnSphereHaldaneHugeBasis.h"
 
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
 #include "HilbertSpace/FermionOnSphereWithSpinLong.h"
@@ -77,7 +78,7 @@
 #include "HilbertSpace/BosonOnSphereSymmetricBasisShort.h"
 #include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
 #include "HilbertSpace/BosonOnSphereHaldaneSymmetricBasisShort.h"
-
+#include "HilbertSpace/BosonOnSphereHaldaneHugeBasisShort.h"
 #include "HilbertSpace/BosonOnSphereWithSpin.h"
 #include "HilbertSpace/BosonOnSphereWithSpinAllSz.h"
 
@@ -149,6 +150,7 @@ void ParticleOnSphereManager::AddOptionGroup(OptionManager* manager, const char*
       {
 	(*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)"); 
 	(*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
+	(*SystemGroup) += new BooleanOption  ('\n', "huge-basis", "use huge Hilbert space support");
 	if (this->BosonFlag == false)
 	  (*SystemGroup) += new SingleStringOption  ('\n', "reference-state", "reference state to start the Haldane algorithm from (can be laughlin, pfaffian or readrezayi3)", "laughlin");
 	(*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
@@ -161,6 +163,7 @@ void ParticleOnSphereManager::AddOptionGroup(OptionManager* manager, const char*
 	  }
 	(*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the haldane or symmetrized bases)",0);
 	(*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the haldane or symmetrized bases)",0);
+	(*PrecalculationGroup) += new SingleIntegerOption  ('\n', "huge-memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
       }
       break;
     case 2:
@@ -387,40 +390,52 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceU1(int totalLz)
 	    }
 	  if (SymmetrizedBasis == false)
 	     {
+	       if (this->Options->GetBoolean("huge-basis") == false)
+		 {
 #ifdef __64_BITS__
-	       if (LzMax <= 62)
-#else
-		 if (LzMax <= 30)
-#endif
-		   {
-		     if (this->Options->GetString("load-hilbert") != 0)
-		       Space = new FermionOnSphereHaldaneBasis(this->Options->GetString("load-hilbert"), MemorySpace);
-		     else
-		       Space = new FermionOnSphereHaldaneBasis(NbrParticles, totalLz, LzMax, ReferenceState, MemorySpace);
-		     if (this->Options->GetString("save-hilbert") != 0)
-		       {
-			 ((FermionOnSphereHaldaneBasis*) Space)->WriteHilbertSpace(this->Options->GetString("save-hilbert"));
-			 cout << "Wrote hilbert space "<<this->Options->GetString("save-hilbert")<<" of dimension d="<<Space->GetHilbertSpaceDimension()<<endl;
-			 return 0;
-		       }
-		   }
-	       else
-#ifdef __128_BIT_LONGLONG__
-		 if (LzMax <= 126)
-#else
 		   if (LzMax <= 62)
+#else
+		     if (LzMax <= 30)
 #endif
+		       {
+			 if (this->Options->GetString("load-hilbert") != 0)
+			   Space = new FermionOnSphereHaldaneBasis(this->Options->GetString("load-hilbert"), MemorySpace);
+			 else
+			   Space = new FermionOnSphereHaldaneBasis(NbrParticles, totalLz, LzMax, ReferenceState, MemorySpace);
+			 if (this->Options->GetString("save-hilbert") != 0)
+			   {
+			     ((FermionOnSphereHaldaneBasis*) Space)->WriteHilbertSpace(this->Options->GetString("save-hilbert"));
+			     cout << "Wrote hilbert space "<<this->Options->GetString("save-hilbert")<<" of dimension d="<<Space->GetHilbertSpaceDimension()<<endl;
+			     return 0;
+			   }
+		       }
+		     else
+#ifdef __128_BIT_LONGLONG__
+		       if (LzMax <= 126)
+#else
+			 if (LzMax <= 62)
+#endif
+			   {
+			     if (this->Options->GetString("load-hilbert") != 0)
+			       Space = new FermionOnSphereHaldaneBasisLong(this->Options->GetString("load-hilbert"), MemorySpace);
+			     else
+			       Space = new FermionOnSphereHaldaneBasisLong(NbrParticles, totalLz, LzMax, ReferenceState, MemorySpace);
+			     if (this->Options->GetString("save-hilbert") != 0)
+			       {
+				 ((FermionOnSphereHaldaneBasisLong*) Space)->WriteHilbertSpace(this->Options->GetString("save-hilbert"));
+				 return 0;
+			       }
+			   }	       
+		 }
+	       else
+		 {
+		   if (this->Options->GetString("load-hilbert") == 0)
 		     {
-		       if (this->Options->GetString("load-hilbert") != 0)
-			 Space = new FermionOnSphereHaldaneBasisLong(this->Options->GetString("load-hilbert"), MemorySpace);
-		       else
-			 Space = new FermionOnSphereHaldaneBasisLong(NbrParticles, totalLz, LzMax, ReferenceState, MemorySpace);
-		       if (this->Options->GetString("save-hilbert") != 0)
-			 {
-			   ((FermionOnSphereHaldaneBasisLong*) Space)->WriteHilbertSpace(this->Options->GetString("save-hilbert"));
-			   return 0;
-			 }
-		     }	       
+		       cout << "error : huge basis mode requires to save and load the Hilbert space" << endl;
+		       return 0;
+		     }
+		   Space = new FermionOnSphereHaldaneHugeBasis (this->Options->GetString("load-hilbert"), this->Options->GetInteger("huge-memory"));
+		 }
 	     }
 	  else
 	    {
@@ -523,23 +538,35 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceU1(int totalLz)
 	    }
 	  if (SymmetrizedBasis == false)
 	     {
+	       if (this->Options->GetBoolean("huge-basis") == false)
+		 {
 #ifdef  __64_BITS__
-	       if ((LzMax + NbrParticles - 1) < 63)
+		   if ((LzMax + NbrParticles - 1) < 63)
 #else
-		 if ((LzMax + NbrParticles - 1) < 31)	
+		     if ((LzMax + NbrParticles - 1) < 31)	
 #endif
-		   {
-		     if (this->Options->GetString("load-hilbert") != 0)
-		       Space = new BosonOnSphereHaldaneBasisShort(this->Options->GetString("load-hilbert"));
-		     else
-		       Space = new BosonOnSphereHaldaneBasisShort(NbrParticles, totalLz, LzMax, ReferenceState);
-		     if (this->Options->GetString("save-hilbert") != 0)
 		       {
-			 ((BosonOnSphereHaldaneBasisShort*) Space)->WriteHilbertSpace(this->Options->GetString("save-hilbert"));
-			 cout << "Wrote hilbert space "<<this->Options->GetString("save-hilbert")<<" of dimension d="<<Space->GetHilbertSpaceDimension()<<endl;
-			 return 0;
+			 if (this->Options->GetString("load-hilbert") != 0)
+			   Space = new BosonOnSphereHaldaneBasisShort(this->Options->GetString("load-hilbert"));
+			 else
+			   Space = new BosonOnSphereHaldaneBasisShort(NbrParticles, totalLz, LzMax, ReferenceState);
+			 if (this->Options->GetString("save-hilbert") != 0)
+			   {
+			     ((BosonOnSphereHaldaneBasisShort*) Space)->WriteHilbertSpace(this->Options->GetString("save-hilbert"));
+			     cout << "Wrote hilbert space "<<this->Options->GetString("save-hilbert")<<" of dimension d="<<Space->GetHilbertSpaceDimension()<<endl;
+			     return 0;
+			   }
 		       }
-		   }
+		 }
+	       else
+		 {
+		   if (this->Options->GetString("load-hilbert") == 0)
+		     {
+		       cout << "error : huge basis mode requires to save and load the Hilbert space" << endl;
+		       return 0;
+		     }
+		   Space = new BosonOnSphereHaldaneHugeBasisShort (this->Options->GetString("load-hilbert"), this->Options->GetInteger("huge-memory"));
+		 }
 	     }
 	  else
 	    {
