@@ -277,30 +277,76 @@ int main(int argc, char** argv)
 	{
 	  ParticleOnSphere* LeftSpace = 0;
 	  RealVector LeftState;
+	  int LeftTotalLz = 0;
+	  if ((InputVectors.GetNbrColumns() <= 2) || (strcmp ("none", InputVectors(2, i)) == 0))
+	    {
+	      if (FQHEDiskDensityGetHilbertSpace(InputVectors(0, i), NbrParticles, ForceMaxMomentum, LeftTotalLz, Statistics, 
+						 LeftSpace, LeftState) == false)
+		return -1;
+	    }
+	  else
+	    {
+	      if ((InputVectors.GetNbrColumns() <= 3) || (strcmp ("none", InputVectors(3, i)) == 0))
+		{
+		  if (FQHEDiskDensityGetHilbertSpace(InputVectors(0, i), NbrParticles, ForceMaxMomentum, LeftTotalLz, Statistics, 
+						     LeftSpace, LeftState, InputVectors(2, i)) == false)
+		    return -1;
+		}
+	      else
+		{
+		  if (FQHEDiskDensityGetHilbertSpace(InputVectors(0, i), NbrParticles, ForceMaxMomentum, LeftTotalLz, Statistics, 
+						     LeftSpace, LeftState, InputVectors(2, i), InputVectors(3, i)) == false)
+		    return -1;
+		}
+	    }
 	  for (int m = 0; m <= ForceMaxMomentum; ++m)
 	    {
 	      ParticleOnSphereDensityOperator Operator (LeftSpace, m);
-	      PrecalculatedValues(m, m) += Operator.MatrixElement(LeftState, LeftState);
+	      PrecalculatedValues.AddToMatrixElement(m, m, (Coefficients[i] * Coefficients[i]) * Operator.MatrixElement(LeftState, LeftState));
 	    }
 	  for (int j = i + 1; j < InputVectors.GetNbrLines(); ++j)
 	    {
 	      ParticleOnSphere* RightSpace = 0;
 	      RealVector RightState;
+	      int RightTotalLz = 0;
+	      if ((InputVectors.GetNbrColumns() <= 2) || (strcmp ("none", InputVectors(2, j)) == 0))
+		{
+		  if (FQHEDiskDensityGetHilbertSpace(InputVectors(0, j), NbrParticles, ForceMaxMomentum, RightTotalLz, Statistics, 
+						     RightSpace, RightState) == false)
+		    return -1;
+		}
+	      else
+		{
+		  if ((InputVectors.GetNbrColumns() <= 3) || (strcmp ("none", InputVectors(3, j)) == 0))
+		    {
+		      if (FQHEDiskDensityGetHilbertSpace(InputVectors(0, j), NbrParticles, ForceMaxMomentum, RightTotalLz, Statistics, 
+							 RightSpace, RightState, InputVectors(2, j)) == false)
+			return -1;
+		    }
+		  else
+		    {
+		      if (FQHEDiskDensityGetHilbertSpace(InputVectors(0, j), NbrParticles, ForceMaxMomentum, RightTotalLz, Statistics, 
+							 RightSpace, RightState, InputVectors(2, j), InputVectors(3, j)) == false)
+			return -1;
+		    }
+		}
 	      for (int m = 0; m <= ForceMaxMomentum; ++m)
 		{
 		  for (int n = 0; n <= ForceMaxMomentum; ++n)
 		    {
-		      RightSpace->SetTargetSpace(LeftSpace);
-		      ParticleOnSphereDensityOperator Operator (RightSpace, m, n);
-		      Complex Tmp = Operator.MatrixElement(LeftState, RightState);
-		      PrecalculatedValues(m, n) += Tmp;
-		      PrecalculatedValues(n, m) += Conj(Tmp);
+		      if ((RightTotalLz - n) == (LeftTotalLz - m))
+			{
+			  RightSpace->SetTargetSpace(LeftSpace);
+			  ParticleOnSphereDensityOperator Operator (RightSpace, m, n);
+			  Complex Tmp = Operator.MatrixElement(LeftState, RightState);
+			  Tmp *= (Coefficients[i] * Coefficients[j]);
+			  PrecalculatedValues.AddToMatrixElement(m, n, Tmp);
+			  PrecalculatedValues.AddToMatrixElement(n, m, Conj(Tmp));
+			}
 		    }
 		}
+	      delete RightSpace;
 	    }
-	{
-	  //	  ParticleOnSphereDensityOperator Operator (Space, i);
-	  //	  PrecalculatedValues[i] = Operator.MatrixElement(State, State);
 	}
       
       ofstream File;
@@ -312,7 +358,7 @@ int main(int argc, char** argv)
       File << "#" << endl << "# m  n  c_{m,n}" << endl;
       for (int i = 0; i <= ForceMaxMomentum; ++i)
 	for (int j = 0; j <= ForceMaxMomentum; ++j)
-	  File << i << " " << j << " " << PrecalculatedValues(i, j) << endl;
+	  File << "# " << i << " " << j << " " << PrecalculatedValues[i][j] << endl;
 
       if (CoefficientOnlyFlag == false)
 	{
@@ -336,7 +382,7 @@ int main(int argc, char** argv)
 		      for (int l = 0; l <= ForceMaxMomentum; ++l)
 			{
 			  Basis.GetFunctionValue(Value, TmpValue2, l);
-			  Tmp += PrecalculatedValues(k, l)  * Conj(TmpValue) * TmpValue2;
+			  Tmp += PrecalculatedValues[k][l]  * Conj(TmpValue) * TmpValue2;
 			}
 		    }
 		  Tmp *= exp (-0.5 * ((Value[0] * Value[0]) + (Value[1] * Value[1])));
