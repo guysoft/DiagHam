@@ -461,3 +461,46 @@ long GetFileNbrLines (char* fileName)
   delete[] TmpBuffer;
   return NbrLines;
 }
+
+
+// get unique filename by appending a counter to a requested name, if necessary
+// inputName = previous file name
+// insertion = string to insert after element
+// element = segment to be searched for
+// HaveIntValue = element has optional integer argument
+// return value = file name with inserted string
+//
+char* AddSegmentInFileName(const char* inputName, const char* insertion, const char* element, bool HaveIntValue)
+{
+  char* StrElement;
+  char* Result = new char[strlen(inputName)+strlen(insertion)+1];
+  StrElement = strstr(inputName, element);
+  if (StrElement != 0)
+    {      
+      StrElement += strlen(element);
+      if (HaveIntValue)
+	{
+	  int SizeString = 0;
+	  if (StrElement[SizeString] == '-')
+	    ++SizeString;
+	  while ((StrElement[SizeString] != '\0') && (StrElement[SizeString] != '.') && (StrElement[SizeString] >= '0') 
+		 && (StrElement[SizeString] <= '9'))
+	    ++SizeString;	  
+	  StrElement += SizeString;
+	}
+      if (StrElement!='\0')
+	{
+	  char* StringEnd=NULL;
+	  StringEnd = new char[strlen(StrElement)+1];
+	  strcpy(StringEnd, StrElement);
+	  StrElement[0]='\0';
+	  sprintf(Result,"%s%s%s",inputName,insertion,StringEnd);
+	  delete [] StringEnd;
+	}
+      else
+	sprintf(Result,"%s%s",inputName,insertion);
+    }
+  else
+    sprintf(Result,"%s%s",inputName,insertion);
+  return Result;
+}

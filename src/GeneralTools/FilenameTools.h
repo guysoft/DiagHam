@@ -131,4 +131,14 @@ int BackUpFile(const char* fileName, const char* optExtension = ".bak");
 // return value = number of lines 
 long GetFileNbrLines (char* fileName);
 
+// get unique filename by appending a counter to a requested name, if necessary
+// inputName = previous file name
+// insertion = string to insert after element
+// element = segment to be searched for
+// HaveIntValue = element has optional integer argument
+// return value = file name with inserted string
+//
+char* AddSegmentInFileName(const char* inputName, const char* insertion, const char* element, bool HaveIntValue=false);
+
+
 #endif
