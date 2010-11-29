@@ -31,6 +31,8 @@
 
 #include "config.h"
 #include "Hamiltonian/AbstractQHEOnSphereWithSU4SpinHamiltonian.h"
+#include "Hamiltonian/ParticleOnSphereWithSU4SpinL2Hamiltonian.h"
+#include "Hamiltonian/ParticleOnSphereWithSU4SpinS2Hamiltonian.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 #include "MathTools/Complex.h"
@@ -98,6 +100,10 @@ AbstractQHEOnSphereWithSU4SpinHamiltonian::~AbstractQHEOnSphereWithSU4SpinHamilt
       delete[] this->OneBodyInteractionFactorsdpdp;
       delete[] this->OneBodyInteractionFactorsdmdm;
     }
+  if (this->S2Hamiltonian != 0)
+    delete this->S2Hamiltonian;
+  if (this->L2Hamiltonian != 0)
+    delete this->L2Hamiltonian;
 }
 
 // ask if Hamiltonian implements hermitian symmetry operations
@@ -112,6 +118,30 @@ bool AbstractQHEOnSphereWithSU4SpinHamiltonian::IsHermitian()
 bool AbstractQHEOnSphereWithSU4SpinHamiltonian::IsConjugate()
 {
   return false;
+}
+
+// add an additional S^2 term to the Hamiltonian
+//
+// totalLz = twice the projected momentum total value
+// totalSz = twice the projected spin total value
+// factor = factor in front of the S^2
+// memory = amount of memory that can be used for S^2  precalculations 
+
+void AbstractQHEOnSphereWithSU4SpinHamiltonian::AddS2 (int totalLz, int totalSz, double factor, long memory)
+{
+  this->S2Hamiltonian = new ParticleOnSphereWithSU4SpinS2Hamiltonian((ParticleOnSphereWithSU4Spin*)this->Particles, this->NbrParticles, this->LzMax, totalLz, totalSz, this->Architecture, factor, memory);
+}
+
+// add an additional L^2 term to the Hamiltonian
+//
+// totalLz = twice the projected momentum total value
+// totalSz = twice the projected spin total value
+// factor = factor in front of the L^2
+// memory = amount of memory that can be used for L^2  precalculations 
+
+void AbstractQHEOnSphereWithSU4SpinHamiltonian::AddL2 (int totalLz, int totalSz, double factor, long memory)
+{
+  this->L2Hamiltonian = new ParticleOnSphereWithSU4SpinL2Hamiltonian((ParticleOnSphereWithSU4Spin*)this->Particles, this->NbrParticles, this->LzMax, totalLz, this->Architecture, factor, memory);
 }
 
 
@@ -645,6 +675,12 @@ RealVector& AbstractQHEOnSphereWithSU4SpinHamiltonian::LowLevelAddMultiply(RealV
 	}
     }
 
+  if (this->L2Hamiltonian != 0)
+    this->L2Hamiltonian->LowLevelAddMultiply(vSource, vDestination, firstComponent, nbrComponent);
+  if (this->S2Hamiltonian != 0)
+    this->S2Hamiltonian->LowLevelAddMultiply(vSource, vDestination, firstComponent, nbrComponent);
+
+
   return vDestination;
 }
 
@@ -915,6 +951,11 @@ RealVector* AbstractQHEOnSphereWithSU4SpinHamiltonian::LowLevelMultipleAddMultip
 	    this->LowLevelMultipleAddMultiplyDiskStorage(vSources, vDestinations, nbrVectors, firstComponent, nbrComponent);
 	}
     }
+  if (this->L2Hamiltonian != 0)
+    this->L2Hamiltonian->LowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, nbrComponent);
+  if (this->S2Hamiltonian != 0)
+    this->S2Hamiltonian->LowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, nbrComponent);
+
   return vDestinations;
 }
 

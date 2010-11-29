@@ -399,12 +399,12 @@ int main(int argc, char** argv)
   if (CoefficientOnlyFlag == false)
     {
       for (int i = 0; i <= LzMax; ++i)
-	File << "# " << i << " " << PrecalculatedValues[i]<< endl;
+	File << "# " << i << " " << PrecalculatedValues[i].Re<< endl;
     }
   else
     {
       for (int i = 0; i <= LzMax; ++i)
-	File << i << " " << PrecalculatedValues[i]<< endl;
+	File << i << " " << PrecalculatedValues[i].Re<< endl;
     }
   if (CoefficientOnlyFlag == false)
     {

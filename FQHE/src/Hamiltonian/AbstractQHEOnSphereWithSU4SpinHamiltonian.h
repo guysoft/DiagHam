@@ -37,6 +37,9 @@
 #include "HilbertSpace/ParticleOnSphereWithSU4Spin.h"
 #include "Hamiltonian/AbstractQHEOnSphereHamiltonian.h"
 
+class ParticleOnSphereWithSU4SpinL2Hamiltonian;
+class ParticleOnSphereWithSU4SpinS2Hamiltonian;
+
 #include <iostream>
 
 
@@ -94,6 +97,12 @@ class AbstractQHEOnSphereWithSU4SpinHamiltonian : public AbstractQHEOnSphereHami
   // array that contains all one-body interaction factors for particles with spin down/isospin minus
   double* OneBodyInteractionFactorsdmdm;
 
+  // pointer to an optional L^2 operator in the Hamiltonian 
+  ParticleOnSphereWithSU4SpinL2Hamiltonian* L2Hamiltonian;
+  // pointer to an optional S^2 operator in the Hamiltonian 
+  ParticleOnSphereWithSU4SpinS2Hamiltonian* S2Hamiltonian;
+
+
  public:
 
   // destructor
@@ -108,6 +117,23 @@ class AbstractQHEOnSphereWithSU4SpinHamiltonian : public AbstractQHEOnSphereHami
   //
   virtual bool IsConjugate();
 
+  // add an additional S^2 term to the Hamiltonian
+  //
+  // totalLz = twice the projected momentum total value
+  // totalSz = twice the projected spin total value
+  // factor = factor in front of the S^2
+  // memory = amount of memory that can be used for S^2  precalculations 
+  void AddS2 (int totalLz, int totalSz, double factor, long memory);
+
+
+  // add an additional S^2 term to the Hamiltonian
+  //
+  // totalLz = twice the projected momentum total value
+  // totalSz = twice the projected spin total value
+  // factor = factor in front of the S^2
+  // memory = amount of memory that can be used for S^2  precalculations 
+  void AddL2 (int totalLz, int totalSz, double factor, long memory);
+  
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)
   //

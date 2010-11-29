@@ -333,4 +333,3 @@ ComplexVector& ParticleOnLatticeMomentumOperator::LowLevelAddMultiply(ComplexVec
   return vDestination;
 }
 
-

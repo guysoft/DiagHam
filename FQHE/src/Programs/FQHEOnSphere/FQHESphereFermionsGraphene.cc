@@ -2,6 +2,8 @@
 #include "HilbertSpace/FermionOnSphereWithSU4Spin.h"
 
 #include "Hamiltonian/ParticleOnSphereWithSU4SpinGenericHamiltonian.h"
+#include "Hamiltonian/ParticleOnSphereWithSU4SpinS2Hamiltonian.h"
+#include "Hamiltonian/ParticleOnSphereWithSU4SpinL2Hamiltonian.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -91,6 +93,15 @@ int main(int argc, char** argv)
   (*LanczosGroup) += new SingleDoubleOption ('\n', "lanczos-precision", "define Lanczos precision for eigenvalues (0 if automatically defined by the program)", 0);
   (*LanczosGroup) += new  BooleanOption ('\n', "fast-disk", "use disk storage to increase speed of ground state calculation and decrease memory footprint when using Lanczos algorithm");
   (*LanczosGroup) += new  BooleanOption ('\n', "resume-fastdisk", "resume the fast-disk mode Lanczos algorithm from a stopped one (for example due to computer crash)");
+
+  (*LanczosGroup) += new  BooleanOption ('\n', "project-s2", "add a projector onto the spin S2 groundstate");
+  (*LanczosGroup) += new  BooleanOption ('\n', "project-p2", "add a projector onto the isospin P2 groundstate");
+  (*LanczosGroup) += new  BooleanOption ('\n', "project-l2", "add a projector onto the angular momentum L2 groundstate");
+  (*LanczosGroup) += new SingleIntegerOption  ('\n', "projector-storage", "additional number of vectors in RAM when using projected Lanczos", 2);
+  (*LanczosGroup) += new SingleIntegerOption  ('\n', "projector-iter-max", "maximum number of iterations for internal lanczos",100);
+  (*LanczosGroup) += new SingleDoubleOption ('\n', "projector-precision", "define Lanczos precision for projection (0 if automatically defined by the program)", 1e-14);
+  (*LanczosGroup) += new  BooleanOption ('\n', "restart-projection", "allow lanczos projections to be restarted if full convergence not yet reached");
+
   
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 6);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 15);
@@ -443,7 +454,23 @@ int main(int argc, char** argv)
      delete[] TmpPseudoPotentials;
     }
 
-  char* OutputNameLz = new char [512 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
+  char* OutputNameLz = new char [512 + strlen(Manager.GetString("interaction-name"))];
+  char* ExtraTerms = new char[50];
+  ExtraTerms[0]='\0';
+  if (Manager.GetBoolean("project-s2"))
+    {
+      sprintf(ExtraTerms,"%s_Ps2", ExtraTerms);
+    }
+  if (Manager.GetBoolean("project-p2"))
+    {
+      sprintf(ExtraTerms,"%s_Pp2", ExtraTerms);
+    }
+  if (Manager.GetBoolean("project-l2"))
+    {
+      sprintf(ExtraTerms,"%s_Pl2", ExtraTerms);
+    }
+
+
   if (((BooleanOption*) Manager["use-entanglement"])->GetBoolean())
     sprintf (OutputNameLz, "fermions_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_pz_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), 
 	     NbrFermions, LzMax, SzTotal, IsoSzTotal, TotalEntanglement);
@@ -529,11 +556,52 @@ int main(int argc, char** argv)
 
       AbstractQHEHamiltonian* Hamiltonian;      
       Hamiltonian = new ParticleOnSphereWithSU4SpinGenericHamiltonian(Space, NbrFermions, LzMax, PseudoPotentials, Zeeman,
-								       Architecture.GetArchitecture(), Memory, onDiskCacheFlag, LoadPrecalculationFileName);
+								       Architecture.GetArchitecture(), Memory, onDiskCacheFlag, LoadPrecalculationFileName);      
       Hamiltonian->ShiftHamiltonian(Shift);
       if (SavePrecalculationFileName != 0)
 	{
 	  Hamiltonian->SavePrecalculation(SavePrecalculationFileName);
+	}
+      // add eventual projectors
+      int NbrProjectors = 0;
+      AbstractHamiltonian** Projectors = NULL;
+      if (Manager.GetBoolean("project-s2")) ++NbrProjectors;
+      if (Manager.GetBoolean("project-p2")) ++NbrProjectors;
+      if (Manager.GetBoolean("project-l2")) ++NbrProjectors;
+      Projectors = new AbstractHamiltonian*[NbrProjectors];
+      NbrProjectors = 0;
+      if (Manager.GetBoolean("project-s2"))
+	{
+	  AbstractHamiltonian* S2Projector =
+	    new ParticleOnSphereWithSU4SpinS2Hamiltonian(Space, NbrFermions, LzMax, L, SzTotal,
+						      Architecture.GetArchitecture(), 1.0,
+						      ((unsigned long)Manager.GetInteger("s2-memory")) << 20,
+						      onDiskCacheFlag);
+	  S2Projector->ShiftHamiltonian(-0.25*(double)SzTotal*(SzTotal+2.0));
+	  Projectors[NbrProjectors++]=S2Projector;
+	}
+      if (Manager.GetBoolean("project-l2"))
+	{
+	  AbstractHamiltonian* L2Projector =
+	    new ParticleOnSphereWithSU4SpinL2Hamiltonian(Space, NbrFermions, LzMax, L,
+							 Architecture.GetArchitecture(), 1.0,
+							 ((unsigned long)Manager.GetInteger("l2-memory")) << 20,
+							 onDiskCacheFlag);
+	  L2Projector->ShiftHamiltonian(-0.25*(double)L*(L+2.0));
+	  Projectors[NbrProjectors++]=L2Projector;
+	}      
+      if (Manager.GetBoolean("project-l2-s2"))
+	{
+	  AbstractQHEOnSphereWithSU4SpinHamiltonian* L2S2Projector =
+	    new ParticleOnSphereWithSU4SpinL2Hamiltonian(Space, NbrFermions, LzMax, L,
+							 Architecture.GetArchitecture(), 1.0,
+							 ((unsigned long)Manager.GetInteger("l2-memory")) << 20,
+							 onDiskCacheFlag);
+	  if (Manager.GetDouble("s2-factor") != 0.0)
+	    L2S2Projector->AddS2(L, SzTotal, Manager.GetDouble("s2-factor")/Manager.GetDouble("l2-factor"), ((unsigned long)Manager.GetInteger("l2-memory")) << 20);
+
+	  L2S2Projector->ShiftHamiltonian(-0.25*(double)L*(L+2.0)-0.25*(double)SzTotal*(SzTotal+2.0));
+	  Projectors[NbrProjectors++]=L2S2Projector;
 	}
       char* EigenvectorName = 0;
       if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	

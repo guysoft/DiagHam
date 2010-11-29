@@ -35,6 +35,8 @@ ParticleOnSphereNBodyHardCoreWithImpuritiesHamiltonian.cc \
 ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian.cc \
 AbstractQHEOnSphereWithSU4SpinHamiltonian.cc \
 ParticleOnSphereWithSU4SpinGenericHamiltonian.cc \
+ParticleOnSphereWithSU4SpinL2Hamiltonian.cc \
+ParticleOnSphereWithSU4SpinS2Hamiltonian.cc \
 ParticleOnSphereL2Hamiltonian.cc \
 LinearlySuperposedQHEOnSphereHamiltonian.cc \
 AbstractQHEOnSphereWithSpinHamiltonian.cc \

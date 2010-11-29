@@ -379,7 +379,7 @@ int main(int argc, char** argv)
 
       File.precision(10);
       File << Energy/NbrSites << "\t" << MeanFieldState.GetNbrParticles()/NbrSites << "\t" << Energy/MeanFieldState.GetNbrParticles() + ChemicalPotential;
-      File.precision(nearbyint(-log(Manager.GetDouble("tolerance"))/log(10)));
+      File.precision(nearbyint(-log(Manager.GetDouble("tolerance"))/log((double)10.0)));
       for (int i=0; i<Parameters.GetVectorDimension(); ++i)
 	File << "\t" << Parameters[i];
       File << endl;

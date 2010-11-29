@@ -116,7 +116,7 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // totalEntanglement = twice the total entanglement value
   // memory = amount of memory granted for precalculations
   FermionOnSphereWithSU4Spin (int nbrFermions, int totalLz, int lzMax, int totalSpin, int totalIsospin, 
-			      int totzlEntanglement, unsigned long memory = 10000000);
+			      int totalEntanglement, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
