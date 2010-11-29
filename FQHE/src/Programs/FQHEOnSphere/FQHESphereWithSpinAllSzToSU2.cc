@@ -168,7 +168,7 @@ int main(int argc, char** argv)
     {
       char *Insertion = new char[10];
       sprintf(Insertion,"_sz_%d",TotalSz);
-      OutputName=AddSegmentInFileName(Manager.GetString("state"), Insertion, "_lz_", true);
+      OutputName=AddSegmentInFileName(Manager.GetString("state"), Insertion, "_2s_", true);
       delete [] Insertion;
     }
       
