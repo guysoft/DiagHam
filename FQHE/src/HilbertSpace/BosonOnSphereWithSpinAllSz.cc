@@ -1830,6 +1830,7 @@ RealVector BosonOnSphereWithSpinAllSz::ForgeSU2FromTunneling(RealVector& state, 
     }
   unsigned TargetNbrUp = (SzValue+this->NbrBosons)>>1;
   int counter=0;
+  double Weight=0.0;
   int LzSzMax, CurrentLzMaxUp, CurrentLzMaxDown;
   unsigned TemporaryStateNbrUp;
   int *TmpState = new int[NbrLzValue];
@@ -1844,9 +1845,11 @@ RealVector BosonOnSphereWithSpinAllSz::ForgeSU2FromTunneling(RealVector& state, 
 	  LzSzMax = std::max(2*CurrentLzMaxUp+1,2*CurrentLzMaxDown);
 	  ++counter;
 	  FinalState[su2Space.FindStateIndex(TmpState, LzSzMax)] += state[j];
+	  Weight+=state[j]*state[j];
 	}
     }
   cout<<"Nbr of stored components = "<<counter<<endl;
+  cout<<"Weight = "<<Weight<<endl;
   FinalState /= FinalState.Norm();
   delete[] TmpState;
   return FinalState;  
