@@ -106,12 +106,6 @@ int main(int argc, char** argv)
   if (Manager.GetString("statistics") == 0)
     FermionFlag = true;
 
-  if (NbrParticles==0)
-    {
-      cout<<"Please provide the number of particles!"<<endl;
-      exit(0);
-    }
-
   int TmpTotalSz=-1;
   if (NbrParticles==0)
     if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(Manager.GetString("state"), NbrParticles, LzMax, TotalLz, TmpTotalSz, SzSymmetrizedBasis, SzMinusParity, 
@@ -133,7 +127,14 @@ int main(int argc, char** argv)
       else
 	{
 	  cout << Manager.GetString("statistics") << " is an undefined statistics" << endl;
-	}  
+	}
+
+  if (NbrParticles==0)
+    {
+      cout<<"Please provide the number of particles!"<<endl;
+      exit(0);
+    }
+
 
   int Parity = TotalLz & 1;
   if (Parity != ((NbrParticles * LzMax) & 1))
@@ -157,11 +158,19 @@ int main(int argc, char** argv)
 
 
   long MemorySpace = 9l << 20;
-  char* OutputName = new char [512 + strlen(Manager.GetString("interaction-name"))];
+  char* OutputName;
   if (FermionFlag==true)
-    sprintf (OutputName, "fermions_sphere_su2_%s_n_%d_2s_%d_sz_%d_t_%f_lz_%d.0.vec", Manager.GetString("interaction-name"), NbrParticles, LzMax, TotalSz, tunneling, TotalLz);
+    {
+      OutputName = new char [512 + strlen(Manager.GetString("interaction-name"))];
+      sprintf (OutputName, "fermions_sphere_su2_%s_n_%d_2s_%d_sz_%d_t_%f_lz_%d.0.vec", Manager.GetString("interaction-name"), NbrParticles, LzMax, TotalSz, tunneling, TotalLz);
+    }
   else
-    sprintf (OutputName, "bosons_sphere_su2_%s_n_%d_2s_%d_sz_%d_t_%f_lz_%d.0.vec", Manager.GetString("interaction-name"), NbrParticles, LzMax, TotalSz, tunneling, TotalLz);
+    {
+      char *Insertion = new char[10];
+      sprintf(Insertion,"_sz_%d",TotalSz);
+      OutputName=AddSegmentInFileName(Manager.GetString("state"), Insertion, "_lz_", true);
+      delete [] Insertion;
+    }
       
   if (FermionFlag == true)
     {
