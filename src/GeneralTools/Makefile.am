@@ -11,4 +11,5 @@ RealUniqueArray.cc \
 ComplexUniqueArray.cc \
 SmallIntegerArray.cc \
 StringTools.cc \
-BitMarkers.cc
+BitMarkers.cc \
+GenericSignalHandler.cc

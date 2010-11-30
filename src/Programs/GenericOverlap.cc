@@ -35,6 +35,7 @@ int main(int argc, char** argv)
   
   (*SystemGroup) += new BooleanOption  ('c', "complex", "Assume vectors consist of complex numbers");
   (*SystemGroup) += new BooleanOption  ('s', "scalar-product", "Get the scalar product, not the overlap");
+  (*SystemGroup) += new BooleanOption  ('p', "polar", "print complex numbers in polar coordinates");
   (*SystemGroup) += new BooleanOption  ('\n', "conjugate", "Conjugate the second (complex) number");
   (*SystemGroup) += new BooleanOption  ('\n', "discard-sign", "compute sum_i |v1_i * v2_i| instead of sum_i v1_i * v2_i");
   (*SystemGroup) += new BooleanOption  ('x', "no-cross", "calculate only overlap of 1st vector with all others");
@@ -170,7 +171,12 @@ int main(int argc, char** argv)
 	      else
 		{
 		  if (QuietFlag == false)
-		    cout << "Overlap |<"<<i<<"|"<<j<<">|^2 = " << sp << endl;
+		    {
+		      if (Manager.GetBoolean("polar"))
+			cout << "Overlap |<"<<i<<"|"<<j<<">|^2 = " << Norm(sp)<<"*Exp("<< Arg(sp)/M_PI<< " I Pi)" << endl;
+		      else
+			cout << "Overlap |<"<<i<<"|"<<j<<">|^2 = " << sp << endl;
+		    }
 		  else
 		    cout << sp.Re << " " << sp.Im << endl;
 		}

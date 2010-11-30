@@ -138,7 +138,7 @@ long GetFileNbrLines (char* fileName);
 // HaveIntValue = element has optional integer argument
 // return value = file name with inserted string
 //
-char* AddSegmentInFileName(const char* inputName, const char* insertion, const char* element, bool HaveIntValue=false);
+char* AddSegmentInFileName(char* inputName, const char* insertion, const char* element, bool HaveIntValue=false);
 
 
 #endif

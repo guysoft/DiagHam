@@ -295,6 +295,8 @@ void ProjectedReorthogonalizedLanczosAlgorithmDiskStorage::ResumeLanczosAlgorith
     }
   for (int i=0; i<NbrStorageVectors; ++i)
     this->LanczosVectorStorage[i].Resize(VectorDimension);
+  for (int i=0; i<this->Index + 2; ++i)
+    MainLanczosVectorFlags[i]|=SavedOnDisk;
 }
   
 // get last produced vector
