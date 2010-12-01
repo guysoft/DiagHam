@@ -28,54 +28,97 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef SIGNALMANAGER_H
-#define SIGNALMANAGER_H
+#ifndef GENERICSIGNALHANDLER_H
+#define GENERICSIGNALHANDLER_H
 
 
 #include "config.h"
 
+#include <cstdlib>
+#include <signal.h>
 
-class SignalManager
+
+#define NBRDIAGHAMSIGNALHANDLERS 34
+
+
+class GenericSignalHandler
 {
 
- protected:  /* Flag indicating whether error handler was set */
-  static bool TermHandlerSet;
+ protected:
+  // code of signal that is being handled
+  int SignalNumber;
+
+  // flag indicating whether signal shall be passed on, or deleted upon deletion of this objectt
+  volatile bool IteratePreviousSignalOnRelease;
+
+  // function that will be executed when a signal is caught (and deferred)
+  virtual void FunctionOnSignal();
+
+  // function that will be executed when the signal is released
+  virtual void FunctionOnRelease();
   
   /* If this flag is nonzero, don't handle the signal right away. */
-  static volatile sig_atomic_t TermSignalPending;
+  volatile sig_atomic_t SignalPending;
   
   /* This is nonzero if a signal arrived and was not handled. */
-  static volatile sig_atomic_t TermSignalDeferred;
+  volatile sig_atomic_t SignalDeferred;
 
-  /* If this flag is nonzero, don't handle the signal right away. */
-  static volatile sig_atomic_t TermSignalPending;
+  /* Flag indicating whether error handler was set */
+  volatile bool SignalHandlerSet;
 
-  static int NbrSignalManagers;
+  /* Flag indicating whether global array of error handlers was initialized */
+  static volatile bool SignalHandlerInitialized;
 
+  // total number of signal handlers
+  static volatile sig_atomic_t NbrSignalHandlers;
+
+  
  public:
 
   // standard constructor
-  SignalManager();
+  // signum = number of signal to be caught
+  // iterateOnRelease = when signal is released, execute previous default signal handler
+  GenericSignalHandler(int signum, bool iterateOnRelease=true);
 
   // destructor
-  ~SignalManager();
-  
+  ~GenericSignalHandler();
 
-  // routine to call to block Term Signal
-  static void DeferTermSignal();
+  // start to defer the signal
+  void StartToDeferSignal();
 
-  // routine to call to clear pending Term Signal
-  static void ClearTermSignal();
+  // process any pending deferred signals
+  void ProcessDeferredSignal();
 
- private:
+  // routine to call to clear pending Signal
+  // revertHandler = flag indicating whether the standard-handler shall be put in place
+  //
+  void ClearDeferredSignal(bool revertHandler=true);
 
-  // signal handling routines for deferring exit in  with disk storage
-  // actual signal handler
-  static void TermSignalHandler(int signum);
-}
+  // accessor routine to request whether signal is pending
+  bool HavePendingSignal(){return (SignalPending!=0);}
+
+  // function called when a signal is caught
+  void CatchSignal(int signum);
+
+  // accessor routines for deferred signal flag
+  sig_atomic_t IsDeferred(){return this->SignalDeferred;}
+  //sig_atomic_t& SignalPending(){return this->SignalDeferred;}
+
+  static GenericSignalHandler** DiagHamSignalHandlers;
+
+};
 
 
-#endif
+
+/* ===== GLOBAL FUNCTIONS  =====  */
+
+// signal handling routines for deferring exit in  with disk storage
+// actual signal handler
+void DiagHamSignalHandler(int signum);
+
+
+#endif  // SIGNALMANAGER_H
+
 
 /* =========================================================================== */
 /* for convenience, the following includes a list of unix signals
@@ -113,4 +156,4 @@ SIGXFSZ	31	Core	File size limit exceeded
 SIGWAITING	32	Ignore	All LWPs blocked
 SIGLWP	33	Ignore	Virtual Interprocessor Interrupt for Threads Library
 SIGAIO	34	Ignore	Asynchronous I/O
-/* =========================================================================== */
+   =========================================================================== */
