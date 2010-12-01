@@ -394,8 +394,8 @@ int BackUpFile(const char* fileName, const char* optExtension)
       else
 	{
 	  BackupFileName = new char[strlen(fileName)+5];
-	  Extension = new char[2];
-	  sprintf(Extension, ".");
+	  Extension = new char[1];
+	  Extension[0]='\0';
 	}
       sprintf(BackupFileName, "%s%s", fileName, Extension);
       testExistant.open(BackupFileName,std::ios::in);
