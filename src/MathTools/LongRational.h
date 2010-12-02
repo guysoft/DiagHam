@@ -100,6 +100,12 @@ class LongRational
   // return value = reference on current rational coefficient
   LongRational& operator = (long x);
 
+  // assignement from a rational number encoded as a string
+  //
+  // x = string 
+  // return value = reference on current rational coefficient
+  LongRational& operator = (char* x);
+
   // set the coefficient to one
   //
   // return value = reference on current coefficient

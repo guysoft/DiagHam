@@ -33,6 +33,9 @@
 #include "GeneralTools/Endian.h"
 
 #include <iostream>
+#include <string.h>
+#include <cstring>
+#include <cstdlib>
 
 
 using std::cout;
@@ -111,6 +114,17 @@ LongRational& LongRational::operator = (const LongRational& rational)
 LongRational& LongRational::operator = (long x)
 {
   mpq_set_si (this->Value, x ,1ul);
+  return *this;
+}
+
+// assignement from a rational number encoded as a string
+//
+// x = string 
+// return value = reference on current rational coefficient
+
+LongRational& LongRational::operator = (char* x)
+{
+  mpq_set_str (this->Value, x ,10);
   return *this;
 }
 
@@ -522,6 +536,29 @@ LongRational& LongRational::operator = (long x)
 {
   this->Numerator = x;
   this->Denominator = 1.0;
+  return *this;
+}
+
+// assignement from a rational number encoded as a string
+//
+// x = string 
+// return value = reference on current rational coefficient
+
+LongRational& LongRational::operator = (char* x)
+{
+  char* TmpPos = strpos (x, "/");
+  if (TmpPos == 0)
+    {
+      char* TmpError;
+      this->Numerator =  strtol(x, &TmpError, 0);
+      this->Denominator = 1l;
+    }
+  else
+    {
+      (*TmpPos) = '\0';
+      this->Numerator =  strtol(x, &TmpError, 0);
+      this->Denominator = strtol(TmpPos + 1, &TmpError, 0);
+    }
   return *this;
 }
 

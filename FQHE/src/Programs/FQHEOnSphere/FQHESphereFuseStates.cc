@@ -90,16 +90,36 @@ int main(int argc, char** argv)
 	Paddings[i] = Padding;
     }
  double* Coefficients = 0;
-  if (InputVectors(7, 0) != 0)
-    {
-      Coefficients = InputVectors.GetAsDoubleArray(7);
-    }
-  else
-    {
-      Coefficients = new double [InputVectors.GetNbrLines()];
-      for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
-	Coefficients[i] = 1.0;
-    }
+ LongRational* RationalCoefficients = 0;
+ if (Manager.GetBoolean("rational") == false)
+   {
+     if (InputVectors(7, 0) != 0)
+       {
+	 Coefficients = InputVectors.GetAsDoubleArray(7);
+       }
+     else
+       {
+	 Coefficients = new double [InputVectors.GetNbrLines()];
+	 for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
+	   Coefficients[i] = 1.0;
+       }
+   }
+ else
+   {
+     if (Manager.GetBoolean("rational") == false)
+       {
+	 if (InputVectors(7, 0) != 0)
+	   {
+	     RationalCoefficients = InputVectors.GetAsLongRationalArray(7);
+	   }
+	 else
+	   {
+	     RationalCoefficients = new LongRational [InputVectors.GetNbrLines()];
+	     for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
+	       RationalCoefficients[i] = 1l;
+	   }
+       }
+   }
   int LeftNbrParticles = 0;
   int LeftLzMax = 0;
   int LeftTotalLz = 0;
@@ -193,7 +213,12 @@ int main(int argc, char** argv)
 	    }
 	}
     }
-  RealVector OutputState(OutputBasis->GetLargeHilbertSpaceDimension(), true);
+  RealVector OutputState;
+  LongRationalVector RationalOutputState;
+  if (Manager.GetBoolean("rational") == false)
+    OutputState = RealVector (OutputBasis->GetLargeHilbertSpaceDimension(), true);
+  else
+    RationalOutputState = LongRationalVector (OutputBasis->GetLargeHilbertSpaceDimension());
 
   for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
     {
@@ -278,23 +303,46 @@ int main(int argc, char** argv)
 		RightBasis = new FermionOnSphereHaldaneBasis(InputVectors(5, i));
 	    }
 	}
-      RealVector LeftVector;
-      if (LeftVector.ReadVector (InputVectors(0, i)) == false)
+      if (Manager.GetBoolean("rational") == false)
 	{
-	  cout << "can't open vector file " << InputVectors(0, i) << endl;
-	  return -1;      
+	  RealVector LeftVector;
+	  if (LeftVector.ReadVector (InputVectors(0, i)) == false)
+	    {
+	      cout << "can't open vector file " << InputVectors(0, i) << endl;
+	      return -1;      
+	    }
+	  RealVector RightVector;
+	  if (RightVector.ReadVector (InputVectors(1, i)) == false)
+	    {
+	      cout << "can't open vector file " << InputVectors(1, i) << endl;
+	      return -1;      
+	    }
+
+
+	  cout << "local padding = " <<  Paddings[i] << "  local coeffcient = " << Coefficients[i] << endl;
+	  
+	  OutputBasis->FuseStates(OutputState, LeftVector, RightVector, Paddings[i], LeftBasis, RightBasis, SymmetrizedBasis, Coefficients[i]);
 	}
-      RealVector RightVector;
-      if (RightVector.ReadVector (InputVectors(1, i)) == false)
+      else
 	{
-	  cout << "can't open vector file " << InputVectors(1, i) << endl;
-	  return -1;      
+	  LongRationalVector LeftVector;
+	  if (LeftVector.ReadVector (InputVectors(0, i)) == false)
+	    {
+	      cout << "can't open vector file " << InputVectors(0, i) << endl;
+	      return -1;      
+	    }
+	  LongRationalVector RightVector;
+	  if (RightVector.ReadVector (InputVectors(1, i)) == false)
+	    {
+	      cout << "can't open vector file " << InputVectors(1, i) << endl;
+	      return -1;      
+	    }
+
+
+	  cout << "local padding = " <<  Paddings[i] << "  local coeffcient = " << Coefficients[i] << endl;
+	  
+	  OutputBasis->FuseStates(RationalOutputState, LeftVector, RightVector, Paddings[i], LeftBasis, RightBasis, SymmetrizedBasis, RationalCoefficients[i]);
 	}
-
-
-      cout << "local padding = " <<  Paddings[i] << "  local coeffcient = " << Coefficients[i] << endl;
-
-      OutputBasis->FuseStates(OutputState, LeftVector, RightVector, Paddings[i], LeftBasis, RightBasis, SymmetrizedBasis, Coefficients[i]);
       delete RightBasis;
       delete LeftBasis;      
     }

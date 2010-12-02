@@ -40,6 +40,9 @@
 using std::ostream;
 
 
+class LongRational;
+
+
 class MultiColumnASCIIFile
 {
 
@@ -119,6 +122,12 @@ class MultiColumnASCIIFile
   // column = column index
   // return value = reference on the array where the read values have to be stored (allocation is done by the method itself, de-allocation has to be done by hand)
   double* GetAsDoubleArray (int column);
+
+  // get a column converting it to long rational
+  //
+  // column = column index
+  // return value = reference on the array where the read values have to be stored (allocation is done by the method itself,  de-allocation has to be done by hand)
+  LongRational* GetAsLongRationalArray (int column);
 
   // get a line converting it to integer
   //

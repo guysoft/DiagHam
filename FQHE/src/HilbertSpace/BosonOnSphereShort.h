@@ -37,6 +37,8 @@
 #include "HilbertSpace/ParticleOnSphere.h"
 #include "HilbertSpace/FermionOnSphere.h"
 #include "Matrix/RealSymmetricMatrix.h"
+#include "MathTools/LongRational.h"
+#include "Vector/LongRationalVector.h"
 
 #include <iostream>
 
@@ -408,6 +410,20 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // return value = reference on the fused state
   virtual RealVector& FuseStates (RealVector& outputVector, RealVector& leftVector, RealVector& rightVector, int padding, 
 				  ParticleOnSphere* leftSpace, ParticleOnSphere* rightSpace, bool symmetrizedFlag = false, double coefficient = 1.0);
+
+  // fuse two states which belong to different Hilbert spaces 
+  //
+  // outputVector = reference on the vector which will contain the fused states (without zeroing components which do not occur in the fusion)
+  // leftVector = reference on the vector whose Hilbert space will be fuse to the left
+  // rightVector = reference on the vector whose Hilbert space will be fuse to the right
+  // padding = number of unoccupied one body states that have to be inserted between the fused left and right spaces
+  // leftSpace = point to the Hilbert space that will be fuse to the left
+  // rightSpace = point to the Hilbert space that will be fuse to the right
+  // symmetrizedFlag = assume that the target state has to be invariant under the Lz<->-Lz symmetry
+  // coefficient = optional multiplicative factor to apply to the fused state 
+  // return value = reference on the fused state
+  virtual LongRationalVector& FuseStates (LongRationalVector& outputVector, LongRationalVector& leftVector, LongRationalVector& rightVector, int padding, 
+					  ParticleOnSphere* leftSpace, ParticleOnSphere* rightSpace, bool symmetrizedFlag, LongRational& coefficient);
 
   // use product rule to produce part of the components of a system from a smaller one
   //

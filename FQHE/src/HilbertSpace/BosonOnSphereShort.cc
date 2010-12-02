@@ -2902,6 +2902,69 @@ RealVector& BosonOnSphereShort::FuseStates (RealVector& outputVector, RealVector
   return outputVector;
 }
 
+// fuse two states which belong to different Hilbert spaces 
+//
+// outputVector = reference on the vector which will contain the fused states (without zeroing components which do not occur in the fusion)
+// leftVector = reference on the vector whose Hilbert space will be fuse to the left
+// rightVector = reference on the vector whose Hilbert space will be fuse to the right
+// padding = number of unoccupied one body states that have to be inserted between the fused left and right spaces
+// leftSpace = point to the Hilbert space that will be fuse to the left
+// rightSpace = point to the Hilbert space that will be fuse to the right
+// symmetrizedFlag = assume that the target state has to be invariant under the Lz<->-Lz symmetry
+// coefficient = optional multiplicative factor to apply to the fused state 
+// return value = reference on the fused state
+
+LongRationalVector& BosonOnSphereShort::FuseStates (LongRationalVector& outputVector, LongRationalVector& leftVector, LongRationalVector& rightVector, int padding, 
+						    ParticleOnSphere* leftSpace, ParticleOnSphere* rightSpace,
+						    bool symmetrizedFlag, LongRational& coefficient)
+{
+  BosonOnSphereShort* LeftSpace = (BosonOnSphereShort*) leftSpace;
+  BosonOnSphereShort* RightSpace = (BosonOnSphereShort*) rightSpace;
+   int StateShift = RightSpace->FermionBasis->LzMax + padding + 2;
+  for (long i = 0; i <  LeftSpace->LargeHilbertSpaceDimension; ++i)
+    {
+      unsigned long TmpState1 = LeftSpace->FermionBasis->StateDescription[i] << StateShift;
+      LongRational Coefficient = coefficient * leftVector[i];
+      int TmpLzMax = this->FermionBasis->LzMax;
+      while ((TmpState1 >> TmpLzMax) == 0x0ul)
+	--TmpLzMax;
+      if (symmetrizedFlag == false)
+	{
+	  for (long j = 0; j < RightSpace->LargeHilbertSpaceDimension; ++j)
+	    {
+	      unsigned long TmpState2 = RightSpace->FermionBasis->StateDescription[j];
+	      TmpState2 |= TmpState1;
+	      LongRational Coefficient2 = Coefficient;
+	      Coefficient2 *= rightVector[j];	  
+	      int TmpIndex = this->FermionBasis->FindStateIndex(TmpState2, TmpLzMax);
+	      outputVector[TmpIndex] = Coefficient2;
+	    }
+	}
+      else
+	{
+	  for (long j = 0; j < RightSpace->LargeHilbertSpaceDimension; ++j)
+	    {
+	      unsigned long TmpState2 = RightSpace->FermionBasis->StateDescription[j];
+	      TmpState2 |= TmpState1;
+	      LongRational Coefficient2 = Coefficient;
+	      Coefficient2 *= rightVector[j];	  
+	      int TmpIndex = this->FermionBasis->FindStateIndex(TmpState2, TmpLzMax);
+	      outputVector[TmpIndex] = Coefficient2;
+	      unsigned long TmpState3 = this->FermionBasis->GetSymmetricState(TmpState2);
+	      if (TmpState3 != TmpState2)
+		{
+		  int TmpLzMax2 = this->FermionBasis->LzMax;
+		  while ((TmpState3 >> TmpLzMax2) == 0x0ul)
+		    --TmpLzMax2;
+		  TmpIndex = this->FermionBasis->FindStateIndex(TmpState3, TmpLzMax2);
+		  outputVector[TmpIndex] = Coefficient2;      
+		}
+	    }
+	}
+    }
+  return outputVector;
+}
+
 // use product rule to produce part of the components of a system from a smaller one
 //
 // outputVector = reference on the vector which will contain the product rule state  (without zeroing components which do not occur in the fusion)
