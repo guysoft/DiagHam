@@ -201,11 +201,7 @@ void RationalVector::Resize (int dimension)
       this->LargeDimension = dimension;
       return;
     }
-  this->Dimension = dimension;
-  this->TrueDimension = dimension;
-  this->LargeDimension = dimension;
-  this->LargeTrueDimension = dimension;
-  Rational* TmpComponents = new Rational [this->TrueDimension + 1];
+  Rational* TmpComponents = new Rational [dimension + 1];
   for (int i = 0; i < this->Dimension; i++)
     {
       TmpComponents[i] = this->Components[i];
@@ -214,6 +210,10 @@ void RationalVector::Resize (int dimension)
     {
       delete[] this->Components;
     }
+  this->Dimension = dimension;
+  this->TrueDimension = dimension;
+  this->LargeDimension = dimension;
+  this->LargeTrueDimension = dimension;
   this->Components = TmpComponents;
   this->Flag = GarbageFlag();
   this->Flag.Initialize();

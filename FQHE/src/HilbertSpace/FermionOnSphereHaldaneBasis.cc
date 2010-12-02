@@ -883,6 +883,10 @@ int FermionOnSphereHaldaneBasis::AdA (int index, int m, int n, double& coefficie
 
 int FermionOnSphereHaldaneBasis::FindStateIndex(unsigned long stateDescription, int lzmax)
 {
+  if (stateDescription > this->ReferenceState)
+    {
+      return this->HilbertSpaceDimension;
+    }
   long PosMax = stateDescription >> this->LookUpTableShift[lzmax];
   long PosMin = this->LookUpTable[lzmax][PosMax];
   PosMax = this->LookUpTable[lzmax][PosMax + 1];

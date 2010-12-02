@@ -63,14 +63,13 @@ int main(int argc, char** argv)
   ArchitectureManager Architecture;
   LanczosManager Lanczos(false);
 
-  Manager += SystemGroup;
   Architecture.AddOptionGroup(&Manager);
   Lanczos.AddOptionGroup(&Manager);
   Manager += ToolsGroup;
-  Manager += PrecalculationGroup;
   Manager += MiscGroup;
 
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the system", 0);
+  (*SystemGroup) += new BooleanOption  ('\n', "bosons", "use boson statistics");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "l2");
   (*SystemGroup) += new SingleDoubleOption ('\n', "l2-factor", "multiplicative factor in front of an optional L^2 operator than can be added to the Hamiltonian", 1.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "energy-shift", "if non zero, override energy shift using the indicated value ", -10.0);

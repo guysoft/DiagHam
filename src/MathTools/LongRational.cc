@@ -437,8 +437,7 @@ ostream& operator << (ostream& str, LongRational& x)
 
 ofstream& LongRational::Write(ofstream& file)
 {
-//   WriteLittleEndian(file, this->Numerator);
-//   WriteLittleEndian(file, this->Denominator);
+  file << this->Value << endl;
   return file;
 }
 
@@ -449,8 +448,7 @@ ofstream& LongRational::Write(ofstream& file)
 
 ifstream& LongRational::Read(ifstream& file)
 {
-//   ReadLittleEndian(file, this->Numerator);
-//   ReadLittleEndian(file, this->Denominator);
+  file >>  this->Value;
   return file;
 }
 

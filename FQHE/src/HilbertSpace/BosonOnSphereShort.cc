@@ -481,7 +481,10 @@ int BosonOnSphereShort::AdA (int index, int m, int n, double& coefficient)
   ++this->TemporaryState[m];
   coefficient *= (double) this->TemporaryState[m];
   coefficient = sqrt(coefficient);  
-  return this->TargetSpace->FermionBasis->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax), this->TemporaryStateLzMax + this->NbrBosons - 1);
+  int TmpIndex = this->TargetSpace->FermionBasis->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax), this->TemporaryStateLzMax + this->NbrBosons - 1);
+  if (TmpIndex == this->TargetSpace->HilbertSpaceDimension)
+    coefficient = 0.0;
+  return TmpIndex;
 }
 
 // print a given State

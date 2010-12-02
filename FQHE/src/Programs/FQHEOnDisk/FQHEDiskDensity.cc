@@ -339,10 +339,10 @@ int main(int argc, char** argv)
 			{
 			  RightSpace->SetTargetSpace(LeftSpace);
 			  ParticleOnSphereDensityOperator Operator (RightSpace, m, n);
-			  Complex Tmp = Operator.MatrixElement(LeftState, RightState);
-			  Tmp *= (Coefficients[i] * Coefficients[j]);
-			  PrecalculatedValues.AddToMatrixElement(m, n, Tmp);
-			  PrecalculatedValues.AddToMatrixElement(n, m, Conj(Tmp));
+ 			  Complex Tmp = Operator.MatrixElement(LeftState, RightState);
+ 			  Tmp *= (Coefficients[i] * Coefficients[j]);
+ 			  PrecalculatedValues.AddToMatrixElement(m, n, Tmp);
+ 			  PrecalculatedValues.AddToMatrixElement(n, m, Conj(Tmp));
 			}
 		    }
 		}
@@ -357,9 +357,9 @@ int main(int argc, char** argv)
       File.open(OutputName, ios::binary | ios::out);
       File << "# density coefficients for " << Manager.GetString("input-states") << endl;
       File << "#" << endl << "# m  n  c_{m,n}" << endl;
-      for (int i = 0; i <= ForceMaxMomentum; ++i)
-	for (int j = 0; j <= ForceMaxMomentum; ++j)
-	  File << "# " << i << " " << j << " " << PrecalculatedValues[i][j] << endl;
+       for (int i = 0; i <= ForceMaxMomentum; ++i)
+ 	for (int j = 0; j <= ForceMaxMomentum; ++j)
+ 	  File << "# " << i << " " << j << " " << PrecalculatedValues[i][j] << endl;
 
       if (CoefficientOnlyFlag == false)
 	{

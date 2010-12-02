@@ -138,6 +138,16 @@ class BosonOnSphereHaldaneBasisShort :  public BosonOnSphereShort
   // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
   virtual LongRationalVector& GenerateJackPolynomial(LongRationalVector& jack, long alphaNumerator, long alphaDenominator, int symbolicDepth = 0);
   
+  // create the Jack polynomial decomposition corresponding to the root partition, assuming only rational numbers occur and the resulting state is invariant under the Lz<->-Lz symmetry
+  //
+  // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
+  // alphaNumerator = numerator of the Jack polynomial alpha coefficient
+  // alphaDenominator = numerator of the Jack polynomial alpha coefficient
+  // symbolicDepth = use symbolic calculation to solve singular values if non zero, if greater than zero it will use symbolic calculation up to a given depth (below that depth it will rely on numerical calculation),
+  //                 -1 if the symbolic calculation has to be done up to the point the singular value problem has been solved
+  // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
+  LongRationalVector& GenerateSymmetrizedJackPolynomial(LongRationalVector& jack, long alphaNumerator, long alphaDenominator, int symbolicDepth);
+
   // compute a single coefficient of the Jack polynomial decomposition corresponding to the root partition, assuming only rational numbers occur and using (partial symbolic calculation)
   //
   // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored

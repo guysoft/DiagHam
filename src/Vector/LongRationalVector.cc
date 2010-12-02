@@ -201,11 +201,7 @@ void LongRationalVector::Resize (int dimension)
       this->LargeDimension = dimension;
       return;
     }
-  this->Dimension = dimension;
-  this->TrueDimension = dimension;
-  this->LargeDimension = dimension;
-  this->LargeTrueDimension = dimension;
-  LongRational* TmpComponents = new LongRational [this->TrueDimension + 1];
+  LongRational* TmpComponents = new LongRational [dimension + 1];
   for (int i = 0; i < this->Dimension; i++)
     {
       TmpComponents[i] = this->Components[i];
@@ -214,6 +210,10 @@ void LongRationalVector::Resize (int dimension)
     {
       delete[] this->Components;
     }
+  this->Dimension = dimension;
+  this->TrueDimension = dimension;
+  this->LargeDimension = dimension;
+  this->LargeTrueDimension = dimension;
   this->Components = TmpComponents;
   this->Flag = GarbageFlag();
   this->Flag.Initialize();
@@ -379,26 +379,11 @@ bool LongRationalVector::ReadVector (const char* fileName)
       return false;
     }
   
-  std::streampos ZeroPos, MaxPos;
-  File.seekg (0, ios::beg);
-  ZeroPos = File.tellg();
-  File.seekg (0, ios::end);
-  MaxPos = File.tellg ();
-
-  std::streampos Length = MaxPos-ZeroPos-sizeof(int);  
-  File.seekg (0, ios::beg);
   int TmpDimension;
   ReadLittleEndian(File, TmpDimension);
 
   if (TmpDimension > 0)
     {
-      if (Length / (2.0 * sizeof(long)) > ((unsigned) TmpDimension))
-	{      
-	  cout << "Error reading real vector "<<fileName<<": estimated length "<< (Length / (2l * sizeof(long))) <<" vs dimension "<<TmpDimension<<endl;
-	  if ((unsigned)TmpDimension == Length/sizeof(double))
-	    cout << "This could be a real vector!"<<endl;
-	  exit(1);
-	}
       this->Resize(TmpDimension);
       for (int i = 0; i < this->Dimension; ++i)
 	{
