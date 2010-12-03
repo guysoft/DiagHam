@@ -1,5 +1,6 @@
 #include "Vector/RealVector.h"
 #include "Vector/RationalVector.h"
+#include "Vector/LongRationalVector.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -39,6 +40,11 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('i', "input-vector", "name of the file containing the ASCII vector");
   (*SystemGroup) += new SingleStringOption  ('o', "output-vector", "name of the file where the vector will be stored in binary");
   (*SystemGroup) += new BooleanOption  ('r', "rational", "indicate that the input vector has rational coefficients");
+#ifdef __GMP__
+  (*SystemGroup) += new BooleanOption  ('\n', "use-gmp", "use arbitrary precision integers instead of fixed precision integers in rational mode");
+#else
+  (*SystemGroup) += new BooleanOption  ('\n', "use-longlong", "use 128bit(64bits) integers instead of 64bits(32bits) integers in rational mode");
+#endif
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -85,15 +91,33 @@ int main(int argc, char** argv)
     }
   else
     {
-      long* TmpNumerators = AsciiVector.GetAsLongArray(0);
-      long* TmpDenominators = AsciiVector.GetAsLongArray(1);
-      if ((TmpNumerators == 0) || (TmpDenominators == 0))
+#ifdef __GMP__
+      if (Manager.GetBoolean("use-gmp") == false)
+#else
+      if (Manager.GetBoolean("use-longlong") == false)	
+#endif
 	{
-	  AsciiVector.DumpErrors(cout) << endl;
-	  return -1;     
+	  long* TmpNumerators = AsciiVector.GetAsLongArray(0);
+	  long* TmpDenominators = AsciiVector.GetAsLongArray(1);
+	  if ((TmpNumerators == 0) || (TmpDenominators == 0))
+	    {
+	      AsciiVector.DumpErrors(cout) << endl;
+	      return -1;     
+	    }
+	  RationalVector BinaryVector(TmpNumerators, TmpDenominators, AsciiVector.GetNbrLines());
+	  BinaryVector.WriteVector(Manager.GetString("output-vector"));
 	}
-      RationalVector BinaryVector(TmpNumerators, TmpDenominators, AsciiVector.GetNbrLines());
-      BinaryVector.WriteVector(Manager.GetString("output-vector"));
+      else 
+	{
+	  LongRational* TmpCoefficients = AsciiVector.GetAsLongRationalArray(0);
+	  if (TmpCoefficients == 0)
+	    {
+	      AsciiVector.DumpErrors(cout) << endl;
+	      return -1;     
+	    }
+	  LongRationalVector BinaryVector(TmpCoefficients, AsciiVector.GetNbrLines());
+	  BinaryVector.WriteVector(Manager.GetString("output-vector"));
+	}
     }
 
  

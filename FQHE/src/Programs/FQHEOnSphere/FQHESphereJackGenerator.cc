@@ -79,6 +79,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "check-singularity", "display configurations which may produce singularities");
   (*SystemGroup) += new BooleanOption  ('\n', "check-connected", "display lowest configuration connected to each squeezed paritition");
   (*SystemGroup) += new BooleanOption  ('\n', "use-symbolic", "use symbolic calculation to solve singular coefficient (only available in rational mode)");
+  (*SystemGroup) += new BooleanOption  ('\n', "full-symbolic", "use symbolic calculation for every case (only available in rational mode)");
+  (*SystemGroup) += new BooleanOption  ('\n', "display-symbolic", "display symbolic calculation");
 #ifdef __GMP__
   (*SystemGroup) += new BooleanOption  ('\n', "use-gmp", "use arbitrary precision integers instead of fixed precision integers in rational mode");
 #else
@@ -114,7 +116,15 @@ int main(int argc, char** argv)
   int SymbolicDepth = 0;
   if (Manager.GetBoolean("use-symbolic") == true)
     {
-      SymbolicDepth = -1;
+      SymbolicDepth = 1;
+    }
+  if (Manager.GetBoolean("full-symbolic") == true)
+    {
+      SymbolicDepth = 2;
+    }
+  if (Manager.GetBoolean("display-symbolic") == true)
+    {
+      SymbolicDepth = 3;
     }
 
   long MinIndex = Manager.GetInteger("min-index");

@@ -130,6 +130,34 @@ LongRationalVector::LongRationalVector(long* numerators, long* denominators, lon
   this->Flag.Initialize();
 }
 
+
+// constructor from an array of long rational
+//
+// array = array of long rational to become Components of vector
+// size = Vector Dimension
+ 
+LongRationalVector::LongRationalVector(LongRational* array, long size)
+{
+  this->LargeDimension = size;
+  this->LargeTrueDimension = this->LargeDimension;
+  this->VectorType = Vector::LongRationalData;
+  #ifdef  __64_BITS__
+  if (this->LargeDimension < (1l << 31))
+    this->Dimension = (int) size;
+  else
+    {
+      this->Dimension = -1;
+      this->VectorType |= Vector::LargeData;
+    }
+#else
+  this->Dimension = (int) size;
+#endif
+  this->TrueDimension = this->Dimension;
+  this->Components = array;
+  this->Flag.Initialize();
+  this->VectorId = 0;
+}
+
 // copy constructor
 //
 // vector = vector to copy

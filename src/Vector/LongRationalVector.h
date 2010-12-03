@@ -83,6 +83,12 @@ class LongRationalVector : public Vector
   // size = vector Dimension 
   LongRationalVector(long* numerators, long* denominators, long size);
 
+  // constructor from an array of long rational
+  //
+  // array = array of long rational to become Components of vector
+  // size = Vector Dimension
+  LongRationalVector(LongRational* array, long size);
+
   // copy constructor
   //
   // vector = vector to copy

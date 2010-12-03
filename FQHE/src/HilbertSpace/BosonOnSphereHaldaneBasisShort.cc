@@ -377,9 +377,15 @@ RationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(RationalV
   this->GenerateSingleJackPolynomialCoefficient(jack, 0, TmpNumerators, TmpDenominators);
   for (long i = 1; i < this->LargeHilbertSpaceDimension; ++i)
     {
-      //      this->GenerateSingleJackPolynomialCoefficient(jack, i, TmpNumerators, TmpDenominators);
-      //      cout << TmpNumerators[i] << endl;
-      //      cout << TmpDenominators[i] << endl;
+      if (symbolicDepth > 1)
+	{
+	  this->GenerateSingleJackPolynomialCoefficient(jack, i, TmpNumerators, TmpDenominators);
+	  if (symbolicDepth == 3)
+	    {
+	      cout << TmpNumerators[i] << endl;
+	      cout << TmpDenominators[i] << endl;
+	    }
+	}
       if (jack[i].Num() == 0l)
 	{
 	  Rational Rho = 0l;
@@ -394,15 +400,21 @@ RationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(RationalV
  		  cout << "warning : singular value detected at position " << i << ", skipping the rest of the calculation" << endl;
  		  return jack;
  		}
-	      cout << "singular value detected at position " << i << ", using symbolic calculation" << endl;
+	      if (symbolicDepth != 3)
+		{
+		  cout << "singular value detected at position " << i << ", using symbolic calculation" << endl;
+		}
 	      this->GenerateSingleJackPolynomialCoefficient(jack, i, TmpNumerators, TmpDenominators);
 	      Rational Tmp = TmpNumerators[i].PolynomialEvaluate(InvAlpha);
 	      Tmp /= TmpDenominators[i].PolynomialEvaluate(InvAlpha);
-	      cout << "--------------------------------" << endl
-		   << "result = " << endl;
-	      cout << TmpNumerators[i] << endl;
-	      cout << TmpDenominators[i] << endl;
-	      cout << Tmp.Num() << endl;		  
+	      if (symbolicDepth != 3)
+		{
+		  cout << "--------------------------------" << endl
+		       << "result = " << endl;
+		  cout << TmpNumerators[i] << endl;
+		  cout << TmpDenominators[i] << endl;
+		  cout << Tmp << endl;
+		}		  
 	      jack[i] = Tmp;
 	    }
 	  else
@@ -496,9 +508,15 @@ LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(LongR
   this->GenerateSingleJackPolynomialCoefficient(jack, 0, TmpNumerators, TmpDenominators);
   for (long i = 1; i < this->LargeHilbertSpaceDimension; ++i)
     {
-      //      this->GenerateSingleJackPolynomialCoefficient(jack, i, TmpNumerators, TmpDenominators);
-      //      cout << TmpNumerators[i] << endl;
-      //      cout << TmpDenominators[i] << endl;
+      if (symbolicDepth > 1)
+	{
+	  this->GenerateSingleJackPolynomialCoefficient(jack, i, TmpNumerators, TmpDenominators);
+	  if (symbolicDepth == 3)
+	    {
+	      cout << TmpNumerators[i] << endl;
+	      cout << TmpDenominators[i] << endl;
+	    }
+	}
       if (jack[i] == 0l)
 	{
 	  LongRational Rho = 0l;
@@ -513,15 +531,21 @@ LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(LongR
  		  cout << "warning : singular value detected at position " << i << ", skipping the rest of the calculation" << endl;
  		  return jack;
  		}
-	      cout << "singular value detected at position " << i << ", using symbolic calculation" << endl;
+	      if (symbolicDepth != 3)
+		{
+		  cout << "singular value detected at position " << i << ", using symbolic calculation" << endl;
+		}
 	      this->GenerateSingleJackPolynomialCoefficient(jack, i, TmpNumerators, TmpDenominators);
 	      LongRational Tmp = TmpNumerators[i].PolynomialEvaluate(InvAlpha);
 	      Tmp /= TmpDenominators[i].PolynomialEvaluate(InvAlpha);
-	      cout << "--------------------------------" << endl
-		   << "result = " << endl;
-	      cout << TmpNumerators[i] << endl;
-	      cout << TmpDenominators[i] << endl;
-	      cout << Tmp << endl;		  
+	      if (symbolicDepth != 3)
+		{
+		  cout << "--------------------------------" << endl
+		       << "result = " << endl;
+		  cout << TmpNumerators[i] << endl;
+		  cout << TmpDenominators[i] << endl;
+		  cout << Tmp << endl;
+		}		  
 	      jack[i] = Tmp;
 	    }
 	  else
