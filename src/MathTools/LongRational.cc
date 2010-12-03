@@ -546,7 +546,7 @@ LongRational& LongRational::operator = (long x)
 
 LongRational& LongRational::operator = (char* x)
 {
-  char* TmpPos = strpos (x, "/");
+  char* TmpPos = strstr (x, "/");
   if (TmpPos == 0)
     {
       char* TmpError;
@@ -555,6 +555,7 @@ LongRational& LongRational::operator = (char* x)
     }
   else
     {
+      char* TmpError;
       (*TmpPos) = '\0';
       this->Numerator =  strtol(x, &TmpError, 0);
       this->Denominator = strtol(TmpPos + 1, &TmpError, 0);
