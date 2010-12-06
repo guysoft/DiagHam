@@ -30,6 +30,7 @@
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphere.h"
+#include "MathTools/LongRational.h"
 
 #include <iostream>
 
@@ -740,6 +741,18 @@ RealVector& ParticleOnSphere::ProductRules (RealVector& outputVector, RealVector
 double ParticleOnSphere::JackSqrNormalization (RealVector& outputVector, long minIndex, long nbrComponents)
 {
   return 0.0;
+}
+
+// compute part of the Jack polynomial square normalization in a given range of indices
+//
+// state = reference on the unnormalized Jack polynomial
+// minIndex = first index to compute 
+// nbrComponents = number of indices to compute (0 if they all have to be computed from minIndex)
+// return value = quare normalization 
+
+LongRational ParticleOnSphere::JackSqrNormalization (LongRationalVector& outputVector, long minIndex, long nbrComponents)
+{
+  return LongRational();
 }
 
 // remove part of each Fock state, discarding component if the Fock state does not a given pattern

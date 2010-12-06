@@ -30,6 +30,7 @@
 
 #include "config.h"
 #include "MathTools/FactorialCoefficient.h"
+#include "MathTools/LongRational.h"
 
 
 #include <iostream>
@@ -436,6 +437,20 @@ double FactorialCoefficient::GetNumericalValue()
   for (int i = 0; i <= this->DenominatorPosition; ++i)
     y *= (double) this->Denominator[i];
   return (x / y);
+}
+
+// return the long rational value associated to the coefficient
+//
+// return value = numerical value associated to the coefficient
+
+LongRational FactorialCoefficient::GetLongRationalValue()
+{
+  LongRational x (1l, 1l);
+  for (int i = 0; i <= this->NumeratorPosition; ++i)
+    x *= this->Numerator[i];
+  for (int i = 0; i <= this->DenominatorPosition; ++i)
+    x /= this->Denominator[i];
+  return x;
 }
 
 // return integer value associated to the coefficient (0 if the coefficient is not an integer, or can't be cast into an integer)

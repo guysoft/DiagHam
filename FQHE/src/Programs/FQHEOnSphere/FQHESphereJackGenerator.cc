@@ -286,7 +286,7 @@ int main(int argc, char** argv)
 		    if (OutputState[i] != 0.0)
 		      {
 			InitialSpace->PrintStateMonomial(cout, i) << " = ";
-			InitialSpace->PrintState(cout, i) << endl;
+			InitialSpace->PrintState(cout, i) << " (pos = " << i<< ")" << endl;
 		      }
 		  return 0;
 		}
@@ -345,7 +345,7 @@ int main(int argc, char** argv)
 			if (OutputState[i] != Zero)
 			  {
 			    InitialSpace->PrintStateMonomial(cout, i) << " = ";
-			    InitialSpace->PrintState(cout, i) << endl;
+			    InitialSpace->PrintState(cout, i) << " (pos = " << i << ")" << endl;
 			  }
 		      return 0;
 		    }

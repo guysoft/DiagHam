@@ -117,6 +117,11 @@ class LongRational
   // return value = ooposit number
   friend LongRational operator - (const LongRational& x);
 
+  // multiply the current rational by -1
+  //
+  // return value = reference on the current rational
+  LongRational& Neg();
+
   // add two rational numbers
   //
   // x = first rational
@@ -248,6 +253,12 @@ class LongRational
   // x = rational to use
   // return value = reference on current coefficient
   LongRational& operator /= (const LongRational& x);
+
+  // swap two rationals in an effecient way
+  //
+  // x = first rational
+  // y = second rational
+  friend void Swap(LongRational& x, LongRational& y);
 
   // test is two rational numbers are identical
   // 
@@ -407,6 +418,16 @@ inline double LongRational::GetNumericalValue()
   return mpq_get_d(this->Value);
 }
 
+// swap two rationals in an effecient way
+//
+// x = first rational
+// y = second rational
+
+inline void Swap(LongRational& x, LongRational& y)
+{
+  mpq_swap(x.Value, y.Value);
+}
+
 // Simplify the current rational number
 //
 
@@ -494,6 +515,62 @@ inline LongRational operator - (const LongRational& x)
   return Tmp;
 }
 
+// multiply the current rational by -1
+//
+// return value = reference on the current rational
+
+inline LongRational& LongRational::Neg()
+{
+  mpq_neg(this->Value, this->Value);
+  return *this;
+}
+
+// multiply two rational numbers
+//
+// x = first rational
+// y = second rational
+// return value = product
+
+inline LongRational operator * (const LongRational& x, const LongRational& y)
+{
+  LongRational Tmp;
+  mpq_mul(Tmp.Value, x.Value, y.Value);
+  return Tmp;
+}
+
+// add a rational
+//
+// x = rational to use
+// return value = reference on current coefficient
+
+inline LongRational& LongRational::operator += (const  LongRational& x)
+{
+  mpq_add(this->Value, this->Value, x.Value);  
+  return *this;
+}
+
+// multiply by a rational
+//
+// x = rational to use
+// return value = reference on current coefficient
+
+inline LongRational& LongRational::operator *= (const LongRational& x)
+{
+  mpq_mul(this->Value, this->Value, x.Value);  
+  return *this;
+}
+
+// divide by a rational
+//
+// x = rational to use
+// return value = reference on current coefficient
+
+inline LongRational& LongRational::operator /= (const LongRational& x)
+{
+  mpq_div(this->Value, this->Value, x.Value);  
+  return *this;
+}
+
 #else
 
 // return integer value associated to the coefficient numerator (0 if the coefficient can't be cast into an integer)
@@ -549,6 +626,18 @@ inline long LongRational::FindGCD(LONGLONG m, LONGLONG n)
       m = Tmp;
     }
   return m;
+}
+
+// swap two rationals in an effecient way
+//
+// x = first rational
+// y = second rational
+
+inline void Swap(LongRational& x, LongRational& y)
+{
+  LONGLONG Tmp = x;
+  x = y;
+  y = Tmp;
 }
 
 // test is two rational numbers are identical
@@ -646,6 +735,16 @@ inline LongRational operator - (const LongRational& x)
   LongRational Tmp(x);
   Tmp.Numerator *= -1l;
   return Tmp;
+}
+
+// multiply the current rational by -1
+//
+// return value = reference on the current rational
+
+inline LongRational& LongRational::Neg()
+{
+  this->Numerator *= -1l;
+  return *this;
 }
 
 #endif

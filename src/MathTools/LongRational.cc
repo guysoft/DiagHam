@@ -233,19 +233,6 @@ LongRational operator - (long y, const LongRational& x)
   return Tmp;
 }
 
-// multiply two rational numbers
-//
-// x = first rational
-// y = second rational
-// return value = product
-
-LongRational operator * (const LongRational& x, const LongRational& y)
-{
-  LongRational Tmp;
-  mpq_mul(Tmp.Value, x.Value, y.Value);
-  return Tmp;
-}
-
 // multiply a rational number and an integer
 //
 // x = rational number
@@ -327,17 +314,6 @@ LongRational operator / (long y, const LongRational& x)
   return Tmp;
 }
 
-// add a rational
-//
-// x = rational to use
-// return value = reference on current coefficient
-
-LongRational& LongRational::operator += (const  LongRational& x)
-{
-  mpq_add(this->Value, this->Value, x.Value);  
-  return *this;
-}
-
 // add an integer
 //
 // x = integer to use
@@ -394,17 +370,6 @@ LongRational& LongRational::operator *= (long x)
   return *this;
 }
 
-// multiply by a rational
-//
-// x = rational to use
-// return value = reference on current coefficient
-
-LongRational& LongRational::operator *= (const LongRational& x)
-{
-  mpq_mul(this->Value, this->Value, x.Value);  
-  return *this;
-}
-
 // divide by an integer
 //
 // y = integer to use
@@ -417,17 +382,6 @@ LongRational& LongRational::operator /= (long y)
   mpq_set_si (Tmp, y, 1ul);
   mpq_div(this->Value, this->Value, Tmp);  
   mpq_clear(Tmp);  
-  return *this;
-}
-
-// divide by a rational
-//
-// x = rational to use
-// return value = reference on current coefficient
-
-LongRational& LongRational::operator /= (const LongRational& x)
-{
-  mpq_div(this->Value, this->Value, x.Value);  
   return *this;
 }
 

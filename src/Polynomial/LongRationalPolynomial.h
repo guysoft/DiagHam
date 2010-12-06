@@ -53,6 +53,8 @@ private:
 
   // polynomial degree
   int Degree;
+  // maximal polynomial degree that can be used without reallocating memory
+  int MaxDegree;
 
   // number of found roots
   int NbrRoot;
@@ -122,6 +124,13 @@ public:
   // return value = polynomial value at x
   LongRational PolynomialEvaluate (const LongRational& x);
   
+  // Return polynomial value at a given point
+  //
+  // x = point where to evaluate polynomial
+  // result = variable where to store the result
+  // return value = reference on the current polynomial
+  LongRationalPolynomial& PolynomialEvaluate (const LongRational& x, LongRational& result);
+
   // Return polynomial value at a given point
   //
   // x = point where to evaluate polynomial
@@ -241,11 +250,24 @@ public:
   // return value = result of polynomial division
   LongRationalPolynomial MonomialDivision (const LongRational& z0);
 
+
+  // Divide the current polynomial by a monomial (z - z0) using Horner scheme
+  //
+  // z0 = monomial root
+  // return value = reference on the current polynomial
+  LongRationalPolynomial& LocalMonomialDivision (const LongRational& z0);
+
   // Multiply polynomial by a monomial (z - z0)
   //
   // z0 = monomial root
   // return value = result of polynomial multiplication
   LongRationalPolynomial MonomialMultiplication (const LongRational& z0);
+
+  // Multiply the current polynomial by a monomial (z - z0)
+  //
+  // z0 = monomial root
+  // return value = reference on the current polynomial
+  LongRationalPolynomial& LocalMonomialMultiplication (const LongRational& z0);
 
   // shift all powers from a given value
   //
@@ -255,6 +277,7 @@ public:
 
   //Output Stream overload
   friend ostream& operator << (ostream& Str, const LongRationalPolynomial& P);
+
   
 private:
 
@@ -332,6 +355,26 @@ inline LongRational& LongRationalPolynomial::operator [] (int n)
 inline bool LongRationalPolynomial::Defined()
 {
   return !(this->Coefficient == 0);
+}
+
+// Return polynomial value at a given point
+//
+// x = point where to evaluate polynomial
+// result = variable where to store the result
+// return value = reference on the current polynomial
+
+inline LongRationalPolynomial& LongRationalPolynomial::PolynomialEvaluate (const LongRational& x, LongRational& result)
+{
+  if (this->Coefficient != 0)
+    {
+      result =  this->Coefficient[this->Degree];
+      for (int i = this->Degree - 1 ; i >= 0; i--)
+	{
+	  result *= x;
+	  result += this->Coefficient[i];
+	}
+    }
+  return *this;
 }
 
 #endif

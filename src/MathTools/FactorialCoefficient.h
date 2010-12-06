@@ -37,6 +37,9 @@
 #include <iostream>
 
 
+class LongRational;
+
+
 class FactorialCoefficient
 {
 
@@ -174,6 +177,11 @@ class FactorialCoefficient
   //
   // return value = numerical value associated to the coefficient
   double GetNumericalValue();
+
+  // return the long rational value associated to the coefficient
+  //
+  // return value = numerical value associated to the coefficient
+  LongRational GetLongRationalValue();
 
   // return integer value associated to the coefficient (0 if the coefficient is not an integer, or can't be cast into an integer)
   //
