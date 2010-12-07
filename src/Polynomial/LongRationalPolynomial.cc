@@ -1015,6 +1015,11 @@ LongRationalPolynomial& LongRationalPolynomial::ShiftPowers(int shift)
 	this->Coefficient[i] = 0l;
       this->Degree = TmpDegree;
     }
+  if (this->RationalRoots != 0)
+    {
+      delete[] this->RationalRoots;
+      this->RationalRoots = 0;
+    }
   return *this;
 }
 

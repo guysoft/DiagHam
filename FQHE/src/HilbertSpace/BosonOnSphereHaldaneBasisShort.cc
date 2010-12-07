@@ -415,7 +415,7 @@ RationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(RationalV
 	      Tmp /= TmpDenominators[i].PolynomialEvaluate(InvAlpha);
 	      if (symbolicDepth != 3)
 		{
-		  cout << "--------------------------------" << endl
+		  cout << "----------------------------------------------------------------" << endl
 		       << "result = " << endl;
 		  cout << TmpNumerators[i] << endl;
 		  cout << TmpDenominators[i] << endl;
@@ -569,7 +569,7 @@ LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(LongR
 	      Coefficient /= TmpDenominators[i].PolynomialEvaluate(InvAlpha);
 	      if (symbolicDepth != 3)
 		{
-		  cout << "--------------------------------" << endl
+		  cout << "----------------------------------------------------------------" << endl
 		       << "result = " << endl;
 		  cout << TmpNumerators[i] << endl;
 		  cout << TmpDenominators[i] << endl;
@@ -780,7 +780,7 @@ LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateSymmetrizedJackPolyn
 	      Tmp /= TmpDenominators[i].PolynomialEvaluate(InvAlpha);
 	      if (symbolicDepth != 3)
 		{
-		  cout << "--------------------------------" << endl
+		  cout << "----------------------------------------------------------------" << endl
 		       << "result = " << endl;
 		  cout << TmpNumerators[i] << endl;
 		  cout << TmpDenominators[i] << endl;
@@ -1208,8 +1208,8 @@ bool BosonOnSphereHaldaneBasisShort::GenerateSingleJackPolynomialCoefficient(Lon
 	}
     }
 
-  //  cout << "using symbolic calculation for " << index << "                           \r";
-  //  cout.flush();
+  cout << "using symbolic calculation for " << index << "                           \r";
+  cout.flush();
   cout <<  index << " ";
 
   numerators[index] = numerators[ConnectedIndices2[0]];
