@@ -489,9 +489,10 @@ RationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(RationalV
 // alphaDenominator = numerator of the Jack polynomial alpha coefficient
 // symbolicDepth = use symbolic calculation to solve singular values if non zero, if greater than zero it will use symbolic calculation up to a given depth (below that depth it will rely on numerical calculation),
 //                 -1 if the symbolic calculation has to be done up to the point the singular value problem has been solved
+// fileName = optional file name to store temporary calculations
 // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
 
-LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(LongRationalVector& jack, long alphaNumerator, long alphaDenominator, int symbolicDepth)
+LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(LongRationalVector& jack, long alphaNumerator, long alphaDenominator, int symbolicDepth, char* fileName)
 {
   jack[0] = 1l;
   LongRational InvAlpha (2l * alphaDenominator, alphaNumerator);
@@ -563,6 +564,8 @@ LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(LongR
 		{
 		  cout << "singular value detected at position " << i << ", using symbolic calculation" << endl;
 		}
+	      if (fileName != 0)
+		jack.WriteVector(fileName);
 	      this->GenerateSingleJackPolynomialCoefficient(jack, i, TmpNumerators, TmpDenominators, ConnectedIndices, ConnectedCoefficients, TmpMonomial, TmpMonomial2,
 							    RhoRootInvAlphaCoef, RhoRootConstCoef, MaxRoot);
 	      TmpNumerators[i].PolynomialEvaluate(InvAlpha, Coefficient);
@@ -702,9 +705,10 @@ LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(LongR
 // alphaDenominator = numerator of the Jack polynomial alpha coefficient
 // symbolicDepth = use symbolic calculation to solve singular values if non zero, if greater than zero it will use symbolic calculation up to a given depth (below that depth it will rely on numerical calculation),
 //                 -1 if the symbolic calculation has to be done up to the point the singular value problem has been solved
+// fileName = optional file name to store temporary calculations
 // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
 
-LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateSymmetrizedJackPolynomial(LongRationalVector& jack, long alphaNumerator, long alphaDenominator, int symbolicDepth)
+LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateSymmetrizedJackPolynomial(LongRationalVector& jack, long alphaNumerator, long alphaDenominator, int symbolicDepth, char* fileName)
 {
   jack[0] = 1l;
   LongRational InvAlpha (2l * alphaDenominator, alphaNumerator);
@@ -773,7 +777,8 @@ LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateSymmetrizedJackPolyn
 		{
 		  cout << "singular value detected at position " << i << ", using symbolic calculation" << endl;
 		}
-	      cout << "singular value detected at position " << i << ", using symbolic calculation" << endl;
+	      if (fileName != 0)
+		jack.WriteVector(fileName);
 	      this->GenerateSingleJackPolynomialCoefficient(jack, i, TmpNumerators, TmpDenominators, ConnectedIndices, ConnectedCoefficients, TmpMonomial, TmpMonomial2, 
 							    RhoRootInvAlphaCoef, RhoRootConstCoef, MaxRoot);
 	      LongRational Tmp = TmpNumerators[i].PolynomialEvaluate(InvAlpha);
@@ -1210,7 +1215,6 @@ bool BosonOnSphereHaldaneBasisShort::GenerateSingleJackPolynomialCoefficient(Lon
 
   cout << "using symbolic calculation for " << index << "                           \r";
   cout.flush();
-  cout <<  index << " ";
 
   numerators[index] = numerators[ConnectedIndices2[0]];
   denominators[index] = denominators[ConnectedIndices2[0]];

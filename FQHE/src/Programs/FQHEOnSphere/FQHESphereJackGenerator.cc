@@ -392,9 +392,9 @@ int main(int argc, char** argv)
 			return -1;
 		      }
 		  if (SymmetrizedBasis == false)    
-		    InitialSpace->GenerateJackPolynomial(OutputState, AlphaNumerator, AlphaDenominator, SymbolicDepth);
+		    InitialSpace->GenerateJackPolynomial(OutputState, AlphaNumerator, AlphaDenominator, SymbolicDepth, OutputFileName);
 		  else
-		    InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, AlphaNumerator, AlphaDenominator, SymbolicDepth);
+		    InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, AlphaNumerator, AlphaDenominator, SymbolicDepth, OutputFileName);
 		  if (Manager.GetBoolean("normalize"))
 		    {
 		      cout << "calculations have been done with rational numbers, normalization will not be done" << endl;
