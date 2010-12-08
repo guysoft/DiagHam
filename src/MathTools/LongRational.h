@@ -635,7 +635,7 @@ inline long LongRational::FindGCD(LONGLONG m, LONGLONG n)
 
 inline void Swap(LongRational& x, LongRational& y)
 {
-  LONGLONG Tmp = x;
+  LongRational Tmp = x;
   x = y;
   y = Tmp;
 }
