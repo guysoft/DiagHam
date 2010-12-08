@@ -1549,13 +1549,20 @@ RealVector& BosonOnSphereHaldaneBasisShort::CheckPossibleSingularCoefficientsInJ
 // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
 // alphaNumerator = numerator of the Jack polynomial alpha coefficient
 // alphaDenominator = numerator of the Jack polynomial alpha coefficient
+// checkConnectivity = if true, compute how many componets are involved in the calculation of a given singular coefficients
 // return value = vector with non-zero component being rho factor of possible singular coefficients
 
-RationalVector& BosonOnSphereHaldaneBasisShort::CheckPossibleSingularCoefficientsInJackPolynomial(RationalVector& jack, long alphaNumerator, long alphaDenominator)
+RationalVector& BosonOnSphereHaldaneBasisShort::CheckPossibleSingularCoefficientsInJackPolynomial(RationalVector& jack, long alphaNumerator, long alphaDenominator, bool checkConnectivity)
 {
   Rational InvAlpha (2l * alphaDenominator, alphaNumerator);
 
+  int ReducedNbrBosons = this->NbrBosons - 1;
   unsigned long* TmpMonomial = new unsigned long [this->NbrBosons];
+  unsigned long* TmpMonomial2 = new unsigned long [this->NbrBosons];
+  long* ConnectedIndices = new long [((this->NbrBosons * ReducedNbrBosons) >> 1) * (this->LzMax + 1)];
+  int* EvaluatedCoeffcients = 0;
+  if (checkConnectivity == true)
+    EvaluatedCoeffcients = new int[this->LargeHilbertSpaceDimension];
 
   Rational RhoRoot = 0;
   unsigned long MaxRoot = this->FermionBasis->StateDescription[0];
@@ -1572,12 +1579,24 @@ RationalVector& BosonOnSphereHaldaneBasisShort::CheckPossibleSingularCoefficient
       for (int j = 0; j < this->NbrBosons; ++j)
 	Rho += TmpMonomial[j] * ((TmpMonomial[j] - 1l) - InvAlpha * ((long) j));
       if (RhoRoot == Rho)
-	jack[i] = Rho;
+	{
+	  if (checkConnectivity == false)
+	    {
+	      jack[i] = Rho;
+	    }
+	  else
+	    {
+	      jack[i] = this->GenerateSingleJackPolynomialCoefficientCountOnly(i, EvaluatedCoeffcients, ConnectedIndices, TmpMonomial, TmpMonomial2, MaxRoot);	      
+	    }
+	}
       else
 	jack[i] = 0l;
       }
   delete[] TmpMonomial;
-
+  delete[] TmpMonomial2;
+  delete[] ConnectedIndices;
+  if (EvaluatedCoeffcients != 0)
+    delete[] EvaluatedCoeffcients;
   return jack;
 }
   

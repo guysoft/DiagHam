@@ -198,8 +198,9 @@ class BosonOnSphereHaldaneBasisShort :  public BosonOnSphereShort
   // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
   // alphaNumerator = numerator of the Jack polynomial alpha coefficient
   // alphaDenominator = numerator of the Jack polynomial alpha coefficient
+  // checkConnectivity = if true, compute how many componets are involved in the calculation of a given singular coefficients
   // return value = vector with non-zero component being rho factor of possible singular coefficients
-  virtual RationalVector& CheckPossibleSingularCoefficientsInJackPolynomial(RationalVector& jack, long alphaNumerator, long alphaDenominator);
+  virtual RationalVector& CheckPossibleSingularCoefficientsInJackPolynomial(RationalVector& jack, long alphaNumerator, long alphaDenominator, bool checkConnectivity = false);
   
   // check partitions that may lead to singular coefficient in a given Jack polynomial decomposition
   //

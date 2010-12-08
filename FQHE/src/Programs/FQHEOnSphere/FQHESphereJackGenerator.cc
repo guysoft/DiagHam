@@ -338,14 +338,14 @@ int main(int argc, char** argv)
 		  if (Manager.GetBoolean("check-singularity") == true)
 		    {
 		      OutputState = RationalVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);		  
-		      InitialSpace->CheckPossibleSingularCoefficientsInJackPolynomial(OutputState, AlphaNumerator, AlphaDenominator);
+		      InitialSpace->CheckPossibleSingularCoefficientsInJackPolynomial(OutputState, AlphaNumerator, AlphaDenominator, true);
 		      cout << "partitions that may lead to singular coefficients : " << endl;
 		      Rational Zero = 0l;
 		      for (long i = 1l; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
 			if (OutputState[i] != Zero)
 			  {
 			    InitialSpace->PrintStateMonomial(cout, i) << " = ";
-			    InitialSpace->PrintState(cout, i) << " (pos = " << i << ")" << endl;
+			    InitialSpace->PrintState(cout, i) << " (pos = " << i << ", connectivity = " << OutputState[i] << ") " << endl;
 			  }
 		      return 0;
 		    }

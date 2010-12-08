@@ -749,7 +749,7 @@ inline bool operator != (LONGLONG y, const LongRational& x)
 
 inline bool LongRational::IsZero ()
 { 
-  return (x.Numerator == ((LONGLONG) 0l));
+  return (this->Numerator == ((LONGLONG) 0l));
 }
 
 // compute the opposit number
