@@ -50,7 +50,6 @@
 #include "HilbertSpace/FermionOnSphereHaldaneBasisLong.h"
 #include "HilbertSpace/FermionOnSphereSymmetricBasisLong.h"
 #include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasisLong.h"
-#include "HilbertSpace/FermionOnSphereUnnormalizedBasis.h"
 #include "HilbertSpace/FermionOnSphereHaldaneHugeBasis.h"
 
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
@@ -143,7 +142,7 @@ void ParticleOnSphereManager::AddOptionGroup(OptionManager* manager, const char*
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 5);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 8);
   if ((this->FermionFlag == true) && (this->BosonFlag == true))
-    (*SystemGroup) += new SingleStringOption  ('\n', "statistics", "particle statistics (bosons or fermions, try to guess it from file name if not defined)");
+    (*SystemGroup) += new SingleStringOption  ('\n', "statistics", "particle statistics (bosons or fermions)", "fermions");
   switch (this->SUKIndex)
     {
     case 1:
@@ -154,8 +153,6 @@ void ParticleOnSphereManager::AddOptionGroup(OptionManager* manager, const char*
 	if (this->BosonFlag == false)
 	  (*SystemGroup) += new SingleStringOption  ('\n', "reference-state", "reference state to start the Haldane algorithm from (can be laughlin, pfaffian or readrezayi3)", "laughlin");
 	(*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
-	if (this->BosonFlag == false)
-	  (*SystemGroup) += new BooleanOption  ('\n', "unnormalized-basis", "do not normalize Fock states"); 
 	if (this->FermionFlag == true)
 	  {
 	    (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
@@ -267,14 +264,8 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceU1(int totalLz)
   bool HaldaneBasisFlag = this->Options->GetBoolean("haldane");
   if (this->BosonFlag == false)
     {
-      bool UnnormalizedBasis = this->Options->GetBoolean("unnormalized-basis");
       unsigned long MemorySpace = ((unsigned long) this->Options->GetInteger("fast-search")) << 20;
       ParticleOnSphere* Space = 0;
-      if (UnnormalizedBasis == true)
-	{
-	  Space = new  FermionOnSphereUnnormalizedBasis(NbrParticles, totalLz, LzMax, MemorySpace);
-	  return Space;
-	}
       if (HaldaneBasisFlag == false)
 	{
 #ifdef __64_BITS__

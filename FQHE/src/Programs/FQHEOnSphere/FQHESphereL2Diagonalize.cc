@@ -69,7 +69,6 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
 
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the system", 0);
-  (*SystemGroup) += new BooleanOption  ('\n', "boson", "use boson statistics");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "l2");
   (*SystemGroup) += new SingleDoubleOption ('\n', "l2-factor", "multiplicative factor in front of an optional L^2 operator than can be added to the Hamiltonian", 1.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "energy-shift", "if non zero, override energy shift using the indicated value ", -10.0);
@@ -105,7 +104,7 @@ int main(int argc, char** argv)
   bool DiskCacheFlag = Manager.GetBoolean("disk-cache");
   bool FirstRun = true;
   char* OutputNameLz = new char [256 + strlen(Manager.GetString("interaction-name"))];
-  if (Manager.GetBoolean("boson") == false)
+  if (strcmp ("fermions", Manager.GetString("statistics")) == 0)
     sprintf (OutputNameLz, "fermions_%s_n_%d_2s_%d_lz.dat", Manager.GetString("interaction-name"), NbrParticles, LzMax);
   else
     sprintf (OutputNameLz, "bosons_%s_n_%d_2s_%d_lz.dat", Manager.GetString("interaction-name"), NbrParticles, LzMax);
