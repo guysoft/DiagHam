@@ -96,6 +96,12 @@ public:
   // P = polynomial to copy
   LongRationalPolynomial (const LongRationalPolynomial& P);
   
+  // constructor from P1 * P2
+  //
+  // P1 = first polynomial
+  // P2 = second polynomial
+  LongRationalPolynomial (const LongRationalPolynomial& P1, const LongRationalPolynomial& P2);
+
   // constructor from P1+q^n P2
   //
   // P1 = first polynomial
@@ -243,6 +249,7 @@ public:
   LongRationalPolynomial& operator *= (const LongRationalPolynomial& P);
   LongRationalPolynomial& operator /= (const LongRational& d);
   LongRationalPolynomial& operator /= (long d);
+  //  LongRationalPolynomial&MultiplyAndAdd (const LongRationalPolynomial& P1 , const LongRationalPolynomial& P2);
 
   // Divide polynomial by a monomial (z - z0) using Horner scheme
   //

@@ -274,6 +274,13 @@ class LongRational
   // return value = true if the two numbers are different
   friend bool operator != (const LongRational& x, const LongRational& y);
 
+  // test is a rational numbers is zero
+  // 
+  // x = rational number
+  // return value = true if the number is zero
+  bool IsZero ();
+
+
 #ifdef __GMP__
 
   // test is a rational number is equal to an integer number
@@ -503,6 +510,16 @@ inline bool operator != (long y, const LongRational& x)
   return (mpq_cmp_si (x.Value, y, 1ul) != 0);
 }
 
+// test is a rational numbers is zero
+// 
+// x = rational number
+// return value = true if the number is zero
+
+inline bool LongRational::IsZero ()
+{ 
+  return (mpq_sgn(this->Value) == 0);
+}
+
 // compute the opposit number
 //
 // x = first rational
@@ -723,6 +740,16 @@ inline bool operator != (LONGLONG y, const LongRational& x)
     return false;
   else
     return true;    
+}
+
+// test is a rational numbers is zero
+// 
+// x = rational number
+// return value = true if the number is zero
+
+inline bool LongRational::IsZero ()
+{ 
+  return (x.Numerator == ((LONGLONG) 0l));
 }
 
 // compute the opposit number
