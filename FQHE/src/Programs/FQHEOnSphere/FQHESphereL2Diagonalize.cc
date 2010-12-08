@@ -126,7 +126,7 @@ int main(int argc, char** argv)
   if (Manager.GetBoolean("eigenstate") == true)	
     {
       EigenvectorName = new char [64];
-      if (Manager.GetBoolean("boson") == false)
+      if (strcmp ("fermions", Manager.GetString("statistics")) == 0)
 	sprintf (EigenvectorName, "fermions_%s_n_%d_2s_%d_lz_%d", Manager.GetString("interaction-name"), NbrParticles, LzMax, TotalLz);
       else
 	sprintf (EigenvectorName, "bosons_%s_n_%d_2s_%d_lz_%d", Manager.GetString("interaction-name"), NbrParticles, LzMax, TotalLz);
