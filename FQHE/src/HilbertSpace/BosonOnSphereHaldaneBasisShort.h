@@ -170,10 +170,12 @@ class BosonOnSphereHaldaneBasisShort :  public BosonOnSphereShort
   // rhoRootInvAlphaCoef = coefficient in front of inv alpha in the rho for the root partition
   // rhoRootConstCoef = constant coefficient in the rho for the root partition
   // maxRoot = fermionic expression for the root partition
+  // currentNbrComponents = current number of components computed for the symbolic of the index-th compoment
+  // symmetryFlag = true iof the Lz <-> -Lz symmetry has to be used
   // return value = total number of components computed for the symbolic of the index-th compoment
   long GenerateSingleJackPolynomialCoefficient(LongRationalVector& jack, long index, LongRationalPolynomial* numerators, LongRationalPolynomial* denominators, long* connectedIndices, long* connectedCoefficients, 
 					       unsigned long* tmpMonomial, unsigned long* tmpMonomial2,
-					       LongRational& rhoRootInvAlphaCoef, LongRational& rhoRootConstCoef, unsigned long maxRoot, long currentNbrComponents = 0);
+					       LongRational& rhoRootInvAlphaCoef, LongRational& rhoRootConstCoef, unsigned long maxRoot, long currentNbrComponents = 0, bool symmetryFlag = false);
 
 
   long GenerateSingleJackPolynomialCoefficientCountOnly(long index, int* evaluatedCoeffcients, long* connectedIndices, unsigned long* tmpMonomial, unsigned long* tmpMonomial2, unsigned long maxRoot);

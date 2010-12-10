@@ -731,6 +731,12 @@ LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateSymmetrizedJackPolyn
   long* ConnectedIndices2 = new long [((this->NbrBosons * ReducedNbrBosons) >> 1) * (this->LzMax + 1)];
   long* ConnectedCoefficients2  = new long [((this->NbrBosons * ReducedNbrBosons) >> 1) * (this->LzMax + 1)];
 
+  long CounterMask = 0xffffl;
+  if (symbolicDepth > 1)
+    {
+      CounterMask = 0xffl;
+    }
+
   LongRational RhoRoot = 0l;
   LongRational Rho = 0l;
   unsigned long MaxRoot = this->FermionBasis->StateDescription[0];
@@ -748,9 +754,13 @@ LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateSymmetrizedJackPolyn
 
   LongRationalPolynomial* TmpNumerators = new LongRationalPolynomial[this->LargeHilbertSpaceDimension];
   LongRationalPolynomial* TmpDenominators = new LongRationalPolynomial[this->LargeHilbertSpaceDimension];		  
+  int* EvaluatedCoeffcients = new int[this->LargeHilbertSpaceDimension];
 
   this->GenerateSingleJackPolynomialCoefficient(jack, 0, TmpNumerators, TmpDenominators, ConnectedIndices, ConnectedCoefficients, TmpMonomial, TmpMonomial2, 
 						RhoRootInvAlphaCoef, RhoRootConstCoef, MaxRoot);
+  LongRational Coefficient = 0l;
+  LongRational Coefficient2 = 0l;
+
   for (long i = 1; i < this->LargeHilbertSpaceDimension; ++i)
     {
       if (jack[i] == 0l)
@@ -763,7 +773,7 @@ LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateSymmetrizedJackPolyn
 	  if (symbolicDepth > 1)
 	    {
 	      this->GenerateSingleJackPolynomialCoefficient(jack, i, TmpNumerators, TmpDenominators, ConnectedIndices, ConnectedCoefficients, TmpMonomial, TmpMonomial2, 
-							    RhoRootInvAlphaCoef, RhoRootConstCoef, MaxRoot);
+							    RhoRootInvAlphaCoef, RhoRootConstCoef, MaxRoot, 0, true);
 	      long TmpIndex = this->FermionBasis->FindStateIndex(((FermionOnSphereHaldaneBasis*) this->FermionBasis)->GetSymmetricState(CurrentPartition), (this->LzMax - TmpMonomial[ReducedNbrBosons]) + ReducedNbrBosons);
 	      if (i < TmpIndex)
 		{
@@ -789,8 +799,17 @@ LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateSymmetrizedJackPolyn
 		}
 	      if (fileName != 0)
 		jack.WriteVector(fileName);
+	      for (long j = 0l; j < this->LargeHilbertSpaceDimension; ++j)
+		{
+		  if (TmpNumerators[j].Defined())
+		    EvaluatedCoeffcients[j] = 1;
+		  else
+		    EvaluatedCoeffcients[j] = 0;
+		}
+	      long NbrComponentToEvaluate = this->GenerateSingleJackPolynomialCoefficientCountOnly(i, EvaluatedCoeffcients, ConnectedIndices, TmpMonomial, TmpMonomial2, MaxRoot);
+	      cout << "number of components to evalute using symbolic calculation : " << NbrComponentToEvaluate << endl;
 	      this->GenerateSingleJackPolynomialCoefficient(jack, i, TmpNumerators, TmpDenominators, ConnectedIndices, ConnectedCoefficients, TmpMonomial, TmpMonomial2, 
-							    RhoRootInvAlphaCoef, RhoRootConstCoef, MaxRoot);
+							    RhoRootInvAlphaCoef, RhoRootConstCoef, MaxRoot, 0, true);
 	      LongRational Tmp = TmpNumerators[i].PolynomialEvaluate(InvAlpha);
 	      Tmp /= TmpDenominators[i].PolynomialEvaluate(InvAlpha);
 	      if (symbolicDepth != 3)
@@ -812,7 +831,8 @@ LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateSymmetrizedJackPolyn
 	    }
 	  else
 	    {
-	      LongRational Coefficient = 0;
+	      Coefficient = 0l;
+	      int Pos = 0;
 	      for (int j1 = 0; j1 < ReducedNbrBosons; ++j1)
 		for (int j2 = j1 + 1; j2 < this->NbrBosons; ++j2)
 		  {
@@ -847,19 +867,75 @@ LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateSymmetrizedJackPolyn
 			  {
 			    long TmpIndex = this->FermionBasis->FindStateIndex(TmpState, TmpMonomial2[0] + ReducedNbrBosons);
 			    if (TmpIndex < this->HilbertSpaceDimension)
-			      Coefficient += Diff * jack[TmpIndex];
+			      {
+				long TmpIndex2 = this->FermionBasis->FindStateIndex(((FermionOnSphereHaldaneBasis*) this->FermionBasis)->GetSymmetricState(TmpState), (this->LzMax - TmpMonomial2[ReducedNbrBosons]) + ReducedNbrBosons);
+				if (TmpIndex < TmpIndex2)
+				  ConnectedIndices[Pos] = TmpIndex;
+				else
+				  ConnectedIndices[Pos] = TmpIndex2;
+				ConnectedCoefficients[Pos] = Diff;
+				++Pos;
+			      }
 			  }
 		      }
 		  }
+	      int NbrConnected = 1l;
+	      if (Pos > 1)
+		{
+		  SortArrayDownOrdering<long>(ConnectedIndices, ConnectedCoefficients, Pos);
+		  int TmpIndex = 1;
+		  while (TmpIndex < Pos)
+		    {
+		      while ((TmpIndex < Pos) && (ConnectedIndices[TmpIndex] == ConnectedIndices[TmpIndex - 1]))
+			++TmpIndex;
+		      if (TmpIndex < Pos)
+			++NbrConnected;
+		      ++TmpIndex;
+		    }
+		  ConnectedIndices2[0] = ConnectedIndices[0];
+		  ConnectedCoefficients2[0] = ConnectedCoefficients[0];
+		  TmpIndex = 1;
+		  NbrConnected = 1;
+		  while (TmpIndex < Pos)
+		    {
+		      while ((TmpIndex < Pos) && (ConnectedIndices[TmpIndex] == ConnectedIndices[TmpIndex - 1]))
+			{
+			  ConnectedCoefficients2[NbrConnected - 1] += ConnectedCoefficients[TmpIndex];
+			  ++TmpIndex;
+			}
+		      if (TmpIndex < Pos)
+			{
+			  ConnectedIndices2[NbrConnected] = ConnectedIndices[TmpIndex];
+			  ConnectedCoefficients2[NbrConnected] = ConnectedCoefficients[TmpIndex];	   
+			  ++NbrConnected;
+			}
+		      ++TmpIndex;
+		    }
+		}
+	      else
+		{
+		  ConnectedIndices2[0] = ConnectedIndices[0];
+		  ConnectedCoefficients2[0] = ConnectedCoefficients[0];
+		}
+ 	      Coefficient = ConnectedCoefficients2[0];	  
+	      Coefficient *= jack[ConnectedIndices2[0]];
+	      for (int j = 1; j < NbrConnected; ++j)
+		{
+		  Coefficient2 = ConnectedCoefficients2[j];
+		  Coefficient2 *= jack[ConnectedIndices2[j]];
+		  Coefficient += Coefficient2;
+		}
 	      long TmpIndex = this->FermionBasis->FindStateIndex(((FermionOnSphereHaldaneBasis*) this->FermionBasis)->GetSymmetricState(CurrentPartition), (this->LzMax - TmpMonomial[ReducedNbrBosons]) + ReducedNbrBosons);
 	      Coefficient *= InvAlpha;
-	      Coefficient /= (RhoRoot - Rho);
+	      Rho -= RhoRoot;
+	      Rho.Neg();
+	      Coefficient /= Rho;
 	      if (i < TmpIndex)
 		jack[TmpIndex] = Coefficient;
 	      jack[i] = Coefficient;
 	    }
 	}
-      if ((i & 0xffffl) == 0l)
+      if ((i & CounterMask) == 0l)
 	{
 	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
 	  cout.flush();
@@ -1091,9 +1167,11 @@ bool BosonOnSphereHaldaneBasisShort::GenerateSingleJackPolynomialCoefficient(Rat
 // rhoRootInvAlphaCoef = coefficient in front of inv alpha in the rho for the root partition
 // rhoRootConstCoef = constant coefficient in the rho for the root partition
 // maxRoot = fermionic expression for the root partition
+// currentNbrComponents = current number of components computed for the symbolic of the index-th compoment
+// symmetryFlag = true iof the Lz <-> -Lz symmetry has to be used
 // return value = total number of components computed for the symbolic of the index-th compoment
 
-long BosonOnSphereHaldaneBasisShort::GenerateSingleJackPolynomialCoefficient(LongRationalVector& jack, long index, LongRationalPolynomial* numerators, LongRationalPolynomial* denominators, long* connectedIndices, long* connectedCoefficients, unsigned long* tmpMonomial, unsigned long* tmpMonomial2, LongRational& rhoRootInvAlphaCoef, LongRational& rhoRootConstCoef, unsigned long maxRoot, long currentNbrComponents)
+long BosonOnSphereHaldaneBasisShort::GenerateSingleJackPolynomialCoefficient(LongRationalVector& jack, long index, LongRationalPolynomial* numerators, LongRationalPolynomial* denominators, long* connectedIndices, long* connectedCoefficients, unsigned long* tmpMonomial, unsigned long* tmpMonomial2, LongRational& rhoRootInvAlphaCoef, LongRational& rhoRootConstCoef, unsigned long maxRoot, long currentNbrComponents, bool symmetryFlag)
 {
   if (numerators[index].Defined())
     return 0l;
@@ -1160,9 +1238,22 @@ long BosonOnSphereHaldaneBasisShort::GenerateSingleJackPolynomialCoefficient(Lon
 		long TmpIndex = this->FermionBasis->FindStateIndex(TmpState, tmpMonomial2[0] + ReducedNbrBosons);
 		if (TmpIndex < this->HilbertSpaceDimension)
 		  {
-		    connectedIndices[Pos] = TmpIndex;
-		    connectedCoefficients[Pos] = Diff;
-		    ++Pos;
+		    if (symmetryFlag == false)
+		      {
+			connectedIndices[Pos] = TmpIndex;
+			connectedCoefficients[Pos] = Diff;
+			++Pos;
+		      }
+		    else
+		      {
+			long TmpIndex2 = this->FermionBasis->FindStateIndex(((FermionOnSphereHaldaneBasis*) this->FermionBasis)->GetSymmetricState(TmpState), (this->LzMax - tmpMonomial2[ReducedNbrBosons]) + ReducedNbrBosons);
+			if (TmpIndex < TmpIndex2)
+			  connectedIndices[Pos] = TmpIndex;
+			else
+			  connectedIndices[Pos] = TmpIndex2;
+			connectedCoefficients[Pos] = Diff;
+			++Pos;
+		      }
 		  }
 	      }
 	  }
@@ -1218,7 +1309,7 @@ long BosonOnSphereHaldaneBasisShort::GenerateSingleJackPolynomialCoefficient(Lon
       if (!numerators[ConnectedIndices2[i]].Defined())
         {
 	  TmpNbrComponents += this->GenerateSingleJackPolynomialCoefficient(jack, ConnectedIndices2[i], numerators, denominators, connectedIndices, connectedCoefficients, 
-									    tmpMonomial, tmpMonomial2, rhoRootInvAlphaCoef, rhoRootConstCoef, maxRoot, currentNbrComponents + TmpNbrComponents);
+									    tmpMonomial, tmpMonomial2, rhoRootInvAlphaCoef, rhoRootConstCoef, maxRoot, currentNbrComponents + TmpNbrComponents, symmetryFlag);
 	}
     }
 
@@ -1263,7 +1354,7 @@ long BosonOnSphereHaldaneBasisShort::GenerateSingleJackPolynomialCoefficient(Lon
 	      else
 		{
 		  denominators[index].LocalMonomialMultiplication(TmpPolynomial.PolynomialRationalRoot(j));
-	     }
+		}
 	    }
 	}  
     }
@@ -1318,12 +1409,15 @@ long BosonOnSphereHaldaneBasisShort::GenerateSingleJackPolynomialCoefficient(Lon
 
 long BosonOnSphereHaldaneBasisShort::GenerateSingleJackPolynomialCoefficientCountOnly(long index, int* evaluatedCoeffcients, long* connectedIndices, unsigned long* tmpMonomial, unsigned long* tmpMonomial2, unsigned long maxRoot)
 {
+  if (index == 0l)
+    return 1l;
   int ReducedNbrBosons = this->NbrBosons - 1;  
 
   unsigned long CurrentPartition = this->FermionBasis->StateDescription[index];
   this->ConvertToMonomial(CurrentPartition, this->FermionBasis->StateLzMax[index], tmpMonomial);
 
-  int Pos = 0;
+  long* ConnectedIndices2 = new long [((this->NbrBosons * ReducedNbrBosons) >> 1) * (this->LzMax + 1)];
+  int NbrConnected  = 0;
   for (int j1 = 0; j1 < ReducedNbrBosons; ++j1)
     for (int j2 = j1 + 1; j2 < this->NbrBosons; ++j2)
       {
@@ -1357,57 +1451,20 @@ long BosonOnSphereHaldaneBasisShort::GenerateSingleJackPolynomialCoefficientCoun
 		long TmpIndex = this->FermionBasis->FindStateIndex(TmpState, tmpMonomial2[0] + ReducedNbrBosons);
 		if (TmpIndex < this->HilbertSpaceDimension)
 		  {
-		    connectedIndices[Pos] = TmpIndex;
-		    ++Pos;
+		    ConnectedIndices2[NbrConnected] = TmpIndex;
+		    ++NbrConnected;
 		  }
 	      }
 	  }
       }
-  long* ConnectedIndices2 = 0;
-  int NbrConnected = 1l;
-  if (Pos > 1)
-    {
-      SortArrayDownOrdering<long>(connectedIndices, Pos);
-      int TmpIndex = 1;
-      while (TmpIndex < Pos)
-	{
-	  while ((TmpIndex < Pos) && (connectedIndices[TmpIndex] == connectedIndices[TmpIndex - 1]))
-	    ++TmpIndex;
-	  if (TmpIndex < Pos)
-	    ++NbrConnected;
-	  ++TmpIndex;
-	}
-      ConnectedIndices2 = new long[NbrConnected];
-      ConnectedIndices2[0] = connectedIndices[0];
-      TmpIndex = 1;
-      NbrConnected = 1;
-      while (TmpIndex < Pos)
-	{
-	  while ((TmpIndex < Pos) && (connectedIndices[TmpIndex] == connectedIndices[TmpIndex - 1]))
-	    {
-	      ++TmpIndex;
-	    }
-	  if (TmpIndex < Pos)
-	    {
-	      ConnectedIndices2[NbrConnected] = connectedIndices[TmpIndex];
-	      ++NbrConnected;
-	    }
-	  ++TmpIndex;
-	}
-    }
-  else
-    {
-      ConnectedIndices2 = new long[NbrConnected];
-      ConnectedIndices2[0] = connectedIndices[0];
-    }
 
   long TmpNbrConnected = 1;
   for (int i = 0; i < NbrConnected; ++i)
     {
       if (evaluatedCoeffcients[ConnectedIndices2[i]] == 0)
         {
-	  TmpNbrConnected += this->GenerateSingleJackPolynomialCoefficientCountOnly(ConnectedIndices2[i], evaluatedCoeffcients, connectedIndices, 
-										    tmpMonomial, tmpMonomial2, maxRoot);
+ 	  TmpNbrConnected += this->GenerateSingleJackPolynomialCoefficientCountOnly(ConnectedIndices2[i], evaluatedCoeffcients, connectedIndices, 
+ 										    tmpMonomial, tmpMonomial2, maxRoot);
 	  evaluatedCoeffcients[ConnectedIndices2[i]] = 1;
 	}
     }
@@ -1586,6 +1643,8 @@ RationalVector& BosonOnSphereHaldaneBasisShort::CheckPossibleSingularCoefficient
 	    }
 	  else
 	    {
+	      for (long j = 0l; j < this->LargeHilbertSpaceDimension; ++j)
+		EvaluatedCoeffcients[j] = 0;
 	      jack[i] = this->GenerateSingleJackPolynomialCoefficientCountOnly(i, EvaluatedCoeffcients, ConnectedIndices, TmpMonomial, TmpMonomial2, MaxRoot);	      
 	    }
 	}
