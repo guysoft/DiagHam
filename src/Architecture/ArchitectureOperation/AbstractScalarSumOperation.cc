@@ -149,10 +149,6 @@ bool AbstractScalarSumOperation::ArchitectureDependentApplyOperation(SMPArchitec
       for (int i = 0; i < architecture->GetNbrThreads(); ++i)
 	{
 	  this->GetScalar() += TmpOperations[i]->GetScalar();
-	  delete TmpOperations[i];
-	}
-      for (int i = 0; i < architecture->GetNbrThreads(); ++i)
-	{
 	  this->GetLongRationalScalar() += TmpOperations[i]->GetLongRationalScalar();
 	  delete TmpOperations[i];
 	}

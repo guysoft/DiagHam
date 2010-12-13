@@ -363,7 +363,7 @@ int ReshuffleVectors (RealVector* vectors, int nbrVectors, double componentError
   for (int j = 0; j < nbrVectors; ++j)      
     {
       int TmpPos = 0;
-      while ((TmpPos < vectors[0].GetVectorDimension()) && (fabs(vectors[0][TmpPos]) < componentError))
+      while ((TmpPos < vectors[j].GetVectorDimension()) && (fabs(vectors[j][TmpPos]) < componentError))
 	{
 	  TmpPos++;
 	}
