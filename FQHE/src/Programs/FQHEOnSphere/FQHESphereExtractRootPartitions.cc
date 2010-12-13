@@ -70,11 +70,12 @@ int main(int argc, char** argv)
   Manager += MainGroup;
  
   (*MainGroup) += new SingleStringOption  ('\0', "input-file", "name of the file which contains the spectrum");
-  (*MainGroup) += new SingleStringOption  ('\n', "eigenstate-list", "use a list of eigenstates instead of extracting the information from the spectrm");
+  (*MainGroup) += new SingleStringOption  ('\n', "eigenstate-list", "use a list of eigenstates instead of extracting the information from the spectrum");
   (*MainGroup) += new SingleDoubleOption  ('\n', "energy-error", "energy below which a state is considered as a zero energy states", 1e-10);
   (*MainGroup) += new SingleDoubleOption  ('\n', "component-error", "value below which norm of a vector component is assumed to be zero", 1e-8);
   (*MainGroup) += new SingleIntegerOption  ('\n', "output-precision", "numerical display precision", 14, true, 2, true, 14);
   (*MainGroup) += new SingleStringOption  ('o', "output", "output name for the root partition list (default name uses input-file, replacing dat extension with root)");
+  (*MainGroup) += new BooleanOption  ('\n', "save-states", "save the states corresponding to each root configuration");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -113,6 +114,7 @@ int main(int argc, char** argv)
   int MinLzValue = 0;
   int* LzDegeneracy = 0;
   long TotalNbrZeroEnergyStates = 0l;
+  bool SaveStates = Manager.GetBoolean("save-states");
 
   if (Manager.GetString("input-file") != 0)
     {
@@ -264,15 +266,21 @@ int main(int argc, char** argv)
 	}
       
       ParticleOnSphere* Space = 0;
+      char* FilePrefix = new char [256];
+      char* FileSuffix = new char [256];
       if (FermionFlag == false)
 	{
 	  if (SU2SpinFlag == false)
 	    {
 	      Space = new BosonOnSphereShort(NbrParticles, TotalLz, NbrFluxQuanta);
+	      sprintf (FilePrefix, "bosons_");
+	      sprintf (FileSuffix, "n_%d_2s_%d_lz_%d.", NbrParticles, NbrFluxQuanta, TotalLz);
 	    }
 	  else
 	    {
 	      Space = new BosonOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
+	      sprintf (FilePrefix, "bosons_sphere_su2_");
+	      sprintf (FileSuffix, "n_%d_2s_%d_sz_%d_lz_%d.", NbrParticles, NbrFluxQuanta, TotalSz, TotalLz);
 	    }
 	}
       else
@@ -290,23 +298,54 @@ int main(int argc, char** argv)
 	      else
 		Space = new FermionOnSphereUnlimited(NbrParticles, TotalLz, NbrFluxQuanta);
 #endif
+	      sprintf (FilePrefix, "fermions_");
+	      sprintf (FileSuffix, "n_%d_2s_%d_lz_%d.", NbrParticles, NbrFluxQuanta, TotalLz);
 	    }
 	  else
-	    if (SU2SpinFlag == true)
-	      Space = new FermionOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
-	    else 
-	      if (SU3SpinFlag == true)
-		Space = new FermionOnSphereWithSU3Spin(NbrParticles, TotalLz, NbrFluxQuanta, TotalTz, TotalY);
-	      else
-		if (SU4SpinFlag == true)
-		  Space = new FermionOnSphereWithSU4Spin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz, TotalIz, TotalPz);	    
+	    {
+	      if (SU2SpinFlag == true)
+		{
+		  Space = new FermionOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
+		  sprintf (FilePrefix, "fermions_sphere_su2_");
+		  sprintf (FileSuffix, "n_%d_2s_%d_sz_%d_lz_%d.", NbrParticles, NbrFluxQuanta, TotalSz, TotalLz);
+		}
+	      else 
+		{
+		  if (SU3SpinFlag == true)
+		    {
+		      Space = new FermionOnSphereWithSU3Spin(NbrParticles, TotalLz, NbrFluxQuanta, TotalTz, TotalY);
+		      sprintf (FilePrefix, "fermions_sphere_su3_");
+		      sprintf (FileSuffix, "n_%d_2s_%d_tz_%d_y_%d_lz_%d.", NbrParticles, NbrFluxQuanta, TotalTz, TotalY, TotalLz);
+		    }
+		  else
+		    {
+		      if (SU4SpinFlag == true)
+			{
+			  Space = new FermionOnSphereWithSU4Spin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz, TotalIz, TotalPz);	    
+			  sprintf (FilePrefix, "fermions_sphere_su4_");
+			  sprintf (FileSuffix, "n_%d_2s_%d_sz_%d_iz_%d_pz_%d_lz_%d.", NbrParticles, NbrFluxQuanta, TotalSz, TotalIz, TotalPz, TotalLz);
+			}
+		    }
+		}
+	    }
 	}
       
-     for (int j = 0; j < TmpNbrStates; ++j)
-       Space->PrintState(File, RootPositions[j]) << endl;
+      for (int j = 0; j < TmpNbrStates; ++j)
+	{
+	  Space->PrintState(File, RootPositions[j]) << endl;
+	  if (SaveStates == true)
+	    {
+	      char* FileName = new char[512];
+	      sprintf (FileName, "%sroot_%s%d.vec", FilePrefix, FileSuffix, j); 
+	      TmpVectors[j].WriteVector(FileName);
+	      delete[] FileName;
+	    }
+	}
       File << "nbr states = " << TmpNbrStates << endl;
       File << "-----------------------------------------" << endl;
 
+      delete[] FilePrefix;
+      delete[] FileSuffix;
       delete Space;
       delete[] RootPositions;
       delete[] TmpVectors;

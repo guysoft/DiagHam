@@ -46,9 +46,11 @@ OperatorMatrixElementOperation::OperatorMatrixElementOperation(AbstractOperator*
   this->Operator = oper->Clone();
   this->OperationType = AbstractArchitectureOperation::OperatorMatrixElement;  
   this->FirstComponent = 0;
-  this->NbrComponent = leftVector.GetVectorDimension();
+  this->NbrComponent = rightVector.GetVectorDimension();
   this->LargeFirstComponent = 0l;
-  this->LargeNbrComponent = leftVector.GetLargeVectorDimension();
+  this->LargeNbrComponent = rightVector.GetLargeVectorDimension();
+  this->Scalars = 0;
+  this->NbrScalars = 1;
 }
 
 // constructor 
@@ -67,6 +69,8 @@ OperatorMatrixElementOperation::OperatorMatrixElementOperation(AbstractOperator*
   this->NbrComponent = leftVector.GetVectorDimension();
   this->LargeFirstComponent = 0l;
   this->LargeNbrComponent = leftVector.GetLargeVectorDimension();
+  this->Scalars = 0;
+  this->NbrScalars = 1;
 }
  
 // copy constructor 
@@ -85,6 +89,8 @@ OperatorMatrixElementOperation::OperatorMatrixElementOperation(const OperatorMat
   this->NbrComponent = operation.NbrComponent;
   this->LargeFirstComponent = operation.LargeFirstComponent;
   this->LargeNbrComponent = operation.LargeNbrComponent;
+  this->Scalars = 0;
+  this->NbrScalars = 1;
 }
   
 // destructor
@@ -95,6 +101,15 @@ OperatorMatrixElementOperation::~OperatorMatrixElementOperation()
   delete this->Operator;
 }
 
+// clone operation
+//
+// return value = pointer to cloned operation
+
+AbstractArchitectureOperation* OperatorMatrixElementOperation::Clone()
+{
+  return new OperatorMatrixElementOperation (*this);
+}
+  
 // apply operation(architecture independent)
 //
 // return value = true if no error occurs

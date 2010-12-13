@@ -86,7 +86,7 @@ void AbstractScalarSumOperation::SetIndicesRange (const long& firstComponent, co
 
 int AbstractScalarSumOperation::GetDimension ()
 {
-  return 0;
+  return this->NbrComponent;
 }
 
 // get dimension (i.e. Hilbert space dimension, nbr of subdivisions,...) when large number are required
@@ -95,7 +95,7 @@ int AbstractScalarSumOperation::GetDimension ()
 
 long AbstractScalarSumOperation::GetLargeDimension ()
 {
-  return (long) this->GetDimension();
+  return this->LargeNbrComponent;
 }
 
 // apply operation for SMP architecture

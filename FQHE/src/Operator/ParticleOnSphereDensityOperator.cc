@@ -47,7 +47,7 @@ using std::endl;
 
 ParticleOnSphereDensityOperator::ParticleOnSphereDensityOperator(ParticleOnSphere* particle, int index)
 {
-  this->Particle= particle;
+  this->Particle= (ParticleOnSphere*) (particle->Clone());
   this->OperatorIndex = index;
   this->OperatorIndexDagger = index;
 }
@@ -60,9 +60,20 @@ ParticleOnSphereDensityOperator::ParticleOnSphereDensityOperator(ParticleOnSpher
  
 ParticleOnSphereDensityOperator::ParticleOnSphereDensityOperator(ParticleOnSphere* particle, int indexDagger, int index)
 {
-  this->Particle= particle;
+  this->Particle= (ParticleOnSphere*) (particle->Clone());
   this->OperatorIndexDagger = indexDagger;
   this->OperatorIndex = index;
+}
+
+// copy constructor
+//
+// oper = operator to copy
+  
+ParticleOnSphereDensityOperator::ParticleOnSphereDensityOperator(ParticleOnSphereDensityOperator& oper)
+{
+  this->Particle = (ParticleOnSphere*) (oper.Particle->Clone());
+  this->OperatorIndexDagger = oper.OperatorIndexDagger;
+  this->OperatorIndex = oper.OperatorIndex;
 }
 
 // destructor
@@ -70,6 +81,7 @@ ParticleOnSphereDensityOperator::ParticleOnSphereDensityOperator(ParticleOnSpher
 
 ParticleOnSphereDensityOperator::~ParticleOnSphereDensityOperator()
 {
+  delete this->Particle;
 }
   
 // clone operator without duplicating datas
@@ -78,7 +90,7 @@ ParticleOnSphereDensityOperator::~ParticleOnSphereDensityOperator()
 
 AbstractOperator* ParticleOnSphereDensityOperator::Clone ()
 {
-  return 0;
+  return new ParticleOnSphereDensityOperator(*this);
 }
 
 // set Hilbert space

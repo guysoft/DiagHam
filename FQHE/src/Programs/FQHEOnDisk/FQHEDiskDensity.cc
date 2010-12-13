@@ -25,6 +25,10 @@
 #include "GeneralTools/FilenameTools.h"
 #include "GeneralTools/MultiColumnASCIIFile.h"
 
+#include "Architecture/ArchitectureManager.h"
+#include "Architecture/AbstractArchitecture.h"
+#include "Architecture/ArchitectureOperation/OperatorMatrixElementOperation.h"
+
 #include <iostream>
 #include <stdlib.h>
 #include <string.h>
@@ -64,8 +68,11 @@ int main(int argc, char** argv)
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
 
+  ArchitectureManager Architecture;
+
   Manager += SystemGroup;
   Manager += PlotOptionGroup;
+  Architecture.AddOptionGroup(&Manager);
   Manager += PrecalculationGroup;
   Manager += MiscGroup;
 
@@ -79,7 +86,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
   (*SystemGroup) += new BooleanOption  ('\n', "coefficients-only", "only compute the one body coefficients that are requested to evaluate the density profile", false);
-
+  (*SystemGroup) += new BooleanOption ('\n', "density-profil", "only compute the density profil along x");  
   (*SystemGroup) += new BooleanOption ('\n', "force-xsymmetry", "assume the wave function is invariant under the x <->-x symmetry");  
   (*SystemGroup) += new BooleanOption ('\n', "force-ysymmetry", "assume the wave function is invariant under the y <->-y symmetry");  
 
@@ -114,7 +121,7 @@ int main(int argc, char** argv)
   char* OutputName = Manager.GetString("output");
   int NbrSamples = Manager.GetInteger("nbr-samples");
   bool Statistics = true;
-  bool Plot2DFlag = true;
+  bool Plot2DFlag = !(Manager.GetBoolean("density-profil"));
 
   if ((Manager.GetBoolean("boson") == true) || (Manager.GetBoolean("fermion") == true))
     {
@@ -142,15 +149,18 @@ int main(int argc, char** argv)
 	    return -1;
 	}
       
-      ParticleOnDiskFunctionBasis Basis(TotalLz);
+      ParticleOnDiskFunctionBasis Basis(ForceMaxMomentum);
       
-      double Scale = 1.5 * sqrt((double) TotalLz);
+      double Scale = 2.0 * sqrt((double) ForceMaxMomentum);
+      cout << "scale="  << Scale << endl;
       Complex* PrecalculatedValues = new Complex [ForceMaxMomentum + 1];
 	  
       for (int i = 0; i <= ForceMaxMomentum; ++i)
 	{
 	  ParticleOnSphereDensityOperator Operator (Space, i);
-	  PrecalculatedValues[i] = Operator.MatrixElement(State, State);
+	  OperatorMatrixElementOperation Operation(&Operator, State, State);
+	  Operation.ApplyOperation(Architecture.GetArchitecture());
+	  PrecalculatedValues[i] = Operation.GetScalar();
 	}
       
       ofstream File;
@@ -271,7 +281,7 @@ int main(int argc, char** argv)
 
       ParticleOnDiskFunctionBasis Basis(TotalLz);
       
-      double Scale = 1.5 * sqrt((double) TotalLz);
+      double Scale = 2.0 * sqrt((double) TotalLz);
       ComplexMatrix PrecalculatedValues(ForceMaxMomentum + 1, ForceMaxMomentum + 1, true);
 	  
       for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
@@ -303,7 +313,11 @@ int main(int argc, char** argv)
 	  for (int m = 0; m <= ForceMaxMomentum; ++m)
 	    {
 	      ParticleOnSphereDensityOperator Operator (LeftSpace, m);
-	      PrecalculatedValues.AddToMatrixElement(m, m, (Coefficients[i] * Coefficients[i]) * Operator.MatrixElement(LeftState, LeftState));
+	      OperatorMatrixElementOperation Operation(&Operator, LeftState, LeftState);
+	      Operation.ApplyOperation(Architecture.GetArchitecture());
+	      Complex Tmp = Operation.GetScalar();
+	      Tmp *= (Coefficients[i] * Coefficients[i]);
+	      PrecalculatedValues.AddToMatrixElement(m, m, Tmp);
 	    }
 	  for (int j = i + 1; j < InputVectors.GetNbrLines(); ++j)
 	    {
@@ -339,7 +353,9 @@ int main(int argc, char** argv)
 			{
 			  RightSpace->SetTargetSpace(LeftSpace);
 			  ParticleOnSphereDensityOperator Operator (RightSpace, m, n);
- 			  Complex Tmp = Operator.MatrixElement(LeftState, RightState);
+			  OperatorMatrixElementOperation Operation(&Operator, LeftState, RightState);
+			  Operation.ApplyOperation(Architecture.GetArchitecture());
+			  Complex Tmp = Operation.GetScalar();
  			  Tmp *= (Coefficients[i] * Coefficients[j]);
  			  PrecalculatedValues.AddToMatrixElement(m, n, Tmp);
  			  PrecalculatedValues.AddToMatrixElement(n, m, Conj(Tmp));

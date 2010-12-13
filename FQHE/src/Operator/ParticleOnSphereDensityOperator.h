@@ -71,6 +71,11 @@ class ParticleOnSphereDensityOperator : public AbstractOperator
   // index = index of the annihilation operator that is part of the density operator
   ParticleOnSphereDensityOperator(ParticleOnSphere* particle, int indexDagger, int index);
 
+  // copy constructor
+  //
+  // oper = operator to copy
+  ParticleOnSphereDensityOperator(ParticleOnSphereDensityOperator& oper);
+
   // destructor
   //
   ~ParticleOnSphereDensityOperator();

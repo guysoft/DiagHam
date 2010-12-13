@@ -85,18 +85,17 @@ class OperatorMatrixElementOperation: public AbstractScalarSumOperation
   //
   ~OperatorMatrixElementOperation();
   
+  // clone operation
+  //
+  // return value = pointer to cloned operation
+  AbstractArchitectureOperation* Clone();
+  
+ protected:
+
   // apply operation(architecture independent)
   //
   // return value = true if no error occurs
   bool RawApplyOperation();
-  
- protected:
-
-  // apply operation for SMP architecture
-  //
-  // architecture = pointer to the architecture
-  // return value = true if no error occurs
-  bool ArchitectureDependentApplyOperation(SMPArchitecture* architecture);
   
 };
 
