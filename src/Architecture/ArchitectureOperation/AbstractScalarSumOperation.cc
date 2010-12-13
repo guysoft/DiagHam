@@ -33,6 +33,14 @@
 #include "Architecture/SMPArchitecture.h"
 
 
+// default constructor
+//
+
+AbstractScalarSumOperation::AbstractScalarSumOperation()
+{
+  this->LongRationalScalars = 0;
+}
+  
 // destructor
 //
 
@@ -114,11 +122,26 @@ bool AbstractScalarSumOperation::ArchitectureDependentApplyOperation(SMPArchitec
   architecture->SendJobs();
   if (this->NbrScalars > 1)
     {
-      for (int i = 0; i < architecture->GetNbrThreads(); ++i)
+      if (this->Scalars != 0)
 	{
-	  for (int j = 0; j < this->NbrScalars; ++j)
-	    this->GetScalar(j) += TmpOperations[i]->GetScalar(j);
-	  delete TmpOperations[i];
+	  for (int i = 0; i < architecture->GetNbrThreads(); ++i)
+	    {
+	      for (int j = 0; j < this->NbrScalars; ++j)
+		this->GetScalar(j) += TmpOperations[i]->GetScalar(j);
+	      delete TmpOperations[i];
+	    }
+	}
+      else
+	{
+	  if (this->LongRationalScalars != 0)
+	    {
+	      for (int i = 0; i < architecture->GetNbrThreads(); ++i)
+		{
+		  for (int j = 0; j < this->NbrScalars; ++j)
+		    this->GetLongRationalScalar(j) += TmpOperations[i]->GetLongRationalScalar(j);
+		  delete TmpOperations[i];
+		}
+	    }
 	}
     }
   else
@@ -126,6 +149,11 @@ bool AbstractScalarSumOperation::ArchitectureDependentApplyOperation(SMPArchitec
       for (int i = 0; i < architecture->GetNbrThreads(); ++i)
 	{
 	  this->GetScalar() += TmpOperations[i]->GetScalar();
+	  delete TmpOperations[i];
+	}
+      for (int i = 0; i < architecture->GetNbrThreads(); ++i)
+	{
+	  this->GetLongRationalScalar() += TmpOperations[i]->GetLongRationalScalar();
 	  delete TmpOperations[i];
 	}
     }

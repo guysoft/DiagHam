@@ -31,6 +31,7 @@
 #include "config.h"
 #include "Architecture/ArchitectureOperation/FQHEDiskQuasiholePropagatorOperation.h"
 #include "Vector/RealVector.h"
+#include "Vector/LongRationalVector.h"
 #include "FunctionBasis/AbstractFunctionBasis.h"
 
 
@@ -47,8 +48,30 @@ FQHEDiskQuasiholePropagatorOperation::FQHEDiskQuasiholePropagatorOperation (Part
   this->LargeNbrComponent = space->GetLargeHilbertSpaceDimension();
   this->HilbertSpace = (ParticleOnSphere*) space->Clone();
   this->JackPolynomial = jackPolynomial;
+  this->RationalJackPolynomial = 0;
   this->OperationType = AbstractArchitectureOperation::QHEParticleWaveFunction;
   this->Scalars = 0;
+  this->LongRationalScalars = 0;
+  this->NbrScalars = 1;
+}
+
+// constructor 
+//
+// space = pointer to the Hilbert space to use
+// jackPolynomial = vector corresponding to the Jack polynomial
+
+FQHEDiskQuasiholePropagatorOperation::FQHEDiskQuasiholePropagatorOperation (ParticleOnSphere* space, LongRationalVector* jackPolynomial)
+{
+  this->FirstComponent = 0;
+  this->NbrComponent = 0;
+  this->LargeFirstComponent = 0;
+  this->LargeNbrComponent = space->GetLargeHilbertSpaceDimension();
+  this->HilbertSpace = (ParticleOnSphere*) space->Clone();
+  this->RationalJackPolynomial = jackPolynomial;
+  this->JackPolynomial = 0;
+  this->OperationType = AbstractArchitectureOperation::QHEParticleWaveFunction;
+  this->Scalars = 0;
+  this->LongRationalScalars = 0;
   this->NbrScalars = 1;
 }
 
@@ -63,10 +86,13 @@ FQHEDiskQuasiholePropagatorOperation::FQHEDiskQuasiholePropagatorOperation(const
   this->LargeFirstComponent = operation.LargeFirstComponent;
   this->LargeNbrComponent = operation.LargeNbrComponent;
   this->JackPolynomial = operation.JackPolynomial;
+  this->RationalJackPolynomial = operation.RationalJackPolynomial;
   this->HilbertSpace = (ParticleOnSphere*) operation.HilbertSpace->Clone();
   this->OperationType = AbstractArchitectureOperation::QHEParticleWaveFunction;
   this->Scalar = operation.Scalar;
+  this->LongRationalScalar = operation.LongRationalScalar;
   this->Scalars = 0; 
+  this->LongRationalScalars = 0;
   this->NbrScalars = 1;
 }
   
@@ -93,7 +119,14 @@ AbstractArchitectureOperation* FQHEDiskQuasiholePropagatorOperation::Clone()
 
 bool FQHEDiskQuasiholePropagatorOperation::RawApplyOperation()
 {
-  this->Scalar = this->HilbertSpace->JackSqrNormalization(*(this->JackPolynomial), this->LargeFirstComponent, this->LargeNbrComponent);
+  if (this->RationalJackPolynomial == 0)
+    {
+      this->Scalar = this->HilbertSpace->JackSqrNormalization(*(this->JackPolynomial), this->LargeFirstComponent, this->LargeNbrComponent);
+    }
+  else
+    {
+      this->LongRationalScalar = this->HilbertSpace->JackSqrNormalization(*(this->RationalJackPolynomial), this->LargeFirstComponent, this->LargeNbrComponent);
+    }
   return true;
 }
 

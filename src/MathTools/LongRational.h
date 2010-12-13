@@ -254,6 +254,12 @@ class LongRational
   // return value = reference on current coefficient
   LongRational& operator /= (const LongRational& x);
 
+  // multiply the current rational by 2^x
+  // 
+  // x = 2 power exponent
+  // return value = referencce on the current rational
+  LongRational& Power2Multiply (long x);
+
   // swap two rationals in an effecient way
   //
   // x = first rational

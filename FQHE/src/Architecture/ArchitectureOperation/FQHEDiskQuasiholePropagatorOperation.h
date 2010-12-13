@@ -39,6 +39,7 @@
 
 class AbstractFunctionBasis;
 class RealVector;
+class LongRationalVector;
 
 
 class FQHEDiskQuasiholePropagatorOperation: public AbstractScalarSumOperation
@@ -51,6 +52,8 @@ class FQHEDiskQuasiholePropagatorOperation: public AbstractScalarSumOperation
 
   // vector corresponding to the Jack polynomial  
   RealVector* JackPolynomial;
+  // vector corresponding to the Jack polynomial, rational version  
+  LongRationalVector* RationalJackPolynomial;
 
  public:
   
@@ -59,6 +62,12 @@ class FQHEDiskQuasiholePropagatorOperation: public AbstractScalarSumOperation
   // space = pointer to the Hilbert space to use
   // jackPolynomial = vector corresponding to the Jack polynomial
   FQHEDiskQuasiholePropagatorOperation(ParticleOnSphere* space, RealVector* jackPolynomial);
+
+  // constructor 
+  //
+  // space = pointer to the Hilbert space to use
+  // jackPolynomial = vector corresponding to the Jack polynomial
+  FQHEDiskQuasiholePropagatorOperation(ParticleOnSphere* space, LongRationalVector* jackPolynomial);
 
   // copy constructor 
   //

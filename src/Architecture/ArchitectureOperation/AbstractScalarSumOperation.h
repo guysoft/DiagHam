@@ -35,6 +35,7 @@
 #include "config.h"
 #include "Architecture/ArchitectureOperation/AbstractArchitectureOperation.h"
 #include "MathTools/Complex.h"
+#include "MathTools/LongRational.h"
 
 
 class AbstractScalarSumOperation: public AbstractArchitectureOperation
@@ -54,11 +55,19 @@ class AbstractScalarSumOperation: public AbstractArchitectureOperation
   Complex Scalar;
   // array complex scalars used to store the results in case of multiple scalar sum evaluation
   Complex* Scalars;
+  // complex scalar used to store the results
+  LongRational LongRationalScalar;
+  // array complex scalars used to store the results in case of multiple scalar sum evaluation
+  LongRational* LongRationalScalars;
   // number of complex scalars in the Scalars array
   int NbrScalars;
 
  public:
   
+  // default constructor
+  //
+  AbstractScalarSumOperation();
+
   // destructor
   //
   virtual ~AbstractScalarSumOperation();
@@ -91,6 +100,12 @@ class AbstractScalarSumOperation: public AbstractArchitectureOperation
   // return value = reference ont the scalar used to store the operation
   virtual Complex& GetScalar(int index = 0);
 
+  // return scalar corresponding to the result of the operation
+  //
+  // index = optional index in case of multiple scalar sum evaluation
+  // return value = reference ont the scalar used to store the operation
+  virtual LongRational& GetLongRationalScalar(int index = 0);
+
   // apply operation for SMP architecture
   //
   // architecture = pointer to the architecture
@@ -111,6 +126,18 @@ inline Complex& AbstractScalarSumOperation::GetScalar(int index)
     return this->Scalar;
   else
     return this->Scalars[index];
+}                                                                                                                                                                                  
+// return scalar corresponding to the result of the operation
+//
+// index = optional index in case of multiple scalar sum evaluation
+// return value = reference ont the scalar used to store the operation
+
+inline LongRational& AbstractScalarSumOperation::GetLongRationalScalar(int index)
+{
+  if (this->LongRationalScalars == 0)
+    return this->LongRationalScalar;
+  else
+    return this->LongRationalScalars[index];
 }                                                                                                                                                                                  
 
 #endif

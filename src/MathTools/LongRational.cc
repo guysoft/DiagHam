@@ -385,6 +385,16 @@ LongRational& LongRational::operator /= (long y)
   return *this;
 }
 
+// multiply the current rational by 2^x
+// 
+// x = 2 power exponent
+// return value = referencce on the current rational
+
+LongRational& LongRational::Power2Multiply (long x)
+{
+  return *this;
+}
+
 // Output stream overload
 //
 // str = reference on output stream
@@ -838,6 +848,43 @@ LongRational& LongRational::operator /= (const LongRational& x)
   this->Numerator *=  x.Denominator / Tmp2;
   this->Denominator *= x.Numerator / Tmp;
   return *this;     
+}
+
+// multiply the current rational by 2^x
+// 
+// x = 2 power exponent
+// return value = referencce on the current rational
+
+LongRational& LongRational::Power2Multiply (long x)
+{
+  if (x > 0)
+    {
+      while ((x > 0) && ((this->Denominator & ((LONGLONG) 0x1l)) == ((LONGLONG) 0x0l)))
+	{
+	  this->Denominator >>= 1;
+	  --x;
+	}
+      while (x > 0)
+	{
+	  this->Numerator <<= 1;
+	  --x;
+	}
+    }
+  else
+    {
+      x *= -1l;
+      while ((x > 0) && ((this->Numerator & ((LONGLONG) 0x1l)) == ((LONGLONG) 0x0l)))
+	{
+	  this->Numerator >>= 1;
+	  --x;
+	}
+      while (x > 0)
+	{
+	  this->Denominator <<= 1;
+	  --x;
+	}
+    }
+  return *this;
 }
 
 // Output stream overload
