@@ -168,8 +168,8 @@ int main(int argc, char** argv)
 	  LongRational Tmp = Excited / RationalBase;
 	  Tmp.Power2Multiply(DiffLzMax);
 	  LongRational Tmp2 = Tmp;
+	  Tmp2.Power2Multiply(DiffLzMax);
 	  cout << "2^" << DiffLzMax <<  " * " << Excited << " / " << RationalBase << " = " << Tmp2 << endl;
-	  //(pow(2.0, (double) DiffLzMax) * Excited / RationalBase) << endl;
 	}
       else
 	{
