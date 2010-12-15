@@ -32,6 +32,9 @@
 
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
 
+#include "Architecture/ArchitectureManager.h"
+#include "Architecture/AbstractArchitecture.h"
+
 #include <iostream>
 #include <cstring>
 #include <stdlib.h>
@@ -69,10 +72,14 @@ int main(int argc, char** argv)
   OptionGroup* OutputGroup = new OptionGroup ("output options");
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
+
+  ArchitectureManager Architecture;
+
   Manager += SystemGroup;
   Manager += PrecalculationGroup;
   Manager += OutputGroup;
   Manager += ToolsGroup;
+  Architecture.AddOptionGroup(&Manager);
   Manager += MiscGroup;
   (*SystemGroup) += new SingleStringOption  ('\0', "ground-file", "name of the file corresponding to the ground state of the whole system");
   (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
@@ -380,7 +387,7 @@ int main(int argc, char** argv)
 	      if (UseEntanglementMatrixFlag == false)
 		{
 		  if (RealSpaceCut == false)	    
-		    PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[0]);
+		    PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[0], Architecture.GetArchitecture());
 		  else
 		    {
 		      if ((2 * SubsystemNbrParticles) <= NbrParticles)
@@ -404,7 +411,7 @@ int main(int argc, char** argv)
 		      RealSymmetricMatrix TmpMatrix;
 		      if (RealSpaceCut == false)
 			{
-			  TmpMatrix =  Spaces[i]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[i]);
+			  TmpMatrix =  Spaces[i]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[i], Architecture.GetArchitecture());
 			}
 		      else
 			{

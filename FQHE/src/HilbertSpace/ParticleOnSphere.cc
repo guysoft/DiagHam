@@ -463,9 +463,10 @@ HermitianMatrix ParticleOnSphere::EvaluateShiftedPartialDensityMatrix (int subsy
 // nbrBosonSector = number of particles that belong to the subsytem 
 // lzSector = Lz sector in which the density matrix has to be evaluated 
 // groundState = reference on the total system ground state
+// architecture = pointer to the architecture to use parallelized algorithm 
 // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
 
-RealSymmetricMatrix ParticleOnSphere::EvaluatePartialDensityMatrixParticlePartition (int nbrBosonSector, int lzSector, RealVector& groundState)
+RealSymmetricMatrix ParticleOnSphere::EvaluatePartialDensityMatrixParticlePartition (int nbrBosonSector, int lzSector, RealVector& groundState, AbstractArchitecture* architecture)
 {
   RealSymmetricMatrix PartialDensityMatrix;
   return PartialDensityMatrix;
