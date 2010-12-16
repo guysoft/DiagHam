@@ -49,10 +49,15 @@
 
 FQHESphereParticleEntanglementSpectrumOperation::FQHESphereParticleEntanglementSpectrumOperation (ParticleOnSphere* fullSpace, ParticleOnSphere* destinationSpace, ParticleOnSphere* complementarySpace, RealVector& groundState, RealSymmetricMatrix& densityMatrix)
 {
+  this->FullSpace  = (ParticleOnSphere*) fullSpace->Clone();
+  this->DestinationHilbertSpace = (ParticleOnSphere*) destinationSpace->Clone();
+  this->ComplementaryHilbertSpace = (ParticleOnSphere*) complementarySpace->Clone();
+  this->GroundState = groundState;
+  this->DensityMatrix = densityMatrix;
   this->FirstComponent = 0;
   this->NbrComponent = 0;
   this->LargeFirstComponent = 0;
-  this->LargeNbrComponent = fullSpace->GetLargeHilbertSpaceDimension();
+  this->LargeNbrComponent = this->ComplementaryHilbertSpace->GetLargeHilbertSpaceDimension();
   this->OperationType = AbstractArchitectureOperation::FQHESphereParticleEntanglementSpectrumOperation;
   this->LocalOperations = 0;
   this->NbrLocalOperations = 0;
@@ -64,9 +69,9 @@ FQHESphereParticleEntanglementSpectrumOperation::FQHESphereParticleEntanglementS
 
 FQHESphereParticleEntanglementSpectrumOperation::FQHESphereParticleEntanglementSpectrumOperation(const FQHESphereParticleEntanglementSpectrumOperation& operation)
 {
-  this->FullSpace  = operation.FullSpace->Clone();
-  this->DestinationHilbertSpace = operation.DestinationHilbertSpace->Clone();
-  this->ComplementaryHilbertSpace = operation.ComplementaryHilbertSpace->Clone();
+  this->FullSpace  = (ParticleOnSphere*) operation.FullSpace->Clone();
+  this->DestinationHilbertSpace = (ParticleOnSphere*) operation.DestinationHilbertSpace->Clone();
+  this->ComplementaryHilbertSpace = (ParticleOnSphere*) operation.ComplementaryHilbertSpace->Clone();
   this->GroundState = operation.GroundState;
   this->DensityMatrix = operation.DensityMatrix;
   this->FirstComponent = operation.FirstComponent;
@@ -91,7 +96,9 @@ FQHESphereParticleEntanglementSpectrumOperation::~FQHESphereParticleEntanglement
 	}
       delete[] this->LocalOperations;
     }
-  delete this->HilbertSpace;
+  delete this->FullSpace;
+  delete this->DestinationHilbertSpace;
+  delete this->ComplementaryHilbertSpace;
 }
   
 // clone operation
@@ -109,28 +116,7 @@ AbstractArchitectureOperation* FQHESphereParticleEntanglementSpectrumOperation::
 
 bool FQHESphereParticleEntanglementSpectrumOperation::RawApplyOperation()
 {
-  if (this->FermionicFlag == false)
-    {
-      if (this->SymmetricFlag == true)
-	{
-	  ((BosonOnSphereHaldaneHugeBasisShort*) this->HilbertSpace)->GenerateSymmetrizedJackPolynomialFactorizedCore(this->InvAlpha, this->RootPartition, this->LargeFirstComponent, this->LargeFirstComponent + this->LargeNbrComponent - 1l, this->StateArray + this->LocalShift, this->ComponentArray + this->LocalShift, this->IndexArray + this->LocalShift, this->NbrComputedComponentArray + this->LocalShift, this->RhoArray + this->LocalShift);
-	}
-      else
-	{
-	  ((BosonOnSphereHaldaneHugeBasisShort*) this->HilbertSpace)->GenerateJackPolynomialFactorizedCore(this->InvAlpha, this->RootPartition, this->LargeFirstComponent, this->LargeFirstComponent + this->LargeNbrComponent - 1l, this->StateArray + this->LocalShift, this->ComponentArray + this->LocalShift, this->IndexArray + this->LocalShift, this->NbrComputedComponentArray + this->LocalShift, this->RhoArray + this->LocalShift);
-	}
-    }
-  else
-    {
-      if (this->SymmetricFlag == true)
-	{
-	  ((FermionOnSphereHaldaneHugeBasis*) this->HilbertSpace)->GenerateSymmetrizedJackPolynomialFactorizedCore(this->InvAlpha, this->RootPartition, this->LargeFirstComponent, this->LargeFirstComponent + this->LargeNbrComponent - 1l, this->StateArray + this->LocalShift, this->ComponentArray + this->LocalShift, this->IndexArray + this->LocalShift, this->NbrComputedComponentArray + this->LocalShift, this->RhoArray + this->LocalShift);
-	}
-      else
-	{
-	  ((FermionOnSphereHaldaneHugeBasis*) this->HilbertSpace)->GenerateJackPolynomialFactorizedCore(this->InvAlpha, this->RootPartition, this->LargeFirstComponent, this->LargeFirstComponent + this->LargeNbrComponent - 1l, this->StateArray + this->LocalShift, this->ComponentArray + this->LocalShift, this->IndexArray + this->LocalShift, this->NbrComputedComponentArray + this->LocalShift, this->RhoArray + this->LocalShift);
-	}
-    }
+  this->FullSpace->EvaluatePartialDensityMatrixParticlePartitionCore(this->LargeFirstComponent, this->LargeNbrComponent, this->ComplementaryHilbertSpace, this->DestinationHilbertSpace, this->GroundState, &this->DensityMatrix);
   return true;
 }
 
@@ -154,15 +140,16 @@ bool FQHESphereParticleEntanglementSpectrumOperation::ArchitectureDependentApply
   int ReducedNbrThreads = this->NbrLocalOperations - 1;
   for (int i = 0; i < ReducedNbrThreads; ++i)
     {
-      this->LocalOperations[i]->LocalShift = TmpFirstComponent - this->LargeFirstComponent;
       this->LocalOperations[i]->SetIndicesRange(TmpFirstComponent, Step);
+      this->LocalOperations[i]->DensityMatrix = RealSymmetricMatrix(this->DestinationHilbertSpace->GetHilbertSpaceDimension(), true);
       architecture->SetThreadOperation(this->LocalOperations[i], i);
       TmpFirstComponent += Step;
     }
   this->LocalOperations[ReducedNbrThreads]->SetIndicesRange(TmpFirstComponent, this->LargeNbrComponent + this->LargeFirstComponent - TmpFirstComponent);  
-  this->LocalOperations[ReducedNbrThreads]->LocalShift = TmpFirstComponent - this->LargeFirstComponent;
   architecture->SetThreadOperation(this->LocalOperations[ReducedNbrThreads], ReducedNbrThreads);
   architecture->SendJobs();
+  for (int i = 0; i < ReducedNbrThreads; ++i)
+    this->LocalOperations[ReducedNbrThreads]->DensityMatrix += this->LocalOperations[i]->DensityMatrix;
   return true;
 }
   

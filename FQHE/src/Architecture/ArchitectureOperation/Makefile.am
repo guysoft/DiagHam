@@ -8,4 +8,5 @@ FQHEDiskQuasiholePropagatorOperation.cc \
 FQHESphereJackGeneratorOperation.cc \
 FQHESphereJastrowMultiplicationOperation.cc \
 FQHESphereJastrowDivisionOperation.cc \
-FQHESphereMonomialsTimesSlaterProjectionOperation.cc
+FQHESphereMonomialsTimesSlaterProjectionOperation.cc \
+FQHESphereParticleEntanglementSpectrumOperation.cc

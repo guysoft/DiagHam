@@ -343,6 +343,18 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
   virtual RealSymmetricMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrBosonSector, int lzSector, RealVector& groundState, AbstractArchitecture* architecture = 0);
 
+  // core part of the evaluation density matrix particle partition calculation
+  // 
+  // minIndex = first index to consider in source Hilbert space
+  // nbrIndex = number of indices to consider in source Hilbert space
+  // complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e. part B)
+  // destinationHilbertSpace = pointer to the destination Hilbert space  (i.e. part A)
+  // groundState = reference on the total system ground state
+  // densityMatrix = reference on the density matrix where result has to stored
+  // return value = number of components that have been added to the density matrix
+  virtual long EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace,
+								  RealVector& groundState, RealSymmetricMatrix* densityMatrix);
+
   // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using real space partition. The density matrix is only evaluated in a given Lz sector.
   // 
   // nbrBosonSector = number of particles that belong to the subsytem 
@@ -554,18 +566,6 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // pauliK = number of particles allowed in consecutive orbitals
   // pauliR = number of consecutive orbitals
   virtual bool HasPauliExclusions(int index, int pauliK, int pauliR);
-
-  // core part of the evaluation density matrix particle partition calculation
-  // 
-  // minIndex = first index to consider in source Hilbert space
-  // nbrIndex = number of indices to consider in source Hilbert space
-  // sourceHilbertSpace = pointer to the source Hilbert space
-  // destinationHilbertSpace = pointer to the destination Hilbert space 
-  // groundState = reference on the total system ground state
-  // densityMatrix = reference on the density matrix where result has to stored
-  // return value = number of components that have been added to the density matrix
-  virtual long EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* sourceHilbertSpace,  ParticleOnSphere* destinationHilbertSpace,
-								  RealVector& groundState,RealSymmetricMatrix* densityMatrix);
 
 };
 

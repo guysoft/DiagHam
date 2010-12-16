@@ -114,7 +114,7 @@ class FQHESphereParticleEntanglementSpectrumOperation: public AbstractPrecalcula
 
 inline int FQHESphereParticleEntanglementSpectrumOperation::GetHilbertSpaceDimension ()
 {
-  return this->HilbertSpace->GetHilbertSpaceDimension();
+  return this->ComplementaryHilbertSpace->GetHilbertSpaceDimension();
 }
 
 #endif
