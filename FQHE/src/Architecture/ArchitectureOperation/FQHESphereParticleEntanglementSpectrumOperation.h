@@ -56,7 +56,15 @@ class FQHESphereParticleEntanglementSpectrumOperation: public AbstractPrecalcula
   RealVector GroundState;
   // reduced density matrix where result is stored
   RealSymmetricMatrix DensityMatrix;
+  // upper bound on the number of non zero matrix element in the reduced density matrix
+  long NbrNonZeroElements;
 
+  // pointer to the array where the top part coefficients are stored
+  double* IncompleteBetaThetaTop;
+  // pointer on the pointer to the array where the bottom part coefficients are stored
+  double* IncompleteBetaThetaBottom;
+  // The angle traced in the \hat{phi} direction between the 2 longitudes defining the cut in degrees
+  double PhiRange;
 
   // a temporary array to store copies of operations in SMP mode
   FQHESphereParticleEntanglementSpectrumOperation** LocalOperations;
@@ -73,6 +81,18 @@ class FQHESphereParticleEntanglementSpectrumOperation: public AbstractPrecalcula
   // groundState = reference on the total system ground state
   // densityMatrix = reference on the density matrix where result has to stored
   FQHESphereParticleEntanglementSpectrumOperation(ParticleOnSphere* fullSpace, ParticleOnSphere* destinationSpace, ParticleOnSphere* complementarySpace, RealVector& groundState, RealSymmetricMatrix& densityMatrix);
+
+  // constructor 
+  //
+  // fullSpace = pointer to the full Hilbert space to use
+  // destinationHilbertSpace = pointer to the destination Hilbert space (i.e. part A)
+  // complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e. part B)
+  // groundState = reference on the total system ground state
+  // densityMatrix = reference on the density matrix where result has to stored
+  // incompleteBetaThetaTop = pointer to the array where the top part coefficients are stored
+  // incompleteBetaThetaBotton = pointer on the pointer to the array where the bottom part coefficients are stored
+  // phiRange = The angle traced in the \hat{phi} direction between the 2 longitudes defining the cut in degrees
+  FQHESphereParticleEntanglementSpectrumOperation(ParticleOnSphere* fullSpace, ParticleOnSphere* destinationSpace, ParticleOnSphere* complementarySpace, RealVector& groundState, RealSymmetricMatrix& densityMatrix, double* incompleteBetaThetaBottom, double* incompleteBetaThetaTop, double phiRange);
 
   // copy constructor 
   //
@@ -92,6 +112,11 @@ class FQHESphereParticleEntanglementSpectrumOperation: public AbstractPrecalcula
   // 
   // return value = hilbert space dimension  
   int GetHilbertSpaceDimension ();
+
+  // upper bound on the number of non zero matrix element in the reduced density matrix
+  //
+  // return value = upper bound
+  long GetNbrNonZeroMatrixElements();
 
  protected:
 
@@ -115,6 +140,15 @@ class FQHESphereParticleEntanglementSpectrumOperation: public AbstractPrecalcula
 inline int FQHESphereParticleEntanglementSpectrumOperation::GetHilbertSpaceDimension ()
 {
   return this->ComplementaryHilbertSpace->GetHilbertSpaceDimension();
+}
+
+// upper bound on the number of non zero matrix element in the reduced density matrix
+//
+// return value = upper bound
+
+inline long FQHESphereParticleEntanglementSpectrumOperation::GetNbrNonZeroMatrixElements()
+{
+  return this->NbrNonZeroElements;
 }
 
 #endif

@@ -352,6 +352,21 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
   virtual RealSymmetricMatrix EvaluatePartialDensityMatrixRealSpacePartition (int nbrBosonSector, int lzSector, double thetaTop, double thetaBottom, double phiRange, RealVector& groundState);
 
+  // core part of the evaluation density matrix real space partition calculation
+  // 
+  // minIndex = first index to consider in complementary Hilbert space
+  // nbrIndex = number of indices to consider in complementary Hilbert space
+  // complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e part B)
+  // destinationHilbertSpace = pointer to the destination Hilbert space (i.e. part A)
+  // groundState = reference on the total system ground state
+  // densityMatrix = reference on the density matrix where result has to stored
+  // incompleteBetaThetaTop = pointer to the array where the top part coefficients are stored
+  // incompleteBetaThetaBotton = pointer on the pointer to the array where the bottom part coefficients are stored
+  // phiRange = The angle traced in the \hat{phi} direction between the 2 longitudes defining the cut in degrees
+  // return value = number of components that have been added to the density matrix
+  virtual long EvaluatePartialDensityMatrixRealSpacePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace,
+								   RealVector& groundState,  RealSymmetricMatrix* densityMatrix, double* incompleteBetaThetaBottom, double* incompleteBetaThetaTop, double phiRange);
+
   // evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state, using particle partition. The entanglement matrix is only evaluated in a given Lz sector.
   // 
   // nbrBosonSector = number of particles that belong to the subsytem 

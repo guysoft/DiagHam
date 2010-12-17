@@ -54,6 +54,41 @@ FQHESphereParticleEntanglementSpectrumOperation::FQHESphereParticleEntanglementS
   this->ComplementaryHilbertSpace = (ParticleOnSphere*) complementarySpace->Clone();
   this->GroundState = groundState;
   this->DensityMatrix = densityMatrix;
+  this->IncompleteBetaThetaTop = 0; 
+  this->IncompleteBetaThetaBottom = 0; 
+  this->PhiRange = 0.0;
+  this->NbrNonZeroElements = 0l;
+  this->FirstComponent = 0;
+  this->NbrComponent = 0;
+  this->LargeFirstComponent = 0;
+  this->LargeNbrComponent = this->ComplementaryHilbertSpace->GetLargeHilbertSpaceDimension();
+  this->OperationType = AbstractArchitectureOperation::FQHESphereParticleEntanglementSpectrumOperation;
+  this->LocalOperations = 0;
+  this->NbrLocalOperations = 0;
+}
+
+// constructor 
+//
+// fullSpace = pointer to the full Hilbert space to use
+// destinationHilbertSpace = pointer to the destination Hilbert space (i.e. part A)
+// complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e. part B)
+// groundState = reference on the total system ground state
+// densityMatrix = reference on the density matrix where result has to stored
+// incompleteBetaThetaTop = pointer to the array where the top part coefficients are stored
+// incompleteBetaThetaBotton = pointer on the pointer to the array where the bottom part coefficients are stored
+// phiRange = The angle traced in the \hat{phi} direction between the 2 longitudes defining the cut in degrees
+
+FQHESphereParticleEntanglementSpectrumOperation::FQHESphereParticleEntanglementSpectrumOperation(ParticleOnSphere* fullSpace, ParticleOnSphere* destinationSpace, ParticleOnSphere* complementarySpace, RealVector& groundState, RealSymmetricMatrix& densityMatrix, double* incompleteBetaThetaBottom, double* incompleteBetaThetaTop, double phiRange)
+{
+  this->FullSpace  = (ParticleOnSphere*) fullSpace->Clone();
+  this->DestinationHilbertSpace = (ParticleOnSphere*) destinationSpace->Clone();
+  this->ComplementaryHilbertSpace = (ParticleOnSphere*) complementarySpace->Clone();
+  this->GroundState = groundState;
+  this->DensityMatrix = densityMatrix;
+  this->IncompleteBetaThetaTop = incompleteBetaThetaTop; 
+  this->IncompleteBetaThetaBottom = incompleteBetaThetaBottom; 
+  this->PhiRange = phiRange;
+  this->NbrNonZeroElements = 0l;
   this->FirstComponent = 0;
   this->NbrComponent = 0;
   this->LargeFirstComponent = 0;
@@ -74,6 +109,10 @@ FQHESphereParticleEntanglementSpectrumOperation::FQHESphereParticleEntanglementS
   this->ComplementaryHilbertSpace = (ParticleOnSphere*) operation.ComplementaryHilbertSpace->Clone();
   this->GroundState = operation.GroundState;
   this->DensityMatrix = operation.DensityMatrix;
+  this->IncompleteBetaThetaTop = operation.IncompleteBetaThetaTop; 
+  this->IncompleteBetaThetaBottom = operation.IncompleteBetaThetaBottom; 
+  this->PhiRange = operation.PhiRange;
+  this->NbrNonZeroElements = operation.NbrNonZeroElements;
   this->FirstComponent = operation.FirstComponent;
   this->NbrComponent = operation.NbrComponent;
   this->LargeFirstComponent = operation.LargeFirstComponent;
@@ -116,7 +155,14 @@ AbstractArchitectureOperation* FQHESphereParticleEntanglementSpectrumOperation::
 
 bool FQHESphereParticleEntanglementSpectrumOperation::RawApplyOperation()
 {
-  this->FullSpace->EvaluatePartialDensityMatrixParticlePartitionCore(this->LargeFirstComponent, this->LargeNbrComponent, this->ComplementaryHilbertSpace, this->DestinationHilbertSpace, this->GroundState, &this->DensityMatrix);
+  if (this->IncompleteBetaThetaTop == 0)
+    {
+      this->NbrNonZeroElements = this->FullSpace->EvaluatePartialDensityMatrixParticlePartitionCore(this->LargeFirstComponent, this->LargeNbrComponent, this->ComplementaryHilbertSpace, this->DestinationHilbertSpace, this->GroundState, &this->DensityMatrix);
+    }
+  else
+    {
+      this->NbrNonZeroElements = this->FullSpace->EvaluatePartialDensityMatrixRealSpacePartitionCore(this->LargeFirstComponent, this->LargeNbrComponent, this->ComplementaryHilbertSpace, this->DestinationHilbertSpace, this->GroundState, &this->DensityMatrix, this->IncompleteBetaThetaTop, this->IncompleteBetaThetaBottom, this->PhiRange);
+    }
   return true;
 }
 
@@ -149,7 +195,10 @@ bool FQHESphereParticleEntanglementSpectrumOperation::ArchitectureDependentApply
   architecture->SetThreadOperation(this->LocalOperations[ReducedNbrThreads], ReducedNbrThreads);
   architecture->SendJobs();
   for (int i = 0; i < ReducedNbrThreads; ++i)
-    this->LocalOperations[ReducedNbrThreads]->DensityMatrix += this->LocalOperations[i]->DensityMatrix;
+    {
+      this->LocalOperations[ReducedNbrThreads]->DensityMatrix += this->LocalOperations[i]->DensityMatrix;
+      this->LocalOperations[ReducedNbrThreads]->NbrNonZeroElements += this->LocalOperations[i]->NbrNonZeroElements;
+    }
   return true;
 }
   
