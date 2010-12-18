@@ -1813,8 +1813,7 @@ RealSymmetricMatrix  BosonOnSphereShort::EvaluatePartialDensityMatrixParticlePar
 
   FQHESphereParticleEntanglementSpectrumOperation Operation(this, &TmpDestinationHilbertSpace, &TmpHilbertSpace, groundState, TmpDensityMatrix);
   Operation.ApplyOperation(architecture);
-  long TmpNbrNonZeroElements = 1l;//this->EvaluatePartialDensityMatrixParticlePartitionCore(0, TmpHilbertSpace.HilbertSpaceDimension, &TmpHilbertSpace, &TmpDestinationHilbertSpace, groundState, &TmpDensityMatrix);
-  if (TmpNbrNonZeroElements > 0)	
+  if (Operation.GetNbrNonZeroMatrixElements() > 0)	
     return TmpDensityMatrix;
   else
     {
@@ -1961,9 +1960,10 @@ long BosonOnSphereShort::EvaluatePartialDensityMatrixParticlePartitionCore (int 
 // thetaTop =  inclination angle defining one edge of the cut in degrees
 // thetaBottom = inclination angle defining the bottom edge of the cut. thetaBottom>thetaTop in degrees
 // groundState = reference on the total system ground state
+// architecture = pointer to the architecture to use parallelized algorithm 
 // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
 
-RealSymmetricMatrix BosonOnSphereShort::EvaluatePartialDensityMatrixRealSpacePartition (int nbrBosonSector, int lzSector, double thetaTop, double thetaBottom, double phiRange, RealVector& groundState)
+RealSymmetricMatrix BosonOnSphereShort::EvaluatePartialDensityMatrixRealSpacePartition (int nbrBosonSector, int lzSector, double thetaTop, double thetaBottom, double phiRange, RealVector& groundState, AbstractArchitecture* architecture)
 {
   if ((abs(lzSector) > (nbrBosonSector * this->LzMax)) || (thetaBottom <= thetaTop) || (phiRange <= 0.0))
     {
@@ -2115,154 +2115,166 @@ RealSymmetricMatrix BosonOnSphereShort::EvaluatePartialDensityMatrixRealSpacePar
   BosonOnSphereShort TmpDestinationHilbertSpace(nbrBosonSector, lzSector, this->LzMax);
   cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
   RealSymmetricMatrix TmpDensityMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
-  int* TmpStatePosition = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
-  int* TmpStatePosition2 = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
-  double* TmpStateCoefficient = new double [TmpDestinationHilbertSpace.HilbertSpaceDimension];
-  double* TmpStateCoefficientOccFactorial = new double [TmpDestinationHilbertSpace.HilbertSpaceDimension];
-  long TmpNbrNonZeroElements = 0;
-  unsigned long* TmpMonomial2 = 0;
-  unsigned long* TmpMonomial1 = new unsigned long [ComplementaryNbrBosonSector];
-  unsigned long* TmpMonomial3 = new unsigned long [this->NbrBosons];
-
-  double* LogFactorials = new double[this->NbrBosons + 1];
-  LogFactorials[0] = 0.0;
-  LogFactorials[1] = 0.0;
-  for (int i = 2 ; i <= this->NbrBosons; ++i)
-    LogFactorials[i] = LogFactorials[i - 1] + log((double) i); 
-
   BosonOnSphereShort TmpHilbertSpace(ComplementaryNbrBosonSector, this->TotalLz - lzSector, this->LzMax);
-  FactorialCoefficient Factorial;
-  unsigned long** TmpDestinationHilbertSpaceOccupationNumbers = new unsigned long* [TmpDestinationHilbertSpace.HilbertSpaceDimension];
-  unsigned long** TmpDestinationHilbertSpaceMonomial = new unsigned long* [TmpDestinationHilbertSpace.HilbertSpaceDimension];
-  int* TmpDestinationHilbertSpaceLzMax = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
-  double* TmpDestinationLogFactorials = new double [TmpDestinationHilbertSpace.HilbertSpaceDimension];
-  for (int i = 0; i < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++i)
-    {
-      TmpDestinationHilbertSpaceOccupationNumbers[i] = new unsigned long [this->NbrLzValue];
-      TmpDestinationHilbertSpaceMonomial[i] = new unsigned long [nbrBosonSector];
-      TmpDestinationHilbertSpace.FermionToBoson(TmpDestinationHilbertSpace.FermionBasis->StateDescription[i], TmpDestinationHilbertSpace.FermionBasis->StateLzMax[i], TmpDestinationHilbertSpaceOccupationNumbers[i], TmpDestinationHilbertSpaceLzMax[i]);
-      TmpDestinationHilbertSpace.ConvertToMonomial(TmpDestinationHilbertSpace.FermionBasis->StateDescription[i], TmpDestinationHilbertSpace.FermionBasis->StateLzMax[i], TmpDestinationHilbertSpaceMonomial[i]);
-      unsigned long* TmpOccupationNumber = TmpDestinationHilbertSpaceOccupationNumbers[i];
-      int TmpLzMax = TmpDestinationHilbertSpaceLzMax[i];
-      double TmpFactor = 0.0;
-      for (int k = 0; k <= TmpLzMax; ++k)
-	TmpFactor += LogFactorials[TmpOccupationNumber[k]];
-      TmpDestinationLogFactorials[i] =  TmpFactor;
-    }
 
-  //Compute the coefficients multiplying rhoA in TmpStateCoefficient
-  for (int i = 0; i < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++i)
-    {
-      TmpStateCoefficient [i] = 0.5 * nbrBosonSector * log(phiRange);
+   FQHESphereParticleEntanglementSpectrumOperation Operation(this, &TmpDestinationHilbertSpace, &TmpHilbertSpace, groundState, TmpDensityMatrix, IncompleteBetaThetaBottom, IncompleteBetaThetaTop, phiRange);
+   Operation.ApplyOperation(architecture);
+   if (Operation.GetNbrNonZeroMatrixElements() > 0)	
+     return TmpDensityMatrix;
+   else
+     {
+       RealSymmetricMatrix TmpDensityMatrixZero;
+       return TmpDensityMatrixZero;
+     }
+
+
+//   int* TmpStatePosition = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+//   int* TmpStatePosition2 = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+//   double* TmpStateCoefficient = new double [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+//   double* TmpStateCoefficientOccFactorial = new double [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+//   long TmpNbrNonZeroElements = 0;
+//   unsigned long* TmpMonomial2 = 0;
+//   unsigned long* TmpMonomial1 = new unsigned long [ComplementaryNbrBosonSector];
+//   unsigned long* TmpMonomial3 = new unsigned long [this->NbrBosons];
+
+//   double* LogFactorials = new double[this->NbrBosons + 1];
+//   LogFactorials[0] = 0.0;
+//   LogFactorials[1] = 0.0;
+//   for (int i = 2 ; i <= this->NbrBosons; ++i)
+//     LogFactorials[i] = LogFactorials[i - 1] + log((double) i); 
+
+//   FactorialCoefficient Factorial;
+//   unsigned long** TmpDestinationHilbertSpaceOccupationNumbers = new unsigned long* [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+//   unsigned long** TmpDestinationHilbertSpaceMonomial = new unsigned long* [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+//   int* TmpDestinationHilbertSpaceLzMax = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+//   double* TmpDestinationLogFactorials = new double [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+//   for (int i = 0; i < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++i)
+//     {
+//       TmpDestinationHilbertSpaceOccupationNumbers[i] = new unsigned long [this->NbrLzValue];
+//       TmpDestinationHilbertSpaceMonomial[i] = new unsigned long [nbrBosonSector];
+//       TmpDestinationHilbertSpace.FermionToBoson(TmpDestinationHilbertSpace.FermionBasis->StateDescription[i], TmpDestinationHilbertSpace.FermionBasis->StateLzMax[i], TmpDestinationHilbertSpaceOccupationNumbers[i], TmpDestinationHilbertSpaceLzMax[i]);
+//       TmpDestinationHilbertSpace.ConvertToMonomial(TmpDestinationHilbertSpace.FermionBasis->StateDescription[i], TmpDestinationHilbertSpace.FermionBasis->StateLzMax[i], TmpDestinationHilbertSpaceMonomial[i]);
+//       unsigned long* TmpOccupationNumber = TmpDestinationHilbertSpaceOccupationNumbers[i];
+//       int TmpLzMax = TmpDestinationHilbertSpaceLzMax[i];
+//       double TmpFactor = 0.0;
+//       for (int k = 0; k <= TmpLzMax; ++k)
+// 	TmpFactor += LogFactorials[TmpOccupationNumber[k]];
+//       TmpDestinationLogFactorials[i] =  TmpFactor;
+//     }
+
+//   //Compute the coefficients multiplying rhoA in TmpStateCoefficient
+//   for (int i = 0; i < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++i)
+//     {
+//       TmpStateCoefficient [i] = 0.5 * nbrBosonSector * log(phiRange);
       
-      for( int j=0; j<nbrBosonSector; j++)
-	{
-	  TmpStateCoefficient [i] += 0.5 * log( IncompleteBetaThetaBottom[TmpDestinationHilbertSpaceMonomial[i][j]] - IncompleteBetaThetaTop[TmpDestinationHilbertSpaceMonomial[i][j]]);
-	}
-      TmpStateCoefficient[i] = exp(TmpStateCoefficient[i]);
-    }
+//       for( int j=0; j<nbrBosonSector; j++)
+// 	{
+// 	  TmpStateCoefficient [i] += 0.5 * log( IncompleteBetaThetaBottom[TmpDestinationHilbertSpaceMonomial[i][j]] - IncompleteBetaThetaTop[TmpDestinationHilbertSpaceMonomial[i][j]]);
+// 	}
+//       TmpStateCoefficient[i] = exp(TmpStateCoefficient[i]);
+//     }
 
-  for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
-    {
-      int Pos = 0;
-      TmpHilbertSpace.ConvertToMonomial(TmpHilbertSpace.FermionBasis->StateDescription[MinIndex], TmpHilbertSpace.FermionBasis->StateLzMax[MinIndex], TmpMonomial1);
-      double FormFactor = 0.0;
-      for (int i=0; i < ComplementaryNbrBosonSector; i++)
-	FormFactor += log(1.0 - IncompleteBetaThetaBottom[TmpMonomial1[i]] + IncompleteBetaThetaTop[TmpMonomial1[i]] + (1.0 - phiRange) * (IncompleteBetaThetaBottom[TmpMonomial1[i]] - IncompleteBetaThetaTop[TmpMonomial1[i]]) );
-      FormFactor = exp(FormFactor);
-      TmpHilbertSpace.FermionToBoson(TmpHilbertSpace.FermionBasis->StateDescription[MinIndex], TmpHilbertSpace.FermionBasis->StateLzMax[MinIndex], TmpHilbertSpace.TemporaryState, TmpHilbertSpace.TemporaryStateLzMax);
-      double TmpHilbertSpaceFactorial = 0.0;
-      for (int k = 0; k <= TmpHilbertSpace.TemporaryStateLzMax; ++k)
-	TmpHilbertSpaceFactorial += LogFactorials[TmpHilbertSpace.TemporaryState[k]];
-      for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
-	{
-	  TmpMonomial2 = TmpDestinationHilbertSpaceMonomial[j];
-	  int TmpIndex2 = 0;
-	  int TmpIndex3 = 0;
-	  int TmpIndex4 = 0;
-	  while ((TmpIndex2 < ComplementaryNbrBosonSector) && (TmpIndex3 < nbrBosonSector)) 
-	    {
-	      while ((TmpIndex2 < ComplementaryNbrBosonSector) && (TmpMonomial2[TmpIndex3] <= TmpMonomial1[TmpIndex2]))
-		{
-		  TmpMonomial3[TmpIndex4] = TmpMonomial1[TmpIndex2];
-		  ++TmpIndex2;
-		  ++TmpIndex4;		  
-		}
-	      if (TmpIndex2 < ComplementaryNbrBosonSector)
-		{
-		  while ((TmpIndex3 < nbrBosonSector) && (TmpMonomial1[TmpIndex2] <= TmpMonomial2[TmpIndex3]))
-		    {
-		      TmpMonomial3[TmpIndex4] = TmpMonomial2[TmpIndex3];
-		      ++TmpIndex3;
-		      ++TmpIndex4;		  
-		    }
-		}
-	    }
-	  while (TmpIndex2 < ComplementaryNbrBosonSector)
-	    {
-	      TmpMonomial3[TmpIndex4] = TmpMonomial1[TmpIndex2];
-	      ++TmpIndex2;
-	      ++TmpIndex4;		  
-	    }
-	  while (TmpIndex3 < nbrBosonSector)
-	    {
-	      TmpMonomial3[TmpIndex4] = TmpMonomial2[TmpIndex3];
-	      ++TmpIndex3;
-	      ++TmpIndex4;		  
-	    }
+//   for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
+//     {
+//       int Pos = 0;
+//       TmpHilbertSpace.ConvertToMonomial(TmpHilbertSpace.FermionBasis->StateDescription[MinIndex], TmpHilbertSpace.FermionBasis->StateLzMax[MinIndex], TmpMonomial1);
+//       double FormFactor = 0.0;
+//       for (int i=0; i < ComplementaryNbrBosonSector; i++)
+// 	FormFactor += log(1.0 - IncompleteBetaThetaBottom[TmpMonomial1[i]] + IncompleteBetaThetaTop[TmpMonomial1[i]] + (1.0 - phiRange) * (IncompleteBetaThetaBottom[TmpMonomial1[i]] - IncompleteBetaThetaTop[TmpMonomial1[i]]) );
+//       FormFactor = exp(FormFactor);
+//       TmpHilbertSpace.FermionToBoson(TmpHilbertSpace.FermionBasis->StateDescription[MinIndex], TmpHilbertSpace.FermionBasis->StateLzMax[MinIndex], TmpHilbertSpace.TemporaryState, TmpHilbertSpace.TemporaryStateLzMax);
+//       double TmpHilbertSpaceFactorial = 0.0;
+//       for (int k = 0; k <= TmpHilbertSpace.TemporaryStateLzMax; ++k)
+// 	TmpHilbertSpaceFactorial += LogFactorials[TmpHilbertSpace.TemporaryState[k]];
+//       for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
+// 	{
+// 	  TmpMonomial2 = TmpDestinationHilbertSpaceMonomial[j];
+// 	  int TmpIndex2 = 0;
+// 	  int TmpIndex3 = 0;
+// 	  int TmpIndex4 = 0;
+// 	  while ((TmpIndex2 < ComplementaryNbrBosonSector) && (TmpIndex3 < nbrBosonSector)) 
+// 	    {
+// 	      while ((TmpIndex2 < ComplementaryNbrBosonSector) && (TmpMonomial2[TmpIndex3] <= TmpMonomial1[TmpIndex2]))
+// 		{
+// 		  TmpMonomial3[TmpIndex4] = TmpMonomial1[TmpIndex2];
+// 		  ++TmpIndex2;
+// 		  ++TmpIndex4;		  
+// 		}
+// 	      if (TmpIndex2 < ComplementaryNbrBosonSector)
+// 		{
+// 		  while ((TmpIndex3 < nbrBosonSector) && (TmpMonomial1[TmpIndex2] <= TmpMonomial2[TmpIndex3]))
+// 		    {
+// 		      TmpMonomial3[TmpIndex4] = TmpMonomial2[TmpIndex3];
+// 		      ++TmpIndex3;
+// 		      ++TmpIndex4;		  
+// 		    }
+// 		}
+// 	    }
+// 	  while (TmpIndex2 < ComplementaryNbrBosonSector)
+// 	    {
+// 	      TmpMonomial3[TmpIndex4] = TmpMonomial1[TmpIndex2];
+// 	      ++TmpIndex2;
+// 	      ++TmpIndex4;		  
+// 	    }
+// 	  while (TmpIndex3 < nbrBosonSector)
+// 	    {
+// 	      TmpMonomial3[TmpIndex4] = TmpMonomial2[TmpIndex3];
+// 	      ++TmpIndex3;
+// 	      ++TmpIndex4;		  
+// 	    }
 
-	  unsigned long TmpState = this->ConvertFromMonomial(TmpMonomial3);
-	  int TmpPos = this->FermionBasis->FindStateIndex(TmpState,  TmpMonomial3[0] + this->NbrBosons - 1);
-	  if (TmpPos != this->HilbertSpaceDimension)
-	    {	      
-	      this->FermionToBoson(TmpState, TmpMonomial3[0] + this->NbrBosons - 1, this->TemporaryState, this->TemporaryStateLzMax);
-	      double TmpFactorial = 0.0;	      
-	      for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
-		TmpFactorial += LogFactorials[this->TemporaryState[k]];
-	      TmpFactorial -= TmpHilbertSpaceFactorial + TmpDestinationLogFactorials[j];
-	      TmpFactorial *= 0.5; 
+// 	  unsigned long TmpState = this->ConvertFromMonomial(TmpMonomial3);
+// 	  int TmpPos = this->FermionBasis->FindStateIndex(TmpState,  TmpMonomial3[0] + this->NbrBosons - 1);
+// 	  if (TmpPos != this->HilbertSpaceDimension)
+// 	    {	      
+// 	      this->FermionToBoson(TmpState, TmpMonomial3[0] + this->NbrBosons - 1, this->TemporaryState, this->TemporaryStateLzMax);
+// 	      double TmpFactorial = 0.0;	      
+// 	      for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
+// 		TmpFactorial += LogFactorials[this->TemporaryState[k]];
+// 	      TmpFactorial -= TmpHilbertSpaceFactorial + TmpDestinationLogFactorials[j];
+// 	      TmpFactorial *= 0.5; 
 	      
-	      TmpStatePosition[Pos] = TmpPos;
-	      TmpStatePosition2[Pos] = j;
-	      TmpStateCoefficientOccFactorial[Pos] = exp(TmpFactorial);
-	      ++Pos;
-	    }
-	}
-      if (Pos != 0)
-	{
-	  ++TmpNbrNonZeroElements;
-	  for (int j = 0; j < Pos; ++j)
-	    {
-	      int Pos2 = TmpStatePosition2[j];
-	      double TmpValue = groundState[TmpStatePosition[j]] * TmpStateCoefficient[Pos2] * TmpStateCoefficientOccFactorial[j];
-	      for (int k = 0; k < Pos; ++k)
-		if (TmpStatePosition2[k] >= Pos2)
-		  {
-		    TmpDensityMatrix.AddToMatrixElement(Pos2, TmpStatePosition2[k],  FormFactor * TmpValue * groundState[TmpStatePosition[k]] * TmpStateCoefficient[TmpStatePosition2[k]] * TmpStateCoefficientOccFactorial[k]);
-		  }
-	    }
-	}
-    }
-  for (int i = 0; i < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++i)
-    {
-      delete[] TmpDestinationHilbertSpaceOccupationNumbers[i];
-      delete[] TmpDestinationHilbertSpaceMonomial[i];
-    }
-  delete[] TmpDestinationHilbertSpaceOccupationNumbers;
-  delete[] TmpDestinationHilbertSpaceLzMax;
-  delete[] TmpDestinationHilbertSpaceMonomial;
-  delete[] TmpStatePosition2;
-  delete[] TmpStatePosition;
-  delete[] TmpStateCoefficient;
-  delete[] TmpMonomial1;
-  delete[] TmpMonomial3;
-  if (TmpNbrNonZeroElements > 0)	
-    return TmpDensityMatrix;
-  else
-    {
-      RealSymmetricMatrix TmpDensityMatrixZero;
-      return TmpDensityMatrixZero;
-    }
+// 	      TmpStatePosition[Pos] = TmpPos;
+// 	      TmpStatePosition2[Pos] = j;
+// 	      TmpStateCoefficientOccFactorial[Pos] = exp(TmpFactorial);
+// 	      ++Pos;
+// 	    }
+// 	}
+//       if (Pos != 0)
+// 	{
+// 	  ++TmpNbrNonZeroElements;
+// 	  for (int j = 0; j < Pos; ++j)
+// 	    {
+// 	      int Pos2 = TmpStatePosition2[j];
+// 	      double TmpValue = groundState[TmpStatePosition[j]] * TmpStateCoefficient[Pos2] * TmpStateCoefficientOccFactorial[j];
+// 	      for (int k = 0; k < Pos; ++k)
+// 		if (TmpStatePosition2[k] >= Pos2)
+// 		  {
+// 		    TmpDensityMatrix.AddToMatrixElement(Pos2, TmpStatePosition2[k],  FormFactor * TmpValue * groundState[TmpStatePosition[k]] * TmpStateCoefficient[TmpStatePosition2[k]] * TmpStateCoefficientOccFactorial[k]);
+// 		  }
+// 	    }
+// 	}
+//     }
+//   for (int i = 0; i < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++i)
+//     {
+//       delete[] TmpDestinationHilbertSpaceOccupationNumbers[i];
+//       delete[] TmpDestinationHilbertSpaceMonomial[i];
+//     }
+//   delete[] TmpDestinationHilbertSpaceOccupationNumbers;
+//   delete[] TmpDestinationHilbertSpaceLzMax;
+//   delete[] TmpDestinationHilbertSpaceMonomial;
+//   delete[] TmpStatePosition2;
+//   delete[] TmpStatePosition;
+//   delete[] TmpStateCoefficient;
+//   delete[] TmpMonomial1;
+//   delete[] TmpMonomial3;
+//   if (TmpNbrNonZeroElements > 0)	
+//     return TmpDensityMatrix;
+//   else
+//     {
+//       RealSymmetricMatrix TmpDensityMatrixZero;
+//       return TmpDensityMatrixZero;
+//     }
 }
 
 // core part of the evaluation density matrix real space partition calculation
@@ -2311,11 +2323,12 @@ long BosonOnSphereShort::EvaluatePartialDensityMatrixRealSpacePartitionCore (int
 	TmpFactor += LogFactorials[TmpDestinationHilbertSpace->TemporaryState[k]];
       TmpDestinationLogFactorials[i] =  TmpFactor;
 
-      TmpStateCoefficient [i] = 0.5 * NbrBosonSector * log(phiRange);
+      TmpStateCoefficient[i] = 0.5 * NbrBosonSector * log(phiRange);
       
-      for( int j=0; j<NbrBosonSector; j++)
+      TmpDestinationHilbertSpace->ConvertToMonomial(TmpDestinationHilbertSpace->FermionBasis->StateDescription[i], TmpDestinationHilbertSpace->FermionBasis->StateLzMax[i], TmpMonomial2);
+     for(int j = 0; j < NbrBosonSector; j++)
 	{
-	  TmpStateCoefficient[i] += 0.5 * log( incompleteBetaThetaBottom[TmpDestinationHilbertSpace->TemporaryState[j]] - incompleteBetaThetaTop[TmpDestinationHilbertSpace->TemporaryState[j]]);
+	  TmpStateCoefficient[i] += 0.5 * log( incompleteBetaThetaBottom[TmpMonomial2[j]] - incompleteBetaThetaTop[TmpMonomial2[j]]);
 	}
       TmpStateCoefficient[i] = exp(TmpStateCoefficient[i]);
     }

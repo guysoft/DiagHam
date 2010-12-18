@@ -161,7 +161,7 @@ bool FQHESphereParticleEntanglementSpectrumOperation::RawApplyOperation()
     }
   else
     {
-      this->NbrNonZeroElements = this->FullSpace->EvaluatePartialDensityMatrixRealSpacePartitionCore(this->LargeFirstComponent, this->LargeNbrComponent, this->ComplementaryHilbertSpace, this->DestinationHilbertSpace, this->GroundState, &this->DensityMatrix, this->IncompleteBetaThetaTop, this->IncompleteBetaThetaBottom, this->PhiRange);
+      this->NbrNonZeroElements = this->FullSpace->EvaluatePartialDensityMatrixRealSpacePartitionCore(this->LargeFirstComponent, this->LargeNbrComponent, this->ComplementaryHilbertSpace, this->DestinationHilbertSpace, this->GroundState, &this->DensityMatrix, this->IncompleteBetaThetaBottom, this->IncompleteBetaThetaTop, this->PhiRange);
     }
   return true;
 }
@@ -199,6 +199,7 @@ bool FQHESphereParticleEntanglementSpectrumOperation::ArchitectureDependentApply
       this->LocalOperations[ReducedNbrThreads]->DensityMatrix += this->LocalOperations[i]->DensityMatrix;
       this->LocalOperations[ReducedNbrThreads]->NbrNonZeroElements += this->LocalOperations[i]->NbrNonZeroElements;
     }
+  this->NbrNonZeroElements = this->LocalOperations[ReducedNbrThreads]->NbrNonZeroElements;
   return true;
 }
   

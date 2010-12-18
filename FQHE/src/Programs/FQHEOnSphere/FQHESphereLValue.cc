@@ -92,45 +92,45 @@ int main(int argc, char** argv)
       return -1;
     }
   
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
     }
 
-  if(((SingleStringOption*) Manager["state"])->GetString() == 0)
+  if(Manager.GetString("state") == 0)
     {
       cout << "no input state" << endl << "see man page for option syntax or type FQHESphereLValue -h" << endl;
       return -1;
     }
 
-  int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
-  int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
-  int TotalLz = ((SingleIntegerOption*) Manager["total-lz"])->GetInteger();
+  int NbrParticles = Manager.GetInteger("nbr-particles");
+  int LzMax = Manager.GetInteger("lzmax");
+  int TotalLz = Manager.GetInteger("total-lz");
   bool FermionFlag = false;
   bool FixedLzFlag = true;
-  bool HaldaneBasisFlag = ((BooleanOption*) Manager["haldane"])->GetBoolean();
-  bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
-  if (((SingleStringOption*) Manager["statistics"])->GetString() == 0)
+  bool HaldaneBasisFlag = Manager.GetBoolean("haldane");
+  bool SymmetrizedBasis = Manager.GetBoolean("symmetrized-basis");
+  if (Manager.GetString("statistics") == 0)
     FermionFlag = true;
   if (NbrParticles==0)
-    if (FQHEOnSphereFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["state"])->GetString(), NbrParticles, LzMax, TotalLz, FermionFlag) == false)
+    if (FQHEOnSphereFindSystemInfoFromVectorFileName(Manager.GetString("state"), NbrParticles, LzMax, TotalLz, FermionFlag) == false)
       {
 	return -1;
       }
-  if (((SingleStringOption*) Manager["statistics"])->GetString() != 0)
-    if ((strcmp ("fermions", ((SingleStringOption*) Manager["statistics"])->GetString()) == 0))
+  if (Manager.GetString("statistics") != 0)
+    if ((strcmp ("fermions", Manager.GetString("statistics")) == 0))
       {
 	FermionFlag = true;
       }
     else
-      if ((strcmp ("bosons", ((SingleStringOption*) Manager["statistics"])->GetString()) == 0))
+      if ((strcmp ("bosons", Manager.GetString("statistics")) == 0))
 	{
 	  FermionFlag = false;
 	}
       else
 	{
-	  cout << ((SingleStringOption*) Manager["statistics"])->GetString() << " is an undefined statistics" << endl;
+	  cout << Manager.GetString("statistics") << " is an undefined statistics" << endl;
 	}  
   int Parity = TotalLz & 1;
   if (Parity != ((NbrParticles * LzMax) & 1))
@@ -139,7 +139,7 @@ int main(int argc, char** argv)
       return -1;           
     }
 
-  char* StateFileName = ((SingleStringOption*) Manager["state"])->GetString();
+  char* StateFileName = Manager.GetString("state");
   if (IsFile(StateFileName) == false)
     {
       cout << "state " << StateFileName << " does not exist or can't be opened" << endl;
@@ -197,23 +197,23 @@ int main(int argc, char** argv)
 	  else
 	    {
 	      int* ReferenceState = 0;
-	      if (((SingleStringOption*) Manager["reference-file"])->GetString() == 0)
+	      if (Manager.GetString("reference-file") == 0)
 		{
 		  ReferenceState = new int[LzMax + 1];
 		  for (int i = 0; i <= LzMax; ++i)
 		    ReferenceState[i] = 0;
-		  if (strcasecmp(((SingleStringOption*) Manager["reference-state"])->GetString(), "laughlin") == 0)
+		  if (strcasecmp(Manager.GetString("reference-state"), "laughlin") == 0)
 		    for (int i = 0; i <= LzMax; i += 3)
 		      ReferenceState[i] = 1;
 		  else
-		    if (strcasecmp(((SingleStringOption*) Manager["reference-state"])->GetString(), "pfaffian") == 0)
+		    if (strcasecmp(Manager.GetString("reference-state"), "pfaffian") == 0)
 		      for (int i = 0; i <= LzMax; i += 4)
 			{
 			  ReferenceState[i] = 1;
 			  ReferenceState[i + 1] = 1;
 			}
 		    else
-		      if (strcasecmp(((SingleStringOption*) Manager["reference-state"])->GetString(), "readrezayi3") == 0)
+		      if (strcasecmp(Manager.GetString("reference-state"), "readrezayi3") == 0)
 			for (int i = 0; i <= LzMax; i += 5)
 			  {
 			    ReferenceState[i] = 1;
@@ -222,14 +222,14 @@ int main(int argc, char** argv)
 			  }
 		      else
 			{
-			  cout << "unknown reference state " << ((SingleStringOption*) Manager["reference-state"])->GetString() << endl;
+			  cout << "unknown reference state " << Manager.GetString("reference-state") << endl;
 			  return -1;
 			}
 		}
 	      else
 		{
 		  ConfigurationParser ReferenceStateDefinition;
-		  if (ReferenceStateDefinition.Parse(((SingleStringOption*) Manager["reference-file"])->GetString()) == false)
+		  if (ReferenceStateDefinition.Parse(Manager.GetString("reference-file")) == false)
 		    {
 		      ReferenceStateDefinition.DumpErrors(cout) << endl;
 		      return -1;
@@ -247,7 +247,7 @@ int main(int argc, char** argv)
 		  int MaxNbrLz;
 		  if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
 		    {
-		      cout << "error while parsing ReferenceState in " << ((SingleStringOption*) Manager["reference-file"])->GetString() << endl;
+		      cout << "error while parsing ReferenceState in " << Manager.GetString("reference-file") << endl;
 		      return -1;     
 		    }
 		  if (MaxNbrLz != (LzMax + 1))
@@ -262,25 +262,25 @@ int main(int argc, char** argv)
 		}
 	      if (SymmetrizedBasis == false)
 		{
-		  if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
-		    Space = new FermionOnSphereHaldaneBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		  if (Manager.GetString("load-hilbert") != 0)
+		    Space = new FermionOnSphereHaldaneBasis(Manager.GetString("load-hilbert"), MemorySpace);
 		  else
 		    Space = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, LzMax, ReferenceState, MemorySpace);
-		  if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+		  if (Manager.GetString("save-hilbert") != 0)
 		    {
-		      ((FermionOnSphereHaldaneBasis*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+		      ((FermionOnSphereHaldaneBasis*) Space)->WriteHilbertSpace(Manager.GetString("save-hilbert"));
 		      return 0;
 		    }
 		}
 	      else
 		{
-		  if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
-		    Space = new FermionOnSphereHaldaneSymmetricBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		  if (Manager.GetString("load-hilbert") != 0)
+		    Space = new FermionOnSphereHaldaneSymmetricBasis(Manager.GetString("load-hilbert"), MemorySpace);
 		  else
 		    Space = new FermionOnSphereHaldaneSymmetricBasis(NbrParticles, LzMax, ReferenceState, MemorySpace);
-		  if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+		  if (Manager.GetString("save-hilbert") != 0)
 		    {
-		      ((FermionOnSphereHaldaneSymmetricBasis*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+		      ((FermionOnSphereHaldaneSymmetricBasis*) Space)->WriteHilbertSpace(Manager.GetString("save-hilbert"));
 		      return 0;
 		    }
 		}
@@ -313,13 +313,13 @@ int main(int argc, char** argv)
       else
 	{
 	  int* ReferenceState = 0;
-          if (((SingleStringOption*) Manager["reference-file"])->GetString() == 0)
+          if (Manager.GetString("reference-file") == 0)
             {
               cout << "error, a reference file is needed for bosons in Haldane basis" << endl;
               return -1;
             }
           ConfigurationParser ReferenceStateDefinition;
-          if (ReferenceStateDefinition.Parse(((SingleStringOption*) Manager["reference-file"])->GetString()) == false)
+          if (ReferenceStateDefinition.Parse(Manager.GetString("reference-file")) == false)
             {
               ReferenceStateDefinition.DumpErrors(cout) << endl;
               return -1;
@@ -337,7 +337,7 @@ int main(int argc, char** argv)
           int MaxNbrLz;
           if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
             {
-	      cout << "error while parsing ReferenceState in " << ((SingleStringOption*) Manager["reference-file"])->GetString() << endl;
+	      cout << "error while parsing ReferenceState in " << Manager.GetString("reference-file") << endl;
               return -1;
             }
           if (MaxNbrLz != (LzMax + 1))

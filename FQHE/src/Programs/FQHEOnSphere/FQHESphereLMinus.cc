@@ -17,6 +17,8 @@
 #include "GeneralTools/ArrayTools.h"
 #include "GeneralTools/FilenameTools.h"
 
+#include "Architecture/ArchitectureManager.h"
+#include "Architecture/AbstractArchitecture.h"
 #include "Operator/ParticleOnSphereLMinusOperator.h"
 
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
@@ -24,6 +26,10 @@
 #include "HilbertSpace/BosonOnSphereShort.h"
 #include "HilbertSpace/FermionOnSphere.h"
 #include "HilbertSpace/FermionOnSphereUnlimited.h"
+
+#include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
+
+#include "Hamiltonian/ParticleOnSphereL2Hamiltonian.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -41,13 +47,16 @@ int main(int argc, char** argv)
   cout.precision(14);
 
   // some running options and help
-  OptionManager Manager ("LMinus" , "0.01");
+  OptionManager Manager ("FQHESphereLMinus" , "0.01");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* DataGroup = new OptionGroup ("data options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
 
+  ArchitectureManager Architecture;
+
   Manager += SystemGroup;
   Manager += DataGroup;
+  Architecture.AddOptionGroup(&Manager);
   Manager += MiscGroup;
  
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles (0 if it has to be guessed from file name)", 0);
@@ -58,50 +67,54 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleStringOption  ('\n', "input-reference", "use a haldane basis with the given reference file for the input file");
   (*SystemGroup) += new SingleStringOption  ('\n', "output-reference", "use a haldane basis with the given reference file for the output file");
-
+  (*SystemGroup) += new BooleanOption  ('\n', "save-all", "save all states when applying L^- multiple times");
+  (*SystemGroup) += new BooleanOption  ('\n', "check-l2", "check the L^2 value after applying L^-");
 
   (*DataGroup) += new SingleStringOption  ('i', "input-file", "input vector file name");
   (*DataGroup) += new SingleStringOption  ('o', "output-file", "output vector file name");
+  (*DataGroup) += new SingleStringOption  ('\n', "interaction-name", "interaction name for the output files when computing more than one state", "lminus");
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type LMinus -h" << endl;
+      cout << "see man page for option syntax or type FQHESphereLMinus -h" << endl;
       return -1;
     }
   
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
     }
 
-  int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
-  int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
-  int Lz = ((SingleIntegerOption*) Manager["lz"])->GetInteger();
-  int NbrLMinus = ((SingleIntegerOption*) Manager["nbr-lm"])->GetInteger();
+  int NbrParticles = Manager.GetInteger("nbr-particles");
+  int LzMax = Manager.GetInteger("lzmax");
+  int Lz = Manager.GetInteger("lz");
+  int NbrLMinus = Manager.GetInteger("nbr-lm");
   bool FermionFlag = false;
-  if (((SingleStringOption*) Manager["statistics"])->GetString() == 0)
+  if (Manager.GetString("statistics") == 0)
     FermionFlag = true;
-  if (FQHEOnSphereFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["input-file"])->GetString(), NbrParticles, LzMax, Lz, FermionFlag) == false)
+  if (FQHEOnSphereFindSystemInfoFromVectorFileName(Manager.GetString("input-file"), NbrParticles, LzMax, Lz, FermionFlag) == false)
     {
       return -1;
     }
-  if ((((SingleStringOption*) Manager["statistics"])->GetString()) != 0)
-    if ((strcmp ("fermions", ((SingleStringOption*) Manager["statistics"])->GetString()) == 0))
-      {
-	FermionFlag = true;
-      }
-    else
-      if ((strcmp ("fermions", ((SingleStringOption*) Manager["statistics"])->GetString()) == 0))
+  if ((Manager.GetString("statistics")) != 0)
+    {
+      if ((strcmp ("fermions", Manager.GetString("statistics")) == 0))
 	{
-	  FermionFlag = false;
+	  FermionFlag = true;
 	}
       else
-	{
-	  cout << ((SingleStringOption*) Manager["statistics"])->GetString() << " is an undefined statistics" << endl;
-	}  
+	if ((strcmp ("fermions", Manager.GetString("statistics")) == 0))
+	  {
+	    FermionFlag = false;
+	  }
+	else
+	  {
+	    cout << Manager.GetString("statistics") << " is an undefined statistics" << endl;
+	  }  
+    }
   int Parity = Lz & 1;
   if (Parity != ((NbrParticles * LzMax) & 1))
     {
@@ -111,9 +124,9 @@ int main(int argc, char** argv)
 
   RealVector InitialVector; 
   RealVector TargetVector; 
-  if (InitialVector.ReadVector(((SingleStringOption*) Manager["input-file"])->GetString()) == false)
+  if (InitialVector.ReadVector(Manager.GetString("input-file")) == false)
     {
-      cout << "error while reading " << ((SingleStringOption*) Manager["input-file"])->GetString() << endl;
+      cout << "error while reading " << Manager.GetString("input-file") << endl;
       return -1;
     }
 	
@@ -194,25 +207,59 @@ int main(int argc, char** argv)
       IntialSpace = TargetSpace;
       InitialVector = TargetVector;
       InitialVector/=InitialVector.Norm();
+      if (Manager.GetBoolean("check-l2") == true)
+	{
+	  ParticleOnSphereL2Hamiltonian Hamiltonian (IntialSpace, NbrParticles, LzMax, (Lz - (2 * i)), Architecture.GetArchitecture(), 1.0, 0);
+	  RealVector TmpState(IntialSpace->GetHilbertSpaceDimension());
+	  VectorHamiltonianMultiplyOperation Operation (&Hamiltonian, &InitialVector, &TmpState);
+	  Operation.ApplyOperation(Architecture.GetArchitecture());
+	  double L2Value = TmpState * InitialVector;
+	  double RawTmpAngularMomentum = 0.5 * (sqrt ((4.0 * L2Value) + 1.0) - 1.0);
+	  cout << "checking L^2 value at Lz = " << (Lz - (2 * i)) << " : " << endl
+	       << "<L^2> = " << L2Value << endl
+	       << "<L> = " << RawTmpAngularMomentum << endl
+	       << "-----------------------------------" << endl;
+	}
+      if (Manager.GetBoolean("save-all") == true)
+	{
+	  char* OutputName = new char [strlen(Manager.GetString("interaction-name")) + 256];
+	  if (FermionFlag == true)
+	    {
+	      sprintf (OutputName, "fermions_%s_n_%d_2s_%d_lz_%d.0.vec", Manager.GetString("interaction-name"), NbrParticles, LzMax, (Lz - (2 * i)));
+	    }
+	  else
+	    {
+	      sprintf (OutputName, "bosons_%s_n_%d_2s_%d_lz_%d.0.vec", Manager.GetString("interaction-name"), NbrParticles, LzMax, (Lz - (2 * i)));
+	    }
+	  if (InitialVector.WriteVector(OutputName) == false)
+	    {
+	      cout << "error while writing " << OutputName << endl;
+	      return -1;
+	    }
+	  delete[] OutputName;
+	}
     }
-  char *OutputName;
-  if (Manager.GetString("output-file")!=NULL)
+  if (Manager.GetBoolean("save-all") == false)
     {
-      OutputName = new char[strlen(Manager.GetString("output-file"))+1];
-      strcpy(OutputName,Manager.GetString("output-file"));
-    }
-  else
-    {
-      OutputName = new char[strlen(Manager.GetString("input-file"))+10];
-      sprintf(OutputName,"%s_L-",Manager.GetString("input-file"));
-    }  
-  if (InitialVector.WriteVector(OutputName) == false)
-    {
-      cout << "error while writing " << OutputName << endl;
-      return -1;
+      char *OutputName;
+      if (Manager.GetString("output-file")!=NULL)
+	{
+	  OutputName = new char[strlen(Manager.GetString("output-file"))+1];
+	  strcpy(OutputName,Manager.GetString("output-file"));
+	}
+      else
+	{
+	  OutputName = new char[strlen(Manager.GetString("input-file"))+10];
+	  sprintf(OutputName,"%s_L-",Manager.GetString("input-file"));
+	}  
+      if (InitialVector.WriteVector(OutputName) == false)
+	{
+	  cout << "error while writing " << OutputName << endl;
+	  return -1;
+	}
+      delete [] OutputName;
     }
   delete IntialSpace;
-  delete [] OutputName;
   return 0;
 }
 

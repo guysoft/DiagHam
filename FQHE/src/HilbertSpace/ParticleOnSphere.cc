@@ -497,9 +497,10 @@ long ParticleOnSphere::EvaluatePartialDensityMatrixParticlePartitionCore (int mi
 // thetaTop =  inclination angle defining one edge of the cut in degrees
 // thetaBottom = inclination angle defining the bottom edge of the cut. thetaBottom>thetaTop in degrees
 // groundState = reference on the total system ground state
+// architecture = pointer to the architecture to use parallelized algorithm 
 // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
 
-RealSymmetricMatrix ParticleOnSphere::EvaluatePartialDensityMatrixRealSpacePartition (int nbrBosonSector, int lzSector, double thetaTop, double thetaBottom, double phiRange, RealVector& groundState)
+RealSymmetricMatrix ParticleOnSphere::EvaluatePartialDensityMatrixRealSpacePartition (int nbrBosonSector, int lzSector, double thetaTop, double thetaBottom, double phiRange, RealVector& groundState, AbstractArchitecture* architecture)
 {
   RealSymmetricMatrix PartialDensityMatrix;
   return PartialDensityMatrix;
