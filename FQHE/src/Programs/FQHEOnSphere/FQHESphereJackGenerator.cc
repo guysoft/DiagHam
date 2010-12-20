@@ -248,11 +248,10 @@ int main(int argc, char** argv)
 		    }
 	      if (SymmetrizedBasis == false)    
 		{
-		  // 		InitialSpace->GenerateJackPolynomialSparse(Alpha, OutputFileName, MinIndex, MaxIndex);
-		  cout << "disk storage mode only activated in symmetrized basis mode" << endl;
+		  InitialSpace->GenerateJackPolynomialSparse(Alpha, Architecture.GetArchitecture(), OutputFileName, MinIndex, MaxIndex, Manager.GetInteger("huge-vector") << 20, Manager.GetInteger("huge-blocks") << 20, Manager.GetBoolean("resume"));
 		}
 	      else
-		InitialSpace->GenerateSymmetrizedJackPolynomialSparse(Alpha,Architecture.GetArchitecture(), OutputFileName, MinIndex, MaxIndex, Manager.GetInteger("huge-vector") << 20, Manager.GetInteger("huge-blocks") << 20, Manager.GetBoolean("resume"));
+		InitialSpace->GenerateSymmetrizedJackPolynomialSparse(Alpha, Architecture.GetArchitecture(), OutputFileName, MinIndex, MaxIndex, Manager.GetInteger("huge-vector") << 20, Manager.GetInteger("huge-blocks") << 20, Manager.GetBoolean("resume"));
 	    }
 	  return 0;
 	}
@@ -392,9 +391,9 @@ int main(int argc, char** argv)
 			return -1;
 		      }
 		  if (SymmetrizedBasis == false)    
-		    InitialSpace->GenerateJackPolynomial(OutputState, AlphaNumerator, AlphaDenominator, SymbolicDepth, OutputFileName);
+		    InitialSpace->GenerateJackPolynomial(OutputState, AlphaNumerator, AlphaDenominator, SymbolicDepth, MinIndex, MaxIndex, OutputFileName);
 		  else
-		    InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, AlphaNumerator, AlphaDenominator, SymbolicDepth, OutputFileName);
+		    InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, AlphaNumerator, AlphaDenominator, SymbolicDepth, MinIndex, MaxIndex, OutputFileName);
 		  if (Manager.GetBoolean("normalize"))
 		    {
 		      cout << "calculations have been done with rational numbers, normalization will not be done" << endl;

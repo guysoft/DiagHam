@@ -449,35 +449,23 @@ bool LongRationalVector::ReadVector (const char* fileName, long minIndex, long m
       return false;
     }
   
-  unsigned ZeroPos, MaxPos;
-  File.seekg (0, ios::beg);
-  ZeroPos = File.tellg();
-  File.seekg (0, ios::end);
-  MaxPos = File.tellg ();
-
-  unsigned Length = MaxPos-ZeroPos-sizeof(int);  
-  File.seekg (0, ios::beg);
   int TmpDimension;
   ReadLittleEndian(File, TmpDimension);
 
   if (TmpDimension > 0)
     {
-      if (Length / (2l * sizeof(long)) > (unsigned)TmpDimension)
-	{      
-	  cout << "Error reading real vector "<<fileName<<": estimated length "<< (Length / (2l * sizeof(long))) <<" vs dimension "<<TmpDimension<<endl;
-	  if ((unsigned)TmpDimension == Length/sizeof(double))
-	    cout << "This could be a real vector!"<<endl;
-	  exit(1);
-	}
       if ((maxIndex >= TmpDimension) || (maxIndex <= 0l))
-	maxIndex = TmpDimension - 1;
+ 	maxIndex = TmpDimension - 1;
       if (minIndex < 0l)      
-	minIndex += TmpDimension;
-      this->Resize(maxIndex - minIndex + 1l);
-      File.seekg (minIndex * sizeof(double), ios::cur);    
-      for (int i = 0; i < this->Dimension; ++i)
+ 	minIndex += TmpDimension;
+       this->Resize(maxIndex - minIndex + 1l);
+      for (int i = 0; i < minIndex; ++i)
 	{
-	  this->Components[i].Read(File);
+	  this->Components[0].Read(File);
+	}
+      for (int i = minIndex; i < maxIndex; ++i)
+	{
+	  this->Components[i - minIndex].Read(File);
 	}
     }
   else
@@ -485,14 +473,17 @@ bool LongRationalVector::ReadVector (const char* fileName, long minIndex, long m
       long TmpLargeDimension;
       ReadLittleEndian(File, TmpLargeDimension);
       if ((maxIndex >= TmpLargeDimension) || (maxIndex <= 0l))
-	maxIndex = TmpLargeDimension - 1l;
-      if (minIndex < 0l)      
-	minIndex += TmpLargeDimension;
-      this->Resize(maxIndex - minIndex + 1l);
-      File.seekg (minIndex * sizeof(double), ios::cur);    
-      for (long i = 0; i < this->LargeDimension; ++i)
+ 	maxIndex = TmpLargeDimension - 1l;
+       if (minIndex < 0l)      
+ 	minIndex += TmpLargeDimension;
+       this->Resize(maxIndex - minIndex + 1l);
+      for (long i = 0l; i < minIndex; ++i)
 	{
-	  this->Components[i].Read(File);
+	  this->Components[0l].Read(File);
+	}
+      for (long i = minIndex; i < maxIndex; ++i)
+	{
+	  this->Components[i - minIndex].Read(File);
 	}
     }
   File.close();

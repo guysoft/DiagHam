@@ -489,10 +489,12 @@ RationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(RationalV
 // alphaDenominator = numerator of the Jack polynomial alpha coefficient
 // symbolicDepth = use symbolic calculation to solve singular values if non zero, if greater than zero it will use symbolic calculation up to a given depth (below that depth it will rely on numerical calculation),
 //                 -1 if the symbolic calculation has to be done up to the point the singular value problem has been solved
+// minIndex = start computing the Jack polynomial from the minIndex-th component
+// maxIndex = stop  computing the Jack polynomial up to the maxIndex-th component (0 if it has to be computed up to the end)
 // fileName = optional file name to store temporary calculations
 // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
 
-LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(LongRationalVector& jack, long alphaNumerator, long alphaDenominator, int symbolicDepth, char* fileName)
+LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(LongRationalVector& jack, long alphaNumerator, long alphaDenominator, int symbolicDepth, long minIndex, long maxIndex, char* fileName)
 {
   jack[0] = 1l;
   LongRational InvAlpha (2l * alphaDenominator, alphaNumerator);
@@ -534,8 +536,13 @@ LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(LongR
 						RhoRootInvAlphaCoef, RhoRootConstCoef, MaxRoot);
   LongRational Coefficient = 0l;
   LongRational Coefficient2 = 0l;
+  
+  if (minIndex < 1l)
+    minIndex = 1l;
+  if ((maxIndex <= minIndex) || (maxIndex > this->LargeHilbertSpaceDimension))
+    maxIndex = this->LargeHilbertSpaceDimension;
 
-  for (long i = 1; i < this->LargeHilbertSpaceDimension; ++i)
+  for (long i = minIndex; i < maxIndex; ++i)
     {
       if (symbolicDepth > 1)
 	{
@@ -715,10 +722,12 @@ LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(LongR
 // alphaDenominator = numerator of the Jack polynomial alpha coefficient
 // symbolicDepth = use symbolic calculation to solve singular values if non zero, if greater than zero it will use symbolic calculation up to a given depth (below that depth it will rely on numerical calculation),
 //                 -1 if the symbolic calculation has to be done up to the point the singular value problem has been solved
+// minIndex = start computing the Jack polynomial from the minIndex-th component
+// maxIndex = stop  computing the Jack polynomial up to the maxIndex-th component (0 if it has to be computed up to the end)
 // fileName = optional file name to store temporary calculations
 // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
 
-LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateSymmetrizedJackPolynomial(LongRationalVector& jack, long alphaNumerator, long alphaDenominator, int symbolicDepth, char* fileName)
+LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateSymmetrizedJackPolynomial(LongRationalVector& jack, long alphaNumerator, long alphaDenominator, int symbolicDepth, long minIndex, long maxIndex, char* fileName)
 {
   jack[0] = 1l;
   LongRational InvAlpha (2l * alphaDenominator, alphaNumerator);
@@ -761,7 +770,12 @@ LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateSymmetrizedJackPolyn
   LongRational Coefficient = 0l;
   LongRational Coefficient2 = 0l;
 
-  for (long i = 1; i < this->LargeHilbertSpaceDimension; ++i)
+  if (minIndex < 1l)
+    minIndex = 1l;
+  if ((maxIndex <= minIndex) || (maxIndex > this->LargeHilbertSpaceDimension))
+    maxIndex = this->LargeHilbertSpaceDimension;
+  
+  for (long i = minIndex; i < maxIndex; ++i)
     {
       if (jack[i] == 0l)
 	{
@@ -1618,8 +1632,12 @@ RationalVector& BosonOnSphereHaldaneBasisShort::CheckPossibleSingularCoefficient
   unsigned long* TmpMonomial2 = new unsigned long [this->NbrBosons];
   long* ConnectedIndices = new long [((this->NbrBosons * ReducedNbrBosons) >> 1) * (this->LzMax + 1)];
   int* EvaluatedCoeffcients = 0;
+  int* EvaluatedCoeffcientsFull = 0;
   if (checkConnectivity == true)
-    EvaluatedCoeffcients = new int[this->LargeHilbertSpaceDimension];
+    {
+      EvaluatedCoeffcients = new int[this->LargeHilbertSpaceDimension];
+      EvaluatedCoeffcientsFull = new int[this->LargeHilbertSpaceDimension];
+    }
 
   Rational RhoRoot = 0;
   unsigned long MaxRoot = this->FermionBasis->StateDescription[0];
@@ -1645,7 +1663,8 @@ RationalVector& BosonOnSphereHaldaneBasisShort::CheckPossibleSingularCoefficient
 	    {
 	      for (long j = 0l; j < this->LargeHilbertSpaceDimension; ++j)
 		EvaluatedCoeffcients[j] = 0;
-	      jack[i] = this->GenerateSingleJackPolynomialCoefficientCountOnly(i, EvaluatedCoeffcients, ConnectedIndices, TmpMonomial, TmpMonomial2, MaxRoot);	      
+//	      jack[i] = this->GenerateSingleJackPolynomialCoefficientCountOnly(i, EvaluatedCoeffcients, ConnectedIndices, TmpMonomial, TmpMonomial2, MaxRoot);	      
+	      jack[i] = this->GenerateSingleJackPolynomialCoefficientCountOnly(i, EvaluatedCoeffcientsFull, ConnectedIndices, TmpMonomial, TmpMonomial2, MaxRoot);	      
 	    }
 	}
       else
@@ -1655,7 +1674,10 @@ RationalVector& BosonOnSphereHaldaneBasisShort::CheckPossibleSingularCoefficient
   delete[] TmpMonomial2;
   delete[] ConnectedIndices;
   if (EvaluatedCoeffcients != 0)
-    delete[] EvaluatedCoeffcients;
+    {
+      delete[] EvaluatedCoeffcients;
+      delete[] EvaluatedCoeffcientsFull;
+    }
   return jack;
 }
   
