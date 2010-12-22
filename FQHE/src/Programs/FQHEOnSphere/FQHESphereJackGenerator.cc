@@ -391,9 +391,9 @@ int main(int argc, char** argv)
 			return -1;
 		      }
 		  if (SymmetrizedBasis == false)    
-		    InitialSpace->GenerateJackPolynomial(OutputState, AlphaNumerator, AlphaDenominator, SymbolicDepth, MinIndex, MaxIndex, OutputFileName);
+		    InitialSpace->GenerateJackPolynomial(OutputState, AlphaNumerator, AlphaDenominator, Architecture.GetArchitecture(), SymbolicDepth, MinIndex, MaxIndex, OutputFileName);
 		  else
-		    InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, AlphaNumerator, AlphaDenominator, SymbolicDepth, MinIndex, MaxIndex, OutputFileName);
+		    InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, AlphaNumerator, AlphaDenominator, Architecture.GetArchitecture(), SymbolicDepth, MinIndex, MaxIndex, OutputFileName);
 		  if (Manager.GetBoolean("normalize"))
 		    {
 		      cout << "calculations have been done with rational numbers, normalization will not be done" << endl;
@@ -540,10 +540,10 @@ int main(int argc, char** argv)
 		}
 	      else
 		{
-//		  if (SymmetrizedBasis == false)    
-//		    InitialSpace->GenerateJackPolynomialSparse(OutputState, Alpha, MinIndex, MaxIndex);
-		  //		  else
-		  InitialSpace->GenerateSymmetrizedJackPolynomialSparse(Alpha, Architecture.GetArchitecture(), OutputFileName, MinIndex, MaxIndex, Manager.GetInteger("huge-vector") << 20, Manager.GetInteger("huge-blocks") << 20, Manager.GetBoolean("resume"));
+		  if (SymmetrizedBasis == false)    
+		    InitialSpace->GenerateJackPolynomialSparse(OutputState, Alpha, MinIndex, MaxIndex);
+		  else
+		    InitialSpace->GenerateSymmetrizedJackPolynomialSparse(Alpha, Architecture.GetArchitecture(), OutputFileName, MinIndex, MaxIndex, Manager.GetInteger("huge-vector") << 20, Manager.GetInteger("huge-blocks") << 20, Manager.GetBoolean("resume"));
 		}
 	      return 0;
 	    }

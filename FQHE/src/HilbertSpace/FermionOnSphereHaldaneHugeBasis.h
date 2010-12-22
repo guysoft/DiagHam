@@ -396,6 +396,18 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
   virtual RealVector& GenerateSymmetrizedJackPolynomial(RealVector& jack, double alpha, long minIndex = 0l, long maxIndex = 0l, char* partialSave = 0);
 
+  // create the Jack polynomial decomposition corresponding to the root partition and using sparse storage
+  //
+  // alpha = value of the Jack polynomial alpha coefficient
+  // architecture = architecture to use for precalculation
+  // partialSave = save partial results in a given vector file
+  // minIndex = start computing the Jack polynomial from the minIndex-th component
+  // maxIndex = stop  computing the Jack polynomial up to the maxIndex-th component (0 if it has to be computed up to the end)
+  // memory = amount of memory (in bytes) allowed for temporary vector storage (0 if the whole vector has to be stored in memory)
+  // memoryBlock = amount of memory (in bytes) allowed for precomputing state indices
+  // resumeFlag = true if the calculation has to be resumed from a previous one (assuming partialSave contains already computed components)
+  virtual void GenerateJackPolynomialSparse(double alpha, AbstractArchitecture* architecture, char* partialSave = 0, long minIndex = 0l, long maxIndex = 0l, long memory = 0l, long memoryBlock = 0l, bool resumeFlag = false);
+
   // create the Jack polynomial decomposition corresponding to the root partition assuming the resulting state is invariant under the Lz<->-Lz symmetry and using sparse storage
   //
   // alpha = value of the Jack polynomial alpha coefficient

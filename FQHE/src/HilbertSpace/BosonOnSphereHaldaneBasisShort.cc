@@ -487,6 +487,7 @@ RationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(RationalV
 // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
 // alphaNumerator = numerator of the Jack polynomial alpha coefficient
 // alphaDenominator = numerator of the Jack polynomial alpha coefficient
+// architecture = architecture to use for precalculation
 // symbolicDepth = use symbolic calculation to solve singular values if non zero, if greater than zero it will use symbolic calculation up to a given depth (below that depth it will rely on numerical calculation),
 //                 -1 if the symbolic calculation has to be done up to the point the singular value problem has been solved
 // minIndex = start computing the Jack polynomial from the minIndex-th component
@@ -494,7 +495,7 @@ RationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(RationalV
 // fileName = optional file name to store temporary calculations
 // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
 
-LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(LongRationalVector& jack, long alphaNumerator, long alphaDenominator, int symbolicDepth, long minIndex, long maxIndex, char* fileName)
+LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(LongRationalVector& jack, long alphaNumerator, long alphaDenominator, AbstractArchitecture* architecture, int symbolicDepth, long minIndex, long maxIndex, char* fileName)
 {
   jack[0] = 1l;
   LongRational InvAlpha (2l * alphaDenominator, alphaNumerator);
@@ -532,8 +533,8 @@ LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(LongR
   LongRationalPolynomial* TmpDenominators = new LongRationalPolynomial[this->LargeHilbertSpaceDimension];		  
   int* EvaluatedCoeffcients = new int[this->LargeHilbertSpaceDimension];
 
-  this->GenerateSingleJackPolynomialCoefficient(jack, 0, TmpNumerators, TmpDenominators, ConnectedIndices, ConnectedCoefficients, TmpMonomial, TmpMonomial2,
-						RhoRootInvAlphaCoef, RhoRootConstCoef, MaxRoot);
+  this->GenerateSingleJackPolynomialCoefficient(0, TmpNumerators, TmpDenominators, ConnectedIndices, ConnectedCoefficients, TmpMonomial, TmpMonomial2,
+						RhoRootInvAlphaCoef, RhoRootConstCoef, MaxRoot, architecture);
   LongRational Coefficient = 0l;
   LongRational Coefficient2 = 0l;
   
@@ -546,8 +547,8 @@ LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(LongR
     {
       if (symbolicDepth > 1)
 	{
-	  this->GenerateSingleJackPolynomialCoefficient(jack, i, TmpNumerators, TmpDenominators, ConnectedIndices, ConnectedCoefficients, TmpMonomial, TmpMonomial2,
-							RhoRootInvAlphaCoef, RhoRootConstCoef, MaxRoot);
+	  this->GenerateSingleJackPolynomialCoefficient(i, TmpNumerators, TmpDenominators, ConnectedIndices, ConnectedCoefficients, TmpMonomial, TmpMonomial2,
+							RhoRootInvAlphaCoef, RhoRootConstCoef, MaxRoot, architecture);
 	  if (symbolicDepth == 3)
 	    {
 	      cout << TmpNumerators[i] << endl;
@@ -583,8 +584,8 @@ LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(LongR
 		}
 	      long NbrComponentToEvaluate = this->GenerateSingleJackPolynomialCoefficientCountOnly(i, EvaluatedCoeffcients, ConnectedIndices, TmpMonomial, TmpMonomial2, MaxRoot);
 	      cout << "number of components to evalute using symbolic calculation : " << NbrComponentToEvaluate << endl;
-	      this->GenerateSingleJackPolynomialCoefficient(jack, i, TmpNumerators, TmpDenominators, ConnectedIndices, ConnectedCoefficients, TmpMonomial, TmpMonomial2,
-							    RhoRootInvAlphaCoef, RhoRootConstCoef, MaxRoot);
+	      this->GenerateSingleJackPolynomialCoefficient(i, TmpNumerators, TmpDenominators, ConnectedIndices, ConnectedCoefficients, TmpMonomial, TmpMonomial2,
+							    RhoRootInvAlphaCoef, RhoRootConstCoef, MaxRoot, architecture);
 	      TmpNumerators[i].PolynomialEvaluate(InvAlpha, Coefficient);
 	      Coefficient /= TmpDenominators[i].PolynomialEvaluate(InvAlpha);
 	      if (symbolicDepth != 3)
@@ -681,8 +682,6 @@ LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(LongR
 		  ConnectedIndices2[0] = ConnectedIndices[0];
 		  ConnectedCoefficients2[0] = ConnectedCoefficients[0];
 		}
-	      //	      Coefficient = jack[ConnectedIndices2[0]];
-	      //	      Coefficient *= ConnectedCoefficients2[0];	  
  	      Coefficient = ConnectedCoefficients2[0];	  
 	      Coefficient *= jack[ConnectedIndices2[0]];
 	      for (int j = 1; j < NbrConnected; ++j)
@@ -690,7 +689,6 @@ LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(LongR
 		  Coefficient2 = ConnectedCoefficients2[j];
 		  Coefficient2 *= jack[ConnectedIndices2[j]];
 		  Coefficient += Coefficient2;
-		  //		  Coefficient += ConnectedCoefficients2[j] * jack[ConnectedIndices2[j]];
 		}
 	      Coefficient *= InvAlpha;
 	      Rho -= RhoRoot;
@@ -727,7 +725,7 @@ LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(LongR
 // fileName = optional file name to store temporary calculations
 // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
 
-LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateSymmetrizedJackPolynomial(LongRationalVector& jack, long alphaNumerator, long alphaDenominator, int symbolicDepth, long minIndex, long maxIndex, char* fileName)
+LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateSymmetrizedJackPolynomial(LongRationalVector& jack, long alphaNumerator, long alphaDenominator, AbstractArchitecture* architecture, int symbolicDepth, long minIndex, long maxIndex, char* fileName)
 {
   jack[0] = 1l;
   LongRational InvAlpha (2l * alphaDenominator, alphaNumerator);
@@ -765,8 +763,8 @@ LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateSymmetrizedJackPolyn
   LongRationalPolynomial* TmpDenominators = new LongRationalPolynomial[this->LargeHilbertSpaceDimension];		  
   int* EvaluatedCoeffcients = new int[this->LargeHilbertSpaceDimension];
 
-  this->GenerateSingleJackPolynomialCoefficient(jack, 0, TmpNumerators, TmpDenominators, ConnectedIndices, ConnectedCoefficients, TmpMonomial, TmpMonomial2, 
-						RhoRootInvAlphaCoef, RhoRootConstCoef, MaxRoot);
+  this->GenerateSingleJackPolynomialCoefficient(0, TmpNumerators, TmpDenominators, ConnectedIndices, ConnectedCoefficients, TmpMonomial, TmpMonomial2, 
+						RhoRootInvAlphaCoef, RhoRootConstCoef, MaxRoot, architecture);
   LongRational Coefficient = 0l;
   LongRational Coefficient2 = 0l;
 
@@ -786,8 +784,8 @@ LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateSymmetrizedJackPolyn
 	    Rho += TmpMonomial[j] * ((TmpMonomial[j] - 1l) - InvAlpha * ((long) j));
 	  if (symbolicDepth > 1)
 	    {
-	      this->GenerateSingleJackPolynomialCoefficient(jack, i, TmpNumerators, TmpDenominators, ConnectedIndices, ConnectedCoefficients, TmpMonomial, TmpMonomial2, 
-							    RhoRootInvAlphaCoef, RhoRootConstCoef, MaxRoot, 0, true);
+	      this->GenerateSingleJackPolynomialCoefficient(i, TmpNumerators, TmpDenominators, ConnectedIndices, ConnectedCoefficients, TmpMonomial, TmpMonomial2, 
+							    RhoRootInvAlphaCoef, RhoRootConstCoef, MaxRoot, architecture, 0, true);
 	      long TmpIndex = this->FermionBasis->FindStateIndex(((FermionOnSphereHaldaneBasis*) this->FermionBasis)->GetSymmetricState(CurrentPartition), (this->LzMax - TmpMonomial[ReducedNbrBosons]) + ReducedNbrBosons);
 	      if (i < TmpIndex)
 		{
@@ -822,8 +820,8 @@ LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateSymmetrizedJackPolyn
 		}
 	      long NbrComponentToEvaluate = this->GenerateSingleJackPolynomialCoefficientCountOnly(i, EvaluatedCoeffcients, ConnectedIndices, TmpMonomial, TmpMonomial2, MaxRoot);
 	      cout << "number of components to evalute using symbolic calculation : " << NbrComponentToEvaluate << endl;
-	      this->GenerateSingleJackPolynomialCoefficient(jack, i, TmpNumerators, TmpDenominators, ConnectedIndices, ConnectedCoefficients, TmpMonomial, TmpMonomial2, 
-							    RhoRootInvAlphaCoef, RhoRootConstCoef, MaxRoot, 0, true);
+	      this->GenerateSingleJackPolynomialCoefficient(i, TmpNumerators, TmpDenominators, ConnectedIndices, ConnectedCoefficients, TmpMonomial, TmpMonomial2, 
+							    RhoRootInvAlphaCoef, RhoRootConstCoef, MaxRoot, architecture, 0, true);
 	      LongRational Tmp = TmpNumerators[i].PolynomialEvaluate(InvAlpha);
 	      Tmp /= TmpDenominators[i].PolynomialEvaluate(InvAlpha);
 	      if (symbolicDepth != 3)
@@ -1172,7 +1170,6 @@ bool BosonOnSphereHaldaneBasisShort::GenerateSingleJackPolynomialCoefficient(Rat
 
 // compute a single coefficient of the Jack polynomial decomposition corresponding to the root partition, assuming only rational numbers occur and using (partial symbolic calculation)
 //
-// jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
 // index = index of the component to compute
 // numerators = array of polynomials attached to each coefficient numerator
 // denominators = array of polynomials attached to each coefficient denominator
@@ -1181,11 +1178,12 @@ bool BosonOnSphereHaldaneBasisShort::GenerateSingleJackPolynomialCoefficient(Rat
 // rhoRootInvAlphaCoef = coefficient in front of inv alpha in the rho for the root partition
 // rhoRootConstCoef = constant coefficient in the rho for the root partition
 // maxRoot = fermionic expression for the root partition
+// architecture = architecture to use for precalculation
 // currentNbrComponents = current number of components computed for the symbolic of the index-th compoment
 // symmetryFlag = true iof the Lz <-> -Lz symmetry has to be used
 // return value = total number of components computed for the symbolic of the index-th compoment
 
-long BosonOnSphereHaldaneBasisShort::GenerateSingleJackPolynomialCoefficient(LongRationalVector& jack, long index, LongRationalPolynomial* numerators, LongRationalPolynomial* denominators, long* connectedIndices, long* connectedCoefficients, unsigned long* tmpMonomial, unsigned long* tmpMonomial2, LongRational& rhoRootInvAlphaCoef, LongRational& rhoRootConstCoef, unsigned long maxRoot, long currentNbrComponents, bool symmetryFlag)
+long BosonOnSphereHaldaneBasisShort::GenerateSingleJackPolynomialCoefficient(long index, LongRationalPolynomial* numerators, LongRationalPolynomial* denominators, long* connectedIndices, long* connectedCoefficients, unsigned long* tmpMonomial, unsigned long* tmpMonomial2, LongRational& rhoRootInvAlphaCoef, LongRational& rhoRootConstCoef, unsigned long maxRoot, AbstractArchitecture* architecture, long currentNbrComponents, bool symmetryFlag)
 {
   if (numerators[index].Defined())
     return 0l;
@@ -1322,8 +1320,8 @@ long BosonOnSphereHaldaneBasisShort::GenerateSingleJackPolynomialCoefficient(Lon
     {
       if (!numerators[ConnectedIndices2[i]].Defined())
         {
-	  TmpNbrComponents += this->GenerateSingleJackPolynomialCoefficient(jack, ConnectedIndices2[i], numerators, denominators, connectedIndices, connectedCoefficients, 
-									    tmpMonomial, tmpMonomial2, rhoRootInvAlphaCoef, rhoRootConstCoef, maxRoot, currentNbrComponents + TmpNbrComponents, symmetryFlag);
+	  TmpNbrComponents += this->GenerateSingleJackPolynomialCoefficient(ConnectedIndices2[i], numerators, denominators, connectedIndices, connectedCoefficients, 
+									    tmpMonomial, tmpMonomial2, rhoRootInvAlphaCoef, rhoRootConstCoef, maxRoot, architecture, currentNbrComponents + TmpNbrComponents, symmetryFlag);
 	}
     }
 
