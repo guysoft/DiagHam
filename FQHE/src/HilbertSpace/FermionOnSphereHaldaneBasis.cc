@@ -38,6 +38,8 @@
 #include "FunctionBasis/AbstractFunctionBasis.h"
 #include "GeneralTools/ArrayTools.h"
 #include "GeneralTools/Endian.h"
+#include "Polynomial/RationalPolynomial.h"
+#include "Polynomial/LongRationalPolynomial.h"
 
 #include <math.h>
 #include <fstream>
@@ -1438,6 +1440,896 @@ RealVector& FermionOnSphereHaldaneBasis::GenerateSymmetrizedJackPolynomial(RealV
   return jack;
 }
 
+// create the Jack polynomial decomposition corresponding to the root partition, assuming only rational numbers occur
+//
+// jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
+// alphaNumerator = numerator of the Jack polynomial alpha coefficient
+// alphaDenominator = numerator of the Jack polynomial alpha coefficient
+// architecture = architecture to use for precalculation
+// symbolicDepth = use symbolic calculation to solve singular values if non zero, if greater than zero it will use symbolic calculation up to a given depth (below that depth it will rely on numerical calculation),
+//                 -1 if the symbolic calculation has to be done up to the point the singular value problem has been solved
+// minIndex = start computing the Jack polynomial from the minIndex-th component
+// maxIndex = stop  computing the Jack polynomial up to the maxIndex-th component (0 if it has to be computed up to the end)
+// fileName = optional file name to store temporary calculations
+// return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
+
+LongRationalVector& FermionOnSphereHaldaneBasis::GenerateJackPolynomial(LongRationalVector& jack, long alphaNumerator, long alphaDenominator, AbstractArchitecture* architecture, int symbolicDepth, long minIndex, long maxIndex, char* fileName)
+{
+  jack[0] = 1l;
+  LongRational InvAlpha (2l * (alphaDenominator - alphaNumerator), alphaNumerator);
+
+  int ReducedNbrFermions = this->NbrFermions - 1;
+  unsigned long* TmpMonomial = new unsigned long [this->NbrFermions];
+  unsigned long* TmpMonomial2 = new unsigned long [this->NbrFermions];
+  long* ConnectedIndices = new long [((this->NbrFermions * ReducedNbrFermions) >> 1) * (this->LzMax + 1)];
+  long* ConnectedCoefficients  = new long [((this->NbrFermions * ReducedNbrFermions) >> 1) * (this->LzMax + 1)];
+  long* ConnectedIndices2 = new long [((this->NbrFermions * ReducedNbrFermions) >> 1) * (this->LzMax + 1)];
+  long* ConnectedCoefficients2  = new long [((this->NbrFermions * ReducedNbrFermions) >> 1) * (this->LzMax + 1)];
+
+  long CounterMask = 0xffffl;
+  if (symbolicDepth > 1)
+    {
+      CounterMask = 0xffl;
+    }
+
+  LongRational RhoRoot = 0l;
+  LongRational Rho = 0l;
+  unsigned long MaxRoot = this->StateDescription[0];
+  this->ConvertToMonomial(MaxRoot, TmpMonomial);
+  long TmpRhoRootInvAlphaCoef = 0l;
+  long TmpRhoRootConstCoef  = 0l;
+  for (int j = 0; j < this->NbrFermions; ++j)
+    {
+      TmpRhoRootInvAlphaCoef -= TmpMonomial[j] * ((long) j);
+      TmpRhoRootConstCoef += TmpMonomial[j] * (TmpMonomial[j] - 1l);
+      RhoRoot += TmpMonomial[j] * ((TmpMonomial[j] - 1l) - InvAlpha * ((long) j));
+    }
+  LongRational RhoRootInvAlphaCoef(TmpRhoRootInvAlphaCoef);
+  LongRational RhoRootConstCoef(TmpRhoRootConstCoef);
+
+  LongRationalPolynomial* TmpNumerators = new LongRationalPolynomial[this->LargeHilbertSpaceDimension];
+  LongRationalPolynomial* TmpDenominators = new LongRationalPolynomial[this->LargeHilbertSpaceDimension];		  
+  int* EvaluatedCoeffcients = new int[this->LargeHilbertSpaceDimension];
+
+  this->GenerateSingleJackPolynomialCoefficient(0, TmpNumerators, TmpDenominators, ConnectedIndices, ConnectedCoefficients, TmpMonomial, TmpMonomial2,
+						RhoRootInvAlphaCoef, RhoRootConstCoef, MaxRoot, architecture);
+  LongRational Coefficient = 0l;
+  LongRational Coefficient2 = 0l;
+  
+  if (minIndex < 1l)
+    minIndex = 1l;
+  if ((maxIndex <= minIndex) || (maxIndex > this->LargeHilbertSpaceDimension))
+    maxIndex = this->LargeHilbertSpaceDimension;
+
+  for (long i = minIndex; i < maxIndex; ++i)
+    {
+      if (symbolicDepth > 1)
+	{
+	  this->GenerateSingleJackPolynomialCoefficient(i, TmpNumerators, TmpDenominators, ConnectedIndices, ConnectedCoefficients, TmpMonomial, TmpMonomial2,
+							RhoRootInvAlphaCoef, RhoRootConstCoef, MaxRoot, architecture);
+	  if (symbolicDepth == 3)
+	    {
+	      cout << TmpNumerators[i] << endl;
+	      cout << TmpDenominators[i] << endl;
+	    }
+	}
+      if (jack[i] == 0l)
+	{
+	  Rho = 0l;
+	  unsigned long CurrentPartition = this->StateDescription[i];
+	  this->ConvertToMonomial(CurrentPartition, TmpMonomial);
+	  for (int j = 0; j < this->NbrFermions; ++j)
+	    Rho += TmpMonomial[j] * ((TmpMonomial[j] - 1l) - InvAlpha * ((long) j));
+	  if (Rho == RhoRoot)
+	    {
+ 	      if (symbolicDepth == 0)
+ 		{
+ 		  cout << "warning : singular value detected at position " << i << ", skipping the rest of the calculation" << endl;
+ 		  return jack;
+ 		}
+	      if (symbolicDepth != 3)
+		{
+		  cout << "singular value detected at position " << i << ", using symbolic calculation" << endl;
+		}
+	      if (fileName != 0)
+		jack.WriteVector(fileName);
+	      for (long j = 0l; j < this->LargeHilbertSpaceDimension; ++j)
+		{
+		  if (TmpNumerators[j].Defined())
+		    EvaluatedCoeffcients[j] = 1;
+		  else
+		    EvaluatedCoeffcients[j] = 0;
+		}
+	      long NbrComponentToEvaluate = this->GenerateSingleJackPolynomialCoefficientCountOnly(i, EvaluatedCoeffcients, TmpMonomial, TmpMonomial2, MaxRoot);
+	      cout << "number of components to evalute using symbolic calculation : " << NbrComponentToEvaluate << endl;
+	      this->GenerateSingleJackPolynomialCoefficient(i, TmpNumerators, TmpDenominators, ConnectedIndices, ConnectedCoefficients, TmpMonomial, TmpMonomial2,
+							    RhoRootInvAlphaCoef, RhoRootConstCoef, MaxRoot, architecture);
+	      TmpNumerators[i].PolynomialEvaluate(InvAlpha, Coefficient);
+	      Coefficient /= TmpDenominators[i].PolynomialEvaluate(InvAlpha);
+	      if (symbolicDepth != 3)
+		{
+		  cout << "----------------------------------------------------------------" << endl
+		       << "result = " << endl;
+		  cout << TmpNumerators[i] << endl;
+		  cout << TmpDenominators[i] << endl;
+		  cout << Coefficient << endl;
+		}		  
+	      jack[i] = Coefficient;
+	    }
+	  else
+	    {
+	      Coefficient = 0l;
+	      int Pos = 0;
+	      for (int j1 = 0; j1 < ReducedNbrFermions; ++j1)
+		for (int j2 = j1 + 1; j2 < this->NbrFermions; ++j2)
+		  {
+		    long Diff = (long) (TmpMonomial[j1] - TmpMonomial[j2]);
+		    unsigned int Max = TmpMonomial[j2];
+		    unsigned long TmpState = 0x0ul;
+		    int Tmpj1 = j1;
+		    int Tmpj2 = j2;
+		    for (int l = 0; l < this->NbrFermions; ++l)
+		      TmpMonomial2[l] = TmpMonomial[l];	    
+		    long Sign = 1l;
+		    for (unsigned int k = 1; (k <= Max) && (TmpState < MaxRoot); ++k)
+		      {
+			++TmpMonomial2[Tmpj1];
+			--TmpMonomial2[Tmpj2];
+			while ((Tmpj1 > 0) && (TmpMonomial2[Tmpj1] > TmpMonomial2[Tmpj1 - 1]))
+			  {
+			    unsigned long Tmp = TmpMonomial2[Tmpj1 - 1];
+			    TmpMonomial2[Tmpj1 - 1] = TmpMonomial2[Tmpj1];
+			    TmpMonomial2[Tmpj1] = Tmp;
+			    --Tmpj1;
+			    Sign *= -1l; 
+			  }
+			while ((Tmpj2 < ReducedNbrFermions) && (TmpMonomial2[Tmpj2] < TmpMonomial2[Tmpj2 + 1]))
+			  {
+			    unsigned long Tmp = TmpMonomial2[Tmpj2 + 1];
+			    TmpMonomial2[Tmpj2 + 1] = TmpMonomial2[Tmpj2];
+			    TmpMonomial2[Tmpj2] = Tmp;
+			    ++Tmpj2;
+			    Sign *= -1l; 
+			  }
+			if ((TmpMonomial2[Tmpj1] != TmpMonomial2[Tmpj1 + 1]) && (TmpMonomial2[Tmpj2] != TmpMonomial2[Tmpj2 - 1]))
+			  {
+			    TmpState = this->ConvertFromMonomial(TmpMonomial2);
+			    if ((TmpState <= MaxRoot) && (TmpState > CurrentPartition))
+			      {
+				long TmpIndex = this->FindStateIndex(TmpState, TmpMonomial2[0]);
+				if (TmpIndex < this->HilbertSpaceDimension)
+				  {
+				    ConnectedIndices[Pos] = TmpIndex;
+				    ConnectedCoefficients[Pos] = Sign * Diff;
+				    ++Pos;
+				  }
+ 			      }
+			  }
+		      }
+		  }
+	      int NbrConnected = 1l;
+	      if (Pos > 1)
+		{
+		  SortArrayDownOrdering<long>(ConnectedIndices, ConnectedCoefficients, Pos);
+		  int TmpIndex = 1;
+		  while (TmpIndex < Pos)
+		    {
+		      while ((TmpIndex < Pos) && (ConnectedIndices[TmpIndex] == ConnectedIndices[TmpIndex - 1]))
+			++TmpIndex;
+		      if (TmpIndex < Pos)
+			++NbrConnected;
+		      ++TmpIndex;
+		    }
+		  ConnectedIndices2[0] = ConnectedIndices[0];
+		  ConnectedCoefficients2[0] = ConnectedCoefficients[0];
+		  TmpIndex = 1;
+		  NbrConnected = 1;
+		  while (TmpIndex < Pos)
+		    {
+		      while ((TmpIndex < Pos) && (ConnectedIndices[TmpIndex] == ConnectedIndices[TmpIndex - 1]))
+			{
+			  ConnectedCoefficients2[NbrConnected - 1] += ConnectedCoefficients[TmpIndex];
+			  ++TmpIndex;
+			}
+		      if (TmpIndex < Pos)
+			{
+			  ConnectedIndices2[NbrConnected] = ConnectedIndices[TmpIndex];
+			  ConnectedCoefficients2[NbrConnected] = ConnectedCoefficients[TmpIndex];	   
+			  ++NbrConnected;
+			}
+		      ++TmpIndex;
+		    }
+		}
+	      else
+		{
+		  ConnectedIndices2[0] = ConnectedIndices[0];
+		  ConnectedCoefficients2[0] = ConnectedCoefficients[0];
+		}
+ 	      Coefficient = ConnectedCoefficients2[0];	  
+	      Coefficient *= jack[ConnectedIndices2[0]];
+	      for (int j = 1; j < NbrConnected; ++j)
+		{
+		  Coefficient2 = ConnectedCoefficients2[j];
+		  Coefficient2 *= jack[ConnectedIndices2[j]];
+		  Coefficient += Coefficient2;
+		}
+	      Coefficient *= InvAlpha;
+	      Rho -= RhoRoot;
+	      Rho.Neg();
+	      Coefficient /= Rho;
+	      jack[i] = Coefficient;
+	    }
+	}
+      if ((i & CounterMask) == 0l)
+	{
+	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
+	  cout.flush();
+	}
+    }
+  delete[] TmpMonomial;
+  delete[] TmpMonomial2;
+  delete[] ConnectedIndices;
+  delete[] ConnectedCoefficients;
+  delete[] ConnectedIndices2;
+  delete[] ConnectedCoefficients2;
+  cout << endl;
+  return jack;
+}
+
+// create the Jack polynomial decomposition corresponding to the root partition, assuming only rational numbers occur and the resulting state is invariant under the Lz<->-Lz symmetry
+//
+// jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
+// alphaNumerator = numerator of the Jack polynomial alpha coefficient
+// alphaDenominator = numerator of the Jack polynomial alpha coefficient
+// symbolicDepth = use symbolic calculation to solve singular values if non zero, if greater than zero it will use symbolic calculation up to a given depth (below that depth it will rely on numerical calculation),
+//                 -1 if the symbolic calculation has to be done up to the point the singular value problem has been solved
+// minIndex = start computing the Jack polynomial from the minIndex-th component
+// maxIndex = stop  computing the Jack polynomial up to the maxIndex-th component (0 if it has to be computed up to the end)
+// fileName = optional file name to store temporary calculations
+// return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
+
+LongRationalVector& FermionOnSphereHaldaneBasis::GenerateSymmetrizedJackPolynomial(LongRationalVector& jack, long alphaNumerator, long alphaDenominator, AbstractArchitecture* architecture, int symbolicDepth, long minIndex, long maxIndex, char* fileName)
+{
+  jack[0] = 1l;
+  LongRational InvAlpha (2l * (alphaDenominator - alphaNumerator), alphaNumerator);
+
+  int ReducedNbrFermions = this->NbrFermions - 1;
+  unsigned long* TmpMonomial = new unsigned long [this->NbrFermions];
+  unsigned long* TmpMonomial2 = new unsigned long [this->NbrFermions];
+  long* ConnectedIndices = new long [((this->NbrFermions * ReducedNbrFermions) >> 1) * (this->LzMax + 1)];
+  long* ConnectedCoefficients  = new long [((this->NbrFermions * ReducedNbrFermions) >> 1) * (this->LzMax + 1)];
+  long* ConnectedIndices2 = new long [((this->NbrFermions * ReducedNbrFermions) >> 1) * (this->LzMax + 1)];
+  long* ConnectedCoefficients2  = new long [((this->NbrFermions * ReducedNbrFermions) >> 1) * (this->LzMax + 1)];
+
+  long CounterMask = 0xffffl;
+  if (symbolicDepth > 1)
+    {
+      CounterMask = 0xffl;
+    }
+
+  LongRational RhoRoot = 0l;
+  LongRational Rho = 0l;
+  unsigned long MaxRoot = this->StateDescription[0];
+  this->ConvertToMonomial(MaxRoot, TmpMonomial);
+  long TmpRhoRootInvAlphaCoef = 0l;
+  long TmpRhoRootConstCoef  = 0l;
+  for (int j = 0; j < this->NbrFermions; ++j)
+    {
+      TmpRhoRootInvAlphaCoef -= TmpMonomial[j] * ((long) j);
+      TmpRhoRootConstCoef += TmpMonomial[j] * (TmpMonomial[j] - 1l);
+      RhoRoot += TmpMonomial[j] * ((TmpMonomial[j] - 1l) - InvAlpha * ((long) j));
+    }
+  LongRational RhoRootInvAlphaCoef(TmpRhoRootInvAlphaCoef);
+  LongRational RhoRootConstCoef(TmpRhoRootConstCoef);
+
+  LongRationalPolynomial* TmpNumerators = new LongRationalPolynomial[this->LargeHilbertSpaceDimension];
+  LongRationalPolynomial* TmpDenominators = new LongRationalPolynomial[this->LargeHilbertSpaceDimension];		  
+  int* EvaluatedCoeffcients = new int[this->LargeHilbertSpaceDimension];
+
+  this->GenerateSingleJackPolynomialCoefficient(0, TmpNumerators, TmpDenominators, ConnectedIndices, ConnectedCoefficients, TmpMonomial, TmpMonomial2, 
+						RhoRootInvAlphaCoef, RhoRootConstCoef, MaxRoot, architecture);
+  LongRational Coefficient = 0l;
+  LongRational Coefficient2 = 0l;
+  long SymSign = 1l;
+  if ((((this->NbrFermions * ReducedNbrFermions) >> 1) & 1) != 0)
+    SymSign = -1l;
+
+  if (minIndex < 1l)
+    minIndex = 1l;
+  if ((maxIndex <= minIndex) || (maxIndex > this->LargeHilbertSpaceDimension))
+    maxIndex = this->LargeHilbertSpaceDimension;
+  
+  for (long i = minIndex; i < maxIndex; ++i)
+    {
+      if (jack[i] == 0l)
+	{
+	  Rho = 0l;
+	  unsigned long CurrentPartition = this->StateDescription[i];
+	  this->ConvertToMonomial(CurrentPartition, TmpMonomial);
+	  for (int j = 0; j < this->NbrFermions; ++j)
+	    Rho += TmpMonomial[j] * ((TmpMonomial[j] - 1l) - InvAlpha * ((long) j));
+	  if (symbolicDepth > 1)
+	    {
+	      this->GenerateSingleJackPolynomialCoefficient(i, TmpNumerators, TmpDenominators, ConnectedIndices, ConnectedCoefficients, TmpMonomial, TmpMonomial2, 
+							    RhoRootInvAlphaCoef, RhoRootConstCoef, MaxRoot, architecture, 0, true);
+	      long TmpIndex = this->FindStateIndex(this->GetSymmetricState(CurrentPartition), this->LzMax - TmpMonomial[ReducedNbrFermions]);
+	      if (i < TmpIndex)
+		{
+		  TmpNumerators[TmpIndex] = TmpNumerators[i];
+		  TmpDenominators[TmpIndex] = TmpDenominators[i];
+		}
+	      if (symbolicDepth == 3)
+		{
+		  cout << TmpNumerators[i] << endl;
+		  cout << TmpDenominators[i] << endl;
+		}
+	    }
+	  if (Rho == RhoRoot)
+	    {
+ 	      if (symbolicDepth == 0)
+ 		{
+ 		  cout << "warning : singular value detected at position " << i << ", skipping the rest of the calculation" << endl;
+ 		  return jack;
+ 		}
+	      if (symbolicDepth != 3)
+		{
+		  cout << "singular value detected at position " << i << ", using symbolic calculation" << endl;
+		}
+	      if (fileName != 0)
+		jack.WriteVector(fileName);
+	      for (long j = 0l; j < this->LargeHilbertSpaceDimension; ++j)
+		{
+		  if (TmpNumerators[j].Defined())
+		    EvaluatedCoeffcients[j] = 1;
+		  else
+		    EvaluatedCoeffcients[j] = 0;
+		}
+	      long NbrComponentToEvaluate = this->GenerateSingleJackPolynomialCoefficientCountOnly(i, EvaluatedCoeffcients, TmpMonomial, TmpMonomial2, MaxRoot);
+	      cout << "number of components to evalute using symbolic calculation : " << NbrComponentToEvaluate << endl;
+	      this->GenerateSingleJackPolynomialCoefficient(i, TmpNumerators, TmpDenominators, ConnectedIndices, ConnectedCoefficients, TmpMonomial, TmpMonomial2, 
+							    RhoRootInvAlphaCoef, RhoRootConstCoef, MaxRoot, architecture, 0, true);
+	      LongRational Tmp = TmpNumerators[i].PolynomialEvaluate(InvAlpha);
+	      Tmp /= TmpDenominators[i].PolynomialEvaluate(InvAlpha);
+	      if (symbolicDepth != 3)
+		{
+		  cout << "----------------------------------------------------------------" << endl
+		       << "result = " << endl;
+		  cout << TmpNumerators[i] << endl;
+		  cout << TmpDenominators[i] << endl;
+		  cout << Tmp << endl;
+		}		  
+	      long TmpIndex = this->FindStateIndex(this->GetSymmetricState(CurrentPartition), this->LzMax - TmpMonomial[ReducedNbrFermions]);
+	      jack[i] = Tmp;
+	      if (i < TmpIndex)
+		{
+		  jack[TmpIndex] = Tmp;
+		  TmpNumerators[TmpIndex] = TmpNumerators[i];
+		  TmpDenominators[TmpIndex] = TmpDenominators[i];
+		}
+	    }
+	  else
+	    {
+	      Coefficient = 0l;
+	      int Pos = 0;
+	      for (int j1 = 0; j1 < ReducedNbrFermions; ++j1)
+		for (int j2 = j1 + 1; j2 < this->NbrFermions; ++j2)
+		  {
+		    long Diff = (long) (TmpMonomial[j1] - TmpMonomial[j2]);
+		    unsigned int Max = TmpMonomial[j2];
+		    unsigned long TmpState = 0x0ul;
+		    int Tmpj1 = j1;
+		    int Tmpj2 = j2;
+		    for (int l = 0; l < this->NbrFermions; ++l)
+		      TmpMonomial2[l] = TmpMonomial[l];	 
+		    long Sign = 1l;   
+		    for (unsigned int k = 1; (k <= Max) && (TmpState < MaxRoot); ++k)
+		      {
+			++TmpMonomial2[Tmpj1];
+			--TmpMonomial2[Tmpj2];
+			while ((Tmpj1 > 0) && (TmpMonomial2[Tmpj1] > TmpMonomial2[Tmpj1 - 1]))
+			  {
+			    unsigned long Tmp = TmpMonomial2[Tmpj1 - 1];
+			    TmpMonomial2[Tmpj1 - 1] = TmpMonomial2[Tmpj1];
+			    TmpMonomial2[Tmpj1] = Tmp;
+			    Sign *= -1.0; 
+			    --Tmpj1;
+			  }
+			while ((Tmpj2 < ReducedNbrFermions) && (TmpMonomial2[Tmpj2] < TmpMonomial2[Tmpj2 + 1]))
+			  {
+			    unsigned long Tmp = TmpMonomial2[Tmpj2 + 1];
+			    TmpMonomial2[Tmpj2 + 1] = TmpMonomial2[Tmpj2];
+			    TmpMonomial2[Tmpj2] = Tmp;
+			    Sign *= -1.0; 
+			    ++Tmpj2;
+			  }
+			if ((TmpMonomial2[Tmpj1] != TmpMonomial2[Tmpj1 + 1]) && (TmpMonomial2[Tmpj2] != TmpMonomial2[Tmpj2 - 1]))
+			  {
+			    TmpState = this->ConvertFromMonomial(TmpMonomial2);
+			    if ((TmpState <= MaxRoot) && (TmpState > CurrentPartition))
+			      {
+				long TmpIndex = this->FindStateIndex(TmpState, TmpMonomial2[0]);
+				if (TmpIndex < this->HilbertSpaceDimension)
+				  {
+				    long TmpIndex2 = this->FindStateIndex(this->GetSymmetricState(TmpState), this->LzMax - TmpMonomial2[ReducedNbrFermions]);
+				    if (TmpIndex < TmpIndex2)
+				      {
+					ConnectedIndices[Pos] = TmpIndex;
+					ConnectedCoefficients[Pos] = Sign * Diff;
+				      }
+				    else
+				      {
+					ConnectedIndices[Pos] = TmpIndex2;
+					ConnectedCoefficients[Pos] = SymSign * Sign * Diff;
+				      }
+				    ++Pos;
+				  }
+			      }
+			  }
+		      }
+		  }
+	      int NbrConnected = 1l;
+	      if (Pos > 1)
+		{
+		  SortArrayDownOrdering<long>(ConnectedIndices, ConnectedCoefficients, Pos);
+		  int TmpIndex = 1;
+		  while (TmpIndex < Pos)
+		    {
+		      while ((TmpIndex < Pos) && (ConnectedIndices[TmpIndex] == ConnectedIndices[TmpIndex - 1]))
+			++TmpIndex;
+		      if (TmpIndex < Pos)
+			++NbrConnected;
+		      ++TmpIndex;
+		    }
+		  ConnectedIndices2[0] = ConnectedIndices[0];
+		  ConnectedCoefficients2[0] = ConnectedCoefficients[0];
+		  TmpIndex = 1;
+		  NbrConnected = 1;
+		  while (TmpIndex < Pos)
+		    {
+		      while ((TmpIndex < Pos) && (ConnectedIndices[TmpIndex] == ConnectedIndices[TmpIndex - 1]))
+			{
+			  ConnectedCoefficients2[NbrConnected - 1] += ConnectedCoefficients[TmpIndex];
+			  ++TmpIndex;
+			}
+		      if (TmpIndex < Pos)
+			{
+			  ConnectedIndices2[NbrConnected] = ConnectedIndices[TmpIndex];
+			  ConnectedCoefficients2[NbrConnected] = ConnectedCoefficients[TmpIndex];	   
+			  ++NbrConnected;
+			}
+		      ++TmpIndex;
+		    }
+		}
+	      else
+		{
+		  ConnectedIndices2[0] = ConnectedIndices[0];
+		  ConnectedCoefficients2[0] = ConnectedCoefficients[0];
+		}
+ 	      Coefficient = ConnectedCoefficients2[0];	  
+	      Coefficient *= jack[ConnectedIndices2[0]];
+	      for (int j = 1; j < NbrConnected; ++j)
+		{
+		  Coefficient2 = ConnectedCoefficients2[j];
+		  Coefficient2 *= jack[ConnectedIndices2[j]];
+		  Coefficient += Coefficient2;
+		}
+	      long TmpIndex = this->FindStateIndex(this->GetSymmetricState(CurrentPartition), this->LzMax - TmpMonomial[ReducedNbrFermions]);
+	      Coefficient *= InvAlpha;
+	      Rho -= RhoRoot;
+	      Rho.Neg();
+	      Coefficient /= Rho;
+	      if (i < TmpIndex)
+		jack[TmpIndex] = Coefficient;
+	      jack[i] = Coefficient;
+	    }
+	}
+      if ((i & CounterMask) == 0l)
+	{
+	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
+	  cout.flush();
+	}
+    }
+  delete[] TmpMonomial;
+  delete[] TmpMonomial2;
+  delete[] ConnectedIndices;
+  delete[] ConnectedCoefficients;
+  delete[] ConnectedIndices2;
+  delete[] ConnectedCoefficients2;
+  cout << endl;
+  return jack;
+}
+
+// compute a single coefficient of the Jack polynomial decomposition corresponding to the root partition, assuming only rational numbers occur and using (partial symbolic calculation)
+//
+// index = index of the component to compute
+// numerators = array of polynomials attached to each coefficient numerator
+// denominators = array of polynomials attached to each coefficient denominator
+// tmpMonomial = temporary array for monomial description
+// tmpMonomial2 = temporary array for monomial description
+// rhoRootInvAlphaCoef = coefficient in front of inv alpha in the rho for the root partition
+// rhoRootConstCoef = constant coefficient in the rho for the root partition
+// maxRoot = fermionic expression for the root partition
+// architecture = architecture to use for precalculation
+// currentNbrComponents = current number of components computed for the symbolic of the index-th compoment
+// symmetryFlag = true iof the Lz <-> -Lz symmetry has to be used
+// return value = total number of components computed for the symbolic of the index-th compoment
+
+long FermionOnSphereHaldaneBasis::GenerateSingleJackPolynomialCoefficient(long index, LongRationalPolynomial* numerators, LongRationalPolynomial* denominators, long* connectedIndices, long* connectedCoefficients, unsigned long* tmpMonomial, unsigned long* tmpMonomial2, LongRational& rhoRootInvAlphaCoef, LongRational& rhoRootConstCoef, unsigned long maxRoot, AbstractArchitecture* architecture, long currentNbrComponents, bool symmetryFlag)
+{
+  if (numerators[index].Defined())
+    return 0l;
+  if (index == 0l)
+    {
+      if (!numerators[0l].Defined())
+	{
+	  numerators[0l] = LongRationalPolynomial(0);
+	  denominators[0l] = LongRationalPolynomial(0);
+	  numerators[0l][0] = 1l;
+	  denominators[0l][0] = 1l;
+	  return 0l;
+	}
+    }
+
+
+  int ReducedNbrFermions = this->NbrFermions - 1;  
+
+  unsigned long CurrentPartition = this->StateDescription[index];
+  this->ConvertToMonomial(CurrentPartition, tmpMonomial);
+  long TmpRhoInvAlphaCoef = 0l;
+  long TmpRhoConstCoef  = 0l;
+  for (int j = 0; j < this->NbrFermions; ++j)
+    {
+      TmpRhoInvAlphaCoef -= tmpMonomial[j] * ((long) j);
+      TmpRhoConstCoef += tmpMonomial[j] * (tmpMonomial[j] - 1l);
+    }
+  LongRational RhoInvAlphaCoef(TmpRhoInvAlphaCoef);
+  LongRational RhoConstCoef (TmpRhoConstCoef);
+  double SymSign = 1l;
+  if ((((this->NbrFermions * ReducedNbrFermions) >> 1) & 1) != 0)
+    SymSign = -1l;
+  
+  int Pos = 0;
+  for (int j1 = 0; j1 < ReducedNbrFermions; ++j1)
+    for (int j2 = j1 + 1; j2 < this->NbrFermions; ++j2)
+      {
+	long Diff = (long) (tmpMonomial[j1] - tmpMonomial[j2]);
+	unsigned int Max = tmpMonomial[j2];
+	unsigned long TmpState = 0x0ul;
+	int Tmpj1 = j1;
+	int Tmpj2 = j2;
+	for (int l = 0; l < this->NbrFermions; ++l)
+	  tmpMonomial2[l] = tmpMonomial[l];	    
+	long Sign = 1l;
+	for (unsigned int k = 1; (k <= Max) && (TmpState < maxRoot); ++k)
+	  {
+	    ++tmpMonomial2[Tmpj1];
+	    --tmpMonomial2[Tmpj2];
+	    while ((Tmpj1 > 0) && (tmpMonomial2[Tmpj1] > tmpMonomial2[Tmpj1 - 1]))
+	      {
+		unsigned long Tmp = tmpMonomial2[Tmpj1 - 1];
+		tmpMonomial2[Tmpj1 - 1] = tmpMonomial2[Tmpj1];
+		tmpMonomial2[Tmpj1] = Tmp;
+		--Tmpj1;
+		Sign *= -1l; 
+	      }
+	    while ((Tmpj2 < ReducedNbrFermions) && (tmpMonomial2[Tmpj2] < tmpMonomial2[Tmpj2 + 1]))
+	      {
+		unsigned long Tmp = tmpMonomial2[Tmpj2 + 1];
+		tmpMonomial2[Tmpj2 + 1] = tmpMonomial2[Tmpj2];
+		tmpMonomial2[Tmpj2] = Tmp;
+		++Tmpj2;
+		Sign *= -1l; 
+	      }
+	    if ((tmpMonomial2[Tmpj1] != tmpMonomial2[Tmpj1 + 1]) && (tmpMonomial2[Tmpj2] != tmpMonomial2[Tmpj2 - 1]))
+	      {
+		TmpState = this->ConvertFromMonomial(tmpMonomial2);
+		if ((TmpState <= maxRoot) && (TmpState > CurrentPartition))
+		  {
+		    long TmpIndex = this->FindStateIndex(TmpState, tmpMonomial2[0]);
+		    if (TmpIndex < this->HilbertSpaceDimension)
+		      {
+			if (symmetryFlag == false)
+			  {
+			    connectedIndices[Pos] = TmpIndex;
+			    connectedCoefficients[Pos] = Sign * Diff;
+			    ++Pos;
+			  }
+			else
+			  {
+			    long TmpIndex2 = this->FindStateIndex(this->GetSymmetricState(TmpState), this->LzMax - tmpMonomial2[ReducedNbrFermions]);
+			    if (TmpIndex < TmpIndex2)
+			      {
+				connectedIndices[Pos] = TmpIndex;
+				connectedCoefficients[Pos] = Sign * Diff;
+			      }
+			    else
+			      {
+				connectedIndices[Pos] = TmpIndex2;
+				connectedCoefficients[Pos] = SymSign * Sign * Diff;
+			      }
+			    ++Pos;
+			  }
+		      }
+		  }
+	      }
+	  }
+      }
+  long* ConnectedIndices2 = 0;
+  long* ConnectedCoefficients2  = 0;
+  int NbrConnected = 1l;
+  if (Pos > 1)
+    {
+      SortArrayDownOrdering<long>(connectedIndices, connectedCoefficients, Pos);
+      int TmpIndex = 1;
+      while (TmpIndex < Pos)
+	{
+	  while ((TmpIndex < Pos) && (connectedIndices[TmpIndex] == connectedIndices[TmpIndex - 1]))
+	    ++TmpIndex;
+	  if (TmpIndex < Pos)
+	    ++NbrConnected;
+	  ++TmpIndex;
+	}
+      ConnectedIndices2 = new long[NbrConnected];
+      ConnectedCoefficients2  = new long[NbrConnected];
+      ConnectedIndices2[0] = connectedIndices[0];
+      ConnectedCoefficients2[0] = connectedCoefficients[0];
+      TmpIndex = 1;
+      NbrConnected = 1;
+      while (TmpIndex < Pos)
+	{
+	  while ((TmpIndex < Pos) && (connectedIndices[TmpIndex] == connectedIndices[TmpIndex - 1]))
+	    {
+	      ConnectedCoefficients2[NbrConnected - 1] += connectedCoefficients[TmpIndex];
+	      ++TmpIndex;
+	    }
+	  if (TmpIndex < Pos)
+	    {
+	      ConnectedIndices2[NbrConnected] = connectedIndices[TmpIndex];
+	      ConnectedCoefficients2[NbrConnected] = connectedCoefficients[TmpIndex];	   
+	      ++NbrConnected;
+	    }
+	  ++TmpIndex;
+	}
+    }
+  else
+    {
+      ConnectedIndices2 = new long[NbrConnected];
+      ConnectedCoefficients2  = new long[NbrConnected];
+      ConnectedIndices2[0] = connectedIndices[0];
+      ConnectedCoefficients2[0] = connectedCoefficients[0];
+    }
+
+  int TmpNbrComponents = 0;
+  for (int i = 0; i < NbrConnected; ++i)
+    {
+      if (!numerators[ConnectedIndices2[i]].Defined())
+        {
+	  TmpNbrComponents += this->GenerateSingleJackPolynomialCoefficient(ConnectedIndices2[i], numerators, denominators, connectedIndices, connectedCoefficients, 
+									    tmpMonomial, tmpMonomial2, rhoRootInvAlphaCoef, rhoRootConstCoef, maxRoot, architecture, currentNbrComponents + TmpNbrComponents, symmetryFlag);
+	}
+    }
+
+  cout << (currentNbrComponents + TmpNbrComponents) << " symbolic components computed                  \r";
+  cout.flush();
+
+  numerators[index]= numerators[ConnectedIndices2[0]];
+  denominators[index] = denominators[ConnectedIndices2[0]];
+  numerators[index] *= ConnectedCoefficients2[0];
+  LongRational Tmp4;
+  if (NbrConnected > 1)
+    {
+      for (int i = 1; i < NbrConnected; ++i)
+	{
+	  LongRationalPolynomial TmpNumerator (numerators[ConnectedIndices2[i]], denominators[index]);
+	  TmpNumerator *= ConnectedCoefficients2[i];
+	  LongRationalPolynomial& TmpPolynomial = denominators[ConnectedIndices2[i]];
+	  numerators[index] *= TmpPolynomial;
+	  numerators[index] += TmpNumerator;
+	  LongRationalPolynomial TmpDenominator (0);
+	  TmpDenominator[0] = 1l;
+	  for (int j = 0; j < denominators[index].GetPolynomialDegree(); ++j)
+	    {
+	      numerators[index].PolynomialEvaluate(denominators[index].PolynomialRationalRoot(j), Tmp4);	
+	      if (Tmp4.IsZero())
+		{
+		  numerators[index].LocalMonomialDivision(denominators[index].PolynomialRationalRoot(j));
+		}
+	      else
+		{
+		  TmpDenominator.LocalMonomialMultiplication(denominators[index].PolynomialRationalRoot(j));
+		}
+	    }
+	  denominators[index] = TmpDenominator;
+	  for (int j = 0; j < TmpPolynomial.GetPolynomialDegree(); ++j)
+	    {
+	      numerators[index].PolynomialEvaluate(TmpPolynomial.PolynomialRationalRoot(j), Tmp4);
+	      if (Tmp4.IsZero())
+		{
+		  numerators[index].LocalMonomialDivision(TmpPolynomial.PolynomialRationalRoot(j));
+		}
+	      else
+		{
+		  denominators[index].LocalMonomialMultiplication(TmpPolynomial.PolynomialRationalRoot(j));
+		}
+	    }
+	}  
+    }
+  numerators[index].ShiftPowers(1);
+
+  LongRational Tmp2 = rhoRootInvAlphaCoef;
+  Tmp2 -= RhoInvAlphaCoef;
+  if (Tmp2 != 0l)
+    {
+      numerators[index] /= Tmp2;
+      LongRational Tmp3 = rhoRootConstCoef;
+      Tmp3 -= RhoConstCoef;
+      Tmp3 /= -Tmp2;
+      numerators[index].PolynomialEvaluate(Tmp3, Tmp4);
+      if (Tmp4 == 0l)
+	{
+	  numerators[index].LocalMonomialDivision(Tmp3);
+	}
+      else
+	{
+	  denominators[index].LocalMonomialMultiplication(Tmp3);
+	}
+    }
+  else
+    {
+      Tmp2 = rhoRootConstCoef;
+      Tmp2 -= RhoConstCoef;
+      if (Tmp2 != 0)
+	{
+	  numerators[index] /= Tmp2;
+	}
+    }
+
+  delete[] ConnectedIndices2;
+  delete[] ConnectedCoefficients2;
+
+  return (TmpNbrComponents + 1);
+}
+
+
+// compute of many coefficients have to be computed to get a single coefficient of the Jack polynomial decomposition 
+//
+// index = index of the component to compute
+// evaluatedCoeffcients = that indicates which coefficients have already been computed
+// tmpMonomial = temporary array for monomial description
+// tmpMonomial2 = temporary array for monomial description
+// maxRoot = fermionic expression for the root partition
+// return value = true if a fully symbolic calculation has been performed
+
+long FermionOnSphereHaldaneBasis::GenerateSingleJackPolynomialCoefficientCountOnly(long index, int* evaluatedCoeffcients, unsigned long* tmpMonomial, unsigned long* tmpMonomial2, unsigned long maxRoot)
+{
+  if (index == 0l)
+    return 1l;
+  int ReducedNbrFermions = this->NbrFermions - 1;  
+
+  unsigned long CurrentPartition = this->StateDescription[index];
+  this->ConvertToMonomial(CurrentPartition, tmpMonomial);
+
+  long* ConnectedIndices2 = new long [((this->NbrFermions * ReducedNbrFermions) >> 1) * (this->LzMax + 1)];
+  int NbrConnected  = 0;
+  for (int j1 = 0; j1 < ReducedNbrFermions; ++j1)
+    for (int j2 = j1 + 1; j2 < this->NbrFermions; ++j2)
+      {
+	unsigned int Max = tmpMonomial[j2];
+	unsigned long TmpState = 0x0ul;
+	int Tmpj1 = j1;
+	int Tmpj2 = j2;
+	for (int l = 0; l < this->NbrFermions; ++l)
+	  tmpMonomial2[l] = tmpMonomial[l];	    
+	for (unsigned int k = 1; (k <= Max) && (TmpState < maxRoot); ++k)
+	  {
+	    ++tmpMonomial2[Tmpj1];
+	    --tmpMonomial2[Tmpj2];
+	    while ((Tmpj1 > 0) && (tmpMonomial2[Tmpj1] > tmpMonomial2[Tmpj1 - 1]))
+	      {
+		unsigned long Tmp = tmpMonomial2[Tmpj1 - 1];
+		tmpMonomial2[Tmpj1 - 1] = tmpMonomial2[Tmpj1];
+		tmpMonomial2[Tmpj1] = Tmp;
+		--Tmpj1;
+	      }
+	    while ((Tmpj2 < ReducedNbrFermions) && (tmpMonomial2[Tmpj2] < tmpMonomial2[Tmpj2 + 1]))
+	      {
+		unsigned long Tmp = tmpMonomial2[Tmpj2 + 1];
+		tmpMonomial2[Tmpj2 + 1] = tmpMonomial2[Tmpj2];
+		tmpMonomial2[Tmpj2] = Tmp;
+		++Tmpj2;
+	      }
+	    if ((tmpMonomial2[Tmpj1] != tmpMonomial2[Tmpj1 + 1]) && (tmpMonomial2[Tmpj2] != tmpMonomial2[Tmpj2 - 1]))
+	      {
+		TmpState = this->ConvertFromMonomial(tmpMonomial2);
+		if ((TmpState <= maxRoot) && (TmpState > CurrentPartition))
+		  {
+		    long TmpIndex = this->FindStateIndex(TmpState, tmpMonomial2[0]);
+		    if (TmpIndex < this->HilbertSpaceDimension)
+		      {
+			ConnectedIndices2[NbrConnected] = TmpIndex;
+			++NbrConnected;
+		      }
+		  }
+	      }
+	  }
+      }
+
+  long TmpNbrConnected = 1;
+  for (int i = 0; i < NbrConnected; ++i)
+    {
+      if (evaluatedCoeffcients[ConnectedIndices2[i]] == 0)
+        {
+ 	  TmpNbrConnected += this->GenerateSingleJackPolynomialCoefficientCountOnly(ConnectedIndices2[i], evaluatedCoeffcients, 
+ 										    tmpMonomial, tmpMonomial2, maxRoot);
+	  evaluatedCoeffcients[ConnectedIndices2[i]] = 1;
+	}
+    }
+
+  delete[] ConnectedIndices2;
+
+  return TmpNbrConnected;
+}
+
+
+// check partitions that may lead to singular coefficient in a given Jack polynomial decomposition, assuming only rational numbers occur
+//
+// jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
+// alphaNumerator = numerator of the Jack polynomial alpha coefficient
+// alphaDenominator = numerator of the Jack polynomial alpha coefficient
+// checkConnectivity = if true, compute how many componets are involved in the calculation of a given singular coefficients
+// return value = vector with non-zero component being rho factor of possible singular coefficients
+
+RationalVector& FermionOnSphereHaldaneBasis::CheckPossibleSingularCoefficientsInJackPolynomial(RationalVector& jack, long alphaNumerator, long alphaDenominator, bool checkConnectivity)
+{
+  Rational InvAlpha (2l * (alphaDenominator - alphaNumerator), alphaNumerator);
+
+  unsigned long* TmpMonomial = new unsigned long [this->NbrFermions];
+  unsigned long* TmpMonomial2 = new unsigned long [this->NbrFermions];
+  int* EvaluatedCoeffcients = 0;
+  if (checkConnectivity == true)
+    {
+      EvaluatedCoeffcients = new int[this->LargeHilbertSpaceDimension];
+    }
+
+  Rational RhoRoot = 0;
+  unsigned long MaxRoot = this->StateDescription[0];
+  this->ConvertToMonomial(MaxRoot, TmpMonomial);
+  for (int j = 0; j < this->NbrFermions; ++j)
+    RhoRoot += TmpMonomial[j] * ((TmpMonomial[j] - 1l) - InvAlpha * ((long) j));
+
+  jack[0] = RhoRoot;
+  for (long i = 1; i < this->LargeHilbertSpaceDimension; ++i)
+    {
+      Rational Rho = 0l;
+      unsigned long CurrentPartition = this->StateDescription[i];
+      this->ConvertToMonomial(CurrentPartition, TmpMonomial);
+      for (int j = 0; j < this->NbrFermions; ++j)
+	Rho += TmpMonomial[j] * ((TmpMonomial[j] - 1l) - InvAlpha * ((long) j));
+      if (RhoRoot == Rho)
+	{
+	  if (checkConnectivity == false)
+	    {
+	      jack[i] = Rho;
+	    }
+	  else
+	    {
+	      for (long j = 0l; j < this->LargeHilbertSpaceDimension; ++j)
+		EvaluatedCoeffcients[j] = 0;
+	      jack[i] = this->GenerateSingleJackPolynomialCoefficientCountOnly(i, EvaluatedCoeffcients, TmpMonomial, TmpMonomial2, MaxRoot);	      
+	    }
+	}
+      else
+	jack[i] = 0l;
+      }
+  delete[] TmpMonomial;
+  delete[] TmpMonomial2;
+  if (EvaluatedCoeffcients != 0)
+    {
+      delete[] EvaluatedCoeffcients;
+    }
+  return jack;
+}
+  
 // check partitions that may lead to singular coefficient in a given Jack polynomial decomposition
 //
 // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored

@@ -183,8 +183,15 @@ class BosonOnSphereHaldaneBasisShort :  public BosonOnSphereShort
 					       unsigned long* tmpMonomial, unsigned long* tmpMonomial2,
 					       LongRational& rhoRootInvAlphaCoef, LongRational& rhoRootConstCoef, unsigned long maxRoot, AbstractArchitecture* architecture, long currentNbrComponents = 0, bool symmetryFlag = false);
 
-
-  long GenerateSingleJackPolynomialCoefficientCountOnly(long index, int* evaluatedCoeffcients, long* connectedIndices, unsigned long* tmpMonomial, unsigned long* tmpMonomial2, unsigned long maxRoot);
+  // compute of many coefficients have to be computed to get a single coefficient of the Jack polynomial decomposition 
+  //
+  // index = index of the component to compute
+  // evaluatedCoeffcients = that indicates which coefficients have already been computed
+  // tmpMonomial = temporary array for monomial description
+  // tmpMonomial2 = temporary array for monomial description
+  // maxRoot = fermionic expression for the root partition
+  // return value = true if a fully symbolic calculation has been performed
+  long GenerateSingleJackPolynomialCoefficientCountOnly(long index, int* evaluatedCoeffcients, unsigned long* tmpMonomial, unsigned long* tmpMonomial2, unsigned long maxRoot);
 
   // create the Jack polynomial decomposition corresponding to the root partition assuming the resulting state is invariant under the Lz<->-Lz symmetry
   //

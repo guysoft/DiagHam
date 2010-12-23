@@ -61,7 +61,6 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "denominator-alpha", "denominator of the alpha coefficient of the Jack polynomial (enable in rational mode)", 1);
   (*SystemGroup) += new BooleanOption  ('\n', "rational" , "use rational numbers instead of double precision floating point numbers");
   (*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0) to speed up calculations");
-  (*SystemGroup) += new BooleanOption  ('\n', "sym-storage", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0), both for speed and storage");
   (*SystemGroup) += new SingleStringOption  ('\n', "initial-state", "use an optional state where some of the components have already been computed, improving computation time");
   (*SystemGroup) += new BooleanOption  ('\n', "resume", "resume Jack calculation (only available in huge mode)");
   (*SystemGroup) += new SingleIntegerOption ('\n', "min-index", "compute the Jack polynomial from the min-index-th component (require an initial state)", 0l);
@@ -481,107 +480,107 @@ int main(int argc, char** argv)
     }
   else
     {
-      if (Manager.GetBoolean("sym-storage") == false)
+      if (Manager.GetBoolean("huge-basis") == true)
 	{
-	  if (Manager.GetBoolean("huge-basis") == true)
+	  FermionOnSphereHaldaneHugeBasis* InitialSpace;
+	  if (Manager.GetString("load-hilbert") != 0)
+	    InitialSpace = new FermionOnSphereHaldaneHugeBasis(Manager.GetString("load-hilbert"), Manager.GetInteger("memory"));
+	  else
 	    {
-	      FermionOnSphereHaldaneHugeBasis* InitialSpace;
-	      if (Manager.GetString("load-hilbert") != 0)
-		InitialSpace = new FermionOnSphereHaldaneHugeBasis(Manager.GetString("load-hilbert"), Manager.GetInteger("memory"));
-	      else
-		{
-		  InitialSpace = new FermionOnSphereHaldaneHugeBasis (NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetInteger("file-size"), ReferenceState, ((unsigned long) Manager.GetInteger("memory")) << 20, false, Manager.GetInteger("huge-fulldim"));
-		  if (Manager.GetString("save-hilbert") != 0)
-		    {		      
-		      InitialSpace->WriteHilbertSpace(Manager.GetString("save-hilbert"));
-		      return 0;
-		    }
+	      InitialSpace = new FermionOnSphereHaldaneHugeBasis (NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetInteger("file-size"), ReferenceState, ((unsigned long) Manager.GetInteger("memory")) << 20, false, Manager.GetInteger("huge-fulldim"));
+	      if (Manager.GetString("save-hilbert") != 0)
+		{		      
+		  InitialSpace->WriteHilbertSpace(Manager.GetString("save-hilbert"));
+		  return 0;
 		}
-	      bool DiskStorageFlag = InitialSpace->CheckDiskStorage();	  
-	      if (DiskStorageFlag == true)
-		{
-		  cout << "using disk storage for the Hilbert space and output state, some options might be disabled" << endl;
-		}
-	      if (Manager.GetBoolean("disk-storage") == true)
-		DiskStorageFlag = true;
-	      if (DiskStorageFlag == false)
-		{
-		  RealVector OutputState;
-		  if (Manager.GetString("initial-state") == 0)
-		    OutputState = RealVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
-		  else
-		    if (OutputState.ReadVector(Manager.GetString("initial-state")) == false)
-		      {
-			cout << "can't open " << Manager.GetString("initial-state") << endl;
-			return -1;
-		      }
-		  if (SymmetrizedBasis == false)    
-		    InitialSpace->GenerateJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex, OutputFileName);
-		  else
-		    InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex, OutputFileName);
-		  if (Manager.GetBoolean("normalize"))
-		    InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);
-		  if (OutputTxtFileName != 0)
-		    {
-		      ofstream File;
-		      File.open(OutputTxtFileName, ios::binary | ios::out);
-		      File.precision(14);
-		      for (long i = 0; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
-			{
-			  File << OutputState[i] << " ";
-			  InitialSpace->PrintStateMonomial(File, i) << endl;
-			}
-		      File.close();
-		    }
-		  if (OutputFileName != 0)
-		    {
-		      OutputState.WriteVector(OutputFileName);
-		    }
-		}
-	      else
-		{
-		  if (SymmetrizedBasis == false)    
-		    InitialSpace->GenerateJackPolynomialSparse(OutputState, Alpha, MinIndex, MaxIndex);
-		  else
-		    InitialSpace->GenerateSymmetrizedJackPolynomialSparse(Alpha, Architecture.GetArchitecture(), OutputFileName, MinIndex, MaxIndex, Manager.GetInteger("huge-vector") << 20, Manager.GetInteger("huge-blocks") << 20, Manager.GetBoolean("resume"));
-		}
-	      return 0;
 	    }
-#ifdef __64_BITS__
-	  if (NbrFluxQuanta < 63)
-#else
-	    if (NbrFluxQuanta < 31)
-#endif
-	      {
-		FermionOnSphereHaldaneBasis* InitialSpace;
-		if (Manager.GetBoolean("large-basis") == true)
+	  bool DiskStorageFlag = InitialSpace->CheckDiskStorage();	  
+	  if (DiskStorageFlag == true)
+	    {
+	      cout << "using disk storage for the Hilbert space and output state, some options might be disabled" << endl;
+	    }
+	  if (Manager.GetBoolean("disk-storage") == true)
+	    DiskStorageFlag = true;
+	  if (DiskStorageFlag == false)
+	    {
+	      RealVector OutputState;
+	      if (Manager.GetString("initial-state") == 0)
+		OutputState = RealVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
+	      else
+		if (OutputState.ReadVector(Manager.GetString("initial-state")) == false)
 		  {
-		    if (Manager.GetString("load-hilbert") != 0)
-		      InitialSpace = new FermionOnSphereHaldaneLargeBasis(Manager.GetString("load-hilbert"), Manager.GetInteger("large-memory") << 10);
-		    else
-		      {
-			InitialSpace = new FermionOnSphereHaldaneLargeBasis(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState, Manager.GetInteger("large-memory") << 10);	  
-			if (Manager.GetString("save-hilbert") != 0)
-			  {
-			    InitialSpace->WriteHilbertSpace(Manager.GetString("save-hilbert"));
-			    return 0;
-			  }
-		      }
+		    cout << "can't open " << Manager.GetString("initial-state") << endl;
+		    return -1;
 		  }
+	      if (SymmetrizedBasis == false)    
+		InitialSpace->GenerateJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex, OutputFileName);
+	      else
+		InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex, OutputFileName);
+	      if (Manager.GetBoolean("normalize"))
+		InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);
+	      if (OutputTxtFileName != 0)
+		{
+		  ofstream File;
+		  File.open(OutputTxtFileName, ios::binary | ios::out);
+		  File.precision(14);
+		  for (long i = 0; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
+		    {
+		      File << OutputState[i] << " ";
+		      InitialSpace->PrintStateMonomial(File, i) << endl;
+		    }
+		  File.close();
+		}
+	      if (OutputFileName != 0)
+		{
+		  OutputState.WriteVector(OutputFileName);
+		}
+	    }
+	  else
+	    {
+	      if (SymmetrizedBasis == false)    
+		InitialSpace->GenerateJackPolynomialSparse(Alpha, Architecture.GetArchitecture(), OutputFileName, MinIndex, MaxIndex, Manager.GetInteger("huge-vector") << 20, Manager.GetInteger("huge-blocks") << 20, Manager.GetBoolean("resume"));
+	      else
+		InitialSpace->GenerateSymmetrizedJackPolynomialSparse(Alpha, Architecture.GetArchitecture(), OutputFileName, MinIndex, MaxIndex, Manager.GetInteger("huge-vector") << 20, Manager.GetInteger("huge-blocks") << 20, Manager.GetBoolean("resume"));
+	    }
+	  return 0;
+	}
+#ifdef __64_BITS__
+      if (NbrFluxQuanta < 63)
+#else
+	if (NbrFluxQuanta < 31)
+#endif
+	  {
+	    FermionOnSphereHaldaneBasis* InitialSpace;
+	    if (Manager.GetBoolean("large-basis") == true)
+	      {
+		if (Manager.GetString("load-hilbert") != 0)
+		  InitialSpace = new FermionOnSphereHaldaneLargeBasis(Manager.GetString("load-hilbert"), Manager.GetInteger("large-memory") << 10);
 		else
 		  {
-		    if (Manager.GetString("load-hilbert") != 0)
-		      InitialSpace = new FermionOnSphereHaldaneBasis(Manager.GetString("load-hilbert"));
-		    else
+		    InitialSpace = new FermionOnSphereHaldaneLargeBasis(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState, Manager.GetInteger("large-memory") << 10);	  
+		    if (Manager.GetString("save-hilbert") != 0)
 		      {
-			InitialSpace = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);	  
-			if (Manager.GetString("save-hilbert") != 0)
-			  {
-			    InitialSpace->WriteHilbertSpace(Manager.GetString("save-hilbert"));
-			    return 0;
-			  }
+			InitialSpace->WriteHilbertSpace(Manager.GetString("save-hilbert"));
+			return 0;
 		      }
 		  }
+	      }
+	    else
+	      {
+		if (Manager.GetString("load-hilbert") != 0)
+		  InitialSpace = new FermionOnSphereHaldaneBasis(Manager.GetString("load-hilbert"));
+		else
+		  {
+		    InitialSpace = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);	  
+		    if (Manager.GetString("save-hilbert") != 0)
+		      {
+			InitialSpace->WriteHilbertSpace(Manager.GetString("save-hilbert"));
+			return 0;
+		      }
+		  }
+	      }
+	    if (Manager.GetBoolean("rational") == false)
+	      {
 		RealVector OutputState;
 		if (Manager.GetBoolean("check-singularity") == true)
 		  {
@@ -629,108 +628,128 @@ int main(int argc, char** argv)
 	      }
 	    else
 	      {
-		FermionOnSphereHaldaneBasisLong* InitialSpace;
-		if (Manager.GetString("load-hilbert") != 0)
-		  InitialSpace = new FermionOnSphereHaldaneBasisLong(Manager.GetString("load-hilbert"));
-		else
-		  {
-		    InitialSpace = new FermionOnSphereHaldaneBasisLong(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);	  
-		    if (Manager.GetString("save-hilbert") != 0)
-		      {
-			InitialSpace->WriteHilbertSpace(Manager.GetString("save-hilbert"));
-			return 0;
-		      }
-		  }
-		RealVector OutputState;
-		if (Manager.GetBoolean("check-singularity") == true)
-		  {
-		    OutputState = RealVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
-		    InitialSpace->CheckPossibleSingularCoefficientsInJackPolynomial(OutputState, Alpha, 1e-14);
-		    cout << "partitions that may lead to singular coefficients : " << endl;
-		    for (long i = 1l; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
-		      if (OutputState[i] != 0.0)
+#ifdef __GMP__
+		if (Manager.GetBoolean("use-gmp") == false)
+#else
+		  if (Manager.GetBoolean("use-longlong") == false)
+#endif
+		    {
+		      RationalVector OutputState;
+		      if (Manager.GetBoolean("check-singularity") == true)
 			{
-			  InitialSpace->PrintStateMonomial(cout, i) << " = ";
-			  InitialSpace->PrintState(cout, i) << endl;
+			  OutputState = RationalVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);		  
+			  InitialSpace->CheckPossibleSingularCoefficientsInJackPolynomial(OutputState, AlphaNumerator, AlphaDenominator, true);
+			  cout << "partitions that may lead to singular coefficients : " << endl;
+			  Rational Zero = 0l;
+			  for (long i = 1l; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
+			    if (OutputState[i] != Zero)
+			      {
+				InitialSpace->PrintStateMonomial(cout, i) << " = ";
+				InitialSpace->PrintState(cout, i) << " (pos = " << i << ", connectivity = " << OutputState[i] << ") " << endl;
+			      }
+			  return 0;
 			}
+		      cout << "only use-gmp/use-longlong rational mode are available for fermions" << endl;
+		      return 0;
+		    }
+		  else
+		    {
+		      LongRationalVector OutputState;
+		      if (Manager.GetString("initial-state") == 0)
+			OutputState = LongRationalVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
+		      else
+			if (OutputState.ReadVector(Manager.GetString("initial-state")) == false)
+			  {
+			    cout << "can't open " << Manager.GetString("initial-state") << endl;
+			    return -1;
+			  }
+		      if (SymmetrizedBasis == false)    
+			InitialSpace->GenerateJackPolynomial(OutputState, AlphaNumerator, AlphaDenominator, Architecture.GetArchitecture(), SymbolicDepth, MinIndex, MaxIndex, OutputFileName);
+		      else
+			InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, AlphaNumerator, AlphaDenominator, Architecture.GetArchitecture(), SymbolicDepth, MinIndex, MaxIndex, OutputFileName);
+		      if (Manager.GetBoolean("normalize"))
+			{
+			  cout << "calculations have been done with rational numbers, normalization will not be done" << endl;
+			}
+		      if (OutputTxtFileName != 0)
+			{
+			  ofstream File;
+			  File.open(OutputTxtFileName, ios::binary | ios::out);
+			  File.precision(14);
+			  for (long i = 0; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
+			    {
+			      File << OutputState[i] << " ";
+			      InitialSpace->PrintStateMonomial(File, i) << endl;
+			    }
+			  File.close();
+			}
+		      if (OutputFileName != 0)
+			{
+			  OutputState.WriteVector(OutputFileName);
+			}
+		    }
+	      }
+	  }
+	else
+	  {
+	    FermionOnSphereHaldaneBasisLong* InitialSpace;
+	    if (Manager.GetString("load-hilbert") != 0)
+	      InitialSpace = new FermionOnSphereHaldaneBasisLong(Manager.GetString("load-hilbert"));
+	    else
+	      {
+		InitialSpace = new FermionOnSphereHaldaneBasisLong(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);	  
+		if (Manager.GetString("save-hilbert") != 0)
+		  {
+		    InitialSpace->WriteHilbertSpace(Manager.GetString("save-hilbert"));
 		    return 0;
 		  }
-		if (Manager.GetString("initial-state") == 0)
-		  OutputState = RealVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
-		else
-		  if (OutputState.ReadVector(Manager.GetString("initial-state")) == false)
-		    {
-		      cout << "can't open " << Manager.GetString("initial-state") << endl;
-		      return -1;
-		    }
-		if (SymmetrizedBasis == false)    
-		  InitialSpace->GenerateJackPolynomial(OutputState, Alpha);
-		else
-		  InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, Alpha);
-		if (Manager.GetBoolean("normalize"))
-		  InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);
-		if (OutputTxtFileName != 0)
-		  {
-		    ofstream File;
-		    File.open(OutputTxtFileName, ios::binary | ios::out);
-		    File.precision(14);
-		    for (long i = 0; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
-		      {
-			File << OutputState[i] << " ";
-			InitialSpace->PrintStateMonomial(File, i) << endl;
-		      }
-		    File.close();
-		  }
-		if (OutputFileName != 0)
-		  {
-		    OutputState.WriteVector(OutputFileName);
-		  }
 	      }
-	}
-      else
-	{
-	  FermionOnSphereHaldaneSymmetricBasis* InitialSpace;
-	  if (Manager.GetString("load-hilbert") != 0)
-	    InitialSpace = new FermionOnSphereHaldaneSymmetricBasis(Manager.GetString("load-hilbert"));
-	  else
-	    {
-	      InitialSpace = new FermionOnSphereHaldaneSymmetricBasis(NbrParticles, NbrFluxQuanta, ReferenceState);	  
-	      if (Manager.GetString("save-hilbert") != 0)
-		{
-		  InitialSpace->WriteHilbertSpace(Manager.GetString("save-hilbert"));
-		  return 0;
-		}
-	    }
-	  RealVector OutputState;
-	  if (Manager.GetString("initial-state") == 0)
-	    OutputState = RealVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
-	  else
-	    if (OutputState.ReadVector(Manager.GetString("initial-state")) == false)
+	    RealVector OutputState;
+	    if (Manager.GetBoolean("check-singularity") == true)
 	      {
-		cout << "can't open " << Manager.GetString("initial-state") << endl;
-		return -1;
+		OutputState = RealVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
+		InitialSpace->CheckPossibleSingularCoefficientsInJackPolynomial(OutputState, Alpha, 1e-14);
+		cout << "partitions that may lead to singular coefficients : " << endl;
+		for (long i = 1l; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
+		  if (OutputState[i] != 0.0)
+		    {
+		      InitialSpace->PrintStateMonomial(cout, i) << " = ";
+		      InitialSpace->PrintState(cout, i) << endl;
+		    }
+		return 0;
 	      }
-	  InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, Alpha);
-	  if (Manager.GetBoolean("normalize"))
-	    InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);
-	  if (OutputTxtFileName != 0)
-	    {
-	      ofstream File;
-	      File.open(OutputTxtFileName, ios::binary | ios::out);
-	      File.precision(14);
-	      for (long i = 0; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
+	    if (Manager.GetString("initial-state") == 0)
+	      OutputState = RealVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
+	    else
+	      if (OutputState.ReadVector(Manager.GetString("initial-state")) == false)
 		{
-		  File << OutputState[i] << " ";
-		  InitialSpace->PrintStateMonomial(File, i) << endl;
+		  cout << "can't open " << Manager.GetString("initial-state") << endl;
+		  return -1;
 		}
-	      File.close();
-	    }
-	  if (OutputFileName != 0)
-	    {
-	      OutputState.WriteVector(OutputFileName);
-	    }
-	}
-    }    
+	    if (SymmetrizedBasis == false)    
+	      InitialSpace->GenerateJackPolynomial(OutputState, Alpha);
+	    else
+	      InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, Alpha);
+	    if (Manager.GetBoolean("normalize"))
+	      InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);
+	    if (OutputTxtFileName != 0)
+	      {
+		ofstream File;
+		File.open(OutputTxtFileName, ios::binary | ios::out);
+		File.precision(14);
+		for (long i = 0; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
+		  {
+		    File << OutputState[i] << " ";
+		    InitialSpace->PrintStateMonomial(File, i) << endl;
+		  }
+		File.close();
+	      }
+	    if (OutputFileName != 0)
+	      {
+		OutputState.WriteVector(OutputFileName);
+	      }
+	  }
+    }
   return 0;
 }
 

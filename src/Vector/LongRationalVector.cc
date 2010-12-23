@@ -463,7 +463,7 @@ bool LongRationalVector::ReadVector (const char* fileName, long minIndex, long m
 	{
 	  this->Components[0].Read(File);
 	}
-      for (int i = minIndex; i < maxIndex; ++i)
+      for (int i = minIndex; i <= maxIndex; ++i)
 	{
 	  this->Components[i - minIndex].Read(File);
 	}
@@ -481,7 +481,7 @@ bool LongRationalVector::ReadVector (const char* fileName, long minIndex, long m
 	{
 	  this->Components[0l].Read(File);
 	}
-      for (long i = minIndex; i < maxIndex; ++i)
+      for (long i = minIndex; i <= maxIndex; ++i)
 	{
 	  this->Components[i - minIndex].Read(File);
 	}

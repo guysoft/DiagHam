@@ -33,6 +33,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "max-range", "compare vectors up to a given component (0 if up to the end)", 0l);
   (*SystemGroup) += new SingleDoubleOption  ('e', "error", "rounding error", 0.0);
   (*SystemGroup) +=  new BooleanOption  ('\n', "discard-zero", "do not compare components if the one the first start is strictly zero");
+  (*SystemGroup) +=  new BooleanOption  ('\n', "relative-error", "compute relative error");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -91,57 +92,136 @@ int main(int argc, char** argv)
   double Error = Manager.GetDouble("error");
 
   bool DiscardZero = Manager.GetBoolean("discard-zero");
+  bool RealtiveError = Manager.GetBoolean("relative-error");
+  double MaxRelativeError = 0.0;
   long Count = 0l;
   if (Error == 0.0)
     {
-      if (DiscardZero == false)
+      if (RealtiveError == true)
 	{
-	  for (long i = MinValue; i < MaxValue; ++i)
+	  if (DiscardZero == false)
 	    {
-	      if (State1[i] != State2[i])
+	      for (long i = MinValue; i < MaxValue; ++i)
 		{
-		  cout << i << " : " << State1[i] << " " << State2[i] << endl;
-		  ++Count;
+		  if (State1[i] != State2[i])
+		    {
+		      double RelativeError = fabs(State1[i] - State2[i]);
+		      if (State1[i] != 0.0)
+			RelativeError /= fabs(State1[i]);
+		      if (RelativeError > MaxRelativeError)
+			MaxRelativeError = RelativeError;
+		      cout << i << " : " << State1[i] << " " << State2[i] << " (" << RelativeError << ")"  << endl;
+		      ++Count;
+		    }
+		}
+	    }
+	  else
+	    {
+	      for (long i = MinValue; i < MaxValue; ++i)
+		{
+		  if ((State1[i] != 0.0) && (State1[i] != State2[i]))
+		    {
+		      double RelativeError = fabs(State1[i] - State2[i]) / fabs(State1[i]);
+		      if (RelativeError > MaxRelativeError)
+			MaxRelativeError = RelativeError;
+		      cout << i << " : " << State1[i] << " " << State2[i] << " (" << RelativeError << ")" << endl;
+		      ++Count;
+		    }
 		}
 	    }
 	}
       else
 	{
-	  for (long i = MinValue; i < MaxValue; ++i)
+	  if (DiscardZero == false)
 	    {
-	      if ((State1[i] != 0.0) && (State1[i] != State2[i]))
+	      for (long i = MinValue; i < MaxValue; ++i)
 		{
-		  cout << i << " : " << State1[i] << " " << State2[i] << endl;
+		  if (State1[i] != State2[i])
+		    {
+		      cout << i << " : " << State1[i] << " " << State2[i] << endl;
+		      ++Count;
+		    }
+		}
+	    }
+	  else
+	    {
+	      for (long i = MinValue; i < MaxValue; ++i)
+		{
+		  if ((State1[i] != 0.0) && (State1[i] != State2[i]))
+		    {
+		      cout << i << " : " << State1[i] << " " << State2[i] << endl;
 		  ++Count;
+		    }
 		}
 	    }
 	}
     }
   else
     {
-      if (DiscardZero == false)
+      if (RealtiveError == true)
 	{
-	  for (long i = MinValue; i < MaxValue; ++i)
+	  if (DiscardZero == false)
 	    {
-	      if ((fabs(State1[i] - State2[i]) > Error) && (fabs(State1[i] - State2[i]) > (Error * fabs(State1[i]))))
+	      for (long i = MinValue; i < MaxValue; ++i)
 		{
-		  cout << i << " : " << State1[i] << " " << State2[i] << endl;
-		  ++Count;
+		  double RelativeError = fabs(State1[i] - State2[i]);
+		  if ((RelativeError > Error) && (RelativeError > (Error * fabs(State1[i]))))
+		    {
+		      if (State1[i] != 0.0)
+			RelativeError /= fabs(State1[i]);
+		      if (RelativeError > MaxRelativeError)
+			MaxRelativeError = RelativeError;
+		      cout << i << " : " << State1[i] << " " << State2[i] << " (" << RelativeError << ")"   << endl;
+		      ++Count;
+		    }
+		}
+	    }
+	  else
+	    {
+	      for (long i = MinValue; i < MaxValue; ++i)
+		{
+		  double RelativeError = fabs(State1[i] - State2[i]);
+		  if ((State1[i] != 0.0) && (RelativeError > Error) && (RelativeError > (Error * fabs(State1[i]))))
+		    {
+		      RelativeError /= fabs(State1[i]);
+		      if (RelativeError > MaxRelativeError)
+			MaxRelativeError = RelativeError;
+		      cout << i << " : " << State1[i] << " " << State2[i] << " (" << RelativeError << ")"   << endl;
+		      ++Count;
+		    }
 		}
 	    }
 	}
       else
 	{
-	  for (long i = MinValue; i < MaxValue; ++i)
+	  if (DiscardZero == false)
 	    {
-	      if ((State1[i] != 0.0) && ((fabs(State1[i] - State2[i]) > Error) && (fabs(State1[i] - State2[i]) > (Error * fabs(State1[i])))))
+	      for (long i = MinValue; i < MaxValue; ++i)
 		{
-		  cout << i << " : " << State1[i] << " " << State2[i] << endl;
-		  ++Count;
+		  if ((fabs(State1[i] - State2[i]) > Error) && (fabs(State1[i] - State2[i]) > (Error * fabs(State1[i]))))
+		    {
+		      cout << i << " : " << State1[i] << " " << State2[i] << endl;
+		      ++Count;
+		    }
+		}
+	    }
+	  else
+	    {
+	      for (long i = MinValue; i < MaxValue; ++i)
+		{
+		  if ((State1[i] != 0.0) && ((fabs(State1[i] - State2[i]) > Error) && (fabs(State1[i] - State2[i]) > (Error * fabs(State1[i])))))
+		    {
+		      cout << i << " : " << State1[i] << " " << State2[i] << endl;
+		      ++Count;
+		    }
 		}
 	    }
 	}
     }
   cout << "total number of different components : " << Count << " / " << State1.GetLargeVectorDimension() << endl;
+  if (RealtiveError == true)
+    {
+      cout  << "maximum relative error : "  << MaxRelativeError << endl;
+    }
   return 0;
 }

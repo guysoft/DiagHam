@@ -169,11 +169,11 @@ int main(int argc, char** argv)
 	  Tmp.Power2Multiply(DiffLzMax);
 	  LongRational Tmp2 = Tmp;
 	  Tmp2.Power2Multiply(DiffLzMax);
-	  cout << "2^" << DiffLzMax <<  " * " << Excited << " / " << RationalBase << " = " << Tmp2 << endl;
+	  cout << "2^" << DiffLzMax <<  " * " << Excited << " / " << RationalBase << " = " << Tmp2 << " = " << Tmp2.GetNumericalValue() << endl;
 	}
       else
 	{
-	  cout << Excited << endl;
+	  cout << Excited << " = " << Excited.GetNumericalValue() << endl;
 	}
     }
   else
