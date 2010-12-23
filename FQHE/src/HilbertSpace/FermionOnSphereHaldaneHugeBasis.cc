@@ -3247,23 +3247,48 @@ double FermionOnSphereHaldaneHugeBasis::JackSqrNormalization (RealVector& output
   long MaxIndex = minIndex + nbrComponents;
   if (MaxIndex == minIndex)
     MaxIndex = this->LargeHilbertSpaceDimension;
-  for (long i = minIndex; i < MaxIndex; ++i)
+  if (this->NbrBuffers == 0)
     {
-      Factorial.SetToOne();
-      this->ConvertToMonomial(this->StateDescription[i], this->TemporaryMonomial);
-      for (int k = 0; k < this->NbrFermions; ++k)
+      for (long i = minIndex; i < MaxIndex; ++i)
 	{
-	  if (HalfLzMax < this->TemporaryMonomial[k])
-	    Factorial.PartialFactorialMultiply(HalfLzMax + 1, this->TemporaryMonomial[k]);
-	  else
-	    if (HalfLzMax > this->TemporaryMonomial[k])
-	      Factorial.PartialFactorialDivide(this->TemporaryMonomial[k] + 1, HalfLzMax);
-	}	      
-      SqrNorm +=(outputVector[i] * outputVector[i]) * Factorial.GetNumericalValue();
-      if ((i & 0x3fffl) == 0l)
+	  Factorial.SetToOne();
+	  this->ConvertToMonomial(this->StateDescription[i], this->TemporaryMonomial);
+	  for (int k = 0; k < this->NbrFermions; ++k)
+	    {
+	      if (HalfLzMax < this->TemporaryMonomial[k])
+		Factorial.PartialFactorialMultiply(HalfLzMax + 1, this->TemporaryMonomial[k]);
+	      else
+		if (HalfLzMax > this->TemporaryMonomial[k])
+		  Factorial.PartialFactorialDivide(this->TemporaryMonomial[k] + 1, HalfLzMax);
+	    }	      
+	  SqrNorm +=(outputVector[i] * outputVector[i]) * Factorial.GetNumericalValue();
+	  if ((i & 0x3fffl) == 0l)
+	    {
+	      cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100l) / this->LargeHilbertSpaceDimension) << "%)           \r";
+	      cout.flush();
+	    }
+	}
+    }
+  else
+    {
+      for (long i = minIndex; i < MaxIndex; ++i)
 	{
-	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100l) / this->LargeHilbertSpaceDimension) << "%)           \r";
-	  cout.flush();
+	  Factorial.SetToOne();
+	  this->ConvertToMonomial(this->GetStateFactorized(i), this->TemporaryMonomial);
+	  for (int k = 0; k < this->NbrFermions; ++k)
+	    {
+	      if (HalfLzMax < this->TemporaryMonomial[k])
+		Factorial.PartialFactorialMultiply(HalfLzMax + 1, this->TemporaryMonomial[k]);
+	      else
+		if (HalfLzMax > this->TemporaryMonomial[k])
+		  Factorial.PartialFactorialDivide(this->TemporaryMonomial[k] + 1, HalfLzMax);
+	    }	      
+	  SqrNorm +=(outputVector[i] * outputVector[i]) * Factorial.GetNumericalValue();
+	  if ((i & 0x3fffl) == 0l)
+	    {
+	      cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100l) / this->LargeHilbertSpaceDimension) << "%)           \r";
+	      cout.flush();
+	    }
 	}
     }
   cout << endl;

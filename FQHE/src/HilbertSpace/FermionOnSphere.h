@@ -39,6 +39,8 @@
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/ComplexLapackDeterminant.h"
 #include "MathTools/BinomialCoefficients.h"
+#include "MathTools/LongRational.h"
+#include "Vector/LongRationalVector.h"
 
 
 #include <iostream>
@@ -510,6 +512,14 @@ class FermionOnSphere :  public ParticleOnSphere
   // return value = reference on the fused state
   virtual RealVector& FuseStates (RealVector& outputVector, RealVector& leftVector, RealVector& rightVector, int padding, 
 				  ParticleOnSphere* leftSpace, ParticleOnSphere* rightSpace, bool symmetrizedFlag = false, double coefficient = 1.0);
+
+  // compute part of the Jack polynomial square normalization in a given range of indices
+  //
+  // state = reference on the unnormalized Jack polynomial
+  // minIndex = first index to compute 
+  // nbrComponents = number of indices to compute (0 if they all have to be computed from minIndex)
+  // return value = quare normalization 
+  virtual LongRational JackSqrNormalization (LongRationalVector& outputVector, long minIndex = 0l, long nbrComponents = 0l);
 
   // compute part of the Jack polynomial square normalization in a given range of indices
   //

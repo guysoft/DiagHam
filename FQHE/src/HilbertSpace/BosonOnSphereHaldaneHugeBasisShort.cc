@@ -2036,31 +2036,64 @@ double BosonOnSphereHaldaneHugeBasisShort::JackSqrNormalization (RealVector& out
   long MaxIndex = minIndex + nbrComponents;
   if (MaxIndex == minIndex)
     MaxIndex = this->LargeHilbertSpaceDimension;
-  for (long i = minIndex; i < MaxIndex; ++i)
+  if (this->FermionHugeBasis->NbrBuffers == 0)
     {
-      unsigned long TmpState = this->FermionHugeBasis->StateDescription[i];
-      while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
-	--TmpLzMax;
-      Factorial.SetToOne();
-      this->ConvertToMonomial(TmpState, TmpLzMax, this->TemporaryMonomial);
-      this->FermionToBoson(TmpState, TmpLzMax, 
-			   this->TemporaryState, this->TemporaryStateLzMax);
-      for (int k = 0; k < this->NbrBosons; ++k)
+      for (long i = minIndex; i < MaxIndex; ++i)
 	{
-	  if (HalfLzMax < this->TemporaryMonomial[k])
-	    Factorial.PartialFactorialMultiply(HalfLzMax + 1, this->TemporaryMonomial[k]);
-	  else
-	    if (HalfLzMax > this->TemporaryMonomial[k])
-	      Factorial.PartialFactorialDivide(this->TemporaryMonomial[k] + 1, HalfLzMax);
-	}	      
-      for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
-	if (this->TemporaryState[k] > 1)
-	  Factorial.FactorialDivide(this->TemporaryState[k]);
-      SqrNorm += (outputVector[i] * outputVector[i]) * Factorial.GetNumericalValue();
-      if ((i & 0x3fffl) == 0l)
+	  unsigned long TmpState = this->FermionHugeBasis->StateDescription[i];
+	  while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
+	    --TmpLzMax;
+	  Factorial.SetToOne();
+	  this->ConvertToMonomial(TmpState, TmpLzMax, this->TemporaryMonomial);
+	  this->FermionToBoson(TmpState, TmpLzMax, 
+			       this->TemporaryState, this->TemporaryStateLzMax);
+	  for (int k = 0; k < this->NbrBosons; ++k)
+	    {
+	      if (HalfLzMax < this->TemporaryMonomial[k])
+		Factorial.PartialFactorialMultiply(HalfLzMax + 1, this->TemporaryMonomial[k]);
+	      else
+		if (HalfLzMax > this->TemporaryMonomial[k])
+		  Factorial.PartialFactorialDivide(this->TemporaryMonomial[k] + 1, HalfLzMax);
+	    }	      
+	  for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
+	    if (this->TemporaryState[k] > 1)
+	      Factorial.FactorialDivide(this->TemporaryState[k]);
+	  SqrNorm += (outputVector[i] * outputVector[i]) * Factorial.GetNumericalValue();
+	  if ((i & 0x3fffl) == 0l)
+	    {
+	      cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100l) / this->LargeHilbertSpaceDimension) << "%)           \r";
+	      cout.flush();
+	    }
+	}
+    }
+  else
+    {
+      for (long i = minIndex; i < MaxIndex; ++i)
 	{
-	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100l) / this->LargeHilbertSpaceDimension) << "%)           \r";
-	  cout.flush();
+	  unsigned long TmpState = this->FermionHugeBasis->GetStateFactorized(i);
+	  while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
+	    --TmpLzMax;
+	  Factorial.SetToOne();
+	  this->ConvertToMonomial(TmpState, TmpLzMax, this->TemporaryMonomial);
+	  this->FermionToBoson(TmpState, TmpLzMax, 
+			       this->TemporaryState, this->TemporaryStateLzMax);
+	  for (int k = 0; k < this->NbrBosons; ++k)
+	    {
+	      if (HalfLzMax < this->TemporaryMonomial[k])
+		Factorial.PartialFactorialMultiply(HalfLzMax + 1, this->TemporaryMonomial[k]);
+	      else
+		if (HalfLzMax > this->TemporaryMonomial[k])
+		  Factorial.PartialFactorialDivide(this->TemporaryMonomial[k] + 1, HalfLzMax);
+	    }	      
+	  for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
+	    if (this->TemporaryState[k] > 1)
+	      Factorial.FactorialDivide(this->TemporaryState[k]);
+	  SqrNorm += (outputVector[i] * outputVector[i]) * Factorial.GetNumericalValue();
+	  if ((i & 0x3fffl) == 0l)
+	    {
+	      cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100l) / this->LargeHilbertSpaceDimension) << "%)           \r";
+	      cout.flush();
+	    }
 	}
     }
   cout << endl;
