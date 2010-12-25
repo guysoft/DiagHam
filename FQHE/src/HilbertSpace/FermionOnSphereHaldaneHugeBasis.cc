@@ -1,3 +1,4 @@
+
 ////////////////////////////////////////////////////////////////////////////////
 //                                                                            //
 //                                                                            //
@@ -2605,7 +2606,6 @@ void FermionOnSphereHaldaneHugeBasis::GenerateJackPolynomialSparse(double alpha,
 	    }
 	}
       OutputFile.close();
-      return;
       if ((i & DisplayStep) == 0l)
       	{
      	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
@@ -3247,7 +3247,7 @@ double FermionOnSphereHaldaneHugeBasis::JackSqrNormalization (RealVector& output
   long MaxIndex = minIndex + nbrComponents;
   if (MaxIndex == minIndex)
     MaxIndex = this->LargeHilbertSpaceDimension;
-  if (this->NbrBuffers == 0)
+  if (this->NbrRootSuffix == 0)
     {
       for (long i = minIndex; i < MaxIndex; ++i)
 	{

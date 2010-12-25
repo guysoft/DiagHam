@@ -2036,7 +2036,7 @@ double BosonOnSphereHaldaneHugeBasisShort::JackSqrNormalization (RealVector& out
   long MaxIndex = minIndex + nbrComponents;
   if (MaxIndex == minIndex)
     MaxIndex = this->LargeHilbertSpaceDimension;
-  if (this->FermionHugeBasis->NbrBuffers == 0)
+  if (this->FermionHugeBasis->NbrRootSuffix == 0)
     {
       for (long i = minIndex; i < MaxIndex; ++i)
 	{
