@@ -116,7 +116,8 @@ class SMPArchitecture : public AbstractArchitecture
 
   // send jobs to threads
   //
-  void SendJobs ();
+  // nbrJobs = optional parameter that indicates how many jobs have to be sent (0 if all)
+  void SendJobs (int nbrJobs = 0);
 
   // indicate if the log file option is activated
   //

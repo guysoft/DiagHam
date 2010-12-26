@@ -121,15 +121,20 @@ void SMPArchitecture::SetThreadOperation(AbstractArchitectureOperation* operatio
 
 // send jobs to threads
 //
+// nbrJobs = optional parameter that indicates how many jobs have to be sent (0 if all)
 
-void SMPArchitecture::SendJobs ()
+void SMPArchitecture::SendJobs (int nbrJobs)
 {
   int Flag = 0;
   void* ret;
 #ifdef __SMP__
   pthread_mutex_t mut = PTHREAD_MUTEX_INITIALIZER;
 #endif
-  int ReducedNbrThreads =  this->NbrThreads - 1;
+  if ((nbrJobs <= 0) || (nbrJobs > this->NbrThreads))
+    {
+      nbrJobs = this->NbrThreads;
+    }
+  int ReducedNbrThreads =  nbrJobs - 1;
   for (int i = 0; i < ReducedNbrThreads; ++i)
     {
       this->ThreadParameters[i].ThreadID = i;
@@ -145,8 +150,8 @@ void SMPArchitecture::SendJobs ()
 #endif
 
 #ifdef __SMP__
-  pthread_t* Threads2 = new pthread_t [this->NbrThreads];
-  for (int i = 0; i < this->NbrThreads; ++i)
+  pthread_t* Threads2 = new pthread_t [nbrJobs];
+  for (int i = 0; i < nbrJobs; ++i)
     {
       int code;
       if ( (code = pthread_create (&(Threads2[i]), (const pthread_attr_t *)NULL, ThreadExecuteOperation, (void*) &(this->ThreadParameters[i])))!=0 )
@@ -156,7 +161,7 @@ void SMPArchitecture::SendJobs ()
 	  exit(1);
 	}
     }
-  for (int i = 0; i < this->NbrThreads; ++i)
+  for (int i = 0; i < nbrJobs; ++i)
     {
       (void) pthread_join (Threads2[i], &ret);
     }

@@ -9,4 +9,5 @@ FQHESphereJackGeneratorOperation.cc \
 FQHESphereJastrowMultiplicationOperation.cc \
 FQHESphereJastrowDivisionOperation.cc \
 FQHESphereMonomialsTimesSlaterProjectionOperation.cc \
-FQHESphereParticleEntanglementSpectrumOperation.cc
+FQHESphereParticleEntanglementSpectrumOperation.cc \
+FQHESphereJackGeneratorSumRationalPolynomialOperation.cc
