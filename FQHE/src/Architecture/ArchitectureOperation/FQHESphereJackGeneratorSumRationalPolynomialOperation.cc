@@ -254,12 +254,37 @@ bool FQHESphereJackGeneratorSumRationalPolynomialOperation::ArchitectureDependen
   LocalOperations[ReducedNbrThreads]->LocalIndex = ReducedNbrThreads;
   architecture->SetThreadOperation(LocalOperations[ReducedNbrThreads], ReducedNbrThreads);
   architecture->SendJobs(this->LocalNbrJobs);
+  
+  for (int i = 0; i < this->LocalNbrJobs; ++i)
+    LocalOperations[i]->FirstPassFlag = false;
+    
+  int TmpNbrJobs = this->LocalNbrJobs;
+  Step = 1;
+  while ((TmpNbrJobs >> 1) > 1)
+    {
+      TmpNbrJobs >>= 1;
+      Step = TmpNbrJobs;
+      ReducedNbrThreads = TmpNbrJobs - 1;
+      for (int i = 0; i < ReducedNbrThreads; ++i)
+	{
+	  LocalOperations[i]->LocalNbrRationalPolynomials = 2;
+	  LocalOperations[i]->LocalIndex = i * Step;
+	  LocalOperations[i]->LocalStep = Step;
+	}
+      LocalOperations[ReducedNbrThreads]->LocalNbrRationalPolynomials = 2 + (TmpNbrJobs & 1);
+      LocalOperations[ReducedNbrThreads]->LocalIndex = ReducedNbrThreads * Step;
+      LocalOperations[ReducedNbrThreads]->LocalStep = Step;
+      architecture->SendJobs(TmpNbrJobs);
+      Step <<= 1;
+    }
+  LocalOperations[0]->LocalNbrRationalPolynomials = TmpNbrJobs;
+  LocalOperations[0]->LocalIndex = 0;
+  LocalOperations[0]->LocalStep = Step;
+  LocalOperations[0]->RawApplyOperation();
 
-  this->FirstPassFlag = false;  
-  this->LocalNbrRationalPolynomials = this->LocalNbrJobs; 
-  this->LocalIndex = 0;
-  this->LocalStep = 1;
-  this->RawApplyOperation();
+  for (int i = 0; i < this->LocalNbrJobs; ++i)
+    delete LocalOperations[i];
+  delete[] LocalOperations;
   return true;
 }
   
