@@ -260,20 +260,19 @@ bool FQHESphereJackGeneratorSumRationalPolynomialOperation::ArchitectureDependen
     
   int TmpNbrJobs = this->LocalNbrJobs;
   Step = 1;
-  while ((TmpNbrJobs >> 1) > 1)
+  while ((TmpNbrJobs >> 1) > 2)
     {
-      TmpNbrJobs >>= 1;
-      Step = TmpNbrJobs;
-      ReducedNbrThreads = TmpNbrJobs - 1;
+      ReducedNbrThreads = (TmpNbrJobs >> 1) - 1;
       for (int i = 0; i < ReducedNbrThreads; ++i)
 	{
 	  LocalOperations[i]->LocalNbrRationalPolynomials = 2;
-	  LocalOperations[i]->LocalIndex = i * Step;
+	  LocalOperations[i]->LocalIndex = i * (Step << 1);
 	  LocalOperations[i]->LocalStep = Step;
 	}
       LocalOperations[ReducedNbrThreads]->LocalNbrRationalPolynomials = 2 + (TmpNbrJobs & 1);
-      LocalOperations[ReducedNbrThreads]->LocalIndex = ReducedNbrThreads * Step;
+      LocalOperations[ReducedNbrThreads]->LocalIndex = ReducedNbrThreads * (Step << 1);
       LocalOperations[ReducedNbrThreads]->LocalStep = Step;
+      TmpNbrJobs >>= 1;
       architecture->SendJobs(TmpNbrJobs);
       Step <<= 1;
     }

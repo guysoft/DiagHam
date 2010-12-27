@@ -2417,9 +2417,6 @@ void FermionOnSphereHaldaneHugeBasis::GenerateJackPolynomialSparse(double alpha,
   for (int j = 0; j < this->NbrFermions; ++j)
     RhoRoot += this->TemporaryMonomial[j] * (this->TemporaryMonomial[j] - InvAlpha * ((double) j));
   int ReducedNbrFermions = this->NbrFermions - 1;  
-  double SymSign = 1.0;
-  if ((((this->NbrFermions * ReducedNbrFermions) >> 1) & 1) != 0)
-    SymSign = -1.0;
 
   if (minIndex <= 0)
     minIndex = 1;
@@ -2447,7 +2444,7 @@ void FermionOnSphereHaldaneHugeBasis::GenerateJackPolynomialSparse(double alpha,
       TmpComponentArray[j] = new double [MaxArraySize];
       TmpStateArray[j] = new unsigned long [MaxArraySize];
     }
-  FQHESphereJackGeneratorOperation Operation(this, InvAlpha, MaxRoot, TmpIndexArray, TmpStateArray, TmpComponentArray, TmpRhoArray, TmpNbrComputedComponentArray, true, true);
+  FQHESphereJackGeneratorOperation Operation(this, InvAlpha, MaxRoot, TmpIndexArray, TmpStateArray, TmpComponentArray, TmpRhoArray, TmpNbrComputedComponentArray, true, false);
 
   if (resumeFlag == true)
     {
@@ -2505,7 +2502,6 @@ void FermionOnSphereHaldaneHugeBasis::GenerateJackPolynomialSparse(double alpha,
 		  long TmpIndex = TmpIndexArray[k][0];
 		  OutputFile.seekg ((TmpIndex * sizeof(double)) + FileShift, ios::beg);
 		  ReadLittleEndian (OutputFile, Coefficient);
-		  Coefficient *= SymSign;
 		}
 	      if (Coefficient != RefCoefficient)
 		{
@@ -2596,7 +2592,6 @@ void FermionOnSphereHaldaneHugeBasis::GenerateJackPolynomialSparse(double alpha,
 		{
 		  TmpComponent = TmpVectorBuffer[TmpIndex % memory];
 		}
-	      TmpComponent *= SymSign;
 	      OutputFile.seekg (0, ios::end);
 	      WriteLittleEndian(OutputFile, TmpComponent); 	  
 	      if (i >= memory)
@@ -2605,7 +2600,6 @@ void FermionOnSphereHaldaneHugeBasis::GenerateJackPolynomialSparse(double alpha,
 	      ++i;
 	    }
 	}
-      OutputFile.close();
       if ((i & DisplayStep) == 0l)
       	{
      	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
@@ -2844,8 +2838,6 @@ void FermionOnSphereHaldaneHugeBasis::GenerateSymmetrizedJackPolynomialSparse(do
 	      if (i >= memory)
 		++BufferGlobalIndex;
 	      TmpVectorBuffer[i % memory] = Coefficient;
-	      if (i == 1070l)
-		cout << "check" << endl;
 	      ++i;
 	    }
 	  else
@@ -2863,25 +2855,16 @@ void FermionOnSphereHaldaneHugeBasis::GenerateSymmetrizedJackPolynomialSparse(do
 	      TmpComponent *= SymSign;
 	      OutputFile.seekg (0, ios::end);
 	      WriteLittleEndian(OutputFile, TmpComponent); 	  
-	      if (i <= 1070l)
-		cout << "chock " << i << " " << TmpComponent << " " << SymSign << endl;
 	      if (i >= memory)
 		++BufferGlobalIndex;
 	      TmpVectorBuffer[i % memory] = TmpComponent;
 	      ++i;
 	    }
 	}
-      OutputFile.close();
-      return;
       if ((i & DisplayStep) == 0l)
       	{
-	  //	  gettimeofday (&(TotalEndingTime), 0);
      	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
       	  cout.flush();
-	  //	  double Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
-	  //	    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);
-	  //	  cout << "done in " << Dt << " s" << endl;
-	  //	  gettimeofday (&(TotalStartingTime), 0);
       	}
     }
   OutputFile.close();
@@ -3048,8 +3031,8 @@ void FermionOnSphereHaldaneHugeBasis::GenerateJackPolynomialFactorizedCore(doubl
 			long TmpIndex = this->FindStateIndexFactorized(TmpState);
 			if (TmpIndex < this->LargeHilbertSpaceDimension)
 			  {
-			    TmpComponentArray[NbrComputedComponents] = Diff;
-			    TmpStateArray[NbrComputedComponents] = Sign * TmpState;
+			    TmpComponentArray[NbrComputedComponents] = Sign * Diff;
+			    TmpStateArray[NbrComputedComponents] = TmpState;
 			    ++NbrComputedComponents;
 			  }
 		      }
