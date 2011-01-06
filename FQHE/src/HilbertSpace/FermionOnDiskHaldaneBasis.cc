@@ -91,21 +91,40 @@ FermionOnDiskHaldaneBasis::FermionOnDiskHaldaneBasis (int nbrFermions, int& tota
     }
   totalLz = this->TotalLz;
 
-  unsigned long TmpHilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz);
-  this->Flag.Initialize();
-
-  this->StateDescription = new unsigned long [TmpHilbertSpaceDimension];
-  this->StateLzMax = new int [TmpHilbertSpaceDimension];
-#ifdef  __64_BITS__
-  int ReducedHilbertSpaceDimension = (int) ((TmpHilbertSpaceDimension >> 6) + 1);
+#ifdef __64_BITS__
+  this->InvertShift = 32 - ((this->LzMax + 1) >> 1);
 #else
-  int ReducedHilbertSpaceDimension = (int) ((TmpHilbertSpaceDimension >> 5) + 1);
+  this->InvertShift = 16 - ((this->LzMax + 1 ) >> 1);
+#endif
+  if ((this->LzMax & 1) == 0)
+    this->InvertUnshift = this->InvertShift - 1;
+  else
+    this->InvertUnshift = this->InvertShift;
+
+  unsigned long TmpSymmetricState = this->GetSymmetricState (this->ReferenceState);
+  if (TmpSymmetricState == this->ReferenceState)
+    this->SymmetricReferenceState = true;
+  else
+    this->SymmetricReferenceState = false;
+
+  this->LargeHilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz);
+  if (this->LargeHilbertSpaceDimension >= (1l << 30))
+    this->HilbertSpaceDimension = 0;
+  else
+    this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+
+
+  this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
+  this->StateLzMax = new int [this->LargeHilbertSpaceDimension];
+#ifdef  __64_BITS__
+  int ReducedHilbertSpaceDimension = (int) ((this->LargeHilbertSpaceDimension >> 6) + 1);
+#else
+  int ReducedHilbertSpaceDimension = (int) ((this->LargeHilbertSpaceDimension >> 5) + 1);
 #endif
   this->KeepStateFlag = new unsigned long [ReducedHilbertSpaceDimension];
   for (int i = 0; i < ReducedHilbertSpaceDimension; ++i)
     this->KeepStateFlag[i] = 0x0l;
   this->RawGenerateStates(this->NbrFermions, this->LzMax, this->LzMax, this->TotalLz, 0ul);
-  this->HilbertSpaceDimension = (int) TmpHilbertSpaceDimension;
   this->GenerateLookUpTable(memory);
 
   int MaxSweeps = (this->NbrFermions * (this->NbrFermions - 1)) >> 1;  
@@ -166,9 +185,9 @@ FermionOnDiskHaldaneBasis::FermionOnDiskHaldaneBasis (int nbrFermions, int& tota
   NewHilbertSpaceDimension = 0;
   unsigned long TotalIndex = 0ul;
 #ifdef  __64_BITS__
-  if ((TmpHilbertSpaceDimension & 0x3f) != 0)
+  if ((this->LargeHilbertSpaceDimension & 0x3f) != 0)
 #else
-  if ((TmpHilbertSpaceDimension & 0x1f) != 0)
+  if ((this->LargeHilbertSpaceDimension & 0x1f) != 0)
 #endif
     --ReducedHilbertSpaceDimension;
   for (int i = 0; i < ReducedHilbertSpaceDimension; ++i)
@@ -190,14 +209,14 @@ FermionOnDiskHaldaneBasis::FermionOnDiskHaldaneBasis (int nbrFermions, int& tota
 	}
     }
 #ifdef  __64_BITS__
-  TmpHilbertSpaceDimension &= 0x3f;
+  this->LargeHilbertSpaceDimension &= 0x3f;
  #else
-  TmpHilbertSpaceDimension &= 0x1f;
+  this->LargeHilbertSpaceDimension &= 0x1f;
  #endif
-  if (TmpHilbertSpaceDimension != 0)
+  if (this->LargeHilbertSpaceDimension != 0)
     {
       TmpKeepStateFlag = this->KeepStateFlag[ReducedHilbertSpaceDimension];
-      for (unsigned long j = 0ul; j < TmpHilbertSpaceDimension; ++j)
+      for (long j = 0l; j < this->LargeHilbertSpaceDimension; ++j)
 	{
 	  if ((TmpKeepStateFlag >> j) & 0x1l)
 	    {
@@ -214,7 +233,11 @@ FermionOnDiskHaldaneBasis::FermionOnDiskHaldaneBasis (int nbrFermions, int& tota
   delete[] this->KeepStateFlag;
   this->StateDescription = TmpStateDescription;
   this->StateLzMax = TmpStateLzMax;
-  this->HilbertSpaceDimension = NewHilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = NewHilbertSpaceDimension;
+  if (this->LargeHilbertSpaceDimension >= (1l << 30))
+    this->HilbertSpaceDimension = 0;
+  else
+    this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
 
   delete[] this->TmpGeneratedStates;
   delete[] this->TmpGeneratedStatesLzMax;
@@ -252,25 +275,77 @@ FermionOnDiskHaldaneBasis::FermionOnDiskHaldaneBasis (char* fileName, unsigned l
       this->HilbertSpaceDimension = 0;
       return;
     }
-  ReadLittleEndian(File, this->HilbertSpaceDimension);
-  ReadLittleEndian(File, this->NbrFermions);
-  ReadLittleEndian(File, this->LzMax);
-  ReadLittleEndian(File, this->TotalLz);
-  ReadLittleEndian(File, this->ReferenceState);
-  this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
-  this->StateLzMax = new int [this->HilbertSpaceDimension];
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-    ReadLittleEndian(File, this->StateDescription[i]);
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-    ReadLittleEndian(File, this->StateLzMax[i]);
-
+  File.seekg (0l, ios::end);
+  unsigned long FileSize = File.tellg ();
   File.close();
+
+  File.open(fileName, ios::binary | ios::in);
+  if (!File.is_open())
+    {
+      cout << "can't open the file: " << fileName << endl;
+      this->HilbertSpaceDimension = 0;
+      return;
+    }
+ 
+
+  ReadLittleEndian(File, this->HilbertSpaceDimension);
+  FileSize -= sizeof (int);
+  ReadLittleEndian(File, this->LargeHilbertSpaceDimension);
+  FileSize -= sizeof (unsigned long);
+  cout << this->LargeHilbertSpaceDimension << endl;
+  ReadLittleEndian(File, this->NbrFermions);
+  FileSize -= sizeof (int);
+  ReadLittleEndian(File, this->LzMax);
+  FileSize -= sizeof (int);
+  ReadLittleEndian(File, this->TotalLz);
+  FileSize -= sizeof (int);
+  ReadLittleEndian(File, this->ReferenceState);
+  FileSize -= sizeof (unsigned long);
+  this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
+  for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+    ReadLittleEndian(File, this->StateDescription[i]);
+  FileSize -= this->LargeHilbertSpaceDimension * sizeof (unsigned long);
+  if (FileSize == 0ul)
+    {
+
+      int TmpLzMax = this->LzMax;
+      this->StateLzMax = new int [this->LargeHilbertSpaceDimension];
+      for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+	{
+	  unsigned long TmpState = this->StateDescription[i];
+	  while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
+	    --TmpLzMax;
+	  this->StateLzMax[i] = TmpLzMax;
+	}
+   }
+  else
+    {
+      this->StateLzMax = new int [this->LargeHilbertSpaceDimension];
+      for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+	ReadLittleEndian(File, this->StateLzMax[i]);
+    }
+  File.close();
+
+#ifdef __64_BITS__
+  this->InvertShift = 32 - ((this->LzMax + 1) >> 1);
+#else
+  this->InvertShift = 16 - ((this->LzMax + 1 ) >> 1);
+#endif
+  if ((this->LzMax & 1) == 0)
+    this->InvertUnshift = this->InvertShift - 1;
+  else
+    this->InvertUnshift = this->InvertShift;
 
   this->TargetSpace = this;
   this->NbrLzValue = this->LzMax + 1;
   this->MaximumSignLookUp = 16;
   this->IncNbrFermions = this->NbrFermions + 1;
   this->Flag.Initialize();
+  unsigned long TmpSymmetricState = this->GetSymmetricState (this->ReferenceState);
+  if (TmpSymmetricState == this->ReferenceState)
+    this->SymmetricReferenceState = true;
+  else
+    this->SymmetricReferenceState = false;
 
   this->GenerateLookUpTable(memory);
 #ifdef __DEBUG__
@@ -301,6 +376,8 @@ FermionOnDiskHaldaneBasis::FermionOnDiskHaldaneBasis(const FermionOnDiskHaldaneB
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = fermions.LargeHilbertSpaceDimension;
+  this->SymmetricReferenceState =  fermions.SymmetricReferenceState;
   this->StateDescription = fermions.StateDescription;
   this->StateLzMax = fermions.StateLzMax;
   this->LzMax = fermions.LzMax;
@@ -314,6 +391,8 @@ FermionOnDiskHaldaneBasis::FermionOnDiskHaldaneBasis(const FermionOnDiskHaldaneB
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
+  this->InvertShift = fermions.InvertShift;
+  this->InvertUnshift = fermions.InvertUnshift;
 }
 
 // destructor
