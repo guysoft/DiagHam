@@ -87,6 +87,26 @@ class FermionOnDisk:  public FermionOnSphere
   // return value = converted state
   virtual RealVector& ConvertFromUnnormalizedMonomial(RealVector& state, long reference = 0, bool symmetryFactor = true);
 
+  // convert a state such that its components are now expressed in the normalized basis, shifting all orbitals
+  //
+  // state = reference to the state to convert
+  // shift = shift to apply to each orbitals
+  // reference = set which component has been normalized to 1
+  // return value = converted state
+  virtual RealVector& ShiftedConvertFromUnnormalizedMonomial(RealVector& state, int shift, long reference = 0);
+
+ protected:
+
+  // core part of the convertion of a state such that its components are now expressed in the normalized basis
+  //
+  // state = reference to the state to convert
+  // sqrtCoefficients = array that contains the normalization coefficients
+  // invSqrtCoefficients = array that contains the inverts of the normalization coefficients
+  // reference = set which component has been normalized to 1
+  // symmetryFactor = if true also add the symmetry factors
+  // return value = converted state
+  virtual RealVector& ConvertFromUnnormalizedMonomialCore(RealVector& state, double* sqrtCoefficients, double* invSqrtCoefficients, long reference, bool symmetryFactor);
+
 };
 
 #endif

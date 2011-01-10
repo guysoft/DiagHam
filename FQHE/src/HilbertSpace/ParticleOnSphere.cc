@@ -689,6 +689,18 @@ RealVector& ParticleOnSphere::ConvertFromUnnormalizedMonomial(RealVector& state,
   return state;
 }
 
+// convert a state such that its components are now expressed in the normalized basis, shifting all orbitals
+//
+// state = reference to the state to convert
+// shift = shift to apply to each orbitals
+// reference = set which component has been normalized to 1
+// return value = converted state
+
+RealVector& ParticleOnSphere::ShiftedConvertFromUnnormalizedMonomial(RealVector& state, int shift, long reference)
+{
+  return state;
+}
+
 // convert a state such that its components, given in the conformal limit,  are now expressed in the normalized basis
 //
 // state = reference to the state to convert

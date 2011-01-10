@@ -40,6 +40,7 @@
 #include "GeneralTools/Endian.h"
 #include "Polynomial/RationalPolynomial.h"
 #include "Polynomial/LongRationalPolynomial.h"
+#include "Architecture/ArchitectureOperation/FQHESphereJackGeneratorSumRationalPolynomialOperation.h"
 
 #include <math.h>
 #include <fstream>
@@ -2112,47 +2113,17 @@ long FermionOnSphereHaldaneBasis::GenerateSingleJackPolynomialCoefficient(long i
   cout << (currentNbrComponents + TmpNbrComponents) << " symbolic components computed                  \r";
   cout.flush();
 
-  numerators[index]= numerators[ConnectedIndices2[0]];
-  denominators[index] = denominators[ConnectedIndices2[0]];
-  numerators[index] *= ConnectedCoefficients2[0];
   LongRational Tmp4;
   if (NbrConnected > 1)
     {
-      for (int i = 1; i < NbrConnected; ++i)
-	{
-	  LongRationalPolynomial TmpNumerator (numerators[ConnectedIndices2[i]], denominators[index]);
-	  TmpNumerator *= ConnectedCoefficients2[i];
-	  LongRationalPolynomial& TmpPolynomial = denominators[ConnectedIndices2[i]];
-	  numerators[index] *= TmpPolynomial;
-	  numerators[index] += TmpNumerator;
-	  LongRationalPolynomial TmpDenominator (0);
-	  TmpDenominator[0] = 1l;
-	  for (int j = 0; j < denominators[index].GetPolynomialDegree(); ++j)
-	    {
-	      numerators[index].PolynomialEvaluate(denominators[index].PolynomialRationalRoot(j), Tmp4);	
-	      if (Tmp4.IsZero())
-		{
-		  numerators[index].LocalMonomialDivision(denominators[index].PolynomialRationalRoot(j));
-		}
-	      else
-		{
-		  TmpDenominator.LocalMonomialMultiplication(denominators[index].PolynomialRationalRoot(j));
-		}
-	    }
-	  denominators[index] = TmpDenominator;
-	  for (int j = 0; j < TmpPolynomial.GetPolynomialDegree(); ++j)
-	    {
-	      numerators[index].PolynomialEvaluate(TmpPolynomial.PolynomialRationalRoot(j), Tmp4);
-	      if (Tmp4.IsZero())
-		{
-		  numerators[index].LocalMonomialDivision(TmpPolynomial.PolynomialRationalRoot(j));
-		}
-	      else
-		{
-		  denominators[index].LocalMonomialMultiplication(TmpPolynomial.PolynomialRationalRoot(j));
-		}
-	    }
-	}  
+      FQHESphereJackGeneratorSumRationalPolynomialOperation Operation(index, numerators, denominators, ConnectedIndices2, ConnectedCoefficients2, NbrConnected);
+      Operation.ApplyOperation(architecture);
+    }
+  else
+    {
+      numerators[index]= numerators[ConnectedIndices2[0]];
+      denominators[index] = denominators[ConnectedIndices2[0]];
+      numerators[index] *= ConnectedCoefficients2[0];
     }
   numerators[index].ShiftPowers(1);
 
