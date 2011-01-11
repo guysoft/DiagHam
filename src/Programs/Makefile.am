@@ -58,9 +58,9 @@ GenericOverlap_DEPENDENCIES= $(top_builddir)/src/Vector/libVector.a  $(top_build
 
 GenericOverlap_LDADD= -L$(top_builddir)/src/Vector  -L$(top_builddir)/src/Options -L$(top_builddir)/src/GeneralTools  -L$(top_builddir)/src/MathTools -L$(top_builddir)/src/Output -lVector -lOptions -lMathTools -lGeneralTools -lMathTools -lOutput @THREAD_LIBS@ @BZ2_LIBS@ @GMP_LIBS@
 
-DiffBinaryVectors_DEPENDENCIES= $(top_builddir)/src/Vector/libVector.a  $(top_builddir)/src/Options/libOptions.a
+DiffBinaryVectors_DEPENDENCIES= $(top_builddir)/src/Vector/libVector.a  $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/MathTools/libMathTools.a
 
-DiffBinaryVectors_LDADD= -L$(top_builddir)/src/Vector  -L$(top_builddir)/src/Options -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/Output -lVector -lOptions -lGeneralTools -lOutput @THREAD_LIBS@
+DiffBinaryVectors_LDADD= -L$(top_builddir)/src/Vector  -L$(top_builddir)/src/Options -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/Output -L$(top_builddir)/src/MathTools -lVector -lOptions -lGeneralTools  -lMathTools -lOutput @THREAD_LIBS@ @GMP_LIBS@
 
 VectorBinary2Ascii_DEPENDENCIES= $(top_builddir)/src/Vector/libVector.a  $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a 
 

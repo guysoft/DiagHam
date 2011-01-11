@@ -1,5 +1,7 @@
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
+#include "Vector/RationalVector.h"
+#include "Vector/LongRationalVector.h"
 
 #include "Options/Options.h"
 
@@ -34,6 +36,12 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('e', "error", "rounding error", 0.0);
   (*SystemGroup) +=  new BooleanOption  ('\n', "discard-zero", "do not compare components if the one the first start is strictly zero");
   (*SystemGroup) +=  new BooleanOption  ('\n', "relative-error", "compute relative error");
+  (*SystemGroup) +=  new BooleanOption  ('\n', "rationa;", "input vectors are rational vectors");
+#ifdef __GMP__
+  (*SystemGroup) += new BooleanOption  ('\n', "use-gmp", "use arbitrary precision integers instead of fixed precision integers in rational mode");
+#else
+  (*SystemGroup) += new BooleanOption  ('\n', "use-longlong", "use 128bit(64bits) integers instead of 64bits(32bits) integers in rational mode");
+#endif
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -56,6 +64,125 @@ int main(int argc, char** argv)
       exit(1);
     }
 
+  double Error = Manager.GetDouble("error");
+
+  bool DiscardZero = Manager.GetBoolean("discard-zero");
+  bool RealtiveError = Manager.GetBoolean("relative-error");
+  double MaxRelativeError = 0.0;
+  long Count = 0l;
+  if (Manager.GetBoolean("rational") == true)
+    {
+#ifdef __GMP__
+      if (Manager.GetBoolean("use-gmp") == false)
+#else
+	if (Manager.GetBoolean("use-longlong") == false)	
+#endif
+	  {
+	    RationalVector State1;
+	    if (State1.ReadVector (VectorFiles[0]) == false)
+	      {
+		cout << "can't open vector file " << VectorFiles[0] << endl;
+		return -1;      
+	      }
+	    RationalVector State2;
+	    if (State2.ReadVector (VectorFiles[1]) == false)
+	      {
+		cout << "can't open vector file " << VectorFiles[1] << endl;
+		return -1;      
+	      }
+	    long MinValue = 0l;
+	    if (Manager.GetInteger("min-range") > 0l)
+	      {
+		if (Manager.GetInteger("min-range") < State1.GetLargeVectorDimension())
+		  MinValue = Manager.GetInteger("min-range");      
+	      }
+	    else
+	      {
+		long Tmp = State1.GetLargeVectorDimension() + Manager.GetInteger("min-range");
+		if ((Tmp >= 0) && (Tmp < State1.GetLargeVectorDimension()))
+		  MinValue = Tmp;
+	      }
+	    long MaxValue = State1.GetLargeVectorDimension(); 
+	    if ((Manager.GetInteger("max-range") < State1.GetLargeVectorDimension()) && (Manager.GetInteger("max-range") > MinValue))
+	      MaxValue = Manager.GetInteger("max-range");
+	    if (DiscardZero == false)
+	      {
+		for (long i = MinValue; i < MaxValue; ++i)
+		  {
+		    if (State1[i] != State2[i])
+		      {
+			cout << i << " : " << State1[i] << " " << State2[i] << endl;
+			++Count;
+		      }
+		  }
+	      }
+	    else
+	      {
+		for (long i = MinValue; i < MaxValue; ++i)
+		  {
+		    if ((State1[i] != 0l) && (State1[i] != State2[i]))
+		      {
+			cout << i << " : " << State1[i] << " " << State2[i] << endl;
+			++Count;
+		      }
+		  }
+	      }	    
+	  }
+	else
+	  {
+	    LongRationalVector State1;
+	    if (State1.ReadVector (VectorFiles[0]) == false)
+	      {
+		cout << "can't open vector file " << VectorFiles[0] << endl;
+		return -1;      
+	      }
+	    LongRationalVector State2;
+	    if (State2.ReadVector (VectorFiles[1]) == false)
+	      {
+		cout << "can't open vector file " << VectorFiles[1] << endl;
+		return -1;      
+	      }
+	    long MinValue = 0l;
+	    if (Manager.GetInteger("min-range") > 0l)
+	      {
+		if (Manager.GetInteger("min-range") < State1.GetLargeVectorDimension())
+		  MinValue = Manager.GetInteger("min-range");      
+	      }
+	    else
+	      {
+		long Tmp = State1.GetLargeVectorDimension() + Manager.GetInteger("min-range");
+		if ((Tmp >= 0) && (Tmp < State1.GetLargeVectorDimension()))
+		  MinValue = Tmp;
+	      }
+	    long MaxValue = State1.GetLargeVectorDimension(); 
+	    if ((Manager.GetInteger("max-range") < State1.GetLargeVectorDimension()) && (Manager.GetInteger("max-range") > MinValue))
+	      MaxValue = Manager.GetInteger("max-range");
+	    if (DiscardZero == false)
+	      {
+		for (long i = MinValue; i < MaxValue; ++i)
+		  {
+		    if (State1[i] != State2[i])
+		      {
+			cout << i << " : " << State1[i] << " " << State2[i] << endl;
+			++Count;
+		      }
+		  }
+	      }
+	    else
+	      {
+		for (long i = MinValue; i < MaxValue; ++i)
+		  {
+		    if ((State1[i] != 0l) && (State1[i] != State2[i]))
+		      {
+			cout << i << " : " << State1[i] << " " << State2[i] << endl;
+			++Count;
+		      }
+		  }
+	      }	    
+	  }
+      return 0;
+    }
+
   RealVector State1;
   if (State1.ReadVector (VectorFiles[0]) == false)
     {
@@ -75,26 +202,20 @@ int main(int argc, char** argv)
     }
   
   long MinValue = 0l;
-      if (Manager.GetInteger("min-range") > 0l)
-	{
-	  if (Manager.GetInteger("min-range") < State1.GetLargeVectorDimension())
-	    MinValue = Manager.GetInteger("min-range");      
-	}
-      else
-	{
-	  long Tmp = State1.GetLargeVectorDimension() + Manager.GetInteger("min-range");
-	  if ((Tmp >= 0) && (Tmp < State1.GetLargeVectorDimension()))
-	    MinValue = Tmp;
-	}
+  if (Manager.GetInteger("min-range") > 0l)
+    {
+      if (Manager.GetInteger("min-range") < State1.GetLargeVectorDimension())
+	MinValue = Manager.GetInteger("min-range");      
+    }
+  else
+    {
+      long Tmp = State1.GetLargeVectorDimension() + Manager.GetInteger("min-range");
+      if ((Tmp >= 0) && (Tmp < State1.GetLargeVectorDimension()))
+	MinValue = Tmp;
+    }
   long MaxValue = State1.GetLargeVectorDimension(); 
   if ((Manager.GetInteger("max-range") < State1.GetLargeVectorDimension()) && (Manager.GetInteger("max-range") > MinValue))
     MaxValue = Manager.GetInteger("max-range");
-  double Error = Manager.GetDouble("error");
-
-  bool DiscardZero = Manager.GetBoolean("discard-zero");
-  bool RealtiveError = Manager.GetBoolean("relative-error");
-  double MaxRelativeError = 0.0;
-  long Count = 0l;
   if (Error == 0.0)
     {
       if (RealtiveError == true)
