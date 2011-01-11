@@ -782,7 +782,7 @@ RationalPolynomial& RationalPolynomial::operator *= (const RationalPolynomial& P
       for (int i = this->Degree; i >= 0; --i)
 	Coef[i + P.Degree] = this->Coefficient[i] * Tmp;
       for (int i = 0; i < P.Degree; ++i)
-	Coef[i] = 0;
+	Coef[i] = 0l;
       if (P.Degree == 0)
 	{
 	  delete[] this->Coefficient;

@@ -333,6 +333,124 @@ Vector* LongRationalVector::EmptyCloneArray(int nbrVectors, bool zeroFlag)
   return TmpVectors;
 }
 
+// multiply a vector with a rational number on the right hand side
+//
+// d = rational to use
+// return value = reference on current vector
+
+LongRationalVector& LongRationalVector::operator *= (const LongRational& d)
+{
+  if (this->Dimension == -1)
+    for (long i = 0; i < this->LargeDimension; ++i)
+      this->Components[i] *= d;
+  else
+    {
+      for (int i = 0; i < this->Dimension; i++)
+	this->Components[i] *= d;
+    }
+  return *this;
+}
+
+// divide a vector by a rational number on the right hand side
+//
+// d = rational to use
+// return value = reference on current vector
+
+LongRationalVector& LongRationalVector::operator /= (const LongRational& d)
+{
+  if (this->Dimension == -1)
+    for (long i = 0; i < this->LargeDimension; ++i)
+      this->Components[i] /= d;
+  else
+    {
+      for (int i = 0; i < this->Dimension; i++)
+	this->Components[i] /= d;
+    }
+  return *this;
+}
+
+// add a linear combination to a given vector
+//
+// x = multiplicative coefficient
+// V = vector to add
+// return value = reference on current vector
+
+LongRationalVector& LongRationalVector::AddLinearCombination (const LongRational& x, LongRationalVector& V)
+{
+  if ((V.Dimension != this->Dimension)||(V.LargeDimension != this->LargeDimension))
+    return *this;
+  if (V.Dimension == -1)
+    for (long i = 0; i < this->LargeDimension; i++)
+      this->Components[i] += V.Components[i] * x;
+  else
+    for (int i = 0; i < this->Dimension; i++)
+      this->Components[i] += V.Components[i] * x;
+  return *this;
+}
+
+// add a linear combination to a given vector, for a given range of indices
+//
+// x = multiplicative coefficient
+// V = vector to add
+// return value = reference on current vector
+
+LongRationalVector& LongRationalVector::AddLinearCombination (const LongRational& x, LongRationalVector& V, int firstComponent, 
+							      int nbrComponent)
+{
+  int LastComponent = firstComponent + nbrComponent;
+  if ((LastComponent > this->Dimension) || (LastComponent > V.Dimension))
+    return *this;
+  for (int i = firstComponent; i < LastComponent; ++i)
+    this->Components[i] += V.Components[i] * x;
+  return *this;
+}
+
+// add a linear combination of two vectors to a given vector
+//
+// x1 = multiplicative coefficient of first vector
+// v1 = first vector to add
+// x2 = multiplicative coefficient of first vector
+// v2 = first vector to add
+// return value = reference on current vector
+
+LongRationalVector& LongRationalVector::AddLinearCombination (const LongRational& x1, LongRationalVector& v1, const LongRational& x2, 
+							      LongRationalVector& v2)
+{
+  if ((v1.Dimension != this->Dimension) || (v2.Dimension != this->Dimension) ||
+      (v1.LargeDimension != this->LargeDimension) || (v2.LargeDimension != this->LargeDimension))
+    return *this;
+  if (this->Dimension==-1)
+    for (long i = 0; i < this->LargeDimension; ++i)
+      this->Components[i] += v1.Components[i] * x1 + v2.Components[i] * x2;
+  else
+    for (int i = 0; i < this->Dimension; ++i)
+      this->Components[i] += v1.Components[i] * x1 + v2.Components[i] * x2;
+  return *this;
+}
+
+// add a linear combination of two vectors to a given vector, for a given range of indices
+//
+// x1 = multiplicative coefficient of first vector
+// v1 = first vector to add
+// x2 = multiplicative coefficient of first vector
+// v2 = first vector to add
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on current vector
+
+LongRationalVector& LongRationalVector::AddLinearCombination (const LongRational& x1, LongRationalVector& v1, const LongRational& x2, 
+							      LongRationalVector& v2, int firstComponent, 
+							      int nbrComponent)
+{
+  int LastComponent = firstComponent + nbrComponent;
+  if ((LastComponent > this->Dimension) || (LastComponent > v2.Dimension) || 
+      (LastComponent > v1.Dimension))
+    return *this;
+  for (int i = firstComponent; i < LastComponent; i++)
+    this->Components[i] += v1.Components[i] * x1 + v2.Components[i] * x2;
+  return *this;
+}
+
 // write vector in a file 
 //
 // fileName = name of the file where the vector has to be stored

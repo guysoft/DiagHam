@@ -161,6 +161,53 @@ class RationalVector : public Vector
   // return value = denominator
   long Den(long index);
 
+  // multiply a vector with a rational number on the right hand side
+  //
+  // d = rational to use
+  // return value = reference on current vector
+  RationalVector& operator *= (const Rational& d);
+
+  // divide a vector by a rational number on the right hand side
+  //
+  // d = rational to use
+  // return value = reference on current vector
+  RationalVector& operator /= (const Rational& d);
+
+  // add a linear combination to a given vector
+  //
+  // x = multiplicative coefficient
+  // V = vector to add
+  // return value = reference on current vector
+  RationalVector& AddLinearCombination (const Rational& x, RationalVector& V);
+
+  // add a linear combination to a given vector, for a given range of indices
+  //
+  // x = multiplicative coefficient
+  // V = vector to add
+  // return value = reference on current vector
+  RationalVector& AddLinearCombination (const Rational& x, RationalVector& V, int firstComponent, int nbrComponent);
+
+  // add a linear combination of two vectors to a given vector
+  //
+  // x1 = multiplicative coefficient of first vector
+  // v1 = first vector to add
+  // x2 = multiplicative coefficient of first vector
+  // v2 = first vector to add
+  // return value = reference on current vector
+  RationalVector& AddLinearCombination (const Rational& x1, RationalVector& v1, const Rational& x2, RationalVector& v2);
+
+  // add a linear combination of two vectors to a given vector, for a given range of indices
+  //
+  // x1 = multiplicative coefficient of first vector
+  // v1 = first vector to add
+  // x2 = multiplicative coefficient of first vector
+  // v2 = first vector to add
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = reference on current vector
+  RationalVector& AddLinearCombination (const Rational& x1, RationalVector& v1, const Rational& x2, 
+					RationalVector& v2, int firstComponent, int nbrComponent);
+
   // write vector in a file 
   //
   // fileName = name of the file where the vector has to be stored

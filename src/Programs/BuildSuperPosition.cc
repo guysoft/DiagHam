@@ -1,5 +1,7 @@
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
+#include "Vector/RationalVector.h"
+#include "Vector/LongRationalVector.h"
 
 #include "Options/Options.h"
 
@@ -32,6 +34,12 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new MultipleStringOption  ('\0', "states", "names of all vector files that should be superposed");
   (*SystemGroup) += new BooleanOption  ('c', "complex", "Assume vectors consist of complex numbers");
+  (*SystemGroup) +=  new BooleanOption  ('\n', "rational", "input vectors are rational vectors");
+#ifdef __GMP__
+  (*SystemGroup) += new BooleanOption  ('\n', "use-gmp", "use arbitrary precision integers instead of fixed precision integers in rational mode");
+#else
+  (*SystemGroup) += new BooleanOption  ('\n', "use-longlong", "use 128bit(64bits) integers instead of 64bits(32bits) integers in rational mode");
+#endif
   (*SystemGroup) += new SingleDoubleOption  ('r', "random-component", "amplitude of a random component to be added",0.0);
   (*SystemGroup) += new SingleIntegerOption  ('R', "random-only", "generate a pure random vector, argument is dimension",0);
   (*SystemGroup) += new BooleanOption  ('n', "no-normalize", "do NOT normalize the final vector");
@@ -227,32 +235,84 @@ int main(int argc, char** argv)
 	  Result /= Result.Norm();
 	  Result.WriteVector(Manager.GetString("output"));
 	  delete [] Coefficients;
+	  return 0;
 	}
-      else
+      if (Manager.GetBoolean("rational"))
 	{
-	  RealVector Result;
-	  if (Result.ReadVector(Description(0, 0)) == false)
-	    {
-	      cout << "can't open file " << Description(0, 0) << endl;
-	      return -1;	      
-	    }
-	  double* Coefficients = Description.GetAsDoubleArray(1);
-	  Result *= Coefficients[0];
- 	  for (int i = 1; i < Description.GetNbrLines(); ++i)
-	    {
-	      RealVector TmpVector;
-	      if (TmpVector.ReadVector(Description(0, i)) == false)
-		{
-		  cout << "can't open file " << Description(0, i) << endl;
-		  return -1;	      	    
-		}	      
-	      Result.AddLinearCombination(Coefficients[i], TmpVector);
-	    }
-	  if (!Manager.GetBoolean("no-normalize"))
-	    Result /= Result.Norm();
-	  Result.WriteVector(Manager.GetString("output"));
-	  delete [] Coefficients;
+#ifdef __GMP__
+	  if (Manager.GetBoolean("use-gmp") == false)
+#else
+	    if (Manager.GetBoolean("use-longlong") == false)	
+#endif
+	      {
+		RationalVector Result;
+		if (Result.ReadVector(Description(0, 0)) == false)
+		  {
+		    cout << "can't open file " << Description(0, 0) << endl;
+		    return -1;	      
+		  }
+		Rational* Coefficients = Description.GetAsRationalArray(1);
+		Result *= Coefficients[0];
+		for (int i = 1; i < Description.GetNbrLines(); ++i)
+		  {
+		    RationalVector TmpVector;
+		    if (TmpVector.ReadVector(Description(0, i)) == false)
+		      {
+			cout << "can't open file " << Description(0, i) << endl;
+			return -1;	      	    
+		      }	      
+		    Result.AddLinearCombination(Coefficients[i], TmpVector);
+		  }
+		Result.WriteVector(Manager.GetString("output"));
+		delete [] Coefficients;
+	      }
+	    else
+	      {
+		LongRationalVector Result;
+		if (Result.ReadVector(Description(0, 0)) == false)
+		  {
+		    cout << "can't open file " << Description(0, 0) << endl;
+		    return -1;	      
+		  }
+		LongRational* Coefficients = Description.GetAsLongRationalArray(1);
+		Result *= Coefficients[0];
+		for (int i = 1; i < Description.GetNbrLines(); ++i)
+		  {
+		    LongRationalVector TmpVector;
+		    if (TmpVector.ReadVector(Description(0, i)) == false)
+		      {
+			cout << "can't open file " << Description(0, i) << endl;
+			return -1;	      	    
+		      }	      
+		    Result.AddLinearCombination(Coefficients[i], TmpVector);
+		  }
+		Result.WriteVector(Manager.GetString("output"));
+		delete [] Coefficients;
+	      }
+	  return 0;
 	}
+      RealVector Result;
+      if (Result.ReadVector(Description(0, 0)) == false)
+	{
+	  cout << "can't open file " << Description(0, 0) << endl;
+	  return -1;	      
+	}
+      double* Coefficients = Description.GetAsDoubleArray(1);
+      Result *= Coefficients[0];
+      for (int i = 1; i < Description.GetNbrLines(); ++i)
+	{
+	  RealVector TmpVector;
+	  if (TmpVector.ReadVector(Description(0, i)) == false)
+	    {
+	      cout << "can't open file " << Description(0, i) << endl;
+	      return -1;	      	    
+	    }	      
+	  Result.AddLinearCombination(Coefficients[i], TmpVector);
+	}
+      if (!Manager.GetBoolean("no-normalize"))
+	Result /= Result.Norm();
+      Result.WriteVector(Manager.GetString("output"));
+      delete [] Coefficients;
     }
 }
   

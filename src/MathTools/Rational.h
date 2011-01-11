@@ -88,6 +88,12 @@ class Rational
   // return value = reference on current rational coefficient
   Rational& operator = (long x);
 
+  // assignement from a rational number encoded as a string
+  //
+  // x = string 
+  // return value = reference on current rational coefficient
+  Rational& operator = (char* x);
+
   // set the coefficient to one
   //
   // return value = reference on current coefficient

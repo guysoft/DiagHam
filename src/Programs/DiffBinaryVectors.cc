@@ -36,7 +36,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('e', "error", "rounding error", 0.0);
   (*SystemGroup) +=  new BooleanOption  ('\n', "discard-zero", "do not compare components if the one the first start is strictly zero");
   (*SystemGroup) +=  new BooleanOption  ('\n', "relative-error", "compute relative error");
-  (*SystemGroup) +=  new BooleanOption  ('\n', "rationa;", "input vectors are rational vectors");
+  (*SystemGroup) +=  new BooleanOption  ('\n', "rational", "input vectors are rational vectors");
 #ifdef __GMP__
   (*SystemGroup) += new BooleanOption  ('\n', "use-gmp", "use arbitrary precision integers instead of fixed precision integers in rational mode");
 #else

@@ -32,6 +32,7 @@
 #include "GeneralTools/MultiColumnASCIIFile.h"
 #include "GeneralTools/ListIterator.h"
 #include "GeneralTools/StringTools.h"
+#include "MathTools/Rational.h"
 #include "MathTools/LongRational.h"
 
 #include <string.h>
@@ -323,6 +324,23 @@ long* MultiColumnASCIIFile::GetAsLongArray (int column)
 LongRational* MultiColumnASCIIFile::GetAsLongRationalArray (int column)
 {
   LongRational* TmpColumn = new LongRational [this->NbrLines];
+  char** TmpASCIIColumn = this->Data[column];
+  char* TmpError;
+  for (int i = 0; i < this->NbrLines; ++i)
+    {
+      TmpColumn[i] = TmpASCIIColumn[i];
+    } 
+  return TmpColumn;
+}
+
+// get a column converting it to rational
+//
+// column = column index
+// return value = reference on the array where the read values have to be stored (allocation is done by the method itself,  de-allocation has to be done by hand)
+
+Rational* MultiColumnASCIIFile::GetAsRationalArray (int column)
+{
+  Rational* TmpColumn = new Rational [this->NbrLines];
   char** TmpASCIIColumn = this->Data[column];
   char* TmpError;
   for (int i = 0; i < this->NbrLines; ++i)

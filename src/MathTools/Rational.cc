@@ -33,6 +33,8 @@
 #include "GeneralTools/Endian.h"
 
 #include <iostream>
+#include <cstring>
+#include <cstdlib>
 
 
 using std::cout;
@@ -97,6 +99,31 @@ Rational& Rational::operator = (long x)
 {
   this->Numerator = x;
   this->Denominator = 1.0;
+  return *this;
+}
+
+// assignement from a rational number encoded as a string
+//
+// x = string 
+// return value = reference on current rational coefficient
+
+Rational& Rational::operator = (char* x)
+{
+  char* TmpPos = strstr (x, "/");
+  if (TmpPos == 0)
+    {
+      char* TmpError;
+      this->Numerator =  strtol(x, &TmpError, 0);
+      this->Denominator = 1l;
+    }
+  else
+    {
+      char* TmpError;
+      (*TmpPos) = '\0';
+      this->Numerator =  strtol(x, &TmpError, 0);
+      this->Denominator = strtol(TmpPos + 1, &TmpError, 0);
+    }
+  this->Simplify();
   return *this;
 }
 
