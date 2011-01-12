@@ -107,18 +107,15 @@ int main(int argc, char** argv)
    }
  else
    {
-     if (Manager.GetBoolean("rational") == false)
+     if (InputVectors(7, 0) != 0)
        {
-	 if (InputVectors(7, 0) != 0)
-	   {
-	     RationalCoefficients = InputVectors.GetAsLongRationalArray(7);
-	   }
-	 else
-	   {
-	     RationalCoefficients = new LongRational [InputVectors.GetNbrLines()];
-	     for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
-	       RationalCoefficients[i] = 1l;
-	   }
+	 RationalCoefficients = InputVectors.GetAsLongRationalArray(7);
+       }
+     else
+       {
+	 RationalCoefficients = new LongRational [InputVectors.GetNbrLines()];
+	 for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
+	   RationalCoefficients[i] = 1l;
        }
    }
   int LeftNbrParticles = 0;
@@ -142,9 +139,10 @@ int main(int argc, char** argv)
     }
 
   NbrParticles = RightNbrParticles + LeftNbrParticles;
-  LzMax = RightLzMax + LeftLzMax + Paddings[0];
+  LzMax = RightLzMax + LeftLzMax  + Paddings[0];// + 1
   TotalLz = 0;
   char* OutputFileName = 0;
+  cout << "NbrParticles=" << NbrParticles << " LzMax=" << LzMax << " TotalLz=" << TotalLz << endl;
   if (Manager.GetString("output-file") != 0)
     {
       OutputFileName = new char [strlen(Manager.GetString("output-file")) + 1];
@@ -340,7 +338,7 @@ int main(int argc, char** argv)
 	    }
 
 
-	  cout << "local padding = " <<  Paddings[i] << "  local coeffcient = " << Coefficients[i] << endl;
+	  cout << "local padding = " <<  Paddings[i] << "  local coeffcient = " << RationalCoefficients[i] << endl;
 	  
 	  OutputBasis->FuseStates(RationalOutputState, LeftVector, RightVector, Paddings[i], LeftBasis, RightBasis, SymmetrizedBasis, RationalCoefficients[i]);
 	}
@@ -348,25 +346,51 @@ int main(int argc, char** argv)
       delete LeftBasis;      
     }
 
-  if (OutputTxtFileName != 0)
+  if (Manager.GetBoolean("rational") == false)
     {
-      ofstream File;
-      File.open(OutputTxtFileName, ios::binary | ios::out);
-      File.precision(14);
-      for (long i = 0; i < OutputBasis->GetLargeHilbertSpaceDimension(); ++i)
+      if (OutputTxtFileName != 0)
 	{
-	  File << OutputState[i] << " ";
-	  OutputBasis->PrintStateMonomial(File, i) << endl;
+	  ofstream File;
+	  File.open(OutputTxtFileName, ios::binary | ios::out);
+	  File.precision(14);
+	  for (long i = 0; i < OutputBasis->GetLargeHilbertSpaceDimension(); ++i)
+	    {
+	      File << OutputState[i] << " ";
+	      OutputBasis->PrintStateMonomial(File, i) << endl;
+	    }
+	  File.close();
 	}
-      File.close();
-    }
-  if (OutputFileName != 0)
-    {
-      if (OutputState.WriteVector(OutputFileName) == false)
+      if (OutputFileName != 0)
 	{
-	  cout << "error while writing output state " << OutputFileName << endl;
-	  return -1;
-	}	  
+	  if (OutputState.WriteVector(OutputFileName) == false)
+	    {
+	      cout << "error while writing output state " << OutputFileName << endl;
+	      return -1;
+	    }	  
+	}
+    }
+  else
+    {
+      if (OutputTxtFileName != 0)
+	{
+	  ofstream File;
+	  File.open(OutputTxtFileName, ios::binary | ios::out);
+	  File.precision(14);
+	  for (long i = 0; i < OutputBasis->GetLargeHilbertSpaceDimension(); ++i)
+	    {
+	      File << RationalOutputState[i] << " ";
+	      OutputBasis->PrintStateMonomial(File, i) << endl;
+	    }
+	  File.close();
+	}
+      if (OutputFileName != 0)
+	{
+	  if (RationalOutputState.WriteVector(OutputFileName) == false)
+	    {
+	      cout << "error while writing output state " << OutputFileName << endl;
+	      return -1;
+	    }	  
+	}
     }
 
   return 0;
