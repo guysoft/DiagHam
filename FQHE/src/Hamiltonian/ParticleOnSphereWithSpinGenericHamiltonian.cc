@@ -603,8 +603,6 @@ void ParticleOnSphereWithSpinGenericHamiltonian::EvaluateInteractionFactors()
 		      this->InteractionFactorsupup[i][Index] *= 2.0;
 		      this->InteractionFactorsdowndown[i][Index] *= 2.0;
 		    }
-		  this->InteractionFactorsupup[i][Index] *= -1.0;
-		  this->InteractionFactorsdowndown[i][Index] *= -1.0;		  
 		  TotalNbrInteractionFactors += 2;
 		  ++Index;
 		}
@@ -632,7 +630,7 @@ void ParticleOnSphereWithSpinGenericHamiltonian::EvaluateInteractionFactors()
 		      TmpCoefficient = ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
 		      this->InteractionFactorsupdown[i][Index] += this->PseudoPotentials[2][J >> 1] * TmpCoefficient;
 		    }
-		  this->InteractionFactorsupdown[i][Index] *= -Factor;
+		  this->InteractionFactorsupdown[i][Index] *= Factor;
 		  ++TotalNbrInteractionFactors;
 		  ++Index;
 		}

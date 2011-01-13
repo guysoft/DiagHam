@@ -594,8 +594,8 @@ void ParticleOnSphereEffectiveLatticeHamiltonian::EvaluateInteractionFactors()
 		    {
 		      TmpCoefficient = ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
 		      this->InteractionFactorsupdown[i][Index] += this->PseudoPotentials[2][J >> 1] * TmpCoefficient;
-		      if (J==2*LzMax) // Delta interactions on lattice  - twice strengts
-			this->InteractionFactorsupdown[i][Index] += 2.0 * TmpCoefficient;
+ 		      if (J==2*LzMax) // Delta interactions on lattice
+ 			this->InteractionFactorsupdown[i][Index] += 1.0*TmpCoefficient;
 		    }
 		  this->InteractionFactorsupdown[i][Index] *= Factor;
 		  ++TotalNbrInteractionFactors;
@@ -653,8 +653,8 @@ void ParticleOnSphereEffectiveLatticeHamiltonian::EvaluateInteractionFactors()
 			{
 			  TmpCoefficient = ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
 			  this->InteractionFactorsmixedintra[i][Index] += this->PseudoPotentials[3][J >> 1] * TmpCoefficient;
-			  if (J==2*LzMax) // anomalous terms arising from effective lattice model in V0 channel
-			    this->InteractionFactorsmixedintra[i][Index] += M_PI*this->Alpha/2.0 * TmpCoefficient;
+ 			  if (J==2*LzMax) // anomalous terms arising from effective lattice model in V0 channel
+ 			    this->InteractionFactorsmixedintra[i][Index] += -2.0*M_PI*this->Alpha * TmpCoefficient;
 			}
 		    }
 		  if (m1 != m2)

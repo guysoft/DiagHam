@@ -76,7 +76,10 @@ ParticleOnLatticeGenericHamiltonian::ParticleOnLatticeGenericHamiltonian(Particl
   this->NbrSites = this->LatticeGeometry->GetNbrSites();
   this->NbrFluxQuanta=nbrFluxQuanta;
   this->HamiltonianShift=0.0;
-  this->FluxDensity=((double)nbrFluxQuanta)/NbrSites; 
+  if (LatticeGeometry->HavePredefinedFlux())
+    this->FluxDensity=(double)(LatticeGeometry->GetPredefinedFlux())/(double)(LatticeGeometry->GetNbrSitesPerCell());
+  else
+    this->FluxDensity=((double)nbrFluxQuanta)/NbrSites;
   if (overrideFluxDensity!=0.0)
     {
       if (LatticeGeometry->AllowContinuousPhases())
@@ -207,7 +210,10 @@ void ParticleOnLatticeGenericHamiltonian::EvaluateInteractionFactors()
 	  KineticQi[TmpNumberTerms] = s;
 	  KineticQf[TmpNumberTerms] = Neighbors[n];
 #ifdef DEBUG_OUTPUT
-	  cout << "Using flux density="<<this->FluxDensity<<" and Phase="<<Phases[n]<<endl;
+	  if (LatticeGeometry->HavePredefinedFlux())
+	    cout << "Using hard-coded flux-density"<<endl;
+	  else
+	    cout << "Using flux density="<<this->FluxDensity<<" and Phase="<<Phases[n]<<endl;
 #endif
 	  
 	  HoppingTerms[TmpNumberTerms] = Polar(1.0,Translations[n][0]*SolenoidX)*Polar(1.0,Translations[n][1]*SolenoidY)*HoppingSign*

@@ -157,6 +157,10 @@ class LatticePhases
   //
   int GetNbrSites(){return this->NbrSites;}
 
+  // request total number of sites
+  //
+  int GetNbrSitesPerCell(){return this->NbrSitesPerCell;}
+
   // request total number of cells
   //
   int GetNbrCells(){return this->NbrCells;}
