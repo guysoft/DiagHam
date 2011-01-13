@@ -1,6 +1,7 @@
 #include "config.h"
 
 #include "Vector/RealVector.h"
+#include "Vector/LongRationalVector.h"
 
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
@@ -46,15 +47,20 @@ using std::cout;
 using std::endl;
 
 
-// subdivide a basis into different L orthonormal eigenstate
+// resuffle an array of vectors such that the first vector is the one with the first non-zero component having the smallest index
 //
-// vectors = reference on the matrix whose columns are the vectors that span the basis
-// oper = pointer to operator whivh allow to evaluate total L matrix elements
-// totalMaxLz = maximum L value that can be reach by the system (-1/2 if L is half integer)
-// subspaceSize = reference on the array that will be filled  with the dimension of each fixed L subspace (index equal to L if L is integer, L-1/2 if L is half integer)
-// subspacePositions = reference on the array that will be filled  with the position of the first occurence of a vector with a given fixed L subspace 
-//                     (index equal to L if L is integer, L-1/2 if L is half integer)
+// vectors = array of vectors
+// nbrVectors = numerb of vectors
+// componentError = error threshold to assume a component is zero
+// return value = index of the first non-zero component for the first vector 
 int ReshuffleVectors (RealVector* vectors, int nbrVectors, double componentError);
+
+// resuffle an array of vectors such that the first vector is the one with the first non-zero component having the smallest index
+//
+// vectors = array of vectors
+// nbrVectors = numerb of vectors
+// return value = index of the first non-zero component for the first vector 
+int ReshuffleVectors (LongRationalVector* vectors, int nbrVectors);
 
 
 int main(int argc, char** argv)
@@ -76,6 +82,7 @@ int main(int argc, char** argv)
   (*MainGroup) += new SingleIntegerOption  ('\n', "output-precision", "numerical display precision", 14, true, 2, true, 14);
   (*MainGroup) += new SingleStringOption  ('o', "output", "output name for the root partition list (default name uses input-file, replacing dat extension with root)");
   (*MainGroup) += new BooleanOption  ('\n', "save-states", "save the states corresponding to each root configuration");
+  (*MainGroup) += new BooleanOption  ('\n', "rational" , "use rational numbers instead of double precision floating point numbers");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -191,10 +198,10 @@ int main(int argc, char** argv)
   File << "total nbr of root partitions : " << TotalNbrZeroEnergyStates << endl;
   File << "nbr of root partitions per Lz sector : " << endl;
 
-  for (int i = (MaxLzValue & 1); i <= MaxLzValue; i += 2)
+  for (int i = MinLzValue; i <= MaxLzValue; i += 2)
     {
-      cout << LzDegeneracy[i >> 1] << " ";
-      File << LzDegeneracy[i >> 1] << " ";
+      cout << LzDegeneracy[(i - MinLzValue) >> 1] << " ";
+      File << LzDegeneracy[(i - MinLzValue) >> 1] << " ";
     }
   File << endl << endl << "-----------------------------------------" << endl;
   cout << endl << endl << "-----------------------------------------" << endl;
@@ -220,16 +227,36 @@ int main(int argc, char** argv)
 	  File << "Lz = " << (TotalLz  >> 1) << " : " << endl;
 	}      
       int TmpNbrStates = LzDegeneracy[(TotalLz  - MinLzValue) >> 1];
-      RealVector* TmpVectors = new RealVector[TmpNbrStates];
+      RealVector* TmpVectors = 0;
+      LongRationalVector* TmpRationalVectors = 0;
+      if (Manager.GetBoolean("rational"))
+	{
+	  TmpRationalVectors = new LongRationalVector[TmpNbrStates];
+	}
+      else
+	{
+	  TmpVectors = new RealVector[TmpNbrStates];
+	}
       if (Manager.GetString("input-file") != 0)
 	{
 	  for (int j = 0; j < TmpNbrStates; ++j)
 	    {
 	      sprintf (TmpFileName, "%s_%d.%d.vec", BaseFileName, TotalLz, j);
-	      if (TmpVectors[j].ReadVector(TmpFileName) == false)
+	      if (TmpRationalVectors == 0)
 		{
-		  cout << "error while reading " << TmpFileName << endl;
-		  return -1;
+		  if (TmpVectors[j].ReadVector(TmpFileName) == false)
+		    {
+		      cout << "error while reading " << TmpFileName << endl;
+		      return -1;
+		    }
+		}
+	      else
+		{
+		  if (TmpRationalVectors[j].ReadVector(TmpFileName) == false)
+		    {
+		      cout << "error while reading " << TmpFileName << endl;
+		      return -1;
+		    }
 		}
 	    }
 	}
@@ -243,10 +270,21 @@ int main(int argc, char** argv)
 	    }
 	  for (int j = 0; j < TmpNbrStates; ++j)
 	    {
-	      if (TmpVectors[j].ReadVector(EigenstateListFile(0, j)) == false)
+	      if (TmpRationalVectors == 0)
 		{
-		  cout << "error while reading " << EigenstateListFile(0, j) << endl;
-		  return -1;
+		  if (TmpVectors[j].ReadVector(EigenstateListFile(0, j)) == false)
+		    {
+		      cout << "error while reading " << EigenstateListFile(0, j) << endl;
+		      return -1;
+		    }
+		}
+	      else
+		{
+		  if (TmpRationalVectors[j].ReadVector(EigenstateListFile(0, j)) == false)
+		    {
+		      cout << "error while reading " << EigenstateListFile(0, j) << endl;
+		      return -1;
+		    }
 		}
 	    }
 	}
@@ -254,16 +292,46 @@ int main(int argc, char** argv)
       for (int j = 0; j < TmpNbrStates; ++j)
 	RootPositions[j] = 0;
 
-      int MinTmpPos = ReshuffleVectors(TmpVectors, TmpNbrStates, VectorError);
+      int MinTmpPos = 0;
+      if (TmpRationalVectors == 0)
+	{
+	  MinTmpPos = ReshuffleVectors(TmpVectors, TmpNbrStates, VectorError);
+	}
+      else
+	{
+	  MinTmpPos = ReshuffleVectors(TmpRationalVectors, TmpNbrStates);	  
+	}
       RootPositions[0] = MinTmpPos;
 
-      for (int k = 1; k < TmpNbrStates; ++k)
+      if (TmpRationalVectors == 0)
 	{
-	  for (int j = k; j < TmpNbrStates; ++j)
-	    TmpVectors[j].AddLinearCombination(-TmpVectors[j][MinTmpPos] / TmpVectors[k - 1][MinTmpPos], TmpVectors[k -1]);
-	  MinTmpPos = ReshuffleVectors(TmpVectors + k, TmpNbrStates - k, VectorError);
-	  RootPositions[k] = MinTmpPos;
+	  for (int k = 1; k < TmpNbrStates; ++k)
+	    {
+	      for (int j = k; j < TmpNbrStates; ++j)
+		TmpVectors[j].AddLinearCombination(-TmpVectors[j][MinTmpPos] / TmpVectors[k - 1][MinTmpPos], TmpVectors[k -1]);
+	      MinTmpPos = ReshuffleVectors(TmpVectors + k, TmpNbrStates - k, VectorError);
+	      RootPositions[k] = MinTmpPos;
+	    }
 	}
+      else
+	{
+	  TmpRationalVectors[0] /= TmpRationalVectors[0][MinTmpPos];
+	  for (int k = 1; k < TmpNbrStates; ++k)
+	    {
+	      for (int j = k; j < TmpNbrStates; ++j)
+		{
+		  TmpRationalVectors[j].AddLinearCombination(-TmpRationalVectors[j][MinTmpPos], TmpRationalVectors[k -1]);
+		}
+	      MinTmpPos = ReshuffleVectors(TmpRationalVectors + k, TmpNbrStates - k);
+	      RootPositions[k] = MinTmpPos;
+	      TmpRationalVectors[k] /= TmpRationalVectors[k][MinTmpPos];
+ 	      for (int j = 0; j < k; ++j)
+ 		{
+ 		  TmpRationalVectors[j].AddLinearCombination(-TmpRationalVectors[j][MinTmpPos], TmpRationalVectors[k]);
+ 		}
+	    }
+	}
+
       
       ParticleOnSphere* Space = 0;
       char* FilePrefix = new char [256];
@@ -273,7 +341,14 @@ int main(int argc, char** argv)
 	  if (SU2SpinFlag == false)
 	    {
 	      Space = new BosonOnSphereShort(NbrParticles, TotalLz, NbrFluxQuanta);
-	      sprintf (FilePrefix, "bosons_");
+	      if (TmpRationalVectors == 0)
+		{
+		  sprintf (FilePrefix, "bosons_");
+		}
+	      else
+		{
+		  sprintf (FilePrefix, "bosons_rational_");
+		}
 	      sprintf (FileSuffix, "n_%d_2s_%d_lz_%d.", NbrParticles, NbrFluxQuanta, TotalLz);
 	    }
 	  else
@@ -298,7 +373,14 @@ int main(int argc, char** argv)
 	      else
 		Space = new FermionOnSphereUnlimited(NbrParticles, TotalLz, NbrFluxQuanta);
 #endif
-	      sprintf (FilePrefix, "fermions_");
+	      if (TmpRationalVectors == 0)
+		{
+		  sprintf (FilePrefix, "fermions_");
+		}
+	      else
+		{
+		  sprintf (FilePrefix, "fermions_rational_");
+		}
 	      sprintf (FileSuffix, "n_%d_2s_%d_lz_%d.", NbrParticles, NbrFluxQuanta, TotalLz);
 	    }
 	  else
@@ -306,7 +388,14 @@ int main(int argc, char** argv)
 	      if (SU2SpinFlag == true)
 		{
 		  Space = new FermionOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
-		  sprintf (FilePrefix, "fermions_sphere_su2_");
+		  if (TmpRationalVectors == 0)
+		    {
+		      sprintf (FilePrefix, "fermions_sphere_su2_");
+		    }
+		  else
+		    {
+		      sprintf (FilePrefix, "fermions_rational__sphere_su2_");
+		    }
 		  sprintf (FileSuffix, "n_%d_2s_%d_sz_%d_lz_%d.", NbrParticles, NbrFluxQuanta, TotalSz, TotalLz);
 		}
 	      else 
@@ -314,7 +403,14 @@ int main(int argc, char** argv)
 		  if (SU3SpinFlag == true)
 		    {
 		      Space = new FermionOnSphereWithSU3Spin(NbrParticles, TotalLz, NbrFluxQuanta, TotalTz, TotalY);
-		      sprintf (FilePrefix, "fermions_sphere_su3_");
+		      if (TmpRationalVectors == 0)
+			{
+			  sprintf (FilePrefix, "fermions_sphere_su3_");
+			}
+		      else
+			{
+			  sprintf (FilePrefix, "fermions_rational__sphere_su3_");
+			}
 		      sprintf (FileSuffix, "n_%d_2s_%d_tz_%d_y_%d_lz_%d.", NbrParticles, NbrFluxQuanta, TotalTz, TotalY, TotalLz);
 		    }
 		  else
@@ -322,7 +418,14 @@ int main(int argc, char** argv)
 		      if (SU4SpinFlag == true)
 			{
 			  Space = new FermionOnSphereWithSU4Spin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz, TotalIz, TotalPz);	    
-			  sprintf (FilePrefix, "fermions_sphere_su4_");
+			  if (TmpRationalVectors == 0)
+			    {
+			      sprintf (FilePrefix, "fermions_sphere_su4_");
+			    }
+			  else
+			    {
+			      sprintf (FilePrefix, "fermions_rational__sphere_su4_");
+			    }
 			  sprintf (FileSuffix, "n_%d_2s_%d_sz_%d_iz_%d_pz_%d_lz_%d.", NbrParticles, NbrFluxQuanta, TotalSz, TotalIz, TotalPz, TotalLz);
 			}
 		    }
@@ -337,7 +440,14 @@ int main(int argc, char** argv)
 	    {
 	      char* FileName = new char[512];
 	      sprintf (FileName, "%sroot_%s%d.vec", FilePrefix, FileSuffix, j); 
-	      TmpVectors[j].WriteVector(FileName);
+	      if (TmpRationalVectors == 0)
+		{
+		  TmpVectors[j].WriteVector(FileName);
+		}
+	      else
+		{
+		  TmpRationalVectors[j].WriteVector(FileName);
+		}
 	      delete[] FileName;
 	    }
 	}
@@ -355,6 +465,12 @@ int main(int argc, char** argv)
   return 0;
 }
 
+// resuffle an array of vectors such that the first vector is the one with the first non-zero component having the smallest index
+//
+// vectors = array of vectors
+// nbrVectors = numerb of vectors
+// componentError = error threshold to assume a component is zero
+// return value = index of the first non-zero component for the first vector 
 
 int ReshuffleVectors (RealVector* vectors, int nbrVectors, double componentError)
 {
@@ -395,6 +511,38 @@ int ReshuffleVectors (RealVector* vectors, int nbrVectors, double componentError
       RealVector TmpVector = vectors[TmpVectorPos];
       vectors[TmpVectorPos] = vectors[0];
        vectors[0] = TmpVector;
+    }
+  return MinTmpPos;
+}
+
+// resuffle an array of vectors such that the first vector is the one with the first non-zero component having the smallest index
+//
+// vectors = array of vectors
+// nbrVectors = numerb of vectors
+// return value = index of the first non-zero component for the first vector 
+
+int ReshuffleVectors (LongRationalVector* vectors, int nbrVectors)
+{
+  int MinTmpPos = vectors[0].GetVectorDimension();
+  int TmpVectorPos = 0;
+  for (int j = 0; j < nbrVectors; ++j)      
+    {
+      int TmpPos = 0;
+      while ((TmpPos < vectors[j].GetVectorDimension()) && (vectors[j][TmpPos] == 0l))
+	{
+	  TmpPos++;
+	}
+      if (TmpPos < MinTmpPos)
+	{
+	  TmpVectorPos = j;
+	  MinTmpPos = TmpPos;
+	}
+    }
+  if (TmpVectorPos != 0)
+    {
+      LongRationalVector TmpVector = vectors[TmpVectorPos];
+      vectors[TmpVectorPos] = vectors[0];
+      vectors[0] = TmpVector;
     }
   return MinTmpPos;
 }
