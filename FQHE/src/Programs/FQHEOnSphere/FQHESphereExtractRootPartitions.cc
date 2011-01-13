@@ -315,7 +315,8 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  TmpRationalVectors[0] /= TmpRationalVectors[0][MinTmpPos];
+	  LongRational Tmp = TmpRationalVectors[0][MinTmpPos];
+	  TmpRationalVectors[0] /= Tmp;
 	  for (int k = 1; k < TmpNbrStates; ++k)
 	    {
 	      for (int j = k; j < TmpNbrStates; ++j)
@@ -324,7 +325,8 @@ int main(int argc, char** argv)
 		}
 	      MinTmpPos = ReshuffleVectors(TmpRationalVectors + k, TmpNbrStates - k);
 	      RootPositions[k] = MinTmpPos;
-	      TmpRationalVectors[k] /= TmpRationalVectors[k][MinTmpPos];
+	      Tmp = TmpRationalVectors[k][MinTmpPos];
+	      TmpRationalVectors[k] /= Tmp;
  	      for (int j = 0; j < k; ++j)
  		{
  		  TmpRationalVectors[j].AddLinearCombination(-TmpRationalVectors[j][MinTmpPos], TmpRationalVectors[k]);
