@@ -60,6 +60,7 @@ class BosonOnSphereShort :  public ParticleOnSphere
   friend class BosonOnSphereFullShort;
   friend class FermionOnSphereTwoLandauLevels;
   friend class FermionOnSphereThreeLandauLevels;
+  friend class FermionOnSphereFourLandauLevels;
 
   friend class BosonOnTorusShort;
 

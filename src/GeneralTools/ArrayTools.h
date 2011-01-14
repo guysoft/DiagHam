@@ -32,6 +32,7 @@
 
 #include "config.h"
 #include "GeneralTools/List.h"
+#include "MathTools/LongRational.h"
 
 
 // up ordering array sort using quick sort
@@ -1351,6 +1352,76 @@ int SearchInArrayAndSetWeight(ClassName element, ClassName*& array, double*& wei
   if(array[StartIndex]<element)
     StartIndex++;
    
+  TmpElement = array[StartIndex];
+  TmpWeigth = weigth[StartIndex];
+  array[StartIndex] = element;
+  weigth[StartIndex] = c;
+  for (unsigned int i = StartIndex + 1; i < nbrValue; ++i)
+    {
+      TmpElement1 = array[i];
+      TmpWeigth1 = weigth[i];
+      array[i] = TmpElement;
+      weigth[i] = TmpWeigth;
+      TmpElement = TmpElement1;
+      TmpWeigth = TmpWeigth1;
+    }
+  return 1;
+}
+
+// find an element in an array, if found add c to the corresponding weight in weight array, if not found insert the element and set the weight to c
+//
+// element = element to find
+// array = array where to search 
+// weight = weight array
+// nbrValue = number of values in array
+// c = weight to add
+// return value = number of inserted value
+
+template <class ClassName>
+int SearchInArrayAndSetWeight(ClassName element, ClassName*& array, LongRational*& weigth, unsigned long nbrValue, LongRational c)
+{
+  if (nbrValue == 0)
+    {
+      array[0] = element;
+      weigth[0] = c;
+      return 1;
+    }
+  
+  int StartIndex = 0;
+  int EndIndex = nbrValue;
+  int MidIndex;
+  
+  while((EndIndex - StartIndex) > 1)
+    {
+      MidIndex = (StartIndex + EndIndex) >> 1;
+      
+      if(array[MidIndex] == element)
+	{
+	  weigth[MidIndex] += c;
+	  return 0;
+	}
+      
+      if(array[MidIndex] > element)
+	EndIndex = MidIndex;
+      else
+	StartIndex = MidIndex;
+    }
+  
+  if(array[StartIndex] == element)
+    {
+      weigth[StartIndex] += c;
+      return 0;
+    }
+  
+  ++nbrValue;
+  ClassName TmpElement;
+  ClassName TmpElement1;
+  LongRational TmpWeigth;
+  LongRational TmpWeigth1;
+  
+  if(array[StartIndex]<element)
+    StartIndex++;
+  
   TmpElement = array[StartIndex];
   TmpWeigth = weigth[StartIndex];
   array[StartIndex] = element;

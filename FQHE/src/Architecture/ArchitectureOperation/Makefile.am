@@ -10,4 +10,5 @@ FQHESphereJastrowMultiplicationOperation.cc \
 FQHESphereJastrowDivisionOperation.cc \
 FQHESphereMonomialsTimesSlaterProjectionOperation.cc \
 FQHESphereParticleEntanglementSpectrumOperation.cc \
-FQHESphereJackGeneratorSumRationalPolynomialOperation.cc
+FQHESphereJackGeneratorSumRationalPolynomialOperation.cc \
+FQHESphereMultipleMonomialsTimesSlaterProjectionOperation.cc

@@ -44,9 +44,9 @@
 
 class FQHESphereMonomialsTimesSlaterProjectionOperation : public AbstractArchitectureOperation
 {
-
+  
  protected:
-
+  
   // index of the first component
   int FirstComponent;
   // number of component 
@@ -54,7 +54,7 @@ class FQHESphereMonomialsTimesSlaterProjectionOperation : public AbstractArchite
   
   // pointer to the HilbertSpace after product and projection if there is one
   ParticleOnSphere * FinalSpace;
-
+  
   // pointer to the initial Fermionic HilbertSpace
   ParticleOnSphere * FermionSpace;
   
@@ -62,19 +62,31 @@ class FQHESphereMonomialsTimesSlaterProjectionOperation : public AbstractArchite
   ParticleOnSphere * LLLSpace;
   
   // RealVector where the result will be store
-  RealVector * OutputVector;
+  RealVector * OutputRealVector;
   
   // RealVector where the fermionic state is stored
-  RealVector * FermionVector;
+  RealVector * FermionRealVector;
   
   // RealVector where the bosonic state is stored
-  RealVector * LLLVector;
+  RealVector * LLLRealVector;
+  
+  // RealVector where the result will be store
+  LongRationalVector * OutputLongRationalVector;
+  
+  // RealVector where the fermionic state is stored
+  LongRationalVector * FermionLongRationalVector;
+  
+  // RealVector where the bosonic state is stored
+  LongRationalVector * LLLLongRationalVector;
   
   // table useful in the calculations
   unsigned long * FinalStates;
   
   // table useful in the calculations
-  double * Weigth;
+  double * DoubleWeigth;
+  
+  // table useful in the calculations
+  LongRational * LongRationalWeigth;
   
   //true if the result vector is to be projected
   bool Projection;
@@ -93,7 +105,10 @@ class FQHESphereMonomialsTimesSlaterProjectionOperation : public AbstractArchite
   
   // number of part in which the initial bosonic vector will be separated
   int NbrStage;
-
+  
+  // true if the mode rational is used
+  bool Rational;
+  
  public:
   
   // constructor 
@@ -101,14 +116,21 @@ class FQHESphereMonomialsTimesSlaterProjectionOperation : public AbstractArchite
   // Space = pointer to the HilbertSpace to use
   // fileName = name of the file where the kostka number will be store
   // nbrLL = number of Landau levels
-  FQHESphereMonomialsTimesSlaterProjectionOperation(ParticleOnSphere* fermionSpace, ParticleOnSphere* lllSpace, ParticleOnSphere* finalSpace, RealVector* fermionVector, RealVector* lllVector, 
-						    RealVector* outputVector, int resume, int nbrComponent, bool projection, int step, int nbrLL, bool symmetry);
+  FQHESphereMonomialsTimesSlaterProjectionOperation(ParticleOnSphere* fermionSpace, ParticleOnSphere* lllSpace, ParticleOnSphere* finalSpace, RealVector* fermionVector, RealVector* lllVector, RealVector* outputVector, int resume, int nbrComponent, bool projection, int step, int nbrLL, bool symmetry);
+  
+  
+  // constructor 
+  //
+  // Space = pointer to the HilbertSpace to use
+  // fileName = name of the file where the kostka number will be store
+  // nbrLL = number of Landau levels
+  FQHESphereMonomialsTimesSlaterProjectionOperation(ParticleOnSphere* fermionSpace, ParticleOnSphere* lllSpace, ParticleOnSphere* finalSpace, LongRationalVector* fermionVector, LongRationalVector* lllVector, LongRationalVector* outputVector, int resume, int nbrComponent, bool projection, int step, int nbrLL, bool symmetry);
   
   // copy constructor 
   //
   // operation = reference on operation to copy
   FQHESphereMonomialsTimesSlaterProjectionOperation(const FQHESphereMonomialsTimesSlaterProjectionOperation & operation);
-
+  
   // destructor
   //
   ~FQHESphereMonomialsTimesSlaterProjectionOperation();
@@ -118,17 +140,18 @@ class FQHESphereMonomialsTimesSlaterProjectionOperation : public AbstractArchite
   // firstComponent = index of the first component
   // nbrComponent = number of component
   void SetIndicesRange (const int& firstComponent, const int& nbrComponent);
-
+  
   // clone operation
   //
   // return value = pointer to cloned operation
   AbstractArchitectureOperation* Clone();
-	
+  
   // set destination vector 
   // 
   // vector where the result has to be stored
   void SetOutputVector (RealVector* outputVector);
-	
+  void SetOutputVector (LongRationalVector* outputVector);
+  
   // get destination vector 
   // 
   // return value = pointer to destination vector
