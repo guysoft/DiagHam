@@ -139,7 +139,7 @@ int main(int argc, char** argv)
     }
 
   NbrParticles = RightNbrParticles + LeftNbrParticles;
-  LzMax = RightLzMax + LeftLzMax  + Paddings[0];// + 1
+  LzMax = RightLzMax + LeftLzMax  + Paddings[0] + 1;
   TotalLz = 0;
   char* OutputFileName = 0;
   cout << "NbrParticles=" << NbrParticles << " LzMax=" << LzMax << " TotalLz=" << TotalLz << endl;
