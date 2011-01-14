@@ -426,8 +426,8 @@ bool FQHESphereMonomialsTimesSlaterProjectionOperation::ArchitectureDependentApp
 #ifdef __MPI__
    if (architecture->IsMasterNode())
      {
-       this->OutputVector->ClearVector();
-       RealVector* TmpVector = (RealVector*) this->OutputVector->EmptyClone(true);
+       this->OutputRealVector->ClearVector();
+       RealVector* TmpVector = (RealVector*) this->OutputRealVector->EmptyClone(true);
        int Step = (int) this->NbrComponent / (this->NbrStage * architecture->GetNbrSlaveNodes());
        int TmpFirstComponent = this->FirstComponent;
        int TmpRange[2];
@@ -443,12 +443,12 @@ bool FQHESphereMonomialsTimesSlaterProjectionOperation::ArchitectureDependentApp
 	 }
        while ((Step > 0) && ((TmpSlaveID = architecture->WaitAnySlave())))
 	 {
-	   architecture->SumVector(*(this->OutputVector));
+	   architecture->SumVector(*(this->OutputRealVector));
 	 }
        while ((TmpNbrSlaves > 0) && ((TmpSlaveID = architecture->WaitAnySlave())))
 	 {
 	   --TmpNbrSlaves;
-	   architecture->SumVector(*(this->OutputVector));
+	   architecture->SumVector(*(this->OutputRealVector));
 	 }
      }
    else
@@ -457,14 +457,14 @@ bool FQHESphereMonomialsTimesSlaterProjectionOperation::ArchitectureDependentApp
        int TmpNbrElement = 0;
        while ((architecture->ReceiveFromMaster(TmpRange, TmpNbrElement) == true) && (TmpRange[1] > 0))
 	 {
-	   this->OutputVector->ClearVector();
+	   this->OutputRealVector->ClearVector();
 	   this->SetIndicesRange(TmpRange[0], TmpRange[1]); 
 	   if (architecture->GetLocalArchitecture()->GetArchitectureID() == AbstractArchitecture::SMP)
 	     this->ArchitectureDependentApplyOperation((SMPArchitecture*) architecture->GetLocalArchitecture());
 	   else
 	     this->RawApplyOperation();
 	   architecture->SendDone();
-	   architecture->SumVector(*(this->OutputVector));
+	   architecture->SumVector(*(this->OutputRealVector));
 	 }
      }
   return true;
