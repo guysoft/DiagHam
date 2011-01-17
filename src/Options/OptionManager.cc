@@ -471,6 +471,28 @@ double* OptionManager::GetDoubles(const char *optionName, int & length)
     }
 }
 
+//test routine for Multiple Double value
+bool OptionManager::HasDoubles(const char *optionName)
+{
+  AbstractOption* OptionPointer = (*this)[optionName];
+  if (OptionPointer!=0)
+    {
+      if (OptionPointer->GetOptionType() == AbstractOption::OTDoubles)
+	return (((MultipleDoubleOption*)OptionPointer)->GetLength()>0);
+      else
+	{
+	  cout << "MultipleDouble value of Option '"<<optionName<<"' was requested, but is of different type!" << endl;
+	  exit(-1);
+	}
+    }
+  else
+    {
+      cout << "Option '"<<optionName<<"' was requested, but is not implemented!" << endl;
+      exit(-1);
+    }
+}
+
+
 //accessor routine for Integer value
 long OptionManager::GetInteger(const char *optionName)
   {
@@ -524,6 +546,27 @@ int* OptionManager::GetIntegers(const char *optionName, int & length)
 	  length = ((MultipleIntegerOption*)OptionPointer)->GetLength();
 	  return ((MultipleIntegerOption*)OptionPointer)->GetIntegers();
 	}
+      else
+	{
+	  cout << "MultipleInteger value of Option '"<<optionName<<"' was requested, but is of different type!" << endl;
+	  exit(-1);
+	}
+    }
+  else
+    {
+      cout << "Option '"<<optionName<<"' was requested, but is not implemented!" << endl;
+      exit(-1);
+    }
+}
+
+//test routine for Multiple Double value
+bool OptionManager::HasIntegers(const char *optionName)
+{
+  AbstractOption* OptionPointer = (*this)[optionName];
+  if (OptionPointer!=0)
+    {
+      if (OptionPointer->GetOptionType() == AbstractOption::OTIntegers)
+	return (((MultipleIntegerOption*)OptionPointer)->GetLength()>0);
       else
 	{
 	  cout << "MultipleInteger value of Option '"<<optionName<<"' was requested, but is of different type!" << endl;
@@ -594,6 +637,53 @@ char** OptionManager::GetStrings(const char *optionName, int & length)
       else
 	{
 	  cout << "MultipleString value of Option '"<<optionName<<"' was requested, but is of different type!" << endl;
+	  exit(-1);
+	}
+    }
+  else
+    {
+      cout << "Option '"<<optionName<<"' was requested, but is not implemented!" << endl;
+      exit(-1);
+    }
+}
+
+//test routine for Multiple String value
+bool OptionManager::HasStrings(const char *optionName)
+{
+  AbstractOption* OptionPointer = (*this)[optionName];
+  if (OptionPointer!=0)
+    {
+      if (OptionPointer->GetOptionType() == AbstractOption::OTStrings)
+	return (((MultipleStringOption*)OptionPointer)->GetNbrStrings()>0);
+      else
+	{
+	  cout << "MultipleString value of Option '"<<optionName<<"' was requested, but is of different type!" << endl;
+	  exit(-1);
+	}
+    }
+  else
+    {
+      cout << "Option '"<<optionName<<"' was requested, but is not implemented!" << endl;
+      exit(-1);
+    }
+}
+
+
+//test routine for Multiple String value
+bool OptionManager::HasValues(const char *optionName)
+{
+  AbstractOption* OptionPointer = (*this)[optionName];
+  if (OptionPointer!=0)
+    {
+      if (OptionPointer->GetOptionType() == AbstractOption::OTStrings)
+	return (((MultipleStringOption*)OptionPointer)->GetNbrStrings()>0);
+      else if (OptionPointer->GetOptionType() == AbstractOption::OTIntegers)
+	return (((MultipleIntegerOption*)OptionPointer)->GetLength()>0);
+      else if (OptionPointer->GetOptionType() == AbstractOption::OTDoubles)
+	return (((MultipleDoubleOption*)OptionPointer)->GetLength()>0);
+      else
+	{
+	  cout << "HasValues() function of Option '"<<optionName<<"' was requested, but is not of multiple value type!" << endl;
 	  exit(-1);
 	}
     }

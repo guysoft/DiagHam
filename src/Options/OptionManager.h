@@ -133,17 +133,22 @@ class OptionManager
   // from MultipleDoubleOption: possibility to request the length of the vector, if wanted
   double* GetDoubles(const char *optionName);
   double* GetDoubles(const char *optionName, int &length);
+  bool HasDoubles(const char *optionName);
   long GetInteger(const char *optionName);
   // from MultipleIntegerOption: possibility to request the length of the vector, if wanted
   int* GetIntegers(const char *optionName);
   int* GetIntegers(const char *optionName, int &length);
+  bool HasIntegers(const char *optionName);
   char* GetString(const char *optionName);
   //accessor routine for Multiple String value
   char** GetStrings(const char *optionName);
   // alternative accessor routine for Multiple String value
   char** GetStrings(const char *optionName, int & length);
+  bool HasStrings(const char *optionName);
+  // test if value was given for general multiple field option
+  bool HasValues(const char *optionName);
 
-
+  
   
 };
 
