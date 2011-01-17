@@ -94,6 +94,15 @@ double* EvaluateFiniteWidthPseudoPotentialsNoInterpolation(int nbrFlux, int land
 double* EvaluateOneBodyPotentials(int nbrFlux, int landauLevel, double northPolePotential, double southPolePotential);
 
 
+// evalute one body potentials for two charges +e located at given distance above the poles in a given Landau level
+//
+// nbrFlux = number of flux quanta (i.e. twice the maximum momentum for a single particle)
+// landauLevel = index of the Landau level (0 for the lowest Landau level)
+// northPoleDistance = distance of charge located above the north pole
+// southPoleDistance = distance of charge located above the south pole
+// return value = array that conatins the pseudopotentials
+double* EvaluateOneBodyCoulombPotentials(int nbrFlux, int landauLevel, double northPoleCharge, double northPoleDistance, double southPoleCharge, double southPoleDistance);
+
 
 // evaluate pseudopotentials coefficients of the monomials r^n in units of 1/R
 //

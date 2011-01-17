@@ -97,6 +97,9 @@ double* EvaluateOneBodyPotentials(int nbrFlux, int landauLevel, double northPole
 }
 
 
+
+
+
 // evaluate pseudopotentials coefficients of the monomials r^n in units of 1/R
 //
 // nbrFlux = number of flux quanta (i.e. twice the maximum momentum for a single particle of the corresponding LLL problem)
@@ -244,10 +247,86 @@ namespace DiagPseudoPotentials
 
     return result*parameters->Rho1->GetValue(z1);
   }
+
+  struct param1B
+  {
+    double TwoR;
+    double NorthPoleCharge;
+    double DSqrN;
+    double SouthPoleCharge;
+    double DSqrS;
+    int OrbitalIndex;
+    ParticleOnSphereGenericLLFunctionBasis *Basis;
+    RealVector Value;
+    Complex FctValue;
+  };
+
+  // integration of Coulomb interaction of a point charge
+  double Integrand1B (double theta, void * params)
+  {
+    param1B *parameters=(param1B*)params;
+    parameters->Value[0]=theta;
+    parameters->Basis->GetFunctionValue(parameters->Value, parameters->FctValue, parameters->OrbitalIndex);
+    double s=parameters->TwoR*sin((M_PI-theta)/2.);
+    double s2=parameters->TwoR*sin(theta/2.);
+    return 2.0*M_PI*sin(theta)*SqrNorm(parameters->FctValue)*(-parameters->NorthPoleCharge/sqrt(s*s+parameters->DSqrN)-parameters->SouthPoleCharge/sqrt(s2*s2+parameters->DSqrS));
+  }
   
 }
 
 #endif
+
+
+// evalute one body potentials for two charges +e located at given distance above the poles in a given Landau level
+//
+// nbrFlux = number of flux quanta (i.e. twice the maximum momentum for a single particle)
+// landauLevel = index of the Landau level (0 for the lowest Landau level)
+// northPoleDistance = distance of charge located above the north pole
+// southPoleDistance = distance of charge located above the south pole
+// return value = array that conatins the pseudopotentials
+double* EvaluateOneBodyCoulombPotentials(int nbrFlux, int landauLevel, double northPoleCharge, double northPoleDistance, double southPoleCharge, double southPoleDistance)
+{
+#ifdef HAVE_GSL
+  ParticleOnSphereGenericLLFunctionBasis Basis (nbrFlux, landauLevel);
+
+  DiagPseudoPotentials::param1B params;
+  params.TwoR=sqrt((nbrFlux+2.0*landauLevel)*2.0);
+  params.NorthPoleCharge = northPoleCharge;
+  params.DSqrN = northPoleDistance*northPoleDistance;
+  params.SouthPoleCharge = southPoleCharge;
+  params.DSqrS = southPoleDistance*southPoleDistance;
+  params.Basis=&Basis;
+  params.Value.Resize(2);
+  params.Value[1]=0.0;
+  
+  gsl_function TheIntegrand;
+  TheIntegrand.function = &DiagPseudoPotentials::Integrand1B;
+  TheIntegrand.params = &params;
+
+  int NbrPoints=25*(nbrFlux+2*landauLevel);
+  gsl_integration_workspace *Workspace = gsl_integration_workspace_alloc (NbrPoints);
+
+  double result, error;
+
+  double *Potentials = new double[nbrFlux+2*landauLevel+1];
+    
+  for (int i=0; i<=nbrFlux+2*landauLevel; ++i)
+    {
+      params.OrbitalIndex=i;
+      // call the integration over theta
+      gsl_integration_qag (&TheIntegrand, 0, M_PI, /*epsAbs*/ 0.0, /*epsRel*/ 1.0e-8,
+      			   NbrPoints, /* KEY */ GSL_INTEG_GAUSS15, Workspace, &result, &error);
+      Potentials[i]=result;
+      cout << "1B-Coulomb Potential["<<i<<"]="<<result<<endl;
+    }
+  gsl_integration_workspace_free (Workspace);
+  return Potentials;
+#else
+  cout << "Need GSL libraries to evaluate 1-body pseudopotentials of charges."<<endl;
+  return NULL;
+#endif
+}
+
 
 // evalute pseudopotentials for coulomb interaction in a given Landau level with a given density profile
 //

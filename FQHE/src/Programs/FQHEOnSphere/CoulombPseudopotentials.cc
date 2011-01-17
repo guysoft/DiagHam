@@ -36,8 +36,11 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('l', "landau-level", "index of the Landau level (0 for the lowest Landau level)", 0, true, 0);
   (*SystemGroup) += new SingleIntegerOption  ('s', "nbr-flux", "number of flux quanta (i.e. twice the maximum momentum for a single particle)", 8);
   (*SystemGroup) += new BooleanOption ('\n', "add-impurities", "add two impurities (one at each pole)");
-  (*SystemGroup) += new SingleDoubleOption ('\n', "north-potential", "potential assosciated to the impurity at the north pole", 0.0);
-  (*SystemGroup) += new SingleDoubleOption ('\n', "south-potential", "potential assosciated to the impurity at the south pole", 0.0);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "north-potential", "potential associated to the impurity at the north pole", 0.0);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "south-potential", "potential associated to the impurity at the south pole", 0.0);
+  (*SystemGroup) += new MultipleDoubleOption ('\n', "north-charge", "potential associated to the a charge at the given distance above the north pole", ',');
+  (*SystemGroup) += new MultipleDoubleOption ('\n', "south-charge", "potential associated to the a charge at the given distance above the north pole", ',');
+  
   (*SystemGroup) += new  BooleanOption ('\n', "relativistic-fermions", "assume relativistic fermions");
   (*SystemGroup) += new  BooleanOption ('\n', "graphene-bilayer", "calculate pseudopotentials for bilayer graphene (need to specify the four Landau level indices)");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "l1", "Landau level index for graphene bilayer pseudopotentials, can be 0 (LLL) or 1 (1st LL)", 0);
@@ -140,6 +143,19 @@ int main(int argc, char** argv)
 		    BaseString = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_k_%kappa%");	      
 		  else
 		    BaseString = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%");
+		  if (Manager.HasDoubles("north-charge")||Manager.HasDoubles("south-charge"))
+		    {
+		      double Charge=0.0, D=0.0;
+		      int L;
+		      double *TmpD = Manager.GetDoubles("north-charge",L);
+		      if (L>0) {Charge=1.0;D=TmpD[0];}
+		      if (L>1) {Charge=TmpD[1];}
+		      if (L>0) sprintf(BaseString,"%s_QN_%g_%g",BaseString,Charge,D);
+		      TmpD = Manager.GetDoubles("south-charge",L);
+		      if (L>0) {Charge=1.0;D=TmpD[0];}
+		      if (L>1) {Charge=TmpD[1];}
+		      if (L>0) sprintf(BaseString,"%s_Q_%g_%g",BaseString,Charge,D);
+		    }	      
 		  char* FormatString=new char[1024];
 		  if (Manager.GetDouble("layer-thickness")>0.0)
 		    {
@@ -278,6 +294,26 @@ int main(int argc, char** argv)
 	    OneBodyPotentials = EvaluateOneBodyPotentials(NbrFlux, LandauLevel, 
 							  ((SingleDoubleOption*) Manager["north-potential"])->GetDouble(),
 							  ((SingleDoubleOption*) Manager["south-potential"])->GetDouble());
+	  if (Manager.HasDoubles("north-charge")||Manager.HasDoubles("south-charge"))
+	    {
+	      double ChargeN=0.0, ChargeS=0.0, DN=0.0, DS=0.0;
+	      int L;
+	      double *TmpD = Manager.GetDoubles("north-charge",L);
+	      if (L>0) {ChargeN=1.0;DN=TmpD[0];}
+	      if (L>1) {ChargeN=TmpD[1];}
+	      TmpD = Manager.GetDoubles("south-charge",L);
+	      if (L>0) {ChargeS=1.0;DS=TmpD[0];}
+	      if (L>1) {ChargeS=TmpD[1];}
+	      double *TmpPotentials = EvaluateOneBodyCoulombPotentials(NbrFlux, LandauLevel, ChargeN, DN, ChargeS, DS);
+	      if (OneBodyPotentials!=NULL)
+		{
+		  for (int i=0; i<=NbrFlux+2*(LandauLevel-1);++i)
+		    OneBodyPotentials[i]+=TmpPotentials[i];
+		  delete [] TmpPotentials;
+		}
+	      else
+		OneBodyPotentials=TmpPotentials;
+	    }
 	}
       if (fabs(Manager.GetDouble("kappa"))>0.0)
 	{
@@ -331,8 +367,30 @@ int main(int argc, char** argv)
 	    }
 	  if (OneBodyPotentials != 0)
 	    {
-	      File << "# with two impurities (V_north = " << ((SingleDoubleOption*) Manager["north-potential"])->GetDouble() 
-		   << " and V_south = " << ((SingleDoubleOption*) Manager["south-potential"])->GetDouble() << ")" << endl;
+	      if (Manager.GetBoolean("add-impurities"))
+		File << "# with two impurities (V_north = " << ((SingleDoubleOption*) Manager["north-potential"])->GetDouble() 
+		     << " and V_south = " << ((SingleDoubleOption*) Manager["south-potential"])->GetDouble() << ")" << endl;
+	      else
+		{
+		  int L;
+		  double *TmpD = Manager.GetDoubles("north-charge",L);
+		  if (L>0)
+		    {
+		      if (L>1)
+			File << "# with a charge (Q_north = " << TmpD[1] << " at z=" << TmpD[0] << ")" << endl;
+		      else
+			File << "# with a charge (Q_north = +1 at z=" << TmpD[0] << ")" << endl;
+		    }
+		  TmpD = Manager.GetDoubles("south-charge",L);
+		  if (L>0)
+		    {
+		      if (L>1)
+			File << "# with a charge (Q_south = " << TmpD[1] << " at z=" << TmpD[0] << ")" << endl;
+		      else
+			File << "# with a charge (Q_south = +1 at z=" << TmpD[0] << ")" << endl;
+		    }
+		}
+
 	    }
 	  if (Manager.GetDouble("add-v0")!=0.0)
 	    File << "# with \\delta V_0="<<Manager.GetDouble("add-v0")<<endl;
