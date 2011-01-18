@@ -267,6 +267,24 @@ int main(int argc, char** argv)
 	      return -1;
 	    }
 	}
+      double *OneBodyPotentials;
+      if (InteractionDefinition.GetAsDoubleArray("Onebodypotentials", ' ', OneBodyPotentials, TmpNbrPseudoPotentials) == true)
+	{
+	  if (TmpNbrPseudoPotentials != (LzMax + 1))
+	    {
+	      cout << "Onebodypotentials has a wrong number of components or has a wrong value in " << ((SingleStringOption*) Manager["interaction-file"])->GetString() << endl;
+	      return -1;
+	    }
+	  if (OneBodyPotentialUpUp==NULL)
+	    {
+	      OneBodyPotentialUpUp = new double [LzMax+1];
+	      for (int i=0; i<=LzMax; ++i)
+		OneBodyPotentialUpUp[i]=OneBodyPotentials[i];
+	    }
+	  if (OneBodyPotentialDownDown==NULL)
+	    OneBodyPotentialDownDown = OneBodyPotentials;
+	  else delete [] OneBodyPotentials;
+	}
     }
 
   char* OutputNameLz = new char [512 + strlen(Manager.GetString("interaction-name"))];

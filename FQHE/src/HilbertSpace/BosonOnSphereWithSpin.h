@@ -34,6 +34,7 @@
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphereWithSpin.h"
+#include "HilbertSpace/BosonOnSphere.h"
 #include "Matrix/RealSymmetricMatrix.h"
 #include "MathTools/Complex.h"
 
@@ -379,6 +380,16 @@ class BosonOnSphereWithSpin :  public ParticleOnSphereWithSpin
   //
   // timeCoherence = true if time coherence has to be used
   virtual  void InitializeWaveFunctionEvaluation (bool timeCoherence = false);
+
+  // create an SU(2) state from two U(1) state
+  //
+  // upState = vector describing the up spin part of the output state
+  // upStateSpace = reference on the Hilbert space associated to the up spin part
+  // downState = vector describing the down spin part of the output state
+  // downStateSpace = reference on the Hilbert space associated to the down spin part  
+  // return value = resluting SU(2) state
+  
+  virtual RealVector ForgeSU2FromU1(RealVector& upState, BosonOnSphere& upStateSpace, RealVector& downState, BosonOnSphere& downStateSpace);
 
 
  protected:

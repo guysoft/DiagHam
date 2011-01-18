@@ -153,7 +153,7 @@ int main(int argc, char** argv)
 	      cout << "Invalid number of pseudo-potentials in Pseudopotentials" << endl;
 	      return -1;	  
 	    }
-	  for (int i = 0; i < 4; ++i)
+	  for (int i = 0; i < 3; ++i)
 	    for (int j = 0; j < TmpNbrPseudoPotentials; ++j)
 	      PseudoPotentials[i][j] = TmpPseudoPotentials[j];
 	}
@@ -296,7 +296,7 @@ int main(int argc, char** argv)
     }
   for (; L <= Max; L += 2)
     {
-      double Shift = -10.0;
+      double Shift = 0.0;
       cout << "lz="<<L<<endl;
       ParticleOnSphereWithSpin* Space = 0; 
 
@@ -307,8 +307,11 @@ int main(int argc, char** argv)
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
         Memory = Architecture.GetArchitecture()->GetLocalMemory();
-
-      AbstractQHEHamiltonian* Hamiltonian;      
+      
+      AbstractQHEHamiltonian* Hamiltonian;
+      if (PseudoPotentials!=0)
+	for (int i=0; i<=LzMax; ++i)
+	  cout << "PP["<<i<<"]="<<PseudoPotentials[0][i]<<" "<<PseudoPotentials[1][i]<<" "<<PseudoPotentials[2][i]<<" "<<PseudoPotentials[3][i]<<endl;
       Hamiltonian = new ParticleOnSphereEffectiveLatticeHamiltonian(Space, NbrBosons, LzMax, Alpha, PseudoPotentials,
 								    OneBodyPotentialUpUp, OneBodyPotentialDownDown,
 								    OneBodyPotentialUpDown, 
@@ -316,6 +319,7 @@ int main(int argc, char** argv)
 								    LoadPrecalculationFileName);
       
       Hamiltonian->ShiftHamiltonian(Shift);
+      cout << "Shift="<<Shift<<endl;
       if (SavePrecalculationFileName != 0)
 	{
 	  Hamiltonian->SavePrecalculation(SavePrecalculationFileName);

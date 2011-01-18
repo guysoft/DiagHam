@@ -353,7 +353,7 @@ int main(int argc, char** argv)
       cout << "<S^2> = " << L2Value << endl
 	   << "<S> = " << RawTmpAngularMomentum << endl;
     }
-  if (Manager.GetBoolean("no-szparity") == false)
+  if ((Manager.GetBoolean("all-sz"))||((Manager.GetBoolean("no-szparity") == false)&&(TotalSz==0)))
     {
       Complex Tmp;
       if (SzSymmetrizedBasis == false)

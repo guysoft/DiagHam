@@ -1268,7 +1268,7 @@ int FermionOnSphereWithSpin::SzToMinusSz (int index, double& coefficient)
   int TmpLzMax = 2 * this->LzMax + 1;
   while (((TmpState2 >> TmpLzMax) & 0x1ul) == 0x0ul)
     --TmpLzMax;
-  return this->TargetSpace->FindStateIndex(TmpState2, TmpLzMax);
+  return this->TargetSpace->CarefulFindStateIndex(TmpState2, TmpLzMax);
 }
 
 
@@ -1296,7 +1296,6 @@ int FermionOnSphereWithSpin::CarefulFindStateIndex(unsigned long stateDescriptio
     return Index;
   else
     {
-      cout << "Unexpected situation in CarefulFindStateIndex!"<<endl;
       for (int i=0; i<HilbertSpaceDimension; ++i)
 	if (this->StateDescription[i] == stateDescription)
 	  cout << "Element now found at i="<<i<<", "<<this->StateDescription[i]

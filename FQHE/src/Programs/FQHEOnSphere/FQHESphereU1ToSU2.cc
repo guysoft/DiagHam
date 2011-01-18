@@ -24,6 +24,8 @@
 
 #include "HilbertSpace/FermionOnSphere.h"
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
+#include "HilbertSpace/BosonOnSphere.h"
+#include "HilbertSpace/BosonOnSphereWithSpin.h"
 
 #include <iostream>
 #include <cstring>
@@ -190,6 +192,9 @@ int main(int argc, char** argv)
     }
   else
     {
+      UpSpace = new BosonOnSphere(UpNbrParticles, UpTotalLz, LzMax);
+      DownSpace = new BosonOnSphere(DownNbrParticles, DownTotalLz, LzMax);
+      SU2Space = new BosonOnSphereWithSpin(UpNbrParticles + DownNbrParticles, UpTotalLz + DownTotalLz, LzMax, SzTotal);
     }
   
   if (UpSpace->GetHilbertSpaceDimension() != UpState.GetVectorDimension())
@@ -202,12 +207,23 @@ int main(int argc, char** argv)
       cout << "dimension mismatch between the down state (" << DownState.GetVectorDimension() << ") and the Hilbert space (" << DownSpace->GetHilbertSpaceDimension() << ")" << endl;
       return -1;
     }
-  RealVector OutputState = ((FermionOnSphereWithSpin*) SU2Space)->ForgeSU2FromU1(UpState, *(FermionOnSphere*)UpSpace, DownState, *(FermionOnSphere*)DownSpace);
-  char* OutputName = new char [512 + strlen(Manager.GetString("interaction-name"))];
-  sprintf (OutputName, "fermions_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz_%d.0.vec", Manager.GetString("interaction-name"), 
+  if (FermionFlag == true)
+    {
+      RealVector OutputState = ((FermionOnSphereWithSpin*) SU2Space)->ForgeSU2FromU1(UpState, *(FermionOnSphere*)UpSpace, DownState, *(FermionOnSphere*)DownSpace);
+      char* OutputName = new char [512 + strlen(Manager.GetString("interaction-name"))];
+      sprintf (OutputName, "fermions_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz_%d.0.vec", Manager.GetString("interaction-name"), 
 	   (UpNbrParticles + DownNbrParticles), LzMax, SzTotal, (UpTotalLz + DownTotalLz));
-
-  OutputState.WriteVector(OutputName);
+      
+      OutputState.WriteVector(OutputName);
+    }
+  else
+    {
+      RealVector OutputState = ((BosonOnSphereWithSpin*) SU2Space)->ForgeSU2FromU1(UpState, *(BosonOnSphere*)UpSpace, DownState, *(BosonOnSphere*)DownSpace);
+      char* OutputName = new char [512 + strlen(Manager.GetString("interaction-name"))];
+      sprintf (OutputName, "bosons_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz_%d.0.vec", Manager.GetString("interaction-name"), 
+	   (UpNbrParticles + DownNbrParticles), LzMax, SzTotal, (UpTotalLz + DownTotalLz));
+      OutputState.WriteVector(OutputName);
+    }
   delete UpSpace;
   delete DownSpace;
   delete SU2Space;

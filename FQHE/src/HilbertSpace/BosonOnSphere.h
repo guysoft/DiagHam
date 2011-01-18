@@ -46,6 +46,7 @@ class BosonOnSphere :  public ParticleOnSphere
   friend class BosonOnSphereSymmetricBasis;
   friend class BosonOnSphereHaldaneSymmetricBasis;
   friend class BosonOnSphereShort;
+  friend class BosonOnSphereWithSpin;
   friend class BosonOnSphereWithSpinAllSz;
 
  protected:

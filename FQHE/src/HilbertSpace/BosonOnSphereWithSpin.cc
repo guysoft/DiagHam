@@ -1829,3 +1829,98 @@ void BosonOnSphereWithSpin::InitializeWaveFunctionEvaluation (bool timeCoherence
 	}
     }
 }
+
+
+// create an SU(2) state from two U(1) state
+//
+// upState = vector describing the up spin part of the output state
+// upStateSpace = reference on the Hilbert space associated to the up spin part
+// downState = vector describing the down spin part of the output state
+// downStateSpace = reference on the Hilbert space associated to the down spin part  
+// return value = resluting SU(2) state
+
+RealVector BosonOnSphereWithSpin::ForgeSU2FromU1(RealVector& upState, BosonOnSphere& upStateSpace, RealVector& downState, BosonOnSphere& downStateSpace)
+{
+  cout << "Need to write BosonOnSphereWithSpin::ForgeSU2FromU1"<<endl;
+  RealVector FinalState(this->HilbertSpaceDimension, true);
+  /*
+  for (int j = 0; j < upStateSpace.HilbertSpaceDimension; ++j)
+    {
+      int * TmpUpState = upStateSpace.StateDescription[j];
+      int TmpPos = upStateSpace.LzMax;
+      while (TmpPos > 0)
+	{
+	  unsigned long Tmp = TmpUpState & (0x1ul << TmpPos);
+	  TmpUpState |= Tmp << TmpPos;
+	  TmpUpState ^= Tmp;
+	  --TmpPos;
+	}
+      TmpUpState <<= 1;
+      double TmpComponent = upState[j];
+      int Max = 63;
+      while ((TmpUpState & (0x1ul << Max)) == 0x0ul)
+	--Max;
+      int Min = 0;
+      while ((TmpUpState & (0x1ul << Min)) == 0x0ul)
+	++Min;
+      unsigned long TmpUpStateMask = (0x1ul << Max) - 1;
+      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	if ((this->StateDescription[i] & TmpUpState) == TmpUpState)
+	  {	    
+	    unsigned long TmpUpState3 = this->StateDescription[i] & TmpUpStateMask;
+	    unsigned long TmpUpState2 = TmpUpState3;
+#ifdef  __64_BITS__
+	    TmpUpState3 &= 0x5555555555555555ul;
+	    TmpUpState2 &= 0xaaaaaaaaaaaaaaaaul;
+#else
+	    TmpUpState3 &= 0x55555555ul;
+	    TmpUpState2 &= 0xaaaaaaaaul;
+#endif	    
+	    unsigned long Sign = 0x0;
+	    int Pos = this->LzMax << 1;
+	    while ((Pos > 0) && ((TmpUpState3 & (0x1ul << Pos)) == 0x0ul))
+	      Pos -= 2;
+	    while (Pos > 0)
+	      {
+		unsigned long TmpUpState4 = TmpUpState2 & ((0x1ul << Pos) - 1ul);
+#ifdef  __64_BITS__
+		TmpUpState4 ^= TmpUpState4 >> 32;
+#endif	
+		TmpUpState4 ^= TmpUpState4 >> 16;
+		TmpUpState4 ^= TmpUpState4 >> 8;
+		TmpUpState4 ^= TmpUpState4 >> 4;
+		TmpUpState4 ^= TmpUpState4 >> 2;
+		TmpUpState4 ^= TmpUpState4 >> 1;
+		Sign ^= TmpUpState4;
+		Pos -= 2;
+		while ((Pos > 0) && ((TmpUpState3 & (0x1ul << Pos)) == 0x0ul))
+		  Pos -= 2;
+	      }
+	    if ((Sign & 0x1ul) == 0x0ul)
+	      FinalState[i] = TmpComponent;
+	    else
+	      FinalState[i] = -TmpComponent;
+	  }
+    }
+
+  for (int j = 0; j < downStateSpace.HilbertSpaceDimension; ++j)
+    {
+      unsigned long TmpDownState = downStateSpace.StateDescription[j];
+      int TmpPos = downStateSpace.LzMax;
+      while (TmpPos > 0)
+	{
+	  unsigned long Tmp = TmpDownState & (0x1ul << TmpPos);
+	  TmpDownState |= Tmp << TmpPos;
+	  TmpDownState ^= Tmp;
+	  --TmpPos;
+	}
+      double TmpComponent = downState[j];
+      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	if ((this->StateDescription[i] & TmpDownState) == TmpDownState)
+	  {
+	    FinalState[i] *= TmpComponent;
+	  }
+    }
+  */
+  return FinalState;
+}
