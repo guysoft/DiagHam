@@ -40,6 +40,7 @@ int main(int argc, char** argv)
   Manager += OutputGroup;
   Manager += PrecalculationGroup;
   Manager += MiscGroup;
+
   (*SystemGroup) += new SingleStringOption  ('i', "input-states", "file that describes states to fuse");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "padding", "number of empty one-body states to insert between two fused Hilbert spaces", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
@@ -48,11 +49,14 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "huge-basis", "use huge Hilbert space support");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
   (*SystemGroup) += new BooleanOption  ('\n', "rational" , "use rational numbers instead of double precision floating point numbers");
+  (*SystemGroup) += new BooleanOption  ('\n', "add" , "add the different vector instead of merging them");
+
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "name of the fused vector that will be generated");
   (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the vector into a text file");
+  
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
-
+  
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
       cout << "see man page for option syntax or type FQHESphereFuseStates -h" << endl;
@@ -63,7 +67,7 @@ int main(int argc, char** argv)
       Manager.DisplayHelp (cout);
       return 0;
     }
-
+  
   int NbrParticles = 0;
   int LzMax = 0;
   int TotalLz = 0;
@@ -90,40 +94,41 @@ int main(int argc, char** argv)
       for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
 	Paddings[i] = Padding;
     }
- double* Coefficients = 0;
- LongRational* RationalCoefficients = 0;
- if (Manager.GetBoolean("rational") == false)
-   {
-     if (InputVectors(7, 0) != 0)
-       {
-	 Coefficients = InputVectors.GetAsDoubleArray(7);
+  
+  double* Coefficients = 0;
+  LongRational* RationalCoefficients = 0;
+  if (Manager.GetBoolean("rational") == false)
+    {
+      if (InputVectors(7, 0) != 0)
+	{
+	  Coefficients = InputVectors.GetAsDoubleArray(7);
+	}
+      else
+	{
+	  Coefficients = new double [InputVectors.GetNbrLines()];
+	  for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
+	    Coefficients[i] = 1.0;
+	}
+    }
+  else
+    {
+      if (InputVectors(7, 0) != 0)
+	{
+	  RationalCoefficients = InputVectors.GetAsLongRationalArray(7);
        }
-     else
-       {
-	 Coefficients = new double [InputVectors.GetNbrLines()];
-	 for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
-	   Coefficients[i] = 1.0;
-       }
-   }
- else
-   {
-     if (InputVectors(7, 0) != 0)
-       {
-	 RationalCoefficients = InputVectors.GetAsLongRationalArray(7);
-       }
-     else
-       {
-	 RationalCoefficients = new LongRational [InputVectors.GetNbrLines()];
-	 for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
-	   RationalCoefficients[i] = 1l;
-       }
-   }
+      else
+	{
+	  RationalCoefficients = new LongRational [InputVectors.GetNbrLines()];
+	  for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
+	    RationalCoefficients[i] = 1l;
+	}
+    }
+  
   int LeftNbrParticles = 0;
   int LeftLzMax = 0;
   int LeftTotalLz = 0;
   bool Statistics = true;
-  if (FQHEOnSphereFindSystemInfoFromVectorFileName(InputVectors(0, 0),
-						   LeftNbrParticles, LeftLzMax, LeftTotalLz, Statistics) == false)
+  if (FQHEOnSphereFindSystemInfoFromVectorFileName(InputVectors(0, 0),LeftNbrParticles, LeftLzMax, LeftTotalLz, Statistics) == false)
     {
       cout << "error while retrieving system parameters from left state name " << InputVectors(0, 0) << endl;
       return -1;
@@ -131,13 +136,12 @@ int main(int argc, char** argv)
   int RightNbrParticles = 0;
   int RightLzMax = 0;
   int RightTotalLz = 0;
-  if (FQHEOnSphereFindSystemInfoFromVectorFileName(InputVectors(1, 0),
-						   RightNbrParticles, RightLzMax, RightTotalLz, Statistics) == false)
+  if (FQHEOnSphereFindSystemInfoFromVectorFileName(InputVectors(1, 0), RightNbrParticles, RightLzMax, RightTotalLz, Statistics) == false)
     {
       cout << "error while retrieving system parameters from left state name " << InputVectors(1, 0) << endl;
       return -1;
     }
-
+  
   NbrParticles = RightNbrParticles + LeftNbrParticles;
   LzMax = RightLzMax + LeftLzMax  + Paddings[0] + 1;
   TotalLz = 0;
@@ -156,7 +160,7 @@ int main(int argc, char** argv)
       else
 	sprintf (OutputFileName, "fermions_fused_n_%d_2s_%d_lz_%d.0.vec", NbrParticles, LzMax, TotalLz);
     }
-
+  
   ParticleOnSphere* OutputBasis = 0;
   if (Statistics == false)
     {
@@ -214,11 +218,23 @@ int main(int argc, char** argv)
     }
   RealVector OutputState;
   LongRationalVector RationalOutputState;
+	
   if (Manager.GetBoolean("rational") == false)
     OutputState = RealVector (OutputBasis->GetLargeHilbertSpaceDimension(), true);
   else
-    RationalOutputState = LongRationalVector (OutputBasis->GetLargeHilbertSpaceDimension());
-
+    RationalOutputState = LongRationalVector (OutputBasis->GetLargeHilbertSpaceDimension(),true);
+  
+  RealVector OutputTmpState;
+  LongRationalVector RationalTmpOutputState;
+  
+  if (Manager.GetBoolean("add") == true)
+    {
+      if (Manager.GetBoolean("rational") == false)
+	OutputTmpState = RealVector (OutputBasis->GetLargeHilbertSpaceDimension(), true);
+      else
+	RationalTmpOutputState = LongRationalVector (OutputBasis->GetLargeHilbertSpaceDimension(),true);
+    }
+  
   for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
     {
       LeftNbrParticles = 0;
@@ -316,11 +332,17 @@ int main(int argc, char** argv)
 	      cout << "can't open vector file " << InputVectors(1, i) << endl;
 	      return -1;      
 	    }
-
+	  
 
 	  cout << "local padding = " <<  Paddings[i] << "  local coeffcient = " << Coefficients[i] << endl;
-	  
-	  OutputBasis->FuseStates(OutputState, LeftVector, RightVector, Paddings[i], LeftBasis, RightBasis, SymmetrizedBasis, Coefficients[i]);
+	  if (Manager.GetBoolean("add") == false)
+	    OutputBasis->FuseStates(OutputState, LeftVector, RightVector, Paddings[i], LeftBasis, RightBasis, SymmetrizedBasis, Coefficients[i]);
+	  else
+	    {
+	      OutputBasis->FuseStates(OutputTmpState, LeftVector, RightVector, Paddings[i], LeftBasis, RightBasis, SymmetrizedBasis, Coefficients[i]);
+	      OutputState += OutputTmpState;
+	      OutputTmpState.ClearVector();
+	    }
 	}
       else
 	{
@@ -339,12 +361,20 @@ int main(int argc, char** argv)
 
 
 	  cout << "local padding = " <<  Paddings[i] << "  local coeffcient = " << RationalCoefficients[i] << endl;
-	  
-	  OutputBasis->FuseStates(RationalOutputState, LeftVector, RightVector, Paddings[i], LeftBasis, RightBasis, SymmetrizedBasis, RationalCoefficients[i]);
+		if (Manager.GetBoolean("add") == false)
+		  OutputBasis->FuseStates(RationalOutputState, LeftVector, RightVector, Paddings[i], LeftBasis, RightBasis, SymmetrizedBasis, RationalCoefficients[i]);
+		else
+		  {
+		    OutputBasis->FuseStates(RationalTmpOutputState, LeftVector, RightVector, Paddings[i], LeftBasis, RightBasis, SymmetrizedBasis, RationalCoefficients[i]);
+		    
+		    RationalOutputState += RationalTmpOutputState;
+		    RationalTmpOutputState.ClearVector();
+		  }
 	}
       delete RightBasis;
       delete LeftBasis;      
     }
+  
 
   if (Manager.GetBoolean("rational") == false)
     {
