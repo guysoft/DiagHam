@@ -1,4 +1,5 @@
 #include "Vector/RealVector.h"
+#include "Vector/LongRationalVector.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -33,8 +34,9 @@ int main(int argc, char** argv)
   Manager += SystemGroup;
   Manager += MiscGroup;
 
-  (*SystemGroup) += new SingleStringOption  ('\n', "input-vector", "name of the file containing the binary vector");
-  (*SystemGroup) += new SingleDoubleOption  ('e', "error", "rounding error", 1e-14);
+  (*SystemGroup) += new SingleStringOption  ('i', "input-vector", "name of the file containing the binary vector");
+  (*SystemGroup) += new SingleDoubleOption  ('e', "error", "rounding error (for floattig point vectors)", 1e-14);
+  (*SystemGroup) +=  new BooleanOption  ('r', "rational", "input vectors are rational vectors");
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -56,20 +58,37 @@ int main(int argc, char** argv)
       cout << "CountingZero requires an input file" << endl << "see man page for option syntax or type CountingZero -h" << endl;
       return -1;
     }
-  RealVector State;
-  if (State.ReadVector (Manager.GetString("input-vector")) == false)
-    {
-      cout << "can't open vector file " << Manager.GetString("input-vector") << endl;
-      return -1;      
-    }
 
   long Count = 0l;
+  long Dimension = 0l;
+  if (Manager.GetBoolean("rational"))
+    {
+      LongRationalVector State;
+      if (State.ReadVector (Manager.GetString("input-vector")) == false)
+	{
+	  cout << "can't open vector file " << Manager.GetString("input-vector") << endl;
+	  return -1;      
+	}
+      Dimension = State.GetLargeVectorDimension();
+      for (long i = 0; i < Dimension; ++i)
+	if (State[i] == 0l)
+	  ++Count;
+     }
+  else
+    {
+      RealVector State;
+      if (State.ReadVector (Manager.GetString("input-vector")) == false)
+	{
+	  cout << "can't open vector file " << Manager.GetString("input-vector") << endl;
+	  return -1;      
+	}
+      Dimension = State.GetLargeVectorDimension();
+      for (long i = 0; i < Dimension; ++i)
+	if (fabs(State[i]) < Error)
+	  ++Count;
+    }
 
-  for (long i = 0; i < State.GetLargeVectorDimension(); ++i)
-    if (fabs(State[i]) < Error)
-      ++Count;
-
-  cout << Count << " / " << State.GetLargeVectorDimension() << " (" << ((((double) Count) * 100.0) / ((double) State.GetLargeVectorDimension())) << "%)" << endl; 
+  cout << Count << " / " << Dimension << " (" << ((((double) Count) * 100.0) / ((double) Dimension)) << "%)" << endl; 
 
   return 0;
 }

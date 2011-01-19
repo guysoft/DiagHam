@@ -108,7 +108,7 @@ ZeroingVector_LDADD=-L$(top_builddir)/src/Vector -L$(top_builddir)/src/Matrix -L
 
 CountingZero_DEPENDENCIES=$(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Options/libOptions.a
 
-CountingZero_LDADD=-L$(top_builddir)/src/Vector -L$(top_builddir)/src/Matrix -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/Options -L$(top_builddir)/src/Output -lMatrix -lVector -lGeneralTools -lOutput -lOptions @MATH_LIBS@ @THREAD_LIBS@ @LAPACK_LIBS@ @BLAS_LIBS@ @FORTRAN2C_LIBS@ @GMP_LIBS@
+CountingZero_LDADD=-L$(top_builddir)/src/Vector -L$(top_builddir)/src/Matrix -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/Options -L$(top_builddir)/src/Output -L$(top_builddir)/src/MathTools -lMatrix -lVector -lGeneralTools -lMathTools -lOutput -lOptions @MATH_LIBS@ @THREAD_LIBS@ @LAPACK_LIBS@ @BLAS_LIBS@ @FORTRAN2C_LIBS@ @GMP_LIBS@
 VectorAscii2Binary_DEPENDENCIES= $(top_builddir)/src/Vector/libVector.a  $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a 
 
 VectorAscii2Binary_LDADD=-L$(top_builddir)/src/Vector  -L$(top_builddir)/src/Options -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/Output  -L$(top_builddir)/src/MathTools -lVector -lMathTools -lOptions -lGeneralTools -lMathTools -lOutput  @BZ2_LIBS@ @THREAD_LIBS@ @GMP_LIBS@
