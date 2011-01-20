@@ -87,6 +87,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state (should be the one of the bosonic state)");
   (*SystemGroup) += new BooleanOption ('\n',"projection","the state will be projected into the LLL");
+  (*SystemGroup) += new BooleanOption  ('\n', "projected-haldane", "use an Haldane basis instead of the usual n-body basis for the projected state");
+  (*SystemGroup) += new SingleStringOption  ('\n', "projected-referencefile", "use a file as the definition of the reference state for the projected state (should be the one of the bosonic state)");
   (*SystemGroup) += new BooleanOption ('\n', "resume", "the last calcul will be resumed from its last save step");
   (*SystemGroup) += new BooleanOption  ('\n', "3-ll", "consider particles within three Landau levels");
   (*SystemGroup) += new BooleanOption  ('\n', "4-ll", "consider particles within four Landau levels");
@@ -351,19 +353,119 @@ int main(int argc, char** argv)
     }
   
   
-  ParticleOnSphere * FinalSpace;
+  ParticleOnSphere * FinalSpace = 0;
   if (LLLFermionFlag == false)
     {
-      if( Projection == true)
+      if (Projection == true)
 	{
-	  FinalSpace = new FermionOnSphere (LLLNbrParticles, TotalLzFermion, LzMaxDown + LLLLzMax);
+	  if (Manager.GetBoolean("projected-haldane") == false)
+	    {
+	      FinalSpace = new FermionOnSphere (LLLNbrParticles, TotalLzFermion, LzMaxDown + LLLLzMax);
+	    }
+	  else
+	    {
+	      int * ReferenceState = 0;
+	      ConfigurationParser ReferenceStateDefinition;
+	      if (ReferenceStateDefinition.Parse(Manager.GetString("projected-referencefile")) == false)
+		{
+		  ReferenceStateDefinition.DumpErrors(cout) << endl;
+		  return -1;
+		}
+	      if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", LLLNbrParticles) == false) || (LLLNbrParticles <= 0))
+		{
+		  cout << "NbrParticles is not defined or as a wrong value" << endl;
+		  return -1;
+		}
+	      int TmpLzMax = 0;
+	      if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", TmpLzMax) == false) || (TmpLzMax < 0))
+		{
+		  cout << "LzMax is not defined or as a wrong value" << endl;
+		  return 0;
+		}
+	      if (TmpLzMax != (LzMaxDown + LLLLzMax))
+		{
+		  cout << "LzMax does not match the one of the projected state" << endl;
+		  return 0;
+		}
+	      int MaxNbrLz;
+	      if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
+		{
+		  cout << "error while parsing ReferenceState in " << Manager.GetString("reference-file") << endl;
+		  return -1;
+		}
+	      if (MaxNbrLz != (TmpLzMax + 1))
+		{
+		  cout << "wrong LzMax value in ReferenceState" << endl;
+		  return -1;
+		}
+#ifdef  __64_BITS__
+	      if (LLLLzMax  < 63)
+#else
+		if (LLLLzMax  < 31)
+#endif
+		  FinalSpace = new FermionOnSphereHaldaneBasis (LLLNbrParticles, TotalLzFermion, TmpLzMax, ReferenceState);
+	    }
 	}
       else
 	FinalSpace = new FermionOnSphereTwoLandauLevels (LLLNbrParticles, TotalLzFermion, LzMaxUp + LLLLzMax, LzMaxDown + LLLLzMax);
     }
   else
     {
-      FinalSpace = new BosonOnSphereShort (LLLNbrParticles, TotalLzFermion, LzMaxDown + LLLLzMax);
+      if (Projection == true)
+	{
+	  if (Manager.GetBoolean("projected-haldane") == false)
+	    {
+	      FinalSpace = new BosonOnSphereShort (LLLNbrParticles, TotalLzFermion, LzMaxDown + LLLLzMax);
+	    }
+	  else
+	    {
+	      int * ReferenceState = 0;
+	      ConfigurationParser ReferenceStateDefinition;
+	      if (ReferenceStateDefinition.Parse(Manager.GetString("projected-referencefile")) == false)
+		{
+		  ReferenceStateDefinition.DumpErrors(cout) << endl;
+		  return -1;
+		}
+	      if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", LLLNbrParticles) == false) || (LLLNbrParticles <= 0))
+		{
+		  cout << "NbrParticles is not defined or as a wrong value" << endl;
+		  return -1;
+		}
+	      int TmpLzMax = 0;
+	      if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", TmpLzMax) == false) || (TmpLzMax < 0))
+		{
+		  cout << "LzMax is not defined or as a wrong value" << endl;
+		  return 0;
+		}
+	      if (TmpLzMax != (LzMaxDown + LLLLzMax))
+		{
+		  cout << "LzMax does not match the one of the projected state" << endl;
+		  return 0;
+		}
+	      int MaxNbrLz;
+	      if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
+		{
+		  cout << "error while parsing ReferenceState in " << Manager.GetString("reference-file") << endl;
+		  return -1;
+		}
+	      if (MaxNbrLz != (TmpLzMax + 1))
+		{
+		  cout << "wrong LzMax value in ReferenceState" << endl;
+		  return -1;
+		}
+#ifdef  __64_BITS__
+	      if (LLLLzMax  < 63)
+#else
+		if (LLLLzMax  < 31)
+#endif
+		  FinalSpace = new BosonOnSphereHaldaneBasisShort (LLLNbrParticles, TotalLzFermion, TmpLzMax, ReferenceState);
+	    }
+	}
+      else
+	{
+	  cout << "unprojected bosonic Jain states are not implemented" << endl;
+	  return -1;
+	}
     }
 	
   
@@ -469,10 +571,12 @@ int main(int argc, char** argv)
 	      FermionState = new RealVector(SpaceLL->GetHilbertSpaceDimension(),true);
 	      (*FermionState)[Index]=1;
 	    }
-	  if(Resume == true)
+	  if (Resume == true)
 	    {
-	      char * ResumeVectorName = "temporary_projection_vector.vec";
-	      char * LogFile = "projection.dat";
+	      char* ResumeVectorName = new char [256];
+	      sprintf (ResumeVectorName, "temporary_projection_vector.vec");
+	      char * LogFile = new char [256];
+	      sprintf (LogFile, "projection.dat");
 	      if (IsFile(LogFile) == false)
 		{
 		  cout << "The calcul cannot be resume as the LogFile doesn't exist." << endl;
@@ -515,8 +619,10 @@ int main(int argc, char** argv)
 	  
 	  if(NbrComponents+MinComponent != FinalSpace->GetHilbertSpaceDimension())
 	    {
-	      char * OutputFileName = "temporary_projection_vector.vec";
-	      char * LogFile = "projection.dat";
+	      char* OutputFileName = new char [256];
+	      sprintf (OutputFileName, "temporary_projection_vector.vec");
+	      char * LogFile = new char [256];
+	      sprintf (LogFile, "projection.dat");
 	      (*OutputVector).WriteVector(OutputFileName);
 	      ofstream File;
 	      File.open(LogFile, ios::binary | ios::out);
@@ -591,10 +697,10 @@ int main(int argc, char** argv)
 	  return -1;
 	}
       
-      LongRationalVector * FermionState = 0;
-      LongRationalVector * OutputVector = 0;
+      LongRationalVector* FermionState = 0;
+      LongRationalVector* OutputVector = 0;
       
-      if(Constraint == false)
+      if (Constraint == false)
 	{
 	  if(Index == -1)
 	    {
@@ -622,8 +728,10 @@ int main(int argc, char** argv)
 	    }
 	  if(Resume == true)
 	    {
-	      char * ResumeVectorName = "temporary_projection_vector.vec";
-	      char * LogFile = "projection.dat";
+	      char* ResumeVectorName = new char [256];
+	      sprintf (ResumeVectorName, "temporary_projection_vector.vec");
+	      char * LogFile = new char [256];
+	      sprintf (LogFile, "projection.dat");
 	      if (IsFile(LogFile) == false)
 		{
 		  cout << "The calcul cannot be resume as the LogFile doesn't exist." << endl;
@@ -666,8 +774,10 @@ int main(int argc, char** argv)
 	  
 	  if(NbrComponents+MinComponent!=FinalSpace->GetHilbertSpaceDimension())
 	    {
-	      char * OutputFileName = "temporary_projection_vector.vec";
-	      char * LogFile = "projection.dat";
+	      char* OutputFileName = new char [256];
+	      sprintf (OutputFileName, "temporary_projection_vector.vec");
+	      char * LogFile = new char [256];
+	      sprintf (LogFile, "projection.dat");
 	      (*OutputVector).WriteVector(OutputFileName);
 	      ofstream File;
 	      File.open(LogFile, ios::binary | ios::out);
