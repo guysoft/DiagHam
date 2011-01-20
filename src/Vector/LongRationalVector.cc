@@ -333,6 +333,42 @@ Vector* LongRationalVector::EmptyCloneArray(int nbrVectors, bool zeroFlag)
   return TmpVectors;
 }
 
+// sum two vectors
+//
+// vector = vector to add
+// return value = reference on current vector
+
+LongRationalVector& LongRationalVector::operator += (LongRationalVector& vector)
+{
+  if (this->Dimension == -1)
+    for (long i = 0; i < this->LargeDimension; ++i)
+      this->Components[i] += vector[i];
+  else
+    {
+      for (int i = 0; i < this->Dimension; i++)
+	this->Components[i] += vector[i];
+    }
+  return *this;
+}
+
+// substract two vectors
+//
+// vector = vector to substract
+// return value = reference on current vector
+
+LongRationalVector& LongRationalVector::operator -= (LongRationalVector& vector)
+{
+  if (this->Dimension == -1)
+    for (long i = 0; i < this->LargeDimension; ++i)
+      this->Components[i] -= vector[i];
+  else
+    {
+      for (int i = 0; i < this->Dimension; i++)
+	this->Components[i] -= vector[i];
+    }
+  return *this;
+}
+
 // multiply a vector with a rational number on the right hand side
 //
 // d = rational to use

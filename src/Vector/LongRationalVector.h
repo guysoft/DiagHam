@@ -167,6 +167,18 @@ class LongRationalVector : public Vector
   // return value = denominator
   long Den(long index);
 
+  // sum two vectors
+  //
+  // vector = vector to add
+  // return value = reference on current vector
+  LongRationalVector& operator += (LongRationalVector& vector);
+
+  // substract two vectors
+  //
+  // vector = vector to substract
+  // return value = reference on current vector
+  LongRationalVector& operator -= (LongRationalVector& vector);
+
   // multiply a vector with a rational number on the right hand side
   //
   // d = rational to use
