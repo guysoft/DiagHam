@@ -35,14 +35,14 @@
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/RealMatrix.h"
 
-#include <math.h>
+#include <cstdlib>
+#include <cmath>
 
 #ifdef __LAPACK__
 // binding to the LAPACK zhpev function
 extern "C" void FORTRAN_NAME(zhpev)(const char* jobz, const char* uplo, const int* dimension, const doublecomplex* matrix, const double *eigenvalues, const doublecomplex *eigenvectors, const int* leadingDimension, const doublecomplex *work, const doublereal *rwork, const int* information );
 
 #endif
-
 
 
 using std::cout;
