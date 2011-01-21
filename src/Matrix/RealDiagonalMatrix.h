@@ -59,6 +59,7 @@ class RealDiagonalMatrix : public Matrix
   friend class RealBandDiagonalSymmetricMatrix;
   friend class HermitianMatrix;
   friend class ComplexDiagonalMatrix;
+  friend class BandDiagonalHermitianMatrix;
 
  protected:
 

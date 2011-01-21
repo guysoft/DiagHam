@@ -19,7 +19,8 @@ RealLowerTriangularMatrix.cc \
 ComplexUpperTriangularMatrix.cc \
 ComplexDiagonalMatrix.cc \
 RealBandDiagonalSymmetricMatrix.cc \
-ComplexLapackDeterminant.cc
+ComplexLapackDeterminant.cc \
+BandDiagonalHermitianMatrix.cc
 
 
 libArray_a_SOURCES = \

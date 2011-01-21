@@ -77,6 +77,10 @@ class QHEOnLatticeMainTask: public AbstractMainTask
   bool DiskFlag;
   // resume from disk datas
   bool ResumeFlag;
+    // enable block Lanczos algorithm
+  bool BlockLanczosFlag;
+  // size of the blocks used in the block Lanczos algorithm
+  int SizeBlockLanczos;
   // number of eigenvalues to evaluate 
   int NbrEigenvalue;
   // number of lanczos iteration (for the current run)
@@ -101,6 +105,8 @@ class QHEOnLatticeMainTask: public AbstractMainTask
   bool ShowIterationTime;
   // name of the file that contains the vector to use as initial vector for the Lanczos algorithm (null if a random vector has to be picked)
   char* InitialVectorFileName;
+  // name of the file that describes the set of vectors to use as initial set of vectors for the block Lanczos algorithm (null if a random vectors have to be picked)  
+  char* InitialBlockVectorFileName;
   // allow to only run a given number of Lanczos iterations
   bool PartialLanczos;
   // use LAPACK libraries instead of DiagHam libraries
@@ -115,6 +121,8 @@ class QHEOnLatticeMainTask: public AbstractMainTask
   bool ResumeFastDiskFlag;
   // flag that indicates if it the first time the main task is used
   bool FirstRun;
+  // flag that indicate if eigenstates have to be computed and saved at a given frequency
+  int PartialEigenstateFlag;
   // use ARPACK libraries instead of native lanczos
   bool ArpackFlag;
 

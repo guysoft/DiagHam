@@ -28,12 +28,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef REALBANDDIAGONALSYMMETRICMATRIX_H
-#define REALBANDDIAGONALSYMMETRICMATRIX_H
+#ifndef BANDDIAGONALHERMITIANMATRIX_H
+#define BANDDIAGONALHERMITIANMATRIX_H
 
 
 #include "config.h"
 #include "Matrix/Matrix.h"
+#include "Matrix/ComplexMatrix.h"
 #ifdef USE_OUTPUT
 #include "Output/MathematicaOutput.h"
 #endif
@@ -53,7 +54,7 @@ class Complex;
 class RealTriDiagonalSymmetricMatrix;
 
 
-class RealBandDiagonalSymmetricMatrix : public Matrix
+class BandDiagonalHermitianMatrix : public Matrix
 {
 
  protected:
@@ -61,7 +62,8 @@ class RealBandDiagonalSymmetricMatrix : public Matrix
   // array which contains diagonal elements
   double* DiagonalElements;
   // array which contains upper off-diagonal elements (first index is used as row index)
-  double** UpperOffDiagonalElements;
+  double** RealUpperOffDiagonalElements;
+  double** ImaginaryUpperOffDiagonalElements;
 
   // number of bands in used in the upper part of the matrix
   int NbrBands;
@@ -78,14 +80,14 @@ class RealBandDiagonalSymmetricMatrix : public Matrix
 
   // default constructor
   //
-  RealBandDiagonalSymmetricMatrix();
+  BandDiagonalHermitianMatrix();
 
   // constructor for an empty matrix
   //
   // dimension = matrix dimension
   // nbrBands = number of bands in the upper part of the matrix
   // zero = true if matrix has to be filled with zeros
-  RealBandDiagonalSymmetricMatrix(int dimension, int nbrBands, bool zero = false);
+  BandDiagonalHermitianMatrix(int dimension, int nbrBands, bool zero = false);
 
   // constructor from matrix elements (without duplicating datas)
   //
@@ -93,22 +95,22 @@ class RealBandDiagonalSymmetricMatrix : public Matrix
   // upperOffDiagonal = pointer to the array which contains upper off-diagonal elements (second index is used as row index)
   // dimension = matrix dimension
   // nbrBands = number of bands in the upper part of the matrix
-  RealBandDiagonalSymmetricMatrix(double* diagonal, double** upperOffDiagonal, int dimension, int nbrBands);
+  BandDiagonalHermitianMatrix(double* diagonal, double** realUpperOffDiagonal, double** imaginaryUpperOffDiagonal, int dimension, int nbrBands);
 
   // copy constructor (without duplicating datas)
   //
   // M = matrix to copy
-  RealBandDiagonalSymmetricMatrix(const RealBandDiagonalSymmetricMatrix& M);
+  BandDiagonalHermitianMatrix(const BandDiagonalHermitianMatrix& M);
 
   // destructor
   //
-  ~RealBandDiagonalSymmetricMatrix();
+  ~BandDiagonalHermitianMatrix();
 
   // assignement (without duplicating datas)
   //
   // M = matrix to copy
   // return value = reference on modified matrix
-  RealBandDiagonalSymmetricMatrix& operator = (const RealBandDiagonalSymmetricMatrix& M);
+  BandDiagonalHermitianMatrix& operator = (const BandDiagonalHermitianMatrix& M);
 
   // return pointer on a clone matrix (without duplicating datas)
   //
@@ -135,6 +137,13 @@ class RealBandDiagonalSymmetricMatrix : public Matrix
   // j = column position
   // x = reference on the variable where to store the requested matrix element
   void GetMatrixElement(int i, int j, double& x) const;
+
+  // get a matrix element
+  //
+  // i = line position
+  // j = column position
+  // x = reference on the variable where to store the requested matrix element
+  void GetMatrixElement(int i, int j, Complex& x) const;
 
   // add a value to a matrix element
   //
@@ -180,73 +189,73 @@ class RealBandDiagonalSymmetricMatrix : public Matrix
   //
   // M = matrix to copy
   // return value = refence on current matrix
-  RealBandDiagonalSymmetricMatrix& Copy (RealBandDiagonalSymmetricMatrix& M);
+  BandDiagonalHermitianMatrix& Copy (BandDiagonalHermitianMatrix& M);
 
   // add two matrices
   //
   // M1 = first matrix
   // M2 = second matrix
   // return value = sum of the two matrices
-  friend RealBandDiagonalSymmetricMatrix operator + (const RealBandDiagonalSymmetricMatrix& M1, const RealBandDiagonalSymmetricMatrix& M2);
+  friend BandDiagonalHermitianMatrix operator + (const BandDiagonalHermitianMatrix& M1, const BandDiagonalHermitianMatrix& M2);
 
   // substract two matrices
   //
   // M1 = first matrix
   // M2 = matrix to substract to M1
   // return value = difference of the two matrices
-  friend RealBandDiagonalSymmetricMatrix operator - (const RealBandDiagonalSymmetricMatrix& M1, const RealBandDiagonalSymmetricMatrix& M2);
+  friend BandDiagonalHermitianMatrix operator - (const BandDiagonalHermitianMatrix& M1, const BandDiagonalHermitianMatrix& M2);
 
   // multiply a matrix by a real number (right multiplication)
   //
   // M = source matrix
   // x = real number to use
   // return value = product result
-  friend RealBandDiagonalSymmetricMatrix operator * (const RealBandDiagonalSymmetricMatrix& M, double x);
+  friend BandDiagonalHermitianMatrix operator * (const BandDiagonalHermitianMatrix& M, double x);
 
   // multiply a matrix by a real number (left multiplication)
   //
   // M = source matrix
   // x = real number to use
   // return value = product result
-  friend RealBandDiagonalSymmetricMatrix operator * (double x, const RealBandDiagonalSymmetricMatrix& M);
+  friend BandDiagonalHermitianMatrix operator * (double x, const BandDiagonalHermitianMatrix& M);
 
   // divide a matrix by a real number (right multiplication)
   //
   // M = source matrix
   // x = real number to use
   // return value = division result
-  friend RealBandDiagonalSymmetricMatrix operator / (const RealBandDiagonalSymmetricMatrix& M, double x);
+  friend BandDiagonalHermitianMatrix operator / (const BandDiagonalHermitianMatrix& M, double x);
 
   // add two matrices
   //
   // M = matrix to add to current matrix
   // return value = reference on current matrix
-  RealBandDiagonalSymmetricMatrix& operator += (const RealBandDiagonalSymmetricMatrix& M);
+  BandDiagonalHermitianMatrix& operator += (const BandDiagonalHermitianMatrix& M);
 
   // substract two matrices
   //
   // M = matrix to substract to current matrix
   // return value = reference on current matrix
-  RealBandDiagonalSymmetricMatrix& operator -= (const RealBandDiagonalSymmetricMatrix& M);
+  BandDiagonalHermitianMatrix& operator -= (const BandDiagonalHermitianMatrix& M);
 
   // multiply a matrix by a real number
   //
   // x = real number to use
   // return value = reference on current matrix
-  RealBandDiagonalSymmetricMatrix& operator *= (double x);
+  BandDiagonalHermitianMatrix& operator *= (double x);
 
   // divide a matrix by a real number
   //
   // x = real number to use
   // return value = reference on current matrix
-  RealBandDiagonalSymmetricMatrix& operator /= (double x) ;
+  BandDiagonalHermitianMatrix& operator /= (double x) ;
 
   // get a matrix element 
   // 
   // i = Row number
   // j = Column number
   // return value = matrix element M_(i,j)
-  double GetElement(int i, int j);
+  Complex GetElement(int i, int j);
 
   // access to i-th diagonal element
   // 
@@ -277,7 +286,7 @@ class RealBandDiagonalSymmetricMatrix : public Matrix
   // err = absolute error on matrix element
   // Q = matrix where transformation matrix has to be stored
   // return value = reference on real tridiagonal symmetric matrix
-  RealTriDiagonalSymmetricMatrix& Tridiagonalize (RealTriDiagonalSymmetricMatrix& M, double err, RealMatrix& Q);
+  RealTriDiagonalSymmetricMatrix& Tridiagonalize (RealTriDiagonalSymmetricMatrix& M, double err, ComplexMatrix& Q);
 
 #ifdef __LAPACK__
 
@@ -296,7 +305,14 @@ class RealBandDiagonalSymmetricMatrix : public Matrix
   // err = absolute error on matrix element
   // maxIter = maximum number of iteration to fund an eigenvalue
   // return value = reference on real tridiagonal symmetric matrix
-  RealDiagonalMatrix& LapackDiagonalize (RealDiagonalMatrix& M, RealMatrix& Q, double err = 1e-7, int maxIter = 50);
+  RealDiagonalMatrix& LapackDiagonalize (RealDiagonalMatrix& M, ComplexMatrix& Q, double err = 1e-7, int maxIter = 50);
+
+ private:
+  int LapackWorkAreaDimension;
+  doublecomplex *LapackMatrix;
+  doublecomplex *LapackEVMatrix;
+  doublecomplex *LapackWorkingArea;
+  double *LapackRealWorkingArea;  
 
 #endif
 
@@ -305,7 +321,7 @@ class RealBandDiagonalSymmetricMatrix : public Matrix
   // Str = reference on output stream
   // P = matrix to print
   // return value = reference on output stream
-  friend ostream& operator << (ostream& Str, const RealBandDiagonalSymmetricMatrix& P);
+  friend ostream& operator << (ostream& Str, const BandDiagonalHermitianMatrix& P);
 
 #ifdef USE_OUTPUT
 
@@ -314,9 +330,11 @@ class RealBandDiagonalSymmetricMatrix : public Matrix
   // Str = reference on Mathematica output stream
   // P = matrix to print
   // return value = reference on output stream
-  friend MathematicaOutput& operator << (MathematicaOutput& Str, const RealBandDiagonalSymmetricMatrix& P);
+  friend MathematicaOutput& operator << (MathematicaOutput& Str, const BandDiagonalHermitianMatrix& P);
 
 #endif
+
+
 
 };
 

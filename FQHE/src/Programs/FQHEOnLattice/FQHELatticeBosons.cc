@@ -93,6 +93,7 @@ int main(int argc, char** argv)
   Architecture.AddOptionGroup(&Manager);
   QHEOnLatticeMainTask::AddOptionGroup(&Manager);
   Manager += PrecalculationGroup;
+  Manager += ToolsGroup;
   Manager += MiscGroup;
 
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 8);

@@ -60,6 +60,7 @@
 #include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithGroundStateFastDisk.h"
 #include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithm.h"
 #include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage.h"
+#include "LanczosAlgorithm/ComplexBasicBlockLanczosAlgorithm.h"
 
 #include "Options/Options.h"
 
@@ -67,6 +68,8 @@
 
 #include "GeneralTools/ConfigurationParser.h"
 #include "GeneralTools/FilenameTools.h"
+#include "GeneralTools/GenericSignalHandler.h"
+
 
 #include <iostream>
 #include <cstring>
@@ -174,6 +177,16 @@ QHEOnLatticeMainTask::QHEOnLatticeMainTask(OptionManager* options, AbstractHilbe
       this->NbrEigenvalue = this->Space->GetHilbertSpaceDimension();
     }
   this->FullDiagonalizationLimit = ((SingleIntegerOption*) (*options)["full-diag"])->GetInteger();
+  this->BlockLanczosFlag = false;
+  if ((*options)["block-lanczos"] != 0)
+    {
+      this->BlockLanczosFlag = options->GetBoolean("block-lanczos");
+    }
+  this->SizeBlockLanczos = 1;
+  if ((*options)["block-size"] != 0)
+    {
+      this->SizeBlockLanczos = options->GetInteger("block-size");
+    }
   this->VectorMemory = ((SingleIntegerOption*) (*options)["nbr-vector"])->GetInteger();
   this->SavePrecalculationFileName = ((SingleStringOption*) (*options)["save-precalculation"])->GetString();
   this->FullReorthogonalizationFlag = ((BooleanOption*) (*options)["force-reorthogonalize"])->GetBoolean();
@@ -192,6 +205,14 @@ QHEOnLatticeMainTask::QHEOnLatticeMainTask(OptionManager* options, AbstractHilbe
   else
     {
       this->InitialVectorFileName = 0;
+    }
+  if ((*options)["initial-blockvectors"] != 0)
+    {
+      this->InitialBlockVectorFileName = options->GetString("initial-blockvectors");
+    }
+  else
+    {
+      this->InitialBlockVectorFileName = 0;
     }
   if ((*options)["partial-lanczos"] != 0)
     {
@@ -251,7 +272,7 @@ QHEOnLatticeMainTask::QHEOnLatticeMainTask(OptionManager* options, AbstractHilbe
     {
       this->LanczosPrecision = 0.0;
     }
-  if (((*options)["fast-disk"] != 0) && (this->NbrEigenvalue == 1) && (this->EvaluateEigenvectors == true))
+  if (((*options)["fast-disk"] != 0) && (this->BlockLanczosFlag || ((this->NbrEigenvalue == 1) && (this->EvaluateEigenvectors == true))))
     {
       this->FastDiskFlag = ((BooleanOption*) (*options)["fast-disk"])->GetBoolean();
       if ((*options)["resume-fastdisk"] != 0)
@@ -265,6 +286,11 @@ QHEOnLatticeMainTask::QHEOnLatticeMainTask(OptionManager* options, AbstractHilbe
       this->ResumeFastDiskFlag = false;
     }
   this->FirstRun = firstRun;
+  this->PartialEigenstateFlag = 0;
+  if (((*options)["partial-eigenstate"] != 0) && (this->EvaluateEigenvectors == true))
+    {
+      this->PartialEigenstateFlag = options->GetInteger("partial-eigenstate");
+    }  
 #ifdef HAVE_ARPACK
   ArpackFlag = options->GetBoolean("use-arpack");
 #endif
@@ -570,7 +596,29 @@ int QHEOnLatticeMainTask::ExecuteMainTask()
 	    {
 	      if (this->DiskFlag == false)
 		{
-		  Lanczos = new FullReorthogonalizedComplexLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
+		  if (this->BlockLanczosFlag == true)
+		    {
+		      if (this->FullReorthogonalizationFlag == true)
+			{
+			  cout << "reorthogonalized block lanczos is not yet defined: ComplexFullReorthogonalizedBlockLanczosAlgorithm missing"<<endl;
+			  cout << "using non-reorthogonalized algorithm 'ComplexBasicBlockLanczosAlgorithm'"<<endl;
+			  //Lanczos = new ComplexFullReorthogonalizedBlockLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->SizeBlockLanczos, this->MaxNbrIterLanczos, false, this->LapackFlag);
+			  Lanczos = new ComplexBasicBlockLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->SizeBlockLanczos, this->MaxNbrIterLanczos, 
+									   this->FastDiskFlag, this->ResumeFastDiskFlag, false, this->LapackFlag);
+			  
+			}
+		      else
+			{
+			  cout << "Using ComplexBasicBlockLanczosAlgorithm"<<endl;
+			  Lanczos = new ComplexBasicBlockLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->SizeBlockLanczos, this->MaxNbrIterLanczos, 
+									   this->FastDiskFlag, this->ResumeFastDiskFlag, false, this->LapackFlag);
+			}
+		    }
+		  else
+		    {
+		      
+		      Lanczos = new FullReorthogonalizedComplexLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
+		    }
 		}
 	      else
 		Lanczos = new FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage (this->Architecture, this->NbrEigenvalue, this->VectorMemory, this->MaxNbrIterLanczos);
@@ -587,16 +635,52 @@ int QHEOnLatticeMainTask::ExecuteMainTask()
 	    Lanczos->ResumeLanczosAlgorithm();
 	  else
 	    {
-	      if (this->InitialVectorFileName == 0)
+	      if (this->BlockLanczosFlag == false)
 		{
-		  Lanczos->InitializeLanczosAlgorithm();
+		  if (this->InitialVectorFileName == 0)
+		    {
+		      Lanczos->InitializeLanczosAlgorithm();
+		    }
+		  else
+		    {	      
+		      ComplexVector InitialVector;
+		      InitialVector.ReadVector(this->InitialVectorFileName);
+		      Lanczos->InitializeLanczosAlgorithm(InitialVector);
+		    }
 		}
 	      else
-		{	      
-		  ComplexVector InitialVector;
-		  InitialVector.ReadVector(this->InitialVectorFileName);
-		  Lanczos->InitializeLanczosAlgorithm(InitialVector);
+		{
+		  if (this->InitialBlockVectorFileName == 0)
+		    Lanczos->InitializeLanczosAlgorithm();
+		  else
+		    {
+		      int TmpNbrInitialVectors;
+		      ConfigurationParser InitialVectorDescription;
+		      if (InitialVectorDescription.Parse(this->InitialBlockVectorFileName) == false)
+			{
+			  InitialVectorDescription.DumpErrors(cout) << endl;
+			}
+		      else
+			{
+			  char** VectorFileNames;
+			  if (InitialVectorDescription.GetAsStringArray("InitialVectors", ' ', VectorFileNames, TmpNbrInitialVectors) == false)
+			    {
+			      cout << "Vectors are not defined or have a wrong value in " << this->InitialBlockVectorFileName << endl;
+			    }
+			  else
+			    {
+			      RealVector* InitialVectors = new RealVector[TmpNbrInitialVectors];
+			      for (int i = 0; i < TmpNbrInitialVectors; ++i)
+				{
+				  InitialVectors[i].ReadVector(VectorFileNames[i]);
+				}
+			      Lanczos->InitializeLanczosAlgorithm(InitialVectors, TmpNbrInitialVectors);		  
+			      delete[] InitialVectors;
+			    }
+			}
+		    }
 		}
+
 	    }
 	  cout << "Run Lanczos Algorithm" << endl;
 	  timeval TotalStartingTime;
@@ -608,17 +692,25 @@ int QHEOnLatticeMainTask::ExecuteMainTask()
 	  if (this->ResumeFlag == false)
 	    {
 	      Lanczos->RunLanczosAlgorithm(NbrEigenvalue + 2);
-	      CurrentNbrIterLanczos = NbrEigenvalue + 3;
+	      if (this->BlockLanczosFlag == true)
+		CurrentNbrIterLanczos = (NbrEigenvalue + 3) * this->SizeBlockLanczos;
+	      else
+		CurrentNbrIterLanczos = NbrEigenvalue + 3;
 	    }
 	  RealTriDiagonalSymmetricMatrix TmpMatrix;
 	  gettimeofday (&(TotalCurrentTime), 0); 
 	  int CurrentTimeSecond = TotalCurrentTime.tv_sec;
+	  GenericSignalHandler Usr1Handler(SIGUSR1);
 	  while ((Lanczos->TestConvergence() == false) && (((this->DiskFlag == true) && (((this->MaximumAllowedTime == 0) && (CurrentNbrIterLanczos < this->NbrIterLanczos)) || 
 											 ((this->MaximumAllowedTime > 0) && (this->MaximumAllowedTime > (CurrentTimeSecond - StartTimeSecond))))) ||
 							   ((this->DiskFlag == false) && ((this->PartialLanczos == false) && (CurrentNbrIterLanczos < this->MaxNbrIterLanczos)) ||
 							    ((this->PartialLanczos == true) && (CurrentNbrIterLanczos < this->NbrIterLanczos)))))
 	    {
-	      ++CurrentNbrIterLanczos;
+	      if (this->BlockLanczosFlag == true)
+		CurrentNbrIterLanczos += this->SizeBlockLanczos;
+	      else
+		++CurrentNbrIterLanczos;
+	      Usr1Handler.StartToDeferSignal();
 	      Lanczos->RunLanczosAlgorithm(1);
 	      TmpMatrix.Copy(Lanczos->GetDiagonalizedMatrix());
 	      TmpMatrix.SortMatrixUpOrder();
@@ -637,6 +729,42 @@ int QHEOnLatticeMainTask::ExecuteMainTask()
 		  TotalCurrentTime.tv_sec = TotalEndingTime.tv_sec;
 		}
 	      cout << endl;
+
+	      if (Usr1Handler.HavePendingSignal())
+		{
+		  cout << "Terminating Lanczos iteration on user signal"<<endl;
+		  File << "# Lanczos terminated at step "<<CurrentNbrIterLanczos<<" with precision "<<Precision<<endl;
+		  TmpMatrix.Copy(Lanczos->GetDiagonalizedMatrix());
+		  TmpMatrix.SortMatrixUpOrder();
+		  for (int i = 0; i < this->NbrEigenvalue; ++i)
+		    {
+		      cout << (TmpMatrix.DiagonalElement(i) - this->EnergyShift) << " ";
+		      this->WriteResult(File, TmpMatrix.DiagonalElement(i) - this->EnergyShift, true);
+		    }
+		  cout << endl;
+		}
+	      
+	      if ( ((Usr1Handler.HavePendingSignal()) && (this->EvaluateEigenvectors == true))
+		   ||((this->PartialEigenstateFlag > 0) && ((CurrentNbrIterLanczos % (this->PartialEigenstateFlag * this->SizeBlockLanczos)) == 0)))
+		{
+		  ComplexVector* Eigenvectors = (ComplexVector*) Lanczos->GetEigenstates(this->NbrEigenvalue);
+		  if (Eigenvectors != 0)
+		    {
+		      char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 32];
+		      for (int i = 0; i < this->NbrEigenvalue; ++i)
+			{
+			  sprintf (TmpVectorName, "%s.%d.part.%d.vec", this->EigenvectorFileName, i, CurrentNbrIterLanczos);		  
+			  Eigenvectors[i].WriteVector(TmpVectorName);
+			}
+		      delete[] TmpVectorName;
+		      delete[] Eigenvectors;
+		    }
+		  else
+		    {
+		      cout << "eigenvectors can't be computed" << endl;
+		    }
+		}
+	      Usr1Handler.ProcessDeferredSignal();
 	    }
 	  if ((Lanczos->TestConvergence() == true) && (CurrentNbrIterLanczos == 0))
 	    {
@@ -892,6 +1020,8 @@ void QHEOnLatticeMainTask::AddOptionGroup(OptionManager *optionManager)
   (*LanczosGroup)  += new SingleIntegerOption  ('\n', "full-diag", 
 	"maximum Hilbert space dimension for which full diagonalization is applied", 300, true, 10);
   (*LanczosGroup) += new SingleIntegerOption  ('\n', "iter-max", "maximum number of lanczos iteration", 3000);
+  (*LanczosGroup) += new BooleanOption  ('\n', "block-lanczos", "use block Lanczos algorithm", false);
+  (*LanczosGroup) += new SingleIntegerOption  ('\n', "block-size", "size of the block used in the block Lanczos algorithm", 2);
   (*LanczosGroup) += new BooleanOption  ('d', "disk", "enable disk resume capabilities", false);
   (*LanczosGroup) += new BooleanOption  ('r', "resume", "resume from disk datas", false);
   (*LanczosGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of lanczos iteration (for the current run)", 10);
@@ -900,10 +1030,12 @@ void QHEOnLatticeMainTask::AddOptionGroup(OptionManager *optionManager)
   (*LanczosGroup) += new BooleanOption  ('\n', "force-reorthogonalize", 
 					 "force to use Lanczos algorithm with reorthogonalizion even if the number of eigenvalues to evaluate is 1", false);
   (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate", "evaluate eigenstates", false);  
-  (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate-convergence", "evaluate Lanczos convergence from eigenstate convergence", false);  
+  (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate-convergence", "evaluate Lanczos convergence from eigenstate convergence", false);
+  (*LanczosGroup) += new SingleIntegerOption  ('\n', "partial-eigenstate", "evaluate eigenstates every given number of iterations (0 to discard this option)", 0);  
   (*LanczosGroup) += new BooleanOption  ('\n', "show-itertime", "show time spent for each Lanczos iteration", false);
   (*LanczosGroup) += new BooleanOption  ('\n', "get-hvalue", "show energy expectation value for eigenstates", false);
   (*LanczosGroup) += new SingleStringOption  ('\n', "initial-vector", "use file as the initial vector for the Lanczos algorithm" , 0);
+  (*LanczosGroup) += new SingleStringOption  ('\n', "initial-blockvectors", "use file that describe a set of initial vectors for the block Lanczos algorithm (syntax : InitialVectors=vec0.vec vec1.vec ...)", 0);
   (*LanczosGroup) += new  BooleanOption ('\n', "partial-lanczos", "only run a given number of Lanczos iterations" , false);
   (*LanczosGroup) += new SingleDoubleOption ('\n', "lanczos-precision", "define Lanczos precision for eigenvalues (0 if automatically defined by the program)", 0);
   (*LanczosGroup) += new  BooleanOption ('\n', "fast-disk", "use disk storage to increase speed of ground state calculation and decrease memory footprint when using Lanczos algorithm");

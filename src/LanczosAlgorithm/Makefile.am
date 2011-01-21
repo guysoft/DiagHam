@@ -23,7 +23,8 @@ BasicBlockLanczosAlgorithm.cc \
 LanczosManager.cc \
 InternalReorthogonalizedLanczosAlgorithm.cc \
 ProjectedLanczosAlgorithmWithGroundState.cc \
-ProjectedReorthogonalizedLanczosAlgorithmDiskStorage.cc
+ProjectedReorthogonalizedLanczosAlgorithmDiskStorage.cc \
+ComplexBasicBlockLanczosAlgorithm.cc
 
 
 #ComplexBasicLanczosAlgorithmDiskWithGroundState.cc 

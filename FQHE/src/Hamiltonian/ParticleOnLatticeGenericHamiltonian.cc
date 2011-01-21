@@ -211,7 +211,7 @@ void ParticleOnLatticeGenericHamiltonian::EvaluateInteractionFactors()
 	  KineticQf[TmpNumberTerms] = Neighbors[n];
 #ifdef DEBUG_OUTPUT
 	  if (LatticeGeometry->HavePredefinedFlux())
-	    cout << "Using hard-coded flux-density"<<endl;
+	    cout << "Using hard-coded flux-density "<<this->FluxDensity<<" and Phase="<<Phases[n]<<endl;
 	  else
 	    cout << "Using flux density="<<this->FluxDensity<<" and Phase="<<Phases[n]<<endl;
 #endif

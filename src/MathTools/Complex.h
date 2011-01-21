@@ -452,7 +452,7 @@ inline Complex& Complex::ConjugateProduct(const Complex& z)
 // conjugate the number itself and return a reference to self
 inline Complex& Complex::Conjugate()
 {
-  this->Im*=1.0;
+  this->Im*=-1.0;
   return *this;
 }
 
