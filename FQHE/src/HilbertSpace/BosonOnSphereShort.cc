@@ -2913,53 +2913,126 @@ RealVector& BosonOnSphereShort::ConvertFromConformalLimit(RealVector& state, lon
 // return value = reference on the fused state
 
 RealVector& BosonOnSphereShort::FuseStates (RealVector& outputVector, RealVector& leftVector, RealVector& rightVector, int padding, 
-					   ParticleOnSphere* leftSpace, ParticleOnSphere* rightSpace,
+					    ParticleOnSphere* leftSpace, ParticleOnSphere* rightSpace,
 					    bool symmetrizedFlag, double coefficient)
 {
   BosonOnSphereShort* LeftSpace = (BosonOnSphereShort*) leftSpace;
   BosonOnSphereShort* RightSpace = (BosonOnSphereShort*) rightSpace;
-   int StateShift = RightSpace->FermionBasis->LzMax + padding + 2;
-  for (long i = 0; i <  LeftSpace->LargeHilbertSpaceDimension; ++i)
+  if (padding > -2)
     {
-      unsigned long TmpState1 = LeftSpace->FermionBasis->StateDescription[i] << StateShift;
-      double Coefficient = coefficient * leftVector[i];
-      int TmpLzMax = this->FermionBasis->LzMax;
-      while ((TmpState1 >> TmpLzMax) == 0x0ul)
-	--TmpLzMax;
-      if (symmetrizedFlag == false)
+      int StateShift = RightSpace->FermionBasis->LzMax + padding + 2;
+      for (long i = 0; i <  LeftSpace->LargeHilbertSpaceDimension; ++i)
 	{
-	  for (long j = 0; j < RightSpace->LargeHilbertSpaceDimension; ++j)
+	  unsigned long TmpState1 = LeftSpace->FermionBasis->StateDescription[i] << StateShift;
+	  double Coefficient = coefficient * leftVector[i];
+	  int TmpLzMax = this->FermionBasis->LzMax;
+	  while ((TmpState1 >> TmpLzMax) == 0x0ul)
+	    --TmpLzMax;
+	  if (symmetrizedFlag == false)
 	    {
-	      unsigned long TmpState2 = RightSpace->FermionBasis->StateDescription[j];
-	      TmpState2 |= TmpState1;
-	      double Coefficient2 = Coefficient;
-	      Coefficient2 *= rightVector[j];	  
-	      int TmpIndex = this->FermionBasis->FindStateIndex(TmpState2, TmpLzMax);
-	      outputVector[TmpIndex] = Coefficient2;
-	    }
-	}
-      else
-	{
-	  for (long j = 0; j < RightSpace->LargeHilbertSpaceDimension; ++j)
-	    {
-	      unsigned long TmpState2 = RightSpace->FermionBasis->StateDescription[j];
-	      TmpState2 |= TmpState1;
-	      double Coefficient2 = Coefficient;
-	      Coefficient2 *= rightVector[j];	  
-	      int TmpIndex = this->FermionBasis->FindStateIndex(TmpState2, TmpLzMax);
-	      outputVector[TmpIndex] = Coefficient2;
-	      unsigned long TmpState3 = this->FermionBasis->GetSymmetricState(TmpState2);
-	      if (TmpState3 != TmpState2)
+	      for (long j = 0; j < RightSpace->LargeHilbertSpaceDimension; ++j)
 		{
-		  int TmpLzMax2 = this->FermionBasis->LzMax;
-		  while ((TmpState3 >> TmpLzMax2) == 0x0ul)
-		    --TmpLzMax2;
-		  TmpIndex = this->FermionBasis->FindStateIndex(TmpState3, TmpLzMax2);
-		  outputVector[TmpIndex] = Coefficient2;      
+		  unsigned long TmpState2 = RightSpace->FermionBasis->StateDescription[j];
+		  TmpState2 |= TmpState1;
+		  double Coefficient2 = Coefficient;
+		  Coefficient2 *= rightVector[j];	  
+		  int TmpIndex = this->FermionBasis->FindStateIndex(TmpState2, TmpLzMax);
+		  outputVector[TmpIndex] = Coefficient2;
+		}
+	    }
+	  else
+	    {
+	      for (long j = 0; j < RightSpace->LargeHilbertSpaceDimension; ++j)
+		{
+		  unsigned long TmpState2 = RightSpace->FermionBasis->StateDescription[j];
+		  TmpState2 |= TmpState1;
+		  double Coefficient2 = Coefficient;
+		  Coefficient2 *= rightVector[j];	  
+		  int TmpIndex = this->FermionBasis->FindStateIndex(TmpState2, TmpLzMax);
+		  outputVector[TmpIndex] = Coefficient2;
+		  unsigned long TmpState3 = this->FermionBasis->GetSymmetricState(TmpState2);
+		  if (TmpState3 != TmpState2)
+		    {
+		      int TmpLzMax2 = this->FermionBasis->LzMax;
+		      while ((TmpState3 >> TmpLzMax2) == 0x0ul)
+			--TmpLzMax2;
+		      TmpIndex = this->FermionBasis->FindStateIndex(TmpState3, TmpLzMax2);
+		      outputVector[TmpIndex] = Coefficient2;      
+		    }
 		}
 	    }
 	}
     }
+  else
+    {
+      int StateShift = RightSpace->LzMax + padding + 1;
+      for (long i = 0; i <  LeftSpace->LargeHilbertSpaceDimension; ++i)
+	{
+	  LeftSpace->FermionToBoson(LeftSpace->FermionBasis->StateDescription[i], LeftSpace->FermionBasis->StateLzMax[i], LeftSpace->TemporaryState, LeftSpace->TemporaryStateLzMax);	  
+	  this->TemporaryStateLzMax = LeftSpace->TemporaryStateLzMax + StateShift;
+	  double Coefficient = coefficient * leftVector[i];
+	  if (symmetrizedFlag == false)
+	    {
+	      for (long j = 0; j < RightSpace->LargeHilbertSpaceDimension; ++j)
+		{
+		  LeftSpace->FermionToBoson(RightSpace->FermionBasis->StateDescription[j], RightSpace->FermionBasis->StateLzMax[j], RightSpace->TemporaryState, RightSpace->TemporaryStateLzMax);
+		  for (int k = 0; k <= RightSpace->TemporaryStateLzMax; ++k)
+		    this->TemporaryState[k] = RightSpace->TemporaryState[k];
+		  for (int k = RightSpace->TemporaryStateLzMax + 1; k <= this->LzMax; ++k)
+		    this->TemporaryState[k] = 0;
+		  for (int k = 0; k <= LeftSpace->TemporaryStateLzMax; ++k)
+		    this->TemporaryState[k + StateShift] += LeftSpace->TemporaryState[k];
+		  unsigned long TmpState2 = this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax);
+		  double Coefficient2 = Coefficient;
+		  Coefficient2 *= rightVector[j];	  
+		  int TmpLzMax = this->FermionBasis->LzMax;
+		  while ((TmpState2 >> TmpLzMax) == 0x0ul)
+		    --TmpLzMax;
+		  int TmpIndex = this->FermionBasis->FindStateIndex(TmpState2, TmpLzMax);
+		  if (TmpIndex == this->HilbertSpaceDimension)
+		    {
+		      cout << "error while merging components " << i << " and " << j << endl;
+		    }
+		  outputVector[TmpIndex] = Coefficient2;
+		}
+	    }
+	  else
+	    {
+	      for (long j = 0; j < RightSpace->LargeHilbertSpaceDimension; ++j)
+		{
+		  LeftSpace->FermionToBoson(RightSpace->FermionBasis->StateDescription[j], RightSpace->FermionBasis->StateLzMax[j], RightSpace->TemporaryState, RightSpace->TemporaryStateLzMax);
+		  for (int k = 0; k <= RightSpace->TemporaryStateLzMax; ++k)
+		    this->TemporaryState[k] = RightSpace->TemporaryState[k];
+		  for (int k = RightSpace->TemporaryStateLzMax + 1; k <= this->LzMax; ++k)
+		    this->TemporaryState[k] = 0;
+		  for (int k = 0; k <= LeftSpace->TemporaryStateLzMax; ++k)
+		    this->TemporaryState[k + StateShift] += LeftSpace->TemporaryState[k];
+		  unsigned long TmpState2 = this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax);
+		  double Coefficient2 = Coefficient;
+		  Coefficient2 *= rightVector[j];	  
+		  int TmpLzMax = this->FermionBasis->LzMax;
+		  while ((TmpState2 >> TmpLzMax) == 0x0ul)
+		    --TmpLzMax;
+		  int TmpIndex = this->FermionBasis->FindStateIndex(TmpState2, TmpLzMax);
+		  if (TmpIndex == this->HilbertSpaceDimension)
+		    {
+		      cout << "error while merging components " << i << " and " << j << endl;
+		    }
+		  outputVector[TmpIndex] = Coefficient2;
+		  unsigned long TmpState3 = this->FermionBasis->GetSymmetricState(TmpState2);
+		  if (TmpState3 != TmpState2)
+		    {
+		      int TmpLzMax2 = this->FermionBasis->LzMax;
+		      while ((TmpState3 >> TmpLzMax2) == 0x0ul)
+			--TmpLzMax2;
+		      TmpIndex = this->FermionBasis->FindStateIndex(TmpState3, TmpLzMax2);
+		      outputVector[TmpIndex] = Coefficient2;      
+		    }
+		}
+	    }
+	}
+    }
+
   return outputVector;
 }
 
@@ -2981,44 +3054,124 @@ LongRationalVector& BosonOnSphereShort::FuseStates (LongRationalVector& outputVe
 {
   BosonOnSphereShort* LeftSpace = (BosonOnSphereShort*) leftSpace;
   BosonOnSphereShort* RightSpace = (BosonOnSphereShort*) rightSpace;
-   int StateShift = RightSpace->FermionBasis->LzMax + padding + 2;
-  for (long i = 0; i <  LeftSpace->LargeHilbertSpaceDimension; ++i)
+  if (padding > -2)
     {
-      unsigned long TmpState1 = LeftSpace->FermionBasis->StateDescription[i] << StateShift;
-      LongRational Coefficient = coefficient * leftVector[i];
-      int TmpLzMax = this->FermionBasis->LzMax;
-      while ((TmpState1 >> TmpLzMax) == 0x0ul)
-	--TmpLzMax;
-      if (symmetrizedFlag == false)
+      int StateShift = RightSpace->FermionBasis->LzMax + padding + 2;
+      for (long i = 0; i <  LeftSpace->LargeHilbertSpaceDimension; ++i)
 	{
-	  for (long j = 0; j < RightSpace->LargeHilbertSpaceDimension; ++j)
+	  unsigned long TmpState1 = LeftSpace->FermionBasis->StateDescription[i] << StateShift;
+	  LongRational Coefficient = coefficient * leftVector[i];
+	  int TmpLzMax = this->FermionBasis->LzMax;
+	  while ((TmpState1 >> TmpLzMax) == 0x0ul)
+	    --TmpLzMax;
+	  if (symmetrizedFlag == false)
 	    {
-	      unsigned long TmpState2 = RightSpace->FermionBasis->StateDescription[j];
-	      TmpState2 |= TmpState1;
-	      LongRational Coefficient2 = Coefficient;
-	      Coefficient2 *= rightVector[j];	  
-	      int TmpIndex = this->FermionBasis->FindStateIndex(TmpState2, TmpLzMax);
-	      outputVector[TmpIndex] = Coefficient2;
+	      for (long j = 0; j < RightSpace->LargeHilbertSpaceDimension; ++j)
+		{
+		  unsigned long TmpState2 = RightSpace->FermionBasis->StateDescription[j];
+		  TmpState2 |= TmpState1;
+		  LongRational Coefficient2 = Coefficient;
+		  Coefficient2 *= rightVector[j];	  
+		  int TmpIndex = this->FermionBasis->FindStateIndex(TmpState2, TmpLzMax);
+		  if (TmpIndex == this->HilbertSpaceDimension)
+		    {
+		      cout << "error while merging components " << i << " and " << j << endl;
+		    }
+		  outputVector[TmpIndex] = Coefficient2;
+		}
+	    }
+	  else
+	    {
+	      for (long j = 0; j < RightSpace->LargeHilbertSpaceDimension; ++j)
+		{
+		  unsigned long TmpState2 = RightSpace->FermionBasis->StateDescription[j];
+		  TmpState2 |= TmpState1;
+		  LongRational Coefficient2 = Coefficient;
+		  Coefficient2 *= rightVector[j];	  
+		  int TmpIndex = this->FermionBasis->FindStateIndex(TmpState2, TmpLzMax);
+		  if (TmpIndex == this->HilbertSpaceDimension)
+		    {
+		      cout << "error while merging components " << i << " and " << j << endl;
+		    }
+		  outputVector[TmpIndex] = Coefficient2;
+		  unsigned long TmpState3 = this->FermionBasis->GetSymmetricState(TmpState2);
+		  if (TmpState3 != TmpState2)
+		    {
+		      int TmpLzMax2 = this->FermionBasis->LzMax;
+		      while ((TmpState3 >> TmpLzMax2) == 0x0ul)
+		    --TmpLzMax2;
+		      TmpIndex = this->FermionBasis->FindStateIndex(TmpState3, TmpLzMax2);
+		      outputVector[TmpIndex] = Coefficient2;      
+		    }
+		}
 	    }
 	}
-      else
+    }
+  else
+    {
+      int StateShift = RightSpace->LzMax + padding + 1;
+      for (long i = 0; i <  LeftSpace->LargeHilbertSpaceDimension; ++i)
 	{
-	  for (long j = 0; j < RightSpace->LargeHilbertSpaceDimension; ++j)
+	  LeftSpace->FermionToBoson(LeftSpace->FermionBasis->StateDescription[i], LeftSpace->FermionBasis->StateLzMax[i], LeftSpace->TemporaryState, LeftSpace->TemporaryStateLzMax);	  
+	  this->TemporaryStateLzMax = LeftSpace->TemporaryStateLzMax + StateShift;
+	  LongRational Coefficient = coefficient * leftVector[i];
+	  if (symmetrizedFlag == false)
 	    {
-	      unsigned long TmpState2 = RightSpace->FermionBasis->StateDescription[j];
-	      TmpState2 |= TmpState1;
-	      LongRational Coefficient2 = Coefficient;
-	      Coefficient2 *= rightVector[j];	  
-	      int TmpIndex = this->FermionBasis->FindStateIndex(TmpState2, TmpLzMax);
-	      outputVector[TmpIndex] = Coefficient2;
-	      unsigned long TmpState3 = this->FermionBasis->GetSymmetricState(TmpState2);
-	      if (TmpState3 != TmpState2)
+	      for (long j = 0; j < RightSpace->LargeHilbertSpaceDimension; ++j)
 		{
-		  int TmpLzMax2 = this->FermionBasis->LzMax;
-		  while ((TmpState3 >> TmpLzMax2) == 0x0ul)
-		    --TmpLzMax2;
-		  TmpIndex = this->FermionBasis->FindStateIndex(TmpState3, TmpLzMax2);
-		  outputVector[TmpIndex] = Coefficient2;      
+		  LeftSpace->FermionToBoson(RightSpace->FermionBasis->StateDescription[j], RightSpace->FermionBasis->StateLzMax[j], RightSpace->TemporaryState, RightSpace->TemporaryStateLzMax);
+		  for (int k = 0; k <= RightSpace->TemporaryStateLzMax; ++k)
+		    this->TemporaryState[k] = RightSpace->TemporaryState[k];
+		  for (int k = RightSpace->TemporaryStateLzMax + 1; k <= this->LzMax; ++k)
+		    this->TemporaryState[k] = 0;
+		  for (int k = 0; k <= LeftSpace->TemporaryStateLzMax; ++k)
+		    this->TemporaryState[k + StateShift] += LeftSpace->TemporaryState[k];
+		  unsigned long TmpState2 = this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax);
+		  LongRational Coefficient2 = Coefficient;
+		  Coefficient2 *= rightVector[j];	  
+		  int TmpLzMax = this->FermionBasis->LzMax;
+		  while ((TmpState2 >> TmpLzMax) == 0x0ul)
+		    --TmpLzMax;
+		  int TmpIndex = this->FermionBasis->FindStateIndex(TmpState2, TmpLzMax);
+		  if (TmpIndex == this->HilbertSpaceDimension)
+		    {
+		      cout << "error while merging components " << i << " and " << j << endl;
+		    }
+		  outputVector[TmpIndex] = Coefficient2;
+		}
+	    }
+	  else
+	    {
+	      for (long j = 0; j < RightSpace->LargeHilbertSpaceDimension; ++j)
+		{
+		  LeftSpace->FermionToBoson(RightSpace->FermionBasis->StateDescription[j], RightSpace->FermionBasis->StateLzMax[j], RightSpace->TemporaryState, RightSpace->TemporaryStateLzMax);
+		  for (int k = 0; k <= RightSpace->TemporaryStateLzMax; ++k)
+		    this->TemporaryState[k] = RightSpace->TemporaryState[k];
+		  for (int k = RightSpace->TemporaryStateLzMax + 1; k <= this->LzMax; ++k)
+		    this->TemporaryState[k] = 0;
+		  for (int k = 0; k <= LeftSpace->TemporaryStateLzMax; ++k)
+		    this->TemporaryState[k + StateShift] += LeftSpace->TemporaryState[k];
+		  unsigned long TmpState2 = this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax);
+		  LongRational Coefficient2 = Coefficient;
+		  Coefficient2 *= rightVector[j];	  
+		  int TmpLzMax = this->FermionBasis->LzMax;
+		  while ((TmpState2 >> TmpLzMax) == 0x0ul)
+		    --TmpLzMax;
+		  int TmpIndex = this->FermionBasis->FindStateIndex(TmpState2, TmpLzMax);
+		  if (TmpIndex == this->HilbertSpaceDimension)
+		    {
+		      cout << "error while merging components " << i << " and " << j << endl;
+		    }
+		  outputVector[TmpIndex] = Coefficient2;
+		  unsigned long TmpState3 = this->FermionBasis->GetSymmetricState(TmpState2);
+		  if (TmpState3 != TmpState2)
+		    {
+		      int TmpLzMax2 = this->FermionBasis->LzMax;
+		      while ((TmpState3 >> TmpLzMax2) == 0x0ul)
+			--TmpLzMax2;
+		      TmpIndex = this->FermionBasis->FindStateIndex(TmpState3, TmpLzMax2);
+		      outputVector[TmpIndex] = Coefficient2;      
+		    }
 		}
 	    }
 	}
