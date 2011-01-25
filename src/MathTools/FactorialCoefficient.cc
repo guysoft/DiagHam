@@ -457,7 +457,7 @@ LongRational FactorialCoefficient::GetLongRationalValue()
 //
 // return value = numerical value associated to the coefficient
 
-long  FactorialCoefficient::GetIntegerValue()
+long FactorialCoefficient::GetIntegerValue()
 {
   for (int i = 0; i <= this->DenominatorPosition; ++i)
     if (this->Denominator[i] != 1)
@@ -475,7 +475,7 @@ long  FactorialCoefficient::GetIntegerValue()
 //
 // return value = numerical value associated to the coefficient numerator
 
-long  FactorialCoefficient::GetIntegerNumeratorValue()
+long FactorialCoefficient::GetIntegerNumeratorValue()
 {
   long x = 1;
   for (int i = 0; i <= this->NumeratorPosition; ++i)
@@ -490,7 +490,7 @@ long  FactorialCoefficient::GetIntegerNumeratorValue()
 //
 // return value = numerical value associated to the coefficient denominator
 
-long  FactorialCoefficient::GetIntegerDenominatorValue()
+long FactorialCoefficient::GetIntegerDenominatorValue()
 {
   long x = 1;
   for (int i = 0; i <= this->DenominatorPosition; ++i)
@@ -500,6 +500,34 @@ long  FactorialCoefficient::GetIntegerDenominatorValue()
       return 0;
   return x;
 }
+
+// output stream, printing internal representation of the coefficient
+// str = stream to write to
+// coeff = factorial coefficient object
+// return = str
+ostream& operator << (ostream& str, FactorialCoefficient &coeff)
+{
+  if (coeff.NumeratorPosition==0)
+    str << coeff.Numerator[0];
+  else
+    {
+      str << "(" << coeff.Numerator[0];
+      for (int i = 1; i <= coeff.NumeratorPosition; ++i)
+	str << "*"<<coeff.Numerator[i];
+      str << ")";
+    }
+  if (coeff.DenominatorPosition==0)
+    str << "/" << coeff.Denominator[0];
+  else
+    {
+      str << "/("<< coeff.Denominator[0];
+      for (int i = 1; i <= coeff.DenominatorPosition; ++i)
+	str <<"*"<< coeff.Denominator[i];
+      str << ")";
+    }
+  return str;
+}
+
 
 // find greatest common divider (recursive part of the method)
 //

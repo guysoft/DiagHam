@@ -1039,9 +1039,9 @@ long FermionOnTorusWithMagneticTranslations::EvaluateHilbertSpaceDimension(int n
   FactorialCoefficient Dimension; 
   Dimension.PartialFactorialMultiply(maxMomentum - nbrFermions + 1, maxMomentum); 
   Dimension.FactorialDivide(nbrFermions);
-  // approximate factor for reduction
+  // approximate factor for reduction by symmetries
   if (Dimension.GetIntegerValue()>100000)
     Dimension/=maxMomentum-(maxMomentum>3?3:(maxMomentum>2?2:1));
-  return Dimension.GetIntegerValue();
+  return (long)(Dimension.GetNumericalValue());
 }
 

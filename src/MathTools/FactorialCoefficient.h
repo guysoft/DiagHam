@@ -35,7 +35,7 @@
 #include "config.h"
 
 #include <iostream>
-
+using std::ostream;
 
 class LongRational;
 
@@ -187,6 +187,13 @@ class FactorialCoefficient
   //
   // return value = numerical value associated to the coefficient
   long GetIntegerValue();
+
+
+  // output stream, printing internal representation of the coefficient
+  // str = stream to write to
+  // coeff = factorial coefficient object
+  // return = str
+  friend ostream& operator << (ostream& str, FactorialCoefficient &coeff);
 
  private:
 
