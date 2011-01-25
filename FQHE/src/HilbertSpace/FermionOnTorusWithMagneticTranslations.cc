@@ -40,6 +40,7 @@
 #include "GeneralTools/ArrayTools.h"
 
 #include <math.h>
+#include <limits.h>
 
 
 using std::cout;
