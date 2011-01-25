@@ -60,6 +60,7 @@
 #include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithGroundStateFastDisk.h"
 #include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithm.h"
 #include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage.h"
+#include "LanczosAlgorithm/ComplexBasicBlockLanczosAlgorithm.h"
 
 #include "Options/Options.h"
 
@@ -769,7 +770,28 @@ int FQHEOnTorusMainTask::ExecuteMainTask()
 	    {
 	      if (this->DiskFlag == false)
 		{
-		  Lanczos = new FullReorthogonalizedComplexLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
+		  if (this->BlockLanczosFlag == true)
+		    {
+		      if (this->FullReorthogonalizationFlag == true)
+			{
+			  cout << "reorthogonalized block lanczos is not yet defined: ComplexFullReorthogonalizedBlockLanczosAlgorithm missing"<<endl;
+			  cout << "using non-reorthogonalized algorithm 'ComplexBasicBlockLanczosAlgorithm'"<<endl;
+			  //Lanczos = new ComplexFullReorthogonalizedBlockLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->SizeBlockLanczos, this->MaxNbrIterLanczos, false, this->LapackFlag);
+			  Lanczos = new ComplexBasicBlockLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->SizeBlockLanczos, this->MaxNbrIterLanczos, 
+									   this->FastDiskFlag, this->ResumeFastDiskFlag, false, this->LapackFlag);
+			  
+			}
+		      else
+			{
+			  cout << "Using ComplexBasicBlockLanczosAlgorithm"<<endl;
+			  Lanczos = new ComplexBasicBlockLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->SizeBlockLanczos, this->MaxNbrIterLanczos, 
+									   this->FastDiskFlag, this->ResumeFastDiskFlag, false, this->LapackFlag);
+			}
+		    }
+		  else
+		    {
+		      Lanczos = new FullReorthogonalizedComplexLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
+		    }
 		}
 	      else
 		Lanczos = new FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage (this->Architecture, this->NbrEigenvalue, this->VectorMemory, this->MaxNbrIterLanczos);

@@ -80,9 +80,11 @@ FermionOnTorusWithMagneticTranslations::FermionOnTorusWithMagneticTranslations (
 
   this->MaximumSignLookUp = 16;
   this->GenerateSignLookUpTable();
-  this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->MaxMomentum);  
-  cout << "Max dimension: " << this->HilbertSpaceDimension << endl;
-  this->HilbertSpaceDimension = this->GenerateStates();
+  long TmpDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->MaxMomentum);
+  cout << "Max dimension: " << TmpDimension << endl;
+  if (TmpDimension>INT_MAX)
+    cout << "Max-Dimension surpasses integer representation..."<<endl;
+  this->HilbertSpaceDimension = this->GenerateStates(TmpDimension);
   cout << "Actual dimension: " << this->HilbertSpaceDimension << endl;
 
   this->Flag.Initialize();
@@ -683,13 +685,13 @@ string convBase(unsigned long v, long base)
 }
 
 // generate all states corresponding to the constraints
-// 
+// tmpDimension = max dimension of Hilbert space (to be reduced by symmetries)
 // return value = hilbert space dimension
 
-int FermionOnTorusWithMagneticTranslations::GenerateStates()
+int FermionOnTorusWithMagneticTranslations::GenerateStates(long tmpDimension)
 {
-  this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
-  this->StateMaxMomentum = new int [this->HilbertSpaceDimension];
+  this->StateDescription = new unsigned long [tmpDimension];
+  this->StateMaxMomentum = new int [tmpDimension];
   this->HilbertSpaceDimension = this->RawGenerateStates(this->NbrFermions, this->MaxMomentum - 1, this->MaxMomentum - 1, 0, 0);
   int* TmpNbrStateDescription = new int [this->MaxMomentum + 1];  
   for (int i = 0; i <= this->MaxMomentum; ++i)
@@ -1031,11 +1033,14 @@ void FermionOnTorusWithMagneticTranslations::GenerateSignLookUpTable()
 // maxMomentum = momentum maximum value for a fermion
 // return value = Hilbert space dimension
 
-int FermionOnTorusWithMagneticTranslations::EvaluateHilbertSpaceDimension(int nbrFermions, int maxMomentum)
+long FermionOnTorusWithMagneticTranslations::EvaluateHilbertSpaceDimension(int nbrFermions, int maxMomentum)
 {
   FactorialCoefficient Dimension; 
   Dimension.PartialFactorialMultiply(maxMomentum - nbrFermions + 1, maxMomentum); 
   Dimension.FactorialDivide(nbrFermions);
+  // approximate factor for reduction
+  if (Dimension.GetIntegerValue()>100000)
+    Dimension/=maxMomentum-(maxMomentum>3?3:(maxMomentum>2?2:1));
   return Dimension.GetIntegerValue();
 }
 

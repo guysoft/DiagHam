@@ -235,7 +235,7 @@ class FermionOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnet
   // nbrFermions = number of fermions
   // maxMomentum = momentum maximum value for a fermion
   // return value = Hilbert space dimension
-  int EvaluateHilbertSpaceDimension(int nbrFermions, int maxMomentum);
+  long EvaluateHilbertSpaceDimension(int nbrFermions, int maxMomentum);
 
   // generate look-up table associated to current Hilbert space
   // 
@@ -247,9 +247,9 @@ class FermionOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnet
   void GenerateSignLookUpTable();
 
   // generate all states corresponding to the constraints
-  // 
+  // tmpDimension = max dimension of Hilbert space (to be reduced by symmetries)
   // return value = hilbert space dimension
-  int GenerateStates();
+  int GenerateStates(long tmpDimension);
 
   // generate all states corresponding to the constraints (without taking into the canonical form) 
   // 

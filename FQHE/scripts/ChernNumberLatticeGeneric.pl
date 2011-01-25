@@ -2,14 +2,16 @@
 #
 # script for optimizing overlaps for vectors associated with given protocol files
 #
+# example program call:
+# ChernNumberLatticeGeneric.pl -o "--eigenstate --fast-disk" -n 5 -m 500 -q 1 -s 1 -L TriangularLattice.dat bosons_lattice_triang_4x2_n_3_u_1_s_SX_SY_q_1
+#
 use strict 'vars';
 use File::stat;
 use Math::Complex;
 
 
 # hardwire which state to look at
-my $Program_32="FQHELatticeBosons";
-my $Program_64="FQHELatticeBosons_64";
+my $Diagonalizer="FQHELatticeBosonsGeneric";
 my $OverlapExe="GenericOverlap";
 
 my $CalculateVectors=0;
@@ -23,6 +25,7 @@ $Multiplet[0]=0;
 my $Memory=1000;
 my $Options="";
 my $NbrCalculate=1;
+my $LatticeDefinition="";
 
 while( (defined($ARGV[0])&&$ARGV[0] =~ /^-/ ))
   {
@@ -69,6 +72,19 @@ while( (defined($ARGV[0])&&$ARGV[0] =~ /^-/ ))
 	    $GridString2 = $ARGV[0];
 	  }
       }
+    if ( $ARGV[0] =~ /-L/ )
+      {
+	if (length($ARGV[0])>2)
+	  {
+	    $LatticeDefinition = $ARGV[0];
+	    $LatticeDefinition =~ s/-L//;
+	  }
+	else
+	  {
+	    shift(@ARGV);
+	    $LatticeDefinition = $ARGV[0];
+	  }
+      }
     if ( $ARGV[0] =~ /-m/ )
       {
 	if (length($ARGV[0])>2)
@@ -107,6 +123,7 @@ while( (defined($ARGV[0])&&$ARGV[0] =~ /^-/ ))
             shift(@ARGV);
             $Options = $ARGV[0];
           }
+	print ("Read Options: $Options\n");
       }
 
     if ( $ARGV[0] =~ /-q/ )
@@ -123,7 +140,7 @@ while( (defined($ARGV[0])&&$ARGV[0] =~ /^-/ ))
 	    $TmpStr = $ARGV[0];
 	  }
 	@Multiplet = split(/,/,$TmpStr);	
-	sort(@Multiplet);
+	@Multiplet = sort(@Multiplet);
 	$Degeneracy = $#Multiplet+1;
 	print ("Analysing multiplet  [$Multiplet[0]");
 	for (my $i=1; $i<$Degeneracy; ++$i)
@@ -167,18 +184,21 @@ while( (defined($ARGV[0])&&$ARGV[0] =~ /^-/ ))
     shift(@ARGV);
   }
 
-if (!defined($ARGV[0]))
+if(!defined($ARGV[0]))
   {
     print("usage ChernNumberLattice.pl [-g GRIDPOINTS] [-n NbrPoints] [-c] [-r s1x,s1y,s2x,s2y] basename_*SX_SY*\n");
+    print("where basename_*SX_SY_* reflects the filenames produced by FQHELatticeBosonsGeneric (without extension)\n");
     print("option -g: list of discrete points used for both x- and y- directions\n");
     print("       -h: list of discrete points used for both y- directions (if different from x)\n");
     print("       -d: degeneracy of groundstate multiplet (or indicate states with -q)\n");
     print("       -n: number of gridpoints to be used\n");
     print("       -r: reference points A,B as theta1A,theta2A,theta1B,theta2B (default 0,0,1,1)\n");
     print("       -c: optionally calculate missing vector files\n");
+    print("       -o: give additional options to this argument\n");
     print("       -m: memory for precalculations when calculating vectors\n");
     print("       -q: quantum numbers of states to be considered part of multiplet (-q q1,q2,q3,...)\n");
     print("       -s: number of states to be calculated at each point\n");
+    print("       -L: file with lattice definition\n");
     exit(1);
   }
 
@@ -221,18 +241,34 @@ if ($NbrCalculate<$Degeneracy)
     $NbrCalculate=$Degeneracy;
   }
 
-my $Program;
+
+my $Extension="";
 my $Have64Bits=0;
 my $tmp = "";
-$tmp = `status`;
-if ( $tmp =~ /x86_64/ )
+my $tmp2 = `which status`;
+if (length($tmp2)>0)
   {
-    $Program = $Program_64;
+    $tmp = `status`;
+    if ( $tmp =~ /x86_64/ )
+      {
+	$Extension="_64";
+      }
   }
-else
+my $Program = $Diagonalizer.$Extension;
+print ("LatticeDefinition=".$LatticeDefinition."\n");
+if ((! $LatticeDefinition) || (! -e $LatticeDefinition))
   {
-    $Program = $Program_32;	
+    if ( ! $LatticeDefinition)
+      {
+	die ("File with lattice definition is required!".$LatticeDefinition);
+      }
+    else
+      {
+	die ("File with lattice definition ".$LatticeDefinition." not found!");
+      }
   }
+
+print ("Using command line options: ".$Options."\n");
 
 my $TmpFile;
 foreach $TmpFile (@ARGV)
@@ -253,43 +289,42 @@ sub AnalyzeChern
   {
     my $BaseName = $_[0];
     my $HardCore;
+    my $Lx;
+    my $Ly;
     my $N;
-    my $x;
-    my $y;
     my $u;
     my $q;
-    if ($BaseName =~ m/hardcore/)
+    if ($BaseName =~ m/_u_/)
       {
-
-	$BaseName =~ /n\_(\d+)\_x\_(\d*)\_y\_(\d*)\_.*\_q\_(\d*)/;
-	$N = $1;
-	$x = $2;
-	$y = $3;
-	$u = 0;
-	$HardCore=1;
-	$q = $4;
-      }
-    else
-      {
-	$BaseName =~ /n\_(\d+)\_x\_(\d*)\_y\_(\d*)\_u\_(-*\d*[\.]*\d*)\_.*\_q\_(\d*)/;
-	$N = $1;
-	$x = $2;
-	$y = $3;
+	$BaseName =~ /_(\d+)x(\d+)\_n\_(\d+)\_u\_(-*\d*[\.]*\d*)\_.*\_q\_(\d*)/;
+	$Lx = $1;
+	$Ly = $2;
+	$N = $3;
 	$u = $4;
 	$HardCore=0;
 	$q = $5;
+      }
+    else
+      {
+	$BaseName =~ /_(\d+)x(\d+)\_n\_(\d+)\_.*\_q\_(\d*)/;
+	$Lx = $1;
+	$Ly = $2;
+	$N = $3;
+	$u = 1;
+	$HardCore=1;
+	$q = $4;
       }
     my $TotalSolenoid="";
     my $Interaction;
     if ( $HardCore == 1)
       {
-	print "n = ".$N."  x = ".$x."  y = ".$y."  q = ".$q."  (hardcore bosons)\n";
+	print "n = ".$N."  x = ".$Lx."  y = ".$Ly."  q = ".$q."  (hardcore bosons)\n";
 	$Interaction ="-c";
       }
     else
       {
-	print "n = ".$N."  x = ".$x."  y = ".$y."  q = ".$q."  u = ".$u."\n";
-	$Interaction ="";
+	print "n = ".$N."  x = ".$Lx."  y = ".$Ly."  q = ".$q."  u = ".$u."\n";
+	$Interaction ="-u ".$u;
       }
 
     my @ReferenceVals = split (/,/, $ReferenceString);
@@ -298,26 +333,26 @@ sub AnalyzeChern
     my $RefS1y = $ReferenceVals[1];
     my $RefS2x = $ReferenceVals[2];
     my $RefS2y = $ReferenceVals[3];
+    my $LatticeGeometry = $Lx."x".$Ly;
+    my $CommandLine = "$Program -L ".$LatticeDefinition." -C ".$Lx.",".$Ly." -p $N $Interaction -n $NbrCalculate -m $Memory $Options --show-itertime";
 
-    my $CommandLine = "$Program -p $N -x $x -y $y $Interaction -q $q -n $NbrCalculate -m $Memory $Options";
-
-    TestVectors ($BaseName, $RefS1x, $RefS1y, $Degeneracy, $CalculateVectors, $CommandLine, \@Multiplet);
-    TestVectors ($BaseName, $RefS2x, $RefS2y, $Degeneracy, $CalculateVectors, $CommandLine, \@Multiplet);
+    TestVectors ($BaseName, $RefS1x, $RefS1y, $Degeneracy, $CalculateVectors, $CommandLine, \@Multiplet, $HardCore, $u, $LatticeGeometry);
+    TestVectors ($BaseName, $RefS2x, $RefS2y, $Degeneracy, $CalculateVectors, $CommandLine, \@Multiplet, $HardCore, $u, $LatticeGeometry);
 
     my $LogFileName = GetVectorName($BaseName, 0, 0, 0);
     $LogFileName =~ s/0\.vec/cn/;
 
     SavePrevious($LogFileName);
     open (LOGFILE, ">$LogFileName");
-    
+
     my $PlotFileName = GetVectorName($BaseName, 0, 0, 0);
     $PlotFileName =~ s/0\.vec/cnp1/;
     open (PLOTFILE1, ">$PlotFileName");
-    
+
     $PlotFileName =~ s/cnp1/cnp2/;
     open (PLOTFILE2, ">$PlotFileName");
-    
-    print LOGFILE ("# Evaluation of Chern-Number for state at N = $N, x = $x, y = $y, q = $q  ($Interaction)\n");
+
+    print LOGFILE ("# Evaluation of Chern-Number for state at N = $N, x = $Lx, y = $Ly, q = $q  ($Interaction)\n");
     print LOGFILE ("# Theta_x\tTheta_y\tOmega_x\tOmega_y\n");
 
     my $GridX;
@@ -331,12 +366,13 @@ sub AnalyzeChern
 	    my $SolenoidY = $GridPointsY[$GridY];
 	    #print ("Analysing point $SolenoidX,$SolenoidY \n");
 	    print ("x");
-
+	
 	    # make sure we have all necessary data
-	    TestVectors ($BaseName, $SolenoidX, $SolenoidY, $Degeneracy, $CalculateVectors, $CommandLine, \@Multiplet);
+	    TestVectors ($BaseName, $SolenoidX, $SolenoidY, $Degeneracy, $CalculateVectors, $CommandLine, \@Multiplet, $HardCore, $u, $LatticeGeometry);
 	    my $Alpha;
 	    my $Beta;
-	    my $OvlCommand="GenericOverlap --quiet -s -c ";
+	    print ("Ovl ");
+	    my $OvlCommand="$OverlapExe --quiet -s -c ";
 	    my @Matrix1;
 	    my @Matrix2;
 	    my @Overlaps;
@@ -391,6 +427,7 @@ sub AnalyzeChern
 # test if all required vectors at a given point are present
 # if not, calculate
 sub TestVectors {
+  #print("TestVectors(".$_[0].", ".$_[1].", ".$_[2].", ".$_[3].", ".$_[4].", ".$_[5].", ".$_[6].", ".$_[7].", ".$_[8].", ".$_[9]."\n");
   my $BaseName = $_[0];
   my $SolenoidX = $_[1];
   my $SolenoidY = $_[2];
@@ -398,6 +435,9 @@ sub TestVectors {
   my $Calculate = $_[4];
   my $Command = $_[5];
   my $Multiplet = $_[6];
+  my $HardCore = $_[7];
+  my $InteractionU = $_[8];
+  my $LatticeGeometry = $_[9];
 
   while ($SolenoidX<=-1.0)
     {
@@ -415,7 +455,7 @@ sub TestVectors {
     {
       $SolenoidY-=2.0;
     }
-  
+
   my $HavePoint=1;
   for (my $i=0; $i<$Degeneracy; ++$i)
     {
@@ -444,6 +484,7 @@ sub TestVectors {
 	{
 	  die("Missing vectors at $SolenoidX,$SolenoidY ...\nAborting - please supply the missing files manually!\n");
 	}
+
     }
 }
 
@@ -451,6 +492,7 @@ sub TestVectors {
 #
 sub GetVectorName
   {
+    #print ("GetVectorName(".$_[0].", ".$_[1].", ".$_[2].", ".$_[3]."\n");
     my $BaseName=$_[0];
     my $SolenoidX = $_[1];
     my $SolenoidY = $_[2];
@@ -476,8 +518,8 @@ sub GetVectorName
     my $VectorName = $BaseName.".".$ID.".vec";
     my $XStr = sprintf("%g",$SolenoidX);
     my $YStr = sprintf("%g",$SolenoidY);
-    $VectorName =~ s/XX/$XStr/;
-    $VectorName =~ s/YY/$YStr/;
+    $VectorName =~ s/SX/$XStr/;
+    $VectorName =~ s/SY/$YStr/;
     if (($SolenoidX==0)&&($SolenoidY==0))
       {
 	$VectorName =~ s/\_s\_0\_0//;
