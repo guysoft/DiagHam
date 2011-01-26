@@ -165,6 +165,7 @@ bool MultiColumnASCIIFile::Parse(char* filename)
 	++MaxNbrLines;
       ++Pos;
     }
+  ++MaxNbrLines;
   Pos = 0;
   char* Start = TmpBuffer;
   int LineNumber = 1;

@@ -66,6 +66,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
   (*SystemGroup) += new BooleanOption  ('\n', "rational" , "use rational numbers instead of double precision floating point numbers");
   (*SystemGroup) += new BooleanOption  ('\n', "add" , "add the different vector instead of merging them");
+  (*SystemGroup) += new SingleStringOption  ('\n', "multiple-add", "use multiple description files, each of then in add mode, merging results of each description file");
 
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "name of the fused vector that will be generated");
   (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the vector into a text file");
@@ -92,10 +93,36 @@ int main(int argc, char** argv)
   char* OutputTxtFileName = Manager.GetString("txt-output");
   bool SymmetrizedBasis = Manager.GetBoolean("symmetrized-basis");
   MultiColumnASCIIFile InputVectors;
-  if (InputVectors.Parse(Manager.GetString("input-states")) == false)
+
+  if (Manager.GetString("input-states") != 0)
     {
-      InputVectors.DumpErrors(cout) << endl;
-      return -1;
+      if (InputVectors.Parse(Manager.GetString("input-states")) == false)
+	{
+	  InputVectors.DumpErrors(cout) << endl;
+	  return -1;
+	}
+    }
+  else
+    {
+      if (Manager.GetString("multiple-add") != 0)
+	{
+	  MultiColumnASCIIFile MultipleAddFiles;
+	  if (MultipleAddFiles.Parse(Manager.GetString("multiple-add")) == false)
+	    {
+	      MultipleAddFiles.DumpErrors(cout) << endl;
+	      return -1;
+	    }
+	  if (InputVectors.Parse(MultipleAddFiles(0, 0)) == false)
+	    {
+	      InputVectors.DumpErrors(cout) << endl;
+	      return -1;
+	    }
+	}
+      else
+	{
+	  cout << "no input file, see man page for option syntax or type FQHESphereFuseStates -h" << endl;
+	  return -1;
+	}
     }
   
   
@@ -243,9 +270,6 @@ int main(int argc, char** argv)
   RealVector OutputTmpState;
   LongRationalVector RationalTmpOutputState;
 
-  if (FQHEShereFuseStateCore(Manager.GetString("input-states"), OutputBasis, OutputState, RationalOutputState, OutputTmpState, RationalTmpOutputState, Manager.GetBoolean("rational"), Manager.GetBoolean("add"), SymmetrizedBasis, Padding) != 0)
-    return -1;
-  
   if (Manager.GetBoolean("add") == true)
     {
       if (Manager.GetBoolean("rational") == false)
@@ -253,7 +277,26 @@ int main(int argc, char** argv)
       else
 	RationalTmpOutputState = LongRationalVector (OutputBasis->GetLargeHilbertSpaceDimension(),true);
     }
-  
+
+  if (Manager.GetString("input-states") != 0)
+    {
+      if (FQHEShereFuseStateCore(Manager.GetString("input-states"), OutputBasis, OutputState, RationalOutputState, OutputTmpState, RationalTmpOutputState, Manager.GetBoolean("rational"), Manager.GetBoolean("add"), SymmetrizedBasis, Padding) != 0)
+	return -1;  
+    }
+  else
+    {
+      MultiColumnASCIIFile MultipleAddFiles;
+      if (MultipleAddFiles.Parse(Manager.GetString("multiple-add")) == false)
+	{
+	  MultipleAddFiles.DumpErrors(cout) << endl;
+	  return -1;
+	}
+      for (int i = 0; i < MultipleAddFiles.GetNbrLines(); ++i)
+	{
+	  if (FQHEShereFuseStateCore(MultipleAddFiles(0, i), OutputBasis, OutputState, RationalOutputState, OutputTmpState, RationalTmpOutputState, Manager.GetBoolean("rational"), Manager.GetBoolean("add"), SymmetrizedBasis, Padding) != 0)
+	    return -1;  	  
+	}
+    }
 
   if (Manager.GetBoolean("rational") == false)
     {
@@ -499,8 +542,7 @@ int FQHEShereFuseStateCore(char* inputFileName, ParticleOnSphere* outputBasis, R
 	    outputBasis->FuseStates(rationalOutputState, LeftVector, RightVector, Paddings[i], LeftBasis, RightBasis, symmetrizedBasisFlag, RationalCoefficients[i]);
 	  else
 	    {
-	      outputBasis->FuseStates(rationalTmpOutputState, LeftVector, RightVector, Paddings[i], LeftBasis, RightBasis, symmetrizedBasisFlag, RationalCoefficients[i]);
-	      
+	      outputBasis->FuseStates(rationalTmpOutputState, LeftVector, RightVector, Paddings[i], LeftBasis, RightBasis, symmetrizedBasisFlag, RationalCoefficients[i]);	      
 	      rationalOutputState += rationalTmpOutputState;
 	      rationalTmpOutputState.ClearVector();
 	    }
