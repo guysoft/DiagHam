@@ -77,7 +77,7 @@ double MySqrArg;
 ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian(ParticleOnTorusWithMagneticTranslations* particles, 
 														     int nbrParticles, int maxMomentum, 
 														     int xMomentum, double ratio, bool haveCoulomb, int landauLevel, int nbrPseudopotentials, double* pseudopotentials,
-														     AbstractArchitecture* architecture, int memory, 
+														     AbstractArchitecture* architecture, long memory, 
 														     char* precalculationFileName)
 {
   this->Particles = particles;
@@ -137,7 +137,8 @@ ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::ParticleOnTorusCoulom
       if (memory > 0)
 	{
 	  int TmpMemory = this->FastMultiplicationMemory(memory);
-	  PrintMemorySize(cout,TmpMemory);
+	  cout << "fast memory = ";
+	  PrintMemorySize(cout,TmpMemory)<<endl;
 	  if (memory > 0)
 	    {
 	      this->EnableFastMultiplication();

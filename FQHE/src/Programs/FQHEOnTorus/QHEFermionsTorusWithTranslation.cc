@@ -152,7 +152,7 @@ int main(int argc, char** argv)
     {
       XRatio = ((SingleDoubleOption*) Manager["ratio"])->GetDouble();
     }
-  long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
+  long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
 
   char* OutputName = new char [512];
   if (NbrPseudopotentials>0)
