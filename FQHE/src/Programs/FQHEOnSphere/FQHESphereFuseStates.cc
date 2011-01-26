@@ -29,6 +29,22 @@ using std::ios;
 using std::ofstream;
 
 
+// core part of the fuse state program
+//
+// inputFileName = name of the file that describes the states to fuse
+// outputBasis = output basis
+// outputState = output state (i.e. fused state)
+// rationalOutputState = output state (i.e. fused state) in rational mode
+// tmpOutputState = temporay state used in add mode
+// rationalTmpOutputState = temporay state used in add and rational modes
+// rationalFlag = use rational instead of double
+// addFlag = use add mode instead of merge mode 
+// symmetrizedBasisFlag = output basis is Lz symmetric
+// defaultPadding = default padding to use
+// return value = 0 if no error occured
+int FQHEShereFuseStateCore(char* inputFileName, ParticleOnSphere* outputBasis, RealVector& outputState, LongRationalVector& rationalOutputState, RealVector& tmpOutputState, LongRationalVector& rationalTmpOutputState, bool rationalFlag, bool addFlag, bool symmetrizedBasisFlag, int defaultPadding);
+
+
 int main(int argc, char** argv)
 {
   OptionManager Manager ("FQHESphereFuseStates" , "0.01");
@@ -226,6 +242,9 @@ int main(int argc, char** argv)
   
   RealVector OutputTmpState;
   LongRationalVector RationalTmpOutputState;
+
+  if (FQHEShereFuseStateCore(Manager.GetString("input-states"), OutputBasis, OutputState, RationalOutputState, OutputTmpState, RationalTmpOutputState, Manager.GetBoolean("rational"), Manager.GetBoolean("add"), SymmetrizedBasis, Padding) != 0)
+    return -1;
   
   if (Manager.GetBoolean("add") == true)
     {
@@ -235,15 +254,130 @@ int main(int argc, char** argv)
 	RationalTmpOutputState = LongRationalVector (OutputBasis->GetLargeHilbertSpaceDimension(),true);
     }
   
+
+  if (Manager.GetBoolean("rational") == false)
+    {
+      if (OutputTxtFileName != 0)
+	{
+	  ofstream File;
+	  File.open(OutputTxtFileName, ios::binary | ios::out);
+	  File.precision(14);
+	  for (long i = 0; i < OutputBasis->GetLargeHilbertSpaceDimension(); ++i)
+	    {
+	      File << OutputState[i] << " ";
+	      OutputBasis->PrintStateMonomial(File, i) << endl;
+	    }
+	  File.close();
+	}
+      if (OutputFileName != 0)
+	{
+	  if (OutputState.WriteVector(OutputFileName) == false)
+	    {
+	      cout << "error while writing output state " << OutputFileName << endl;
+	      return -1;
+	    }	  
+	}
+    }
+  else
+    {
+      if (OutputTxtFileName != 0)
+	{
+	  ofstream File;
+	  File.open(OutputTxtFileName, ios::binary | ios::out);
+	  File.precision(14);
+	  for (long i = 0; i < OutputBasis->GetLargeHilbertSpaceDimension(); ++i)
+	    {
+	      File << RationalOutputState[i] << " ";
+	      OutputBasis->PrintStateMonomial(File, i) << endl;
+	    }
+	  File.close();
+	}
+      if (OutputFileName != 0)
+	{
+	  if (RationalOutputState.WriteVector(OutputFileName) == false)
+	    {
+	      cout << "error while writing output state " << OutputFileName << endl;
+	      return -1;
+	    }	  
+	}
+    }
+
+  return 0;
+}
+
+
+// core part of the fuse state program
+//
+// inputFileName = name of the file that describes the states to fuse
+// outputBasis = output basis
+// outputState = output state (i.e. fused state)
+// rationalOutputState = output state (i.e. fused state) in rational mode
+// tmpOutputState = temporay state used in add mode
+// rationalTmpOutputState = temporay state used in add and rational modes
+// rationalFlag = use rational instead of double
+// addFlag = use add mode instead of merge mode 
+// symmetrizedBasisFlag = output basis is Lz symmetric
+// defaultPadding = default padding to use
+// return value = 0 if no error occured
+
+int FQHEShereFuseStateCore(char* inputFileName, ParticleOnSphere* outputBasis, RealVector& outputState, LongRationalVector& rationalOutputState, RealVector& tmpOutputState, LongRationalVector& rationalTmpOutputState, bool rationalFlag, bool addFlag, bool symmetrizedBasisFlag, int defaultPadding)
+{
+  MultiColumnASCIIFile InputVectors;
+  if (InputVectors.Parse(inputFileName) == false)
+    {
+      InputVectors.DumpErrors(cout) << endl;
+      return -1;
+    }
+  int* Paddings = 0;
+  if (InputVectors(6, 0) != 0)
+    {
+      Paddings = InputVectors.GetAsIntegerArray(6);
+    }
+  else
+    {
+      Paddings = new int [InputVectors.GetNbrLines()];
+      for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
+	Paddings[i] = defaultPadding;
+    }
+  
+  double* Coefficients = 0;
+  LongRational* RationalCoefficients = 0;
+  if (rationalFlag  == false)
+    {
+      if (InputVectors(7, 0) != 0)
+	{
+	  Coefficients = InputVectors.GetAsDoubleArray(7);
+	}
+      else
+	{
+	  Coefficients = new double [InputVectors.GetNbrLines()];
+	  for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
+	    Coefficients[i] = 1.0;
+	}
+    }
+  else
+    {
+      if (InputVectors(7, 0) != 0)
+	{
+	  RationalCoefficients = InputVectors.GetAsLongRationalArray(7);
+       }
+      else
+	{
+	  RationalCoefficients = new LongRational [InputVectors.GetNbrLines()];
+	  for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
+	    RationalCoefficients[i] = 1l;
+	}
+    }
+
   for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
     {
-      LeftNbrParticles = 0;
-      LeftLzMax = 0;
-      LeftTotalLz = 0;
-      Statistics = true;
-      RightNbrParticles = 0;
-      RightLzMax = 0;
-      RightTotalLz = 0;
+      int LeftNbrParticles = 0;
+      int LeftLzMax = 0;
+      int LeftTotalLz = 0;
+      bool Statistics = true;
+      int RightNbrParticles = 0;
+      int RightLzMax = 0;
+      int RightTotalLz = 0;
       if (FQHEOnSphereFindSystemInfoFromVectorFileName(InputVectors(0, i),
 						       LeftNbrParticles, LeftLzMax, LeftTotalLz, Statistics) == false)
 	{
@@ -318,7 +452,7 @@ int main(int argc, char** argv)
 		RightBasis = new FermionOnSphereHaldaneBasis(InputVectors(5, i));
 	    }
 	}
-      if (Manager.GetBoolean("rational") == false)
+      if (rationalFlag == false)
 	{
 	  RealVector LeftVector;
 	  if (LeftVector.ReadVector (InputVectors(0, i)) == false)
@@ -335,13 +469,13 @@ int main(int argc, char** argv)
 	  
 
 	  cout << "local padding = " <<  Paddings[i] << "  local coeffcient = " << Coefficients[i] << endl;
-	  if (Manager.GetBoolean("add") == false)
-	    OutputBasis->FuseStates(OutputState, LeftVector, RightVector, Paddings[i], LeftBasis, RightBasis, SymmetrizedBasis, Coefficients[i]);
+	  if (addFlag == false)
+	    outputBasis->FuseStates(outputState, LeftVector, RightVector, Paddings[i], LeftBasis, RightBasis, symmetrizedBasisFlag, Coefficients[i]);
 	  else
 	    {
-	      OutputBasis->FuseStates(OutputTmpState, LeftVector, RightVector, Paddings[i], LeftBasis, RightBasis, SymmetrizedBasis, Coefficients[i]);
-	      OutputState += OutputTmpState;
-	      OutputTmpState.ClearVector();
+	      outputBasis->FuseStates(tmpOutputState, LeftVector, RightVector, Paddings[i], LeftBasis, RightBasis, symmetrizedBasisFlag, Coefficients[i]);
+	      outputState += tmpOutputState;
+	      tmpOutputState.ClearVector();
 	    }
 	}
       else
@@ -361,67 +495,18 @@ int main(int argc, char** argv)
 
 
 	  cout << "local padding = " <<  Paddings[i] << "  local coeffcient = " << RationalCoefficients[i] << endl;
-		if (Manager.GetBoolean("add") == false)
-		  OutputBasis->FuseStates(RationalOutputState, LeftVector, RightVector, Paddings[i], LeftBasis, RightBasis, SymmetrizedBasis, RationalCoefficients[i]);
-		else
-		  {
-		    OutputBasis->FuseStates(RationalTmpOutputState, LeftVector, RightVector, Paddings[i], LeftBasis, RightBasis, SymmetrizedBasis, RationalCoefficients[i]);
-		    
-		    RationalOutputState += RationalTmpOutputState;
-		    RationalTmpOutputState.ClearVector();
-		  }
+	  if (addFlag == false)
+	    outputBasis->FuseStates(rationalOutputState, LeftVector, RightVector, Paddings[i], LeftBasis, RightBasis, symmetrizedBasisFlag, RationalCoefficients[i]);
+	  else
+	    {
+	      outputBasis->FuseStates(rationalTmpOutputState, LeftVector, RightVector, Paddings[i], LeftBasis, RightBasis, symmetrizedBasisFlag, RationalCoefficients[i]);
+	      
+	      rationalOutputState += rationalTmpOutputState;
+	      rationalTmpOutputState.ClearVector();
+	    }
 	}
       delete RightBasis;
       delete LeftBasis;      
-    }
-  
-
-  if (Manager.GetBoolean("rational") == false)
-    {
-      if (OutputTxtFileName != 0)
-	{
-	  ofstream File;
-	  File.open(OutputTxtFileName, ios::binary | ios::out);
-	  File.precision(14);
-	  for (long i = 0; i < OutputBasis->GetLargeHilbertSpaceDimension(); ++i)
-	    {
-	      File << OutputState[i] << " ";
-	      OutputBasis->PrintStateMonomial(File, i) << endl;
-	    }
-	  File.close();
-	}
-      if (OutputFileName != 0)
-	{
-	  if (OutputState.WriteVector(OutputFileName) == false)
-	    {
-	      cout << "error while writing output state " << OutputFileName << endl;
-	      return -1;
-	    }	  
-	}
-    }
-  else
-    {
-      if (OutputTxtFileName != 0)
-	{
-	  ofstream File;
-	  File.open(OutputTxtFileName, ios::binary | ios::out);
-	  File.precision(14);
-	  for (long i = 0; i < OutputBasis->GetLargeHilbertSpaceDimension(); ++i)
-	    {
-	      File << RationalOutputState[i] << " ";
-	      OutputBasis->PrintStateMonomial(File, i) << endl;
-	    }
-	  File.close();
-	}
-      if (OutputFileName != 0)
-	{
-	  if (RationalOutputState.WriteVector(OutputFileName) == false)
-	    {
-	      cout << "error while writing output state " << OutputFileName << endl;
-	      return -1;
-	    }	  
-	}
-    }
-
+    } 
   return 0;
 }
