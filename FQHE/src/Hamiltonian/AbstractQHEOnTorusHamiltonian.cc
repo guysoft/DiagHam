@@ -122,35 +122,6 @@ Complex AbstractQHEOnTorusHamiltonian::MatrixElement (ComplexVector& V1, Complex
   return Complex();
 }
 
-// multiply a vector by the current hamiltonian and store result in another vector
-// low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// return value = reference on vectorwhere result has been stored
-
-RealVector& AbstractQHEOnTorusHamiltonian::LowLevelMultiply(RealVector& vSource, RealVector& vDestination) 
-{
-  return this->LowLevelMultiply(vSource, vDestination, 0, this->Particles->GetHilbertSpaceDimension());
-}
-
-// multiply a vector by the current hamiltonian for a given range of indices 
-// and store result in another vector, low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// firstComponent = index of the first component to evaluate
-// nbrComponent = number of components to evaluate
-// return value = reference on vector where result has been stored
-
-RealVector& AbstractQHEOnTorusHamiltonian::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
-							       int firstComponent, int nbrComponent) 
-{
-  int LastComponent = firstComponent + nbrComponent;
-  for (int i = firstComponent; i < LastComponent; ++i)
-    vDestination[i] = 0.0;
-  return this->LowLevelAddMultiply(vSource, vDestination, firstComponent, nbrComponent);
-}
 
 // multiply a vector by the current hamiltonian for a given range of indices 
 // and add result to another vector, low level function (no architecture optimization)
@@ -190,6 +161,7 @@ RealVector& AbstractQHEOnTorusHamiltonian::LowLevelAddMultiply(RealVector& vSour
       int m4;
       double TmpInteraction;
       int ReducedNbrInteractionFactors = this->NbrInteractionFactors - 1;
+      ParticleOnTorus* TmpParticles = (ParticleOnTorus*) this->Particles->Clone();
       for (int j = 0; j < ReducedNbrInteractionFactors; ++j) 
 	{
 	  m1 = this->M1Value[j];
@@ -199,7 +171,7 @@ RealVector& AbstractQHEOnTorusHamiltonian::LowLevelAddMultiply(RealVector& vSour
 	  TmpInteraction = this->InteractionFactors[j];
 	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
-	      Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
+	      Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
 	      if (Index < Dim)
 		vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
 	    }
@@ -211,11 +183,12 @@ RealVector& AbstractQHEOnTorusHamiltonian::LowLevelAddMultiply(RealVector& vSour
       TmpInteraction = this->InteractionFactors[ReducedNbrInteractionFactors];
       for (int i = firstComponent; i < LastComponent; ++i)
 	{
-	  Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
+	  Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
 	  if (Index < Dim)
 	    vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
 	  vDestination[i] += this->EnergyShift * vSource[i];
 	}
+      delete TmpParticles;
     }
   else
     {
@@ -267,6 +240,7 @@ RealVector& AbstractQHEOnTorusHamiltonian::LowLevelAddMultiply(RealVector& vSour
 	  int m4;
 	  double TmpInteraction;
 	  int ReducedNbrInteractionFactors = this->NbrInteractionFactors - 1;
+	  ParticleOnTorus* TmpParticles = (ParticleOnTorus*) this->Particles->Clone();
 	  for (int k = 0; k < this->FastMultiplicationStep; ++k)
 	    if (PosMod != k)
 	      {		
@@ -279,7 +253,7 @@ RealVector& AbstractQHEOnTorusHamiltonian::LowLevelAddMultiply(RealVector& vSour
 		    TmpInteraction = this->InteractionFactors[j];
 		    for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
 		      {
-			Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
+			Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
 			if (Index < Dim)
 			  vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
 		      }
@@ -292,41 +266,15 @@ RealVector& AbstractQHEOnTorusHamiltonian::LowLevelAddMultiply(RealVector& vSour
 		m4 = m1 + m2 - m3;
 		for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
 		  {
-		    Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
+		    Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
 		    if (Index < Dim)
 		      vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
 		    vDestination[i] += this->EnergyShift * vSource[i];
 		  }
 	      }
+	  delete TmpParticles;
 	}
    }
-  return vDestination;
-}
-
-// multiply a vector by the current hamiltonian and store result in another vector
-// low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// return value = reference on vectorwhere result has been stored
-
-ComplexVector& AbstractQHEOnTorusHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination) 
-{
-  return vDestination;
-}
-
-// multiply a vector by the current hamiltonian for a given range of indices 
-// and store result in another vector, low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// firstComponent = index of the first component to evaluate
-// nbrComponent = number of components to evaluate
-// return value = reference on vector where result has been stored
-
-ComplexVector& AbstractQHEOnTorusHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-							 int firstComponent, int nbrComponent)
-{
   return vDestination;
 }
 
@@ -417,7 +365,7 @@ long AbstractQHEOnTorusHamiltonian::FastMultiplicationMemory(long allowedMemory)
 	  for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); i += this->FastMultiplicationStep)
 	    Memory += this->NbrInteractionPerComponent[i];
 	}
-      int* TmpNbrInteractionPerComponent = TmpNbrInteractionPerComponent = new int [ReducedSpaceDimension];
+      int* TmpNbrInteractionPerComponent = new int [ReducedSpaceDimension];
       for (int i = 0; i < ReducedSpaceDimension; ++i)
 	TmpNbrInteractionPerComponent[i] = this->NbrInteractionPerComponent[i * this->FastMultiplicationStep];
       delete[] this->NbrInteractionPerComponent;
@@ -455,6 +403,7 @@ long AbstractQHEOnTorusHamiltonian::PartialFastMultiplicationMemory(int firstCom
   int m3;
   int m4;
   int LastComponent = lastComponent + firstComponent;
+  ParticleOnTorus* TmpParticles = (ParticleOnTorus*) this->Particles->Clone();
   for (int i = firstComponent; i < LastComponent; ++i)
     {
       for (int j = 0; j < this->NbrInteractionFactors; ++j) 
@@ -463,16 +412,17 @@ long AbstractQHEOnTorusHamiltonian::PartialFastMultiplicationMemory(int firstCom
 	  m2 = this->M2Value[j];
 	  m3 = this->M3Value[j];
 	  m4 = this->M4Value[j];
-	  Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
-	  if (Index < this->Particles->GetHilbertSpaceDimension())
+	  Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
+	  if (Index < TmpParticles->GetHilbertSpaceDimension())
 	    {
 	      ++Memory;
 	      ++this->NbrInteractionPerComponent[i];
 	    }
 	}    
     }
-  Memory = ((sizeof (int*) + sizeof (int) + 2 * sizeof(double*)) * this->Particles->GetHilbertSpaceDimension() + 
+  Memory = ((sizeof (int*) + sizeof (int) + 2 * sizeof(double*)) * TmpParticles->GetHilbertSpaceDimension() + 
 	    Memory *  (sizeof (int) + 2 * sizeof(double)));
+  delete TmpParticles;
   return Memory;
 }
 
@@ -551,7 +501,7 @@ void AbstractQHEOnTorusHamiltonian::PartialEnableFastMultiplication(int firstCom
   int Pos;
   int Min = firstComponent / this->FastMultiplicationStep;
   int Max = lastComponent / this->FastMultiplicationStep;
-  
+  ParticleOnTorus* TmpParticles = (ParticleOnTorus*) this->Particles->Clone();
   for (int i = Min; i < Max; ++i)
     {
       this->InteractionPerComponentIndex[i] = new int [this->NbrInteractionPerComponent[i]];
@@ -565,8 +515,8 @@ void AbstractQHEOnTorusHamiltonian::PartialEnableFastMultiplication(int firstCom
 	  m2 = this->M2Value[j];
 	  m3 = this->M3Value[j];
 	  m4 = this->M4Value[j];
-	  Index = this->Particles->AdAdAA(i * this->FastMultiplicationStep, m1, m2, m3, m4, Coefficient);
-	  if (Index < this->Particles->GetHilbertSpaceDimension())
+	  Index = TmpParticles->AdAdAA(i * this->FastMultiplicationStep, m1, m2, m3, m4, Coefficient);
+	  if (Index < TmpParticles->GetHilbertSpaceDimension())
 	    {
 	      TmpIndexArray[Pos] = Index;
 	      TmpCoefficientArray[Pos] = Coefficient * this->InteractionFactors[j];
@@ -574,6 +524,7 @@ void AbstractQHEOnTorusHamiltonian::PartialEnableFastMultiplication(int firstCom
 	    }
 	}
     }
+  delete TmpParticles;
 }
 
 // save precalculations in a file

@@ -187,33 +187,6 @@ Complex AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::MatrixElem
   return Complex();
 }
   
-// multiply a vector by the current hamiltonian and store result in another vector
-// low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// return value = reference on vectorwhere result has been stored
-
-RealVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::LowLevelMultiply(RealVector& vSource, RealVector& vDestination) 
-{
-  return vDestination;
-}
-
-// multiply a vector by the current hamiltonian for a given range of indices 
-// and store result in another vector, low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// firstComponent = index of the first component to evaluate
-// nbrComponent = number of components to evaluate
-// return value = reference on vector where result has been stored
-
-RealVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
-											       int firstComponent, int nbrComponent) 
-{
-  return vDestination;
-}
-
 // multiply a vector by the current hamiltonian for a given range of indices 
 // and add result to another vector, low level function (no architecture optimization)
 //
@@ -239,39 +212,6 @@ RealVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::LowLev
 												  int firstComponent, int nbrComponent)
 {
   return vDestination;
-}
-
-// multiply a vector by the current hamiltonian and store result in another vector
-// low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// return value = reference on vectorwhere result has been stored
-
-ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination) 
-{
-  return this->LowLevelMultiply(vSource, vDestination, 0, this->Particles->GetHilbertSpaceDimension());
-}
-
-// multiply a vector by the current hamiltonian for a given range of indices 
-// and store result in another vector, low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// firstComponent = index of the first component to evaluate
-// nbrComponent = number of components to evaluate
-// return value = reference on vector where result has been stored
-
-ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-										       int firstComponent, int nbrComponent)
-{
-  int LastComponent = firstComponent + nbrComponent;
-  for (int i = firstComponent; i < LastComponent; ++i)
-    {
-      vDestination.Re(i) = 0.0;
-      vDestination.Im(i) = 0.0;
-    }
-  return this->LowLevelAddMultiply(vSource, vDestination, firstComponent, nbrComponent);
 }
 
 // multiply a vector by the current hamiltonian for a given range of indices 

@@ -37,6 +37,7 @@
 #include "Matrix/RealAntisymmetricMatrix.h"
 #include "MathTools/Complex.h"
 #include "Output/MathematicaOutput.h"
+#include "GeneralTools/StringTools.h"
 #include "MathTools/FactorialCoefficient.h"
 #include "MathTools/ClebschGordanCoefficients.h"
 #include "MathTools/IntegerAlgebraTools.h"
@@ -136,16 +137,7 @@ ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::ParticleOnTorusCoulom
       if (memory > 0)
 	{
 	  int TmpMemory = this->FastMultiplicationMemory(memory);
-	  if (TmpMemory < 1024)
-	    cout  << "fast = " <<  TmpMemory << "b ";
-	  else
-	    if (TmpMemory < (1 << 20))
-	      cout  << "fast = " << (TmpMemory >> 10) << "kb ";
-	    else
-	      if (TmpMemory < (1 << 30))
-		cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
-	      else
-		cout  << "fast = " << (TmpMemory >> 30) << "Gb ";
+	  PrintMemorySize(cout,TmpMemory);
 	  if (memory > 0)
 	    {
 	      this->EnableFastMultiplication();
