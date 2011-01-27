@@ -377,6 +377,23 @@ double* MultiColumnASCIIFile::GetAsDoubleArray (int column)
   return TmpColumn;
 }
 
+// get a column converting it to complex
+//
+// column = column index
+// return value = reference on the array where the read values have to be stored (allocation is done by the method itself, de-allocation has to be done by hand)
+
+Complex* MultiColumnASCIIFile::GetAsComplexArray (int column)
+{
+  Complex* TmpColumn = new Complex [this->NbrLines];
+  char** TmpASCIIColumn = this->Data[column];
+  char* TmpError;
+  for (int i = 0; i < this->NbrLines; ++i)
+    {
+      TmpColumn[i] = StrToComplex(TmpASCIIColumn[i]);
+    } 
+  return TmpColumn;
+}
+
 // get a line converting it to integer
 //
 // line = line index

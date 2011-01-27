@@ -36,6 +36,8 @@
 
 #include <math.h>
 #include <iostream>
+#include <cstring>
+#include <cstdlib>
 
 
 #ifndef COMPLEX_H
@@ -175,6 +177,12 @@ public:
   // z = complex value to print
   // return value = reference on current output stream 
   friend ostream& operator << (ostream& Str, const Complex& z);
+
+  // convert a string to comples
+  // 
+  // str = input string
+  // return value = complex value
+  friend Complex StrToComplex(char* str);
 
 #ifdef USE_OUTPUT
   // Mathematica Output Stream overload
@@ -646,6 +654,37 @@ inline ostream& operator << (ostream& Str, const Complex& z)
 {
   Str << "(" << z.Re << "," << z.Im << ")";
   return Str;
+}
+
+// convert a string to comples
+// 
+// str = input string
+// return value = complex value
+
+inline Complex StrToComplex(char* str)
+{
+  char* TmpError;
+  Complex Tmp;
+  if (str[0] == '(')
+    {
+      ++str;
+      Tmp.Re = strtod(str, &TmpError);      
+      str = strstr (str, ",");
+      if (str != 0)
+	{
+	  ++str;
+	  Tmp.Im = strtod(str, &TmpError);      
+	}
+      else
+	{
+	  Tmp.Re = 0.0;
+	}
+    }
+  else
+    {
+      Tmp = strtod(str, &TmpError);      
+    } 
+  return Tmp; 
 }
 
 #ifdef  USE_OUTPUT

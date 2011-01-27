@@ -91,7 +91,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "force-ysymmetry", "assume the wave function is invariant under the y <->-y symmetry");  
 
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
-
+  (*PrecalculationGroup) += new SingleStringOption  ('\n', "use-precomputed", "use precomputed matrix elements to do the plot");
   (*PlotOptionGroup) += new SingleStringOption ('\n', "output", "output file name (default output name replace the .vec extension of the input file with .rho.dat)", 0);
   (*PlotOptionGroup) += new SingleIntegerOption ('\n', "nbr-samples", "number of samples in radial direction", 1000, true, 10);
 
@@ -283,99 +283,164 @@ int main(int argc, char** argv)
       
       double Scale = 2.0 * sqrt((double) TotalLz);
       ComplexMatrix PrecalculatedValues(ForceMaxMomentum + 1, ForceMaxMomentum + 1, true);
-	  
+      ComplexMatrix** RawPrecalculatedValues = new ComplexMatrix*[InputVectors.GetNbrLines()];
       for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
 	{
-	  ParticleOnSphere* LeftSpace = 0;
-	  RealVector LeftState;
-	  int LeftTotalLz = 0;
-	  if ((InputVectors.GetNbrColumns() <= 2) || (strcmp ("none", InputVectors(2, i)) == 0))
+	  RawPrecalculatedValues[i] = new ComplexMatrix[InputVectors.GetNbrLines()];
+	  for (int j = i; j < InputVectors.GetNbrLines(); ++j)
+	    RawPrecalculatedValues[i][j] = ComplexMatrix(ForceMaxMomentum + 1, ForceMaxMomentum + 1, true);
+	}
+
+      if (Manager.GetString("use-precomputed") == 0)
+	{	  
+	  for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
 	    {
-	      if (FQHEDiskDensityGetHilbertSpace(InputVectors(0, i), NbrParticles, ForceMaxMomentum, LeftTotalLz, Statistics, 
-						 LeftSpace, LeftState) == false)
-		return -1;
-	    }
-	  else
-	    {
-	      if ((InputVectors.GetNbrColumns() <= 3) || (strcmp ("none", InputVectors(3, i)) == 0))
+	      ParticleOnSphere* LeftSpace = 0;
+	      RealVector LeftState;
+	      int LeftTotalLz = 0;
+	      if ((InputVectors.GetNbrColumns() <= 2) || (strcmp ("none", InputVectors(2, i)) == 0))
 		{
 		  if (FQHEDiskDensityGetHilbertSpace(InputVectors(0, i), NbrParticles, ForceMaxMomentum, LeftTotalLz, Statistics, 
-						     LeftSpace, LeftState, InputVectors(2, i)) == false)
+						     LeftSpace, LeftState) == false)
 		    return -1;
 		}
 	      else
 		{
-		  if (FQHEDiskDensityGetHilbertSpace(InputVectors(0, i), NbrParticles, ForceMaxMomentum, LeftTotalLz, Statistics, 
-						     LeftSpace, LeftState, InputVectors(2, i), InputVectors(3, i)) == false)
-		    return -1;
-		}
-	    }
-	  for (int m = 0; m <= ForceMaxMomentum; ++m)
-	    {
-	      ParticleOnSphereDensityOperator Operator (LeftSpace, m);
-	      OperatorMatrixElementOperation Operation(&Operator, LeftState, LeftState);
-	      Operation.ApplyOperation(Architecture.GetArchitecture());
-	      Complex Tmp = Operation.GetScalar();
-	      Tmp *= (Coefficients[i] * Coefficients[i]);
-	      PrecalculatedValues.AddToMatrixElement(m, m, Tmp);
-	    }
-	  for (int j = i + 1; j < InputVectors.GetNbrLines(); ++j)
-	    {
-	      ParticleOnSphere* RightSpace = 0;
-	      RealVector RightState;
-	      int RightTotalLz = 0;
-	      if ((InputVectors.GetNbrColumns() <= 2) || (strcmp ("none", InputVectors(2, j)) == 0))
-		{
-		  if (FQHEDiskDensityGetHilbertSpace(InputVectors(0, j), NbrParticles, ForceMaxMomentum, RightTotalLz, Statistics, 
-						     RightSpace, RightState) == false)
-		    return -1;
-		}
-	      else
-		{
-		  if ((InputVectors.GetNbrColumns() <= 3) || (strcmp ("none", InputVectors(3, j)) == 0))
+		  if ((InputVectors.GetNbrColumns() <= 3) || (strcmp ("none", InputVectors(3, i)) == 0))
 		    {
-		      if (FQHEDiskDensityGetHilbertSpace(InputVectors(0, j), NbrParticles, ForceMaxMomentum, RightTotalLz, Statistics, 
-							 RightSpace, RightState, InputVectors(2, j)) == false)
+		      if (FQHEDiskDensityGetHilbertSpace(InputVectors(0, i), NbrParticles, ForceMaxMomentum, LeftTotalLz, Statistics, 
+							 LeftSpace, LeftState, InputVectors(2, i)) == false)
 			return -1;
 		    }
 		  else
 		    {
-		      if (FQHEDiskDensityGetHilbertSpace(InputVectors(0, j), NbrParticles, ForceMaxMomentum, RightTotalLz, Statistics, 
-							 RightSpace, RightState, InputVectors(2, j), InputVectors(3, j)) == false)
+		      if (FQHEDiskDensityGetHilbertSpace(InputVectors(0, i), NbrParticles, ForceMaxMomentum, LeftTotalLz, Statistics, 
+							 LeftSpace, LeftState, InputVectors(2, i), InputVectors(3, i)) == false)
 			return -1;
 		    }
 		}
 	      for (int m = 0; m <= ForceMaxMomentum; ++m)
 		{
-		  for (int n = 0; n <= ForceMaxMomentum; ++n)
+		  ParticleOnSphereDensityOperator Operator (LeftSpace, m);
+		  OperatorMatrixElementOperation Operation(&Operator, LeftState, LeftState);
+		  Operation.ApplyOperation(Architecture.GetArchitecture());
+		  Complex Tmp = Operation.GetScalar();
+		  RawPrecalculatedValues[i][i].AddToMatrixElement(m, m, Tmp);
+		  Tmp *= (Coefficients[i] * Coefficients[i]);
+		  PrecalculatedValues.AddToMatrixElement(m, m, Tmp);
+		}
+	      for (int j = i + 1; j < InputVectors.GetNbrLines(); ++j)
+		{
+		  ParticleOnSphere* RightSpace = 0;
+		  RealVector RightState;
+		  int RightTotalLz = 0;
+		  if ((InputVectors.GetNbrColumns() <= 2) || (strcmp ("none", InputVectors(2, j)) == 0))
 		    {
-		      if ((RightTotalLz - n) == (LeftTotalLz - m))
+		      if (FQHEDiskDensityGetHilbertSpace(InputVectors(0, j), NbrParticles, ForceMaxMomentum, RightTotalLz, Statistics, 
+							 RightSpace, RightState) == false)
+			return -1;
+		    }
+		  else
+		    {
+		      if ((InputVectors.GetNbrColumns() <= 3) || (strcmp ("none", InputVectors(3, j)) == 0))
 			{
-			  RightSpace->SetTargetSpace(LeftSpace);
-			  ParticleOnSphereDensityOperator Operator (RightSpace, m, n);
-			  OperatorMatrixElementOperation Operation(&Operator, LeftState, RightState);
-			  Operation.ApplyOperation(Architecture.GetArchitecture());
-			  Complex Tmp = Operation.GetScalar();
- 			  Tmp *= (Coefficients[i] * Coefficients[j]);
- 			  PrecalculatedValues.AddToMatrixElement(m, n, Tmp);
- 			  PrecalculatedValues.AddToMatrixElement(n, m, Conj(Tmp));
+			  if (FQHEDiskDensityGetHilbertSpace(InputVectors(0, j), NbrParticles, ForceMaxMomentum, RightTotalLz, Statistics, 
+							     RightSpace, RightState, InputVectors(2, j)) == false)
+			return -1;
+			}
+		      else
+			{
+			  if (FQHEDiskDensityGetHilbertSpace(InputVectors(0, j), NbrParticles, ForceMaxMomentum, RightTotalLz, Statistics, 
+							     RightSpace, RightState, InputVectors(2, j), InputVectors(3, j)) == false)
+			    return -1;
+			}
+		    }
+		  for (int m = 0; m <= ForceMaxMomentum; ++m)
+		    {
+		      for (int n = 0; n <= ForceMaxMomentum; ++n)
+			{
+			  if ((RightTotalLz - n) == (LeftTotalLz - m))
+			    {
+			      RightSpace->SetTargetSpace(LeftSpace);
+			      ParticleOnSphereDensityOperator Operator (RightSpace, m, n);
+			      OperatorMatrixElementOperation Operation(&Operator, LeftState, RightState);
+			      Operation.ApplyOperation(Architecture.GetArchitecture());
+			      Complex Tmp = Operation.GetScalar();
+			      RawPrecalculatedValues[i][j].AddToMatrixElement(m, n, Tmp);
+			      Tmp *= (Coefficients[i] * Coefficients[j]);
+			      PrecalculatedValues.AddToMatrixElement(m, n, Tmp);
+			      PrecalculatedValues.AddToMatrixElement(n, m, Conj(Tmp));
+			    }
+			}
+		    }
+		  delete RightSpace;
+		}
+	    }
+	}
+      else
+	{
+	  MultiColumnASCIIFile PrecomputedElements;
+	  if (PrecomputedElements.Parse(Manager.GetString("use-precomputed")) == false)
+	    {
+	      PrecomputedElements.DumpErrors(cout) << endl;
+	      return -1;
+	    }
+	  int* StateIndexLeft = PrecomputedElements.GetAsIntegerArray(0);
+	  int* StateIndexRight = PrecomputedElements.GetAsIntegerArray(1);
+	  int* OperatorIndexLeft = PrecomputedElements.GetAsIntegerArray(2);
+	  int* OperatorIndexRight = PrecomputedElements.GetAsIntegerArray(3);	  
+	  Complex* Coefficients = PrecomputedElements.GetAsComplexArray(4);	  
+	  for (int i = 0; i < PrecomputedElements.GetNbrLines(); ++i)
+	    {
+	      RawPrecalculatedValues[StateIndexLeft[i]][StateIndexRight[i]].AddToMatrixElement(OperatorIndexLeft[i], OperatorIndexRight[i], Coefficients[i]);
+	      for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
+		{
+		  for (int m = 0; m <= ForceMaxMomentum; ++m)
+		    {
+		      Complex Tmp = RawPrecalculatedValues[i][i][m][m];
+		      Tmp *= (Coefficients[i] * Coefficients[i]);
+		      PrecalculatedValues.AddToMatrixElement(m, m, Tmp);
+		    }
+		  for (int j = i + 1; j < InputVectors.GetNbrLines(); ++j)
+		    {
+		      for (int m = 0; m <= ForceMaxMomentum; ++m)
+			{
+			  for (int n = 0; n <= ForceMaxMomentum; ++n)
+			    {
+			      Complex Tmp = RawPrecalculatedValues[i][j][m][n];
+			      Tmp *= (Coefficients[i] * Coefficients[j]);
+			      PrecalculatedValues.AddToMatrixElement(m, n, Tmp);
+			      PrecalculatedValues.AddToMatrixElement(n, m, Conj(Tmp));
+			    }
 			}
 		    }
 		}
-	      delete RightSpace;
 	    }
 	}
-      
       ofstream File;
       File.precision(14);
       if (OutputName == 0)
 	OutputName = ReplaceExtensionToFileName(Manager.GetString("input-states"), "dat", "rho.dat");
       File.open(OutputName, ios::binary | ios::out);
       File << "# density coefficients for " << Manager.GetString("input-states") << endl;
-      File << "#" << endl << "# m  n  c_{m,n}" << endl;
-       for (int i = 0; i <= ForceMaxMomentum; ++i)
- 	for (int j = 0; j <= ForceMaxMomentum; ++j)
- 	  File << "# " << i << " " << j << " " << PrecalculatedValues[i][j] << endl;
+      if (CoefficientOnlyFlag == false)
+	{
+	  File << "#" << endl << "# m  n  c_{m,n}" << endl;
+	  for (int i = 0; i <= ForceMaxMomentum; ++i)
+	    for (int j = 0; j <= ForceMaxMomentum; ++j)
+	      File << "# " << i << " " << j << " " << PrecalculatedValues[i][j] << endl;
+	}
+      else
+	{
+	  File << "#" << endl << "# state_index_left state_index_right m  n  c_{m,n}" << endl;
+	  for (int m = 0; m < InputVectors.GetNbrLines(); ++m)
+	    for (int n = m; n < InputVectors.GetNbrLines(); ++n)
+	      for (int i = 0; i <= ForceMaxMomentum; ++i)
+		for (int j = 0; j <= ForceMaxMomentum; ++j)
+		  {
+		    File << m << " " << n << " " << i << " " << j << " " << RawPrecalculatedValues[m][n][i][j] << endl;
+		  }
+	}
 
       if (CoefficientOnlyFlag == false)
 	{

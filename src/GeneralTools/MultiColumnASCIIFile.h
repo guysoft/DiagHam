@@ -33,6 +33,7 @@
 
 #include "config.h"
 #include "GeneralTools/List.h"
+#include "MathTools/Complex.h"
 
 #include <iostream>
 
@@ -123,6 +124,12 @@ class MultiColumnASCIIFile
   // column = column index
   // return value = reference on the array where the read values have to be stored (allocation is done by the method itself, de-allocation has to be done by hand)
   double* GetAsDoubleArray (int column);
+
+  // get a column converting it to complex
+  //
+  // column = column index
+  // return value = reference on the array where the read values have to be stored (allocation is done by the method itself, de-allocation has to be done by hand)
+  Complex* GetAsComplexArray (int column);
 
   // get a column converting it to rational
   //
