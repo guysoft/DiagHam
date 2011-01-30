@@ -154,6 +154,19 @@ class FermionOnSphereHaldaneBasis :  public FermionOnSphere
   // return value = converted vector
   RealVector ConvertFromNbodyBasis(RealVector& state, FermionOnSphere& nbodyBasis);
 
+  // convert a given state from Haldane basis to the usual n-body basis
+  //
+  // state = reference on the vector to convert
+  // nbodyBasis = reference on the nbody-basis to use
+  // return value = converted vector
+  LongRationalVector ConvertToNbodyBasis(LongRationalVector& state, FermionOnSphere& nbodyBasis);
+
+  // convert a given state from the usual n-body basis to the Haldane basis
+  //
+  // state = reference on the vector to convert
+  // nbodyBasis = reference on the nbody-basis to use
+  // return value = converted vector
+  LongRationalVector ConvertFromNbodyBasis(LongRationalVector& state, FermionOnSphere& nbodyBasis);
 
   // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
   //

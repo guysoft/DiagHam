@@ -259,6 +259,37 @@ RealVector BosonOnSphereHaldaneBasisShort::ConvertFromNbodyBasis(RealVector& sta
   return TmpVector;
 }
 
+// convert a given state from Haldane basis to the usual n-body basis
+//
+// state = reference on the vector to convert
+// nbodyBasis = reference on the nbody-basis to use
+// return value = converted vector
+
+LongRationalVector BosonOnSphereHaldaneBasisShort::ConvertToNbodyBasis(LongRationalVector& state, BosonOnSphereShort& nbodyBasis)
+{
+  LongRationalVector TmpVector (nbodyBasis.GetHilbertSpaceDimension(), true);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    {
+      TmpVector[nbodyBasis.FermionBasis->FindStateIndex(this->FermionBasis->StateDescription[i], this->FermionBasis->StateLzMax[i])] = state[i];
+    }
+  return TmpVector;
+}
+
+// convert a given state from the usual n-body basis to the Haldane basis
+//
+// state = reference on the vector to convert
+// nbodyBasis = reference on the nbody-basis to use
+// return value = converted vector
+
+LongRationalVector BosonOnSphereHaldaneBasisShort::ConvertFromNbodyBasis(LongRationalVector& state, BosonOnSphereShort& nbodyBasis)
+{
+  LongRationalVector TmpVector (this->HilbertSpaceDimension, true);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    TmpVector[i] = state[nbodyBasis.FermionBasis->FindStateIndex(this->FermionBasis->StateDescription[i], this->FermionBasis->StateLzMax[i])];
+  TmpVector /= TmpVector.Norm();
+  return TmpVector;
+}
+
 // create the Jack polynomial decomposition corresponding to the root partition
 //
 // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored

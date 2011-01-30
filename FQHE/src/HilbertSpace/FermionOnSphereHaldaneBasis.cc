@@ -579,6 +579,35 @@ RealVector FermionOnSphereHaldaneBasis::ConvertFromNbodyBasis(RealVector& state,
   return TmpVector;
 }
 
+// convert a gien state from Haldane basis to the usual n-body basis
+//
+// state = reference on the vector to convert
+// nbodyBasis = reference on the nbody-basis to use
+// return value = converted vector
+
+LongRationalVector FermionOnSphereHaldaneBasis::ConvertToNbodyBasis(LongRationalVector& state, FermionOnSphere& nbodyBasis)
+{
+  LongRationalVector TmpVector (nbodyBasis.GetHilbertSpaceDimension(), true);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    TmpVector[nbodyBasis.FindStateIndex(this->StateDescription[i], this->StateLzMax[i])] = state[i];
+  return TmpVector;
+}
+
+// convert a given state from the usual n-body basis to the Haldane basis
+//
+// state = reference on the vector to convert
+// nbodyBasis = reference on the nbody-basis to use
+// return value = converted vector
+
+LongRationalVector FermionOnSphereHaldaneBasis::ConvertFromNbodyBasis(LongRationalVector& state, FermionOnSphere& nbodyBasis)
+{
+  LongRationalVector TmpVector (this->HilbertSpaceDimension, true);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    TmpVector[i] = state[nbodyBasis.FindStateIndex(this->StateDescription[i], this->StateLzMax[i])];
+  TmpVector /= TmpVector.Norm();
+  return TmpVector;
+}
+
 // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
 //
 // index = index of the state on which the operator has to be applied
