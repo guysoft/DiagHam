@@ -38,40 +38,54 @@
 #include "HilbertSpace/BosonOnSphereHaldaneHugeBasisShort.h"
 
 
-class BosonOnDiskHaldaneBasisShort :  public BosonOnSphereHaldaneHugeBasisShort
+class BosonOnDiskHaldaneHugeBasisShort :  public BosonOnSphereHaldaneHugeBasisShort
 {
 
 
  public:
 
+  // default constructor
+  //
+  BosonOnDiskHaldaneHugeBasisShort();
+
   // basic constructor
   // 
   // nbrBosons = number of bosons
   // totalLz = momentum total value
-  // lzMax = maximum angular momentum that a single particle can reach
+  // lzMax = maximum Lz value reached by a boson
+  // maxFileSize = maximum file size (in MBytes)
   // referenceState = array that describes the reference state to start from
-  BosonOnDiskHaldaneBasisShort (int nbrBosons, int totalLz, int lzMax, int* referenceState);
+  // memory = amount of memory granted for precalculations
+  // referenceState = array that describes the reference state to start from
+  // symmetricFlag = indicate if a symmetric basis has to be used (only available if totalLz = 0)
+  // fullDimension = provide the full (i.e. without squeezing) Hilbert space dimension (0 if it has to be computed)
+  BosonOnDiskHaldaneHugeBasisShort (int nbrBosons, int totalLz, int lzMax, unsigned long maxFileSize, int* referenceState, unsigned long memory, bool symmetricFlag, long fullDimension);
 
   // constructor from a binary file that describes the Hilbert space
   //
   // fileName = name of the binary file
-  // memory = amount of memory granted for precalculations
-  BosonOnDiskHaldaneBasisShort (char* fileName);
+  // memoryHilbert = amount of memory granted to store the Hilbert space (in Mbytes)
+  BosonOnDiskHaldaneHugeBasisShort (char* fileName, unsigned long memoryHilbert);
 
   // copy constructor (without duplicating datas)
   //
   // bosons = reference on the hilbert space to copy to copy
-  BosonOnDiskHaldaneBasisShort(const BosonOnDiskHaldaneBasisShort& bosons);
+  BosonOnDiskHaldaneHugeBasisShort(const BosonOnDiskHaldaneHugeBasisShort& bosons);
 
   // destructor
   //
-  ~BosonOnDiskHaldaneBasisShort ();
+  ~BosonOnDiskHaldaneHugeBasisShort ();
 
   // assignement (without duplicating datas)
   //
   // bosons = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space
-  BosonOnDiskHaldaneBasisShort& operator = (const BosonOnDiskHaldaneBasisShort& bosons);
+  BosonOnDiskHaldaneHugeBasisShort& operator = (const BosonOnDiskHaldaneHugeBasisShort& bosons);
+
+  // clone Hilbert space (without duplicating datas)
+  //
+  // return value = pointer to cloned Hilbert space
+  AbstractHilbertSpace* Clone();
 
   // convert a state such that its components are now expressed in the unnormalized basis
   //
@@ -88,26 +102,6 @@ class BosonOnDiskHaldaneBasisShort :  public BosonOnSphereHaldaneHugeBasisShort
   // symmetryFactor = if true also add the symmetry factors
   // return value = converted state
   virtual RealVector& ConvertFromUnnormalizedMonomial(RealVector& state, long reference = 0, bool symmetryFactor = true);
-
-  // convert a state such that its components are now expressed in the normalized basis, shifting all orbitals
-  //
-  // state = reference to the state to convert
-  // shift = shift to apply to each orbitals
-  // reference = set which component has been normalized to 1
-  // return value = converted state
-  virtual RealVector& ShiftedConvertFromUnnormalizedMonomial(RealVector& state, int shift, long reference = 0);
-
- protected:
-
-  // core part of the convertion of a state such that its components are now expressed in the normalized basis
-  //
-  // state = reference to the state to convert
-  // sqrtCoefficients = array that contains the normalization coefficients
-  // invSqrtCoefficients = array that contains the inverts of the normalization coefficients
-  // reference = set which component has been normalized to 1
-  // symmetryFactor = if true also add the symmetry factors
-  // return value = converted state
-  virtual RealVector& ConvertFromUnnormalizedMonomialCore(RealVector& state, double* sqrtCoefficients, double* invSqrtCoefficients, long reference, bool symmetryFactor);
 
 };
 

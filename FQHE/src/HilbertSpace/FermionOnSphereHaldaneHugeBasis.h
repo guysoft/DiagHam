@@ -47,6 +47,7 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
 {
 
   friend class BosonOnSphereHaldaneHugeBasisShort;
+  friend class BosonOnDiskHaldaneHugeBasisShort;
   friend class FQHESphereJackGeneratorOperation;
 
  protected:

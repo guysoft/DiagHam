@@ -7,6 +7,7 @@
 #include "HilbertSpace/ParticleOnSphere.h"
 #include "HilbertSpace/FermionOnDiskHaldaneBasis.h"
 #include "HilbertSpace/BosonOnDiskHaldaneBasisShort.h"
+#include "HilbertSpace/BosonOnDiskHaldaneHugeBasisShort.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -52,9 +53,11 @@ using std::ofstream;
 // state = reference on the state vector
 // referenceFile = name of reference file for the squeezed Hilbert space (0 if non squeezed basis)
 // loadHilbert = name of the file where the Hilbert space is stored (0 if none) 
+// hugeMode = flag for huge basis mode
+// hugeMemory = amount of memory in huge mode
 // return value = true if no error occured
 bool FQHEDiskDensityGetHilbertSpace(char* inputState, int& nbrParticles, int& forceMaxMomentum, int& totalLz, bool& statistics, 
-				    ParticleOnSphere*& space, RealVector& state, char* referenceFile = 0, char* loadHilbert = 0);
+				    ParticleOnSphere*& space, RealVector& state, char* referenceFile = 0, char* loadHilbert = 0, bool hugeMode = false, long hugeMemory = 0l);
 
 
 int main(int argc, char** argv)
@@ -89,6 +92,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "density-profil", "only compute the density profil along x");  
   (*SystemGroup) += new BooleanOption ('\n', "force-xsymmetry", "assume the wave function is invariant under the x <->-x symmetry");  
   (*SystemGroup) += new BooleanOption ('\n', "force-ysymmetry", "assume the wave function is invariant under the y <->-y symmetry");  
+  (*SystemGroup) += new BooleanOption  ('\n', "huge-basis", "use huge Hilbert space support");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
 
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "use-precomputed", "use precomputed matrix elements to do the plot");
@@ -490,10 +495,12 @@ int main(int argc, char** argv)
 // state = reference on the state vector
 // referenceFile = name of reference file for the squeezed Hilbert space (0 if non squeezed basis)
 // loadHilbert = name of the file where the Hilbert space is stored (0 if none) 
+// hugeMode = flag for huge basis mode
+// hugeMemory = amount of memory in huge mode
 // return value = true if no error occured
 
 bool FQHEDiskDensityGetHilbertSpace(char* inputState, int& nbrParticles, int& forceMaxMomentum, int& totalLz, bool& statistics, 
-				    ParticleOnSphere*& space, RealVector& state, char* referenceFile, char* loadHilbert)
+				    ParticleOnSphere*& space, RealVector& state, char* referenceFile, char* loadHilbert, bool hugeMode, long hugeMemory)
 {
   if (FQHEOnDiskFindSystemInfoFromFileName(inputState, nbrParticles, forceMaxMomentum, totalLz, statistics) == false)
     {
@@ -587,18 +594,30 @@ bool FQHEDiskDensityGetHilbertSpace(char* inputState, int& nbrParticles, int& fo
 #endif
 
 	      {	  
-		if (loadHilbert == 0)
-		  space = new BosonOnDiskHaldaneBasisShort(nbrParticles, totalLz, forceMaxMomentum, ReferenceState);
+		if (hugeMode == true)
+		  {
+		    if (loadHilbert == 0)
+		      {
+			cout << "error : huge basis mode requires to save and load the Hilbert space" << endl;
+			return false;
+		      }
+		    space = new BosonOnDiskHaldaneHugeBasisShort (loadHilbert, hugeMemory);
+		  }
 		else
-		  space = new BosonOnDiskHaldaneBasisShort(loadHilbert);
+		  {
+		    if (loadHilbert == 0)
+		      space = new BosonOnDiskHaldaneBasisShort(nbrParticles, totalLz, forceMaxMomentum, ReferenceState);
+		    else
+		      space = new BosonOnDiskHaldaneBasisShort(loadHilbert);
+		  }
 	      }
 	}
     }
 
 
-  if (space->GetHilbertSpaceDimension() != state.GetVectorDimension())
+  if (space->GetLargeHilbertSpaceDimension() != state.GetLargeVectorDimension())
     {
-      cout << "dimension mismatch between the state (" << state.GetVectorDimension() << ") and the Hilbert space (" << space->GetHilbertSpaceDimension() << ")" << endl;
+      cout << "dimension mismatch between the state (" << state.GetLargeVectorDimension() << ") and the Hilbert space (" << space->GetLargeHilbertSpaceDimension() << ")" << endl;
       return false;
     }
   return true;

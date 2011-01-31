@@ -4,6 +4,7 @@
 #include "HilbertSpace/FermionOnDiskHaldaneBasis.h"
 #include "HilbertSpace/BosonOnDiskShort.h"
 #include "HilbertSpace/BosonOnDiskHaldaneBasisShort.h"
+#include "HilbertSpace/BosonOnDiskHaldaneHugeBasisShort.h"
 
 #include "Options/Options.h"
 
@@ -42,6 +43,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('i', "input-state", "file that describes states to fuse");
   (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state of the output state");
+  (*SystemGroup) += new BooleanOption  ('\n', "huge-basis", "use huge Hilbert space support");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "normalization", "indicates which component should be set to one", 0l);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "shift-orbitals", "shift the angular momentum of all orbitals", 0);
@@ -148,10 +150,22 @@ int main(int argc, char** argv)
 	  int* ReferenceState = 0;
 	  if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, TmpMaxMomentum, ReferenceState) == false)
 	    return -1;
- 	  if (Manager.GetString("load-hilbert") != 0)
- 	    OutputBasis = new BosonOnDiskHaldaneBasisShort(Manager.GetString("load-hilbert"));	  
- 	  else
-	    OutputBasis = new BosonOnDiskHaldaneBasisShort(NbrParticles, TotalLz, TmpMaxMomentum, ReferenceState);	  
+	  if (Manager.GetBoolean("huge-basis") == true)
+	    {
+	      if (Manager.GetString("load-hilbert") == 0)
+		{
+		  cout << "error : huge basis mode requires to save and load the Hilbert space" << endl;
+		  return -1;
+		}
+	      OutputBasis = new BosonOnDiskHaldaneHugeBasisShort (Manager.GetString("load-hilbert"), Manager.GetInteger("memory"));
+	    }
+	  else
+	    {
+	      if (Manager.GetString("load-hilbert") != 0)
+		OutputBasis = new BosonOnDiskHaldaneBasisShort(Manager.GetString("load-hilbert"));	  
+	      else
+		OutputBasis = new BosonOnDiskHaldaneBasisShort(NbrParticles, TotalLz, TmpMaxMomentum, ReferenceState);	  
+	    }
 	}
     }
 

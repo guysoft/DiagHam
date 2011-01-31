@@ -62,7 +62,7 @@ using std::ios;
 // default constructor
 //
 
-BosonOnDiskHaldaneHugeBasisShort::BosonOnDiskHaldaneHugeBasisShort ()
+BosonOnDiskHaldaneHugeBasisShort::BosonOnDiskHaldaneHugeBasisShort()
 {
 }
 
@@ -146,40 +146,6 @@ BosonOnDiskHaldaneHugeBasisShort::BosonOnDiskHaldaneHugeBasisShort (char* fileNa
   double Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
     ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);
   cout << "Hilbert space factorization done in " << Dt << "s" <<endl;
- 
-//  gettimeofday (&(TotalStartingTime), 0);
-
-//   ifstream FileHilbert;
-//   FileHilbert.open(this->FermionHugeBasis->HilbertSpaceFileName, ios::binary | ios::in);
-//   FileHilbert.seekg (this->FermionHugeBasis->FileHeaderSize, ios::beg);
-//   unsigned long CurrentPartition;
-//   for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
-//     {
-//       ReadLittleEndian(FileHilbert, CurrentPartition);
-//       if (i != this->FermionHugeBasis->FindStateIndexFactorized(CurrentPartition))
-// //      if (CurrentPartition != this->FermionHugeBasis->GetStateFactorized(i))
-// 	cout << i << " " << this->FermionHugeBasis->FindStateIndexFactorized(CurrentPartition) << " " << hex << CurrentPartition << " " << this->FermionHugeBasis->GetStateFactorized(i) << dec << endl;
-//     }
-//   FileHilbert.close();
-
-//   long Test = 5;
-//   long TmpShift = 470;
-//   long TmpStep = 5;
-//   unsigned long* TmpStateArray = new unsigned long [Test];
-//   long* TmpIndexArray = new long[Test];
-//   for (long i = 0; i < Test; ++i)
-//     TmpStateArray[i] = this->FermionHugeBasis->GetStateFactorized((i * TmpStep) + TmpShift);
-//   this->FermionHugeBasis->FindMultipleStateIndexFactorized(TmpStateArray, Test, TmpIndexArray);
-//   for (long i = 0; i < Test; ++i)
-//     if (((i * TmpStep) + TmpShift) != TmpIndexArray[i])
-//       cout << ((i * TmpStep) + TmpShift) << " : " << TmpIndexArray[i] << " " << endl;
- 
-//   gettimeofday (&(TotalEndingTime), 0);
-//   Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
-//     ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);
-//   cout << "Hilbert space consistency check done in " << Dt << "s" <<endl;
-//  exit(0) ;
-
   this->NbrBosons = this->FermionHugeBasis->NbrFermions;
   this->IncNbrBosons = this->NbrBosons + 1;
   this->TotalLz = this->FermionHugeBasis->TotalLz;
@@ -305,7 +271,7 @@ AbstractHilbertSpace* BosonOnDiskHaldaneHugeBasisShort::Clone()
 // symmetryFactor = if true also remove the symmetry factors
 // return value = converted state
 
-RealVector& BosonOnSphereHaldaneHugeBasisShort::ConvertToUnnormalizedMonomial(RealVector& state, long reference, bool symmetryFactor)
+RealVector& BosonOnDiskHaldaneHugeBasisShort::ConvertToUnnormalizedMonomial(RealVector& state, long reference, bool symmetryFactor)
 {
   double Factor = 1.0 / state[reference];
   state[reference] = 1.0;
@@ -324,10 +290,11 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::ConvertToUnnormalizedMonomial(Re
   this->ConvertToMonomial(TmpState, TmpLzMax, this->TemporaryMonomial2);
   double* SqrtCoefficients = new double [this->LzMax + 1];
   double* InvSqrtCoefficients = new double [this->LzMax + 1];
-  BinomialCoefficients Binomials(this->LzMax);
-  for (int k = 0; k <= this->LzMax; ++k)
+  SqrtCoefficients[0] = 1.0;
+  InvSqrtCoefficients[0] = 1.0;
+  for (int k = 1; k <= this->LzMax; ++k)
     {
-      SqrtCoefficients[k] = sqrt(Binomials.GetNumericalCoefficient(this->LzMax, k));
+      SqrtCoefficients[k] = sqrt((double) k) * SqrtCoefficients[k - 1];
       InvSqrtCoefficients[k] = 1.0 / SqrtCoefficients[k];
     }
   FactorialCoefficient ReferenceFactorial;
@@ -409,7 +376,7 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::ConvertToUnnormalizedMonomial(Re
 // symmetryFactor = if true also add the symmetry factors
 // return value = converted state
 
-RealVector& BosonOnSphereHaldaneHugeBasisShort::ConvertFromUnnormalizedMonomial(RealVector& state, long reference, bool symmetryFactor)
+RealVector& BosonOnDiskHaldaneHugeBasisShort::ConvertFromUnnormalizedMonomial(RealVector& state, long reference, bool symmetryFactor)
 {
   double Factor = 1.0;
   int TmpLzMax = this->FermionHugeBasis->LzMax;
@@ -427,11 +394,12 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::ConvertFromUnnormalizedMonomial(
    this->ConvertToMonomial(TmpState, TmpLzMax, this->TemporaryMonomial2);
   double* SqrtCoefficients = new double [this->LzMax + 1];
   double* InvSqrtCoefficients = new double [this->LzMax + 1];
-  BinomialCoefficients Binomials(this->LzMax);
-  for (int k = 0; k <= this->LzMax; ++k)
+  SqrtCoefficients[0] = 1.0;
+  InvSqrtCoefficients[0] = 1.0;
+  for (int k = 1; k <= this->LzMax; ++k)
     {
-      InvSqrtCoefficients[k] = sqrt(Binomials.GetNumericalCoefficient(this->LzMax, k));
-      SqrtCoefficients[k] = 1.0 / InvSqrtCoefficients[k];
+      SqrtCoefficients[k] = sqrt((double) k) * SqrtCoefficients[k - 1];
+      InvSqrtCoefficients[k] = 1.0 / SqrtCoefficients[k];
     }
   FactorialCoefficient ReferenceFactorial;
   FactorialCoefficient Factorial;
