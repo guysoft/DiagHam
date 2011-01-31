@@ -267,20 +267,38 @@ int main(int argc, char** argv)
   else
     RationalOutputState = LongRationalVector (OutputBasis->GetLargeHilbertSpaceDimension(),true);
   
-  RealVector OutputTmpState;
+  RealVector TmpOutputState;
   LongRationalVector RationalTmpOutputState;
+  RealVector TmpOutputState2;
+  LongRationalVector RationalTmpOutputState2;
 
-  if (Manager.GetBoolean("add") == true)
+  if ((Manager.GetBoolean("add") == true) || (Manager.GetString("multiple-add") != 0))
     {
       if (Manager.GetBoolean("rational") == false)
-	OutputTmpState = RealVector (OutputBasis->GetLargeHilbertSpaceDimension(), true);
+	{
+	  TmpOutputState = RealVector (OutputBasis->GetLargeHilbertSpaceDimension(), true);
+	}
       else
-	RationalTmpOutputState = LongRationalVector (OutputBasis->GetLargeHilbertSpaceDimension(),true);
+	{
+	  RationalTmpOutputState = LongRationalVector (OutputBasis->GetLargeHilbertSpaceDimension(),true);
+	}
     }
+  if (Manager.GetString("multiple-add") != 0)
+    {
+      if (Manager.GetBoolean("rational") == false)
+	{
+	  TmpOutputState2 = RealVector (OutputBasis->GetLargeHilbertSpaceDimension(), true);
+	}
+      else
+	{
+	  RationalTmpOutputState2 = LongRationalVector (OutputBasis->GetLargeHilbertSpaceDimension(),true);
+	}
+    }
+
 
   if (Manager.GetString("input-states") != 0)
     {
-      if (FQHEShereFuseStateCore(Manager.GetString("input-states"), OutputBasis, OutputState, RationalOutputState, OutputTmpState, RationalTmpOutputState, Manager.GetBoolean("rational"), Manager.GetBoolean("add"), SymmetrizedBasis, Padding) != 0)
+      if (FQHEShereFuseStateCore(Manager.GetString("input-states"), OutputBasis, OutputState, RationalOutputState, TmpOutputState, RationalTmpOutputState, Manager.GetBoolean("rational"), Manager.GetBoolean("add"), SymmetrizedBasis, Padding) != 0)
 	return -1;  
     }
   else
@@ -293,8 +311,47 @@ int main(int argc, char** argv)
 	}
       for (int i = 0; i < MultipleAddFiles.GetNbrLines(); ++i)
 	{
-	  if (FQHEShereFuseStateCore(MultipleAddFiles(0, i), OutputBasis, OutputState, RationalOutputState, OutputTmpState, RationalTmpOutputState, Manager.GetBoolean("rational"), Manager.GetBoolean("add"), SymmetrizedBasis, Padding) != 0)
-	    return -1;  	  
+	  if (MultipleAddFiles.GetNbrColumns() == 1)
+	    {
+	      if (FQHEShereFuseStateCore(MultipleAddFiles(0, i), OutputBasis, TmpOutputState, RationalTmpOutputState, TmpOutputState2, RationalTmpOutputState2, Manager.GetBoolean("rational"), Manager.GetBoolean("add"), SymmetrizedBasis, Padding) != 0)
+		return -1;  	  
+	    }
+	  else
+	    {
+	      if (strcmp(MultipleAddFiles(1, i), "add") == 0)
+		{
+		  if (FQHEShereFuseStateCore(MultipleAddFiles(0, i), OutputBasis, TmpOutputState, RationalTmpOutputState, TmpOutputState2, RationalTmpOutputState2, Manager.GetBoolean("rational"), true, SymmetrizedBasis, Padding) != 0)
+		    return -1;  	  
+		}
+	      else
+		{
+		  if (FQHEShereFuseStateCore(MultipleAddFiles(0, i), OutputBasis, TmpOutputState, RationalTmpOutputState, TmpOutputState2, RationalTmpOutputState2, Manager.GetBoolean("rational"), false, SymmetrizedBasis, Padding) != 0)
+		    return -1;  	  
+		}	      
+
+	    }
+	  if (Manager.GetBoolean("rational") == false)
+	    {
+	      for (long j = 0; j < TmpOutputState.GetLargeVectorDimension(); ++j)
+		{
+		  if (TmpOutputState[j] != 0.0)
+		    {
+		      OutputState[j] = TmpOutputState[j];
+		    }
+		}
+	      TmpOutputState.ClearVector();
+	    }
+	  else
+	    {
+	      for (long j = 0; j < RationalTmpOutputState.GetLargeVectorDimension(); ++j)
+		{
+		  if (RationalTmpOutputState[j] != 0l)
+		    {
+		      RationalOutputState[j] = RationalTmpOutputState[j];
+		    }
+		}
+	      RationalTmpOutputState.ClearVector();
+	    }	      
 	}
     }
 

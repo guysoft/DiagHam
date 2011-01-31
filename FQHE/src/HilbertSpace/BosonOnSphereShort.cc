@@ -2970,6 +2970,8 @@ RealVector& BosonOnSphereShort::FuseStates (RealVector& outputVector, RealVector
 	{
 	  LeftSpace->FermionToBoson(LeftSpace->FermionBasis->StateDescription[i], LeftSpace->FermionBasis->StateLzMax[i], LeftSpace->TemporaryState, LeftSpace->TemporaryStateLzMax);	  
 	  this->TemporaryStateLzMax = LeftSpace->TemporaryStateLzMax + StateShift;
+	  if (this->TemporaryStateLzMax > this->LzMax)
+	    this->TemporaryStateLzMax = this->LzMax;
 	  double Coefficient = coefficient * leftVector[i];
 	  if (symmetrizedFlag == false)
 	    {
@@ -3110,10 +3112,13 @@ LongRationalVector& BosonOnSphereShort::FuseStates (LongRationalVector& outputVe
   else
     {
       int StateShift = RightSpace->LzMax + padding + 1;
+      cout << "StateShift=" << StateShift << endl;
       for (long i = 0; i <  LeftSpace->LargeHilbertSpaceDimension; ++i)
 	{
 	  LeftSpace->FermionToBoson(LeftSpace->FermionBasis->StateDescription[i], LeftSpace->FermionBasis->StateLzMax[i], LeftSpace->TemporaryState, LeftSpace->TemporaryStateLzMax);	  
 	  this->TemporaryStateLzMax = LeftSpace->TemporaryStateLzMax + StateShift;
+	  if (this->TemporaryStateLzMax > this->LzMax)
+	    this->TemporaryStateLzMax = this->LzMax;
 	  LongRational Coefficient = coefficient * leftVector[i];
 	  if (symmetrizedFlag == false)
 	    {
@@ -3135,7 +3140,22 @@ LongRationalVector& BosonOnSphereShort::FuseStates (LongRationalVector& outputVe
 		  int TmpIndex = this->FermionBasis->FindStateIndex(TmpState2, TmpLzMax);
 		  if (TmpIndex == this->HilbertSpaceDimension)
 		    {
-		      cout << "error while merging components " << i << " and " << j << endl;
+		      cout << "error while merging components " << i << " ( ";
+		      for (int k = 0; k <= LeftSpace->TemporaryStateLzMax; ++k)
+			cout << LeftSpace->TemporaryState[k] << " ";
+		      for (int k =  LeftSpace->TemporaryStateLzMax + 1; k <= LeftSpace->LzMax; ++k)
+			cout << "0 ";
+		      cout << ") and " << j << " ( ";
+		      for (int k = 0; k <= RightSpace->TemporaryStateLzMax; ++k)
+			cout << RightSpace->TemporaryState[k] << " ";
+		      for (int k = RightSpace->TemporaryStateLzMax + 1; k <= RightSpace->LzMax; ++k)
+			cout << "0 ";
+		      cout << "), merge = ( ";
+		      for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
+			cout << this->TemporaryState[k] << " ";
+		      for (int k = this->TemporaryStateLzMax + 1; k <= this->LzMax; ++k)
+			cout << "0 ";
+		      cout << ")" << endl;
 		    }
 		  outputVector[TmpIndex] = Coefficient2;
 		}
@@ -3160,7 +3180,16 @@ LongRationalVector& BosonOnSphereShort::FuseStates (LongRationalVector& outputVe
 		  int TmpIndex = this->FermionBasis->FindStateIndex(TmpState2, TmpLzMax);
 		  if (TmpIndex == this->HilbertSpaceDimension)
 		    {
-		      cout << "error while merging components " << i << " and " << j << endl;
+		      cout << "error while merging components " << i << " ( ";
+		      for (int k = 0; k <= RightSpace->TemporaryStateLzMax; ++k)
+			cout << RightSpace->TemporaryState[k] << " ";
+		      cout << ") and " << j << " ( ";
+		      for (int k = 0; k <= LeftSpace->TemporaryStateLzMax; ++k)
+			cout << LeftSpace->TemporaryState[k] << " ";
+		      cout << "), merge = ( ";
+		      for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
+			cout << this->TemporaryState[k] << " ";
+		      cout << ")" << endl;
 		    }
 		  outputVector[TmpIndex] = Coefficient2;
 		  unsigned long TmpState3 = this->FermionBasis->GetSymmetricState(TmpState2);
