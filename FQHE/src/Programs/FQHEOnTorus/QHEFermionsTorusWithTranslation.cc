@@ -337,14 +337,13 @@ int main(int argc, char** argv)
       cout << " Ratio = " << XRatio << endl;
       //	FermionOnTorus TotalSpace (NbrFermions, MaxMomentum, y);
       FermionOnTorusWithMagneticTranslations *TotalSpace = new FermionOnTorusWithMagneticTranslations(NbrFermions, MaxMomentum, XMomentum, YMomentum);
-      // cout << " Total Hilbert space dimension = " << TotalSpace.GetHilbertSpaceDimension() << endl;
-      // cout << "momentum = " << Momentum << endl;
-      // cout << "momentum = (" << XMomentum << "," << YMomentum << ")" << endl;
+      //cout << " Total Hilbert space dimension = " << TotalSpace->GetHilbertSpaceDimension() << endl;
+      //cout << "momentum = (" << XMomentum << "," << YMomentum << ")" << endl;
       Architecture.GetArchitecture()->SetDimension(TotalSpace->GetHilbertSpaceDimension());
-      
+
       AbstractQHEHamiltonian* Hamiltonian = new ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian (TotalSpace, 
 													   NbrFermions, MaxMomentum, XMomentum, XRatio, HaveCoulomb, LandauLevel, NbrPseudopotentials, Pseudopotentials, 
-													Architecture.GetArchitecture(), 
+													   Architecture.GetArchitecture(), 
 													   Memory, LoadPrecalculationFile);
       
       char* EigenvectorName = 0;

@@ -120,7 +120,7 @@ bool QHEParticlePrecalculationOperation::ArchitectureDependentApplyOperation(SMP
       SegmentIndices[0]=this->FirstComponent;
       for (int i=0; i<TmpNbrThreads; ++i)
 	SegmentIndices[i]=this->FirstComponent+i*Step;
-      SegmentIndices[TmpNbrThreads]=this->FirstComponent+this->NbrComponent+1;
+      SegmentIndices[TmpNbrThreads]=this->FirstComponent+this->NbrComponent;
     }
   QHEParticlePrecalculationOperation** TmpOperations = new QHEParticlePrecalculationOperation* [architecture->GetNbrThreads()];
   for (int i = 0; i < TmpNbrThreads; ++i)

@@ -38,6 +38,7 @@
 #include "Matrix/Matrix.h"
 #include "MathTools/IntegerAlgebraTools.h"
 #include "GeneralTools/ArrayTools.h"
+#include "GeneralTools/UnsignedIntegerTools.h"
 
 #include <math.h>
 #include <limits.h>
@@ -432,8 +433,19 @@ unsigned long FermionOnTorusWithMagneticTranslations::FindCanonicalForm(unsigned
   nbrTranslation = 0;
   unsigned long CanonicalState = stateDescription;
   unsigned long stateDescriptionReference = stateDescription;
-  int index = 1;  
+  int index = 1;
+  // testing
+  if (bitcount(stateDescription)!=this->NbrFermions)
+    {
+      cout << "attention: wrong number of particles in FindCanonicalForm"<<endl;
+    }
+
   stateDescription = (stateDescription >> this->StateShift) | ((stateDescription & this->MomentumMask) << this->ComplementaryStateShift);
+  if (bitcount(stateDescription)!=this->NbrFermions)
+    {
+      cout << "attention: wrong number of particles in FindCanonicalForm after shift"<<endl;
+    }
+
   while (stateDescriptionReference != stateDescription)
     {
       if (stateDescription < CanonicalState)

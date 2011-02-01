@@ -74,7 +74,10 @@ class AbstractQHEOnTorusWithMagneticTranslationsHamiltonian : public AbstractQHE
   // number of Lz values in a state
   int NbrLzValue;
   // GCD of MaxMomentum and NbrFermions (momemta are defined modulo MomentumModulo)
-  int MomentumModulo;  
+  int MomentumModulo;
+
+  // shift to apply to go from precalculation index to the corresponding index in the HilbertSpace
+  int PrecalculationShift;
 
   // array containing all interaction factors 
   double* InteractionFactors;

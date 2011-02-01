@@ -39,7 +39,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption ('\n', "north-potential", "potential associated to the impurity at the north pole", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "south-potential", "potential associated to the impurity at the south pole", 0.0);
   (*SystemGroup) += new MultipleDoubleOption ('\n', "north-charge", "potential associated to the a charge at the given distance above the north pole", ',');
-  (*SystemGroup) += new MultipleDoubleOption ('\n', "south-charge", "potential associated to the a charge at the given distance above the north pole", ',');
+  (*SystemGroup) += new MultipleDoubleOption ('\n', "south-charge", "potential associated to the a charge at the given distance above the south pole", ',');
   
   (*SystemGroup) += new  BooleanOption ('\n', "relativistic-fermions", "assume relativistic fermions");
   (*SystemGroup) += new  BooleanOption ('\n', "graphene-bilayer", "calculate pseudopotentials for bilayer graphene (need to specify the four Landau level indices)");
@@ -132,7 +132,7 @@ int main(int argc, char** argv)
 	    OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_relativistic_l_%landau-level%_2s_%nbr-flux%.dat");
 	  else
 	    {
-	      char* BaseString = new char[512];
+	      char* BaseString = new char[1024];
 	      if (Manager.GetBoolean("BN-only"))
 		{
 		  OutputFile = Manager.GetFormattedString("pseudopotential_BN-mix_l_%landau-level%_2s_%nbr-flux%_k_%kappa%.dat");
@@ -145,16 +145,20 @@ int main(int argc, char** argv)
 		    BaseString = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%");
 		  if (Manager.HasDoubles("north-charge")||Manager.HasDoubles("south-charge"))
 		    {
+		      char * TmpStr=new char[512];
 		      double Charge=0.0, D=0.0;
 		      int L;
 		      double *TmpD = Manager.GetDoubles("north-charge",L);
 		      if (L>0) {Charge=1.0;D=TmpD[0];}
 		      if (L>1) {Charge=TmpD[1];}
-		      if (L>0) sprintf(BaseString,"%s_QN_%g_%g",BaseString,Charge,D);
+		      strcpy(TmpStr,BaseString);
+		      if (L>0) sprintf(BaseString,"%s_QN_%g_%g",TmpStr,Charge,D);
 		      TmpD = Manager.GetDoubles("south-charge",L);
 		      if (L>0) {Charge=1.0;D=TmpD[0];}
 		      if (L>1) {Charge=TmpD[1];}
-		      if (L>0) sprintf(BaseString,"%s_Q_%g_%g",BaseString,Charge,D);
+		      strcpy(TmpStr,BaseString);
+		      if (L>0) sprintf(BaseString,"%s_QS_%g_%g",TmpStr,Charge,D);
+		      delete [] TmpStr;
 		    }	      
 		  char* FormatString=new char[1024];
 		  if (Manager.GetDouble("layer-thickness")>0.0)

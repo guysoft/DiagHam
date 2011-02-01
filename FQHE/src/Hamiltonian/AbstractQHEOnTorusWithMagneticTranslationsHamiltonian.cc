@@ -58,6 +58,7 @@ using std::ostream;
 
 AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::~AbstractQHEOnTorusWithMagneticTranslationsHamiltonian()
 {
+  this->PrecalculationShift = 0;
 }
 
 // set Hilbert space
@@ -453,7 +454,7 @@ long AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::FastMultiplicationMe
   long Memory = 0;
   for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); ++i)
     Memory += this->NbrInteractionPerComponent[i];
-
+  
   cout << "nbr interaction = " << Memory << endl;
   long TmpMemory = allowedMemory - (sizeof (int*) + sizeof (int) + sizeof(double*)) * this->Particles->GetHilbertSpaceDimension();
   if ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(double)))) < Memory))
@@ -499,7 +500,7 @@ long AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::FastMultiplicationMe
 // lastComponent  = index of the last component that has to be precalcualted
 // return value = number of non-zero matrix element
 
-long AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int lastComponent)
+long AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int nbrComponent)
 {
   int Index;
   double Coefficient;
@@ -509,7 +510,7 @@ long AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::PartialFastMultiplic
   int m2;
   int m3;
   int m4;
-  int LastComponent = lastComponent + firstComponent;
+  int LastComponent = firstComponent + nbrComponent;
   ParticleOnTorusWithMagneticTranslations* TmpParticles = (ParticleOnTorusWithMagneticTranslations*) this->Particles->Clone();
   for (int i = firstComponent; i < LastComponent; ++i)
     {
@@ -525,7 +526,7 @@ long AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::PartialFastMultiplic
 	      ++Memory;
 	      ++this->NbrInteractionPerComponent[i];
 	    }
-	}    
+	}
     }
   Memory = ((sizeof (int*) + sizeof (int) + 2 * sizeof(double*)) * TmpParticles->GetHilbertSpaceDimension() + 
 	    Memory *  (sizeof (int) + sizeof(double) + sizeof(int)));
@@ -533,6 +534,7 @@ long AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::PartialFastMultiplic
   return Memory;
 }
 
+/*
 // enable fast multiplication algorithm
 //
 
@@ -595,13 +597,51 @@ void AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::EnableFastMultiplica
     ((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
   cout << "time = " << Dt2 << endl;
 }
+*/
+
+
+// enable fast multiplication algorithm
+//
+
+void AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::EnableFastMultiplication()
+{
+  timeval TotalStartingTime2;
+  timeval TotalEndingTime2;
+  double Dt2;
+  gettimeofday (&(TotalStartingTime2), 0);
+  cout << "start" << endl;
+  int ReducedSpaceDimension = this->Particles->GetHilbertSpaceDimension() / this->FastMultiplicationStep;
+  if ((ReducedSpaceDimension * this->FastMultiplicationStep) != this->Particles->GetHilbertSpaceDimension())
+    ++ReducedSpaceDimension;
+  this->InteractionPerComponentIndex = new int* [ReducedSpaceDimension];
+  this->InteractionPerComponentCoefficient = new double* [ReducedSpaceDimension];
+  this->InteractionPerComponentNbrTranslation = new int* [ReducedSpaceDimension];
+
+    // allocate all memory at the outset:
+  for (int i = 0; i < ReducedSpaceDimension; ++i)
+    {
+      this->InteractionPerComponentIndex[i] = new int [this->NbrInteractionPerComponent[i]];
+      this->InteractionPerComponentCoefficient[i] = new double [this->NbrInteractionPerComponent[i]];
+      this->InteractionPerComponentNbrTranslation[i] = new int [this->NbrInteractionPerComponent[i]];
+    }
+
+  QHEParticlePrecalculationOperation Operation(this, false);
+  Operation.ApplyOperation(this->Architecture);
+  
+  this->FastMultiplicationFlag = true;
+  gettimeofday (&(TotalEndingTime2), 0);
+  cout << "------------------------------------------------------------------" << endl << endl;;
+  Dt2 = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
+    ((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
+  cout << "time = " << Dt2 << endl;
+}
 
 // enable fast multiplication algorithm (partial evaluation)
 //
 // firstComponent = index of the first component that has to be precalcualted
-// lastComponent  = index of the last component that has to be precalcualted
+// nbrComponent  = number of components that have to be precalcualted
 
-void AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::PartialEnableFastMultiplication(int firstComponent, int lastComponent)
+void AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::PartialEnableFastMultiplication(int firstComponent, int nbrComponent)
 {
   int Index;
   double Coefficient;
@@ -613,35 +653,43 @@ void AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::PartialEnableFastMul
   int* TmpIndexArray;
   double* TmpCoefficientArray;
   int* TmpNbrTranslationArray;
-  int Pos;
-  int Min = firstComponent / this->FastMultiplicationStep;
-  int Max = lastComponent / this->FastMultiplicationStep;
-  
-  for (int i = Min; i < Max; ++i)
+  ParticleOnTorusWithMagneticTranslations* TmpParticles = (ParticleOnTorusWithMagneticTranslations*) this->Particles->Clone();
+
+  int LastComponent = nbrComponent + firstComponent;
+  firstComponent -= this->PrecalculationShift;
+  LastComponent -= this->PrecalculationShift;
+  long Pos = firstComponent / this->FastMultiplicationStep;
+  int count;
+  int PosMod = firstComponent % this->FastMultiplicationStep;
+  if (PosMod != 0)
     {
-      this->InteractionPerComponentIndex[i] = new int [this->NbrInteractionPerComponent[i]];
-      this->InteractionPerComponentCoefficient[i] = new double [this->NbrInteractionPerComponent[i]];      
-      this->InteractionPerComponentNbrTranslation[i] = new int [this->NbrInteractionPerComponent[i]];
-      TmpIndexArray = this->InteractionPerComponentIndex[i];
-      TmpCoefficientArray = this->InteractionPerComponentCoefficient[i];
-      TmpNbrTranslationArray = this->InteractionPerComponentNbrTranslation[i];
-      Pos = 0;
+      ++Pos;
+      PosMod = this->FastMultiplicationStep - PosMod;
+    }  
+  for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
+    {
+      count=0;
+      TmpIndexArray = this->InteractionPerComponentIndex[Pos];
+      TmpCoefficientArray = this->InteractionPerComponentCoefficient[Pos];
+      TmpNbrTranslationArray = this->InteractionPerComponentNbrTranslation[Pos];
       for (int j = 0; j < this->NbrInteractionFactors; ++j) 
 	{
 	  m1 = this->M1Value[j];
 	  m2 = this->M2Value[j];
 	  m3 = this->M3Value[j];
 	  m4 = this->M4Value[j];
-	  Index = this->Particles->AdAdAA(i * this->FastMultiplicationStep, m1, m2, m3, m4, Coefficient, NbrTranslation);
+	  Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient, NbrTranslation);
 	  if (Index < this->Particles->GetHilbertSpaceDimension())
 	    {
-	      TmpIndexArray[Pos] = Index;
-	      TmpCoefficientArray[Pos] = Coefficient * this->InteractionFactors[j];
-	      TmpNbrTranslationArray[Pos] = NbrTranslation;
-	      ++Pos;
+	      TmpIndexArray[count] = Index;
+	      TmpCoefficientArray[count] = Coefficient * this->InteractionFactors[j];
+	      TmpNbrTranslationArray[count] = NbrTranslation;
+	      ++count;
 	    }
 	}
+      ++Pos;
     }
+  delete TmpParticles;
 }
 
 

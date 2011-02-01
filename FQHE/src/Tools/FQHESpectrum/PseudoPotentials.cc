@@ -317,7 +317,7 @@ double* EvaluateOneBodyCoulombPotentials(int nbrFlux, int landauLevel, double no
       gsl_integration_qag (&TheIntegrand, 0, M_PI, /*epsAbs*/ 0.0, /*epsRel*/ 1.0e-8,
       			   NbrPoints, /* KEY */ GSL_INTEG_GAUSS15, Workspace, &result, &error);
       Potentials[i]=result;
-      cout << "1B-Coulomb Potential["<<i<<"]="<<result<<endl;
+      //cout << "1B-Coulomb Potential["<<i<<"]="<<result<<endl;
     }
   gsl_integration_workspace_free (Workspace);
   return Potentials;

@@ -122,6 +122,10 @@ ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::ParticleOnTorusCoulom
     this->WignerEnergy = this->EvaluateWignerCrystalEnergy() / 2.0;
   else this->WignerEnergy = 0.0;
   this->Architecture = architecture;
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  this->PrecalculationShift = (int) MinIndex;
   cout << "Wigner Energy = " << WignerEnergy << endl;  
   this->EvaluateInteractionFactors();
   this->EnergyShift = ((double) this->NbrParticles)*WignerEnergy;
@@ -136,7 +140,7 @@ ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::ParticleOnTorusCoulom
     {
       if (memory > 0)
 	{
-	  int TmpMemory = this->FastMultiplicationMemory(memory);
+	  long TmpMemory = this->FastMultiplicationMemory(memory);
 	  cout << "fast memory = ";
 	  PrintMemorySize(cout,TmpMemory)<<endl;
 	  if (memory > 0)
