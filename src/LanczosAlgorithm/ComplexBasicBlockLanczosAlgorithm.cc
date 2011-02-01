@@ -182,7 +182,7 @@ void ComplexBasicBlockLanczosAlgorithm::InitializeLanczosAlgorithm()
 	  double TmpNorm = this->LanczosVectors[j].Norm();
 	  this->LanczosVectors[j] /= TmpNorm;
 	}
-      this->TestOrthogonality(this->LanczosVectors,BlockSize);
+      //this->TestOrthogonality(this->LanczosVectors,BlockSize);
       delete[] TmpCoef;
       if (this->DiskFlag == false)
 	{	  
@@ -231,7 +231,7 @@ void ComplexBasicBlockLanczosAlgorithm::InitializeLanczosAlgorithm(const Vector&
 	  double TmpNorm = this->LanczosVectors[j].Norm();
 	  this->LanczosVectors[j] /= TmpNorm;
 	}
-      this->TestOrthogonality(this->LanczosVectors,BlockSize);
+      //this->TestOrthogonality(this->LanczosVectors,BlockSize);
       delete[] TmpCoef;
       this->Index = 0;
       if (this->DiskFlag == false)
@@ -289,7 +289,7 @@ void ComplexBasicBlockLanczosAlgorithm::InitializeLanczosAlgorithm(Vector* vecto
 	    }
 	  delete[] TmpCoef;
 	}
-      this->TestOrthogonality(this->LanczosVectors,BlockSize);
+      //this->TestOrthogonality(this->LanczosVectors,BlockSize);
       if (this->DiskFlag == false)
 	{	  
 	  for (int j = 0; j < this->BlockSize; ++j)
@@ -466,7 +466,7 @@ Vector* ComplexBasicBlockLanczosAlgorithm::GetEigenstates(int nbrEigenstates)
 	    }
 	  this->ReorthogonalizeVectors(&(this->LanczosVectors[2 * this->BlockSize]), this->BlockSize, this->ReducedMatrix, 
 				       NewVectorPosition - this->BlockSize, NewVectorPosition);
-	  this->TestOrthogonality(&(this->LanczosVectors[2*this->BlockSize]),BlockSize,&(this->LanczosVectors[0]),2*BlockSize);
+	  //this->TestOrthogonality(&(this->LanczosVectors[2*this->BlockSize]),BlockSize,&(this->LanczosVectors[0]),2*BlockSize);
  	  for (int k = 0; k < this->BlockSize; ++k)
  	    {
  	      for (int j = 0; j < this->BlockSize; ++j)

@@ -410,6 +410,245 @@ ComplexVector& AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::LowLevelAd
    }
   return vDestination;
 }
+
+// multiply a et of vectors by the current hamiltonian for a given range of indices 
+// and add result to another et of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors at which result has to be added
+// nbrVectors = number of vectors that have to be evaluated together
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = pointer to the array of vectors where result has been stored
+
+ComplexVector* AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+									   int firstComponent, int nbrComponent)
+{
+  int LastComponent = firstComponent + nbrComponent;
+  int Dim = this->Particles->GetHilbertSpaceDimension();
+  double Coefficient;
+  double Cosinus;
+  double Sinus;
+  int NbrTranslation;
+  if (this->FastMultiplicationFlag == false)
+    {
+      double Coefficient;
+      int Index;
+      int m1;
+      int m2;
+      int m3;
+      int m4;
+      double TmpInteraction;
+      int ReducedNbrInteractionFactors = this->NbrInteractionFactors - 1;
+      ParticleOnTorusWithMagneticTranslations* TmpParticles = (ParticleOnTorusWithMagneticTranslations*) this->Particles->Clone();
+      for (int j = 0; j < ReducedNbrInteractionFactors; ++j) 
+	{
+	  m1 = this->M1Value[j];
+	  m2 = this->M2Value[j];
+	  m3 = this->M3Value[j];
+	  m4 = this->M4Value[j];
+	  TmpInteraction = this->InteractionFactors[j];
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient, NbrTranslation);
+	      if (Index < Dim)
+		{
+		  Coefficient *= TmpInteraction;
+		  Cosinus = Coefficient * this->CosinusTable[NbrTranslation];
+		  Sinus = Coefficient * this->SinusTable[NbrTranslation];
+		  for (int l = 0; l < nbrVectors; ++l)
+		    {
+		      vDestinations[l].Re(Index) += ((vSources[l].Re(i) * Cosinus) - (vSources[l].Im(i) * Sinus));
+		      vDestinations[l].Im(Index) += ((vSources[l].Re(i) * Sinus) + (vSources[l].Im(i) * Cosinus));
+		    }
+		}
+	    }
+	}
+      m1 = this->M1Value[ReducedNbrInteractionFactors];
+      m2 = this->M2Value[ReducedNbrInteractionFactors];
+      m3 = this->M3Value[ReducedNbrInteractionFactors];
+      m4 = this->M4Value[ReducedNbrInteractionFactors];
+      TmpInteraction = this->InteractionFactors[ReducedNbrInteractionFactors];
+      for (int i = firstComponent; i < LastComponent; ++i)
+	{
+	  Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient, NbrTranslation);
+	  if (Index < Dim)
+	    {
+	      Coefficient *= TmpInteraction;
+	      Cosinus = Coefficient * this->CosinusTable[NbrTranslation];
+	      Sinus = Coefficient * this->SinusTable[NbrTranslation];
+	      for (int l = 0; l < nbrVectors; ++l)
+		{
+		  vDestinations[l].Re(Index) += ((vSources[l].Re(i) * Cosinus) - (vSources[l].Im(i) * Sinus));
+		  vDestinations[l].Im(Index) += ((vSources[l].Re(i) * Sinus) + (vSources[l].Im(i) * Cosinus));
+		}
+	    }
+	  for (int l = 0; l < nbrVectors; ++l)
+	    {
+	      vDestinations[l].Re(i) += this->EnergyShift * vSources[l].Re(i);
+	      vDestinations[l].Im(i) += this->EnergyShift * vSources[l].Im(i);
+	    }
+	}
+      delete TmpParticles;
+    }
+  else
+    {
+      if (this->FastMultiplicationStep == 1)
+	{
+	  int* TmpIndexArray;
+	  double* TmpCoefficientArray; 
+	  int* TmpNbrTranslationArray;
+	  int j;
+	  int TmpNbrInteraction;
+	  double *TmpRe=new double[nbrVectors];
+	  double *TmpIm=new double[nbrVectors];
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      TmpNbrInteraction = this->NbrInteractionPerComponent[i];
+	      TmpIndexArray = this->InteractionPerComponentIndex[i];
+	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[i];
+	      TmpNbrTranslationArray = this->InteractionPerComponentNbrTranslation[i];
+	      for (int l = 0; l < nbrVectors; ++l)
+		{
+		  TmpRe[l] = vSources[l].Re(i);
+		  TmpIm[l] = vSources[l].Im(i);
+		}
+	      for (j = 0; j < TmpNbrInteraction; ++j)
+		{
+		  Cosinus = TmpCoefficientArray[j];
+		  NbrTranslation = TmpNbrTranslationArray[j];
+		  Sinus = Cosinus * this->SinusTable[NbrTranslation];
+		  Cosinus *= this->CosinusTable[NbrTranslation];
+		  for (int l = 0; l < nbrVectors; ++l)
+		    {
+		      vDestinations[l].Re(TmpIndexArray[j]) += ((Cosinus * TmpRe[l]) - (Sinus * TmpIm[l]));
+		      vDestinations[l].Im(TmpIndexArray[j]) += ((Sinus * TmpRe[l]) + (Cosinus * TmpIm[l]));
+		    }
+		}
+	      for (int l = 0; l < nbrVectors; ++l)
+		{
+		  vDestinations[l].Re(i) += this->EnergyShift * TmpRe[l];
+		  vDestinations[l].Im(i) += this->EnergyShift * TmpIm[l];
+		}
+	    }
+	  delete [] TmpRe;
+	  delete [] TmpIm;
+	}
+      else
+	{
+	  int* TmpIndexArray;
+	  double* TmpCoefficientArray; 
+	  int* TmpNbrTranslationArray;
+	  int j;
+	  int TmpNbrInteraction;
+	  int Pos = firstComponent / this->FastMultiplicationStep; 
+	  int PosMod = firstComponent % this->FastMultiplicationStep;
+	  double *TmpRe=new double[nbrVectors];
+	  double *TmpIm=new double[nbrVectors];
+	  if (PosMod != 0)
+	    {
+	      ++Pos;
+	      PosMod = this->FastMultiplicationStep - PosMod;
+	    }
+	  for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
+	    {
+	      TmpNbrInteraction = this->NbrInteractionPerComponent[Pos];
+	      TmpIndexArray = this->InteractionPerComponentIndex[Pos];
+	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[Pos];
+	      TmpNbrTranslationArray = this->InteractionPerComponentNbrTranslation[Pos];
+	      for (int l = 0; l < nbrVectors; ++l)
+		{
+		  TmpRe[l] = vSources[l].Re(i);
+		  TmpIm[l] = vSources[l].Im(i);
+		}
+	      for (j = 0; j < TmpNbrInteraction; ++j)
+		{
+		  Cosinus = TmpCoefficientArray[j];
+		  NbrTranslation = TmpNbrTranslationArray[j];
+		  Sinus = Cosinus * this->SinusTable[NbrTranslation];
+		  Cosinus *= this->CosinusTable[NbrTranslation];
+		  for (int l = 0; l < nbrVectors; ++l)
+		    {
+		      vDestinations[l].Re(TmpIndexArray[j]) += ((Cosinus * TmpRe[l]) - (Sinus * TmpIm[l]));
+		      vDestinations[l].Im(TmpIndexArray[j]) += ((Sinus * TmpRe[l]) + (Cosinus * TmpIm[l]));
+		    }
+		}
+	      for (int l = 0; l < nbrVectors; ++l)
+		{
+		  vDestinations[l].Re(i) += this->EnergyShift * TmpRe[l];
+		  vDestinations[l].Im(i) += this->EnergyShift * TmpIm[l];
+		}
+	      ++Pos;
+	    }
+	  int Index;
+	  int m1;
+	  int m2;
+	  int m3;
+	  int m4;
+	  double TmpInteraction;
+	  int ReducedNbrInteractionFactors = this->NbrInteractionFactors - 1;
+	  ParticleOnTorusWithMagneticTranslations* TmpParticles = (ParticleOnTorusWithMagneticTranslations*) this->Particles->Clone();
+	  for (int k = 0; k < this->FastMultiplicationStep; ++k)
+	    if (PosMod != k)
+	      {		
+		for (int j = 0; j < ReducedNbrInteractionFactors; ++j) 
+		  {
+		    m1 = this->M1Value[j];
+		    m2 = this->M2Value[j];
+		    m3 = this->M3Value[j];
+		    m4 = this->M4Value[j];
+		    TmpInteraction = this->InteractionFactors[j];
+		    for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
+		      {
+			Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient, NbrTranslation);
+			if (Index < Dim)
+			  {
+			    Coefficient *= TmpInteraction;
+			    Cosinus = Coefficient * this->CosinusTable[NbrTranslation];
+			    Sinus = Coefficient * this->SinusTable[NbrTranslation];
+			    for (int l = 0; l < nbrVectors; ++l)
+			      {
+				vDestinations[l].Re(Index) += ((vSources[l].Re(i) * Cosinus) - (vSources[l].Im(i) * Sinus));
+				vDestinations[l].Im(Index) += ((vSources[l].Re(i) * Sinus) + (vSources[l].Im(i) * Cosinus));
+			      }
+			  }
+		      }
+		  }
+		m1 = this->M1Value[ReducedNbrInteractionFactors];
+		m2 = this->M2Value[ReducedNbrInteractionFactors];
+		m3 = this->M3Value[ReducedNbrInteractionFactors];
+		m4 = this->M4Value[ReducedNbrInteractionFactors];
+		TmpInteraction = this->InteractionFactors[ReducedNbrInteractionFactors];
+		m4 = m1 + m2 - m3;
+		for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
+		  {
+		    Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient, NbrTranslation);
+		    if (Index < Dim)
+		      {
+			Coefficient *= TmpInteraction;
+			Cosinus = Coefficient * this->CosinusTable[NbrTranslation];
+			Sinus = Coefficient * this->SinusTable[NbrTranslation];
+			for (int l = 0; l < nbrVectors; ++l)
+			  {
+			    vDestinations[l].Re(Index) += ((vSources[l].Re(i) * Cosinus) - (vSources[l].Im(i) * Sinus));
+			    vDestinations[l].Im(Index) += ((vSources[l].Re(i) * Sinus) + (vSources[l].Im(i) * Cosinus));
+			  }
+		      }
+		    for (int l = 0; l < nbrVectors; ++l)
+		      {
+			vDestinations[l].Re(i) += this->EnergyShift * vSources[l].Re(i);
+			vDestinations[l].Im(i) += this->EnergyShift * vSources[l].Im(i);
+		      }
+		  }
+	      }
+	  delete TmpParticles;
+	  delete [] TmpRe;
+	  delete [] TmpIm;
+	}
+   }
+  return vDestinations;
+}
+
  
 // return a list of left interaction operators
 //

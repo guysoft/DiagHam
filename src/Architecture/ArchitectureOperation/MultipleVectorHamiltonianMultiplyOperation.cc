@@ -351,7 +351,7 @@ bool MultipleVectorHamiltonianMultiplyOperation::RawApplyOperation()
 							       this->NbrVectors, this->FirstComponent, this->NbrComponent);
 	}
       else this->Hamiltonian->LowLevelMultipleMultiply(this->ComplexSourceVectors, this->ComplexDestinationVectors, this->NbrVectors, this->FirstComponent, 
-						  this->NbrComponent);
+						       this->NbrComponent);
     }
 
   gettimeofday (&(TotalEndingTime2), 0);
@@ -371,15 +371,17 @@ bool MultipleVectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOpera
   if (this->ComplexDestinationVectors == 0)
     RealFlag = true;
   long *SegmentIndices=0;
+  bool CleanUp=false;
   int TmpNbrThreads = architecture->GetNbrThreads();
   if (Hamiltonian->GetLoadBalancing(TmpNbrThreads, SegmentIndices)==false)
     {
       SegmentIndices = new long[TmpNbrThreads+1];
+      CleanUp=true;
       int Step = this->NbrComponent / TmpNbrThreads;
       SegmentIndices[0]=this->FirstComponent;
       for (int i=0; i<TmpNbrThreads; ++i)
 	SegmentIndices[i]=this->FirstComponent+i*Step;
-      SegmentIndices[TmpNbrThreads]=this->FirstComponent+this->NbrComponent+1;
+      SegmentIndices[TmpNbrThreads]=this->FirstComponent+this->NbrComponent;
     }
   MultipleVectorHamiltonianMultiplyOperation** TmpOperations = new MultipleVectorHamiltonianMultiplyOperation* [architecture->GetNbrThreads()];
   for (int i = 0; i < TmpNbrThreads; ++i)
@@ -431,6 +433,8 @@ bool MultipleVectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOpera
     }
   delete TmpOperations[0];
   delete[] TmpOperations;
+  if (CleanUp)
+    delete [] SegmentIndices;
   return true;
 }
 
