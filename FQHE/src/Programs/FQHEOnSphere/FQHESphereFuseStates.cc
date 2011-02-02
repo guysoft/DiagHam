@@ -606,28 +606,28 @@ int FQHEShereFuseStateCore(char* inputFileName, ParticleOnSphere* outputBasis, R
 	}
       delete RightBasis;
       delete LeftBasis;      
-    } 
+    }
   if ((symmetrizedBasisFlag == true) && (addFlag == true))
     {
       if (rationalFlag == false)
 	{
-	  tmpOutputState = outputBasis->GetLzSymmetricVector(outputBasis, outputState);
+	  RealVector TmpState = outputBasis->GetLzSymmetricVector(outputBasis, outputState);
 	  for (long j = 0; j < outputState.GetLargeVectorDimension(); ++j)
 	    {
-	      if (tmpOutputState[j] != 0.0)
+	      if (TmpState[j] != 0.0)
 		{
-		  outputState[j] = tmpOutputState[j];
+		  outputState[j] = TmpState[j];
 		}
 	    } 	  
 	}
       else
 	{
-	  rationalTmpOutputState = outputBasis->GetLzSymmetricVector(outputBasis, rationalOutputState);
+	  LongRationalVector TmpState = outputBasis->GetLzSymmetricVector(outputBasis, rationalOutputState);
 	  for (long j = 0; j < rationalOutputState.GetLargeVectorDimension(); ++j)
 	    {
-	      if (rationalTmpOutputState[j] != 0l)
+	      if (TmpState[j] != 0l)
 		{
-		  rationalOutputState[j] = rationalTmpOutputState[j];
+		  rationalOutputState[j] = TmpState[j];
 		}
 	    }
 	}
