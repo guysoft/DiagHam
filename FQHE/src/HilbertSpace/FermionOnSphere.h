@@ -558,6 +558,12 @@ class FermionOnSphere :  public ParticleOnSphere
   // return value = vector resulting of the operation
   virtual RealVector GetLzSymmetricVector(ParticleOnSphere* finalSpace, RealVector& initialVector);
 
+  // transform a vector belonging to this vector space in the lz->-lz
+  //
+  // finalSpace = the space obtained after the lz->-lz operation
+  // initialVector = vector on which the operation will be apply
+  // return value = vector resulting of the operation
+  virtual LongRationalVector GetLzSymmetricVector(ParticleOnSphere* finalSpace, LongRationalVector& initialVector);
 
  protected:
 

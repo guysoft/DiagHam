@@ -12,6 +12,7 @@
 #include "HilbertSpace/FermionOnSphereTwoLandauLevels.h"
 #include "HilbertSpace/FermionOnSphereThreeLandauLevels.h"
 #include "HilbertSpace/FermionOnSphereFourLandauLevels.h"
+#include "HilbertSpace/BosonOnSphereTwoLandauLevels.h"
 
 #include "MathTools/ClebschGordanCoefficients.h"
 #include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
@@ -128,24 +129,32 @@ int main(int argc, char** argv)
   ParticleOnSphere* Space = 0;
   if (Manager.GetBoolean("boson") == true)
     {
-      if (SU2SpinFlag == false)
+      if (TwoLLFlag == false)
 	{
-	  if (HaldaneBasisFlag == false)
+	  if (SU2SpinFlag == false)
 	    {
-	      Space = new BosonOnSphereShort(NbrParticles, TotalLz, NbrFluxQuanta);
+	      if (HaldaneBasisFlag == false)
+		{
+		  Space = new BosonOnSphereShort(NbrParticles, TotalLz, NbrFluxQuanta);
+		}
+	      else
+		{
+		  int* ReferenceState = 0;
+		  if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, NbrFluxQuanta, ReferenceState) == false)
+		    return -1;
+		  Space = new BosonOnSphereHaldaneBasisShort(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);
+		}
 	    }
 	  else
 	    {
-	      int* ReferenceState = 0;
-	      if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, NbrFluxQuanta, ReferenceState) == false)
-		return -1;
-	      Space = new BosonOnSphereHaldaneBasisShort(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);
+	      Space = new BosonOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
 	    }
 	}
       else
-	{
-	  Space = new BosonOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
-	}
+        {
+	  Space = new BosonOnSphereTwoLandauLevels(NbrParticles, TotalLz, NbrFluxQuanta + 2, NbrFluxQuanta);    
+        }
+
     }
   else
     {

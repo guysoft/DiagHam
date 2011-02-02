@@ -394,29 +394,29 @@ int main(int argc, char** argv)
 	  int* StateIndexRight = PrecomputedElements.GetAsIntegerArray(1);
 	  int* OperatorIndexLeft = PrecomputedElements.GetAsIntegerArray(2);
 	  int* OperatorIndexRight = PrecomputedElements.GetAsIntegerArray(3);	  
-	  Complex* Coefficients = PrecomputedElements.GetAsComplexArray(4);	  
+	  Complex* OneBodyCoefficients = PrecomputedElements.GetAsComplexArray(4);	  
 	  for (int i = 0; i < PrecomputedElements.GetNbrLines(); ++i)
 	    {
-	      RawPrecalculatedValues[StateIndexLeft[i]][StateIndexRight[i]].AddToMatrixElement(OperatorIndexLeft[i], OperatorIndexRight[i], Coefficients[i]);
-	      for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
+	      RawPrecalculatedValues[StateIndexLeft[i]][StateIndexRight[i]].AddToMatrixElement(OperatorIndexLeft[i], OperatorIndexRight[i], OneBodyCoefficients[i]);
+	    }
+	  for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
+	    {
+	      for (int m = 0; m <= ForceMaxMomentum; ++m)
+		{
+		  Complex Tmp = RawPrecalculatedValues[i][i][m][m];
+		  Tmp *= (Coefficients[i] * Coefficients[i]);
+		  PrecalculatedValues.AddToMatrixElement(m, m, Tmp);
+		}
+	      for (int j = i + 1; j < InputVectors.GetNbrLines(); ++j)
 		{
 		  for (int m = 0; m <= ForceMaxMomentum; ++m)
 		    {
-		      Complex Tmp = RawPrecalculatedValues[i][i][m][m];
-		      Tmp *= (Coefficients[i] * Coefficients[i]);
-		      PrecalculatedValues.AddToMatrixElement(m, m, Tmp);
-		    }
-		  for (int j = i + 1; j < InputVectors.GetNbrLines(); ++j)
-		    {
-		      for (int m = 0; m <= ForceMaxMomentum; ++m)
+		      for (int n = 0; n <= ForceMaxMomentum; ++n)
 			{
-			  for (int n = 0; n <= ForceMaxMomentum; ++n)
-			    {
-			      Complex Tmp = RawPrecalculatedValues[i][j][m][n];
-			      Tmp *= (Coefficients[i] * Coefficients[j]);
-			      PrecalculatedValues.AddToMatrixElement(m, n, Tmp);
-			      PrecalculatedValues.AddToMatrixElement(n, m, Conj(Tmp));
-			    }
+			  Complex Tmp = RawPrecalculatedValues[i][j][m][n];
+			  Tmp *= (Coefficients[i] * Coefficients[j]);
+			  PrecalculatedValues.AddToMatrixElement(m, n, Tmp);
+			  PrecalculatedValues.AddToMatrixElement(n, m, Conj(Tmp));
 			}
 		    }
 		}

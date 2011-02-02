@@ -31,6 +31,7 @@
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphere.h"
 #include "MathTools/LongRational.h"
+#include "Vector/LongRationalVector.h"
 
 #include <iostream>
 
@@ -860,6 +861,19 @@ RealVector ParticleOnSphere::GetLzSymmetricVector(ParticleOnSphere* finalSpace, 
   RealVector Tmp (this->LargeHilbertSpaceDimension, true);
   return Tmp;
 }
+
+// transform a vector belonging to this vector space in the lz->-lz
+//
+// finalSpace = the space obtained after the lz->-lz operation
+// initialVector = vector on which the operation will be apply
+// return value = vector resulting of the operation
+
+LongRationalVector ParticleOnSphere::GetLzSymmetricVector(ParticleOnSphere* finalSpace, LongRationalVector& initialVector)
+{
+  LongRationalVector Tmp (this->LargeHilbertSpaceDimension, true);
+  return Tmp;
+}
+
 
 // compute the number of particles in each Landau level
 //

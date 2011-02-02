@@ -3329,3 +3329,25 @@ RealVector FermionOnSphere::GetLzSymmetricVector(ParticleOnSphere* finalSpace, R
   return TmpVector;
 }
 
+// transform a vector belonging to this vector space in the lz->-lz
+//
+// finalSpace = the space obtained after the lz->-lz operation
+// initialVector = vector on which the operation will be apply
+// return value = vector resulting of the operation
+
+LongRationalVector FermionOnSphere::GetLzSymmetricVector(ParticleOnSphere* finalSpace, LongRationalVector& initialVector)
+{
+  FermionOnSphere* TmpFinalState = (FermionOnSphere*) finalSpace;
+  LongRationalVector TmpVector(this->LargeHilbertSpaceDimension, true);
+  for(long i = 0 ; i < this->LargeHilbertSpaceDimension ; i++)
+    {
+      unsigned long Tmp = this->GetSymmetricState(this->StateDescription[i]);
+      int TmpLzMax = this->LzMax;
+      while (((Tmp >> TmpLzMax) & 0x1ul) == 0x0ul)
+	--TmpLzMax;
+      TmpVector[TmpFinalState->FindStateIndex(Tmp, TmpLzMax)] = initialVector[i];
+    }
+  return TmpVector;
+}
+
+

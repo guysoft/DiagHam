@@ -155,6 +155,24 @@ ostream& FermionSU4WriteDimension(ostream& output, int nbrParticles, int nbrFlux
 // return value = reference on the output stream
 ostream& Fermion2LLWriteDimension(ostream& output, int nbrParticles, int nbrFluxQuanta);
 
+// save dimensions in a given output stream for bosons in 2 Landau levels
+//
+// output = reference on the output stream
+// nbrParticles = number of particles
+// nbrFluxQuanta = number of flux quanta
+// return value = reference on the output stream
+ostream& Boson2LLWriteDimension(ostream& output, int nbrParticles, int nbrFluxQuanta);
+
+// evaluate Hilbert space dimension without constraint on the number of particles per level
+//
+// nbrBosons = number of bosons
+// lzMax = momentum maximum value for a boson
+// totalLz = momentum total value
+// LzMaxUp = maximum lz value on SLL 
+// LzMaxDown = maximum lz value on LLL
+// return value = Hilbert space dimension
+long Boson2LLShiftedEvaluateFullHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz, int LzMaxUp, int LzMaxDown);
+
 // save dimensions in a given output stream for fermions in 2 Landau levels
 //
 // output = reference on the output stream
@@ -203,7 +221,7 @@ int main(int argc, char** argv)
   int NbrParticles = Manager.GetInteger("nbr-particles"); 
   int NbrFluxQuanta = Manager.GetInteger("nbr-flux"); 
   int  LzMin = 0;
-  if (((NbrParticles * NbrFluxQuanta) & 1) != 0)
+  if (((NbrParticles * NbrFluxQuanta) & 1) != 0) //if odd then lzmin is 1/2
     LzMin = 1;
   if ((Manager.GetBoolean("su4-spin") == false) && (Manager.GetBoolean("su2-spin") == false) && 
       (Manager.GetBoolean("su3-spin") == false) && (Manager.GetBoolean("su2su2-spin") == false) && (Manager.GetBoolean("2-ll") == false) && (Manager.GetBoolean("3-ll") == false))
@@ -420,8 +438,27 @@ int main(int argc, char** argv)
     {
       if (Manager.GetBoolean("boson") == true)
 	{
-	  cout << "2 Landau level mode not yet available" << endl;	
-	  return -1;
+	  if (Manager.GetBoolean("save-disk") == true)
+	    {
+	      char* OutputFileName = 0;
+	      if (Manager.GetString("output-file") == 0)
+		{
+		  OutputFileName = new char[256];
+		  sprintf (OutputFileName, "bosons_sphere_2ll_n_%d_2s_%d.dim", NbrParticles, NbrFluxQuanta);
+		}
+	      else
+		{
+		  OutputFileName = new char[strlen(Manager.GetString("output-file")) + 1];
+		  strcpy (OutputFileName, Manager.GetString("output-file"));
+		}		  
+	      ofstream File;
+	      File.open(OutputFileName, ios::binary | ios::out);
+	      Boson2LLWriteDimension(File, NbrParticles, NbrFluxQuanta);
+	      File.close();
+	      delete[] OutputFileName;
+	    }
+	  else
+	      Boson2LLWriteDimension(cout, NbrParticles, NbrFluxQuanta);
 	}
       else
 	{
@@ -1239,5 +1276,88 @@ ostream& Fermion3LLWriteDimension(ostream& output, int nbrParticles, int nbrFlux
 	   << LzDimension[(Max - Min) >> 1] << endl;
   delete[] LzDimension;
   return output;
+}
+
+// save dimensions in a given output stream for bosons in 2 Landau levels
+//
+// output = reference on the output stream
+// nbrParticles = number of particles
+// nbrFluxQuanta = number of flux quanta
+// return value = reference on the output stream
+
+ostream& Boson2LLWriteDimension(ostream& output, int nbrParticles, int nbrFluxQuanta)
+{
+  output << "# Hilbert space dimension in each L and Lz sector for " << nbrParticles << " bosons" << endl;
+  output << "# in two Landau levels on the sphere geometry with " << nbrFluxQuanta << " flux quanta" << endl;
+  output << "#" << endl << "#  dimensions for each subspaces with the following convention " << endl 
+	 << "# (twice the total Lz/L value) (dimension of the subspace with fixed Lz) (dimension of the subspace with fixed L, Lz=L)" << endl << endl;
+  int Min = (nbrParticles * nbrFluxQuanta) & 1;
+  //int Min = -nbrParticles * (nbrFluxQuanta+2);
+  int TmpNbrParticleDown = (nbrParticles - 1) / 2;
+  int Max = (nbrFluxQuanta + 2) * nbrParticles; 
+  long* LzDimension = new long [((Max - Min) >> 1) + 1];
+  for (int Lz = Min; Lz <= Max; Lz += 2)
+    {
+      /*BosonOnSphereTwoLandauLevels* space = new BosonOnSphereTwoLandauLevels(nbrParticles, Lz, nbrFluxQuanta+2, nbrFluxQuanta);
+      LzDimension[(Lz - Min) >> 1] = space->GetTargetHilbertSpaceDimension();
+      delete space; */
+      LzDimension[(Lz - Min) >> 1] = Boson2LLShiftedEvaluateFullHilbertSpaceDimension(nbrParticles, 0, (Lz + (nbrParticles * (nbrFluxQuanta+2))) >> 1 , nbrFluxQuanta+2, nbrFluxQuanta);
+    }
+  for (int Lz = Min; Lz < Max; Lz += 2)
+    {
+      output << Lz << " " << LzDimension[(Lz - Min) >> 1] << " " << LzDimension[(Lz - Min) >> 1] - LzDimension[((Lz - Min) >> 1) + 1] << endl;      
+    }
+    output << Max << " " << LzDimension[(Max - Min) >> 1] << " " << LzDimension[(Max - Min) >> 1] << endl;
+  delete[] LzDimension;
+  return output;
+}
+
+// evaluate Hilbert space dimension without constraint on the number of particles per level
+//
+// nbrBosons = number of bosons
+// lzMax = momentum maximum value for a boson
+// totalLz = momentum total value
+// LzMaxUp = maximum lz value on SLL 
+// LzMaxDown = maximum lz value on LLL
+// return value = Hilbert space dimension
+
+long Boson2LLShiftedEvaluateFullHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz, int LzMaxUp, int LzMaxDown)
+{
+  if ((nbrBosons == 0) && (totalLz == 0)) //all bosons gone and correct total totalLz been realised. Fill in correct entries on way back up.
+    {
+      return 1l;
+    }
+    
+  if (nbrBosons < 0 || totalLz < 0  )//|| (this->MaxLzLeft(nbrBosons,pos) < totalLz) ) //if state not working out. 
+    return 0l;
+    
+  if (lzMax < 0) //if the position is negative. This should never happen.
+    return 0l;
+  
+  if ((lzMax == (LzMaxUp + LzMaxDown + 2)) && (totalLz != 0)) //if at the final position and still hav not satisfied the totallz.
+    return 0l;
+  
+  int currentLz = 0; // this is the lz value of the current position.
+  if ( lzMax <=  LzMaxUp )  //if its on the Up (second) Landau level.
+    {
+      currentLz = LzMaxUp - lzMax; 
+    }
+  else //if its on the down (lowest) Landau level
+    {
+      currentLz = LzMaxDown + 1 - (lzMax - (LzMaxUp+1));
+    }
+    
+  long Tmp = 0;
+  if ( lzMax < (LzMaxUp + LzMaxDown + 2) ) //if the position has not reached the end.
+    {
+      //Can place between 0 and nbrBosons on this spot and then move on.
+      for ( int i = nbrBosons ; i >= 1 ; i-- ) 
+        {
+	  //place i bosons
+	  Tmp += Boson2LLShiftedEvaluateFullHilbertSpaceDimension(nbrBosons - i, lzMax+1, totalLz - (currentLz*i), LzMaxUp, LzMaxDown);
+	}
+	Tmp += Boson2LLShiftedEvaluateFullHilbertSpaceDimension(nbrBosons, lzMax+1, totalLz, LzMaxUp, LzMaxDown);
+    }
+    return Tmp;
 }
 

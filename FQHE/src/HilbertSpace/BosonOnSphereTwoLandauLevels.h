@@ -34,7 +34,10 @@
 
 
 #include "config.h"
+#include "HilbertSpace/BosonOnSphere.h"
 #include "HilbertSpace/ParticleOnSphereWithSpin.h"
+
+#include "MathTools/ClebschGordanCoefficients.h"
 
 #include <iostream>
 
@@ -51,22 +54,21 @@ class BosonOnSphereTwoLandauLevels :  public ParticleOnSphereWithSpin
   int IncNbrBosons;
   // momentum total value
   int TotalLz;
-  // maximum Lz value reached by a fermion
+  // maximum Lz value reached by a boson
   int LzMax;
-  // number of fermions with spin up / down
+  // number of bosons with spin up / down
   int NbrBosonsUp;
   int NbrBosonsDown;
   // number of Lz values in a stat
   int NbrLzValue;
   // twice the total spin value
   int TotalSpin;
-  // highest bit in a given state description
-  int HighestBit;
 
   // array describing each state
   unsigned long* StateDescription;
-  // array giving maximum Lz value reached for a fermion in a given state
-  int* StateHighestBit;
+  
+  // array giving maximum Lz value reached for a boson in a given state
+  int* StateLzMax;
 
   // maximum shift used for searching a position in the look-up table
   int MaximumLookUpShift;
@@ -84,10 +86,15 @@ class BosonOnSphereTwoLandauLevels :  public ParticleOnSphereWithSpin
   // number to evalute size of SignLookUpTable
   int MaximumSignLookUp;
 
+  // temporary state
+  unsigned long* TemporaryState;
+  // Lz maximum value associated to temporary state
+  int TemporaryStateLzMax;
+  
   // temporary state used when applying ProdA operator
-  unsigned long ProdATemporaryState;
+  unsigned long* ProdATemporaryState;
   // Lz maximum value associated to temporary state used when applying ProdA operator
-  int ProdALzMax;
+  int ProdATemporaryStateLzMax;
 
   // maximum Lz value reached by a boson with a spin up
   int LzMaxUp;
@@ -102,6 +109,11 @@ class BosonOnSphereTwoLandauLevels :  public ParticleOnSphereWithSpin
   // numer of bit occupied by the down part
   int UpStateShift;
 
+  // holds instance of class to calculate the Clebsch Gordan coefficients
+  ClebschGordanCoefficients*	CGCoefficients;
+  
+  // array to store the precalculated PseudoPotentials
+  double *PseudoPotentials; 
 
  public:
 
@@ -177,18 +189,130 @@ class BosonOnSphereTwoLandauLevels :  public ParticleOnSphereWithSpin
   // downStateSpace = reference on the Hilbert space associated to the down spin part  
   // return value = resluting SU(2) state
   virtual RealVector ForgeSU2FromU1(RealVector& upState, BosonOnSphere& upStateSpace, RealVector& downState, BosonOnSphere& downStateSpace);
+  
+  // apply a_n1_d a_n2_d operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next AdAd call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // return value =  multiplicative factor 
+  double AdAd (int index, int n1, int n2);
+  
+  // apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next AdAd call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // return value =  multiplicative factor 
+  double AuAu (int index, int n1, int n2);
+  
+  // apply a_n1_u a_n2_d operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next AdAd call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // return value =  multiplicative factor 
+  double AuAd (int index, int n1, int n2);
+  
+  // apply a^+_m1_u a^+_m2_u operator to the state produced using AuAu method (without destroying it)
+  //
+  // m1 = first index for creation operator (spin up)
+  // m2 = second index for creation operator (spin up)
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  int AduAdu (int m1, int m2, double& coefficient);
+
+  // apply a^+_m1_d a^+_m2_d operator to the state produced using AuAu method (without destroying it)
+  //
+  // m1 = first index for creation operator (spin down)
+  // m2 = second index for creation operator (spin down)
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  int AddAdd (int m1, int m2, double& coefficient);
+
+  // apply a^+_m1_u a^+_m2_d operator to the state produced using AuAu method (without destroying it)
+  //
+  // m1 = first index for creation operator (spin up)
+  // m2 = second index for creation operator (spin down)
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  int AduAdd (int m1, int m2, double& coefficient);
+  
+  
+  // apply a^+_m_d a_m_d operator to a given state (only spin down)
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation and annihilation operator
+  // return value = coefficient obtained when applying a^+_m a_m
+  virtual double AddAd (int index, int m);
+
+  // apply a^+_m_u a_m_u operator to a given state  (only spin up)
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation and annihilation operator
+  // return value = coefficient obtained when applying a^+_m a_m
+  virtual double AduAu (int index, int m);
+
+  // apply a^+_m_u a_n_u operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AduAu (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_d a_n_d operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AddAd (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_u a_n_d operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AduAd (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_u a_n_d operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation/annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AduAd (int index, int m, double& coefficient);
+
+  // apply a^+_m_d a_n_u operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AddAu (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_d a_n_u operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation/annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AddAu (int index, int m, double& coefficient);
 
  protected:
 
   // convert a bosonic state into its fermionic counterpart
   //
-  // initialStateUp = reference on the array where the initial up bosonic state is stored
-  // initialStateLzMaxUp = reference on the initial up bosonic state maximum Lz value
-  // initialStateDown = reference on the array where the initial down bosonic state is stored
-  // initialStateLzMaxDown = reference on the initial down bosonic state maximum Lz value
+  // initialState = reference on the array where the initial up bosonic state is stored
+  // initialStateLzMax = reference on the initial down bosonic state maximum Lz value
   // return value = corresponding fermionic state
-  unsigned long BosonToFermion(unsigned long*& initialStateUp, int& initialStateLzMaxUp, 
-			       unsigned long*& initialStateDown, int& initialStateLzMaxDown);
+  unsigned long BosonToFermion(unsigned long*& initialState, int& initialStateLzMax);
 
   // convert a fermionic state into its bosonic  counterpart
   //
@@ -196,8 +320,61 @@ class BosonOnSphereTwoLandauLevels :  public ParticleOnSphereWithSpin
   // initialStateLzMax = initial fermionic state maximum Lz value
   // finalState = reference on the array where the bosonic state has to be stored
   // finalStateLzMax = reference on the integer where the bosonic state maximum Lz value has to be stored
-  void FermionToBoson(unsigned long initialState, int initialStateLzMax, unsigned long*& finalState, int& finalStateLzMax);
+  void FermionToBoson(unsigned long initialState, int initialStateLzMax,unsigned long*& finalState, int& finalStateLzMax);
 
+  // convert a fermionic state to its monomial representation
+  //
+  // index = index of the fermionic state
+  // finalState = reference on the array where the monomial representation has to be stored
+  //void GetMonomial(long index, unsigned long*& finalState);
+
+  // convert a bosonic state to its monomial representation
+  //
+  // initialState = initial  bosonic state
+  // initialStateLzMax = initial bosonic state maximum Lz value
+  // finalState = reference on the array where the monomial representation has to be stored
+  //void ConvertToMonomial(unsigned long* initialState, int initialStateLzMax, unsigned long*& finalState);
+
+  // convert a bosonic state to its monomial representation
+  //
+  // initialState = initial bosonic state in its fermionic representation
+  // initialStateLzMax = initial bosonic state maximum Lz value
+  // finalState = reference on the array where the monomial representation has to be stored
+  //   void ConvertToMonomial(unsigned long initialState, int initialStateLzMax, unsigned long*& finalState);
+
+  // convert a bosonic state from its monomial representation
+  //
+  // initialState = array where the monomial representation is stored
+  // return value = bosonic state in its fermionic representation
+  //   unsigned long ConvertFromMonomial(unsigned long* initialState);
+  
+  // works out the maximum possible totallz that is left
+  //
+  // nbrBosons = the number of bosons that are left
+  // pos = the index of the position we are on in filling with bosons where 0 is the largest Lz on the second Landau level
+  // return value = maximum possible totallz that can be result
+  long MaxLzLeft(int nbrBosons, int pos);
+  
+  // find state index
+  //
+  // stateDescription = unsigned integer describing the state
+  // return value = corresponding index
+  int FindStateIndex(unsigned long stateDescription);
+  
+  // calculate the pseudo potentials denoted V^S_J in the literature
+  //
+  // S double the max angular momentum
+  // J the relative angular momentum
+  // return value = The pseudo potential V^S_J
+  double CalculatePseudoPotential(int S, int J);
+  
+  // calculate the number of ways of choosing c elements from n
+  // 
+  // n the number of options
+  // c the number of choices
+  // return value = number of ways of choosing c elements from n
+  unsigned long NChooseC(int n , int c );
+  
   // evaluate Hilbert space dimension without constraint on the number of particles per level
   //
   // nbrBosons = number of bosons
@@ -218,8 +395,32 @@ class BosonOnSphereTwoLandauLevels :  public ParticleOnSphereWithSpin
   // generate look-up table associated to current Hilbert space
   // 
   // memory = memory size that can be allocated for the look-up table
-  virtual void GenerateLookUpTable(unsigned long memory);
-
+  //virtual void GenerateLookUpTable(unsigned long memory);
+  
+  // Get the Lz value in second LL from the index given. index starts off at 0 on largest Lz of second LL (Up)
+  // 
+  // index = index used in boson representation
+  // return value = equivalent Lz value with appropriate shift
+  int GetLzFromIndexU(int index);
+  
+  // Get the Lz value in LLL from the index given. index starts off at 0 on largest Lz of second LL (Up)
+  // 
+  // index = index used in boson representation
+  // return value = equivalent Lz value with appropriate shift
+  int GetLzFromIndexD(int index);
+  
+  // Get the index value from the Lz for the second LL (labelled with Up)
+  // 
+  // lz = shifted Lz value
+  // return value = index used for bosonic representation
+  int GetIndexFromLzU(int lz);
+  
+  // Get the index value from the Lz for the LLL (labelled with Down)
+  // 
+  // lz = shifted Lz value
+  // return value = index used for bosonic representation
+  int GetIndexFromLzD(int lz);
+   
 };
 
 // get the particle statistic 
@@ -239,23 +440,22 @@ inline int BosonOnSphereTwoLandauLevels::GetParticleStatistic()
 // initialStateLzMaxDown = reference on the initial down bosonic state maximum Lz value
 // return value = corresponding fermionic state
 
-inline unsigned long BosonOnSphereTwoLandauLevels::BosonToFermion(unsigned long*& initialStateUp, int& initialStateLzMaxUp, 
-								  unsigned long*& initialStateDown, int& initialStateLzMaxDown)
+inline unsigned long BosonOnSphereTwoLandauLevels::BosonToFermion(unsigned long*& initialState, int& initialStateLzMax)
 {
   unsigned long TmpState = 0x0ul;
-  unsigned long Shift = 0;
-  for (int i = 0; i <= initialStateLzMaxUp; ++i)
+  unsigned long bosons, Mask;
+  int bosons_placed = 0;
+
+  for (int i = 0; i <= initialStateLzMax; ++i)
     {
-      TmpState |= ((1ul << initialStateUp[i]) - 1ul) << Shift;
-      Shift += initialStateUp[i];
-      Shift += 2;
-    }
-  for (int i = 0; i <= initialStateLzMaxDown; ++i)
-    {
-      TmpState |= ((1ul << initialStateDown[i]) - 1ul) << Shift;
-      Shift += initialStateDown[i];
-      Shift += 2;
-    }
+    	if ( initialState[i] > 0 ) {
+		    bosons = (0x1ul << initialState[i]) - 1;
+		   	Mask = (bosons << (63 - (initialState[i] - 1 ) - (i + bosons_placed) )); //this places bosons starting from the MSB.
+		   	bosons_placed += initialState[i];
+		   	TmpState |= Mask;
+		}
+	}
+	 
   return TmpState;
 }
 
@@ -268,36 +468,169 @@ inline unsigned long BosonOnSphereTwoLandauLevels::BosonToFermion(unsigned long*
 
 inline void BosonOnSphereTwoLandauLevels::FermionToBoson(unsigned long initialState, int initialStateLzMax, unsigned long*& finalState, int& finalStateLzMax)
 {
-  finalStateLzMax = 0;
-  while (initialStateLzMax >= 0)
+
+  int bit = 63;
+  int pos = 0;
+  finalState[pos] = 0;
+  unsigned long mask;
+  bool last = false;
+  while ( bit >= 0 && pos < this->NbrLzValue && bit >= (63 - initialStateLzMax) ) 
     {
-      unsigned long TmpState = (~initialState - 1ul) ^ (~initialState);
-      TmpState &= ~(TmpState >> 1);
-//      cout << hex << initialState << "  " << TmpState << dec << endl;
-#ifdef  __64_BITS__
-      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaaaaaaaaaul) != 0);
-      TmpPower |= ((TmpState & 0xccccccccccccccccul) != 0) << 1;
-      TmpPower |= ((TmpState & 0xf0f0f0f0f0f0f0f0ul) != 0) << 2;
-      TmpPower |= ((TmpState & 0xff00ff00ff00ff00ul) != 0) << 3;      
-      TmpPower |= ((TmpState & 0xffff0000ffff0000ul) != 0) << 4;      
-      TmpPower |= ((TmpState & 0xffffffff00000000ul) != 0) << 5;      
-#else
-      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaul) != 0);
-      TmpPower |= ((TmpState & 0xccccccccul) != 0) << 1;
-      TmpPower |= ((TmpState & 0xf0f0f0f0ul) != 0) << 2;
-      TmpPower |= ((TmpState & 0xff00ff00ul) != 0) << 3;      
-      TmpPower |= ((TmpState & 0xffff0000ul) != 0) << 4;      
-#endif
-//      cout << TmpPower << endl;
-      finalState[finalStateLzMax] = (unsigned long) TmpPower;
-      ++TmpPower;
-      initialState >>= TmpPower;
-      ++finalStateLzMax;
-      initialStateLzMax -= TmpPower;
+      mask = 0x1ul << bit; 
+      if ( (mask & initialState) > 0 ) 
+        {
+	  		finalState[pos]++;
+	  	    last = true;
+	    }	
+      else 
+        {
+	       if ( last ) last = false;
+	       pos++;
+	       finalState[pos] = 0;
+	    }
+       bit--;
     }
-  --finalStateLzMax;
+  if ( pos < this->NbrLzValue ) 
+    {
+  		finalStateLzMax = pos;
+  	}
+  else
+  	{
+  		finalStateLzMax = this->NbrLzValue-1;
+  	} 
+}
+
+// convert a fermionic state to its monomial representation
+//
+// index = index of the fermionic state
+// finalState = reference on the array where the monomial representation has to be stored
+/*
+inline void BosonOnSphereTwoLandauLevels::GetMonomial(long index, unsigned long*& finalState)
+{
+  int Index = 0;
+  unsigned long InitialState = this->FermionBasis->StateDescription[index];
+  int InitialStateLzMax  = this->FermionBasis->LzMax;
+  int TmpLz = InitialStateLzMax  - this->NbrBosons + 1;
+  while (InitialStateLzMax >= 0)
+    {
+      while ((InitialStateLzMax >= 0) && (((InitialState >> InitialStateLzMax) & 0x1ul) != 0x0ul))
+	{
+	  finalState[Index++] = (unsigned long) TmpLz;
+	  --InitialStateLzMax;
+	}
+      while ((InitialStateLzMax >= 0) && (((InitialState >> InitialStateLzMax) & 0x1ul) == 0x0ul))
+	{
+	  --TmpLz;
+	  --InitialStateLzMax;
+	}
+    }
+}*/
+
+
+// convert a bosonic state to its monomial representation
+//
+// initialState = initial  bosonic state
+// initialStateLzMax = initial bosonic state maximum Lz value
+// finalState = reference on the array where the monomial representation has to be stored
+/*
+inline void BosonOnSphereTwoLandauLevels::ConvertToMonomial(unsigned long* initialState, int initialStateLzMax, unsigned long*& finalState)
+{
+  int Index = 0;
+  for (int i = initialStateLzMax; i >= 0; --i)
+    for (unsigned long j = 0l; j < initialState[i]; ++j)
+      finalState[Index++] = i;
+}*/
+
+// convert a bosonic state to its monomial representation
+//
+// initialState = initial bosonic state in its fermionic representation
+// initialStateLzMax = initial bosonic state maximum Lz value
+// finalState = reference on the array where the monomial representation has to be stored
+
+// inline void BosonOnSphereTwoLandauLevels::ConvertToMonomial(unsigned long initialState, int initialStateLzMax, unsigned long*& finalState)
+// {
+//   int Index = 0;
+//   int TmpLz = initialStateLzMax - this->NbrBosons + 1;
+//   while (initialStateLzMax >= 0)
+//     {
+//       while ((initialStateLzMax >= 0) && (((initialState >> initialStateLzMax) & 0x1ul) != 0x0ul))
+// 	{
+// 	  finalState[Index++] = TmpLz;
+// 	  --initialStateLzMax;
+// 	}
+//       while ((initialStateLzMax >= 0) && (((initialState >> initialStateLzMax) & 0x1ul) == 0x0ul))
+// 	{
+// 	  --TmpLz;
+// 	  --initialStateLzMax;
+// 	}
+//     }
+// }
+
+// convert a bosonic state from its monomial representation
+//
+// initialState = array where the monomial representation is stored
+// return value = bosonic state in its fermionic representation
+
+// inline unsigned long BosonOnSphereTwoLandauLevels::ConvertFromMonomial(unsigned long* initialState)
+// {
+//   unsigned long Tmp = 0x0ul;
+//   for (int i = 0; i < this->NbrBosons; ++i)
+//     if ( initialState[i] & this->HighestLongBit > 0 ) 
+//       {
+// 	Tmp |= 0x1ul << ( 
+// 	
+//       }
+//       
+//       
+//     Tmp |= 0x1ul << (initialState[i] + ((unsigned long) (this->NbrBosons - i)) - 1ul);
+//   return Tmp;
+// }
+// 
+// 
+
+// Get the Lz value in second LL from the index given. index starts off at 0 on largest Lz of second LL (Up)
+// 
+// index = index used in boson representation
+// return value = equivalent Lz value with appropriate shift
+
+inline int BosonOnSphereTwoLandauLevels::GetLzFromIndexU(int index)
+{
+  // for the second (Up) LL the indices go from 0 for highest Lz to this->LzMaxUp. does not check index is within expected range
+  return this->LzMaxUp - index; 
+}
+
+// Get the Lz value in LLL from the index given. index starts off at 0 on largest Lz of second LL (Up)
+// 
+// index = index used in boson representation
+// return value = equivalent Lz value with appropriate shift
+
+inline int BosonOnSphereTwoLandauLevels::GetLzFromIndexD(int index)
+{
+  // for the LLL (Down) the indices go from this->LzMaxUp+1 for highest Lz to this->LzMaxUp+1 + this->LzMaxDown. does not check index is within expected range
+  //return this->LzMaxDown + 1 - (index - (this->LzMaxUp+1)); 
+  //return this->LzMaxDown + this->LzMaxUp + 2 - index;
+  return (this->LzMaxUp << 1 ) - index;
+}
+
+// Get the index value from the Lz for the second LL (labelled with Up)
+// 
+// lz = shifted Lz value
+// return value = index used for bosonic representation
+
+inline int BosonOnSphereTwoLandauLevels::GetIndexFromLzU(int lz)
+{
+  return this->LzMaxUp - lz;
+}
+  
+// Get the index value from the Lz for the LLL (labelled with Down)
+// 
+// lz = shifted Lz value
+// return value = index used for bosonic representation
+
+inline int BosonOnSphereTwoLandauLevels::GetIndexFromLzD(int lz)
+{
+  //return this->LzMaxUp + 1 + this->LzMaxDown + 1 - lz;
+  return (this->LzMaxUp << 1 ) - lz;
 }
 
 #endif
-
-

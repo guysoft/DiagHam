@@ -3718,3 +3718,47 @@ bool BosonOnSphereShort::HasPauliExclusions(int index, int pauliK, int pauliR)
     }
   return true;
 }
+
+// transform a vector belonging to this vector space in the lz->-lz
+//
+// finalSpace = the space obtained after the lz->-lz operation
+// initialVector = vector on which the operation will be apply
+// return value = vector resulting of the operation
+
+RealVector BosonOnSphereShort::GetLzSymmetricVector(ParticleOnSphere* finalSpace, RealVector& initialVector)
+{
+  BosonOnSphereShort* TmpFinalState = (BosonOnSphereShort*) finalSpace;
+  RealVector TmpVector(this->LargeHilbertSpaceDimension, true);
+  for(long i = 0 ; i < this->LargeHilbertSpaceDimension ; i++)
+    {
+      unsigned long Tmp = this->FermionBasis->GetSymmetricState(this->FermionBasis->StateDescription[i]);
+      int TmpLzMax = this->FermionBasis->LzMax;
+      while (((Tmp >> TmpLzMax) & 0x1ul) == 0x0ul)
+	--TmpLzMax;
+      TmpVector[TmpFinalState->FermionBasis->FindStateIndex(Tmp, TmpLzMax)] = initialVector[i];
+    }
+  return TmpVector;
+}
+
+// transform a vector belonging to this vector space in the lz->-lz
+//
+// finalSpace = the space obtained after the lz->-lz operation
+// initialVector = vector on which the operation will be apply
+// return value = vector resulting of the operation
+
+LongRationalVector BosonOnSphereShort::GetLzSymmetricVector(ParticleOnSphere* finalSpace, LongRationalVector& initialVector)
+{
+  BosonOnSphereShort* TmpFinalState = (BosonOnSphereShort*) finalSpace;
+  LongRationalVector TmpVector(this->LargeHilbertSpaceDimension, true);
+  for(long i = 0 ; i < this->LargeHilbertSpaceDimension ; i++)
+    {
+      unsigned long Tmp = this->FermionBasis->GetSymmetricState(this->FermionBasis->StateDescription[i]);
+      int TmpLzMax = this->FermionBasis->LzMax;
+      while (((Tmp >> TmpLzMax) & 0x1ul) == 0x0ul)
+	--TmpLzMax;
+      TmpVector[TmpFinalState->FermionBasis->FindStateIndex(Tmp, TmpLzMax)] = initialVector[i];
+    }
+  return TmpVector;
+}
+
+

@@ -573,7 +573,7 @@ int FQHEShereFuseStateCore(char* inputFileName, ParticleOnSphere* outputBasis, R
 	    outputBasis->FuseStates(outputState, LeftVector, RightVector, Paddings[i], LeftBasis, RightBasis, symmetrizedBasisFlag, Coefficients[i]);
 	  else
 	    {
-	      outputBasis->FuseStates(tmpOutputState, LeftVector, RightVector, Paddings[i], LeftBasis, RightBasis, symmetrizedBasisFlag, Coefficients[i]);
+	      outputBasis->FuseStates(tmpOutputState, LeftVector, RightVector, Paddings[i], LeftBasis, RightBasis, false, Coefficients[i]);
 	      outputState += tmpOutputState;
 	      tmpOutputState.ClearVector();
 	    }
@@ -599,7 +599,7 @@ int FQHEShereFuseStateCore(char* inputFileName, ParticleOnSphere* outputBasis, R
 	    outputBasis->FuseStates(rationalOutputState, LeftVector, RightVector, Paddings[i], LeftBasis, RightBasis, symmetrizedBasisFlag, RationalCoefficients[i]);
 	  else
 	    {
-	      outputBasis->FuseStates(rationalTmpOutputState, LeftVector, RightVector, Paddings[i], LeftBasis, RightBasis, symmetrizedBasisFlag, RationalCoefficients[i]);	      
+	      outputBasis->FuseStates(rationalTmpOutputState, LeftVector, RightVector, Paddings[i], LeftBasis, RightBasis, false, RationalCoefficients[i]);	      
 	      rationalOutputState += rationalTmpOutputState;
 	      rationalTmpOutputState.ClearVector();
 	    }
@@ -607,5 +607,30 @@ int FQHEShereFuseStateCore(char* inputFileName, ParticleOnSphere* outputBasis, R
       delete RightBasis;
       delete LeftBasis;      
     } 
+  if ((symmetrizedBasisFlag == true) && (addFlag == true))
+    {
+      if (rationalFlag == false)
+	{
+	  tmpOutputState = outputBasis->GetLzSymmetricVector(outputBasis, outputState);
+	  for (long j = 0; j < outputState.GetLargeVectorDimension(); ++j)
+	    {
+	      if (tmpOutputState[j] != 0.0)
+		{
+		  outputState[j] = tmpOutputState[j];
+		}
+	    } 	  
+	}
+      else
+	{
+	  rationalTmpOutputState = outputBasis->GetLzSymmetricVector(outputBasis, rationalOutputState);
+	  for (long j = 0; j < rationalOutputState.GetLargeVectorDimension(); ++j)
+	    {
+	      if (rationalTmpOutputState[j] != 0l)
+		{
+		  rationalOutputState[j] = rationalTmpOutputState[j];
+		}
+	    }
+	}
+    }
   return 0;
 }
