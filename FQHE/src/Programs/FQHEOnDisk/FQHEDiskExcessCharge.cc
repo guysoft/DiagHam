@@ -88,17 +88,21 @@ int main(int argc, char** argv)
   double* YValues = Data.GetAsDoubleArray(1);
   int NbrValues = Data.GetNbrLines();
 
-  double Factor = M_PI;//FillingFactor * M_PI * ((double) (LzMax)) / ((double) NbrParticles);
-  double MeanValue = ((double) (NbrParticles * (LzMax + Shift))) / (2.0 * M_PI * ((double) (LzMax)));
+  double Factor = FillingFactor * M_PI * ((double) (LzMax)) / ((double) NbrParticles);
+  double MeanValue = ((double) NbrParticles)  / (M_PI * ((double) (2 * LzMax))) * ((double) NbrParticles) / (FillingFactor * ((double) (LzMax)));
+  double DropletRadius = sqrt((double) (2 * LzMax)); 
   for (int i = 0; i < NbrValues; ++i)
-    YValues[i] = MeanValue - YValues[i];
-
+    {
+      if (fabs(XValues[i]) < DropletRadius)
+	YValues[i] = MeanValue - YValues[i];
+      else
+	YValues[i] *= -1.0;
+    }
   double Integral = 0.0;
   cout << 0.0 << " " << 0.0 << endl;
   int i = 0;
   while ((i < NbrValues) && (XValues[i] < 0.0))
     ++i;
-  ++i;
   for (; i < NbrValues; ++i)
     {
       // Integral += ((XValues[i - 1] * YValues[i - 1] * exp(-0.5 * XValues[i - 1] * XValues[i - 1])) + (XValues[i] * YValues[i] * exp(-0.5 * XValues[i] * XValues[i]))) * (XValues[i] - XValues[i - 1]);
