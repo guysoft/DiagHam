@@ -170,7 +170,7 @@ int main(int argc, char** argv)
     }
 
    if (Manager.GetBoolean("normalize"))
-     OutputBasis->ShiftedConvertFromUnnormalizedMonomial(OutputState, 0, Manager.GetInteger("normalization"));
+     OutputBasis->ShiftedConvertFromUnnormalizedMonomial(OutputState, Manager.GetInteger("shift-orbitals"), Manager.GetInteger("normalization"));
    else
      OutputBasis->ConvertToUnnormalizedMonomial(OutputState, Manager.GetInteger("normalization"));
   
