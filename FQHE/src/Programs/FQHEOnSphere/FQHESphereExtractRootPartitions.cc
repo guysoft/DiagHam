@@ -311,6 +311,10 @@ int main(int argc, char** argv)
 		TmpVectors[j].AddLinearCombination(-TmpVectors[j][MinTmpPos] / TmpVectors[k - 1][MinTmpPos], TmpVectors[k -1]);
 	      MinTmpPos = ReshuffleVectors(TmpVectors + k, TmpNbrStates - k, VectorError);
 	      RootPositions[k] = MinTmpPos;
+ 	      for (int j = 0; j < k; ++j)
+ 		{
+ 		  TmpVectors[j].AddLinearCombination(-TmpVectors[j][MinTmpPos] / TmpVectors[k][MinTmpPos], TmpVectors[k]);
+ 		}
 	    }
 	}
       else

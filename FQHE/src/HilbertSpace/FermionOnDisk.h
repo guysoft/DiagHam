@@ -95,6 +95,16 @@ class FermionOnDisk:  public FermionOnSphere
   // return value = converted state
   virtual RealVector& ShiftedConvertFromUnnormalizedMonomial(RealVector& state, int shift, long reference = 0);
 
+  // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using real space partition. The density matrix is only evaluated in a given Lz sector.
+  // 
+  // nbrFermionSector = number of particles that belong to the subsytem 
+  // lzSector = Lz sector in which the density matrix has to be evaluated 
+  // radius = radius of the A disk
+  // groundState = reference on the total system ground state
+  // architecture = pointer to the architecture to use parallelized algorithm 
+  // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)  
+  virtual RealSymmetricMatrix EvaluatePartialDensityMatrixRealSpacePartition (int nbrFermionSector, int lzSector,  double radius , RealVector& groundState, int shift = 0, AbstractArchitecture* architecture = 0);
+
  protected:
 
   // core part of the convertion of a state such that its components are now expressed in the normalized basis
