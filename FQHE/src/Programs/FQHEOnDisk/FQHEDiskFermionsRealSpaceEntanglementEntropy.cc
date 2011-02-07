@@ -313,13 +313,28 @@ int main(int argc, char** argv)
 	{
 	  cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Lz=" << SubsystemTotalLz << endl;
 	  RealSymmetricMatrix PartialDensityMatrix;
+	  if(HaldaneBasisFlag == false )
+	    {
 	  PartialDensityMatrix = ((FermionOnDisk*) Spaces[0])->EvaluatePartialDensityMatrixRealSpacePartition(SubsystemNbrParticles, SubsystemTotalLz, Radius, GroundStates[0],Manager.GetInteger("shift-orbitals"));
-	  for (int i = 1; i < NbrSpaces; ++i)	    {
-	    RealSymmetricMatrix TmpMatrix;
-	    
-	    TmpMatrix = ((FermionOnDisk*) Spaces[i])->EvaluatePartialDensityMatrixRealSpacePartition(SubsystemNbrParticles, SubsystemTotalLz, Radius, GroundStates[i],Manager.GetInteger("shift-orbitals"));
-	    PartialDensityMatrix += TmpMatrix;
-	  }
+	    }
+	  else
+	    {
+	      PartialDensityMatrix = ((FermionOnDiskHaldaneBasis*) Spaces[0])->EvaluatePartialDensityMatrixRealSpacePartition(SubsystemNbrParticles, SubsystemTotalLz, Radius, GroundStates[0],Manager.GetInteger("shift-orbitals"));
+	    }
+	  
+	  for (int i = 1; i < NbrSpaces; ++i)
+	    {
+	      RealSymmetricMatrix TmpMatrix;
+	      if( HaldaneBasisFlag == false )
+		{
+		  TmpMatrix = ((FermionOnDisk*) Spaces[i])->EvaluatePartialDensityMatrixRealSpacePartition(SubsystemNbrParticles, SubsystemTotalLz, Radius, GroundStates[i],Manager.GetInteger("shift-orbitals"));
+		}
+	      else
+		{
+		  TmpMatrix = ((FermionOnDiskHaldaneBasis*) Spaces[i])->EvaluatePartialDensityMatrixRealSpacePartition(SubsystemNbrParticles, SubsystemTotalLz, Radius, GroundStates[i],Manager.GetInteger("shift-orbitals"));
+		}
+	      PartialDensityMatrix += TmpMatrix;
+	    }
 	  if (NbrSpaces > 1)
 	    PartialDensityMatrix /= ((double) NbrSpaces);
 	  if (PartialDensityMatrix.GetNbrRow() > 1)
