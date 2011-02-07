@@ -369,6 +369,7 @@ RealVector& BosonOnDiskHaldaneHugeBasisShort::ConvertToUnnormalizedMonomial(Real
   return state;
 }
 
+
 // convert a state such that its components are now expressed in the normalized basis
 //
 // state = reference to the state to convert
@@ -377,6 +378,57 @@ RealVector& BosonOnDiskHaldaneHugeBasisShort::ConvertToUnnormalizedMonomial(Real
 // return value = converted state
 
 RealVector& BosonOnDiskHaldaneHugeBasisShort::ConvertFromUnnormalizedMonomial(RealVector& state, long reference, bool symmetryFactor)
+{
+  double* SqrtCoefficients = new double [this->LzMax + 1];
+  double* InvSqrtCoefficients = new double [this->LzMax + 1];
+  SqrtCoefficients[0] = 1.0;
+  InvSqrtCoefficients[0] = 1.0;
+  for (int k = 1; k <= this->LzMax; ++k)
+    {
+      SqrtCoefficients[k] = sqrt((double) k) * SqrtCoefficients[k - 1];
+      InvSqrtCoefficients[k] = 1.0 / SqrtCoefficients[k];
+    }
+  this->ConvertFromUnnormalizedMonomialCore(state, SqrtCoefficients, InvSqrtCoefficients, reference, symmetryFactor);
+  delete[] SqrtCoefficients;
+  delete[] InvSqrtCoefficients;
+  return state;
+}
+
+// convert a state such that its components are now expressed in the normalized basis, shifting all orbitals
+//
+// state = reference to the state to convert
+// shift = shift to apply to each orbitals
+// reference = set which component has been normalized to 1
+// return value = converted state
+
+RealVector& BosonOnDiskHaldaneHugeBasisShort::ShiftedConvertFromUnnormalizedMonomial(RealVector& state, int shift, long reference)
+{
+  double* SqrtCoefficients = new double [this->LzMax + 1];
+  double* InvSqrtCoefficients = new double [this->LzMax + 1];
+  SqrtCoefficients[0] = 1.0;
+  InvSqrtCoefficients[0] = 1.0;
+  for (int k = 1; k <= this->LzMax; ++k)
+    {
+      SqrtCoefficients[k] = sqrt((double) (shift + k)) * SqrtCoefficients[k - 1];
+      InvSqrtCoefficients[k] = 1.0 / SqrtCoefficients[k];
+    }
+  this->ConvertFromUnnormalizedMonomialCore(state, SqrtCoefficients, InvSqrtCoefficients, reference, false);
+  delete[] SqrtCoefficients;
+  delete[] InvSqrtCoefficients;
+  return state;
+}
+
+
+// core part of the convertion of a state such that its components are now expressed in the normalized basis
+//
+// state = reference to the state to convert
+// sqrtCoefficients = array that contains the normalization coefficients
+// invSqrtCoefficients = array that contains the inverts of the normalization coefficients
+// reference = set which component has been normalized to 1
+// symmetryFactor = if true also add the symmetry factors
+// return value = converted state
+
+RealVector& BosonOnDiskHaldaneHugeBasisShort::ConvertFromUnnormalizedMonomialCore(RealVector& state, double* sqrtCoefficients, double* invSqrtCoefficients, long reference, bool symmetryFactor)
 {
   double Factor = 1.0;
   int TmpLzMax = this->FermionHugeBasis->LzMax;
@@ -392,15 +444,6 @@ RealVector& BosonOnDiskHaldaneHugeBasisShort::ConvertFromUnnormalizedMonomial(Re
    while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
     --TmpLzMax;
    this->ConvertToMonomial(TmpState, TmpLzMax, this->TemporaryMonomial2);
-  double* SqrtCoefficients = new double [this->LzMax + 1];
-  double* InvSqrtCoefficients = new double [this->LzMax + 1];
-  SqrtCoefficients[0] = 1.0;
-  InvSqrtCoefficients[0] = 1.0;
-  for (int k = 1; k <= this->LzMax; ++k)
-    {
-      SqrtCoefficients[k] = sqrt((double) k) * SqrtCoefficients[k - 1];
-      InvSqrtCoefficients[k] = 1.0 / SqrtCoefficients[k];
-    }
   FactorialCoefficient ReferenceFactorial;
   FactorialCoefficient Factorial;
   this->FermionToBoson(TmpState, TmpLzMax, 
@@ -431,7 +474,7 @@ RealVector& BosonOnDiskHaldaneHugeBasisShort::ConvertFromUnnormalizedMonomial(Re
 	      {
 		while ((Index1 < this->NbrBosons) && (this->TemporaryMonomial2[Index1] > this->TemporaryMonomial[Index2]))
 		  {
-		    Coefficient *= InvSqrtCoefficients[this->TemporaryMonomial2[Index1]];
+		    Coefficient *= invSqrtCoefficients[this->TemporaryMonomial2[Index1]];
 		    ++Index1;
 		  }
 		while ((Index1 < this->NbrBosons) && (Index2 < this->NbrBosons) && (this->TemporaryMonomial2[Index1] == this->TemporaryMonomial[Index2]))
@@ -441,18 +484,18 @@ RealVector& BosonOnDiskHaldaneHugeBasisShort::ConvertFromUnnormalizedMonomial(Re
 		  }
 		while ((Index2 < this->NbrBosons) && (this->TemporaryMonomial2[Index1] < this->TemporaryMonomial[Index2]))
 		  {
-		    Coefficient *= SqrtCoefficients[this->TemporaryMonomial[Index2]];
+		    Coefficient *= sqrtCoefficients[this->TemporaryMonomial[Index2]];
 		    ++Index2;
 		  }	  
 	      }
 	    while (Index1 < this->NbrBosons)
 	      {
-		Coefficient *= InvSqrtCoefficients[this->TemporaryMonomial2[Index1]];
+		Coefficient *= invSqrtCoefficients[this->TemporaryMonomial2[Index1]];
 		++Index1;
 	      }
 	    while (Index2 < this->NbrBosons)
 	      {
-		Coefficient *= SqrtCoefficients[this->TemporaryMonomial2[Index2]];
+		Coefficient *= sqrtCoefficients[this->TemporaryMonomial2[Index2]];
 		++Index2;
 	      }
 	    Factorial = ReferenceFactorial;
