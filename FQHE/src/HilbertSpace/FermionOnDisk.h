@@ -101,6 +101,7 @@ class FermionOnDisk:  public FermionOnSphere
   // lzSector = Lz sector in which the density matrix has to be evaluated 
   // radius = radius of the A disk
   // groundState = reference on the total system ground state
+  // shift = shift to apply to each orbitals
   // architecture = pointer to the architecture to use parallelized algorithm 
   // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)  
   virtual RealSymmetricMatrix EvaluatePartialDensityMatrixRealSpacePartition (int nbrFermionSector, int lzSector,  double radius , RealVector& groundState, int shift = 0, AbstractArchitecture* architecture = 0);

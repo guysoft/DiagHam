@@ -478,10 +478,9 @@ RealVector& FermionOnDisk::ConvertFromUnnormalizedMonomialCore(RealVector& state
 // 
 // nbrFermionSector = number of particles that belong to the subsytem 
 // lzSector = Lz sector in which the density matrix has to be evaluated 
-// phiRange = The angle traced in the \hat{phi} direction between the 2 longitudes defining the cut in degrees
-// thetaTop =  inclination angle defining one edge of the cut in degrees
-// thetaBottom = inclination angle defining the bottom edge of the cut. thetaBottom>thetaTop in degrees
+// radius = radius of the A disk
 // groundState = reference on the total system ground state
+// shift = shift to apply to each orbitals
 // architecture = pointer to the architecture to use parallelized algorithm 
 // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
 

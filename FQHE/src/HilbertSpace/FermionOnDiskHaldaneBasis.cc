@@ -42,6 +42,9 @@
 #include <math.h>
 #include <fstream>
 
+#ifdef __GSL__                                                                                                                                
+#include <gsl/gsl_sf_gamma.h>                                                                                                                 
+#endif
 
 using std::cout;
 using std::endl;
@@ -757,4 +760,244 @@ RealVector& FermionOnDiskHaldaneBasis::ConvertFromUnnormalizedMonomialCore(RealV
       delete[] TmpMonomial;
     }
   return state;
+}
+
+// evaluate a density matrix of a subsystem of the whole system described by a given ground state, using real space partition. The density matrix is only evaluated in a given Lz sector.
+// 
+// nbrFermionSector = number of particles that belong to the subsytem 
+// lzSector = Lz sector in which the density matrix has to be evaluated 
+// radius = radius of the A disk
+// groundState = reference on the total system ground state
+// shift = shift to apply to each orbitals
+// architecture = pointer to the architecture to use parallelized algorithm 
+// return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+
+RealSymmetricMatrix FermionOnDiskHaldaneBasis::EvaluatePartialDensityMatrixRealSpacePartition (int nbrFermionSector, int lzSector,  double radius , RealVector& groundState,int shift, AbstractArchitecture* architecture)
+{
+#ifdef __GSL__	
+  double ReducedRadius = radius * radius / 2.0;
+  double* IncompleteNormalizedGamma = new double[this->LzMax + 1];
+  
+  for (int i = 0; i <= this->LzMax ; i++)
+    {
+      IncompleteNormalizedGamma[i] = gsl_sf_gamma_inc_Q( ((double) i + shift) + 1.0 , ReducedRadius);
+    }
+  if (nbrFermionSector == 0)
+    {
+      if (lzSector == 0)
+	{
+	  unsigned long* TmpMonomial1 = new unsigned long [this->NbrFermions];
+	  double TmpValue = 0.0;
+	  for (int MinIndex = 0; MinIndex < this->HilbertSpaceDimension; ++MinIndex)    
+	    {
+	      this->ConvertToMonomial(this->StateDescription[MinIndex], TmpMonomial1);
+	      double FormFactor = 0.0;
+	      for (int i=0; i < this->NbrFermions; i++)
+		FormFactor += log(1.0 - IncompleteNormalizedGamma[TmpMonomial1[i]]);
+	      FormFactor = exp(FormFactor);
+	      TmpValue += groundState[MinIndex] * groundState[MinIndex] * FormFactor;	
+	    }
+	  RealSymmetricMatrix TmpDensityMatrix(1);
+	  TmpDensityMatrix.SetMatrixElement(0, 0, TmpValue); 
+	  
+	  delete[] IncompleteNormalizedGamma;
+	  delete[] TmpMonomial1;
+	  return TmpDensityMatrix;
+	}
+      else
+	{
+	  RealSymmetricMatrix TmpDensityMatrix;
+	  return TmpDensityMatrix;	  
+	}
+    }
+  
+  if (nbrFermionSector == this->NbrFermions)
+    {
+      if (lzSector == this->TotalLz)
+	{
+	  RealSymmetricMatrix TmpDensityMatrix(this->HilbertSpaceDimension, true);
+	  unsigned long* TmpMonomial1 = new unsigned long [this->NbrFermions];
+	  double* TmpStateCoefficient = new double [this->HilbertSpaceDimension];
+	  for( int i = 0; i < this->HilbertSpaceDimension; i++)
+	    {
+	      TmpStateCoefficient[i] = 0.0;
+	      this->ConvertToMonomial(this->StateDescription[i], TmpMonomial1);
+	      for( int j=0; j<this->NbrFermions; j++)
+		{
+		  TmpStateCoefficient [i] += 0.5*log( IncompleteNormalizedGamma[TmpMonomial1[j]]);
+		}
+	      TmpStateCoefficient[i] = exp(TmpStateCoefficient[i]);
+	    }
+	  
+	  for(int pos1 = 0; pos1 < this->HilbertSpaceDimension; pos1++)
+	    for(int pos2 = pos1; pos2 < this->HilbertSpaceDimension; pos2++)
+	      {
+		TmpDensityMatrix.SetMatrixElement(pos1, pos2, groundState[pos1]*groundState[pos2]*TmpStateCoefficient[pos1]*TmpStateCoefficient[pos2]);
+	      }
+	  delete[] TmpMonomial1;
+	  delete[] TmpStateCoefficient;
+	  delete[] IncompleteNormalizedGamma;
+	  return TmpDensityMatrix;
+	}
+      else
+	{
+	  RealSymmetricMatrix TmpDensityMatrix;
+	  return TmpDensityMatrix;	  
+	}
+    }
+  
+  int ComplementaryNbrFermionSector = this->NbrFermions - nbrFermionSector;
+  
+  if (nbrFermionSector == 1)
+    {
+      double TmpValue = 0.0;
+      FermionOnDisk TmpHilbertSpace(this->NbrFermions - 1, this->TotalLz - lzSector, this->LzMax);
+      unsigned long TmpMask = 0x1ul << lzSector;
+      double TmpStateCoefficient = IncompleteNormalizedGamma[lzSector];
+      unsigned long* TmpMonomial1 = new unsigned long [ComplementaryNbrFermionSector];
+      for (int MinIndex = 0; MinIndex < TmpHilbertSpace.GetHilbertSpaceDimension() ; ++MinIndex)    
+	{
+	  TmpHilbertSpace.ConvertToMonomial(TmpHilbertSpace.StateDescription[MinIndex], TmpMonomial1);
+	  double FormFactor = 0.0;
+	  for (int i = 0; i < ComplementaryNbrFermionSector; i++)
+	    FormFactor += log(1.0 - IncompleteNormalizedGamma[TmpMonomial1[i]]);
+	  FormFactor = exp(FormFactor);
+	  unsigned long TmpState = TmpHilbertSpace.StateDescription[MinIndex];
+	  if ((TmpState & TmpMask) == 0x0ul)
+	    {
+	      TmpState |= TmpMask;
+	      int TmpLzMax = this->LzMax;
+	      while ((TmpState >> TmpLzMax) == 0x0ul)
+		--TmpLzMax;
+	      int TmpPos = this->FindStateIndex(TmpState, TmpLzMax);
+	      if (TmpPos != this->HilbertSpaceDimension)
+		{
+		  TmpValue += groundState[TmpPos] * groundState[TmpPos] *FormFactor*TmpStateCoefficient;	
+		}
+	    }
+	}
+      RealSymmetricMatrix TmpDensityMatrix(1);
+      TmpDensityMatrix.SetMatrixElement(0, 0, TmpValue);
+      delete[] TmpMonomial1;
+      delete[] IncompleteNormalizedGamma;
+      return TmpDensityMatrix;
+    }
+    
+  FermionOnDisk TmpDestinationHilbertSpace(nbrFermionSector, lzSector, this->LzMax);
+  cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
+  RealSymmetricMatrix TmpDensityMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
+  int* TmpStatePosition = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+  int* TmpStatePosition2 = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+  unsigned long* TmpMonomial1 = new unsigned long [ComplementaryNbrFermionSector];
+  unsigned long* TmpMonomial2 = new unsigned long [nbrFermionSector];
+  double* TmpStateCoefficient = new double [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+	
+  double* TmpStateCoefficient_Sign = new double [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+  long TmpNbrNonZeroElements = 0;
+	
+  if ( this->TotalLz < lzSector)
+    {
+      RealSymmetricMatrix TmpDensityMatrixZero;
+      return TmpDensityMatrixZero;
+    }
+  FermionOnDisk TmpHilbertSpace(ComplementaryNbrFermionSector, this->TotalLz - lzSector, this->LzMax);
+	
+  for (int i = 0; i < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++i)
+    {
+      TmpStateCoefficient [i] = 0.0;
+      TmpDestinationHilbertSpace.ConvertToMonomial(TmpDestinationHilbertSpace.StateDescription[i], TmpMonomial2);
+      for( int j=0; j<nbrFermionSector; j++)
+	{
+	  TmpStateCoefficient [i] += 0.5 * log( IncompleteNormalizedGamma[TmpMonomial2[j]] );
+	}
+      TmpStateCoefficient[i] = exp(TmpStateCoefficient[i]);
+    }
+  for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
+    {
+      int Pos = 0;
+      unsigned long TmpState = TmpHilbertSpace.StateDescription[MinIndex];
+		
+      TmpHilbertSpace.ConvertToMonomial(TmpHilbertSpace.StateDescription[MinIndex], TmpMonomial1);
+      double FormFactor = 0.0;
+      for (int i=0; i < ComplementaryNbrFermionSector; i++)
+	FormFactor += log(1.0 - IncompleteNormalizedGamma[TmpMonomial1[i]] );
+      FormFactor = exp(FormFactor);
+		
+      for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
+	{
+	  unsigned long TmpState2 = TmpDestinationHilbertSpace.StateDescription[j];
+	  if ((TmpState & TmpState2) == 0x0ul)
+	    {
+	      int TmpLzMax = this->LzMax;
+	      unsigned long TmpState3 = TmpState | TmpState2;
+	      while ((TmpState3 >> TmpLzMax) == 0x0ul)
+		--TmpLzMax;
+	      int TmpPos = this->FindStateIndex(TmpState3, TmpLzMax);
+				
+	      if (TmpPos != this->HilbertSpaceDimension)
+		{
+		  double Coefficient = 1.0;
+		  unsigned long Sign = 0x0ul;
+		  int Pos2 = TmpDestinationHilbertSpace.LzMax;
+		  while ((Pos2 > 0) && (TmpState2 != 0x0ul))
+		    {
+		      while (((TmpState2 >> Pos2) & 0x1ul) == 0x0ul)
+			--Pos2;
+		      TmpState3 = TmpState & ((0x1ul << (Pos2 + 1)) - 1ul);
+#ifdef  __64_BITS__
+		      TmpState3 ^= TmpState3 >> 32;
+#endif	
+		      TmpState3 ^= TmpState3 >> 16;
+		      TmpState3 ^= TmpState3 >> 8;
+		      TmpState3 ^= TmpState3 >> 4;
+		      TmpState3 ^= TmpState3 >> 2;
+		      TmpState3 ^= TmpState3 >> 1;
+		      Sign ^= TmpState3;
+		      TmpState2 &= ~(0x1ul << Pos2);
+		      --Pos2;
+		    }
+		  if ((Sign & 0x1ul) == 0x0ul)		  
+		    Coefficient *= 1.0;
+		  else
+		    Coefficient *= -1.0;
+		  TmpStatePosition[Pos] = TmpPos;
+		  TmpStatePosition2[Pos] = j;
+		  TmpStateCoefficient_Sign[Pos] = Coefficient;
+		  ++Pos;
+		}
+	    }
+	}
+      if (Pos != 0)
+	{
+	  ++TmpNbrNonZeroElements;
+	  for (int j = 0; j < Pos; ++j)
+	    {
+	      int Pos2 = TmpStatePosition2[j];
+	      double TmpValue = groundState[TmpStatePosition[j]] * TmpStateCoefficient_Sign[j] *TmpStateCoefficient[Pos2];
+	      for (int k = 0; k < Pos; ++k)
+		if (TmpStatePosition2[k] >= Pos2)
+		  {
+		    TmpDensityMatrix.AddToMatrixElement(Pos2, TmpStatePosition2[k], FormFactor* TmpValue * groundState[TmpStatePosition[k]] * TmpStateCoefficient_Sign[k] *TmpStateCoefficient[TmpStatePosition2[k]]);
+		  }
+	    }
+	}
+    }
+  delete[] TmpStatePosition2;
+  delete[] TmpStatePosition;
+  delete[] TmpStateCoefficient;
+  delete[] TmpStateCoefficient_Sign;
+  delete[] TmpMonomial1;
+  delete[] TmpMonomial2;
+  delete[] IncompleteNormalizedGamma;
+  if (TmpNbrNonZeroElements > 0)	
+    return TmpDensityMatrix;
+  else
+    {
+      RealSymmetricMatrix TmpDensityMatrixZero;
+      return TmpDensityMatrixZero;
+    }
+#else
+  RealSymmetricMatrix TmpDensityMatrixZero;
+  return TmpDensityMatrixZero;
+#endif
 }
