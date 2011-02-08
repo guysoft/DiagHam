@@ -57,6 +57,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "force-maxmomentum", "force the maximum single particle momentum to a particular value (negative from the number of particles and the state total angular momentum)", -1);
+  (*SystemGroup) += new SingleIntegerOption ('\n',"min-na","minimum number of particlesin the region A whose entropy has to be evaluated", 0);
+  (*SystemGroup) += new SingleIntegerOption ('\n',"max-na","maximum number of particlesin the region A whose entropy has to be evaluated", -1);
   (*SystemGroup) += new SingleStringOption  ('\n', "degenerated-groundstate", "single column file describing a degenerated ground state");
   (*SystemGroup) += new SingleDoubleOption ('\n', "radius", "radius that defines the size of the real space parition", 1.0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "shift-orbitals", "shift the angular momentum of all orbitals", 0);
@@ -276,8 +278,13 @@ int main(int argc, char** argv)
   File.precision(14);
   cout.precision(14);
   
+  
   int  MaxSubsystemNbrParticles = NbrParticles;
-  int  SubsystemNbrParticles = 0;
+  if( Manager.GetInteger("max-na") != -1)
+    {
+      MaxSubsystemNbrParticles = Manager.GetInteger("max-na");
+    }
+  int  SubsystemNbrParticles = Manager.GetInteger("min-na");
   
   int MaxMomentum = (TotalLz[0] - (((NbrParticles - 1) * (NbrParticles - 2)) / 2));
   if ((ForceMaxMomentum >= 0) && (ForceMaxMomentum < MaxMomentum))
