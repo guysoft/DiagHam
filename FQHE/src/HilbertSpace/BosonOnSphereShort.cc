@@ -3208,6 +3208,200 @@ LongRationalVector& BosonOnSphereShort::FuseStates (LongRationalVector& outputVe
   return outputVector;
 }
 
+// fuse multiple states which belong to different Hilbert spaces 
+//
+// outputVector = reference on the vector which will contain the fused states (without zeroing components which do not occur in the fusion)
+// nbrInputVectors = number of input vectors
+// inputVectors = input vectors whose Hilbert space will be fuse from  left to right
+// paddings = number of unoccupied one body states that have to be inserted between two consecutive fused spaces
+// inputSpaces = point to the Hilbert space that will be fuse to the left
+// symmetrizedFlag = assume that the target state has to be invariant under the Lz<->-Lz symmetry
+// coefficient = optional multiplicative factor to apply to the fused state 
+// return value = reference on the fused state
+
+RealVector& BosonOnSphereShort::FuseMultipleStates (RealVector& outputVector, int nbrInputVectors, RealVector* inputVectors, int* paddings, 
+						    ParticleOnSphere** inputSpaces, bool symmetrizedFlag, double coefficient)
+{
+  BosonOnSphereShort** InputSpaces = (BosonOnSphereShort**) inputSpaces;
+  for (long i = 0; i <  InputSpaces[0]->LargeHilbertSpaceDimension; ++i)
+    {
+      this->CoreFuseMultipleStates(outputVector, nbrInputVectors, inputVectors, paddings, InputSpaces, 1, 
+				   ((BosonOnSphereShort*) InputSpaces[0])->FermionBasis->StateDescription[i], 
+				   ((BosonOnSphereShort*) InputSpaces[0])->FermionBasis->LzMax + paddings[0] + 2,
+				   coefficient  * inputVectors[0][i], symmetrizedFlag);	    
+      
+    }
+  return outputVector;
+}
+
+// fuse multiple states which belong to different Hilbert spaces 
+//
+// outputVector = reference on the vector which will contain the fused states (without zeroing components which do not occur in the fusion)
+// nbrInputVectors = number of input vectors
+// inputVectors = input vectors whose Hilbert space will be fuse from  left to right
+// paddings = number of unoccupied one body states that have to be inserted between two consecutive fused spaces
+// inputSpaces = point to the Hilbert space that will be fuse to the left
+// symmetrizedFlag = assume that the target state has to be invariant under the Lz<->-Lz symmetry
+// coefficient = optional multiplicative factor to apply to the fused state 
+// return value = reference on the fused state
+
+LongRationalVector& BosonOnSphereShort::FuseMultipleStates (LongRationalVector& outputVector, int nbrInputVectors, LongRationalVector* inputVectors, int* paddings, 
+							    ParticleOnSphere** inputSpaces, bool symmetrizedFlag, LongRational& coefficient)
+{
+  BosonOnSphereShort** InputSpaces = (BosonOnSphereShort**) inputSpaces;
+  for (long i = 0; i <  InputSpaces[0]->LargeHilbertSpaceDimension; ++i)
+    {
+      this->CoreFuseMultipleStates(outputVector, nbrInputVectors, inputVectors, paddings, InputSpaces, 1, 
+				   ((BosonOnSphereShort*) InputSpaces[0])->FermionBasis->StateDescription[i], 
+				   ((BosonOnSphereShort*) InputSpaces[0])->FermionBasis->LzMax + paddings[0] + 2,
+				   coefficient  * inputVectors[0][i], symmetrizedFlag);	    
+      
+    }
+  return outputVector;
+}
+
+// core part of multiple state fuse 
+//
+// outputVector = reference on the vector which will contain the fused states (without zeroing components which do not occur in the fusion)
+// nbrInputVectors = number of input vectors
+// inputVectors = input vectors whose Hilbert space will be fuse from  left to right
+// paddings = number of unoccupied one body states that have to be inserted between two consecutive fused spaces
+// inputSpaces = point to the Hilbert space that will be fuse to the left
+// currentPosition = index of the current space to fuse
+// currentState = current fermionic state obtained by fusing previous states
+// currentCoefficient = current multiplicative coefficient
+// symmetrizedFlag = assume that the target state has to be invariant under the Lz<->-Lz symmetry
+
+void BosonOnSphereShort::CoreFuseMultipleStates (RealVector& outputVector, int nbrInputVectors, RealVector* inputVectors, int* paddings, 
+						 BosonOnSphereShort** inputSpaces, int currentPosition, unsigned long currentState, int currentPadding, 
+						 double currentCoefficient, bool symmetrizedFlag)
+{
+  if (currentPosition < nbrInputVectors)
+    {
+      for (long i = 0; i <  inputSpaces[currentPosition]->LargeHilbertSpaceDimension; ++i)
+	{
+	  this->CoreFuseMultipleStates(outputVector, nbrInputVectors, inputVectors, paddings, inputSpaces, currentPosition + 1, 
+				       currentState | (inputSpaces[currentPosition]->FermionBasis->StateDescription[i] << currentPadding), 
+				       currentPadding + inputSpaces[currentPosition]->FermionBasis->LzMax + paddings[currentPosition] + 2,
+				       currentCoefficient * inputVectors[currentPosition][i], symmetrizedFlag);	    
+	  
+	}
+    }
+  else
+    {
+      FermionOnSphere* RightSpace = inputSpaces[currentPosition]->FermionBasis;
+      RealVector& RightVector = inputVectors[currentPosition];
+      if (symmetrizedFlag == false)
+	{
+	  for (long j = 0; j < RightSpace->LargeHilbertSpaceDimension; ++j)
+	    {
+	      unsigned long TmpState = RightSpace->StateDescription[j] << currentPadding;
+	      TmpState |= currentState;
+	      int TmpLzMax = this->FermionBasis->LzMax;
+	      while ((TmpState >> TmpLzMax) == 0x0ul)
+		--TmpLzMax;
+	      int TmpIndex = this->FermionBasis->FindStateIndex(TmpState, TmpLzMax);
+	      outputVector[TmpIndex] = currentCoefficient * RightVector[j];
+	    }
+	}
+      else
+	{
+	  for (long j = 0; j < RightSpace->LargeHilbertSpaceDimension; ++j)
+	    {
+	      unsigned long TmpState = RightSpace->StateDescription[j] << currentPadding;
+	      TmpState |= currentState;
+	      double Coefficient = currentCoefficient;
+	      Coefficient *= RightVector[j];	  
+	      int TmpLzMax = this->FermionBasis->LzMax;
+	      while ((TmpState >> TmpLzMax) == 0x0ul)
+		--TmpLzMax;
+	      int TmpIndex = this->FermionBasis->FindStateIndex(TmpState, TmpLzMax);
+	      outputVector[TmpIndex] = Coefficient;
+	      unsigned long TmpState2 = this->FermionBasis->GetSymmetricState(TmpState);
+	      if (TmpState != TmpState2)
+		{
+		  TmpLzMax = this->FermionBasis->LzMax;
+		  while ((TmpState2 >> TmpLzMax) == 0x0ul)
+		    --TmpLzMax;
+		  TmpIndex = this->FermionBasis->FindStateIndex(TmpState2, TmpLzMax);
+		  outputVector[TmpIndex] = Coefficient;      
+		}
+	    }
+	}
+    }
+}
+
+// core part of multiple state fuse 
+//
+// outputVector = reference on the vector which will contain the fused states (without zeroing components which do not occur in the fusion)
+// nbrInputVectors = number of input vectors
+// inputVectors = input vectors whose Hilbert space will be fuse from  left to right
+// paddings = number of unoccupied one body states that have to be inserted between two consecutive fused spaces
+// inputSpaces = point to the Hilbert space that will be fuse to the left
+// currentPosition = index of the current space to fuse
+// currentState = current fermionic state obtained by fusing previous states
+// currentCoefficient = current multiplicative coefficient
+// symmetrizedFlag = assume that the target state has to be invariant under the Lz<->-Lz symmetry
+
+void BosonOnSphereShort::CoreFuseMultipleStates (LongRationalVector& outputVector, int nbrInputVectors, LongRationalVector* inputVectors, int* paddings, 
+						 BosonOnSphereShort** inputSpaces, int currentPosition, unsigned long currentState, int currentPadding, 
+						 LongRational currentCoefficient, bool symmetrizedFlag)
+{
+  if (currentPosition < nbrInputVectors)
+    {
+      for (long i = 0; i <  inputSpaces[currentPosition]->LargeHilbertSpaceDimension; ++i)
+	{
+	  this->CoreFuseMultipleStates(outputVector, nbrInputVectors, inputVectors, paddings, inputSpaces, currentPosition + 1, 
+				       currentState | (inputSpaces[currentPosition]->FermionBasis->StateDescription[i] << currentPadding), 
+				       currentPadding + inputSpaces[currentPosition]->FermionBasis->LzMax + paddings[currentPosition] + 2,
+				       currentCoefficient * inputVectors[currentPosition][i], symmetrizedFlag);	    
+	  
+	}
+    }
+  else
+    {
+      FermionOnSphere* RightSpace = inputSpaces[currentPosition]->FermionBasis;
+      LongRationalVector& RightVector = inputVectors[currentPosition];
+      if (symmetrizedFlag == false)
+	{
+	  for (long j = 0; j < RightSpace->LargeHilbertSpaceDimension; ++j)
+	    {
+	      unsigned long TmpState = RightSpace->StateDescription[j] << currentPadding;
+	      TmpState |= currentState;
+	      int TmpLzMax = this->FermionBasis->LzMax;
+	      while ((TmpState >> TmpLzMax) == 0x0ul)
+		--TmpLzMax;
+	      int TmpIndex = this->FermionBasis->FindStateIndex(TmpState, TmpLzMax);
+	      outputVector[TmpIndex] = currentCoefficient * RightVector[j];
+	    }
+	}
+      else
+	{
+	  for (long j = 0; j < RightSpace->LargeHilbertSpaceDimension; ++j)
+	    {
+	      unsigned long TmpState = RightSpace->StateDescription[j] << currentPadding;
+	      TmpState |= currentState;
+	      LongRational Coefficient = currentCoefficient;
+	      Coefficient *= RightVector[j];	  
+	      int TmpLzMax = this->FermionBasis->LzMax;
+	      while ((TmpState >> TmpLzMax) == 0x0ul)
+		--TmpLzMax;
+	      int TmpIndex = this->FermionBasis->FindStateIndex(TmpState, TmpLzMax);
+	      outputVector[TmpIndex] = Coefficient;
+	      unsigned long TmpState2 = this->FermionBasis->GetSymmetricState(TmpState);
+	      if (TmpState != TmpState2)
+		{
+		  TmpLzMax = this->FermionBasis->LzMax;
+		  while ((TmpState2 >> TmpLzMax) == 0x0ul)
+		    --TmpLzMax;
+		  TmpIndex = this->FermionBasis->FindStateIndex(TmpState2, TmpLzMax);
+		  outputVector[TmpIndex] = Coefficient;      
+		}
+	    }
+	}
+    }
+}
+
 // use product rule to produce part of the components of a system from a smaller one
 //
 // outputVector = reference on the vector which will contain the product rule state  (without zeroing components which do not occur in the fusion)

@@ -761,6 +761,40 @@ LongRationalVector& ParticleOnSphere::FuseStates (LongRationalVector& outputVect
   return outputVector;
 }
 
+// fuse multiple states which belong to different Hilbert spaces 
+//
+// outputVector = reference on the vector which will contain the fused states (without zeroing components which do not occur in the fusion)
+// nbrInputVectors = number of input vectors
+// inputVectors = input vectors whose Hilbert space will be fuse from  left to right
+// paddings = number of unoccupied one body states that have to be inserted between two consecutive fused spaces
+// inputSpaces = point to the Hilbert space that will be fuse to the left
+// symmetrizedFlag = assume that the target state has to be invariant under the Lz<->-Lz symmetry
+// coefficient = optional multiplicative factor to apply to the fused state 
+// return value = reference on the fused state
+
+RealVector& ParticleOnSphere::FuseMultipleStates (RealVector& outputVector, int nbrInputVectors, RealVector* inputVectors, int* paddings, 
+						  ParticleOnSphere** inputSpaces, bool symmetrizedFlag, double coefficient)
+{
+  return outputVector;
+}
+
+// fuse multiple states which belong to different Hilbert spaces 
+//
+// outputVector = reference on the vector which will contain the fused states (without zeroing components which do not occur in the fusion)
+// nbrInputVectors = number of input vectors
+// inputVectors = input vectors whose Hilbert space will be fuse from  left to right
+// paddings = number of unoccupied one body states that have to be inserted between two consecutive fused spaces
+// inputSpaces = point to the Hilbert space that will be fuse to the left
+// symmetrizedFlag = assume that the target state has to be invariant under the Lz<->-Lz symmetry
+// coefficient = optional multiplicative factor to apply to the fused state 
+// return value = reference on the fused state
+
+LongRationalVector& ParticleOnSphere::FuseMultipleStates (LongRationalVector& outputVector, int nbrInputVectors, LongRationalVector* inputVectors, int* paddings, 
+							  ParticleOnSphere** inputSpaces, bool symmetrizedFlag, LongRational& coefficient)
+{
+  return outputVector;
+}
+
 
 // use product rule to produce part of the components of a system from a smaller one
 //

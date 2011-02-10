@@ -455,6 +455,32 @@ class BosonOnSphereShort :  public ParticleOnSphere
   virtual LongRationalVector& FuseStates (LongRationalVector& outputVector, LongRationalVector& leftVector, LongRationalVector& rightVector, int padding, 
 					  ParticleOnSphere* leftSpace, ParticleOnSphere* rightSpace, bool symmetrizedFlag, LongRational& coefficient);
 
+  // fuse multiple states which belong to different Hilbert spaces 
+  //
+  // outputVector = reference on the vector which will contain the fused states (without zeroing components which do not occur in the fusion)
+  // nbrInputVectors = number of input vectors
+  // inputVectors = input vectors whose Hilbert space will be fuse from  left to right
+  // paddings = number of unoccupied one body states that have to be inserted between two consecutive fused spaces
+  // inputSpaces = point to the Hilbert space that will be fuse to the left
+  // symmetrizedFlag = assume that the target state has to be invariant under the Lz<->-Lz symmetry
+  // coefficient = optional multiplicative factor to apply to the fused state 
+  // return value = reference on the fused state
+  virtual RealVector& FuseMultipleStates (RealVector& outputVector, int nbrInputVectors, RealVector* inputVectors, int* paddings, 
+					  ParticleOnSphere** inputSpaces, bool symmetrizedFlag, double coefficient);
+
+  // fuse multiple states which belong to different Hilbert spaces 
+  //
+  // outputVector = reference on the vector which will contain the fused states (without zeroing components which do not occur in the fusion)
+  // nbrInputVectors = number of input vectors
+  // inputVectors = input vectors whose Hilbert space will be fuse from  left to right
+  // paddings = number of unoccupied one body states that have to be inserted between two consecutive fused spaces
+  // inputSpaces = point to the Hilbert space that will be fuse to the left
+  // symmetrizedFlag = assume that the target state has to be invariant under the Lz<->-Lz symmetry
+  // coefficient = optional multiplicative factor to apply to the fused state 
+  // return value = reference on the fused state
+  virtual LongRationalVector& FuseMultipleStates (LongRationalVector& outputVector, int nbrInputVectors, LongRationalVector* inputVectors, int* paddings, 
+						  ParticleOnSphere** inputSpaces, bool symmetrizedFlag, LongRational& coefficient);
+
   // use product rule to produce part of the components of a system from a smaller one
   //
   // outputVector = reference on the vector which will contain the product rule state  (without zeroing components which do not occur in the fusion)
@@ -596,6 +622,36 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // pauliK = number of particles allowed in consecutive orbitals
   // pauliR = number of consecutive orbitals
   virtual bool HasPauliExclusions(int index, int pauliK, int pauliR);
+
+  // core part of multiple state fuse 
+  //
+  // outputVector = reference on the vector which will contain the fused states (without zeroing components which do not occur in the fusion)
+  // nbrInputVectors = number of input vectors
+  // inputVectors = input vectors whose Hilbert space will be fuse from  left to right
+  // paddings = number of unoccupied one body states that have to be inserted between two consecutive fused spaces
+  // inputSpaces = point to the Hilbert space that will be fuse to the left
+  // currentPosition = index of the current space to fuse
+  // currentState = current fermionic state obtained by fusing previous states
+  // currentCoefficient = current multiplicative coefficient
+  // symmetrizedFlag = assume that the target state has to be invariant under the Lz<->-Lz symmetry
+  virtual void CoreFuseMultipleStates (RealVector& outputVector, int nbrInputVectors, RealVector* inputVectors, int* paddings, 
+				       BosonOnSphereShort** inputSpaces, int currentPosition, unsigned long currentState, int currentPadding, 
+				       double currentCoefficient, bool symmetrizedFlag);
+
+  // core part of multiple state fuse 
+  //
+  // outputVector = reference on the vector which will contain the fused states (without zeroing components which do not occur in the fusion)
+  // nbrInputVectors = number of input vectors
+  // inputVectors = input vectors whose Hilbert space will be fuse from  left to right
+  // paddings = number of unoccupied one body states that have to be inserted between two consecutive fused spaces
+  // inputSpaces = point to the Hilbert space that will be fuse to the left
+  // currentPosition = index of the current space to fuse
+  // currentState = current fermionic state obtained by fusing previous states
+  // currentCoefficient = current multiplicative coefficient
+  // symmetrizedFlag = assume that the target state has to be invariant under the Lz<->-Lz symmetry
+  virtual void CoreFuseMultipleStates (LongRationalVector& outputVector, int nbrInputVectors, LongRationalVector* inputVectors, int* paddings, 
+				       BosonOnSphereShort** inputSpaces, int currentPosition, unsigned long currentState, int currentPadding, 
+				       LongRational currentCoefficient, bool symmetrizedFlag);
 
 };
 
