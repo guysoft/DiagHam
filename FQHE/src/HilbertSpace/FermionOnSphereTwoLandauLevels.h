@@ -38,8 +38,9 @@
 #include "HilbertSpace/BosonOnSphereShort.h"
 
 #include <iostream>
+#include <map>
 
-
+using std::map;
 
 class FermionOnSphereTwoLandauLevels :  public FermionOnSphereWithSpin
 {
@@ -241,11 +242,9 @@ class FermionOnSphereTwoLandauLevels :  public FermionOnSphereWithSpin
   // monomial = array where the monomial is stored in its monomial representation
   // variable = reference on the array where the indice of fermions in the second Landau level is stored
   // nbrVariable = number of fermions in the second Landau level
-  // finalStates = array where the obtained states are stored in their fermionic representation
-  // weigth = array where the coefficients for each obtained state are stored
+  // sortingMap = map in which the generated states and their coefficient will be stored
   // finalSpace = pointer to the final HilbertSpace
-  // return value = number of different obtained states	
-  virtual unsigned int MonomialsTimesSlaterProjection(unsigned long* slater,unsigned long* monomial,unsigned long* variable,int nbrVariable, unsigned long*& finalStates, double*& weigth, FermionOnSphere* finalSpace);
+  virtual void MonomialsTimesSlaterProjection(unsigned long* slater, unsigned long* monomial, unsigned long* variable,int nbrVariable, map <unsigned long, double> & sortingMap, FermionOnSphere* finalSpace);
   
   // compute the projection of the product of a Slater determinant and a monomial 
   // 
@@ -253,141 +252,119 @@ class FermionOnSphereTwoLandauLevels :  public FermionOnSphereWithSpin
   // monomial = array where the monomial is stored in its monomial representation
   // variable = reference on the array where the indice of fermions in the second Landau level is stored
   // nbrVariable = number of fermions in the second Landau level
-  // finalStates = array where the obtained states are stored in their fermionic representation
-  // weigth = array where the coefficients for each obtained state are stored
+  // sortingMap = map in which the generated states and their coefficient will be stored
   // finalSpace = pointer to the final HilbertSpace
-	// return value = number of different obtained states	
-  virtual unsigned int MonomialsTimesSlaterProjection(unsigned long* slater,unsigned long* monomial,unsigned long* variable,int nbrVariable, unsigned long*& finalStates, LongRational*& weigth, FermionOnSphere* finalSpace);
+  virtual void MonomialsTimesSlaterProjection(unsigned long* slater,unsigned long* monomial,unsigned long* variable,int nbrVariable,  map <unsigned long, LongRational> & sortingMap, FermionOnSphere* finalSpace);
   
   // compute the projection of the product of a bosonic state and a fermionic state
   //
   // bosonState = real vector where the bosonic state is stored
   // fermionState = real vector where the fermionic state is stored
   // outputVector = real vector where the result has to be stored
-  // finalStates = array where the obtained states are stored in their fermionic representation
-  // weigth = array where the coefficients for each obtained state are stored
   // bosonSpace = pointer to the bosonic Hilbert space
   // finalSpace = pointer to the final Hilbert space
   // firstComponent = first component to be computed
   // nbrComponent = number of components to be computed	
-  virtual void BosonicStateTimeFermionicState(RealVector& bosonState, RealVector& fermionState, RealVector& outputVector, unsigned long* finalStates, double* weigth,BosonOnSphereShort* bosonSpace,FermionOnSphere* finalSpace, int firstComponent,int nbrComponent);
+  virtual void BosonicStateTimeFermionicState(RealVector& bosonState, RealVector& fermionState, RealVector& outputVector, BosonOnSphereShort* bosonSpace,FermionOnSphere* finalSpace, int firstComponent, int nbrComponent);
   
   // compute the projection of the product of a bosonic state and a fermionic state
   //
   // bosonState = real vector where the bosonic state is stored
   // fermionState = real vector where the fermionic state is stored
   // outputVector = real vector where the result has to be stored
-  // finalStates = array where the obtained states are stored in their fermionic representation
-  // weigth = array where the coefficients for each obtained state are stored
   // bosonSpace = pointer to the bosonic Hilbert space
   // finalSpace = pointer to the final Hilbert space
   // firstComponent = first component to be computed
   // nbrComponent = number of components to be computed	
-  virtual void BosonicStateTimeFermionicState(LongRationalVector& bosonState, LongRationalVector& fermionState, LongRationalVector& outputVector, unsigned long* finalStates, LongRational* weigth,BosonOnSphereShort* bosonSpace,FermionOnSphere* finalSpace, int firstComponent,int nbrComponent);
+  virtual void BosonicStateTimeFermionicState(LongRationalVector& bosonState, LongRationalVector& fermionState, LongRationalVector& outputVector, BosonOnSphereShort* bosonSpace,FermionOnSphere* finalSpace, int firstComponent,int nbrComponent);
   
   // compute the projection of the product of a bosonic state and a fermionic state using the lz->-lz symmetry
   //
   // bosonState = real vector where the bosonic state is stored
   // fermionState = real vector where the fermionic state is stored
   // outputVector = real vector where the result has to be stored
-  // finalStates = array where the obtained states are stored in their fermionic representation
-  // weigth = array where the coefficients for each obtained state are stored
   // bosonSpace = pointer to the bosonic Hilbert space
   // finalSpace = pointer to the final Hilbert space
   // firstComponent = first component to be computed
   // nbrComponent = number of components to be computed  
-  virtual void BosonicStateTimeFermionicStateSymmetric(RealVector& bosonState, RealVector& fermionState, RealVector& outputVector,unsigned long* finalStates, double* weigth,BosonOnSphereShort* bosonSpace,FermionOnSphere* finalSpace, int firstComponent,int nbrComponent);
+  virtual void BosonicStateTimeFermionicStateSymmetric(RealVector& bosonState, RealVector& fermionState, RealVector& outputVector,BosonOnSphereShort* bosonSpace, FermionOnSphere* finalSpace, int firstComponent, int nbrComponent);
   
   // compute the projection of the product of a bosonic state and a fermionic state using the lz->-lz symmetry
   //
   // bosonState = real vector where the bosonic state is stored
   // fermionState = real vector where the fermionic state is stored
   // outputVector = real vector where the result has to be stored
-  // finalStates = array where the obtained states are stored in their fermionic representation
-  // weigth = array where the coefficients for each obtained state are stored
   // bosonSpace = pointer to the bosonic Hilbert space
   // finalSpace = pointer to the final Hilbert space
   // firstComponent = first component to be computed
   // nbrComponent = number of components to be computed  
-  virtual void BosonicStateTimeFermionicStateSymmetric(LongRationalVector& bosonState, LongRationalVector& fermionState, LongRationalVector& outputVector,unsigned long* finalStates, LongRational* weigth,BosonOnSphereShort* bosonSpace,FermionOnSphere* finalSpace, int firstComponent,int nbrComponent);
+  virtual void BosonicStateTimeFermionicStateSymmetric(LongRationalVector& bosonState, LongRationalVector& fermionState, LongRationalVector& outputVector, BosonOnSphereShort* bosonSpace, FermionOnSphere* finalSpace, int firstComponent, int nbrComponent);
   
   // compute the product of a bosonic state and a fermionic state belonging in two Landau levels
   //
   // bosonState = real vector where the bosonic state is stored
   // fermionState = real vector where the fermionic state is stored
   // outputVector = real vector where the result has to be stored
-  // finalStates = array where the obtained states are stored in their fermionic representation
-  // weigth = array where the coefficients for each obtained state are stored
   // bosonSpace = pointer to the bosonic Hilbert space
   // finalSpace = pointer to the final Hilbert space
   // firstComponent = first component to be computed
   // nbrComponent = number of components to be computed	
-  virtual void BosonicStateTimeFermionicState(RealVector& bosonState, RealVector& fermionState, RealVector& outputVector, unsigned long* finalStates, double* weigth, BosonOnSphereShort* bosonSpace, FermionOnSphereTwoLandauLevels* finalSpace, int firstComponent, int nbrComponent);
+  virtual void BosonicStateTimeFermionicState(RealVector& bosonState, RealVector& fermionState, RealVector& outputVector, BosonOnSphereShort* bosonSpace, FermionOnSphereTwoLandauLevels* finalSpace, int firstComponent, int nbrComponent);
 
   // compute the product of a bosonic state and a fermionic state belonging in two Landau levels
   //
   // bosonState = real vector where the bosonic state is stored
   // fermionState = real vector where the fermionic state is stored
   // outputVector = real vector where the result has to be stored
-  // finalStates = array where the obtained states are stored in their fermionic representation
-  // weigth = array where the coefficients for each obtained state are stored
   // bosonSpace = pointer to the bosonic Hilbert space
   // finalSpace = pointer to the final Hilbert space
   // firstComponent = first component to be computed
   // nbrComponent = number of components to be computed	
-  virtual void BosonicStateTimeFermionicState(LongRationalVector& bosonState, LongRationalVector& fermionState, LongRationalVector& outputVector, unsigned long* finalStates, LongRational* weigth, BosonOnSphereShort* bosonSpace, FermionOnSphereTwoLandauLevels* finalSpace, int firstComponent, int nbrComponent);
+  virtual void BosonicStateTimeFermionicState(LongRationalVector& bosonState, LongRationalVector& fermionState, LongRationalVector& outputVector, BosonOnSphereShort* bosonSpace, FermionOnSphereTwoLandauLevels* finalSpace, int firstComponent, int nbrComponent);
   
-  // compute the projection of the product of a bosonic state and a fermionic state
+  // compute the projection of the product of a fermionic state in the lowest Landau level and a fermionic state in the two lowest Landau levels
   //
   // lllFermionState = real vector where the lowest Landau level fermionic state is stored
   // fermionState = real vector where the two Landau level fermionic state is stored
   // outputVector = real vector where the result has to be stored
-  // finalStates = array where the obtained states are stored in their fermionic representation
-  // weigth = array where the coefficients for each obtained state are stored
   // lllFermionSpace = pointer to the lowest Landau level Hilbert space
   // finalSpace = pointer to the final Hilbert space
   // firstComponent = first component to be computed
   // nbrComponent = number of components to be computed
-  virtual void LLLFermionicStateTimeFermionicState(RealVector& lllFermionState, RealVector& fermionState, RealVector& outputVector, unsigned long* finalStates, double* weigth,FermionOnSphere* lllFermionSpace,BosonOnSphereShort* finalSpace, int firstComponent,int nbrComponent);
+  virtual void LLLFermionicStateTimeFermionicState(RealVector& lllFermionState, RealVector& fermionState, RealVector& outputVector, FermionOnSphere* lllFermionSpace, BosonOnSphereShort* finalSpace, int firstComponent, int nbrComponent);
 	
-  // compute the projection of the product of a bosonic state and a fermionic state
+  // compute the projection of the product of a fermionic state in the lowest Landau level and a fermionic state in the two lowest Landau levels
   //
   // lllFermionState = real vector where the lowest Landau level fermionic state is stored
   // fermionState = real vector where the two Landau level fermionic state is stored
   // outputVector = real vector where the result has to be stored
-  // finalStates = array where the obtained states are stored in their fermionic representation
-  // weigth = array where the coefficients for each obtained state are stored
   // lllFermionSpace = pointer to the lowest Landau level Hilbert space
   // finalSpace = pointer to the final Hilbert space
   // firstComponent = first component to be computed
   // nbrComponent = number of components to be computed
-  virtual void LLLFermionicStateTimeFermionicState(LongRationalVector& lllFermionState, LongRationalVector& fermionState, LongRationalVector& outputVector, unsigned long* finalStates, LongRational* weigth,FermionOnSphere* lllFermionSpace,BosonOnSphereShort* finalSpace, int firstComponent,int nbrComponent);
+  virtual void LLLFermionicStateTimeFermionicState(LongRationalVector& lllFermionState, LongRationalVector& fermionState, LongRationalVector& outputVector, FermionOnSphere* lllFermionSpace, BosonOnSphereShort* finalSpace, int firstComponent, int nbrComponent);
   
-  // compute the projection of the product of a bosonic state and a fermionic state using lz->-lz symmetry
+  // compute the projection of the product of a fermionic state in the lowest Landau level and a fermionic state in the two lowest Landau levels using lz->-lz symmetry
   //
   // lllFermionState = real vector where the lowest Landau level fermionic state is stored
   // fermionState = real vector where the two Landau level fermionic state is stored
   // outputVector = real vector where the result has to be stored
-  // finalStates = array where the obtained states are stored in their fermionic representation
-  // weigth = array where the coefficients for each obtained state are stored
   // lllFermionSpace = pointer to the lowest Landau level Hilbert space
   // finalSpace = pointer to the final Hilbert space
   // firstComponent = first component to be computed
   // nbrComponent = number of components to be computed
-  virtual void LLLFermionicStateTimeFermionicStateSymmetric(RealVector& lllFermionState, RealVector& fermionState, RealVector& outputVector, unsigned long* finalStates, double* weigth, FermionOnSphere* lllFermionSpace, BosonOnSphereShort* finalSpace, int firstComponent, int nbrComponent);
+  virtual void LLLFermionicStateTimeFermionicStateSymmetric(RealVector& lllFermionState, RealVector& fermionState, RealVector& outputVector, FermionOnSphere* lllFermionSpace, BosonOnSphereShort* finalSpace, int firstComponent, int nbrComponent);
   
-  // compute the projection of the product of a bosonic state and a fermionic state using lz->-lz symmetry
+  // compute the projection of the product of a fermionic state in the lowest Landau level and a fermionic state in the two lowest Landau levels using lz->-lz symmetry
   //
   // lllFermionState = real vector where the lowest Landau level fermionic state is stored
   // fermionState = real vector where the two Landau level fermionic state is stored
   // outputVector = real vector where the result has to be stored
-  // finalStates = array where the obtained states are stored in their fermionic representation
-  // weigth = array where the coefficients for each obtained state are stored
   // lllFermionSpace = pointer to the lowest Landau level Hilbert space
   // finalSpace = pointer to the final Hilbert space
   // firstComponent = first component to be computed
   // nbrComponent = number of components to be computed
-  virtual void LLLFermionicStateTimeFermionicStateSymmetric(LongRationalVector& lllFermionState, LongRationalVector& fermionState, LongRationalVector& outputVector, unsigned long* finalStates, LongRational* weigth, FermionOnSphere* lllFermionSpace, BosonOnSphereShort* finalSpace, int firstComponent, int nbrComponent);
+  virtual void LLLFermionicStateTimeFermionicStateSymmetric(LongRationalVector& lllFermionState, LongRationalVector& fermionState, LongRationalVector& outputVector, FermionOnSphere* lllFermionSpace, BosonOnSphereShort* finalSpace, int firstComponent, int nbrComponent);
   
   // compute the number of particles in each Landau level
   //
@@ -461,47 +438,40 @@ class FermionOnSphereTwoLandauLevels :  public FermionOnSphereWithSpin
 	
   // generate the different states that appear in the product of a monomial and a Slater determinant in the two Landau levels
   //
-  // finalStates = array where the obtained states has to be stored in their fermionic representation
-  // weigth = array where the coefficients for each obtained state has to be stored
+  // sortingMap = map in which the generated states and their coefficient will be stored
   // slater = array where the Slater determinant is stored in its monomial representation
   // state = array where the obtained state is stored in its monomial representation
   // slaterSpace = pointer to the Hilbert Space which the Slater determinant belongs to
   // index = index of the particle being examinate
-  // nbrStates = number of different obtained states
   // coef = coefficient of the state being generate	
-  virtual void GeneratesDifferentState(unsigned long* finalStates,double* weigth,unsigned long* slater,unsigned long* state,FermionOnSphereTwoLandauLevels * slaterSpace, int index, unsigned int& nbrStates, double coef);
+  virtual void GeneratesDifferentState( map <unsigned long, double> & sortingMap ,unsigned long* slater,unsigned long* state,FermionOnSphereTwoLandauLevels * slaterSpace, int index, double coef);
 							 
   // generate the different states that appear in the product of a monomial and a Slater determinant in the two Landau levels
   //
-  // finalStates = array where the obtained states has to be stored in their fermionic representation
-  // weigth = array where the coefficients for each obtained state has to be stored
+  // sortingMap = map in which the generated states and their coefficient will be stored
   // slater = array where the Slater determinant is stored in its monomial representation
   // state = array where the obtained state is stored in its monomial representation
   // slaterSpace = pointer to the Hilbert Space which the Slater determinant belongs to
   // index = index of the particle being examinate
-  // nbrNonZero = number of different obtained states
   // coef = coefficient of the state being generate	
-  virtual void GeneratesDifferentState(unsigned long* finalStates,LongRational* weigth,unsigned long* slater,unsigned long* state,FermionOnSphereTwoLandauLevels * slaterSpace, int index, unsigned int& nbrStates,LongRational coef);
+  virtual void GeneratesDifferentState( map <unsigned long, LongRational> & sortingMap , unsigned long* slater, unsigned long* state,FermionOnSphereTwoLandauLevels * slaterSpace, int index, LongRational coef);
   
   // compute the product of a monomial and a Slater determinant belonging in two Landau levels
   // 
   // slater = array where the slater is stored in its monomial representation
   // monomial = array where the monomial is stored in its monomial representation
-  // finalStates = array where the obtained states are stored in their fermionic representation
-  // weigth = array where the coefficients for each obtained state are stored
+  // sortingMap = map in which the generated states and their coefficient will be stored
   // finalSpace = pointer to the final HilbertSpace
-  // return value = number of different obtained states
-  virtual unsigned int MonomialsTimesSlater(unsigned long* slater,unsigned long* monomial, unsigned long * & finalStates, double * & weigth,FermionOnSphereTwoLandauLevels * finalSpace);
+  virtual void MonomialsTimesSlater(unsigned long* slater,unsigned long* monomial, map <unsigned long, double> & sortingMap,FermionOnSphereTwoLandauLevels * finalSpace);
   
   // compute the product of a monomial and a Slater determinant belonging in two Landau levels
   // 
   // slater = array where the slater is stored in its monomial representation
   // monomial = array where the monomial is stored in its monomial representation
-  // finalStates = array where the obtained states are stored in their fermionic representation
-  // weigth = array where the coefficients for each obtained state are stored
+  // sortingMap = map in which the generated states and their coefficient will be stored
   // finalSpace = pointer to the final HilbertSpace
   // return value = number of different obtained states
-  virtual unsigned int MonomialsTimesSlater(unsigned long* slater,unsigned long* monomial, unsigned long * & finalStates, LongRational * & weigth,FermionOnSphereTwoLandauLevels * finalSpace);
+  virtual void MonomialsTimesSlater(unsigned long* slater,unsigned long* monomial, map <unsigned long, LongRational> & sortingMap ,FermionOnSphereTwoLandauLevels * finalSpace);
   
   // compute the product and the projection of a Slater determinant in the LLL and a Slater determinant in two Landau levels
   //
@@ -510,10 +480,8 @@ class FermionOnSphereTwoLandauLevels :  public FermionOnSphereWithSpin
   // variable = reference on the array where the indice of fermions in the second Landau level is stored
   // nbrVariable = number of fermions in the second Landau level
   // finalStates = array where the obtained states are stored in their fermionic representation
-  // weigth = array where the coefficients for each obtained state are stored
-  // finalSpace = pointer to the final HilbertSpace
-  // return value = number of different obtained states
-  virtual unsigned int SlaterTimesSlaterProjection(unsigned long* slater,unsigned long* lllslater,unsigned long * variable,int nbrVariable, unsigned long*& finalStates, double*& weigth, BosonOnSphereShort* finalSpace);
+  // sortingMap = map in which the generated states and their coefficient will be stored
+  virtual void SlaterTimesSlaterProjection(unsigned long* slater, unsigned long* lllslater, unsigned long * variable, int nbrVariable, map <unsigned long, double> & sortingMap, BosonOnSphereShort* finalSpace);
 	
   // compute the product and the projection of a Slater determinant in the LLL and a Slater determinant in two Landau levels
   //
@@ -521,11 +489,9 @@ class FermionOnSphereTwoLandauLevels :  public FermionOnSphereWithSpin
   // lllslater = array where the slater determinant in the LLL is stored in its monomial representation
   // variable = reference on the array where the indice of fermions in the second Landau level is stored
   // nbrVariable = number of fermions in the second Landau level
-  // finalStates = array where the obtained states are stored in their fermionic representation
-  // weigth = array where the coefficients for each obtained state are stored
+  // sortingMap = map in which the generated states and their coefficient will be stored
   // finalSpace = pointer to the final HilbertSpace
-  // return value = number of different obtained states
-  virtual unsigned int SlaterTimesSlaterProjection(unsigned long* slater,unsigned long* lllslater,unsigned long * variable,int nbrVariable, unsigned long*& finalStates,LongRational*& weigth, BosonOnSphereShort* finalSpace);
+  virtual void SlaterTimesSlaterProjection(unsigned long* slater, unsigned long* lllslater, unsigned long * variable, int nbrVariable, map <unsigned long, LongRational> & sortingMap, BosonOnSphereShort* finalSpace);
   
 };
 

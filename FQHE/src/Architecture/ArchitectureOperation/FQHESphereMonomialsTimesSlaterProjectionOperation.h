@@ -49,6 +49,7 @@ class FQHESphereMonomialsTimesSlaterProjectionOperation : public AbstractArchite
   
   // index of the first component
   int FirstComponent;
+  
   // number of component 
   int NbrComponent;
   
@@ -79,16 +80,7 @@ class FQHESphereMonomialsTimesSlaterProjectionOperation : public AbstractArchite
   // RealVector where the bosonic state is stored
   LongRationalVector * LLLLongRationalVector;
   
-  // table useful in the calculations
-  unsigned long * FinalStates;
-  
-  // table useful in the calculations
-  double * DoubleWeigth;
-  
-  // table useful in the calculations
-  LongRational * LongRationalWeigth;
-  
-  //true if the result vector is to be projected
+    //true if the result vector is to be projected
   bool Projection;
   
   //true if the result vector is to be normalized

@@ -44,8 +44,6 @@ class FermionOnDisk;
 class FermionOnDiskHaldaneBasis :  public FermionOnSphereHaldaneBasis
 {
   
-  friend class FermionOnDisk;
-  friend class FermionOnSphere;
  protected:
 
  public:
