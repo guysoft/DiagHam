@@ -28,91 +28,41 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef GROUPEDPERMUTATIONS_H
-#define GROUPEDPERMUTATIONS_H
+#ifndef SIMPLEPERMUTATIONS_H
+#define SIMPLEPERMUTATIONS_H
 
 #include "GeneralTools/SmallIntegerArray.h"
-#include "GeneralTools/OrderedList.h"
-#include "GeneralTools/UnsignedIntegerTools.h"
-
-#include "PermutationElement.h";
 
 
-class GroupedPermutations
+class PermutationElement
 {
- private:
-  // number of groups  
-  int NbrGroups;
+public:
 
-  // number of elements per groups  
-  int ElementsPerGroup;
-
-  // total number of elements
-  int NbrElements;
-
-  // number of bits required to represent NbrElements
-  int NbrBitsForElements;
-
-  // number of bits required to represent groups
-  int NbrBitsPerGroup;
-
-  // flag indicating whether order of groups matters
-  bool OrderedGroups;
-
-  // number of different permutations
-  int NbrPermutations;
+  SmallIntegerArray Value;
+  unsigned long Multiplicity;
   
-  // permutations
-  SmallIntegerArray *Permutations;
+  PermutationElement();
 
-  // multiplicities
-  unsigned long *Multiplicities;
-
-  // temporary space for interface with SmallIntegerArray
-  unsigned *MyArray;
-
-  // map of groups (temporary, unless having ordered group)
-  unsigned *MapOfGroups;
-  unsigned *InverseMapOfGroups;
-
-  // count of group members (temporary)
-  unsigned *CountOfGroups;
-
-  // internal storage whilst growing list of elements:
-  OrderedList<PermutationElement> PermutationList;
+  PermutationElement(SmallIntegerArray value, unsigned long multiplicity);
   
+  PermutationElement(const PermutationElement &per);
 
- public:
-  // default constructor
-  // nbrGroups = number of groups
-  // elementsPerGroup = number of elements per group
-  // orderedGroups = flag indicating whether order of groups matters
-  GroupedPermutations(int nbrGroups, unsigned elementsPerGroup, bool orderedGroups=false);
+  ~PermutationElement();
 
-  // destructor
-  ~GroupedPermutations();
+  // assignment operator
+  //
+  // per = permutation to assign
+  // return value = reference on current permutation
+  PermutationElement& operator = (const PermutationElement& array);
 
-  // get Array of permutations
-  SmallIntegerArray* GetPermutations() {return this->Permutations;}
+  // multiply on multiplicity
+  PermutationElement& operator *= (const unsigned long mult);
 
-  // get Array of multiplicities
-  unsigned long* GetMultiplicities(){return this->Multiplicities;}
+  friend bool operator == (const PermutationElement& a1, const PermutationElement& a2);
+  friend bool operator < (const PermutationElement& a1,const PermutationElement& a2);
+  friend bool operator > (const PermutationElement& a1,const PermutationElement& a2);
 
-  // get length of arrays
-  unsigned GetNbrPermutations() {return this->NbrPermutations; }
-
- private:
-
-  // central recursive function that generates all different permutations
-  void CentralRecursion(SmallIntegerArray remainingElements, SmallIntegerArray permutation, unsigned long multiplicity);
-
-  // translate internal form of permutations to a canonic expression
-  SmallIntegerArray GetPermutationString(SmallIntegerArray &permutation);
-
-  // get an initial string without permutations
-  SmallIntegerArray GetInitialString();
-
-  
+  friend ostream& operator << ( ostream &Str, PermutationElement PE);
   
 };
 

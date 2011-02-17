@@ -61,6 +61,7 @@
 #include "Tools/FQHEWaveFunction/CFOnSphereWithSpinPartonTunnellingWaveFunction.h"
 #include "Tools/FQHEWaveFunction/FQHESphereSymmetrizedSU2ToU1WaveFunction.h"
 #include "Tools/FQHEWaveFunction/SU4HalperinOnSphereWaveFunction.h"
+#include "Tools/FQHEWaveFunction/NASSOnSphereWaveFunction.h"
 #include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
 #include "MathTools/NumericalAnalysis/AntisymmetrizedComplexFunction.h"
 
@@ -627,10 +628,19 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	      Abstract1DComplexFunctionOnSphere* BaseFunction = new SU4HalperinOnSphereWaveFunction(N >> 2, N >> 2, N >> 2, N >> 2, 
 												    2, 2, 2, 2, 
 												    1, 0, 0);
-	      FQHESphereSymmetrizedSU2ToU1WaveFunction* rst = new FQHESphereSymmetrizedSU2ToU1WaveFunction (N >> 1, N >>1, BaseFunction, true);
+	      FQHESphereSymmetrizedSU2ToU1WaveFunction* rst = new FQHESphereSymmetrizedSU2ToU1WaveFunction (N, N >> 1, BaseFunction, true);
 	      //	      rst->AdaptAverageMCNorm();
 	      return rst;
 	    }
+	  if ((strcmp (this->Options->GetString("test-wavefunction"), "nass2") == 0))
+	    {
+	      int N = this->Options->GetInteger("nbr-particles");
+	      Abstract1DComplexFunctionOnSphere* rst = new NASSOnSphereWaveFunction(N >> 2, true);
+
+	      //	      rst->AdaptAverageMCNorm();
+	      return rst;
+	    }
+
 	}
     else
       if (this->GeometryID == QHEWaveFunctionManager::SphereWithSU3SpinGeometry)

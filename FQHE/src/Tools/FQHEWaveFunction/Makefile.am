@@ -1,4 +1,4 @@
-SUBDIRS=
+
 
 noinst_LIBRARIES=libQHEWaveFunction.a
 
@@ -63,4 +63,5 @@ CFOnSphereWithSpinPartonTunnellingWaveFunction.cc \
 FQHESphereProductWaveFunction.cc \
 GutzwillerOnLatticeWaveFunction.cc \
 GrossPitaevskiiOnLatticeState.cc \
-MaximallyCondensedStateOnLattice.cc
+MaximallyCondensedStateOnLattice.cc \
+NASSOnSphereWaveFunction.cc

@@ -7,6 +7,8 @@ ClebschGordanCoefficients.cc \
 IntegerAlgebraTools.cc \
 BinomialCoefficients.cc \
 GroupedPermutations.cc \
+PermutationElement.cc \
+SimplePermutations.cc \
 ClebschGordanDiskCoefficients.cc \
 ArithmeticGeometricMean.cc \
 JacobiThetaFunction.cc \

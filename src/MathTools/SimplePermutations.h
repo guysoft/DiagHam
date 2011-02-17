@@ -28,92 +28,67 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef GROUPEDPERMUTATIONS_H
-#define GROUPEDPERMUTATIONS_H
-
-#include "GeneralTools/SmallIntegerArray.h"
-#include "GeneralTools/OrderedList.h"
-#include "GeneralTools/UnsignedIntegerTools.h"
-
-#include "PermutationElement.h";
+#ifndef SIMPLEPERMUTATIONS_H
+#define SIMPLEPERMUTATIONS_H
 
 
-class GroupedPermutations
+class SimplePermutations
 {
  private:
-  // number of groups  
-  int NbrGroups;
-
-  // number of elements per groups  
-  int ElementsPerGroup;
-
   // total number of elements
   int NbrElements;
 
-  // number of bits required to represent NbrElements
-  int NbrBitsForElements;
-
-  // number of bits required to represent groups
-  int NbrBitsPerGroup;
-
-  // flag indicating whether order of groups matters
-  bool OrderedGroups;
-
   // number of different permutations
-  int NbrPermutations;
+  long NbrPermutations;
   
   // permutations
-  SmallIntegerArray *Permutations;
+  unsigned **Permutations;
 
-  // multiplicities
-  unsigned long *Multiplicities;
+  // space used internally, only
+  unsigned *MyPermutation;
 
-  // temporary space for interface with SmallIntegerArray
-  unsigned *MyArray;
+  // current index to be filled
+  long CurrentPermutation;
 
-  // map of groups (temporary, unless having ordered group)
-  unsigned *MapOfGroups;
-  unsigned *InverseMapOfGroups;
-
-  // count of group members (temporary)
-  unsigned *CountOfGroups;
-
-  // internal storage whilst growing list of elements:
-  OrderedList<PermutationElement> PermutationList;
+  // cleanup flag
+  bool CleanUp;
   
-
  public:
   // default constructor
-  // nbrGroups = number of groups
-  // elementsPerGroup = number of elements per group
-  // orderedGroups = flag indicating whether order of groups matters
-  GroupedPermutations(int nbrGroups, unsigned elementsPerGroup, bool orderedGroups=false);
+  // nbrElements = number of elements
+  SimplePermutations(int nbrElements);
 
   // destructor
-  ~GroupedPermutations();
+  ~SimplePermutations();
 
   // get Array of permutations
-  SmallIntegerArray* GetPermutations() {return this->Permutations;}
+  inline unsigned* GetPermutation(int nbrPermutation);
 
-  // get Array of multiplicities
-  unsigned long* GetMultiplicities(){return this->Multiplicities;}
+  // get number of permutations
+  long GetNbrPermutations(){return NbrPermutations;}
 
-  // get length of arrays
-  unsigned GetNbrPermutations() {return this->NbrPermutations; }
+  // check out Permutations to an external method
+  // if this method is called, the caller is responsible for cleaning up
+  unsigned** CheckOutPermutations();
 
  private:
 
-  // central recursive function that generates all different permutations
-  void CentralRecursion(SmallIntegerArray remainingElements, SmallIntegerArray permutation, unsigned long multiplicity);
+  // central recursion for generating permutations
+  void Permute(const int start, const int n, int sign);
 
-  // translate internal form of permutations to a canonic expression
-  SmallIntegerArray GetPermutationString(SmallIntegerArray &permutation);
+  // rotate permutation left
+  void RotateLeft(const int start, const int n, int &sign);
 
-  // get an initial string without permutations
-  SmallIntegerArray GetInitialString();
+  // swap two members
+  void Swap(const int i, const int j, int &sign);
 
-  
-  
 };
+
+// get Array of permutations
+unsigned* SimplePermutations::GetPermutation(int nbrPermutation)
+{
+  return this->Permutations[nbrPermutation];
+}
+
 
 #endif
