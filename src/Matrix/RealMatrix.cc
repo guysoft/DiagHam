@@ -37,6 +37,21 @@
 using std::endl;
 using std::cout;
 
+#ifdef HAVE_LAPACK
+
+// binding to the LAPACK dgesvd function
+//
+extern "C" void FORTRAN_NAME(dgesvd)(const char* jobu, const char* jobv, const int* nbrRow, const int* nbrColumn, const double* matrix, const int* leadingDimension,
+				     const double* singularValues, const double* uMatrix, const int* uLeadingDimension, const double* vMatrix, 
+				     const int* vLeadingDimension, const double* workingArea, const int* workingAreaSize, const int* information);
+
+// binding to the LAPACK dgesdd function
+//
+extern "C" void FORTRAN_NAME(dgesdd)(const char* jobz, const int* nbrRow, const int* nbrColumn, const double* matrix, const int* leadingDimension,
+				     const double* singularValues, const double* uMatrix, const int* uLeadingDimension, const double* vMatrix, 
+				     const int* vLeadingDimension, const double* workingArea, const int* workingAreaSize, const int* workingAreaInteger, const int* information);
+
+#endif
 
 // default constructor
 //
@@ -909,6 +924,94 @@ double RealMatrix::Permanent()
   return Perm;
 }
 
+// compute singular value decomposition U D V^t
+// 
+// uMatrix = reference on the U matrix
+// vMatrix = reference on the V matrix
+// return value = pointer on the diagonal elements of D
+
+double* RealMatrix::SingularValueDecomposition(RealMatrix& uMatrix, RealMatrix& vMatrix)
+{
+#ifdef HAVE_LAPACK
+  int MinDimension = this->NbrColumn;
+  if (this->NbrColumn > this->NbrRow)
+    MinDimension = this->NbrRow;
+  double* SigmaMatrix = new double[MinDimension];
+  int Information = 0;
+  int WorkingAreaSize = -1;
+  int IntegerWorkingAreaSize = -1;
+  double TmpWorkingArea;
+  int TmpIntegerWorkingArea;
+  char Jobz = 'N';
+  double* TmpMatrix = new double [this->NbrRow * this->NbrColumn];
+  int TotalIndex = 0;
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      for (int j = 0; j < this->NbrColumn; ++j)
+	{
+	  TmpMatrix[TotalIndex] = this->Columns[j][i];
+	  ++TotalIndex;
+	}
+    }
+  double* TmpUMatrix = new double [this->NbrColumn];
+  double* TmpVMatrix = new double [this->NbrRow];
+  int DummySize = 1;
+  FORTRAN_NAME(dgesdd)(&Jobz, &this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrColumn, SigmaMatrix, TmpUMatrix, &DummySize, TmpVMatrix, &DummySize, &TmpWorkingArea, &WorkingAreaSize, &TmpIntegerWorkingArea, &Information);
+  WorkingAreaSize = (int) TmpWorkingArea;
+  double* WorkingArea = new double [WorkingAreaSize];
+  IntegerWorkingAreaSize = TmpIntegerWorkingArea;
+  int* IntegerWorkingArea = new int [IntegerWorkingAreaSize];
+  FORTRAN_NAME(dgesdd)(&Jobz, &this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrColumn, SigmaMatrix, TmpUMatrix, &DummySize, TmpVMatrix, &DummySize, WorkingArea, &WorkingAreaSize, IntegerWorkingArea, &Information);
+  return SigmaMatrix;
+#else
+  return 0;
+#endif
+}
+
+// compute the diagonal part of the singular value decomposition U D V^t
+// 
+// return value = pointer on the diagonal elements of D
+
+double* RealMatrix::SingularValueDecomposition()
+{
+#ifdef HAVE_LAPACK
+  int MinDimension = this->NbrColumn;
+  if (this->NbrColumn > this->NbrRow)
+    MinDimension = this->NbrRow;
+  double* SigmaMatrix = new double[MinDimension];
+  int Information = 0;
+  int WorkingAreaSize = -1;
+  int IntegerWorkingAreaSize = -1;
+  double TmpWorkingArea;
+  int TmpIntegerWorkingArea;
+  char Jobz = 'N';
+  double* TmpMatrix = new double [this->NbrRow * this->NbrColumn];
+  int TotalIndex = 0;
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      for (int j = 0; j < this->NbrColumn; ++j)
+	{
+	  TmpMatrix[TotalIndex] = this->Columns[j][i];
+	  ++TotalIndex;
+	}
+    }
+  double* TmpUMatrix = new double [this->NbrColumn];
+  double* TmpVMatrix = new double [this->NbrRow];
+  int DummySize = 1;
+  FORTRAN_NAME(dgesdd)(&Jobz, &this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrRow, SigmaMatrix, TmpUMatrix, &DummySize, TmpVMatrix, &DummySize, &TmpWorkingArea, &WorkingAreaSize, &TmpIntegerWorkingArea, &Information);
+  WorkingAreaSize = (int) TmpWorkingArea;
+  double* WorkingArea = new double [WorkingAreaSize];
+  IntegerWorkingAreaSize = 8 * MinDimension;
+  int* IntegerWorkingArea = new int [IntegerWorkingAreaSize];
+  FORTRAN_NAME(dgesdd)(&Jobz, &this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrRow, SigmaMatrix, TmpUMatrix, &DummySize, TmpVMatrix, &DummySize, WorkingArea, &WorkingAreaSize, IntegerWorkingArea, &Information);
+  delete[] TmpUMatrix;
+  delete[] TmpVMatrix;
+  return SigmaMatrix;
+#else
+  return 0;
+#endif
+}
+
 // Output Stream overload
 //
 // Str = reference on output stream
@@ -928,6 +1031,7 @@ ostream& operator << (ostream& Str, const RealMatrix& P)
   Str << P.Columns[P.NbrColumn - 1].Components[P.NbrRow - 1] << endl;      
   return Str;
 }
+
 
 #ifdef USE_OUTPUT
 

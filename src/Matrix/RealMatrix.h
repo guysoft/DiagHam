@@ -308,6 +308,18 @@ class RealMatrix : public Matrix
   // return value = permanent associated to the matrix
   double Permanent();
 
+  // compute singular value decomposition U D V^t
+  // 
+  // uMatrix = reference on the U matrix
+  // vMatrix = reference on the V matrix
+  // return value = pointer on the diagonal elements of D
+  double* SingularValueDecomposition(RealMatrix& uMatrix, RealMatrix& vMatrix);
+
+  // compute the diagonal part of the singular value decomposition U D V^t
+  // 
+  // return value = pointer on the diagonal elements of D
+  double* SingularValueDecomposition();
+
   // Output Stream overload
   //
   // Str = reference on output stream
