@@ -54,7 +54,7 @@ int main(int argc, char** argv)
   cout.precision(14);
 
   // some running options and help
-  OptionManager Manager ("FQHESphereBosonstoFermions" , "0.01");
+  OptionManager Manager ("FQHESphereBosonsFermionsConverter" , "0.01");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* OutputGroup = new OptionGroup ("output options");

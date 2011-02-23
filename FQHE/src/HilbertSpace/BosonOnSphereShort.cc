@@ -2434,30 +2434,45 @@ long BosonOnSphereShort::EvaluatePartialDensityMatrixRealSpacePartitionCore (int
 // return value = entanglement matrix of the subsytem (return a wero dimension matrix if the entanglement matrix is equal to zero)
 
 RealMatrix BosonOnSphereShort::EvaluatePartialEntanglementMatrixParticlePartition (int nbrBosonSector, int lzSector, RealVector& groundState, bool removeBinomialCoefficient)
-{
+{	
+  if ( abs(lzSector) > (nbrBosonSector * this->LzMax))
+    {
+      RealMatrix TmpEntanglementMatrixZero;
+      return TmpEntanglementMatrixZero;
+    }
+  
   if (nbrBosonSector == 0)
     {
-      if (lzSector == 0)
+      BosonOnSphereShort TmpHilbertSpace(this->NbrBosons, this->TotalLz - lzSector, this->LzMax);
+      RealMatrix TmpEntanglementMatrix(1, TmpHilbertSpace.HilbertSpaceDimension, true);
+      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
 	{
-	  RealMatrix TmpEntanglementMatrix(1, this->HilbertSpaceDimension, true);
-	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-	    TmpEntanglementMatrix.SetMatrixElement(0, i, groundState[i]);
-	  return TmpEntanglementMatrix;
+	  int TmpLzMax = this->LzMax + this->NbrBosons - 1;
+	  unsigned long TmpState = this->FermionBasis->StateDescription[i];
+	  while ((TmpState >> TmpLzMax) == 0x0ul)
+	    --TmpLzMax;
+	  
+	  TmpEntanglementMatrix.SetMatrixElement(0, TmpHilbertSpace.FermionBasis->FindStateIndex(TmpState, TmpLzMax), groundState[i]);
 	}
-      else
-	{
-	  RealSymmetricMatrix TmpEntanglementMatrix;
-	  return TmpEntanglementMatrix;	  
-	}
+      return TmpEntanglementMatrix;
     }
-
+  
+  
   if (nbrBosonSector == this->NbrBosons)
     {
       if (lzSector == this->TotalLz)
 	{
-	  RealMatrix TmpEntanglementMatrix(this->HilbertSpaceDimension, 1);
+	  BosonOnSphereShort TmpDestinationHilbertSpace(nbrBosonSector, lzSector, this->LzMax);
+	  RealMatrix TmpEntanglementMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, 1);
 	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-	    TmpEntanglementMatrix.SetMatrixElement(i, 0, groundState[i]);
+	    {
+	      int TmpLzMax = this->LzMax + this->NbrBosons - 1;
+	      unsigned long TmpState = this->FermionBasis->StateDescription[i];
+	      while ((TmpState >> TmpLzMax) == 0x0ul)
+		--TmpLzMax;
+	      
+	      TmpEntanglementMatrix.SetMatrixElement(TmpDestinationHilbertSpace.FermionBasis->FindStateIndex(TmpState, TmpLzMax), 0, groundState[i]);
+	    }
 	  return TmpEntanglementMatrix;
 	}
       else
@@ -2468,8 +2483,8 @@ RealMatrix BosonOnSphereShort::EvaluatePartialEntanglementMatrixParticlePartitio
     }
 
   int ComplementaryNbrBosonSector = this->NbrBosons - nbrBosonSector;
-
-  if (abs(this->TotalLz - lzSector) > (ComplementaryNbrBosonSector * LzMax))
+  
+  if ( abs(this->TotalLz - lzSector) > (ComplementaryNbrBosonSector * this->LzMax))
     {
       RealMatrix TmpEntanglementMatrixZero;
       return TmpEntanglementMatrixZero;
@@ -2582,7 +2597,7 @@ RealMatrix BosonOnSphereShort::EvaluatePartialEntanglementMatrixParticlePartitio
   delete[] TmpDestinationHilbertSpaceMonomial;
   delete[] TmpMonomial1;
   delete[] TmpMonomial3;
-  if (TmpNbrNonZeroElements > 0)	
+  if (TmpNbrNonZeroElements > 0)
     return TmpEntanglementMatrix;
   else
     {
@@ -2611,7 +2626,7 @@ RealMatrix& BosonOnSphereShort::EvaluateEntanglementMatrixRealSpacePartitionFrom
 	  entanglementMatrix(i, j) = 0.0;
       return entanglementMatrix;
     }
-
+  
   thetaTop *= M_PI / 180.0;
   thetaBottom *= M_PI / 180.0;
   phiRange /= 360.0;
@@ -2620,7 +2635,7 @@ RealMatrix& BosonOnSphereShort::EvaluateEntanglementMatrixRealSpacePartitionFrom
   double* IncompleteBetaThetaBottom = 0;
 
   this->EvaluatePartialDensityMatrixRealSpacePartitionCoefficient(this->LzMax, thetaTop, thetaBottom, IncompleteBetaThetaTop, IncompleteBetaThetaBottom);
-
+  
   int ComplementaryNbrBosonSector = this->NbrBosons - nbrBosonSector;
   BosonOnSphereShort TmpDestinationHilbertSpace(nbrBosonSector, lzSector, this->LzMax);
   cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;

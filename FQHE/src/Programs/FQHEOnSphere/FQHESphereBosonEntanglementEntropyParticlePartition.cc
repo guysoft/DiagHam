@@ -388,7 +388,7 @@ int main(int argc, char** argv)
 		}
 	      else
 		{
-		  PartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[0], false);
+		  PartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[0], true);
 		}
 	    }
 	  else
@@ -415,20 +415,29 @@ int main(int argc, char** argv)
 		{
 		  if ((2 * SubsystemNbrParticles) <= NbrParticles)
 		    {
-		      PartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[0], false);
+		      PartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[0], true);
+		      if (PartialEntanglementMatrix.GetNbrRow() != 0)
+			{
 		      Spaces[0]->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), PartialEntanglementMatrix);
+			}	
 		    }
 		  else
 		    {
 		      if (Manager.GetDouble("realspace-theta-top") != 0.0)
 			{
-			  PartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[0], false);
-			  Spaces[0]->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), PartialEntanglementMatrix);
+			  PartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[0], true);
+			  if (PartialEntanglementMatrix.GetNbrRow() != 0)
+			    {
+			      Spaces[0]->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), PartialEntanglementMatrix);
+			    }
 			}
 		      else
 			{
-			  PartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(NbrParticles - SubsystemNbrParticles, TotalLz[0] - SubsystemTotalLz, GroundStates[0], false);
-			  Spaces[0]->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(NbrParticles - SubsystemNbrParticles, TotalLz[0] - SubsystemTotalLz, Manager.GetDouble("realspace-theta-bot"), 180.0, Manager.GetDouble("realspace-phi-range"), PartialEntanglementMatrix);
+			  PartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(NbrParticles - SubsystemNbrParticles, TotalLz[0] - SubsystemTotalLz, GroundStates[0], true);
+			  if (PartialEntanglementMatrix.GetNbrRow() != 0)
+			    {
+			      Spaces[0]->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(NbrParticles - SubsystemNbrParticles, TotalLz[0] - SubsystemTotalLz, Manager.GetDouble("realspace-theta-bot"), 180.0, Manager.GetDouble("realspace-phi-range"), PartialEntanglementMatrix);
+			    }
 			}
 		    }		 
 		}
@@ -472,22 +481,31 @@ int main(int argc, char** argv)
 		    {
 		      if ((2 * SubsystemNbrParticles) <= NbrParticles)
 			{
-			  TmpEntanglementMatrix = Spaces[i]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[i], false);
-			  Spaces[i]->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), TmpEntanglementMatrix);
+			  TmpEntanglementMatrix = Spaces[i]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[i], true);
+			  if (TmpEntanglementMatrix.GetNbrRow() != 0)
+			    {
+			      Spaces[i]->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), TmpEntanglementMatrix);
+			    }
 			}
 		      else
 			{
 			  if (Manager.GetDouble("realspace-theta-top") != 0.0)
 			    {
-			      TmpEntanglementMatrix = Spaces[i]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[i], false);
-			      Spaces[i]->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), TmpEntanglementMatrix);
+			      TmpEntanglementMatrix = Spaces[i]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[i], true);
+			      if (TmpEntanglementMatrix.GetNbrRow() != 0)
+				{
+				  Spaces[i]->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), TmpEntanglementMatrix);
+				}
 			    }
 			  else
 			    {
-			      TmpEntanglementMatrix = Spaces[i]->EvaluatePartialEntanglementMatrixParticlePartition(NbrParticles - SubsystemNbrParticles, TotalLz[i] - SubsystemTotalLz, GroundStates[i], false);
-			      Spaces[i]->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(NbrParticles - SubsystemNbrParticles, TotalLz[i] - SubsystemTotalLz, Manager.GetDouble("realspace-theta-bot"), 180.0, Manager.GetDouble("realspace-phi-range"), TmpEntanglementMatrix);
+			      TmpEntanglementMatrix = Spaces[i]->EvaluatePartialEntanglementMatrixParticlePartition(NbrParticles - SubsystemNbrParticles, TotalLz[i] - SubsystemTotalLz, GroundStates[i], true);
+			      if (TmpEntanglementMatrix.GetNbrRow() != 0)
+				{
+				  Spaces[i]->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(NbrParticles - SubsystemNbrParticles, TotalLz[i] - SubsystemTotalLz, Manager.GetDouble("realspace-theta-bot"), 180.0, Manager.GetDouble("realspace-phi-range"), TmpEntanglementMatrix);
+				}
 			    }
-			}		
+			}
 		    } 
 		}
 	      if (SVDFlag == false)
@@ -510,7 +528,7 @@ int main(int argc, char** argv)
 		  PartialEntanglementMatrix /= sqrt((double) NbrSpaces);
 		}
 	    }
-
+	  
 	  if (ShowTimeFlag == true)
 	    {
 	      gettimeofday (&(TotalEndingTime), 0);
