@@ -74,4 +74,6 @@ ParticleOnTorusThreeBodyHardcoreHamiltonian.cc \
 AbstractQHEOnTorusWithSpinHamiltonian.cc \
 ParticleOnTorusLaplacianDeltaHamiltonian.cc \
 ParticleOnTorusWithSpinLaplacianDeltaHamiltonian.cc \
-ParticleOnTorusHaffnianHamiltonian.cc
+ParticleOnTorusHaffnianHamiltonian.cc \
+ParticleOnLatticeWithSpinChernInsulatorHamiltonian.cc
+

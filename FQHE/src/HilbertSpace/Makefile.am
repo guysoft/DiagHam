@@ -95,4 +95,6 @@ FermionOnSphereThreeLandauLevels.cc \
 BosonOnSphereWithSpinAllSz.cc \
 FermionOnSphereFourLandauLevels.cc \
 BosonOnSphereHaldaneSymmetricBasisShort.cc \
-BosonOnDiskHaldaneHugeBasisShort.cc
+BosonOnDiskHaldaneHugeBasisShort.cc \
+FermionOnSquareLatticeMomentumSpace.cc \
+FermionOnSquareLatticeWithSpinMomentumSpace.cc
