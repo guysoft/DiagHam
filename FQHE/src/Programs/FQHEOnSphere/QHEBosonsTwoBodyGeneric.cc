@@ -83,25 +83,25 @@ int main(int argc, char** argv)
       cout << "see man page for option syntax or type QHEBosonsNBodyHardCore -h" << endl;
       return -1;
     }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
     }
 
 
-  bool GroundFlag = ((BooleanOption*) Manager["ground"])->GetBoolean();
-  int NbrBosons = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
-  int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
-  long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
-  int InitialLz = ((SingleIntegerOption*) Manager["initial-lz"])->GetInteger();
-  int NbrLz = ((SingleIntegerOption*) Manager["nbr-lz"])->GetInteger();
-  char* LoadPrecalculationFileName = ((SingleStringOption*) Manager["load-precalculation"])->GetString();  
-  bool DiskCacheFlag = ((BooleanOption*) Manager["disk-cache"])->GetBoolean();
+  bool GroundFlag = Manager.GetBoolean("ground");
+  int NbrBosons = Manager.GetInteger("nbr-particles");
+  int LzMax = Manager.GetInteger("lzmax");
+  long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
+  int InitialLz = Manager.GetInteger("initial-lz");
+  int NbrLz = Manager.GetInteger("nbr-lz");
+  char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");  
+  bool DiskCacheFlag = Manager.GetBoolean("disk-cache");
   bool FirstRun = true;
   double* PseudoPotentials = 0;
   double* OneBodyPotentials = 0; 
-  if (((SingleStringOption*) Manager["interaction-file"])->GetString() == 0)
+  if (Manager.GetString("interaction-file") == 0)
     {
       cout << "an interaction file has to be provided" << endl;
       return -1;
@@ -109,7 +109,7 @@ int main(int argc, char** argv)
   else
     {
       ConfigurationParser InteractionDefinition;
-      if (InteractionDefinition.Parse(((SingleStringOption*) Manager["interaction-file"])->GetString()) == false)
+      if (InteractionDefinition.Parse(Manager.GetString("interaction-file")) == false)
 	{
 	  InteractionDefinition.DumpErrors(cout) << endl;
 	  return -1;
@@ -117,7 +117,7 @@ int main(int argc, char** argv)
       int TmpNbrPseudoPotentials;
       if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials", ' ', PseudoPotentials, TmpNbrPseudoPotentials) == false)
 	{
-	  cout << "Weights is not defined or as a wrong value in " << ((SingleStringOption*) Manager["interaction-file"])->GetString() << endl;
+	  cout << "Weights is not defined or as a wrong value in " << Manager.GetString("interaction-file") << endl;
 	  return -1;
 	}
       if (TmpNbrPseudoPotentials != (LzMax +1))
@@ -135,8 +135,8 @@ int main(int argc, char** argv)
 	}
     }
 
-  char* OutputNameLz = new char [256 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
-  sprintf (OutputNameLz, "bosons_%s_n_%d_2s_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrBosons, LzMax);
+  char* OutputNameLz = new char [256 + strlen(Manager.GetString("interaction-name"))];
+  sprintf (OutputNameLz, "bosons_%s_n_%d_2s_%d_lz.dat", Manager.GetString("interaction-name"), NbrBosons, LzMax);
   int Max = (LzMax * NbrBosons);
   int  L = InitialLz;
 
@@ -162,13 +162,13 @@ int main(int argc, char** argv)
 
       if (OneBodyPotentials == 0)
         Hamiltonian = new ParticleOnSphereGenericHamiltonian(Space, NbrBosons, LzMax, PseudoPotentials,
-							   ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),
+							   Manager.GetDouble("l2-factor"),
 							   Architecture.GetArchitecture(), 
 							   Memory, DiskCacheFlag,
 							   LoadPrecalculationFileName);
       else
         Hamiltonian = new ParticleOnSphereGenericHamiltonian(Space, NbrBosons, LzMax, PseudoPotentials, OneBodyPotentials, 
-							   ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),
+							   Manager.GetDouble("l2-factor"),
 							   Architecture.GetArchitecture(), 
 							   Memory, DiskCacheFlag,
 							   LoadPrecalculationFileName);
@@ -176,10 +176,10 @@ int main(int argc, char** argv)
       double Shift = - 0.5 * ((double) (NbrBosons * NbrBosons)) / (0.5 * ((double) LzMax));
       Hamiltonian->ShiftHamiltonian(Shift);
       char* EigenvectorName = 0;
-      if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
+      if (Manager.GetBoolean("eigenstate") == true)	
 	{
 	  EigenvectorName = new char [64];
-	  sprintf (EigenvectorName, "bosons_%s_n_%d_2s_%d_lz_%d", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrBosons, LzMax, L);
+	  sprintf (EigenvectorName, "bosons_%s_n_%d_2s_%d_lz_%d", Manager.GetString("interaction-name"), NbrBosons, LzMax, L);
 	}
       QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);
       MainTaskOperation TaskOperation (&Task);
