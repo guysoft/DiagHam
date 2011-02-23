@@ -945,9 +945,9 @@ double* RealMatrix::SingularValueDecomposition(RealMatrix& uMatrix, RealMatrix& 
   char Jobz = 'N';
   double* TmpMatrix = new double [this->NbrRow * this->NbrColumn];
   int TotalIndex = 0;
-  for (int i = 0; i < this->NbrRow; ++i)
+  for (int j = 0; j < this->NbrColumn; ++j)
     {
-      for (int j = 0; j < this->NbrColumn; ++j)
+      for (int i = 0; i < this->NbrRow; ++i)
 	{
 	  TmpMatrix[TotalIndex] = this->Columns[j][i];
 	  ++TotalIndex;
@@ -956,12 +956,12 @@ double* RealMatrix::SingularValueDecomposition(RealMatrix& uMatrix, RealMatrix& 
   double* TmpUMatrix = new double [this->NbrColumn];
   double* TmpVMatrix = new double [this->NbrRow];
   int DummySize = 1;
-  FORTRAN_NAME(dgesdd)(&Jobz, &this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrColumn, SigmaMatrix, TmpUMatrix, &DummySize, TmpVMatrix, &DummySize, &TmpWorkingArea, &WorkingAreaSize, &TmpIntegerWorkingArea, &Information);
+  FORTRAN_NAME(dgesdd)(&Jobz, &this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrRow, SigmaMatrix, TmpUMatrix, &DummySize, TmpVMatrix, &DummySize, &TmpWorkingArea, &WorkingAreaSize, &TmpIntegerWorkingArea, &Information);
   WorkingAreaSize = (int) TmpWorkingArea;
   double* WorkingArea = new double [WorkingAreaSize];
   IntegerWorkingAreaSize = TmpIntegerWorkingArea;
   int* IntegerWorkingArea = new int [IntegerWorkingAreaSize];
-  FORTRAN_NAME(dgesdd)(&Jobz, &this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrColumn, SigmaMatrix, TmpUMatrix, &DummySize, TmpVMatrix, &DummySize, WorkingArea, &WorkingAreaSize, IntegerWorkingArea, &Information);
+  FORTRAN_NAME(dgesdd)(&Jobz, &this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrRow, SigmaMatrix, TmpUMatrix, &DummySize, TmpVMatrix, &DummySize, WorkingArea, &WorkingAreaSize, IntegerWorkingArea, &Information);
   return SigmaMatrix;
 #else
   return 0;
@@ -987,9 +987,9 @@ double* RealMatrix::SingularValueDecomposition()
   char Jobz = 'N';
   double* TmpMatrix = new double [this->NbrRow * this->NbrColumn];
   int TotalIndex = 0;
-  for (int i = 0; i < this->NbrRow; ++i)
+  for (int j = 0; j < this->NbrColumn; ++j)
     {
-      for (int j = 0; j < this->NbrColumn; ++j)
+      for (int i = 0; i < this->NbrRow; ++i)
 	{
 	  TmpMatrix[TotalIndex] = this->Columns[j][i];
 	  ++TotalIndex;
