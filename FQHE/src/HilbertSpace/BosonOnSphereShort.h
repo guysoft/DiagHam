@@ -279,7 +279,16 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // lzSector = Lz sector in which the density matrix has to be evaluated 
   // return value = density matrix of the subsytem  (return a wero dimension matrix if the density matrix is equal to zero)
   virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int subsytemSize, int nbrBosonSector, int lzSector, RealVector& groundState);
-
+  
+  // evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix is only evaluated in a given Lz sector and fixed number of particles
+  // 
+  // subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax to -Lzmax+subsytemSize-1)
+  // nbrFermionSector = number of particles that belong to the subsytem 
+  // groundState = reference on the total system ground state
+  // lzSector = Lz sector in which the density matrix has to be evaluated 
+  // return value = entanglement matrix of the subsytem
+  virtual RealMatrix EvaluatePartialEntanglementMatrix (int subsytemSize, int nbrFermionSector, int lzSector, RealVector& groundState);
+  
 // reconstruct a state that contains only a certain subset of Schmidt eigenvalues of the given ground state
 // subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax to -Lzmax+subsytemSize-1)
 // nbrBosonSector = number of particles that belong to the subsytem 
@@ -310,7 +319,7 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // lzSector = Lz sector in which the density matrix has to be evaluated 
   // return value = density matrix of the subsytem  (return a wero dimension matrix if the density matrix is equal to zero)
   virtual RealSymmetricMatrix EvaluateShiftedPartialDensityMatrix (int subsytemSize, int nbrShiftedOrbitals, int nbrBosonSector, int lzSector, RealVector& groundState);
-  
+	 
   // Compute the row and column dimension of the orbital entanglement matrix of 2 cuts counting only those rows/columns that are not completely zero
   // Also returns from the set of indices in the reduced density matrix corresponding to rows with atleast one non-zero entry
   // Columns contain the hilbert space of B and C which are traced out

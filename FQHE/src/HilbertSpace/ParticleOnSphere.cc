@@ -424,7 +424,21 @@ HermitianMatrix ParticleOnSphere::EvaluatePartialDensityMatrix (int subsytemSize
   HermitianMatrix PartialDensityMatrix;
   return PartialDensityMatrix;
 }
-  
+
+// evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix is only evaluated in a given Lz sector and fixed number of particles
+// 
+// subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax to -Lzmax+subsytemSize-1)
+// nbrFermionSector = number of particles that belong to the subsytem 
+// groundState = reference on the total system ground state
+// lzSector = Lz sector in which the density matrix has to be evaluated 
+// return value = entanglement matrix of the subsytem
+
+RealMatrix ParticleOnSphere::EvaluatePartialEntanglementMatrix (int subsytemSize, int nbrBosonSector, int lzSector, RealVector& groundState)
+{ 
+  RealMatrix PartialEntanglementMatrix;
+  return PartialEntanglementMatrix;
+}
+
 // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Lz sector and fixed number of particle. The geometrical cut is a stripe.
 // 
 // subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax+shitedCut to -Lzmax+shitedCut+subsytemSize-1)
