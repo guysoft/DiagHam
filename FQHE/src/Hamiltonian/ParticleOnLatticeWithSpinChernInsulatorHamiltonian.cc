@@ -40,6 +40,7 @@
 #include "Architecture/ArchitectureOperation/QHEParticlePrecalculationOperation.h"
 
 #include <iostream>
+#include <sys/time.h>
 
 
 using std::cout;
@@ -73,7 +74,6 @@ ParticleOnLatticeWithSpinChernInsulatorHamiltonian::ParticleOnLatticeWithSpinChe
   this->KineticFactor = kineticFactor;
   this->BandParameter = bandParameter;
   this->Architecture = architecture;
-  this->EvaluateInteractionFactors();
   this->Memory = memory;
   this->OneBodyInteractionFactorsupup = 0;
   this->OneBodyInteractionFactorsdowndown = 0;
@@ -84,6 +84,29 @@ ParticleOnLatticeWithSpinChernInsulatorHamiltonian::ParticleOnLatticeWithSpinChe
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex;  
   this->EvaluateInteractionFactors();
+  if (memory > 0)
+    {
+      long TmpMemory = this->FastMultiplicationMemory(memory);
+      if (TmpMemory < 1024)
+	cout  << "fast = " <<  TmpMemory << "b ";
+      else
+	if (TmpMemory < (1 << 20))
+	  cout  << "fast = " << (TmpMemory >> 10) << "kb ";
+	else
+	  if (TmpMemory < (1 << 30))
+	    cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
+	  else
+	    {
+	      cout  << "fast = " << (TmpMemory >> 30) << ".";
+	      TmpMemory -= ((TmpMemory >> 30) << 30);
+	      TmpMemory *= 100l;
+	      TmpMemory >>= 30;
+	      if (TmpMemory < 10l)
+		cout << "0";
+	      cout  << TmpMemory << " Gb ";
+	    }
+      this->EnableFastMultiplication();
+    }
 }
 
 // destructor
@@ -151,6 +174,30 @@ ComplexVector& ParticleOnLatticeWithSpinChernInsulatorHamiltonian::LowLevelAddMu
       this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSource, vDestination);
       delete TmpParticles;
     }
+  else
+    {
+      if (this->FastMultiplicationStep == 1)
+	{
+	  int* TmpIndexArray;
+	  double* TmpCoefficientArray; 
+	  int j;
+	  int TmpNbrInteraction;
+	  int k = firstComponent;
+	  Complex Coefficient;
+	  firstComponent -= this->PrecalculationShift;
+	  LastComponent -= this->PrecalculationShift;
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      TmpNbrInteraction = this->NbrInteractionPerComponent[i];
+	      TmpIndexArray = this->InteractionPerComponentIndex[i];
+	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[i];
+	      Coefficient = vSource[k];
+	      for (j = 0; j < TmpNbrInteraction; ++j)
+		vDestination[TmpIndexArray[j]] +=  TmpCoefficientArray[j] * Coefficient;
+	      vDestination[k++] += this->HamiltonianShift * Coefficient;
+	    }
+	}
+    }
   return vDestination;
 }
  
@@ -177,6 +224,42 @@ ComplexVector* ParticleOnLatticeWithSpinChernInsulatorHamiltonian::LowLevelMulti
       this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSources, vDestinations, nbrVectors);
       delete[] Coefficient2;
       delete TmpParticles;
+    }
+  else
+    {
+      if (this->FastMultiplicationStep == 1)
+	{
+	  int* TmpIndexArray;
+	  Complex Coefficient;
+	  Complex* Coefficient2 = new Complex [nbrVectors];
+	  double* TmpCoefficientArray; 
+	  int j;
+	  int Pos;
+	  int TmpNbrInteraction;
+	  int k = firstComponent;
+	  firstComponent -= this->PrecalculationShift;
+	  LastComponent -= this->PrecalculationShift;
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      TmpNbrInteraction = this->NbrInteractionPerComponent[i];
+	      TmpIndexArray = this->InteractionPerComponentIndex[i];
+	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[i];
+	      for (int l = 0; l < nbrVectors; ++l)
+		{
+		  Coefficient2[l] = vSources[l][k];
+		  vDestinations[l][k] += this->HamiltonianShift * Coefficient2[l];
+		}
+	      for (j = 0; j < TmpNbrInteraction; ++j)
+		{
+		  Pos = TmpIndexArray[j];
+		  Coefficient = TmpCoefficientArray[j];
+		  for (int l = 0; l < nbrVectors; ++l)
+		    vDestinations[l][Pos] +=  Coefficient * Coefficient2[l];
+		}
+	      ++k;
+	    }
+	  delete[] Coefficient2;
+	}
     }
   return vDestinations;
 }
@@ -344,5 +427,166 @@ void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateInteractionFact
       }
   cout << "nbr interaction = " << TotalNbrInteractionFactors << endl;
   cout << "====================================" << endl;
+}
+
+// test the amount of memory needed for fast multiplication algorithm (partial evaluation)
+//
+// firstComponent = index of the first component that has to be precalcualted
+// lastComponent  = index of the last component that has to be precalcualted
+// return value = number of non-zero matrix element
+
+long ParticleOnLatticeWithSpinChernInsulatorHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int lastComponent)
+{
+  int Index;
+  double Coefficient = 0.0;
+  double Coefficient2 = 0.0;
+  long Memory = 0;
+  int* TmpIndices;
+  ParticleOnSphereWithSpin* TmpParticles = (ParticleOnSphereWithSpin*) this->Particles->Clone();
+  int LastComponent = lastComponent + firstComponent;
+  int Dim = this->Particles->GetHilbertSpaceDimension();
+  int SumIndices;
+  int TmpNbrM3Values;
+  int* TmpM3Values;
+
+  for (int i = firstComponent; i < LastComponent; ++i)
+    {
+      for (int j = 0; j < this->NbrIntraSectorSums; ++j)
+	{
+	  int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
+	  TmpIndices = this->IntraSectorIndicesPerSum[j];
+	  for (int i1 = 0; i1 < Lim; i1 += 2)
+	    {
+	      Coefficient2 = TmpParticles->AuAu(i, TmpIndices[i1], TmpIndices[i1 + 1]);
+	      if (Coefficient2 != 0.0)
+		{
+		  for (int i2 = 0; i2 < Lim; i2 += 2)
+		    {
+		      Index = TmpParticles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		      if (Index < Dim)
+			{
+			  ++Memory;
+			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			}
+		    }
+		}
+	      Coefficient2 = TmpParticles->AdAd(i, TmpIndices[i1], TmpIndices[i1 + 1]);
+	      if (Coefficient2 != 0.0)
+		{
+		  for (int i2 = 0; i2 < Lim; i2 += 2)
+		    {
+		      Index = TmpParticles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		      if (Index < Dim)
+			{
+			  ++Memory;
+			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			}
+		    }
+		}
+	    }
+	}
+      
+      for (int j = 0; j < this->NbrInterSectorSums; ++j)
+	{
+	  int Lim = 2 * this->NbrInterSectorIndicesPerSum[j];
+	  TmpIndices = this->InterSectorIndicesPerSum[j];
+	  for (int i1 = 0; i1 < Lim; i1 += 2)
+	    {
+	      Coefficient2 = TmpParticles->AuAd(i, TmpIndices[i1], TmpIndices[i1 + 1]);
+	      if (Coefficient2 != 0.0)
+		{
+		  for (int i2 = 0; i2 < Lim; i2 += 2)
+		    {
+		      Index = TmpParticles->AduAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		      if (Index < Dim)
+			{
+			  ++Memory;
+			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			}
+		    }
+		}
+	    }
+	}	
+    }    
+
+  if ((this->OneBodyInteractionFactorsdowndown != 0) || (this->OneBodyInteractionFactorsupup != 0))
+    {
+      for (int i = firstComponent; i < LastComponent; ++i)
+	{
+	  ++Memory;
+	  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+	}
+    }
+  if (this->OneBodyInteractionFactorsupdown != 0)
+    {
+      for (int i = firstComponent; i < LastComponent; ++i)
+	{
+	  for (int j=0; j<= this->LzMax; ++j)
+	    {
+	      Index = TmpParticles->AddAu(i, j, j, Coefficient);
+	      if (Index < Dim)
+		{
+		  ++Memory;
+		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		}
+	      Index = TmpParticles->AduAd(i, j, j, Coefficient);
+	      if (Index < Dim)
+		{
+		  ++Memory;
+		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		}
+	    }
+	}
+    }
+
+  delete TmpParticles;
+
+  return Memory;
+}
+
+// enable fast multiplication algorithm
+//
+
+void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EnableFastMultiplication()
+{
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+  int* TmpIndexArray;
+  double* TmpCoefficientArray;
+  long Pos;
+  timeval TotalStartingTime2;
+  timeval TotalEndingTime2;
+  double Dt2;
+  gettimeofday (&(TotalStartingTime2), 0);
+  cout << "start" << endl;
+  int ReducedSpaceDimension = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
+  if ((ReducedSpaceDimension * this->FastMultiplicationStep) != EffectiveHilbertSpaceDimension)
+    ++ReducedSpaceDimension;
+  this->InteractionPerComponentIndex = new int* [ReducedSpaceDimension];
+  this->InteractionPerComponentCoefficient = new double* [ReducedSpaceDimension];
+  ParticleOnSphereWithSpin* TmpParticles = (ParticleOnSphereWithSpin*) this->Particles;
+  int Dim = TmpParticles->GetHilbertSpaceDimension();
+  int TotalPos = 0;
+  
+
+  for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
+    {
+      this->InteractionPerComponentIndex[TotalPos] = new int [this->NbrInteractionPerComponent[TotalPos]];
+      this->InteractionPerComponentCoefficient[TotalPos] = new double [this->NbrInteractionPerComponent[TotalPos]];      
+      TmpIndexArray = this->InteractionPerComponentIndex[TotalPos];
+      TmpCoefficientArray = this->InteractionPerComponentCoefficient[TotalPos];
+      Pos = 0l;
+      this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, TmpIndexArray, TmpCoefficientArray, Pos);
+      this->EvaluateMNOneBodyFastMultiplicationComponent(TmpParticles, i, TmpIndexArray, TmpCoefficientArray, Pos);
+      ++TotalPos;
+    }
+  this->FastMultiplicationFlag = true;
+  gettimeofday (&(TotalEndingTime2), 0);
+  cout << "------------------------------------------------------------------" << endl << endl;;
+  Dt2 = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
+    ((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
+  cout << "time = " << Dt2 << endl;
 }
 

@@ -75,5 +75,5 @@ AbstractQHEOnTorusWithSpinHamiltonian.cc \
 ParticleOnTorusLaplacianDeltaHamiltonian.cc \
 ParticleOnTorusWithSpinLaplacianDeltaHamiltonian.cc \
 ParticleOnTorusHaffnianHamiltonian.cc \
-ParticleOnLatticeWithSpinChernInsulatorHamiltonian.cc
-
+ParticleOnLatticeWithSpinChernInsulatorHamiltonian.cc \
+ParticleOnLatticeChernInsulatorSingleBandHamiltonian.cc
