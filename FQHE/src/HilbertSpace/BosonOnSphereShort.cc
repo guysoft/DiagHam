@@ -857,8 +857,8 @@ RealMatrix BosonOnSphereShort::EvaluatePartialEntanglementMatrix (int subsytemSi
 	}
       else
 	{
-	  RealSymmetricMatrix TmpDensityMatrix;
-	  return TmpDensityMatrix;	  
+		RealMatrix TmpEntanglementMatrix;
+		return TmpEntanglementMatrix;
 	}
     }
   
@@ -868,7 +868,7 @@ RealMatrix BosonOnSphereShort::EvaluatePartialEntanglementMatrix (int subsytemSi
 	{
 	  RealMatrix TmpEntanglementMatrix(this->HilbertSpaceDimension,1,true);
 	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-	    TmpEntanglementMatrix.SetMatrixElement(i, 0, groundState[i] );
+	    TmpEntanglementMatrix.SetMatrixElement(i, 0, groundState[i]);
 	  return TmpEntanglementMatrix;
 	}
       else
@@ -936,7 +936,7 @@ RealMatrix BosonOnSphereShort::EvaluatePartialEntanglementMatrix (int subsytemSi
 	      unsigned long TmpState = TmpHilbertSpace.FermionBasis->StateDescription[MinIndex] << (subsytemSize + nbrBosonSector);
 	      int TmpLzMax = this->FermionBasis->LzMax;
 	      while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
-		--TmpLzMax;
+					--TmpLzMax;
 	      int TmpPos = this->FermionBasis->FindStateIndex(TmpState, TmpLzMax);
 	      if (TmpPos != this->HilbertSpaceDimension)
 		{
@@ -991,7 +991,7 @@ RealMatrix BosonOnSphereShort::EvaluatePartialEntanglementMatrix (int subsytemSi
 	  RealMatrix TmpEntanglementMatrix;
 	  return TmpEntanglementMatrix;
 	}
-      BosonOnSphere TmpDestinationHilbertSpace(nbrBosonSector, lzSector, subsytemSize - 1);
+      BosonOnSphereShort TmpDestinationHilbertSpace(nbrBosonSector, lzSector, subsytemSize - 1);
       cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
       RealMatrix TmpEntanglementMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension,1, true);
       MinIndex = this->HilbertSpaceDimension - TmpDestinationHilbertSpace.HilbertSpaceDimension;
