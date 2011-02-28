@@ -630,6 +630,11 @@ double FermionOnSphere::AA (int index, int n1, int n2)
 #endif
   this->ProdATemporaryState &= ~(((unsigned long) (0x1)) << n1);
 
+  if (this->ProdATemporaryState == 0x0ul)
+    {
+      this->ProdALzMax = 0;
+      return Coefficient;      
+    }
   while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
     --this->ProdALzMax;
   return Coefficient;

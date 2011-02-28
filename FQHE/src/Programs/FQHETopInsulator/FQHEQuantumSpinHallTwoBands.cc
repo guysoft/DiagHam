@@ -2,7 +2,7 @@
 
 #include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpace.h"
 
-#include "Hamiltonian/ParticleOnLatticeWithSpinChernInsulatorHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian.h"
 #include "LanczosAlgorithm/LanczosManager.h"
 
 #include "Architecture/ArchitectureManager.h"
@@ -22,17 +22,9 @@ using std::endl;
 using std::ios;
 using std::ofstream;
 
-// evaluate Hilbert space dimension for fermions
-//
-// nbrFermions = number of fermions
-// lzMax = momentum maximum value for a fermion
-// totalLz = momentum total value
-// return value = Hilbert space dimension
-long EvaluateHilbertSpaceDimension(int nbrFermions, int currentPx, int currentPy, int currentTotalPx, int currentTotalPy, int pxConstraint, int pyConstraint);
-
 int main(int argc, char** argv)
 {
-  OptionManager Manager ("FQHESphereGetDimension" , "0.01");
+  OptionManager Manager ("FQHEQuantumSpinHallTwoBands" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
@@ -53,9 +45,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-sitey", "number of sites along the y direction", 3);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "Hubbard potential strength", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "band-parameter", "band structure parameter", 1.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "kinetic-factor", "multiplicative factor in front of the kinetic term", 1.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "sz-symmetrybreaking", "amplitude of the Sz symmetry breaking term", 1.0);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
@@ -65,7 +56,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHESphereGetDimension -h" << endl;
+      cout << "see man page for option syntax or type FQHEQuantumSpinHallTwoBands -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)
@@ -82,7 +73,8 @@ int main(int argc, char** argv)
   char* CommentLine = new char [256];
   sprintf (CommentLine, "eigenvalues\n#");
   char* EigenvalueOutputFile = new char [512];
-  sprintf (EigenvalueOutputFile, "fermions_cherninsulator_n_%d_x_%d_y_%d_u_%f_m_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("band-parameter"));
+  sprintf (EigenvalueOutputFile, "fermions_qsh_twobands_n_%d_x_%d_y_%d_m_%f_d_%f_.dat", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("band-parameter"),
+	   Manager.GetDouble("sz-symmetrybreaking"));
 
   int MinKx = 0;
   int MaxKx = NbrSitesX - 1;
@@ -106,64 +98,24 @@ int main(int argc, char** argv)
 	  cout << "(kx=" << i << ",ky=" << j << ") : " << endl;
 	  FermionOnSquareLatticeWithSpinMomentumSpace Space(NbrParticles, NbrSitesX, NbrSitesY, i, j);
  	  cout << "dim = " << Space.GetHilbertSpaceDimension()  << endl;
-	  Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());	
-	  AbstractQHEHamiltonian* Hamiltonian = new ParticleOnLatticeWithSpinChernInsulatorHamiltonian(&Space, NbrParticles, NbrSitesX, NbrSitesY,
-												       Manager.GetDouble("kinetic-factor"), Manager.GetDouble("u-potential"), Manager.GetDouble("band-parameter"),
+ 	  Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());	
+ 	  AbstractQHEHamiltonian* Hamiltonian = new ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian(&Space, NbrParticles, NbrSitesX, NbrSitesY, 
+												       Manager.GetDouble("band-parameter"),
+												       Manager.GetDouble("sz-symmetrybreaking"),
 												       Architecture.GetArchitecture(), Memory);
-	  char* ContentPrefix = new char[256];
-	  sprintf (ContentPrefix, "%d %d", i, j);
-	  GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag);
-	  FirstRunFlag = false;
-	  MainTaskOperation TaskOperation (&Task);
-	  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+ 	  char* ContentPrefix = new char[256];
+ 	  sprintf (ContentPrefix, "%d %d", i, j);
+ 	  GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag);
+ 	  FirstRunFlag = false;
+ 	  MainTaskOperation TaskOperation (&Task);
+ 	  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
 
 //  	  for (int k = 0; k < Space.GetHilbertSpaceDimension(); ++k)
 //  	    Space.PrintState(cout, k) << endl;
 	  cout << "------------------------------------" << endl;
-	  delete[] ContentPrefix;
+	  //	  delete[] ContentPrefix;
 	}
     }
   return 0;
 }
 
-// evaluate Hilbert space dimension for fermions
-//
-// nbrFermions = number of fermions
-// lzMax = momentum maximum value for a fermion
-// totalLz = momentum total value
-// return value = Hilbert space dimension
-
-long EvaluateHilbertSpaceDimension(int nbrFermions, int currentPx, int currentPy, int currentTotalPx, int currentTotalPy, int pxConstraint, int pyConstraint)
-{
-  if (currentPy >= pyConstraint)
-    {
-      currentPy = 0;
-      currentPx++;
-    }
-  if (nbrFermions == 0)
-    {
-      if (((currentTotalPx % pxConstraint) == 0) && ((currentTotalPy % pyConstraint) == 0))
-	return 1l;
-      else	
-	return 0l;
-    }
-  if (currentPx >= pxConstraint)
-    return 0l;
-  long Count = 0;
-  if (nbrFermions == 1)
-    {
-      for (int i = currentPx; i < pxConstraint; ++i)
-	{
-	  for (int j = currentPy; j < pyConstraint; ++j)
-	    {
-	      if ((((i + currentTotalPx) % pxConstraint) == 0) && (((j + currentTotalPy) % pyConstraint) == 0))
-		++Count;
-	    }
-	}
-      return Count;
-    }
-  Count += EvaluateHilbertSpaceDimension(nbrFermions - 2, currentPx, currentPy + 1, currentTotalPx + (2 * currentPx), currentTotalPy + (2 * currentPy), pxConstraint, pyConstraint);
-  Count += EvaluateHilbertSpaceDimension(nbrFermions - 1, currentPx, currentPy + 1, currentTotalPx + currentPx, currentTotalPy + currentPy, pxConstraint, pyConstraint);
-  Count += EvaluateHilbertSpaceDimension(nbrFermions, currentPx, currentPy + 1, currentTotalPx, currentTotalPy, pxConstraint, pyConstraint);
-  return Count;
-}

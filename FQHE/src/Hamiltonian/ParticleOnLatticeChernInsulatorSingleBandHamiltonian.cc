@@ -40,6 +40,7 @@
 #include "Architecture/ArchitectureOperation/QHEParticlePrecalculationOperation.h"
 
 #include <iostream>
+#include <sys/time.h>
 
 
 using std::cout;
@@ -280,5 +281,195 @@ void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::EvaluateInteractionFa
     }
   cout << "nbr interaction = " << TotalNbrInteractionFactors << endl;
   cout << "====================================" << endl;
+}
+
+// test the amount of memory needed for fast multiplication algorithm
+//
+// allowedMemory = amount of memory that cam be allocated for fast multiplication
+// return value = amount of memory needed
+
+long ParticleOnLatticeChernInsulatorSingleBandHamiltonian::FastMultiplicationMemory(long allowedMemory)
+{
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+  
+  this->NbrInteractionPerComponent = new int [EffectiveHilbertSpaceDimension];
+  for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
+    this->NbrInteractionPerComponent[i] = 0;
+  timeval TotalStartingTime2;
+  timeval TotalEndingTime2;
+  double Dt2;
+  gettimeofday (&(TotalStartingTime2), 0);
+  cout << "start" << endl;
+
+  QHEParticlePrecalculationOperation Operation(this);
+  Operation.ApplyOperation(this->Architecture);
+
+  long Memory = 0;
+  for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
+    Memory += this->NbrInteractionPerComponent[i];
+
+  cout << "nbr interaction = " << Memory << endl;
+  long TmpMemory = allowedMemory - (sizeof (int*) + sizeof (int) + sizeof(double*)) * EffectiveHilbertSpaceDimension;
+  if ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(double)))) < Memory))
+    {
+      this->FastMultiplicationStep = 1;
+      int ReducedSpaceDimension  = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
+      while ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(double)))) < Memory))
+	{
+	  ++this->FastMultiplicationStep;
+	  ReducedSpaceDimension = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
+	  if (this->Particles->GetHilbertSpaceDimension() != (ReducedSpaceDimension * this->FastMultiplicationStep))
+	    ++ReducedSpaceDimension;
+	  TmpMemory = allowedMemory - (sizeof (int*) + sizeof (int) + sizeof(double*)) * ReducedSpaceDimension;
+	  Memory = 0;
+	  for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
+	    Memory += this->NbrInteractionPerComponent[i];
+	}
+      Memory = ((sizeof (int*) + sizeof (int) + sizeof(double*)) * ReducedSpaceDimension) + (Memory * (sizeof (int) + sizeof(double)));
+      long ResidualMemory = allowedMemory - Memory;
+      if (ResidualMemory > 0)
+	{
+	  int TotalReducedSpaceDimension = ReducedSpaceDimension;
+	  int* TmpNbrInteractionPerComponent = new int [TotalReducedSpaceDimension];
+	  int i = 0;
+	  int Pos = 0;
+	  for (; i < ReducedSpaceDimension; ++i)
+	    {
+	      TmpNbrInteractionPerComponent[i] = this->NbrInteractionPerComponent[Pos];
+	      Pos += this->FastMultiplicationStep;
+	    }
+	  delete[] this->NbrInteractionPerComponent;
+	      this->NbrInteractionPerComponent = TmpNbrInteractionPerComponent;
+	}
+      else
+	{
+	  int* TmpNbrInteractionPerComponent = new int [ReducedSpaceDimension];
+	  for (int i = 0; i < ReducedSpaceDimension; ++i)
+	    TmpNbrInteractionPerComponent[i] = this->NbrInteractionPerComponent[i * this->FastMultiplicationStep];
+	  delete[] this->NbrInteractionPerComponent;
+	  this->NbrInteractionPerComponent = TmpNbrInteractionPerComponent;
+	}
+    }
+  else
+    {
+      Memory = ((sizeof (int*) + sizeof (int) + sizeof(double*)) * EffectiveHilbertSpaceDimension) + (Memory * (sizeof (int) + sizeof(double)));
+      this->FastMultiplicationStep = 1;
+    }
+
+  cout << "reduction factor=" << this->FastMultiplicationStep << endl;
+  gettimeofday (&(TotalEndingTime2), 0);
+  cout << "------------------------------------------------------------------" << endl << endl;;
+  Dt2 = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
+    ((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
+  cout << "time = " << Dt2 << endl;
+  return Memory;
+}
+
+// test the amount of memory needed for fast multiplication algorithm (partial evaluation)
+//
+// firstComponent = index of the first component that has to be precalcualted
+// lastComponent  = index of the last component that has to be precalcualted
+// return value = number of non-zero matrix element
+
+long ParticleOnLatticeChernInsulatorSingleBandHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int lastComponent)
+{
+  int Index;
+  double Coefficient = 0.0;
+  double Coefficient2 = 0.0;
+  long Memory = 0;
+  int* TmpIndices;
+  ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
+  int LastComponent = lastComponent + firstComponent;
+  int Dim = this->Particles->GetHilbertSpaceDimension();
+  int SumIndices;
+  int TmpNbrM3Values;
+  int* TmpM3Values;
+
+  for (int i = firstComponent; i < LastComponent; ++i)
+    {
+      for (int j = 0; j < this->NbrSectorSums; ++j)
+	{
+	  int Lim = 2 * this->NbrSectorIndicesPerSum[j];
+	  TmpIndices = this->SectorIndicesPerSum[j];
+	  for (int i1 = 0; i1 < Lim; i1 += 2)
+	    {
+	      Coefficient2 = TmpParticles->AA(i, TmpIndices[i1], TmpIndices[i1 + 1]);
+	      if (Coefficient2 != 0.0)
+		{
+		  for (int i2 = 0; i2 < Lim; i2 += 2)
+		    {
+		      Index = TmpParticles->AdAd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		      if (Index < Dim)
+			{
+			  ++Memory;
+			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			}
+		    }
+		}
+	    }
+	}
+    }    
+
+  if (this->OneBodyInteractionFactors != 0)
+    {
+      for (int i = firstComponent; i < LastComponent; ++i)
+	{
+	  ++Memory;
+	  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+	}
+    }
+
+  delete TmpParticles;
+
+  return Memory;
+}
+
+// enable fast multiplication algorithm
+//
+
+void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::EnableFastMultiplication()
+{
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+  int* TmpIndexArray;
+  Complex* TmpCoefficientArray;
+  long Pos;
+  timeval TotalStartingTime2;
+  timeval TotalEndingTime2;
+  double Dt2;
+  gettimeofday (&(TotalStartingTime2), 0);
+  cout << "start" << endl;
+  int ReducedSpaceDimension = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
+  if ((ReducedSpaceDimension * this->FastMultiplicationStep) != EffectiveHilbertSpaceDimension)
+    ++ReducedSpaceDimension;
+  this->InteractionPerComponentIndex = new int* [ReducedSpaceDimension];
+  this->InteractionPerComponentCoefficient = new Complex* [ReducedSpaceDimension];
+  ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles;
+  int Dim = TmpParticles->GetHilbertSpaceDimension();
+  int TotalPos = 0;
+  
+
+  for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
+    {
+      this->InteractionPerComponentIndex[TotalPos] = new int [this->NbrInteractionPerComponent[TotalPos]];
+      this->InteractionPerComponentCoefficient[TotalPos] = new Complex [this->NbrInteractionPerComponent[TotalPos]];      
+      TmpIndexArray = this->InteractionPerComponentIndex[TotalPos];
+      TmpCoefficientArray = this->InteractionPerComponentCoefficient[TotalPos];
+      Pos = 0l;
+      this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, TmpIndexArray, TmpCoefficientArray, Pos);
+      this->EvaluateMNOneBodyFastMultiplicationComponent(TmpParticles, i, TmpIndexArray, TmpCoefficientArray, Pos);
+      ++TotalPos;
+    }
+  this->FastMultiplicationFlag = true;
+  gettimeofday (&(TotalEndingTime2), 0);
+  cout << "------------------------------------------------------------------" << endl << endl;;
+  Dt2 = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
+    ((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
+  cout << "time = " << Dt2 << endl;
 }
 

@@ -76,4 +76,5 @@ ParticleOnTorusLaplacianDeltaHamiltonian.cc \
 ParticleOnTorusWithSpinLaplacianDeltaHamiltonian.cc \
 ParticleOnTorusHaffnianHamiltonian.cc \
 ParticleOnLatticeWithSpinChernInsulatorHamiltonian.cc \
-ParticleOnLatticeChernInsulatorSingleBandHamiltonian.cc
+ParticleOnLatticeChernInsulatorSingleBandHamiltonian.cc \
+ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian.cc

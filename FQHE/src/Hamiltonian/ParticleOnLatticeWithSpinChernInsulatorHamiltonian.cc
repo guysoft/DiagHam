@@ -49,6 +49,13 @@ using std::ostream;
 
 
 
+// default constructor
+//
+
+ParticleOnLatticeWithSpinChernInsulatorHamiltonian::ParticleOnLatticeWithSpinChernInsulatorHamiltonian()
+{
+}
+
 // constructor
 //
 // particles = Hilbert space associated to the system
@@ -179,7 +186,7 @@ ComplexVector& ParticleOnLatticeWithSpinChernInsulatorHamiltonian::LowLevelAddMu
       if (this->FastMultiplicationStep == 1)
 	{
 	  int* TmpIndexArray;
-	  double* TmpCoefficientArray; 
+	  Complex* TmpCoefficientArray; 
 	  int j;
 	  int TmpNbrInteraction;
 	  int k = firstComponent;
@@ -232,7 +239,7 @@ ComplexVector* ParticleOnLatticeWithSpinChernInsulatorHamiltonian::LowLevelMulti
 	  int* TmpIndexArray;
 	  Complex Coefficient;
 	  Complex* Coefficient2 = new Complex [nbrVectors];
-	  double* TmpCoefficientArray; 
+	  Complex* TmpCoefficientArray; 
 	  int j;
 	  int Pos;
 	  int TmpNbrInteraction;
@@ -339,12 +346,12 @@ void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateInteractionFact
 		    ++this->NbrIntraSectorIndicesPerSum[TmpSum];    
 		  }
 	      }
-      this->InteractionFactorsupup = new double* [this->NbrIntraSectorSums];
-      this->InteractionFactorsdowndown = new double* [this->NbrIntraSectorSums];
+      this->InteractionFactorsupup = new Complex* [this->NbrIntraSectorSums];
+      this->InteractionFactorsdowndown = new Complex* [this->NbrIntraSectorSums];
       for (int i = 0; i < this->NbrIntraSectorSums; ++i)
 	{
-	  this->InteractionFactorsupup[i] = new double[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
-	  this->InteractionFactorsdowndown[i] = new double[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
+	  this->InteractionFactorsupup[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
+	  this->InteractionFactorsdowndown[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
 	  int Index = 0;
 	  for (int j1 = 0; j1 < this->NbrIntraSectorIndicesPerSum[i]; ++j1)
 	    {
@@ -368,10 +375,10 @@ void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateInteractionFact
 		}
 	    }
 	}
-      this->InteractionFactorsupdown = new double* [this->NbrInterSectorSums];
+      this->InteractionFactorsupdown = new Complex* [this->NbrInterSectorSums];
       for (int i = 0; i < this->NbrInterSectorSums; ++i)
 	{
-	  this->InteractionFactorsupdown[i] = new double[this->NbrInterSectorIndicesPerSum[i] * this->NbrInterSectorIndicesPerSum[i]];
+	  this->InteractionFactorsupdown[i] = new Complex[this->NbrInterSectorIndicesPerSum[i] * this->NbrInterSectorIndicesPerSum[i]];
 	  int Index = 0;
 	  for (int j1 = 0; j1 < this->NbrInterSectorIndicesPerSum[i]; ++j1)
 	    {
@@ -427,6 +434,91 @@ void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateInteractionFact
       }
   cout << "nbr interaction = " << TotalNbrInteractionFactors << endl;
   cout << "====================================" << endl;
+}
+
+// test the amount of memory needed for fast multiplication algorithm
+//
+// allowedMemory = amount of memory that cam be allocated for fast multiplication
+// return value = amount of memory needed
+
+long ParticleOnLatticeWithSpinChernInsulatorHamiltonian::FastMultiplicationMemory(long allowedMemory)
+{
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+  
+  this->NbrInteractionPerComponent = new int [EffectiveHilbertSpaceDimension];
+  for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
+    this->NbrInteractionPerComponent[i] = 0;
+  timeval TotalStartingTime2;
+  timeval TotalEndingTime2;
+  double Dt2;
+  gettimeofday (&(TotalStartingTime2), 0);
+  cout << "start" << endl;
+
+  QHEParticlePrecalculationOperation Operation(this);
+  Operation.ApplyOperation(this->Architecture);
+
+  long Memory = 0;
+  for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
+    Memory += this->NbrInteractionPerComponent[i];
+
+  cout << "nbr interaction = " << Memory << endl;
+  long TmpMemory = allowedMemory - (sizeof (int*) + sizeof (int) + sizeof(double*)) * EffectiveHilbertSpaceDimension;
+  if ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(double)))) < Memory))
+    {
+      this->FastMultiplicationStep = 1;
+      int ReducedSpaceDimension  = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
+      while ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(double)))) < Memory))
+	{
+	  ++this->FastMultiplicationStep;
+	  ReducedSpaceDimension = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
+	  if (this->Particles->GetHilbertSpaceDimension() != (ReducedSpaceDimension * this->FastMultiplicationStep))
+	    ++ReducedSpaceDimension;
+	  TmpMemory = allowedMemory - (sizeof (int*) + sizeof (int) + sizeof(double*)) * ReducedSpaceDimension;
+	  Memory = 0;
+	  for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
+	    Memory += this->NbrInteractionPerComponent[i];
+	}
+      Memory = ((sizeof (int*) + sizeof (int) + sizeof(double*)) * ReducedSpaceDimension) + (Memory * (sizeof (int) + sizeof(double)));
+      long ResidualMemory = allowedMemory - Memory;
+      if (ResidualMemory > 0)
+	{
+	  int TotalReducedSpaceDimension = ReducedSpaceDimension;
+	  int* TmpNbrInteractionPerComponent = new int [TotalReducedSpaceDimension];
+	  int i = 0;
+	  int Pos = 0;
+	  for (; i < ReducedSpaceDimension; ++i)
+	    {
+	      TmpNbrInteractionPerComponent[i] = this->NbrInteractionPerComponent[Pos];
+	      Pos += this->FastMultiplicationStep;
+	    }
+	  delete[] this->NbrInteractionPerComponent;
+	      this->NbrInteractionPerComponent = TmpNbrInteractionPerComponent;
+	}
+      else
+	{
+	  int* TmpNbrInteractionPerComponent = new int [ReducedSpaceDimension];
+	  for (int i = 0; i < ReducedSpaceDimension; ++i)
+	    TmpNbrInteractionPerComponent[i] = this->NbrInteractionPerComponent[i * this->FastMultiplicationStep];
+	  delete[] this->NbrInteractionPerComponent;
+	  this->NbrInteractionPerComponent = TmpNbrInteractionPerComponent;
+	}
+    }
+  else
+    {
+      Memory = ((sizeof (int*) + sizeof (int) + sizeof(double*)) * EffectiveHilbertSpaceDimension) + (Memory * (sizeof (int) + sizeof(double)));
+      this->FastMultiplicationStep = 1;
+    }
+
+  cout << "reduction factor=" << this->FastMultiplicationStep << endl;
+  gettimeofday (&(TotalEndingTime2), 0);
+  cout << "------------------------------------------------------------------" << endl << endl;;
+  Dt2 = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
+    ((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
+  cout << "time = " << Dt2 << endl;
+  return Memory;
 }
 
 // test the amount of memory needed for fast multiplication algorithm (partial evaluation)
@@ -554,7 +646,7 @@ void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EnableFastMultiplicatio
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
   int* TmpIndexArray;
-  double* TmpCoefficientArray;
+  Complex* TmpCoefficientArray;
   long Pos;
   timeval TotalStartingTime2;
   timeval TotalEndingTime2;
@@ -565,7 +657,7 @@ void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EnableFastMultiplicatio
   if ((ReducedSpaceDimension * this->FastMultiplicationStep) != EffectiveHilbertSpaceDimension)
     ++ReducedSpaceDimension;
   this->InteractionPerComponentIndex = new int* [ReducedSpaceDimension];
-  this->InteractionPerComponentCoefficient = new double* [ReducedSpaceDimension];
+  this->InteractionPerComponentCoefficient = new Complex* [ReducedSpaceDimension];
   ParticleOnSphereWithSpin* TmpParticles = (ParticleOnSphereWithSpin*) this->Particles;
   int Dim = TmpParticles->GetHilbertSpaceDimension();
   int TotalPos = 0;
@@ -574,7 +666,7 @@ void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EnableFastMultiplicatio
   for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
     {
       this->InteractionPerComponentIndex[TotalPos] = new int [this->NbrInteractionPerComponent[TotalPos]];
-      this->InteractionPerComponentCoefficient[TotalPos] = new double [this->NbrInteractionPerComponent[TotalPos]];      
+      this->InteractionPerComponentCoefficient[TotalPos] = new Complex [this->NbrInteractionPerComponent[TotalPos]];      
       TmpIndexArray = this->InteractionPerComponentIndex[TotalPos];
       TmpCoefficientArray = this->InteractionPerComponentCoefficient[TotalPos];
       Pos = 0l;

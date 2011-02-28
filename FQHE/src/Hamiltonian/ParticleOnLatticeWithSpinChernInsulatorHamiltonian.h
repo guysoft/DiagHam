@@ -103,11 +103,11 @@ class ParticleOnLatticeWithSpinChernInsulatorHamiltonian : public AbstractQHEHam
   // arrays containing all interaction factors, the first index correspond correspond to index sum for the creation (or annhilation) operators
   // the second index is a linearized index (m1,m2) + (n1,n2) * (nbr element in current index sum) (m for creation operators, n for annhilation operators)
   // array containing all interaction factors for spin up and spin up
-  double** InteractionFactorsupup;
+  Complex** InteractionFactorsupup;
   // array containing all interaction factors for spin down and spin down
-  double** InteractionFactorsdowndown;
+  Complex** InteractionFactorsdowndown;
   // array containing all interaction factors for spin up and spin down
-  double** InteractionFactorsupdown;
+  Complex** InteractionFactorsupdown;
 
   // array that contains all one-body interaction factors for particles with spin up
   double* OneBodyInteractionFactorsupup;
@@ -127,7 +127,7 @@ class ParticleOnLatticeWithSpinChernInsulatorHamiltonian : public AbstractQHEHam
   // indices of matrix elements per component
   int **InteractionPerComponentIndex;
   // coefficients of matrix elements per component
-  double **InteractionPerComponentCoefficient;
+  Complex** InteractionPerComponentCoefficient;
   // translations of matrix elements per component
   int **InteractionPerComponentNbrTranslation;
   
@@ -137,6 +137,10 @@ class ParticleOnLatticeWithSpinChernInsulatorHamiltonian : public AbstractQHEHam
   double* SinusTable;
 
  public:
+
+  // default constructor
+  //
+  ParticleOnLatticeWithSpinChernInsulatorHamiltonian();
 
   // constructor
   //
@@ -228,7 +232,7 @@ class ParticleOnLatticeWithSpinChernInsulatorHamiltonian : public AbstractQHEHam
   // coefficientArray = array of the numerical coefficients related to the indexArray
   // position = reference on the current position in arrays indexArray and coefficientArray
   virtual void EvaluateMNTwoBodyFastMultiplicationComponent(ParticleOnSphereWithSpin* particles, int index, 
-							  int* indexArray, double* coefficientArray, long& position);
+							  int* indexArray, Complex* coefficientArray, long& position);
 
   // core part of the FastMultiplication method involving the one-body interaction
   // 
@@ -238,7 +242,7 @@ class ParticleOnLatticeWithSpinChernInsulatorHamiltonian : public AbstractQHEHam
   // coefficientArray = array of the numerical coefficients related to the indexArray
   // position = reference on the current position in arrays indexArray and coefficientArray
   void EvaluateMNOneBodyFastMultiplicationComponent(ParticleOnSphereWithSpin* particles, int index, 
-						    int* indexArray, double* coefficientArray, long& position);
+						    int* indexArray, Complex* coefficientArray, long& position);
 
   // core part of the AddMultiply method involving the one-body interaction, including loop on vector components
   // 
@@ -288,6 +292,12 @@ class ParticleOnLatticeWithSpinChernInsulatorHamiltonian : public AbstractQHEHam
   //   
   virtual void EvaluateInteractionFactors();
 
+  // test the amount of memory needed for fast multiplication algorithm
+  //
+  // allowedMemory = amount of memory that cam be allocated for fast multiplication
+  // return value = amount of memory needed
+  virtual long FastMultiplicationMemory(long allowedMemory);
+
   // test the amount of memory needed for fast multiplication algorithm (partial evaluation)
   //
   // firstComponent = index of the first component that has to be precalcualted
@@ -315,7 +325,7 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
   double Coefficient3;
   Complex Coefficient4;
   int* TmpIndices;
-  double* TmpInteractionFactor;
+  Complex* TmpInteractionFactor;
   int Index;
   for (int j = 0; j < this->NbrIntraSectorSums; ++j)
     {
@@ -398,7 +408,7 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
   int Index;
   
   int* TmpIndices;
-  double* TmpInteractionFactor;
+  Complex* TmpInteractionFactor;
   for (int j = 0; j < this->NbrIntraSectorSums; ++j)
     {
       int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
@@ -471,13 +481,13 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
 // position = reference on the current position in arrays indexArray and coefficientArray
 
 inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBodyFastMultiplicationComponent(ParticleOnSphereWithSpin* particles, int index, 
-												 int* indexArray, double* coefficientArray, long& position)
+													     int* indexArray, Complex* coefficientArray, long& position)
 {
   int Index;
   double Coefficient = 0.0;
   double Coefficient2 = 0.0;
   int* TmpIndices;
-  double* TmpInteractionFactor;
+  Complex* TmpInteractionFactor;
   int Dim = particles->GetHilbertSpaceDimension();
   for (int j = 0; j < this->NbrIntraSectorSums; ++j)
     {
@@ -556,7 +566,7 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
 // vDestination = vector at which result has to be added
 
 inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNOneBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int firstComponent, int lastComponent,
-											  int step, ComplexVector& vSource, ComplexVector& vDestination)
+												      int step, ComplexVector& vSource, ComplexVector& vDestination)
 {
   if (this->OneBodyInteractionFactorsupup != 0)
     if (this->OneBodyInteractionFactorsdowndown != 0)
@@ -636,7 +646,7 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNOneBod
 // nbrVectors = number of vectors that have to be evaluated together
 
 inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNOneBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int firstComponent, int lastComponent,
-											  int step, ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors)
+												      int step, ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors)
 {
   if (this->OneBodyInteractionFactorsupup != 0) 
     if (this->OneBodyInteractionFactorsdowndown != 0)
@@ -719,7 +729,7 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNOneBod
 	      if (Index < Dim)
 		{
 		  for (int p = 0; p < nbrVectors; ++p)
-		    vDestinations[p][Index] += Coefficient * OneBodyInteractionFactorsupdown[j] * vSources[p][i];
+		    vDestinations[p][Index] += Coefficient * Conj(OneBodyInteractionFactorsupdown[j]) * vSources[p][i];
 		}
 	      Index = particles->AduAd(i + this->PrecalculationShift, j, j, Coefficient);
 	      if (Index < Dim)
@@ -742,7 +752,7 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNOneBod
 // position = reference on the current position in arrays indexArray and coefficientArray
 
 inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNOneBodyFastMultiplicationComponent(ParticleOnSphereWithSpin* particles, int index, 
-												 int* indexArray, double* coefficientArray, long& position)
+													     int* indexArray, Complex* coefficientArray, long& position)
 {
   if ((this->OneBodyInteractionFactorsdowndown != 0) || (this->OneBodyInteractionFactorsupup != 0))
     {
@@ -757,29 +767,29 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNOneBod
 	  coefficientArray[position] = TmpDiagonal;
 	  ++position;	  
     }
-/*   if (this->OneBodyInteractionFactorsupdown != 0) */
-/*     { */
-/*       int Dim = particles->GetHilbertSpaceDimension(); */
-/*       double Coefficient; */
-/*       int Index; */
-/*       for (int j = 0; j <= this->LzMax; ++j) */
-/* 	{ */
-/* 	  Index = particles->AddAu(index + this->PrecalculationShift, j, j, Coefficient); */
-/* 	  if (Index < Dim) */
-/* 	    { */
-/* 	      indexArray[position] = Index; */
-/* 	      coefficientArray[position] = Coefficient * OneBodyInteractionFactorsupdown[j]; */
-/* 	      ++position; */
-/* 	    } */
-/* 	  Index = particles->AduAd(index + this->PrecalculationShift, j, j, Coefficient); */
-/* 	  if (Index < Dim) */
-/* 	    { */
-/* 	      indexArray[position] = Index; */
-/* 	      coefficientArray[position] = Coefficient * Conj(OneBodyInteractionFactorsupdown[j]); */
-/* 	      ++position; */
-/* 	    } */
-/* 	} */
-/*     }        */
+  if (this->OneBodyInteractionFactorsupdown != 0)
+    {
+      int Dim = particles->GetHilbertSpaceDimension();
+      double Coefficient;
+      int Index;
+      for (int j = 0; j <= this->LzMax; ++j)
+	{
+	  Index = particles->AddAu(index + this->PrecalculationShift, j, j, Coefficient);
+	  if (Index < Dim)
+	    {
+	      indexArray[position] = Index;
+	      coefficientArray[position] = Coefficient * this->OneBodyInteractionFactorsupdown[j];
+	      ++position;
+	    }
+	  Index = particles->AduAd(index + this->PrecalculationShift, j, j, Coefficient);
+	  if (Index < Dim)
+	    {
+	      indexArray[position] = Index;
+	      coefficientArray[position] = Coefficient * Conj(this->OneBodyInteractionFactorsupdown[j]);
+	      ++position;
+	    }
+	}
+    }       
 }
 
 // core part of the PartialFastMultiplicationMemory method involving two-body term

@@ -45,7 +45,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-sitey", "number of sites along the y direction", 3);
-  (*SystemGroup) += new SingleDoubleOption  ('m', "band-parameter", "band structure parameter", 1.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "band-parameter", "band structure parameter", 1.0);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
@@ -72,7 +72,7 @@ int main(int argc, char** argv)
   char* CommentLine = new char [256];
   sprintf (CommentLine, "eigenvalues\n#");
   char* EigenvalueOutputFile = new char [512];
-  sprintf (EigenvalueOutputFile, "fermions_cherninsulator_singleband_n_%d_x_%d_y_%d.dat", NbrParticles, NbrSitesX, NbrSitesY);
+  sprintf (EigenvalueOutputFile, "fermions_cherninsulator_singleband_n_%d_x_%d_y_%d_m_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("band-parameter"));
 
   int MinKx = 0;
   int MaxKx = NbrSitesX - 1;
