@@ -108,6 +108,37 @@ ParticleOnLatticeChernInsulatorSingleBandHamiltonian::ParticleOnLatticeChernInsu
 
 ParticleOnLatticeChernInsulatorSingleBandHamiltonian::~ParticleOnLatticeChernInsulatorSingleBandHamiltonian()
 {
+  for (int i = 0; i < this->NbrSectorSums; ++i)
+    {
+      if (this->NbrSectorIndicesPerSum[i] > 0)
+	{
+	  delete[] this->SectorIndicesPerSum[i];
+	  delete[] this->InteractionFactors[i];
+	}
+    }
+  delete[] this->InteractionFactors;
+  delete[] this->NbrSectorIndicesPerSum;
+  delete[] this->SectorIndicesPerSum;
+  if (this->OneBodyInteractionFactors != 0)
+    delete[] this->OneBodyInteractionFactors;
+  if (this->FastMultiplicationFlag == true)
+    {
+      long MinIndex;
+      long MaxIndex;
+      this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+      int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+      int ReducedDim = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
+      if ((ReducedDim * this->FastMultiplicationStep) != EffectiveHilbertSpaceDimension)
+	++ReducedDim;
+      for (int i = 0; i < ReducedDim; ++i)
+	{
+	  delete[] this->InteractionPerComponentIndex[i];
+	  delete[] this->InteractionPerComponentCoefficient[i];
+	}
+      delete[] this->InteractionPerComponentIndex;
+      delete[] this->InteractionPerComponentCoefficient;
+      delete[] this->NbrInteractionPerComponent;
+    }
 }
   
 // set Hilbert space
