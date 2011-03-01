@@ -117,16 +117,16 @@ int main(int argc, char** argv)
   bool SymmetrizedBasis = Manager.GetBoolean("symmetrized-basis");
   bool CoefficientOnlyFlag = Manager.GetBoolean("coefficients-only");
   bool Statistics = true;
- if (FQHEOnSphereFindSystemInfoFromVectorFileName(Manager.GetString("eigenstate"),
-						  NbrParticles, LzMax, TotalLz, Statistics) == false)
-    {
-      cout << "error while retrieving system parameters from file name " << Manager.GetString("eigenstate") << endl;
-      return -1;
-    }
-
   if (Manager.GetString("eigenstate") == 0)
     {
       cout << "FQHESphereFermionsCorrelation requires a state" << endl;
+      return -1;
+    }
+
+  if (FQHEOnSphereFindSystemInfoFromVectorFileName(Manager.GetString("eigenstate"),
+						  NbrParticles, LzMax, TotalLz, Statistics) == false)
+    {
+      cout << "error while retrieving system parameters from file name " << Manager.GetString("eigenstate") << endl;
       return -1;
     }
 

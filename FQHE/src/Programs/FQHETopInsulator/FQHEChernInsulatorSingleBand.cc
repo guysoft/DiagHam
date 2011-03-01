@@ -102,7 +102,10 @@ int main(int argc, char** argv)
 													 Architecture.GetArchitecture(), Memory);
  	  char* ContentPrefix = new char[256];
  	  sprintf (ContentPrefix, "%d %d", i, j);
- 	  GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag);
+	  char* EigenstateOutputFile = new char [512];
+	  sprintf (EigenstateOutputFile, "fermions_cherninsulator_singleband_n_%d_x_%d_y_%d_m_%f_kx_%df_ky_%d", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("band-parameter"), i, j);
+ 	  GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, 
+				      FirstRunFlag, EigenstateOutputFile);
  	  FirstRunFlag = false;
  	  MainTaskOperation TaskOperation (&Task);
  	  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
