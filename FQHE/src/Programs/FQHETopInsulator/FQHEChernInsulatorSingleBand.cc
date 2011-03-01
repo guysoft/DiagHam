@@ -106,11 +106,8 @@ int main(int argc, char** argv)
  	  FirstRunFlag = false;
  	  MainTaskOperation TaskOperation (&Task);
  	  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
-
-//  	  for (int k = 0; k < Space.GetHilbertSpaceDimension(); ++k)
-//  	    Space.PrintState(cout, k) << endl;
-	  cout << "------------------------------------" << endl;
-	  //	  delete[] ContentPrefix;
+	  delete Hamiltonian;
+	  delete[] ContentPrefix;
 	}
     }
   return 0;
