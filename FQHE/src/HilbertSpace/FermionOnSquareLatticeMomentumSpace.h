@@ -55,6 +55,10 @@ class FermionOnSquareLatticeMomentumSpace : public FermionOnSphere
 
  public:
 
+  // default constructor
+  // 
+  FermionOnSquareLatticeMomentumSpace ();
+
   // basic constructor
   // 
   // nbrFermions = number of fermions
@@ -91,6 +95,47 @@ class FermionOnSquareLatticeMomentumSpace : public FermionOnSphere
   // state = ID of the state to print
   // return value = reference on current output stream 
   virtual ostream& PrintState (ostream& Str, int state);
+
+  // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given momentum sector and fixed number of particles
+  // 
+  // subsytemSizeX = number of sites along the x direction that belong to the subsytem
+  // subsytemSizeY = number of sites along the y direction that belong to the subsytem
+  // nbrParticleSector = number of particles that belong to the subsytem 
+  // kxSector = Kx momentum sector in which the entanglement matrix has to be evaluated 
+  // kySector = Ky momentum sector in which the entanglement matrix has to be evaluated 
+  // groundState = reference on the total system ground state
+  // return value = density matrix of the subsytem
+  virtual HermitianMatrix EvaluatePartialDensityMatrixMomentumSpace (int subsytemSizeX, int subsytemSizeY, int nbrParticleSector, int kxSector, int kySector, ComplexVector& groundState);
+  
+  // evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix is only evaluated in a given momentum sector and fixed number of particles
+  // 
+  // subsytemSizeX = number of sites along the x direction that belong to the subsytem
+  // subsytemSizeY = number of sites along the y direction that belong to the subsytem
+  // nbrParticleSector = number of particles that belong to the subsytem 
+  // kxSector = Kx momentum sector in which the entanglement matrix has to be evaluated 
+  // kySector = Ky momentum sector in which the entanglement matrix has to be evaluated 
+  // groundState = reference on the total system ground state
+  // return value = entanglement matrix of the subsytem
+  virtual ComplexMatrix EvaluatePartialEntanglementMatrixMomentumSpace (int subsytemSizeX, int subsytemSizeY, int nbrParticleSector, int kxSector, int kySector, ComplexVector& groundState);
+  
+  // evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state, using particle partition. The entanglement matrix is only evaluated in a given Lz sector.
+  // 
+  // nbrParticleSector = number of particles that belong to the subsytem 
+  // kxSector = Kx momentum sector in which the entanglement matrix has to be evaluated 
+  // kySector = Ky momentum sector in which the entanglement matrix has to be evaluated 
+  // groundState = reference on the total system ground state
+  // removeBinomialCoefficient = remove additional binomial coefficient in case the particle entanglement matrix has to be used for real space cut
+  // return value = entanglement matrix of the subsytem (return a wero dimension matrix if the entanglement matrix is equal to zero)
+  virtual ComplexMatrix EvaluatePartialEntanglementMatrixParticlePartition (int nbrParticleSector, int kxSector, int kySector, ComplexVector& groundState, bool removeBinomialCoefficient = false);
+
+  // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Lz sector.
+  // 
+  // nbrBosonSector = number of particles that belong to the subsytem 
+  // lzSector = Lz sector in which the density matrix has to be evaluated 
+  // groundState = reference on the total system ground state
+  // architecture = pointer to the architecture to use parallelized algorithm 
+  // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+  virtual HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int kxSector, int kySector, ComplexVector& groundState, AbstractArchitecture* architecture = 0);
 
  protected:
 

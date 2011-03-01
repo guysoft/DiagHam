@@ -31,6 +31,7 @@
 
 #include "config.h"
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
+#include "HilbertSpace/FermionOnSquareLatticeNonPeriodicMomentumSpace.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
 #include "Matrix/ComplexMatrix.h"
@@ -54,6 +55,13 @@ using std::ofstream;
 using std::ifstream;
 using std::ios;
 
+
+// default constructor
+// 
+
+FermionOnSquareLatticeMomentumSpace::FermionOnSquareLatticeMomentumSpace ()
+{
+}
 
 // basic constructor
 // 
@@ -336,6 +344,144 @@ long FermionOnSquareLatticeMomentumSpace::EvaluateHilbertSpaceDimension(int nbrF
   Count += this->EvaluateHilbertSpaceDimension(nbrFermions - 1, currentKx, currentKy - 1, currentTotalKx + currentKx, currentTotalKy + currentKy);
   Count += this->EvaluateHilbertSpaceDimension(nbrFermions, currentKx, currentKy - 1, currentTotalKx, currentTotalKy);
   return Count;
+}
+
+
+// evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given momentum sector and fixed number of particles
+// 
+// subsytemSizeX = number of sites along the x direction that belong to the subsytem
+// subsytemSizeY = number of sites along the y direction that belong to the subsytem
+// nbrParticleSector = number of particles that belong to the subsytem 
+// kxSector = Kx momentum sector in which the entanglement matrix has to be evaluated 
+// kySector = Ky momentum sector in which the entanglement matrix has to be evaluated 
+// groundState = reference on the total system ground state
+// return value = density matrix of the subsytem
+
+HermitianMatrix FermionOnSquareLatticeMomentumSpace::EvaluatePartialDensityMatrixMomentumSpace (int subsytemSizeX, int subsytemSizeY, int nbrParticleSector, int kxSector, int kySector, ComplexVector& groundState)
+{
+  if (nbrParticleSector == 0)
+    {
+      if ((kxSector == 0) && (kySector == 0))
+	{
+	  HermitianMatrix TmpDensityMatrix(1, true);
+	  TmpDensityMatrix(0, 0) = 1.0;
+	  return TmpDensityMatrix;
+	}
+      else
+	{
+	  HermitianMatrix TmpDensityMatrix;
+	  return TmpDensityMatrix;
+	}
+    }
+  if (nbrParticleSector == this->NbrFermions)
+    {
+      if ((kxSector == this->KxMomentum) && (kySector == this->KyMomentum))
+	{
+	  HermitianMatrix TmpDensityMatrix(1, true);
+	  TmpDensityMatrix(0, 0) = 1.0;
+	  return TmpDensityMatrix;
+	}
+      else
+	{
+	  HermitianMatrix TmpDensityMatrix;
+	  return TmpDensityMatrix;
+	}
+    }
+  int ComplementaryNbrParticles = this->NbrFermions - nbrParticleSector;
+  int ComplementarySubsytemSizeX = this->NbrSiteX - subsytemSizeX;
+  int ComplementarySubsytemSizeY = this->NbrSiteY - subsytemSizeY;
+  int MinComplementaryKxMomentum = (this->KxMomentum - kxSector) % ComplementarySubsytemSizeX;
+  int MinComplementaryKyMomentum = (this->KyMomentum - kySector) % ComplementarySubsytemSizeY;
+  int MaxComplementaryKxMomentum =  ComplementarySubsytemSizeX * ComplementaryNbrParticles - (((ComplementaryNbrParticles - 1) * ComplementaryNbrParticles) / 2);
+  int MaxComplementaryKyMomentum =  ComplementarySubsytemSizeY * ComplementaryNbrParticles - (((ComplementaryNbrParticles - 1) * ComplementaryNbrParticles) / 2);
+  FermionOnSquareLatticeNonPeriodicMomentumSpace SubsytemSpace (nbrParticleSector, subsytemSizeX, subsytemSizeY, kxSector, kySector);
+  HermitianMatrix TmpDensityMatrix (SubsytemSpace.GetHilbertSpaceDimension(), true);
+  for (int kx = MinComplementaryKxMomentum; kx < MaxComplementaryKxMomentum; kx += this->NbrSiteX)
+    for (int ky = MinComplementaryKyMomentum; ky < MaxComplementaryKyMomentum; ky += this->NbrSiteY)
+      {
+	FermionOnSquareLatticeNonPeriodicMomentumSpace ComplementarySpace (ComplementaryNbrParticles, ComplementarySubsytemSizeX, ComplementarySubsytemSizeY, kx, ky);
+      }
+  return TmpDensityMatrix;
+}
+
+// evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix is only evaluated in a given momentum sector and fixed number of particles
+// 
+// subsytemSizeX = number of sites along the x direction that belong to the subsytem
+// subsytemSizeY = number of sites along the y direction that belong to the subsytem
+// nbrParticleSector = number of particles that belong to the subsytem 
+// kxSector = Kx momentum sector in which the entanglement matrix has to be evaluated 
+// kySector = Ky momentum sector in which the entanglement matrix has to be evaluated 
+// groundState = reference on the total system ground state
+// return value = entanglement matrix of the subsytem
+  
+ComplexMatrix FermionOnSquareLatticeMomentumSpace::EvaluatePartialEntanglementMatrixMomentumSpace (int subsytemSizeX, int subsytemSizeY, int nbrParticleSector, int kxSector, int kySector, ComplexVector& groundState)
+{
+  int ComplementaryNbrParticles = this->NbrFermions - nbrParticleSector;
+  int ComplementarySubsytemSizeX = this->NbrSiteX - subsytemSizeX;
+  int ComplementarySubsytemSizeY = this->NbrSiteY - subsytemSizeY;
+  int MinComplementaryKxMomentum = (this->KxMomentum - kxSector) % ComplementarySubsytemSizeX;
+  int MinComplementaryKyMomentum = (this->KyMomentum - kySector) % ComplementarySubsytemSizeY;
+  int MaxComplementaryKxMomentum =  ComplementarySubsytemSizeX * ComplementaryNbrParticles - (((ComplementaryNbrParticles - 1) * ComplementaryNbrParticles) / 2);
+  int MaxComplementaryKyMomentum =  ComplementarySubsytemSizeY * ComplementaryNbrParticles - (((ComplementaryNbrParticles - 1) * ComplementaryNbrParticles) / 2);
+  long TotalComplementaryDimension = 0l;
+  int NbrComplementarySpaces = (((MaxComplementaryKxMomentum - MinComplementaryKxMomentum + 1) / this->NbrSiteX)
+				* ((MaxComplementaryKyMomentum - MinComplementaryKyMomentum + 1) / this->NbrSiteY));
+  FermionOnSquareLatticeNonPeriodicMomentumSpace SubsytemSpace (nbrParticleSector, subsytemSizeX, subsytemSizeY, kxSector, kySector);
+  FermionOnSquareLatticeNonPeriodicMomentumSpace** ComplementarySpaces = new FermionOnSquareLatticeNonPeriodicMomentumSpace*[NbrComplementarySpaces];
+  NbrComplementarySpaces = 0;
+  for (int kx = MinComplementaryKxMomentum; kx < MaxComplementaryKxMomentum; kx += this->NbrSiteX)
+    for (int ky = MinComplementaryKyMomentum; ky < MaxComplementaryKyMomentum; ky += this->NbrSiteY)
+      {
+	ComplementarySpaces[NbrComplementarySpaces] = new FermionOnSquareLatticeNonPeriodicMomentumSpace (ComplementaryNbrParticles, ComplementarySubsytemSizeX, ComplementarySubsytemSizeY, kx, ky);
+	TotalComplementaryDimension += ComplementarySpaces[NbrComplementarySpaces]->GetHilbertSpaceDimension();
+	++NbrComplementarySpaces;
+      }
+  ComplexMatrix TmpEntanglementMatrix(SubsytemSpace.GetHilbertSpaceDimension(), TotalComplementaryDimension, true);
+  long Shift = 0;
+  NbrComplementarySpaces = 0;
+  for (int kx = MinComplementaryKxMomentum; kx < MaxComplementaryKxMomentum; kx += this->NbrSiteX)
+    for (int ky = MinComplementaryKyMomentum; ky < MaxComplementaryKyMomentum; ky += this->NbrSiteY)
+      {
+	for (int i = 0; i < ComplementarySpaces[NbrComplementarySpaces]->GetHilbertSpaceDimension(); ++i)
+	  {
+	    for (int j = 0; j < SubsytemSpace.GetHilbertSpaceDimension(); ++j)
+	      {
+	      }
+	  }
+	Shift += ComplementarySpaces[NbrComplementarySpaces]->GetHilbertSpaceDimension();
+	delete[] ComplementarySpaces[NbrComplementarySpaces];
+	++NbrComplementarySpaces;	
+      }
+  return TmpEntanglementMatrix;
+}
+  
+// evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state, using particle partition. The entanglement matrix is only evaluated in a given Lz sector.
+// 
+// nbrParticleSector = number of particles that belong to the subsytem 
+// kxSector = Kx momentum sector in which the entanglement matrix has to be evaluated 
+// kySector = Ky momentum sector in which the entanglement matrix has to be evaluated 
+// groundState = reference on the total system ground state
+// removeBinomialCoefficient = remove additional binomial coefficient in case the particle entanglement matrix has to be used for real space cut
+// return value = entanglement matrix of the subsytem (return a wero dimension matrix if the entanglement matrix is equal to zero)
+
+ComplexMatrix FermionOnSquareLatticeMomentumSpace::EvaluatePartialEntanglementMatrixParticlePartition (int nbrParticleSector, int kxSector, int kySector, ComplexVector& groundState, bool removeBinomialCoefficient)
+{
+  ComplexMatrix TmpEntanglementMatrix;
+  return TmpEntanglementMatrix;
+}
+ 
+// evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Lz sector.
+// 
+// nbrBosonSector = number of particles that belong to the subsytem 
+// lzSector = Lz sector in which the density matrix has to be evaluated 
+// groundState = reference on the total system ground state
+// architecture = pointer to the architecture to use parallelized algorithm 
+// return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+
+HermitianMatrix FermionOnSquareLatticeMomentumSpace::EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int kxSector, int kySector, ComplexVector& groundState, AbstractArchitecture* architecture)
+{
+  HermitianMatrix TmpDensityMatrix;
+  return TmpDensityMatrix;
 }
 
 
