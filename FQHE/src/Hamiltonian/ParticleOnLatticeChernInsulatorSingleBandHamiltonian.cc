@@ -168,6 +168,30 @@ ComplexVector& ParticleOnLatticeChernInsulatorSingleBandHamiltonian::LowLevelAdd
       this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSource, vDestination);
       delete TmpParticles;
     }
+  else
+    {
+      if (this->FastMultiplicationStep == 1)
+	{
+	  int* TmpIndexArray;
+	  Complex* TmpCoefficientArray; 
+	  int j;
+	  int TmpNbrInteraction;
+	  int k = firstComponent;
+	  Complex Coefficient;
+	  firstComponent -= this->PrecalculationShift;
+	  LastComponent -= this->PrecalculationShift;
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      TmpNbrInteraction = this->NbrInteractionPerComponent[i];
+	      TmpIndexArray = this->InteractionPerComponentIndex[i];
+	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[i];
+	      Coefficient = vSource[k];
+	      for (j = 0; j < TmpNbrInteraction; ++j)
+		vDestination[TmpIndexArray[j]] +=  TmpCoefficientArray[j] * Coefficient;
+	      vDestination[k++] += this->HamiltonianShift * Coefficient;
+	    }
+	}
+    }
   return vDestination;
 }
  
@@ -194,6 +218,42 @@ ComplexVector* ParticleOnLatticeChernInsulatorSingleBandHamiltonian::LowLevelMul
       this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSources, vDestinations, nbrVectors);
       delete[] Coefficient2;
       delete TmpParticles;
+    }
+  else
+    {
+      if (this->FastMultiplicationStep == 1)
+	{
+	  int* TmpIndexArray;
+	  Complex Coefficient;
+	  Complex* Coefficient2 = new Complex [nbrVectors];
+	  Complex* TmpCoefficientArray; 
+	  int j;
+	  int Pos;
+	  int TmpNbrInteraction;
+	  int k = firstComponent;
+	  firstComponent -= this->PrecalculationShift;
+	  LastComponent -= this->PrecalculationShift;
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      TmpNbrInteraction = this->NbrInteractionPerComponent[i];
+	      TmpIndexArray = this->InteractionPerComponentIndex[i];
+	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[i];
+	      for (int l = 0; l < nbrVectors; ++l)
+		{
+		  Coefficient2[l] = vSources[l][k];
+		  vDestinations[l][k] += this->HamiltonianShift * Coefficient2[l];
+		}
+	      for (j = 0; j < TmpNbrInteraction; ++j)
+		{
+		  Pos = TmpIndexArray[j];
+		  Coefficient = TmpCoefficientArray[j];
+		  for (int l = 0; l < nbrVectors; ++l)
+		    vDestinations[l][Pos] +=  Coefficient * Coefficient2[l];
+		}
+	      ++k;
+	    }
+	  delete[] Coefficient2;
+	}
     }
   return vDestinations;
 }
