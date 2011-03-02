@@ -57,5 +57,18 @@ bool FQHEOnSquareLatticeFindSystemInfoFromFileName(char* filename, int& nbrParti
 // return value = true if no error occured
 bool FQHEOnSquareLatticeFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& nbrSiteX, int& nbrSiteY, int& momentumX, int& momentumY, bool& statistics);
 
+// try to guess system information from file name 
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles 
+// nbrSiteX = reference to the number sites along the x direction
+// nbrSiteY = reference to the number sites along the y direction
+// momentumX = reference to the momentum along the x direction
+// momentumX = reference to the momentum along the y direction
+// mass = reference to the mass term
+// statistics = reference to flag for fermionic statistics (true for fermion, false for bosons, grab it only if initial value is true)
+// return value = true if no error occured
+bool FQHEOnSquareLatticeFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& nbrSiteX, int& nbrSiteY, int& momentumX, int& momentumY, double& mass, bool& statistics);
+
 
 #endif

@@ -168,7 +168,7 @@ bool FQHEOnSquareLatticeFindSystemInfoFromVectorFileName(char* filename, int& nb
       if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
 	{
 	  StrNbrParticles[SizeString] = '\0';
-	  nbrSiteX = atoi(StrNbrParticles);
+	  momentumX = atoi(StrNbrParticles);
 	  StrNbrParticles[SizeString] = '_';
 	  StrNbrParticles += SizeString;
 	}
@@ -177,21 +177,21 @@ bool FQHEOnSquareLatticeFindSystemInfoFromVectorFileName(char* filename, int& nb
     }
   if (StrNbrParticles == 0)
     {
-      nbrSiteX = 0;
+      momentumX = 0;
     }
   StrNbrParticles = strstr(filename, "_ky_");
   if (StrNbrParticles != 0)
     {
       StrNbrParticles += 4;
       int SizeString = 0;
-      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '.') && (StrNbrParticles[SizeString] >= '0') 
 	     && (StrNbrParticles[SizeString] <= '9'))
 	++SizeString;
-      if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+      if ((StrNbrParticles[SizeString] == '.') && (SizeString != 0))
 	{
 	  StrNbrParticles[SizeString] = '\0';
-	  nbrSiteY = atoi(StrNbrParticles);
-	  StrNbrParticles[SizeString] = '_';
+	  momentumY = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = '.';
 	  StrNbrParticles += SizeString;
 	}
       else
@@ -199,7 +199,52 @@ bool FQHEOnSquareLatticeFindSystemInfoFromVectorFileName(char* filename, int& nb
     }
   if (StrNbrParticles == 0)
     {
-      nbrSiteY = 0;
+      momentumY = 0;
+    }
+  return true;
+}
+
+// try to guess system information from file name 
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles 
+// nbrSiteX = reference to the number sites along the x direction
+// nbrSiteY = reference to the number sites along the y direction
+// momentumX = reference to the momentum along the x direction
+// momentumX = reference to the momentum along the y direction
+// mass = reference to the mass term
+// statistics = reference to flag for fermionic statistics (true for fermion, false for bosons, grab it only if initial value is true)
+// return value = true if no error occured
+
+bool FQHEOnSquareLatticeFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& nbrSiteX, int& nbrSiteY, int& momentumX, int& momentumY, double& mass, bool& statistics)
+{
+  if (FQHEOnSquareLatticeFindSystemInfoFromVectorFileName(filename, nbrParticles, nbrSiteX, nbrSiteY, momentumX, momentumY, statistics) == false)
+    {
+      return false;
+    }
+  char* StrNbrParticles;
+  StrNbrParticles = strstr(filename, "_m_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 3;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if (SizeString != 0)
+	{
+	  char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  mass = atof(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      mass = 0.0;
     }
   return true;
 }

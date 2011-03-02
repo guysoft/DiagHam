@@ -14,7 +14,8 @@
 #include "Operator/ParticleOnSphereDensityDensityOperator.h"
 #include "Operator/ParticleOnSphereDensityOperator.h"
 
-#include "FunctionBasis/ParticleOnDiskFunctionBasis.h"
+#include "FunctionBasis/ParticleOnChernInsulatorSingleBandFunctionBasis.h"
+
 #include "GeneralTools/ConfigurationParser.h"
 #include "GeneralTools/FilenameTools.h"
 #include "GeneralTools/MultiColumnASCIIFile.h"
@@ -58,7 +59,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\0', "state", "name of the vector file describing the state whose density has to be plotted");
   (*SystemGroup) += new BooleanOption  ('\n', "density", "plot density insted of density-density correlation", false);
 
-  (*PlotOptionGroup) += new SingleStringOption ('\n', "output", "output file name (default output name replace the .vec extension of the input file with .rho.dat)", 0);
+  (*PlotOptionGroup) += new SingleStringOption ('\n', "output", "output file name (default output name replace the .vec extension of the input file with .rho or .rhorho)", 0);
   (*PlotOptionGroup) += new SingleIntegerOption ('\n', "nbr-samplesx", "number of samples along the x direction", 100, true, 10);
   (*PlotOptionGroup) += new SingleIntegerOption ('\n', "nbr-samplesy", "number of samples along the y direction", 100, true, 10);
 
@@ -90,40 +91,103 @@ int main(int argc, char** argv)
   int NbrSiteY = 0;
   int MomentumX = 0;
   int MomentumY = 0;
+  double Mass = 0.0;
   int NbrSamplesX = Manager.GetInteger("nbr-samplesx");
   int NbrSamplesY = Manager.GetInteger("nbr-samplesy");
   bool DensityFlag = Manager.GetBoolean("density");
   bool Statistics = true;
 
   if (FQHEOnSquareLatticeFindSystemInfoFromVectorFileName(Manager.GetString("state"),
-							  NbrParticles, NbrSiteX, NbrSiteY, MomentumX, MomentumY, Statistics) == false)
+							  NbrParticles, NbrSiteX, NbrSiteY, MomentumX, MomentumY, Mass, Statistics) == false)
     {
       cout << "error while retrieving system parameters from file name " << Manager.GetString("state") << endl;
       return -1;
     }
-  
+  cout << "N=" << NbrParticles << " Nx=" << NbrSiteX << " Ny=" << NbrSiteY << " kx=" << MomentumX << " ky=" << MomentumY << " m=" << Mass << endl; 
   FermionOnSquareLatticeMomentumSpace* Space = new FermionOnSquareLatticeMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, MomentumX, MomentumY);
   ComplexVector ComplexState;
-  if (ComplexState.ReadVector (Manager.GetString("eigenstate")) == false)
+  if (ComplexState.ReadVector (Manager.GetString("state")) == false)
     {
-      cout << "can't open vector file " << Manager.GetString("eigenstate") << endl;
+      cout << "can't open vector file " << Manager.GetString("state") << endl;
       return -1;      
     }
+  Complex* PrecalculatedValues = 0;
+  int* PrecalculatedIndices = 0;
+  int NbrPrecalculatedValues = 0;
   if (DensityFlag == false)
     {
-//       ParticleOnSphereDensityDensityOperator Operator (Space, i);
-//       PrecalculatedValues[i] = Operator.MatrixElement(ComplexState, ComplexState);
+      for (int kx1 =0; kx1 < NbrSiteX; ++kx1)
+	for (int kx2 =0; kx2 < NbrSiteX; ++kx2)
+	  for (int kx3 =0; kx3 < NbrSiteX; ++kx3)
+	    for (int kx4 =0; kx4 < NbrSiteX; ++kx4)
+	      {
+		if (((kx1 + kx2 - kx3 - kx4) % NbrSiteX) == 0)
+		  {
+		    for (int ky1 = 0; ky1 < NbrSiteY; ++ky1)
+		      for (int ky2 = 0; ky2 < NbrSiteY; ++ky2)
+			for (int ky3 = 0; ky3 < NbrSiteY; ++ky3)
+			  for (int ky4 = 0; ky4 < NbrSiteY; ++ky4)
+			    {
+			      if (((ky1 + ky2 - ky3 - ky4) % NbrSiteY) == 0)
+				{
+				  ++NbrPrecalculatedValues;
+				}
+			    }
+			}
+	      }
+      PrecalculatedValues = new Complex [NbrPrecalculatedValues];
+      PrecalculatedIndices = new int [4 * NbrPrecalculatedValues];
+      NbrPrecalculatedValues = 0; 
+      for (int kx1 =0; kx1 < NbrSiteX; ++kx1)
+	for (int kx2 =0; kx2 < NbrSiteX; ++kx2)
+	  for (int kx3 =0; kx3 < NbrSiteX; ++kx3)
+	    for (int kx4 =0; kx4 < NbrSiteX; ++kx4)
+	      {
+		if (((kx1 + kx2 - kx3 - kx4) % NbrSiteX) == 0)
+		  {
+		    for (int ky1 = 0; ky1 < NbrSiteY; ++ky1)
+		      for (int ky2 = 0; ky2 < NbrSiteY; ++ky2)
+			for (int ky3 = 0; ky3 < NbrSiteY; ++ky3)
+			  for (int ky4 = 0; ky4 < NbrSiteY; ++ky4)
+			    {
+			      if (((ky1 + ky2 - ky3 - ky4) % NbrSiteY) == 0)
+				{
+				  int Index1 = (kx1 * NbrSiteY) + ky1;
+				  int Index2 = (kx2 * NbrSiteY) + ky2;
+				  int Index3 = (kx3 * NbrSiteY) + ky3;
+				  int Index4 = (kx4 * NbrSiteY) + ky4;
+				  ParticleOnSphereDensityDensityOperator Operator (Space, Index1, Index2, Index3, Index4);
+				  PrecalculatedValues[NbrPrecalculatedValues] = Operator.MatrixElement(ComplexState, ComplexState);
+				  PrecalculatedIndices[(NbrPrecalculatedValues << 2)] = Index1;
+				  PrecalculatedIndices[(NbrPrecalculatedValues << 2) + 1] = Index2;
+				  PrecalculatedIndices[(NbrPrecalculatedValues << 2) + 2] = Index3;
+				  PrecalculatedIndices[(NbrPrecalculatedValues << 2) + 3] = Index4;
+				  ++NbrPrecalculatedValues;
+				}
+			    }
+		  }
+	      }
     }
   else
     {
-//       ParticleOnSphereDensityOperator Operator (Space, i);
-//       PrecalculatedValues[i] = Operator.MatrixElement(ComplexState, ComplexState);
+      NbrPrecalculatedValues = NbrSiteX * NbrSiteY;
+      PrecalculatedValues = new Complex [NbrPrecalculatedValues];
+      for (int kx =0; kx < NbrSiteX; ++kx)
+	for (int ky = 0; ky < NbrSiteY; ++ky)
+	  {
+	    int Index = (kx * NbrSiteY) + ky;
+	    ParticleOnSphereDensityOperator Operator (Space, Index);	    
+	    PrecalculatedValues[Index] = Operator.MatrixElement(ComplexState, ComplexState);
+	  }
     }  
   delete Space;
   ofstream File;
   File.precision(14);
-  if (Manager.GetString("output-file") != 0)
-    File.open(Manager.GetString("output-file"), ios::binary | ios::out);
+  double XStep = ((double) NbrSiteX) / ((double) NbrSamplesX);
+  double YStep = ((double) NbrSiteY) / ((double) NbrSamplesY);
+  RealVector Position(2, true);
+  if (Manager.GetString("output") != 0)
+    File.open(Manager.GetString("output"), ios::binary | ios::out);
   else
     {
       char* TmpFileName = 0;
@@ -143,6 +207,51 @@ int main(int argc, char** argv)
       File.open(TmpFileName, ios::binary | ios::out);
       delete[] TmpFileName;
     }
+  
+  ParticleOnChernInsulatorSingleBandFunctionBasis Basis(NbrSiteX, NbrSiteY, Mass);
+  int TotalNbrSites = NbrSiteX * NbrSiteY;
+  Complex* Coefficients = new Complex[TotalNbrSites];
+  Complex* Coefficients2 = new Complex[TotalNbrSites];
+  for (int i = 0; i < TotalNbrSites; ++i)
+    {
+      Basis.GetFunctionValue(Position, Coefficients[i], i);      
+    }
+  for (int i = 0; i < NbrSamplesX; ++i)
+    {
+      Position[1] = 0.0;
+      for (int j = 0; j < NbrSamplesY; ++j)
+	{
+	  Complex TmpValue = 0.0;
+	  if (DensityFlag == false)
+	    {
+	      for (int i = 0; i < TotalNbrSites; ++i)
+		{
+		  Basis.GetFunctionValue(Position, Coefficients2[i], i);      
+		}
+	      for (int i = 0; i < NbrPrecalculatedValues; ++i) 
+		{
+		  TmpValue -= (PrecalculatedValues[i] * Conj(Coefficients[PrecalculatedIndices[(i << 2)]]) *
+			       Coefficients[PrecalculatedIndices[(i << 2) + 2]] * Conj(Coefficients2[PrecalculatedIndices[(i << 2) + 1]]) 
+			       * Coefficients2[PrecalculatedIndices[(i << 2) + 3]]);
+		}
+	    }
+	  else
+	    {	      
+	      for (int i = 0; i < NbrPrecalculatedValues; ++i) 
+		{
+		  Complex TmpValue2;
+		  Basis.GetFunctionValue(Position, TmpValue2, i);
+		  TmpValue += PrecalculatedValues[i] * SqrNorm(TmpValue2);
+		}
+	    }
+	  File << Position[0] << " " << Position[1] << " " << TmpValue.Re << endl;
+	  Position[1] += YStep;
+	}
+      Position[0] += XStep;
+      File << endl;
+    }
   File.close();
+  delete[] Coefficients;
+  delete[] Coefficients2;
   return 0;
 }
