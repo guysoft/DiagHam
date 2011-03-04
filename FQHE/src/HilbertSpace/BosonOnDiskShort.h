@@ -39,10 +39,10 @@
 
 class BosonOnDiskShort :  public BosonOnSphereShort
 {
-	friend class BosonOnDiskHaldaneBasisShort;
+  friend class BosonOnDiskHaldaneBasisShort;
 
  public:
-
+  
   // basic constructor
   // 
   // nbrBosons = number of bosons
@@ -89,17 +89,17 @@ class BosonOnDiskShort :  public BosonOnSphereShort
   // return value = converted state
   virtual RealVector& ShiftedConvertFromUnnormalizedMonomial(RealVector& state, int shift, long reference = 0);
 	
-	// evaluate a entanglement matrix of a subsystem of the whole system described by a given ground state, using real space partition. The entanglement matrix is only evaluated in a given Lz sector.
-	// and computed from precalculated particle entanglement matrix
-	// 
-	// nbrBosonSector = number of particles that belong to the subsytem 
-	// lzSector = Lz sector in which the density matrix has to be evaluated 
-	// radius = radius of the A disk
-	// shift = shift to apply to each orbitals
-	// entanglementMatrix = reference on the entanglement matrix (will be overwritten)
-	// return value = reference on the entanglement matrix
-	RealMatrix& EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix (int nbrBosonSector, int lzSector, double radius, int shift, RealMatrix& entanglementMatrix);
-
+  // evaluate a entanglement matrix of a subsystem of the whole system described by a given ground state, using real space partition. The entanglement matrix is only evaluated in a given Lz sector.
+  // and computed from precalculated particle entanglement matrix
+  // 
+  // nbrBosonSector = number of particles that belong to the subsytem 
+  // lzSector = Lz sector in which the density matrix has to be evaluated 
+  // radius = radius of the A disk
+  // shift = shift to apply to each orbitals
+  // entanglementMatrix = reference on the entanglement matrix (will be overwritten)
+  // return value = reference on the entanglement matrix
+  RealMatrix& EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix (int nbrBosonSector, int lzSector, double radius, int shift, RealMatrix& entanglementMatrix);
+  
  protected:
 
   // core part of the convertion of a state such that its components are now expressed in the normalized basis

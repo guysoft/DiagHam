@@ -244,7 +244,7 @@ AbstractQuantumNumber* BosonOnSphereShort::GetQuantumNumber (int index)
 // return value = pointer to the new subspace
 
 AbstractHilbertSpace* BosonOnSphereShort::ExtractSubspace (AbstractQuantumNumber& q, 
-						      SubspaceSpaceConverter& converter)
+							   SubspaceSpaceConverter& converter)
 {
   return 0;
 }
@@ -857,8 +857,8 @@ RealMatrix BosonOnSphereShort::EvaluatePartialEntanglementMatrix (int subsytemSi
 	}
       else
 	{
-		RealMatrix TmpEntanglementMatrix;
-		return TmpEntanglementMatrix;
+	  RealMatrix TmpEntanglementMatrix;
+	  return TmpEntanglementMatrix;
 	}
     }
   
@@ -936,7 +936,7 @@ RealMatrix BosonOnSphereShort::EvaluatePartialEntanglementMatrix (int subsytemSi
 	      unsigned long TmpState = TmpHilbertSpace.FermionBasis->StateDescription[MinIndex] << (subsytemSize + nbrBosonSector);
 	      int TmpLzMax = this->FermionBasis->LzMax;
 	      while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
-					--TmpLzMax;
+		--TmpLzMax;
 	      int TmpPos = this->FermionBasis->FindStateIndex(TmpState, TmpLzMax);
 	      if (TmpPos != this->HilbertSpaceDimension)
 		{
@@ -1440,7 +1440,7 @@ HermitianMatrix BosonOnSphereShort::EvaluatePartialDensityMatrix (int subsytemSi
       return TmpDensityMatrixZero;
     }
 }
-  
+
 // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Lz sector and fixed number of particle. The geometrical cut is a stripe.
 // 
 // subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax+shitedCut to -Lzmax+shitedCut+subsytemSize-1)
@@ -2326,7 +2326,7 @@ RealSymmetricMatrix BosonOnSphereShort::EvaluatePartialDensityMatrixRealSpacePar
        RealSymmetricMatrix TmpDensityMatrixZero;
        return TmpDensityMatrixZero;
      }
-
+   
 
 //   int* TmpStatePosition = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
 //   int* TmpStatePosition2 = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
@@ -2635,7 +2635,7 @@ long BosonOnSphereShort::EvaluatePartialDensityMatrixRealSpacePartitionCore (int
 
 RealMatrix BosonOnSphereShort::EvaluatePartialEntanglementMatrixParticlePartition (int nbrBosonSector, int lzSector, RealVector& groundState, bool removeBinomialCoefficient)
 {	
-  if ( abs(lzSector) > (nbrBosonSector * this->LzMax))
+  if ( abs(lzSector) > (nbrBosonSector * this->LzMax) )
     {
       RealMatrix TmpEntanglementMatrixZero;
       return TmpEntanglementMatrixZero;
@@ -2689,7 +2689,7 @@ RealMatrix BosonOnSphereShort::EvaluatePartialEntanglementMatrixParticlePartitio
       RealMatrix TmpEntanglementMatrixZero;
       return TmpEntanglementMatrixZero;
     }
-
+  
   BosonOnSphereShort TmpDestinationHilbertSpace(nbrBosonSector, lzSector, this->LzMax);
   cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
   long TmpNbrNonZeroElements = 0;
@@ -2757,7 +2757,7 @@ RealMatrix BosonOnSphereShort::EvaluatePartialEntanglementMatrixParticlePartitio
 		    }
 		}
 	    }
-	  while (TmpIndex2 < ComplementaryNbrBosonSector)
+	  while ( TmpIndex2 < ComplementaryNbrBosonSector)
 	    {
 	      TmpMonomial3[TmpIndex4] = TmpMonomial1[TmpIndex2];
 	      ++TmpIndex2;
