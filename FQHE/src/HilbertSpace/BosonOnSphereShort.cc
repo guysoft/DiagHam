@@ -2663,7 +2663,7 @@ RealMatrix BosonOnSphereShort::EvaluatePartialEntanglementMatrixParticlePartitio
       if (lzSector == this->TotalLz)
 	{
 	  BosonOnSphereShort TmpDestinationHilbertSpace(nbrBosonSector, lzSector, this->LzMax);
-	  RealMatrix TmpEntanglementMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, 1);
+	  RealMatrix TmpEntanglementMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, 1,true);
 	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
 	    {
 	      int TmpLzMax = this->LzMax + this->NbrBosons - 1;
