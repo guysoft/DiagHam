@@ -41,6 +41,9 @@
 #include <math.h>
 #include <iostream>
 
+#ifdef __GSL__                                                                                                                                
+#include <gsl/gsl_sf_gamma.h>                                                                                                                 
+#endif
 
 using std::cout;
 using std::endl;
@@ -359,5 +362,66 @@ RealVector& BosonOnDiskShort::ConvertFromUnnormalizedMonomialCore(RealVector& st
   return state;
 }
 
+// evaluate a entanglement matrix of a subsystem of the whole system described by a given ground state, using real space partition. The entanglement matrix is only evaluated in a given Lz sector.
+// and computed from precalculated particle entanglement matrix
+// 
+// nbrBosonSector = number of particles that belong to the subsytem 
+// lzSector = Lz sector in which the density matrix has to be evaluated 
+// radius = radius of the A disk
+// shift = shift to apply to each orbitals
+// entanglementMatrix = reference on the entanglement matrix (will be overwritten)
+// return value = reference on the entanglement matrix
 
+RealMatrix& BosonOnDiskShort::EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix (int nbrBosonSector, int lzSector, double radius, int shift, RealMatrix& entanglementMatrix)
+{
+#ifdef __GSL__
+	double ReducedRadius = radius * radius / 2.0;
+	double* IncompleteNormalizedGamma = new double[this->LzMax + 1];
+	
+	for (int i = 0; i <= this->LzMax ; i++)
+	{
+		IncompleteNormalizedGamma[i] = gsl_sf_gamma_inc_Q( ((double) i + shift) + 1.0 , ReducedRadius);
+	}
 
+	int ComplementaryNbrBosonSector = this->NbrBosons - nbrBosonSector;
+	BosonOnDiskShort TmpDestinationHilbertSpace(nbrBosonSector, lzSector, this->LzMax);
+	cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
+	unsigned long* TmpMonomial1 = new unsigned long [ComplementaryNbrBosonSector];
+	unsigned long* TmpMonomial3 = new unsigned long [this->NbrBosons];
+	cout <<ComplementaryNbrBosonSector<<ComplementaryNbrBosonSector<<endl;
+	int ComplementaryLz = (this->TotalLz + this->LzMax * this->NbrBosons)>>1;
+	BosonOnDiskShort TmpHilbertSpace(ComplementaryNbrBosonSector, ComplementaryLz-lzSector, this->LzMax);
+	for (int i = 0; i < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++i)
+	{
+		TmpDestinationHilbertSpace.ConvertToMonomial(TmpDestinationHilbertSpace.FermionBasis->StateDescription[i], TmpDestinationHilbertSpace.FermionBasis->StateLzMax[i], TmpMonomial3);
+		double Tmp = 0.0;     
+		for( int j = 0; j < nbrBosonSector; j++)
+		{
+			Tmp += log( IncompleteNormalizedGamma[TmpMonomial3[j]] );
+		}
+		Tmp = exp(0.5 * Tmp);
+		for (int j = 0; j < TmpHilbertSpace.HilbertSpaceDimension; ++j)          
+			entanglementMatrix(i, j) *= Tmp;      
+	}
+	
+	for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
+	{
+		TmpHilbertSpace.ConvertToMonomial(TmpHilbertSpace.FermionBasis->StateDescription[MinIndex], TmpHilbertSpace.FermionBasis->StateLzMax[MinIndex], TmpMonomial1);
+		double FormFactor = 0.0;
+		for (int i=0; i < ComplementaryNbrBosonSector; i++)
+			FormFactor += log(1.0 - IncompleteNormalizedGamma[TmpMonomial1[i]]);
+		FormFactor = exp(0.5 * FormFactor);
+		for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
+			entanglementMatrix(j, MinIndex) *= FormFactor; 
+	}
+	
+	delete[] TmpMonomial1;
+	delete[] TmpMonomial3;
+	
+	return entanglementMatrix;
+
+#else
+	RealMatrix TmpEntanglementMatrix;
+	return TmpEntanglementMatrix;
+#endif
+}
