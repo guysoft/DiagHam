@@ -2770,7 +2770,7 @@ RealMatrix FermionOnSphere::EvaluatePartialEntanglementMatrixParticlePartition(i
   if(removeBinomialCoefficient == false )
     {
       BinomialCoefficients TmpBinomial (this->NbrFermions);
-      double TmpInvBinomial = sqrt(1.0 / (TmpBinomial(this->NbrFermions, nbrFermionSector)));
+      TmpInvBinomial = sqrt(1.0 / (TmpBinomial(this->NbrFermions, nbrFermionSector)));
     }
   
   
