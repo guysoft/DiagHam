@@ -1904,6 +1904,7 @@ HermitianMatrix FermionOnSphere::EvaluatePartialDensityMatrix (int subsytemSize,
 // groundState = reference on the total system ground state
 // lzSector = Lz sector in which the density matrix has to be evaluated 
 // return value = entanglement matrix of the subsytem
+
 RealMatrix FermionOnSphere::EvaluatePartialEntanglementMatrix (int subsytemSize, int nbrFermionSector, int lzSector, RealVector& groundState)
 {
   if (subsytemSize <= 0)
@@ -2694,6 +2695,146 @@ RealSymmetricMatrix  FermionOnSphere::EvaluatePartialDensityMatrixParticlePartit
     }
 }
 
+// evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state, using particle partition. The entanglement matrix is only evaluated in a given Lz sector.
+// 
+// nbrFermionSector = number of particles that belong to the subsytem 
+// lzSector = Lz sector in which the density matrix has to be evaluated
+// groundState = reference on the total system ground state
+// removeBinomialCoefficient = remove additional binomial coefficient in case the particle entanglement matrix has to be used for real space cut
+// return value = entanglement matrix of the subsytem (return a wero dimension matrix if the entanglement matrix is equal to zero)
+
+RealMatrix FermionOnSphere::EvaluatePartialEntanglementMatrixParticlePartition(int nbrFermionSector, int lzSector, RealVector& groundState, bool removeBinomialCoefficient)
+{
+  if (nbrFermionSector == 0)
+    {
+      if (lzSector == 0)
+	{
+	  FermionOnSphere TmpHilbertSpace(this->NbrFermions, this->TotalLz - lzSector, this->LzMax);
+	  RealMatrix TmpEntanglementMatrix(1, TmpHilbertSpace.HilbertSpaceDimension, true);
+	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	    {
+	      int TmpLzMax = this->LzMax ;
+	      unsigned long TmpState = this->StateDescription[i];
+	      while ((TmpState >> TmpLzMax) == 0x0ul)
+		--TmpLzMax;
+	      
+	      TmpEntanglementMatrix.SetMatrixElement(0, TmpHilbertSpace.FindStateIndex(TmpState, TmpLzMax), groundState[i]);
+	    }
+	  return TmpEntanglementMatrix;
+	}
+      else
+	{
+	  RealMatrix TmpEntanglementMatrix;
+	  return TmpEntanglementMatrix;	
+	}
+    }
+  
+  
+  if (nbrFermionSector == this->NbrFermions)
+    {
+      if (lzSector == this->TotalLz)
+	{
+	  FermionOnSphere TmpDestinationHilbertSpace(nbrFermionSector, lzSector, this->LzMax);
+	  RealMatrix TmpEntanglementMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, 1,true);
+	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	    {
+	      int TmpLzMax = this->LzMax;
+	      unsigned long TmpState = this->StateDescription[i];
+	      while ((TmpState >> TmpLzMax) == 0x0ul)
+		--TmpLzMax;
+	      
+	      TmpEntanglementMatrix.SetMatrixElement(TmpDestinationHilbertSpace.FindStateIndex(TmpState, TmpLzMax), 0, groundState[i]);
+	    }
+	  return TmpEntanglementMatrix;
+	}
+      else
+	{
+	  RealMatrix TmpEntanglementMatrix;
+	  return TmpEntanglementMatrix;	  
+	}
+    }
+  
+  int ComplementaryNbrFermionSector = this->NbrFermions - nbrFermionSector;
+  
+  if ( abs(this->TotalLz - lzSector) > (ComplementaryNbrFermionSector * this->LzMax -  ((ComplementaryNbrFermionSector * ComplementaryNbrFermionSector)>>1)  ))
+    {
+      RealMatrix TmpEntanglementMatrixZero;
+      return TmpEntanglementMatrixZero;
+    }
+  
+  FermionOnSphere TmpDestinationHilbertSpace(nbrFermionSector, lzSector, this->LzMax);
+  cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
+  long TmpNbrNonZeroElements = 0;
+
+  double TmpInvBinomial = 1.0;
+  if(removeBinomialCoefficient == false )
+    {
+      BinomialCoefficients TmpBinomial (this->NbrFermions);
+      double TmpInvBinomial = sqrt(1.0 / (TmpBinomial(this->NbrFermions, nbrFermionSector)));
+    }
+  
+  
+  FermionOnSphere TmpHilbertSpace(ComplementaryNbrFermionSector, this->TotalLz - lzSector, this->LzMax);
+  
+  FactorialCoefficient Factorial;
+  RealMatrix TmpEntanglementMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, TmpHilbertSpace.HilbertSpaceDimension, true);
+  
+  for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
+    {
+      unsigned long TmpState = TmpHilbertSpace.StateDescription[MinIndex];
+      for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
+	{
+	  unsigned long TmpState2 = TmpDestinationHilbertSpace.StateDescription[j];
+	  if ((TmpState & TmpState2) == 0x0ul)
+	    {
+	      int TmpLzMax = this->LzMax;
+	      unsigned long TmpState3 = TmpState | TmpState2;
+	      while ((TmpState3 >> TmpLzMax) == 0x0ul)
+		--TmpLzMax;
+	      int TmpPos = this->FindStateIndex(TmpState3, TmpLzMax);
+	      if (TmpPos != this->HilbertSpaceDimension)
+		{
+		  double Coefficient = TmpInvBinomial;
+		  unsigned long Sign = 0x0ul;
+		  int Pos2 = TmpDestinationHilbertSpace.LzMax;
+		  while ((Pos2 > 0) && (TmpState2 != 0x0ul))
+		    {
+		      while (((TmpState2 >> Pos2) & 0x1ul) == 0x0ul)
+			--Pos2;
+		      TmpState3 = TmpState & ((0x1ul << (Pos2 + 1)) - 1ul);
+#ifdef  __64_BITS__
+		      TmpState3 ^= TmpState3 >> 32;
+#endif	
+		      TmpState3 ^= TmpState3 >> 16;
+		      TmpState3 ^= TmpState3 >> 8;
+		      TmpState3 ^= TmpState3 >> 4;
+		      TmpState3 ^= TmpState3 >> 2;
+		      TmpState3 ^= TmpState3 >> 1;
+		      Sign ^= TmpState3;
+		      TmpState2 &= ~(0x1ul << Pos2);
+		      --Pos2;
+		    }
+		  if ((Sign & 0x1ul) == 0x0ul)		  
+		    Coefficient *= 1.0;
+		  else
+		    Coefficient *= -1.0;
+		  
+		  TmpNbrNonZeroElements++;
+		  TmpEntanglementMatrix.SetMatrixElement(j, MinIndex, Coefficient*groundState[TmpPos]);
+		}
+	    }
+	}
+    }
+  
+  if (TmpNbrNonZeroElements > 0)
+    return TmpEntanglementMatrix;
+  else
+    {
+      RealMatrix TmpEntanglementMatrixZero;
+      return TmpEntanglementMatrixZero;
+    }
+}
+
 // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using real space partition. The density matrix is only evaluated in a given Lz sector.
 // 
 // nbrFermionSector = number of particles that belong to the subsytem 
@@ -2936,6 +3077,75 @@ RealSymmetricMatrix FermionOnSphere::EvaluatePartialDensityMatrixRealSpacePartit
       return TmpDensityMatrixZero;
     }
 }
+
+
+// evaluate a entanglement matrix of a subsystem of the whole system described by a given ground state, using real space partition. The entanglement matrix is only evaluated in a given Lz sector.
+// and computed from precalculated particle entanglement matrix
+// 
+// nbrFermionSector = number of particles that belong to the subsytem 
+// lzSector = Lz sector in which the density matrix has to be evaluated 
+// phiRange = The angle traced in the \hat{phi} direction between the 2 longitudes defining the cut in degrees
+// thetaTop =  inclination angle defining one edge of the cut in degrees
+// thetaBottom = inclination angle defining the bottom edge of the cut. thetaBottom>thetaTop in degrees
+// entanglementMatrix = reference on the entanglement matrix (will be overwritten)
+// return value = reference on the entanglement matrix
+RealMatrix& FermionOnSphere::EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix (int nbrFermionSector, int lzSector, double thetaTop, double thetaBottom, double phiRange, RealMatrix& entanglementMatrix)
+{
+  if ((thetaBottom <= thetaTop) || (phiRange <= 0.0))
+    {
+      for (int i = 0; i < entanglementMatrix.GetNbrRow(); ++i)
+	for (int j = 0; j < entanglementMatrix.GetNbrColumn(); ++j)
+	  entanglementMatrix(i, j) = 0.0;
+      return entanglementMatrix;
+    }
+  
+  thetaTop *= M_PI / 180.0;
+  thetaBottom *= M_PI / 180.0;
+  phiRange /= 360.0;
+  
+  double* IncompleteBetaThetaTop = 0;
+  double* IncompleteBetaThetaBottom = 0;
+  
+  this->EvaluatePartialDensityMatrixRealSpacePartitionCoefficient(this->LzMax, thetaTop, thetaBottom, IncompleteBetaThetaTop, IncompleteBetaThetaBottom);
+  
+  int ComplementaryNbrFermionsSector = this->NbrFermions - nbrFermionSector;
+  FermionOnSphere TmpDestinationHilbertSpace(nbrFermionSector, lzSector, this->LzMax);
+  cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
+  unsigned long* TmpMonomial1 = new unsigned long [ComplementaryNbrFermionsSector];
+  unsigned long* TmpMonomial3 = new unsigned long [this->NbrFermions];
+  
+  FermionOnSphere TmpHilbertSpace(ComplementaryNbrFermionsSector, this->TotalLz - lzSector, this->LzMax);
+  for (int i = 0; i < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++i)
+    {
+      TmpDestinationHilbertSpace.ConvertToMonomial(TmpDestinationHilbertSpace.StateDescription[i],TmpMonomial3);
+      double Tmp = 0.0;
+      Tmp = 0.5 * nbrFermionSector * log(phiRange);      
+      for( int j = 0; j < nbrFermionSector; j++)
+	{
+	  Tmp += log( IncompleteBetaThetaBottom[TmpMonomial3[j]] - IncompleteBetaThetaTop[TmpMonomial3[j]]);
+	}
+      Tmp = exp(0.5 * Tmp);
+      for (int j = 0; j < TmpHilbertSpace.HilbertSpaceDimension; ++j)          
+	entanglementMatrix(i, j) *= Tmp;      
+    }
+  
+  for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
+    {
+      TmpHilbertSpace.ConvertToMonomial(TmpHilbertSpace.StateDescription[MinIndex], TmpMonomial1);
+      double FormFactor = 0.0;
+      for (int i = 0; i < ComplementaryNbrFermionsSector; i++)
+	FormFactor += log(1.0 - IncompleteBetaThetaBottom[TmpMonomial1[i]] + IncompleteBetaThetaTop[TmpMonomial1[i]] + (1.0 - phiRange) * (IncompleteBetaThetaBottom[TmpMonomial1[i]] - IncompleteBetaThetaTop[TmpMonomial1[i]]) );
+      FormFactor = exp(0.5 * FormFactor);
+      for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
+	entanglementMatrix(j, MinIndex) *= FormFactor; 
+    }
+  
+  delete[] TmpMonomial1;
+  delete[] TmpMonomial3;
+  
+  return entanglementMatrix;
+}
+
 
 // compute particule-hole symmetric state from a given state
 //

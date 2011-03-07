@@ -550,6 +550,7 @@ long ParticleOnSphere::EvaluatePartialDensityMatrixRealSpacePartitionCore (int m
 
 RealMatrix ParticleOnSphere::EvaluatePartialEntanglementMatrixParticlePartition (int nbrBosonSector, int lzSector, RealVector& groundState, bool removeBinomialCoefficient)
 {
+	cout <<"Tu l'as dans le cul"<<endl;
   RealMatrix PartialEntanglementMatrix;
   return PartialEntanglementMatrix;  
 }

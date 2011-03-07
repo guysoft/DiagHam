@@ -110,7 +110,7 @@ int main(int argc, char** argv)
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
-
+  
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
       cout << "see man page for option syntax or type FQHESphereBosonEntanglementEntropyParticlePartition -h" << endl;
@@ -214,7 +214,7 @@ int main(int argc, char** argv)
 	  return -1;
 	}
     }
-
+  
 
   GroundStates = new RealVector [NbrSpaces];  
   for (int i = 0; i < NbrSpaces; ++i)
@@ -223,8 +223,8 @@ int main(int argc, char** argv)
 	cout << "can't open vector file " << GroundStateFiles[i] << endl;
 	return -1;      
       }
-
-
+  
+  
   Spaces = new ParticleOnSphere* [NbrSpaces];
   for (int i = 0; i < NbrSpaces; ++i)
     {
@@ -337,6 +337,7 @@ int main(int argc, char** argv)
   File.precision(14);
   cout.precision(14);
   
+  double TotalTrace = 0.0;
   for (; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
     {
       double EntanglementEntropy = 0.0;
@@ -686,8 +687,11 @@ int main(int argc, char** argv)
 	}
       File << SubsystemNbrParticles << " " << (-EntanglementEntropy) << " " << DensitySum << " " << (1.0 - DensitySum) << endl;
       cout << "trace = " << DensitySum << endl;
+      TotalTrace += DensitySum;
     }
   File.close();
+  if (RealSpaceCut == true)
+    cout <<"Total Trace = "<<TotalTrace<<endl;
   return 0;
 }
 
