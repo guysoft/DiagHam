@@ -382,8 +382,6 @@ int main(int argc, char** argv)
 	      else
 		{
 		  PartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[0]);
-		  if(PartialEntanglementMatrix.GetNbrRow() >= 1)
-		    cout <<PartialEntanglementMatrix<<endl;
 		}
 	    }
 	  else
