@@ -157,7 +157,6 @@ BosonOnDiskShort& BosonOnDiskShort::operator = (const BosonOnDiskShort& bosons)
   this->Minors = bosons.Minors;
   this->TemporaryState = new unsigned long [this->NbrLzValue];
   this->ProdATemporaryState = new unsigned long [this->NbrLzValue];
-
   return *this;
 }
 
@@ -388,9 +387,9 @@ RealMatrix& BosonOnDiskShort::EvaluateEntanglementMatrixRealSpacePartitionFromPa
   cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
   unsigned long* TmpMonomial1 = new unsigned long [ComplementaryNbrBosonSector];
   unsigned long* TmpMonomial3 = new unsigned long [this->NbrBosons];
-  cout <<ComplementaryNbrBosonSector<<ComplementaryNbrBosonSector<<endl;
+	
   int ComplementaryLz = (this->TotalLz + this->LzMax * this->NbrBosons)>>1;
-  BosonOnDiskShort TmpHilbertSpace(ComplementaryNbrBosonSector, ComplementaryLz-lzSector, this->LzMax);
+  BosonOnDiskShort TmpHilbertSpace(ComplementaryNbrBosonSector, ComplementaryLz - lzSector, this->LzMax);
   for (int i = 0; i < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++i)
     {
       TmpDestinationHilbertSpace.ConvertToMonomial(TmpDestinationHilbertSpace.FermionBasis->StateDescription[i], TmpDestinationHilbertSpace.FermionBasis->StateLzMax[i], TmpMonomial3);

@@ -55,7 +55,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\0', "ground-file", "name of the file corresponding to the ground state of the whole system");
   (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
-	(*SystemGroup) += new BooleanOption  ('\n', "huge-basis", "use huge Hilbert space support");
+  (*SystemGroup) += new BooleanOption  ('\n', "huge-basis", "use huge Hilbert space support");
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "force-maxmomentum", "force the maximum single particle momentum to a particular value (negative from the number of particles and the state total angular momentum)", -1);
   (*SystemGroup) += new SingleIntegerOption ('\n',"min-na","minimum number of particlesin the region A whose entropy has to be evaluated", 0);
@@ -67,7 +67,7 @@ int main(int argc, char** argv)
   (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
-	(*ToolsGroup) += new BooleanOption  ('\n', "use-svd", "use singular value decomposition instead of diagonalization to compute the entropy");
+  (*ToolsGroup) += new BooleanOption  ('\n', "use-svd", "use singular value decomposition instead of diagonalization to compute the entropy");
 	
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");	
   
@@ -88,7 +88,7 @@ int main(int argc, char** argv)
       cout << "error, a ground state file should be provided. See man page for option syntax or type FQHESphereFermionEntanglementEntropyParticlePartition -h" << endl;
       return -1;
     }
-
+  
   if ((Manager.GetString("ground-file") != 0) && 
       (IsFile(Manager.GetString("ground-file")) == false))
     {
@@ -115,7 +115,7 @@ int main(int argc, char** argv)
   ParticleOnSphere** Spaces = 0;
   RealVector* GroundStates = 0;
   char** GroundStateFiles = 0;
-	bool SVDFlag = Manager.GetBoolean("use-svd");
+  bool SVDFlag = Manager.GetBoolean("use-svd");
   
   if (Manager.GetString("degenerated-groundstate") == 0)
     {
@@ -170,39 +170,36 @@ int main(int argc, char** argv)
   Spaces = new ParticleOnSphere* [NbrSpaces];
   for (int i = 0; i < NbrSpaces; ++i)
     {
-			int TmpMaxMomentum = TotalLz[i];
-			if ((ForceMaxMomentum >= 0) && (ForceMaxMomentum < TmpMaxMomentum))
-				TmpMaxMomentum = ForceMaxMomentum;
-			
-			if (HaldaneBasisFlag == false)
-			{
-				cout << "NbrParticles = "<< NbrParticles<<endl;
-				cout << "TmpMaxMomentum = "<<TmpMaxMomentum<<endl;
-				cout << "TotalLz = "<< TotalLz[i]<<endl;
-				Spaces[i] = new BosonOnDiskShort(NbrParticles, TotalLz[i], TmpMaxMomentum);
-			}
-			else
-			{
-				int* ReferenceState = 0;
-				if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, TmpMaxMomentum, ReferenceState) == false)
-					return -1;
-				if (Manager.GetBoolean("huge-basis") == true)
-				{
-					if (Manager.GetString("load-hilbert") == 0)
-					{
-						cout << "error : huge basis mode requires to save and load the Hilbert space" << endl;
-						return -1;
-					}
-					Spaces[i] = new BosonOnDiskHaldaneHugeBasisShort (Manager.GetString("load-hilbert"), Manager.GetInteger("memory"));
-				}
-				else
-				{
-					if (Manager.GetString("load-hilbert") != 0)
-						Spaces[i] = new BosonOnDiskHaldaneBasisShort(Manager.GetString("load-hilbert"));	  
-					else
-						Spaces[i] = new BosonOnDiskHaldaneBasisShort(NbrParticles, TotalLz[i], TmpMaxMomentum, ReferenceState);	  
-				}
-			}
+      int TmpMaxMomentum = TotalLz[i];
+      if ((ForceMaxMomentum >= 0) && (ForceMaxMomentum < TmpMaxMomentum))
+	TmpMaxMomentum = ForceMaxMomentum;
+      
+      if (HaldaneBasisFlag == false)
+	{
+	  Spaces[i] = new BosonOnDiskShort(NbrParticles, TotalLz[i], TmpMaxMomentum);
+	}
+      else
+	{
+	  int* ReferenceState = 0;
+	  if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, TmpMaxMomentum, ReferenceState) == false)
+	    return -1;
+	  if (Manager.GetBoolean("huge-basis") == true)
+	    {
+	      if (Manager.GetString("load-hilbert") == 0)
+		{
+		  cout << "error : huge basis mode requires to save and load the Hilbert space" << endl;
+		  return -1;
+		}
+	      Spaces[i] = new BosonOnDiskHaldaneHugeBasisShort (Manager.GetString("load-hilbert"), Manager.GetInteger("memory"));
+	    }
+	  else
+	    {
+	      if (Manager.GetString("load-hilbert") != 0)
+		Spaces[i] = new BosonOnDiskHaldaneBasisShort(Manager.GetString("load-hilbert"));	  
+	      else
+		Spaces[i] = new BosonOnDiskHaldaneBasisShort(NbrParticles, TotalLz[i], TmpMaxMomentum, ReferenceState);	  
+	    }
+	}
       
       if (Spaces[i]->GetHilbertSpaceDimension() != GroundStates[i].GetVectorDimension())
 	{
@@ -249,8 +246,6 @@ int main(int argc, char** argv)
   if ((ForceMaxMomentum >= 0) && (ForceMaxMomentum < MaxMomentum))
     MaxMomentum = ForceMaxMomentum;
   
-  cout <<"TotalLz = "<<TotalLz[0]<<endl;
-  cout <<"MaxMomentum = "<<MaxMomentum<<endl;
   
   double TotalTrace = 0.0;
   cout <<"MaxSubsystemNbrParticles = "<<MaxSubsystemNbrParticles<<endl;
@@ -265,103 +260,103 @@ int main(int argc, char** argv)
       int ComplementaryMaxTotalLz = ComplementarySubsystemNbrParticles * MaxMomentum;
       cout << "SubsystemMaxTotalLz = " << SubsystemMaxTotalLz << "    ComplementaryMaxTotalLz = " << ComplementaryMaxTotalLz << endl;
       
-			int SubsystemTotalLz = 0; 
-			
-			
-			while ( (TotalLz[0] -  SubsystemTotalLz) > ComplementaryMaxTotalLz )
-				SubsystemTotalLz++;
-			
-			while( (TotalLz[0] - SubsystemMaxTotalLz)<0)
-				SubsystemMaxTotalLz--;
+      int SubsystemTotalLz = 0; 
+      
+      
+      while ( (TotalLz[0] -  SubsystemTotalLz) > ComplementaryMaxTotalLz )
+	SubsystemTotalLz++;
+      
+      while( (TotalLz[0] - SubsystemMaxTotalLz)<0)
+	SubsystemMaxTotalLz--;
       
       cout << "SubsystemMaxTotalLz = " << SubsystemMaxTotalLz << "  SubsystemTotalLz = " << SubsystemTotalLz << endl;
       for (; SubsystemTotalLz <= SubsystemMaxTotalLz; SubsystemTotalLz++)
 	{
-		int ShiftedTotaLz = 2*SubsystemTotalLz - SubsystemNbrParticles * MaxMomentum;
-		cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Lz=" << ShiftedTotaLz << endl;
-		if( SVDFlag == true)
+	  int ShiftedTotaLz = 2*SubsystemTotalLz - SubsystemNbrParticles * MaxMomentum;
+	  cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Lz=" << ShiftedTotaLz << endl;
+	  if( SVDFlag == true)
+	    {
+	      RealMatrix PartialEntanglementMatrix;
+	      if(HaldaneBasisFlag == false )
 		{
-		RealMatrix PartialEntanglementMatrix;
-	  if(HaldaneBasisFlag == false )
-	    {
-				PartialEntanglementMatrix = ((BosonOnDiskShort*) Spaces[0])->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, ShiftedTotaLz, GroundStates[0], true);
-				if (PartialEntanglementMatrix.GetNbrRow() != 0)
-				{
-					((BosonOnDiskShort*) Spaces[0])->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("radius"),Manager.GetInteger("shift-orbitals"), PartialEntanglementMatrix);
-				}
-	    }
-	  else
-	    {
-				PartialEntanglementMatrix = ((BosonOnDiskHaldaneBasisShort*) Spaces[0])->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, ShiftedTotaLz, GroundStates[0], true);
-				if (PartialEntanglementMatrix.GetNbrRow() != 0)
-				{
-					((BosonOnDiskHaldaneBasisShort*) Spaces[0])->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("radius"),Manager.GetInteger("shift-orbitals"), PartialEntanglementMatrix);
-				}
-	    }
-
-	  for (int i = 1; i < NbrSpaces; ++i)
-	    {
-				RealMatrix TmpEntanglementMatrix; 
-				if(HaldaneBasisFlag == false )
-				{
-					TmpEntanglementMatrix = ((BosonOnDiskShort*) Spaces[i])->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[i], true);
-					if (PartialEntanglementMatrix.GetNbrRow() != 0)
-					{
-						((BosonOnDiskShort*) Spaces[i])->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("radius"),Manager.GetInteger("shift-orbitals"), TmpEntanglementMatrix);
-					}
-				}
-				else
-				{
-					TmpEntanglementMatrix = ((BosonOnDiskHaldaneBasisShort*) Spaces[i])->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[i], true);
-					if (PartialEntanglementMatrix.GetNbrRow() != 0)
-					{
-						((BosonOnDiskHaldaneBasisShort*) Spaces[i])->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("radius"),Manager.GetInteger("shift-orbitals"), TmpEntanglementMatrix);
-					}
-				}
-				PartialEntanglementMatrix += TmpEntanglementMatrix;
-	    }
-	  if (NbrSpaces > 1)
-			PartialEntanglementMatrix /= sqrt((double) NbrSpaces);
-		if (PartialEntanglementMatrix.GetNbrRow() >= 1)
-	    {
-				double* TmpValues = PartialEntanglementMatrix.SingularValueDecomposition();
-				int TmpDimension = PartialEntanglementMatrix.GetNbrColumn();
-				if (TmpDimension > PartialEntanglementMatrix.GetNbrRow())
-				{
-					TmpDimension = PartialEntanglementMatrix.GetNbrRow();
-				}
-				for (int i = 0; i < TmpDimension; ++i)
-					TmpValues[i] *= TmpValues[i];
-				RealDiagonalMatrix TmpDiag = RealDiagonalMatrix(TmpValues, TmpDimension);
-				TmpDiag.SortMatrixDownOrder();
-	      if (DensityMatrixFileName != 0)
+		  PartialEntanglementMatrix = ((BosonOnDiskShort*) Spaces[0])->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, ShiftedTotaLz, GroundStates[0], true);
+		  if (PartialEntanglementMatrix.GetNbrRow() != 0)
+		    {
+		      ((BosonOnDiskShort*) Spaces[0])->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("radius"),Manager.GetInteger("shift-orbitals"), PartialEntanglementMatrix);
+		    }
+		}
+	      else
 		{
-		  ofstream DensityMatrixFile;
-		  DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
-		  DensityMatrixFile.precision(14);
-			for (int i = 0; i < TmpDiag.GetNbrRow(); ++i)
-		    DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpDiag[i] << endl;
-		  DensityMatrixFile.close();
+		  PartialEntanglementMatrix = ((BosonOnDiskHaldaneBasisShort*) Spaces[0])->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, ShiftedTotaLz, GroundStates[0], true);
+		  if (PartialEntanglementMatrix.GetNbrRow() != 0)
+		    {
+		      ((BosonOnDiskHaldaneBasisShort*) Spaces[0])->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("radius"),Manager.GetInteger("shift-orbitals"), PartialEntanglementMatrix);
+		    }
 		}
 	      
-	      for (int i = 0; i < TmpDiag.GetNbrRow(); ++i)
-				{
-					if (TmpDiag[i] > 1e-14)
-					{
-						EntanglementEntropy += TmpDiag[i] * log(TmpDiag[i]);
-						DensitySum += TmpDiag[i];
-						TotalTrace += TmpDiag[i];
-					}
-				}
-	      
+	      for (int i = 1; i < NbrSpaces; ++i)
+		{
+		  RealMatrix TmpEntanglementMatrix; 
+		  if(HaldaneBasisFlag == false )
+		    {
+		      TmpEntanglementMatrix = ((BosonOnDiskShort*) Spaces[i])->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[i], true);
+		      if (PartialEntanglementMatrix.GetNbrRow() != 0)
+			{
+			  ((BosonOnDiskShort*) Spaces[i])->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("radius"),Manager.GetInteger("shift-orbitals"), TmpEntanglementMatrix);
+			}
+		    }
+		  else
+		    {
+		      TmpEntanglementMatrix = ((BosonOnDiskHaldaneBasisShort*) Spaces[i])->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[i], true);
+		      if (PartialEntanglementMatrix.GetNbrRow() != 0)
+			{
+			  ((BosonOnDiskHaldaneBasisShort*) Spaces[i])->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("radius"),Manager.GetInteger("shift-orbitals"), TmpEntanglementMatrix);
+			}
+		    }
+		  PartialEntanglementMatrix += TmpEntanglementMatrix;
+		}
+	      if (NbrSpaces > 1)
+		PartialEntanglementMatrix /= sqrt((double) NbrSpaces);
+	      if (PartialEntanglementMatrix.GetNbrRow() >= 1)
+		{
+		  double* TmpValues = PartialEntanglementMatrix.SingularValueDecomposition();
+		  int TmpDimension = PartialEntanglementMatrix.GetNbrColumn();
+		  if (TmpDimension > PartialEntanglementMatrix.GetNbrRow())
+		    {
+		      TmpDimension = PartialEntanglementMatrix.GetNbrRow();
+		    }
+		  for (int i = 0; i < TmpDimension; ++i)
+		    TmpValues[i] *= TmpValues[i];
+		  RealDiagonalMatrix TmpDiag = RealDiagonalMatrix(TmpValues, TmpDimension);
+		  TmpDiag.SortMatrixDownOrder();
+		  if (DensityMatrixFileName != 0)
+		    {
+		      ofstream DensityMatrixFile;
+		      DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
+		      DensityMatrixFile.precision(14);
+		      for (int i = 0; i < TmpDiag.GetNbrRow(); ++i)
+			DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpDiag[i] << endl;
+		      DensityMatrixFile.close();
+		    }
+		  
+		  for (int i = 0; i < TmpDiag.GetNbrRow(); ++i)
+		    {
+		      if (TmpDiag[i] > 1e-14)
+			{
+			  EntanglementEntropy += TmpDiag[i] * log(TmpDiag[i]);
+			  DensitySum += TmpDiag[i];
+			  TotalTrace += TmpDiag[i];
+			}
+		    }
+		  
+		}
 	    }
-	}
 	}
       File << SubsystemNbrParticles << " " << (-EntanglementEntropy) << " " << DensitySum << " " << (1.0 - DensitySum) << " "<<TotalTrace<<endl;
       cout << "trace = " << DensitySum << endl;
     }
   File.close();
-	
+  
   cout <<"Total trace = " << TotalTrace<<endl;
   return 0;
 }

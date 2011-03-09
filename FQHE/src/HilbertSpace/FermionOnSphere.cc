@@ -2709,6 +2709,8 @@ RealMatrix FermionOnSphere::EvaluatePartialEntanglementMatrixParticlePartition(i
     {
       if (lzSector == 0)
 	{
+		cout <<this->TotalLz <<endl;
+		cout << this->LzMax<<endl;
 	  FermionOnSphere TmpHilbertSpace(this->NbrFermions, this->TotalLz - lzSector, this->LzMax);
 	  RealMatrix TmpEntanglementMatrix(1, TmpHilbertSpace.HilbertSpaceDimension, true);
 	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
@@ -2716,7 +2718,7 @@ RealMatrix FermionOnSphere::EvaluatePartialEntanglementMatrixParticlePartition(i
 	      int TmpLzMax = this->LzMax ;
 	      unsigned long TmpState = this->StateDescription[i];
 	      while ((TmpState >> TmpLzMax) == 0x0ul)
-		--TmpLzMax;
+					--TmpLzMax;
 	      
 	      TmpEntanglementMatrix.SetMatrixElement(0, TmpHilbertSpace.FindStateIndex(TmpState, TmpLzMax), groundState[i]);
 	    }

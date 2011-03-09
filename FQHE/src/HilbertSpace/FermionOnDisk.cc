@@ -80,6 +80,8 @@ FermionOnDisk::FermionOnDisk (int nbrFermions, int totalLz, int lzMax, unsigned 
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
   this->StateLzMax = new int [this->HilbertSpaceDimension];
   this->GenerateStates(this->NbrFermions, this->LzMax, this->LzMax, this->TotalLz, 0);
+  this->ShiftedTotalLz = this->TotalLz;
+  this->TotalLz = (this->TotalLz << 1) - (this->NbrFermions * this->LzMax);
   this->MaximumSignLookUp = 16;
   this->GenerateLookUpTable(memory);
 #ifdef __DEBUG__
@@ -109,6 +111,7 @@ FermionOnDisk::FermionOnDisk(const FermionOnDisk& fermions)
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;
+  this->ShiftedTotalLz = fermions.ShiftedTotalLz;
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
   this->StateDescription = fermions.StateDescription;
   this->StateLzMax = fermions.StateLzMax;
@@ -156,6 +159,7 @@ FermionOnDisk& FermionOnDisk::operator = (const FermionOnDisk& fermions)
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;
+  this->ShiftedTotalLz = fermions.ShiftedTotalLz;
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
   this->StateDescription = fermions.StateDescription;
   this->StateLzMax = fermions.StateLzMax;
@@ -525,7 +529,7 @@ RealSymmetricMatrix FermionOnDisk::EvaluatePartialDensityMatrixRealSpacePartitio
   
   if (nbrFermionSector == this->NbrFermions)
     {
-      if (lzSector == this->TotalLz)
+			if (lzSector == this->ShiftedTotalLz)
 	{
 	  RealSymmetricMatrix TmpDensityMatrix(this->HilbertSpaceDimension, true);
 	  unsigned long* TmpMonomial1 = new unsigned long [this->NbrFermions];
@@ -563,7 +567,7 @@ RealSymmetricMatrix FermionOnDisk::EvaluatePartialDensityMatrixRealSpacePartitio
   if (nbrFermionSector == 1)
     {
       double TmpValue = 0.0;
-      FermionOnDisk TmpHilbertSpace(this->NbrFermions - 1, this->TotalLz - lzSector, this->LzMax);
+			FermionOnDisk TmpHilbertSpace(this->NbrFermions - 1, this->ShiftedTotalLz - lzSector, this->LzMax);
       unsigned long TmpMask = 0x1ul << lzSector;
       double TmpStateCoefficient = IncompleteNormalizedGamma[lzSector];
       unsigned long* TmpMonomial1 = new unsigned long [ComplementaryNbrFermionSector];
@@ -608,12 +612,12 @@ RealSymmetricMatrix FermionOnDisk::EvaluatePartialDensityMatrixRealSpacePartitio
   double* TmpStateCoefficient_Sign = new double [TmpDestinationHilbertSpace.HilbertSpaceDimension];
   long TmpNbrNonZeroElements = 0;
 	
-  if ( this->TotalLz < lzSector)
+	if ( this->ShiftedTotalLz < lzSector)
     {
       RealSymmetricMatrix TmpDensityMatrixZero;
       return TmpDensityMatrixZero;
     }
-  FermionOnDisk TmpHilbertSpace(ComplementaryNbrFermionSector, this->TotalLz - lzSector, this->LzMax);
+    FermionOnDisk TmpHilbertSpace(ComplementaryNbrFermionSector, this->ShiftedTotalLz - lzSector, this->LzMax);
 	
   //Compute the coefficients multiplying rhoA in TmpStateCoefficient
   for (int i = 0; i < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++i)
@@ -715,3 +719,101 @@ RealSymmetricMatrix FermionOnDisk::EvaluatePartialDensityMatrixRealSpacePartitio
   return TmpDensityMatrixZero;
 #endif
 }
+
+// evaluate a entanglement matrix of a subsystem of the whole system described by a given ground state, using real space partition. The entanglement matrix is only evaluated in a given Lz sector.
+// and computed from precalculated particle entanglement matrix
+// 
+// nbrFermionSector = number of particles that belong to the subsytem 
+// lzSector = Lz sector in which the density matrix has to be evaluated 
+// radius = radius of the A disk
+// shift = shift to apply to each orbitals
+// entanglementMatrix = reference on the entanglement matrix (will be overwritten)
+// return value = reference on the entanglement matrix
+
+RealMatrix& FermionOnDisk::EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix (int nbrFermionSector, int lzSector, double radius, int shift, RealMatrix& entanglementMatrix)
+{
+#ifdef __GSL__
+  double ReducedRadius = radius * radius / 2.0;
+  double* IncompleteNormalizedGamma = new double[this->LzMax + 1];
+  
+  int ComplementaryNbrFermionSector = this->NbrFermions - nbrFermionSector;
+  unsigned long* TmpMonomial1 = new unsigned long [ComplementaryNbrFermionSector];
+  unsigned long* TmpMonomial3 = new unsigned long [nbrFermionSector];
+  
+  
+  for (int i = 0; i <= this->LzMax ; i++)
+    {
+      IncompleteNormalizedGamma[i] = gsl_sf_gamma_inc_Q( ((double) i + shift) + 1.0 , ReducedRadius);
+    }
+  
+  if (nbrFermionSector == 0)
+    {
+      FermionOnDisk TmpHilbertSpace(this->NbrFermions, this->ShiftedTotalLz - lzSector , this->LzMax);
+      for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
+	{
+	  TmpHilbertSpace.ConvertToMonomial(TmpHilbertSpace.StateDescription[MinIndex] , TmpMonomial1);
+	  double FormFactor = 0.0;
+	  for (int i = 0; i < ComplementaryNbrFermionSector; i++)
+	    FormFactor += log(1.0 - IncompleteNormalizedGamma[TmpMonomial1[i]]);
+	  FormFactor = exp(0.5 * FormFactor);
+	  entanglementMatrix(0, MinIndex) *= FormFactor; 
+	}
+      return entanglementMatrix;
+    }
+  
+  if (ComplementaryNbrFermionSector == 0)
+    {
+      FermionOnDisk TmpDestinationHilbertSpace(nbrFermionSector, lzSector, this->LzMax);
+      for (int i = 0; i < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++i)
+	{
+	  TmpDestinationHilbertSpace.ConvertToMonomial(TmpDestinationHilbertSpace.StateDescription[i],  TmpMonomial3);
+	  double Tmp = 0.0;     
+	  for( int j = 0; j < nbrFermionSector; j++)
+	    {
+	      Tmp += log( IncompleteNormalizedGamma[TmpMonomial3[j]] );
+	    }
+	  Tmp = exp(0.5 * Tmp);        
+	  entanglementMatrix(i, 0) *= Tmp;      
+	}
+      return entanglementMatrix;
+    }
+  
+  FermionOnDisk TmpDestinationHilbertSpace(nbrFermionSector, lzSector, this->LzMax);
+  cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
+  int ComplementaryLz = (this->TotalLz + this->LzMax * this->NbrFermions)>>1;
+  FermionOnDisk TmpHilbertSpace( ComplementaryNbrFermionSector, this->ShiftedTotalLz - lzSector, this->LzMax);
+  for (int i = 0; i < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++i)
+    {
+      TmpDestinationHilbertSpace.ConvertToMonomial(TmpDestinationHilbertSpace.StateDescription[i],  TmpMonomial3);
+      double Tmp = 0.0;     
+      for( int j = 0; j < nbrFermionSector; j++)
+	{
+	  Tmp += log( IncompleteNormalizedGamma[TmpMonomial3[j]] );
+	}
+      Tmp = exp(0.5 * Tmp);
+      for (int j = 0; j < TmpHilbertSpace.HilbertSpaceDimension; ++j)          
+	entanglementMatrix(i, j) *= Tmp;      
+    }
+  
+  for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
+    {
+      TmpHilbertSpace.ConvertToMonomial(TmpHilbertSpace.StateDescription[MinIndex] , TmpMonomial1);
+      double FormFactor = 0.0;
+      for (int i = 0; i < ComplementaryNbrFermionSector; i++)
+	FormFactor += log(1.0 - IncompleteNormalizedGamma[TmpMonomial1[i]]);
+      FormFactor = exp(0.5 * FormFactor);
+      for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
+	entanglementMatrix(j, MinIndex) *= FormFactor; 
+    }
+  
+  delete[] TmpMonomial1;
+  delete[] TmpMonomial3;
+  
+  return entanglementMatrix;
+  
+#else
+  RealMatrix TmpEntanglementMatrix;
+  return TmpEntanglementMatrix;
+#endif
+}
+
