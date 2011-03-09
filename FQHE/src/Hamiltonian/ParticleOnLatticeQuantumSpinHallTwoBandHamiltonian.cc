@@ -45,6 +45,8 @@
 using std::cout;
 using std::endl;
 using std::ostream;
+
+
 // constructor
 //
 // particles = Hilbert space associated to the system
@@ -108,6 +110,42 @@ ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::ParticleOnLatticeQuantumSpin
 
 ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::~ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian()
 {
+  if (this->InteractionFactorsupupupup != 0)
+    {
+      this->InteractionFactorsupupupup = new Complex* [this->NbrIntraSectorSums];
+      this->InteractionFactorsupupdowndown = new Complex* [this->NbrIntraSectorSums];
+      this->InteractionFactorsdowndownupup = new Complex* [this->NbrIntraSectorSums];
+      this->InteractionFactorsdowndowndowndown = new Complex* [this->NbrIntraSectorSums];
+      this->InteractionFactorsupdownupup = new Complex* [this->NbrIntraSectorSums];
+      this->InteractionFactorsupdowndowndown = new Complex* [this->NbrIntraSectorSums];  
+      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
+	{
+	  delete[] this->InteractionFactorsupupupup[i];
+	  delete[] this->InteractionFactorsupupdowndown[i];
+	  delete[] this->InteractionFactorsdowndownupup[i];
+	  delete[] this->InteractionFactorsdowndowndowndown[i];
+	  delete[] this->InteractionFactorsupdownupup[i];
+	  delete[] this->InteractionFactorsupdowndowndown[i];
+	}
+      delete[] this->InteractionFactorsupupupup;
+      delete[] this->InteractionFactorsupupdowndown;
+      delete[] this->InteractionFactorsdowndownupup;
+      delete[] this->InteractionFactorsdowndowndowndown;
+      delete[] this->InteractionFactorsupdownupup;
+      delete[] this->InteractionFactorsupdowndowndown;
+      this->InteractionFactorsupupupdown = new Complex* [this->NbrIntraSectorSums];
+      this->InteractionFactorsdowndownupdown = new Complex* [this->NbrIntraSectorSums];
+      this->InteractionFactorsupdownupdown = new Complex* [this->NbrIntraSectorSums];
+      for (int i = 0; i < this->NbrInterSectorSums; ++i)
+	{
+	  delete[] this->InteractionFactorsupupupdown[i];
+	  delete[] this->InteractionFactorsdowndownupdown[i];
+	  delete[] this->InteractionFactorsupdownupdown[i];
+	}
+      delete[] this->InteractionFactorsupupupdown;
+      delete[] this->InteractionFactorsdowndownupdown;
+      delete[] this->InteractionFactorsupdownupdown;
+    }
 }
   
 // evaluate all interaction factors
@@ -117,6 +155,9 @@ void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateInteractionFact
 {
   long TotalNbrInteractionFactors = 0;
   ComplexMatrix* OneBodyBasis = new ComplexMatrix [this->NbrSiteX * this->NbrSiteY];
+  this->InteractionFactorsupup = 0;
+  this->InteractionFactorsdowndown = 0;
+  this->InteractionFactorsupdown = 0;
   for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
     for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
       {
@@ -150,11 +191,36 @@ void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateInteractionFact
 	OneBodyBasis[Index] = TmpMatrix;	
 	cout << TmpDiag(0, 0) << " " << TmpDiag(1, 1)  << " " << TmpDiag(2, 2)  << " " << TmpDiag(3, 3) << endl;
       }
+
+  double** CosineTableX = new double*[this->NbrSiteX];
+  for (int i = 0; i < this->NbrSiteX; ++i)
+    {
+      CosineTableX[i] = new double[this->NbrSiteX];
+      for (int j = 0; j < this->NbrSiteX; ++j)
+	{
+	  CosineTableX[i][j] = cos (2.0 * M_PI * ((double) (i - j)) / ((double) this->NbrSiteX));
+	}
+    }
+  double** CosineTableY = new double*[this->NbrSiteY];
+  for (int i = 0; i < this->NbrSiteY; ++i)
+    {
+      CosineTableY[i] = new double[this->NbrSiteY];
+      for (int j = 0; j < this->NbrSiteY; ++j)
+	{
+	  CosineTableY[i][j] = cos (2.0 * M_PI * ((double) (i - j)) / ((double) this->NbrSiteY));
+	}
+    }
+ 
  
   this->NbrInterSectorSums = this->NbrSiteX * this->NbrSiteY;
   this->NbrInterSectorIndicesPerSum = new int[this->NbrInterSectorSums];
   for (int i = 0; i < this->NbrInterSectorSums; ++i)
     this->NbrInterSectorIndicesPerSum[i] = 0;
+  this->NbrIntraSectorSums = this->NbrSiteX * this->NbrSiteY;
+  this->NbrIntraSectorIndicesPerSum = new int[this->NbrIntraSectorSums];
+  for (int i = 0; i < this->NbrIntraSectorSums; ++i)
+    this->NbrIntraSectorIndicesPerSum[i] = 0;      
+
   for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
     for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
       for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
@@ -182,10 +248,6 @@ void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateInteractionFact
  
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
-      this->NbrIntraSectorSums = this->NbrSiteX * this->NbrSiteY;
-      this->NbrIntraSectorIndicesPerSum = new int[this->NbrIntraSectorSums];
-      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
-	this->NbrIntraSectorIndicesPerSum[i] = 0;      
       for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
 	for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
 	  for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
@@ -220,12 +282,24 @@ void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateInteractionFact
 		    ++this->NbrIntraSectorIndicesPerSum[TmpSum];    
 		  }
 	      }
-      this->InteractionFactorsupup = new Complex* [this->NbrIntraSectorSums];
-      this->InteractionFactorsdowndown = new Complex* [this->NbrIntraSectorSums];
+      this->InteractionFactorsupupupup = new Complex* [this->NbrIntraSectorSums];
+      this->InteractionFactorsupupupdown = new Complex* [this->NbrIntraSectorSums];
+      this->InteractionFactorsupupdowndown = new Complex* [this->NbrIntraSectorSums];
+      this->InteractionFactorsdowndownupup = new Complex* [this->NbrIntraSectorSums];
+      this->InteractionFactorsdowndowndowndown = new Complex* [this->NbrIntraSectorSums];
+      this->InteractionFactorsdowndownupdown = new Complex* [this->NbrIntraSectorSums];
+      this->InteractionFactorsupdownupup = new Complex* [this->NbrIntraSectorSums];
+      this->InteractionFactorsupdownupdown = new Complex* [this->NbrIntraSectorSums];
+      this->InteractionFactorsupdowndowndown = new Complex* [this->NbrIntraSectorSums];
+
       for (int i = 0; i < this->NbrIntraSectorSums; ++i)
 	{
-	  this->InteractionFactorsupup[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
-	  this->InteractionFactorsdowndown[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
+	  this->InteractionFactorsupupupup[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
+	  this->InteractionFactorsdowndowndowndown[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
+	  this->InteractionFactorsupupdowndown[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
+	  this->InteractionFactorsdowndownupup[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
+	  this->InteractionFactorsupdowndowndown[i] = new Complex[this->NbrInterSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
+	  this->InteractionFactorsupdownupup[i] = new Complex[this->NbrInterSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
 	  int Index = 0;
 	  for (int j1 = 0; j1 < this->NbrIntraSectorIndicesPerSum[i]; ++j1)
 	    {
@@ -243,44 +317,130 @@ void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateInteractionFact
 		  int ky3 = Index3 % this->NbrSiteY;
 		  int kx4 = Index4 / this->NbrSiteY;
 		  int ky4 = Index4 % this->NbrSiteY;
-		  this->InteractionFactorsupup[i][Index] = -4.0  *  ((this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 0, 0) * (cos (2.0 * M_PI * ((double) kx2 - kx4) / ((double) this->NbrSiteX)) + cos (2.0 * M_PI * ((double) ky2 - ky4) / ((double) this->NbrSiteY))))
-								     - (this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 0, 0) * (cos (2.0 * M_PI * ((double) kx1 - kx4) / ((double) this->NbrSiteX)) + cos (2.0 * M_PI * ((double) ky1 - ky4) / ((double) this->NbrSiteY))))
-								     - (this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 0, 0) * (cos (2.0 * M_PI * ((double) kx2 - kx3) / ((double) this->NbrSiteX)) + cos (2.0 * M_PI * ((double) ky2 - ky3) / ((double) this->NbrSiteY))))
-								     + (this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 0, 0) * (cos (2.0 * M_PI * ((double) kx1 - kx3) / ((double) this->NbrSiteX)) + cos (2.0 * M_PI * ((double) ky1 - ky3) / ((double) this->NbrSiteY)))));
-		  this->InteractionFactorsdowndown[i][Index] = -4.0  *  ((this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 1, 1) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 1, 1) * (cos (2.0 * M_PI * ((double) kx2 - kx4) / ((double) this->NbrSiteX)) + cos (2.0 * M_PI * ((double) ky2 - ky4) / ((double) this->NbrSiteY))))
-								     - (this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 1, 1) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 1, 1) * (cos (2.0 * M_PI * ((double) kx1 - kx4) / ((double) this->NbrSiteX)) + cos (2.0 * M_PI * ((double) ky1 - ky4) / ((double) this->NbrSiteY))))
-								     - (this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 1, 1) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 1, 1) * (cos (2.0 * M_PI * ((double) kx2 - kx3) / ((double) this->NbrSiteX)) + cos (2.0 * M_PI * ((double) ky2 - ky3) / ((double) this->NbrSiteY))))
-								     + (this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 1, 1) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 1, 1) * (cos (2.0 * M_PI * ((double) kx1 - kx3) / ((double) this->NbrSiteX)) + cos (2.0 * M_PI * ((double) ky1 - ky3) / ((double) this->NbrSiteY)))));;
+		  this->InteractionFactorsupupupup[i][Index] = -((this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 0, 0) * CosineTableX[kx2][kx4] * CosineTableY[ky2][ky4])
+								- (this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 0, 0) * CosineTableX[kx1][kx4] * CosineTableY[ky1][ky4])
+								- (this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 0, 0) * CosineTableX[kx2][kx3] * CosineTableY[ky2][ky3])
+								+ (this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 0, 0) * CosineTableX[kx1][kx3] * CosineTableY[ky1][ky3]));
+		  this->InteractionFactorsdowndowndowndown[i][Index] = -((this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 1, 1) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 1, 1) * CosineTableX[kx2][kx4] * CosineTableY[ky2][ky4])
+									- (this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 1, 1) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 1, 1) * CosineTableX[kx1][kx4] * CosineTableY[ky1][ky4])
+									- (this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 1, 1) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 1, 1) * CosineTableX[kx2][kx3] * CosineTableY[ky2][ky3])
+									+ (this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 1, 1) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 1, 1) * CosineTableX[kx1][kx3] * CosineTableY[ky1][ky3]));
+		  
+		  this->InteractionFactorsdowndownupup[i][Index] = -((this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 1, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 1, 0) * CosineTableX[kx2][kx4] * CosineTableY[ky2][ky4])
+								    - (this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 1, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 1, 0) * CosineTableX[kx1][kx4] * CosineTableY[ky1][ky4])
+								    - (this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 1, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 1, 0) * CosineTableX[kx2][kx3] * CosineTableY[ky2][ky3])
+								    + (this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 1, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 1, 0) * CosineTableX[kx1][kx3] * CosineTableY[ky1][ky3]));
+		  this->InteractionFactorsupupdowndown[i][Index] = -((this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 0, 1) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 0, 1) * CosineTableX[kx2][kx4] * CosineTableY[ky2][ky4])
+								    - (this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 0, 1) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 0, 1) * CosineTableX[kx1][kx4] * CosineTableY[ky1][ky4])
+								    - (this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 0, 1) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 0, 1) * CosineTableX[kx2][kx3] * CosineTableY[ky2][ky3])
+								    + (this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 0, 1) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 0, 1) * CosineTableX[kx1][kx3] * CosineTableY[ky1][ky3]));
+		  TotalNbrInteractionFactors += 4;
+		  ++Index;
+		}
+	    }
+	  Index = 0;
+	  for (int j1 = 0; j1 < this->NbrIntraSectorIndicesPerSum[i]; ++j1)
+	    {
+	      int Index1 = this->IntraSectorIndicesPerSum[i][j1 << 1];
+	      int Index2 = this->IntraSectorIndicesPerSum[i][(j1 << 1) + 1];
+	      int kx1 = Index1 / this->NbrSiteY;
+	      int ky1 = Index1 % this->NbrSiteY;
+	      int kx2 = Index2 / this->NbrSiteY;
+	      int ky2 = Index2 % this->NbrSiteY;
+	      for (int j2 = 0; j2 < this->NbrInterSectorIndicesPerSum[i]; ++j2)
+		{
+		  int Index3 = this->InterSectorIndicesPerSum[i][j2 << 1];
+		  int Index4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1];
+		  int kx3 = Index3 / this->NbrSiteY;
+		  int ky3 = Index3 % this->NbrSiteY;
+		  int kx4 = Index4 / this->NbrSiteY;
+		  int ky4 = Index4 % this->NbrSiteY;
+		  this->InteractionFactorsupdownupup[i][Index] = -((this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 1, 0) * CosineTableX[kx2][kx4] * CosineTableY[ky2][ky4])
+								   - (this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 1, 0) * CosineTableX[kx1][kx4] * CosineTableY[ky1][ky4])
+								   - (this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 1, 0) * CosineTableX[kx2][kx3] * CosineTableY[ky2][ky3])
+								   + (this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 1, 0) * CosineTableX[kx1][kx3] * CosineTableY[ky1][ky3]));
+		  this->InteractionFactorsupdowndowndown[i][Index] = -((this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 0, 1) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 1, 1) * CosineTableX[kx2][kx4] * CosineTableY[ky2][ky4])
+								       - (this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 0, 1) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 1, 1) * CosineTableX[kx1][kx4] * CosineTableY[ky1][ky4])
+								       - (this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 0, 1) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 1, 1) * CosineTableX[kx2][kx3] * CosineTableY[ky2][ky3])
+								       + (this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 0, 1) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 1, 1) * CosineTableX[kx1][kx3] * CosineTableY[ky1][ky3]));
 		  TotalNbrInteractionFactors += 2;
 		  ++Index;
 		}
 	    }
 	}
-      this->InteractionFactorsupdown = new Complex* [this->NbrInterSectorSums];
+
       for (int i = 0; i < this->NbrInterSectorSums; ++i)
 	{
-	  this->InteractionFactorsupdown[i] = new Complex[this->NbrInterSectorIndicesPerSum[i] * this->NbrInterSectorIndicesPerSum[i]];
+	  this->InteractionFactorsupdownupdown[i] = new Complex[this->NbrInterSectorIndicesPerSum[i] * this->NbrInterSectorIndicesPerSum[i]];
+	  this->InteractionFactorsupupupdown[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrInterSectorIndicesPerSum[i]];
+	  this->InteractionFactorsdowndownupdown[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrInterSectorIndicesPerSum[i]];
 	  int Index = 0;
 	  for (int j1 = 0; j1 < this->NbrInterSectorIndicesPerSum[i]; ++j1)
 	    {
-	      int kx1 = this->InterSectorIndicesPerSum[i][j1 << 1] / this->NbrSiteY;
-	      int ky1 = this->InterSectorIndicesPerSum[i][j1 << 1] % this->NbrSiteY;
-	      int kx2 = this->InterSectorIndicesPerSum[i][(j1 << 1) + 1] / this->NbrSiteY;
-	      int ky2 = this->InterSectorIndicesPerSum[i][(j1 << 1) + 1] % this->NbrSiteY;
+	      int Index1 = this->InterSectorIndicesPerSum[i][j1 << 1];
+	      int Index2 = this->InterSectorIndicesPerSum[i][(j1 << 1) + 1];
+	      int kx1 = Index1 / this->NbrSiteY;
+	      int ky1 = Index1 % this->NbrSiteY;
+	      int kx2 = Index2 / this->NbrSiteY;
+	      int ky2 = Index2 % this->NbrSiteY;
+	      for (int j2 = 0; j2 < this->NbrIntraSectorIndicesPerSum[i]; ++j2)
+		{
+		  int Index3 = this->IntraSectorIndicesPerSum[i][j2 << 1];
+		  int Index4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1];
+		  int kx3 = Index3 / this->NbrSiteY;
+		  int ky3 = Index3 % this->NbrSiteY;
+		  int kx4 = Index4 / this->NbrSiteY;
+		  int ky4 = Index4 % this->NbrSiteY;
+		  this->InteractionFactorsupupupdown[i][Index] = -((this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 0, 1) * CosineTableX[kx2][kx4] * CosineTableY[ky2][ky4])
+								   - (this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 0, 1) * CosineTableX[kx1][kx4] * CosineTableY[ky1][ky4])
+								   - (this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 0, 1) * CosineTableX[kx2][kx3] * CosineTableY[ky2][ky3])
+								   + (this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 0, 1) * CosineTableX[kx1][kx3] * CosineTableY[ky1][ky3]));
+		  this->InteractionFactorsdowndownupdown[i][Index] = -((this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 1, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 1, 1) * CosineTableX[kx2][kx4] * CosineTableY[ky2][ky4])
+								       - (this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 1, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 1, 1) * CosineTableX[kx1][kx4] * CosineTableY[ky1][ky4])
+								       - (this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 1, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 1, 1) * CosineTableX[kx2][kx3] * CosineTableY[ky2][ky3])
+								       + (this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 1, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 1, 1) * CosineTableX[kx1][kx3] * CosineTableY[ky1][ky3]));
+		  TotalNbrInteractionFactors += 2;
+		  ++Index;
+		}
+	    }
+	  Index = 0;
+	  for (int j1 = 0; j1 < this->NbrInterSectorIndicesPerSum[i]; ++j1)
+	    {
+	      int Index1 = this->IntraSectorIndicesPerSum[i][j1 << 1];
+	      int Index2 = this->IntraSectorIndicesPerSum[i][(j1 << 1) + 1];
+	      int kx1 = Index1 / this->NbrSiteY;
+	      int ky1 = Index1 % this->NbrSiteY;
+	      int kx2 = Index2 / this->NbrSiteY;
+	      int ky2 = Index2 % this->NbrSiteY;
 	      for (int j2 = 0; j2 < this->NbrInterSectorIndicesPerSum[i]; ++j2)
 		{
-		  int kx3 = this->InterSectorIndicesPerSum[i][j2 << 1] / this->NbrSiteY;
-		  int ky3 = this->InterSectorIndicesPerSum[i][j2 << 1] % this->NbrSiteY;
-		  int kx4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1] / this->NbrSiteY;
-		  int ky4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1] % this->NbrSiteY;
-		  this->InteractionFactorsupdown[i][Index] = -2.0 * this->UPotential *((cos (2.0 * M_PI * ((double) kx2 - kx4) / ((double) this->NbrSiteX)) + cos (2.0 * M_PI * ((double) ky2 - ky4) / ((double) this->NbrSiteY)))
-										       + (cos (2.0 * M_PI * ((double) kx1 - kx3) / ((double) this->NbrSiteX)) + cos (2.0 * M_PI * ((double) ky1 - ky3) / ((double) this->NbrSiteY))));
+		  int Index3 = this->InterSectorIndicesPerSum[i][j2 << 1];
+		  int Index4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1];
+		  int kx3 = Index3 / this->NbrSiteY;
+		  int ky3 = Index3 % this->NbrSiteY;
+		  int kx4 = Index4 / this->NbrSiteY;
+		  int ky4 = Index4 % this->NbrSiteY;
+		  this->InteractionFactorsupdownupdown[i][Index] = -((this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 1, 1) * CosineTableX[kx2][kx4] * CosineTableY[ky2][ky4])
+								     - (this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 1, 1) * CosineTableX[kx1][kx4] * CosineTableY[ky1][ky4])
+								     - (this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 1, 1) * CosineTableX[kx2][kx3] * CosineTableY[ky2][ky3])
+								     + (this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 1, 1) * CosineTableX[kx1][kx3] * CosineTableY[ky1][ky3]));
 		  ++TotalNbrInteractionFactors;
 		  ++Index;
 		}
 	    }
 	}
     }
+
+  for (int i = 0; i < this->NbrSiteX; ++i)
+    {
+      delete[] CosineTableX[i];
+    }
+  delete[] CosineTableX;
+  for (int i = 0; i < this->NbrSiteY; ++i)
+    {
+      delete[] CosineTableY[i];
+    }
+  delete[] CosineTableY;
   cout << "nbr interaction = " << TotalNbrInteractionFactors << endl;
   cout << "====================================" << endl;
 }

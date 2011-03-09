@@ -121,6 +121,64 @@ ParticleOnLatticeWithSpinChernInsulatorHamiltonian::ParticleOnLatticeWithSpinChe
 
 ParticleOnLatticeWithSpinChernInsulatorHamiltonian::~ParticleOnLatticeWithSpinChernInsulatorHamiltonian()
 {
+  if (this->InteractionFactorsupup != 0)
+    {
+      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
+	{
+	  delete[] this->InteractionFactorsupup[i];
+	  delete[] this->InteractionFactorsupdown[i];
+	}
+      for (int i = 0; i < this->NbrInterSectorSums; ++i)
+	{
+	  delete[] this->InteractionFactorsupdown[i];
+	}
+      delete[] this->InteractionFactorsupup;
+      delete[] this->InteractionFactorsupdown;
+      delete[] this->InteractionFactorsdowndown;
+    }
+  if (this->OneBodyInteractionFactorsupup != 0)
+    {
+      delete[] this->OneBodyInteractionFactorsupup;
+    }
+  if (this->OneBodyInteractionFactorsdowndown != 0)
+    {
+      delete[] this->OneBodyInteractionFactorsdowndown;
+    }
+  if (this->OneBodyInteractionFactorsupdown != 0)
+    {
+      delete[] this->OneBodyInteractionFactorsupdown;
+    }
+  for (int i = 0; i < this->NbrIntraSectorSums; ++i)
+    {
+      if (this->NbrIntraSectorIndicesPerSum[i] > 0)
+	delete[] this->IntraSectorIndicesPerSum[i];
+    }
+  for (int i = 0; i < this->NbrInterSectorSums; ++i)
+    {
+      if (this->NbrInterSectorIndicesPerSum[i] > 0)
+	delete[] this->InterSectorIndicesPerSum[i];
+    }
+  delete[] this->NbrIntraSectorIndicesPerSum;
+  delete[] this->NbrInterSectorIndicesPerSum;
+  if (this->FastMultiplicationFlag == true)
+    {
+      long MinIndex;
+      long MaxIndex;
+      this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+      int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+      int ReducedDim = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
+      if ((ReducedDim * this->FastMultiplicationStep) != EffectiveHilbertSpaceDimension)
+	++ReducedDim;
+      for (int i = 0; i < ReducedDim; ++i)
+	{
+	  delete[] this->InteractionPerComponentIndex[i];
+	  delete[] this->InteractionPerComponentCoefficient[i];
+	}
+      delete[] this->InteractionPerComponentIndex;
+      delete[] this->InteractionPerComponentCoefficient;
+      delete[] this->NbrInteractionPerComponent;
+      this->FastMultiplicationFlag = false;
+    }
 }
   
 // set Hilbert space
