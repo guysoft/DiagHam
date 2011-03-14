@@ -109,7 +109,6 @@ BosonOnSphereTwoLandauLevels::BosonOnSphereTwoLandauLevels (int nbrBosons, int t
     this->HilbertSpaceDimension = 0;
   else
     this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
-  //cout << this->HilbertSpaceDimension << endl;
   this->Flag.Initialize();
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
   this->StateLzMax = new int [this->HilbertSpaceDimension];  //this will store two values, the index of the split beween Landau levels and the maximum lowest bit used. 
@@ -123,21 +122,12 @@ BosonOnSphereTwoLandauLevels::BosonOnSphereTwoLandauLevels (int nbrBosons, int t
     this->PrintState(cout, i) << endl;
        exit(1);
     }
-    
-  // initialise the instance of the Clebsch Gordan coefficient class with max angular momentum of LLL
-  //this->CGCoefficients = new  ClebschGordanCoefficients(this->LzMaxDown,this->LzMaxDown);
-  
-  // allocate space for and set Pseudo Potentials that are needed for LLL
-  /*this->PseudoPotentials = new double[2*this->LzMaxDown + 1];
-  for ( int i = 0 ; i <= 2*this->LzMaxDown ; i++ ) 
-    {
-      this->PseudoPotentials[i] = this->CalculatePseudoPotential(this->LzMaxDown, i);
-    }*/
 
   //  this->HilbertSpaceDimension = this->GenerateStates(this->NbrBosonsUp, this->NbrBosonsDown, this->LzMaxUp, this->LzMaxDown, );
   //this->GenerateLookUpTable(memory);
   
 #ifdef __DEBUG__
+  this->LookUpTableMemorySize = 0;
   long UsedMemory = 0;
   UsedMemory += (long) this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
   cout << "memory requested for Hilbert space = ";
@@ -316,9 +306,9 @@ ostream& BosonOnSphereTwoLandauLevels::PrintState (ostream& Str, int state)
      value <<= 1;
 
       if ( i % 8 == 0 )
-         cout << ' ';
+         Str << ' ';
    }
-  cout << "  " << this->StateLzMax[state] << endl;
+  Str << "  " << this->StateLzMax[state] << endl;
   
   value = this->StateDescription[state];
   /*int occupations[this->LzMaxUp*2];
@@ -348,33 +338,33 @@ ostream& BosonOnSphereTwoLandauLevels::PrintState (ostream& Str, int state)
     }
   
   for ( int i = 0 ; i <= this->LzMaxUp ; i++ ) {
-      cout << occupations[this->LzMaxUp-i] << " " ;
+      Str << occupations[this->LzMaxUp-i] << " " ;
   }
-  cout << endl;
-  cout << "  ";
+  Str << endl;
+  Str << "  ";
   for ( int i = 0 ; i <= this->LzMaxDown ; i++ ) {
-      cout << occupations[this->LzMaxUp + 1 + LzMaxDown - i] << " " ;
+      Str << occupations[this->LzMaxUp + 1 + LzMaxDown - i] << " " ;
   }*/
   
   this->FermionToBoson(value, this->StateLzMax[state], this->TemporaryState, this->TemporaryStateLzMax);
   for ( int i = 0 ; i <= this->LzMaxUp ; i++ ) {
   	  if ( (this->LzMaxUp-i) <=  this->TemporaryStateLzMax ) {
-	      cout << this->TemporaryState[this->LzMaxUp-i] << " " ;
+	      Str << this->TemporaryState[this->LzMaxUp-i] << " " ;
 	  } else {
-		  cout << "0" << " " ;
+		  Str << "0" << " " ;
 	  }
   }
-  cout << endl;
-  cout << "  ";
+  Str << endl;
+  Str << "  ";
   for ( int i = 0 ; i <= this->LzMaxDown ; i++ ) {
   	  if ( (this->LzMaxUp + 1 + LzMaxDown - i) <=  this->TemporaryStateLzMax ) {
-      	cout << this->TemporaryState[this->LzMaxUp + 1 + LzMaxDown - i] << " " ;
+      	Str << this->TemporaryState[this->LzMaxUp + 1 + LzMaxDown - i] << " " ;
       } else {
-      	cout << "0" << " " ;
+      	Str << "0" << " " ;
       }
   }  
   
-  cout << endl;
+  Str << endl;
   value = this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax);
   
    for ( int i = 1; i <= SHIFT + 1; i++ ) 
@@ -390,50 +380,40 @@ ostream& BosonOnSphereTwoLandauLevels::PrintState (ostream& Str, int state)
      value <<= 1;
 
       if ( i % 8 == 0 )
-         cout << ' ';
+         Str << ' ';
    }
-  cout << "  " << this->StateLzMax[state] << ", index: " << this->FindStateIndex(this->StateDescription[state]) << endl;
+  Str << "  " << this->StateLzMax[state] << ", index: " << this->FindStateIndex(this->StateDescription[state]) << endl;
+    
+  this->PrintStateMonomial(Str, state);
   
-  
-  
+  unsigned long* MonomialRep;
+  MonomialRep = new unsigned long[this->NbrBosons];
+  this->GetMonomial((long)state, MonomialRep);
+  Str << endl <<  "Converted back from monomial: " << this->ConvertFromMonomial(MonomialRep) << endl;
+  delete []MonomialRep;
 
   return Str;
 }
 
-// evaluate Hilbert space dimension without constraint on the number of particles per level
+// print monomial representation of a given State
 //
-// nbrBosons = number of bosons
-// lzMax = momentum maximum value for a fermion
-// totalLz = momentum total value
-// return value = Hilbert space dimension
+// Str = reference on current output stream 
+// state = ID of the state to print
+// return value = reference on current output stream 
 
-/*long BosonOnSphereTwoLandauLevels::ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz)
+ostream& BosonOnSphereTwoLandauLevels::PrintStateMonomial (ostream& Str, int state)
 {
-  if ((nbrBosons < 0) || (totalLz < 0))
-    return 0l;
-  if ((nbrBosons == 0) && (totalLz == 0))
-    return 1l;
-  if (lzMax < 0) 
-    return 0l;
-    
-  if ((lzMax == 0) && (totalLz != 0)) //no longer makes sense.
-    return 0l;
-
-  long Tmp = 0l;
-  if ((lzMax <= (this->LzMaxUp + this->LzShiftUp)) && (lzMax >= this->LzShiftUp)) //if lzMax is within the range of lz values on the Landau level labelled up.
+  unsigned long* MonomialRep;
+  MonomialRep = new unsigned long[this->NbrBosons];
+  this->GetMonomial((long)state, MonomialRep);
+  for ( int i = 0; i < this->NbrBosons; i++ )
     {
-      for (int i = nbrBosons; i >= 1; --i) //place i bosons on upper level at site with lz lzMax
-	Tmp += this->ShiftedEvaluateHilbertSpaceDimension(nbrBosons - i, lzMax - 1, totalLz - (i * lzMax));
-      if ((lzMax <= (this->LzMaxDown + this->LzShiftDown)) && (lzMax >= this->LzShiftDown))
-	for (int i = nbrBosons & 0x0fffffffe; i >= 2; i -= 2)
-	  Tmp += this->ShiftedEvaluateHilbertSpaceDimension(nbrBosons - i, lzMax - 1, totalLz - (i * lzMax));
+	if ( i > 0 ) Str << ", ";
+	Str << MonomialRep[i] ;
     }
-  if ((lzMax <= (this->LzMaxDown + this->LzShiftDown)) && (lzMax >= this->LzShiftDown))  //if lzMax is within the range of lz values on the Landau level labelled down.  
-    for (int i = nbrBosons; i >= 1; --i) 
-      Tmp += this->ShiftedEvaluateHilbertSpaceDimension(nbrBosons - i, lzMax - 1, totalLz - (i * lzMax));
-  Tmp += this->ShiftedEvaluateHilbertSpaceDimension(nbrBosons, lzMax - 1, totalLz);
-  return Tmp;
-}*/
+  delete []MonomialRep;
+  return Str;
+}
 
 // evaluate Hilbert space dimension without constraint on the number of particles per level
 //
@@ -480,55 +460,7 @@ long BosonOnSphereTwoLandauLevels::ShiftedEvaluateHilbertSpaceDimension(int nbrB
     }
     return Tmp;
 }
-// generate all states corresponding to the constraints
-// 
-// nbrFermions = number of fermions
-// lzMax = momentum maximum value for a fermion
-// totalLz = momentum total value
-// pos = position in StateDescription array where to store states
-// return value = position from which new states have to be stored
 
-/*long BosonOnSphereTwoLandauLevels::GenerateStates(int nbrBosons, int lzMax, int totalLz, long pos)
-{
-  if (nbrBosons < 0)
-    return pos;
-  if ((nbrBosons == 0) && (totalLz == 0))
-    {
-      this->StateDescription[pos] = 0x0ul;
-      return (pos + 1l);
-    }
-    
-  if (lzMax < 0)
-    return pos;
-  
-  if ((lzMax == 0) && (totalLz != 0))
-    return pos;
-
-  if ((lzMax <= (this->LzMaxUp + this->LzShiftUp)) && (lzMax >= this->LzShiftUp))
-    {
-      long TmpPos = this->GenerateStates(nbrBosons - 1, lzMax - 1, totalLz - lzMax,  pos);
-      unsigned long Mask = (0x1ul << lzMax) << this->UpStateShift;
-      for (; pos < TmpPos; ++pos)
-	this->StateDescription[pos] |= Mask;
-    }
-  if (((lzMax <= (this->LzMaxUp + this->LzShiftUp)) && (lzMax >= this->LzShiftUp)) &&
-      ((lzMax <= (this->LzMaxDown + this->LzShiftDown)) && (lzMax >= this->LzShiftDown)))
-    {
-      long TmpPos = this->GenerateStates(nbrBosons - 2, lzMax - 1, totalLz - (2 * lzMax), pos);
-      unsigned long Mask = ((0x1ul << lzMax) << this->UpStateShift) | (0x1ul << lzMax);
-      for (; pos < TmpPos; ++pos)
-	this->StateDescription[pos] |= Mask;
-    }
-  if ((lzMax <= (this->LzMaxDown + this->LzShiftDown)) && (lzMax >= this->LzShiftDown))
-    {
-      long TmpPos = this->GenerateStates(nbrBosons - 1, lzMax - 1, totalLz - lzMax,  pos);
-      unsigned long Mask = 0x1ul << lzMax;
-      for (; pos < TmpPos; ++pos)
-	this->StateDescription[pos] |= Mask;
-    }
-
-  return this->GenerateStates(nbrBosons, lzMax - 1, totalLz, pos);
-}*/
 
 // generate all states corresponding to the constraints
 // 
@@ -600,8 +532,6 @@ long BosonOnSphereTwoLandauLevels::GenerateStates(int nbrBosons, int lzMax, int 
     }
     return TmpPos;
 }
-      
-  
 
 // works out the maximum possible totallz that is left
 //
@@ -1184,4 +1114,56 @@ int BosonOnSphereTwoLandauLevels::AddAu (int index, int m, double& coefficient)
 	coefficient = sqrt(coefficient);
 	return this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax)); 
       }
+}
+
+// project out any configurations that have particles on levels other than lll
+//
+// inputVector = vector to apply the projection to
+// outputVector = projected vector
+// finalSpace = reference to output vector space
+  
+void  BosonOnSphereTwoLandauLevels::ProjectionInTheLowestLevel(RealVector &inputVector, RealVector & outputVector, BosonOnSphereShort *finalSpace)
+{
+  unsigned long Etat, Tmp;
+  int Idx; 
+  for(int i = 0 ; i < finalSpace->GetHilbertSpaceDimension() ; i++)
+    {
+      //need to translate the format on a single LL into the 2LL picture. Involves reverse and shift. 
+      Tmp = finalSpace->FermionBasis->StateDescription[i];
+      Etat = Tmp;
+      int s = sizeof(Tmp) * 8 - 1; // extra shift needed at end
+      for (Tmp >>= 1; Tmp; Tmp >>= 1)
+      {   
+	Etat <<= 1;
+	Etat |= Tmp & 1;
+	s--;
+      }
+      Etat <<= s; 
+      //reversed so now need to shift by amount of flux quanta on SLL as assume it is empty.
+      Etat >>= this->LzMaxUp + 1; 
+      Idx = this->FindStateIndex(Etat);
+      if ( Idx < this->HilbertSpaceDimension ) 
+	outputVector[i] = inputVector[Idx];
+    }
+}
+
+
+// compute the number of particles in each Landau level
+//
+// state = ID of the state to handle
+// LLOccupationConfiguration = array where the decomposition will be store
+
+void  BosonOnSphereTwoLandauLevels::LandauLevelOccupationNumber(int state, int* lLOccupationConfiguration)
+{
+  unsigned long State = this->StateDescription[state];
+  int idx = 63;
+  while ( idx >= ( 63 - lLOccupationConfiguration[1] - this->LzMaxUp ) ) 
+    {
+      if ( (State >> idx ) & 0x1ul ) 
+	{
+	  lLOccupationConfiguration[1]++;
+	}
+      idx--;
+    }
+  lLOccupationConfiguration[0] = this->NbrBosons - lLOccupationConfiguration[1];
 }

@@ -112,6 +112,8 @@ class FermionOnSphere :  public ParticleOnSphere
 
   friend class ParticleOnSphereProjectorHamiltonian;
 
+  friend class BosonOnSphereTwoLandauLevels;
+
  protected:
 
   // number of fermions

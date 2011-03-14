@@ -62,7 +62,10 @@ class BosonOnSphereShort :  public ParticleOnSphere
   friend class FermionOnSphereThreeLandauLevels;
   friend class FermionOnSphereFourLandauLevels;
 
+
   friend class BosonOnTorusShort;
+
+  friend class BosonOnSphereTwoLandauLevels;
 
  protected:
 
