@@ -113,7 +113,7 @@ int main(int argc, char** argv)
       {
 	return -1;
       }
-  cout << "N=" << NbrParticles << "  LzMax=" << LzMax << "  TotalLz=" << TotalLz << endl;
+  cout << "N=" << NbrParticles << "  LzMax=" << LzMax << "  TotalLz=" << TotalLz << "  FermionFlag="<< FermionFlag <<endl;
   if (Manager.GetString("statistics") != 0)
     if ((strcmp ("fermions", Manager.GetString("statistics")) == 0))
       {

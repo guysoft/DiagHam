@@ -4,6 +4,8 @@
 #include "HilbertSpace/FermionOnSphereWithSpinLzSzSymmetry.h"
 #include "HilbertSpace/FermionOnSphereWithSpinSzSymmetry.h"
 #include "HilbertSpace/FermionOnSphereWithSpinLzSymmetry.h"
+#include "HilbertSpace/BosonOnSphereWithSpin.h"
+#include "HilbertSpace/BosonOnSphereWithSpinAllSz.h"
 
 #include "FunctionBasis/ParticleOnSphereFunctionBasis.h"
 
@@ -19,6 +21,7 @@
 #include "Tools/FQHEWaveFunction/ExtendedHalperinWavefunction.h"
 #include "Tools/FQHEWaveFunction/HundRuleBilayerSinglet.h"
 #include "Tools/FQHEMonteCarlo/ParticleOnSphereCollection.h"
+#include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
 
 #include "MCObservables/RealObservable.h"
 #include "MCObservables/ComplexObservable.h"
@@ -85,18 +88,20 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
 
 
-  (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 10);
-  (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 9);
+  (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 0);
   (*SystemGroup) += new SingleIntegerOption  ('z', "LzTotal", "twice the z component of the total angular momentum of the system", 0);  
   (*SystemGroup) += new SingleIntegerOption  ('s', "SzTotal", "twice the z component of the total spin of the system", 0);
   (*SystemGroup) += new SingleStringOption  ('\n', "exact-state", "name of the file containing the vector obtained using exact diagonalization");
   (*SystemGroup) += new BooleanOption  ('\n', "use-trial", "calculate overlap against a known trial state");
   (*SystemGroup) += new BooleanOption ('\n', "list-wavefunctions", "list all available test wave fuctions");  
   (*SystemGroup) += new SingleStringOption  ('\n', "use-exact", "file name of an exact state that has to be used as test wave function");
-  // (*SystemGroup) += new BooleanOption  ('\n', "lzsymmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
-//   (*SystemGroup) += new BooleanOption  ('\n', "szsymmetrized-basis", "use Sz <-> -Sz symmetrized version of the basis (only valid if total-sz=0)");
-//   (*SystemGroup) += new BooleanOption  ('\n', "minus-szparity", "select the  Sz <-> -Sz symmetric sector with negative parity");
-//   (*SystemGroup) += new BooleanOption  ('\n', "minus-lzparity", "select the  Lz <-> -Lz symmetric sector with negative parity");
+  (*SystemGroup) += new SingleStringOption  ('\n', "statistics", "particle statistics (bosons or fermions, try to guess it from file name if not defined)");
+
+  (*SystemGroup) += new BooleanOption  ('\n', "lzsymmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
+  (*SystemGroup) += new BooleanOption  ('\n', "szsymmetrized-basis", "use Sz <-> -Sz symmetrized version of the basis (only valid if total-sz=0)");
+  (*SystemGroup) += new BooleanOption  ('\n', "minus-szparity", "select the  Sz <-> -Sz symmetric sector with negative parity");
+  (*SystemGroup) += new BooleanOption  ('\n', "minus-lzparity", "select the  Lz <-> -Lz symmetric sector with negative parity");
 
   (*MonteCarloGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of Monte Carlo iterations", 10000);
   (*MonteCarloGroup) += new SingleIntegerOption  ('t', "nbr-warmup-iter", "number of steps for thermalization", 500);
@@ -139,23 +144,61 @@ int main(int argc, char** argv)
     }
 
   bool UseTrial = Manager.GetBoolean("use-trial");
-  int NbrFermions = Manager.GetInteger("nbr-particles");
+  int NbrParticles = Manager.GetInteger("nbr-particles");
   int LzMax = Manager.GetInteger("lzmax");
   int LzTotal = Manager.GetInteger("LzTotal");
   int SzTotal = Manager.GetInteger("SzTotal");
+  bool SzSymmetrizedBasis;
+  bool SzMinusParity;  
+  bool LzSymmetrizedBasis = Manager.GetBoolean("lzsymmetrized-basis");
+  bool LzMinusParity = Manager.GetBoolean("minus-lzparity");
+  bool FermionFlag = false;
+
+  if (Manager.GetString("statistics") == 0)
+    FermionFlag = true;
+
+  int TmpSzTotal=-1;
+  if ((NbrParticles==0)&&(Manager.GetString("exact-state")!=0))
+    if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(Manager.GetString("exact-state"), NbrParticles, LzMax, LzTotal, TmpSzTotal, SzSymmetrizedBasis, SzMinusParity, 
+							     LzSymmetrizedBasis, LzMinusParity, FermionFlag) == false)
+      {
+	return -1;
+      }
+  cout << "N=" << NbrParticles << "  LzMax=" << LzMax << "  LzTotal=" << LzTotal << "  FermionFlag="<< FermionFlag <<endl;
+  if (Manager.GetString("statistics") != 0)
+    if ((strcmp ("fermions", Manager.GetString("statistics")) == 0))
+      {
+	FermionFlag = true;
+      }
+    else
+      if ((strcmp ("bosons", Manager.GetString("statistics")) == 0))
+	{
+	  FermionFlag = false;
+	}
+      else
+	{
+	  cout << Manager.GetString("statistics") << " is an undefined statistics" << endl;
+	}
+
+  if (NbrParticles==0)
+    {
+      cout<<"Please provide the number of particles!"<<endl;
+      exit(0);
+    }
+
+
+  
   int NbrIter = Manager.GetInteger("nbr-iter");  
   int NbrWarmUpIter = Manager.GetInteger("nbr-warmup-iter");
   
-  int NbrFermionsUp = (NbrFermions+SzTotal)/2;
-  int NbrFermionsDown = (NbrFermions-SzTotal)/2;
+  int NbrParticlesUp = (NbrParticles+SzTotal)/2;
+  int NbrParticlesDown = (NbrParticles-SzTotal)/2;
 
-  bool LzSymmetrizedBasis = false; // Manager.GetBoolean("lzsymmetrized-basis");
-  bool SzSymmetrizedBasis = false; // Manager.GetBoolean("szsymmetrized-basis");
   unsigned long MemorySpace = ((unsigned long) Manager.GetInteger("fast-search")) << 20;
 
-  if (NbrFermionsUp+NbrFermionsDown!=NbrFermions)
+  if (NbrParticlesUp+NbrParticlesDown!=NbrParticles)
     {
-      cout << "Attention, your combination of NbrFermions and SzTotal is not possible!" << endl;
+      cout << "Attention, your combination of NbrParticles and SzTotal is not possible!" << endl;
       exit(1);
     }
   
@@ -218,9 +261,9 @@ int main(int argc, char** argv)
   Abstract1DComplexFunction* ReplaceExactFunction = NULL;
   if (UseTrial)
     {      
-      ReplaceExactFunction = new HundRuleBilayerSinglet(NbrFermions/2);
+      ReplaceExactFunction = new HundRuleBilayerSinglet(NbrParticles/2);
       ((HundRuleBilayerSinglet*)ReplaceExactFunction)->AdaptAverageMCNorm();
-      LzMax = NbrFermions-1;
+      LzMax = NbrParticles-1;
     }
 
 
@@ -237,7 +280,7 @@ int main(int argc, char** argv)
     }
   
 
-  ParticleOnSphereCollection * Particles = new ParticleOnSphereCollection(NbrFermions, RandomNumber);
+  ParticleOnSphereCollection * Particles = new ParticleOnSphereCollection(NbrParticles, RandomNumber);
   Particles->MultiplyStepLength(sqrt(2.0));
   Complex ValueExact;
   Complex TrialValue;
@@ -257,7 +300,7 @@ int main(int argc, char** argv)
 	      if (UseTrial)
 		{
 		  HistoryFileName = new char[30];
-		  sprintf(HistoryFileName,"hund_n%d.samp",NbrFermions);
+		  sprintf(HistoryFileName,"hund_n%d.samp",NbrParticles);
 		}
 	      else
 		{
@@ -279,7 +322,7 @@ int main(int argc, char** argv)
 		}
 	    }
 	  char *tmpC = WaveFunctionManager.GetDescription();
-	  History=new MCHistoryRecord(NbrIter, 2*NbrFermions, Manager.GetString("exact-state"), tmpC, HistoryFileName
+	  History=new MCHistoryRecord(NbrIter, 2*NbrParticles, Manager.GetString("exact-state"), tmpC, HistoryFileName
 				      /* could add additional observables here */);
 	  delete [] tmpC;
 	}
@@ -290,108 +333,101 @@ int main(int argc, char** argv)
 	}
     }
 
-  FermionOnSphereWithSpin *Space = NULL;
+  ParticleOnSphereWithSpin *Space = NULL;
 
   if (!UseTrial)
     {
-      if ((SzSymmetrizedBasis == false) && (LzSymmetrizedBasis == false))
+      if (FermionFlag)
 	{
-#ifdef __64_BITS__
-	  if (LzMax <= 31)
-#else
-	    if (LzMax <= 15)
-#endif
-	      {
-		if (State.GetVectorDimension()>0)
-		  {
-		    Space = new FermionOnSphereWithSpin(NbrFermions, LzTotal, LzMax, SzTotal, MemorySpace);
-		  }
-	      }
-	    else
-	      {
-		cout << "States of this Hilbert space cannot be represented in a single word." << endl;
-		return -1;
-	      }	
-	}
-      else
-	{
-#ifdef __64_BITS__
-	  if (LzMax >= 31)
-#else
-	    if (LzMax >= 15)
-#endif
-	      {
-		cout << "States of this Hilbert space cannot be represented in a single word." << endl;
-		return -1;
-	      }	
-	  if (SzSymmetrizedBasis == true) 
-	    if (LzSymmetrizedBasis == false)
-	      {
-		if (Manager.GetString("load-hilbert") == 0)
-		  Space = new FermionOnSphereWithSpinSzSymmetry(NbrFermions, LzTotal, LzMax, Manager.GetBoolean("minus-szparity"), MemorySpace);
-		else
-		  Space = new FermionOnSphereWithSpinSzSymmetry(Manager.GetString("load-hilbert"), MemorySpace);
-	      }
-	    else
-	      {
-		if (LzTotal != 0)
-		  {
-		    cout << "Lz symmetry is available only for Lz=0 subspace"<<endl;
-		    exit(1);
-		  }
-		if (Manager.GetString("load-hilbert") == 0)
-		  {
-		    Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrFermions, LzMax, Manager.GetBoolean("minus-szparity"),
-								    Manager.GetBoolean("minus-lzparity"), MemorySpace);
-		  }
-		else
-		  Space = new FermionOnSphereWithSpinLzSzSymmetry(Manager.GetString("load-hilbert"), MemorySpace);
-	      }
-	  else
-	    if (Manager.GetString("load-hilbert") == 0)
-	      Space = new FermionOnSphereWithSpinLzSymmetry(NbrFermions, LzMax, SzTotal, Manager.GetBoolean("minus-lzparity"), MemorySpace);
-	    else
-	      Space = new FermionOnSphereWithSpinLzSymmetry(Manager.GetString("load-hilbert"), MemorySpace);	      
-	  if (Manager.GetString("save-hilbert") != 0)
+	  if ((SzSymmetrizedBasis == false) && (LzSymmetrizedBasis == false))
 	    {
-	      ((FermionOnSphereWithSpinLzSzSymmetry*) Space)->WriteHilbertSpace(Manager.GetString("save-hilbert"));
-	      return 0;
+#ifdef __64_BITS__
+	      if (LzMax <= 31)
+#else
+		if (LzMax <= 15)
+#endif
+		  {
+		    if (State.GetVectorDimension()>0)
+		      {
+			Space = new FermionOnSphereWithSpin(NbrParticles, LzTotal, LzMax, SzTotal, MemorySpace);
+		      }
+		  }
+		else
+		  {
+		    cout << "States of this Hilbert space cannot be represented in a single word." << endl;
+		    return -1;
+		  }	
+	    }
+	  else
+	    {
+#ifdef __64_BITS__
+	      if (LzMax >= 31)
+#else
+		if (LzMax >= 15)
+#endif
+		  {
+		    cout << "States of this Hilbert space cannot be represented in a single word." << endl;
+		    return -1;
+		  }	
+	      if (SzSymmetrizedBasis == true) 
+		if (LzSymmetrizedBasis == false)
+		  {
+		    if (Manager.GetString("load-hilbert") == 0)
+		      Space = new FermionOnSphereWithSpinSzSymmetry(NbrParticles, LzTotal, LzMax, Manager.GetBoolean("minus-szparity"), MemorySpace);
+		    else
+		      Space = new FermionOnSphereWithSpinSzSymmetry(Manager.GetString("load-hilbert"), MemorySpace);
+		  }
+		else
+		  {
+		    if (LzTotal != 0)
+		      {
+			cout << "Lz symmetry is available only for Lz=0 subspace"<<endl;
+			exit(1);
+		      }
+		    if (Manager.GetString("load-hilbert") == 0)
+		      {
+			Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrParticles, LzMax, Manager.GetBoolean("minus-szparity"),
+									Manager.GetBoolean("minus-lzparity"), MemorySpace);
+		      }
+		    else
+		      Space = new FermionOnSphereWithSpinLzSzSymmetry(Manager.GetString("load-hilbert"), MemorySpace);
+		  }
+	      else
+		if (Manager.GetString("load-hilbert") == 0)
+		  Space = new FermionOnSphereWithSpinLzSymmetry(NbrParticles, LzMax, SzTotal, Manager.GetBoolean("minus-lzparity"), MemorySpace);
+		else
+		  Space = new FermionOnSphereWithSpinLzSymmetry(Manager.GetString("load-hilbert"), MemorySpace);	      
+	      if (Manager.GetString("save-hilbert") != 0)
+		{
+		  ((FermionOnSphereWithSpinLzSzSymmetry*) Space)->WriteHilbertSpace(Manager.GetString("save-hilbert"));
+		  return 0;
+		}
+	    }
+	}
+      else // bosonic Hilbert space
+	{
+	  if (LzSymmetrizedBasis == false)
+	    {
+	      Space = new BosonOnSphereWithSpin(NbrParticles, LzTotal, LzMax, SzTotal);
+	    }
+	  else
+	    {
+	      cout << "Lz-symmetrized states not available for Bosons with Spin."<<endl;
+	      return -1;
 	    }
 	}
     }
-  
-// #ifdef __64_BITS__
-//       if (LzMax <= 31)
-//         {
-//           Space = new FermionOnSphereWithSpin(NbrFermions, 0 /* assume L=0 for GS */, LzMax, SzTotal);
-//         }
-//       else
-// 	{
-// 	  cout << "States of this Hilbert space cannot be represented in a single word." << endl;
-// 	  return -1;
-// 	}	
-// #else
-//       if (LzMax <= 15)
-//         {
-//           Space = new FermionOnSphereWithSpin(NbrFermions, 0 /* assume L=0 for GS */, LzMax, SzTotal);
-// 	}
-//       else
-// 	{
-// 	  cout << "States of this Hilbert space cannot be represented in a single word." << endl;
-// 	  return -1;
-// 	}	
-// #endif      
 
   if (HistoryMode ==2)
     {
       // code to process available samples
       int sampleCount;
       int totalSampleCount=0;
-      RealVector Positions(2*NbrFermions);
+      RealVector Positions(2*NbrParticles);
       WeightedRealObservable NormTrialObs(100);
       WeightedRealObservable NormExactObs(100);
       WeightedComplexObservable OverlapObs(100);
-      int NbrCoordinates = 2*NbrFermions;
+      int NbrCoordinates = 2*NbrParticles;
       History = new MCHistoryRecord(HistoryFileName, NbrCoordinates /* could add additional observables here */);
       double typicalSA=0.0, typicalWF=0.0, typicalTV=0.0;
       int averageTypical=50;
@@ -467,7 +503,7 @@ int main(int argc, char** argv)
       // code to optimize paired state with available samples:
       bool varyMR = Manager.GetBoolean("varyMR");
       WaveFunctionOverlapOptimizer *Optimizer =
-	new WaveFunctionOverlapOptimizer( TestWaveFunction, HistoryFileName, NbrFermions,
+	new WaveFunctionOverlapOptimizer( TestWaveFunction, HistoryFileName, NbrParticles,
 					  /* excludeLastParameter */ !varyMR,
 					  Manager.GetInteger("linearPoints"), Manager.GetInteger("randomPoints"),
 					  Manager.GetInteger("limitSamples"));
@@ -491,7 +527,7 @@ int main(int argc, char** argv)
     }
   int RecordIndex = 0;
   double Factor = 1.0;
-  for (int j = 0; j < NbrFermions; ++j)
+  for (int j = 0; j < NbrParticles; ++j)
     {
       Factor *= 4.0 * M_PI;
     }
@@ -508,7 +544,7 @@ int main(int argc, char** argv)
   int TimeCoherence;
   
   // test symmetry for spin reversal:
-  if ((SzTotal==0)&&(NbrFermions%2==0)) // otherwise this is not so easy...
+  if ((SzTotal==0)&&(NbrParticles%2==0)) // otherwise this is not so easy...
     {
       // calculate value:
       if (UseTrial)
@@ -522,7 +558,7 @@ int main(int argc, char** argv)
       Complex ValueTrial, ValueTrial2;
       ValueTrial = (*TestWaveFunction)(Particles->GetPositions());      
       double Tmp2;
-      int NUp = NbrFermions/2;
+      int NUp = NbrParticles/2;
       // exchange spin up and spin down
       for (int j = 0; j < NUp; ++j)
 	{
@@ -564,7 +600,7 @@ int main(int argc, char** argv)
 	  cout << "can't open vector file " << Manager.GetString("exact-state") << endl;
 	  return -1;      
 	}
-      History = new MCHistoryRecord (HistoryFileName, 2*NbrFermions, PreviousSamplingAmplitude, &(Particles->GetPositions()[0]), ValueExact, NULL);
+      History = new MCHistoryRecord (HistoryFileName, 2*NbrParticles, PreviousSamplingAmplitude, &(Particles->GetPositions()[0]), ValueExact, NULL);
       // initialize function values at initial positions: - trial function
       TrialValue = (*TestWaveFunction)(Particles->GetPositions());  
 
@@ -660,8 +696,8 @@ int main(int argc, char** argv)
 	  if (History) History->RecordAcceptedStep( CurrentSamplingAmplitude, Particles->GetPositions(), ValueExact);
 	}
       // determine next particle to move
-      NextCoordinates = (int) (((double) NbrFermions) * RandomNumber->GetRealRandomNumber());
-      if (NextCoordinates == NbrFermions) --NextCoordinates;
+      NextCoordinates = (int) (((double) NbrParticles) * RandomNumber->GetRealRandomNumber());
+      if (NextCoordinates == NbrParticles) --NextCoordinates;
       
       // note observations:
       if ( (i % SampleDensity)==0 )

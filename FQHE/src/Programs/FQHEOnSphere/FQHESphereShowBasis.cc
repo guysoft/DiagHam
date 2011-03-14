@@ -13,6 +13,7 @@
 #include "HilbertSpace/FermionOnSphereThreeLandauLevels.h"
 #include "HilbertSpace/FermionOnSphereFourLandauLevels.h"
 #include "HilbertSpace/BosonOnSphereTwoLandauLevels.h"
+#include "HilbertSpace/BosonOnSphereWithSpinAllSz.h"
 
 #include "MathTools/ClebschGordanCoefficients.h"
 #include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
@@ -147,7 +148,10 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      Space = new BosonOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
+	      if (AllSzFlag == false)
+		Space = new BosonOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
+	      else
+		Space = new BosonOnSphereWithSpinAllSz(NbrParticles, TotalLz, NbrFluxQuanta);
 	    }
 	}
       else

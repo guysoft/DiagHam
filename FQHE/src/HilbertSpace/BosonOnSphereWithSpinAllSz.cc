@@ -849,14 +849,15 @@ ostream& BosonOnSphereWithSpinAllSz::PrintState (ostream& Str, int state)
 		       TemporaryState, CurrentLzMaxUp, CurrentLzMaxDown, TemporaryStateNbrUp);
   unsigned* TmpState = TemporaryState; // this->StateDescription[state];
   int i = 0;
+  Str << state << " = " << "|";
   Str << (TmpState[i]>>16) << "u " << (TmpState[i]&0xffff)<<"d";
   for (i=1; i <= LzMax; ++i)
     Str << " | "<< (TmpState[i]>>16) << "u " << (TmpState[i]&0xffff)<<"d";
   //  for (; i <= this->LzMax; ++i)
   //    Str << " | 0u 0d";
-  Str << "  lzmaxU = " <<((this->StateInfo[state]>>20)&0x03ffu)<< "  lzMaxD = "<< ((this->StateInfo[state]>>10)&0x03ffu)
-      << "  nbrUp = " << (this->StateInfo[state]&0x03ffu) <<"  position = ";
-  Str << FindStateIndex(TmpState, this->StateInfo[state]&0x03ffu);
+  //  Str << "  lzmaxU = " <<((this->StateInfo[state]>>20)&0x03ffu)<< "  lzMaxD = "<< ((this->StateInfo[state]>>10)&0x03ffu)
+  //      << "  nbrUp = " << (this->StateInfo[state]&0x03ffu) <<"  position = ";
+  //  Str << FindStateIndex(TmpState, this->StateInfo[state]&0x03ffu);
   return Str;
 }
 
@@ -1850,7 +1851,8 @@ RealVector BosonOnSphereWithSpinAllSz::ForgeSU2FromTunneling(RealVector& state, 
     }
   cout<<"Nbr of stored components = "<<counter<<endl;
   cout<<"Weight = "<<Weight<<endl;
-  FinalState /= FinalState.Norm();
+  if (fabs(Weight)>1e-12)
+    FinalState /= FinalState.Norm();
   delete[] TmpState;
   return FinalState;  
 

@@ -583,13 +583,14 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	      if (length>6) T = Params[6];
 // warning: merge from testing_zr (revision 1159)
 // old version is
-	      delete [] Params;
-	      ExtendedHalperinWavefunction* rst = new ExtendedHalperinWavefunction(N, K, L, P, Q, R, S, T);
+//	      ExtendedHalperinWavefunction* rst = new ExtendedHalperinWavefunction(N, K, L, P, Q, R, S, T);
 // new version is 
-//	      if (length>7) U = Params[7];
-//	      if (length>8) V = Params[8];
-//	      if (length>9) B = Params[9];
-//	      ExtendedHalperinWavefunction* rst = new ExtendedHalperinWavefunction(N, K, L, P, Q, R, S, T, U, V, B);
+	      if (length>7) U = Params[7];
+	      if (length>8) V = Params[8];
+	      if (length>9) B = Params[9];
+	      ExtendedHalperinWavefunction* rst = new ExtendedHalperinWavefunction(N, K, L, P, Q, R, S, T, U, V, B);
+	      delete [] Params;
+
 // end warning
 	      rst->AdaptAverageMCNorm();
 	      if (Options->GetBoolean("antisymmetrize"))

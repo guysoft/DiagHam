@@ -170,12 +170,12 @@ void NASSOnSphereWaveFunction::EvaluatePermutations()
   SimplePermutations Generator(this->NbrParticles>>1);
   this->NbrPermutations = Generator.GetNbrPermutations();
   this->Permutations = Generator.CheckOutPermutations();
-  for (unsigned i=0; i<NbrPermutations; ++i)
-    {
-      cout << "Permutation["<<i<<"]= ["<<Permutations[i][0];
-      for (int j=1; j<NbrParticles>>1; ++j) cout << " " << Permutations[i][j];
-      cout << "]"<<endl;
-    }
+//   for (unsigned i=0; i<NbrPermutations; ++i)
+//     {
+//       cout << "Permutation["<<i<<"]= ["<<Permutations[i][0];
+//       for (int j=1; j<NbrParticles>>1; ++j) cout << " " << Permutations[i][j];
+//       cout << "]"<<endl;
+//     }
   return;
 }
 
