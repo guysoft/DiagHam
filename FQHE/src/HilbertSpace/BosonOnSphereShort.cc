@@ -3562,7 +3562,7 @@ void BosonOnSphereShort::CoreFuseMultipleStates (LongRationalVector& outputVecto
 						 BosonOnSphereShort** inputSpaces, int currentPosition, unsigned long currentState, int currentPadding, 
 						 LongRational currentCoefficient, bool symmetrizedFlag)
 {
-  if (currentPosition < nbrInputVectors)
+  if (currentPosition < (nbrInputVectors - 1))
     {
       for (long i = 0; i <  inputSpaces[currentPosition]->LargeHilbertSpaceDimension; ++i)
 	{

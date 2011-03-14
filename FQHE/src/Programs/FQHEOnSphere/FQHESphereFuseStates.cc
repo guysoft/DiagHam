@@ -42,7 +42,7 @@ using std::ofstream;
 // symmetrizedBasisFlag = output basis is Lz symmetric
 // defaultPadding = default padding to use
 // return value = 0 if no error occured
-int FQHEShereFuseStateCore(char* inputFileName, ParticleOnSphere* outputBasis, RealVector& outputState, LongRationalVector& rationalOutputState, RealVector& tmpOutputState, LongRationalVector& rationalTmpOutputState, bool rationalFlag, bool addFlag, bool symmetrizedBasisFlag, int defaultPadding);
+int FQHESphereFuseStateCore(char* inputFileName, ParticleOnSphere* outputBasis, RealVector& outputState, LongRationalVector& rationalOutputState, RealVector& tmpOutputState, LongRationalVector& rationalTmpOutputState, bool rationalFlag, bool addFlag, bool symmetrizedBasisFlag, int defaultPadding);
 
 // core part of the fuse multiple state program
 //
@@ -55,9 +55,18 @@ int FQHEShereFuseStateCore(char* inputFileName, ParticleOnSphere* outputBasis, R
 // rationalFlag = use rational instead of double
 // addFlag = use add mode instead of merge mode 
 // symmetrizedBasisFlag = output basis is Lz symmetric
-// defaultPadding = default padding to use
 // return value = 0 if no error occured
-int FQHEShereFuseMultipleStateCore(char* inputFileName, ParticleOnSphere* outputBasis, RealVector& outputState, LongRationalVector& rationalOutputState, RealVector& tmpOutputState, LongRationalVector& rationalTmpOutputState, bool rationalFlag, bool addFlag, bool symmetrizedBasisFlag);
+int FQHESphereFuseMultipleStateCore(char* inputFileName, ParticleOnSphere* outputBasis, RealVector& outputState, LongRationalVector& rationalOutputState, RealVector& tmpOutputState, LongRationalVector& rationalTmpOutputState, bool rationalFlag, bool addFlag, bool symmetrizedBasisFlag);
+
+// get the target Hilbert space data for the fuse multiple state program
+//
+// inputFileName = name of the file that describes the states to fuse
+// nbrParticles = reference on the number of particles
+// totalLz = reference on twice the total Lz value
+// statistics = reference on the particle statistics
+// return value = 0 if no error occured
+int FQHESphereFuseMultipleStateCoreGetTargetHilbertSpace(char* inputFileName, int& nbrParticles, int& lzMax, int& totalLz, bool& statistics);
+
 
 // get the Hilbert space from file 
 // 
@@ -68,7 +77,7 @@ int FQHEShereFuseMultipleStateCore(char* inputFileName, ParticleOnSphere* output
 // lzMax = reference on twice the maximum angular momentum for a single particle
 // totalLz = reference on twice the total angular momentum
 // return value = pointer to the Hilbert space
-ParticleOnSphere* FQHEShereFuseStateGetHilbertSpace(char* inputFileName, char* referenceFile, char* hilbertFile, int& nbrParticles, int& lzMax, int& totalLz);
+ParticleOnSphere* FQHESphereFuseStateGetHilbertSpace(char* inputFileName, char* referenceFile, char* hilbertFile, int& nbrParticles, int& lzMax, int& totalLz);
 
 
 int main(int argc, char** argv)
@@ -115,13 +124,14 @@ int main(int argc, char** argv)
   int NbrParticles = 0;
   int LzMax = 0;
   int TotalLz = 0;
+  bool Statistics = true;
   int Padding = Manager.GetInteger("padding");
   bool HaldaneBasisFlag = Manager.GetBoolean("haldane");
   char* OutputTxtFileName = Manager.GetString("txt-output");
   bool SymmetrizedBasis = Manager.GetBoolean("symmetrized-basis");
   MultiColumnASCIIFile InputVectors;
 
-  if (Manager.GetString("input-states") != 0)
+  if (Manager.GetString("input-states") != 0) 
     {
       if (InputVectors.Parse(Manager.GetString("input-states")) == false)
 	{
@@ -149,6 +159,17 @@ int main(int argc, char** argv)
 	{
 	  if (Manager.GetString("multiple-fuse") != 0)
 	    {
+	      MultiColumnASCIIFile MultipleFuseFiles;
+	      if (MultipleFuseFiles.Parse(Manager.GetString("multiple-fuse")) == false)
+		{
+		  MultipleFuseFiles.DumpErrors(cout) << endl;
+		  return -1;
+		}
+	      if (FQHESphereFuseMultipleStateCoreGetTargetHilbertSpace(MultipleFuseFiles(0, 0), NbrParticles, LzMax, TotalLz, Statistics) != 0)
+		{
+		  return -1;
+		}
+	      cout << "full system  : nbr particles=" << NbrParticles << "  lzmax=" << LzMax << "  totalLz = " << TotalLz << endl;
 	    }
 	  else
 	    {
@@ -160,50 +181,51 @@ int main(int argc, char** argv)
   
   
   int* Paddings = 0;
-  if (InputVectors(6, 0) != 0)
-    {
-      Paddings = InputVectors.GetAsIntegerArray(6);
-    }
-  else
-    {
-      Paddings = new int [InputVectors.GetNbrLines()];
-      for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
-	Paddings[i] = Padding;
-    }
-  
   double* Coefficients = 0;
   LongRational* RationalCoefficients = 0;
-  if (Manager.GetBoolean("rational") == false)
+  if (Manager.GetString("multiple-fuse") == 0)
     {
-      if (InputVectors(7, 0) != 0)
+      if (InputVectors(6, 0) != 0)
 	{
-	  Coefficients = InputVectors.GetAsDoubleArray(7);
+	  Paddings = InputVectors.GetAsIntegerArray(6);
 	}
       else
 	{
-	  Coefficients = new double [InputVectors.GetNbrLines()];
+	  Paddings = new int [InputVectors.GetNbrLines()];
 	  for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
-	    Coefficients[i] = 1.0;
+	    Paddings[i] = Padding;
 	}
-    }
-  else
-    {
-      if (InputVectors(7, 0) != 0)
+      if (Manager.GetBoolean("rational") == false)
 	{
-	  RationalCoefficients = InputVectors.GetAsLongRationalArray(7);
-       }
+	  if (InputVectors(7, 0) != 0)
+	    {
+	      Coefficients = InputVectors.GetAsDoubleArray(7);
+	    }
+	  else
+	    {
+	      Coefficients = new double [InputVectors.GetNbrLines()];
+	      for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
+		Coefficients[i] = 1.0;
+	    }
+	}
       else
 	{
-	  RationalCoefficients = new LongRational [InputVectors.GetNbrLines()];
-	  for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
-	    RationalCoefficients[i] = 1l;
+	  if (InputVectors(7, 0) != 0)
+	    {
+	      RationalCoefficients = InputVectors.GetAsLongRationalArray(7);
+	    }
+	  else
+	    {
+	      RationalCoefficients = new LongRational [InputVectors.GetNbrLines()];
+	      for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
+		RationalCoefficients[i] = 1l;
+	    }
 	}
     }
-  
+
   int LeftNbrParticles = 0;
   int LeftLzMax = 0;
   int LeftTotalLz = 0;
-  bool Statistics = true;
   int RightNbrParticles = 0;
   int RightLzMax = 0;
   int RightTotalLz = 0;
@@ -334,37 +356,73 @@ int main(int argc, char** argv)
 
   if (Manager.GetString("input-states") != 0)
     {
-      if (FQHEShereFuseStateCore(Manager.GetString("input-states"), OutputBasis, OutputState, RationalOutputState, TmpOutputState, RationalTmpOutputState, Manager.GetBoolean("rational"), Manager.GetBoolean("add"), SymmetrizedBasis, Padding) != 0)
+      if (FQHESphereFuseStateCore(Manager.GetString("input-states"), OutputBasis, OutputState, RationalOutputState, TmpOutputState, RationalTmpOutputState, Manager.GetBoolean("rational"), Manager.GetBoolean("add"), SymmetrizedBasis, Padding) != 0)
 	return -1;  
     }
   else
     {
-      if (Manager.GetString("multiple-add") != 0)
+      if ((Manager.GetString("multiple-add") != 0) || (Manager.GetString("multiple-fuse") != 0))
 	{
 	  MultiColumnASCIIFile MultipleAddFiles;
-	  if (MultipleAddFiles.Parse(Manager.GetString("multiple-add")) == false)
+	  if (Manager.GetString("multiple-add") != 0)
 	    {
-	      MultipleAddFiles.DumpErrors(cout) << endl;
-	      return -1;
+	      if (MultipleAddFiles.Parse(Manager.GetString("multiple-add")) == false)
+		{
+		  MultipleAddFiles.DumpErrors(cout) << endl;
+		  return -1;
+		}
+	    }
+	  else
+	    {
+	      if (MultipleAddFiles.Parse(Manager.GetString("multiple-fuse")) == false)
+		{
+		  MultipleAddFiles.DumpErrors(cout) << endl;
+		  return -1;
+		}
 	    }
 	  for (int i = 0; i < MultipleAddFiles.GetNbrLines(); ++i)
 	    {
 	      if (MultipleAddFiles.GetNbrColumns() == 1)
 		{
-		  if (FQHEShereFuseStateCore(MultipleAddFiles(0, i), OutputBasis, TmpOutputState, RationalTmpOutputState, TmpOutputState2, RationalTmpOutputState2, Manager.GetBoolean("rational"), Manager.GetBoolean("add"), SymmetrizedBasis, Padding) != 0)
-		    return -1;  	  
+		  if (Manager.GetString("multiple-add") != 0)
+		    {
+		      if (FQHESphereFuseStateCore(MultipleAddFiles(0, i), OutputBasis, TmpOutputState, RationalTmpOutputState, TmpOutputState2, RationalTmpOutputState2, Manager.GetBoolean("rational"), Manager.GetBoolean("add"), SymmetrizedBasis, Padding) != 0)
+			return -1;  	  
+		    }
+		  else
+		    {
+		      if (FQHESphereFuseMultipleStateCore(MultipleAddFiles(0, i), OutputBasis, TmpOutputState, RationalTmpOutputState, TmpOutputState2, RationalTmpOutputState2, Manager.GetBoolean("rational"), Manager.GetBoolean("add"), SymmetrizedBasis) != 0)
+			return -1;  	  
+		    }
 		}
 	      else
 		{
 		  if (strcmp(MultipleAddFiles(1, i), "add") == 0)
 		    {
-		      if (FQHEShereFuseStateCore(MultipleAddFiles(0, i), OutputBasis, TmpOutputState, RationalTmpOutputState, TmpOutputState2, RationalTmpOutputState2, Manager.GetBoolean("rational"), true, SymmetrizedBasis, Padding) != 0)
-			return -1;  	  
+
+		      if (Manager.GetString("multiple-add") != 0)
+			{
+ 			  if (FQHESphereFuseStateCore(MultipleAddFiles(0, i), OutputBasis, TmpOutputState, RationalTmpOutputState, TmpOutputState2, RationalTmpOutputState2, Manager.GetBoolean("rational"), true, SymmetrizedBasis, Padding) != 0)
+			    return -1;  	  
+			}
+		      else
+			{
+ 			  if (FQHESphereFuseMultipleStateCore(MultipleAddFiles(0, i), OutputBasis, TmpOutputState, RationalTmpOutputState, TmpOutputState2, RationalTmpOutputState2, Manager.GetBoolean("rational"), true, SymmetrizedBasis) != 0)
+			    return -1;  	  
+			}
 		    }
 		  else
 		    {
-		      if (FQHEShereFuseStateCore(MultipleAddFiles(0, i), OutputBasis, TmpOutputState, RationalTmpOutputState, TmpOutputState2, RationalTmpOutputState2, Manager.GetBoolean("rational"), false, SymmetrizedBasis, Padding) != 0)
-			return -1;  	  
+		      if (Manager.GetString("multiple-add") != 0)
+			{
+			  if (FQHESphereFuseStateCore(MultipleAddFiles(0, i), OutputBasis, TmpOutputState, RationalTmpOutputState, TmpOutputState2, RationalTmpOutputState2, Manager.GetBoolean("rational"), false, SymmetrizedBasis, Padding) != 0)
+			    return -1;  	  
+			}
+		      else
+			{
+ 			  if (FQHESphereFuseMultipleStateCore(MultipleAddFiles(0, i), OutputBasis, TmpOutputState, RationalTmpOutputState, TmpOutputState2, RationalTmpOutputState2, Manager.GetBoolean("rational"), false, SymmetrizedBasis) != 0)
+			    return -1;  	  
+			}
 		    }	      		  
 		}
 	      if (Manager.GetBoolean("rational") == false)
@@ -393,6 +451,15 @@ int main(int argc, char** argv)
 	}
       else
 	{
+	  if (Manager.GetString("multiple-fuse") != 0)
+	    {
+	      MultiColumnASCIIFile MultipleFuseFiles;
+	      if (MultipleFuseFiles.Parse(Manager.GetString("multiple-fuse")) == false)
+		{
+		  MultipleFuseFiles.DumpErrors(cout) << endl;
+		  return -1;
+		}
+	    }
 	}
     }
 
@@ -461,7 +528,7 @@ int main(int argc, char** argv)
 // defaultPadding = default padding to use
 // return value = 0 if no error occured
 
-int FQHEShereFuseStateCore(char* inputFileName, ParticleOnSphere* outputBasis, RealVector& outputState, LongRationalVector& rationalOutputState, RealVector& tmpOutputState, LongRationalVector& rationalTmpOutputState, bool rationalFlag, bool addFlag, bool symmetrizedBasisFlag, int defaultPadding)
+int FQHESphereFuseStateCore(char* inputFileName, ParticleOnSphere* outputBasis, RealVector& outputState, LongRationalVector& rationalOutputState, RealVector& tmpOutputState, LongRationalVector& rationalTmpOutputState, bool rationalFlag, bool addFlag, bool symmetrizedBasisFlag, int defaultPadding)
 {
   MultiColumnASCIIFile InputVectors;
   if (InputVectors.Parse(inputFileName) == false)
@@ -518,8 +585,8 @@ int FQHEShereFuseStateCore(char* inputFileName, ParticleOnSphere* outputBasis, R
       int RightNbrParticles = 0;
       int RightLzMax = 0;
       int RightTotalLz = 0;
-      ParticleOnSphere* LeftBasis = FQHEShereFuseStateGetHilbertSpace(InputVectors(0, i), InputVectors(2, i), InputVectors(4, i), LeftNbrParticles, LeftLzMax, LeftTotalLz);
-      ParticleOnSphere* RightBasis = FQHEShereFuseStateGetHilbertSpace(InputVectors(1, i), InputVectors(3, i), InputVectors(5, i), RightNbrParticles, RightLzMax, RightTotalLz);
+      ParticleOnSphere* LeftBasis = FQHESphereFuseStateGetHilbertSpace(InputVectors(0, i), InputVectors(2, i), InputVectors(4, i), LeftNbrParticles, LeftLzMax, LeftTotalLz);
+      ParticleOnSphere* RightBasis = FQHESphereFuseStateGetHilbertSpace(InputVectors(1, i), InputVectors(3, i), InputVectors(5, i), RightNbrParticles, RightLzMax, RightTotalLz);
       if (rationalFlag == false)
 	{
 	  RealVector LeftVector;
@@ -617,7 +684,7 @@ int FQHEShereFuseStateCore(char* inputFileName, ParticleOnSphere* outputBasis, R
 // defaultPadding = default padding to use
 // return value = 0 if no error occured
 
-int FQHEShereFuseMultipleStateCore(char* inputFileName, ParticleOnSphere* outputBasis, RealVector& outputState, LongRationalVector& rationalOutputState, RealVector& tmpOutputState, LongRationalVector& rationalTmpOutputState, bool rationalFlag, bool addFlag, bool symmetrizedBasisFlag)
+int FQHESphereFuseMultipleStateCore(char* inputFileName, ParticleOnSphere* outputBasis, RealVector& outputState, LongRationalVector& rationalOutputState, RealVector& tmpOutputState, LongRationalVector& rationalTmpOutputState, bool rationalFlag, bool addFlag, bool symmetrizedBasisFlag)
 {
   MultiColumnASCIIFile InputVectors;
   if (InputVectors.Parse(inputFileName) == false)
@@ -637,6 +704,13 @@ int FQHEShereFuseMultipleStateCore(char* inputFileName, ParticleOnSphere* output
   int* FusedLzMax = new int [NbrFusedStates];
   int* FusedTotalLz = new int [NbrFusedStates];
   ParticleOnSphere** FusedSpaces = new ParticleOnSphere* [NbrFusedStates];
+  for (int j = 0; j < NbrFusedStates; ++j)
+    {
+      Paddings[j] = 0;
+      FusedNbrParticles[j] = 0;
+      FusedLzMax[j] = 0;
+      FusedTotalLz[j] = 0;
+    }
   double* Coefficients = 0;
   LongRational* RationalCoefficients = 0;
   if (rationalFlag  == false)
@@ -655,10 +729,11 @@ int FQHEShereFuseMultipleStateCore(char* inputFileName, ParticleOnSphere* output
       LongRationalVector* RationalFusedVectors = new LongRationalVector[NbrFusedStates];
       for (int j = 0; j < NbrFusedStates; ++j)
 	{
-	  FusedSpaces[TmpNbrFusedStates] = FQHEShereFuseStateGetHilbertSpace(InputVectors(1 + (4 * j), i), InputVectors(2 + (4 * j), i), InputVectors(3 + (4 * j), i), FusedNbrParticles[TmpNbrFusedStates], FusedLzMax[TmpNbrFusedStates], FusedTotalLz[TmpNbrFusedStates]);
+	  cout << InputVectors(1 + (4 * j), i) << endl;
+	  FusedSpaces[TmpNbrFusedStates] = FQHESphereFuseStateGetHilbertSpace(InputVectors(1 + (4 * j), i), InputVectors(2 + (4 * j), i), InputVectors(3 + (4 * j), i), FusedNbrParticles[TmpNbrFusedStates], FusedLzMax[TmpNbrFusedStates], FusedTotalLz[TmpNbrFusedStates]);
 	  if (FusedSpaces[TmpNbrFusedStates] != 0)
 	    {
-	      if (j != (TmpNbrFusedStates - 1))
+	      if (j != (NbrFusedStates - 1))
 		{
 		  Paddings[TmpNbrFusedStates] = atoi(InputVectors(4 + (4 * j), i));
 		}
@@ -684,10 +759,12 @@ int FQHEShereFuseMultipleStateCore(char* inputFileName, ParticleOnSphere* output
       if (rationalFlag == false)
 	{
 	  if (addFlag == false)
-	    outputBasis->FuseMultipleStates(outputState, TmpNbrFusedStates, FusedVectors, Paddings, FusedSpaces, symmetrizedBasisFlag, Coefficients[i]);
+	    {
+	      outputBasis->FuseMultipleStates(outputState, NbrFusedStates, FusedVectors, Paddings, FusedSpaces, symmetrizedBasisFlag, Coefficients[i]);
+	    }
 	  else
 	    {
-	      outputBasis->FuseMultipleStates(tmpOutputState, TmpNbrFusedStates, FusedVectors, Paddings, FusedSpaces, false, Coefficients[i]);
+	      outputBasis->FuseMultipleStates(tmpOutputState, NbrFusedStates, FusedVectors, Paddings, FusedSpaces, false, Coefficients[i]);
 	      outputState += tmpOutputState;
 	      tmpOutputState.ClearVector();
 	    }
@@ -695,17 +772,19 @@ int FQHEShereFuseMultipleStateCore(char* inputFileName, ParticleOnSphere* output
       else
 	{
 	  if (addFlag == false)
-	    outputBasis->FuseMultipleStates(rationalOutputState, TmpNbrFusedStates, RationalFusedVectors, Paddings, FusedSpaces, symmetrizedBasisFlag, RationalCoefficients[i]);
+	    {
+	      outputBasis->FuseMultipleStates(rationalOutputState, NbrFusedStates, RationalFusedVectors, Paddings, FusedSpaces, symmetrizedBasisFlag, RationalCoefficients[i]);
+	    }
 	  else
 	    {
-	      outputBasis->FuseMultipleStates(rationalTmpOutputState, TmpNbrFusedStates, RationalFusedVectors, Paddings, FusedSpaces, false, RationalCoefficients[i]);	      
+	      outputBasis->FuseMultipleStates(rationalTmpOutputState, NbrFusedStates, RationalFusedVectors, Paddings, FusedSpaces, false, RationalCoefficients[i]);	      
 	      rationalOutputState += rationalTmpOutputState;
 	      rationalTmpOutputState.ClearVector();
 	    }
 	}
       delete[] FusedVectors;
       delete[] RationalFusedVectors;      
-      for (int j = 0; j < TmpNbrFusedStates; ++j)
+      for (int j = 0; j < NbrFusedStates; ++j)
 	{
 	  delete FusedSpaces[j];
 	}
@@ -751,6 +830,61 @@ int FQHEShereFuseMultipleStateCore(char* inputFileName, ParticleOnSphere* output
   return 0;
 }
 
+// get the target Hilbert space data for the fuse multiple state program
+//
+// inputFileName = name of the file that describes the states to fuse
+// nbrParticles = reference on the number of particles
+// lzMax = reference on twice the angular momentum 
+// totalLz = reference on twice the total Lz value
+// statistics = reference on the particle statistics
+// return value = 0 if no error occured
+
+int FQHESphereFuseMultipleStateCoreGetTargetHilbertSpace(char* inputFileName, int& nbrParticles, int& lzMax, int& totalLz, bool& statistics)
+{
+  MultiColumnASCIIFile InputVectors;
+  if (InputVectors.Parse(inputFileName) == false)
+    {
+      InputVectors.DumpErrors(cout) << endl;
+      return -1;
+    }
+  int NbrFusedStates = InputVectors.GetNbrColumns();
+  if (((NbrFusedStates % 4) != 0) || (NbrFusedStates < 8))
+    {
+      cout << "wrong number of columns in " << inputFileName << endl;
+      return -1;
+    }
+  NbrFusedStates /= 4;
+  nbrParticles = 0;
+  lzMax = 0;
+  totalLz = 0;
+  for (int j = 0; j < NbrFusedStates; ++j)
+    {
+      int TmpNbrParticles = 0;
+      int TmpLzMax = 0;
+      int TmpTotalLz = 0;
+      if (FQHEOnSphereFindSystemInfoFromVectorFileName(InputVectors(1 + (4 * j), 0), TmpNbrParticles, TmpLzMax, TmpTotalLz, statistics) == false)
+	{
+	  cout << "error while retrieving system parameters from state name " << InputVectors(1 + (4 * j), 0) << endl;
+	  return -1;
+	}
+      int LocalPadding = 0;
+      if (j != (NbrFusedStates - 1))
+	{
+	  LocalPadding = atoi(InputVectors(4 + (4 * j), 0));
+	}
+      else
+	{
+	  LocalPadding = -1;
+	}
+      totalLz += ((TmpTotalLz +  (TmpLzMax * TmpNbrParticles)) >> 1) + (lzMax * TmpNbrParticles);
+      nbrParticles += TmpNbrParticles;
+      lzMax += TmpLzMax + LocalPadding + 1;
+    }
+  totalLz <<= 1;
+  totalLz -= lzMax * nbrParticles;
+  return 0;
+}
+
 // get the Hilbert space from file 
 // 
 // inputFileName = input vector
@@ -761,7 +895,7 @@ int FQHEShereFuseMultipleStateCore(char* inputFileName, ParticleOnSphere* output
 // totalLz = reference on twice the total angular momentum
 // return value = pointer to the Hilbert space
 
-ParticleOnSphere* FQHEShereFuseStateGetHilbertSpace(char* inputFileName, char* referenceFile, char* hilbertFile, int& nbrParticles, int& lzMax, int& totalLz)
+ParticleOnSphere* FQHESphereFuseStateGetHilbertSpace(char* inputFileName, char* referenceFile, char* hilbertFile, int& nbrParticles, int& lzMax, int& totalLz)
 {
   if (strcmp("none" , inputFileName) == 0)
     return 0;
@@ -804,3 +938,4 @@ ParticleOnSphere* FQHEShereFuseStateGetHilbertSpace(char* inputFileName, char* r
     }
   return TmpBasis;
 }
+
