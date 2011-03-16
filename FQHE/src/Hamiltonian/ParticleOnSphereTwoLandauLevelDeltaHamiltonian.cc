@@ -848,10 +848,10 @@ double  ParticleOnSphereTwoLandauLevelDeltaHamiltonian::CalculateDeltaInteractio
    double Value = 0.0;
    
    //work out normalisation.
-   NormCoeff *= this->CalculateNormalization(Q, Q+l1, m1);
-   NormCoeff *= this->CalculateNormalization(Q, Q+l2, m2);
-   NormCoeff *= this->CalculateNormalization(Q, Q+l3, m3);
-   NormCoeff *= this->CalculateNormalization(Q, Q+l4, m4);
+   NormCoeff *= this->CalculateNormalization(Q, Q+l1, m1)*pow(-1.0,(double)l1);
+   NormCoeff *= this->CalculateNormalization(Q, Q+l2, m2)*pow(-1.0,(double)l2);
+   NormCoeff *= this->CalculateNormalization(Q, Q+l3, m3)*pow(-1.0,(double)l3);
+   NormCoeff *= this->CalculateNormalization(Q, Q+l4, m4)*pow(-1.0,(double)l4);
    
    NormCoeff *= 4.0*M_PI;
    

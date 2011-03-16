@@ -97,7 +97,7 @@ int main(int argc, char** argv)
    }
   
   // Get options for the options manager.  
-  bool GroundFlag = ((BooleanOption*) Manager["ground"])->GetBoolean();
+  bool GroundFlag = Manager.GetBoolean("ground");
   int NbrBosons = Manager.GetInteger("nbr-particles");
   int NbrFluxQuanta = Manager.GetInteger("nbr-flux");
   int InitialLz = Manager.GetInteger("initial-lz");

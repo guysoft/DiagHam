@@ -290,7 +290,11 @@ ostream& BosonOnSphereTwoLandauLevels::PrintState (ostream& Str, int state)
 {
   unsigned long value = this->StateDescription[state];
   Str << this->StateDescription[state] << ":\t";
-  const int SHIFT = 8 * sizeof( unsigned long ) - 1;
+#ifdef  __64_BITS__
+  const int SHIFT = 63;
+#else
+  const int SHIFT = 31;
+#endif
   const unsigned long MASK = 0x1ul << SHIFT;
 
    for ( int i = 1; i <= SHIFT + 1; i++ ) 
@@ -383,8 +387,10 @@ ostream& BosonOnSphereTwoLandauLevels::PrintState (ostream& Str, int state)
          Str << ' ';
    }
   Str << "  " << this->StateLzMax[state] << ", index: " << this->FindStateIndex(this->StateDescription[state]) << endl;
-    
-  this->PrintStateMonomial(Str, state);
+  
+  cout << "Norm: " <<  this->GetConfigNorm(state) << endl;
+  
+  this->PrintStateMonomial(Str, state) << endl;
   
   unsigned long* MonomialRep;
   MonomialRep = new unsigned long[this->NbrBosons];
@@ -521,7 +527,11 @@ long BosonOnSphereTwoLandauLevels::GenerateStates(int nbrBosons, int lzMax, int 
 	  TmpPos = this->GenerateStates(nbrBosons - i, lzMax+1, totalLz - (currentLz*i),  pos);
 	  unsigned long Mask = 0l;
 	  unsigned long bosons = (0x1ul << i) - 1;
+#ifdef  __64_BITS__
 	  Mask = (bosons << (63 - (i - 1 ) - (lzMax + this->NbrBosons - nbrBosons) )); //this places bosons starting from the MSB.
+#else
+	  Mask = (bosons << (31 - (i - 1 ) - (lzMax + this->NbrBosons - nbrBosons) )); //this places bosons starting from the MSB.
+#endif	  
 	  for (; pos < TmpPos; ++pos)
 	    {
 	      this->StateDescription[pos] |= Mask;
@@ -1107,13 +1117,13 @@ int BosonOnSphereTwoLandauLevels::AddAu (int index, int m, double& coefficient)
 	  for (int index = this->TemporaryStateLzMax + 1 ; index <= m_index ; index++ ) {
 	      this->TemporaryState[index] = 0;
 	  }
-	  this->TemporaryStateLzMax = m_index;
-	}
-	this->TemporaryState[m_index]++;
-	coefficient *= this->TemporaryState[m_index];
-	coefficient = sqrt(coefficient);
-	return this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax)); 
+	this->TemporaryStateLzMax = m_index;
       }
+      this->TemporaryState[m_index]++;
+      coefficient *= this->TemporaryState[m_index];
+      coefficient = sqrt(coefficient);
+      return this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax)); 
+    }
 }
 
 // project out any configurations that have particles on levels other than lll
@@ -1131,7 +1141,11 @@ void  BosonOnSphereTwoLandauLevels::ProjectionInTheLowestLevel(RealVector &input
       //need to translate the format on a single LL into the 2LL picture. Involves reverse and shift. 
       Tmp = finalSpace->FermionBasis->StateDescription[i];
       Etat = Tmp;
-      int s = sizeof(Tmp) * 8 - 1; // extra shift needed at end
+#ifdef  __64_BITS__  
+      int s = 63; // extra shift needed at end
+#else      
+      int s = 31; // extra shift needed at end
+#endif      
       for (Tmp >>= 1; Tmp; Tmp >>= 1)
       {   
 	Etat <<= 1;
@@ -1156,8 +1170,13 @@ void  BosonOnSphereTwoLandauLevels::ProjectionInTheLowestLevel(RealVector &input
 void  BosonOnSphereTwoLandauLevels::LandauLevelOccupationNumber(int state, int* lLOccupationConfiguration)
 {
   unsigned long State = this->StateDescription[state];
-  int idx = 63;
+#ifdef  __64_BITS__  
+  int idx = 63;  
   while ( idx >= ( 63 - lLOccupationConfiguration[1] - this->LzMaxUp ) ) 
+#else    
+  int idx = 31;  
+  while ( idx >= ( 31 - lLOccupationConfiguration[1] - this->LzMaxUp ) ) 
+#endif
     {
       if ( (State >> idx ) & 0x1ul ) 
 	{

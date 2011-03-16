@@ -327,6 +327,12 @@ class BosonOnSphereTwoLandauLevels :  public ParticleOnSphereWithSpin
   // LLOccupationConfiguration = array where the decomposition will be store
   void  LandauLevelOccupationNumber(int state, int* lLOccupationConfiguration);
   
+  // Calculate normalisation needed for this config
+  // 
+  // index = index of state.
+  // return value = index used for bosonic representation
+  double GetConfigNorm(long index);
+  
  protected:
 
   // convert a bosonic state into its fermionic counterpart
@@ -470,14 +476,18 @@ inline unsigned long BosonOnSphereTwoLandauLevels::BosonToFermion(unsigned long*
 
   for (int i = 0; i <= initialStateLzMax; ++i)
     {
-    	if ( initialState[i] > 0 ) {
-		    bosons = (0x1ul << initialState[i]) - 1;
-		   	Mask = (bosons << (63 - (initialState[i] - 1 ) - (i + bosons_placed) )); //this places bosons starting from the MSB.
-		   	bosons_placed += initialState[i];
-		   	TmpState |= Mask;
-		}
+      if ( initialState[i] > 0 ) 
+	{
+	  bosons = (0x1ul << initialState[i]) - 1;
+#ifdef  __64_BITS__  	  
+	  Mask = (bosons << (63 - (initialState[i] - 1 ) - (i + bosons_placed) )); //this places bosons starting from the MSB.
+#else	  
+	  Mask = (bosons << (31 - (initialState[i] - 1 ) - (i + bosons_placed) )); //this places bosons starting from the MSB.
+#endif	  
+	  bosons_placed += initialState[i];
+	  TmpState |= Mask;
 	}
-	 
+    }	 
   return TmpState;
 }
 
@@ -491,35 +501,41 @@ inline unsigned long BosonOnSphereTwoLandauLevels::BosonToFermion(unsigned long*
 inline void BosonOnSphereTwoLandauLevels::FermionToBoson(unsigned long initialState, int initialStateLzMax, unsigned long*& finalState, int& finalStateLzMax)
 {
 
-  int bit = 63;
+  
   int pos = 0;
   finalState[pos] = 0;
   unsigned long mask;
   bool last = false;
-  while ( bit >= 0 && pos < this->NbrLzValue && bit >= (63 - initialStateLzMax) ) 
+#ifdef  __64_BITS__   
+  int bit = 63;
+  while ( bit >= 0 && pos < this->NbrLzValue && bit >= (63 - initialStateLzMax) )
+#else    
+  int bit = 31;
+  while ( bit >= 0 && pos < this->NbrLzValue && bit >= (31 - initialStateLzMax) )     
+#endif    
     {
       mask = 0x1ul << bit; 
       if ( (mask & initialState) > 0 ) 
         {
-	  		finalState[pos]++;
-	  	    last = true;
-	    }	
+	  finalState[pos]++;
+	  last = true;
+	}	
       else 
         {
-	       if ( last ) last = false;
-	       pos++;
-	       finalState[pos] = 0;
-	    }
+	  if ( last ) last = false;
+	  pos++;
+	  finalState[pos] = 0;
+	}
        bit--;
     }
   if ( pos < this->NbrLzValue ) 
     {
-  		finalStateLzMax = pos;
-  	}
+      finalStateLzMax = pos;
+    }
   else
-  	{
-  		finalStateLzMax = this->NbrLzValue-1;
-  	} 
+    {
+      finalStateLzMax = this->NbrLzValue-1;
+    } 
 }
 
 // convert a fermionic state to its monomial representation
@@ -536,12 +552,20 @@ inline void BosonOnSphereTwoLandauLevels::GetMonomial(long index, unsigned long*
   int TmpLz = 0; // using labels as in bosonic representation where 0 corresponds to largest lz on SLL. 
   while (Pos <= StateLzMax)
     {
+#ifdef  __64_BITS__      
       while ((Pos <= StateLzMax) && (((InitialState >> (63 - Pos)) & 0x1ul) != 0x0ul))
+#else	
+      while ((Pos <= StateLzMax) && (((InitialState >> (31 - Pos)) & 0x1ul) != 0x0ul))	
+#endif	
 	{
 	  finalState[Index--] = (unsigned long) TmpLz;
 	  ++Pos;
 	}
+#ifdef  __64_BITS__	
       while ((Pos <= StateLzMax) && (((InitialState >> (63 - Pos)) & 0x1ul) == 0x0ul))
+#else	
+      while ((Pos <= StateLzMax) && (((InitialState >> (31 - Pos)) & 0x1ul) == 0x0ul))	
+#endif	
 	{
 	  ++TmpLz;
 	  ++Pos;
@@ -577,12 +601,20 @@ inline void BosonOnSphereTwoLandauLevels::ConvertToMonomial(unsigned long initia
   int TmpLz = 0; // using labels as in bosonic representation where 0 corresponds to largest lz on SLL. 
   while (Pos <= initialStateLzMax)
     {
+#ifdef  __64_BITS__        
       while ((Pos <= initialStateLzMax) && (((initialState >> (63 - Pos)) & 0x1ul) != 0x0ul))
+#else
+      while ((Pos <= initialStateLzMax) && (((initialState >> (31 - Pos)) & 0x1ul) != 0x0ul))
+#endif
 	{
 	  finalState[Index--] = (unsigned long) TmpLz;
 	  ++Pos;
 	}
+#ifdef  __64_BITS__	
       while ((Pos <= initialStateLzMax) && (((initialState >> (63 - Pos)) & 0x1ul) == 0x0ul))
+#else	
+      while ((Pos <= initialStateLzMax) && (((initialState >> (31 - Pos)) & 0x1ul) == 0x0ul))
+#endif	
 	{
 	  ++TmpLz;
 	  ++Pos;
@@ -599,7 +631,11 @@ inline unsigned long BosonOnSphereTwoLandauLevels::ConvertFromMonomial(unsigned 
 {
   unsigned long Tmp = 0x0ul;
   for (int i = 0; i < this->NbrBosons; ++i)
+#ifdef  __64_BITS__     
     Tmp |= 0x1ul << (63 - (initialState[this->NbrBosons-i-1]+i)); 
+#else
+    Tmp |= 0x1ul << (31 - (initialState[this->NbrBosons-i-1]+i)); 
+#endif
   return Tmp;
 }
 
@@ -648,6 +684,26 @@ inline int BosonOnSphereTwoLandauLevels::GetIndexFromLzD(int lz)
 {
   //return this->LzMaxUp + 1 + this->LzMaxDown + 1 - lz;
   return (this->LzMaxUp << 1 ) - lz;
+}
+
+// Calculate normalisation needed for this config
+// 
+// index = index of state.
+// return value = index used for bosonic representation
+
+inline double BosonOnSphereTwoLandauLevels::GetConfigNorm(long index)
+{
+  double Value = 1.0;
+  this->FermionToBoson(this->StateDescription[index],this->StateLzMax[index], this->ProdATemporaryState, this->ProdATemporaryStateLzMax);
+  
+  for ( int i = 0 ; i <= this->ProdATemporaryStateLzMax ; i++ ) 
+    {
+      if ( this->ProdATemporaryState[i] > 0 ) 
+	{
+	  Value *= (double)this->ProdATemporaryState[i];
+	}
+    }
+  return sqrt(Value);
 }
 
 #endif

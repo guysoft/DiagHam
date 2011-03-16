@@ -35,6 +35,7 @@
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphereWithSpin.h"
+#include "HilbertSpace/BosonOnSphereTwoLandauLevels.h"
 #include "Hamiltonian/AbstractQHEOnSphereWithSpinFullHamiltonian.h"
 
 #include <iostream>
@@ -54,6 +55,7 @@ class ParticleOnSphereTwoLandauLevelDeltaHamiltonian : public AbstractQHEOnSpher
   // first index refered to the spin sector (sorted as up-up, down-down, up-down)
   double** PseudoPotentials;
   
+  // bool value which signifies whether or not pseudo potentials should be used.
   bool UsePseudoPotentials;
 
   double* TotalCyclotronEnergy;
@@ -65,6 +67,9 @@ class ParticleOnSphereTwoLandauLevelDeltaHamiltonian : public AbstractQHEOnSpher
   
   // twice the maximum momentum a particle can reach in the lower Landau level
   int LzMaxDown;
+
+  // flag to specify whether or not to use additional normalization
+  bool UseAdditionalNormalisation; 
 
  public:
 
@@ -82,7 +87,7 @@ class ParticleOnSphereTwoLandauLevelDeltaHamiltonian : public AbstractQHEOnSpher
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
   ParticleOnSphereTwoLandauLevelDeltaHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, 
                                                                                      double** pseudoPotential, double *cyclotronEnergy,
-                                                                                     AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, char* precalculationFileName);
+                                                                                     AbstractArchitecture* architecture,long memory, bool onDiskCacheFlag, char* precalculationFileName);
 
   // destructor
   //
@@ -202,7 +207,7 @@ inline void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateMNTwoBodyAdd
 		      {
 			Index = particles->AddAdd(this->DownDownSectorIndicesPerSum[j-2][k << 1], this->DownDownSectorIndicesPerSum[j-2][(k << 1) + 1], Coefficient);
 			if (Index < Dim)
-			      vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;
+			    vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;			    
 			++TmpInteractionFactor;
 		      }	  
 		}
@@ -215,7 +220,7 @@ inline void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateMNTwoBodyAdd
 		      {
 			Index = particles->AduAdd(this->UpDownSectorIndicesPerSum[j-1][k << 1], this->UpDownSectorIndicesPerSum[j-1][(k << 1) + 1], Coefficient);
 			if (Index < Dim)
-			      vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;
+			    vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;			    
 			++TmpInteractionFactor;
 		      }	  
 		}
@@ -239,7 +244,7 @@ inline void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateMNTwoBodyAdd
                 {
                   Index = particles->AduAdu(this->UpUpSectorIndicesPerSum[j+1][k << 1], this->UpUpSectorIndicesPerSum[j+1][(k << 1) + 1], Coefficient);
 		  if (Index < Dim)
-		    vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;
+		      vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;		      
                   ++TmpInteractionFactor;
 		}
         	  
@@ -251,7 +256,9 @@ inline void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateMNTwoBodyAdd
 		      {
 			Index = particles->AddAdd(this->DownDownSectorIndicesPerSum[j-1][k << 1], this->DownDownSectorIndicesPerSum[j-1][(k << 1) + 1], Coefficient);
 			if (Index < Dim)
-			  vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;
+			  {
+			    vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;			    
+			  }
 			++TmpInteractionFactor;
 		      }	  
 		  }
@@ -262,7 +269,9 @@ inline void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateMNTwoBodyAdd
 		  {
 		    Index = particles->AduAdd(this->UpDownSectorIndicesPerSum[j][k << 1], this->UpDownSectorIndicesPerSum[j][(k << 1) + 1], Coefficient);
 		    if (Index < Dim)
-		      vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;
+		      {
+			vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;			
+		      }
 		    ++TmpInteractionFactor;
 		  }	  
 	      }
@@ -287,7 +296,9 @@ inline void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateMNTwoBodyAdd
                 {
                   Index = particles->AduAdu(this->UpUpSectorIndicesPerSum[j+2][k << 1], this->UpUpSectorIndicesPerSum[j+2][(k << 1) + 1], Coefficient);
 		  if (Index < Dim)
-                    vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;
+		    {
+		       vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;		      
+		    }
                   ++TmpInteractionFactor;
 		}
         	  
@@ -297,7 +308,9 @@ inline void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateMNTwoBodyAdd
 		{
 		  Index = particles->AddAdd(this->DownDownSectorIndicesPerSum[j][k << 1], this->DownDownSectorIndicesPerSum[j][(k << 1) + 1], Coefficient);
 		  if (Index < Dim)
-		    vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;
+		    {
+		      vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;		      
+		    }
 		  ++TmpInteractionFactor;
 		}	  
 
@@ -308,7 +321,9 @@ inline void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateMNTwoBodyAdd
 		{
 		  Index = particles->AduAdd(this->UpDownSectorIndicesPerSum[j+1][k << 1], this->UpDownSectorIndicesPerSum[j+1][(k << 1) + 1], Coefficient);
 		  if (Index < Dim)
-		    vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;
+		    {
+		      vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;		      
+		    }
 		  ++TmpInteractionFactor;
 		}	  
 	    }
@@ -554,8 +569,8 @@ inline void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateMNTwoBodyFas
                   Index = particles->AduAdu(this->UpUpSectorIndicesPerSum[j][k << 1], this->UpUpSectorIndicesPerSum[j][(k << 1) + 1], Coefficient);
 		  if (Index < Dim)
 		    {
-		      indexArray[position] = Index;
-		      coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+		      indexArray[position] = Index;		     
+		      coefficientArray[position] = Coefficient * (*TmpInteractionFactor) * Coefficient3;			  
 		      ++position;
 		    }
                   ++TmpInteractionFactor;
@@ -571,7 +586,7 @@ inline void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateMNTwoBodyFas
 			if (Index < Dim)
 			  {
 			    indexArray[position] = Index;
-			    coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			    coefficientArray[position] = Coefficient * (*TmpInteractionFactor) * Coefficient3;			  
 			    ++position;
 			  }
 			++TmpInteractionFactor;
@@ -588,7 +603,7 @@ inline void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateMNTwoBodyFas
 			if (Index < Dim)
 			  {
 			    indexArray[position] = Index;
-			    coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			    coefficientArray[position] = Coefficient * (*TmpInteractionFactor) * Coefficient3;			  			    
 			    ++position;
 			  }
 			++TmpInteractionFactor;
@@ -614,7 +629,7 @@ inline void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateMNTwoBodyFas
 		  if (Index < Dim)
 		    {
 		      indexArray[position] = Index;
-		      coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+		      coefficientArray[position] = Coefficient * (*TmpInteractionFactor) * Coefficient3;
 		      ++position;
 		    }
                   ++TmpInteractionFactor;
@@ -630,7 +645,7 @@ inline void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateMNTwoBodyFas
 			if (Index < Dim)
 			  {
 			    indexArray[position] = Index;
-			    coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			    coefficientArray[position] = Coefficient * (*TmpInteractionFactor) * Coefficient3;			  		      
 			    ++position;
 			  }
 			++TmpInteractionFactor;
@@ -645,7 +660,7 @@ inline void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateMNTwoBodyFas
 		    if (Index < Dim)
 		      {
 			indexArray[position] = Index;
-			coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			coefficientArray[position] = Coefficient * (*TmpInteractionFactor) * Coefficient3;			  		      
 			++position;
 		      }
 		    ++TmpInteractionFactor;
@@ -672,7 +687,7 @@ inline void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateMNTwoBodyFas
 		  if (Index < Dim)
                     {
 		      indexArray[position] = Index;
-		      coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+		      coefficientArray[position] = Coefficient * (*TmpInteractionFactor) * Coefficient3;			  		      
 		      ++position;
 		    }
                   ++TmpInteractionFactor;
@@ -686,7 +701,7 @@ inline void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateMNTwoBodyFas
 		  if (Index < Dim)
 		    {
 		      indexArray[position] = Index;
-		      coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+		      coefficientArray[position] = Coefficient * (*TmpInteractionFactor) * Coefficient3;			  		      
 		      ++position;
 		    }
 		  ++TmpInteractionFactor;
@@ -701,7 +716,7 @@ inline void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateMNTwoBodyFas
 		  if (Index < Dim)
 		    {
 		      indexArray[position] = Index;
-		      coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+		      coefficientArray[position] = Coefficient * (*TmpInteractionFactor) * Coefficient3;			  		      
 		      ++position;
 		    }
 		  ++TmpInteractionFactor;
