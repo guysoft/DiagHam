@@ -428,7 +428,7 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
                       int m3 = (this->DownDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxDown - 1;
                       int m4 = (this->DownDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
                       
-                      this->InteractionFactorsDownDownDownDown[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1)/2.0 ,0,(double)m1/2.0 ,0,(double)m2 /2.0 ,0,(double)m3/2.0 ,0,(double)m4/2.0);
+                      this->InteractionFactorsDownDownDownDown[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1)/2.0 ,0.0,(double)m1/2.0 ,0.0,(double)m2 /2.0 ,0.0,(double)m3/2.0 ,0.0,(double)m4/2.0);
                       //cout << this->LzMaxDown-1.0 << ": " << m1  << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsDownDownDownDown[i][Index] << endl;
                       ++Index;
                       TotalNbrInteractionFactors++;
@@ -454,7 +454,7 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
                       int m3 = (this->UpDownSectorIndicesPerSum[i+1][j2 << 1] << 1) - this->LzMaxUp;
                       int m4 = (this->UpDownSectorIndicesPerSum[i+1][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
                       
-                      this->InteractionFactorsUpDownDownDown[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1) /2.0 ,0,(double)m1 /2.0 ,0,(double)m2 /2.0,1,(double)m3/2.0,0,(double)m4/2.0);
+                      this->InteractionFactorsUpDownDownDown[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1) /2.0 ,0.0 ,(double)m1 /2.0 ,0.0 ,(double)m2 /2.0,1.0,(double)m3/2.0,0.0,(double)m4/2.0);
                       //cout << this->LzMaxDown-1.0 << ": " << m1 << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsUpDownDownDown[i][Index] << endl;
                       ++Index;
                       TotalNbrInteractionFactors++;
@@ -479,7 +479,7 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
                       int m3 = (this->UpUpSectorIndicesPerSum[i+2][j2 << 1] << 1) - this->LzMaxUp;
                       int m4 = (this->UpUpSectorIndicesPerSum[i+2][(j2 << 1) + 1] << 1) - this->LzMaxUp;
                       
-                      this->InteractionFactorsUpUpDownDown[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1)/ 2.0 ,0,(double)m1/2.0 ,0,(double)m2 /2.0,1,(double)m3 /2.0 ,1,(double)m4/2.0);
+                      this->InteractionFactorsUpUpDownDown[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1)/ 2.0 ,0.0,(double)m1/2.0 ,0.0,(double)m2 /2.0,1.0,(double)m3 /2.0 ,1.0,(double)m4/2.0);
                       //cout << this->LzMaxDown-1.0 << ": " << m1 << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsUpUpDownDown[i][Index] << endl;
                       ++Index;
                       TotalNbrInteractionFactors++;
@@ -504,7 +504,7 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
                       int m3 = (this->DownDownSectorIndicesPerSum[i-1][j2 << 1] << 1) - this->LzMaxDown - 1;
                       int m4 = (this->DownDownSectorIndicesPerSum[i-1][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
                       
-                      this->InteractionFactorsDownDownUpDown[i-1][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1) /2.0 ,1,(double)m1/2.0 ,0,(double)m2/2.0 ,0,(double)m3/2.0 ,0,(double)m4/2.0);
+                      this->InteractionFactorsDownDownUpDown[i-1][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1) /2.0 ,1.0,(double)m1/2.0 ,0.0,(double)m2/2.0 ,0.0,(double)m3/2.0 ,0.0,(double)m4/2.0);
                       //cout << this->LzMaxDown-1.0 << ": " << m1  << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsDownDownUpDown[i-1][Index] << endl;
                       ++Index;
                       TotalNbrInteractionFactors++;
@@ -529,7 +529,7 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
                       int m3 = (this->UpDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
                       int m4 = (this->UpDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
                       
-                      this->InteractionFactorsUpDownUpDown[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1) /2.0 ,1,(double)m1 /2.0 ,0,(double)m2 /2.0,1,(double)m3 /2.0,0,(double)m4 /2.0);
+                      this->InteractionFactorsUpDownUpDown[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1) /2.0 ,1.0,(double)m1 /2.0 ,0.0,(double)m2 /2.0,1.0,(double)m3 /2.0,0.0,(double)m4 /2.0);
                       //cout << this->LzMaxDown-1.0 << ": " << m1  << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsUpDownUpDown[i][Index] << endl;
                       ++Index;
                       TotalNbrInteractionFactors++;
@@ -554,7 +554,7 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
                       int m3 = (this->UpUpSectorIndicesPerSum[i+1][j2 << 1] << 1) - this->LzMaxUp;
                       int m4 = (this->UpUpSectorIndicesPerSum[i+1][(j2 << 1) + 1] << 1) - this->LzMaxUp;
                       
-                      this->InteractionFactorsUpUpUpDown[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1) /2.0 ,1,(double)m1 /2.0 ,0,(double)m2 /2.0,1,(double)m3 /2.0,1,(double)m4/2.0);
+                      this->InteractionFactorsUpUpUpDown[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1) /2.0 ,1.0,(double)m1 /2.0 ,0.0,(double)m2 /2.0,1.0,(double)m3 /2.0,1.0,(double)m4/2.0);
                       //cout << this->LzMaxDown-1.0 << ": " << m1  << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsUpUpUpDown[i][Index] << endl;
                       ++Index;
                       TotalNbrInteractionFactors++;
@@ -579,7 +579,7 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
                       int m3 = (this->DownDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxDown - 1;
                       int m4 = (this->DownDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
                       
-                      this->InteractionFactorsDownDownUpUp[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1) /2.0 ,1,(double)m1 /2.0 ,1,(double)m2 /2.0,0,(double)m3 /2.0,0,(double)m4 /2.0);
+                      this->InteractionFactorsDownDownUpUp[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1) /2.0 ,1.0,(double)m1 /2.0 ,1.0,(double)m2 /2.0,0.0,(double)m3 /2.0,0.0,(double)m4 /2.0);
                       //cout << this->LzMaxDown-1.0 << ": " << m1  << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsDownDownUpUp[i][Index] << endl;
                       ++Index;
                       TotalNbrInteractionFactors++;
@@ -604,7 +604,7 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
                       int m3 = (this->UpDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
                       int m4 = (this->UpDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
                       
-                      this->InteractionFactorsUpDownUpUp[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1)/2.0 ,1,(double)m1 /2.0 ,1,(double)m2 /2.0,1,(double)m3 /2.0,0,(double)m4 /2.0);
+                      this->InteractionFactorsUpDownUpUp[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1)/2.0 ,1.0,(double)m1 /2.0 ,1.0,(double)m2 /2.0,1.0,(double)m3 /2.0,0.0,(double)m4 /2.0);
                       //cout << this->LzMaxDown-1.0 << ": " << m1 << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsUpDownUpUp[i][Index] << endl;
                       ++Index;
                       TotalNbrInteractionFactors++;
@@ -629,7 +629,7 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
                       int m3 = (this->UpUpSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
                       int m4 = (this->UpUpSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxUp ;
                       
-                      this->InteractionFactorsUpUpUpUp[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1)/2.0 ,1,(double)m1 /2.0 ,1,(double)m2 /2.0,1,(double)m3 /2.0,1,(double)m4 / 2.0);
+                      this->InteractionFactorsUpUpUpUp[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1)/2.0 ,1.0,(double)m1 /2.0 ,1.0,(double)m2 /2.0,1.0,(double)m3 /2.0,1.0,(double)m4 / 2.0);
                       //cout << this->LzMaxDown-1.0 << ": " << m1  << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsUpUpUpUp[i][Index] << endl;
                       ++Index;
                       TotalNbrInteractionFactors++;

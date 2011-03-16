@@ -2568,3 +2568,27 @@ void  FermionOnSphereTwoLandauLevels::LandauLevelOccupationNumber(int state, int
 	}
     }
 }
+
+
+// project out any configurations that have particles on levels other than lll
+//
+// inputVector = vector to apply the projection to
+// outputVector = projected vector
+// finalSpace = reference to space of output vector space
+
+void FermionOnSphereTwoLandauLevels::ProjectionInTheLowestLevel(RealVector &inputVector, RealVector & outputVector, FermionOnSphere * finalSpace)
+{
+  unsigned long * Landau = new unsigned long [this->NbrFermions];
+  unsigned long * State = new unsigned long [this->NbrFermions];
+  for(int i = 0; i < this->NbrFermions ; i++)
+      Landau[i] = 0;
+  for(int i = 0 ; i < finalSpace->GetHilbertSpaceDimension() ; i++)
+    {
+      finalSpace->GetMonomial(i,State);
+      unsigned long Etat = this->ConvertFromPowerLandauRepresentation(State,Landau);
+      int TmpLzMax = 2*this->LzMaxUp+1;
+      while ((Etat >> TmpLzMax) == 0x0ul)
+	--TmpLzMax;
+	outputVector[i] = inputVector[this->CarefulFindStateIndex(Etat,TmpLzMax)];
+    }
+}

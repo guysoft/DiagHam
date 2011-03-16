@@ -371,6 +371,13 @@ class FermionOnSphereTwoLandauLevels :  public FermionOnSphereWithSpin
   // state = ID of the state to handle
   // lLOccupationConfiguration = array where the decomposition will be store
   virtual void LandauLevelOccupationNumber(int state, int* lLOccupationConfiguration);
+  
+  // project out any configurations that have particles on levels other than lll
+  //
+  // inputVector = vector to apply the projection to
+  // outputVector = projected vector
+  // finalSpace = reference to space of output vector space
+  void  ProjectionInTheLowestLevel(RealVector &inputVector, RealVector & outputVector, FermionOnSphere * finalSpace);
 
  protected:
   
@@ -493,6 +500,12 @@ class FermionOnSphereTwoLandauLevels :  public FermionOnSphereWithSpin
   // finalSpace = pointer to the final HilbertSpace
   virtual void SlaterTimesSlaterProjection(unsigned long* slater, unsigned long* lllslater, unsigned long * variable, int nbrVariable, map <unsigned long, LongRational> & sortingMap, BosonOnSphereShort* finalSpace);
   
+  // convert to standard fermionic representation
+  //
+  // monomial = reference to state stored in monomial format
+  // landaulevel = the relevant landau level
+  // return value = fermionic representation
+  unsigned long ConvertFromPowerLandauRepresentation(unsigned long* monomial,unsigned long* landauLevel);  
 };
 
 // convert a fermionic state to its monomial representation
@@ -585,6 +598,16 @@ inline void FermionOnSphereTwoLandauLevels::ConvertToMonomialVariable(unsigned l
 	  }
 	}
     }
+}
+
+inline unsigned long FermionOnSphereTwoLandauLevels::ConvertFromPowerLandauRepresentation(unsigned long* monomial,unsigned long* landauLevel)
+{
+  unsigned long TmpState = 0x0ul;
+  for (int i = 0; i < this->NbrFermions; i++)
+    {
+      TmpState |= 0x1ul << (((monomial[i] + (this->LzShiftDown * (1-landauLevel[i]))) << 1) + landauLevel[i]);
+    }
+  return TmpState;
 }
 
 #endif
