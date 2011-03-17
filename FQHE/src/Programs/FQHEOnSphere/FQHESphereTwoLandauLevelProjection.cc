@@ -52,7 +52,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particule (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the inital momentum projection for the system (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "max lz value a fermions in the LLL can have (override autodetection from input file name if non zero)", 0);
-  (*SystemGroup) += new BooleanOption  ('n', "normalize", "normalize the vector in the end");
+  (*SystemGroup) += new BooleanOption  ('u', "unnormalized", "leave the vector unormalized at the end");
   (*OutputGroup) += new SingleStringOption ('o', "bin-output", "output the result of the projection into a binary file");
   (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the result of the projection into a text file");
   
@@ -79,9 +79,9 @@ int main(int argc, char** argv)
   char * StateName= Manager.GetString("state");
   char* OutputFileName = ((SingleStringOption*) Manager["bin-output"])->GetString();
   char* OutputTxtFileName = ((SingleStringOption*) Manager["txt-output"])->GetString();
-  bool Normalize = false; 
-  if (Manager.GetBoolean("normalize") == true) 
-    Normalize = true;
+  bool UnNormalize = false; 
+  if (Manager.GetBoolean("unnormalized") == true) 
+    UnNormalize = true;
   
   if (StateName == 0)
     {
@@ -131,7 +131,7 @@ int main(int argc, char** argv)
       
       ((FermionOnSphereTwoLandauLevels*) Space)->ProjectionInTheLowestLevel(GroundState,OutputVector,FinalSpace);
       
-      if ( Normalize ) 
+      if ( !UnNormalize ) 
 	OutputVector.Normalize();
       
       OutputVector.WriteVector(OutputFileName);	
@@ -176,7 +176,7 @@ int main(int argc, char** argv)
       
       ((BosonOnSphereTwoLandauLevels*) Space)->ProjectionInTheLowestLevel(GroundState,OutputVector,FinalSpace);
       
-      if ( Normalize ) 
+      if ( !UnNormalize ) 
 	OutputVector.Normalize();
       
       OutputVector.WriteVector(OutputFileName);	

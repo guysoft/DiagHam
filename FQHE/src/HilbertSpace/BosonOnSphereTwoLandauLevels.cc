@@ -288,7 +288,7 @@ AbstractQuantumNumber* BosonOnSphereTwoLandauLevels::GetQuantumNumber (int index
 
 ostream& BosonOnSphereTwoLandauLevels::PrintState (ostream& Str, int state)
 {
-  unsigned long value = this->StateDescription[state];
+  unsigned long Value = this->StateDescription[state];
   Str << this->StateDescription[state] << ":\t";
 #ifdef  __64_BITS__
   const int SHIFT = 63;
@@ -299,7 +299,7 @@ ostream& BosonOnSphereTwoLandauLevels::PrintState (ostream& Str, int state)
 
    for ( int i = 1; i <= SHIFT + 1; i++ ) 
    {
-     if ( (value & MASK) > 0 ) 
+     if ( (Value & MASK) > 0 ) 
        {
 	 Str << '1';
        }
@@ -307,14 +307,14 @@ ostream& BosonOnSphereTwoLandauLevels::PrintState (ostream& Str, int state)
        {
          Str << '0';
        }
-     value <<= 1;
+     Value <<= 1;
 
       if ( i % 8 == 0 )
          Str << ' ';
    }
   Str << "  " << this->StateLzMax[state] << endl;
   
-  value = this->StateDescription[state];
+  Value = this->StateDescription[state];
   /*int occupations[this->LzMaxUp*2];
   for ( int i = 0 ; i < this->LzMaxUp*2 ; i++ )
     {
@@ -350,7 +350,7 @@ ostream& BosonOnSphereTwoLandauLevels::PrintState (ostream& Str, int state)
       Str << occupations[this->LzMaxUp + 1 + LzMaxDown - i] << " " ;
   }*/
   
-  this->FermionToBoson(value, this->StateLzMax[state], this->TemporaryState, this->TemporaryStateLzMax);
+  this->FermionToBoson(Value, this->StateLzMax[state], this->TemporaryState, this->TemporaryStateLzMax);
   for ( int i = 0 ; i <= this->LzMaxUp ; i++ ) {
   	  if ( (this->LzMaxUp-i) <=  this->TemporaryStateLzMax ) {
 	      Str << this->TemporaryState[this->LzMaxUp-i] << " " ;
@@ -361,7 +361,8 @@ ostream& BosonOnSphereTwoLandauLevels::PrintState (ostream& Str, int state)
   Str << endl;
   Str << "  ";
   for ( int i = 0 ; i <= this->LzMaxDown ; i++ ) {
-  	  if ( (this->LzMaxUp + 1 + LzMaxDown - i) <=  this->TemporaryStateLzMax ) {
+      if ( (this->LzMaxUp + 1 + LzMaxDown - i) <=  this->TemporaryStateLzMax ) 
+      {
       	Str << this->TemporaryState[this->LzMaxUp + 1 + LzMaxDown - i] << " " ;
       } else {
       	Str << "0" << " " ;
@@ -369,11 +370,11 @@ ostream& BosonOnSphereTwoLandauLevels::PrintState (ostream& Str, int state)
   }  
   
   Str << endl;
-  value = this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax);
+  Value = this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax);
   
    for ( int i = 1; i <= SHIFT + 1; i++ ) 
    {
-     if ( (value & MASK) > 0 ) 
+     if ( (Value & MASK) > 0 ) 
        {
 	 Str << '1';
        }
@@ -381,7 +382,7 @@ ostream& BosonOnSphereTwoLandauLevels::PrintState (ostream& Str, int state)
        {
          Str << '0';
        }
-     value <<= 1;
+     Value <<= 1;
 
       if ( i % 8 == 0 )
          Str << ' ';
@@ -397,6 +398,42 @@ ostream& BosonOnSphereTwoLandauLevels::PrintState (ostream& Str, int state)
   this->GetMonomial((long)state, MonomialRep);
   Str << endl <<  "Converted back from monomial: " << this->ConvertFromMonomial(MonomialRep) << endl;
   delete []MonomialRep;
+
+  return Str;
+}
+
+
+// print a given State
+//
+// Str = reference on current output stream 
+// state = binary representation of state to print
+// return value = reference on current output stream 
+
+ostream& BosonOnSphereTwoLandauLevels::PrintStateBinary (ostream& Str, unsigned long state)
+{
+  unsigned long Value = state;
+#ifdef  __64_BITS__
+  const int SHIFT = 63;
+#else
+  const int SHIFT = 31;
+#endif
+  const unsigned long MASK = 0x1ul << SHIFT;
+
+   for ( int i = 1; i <= SHIFT + 1; i++ ) 
+   {
+     if ( (Value & MASK) > 0 ) 
+       {
+	 Str << '1';
+       }
+     else
+       {
+         Str << '0';
+       }
+     Value <<= 1;
+
+      if ( i % 8 == 0 )
+         Str << ' ';
+   }
 
   return Str;
 }
@@ -1138,26 +1175,18 @@ void  BosonOnSphereTwoLandauLevels::ProjectionInTheLowestLevel(RealVector &input
   int Idx; 
   for(int i = 0 ; i < finalSpace->GetHilbertSpaceDimension() ; i++)
     {
-      //need to translate the format on a single LL into the 2LL picture. Involves reverse and shift. 
-      Tmp = finalSpace->FermionBasis->StateDescription[i];
-      Etat = Tmp;
+      //need to translate the format on a single LL into the 2LL picture. 
 #ifdef  __64_BITS__  
       int s = 63; // extra shift needed at end
 #else      
       int s = 31; // extra shift needed at end
 #endif      
-      for (Tmp >>= 1; Tmp; Tmp >>= 1)
-      {   
-	Etat <<= 1;
-	Etat |= Tmp & 1;
-	s--;
-      }
-      Etat <<= s; 
-      //reversed so now need to shift by amount of flux quanta on SLL as assume it is empty.
-      Etat >>= this->LzMaxUp + 1; 
+      Etat = finalSpace->FermionBasis->StateDescription[i] << (s - (this->LzMaxDown + this->NbrBosons) -(this->LzMaxUp) ); 
       Idx = this->FindStateIndex(Etat);
       if ( Idx < this->HilbertSpaceDimension ) 
-	outputVector[i] = inputVector[Idx];
+	{
+	  outputVector[i] = inputVector[Idx];
+	}
     }
 }
 

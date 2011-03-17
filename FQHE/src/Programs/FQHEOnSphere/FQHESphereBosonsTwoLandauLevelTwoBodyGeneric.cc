@@ -71,6 +71,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file-lll", "file describing the 2-body interaction in terms of the pseudo-potential on LLL");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file-sll", "file describing the 2-body interaction in terms of the pseudo-potential on SLL");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
+  (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
   
   (*PrecalculationGroup) += new BooleanOption ('\n', "disk-cache", "use disk cache for fast multiplication", false);

@@ -333,6 +333,13 @@ class BosonOnSphereTwoLandauLevels :  public ParticleOnSphereWithSpin
   // return value = index used for bosonic representation
   double GetConfigNorm(long index);
   
+  // print a given State
+  //
+  // Str = reference on current output stream 
+  // state = binary representation of state to print
+  // return value = reference on current output stream 
+  ostream& PrintStateBinary (ostream& Str, unsigned long state);
+  
  protected:
 
   // convert a bosonic state into its fermionic counterpart
