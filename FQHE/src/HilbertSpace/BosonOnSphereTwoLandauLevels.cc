@@ -32,6 +32,7 @@
 #include "config.h"
 #include "HilbertSpace/BosonOnSphere.h"
 #include "HilbertSpace/BosonOnSphereTwoLandauLevels.h"
+#include "HilbertSpace/FermionOnSphereTwoLandauLevels.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
 #include "Matrix/ComplexMatrix.h"
@@ -39,17 +40,22 @@
 #include "Vector/RealVector.h"
 #include "FunctionBasis/AbstractFunctionBasis.h"
 #include "MathTools/BinomialCoefficients.h"
+#include "MathTools/FactorialCoefficient.h" 
 #include "GeneralTools/UnsignedIntegerTools.h"
+#include "GeneralTools/ArrayTools.h"
 
 #include <cmath>
 #include <bitset>
 #include <cstdlib>
+#include <map>
 
 using std::cout;
 using std::endl;
 using std::hex;
 using std::dec;
 using std::bitset;
+using std::map;
+using std::pair;
 
 #define WANT_LAPACK
 
@@ -122,7 +128,7 @@ BosonOnSphereTwoLandauLevels::BosonOnSphereTwoLandauLevels (int nbrBosons, int t
     this->PrintState(cout, i) << endl;
        exit(1);
     }
-
+  
   //  this->HilbertSpaceDimension = this->GenerateStates(this->NbrBosonsUp, this->NbrBosonsDown, this->LzMaxUp, this->LzMaxDown, );
   //this->GenerateLookUpTable(memory);
   
@@ -253,7 +259,7 @@ AbstractHilbertSpace* BosonOnSphereTwoLandauLevels::Clone()
 // return value = pointer to the new subspace
 
 AbstractHilbertSpace* BosonOnSphereTwoLandauLevels::ExtractSubspace (AbstractQuantumNumber& q, 
-						 SubspaceSpaceConverter& converter)
+								     SubspaceSpaceConverter& converter)
 {
   return 0;
 }
@@ -706,28 +712,28 @@ RealVector BosonOnSphereTwoLandauLevels::ForgeSU2FromU1(RealVector& upState, Bos
 
 int BosonOnSphereTwoLandauLevels::FindStateIndex(unsigned long stateDescription) 
 {
-	int start, end, mid;
-	
-	start = 0;					//index of start of range
-	end = this->HilbertSpaceDimension;		//index of end of range + 1 
-	
-	while ( (end - start) > 0 ) 
-	  {
-	  	mid = (start + end) >> 1 ; 		//work out the mid-point
-	  	if ( stateDescription > this->StateDescription[mid] )	
-	  	  {
-	  	  	end = mid;
-	  	  }
-	  	else if ( stateDescription < this->StateDescription[mid] )
-	  	  {
-	  	  	start = mid + 1;	  	 
-	  	  }
-	  	else
-	  	  {
-	  	  	return mid;
-	  	  }
-	  }	
-	return this->HilbertSpaceDimension;
+  int start, end, mid;
+  
+  start = 0;					//index of start of range
+  end = this->HilbertSpaceDimension;		//index of end of range + 1 
+  
+  while ( (end - start) > 0 ) 
+    {
+      mid = (start + end) >> 1 ; 		//work out the mid-point
+      if ( stateDescription > this->StateDescription[mid] )	
+	{
+	  end = mid;
+	}
+      else if ( stateDescription < this->StateDescription[mid] )
+	{
+	  start = mid + 1;	  	 
+	}
+      else
+	{
+	  return mid;
+	}
+    }	
+  return this->HilbertSpaceDimension;
 }
 
 
@@ -904,9 +910,9 @@ double BosonOnSphereTwoLandauLevels::CalculatePseudoPotential(int S, int J)
 
 unsigned long BosonOnSphereTwoLandauLevels::NChooseC(int n , int c ) 
 {
-    if ( c == n || c == 0 ) return 1ul;
-    if ( c == 1ul ) return n;
-    return this->NChooseC(n,c-1) * (n-(c-1))/c;
+  if ( c == n || c == 0 ) return 1ul;
+  if ( c == 1ul ) return n;
+  return this->NChooseC(n,c-1) * (n-(c-1))/c;
 }
 
 // apply a^+_m_d a_m_d operator to a given state (only spin down)
@@ -917,16 +923,16 @@ unsigned long BosonOnSphereTwoLandauLevels::NChooseC(int n , int c )
 
 double BosonOnSphereTwoLandauLevels::AddAd (int index, int m)
 {
-    int m_index = this->GetIndexFromLzD(m);
-    this->FermionToBoson(this->StateDescription[index],this->StateLzMax[index], this->TemporaryState, this->TemporaryStateLzMax);
-    if ((m_index > this->TemporaryStateLzMax) || (this->TemporaryState[m_index] == 0) )
-      {
-	return 0.0;
-      }
-    else 
-      {
-	return (double)this->TemporaryState[m_index];
-      }
+  int m_index = this->GetIndexFromLzD(m);
+  this->FermionToBoson(this->StateDescription[index],this->StateLzMax[index], this->TemporaryState, this->TemporaryStateLzMax);
+  if ((m_index > this->TemporaryStateLzMax) || (this->TemporaryState[m_index] == 0) )
+    {
+      return 0.0;
+    }
+  else 
+    {
+      return (double)this->TemporaryState[m_index];
+    }
 }
 
 // apply a^+_m_u a_m_u operator to a given state  (only spin up)
@@ -937,16 +943,16 @@ double BosonOnSphereTwoLandauLevels::AddAd (int index, int m)
 
 double BosonOnSphereTwoLandauLevels::AduAu (int index, int m)
 {
-    int m_index = this->GetIndexFromLzU(m);
-    this->FermionToBoson(this->StateDescription[index],this->StateLzMax[index], this->TemporaryState, this->TemporaryStateLzMax);
-    if ((m_index > this->TemporaryStateLzMax) || (this->TemporaryState[m_index] == 0) )
-      {
-	return 0.0;
-      }
-    else 
-      {
-	return (double)this->TemporaryState[m_index];
-      }
+  int m_index = this->GetIndexFromLzU(m);
+  this->FermionToBoson(this->StateDescription[index],this->StateLzMax[index], this->TemporaryState, this->TemporaryStateLzMax);
+  if ((m_index > this->TemporaryStateLzMax) || (this->TemporaryState[m_index] == 0) )
+    {
+      return 0.0;
+    }
+  else 
+    {
+      return (double)this->TemporaryState[m_index];
+    }
 }
 
 // apply a^+_m_u a_n_u operator to a given state 
@@ -959,30 +965,30 @@ double BosonOnSphereTwoLandauLevels::AduAu (int index, int m)
 
 int BosonOnSphereTwoLandauLevels::AduAu (int index, int m, int n, double& coefficient)
 {
-    int m_index = this->GetIndexFromLzU(m);
-    int n_index = this->GetIndexFromLzU(n);
-    this->FermionToBoson(this->StateDescription[index],this->StateLzMax[index], this->TemporaryState, this->TemporaryStateLzMax);
-    if ((n_index > this->TemporaryStateLzMax) || (this->TemporaryState[n_index] == 0) )
-      {
-	coefficient = 0.0;
-	return this->HilbertSpaceDimension;
+  int m_index = this->GetIndexFromLzU(m);
+  int n_index = this->GetIndexFromLzU(n);
+  this->FermionToBoson(this->StateDescription[index],this->StateLzMax[index], this->TemporaryState, this->TemporaryStateLzMax);
+  if ((n_index > this->TemporaryStateLzMax) || (this->TemporaryState[n_index] == 0) )
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
       }
-    else 
-      {
-	coefficient = this->TemporaryState[n_index];
-	this->TemporaryState[n_index]--;
-	if ( m_index > this->TemporaryStateLzMax ) 
+  else 
+    {
+      coefficient = this->TemporaryState[n_index];
+      this->TemporaryState[n_index]--;
+      if ( m_index > this->TemporaryStateLzMax ) 
 	{
 	  for ( int index = this->TemporaryStateLzMax + 1 ; index <= m_index ; index++ ) {
-	      this->TemporaryState[index] = 0;
+	    this->TemporaryState[index] = 0;
 	  }
 	  this->TemporaryStateLzMax = m_index;
 	}
-	this->TemporaryState[m_index]++;
-	coefficient *= this->TemporaryState[m_index];
-	coefficient = sqrt(coefficient);
-	return this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax));
-      }
+      this->TemporaryState[m_index]++;
+      coefficient *= this->TemporaryState[m_index];
+      coefficient = sqrt(coefficient);
+      return this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax));
+    }
 }
 
 // apply a^+_m_d a_n_d operator to a given state 
@@ -995,30 +1001,30 @@ int BosonOnSphereTwoLandauLevels::AduAu (int index, int m, int n, double& coeffi
 
 int BosonOnSphereTwoLandauLevels::AddAd (int index, int m, int n, double& coefficient)
 {
-    int m_index = this->GetIndexFromLzD(m);
-    int n_index = this->GetIndexFromLzD(n);
-    this->FermionToBoson(this->StateDescription[index],this->StateLzMax[index], this->TemporaryState, this->TemporaryStateLzMax);
-    if ((n_index > this->TemporaryStateLzMax) || (this->TemporaryState[n_index] == 0) )
-      {
-	coefficient = 0.0;
-	return this->HilbertSpaceDimension;
-      }
-    else 
-      {
-	coefficient = this->TemporaryState[n_index];
-	this->TemporaryState[n_index]--;
-	if ( m_index > this->TemporaryStateLzMax ) 
+  int m_index = this->GetIndexFromLzD(m);
+  int n_index = this->GetIndexFromLzD(n);
+  this->FermionToBoson(this->StateDescription[index],this->StateLzMax[index], this->TemporaryState, this->TemporaryStateLzMax);
+  if ((n_index > this->TemporaryStateLzMax) || (this->TemporaryState[n_index] == 0) )
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }
+  else 
+    {
+      coefficient = this->TemporaryState[n_index];
+      this->TemporaryState[n_index]--;
+      if ( m_index > this->TemporaryStateLzMax ) 
 	{
 	  for (int index = this->TemporaryStateLzMax + 1 ; index <= m_index ; index++ ) {
-	      this->TemporaryState[index] = 0;
+	    this->TemporaryState[index] = 0;
 	  }
 	  this->TemporaryStateLzMax = m_index;
 	}
-	this->TemporaryState[m_index]++;
-	coefficient *= this->TemporaryState[m_index];
-	coefficient = sqrt(coefficient);
-	return this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax));
-      }
+      this->TemporaryState[m_index]++;
+      coefficient *= this->TemporaryState[m_index];
+      coefficient = sqrt(coefficient);
+      return this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax));
+    }
 }
 
 // apply a^+_m_u a_n_d operator to a given state 
@@ -1031,30 +1037,30 @@ int BosonOnSphereTwoLandauLevels::AddAd (int index, int m, int n, double& coeffi
 
 int BosonOnSphereTwoLandauLevels::AduAd (int index, int m, int n, double& coefficient)
 {
-    int m_index = this->GetIndexFromLzU(m);
-    int n_index = this->GetIndexFromLzD(n);
-    this->FermionToBoson(this->StateDescription[index],this->StateLzMax[index], this->TemporaryState, this->TemporaryStateLzMax);
-    if ((n_index > this->TemporaryStateLzMax) || (this->TemporaryState[n_index] == 0) )
-      {
-	coefficient = 0.0;
-	return this->HilbertSpaceDimension;
-      }
-    else 
-      {
-	coefficient = this->TemporaryState[n_index];
-	this->TemporaryState[n_index]--;
-	if ( m_index > this->TemporaryStateLzMax ) 
+  int m_index = this->GetIndexFromLzU(m);
+  int n_index = this->GetIndexFromLzD(n);
+  this->FermionToBoson(this->StateDescription[index],this->StateLzMax[index], this->TemporaryState, this->TemporaryStateLzMax);
+  if ((n_index > this->TemporaryStateLzMax) || (this->TemporaryState[n_index] == 0) )
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }
+  else 
+    {
+      coefficient = this->TemporaryState[n_index];
+      this->TemporaryState[n_index]--;
+      if ( m_index > this->TemporaryStateLzMax ) 
 	{
 	  for (int index = this->TemporaryStateLzMax + 1 ; index <= m_index ; index++ ) {
-	      this->TemporaryState[index] = 0;
+	    this->TemporaryState[index] = 0;
 	  }
 	  this->TemporaryStateLzMax = m_index;
 	}
-	this->TemporaryState[m_index]++;
-	coefficient *= this->TemporaryState[m_index];
-	coefficient = sqrt(coefficient);
-	return this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax));
-      }
+      this->TemporaryState[m_index]++;
+      coefficient *= this->TemporaryState[m_index];
+      coefficient = sqrt(coefficient);
+      return this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax));
+    }
 }
 
 // apply a^+_m_u a_n_d operator to a given state 
@@ -1066,30 +1072,30 @@ int BosonOnSphereTwoLandauLevels::AduAd (int index, int m, int n, double& coeffi
 
 int BosonOnSphereTwoLandauLevels::AduAd (int index, int m, double& coefficient)
 {
-    int m_index = this->GetIndexFromLzU(m);
-    int n_index = this->GetIndexFromLzD(m);
-    this->FermionToBoson(this->StateDescription[index],this->StateLzMax[index], this->TemporaryState, this->TemporaryStateLzMax);
-    if ((n_index > this->TemporaryStateLzMax) || (this->TemporaryState[n_index] == 0) )
-      {
-	coefficient = 0.0;
-	return this->HilbertSpaceDimension;
-      }
-    else 
-      {
-	coefficient = this->TemporaryState[n_index];
-	this->TemporaryState[n_index]--;
-	if ( m_index > this->TemporaryStateLzMax ) 
+  int m_index = this->GetIndexFromLzU(m);
+  int n_index = this->GetIndexFromLzD(m);
+  this->FermionToBoson(this->StateDescription[index],this->StateLzMax[index], this->TemporaryState, this->TemporaryStateLzMax);
+  if ((n_index > this->TemporaryStateLzMax) || (this->TemporaryState[n_index] == 0) )
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }
+  else 
+    {
+      coefficient = this->TemporaryState[n_index];
+      this->TemporaryState[n_index]--;
+      if ( m_index > this->TemporaryStateLzMax ) 
 	{
 	  for (int index = this->TemporaryStateLzMax + 1 ; index <= m_index ; index++ ) {
-	      this->TemporaryState[index] = 0;
+	    this->TemporaryState[index] = 0;
 	  }
 	  this->TemporaryStateLzMax = m_index;
 	}
-	this->TemporaryState[m_index]++;
-	coefficient *= this->TemporaryState[m_index];
-	coefficient = sqrt(coefficient);
-	return this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax));
-      }
+      this->TemporaryState[m_index]++;
+      coefficient *= this->TemporaryState[m_index];
+      coefficient = sqrt(coefficient);
+      return this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax));
+    }
 }
 
 // apply a^+_m_d a_n_u operator to a given state 
@@ -1102,30 +1108,31 @@ int BosonOnSphereTwoLandauLevels::AduAd (int index, int m, double& coefficient)
 
 int BosonOnSphereTwoLandauLevels::AddAu (int index, int m, int n, double& coefficient)
 {
-    int m_index = this->GetIndexFromLzD(m);
-    int n_index = this->GetIndexFromLzU(n);
-    this->FermionToBoson(this->StateDescription[index],this->StateLzMax[index], this->TemporaryState, this->TemporaryStateLzMax);
-    if ((n_index > this->TemporaryStateLzMax) || (this->TemporaryState[n_index] == 0) )
-      {
-	coefficient = 0.0;
-	return this->HilbertSpaceDimension;
-      }
-    else 
-      {
-	coefficient = this->TemporaryState[n_index];
-	this->TemporaryState[n_index]--;
-	if ( m_index > this->TemporaryStateLzMax ) 
+  int m_index = this->GetIndexFromLzD(m);
+  int n_index = this->GetIndexFromLzU(n);
+  this->FermionToBoson(this->StateDescription[index],this->StateLzMax[index], this->TemporaryState, this->TemporaryStateLzMax);
+  if ((n_index > this->TemporaryStateLzMax) || (this->TemporaryState[n_index] == 0) )
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }
+  else 
+    {
+      coefficient = this->TemporaryState[n_index];
+      this->TemporaryState[n_index]--;
+      if ( m_index > this->TemporaryStateLzMax ) 
 	{
-	  for (int index = this->TemporaryStateLzMax + 1 ; index <= m_index ; index++ ) {
+	  for (int index = this->TemporaryStateLzMax + 1 ; index <= m_index ; index++ ) 
+	    {
 	      this->TemporaryState[index] = 0;
-	  }
+	    }
 	  this->TemporaryStateLzMax = m_index;
 	}
-	this->TemporaryState[m_index]++;
-	coefficient *= this->TemporaryState[m_index];
-	coefficient = sqrt(coefficient);
-	return this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax));
-      }
+      this->TemporaryState[m_index]++;
+      coefficient *= this->TemporaryState[m_index];
+      coefficient = sqrt(coefficient);
+      return this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax));
+    }
 }
 
 // apply a^+_m_d a_n_u operator to a given state 
@@ -1137,25 +1144,26 @@ int BosonOnSphereTwoLandauLevels::AddAu (int index, int m, int n, double& coeffi
 
 int BosonOnSphereTwoLandauLevels::AddAu (int index, int m, double& coefficient)
 {
-    int m_index = this->GetIndexFromLzD(m);
-    int n_index = this->GetIndexFromLzU(m);
-    this->FermionToBoson(this->StateDescription[index],this->StateLzMax[index], this->TemporaryState, this->TemporaryStateLzMax);
-    if ((n_index > this->TemporaryStateLzMax) || (this->TemporaryState[n_index] == 0) )
-      {
-	coefficient = 0.0;
-	return this->HilbertSpaceDimension;
-      }
-    else 
-      {
-	coefficient = this->TemporaryState[n_index];
-	this->TemporaryState[n_index]--;
-	if ( m_index > this->TemporaryStateLzMax ) 
+  int m_index = this->GetIndexFromLzD(m);
+  int n_index = this->GetIndexFromLzU(m);
+  this->FermionToBoson(this->StateDescription[index],this->StateLzMax[index], this->TemporaryState, this->TemporaryStateLzMax);
+  
+  if ((n_index > this->TemporaryStateLzMax) || (this->TemporaryState[n_index] == 0) )
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }
+  else 
+    {
+      coefficient = this->TemporaryState[n_index];
+      this->TemporaryState[n_index]--;
+      if ( m_index > this->TemporaryStateLzMax ) 
 	{
 	  for (int index = this->TemporaryStateLzMax + 1 ; index <= m_index ; index++ ) {
-	      this->TemporaryState[index] = 0;
+	    this->TemporaryState[index] = 0;
 	  }
-	this->TemporaryStateLzMax = m_index;
-      }
+	  this->TemporaryStateLzMax = m_index;
+	}
       this->TemporaryState[m_index]++;
       coefficient *= this->TemporaryState[m_index];
       coefficient = sqrt(coefficient);
@@ -1214,4 +1222,231 @@ void  BosonOnSphereTwoLandauLevels::LandauLevelOccupationNumber(int state, int* 
       idx--;
     }
   lLOccupationConfiguration[0] = this->NbrBosons - lLOccupationConfiguration[1];
+}
+
+// generate the different states that appear in the product of a slater in the lowest Landau level and a Slater determinant in the two Landau levels
+//
+// sortingMap = map in which the generated states and their coefficient will be stored
+// slater = array where the Slater determinant is stored in its monomial representation
+// state = array where the obtained state is stored in its monomial representation
+// slaterSpace = pointer to the Hilbert Space which the Slater determinant belongs to
+// index = index of the particle being examinate
+// coef = coefficient of the state being generate
+
+void BosonOnSphereTwoLandauLevels::GeneratesDifferentState( map <unsigned long, double> & sortingMap, unsigned long * slater, unsigned long * state, FermionOnSphereTwoLandauLevels * slaterSpace, int index, double coef)
+{	
+  pair <map <unsigned long, double>::iterator, bool> InsertionResult;
+  int TmpStateIndex = state[index];
+  
+  if ( ( TmpStateIndex ==  ( (this->LzMaxUp << 1) + 0x1ul )) && ( index < (this->NbrBosons - 1) ) )
+    {
+      state[index] = this->GetIndexFromLzU( (state[index]>>1) );
+      this->GeneratesDifferentState( sortingMap, slater, state, slaterSpace, index + 1, coef);
+      state[index] = TmpStateIndex;
+      return;
+    }
+  
+  if(( ( TmpStateIndex & 0x01ul ) == 0x0ul ) && ( index < (this->NbrBosons - 1) ))
+    {
+      state[index] = this->GetIndexFromLzD ((state[index]>>1));
+      this->GeneratesDifferentState( sortingMap, slater, state, slaterSpace, index + 1, coef);
+      state[index] = TmpStateIndex;
+      return;
+    }
+  
+  if(((TmpStateIndex >> 1) == 0 ) && (index < (this->NbrBosons - 1)))
+    {
+      state[index] = this->GetIndexFromLzU( (TmpStateIndex >> 1) );
+      this->GeneratesDifferentState( sortingMap, slater, state, slaterSpace, index + 1, coef);
+      state[index] = TmpStateIndex;
+      return;
+    }
+  
+  if( index == this->NbrBosons - 1 )
+    {
+      unsigned long TmpMonomial[this->NbrBosons];
+      
+      if (( TmpStateIndex & 0x01ul ) == 0x0ul )
+	{
+	  state[index] = this->GetIndexFromLzD ((TmpStateIndex >> 1));
+	  
+	  for (int i = 0; i < this->NbrBosons; i++)
+	    {
+	      TmpMonomial[i] = state[i];
+	    }
+	  
+	  SortArrayDownOrdering(TmpMonomial,this->NbrBosons);
+	  
+	  InsertionResult = sortingMap.insert (pair <unsigned long, double> (this->ConvertFromMonomial(TmpMonomial), coef));
+	  
+	  if (InsertionResult.second == false)
+	    {
+	      InsertionResult.first->second += coef;
+	    }
+	  state[index] = TmpStateIndex;
+	}
+      else
+	{		
+	  state[index] = this->GetIndexFromLzU ((TmpStateIndex>>1));
+	  
+	  for (int i = 0; i < this->NbrBosons; i++)
+	    {
+	      TmpMonomial[i] = state[i];
+	    }
+	  SortArrayDownOrdering(TmpMonomial,this->NbrBosons);
+	  
+	  InsertionResult = sortingMap.insert (pair <unsigned long, double> (this->ConvertFromMonomial(TmpMonomial), coef));
+	  
+	  if (InsertionResult.second == false)
+	    {
+	      InsertionResult.first->second += coef;
+	    }
+	  
+	  
+	  if(( ( TmpStateIndex & 0x01ul) == 1) && ( (TmpStateIndex>>1) != 0 ) )
+	    {
+	      coef *= ((double)((double)(slater[index]>>1)/(double)slaterSpace->LzMaxUp) - ((double)(TmpStateIndex>>1)/(double)this->LzMaxUp));
+	      state[index] = this->GetIndexFromLzD ((TmpStateIndex >> 1));
+	      for (int i = 0; i < this->NbrBosons; i++)
+		{
+		  TmpMonomial[i] = state[i];
+		}
+	      
+	      SortArrayDownOrdering(TmpMonomial,this->NbrBosons);
+				
+	      InsertionResult = sortingMap.insert (pair <unsigned long, double> (this->ConvertFromMonomial(TmpMonomial), coef));
+	      
+	      if (InsertionResult.second == false)
+		{
+		  InsertionResult.first->second += coef;
+		}
+	    }
+	  state[index] = TmpStateIndex;
+	}
+      return;
+    }
+	
+  state[index] = this->GetIndexFromLzU( ( TmpStateIndex >> 1 ) );
+  
+  this->GeneratesDifferentState( sortingMap, slater, state, slaterSpace, index + 1, coef);
+  
+  coef *= ((double)((double)(slater[index] >> 1)/(double)slaterSpace->LzMaxUp)-((double)(TmpStateIndex>>1)/(double)this->LzMaxUp));
+  
+  state[index] = this->GetIndexFromLzD ((TmpStateIndex >> 1));
+  
+  this->GeneratesDifferentState( sortingMap, slater, state, slaterSpace, index + 1, coef);
+  
+  state[index] = TmpStateIndex;
+  return;
+}
+
+// convert a state such that its components are now expressed in the normalized basis
+//
+// state = reference to the state to convert
+// reference = set which component has been normalized to 1
+// symmetryFactor = if true also add the symmetry factors
+// return value = converted state
+
+RealVector& BosonOnSphereTwoLandauLevels::ConvertFromUnnormalizedMonomial(RealVector& state, long reference, bool symmetryFactor)
+{
+  unsigned long* TmpMonomialReference = new unsigned long [this->NbrBosons];
+  unsigned long* TmpMonomial = new unsigned long [this->NbrBosons];
+  double Factor = 1.0;
+  double UpFactor = (this->LzMaxDown + 2) * (this->LzMaxDown + 3);
+  double DownFactor = this->LzMaxDown + 1;
+  if (reference >= 0l)
+    Factor = 1.0;
+  else
+    reference = 0l;
+  this->ConvertToMonomial(this->StateDescription[reference], this->StateLzMax[reference], TmpMonomialReference);
+  double* SqrtCoefficients = new double [2 * this->LzMaxDown + 4];
+  double* InvSqrtCoefficients = new double [2 * this->LzMaxDown + 4];
+  BinomialCoefficients Binomials(this->LzMaxDown + 2);
+  
+  
+  InvSqrtCoefficients[GetIndexFromLzU(0)] = sqrt(UpFactor);
+  SqrtCoefficients[GetIndexFromLzU(0)] = 1.0 / InvSqrtCoefficients[GetIndexFromLzU(0)];
+  
+  InvSqrtCoefficients[GetIndexFromLzU(this->LzMaxUp)] = sqrt(UpFactor);
+  
+  if(this->LzMaxUp & 0x1ul != 0)
+    InvSqrtCoefficients[GetIndexFromLzU(this->LzMaxUp)] *= -1.0;
+  
+  SqrtCoefficients[GetIndexFromLzU(this->LzMaxUp)] = 1.0 / InvSqrtCoefficients[GetIndexFromLzU(this->LzMaxUp)];
+  
+  for (int k = 1; k <= this->LzMaxDown + 1; ++k)
+    {
+      InvSqrtCoefficients[GetIndexFromLzU(k)] = sqrt(UpFactor*Binomials.GetNumericalCoefficient(this->LzMaxUp, k));
+      InvSqrtCoefficients[GetIndexFromLzD(k)] = sqrt(DownFactor*Binomials.GetNumericalCoefficient(this->LzMaxDown, k - 1));
+      if(k & 0x1ul != 0)
+	InvSqrtCoefficients[GetIndexFromLzU(k)] *= -1.0;
+      else
+	InvSqrtCoefficients[GetIndexFromLzD(k)] *= -1.0;
+      SqrtCoefficients[GetIndexFromLzU(k)] = 1.0 / InvSqrtCoefficients[GetIndexFromLzU(k)];
+      SqrtCoefficients[GetIndexFromLzD(k)] = 1.0 / InvSqrtCoefficients[GetIndexFromLzD(k)];
+    }
+  
+  
+  FactorialCoefficient ReferenceFactorial;
+  FactorialCoefficient Factorial;
+  this->FermionToBoson(this->StateDescription[reference], this->StateLzMax[reference], this->TemporaryState, this->TemporaryStateLzMax);
+  for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
+    if (this->TemporaryState[k] > 1)
+      ReferenceFactorial.FactorialMultiply(this->TemporaryState[k]);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    {
+      this->ConvertToMonomial(this->StateDescription[i], this->StateLzMax[i], TmpMonomial);
+      int Index1 = 0;
+      int Index2 = 0;
+      double Coefficient = Factor;
+      if (symmetryFactor == true)
+	{
+	  while ((Index1 < this->NbrBosons) && (Index2 < this->NbrBosons))
+	    {
+	      while ((Index1 < this->NbrBosons) && (TmpMonomialReference[Index1] > TmpMonomial[Index2]))
+		{
+		  Coefficient *= InvSqrtCoefficients[TmpMonomialReference[Index1]];
+		  ++Index1;
+		}
+	      while ((Index1 < this->NbrBosons) && (Index2 < this->NbrBosons) && (TmpMonomialReference[Index1] == TmpMonomial[Index2]))
+		{
+		  ++Index1;
+		  ++Index2;
+		}
+	      while ((Index2 < this->NbrBosons) && (TmpMonomialReference[Index1] < TmpMonomial[Index2]))
+		{
+		  Coefficient *= SqrtCoefficients[TmpMonomial[Index2]];
+		  ++Index2;
+		}	  
+	    }
+	  while (Index1 < this->NbrBosons)
+	    {
+	      Coefficient *= InvSqrtCoefficients[TmpMonomialReference[Index1]];
+	      ++Index1;
+	    }
+	  while (Index2 < this->NbrBosons)
+	    {
+	      Coefficient *= SqrtCoefficients[TmpMonomial[Index2]];
+	      ++Index2;
+	    }
+	  Factorial = ReferenceFactorial;
+	  this->FermionToBoson(this->StateDescription[i], this->StateLzMax[i],this->TemporaryState, this->TemporaryStateLzMax);
+	  for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
+	    if (this->TemporaryState[k] > 1)
+						Factorial.FactorialDivide(this->TemporaryState[k]);
+	  Coefficient *= sqrt(Factorial.GetNumericalValue());
+	}
+      else
+	{
+	  Factorial = ReferenceFactorial;
+	  this->FermionToBoson(this->StateDescription[i], this->StateLzMax[i], this->TemporaryState, this->TemporaryStateLzMax);
+	  for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
+	    if (this->TemporaryState[k] > 1)
+	      Factorial.FactorialDivide(this->TemporaryState[k]);
+	  Coefficient *= sqrt(Factorial.GetNumericalValue());
+	}
+      state[i] *= Coefficient;
+    }
+  state /= state.Norm();
+  return state;
 }

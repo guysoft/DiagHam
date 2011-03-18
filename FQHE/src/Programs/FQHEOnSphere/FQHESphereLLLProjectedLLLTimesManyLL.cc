@@ -163,7 +163,7 @@ int main(int argc, char** argv)
   int Index = Manager.GetInteger("index");
   int EnergyValue = Manager.GetInteger("energy-value");
   
-	
+  
   if((EnergyValue != -1)||(ParticleNumberConstrains[0] != -1)||(ParticleNumberConstrains[1] != -1)||(ParticleNumberConstrains[2] != -1)||(ParticleNumberConstrains[3] != -1))
     Constraint = true;
   
@@ -463,8 +463,14 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  cout << "unprojected bosonic Jain states are not implemented" << endl;
-	  return -1;
+#ifdef  __64_BITS__
+	  if ( 2 * (LzMaxDown + LLLLzMax) + 3 + LLLNbrParticles < 63)
+#else
+	    if ( 2 * (LzMaxDown + LLLLzMax) + 3 + LLLNbrParticles < 31)
+#endif
+	      {
+		FinalSpace = new BosonOnSphereTwoLandauLevels (LLLNbrParticles, TotalLzFermion, LzMaxUp + LLLLzMax, LzMaxDown + LLLLzMax);
+	      }
 	}
     }
 	
@@ -614,9 +620,10 @@ int main(int argc, char** argv)
 	    {
 	      OutputVector = new RealVector(FinalSpace->GetHilbertSpaceDimension(),true);
 	    }
-	  FQHESphereMonomialsTimesSlaterProjectionOperation Operation(SpaceLL, LLLSpace, FinalSpace, FermionState, &LLLState, OutputVector, MinComponent, NbrComponents, Projection, Step, NbrLL, Symmetric);																
-	  Operation.ApplyOperation(Architecture.GetArchitecture());
 	  
+	  FQHESphereMonomialsTimesSlaterProjectionOperation Operation(SpaceLL, LLLSpace, FinalSpace, FermionState, &LLLState, OutputVector, MinComponent, NbrComponents, Projection, Step, NbrLL, Symmetric);
+	  
+	  Operation.ApplyOperation(Architecture.GetArchitecture());
 	  if(NbrComponents+MinComponent != FinalSpace->GetHilbertSpaceDimension())
 	    {
 	      char* OutputFileName = new char [256];
@@ -800,7 +807,7 @@ int main(int argc, char** argv)
 	      for (long i = 0; i < FinalSpace->GetLargeHilbertSpaceDimension(); ++i)
 		{
 		  File << OutputVector[i] << " ";
-				FinalSpace->PrintStateMonomial(File, i) << endl;
+		  FinalSpace->PrintStateMonomial(File, i) << endl;
 		}
 	    }
 	  File.close();

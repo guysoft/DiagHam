@@ -272,7 +272,7 @@ bool FQHESphereMultipleMonomialsTimesSlaterProjectionOperation::RawApplyOperatio
 		  else
 		    ((FermionOnSphereTwoLandauLevels *)this->FermionSpace)->LLLFermionicStateTimeFermionicState(*(this->LLLLongRationalVector), *(this->FermionLongRationalVector) , *(this->OutputLongRationalVector), (FermionOnSphere*)this->LLLSpace, (BosonOnSphereShort*)this->FinalSpace,0, this->LLLSpace->GetHilbertSpaceDimension());
 		}
-			}
+	    }
 	  timeval TotalEndingTime;
 	  gettimeofday (&TotalEndingTime, 0);
 	  
@@ -330,26 +330,43 @@ bool FQHESphereMultipleMonomialsTimesSlaterProjectionOperation::RawApplyOperatio
 		}
 	      else
 		{
-		  if(this->Symmetry)
-		    ((FermionOnSphereTwoLandauLevels *)this->FermionSpace)->LLLFermionicStateTimeFermionicStateSymmetric(*(this->LLLRealVector), *(this->FermionRealVector) , *(this->OutputRealVector), (FermionOnSphere*)this->LLLSpace, (BosonOnSphereShort*) this->FinalSpace, 0, this->LLLSpace->GetHilbertSpaceDimension());
+		  if (this->Projection == true)
+		    {
+		      if(this->Symmetry)
+			((FermionOnSphereTwoLandauLevels *)this->FermionSpace)->LLLFermionicStateTimeFermionicStateSymmetric(*(this->LLLRealVector), *(this->FermionRealVector) , *(this->OutputRealVector), (FermionOnSphere*)this->LLLSpace, (BosonOnSphereShort*) this->FinalSpace, 0, this->LLLSpace->GetHilbertSpaceDimension());
+		      else
+			((FermionOnSphereTwoLandauLevels *)this->FermionSpace)->LLLFermionicStateTimeFermionicState(*(this->LLLRealVector), *(this->FermionRealVector) , *(this->OutputRealVector), (FermionOnSphere*)this->LLLSpace, (BosonOnSphereShort*)this->FinalSpace,0, this->LLLSpace->GetHilbertSpaceDimension());
+		    }
 		  else
-		    ((FermionOnSphereTwoLandauLevels *)this->FermionSpace)->LLLFermionicStateTimeFermionicState(*(this->LLLRealVector), *(this->FermionRealVector) , *(this->OutputRealVector), (FermionOnSphere*)this->LLLSpace, (BosonOnSphereShort*)this->FinalSpace,0, this->LLLSpace->GetHilbertSpaceDimension());
+		    ((FermionOnSphereTwoLandauLevels *)this->FermionSpace)->LLLFermionicStateTimeFermionicState(*(this->LLLRealVector), *(this->FermionRealVector) , *(this->OutputRealVector), (FermionOnSphere*) this->LLLSpace, (BosonOnSphereTwoLandauLevels *) this->FinalSpace , 0 , this->LLLSpace->GetHilbertSpaceDimension());
 		}
 	    }
 	  timeval TotalEndingTime;
 	  gettimeofday (&TotalEndingTime, 0);
-	  if((Projection)&&(Normalize))
+	  if (Normalize == true)
 	    {
-	      if(this->BosonFlag == true)
-		((FermionOnSphere*)FinalSpace)->ConvertFromUnnormalizedMonomial(*(this->OutputRealVector),0l,true);
+	      if(Projection == true)
+		{
+		  if(this->BosonFlag == true)
+		    ((FermionOnSphere*)FinalSpace)->ConvertFromUnnormalizedMonomial(*(this->OutputRealVector),0l,true);
+		  else
+		    ((BosonOnSphereShort*)FinalSpace)->ConvertFromUnnormalizedMonomial(*(this->OutputRealVector),0l,true);
+		  if(fabs(OutputRealVector->Norm() -1.0)<Error)
+		    this->OutputRealVector->WriteVector(this->OutputFileName);
+		}
 	      else
-		((BosonOnSphereShort*)FinalSpace)->ConvertFromUnnormalizedMonomial(*(this->OutputRealVector),0l,true);
-	      if(fabs(OutputRealVector->Norm() -1.0)<Error)
-		this->OutputRealVector->WriteVector(this->OutputFileName);
+		{
+		  if(this->BosonFlag == false)
+		    {
+		      ((BosonOnSphereTwoLandauLevels*)FinalSpace)->ConvertFromUnnormalizedMonomial(*(this->OutputRealVector),0l,true);
+		      if(fabs(OutputRealVector->Norm() - 1.0)<Error)
+			this->OutputRealVector->WriteVector(this->OutputFileName);
+		    }
+		}
 	    }
 	  else
 	    {
-	      if(Projection == true)
+	      if(this->Projection == true)
 		{
 		  PutFirstComponentToOne(*(this->OutputRealVector));
 		}

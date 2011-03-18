@@ -37,17 +37,24 @@
 #include "HilbertSpace/BosonOnSphere.h"
 #include "HilbertSpace/BosonOnSphereShort.h"
 #include "HilbertSpace/FermionOnSphere.h"
+#include "HilbertSpace/FermionOnSphereTwoLandauLevels.h"
 #include "HilbertSpace/ParticleOnSphereWithSpin.h"
 
 #include "MathTools/ClebschGordanCoefficients.h"
 
 #include <iostream>
 
+#include <map>
 
+using std::map;
+
+class FermionOnSphereTwoLandauLevels;
 
 class BosonOnSphereTwoLandauLevels :  public ParticleOnSphereWithSpin
 {
-
+  
+  friend class FermionOnSphereTwoLandauLevels;
+  
  protected:
 
   // number of fermions
@@ -339,6 +346,14 @@ class BosonOnSphereTwoLandauLevels :  public ParticleOnSphereWithSpin
   // state = binary representation of state to print
   // return value = reference on current output stream 
   ostream& PrintStateBinary (ostream& Str, unsigned long state);
+	
+  // convert a state such that its components are now expressed in the normalized basis
+  //
+  // state = reference to the state to convert
+  // reference = set which component has been normalized to 1
+  // symmetryFactor = if true also add the symmetry factors
+  // return value = converted state
+  virtual RealVector& ConvertFromUnnormalizedMonomial(RealVector& state, long reference = 0, bool symmetryFactor = true);
   
  protected:
 
@@ -455,7 +470,17 @@ class BosonOnSphereTwoLandauLevels :  public ParticleOnSphereWithSpin
   // lz = shifted Lz value
   // return value = index used for bosonic representation
   int GetIndexFromLzD(int lz);
- 
+	
+  // generate the different states that appear in the product of a slater in the lowest Landau level and a Slater determinant in the two Landau levels
+  //
+  // sortingMap = map in which the generated states and their coefficient will be stored
+  // slater = array where the Slater determinant is stored in its monomial representation
+  // state = array where the obtained state is stored in its monomial representation
+  // slaterSpace = pointer to the Hilbert Space which the Slater determinant belongs to
+  // index = index of the particle being examinate
+  // coef = coefficient of the state being generate
+  virtual void GeneratesDifferentState(map <unsigned long, double> & sortingMap, unsigned long * slater, unsigned long * state, FermionOnSphereTwoLandauLevels * slaterSpace, int index, double coef);
+  
 };
 
 // get the particle statistic 

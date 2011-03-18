@@ -245,10 +245,15 @@ bool FQHESphereMonomialsTimesSlaterProjectionOperation::RawApplyOperation()
 	    }
 	  else
 	    {
-	      if(this->Symmetry == true)
-		((FermionOnSphereTwoLandauLevels *)this->FermionSpace)->LLLFermionicStateTimeFermionicStateSymmetric( *this->LLLRealVector, *this->FermionRealVector, *this->OutputRealVector, (FermionOnSphere*)this->LLLSpace, (BosonOnSphereShort*) this->FinalSpace, this->FirstComponent, this->NbrComponent);
+	      if (this->Projection == true)
+		{
+		  if(this->Symmetry == true)
+		    ((FermionOnSphereTwoLandauLevels *)this->FermionSpace)->LLLFermionicStateTimeFermionicStateSymmetric( *this->LLLRealVector, *this->FermionRealVector, *this->OutputRealVector, (FermionOnSphere*)this->LLLSpace, (BosonOnSphereShort*) this->FinalSpace, this->FirstComponent, this->NbrComponent);
+		  else
+		    ((FermionOnSphereTwoLandauLevels *)this->FermionSpace)->LLLFermionicStateTimeFermionicState(*this->LLLRealVector, *this->FermionRealVector, *this->OutputRealVector,(FermionOnSphere*)this->LLLSpace, (BosonOnSphereShort*)this->FinalSpace,this->FirstComponent,this->NbrComponent);
+		}
 	      else
-		((FermionOnSphereTwoLandauLevels *)this->FermionSpace)->LLLFermionicStateTimeFermionicState(*this->LLLRealVector, *this->FermionRealVector, *this->OutputRealVector,(FermionOnSphere*)this->LLLSpace, (BosonOnSphereShort*)this->FinalSpace,this->FirstComponent,this->NbrComponent);
+		((FermionOnSphereTwoLandauLevels *)this->FermionSpace)->LLLFermionicStateTimeFermionicState(*this->LLLRealVector, *this->FermionRealVector, *this->OutputRealVector,(FermionOnSphere*)this->LLLSpace, (BosonOnSphereTwoLandauLevels *) this->FinalSpace,this->FirstComponent,this->NbrComponent);
 	    }
 	}
     }
@@ -297,10 +302,14 @@ bool FQHESphereMonomialsTimesSlaterProjectionOperation::RawApplyOperation()
 	    }
 	  else
 	    {
-	      if(this->Symmetry == true)
-		((FermionOnSphereTwoLandauLevels *)this->FermionSpace)->LLLFermionicStateTimeFermionicStateSymmetric(*this->LLLLongRationalVector, *this->FermionLongRationalVector, *this->OutputLongRationalVector,(FermionOnSphere*)this->LLLSpace, (BosonOnSphereShort*) this->FinalSpace, this->FirstComponent, this->NbrComponent);
-	      else
-		((FermionOnSphereTwoLandauLevels *)this->FermionSpace)->LLLFermionicStateTimeFermionicState(*this->LLLLongRationalVector, *this->FermionLongRationalVector, *this->OutputLongRationalVector, (FermionOnSphere*)this->LLLSpace, (BosonOnSphereShort*)this->FinalSpace, this->FirstComponent, this->NbrComponent);
+	      if (this->Projection == true)
+		{
+		  if(this->Symmetry == true)
+		    ((FermionOnSphereTwoLandauLevels *)this->FermionSpace)->LLLFermionicStateTimeFermionicStateSymmetric(*this->LLLLongRationalVector, *this->FermionLongRationalVector, *this->OutputLongRationalVector,(FermionOnSphere*)this->LLLSpace, (BosonOnSphereShort*) this->FinalSpace, this->FirstComponent, this->NbrComponent);
+		  else
+		    ((FermionOnSphereTwoLandauLevels *)this->FermionSpace)->LLLFermionicStateTimeFermionicState(*this->LLLLongRationalVector, *this->FermionLongRationalVector, *this->OutputLongRationalVector, (FermionOnSphere*)this->LLLSpace, (BosonOnSphereShort*)this->FinalSpace, this->FirstComponent, this->NbrComponent);
+		}
+	      
 	    }
 	}
     }

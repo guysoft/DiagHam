@@ -36,17 +36,22 @@
 #include "config.h"
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
 #include "HilbertSpace/BosonOnSphereShort.h"
+#include "HilbertSpace/BosonOnSphereTwoLandauLevels.h"
 
 #include <iostream>
 #include <map>
 
 using std::map;
 
+class BosonOnSphereTwoLandauLevels;
+
 class FermionOnSphereTwoLandauLevels :  public FermionOnSphereWithSpin
 {
 
+  friend class BosonOnSphereTwoLandauLevels;
+ 
  protected:
-
+  
   // maximum Lz value reached by a fermion with a spin up
   int LzMaxUp;
   // maximum Lz value reached by a fermion with a spin down
@@ -365,6 +370,16 @@ class FermionOnSphereTwoLandauLevels :  public FermionOnSphereWithSpin
   // firstComponent = first component to be computed
   // nbrComponent = number of components to be computed
   virtual void LLLFermionicStateTimeFermionicStateSymmetric(LongRationalVector& lllFermionState, LongRationalVector& fermionState, LongRationalVector& outputVector, FermionOnSphere* lllFermionSpace, BosonOnSphereShort* finalSpace, int firstComponent, int nbrComponent);
+	
+  // compute the product of a fermionic state in the lowest Landau level and a fermionic state in the two lowest Landau levels
+  // lllFermionState = real vector where the lowest Landau level fermionic state is stored
+  // fermionState = real vector where the two Landau level fermionic state is stored
+  // outputVector = real vector where the result has to be stored
+  // lllFermionSpace = pointer to the lowest Landau level Hilbert space
+  // finalSpace = pointer to the final Hilbert space
+  // firstComponent = first component to be computed
+  // nbrComponent = number of components to be computed
+  virtual void LLLFermionicStateTimeFermionicState(RealVector& lllFermionState, RealVector& fermionState, RealVector& outputVector, FermionOnSphere* lllFermionSpace, BosonOnSphereTwoLandauLevels * finalSpace, int firstComponent,int nbrComponent);
   
   // compute the number of particles in each Landau level
   //
@@ -505,7 +520,15 @@ class FermionOnSphereTwoLandauLevels :  public FermionOnSphereWithSpin
   // monomial = reference to state stored in monomial format
   // landaulevel = the relevant landau level
   // return value = fermionic representation
-  unsigned long ConvertFromPowerLandauRepresentation(unsigned long* monomial,unsigned long* landauLevel);  
+  unsigned long ConvertFromPowerLandauRepresentation(unsigned long* monomial,unsigned long* landauLevel);
+	
+  // compute the product and the projection of a Slater determinant in the LLL and a Slater determinant in two Landau levels
+  //
+  // slater = array where the slater determinant in the two landau levels is stored in its monomial representation
+  // lllslater = array where the slater determinant in the LLL is stored in its monomial representation
+  // sortingMap = map in which the generated states and their coefficient will be stored
+  // finalSpace = pointer to the final HilbertSpace
+  virtual void SlaterTimesSlater(unsigned long* slater, unsigned long* lllslater, map <unsigned long, double> & sortingMap, BosonOnSphereTwoLandauLevels* finalSpace);
 };
 
 // convert a fermionic state to its monomial representation
