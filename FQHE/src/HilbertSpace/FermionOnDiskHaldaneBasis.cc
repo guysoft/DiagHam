@@ -614,8 +614,8 @@ RealVector& FermionOnDiskHaldaneBasis::ConvertFromUnnormalizedMonomial(RealVecto
   SqrtCoefficients[0] = 1.0;
   for (int k = 1; k <= this->LzMax; ++k)
     {
-      InvSqrtCoefficients[k] = sqrt((double) k) * InvSqrtCoefficients[k - 1];
-      SqrtCoefficients[k] = 1.0 / InvSqrtCoefficients[k];
+      SqrtCoefficients[k] = sqrt((double) k) * SqrtCoefficients[k - 1];
+      InvSqrtCoefficients[k] = 1.0 / SqrtCoefficients[k];
     }
   this->ConvertFromUnnormalizedMonomialCore(state, SqrtCoefficients, InvSqrtCoefficients, reference, symmetryFactor);
   delete[] InvSqrtCoefficients;
@@ -636,10 +636,15 @@ RealVector& FermionOnDiskHaldaneBasis::ShiftedConvertFromUnnormalizedMonomial(Re
   double* InvSqrtCoefficients = new double [this->LzMax + 1];
   InvSqrtCoefficients[0] = 1.0;
   SqrtCoefficients[0] = 1.0;
+  if (shift > 0)
+    {
+      SqrtCoefficients[0] = sqrt((double) (shift));
+      InvSqrtCoefficients[0] = 1.0 / SqrtCoefficients[0];
+    }
   for (int k = 1; k <= this->LzMax; ++k)
     {
-      InvSqrtCoefficients[k] = sqrt((double) (shift + k)) * InvSqrtCoefficients[k - 1];
-      SqrtCoefficients[k] = 1.0 / InvSqrtCoefficients[k];
+      SqrtCoefficients[k] = sqrt((double) (shift + k)) * SqrtCoefficients[k - 1];
+      InvSqrtCoefficients[k] = 1.0 / SqrtCoefficients[k];
     }
   this->ConvertFromUnnormalizedMonomialCore(state, SqrtCoefficients, InvSqrtCoefficients, reference, false);
   delete[] InvSqrtCoefficients;
@@ -658,19 +663,17 @@ RealVector& FermionOnDiskHaldaneBasis::ShiftedConvertFromUnnormalizedMonomial(Re
 
 RealVector& FermionOnDiskHaldaneBasis::ConvertFromUnnormalizedMonomialCore(RealVector& state, double* sqrtCoefficients, double* invSqrtCoefficients, long reference, bool symmetryFactor)
 {
-  BinomialCoefficients Binomials(this->LzMax);
   if (reference >= 0l)
     {
       int* TmpMonomialReference = new int [this->NbrFermions];
-      int* TmpMonomial = new int [this->NbrFermions];
-      double Factor = 1.0 / state[reference];
-      state[reference] = 1.0;
+      int* TmpMonomial = new int [this->NbrFermions];     
+      double Factor = 1.0;
       unsigned long TmpState = this->StateDescription[reference];
       int Index = 0;
       for (int j = this->LzMax; j >= 0; --j)
 	if (((TmpState >> j) & 1ul) != 0ul)
 	  TmpMonomialReference[Index++] = j;
-      for (int i = 1; i < this->HilbertSpaceDimension; ++i)
+      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
 	{
 	  Index = 0;
 	  TmpState = this->StateDescription[i];
@@ -705,7 +708,7 @@ RealVector& FermionOnDiskHaldaneBasis::ConvertFromUnnormalizedMonomialCore(RealV
 	    }
 	  while (Index2 < this->NbrFermions)
 	    {
-	      Coefficient *= sqrtCoefficients[TmpMonomialReference[Index2]];
+	      Coefficient *= sqrtCoefficients[TmpMonomial[Index2]];
 	      ++Index2;
 	    }
 	  state[i] *= Coefficient;
@@ -759,7 +762,7 @@ RealVector& FermionOnDiskHaldaneBasis::ConvertFromUnnormalizedMonomialCore(RealV
 	    }
 	  while (Index2 < this->NbrFermions)
 	    {
-	      Coefficient *= sqrtCoefficients[TmpMonomialReference[Index2]];
+	      Coefficient *= sqrtCoefficients[TmpMonomial[Index2]];
 	      ++Index2;
 	    }
 	  state[i] *= Coefficient;

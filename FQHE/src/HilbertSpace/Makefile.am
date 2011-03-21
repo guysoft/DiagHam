@@ -98,4 +98,7 @@ BosonOnSphereHaldaneSymmetricBasisShort.cc \
 BosonOnDiskHaldaneHugeBasisShort.cc \
 FermionOnSquareLatticeMomentumSpace.cc \
 FermionOnSquareLatticeWithSpinMomentumSpace.cc \
-FermionOnSquareLatticeNonPeriodicMomentumSpace.cc
+FermionOnSquareLatticeNonPeriodicMomentumSpace.cc \
+BosonOnSphereFusedBasis.cc \
+BosonOnSphereTensorProductState.cc \
+BosonOnSphereSumTensorProductState.cc
