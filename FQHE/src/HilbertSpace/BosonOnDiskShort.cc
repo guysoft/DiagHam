@@ -281,7 +281,7 @@ RealVector& BosonOnDiskShort::ShiftedConvertFromUnnormalizedMonomial(RealVector&
       SqrtCoefficients[k] = sqrt((double) (shift + k)) * SqrtCoefficients[k - 1];
       InvSqrtCoefficients[k] = 1.0 / SqrtCoefficients[k];
     }
-  this->ConvertFromUnnormalizedMonomialCore(state, SqrtCoefficients, InvSqrtCoefficients, reference, false);
+  this->ConvertFromUnnormalizedMonomialCore(state, SqrtCoefficients, InvSqrtCoefficients, reference, true);
   delete[] SqrtCoefficients;
   delete[] InvSqrtCoefficients;
   return state;

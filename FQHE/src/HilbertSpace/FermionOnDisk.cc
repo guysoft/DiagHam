@@ -322,8 +322,8 @@ RealVector& FermionOnDisk::ConvertFromUnnormalizedMonomial(RealVector& state, lo
   SqrtCoefficients[0] = 1.0;
   for (int k = 1; k <= this->LzMax; ++k)
     {
-      InvSqrtCoefficients[k] = sqrt((double) k) * InvSqrtCoefficients[k - 1];
-      SqrtCoefficients[k] = 1.0 / InvSqrtCoefficients[k];
+      SqrtCoefficients[k] = sqrt((double) k) * SqrtCoefficients[k - 1];
+      InvSqrtCoefficients[k] = 1.0 / SqrtCoefficients[k];
     }
   this->ConvertFromUnnormalizedMonomialCore(state, SqrtCoefficients, InvSqrtCoefficients, reference, symmetryFactor);
   delete[] InvSqrtCoefficients;
@@ -346,8 +346,8 @@ RealVector& FermionOnDisk::ShiftedConvertFromUnnormalizedMonomial(RealVector& st
   SqrtCoefficients[0] = 1.0;
   for (int k = 1; k <= this->LzMax; ++k)
     {
-      InvSqrtCoefficients[k] = sqrt((double) (shift + k)) * InvSqrtCoefficients[k - 1];
-      SqrtCoefficients[k] = 1.0 / InvSqrtCoefficients[k];
+      SqrtCoefficients[k] = sqrt((double) (shift + k)) * SqrtCoefficients[k - 1];
+      InvSqrtCoefficients[k] = 1.0 / SqrtCoefficients[k];
     }
   this->ConvertFromUnnormalizedMonomialCore(state, SqrtCoefficients, InvSqrtCoefficients, reference, false);
   delete[] InvSqrtCoefficients;
@@ -366,13 +366,11 @@ RealVector& FermionOnDisk::ShiftedConvertFromUnnormalizedMonomial(RealVector& st
 
 RealVector& FermionOnDisk::ConvertFromUnnormalizedMonomialCore(RealVector& state, double* sqrtCoefficients, double* invSqrtCoefficients, long reference, bool symmetryFactor)
 {
-  BinomialCoefficients Binomials(this->LzMax);
   if (reference >= 0l)
     {
       int* TmpMonomialReference = new int [this->NbrFermions];
       int* TmpMonomial = new int [this->NbrFermions];
-      double Factor = 1.0 / state[reference];
-      state[reference] = 1.0;
+      double Factor = 1.0;
       unsigned long TmpState = this->StateDescription[reference];
       int Index = 0;
       for (int j = this->LzMax; j >= 0; --j)
