@@ -46,6 +46,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-sitey", "number of sites along the y direction", 3);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "band-parameter", "band structure parameter", 1.0);
+  (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
@@ -76,6 +77,10 @@ int main(int argc, char** argv)
 
   int MinKx = 0;
   int MaxKx = NbrSitesX - 1;
+  if (Manager.GetBoolean("full-momentum") == false)
+    {
+      MaxKx = NbrSitesX / 2;
+    }
   if (Manager.GetInteger("only-kx") >= 0)
     {						
       MinKx = Manager.GetInteger("only-kx");
@@ -83,6 +88,10 @@ int main(int argc, char** argv)
     }
   int MinKy = 0;
   int MaxKy = NbrSitesY - 1;
+  if (Manager.GetBoolean("full-momentum") == false)
+    {
+      MaxKy = NbrSitesY / 2;
+    }
   if (Manager.GetInteger("only-ky") >= 0)
     {						
       MinKy = Manager.GetInteger("only-ky");
@@ -110,6 +119,7 @@ int main(int argc, char** argv)
  	  MainTaskOperation TaskOperation (&Task);
  	  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
 	  delete Hamiltonian;
+	  delete[] EigenstateOutputFile;
 	  delete[] ContentPrefix;
 	}
     }

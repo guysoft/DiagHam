@@ -65,11 +65,12 @@ ParticleOnLatticeWithSpinChernInsulatorHamiltonian::ParticleOnLatticeWithSpinChe
 // kineticFactor = multiplicative factor in front of the kinetic term
 // uPotential = Hubbard potential strength
 // bandParameter = band parameter
+// flatBandFlag = use flat band model
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
 ParticleOnLatticeWithSpinChernInsulatorHamiltonian::ParticleOnLatticeWithSpinChernInsulatorHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, 
-												       int nbrSiteY, double kineticFactor, double uPotential, double bandParameter, AbstractArchitecture* architecture, long memory)
+												       int nbrSiteY, double kineticFactor, double uPotential, double bandParameter, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -80,6 +81,7 @@ ParticleOnLatticeWithSpinChernInsulatorHamiltonian::ParticleOnLatticeWithSpinChe
   this->HamiltonianShift = 0.0;//4.0 * uPotential;
   this->KineticFactor = kineticFactor;
   this->BandParameter = bandParameter;
+  this->FlatBand = flatBandFlag;
   this->Architecture = architecture;
   this->Memory = memory;
   this->OneBodyInteractionFactorsupup = 0;
@@ -126,7 +128,7 @@ ParticleOnLatticeWithSpinChernInsulatorHamiltonian::~ParticleOnLatticeWithSpinCh
       for (int i = 0; i < this->NbrIntraSectorSums; ++i)
 	{
 	  delete[] this->InteractionFactorsupup[i];
-	  delete[] this->InteractionFactorsupdown[i];
+	  delete[] this->InteractionFactorsdowndown[i];
 	}
       for (int i = 0; i < this->NbrInterSectorSums; ++i)
 	{
@@ -423,10 +425,10 @@ void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateInteractionFact
 		  int ky3 = this->IntraSectorIndicesPerSum[i][j2 << 1] % this->NbrSiteY;
 		  int kx4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1] / this->NbrSiteY;
 		  int ky4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1] % this->NbrSiteY;
-		  this->InteractionFactorsupup[i][Index] = -4.0  * this->UPotential * ((cos (2.0 * M_PI * ((double) kx2 - kx4) / ((double) this->NbrSiteX)) + cos (2.0 * M_PI * ((double) ky2 - ky4) / ((double) this->NbrSiteY)))
-								   - (cos (2.0 * M_PI * ((double) kx1 - kx4) / ((double) this->NbrSiteX)) + cos (2.0 * M_PI * ((double) ky1 - ky4) / ((double) this->NbrSiteY)))
-								   - (cos (2.0 * M_PI * ((double) kx2 - kx3) / ((double) this->NbrSiteX)) + cos (2.0 * M_PI * ((double) ky2 - ky3) / ((double) this->NbrSiteY)))
-								   + (cos (2.0 * M_PI * ((double) kx1 - kx3) / ((double) this->NbrSiteX)) + cos (2.0 * M_PI * ((double) ky1 - ky3) / ((double) this->NbrSiteY))));
+		  this->InteractionFactorsupup[i][Index] = - this->UPotential * ((cos (2.0 * M_PI * ((double) kx2 - kx4) / ((double) this->NbrSiteX)) + cos (2.0 * M_PI * ((double) ky2 - ky4) / ((double) this->NbrSiteY)))
+										 - (cos (2.0 * M_PI * ((double) kx1 - kx4) / ((double) this->NbrSiteX)) + cos (2.0 * M_PI * ((double) ky1 - ky4) / ((double) this->NbrSiteY)))
+										 - (cos (2.0 * M_PI * ((double) kx2 - kx3) / ((double) this->NbrSiteX)) + cos (2.0 * M_PI * ((double) ky2 - ky3) / ((double) this->NbrSiteY)))
+										 + (cos (2.0 * M_PI * ((double) kx1 - kx3) / ((double) this->NbrSiteX)) + cos (2.0 * M_PI * ((double) ky1 - ky3) / ((double) this->NbrSiteY))));
 		  this->InteractionFactorsdowndown[i][Index] = this->InteractionFactorsupup[i][Index];
 		  TotalNbrInteractionFactors += 2;
 		  ++Index;
@@ -450,8 +452,10 @@ void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateInteractionFact
 		  int ky3 = this->InterSectorIndicesPerSum[i][j2 << 1] % this->NbrSiteY;
 		  int kx4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1] / this->NbrSiteY;
 		  int ky4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1] % this->NbrSiteY;
-		  this->InteractionFactorsupdown[i][Index] = -2.0 * this->UPotential *((cos (2.0 * M_PI * ((double) kx2 - kx4) / ((double) this->NbrSiteX)) + cos (2.0 * M_PI * ((double) ky2 - ky4) / ((double) this->NbrSiteY)))
-										       + (cos (2.0 * M_PI * ((double) kx1 - kx3) / ((double) this->NbrSiteX)) + cos (2.0 * M_PI * ((double) ky1 - ky3) / ((double) this->NbrSiteY))));
+		  this->InteractionFactorsupdown[i][Index] = - this->UPotential * (0.5 + (cos (2.0 * M_PI * ((double) kx2 - kx4) / ((double) this->NbrSiteX)) + cos (2.0 * M_PI * ((double) ky2 - ky4) / ((double) this->NbrSiteY)))
+										   - (cos (2.0 * M_PI * ((double) kx1 - kx4) / ((double) this->NbrSiteX)) + cos (2.0 * M_PI * ((double) ky1 - ky4) / ((double) this->NbrSiteY)))
+										   - (cos (2.0 * M_PI * ((double) kx2 - kx3) / ((double) this->NbrSiteX)) + cos (2.0 * M_PI * ((double) ky2 - ky3) / ((double) this->NbrSiteY)))
+										   + (cos (2.0 * M_PI * ((double) kx1 - kx3) / ((double) this->NbrSiteX)) + cos (2.0 * M_PI * ((double) ky1 - ky3) / ((double) this->NbrSiteY))));
 		  ++TotalNbrInteractionFactors;
 		  ++Index;
 		}
@@ -483,12 +487,21 @@ void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateInteractionFact
 	TmpOneBobyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
 #endif   
 	cout << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << endl;
-       	this->OneBodyInteractionFactorsupup[Index] = this->KineticFactor * ((TmpDiag(0, 0) * SqrNorm(TmpMatrix[0][0])) 
-									    + (TmpDiag(1, 1) * SqrNorm(TmpMatrix[1][0])));
-       	this->OneBodyInteractionFactorsdowndown[Index] = this->KineticFactor * ((TmpDiag(0, 0) * SqrNorm(TmpMatrix[0][1])) 
-										+ (TmpDiag(1, 1) * SqrNorm(TmpMatrix[1][1])));
-       	this->OneBodyInteractionFactorsupdown[Index] = this->KineticFactor * ((TmpDiag(0, 0) * TmpMatrix[0][0] * Conj(TmpMatrix[0][1])) 
-									      + (TmpDiag(1, 1) * TmpMatrix[1][0] * Conj(TmpMatrix[1][1])));
+	if (this->FlatBand == false)
+	  {
+	    this->OneBodyInteractionFactorsupup[Index] = this->KineticFactor * ((TmpDiag(0, 0) * SqrNorm(TmpMatrix[0][0])) 
+										+ (TmpDiag(1, 1) * SqrNorm(TmpMatrix[1][0])));
+	    this->OneBodyInteractionFactorsdowndown[Index] = this->KineticFactor * ((TmpDiag(0, 0) * SqrNorm(TmpMatrix[0][1])) 
+										    + (TmpDiag(1, 1) * SqrNorm(TmpMatrix[1][1])));
+	    this->OneBodyInteractionFactorsupdown[Index] = this->KineticFactor * ((TmpDiag(0, 0) * TmpMatrix[0][0] * Conj(TmpMatrix[0][1])) 
+										  + (TmpDiag(1, 1) * TmpMatrix[1][0] * Conj(TmpMatrix[1][1])));
+	  }
+	else
+	  {
+	    this->OneBodyInteractionFactorsupup[Index] = this->KineticFactor * (SqrNorm(TmpMatrix[1][0]) - SqrNorm(TmpMatrix[0][0]));
+	    this->OneBodyInteractionFactorsdowndown[Index] = this->KineticFactor * (SqrNorm(TmpMatrix[1][1]) - SqrNorm(TmpMatrix[0][1]));
+	    this->OneBodyInteractionFactorsupdown[Index] = this->KineticFactor * ((TmpMatrix[1][0] * Conj(TmpMatrix[1][1])) - (TmpMatrix[0][0] * Conj(TmpMatrix[0][1])));
+	  }
       }
   cout << "nbr interaction = " << TotalNbrInteractionFactors << endl;
   cout << "====================================" << endl;

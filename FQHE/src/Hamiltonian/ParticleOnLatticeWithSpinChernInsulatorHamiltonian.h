@@ -75,6 +75,8 @@ class ParticleOnLatticeWithSpinChernInsulatorHamiltonian : public AbstractQHEHam
   double BandParameter;
   // multiplicative factor in front of the kinetic term
   double KineticFactor;
+  // use flat band model
+  bool FlatBand;
 
   // shift to apply to go from precalculation index to the corresponding index in the HilbertSpace
   int PrecalculationShift;
@@ -151,9 +153,10 @@ class ParticleOnLatticeWithSpinChernInsulatorHamiltonian : public AbstractQHEHam
   // kineticFactor = multiplicative factor in front of the kinetic term
   // uPotential = Hubbard potential strength
   // bandParameter = band parameter
+  // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeWithSpinChernInsulatorHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double kineticFactor, double uPotential, double bandParameter, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnLatticeWithSpinChernInsulatorHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double kineticFactor, double uPotential, double bandParameter, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //

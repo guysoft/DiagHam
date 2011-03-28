@@ -56,6 +56,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "Hubbard potential strength", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "band-parameter", "band structure parameter", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "kinetic-factor", "multiplicative factor in front of the kinetic term", 1.0);
+  (*SystemGroup) += new BooleanOption  ('\n', "flat-band", "use flat band model");
+  (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
@@ -86,6 +88,10 @@ int main(int argc, char** argv)
 
   int MinKx = 0;
   int MaxKx = NbrSitesX - 1;
+  if (Manager.GetBoolean("full-momentum") == false)
+    {
+      MaxKx = NbrSitesX / 2;
+    }
   if (Manager.GetInteger("only-kx") >= 0)
     {						
       MinKx = Manager.GetInteger("only-kx");
@@ -93,6 +99,10 @@ int main(int argc, char** argv)
     }
   int MinKy = 0;
   int MaxKy = NbrSitesY - 1;
+  if (Manager.GetBoolean("full-momentum") == false)
+    {
+      MaxKy = NbrSitesY / 2;
+    }
   if (Manager.GetInteger("only-ky") >= 0)
     {						
       MinKy = Manager.GetInteger("only-ky");
@@ -109,17 +119,18 @@ int main(int argc, char** argv)
 	  Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());	
 	  AbstractQHEHamiltonian* Hamiltonian = new ParticleOnLatticeWithSpinChernInsulatorHamiltonian(&Space, NbrParticles, NbrSitesX, NbrSitesY,
 												       Manager.GetDouble("kinetic-factor"), Manager.GetDouble("u-potential"), Manager.GetDouble("band-parameter"),
-												       Architecture.GetArchitecture(), Memory);
+												       Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 	  char* ContentPrefix = new char[256];
 	  sprintf (ContentPrefix, "%d %d", i, j);
-	  GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag);
+	  char* EigenstateOutputFile = new char [512];
+	  sprintf (EigenstateOutputFile, "fermions_cherninsulator_n_%d_x_%d_y_%d_u_%f_m_%f_kx_%d_ky_%d", NbrParticles, NbrSitesX, NbrSitesY, 
+		   Manager.GetDouble("u-potential"), Manager.GetDouble("band-parameter"), i, j);
+	  GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
 	  FirstRunFlag = false;
 	  MainTaskOperation TaskOperation (&Task);
 	  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
-
-//  	  for (int k = 0; k < Space.GetHilbertSpaceDimension(); ++k)
-//  	    Space.PrintState(cout, k) << endl;
-	  cout << "------------------------------------" << endl;
+	  delete Hamiltonian;
+	  delete[] EigenstateOutputFile;
 	  delete[] ContentPrefix;
 	}
     }

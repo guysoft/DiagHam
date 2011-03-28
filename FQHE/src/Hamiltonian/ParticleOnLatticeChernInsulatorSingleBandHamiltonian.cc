@@ -320,6 +320,24 @@ void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::EvaluateInteractionFa
 	OneBodyBasis[Index] = TmpMatrix;	
 	cout << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << endl;
       }
+  double** CosineTableX = new double*[this->NbrSiteX];
+  for (int i = 0; i < this->NbrSiteX; ++i)
+    {
+      CosineTableX[i] = new double[this->NbrSiteX];
+      for (int j = 0; j < this->NbrSiteX; ++j)
+	{
+	  CosineTableX[i][j] = cos (2.0 * M_PI * ((double) (i - j)) / ((double) this->NbrSiteX));
+	}
+    }
+  double** CosineTableY = new double*[this->NbrSiteY];
+  for (int i = 0; i < this->NbrSiteY; ++i)
+    {
+      CosineTableY[i] = new double[this->NbrSiteY];
+      for (int j = 0; j < this->NbrSiteY; ++j)
+	{
+	  CosineTableY[i][j] = cos (2.0 * M_PI * ((double) (i - j)) / ((double) this->NbrSiteY));
+	}
+    }
  
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
@@ -361,6 +379,7 @@ void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::EvaluateInteractionFa
 		    ++this->NbrSectorIndicesPerSum[TmpSum];    
 		  }
 	      }
+      double Factor = 0.5 / ((double) this->NbrParticles);
       this->InteractionFactors = new Complex* [this->NbrSectorSums];
       for (int i = 0; i < this->NbrSectorSums; ++i)
 	{
@@ -382,17 +401,31 @@ void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::EvaluateInteractionFa
 		  int ky3 = Index3 % this->NbrSiteY;
 		  int kx4 = Index4 / this->NbrSiteY;
 		  int ky4 = Index4 % this->NbrSiteY;
-		  this->InteractionFactors[i][Index] = ((Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0] + Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1]) * (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0] + Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1])) * (cos (2.0 * M_PI * ((double) kx2 - kx4) / ((double) this->NbrSiteX)) + cos (2.0 * M_PI * ((double) ky2 - ky4) / ((double) this->NbrSiteY)));
-		  this->InteractionFactors[i][Index] -= ((Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0] + Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1]) * (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0] + Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1])) * (cos (2.0 * M_PI * ((double) kx1 - kx4) / ((double) this->NbrSiteX)) + cos (2.0 * M_PI * ((double) ky1 - ky4) / ((double) this->NbrSiteY)));		  
-		  this->InteractionFactors[i][Index] -= ((Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0] + Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]) * (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0] + Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1])) * (cos (2.0 * M_PI * ((double) kx2 - kx3) / ((double) this->NbrSiteX)) + cos (2.0 * M_PI * ((double) ky2 - ky3) / ((double) this->NbrSiteY)));
-		  this->InteractionFactors[i][Index] += ((Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0] + Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]) * (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0] + Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1])) * (cos (2.0 * M_PI * ((double) kx1 - kx3) / ((double) this->NbrSiteX)) + cos (2.0 * M_PI * ((double) ky1 - ky3) / ((double) this->NbrSiteY)));
-		  this->InteractionFactors[i][Index] *= -4.0;
+		  this->InteractionFactors[i][Index] = ((Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0] + Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1]) * (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0] + Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1])) * (CosineTableX[kx2][kx4] + CosineTableY[ky2][ky4]);
+		  this->InteractionFactors[i][Index] -= ((Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0] + Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1]) * (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0] + Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1])) * (CosineTableX[kx1][kx4] + CosineTableY[ky1][ky4]);
+		  this->InteractionFactors[i][Index] -= ((Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0] + Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]) * (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0] + Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1])) * (CosineTableX[kx2][kx3] + CosineTableY[ky2][ky3]);
+		  this->InteractionFactors[i][Index] += ((Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0] + Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]) * (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0] + Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1])) * (CosineTableX[kx1][kx3] + CosineTableY[ky1][ky3]);
+		  this->InteractionFactors[i][Index] += 4.0 * Conj(OneBodyBasis[Index1][0][0]) * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][0] * OneBodyBasis[Index4][0][1];
+		  this->InteractionFactors[i][Index] -= 4.0 * Conj(OneBodyBasis[Index2][0][0]) * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][0] * OneBodyBasis[Index4][0][1];
+		  this->InteractionFactors[i][Index] -= 4.0 * Conj(OneBodyBasis[Index1][0][0]) * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][0] * OneBodyBasis[Index3][0][1];
+		  this->InteractionFactors[i][Index] += 4.0 * Conj(OneBodyBasis[Index2][0][0]) * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][0] * OneBodyBasis[Index3][0][1];
+		  this->InteractionFactors[i][Index] *= -4.0 * Factor;
 		  TotalNbrInteractionFactors++;
 		  ++Index;
 		}
 	    }
 	}
     }
+  for (int i = 0; i < this->NbrSiteX; ++i)
+    {
+      delete[] CosineTableX[i];
+    }
+  delete[] CosineTableX;
+  for (int i = 0; i < this->NbrSiteY; ++i)
+    {
+      delete[] CosineTableY[i];
+    }
+  delete[] CosineTableY;
   cout << "nbr interaction = " << TotalNbrInteractionFactors << endl;
   cout << "====================================" << endl;
 }

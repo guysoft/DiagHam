@@ -317,23 +317,23 @@ void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateInteractionFact
 		  int ky3 = Index3 % this->NbrSiteY;
 		  int kx4 = Index4 / this->NbrSiteY;
 		  int ky4 = Index4 % this->NbrSiteY;
-		  this->InteractionFactorsupupupup[i][Index] = -((this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 0, 0) * CosineTableX[kx2][kx4] * CosineTableY[ky2][ky4])
-								- (this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 0, 0) * CosineTableX[kx1][kx4] * CosineTableY[ky1][ky4])
-								- (this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 0, 0) * CosineTableX[kx2][kx3] * CosineTableY[ky2][ky3])
-								+ (this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 0, 0) * CosineTableX[kx1][kx3] * CosineTableY[ky1][ky3]));
-		  this->InteractionFactorsdowndowndowndown[i][Index] = -((this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 1, 1) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 1, 1) * CosineTableX[kx2][kx4] * CosineTableY[ky2][ky4])
-									- (this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 1, 1) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 1, 1) * CosineTableX[kx1][kx4] * CosineTableY[ky1][ky4])
-									- (this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 1, 1) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 1, 1) * CosineTableX[kx2][kx3] * CosineTableY[ky2][ky3])
-									+ (this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 1, 1) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 1, 1) * CosineTableX[kx1][kx3] * CosineTableY[ky1][ky3]));
+		  this->InteractionFactorsupupupup[i][Index] = -((this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 0, 0) * (CosineTableX[kx2][kx4] + CosineTableY[ky2][ky4]))
+								 - (this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 0, 0) * (CosineTableX[kx1][kx4] + CosineTableY[ky1][ky4]))
+								 - (this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 0, 0) * (CosineTableX[kx2][kx3] + CosineTableY[ky2][ky3]))
+								 + (this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 0, 0) * (CosineTableX[kx1][kx3] + CosineTableY[ky1][ky3])));
+		  this->InteractionFactorsdowndowndowndown[i][Index] = -((this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 1, 1) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 1, 1) * (CosineTableX[kx2][kx4] + CosineTableY[ky2][ky4]))
+									- (this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 1, 1) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 1, 1) * (CosineTableX[kx1][kx4] + CosineTableY[ky1][ky4]))
+									- (this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 1, 1) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 1, 1) * (CosineTableX[kx2][kx3] + CosineTableY[ky2][ky3]))
+									+ (this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 1, 1) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 1, 1) * (CosineTableX[kx1][kx3] + CosineTableY[ky1][ky3])));
 		  
-		  this->InteractionFactorsdowndownupup[i][Index] = -((this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 1, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 1, 0) * CosineTableX[kx2][kx4] * CosineTableY[ky2][ky4])
-								    - (this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 1, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 1, 0) * CosineTableX[kx1][kx4] * CosineTableY[ky1][ky4])
-								    - (this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 1, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 1, 0) * CosineTableX[kx2][kx3] * CosineTableY[ky2][ky3])
-								    + (this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 1, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 1, 0) * CosineTableX[kx1][kx3] * CosineTableY[ky1][ky3]));
-		  this->InteractionFactorsupupdowndown[i][Index] = -((this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 0, 1) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 0, 1) * CosineTableX[kx2][kx4] * CosineTableY[ky2][ky4])
-								    - (this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 0, 1) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 0, 1) * CosineTableX[kx1][kx4] * CosineTableY[ky1][ky4])
-								    - (this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 0, 1) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 0, 1) * CosineTableX[kx2][kx3] * CosineTableY[ky2][ky3])
-								    + (this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 0, 1) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 0, 1) * CosineTableX[kx1][kx3] * CosineTableY[ky1][ky3]));
+		  this->InteractionFactorsdowndownupup[i][Index] = -((this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 1, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 1, 0) * (CosineTableX[kx2][kx4] + CosineTableY[ky2][ky4]))
+								    - (this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 1, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 1, 0) * (CosineTableX[kx1][kx4] + CosineTableY[ky1][ky4]))
+								    - (this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 1, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 1, 0) * (CosineTableX[kx2][kx3] + CosineTableY[ky2][ky3]))
+								    + (this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 1, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 1, 0) * (CosineTableX[kx1][kx3] + CosineTableY[ky1][ky3])));
+		  this->InteractionFactorsupupdowndown[i][Index] = -((this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 0, 1) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 0, 1) * (CosineTableX[kx2][kx4] + CosineTableY[ky2][ky4]))
+								    - (this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 0, 1) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 0, 1) * (CosineTableX[kx1][kx4] + CosineTableY[ky1][ky4]))
+								    - (this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 0, 1) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 0, 1) * (CosineTableX[kx2][kx3] + CosineTableY[ky2][ky3]))
+								    + (this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 0, 1) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 0, 1) * (CosineTableX[kx1][kx3] + CosineTableY[ky1][ky3])));
 		  TotalNbrInteractionFactors += 4;
 		  ++Index;
 		}
@@ -355,14 +355,14 @@ void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateInteractionFact
 		  int ky3 = Index3 % this->NbrSiteY;
 		  int kx4 = Index4 / this->NbrSiteY;
 		  int ky4 = Index4 % this->NbrSiteY;
-		  this->InteractionFactorsupdownupup[i][Index] = -((this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 1, 0) * CosineTableX[kx2][kx4] * CosineTableY[ky2][ky4])
-								   - (this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 1, 0) * CosineTableX[kx1][kx4] * CosineTableY[ky1][ky4])
-								   - (this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 1, 0) * CosineTableX[kx2][kx3] * CosineTableY[ky2][ky3])
-								   + (this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 1, 0) * CosineTableX[kx1][kx3] * CosineTableY[ky1][ky3]));
-		  this->InteractionFactorsupdowndowndown[i][Index] = -((this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 0, 1) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 1, 1) * CosineTableX[kx2][kx4] * CosineTableY[ky2][ky4])
-								       - (this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 0, 1) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 1, 1) * CosineTableX[kx1][kx4] * CosineTableY[ky1][ky4])
-								       - (this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 0, 1) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 1, 1) * CosineTableX[kx2][kx3] * CosineTableY[ky2][ky3])
-								       + (this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 0, 1) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 1, 1) * CosineTableX[kx1][kx3] * CosineTableY[ky1][ky3]));
+		  this->InteractionFactorsupdownupup[i][Index] = -((this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 1, 0) * (CosineTableX[kx2][kx4] + CosineTableY[ky2][ky4]))
+								   - (this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 1, 0) * (CosineTableX[kx1][kx4] + CosineTableY[ky1][ky4]))
+								   - (this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 1, 0) * (CosineTableX[kx2][kx3] + CosineTableY[ky2][ky3]))
+								   + (this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 1, 0) * (CosineTableX[kx1][kx3] + CosineTableY[ky1][ky3])));
+		  this->InteractionFactorsupdowndowndown[i][Index] = -((this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 0, 1) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 1, 1) * (CosineTableX[kx2][kx4] + CosineTableY[ky2][ky4]))
+								       - (this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 0, 1) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 1, 1) * (CosineTableX[kx1][kx4] + CosineTableY[ky1][ky4]))
+								       - (this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 0, 1) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 1, 1) * (CosineTableX[kx2][kx3] + CosineTableY[ky2][ky3]))
+								       + (this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 0, 1) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 1, 1) * (CosineTableX[kx1][kx3] + CosineTableY[ky1][ky3])));
 		  TotalNbrInteractionFactors += 2;
 		  ++Index;
 		}
@@ -391,14 +391,14 @@ void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateInteractionFact
 		  int ky3 = Index3 % this->NbrSiteY;
 		  int kx4 = Index4 / this->NbrSiteY;
 		  int ky4 = Index4 % this->NbrSiteY;
-		  this->InteractionFactorsupupupdown[i][Index] = -((this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 0, 1) * CosineTableX[kx2][kx4] * CosineTableY[ky2][ky4])
-								   - (this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 0, 1) * CosineTableX[kx1][kx4] * CosineTableY[ky1][ky4])
-								   - (this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 0, 1) * CosineTableX[kx2][kx3] * CosineTableY[ky2][ky3])
-								   + (this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 0, 1) * CosineTableX[kx1][kx3] * CosineTableY[ky1][ky3]));
-		  this->InteractionFactorsdowndownupdown[i][Index] = -((this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 1, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 1, 1) * CosineTableX[kx2][kx4] * CosineTableY[ky2][ky4])
-								       - (this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 1, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 1, 1) * CosineTableX[kx1][kx4] * CosineTableY[ky1][ky4])
-								       - (this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 1, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 1, 1) * CosineTableX[kx2][kx3] * CosineTableY[ky2][ky3])
-								       + (this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 1, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 1, 1) * CosineTableX[kx1][kx3] * CosineTableY[ky1][ky3]));
+		  this->InteractionFactorsupupupdown[i][Index] = -((this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 0, 1) * (CosineTableX[kx2][kx4] + CosineTableY[ky2][ky4]))
+								   - (this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 0, 1) * (CosineTableX[kx1][kx4] + CosineTableY[ky1][ky4]))
+								   - (this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 0, 1) * (CosineTableX[kx2][kx3] + CosineTableY[ky2][ky3]))
+								   + (this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 0, 1) * (CosineTableX[kx1][kx3] + CosineTableY[ky1][ky3])));
+		  this->InteractionFactorsdowndownupdown[i][Index] = -((this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 1, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 1, 1) * (CosineTableX[kx2][kx4] + CosineTableY[ky2][ky4]))
+								       - (this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 1, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 1, 1) * (CosineTableX[kx1][kx4] + CosineTableY[ky1][ky4]))
+								       - (this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 1, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 1, 1) * (CosineTableX[kx2][kx3] + CosineTableY[ky2][ky3]))
+								       + (this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 1, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 1, 1) * (CosineTableX[kx1][kx3] + CosineTableY[ky1][ky3])));
 		  TotalNbrInteractionFactors += 2;
 		  ++Index;
 		}
@@ -420,10 +420,10 @@ void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateInteractionFact
 		  int ky3 = Index3 % this->NbrSiteY;
 		  int kx4 = Index4 / this->NbrSiteY;
 		  int ky4 = Index4 % this->NbrSiteY;
-		  this->InteractionFactorsupdownupdown[i][Index] = -((this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 1, 1) * CosineTableX[kx2][kx4] * CosineTableY[ky2][ky4])
-								     - (this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 1, 1) * CosineTableX[kx1][kx4] * CosineTableY[ky1][ky4])
-								     - (this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 1, 1) * CosineTableX[kx2][kx3] * CosineTableY[ky2][ky3])
-								     + (this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 1, 1) * CosineTableX[kx1][kx3] * CosineTableY[ky1][ky3]));
+		  this->InteractionFactorsupdownupdown[i][Index] = -((this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 1, 1) * (CosineTableX[kx2][kx4] + CosineTableY[ky2][ky4]))
+								     - (this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 1, 1) * (CosineTableX[kx1][kx4] + CosineTableY[ky1][ky4]))
+								     - (this->ComputeBasisContribution(OneBodyBasis, Index1, Index4, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index2, Index3, 1, 1) * (CosineTableX[kx2][kx3] + CosineTableY[ky2][ky3]))
+								     + (this->ComputeBasisContribution(OneBodyBasis, Index2, Index4, 0, 0) * this->ComputeBasisContribution(OneBodyBasis, Index1, Index3, 1, 1) * (CosineTableX[kx1][kx3] + CosineTableY[ky1][ky3])));
 		  ++TotalNbrInteractionFactors;
 		  ++Index;
 		}
