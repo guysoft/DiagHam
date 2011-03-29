@@ -68,7 +68,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "shift-la", "index of the first orbital that is part of the subsystem whose entropy has to be evaluated (0 is the orbital at the north pole)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "stripe-subsystem", "use a stripe center around the equator as the subsystem");
   (*SystemGroup) += new SingleStringOption  ('\n', "degenerated-groundstate", "single column file describing a degenerated ground state");
-	(*ToolsGroup) += new BooleanOption  ('\n', "use-svd", "use singular value decomposition instead of diagonalization to compute the entropy");
+  (*ToolsGroup) += new BooleanOption  ('\n', "use-svd", "use singular value decomposition instead of diagonalization to compute the entropy");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with ent extension");
   (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices to a given file");
   (*OutputGroup) += new BooleanOption ('\n', "density-eigenstate", "compute the eigenstates of the reduced density matrix");
@@ -135,7 +135,7 @@ int main(int argc, char** argv)
   double* Weights =0;
   bool WeightFlag = false;
   bool ComplexFlag = false;
-	bool SVDFlag = Manager.GetBoolean("use-svd");
+  bool SVDFlag = Manager.GetBoolean("use-svd");
 
   if (Manager.GetString("degenerated-groundstate") == 0)
     {
