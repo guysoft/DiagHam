@@ -480,7 +480,110 @@ ComplexMatrix FermionOnSquareLatticeMomentumSpace::EvaluatePartialEntanglementMa
 
 HermitianMatrix FermionOnSquareLatticeMomentumSpace::EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int kxSector, int kySector, ComplexVector& groundState, AbstractArchitecture* architecture)
 {
-  HermitianMatrix TmpDensityMatrix;
+  if (nbrParticleSector == 0)
+    {
+      if ((kxSector == 0) && (kySector == 0))
+	{
+	  HermitianMatrix TmpDensityMatrix(1, true);
+	  TmpDensityMatrix(0, 0) = 1.0;
+	  return TmpDensityMatrix;
+	}
+      else
+	{
+	  HermitianMatrix TmpDensityMatrix;
+	  return TmpDensityMatrix;
+	}
+    }
+  if (nbrParticleSector == this->NbrFermions)
+    {
+      if ((kxSector == this->KxMomentum) && (kySector == this->KyMomentum))
+	{
+	  HermitianMatrix TmpDensityMatrix(1, true);
+	  TmpDensityMatrix(0, 0) = 1.0;
+	  return TmpDensityMatrix;
+	}
+      else
+	{
+	  HermitianMatrix TmpDensityMatrix;
+	  return TmpDensityMatrix;
+	}
+    }
+  int ComplementaryNbrParticles = this->NbrFermions - nbrParticleSector;
+  int ComplementaryKxMomentum = (this->KxMomentum - kxSector) % this->NbrSiteX;
+  int ComplementaryKyMomentum = (this->KyMomentum - kySector) % this->NbrSiteY;
+  FermionOnSquareLatticeMomentumSpace SubsytemSpace (nbrParticleSector, this->NbrSiteX, this->NbrSiteY, kxSector, kySector);
+  HermitianMatrix TmpDensityMatrix (SubsytemSpace.GetHilbertSpaceDimension(), true);
+  FermionOnSquareLatticeNonPeriodicMomentumSpace ComplementarySpace (ComplementaryNbrParticles, this->NbrSiteX, this->NbrSiteY, ComplementaryKxMomentum, ComplementaryKyMomentum);
+  cout << "subsystem Hilbert space dimension = " << SubsytemSpace.HilbertSpaceDimension << endl;
+  int* TmpStatePosition = new int [SubsytemSpace.HilbertSpaceDimension];
+  int* TmpStatePosition2 = new int [SubsytemSpace.HilbertSpaceDimension];
+  double* TmpStateCoefficient = new double [SubsytemSpace.HilbertSpaceDimension];
+  BinomialCoefficients TmpBinomial (this->NbrFermions);
+  double TmpInvBinomial = 1.0 / (TmpBinomial(this->NbrFermions, nbrParticleSector));
+  long TmpNbrNonZeroElements = 0;
+
+  for (int MinIndex = 0; MinIndex < SubsytemSpace.HilbertSpaceDimension; ++MinIndex)    
+    {
+      int Pos = 0;
+      unsigned long TmpState = SubsytemSpace.StateDescription[MinIndex];
+      for (int j = 0; j < ComplementarySpace.HilbertSpaceDimension; ++j)
+	{
+	  unsigned long TmpState2 = ComplementarySpace.StateDescription[j];
+	  if ((TmpState & TmpState2) == 0x0ul)
+	    {
+ 	      int TmpLzMax = this->LzMax;
+	      unsigned long TmpState3 = TmpState | TmpState2;
+	      while ((TmpState3 >> TmpLzMax) == 0x0ul)
+		--TmpLzMax;
+	      int TmpPos = this->FindStateIndex(TmpState3, TmpLzMax);
+	      if (TmpPos != this->HilbertSpaceDimension)
+		{
+		  double Coefficient = TmpInvBinomial;
+		  unsigned long Sign = 0x0ul;
+		  int Pos2 = ComplementarySpace.LzMax;
+		  while ((Pos2 > 0) && (TmpState2 != 0x0ul))
+		    {
+		      while (((TmpState2 >> Pos2) & 0x1ul) == 0x0ul)
+			--Pos2;
+		      TmpState3 = TmpState & ((0x1ul << (Pos2 + 1)) - 1ul);
+#ifdef  __64_BITS__
+		      TmpState3 ^= TmpState3 >> 32;
+#endif	
+		      TmpState3 ^= TmpState3 >> 16;
+		      TmpState3 ^= TmpState3 >> 8;
+		      TmpState3 ^= TmpState3 >> 4;
+		      TmpState3 ^= TmpState3 >> 2;
+		      TmpState3 ^= TmpState3 >> 1;
+		      Sign ^= TmpState3;
+		      TmpState2 &= ~(0x1ul << Pos2);
+		      --Pos2;
+		    }
+ 		  if ((Sign & 0x1ul) == 0x0ul)		  
+ 		    Coefficient *= 1.0;
+ 		  else
+ 		    Coefficient *= -1.0;
+		  TmpStatePosition[Pos] = TmpPos;
+		  TmpStatePosition2[Pos] = j;
+		  TmpStateCoefficient[Pos] = Coefficient;
+		  ++Pos;
+		}
+	    }
+	}
+      if (Pos != 0)
+	{
+	  ++TmpNbrNonZeroElements;
+	  for (int j = 0; j < Pos; ++j)
+	    {
+	      int Pos2 = TmpStatePosition2[j];
+	      Complex TmpValue = Conj(groundState[TmpStatePosition[j]]) * TmpStateCoefficient[j];
+	      for (int k = 0; k < Pos; ++k)
+		if (TmpStatePosition2[k] >= Pos2)
+		  {
+		    TmpDensityMatrix.AddToMatrixElement(Pos2, TmpStatePosition2[k], TmpValue * groundState[TmpStatePosition[k]] * TmpStateCoefficient[k]);
+		  }
+	    }
+	}
+    }
   return TmpDensityMatrix;
 }
 

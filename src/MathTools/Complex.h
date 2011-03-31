@@ -82,6 +82,8 @@ public:
   friend Complex Conj(const Complex& z);
   // return complex corresponding to the polar definition
   friend Complex Polar(double r,double theta);
+  // return complex corresponding to a phase factor
+  friend Complex Phase(double theta);
   //return  the invert of a given complex number
   friend Complex Inv(const Complex& z);
 
@@ -288,6 +290,13 @@ inline Complex Conj(const Complex& z)
 inline Complex Polar(double r,double theta)
 {
   return Complex (r * cos(theta),r * sin(theta));
+}
+
+// return complex corresponding to a phase factor
+
+inline Complex Phase(double theta)
+{
+  return Complex (cos(theta), sin(theta));
 }
 
 //return  the invert of a given complex number

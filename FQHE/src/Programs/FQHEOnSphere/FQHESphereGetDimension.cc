@@ -59,6 +59,15 @@ long FermionShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int
 // return value = Hilbert space dimension
 long FermionSU2ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin);
 
+// evaluate Hilbert space dimension for bosons with SU(2) spin
+//
+// nbrBosons = number of fermions
+// lzMax = momentum maximum value for a fermion
+// totalLz = momentum total value (with shift nbrBosons * lzMax)
+// totalSpin = number of particles with spin up
+// return value = Hilbert space dimension
+long BosonSU2ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz, int totalSpin);
+
 // evaluate Hilbert space dimension for fermions with SU(2)xSU(2) spin
 //
 // nbrFermions = number of fermions
@@ -130,6 +139,14 @@ bool WriteDimensionToDisk(char* outputFileName, int nbrParticles, int nbrFluxQua
 // nbrFluxQuanta = number of flux quanta
 // return value = reference on the output stream
 ostream& FermionSU2WriteDimension(ostream& output, int nbrParticles, int nbrFluxQuanta);
+
+// save dimensions in a given output stream for bosons with SU(2) spin
+//
+// output = reference on the output stream
+// nbrParticles = number of particles
+// nbrFluxQuanta = number of flux quanta
+// return value = reference on the output stream
+ostream& BosonSU2WriteDimension(ostream& output, int nbrParticles, int nbrFluxQuanta);
 
 // save dimensions in a given output stream for fermions with SU(3) spin
 //
@@ -349,6 +366,33 @@ int main(int argc, char** argv)
 	{
 	  cout << "SU(2) mode not yet available" << endl;	
 	  return -1;
+	  if (Manager.GetBoolean("ground-only") == true)
+	    cout << BosonSU2ShiftedEvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, (LzMin + (NbrFluxQuanta * NbrParticles)) >> 1, 
+								 (Sz + NbrParticles) >> 1) << endl;
+	  else
+	    {
+	      if (Manager.GetBoolean("save-disk") == true)
+		{
+		  char* OutputFileName = 0;
+		  if (Manager.GetString("output-file") == 0)
+		    {
+		      OutputFileName = new char[256];
+		      sprintf (OutputFileName, "bosons_sphere_su2_n_%d_2s_%d.dim", NbrParticles, NbrFluxQuanta);
+		    }
+		  else
+		    {
+		      OutputFileName = new char[strlen(Manager.GetString("output-file")) + 1];
+		      strcpy (OutputFileName, Manager.GetString("output-file"));
+		    }		  
+		  ofstream File;
+		  File.open(OutputFileName, ios::binary | ios::out);
+		  BosonSU2WriteDimension(File, NbrParticles, NbrFluxQuanta);
+		  File.close();
+		  delete[] OutputFileName;
+		}
+	      else
+		BosonSU2WriteDimension (cout, NbrParticles, NbrFluxQuanta);
+	    }	      
 	}
       else
 	{
@@ -653,6 +697,18 @@ long FermionSU2ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, 
   return  (Tmp + FermionSU2ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin - 1)
 	   + FermionSU2ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin)
 	   + FermionSU2ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz, totalSpin));
+}
+
+// evaluate Hilbert space dimension for bosons with SU(2) spin
+//
+// nbrBosons = number of fermions
+// lzMax = momentum maximum value for a fermion
+// totalLz = momentum total value (with shift nbrBosons * lzMax)
+// totalSpin = number of particles with spin up
+// return value = Hilbert space dimension
+
+long BosonSU2ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz, int totalSpin)
+{
 }
 
 // evaluate Hilbert space dimension for fermions with SU(2)xSU(2) spin
@@ -1098,6 +1154,47 @@ ostream& FermionSU2WriteDimension(ostream& output, int nbrParticles, int nbrFlux
 	      long* LzDimension = new long [((Max - Min) >> 1) + 1];
 	      for (int Lz = Min; Lz <= Max; Lz += 2)
 		LzDimension[(Lz - Min) >> 1] = FermionSU2ShiftedEvaluateHilbertSpaceDimension(nbrParticles, nbrFluxQuanta, 
+											      (Lz + (nbrParticles * nbrFluxQuanta)) >> 1, NUp);
+	      for (int Lz = Min; Lz < Max; Lz += 2)
+		output << Sz << " " << Lz << " " << LzDimension[(Lz - Min) >> 1] << " " 
+		       << (LzDimension[(Lz - Min) >> 1] - LzDimension[((Lz - Min) >> 1) + 1]) << endl;
+	      output << Sz << " " << Max << " " << LzDimension[(Max - Min) >> 1] << " " 
+		     << LzDimension[(Max - Min) >> 1] << endl;
+	      delete[] LzDimension;	      
+	    }
+	}
+    }
+  return output;
+}
+
+// save dimensions in a given output stream for bosons with SU(2) spin
+//
+// output = reference on the output stream
+// nbrParticles = number of particles
+// nbrFluxQuanta = number of flux quanta
+// return value = reference on the output stream
+
+ostream& BosonSU2WriteDimension(ostream& output, int nbrParticles, int nbrFluxQuanta)
+{
+  output << "# Hilbert space dimension in each L and Lz sector for " << nbrParticles << " bosons" << endl;
+  output << "# with SU(2) spin on the sphere geometry with " << nbrFluxQuanta << " flux quanta" << endl;
+  output << "#" << endl << "#  dimensions for each subspaces with the following convention " << endl 
+	 << "# (twice the total Sz value) (twice the total Lz/L value) (dimension of the subspace with fixed Lz, Sz) (dimension of the subspace with fixed L, Lz=L, Sz)" << endl << endl;
+  for (int Sz = nbrParticles & 1; Sz <= nbrParticles; Sz += 2)
+    {
+      int NUp = nbrParticles + Sz;
+      int NDown = nbrParticles - Sz;
+      if ((NUp >= 0) && (NDown >=0) && ((NUp & 0x1) == 0) && ((NDown & 0x1) == 0))
+	{
+	  NUp >>= 1;
+	  NDown >>= 1;
+	  int Min = (nbrParticles * nbrFluxQuanta) & 1;
+	  int Max  = ((((nbrFluxQuanta - NUp + 1) * NUp) + ((nbrFluxQuanta - NDown + 1) * NDown)));
+	  if ((Max >=  Min) && (NUp <= (nbrFluxQuanta + 1)) && (NDown <= (nbrFluxQuanta + 1)))
+	    {
+	      long* LzDimension = new long [((Max - Min) >> 1) + 1];
+	      for (int Lz = Min; Lz <= Max; Lz += 2)
+		LzDimension[(Lz - Min) >> 1] = BosonSU2ShiftedEvaluateHilbertSpaceDimension(nbrParticles, nbrFluxQuanta, 
 											      (Lz + (nbrParticles * nbrFluxQuanta)) >> 1, NUp);
 	      for (int Lz = Min; Lz < Max; Lz += 2)
 		output << Sz << " " << Lz << " " << LzDimension[(Lz - Min) >> 1] << " " 

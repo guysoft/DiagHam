@@ -30,8 +30,12 @@
 
 #include "config.h"
 #include "HilbertSpace/BosonOnSphereFusedBasis.h"
+#include "HilbertSpace/BosonOnSphereShort.h"
+#include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
 #include "GeneralTools/MultiColumnASCIIFile.h"
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
+#include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
+
 
 #include <iostream>
 
@@ -157,5 +161,155 @@ bool BosonOnSphereFusedBasis::GetTargetHilbertSpaceData(char* inputFileName, int
   totalLz <<= 1;
   totalLz -= lzMax * nbrParticles;
   return true;
+}
+
+// get the fused states from a configuration file, downloading them if needed
+//
+// inputFileName = name of the file that describes the states to fuse
+// vectorFileNames = array that contains the name of already loaded fused states
+// nbrLoadedVectors = number of already loaded fused states
+// return value = new number of already loaded fused states (-1 if an error occured)
+
+int BosonOnSphereFusedBasis::GetFusedStates(char* inputFileName, char** vectorFileNames, int nbrLoadedVectors)
+{
+  MultiColumnASCIIFile InputVectors;
+  if (InputVectors.Parse(inputFileName) == false)
+    {
+      InputVectors.DumpErrors(cout) << endl;
+      return false;
+    }
+  int NbrFusedStates = InputVectors.GetNbrColumns();
+  if (((NbrFusedStates % 4) != 0) || (NbrFusedStates < 8))
+    {
+      cout << "wrong number of columns in " << inputFileName << endl;
+      return false;
+    }
+  NbrFusedStates /= 4;
+  for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
+    {
+      for (int j = 0; j < NbrFusedStates; ++j)
+	{
+	  bool Flag = false;
+	  for (int k = 0; (k < nbrLoadedVectors) && (Flag == false); ++k)
+	    {
+	      if (strcmp(vectorFileNames[k], InputVectors(1 + (4 * j), i)) == 0)
+		{
+		  Flag = true;
+		}
+	    }
+	  if (Flag == false)
+	    {
+	      vectorFileNames[nbrLoadedVectors] = new char[strlen(InputVectors(1 + (4 * j), i)) + 1];
+	      strcpy (vectorFileNames[nbrLoadedVectors], InputVectors(1 + (4 * j), i));
+	      RealVector TmpVector;
+	      if (TmpVector.ReadVector(vectorFileNames[nbrLoadedVectors]) == false)
+		{
+		  cout << "can't read " << vectorFileNames[nbrLoadedVectors] << endl;
+		  return -1;
+		}
+	      this->FusedVectorStates[nbrLoadedVectors] = TmpVector;
+	      ++nbrLoadedVectors;
+	    }
+	}
+    }
+  return nbrLoadedVectors;
+}
+
+// get the fused Hilbert spaces from a configuration file, initializing them if needed
+//
+// inputFileName = name of the file that describes the Hilbert spaces to fuse
+// spaceFileNames = array that contains the name of already loaded fused Hilbert spaces
+// nbrLoadedSpaces = number of already loaded fused Hilbert spaces
+// return value = new number of already loaded fused Hilbert spaces (-1 if an error occured)
+
+int BosonOnSphereFusedBasis::GetFusedHilbertSpaces(char* inputFileName, char** spaceFileNames, int nbrLoadedSpaces)
+{
+  MultiColumnASCIIFile InputVectors;
+  if (InputVectors.Parse(inputFileName) == false)
+    {
+      InputVectors.DumpErrors(cout) << endl;
+      return false;
+    }
+  int NbrFusedStates = InputVectors.GetNbrColumns();
+  if (((NbrFusedStates % 4) != 0) || (NbrFusedStates < 8))
+    {
+      cout << "wrong number of columns in " << inputFileName << endl;
+      return false;
+    }
+  NbrFusedStates /= 4;
+  for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
+    {
+      for (int j = 0; j < NbrFusedStates; ++j)
+	{
+	  char* TmpName = 0;
+	  if (strcmp(InputVectors(2 + (4 * j), i), "none") == 0)
+	    {
+	      bool Statistics = true;
+	      int TotalLz = 0;
+	      int NbrParticles = 0;
+	      int LzMax = 0;
+	      if (FQHEOnSphereFindSystemInfoFromVectorFileName(InputVectors(1 + (4 * j), i), NbrParticles, LzMax, TotalLz, Statistics) == false)
+		{
+		  cout << "error while retrieving system parameters from state name " << InputVectors(1 + (4 * j), i) << endl;
+		  return -1;
+		}
+	      TmpName = new char [256];
+	      sprintf (TmpName, "n_%d_2s_%d_lz_%d", NbrParticles, LzMax, TotalLz);
+	    }
+	  else
+	    {
+	      TmpName = new char [strlen(InputVectors(2 + (4 * j), i)) + 1];
+	      strcpy (TmpName, InputVectors(2 + (4 * j), i));
+	    }
+	  bool Flag = false;
+	  for (int k = 0; (k < nbrLoadedSpaces) && (Flag == false); ++k)
+	    {
+	      if (strcmp(spaceFileNames[k], TmpName) == 0)
+		{
+		  Flag = true;
+		}
+	    }
+	  if (Flag == false)
+	    {
+	      if (strcmp(InputVectors(2 + (4 * j), i), "none") == 0)
+		{
+		  bool Statistics = true;
+		  int TotalLz = 0;
+		  int NbrParticles = 0;
+		  int LzMax = 0;
+		  if (FQHEOnSphereFindSystemInfoFromVectorFileName(InputVectors(1 + (4 * j), i), NbrParticles, LzMax, TotalLz, Statistics) == false)
+		    {
+		      cout << "error while retrieving system parameters from state name " << InputVectors(1 + (4 * j), i) << endl;
+		      return -1;
+		    }
+		  this->FusedHilbertSpaces[nbrLoadedSpaces] = new BosonOnSphereShort(NbrParticles, TotalLz, LzMax);		
+		}
+	      else
+		{
+		  if (strcmp(InputVectors(3 + (4 * j), i), "none") == 0)
+		    {
+		      int* ReferenceState = 0;
+		      int TotalLz = 0;
+		      int NbrParticles = 0;
+		      int LzMax = 0;
+		      if (FQHEGetRootPartition(TmpName, NbrParticles, LzMax, ReferenceState) == false)
+			return -1;
+		      this->FusedHilbertSpaces[nbrLoadedSpaces] = new BosonOnSphereHaldaneBasisShort(NbrParticles, TotalLz, LzMax, ReferenceState);	  
+		    }
+		  else
+		    {
+		      this->FusedHilbertSpaces[nbrLoadedSpaces] = new BosonOnSphereHaldaneBasisShort(InputVectors(3 + (4 * j), i));
+		    }
+		}
+	      spaceFileNames[nbrLoadedSpaces] = TmpName;
+	      ++nbrLoadedSpaces;
+	    }
+	  else
+	    {
+	      delete[] TmpName;
+	    }
+	}
+    }
+  return nbrLoadedSpaces;
 }
 

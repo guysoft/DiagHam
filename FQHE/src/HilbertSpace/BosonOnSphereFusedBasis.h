@@ -70,6 +70,11 @@ class BosonOnSphereFusedBasis : public AbstractQHEParticle
   unsigned long* TemporaryState;
   int TemporaryStateLzMax;
 
+  // array that contains all the fused Hilbert spaces
+  BosonOnSphereShort** FusedHilbertSpaces;
+  // array that contains all the fused vector states
+  RealVector* FusedVectorStates;
+
  public:
 
   enum 
@@ -128,6 +133,22 @@ class BosonOnSphereFusedBasis : public AbstractQHEParticle
   // statistics = reference on the particle statistics
   // return value = true if no error occured
   virtual bool GetTargetHilbertSpaceData(char* inputFileName, int& nbrParticles, int& lzMax, int& totalLz, bool& statistics);
+
+  // get the fused states from a configuration file, downloading them if needed
+  //
+  // inputFileName = name of the file that describes the states to fuse
+  // vectorFileNames = array that contains the name of already loaded fused states
+  // nbrLoadedVectors = number of already loaded fused states
+  // return value = new number of already loaded fused states (-1 if an error occured)
+  virtual int GetFusedStates(char* inputFileName, char** vectorFileNames, int nbrLoadedVectors);
+
+  // get the fused Hilbert spaces from a configuration file, initializing them if needed
+  //
+  // inputFileName = name of the file that describes the Hilbert spaces to fuse
+  // spaceFileNames = array that contains the name of already loaded fused Hilbert spaces
+  // nbrLoadedSpaces = number of already loaded fused Hilbert spaces
+  // return value = new number of already loaded fused Hilbert spaces (-1 if an error occured)
+  int GetFusedHilbertSpaces(char* inputFileName, char** spaceFileNames, int nbrLoadedSpaces);
 
 };
 

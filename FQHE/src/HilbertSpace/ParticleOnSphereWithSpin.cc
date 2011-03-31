@@ -485,6 +485,36 @@ RealSymmetricMatrix ParticleOnSphereWithSpin::EvaluatePartialDensityMatrix (int 
   return TmpMatrix;
 }
 
+// evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Lz sector.
+// 
+// nbrFermionSector = number of particles that belong to the subsytem 
+// lzSector = Lz sector in which the density matrix has to be evaluated 
+// szSector = Sz sector in which the density matrix has to be evaluated 
+// groundState = reference on the total system ground state
+// return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+
+RealSymmetricMatrix ParticleOnSphereWithSpin::EvaluatePartialDensityMatrixParticlePartition (int nbrFermionSector, int lzSector, int szSector, RealVector& groundState)
+{
+  RealSymmetricMatrix TmpMatrix;
+  return TmpMatrix;
+}
+
+// evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state, using particle partition. The entanglement matrix is only evaluated in a given Lz sector.
+// 
+// nbrFermionSector = number of particles that belong to the subsytem 
+// lzSector = Lz sector in which the density matrix has to be evaluated
+// szSector = Sz sector in which the density matrix has to be evaluated 
+// groundState = reference on the total system ground state
+// removeBinomialCoefficient = remove additional binomial coefficient in case the particle entanglement matrix has to be used for real space cut
+// return value = entanglement matrix of the subsytem (return a wero dimension matrix if the entanglement matrix is equal to zero)
+
+RealMatrix ParticleOnSphereWithSpin::EvaluatePartialEntanglementMatrixParticlePartition (int nbrFermionSector, int lzSector, int szSector, RealVector& groundState, bool removeBinomialCoefficient)
+{
+  RealMatrix TmpMatrix;
+  return TmpMatrix;
+}
+  
+
 // flip all spins of a given state
 // 
 // index = index of the state on which the operator has to be applied
