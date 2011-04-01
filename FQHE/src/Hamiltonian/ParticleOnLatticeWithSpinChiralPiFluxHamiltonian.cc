@@ -79,7 +79,7 @@ ParticleOnLatticeWithSpinChiralPiFluxHamiltonian::ParticleOnLatticeWithSpinChira
   this->NbrSiteX = nbrSiteX;
   this->NbrSiteY = nbrSiteY;
   this->LzMax = nbrSiteX * nbrSiteY - 1;
-  this->UPotential = 2.0 * uPotential / ((double) this->NbrParticles);
+  this->UPotential = uPotential / ((double) (this->NbrSiteX * this->NbrSiteX));
   this->NNHoping = t1;
   this->NextNNHoping = t2;
   this->MuS = 4.0 * mus;
@@ -293,9 +293,12 @@ void ParticleOnLatticeWithSpinChiralPiFluxHamiltonian::EvaluateInteractionFactor
 	  }
 	else
 	  {
-	    this->OneBodyInteractionFactorsupup[Index] = (SqrNorm(TmpMatrix[1][0]) - SqrNorm(TmpMatrix[0][0]));
-	    this->OneBodyInteractionFactorsdowndown[Index] = (SqrNorm(TmpMatrix[1][1]) - SqrNorm(TmpMatrix[0][1]));
-	    this->OneBodyInteractionFactorsupdown[Index] = ((TmpMatrix[1][0] * Conj(TmpMatrix[1][1])) - (TmpMatrix[0][0] * Conj(TmpMatrix[0][1])));
+// 	    this->OneBodyInteractionFactorsupup[Index] = (SqrNorm(TmpMatrix[1][0]) - SqrNorm(TmpMatrix[0][0]));
+// 	    this->OneBodyInteractionFactorsdowndown[Index] = (SqrNorm(TmpMatrix[1][1]) - SqrNorm(TmpMatrix[0][1]));
+// 	    this->OneBodyInteractionFactorsupdown[Index] = ((TmpMatrix[1][0] * Conj(TmpMatrix[1][1])) - (TmpMatrix[0][0] * Conj(TmpMatrix[0][1])));
+ 	    this->OneBodyInteractionFactorsupup[Index] = d3 / TmpDiag(1, 1);
+ 	    this->OneBodyInteractionFactorsdowndown[Index] = -d3 / TmpDiag(1, 1);
+ 	    this->OneBodyInteractionFactorsupdown[Index] = Conj(B1) / TmpDiag(1, 1);
 	  }
       }
   cout << "nbr interaction = " << TotalNbrInteractionFactors << endl;
@@ -314,11 +317,11 @@ void ParticleOnLatticeWithSpinChiralPiFluxHamiltonian::EvaluateInteractionFactor
 Complex ParticleOnLatticeWithSpinChiralPiFluxHamiltonian::ComputeTwoBodyMatrixElementUpDown(int kx1, int ky1, int kx2, int ky2)
 {
   Complex Tmp = 1.0;
-  Tmp += Phase(2.0 * M_PI * ((double) (kx2 - kx1)) / ((double) this->NbrSiteX));
-  Tmp += Phase(2.0 * M_PI * ((double) (ky2 - kx1)) / ((double) this->NbrSiteY));
-  Tmp += Phase(2.0 * M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX)) + ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY)))));
-//   Tmp += Phase(-2.0 * 2.0 * M_PI * ((double) (kx2 - kx1)) / ((double) this->NbrSiteX));
-//   Tmp += Phase(2.0 * M_PI * ((((double) (kx1 - kx2)) / ((double) this->NbrSiteX)) - ((((double) (ky1 - ky2)) / ((double) this->NbrSiteY)))));
-//   Tmp += Phase(2.0 * M_PI * ((((double) (kx1 - kx2)) / ((double) this->NbrSiteX)) + ((((double) (ky1 - ky2)) / ((double) this->NbrSiteY)))));
+//   Tmp += Phase(2.0 * M_PI * ((double) (kx2 - kx1)) / ((double) this->NbrSiteX));
+//   Tmp += Phase(2.0 * M_PI * ((double) (ky2 - ky1)) / ((double) this->NbrSiteY));
+//   Tmp += Phase(2.0 * M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX)) + ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY)))));
+  Tmp += Phase(-2.0 * 2.0 * M_PI * ((double) (kx2 - kx1)) / ((double) this->NbrSiteX));
+  Tmp += Phase(2.0 * M_PI * ((((double) (kx1 - kx2)) / ((double) this->NbrSiteX)) - ((((double) (ky1 - ky2)) / ((double) this->NbrSiteY)))));
+  Tmp += Phase(2.0 * M_PI * ((((double) (kx1 - kx2)) / ((double) this->NbrSiteX)) + ((((double) (ky1 - ky2)) / ((double) this->NbrSiteY)))));
   return Tmp;
 }
