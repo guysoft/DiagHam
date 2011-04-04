@@ -136,7 +136,7 @@ BosonOnSphereTwoLandauLevels::BosonOnSphereTwoLandauLevels (int nbrBosons, int t
   this->LookUpTableMemorySize = 0;
   long UsedMemory = 0;
   UsedMemory += (long) this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
-  cout << "memory requested for Hilbert space = ";
+  /*cout << "memory requested for Hilbert space = ";
   if (UsedMemory >= 1024)
     if (UsedMemory >= 1048576)
       cout << (UsedMemory >> 20) << "Mo" << endl;
@@ -153,7 +153,7 @@ BosonOnSphereTwoLandauLevels::BosonOnSphereTwoLandauLevels (int nbrBosons, int t
     else
       cout << (UsedMemory >> 10) << "ko" <<  endl;
   else
-    cout << UsedMemory << endl;
+    cout << UsedMemory << endl;*/
 
 #endif
 }
@@ -1179,7 +1179,7 @@ int BosonOnSphereTwoLandauLevels::AddAu (int index, int m, double& coefficient)
   
 void  BosonOnSphereTwoLandauLevels::ProjectionInTheLowestLevel(RealVector &inputVector, RealVector & outputVector, BosonOnSphereShort *finalSpace)
 {
-  unsigned long Etat, Tmp;
+  unsigned long Etat;
   int Idx; 
   for(int i = 0 ; i < finalSpace->GetHilbertSpaceDimension() ; i++)
     {
@@ -1238,7 +1238,7 @@ void BosonOnSphereTwoLandauLevels::GeneratesDifferentState( map <unsigned long, 
   pair <map <unsigned long, double>::iterator, bool> InsertionResult;
   int TmpStateIndex = state[index];
   
-  if ( ( TmpStateIndex ==  ( (this->LzMaxUp << 1) + 0x1ul )) && ( index < (this->NbrBosons - 1) ) )
+  if ( ( TmpStateIndex ==  ( (this->LzMaxUp << 1) + 1)) && ( index < (this->NbrBosons - 1) ) )
     {
       state[index] = this->GetIndexFromLzU( (state[index]>>1) );
       this->GeneratesDifferentState( sortingMap, slater, state, slaterSpace, index + 1, coef);
@@ -1369,7 +1369,7 @@ RealVector& BosonOnSphereTwoLandauLevels::ConvertFromUnnormalizedMonomial(RealVe
   
   InvSqrtCoefficients[GetIndexFromLzU(this->LzMaxUp)] = sqrt(UpFactor);
   
-  if(this->LzMaxUp & 0x1ul != 0)
+  if( (this->LzMaxUp & 0x1ul) != 0)
     InvSqrtCoefficients[GetIndexFromLzU(this->LzMaxUp)] *= -1.0;
   
   SqrtCoefficients[GetIndexFromLzU(this->LzMaxUp)] = 1.0 / InvSqrtCoefficients[GetIndexFromLzU(this->LzMaxUp)];
@@ -1378,7 +1378,7 @@ RealVector& BosonOnSphereTwoLandauLevels::ConvertFromUnnormalizedMonomial(RealVe
     {
       InvSqrtCoefficients[GetIndexFromLzU(k)] = sqrt(UpFactor*Binomials.GetNumericalCoefficient(this->LzMaxUp, k));
       InvSqrtCoefficients[GetIndexFromLzD(k)] = sqrt(DownFactor*Binomials.GetNumericalCoefficient(this->LzMaxDown, k - 1));
-      if(k & 0x1ul != 0)
+      if( (k & 0x1ul) != 0)
 	InvSqrtCoefficients[GetIndexFromLzU(k)] *= -1.0;
       else
 	InvSqrtCoefficients[GetIndexFromLzD(k)] *= -1.0;
@@ -1450,3 +1450,387 @@ RealVector& BosonOnSphereTwoLandauLevels::ConvertFromUnnormalizedMonomial(RealVe
   state /= state.Norm();
   return state;
 }
+
+// evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix is only evaluated in a given Lz sector and fixed number of particles
+// 
+// subsytemSize = number of states that belong to the subsytem (ranging from -LzmaxUp to -LzmaxUp+subsytemSize-1)
+// nbrFermionSector = number of particles that belong to the subsytem 
+// groundState = reference on the total system ground state
+// lzSector = Lz sector in which the density matrix has to be evaluated 
+// return value = entanglement matrix of the subsytem
+
+/*RealMatrix BosonOnSphereTwoLandauLevels::EvaluatePartialEntanglementMatrix (int subsytemSize, int nbrBosonSector, int lzSector, RealVector& groundState)
+{  
+  if (subsytemSize <= 0)
+    {
+      if ((lzSector == 0) && (nbrBosonSector == 0))
+	{
+	  RealMatrix TmpEntanglementMatrix(1,1);
+	  TmpEntanglementMatrix.SetMatrixElement(0, 0, 1.0);
+	  return TmpEntanglementMatrix;
+	}
+      else
+	{
+	  RealMatrix TmpEntanglementMatrix;
+	  return TmpEntanglementMatrix;
+	}
+    }
+  
+  if (subsytemSize > this->LzMaxUp)
+    {
+      if ((lzSector == this->TotalLz) && (nbrBosonSector == this->NbrBosons))
+	{
+	  RealMatrix TmpEntanglementMatrix(this->HilbertSpaceDimension,1,true);
+	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	    TmpEntanglementMatrix.SetMatrixElement(i, 0, groundState[i]);
+	  return TmpEntanglementMatrix;
+	}
+      else
+	{
+	  RealMatrix TmpEntanglementMatrix;
+	  return TmpEntanglementMatrix;	  
+	}
+    }
+  
+  int ShiftedTotalLz = (this->TotalLz + this->NbrBosons * this->LzMaxUp) >> 1;
+  int ShiftedLzSector = (lzSector + nbrBosonSector * (subsytemSize - 1)) >> 1;
+  int ShiftedLzComplementarySector = ShiftedTotalLz - ShiftedLzSector;
+  int NbrBosonsComplementarySector = this->NbrBosons - nbrBosonSector;
+  
+  if ((ShiftedLzComplementarySector < (NbrBosonsComplementarySector * subsytemSize)) || (ShiftedLzComplementarySector > (NbrBosonsComplementarySector * (this->LzMaxUp))))
+    {
+      RealMatrix TmpEntanglementMatrix;
+      return TmpEntanglementMatrix;	  
+    }
+  long TmpNbrNonZeroElements = 0;
+  if (subsytemSize == 1)
+    {
+      if (lzSector == 0)
+	{
+	  // TODO: Need to add possibly overloaded function for this for the case where there is not the standard two LL structure.
+	  BosonOnSphereTwoLandauLevels TmpHilbertSpace(this->NbrBosons - nbrBosonSector, 2 * ShiftedLzComplementarySector - ((this->NbrBosons - nbrBosonSector) * (this->LzMax + subsytemSize)), this->LzMaxUp - subsytemSize,this->LzMaxDown - subsytemSize);
+	  unsigned long  TmpState2 = 0x0;
+	  RealMatrix TmpEntanglementMatrix(1,TmpHilbertSpace.HilbertSpaceDimension,true);
+	  
+	  for (int i = 0; i < nbrBosonSector; ++i)
+	    TmpState2 |= 0x1ul << i;
+	  for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
+	    {
+	      unsigned long TmpState = TmpHilbertSpace.FermionBasis->StateDescription[MinIndex] << (subsytemSize + nbrBosonSector) | TmpState2;
+	      int TmpLzMax = this->FermionBasis->LzMax;
+	      while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
+		--TmpLzMax;
+	      int TmpPos = this->FermionBasis->FindStateIndex(TmpState, TmpLzMax);
+	      if (TmpPos != this->HilbertSpaceDimension)
+		{
+		  ++TmpNbrNonZeroElements;
+		  TmpEntanglementMatrix.AddToMatrixElement(0,MinIndex,groundState[TmpPos]);
+		}
+	    }
+	  if (TmpNbrNonZeroElements == 0)
+	    {
+	      RealMatrix TmpEntanglementMatrix;
+	      return TmpEntanglementMatrix;
+	    }
+	  return TmpEntanglementMatrix;
+	}
+      else
+	{
+	  RealMatrix TmpEntanglementMatrix;
+	  return TmpEntanglementMatrix;	  
+	}
+    }
+  
+  if (nbrBosonSector == 0)
+    {
+      if (lzSector == 0)
+	{
+	  BosonOnSphereShort TmpHilbertSpace(this->NbrBosons, 2 * ShiftedLzComplementarySector - ( this->NbrBosons  * (this->LzMax + subsytemSize)), this->LzMax - subsytemSize);
+	  RealMatrix TmpEntanglementMatrix(1,TmpHilbertSpace.HilbertSpaceDimension,true);
+	  for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
+	    {
+	      unsigned long TmpState = TmpHilbertSpace.FermionBasis->StateDescription[MinIndex] << (subsytemSize + nbrBosonSector);
+	      int TmpLzMax = this->FermionBasis->LzMax;
+	      while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
+		--TmpLzMax;
+	      int TmpPos = this->FermionBasis->FindStateIndex(TmpState, TmpLzMax);
+	      if (TmpPos != this->HilbertSpaceDimension)
+		{
+		  ++TmpNbrNonZeroElements;
+		  TmpEntanglementMatrix.AddToMatrixElement(0,MinIndex,groundState[TmpPos]);
+		}
+	    }
+	  if (TmpNbrNonZeroElements == 0)
+	    {
+	      RealMatrix TmpEntanglementMatrix;
+	      return TmpEntanglementMatrix;
+	    }
+	  return TmpEntanglementMatrix;
+	}
+      else
+	{
+	  RealMatrix TmpEntanglementMatrix;
+	  return TmpEntanglementMatrix;	  
+	}
+    }
+  
+  int MinIndex = 0;
+  if (nbrBosonSector == 1)
+    {
+      BosonOnSphereShort TmpHilbertSpace(this->NbrBosons - nbrBosonSector, 2 * ShiftedLzComplementarySector - ((this->NbrBosons - nbrBosonSector) * (this->LzMax + subsytemSize)), this->LzMax - subsytemSize);
+      RealMatrix TmpEntanglementMatrix(1,TmpHilbertSpace.HilbertSpaceDimension,true);
+      for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
+	{
+	  unsigned long TmpState = TmpHilbertSpace.FermionBasis->StateDescription[MinIndex] << (subsytemSize + nbrBosonSector) | (0x1ul << ShiftedLzSector);
+	  int TmpLzMax = this->FermionBasis->LzMax;
+	  while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
+	    --TmpLzMax;
+	  int TmpPos = this->FermionBasis->FindStateIndex(TmpState, TmpLzMax);
+	  if (TmpPos != this->HilbertSpaceDimension)
+	    {
+	      ++TmpNbrNonZeroElements;
+	      TmpEntanglementMatrix.AddToMatrixElement(0,MinIndex,groundState[TmpPos]);
+	    }
+	}
+      if (TmpNbrNonZeroElements == 0)
+	{
+	  RealMatrix TmpEntanglementMatrix;
+	  return TmpEntanglementMatrix;
+	}
+      return TmpEntanglementMatrix;
+    }
+  
+  if (NbrBosonsComplementarySector == 0)
+    {
+      if (ShiftedLzComplementarySector != 0)
+	{
+	  RealMatrix TmpEntanglementMatrix;
+	  return TmpEntanglementMatrix;
+	}
+      BosonOnSphereShort TmpDestinationHilbertSpace(nbrBosonSector, lzSector, subsytemSize - 1);
+      cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
+      RealMatrix TmpEntanglementMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension,1, true);
+      MinIndex = this->HilbertSpaceDimension - TmpDestinationHilbertSpace.HilbertSpaceDimension;
+      for (int i = 0; i < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++i)
+	{
+	  TmpEntanglementMatrix.AddToMatrixElement(i,0,groundState[MinIndex + i]);
+	}
+      return TmpEntanglementMatrix;
+    }
+  
+  
+  BosonOnSphereShort TmpDestinationHilbertSpace(nbrBosonSector, lzSector, subsytemSize - 1);
+  cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
+  
+  
+  BosonOnSphereShort TmpHilbertSpace(this->NbrBosons - nbrBosonSector, 2 * ShiftedLzComplementarySector - ((this->NbrBosons - nbrBosonSector) * (this->LzMax + subsytemSize)), this->LzMax - subsytemSize);
+  RealMatrix TmpEntanglementMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension,TmpHilbertSpace.HilbertSpaceDimension, true);
+  for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
+    {
+      unsigned long TmpComplementaryState = TmpHilbertSpace.FermionBasis->StateDescription[MinIndex] << (subsytemSize + nbrBosonSector);
+      for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
+	{
+	  unsigned long TmpState = TmpDestinationHilbertSpace.FermionBasis->StateDescription[j] | TmpComplementaryState;
+	  int TmpLzMax = this->FermionBasis->LzMax;
+	  while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
+	    --TmpLzMax;
+	  int TmpPos = this->FermionBasis->FindStateIndex(TmpState, TmpLzMax);
+	  if (TmpPos != this->HilbertSpaceDimension)
+	    {
+	      ++TmpNbrNonZeroElements;
+	      TmpEntanglementMatrix.AddToMatrixElement(j,MinIndex,groundState[TmpPos]);
+	    }
+	}
+    }
+  
+  if (TmpNbrNonZeroElements > 0)	
+    return TmpEntanglementMatrix;
+  else
+    {
+      RealMatrix TmpEntanglementMatrix;
+      return TmpEntanglementMatrix;
+    }
+}*/
+
+// evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state, using particle partition. The entanglement matrix is only evaluated in a given Lz sector.
+// 
+// nbrBosonSector = number of particles that belong to the subsytem 
+// lzSector = Lz sector in which the density matrix has to be evaluated 
+// groundState = reference on the total system ground state
+// removeBinomialCoefficient = remove additional binomial coefficient in case the particle entanglement matrix has to be used for real space cut
+// return value = entanglement matrix of the subsytem (return a wero dimension matrix if the entanglement matrix is equal to zero)
+
+RealMatrix BosonOnSphereTwoLandauLevels::EvaluatePartialEntanglementMatrixParticlePartition (int nbrBosonSector, int lzSector, RealVector& groundState, bool removeBinomialCoefficient)
+{	
+  if ( abs(lzSector) > (nbrBosonSector * this->LzMax) )
+    {
+      RealMatrix TmpEntanglementMatrixZero;
+      return TmpEntanglementMatrixZero;
+    }
+  
+  if (nbrBosonSector == 0)
+    {
+      BosonOnSphereTwoLandauLevels TmpHilbertSpace(this->NbrBosons, this->TotalLz - lzSector, this->LzMaxUp, this->LzMaxDown);
+      RealMatrix TmpEntanglementMatrix(1, TmpHilbertSpace.HilbertSpaceDimension, true);
+      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	{
+	  /*int TmpLzMax = this->LzMaxUp + this->NbrBosons - 1;
+	  unsigned long TmpState = this->FermionBasis->StateDescription[i];
+	  while ((TmpState >> TmpLzMax) == 0x0ul)
+	    --TmpLzMax;*/
+	  
+	  //TmpEntanglementMatrix.SetMatrixElement(0, TmpHilbertSpace.FermionBasis->FindStateIndex(TmpState, TmpLzMax), groundState[i]);
+	  TmpEntanglementMatrix.SetMatrixElement(0, i, groundState[i]);
+	}
+      return TmpEntanglementMatrix;
+    }
+  
+  
+  if (nbrBosonSector == this->NbrBosons)
+    {
+      if (lzSector == this->TotalLz)
+	{
+	  BosonOnSphereTwoLandauLevels TmpDestinationHilbertSpace(nbrBosonSector, lzSector, this->LzMaxUp, this->LzMaxDown);
+	  RealMatrix TmpEntanglementMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, 1,true);
+	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	    {
+	      /*int TmpLzMax = this->LzMax + this->NbrBosons - 1;
+	      unsigned long TmpState = this->FermionBasis->StateDescription[i];
+	      while ((TmpState >> TmpLzMax) == 0x0ul)
+		--TmpLzMax;*/
+	      
+	      //TmpEntanglementMatrix.SetMatrixElement(TmpDestinationHilbertSpace.FermionBasis->FindStateIndex(TmpState, TmpLzMax), 0, groundState[i]);
+	      TmpEntanglementMatrix.SetMatrixElement( i, 0, groundState[i]);
+	    }
+	  return TmpEntanglementMatrix;
+	}
+      else
+	{
+	  RealMatrix TmpEntanglementMatrix;
+	  return TmpEntanglementMatrix;	  
+	}
+    }
+
+  int ComplementaryNbrBosonSector = this->NbrBosons - nbrBosonSector;
+  
+  if ( abs(this->TotalLz - lzSector) > (ComplementaryNbrBosonSector * this->LzMaxUp))
+    {
+      RealMatrix TmpEntanglementMatrixZero;
+      return TmpEntanglementMatrixZero;
+    }
+  
+  BosonOnSphereTwoLandauLevels TmpDestinationHilbertSpace(nbrBosonSector, lzSector, this->LzMaxUp,this->LzMaxDown);
+  cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
+  long TmpNbrNonZeroElements = 0;
+  unsigned long* TmpMonomial2 = 0;
+  unsigned long* TmpMonomial1 = new unsigned long [ComplementaryNbrBosonSector];
+  unsigned long* TmpMonomial3 = new unsigned long [this->NbrBosons];
+
+  double* LogFactorials = new double[this->NbrBosons + 1];
+  LogFactorials[0] = 0.0;
+  LogFactorials[1] = 0.0;
+  for (int i = 2 ; i <= this->NbrBosons; ++i)
+    LogFactorials[i] = LogFactorials[i - 1] + log((double) i); 
+  double TmpLogBinomial = LogFactorials[this->NbrBosons] - LogFactorials[ComplementaryNbrBosonSector] - LogFactorials[nbrBosonSector];
+  if (removeBinomialCoefficient == true)
+    TmpLogBinomial = 0.0;
+
+  BosonOnSphereTwoLandauLevels TmpHilbertSpace(ComplementaryNbrBosonSector, this->TotalLz - lzSector, this->LzMaxUp, this->LzMaxDown);
+  FactorialCoefficient Factorial;
+  unsigned long** TmpDestinationHilbertSpaceOccupationNumbers = new unsigned long* [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+  unsigned long** TmpDestinationHilbertSpaceMonomial = new unsigned long* [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+  int* TmpDestinationHilbertSpaceLzMax = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+  double* TmpDestinationLogFactorials = new double [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+  RealMatrix TmpEntanglementMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, TmpHilbertSpace.HilbertSpaceDimension, true);
+  for (int i = 0; i < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++i)
+    {
+      TmpDestinationHilbertSpaceOccupationNumbers[i] = new unsigned long [this->NbrLzValue];
+      TmpDestinationHilbertSpaceMonomial[i] = new unsigned long [nbrBosonSector];
+      TmpDestinationHilbertSpace.FermionToBoson(TmpDestinationHilbertSpace.StateDescription[i], TmpDestinationHilbertSpace.StateLzMax[i], TmpDestinationHilbertSpaceOccupationNumbers[i], TmpDestinationHilbertSpaceLzMax[i]);
+      TmpDestinationHilbertSpace.ConvertToMonomial(TmpDestinationHilbertSpace.StateDescription[i], TmpDestinationHilbertSpace.StateLzMax[i], TmpDestinationHilbertSpaceMonomial[i]);
+      unsigned long* TmpOccupationNumber = TmpDestinationHilbertSpaceOccupationNumbers[i];
+      int TmpLzMax = TmpDestinationHilbertSpaceLzMax[i];
+      double TmpFactor = 0.0;
+      for (int k = 0; k <= TmpLzMax; ++k)
+	TmpFactor += LogFactorials[TmpOccupationNumber[k]];
+      TmpDestinationLogFactorials[i] =  TmpFactor;
+    }
+  for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
+    {
+      TmpHilbertSpace.ConvertToMonomial(TmpHilbertSpace.StateDescription[MinIndex], TmpHilbertSpace.StateLzMax[MinIndex], TmpMonomial1);
+      TmpHilbertSpace.FermionToBoson(TmpHilbertSpace.StateDescription[MinIndex], TmpHilbertSpace.StateLzMax[MinIndex], TmpHilbertSpace.TemporaryState, TmpHilbertSpace.TemporaryStateLzMax);
+      double TmpHilbertSpaceFactorial = 0.0;
+      for (int k = 0; k <= TmpHilbertSpace.TemporaryStateLzMax; ++k)
+	TmpHilbertSpaceFactorial += LogFactorials[TmpHilbertSpace.TemporaryState[k]];
+      for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
+	{
+	  TmpMonomial2 = TmpDestinationHilbertSpaceMonomial[j];
+	  int TmpIndex2 = 0;
+	  int TmpIndex3 = 0;
+	  int TmpIndex4 = 0;
+	  while ((TmpIndex2 < ComplementaryNbrBosonSector) && (TmpIndex3 < nbrBosonSector)) 
+	    {
+	      while ((TmpIndex2 < ComplementaryNbrBosonSector) && (TmpMonomial2[TmpIndex3] <= TmpMonomial1[TmpIndex2]))
+		{
+		  TmpMonomial3[TmpIndex4] = TmpMonomial1[TmpIndex2];
+		  ++TmpIndex2;
+		  ++TmpIndex4;		  
+		}
+	      if (TmpIndex2 < ComplementaryNbrBosonSector)
+		{
+		  while ((TmpIndex3 < nbrBosonSector) && (TmpMonomial1[TmpIndex2] <= TmpMonomial2[TmpIndex3]))
+		    {
+		      TmpMonomial3[TmpIndex4] = TmpMonomial2[TmpIndex3];
+		      ++TmpIndex3;
+		      ++TmpIndex4;		  
+		    }
+		}
+	    }
+	  while ( TmpIndex2 < ComplementaryNbrBosonSector)
+	    {
+	      TmpMonomial3[TmpIndex4] = TmpMonomial1[TmpIndex2];
+	      ++TmpIndex2;
+	      ++TmpIndex4;		  
+	    }
+	  while (TmpIndex3 < nbrBosonSector)
+	    {
+	      TmpMonomial3[TmpIndex4] = TmpMonomial2[TmpIndex3];
+	      ++TmpIndex3;
+	      ++TmpIndex4;		  
+	    }
+
+	  unsigned long TmpState = this->ConvertFromMonomial(TmpMonomial3);
+	  int TmpPos = this->FindStateIndex(TmpState);
+	  if (TmpPos != this->HilbertSpaceDimension)
+	    {
+	      this->FermionToBoson(TmpState, TmpMonomial3[0] + this->NbrBosons - 1, this->TemporaryState, this->TemporaryStateLzMax);
+	      double TmpFactorial = 0.0;	      
+	      for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
+		TmpFactorial += LogFactorials[this->TemporaryState[k]];
+	      TmpFactorial -= TmpHilbertSpaceFactorial + TmpDestinationLogFactorials[j] + TmpLogBinomial;
+	      TmpFactorial *= 0.5; 	      
+	      ++TmpNbrNonZeroElements;
+	      double Tmp = exp(TmpFactorial) * groundState[TmpPos];
+	      TmpEntanglementMatrix.SetMatrixElement(j, MinIndex, Tmp);
+	    }
+	}
+    }
+  for (int i = 0; i < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++i)
+    {
+      delete[] TmpDestinationHilbertSpaceOccupationNumbers[i];
+      delete[] TmpDestinationHilbertSpaceMonomial[i];
+    }
+  delete[] TmpDestinationHilbertSpaceOccupationNumbers;
+  delete[] TmpDestinationHilbertSpaceLzMax;
+  delete[] TmpDestinationHilbertSpaceMonomial;
+  delete[] TmpMonomial1;
+  delete[] TmpMonomial3;
+  if (TmpNbrNonZeroElements > 0)
+    return TmpEntanglementMatrix;
+  else
+    {
+      RealMatrix TmpEntanglementMatrixZero;
+      return TmpEntanglementMatrixZero;
+    }
+}
+

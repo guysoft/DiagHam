@@ -308,8 +308,12 @@ inline void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateMNTwoBodyAdd
 		{
 		  Index = particles->AddAdd(this->DownDownSectorIndicesPerSum[j][k << 1], this->DownDownSectorIndicesPerSum[j][(k << 1) + 1], Coefficient);
 		  if (Index < Dim)
-		    {
+		    {				      
 		      vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;		      
+		      /*if (index == 3235 && Index == 3235 ) 
+		        {
+			  cout << "Coeff : " << Coefficient << ", Coeff3 : " << Coefficient3 << ", Factor: " << (*TmpInteractionFactor) << ", Dest :" << vDestination[Index] << ", Source: " << vSource[index] <<  endl;
+			}*/
 		    }
 		  ++TmpInteractionFactor;
 		}	  

@@ -355,6 +355,24 @@ class BosonOnSphereTwoLandauLevels :  public ParticleOnSphereWithSpin
   // return value = converted state
   virtual RealVector& ConvertFromUnnormalizedMonomial(RealVector& state, long reference = 0, bool symmetryFactor = true);
   
+  // evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix is only evaluated in a given Lz sector and fixed number of particles
+  // 
+  // subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax to -Lzmax+subsytemSize-1)
+  // nbrFermionSector = number of particles that belong to the subsytem 
+  // groundState = reference on the total system ground state
+  // lzSector = Lz sector in which the density matrix has to be evaluated 
+  // return value = entanglement matrix of the subsytem  
+  //virtual RealMatrix EvaluatePartialEntanglementMatrix (int subsytemSize, int nbrBosonSector, int lzSector, RealVector& groundState);
+  
+  // evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state, using particle partition. The entanglement matrix is only evaluated in a given Lz sector.
+  // 
+  // nbrBosonSector = number of particles that belong to the subsytem 
+  // lzSector = Lz sector in which the density matrix has to be evaluated 
+  // groundState = reference on the total system ground state
+  // removeBinomialCoefficient = remove additional binomial coefficient in case the particle entanglement matrix has to be used for real space cut
+  // return value = entanglement matrix of the subsytem (return a wero dimension matrix if the entanglement matrix is equal to zero)
+  virtual RealMatrix EvaluatePartialEntanglementMatrixParticlePartition (int nbrBosonSector, int lzSector, RealVector& groundState, bool removeBinomialCoefficient = false);
+  
  protected:
 
   // convert a bosonic state into its fermionic counterpart
