@@ -113,6 +113,10 @@ class ParticleOnLatticeChernInsulatorSingleBandHamiltonian : public AbstractQHEH
   
  public:
 
+  // default constructor
+  //
+  ParticleOnLatticeChernInsulatorSingleBandHamiltonian();
+
   // constructor
   //
   // particles = Hilbert space associated to the system

@@ -585,8 +585,6 @@ ostream& FermionOnTorus::PrintState (ostream& Str, int state)
   unsigned long TmpState = this->StateDescription[state];
   for (int i = 0; i < this->KyMax; ++i)
     Str << ((TmpState >> i) & ((unsigned long) (0x1))) << " ";
-//  Str << " key = " << this->Keys[state] << " maxMomentum position = " << this->KyMaxPosition[Max * (this->NbrFermions + 1) + TmpState[Max]]
-  Str << " position = " << FindStateIndex(TmpState, this->StateKyMax[state]) << " momentum = " << this->GetMomentumValue(state);
   return Str;
 }
 

@@ -101,6 +101,7 @@ int main(int argc, char** argv)
   if (Manager.GetString("degenerated-groundstate") == 0)
     {
       GroundStateFiles = new char* [1];
+      TotalKx = new int[1];
       TotalKy = new int[1];
       GroundStateFiles[0] = new char [strlen(Manager.GetString("ground-file")) + 1];
       strcpy (GroundStateFiles[0], Manager.GetString("ground-file"));      
@@ -115,6 +116,7 @@ int main(int argc, char** argv)
 	}
        NbrSpaces = DegeneratedFile.GetNbrLines();
        GroundStateFiles = new char* [NbrSpaces];
+       TotalKx = new int[NbrSpaces];
        TotalKy = new int[NbrSpaces];
        for (int i = 0; i < NbrSpaces; ++i)
 	 {
@@ -144,6 +146,19 @@ int main(int argc, char** argv)
 	cout << "can't open vector file " << GroundStateFiles[i] << endl;
 	return -1;      
       }
+
+  Spaces = new FermionOnSquareLatticeMomentumSpace*[NbrSpaces];
+  for (int i = 0; i < NbrSpaces; ++i)
+    {
+      Spaces[i] = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKx[i], TotalKy[i]);
+      
+      if (Spaces[i]->GetLargeHilbertSpaceDimension() != GroundStates[i].GetLargeVectorDimension())
+	{
+	  cout << "dimension mismatch between Hilbert space and ground state" << endl;
+	  return 0;
+	}
+    }
+
 
   if (DensityMatrixFileName != 0)
     {
@@ -180,6 +195,75 @@ int main(int argc, char** argv)
     {
       double EntanglementEntropy = 0.0;
       double DensitySum = 0.0;
+      for (int SubsystemTotalKx = 0; SubsystemTotalKx < NbrSiteX; ++SubsystemTotalKx)
+	{
+	  for (int SubsystemTotalKy = 0; SubsystemTotalKy < NbrSiteY; ++SubsystemTotalKy)
+	    {
+	  
+	      cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Ky=" << SubsystemTotalKy << endl;
+	      HermitianMatrix PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStates[0]);
+	      for (int i = 1; i < NbrSpaces; ++i)
+		{
+		  HermitianMatrix TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStates[i]);
+		  PartialDensityMatrix += TmpMatrix;
+		}
+	      if (NbrSpaces > 1)
+		PartialDensityMatrix /= ((double) NbrSpaces);
+	      //	      cout << PartialDensityMatrix << endl;
+	      if (PartialDensityMatrix.GetNbrRow() > 1)
+		{
+		  RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
+#ifdef __LAPACK__
+		  if (LapackFlag == true)
+		    {
+		      PartialDensityMatrix.LapackDiagonalize(TmpDiag);
+		    }
+		  else
+		    {
+		      PartialDensityMatrix.Diagonalize(TmpDiag);
+		    }
+#else
+		  PartialDensityMatrix.Diagonalize(TmpDiag);
+#endif		  
+		  TmpDiag.SortMatrixDownOrder();
+		  if (DensityMatrixFileName != 0)
+		    {
+		      ofstream DensityMatrixFile;
+		      DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
+		      DensityMatrixFile.precision(14);
+		      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+			DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalKx << " " << SubsystemTotalKy << " " << TmpDiag[i] << endl;
+		      DensityMatrixFile.close();
+		    }
+		  for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+		    {
+		      if (TmpDiag[i] > 1e-14)
+			{
+			  EntanglementEntropy += TmpDiag[i] * log(TmpDiag[i]);
+			  DensitySum +=TmpDiag[i];
+			}
+		    }
+		}
+	      else
+		if (PartialDensityMatrix.GetNbrRow() == 1)
+		  {
+		    double TmpValue = PartialDensityMatrix(0,0);
+		    if (DensityMatrixFileName != 0)
+		      {
+			ofstream DensityMatrixFile;
+			DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
+			DensityMatrixFile.precision(14);
+			DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalKx << " " << SubsystemTotalKy << " " << TmpValue << endl;
+			DensityMatrixFile.close();
+		      }		  
+		    if (TmpValue > 1e-14)
+		      {
+			EntanglementEntropy += TmpValue * log(TmpValue);
+			DensitySum += TmpValue;
+		      }
+		  }
+	    }
+	}
       File << SubsystemNbrParticles << " " << (-EntanglementEntropy) << " " << DensitySum << " " << (1.0 - DensitySum) << endl;
     }
   File.close();

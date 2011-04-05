@@ -49,6 +49,13 @@ using std::ostream;
 
 
 
+// default constructor
+//
+
+ParticleOnLatticeChernInsulatorSingleBandHamiltonian::ParticleOnLatticeChernInsulatorSingleBandHamiltonian()
+{
+}
+
 // constructor
 //
 // particles = Hilbert space associated to the system

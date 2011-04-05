@@ -584,7 +584,16 @@ HermitianMatrix FermionOnSquareLatticeMomentumSpace::EvaluatePartialDensityMatri
 	    }
 	}
     }
-  return TmpDensityMatrix;
+  delete[] TmpStatePosition;
+  delete[] TmpStatePosition2;
+  delete[] TmpStateCoefficient;
+  if (TmpNbrNonZeroElements > 0)	
+    return TmpDensityMatrix;
+  else
+    {
+      HermitianMatrix TmpDensityMatrixZero;
+      return TmpDensityMatrixZero;
+    }
 }
 
 

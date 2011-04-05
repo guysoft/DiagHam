@@ -1,8 +1,10 @@
 #include "Options/Options.h"
 
 #include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpace.h"
+#include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
 
 #include "Hamiltonian/ParticleOnLatticeWithSpinChiralPiFluxHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeChiralPiFluxSingleBandHamiltonian.h"
 #include "LanczosAlgorithm/LanczosManager.h"
 
 #include "Architecture/ArchitectureManager.h"
@@ -33,7 +35,8 @@ using std::ofstream;
 // nbrSitesY = number of sites in the x direction
 // nnHoping = nearest neighbor hoping amplitude
 // nnnHoping =  next nearest neighbor hoping amplitude
-void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double nnHoping, double nnnHoping);
+// mus = sublattice staggered chemical potential 
+void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double nnHoping, double nnnHoping, double mus);
 
 
 int main(int argc, char** argv)
@@ -66,6 +69,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
+  (*SystemGroup) += new BooleanOption  ('\n', "single-band", "project onto the lowest enregy band");
   (*SystemGroup) += new BooleanOption  ('\n', "flat-band", "use flat band model");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
 #ifdef __LAPACK__
@@ -93,10 +97,17 @@ int main(int argc, char** argv)
   char* CommentLine = new char [256];
   sprintf (CommentLine, "eigenvalues\n#");
   char* EigenvalueOutputFile = new char [512];
-  sprintf (EigenvalueOutputFile, "fermions_chiralpiflux_n_%d_x_%d_y_%d_u_%f_t1_%f_t2_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"));
+  if (Manager.GetBoolean("single-band") == false)
+    {
+      sprintf (EigenvalueOutputFile, "fermions_chiralpiflux_n_%d_x_%d_y_%d_u_%f_t1_%f_t2_%f_mus_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("mu-s"));
+    }
+  else
+    {
+      sprintf (EigenvalueOutputFile, "fermions_singleband_chiralpiflux_n_%d_x_%d_y_%d_t1_%f_t2_%f_mus_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("mu-s"));
+    }
   if (Manager.GetBoolean("singleparticle-spectrum") == true)
     {
-      ComputeSingleParticleSpectrum(EigenvalueOutputFile, NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"));
+      ComputeSingleParticleSpectrum(EigenvalueOutputFile, NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("mu-s"));
       return 0;
     }
 
@@ -120,26 +131,52 @@ int main(int argc, char** argv)
       for (int j = MinKy; j <= MaxKy; ++j)
 	{
 	  cout << "(kx=" << i << ",ky=" << j << ") : " << endl;
-	  FermionOnSquareLatticeWithSpinMomentumSpace Space(NbrParticles, NbrSitesX, NbrSitesY, i, j);
- 	  cout << "dim = " << Space.GetHilbertSpaceDimension()  << endl;
-	  Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());	
-	  AbstractQHEHamiltonian* Hamiltonian = new ParticleOnLatticeWithSpinChiralPiFluxHamiltonian(&Space, NbrParticles, NbrSitesX, NbrSitesY,
-												     Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"),
-												     Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x") * 2.0 * M_PI, Manager.GetDouble("gamma-y") * 2.0 * M_PI, 		     
-												     Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
-	  char* ContentPrefix = new char[256];
-	  sprintf (ContentPrefix, "%d %d", i, j);
-	  char* EigenstateOutputFile = new char [512];
-	  sprintf (EigenstateOutputFile, "fermions_chiralpiflux_n_%d_x_%d_y_%d_u_%f_t1_%f_t2_%f_kx_%d_ky_%d", NbrParticles, NbrSitesX, NbrSitesY, 
-		   Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), i, j);
-	  GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
-	  FirstRunFlag = false;
-	  MainTaskOperation TaskOperation (&Task);
-	  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
-	  cout << "------------------------------------" << endl;
-	  delete Hamiltonian;
-	  delete[] EigenstateOutputFile;
-	  delete[] ContentPrefix;
+	  if (Manager.GetBoolean("single-band") == false)
+	    {
+	      FermionOnSquareLatticeWithSpinMomentumSpace Space(NbrParticles, NbrSitesX, NbrSitesY, i, j);
+	      cout << "dim = " << Space.GetHilbertSpaceDimension()  << endl;
+	      Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());	
+	      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnLatticeWithSpinChiralPiFluxHamiltonian(&Space, NbrParticles, NbrSitesX, NbrSitesY,
+													 Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"),
+													 Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x") * 2.0 * M_PI, Manager.GetDouble("gamma-y") * 2.0 * M_PI, 		     
+													 Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+	      char* ContentPrefix = new char[256];
+	      sprintf (ContentPrefix, "%d %d", i, j);
+	      char* EigenstateOutputFile = new char [512];
+	      sprintf (EigenstateOutputFile, "fermions_chiralpiflux_n_%d_x_%d_y_%d_u_%f_t1_%f_t2_%f_kx_%d_ky_%d", NbrParticles, NbrSitesX, NbrSitesY, 
+		       Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), i, j);
+	      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
+	      FirstRunFlag = false;
+	      MainTaskOperation TaskOperation (&Task);
+	      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+	      cout << "------------------------------------" << endl;
+	      delete Hamiltonian;
+	      delete[] EigenstateOutputFile;
+	      delete[] ContentPrefix;
+	    }
+	  else
+	    {
+	      FermionOnSquareLatticeMomentumSpace Space(NbrParticles, NbrSitesX, NbrSitesY, i, j);
+	      cout << "dim = " << Space.GetHilbertSpaceDimension()  << endl;
+	      Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());	
+	      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnLatticeChiralPiFluxSingleBandHamiltonian(&Space, NbrParticles, NbrSitesX, NbrSitesY,
+													   Manager.GetDouble("t1"), Manager.GetDouble("t2"),
+													   Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x") * 2.0 * M_PI, Manager.GetDouble("gamma-y") * 2.0 * M_PI, 		     
+													   Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+	      char* ContentPrefix = new char[256];
+	      sprintf (ContentPrefix, "%d %d", i, j);
+	      char* EigenstateOutputFile = new char [512];
+	      sprintf (EigenstateOutputFile, "fermions_singleband_chiralpiflux_n_%d_x_%d_y_%d_t1_%f_t2_%f_kx_%d_ky_%d", NbrParticles, NbrSitesX, NbrSitesY, 
+		       Manager.GetDouble("t1"), Manager.GetDouble("t2"), i, j);
+	      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
+	      FirstRunFlag = false;
+	      MainTaskOperation TaskOperation (&Task);
+	      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+	      cout << "------------------------------------" << endl;
+	      delete Hamiltonian;
+	      delete[] EigenstateOutputFile;
+	      delete[] ContentPrefix;
+	    }
 	}
     }
   return 0;
@@ -152,8 +189,9 @@ int main(int argc, char** argv)
 // nbrSitesY = number of sites in the x direction
 // nnHoping = nearest neighbor hoping amplitude
 // nnnHoping =  next nearest neighbor hoping amplitude
+// mus = sublattice staggered chemical potential 
 
-void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double nnHoping, double nnnHoping)
+void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double nnHoping, double nnnHoping, double mus)
 {
   ofstream File;
   File.open(outputFileName);
@@ -170,8 +208,8 @@ void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrS
 										      (((double) kx) / ((double) nbrSitesX))))))
 				   + (Phase(M_PI * 0.25) * (Phase (-2.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) 
 							    + Phase (2.0 * M_PI * ((double) ky) / ((double) nbrSitesY)))));
-	  double d3 = 2.0 * nnnHoping * (cos (2.0 * M_PI * ((double) ky) / ((double) nbrSitesX))
-					 - cos (2.0 * M_PI * ((double) kx) / ((double) nbrSitesY)));
+	  double d3 = mus + (2.0 * nnnHoping * (cos (2.0 * M_PI * ((double) ky) / ((double) nbrSitesX))
+						- cos (2.0 * M_PI * ((double) kx) / ((double) nbrSitesY))));
 	  HermitianMatrix TmpOneBobyHamiltonian(2, true);
 	  TmpOneBobyHamiltonian.SetMatrixElement(0, 0, d3);
 	  TmpOneBobyHamiltonian.SetMatrixElement(0, 1, B1);

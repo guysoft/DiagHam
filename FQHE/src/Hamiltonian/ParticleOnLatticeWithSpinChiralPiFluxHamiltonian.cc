@@ -317,11 +317,11 @@ void ParticleOnLatticeWithSpinChiralPiFluxHamiltonian::EvaluateInteractionFactor
 Complex ParticleOnLatticeWithSpinChiralPiFluxHamiltonian::ComputeTwoBodyMatrixElementUpDown(int kx1, int ky1, int kx2, int ky2)
 {
   Complex Tmp = 1.0;
-//   Tmp += Phase(2.0 * M_PI * ((double) (kx2 - kx1)) / ((double) this->NbrSiteX));
-//   Tmp += Phase(2.0 * M_PI * ((double) (ky2 - ky1)) / ((double) this->NbrSiteY));
-//   Tmp += Phase(2.0 * M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX)) + ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY)))));
-  Tmp += Phase(-2.0 * 2.0 * M_PI * ((double) (kx2 - kx1)) / ((double) this->NbrSiteX));
-  Tmp += Phase(2.0 * M_PI * ((((double) (kx1 - kx2)) / ((double) this->NbrSiteX)) - ((((double) (ky1 - ky2)) / ((double) this->NbrSiteY)))));
-  Tmp += Phase(2.0 * M_PI * ((((double) (kx1 - kx2)) / ((double) this->NbrSiteX)) + ((((double) (ky1 - ky2)) / ((double) this->NbrSiteY)))));
+   Tmp += Phase(2.0 * M_PI * ((double) (kx2 - kx1)) / ((double) this->NbrSiteX));
+   Tmp += Phase(2.0 * M_PI * ((double) (ky2 - ky1)) / ((double) this->NbrSiteY));
+   Tmp += Phase(2.0 * M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX)) + ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY)))));
+   //  Tmp += Phase(-2.0 * 2.0 * M_PI * ((double) (kx2 - kx1)) / ((double) this->NbrSiteX));
+   //  Tmp += Phase(2.0 * M_PI * ((((double) (kx1 - kx2)) / ((double) this->NbrSiteX)) - ((((double) (ky1 - ky2)) / ((double) this->NbrSiteY)))));
+   //  Tmp += Phase(2.0 * M_PI * ((((double) (kx1 - kx2)) / ((double) this->NbrSiteX)) + ((((double) (ky1 - ky2)) / ((double) this->NbrSiteY)))));
   return Tmp;
 }

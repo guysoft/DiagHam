@@ -44,7 +44,6 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('y', "nbr-sitey", "number of sites along the y direction", 3);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-sitey", "number of sites along the y direction", 3);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "band-parameter", "band structure parameter", 1.0);
   (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
