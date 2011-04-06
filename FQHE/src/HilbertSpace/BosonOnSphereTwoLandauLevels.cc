@@ -1662,7 +1662,7 @@ RealVector& BosonOnSphereTwoLandauLevels::ConvertFromUnnormalizedMonomial(RealVe
 
 RealMatrix BosonOnSphereTwoLandauLevels::EvaluatePartialEntanglementMatrixParticlePartition (int nbrBosonSector, int lzSector, RealVector& groundState, bool removeBinomialCoefficient)
 {	
-  if ( abs(lzSector) > (nbrBosonSector * this->LzMax) )
+  if ( abs(lzSector) > (nbrBosonSector * this->LzMaxUp) )
     {
       RealMatrix TmpEntanglementMatrixZero;
       return TmpEntanglementMatrixZero;
@@ -1731,7 +1731,7 @@ RealMatrix BosonOnSphereTwoLandauLevels::EvaluatePartialEntanglementMatrixPartic
   LogFactorials[1] = 0.0;
   for (int i = 2 ; i <= this->NbrBosons; ++i)
     LogFactorials[i] = LogFactorials[i - 1] + log((double) i); 
-  double TmpLogBinomial = LogFactorials[this->NbrBosons] - LogFactorials[ComplementaryNbrBosonSector] - LogFactorials[nbrBosonSector];
+  double TmpLogBinomial = LogFactorials[this->NbrBosons] - LogFactorials[ComplementaryNbrBosonSector] - LogFactorials[nbrBosonSector];  
   if (removeBinomialCoefficient == true)
     TmpLogBinomial = 0.0;
 
@@ -1753,8 +1753,9 @@ RealMatrix BosonOnSphereTwoLandauLevels::EvaluatePartialEntanglementMatrixPartic
       double TmpFactor = 0.0;
       for (int k = 0; k <= TmpLzMax; ++k)
 	TmpFactor += LogFactorials[TmpOccupationNumber[k]];
-      TmpDestinationLogFactorials[i] =  TmpFactor;
+      TmpDestinationLogFactorials[i] =  TmpFactor;      
     }
+  
   for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
     {
       TmpHilbertSpace.ConvertToMonomial(TmpHilbertSpace.StateDescription[MinIndex], TmpHilbertSpace.StateLzMax[MinIndex], TmpMonomial1);
@@ -1806,10 +1807,10 @@ RealMatrix BosonOnSphereTwoLandauLevels::EvaluatePartialEntanglementMatrixPartic
 	      this->FermionToBoson(TmpState, TmpMonomial3[0] + this->NbrBosons - 1, this->TemporaryState, this->TemporaryStateLzMax);
 	      double TmpFactorial = 0.0;	      
 	      for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
-		TmpFactorial += LogFactorials[this->TemporaryState[k]];
+		TmpFactorial += LogFactorials[this->TemporaryState[k]];	      	      
 	      TmpFactorial -= TmpHilbertSpaceFactorial + TmpDestinationLogFactorials[j] + TmpLogBinomial;
 	      TmpFactorial *= 0.5; 	      
-	      ++TmpNbrNonZeroElements;
+	      ++TmpNbrNonZeroElements;	      	      
 	      double Tmp = exp(TmpFactorial) * groundState[TmpPos];
 	      TmpEntanglementMatrix.SetMatrixElement(j, MinIndex, Tmp);
 	    }

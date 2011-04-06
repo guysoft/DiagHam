@@ -362,7 +362,7 @@ class BosonOnSphereTwoLandauLevels :  public ParticleOnSphereWithSpin
   // groundState = reference on the total system ground state
   // lzSector = Lz sector in which the density matrix has to be evaluated 
   // return value = entanglement matrix of the subsytem  
-  //virtual RealMatrix EvaluatePartialEntanglementMatrix (int subsytemSize, int nbrBosonSector, int lzSector, RealVector& groundState);
+  ///virtual RealMatrix EvaluatePartialEntanglementMatrix (int subsytemSize, int nbrBosonSector, int lzSector, RealVector& groundState);
   
   // evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state, using particle partition. The entanglement matrix is only evaluated in a given Lz sector.
   // 

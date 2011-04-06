@@ -373,8 +373,7 @@ int main(int argc, char** argv)
 		}
 	      else
 		{*/
-		  PartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[0], true);
-		  cout << PartialEntanglementMatrix;
+		  PartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[0], false);		
 		//}
 	    }
 	  /*else
@@ -440,8 +439,7 @@ int main(int argc, char** argv)
 		    }
 		  else
 		    {*/
-		      TmpEntanglementMatrix = Spaces[i]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[i], false);
-		      cout << TmpEntanglementMatrix;
+		      TmpEntanglementMatrix = Spaces[i]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[i], false);		      
 		    //}
 		}
 	      /*else
