@@ -172,23 +172,7 @@ ParticleOnSphereTwoLandauLevelDeltaHamiltonian::ParticleOnSphereTwoLandauLevelDe
     }
   else
     this->LoadPrecalculation(precalculationFileName);
-  
-  // debugging stuff 
-  cout << "<0, 0|delta|0,0> : " << this->CalculateDeltaInteractionFactor(3.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0) << endl;
-  
-  RealVector TmpV1 (this->GetHilbertSpaceDimension(), true);
-  RealVector TmpV2 (this->GetHilbertSpaceDimension(), true);
-  int i = 3235 ;
-  if ( i < this->GetHilbertSpaceDimension() )
-    {
-      TmpV1[i] = 1.0;
-      if (this->IsHermitian())
-	this->HermitianLowLevelMultiply(TmpV1, TmpV2);
-      else
-	this->LowLevelMultiply(TmpV1, TmpV2);
-      cout << "[3235, 3235] = " << TmpV2[i] << endl;
-    }
-
+ 
 }
 
 // destructor
@@ -816,7 +800,7 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 //     }
 
   //print the down down down down interaction factors with sum 1 
-  for (int i = 0; i < this->NbrDownDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
+  /*for (int i = 0; i < this->NbrDownDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
     {
       cout << "Sum : " << i << endl;
       if (this->NbrDownDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
@@ -834,7 +818,7 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 		}
 	    }
 	}
-    }
+    }*/
 
 
   this->NbrOneBodyInteractionFactorsUpUp = this->LzMaxUp + 1;
