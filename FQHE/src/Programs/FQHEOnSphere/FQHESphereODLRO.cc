@@ -53,6 +53,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "pattern", "pattern that has to be shared between the two n-body states");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "shift-pattern", "shift the pattern away from the pole from a given number of orbitals", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "no-unnormalized", "do not use the unnormalized basis as an intermediate step");
+  (*SystemGroup) += new BooleanOption  ('\n', "north-south", " compute the ODLRO between north pole and south pole");
 
   (*OutputGroup) += new BooleanOption ('\n', "save-truncated", "save the truncated state");
   (*OutputGroup) += new SingleStringOption ('\n', "truncated-name", "output file name used to store the truncated state (default name uses input-state and add odlro_pattern to the interaction name)");
@@ -88,7 +89,7 @@ int main(int argc, char** argv)
       cout << "error while retrieving system parameters from input state name " << Manager.GetString("input-state") << endl;
       return -1;
     }
-  if ((Manager.GetBoolean("save-truncated") == false) && 
+  if ((Manager.GetBoolean("save-truncated") == false) && (Manager.GetBoolean("north-south") == false) &&
       (FQHEOnSphereFindSystemInfoFromVectorFileName(Manager.GetString("output-state"),
 						    OutputNbrParticles, OutputLzMax, OutputTotalLz, Statistics) == false))
     {
@@ -102,19 +103,31 @@ int main(int argc, char** argv)
   if (FQHEGetRootPartition(Manager.GetString("pattern"), PatternNbrParticles, PatternLzMax, Pattern) == false)
     return -1;
   
-  if (Manager.GetBoolean("save-truncated") == true)
+  if ((Manager.GetBoolean("save-truncated") == true) || (Manager.GetBoolean("north-south") == true))
     {
       OutputNbrParticles = InputNbrParticles - PatternNbrParticles;
       OutputLzMax = InputLzMax - PatternLzMax - 1;
       OutputTotalLz = 0;
       for (int i = 0; i <= PatternLzMax; ++i)
-	OutputTotalLz -= Pattern[i] * (2 * i);
+	OutputTotalLz -= Pattern[i] * (2 * (i + Manager.GetInteger("shift-pattern")));
+      cout << OutputTotalLz << endl;
       OutputTotalLz += InputTotalLz + (InputNbrParticles * InputLzMax);
-      OutputTotalLz -= OutputNbrParticles * (2 * (PatternLzMax + 1));
+      cout << OutputTotalLz << endl;
+      //      OutputTotalLz -= OutputNbrParticles * (2 * (PatternLzMax + 1));
+      cout << OutputTotalLz << endl;
       OutputTotalLz -= OutputNbrParticles * OutputLzMax;
+      cout << OutputTotalLz << endl;
     }
 
   cout << OutputNbrParticles << " " << OutputLzMax << " " << OutputTotalLz << endl;
+
+  int MaxOutputTotalLz = (OutputLzMax - OutputNbrParticles + 1) * OutputNbrParticles;
+  if ((OutputTotalLz > MaxOutputTotalLz) || (OutputTotalLz < -MaxOutputTotalLz))
+    {
+      cout << "ODLRO=0" << endl;
+      return 0;
+    }
+
   RealVector InputState;
   if (InputState.ReadVector (Manager.GetString("input-state")) == false)
     {
@@ -196,7 +209,7 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-		OutputBasis = new BosonOnSphereShort(OutputNbrParticles, OutputTotalLz, OutputLzMax);	  
+	      OutputBasis = new BosonOnSphereShort(OutputNbrParticles, OutputTotalLz, OutputLzMax);	  
 	    }
 	}
     }
@@ -225,16 +238,53 @@ int main(int argc, char** argv)
     }
   RealVector TruncatedState = InputBasis->TruncateStateWithPatternConstraint(InputState, OutputBasis, Pattern, PatternLzMax + 1, Manager.GetInteger("shift-pattern"));
   
-  double truc = TruncatedState.Norm();
-  if (TruncatedState.Norm() > 1e-10)
+  double NorthNorm = TruncatedState.Norm();
+  if (NorthNorm > 1e-10)
     {
-      if ((NoUnnormalization == false))
+      if (NoUnnormalization == false)
 	OutputBasis->ConvertFromUnnormalizedMonomial(TruncatedState, -1l);
-      cout << "truc=" <<  TruncatedState.Norm() << endl;
-      if (Manager.GetBoolean("save-truncated") == false)
-	TruncatedState /= TruncatedState.Norm();
+      NorthNorm = TruncatedState.Norm();
+      cout << "NorthNorm = " << NorthNorm  << endl;
+      if ((Manager.GetBoolean("save-truncated") == false) || (Manager.GetBoolean("north-south") == true))
+	TruncatedState /= NorthNorm;
     }
-
+  else
+    {
+      if (Manager.GetBoolean("north-south") == true)
+	{
+	  cout << "ODLRO=0" << endl;  
+	  return 0;
+	}
+    }
+  RealVector SouthPoleTruncatedState;
+  if (Manager.GetBoolean("north-south") == true)
+    {
+      int* SouthPattern = new int [PatternLzMax + 1];
+      for (int i = 0; i <= PatternLzMax; ++i)
+	SouthPattern[i] = Pattern[PatternLzMax - i];
+      int TmpShift = InputLzMax - PatternLzMax;
+      SouthPoleTruncatedState = InputBasis->TruncateStateWithPatternConstraint(InputState, OutputBasis, SouthPattern, PatternLzMax + 1, TmpShift);      
+      if (NoUnnormalization == false)
+	{
+	  double SouthNorm = SouthPoleTruncatedState.Norm();
+	  if (SouthNorm > 1e-10)
+	    {
+	      if ((NoUnnormalization == false))
+		OutputBasis->ConvertFromUnnormalizedMonomial(SouthPoleTruncatedState, -1l);
+	      SouthNorm = SouthPoleTruncatedState.Norm();
+	      SouthPoleTruncatedState /= SouthNorm;
+	    }
+	  else
+	    {
+	      if (Manager.GetBoolean("north-south") == true)
+		{
+		  cout << "ODLRO=0" << endl;  
+		  return 0;
+		}
+	    }
+	}
+    }
+  
   if (Manager.GetBoolean("save-truncated") == true)
     {
       if (Manager.GetString("truncated-name") != 0)
@@ -270,6 +320,13 @@ int main(int argc, char** argv)
 	}
       return 0;
     }
+  if (Manager.GetBoolean("north-south") == true)
+    {
+      cout.precision(14); 
+      cout << "ODLRO=" << (SouthPoleTruncatedState * TruncatedState) << endl;  
+      return 0;
+    }
+
   RealVector OutputState;
   if (OutputState.ReadVector(Manager.GetString("output-state")) == false)
     {
@@ -278,7 +335,7 @@ int main(int argc, char** argv)
     }
 
   cout.precision(14); 
-  cout << "ODLRO=" << fabs(OutputState * TruncatedState) << " " << truc << endl;
+  cout << "ODLRO=" << fabs(OutputState * TruncatedState) << " " << NorthNorm << endl;
 
 
 

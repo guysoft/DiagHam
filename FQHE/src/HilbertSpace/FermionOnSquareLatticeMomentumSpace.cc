@@ -511,13 +511,19 @@ HermitianMatrix FermionOnSquareLatticeMomentumSpace::EvaluatePartialDensityMatri
   int ComplementaryNbrParticles = this->NbrFermions - nbrParticleSector;
   int ComplementaryKxMomentum = (this->KxMomentum - kxSector) % this->NbrSiteX;
   int ComplementaryKyMomentum = (this->KyMomentum - kySector) % this->NbrSiteY;
+  if (ComplementaryKxMomentum < 0)
+    ComplementaryKxMomentum += this->NbrSiteX;
+  if (ComplementaryKyMomentum < 0)
+    ComplementaryKyMomentum += this->NbrSiteY;
+  cout << "kx = " << this->KxMomentum << " " << kxSector << " " << ComplementaryKxMomentum << endl;
+  cout << "ky = " << this->KyMomentum << " " << kySector << " " << ComplementaryKyMomentum << endl;
   FermionOnSquareLatticeMomentumSpace SubsytemSpace (nbrParticleSector, this->NbrSiteX, this->NbrSiteY, kxSector, kySector);
   HermitianMatrix TmpDensityMatrix (SubsytemSpace.GetHilbertSpaceDimension(), true);
-  FermionOnSquareLatticeNonPeriodicMomentumSpace ComplementarySpace (ComplementaryNbrParticles, this->NbrSiteX, this->NbrSiteY, ComplementaryKxMomentum, ComplementaryKyMomentum);
+  FermionOnSquareLatticeMomentumSpace ComplementarySpace (ComplementaryNbrParticles, this->NbrSiteX, this->NbrSiteY, ComplementaryKxMomentum, ComplementaryKyMomentum);
   cout << "subsystem Hilbert space dimension = " << SubsytemSpace.HilbertSpaceDimension << endl;
-  int* TmpStatePosition = new int [SubsytemSpace.HilbertSpaceDimension];
-  int* TmpStatePosition2 = new int [SubsytemSpace.HilbertSpaceDimension];
-  double* TmpStateCoefficient = new double [SubsytemSpace.HilbertSpaceDimension];
+  int* TmpStatePosition = new int [ComplementarySpace.HilbertSpaceDimension];
+  int* TmpStatePosition2 = new int [ComplementarySpace.HilbertSpaceDimension];
+  double* TmpStateCoefficient = new double [ComplementarySpace.HilbertSpaceDimension];
   BinomialCoefficients TmpBinomial (this->NbrFermions);
   double TmpInvBinomial = 1.0 / (TmpBinomial(this->NbrFermions, nbrParticleSector));
   long TmpNbrNonZeroElements = 0;
@@ -571,7 +577,6 @@ HermitianMatrix FermionOnSquareLatticeMomentumSpace::EvaluatePartialDensityMatri
 	}
       if (Pos != 0)
 	{
-	  ++TmpNbrNonZeroElements;
 	  for (int j = 0; j < Pos; ++j)
 	    {
 	      int Pos2 = TmpStatePosition2[j];
@@ -579,6 +584,8 @@ HermitianMatrix FermionOnSquareLatticeMomentumSpace::EvaluatePartialDensityMatri
 	      for (int k = 0; k < Pos; ++k)
 		if (TmpStatePosition2[k] >= Pos2)
 		  {
+		    ++TmpNbrNonZeroElements;
+		    //		    cout << Pos2 << " " << TmpStatePosition2[k] << " " << (TmpValue * groundState[TmpStatePosition[k]] * TmpStateCoefficient[k]) << endl;
 		    TmpDensityMatrix.AddToMatrixElement(Pos2, TmpStatePosition2[k], TmpValue * groundState[TmpStatePosition[k]] * TmpStateCoefficient[k]);
 		  }
 	    }
@@ -587,8 +594,12 @@ HermitianMatrix FermionOnSquareLatticeMomentumSpace::EvaluatePartialDensityMatri
   delete[] TmpStatePosition;
   delete[] TmpStatePosition2;
   delete[] TmpStateCoefficient;
-  if (TmpNbrNonZeroElements > 0)	
-    return TmpDensityMatrix;
+  if (TmpNbrNonZeroElements > 0)
+    {
+//       cout << "TmpNbrNonZeroElements = " << TmpNbrNonZeroElements << endl;
+//       cout << TmpDensityMatrix << endl;
+      return TmpDensityMatrix;
+    }
   else
     {
       HermitianMatrix TmpDensityMatrixZero;

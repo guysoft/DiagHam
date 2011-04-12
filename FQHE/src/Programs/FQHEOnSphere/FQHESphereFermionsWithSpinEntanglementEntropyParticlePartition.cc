@@ -122,80 +122,69 @@ int main(int argc, char** argv)
   int NbrParticlesDown = (NbrParticles - TotalSz) >> 1;
   ParticleOnSphereWithSpin* Space = 0;
   
-// #ifdef __64_BITS__
-//   if (LzMax <= 31)
-// #else
-//     if (LzMax <= 15)
-// #endif
-//       {
-// 	Space = new FermionOnSphereWithSpin  (NbrParticles, TotalLz, LzMax, TotalSz);
-//       }
-//     else
-//       {
-// #ifdef __128_BIT_LONGLONG__
-// 	if (LzMax <= 63)
-// #else
-// 	  if (LzMax <= 31)
-// #endif
-// 	    {
-// 	      Space = new FermionOnSphereWithSpinLong (NbrParticles, TotalLz, LzMax, TotalSz);
-// 	    }
-// 	  else
-// 	    {
-// 	      cout << "States of this Hilbert space cannot be represented in a single word." << endl;
-// 	      return 0;
-// 	    }	
-//       }
+#ifdef __64_BITS__
+  if (LzMax <= 31)
+#else
+    if (LzMax <= 15)
+#endif
+      {
+	Space = new FermionOnSphereWithSpin  (NbrParticles, TotalLz, LzMax, TotalSz);
+      }
+    else
+      {
+	cout << "States of this Hilbert space cannot be represented in a single word." << endl;
+	return 0;
+      }	
   
   
-//   RealVector GroundState;
-//   if (GroundState.ReadVector (FileName) == false)
-//     {
-//       cout << "can't open vector file " << FileName << endl;
-//       return -1;      
-//     }   
+  RealVector GroundState;
+  if (GroundState.ReadVector (FileName) == false)
+    {
+      cout << "can't open vector file " << FileName << endl;
+      return -1;      
+    }   
   
-//   if (Space->GetHilbertSpaceDimension() != GroundState.GetVectorDimension())
-//     {
-//       cout << "Number of rows of the vector is not equal to the Hilbert space dimension!";
-//       return -1;
-//     }
+  if (Space->GetHilbertSpaceDimension() != GroundState.GetVectorDimension())
+    {
+      cout << "Number of rows of the vector is not equal to the Hilbert space dimension!";
+      return -1;
+    }
 
 
 
-//   if (DensityMatrixFileName != 0)
-//     {
-//       ofstream DensityMatrixFile;
-//       DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out); 
-//       DensityMatrixFile << "# N    Lz    Sz    lambda";
-//       if (ComputeLValueFlag == true)
-// 	DensityMatrixFile << " L^2 L";
-//       if (ComputeSValueFlag == true)
-// 	DensityMatrixFile << " S^2 S";
-//       DensityMatrixFile.close();
-//     }
-//   ofstream File;
-//   if (Manager.GetString("output-file") != 0)
-//     File.open(Manager.GetString("output-file"), ios::binary | ios::out);
-//   else
-//     {
-//       char* TmpFileName;
-//       TmpFileName = ReplaceExtensionToFileName(FileName, "vec", "partent");
-//       if (TmpFileName == 0)
-// 	{
-// 	  cout << "no vec extension was find in " << FileName << " file name" << endl;
-// 	  return 0;
-// 	}
-//       File.open(TmpFileName, ios::binary | ios::out);
-//       delete[] TmpFileName;
-//     }
-//   File.precision(14);
-//   cout.precision(14);
+  if (DensityMatrixFileName != 0)
+    {
+      ofstream DensityMatrixFile;
+      DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out); 
+      DensityMatrixFile << "# N    Lz    Sz    lambda";
+      if (ComputeLValueFlag == true)
+	DensityMatrixFile << " L^2 L";
+      if (ComputeSValueFlag == true)
+	DensityMatrixFile << " S^2 S";
+      DensityMatrixFile.close();
+    }
+  ofstream File;
+  if (Manager.GetString("output-file") != 0)
+    File.open(Manager.GetString("output-file"), ios::binary | ios::out);
+  else
+    {
+      char* TmpFileName;
+      TmpFileName = ReplaceExtensionToFileName(FileName, "vec", "partent");
+      if (TmpFileName == 0)
+	{
+	  cout << "no vec extension was find in " << FileName << " file name" << endl;
+	  return 0;
+	}
+      File.open(TmpFileName, ios::binary | ios::out);
+      delete[] TmpFileName;
+    }
+  File.precision(14);
+  cout.precision(14);
 
-//   int MaxSubsystemNbrParticles = (NbrParticles >> 1) + (NbrParticles & 1);
-//   if (Manager.GetInteger("max-na") > 0)
-//     MaxSubsystemNbrParticles = Manager.GetInteger("max-na");
-//   int SubsystemNbrParticles = Manager.GetInteger("min-na");
+  int MaxSubsystemNbrParticles = (NbrParticles >> 1) + (NbrParticles & 1);
+  if (Manager.GetInteger("max-na") > 0)
+    MaxSubsystemNbrParticles = Manager.GetInteger("max-na");
+  int SubsystemNbrParticles = Manager.GetInteger("min-na");
 
 //   for (; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
 //     {

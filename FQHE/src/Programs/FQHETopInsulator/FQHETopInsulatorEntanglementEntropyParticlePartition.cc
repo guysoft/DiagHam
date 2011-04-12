@@ -200,7 +200,7 @@ int main(int argc, char** argv)
 	  for (int SubsystemTotalKy = 0; SubsystemTotalKy < NbrSiteY; ++SubsystemTotalKy)
 	    {
 	  
-	      cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Ky=" << SubsystemTotalKy << endl;
+	      cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Kx=" << SubsystemTotalKx << " Ky=" << SubsystemTotalKy << endl;
 	      HermitianMatrix PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStates[0]);
 	      for (int i = 1; i < NbrSpaces; ++i)
 		{
@@ -209,7 +209,6 @@ int main(int argc, char** argv)
 		}
 	      if (NbrSpaces > 1)
 		PartialDensityMatrix /= ((double) NbrSpaces);
-	      //	      cout << PartialDensityMatrix << endl;
 	      if (PartialDensityMatrix.GetNbrRow() > 1)
 		{
 		  RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
