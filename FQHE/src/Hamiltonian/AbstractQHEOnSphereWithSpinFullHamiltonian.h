@@ -724,7 +724,7 @@ inline void AbstractQHEOnSphereWithSpinFullHamiltonian::EvaluateMNOneBodyAddMult
 	{
 	  TmpDiagonal = 0.0;
 	  for (int j = 0; j < this->NbrOneBodyInteractionFactorsDownDown; ++j)
-	    TmpDiagonal += this->OneBodyInteractionFactorsUpUp[j] * particles->AddAd(i, this->OneBodyMValuesDownDown[j]);
+	    TmpDiagonal += this->OneBodyInteractionFactorsDownDown[j] * particles->AddAd(i, this->OneBodyMValuesDownDown[j]);
 	  vDestination[i] += (this->HamiltonianShift + TmpDiagonal)* vSource[i];
 	}
     }

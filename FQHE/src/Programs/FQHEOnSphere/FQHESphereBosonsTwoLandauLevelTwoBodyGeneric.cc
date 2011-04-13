@@ -66,8 +66,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 4);
   (*SystemGroup) += new SingleIntegerOption  ('l', "nbr-flux", "number of flux quanta", 10);
   (*SystemGroup) += new SingleIntegerOption  ('z', "initial-lz", "initial lz value", 0);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "potential-lll", "one particle potential lll", 0);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "potential-sll", "one particle potential sll", 0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "potential-lll", "one particle potential lll", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "potential-fll", "one particle potential sll", 0.0);
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file-lll", "file describing the 2-body interaction in terms of the pseudo-potential on LLL");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file-sll", "file describing the 2-body interaction in terms of the pseudo-potential on SLL");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
@@ -106,8 +106,9 @@ int main(int argc, char** argv)
   char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");  
   bool DiskCacheFlag = Manager.GetBoolean("disk-cache");
   double cyclotron_energies[2];
-  cyclotron_energies[0] = (double)Manager.GetInteger("potential-lll");
-  cyclotron_energies[1] = (double)Manager.GetInteger("potential-sll");
+  cyclotron_energies[0] = (double)Manager.GetDouble("potential-lll");
+  cyclotron_energies[1] = (double)Manager.GetDouble("potential-fll");
+  
   
   bool FirstRun = true;
   
