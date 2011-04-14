@@ -318,10 +318,16 @@ int main(int argc, char** argv)
   
   if ((Manager.GetBoolean("show-counting")) && (KaValueArray != 0))
      {
+       long TotalDegenracy = 0l;
+       for (int i = MinKa; i <= MaxKa; ++i)
+ 	{
+ 	  TotalDegenracy += KaValueArray[(i - MinKa)]; 
+ 	}
+       cout << "total degeneracy counting " << TotalDegenracy << endl;
        cout << "degeneracy counting : " << endl;
        for (int i = MinKa; i <= MaxKa; ++i)
  	{
- 	  cout << i << " " << KaValueArray[(i - MinKa)] << endl; 
+ 	  cout << i << " (kx=" << (i % NbrSiteX) << ", ky=" << (i / NbrSiteX) << ") = "<< KaValueArray[(i - MinKa)] << endl; 
  	}
      }
 

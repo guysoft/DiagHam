@@ -56,6 +56,7 @@ using std::ostream;
 // nbrSiteX = number of sites in the x direction
 // nbrSiteY = number of sites in the y direction
 // uPotential = strength of the repulsive two body neareast neighbor interaction
+// vPotential = strength of the repulsive two body second neareast neighbor interaction
 // t1 = hoping amplitude between neareast neighbor sites
 // t2 = hoping amplitude between next neareast neighbor sites
 // t2p = hoping amplitude between second next neareast neighbor sites
@@ -66,7 +67,7 @@ using std::ostream;
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
 ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian::ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, 
-												       int nbrSiteY, double uPotential, double t1, double t2, double t2p, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
+												       int nbrSiteY, double uPotential, double vPotential, double t1, double t2, double t2p, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -81,6 +82,7 @@ ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian::ParticleOnLatticeChec
   this->GammaY = gammaY;
   this->FlatBand = flatBandFlag;
   this->UPotential = uPotential;
+  this->VPotential = vPotential;
   this->Architecture = architecture;
   this->Memory = memory;
   this->OneBodyInteractionFactors = 0;
@@ -201,9 +203,10 @@ void ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian::EvaluateInteract
 		    ++this->NbrSectorIndicesPerSum[TmpSum];    
 		  }
 	      }
-      double Factor = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
+      double FactorU = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
       if (this->FlatBand == false)
-	Factor *= this->UPotential;
+	FactorU *= this->UPotential;
+      double FactorV = this->VPotential * 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
       this->InteractionFactors = new Complex* [this->NbrSectorSums];
       for (int i = 0; i < this->NbrSectorSums; ++i)
 	{
@@ -225,11 +228,22 @@ void ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian::EvaluateInteract
 		  int ky3 = Index3 % this->NbrSiteY;
 		  int kx4 = Index4 / this->NbrSiteY;
 		  int ky4 = Index4 % this->NbrSiteY;
- 		  this->InteractionFactors[i][Index] = (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]) * this->ComputeTwoBodyMatrixElementUpDown(kx2, ky2, kx4, ky4);
- 		  this->InteractionFactors[i][Index] -= (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]) * this->ComputeTwoBodyMatrixElementUpDown(kx1, ky1, kx4, ky4);
- 		  this->InteractionFactors[i][Index] -= (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1]) * this->ComputeTwoBodyMatrixElementUpDown(kx2, ky2, kx3, ky3);
- 		  this->InteractionFactors[i][Index] += (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1]) * this->ComputeTwoBodyMatrixElementUpDown(kx1, ky1, kx3, ky3);
-		  this->InteractionFactors[i][Index] *= -2.0 * Factor;
+ 		  this->InteractionFactors[i][Index] = FactorU * (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]) * this->ComputeTwoBodyMatrixElementAB(kx2, ky2, kx4, ky4);
+ 		  this->InteractionFactors[i][Index] -= FactorU * (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]) * this->ComputeTwoBodyMatrixElementAB(kx1, ky1, kx4, ky4);
+ 		  this->InteractionFactors[i][Index] -= FactorU * (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1]) * this->ComputeTwoBodyMatrixElementAB(kx2, ky2, kx3, ky3);
+ 		  this->InteractionFactors[i][Index] += FactorU * (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1]) * this->ComputeTwoBodyMatrixElementAB(kx1, ky1, kx3, ky3);
+
+ 		  this->InteractionFactors[i][Index] += FactorV * ((Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0])
+								   + (Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1])) * this->ComputeTwoBodyMatrixElementAA(kx2, ky2, kx4, ky4);
+ 		  this->InteractionFactors[i][Index] -= FactorV * ((Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0])
+								   + (Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1] * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1])) * this->ComputeTwoBodyMatrixElementAA(kx1, ky1, kx4, ky4);
+ 		  this->InteractionFactors[i][Index] -= FactorV * ((Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1])
+								   + (Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1])) * this->ComputeTwoBodyMatrixElementAA(kx2, ky2, kx3, ky3);
+ 		  this->InteractionFactors[i][Index] += FactorV * ((Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0])
+								   + (Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1] * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1])) * this->ComputeTwoBodyMatrixElementAA(kx1, ky1, kx3, ky3);
+
+		  this->InteractionFactors[i][Index] *= -2.0;
+
 		  TotalNbrInteractionFactors++;
 		  ++Index;
 		}
@@ -248,14 +262,24 @@ void ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian::EvaluateInteract
 // ky2 = momentum along y for the B site
 // return value = corresponding matrix element
 
-Complex ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementUpDown(int kx1, int ky1, int kx2, int ky2)
+Complex ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementAB(int kx1, int ky1, int kx2, int ky2)
 {
-//   Complex Tmp = 1.0;
-//   Tmp += Phase(2.0 * M_PI * ((double) (kx2 - kx1)) / ((double) this->NbrSiteX));
-//   Tmp += Phase(-2.0 * M_PI * ((double) (ky2 - ky1)) / ((double) this->NbrSiteY));
-//   Tmp += Phase(2.0 * M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX)) - ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY)))));
-  //  Tmp = 0.0;
   Complex Tmp = 2.0 * (cos (M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX)) - ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY))))) 
 		       + cos (M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX)) + ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY))))));
+  return Tmp;
+}
+
+// compute the matrix element for the two body interaction between two A sites (or two B sites) 
+//
+// kx1 = momentum along x for the first A site
+// ky1 = momentum along y for the first A site
+// kx2 = momentum along x for the second A site
+// ky2 = momentum along y for the second A site
+// return value = corresponding matrix element
+
+Complex ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementAA(int kx1, int ky1, int kx2, int ky2)
+{
+  Complex Tmp = (cos (2.0 * M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX))))
+		 - cos (2.0 * M_PI * ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY))))); 
   return Tmp;
 }

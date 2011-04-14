@@ -60,6 +60,8 @@ class ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian : public Particl
   double SecondNextNNHoping;
   // nearest neighbor density-density potential strength
   double UPotential;
+  // second nearest neighbor density-density potential strength
+  double VPotential;
   // boundary condition twisting angle along x
   double GammaX;
   // boundary condition twisting angle along y
@@ -77,6 +79,7 @@ class ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian : public Particl
   // nbrSiteX = number of sites in the x direction
   // nbrSiteY = number of sites in the y direction
   // uPotential = strength of the repulsive two body neareast neighbor interaction
+  // vPotential = strength of the repulsive two body second neareast neighbor interaction
   // t1 = hoping amplitude between neareast neighbor sites
   // t2 = hoping amplitude between next neareast neighbor sites
   // t2p = hoping amplitude between second next neareast neighbor sites
@@ -85,7 +88,7 @@ class ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian : public Particl
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double t1, double t2, double t2p, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential, double t1, double t2, double t2p, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //
@@ -105,7 +108,17 @@ class ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian : public Particl
   // kx2 = momentum along x for the B site
   // ky2 = momentum along y for the B site
   // return value = corresponding matrix element
-  Complex ComputeTwoBodyMatrixElementUpDown(int kx1, int ky1, int kx2, int ky2);
+  Complex ComputeTwoBodyMatrixElementAB(int kx1, int ky1, int kx2, int ky2);
+
+  // compute the matrix element for the two body interaction between two A sites (or two B sites) 
+  //
+  // kx1 = momentum along x for the first A site
+  // ky1 = momentum along y for the first A site
+  // kx2 = momentum along x for the second A site
+  // ky2 = momentum along y for the second A site
+  // return value = corresponding matrix element
+  Complex ComputeTwoBodyMatrixElementAA(int kx1, int ky1, int kx2, int ky2);
+
 
 };
 
