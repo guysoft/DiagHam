@@ -1273,6 +1273,7 @@ void FermionOnSphereTwoLandauLevels::BosonicStateTimeFermionicState(RealVector& 
 		      
 		      outputVector[finalSpace->FindStateIndex( (*It).first, TmpLzMax )] += bosonState[i] * fermionState[j] * (*It).second;
 		    }
+		    SortingMap.clear();
 		}
 	    }
 	}
@@ -1380,6 +1381,7 @@ void FermionOnSphereTwoLandauLevels::BosonicStateTimeFermionicState(LongRational
 		      
 		      outputVector[finalSpace->FindStateIndex( (*It).first, TmpLzMax)] += bosonState[i] * fermionState[j] * (*It).second;
 		    }
+		    SortingMap.clear();
 		}
 	    }
 	}
@@ -1596,6 +1598,7 @@ void FermionOnSphereTwoLandauLevels::BosonicStateTimeFermionicState(RealVector& 
 		      outputVector[finalSpace->FindStateIndex((*It).first, TmpLzMax)] += bosonState[i] * fermionState[j] *  (*It).second;
 		    }
 		}
+		SortingMap.clear();
 	    }
 	}
     }
@@ -1640,6 +1643,7 @@ void FermionOnSphereTwoLandauLevels::BosonicStateTimeFermionicState( LongRationa
 			--TmpLzMax;
 		      outputVector[finalSpace->FindStateIndex( (*It).first, TmpLzMax)] += bosonState[i] * fermionState[j] *  (*It).second;
 		    }
+		    SortingMap.clear();	
 		}
 	    }
 	}
@@ -1676,7 +1680,7 @@ void FermionOnSphereTwoLandauLevels::BosonicStateTimeFermionicStateSymmetric(Rea
 	    {
 	      if(bosonState[i] != 0)
 		{
-		  unsigned long TmpState=bosonSpace->FermionBasis->GetSymmetricState(bosonSpace->FermionBasis->StateDescription[i]);
+		  unsigned long TmpState = bosonSpace->FermionBasis->GetSymmetricState(bosonSpace->FermionBasis->StateDescription[i]);
 		  int BTmpLzMax = bosonSpace->LzMax + this->NbrFermions - 1;
 		  while (((TmpState >> BTmpLzMax) & 0x1ul) == 0x0ul)
 		    --BTmpLzMax;
@@ -1711,6 +1715,7 @@ void FermionOnSphereTwoLandauLevels::BosonicStateTimeFermionicStateSymmetric(Rea
 			  outputVector[finalSpace->FindStateIndex( (*It).first, TmpLzMax)] += bosonState[i] * fermionState[j] * (*It).second;
 			}
 		    }
+		    SortingMap.clear();
 		}
 	    }
 	}
@@ -1785,6 +1790,7 @@ void FermionOnSphereTwoLandauLevels::BosonicStateTimeFermionicStateSymmetric(Lon
 			  outputVector[finalSpace->FindStateIndex((*It).first, TmpLzMax)] += bosonState[i] * fermionState[j] * (*It).second;
 			}
 		    }
+		    SortingMap.clear();
 		}
 	    }
 	}
@@ -1847,7 +1853,7 @@ void FermionOnSphereTwoLandauLevels::MonomialsTimesSlaterProjection(unsigned lon
 	  Sign ^= TmpState2;
 	  TmpState |= Mask;
 	}
-      if(Bool == true)
+      if (Bool == true)
 	{
 	  if ((Sign & 0x1ul) != 0ul)
 	    Coef *= -1.0;
@@ -1880,7 +1886,7 @@ void FermionOnSphereTwoLandauLevels::MonomialsTimesSlaterProjection(unsigned lon
 	  Bool = true;
 	  TmpState = 0ul;
 	  Sign = 0ul;
-	  for (int i=0; ( i < this->NbrFermions ) && ( Bool == true );i++)
+	  for (int i = 0; (i < this->NbrFermions) && (Bool == true); i++)
 	    {
 	      Mask = (1ul << (State[i] - 1));
 	      if((TmpState&Mask) != 0)
@@ -1897,7 +1903,7 @@ void FermionOnSphereTwoLandauLevels::MonomialsTimesSlaterProjection(unsigned lon
 	      Sign ^= TmpState2;
 	      TmpState |= Mask;
 	    }
-	  if( Bool == true )
+	  if (Bool == true)
 	    {
 	      if ((Sign & 0x1ul) != 0ul)
 		Coef *= -1.0;	
@@ -2092,6 +2098,7 @@ void FermionOnSphereTwoLandauLevels::LLLFermionicStateTimeFermionicState(RealVec
 			}
 		      outputVector[finalSpace->FermionBasis->FindStateIndex((*It).first, FTmpLzMax)] += lllFermionState[i] * fermionState[j] * (*It).second * Coefficient.GetIntegerValue();
 		    }
+		    SortingMap.clear();
 		}
 	    }
 	}
@@ -2145,6 +2152,7 @@ void FermionOnSphereTwoLandauLevels::LLLFermionicStateTimeFermionicState(LongRat
 			}
 		      outputVector[finalSpace->FermionBasis->FindStateIndex((*It).first, FTmpLzMax)] += lllFermionState[i] * fermionState[j]* (*It).second * Coefficient.GetIntegerValue();
 		    }
+		    SortingMap.clear();
 		}
 	    }
 	}
@@ -2235,6 +2243,7 @@ void FermionOnSphereTwoLandauLevels::LLLFermionicStateTimeFermionicStateSymmetri
 			  outputVector[finalSpace->FermionBasis->FindStateIndex((*It).first, FTmpLzMax)] += lllFermionState[i] * fermionState[j] * (*It).second * coefficient.GetIntegerValue();
 			}
 		    }
+		    SortingMap.clear();
 		}
 	    }
 	}
@@ -2325,6 +2334,7 @@ void FermionOnSphereTwoLandauLevels::LLLFermionicStateTimeFermionicStateSymmetri
 			}
 		    }
 		}
+		SortingMap.clear();
 	    }
 	}
     }
@@ -2644,6 +2654,7 @@ void FermionOnSphereTwoLandauLevels::LLLFermionicStateTimeFermionicState(RealVec
 		      outputVector[Index] += lllFermionState[i] * fermionState[j] * (*It).second * Coefficient.GetIntegerValue();
 		    }
 		}
+		SortingMap.clear();
 	    }
 	}
     }

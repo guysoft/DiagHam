@@ -343,9 +343,9 @@ bool FQHESphereMultipleMonomialsTimesSlaterProjectionOperation::RawApplyOperatio
 	    }
 	  timeval TotalEndingTime;
 	  gettimeofday (&TotalEndingTime, 0);
-	  if (Normalize == true)
+	  if (this->Normalize == true)
 	    {
-	      if(Projection == true)
+	      if(this->Projection == true)
 		{
 		  if(this->BosonFlag == true)
 		    ((FermionOnSphere*)FinalSpace)->ConvertFromUnnormalizedMonomial(*(this->OutputRealVector),0l,true);

@@ -544,6 +544,7 @@ void FermionOnSphereFourLandauLevels::BosonicStateTimeFermionicState(RealVector&
 			--TmpLzMax;
 		      outputVector[finalSpace->FindStateIndex( (*It).first, TmpLzMax)] += bosonState[i] * fermionState[j] * (*It).second;
 		    }
+		    SortingMap.clear();
 		}
 	    }
 	}
@@ -741,7 +742,6 @@ void FermionOnSphereFourLandauLevels::MonomialsTimesSlaterProjection(unsigned lo
 
 void FermionOnSphereFourLandauLevels::LLLFermionicStateTimeFermionicState(RealVector& lllFermionState, RealVector& fermionState, RealVector& outputVector, FermionOnSphere* lllFermionSpace, BosonOnSphereShort* finalSpace, int firstComponent,int nbrComponent)
 {
-
   map<unsigned long , double> SortingMap;
   map<unsigned long , double>::iterator It;
   
@@ -777,6 +777,7 @@ void FermionOnSphereFourLandauLevels::LLLFermionicStateTimeFermionicState(RealVe
 			}
 		      outputVector[finalSpace->FermionBasis->FindStateIndex( (*It).first, FTmpLzMax)] += lllFermionState[i] * fermionState[j] *  (*It).second * Coefficient.GetIntegerValue();
 		    }
+		    SortingMap.clear();
 		}
 	    }
 	}
@@ -1092,6 +1093,7 @@ void FermionOnSphereFourLandauLevels::BosonicStateTimeFermionicState(LongRationa
 			--TmpLzMax;
 		      outputVector[finalSpace->FindStateIndex( (*It).first , TmpLzMax)] += bosonState[i] * fermionState[j] *  (*It).second;
 		    }
+		    SortingMap.clear();
 		}
 	    }
 	}
@@ -1352,6 +1354,7 @@ void FermionOnSphereFourLandauLevels::LLLFermionicStateTimeFermionicState(LongRa
 		      
 		      outputVector[finalSpace->FermionBasis->FindStateIndex( (*It).first,FTmpLzMax)] += lllFermionState[i] * fermionState[j] * (*It).second * Coefficient.GetIntegerValue();
 		    }
+		    SortingMap.clear();
 		}
 	    }
 	}

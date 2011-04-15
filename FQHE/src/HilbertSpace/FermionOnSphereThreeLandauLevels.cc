@@ -404,8 +404,9 @@ void FermionOnSphereThreeLandauLevels::BosonicStateTimeFermionicState(RealVector
 			--TmpLzMax;
 		      outputVector[finalSpace->FindStateIndex((*It).first,TmpLzMax)] += bosonState[i] * fermionState[j] * (*It).second;
 		    }
+		    SortingMap.clear();
 		}
-	    }
+			}
 	}
     }
 }
@@ -817,6 +818,7 @@ void FermionOnSphereThreeLandauLevels::LLLFermionicStateTimeFermionicState(RealV
 			}
 		      outputVector[finalSpace->FermionBasis->FindStateIndex((*It).first,FTmpLzMax)] += lllFermionState[i] * fermionState[j] *  (*It).second  * Coefficient.GetIntegerValue();
 		    }
+		    SortingMap.clear();
 		}
 	    }
 	}
@@ -994,6 +996,7 @@ void FermionOnSphereThreeLandauLevels::LLLFermionicStateTimeFermionicState(LongR
 			}
 		      outputVector[finalSpace->FermionBasis->FindStateIndex((*It).first , FTmpLzMax)] += lllFermionState[i] * fermionState[j] * (*It).second * Coefficient.GetIntegerValue();
 		    }
+		    SortingMap.clear(); 
 		}
 	    }
 	}
