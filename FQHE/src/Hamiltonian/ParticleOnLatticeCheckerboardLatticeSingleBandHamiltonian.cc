@@ -237,7 +237,7 @@ void ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian::EvaluateInteract
 								   + (Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1])) * this->ComputeTwoBodyMatrixElementAA(kx2, ky2, kx4, ky4);
  		  this->InteractionFactors[i][Index] -= FactorV * ((Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0])
 								   + (Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1] * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1])) * this->ComputeTwoBodyMatrixElementAA(kx1, ky1, kx4, ky4);
- 		  this->InteractionFactors[i][Index] -= FactorV * ((Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1])
+ 		  this->InteractionFactors[i][Index] -= FactorV * ((Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0])
 								   + (Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1])) * this->ComputeTwoBodyMatrixElementAA(kx2, ky2, kx3, ky3);
  		  this->InteractionFactors[i][Index] += FactorV * ((Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0])
 								   + (Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1] * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1])) * this->ComputeTwoBodyMatrixElementAA(kx1, ky1, kx3, ky3);
@@ -279,7 +279,9 @@ Complex ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian::ComputeTwoBod
 
 Complex ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementAA(int kx1, int ky1, int kx2, int ky2)
 {
-  Complex Tmp = (cos (2.0 * M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX))))
-		 - cos (2.0 * M_PI * ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY))))); 
+//   Complex Tmp = (cos (2.0 * M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX))))
+// 		 + cos (2.0 * M_PI * ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY))))); 
+  Complex Tmp = (Phase (2.0 * M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX))))
+		 + Phase (2.0 * M_PI * ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY))))); 
   return Tmp;
 }

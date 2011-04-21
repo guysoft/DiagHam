@@ -78,6 +78,7 @@ int main(int argc, char** argv)
   int NbrSiteX = 0;
   int NbrSiteY = 0;
   bool Statistics = true;
+  double* Coefficients = 0;
 
   if ((Manager.GetString("ground-file") == 0) && (Manager.GetString("degenerated-groundstate") == 0))
     {
@@ -103,8 +104,10 @@ int main(int argc, char** argv)
       GroundStateFiles = new char* [1];
       TotalKx = new int[1];
       TotalKy = new int[1];
+      Coefficients = new double[1];
       GroundStateFiles[0] = new char [strlen(Manager.GetString("ground-file")) + 1];
-      strcpy (GroundStateFiles[0], Manager.GetString("ground-file"));      
+      strcpy (GroundStateFiles[0], Manager.GetString("ground-file"));
+      Coefficients[0] = 1.0;
     }
   else
     {
@@ -122,6 +125,22 @@ int main(int argc, char** argv)
 	 {
 	   GroundStateFiles[i] = new char [strlen(DegeneratedFile(0, i)) + 1];
 	   strcpy (GroundStateFiles[i], DegeneratedFile(0, i));      	   
+	 }
+       if (DegeneratedFile.GetNbrColumns() == 1)
+	 {
+	   Coefficients = new double[NbrSpaces];
+	   for (int i = 0; i < NbrSpaces; ++i)
+	     Coefficients[i] = 1.0 / ((double) NbrSpaces);
+	 }
+       else
+	 {
+	   double TmpSum = 0.0;
+	   Coefficients = DegeneratedFile.GetAsDoubleArray(1);
+	   for (int i = 0; i < NbrSpaces; ++i)
+	     TmpSum += Coefficients[i];
+	   TmpSum = 1.0 / TmpSum;
+	   for (int i = 0; i < NbrSpaces; ++i)
+	     Coefficients[i] *= TmpSum;
 	 }
     }
 
@@ -202,13 +221,13 @@ int main(int argc, char** argv)
 	  
 	      cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Kx=" << SubsystemTotalKx << " Ky=" << SubsystemTotalKy << endl;
 	      HermitianMatrix PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStates[0]);
+	      PartialDensityMatrix *= Coefficients[0];
 	      for (int i = 1; i < NbrSpaces; ++i)
 		{
 		  HermitianMatrix TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStates[i]);
+		  TmpMatrix *= Coefficients[i];
 		  PartialDensityMatrix += TmpMatrix;
 		}
-	      if (NbrSpaces > 1)
-		PartialDensityMatrix /= ((double) NbrSpaces);
 	      if (PartialDensityMatrix.GetNbrRow() > 1)
 		{
 		  RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
