@@ -335,9 +335,9 @@ void ParticleOnLatticeQuantumSpinHallTwoBandCheckerboardHamiltonian::EvaluateInt
 		  int ky3 = Index3 % this->NbrSiteY;
 		  int kx4 = Index4 / this->NbrSiteY;
 		  int ky4 = Index4 % this->NbrSiteY;
- 		  this->InteractionFactorsupdown[i][Index] = (Conj(OneBodyBasisUp[Index1][0][0]) * OneBodyBasisUp[Index3][0][0] * Conj(OneBodyBasisDown[Index2][0][0]) * OneBodyBasisDown[Index4][0][0]);
- 		  this->InteractionFactorsupdown[i][Index] += (Conj(OneBodyBasisUp[Index1][0][1]) * OneBodyBasisUp[Index3][0][1] * Conj(OneBodyBasisDown[Index2][0][1]) * OneBodyBasisDown[Index4][0][1]);
-		  this->InteractionFactorsupdown[i][Index] = -2.0 * Factor;
+		  //		  this->InteractionFactorsupdown[i][Index] = (Conj(OneBodyBasisUp[Index1][0][0]) * OneBodyBasisUp[Index3][0][0] * Conj(OneBodyBasisDown[Index2][0][0]) * OneBodyBasisDown[Index4][0][0]);
+		  this->InteractionFactorsupdown[i][Index] = (Conj(OneBodyBasisUp[Index1][0][1]) * OneBodyBasisUp[Index3][0][1] * Conj(OneBodyBasisDown[Index2][0][1]) * OneBodyBasisDown[Index4][0][1]);
+		  this->InteractionFactorsupdown[i][Index] *= -2.0 * Factor;
 		  TotalNbrInteractionFactors++;
 		  ++Index;
 		}

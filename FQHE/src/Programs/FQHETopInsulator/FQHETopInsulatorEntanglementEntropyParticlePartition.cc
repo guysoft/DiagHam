@@ -15,6 +15,9 @@
 #include "GeneralTools/ConfigurationParser.h"
 #include "GeneralTools/MultiColumnASCIIFile.h"
 
+#include "Architecture/ArchitectureManager.h"
+#include "Architecture/AbstractArchitecture.h"
+
 #include "Tools/FQHEFiles/FQHEOnSquareLatticeFileTools.h"
 
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
@@ -37,9 +40,13 @@ int main(int argc, char** argv)
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* OutputGroup = new OptionGroup ("output options");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
+
+  ArchitectureManager Architecture;
+
   Manager += SystemGroup;
   Manager += OutputGroup;
   Manager += ToolsGroup;
+  Architecture.AddOptionGroup(&Manager);
   Manager += MiscGroup;
 
   (*SystemGroup) += new SingleStringOption  ('\0', "ground-file", "name of the file corresponding to the ground state of the whole system");
@@ -220,11 +227,11 @@ int main(int argc, char** argv)
 	    {
 	  
 	      cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Kx=" << SubsystemTotalKx << " Ky=" << SubsystemTotalKy << endl;
-	      HermitianMatrix PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStates[0]);
+	      HermitianMatrix PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStates[0], Architecture.GetArchitecture());
 	      PartialDensityMatrix *= Coefficients[0];
 	      for (int i = 1; i < NbrSpaces; ++i)
 		{
-		  HermitianMatrix TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStates[i]);
+		  HermitianMatrix TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStates[i], Architecture.GetArchitecture());
 		  TmpMatrix *= Coefficients[i];
 		  PartialDensityMatrix += TmpMatrix;
 		}

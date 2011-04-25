@@ -35,11 +35,13 @@
 #include "config.h"
 #include "Architecture/ArchitectureOperation/AbstractPrecalculationOperation.h"
 #include "HilbertSpace/ParticleOnSphere.h"
-
+#include "Vector/ComplexVector.h"
 
 class AbstractFunctionBasis;
 class RealVector;
 class RealSymmetricMatrix;
+class HermitianMatrix;
+
 
 class FQHESphereParticleEntanglementSpectrumOperation: public AbstractPrecalculationOperation
 {
@@ -56,6 +58,10 @@ class FQHESphereParticleEntanglementSpectrumOperation: public AbstractPrecalcula
   RealVector GroundState;
   // reduced density matrix where result is stored
   RealSymmetricMatrix DensityMatrix;
+  // total system ground state (complex version)
+  ComplexVector ComplexGroundState;
+  // reduced density matrix where result is stored (complex version)
+  HermitianMatrix ComplexDensityMatrix;
   // upper bound on the number of non zero matrix element in the reduced density matrix
   long NbrNonZeroElements;
 
@@ -81,6 +87,15 @@ class FQHESphereParticleEntanglementSpectrumOperation: public AbstractPrecalcula
   // groundState = reference on the total system ground state
   // densityMatrix = reference on the density matrix where result has to stored
   FQHESphereParticleEntanglementSpectrumOperation(ParticleOnSphere* fullSpace, ParticleOnSphere* destinationSpace, ParticleOnSphere* complementarySpace, RealVector& groundState, RealSymmetricMatrix& densityMatrix);
+
+  // constructor 
+  //
+  // fullSpace = pointer to the full Hilbert space to use
+  // destinationHilbertSpace = pointer to the destination Hilbert space (i.e. part A)
+  // complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e. part B)
+  // groundState = reference on the total system ground state
+  // densityMatrix = reference on the density matrix where result has to stored
+  FQHESphereParticleEntanglementSpectrumOperation(ParticleOnSphere* fullSpace, ParticleOnSphere* destinationSpace, ParticleOnSphere* complementarySpace, ComplexVector& groundState, HermitianMatrix& densityMatrix);
 
   // constructor 
   //

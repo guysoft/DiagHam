@@ -38,16 +38,11 @@
 
 // constructor 
 //
-// space = pointer to the Hilbert space to use
-// invAlpha = inverse of the Jack polynomial alpha coefficient
-// rootPartition = root partition (in fermionic binary representation)
-// indexArray = array where state indices are stored
-// stateArray = array use to store computed state description
-// componentArray = array where computed component numerical factors are stored
-// rhoArray = rho factor associated to each state
-// nbrComputedComponentArray = number of connected components associated to each state through the Jack generator
-// fermionicFlag = true if we are dealing with fermions
-// symmetricFlag = true if the state is Lz<->-Lz symmetric
+// fullSpace = pointer to the full Hilbert space to use
+// destinationHilbertSpace = pointer to the destination Hilbert space (i.e. part A)
+// complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e. part B)
+// groundState = reference on the total system ground state
+// densityMatrix = reference on the density matrix where result has to stored
 
 FQHESphereParticleEntanglementSpectrumOperation::FQHESphereParticleEntanglementSpectrumOperation (ParticleOnSphere* fullSpace, ParticleOnSphere* destinationSpace, ParticleOnSphere* complementarySpace, RealVector& groundState, RealSymmetricMatrix& densityMatrix)
 {
@@ -56,6 +51,34 @@ FQHESphereParticleEntanglementSpectrumOperation::FQHESphereParticleEntanglementS
   this->ComplementaryHilbertSpace = (ParticleOnSphere*) complementarySpace->Clone();
   this->GroundState = groundState;
   this->DensityMatrix = densityMatrix;
+  this->IncompleteBetaThetaTop = 0; 
+  this->IncompleteBetaThetaBottom = 0; 
+  this->PhiRange = 0.0;
+  this->NbrNonZeroElements = 0l;
+  this->FirstComponent = 0;
+  this->NbrComponent = 0;
+  this->LargeFirstComponent = 0;
+  this->LargeNbrComponent = this->ComplementaryHilbertSpace->GetLargeHilbertSpaceDimension();
+  this->OperationType = AbstractArchitectureOperation::FQHESphereParticleEntanglementSpectrumOperation;
+  this->LocalOperations = 0;
+  this->NbrLocalOperations = 0;
+}
+
+// constructor 
+//
+// fullSpace = pointer to the full Hilbert space to use
+// destinationHilbertSpace = pointer to the destination Hilbert space (i.e. part A)
+// complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e. part B)
+// groundState = reference on the total system ground state
+// densityMatrix = reference on the density matrix where result has to stored
+
+FQHESphereParticleEntanglementSpectrumOperation::FQHESphereParticleEntanglementSpectrumOperation(ParticleOnSphere* fullSpace, ParticleOnSphere* destinationSpace, ParticleOnSphere* complementarySpace, ComplexVector& groundState, HermitianMatrix& densityMatrix)
+{
+  this->FullSpace  = (ParticleOnSphere*) fullSpace->Clone();
+  this->DestinationHilbertSpace = (ParticleOnSphere*) destinationSpace->Clone();
+  this->ComplementaryHilbertSpace = (ParticleOnSphere*) complementarySpace->Clone();
+  this->ComplexGroundState = groundState;
+  this->ComplexDensityMatrix = densityMatrix;
   this->IncompleteBetaThetaTop = 0; 
   this->IncompleteBetaThetaBottom = 0; 
   this->PhiRange = 0.0;
@@ -111,6 +134,8 @@ FQHESphereParticleEntanglementSpectrumOperation::FQHESphereParticleEntanglementS
   this->ComplementaryHilbertSpace = (ParticleOnSphere*) operation.ComplementaryHilbertSpace->Clone();
   this->GroundState = operation.GroundState;
   this->DensityMatrix = operation.DensityMatrix;
+  this->ComplexGroundState = operation.ComplexGroundState;
+  this->ComplexDensityMatrix = operation.ComplexDensityMatrix;
   this->IncompleteBetaThetaTop = operation.IncompleteBetaThetaTop; 
   this->IncompleteBetaThetaBottom = operation.IncompleteBetaThetaBottom; 
   this->PhiRange = operation.PhiRange;
@@ -159,7 +184,14 @@ bool FQHESphereParticleEntanglementSpectrumOperation::RawApplyOperation()
 {
   if (this->IncompleteBetaThetaTop == 0)
     {
-      this->NbrNonZeroElements = this->FullSpace->EvaluatePartialDensityMatrixParticlePartitionCore(this->LargeFirstComponent, this->LargeNbrComponent, this->ComplementaryHilbertSpace, this->DestinationHilbertSpace, this->GroundState, &this->DensityMatrix);
+      if (this->ComplexGroundState.GetLargeVectorDimension() == 0l)
+	{
+	  this->NbrNonZeroElements = this->FullSpace->EvaluatePartialDensityMatrixParticlePartitionCore(this->LargeFirstComponent, this->LargeNbrComponent, this->ComplementaryHilbertSpace, this->DestinationHilbertSpace, this->GroundState, &this->DensityMatrix);
+	}
+      else
+	{
+	  this->NbrNonZeroElements = this->FullSpace->EvaluatePartialDensityMatrixParticlePartitionCore(this->LargeFirstComponent, this->LargeNbrComponent, this->ComplementaryHilbertSpace, this->DestinationHilbertSpace, this->ComplexGroundState, &this->ComplexDensityMatrix);
+	}
     }
   else
     {
@@ -186,20 +218,44 @@ bool FQHESphereParticleEntanglementSpectrumOperation::ArchitectureDependentApply
 	this->LocalOperations[i] = (FQHESphereParticleEntanglementSpectrumOperation*) this->Clone();
     }
   int ReducedNbrThreads = this->NbrLocalOperations - 1;
-  for (int i = 0; i < ReducedNbrThreads; ++i)
+  if (this->ComplexGroundState.GetLargeVectorDimension() == 0l)
     {
-      this->LocalOperations[i]->SetIndicesRange(TmpFirstComponent, Step);
-      this->LocalOperations[i]->DensityMatrix = RealSymmetricMatrix(this->DestinationHilbertSpace->GetHilbertSpaceDimension(), true);
-      architecture->SetThreadOperation(this->LocalOperations[i], i);
-      TmpFirstComponent += Step;
+      for (int i = 0; i < ReducedNbrThreads; ++i)
+	{
+	  this->LocalOperations[i]->SetIndicesRange(TmpFirstComponent, Step);
+	  this->LocalOperations[i]->DensityMatrix = RealSymmetricMatrix(this->DestinationHilbertSpace->GetHilbertSpaceDimension(), true);
+	  architecture->SetThreadOperation(this->LocalOperations[i], i);
+	  TmpFirstComponent += Step;
+	}
+    }
+  else
+    {
+      for (int i = 0; i < ReducedNbrThreads; ++i)
+	{
+	  this->LocalOperations[i]->SetIndicesRange(TmpFirstComponent, Step);
+	  this->LocalOperations[i]->ComplexDensityMatrix = HermitianMatrix(this->DestinationHilbertSpace->GetHilbertSpaceDimension(), true);
+	  architecture->SetThreadOperation(this->LocalOperations[i], i);
+	  TmpFirstComponent += Step;
+	}
     }
   this->LocalOperations[ReducedNbrThreads]->SetIndicesRange(TmpFirstComponent, this->LargeNbrComponent + this->LargeFirstComponent - TmpFirstComponent);  
   architecture->SetThreadOperation(this->LocalOperations[ReducedNbrThreads], ReducedNbrThreads);
   architecture->SendJobs();
-  for (int i = 0; i < ReducedNbrThreads; ++i)
+  if (this->ComplexGroundState.GetLargeVectorDimension() == 0l)
     {
-      this->LocalOperations[ReducedNbrThreads]->DensityMatrix += this->LocalOperations[i]->DensityMatrix;
-      this->LocalOperations[ReducedNbrThreads]->NbrNonZeroElements += this->LocalOperations[i]->NbrNonZeroElements;
+      for (int i = 0; i < ReducedNbrThreads; ++i)
+	{
+	  this->LocalOperations[ReducedNbrThreads]->DensityMatrix += this->LocalOperations[i]->DensityMatrix;
+	  this->LocalOperations[ReducedNbrThreads]->NbrNonZeroElements += this->LocalOperations[i]->NbrNonZeroElements;
+	}
+    }
+  else
+    {
+      for (int i = 0; i < ReducedNbrThreads; ++i)
+	{
+	  this->LocalOperations[ReducedNbrThreads]->ComplexDensityMatrix += this->LocalOperations[i]->ComplexDensityMatrix;
+	  this->LocalOperations[ReducedNbrThreads]->NbrNonZeroElements += this->LocalOperations[i]->NbrNonZeroElements;
+	}
     }
   this->NbrNonZeroElements = this->LocalOperations[ReducedNbrThreads]->NbrNonZeroElements;
   return true;
