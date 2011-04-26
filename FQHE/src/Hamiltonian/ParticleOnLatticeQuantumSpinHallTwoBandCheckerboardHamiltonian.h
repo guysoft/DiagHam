@@ -36,6 +36,7 @@
 
 #include "config.h"
 #include "Hamiltonian/ParticleOnLatticeWithSpinChernInsulatorHamiltonian.h"
+#include "Matrix/ComplexMatrix.h"
 
 #include <iostream>
 
@@ -96,15 +97,70 @@ class ParticleOnLatticeQuantumSpinHallTwoBandCheckerboardHamiltonian : public Pa
   //   
   virtual void EvaluateInteractionFactors();
 
-  // compute the matrix element for the two body interaction between two sites A and B 
+  // compute the matrix element for the two body interaction between two sites A and B  belonging to the same layer
   //
   // kx1 = momentum along x for the A site
   // ky1 = momentum along y for the A site
   // kx2 = momentum along x for the B site
   // ky2 = momentum along y for the B site
   // return value = corresponding matrix element
-  Complex ComputeTwoBodyMatrixElementUpDown(int kx1, int ky1, int kx2, int ky2);
+  Complex ComputeTwoBodyMatrixElementAUpBUp(int kx1, int ky1, int kx2, int ky2);
+
+  // compute the matrix element for the two body interaction between two sites B with different layer indices 
+  //
+  // kx1 = momentum along x for the A site
+  // ky1 = momentum along y for the A site
+  // kx2 = momentum along x for the B site
+  // ky2 = momentum along y for the B site
+  // return value = corresponding matrix element
+  Complex ComputeTwoBodyMatrixElementBUpBDown(int kx1, int ky1, int kx2, int ky2);
+    
+
+  // compute the transformation basis contribution to the interaction matrix element
+  // 
+  // oneBodyBasis = array of transformation basis matrices
+  // momentumIndex1 = compact momentum index of the first creation operator
+  // momentumIndex2 = compact momentum index of the second creation operator
+  // momentumIndex3 = compact momentum index of the first annihilation operator
+  // momentumIndex4 = compact momentum index of the second annihiliation operator
+  // energyIndex1 = energy index of the first creation operator
+  // energyIndex2 = energy index of the second creation operator
+  // energyIndex3 = energy index of the first annihilation operator
+  // energyIndex4 = energy index of the second annihiliation operator
+  // siteIndex1 = site index of the first creation operator (0=Aup, 1=Bup, 2=Adown, 3=Bdown)
+  // siteIndex2 = site index of the second creation operator (0=Aup, 1=Bup, 2=Adown, 3=Bdown)
+  // siteIndex3 = site index of the first annihilation operator (0=Aup, 1=Bup, 2=Adown, 3=Bdown)
+  // siteIndex4 = site index of the second annihiliation operator (0=Aup, 1=Bup, 2=Adown, 3=Bdown)
+  Complex ComputeTransfomationBasisContribution(ComplexMatrix* oneBodyBasis,
+						int momentumIndex1, int momentumIndex2, int momentumIndex3, int momentumIndex4, 
+						int energyIndex1, int energyIndex2, int energyIndex3, int energyIndex4,
+						int siteIndex1, int siteIndex2, int siteIndex3, int siteIndex4);
 
 };
+
+// compute the transformation basis contribution to the interaction matrix element
+// 
+// oneBodyBasis = array of transformation basis matrices
+// momentumIndex1 = compact momentum index of the first creation operator
+// momentumIndex2 = compact momentum index of the second creation operator
+// momentumIndex3 = compact momentum index of the first annihilation operator
+// momentumIndex4 = compact momentum index of the second annihiliation operator
+// energyIndex1 = energy index of the first creation operator
+// energyIndex2 = energy index of the second creation operator
+// energyIndex3 = energy index of the first annihilation operator
+// energyIndex4 = energy index of the second annihiliation operator
+// siteIndex1 = site index of the first creation operator (0=Aup, 1=Bup, 2=Adown, 3=Bdown)
+// siteIndex2 = site index of the second creation operator (0=Aup, 1=Bup, 2=Adown, 3=Bdown)
+// siteIndex3 = site index of the first annihilation operator (0=Aup, 1=Bup, 2=Adown, 3=Bdown)
+// siteIndex4 = site index of the second annihiliation operator (0=Aup, 1=Bup, 2=Adown, 3=Bdown)
+
+inline Complex ParticleOnLatticeQuantumSpinHallTwoBandCheckerboardHamiltonian::ComputeTransfomationBasisContribution(ComplexMatrix* oneBodyBasis,
+														     int momentumIndex1, int momentumIndex2, int momentumIndex3, int momentumIndex4, 
+														     int energyIndex1, int energyIndex2, int energyIndex3, int energyIndex4,
+														     int siteIndex1, int siteIndex2, int siteIndex3, int siteIndex4)
+{
+  return (Conj(oneBodyBasis[momentumIndex1][energyIndex1][siteIndex1]) * oneBodyBasis[momentumIndex3][energyIndex3][siteIndex3] * Conj(oneBodyBasis[momentumIndex2][energyIndex2][siteIndex2]) * oneBodyBasis[momentumIndex4][energyIndex4][siteIndex4]);
+}
+
 
 #endif
