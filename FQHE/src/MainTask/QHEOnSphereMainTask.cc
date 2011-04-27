@@ -528,8 +528,17 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 	      }
 	    else
 	      {
-		cout << "Using BasicLanczosAlgorithm"<<endl;
-		Lanczos = new BasicLanczosAlgorithm(this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
+		if (this->NbrProjectors>0)
+		  {
+		    cout << "Info: projected reorthogonalized Lanczos defaults to using disk storage"<<endl;
+		    cout << "Using ProjectedLanczosAlgorithmWithGroundState"<<endl;
+		    Lanczos = new ProjectedLanczosAlgorithmWithGroundState(this->Projectors, this->NbrProjectors, this->Architecture, this->MaxNbrIterLanczos, this->NbrProjectorStorage, this->ProjectorIterMax, this->FastDiskFlag, this->ResumeFastDiskFlag, this->ProjectorPrecision, this->RestartProjection);
+		  }
+		else
+		  {
+		    cout << "Using BasicLanczosAlgorithm"<<endl;
+		    Lanczos = new BasicLanczosAlgorithm(this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
+		  }
 	      }
 	  else
 	    if ((this->EvaluateEigenvectors == true) || (this->ComputeLValueFlag == true))

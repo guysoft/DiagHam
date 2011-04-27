@@ -127,6 +127,7 @@ void QHEWaveFunctionManager::AddOptionGroup(OptionManager* manager)
       (*WaveFunctionGroup) += new MultipleIntegerOption  ('\n', "XHC", "coefficients (k,l,p,q,r,s,t,u,v,b) of extended Halperin wavefunction  (XH only)",',' ,',', "2,2,-2,0");
       (*WaveFunctionGroup) += new BooleanOption  ('\n', "antisymmetrize", "antisymmetrize wavefunction (XH only)");
       (*WaveFunctionGroup) += new MultipleIntegerOption  ('\n', "partonShells", "number of shells for parton & effective flux: lFup,lFdown,N_phi^eff",',');
+      (*WaveFunctionGroup) += new BooleanOption  ('\n', "fermion-state", "generate a fermionic wavefunction (nass)");
     }
   else 
     if (this->GeometryID & QHEWaveFunctionManager::SphereWithSU3SpinGeometry)
@@ -636,7 +637,10 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	  if ((strcmp (this->Options->GetString("test-wavefunction"), "nass2") == 0))
 	    {
 	      int N = this->Options->GetInteger("nbr-particles");
-	      Abstract1DComplexFunctionOnSphere* rst = new NASSOnSphereWaveFunction(N >> 2, true);
+	      bool Fermions = this->Options->GetBoolean("fermion-state");
+	      if (!Fermions)
+		cout << "Attention, using bosonic statistics for NASS state"<<endl;
+	      Abstract1DComplexFunctionOnSphere* rst = new NASSOnSphereWaveFunction(N >> 2, Fermions);
 
 	      //	      rst->AdaptAverageMCNorm();
 	      return rst;
