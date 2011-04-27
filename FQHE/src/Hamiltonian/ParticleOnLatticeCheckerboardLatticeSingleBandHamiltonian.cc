@@ -60,6 +60,7 @@ using std::ostream;
 // t1 = hoping amplitude between neareast neighbor sites
 // t2 = hoping amplitude between next neareast neighbor sites
 // t2p = hoping amplitude between second next neareast neighbor sites
+// mus = sublattice staggered chemical potential 
 // gammaX = boundary condition twisting angle along x
 // gammaY = boundary condition twisting angle along y
 // flatBandFlag = use flat band model
@@ -67,7 +68,7 @@ using std::ostream;
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
 ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian::ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, 
-												       int nbrSiteY, double uPotential, double vPotential, double t1, double t2, double t2p, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
+												       int nbrSiteY, double uPotential, double vPotential, double t1, double t2, double t2p, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -78,6 +79,7 @@ ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian::ParticleOnLatticeChec
   this->NNHoping = t1;
   this->NextNNHoping = t2;
   this->SecondNextNNHoping = t2p;
+  this->MuS = mus;
   this->GammaX = gammaX;
   this->GammaY = gammaY;
   this->FlatBand = flatBandFlag;
@@ -140,8 +142,8 @@ void ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian::EvaluateInteract
 	Complex B1 = 4.0 * this->NNHoping * Complex (cos (1.0 * M_PI * (((double) kx) + this->GammaX) / ((double) this->NbrSiteX)) * cos (1.0 * M_PI * (((double) ky) + this->GammaY) / ((double) this->NbrSiteY)) * cos(M_PI * 0.25), 
 						     sin (1.0 * M_PI * (((double) kx) + this->GammaX) / ((double) this->NbrSiteX)) * sin (1.0 * M_PI * (((double) ky) + this->GammaY) / ((double) this->NbrSiteY)) * sin(M_PI * 0.25));
 	double d1 = 4.0 * this->SecondNextNNHoping * cos (2.0 * M_PI * (((double) kx) + this->GammaX) / ((double) this->NbrSiteX)) * cos (2.0 * M_PI * (((double) ky) + this->GammaY) / ((double) this->NbrSiteY));
-	double d3 = 2.0 * this->NextNNHoping * (cos (2.0 * M_PI * (((double) kx) + this->GammaX) / ((double) this->NbrSiteX))
-						- cos (2.0 * M_PI * (((double) ky) + this->GammaY) / ((double) this->NbrSiteY)));
+	double d3 =  this->MuS + (2.0 * this->NextNNHoping * (cos (2.0 * M_PI * (((double) kx) + this->GammaX) / ((double) this->NbrSiteX))
+							      - cos (2.0 * M_PI * (((double) ky) + this->GammaY) / ((double) this->NbrSiteY))));
 	HermitianMatrix TmpOneBobyHamiltonian(2, true);
 	TmpOneBobyHamiltonian.SetMatrixElement(0, 0, d1 + d3);
 	TmpOneBobyHamiltonian.SetMatrixElement(0, 1, B1);
