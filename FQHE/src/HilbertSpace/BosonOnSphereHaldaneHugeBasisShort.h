@@ -283,6 +283,19 @@ class BosonOnSphereHaldaneHugeBasisShort :  public BosonOnSphereShort
 			  ParticleOnSphere* leftSpace, ParticleOnSphere* rightSpace,
 			  bool symmetrizedFlag = false, double coefficient = 1.0);
 
+  // fuse multiple states which belong to different Hilbert spaces 
+  //
+  // outputVector = reference on the vector which will contain the fused states (without zeroing components which do not occur in the fusion)
+  // nbrInputVectors = number of input vectors
+  // inputVectors = input vectors whose Hilbert space will be fuse from  left to right
+  // paddings = number of unoccupied one body states that have to be inserted between two consecutive fused spaces
+  // inputSpaces = point to the Hilbert space that will be fuse to the left
+  // symmetrizedFlag = assume that the target state has to be invariant under the Lz<->-Lz symmetry
+  // coefficient = optional multiplicative factor to apply to the fused state 
+  // return value = reference on the fused state
+  virtual RealVector& FuseMultipleStates (RealVector& outputVector, int nbrInputVectors, RealVector* inputVectors, int* paddings, 
+					  ParticleOnSphere** inputSpaces, bool symmetrizedFlag, double coefficient);
+
   // use product rule to produce part of the components of a system from a smaller one
   //
   // outputVector = reference on the vector which will contain the product rule state  (without zeroing components which do not occur in the fusion)
@@ -336,6 +349,21 @@ class BosonOnSphereHaldaneHugeBasisShort :  public BosonOnSphereShort
   // nbrComputedComponentArray = number of connected components associated to each state through the Jack generator
   // rhoArray = rho factor associated to each state
   virtual void GenerateJackPolynomialFactorizedCore(double invAlpha, unsigned long maxRoot, long minIndex, long maxIndex, unsigned long** stateArray, double** componentArray, long** indexArray, int* nbrComputedComponents, double* rhoArray);
+
+  // core part of multiple state fuse 
+  //
+  // outputVector = reference on the vector which will contain the fused states (without zeroing components which do not occur in the fusion)
+  // nbrInputVectors = number of input vectors
+  // inputVectors = input vectors whose Hilbert space will be fuse from  left to right
+  // paddings = number of unoccupied one body states that have to be inserted between two consecutive fused spaces
+  // inputSpaces = point to the Hilbert space that will be fuse to the left
+  // currentPosition = index of the current space to fuse
+  // currentState = current fermionic state obtained by fusing previous states
+  // currentCoefficient = current multiplicative coefficient
+  // symmetrizedFlag = assume that the target state has to be invariant under the Lz<->-Lz symmetry
+  virtual void CoreFuseMultipleStates (RealVector& outputVector, int nbrInputVectors, RealVector* inputVectors, int* paddings, 
+				       BosonOnSphereShort** inputSpaces, int currentPosition, unsigned long currentState, int currentPadding, 
+				       double currentCoefficient, bool symmetrizedFlag);
 
 };
 
