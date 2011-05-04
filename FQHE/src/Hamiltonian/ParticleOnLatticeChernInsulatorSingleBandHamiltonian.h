@@ -258,8 +258,8 @@ class ParticleOnLatticeChernInsulatorSingleBandHamiltonian : public AbstractQHEH
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = pointer to the array of vectors where result has been stored
-  //  virtual ComplexVector* LowLevelMultipleAddMultiplyPartialFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
-  //									int firstComponent, int nbrComponent);
+  virtual ComplexVector* LowLevelMultipleAddMultiplyPartialFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+									int firstComponent, int nbrComponent);
 
   // evaluate all interaction factors
   //   
