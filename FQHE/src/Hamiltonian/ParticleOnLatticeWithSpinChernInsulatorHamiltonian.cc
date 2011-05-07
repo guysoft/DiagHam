@@ -188,7 +188,7 @@ ParticleOnLatticeWithSpinChernInsulatorHamiltonian::~ParticleOnLatticeWithSpinCh
 // ask if Hamiltonian implements hermitian symmetry operations
 //
 
-bool ParticleOnLatticeChernInsulatorSingleBandHamiltonian::IsHermitian()
+bool ParticleOnLatticeWithSpinChernInsulatorHamiltonian::IsHermitian()
 {
   return this->HermitianSymmetryFlag;
 }
