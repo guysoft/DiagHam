@@ -2974,7 +2974,7 @@ Vector& ComplexVector::SendPartialClone(MPI::Intracomm& communicator, int id, in
 // zeroFlag = true if all coordinates have to be set to zero
 // return value = pointer to new vector 
 
-Vector* ComplexVector::BroadcastEmptyCloneVector(MPI::Intracomm& communicator, int id, bool zeroFlag)
+Vector* ComplexVector::BroadcastEmptyClone(MPI::Intracomm& communicator, int id, bool zeroFlag)
 {
   if (id == communicator.Get_rank())
     {

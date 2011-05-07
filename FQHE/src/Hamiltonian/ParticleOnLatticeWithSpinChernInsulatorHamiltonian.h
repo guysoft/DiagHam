@@ -138,6 +138,9 @@ class ParticleOnLatticeWithSpinChernInsulatorHamiltonian : public AbstractQHEHam
   //array containing all the sinus that are needed when computing matrix elements
   double* SinusTable;
 
+  // flag for implementation of hermitian symmetry
+  bool HermitianSymmetryFlag;
+  
  public:
 
   // default constructor
@@ -162,6 +165,10 @@ class ParticleOnLatticeWithSpinChernInsulatorHamiltonian : public AbstractQHEHam
   //
   ~ParticleOnLatticeWithSpinChernInsulatorHamiltonian();
   
+  // ask if Hamiltonian implements hermitian symmetry operations
+  //
+  virtual bool IsHermitian();
+
   // set Hilbert space
   //
   // hilbertSpace = pointer to Hilbert space to use
@@ -311,6 +318,12 @@ class ParticleOnLatticeWithSpinChernInsulatorHamiltonian : public AbstractQHEHam
   // enable fast multiplication algorithm
   //
   virtual void EnableFastMultiplication();
+
+  // enable fast multiplication algorithm (partial evaluation)
+  //
+  // firstComponent = index of the first component that has to be precalcualted
+  // nbrComponent  = index of the last component that has to be precalcualted
+  virtual void PartialEnableFastMultiplication(int firstComponent, int nbrComponent);
 
 };
 
@@ -814,64 +827,91 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
   int TmpNbrM3Values;
   int* TmpM3Values;
 
-  for (int i = firstComponent; i < lastComponent; ++i)
+  if (this->HermitianSymmetryFlag == false)
     {
-      for (int j = 0; j < this->NbrIntraSectorSums; ++j)
+      for (int i = firstComponent; i < lastComponent; ++i)
 	{
-	  int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
-	  TmpIndices = this->IntraSectorIndicesPerSum[j];
-	  for (int i1 = 0; i1 < Lim; i1 += 2)
+	  for (int j = 0; j < this->NbrIntraSectorSums; ++j)
 	    {
-	      Coefficient2 = particles->AuAu(i, TmpIndices[i1], TmpIndices[i1 + 1]);
-	      if (Coefficient2 != 0.0)
+	      int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
+	      TmpIndices = this->IntraSectorIndicesPerSum[j];
+	      for (int i1 = 0; i1 < Lim; i1 += 2)
 		{
-		  for (int i2 = 0; i2 < Lim; i2 += 2)
+		  Coefficient2 = particles->AuAu(i, TmpIndices[i1], TmpIndices[i1 + 1]);
+		  if (Coefficient2 != 0.0)
 		    {
-		      Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-		      if (Index < Dim)
+		      for (int i2 = 0; i2 < Lim; i2 += 2)
 			{
-			  ++memory;
-			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			  Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+			  if (Index < Dim)
+			    {
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			    }
+			}
+		    }
+		  Coefficient2 = particles->AdAd(i, TmpIndices[i1], TmpIndices[i1 + 1]);
+		  if (Coefficient2 != 0.0)
+		    {
+		      for (int i2 = 0; i2 < Lim; i2 += 2)
+			{
+			  Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+			  if (Index < Dim)
+			    {
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			    }
 			}
 		    }
 		}
-	      Coefficient2 = particles->AdAd(i, TmpIndices[i1], TmpIndices[i1 + 1]);
-	      if (Coefficient2 != 0.0)
+	    }
+	  
+	  for (int j = 0; j < this->NbrInterSectorSums; ++j)
+	    {
+	      int Lim = 2 * this->NbrInterSectorIndicesPerSum[j];
+	      TmpIndices = this->InterSectorIndicesPerSum[j];
+	      for (int i1 = 0; i1 < Lim; i1 += 2)
 		{
-		  for (int i2 = 0; i2 < Lim; i2 += 2)
+		  Coefficient2 = particles->AuAd(i, TmpIndices[i1], TmpIndices[i1 + 1]);
+		  if (Coefficient2 != 0.0)
 		    {
-		      Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-		      if (Index < Dim)
+		      for (int i2 = 0; i2 < Lim; i2 += 2)
 			{
-			  ++memory;
-			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			  Index = particles->AduAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+			  if (Index < Dim)
+			    {
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			    }
 			}
+		    }
+		}
+	    }	
+	}
+      if (this->OneBodyInteractionFactorsupdown != 0)
+	{
+	  for (int i = firstComponent; i < lastComponent; ++i)
+	    {
+	      for (int j=0; j<= this->LzMax; ++j)
+		{
+		  Index = particles->AddAu(i, j, j, Coefficient);
+		  if (Index < Dim)
+		    {
+		      ++Memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  Index = particles->AduAd(i, j, j, Coefficient);
+		  if (Index < Dim)
+		    {
+		      ++Memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
 		    }
 		}
 	    }
 	}
-	  
-      for (int j = 0; j < this->NbrInterSectorSums; ++j)
-	{
-	  int Lim = 2 * this->NbrInterSectorIndicesPerSum[j];
-	  TmpIndices = this->InterSectorIndicesPerSum[j];
-	  for (int i1 = 0; i1 < Lim; i1 += 2)
-	    {
-	      Coefficient2 = particles->AuAd(i, TmpIndices[i1], TmpIndices[i1 + 1]);
-	      if (Coefficient2 != 0.0)
-		{
-		  for (int i2 = 0; i2 < Lim; i2 += 2)
-		    {
-		      Index = particles->AduAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-		      if (Index < Dim)
-			{
-			  ++memory;
-			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-			}
-		    }
-		}
-	    }
-	}	
+    }
+  else
+    {
     }
 
   if ((this->OneBodyInteractionFactorsdowndown != 0) || (this->OneBodyInteractionFactorsupup != 0))
@@ -880,27 +920,6 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
 	{
 	  ++memory;
 	  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
-	}
-    }
-  if (this->OneBodyInteractionFactorsupdown != 0)
-    {
-      for (int i = firstComponent; i < lastComponent; ++i)
-	{
-	  for (int j=0; j<= this->LzMax; ++j)
-	    {
-	      Index = particles->AddAu(i, j, j, Coefficient);
-	      if (Index < Dim)
-		{
-		  ++Memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	      Index = particles->AduAd(i, j, j, Coefficient);
-	      if (Index < Dim)
-		{
-		  ++Memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	    }
 	}
     }
 }

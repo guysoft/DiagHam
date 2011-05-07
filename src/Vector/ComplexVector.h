@@ -819,7 +819,7 @@ class ComplexVector : public Vector
   // id = id of the MPI process which broadcasts the vector
   // zeroFlag = true if all coordinates have to be set to zero
   // return value = pointer to new vector 
-  Vector* BroadcastEmptyCloneVector(MPI::Intracomm& communicator, int id, bool zeroFlag = false);
+  Vector* BroadcastEmptyClone(MPI::Intracomm& communicator, int id, bool zeroFlag = false);
 
 #endif
 

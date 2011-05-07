@@ -2569,7 +2569,7 @@ RealVector& AbstractQHEOnSphereHamiltonian::HermitianLowLevelAddMultiplyDiskStor
 // return value = pointer to the array of vectors where result has been stored
 
 RealVector* AbstractQHEOnSphereHamiltonian::HermitianLowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
-									int firstComponent, int nbrComponent)
+										 int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
   int Dim = this->Particles->GetHilbertSpaceDimension();

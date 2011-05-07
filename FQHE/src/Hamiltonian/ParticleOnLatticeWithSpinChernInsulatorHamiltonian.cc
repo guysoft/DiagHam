@@ -54,6 +54,7 @@ using std::ostream;
 
 ParticleOnLatticeWithSpinChernInsulatorHamiltonian::ParticleOnLatticeWithSpinChernInsulatorHamiltonian()
 {
+  this->HermitianSymmetryFlag = false;
 }
 
 // constructor
@@ -92,6 +93,7 @@ ParticleOnLatticeWithSpinChernInsulatorHamiltonian::ParticleOnLatticeWithSpinChe
   long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex;  
+  this->HermitianSymmetryFlag = false;
   this->EvaluateInteractionFactors();
   if (memory > 0)
     {
@@ -183,6 +185,14 @@ ParticleOnLatticeWithSpinChernInsulatorHamiltonian::~ParticleOnLatticeWithSpinCh
     }
 }
   
+// ask if Hamiltonian implements hermitian symmetry operations
+//
+
+bool ParticleOnLatticeChernInsulatorSingleBandHamiltonian::IsHermitian()
+{
+  return this->HermitianSymmetryFlag;
+}
+
 // set Hilbert space
 //
 // hilbertSpace = pointer to Hilbert space to use
@@ -850,13 +860,17 @@ void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EnableFastMultiplicatio
     {
       this->InteractionPerComponentIndex[TotalPos] = new int [this->NbrInteractionPerComponent[TotalPos]];
       this->InteractionPerComponentCoefficient[TotalPos] = new Complex [this->NbrInteractionPerComponent[TotalPos]];      
-      TmpIndexArray = this->InteractionPerComponentIndex[TotalPos];
-      TmpCoefficientArray = this->InteractionPerComponentCoefficient[TotalPos];
-      Pos = 0l;
-      this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, TmpIndexArray, TmpCoefficientArray, Pos);
-      this->EvaluateMNOneBodyFastMultiplicationComponent(TmpParticles, i, TmpIndexArray, TmpCoefficientArray, Pos);
+//       TmpIndexArray = this->InteractionPerComponentIndex[TotalPos];
+//       TmpCoefficientArray = this->InteractionPerComponentCoefficient[TotalPos];
+//       Pos = 0l;
+//       this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, TmpIndexArray, TmpCoefficientArray, Pos);
+//       this->EvaluateMNOneBodyFastMultiplicationComponent(TmpParticles, i, TmpIndexArray, TmpCoefficientArray, Pos);
       ++TotalPos;
     }
+
+  QHEParticlePrecalculationOperation Operation(this, false);
+  Operation.ApplyOperation(this->Architecture);
+
   this->FastMultiplicationFlag = true;
   gettimeofday (&(TotalEndingTime2), 0);
   cout << "------------------------------------------------------------------" << endl << endl;;
@@ -865,3 +879,32 @@ void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EnableFastMultiplicatio
   cout << "time = " << Dt2 << endl;
 }
 
+// enable fast multiplication algorithm (partial evaluation)
+//
+// firstComponent = index of the first component that has to be precalcualted
+// nbrComponent  = index of the last component that has to be precalcualted
+
+void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::PartialEnableFastMultiplication(int firstComponent, int nbrComponent)
+{  
+  int LastComponent = nbrComponent + firstComponent;
+  ParticleOnSphereWithSpin* TmpParticles = (ParticleOnSphereWithSpin*) this->Particles->Clone();
+
+  firstComponent -= this->PrecalculationShift;
+  LastComponent -= this->PrecalculationShift;
+  long Pos = firstComponent / this->FastMultiplicationStep; 
+  int PosMod = firstComponent % this->FastMultiplicationStep;
+  if (PosMod != 0)
+    {
+      ++Pos;
+      PosMod = this->FastMultiplicationStep - PosMod;
+    }
+  for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
+    {
+      long TotalPos = 0;
+      this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
+							 this->InteractionPerComponentCoefficient[Pos], TotalPos);
+      this->EvaluateMNOneBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
+							 this->InteractionPerComponentCoefficient[Pos], TotalPos);
+      ++Pos;
+    }
+}

@@ -154,11 +154,13 @@ int main(int argc, char** argv)
  	    {
 	      FermionOnSquareLatticeWithSpinMomentumSpace Space(NbrParticles, NbrSitesX, NbrSitesY, i, j);
 	      cout << "dim = " << Space.GetHilbertSpaceDimension()  << endl;
+	      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
+		Memory = Architecture.GetArchitecture()->GetLocalMemory();
 	      Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());	
 	      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnLatticeWithSpinCheckerboardLatticeHamiltonian(&Space, NbrParticles, NbrSitesX, NbrSitesY,
-													 Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"),
-													 Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x") * 2.0 * M_PI, Manager.GetDouble("gamma-y") * 2.0 * M_PI, 		     
-													 Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+														Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"),
+														Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x") * 2.0 * M_PI, Manager.GetDouble("gamma-y") * 2.0 * M_PI, 		     
+														Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 	      char* ContentPrefix = new char[256];
 	      sprintf (ContentPrefix, "%d %d", i, j);
 	      char* EigenstateOutputFile = new char [512];
@@ -177,6 +179,8 @@ int main(int argc, char** argv)
  	    {
  	      FermionOnSquareLatticeMomentumSpace Space(NbrParticles, NbrSitesX, NbrSitesY, i, j);
  	      cout << "dim = " << Space.GetHilbertSpaceDimension()  << endl;
+	      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
+		Memory = Architecture.GetArchitecture()->GetLocalMemory();
  	      Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());	
  	      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian(&Space, NbrParticles, NbrSitesX, NbrSitesY,
 														  Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"),
