@@ -26,6 +26,8 @@
 #include "Options/SingleDoubleOption.h"
 #include "Options/SingleStringOption.h"
 
+#include "Tools/FQHEFiles/FQHESpherePseudopotentialTools.h"
+
 #include "GeneralTools/ConfigurationParser.h"
 
 #include <iostream>
@@ -68,8 +70,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('z', "initial-lz", "initial lz value", 0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "potential-lll", "one particle potential lll", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "potential-fll", "one particle potential sll", 0.0);
-  (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file-lll", "file describing the 2-body interaction in terms of the pseudo-potential on LLL");
-  (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file-sll", "file describing the 2-body interaction in terms of the pseudo-potential on SLL");
+  (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potentials");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
@@ -114,64 +115,30 @@ int main(int argc, char** argv)
   
   // Read in Pseudopotentials from the interaction file. 
   double** PseudoPotentials ;
-  PseudoPotentials = new double*[4];
-  for ( int i = 0 ; i < 4 ;  i++ ) {
-      PseudoPotentials[i] = new double[NbrFluxQuanta+3]; //make enough space for each level
+  PseudoPotentials = new double*[9];
+  for ( int i = 0 ; i < 9 ;  i++ ) {
+      PseudoPotentials[i] = new double[NbrFluxQuanta+3]; //make enough space for each level and set all to zero
       for ( int j = 0 ; j < NbrFluxQuanta+3 ; j++ ) 
         {
 	  PseudoPotentials[i][j] = 0.0;
         }
   }
   
-  if ( ( Manager.GetString("interaction-file-lll") == 0 ) && ( Manager.GetString("interaction-file-sll") == 0 ) ) 
+  if ( Manager.GetString("interaction-file") == 0 ) 
     {
       cout << "No interaction file supplied. Will use delta interaction." << endl;
     }
   else
     {
-      if ( Manager.GetString("interaction-file-lll") != 0 )
+      if ( Manager.GetString("interaction-file") != 0 )
         {
-	  ConfigurationParser InteractionDefinition;
-	  if (InteractionDefinition.Parse(Manager.GetString("interaction-file-lll")) == false)
+	  if ( !FQHESphereTwoLandauLevelGetPseudopotentials(Manager.GetString("interaction-file"), NbrFluxQuanta, PseudoPotentials) ) 
 	    {
-	      InteractionDefinition.DumpErrors(cout) << endl;
+	      cout << "There were problems encountered when attempting to read the pseudopotential file: " << Manager.GetString("interaction-file") << endl;
 	      return -1;
-	    }
-	  int TmpNbrPseudoPotentials;
-	  if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials", ' ', PseudoPotentials[0], TmpNbrPseudoPotentials) == false)
-	    {
-	      cout << "Weights is not defined or as a wrong value in " << Manager.GetString("interaction-file-lll") << endl;
-	      return -1;
-	    }
-	  if (TmpNbrPseudoPotentials != (NbrFluxQuanta +1))
-	    {
-	      cout << "Invalid number of pseudo-potentials: " << TmpNbrPseudoPotentials <<  endl;
-	      return -1;	  
-	    }
+	    }	  
 	}
-	
-      if ( Manager.GetString("interaction-file-sll") != 0 )
-        {
-	  ConfigurationParser InteractionDefinition;
-	  if (InteractionDefinition.Parse(Manager.GetString("interaction-file-sll")) == false)
-	    {
-	      InteractionDefinition.DumpErrors(cout) << endl;
-	      return -1;
-	    }
-	  int TmpNbrPseudoPotentials;
-	  if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials", ' ', PseudoPotentials[1], TmpNbrPseudoPotentials) == false)
-	    {
-	      cout << "Weights is not defined or as a wrong value in " << Manager.GetString("interaction-file-sll") << endl;
-	      return -1;
-	    }
-	  if (TmpNbrPseudoPotentials != (NbrFluxQuanta +3))
-	    {
-	      cout << "Invalid number of pseudo-potentials: " << TmpNbrPseudoPotentials <<  endl;
-	      return -1;	  
-	    }
-	}
-	
-    }
+    }	
 
   char* OutputNameLz = new char [256 + strlen(Manager.GetString("interaction-name"))];
   sprintf (OutputNameLz, "bosons_%s_n_%d_2s_%d_lz.dat", Manager.GetString("interaction-name"), NbrBosons, NbrFluxQuanta);
@@ -200,7 +167,7 @@ int main(int argc, char** argv)
       // Create data structure for the Hamiltonian.
       AbstractQHEOnSphereHamiltonian* Hamiltonian = 0;
       
-      if ( ( Manager.GetString("interaction-file-lll") == 0 ) && ( Manager.GetString("interaction-file-sll") == 0 ) ) 
+      if ( Manager.GetString("interaction-file") == 0 ) 
 	{
 	  Hamiltonian = new ParticleOnSphereTwoLandauLevelDeltaHamiltonian(Space, NbrBosons, NbrFluxQuanta+2, NULL, cyclotron_energies,  
 									   Architecture.GetArchitecture(), 

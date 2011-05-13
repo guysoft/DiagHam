@@ -55,6 +55,12 @@ class ParticleOnSphereTwoLandauLevelDeltaHamiltonian : public AbstractQHEOnSpher
   // first index refered to the spin sector (sorted as up-up, down-down, up-down)
   double** PseudoPotentials;
   
+  // array to store the nubmer of pseudopotential coefficients expected for each combination of uuuu, uudd....
+  int *NbrPseudoPotentialCoeffs;
+  
+  // array to store the lowest value of total angular momentum for each case. this can be either 0 or 1
+  int *PseudoPotentialMins;
+  
   // bool value which signifies whether or not pseudo potentials should be used.
   bool UsePseudoPotentials;
 

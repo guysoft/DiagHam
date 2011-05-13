@@ -34,6 +34,7 @@
 #include "config.h"
 
 
+
 // get pseudopototentials for particles on sphere with SU(2) spin from file
 // 
 // fileName = name of the file that contains the pseudopotantial description
@@ -63,6 +64,16 @@ bool FQHESphereSU2GetPseudopotentials (char* fileName, int lzMax, double** pseud
 //bool FQHESphereFullSU2GetPseudopotentials (char* fileName, int lzMaxUp, lzMaxDown, double** pseudoPotentials,
 //					   double* oneBodyPseudopotentialUpUp, double* oneBodyPseudopotentialDownUp,
 //					   double* oneBodyPseudopotentialUpDown, double* oneBodyPseudopotentialDownDown);
+
+
+// get pseudopototentials for particles on sphere with two landau levels
+// 
+// fileName = name of the file that contains the pseudopotantial description
+// lzMax = reference on twice the maximum Lz value of the LLL
+// pseudoPotentials = array or arrays of pseudo-potentials. 9 in total which go in ascending order of index p = 0-8 where label p = l*3 + r where l and r label the ll indices on the left and right of the 
+//                   interaction respectively and take values 0:up-up, 1: down-down, 2: up-down.
+// return value = true if no error occured
+bool FQHESphereTwoLandauLevelGetPseudopotentials (char* fileName, int lzMax, double** pseudoPotentials);
 
 #endif
 
