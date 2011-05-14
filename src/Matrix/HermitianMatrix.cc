@@ -83,8 +83,8 @@ HermitianMatrix::HermitianMatrix(int dimension, bool zero)
   this->Flag.Initialize();
   this->MatrixType = Matrix::ComplexElements | Matrix::Hermitian;
   this->DiagonalElements = new double [this->NbrRow];
-  this->RealOffDiagonalElements = new double [(this->NbrRow * (this->NbrRow - 1)) / 2];
-  this->ImaginaryOffDiagonalElements = new double [(this->NbrRow * (this->NbrRow - 1)) / 2];
+  this->RealOffDiagonalElements = new double [(((long) this->NbrRow) * (((long) this->NbrRow) - 1)) / 2l];
+this->ImaginaryOffDiagonalElements = new double [(((long) this->NbrRow) * (((long) this->NbrRow) - 1)) / 2l];
   if (zero == true)
     {
       int pos = 0;
@@ -255,9 +255,10 @@ void HermitianMatrix::SetMatrixElement(int i, int j, double x)
 	  j = i;
 	  i = tmp;
 	}
-      j -= i * (i - 2 * this->NbrRow - this->Increment + 3) / 2 + 1;
-      this->RealOffDiagonalElements[j] = x;
-      this->ImaginaryOffDiagonalElements[j] = 0.0;	        
+      long Tmp = (long) j;
+      Tmp -= ((long) i) * ((long) (i - 2 * this->NbrRow - this->Increment + 3)) / 2l + 1l;
+      this->RealOffDiagonalElements[Tmp] = x;
+      this->ImaginaryOffDiagonalElements[Tmp] = 0.0;	        
     }
 }
 
@@ -280,18 +281,17 @@ void HermitianMatrix::SetMatrixElement(int i, int j, const Complex& x)
     {
       if (i > j)
 	{
-	  int tmp = j;
-	  j = i;
-	  i = tmp;
-	  j -= i * (i - 2 * this->NbrRow - this->Increment + 3) / 2 + 1;
-	  this->RealOffDiagonalElements[j] = x.Re;
-	  this->ImaginaryOffDiagonalElements[j] = -x.Im;	        
+	  long Tmp = (long) i;
+	  Tmp -= ((long) j) * ((long) (j - 2 * this->NbrRow - this->Increment + 3)) / 2l + 1l;
+	  this->RealOffDiagonalElements[Tmp] = x.Re;
+	  this->ImaginaryOffDiagonalElements[Tmp] = -x.Im;	        
 	}
       else
 	{
-	  j -= i * (i - 2 * this->NbrRow - this->Increment + 3) / 2 + 1;
-	  this->RealOffDiagonalElements[j] = x.Re;
-	  this->ImaginaryOffDiagonalElements[j] = x.Im;	        
+	  long Tmp = (long) j;
+	  Tmp -= ((long) i) * ((long) (i - 2 * this->NbrRow - this->Increment + 3)) / 2l + 1l;
+	  this->RealOffDiagonalElements[Tmp] = x.Re;
+	  this->ImaginaryOffDiagonalElements[Tmp] = x.Im;	        
 	}
     }
 }
@@ -318,8 +318,9 @@ void HermitianMatrix::GetMatrixElement(int i, int j, double& x) const
 	  j = i;
 	  i = tmp;
 	}
-      j -= i * (i - 2 * this->NbrRow - this->Increment + 3) / 2 + 1;
-      x = this->RealOffDiagonalElements[j];
+      long Tmp = (long) j;
+      Tmp -= ((long) i) * ((long) (i - 2 * this->NbrRow - this->Increment + 3)) / 2l + 1l;
+      x = this->RealOffDiagonalElements[Tmp];
     }
 }
 
@@ -341,15 +342,17 @@ void HermitianMatrix::GetMatrixElement(int i, int j, Complex& x) const
     {
       if (i > j)
 	{
-	  i -= j * (j - 2 * this->NbrRow - this->Increment + 3) / 2 + 1;
-	  x.Re = this->RealOffDiagonalElements[i];
-	  x.Im = -this->ImaginaryOffDiagonalElements[i];
+	  long Tmp = (long) i;
+	  Tmp -= ((long) j) * ((long) (j - 2 * this->NbrRow - this->Increment + 3)) / 2l + 1l;
+	  x.Re = this->RealOffDiagonalElements[Tmp];
+	  x.Im = -this->ImaginaryOffDiagonalElements[Tmp];
 	}
       else
 	{
-	  j -= i * (i - 2 * this->NbrRow - this->Increment + 3) / 2 + 1;
-	  x.Re = this->RealOffDiagonalElements[j];
-	  x.Im = this->ImaginaryOffDiagonalElements[j];
+	  long Tmp = (long) j;
+	  Tmp -= ((long) i) * ((long) (i - 2 * this->NbrRow - this->Increment + 3)) / 2l + 1l;
+	  x.Re = this->RealOffDiagonalElements[Tmp];
+	  x.Im = this->ImaginaryOffDiagonalElements[Tmp];
 	}
     }
 }
@@ -376,8 +379,9 @@ void HermitianMatrix::AddToMatrixElement(int i, int j, double x)
 	  j = i;
 	  i = tmp;
 	}
-      j -= i * (i - 2 * this->NbrRow - this->Increment + 3) / 2 + 1;
-      this->RealOffDiagonalElements[j] += x;
+      long Tmp = (long) j;
+      Tmp -= ((long) i) * ((long) (i - 2 * this->NbrRow - this->Increment + 3)) / 2l + 1l;
+      this->RealOffDiagonalElements[Tmp] += x;
     }
 }
 
@@ -401,18 +405,17 @@ void HermitianMatrix::AddToMatrixElement(int i, int j, const Complex& x)
 	{
 	  if (i > j)
 	    {
-	      int tmp = j;
-	      j = i;
-	      i = tmp;
-	      j -= i * (i - 2 * this->NbrRow - this->Increment + 3) / 2 + 1;
-	      this->RealOffDiagonalElements[j] += x.Re;
-	      this->ImaginaryOffDiagonalElements[j] -= x.Im;	        
+	      long Tmp = (long) i;
+	      Tmp -= ((long) j) * ((long) (j - 2 * this->NbrRow - this->Increment + 3)) / 2l + 1l;
+	      this->RealOffDiagonalElements[Tmp] += x.Re;
+	      this->ImaginaryOffDiagonalElements[Tmp] -= x.Im;	        
 	    }
 	  else
 	    {
-	      j -= i * (i - 2 * this->NbrRow - this->Increment + 3) / 2 + 1;
-	      this->RealOffDiagonalElements[j] += x.Re;
-	      this->ImaginaryOffDiagonalElements[j] += x.Im;	        
+	      long Tmp = (long) j;
+	      Tmp -= ((long) i) * ((long) (i - 2 * this->NbrRow - this->Increment + 3)) / 2l + 1l;
+	      this->RealOffDiagonalElements[Tmp] += x.Re;
+	      this->ImaginaryOffDiagonalElements[Tmp] += x.Im;	        
 	    }
 	}
     }
@@ -434,7 +437,7 @@ void HermitianMatrix::Resize (int nbrRow, int nbrColumn)
       return;
     }
   double* TmpDiag = new double [nbrRow];
-  int Tot = (nbrRow * (nbrRow - 1)) / 2;
+  long Tot = (((long) nbrRow) * ((long) (nbrRow - 1))) / 2l;
   double* TmpRealOffDiag = new double [Tot];
   double* TmpImaginaryOffDiag = new double [Tot];
   for (int i = 0; i < this->NbrRow; i++)
@@ -459,7 +462,7 @@ void HermitianMatrix::Resize (int nbrRow, int nbrColumn)
 	  ++k;
 	}      
     }
-  for (int i = (this->NbrRow * (this->NbrRow - 1)) / 2; i < Tot; ++i)
+  for (long i = (((long) this->NbrRow) * ((long) (this->NbrRow - 1))) / 2l; i < Tot; ++i)
     {
       TmpRealOffDiag[i] = 0.0;
       TmpImaginaryOffDiag[i] = 0.0;
@@ -496,10 +499,10 @@ void HermitianMatrix::ResizeAndClean (int nbrRow, int nbrColumn)
     {
       if (this->NbrRow < nbrRow)
 	{
-	  int Tot = (nbrRow * (nbrRow - 1)) / 2;
+	  long Tot = (((long) nbrRow) * ((long) (nbrRow - 1))) / 2l;
 	  for (int i = this->NbrRow; i < nbrRow; ++i)
 	    this->DiagonalElements[i] = 0.0;
-	  int k = 2 * (this->NbrRow - 1);
+	  long k = 2l * (this->NbrRow - 1);
 	  for (int i = 0; i < (this->NbrRow - 1); ++i)
 	    {
 	      for (int j = this->NbrRow; j < nbrRow; ++j)
@@ -510,7 +513,7 @@ void HermitianMatrix::ResizeAndClean (int nbrRow, int nbrColumn)
 		}
 	      k += (this->NbrRow - 2 - i);
 	    }
-	  for (int i = (this->NbrRow * (this->NbrRow - 1)) / 2; i < Tot; i++)
+	  for (long i = (((long) this->NbrRow) * ((long) (this->NbrRow - 1))) / 2l; i < Tot; i++)
 	    {
 	      this->RealOffDiagonalElements[i] = 0.0;
 	      this->ImaginaryOffDiagonalElements[i] = 0.0;
@@ -522,15 +525,15 @@ void HermitianMatrix::ResizeAndClean (int nbrRow, int nbrColumn)
       return;
     }
   double* TmpDiag = new double [nbrRow];
-  int Tot = (nbrRow * (nbrRow - 1)) / 2;
+  long Tot = (((long) nbrRow) * (((long) nbrRow) - 1l)) / 2l;
   double* TmpRealOffDiag = new double [Tot];
   double* TmpImaginaryOffDiag = new double [Tot];
   for (int i = 0; i < this->NbrRow; i++)
     TmpDiag [i] = this->DiagonalElements[i];
   for (int i = this->NbrRow; i < nbrRow; i++)
     TmpDiag [i]  = 0.0;
-  int k = 0;
-  int l = 0;
+  long k = 0l;
+  long l = 0l;
   for (int i = 0; i < (this->NbrRow - 1); i++)
     {
       for (int j = 0; j < (this->NbrRow - 1 - i); j++)
@@ -547,7 +550,7 @@ void HermitianMatrix::ResizeAndClean (int nbrRow, int nbrColumn)
 	  ++k;
 	}      
     }
-  for (int i = (this->NbrRow * (this->NbrRow - 1)) / 2; i < Tot; i++)
+  for (long i = (((long) this->NbrRow) * (((long) this->NbrRow) - 1l)) / 2l; i < Tot; i++)
     {
       TmpRealOffDiag[i] = 0.0;
       TmpImaginaryOffDiag[i] = 0.0;
@@ -592,8 +595,9 @@ double& HermitianMatrix::operator () (int i, int j)
 	  j = i;
 	  i = tmp;
 	}
-      j -= i * (i - 2 * this->NbrRow - this->Increment + 3) / 2 + 1;
-      return this->RealOffDiagonalElements[j];
+      long Tmp = (long) j;
+      Tmp -= ((long) i) * ((long) (i - 2 * this->NbrRow - this->Increment + 3)) / 2l + 1l;
+      return this->RealOffDiagonalElements[Tmp];
     }
 }
 
@@ -610,14 +614,14 @@ HermitianMatrix operator + (const HermitianMatrix& M1, const HermitianMatrix& M2
     return HermitianMatrix();
   double* Diagonal = new double [M1.NbrRow];
   int ReducedNbr = M1.NbrRow - 1;
-  int max = (ReducedNbr * M1.NbrRow) / 2;
+  long max = (((long) ReducedNbr) * ((long) M1.NbrRow)) / 2l;
   double* RealOffDiagonal = new double [max];
   double* ImaginaryOffDiagonal = new double [max];
   for (int i = 0; i < M1.NbrRow; i++)
     {
       Diagonal[i] = M1.DiagonalElements[i] + M2.DiagonalElements[i];
     }
-  for (int i = 0; i < max; ++i)
+  for (long i = 0l; i < max; ++i)
     {
       RealOffDiagonal[i] = M1.RealOffDiagonalElements[i] + M2.RealOffDiagonalElements[i];      
       ImaginaryOffDiagonal[i] = M1.ImaginaryOffDiagonalElements[i] + M2.ImaginaryOffDiagonalElements[i];      
@@ -659,14 +663,14 @@ HermitianMatrix operator - (const HermitianMatrix& M1, const HermitianMatrix& M2
     return HermitianMatrix();
   double* Diagonal = new double [M1.NbrRow];
   int ReducedNbr = M1.NbrRow - 1;
-  int max = (ReducedNbr * M1.NbrRow) / 2;
+  long max = (((long) ReducedNbr) * ((long) M1.NbrRow)) / 2l;
   double* RealOffDiagonal = new double [max];
   double* ImaginaryOffDiagonal = new double [max];
   for (int i = 0; i < M1.NbrRow; ++i)
     {
       Diagonal[i] = M1.DiagonalElements[i] - M2.DiagonalElements[i];
     }
-  for (int i = 0; i < max; ++i)
+  for (long i = 0l; i < max; ++i)
     {
       RealOffDiagonal[i] = M1.RealOffDiagonalElements[i] - M2.RealOffDiagonalElements[i];      
       ImaginaryOffDiagonal[i] = M1.ImaginaryOffDiagonalElements[i] - M2.ImaginaryOffDiagonalElements[i];      
@@ -706,14 +710,14 @@ HermitianMatrix operator * (const HermitianMatrix& M, double x)
 {
   double* Diagonal = new double [M.NbrRow];
   int ReducedNbr = M.NbrRow - 1;
-  int max = (ReducedNbr * M.NbrRow) / 2;
+  long max = (((long) ReducedNbr) * ((long) M.NbrRow)) / 2l;
   double* RealOffDiagonal = new double [max];
   double* ImaginaryOffDiagonal = new double [max];
   for (int i = 0; i < M.NbrRow; ++i)
     {
       Diagonal[i] = M.DiagonalElements[i] * x;
     }
-  for (int i = 0; i < max; ++i)
+  for (long i = 0l; i < max; ++i)
     {
       RealOffDiagonal[i] = M.RealOffDiagonalElements[i] * x;      
       ImaginaryOffDiagonal[i] = M.ImaginaryOffDiagonalElements[i] * x;      
@@ -731,14 +735,14 @@ HermitianMatrix operator * (double x, const HermitianMatrix& M)
 {
   double* Diagonal = new double [M.NbrRow];
   int ReducedNbr = M.NbrRow - 1;
-  int max = (ReducedNbr * M.NbrRow) / 2;
+  long max = (((long) ReducedNbr) * ((long) M.NbrRow)) / 2l;
   double* RealOffDiagonal = new double [max];
   double* ImaginaryOffDiagonal = new double [max];
   for (int i = 0; i < M.NbrRow; ++i)
     {
       Diagonal[i] = M.DiagonalElements[i] * x;
     }
-  for (int i = 0; i < max; ++i)
+  for (long i = 0l; i < max; ++i)
     {
       RealOffDiagonal[i] = M.RealOffDiagonalElements[i] * x;      
       ImaginaryOffDiagonal[i] = M.ImaginaryOffDiagonalElements[i] * x;      
@@ -756,7 +760,7 @@ HermitianMatrix operator / (const HermitianMatrix& M, double x)
 {
   double* Diagonal = new double [M.NbrRow];
   int ReducedNbr = M.NbrRow - 1;
-  int max = (ReducedNbr * M.NbrRow) / 2;
+  long max = (((long) ReducedNbr) * ((long) M.NbrRow)) / 2l;
   double* RealOffDiagonal = new double [max];
   double* ImaginaryOffDiagonal = new double [max];
   double inv = 1.0 / x;
@@ -764,7 +768,7 @@ HermitianMatrix operator / (const HermitianMatrix& M, double x)
     {
       Diagonal[i] = M.DiagonalElements[i] * inv;
     }
-  for (int i = 0; i < max; ++i)
+  for (long i = 0l; i < max; ++i)
     {
       RealOffDiagonal[i] = M.RealOffDiagonalElements[i] * inv;      
       ImaginaryOffDiagonal[i] = M.ImaginaryOffDiagonalElements[i] * inv;      
@@ -785,8 +789,8 @@ HermitianMatrix& HermitianMatrix::operator += (const HermitianMatrix& M)
     {
       this->DiagonalElements[i] += M.DiagonalElements[i];
     }
-  int max = ((this->NbrRow - 1) * this->NbrRow) >> 1;
-  for (int i = 0; i < max; ++i)
+  long max = (((long) (this->NbrRow - 1)) * ((long) this->NbrRow)) >> 1;
+  for (long i = 0l; i < max; ++i)
     {
       this->RealOffDiagonalElements[i] += M.RealOffDiagonalElements[i];
       this->ImaginaryOffDiagonalElements[i] += M.ImaginaryOffDiagonalElements[i]; 
@@ -817,8 +821,8 @@ HermitianMatrix& HermitianMatrix::operator -= (const HermitianMatrix& M)
     {
       this->DiagonalElements[i] -= M.DiagonalElements[i];
     }
-  int max = ((this->NbrRow - 1) * this->NbrRow) / 2;
-  for (int i = 0; i < max; ++i)
+  long max = (((long) (this->NbrRow - 1)) * ((long) this->NbrRow)) / 2l;
+  for (long i = 0l; i < max; ++i)
     {
       this->RealOffDiagonalElements[i] -= M.RealOffDiagonalElements[i];
       this->ImaginaryOffDiagonalElements[i] -= M.ImaginaryOffDiagonalElements[i]; 
@@ -849,8 +853,8 @@ HermitianMatrix& HermitianMatrix::operator *= (double x)
     {
       this->DiagonalElements[i] *= x;
     }
-  int max = ((this->NbrRow - 1) * this->NbrRow) / 2;
-  for (int i = 0; i < max; ++i)
+  long max = (((long) (this->NbrRow - 1)) * ((long) this->NbrRow)) / 2l;
+  for (long i = 0l; i < max; ++i)
     {
       this->ImaginaryOffDiagonalElements[i] *= x; 
       this->RealOffDiagonalElements[i] *= x;      
@@ -872,8 +876,8 @@ HermitianMatrix& HermitianMatrix::operator /= (double x)
     {
       this->DiagonalElements[i] *= x;
     }
-  int max = ((this->NbrRow - 1) * this->NbrRow) / 2;
-  for (int i = 0; i < max; ++i)
+  long max = (((long) (this->NbrRow - 1)) * ((long) this->NbrRow)) / 2l;
+  for (long i = 0l; i < max; ++i)
     {
       this->RealOffDiagonalElements[i] *= x; 
       this->ImaginaryOffDiagonalElements[i] *= x;      
@@ -1732,7 +1736,7 @@ RealDiagonalMatrix& HermitianMatrix::LapackDiagonalize (RealDiagonalMatrix& M, d
 	  delete [] LapackRealWorkingArea;
 	  if (LapackEVMatrix!=0) delete [] LapackEVMatrix;	  
 	}      
-      this->LapackMatrix = new doublecomplex [this->NbrRow * (this->NbrRow+1)/2];
+      this->LapackMatrix = new doublecomplex [((long) this->NbrRow) * ((long) (this->NbrRow+1)) / 2l];
       this->LapackEVMatrix = NULL;	  
       this->LapackWorkingArea = new doublecomplex [2*this->NbrRow-1];
       this->LapackRealWorkingArea = new double [3*this->NbrRow-2];
@@ -1742,7 +1746,7 @@ RealDiagonalMatrix& HermitianMatrix::LapackDiagonalize (RealDiagonalMatrix& M, d
   int Information = 0;  
   const char* Jobz = "N";
   const char* UpperLower = "U";
-  int TotalIndex = 0;
+  long TotalIndex = 0l;
   for (int j = 0; j < this->NbrRow; ++j)
     {
       for (int i = 0; i < j; ++i)
@@ -1783,14 +1787,14 @@ RealDiagonalMatrix& HermitianMatrix::LapackDiagonalize (RealDiagonalMatrix& M, C
 	  delete [] LapackRealWorkingArea;
 	  if (LapackEVMatrix!=0) delete [] LapackEVMatrix;	  
 	}
-      this->LapackMatrix = new doublecomplex [this->NbrRow * (this->NbrRow+1)/2];
+      this->LapackMatrix = new doublecomplex [((long) this->NbrRow) * ((long) (this->NbrRow+1)) / 2l];
       this->LapackEVMatrix = NULL;
       this->LapackWorkingArea = new doublecomplex [2*this->NbrRow-1];
       this->LapackRealWorkingArea = new double [3*this->NbrRow-2];
       this->LapackWorkAreaDimension=this->NbrRow;
     }
   if (LapackEVMatrix==NULL)
-    LapackEVMatrix = new doublecomplex[this->NbrRow * this->NbrRow];
+    LapackEVMatrix = new doublecomplex[((long) this->NbrRow) * ((long) this->NbrRow)];
   int Information = 0;  
   char Jobz = 'V';
   char UpperLower = 'U';

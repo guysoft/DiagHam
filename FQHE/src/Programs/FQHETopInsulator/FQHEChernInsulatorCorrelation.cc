@@ -57,7 +57,8 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
 
   (*SystemGroup) += new SingleStringOption  ('\0', "state", "name of the vector file describing the state whose density has to be plotted");
-  (*SystemGroup) += new BooleanOption  ('\n', "density", "plot density insted of density-density correlation", false);
+  (*SystemGroup) += new BooleanOption  ('\n', "density", "plot density instead of density-density correlation", false);
+  (*SystemGroup) += new BooleanOption  ('\n', "k-space", "compute the density/correlation in momentum space", false);
 
   (*PlotOptionGroup) += new SingleStringOption ('\n', "output", "output file name (default output name replace the .vec extension of the input file with .rho or .rhorho)", 0);
   (*PlotOptionGroup) += new SingleIntegerOption ('\n', "nbr-samplesx", "number of samples along the x direction", 100, true, 10);
@@ -206,6 +207,22 @@ int main(int argc, char** argv)
 	}
       File.open(TmpFileName, ios::binary | ios::out);
       delete[] TmpFileName;
+    }
+
+  if (Manager.GetBoolean("k-space") == true)
+    {
+      if (DensityFlag == true)
+	{
+	  File << "# kx ky n(kx,ky)" << endl;
+	  for (int kx =0; kx < NbrSiteX; ++kx)
+	    for (int ky = 0; ky < NbrSiteY; ++ky)
+	      {
+		int Index = (kx * NbrSiteY) + ky;
+		File << kx << " " << ky << " " << PrecalculatedValues[Index] << endl;;
+	      }
+	  File.close();
+	}
+      return 0;
     }
   
   ParticleOnChernInsulatorSingleBandFunctionBasis Basis(NbrSiteX, NbrSiteY, Mass);
