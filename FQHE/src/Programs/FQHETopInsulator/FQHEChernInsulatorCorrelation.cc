@@ -218,7 +218,7 @@ int main(int argc, char** argv)
 	    for (int ky = 0; ky < NbrSiteY; ++ky)
 	      {
 		int Index = (kx * NbrSiteY) + ky;
-		File << kx << " " << ky << " " << PrecalculatedValues[Index] << endl;;
+		File << kx << " " << ky << " " << PrecalculatedValues[Index].Re << endl;;
 	      }
 	  File.close();
 	}
