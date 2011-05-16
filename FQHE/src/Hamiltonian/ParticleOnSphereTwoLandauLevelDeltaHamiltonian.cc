@@ -108,7 +108,7 @@ ParticleOnSphereTwoLandauLevelDeltaHamiltonian::ParticleOnSphereTwoLandauLevelDe
 	  this->PseudoPotentials[i] = new double[this->NbrPseudoPotentialCoeffs[i]]; 
 	  for ( int j = 0; j < this->NbrPseudoPotentialCoeffs[i] ; j++ )
 	    {
-	      this->PseudoPotentials[i][j] = pseudoPotential[0][this->NbrPseudoPotentialCoeffs[i] - 1 - j];
+	      this->PseudoPotentials[i][j] = pseudoPotential[i][this->NbrPseudoPotentialCoeffs[i] - 1 - j];
 	    }	  
 	}            
     }
@@ -363,7 +363,8 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 			  
 			  for ( J = this->PseudoPotentialMins[0] ; J < this->NbrPseudoPotentialCoeffs[0] + this->PseudoPotentialMins[0] ; J++ ) 
 			    {
-			      ClebschCoef = ClebschUpUp.GetCoefficient(m1,m2,J>>1);			     			  
+			      ClebschCoef = ClebschUpUp.GetCoefficient(m1,m2,J>>1);			     	
+			      cout << "ClebschCeof: (" << m1 << ", " << m2 << ", " << (J >> 1) << ") = " <<  ClebschUpUp.GetCoefficient(m1,m2,J>>1) << endl;
 			      TmpCoefficient = ClebschCoef * ClebschUpUp.GetCoefficient(m3, m4, J>>1);
 			      this->InteractionFactorsUpUpUpUp[i][Index] += this->PseudoPotentials[0][J-this->PseudoPotentialMins[0]] * TmpCoefficient;			
 			    }
@@ -392,7 +393,7 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 			  
 			  for ( J = this->PseudoPotentialMins[1] ; J < this->NbrPseudoPotentialCoeffs[1] + this->PseudoPotentialMins[1] ; J++ ) 
 			    {
-			      ClebschCoef = ClebschUpUp.GetCoefficient(m1,m2,J>>1);			     			  
+			      ClebschCoef = ClebschDownDown.GetCoefficient(m1,m2,J>>1);			     			  
 			      TmpCoefficient = ClebschCoef * ClebschUpUp.GetCoefficient(m3, m4, J>>1);
 			      this->InteractionFactorsUpUpDownDown[i][Index] += this->PseudoPotentials[1][J-this->PseudoPotentialMins[1]] * TmpCoefficient;			
 			    }
@@ -423,7 +424,7 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 			  
 			  for ( J = this->PseudoPotentialMins[2] ; J < this->NbrPseudoPotentialCoeffs[2] + this->PseudoPotentialMins[2] ; J++ ) 
 			    {
-			      ClebschCoef = ClebschUpUp.GetCoefficient(m1,m2,J>>1);			     			  
+			      ClebschCoef = ClebschUpDown.GetCoefficient(m1,m2,J>>1);			     			  
 			      TmpCoefficient = ClebschCoef * ClebschUpUp.GetCoefficient(m3, m4, J>>1);
 			      this->InteractionFactorsUpUpUpDown[i][Index] += this->PseudoPotentials[2][J-this->PseudoPotentialMins[2]] * TmpCoefficient;
 			    }
@@ -457,7 +458,7 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 			  for ( J = this->PseudoPotentialMins[3] ; J < this->NbrPseudoPotentialCoeffs[3] + this->PseudoPotentialMins[3] ; J++ ) 
 			    {
 			      ClebschCoef = ClebschUpUp.GetCoefficient(m1,m2,J>>1);			     			  
-			      TmpCoefficient = ClebschCoef * ClebschUpUp.GetCoefficient(m3, m4, J>>1);
+			      TmpCoefficient = ClebschCoef * ClebschDownDown.GetCoefficient(m3, m4, J>>1);
 			      this->InteractionFactorsDownDownUpUp[i][Index] += this->PseudoPotentials[3][J-this->PseudoPotentialMins[3]] * TmpCoefficient;
 			    }
 			  //this->InteractionFactorsDownDownUpUp[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1) /2.0 ,1.0,(double)m1 /2.0 ,1.0,(double)m2 /2.0,0.0,(double)m3 /2.0,0.0,(double)m4 /2.0);
@@ -487,8 +488,8 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 			  
 			  for ( J = this->PseudoPotentialMins[4] ; J < this->NbrPseudoPotentialCoeffs[4] + this->PseudoPotentialMins[4] ; J++ ) 
 			    {
-			      ClebschCoef = ClebschUpUp.GetCoefficient(m1,m2,J>>1);			     			  
-			      TmpCoefficient = ClebschCoef * ClebschUpUp.GetCoefficient(m3, m4, J>>1);
+			      ClebschCoef = ClebschDownDown.GetCoefficient(m1,m2,J>>1);			     			  
+			      TmpCoefficient = ClebschCoef * ClebschDownDown.GetCoefficient(m3, m4, J>>1);
 			      this->InteractionFactorsDownDownDownDown[i][Index] += this->PseudoPotentials[4][J-this->PseudoPotentialMins[4]] * TmpCoefficient;
 			    }
 			  //this->InteractionFactorsDownDownDownDown[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1)/2.0 ,0.0,(double)m1/2.0 ,0.0,(double)m2 /2.0 ,0.0,(double)m3/2.0 ,0.0,(double)m4/2.0);
@@ -518,8 +519,8 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 			  
 			  for ( J = this->PseudoPotentialMins[5] ; J < this->NbrPseudoPotentialCoeffs[5] + this->PseudoPotentialMins[5] ; J++ ) 
 			    {
-			      ClebschCoef = ClebschUpUp.GetCoefficient(m1,m2,J>>1);			     			  
-			      TmpCoefficient = ClebschCoef * ClebschUpUp.GetCoefficient(m3, m4, J>>1);
+			      ClebschCoef = ClebschUpDown.GetCoefficient(m1,m2,J>>1);			     			  
+			      TmpCoefficient = ClebschCoef * ClebschDownDown.GetCoefficient(m3, m4, J>>1);
 			      this->InteractionFactorsDownDownUpDown[i-1][Index] += this->PseudoPotentials[5][J-this->PseudoPotentialMins[5]] * TmpCoefficient;
 			    }
 			  //this->InteractionFactorsDownDownUpDown[i-1][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1) /2.0 ,1.0,(double)m1/2.0 ,0.0,(double)m2/2.0 ,0.0,(double)m3/2.0 ,0.0,(double)m4/2.0);
@@ -550,7 +551,7 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 			  for ( J = this->PseudoPotentialMins[6] ; J < this->NbrPseudoPotentialCoeffs[6] + this->PseudoPotentialMins[6] ; J++ ) 
 			    {
 			      ClebschCoef = ClebschUpUp.GetCoefficient(m1,m2,J>>1);			     			  
-			      TmpCoefficient = ClebschCoef * ClebschUpUp.GetCoefficient(m3, m4, J>>1);
+			      TmpCoefficient = ClebschCoef * ClebschUpDown.GetCoefficient(m3, m4, J>>1);
 			      this->InteractionFactorsUpDownUpUp[i][Index] += this->PseudoPotentials[6][J-this->PseudoPotentialMins[6]] * TmpCoefficient;
 			    }
 			  //this->InteractionFactorsUpDownUpUp[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1)/2.0 ,1.0,(double)m1 /2.0 ,1.0,(double)m2 /2.0,1.0,(double)m3 /2.0,0.0,(double)m4 /2.0);
@@ -581,8 +582,8 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 			  
 			  for ( J = this->PseudoPotentialMins[7] ; J < this->NbrPseudoPotentialCoeffs[7] + this->PseudoPotentialMins[7] ; J++ ) 
 			    {
-			      ClebschCoef = ClebschUpUp.GetCoefficient(m1,m2,J>>1);			     			  
-			      TmpCoefficient = ClebschCoef * ClebschUpUp.GetCoefficient(m3, m4, J>>1);
+			      ClebschCoef = ClebschDownDown.GetCoefficient(m1,m2,J>>1);			     			  
+			      TmpCoefficient = ClebschCoef * ClebschUpDown.GetCoefficient(m3, m4, J>>1);
 			      this->InteractionFactorsUpDownDownDown[i][Index] += this->PseudoPotentials[7][J-this->PseudoPotentialMins[7]] * TmpCoefficient;
 			    }
 			  //this->InteractionFactorsUpDownDownDown[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1) /2.0 ,0.0 ,(double)m1 /2.0 ,0.0 ,(double)m2 /2.0,1.0,(double)m3/2.0,0.0,(double)m4/2.0);
@@ -612,9 +613,9 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 			  
 			  for ( J = this->PseudoPotentialMins[8] ; J < this->NbrPseudoPotentialCoeffs[8] + this->PseudoPotentialMins[8] ; J++ ) 
 			    {
-			      ClebschCoef = ClebschUpUp.GetCoefficient(m1,m2,J>>1);			     			  
-			      TmpCoefficient = ClebschCoef * ClebschUpUp.GetCoefficient(m3, m4, J>>1);
-			      this->InteractionFactorsDownDownUpUp[i][Index] += this->PseudoPotentials[8][J-this->PseudoPotentialMins[8]] * TmpCoefficient;
+			      ClebschCoef = ClebschUpDown.GetCoefficient(m1,m2,J>>1);			     			  
+			      TmpCoefficient = ClebschCoef * ClebschUpDown.GetCoefficient(m3, m4, J>>1);
+			      this->InteractionFactorsUpDownUpDown[i][Index] += this->PseudoPotentials[8][J-this->PseudoPotentialMins[8]] * TmpCoefficient;
 			    }
 			  //this->InteractionFactorsUpDownUpDown[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1) /2.0 ,1.0,(double)m1 /2.0 ,0.0,(double)m2 /2.0,1.0,(double)m3 /2.0,0.0,(double)m4 /2.0);
 			  //cout << this->LzMaxDown-1.0 << ": " << m1  << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsUpDownUpDown[i][Index] << endl;
@@ -660,6 +661,29 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 		    }
 		}
 	    }	   */
+	    
+	          cout << "Up Up interactions: " << endl;
+      for (int i = 0; i < this->NbrUpUpSectorSums; ++i) // go through the possible sums of Lz values on LLL
+	{
+	  cout << "Sum : " << i  << endl;
+	  if (this->NbrUpUpSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+	    {	  
+	      for (int j1 = 0; j1 < this->NbrUpUpSectorIndicesPerSum[i]; ++j1)
+		{
+		  int m1 = (this->UpUpSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp;
+		  int m2 = (this->UpUpSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxUp;
+		  for (int j2 = 0; j2 < this->NbrUpUpSectorIndicesPerSum[i]; ++j2)
+		    {
+		      int m3 = (this->UpUpSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
+		      int m4 = (this->UpUpSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxUp;
+		      cout << m1/2.0 << ", " << m2/2.0 << ", " << m3/2.0 << ", " << m4/2.0 << ": " << this->InteractionFactorsUpUpUpUp[i][j1*this->NbrUpUpSectorIndicesPerSum[i]+j2] << endl;		  
+		      //this->InteractionFactorsDownDownDownDown[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1)/2.0 ,0.0,(double)m1/2.0 ,0.0,(double)m2 /2.0 ,0.0,(double)m3/2.0 ,0.0,(double)m4/2.0);
+		    }
+		}
+	    }
+	}
+
+	    
 	}
       else
 	{

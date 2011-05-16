@@ -213,14 +213,16 @@ bool FQHESphereTwoLandauLevelGetPseudopotentials (char* fileName, int lzMax, dou
 	      cout << "Invalid number of pseudo-potentials in " << PseudoLabels[Idx]  << endl;
 	      return false;	  
 	    }
-	    for (int j = 0; j < TmpNbrPseudoPotentials; ++j)
-	      pseudoPotentials[Idx][j] = TmpPseudoPotentials[j];
 	  if (TmpNbrPseudoPotentials < PseudoLengths[Idx])
 	    {
 	      cout << "warning : number of pseudo-potentials in " << PseudoLabels[Idx] << " is lower than expected, padding with zeros" << endl;	      
 	      for (int j = TmpNbrPseudoPotentials; j < PseudoLengths[Idx]; ++j)
 		  pseudoPotentials[Idx][j] = 0.0;	  
 	    }
+	  for (int j = 0; j < TmpNbrPseudoPotentials; ++j)
+	    pseudoPotentials[Idx][j] = TmpPseudoPotentials[j];
+	  delete [] TmpPseudoPotentials;
+  
 	}
   else if (InteractionDefinition[PseudoLabels[Idx].c_str()] != 0)
       {
