@@ -74,6 +74,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
+  (*SystemGroup) += new BooleanOption  ('\n', "show-interaction-factors", "show the interaction factors being used");
   
   (*PrecalculationGroup) += new BooleanOption ('\n', "disk-cache", "use disk cache for fast multiplication", false);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
@@ -109,6 +110,7 @@ int main(int argc, char** argv)
   double cyclotron_energies[2];
   cyclotron_energies[0] = (double)Manager.GetDouble("potential-lll");
   cyclotron_energies[1] = (double)Manager.GetDouble("potential-fll");
+  bool ShowIntFactorsFlag = Manager.GetBoolean("show-interaction-factors");
   
   
   bool FirstRun = true;
@@ -172,14 +174,14 @@ int main(int argc, char** argv)
 	  Hamiltonian = new ParticleOnSphereTwoLandauLevelDeltaHamiltonian(Space, NbrBosons, NbrFluxQuanta+2, NULL, cyclotron_energies,  
 									   Architecture.GetArchitecture(), 
 									   Memory, DiskCacheFlag,
-									   LoadPrecalculationFileName);
+									   LoadPrecalculationFileName, ShowIntFactorsFlag);
 	}
       else 
 	{
 	  Hamiltonian = new ParticleOnSphereTwoLandauLevelDeltaHamiltonian(Space, NbrBosons, NbrFluxQuanta+2, PseudoPotentials, cyclotron_energies,  
 									   Architecture.GetArchitecture(), 
 									   Memory, DiskCacheFlag,
-									   LoadPrecalculationFileName);
+									   LoadPrecalculationFileName, ShowIntFactorsFlag);
 	}
 
       
@@ -189,13 +191,14 @@ int main(int argc, char** argv)
       char* EigenvectorName = 0;
       if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
 	{
-	  EigenvectorName = new char [64];
+	  EigenvectorName = new char [128];
 	  sprintf (EigenvectorName, "bosons_2ll_%s_n_%d_2s_%d_lz_%d", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrBosons, NbrFluxQuanta, L);
 	}
       
       QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);
       MainTaskOperation TaskOperation (&Task); TaskOperation.ApplyOperation(Architecture.GetArchitecture());
       delete Hamiltonian;
+      delete Space;
       
       if (EigenvectorName != 0)
 	{
