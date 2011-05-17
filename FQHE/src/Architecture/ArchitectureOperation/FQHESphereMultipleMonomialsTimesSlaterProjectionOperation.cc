@@ -185,6 +185,8 @@ FQHESphereMultipleMonomialsTimesSlaterProjectionOperation::~FQHESphereMultipleMo
 void FQHESphereMultipleMonomialsTimesSlaterProjectionOperation::SetIndex(int index)
 {
   this->Index = index;
+  if (this->Index != -1 )
+    {
   char *Tmp;
   Tmp = strstr(this->OutputFileName,".");
   if(Tmp==0)
@@ -197,6 +199,7 @@ void FQHESphereMultipleMonomialsTimesSlaterProjectionOperation::SetIndex(int ind
   else
     {
       (*(this->FermionRealVector))[this->MatchingConditionsIndex[this->Index]] = 1l;
+    }
     }
 }
 
@@ -351,16 +354,15 @@ bool FQHESphereMultipleMonomialsTimesSlaterProjectionOperation::RawApplyOperatio
 		    ((FermionOnSphere*)FinalSpace)->ConvertFromUnnormalizedMonomial(*(this->OutputRealVector),0l,true);
 		  else
 		    ((BosonOnSphereShort*)FinalSpace)->ConvertFromUnnormalizedMonomial(*(this->OutputRealVector),0l,true);
-		  if(fabs(OutputRealVector->Norm() -1.0)<Error)
-		    this->OutputRealVector->WriteVector(this->OutputFileName);
+		  this->OutputRealVector->WriteVector(this->OutputFileName);
 		}
 	      else
 		{
 		  if(this->BosonFlag == false)
 		    {
 		      ((BosonOnSphereTwoLandauLevels*)FinalSpace)->ConvertFromUnnormalizedMonomial(*(this->OutputRealVector),0l,true);
-		      if(fabs(OutputRealVector->Norm() - 1.0)<Error)
-			this->OutputRealVector->WriteVector(this->OutputFileName);
+		      
+		      this->OutputRealVector->WriteVector(this->OutputFileName);
 		    }
 		}
 	    }
@@ -425,10 +427,14 @@ bool FQHESphereMultipleMonomialsTimesSlaterProjectionOperation::ArchitectureDepe
 	  TmpOperations[i]->SetIndex(CurrentIndex);
 	  CurrentIndex++;
 	}
+
+      for (int i = RemainingStates; i <  architecture->GetNbrThreads(); i++)
+	 TmpOperations[i]->SetIndex(-1);
+
       architecture->SendJobs();
     }
   
-  for (int i = 1; i < architecture->GetNbrThreads(); ++i)
+  for (int i = 1; i < architecture->GetNbrThreads() ; ++i)
     {
       delete TmpOperations[i];
     }
