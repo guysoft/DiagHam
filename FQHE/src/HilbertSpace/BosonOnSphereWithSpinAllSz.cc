@@ -78,6 +78,8 @@ BosonOnSphereWithSpinAllSz::BosonOnSphereWithSpinAllSz (int nbrBosons, int total
   this->StateLzMaxUp = new unsigned [this->HilbertSpaceDimension];
   this->StateLzMaxDown = new unsigned [this->HilbertSpaceDimension];
   this->StateNbrUp = new unsigned [this->HilbertSpaceDimension];
+  this->SubspaceRestriction = true;
+  this->SubspaceSz = NbrBosons & 1;
   int TmpLzMax = this->LzMax;
   if (this->ShiftedTotalLz < TmpLzMax)
     {
@@ -147,6 +149,9 @@ BosonOnSphereWithSpinAllSz::BosonOnSphereWithSpinAllSz(const BosonOnSphereWithSp
   this->Minors = bosons.Minors;
   this->TemporaryState = new unsigned [this->NbrLzValue];
   this->ProdATemporaryState = new unsigned [this->NbrLzValue];
+  this->SubspaceRestriction=bosons.SubspaceRestriction;
+  this->SubspaceSz=bosons.SubspaceSz;
+
 }
 
 // destructor
@@ -268,6 +273,8 @@ BosonOnSphereWithSpinAllSz& BosonOnSphereWithSpinAllSz::operator = (const BosonO
   this->Minors = bosons.Minors;
   this->TemporaryState = new unsigned [this->NbrLzValue];
   this->ProdATemporaryState = new unsigned [this->NbrLzValue];
+  this->SubspaceRestriction=bosons.SubspaceRestriction;
+  this->SubspaceSz=bosons.SubspaceSz;
 
   return *this;
 }
@@ -1321,6 +1328,26 @@ Complex BosonOnSphereWithSpinAllSz::EvaluateWaveFunctionWithTimeCoherence (RealV
   return this->EvaluateWaveFunctionWithTimeCoherence(state, position, basis, nextCoordinates, 0, this->HilbertSpaceDimension);
 }
 
+
+// set a restriction to evaluate the wavefunction on a given subspace of fixed sz
+// twoSz = subspace to restrict to
+// restriction = flag whether restriction shall be set (true) or deleted (false)
+bool BosonOnSphereWithSpinAllSz::WaveFunctionSubSpace(int twoSz, bool restriction)
+{
+  if (restriction = false)
+    {
+      this->SubspaceRestriction = false;
+      this->SubspaceSz = 0;
+      return true;
+    }
+  
+  if (((twoSz & 1) != ( this->NbrBosons &1)) || (twoSz > this->NbrBosons) || (twoSz < -this->NbrBosons))
+    return false;
+  this->SubspaceRestriction = true;
+  this->SubspaceSz = twoSz;
+  return true;
+}
+
 // evaluate wave function in real space using a given basis and only for agiven range of components
 //
 // state = vector corresponding to the state in the Fock basis
@@ -1333,72 +1360,131 @@ Complex BosonOnSphereWithSpinAllSz::EvaluateWaveFunctionWithTimeCoherence (RealV
 Complex BosonOnSphereWithSpinAllSz::EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis, 
 					     int firstComponent, int nbrComponent)
 {
-  Complex Value;
+  if (SubspaceRestriction==false)
+    {
+      cout << "Wavefunction evaluation in BosonOnSphereWithSpinAllSz defined only for subspaces of fixed sz."<<endl;
+      cout << "Indicate a subspace first, using BosonOnSphereWithSpinAllSz::WaveFunctionSubSpace(int twoSz)"<<endl;
+    }
+  int NbrBosonsUp = (this->NbrBosons + this->SubspaceSz) >> 1;
+  int NbrBosonsDown = (this->NbrBosons - this->SubspaceSz) >> 1;
+  int IncMaxNbrBosons = (NbrBosonsUp>NbrBosonsDown? NbrBosonsUp : NbrBosonsDown) + 1;
+  Complex Value(0.0, 0.0), TmpValue(0.0, 0.0);
   Complex Tmp;
-  ComplexMatrix Perm(this->NbrBosons, this->NbrBosons);
-  ComplexMatrix Functions(this->LzMax + 1, this->NbrBosons);
+  ComplexMatrix PermUp(NbrBosonsUp, NbrBosonsUp);
+  ComplexMatrix FunctionsUp(this->LzMax + 1, NbrBosonsUp);
+  ComplexMatrix PermDown(NbrBosonsDown, NbrBosonsDown);  
+  ComplexMatrix FunctionsDown(this->LzMax + 1, NbrBosonsDown);
   RealVector TmpCoordinates(2);
   int* Indices = new int [this->NbrBosons];
   int Pos;
   int Lz;
-  for (int j = 0; j < this->NbrBosons; ++j)
+  for (int j = 0; j < NbrBosonsUp; ++j)
+    {
+      TmpCoordinates[0] = position[j << 1];
+      TmpCoordinates[1] = position[1 + (j << 1)];
+      for (int i = 0; i <= this->LzMax; ++i)
+	{	  
+	  basis.GetFunctionValue(TmpCoordinates, Tmp, i);
+	  FunctionsUp[j].Re(i) = Tmp.Re;
+	  FunctionsUp[j].Im(i) = Tmp.Im;
+	}
+    }
+  for (int j = NbrBosonsUp; j < this->NbrBosons; ++j)
     {
       TmpCoordinates[0] = position[j << 1];
       TmpCoordinates[1] = position[1 + (j << 1)];
       for (int i = 0; i <= this->LzMax; ++i)
 	{
 	  basis.GetFunctionValue(TmpCoordinates, Tmp, i);
-	  Functions[j].Re(i) = Tmp.Re;
-	  Functions[j].Im(i) = Tmp.Im;
+	  FunctionsDown[j-NbrBosonsUp].Re(i) = Tmp.Re;
+	  FunctionsDown[j-NbrBosonsUp].Im(i) = Tmp.Im;
 	}
     }
-  double* Factors = new double [this->NbrBosons + 1];
+  double* Factors = new double [IncMaxNbrBosons];  
   Factors[0] = 1.0;
   Factors[1] = 1.0;
-  for (int i = 2; i <= this->NbrBosons; ++i)
+  for (int i = 2; i < IncMaxNbrBosons; ++i)
     Factors[i] = Factors[i - 1] / sqrt((double) i);
-  double TmpFactor;
-  int* ChangeBitSign;
-  int* ChangeBit;
-  unsigned TmpStateDescription;
+  double TmpFactor, TmpComponent;
+  int TmpStateDescription;
+  int LastComponent = firstComponent + nbrComponent;  
+  int* ChangeBitSignUp;
+  int* ChangeBitUp;
+  PermUp.EvaluateFastPermanentPrecalculationArray(ChangeBitUp, ChangeBitSignUp);
+  int* ChangeBitSignDown;
+  int* ChangeBitDown;
   int CurrentLzMaxUp, CurrentLzMaxDown;
   unsigned TemporaryStateNbrUp;
-  Perm.EvaluateFastPermanentPrecalculationArray(ChangeBit, ChangeBitSign);
-  int LastComponent = firstComponent + nbrComponent;
+  PermDown.EvaluateFastPermanentPrecalculationArray(ChangeBitDown, ChangeBitSignDown);  
   for (int k = firstComponent; k < LastComponent; ++k)
-    {
-      Pos = 0;
-      Lz = 0;
-      TmpFactor = state[k] * Factors[this->NbrBosons];
-      this->FermionToBoson(this->StateDescriptionUp[k], this->StateDescriptionDown[k], this->StateInfo[k],
-			   TemporaryState, CurrentLzMaxUp, CurrentLzMaxDown, TemporaryStateNbrUp);
-      while (Pos < this->NbrBosons)
+    if ((StateInfo[k]&0x03ffu) == (unsigned)NbrBosonsUp)
+      {
+      TmpComponent = state[k];
+      if (TmpComponent!=0.0)
 	{
-	  TmpStateDescription = this->TemporaryState[Lz];
-	  if (TmpStateDescription != 0)
-	    {
-	      TmpFactor *= Factors[TmpStateDescription];
-	      for (unsigned j = 0; j < TmpStateDescription; ++j)
+	  TmpFactor = Factors[NbrBosonsUp];
+	  Pos = 0;
+	  Lz = 0;
+	  this->FermionToBoson(this->StateDescriptionUp[k], this->StateDescriptionDown[k], this->StateInfo[k],
+			       TemporaryState, CurrentLzMaxUp, CurrentLzMaxDown, TemporaryStateNbrUp);
+	  while (Pos < NbrBosonsUp)
+	    {	      
+	      TmpStateDescription = (TemporaryState[Lz])>>16;
+	      if (TmpStateDescription != 0)
 		{
-		  Indices[Pos] = Lz;
-		  ++Pos;
+		  TmpFactor *= Factors[TmpStateDescription];
+		  for (int j = 0; j < TmpStateDescription; ++j)
+		    {
+		      Indices[Pos] = Lz;
+		      ++Pos;
+		    }
+		}
+	      ++Lz;
+	    }
+	  for (int i = 0; i < NbrBosonsUp; ++i)
+	    {
+	      ComplexVector& TmpColum2 = FunctionsUp[i];	  
+	      for (int j = 0; j < NbrBosonsUp; ++j)
+		{
+		  PermUp[i].Re(j) = TmpColum2.Re(Indices[j]);
+		  PermUp[i].Im(j) = TmpColum2.Im(Indices[j]);
 		}
 	    }
-	  ++Lz;
-	}
-      for (int i = 0; i < this->NbrBosons; ++i)
-	{
-	  ComplexVector& TmpColum2 = Functions[i];	  
-	  for (int j = 0; j < this->NbrBosons; ++j)
+	  TmpValue = PermUp.FastPermanent(ChangeBitUp, ChangeBitSignUp) * TmpFactor;
+	  Pos = 0;
+	  Lz = 0;
+	  TmpFactor = Factors[NbrBosonsDown];
+	  while (Pos < NbrBosonsDown)
 	    {
-	      Perm[i].Re(j) = TmpColum2.Re(Indices[j]);
-	      Perm[i].Im(j) = TmpColum2.Im(Indices[j]);
+	      TmpStateDescription = (TemporaryState[Lz])&0xffff;
+	      if (TmpStateDescription != 0)
+		{
+		  TmpFactor *= Factors[TmpStateDescription];
+		  for (int j = 0; j < TmpStateDescription; ++j)
+		    {
+		      Indices[Pos] = Lz;
+		      ++Pos;
+		    }
+		}
+	      ++Lz;
 	    }
+	  for (int i = 0; i < NbrBosonsDown; ++i)
+	    {
+	      ComplexVector& TmpColum2 = FunctionsDown[i];	  
+	      for (int j = 0; j < NbrBosonsDown; ++j)
+		{
+		  PermDown[i].Re(j) = TmpColum2.Re(Indices[j]);
+		  PermDown[i].Im(j) = TmpColum2.Im(Indices[j]);
+		}
+	    }
+	  TmpValue *= PermDown.FastPermanent(ChangeBitDown, ChangeBitSignDown) * TmpFactor;
+	  Value+=TmpComponent*TmpValue;
 	}
-      Value += Perm.FastPermanent(ChangeBit, ChangeBitSign) * TmpFactor;
     }
-  delete[] ChangeBitSign;
-  delete[] ChangeBit;
+  delete[] ChangeBitSignUp;
+  delete[] ChangeBitUp;
+  delete[] ChangeBitSignDown;
+  delete[] ChangeBitDown;
   delete[] Factors;
   delete[] Indices;
   return Value;
@@ -1417,6 +1503,7 @@ Complex BosonOnSphereWithSpinAllSz::EvaluateWaveFunction (RealVector& state, Rea
 Complex BosonOnSphereWithSpinAllSz::EvaluateWaveFunctionWithTimeCoherence (RealVector& state, RealVector& position, AbstractFunctionBasis& basis, 
 							      int nextCoordinates, int firstComponent, int nbrComponent)
 {
+  cout << "Attention, TimeCoherence not fully implemented, yet!"<<endl;
   double* Factors = new double [this->NbrBosons + 1];
   Factors[0] = 1.0;
   Factors[1] = 1.0;

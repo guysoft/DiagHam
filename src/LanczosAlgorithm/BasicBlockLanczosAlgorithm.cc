@@ -41,7 +41,7 @@
 
 #include "GeneralTools/Endian.h"
 
-#include <stdlib.h>
+#include <stdlib.h>nohup nice -n 15 doforall "QHEFermionsTwoBodyGeneric_64 -S --processors 4 -p 14 -l 31 --interaction-file pseudopotential_coulomb_l_1_2s_29_w_@.dat --interaction-name coulomb_l_1_lzSym_w_@ --nbr-lz 1 --initial-lz 2 -n 1 --show-itertime -m0 --fast-disk" -0.05 -0.04 -0.03 -0.02 -0.01 0 `seq 0.01 0.01 0.05
 #include <iostream>
 
 

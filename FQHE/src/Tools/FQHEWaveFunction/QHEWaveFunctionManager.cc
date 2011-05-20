@@ -59,6 +59,7 @@
 #include "Tools/FQHEWaveFunction/HundRuleCFStates.h"
 #include "Tools/FQHEWaveFunction/HundRuleBilayerSinglet.h"
 #include "Tools/FQHEWaveFunction/CFOnSphereWithSpinPartonTunnellingWaveFunction.h"
+#include "Tools/FQHEWaveFunction/PfaffianTimesPfaffianState.h"
 #include "Tools/FQHEWaveFunction/FQHESphereSymmetrizedSU2ToU1WaveFunction.h"
 #include "Tools/FQHEWaveFunction/SU4HalperinOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/NASSOnSphereWaveFunction.h"
@@ -645,6 +646,23 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	      //	      rst->AdaptAverageMCNorm();
 	      return rst;
 	    }
+	  if ((strcmp (this->Options->GetString("test-wavefunction"), "pfaff2") == 0))
+	    {
+	      int N = this->Options->GetInteger("nbr-particles");
+	      int LL;
+	      bool conventions = Options->GetBoolean("pair-compatibility");
+	      double *Coefficients = this->Options->GetDoubles("pair-coeff",LL);
+	      double MR =this->Options->GetDouble("MR-coeff");
+	      if (Coefficients==NULL)
+		{
+		  Coefficients = new double[1];
+		  Coefficients[0]=0.0;
+		  LL=1;
+		}
+	      PfaffianTimesPfaffianState* rst = new PfaffianTimesPfaffianState(N, LL, Coefficients, MR, conventions);
+	      //	      rst->AdaptAverageMCNorm();
+	      return rst;
+	    }
 
 	}
     else
@@ -740,5 +758,7 @@ int QHEWaveFunctionManager::GetWaveFunctionType()
     return QHEWaveFunctionManager::SLBSV;
   if ((strcmp (this->Options->GetString("test-wavefunction"), "SLBS") == 0))
     return QHEWaveFunctionManager::SLBS;
+  if ((strcmp (this->Options->GetString("test-wavefunction"), "pfaff2") == 0))
+    return QHEWaveFunctionManager::Pfaff2;
   return QHEWaveFunctionManager::InvalidWaveFunction;
 }

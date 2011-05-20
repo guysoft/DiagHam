@@ -4,6 +4,7 @@
 #include "HilbertSpace/FermionOnSphereWithSpinLzSzSymmetry.h"
 #include "HilbertSpace/FermionOnSphereWithSpinSzSymmetry.h"
 #include "HilbertSpace/FermionOnSphereWithSpinLzSymmetry.h"
+#include "HilbertSpace/FermionOnSphereWithSpinAllSz.h"
 #include "HilbertSpace/BosonOnSphereWithSpin.h"
 #include "HilbertSpace/BosonOnSphereWithSpinAllSz.h"
 
@@ -92,6 +93,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 0);
   (*SystemGroup) += new SingleIntegerOption  ('z', "LzTotal", "twice the z component of the total angular momentum of the system", 0);  
   (*SystemGroup) += new SingleIntegerOption  ('s', "SzTotal", "twice the z component of the total spin of the system", 0);
+  (*SystemGroup) += new BooleanOption  ('\n', "all-sz", "use basis vector with all sz components");
   (*SystemGroup) += new SingleStringOption  ('\n', "exact-state", "name of the file containing the vector obtained using exact diagonalization");
   (*SystemGroup) += new BooleanOption  ('\n', "use-trial", "calculate overlap against a known trial state");
   (*SystemGroup) += new BooleanOption ('\n', "list-wavefunctions", "list all available test wave fuctions");  
@@ -158,11 +160,16 @@ int main(int argc, char** argv)
     FermionFlag = true;
 
   int TmpSzTotal=-1;
-  if ((NbrParticles==0)&&(Manager.GetString("exact-state")!=0))
+  if (Manager.GetString("exact-state")!=0)
     if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(Manager.GetString("exact-state"), NbrParticles, LzMax, LzTotal, TmpSzTotal, SzSymmetrizedBasis, SzMinusParity, 
 							     LzSymmetrizedBasis, LzMinusParity, FermionFlag) == false)
       {
-	return -1;
+	cout << "Failed reading data from file-name -- proceeding with command line input"<<endl;
+	if (NbrParticles == 0)
+	  {
+	    cout << "The number of particles must be indicated. Use option -p" << endl;
+	    return -1;
+	  }
       }
   cout << "N=" << NbrParticles << "  LzMax=" << LzMax << "  LzTotal=" << LzTotal << "  FermionFlag="<< FermionFlag <<endl;
   if (Manager.GetString("statistics") != 0)
@@ -305,9 +312,9 @@ int main(int argc, char** argv)
 	      else
 		{
 		  // default filename: add extension to exact vector
-		  HistoryFileName = new char[strlen(Manager.GetString("exact-state"))+6];
+		  HistoryFileName = new char[strlen(Manager.GetString("exact-state"))+10];
 		  sprintf(HistoryFileName,"%s.samp",Manager.GetString("exact-state"));
-		  char * tmpC = new char[strlen(HistoryFileName)+5];
+		  char * tmpC = new char[strlen(HistoryFileName)+10];
 		  sprintf(tmpC,"%s",HistoryFileName);
 		  std::ifstream testExistant(tmpC,std::ios::in);
 		  int count=1;
@@ -322,8 +329,7 @@ int main(int argc, char** argv)
 		}
 	    }
 	  char *tmpC = WaveFunctionManager.GetDescription();
-	  History=new MCHistoryRecord(NbrIter, 2*NbrParticles, Manager.GetString("exact-state"), tmpC, HistoryFileName
-				      /* could add additional observables here */);
+	  History=new MCHistoryRecord(NbrIter, 2*NbrParticles, Manager.GetString("exact-state"), tmpC, HistoryFileName /* could add additional observables here */);
 	  delete [] tmpC;
 	}
       else if ((HistoryFileName==NULL)&&(HistoryMode>1))
@@ -339,82 +345,100 @@ int main(int argc, char** argv)
     {
       if (FermionFlag)
 	{
-	  if ((SzSymmetrizedBasis == false) && (LzSymmetrizedBasis == false))
-	    {
-#ifdef __64_BITS__
-	      if (LzMax <= 31)
-#else
-		if (LzMax <= 15)
-#endif
-		  {
-		    if (State.GetVectorDimension()>0)
-		      {
-			Space = new FermionOnSphereWithSpin(NbrParticles, LzTotal, LzMax, SzTotal, MemorySpace);
-		      }
-		  }
-		else
-		  {
-		    cout << "States of this Hilbert space cannot be represented in a single word." << endl;
-		    return -1;
-		  }	
-	    }
+	  if (Manager.GetBoolean("all-sz"))
+	    Space = new FermionOnSphereWithSpinAllSz(NbrParticles, LzTotal, LzMax);
 	  else
 	    {
-#ifdef __64_BITS__
-	      if (LzMax >= 31)
-#else
-		if (LzMax >= 15)
-#endif
-		  {
-		    cout << "States of this Hilbert space cannot be represented in a single word." << endl;
-		    return -1;
-		  }	
-	      if (SzSymmetrizedBasis == true) 
-		if (LzSymmetrizedBasis == false)
-		  {
-		    if (Manager.GetString("load-hilbert") == 0)
-		      Space = new FermionOnSphereWithSpinSzSymmetry(NbrParticles, LzTotal, LzMax, Manager.GetBoolean("minus-szparity"), MemorySpace);
-		    else
-		      Space = new FermionOnSphereWithSpinSzSymmetry(Manager.GetString("load-hilbert"), MemorySpace);
-		  }
-		else
-		  {
-		    if (LzTotal != 0)
-		      {
-			cout << "Lz symmetry is available only for Lz=0 subspace"<<endl;
-			exit(1);
-		      }
-		    if (Manager.GetString("load-hilbert") == 0)
-		      {
-			Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrParticles, LzMax, Manager.GetBoolean("minus-szparity"),
-									Manager.GetBoolean("minus-lzparity"), MemorySpace);
-		      }
-		    else
-		      Space = new FermionOnSphereWithSpinLzSzSymmetry(Manager.GetString("load-hilbert"), MemorySpace);
-		  }
-	      else
-		if (Manager.GetString("load-hilbert") == 0)
-		  Space = new FermionOnSphereWithSpinLzSymmetry(NbrParticles, LzMax, SzTotal, Manager.GetBoolean("minus-lzparity"), MemorySpace);
-		else
-		  Space = new FermionOnSphereWithSpinLzSymmetry(Manager.GetString("load-hilbert"), MemorySpace);	      
-	      if (Manager.GetString("save-hilbert") != 0)
+	      if ((SzSymmetrizedBasis == false) && (LzSymmetrizedBasis == false))
 		{
-		  ((FermionOnSphereWithSpinLzSzSymmetry*) Space)->WriteHilbertSpace(Manager.GetString("save-hilbert"));
-		  return 0;
+#ifdef __64_BITS__
+		  if (LzMax <= 31)
+#else
+		    if (LzMax <= 15)
+#endif
+		      {
+			if (State.GetVectorDimension()>0)
+			  {
+			    Space = new FermionOnSphereWithSpin(NbrParticles, LzTotal, LzMax, SzTotal, MemorySpace);
+			  }
+		      }
+		    else
+		      {
+			cout << "States of this Hilbert space cannot be represented in a single word." << endl;
+			return -1;
+		      }	
+		}
+	      else
+		{
+#ifdef __64_BITS__
+		  if (LzMax >= 31)
+#else
+		    if (LzMax >= 15)
+#endif
+		      {
+			cout << "States of this Hilbert space cannot be represented in a single word." << endl;
+			return -1;
+		      }	
+		  if (SzSymmetrizedBasis == true) 
+		    if (LzSymmetrizedBasis == false)
+		      {
+			if (Manager.GetString("load-hilbert") == 0)
+			  Space = new FermionOnSphereWithSpinSzSymmetry(NbrParticles, LzTotal, LzMax, Manager.GetBoolean("minus-szparity"), MemorySpace);
+			else
+			  Space = new FermionOnSphereWithSpinSzSymmetry(Manager.GetString("load-hilbert"), MemorySpace);
+		      }
+		    else
+		      {
+			if (LzTotal != 0)
+			  {
+			    cout << "Lz symmetry is available only for Lz=0 subspace"<<endl;
+			    exit(1);
+			  }
+			if (Manager.GetString("load-hilbert") == 0)
+			  {
+			    Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrParticles, LzMax, Manager.GetBoolean("minus-szparity"),
+									    Manager.GetBoolean("minus-lzparity"), MemorySpace);
+			  }
+			else
+			  Space = new FermionOnSphereWithSpinLzSzSymmetry(Manager.GetString("load-hilbert"), MemorySpace);
+		      }
+		  else
+		    if (Manager.GetString("load-hilbert") == 0)
+		      Space = new FermionOnSphereWithSpinLzSymmetry(NbrParticles, LzMax, SzTotal, Manager.GetBoolean("minus-lzparity"), MemorySpace);
+		    else
+		      Space = new FermionOnSphereWithSpinLzSymmetry(Manager.GetString("load-hilbert"), MemorySpace);	      
+		  if (Manager.GetString("save-hilbert") != 0)
+		    {
+		      ((FermionOnSphereWithSpinLzSzSymmetry*) Space)->WriteHilbertSpace(Manager.GetString("save-hilbert"));
+		      return 0;
+		    }
 		}
 	    }
 	}
       else // bosonic Hilbert space
 	{
-	  if (LzSymmetrizedBasis == false)
+	  if (Manager.GetBoolean("all-sz"))
 	    {
-	      Space = new BosonOnSphereWithSpin(NbrParticles, LzTotal, LzMax, SzTotal);
+	      Space = new BosonOnSphereWithSpinAllSz(NbrParticles, LzTotal, LzMax);
+	      ((BosonOnSphereWithSpinAllSz*)Space) -> WaveFunctionSubSpace(SzTotal);
 	    }
 	  else
 	    {
-	      cout << "Lz-symmetrized states not available for Bosons with Spin."<<endl;
-	      return -1;
+	      if (LzSymmetrizedBasis == false)
+		{
+		  Space = new BosonOnSphereWithSpin(NbrParticles, LzTotal, LzMax, SzTotal);
+		}
+	      else
+		{
+		  cout << "Lz-symmetrized states not available for Bosons with Spin."<<endl;
+		  return -1;
+		}
 	    }
+	}
+      if ((State.GetVectorDimension()!=0)&&(Space->GetHilbertSpaceDimension()!=State.GetVectorDimension()))
+	{
+	  cout << "Dimension mismatch between exact state ("<<State.GetVectorDimension()<<") and Hilbert space ("<<Space->GetHilbertSpaceDimension()<<"). Check program options!"<<endl;
+	  return -1;
 	}
     }
 
@@ -467,7 +491,7 @@ int main(int argc, char** argv)
 		    {
 		      ParticleOnSphereFunctionBasis Basis(LzMax,ParticleOnSphereFunctionBasis::LeftHanded);  
 		      QHEParticleWaveFunctionOperation Operation(Space, &State, &Positions, &Basis, /* TimeCoherence */ -1);
-		      Operation.ApplyOperation(Architecture.GetArchitecture());      
+		      Operation.ApplyOperation(Architecture.GetArchitecture());
 		      ValueExact = Operation.GetScalar();
 		    }
 		  cout << "Comparing: " << ValueExact << " (new) to "<< rawExact << " (old) (ratio " << ValueExact/rawExact << ")" <<endl;

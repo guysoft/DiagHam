@@ -64,4 +64,5 @@ FQHESphereProductWaveFunction.cc \
 GutzwillerOnLatticeWaveFunction.cc \
 GrossPitaevskiiOnLatticeState.cc \
 MaximallyCondensedStateOnLattice.cc \
-NASSOnSphereWaveFunction.cc
+NASSOnSphereWaveFunction.cc \
+PfaffianTimesPfaffianState.cc

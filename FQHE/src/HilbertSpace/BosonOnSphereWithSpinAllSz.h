@@ -116,6 +116,12 @@ class BosonOnSphereWithSpinAllSz :  public ParticleOnSphereWithSpin
   // number of up spins in temporary state
   unsigned ProdATemporaryStateNbrUp;
 
+  // flag indicating partial wavefunction calculation
+  bool SubspaceRestriction;;
+  // subspace for this restriction
+  int SubspaceSz;
+
+  
  public:
 
   // default constructor
@@ -341,6 +347,12 @@ class BosonOnSphereWithSpinAllSz :  public ParticleOnSphereWithSpin
   ostream& PrintState (ostream& Str, unsigned *myState);
 
 
+  // set a restriction to evaluate the wavefunction on a given subspace of fixed sz
+  // twoSz = subspace to restrict to
+  // restriction = flag whether restriction shall be set (true) or deleted (false)
+  virtual bool WaveFunctionSubSpace(int twoSz, bool restriction=true);
+  
+  
   // evaluate wave function in real space using a given basis
   //
   // state = vector corresponding to the state in the Fock basis
