@@ -208,6 +208,12 @@ int main(int argc, char** argv)
       if (FirstRun == true)
 	FirstRun = false;
     }
+    
+  for ( int i = 0 ; i < 9 ;  i++ ) 
+    delete [] PseudoPotentials[i];
+  delete []PseudoPotentials;
+  delete []OutputNameLz;
+  
 
   return 0;
 }

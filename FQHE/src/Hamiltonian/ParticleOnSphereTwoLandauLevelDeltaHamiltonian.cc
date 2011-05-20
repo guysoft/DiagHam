@@ -445,6 +445,7 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 		      int m3 = (this->UpUpSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
 		      int m4 = (this->UpUpSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxUp;
 		      
+		      this->InteractionFactorsUpUpUpUp[i][Index] = 0;
 		      for ( J = this->PseudoPotentialMins[0] ; J < this->NbrPseudoPotentialCoeffs[0] + this->PseudoPotentialMins[0] ; J++ ) 
 			{
 			  if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
@@ -478,6 +479,7 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 		      int m3 = (this->UpUpSectorIndicesPerSum[i+2][j2 << 1] << 1) - this->LzMaxUp;
 		      int m4 = (this->UpUpSectorIndicesPerSum[i+2][(j2 << 1) + 1] << 1) - this->LzMaxUp;
 		      
+		      this->InteractionFactorsUpUpDownDown[i][Index] = 0;
 		      for ( J = this->PseudoPotentialMins[1] ; J < this->NbrPseudoPotentialCoeffs[1] + this->PseudoPotentialMins[1] ; J++ ) 
 			{
 			  if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
@@ -512,6 +514,7 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 		      int m3 = (this->UpUpSectorIndicesPerSum[i+1][j2 << 1] << 1) - this->LzMaxUp;
 		      int m4 = (this->UpUpSectorIndicesPerSum[i+1][(j2 << 1) + 1] << 1) - this->LzMaxUp;
 		      
+		      this->InteractionFactorsUpUpUpDown[i][Index] = 0;
 		      for ( J = this->PseudoPotentialMins[2] ; J < this->NbrPseudoPotentialCoeffs[2] + this->PseudoPotentialMins[2] ; J++ ) 
 			{
 			  if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
@@ -548,6 +551,7 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 		      int m3 = (this->DownDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxDown - 1;
 		      int m4 = (this->DownDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
 		      
+		      this->InteractionFactorsDownDownUpUp[i][Index] = 0;
 		      for ( J = this->PseudoPotentialMins[3] ; J < this->NbrPseudoPotentialCoeffs[3] + this->PseudoPotentialMins[3] ; J++ ) 
 			{
 			  if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
@@ -582,6 +586,7 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 		      int m3 = (this->DownDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxDown - 1;
 		      int m4 = (this->DownDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
 		      
+		      this->InteractionFactorsDownDownDownDown[i][Index] = 0;
 		      for ( J = this->PseudoPotentialMins[4] ; J < this->NbrPseudoPotentialCoeffs[4] + this->PseudoPotentialMins[4] ; J++ ) 
 			{
 			  if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
@@ -616,6 +621,7 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 		      int m3 = (this->DownDownSectorIndicesPerSum[i-1][j2 << 1] << 1) - this->LzMaxDown - 1;
 		      int m4 = (this->DownDownSectorIndicesPerSum[i-1][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
 		      
+		      this->InteractionFactorsDownDownUpDown[i-1][Index] = 0;
 		      for ( J = this->PseudoPotentialMins[5] ; J < this->NbrPseudoPotentialCoeffs[5] + this->PseudoPotentialMins[5] ; J++ ) 
 			{
 			  if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
@@ -650,6 +656,7 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 		      int m3 = (this->UpDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
 		      int m4 = (this->UpDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
 		      
+		      this->InteractionFactorsUpDownUpUp[i][Index] = 0;
 		      for ( J = this->PseudoPotentialMins[6] ; J < this->NbrPseudoPotentialCoeffs[6] + this->PseudoPotentialMins[6] ; J++ ) 
 			{
 			  if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
@@ -685,6 +692,7 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 		      int m3 = (this->UpDownSectorIndicesPerSum[i+1][j2 << 1] << 1) - this->LzMaxUp;
 		      int m4 = (this->UpDownSectorIndicesPerSum[i+1][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
 		      
+		      this->InteractionFactorsUpDownDownDown[i][Index] = 0;
 		      for ( J = this->PseudoPotentialMins[7] ; J < this->NbrPseudoPotentialCoeffs[7] + this->PseudoPotentialMins[7] ; J++ ) 
 			{
 			  if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
@@ -719,6 +727,7 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 		      int m3 = (this->UpDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
 		      int m4 = (this->UpDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
 		      
+		      this->InteractionFactorsUpDownUpDown[i][Index] = 0;
 		      for ( J = this->PseudoPotentialMins[8] ; J < this->NbrPseudoPotentialCoeffs[8] + this->PseudoPotentialMins[8] ; J++ ) 
 			{
 			  if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
@@ -1229,16 +1238,16 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 //
 // return value = interaction factor with delta interaction
 
-double  ParticleOnSphereTwoLandauLevelDeltaHamiltonian::CalculateDeltaInteractionFactor(double Q,double l1,double m1, double l2, double m2, double l3, double m3, double l4, double m4)
+double ParticleOnSphereTwoLandauLevelDeltaHamiltonian::CalculateDeltaInteractionFactor(double Q,double l1,double m1, double l2, double m2, double l3, double m3, double l4, double m4)
 {
    double NormCoeff = 1.0;
    double Value = 0.0;
    
    //work out normalisation.
-   NormCoeff *= this->CalculateNormalization(Q, Q+l1, m1)*pow(-1.0,(double)l1);
-   NormCoeff *= this->CalculateNormalization(Q, Q+l2, m2)*pow(-1.0,(double)l2);
-   NormCoeff *= this->CalculateNormalization(Q, Q+l3, m3)*pow(-1.0,(double)l3);
-   NormCoeff *= this->CalculateNormalization(Q, Q+l4, m4)*pow(-1.0,(double)l4);
+   NormCoeff *= ParticleOnSphereTwoLandauLevelDeltaHamiltonian::CalculateNormalization(Q, Q+l1, m1)*pow(-1.0,(double)l1);
+   NormCoeff *= ParticleOnSphereTwoLandauLevelDeltaHamiltonian::CalculateNormalization(Q, Q+l2, m2)*pow(-1.0,(double)l2);
+   NormCoeff *= ParticleOnSphereTwoLandauLevelDeltaHamiltonian::CalculateNormalization(Q, Q+l3, m3)*pow(-1.0,(double)l3);
+   NormCoeff *= ParticleOnSphereTwoLandauLevelDeltaHamiltonian::CalculateNormalization(Q, Q+l4, m4)*pow(-1.0,(double)l4);
     
    NormCoeff *= 4.0*M_PI;
    
@@ -1288,7 +1297,7 @@ double  ParticleOnSphereTwoLandauLevelDeltaHamiltonian::CalculateDeltaInteractio
 			S4Factorial->FactorialDivide((long)(Q + m4 + S4));
 			S4Coeff = pow(-1.0,(double)S4)*S4Factorial->GetNumericalValue();
 		      }
-                    Value += NormCoeff * S1Coeff * S2Coeff * S3Coeff * S4Coeff * this->CalculateBetaFunction((long)(2*Q - m1 - m2 + 1 + l1 + l2 + l3 + l4 - S1 - S2 - S3 - S4),(long)(2*Q + m1 + m2 + 1 + S1 + S2 + S3 + S4));
+                    Value += NormCoeff * S1Coeff * S2Coeff * S3Coeff * S4Coeff * ParticleOnSphereTwoLandauLevelDeltaHamiltonian::CalculateBetaFunction((long)(2*Q - m1 - m2 + 1 + l1 + l2 + l3 + l4 - S1 - S2 - S3 - S4),(long)(2*Q + m1 + m2 + 1 + S1 + S2 + S3 + S4));
                 }  
             }
         }

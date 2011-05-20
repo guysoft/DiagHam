@@ -12,11 +12,16 @@
 #include "FunctionBasis/ParticleOnSphereFunctionBasis.h"
 #include "FunctionBasis/ParticleOnSphereGenericLLFunctionBasis.h"
 
+#include "Hamiltonian/ParticleOnSphereTwoLandauLevelDeltaHamiltonian.h"
+
 #include <iostream>
 #include <cstdlib>
+#include <string>
+
 
 using std::cout;
 using std::endl;
+using std::string;
 
 // evalute pseudopotentials for coulomb interaction in a given Landau level
 //
@@ -95,7 +100,6 @@ double* EvaluateOneBodyPotentials(int nbrFlux, int landauLevel, double northPole
   OneBodyPotentials[MaxMomentum - landauLevel] = northPolePotential * SqrNorm(TmpValue);  
   return OneBodyPotentials;
 }
-
 
 
 
@@ -657,3 +661,177 @@ double* EvaluateDipolarPseudopotentials(int nbrFlux, bool quiet)
   return Pseudopotentials;
 }
 
+
+// evalute pseudopotentials for delta interaction with two Landau levels on Sphere
+//
+// nbrFlux = number of flux quanta (i.e. twice the maximum momentum on LLL)
+// quiet = indicate whether Coulomb Pseudopotentials should be printed on screen
+// return value = array that conatins the pseudopotentials
+
+double** Evaluate2LLSphereDeltaPseudopotentials(int nbrFlux, bool quiet)
+{
+  int NbrFluxQuanta = nbrFlux;    
+  int LzMaxUp = NbrFluxQuanta + 2;
+  int LzMaxDown = NbrFluxQuanta + 1;
+  
+  ClebschGordanCoefficients ClebschDownDown (LzMaxDown - 1, LzMaxDown - 1);
+  ClebschGordanCoefficients ClebschUpUp (LzMaxUp, LzMaxUp);
+  ClebschGordanCoefficients ClebschUpDown (LzMaxUp, LzMaxDown - 1);
+  ClebschGordanCoefficients ClebshDownUp (LzMaxDown - 1, LzMaxUp);
+  
+  // these are the labels of the arrays as they will be in the file.
+  string PseudoLabels[9] = {"PseudopotentialsUpUpUpUp","PseudopotentialsUpUpDownDown","PseudopotentialsUpUpUpDown",
+			    "PseudopotentialsDownDownUpUp","PseudopotentialsDownDownDownDown","PseudopotentialsDownDownUpDown",
+			    "PseudopotentialsUpDownUpUp","PseudopotentialsUpDownDownDown","PseudopotentialsUpDownUpDown"};
+  
+  // these are the lenghts of the arrays corresponding to the labels above. 			    
+  int PseudoLengths[9] = { LzMaxUp + 1, LzMaxUp - 1 , LzMaxUp - 1, LzMaxUp - 1, LzMaxUp - 1, LzMaxUp - 2, LzMaxUp - 1, LzMaxUp - 2, LzMaxUp - 1}; 
+  
+  // these are the lenghts of the arrays corresponding to the labels above. 			    
+  int PseudoMins[9] = { 0, 0, 1, 0, 0, 1, 1, 1, 1}; 
+  
+  int LLs[9][4] = {{1,1,1,1}, {1,1,0,0}, {1,1,1,0}, {0,0,1,1}, {0,0,0,0}, {0,0,1,0}, {1,0,1,1}, {1,0,0,0}, {1,0,1,0}}; 
+    
+  double **Pseudopotentials;
+  Pseudopotentials = new double*[9];
+    
+  double Q = (double)NbrFluxQuanta/2.0;
+      
+  ClebschGordanCoefficients *LeftCG = &ClebschUpUp;
+  ClebschGordanCoefficients *RightCG = &ClebschUpUp;
+  for ( int j = 0; j < 9 ; j++ ) 
+    {
+      if ( quiet == false )	
+	cout << PseudoLabels[j] << endl;
+      Pseudopotentials[j] = new double[PseudoLengths[j]];    
+      for ( int L = PseudoLengths[j] - 1 + PseudoMins[j] ; L >= PseudoMins[j] ; L--)
+	{
+	  int idx = PseudoLengths[j] - 1 + PseudoMins[j] - L;	  
+	  Pseudopotentials[j][idx] = 0.0;
+	  int l1 = LLs[j][0], l2 = LLs[j][1], l3 = LLs[j][2], l4 = LLs[j][3];
+	  //cout << l1 << ", " << l2 << ", " << l3 << ", " << l4 << endl;
+	  if ( l1 == 1 && l2 == 1 ) LeftCG = &ClebschUpUp;
+	  if ( l1 == 0 && l2 == 0 ) LeftCG = &ClebschDownDown;
+	  if ( l1 == 1 && l2 == 0 ) LeftCG = &ClebschUpDown;
+	  if ( l3 == 1 && l4 == 1 ) RightCG = &ClebschUpUp;
+	  if ( l3 == 0 && l4 == 0 ) RightCG = &ClebschDownDown;
+	  if ( l3 == 1 && l4 == 0 ) RightCG = &ClebschUpDown;
+		  
+	  for ( double m1 = - Q - ((l1) < (l2) ? (l1) : (l2)) ; m1 <= Q + ((l1) < (l2) ? (l1) : (l2)) ; m1+=1.0  ) 
+	    {
+	      for ( double m2 = - Q - ((l3) < (l4) ? (l3) : (l4)) ; m2 <= Q + ((l3) < (l4) ? (l3) : (l4)) ; m2+=1.0  ) 
+		{
+		    //cout << "LeftCG: " << (int)(m1*2) << ", " << -(int)(m1*2) << ", " << L * 2 << ": " << ClebschDownDown.GetCoefficient((int)(m1*2),-(int)(m1*2),L * 2) << endl;
+		    //cout << "L: " << L << ", m1: " << m1 << ", m2: " << m2 << ", LCG: " << LeftCG->GetCoefficient((int)(m1*2),-(int)(m1*2),L * 2) << ", RCG: " << RightCG->GetCoefficient((int)(m2*2),-(int)(m2*2),L * 2) << endl;
+		    //cout << "Interactionfactor: " << CalculateDeltaInteractionFactor(Q, l1, m1, l2, -m1, l3, m2, l4, -m2) << endl;
+		    Pseudopotentials[j][idx] += LeftCG->GetCoefficient((int)(m1*2),-(int)(m1*2),L * 2)  * RightCG->GetCoefficient((int)(m2*2),-(int)(m2*2),L * 2)
+		    * ParticleOnSphereTwoLandauLevelDeltaHamiltonian::CalculateDeltaInteractionFactor(Q, l1, m1, l2, -m1, l3, m2, l4, -m2);
+		}
+	    }		
+	  if (quiet == false)
+	      cout << "V[" << L << "] = " << Pseudopotentials[j][idx] << endl;
+      }             
+  }
+
+  return Pseudopotentials;
+}
+
+// evalute pseudopotentials for Coulomb interaction with two Landau levels on Sphere
+//
+// nbrFlux = number of flux quanta (i.e. twice the maximum momentum on LLL)
+// quiet = indicate whether Coulomb Pseudopotentials should be printed on screen
+// return value = array that conatins the pseudopotentials
+
+double** Evaluate2LLSphereCoulombPseudopotentials(int nbrFlux, bool quiet)
+{
+  int NbrFluxQuanta = nbrFlux;    
+  int LzMaxUp = NbrFluxQuanta + 2;
+  int LzMaxDown = NbrFluxQuanta + 1;
+  
+  ClebschGordanCoefficients ClebschDownDown (LzMaxDown - 1, LzMaxDown - 1);
+  ClebschGordanCoefficients ClebschUpUp (LzMaxUp, LzMaxUp);
+  ClebschGordanCoefficients ClebschUpDown (LzMaxUp, LzMaxDown - 1);
+  ClebschGordanCoefficients ClebshDownUp (LzMaxDown - 1, LzMaxUp);
+  
+  // these are the labels of the arrays as they will be in the file.
+  string PseudoLabels[9] = {"PseudopotentialsUpUpUpUp","PseudopotentialsUpUpDownDown","PseudopotentialsUpUpUpDown",
+			    "PseudopotentialsDownDownUpUp","PseudopotentialsDownDownDownDown","PseudopotentialsDownDownUpDown",
+			    "PseudopotentialsUpDownUpUp","PseudopotentialsUpDownDownDown","PseudopotentialsUpDownUpDown"};
+  
+  // these are the lenghts of the arrays corresponding to the labels above. 			    
+  int PseudoLengths[9] = { LzMaxUp + 1, LzMaxUp - 1 , LzMaxUp - 1, LzMaxUp - 1, LzMaxUp - 1, LzMaxUp - 2, LzMaxUp - 1, LzMaxUp - 2, LzMaxUp - 1}; 
+  
+  // these are the lenghts of the arrays corresponding to the labels above. 			    
+  int PseudoMins[9] = { 0, 0, 1, 0, 0, 1, 1, 1, 1}; 
+  
+  int LLs[9][4] = {{1,1,1,1}, {1,1,0,0}, {1,1,1,0}, {0,0,1,1}, {0,0,0,0}, {0,0,1,0}, {1,0,1,1}, {1,0,0,0}, {1,0,1,0}}; 
+    
+  double **Pseudopotentials;
+  Pseudopotentials = new double*[9];
+      
+  double Q = (double)NbrFluxQuanta/2.0;
+      
+  ClebschGordanCoefficients *LeftCG = &ClebschUpUp;
+  ClebschGordanCoefficients *RightCG = &ClebschUpUp;
+  
+  ClebschGordanCoefficients ***CGArray;
+  CGArray = new ClebschGordanCoefficients**[2];
+  CGArray[0] = new ClebschGordanCoefficients*[NbrFluxQuanta+2];
+  CGArray[1] = new ClebschGordanCoefficients*[NbrFluxQuanta+2];
+  
+  for ( int j = 0; j <= NbrFluxQuanta+2 ; j++ ) 
+    {
+      CGArray[0][j] = new ClebschGordanCoefficients(NbrFluxQuanta,j*2);
+      CGArray[1][j] = new ClebschGordanCoefficients(NbrFluxQuanta+2,j*2);
+    }
+      
+  for ( int j = 0; j < 9 ; j++ )  
+    {
+      if ( quiet == false ) 
+	cout << PseudoLabels[j] << endl;
+      Pseudopotentials[j] = new double[PseudoLengths[j]];      
+      for ( int L = PseudoLengths[j] - 1 + PseudoMins[j] ; L >= PseudoMins[j] ; L--)
+	{
+	  int idx = PseudoLengths[j] - 1 + PseudoMins[j] - L;	  
+	  Pseudopotentials[j][idx] = 0.0;
+	  int l1 = LLs[j][0], l2 = LLs[j][1], l3 = LLs[j][2], l4 = LLs[j][3];
+	  //cout << l1 << ", " << l2 << ", " << l3 << ", " << l4 << endl;
+	  if ( l1 == 1 && l2 == 1 ) LeftCG = &ClebschUpUp;
+	  if ( l1 == 0 && l2 == 0 ) LeftCG = &ClebschDownDown;
+	  if ( l1 == 1 && l2 == 0 ) LeftCG = &ClebschUpDown;
+	  if ( l3 == 1 && l4 == 1 ) RightCG = &ClebschUpUp;
+	  if ( l3 == 0 && l4 == 0 ) RightCG = &ClebschDownDown;
+	  if ( l3 == 1 && l4 == 0 ) RightCG = &ClebschUpDown;
+		  
+	  for ( double m1 = - Q - ((l1) < (l2) ? (l1) : (l2)); m1 <= Q + ((l1) < (l2) ? (l1) : (l2)) ; m1+=1.0  ) 
+	    {
+	      for ( double m2 = - Q - ((l3) < (l4) ? (l3) : (l4)) ; m2 <= Q + ((l3) < (l4) ? (l3) : (l4)) ; m2+=1.0  ) 
+		{
+		    //cout << "LeftCG: " << (int)(m1*2) << ", " << -(int)(m1*2) << ", " << L * 2 << ": " << ClebschDownDown.GetCoefficient((int)(m1*2),-(int)(m1*2),L * 2) << endl;
+		    //cout << "L: " << L << ", m1: " << m1 << ", m2: " << m2 << ", LCG: " << LeftCG->GetCoefficient((int)(m1*2),-(int)(m1*2),L * 2) << ", RCG: " << RightCG->GetCoefficient((int)(m2*2),-(int)(m2*2),L * 2) << endl;
+		    //cout << "Interactionfactor: " << CalculateDeltaInteractionFactor(Q, l1, m1, l2, -m1, l3, m2, l4, -m2) << endl;
+		    double TmpCoefficient = LeftCG->CarefulGetCoefficient((int)(m1*2),-(int)(m1*2),L * 2)  * RightCG->CarefulGetCoefficient((int)(m2*2),-(int)(m2*2),L * 2);
+		    for ( int k = (int)abs(m1-m2) ; k <= ((2*Q + l1 + l2) < (2*Q + l3 + l4) ? (2*Q + l1 + l2) : (2*Q + l3 + l4)) ; k++ ) 
+		      {
+			if ( k >= abs(m1-m2) )
+			  {
+			    //cout << "(" << m1 << "," << m2 << "), " << k << ": " <<  (CGArray[l3][k])->GetCoefficient(Q*2,0,(2*Q+2*l1)) << ", " << (CGArray[l4][k])->GetCoefficient(Q*2,0,(2*Q+2*l2)) << ", " << (CGArray[l1][k])->GetCoefficient(-2*m1,-2*(m2-m1),(2*Q+2*l3)) << ", " << (CGArray[l2][k])->GetCoefficient(2*m1,2*(m2-m1),(2*Q+2*l4)) << endl;
+			    Pseudopotentials[j][idx] += pow(-1.0,m2-m1+(double)(l1+l2+l3+l4))*TmpCoefficient * (CGArray[l3][k])->CarefulGetCoefficient(Q*2,0,(2*Q+2*l1))
+								* (CGArray[l4][k])->CarefulGetCoefficient(Q*2,0,(2*Q+2*l2))
+								* (CGArray[l1][k])->CarefulGetCoefficient(-2*m1,-2*(m2-m1),(2*Q+2*l3))
+								* (CGArray[l2][k])->CarefulGetCoefficient(2*m1,2*(m2-m1),(2*Q+2*l4));			  
+			  }
+		      }		      
+		}
+	    }		
+	  if (quiet == false) 
+	    cout << "V[" << L << "] = " << Pseudopotentials[j][idx] << endl;	
+	} 
+	
+	
+    }
+	
+  delete [] CGArray;
+	     
+  return Pseudopotentials;
+}

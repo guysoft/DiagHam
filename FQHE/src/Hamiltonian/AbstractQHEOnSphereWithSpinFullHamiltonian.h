@@ -924,9 +924,9 @@ inline void AbstractQHEOnSphereWithSpinFullHamiltonian::EvaluateMNTwoBodyFastMul
   int* TmpIndices2;
   // double* TmpInteractionFactor;
   int Dim = particles->GetHilbertSpaceDimension();
-  int SumIndices;
-  int TmpNbrM3Values;
-  int* TmpM3Values;
+  //int SumIndices;
+  //int TmpNbrM3Values;
+  //int* TmpM3Values;
 
   for (int i = firstComponent; i < lastComponent; ++i)
     {

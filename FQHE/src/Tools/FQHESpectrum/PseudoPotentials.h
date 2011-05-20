@@ -83,7 +83,6 @@ double* EvaluateFiniteWidthPseudoPotentials(int nbrFlux, int landauLevel, Abstra
 double* EvaluateFiniteWidthPseudoPotentialsNoInterpolation(int nbrFlux, int landauLevel, AbstractZDensityProfile *zDensity, int points, double multiplier, double layerSeparation, AbstractZDensityProfile *zDensity2, double epsRel=1e-8);
 
 
-
 // evalute one body potentials for two impurities located at the poles in a given Landau level
 //
 // nbrFlux = number of flux quanta (i.e. twice the maximum momentum for a single particle)
@@ -112,15 +111,28 @@ double* EvaluateOneBodyCoulombPotentials(int nbrFlux, int landauLevel, double no
 // bool verbose = print pseudopotentials on screen
 // return value = array that conatins the coefficients V_m(r^n)
 // where m runs over 0,...,nbrFlux, or if option onlyOdd given, from 0 to nbrFlux/2 with entries V_(2m+1)(r^n)
-//
 double* GetMonomialPseudopotentials(int nbrFlux, int exponentN, bool onlyOdd, bool verbose = false);
   
 // evaluate graphene bilayer pseudopotentials
 //
 // nbrflux = number of flux quanta for the lowest Landau level (i.e. twice the maximum momentum for a single particle
 // l1, l2, l3, l4 = Landau level indices (0 for lowest LL, 1 for first excited LL)
-//
 double* EvaluateGrapheneBilayerPseudopotentials(int nbrFlux, int& nbrPseudopotentials, int l1, int l2, int l3, int l4, bool verbose = true);
+
+// evalute pseudopotentials for delta interaction with two Landau levels on Sphere
+//
+// nbrFlux = number of flux quanta (i.e. twice the maximum momentum on LLL)
+// quiet = indicate whether Coulomb Pseudopotentials should be printed on screen
+// return value = array that conatins the pseudopotentials
+double** Evaluate2LLSphereDeltaPseudopotentials(int nbrFlux, bool quiet);
+
+
+// evalute pseudopotentials for Coulomb interaction with two Landau levels on Sphere
+//
+// nbrFlux = number of flux quanta (i.e. twice the maximum momentum on LLL)
+// quiet = indicate whether Coulomb Pseudopotentials should be printed on screen
+// return value = array that conatins the pseudopotentials
+double** Evaluate2LLSphereCoulombPseudopotentials(int nbrFlux, bool quiet);
 
 
 #endif //PSEUDOPOTENTIALS_H

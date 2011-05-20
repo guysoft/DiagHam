@@ -94,7 +94,7 @@ class ParticleOnSphereTwoLandauLevelDeltaHamiltonian : public AbstractQHEOnSpher
   ParticleOnSphereTwoLandauLevelDeltaHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, 
                                                                                      double** pseudoPotential, double *cyclotronEnergy,
                                                                                      AbstractArchitecture* architecture,long memory, bool onDiskCacheFlag, char* precalculationFileName, bool showIntFactorsFlag);
-
+										     
   // destructor
   //
   ~ParticleOnSphereTwoLandauLevelDeltaHamiltonian();
@@ -103,6 +103,38 @@ class ParticleOnSphereTwoLandauLevelDeltaHamiltonian : public AbstractQHEOnSpher
   //
   // return value = pointer to cloned hamiltonian
   AbstractHamiltonian* Clone ();
+  
+  // evaluate a particular interaction factor <l1,m1,l2,m2|\delta|l3,m3,l4.m4>
+  //
+  // Q = max angular momentum on LLL.
+  // l1 = LL of m1, 0 or 1 supported.
+  // m1 = angular momentum of first operator.
+  // l2 = LL of m2, 0 or 1 supported.
+  // m2 = angular momentum of second operator.
+  // l3 = LL of m3, 0 or 1 supported.
+  // m3 = angular momentum of third operator.
+  // l4 = LL of m4, 0 or 1 supported.
+  // m4 = angular momentum of fourth operator.
+  //
+  // return value = interaction factor with delta interaction
+  static double CalculateDeltaInteractionFactor(double Q,double l1,double m1, double l2, double m2, double l3, double m3, double l4, double m4);
+  
+  // evaluate normalisation for Q, l, m
+  //
+  // Q = max angular momentum on LLL.
+  // l = LL
+  // m = angular momentum
+  //
+  // return value = normalisation
+  static double CalculateNormalization(double Q,double l,double m);
+  
+  // evaluate the beta function B(x,y) = (x-1)!(y-1)!/(x+y-1)!
+  //
+  // x = first arg
+  // y = second arg
+  //
+  // return value = value of beta function with args x,y
+  static double CalculateBetaFunction(long x, long y);
  
  protected:
  
@@ -134,39 +166,6 @@ class ParticleOnSphereTwoLandauLevelDeltaHamiltonian : public AbstractQHEOnSpher
   // coefficientArray = array of the numerical coefficients related to the indexArray
   // position = reference on the current position in arrays indexArray and coefficientArray
   void EvaluateMNTwoBodyFastMultiplicationComponent(ParticleOnSphereWithSpin* particles, int index, int* indexArray, double* coefficientArray, long& position);
-  
-  // evaluate a particular interaction factor <l1,m1,l2,m2|\delta|l3,m3,l4.m4>
-  //
-  // Q = max angular momentum on LLL.
-  // l1 = LL of m1, 0 or 1 supported.
-  // m1 = angular momentum of first operator.
-  // l2 = LL of m2, 0 or 1 supported.
-  // m2 = angular momentum of second operator.
-  // l3 = LL of m3, 0 or 1 supported.
-  // m3 = angular momentum of third operator.
-  // l4 = LL of m4, 0 or 1 supported.
-  // m4 = angular momentum of fourth operator.
-  //
-  // return value = interaction factor with delta interaction
-  double CalculateDeltaInteractionFactor(double Q,double l1,double m1, double l2, double m2, double l3, double m3, double l4, double m4);
-  
-  // evaluate normalisation for Q, l, m
-  //
-  // Q = max angular momentum on LLL.
-  // l = LL
-  // m = angular momentum
-  //
-  // return value = normalisation
-  double CalculateNormalization(double Q,double l,double m);
-  
-  // evaluate the beta function B(x,y) = (x-1)!(y-1)!/(x+y-1)!
-  //
-  // x = first arg
-  // y = second arg
-  //
-  // return value = value of beta function with args x,y
-  double CalculateBetaFunction(long x, long y);
-
 };
 
 
