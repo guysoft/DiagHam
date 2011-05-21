@@ -9,6 +9,9 @@ using std::ios;
 using std::cout;
 using std::endl;
 
+// dis/activate testing output
+#define MCHistoryRecord_TESTING
+
 // constructors
 // for recording mode
 // projectedSamples : number of samples to be expected
@@ -123,11 +126,11 @@ MCHistoryRecord::MCHistoryRecord(char* fileName, int nbrPositions, double & samp
     }
   // first entry from writing is lastSampleCount that was zero...
   ReadLittleEndian(HistoryFile, this->LastSampleCount);
-  if (this->LastSampleCount!=0)
-    {
-      cout << "Problem with header of History record " <<fileName << endl;
-      exit(2);
-    }
+//   if (this->LastSampleCount!=0)
+//     {
+//       cout << "Problem with header of History record " <<fileName << endl;
+//       exit(2);
+//     }
 
   // find last block:
   int skip = ((unsigned)NumAdditionalData>SkipAdditional ? NumAdditionalData : SkipAdditional);
@@ -261,12 +264,12 @@ MCHistoryRecord::MCHistoryRecord(char *Input, int &nbrPositions, List<AbstractMC
     }
   // first entry from writing is lastSampleCount that was zero...
   ReadLittleEndian(HistoryFile, this->LastSampleCount);
-  if (this->LastSampleCount!=0)
-    {
-      cout << "Problem with header of History record " <<Input << endl;
-      cout << "LastSampleCount = "<<LastSampleCount<<endl;
-      exit(2);
-    }
+//   if (this->LastSampleCount!=0)
+//     {
+//       cout << "Problem with header of History record " <<Input << endl;
+//       cout << "LastSampleCount = "<<LastSampleCount<<endl;
+//       exit(2);
+//     }
   this->StartPos=HistoryFile.tellg();
   // cout << "Constructor: StartPos is: " << StartPos << " peeking: " <<HistoryFile.peek() << endl;
 }
@@ -297,13 +300,16 @@ void MCHistoryRecord::RecordRejectedStep()
 {
   this->LastSampleCount++;
   this->TotalSampleCount++;
+#ifdef MCHistoryRecord_TESTING
+  cout << "Step rejected"<<endl;
+#endif
 }
 
 // record accepted step - to be called for each accepted step, or at every step to be written to file
 bool MCHistoryRecord::RecordAcceptedStep( double samplingAmplitude, RealVector &positions, Complex &valueExact)
 {
   // fix to assure that first recorded step is one that was accepted:
-  if (LastSampleCount==TotalSampleCount) LastSampleCount=0;
+  //if (LastSampleCount==TotalSampleCount) LastSampleCount=0;
   //
   this->TotalSampleCount++;
   this->TotalRecordCount++;
@@ -321,6 +327,9 @@ bool MCHistoryRecord::RecordAcceptedStep( double samplingAmplitude, RealVector &
       for (int i=0; i<NumAdditionalData; ++i) 
 	this->AdditionalData[i]->WriteMCHistoryData();
     }
+#ifdef MCHistoryRecord_TESTING
+  cout << "Recorded S: "<<samplingAmplitude<<", E: "<<valueExact<<", count: "<<this->LastSampleCount<<endl;
+#endif
   this->LastSampleCount=1; // reset counter for present position
   return true;
 }
@@ -356,6 +365,9 @@ bool MCHistoryRecord::GetMonteCarloStep( int &sampleCount, double &samplingAmpli
 	  this->TotalSampleCount+=this->LastSampleCount;
 	  sampleCount=this->LastSampleCount;
 	  samplingAmplitude*=sampleCount;
+#ifdef MCHistoryRecord_TESTING
+	  cout << "Read S: "<<samplingAmplitude<<", E: "<<valueExact<<", count: "<<sampleCount<<endl;
+#endif
 	  return true;
 	}
       else if (signature == 'e')

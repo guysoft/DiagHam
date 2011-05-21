@@ -366,6 +366,7 @@ int main(int argc, char** argv)
     {
       TotalMaxLz = (LzMax - NbrParticles + 1) * NbrParticles;
     }
+  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
   ParticleOnSphereL2Hamiltonian Hamiltonian (Space, NbrParticles, LzMax, TotalLz, Architecture.GetArchitecture(), 1.0, 0, FixedLzFlag);
   RealVector TmpState(Space->GetHilbertSpaceDimension());
   VectorHamiltonianMultiplyOperation Operation (&Hamiltonian, &State, &TmpState);

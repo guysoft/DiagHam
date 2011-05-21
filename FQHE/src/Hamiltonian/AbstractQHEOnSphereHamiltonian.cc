@@ -3151,6 +3151,7 @@ bool AbstractQHEOnSphereHamiltonian::GetLoadBalancing(int nbrTasks, long* &segme
 	  for (int i=0; i<nbrTasks; ++i)
 	    LoadBalancingArray[i]=MinIndex+i*Step;
 	  LoadBalancingArray[nbrTasks]=MaxIndex+1;
+	  NbrBalancedTasks=nbrTasks;
 	}
     }
   segmentIndices=LoadBalancingArray;

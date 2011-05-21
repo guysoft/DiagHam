@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 //                                                                            //
 //                                                                            //
-//                            DiagHam  version 0.01                           //
+//                            diagham  version 0.01                           //
 //                                                                            //
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
@@ -30,6 +30,13 @@
 
 #include "HilbertSpace/AbstractHilbertSpace.h"
 
+
+// default constructor
+//
+AbstractHilbertSpace::AbstractHilbertSpace ()
+{
+  LargeHilbertSpaceDimension=0x0l;
+}
 
 // virtual destructor
 //

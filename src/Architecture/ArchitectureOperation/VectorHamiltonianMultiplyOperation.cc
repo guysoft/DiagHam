@@ -60,7 +60,7 @@ VectorHamiltonianMultiplyOperation::VectorHamiltonianMultiplyOperation (Abstract
   this->NbrComponent = sourceVector->GetVectorDimension();
   this->Hamiltonian = hamiltonian;
   this->SourceVector = sourceVector;
-  this->DestinationVector = destinationVector;  
+  this->DestinationVector = destinationVector;
   this->OperationType = AbstractArchitectureOperation::VectorHamiltonianMultiply;
   this->ExecutionTime=0.0;
   if ((forceNormalMultiplication == false) && (forceConjugateMultiplication == false) && (forceHermitianeMultiplication == false))
@@ -248,6 +248,13 @@ bool VectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOperation(SMP
 	SegmentIndices[i]=this->FirstComponent+i*Step;
       SegmentIndices[TmpNbrThreads]=this->FirstComponent+this->NbrComponent;
     }
+//   else
+//     {
+//       cout << "Hamiltonian supplied load balancing: ["<<SegmentIndices[0];
+//       for (int i=1; i<=TmpNbrThreads; ++i)
+// 	cout <<" "<<SegmentIndices[i];
+//       cout <<"]"<<endl;
+//     }
   VectorHamiltonianMultiplyOperation** TmpOperations = new VectorHamiltonianMultiplyOperation* [architecture->GetNbrThreads()];
   //this->DestinationVector->ClearVector();
   for (int i = 0; i < TmpNbrThreads; ++i)

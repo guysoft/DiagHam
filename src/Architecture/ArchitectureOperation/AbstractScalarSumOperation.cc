@@ -55,6 +55,7 @@ AbstractScalarSumOperation::~AbstractScalarSumOperation()
 
 void AbstractScalarSumOperation::SetIndicesRange (const int& firstComponent, const int& nbrComponent)
 {
+  cout << "AbstractScalarSumOperation::SetIndicesRange(int,int)"<<endl;
   this->FirstComponent = firstComponent;
   this->NbrComponent = nbrComponent;
   this->LargeFirstComponent = (long) firstComponent;
@@ -68,6 +69,7 @@ void AbstractScalarSumOperation::SetIndicesRange (const int& firstComponent, con
 
 void AbstractScalarSumOperation::SetIndicesRange (const long& firstComponent, const long& nbrComponent)
 {
+  cout << "AbstractScalarSumOperation::SetIndicesRange(long "<<firstComponent<<", long "<<nbrComponent<<")"<<endl;
   this->LargeFirstComponent = firstComponent;
   this->LargeNbrComponent = nbrComponent;
   if (this->LargeFirstComponent < (1l << 30))
@@ -80,13 +82,15 @@ void AbstractScalarSumOperation::SetIndicesRange (const long& firstComponent, co
     this->NbrComponent = 0;
 }
 
+
 // get dimension (i.e. Hilbert space dimension, nbr of subdivisions,...), return 0 if large number are required
 // 
 // return value = dimension  
 
 int AbstractScalarSumOperation::GetDimension ()
 {
-  return this->NbrComponent;
+  cout << "AbstractScalarSumOperation::GetDimension () needs to be overridden in derived classes"<<endl;
+  return 0;
 }
 
 // get dimension (i.e. Hilbert space dimension, nbr of subdivisions,...) when large number are required
@@ -95,7 +99,8 @@ int AbstractScalarSumOperation::GetDimension ()
 
 long AbstractScalarSumOperation::GetLargeDimension ()
 {
-  return this->LargeNbrComponent;
+  cout << "AbstractScalarSumOperation::GetLargeDimension () needs to be overridden in derived classes"<<endl;
+  return 0;
 }
 
 // apply operation for SMP architecture

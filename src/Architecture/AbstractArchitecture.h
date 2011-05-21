@@ -112,6 +112,11 @@ class AbstractArchitecture
   // dimension = dimension of the Hilbert space
   virtual void SetDimension (long dimension);
 
+  // get dimension of the Hilbert space on which the architecture has to work
+  // 
+  // return = dimension of the Hilbert space
+  virtual long GetDimension ();
+
   // request a given amount of memory for an array of Type element
   //
   // architecture = reference on the architecture to which memory will be asked

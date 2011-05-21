@@ -48,7 +48,7 @@ class QHEParticleWaveFunctionOperation: public AbstractScalarSumOperation
 
   // pointer to the Hilbert space
   AbstractQHEParticle* HilbertSpace;
-
+  
   // vector corresponding to the state in the Fock basis  
   RealVector* State;
   // array of vectors corresponding to the states in the Fock basis
@@ -93,16 +93,16 @@ class QHEParticleWaveFunctionOperation: public AbstractScalarSumOperation
   //
   ~QHEParticleWaveFunctionOperation();
   
-  // set range of indices
-  // 
-  // firstComponent = index of the first component
-  // nbrComponent = number of component
-  void SetIndicesRange (const int& firstComponent, const int& nbrComponent);
-
   // get dimension (i.e. Hilbert space dimension)
   //
   // return value = dimension
   int GetDimension ();
+
+  // get dimension (i.e. Hilbert space dimension)
+  //
+  // return value = dimension
+  long GetLargeDimension ();
+  
 
   // clone operation
   //
@@ -126,5 +126,16 @@ inline int QHEParticleWaveFunctionOperation::GetDimension ()
 {
   return this->HilbertSpace->GetHilbertSpaceDimension();
 }
+
+
+// get dimension (i.e. Hilbert space dimension, nbr of subdivisions,...) when large number are required
+// 
+// return value = dimension  
+
+inline long QHEParticleWaveFunctionOperation::GetLargeDimension ()
+{
+  return this->HilbertSpace->GetLargeHilbertSpaceDimension();
+}
+
 
 #endif

@@ -63,6 +63,11 @@ class AbstractHilbertSpace
 
  public:
 
+  // default constructor
+  //
+  AbstractHilbertSpace ();
+
+
   // virtual destructor
   //
   virtual ~AbstractHilbertSpace ();
@@ -134,7 +139,10 @@ inline int AbstractHilbertSpace::GetHilbertSpaceDimension()
 
 inline long AbstractHilbertSpace::GetLargeHilbertSpaceDimension()
 {
-  return this->LargeHilbertSpaceDimension;
+  if (LargeHilbertSpaceDimension!=0)
+    return this->LargeHilbertSpaceDimension;
+  else
+    return (long)this->HilbertSpaceDimension;
 }
 
 #endif

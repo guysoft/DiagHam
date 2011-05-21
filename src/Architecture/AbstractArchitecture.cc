@@ -115,6 +115,15 @@ void AbstractArchitecture::SetDimension (long dimension)
   this->HilbertSpaceDimension = dimension;
 }
 
+// get dimension of the Hilbert space on which the architecture has to work
+// 
+// return = dimension of the Hilbert space
+long AbstractArchitecture::GetDimension ()
+{
+  return this->HilbertSpaceDimension;
+}
+
+
 // get a temporary file name
 //
 // return value = string corresponding to a temporary file name

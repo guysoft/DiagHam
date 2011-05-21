@@ -84,6 +84,7 @@ class AbstractScalarSumOperation: public AbstractArchitectureOperation
   // nbrComponent = number of component
   virtual void SetIndicesRange (const long& firstComponent, const long& nbrComponent);
 
+
   // get dimension (i.e. Hilbert space dimension, nbr of subdivisions,...), return 0 if large number are required
   // 
   // return value = dimension  

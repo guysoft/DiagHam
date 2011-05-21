@@ -71,8 +71,8 @@ QHEParticleWaveFunctionOperation::QHEParticleWaveFunctionOperation (AbstractQHEP
 // basis = one body real space basis to use
 // nextCoordinates = indicate which coordinates will be change during next time step (-1 if no time coherence has to be used)
 
-QHEParticleWaveFunctionOperation::QHEParticleWaveFunctionOperation(AbstractQHEParticle* space, RealVector* states, int nbrStates, RealVector* position, 
-								   AbstractFunctionBasis* basis, int nextCoordinates)
+QHEParticleWaveFunctionOperation::QHEParticleWaveFunctionOperation(AbstractQHEParticle* space, RealVector* states, int nbrStates,
+								   RealVector* position, AbstractFunctionBasis* basis, int nextCoordinates)
 {
   this->FirstComponent = 0;
   this->NbrComponent = space->GetHilbertSpaceDimension();
@@ -141,17 +141,6 @@ QHEParticleWaveFunctionOperation::~QHEParticleWaveFunctionOperation()
     }
   delete this->HilbertSpace;
 }
-  
-// set range of indices
-// 
-// firstComponent = index of the first component
-// nbrComponent = number of component
-
-void QHEParticleWaveFunctionOperation::SetIndicesRange (const int& firstComponent, const int& nbrComponent)
-{
-  this->FirstComponent = firstComponent;
-  this->NbrComponent = nbrComponent;
-}
 
 // clone operation
 //
@@ -161,6 +150,7 @@ AbstractArchitectureOperation* QHEParticleWaveFunctionOperation::Clone()
 {
   return new QHEParticleWaveFunctionOperation (*this);
 }
+
   
 // apply operation (architecture independent)
 //
