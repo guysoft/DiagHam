@@ -1334,7 +1334,7 @@ Complex BosonOnSphereWithSpinAllSz::EvaluateWaveFunctionWithTimeCoherence (RealV
 // restriction = flag whether restriction shall be set (true) or deleted (false)
 bool BosonOnSphereWithSpinAllSz::WaveFunctionSubSpace(int twoSz, bool restriction)
 {
-  if (restriction = false)
+  if (restriction == false)
     {
       this->SubspaceRestriction = false;
       this->SubspaceSz = 0;
