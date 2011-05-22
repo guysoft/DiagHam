@@ -87,6 +87,10 @@ class MCHistoryRecord : public AbstractMCHistoryRecord
   // record accepted step - to be called for each accepted step, or at every step to be written to file
   bool RecordAcceptedStep(double samplingAmplitude, RealVector &positions, Complex &valueExact);
 
+  // record accepted step - to be called for each accepted step, or at every step to be written to file
+  bool RecordInitialPositions( double samplingAmplitude, RealVector &positions, Complex &valueExact);
+
+
   // read one MC sample back from file, gives back the parameters in call of RecordAcceptedStep
   // sampleCount additionally gives the multiplicity of each record
   // sampleCount : number of microsteps that the simulation remained at this position (for information only)

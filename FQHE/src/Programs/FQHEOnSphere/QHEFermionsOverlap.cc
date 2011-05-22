@@ -290,9 +290,10 @@ int main(int argc, char** argv)
       int initialSkip=10;
       for (int i=0; i<initialSkip; ++i)
 	History->GetMonteCarloStep(sampleCount, CurrentSamplingAmplitude, &(Positions[0]), ValueExact);
-      for (int i=0; i<averageTypical; ++i)
+      bool MoreData=true;
+      for (int i=0; (i<averageTypical)&MoreData; ++i)
 	{
-	  History->GetMonteCarloStep(sampleCount, CurrentSamplingAmplitude, &(Positions[0]), ValueExact);
+	  MoreData=History->GetMonteCarloStep(sampleCount, CurrentSamplingAmplitude, &(Positions[0]), ValueExact);
 	  typicalSA+=CurrentSamplingAmplitude;
 	  typicalWF+=Norm(ValueExact);
 	  typicalTV+=Norm((*TestWaveFunction)(Positions));
@@ -328,6 +329,8 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
+	      // could change here to add multiple observations in order to get errors right in sampling density of one
+	      // (see FQHESphereFermionsWithSpinOverlap.cc)
 	      NormTrialObs.Observe(SqrNorm(TrialValue)/CurrentSamplingAmplitude,(double)sampleCount);
 	      NormExactObs.Observe(SqrNorm(ValueExact)/CurrentSamplingAmplitude,(double)sampleCount);
 	      OverlapObs.Observe(Conj(TrialValue)*ValueExact/CurrentSamplingAmplitude,(double)sampleCount);
@@ -463,6 +466,8 @@ int main(int argc, char** argv)
       TrialValue = (*TestWaveFunction)(Particles->GetPositions());
       PreviousSamplingAmplitude = SqrNorm(TrialValue);
       CurrentSamplingAmplitude = PreviousSamplingAmplitude;
+
+      History->RecordInitialPositions( CurrentSamplingAmplitude, Particles->GetPositions(), ValueExact);
     } 
 
 

@@ -10,7 +10,7 @@ using std::cout;
 using std::endl;
 
 // dis/activate testing output
-#define MCHistoryRecord_TESTING
+//#define MCHistoryRecord_TESTING
 
 // constructors
 // for recording mode
@@ -264,12 +264,12 @@ MCHistoryRecord::MCHistoryRecord(char *Input, int &nbrPositions, List<AbstractMC
     }
   // first entry from writing is lastSampleCount that was zero...
   ReadLittleEndian(HistoryFile, this->LastSampleCount);
-//   if (this->LastSampleCount!=0)
-//     {
-//       cout << "Problem with header of History record " <<Input << endl;
-//       cout << "LastSampleCount = "<<LastSampleCount<<endl;
-//       exit(2);
-//     }
+   if (this->LastSampleCount!=0)
+     {
+       cout << "Problem with header of History record " <<Input << endl;
+       cout << "LastSampleCount = "<<LastSampleCount<<endl;
+       exit(2);
+     }
   this->StartPos=HistoryFile.tellg();
   // cout << "Constructor: StartPos is: " << StartPos << " peeking: " <<HistoryFile.peek() << endl;
 }
@@ -281,6 +281,9 @@ MCHistoryRecord::~MCHistoryRecord()
     {
       // write last multiplicity
       WriteLittleEndian(LogFile,this->LastSampleCount);
+#ifdef MCHistoryRecord_TESTING
+      cout << "Recorded final count: "<<this->LastSampleCount<<endl;
+#endif
       cout << "Total " << TotalRecordCount << " History records written." << endl;
       char signature = 'e'; // signature for the END
       WriteLittleEndian(LogFile,signature);
@@ -328,9 +331,35 @@ bool MCHistoryRecord::RecordAcceptedStep( double samplingAmplitude, RealVector &
 	this->AdditionalData[i]->WriteMCHistoryData();
     }
 #ifdef MCHistoryRecord_TESTING
-  cout << "Recorded S: "<<samplingAmplitude<<", E: "<<valueExact<<", count: "<<this->LastSampleCount<<endl;
+  cout << "Recorded previous count: "<<this->LastSampleCount<<", S: "<<samplingAmplitude<<", E: "<<valueExact<<endl;
 #endif
   this->LastSampleCount=1; // reset counter for present position
+  return true;
+}
+
+// record accepted step - to be called for each accepted step, or at every step to be written to file
+bool MCHistoryRecord::RecordInitialPositions( double samplingAmplitude, RealVector &positions, Complex &valueExact)
+{
+  // first: write zero multiplicity by convention
+  int tmp=0;
+  WriteLittleEndian(LogFile,tmp);
+
+  // start writing info about new positions (starting new record)
+  char signature = 'b'; // signature for a new Block
+  WriteLittleEndian(LogFile,signature);
+  WriteLittleEndian(LogFile,samplingAmplitude);
+  for (int i = 0; i < this->NbrPositions; ++i)
+    WriteLittleEndian(LogFile, positions[i]);
+  WriteLittleEndian(LogFile,valueExact);
+  if (NumAdditionalData>0)
+    {
+      for (int i=0; i<NumAdditionalData; ++i) 
+	this->AdditionalData[i]->WriteMCHistoryData();
+    }
+#ifdef MCHistoryRecord_TESTING
+  cout << "Recorded start at S: "<<samplingAmplitude<<", E: "<<valueExact<<endl;
+#endif
+  this->LastSampleCount=0; // set counter to zero for a start...
   return true;
 }
 
@@ -364,7 +393,6 @@ bool MCHistoryRecord::GetMonteCarloStep( int &sampleCount, double &samplingAmpli
 	  ReadLittleEndian(HistoryFile,this->LastSampleCount);
 	  this->TotalSampleCount+=this->LastSampleCount;
 	  sampleCount=this->LastSampleCount;
-	  samplingAmplitude*=sampleCount;
 #ifdef MCHistoryRecord_TESTING
 	  cout << "Read S: "<<samplingAmplitude<<", E: "<<valueExact<<", count: "<<sampleCount<<endl;
 #endif

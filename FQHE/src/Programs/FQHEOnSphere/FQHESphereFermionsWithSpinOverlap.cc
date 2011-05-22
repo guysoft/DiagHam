@@ -458,9 +458,10 @@ int main(int argc, char** argv)
       int initialSkip=10;
       for (int i=0; i<initialSkip; ++i)
 	History->GetMonteCarloStep(sampleCount, CurrentSamplingAmplitude, &(Positions[0]), ValueExact);
-      for (int i=0; i<averageTypical; ++i)
+      bool MoreData=true;
+      for (int i=0; (i<averageTypical)&&MoreData; ++i)
 	{
-	  History->GetMonteCarloStep(sampleCount, CurrentSamplingAmplitude, &(Positions[0]), ValueExact);
+	  MoreData=History->GetMonteCarloStep(sampleCount, CurrentSamplingAmplitude, &(Positions[0]), ValueExact);
 	  typicalSA+=CurrentSamplingAmplitude;
 	  typicalWF+=Norm(ValueExact);
 	  typicalTV+=Norm((*TestWaveFunction)(Positions));
@@ -499,13 +500,23 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
+//  to get errors correctly, would need to add individual samples, rather than weight them
+// 	      for (int i=0; i<sampleCount; ++i)
+// 		{
+// 		  NormTrialObs << SqrNorm(TrialValue)/CurrentSamplingAmplitude;
+// 		  NormExactObs << SqrNorm(ValueExact)/CurrentSamplingAmplitude;
+// 		  OverlapObs << (Conj(TrialValue)*ValueExact)/CurrentSamplingAmplitude;
+// 		}
+//  weighted samples give same averages, though:
 	      NormTrialObs.Observe(SqrNorm(TrialValue)/CurrentSamplingAmplitude,(double)sampleCount);
 	      NormExactObs.Observe(SqrNorm(ValueExact)/CurrentSamplingAmplitude,(double)sampleCount);
 	      OverlapObs.Observe(Conj(TrialValue)*ValueExact/CurrentSamplingAmplitude,(double)sampleCount);
 	    }
 	}
       if (i>NbrIter) cout << "Attention, step number limited by NbrIter!" << endl;
-      History->RewindHistory();      
+      History->RewindHistory();
+      
+      cout << "Check: TrialNorm="<<NormTrialObs.Average()<<" TV/TA="<<typicalSA/(typicalTV*typicalTV)<<endl;
       
       cout << " final results :" << endl;
       cout << "overlap:   " << OverlapValue(OverlapObs, NormTrialObs, NormExactObs) << " +/- "
@@ -664,6 +675,8 @@ int main(int argc, char** argv)
       TrialValue = (*TestWaveFunction)(Particles->GetPositions());  
       PreviousSamplingAmplitude = SqrNorm(TrialValue);
       CurrentSamplingAmplitude = PreviousSamplingAmplitude;
+
+      History->RecordInitialPositions( CurrentSamplingAmplitude, Particles->GetPositions(), ValueExact);
     }
   
     for (int i = 0; i < NbrIter; ++i)
