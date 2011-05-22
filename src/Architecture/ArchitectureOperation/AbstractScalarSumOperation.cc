@@ -55,7 +55,6 @@ AbstractScalarSumOperation::~AbstractScalarSumOperation()
 
 void AbstractScalarSumOperation::SetIndicesRange (const int& firstComponent, const int& nbrComponent)
 {
-  cout << "AbstractScalarSumOperation::SetIndicesRange(int,int)"<<endl;
   this->FirstComponent = firstComponent;
   this->NbrComponent = nbrComponent;
   this->LargeFirstComponent = (long) firstComponent;
@@ -69,7 +68,6 @@ void AbstractScalarSumOperation::SetIndicesRange (const int& firstComponent, con
 
 void AbstractScalarSumOperation::SetIndicesRange (const long& firstComponent, const long& nbrComponent)
 {
-  cout << "AbstractScalarSumOperation::SetIndicesRange(long "<<firstComponent<<", long "<<nbrComponent<<")"<<endl;
   this->LargeFirstComponent = firstComponent;
   this->LargeNbrComponent = nbrComponent;
   if (this->LargeFirstComponent < (1l << 30))
