@@ -2634,13 +2634,15 @@ RealVector* AbstractQHEOnSphereHamiltonian::HermitianLowLevelMultipleAddMultiply
 		      for (m3 = 0; m3 < TmpNbrM3Values; ++m3)
 			{
 			  Index = TmpParticles->AdAd(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
-			  if (Index < Dim)
-			    for (int l = 0; l < nbrVectors; ++l)
-			      {
-				Coefficient2 *= this->InteractionFactors[ReducedNbrInteractionFactors];
-				vDestinations[l][Index] += TmpCoefficients[l] * Coefficient2;
-				TmpSum[l] += Coefficient * Coefficient2 * vDestinations[l][i];
-			      }
+			  if (Index <= Dim)
+			    {
+			      Coefficient2 *= this->InteractionFactors[ReducedNbrInteractionFactors];
+			      for (int l = 0; l < nbrVectors; ++l)
+				{
+				  vDestinations[l][Index] += TmpCoefficients[l] * Coefficient2;
+				  TmpSum[l] += Coefficient * Coefficient2 * vSources[l][Index];
+				}
+			    }
 			  ++ReducedNbrInteractionFactors;
 			}
 		    }
