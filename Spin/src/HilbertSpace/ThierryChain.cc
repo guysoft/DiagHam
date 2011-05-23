@@ -51,7 +51,6 @@ ThierryChain::ThierryChain ()
   this->LookUpTableMask = 0;
   this->LookUpPosition = 0;
   this->LookUpPosition2 = 0;
-  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // constructor for complete Hilbert space with no restriction on total spin projection Sz
@@ -109,7 +108,6 @@ ThierryChain::ThierryChain (int spin2ChainLength, int spin3_2ChainLength, int sz
   this->ChainDescription[0] = 0xffffffff; 
   this->HilbertSpaceDimension = this->GenerateSpin2States (0, 0, 0xffffffff, 
 							   (this->Spin2ChainLength * 4) + (this->Spin3_2ChainLength * 3));
-  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // copy constructor (without duplicating datas)
@@ -149,7 +147,6 @@ ThierryChain::ThierryChain (const ThierryChain& chain)
       this->LookUpPosition = 0;
       this->LookUpPosition2 = 0;
     }
-  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -213,7 +210,6 @@ ThierryChain& ThierryChain::operator = (const ThierryChain& chain)
       this->LookUpPosition = 0;
       this->LookUpPosition2 = 0;
     }
-  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 
@@ -227,7 +223,6 @@ ThierryChain& ThierryChain::Reinitialize(int sz)
   this->Sz = sz;
   this->HilbertSpaceDimension = this->GenerateSpin2States (0, 0, 0xffffffff, 
 							   (this->Spin2ChainLength * 4) + (this->Spin3_2ChainLength * 3));
-  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 
