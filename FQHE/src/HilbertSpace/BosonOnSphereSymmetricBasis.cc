@@ -108,6 +108,7 @@ BosonOnSphereSymmetricBasis::BosonOnSphereSymmetricBasis (int nbrBosons, int lzM
   this->Minors = 0;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     this->GetStateSymmetry(this->StateDescription[i], this->StateLzMax[i]);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
 #ifdef __DEBUG__
   int UsedMemory = 0;
@@ -155,6 +156,7 @@ BosonOnSphereSymmetricBasis::BosonOnSphereSymmetricBasis(const BosonOnSphereSymm
   this->Minors = bosons.Minors;
   this->TemporaryState = new int [this->NbrLzValue];
   this->ProdATemporaryState = new int [this->NbrLzValue];
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -226,6 +228,7 @@ BosonOnSphereSymmetricBasis& BosonOnSphereSymmetricBasis::operator = (const Boso
   this->Minors = bosons.Minors;
   this->TemporaryState = new int [this->NbrLzValue];
   this->ProdATemporaryState = new int [this->NbrLzValue];
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
   return *this;
 }

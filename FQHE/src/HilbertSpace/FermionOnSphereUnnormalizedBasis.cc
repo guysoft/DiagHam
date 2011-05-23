@@ -85,6 +85,7 @@ FermionOnSphereUnnormalizedBasis::FermionOnSphereUnnormalizedBasis (int nbrFermi
 						     TmpCoef.GetNumericalCoefficient(this->LzMax , i));
       this->OneBodyNormalizationCoefficients[i] = TmpCoef.GetNumericalCoefficient(this->LzMax , i);
     }
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
 #ifdef __DEBUG__
   unsigned long UsedMemory = 0;
@@ -128,6 +129,7 @@ FermionOnSphereUnnormalizedBasis::FermionOnSphereUnnormalizedBasis(const Fermion
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
   this->OneBodyNormalizationCoefficients = fermions.OneBodyNormalizationCoefficients;  
   this->TwoBodyNormalizationCoefficients = fermions.TwoBodyNormalizationCoefficients;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -198,6 +200,7 @@ FermionOnSphereUnnormalizedBasis& FermionOnSphereUnnormalizedBasis::operator = (
   this->InitializeWaveFunctionEvaluation();
   this->OneBodyNormalizationCoefficients = fermions.OneBodyNormalizationCoefficients;  
   this->TwoBodyNormalizationCoefficients = fermions.TwoBodyNormalizationCoefficients;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 

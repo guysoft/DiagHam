@@ -79,6 +79,7 @@ FermionOnSphereUnlimited::FermionOnSphereUnlimited (int nbrFermions, int totalLz
   this->GenerateStates(this->NbrFermions, this->LzMax, this->LzMax, (this->TotalLz + this->NbrFermions * this->LzMax) >> 1, 0);
   this->MaximumSignLookUp = 16;
   this->GenerateLookUpTable(memory);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 #ifdef __DEBUG__
   long UsedMemory = 0;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
@@ -137,6 +138,7 @@ FermionOnSphereUnlimited::FermionOnSphereUnlimited(const FermionOnSphereUnlimite
   this->TemporaryState.Resize(this->TemporaryStateReducedNbrState);
   this->ProdATemporaryStateReducedNbrState = this->TemporaryStateReducedNbrState;
   this->ProdATemporaryState.Resize(this->ProdATemporaryStateReducedNbrState);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -219,6 +221,7 @@ FermionOnSphereUnlimited& FermionOnSphereUnlimited::operator = (const FermionOnS
   this->TemporaryState.Resize(this->TemporaryStateReducedNbrState);
   this->ProdATemporaryStateReducedNbrState = this->TemporaryStateReducedNbrState;
   this->ProdATemporaryState.Resize(this->ProdATemporaryStateReducedNbrState);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 

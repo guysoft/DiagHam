@@ -89,6 +89,7 @@ SingleBosonOnLatticeGeneric::SingleBosonOnLatticeGeneric (LatticePhases *lattice
   this->TargetSpace=this;
 
   this->Flag.Initialize();
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 #ifdef DEBUG_OUTPUT
   for (int i=0; i<HilbertSpaceDimension; ++i)
     {
@@ -127,6 +128,7 @@ SingleBosonOnLatticeGeneric::SingleBosonOnLatticeGeneric(const SingleBosonOnLatt
       TmpTranslations[i]=0;
       TmpCoordinates[i]=0;
     }
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 
@@ -183,6 +185,7 @@ SingleBosonOnLatticeGeneric& SingleBosonOnLatticeGeneric::operator = (const Sing
       TmpTranslations[i]=0;
       TmpCoordinates[i]=0;
     }
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 

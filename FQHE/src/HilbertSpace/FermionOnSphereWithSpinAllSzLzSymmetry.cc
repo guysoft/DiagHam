@@ -230,6 +230,7 @@ for (int i=0;i<this->HilbertSpaceDimension;i++)
     }
 
 #endif
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
   // clean up temporary space
   for (int i=0; i<2*NbrLzValue; ++i)
@@ -284,6 +285,7 @@ FermionOnSphereWithSpinAllSzLzSymmetry::FermionOnSphereWithSpinAllSzLzSymmetry (
 	this->GetStateSymmetry(this->StateDescription[i]);
       this->StateHighestBit = 0;
     }
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 #ifdef __DEBUG__
   int UsedMemory = 0;
   UsedMemory += this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
@@ -337,6 +339,7 @@ FermionOnSphereWithSpinAllSzLzSymmetry::FermionOnSphereWithSpinAllSzLzSymmetry(c
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
   this->LzParitySign = fermions.LzParitySign;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -376,6 +379,7 @@ FermionOnSphereWithSpinAllSzLzSymmetry& FermionOnSphereWithSpinAllSzLzSymmetry::
   this->LookUpTableShift = fermions.LookUpTableShift;
   this->LookUpTable = fermions.LookUpTable;  
   this->LzParitySign = fermions.LzParitySign;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 

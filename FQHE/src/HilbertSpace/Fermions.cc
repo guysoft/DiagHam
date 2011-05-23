@@ -99,6 +99,7 @@ Fermions::Fermions (int nbrSite, int memorySize)
   this->FermionDescription = new unsigned long [this->HilbertSpaceDimension];
   this->Parity = new unsigned long [this->HilbertSpaceDimension];
   this->GenerateStates (0, 0, 0x00000000);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // constructor for complete Hilbert space corresponding to a given total spin projection Sz and a
@@ -143,6 +144,7 @@ Fermions::Fermions (int nbrSite, int n, int sz, int memorySize)
   this->FermionDescription = new unsigned long [this->HilbertSpaceDimension];
   this->Parity = new unsigned long [this->HilbertSpaceDimension];
   this->HilbertSpaceDimension = this->GenerateStates (0, 0, 0x00000000, 0, 0);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // constructor from pre-constructed datas
@@ -176,6 +178,7 @@ Fermions::Fermions (int hilbertSpaceDimension, unsigned long* fermionDescription
   this->NbrFermion = n;
   this->FixedQuantumNumberFlag = fixedQuantumNumberFlag;
   this->NbrSite = nbrSite;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
   
 // copy constructor (without duplicating datas)
@@ -213,6 +216,7 @@ Fermions::Fermions (const Fermions& fermions)
       this->Sz = 0;
       this->FixedQuantumNumberFlag = false;
     }
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -270,6 +274,7 @@ Fermions& Fermions::operator = (const Fermions& fermions)
       this->Sz = 0;
       this->FixedQuantumNumberFlag = false;
     }
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 

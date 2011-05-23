@@ -46,6 +46,7 @@ PlanarRotationSymmetryZPeriodicOneParticle::PlanarRotationSymmetryZPeriodicOnePa
   this->StateR = new OneDOneParticle (nbrStateR);
   this->StateZ = new PeriodicOneDOneParticle (nbrStateZ, lowerImpulsionZ);
   this->HilbertSpaceDimension = this->StateR->GetNbrState () * this->StateZ->GetNbrState ();
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // copy constructor
@@ -58,6 +59,7 @@ PlanarRotationSymmetryZPeriodicOneParticle::PlanarRotationSymmetryZPeriodicOnePa
   this->StateR = space.StateR;
   this->StateZ = space.StateZ;
   this->HilbertSpaceDimension = space.HilbertSpaceDimension;  
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -78,6 +80,7 @@ PlanarRotationSymmetryZPeriodicOneParticle& PlanarRotationSymmetryZPeriodicOnePa
   this->StateR = space.StateR;
   this->StateZ = space.StateZ;
   this->HilbertSpaceDimension = space.HilbertSpaceDimension;  
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 

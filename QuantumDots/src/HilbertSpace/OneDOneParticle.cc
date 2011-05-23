@@ -47,6 +47,7 @@ OneDOneParticle::OneDOneParticle(int nbrState)
 {
   this->NbrState = nbrState;
   this->HilbertSpaceDimension = this->NbrState;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // copy constructor
@@ -57,6 +58,7 @@ OneDOneParticle::OneDOneParticle(const OneDOneParticle& space)
 {
   this->NbrState = space.NbrState;
   this->HilbertSpaceDimension = space.HilbertSpaceDimension;  
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -75,6 +77,7 @@ OneDOneParticle& OneDOneParticle::operator = (const OneDOneParticle& space)
 {
   this->NbrState = space.NbrState;
   this->HilbertSpaceDimension = space.HilbertSpaceDimension;  
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 

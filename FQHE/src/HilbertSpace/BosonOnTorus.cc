@@ -64,6 +64,7 @@ BosonOnTorus::BosonOnTorus (int nbrBosons, int maxMomentum)
   this->StateMaxMomentum = new int [this->HilbertSpaceDimension];
   cout << this->GenerateStates(this->NbrBosons, this->MaxMomentum - 1, this->MaxMomentum - 1, 0) << endl;
   this->GenerateLookUpTable(0);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 #ifdef __DEBUG__
   int UsedMemory = 0;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
@@ -103,6 +104,7 @@ BosonOnTorus::BosonOnTorus (int nbrBosons, int maxMomentum, int momentumConstrai
   this->StateMaxMomentum = new int [this->HilbertSpaceDimension];
   this->HilbertSpaceDimension = this->GenerateStates(this->NbrBosons, this->MaxMomentum - 1, this->MaxMomentum - 1, 0, 0);
   this->GenerateLookUpTable(1000000);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 #ifdef __DEBUG__
   int UsedMemory = 0;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
@@ -140,6 +142,7 @@ BosonOnTorus::BosonOnTorus (int nbrBosons, int maxMomentum, int hilbertSpaceDime
   this->StateDescription = stateDescription;
   this->StateMaxMomentum = stateMaxMomentum;
   this->GenerateLookUpTable(1000000);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 #ifdef __DEBUG__
   int UsedMemory = 0;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
@@ -179,6 +182,7 @@ BosonOnTorus::BosonOnTorus (int nbrBosons, int maxMomentum, int momentumConstrai
   this->StateDescription = stateDescription;
   this->StateMaxMomentum = stateMaxMomentum;
   this->GenerateLookUpTable(1000000);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 #ifdef __DEBUG__
   int UsedMemory = 0;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
@@ -209,6 +213,7 @@ BosonOnTorus::BosonOnTorus(const BosonOnTorus& bosons)
   this->StateMaxMomentum = bosons.StateMaxMomentum;
   this->TemporaryState = new int [this->MaxMomentum + 1];
   this->Flag = bosons.Flag;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -269,6 +274,7 @@ BosonOnTorus& BosonOnTorus::operator = (const BosonOnTorus& bosons)
   this->StateMaxMomentum = bosons.StateMaxMomentum;
   this->TemporaryState = new int [this->MaxMomentum + 1];
   this->Flag = bosons.Flag;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 

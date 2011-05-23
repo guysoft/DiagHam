@@ -65,6 +65,7 @@ PeriodicReflexionSymmetryOneDOneParticle::PeriodicReflexionSymmetryOneDOnePartic
       this->LowerImpulsion = 1;
     }
   this->HilbertSpaceDimension = this->NbrState;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
   
 // copy constructor

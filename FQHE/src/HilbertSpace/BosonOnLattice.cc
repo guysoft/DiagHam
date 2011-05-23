@@ -90,6 +90,7 @@ BosonOnLattice::BosonOnLattice (int nbrBosons, int lx, int ly, int nbrFluxQuanta
   this->ShiftedState = new unsigned long [this->NbrStates];
   this->ProdATemporaryState = new unsigned long [this->NbrStates];
   this->Flag.Initialize();
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
 #ifdef DEBUG_OUTPUT
   for (int i=0; i<this->HilbertSpaceDimension; ++i)
@@ -130,6 +131,7 @@ BosonOnLattice::BosonOnLattice(const BosonOnLattice& bosons)
   this->TemporaryState = new unsigned long [this->NbrStates];
   this->ShiftedState = new unsigned long [this->NbrStates];
   this->ProdATemporaryState = new unsigned long [this->NbrStates];  
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -201,6 +203,7 @@ BosonOnLattice& BosonOnLattice::operator = (const BosonOnLattice& bosons)
   this->TemporaryState = new unsigned long [this->NbrStates];
   this->ShiftedState = new unsigned long [this->NbrStates];
   this->ProdATemporaryState = new unsigned long [this->NbrStates];  
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 

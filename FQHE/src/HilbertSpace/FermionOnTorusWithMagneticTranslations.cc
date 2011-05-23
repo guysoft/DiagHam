@@ -91,6 +91,7 @@ FermionOnTorusWithMagneticTranslations::FermionOnTorusWithMagneticTranslations (
 
   this->Flag.Initialize();
   this->GenerateLookUpTable(1000000);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 #ifdef __DEBUG__
   int UsedMemory = 0;
   UsedMemory += 2 * this->HilbertSpaceDimension * sizeof(int);
@@ -148,6 +149,7 @@ FermionOnTorusWithMagneticTranslations::FermionOnTorusWithMagneticTranslations(c
   this->ReorderingSign = fermions.ReorderingSign;
 
   this->Flag = fermions.Flag;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -234,6 +236,7 @@ FermionOnTorusWithMagneticTranslations& FermionOnTorusWithMagneticTranslations::
   this->ReorderingSign = fermions.ReorderingSign;
 
   this->Flag = fermions.Flag;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
   return *this;
 }

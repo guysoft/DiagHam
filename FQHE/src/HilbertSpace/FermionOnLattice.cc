@@ -90,6 +90,7 @@ FermionOnLattice::FermionOnLattice (int nbrFermions, int lx, int ly, int nbrFlux
   
   this->MaximumSignLookUp = 16;
   this->GenerateLookUpTable(memory);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
 //   for (int i=0; i<HilbertSpaceDimension; ++i)
 //     {
@@ -154,6 +155,7 @@ FermionOnLattice::FermionOnLattice(const FermionOnLattice& fermions)
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 
@@ -220,6 +222,7 @@ FermionOnLattice& FermionOnLattice::operator = (const FermionOnLattice& fermions
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 

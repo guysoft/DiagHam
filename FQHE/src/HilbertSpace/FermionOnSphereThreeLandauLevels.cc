@@ -93,6 +93,7 @@ FermionOnSphereThreeLandauLevels::FermionOnSphereThreeLandauLevels (int nbrFermi
   this->HilbertSpaceDimension = TmpHilbertSpaceDimension;
   cout << "Hilbert space dimension = " << this->HilbertSpaceDimension << endl;  
   this->GenerateLookUpTable(memory);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 //   for (int i = 0; i < this->HilbertSpaceDimension; ++i)	
 //     this->PrintState(cout, i) << endl;
 // #ifdef __DEBUG__
@@ -144,6 +145,7 @@ FermionOnSphereThreeLandauLevels::FermionOnSphereThreeLandauLevels(const Fermion
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -190,6 +192,7 @@ FermionOnSphereThreeLandauLevels& FermionOnSphereThreeLandauLevels::operator = (
   this->LookUpTableMemorySize = fermions.LookUpTableMemorySize;
   this->LookUpTableShift = fermions.LookUpTableShift;
   this->LookUpTable = fermions.LookUpTable;  
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 

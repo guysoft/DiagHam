@@ -109,6 +109,7 @@ FermionOnSphereWithSU4Spin::FermionOnSphereWithSU4Spin (int nbrFermions, int tot
       exit(1);
     }
    this->GenerateLookUpTable(memory);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 //    for (int i = 0 ; i < this->HilbertSpaceDimension; ++i)
 //      {
 //        cout << i << " = ";
@@ -181,6 +182,7 @@ FermionOnSphereWithSU4Spin::FermionOnSphereWithSU4Spin (int nbrFermions, int tot
   this->HilbertSpaceDimension = TmpHilbertSpaceDimension;
   cout << "Hilbert space dimension = " << this->HilbertSpaceDimension << endl;  
    this->GenerateLookUpTable(memory);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   
 // #ifdef __DEBUG__
 //   int UsedMemory = 0;
@@ -232,6 +234,7 @@ FermionOnSphereWithSU4Spin::FermionOnSphereWithSU4Spin(const FermionOnSphereWith
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -278,6 +281,7 @@ FermionOnSphereWithSU4Spin& FermionOnSphereWithSU4Spin::operator = (const Fermio
   this->LookUpTableMemorySize = fermions.LookUpTableMemorySize;
   this->LookUpTableShift = fermions.LookUpTableShift;
   this->LookUpTable = fermions.LookUpTable;  
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 

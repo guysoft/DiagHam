@@ -51,6 +51,7 @@ ThreeDTwoParticles::ThreeDTwoParticles (ThreeDOneParticle* firstParticle, ThreeD
   this->FirstParticle = firstParticle;
   this->SecondParticle = secondParticle;
   this->HilbertSpaceDimension = this->FirstParticle->GetHilbertSpaceDimension () * this->SecondParticle->GetHilbertSpaceDimension ();
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // copy constructor
@@ -62,6 +63,7 @@ ThreeDTwoParticles::ThreeDTwoParticles (const ThreeDTwoParticles& space)
   this->FirstParticle = space.FirstParticle;
   this->SecondParticle = space.SecondParticle;
   this->HilbertSpaceDimension = space.HilbertSpaceDimension;  
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -83,6 +85,7 @@ ThreeDTwoParticles& ThreeDTwoParticles::operator = (const ThreeDTwoParticles& sp
   this->FirstParticle = space.FirstParticle;
   this->SecondParticle = space.SecondParticle;
   this->HilbertSpaceDimension = space.HilbertSpaceDimension;  
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 

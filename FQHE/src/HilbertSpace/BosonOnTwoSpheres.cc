@@ -62,6 +62,7 @@ BosonOnTwoSpheres::BosonOnTwoSpheres (int nbrBosons, int totalLz, int lzMax)
   this->GenerateStates(this->NbrBosons, this->LzMax, this->LzMax, this->ShiftedTotalLz, 0);
   this->KeyMultiplicationTable = new int [this->LzMax + 1];
   this->GenerateLookUpTable(0);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
 #ifdef __DEBUG__
   int UsedMemory = 0;
@@ -97,6 +98,7 @@ BosonOnTwoSpheres::BosonOnTwoSpheres(const BosonOnTwoSpheres& bosons)
   this->StateDescription = bosons.StateDescription;
   this->StateLzMax = bosons.StateLzMax;
   this->Flag = bosons.Flag;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
 }
 
@@ -156,6 +158,7 @@ BosonOnTwoSpheres& BosonOnTwoSpheres::operator = (const BosonOnTwoSpheres& boson
   this->StateDescription = bosons.StateDescription;
   this->StateLzMax = bosons.StateLzMax;
   this->Flag = bosons.Flag;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
   return *this;
 }

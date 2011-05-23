@@ -106,6 +106,7 @@ FermionOnSphereSymmetricBasis::FermionOnSphereSymmetricBasis (int nbrFermions, i
   this->StateLzMax = 0;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     this->GetStateSymmetry(this->StateDescription[i]);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 #ifdef __DEBUG__
   unsigned long UsedMemory = 0;
   UsedMemory += ((unsigned long) this->HilbertSpaceDimension) * sizeof(unsigned long);
@@ -176,6 +177,7 @@ FermionOnSphereSymmetricBasis::FermionOnSphereSymmetricBasis (char* fileName, un
     this->GetStateSymmetry(this->StateDescription[i]);
   delete[] this->StateLzMax;
   this->StateLzMax = 0;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
 #ifdef __DEBUG__
   unsigned long UsedMemory = 0l;
@@ -223,6 +225,7 @@ FermionOnSphereSymmetricBasis::FermionOnSphereSymmetricBasis(const FermionOnSphe
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -284,6 +287,7 @@ FermionOnSphereSymmetricBasis& FermionOnSphereSymmetricBasis::operator = (const 
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 

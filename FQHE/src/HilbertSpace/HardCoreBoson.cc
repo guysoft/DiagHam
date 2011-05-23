@@ -74,6 +74,7 @@ HardCoreBoson::HardCoreBoson(int nbrBosons, int nbrStates, unsigned long memory)
   this->TargetSpace=this;
   this->GenerateLookUpTable(memory);
   this->Flag.Initialize();
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 #ifdef __DEBUG__
   // for (int i=0; i<HilbertSpaceDimension; ++i)
 //     {
@@ -114,6 +115,7 @@ HardCoreBoson::HardCoreBoson(const HardCoreBoson& bosons)
   this->LookUpTableMemorySize = bosons.LookUpTableMemorySize;
   this->LookUpTableShift = bosons.LookUpTableShift;
   this->LookUpTable = bosons.LookUpTable;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 
@@ -164,6 +166,7 @@ HardCoreBoson& HardCoreBoson::operator = (const HardCoreBoson& bosons)
   this->LookUpTableMemorySize = bosons.LookUpTableMemorySize;
   this->LookUpTableShift = bosons.LookUpTableShift;
   this->LookUpTable = bosons.LookUpTable;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 

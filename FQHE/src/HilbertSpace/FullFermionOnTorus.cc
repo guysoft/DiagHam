@@ -68,6 +68,7 @@ FullFermionOnTorus::FullFermionOnTorus (int nbrFermions, int maxMomentum)
   this->GenerateStates();
   this->MaximumSignLookUp = 16;
   this->GenerateLookUpTable(1000000);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 #ifdef __DEBUG__
   int UsedMemory = 0;
   UsedMemory += 2 * this->HilbertSpaceDimension * sizeof(int);
@@ -107,6 +108,7 @@ FullFermionOnTorus::FullFermionOnTorus (int nbrFermions, int maxMomentum, int mo
   cout << this->HilbertSpaceDimension << endl;
   this->MaximumSignLookUp = 16;
   this->GenerateLookUpTable(1000000);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 #ifdef __DEBUG__
   int UsedMemory = 0;
   UsedMemory += 2 * this->HilbertSpaceDimension * sizeof(int);
@@ -140,6 +142,7 @@ FullFermionOnTorus::FullFermionOnTorus(const FullFermionOnTorus& fermions)
   this->MomentumConstraint = fermions.MomentumConstraint;
   this->MomentumConstraintFlag = fermions.MomentumConstraintFlag;
   this->Flag = fermions.Flag;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // constructor from full datas
@@ -166,6 +169,7 @@ FullFermionOnTorus::FullFermionOnTorus (int nbrFermions, int maxMomentum, int mo
   this->StateMaxMomentum = StateMaxMomentum;
   this->MaximumSignLookUp = 16;
   this->GenerateLookUpTable(1000000);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 #ifdef __DEBUG__
   int UsedMemory = 0;
   UsedMemory += 2 * this->HilbertSpaceDimension * sizeof(int);
@@ -218,6 +222,7 @@ FullFermionOnTorus& FullFermionOnTorus::operator = (const FullFermionOnTorus& fe
   this->MomentumConstraint = fermions.MomentumConstraint;
   this->MomentumConstraintFlag = fermions.MomentumConstraintFlag;
   this->Flag = fermions.Flag;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 

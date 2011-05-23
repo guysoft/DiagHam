@@ -139,10 +139,10 @@ inline int AbstractHilbertSpace::GetHilbertSpaceDimension()
 
 inline long AbstractHilbertSpace::GetLargeHilbertSpaceDimension()
 {
-  if (LargeHilbertSpaceDimension!=0)
+/*   if (LargeHilbertSpaceDimension!=0) */
     return this->LargeHilbertSpaceDimension;
-  else
-    return (long)this->HilbertSpaceDimension;
+/*   else */
+/*     return (long)this->HilbertSpaceDimension; */
 }
 
 #endif

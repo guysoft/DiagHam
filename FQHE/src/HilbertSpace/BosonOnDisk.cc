@@ -78,6 +78,7 @@ BosonOnDisk::BosonOnDisk (int nbrBosons, int totalLz, int lzMax)
   this->KeptCoordinates = new int;
   (*(this->KeptCoordinates)) = -1;
   this->Minors = 0;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
 #ifdef __DEBUG__
   int UsedMemory = 0;
@@ -196,6 +197,7 @@ BosonOnDisk& BosonOnDisk::operator = (const BosonOnDisk& bosons)
   this->Minors = bosons.Minors;
   this->TemporaryState = new int [this->NbrLzValue];
   this->ProdATemporaryState = new int [this->NbrLzValue];
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
   return *this;
 }

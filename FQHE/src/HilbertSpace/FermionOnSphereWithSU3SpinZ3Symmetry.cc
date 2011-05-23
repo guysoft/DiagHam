@@ -129,6 +129,7 @@ FermionOnSphereWithSU3SpinZ3Symmetry::FermionOnSphereWithSU3SpinZ3Symmetry (int 
   delete[] this->StateDescription;
   this->StateDescription = TmpStateDescription;
   this->HilbertSpaceDimension = TmpHilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   if (this->HilbertSpaceDimension > 0)
     {
       this->StateHighestBit =  new int [TmpHilbertSpaceDimension];
@@ -193,6 +194,7 @@ FermionOnSphereWithSU3SpinZ3Symmetry::FermionOnSphereWithSU3SpinZ3Symmetry(const
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // constructor from a binary file that describes the Hilbert space
@@ -213,6 +215,7 @@ FermionOnSphereWithSU3SpinZ3Symmetry::FermionOnSphereWithSU3SpinZ3Symmetry (char
       delete[] this->StateHighestBit;
       this->StateHighestBit = 0;
     }
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 #ifdef __DEBUG__
   long UsedMemory = 0;
   UsedMemory += this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
@@ -275,6 +278,7 @@ FermionOnSphereWithSU3SpinZ3Symmetry& FermionOnSphereWithSU3SpinZ3Symmetry::oper
   this->LookUpTableMemorySize = fermions.LookUpTableMemorySize;
   this->LookUpTableShift = fermions.LookUpTableShift;
   this->LookUpTable = fermions.LookUpTable;  
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 

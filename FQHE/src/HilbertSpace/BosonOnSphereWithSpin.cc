@@ -99,6 +99,7 @@ BosonOnSphereWithSpin::BosonOnSphereWithSpin (int nbrBosons, int totalLz, int lz
   (*(this->KeptCoordinates)) = -1;
   this->MinorsUp = 0;
   this->MinorsDown = 0;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
 //   for (int i=0; i<HilbertSpaceDimension; ++i)
 //     PrintState(cout,i)<<endl;
@@ -157,6 +158,7 @@ BosonOnSphereWithSpin::BosonOnSphereWithSpin(const BosonOnSphereWithSpin& bosons
     this->TargetSpace = bosons.TargetSpace;
   else
     this->TargetSpace = this;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -295,6 +297,7 @@ BosonOnSphereWithSpin& BosonOnSphereWithSpin::operator = (const BosonOnSphereWit
   this->MinorsDown = bosons.MinorsDown;
   this->TemporaryState = new int [this->NbrLzValue];
   this->ProdATemporaryState = new int [this->NbrLzValue];
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
   return *this;
 }

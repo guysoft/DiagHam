@@ -120,6 +120,7 @@ HardCoreBosonOnLatticeKy::HardCoreBosonOnLatticeKy (int nbrBosons, int lx, int l
   
   this->TargetSpace=this;
   this->GenerateLookUpTable(memory);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
   for (int i=0; i<this->HilbertSpaceDimension; ++i)
     {
@@ -160,6 +161,7 @@ HardCoreBosonOnLatticeKy::HardCoreBosonOnLatticeKy(const HardCoreBosonOnLatticeK
   this->TargetSpace = bosons.TargetSpace;
   this->Minors = bosons.Minors;
   this->KeptCoordinates = bosons.KeptCoordinates;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -241,6 +243,7 @@ HardCoreBosonOnLatticeKy& HardCoreBosonOnLatticeKy::operator = (const HardCoreBo
   this->LookUpTable = bosons.LookUpTable;
   this->Minors = bosons.Minors;
   this->KeptCoordinates = bosons.KeptCoordinates;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 

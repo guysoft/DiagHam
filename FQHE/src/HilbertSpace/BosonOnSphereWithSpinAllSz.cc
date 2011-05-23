@@ -96,6 +96,7 @@ BosonOnSphereWithSpinAllSz::BosonOnSphereWithSpinAllSz (int nbrBosons, int total
   this->KeptCoordinates = new int;
   (*(this->KeptCoordinates)) = -1;
   this->Minors = 0;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
 //   for (int i=0; i<HilbertSpaceDimension; ++i)
 //     {
@@ -151,6 +152,7 @@ BosonOnSphereWithSpinAllSz::BosonOnSphereWithSpinAllSz(const BosonOnSphereWithSp
   this->ProdATemporaryState = new unsigned [this->NbrLzValue];
   this->SubspaceRestriction=bosons.SubspaceRestriction;
   this->SubspaceSz=bosons.SubspaceSz;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
 }
 
@@ -275,6 +277,7 @@ BosonOnSphereWithSpinAllSz& BosonOnSphereWithSpinAllSz::operator = (const BosonO
   this->ProdATemporaryState = new unsigned [this->NbrLzValue];
   this->SubspaceRestriction=bosons.SubspaceRestriction;
   this->SubspaceSz=bosons.SubspaceSz;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
   return *this;
 }

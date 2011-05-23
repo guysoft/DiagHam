@@ -42,6 +42,7 @@ UndescribedHilbertSpace::UndescribedHilbertSpace ()
 {
   this->QuantumNumber = 0;
   this->HilbertSpaceDimension = 0;
+  this->LargeHilbertSpaceDimension = 0l;
 }
 
 // constructor from datas
@@ -51,6 +52,7 @@ UndescribedHilbertSpace::UndescribedHilbertSpace ()
 UndescribedHilbertSpace::UndescribedHilbertSpace (int dimension) 
 {
   this->HilbertSpaceDimension = dimension;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   this->QuantumNumber = 0;
 }
 
@@ -62,6 +64,7 @@ UndescribedHilbertSpace::UndescribedHilbertSpace (int dimension)
 UndescribedHilbertSpace::UndescribedHilbertSpace (int dimension, AbstractQuantumNumber& quantumNumber) 
 {
   this->HilbertSpaceDimension = dimension;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   this->QuantumNumber = quantumNumber.Clone();
 }
 
@@ -72,6 +75,7 @@ UndescribedHilbertSpace::UndescribedHilbertSpace (int dimension, AbstractQuantum
 UndescribedHilbertSpace::UndescribedHilbertSpace (const UndescribedHilbertSpace& space) 
 {
   this->HilbertSpaceDimension = space.HilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   if (space.QuantumNumber != 0)
     this->QuantumNumber = space.QuantumNumber->Clone();
   else
@@ -95,6 +99,7 @@ UndescribedHilbertSpace::~UndescribedHilbertSpace ()
 UndescribedHilbertSpace& UndescribedHilbertSpace::operator = (const UndescribedHilbertSpace& space)
 {
   this->HilbertSpaceDimension = space.HilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   if (space.QuantumNumber != 0)
     this->QuantumNumber = space.QuantumNumber->Clone();
   else

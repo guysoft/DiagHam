@@ -84,6 +84,7 @@ FermionOnDisk::FermionOnDisk (int nbrFermions, int totalLz, int lzMax, unsigned 
   this->TotalLz = (this->TotalLz << 1) - (this->NbrFermions * this->LzMax);
   this->MaximumSignLookUp = 16;
   this->GenerateLookUpTable(memory);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 #ifdef __DEBUG__
   unsigned long UsedMemory = 0;
   UsedMemory += ((unsigned long) this->HilbertSpaceDimension) * (sizeof(unsigned long) + sizeof(int));
@@ -125,6 +126,7 @@ FermionOnDisk::FermionOnDisk(const FermionOnDisk& fermions)
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -173,6 +175,7 @@ FermionOnDisk& FermionOnDisk::operator = (const FermionOnDisk& fermions)
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 

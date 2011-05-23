@@ -54,6 +54,7 @@ ThreeDOneParticle::ThreeDOneParticle (int nbrStateX, int nbrStateY, int nbrState
   this->StateY = new OneDOneParticle (nbrStateY);
   this->StateZ = new OneDOneParticle (nbrStateZ);
   this->HilbertSpaceDimension = this->StateX->GetNbrState () * this->StateY->GetNbrState () * this->StateZ->GetNbrState ();
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // copy constructor
@@ -66,6 +67,7 @@ ThreeDOneParticle::ThreeDOneParticle (const ThreeDOneParticle& space)
   this->StateY = space.StateY;
   this->StateZ = space.StateZ;
   this->HilbertSpaceDimension = space.HilbertSpaceDimension;  
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -89,6 +91,7 @@ ThreeDOneParticle& ThreeDOneParticle::operator = (const ThreeDOneParticle& space
   this->StateY = space.StateY;
   this->StateZ = space.StateZ;
   this->HilbertSpaceDimension = space.HilbertSpaceDimension;  
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 

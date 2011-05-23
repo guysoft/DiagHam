@@ -71,6 +71,7 @@ FullBosonOnSphere::FullBosonOnSphere (int nbrBosons, int lzMax)
   this->KeptCoordinates = new int;
   (*(this->KeptCoordinates)) = -1;
   this->Minors = 0;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
 #ifdef __DEBUG__
   int UsedMemory = 0;
@@ -119,6 +120,7 @@ FullBosonOnSphere::FullBosonOnSphere(const FullBosonOnSphere& bosons)
   this->Minors = bosons.Minors;
   this->TemporaryState = new int [this->NbrLzValue];
   this->ProdATemporaryState = new int [this->NbrLzValue];
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -260,6 +262,7 @@ FullBosonOnSphere& FullBosonOnSphere::operator = (const FullBosonOnSphere& boson
   this->Minors = bosons.Minors;
   this->TemporaryState = new int [this->NbrLzValue];
   this->ProdATemporaryState = new int [this->NbrLzValue];
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   
   return *this;
 }

@@ -86,6 +86,7 @@ BosonOnSphereSymmetricBasisShort::BosonOnSphereSymmetricBasisShort (int nbrBoson
   this->KeptCoordinates = new int;
   (*(this->KeptCoordinates)) = -1;
   this->Minors = 0;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
 }
 
@@ -114,6 +115,7 @@ BosonOnSphereSymmetricBasisShort::BosonOnSphereSymmetricBasisShort(const BosonOn
   this->StateLzMax =  bosons.StateLzMax;
   this->TemporaryState = new unsigned long [this->NbrLzValue];
   this->ProdATemporaryState = new unsigned long [this->NbrLzValue];  
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor

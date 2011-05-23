@@ -200,6 +200,7 @@ FermionOnSphereWithSpinLzSzSymmetryLong::FermionOnSphereWithSpinLzSzSymmetryLong
   delete[] this->StateDescription;
   this->StateDescription = TmpStateDescription;
   this->HilbertSpaceDimension = TmpHilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
   if (this->HilbertSpaceDimension > 0)
     {
@@ -265,6 +266,7 @@ FermionOnSphereWithSpinLzSzSymmetryLong::FermionOnSphereWithSpinLzSzSymmetryLong
   this->LzParitySign = fermions.LzParitySign;
   this->SzParitySign = fermions.SzParitySign;
   this->LzSzSameParityFlag = fermions.LzSzSameParityFlag;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // constructor from a binary file that describes the Hilbert space
@@ -312,6 +314,7 @@ FermionOnSphereWithSpinLzSzSymmetryLong::FermionOnSphereWithSpinLzSzSymmetryLong
 	this->GetStateSymmetry(this->StateDescription[i]);
       this->StateHighestBit = 0;
     }
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 #ifdef __DEBUG__
   int UsedMemory = 0;
   UsedMemory += this->HilbertSpaceDimension * (sizeof(ULONGLONG) + sizeof(int));
@@ -378,6 +381,7 @@ FermionOnSphereWithSpinLzSzSymmetryLong& FermionOnSphereWithSpinLzSzSymmetryLong
   this->LzParitySign = fermions.LzParitySign;
   this->SzParitySign = fermions.SzParitySign;
   this->LzSzSameParityFlag = fermions.LzSzSameParityFlag;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 

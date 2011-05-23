@@ -53,6 +53,7 @@ PeriodicThreeDTwoParticles::PeriodicThreeDTwoParticles (PeriodicThreeDOneParticl
   this->FirstParticle = (PeriodicThreeDOneParticle*) firstParticle;
   this->SecondParticle = (PeriodicThreeDOneParticle*) secondParticle;
   this->HilbertSpaceDimension = this->FirstParticle->GetHilbertSpaceDimension () * this->SecondParticle->GetHilbertSpaceDimension ();
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // copy constructor
@@ -64,6 +65,7 @@ PeriodicThreeDTwoParticles::PeriodicThreeDTwoParticles (const PeriodicThreeDTwoP
   this->FirstParticle = space.FirstParticle;
   this->SecondParticle = space.SecondParticle;
   this->HilbertSpaceDimension = space.HilbertSpaceDimension;  
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -86,6 +88,7 @@ PeriodicThreeDTwoParticles& PeriodicThreeDTwoParticles::operator = (const Period
   this->FirstParticle = space.FirstParticle;
   this->SecondParticle = space.SecondParticle;
   this->HilbertSpaceDimension = space.HilbertSpaceDimension;  
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 

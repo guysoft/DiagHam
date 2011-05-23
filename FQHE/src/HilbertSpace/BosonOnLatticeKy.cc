@@ -61,6 +61,7 @@ using std::endl;
 BosonOnLatticeKy::BosonOnLatticeKy ()
 {
   this->HilbertSpaceDimension=0;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // basic constructor -> yields a square lattice in Landau gauge
@@ -130,6 +131,7 @@ BosonOnLatticeKy::BosonOnLatticeKy (int nbrBosons, int lx, int ly, int ky, int n
   
   this->TargetSpace=this;
   this->GenerateLookUpTable(memory);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
 #ifdef DEBUG_OUTPUT
   for (int i=0; i<this->HilbertSpaceDimension; ++i)
@@ -176,6 +178,7 @@ BosonOnLatticeKy::BosonOnLatticeKy(const BosonOnLatticeKy& bosons)
   this->TemporaryState = new unsigned long [this->NbrStates];
   this->ShiftedState = new unsigned long [this->NbrStates];
   this->ProdATemporaryState = new unsigned long [this->NbrStates];  
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -266,6 +269,7 @@ BosonOnLatticeKy& BosonOnLatticeKy::operator = (const BosonOnLatticeKy& bosons)
   this->TemporaryState = new unsigned long [this->NbrStates];
   this->ShiftedState = new unsigned long [this->NbrStates];
   this->ProdATemporaryState = new unsigned long [this->NbrStates];  
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 

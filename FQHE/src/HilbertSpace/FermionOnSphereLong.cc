@@ -88,6 +88,7 @@ FermionOnSphereLong::FermionOnSphereLong (int nbrFermions, int totalLz, int lzMa
   this->GenerateStates(this->NbrFermions, this->LzMax, this->LzMax, (this->TotalLz + this->NbrFermions * this->LzMax) >> 1, 0);
   this->MaximumSignLookUp = 16;
   this->GenerateLookUpTable(memory);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 #ifdef __DEBUG__
   unsigned long UsedMemory = 0;
   UsedMemory += ((unsigned long) this->HilbertSpaceDimension) * (sizeof(ULONGLONG) + sizeof(int));
@@ -133,6 +134,7 @@ FermionOnSphereLong::FermionOnSphereLong(const FermionOnSphereLong& fermions)
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
   this->InvertShift = fermions.InvertShift;
   this->InvertUnshift = fermions.InvertUnshift;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -193,6 +195,7 @@ FermionOnSphereLong& FermionOnSphereLong::operator = (const FermionOnSphereLong&
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
   this->InvertShift = fermions.InvertShift;
   this->InvertUnshift = fermions.InvertUnshift;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 

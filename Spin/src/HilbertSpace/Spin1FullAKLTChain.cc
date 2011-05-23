@@ -64,6 +64,7 @@ Spin1FullAKLTChain::Spin1FullAKLTChain ()
   this->RightmostPosition = 0;
   this->Sz = 0;
   this->FixedQuantumNumberFlag = false;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // constructor for complete Hilbert space with no restriction on total spin projection Sz
@@ -105,6 +106,7 @@ Spin1FullAKLTChain::Spin1FullAKLTChain (int chainLength, int memorySize)
   
   this->ChainDescription = new unsigned long [this->HilbertSpaceDimension];
   this->GenerateStates (0, 0, 0xffffffff);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // constructor for complete Hilbert space corresponding to a given total spin projection Sz
@@ -146,6 +148,7 @@ Spin1FullAKLTChain::Spin1FullAKLTChain (int chainLength, int sz, int memorySize)
 
   this->ChainDescription = new unsigned long [this->HilbertSpaceDimension];
   this->HilbertSpaceDimension = this->GenerateStates (0, 0, 0xffffffff, this->ChainLength * 2 + 2);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // constructor from pre-constructed datas
@@ -175,6 +178,7 @@ Spin1FullAKLTChain::Spin1FullAKLTChain (int hilbertSpaceDimension, unsigned long
   this->ChainLength = chainLength;
   this->RightmostSpinMask = (2 << (2 * this->ChainLength));
   this->RightmostPosition = this->ChainLength + 1;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
   
 // copy constructor (without duplicating datas)
@@ -212,6 +216,7 @@ Spin1FullAKLTChain::Spin1FullAKLTChain (const Spin1FullAKLTChain& chain)
       this->LookUpTableSize = 0;
       this->FixedQuantumNumberFlag = false;
     }
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -267,6 +272,7 @@ Spin1FullAKLTChain& Spin1FullAKLTChain::operator = (const Spin1FullAKLTChain& ch
       this->RightmostSpinMask = 0;
       this->RightmostPosition = 0;
     }
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 

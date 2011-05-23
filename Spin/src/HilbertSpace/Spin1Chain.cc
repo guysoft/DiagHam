@@ -62,6 +62,7 @@ Spin1Chain::Spin1Chain ()
   this->ChainLength = 0;
   this->Sz = 0;
   this->FixedQuantumNumberFlag = false;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // constructor for complete Hilbert space with no restriction on total spin projection Sz
@@ -94,6 +95,7 @@ Spin1Chain::Spin1Chain (int chainLength, int memorySize)
 
   this->ChainDescription = new unsigned long [this->HilbertSpaceDimension];
   this->GenerateStates (0, 0, 0xffffffff);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // constructor for complete Hilbert space corresponding to a given total spin projection Sz
@@ -126,6 +128,7 @@ Spin1Chain::Spin1Chain (int chainLength, int sz, int memorySize)
 
   this->ChainDescription = new unsigned long [this->HilbertSpaceDimension];
   this->HilbertSpaceDimension = this->GenerateStates (0, 0, 0xffffffff, this->ChainLength * 2);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // constructor from pre-constructed datas
@@ -154,6 +157,7 @@ Spin1Chain::Spin1Chain (int hilbertSpaceDimension, unsigned long* chainDescripti
   this->Sz = sz;
   this->FixedQuantumNumberFlag = fixedQuantumNumberFlag;
   this->ChainLength = chainLength;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
   
 // copy constructor (without duplicating datas)
@@ -187,6 +191,7 @@ Spin1Chain::Spin1Chain (const Spin1Chain& chain)
       this->Sz = 0;
       this->FixedQuantumNumberFlag = false;
     }
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -238,6 +243,7 @@ Spin1Chain& Spin1Chain::operator = (const Spin1Chain& chain)
       this->Sz = 0;
       this->FixedQuantumNumberFlag = false;
     }
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 

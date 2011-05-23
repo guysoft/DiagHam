@@ -51,6 +51,7 @@ PlanarRotationSymmetryThreeDOneParticle::PlanarRotationSymmetryThreeDOneParticle
   this->StateR = new OneDOneParticle (nbrStateR);
   this->StateZ = new OneDOneParticle (nbrStateZ);
   this->HilbertSpaceDimension = this->StateR->GetNbrState () * this->StateZ->GetNbrState ();
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // copy constructor
@@ -63,6 +64,7 @@ PlanarRotationSymmetryThreeDOneParticle::PlanarRotationSymmetryThreeDOneParticle
   this->StateR = space.StateR;
   this->StateZ = space.StateZ;
   this->HilbertSpaceDimension = space.HilbertSpaceDimension;  
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -86,6 +88,7 @@ PlanarRotationSymmetryThreeDOneParticle& PlanarRotationSymmetryThreeDOneParticle
   this->StateZ = space.StateZ;
   this->HilbertSpaceDimension = space.HilbertSpaceDimension;  
   return *this;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // clone Hilbert space (without duplicating datas)

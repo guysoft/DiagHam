@@ -281,6 +281,7 @@ FermionOnSphereWithSpinSqueezedBasis::FermionOnSphereWithSpinSqueezedBasis (int 
     }
 
   this->GenerateLookUpTable(memory);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   
 
 #ifdef __DEBUG__
@@ -346,6 +347,7 @@ FermionOnSphereWithSpinSqueezedBasis::FermionOnSphereWithSpinSqueezedBasis (char
   this->Flag.Initialize();
 
   this->GenerateLookUpTable(memory);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 #ifdef __DEBUG__
   unsigned long UsedMemory = 0l;
   UsedMemory += ((unsigned long) this->HilbertSpaceDimension) * (sizeof(unsigned long) + sizeof(int));
@@ -390,6 +392,7 @@ FermionOnSphereWithSpinSqueezedBasis::FermionOnSphereWithSpinSqueezedBasis(const
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -428,6 +431,7 @@ FermionOnSphereWithSpinSqueezedBasis& FermionOnSphereWithSpinSqueezedBasis::oper
   this->LookUpTableMemorySize = fermions.LookUpTableMemorySize;
   this->LookUpTableShift = fermions.LookUpTableShift;
   this->LookUpTable = fermions.LookUpTable;  
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 

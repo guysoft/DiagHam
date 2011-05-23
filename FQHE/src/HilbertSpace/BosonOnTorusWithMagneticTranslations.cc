@@ -92,6 +92,7 @@ BosonOnTorusWithMagneticTranslations::BosonOnTorusWithMagneticTranslations (int 
     }
   this->HashKeyMask >>= 1;
   this->GenerateLookUpTable();
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
   this->Flag.Initialize();
 
@@ -141,6 +142,7 @@ BosonOnTorusWithMagneticTranslations::BosonOnTorusWithMagneticTranslations(const
   this->LookUpTable = bosons.LookUpTable;
   this->NbrStateInLookUpTable = bosons.NbrStateInLookUpTable;
   this->HashKeyMask = bosons.HashKeyMask;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
   this->Flag = bosons.Flag;
 }
@@ -239,6 +241,7 @@ BosonOnTorusWithMagneticTranslations& BosonOnTorusWithMagneticTranslations::oper
   this->LookUpTable = bosons.LookUpTable;
   this->NbrStateInLookUpTable = bosons.NbrStateInLookUpTable;
   this->HashKeyMask = bosons.HashKeyMask;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
   this->Flag = bosons.Flag;
   return *this;

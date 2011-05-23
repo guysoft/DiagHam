@@ -58,6 +58,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('x', "nbr-sitex", "number of sites along the x direction", 3);
   (*SystemGroup) += new SingleIntegerOption  ('y', "nbr-sitey", "number of sites along the y direction", 3);
   (*SystemGroup) += new SingleIntegerOption  ('s', "nbr-subbands", "number of subbands", 1);
+  (*SystemGroup) += new BooleanOption  ('\n', "no-inversion", "do not assume inversion symmetry");
   (*OutputGroup) += new BooleanOption  ('\n', "save-disk", "save output on disk");
   (*OutputGroup) += new SingleStringOption ('\n', "output-file", "use this file name instead of statistics_topinsulator_nbrsubbands_n_nbrparticles_x_nbrsitex_y_nbrsitey.dim");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -83,8 +84,11 @@ int main(int argc, char** argv)
 	{
 	  for (int ky = 0; ky < NbrSitesY; ++ky)
 	    {
-	      long Dimension = FermionSingleBandEvaluateHilbertSpaceDimension(NbrParticles, kx, ky, NbrSitesX, NbrSitesY, NbrSitesX - 1, NbrSitesY - 1);
-	      cout << "(kx=" << kx << ",ky=" << ky << ") : " << Dimension << endl;
+	      if ((Manager.GetBoolean("no-inversion") == true) || ((kx <= ((NbrSitesX - kx) % NbrSitesX)) && (ky <= ((NbrSitesY - ky) % NbrSitesY))))
+		{
+		  long Dimension = FermionSingleBandEvaluateHilbertSpaceDimension(NbrParticles, kx, ky, NbrSitesX, NbrSitesY, NbrSitesX - 1, NbrSitesY - 1);
+		  cout << "(kx=" << kx << ",ky=" << ky << ") : " << Dimension << endl;
+		}
 	    }
 	}
     }
@@ -94,8 +98,11 @@ int main(int argc, char** argv)
 	{
 	  for (int ky = 0; ky < NbrSitesY; ++ky)
 	    {
-	      long Dimension = FermionTwoBandEvaluateHilbertSpaceDimension(NbrParticles, kx, ky, NbrSitesX, NbrSitesY, NbrSitesX - 1, NbrSitesY - 1);
-	      cout << "(kx=" << kx << ",ky=" << ky << ") : " << Dimension << endl;
+	      if ((Manager.GetBoolean("no-inversion") == true) || ((kx <= ((NbrSitesX - kx) % NbrSitesX)) && (ky <= ((NbrSitesY - ky) % NbrSitesY))))
+		{
+		  long Dimension = FermionTwoBandEvaluateHilbertSpaceDimension(NbrParticles, kx, ky, NbrSitesX, NbrSitesY, NbrSitesX - 1, NbrSitesY - 1);
+		  cout << "(kx=" << kx << ",ky=" << ky << ") : " << Dimension << endl;
+		}
 	    }
 	}
     }

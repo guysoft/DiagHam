@@ -149,6 +149,7 @@ FermionOnSphereWithSpinLzSymmetry::FermionOnSphereWithSpinLzSymmetry (int nbrFer
   delete[] this->StateDescription;
   this->StateDescription = TmpStateDescription;
   this->HilbertSpaceDimension = TmpHilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   if (this->HilbertSpaceDimension > 0)
     {
       this->StateHighestBit =  new int [TmpHilbertSpaceDimension];
@@ -227,6 +228,7 @@ FermionOnSphereWithSpinLzSymmetry::FermionOnSphereWithSpinLzSymmetry (char* file
 	this->GetStateSymmetry(this->StateDescription[i]);
       this->StateHighestBit = 0;
     }
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 #ifdef __DEBUG__
   int UsedMemory = 0;
   UsedMemory += this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
@@ -280,6 +282,7 @@ FermionOnSphereWithSpinLzSymmetry::FermionOnSphereWithSpinLzSymmetry(const Fermi
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
   this->LzParitySign = fermions.LzParitySign;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -319,6 +322,7 @@ FermionOnSphereWithSpinLzSymmetry& FermionOnSphereWithSpinLzSymmetry::operator =
   this->LookUpTableShift = fermions.LookUpTableShift;
   this->LookUpTable = fermions.LookUpTable;  
   this->LzParitySign = fermions.LzParitySign;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 

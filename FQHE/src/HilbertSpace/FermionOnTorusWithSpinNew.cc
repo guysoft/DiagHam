@@ -124,6 +124,7 @@ FermionOnTorusWithSpinNew::FermionOnTorusWithSpinNew (int nbrFermions, int total
 
   if (this->HilbertSpaceDimension !=0)
     this->GenerateLookUpTable(1000000);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 #ifdef __DEBUG__
   int UsedMemory = 0;
   UsedMemory += 2 * this->HilbertSpaceDimension * sizeof(int);
@@ -179,6 +180,7 @@ FermionOnTorusWithSpinNew::FermionOnTorusWithSpinNew(const FermionOnTorusWithSpi
   this->NbrParticleLookUpTable = fermions.NbrParticleLookUpTable;
 
   this->Flag = fermions.Flag;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -259,6 +261,7 @@ FermionOnTorusWithSpinNew& FermionOnTorusWithSpinNew::operator = (const FermionO
   this->NbrParticleLookUpTable = fermions.NbrParticleLookUpTable;
 
   this->Flag = fermions.Flag;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
   return *this;
 }

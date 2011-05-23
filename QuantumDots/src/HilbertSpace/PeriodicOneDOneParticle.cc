@@ -52,6 +52,7 @@ PeriodicOneDOneParticle::PeriodicOneDOneParticle (int nbrState, int low)
   this->NbrState = nbrState;
   this->LowerImpulsion = low;
   this->HilbertSpaceDimension = this->NbrState;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // copy constructor

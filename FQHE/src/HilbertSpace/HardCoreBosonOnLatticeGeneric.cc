@@ -102,6 +102,7 @@ HardCoreBosonOnLatticeGeneric::HardCoreBosonOnLatticeGeneric (int nbrBosons, Lat
   this->CurrentMappings = new int[NbrStates]; 
   this->CurrentTranslationPhases = new Complex[NbrStates];
 
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
 //   for (int i=0; i<HilbertSpaceDimension; ++i)
 //     {
@@ -177,6 +178,7 @@ HardCoreBosonOnLatticeGeneric::HardCoreBosonOnLatticeGeneric(const HardCoreBoson
       this->CurrentMappings[i] = bosons.CurrentMappings[i];
       this->CurrentTranslationPhases[i] = bosons.CurrentTranslationPhases[i];
     }
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
 }
 
@@ -267,6 +269,7 @@ HardCoreBosonOnLatticeGeneric& HardCoreBosonOnLatticeGeneric::operator = (const 
       this->CurrentMappings[i] = bosons.CurrentMappings[i];
       this->CurrentTranslationPhases[i] = bosons.CurrentTranslationPhases[i];
     }
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 

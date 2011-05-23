@@ -54,6 +54,7 @@ PeriodicXReflexionYZPeriodicThreeDOneParticle::PeriodicXReflexionYZPeriodicThree
   this->StateY = new PeriodicOneDOneParticle (nbrStateY, lowY);
   this->StateZ = new PeriodicOneDOneParticle (nbrStateZ, lowZ);
   this->HilbertSpaceDimension = this->StateX->GetNbrState () * this->StateY->GetNbrState () * this->StateZ->GetNbrState ();
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // copy constructor
@@ -66,6 +67,7 @@ PeriodicXReflexionYZPeriodicThreeDOneParticle::PeriodicXReflexionYZPeriodicThree
   this->StateY = (PeriodicOneDOneParticle*) space.StateY;
   this->StateZ = (PeriodicOneDOneParticle*) space.StateZ;
   this->HilbertSpaceDimension = space.HilbertSpaceDimension;  
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor

@@ -68,6 +68,7 @@ Spin1ChainWithTranslations::Spin1ChainWithTranslations ()
   this->CompatibilityWithMomentum = 0;
   this->RescalingFactors = 0;
   this->NbrStateInOrbit = 0;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // constructor for Hilbert space with no restriction on total spin projection Sz
@@ -97,6 +98,7 @@ Spin1ChainWithTranslations::Spin1ChainWithTranslations (int chainLength, int mom
   this->CreatePrecalculationTable();
   this->HilbertSpaceDimension = this->GenerateStates (memorySlice >> 3);
   this->CreateLookUpTable();
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // constructor for Hilbert space corresponding to a given total spin projection Sz
@@ -128,6 +130,7 @@ Spin1ChainWithTranslations::Spin1ChainWithTranslations (int chainLength, int mom
   this->CreatePrecalculationTable();
   this->HilbertSpaceDimension = this->GenerateStates (this->Sz, memorySlice >> 3);
   this->CreateLookUpTable();
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // constructor from pre-constructed datas
@@ -156,6 +159,7 @@ Spin1ChainWithTranslations::Spin1ChainWithTranslations (int hilbertSpaceDimensio
   this->ChainLength = chainLength;
   this->CreatePrecalculationTable();
   this->CreateLookUpTable();
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
   
 // copy constructor (without duplicating datas)
@@ -195,6 +199,7 @@ Spin1ChainWithTranslations::Spin1ChainWithTranslations (const Spin1ChainWithTran
       this->RescalingFactors = 0;
       this->NbrStateInOrbit = 0;
     }
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -266,6 +271,7 @@ Spin1ChainWithTranslations& Spin1ChainWithTranslations::operator = (const Spin1C
       this->RescalingFactors = 0;
       this->NbrStateInOrbit = 0;
     }
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 

@@ -63,6 +63,7 @@ FermionOnSphereWithSpinSzProjection::FermionOnSphereWithSpinSzProjection (int nb
   this->SzProjectionValue = szProjectionValue;
   this->FullSpace = new FermionOnSphereWithSpin(nbrFermions, totalLz, lzMax, totalSpin, memory);
   this->HilbertSpaceDimension = FullSpace->GetHilbertSpaceDimension();
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   this->Flag.Initialize();
 }
 
@@ -79,6 +80,7 @@ FermionOnSphereWithSpinSzProjection::FermionOnSphereWithSpinSzProjection(const F
   this->FullSpace = fermions.FullSpace;
   this->SzProjectionValue = fermions.SzProjectionValue;
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -106,6 +108,7 @@ FermionOnSphereWithSpinSzProjection& FermionOnSphereWithSpinSzProjection::operat
   this->FullSpace = fermions.FullSpace;
   this->SzProjectionValue = fermions.SzProjectionValue;
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   if (fermions.TargetSpace != &fermions)
     this->TargetSpace = fermions.TargetSpace;
   else

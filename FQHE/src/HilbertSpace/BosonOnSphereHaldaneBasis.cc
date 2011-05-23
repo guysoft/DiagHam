@@ -197,6 +197,7 @@ BosonOnSphereHaldaneBasis::BosonOnSphereHaldaneBasis (int nbrBosons, int totalLz
   delete[] this->KeyInvertTableNbrIndices;
   delete[] this->KeyInvertIndices;
   this->GenerateLookUpTable(0);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
 #ifdef __DEBUG__
   int UsedMemory = 0;
@@ -244,6 +245,7 @@ BosonOnSphereHaldaneBasis::BosonOnSphereHaldaneBasis(const BosonOnSphereHaldaneB
   this->Minors = bosons.Minors;
   this->TemporaryState = new int [this->NbrLzValue];
   this->ProdATemporaryState = new int [this->NbrLzValue];
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -349,6 +351,7 @@ BosonOnSphereHaldaneBasis& BosonOnSphereHaldaneBasis::operator = (const BosonOnS
   this->Minors = bosons.Minors;
   this->TemporaryState = new int [this->NbrLzValue];
   this->ProdATemporaryState = new int [this->NbrLzValue];
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
   return *this;
 }

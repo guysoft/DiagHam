@@ -49,6 +49,7 @@ TwoDOneParticle::TwoDOneParticle (int nbrStateX, int nbrStateY)
   this->StateX = new OneDOneParticle (nbrStateX);
   this->StateY = new OneDOneParticle (nbrStateY);
   this->HilbertSpaceDimension = this->StateX->GetNbrState () * this->StateY->GetNbrState ();
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // copy constructor
@@ -60,6 +61,7 @@ TwoDOneParticle::TwoDOneParticle (const TwoDOneParticle& space)
   this->StateX = space.StateX;
   this->StateY = space.StateY;
   this->HilbertSpaceDimension = space.HilbertSpaceDimension;  
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -81,6 +83,7 @@ TwoDOneParticle& TwoDOneParticle::operator = (const TwoDOneParticle& space)
   this->StateX = space.StateX;
   this->StateY = space.StateY;
   this->HilbertSpaceDimension = space.HilbertSpaceDimension;  
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 

@@ -102,6 +102,7 @@ BosonOnLatticeGeneric::BosonOnLatticeGeneric (int nbrBosons, LatticePhases *latt
   this->CurrentTranslation = new int[2];
   this->CurrentMappings = new int[NbrStates]; 
   this->CurrentTranslationPhases = new Complex[NbrStates];
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
 
 #ifdef DEBUG_OUTPUT
@@ -161,6 +162,7 @@ BosonOnLatticeGeneric::BosonOnLatticeGeneric(const BosonOnLatticeGeneric& bosons
       this->CurrentMappings[i] = bosons.CurrentMappings[i];
       this->CurrentTranslationPhases[i] = bosons.CurrentTranslationPhases[i];
     }
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -262,6 +264,7 @@ BosonOnLatticeGeneric& BosonOnLatticeGeneric::operator = (const BosonOnLatticeGe
       this->CurrentMappings[i] = bosons.CurrentMappings[i];
       this->CurrentTranslationPhases[i] = bosons.CurrentTranslationPhases[i];
     }
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 

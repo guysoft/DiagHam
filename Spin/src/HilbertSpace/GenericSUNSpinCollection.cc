@@ -136,8 +136,7 @@ GenericSUNSpinCollection::GenericSUNSpinCollection(int levelN, int nbrSpins, int
   cout << "memory requested for lookup table = ";
   PrintMemorySize(cout, UsedMemory)<<endl;
 #endif
-
-
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 
@@ -153,7 +152,7 @@ GenericSUNSpinCollection::GenericSUNSpinCollection (GenericSUNSpinCollection &co
   this->LookUpTableDepth = collection.LookUpTableDepth;
   this->LookUpTableShift = collection.LookUpTableShift;
   this->LookUpTable = collection.LookUpTable;
-
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -186,6 +185,7 @@ GenericSUNSpinCollection& GenericSUNSpinCollection::operator = (GenericSUNSpinCo
   this->LookUpTableDepth = collection.LookUpTableDepth;
   this->LookUpTableShift = collection.LookUpTableShift;
   this->LookUpTable = collection.LookUpTable;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 
