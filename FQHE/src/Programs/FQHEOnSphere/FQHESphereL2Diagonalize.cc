@@ -75,6 +75,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
 
   (*PrecalculationGroup) += new BooleanOption ('\n', "disk-cache", "use disk cache for fast multiplication", false);
+  (*PrecalculationGroup) += new BooleanOption ('\n', "no-hermitian", "do not use hermitian symmetry of Hamiltonian", false);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-precalculation", "save precalculation in a file",0);
@@ -103,6 +104,7 @@ int main(int argc, char** argv)
   char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");  
   bool DiskCacheFlag = Manager.GetBoolean("disk-cache");
   bool FirstRun = true;
+  bool Hermitian = !Manager.GetBoolean("no-hermitian");
   char* OutputNameLz = new char [256 + strlen(Manager.GetString("interaction-name"))];
   if (strcmp ("fermions", Manager.GetString("statistics")) == 0)
     sprintf (OutputNameLz, "fermions_%s_n_%d_2s_%d_lz.dat", Manager.GetString("interaction-name"), NbrParticles, LzMax);
@@ -118,7 +120,7 @@ int main(int argc, char** argv)
 										  Architecture.GetArchitecture(), 
 										  Manager.GetDouble("l2-factor"),
 										  Memory, true, DiskCacheFlag,
-										  LoadPrecalculationFileName);
+										  LoadPrecalculationFileName, Hermitian);
 
   double Shift = Manager.GetDouble("energy-shift");
   Hamiltonian->ShiftHamiltonian(Shift);
