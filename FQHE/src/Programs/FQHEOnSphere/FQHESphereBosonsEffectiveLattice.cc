@@ -9,6 +9,7 @@
 #include "HilbertSpace/AbstractQHEParticle.h"
 #include "HilbertSpace/BosonOnSphereWithSpinAllSz.h"
 #include "Hamiltonian/ParticleOnSphereEffectiveLatticeHamiltonian.h"
+#include "Hamiltonian/ParticleOnSphereWithSpinL2Hamiltonian.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -65,6 +66,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('a', "alpha", "deviation of flux-density from n_phi=1/2", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('t', "tunnelling", "tunnelling splitting Delta_SAS that couples to S_z term", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('b', "density-imbalance", "density imbalance term that couples to S_x", 0.0);
+  (*SystemGroup) += new BooleanOption ('\n', "project-l2", "add a projector onto the L2 groundstate");
+  
   (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
   (*LanczosGroup)  += new SingleIntegerOption  ('\n', "full-diag", 
 						"maximum Hilbert space dimension for which full diagonalization is applied", 
@@ -79,7 +82,13 @@ int main(int argc, char** argv)
   (*LanczosGroup) += new SingleIntegerOption  ('\n', "nbr-vector", "maximum number of vector in RAM during Lanczos iteration", 10);
   (*LanczosGroup) += new BooleanOption  ('\n', "force-reorthogonalize", 
 					 "force to use Lanczos algorithm with reorthogonalizion even if the number of eigenvalues to evaluate is 1", false);
-  (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate", "evaluate eigenstates", false);  
+  (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate", "evaluate eigenstates", false);
+  (*LanczosGroup) += new SingleIntegerOption  ('\n', "l2-memory", "precalculation memory for L^2 operator",1000);
+  (*LanczosGroup) += new SingleIntegerOption  ('\n', "l2-nbr-vectors", "number of states stored for L^2 projection",10);
+  (*LanczosGroup) += new SingleIntegerOption  ('\n', "projector-storage", "additional number of vectors in RAM when using projected Lanczos", 2);
+  (*LanczosGroup) += new SingleIntegerOption  ('\n', "projector-iter-max", "maximum number of iterations for internal lanczos",100);
+  (*LanczosGroup) += new SingleDoubleOption ('\n', "projector-precision", "define Lanczos precision for projection (0 if automatically defined by the program)", 1e-14);
+  (*LanczosGroup) += new BooleanOption ('\n', "restart-projection", "allow lanczos projections to be restarted if full convergence not yet reached");
   (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate-convergence", "evaluate Lanczos convergence from eigenstate convergence", false);
   (*LanczosGroup) += new BooleanOption  ('\n', "show-itertime", "show time spent for each Lanczos iteration", false); 
   (*LanczosGroup) += new SingleStringOption  ('\n', "initial-vector", "use file as the initial vector for the Lanczos algorithm" , 0);
@@ -87,6 +96,8 @@ int main(int argc, char** argv)
   (*LanczosGroup) += new SingleDoubleOption ('\n', "lanczos-precision", "define Lanczos precision for eigenvalues (0 if automatically defined by the program)", 0);
   (*LanczosGroup) += new  BooleanOption ('\n', "fast-disk", "use disk storage to increase speed of ground state calculation and decrease memory footprint when using Lanczos algorithm");
   (*LanczosGroup) += new  BooleanOption ('\n', "resume-fastdisk", "resume the fast-disk mode Lanczos algorithm from a stopped one (for example due to computer crash)");
+
+  
 
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 0);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);	
@@ -269,10 +280,15 @@ int main(int argc, char** argv)
 
 
   char* OutputNameLz = new char [512 + strlen(Manager.GetString("interaction-name"))];
+  char* ExtraTerms = new char[50];
+  ExtraTerms[0]='\0';
+  if (Manager.GetBoolean("project-l2"))
+    sprintf(ExtraTerms,"_Pl2");
+
   if (Manager.GetString("interaction-file")!=NULL)
-    sprintf (OutputNameLz, "bosons_sphere_eff_su2_%s_a_%g_n_%d_2s_%d_t_%g_b_%g_lz.dat", Manager.GetString("interaction-name"), Alpha, NbrBosons, LzMax, DeltaSAS, DensityImbalance);
+    sprintf (OutputNameLz, "bosons_sphere_eff_su2%s_%s_a_%g_n_%d_2s_%d_t_%g_b_%g_lz.dat", ExtraTerms, Manager.GetString("interaction-name"), Alpha, NbrBosons, LzMax, DeltaSAS, DensityImbalance);
   else
-    sprintf (OutputNameLz, "bosons_sphere_eff_su2_a_%g_n_%d_2s_%d_t_%g_b_%g_lz.dat", Alpha, NbrBosons, LzMax, DeltaSAS, DensityImbalance);
+    sprintf (OutputNameLz, "bosons_sphere_eff_su2%s_a_%g_n_%d_2s_%d_t_%g_b_%g_lz.dat", ExtraTerms, Alpha, NbrBosons, LzMax, DeltaSAS, DensityImbalance);
 
   
   int Max = LzMax * NbrBosons;
@@ -324,14 +340,29 @@ int main(int argc, char** argv)
 	{
 	  Hamiltonian->SavePrecalculation(SavePrecalculationFileName);
 	}
+
+      int NbrProjectors = 0;
+      AbstractHamiltonian** Projectors = NULL;
+      if (Manager.GetBoolean("project-l2")) ++NbrProjectors;
+      Projectors = new AbstractHamiltonian*[NbrProjectors];
+      NbrProjectors = 0;
+      if (Manager.GetBoolean("project-l2"))
+	{
+	  AbstractHamiltonian* L2Projector =
+	    new ParticleOnSphereWithSpinL2Hamiltonian(Space, NbrBosons, LzMax, L, 
+						      Architecture.GetArchitecture(), 1.0, ((long)Manager.GetInteger("l2-memory"))<<20);
+	  L2Projector->ShiftHamiltonian(-0.25*(double)L*(L+2.0));
+	  Projectors[NbrProjectors++]=L2Projector;
+	}
+      
       char* EigenvectorName = 0;
       if (Manager.GetBoolean("eigenstate") == true)	
 	{
 	  EigenvectorName = new char [512];
 	  if (Manager.GetString("interaction-file")!=NULL)
-	    sprintf (EigenvectorName, "bosons_sphere_eff_su2_%s_a_%g_n_%d_2s_%d_t_%g_b_%g_lz_%d", Manager.GetString("interaction-name"), Alpha, NbrBosons, LzMax, DeltaSAS, DensityImbalance, L);
+	    sprintf (EigenvectorName, "bosons_sphere_eff_su2%s_%s_a_%g_n_%d_2s_%d_t_%g_b_%g_lz_%d", ExtraTerms, Manager.GetString("interaction-name"), Alpha, NbrBosons, LzMax, DeltaSAS, DensityImbalance, L);
 	  else
-	    sprintf (EigenvectorName, "bosons_sphere_eff_su2_a_%g_n_%d_2s_%d_t_%g_b_%g_lz_%d", Alpha, NbrBosons, LzMax, DeltaSAS, DensityImbalance, L);
+	    sprintf (EigenvectorName, "bosons_sphere_eff_su2%s_a_%g_n_%d_2s_%d_t_%g_b_%g_lz_%d", ExtraTerms, Alpha, NbrBosons, LzMax, DeltaSAS, DensityImbalance, L);
 	}
       QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);
       MainTaskOperation TaskOperation (&Task);
@@ -359,5 +390,7 @@ int main(int argc, char** argv)
     }
   if (DensityImbalance!=0.0)
     delete[] OneBodyPotentialUpDown;
+  if (ExtraTerms!=NULL)
+    delete [] ExtraTerms;
   return 0;
 }

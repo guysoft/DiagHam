@@ -335,7 +335,15 @@ int main()
 
 dnl Checks for library functions.
 
-CXXFLAGS=" -O2 -Wall "
+AC_MSG_CHECKING(environment for CXXFLAGS)
+
+if test -n "${CXXFLAGS}"; then
+  AC_MSG_RESULT([${CXXFLAGS}])
+else
+  CXXFLAGS=" -O2 -Wall "
+  AC_MSG_RESULT([using defaults])
+fi
+
 INCLUDES="-I\$(top_srcdir)/src -I\$(top_srcdir)/Base/src"
 
 dnl check for debugging/profiling mode 
