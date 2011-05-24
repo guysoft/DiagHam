@@ -1722,9 +1722,9 @@ RealVector* AbstractQHEOnSphereHamiltonian::ConjugateLowLevelMultipleAddMultiply
 			  Index = TmpParticles->AdAd(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
 			  if (Index < Dim)
 			    {
-			      Coefficient *= this->InteractionFactors[ReducedNbrInteractionFactors] * Coefficient2;
+			      Coefficient2 *= this->InteractionFactors[ReducedNbrInteractionFactors] * Coefficient;
 			      for (int l = 0; l < nbrVectors; ++l)
-				TmpSum[l] += Coefficient * vSources[l][Index];
+				TmpSum[l] += Coefficient2 * vSources[l][Index];
 			      ++ReducedNbrInteractionFactors;
 			    }
 			}
@@ -1927,9 +1927,9 @@ RealVector* AbstractQHEOnSphereHamiltonian::ConjugateLowLevelMultipleAddMultiply
 			    Index = TmpParticles->AdAd(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
 			    if (Index < Dim)
 			      {
-				Coefficient *= this->InteractionFactors[ReducedNbrInteractionFactors] * Coefficient2;
+				Coefficient2 *= this->InteractionFactors[ReducedNbrInteractionFactors] * Coefficient;
 				for (int l = 0; l < nbrVectors; ++l)
-				  TmpSum[l] += Coefficient * vSources[l][Index];
+				  TmpSum[l] += Coefficient2 * vSources[l][Index];
 			      }
 			    ++ReducedNbrInteractionFactors;
 			  }

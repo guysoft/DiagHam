@@ -383,6 +383,8 @@ bool MultipleVectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOpera
 	SegmentIndices[i]=this->FirstComponent+i*Step;
       SegmentIndices[TmpNbrThreads]=this->FirstComponent+this->NbrComponent;
     }
+
+
   MultipleVectorHamiltonianMultiplyOperation** TmpOperations = new MultipleVectorHamiltonianMultiplyOperation* [architecture->GetNbrThreads()];
   for (int i = 0; i < TmpNbrThreads; ++i)
     {

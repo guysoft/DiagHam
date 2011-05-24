@@ -49,7 +49,7 @@ using std::endl;
 
 
 // special flag to track the method used in matrix-vector multiplication, for debugging purpose only
-// #define __DEBUG_MATRIXVECTOR_MULT__
+//#define __DEBUG_MATRIXVECTOR_MULT__
 
 // destructor
 //
@@ -880,7 +880,7 @@ RealVector* AbstractHamiltonian::ConjugateLowLevelMultipleMultiply(RealVector* v
        << "							  int firstComponent, int nbrComponent)" << endl;
 #endif
   for (int i = 0; i < nbrVectors; ++i)
-    vDestinations[i].ClearVector();
+    vDestinations[i].ClearVectorSegment(firstComponent, nbrComponent);
   return ConjugateLowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, nbrComponent);
 }
 

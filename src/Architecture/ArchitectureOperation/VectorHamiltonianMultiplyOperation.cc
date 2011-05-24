@@ -239,9 +239,11 @@ bool VectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOperation(SMP
 {
   long *SegmentIndices=0;
   int TmpNbrThreads = architecture->GetNbrThreads();
+  bool CleanUp = false;
   if (Hamiltonian->GetLoadBalancing(TmpNbrThreads, SegmentIndices)==false)
     {
       SegmentIndices = new long[TmpNbrThreads+1];
+      CleanUp = true;
       int Step = this->NbrComponent / TmpNbrThreads;
       SegmentIndices[0]=this->FirstComponent;
       for (int i=0; i<TmpNbrThreads; ++i)
@@ -291,6 +293,8 @@ bool VectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOperation(SMP
     }
   delete TmpOperations[0];
   delete[] TmpOperations;
+  if (CleanUp)
+    delete [] SegmentIndices;
   return true;  
 }
   
