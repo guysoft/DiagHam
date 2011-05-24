@@ -1351,6 +1351,21 @@ bool BosonOnSphereWithSpinAllSz::WaveFunctionSubSpace(int twoSz, bool restrictio
   return true;
 }
 
+// get weight of wavefunction in current subspace
+// state = vector to be considered
+//
+// return = weight
+double BosonOnSphereWithSpinAllSz::GetWeightInSubSpace(RealVector& state)
+{
+  int NbrBosonsUp = (this->NbrBosons + this->SubspaceSz) >> 1;
+  double Weight = 0.0;
+  for (int k = 0; k < this->HilbertSpaceDimension; ++k)
+    if ((StateInfo[k]&0x03ffu) == (unsigned)NbrBosonsUp)
+      Weight+=state[k]*state[k];
+  return Weight;
+}
+
+
 // evaluate wave function in real space using a given basis and only for agiven range of components
 //
 // state = vector corresponding to the state in the Fock basis

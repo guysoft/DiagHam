@@ -210,6 +210,7 @@ int main(int argc, char** argv)
 	    }
 	  for (int j = 0; j < TmpNbrPseudoPotentials; ++j)
 	    PseudoPotentials[0][j] = TmpPseudoPotentials[j];
+	  delete [] TmpPseudoPotentials;
 	}
       else
 	if (InteractionDefinition["PseudopotentialsUpUp"] != 0)
@@ -227,6 +228,7 @@ int main(int argc, char** argv)
 	    }
 	  for (int j = 0; j < TmpNbrPseudoPotentials; ++j)
 	    PseudoPotentials[1][j] = TmpPseudoPotentials[j];
+	  delete [] TmpPseudoPotentials;
 	}
       else
 	if (InteractionDefinition["PseudopotentialsDownDown"] != 0)
@@ -244,6 +246,7 @@ int main(int argc, char** argv)
 	    }
 	  for (int j = 0; j < TmpNbrPseudoPotentials; ++j)
 	    PseudoPotentials[2][j] = TmpPseudoPotentials[j];
+	  delete [] TmpPseudoPotentials;
 	}
       else
 	if (InteractionDefinition["PseudopotentialsUpDown"] != 0)

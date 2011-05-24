@@ -351,7 +351,12 @@ class BosonOnSphereWithSpinAllSz :  public ParticleOnSphereWithSpin
   // twoSz = subspace to restrict to
   // restriction = flag whether restriction shall be set (true) or deleted (false)
   virtual bool WaveFunctionSubSpace(int twoSz, bool restriction=true);
-  
+
+  // get weight of wavefunction in current subspace
+  // state = vector to be considered
+  //
+  // return = weight
+  virtual double GetWeightInSubSpace(RealVector& state);
   
   // evaluate wave function in real space using a given basis
   //

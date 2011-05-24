@@ -44,7 +44,7 @@ class SingleIntegerOption : public AbstractOption
   long Integer;
   
   // default value
-  double DefaultValue;
+  long DefaultValue;
 
   // maximum value allowed
   long MaxValue;

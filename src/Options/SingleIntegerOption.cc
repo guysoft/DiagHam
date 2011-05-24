@@ -104,7 +104,7 @@ int SingleIntegerOption::ReadOption(char** argumentValues, int nbrArgument, int 
 	  {
 	    this->ErrorCode = SingleIntegerOption::Greater;
 	    return -1;
-	  }	  
+	  }
 	return 1;
       }
     else

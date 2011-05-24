@@ -575,8 +575,10 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 		  if (this->NbrProjectors>0)
 		    {
 		      cout << "Info: projected reorthogonalized Lanczos defaults to using disk storage"<<endl;
+		      cout << "      nbr iterations controlled by MaxNbrIterLanczos"<<endl;
 		      cout << "Using ProjectedReorthogonalizedLanczosAlgorithmDiskStorage"<<endl;
 		      this->DiskFlag = true;
+		      this->NbrIterLanczos = this->MaxNbrIterLanczos;
 		      Lanczos = new ProjectedReorthogonalizedLanczosAlgorithmDiskStorage(this->Projectors, this->NbrProjectors,
 											 this->Architecture, this->NbrEigenvalue,
 											 this->MaxNbrIterLanczos, this->NbrProjectorStorage,

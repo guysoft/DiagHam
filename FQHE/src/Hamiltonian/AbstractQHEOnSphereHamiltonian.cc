@@ -1253,6 +1253,7 @@ RealVector* AbstractQHEOnSphereHamiltonian::LowLevelMultipleAddMultiplyDiskStora
 RealVector& AbstractQHEOnSphereHamiltonian::ConjugateLowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
 									 int firstComponent, int nbrComponent)
 {
+  cout << "AbstractQHEOnSphereHamiltonian::ConjugateLowLevelAddMultiply"<<endl;
   int LastComponent = firstComponent + nbrComponent;
   int Dim = this->Particles->GetHilbertSpaceDimension();
   double Coefficient;
@@ -1408,7 +1409,7 @@ RealVector& AbstractQHEOnSphereHamiltonian::ConjugateLowLevelAddMultiply(RealVec
 RealVector& AbstractQHEOnSphereHamiltonian::ConjugateLowLevelAddMultiplyPartialFastMultiply(RealVector& vSource, RealVector& vDestination, 
 										   int firstComponent, int nbrComponent)
 {
-  //cout << "ConjugateLowLevelAddMultiplyPartialFastMultiply not yet edited!"<<endl;
+  cout << "AbstractQHEOnSphereHamiltonian::ConjugateLowLevelAddMultiplyPartialFastMultiply"<<endl;
   int LastComponent = firstComponent + nbrComponent;
   int Dim = this->Particles->GetHilbertSpaceDimension();
   double Coefficient;
@@ -1661,6 +1662,7 @@ RealVector& AbstractQHEOnSphereHamiltonian::ConjugateLowLevelAddMultiplyDiskStor
 RealVector* AbstractQHEOnSphereHamiltonian::ConjugateLowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
 									int firstComponent, int nbrComponent)
 {
+  cout << "AbstractQHEOnSphereHamiltonian::ConjugateLowLevelMultipleAddMultiply"<<endl;
   int LastComponent = firstComponent + nbrComponent;
   int Dim = this->Particles->GetHilbertSpaceDimension();
   double Coefficient;
@@ -1828,6 +1830,7 @@ RealVector* AbstractQHEOnSphereHamiltonian::ConjugateLowLevelMultipleAddMultiply
 RealVector* AbstractQHEOnSphereHamiltonian::ConjugateLowLevelMultipleAddMultiplyPartialFastMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
 											   int firstComponent, int nbrComponent)
 {
+  cout << "AbstractQHEOnSphereHamiltonian::ConjugateLowLevelMultipleAddMultiplyPartialFastMultiply"<<endl;
   int LastComponent = firstComponent + nbrComponent;
   int Dim = this->Particles->GetHilbertSpaceDimension();
   double Coefficient;

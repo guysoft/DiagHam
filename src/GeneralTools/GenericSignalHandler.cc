@@ -23,6 +23,7 @@ GenericSignalHandler::GenericSignalHandler(int signum, bool iterateOnRelease)
   ++NbrSignalHandlers;
   this->SignalNumber=signum;
   this->IteratePreviousSignalOnRelease=iterateOnRelease;
+  this->SignalHandlerSet=false;
   this->SignalDeferred=0;
   this->SignalPending=0;
   if (!SignalHandlerInitialized)
