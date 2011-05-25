@@ -364,7 +364,7 @@ int main(int argc, char** argv)
 	  else
 	    sprintf (EigenvectorName, "bosons_sphere_eff_su2%s_a_%g_n_%d_2s_%d_t_%g_b_%g_lz_%d", ExtraTerms, Alpha, NbrBosons, LzMax, DeltaSAS, DensityImbalance, L);
 	}
-      QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);
+      QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax, Projectors, NbrProjectors);
       MainTaskOperation TaskOperation (&Task);
       TaskOperation.ApplyOperation(Architecture.GetArchitecture());
       delete Hamiltonian;
