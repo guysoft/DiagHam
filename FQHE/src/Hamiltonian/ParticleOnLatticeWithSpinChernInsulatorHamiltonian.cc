@@ -908,3 +908,5 @@ void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::PartialEnableFastMultip
       ++Pos;
     }
 }
+
+

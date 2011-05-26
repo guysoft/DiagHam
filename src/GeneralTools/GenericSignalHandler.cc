@@ -26,6 +26,7 @@ GenericSignalHandler::GenericSignalHandler(int signum, bool iterateOnRelease)
   this->SignalHandlerSet=false;
   this->SignalDeferred=0;
   this->SignalPending=0;
+  this->SignalHandlerSet = false;
   if (!SignalHandlerInitialized)
     {
       // initialize signal handler fields
@@ -77,7 +78,7 @@ void GenericSignalHandler::CatchSignal(int signum)
 void GenericSignalHandler::StartToDeferSignal()
 {
   //  cout << "Activating deferred signal no. "<<SignalNumber<<endl;
-  if (SignalHandlerSet==false)
+  if (this->SignalHandlerSet == false)
     {
       signal(this->SignalNumber, &DiagHamSignalHandler);
       this->SignalHandlerSet=true;

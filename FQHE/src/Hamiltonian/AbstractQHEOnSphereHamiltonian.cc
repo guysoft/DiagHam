@@ -157,7 +157,7 @@ bool AbstractQHEOnSphereHamiltonian::IsHermitian()
 //
 bool AbstractQHEOnSphereHamiltonian::IsConjugate()
 {
-  return true;
+  return false;
 }
 
 // symmetrize interaction factors to enable hermitian matrix multiplication
@@ -1778,6 +1778,17 @@ RealVector* AbstractQHEOnSphereHamiltonian::ConjugateLowLevelMultipleAddMultiply
 	  int k = firstComponent;
 	  firstComponent -= this->PrecalculationShift;
 	  LastComponent -= this->PrecalculationShift;
+	  cout << "before " << firstComponent << " " << LastComponent << "  ";
+	  for (int i = firstComponent; i < (firstComponent + 10); ++i)
+	    {
+	      cout << (i + this->PrecalculationShift) << " : ";
+	      for (int l = 0; l < nbrVectors; ++l)
+		{
+		  cout << vDestinations[l][i + this->PrecalculationShift] << " ";
+		}
+	      cout << "| ";
+	    }
+	  cout << endl;
 	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
 	      for (int l = 0; l < nbrVectors; ++l)
@@ -1794,9 +1805,20 @@ RealVector* AbstractQHEOnSphereHamiltonian::ConjugateLowLevelMultipleAddMultiply
 		}
 	      for (int l = 0; l < nbrVectors; ++l)
 		vDestinations[l][k] += TmpSum[l] + this->HamiltonianShift * vSources[l][k];
-	      ++k;
+		++k;
 	    }
 	  delete[] TmpSum;
+	  cout << "after " << k << "  ; ";
+	  for (int i = firstComponent; i < (firstComponent + 10); ++i)
+	    {
+	      cout << (i + this->PrecalculationShift) << " : ";
+	      for (int l = 0; l < nbrVectors; ++l)
+		{
+		  cout << vDestinations[l][i + this->PrecalculationShift] << " ";
+		}
+	      cout << "| ";
+	    }
+	  cout << endl;
 	}
       else
 	{
