@@ -188,47 +188,30 @@ Complex HaldaneShastryHamiltonianWithTranslations::MatrixElement (ComplexVector&
     {
       for (int j = 0; j < MaxPos; j++)
 	{
-	  pos = this->Chain->SmiSpj(j, j + 1, i, Coef, NbrTranslation);
-	  if (pos != this->Chain->GetHilbertSpaceDimension())
+	  for (int k = j + 1; k < this->NbrSpin; ++k)
 	    {
-	      Coef *= this->HalfJ;
-	      TmpZ.Re = Coef * ((V2.Re(i) * this->CosinusTable[NbrTranslation]) -
-				(V2.Im(i) * this->SinusTable[NbrTranslation]));
-	      TmpZ.Im = Coef * ((V2.Re(i) * this->SinusTable[NbrTranslation]) +
-				(V2.Im(i) * this->CosinusTable[NbrTranslation]));
-	      Z += Conj(V1[pos]) * TmpZ;
-	    }
-	  pos = this->Chain->SmiSpj(j + 1, j, i, Coef, NbrTranslation);
-	  if (pos != this->Chain->GetHilbertSpaceDimension())
-	    {
-	      Coef *= this->HalfJ;
-	      TmpZ.Re = Coef * ((V2.Re(i) * this->CosinusTable[NbrTranslation]) -
-				(V2.Im(i) * this->SinusTable[NbrTranslation]));
-	      TmpZ.Im = Coef * ((V2.Re(i) * this->SinusTable[NbrTranslation]) +
-				(V2.Im(i) * this->CosinusTable[NbrTranslation]));
-	      Z += Conj(V1[pos]) * TmpZ;
-	    }
-	}    
-      pos = this->Chain->SmiSpj(MaxPos, 0, i, Coef, NbrTranslation);
-      if (pos != this->Chain->GetHilbertSpaceDimension())
-	{
-	  Coef *= this->HalfJ;
-	  TmpZ.Re = Coef * ((V2.Re(i) * this->CosinusTable[NbrTranslation]) -
-			    (V2.Im(i) * this->SinusTable[NbrTranslation]));
-	  TmpZ.Im = Coef * ((V2.Re(i) * this->SinusTable[NbrTranslation]) +
-			    (V2.Im(i) * this->CosinusTable[NbrTranslation]));
-	  Z += Conj(V1[pos]) * TmpZ;
+	      pos = this->Chain->SmiSpj(j, k, i, Coef, NbrTranslation);
+	      if (pos != this->Chain->GetHilbertSpaceDimension())
+		{
+		  Coef *= 0.5 * this->JCoupling[k - j];
+		  TmpZ.Re = Coef * ((V2.Re(i) * this->CosinusTable[NbrTranslation]) -
+				    (V2.Im(i) * this->SinusTable[NbrTranslation]));
+		  TmpZ.Im = Coef * ((V2.Re(i) * this->SinusTable[NbrTranslation]) +
+				    (V2.Im(i) * this->CosinusTable[NbrTranslation]));
+		  Z += Conj(V1[pos]) * TmpZ;
+		}
+	      pos = this->Chain->SmiSpj(k, j, i, Coef, NbrTranslation);
+	      if (pos != this->Chain->GetHilbertSpaceDimension())
+		{
+		  Coef *= 0.5 * this->JCoupling[k - j];
+		  TmpZ.Re = Coef * ((V2.Re(i) * this->CosinusTable[NbrTranslation]) -
+				    (V2.Im(i) * this->SinusTable[NbrTranslation]));
+		  TmpZ.Im = Coef * ((V2.Re(i) * this->SinusTable[NbrTranslation]) +
+				    (V2.Im(i) * this->CosinusTable[NbrTranslation]));
+		  Z += Conj(V1[pos]) * TmpZ;
+		}
+	    }    
 	}
-      pos = this->Chain->SmiSpj(0, MaxPos, i, Coef, NbrTranslation);
-      if (pos != this->Chain->GetHilbertSpaceDimension())
-	{
-	  Coef *= this->HalfJ;
-	  TmpZ.Re = Coef * ((V2.Re(i) * this->CosinusTable[NbrTranslation]) -
-			    (V2.Im(i) * this->SinusTable[NbrTranslation]));
-	  TmpZ.Im = Coef * ((V2.Re(i) * this->SinusTable[NbrTranslation]) +
-			    (V2.Im(i) * this->CosinusTable[NbrTranslation]));
-	  Z += Conj(V1[pos]) * TmpZ;
-	}      
     }
   return Z;
 }
@@ -252,47 +235,32 @@ ComplexVector& HaldaneShastryHamiltonianWithTranslations::LowLevelAddMultiply(Co
   int Last = firstComponent + nbrComponent;
   for (int i = firstComponent; i < Last; i++)
     {
-       vDestination.Re(i) += this->SzSzContributions[i] * vSource.Re(i);
-       vDestination.Im(i) += this->SzSzContributions[i] * vSource.Im(i);
-     for (int j = 0; j < MaxPos; j++)
+      vDestination.Re(i) += this->SzSzContributions[i] * vSource.Re(i);
+      vDestination.Im(i) += this->SzSzContributions[i] * vSource.Im(i);
+      for (int j = 0; j < MaxPos; j++)
 	{
-	  pos = this->Chain->SmiSpj(j, j + 1, i, Coef, NbrTranslation);
-	  if (pos != this->Chain->GetHilbertSpaceDimension())
+	  for (int k = j + 1; k < this->NbrSpin; ++k)
 	    {
-	      Coef *= this->HalfJ;
-	      vDestination.Re(pos) += Coef * ((vSource.Re(i) * this->CosinusTable[NbrTranslation]) -
-					      (vSource.Im(i) * this->SinusTable[NbrTranslation]));
-	      vDestination.Im(pos) += Coef * ((vSource.Re(i) * this->SinusTable[NbrTranslation]) +
-					      (vSource.Im(i) * this->CosinusTable[NbrTranslation]));
-	    }
-	  pos = this->Chain->SmiSpj(j + 1, j, i, Coef, NbrTranslation);
-	  if (pos != this->Chain->GetHilbertSpaceDimension())
-	    {
-	      Coef *= this->HalfJ;
-	      vDestination.Re(pos) += Coef * ((vSource.Re(i) * this->CosinusTable[NbrTranslation]) -
-					      (vSource.Im(i) * this->SinusTable[NbrTranslation]));
-	      vDestination.Im(pos) += Coef * ((vSource.Re(i) * this->SinusTable[NbrTranslation]) +
-					      (vSource.Im(i) * this->CosinusTable[NbrTranslation]));
-	    }
-	}    
-      pos = this->Chain->SmiSpj(MaxPos, 0, i, Coef, NbrTranslation);
-      if (pos != this->Chain->GetHilbertSpaceDimension())
-	{
-	  Coef *= this->HalfJ;
-	  vDestination.Re(pos) += Coef * ((vSource.Re(i) * this->CosinusTable[NbrTranslation]) -
-					  (vSource.Im(i) * this->SinusTable[NbrTranslation]));
-	  vDestination.Im(pos) += Coef * ((vSource.Re(i) * this->SinusTable[NbrTranslation]) +
-					  (vSource.Im(i) * this->CosinusTable[NbrTranslation]));
+	      pos = this->Chain->SmiSpj(j, k, i, Coef, NbrTranslation);
+	      if (pos != this->Chain->GetHilbertSpaceDimension())
+		{
+		  Coef *= 0.5 * this->JCoupling[k - j];
+		  vDestination.Re(pos) += Coef * ((vSource.Re(i) * this->CosinusTable[NbrTranslation]) -
+						  (vSource.Im(i) * this->SinusTable[NbrTranslation]));
+		  vDestination.Im(pos) += Coef * ((vSource.Re(i) * this->SinusTable[NbrTranslation]) +
+						  (vSource.Im(i) * this->CosinusTable[NbrTranslation]));
+		}
+	      pos = this->Chain->SmiSpj(k, j, i, Coef, NbrTranslation);
+	      if (pos != this->Chain->GetHilbertSpaceDimension())
+		{
+		  Coef *= 0.5 * this->JCoupling[k - j];
+		  vDestination.Re(pos) += Coef * ((vSource.Re(i) * this->CosinusTable[NbrTranslation]) -
+						  (vSource.Im(i) * this->SinusTable[NbrTranslation]));
+		  vDestination.Im(pos) += Coef * ((vSource.Re(i) * this->SinusTable[NbrTranslation]) +
+						  (vSource.Im(i) * this->CosinusTable[NbrTranslation]));
+		}
+	    }    
 	}
-      pos = this->Chain->SmiSpj(0, MaxPos, i, Coef, NbrTranslation);
-      if (pos != this->Chain->GetHilbertSpaceDimension())
-	{
-	  Coef *= this->HalfJ;
-	  vDestination.Re(pos) += Coef * ((vSource.Re(i) * this->CosinusTable[NbrTranslation]) -
-					  (vSource.Im(i) * this->SinusTable[NbrTranslation]));
-	  vDestination.Im(pos) += Coef * ((vSource.Re(i) * this->SinusTable[NbrTranslation]) +
-					  (vSource.Im(i) * this->CosinusTable[NbrTranslation]));
-	}      
     }
   return vDestination;
 }
@@ -347,10 +315,11 @@ void HaldaneShastryHamiltonianWithTranslations::EvaluateDiagonalMatrixElements()
       this->SzSzContributions[i] = 0.0;
       for (int j = 0; j < (this->NbrSpin - 1); j++)
 	{
-	  this->SzSzContributions[i] += this->Chain->SziSzj(j, j + 1, i);
+	  for (int k = j + 1; k < this->NbrSpin; ++k)
+	    {
+	      this->SzSzContributions[i] += this->JCoupling[k - j] * this->Chain->SziSzj(j, k, i);
+	    }
 	}
-      this->SzSzContributions[i] += this->Chain->SziSzj(this->NbrSpin - 1, 0, i);
-      this->SzSzContributions[i] *= this->Jz;
     }
 }
 

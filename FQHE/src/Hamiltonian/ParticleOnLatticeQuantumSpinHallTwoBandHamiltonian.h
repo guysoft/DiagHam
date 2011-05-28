@@ -307,7 +307,7 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 // tmpCoefficients = a temporary array whose size is nbrVectors
 
 inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int index, ComplexVector* vSources, 
-											  ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients)
+												      ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients)
 {
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
@@ -467,6 +467,7 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
   int SumIndices;
   int TmpNbrM3Values;
   int* TmpM3Values;
+
 }
 
 #endif
