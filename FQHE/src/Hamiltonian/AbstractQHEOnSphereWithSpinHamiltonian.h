@@ -275,8 +275,9 @@ class AbstractQHEOnSphereWithSpinHamiltonian : public AbstractQHEOnSphereHamilto
   // enable fast multiplication algorithm (partial evaluation)
   //
   // firstComponent = index of the first component that has to be precalcualted
-  // lastComponent  = index of the last component that has to be precalcualted
-  virtual void PartialEnableFastMultiplication(int firstComponent, int lastComponent);
+  // nbrComponent  = number of components that have to be precalcualted
+  //
+  virtual void PartialEnableFastMultiplication(int firstComponent, int nbrComponent);
 
   // enable fast multiplication algorithm
   //

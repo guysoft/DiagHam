@@ -574,9 +574,6 @@ void AbstractQHEOnSphereWithSpinHamiltonian::EnableFastMultiplication()
   long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
-  int* TmpIndexArray;
-  double* TmpCoefficientArray;
-  long Pos;
   timeval TotalStartingTime2;
   timeval TotalEndingTime2;
   double Dt2;
@@ -587,22 +584,19 @@ void AbstractQHEOnSphereWithSpinHamiltonian::EnableFastMultiplication()
     ++ReducedSpaceDimension;
   this->InteractionPerComponentIndex = new int* [ReducedSpaceDimension];
   this->InteractionPerComponentCoefficient = new double* [ReducedSpaceDimension];
-  ParticleOnSphereWithSpin* TmpParticles = (ParticleOnSphereWithSpin*) this->Particles;
-  int Dim = TmpParticles->GetHilbertSpaceDimension();
-  int TotalPos = 0;
-  
 
+  int TotalPos = 0;
   for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
     {
       this->InteractionPerComponentIndex[TotalPos] = new int [this->NbrInteractionPerComponent[TotalPos]];
-      this->InteractionPerComponentCoefficient[TotalPos] = new double [this->NbrInteractionPerComponent[TotalPos]];      
-      TmpIndexArray = this->InteractionPerComponentIndex[TotalPos];
-      TmpCoefficientArray = this->InteractionPerComponentCoefficient[TotalPos];
-      Pos = 0l;
-      this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, TmpIndexArray, TmpCoefficientArray, Pos);
-      this->EvaluateMNOneBodyFastMultiplicationComponent(TmpParticles, i, TmpIndexArray, TmpCoefficientArray, Pos);
+      this->InteractionPerComponentCoefficient[TotalPos] = new double [this->NbrInteractionPerComponent[TotalPos]];
       ++TotalPos;
     }
+
+  QHEParticlePrecalculationOperation Operation(this, false);
+  Operation.ApplyOperation(this->Architecture);
+
+  
   this->FastMultiplicationFlag = true;
   gettimeofday (&(TotalEndingTime2), 0);
   cout << "------------------------------------------------------------------" << endl << endl;;
@@ -614,10 +608,37 @@ void AbstractQHEOnSphereWithSpinHamiltonian::EnableFastMultiplication()
 // enable fast multiplication algorithm (partial evaluation)
 //
 // firstComponent = index of the first component that has to be precalcualted
-// lastComponent  = index of the last component that has to be precalcualted
+// nbrComponent  = number of components that have to be precalcualted
 
-void AbstractQHEOnSphereWithSpinHamiltonian::PartialEnableFastMultiplication(int firstComponent, int lastComponent)
+void AbstractQHEOnSphereWithSpinHamiltonian::PartialEnableFastMultiplication(int firstComponent, int nbrComponent)
 {
+  int LastComponent = nbrComponent + firstComponent;
+
+  int* TmpIndexArray;
+  double* TmpCoefficientArray;
+  long ColumnIndex;
+  ParticleOnSphereWithSpin* TmpParticles = (ParticleOnSphereWithSpin*) this->Particles->Clone();
+
+  firstComponent -= this->PrecalculationShift;
+  LastComponent -= this->PrecalculationShift;
+  long Pos = firstComponent / this->FastMultiplicationStep; 
+  int PosMod = firstComponent % this->FastMultiplicationStep;
+  if (PosMod != 0)
+    {
+      ++Pos;
+      PosMod = this->FastMultiplicationStep - PosMod;
+    }
+  for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
+    {
+      TmpIndexArray = this->InteractionPerComponentIndex[Pos];
+      TmpCoefficientArray = this->InteractionPerComponentCoefficient[Pos];
+      ColumnIndex = 0l;
+      this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, TmpIndexArray, TmpCoefficientArray, ColumnIndex);
+      this->EvaluateMNOneBodyFastMultiplicationComponent(TmpParticles, i, TmpIndexArray, TmpCoefficientArray, ColumnIndex);
+      ++Pos;
+    }
+  
+  delete TmpParticles;
 }
 
 // enable fast multiplication algorithm using on disk cache 
