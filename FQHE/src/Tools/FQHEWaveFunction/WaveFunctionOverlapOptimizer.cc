@@ -44,7 +44,10 @@ WaveFunctionOverlapOptimizer::WaveFunctionOverlapOptimizer( Abstract1DComplexFun
   this->NbrParameters = this->TrialState->GetNbrParameters();
   this->LastParameterExcluded = excludeLastParameter; // do not optimize last trial parameter
   if (excludeLastParameter)
-    this->EffectiveNbrParameters = this->NbrParameters-1;
+    {
+      this->EffectiveNbrParameters = this->NbrParameters-1;
+      cout << "not varying last trial parameter";
+    }
   else
     this->EffectiveNbrParameters = this->NbrParameters;
   this->LimitSamples=limitSamples;
@@ -316,7 +319,7 @@ void WaveFunctionOverlapOptimizer::CalculateLinearSeries(RealVector &startParame
   this->ManyValues.Resize(this->MaxParameters);
   // set parameters for which the overlap shall be calculated:
   int StatesPerPoint = 1+2*this->EffectiveNbrParameters;
-  RealVector TmpParameters(startParameters,true);
+  RealVector TmpParameters(startParameters, true);
   RealVector TmpStep;
   TmpStep.Copy(stepDirection, this->StepLength); // initialize TmpStep with StepLength * stepDirection
   for (int p=0; p<LinearPoints; ++p)
@@ -369,6 +372,7 @@ void WaveFunctionOverlapOptimizer::CalculateLinearSeries(RealVector &startParame
 
 double WaveFunctionOverlapOptimizer::GetRandomOffset(int parameter)
 {
+  if (parameter==this->EffectiveNbrParameters) return 0.0;
   double ran = this->Generator->GetRealRandomNumber();
   double sign=-1.0;
   if (ran>0.5) sign = 1.0;

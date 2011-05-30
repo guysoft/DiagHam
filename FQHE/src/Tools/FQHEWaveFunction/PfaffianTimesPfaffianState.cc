@@ -309,7 +309,12 @@ void PfaffianTimesPfaffianState::GetForManyParameters(ComplexVector &results, Re
   for (int s=0; s<numParamSets; ++s)
     {
       tmpCoefficients = coefficients[s];
-      
+      /*      
+      cout<<"tmpCoefficients="<<tmpCoefficients[0];
+      for (int k=1; k<this->NbrLandauLevels; ++k)
+	cout<<" "<<tmpCoefficients[k];
+      cout<<"; "<<tmpCoefficients[NbrLandauLevels]<<endl;
+      */
       // initialize Slater determinant 
       for (int i=0;i<this->NbrParticlesPerLayer;++i)
 	{

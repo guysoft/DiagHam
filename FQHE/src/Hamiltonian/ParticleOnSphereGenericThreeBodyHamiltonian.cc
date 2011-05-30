@@ -388,7 +388,7 @@ void ParticleOnSphereGenericThreeBodyHamiltonian::EvaluateInteractionFactors()
 	}
       delete[] TmpInteractionCoeffients;
     }
-  else
+  else // three-body interactions for bosons
     {
       this->MinSumIndices[3] = 0;
       this->MaxSumIndices[3] = this->LzMax * 3;

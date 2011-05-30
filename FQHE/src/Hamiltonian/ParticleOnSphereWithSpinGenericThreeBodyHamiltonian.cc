@@ -454,7 +454,7 @@ AbstractHamiltonian* ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::Clone 
 // evaluate all interaction factors
 //   
 
-void ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::EvaluateInteractionFactors()
+void    ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::EvaluateInteractionFactors()
 {
   double* TmpNormalizationCoeffients = new double[this->NbrLzValue];
   double TmpFactor = ((double) this->NbrLzValue) / (4.0 * M_PI);
@@ -513,23 +513,23 @@ void ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::EvaluateInteractionFac
 	  if (Lim > 0)
 	    {
 	      int* TmpNIndices2 = this->SortedIndicesPerSum[3][0][MinSum];
-	      int TmpMaxRealtiveMonentum = 8;
-	      if (this->MaxRelativeAngularMomentum[0] <= TmpMaxRealtiveMonentum)
-		TmpMaxRealtiveMonentum = this->MaxRelativeAngularMomentum[0];
-	      if (this->MaxRelativeAngularMomentum[1] > TmpMaxRealtiveMonentum)
+	      int TmpMaxRelativeMomentum = 8;
+	      if (this->MaxRelativeAngularMomentum[0] <= TmpMaxRelativeMomentum)
+		TmpMaxRelativeMomentum = this->MaxRelativeAngularMomentum[0];
+	      if (this->MaxRelativeAngularMomentum[1] > TmpMaxRelativeMomentum)
 		{
 		  if (this->MaxRelativeAngularMomentum[1] <= 8)
-		    TmpMaxRealtiveMonentum = this->MaxRelativeAngularMomentum[1];
+		    TmpMaxRelativeMomentum = this->MaxRelativeAngularMomentum[1];
 		  else
-		    TmpMaxRealtiveMonentum = 8;		    
+		    TmpMaxRelativeMomentum = 8;		    
 		}
 	      int TmpSum = TmpNIndices2[0] + TmpNIndices2[1] + TmpNIndices2[2];
-	      while (((3 * this->LzMax) - TmpMaxRealtiveMonentum)  < TmpSum)
-		--TmpMaxRealtiveMonentum;
-	      double** TmpProjectorCoefficients = new double* [TmpMaxRealtiveMonentum + 1];
+	      while (((3 * this->LzMax) - TmpMaxRelativeMomentum)  < TmpSum)
+		--TmpMaxRelativeMomentum;
+	      double** TmpProjectorCoefficients = new double* [TmpMaxRelativeMomentum + 1];
 	      if ((this->ThreeBodyPseudoPotentials[0][3] != 0.0) || (this->ThreeBodyPseudoPotentials[1][3] != 0.0))
 		TmpProjectorCoefficients[3] = this->ComputeProjectorCoefficients(6, 1, TmpNIndices2, Lim, (2 * this->LzMax) - 2, 0);
-	      for (int i = 5; i <= TmpMaxRealtiveMonentum; ++i)  
+	      for (int i = 5; i <= TmpMaxRelativeMomentum; ++i)  
 		if ((this->ThreeBodyPseudoPotentials[0][i] != 0.0) || (this->ThreeBodyPseudoPotentials[1][i] != 0.0))
 		  TmpProjectorCoefficients[i] = this->ComputeProjectorCoefficients(2 * i, 1, TmpNIndices2, Lim, (2 * this->LzMax) - 2, 0);
 	      for (int i = 0; i < Lim; ++i)
@@ -558,7 +558,7 @@ void ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::EvaluateInteractionFac
 			TmpInteraction2UpUp += 4.0 * this->ThreeBodyPseudoPotentials[0][3] * TmpProjectorCoefficients[3][i] * TmpProjectorCoefficients[3][j];
 		      if (this->ThreeBodyPseudoPotentials[1][3] != 0.0)
 			TmpInteraction2DownDown += 4.0 * this->ThreeBodyPseudoPotentials[1][3] * TmpProjectorCoefficients[3][i] * TmpProjectorCoefficients[3][j];
-		      for (int k = 5; k <= TmpMaxRealtiveMonentum; ++k)  
+		      for (int k = 5; k <= TmpMaxRelativeMomentum; ++k)  
 			{
 			  if (this->ThreeBodyPseudoPotentials[0][k] != 0.0)
 			    TmpInteraction2UpUp += 4.0 * this->ThreeBodyPseudoPotentials[0][k] * TmpProjectorCoefficients[k][i] * TmpProjectorCoefficients[k][j];
@@ -576,7 +576,7 @@ void ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::EvaluateInteractionFac
 		}
 	      if ((this->ThreeBodyPseudoPotentials[0][3] != 0.0) || (this->ThreeBodyPseudoPotentials[1][3]))
 		delete[] TmpProjectorCoefficients[3];
-	      for (int i = 5; i <= TmpMaxRealtiveMonentum; ++i)  
+	      for (int i = 5; i <= TmpMaxRelativeMomentum; ++i)  
 		if ((this->ThreeBodyPseudoPotentials[0][i] != 0.0) || (this->ThreeBodyPseudoPotentials[1][i]))
 		  delete[] TmpProjectorCoefficients[i];
 	      delete[] TmpProjectorCoefficients;		
@@ -628,24 +628,24 @@ void ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::EvaluateInteractionFac
 	  if (Lim > 0)
 	    {
 	      int* TmpNIndices2 = this->SortedIndicesPerSum[3][1][MinSum];
-	      int TmpMaxRealtiveMonentum = 6;
-	      if (this->MaxRelativeAngularMomentum[2] <= TmpMaxRealtiveMonentum)
-		TmpMaxRealtiveMonentum = this->MaxRelativeAngularMomentum[2];
-	      if (this->MaxRelativeAngularMomentum[3] > TmpMaxRealtiveMonentum)
+	      int TmpMaxRelativeMomentum = 6;
+	      if (this->MaxRelativeAngularMomentum[2] <= TmpMaxRelativeMomentum)
+		TmpMaxRelativeMomentum = this->MaxRelativeAngularMomentum[2];
+	      if (this->MaxRelativeAngularMomentum[3] > TmpMaxRelativeMomentum)
 		{
 		  if (this->MaxRelativeAngularMomentum[3] <= 6)
-		    TmpMaxRealtiveMonentum = this->MaxRelativeAngularMomentum[3];
+		    TmpMaxRelativeMomentum = this->MaxRelativeAngularMomentum[3];
 		  else
-		    TmpMaxRealtiveMonentum = 6;		    
+		    TmpMaxRelativeMomentum = 6;		    
 		}
 	      int TmpSum = TmpNIndices2[0] + TmpNIndices2[1] + TmpNIndices2[2];
-	      while (((3 * this->LzMax) - TmpMaxRealtiveMonentum)  < TmpSum)
-		--TmpMaxRealtiveMonentum;
-	      double** TmpProjectorCoefficients = new double* [TmpMaxRealtiveMonentum + 1];
-	      for (int i = 1; i <= TmpMaxRealtiveMonentum; ++i)  
+	      while (((3 * this->LzMax) - TmpMaxRelativeMomentum)  < TmpSum)
+		--TmpMaxRelativeMomentum;
+	      double** TmpProjectorCoefficients = new double* [TmpMaxRelativeMomentum + 1];
+	      for (int i = 1; i <= TmpMaxRelativeMomentum; ++i)  
 		if ((this->ThreeBodyPseudoPotentials[2][i] != 0.0) || (this->ThreeBodyPseudoPotentials[3][i] != 0.0))
 		  TmpProjectorCoefficients[i] = this->ComputeProjectorCoefficients(2 * i, 1, TmpNIndices2, Lim, 2 * this->LzMax - 2, 1);
-
+	      
 	      int TmpNbrNIndices3 = TmpNbrNIndices;
 	      for (int i = 0; i < Lim; ++i)
 		{
@@ -669,7 +669,7 @@ void ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::EvaluateInteractionFac
 		      TmpInteraction2UpUpDown = 0.0;
 		      double& TmpInteraction2DownDownUp = TmpInteractionDownDownUp[j];
 		      TmpInteraction2DownDownUp = 0.0;
-		      for (int k = 0; k <= TmpMaxRealtiveMonentum; ++k)  
+		      for (int k = 0; k <= TmpMaxRelativeMomentum; ++k)  
 			{
 			  if (this->ThreeBodyPseudoPotentials[2][k] != 0.0)
 			    TmpInteraction2UpUpDown += this->ThreeBodyPseudoPotentials[2][k] * TmpProjectorCoefficients[k][i] * TmpProjectorCoefficients[k][j];
@@ -685,14 +685,14 @@ void ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::EvaluateInteractionFac
 		    }
 		  ++TmpNbrNIndices;
 		}
-	      for (int i = 0; i <= TmpMaxRealtiveMonentum; ++i)  
+	      for (int i = 0; i <= TmpMaxRelativeMomentum; ++i)  
 		if ((this->ThreeBodyPseudoPotentials[2][i] != 0.0) || (this->ThreeBodyPseudoPotentials[3][i] != 0.0))
 		  delete[] TmpProjectorCoefficients[i];
 
 
 	      TmpNIndices2 = this->SortedIndicesPerSum[3][1][MinSum];
 	      TmpNbrNIndices = TmpNbrNIndices3;
-	      for (int i = 1; i <= TmpMaxRealtiveMonentum; ++i)  
+	      for (int i = 1; i <= TmpMaxRelativeMomentum; ++i)  
 		if ((this->ThreeBodyPseudoPotentials[2][i] != 0.0) || (this->ThreeBodyPseudoPotentials[3][i] != 0.0))
 		  TmpProjectorCoefficients[i] = this->ComputeProjectorCoefficients(2 * i, 1, TmpNIndices2, Lim, 2 * this->LzMax, 2);
 	      for (int i = 0; i < Lim; ++i)
@@ -703,7 +703,7 @@ void ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::EvaluateInteractionFac
 		    {
 		      double& TmpInteraction2UpUpDown = TmpInteractionUpUpDown[j];
 		      double& TmpInteraction2DownDownUp = TmpInteractionDownDownUp[j];
-		      for (int k = 0; k <= TmpMaxRealtiveMonentum; ++k)  
+		      for (int k = 0; k <= TmpMaxRelativeMomentum; ++k)  
 			{
 			  if (this->ThreeBodyPseudoPotentials[2][k] != 0.0)
 			    TmpInteraction2UpUpDown += this->ThreeBodyPseudoPotentials[2][k] * TmpProjectorCoefficients[k][i] * TmpProjectorCoefficients[k][j];
@@ -713,14 +713,14 @@ void ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::EvaluateInteractionFac
 		    }
 		  ++TmpNbrNIndices;
 		}
-	      for (int i = 0; i <= TmpMaxRealtiveMonentum; ++i)  
+	      for (int i = 0; i <= TmpMaxRelativeMomentum; ++i)  
 		if ((this->ThreeBodyPseudoPotentials[2][i] != 0.0) || (this->ThreeBodyPseudoPotentials[3][i] != 0.0))
 		  delete[] TmpProjectorCoefficients[i];
 
 
 	      TmpNIndices2 = this->SortedIndicesPerSum[3][1][MinSum];
 	      TmpNbrNIndices = TmpNbrNIndices3;
-	      for (int i = 1; i <= TmpMaxRealtiveMonentum; ++i)  
+	      for (int i = 1; i <= TmpMaxRelativeMomentum; ++i)  
 		if ((this->ThreeBodyPseudoPotentials[2][i] != 0.0) || (this->ThreeBodyPseudoPotentials[3][i] != 0.0))
 		  TmpProjectorCoefficients[i] = this->ComputeProjectorCoefficients(2 * i, 1, TmpNIndices2, Lim, 2 * this->LzMax, 3);
 	      for (int i = 0; i < Lim; ++i)
@@ -731,7 +731,7 @@ void ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::EvaluateInteractionFac
 		    {
 		      double& TmpInteraction2UpUpDown = TmpInteractionUpUpDown[j];
 		      double& TmpInteraction2DownDownUp = TmpInteractionDownDownUp[j];
-		      for (int k = 0; k <= TmpMaxRealtiveMonentum; ++k)  
+		      for (int k = 0; k <= TmpMaxRelativeMomentum; ++k)  
 			{
 			  if (this->ThreeBodyPseudoPotentials[2][k] != 0.0)
 			    TmpInteraction2UpUpDown += this->ThreeBodyPseudoPotentials[2][k] * TmpProjectorCoefficients[k][i] * TmpProjectorCoefficients[k][j];
@@ -741,7 +741,7 @@ void ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::EvaluateInteractionFac
 		    }
 		  ++TmpNbrNIndices;
 		}
-	      for (int i = 0; i <= TmpMaxRealtiveMonentum; ++i)  
+	      for (int i = 0; i <= TmpMaxRelativeMomentum; ++i)  
 		if ((this->ThreeBodyPseudoPotentials[2][i] != 0.0) || (this->ThreeBodyPseudoPotentials[3][i] != 0.0))
 		  delete[] TmpProjectorCoefficients[i];
 
@@ -752,7 +752,128 @@ void ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::EvaluateInteractionFac
       delete[] TmpInteractionCoeffients;
     }
   else
-    {
+    { // xxx - case of bosons
+      this->MinSumIndices[3][0] = 0;
+      this->MaxSumIndices[3][0] = this->LzMax * 3;
+      double* TmpInteractionCoeffients = new double[this->MaxSumIndices[3][0] + 1];
+      double Coefficient;
+      TmpInteractionCoeffients[0] = 1.0;
+      TmpInteractionCoeffients[1] = 1.0;
+      for (int i = 2; i <= this->MaxSumIndices[3][0]; ++i)
+	{
+	  Coefficient = 1.0;
+	  for (int j = 1; j < i; ++j)
+	    {
+	      double Coefficient2 = TmpInteractionCoeffients[j];
+	      TmpInteractionCoeffients[j] += Coefficient;
+	      Coefficient = Coefficient2;
+	    }
+	  TmpInteractionCoeffients[i] = 1.0;
+	}
+      Coefficient = 4.0 * M_PI / (((double) this->MaxSumIndices[3][0]) + 1.0);
+      double Radius = 2.0 / ((double) this->LzMax);
+      for (int i = 2; i <= 3; ++i)
+	{
+	  Coefficient *= (double) (i * i);	  
+	  Coefficient *= Radius;
+	}
+      for (int i = 0; i <= this->MaxSumIndices[3][0]; ++i)
+	TmpInteractionCoeffients[i] = sqrt(Coefficient / TmpInteractionCoeffients[i]);
+      
+      double** SortedIndicesPerSumSymmetryFactor;
+      GetAllSymmetricIndices(this->NbrLzValue, 3, this->NbrSortedIndicesPerSum[3][0], this->SortedIndicesPerSum[3][0],
+			     SortedIndicesPerSumSymmetryFactor);
+      
+      
+      long TmpNbrNIndices = 0;
+      for (int MinSum = 0; MinSum <= this->MaxSumIndices[3][0]; ++MinSum)
+	TmpNbrNIndices += this->NbrSortedIndicesPerSum[3][0][MinSum];
+      this->NbrNIndices[3][0] = TmpNbrNIndices;
+      this->NIndices[3][0] = new int[TmpNbrNIndices * 3];
+      this->NbrMIndices[3][0] = new long[TmpNbrNIndices];
+      this->MIndices[3][0] = new int*[TmpNbrNIndices];
+      this->MNNBodyInteractionFactors[3][0] = new double* [TmpNbrNIndices];
+      this->MNNBodyInteractionFactors[3][1] = new double* [TmpNbrNIndices];
+      TmpNbrNIndices = 0;	 
+      int* TmpNIndices = this->NIndices[3][0];
+      for (int MinSum = 0; MinSum <= this->MaxSumIndices[3][0]; ++MinSum)
+	{
+	  int Lim = this->NbrSortedIndicesPerSum[3][0][MinSum];
+	  double* TmpSymmetryFactors = SortedIndicesPerSumSymmetryFactor[MinSum];
+	  int* TmpNIndices2 = this->SortedIndicesPerSum[3][0][MinSum];
+	  int TmpMaxRelativeMomentum = 10;
+	  if (this->MaxRelativeAngularMomentum[0] <= TmpMaxRelativeMomentum)
+	    TmpMaxRelativeMomentum = this->MaxRelativeAngularMomentum[0];
+	  int TmpSum = TmpNIndices2[0] + TmpNIndices2[1] + TmpNIndices2[2];
+	  while (((3 * this->LzMax) - TmpMaxRelativeMomentum)  < TmpSum)
+	    --TmpMaxRelativeMomentum;
+	  double** TmpProjectorCoefficients = new double* [TmpMaxRelativeMomentum + 1];
+	  if ((this->ThreeBodyPseudoPotentials[0][0] != 0.0)||(this->ThreeBodyPseudoPotentials[1][0] != 0.0))
+	    TmpProjectorCoefficients[0] = this->ComputeProjectorCoefficients(0, 1, TmpNIndices2, Lim, 2 * this->LzMax, 0);
+	  for (int i = 2; i <= TmpMaxRelativeMomentum; ++i)  
+	    if ((this->ThreeBodyPseudoPotentials[0][i] != 0.0)||(this->ThreeBodyPseudoPotentials[1][i] != 0.0))
+	      TmpProjectorCoefficients[i] = this->ComputeProjectorCoefficients(2 * i, 1, TmpNIndices2, Lim, 2 * this->LzMax, 0);
+	  for (int i = 0; i < Lim; ++i)
+	    {
+	      this->NbrMIndices[3][0][TmpNbrNIndices] = Lim;		    
+	      this->MIndices[3][0][TmpNbrNIndices] = new int [Lim * 3];
+	      this->MNNBodyInteractionFactors[3][0][TmpNbrNIndices] = new double [Lim];
+	      this->MNNBodyInteractionFactors[3][1][TmpNbrNIndices] = new double [Lim];
+	      int* TmpMIndices = this->MIndices[3][0][TmpNbrNIndices];
+	      int* TmpMIndices2 = this->SortedIndicesPerSum[3][0][MinSum];
+	      double* TmpInteractionUpUpUp = this->MNNBodyInteractionFactors[3][0][TmpNbrNIndices];
+	      double* TmpInteractionDownDownDown = this->MNNBodyInteractionFactors[3][1][TmpNbrNIndices];
+	      for (int j = 0; j < Lim; ++j)
+		{
+		  double Coefficient2 = TmpSymmetryFactors[j];
+		  for (int l = 0; l < 3; ++l)
+		    {
+		      Coefficient2 *= TmpNormalizationCoeffients[(*TmpMIndices2)];		    
+		      (*TmpMIndices) = (*TmpMIndices2);			
+		      ++TmpMIndices;
+		      ++TmpMIndices2;
+		    }			
+		  double& TmpInteraction2UpUp = TmpInteractionUpUpUp[j];
+		  TmpInteraction2UpUp = 0.0;
+		  if (this->ThreeBodyPseudoPotentials[0][0] != 0.0)
+		    TmpInteraction2UpUp += this->ThreeBodyPseudoPotentials[0][0] * TmpProjectorCoefficients[0][i] * TmpProjectorCoefficients[0][j];
+		  for (int k = 2; k <= TmpMaxRelativeMomentum; ++k)
+		    if (this->ThreeBodyPseudoPotentials[0][k] != 0.0)
+		      TmpInteraction2UpUp += this->ThreeBodyPseudoPotentials[0][k] * TmpProjectorCoefficients[k][i] * TmpProjectorCoefficients[k][j];
+		  TmpInteraction2UpUp *= TmpSymmetryFactors[i] * TmpSymmetryFactors[j];
+
+		  double& TmpInteraction2DownDown = TmpInteractionDownDownDown[j];
+		  TmpInteraction2DownDown = 0.0;
+		  if (this->ThreeBodyPseudoPotentials[1][0] != 0.0)
+		    TmpInteraction2DownDown += this->ThreeBodyPseudoPotentials[1][0] * TmpProjectorCoefficients[0][i] * TmpProjectorCoefficients[0][j];
+		  for (int k = 2; k <= TmpMaxRelativeMomentum; ++k)
+		    if (this->ThreeBodyPseudoPotentials[1][k] != 0.0)
+		      TmpInteraction2DownDown += this->ThreeBodyPseudoPotentials[1][k] * TmpProjectorCoefficients[k][i] * TmpProjectorCoefficients[k][j];
+		  TmpInteraction2DownDown *= TmpSymmetryFactors[i] * TmpSymmetryFactors[j];
+		}
+	      for (int j = 0; j < 3; ++j)
+		{
+		  (*TmpNIndices) = (*TmpNIndices2);
+		  ++TmpNIndices;
+		  ++TmpNIndices2;
+		}
+	      ++TmpNbrNIndices;
+	    }
+	  if ((this->ThreeBodyPseudoPotentials[0][0] != 0.0)||(this->ThreeBodyPseudoPotentials[1][0] != 0.0))
+	    delete[] TmpProjectorCoefficients[0];
+	  for (int i = 2; i <= TmpMaxRelativeMomentum; ++i)  
+	    if ((this->ThreeBodyPseudoPotentials[0][i] != 0.0)||(this->ThreeBodyPseudoPotentials[1][i] != 0.0))
+	      delete[] TmpProjectorCoefficients[i];
+	  delete[] TmpProjectorCoefficients;		
+	}
+      for (int MinSum = 0; MinSum <= this->MaxSumIndices[3][0]; ++MinSum)
+	{
+	  delete[] SortedIndicesPerSumSymmetryFactor[MinSum];
+	}
+      delete[] SortedIndicesPerSumSymmetryFactor;
+      delete[] TmpInteractionCoeffients;
+
+      cout << "No cross-spin terms implemented in Generic Three-Body Hamiltonian for Bosons!"<<endl;
     }
   delete[] TmpNormalizationCoeffients;
   if (this->FullTwoBodyFlag == true)
@@ -875,7 +996,98 @@ void ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::EvaluateInteractionFac
 	    }
 	}
       else
-	{
+	{ // two-body interaction for bosons needs to be tested
+	  this->NbrIntraSectorSums = 2 * this->LzMax;
+	  this->NbrIntraSectorIndicesPerSum = new int[this->NbrIntraSectorSums];
+	  for (int i = 0; i < this->NbrIntraSectorSums; ++i)
+	    this->NbrIntraSectorIndicesPerSum[i] = 0;
+	  for (int m1 = 0; m1 < this->LzMax; ++m1)
+	    for (int m2 = m1; m2 <= this->LzMax; ++m2)
+	      ++this->NbrIntraSectorIndicesPerSum[m1 + m2];
+	  this->IntraSectorIndicesPerSum = new int* [this->NbrIntraSectorSums];
+	  for (int i = 0; i < this->NbrIntraSectorSums; ++i)
+	    {
+	      this->IntraSectorIndicesPerSum[i] = new int[2 * this->NbrIntraSectorIndicesPerSum[i]];      
+	      this->NbrIntraSectorIndicesPerSum[i] = 0;
+	    }
+	  for (int m1 = 0; m1 < this->LzMax; ++m1)
+	    for (int m2 = m1; m2 <= this->LzMax; ++m2)
+	      {
+		this->IntraSectorIndicesPerSum[m1 + m2][this->NbrIntraSectorIndicesPerSum[m1 + m2] << 1] = m1;
+		this->IntraSectorIndicesPerSum[m1 + m2][1 + (this->NbrIntraSectorIndicesPerSum[m1 + m2] << 1)] = m2;
+		++this->NbrIntraSectorIndicesPerSum[m1 + m2];
+	      }
+	  
+	  this->InteractionFactorsupup = new double* [this->NbrIntraSectorSums];
+	  this->InteractionFactorsdowndown = new double* [this->NbrIntraSectorSums];
+	  for (int i = 0; i < this->NbrIntraSectorSums; ++i)
+	    {
+	      this->InteractionFactorsupup[i] = new double[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
+	      this->InteractionFactorsdowndown[i] = new double[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
+	      int Index = 0;
+	      for (int j1 = 0; j1 < this->NbrIntraSectorIndicesPerSum[i]; ++j1)
+		{
+		  int m1 = (this->IntraSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMax;
+		  int m2 = (this->IntraSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMax;
+		  for (int j2 = 0; j2 < this->NbrIntraSectorIndicesPerSum[i]; ++j2)
+		    {
+		      int m3 = (this->IntraSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMax;
+		      int m4 = (this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMax;
+		      Clebsch.InitializeCoefficientIterator(m1, m2);
+		      this->InteractionFactorsupup[i][Index] = 0.0;
+		      this->InteractionFactorsdowndown[i][Index] = 0.0;
+		      while (Clebsch.Iterate(J, ClebschCoef))
+			{
+			  if (((J >> 1) & 1) != Sign)
+			    {
+			      TmpCoefficient = ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
+			      this->InteractionFactorsupup[i][Index] += this->PseudoPotentials[0][J >> 1] * TmpCoefficient;
+			      this->InteractionFactorsdowndown[i][Index] += this->PseudoPotentials[1][J >> 1] * TmpCoefficient;
+			    }
+			}
+		      if (m1!=m2)
+			{
+			  this->InteractionFactorsupup[i][Index] *= 2.0;
+			  this->InteractionFactorsdowndown[i][Index] *= 2.0;
+			}
+		      if (m3!=m4)
+			{
+			  this->InteractionFactorsupup[i][Index] *= 2.0;
+			  this->InteractionFactorsdowndown[i][Index] *= 2.0;
+			}
+		      TotalNbrInteractionFactors += 2;
+		      ++Index;
+		    }
+		}
+	    }
+	  
+	  this->InteractionFactorsupdown = new double* [this->NbrInterSectorSums];
+	  for (int i = 0; i < this->NbrInterSectorSums; ++i)
+	    {
+	      this->InteractionFactorsupdown[i] = new double[this->NbrInterSectorIndicesPerSum[i] * this->NbrInterSectorIndicesPerSum[i]];
+	      int Index = 0;
+	      for (int j1 = 0; j1 < this->NbrInterSectorIndicesPerSum[i]; ++j1)
+		{
+		  double Factor = 2.0;
+		  int m1 = (this->InterSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMax;
+		  int m2 = (this->InterSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMax;
+		  for (int j2 = 0; j2 < this->NbrInterSectorIndicesPerSum[i]; ++j2)
+		    {
+		      int m3 = (this->InterSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMax;
+		      int m4 = (this->InterSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMax;
+		      Clebsch.InitializeCoefficientIterator(m1, m2);
+		      this->InteractionFactorsupdown[i][Index] = 0.0;
+		      while (Clebsch.Iterate(J, ClebschCoef))
+			{
+			  TmpCoefficient = ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
+			  this->InteractionFactorsupdown[i][Index] += this->PseudoPotentials[2][J >> 1] * TmpCoefficient;
+			}
+		      this->InteractionFactorsupdown[i][Index] *= Factor;
+		      ++TotalNbrInteractionFactors;
+		      ++Index;
+		    }
+		}
+	    }
 	}
     }
 }
