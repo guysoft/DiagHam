@@ -162,7 +162,7 @@ void ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian::EvaluateInteract
 	  {
 	    this->OneBodyInteractionFactors[Index] = TmpDiag(0, 0);
 	  }
-	cout << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << endl;
+	cout << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << "  e1=[" << TmpMatrix[0][0] << ", " << TmpMatrix[0][1] << "]  e2=[" << TmpMatrix[1][0] << ", " << TmpMatrix[1][1] << "]" << endl;
       }
  
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
