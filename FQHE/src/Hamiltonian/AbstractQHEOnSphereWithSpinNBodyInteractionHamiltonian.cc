@@ -373,36 +373,20 @@ void AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::EnableFastMultiplic
     ++ReducedSpaceDimension;
   this->InteractionPerComponentIndex = new int* [ReducedSpaceDimension];
   this->InteractionPerComponentCoefficient = new double* [ReducedSpaceDimension];
-  ParticleOnSphereWithSpin* TmpParticles = (ParticleOnSphereWithSpin*) this->Particles;
 
+
+  // allocate all memory at the outset:
   long TotalPos = 0;
   for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
     {
       this->InteractionPerComponentIndex[TotalPos] = new int [this->NbrInteractionPerComponent[TotalPos]];
       this->InteractionPerComponentCoefficient[TotalPos] = new double [this->NbrInteractionPerComponent[TotalPos]];      
-      TmpIndexArray = this->InteractionPerComponentIndex[TotalPos];
-      TmpCoefficientArray = this->InteractionPerComponentCoefficient[TotalPos];
-      Pos = 0;
-      if (this->FullTwoBodyFlag == true)
-	this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, TmpIndexArray, TmpCoefficientArray, Pos);
-      for (int k = 2; k <= this->MaxNBody; ++k)
-	if (this->NBodyFlags[k] == true)
-	  this->EvaluateMNNBodyFastMultiplicationComponent(TmpParticles, i, k, TmpIndexArray, TmpCoefficientArray, Pos);
-      if ((this->OneBodyInteractionFactorsdowndown != 0) || (this->OneBodyInteractionFactorsupup != 0))
-	{
-	  double TmpDiagonal = 0.0;
-	  if (this->OneBodyInteractionFactorsupup != 0)
-	    for (int j = 0; j <= this->LzMax; ++j) 
-	      TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * TmpParticles->AduAu(i + this->PrecalculationShift, j);
-	  if (this->OneBodyInteractionFactorsdowndown != 0)
-	    for (int j = 0; j <= this->LzMax; ++j) 
-	      TmpDiagonal += this->OneBodyInteractionFactorsdowndown[j] * TmpParticles->AddAd(i + this->PrecalculationShift, j);
-	  TmpIndexArray[Pos] = i + this->PrecalculationShift;
-	  TmpCoefficientArray[Pos] = TmpDiagonal;
-	  ++Pos;	  
-	}
       ++TotalPos;
     }
+
+  QHEParticlePrecalculationOperation Operation(this, false);
+  Operation.ApplyOperation(this->Architecture);
+  
   this->FastMultiplicationFlag = true;
   gettimeofday (&(TotalEndingTime2), 0);
   cout << "------------------------------------------------------------------" << endl << endl;;
@@ -453,6 +437,7 @@ void AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::PartialEnableFastMu
     }
   delete TmpParticles;
 }
+
 
 // enable fast multiplication algorithm using on disk cache 
 //

@@ -138,8 +138,6 @@ int main(int argc, char** argv)
 	  Padding=true;
       }
 	
-      cout << "Padding="<<Padding<<endl;
-      
       double* TmpThreeBodyPotentials = 0;
       int TmpNbrThreeBodyPseudoPotentials = 0;
       NbrThreeBodyPseudoPotentials[0] = 0;
