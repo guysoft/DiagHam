@@ -3210,11 +3210,15 @@ long AbstractQHEOnSphereHamiltonian::FastMultiplicationMemory(long allowedMemory
   QHEParticlePrecalculationOperation Operation(this);
   Operation.ApplyOperation(this->Architecture);
 
+  // reset load-balancing
+  if (this->LoadBalancingArray!=0)
+    delete [] this->LoadBalancingArray;
+  this->LoadBalancingArray=0;
+  this->NbrBalancedTasks=0;
+
   long Memory = 0;
   for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
-    Memory += this->NbrInteractionPerComponent[i];
-
-  
+    Memory += this->NbrInteractionPerComponent[i];  
 
   cout << "nbr interaction = " << Memory << endl;
   long TmpMemory = allowedMemory - (sizeof (int*) + sizeof (int) + sizeof(double*)) * EffectiveHilbertSpaceDimension;
@@ -3394,10 +3398,12 @@ void AbstractQHEOnSphereHamiltonian::EnableFastMultiplication()
   this->InteractionPerComponentCoefficient = new double* [ReducedSpaceDimension];
 
   // allocate all memory at the outset:
-  for (int i = 0; i < ReducedSpaceDimension; ++i)
+  long TotalPos = 0;
+  for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
     {
-      this->InteractionPerComponentIndex[i] = new int [this->NbrInteractionPerComponent[i]];
-      this->InteractionPerComponentCoefficient[i] = new double [this->NbrInteractionPerComponent[i]];
+      this->InteractionPerComponentIndex[TotalPos] = new int [this->NbrInteractionPerComponent[TotalPos]];
+      this->InteractionPerComponentCoefficient[TotalPos] = new double [this->NbrInteractionPerComponent[TotalPos]];
+      ++TotalPos;
     }
 
   QHEParticlePrecalculationOperation Operation(this, false);

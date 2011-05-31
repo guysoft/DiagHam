@@ -440,6 +440,24 @@ ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::~ParticleOnSphereWithSpinGe
 	delete[] this->PseudoPotentials[i];
       delete[] this->PseudoPotentials;
     }
+
+  delete [] this->NBodyFlags;
+
+  // rough job deleting only outer arrays...
+  delete [] this->NbrSortedIndicesPerSum;
+  delete [] this->SortedIndicesPerSum;
+  delete [] this->MinSumIndices;
+  delete [] this->MaxSumIndices;
+
+  delete [] this->NBodySign;
+  delete [] this->SpinIndices;
+  delete [] this->SpinIndicesShort;
+  delete [] this->NbrNIndices;
+  delete [] this->NIndices; // multiple
+  delete [] this->NbrMIndices; // multiple = new long**[this->MaxNBody + 1];
+  delete [] this->MIndices; // multiple = new int***[this->MaxNBody + 1];
+  delete [] this->MNNBodyInteractionFactors; // multiple = new double***[this->MaxNBody + 1];
+
 }
 
 // clone hamiltonian without duplicating datas
@@ -874,6 +892,7 @@ void    ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::EvaluateInteraction
       delete[] TmpInteractionCoeffients;
 
       cout << "No cross-spin terms implemented in Generic Three-Body Hamiltonian for Bosons!"<<endl;
+      this->NbrNIndices[3][1] = 0;
     }
   delete[] TmpNormalizationCoeffients;
   if (this->FullTwoBodyFlag == true)

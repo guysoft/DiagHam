@@ -268,10 +268,6 @@ class AbstractQHEOnSphereWithSpinHamiltonian : public AbstractQHEOnSphereHamilto
   // return value = number of non-zero matrix element
   virtual long PartialFastMultiplicationMemory(int firstComponent, int lastComponent);
 
-  // enable fast multiplication algorithm
-  //
-  virtual void EnableFastMultiplication();
-
   // enable fast multiplication algorithm (partial evaluation)
   //
   // firstComponent = index of the first component that has to be precalcualted

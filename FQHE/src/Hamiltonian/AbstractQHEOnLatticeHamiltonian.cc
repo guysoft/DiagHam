@@ -2406,7 +2406,6 @@ bool AbstractQHEOnLatticeHamiltonian::GetLoadBalancing(int nbrTasks, long* &segm
   if (((NbrRealInteractionPerComponent!=0)||(NbrComplexInteractionPerComponent!=0))&&(this->FastMultiplicationStep!=0))
     {
       int ReducedSpaceDimension  = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
-
       if ((LoadBalancingArray==0)||(NbrBalancedTasks!=nbrTasks))
 	{
 	  if (LoadBalancingArray!=0)

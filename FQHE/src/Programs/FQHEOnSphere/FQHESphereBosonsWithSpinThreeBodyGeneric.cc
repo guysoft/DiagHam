@@ -108,6 +108,11 @@ int main(int argc, char** argv)
       cout << "This value of the spin z projection cannot be achieved with this particle number!" << endl;
       return -1;
     }
+  if ((NbrParticles&1)!=(SzTotal&1))
+    {
+      cout << "NbrParticles and SzTotal need to be of the same parity."<<endl;
+      return -1;
+    }
 
   double* OneBodyPotentialUpUp = 0;
   double* OneBodyPotentialDownDown = 0;

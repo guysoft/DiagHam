@@ -351,46 +351,6 @@ long AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::PartialFastMultipli
   return Memory;
 }
 
-// enable fast multiplication algorithm
-//
-
-void AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::EnableFastMultiplication()
-{
-  long MinIndex;
-  long MaxIndex;
-  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
-  int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
-  timeval TotalStartingTime2;
-  timeval TotalEndingTime2;
-  double Dt2;
-  gettimeofday (&(TotalStartingTime2), 0);
-  cout << "start" << endl;
-  int ReducedSpaceDimension = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
-  if ((ReducedSpaceDimension * this->FastMultiplicationStep) != EffectiveHilbertSpaceDimension)
-    ++ReducedSpaceDimension;
-  this->InteractionPerComponentIndex = new int* [ReducedSpaceDimension];
-  this->InteractionPerComponentCoefficient = new double* [ReducedSpaceDimension];
-
-
-  // allocate all memory at the outset:
-  long TotalPos = 0;
-  for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
-    {
-      this->InteractionPerComponentIndex[TotalPos] = new int [this->NbrInteractionPerComponent[TotalPos]];
-      this->InteractionPerComponentCoefficient[TotalPos] = new double [this->NbrInteractionPerComponent[TotalPos]];      
-      ++TotalPos;
-    }
-
-  QHEParticlePrecalculationOperation Operation(this, false);
-  Operation.ApplyOperation(this->Architecture);
-  
-  this->FastMultiplicationFlag = true;
-  gettimeofday (&(TotalEndingTime2), 0);
-  cout << "------------------------------------------------------------------" << endl << endl;;
-  Dt2 = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
-    ((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
-  cout << "time = " << Dt2 << endl;
-}
 
 // enable fast multiplication algorithm (partial evaluation)
 //
