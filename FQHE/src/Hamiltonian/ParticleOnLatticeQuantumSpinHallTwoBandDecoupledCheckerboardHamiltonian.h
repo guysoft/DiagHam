@@ -8,7 +8,7 @@
 //                        class author: Nicolas Regnault                      //
 //                                                                            //
 //                class of quatum spin Hall restricted to two bands           //
-//                         using the checkerboard model                       //
+//                      using two decoupled checkerboard models               //
 //                                                                            //
 //                        last modification : 04/04/2011                      //
 //                                                                            //
@@ -30,12 +30,12 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PARTICLEONLATTICEQUANTUMSPINHALLTWOBANDCHECKERBOARDHAMILTONIAN_H
-#define PARTICLEONLATTICEQUANTUMSPINHALLTWOBANDCHECKERBOARDHAMILTONIAN_H
+#ifndef PARTICLEONLATTICEQUANTUMSPINHALLTWOBANDDECOULPEDCHECKERBOARDHAMILTONIAN_H
+#define PARTICLEONLATTICEQUANTUMSPINHALLTWOBANDDECOUPLEDCHECKERBOARDHAMILTONIAN_H
 
 
 #include "config.h"
-#include "Hamiltonian/ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeWithSpinChernInsulatorHamiltonian.h"
 #include "Matrix/ComplexMatrix.h"
 
 #include <iostream>
@@ -46,7 +46,7 @@ using std::cout;
 using std::endl;
 
 
-class ParticleOnLatticeQuantumSpinHallTwoBandCheckerboardHamiltonian : public ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian
+class ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonian : public ParticleOnLatticeWithSpinChernInsulatorHamiltonian
 {
 
  protected:
@@ -63,8 +63,6 @@ class ParticleOnLatticeQuantumSpinHallTwoBandCheckerboardHamiltonian : public Pa
   double GammaY;
   // nearest neighbor density-density potential strength
   double UPotential;
-  // mixing term coupling the two copies of the checkerboard lattice
-  Complex MixingTerm;
 
   // use flat band model
   bool FlatBand;
@@ -81,18 +79,16 @@ class ParticleOnLatticeQuantumSpinHallTwoBandCheckerboardHamiltonian : public Pa
   // t1 = hoping amplitude between neareast neighbor sites
   // t2 = hoping amplitude between next neareast neighbor sites
   // t2p = hoping amplitude between second next neareast neighbor sites
-  // mixingTermNorm = norm of the mixing term coupling the two copies of the checkerboard lattice
-  // mixingTermArgv = argument of the mixing term coupling the two copies of the checkerboard lattice
   // gammaX = boundary condition twisting angle along x
   // gammaY = boundary condition twisting angle along y
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeQuantumSpinHallTwoBandCheckerboardHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double t1, double t2, double t2p, double mixingTermNorm, double mixingTermArg, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double t1, double t2, double t2p, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //
-  ~ParticleOnLatticeQuantumSpinHallTwoBandCheckerboardHamiltonian();
+  ~ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonian();
   
 
  protected:
@@ -110,21 +106,12 @@ class ParticleOnLatticeQuantumSpinHallTwoBandCheckerboardHamiltonian : public Pa
   // return value = corresponding matrix element
   Complex ComputeTwoBodyMatrixElementAUpBUp(int kx1, int ky1, int kx2, int ky2);
 
-  // compute the matrix element for the two body interaction between two sites A with different layer indices 
-  //
-  // kx1 = momentum along x for the first A site
-  // ky1 = momentum along y for the first A site
-  // kx2 = momentum along x for the second A site
-  // ky2 = momentum along y for the second A site
-  // return value = corresponding matrix element
-  Complex ComputeTwoBodyMatrixElementAUpADown(int kx1, int ky1, int kx2, int ky2);
-
   // compute the matrix element for the two body interaction between two sites B with different layer indices 
   //
-  // kx1 = momentum along x for the first B site
-  // ky1 = momentum along y for the first B site
-  // kx2 = momentum along x for the second B site
-  // ky2 = momentum along y for the second B site
+  // kx1 = momentum along x for the A site
+  // ky1 = momentum along y for the A site
+  // kx2 = momentum along x for the B site
+  // ky2 = momentum along y for the B site
   // return value = corresponding matrix element
   Complex ComputeTwoBodyMatrixElementBUpBDown(int kx1, int ky1, int kx2, int ky2);
     
@@ -167,7 +154,7 @@ class ParticleOnLatticeQuantumSpinHallTwoBandCheckerboardHamiltonian : public Pa
 // siteIndex3 = site index of the first annihilation operator (0=Aup, 1=Bup, 2=Adown, 3=Bdown)
 // siteIndex4 = site index of the second annihiliation operator (0=Aup, 1=Bup, 2=Adown, 3=Bdown)
 
-inline Complex ParticleOnLatticeQuantumSpinHallTwoBandCheckerboardHamiltonian::ComputeTransfomationBasisContribution(ComplexMatrix* oneBodyBasis,
+inline Complex ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonian::ComputeTransfomationBasisContribution(ComplexMatrix* oneBodyBasis,
 														     int momentumIndex1, int momentumIndex2, int momentumIndex3, int momentumIndex4, 
 														     int energyIndex1, int energyIndex2, int energyIndex3, int energyIndex4,
 														     int siteIndex1, int siteIndex2, int siteIndex3, int siteIndex4)

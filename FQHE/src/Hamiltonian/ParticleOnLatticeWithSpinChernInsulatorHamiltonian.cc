@@ -860,16 +860,16 @@ void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EnableFastMultiplicatio
     {
       this->InteractionPerComponentIndex[TotalPos] = new int [this->NbrInteractionPerComponent[TotalPos]];
       this->InteractionPerComponentCoefficient[TotalPos] = new Complex [this->NbrInteractionPerComponent[TotalPos]];      
-//       TmpIndexArray = this->InteractionPerComponentIndex[TotalPos];
-//       TmpCoefficientArray = this->InteractionPerComponentCoefficient[TotalPos];
-//       Pos = 0l;
-//       this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, TmpIndexArray, TmpCoefficientArray, Pos);
-//       this->EvaluateMNOneBodyFastMultiplicationComponent(TmpParticles, i, TmpIndexArray, TmpCoefficientArray, Pos);
+      TmpIndexArray = this->InteractionPerComponentIndex[TotalPos];
+      TmpCoefficientArray = this->InteractionPerComponentCoefficient[TotalPos];
+      Pos = 0l;
+      this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, TmpIndexArray, TmpCoefficientArray, Pos);
+      //      this->EvaluateMNOneBodyFastMultiplicationComponent(TmpParticles, i, TmpIndexArray, TmpCoefficientArray, Pos);
       ++TotalPos;
     }
 
-  QHEParticlePrecalculationOperation Operation(this, false);
-  Operation.ApplyOperation(this->Architecture);
+  //  QHEParticlePrecalculationOperation Operation(this, false);
+  //  Operation.ApplyOperation(this->Architecture);
 
   this->FastMultiplicationFlag = true;
   gettimeofday (&(TotalEndingTime2), 0);

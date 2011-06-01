@@ -47,6 +47,13 @@ using std::endl;
 using std::ostream;
 
 
+// default constructor
+//
+
+ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian()
+{
+}
+
 // constructor
 //
 // particles = Hilbert space associated to the system
@@ -112,12 +119,6 @@ ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::~ParticleOnLatticeQuantumSpi
 {
   if (this->InteractionFactorsupupupup != 0)
     {
-      this->InteractionFactorsupupupup = new Complex* [this->NbrIntraSectorSums];
-      this->InteractionFactorsupupdowndown = new Complex* [this->NbrIntraSectorSums];
-      this->InteractionFactorsdowndownupup = new Complex* [this->NbrIntraSectorSums];
-      this->InteractionFactorsdowndowndowndown = new Complex* [this->NbrIntraSectorSums];
-      this->InteractionFactorsupdownupup = new Complex* [this->NbrIntraSectorSums];
-      this->InteractionFactorsupdowndowndown = new Complex* [this->NbrIntraSectorSums];  
       for (int i = 0; i < this->NbrIntraSectorSums; ++i)
 	{
 	  delete[] this->InteractionFactorsupupupup[i];
@@ -133,9 +134,6 @@ ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::~ParticleOnLatticeQuantumSpi
       delete[] this->InteractionFactorsdowndowndowndown;
       delete[] this->InteractionFactorsupdownupup;
       delete[] this->InteractionFactorsupdowndowndown;
-      this->InteractionFactorsupupupdown = new Complex* [this->NbrIntraSectorSums];
-      this->InteractionFactorsdowndownupdown = new Complex* [this->NbrIntraSectorSums];
-      this->InteractionFactorsupdownupdown = new Complex* [this->NbrIntraSectorSums];
       for (int i = 0; i < this->NbrInterSectorSums; ++i)
 	{
 	  delete[] this->InteractionFactorsupupupdown[i];

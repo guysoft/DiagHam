@@ -109,14 +109,14 @@ int main(int argc, char** argv)
       OutputLzMax = InputLzMax - PatternLzMax - 1;
       OutputTotalLz = 0;
       for (int i = 0; i <= PatternLzMax; ++i)
-	OutputTotalLz -= Pattern[i] * (2 * (i + Manager.GetInteger("shift-pattern")));
-      cout << OutputTotalLz << endl;
+	OutputTotalLz -= Pattern[i] * (2 * i);
+      //	OutputTotalLz -= Pattern[i] * (2 * (i + Manager.GetInteger("shift-pattern")));
       OutputTotalLz += InputTotalLz + (InputNbrParticles * InputLzMax);
-      cout << OutputTotalLz << endl;
-      //      OutputTotalLz -= OutputNbrParticles * (2 * (PatternLzMax + 1));
-      cout << OutputTotalLz << endl;
-      OutputTotalLz -= OutputNbrParticles * OutputLzMax;
-      cout << OutputTotalLz << endl;
+      //      cout << OutputTotalLz << endl;
+      OutputTotalLz -= OutputNbrParticles * (2 * (PatternLzMax + 1));
+      //      cout << OutputTotalLz << endl;
+      //      OutputTotalLz -= OutputNbrParticles * OutputLzMax;
+      //      cout << OutputTotalLz << endl;
     }
 
   cout << OutputNbrParticles << " " << OutputLzMax << " " << OutputTotalLz << endl;
