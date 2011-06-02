@@ -564,6 +564,7 @@ class FermionOnSphereEfficient :  public ParticleOnSphere
 
 };
 
+
 // get the particle statistic 
 //
 // return value = particle statistic
@@ -572,6 +573,20 @@ inline int FermionOnSphereEfficient::GetParticleStatistic()
 {
   return ParticleOnSphere::FermionicStatistic;
 }
+
+
+// find state index
+//
+// stateDescription = unsigned integer describing the state
+// lzmax = maximum Lz value reached by a fermion in the state (ignored in this class)
+// return value = corresponding index
+inline int FermionOnSphereEfficient::FindStateIndex(unsigned long stateDescription)
+{
+  int Result = HighBitLookUpTable[stateDescription>>this->HighBitLookUpShift];
+  Result += LowBitLookUpTable[stateDescription&this->LowBitMask];
+  return Result;
+}
+
 
 // get Lz<->-Lz symmetric state of a given state 
 //

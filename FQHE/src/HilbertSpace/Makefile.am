@@ -93,7 +93,7 @@ FermionOnSphereFull.cc \
 BosonOnSphereFullShort.cc \
 FermionOnSphereThreeLandauLevels.cc \
 BosonOnSphereWithSpinAllSz.cc \
-BosonOnSphereWithSpinFast.cc \
+BosonOnSphereWithSpinOld.cc \
 FermionOnSphereFourLandauLevels.cc \
 BosonOnSphereHaldaneSymmetricBasisShort.cc \
 BosonOnDiskHaldaneHugeBasisShort.cc \

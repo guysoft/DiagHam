@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                           class of bosons on sphere                        //
+//                   class of bosons on sphere with SU(2) spin                //
 //                                                                            //
-//                        last modification : 05/07/2002                      //
+//                        last modification : 10/10/2008                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,36 +28,32 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef BOSONONSPHEREWITHSPINFAST_H
-#define BOSONONSPHEREWITHSPINFAST_H
+#ifndef BOSONONSPHEREWITHSPINOLD_H
+#define BOSONONSPHEREWITHSPINOLD_H
 
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphereWithSpin.h"
+#include "HilbertSpace/BosonOnSphere.h"
 #include "Matrix/RealSymmetricMatrix.h"
+#include "MathTools/Complex.h"
 
 #include <iostream>
-#include <iomanip>
-#include <algorithm>
-
-using std::cout;
-using std::endl;
-using std::hex;
-using std::dec;
-
-class BosonOnSphere;
-class BosonOnSphereWithSpin;
 
 
-class BosonOnSphereWithSpinFast :  public ParticleOnSphereWithSpin
+class BosonOnSphereWithSpinOld :  public ParticleOnSphereWithSpin
 {
 
+  friend class BosonOnSphereWithSpinShort;
+  friend class BosonOnSphereWithSpinAllSz;
+  friend class BosonOnSphereWithSpin;
+  
  protected:
 
   // number of bosons
   int NbrBosons;
-  // number of bosons plus 1
-  int IncNbrBosons;
+  // number of bosons per spin and angular momentum state, plus 1
+  int IncMaxNbrBosons;
   // twice the momentum total value
   int TotalLz;
   // momentum total value shifted by LzMax / 2 * NbrBosons
@@ -66,89 +62,79 @@ class BosonOnSphereWithSpinFast :  public ParticleOnSphereWithSpin
   int LzMax;
   // number of Lz values in a state
   int NbrLzValue;
-    // number of bosons with spin up / down
+  // number of bosons with spin up / down
   int NbrBosonsUp;
   int NbrBosonsDown;
   // twice the total spin value
   int TotalSpin;
 
-  
+  // array describing each state
+  int** StateDescription;
+  // array giving maximum Lz value reached for a boson in a given state
+  int* StateLzSzMax;
 
-  // array describing each state (full storage, temporary use)
-  unsigned** StateDescription;
-  // array describing each state up / down
-  unsigned long* StateDescriptionUp;
-  unsigned long* StateDescriptionDown;
-  // array giving maximum Lz value reached for a boson in a given state for up and down spin
-  unsigned* StateLzMaxUp;
-  unsigned* StateLzMaxDown;
-  // array to store condensed info on states after state generation
-  unsigned *StateInfo;
+  // multiplicative factors used during key construction
+  int* KeyMultiplicationTable;
+  // keys associated to each state
+  int* Keys;
+  // indicate position of the first state with a given number of boson having a given maximum Lz value
+  int* LzSzMaxPosition;
+  // array that indicates how many different states are store for each sector (a sector is given by its lzmax and the number of bosons that are at lzmax)
+  int* KeyInvertSectorSize;
+  // array that contains sorted possible key for each sector
+  int** KeyInvertTable;
+  // array that contains number of indices that have the same key per sector 
+  int** KeyInvertTableNbrIndices;
+  // array that contains state index per sector and per key
+  int*** KeyInvertIndices;
 
-  // Lookup-table for base indices for given sequence of up spins
-  unsigned *UpSpinLookUpTable;
-  // Lookup-table for offsets for given sequence of down spins
-  unsigned *DownSpinLookUpTable;
-  // elements of spaces that are being tensored together for both up and down spins (provides index)
-  unsigned long* TensoredElements;
-  // maximum lz value of TensoredElements
-  int *TensoredLzMax;
-  // number of tensored elements
-  unsigned NbrTensoredElements;
-
-  // maximum shift used for searching a position in the look-up table of array TensoredElements
-  int MaximumLookUpShift;
-  // memory used for the look-up table in a given lzmax sector
-  unsigned long LookUpTableMemorySize;
-  // shift used in each lzmax sector
-  int* LookUpTableShift;
-  // look-up table with two entries : the first one used lzmax value of the state an the second 
-  int** LookUpTable;
-
-  // table for coherence factors
-  double *CoherenceFactors;
-    
   // pointer to an integer which indicate which coordinates are kept for the next time step iteration
   int* KeptCoordinates;
+  
+  // Saved values of permanents;
+  Complex KeptValueUp;
+  Complex KeptValueDown;
+  
   // minors of permanents used for the time coherent wave function evaluation
-  Complex** Minors;
+  Complex** MinorsUp;
+  Complex** MinorsDown;
 
   // temporary state used when applying operators
-  unsigned* TemporaryState;
+  int* TemporaryState;
   // temporary state used when applying ProdA operator
-  unsigned* ProdATemporaryState;
-  // number of up spins in temporary state
-  unsigned ProdATemporaryStateNbrUp;
-  
+  int* ProdATemporaryState;
+
+  // Target space for out-of space operations
+  BosonOnSphereWithSpinOld *TargetSpace;
+
  public:
 
   // default constructor
   //
-  BosonOnSphereWithSpinFast ();
+  BosonOnSphereWithSpinOld ();
 
   // basic constructor
   // 
   // nbrBosons = number of bosons
   // totalLz = momentum total value
   // lzMax = maximum Lz value reached by a boson
-  // totalSpin = twice the total spin
-  // memory = amount of memory granted for precalculations
-  BosonOnSphereWithSpinFast (int nbrBosons, int totalLz, int lzMax, int totalSpin, unsigned long memory = 10000000);
+  // totalSpin = twice the total spin value
+  BosonOnSphereWithSpinOld (int nbrBosons, int totalLz, int lzMax, int totalSpin);
 
   // copy constructor (without duplicating datas)
   //
   // bosons = reference on the hilbert space to copy to copy
-  BosonOnSphereWithSpinFast(const BosonOnSphereWithSpinFast& bosons);
+  BosonOnSphereWithSpinOld(const BosonOnSphereWithSpinOld& bosons);
 
   // destructor
   //
-  virtual ~BosonOnSphereWithSpinFast ();
+  virtual ~BosonOnSphereWithSpinOld ();
 
   // assignement (without duplicating datas)
   //
   // bosons = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space
-  BosonOnSphereWithSpinFast& operator = (const BosonOnSphereWithSpinFast& bosons);
+  BosonOnSphereWithSpinOld& operator = (const BosonOnSphereWithSpinOld& bosons);
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -179,8 +165,7 @@ class BosonOnSphereWithSpinFast :  public ParticleOnSphereWithSpin
   virtual AbstractHilbertSpace* ExtractSubspace (AbstractQuantumNumber& q, 
 						 SubspaceSpaceConverter& converter);
 
-
-    // apply a^+_m1_d a^+_m2_d a_n1_d a_n2_d operator to a given state (with m1+m2=n1+n2, only spin down)
+  // apply a^+_m1_d a^+_m2_d a_n1_d a_n2_d operator to a given state (with m1+m2=n1+n2, only spin down)
   //
   // index = index of the state on which the operator has to be applied
   // m1 = first index for creation operator (spin down)
@@ -329,7 +314,6 @@ class BosonOnSphereWithSpinFast :  public ParticleOnSphereWithSpin
   // return value = index of the destination state 
   virtual int ProdAd (int* m, int* spinIndices, int nbrIndices, double& coefficient);
 
-  
   // print a given State
   //
   // Str = reference on current output stream 
@@ -340,12 +324,19 @@ class BosonOnSphereWithSpinFast :  public ParticleOnSphereWithSpin
   // print a given State
   //
   // Str = reference on current output stream 
-  // myState = explicit form of the state to print
+  // stateDesc = array describing the state to print
   // return value = reference on current output stream 
   
-  ostream& PrintState (ostream& Str, unsigned *myState);
-  
-  // evaluate wave function in real space using a given basis
+  ostream& PrintState (ostream& Str, int* stateDesc);
+
+
+  // find state index from a string
+  //
+  // stateDescription = string describing the state
+  // return value = corresponding index, -1 if an error occured
+  virtual int FindStateIndex(char* stateDescription);
+
+    // evaluate wave function in real space using a given basis
   //
   // state = vector corresponding to the state in the Fock basis
   // position = vector whose components give coordinates of the point where the wave function has to be evaluated
@@ -391,50 +382,36 @@ class BosonOnSphereWithSpinFast :  public ParticleOnSphereWithSpin
   // timeCoherence = true if time coherence has to be used
   virtual  void InitializeWaveFunctionEvaluation (bool timeCoherence = false);
 
-  // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Lz sector and fixed number of particles
+  // create an SU(2) state from two U(1) states
+  //
+  // upState = vector describing the up spin part of the output state
+  // upStateSpace = reference on the Hilbert space associated to the up spin part
+  // downState = vector describing the down spin part of the output state
+  // downStateSpace = reference on the Hilbert space associated to the down spin part  
+  // return value = resluting SU(2) state
+  
+  virtual RealVector ForgeSU2FromU1(RealVector& upState, BosonOnSphere& upStateSpace, RealVector& downState, BosonOnSphere& downStateSpace);
+
+  // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Lz sector.
   // 
-  // subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax to -Lzmax+subsytemSize-1)
-  // nbrBosonSector = number of particles that belong to the subsytem 
-  // groundState = reference on the total system ground state
+  // nbrFermionSector = number of particles that belong to the subsytem 
   // lzSector = Lz sector in which the density matrix has to be evaluated 
-  // return value = density matrix of the subsytem  (return a wero dimension matrix if the density matrix is equal to zero)
-  virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int subsytemSize, int nbrBosonSector, int lzSector, RealVector& groundState);
+  // szSector = Sz sector in which the density matrix has to be evaluated 
+  // groundState = reference on the total system ground state
+  // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+  virtual RealSymmetricMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrFermionSector, int lzSector, int szSector, RealVector& groundState);
 
-  // Project the state from the su2 space
-  // to the U(1) space (u1Space)
-  //
-  // state = state that needs to be projected
-  // u1Space = the subspace onto which the projection is carried out
-  virtual RealVector ForgeU1FromSU2(RealVector& state, BosonOnSphere& u1Space);
+  // evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state, using particle partition. The entanglement matrix is only evaluated in a given Lz sector.
+  // 
+  // nbrFermionSector = number of particles that belong to the subsytem 
+  // lzSector = Lz sector in which the density matrix has to be evaluated
+  // szSector = Sz sector in which the density matrix has to be evaluated 
+  // groundState = reference on the total system ground state
+  // removeBinomialCoefficient = remove additional binomial coefficient in case the particle entanglement matrix has to be used for real space cut
+  // return value = entanglement matrix of the subsytem (return a wero dimension matrix if the entanglement matrix is equal to zero)
+  virtual RealMatrix EvaluatePartialEntanglementMatrixParticlePartition (int nbrFermionSector, int lzSector, int szSector, RealVector& groundState, bool removeBinomialCoefficient = false);
+  
 
-  // Calculate mean value <Sx> in a given state
-  //
-  // state = given state
-  virtual double MeanSxValue(RealVector& state);
-
-  // Calculate mean value <Sz> in a given state
-  //
-  // state = given state
-  virtual double MeanSzValue(RealVector& state);
-
-  // find state index from a string
-  //
-  // stateDescription = string describing the state
-  // return value = corresponding index, -1 if an error occured
-  virtual int FindStateIndex(char* stateDescription);
-
-  // find state index
-  //
-  // stateDescription = array describing the state
-  // lzmax = maximum Lz value reached by a boson in the state
-  // return value = corresponding index
-  int FindStateIndex(unsigned* stateDescription);
-
-  // get Lz component of a component
-  //
-  // j = index of the component in Hilbert space
-  // return value = twice the Lz component
-  virtual int GetLzValue(int j=0);
 
  protected:
 
@@ -443,15 +420,7 @@ class BosonOnSphereWithSpinFast :  public ParticleOnSphereWithSpin
   // stateDescription = array describing the state
   // lzmax = maximum Lz value reached by a boson in the state
   // return value = corresponding index
-  int FindStateIndex(unsigned long stateDescriptionUp, unsigned long stateDescriptionDown, int lzMaxUp, int lzMaxDown);
-
-  
-  // find index of a tensored configuration
-  //
-  // stateDescription = array describing the state
-  // lzmax = maximum Lz value reached by a boson in the state
-  // return value = corresponding index
-  unsigned FindTensoredIndex(unsigned long stateDescription, int lzmax);
+  int FindStateIndex(int* stateDescription, int lzmax);
 
   // evaluate Hilbert space dimension with shifted values for lzMax and totalLz
   //
@@ -459,67 +428,64 @@ class BosonOnSphereWithSpinFast :  public ParticleOnSphereWithSpin
   // lzMax = two times momentum maximum value for a boson plus one 
   // totalLz = momentum total value plus nbrBosons * (momentum maximum value for a boson + 1)
   // return value = Hilbert space dimension
-  long int ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz, int totalSpin);
-
+  int ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz);
 
   // generate look-up table associated to current Hilbert space
   // 
   // memeory = memory size that can be allocated for the look-up table
   virtual void GenerateLookUpTable(int memory);
+
+  // generate look-up table associated to current Hilbert space (core part of the look-up table generation)
+  // 
+  // dimension = Hilbert space dimension
+  // lzMax = maximum Lz value that can be reached by a particle
+  // stateDescription = array that contains state description
+  // stateLzMax = array giving maximum Lz value reached for a boson in a given state
+  // keys = keys associated to each state
+  // lzMaxPosition = indicate position of the first state with a given number of boson having a given maximum Lz value
+  // keyInvertSectorSize = array that indicates how many different states are store for each sector
+  // keyInvertTable = array that contains sorted possible key for each sector
+  // keyInvertTableNbrIndices = array that contains number of indices that have the same key per sector 
+  // keyInvertIndices = array that contains state index per sector and per key
+  // indexShift = optional shift to apply before storing any index
+  void CoreGenerateLookUpTable(int dimension, int lzMax, int** stateDescription, int* stateLzMax, int* keys, int* lzMaxPosition, int* keyInvertSectorSize, 
+			       int** keyInvertTable, int** keyInvertTableNbrIndices, int*** keyInvertIndices, int indexShift = 0);
+
+  // generate look-up table associated to current Hilbert space
+  // 
+  // stateDescription = array describing the state
+  // lzmax = maximum Lz value reached by a boson in the state
+  // return value = key associated to the state
+  int GenerateKey(int* stateDescription, int lzmax);
     
   // evaluate Hilbert space dimension
   //
   // nbrBosons = number of bosons
   // lzMax = momentum maximum value for a boson
   // totalLz = momentum total value
+  // totalSpin = twice the total spin value
   // return value = Hilbert space dimension
-  virtual long int EvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz, int totalSpin);
+  virtual long EvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz, int totalSpin);
+
+  // evaluate Hilbert space dimension
+  //
+  // nbrFermions = number of fermions
+  // lzMax = momentum maximum value for a fermion
+  // totalLz = momentum total value
+  // totalSpin = number of particles with spin up
+  // return value = Hilbert space dimension      
+  virtual long ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin);
 
   // generate all states corresponding to the constraints
   // 
   // nbrBosonsUp = number of bosons with spin up
   // nbrBosonsDown = number of bosons with spin down
-  // lzMax = momentum maximum value for a boson in the state
+  // lzMax = momentum maximum value for a boson
   // currentLzMax = momentum maximum value for bosons that are still to be placed
   // totalLz = momentum total value
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  int GenerateStates(int nbrBosonsUp, int nbrBosonsDown, int lzMax, int currentLzMax, int totalLz, int pos, int level=0);
-
-
-  // convert a bosonic state into its fermionic counterpart
-  //
-  // finalStateUp = return value of bit-coded state of up-bosons
-  // finalStateDown = return value of bit-coded state of down-bosons
-  // finalLzMaxUp = highest bit in fermionic coding finalStateUp
-  // finalLzMaxDown = highest bit in fermionic coding finalStateDown
-  // initialState = reference on the array where initialbosonic  state is stored
-  
-  void BosonToFermion(unsigned long &finalStateUp, unsigned long &finalStateDown, int &finalLzMaxUp, int &finalLzMaxDown, unsigned*& initialState);
-
-
-  // convert a fermionic state into its bosonic counterpart
-  //
-  // initialState = initial fermionic state
-  // initialStateLzMax = initial fermionic state maximum Lz value
-  // finalState = reference on the array where the bosonic state has to be stored
-  // finalStateLzMax = reference on the integer where the bosonic state maximum Lz value has to be stored
-  
-  void FermionToBoson(unsigned long initialStateUp, unsigned long initialStateDown, unsigned initialInfo, unsigned*& finalState, int &finalStateLzMaxUp, int &finalStateLzMaxDown);
-
-  // get LzMax value for a given state
-  // index = index of state to analyse
-  // return = lzMax value (max of up and down)
-  int GetStateLzMax(int index);
-
-  // sort an array and reflect permutations in auxiliary array
-  //
-  // length = length of arrays
-  // sortArray = array to be sorted
-  // auxArray = auxiliary array
-  //
-  void ShellSortAux(unsigned length, unsigned long* sortArray, unsigned *auxArray, int *auxArray2);
-
+  int GenerateStates(int nbrBosonsUp, int nbrBosonsDown, int lzMax, int currentLzMax, int totalLz, int pos);
 
 };
 
@@ -527,212 +493,11 @@ class BosonOnSphereWithSpinFast :  public ParticleOnSphereWithSpin
 //
 // return value = particle statistic
 
-inline int BosonOnSphereWithSpinFast::GetParticleStatistic()
+inline int BosonOnSphereWithSpinOld::GetParticleStatistic()
 {
   return ParticleOnSphere::BosonicStatistic;
 }
 
 #endif
 
-
-// convert a bosonic state into its fermionic counterpart
-//
-// finalStateUp = return value of bit-coded state of up-bosons
-// finalStateDown = return value of bit-coded state of down-bosons
-// finalLzMaxUp = highest bit in fermionic coding finalStateUp
-// finalLzMaxDown = highest bit in fermionic coding finalStateDown
-// initialState = reference on the array where initialbosonic  state is stored
-// initialStateNbrUp = reference on the number of up-bosons in initial state maximum Lz value
-
-inline void BosonOnSphereWithSpinFast::BosonToFermion(unsigned long &finalStateUp, unsigned long &finalStateDown, int &finalLzMaxUp, int &finalLzMaxDown, unsigned*& initialState)
-{
-/*   cout << "NbrUp="<<StateNbrUp <<", InitialState = |"; */
-/*   for (int i=0; i<=LzMax; ++i) */
-/*     cout << " " << (initialState[i] >> 16)<< "u "<< (initialState[i] & 0xffff)<<"d |"; */
-/*   cout << endl; */
-
-  finalStateUp = 0x0ul;
-  unsigned ShiftUp = 0;
-  finalStateDown = 0x0ul;
-  unsigned ShiftDown = 0;
-  finalLzMaxUp = 0;
-  finalLzMaxDown = 0;
-  int RemainingNbrUp=NbrBosonsUp;
-  int RemainingNbrDown=NbrBosonsDown;
-  int TmpUp, TmpDown;
-  for (int i = 0; (i <= this->LzMax)&&((RemainingNbrUp!=0)||(RemainingNbrDown!=0)); ++i)
-    {
-      TmpUp = initialState[i]>>16;
-      TmpDown = initialState[i]&0xffff;
-      finalStateUp |= ((1ul << TmpUp) - 1ul) << ShiftUp;
-      ShiftUp += TmpUp;
-      RemainingNbrUp -= TmpUp;
-      ++ShiftUp;
-      finalLzMaxUp = (TmpUp>0)*i+(TmpUp==0)*finalLzMaxUp;
-      finalStateDown |= ((1ul << TmpDown) - 1ul) << ShiftDown;
-      ShiftDown += TmpDown;
-      RemainingNbrDown -= TmpDown;
-      ++ShiftDown;
-      finalLzMaxDown = (TmpDown>0)*i+(TmpDown==0)*finalLzMaxDown;
-    }
-  finalLzMaxUp += this->NbrBosonsUp-(this->NbrBosonsUp!=0);
-  finalLzMaxDown += this->NbrBosonsDown -(this->NbrBosonsDown!=0);
-  //  this->PrintState(cout, initialState) << " " << std::hex << finalStateUp << " " << finalStateDown << std::dec << " " << finalLzMaxUp <<" " << finalLzMaxDown<<endl;
-  return;
-}
-
-
-// convert a fermionic state into its bosonic counterpart
-//
-// initialState = initial fermionic state
-// initialStateLzMax = initial fermionic state maximum Lz value
-// finalState = reference on the array where the bosonic state has to be stored
-// finalStateLzMax = reference on the integer where the bosonic state maximum Lz value has to be stored
-
-inline void BosonOnSphereWithSpinFast::FermionToBoson(unsigned long initialStateUp, unsigned long initialStateDown, unsigned initialInfo, unsigned*& finalState, int &finalStateLzMaxUp, int &finalStateLzMaxDown)
-{
-  //cout << "FermionToBoson :: initialStateUp =" << hex << initialStateUp << ", initialStateDown="<<initialStateDown<<dec<<endl;
-  int StateNbrUp=0;
-  int InitialStateLzMax = initialInfo >> 16;
-  finalStateLzMaxUp = 0;
-  while (InitialStateLzMax >= 0)
-    {
-      unsigned long TmpState = (~initialStateUp - 1ul) ^ (~initialStateUp);
-      TmpState &= ~(TmpState >> 1);
-      // cout << hex << initialStateUp << "  " << TmpState << dec << endl;
-#ifdef  __64_BITS__
-      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaaaaaaaaaul) != 0);
-      TmpPower |= ((TmpState & 0xccccccccccccccccul) != 0) << 1;
-      TmpPower |= ((TmpState & 0xf0f0f0f0f0f0f0f0ul) != 0) << 2;
-      TmpPower |= ((TmpState & 0xff00ff00ff00ff00ul) != 0) << 3;      
-      TmpPower |= ((TmpState & 0xffff0000ffff0000ul) != 0) << 4;      
-      TmpPower |= ((TmpState & 0xffffffff00000000ul) != 0) << 5;      
-#else
-      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaul) != 0);
-      TmpPower |= ((TmpState & 0xccccccccul) != 0) << 1;
-      TmpPower |= ((TmpState & 0xf0f0f0f0ul) != 0) << 2;
-      TmpPower |= ((TmpState & 0xff00ff00ul) != 0) << 3;      
-      TmpPower |= ((TmpState & 0xffff0000ul) != 0) << 4;      
-#endif
-//      cout << TmpPower << endl;
-      //cout << "initialStateLzMaxUp="<<InitialStateLzMax<<" - setting finalState["<<finalStateLzMaxUp<<"]="<<TmpPower<<"u"<<endl;
-      finalState[finalStateLzMaxUp] = TmpPower << 16;
-      StateNbrUp+=TmpPower;
-      ++TmpPower;
-      initialStateUp >>= TmpPower;
-      ++finalStateLzMaxUp;
-      InitialStateLzMax -= TmpPower;
-    }
-  --finalStateLzMaxUp;
-
-/*   cout << "FinalStateUp ="; */
-/*   for (int i=0; i<=LzMax; ++i) */
-/*     cout << " " << (finalState[i] >> 16); */
-/*   cout << endl; */
-  
-  for (int i=finalStateLzMaxUp+1; i<NbrLzValue; ++i)
-    finalState[i]=0;
-  finalStateLzMaxDown = 0;
-  InitialStateLzMax = initialInfo&0xffff;
-  while (InitialStateLzMax >= 0)
-    {
-      unsigned long TmpState = (~initialStateDown - 1ul) ^ (~initialStateDown);
-      TmpState &= ~(TmpState >> 1);
-      // cout << hex << initialStateDown << "  " << TmpState << dec << endl;
-#ifdef  __64_BITS__
-      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaaaaaaaaaul) != 0);
-      TmpPower |= ((TmpState & 0xccccccccccccccccul) != 0) << 1;
-      TmpPower |= ((TmpState & 0xf0f0f0f0f0f0f0f0ul) != 0) << 2;
-      TmpPower |= ((TmpState & 0xff00ff00ff00ff00ul) != 0) << 3;      
-      TmpPower |= ((TmpState & 0xffff0000ffff0000ul) != 0) << 4;      
-      TmpPower |= ((TmpState & 0xffffffff00000000ul) != 0) << 5;      
-#else
-      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaul) != 0);
-      TmpPower |= ((TmpState & 0xccccccccul) != 0) << 1;
-      TmpPower |= ((TmpState & 0xf0f0f0f0ul) != 0) << 2;
-      TmpPower |= ((TmpState & 0xff00ff00ul) != 0) << 3;      
-      TmpPower |= ((TmpState & 0xffff0000ul) != 0) << 4;      
-#endif
-//      cout << TmpPower << endl;
-//      cout << "initialStateLzMaxDown="<<InitialStateLzMax<<" - setting finalState["<<finalStateLzMaxDown<<"]="<<TmpPower<<"d"<<endl;
-      finalState[finalStateLzMaxDown] |= TmpPower;
-      ++TmpPower;
-      initialStateDown >>= TmpPower;
-      ++finalStateLzMaxDown;
-      InitialStateLzMax -= TmpPower;
-    }
-  --finalStateLzMaxDown;
-/*   cout << "FinalStateDown ="; */
-/*   for (int i=0; i<=LzMax; ++i) */
-/*     cout << " " << (finalState[i]& 0xffff); */
-/*   cout << endl; */
-  // this->PrintState(cout, finalState)<<endl;
-}
-
-
-// get LzMax value for a given state
-// index = index of state to analyse
-// return = lzMax value (max of up and down)
-inline int BosonOnSphereWithSpinFast::GetStateLzMax(int index)
-{
-  unsigned Info = StateInfo[index];
-  int LzMaxUp = Info >> 16;
-  int LzMaxDown = Info&0xffff;
-  LzMaxUp -= NbrBosonsUp-(NbrBosonsUp!=0);
-  LzMaxDown -= this->NbrBosonsDown - (NbrBosonsDown!=0);
-  return std::max(LzMaxUp, LzMaxDown);
-}
-
-
-// find state index
-//
-// stateDescription = array describing the state
-// lzmax = maximum Lz value reached by a boson in the state
-// return value = corresponding index
-inline int BosonOnSphereWithSpinFast::FindStateIndex(unsigned long stateDescriptionUp, unsigned long stateDescriptionDown, int lzMaxUp, int lzMaxDown)
-{
-  // cout << "FindStateIndex: "<<hex<<stateDescriptionUp<<" "<<stateDescriptionDown<<" " <<dec << lzMaxUp <<" "<<lzMaxDown;
-  int Base = this->UpSpinLookUpTable[this->FindTensoredIndex(stateDescriptionUp, lzMaxUp)];
-  int Offset = this->DownSpinLookUpTable[this->FindTensoredIndex(stateDescriptionDown, lzMaxDown)];
-  return Base+Offset;
-}
-
-// find index of a tensored configuration
-//
-// stateDescription = array describing the state
-// lzmax = maximum Lz value reached by a boson in the state
-// return value = corresponding index
-inline unsigned BosonOnSphereWithSpinFast::FindTensoredIndex(unsigned long elementDescription, int lzmax)
-{
-  // long PosMax = this->NbrTensoredElements-1;
-  long PosMin = elementDescription >> this->LookUpTableShift[lzmax];
-  //long PosMin = 0;
-  long PosMax = this->LookUpTable[lzmax][PosMin];  
-  PosMin = this->LookUpTable[lzmax][PosMin + 1];
-
-  // cout << "Initial propositions searching "<<std::hex<<elementDescription<<std::dec<<" with lzMax="<<lzmax<< " PosMax="<<PosMax<<" PosMin="<<PosMin<<endl;
-  long PosMid = (PosMin + PosMax + 1) >> 1;
-  unsigned long CurrentElement = this->TensoredElements[PosMid];
-  while ((PosMax != PosMid) && (CurrentElement != elementDescription))
-    {
-      if (CurrentElement > elementDescription)
-	{
-	  PosMin = PosMid;
-	}
-      else
-	{
-	  PosMax = PosMid;
-	} 
-      PosMid = (PosMin + PosMax + 1) >> 1;
-      CurrentElement = this->TensoredElements[PosMid];
-    }
-  if (CurrentElement == elementDescription)
-    {
-      return PosMid;
-    }
-  else
-    {
-      return PosMin;
-    }
-}
 

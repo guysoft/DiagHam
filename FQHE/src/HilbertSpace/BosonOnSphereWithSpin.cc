@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                   class of bosons on sphere wih SU(2) spin                 //
+//                           class of bosons on sphere                        //
 //                                                                            //
-//                        last modification : 10/10/2008                      //
+//                        last modification : 05/07/2002                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -36,15 +36,15 @@
 #include "Vector/RealVector.h"
 #include "FunctionBasis/AbstractFunctionBasis.h"
 #include "GeneralTools/StringTools.h"
+#include "HilbertSpace/BosonOnSphere.h"
+#include "HilbertSpace/BosonOnSphereWithSpin.h"
 
+#include <algorithm>
+#include <cmath>
+#include <cstdlib>
 
-#include <math.h>
-#include <stdlib.h>
-
-
-using std::cout;
-using std::endl;
-
+// testing flag - switches debut output
+//#define TESTING
 
 // default constructor
 //
@@ -58,16 +58,14 @@ BosonOnSphereWithSpin::BosonOnSphereWithSpin ()
 // nbrBosons = number of bosons
 // totalLz = momentum total value
 // lzMax = maximum Lz value reached by a boson
-// totalSpin = twce the total spin value
-
-BosonOnSphereWithSpin::BosonOnSphereWithSpin (int nbrBosons, int totalLz, int lzMax, int totalSpin)
+// totalSpin = spin projection
+// memory = amount of memory granted for precalculations
+//
+BosonOnSphereWithSpin::BosonOnSphereWithSpin (int nbrBosons, int totalLz, int lzMax, int totalSpin, unsigned long memory)
 {
-  if ((nbrBosons^totalSpin)&1)
-    {
-      cout << "NbrBosons and TotalSpin need to have the same parity"<<endl;
-      exit(1);
-    }
-  this->NbrBosons = nbrBosons;  
+  cout << "BosonOnSphereWithSpin"<<endl;
+  this->NbrBosons = nbrBosons;
+  this->IncNbrBosons = this->NbrBosons + 1;
   this->TotalLz = totalLz;
   this->LzMax = lzMax;
   this->ShiftedTotalLz = (this->TotalLz + this->NbrBosons * this->LzMax) >> 1;
@@ -75,51 +73,47 @@ BosonOnSphereWithSpin::BosonOnSphereWithSpin (int nbrBosons, int totalLz, int lz
   this->TotalSpin = totalSpin;
   this->NbrBosonsUp = (this->NbrBosons + this->TotalSpin) >> 1;
   this->NbrBosonsDown = (this->NbrBosons - this->TotalSpin) >> 1;
-  if (NbrBosonsUp>NbrBosonsDown)
-    this->IncMaxNbrBosons = this->NbrBosonsUp + 1;
-  else
-    this->IncMaxNbrBosons = this->NbrBosonsDown + 1;
-  this->HilbertSpaceDimension = (int) this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->LzMax, this->TotalLz, this->TotalSpin);
+
+  this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->LzMax, this->TotalLz, this->TotalSpin);
   cout << "dim = " << this->HilbertSpaceDimension << endl;
-  this->TemporaryState = new int [this->NbrLzValue];
-  this->ProdATemporaryState = new int [this->NbrLzValue];
+  this->TemporaryState = new unsigned [this->NbrLzValue];
+  this->ProdATemporaryState = new unsigned [this->NbrLzValue];
   this->Flag.Initialize();
-  this->TargetSpace = this;
-  this->StateDescription = new int* [this->HilbertSpaceDimension];
-  this->StateLzSzMax = new int [this->HilbertSpaceDimension];
+  this->StateDescription = new unsigned* [this->HilbertSpaceDimension];
+  this->StateLzMaxUp = new unsigned [this->HilbertSpaceDimension];
+  this->StateLzMaxDown = new unsigned [this->HilbertSpaceDimension];
   int TmpLzMax = this->LzMax;
   if (this->ShiftedTotalLz < TmpLzMax)
     {
       TmpLzMax = this->ShiftedTotalLz;	  
     }
-  this->GenerateStates(this->NbrBosonsUp, this->NbrBosonsDown, TmpLzMax, TmpLzMax, this->ShiftedTotalLz, 0);
-  this->KeyMultiplicationTable = new int [2*(this->LzMax + 1)];
-  this->GenerateLookUpTable(0);
+  //  int TmpDim = this->GenerateStates(this->NbrBosonsUp, this->NbrBosonsDown, TmpLzMax, TmpLzMax, this->ShiftedTotalLz, 0);
+  long TmpDim = GenerateStates(this->NbrBosonsUp, this->NbrBosonsDown, this->LzMax, this->ShiftedTotalLz);
+
+  if (TmpDim!=this->HilbertSpaceDimension)
+    cout << "Count inconsistent: "<<TmpDim<<" vs " << this->HilbertSpaceDimension<<endl;
+  this->GenerateLookUpTable(memory);
+  this->CoherenceFactors=new double[NbrBosons*NbrBosons+1];
+  for (int i=0; i<NbrBosons*NbrBosons+1; ++i)
+    this->CoherenceFactors[i]=sqrt((double)i);
   this->KeptCoordinates = new int;
   (*(this->KeptCoordinates)) = -1;
-  this->MinorsUp = 0;
-  this->MinorsDown = 0;
+  this->Minors = 0;
   this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
 //   for (int i=0; i<HilbertSpaceDimension; ++i)
-//     PrintState(cout,i)<<endl;
+//     {
+//       PrintState(cout,i)<<endl;      
+//     }
 
 #ifdef __DEBUG__
-  int UsedMemory = 0;
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-    UsedMemory += (this->StateLzSzMax[i] + 1) * sizeof(int) + sizeof(int*);
-  UsedMemory += (this->TotalLz + 1) * sizeof(int);
-  UsedMemory += this->HilbertSpaceDimension * sizeof(int);
-  UsedMemory += ((this->TotalLz + 1) * this->IncMaxNbrBosons) * sizeof(int);
-  UsedMemory += this->HilbertSpaceDimension * sizeof(int);
-/*  cout << "memory requested for Hilbert space = ";
-  if (UsedMemory >= 1024)
-    if (UsedMemory >= 1048576)
-      cout << (UsedMemory >> 20) << "Mo" << endl;
-    else
-      cout << (UsedMemory >> 10) << "ko" <<  endl;
-  else
-    cout << UsedMemory << endl;*/
+  long UsedMemory = 0;
+  UsedMemory += 2*this->HilbertSpaceDimension * sizeof(unsigned long);  // StateDescriptionUp/Down
+  UsedMemory += this->HilbertSpaceDimension * sizeof(unsigned); // StateInfo
+  UsedMemory += 0x1l<<(this->LzMax+this->NbrBosonsUp) * sizeof(unsigned long);  // LookUpTableUp 
+  UsedMemory += 0x1l<<(this->LzMax+this->NbrBosonsDown) * sizeof(unsigned long); // LookUpTableDown
+  cout << "HS using ";
+  PrintMemorySize(cout, UsedMemory)<<endl;
 #endif
 }
 
@@ -130,7 +124,7 @@ BosonOnSphereWithSpin::BosonOnSphereWithSpin (int nbrBosons, int totalLz, int lz
 BosonOnSphereWithSpin::BosonOnSphereWithSpin(const BosonOnSphereWithSpin& bosons)
 {
   this->NbrBosons = bosons.NbrBosons;
-  this->IncMaxNbrBosons = bosons.IncMaxNbrBosons;
+  this->IncNbrBosons = bosons.IncNbrBosons;
   this->TotalLz = bosons.TotalLz;
   this->ShiftedTotalLz = bosons. ShiftedTotalLz;
   this->LzMax = bosons.LzMax;
@@ -140,25 +134,21 @@ BosonOnSphereWithSpin::BosonOnSphereWithSpin(const BosonOnSphereWithSpin& bosons
   this->NbrBosonsDown = bosons.NbrBosonsDown;
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
   this->StateDescription = bosons.StateDescription;
-  this->StateLzSzMax = bosons.StateLzSzMax;
+  this->StateDescriptionUp = bosons.StateDescriptionUp;
+  this->StateDescriptionDown = bosons.StateDescriptionDown;
+  this->StateLzMaxUp = bosons.StateLzMaxUp;
+  this->StateLzMaxDown = bosons.StateLzMaxDown;
+  this->StateInfo = bosons.StateInfo;
+  this->LookUpTableUp = bosons.LookUpTableUp;
+  this->LookUpTableDown = bosons.LookUpTableDown;
+  this->CoherenceFactors = bosons.CoherenceFactors;
   this->Flag = bosons.Flag;
-  this->Keys = bosons.Keys;
-  this->KeyMultiplicationTable = bosons.KeyMultiplicationTable;
-  this->LzSzMaxPosition = bosons.LzSzMaxPosition;
-  this->KeyInvertSectorSize = bosons.KeyInvertSectorSize;
-  this->KeyInvertTable = bosons.KeyInvertTable;
-  this->KeyInvertTableNbrIndices = bosons.KeyInvertTableNbrIndices;
-  this->KeyInvertIndices = bosons.KeyInvertIndices;
   this->KeptCoordinates = bosons.KeptCoordinates;
-  this->MinorsUp = bosons.MinorsUp;
-  this->MinorsDown = bosons.MinorsDown;
-  this->TemporaryState = new int [this->NbrLzValue];
-  this->ProdATemporaryState = new int [this->NbrLzValue];
-  if (bosons.TargetSpace != &bosons)
-    this->TargetSpace = bosons.TargetSpace;
-  else
-    this->TargetSpace = this;
+  this->Minors = bosons.Minors;
+  this->TemporaryState = new unsigned [this->NbrLzValue];
+  this->ProdATemporaryState = new unsigned [this->NbrLzValue];
   this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
+
 }
 
 // destructor
@@ -170,49 +160,26 @@ BosonOnSphereWithSpin::~BosonOnSphereWithSpin ()
   delete[] this->ProdATemporaryState;
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
-      delete[] this->Keys;
-      delete[] this->KeyMultiplicationTable;
-      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-	delete[] this->StateDescription[i];
-      delete[] this->StateDescription;
-      delete[] this->StateLzSzMax;
-      int Size = (2*(this->LzMax+1) + 1) * this->IncMaxNbrBosons;
-      for (int i = 0; i < Size; ++i)
-	{
-	  if (this->KeyInvertSectorSize[i] > 0)
-	    {
-	      for (int j= 0; j < this->KeyInvertSectorSize[i]; ++j)
-		delete[] this->KeyInvertIndices[i][j];
-	      delete[] this->KeyInvertTable[i];
-	      delete[] this->KeyInvertTableNbrIndices[i];
-	      delete[] this->KeyInvertIndices[i];
-	    }
-	}
-      delete[] this->KeyInvertSectorSize;
-      delete[] this->KeyInvertTable;
-      delete[] this->KeyInvertTableNbrIndices;
-      delete[] this->KeyInvertIndices;
-
-      if (this->MinorsUp != 0)
+      if (this->StateDescription!=NULL)
 	{
 	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-	    {
-	      if (this->MinorsUp[i] != 0)
-		delete[] this->MinorsUp[i];	      
-	      delete[] this->MinorsUp;
-	    }
+	    delete[] this->StateDescription[i];
+	  delete[] this->StateDescription;
 	}
-      if (this->MinorsDown != 0)
+      delete[] this->StateDescriptionUp;
+      delete[] this->StateDescriptionDown;
+      delete[] this->StateInfo;
+      delete[] this->LookUpTableUp;
+      delete[] this->LookUpTableDown;
+      delete[] this->CoherenceFactors;
+      if (this->Minors != 0)
 	{
 	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-	    {
-	      if (this->MinorsDown[i] != 0)
-		delete[] this->MinorsDown[i];	      
-	      delete[] this->MinorsDown;
-	    }
+	    if (this->Minors[i] != 0)
+	      delete[] this->Minors[i];
+	  delete[] this->Minors;
 	}
       delete this->KeptCoordinates;
-      delete[] this->LzSzMaxPosition;
     }
 }
 
@@ -227,76 +194,54 @@ BosonOnSphereWithSpin& BosonOnSphereWithSpin::operator = (const BosonOnSphereWit
   delete[] this->ProdATemporaryState;
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
-      delete[] this->Keys;
-      delete[] this->KeyMultiplicationTable;
-      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-	delete[] this->StateDescription[i];
-      delete[] this->StateDescription;
-      delete[] this->StateLzSzMax;
-      int Size = (this->LzMax + 2) * this->IncMaxNbrBosons;
-      for (int i = 0; i < Size; ++i)
-	{
-	  if (this->KeyInvertSectorSize[i] > 0)
-	    {
-	      for (int j= 0; j < this->KeyInvertSectorSize[i]; ++j)
-		delete[] this->KeyInvertIndices[i][j];
-	      delete[] this->KeyInvertTable[i];
-	      delete[] this->KeyInvertTableNbrIndices[i];
-	      delete[] this->KeyInvertIndices[i];
-	    }
-	}      
-      delete[] this->KeyInvertSectorSize;
-      delete[] this->KeyInvertTable;
-      delete[] this->KeyInvertTableNbrIndices;
-      delete[] this->KeyInvertIndices;
-      if (this->MinorsUp != 0)
+      if (this->StateDescription!=NULL)
 	{
 	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-	    {
-	      if (this->MinorsUp[i] != 0)
-		delete[] this->MinorsUp[i];	      
-	      delete[] this->MinorsUp;
-	    }
+	    delete[] this->StateDescription[i];
+	  delete[] this->StateDescription;
 	}
-      if (this->MinorsDown != 0)
+      delete[] this->StateDescriptionUp;
+      delete[] this->StateDescriptionDown;
+      delete[] this->StateInfo;
+      delete[] this->LookUpTableUp;
+      delete[] this->LookUpTableDown;
+      delete[] this->CoherenceFactors;
+      if (this->StateLzMaxUp!=NULL)
+	delete[] this->StateLzMaxUp;
+      if (this->StateLzMaxDown!=NULL)
+	delete[] this->StateLzMaxDown;
+      if (this->Minors != 0)
 	{
 	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-	    {
-	      if (this->MinorsDown[i] != 0)
-		delete[] this->MinorsDown[i];	      
-	      delete[] this->MinorsDown;
-	    }
+	    if (this->Minors[i] != 0)
+	      delete[] this->Minors[i];
+	  delete[] this->Minors;
 	}
       delete this->KeptCoordinates;
     }
-  if (this->TargetSpace != &bosons)
-    this->TargetSpace = bosons.TargetSpace;
-  else
-    this->TargetSpace = this;
   this->NbrBosons = bosons.NbrBosons;
-  this->IncMaxNbrBosons = bosons.IncMaxNbrBosons;
+  this->IncNbrBosons = bosons.IncNbrBosons;
   this->TotalLz = bosons.TotalLz;
   this->ShiftedTotalLz = bosons. ShiftedTotalLz;
+  this->LzMax = bosons.LzMax;
   this->TotalSpin = bosons.TotalSpin;
   this->NbrBosonsUp = bosons.NbrBosonsUp;
   this->NbrBosonsDown = bosons.NbrBosonsDown;
-  this->LzMax = bosons.LzMax;
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
   this->StateDescription = bosons.StateDescription;
-  this->StateLzSzMax = bosons.StateLzSzMax;
+  this->StateDescriptionUp = bosons.StateDescriptionUp;
+  this->StateDescriptionDown = bosons.StateDescriptionDown;
+  this->StateLzMaxUp = bosons.StateLzMaxUp;
+  this->StateLzMaxDown = bosons.StateLzMaxDown;
+  this->StateInfo = bosons.StateInfo;
+  this->LookUpTableUp = bosons.LookUpTableUp;
+  this->LookUpTableDown = bosons.LookUpTableDown;
+  this->CoherenceFactors = bosons.CoherenceFactors;
   this->Flag = bosons.Flag;
-  this->Keys = bosons.Keys;
-  this->KeyMultiplicationTable = bosons.KeyMultiplicationTable;
-  this->LzSzMaxPosition = bosons.LzSzMaxPosition;
-  this->KeyInvertSectorSize = bosons.KeyInvertSectorSize;
-  this->KeyInvertTable = bosons.KeyInvertTable;
-  this->KeyInvertTableNbrIndices = bosons.KeyInvertTableNbrIndices;
-  this->KeyInvertIndices = bosons.KeyInvertIndices;
   this->KeptCoordinates = bosons.KeptCoordinates;
-  this->MinorsUp = bosons.MinorsUp;
-  this->MinorsDown = bosons.MinorsDown;
-  this->TemporaryState = new int [this->NbrLzValue];
-  this->ProdATemporaryState = new int [this->NbrLzValue];
+  this->Minors = bosons.Minors;
+  this->TemporaryState = new unsigned [this->NbrLzValue];
+  this->ProdATemporaryState = new unsigned [this->NbrLzValue];
   this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
   return *this;
@@ -398,24 +343,25 @@ int BosonOnSphereWithSpin::AddAduAdAu (int index, int m1, int m2, int n1, int n2
 
 int BosonOnSphereWithSpin::AduAdu (int m1, int m2, double& coefficient)
 {
-  int i = 0;
-  for (; i < this->NbrLzValue; ++i)
+  for (int i = 0; i < this->NbrLzValue; ++i)
     this->TemporaryState[i] = this->ProdATemporaryState[i];
   this->TemporaryState[m2] += 0x10000;
-  coefficient = (this->TemporaryState[m2] >> 16);
+  //coefficient = (this->TemporaryState[m2] >> 16);
+  int CoherenceIndex = (this->TemporaryState[m2] >> 16);
   this->TemporaryState[m1] += 0x10000;
-  coefficient *= (this->TemporaryState[m1] >> 16);
-  coefficient = sqrt(coefficient);
-  int NewLzSzMax = this->LzMax;
-  while (this->TemporaryState[NewLzSzMax] == 0)
-    --NewLzSzMax;
-  if (this->TemporaryState[NewLzSzMax]&0xffff0000)
-    {
-      NewLzSzMax<<=1;
-      NewLzSzMax+=1;
-    }
-  else NewLzSzMax<<=1;
-  return this->TargetSpace->FindStateIndex(this->TemporaryState, NewLzSzMax);
+  //coefficient *= (this->TemporaryState[m1] >> 16);
+  CoherenceIndex *= (this->TemporaryState[m1] >> 16);
+  coefficient = this->CoherenceFactors[CoherenceIndex];
+//   int NewLzSzMax = this->LzMax;
+//   while (this->TemporaryState[NewLzSzMax] == 0)
+//     --NewLzSzMax;
+//   if (this->TemporaryState[NewLzSzMax]&0xffff0000)
+//     {
+//       NewLzSzMax<<=1;
+//       NewLzSzMax+=1;
+//     }
+//   else NewLzSzMax<<=1;
+  return this->FindStateIndex(this->TemporaryState);
 }
 
 // apply a^+_m1_d a^+_m2_d operator to the state produced using AdAd method (without destroying it)
@@ -427,24 +373,17 @@ int BosonOnSphereWithSpin::AduAdu (int m1, int m2, double& coefficient)
 
 int BosonOnSphereWithSpin::AddAdd (int m1, int m2, double& coefficient)
 {
-  int i = 0;
-  for (; i < this->NbrLzValue; ++i)
+  for (int i = 0; i < this->NbrLzValue; ++i)
     this->TemporaryState[i] = this->ProdATemporaryState[i];
   ++this->TemporaryState[m2];
-  coefficient = (this->TemporaryState[m2] & 0xffff);
+  //coefficient = (this->TemporaryState[m2] & 0xffff);
+  int CoherenceIndex = (this->TemporaryState[m2] & 0xffff);
   ++this->TemporaryState[m1];
-  coefficient *= (this->TemporaryState[m1] & 0xffff);
-  coefficient = sqrt(coefficient);
-  int NewLzSzMax = this->LzMax;
-  while (this->TemporaryState[NewLzSzMax] == 0)
-    --NewLzSzMax;  
-  if (this->TemporaryState[NewLzSzMax]&0xffff0000)
-    {
-      NewLzSzMax<<=1;
-      NewLzSzMax+=1;
-    }
-  else NewLzSzMax<<=1;
-  return this->TargetSpace->FindStateIndex(this->TemporaryState, NewLzSzMax);
+  //coefficient *= (this->TemporaryState[m1] & 0xffff);
+  CoherenceIndex *= (this->TemporaryState[m1] & 0xffff);
+  coefficient = this->CoherenceFactors[CoherenceIndex];
+
+  return this->FindStateIndex(this->TemporaryState);
 }
 
 // apply a^+_m1_u a^+_m2_d operator to the state produced using AuAd method (without destroying it)
@@ -456,24 +395,16 @@ int BosonOnSphereWithSpin::AddAdd (int m1, int m2, double& coefficient)
 
 int BosonOnSphereWithSpin::AduAdd (int m1, int m2, double& coefficient)
 {
-  int i = 0;
-  for (; i < this->NbrLzValue; ++i)
+  for (int i = 0; i < this->NbrLzValue; ++i)
     this->TemporaryState[i] = this->ProdATemporaryState[i];
   ++this->TemporaryState[m2];
-  coefficient = (this->TemporaryState[m2] & 0xffff);
+  //coefficient = (this->TemporaryState[m2] & 0xffff);
+  int CoherenceIndex = (this->TemporaryState[m2] & 0xffff);
   this->TemporaryState[m1] += 0x10000;
-  coefficient *= (this->TemporaryState[m1] >> 16);
-  coefficient = sqrt(coefficient);
-  int NewLzSzMax = this->LzMax;
-  while (this->TemporaryState[NewLzSzMax] == 0)
-    --NewLzSzMax;  
-  if (this->TemporaryState[NewLzSzMax]&0xffff0000)
-    {
-      NewLzSzMax<<=1;
-      NewLzSzMax+=1;
-    }
-  else NewLzSzMax<<=1;    
-  return this->TargetSpace->FindStateIndex(this->TemporaryState, NewLzSzMax);
+  //coefficient *= (this->TemporaryState[m1] >> 16);
+  CoherenceIndex *= (this->TemporaryState[m1] >> 16);
+  coefficient = this->CoherenceFactors[CoherenceIndex];
+  return this->FindStateIndex(this->TemporaryState);
 }
 
 // apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdu call
@@ -482,26 +413,22 @@ int BosonOnSphereWithSpin::AduAdd (int m1, int m2, double& coefficient)
 // n1 = first index for annihilation operator (spin up)
 // n2 = second index for annihilation operator (spin up)
 // return value =  multiplicative factor 
-
 double BosonOnSphereWithSpin::AuAu (int index, int n1, int n2)
 {
-  int CurrentLzMax = this->StateLzSzMax[index]>>1;
-  int* State = this->StateDescription[index];
-  if ((n1 > CurrentLzMax) || (n2 > CurrentLzMax) || ((State[n1] >> 16) == 0) || ((State[n2] >> 16) == 0) || ((n1 == n2) && ((State[n1] >> 16) == 1)))
-    {
-      return 0.0;
-    }
-  int i = 0;
-  for (; i <= CurrentLzMax; ++i)
-    this->ProdATemporaryState[i] = State[i];
-  double Coefficient = (this->ProdATemporaryState[n2] >> 16);
+  int CurrentLzMaxUp, CurrentLzMaxDown;
+  this->FermionToBoson(this->StateDescriptionUp[index], this->StateDescriptionDown[index], this->StateInfo[index],
+		       ProdATemporaryState, CurrentLzMaxUp, CurrentLzMaxDown);
+  if ((n1 > CurrentLzMaxUp) || (n2 > CurrentLzMaxUp) || ((ProdATemporaryState[n1] >> 16) == 0)
+      || ((ProdATemporaryState[n2] >> 16) == 0) || ((n1 == n2) && ((ProdATemporaryState[n1] >> 16) == 1)))
+    return 0.0;
+  //double Coefficient = (this->ProdATemporaryState[n2] >> 16);
+  int CoherenceIndex = (this->ProdATemporaryState[n2] >> 16);
   this->ProdATemporaryState[n2] -= 0x10000;
-  Coefficient *= (this->ProdATemporaryState[n1] >> 16);
+  //Coefficient *= (this->ProdATemporaryState[n1] >> 16);
+  CoherenceIndex *= (this->ProdATemporaryState[n1] >> 16);
   this->ProdATemporaryState[n1] -= 0x10000;
-  for (i = CurrentLzMax + 1; i < this->NbrLzValue; ++i)
-    this->ProdATemporaryState[i] = 0;
-  return sqrt(Coefficient);
-  
+
+  return this->CoherenceFactors[CoherenceIndex];
 }
 
 // apply a_n1_d a_n2_d operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AddAdd call
@@ -513,22 +440,20 @@ double BosonOnSphereWithSpin::AuAu (int index, int n1, int n2)
 
 double BosonOnSphereWithSpin::AdAd (int index, int n1, int n2)
 {
-  int CurrentLzMax = this->StateLzSzMax[index]>>1;
-  int* State = this->StateDescription[index];
-  if ((n1 > CurrentLzMax) || (n2 > CurrentLzMax) || ((State[n1] & 0xffff) == 0) || ((State[n2] & 0xffff) == 0) || ((n1 == n2) && ((State[n1] & 0xffff) == 1)))
-    {
-      return 0.0;
-    }
-  int i = 0;
-  for (; i <= CurrentLzMax; ++i)
-    this->ProdATemporaryState[i] = State[i];
-  double Coefficient = (this->ProdATemporaryState[n2] & 0xffff);
+  int CurrentLzMaxUp, CurrentLzMaxDown;
+  this->FermionToBoson(this->StateDescriptionUp[index], this->StateDescriptionDown[index], this->StateInfo[index],
+		       ProdATemporaryState, CurrentLzMaxUp, CurrentLzMaxDown);
+
+  if ((n1 > CurrentLzMaxDown) || (n2 > CurrentLzMaxDown) || ((ProdATemporaryState[n1] & 0xffff) == 0)
+      || ((ProdATemporaryState[n2] & 0xffff) == 0) || ((n1 == n2) && ((ProdATemporaryState[n1] & 0xffff) == 1)))
+    return 0.0;
+  //double Coefficient = (this->ProdATemporaryState[n2] & 0xffff);
+  int CoherenceIndex = (this->ProdATemporaryState[n2] & 0xffff);
   --this->ProdATemporaryState[n2];
-  Coefficient *= (this->ProdATemporaryState[n1] & 0xffff);
+  //Coefficient *= (this->ProdATemporaryState[n1] & 0xffff);
+  CoherenceIndex *= (this->ProdATemporaryState[n1] & 0xffff);
   --this->ProdATemporaryState[n1];
-  for (i = CurrentLzMax + 1; i < this->NbrLzValue; ++i)
-    this->ProdATemporaryState[i] = 0;
-  return sqrt(Coefficient);
+  return this->CoherenceFactors[CoherenceIndex];
 }
 
 // apply a_n1_u a_n2_d operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdd call
@@ -540,22 +465,19 @@ double BosonOnSphereWithSpin::AdAd (int index, int n1, int n2)
 
 double BosonOnSphereWithSpin::AuAd (int index, int n1, int n2)
 {
-  int CurrentLzMax = this->StateLzSzMax[index]>>1;
-  int* State = this->StateDescription[index];
-  if ((n1 > CurrentLzMax) || (n2 > CurrentLzMax) || ((State[n1] >> 16) == 0) || ((State[n2] & 0xffff) == 0))
-    {
-      return 0.0;
-    }
-  int i = 0;
-  for (; i <= CurrentLzMax; ++i)
-    this->ProdATemporaryState[i] = State[i];
-  double Coefficient = (this->ProdATemporaryState[n2] & 0xffff);
+  int CurrentLzMaxUp, CurrentLzMaxDown;
+  this->FermionToBoson(this->StateDescriptionUp[index], this->StateDescriptionDown[index], this->StateInfo[index],
+		       ProdATemporaryState, CurrentLzMaxUp, CurrentLzMaxDown);
+  if ((n1 > CurrentLzMaxUp) || (n2 > CurrentLzMaxDown) || ((ProdATemporaryState[n1] >> 16) == 0)
+      || ((ProdATemporaryState[n2] & 0xffff) == 0))
+    return 0.0;
+  //double Coefficient = (this->ProdATemporaryState[n2] & 0xffff);
+  int CoherenceIndex = (this->ProdATemporaryState[n2] & 0xffff);
   --this->ProdATemporaryState[n2];
-  Coefficient *= (this->ProdATemporaryState[n1] >> 16);
+  //Coefficient *= (this->ProdATemporaryState[n1] >> 16);
+  CoherenceIndex *= (this->ProdATemporaryState[n1] >> 16);
   this->ProdATemporaryState[n1] -= 0x10000;
-  for (i = CurrentLzMax + 1; i < this->NbrLzValue; ++i)
-    this->ProdATemporaryState[i] = 0;
-  return sqrt(Coefficient);
+  return this->CoherenceFactors[CoherenceIndex];
 }
 
 // apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
@@ -568,34 +490,29 @@ double BosonOnSphereWithSpin::AuAd (int index, int n1, int n2)
 
 double BosonOnSphereWithSpin::ProdA (int index, int* n, int* spinIndices, int nbrIndices)
 {
-  int CurrentLzMax = this->StateLzSzMax[index]>>1;
-  int* State = this->StateDescription[index];
-  int i = 0;
-  for (; i <= CurrentLzMax; ++i)
-    this->ProdATemporaryState[i] = State[i];
+  int CurrentLzMaxUp, CurrentLzMaxDown;
+  this->FermionToBoson(this->StateDescriptionUp[index], this->StateDescriptionDown[index], this->StateInfo[index],
+		       ProdATemporaryState, CurrentLzMaxUp, CurrentLzMaxDown);
+  
   int TmpCoefficient = 1;
-  for (i = nbrIndices - 1; i >= 0; --i)
+  for (int i = nbrIndices - 1; i >= 0; --i)
     {
-      if (n[i] > CurrentLzMax)
-	return 0.0;
-      int& Tmp = this->ProdATemporaryState[n[i]];
+      unsigned& Tmp = this->ProdATemporaryState[n[i]];
       if (spinIndices[i] == 0)
 	{
-	  if ((Tmp & 0xffff) == 0)
+	  if ((n[i]>CurrentLzMaxDown)||((Tmp & 0xffff) == 0))
 	    return 0.0;
 	  TmpCoefficient *= (Tmp & 0xffff);
 	  --Tmp;
 	}
       else
 	{
-	  if ((Tmp >> 16) == 0)
+	  if ((n[i]>CurrentLzMaxUp)||((Tmp >> 16) == 0))
 	    return 0.0;
 	  TmpCoefficient *= (Tmp >> 16);
 	  Tmp -= 0x10000;
 	}
     }
-  for (i = CurrentLzMax + 1; i < this->NbrLzValue; ++i)
-    this->ProdATemporaryState[i] = 0;
   return sqrt((double) TmpCoefficient);
 }
 
@@ -627,16 +544,7 @@ int BosonOnSphereWithSpin::ProdAd (int* m, int* spinIndices, int nbrIndices, dou
 	TmpCoefficient *= (this->TemporaryState[m[i]] >> 16);
       }
   coefficient = sqrt((double) TmpCoefficient);
-  int NewLzSzMax = this->LzMax;
-  while (this->TemporaryState[NewLzSzMax] == 0)
-    --NewLzSzMax;
-  if (this->TemporaryState[NewLzSzMax]&0xffff0000)
-    {
-      NewLzSzMax<<=1;
-      NewLzSzMax+=1;
-    }
-  else NewLzSzMax<<=1;
-  return this->TargetSpace->FindStateIndex(this->TemporaryState, NewLzSzMax);
+  return this->FindStateIndex(this->TemporaryState);
 }
 
 
@@ -648,9 +556,17 @@ int BosonOnSphereWithSpin::ProdAd (int* m, int* spinIndices, int nbrIndices, dou
 
 double BosonOnSphereWithSpin::AduAu (int index, int m)
 {
-  if (this->StateLzSzMax[index]>>1 < m)  
+  unsigned Info = this->StateInfo[index];
+  int CurrentLzMaxUp = (Info>>16) - NbrBosonsUp + (NbrBosonsUp!=0);
+  if (CurrentLzMaxUp < m)
     return 0.0;
-  return (double) ((this->StateDescription[index][m] >> 16));  
+  else
+    {
+      int CurrentLzMaxDown;
+      this->FermionToBoson(this->StateDescriptionUp[index], this->StateDescriptionDown[index], Info,
+			   TemporaryState, CurrentLzMaxUp, CurrentLzMaxDown);
+      return (double) ((this->TemporaryState[m] >> 16));
+    }
 }
 
 // apply a^+_m_u a_m_u operator to a given state  (only spin up)
@@ -661,9 +577,19 @@ double BosonOnSphereWithSpin::AduAu (int index, int m)
 
 double BosonOnSphereWithSpin::AddAd (int index, int m)
 {
-  if (this->StateLzSzMax[index]>>1 < m)  
-    return 0.0;
-  return (double) ((this->StateDescription[index][m] & 0xffff));  
+  unsigned Info = this->StateInfo[index];
+  int CurrentLzMaxDown = (Info&0xffff) - NbrBosonsDown + (NbrBosonsDown!=0);
+  if (CurrentLzMaxDown < m)
+    {
+      return 0.0;
+    }
+  else
+    {
+      int CurrentLzMaxUp;
+      this->FermionToBoson(this->StateDescriptionUp[index], this->StateDescriptionDown[index], Info,
+			   TemporaryState, CurrentLzMaxUp, CurrentLzMaxDown);
+      return (double) ((this->TemporaryState[m] & 0xffff));
+    }
 }
 
 // apply a^+_m_u a_n_u operator to a given state 
@@ -675,35 +601,23 @@ double BosonOnSphereWithSpin::AddAd (int index, int m)
 // return value = index of the destination state 
 int BosonOnSphereWithSpin::AduAu (int index, int m, int n, double& coefficient)
 {
-  int CurrentLzMax = this->StateLzSzMax[index]>>1;
-  int* State = this->StateDescription[index];
-  if ((n > CurrentLzMax) || ((State[n] >> 16) == 0)) // || ((State[n] & 0xffff) == 0)) // shift for up, mask for down
+  int CurrentLzMaxUp, CurrentLzMaxDown;
+  this->FermionToBoson(this->StateDescriptionUp[index], this->StateDescriptionDown[index], this->StateInfo[index],
+		       TemporaryState, CurrentLzMaxUp, CurrentLzMaxDown);
+
+  if ((n > CurrentLzMaxUp) || ((TemporaryState[n] >> 16) == 0)) // || ((State[n] & 0xffff) == 0)) // shift for up, mask for down
     {
       return 0.0;
     }
-  int i = 0;
-  for (; i <= CurrentLzMax; ++i)
-    this->TemporaryState[i] = State[i];
-  // double Coefficient = (this->TemporaryState[n] & 0xffff);
-  // --this->TemporaryState[n];
-  double TmpCoefficient = (this->TemporaryState[n] >> 16);
+  //double TmpCoefficient = (this->TemporaryState[n] >> 16);
+  int CoherenceIndex = (this->TemporaryState[n] >> 16);
   this->TemporaryState[n] -= 0x10000;
-
-  //this->TemporaryState[m]+= 0x10000;
-  //TmpCoefficient *= (this->TemporaryState[m] & 0xffff);
+  
   this->TemporaryState[m] += 0x10000;
-  TmpCoefficient *= (this->TemporaryState[m] >> 16);
-  coefficient *= sqrt(TmpCoefficient);
-  int NewLzSzMax = this->LzMax;
-  while (this->TemporaryState[NewLzSzMax] == 0)
-    --NewLzSzMax;
-  if (this->TemporaryState[NewLzSzMax]&0xffff0000)
-    {
-      NewLzSzMax<<=1;
-      NewLzSzMax+=1;
-    }
-  else NewLzSzMax<<=1;
-  return this->TargetSpace->FindStateIndex(this->TemporaryState, NewLzSzMax);
+  //TmpCoefficient *= (this->TemporaryState[m] >> 16);
+  CoherenceIndex *= (this->TemporaryState[m] >> 16);  
+  coefficient *= this->CoherenceFactors[CoherenceIndex];
+  return this->FindStateIndex(this->TemporaryState);
 }
 
 // apply a^+_m_d a_n_d operator to a given state 
@@ -715,31 +629,22 @@ int BosonOnSphereWithSpin::AduAu (int index, int m, int n, double& coefficient)
 // return value = index of the destination state 
 int BosonOnSphereWithSpin::AddAd (int index, int m, int n, double& coefficient)
 {
-  int CurrentLzMax = this->StateLzSzMax[index]>>1;
-  int* State = this->StateDescription[index];  
-  if ((n > CurrentLzMax) || ((State[n] & 0xffff) == 0)) // || ((State[n] & 0xffff) == 0)) // shift for up, mask for down
+  int CurrentLzMaxUp, CurrentLzMaxDown;
+  this->FermionToBoson(this->StateDescriptionUp[index], this->StateDescriptionDown[index], this->StateInfo[index],
+		       TemporaryState, CurrentLzMaxUp, CurrentLzMaxDown);
+
+  if ((n > CurrentLzMaxDown) || ((TemporaryState[n] & 0xffff) == 0)) // || ((State[n] & 0xffff) == 0)) // shift for up, mask for down
     {
       return 0.0;
     }
-  int i = 0;
-  for (; i <= CurrentLzMax; ++i)
-    this->TemporaryState[i] = State[i];
-  double TmpCoefficient = (this->TemporaryState[n] & 0xffff);
+  //double TmpCoefficient = (this->TemporaryState[n] & 0xffff);
+  int CoherenceIndex = (this->TemporaryState[n] & 0xffff);
   --this->TemporaryState[n];
-
   ++this->TemporaryState[m];
-  TmpCoefficient *= (this->TemporaryState[m] & 0xffff);  
-  coefficient *= sqrt(TmpCoefficient);
-  int NewLzSzMax = this->LzMax;
-  while (this->TemporaryState[NewLzSzMax] == 0)
-    --NewLzSzMax;
-  if (this->TemporaryState[NewLzSzMax]&0xffff0000)
-    {
-      NewLzSzMax<<=1;
-      NewLzSzMax+=1;
-    }
-  else NewLzSzMax<<=1;
-  return this->TargetSpace->FindStateIndex(this->TemporaryState, NewLzSzMax);
+  //TmpCoefficient *= (this->TemporaryState[m] & 0xffff);
+  CoherenceIndex *= (this->TemporaryState[m] & 0xffff);
+  coefficient *= this->CoherenceFactors[CoherenceIndex];
+  return this->FindStateIndex(this->TemporaryState);
 }
 
 // apply a^+_m_u a_n_d operator to a given state 
@@ -751,31 +656,7 @@ int BosonOnSphereWithSpin::AddAd (int index, int m, int n, double& coefficient)
 // return value = index of the destination state 
 int BosonOnSphereWithSpin::AduAd (int index, int m, int n, double& coefficient)
 {
-  int CurrentLzMax = this->StateLzSzMax[index]>>1;
-  int* State = this->StateDescription[index];
-  if ((n > CurrentLzMax) || ((State[n] & 0xffff) == 0)) // || ((State[n] & 0xffff) == 0)) // shift for up, mask for down
-    {
-      return 0.0;
-    }
-  int i = 0;
-  for (; i <= CurrentLzMax; ++i)
-    this->TemporaryState[i] = State[i];
-  double TmpCoefficient = (this->TemporaryState[n] & 0xffff);
-  --this->TemporaryState[n];
-  
-  this->TemporaryState[m] += 0x10000;
-  TmpCoefficient *= (this->TemporaryState[m] >> 16);
-  coefficient *= sqrt(TmpCoefficient);
-  int NewLzSzMax = this->LzMax;
-  while (this->TemporaryState[NewLzSzMax] == 0)
-    --NewLzSzMax;
-  if (this->TemporaryState[NewLzSzMax]&0xffff0000)
-    {
-      NewLzSzMax<<=1;
-      NewLzSzMax+=1;
-    }
-  else NewLzSzMax<<=1;
-  return this->TargetSpace->FindStateIndex(this->TemporaryState, NewLzSzMax);
+  return this->HilbertSpaceDimension;
 }
 
 // apply a^+_m_d a_n_u operator to a given state 
@@ -787,105 +668,9 @@ int BosonOnSphereWithSpin::AduAd (int index, int m, int n, double& coefficient)
 // return value = index of the destination state 
 int BosonOnSphereWithSpin::AddAu (int index, int m, int n, double& coefficient)
 {
-  int CurrentLzMax = this->StateLzSzMax[index]>>1;
-  int* State = this->StateDescription[index];
-  if ((n > CurrentLzMax) || ((State[n] >> 16) == 0)) // || ((State[n] & 0xffff) == 0)) // shift for up, mask for down
-    {
-      return 0.0;
-    }
-  int i = 0;
-  for (; i <= CurrentLzMax; ++i)
-    this->TemporaryState[i] = State[i];
-  double TmpCoefficient = (this->TemporaryState[n] >> 16);
-  this->TemporaryState[n] -= 0x10000;
-  
-  ++this->TemporaryState[m];
-  TmpCoefficient *= (this->TemporaryState[m]) & 0xffff;
-  coefficient *= sqrt(TmpCoefficient);
-  int NewLzSzMax = this->LzMax;
-  while (this->TemporaryState[NewLzSzMax] == 0)
-    --NewLzSzMax;
-  if (this->TemporaryState[NewLzSzMax]&0xffff0000)
-    {
-      NewLzSzMax<<=1;
-      NewLzSzMax+=1;
-    }
-  else NewLzSzMax<<=1;
-  return this->TargetSpace->FindStateIndex(this->TemporaryState, NewLzSzMax);
+  return this->HilbertSpaceDimension;
 }
 
-
-// find state index
-//
-// stateDescription = array describing the state
-// lzszmax = maximum Lz value reached by a boson in the state
-// return value = corresponding index
-
-int BosonOnSphereWithSpin::FindStateIndex(int* stateDescription, int lzszmax)
-{
-//   cout << "Searching: ";
-//   PrintState(cout, stateDescription)<<" "<<" lzszmax="<<lzszmax;
-  int TmpKey = this->GenerateKey(stateDescription, lzszmax);
-//   cout << "key="<<TmpKey<<endl;
-  int Offset;
-  if (lzszmax&1)
-    Offset=stateDescription[lzszmax>>1]>>16;
-  else
-    Offset=stateDescription[lzszmax>>1]&0xffff;
-  int Sector = lzszmax * this->IncMaxNbrBosons + Offset;
-  int TmpPos = 0;
-  int TmpPos2 = this->KeyInvertSectorSize[Sector] - 1;
-  int TmpPos3;
-  int* TmpKeyInvertTable = this->KeyInvertTable[Sector];
-  while (TmpPos2 != TmpPos)
-    {
-      TmpPos3 = (TmpPos2 + TmpPos) >> 1;
-//       cout << "this->KeyInvertSectorSize["<<Sector<<"] = " << this->KeyInvertSectorSize[Sector] <<", TmpPos3="<<TmpPos3<<endl;
-      if (TmpKey < TmpKeyInvertTable[TmpPos3])
-	{
-	  TmpPos2 = TmpPos3 - 1;
-	}
-      else
-	if (TmpKey > TmpKeyInvertTable[TmpPos3])
-	  {
-	    TmpPos = TmpPos3 + 1;
-	  }
-	else
-	  {
-	    TmpPos2 = TmpPos3;
-	    TmpPos = TmpPos3;		    
-	  }
-    }
-  int i;
-  int* TmpStateDescription;
-  int Start;
-  int* TmpKeyInvertIndices = this->KeyInvertIndices[Sector][TmpPos];
-
-  TmpPos2 =this->KeyInvertTableNbrIndices[Sector][TmpPos] - 1;
-  TmpPos = 0;
-  while (TmpPos2 != TmpPos)
-    {
-      TmpPos3 = (TmpPos2 + TmpPos) >> 1;
-      Start = TmpKeyInvertIndices[TmpPos3];
-      TmpStateDescription = this->StateDescription[Start];
-      i = lzszmax;
-      while ((i >= 0) && (stateDescription[i] ==  TmpStateDescription[i]))
-        --i;
-      if (i == -1)
-        {
-          return Start;
-        }
-      if (stateDescription[i] < TmpStateDescription[i])
-        {
-          TmpPos = TmpPos3 + 1;
-        }
-      else
-        {
-           TmpPos2 = TmpPos3 - 1;
-        }
-    }
-  return TmpKeyInvertIndices[TmpPos];
-}
 
 // find state index from a string
 //
@@ -899,10 +684,8 @@ int BosonOnSphereWithSpin::FindStateIndex(char* stateDescription)
     return -1;
   int TmpNbrParticles = 0;
   int TmpTotalLz = 0;
-  //int TmpTotalSz = 0;
   for (int i = 0; i <= this->LzMax; ++i)
     {
-      cout << "Need to fix BosonOnSphereWithSpin::FindStateIndex(char* stateDescription)"<<endl;
       int Tmp = atoi(TmpDescription[i]);
       this->TemporaryState[i] = Tmp;
       TmpTotalLz += (i * Tmp);
@@ -912,17 +695,58 @@ int BosonOnSphereWithSpin::FindStateIndex(char* stateDescription)
   delete[] TmpDescription;
   if ((TmpNbrParticles != this->NbrBosons) || (TmpTotalLz != ((this->TotalLz + this->NbrBosons * this->LzMax) >> 1)))
     return -1;
-  int NewLzSzMax = this->LzMax;
-  while (this->TemporaryState[NewLzSzMax] == 0)
-    --NewLzSzMax;
-  if (this->TemporaryState[NewLzSzMax]&0xffff0000)
-    {
-      NewLzSzMax<<=1;
-      NewLzSzMax+=1;
-    }
-  else NewLzSzMax<<=1;
-  return this->FindStateIndex(this->TemporaryState, NewLzSzMax);
+  int NewLzMax = this->LzMax;
+  while (this->TemporaryState[NewLzMax] == 0)
+    --NewLzMax;
+  return this->FindStateIndex(this->TemporaryState);
 }
+
+
+
+// sort an array and reflect permutations in auxiliary array
+//
+// length = length of arrays
+// sortArray = array to be sorted
+// auxArray = auxiliary array
+//
+void BosonOnSphereWithSpin::ShellSortAux(unsigned length, unsigned long* sortArray, unsigned *auxArray, int *auxArray2)
+{
+  unsigned inc = round(length/2.0);
+  unsigned long tmpI;
+  unsigned tmpA;
+  int tmpA2;
+  while (inc > 0)
+    {
+      for (unsigned i = inc; i< length; ++i)
+	{
+	  tmpI = sortArray[i];
+	  tmpA = auxArray[i];
+	  tmpA2 = auxArray2[i];
+	  unsigned j = i;
+	  while ((j>=inc) && ( sortArray[j-inc] < tmpI) )
+	    {
+	      sortArray[j] = sortArray[j - inc];
+	      auxArray[j] = auxArray[j - inc];
+	      auxArray2[j] = auxArray2[j - inc];
+	      j = j - inc;
+	    }
+	  sortArray[j] = tmpI;
+	  auxArray[j] = tmpA;
+	  auxArray2[j] = tmpA2;
+	}
+      inc = round(inc / 2.2);
+    }
+}
+  
+// get Lz component of a component
+//
+// j = index of the component in Hilbert space
+// return value = twice the Lz component
+int BosonOnSphereWithSpin::GetLzValue(int j)
+{
+  return this->TotalLz;
+}
+
 
 // print a given State
 //
@@ -932,70 +756,175 @@ int BosonOnSphereWithSpin::FindStateIndex(char* stateDescription)
 
 ostream& BosonOnSphereWithSpin::PrintState (ostream& Str, int state)
 {
-  int* TmpState = this->StateDescription[state];
-  int Max = (this->StateLzSzMax[state]>>1);
+  int CurrentLzMaxUp, CurrentLzMaxDown;
+  this->FermionToBoson(this->StateDescriptionUp[state], this->StateDescriptionDown[state], this->StateInfo[state],
+		       TemporaryState, CurrentLzMaxUp, CurrentLzMaxDown);
+  unsigned* TmpState = TemporaryState; // this->StateDescription[state];
   int i = 0;
   Str << state << " = " << "|";
-  for (; i <= Max; ++i)
-    {
-      if (TmpState[i] == 0)
-	Str << "  0 ";
-      else
-	{
-	  if ((TmpState[i] & 0xffff0000) != 0) 
-	    Str << (TmpState[i] >> 16) << "u";
-	  else 
-	    Str << "  ";
-	  if ((TmpState[i] & 0xffff) != 0) 
-	    Str << (TmpState[i] & 0xffff) << "d";
-	  else
-	    Str << "  ";
-	}
-      Str << "|";
-    }
-  for (; i <= this->LzMax; ++i)
-    Str << "  0 |";
-//   Str << " lzszmax  = " << this->StateLzSzMax[state];
-//   Str << " key = " << GenerateKey(TmpState, this->StateLzSzMax[state]);
-//   Str << " position = " << FindStateIndex(TmpState, this->StateLzSzMax[state]);
+  Str << (TmpState[i]>>16) << "u " << (TmpState[i]&0xffff)<<"d";
+  for (i=1; i <= LzMax; ++i)
+    Str << " | "<< (TmpState[i]>>16) << "u " << (TmpState[i]&0xffff)<<"d";
+  //  for (; i <= this->LzMax; ++i)
+  //    Str << " | 0u 0d";
+  //  Str << "  lzmaxU = " <<((this->StateInfo[state]>>20)&0x03ffu)<< "  lzMaxD = "<< ((this->StateInfo[state]>>10)&0x03ffu)
+  //      << "  nbrUp = " << (this->StateInfo[state]&0x03ffu) <<"  position = ";
+  //  Str << FindStateIndex(TmpState, this->StateInfo[state]&0x03ffu);
   return Str;
 }
+
 
 // print a given State
 //
 // Str = reference on current output stream 
-// stateDesc = array describing the state to print
+// myState = explicit form of the state to print
 // return value = reference on current output stream 
 
-ostream& BosonOnSphereWithSpin::PrintState (ostream& Str, int* stateDesc)
+ostream& BosonOnSphereWithSpin::PrintState (ostream& Str, unsigned *myState)
 {
-  int Max = this->LzMax;
-  while((stateDesc[Max]==0)&&(Max>0)) --Max;
   int i = 0;
-  Str << " |";
-  for (; i <= Max; ++i)
-    {
-      if (stateDesc[i] == 0)
-	Str << "  0 ";
-      else
-	{
-	  if ((stateDesc[i] & 0xffff0000) != 0) 
-	    Str << (stateDesc[i] >> 16) << "u";
-	  else 
-	    Str << "  ";
-	  if ((stateDesc[i] & 0xffff) != 0) 
-	    Str << (stateDesc[i] & 0xffff) << "d";
-	  else
-	    Str << "  ";
-	}
-      Str << "|";
-    }
-  for (; i <= this->LzMax; ++i)
-    Str << "  0 |";
+  Str << (myState[i]>>16) << "u " << (myState[i]&0xffff)<<"d";
+  for (i=1; i <= LzMax; ++i)
+    Str << " | "<< (myState[i]>>16) << "u " << (myState[i]&0xffff)<<"d";
+  //Str << " key = " << this->Keys[state] << " lzmax  = " << this->StateLzMax[state]<< " position = " << FindStateIndex(myState, Max);
+//   Str << " key = " << this->Keys[state] << " lzmax position = " << this->LzMaxPosition[Max * (this->NbrBosons + 1) + TmpState[Max]]
+//       << " position = " << FindStateIndex(TmpState, Max);
   return Str;
 }
 
 
+
+// generate all states corresponding to the constraints
+// 
+// nbrBosonsUp = number of bosons with spin up
+// nbrBosonsDown = number of bosons with spin down
+// lzMax = momentum maximum value for a boson in the state
+// totalLz = momentum total value
+// return value = position from which new states have to be stored
+
+long BosonOnSphereWithSpin::GenerateStates(int nbrBosonsUp, int nbrBosonsDown, int lzMax, int totalLz)
+{
+  long Pos=0;
+  for (int TotalLzUp=0; TotalLzUp<=totalLz; ++TotalLzUp)
+    Pos=this->GenerateStatesWithConstraint(nbrBosonsUp, nbrBosonsDown, lzMax, lzMax, lzMax, TotalLzUp, totalLz-TotalLzUp, Pos, /*level*/ 0);
+  return Pos;
+}
+
+// generate all states corresponding to the constraints
+// 
+// nbrBosonsUp = number of bosons with spin up
+// nbrBosonsDown = number of bosons with spin down
+// lzMax = momentum maximum value for a boson in the state
+// lzMaxUp = momentum maximum value for a spin-up boson in the state
+// currentLzMax = momentum maximum value for bosons that are still to be placed
+// totalLz = momentum total value
+// totalLzUp = momentum total value for spin-up bosons
+// pos = position in StateDescription array where to store states
+// return value = position from which new states have to be stored
+
+long BosonOnSphereWithSpin::GenerateStatesWithConstraint(int nbrBosonsUp, int nbrBosonsDown, int lzMax, int lzMaxUp, int currentLzMax, int totalLzUp, int totalLzDown, long pos, int level)
+{
+#ifdef TESTING
+  for (int i=0; i<level; ++i) cout << " ";
+  cout << "GenerateStates(Up:"<< nbrBosonsUp<<", Down:"<< nbrBosonsDown<<", lzMax:"<<lzMax<<", lzMaxUp="<<lzMaxUp<<", currLz:"<<currentLzMax<< ", totalLzUp:" <<totalLzUp<<", totalLzDown:" <<totalLzDown<<", pos:"<< pos<<")"<<endl;
+#endif
+
+  // place up spin bosons, first, given the additional constraint on the angular momentum
+  if (nbrBosonsUp>0)
+    {
+      if (((nbrBosonsUp * currentLzMax) < totalLzUp) || (pos == this->HilbertSpaceDimension))
+	{
+	  return pos;
+	}
+      if ((nbrBosonsUp * currentLzMax) == totalLzUp)
+	{
+	  long TmpPos = this->GenerateStatesWithConstraint(0, nbrBosonsDown, lzMax, 0, lzMax, 0, totalLzDown, pos, level+1);
+	  for (long i = pos; i < TmpPos; i++)
+	    {
+	      this->StateDescription[i][currentLzMax] |= nbrBosonsUp<<16;
+	      this->StateLzMaxUp[i] = lzMaxUp;
+	    }
+	  return TmpPos;
+	}
+      if ((currentLzMax == 0) || (totalLzUp == 0))
+	{
+	  long TmpPos = this->GenerateStatesWithConstraint(0, nbrBosonsDown, lzMax, 0, lzMax, 0, totalLzDown, pos, level+1);
+	  for (long i = pos; i < TmpPos; i++)
+	    {
+	      this->StateDescription[i][0] |= nbrBosonsUp<<16;
+	      this->StateLzMaxUp[i] = lzMaxUp;
+	    }
+	  return TmpPos;
+	}
+
+      int TmpTotalLzUp = totalLzUp / currentLzMax;
+      int TmpNbrBosonsUp = nbrBosonsUp - TmpTotalLzUp;
+      TmpTotalLzUp = totalLzUp - TmpTotalLzUp * currentLzMax;
+      int ReducedCurrentLzMax = currentLzMax - 1;
+      long TmpPos = pos;
+      while (TmpNbrBosonsUp < nbrBosonsUp)
+	{
+	  TmpPos = this->GenerateStatesWithConstraint(TmpNbrBosonsUp, nbrBosonsDown, lzMax, lzMaxUp, ReducedCurrentLzMax, TmpTotalLzUp, totalLzDown, pos, level+1);
+	  for (long i = pos; i < TmpPos; i++)
+	    this->StateDescription[i][currentLzMax] |= (nbrBosonsUp - TmpNbrBosonsUp)<<16;
+	  ++TmpNbrBosonsUp;
+	  pos = TmpPos;
+	  TmpTotalLzUp += currentLzMax;
+	}
+      if (lzMaxUp == currentLzMax)
+	return this->GenerateStatesWithConstraint(nbrBosonsUp, nbrBosonsDown, lzMax, ReducedCurrentLzMax, ReducedCurrentLzMax, totalLzUp, totalLzDown, pos, level+1);
+      else
+	return this->GenerateStatesWithConstraint(nbrBosonsUp, nbrBosonsDown, lzMax, lzMaxUp, ReducedCurrentLzMax, totalLzUp, totalLzDown, pos, level+1);
+    }
+  else // place down spins
+    {
+      if ((nbrBosonsDown == 0) || ((nbrBosonsDown * currentLzMax) < totalLzDown) || (pos == this->HilbertSpaceDimension))
+	{
+	  return pos;
+	}
+      if ((nbrBosonsDown * currentLzMax) == totalLzDown)
+	{
+	  this->StateDescription[pos] = new unsigned [this->LzMax + 1];
+	  unsigned* TmpState = this->StateDescription[pos];
+	  for (int i = 0; i <= this->LzMax; ++i)
+	    TmpState[i] = 0;
+	  TmpState[currentLzMax] = nbrBosonsDown;
+	  this->StateLzMaxDown[pos] = lzMax;
+	  return pos + 1;
+	}
+      if ((currentLzMax == 0) || (totalLzDown == 0))
+	{
+	  this->StateDescription[pos] = new unsigned [this->LzMax + 1];
+	  unsigned* TmpState = this->StateDescription[pos];
+	  for (int i = 1; i <= this->LzMax; ++i)
+	    TmpState[i] = 0;
+	  TmpState[0] = nbrBosonsDown;
+	  this->StateLzMaxDown[pos] = lzMax;
+	  return pos + 1;
+	}      
+      int TmpTotalLzDown = totalLzDown / currentLzMax;
+      int TmpNbrBosonsDown = nbrBosonsDown - TmpTotalLzDown;
+      TmpTotalLzDown = totalLzDown - TmpTotalLzDown * currentLzMax;
+      int ReducedCurrentLzMax = currentLzMax - 1;
+      long TmpPos = pos;
+      while (TmpNbrBosonsDown < nbrBosonsDown)
+	{
+	  TmpPos = this->GenerateStatesWithConstraint(0, TmpNbrBosonsDown, lzMax, 0, ReducedCurrentLzMax, 0, TmpTotalLzDown, pos, level+1);
+	  for (long i = pos; i < TmpPos; i++)
+	    this->StateDescription[i][currentLzMax] = nbrBosonsDown - TmpNbrBosonsDown;
+	  ++TmpNbrBosonsDown;
+	  pos = TmpPos;
+	  TmpTotalLzDown += currentLzMax;
+	}
+      if (lzMax == currentLzMax)
+	return this->GenerateStatesWithConstraint(0, nbrBosonsDown, ReducedCurrentLzMax, 0, ReducedCurrentLzMax, 0, totalLzDown, pos, level+1);
+      else
+	return this->GenerateStatesWithConstraint(0, nbrBosonsDown, lzMax, 0, ReducedCurrentLzMax, 0, totalLzDown, pos, level+1);
+    }
+}
+
+
+/* conventional Generate States, no tensored index
 // generate all states corresponding to the constraints
 // 
 // nbrBosonsUp = number of bosons with spin up
@@ -1006,76 +935,163 @@ ostream& BosonOnSphereWithSpin::PrintState (ostream& Str, int* stateDesc)
 // pos = position in StateDescription array where to store states
 // return value = position from which new states have to be stored
 
-int BosonOnSphereWithSpin::GenerateStates(int nbrBosonsUp, int nbrBosonsDown, int lzMax, int currentLzMax, int totalLz, int pos)
+int BosonOnSphereWithSpin::GenerateStates(int nbrBosonsUp, int nbrBosonsDown, int lzMax, int currentLzMax, int totalLz, int pos, int level)
 {
-  //cout << "GenerateStates(Up:"<< nbrBosonsUp<<", Down:"<< nbrBosonsDown<<", lzMax:"<<lzMax<<", currLz:"<<currentLzMax<< ", totalLz:" <<totalLz<<", pos:"<< pos<<")"<<endl;
+#ifdef TESTING
+  for (int i=0; i<level; ++i) cout << " ";
+  cout << "GenerateStates(Up:"<< nbrBosonsUp<<", Down:"<< nbrBosonsDown<<", lzMax:"<<lzMax<<", currLz:"<<currentLzMax<< ", totalLz:" <<totalLz<<", pos:"<< pos<<")"<<endl;
+#endif
   if ((nbrBosonsUp < 0) || (nbrBosonsDown < 0) || (totalLz < 0) || (currentLzMax < 0) || (((nbrBosonsUp + nbrBosonsDown) * currentLzMax) < totalLz))
     return pos;
   if ((nbrBosonsUp + nbrBosonsDown) == 0)
     {
       if (totalLz == 0)
 	{	  
-	  this->StateDescription[pos] = new int [lzMax + 1];
-	  int* TmpState = this->StateDescription[pos];
+	  this->StateDescription[pos] = new unsigned [lzMax + 1];
+	  unsigned* TmpState = this->StateDescription[pos];
 	  for (int i = 0; i <= lzMax; ++i)
 	    TmpState[i] = 0;
-	  this->StateLzSzMax[pos] = 0;
+	  this->StateLzMaxUp[pos] = 0;
+	  this->StateLzMaxDown[pos] = 0;
 	  return pos + 1;
 	}
       else return pos;
     }
   if (((nbrBosonsUp + nbrBosonsDown) * currentLzMax) == totalLz)
     {
-      this->StateDescription[pos] = new int [lzMax + 1];
-      int* TmpState = this->StateDescription[pos];
+      this->StateDescription[pos] = new unsigned [lzMax + 1];
+      unsigned* TmpState = this->StateDescription[pos];
       for (int i = 0; i <= lzMax; ++i)
 	TmpState[i] = 0;
       TmpState[currentLzMax] = (nbrBosonsUp << 16) | nbrBosonsDown;
       if (nbrBosonsUp>0)
-	this->StateLzSzMax[pos] = (currentLzMax<<1)+1;
+	this->StateLzMaxUp[pos] = currentLzMax;
       else
-	this->StateLzSzMax[pos] = currentLzMax<<1;
+	this->StateLzMaxUp[pos] = 0;
+      if (nbrBosonsDown>0)
+	this->StateLzMaxDown[pos] = currentLzMax;
+      else
+	this->StateLzMaxDown[pos] = 0;
       return pos + 1;
     }
   if ((nbrBosonsDown + nbrBosonsUp) == 1)
     if (lzMax >= totalLz)
       {
-	this->StateDescription[pos] = new int [lzMax + 1];
-	int* TmpState = this->StateDescription[pos];
+	this->StateDescription[pos] = new unsigned [lzMax + 1];
+	unsigned* TmpState = this->StateDescription[pos];
 	for (int i = 0; i <= lzMax; ++i)
 	  TmpState[i] = 0;
 	if (nbrBosonsUp == 1)
 	  {
 	    TmpState[totalLz] = 1 << 16; // place spin up
-	    this->StateLzSzMax[pos] = (totalLz<<1)+1;
+	    this->StateLzMaxUp[pos] = totalLz;
+	    this->StateLzMaxDown[pos] = 0;
 	  }
 	else
 	  {
 	    TmpState[totalLz] = 1; // place spin down
-	    this->StateLzSzMax[pos] = totalLz<<1;
+	    this->StateLzMaxUp[pos] = 0;
+	    this->StateLzMaxDown[pos] = totalLz;
 	  }
 	return pos + 1;	
       }
     else return pos;
   int ReducedCurrentLzMax = currentLzMax - 1;
   int TmpPos = pos;
-  int TmpLzSzMax;
   for (int UpToPlace=nbrBosonsUp; UpToPlace>=0; --UpToPlace)
     for (int DownToPlace=nbrBosonsDown; DownToPlace>=0; --DownToPlace)    
       {
-	TmpPos = this->GenerateStates(nbrBosonsUp-UpToPlace, nbrBosonsDown-DownToPlace, lzMax, ReducedCurrentLzMax, totalLz-(UpToPlace+DownToPlace)*currentLzMax, pos);
-	TmpLzSzMax = (currentLzMax<<1);
-	if (UpToPlace>0) ++TmpLzSzMax;
+	TmpPos = this->GenerateStates(nbrBosonsUp-UpToPlace, nbrBosonsDown-DownToPlace, lzMax, ReducedCurrentLzMax, totalLz-(UpToPlace+DownToPlace)*currentLzMax, pos, level+1);
 	for (int i = pos; i < TmpPos; i++)
 	  {
 	    this->StateDescription[i][currentLzMax] = (UpToPlace << 16) | DownToPlace;
-	    if ((UpToPlace>0)||(DownToPlace>0))
-	      this->StateLzSzMax[i] = TmpLzSzMax;
+	    if (UpToPlace>0)
+	      this->StateLzMaxUp[i] = currentLzMax;
+	    if (DownToPlace>0)
+	      this->StateLzMaxDown[i] = currentLzMax;
 	  }	
 	pos = TmpPos;
       }
   return pos;
 }
+
+*/
+
+/*
+int BosonOnSphereWithSpin::GenerateStates(int nbrBosons, int lzMax, int currentLzMax, int totalLz, int pos)
+{
+  // cout << "GenerateStates(n:"<< nbrBosons<<", currLz:"<<currentLzMax<< ", totalLz:" <<totalLz<<", pos:"<< pos<<")"<<endl;
+  int CurrentMomentum = currentLzMax%this->NbrLzValue;
+  int CurrentSpinUp = currentLzMax/this->NbrLzValue;
+  if ((nbrBosons < 0) || (totalLz < 0) || (currentLzMax < 0) || ((CurrentSpinUp==0)&&((nbrBosons * CurrentMomentum) < totalLz)))
+    return pos;
+  if (nbrBosons == 0)
+    {
+      if (totalLz == 0)
+	{
+	  this->StateDescription[pos] = new unsigned [lzMax + 1];
+	  unsigned* TmpState = this->StateDescription[pos];
+	  for (int i = 0; i <= lzMax; ++i)
+	    TmpState[i] = 0;
+	  this->StateNbrUp[pos] = 0;
+	  this->StateLzMaxUp[pos] = 0;
+	  this->StateLzMaxDown[pos] = 0;
+	  return pos + 1;
+	}
+      else return pos;
+    }
+  if ((CurrentSpinUp==0)&&(nbrBosons == 1))
+    {
+      if (currentLzMax >= totalLz)
+	{
+	  this->StateDescription[pos] = new unsigned [lzMax + 1];
+	  unsigned* TmpState = this->StateDescription[pos];
+	  for (int i = 0; i <= lzMax; ++i)
+	    TmpState[i] = 0;	    	
+	  TmpState[totalLz] = 1; // place spin down
+	  this->StateNbrUp[pos] = 0;
+	  this->StateLzMaxUp[pos] = 0;
+	  this->StateLzMaxDown[pos] = totalLz;
+	  return pos + 1;	
+	}
+      else return pos;
+    }
+  if ((CurrentSpinUp==0)&&((nbrBosons * CurrentMomentum) == totalLz))
+    {
+      this->StateDescription[pos] = new unsigned [lzMax + 1];
+      unsigned* TmpState = this->StateDescription[pos];
+      for (int i = 0; i <= lzMax; ++i)
+	TmpState[i] = 0;	    	
+      TmpState[CurrentMomentum] = nbrBosons; // place spin down
+      this->StateNbrUp[pos] = 0;
+      this->StateLzMaxUp[pos] = 0;
+      this->StateLzMaxDown[pos] = CurrentMomentum;
+      return pos + 1;	
+    }
+  int ReducedCurrentLzMax = currentLzMax - 1;
+  int TmpPos = pos;
+  int TmpNbrUp;
+  for (int ToPlace=nbrBosons; ToPlace>=0; --ToPlace)
+    {
+      TmpPos = this->GenerateStates(nbrBosons-ToPlace, lzMax, ReducedCurrentLzMax, totalLz-ToPlace*CurrentMomentum, pos);
+      TmpNbrUp = ToPlace*CurrentSpinUp;
+      for (int i = pos; i < TmpPos; i++)
+	{
+	  this->StateDescription[i][CurrentMomentum] |= ToPlace << (16*CurrentSpinUp);
+	  this->StateNbrUp[i] += TmpNbrUp;
+	  if (ToPlace>0)
+	    {
+	      if (CurrentSpinUp>0)
+		this->StateLzMaxUp[i] = CurrentMomentum;
+	      else
+		this->StateLzMaxDown[i] = CurrentMomentum;
+	    }
+	}
+      pos = TmpPos;
+    }
+  return pos;
+}*/
+
 
 
 // generate look-up table associated to current Hilbert space
@@ -1084,337 +1100,81 @@ int BosonOnSphereWithSpin::GenerateStates(int nbrBosonsUp, int nbrBosonsDown, in
 
 void BosonOnSphereWithSpin::GenerateLookUpTable(int memory)
 {
-  this->Keys = new int [this->HilbertSpaceDimension];
-  this->KeyMultiplicationTable[0]=this->IncMaxNbrBosons;
-  for (int i = 1; i < 2*(this->LzMax+1); ++i)
-    this->KeyMultiplicationTable[i] = this->IncMaxNbrBosons*this->KeyMultiplicationTable[i-1];
-  int Size = (2*(this->LzMax+1) + 1) * this->IncMaxNbrBosons;
-  this->LzSzMaxPosition = new int [Size];
-  this->KeyInvertSectorSize = new int [Size];
-  this->KeyInvertTable = new int* [Size];
-  this->KeyInvertTableNbrIndices = new int* [Size];
-  this->KeyInvertIndices = new int** [Size];
-  this->CoreGenerateLookUpTable(this->HilbertSpaceDimension, this->LzMax, this->StateDescription, this->StateLzSzMax, this->Keys, this->LzSzMaxPosition, this->KeyInvertSectorSize, 
-				this->KeyInvertTable, this->KeyInvertTableNbrIndices, this->KeyInvertIndices);
+  // re-code storage of LzMaxUp etc in StateInfo & convert all states into packed storage
+  this->StateInfo = new unsigned[this->HilbertSpaceDimension];
+  this->StateDescriptionUp = new unsigned long[this->HilbertSpaceDimension];
+  this->StateDescriptionDown = new unsigned long[this->HilbertSpaceDimension];
+  int LzMaxUp, LzMaxDown;
+  for (int i=0; i<this->HilbertSpaceDimension; ++i)
+    {
+      LzMaxUp = this->StateLzMaxUp[i] + NbrBosonsUp;
+      if (NbrBosonsUp!=0) --LzMaxUp;
+      LzMaxDown = this->StateLzMaxDown[i] + NbrBosonsDown;
+      if (NbrBosonsUp!=NbrBosons) --LzMaxDown;
+
+      this->StateInfo[i]=(LzMaxUp<<16) | LzMaxDown;
+      this->BosonToFermion(this->StateDescriptionUp[i], this->StateDescriptionDown[i], LzMaxUp, LzMaxDown,
+			   this->StateDescription[i]);
+#ifdef TESTING
+      cout << i << " ";
+      this->PrintState(cout, StateDescription[i]) <<" "<<this->StateDescriptionUp[i]<<" "<< this->StateDescriptionDown[i] << endl;
+#endif
+    }
+  
+  // size of lookup tables
+  long LookUpTableSizeUp = 0x1ul<<(this->LzMax+this->NbrBosonsUp);
+  long LookUpTableSizeDown = 0x1ul<<(this->LzMax+this->NbrBosonsDown);
+  // look-up table for up/down spins
+  this->LookUpTableUp = new unsigned long[LookUpTableSizeUp];
+  this->LookUpTableDown = new unsigned long[LookUpTableSizeDown];
+
+  unsigned long LastUpSpins=this->StateDescriptionUp[0];
+  this->LookUpTableUp[LastUpSpins]=0;
+  this->LookUpTableDown[this->StateDescriptionDown[0]]=0;
+  unsigned SectorCount=1;
+  for (int i=1; i<this->HilbertSpaceDimension; ++i)
+    {
+      if (LastUpSpins!=this->StateDescriptionUp[i])
+	{
+	  LastUpSpins=this->StateDescriptionUp[i];
+	  this->LookUpTableUp[LastUpSpins]=i;
+	  this->LookUpTableDown[this->StateDescriptionDown[i]]=0;
+	  SectorCount=1;
+	}
+      else
+	{
+	  this->LookUpTableDown[this->StateDescriptionDown[i]]=SectorCount;
+	  ++SectorCount;
+	}
+    }
+  
+  for (int i=0; i<this->HilbertSpaceDimension; ++i)
+    delete [] this->StateDescription[i];
+  delete [] this->StateDescription;
+  this->StateDescription=NULL;
+  delete [] this->StateLzMaxUp;
+  this->StateLzMaxUp=NULL;
+  delete [] this->StateLzMaxDown;
+  this->StateLzMaxDown=NULL;
+
+#ifdef TESTING
+  unsigned Info;
+  int Index;
+  for (int i=0; i<this->HilbertSpaceDimension; ++i)
+    {
+      Info = this->StateInfo[i];
+      LzMaxUp = (Info>>16); // +CurrentStateNbrUp-(CurrentStateNbrUp!=0);
+      LzMaxDown = (Info&0xffff); // + NbrBosons - CurrentStateNbrUp - (CurrentStateNbrUp!=NbrBosons);
+      Index = this->FindStateIndex(this->StateDescriptionUp[i], this->StateDescriptionDown[i]);
+      if (Index != i)
+	cout << "Error in state "<<i<<" base: " << this->LookUpTableUp[this->StateDescriptionUp[i]]
+	     << " Offset: "<<this->LookUpTableDown[this->StateDescriptionDown[i]] << endl;
+      else
+	cout << "State "<<i<<" found"<<endl;
+    }
+#endif
+
 }
-
-// generate look-up table associated to current Hilbert space (core part of the look-up table generation)
-// 
-// dimension = Hilbert space dimension
-// lzMax = maximum Lz value that can be reached by a particle
-// stateDescription = array that contains state description
-// stateLzMax = array giving maximum Lz value reached for a boson in a given state
-// keys = keys associated to each state
-// lzSzMaxPosition = indicate position of the first state with a given number of boson having a given maximum Lz value
-// keyInvertSectorSize = array that indicates how many different states are store for each sector
-// keyInvertTable = array that contains sorted possible key for each sector
-// keyInvertTableNbrIndices = array that contains number of indices that have the same key per sector 
-// keyInvertIndices = array that contains state index per sector and per key
-// indexShift = optional shift to apply before storing any index
-
-void BosonOnSphereWithSpin::CoreGenerateLookUpTable(int dimension, int lzMax, int** stateDescription, int* stateLzSzMax, int* keys, int* lzSzMaxPosition, int* keyInvertSectorSize, 
-					    int** keyInvertTable, int** keyInvertTableNbrIndices, int*** keyInvertIndices, int indexShift)
-{
-  int Size = (2*(this->LzMax+1) + 1) * this->IncMaxNbrBosons;
-  for (int i = 0; i < Size; ++i)
-    keyInvertSectorSize[i] = 0;
-  int CurrentLzSzMax = stateLzSzMax[0];
-  int CurrentNbrLzSzMax, NewNbrLzSzMax;
-  if (CurrentLzSzMax&1)
-    CurrentNbrLzSzMax = (stateDescription[0][CurrentLzSzMax>>1])>>16;
-  else
-    CurrentNbrLzSzMax = (stateDescription[0][CurrentLzSzMax>>1])&0xffff;
-  lzSzMaxPosition[CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax] = 0; 
-  keyInvertSectorSize[CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax] = 0;   
-  for (int i = 0; i < dimension; ++i)
-    {
-      keys[i] = this->GenerateKey(stateDescription[i], stateLzSzMax[i]);
-      if (CurrentLzSzMax != stateLzSzMax[i])
-	{
-	  CurrentLzSzMax = stateLzSzMax[i];
-	  if (CurrentLzSzMax&1)
-	    CurrentNbrLzSzMax = (stateDescription[i][CurrentLzSzMax>>1])>>16;
-	  else
-	    CurrentNbrLzSzMax = (stateDescription[i][CurrentLzSzMax>>1])&0xffff;
-	  lzSzMaxPosition[CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax] = indexShift + i; 
-	  keyInvertSectorSize[CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax] = 1;
-	}
-      else
-	{
-	  if (stateLzSzMax[i]&1)
-	    NewNbrLzSzMax = (stateDescription[i][CurrentLzSzMax>>1])>>16;
-	  else
-	    NewNbrLzSzMax = (stateDescription[i][CurrentLzSzMax>>1])&0xffff;	  
-	  if (NewNbrLzSzMax != CurrentNbrLzSzMax)
-	    {
-	      CurrentNbrLzSzMax = NewNbrLzSzMax;
-	      lzSzMaxPosition[CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax] = indexShift + i;
-	      keyInvertSectorSize[CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax] = 1;
-	    }
-	  else
-	    {
-	      ++keyInvertSectorSize[CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax]; 
-	    }
-	}
-    }
-
-  for (int i = 0; i < Size; ++i)
-    {
-      if (keyInvertSectorSize[i] > 0)
-	{
-	  keyInvertTable[i] = new int [keyInvertSectorSize[i]];
-	  keyInvertTableNbrIndices[i] = new int [keyInvertSectorSize[i]];
-	}
-      else
-	{
-	  keyInvertTable[i] = 0; 
-	  keyInvertTableNbrIndices[i] = 0;
-	}
-    }
-
-  CurrentLzSzMax = stateLzSzMax[0];
-  if (CurrentLzSzMax&1)
-    CurrentNbrLzSzMax = (stateDescription[0][CurrentLzSzMax>>1])>>16;
-  else
-    CurrentNbrLzSzMax = (stateDescription[0][CurrentLzSzMax>>1])&0xffff;
-  int CurrentKeyInvertSectorSize = keyInvertSectorSize[CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax];
-  keyInvertSectorSize[CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax] = 1;
-  int* TmpKeyInvertTable = keyInvertTable[CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax];
-  int* TmpKeyInvertTableNbrIndices = keyInvertTableNbrIndices[CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax];
-  //cout << "keys="<<keys<<", CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax="<<CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax<<" TmpKeyInvertTable="<<TmpKeyInvertTable<<endl;
-  TmpKeyInvertTable[0] = keys[0];
-  TmpKeyInvertTableNbrIndices[0] = 1;
-  for (int i = 1; i < dimension; ++i)
-    {
-      if (CurrentLzSzMax != stateLzSzMax[i])
-	{
-	  CurrentLzSzMax = stateLzSzMax[i];
-	  if (CurrentLzSzMax&1)
-	    CurrentNbrLzSzMax = (stateDescription[i][CurrentLzSzMax>>1])>>16;
-	  else
-	    CurrentNbrLzSzMax = (stateDescription[i][CurrentLzSzMax>>1])&0xffff;
-	  CurrentKeyInvertSectorSize = keyInvertSectorSize[CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax];
-	  keyInvertSectorSize[CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax] = 1;
-	  TmpKeyInvertTable = keyInvertTable[CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax];
-	  TmpKeyInvertTableNbrIndices = keyInvertTableNbrIndices[CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax];
-	  TmpKeyInvertTable[0] = keys[i];
-	  TmpKeyInvertTableNbrIndices[0] = 1;
-	}
-      else
-	{
-	  if (stateLzSzMax[i]&1)
-	    NewNbrLzSzMax = (stateDescription[i][CurrentLzSzMax>>1])>>16;
-	  else
-	    NewNbrLzSzMax = (stateDescription[i][CurrentLzSzMax>>1])&0xffff;	  
-	  if (NewNbrLzSzMax != CurrentNbrLzSzMax)
-	    {
-	      CurrentNbrLzSzMax = NewNbrLzSzMax;
-	      CurrentKeyInvertSectorSize = keyInvertSectorSize[CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax];
-	      keyInvertSectorSize[CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax] = 1;
-	      TmpKeyInvertTable = keyInvertTable[CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax];
-	      TmpKeyInvertTableNbrIndices = keyInvertTableNbrIndices[CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax];
-	      TmpKeyInvertTable[0] = keys[i];
-	      TmpKeyInvertTableNbrIndices[0] = 1;
-	    }
-	  else
-	    {
-	      int Lim = keyInvertSectorSize[CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax];
-	      int j = 0;
-	      bool Flag = false;
-	      int TmpKey = keys[i];
-	      for (; ((j < Lim) && (Flag == false)); ++j)
-		if (TmpKeyInvertTable[j] == TmpKey)
-		  {
-		    Flag = true;
-		    --j;
-		  }
-	      if (Flag == true)
-		{
-		  ++TmpKeyInvertTableNbrIndices[j];
-		}
-	      else
-		{
-		  TmpKeyInvertTable[keyInvertSectorSize[CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax]] = TmpKey;
-		  TmpKeyInvertTableNbrIndices[keyInvertSectorSize[CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax]] = 1;
-		  ++keyInvertSectorSize[CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax];
-		}
-	    }
-	}
-    }
- 
-  // sort key invert table and resize arrays
-  int TmpPos;
-  int TmpSize;
-  for (int i = 0; i < Size; ++i)
-    {
-      if (keyInvertSectorSize[i] > 0)
-	{
-	  int Lim = keyInvertSectorSize[i];
-	  TmpKeyInvertTable = keyInvertTable[i];
-	  TmpKeyInvertTableNbrIndices = keyInvertTableNbrIndices[i];
-	  int* TmpKeyInvertTable2 = new int [Lim];
-	  int* TmpKeyInvertTableNbrIndices2 = new int [Lim];
-	  int Tmp;
-	  for (int j = 0; j < Lim; ++j)
-	    {
-	      Tmp = TmpKeyInvertTable[j];
-	      TmpPos = j;
-	      for (int k = j + 1; k < Lim; ++k)
-		if (Tmp > TmpKeyInvertTable[k])
-		  {
-		    Tmp = TmpKeyInvertTable[k];
-		    TmpPos = k;
-		  }
-	      TmpKeyInvertTable2[j] = Tmp;
-	      TmpKeyInvertTableNbrIndices2[j] = TmpKeyInvertTableNbrIndices[TmpPos];
-	      TmpKeyInvertTableNbrIndices[TmpPos] = TmpKeyInvertTableNbrIndices[j];
-	      TmpKeyInvertTable[TmpPos] = TmpKeyInvertTable[j];
-	    }
-	  delete[] TmpKeyInvertTable;
-	  delete[] TmpKeyInvertTableNbrIndices;
-	  keyInvertTable[i] = TmpKeyInvertTable2;
-	  keyInvertTableNbrIndices[i] = TmpKeyInvertTableNbrIndices2;
-	  keyInvertIndices[i] = new int* [Lim];
-	  for (int j = 0; j < Lim; ++j)
-	    {
-	      keyInvertIndices[i][j] = new int [keyInvertTableNbrIndices[i][j]];
-	      keyInvertTableNbrIndices[i][j] = 0;
-	    }
-	}
-    }
-
-  // find all hilbert space indices that have the same key in each sector
-  CurrentLzSzMax = (lzMax<<1)+1;
-  CurrentNbrLzSzMax = 1;
-  TmpKeyInvertTableNbrIndices = keyInvertTableNbrIndices[CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax];
-  int** TmpKeyInvertIndices = keyInvertIndices[CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax];
-  int TmpPos2;
-  int TmpPos3;
-  int TmpPos4 = CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax;
-  TmpSize = keyInvertSectorSize[TmpPos4];
-  TmpKeyInvertIndices = keyInvertIndices[TmpPos4];
-  TmpKeyInvertTable = keyInvertTable[TmpPos4];
-  TmpKeyInvertTableNbrIndices = keyInvertTableNbrIndices[TmpPos4];
-  for (int i = 0; i < dimension; ++i)
-    {
-      int TmpKey = keys[i];
-      if (CurrentLzSzMax != stateLzSzMax[i])
-	{
-	  CurrentLzSzMax = stateLzSzMax[i];
-	  if (CurrentLzSzMax&1)
-	    CurrentNbrLzSzMax = (stateDescription[i][CurrentLzSzMax>>1])>>16;
-	  else
-	    CurrentNbrLzSzMax = (stateDescription[i][CurrentLzSzMax>>1])&0xffff;
-	  TmpPos4 = CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax;
-	  TmpKeyInvertIndices = keyInvertIndices[TmpPos4];
-	  TmpKeyInvertTable = keyInvertTable[TmpPos4];
-	  TmpKeyInvertTableNbrIndices = keyInvertTableNbrIndices[TmpPos4];
-	  TmpSize = keyInvertSectorSize[TmpPos4];
-	  TmpPos = 0;
-	  TmpPos2 = TmpSize - 1;
-	  while ((TmpPos2 - TmpPos) > 1)
-	    {
-	      TmpPos3 = (TmpPos2 + TmpPos) >> 1;
-	      if (TmpKey < TmpKeyInvertTable[TmpPos3])
-		TmpPos2 = TmpPos3;
-	      else
-		TmpPos = TmpPos3;
-	    }
-	  if (TmpKey == TmpKeyInvertTable[TmpPos])
-	    {
-	      TmpKeyInvertIndices[TmpPos][0] = indexShift + i;
-	      TmpKeyInvertTableNbrIndices[TmpPos] = 1;
-	    }
-	  else
-	    {
-	      TmpKeyInvertIndices[TmpPos2][0] = indexShift + i;
-	      TmpKeyInvertTableNbrIndices[TmpPos2] = 1;
-	    }
-	}
-      else
-	{
-	  if (stateLzSzMax[i]&1)
-	    NewNbrLzSzMax = (stateDescription[i][CurrentLzSzMax>>1])>>16;
-	  else
-	    NewNbrLzSzMax = (stateDescription[i][CurrentLzSzMax>>1])&0xffff;	  
-	  if (NewNbrLzSzMax != CurrentNbrLzSzMax)
-	    {
-	      CurrentNbrLzSzMax = NewNbrLzSzMax;
-	      TmpPos4 = CurrentLzSzMax * this->IncMaxNbrBosons + CurrentNbrLzSzMax;
-	      TmpKeyInvertIndices = keyInvertIndices[TmpPos4];
-	      TmpKeyInvertTable = keyInvertTable[TmpPos4];
-	      TmpKeyInvertTableNbrIndices = keyInvertTableNbrIndices[TmpPos4];
-	      TmpSize = keyInvertSectorSize[TmpPos4];
-	      TmpPos = 0;
-	      TmpPos2 = TmpSize - 1;
-	      while ((TmpPos2 - TmpPos) > 1)
-		{
-		  TmpPos3 = (TmpPos2 + TmpPos) >> 1;
-		  if (TmpKey < TmpKeyInvertTable[TmpPos3])
-		    TmpPos2 = TmpPos3;
-		  else
-		    TmpPos = TmpPos3;
-		}
-	      if (TmpKey == TmpKeyInvertTable[TmpPos])
-		{
-		  TmpKeyInvertIndices[TmpPos][0] = indexShift + i;
-		  TmpKeyInvertTableNbrIndices[TmpPos] = 1;
-		}
-	      else
-		{
-		  TmpKeyInvertIndices[TmpPos2][0] = indexShift + i;
-		  TmpKeyInvertTableNbrIndices[TmpPos2] = 1;
-		}
-	    }
-	  else
-	    {
-	      TmpPos = 0;
-	      TmpPos2 = TmpSize - 1;
-	      while ((TmpPos2 - TmpPos) > 1)
-		{
-		  TmpPos3 = (TmpPos2 + TmpPos) >> 1;
-		  if (TmpKey < TmpKeyInvertTable[TmpPos3])
-		    {
-		      TmpPos2 = TmpPos3;
-		    }
-		  else
-		    TmpPos = TmpPos3;
-		}
-	      if (TmpKey == TmpKeyInvertTable[TmpPos])
-		{
-		  TmpKeyInvertIndices[TmpPos][TmpKeyInvertTableNbrIndices[TmpPos]] = indexShift + i;
-		  ++TmpKeyInvertTableNbrIndices[TmpPos];
-		}
-	      else
-		{
-		  TmpKeyInvertIndices[TmpPos2][TmpKeyInvertTableNbrIndices[TmpPos2]] = indexShift + i;
-		  ++TmpKeyInvertTableNbrIndices[TmpPos2];
-		}
-	    }
-	}
-    }
-}
-
-// generate look-up table associated to current Hilbert space
-// 
-// stateDescription = array describing the state
-// lzszmax = maximum Lz/Sz value lzMax<<1 (spin down) / lzMax<<1 + 1 (spin up) reached by a boson in the state
-// return value = key associated to the state
-
-int BosonOnSphereWithSpin::GenerateKey(int* stateDescription, int lzszmax)
-{
-  int Key = 0;
-  lzszmax>>=1;
-  //cout << "GenerateKey: lzszmax="<<lzszmax<<endl;
-  for (int i = 0; i <= lzszmax; ++i)
-    {
-      Key += this->KeyMultiplicationTable[i<<1] * (stateDescription[i] & 0xffff) +
-	this->KeyMultiplicationTable[(i<<1)+1] * (stateDescription[i] >>16);
-      //cout << "i="<<i<<"Key="<<Key<<" KeyMultiplicationTable[i<<1]="<<KeyMultiplicationTable[i<<1]<<" KeyMultiplicationTable[(i<<1)+1]="<<KeyMultiplicationTable[(i<<1)+1]<<endl;
-    }
-  return Key;
-}
-
 
 
 // evaluate Hilbert space dimension
@@ -1460,6 +1220,8 @@ long BosonOnSphereWithSpin::ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, 
 }
 
 
+
+
 // evaluate wave function in real space using a given basis
 //
 // state = vector corresponding to the state in the Fock basis
@@ -1486,6 +1248,8 @@ Complex BosonOnSphereWithSpin::EvaluateWaveFunctionWithTimeCoherence (RealVector
   return this->EvaluateWaveFunctionWithTimeCoherence(state, position, basis, nextCoordinates, 0, this->HilbertSpaceDimension);
 }
 
+
+
 // evaluate wave function in real space using a given basis and only for agiven range of components
 //
 // state = vector corresponding to the state in the Fock basis
@@ -1497,18 +1261,19 @@ Complex BosonOnSphereWithSpin::EvaluateWaveFunctionWithTimeCoherence (RealVector
 
 Complex BosonOnSphereWithSpin::EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis, 
 					     int firstComponent, int nbrComponent)
-{  
+{
+  int IncMaxNbrBosons = (NbrBosonsUp>NbrBosonsDown? NbrBosonsUp : NbrBosonsDown) + 1;
   Complex Value(0.0, 0.0), TmpValue(0.0, 0.0);
   Complex Tmp;
-  ComplexMatrix PermUp(this->NbrBosonsUp, this->NbrBosonsUp);  
-  ComplexMatrix FunctionsUp(this->LzMax + 1, this->NbrBosonsUp);
-  ComplexMatrix PermDown(this->NbrBosonsDown, this->NbrBosonsDown);  
-  ComplexMatrix FunctionsDown(this->LzMax + 1, this->NbrBosonsDown);
+  ComplexMatrix PermUp(NbrBosonsUp, NbrBosonsUp);
+  ComplexMatrix FunctionsUp(this->LzMax + 1, NbrBosonsUp);
+  ComplexMatrix PermDown(NbrBosonsDown, NbrBosonsDown);  
+  ComplexMatrix FunctionsDown(this->LzMax + 1, NbrBosonsDown);
   RealVector TmpCoordinates(2);
   int* Indices = new int [this->NbrBosons];
   int Pos;
   int Lz;
-  for (int j = 0; j < this->NbrBosonsUp; ++j)
+  for (int j = 0; j < NbrBosonsUp; ++j)
     {
       TmpCoordinates[0] = position[j << 1];
       TmpCoordinates[1] = position[1 + (j << 1)];
@@ -1519,21 +1284,21 @@ Complex BosonOnSphereWithSpin::EvaluateWaveFunction (RealVector& state, RealVect
 	  FunctionsUp[j].Im(i) = Tmp.Im;
 	}
     }
-  for (int j = this->NbrBosonsUp; j < this->NbrBosons; ++j)
+  for (int j = NbrBosonsUp; j < this->NbrBosons; ++j)
     {
       TmpCoordinates[0] = position[j << 1];
       TmpCoordinates[1] = position[1 + (j << 1)];
       for (int i = 0; i <= this->LzMax; ++i)
 	{
 	  basis.GetFunctionValue(TmpCoordinates, Tmp, i);
-	  FunctionsDown[j-this->NbrBosonsUp].Re(i) = Tmp.Re;
-	  FunctionsDown[j-this->NbrBosonsUp].Im(i) = Tmp.Im;
+	  FunctionsDown[j-NbrBosonsUp].Re(i) = Tmp.Re;
+	  FunctionsDown[j-NbrBosonsUp].Im(i) = Tmp.Im;
 	}
     }
-  double* Factors = new double [this->IncMaxNbrBosons];  
+  double* Factors = new double [IncMaxNbrBosons];  
   Factors[0] = 1.0;
   Factors[1] = 1.0;
-  for (int i = 2; i < this->IncMaxNbrBosons; ++i)
+  for (int i = 2; i < IncMaxNbrBosons; ++i)
     Factors[i] = Factors[i - 1] / sqrt((double) i);
   double TmpFactor, TmpComponent;
   int TmpStateDescription;
@@ -1543,18 +1308,21 @@ Complex BosonOnSphereWithSpin::EvaluateWaveFunction (RealVector& state, RealVect
   PermUp.EvaluateFastPermanentPrecalculationArray(ChangeBitUp, ChangeBitSignUp);
   int* ChangeBitSignDown;
   int* ChangeBitDown;
+  int CurrentLzMaxUp, CurrentLzMaxDown;
   PermDown.EvaluateFastPermanentPrecalculationArray(ChangeBitDown, ChangeBitSignDown);  
   for (int k = firstComponent; k < LastComponent; ++k)
     {
       TmpComponent = state[k];
       if (TmpComponent!=0.0)
 	{
-	  TmpFactor = Factors[this->NbrBosonsUp];
+	  TmpFactor = Factors[NbrBosonsUp];
 	  Pos = 0;
 	  Lz = 0;
-	  while (Pos < this->NbrBosonsUp)
+	  this->FermionToBoson(this->StateDescriptionUp[k], this->StateDescriptionDown[k], this->StateInfo[k],
+			       TemporaryState, CurrentLzMaxUp, CurrentLzMaxDown);
+	  while (Pos < NbrBosonsUp)
 	    {	      
-	      TmpStateDescription = (this->StateDescription[k][Lz])>>16;
+	      TmpStateDescription = (TemporaryState[Lz])>>16;
 	      if (TmpStateDescription != 0)
 		{
 		  TmpFactor *= Factors[TmpStateDescription];
@@ -1566,10 +1334,10 @@ Complex BosonOnSphereWithSpin::EvaluateWaveFunction (RealVector& state, RealVect
 		}
 	      ++Lz;
 	    }
-	  for (int i = 0; i < this->NbrBosonsUp; ++i)
+	  for (int i = 0; i < NbrBosonsUp; ++i)
 	    {
 	      ComplexVector& TmpColum2 = FunctionsUp[i];	  
-	      for (int j = 0; j < this->NbrBosonsUp; ++j)
+	      for (int j = 0; j < NbrBosonsUp; ++j)
 		{
 		  PermUp[i].Re(j) = TmpColum2.Re(Indices[j]);
 		  PermUp[i].Im(j) = TmpColum2.Im(Indices[j]);
@@ -1578,10 +1346,10 @@ Complex BosonOnSphereWithSpin::EvaluateWaveFunction (RealVector& state, RealVect
 	  TmpValue = PermUp.FastPermanent(ChangeBitUp, ChangeBitSignUp) * TmpFactor;
 	  Pos = 0;
 	  Lz = 0;
-	  TmpFactor = Factors[this->NbrBosonsDown];
-	  while (Pos < this->NbrBosonsDown)
+	  TmpFactor = Factors[NbrBosonsDown];
+	  while (Pos < NbrBosonsDown)
 	    {
-	      TmpStateDescription = (this->StateDescription[k][Lz])&0xffff;
+	      TmpStateDescription = (TemporaryState[Lz])&0xffff;
 	      if (TmpStateDescription != 0)
 		{
 		  TmpFactor *= Factors[TmpStateDescription];
@@ -1593,10 +1361,10 @@ Complex BosonOnSphereWithSpin::EvaluateWaveFunction (RealVector& state, RealVect
 		}
 	      ++Lz;
 	    }
-	  for (int i = 0; i < this->NbrBosonsDown; ++i)
+	  for (int i = 0; i < NbrBosonsDown; ++i)
 	    {
 	      ComplexVector& TmpColum2 = FunctionsDown[i];	  
-	      for (int j = 0; j < this->NbrBosonsDown; ++j)
+	      for (int j = 0; j < NbrBosonsDown; ++j)
 		{
 		  PermDown[i].Re(j) = TmpColum2.Re(Indices[j]);
 		  PermDown[i].Im(j) = TmpColum2.Im(Indices[j]);
@@ -1629,10 +1397,10 @@ Complex BosonOnSphereWithSpin::EvaluateWaveFunctionWithTimeCoherence (RealVector
 							      int nextCoordinates, int firstComponent, int nbrComponent)
 {
   cout << "Attention, TimeCoherence not fully implemented, yet!"<<endl;
-  double* Factors = new double [this->IncMaxNbrBosons];
+  double* Factors = new double [this->NbrBosons + 1];
   Factors[0] = 1.0;
   Factors[1] = 1.0;
-  for (int i = 2; i <= this->IncMaxNbrBosons; ++i)
+  for (int i = 2; i <= this->NbrBosons; ++i)
     Factors[i] = Factors[i - 1] / sqrt((double) i);
   double TmpFactor;
   Complex Value;
@@ -1642,138 +1410,74 @@ Complex BosonOnSphereWithSpin::EvaluateWaveFunctionWithTimeCoherence (RealVector
   int Pos;
   int Lz;
   int TmpStateDescription;
-  int LastComponent = firstComponent + nbrComponent;  
+  int CurrentLzMaxUp, CurrentLzMaxDown;
+  int LastComponent = firstComponent + nbrComponent;
   if ((*(this->KeptCoordinates)) == -1)
-    {      
-      ComplexMatrix PermUp(this->NbrBosonsUp, this->NbrBosonsUp);  
-      ComplexMatrix FunctionsUp(this->LzMax + 1, this->NbrBosonsUp);
-      ComplexMatrix PermDown(this->NbrBosonsDown, this->NbrBosonsDown);  
-      ComplexMatrix FunctionsDown(this->LzMax + 1, this->NbrBosonsDown);
+    {
+      ComplexMatrix Perm(this->NbrBosons, this->NbrBosons);
+      ComplexMatrix Functions(this->LzMax + 1, this->NbrBosons);
       RealVector TmpCoordinates(2);
-      int* Indices = new int [this->NbrBosons];
-      int Pos;
-      int Lz;
-      for (int j = 0; j < this->NbrBosonsUp; ++j)
+      for (int j = 0; j < this->NbrBosons; ++j)
 	{
 	  TmpCoordinates[0] = position[j << 1];
 	  TmpCoordinates[1] = position[1 + (j << 1)];
 	  for (int i = 0; i <= this->LzMax; ++i)
 	    {
 	      basis.GetFunctionValue(TmpCoordinates, Tmp, i);
-	      FunctionsUp[j].Re(i) = Tmp.Re;
-	      FunctionsUp[j].Im(i) = Tmp.Im;
+	      Functions[j].Re(i) = Tmp.Re;
+	      Functions[j].Im(i) = Tmp.Im;
 	    }
 	}
-      for (int j = this->NbrBosonsUp; j < this->NbrBosons; ++j)
-	{
-	  TmpCoordinates[0] = position[j << 1];
-	  TmpCoordinates[1] = position[1 + (j << 1)];
-	  for (int i = 0; i <= this->LzMax; ++i)
-	    {
-	      basis.GetFunctionValue(TmpCoordinates, Tmp, i);
-	      FunctionsDown[j-this->NbrBosonsUp].Re(i) = Tmp.Re;
-	      FunctionsDown[j-this->NbrBosonsUp].Im(i) = Tmp.Im;
-	    }
-	}
-      int* ChangeBitSignUp;
-      int* ChangeBitUp;
-      PermUp.EvaluateFastPermanentPrecalculationArray(ChangeBitUp, ChangeBitSignUp);
-      int* ChangeBitSignDown;
-      int* ChangeBitDown;
-      PermDown.EvaluateFastPermanentPrecalculationArray(ChangeBitDown, ChangeBitSignDown);  
-      int TmpStateDescription;
-      int LastComponent = firstComponent + nbrComponent;
+      int* ChangeBitSign;
+      int* ChangeBit;
+      Perm.EvaluateFastPermanentPrecalculationArray(ChangeBit, ChangeBitSign, true);
       for (int k = firstComponent; k < LastComponent; ++k)
 	{
-	  TmpFactor = state[k] * Factors[this->NbrBosonsUp]* Factors[this->NbrBosonsDown];
-
-	  if (TmpFactor!=0.0)
+	  Pos = 0;
+	  Lz = 0;
+	  TmpFactor = state[k] * Factors[this->NbrBosons];
+	  this->FermionToBoson(this->StateDescriptionUp[k], this->StateDescriptionDown[k], this->StateInfo[k],
+			       TemporaryState, CurrentLzMaxUp, CurrentLzMaxDown);
+	  while (Pos < this->NbrBosons)
 	    {
-	      Pos = 0;
-	      Lz = 0;
-	      while (Pos < this->NbrBosonsUp)
-		{	      
-		  TmpStateDescription = (this->StateDescription[k][Lz])>>16;
-		  if (TmpStateDescription != 0)
-		    {
-		      TmpFactor *= Factors[TmpStateDescription];
-		      for (int j = 0; j < TmpStateDescription; ++j)
-			{
-			  Indices[Pos] = Lz;
-			  ++Pos;
-			}
-		    }
-		  ++Lz;
-		}
-	      for (int i = 0; i < this->NbrBosonsUp; ++i)
+	      TmpStateDescription = this->TemporaryState[Lz];
+	      if (TmpStateDescription != 0)
 		{
-		  ComplexVector& TmpColum2 = FunctionsUp[i];	  
-		  for (int j = 0; j < this->NbrBosonsUp; ++j)
+		  TmpFactor *= Factors[TmpStateDescription];
+		  for (int j = 0; j < TmpStateDescription; ++j)
 		    {
-		      PermUp[i].Re(j) = TmpColum2.Re(Indices[j]);
-		      PermUp[i].Im(j) = TmpColum2.Im(Indices[j]);
+		      Indices[Pos] = Lz;
+		      ++Pos;
 		    }
 		}
-	      
-	      Pos = 0;
-	      Lz = 0;
-	      while (Pos < this->NbrBosonsDown)
+	      ++Lz;
+	    }
+	  for (int i = 0; i < this->NbrBosons; ++i)
+	    {
+	      ComplexVector& TmpColum2 = Functions[i];	  
+	      for (int j = 0; j < this->NbrBosons; ++j)
 		{
-		  TmpStateDescription = (this->StateDescription[k][Lz])&0xffff;
-		  if (TmpStateDescription != 0)
-		    {
-		      TmpFactor *= Factors[TmpStateDescription];
-		      for (int j = 0; j < TmpStateDescription; ++j)
-			{
-			  Indices[Pos] = Lz;
-			  ++Pos;
-			}
-		    }
-		  ++Lz;
-		}
-	      for (int i = 0; i < this->NbrBosonsDown; ++i)
-		{
-		  ComplexVector& TmpColum2 = FunctionsDown[i];	  
-		  for (int j = 0; j < this->NbrBosonsDown; ++j)
-		    {
-		      PermDown[i].Re(j) = TmpColum2.Re(Indices[j]);
-		      PermDown[i].Im(j) = TmpColum2.Im(Indices[j]);
-		    }
+		  Perm[i].Re(j) = TmpColum2.Re(Indices[j]);
+		  Perm[i].Im(j) = TmpColum2.Im(Indices[j]);
 		}
 	    }
-	  // attention, need to decide how time coherence works, and edit from here...
-	  if (this->MinorsUp[k] == 0)
+	  if (this->Minors[k] == 0)
 	    {
-	      this->MinorsUp[k] = new Complex [this->NbrBosonsUp];
+	      this->Minors[k] = new Complex [this->NbrBosons];
 	    }
-	  PermUp.FastPermanentMinorDevelopment(ChangeBitUp, ChangeBitSignUp, nextCoordinates, this->MinorsUp[k]);
+	  Perm.FastPermanentMinorDevelopment(ChangeBit, ChangeBitSign, nextCoordinates, this->Minors[k]);
 	  TmpPerm = 0.0;
 	  for (int i = 0; i < this->NbrBosons; ++i)
-	    TmpPerm += this->MinorsUp[k][i] * Complex (PermUp[nextCoordinates].Re(i), 
-						     PermUp[nextCoordinates].Im(i));
+	    TmpPerm += this->Minors[k][i] * Complex (Perm[nextCoordinates].Re(i), 
+						     Perm[nextCoordinates].Im(i));
 	  Value += TmpPerm * TmpFactor;
 	}
-      delete[] ChangeBitSignUp;
-      delete[] ChangeBitUp;
-      delete[] ChangeBitSignDown;
-      delete[] ChangeBitDown;
+      delete[] ChangeBitSign;
+      delete[] ChangeBit;
       (*(this->KeptCoordinates)) = nextCoordinates;
     }
   else
     {
-      int StartCoordinates, EndCoordinates, EffectiveNbrBosons;
-      if (nextCoordinates<NbrBosonsUp)
-	{
-	  StartCoordinates=0;
-	  EndCoordinates=NbrBosonsUp;
-	  EffectiveNbrBosons=NbrBosonsUp;
-	}
-      else
-	{
-	  StartCoordinates=NbrBosonsUp;
-	  EndCoordinates=NbrBosons;
-	  EffectiveNbrBosons=NbrBosonsDown;
-	}
       Complex* Functions = new Complex[this->LzMax + 1];
       RealVector TmpCoordinates(2);
       TmpCoordinates[0] = position[(*(this->KeptCoordinates)) << 1];
@@ -1787,9 +1491,11 @@ Complex BosonOnSphereWithSpin::EvaluateWaveFunctionWithTimeCoherence (RealVector
 	  Pos = 0;
 	  Lz = 0;
 	  TmpFactor = Factors[this->NbrBosons] * state[k];
+	  this->FermionToBoson(this->StateDescriptionUp[k], this->StateDescriptionDown[k], this->StateInfo[k],
+			       TemporaryState, CurrentLzMaxUp, CurrentLzMaxDown);
 	  while (Pos < this->NbrBosons)
 	    {
-	      TmpStateDescription = this->StateDescription[k][Lz];
+	      TmpStateDescription = this->TemporaryState[Lz];
 	      if (TmpStateDescription != 0)
 		{
 		  TmpFactor *= Factors[TmpStateDescription];
@@ -1801,7 +1507,7 @@ Complex BosonOnSphereWithSpin::EvaluateWaveFunctionWithTimeCoherence (RealVector
 		}
 	      ++Lz;
 	    }
-	  Complex* TmpMinors = this->MinorsUp[k];
+	  Complex* TmpMinors = this->Minors[k];
 	  TmpPerm = 0.0;
 	  for (int i = 0; i < this->NbrBosons; ++i)
 	    TmpPerm += TmpMinors[i] * Functions[Indices[i]];
@@ -1821,139 +1527,345 @@ Complex BosonOnSphereWithSpin::EvaluateWaveFunctionWithTimeCoherence (RealVector
 
 void BosonOnSphereWithSpin::InitializeWaveFunctionEvaluation (bool timeCoherence)
 {
-  if ((timeCoherence == true) && (this->MinorsUp == 0))
+  if ((timeCoherence == true) && (this->Minors == 0))
     {
-      this->MinorsUp = new Complex* [this->HilbertSpaceDimension];
-      this->MinorsDown = new Complex* [this->HilbertSpaceDimension];
+      this->Minors = new Complex* [this->HilbertSpaceDimension];
       for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-	{
-	  this->MinorsUp[i] = 0;
-	  this->MinorsDown[i] = 0;
-	}
+	this->Minors[i] = 0;
     }
 }
 
 
-// create an SU(2) state from two U(1) state
-//
-// upState = vector describing the up spin part of the output state
-// upStateSpace = reference on the Hilbert space associated to the up spin part
-// downState = vector describing the down spin part of the output state
-// downStateSpace = reference on the Hilbert space associated to the down spin part  
-// return value = resluting SU(2) state
 
-RealVector BosonOnSphereWithSpin::ForgeSU2FromU1(RealVector& upState, BosonOnSphere& upStateSpace, RealVector& downState, BosonOnSphere& downStateSpace)
+// evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Lz sector and fixed number of particles
+// 
+// subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax to -Lzmax+subsytemSize-1)
+// nbrBosonSector = number of particles that belong to the subsytem 
+// groundState = reference on the total system ground state
+// lzSector = Lz sector in which the density matrix has to be evaluated 
+// return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+
+RealSymmetricMatrix  BosonOnSphereWithSpin::EvaluatePartialDensityMatrix (int subsytemSize, int nbrBosonSector, int lzSector, RealVector& groundState)
 {
-  cout << "Need to write BosonOnSphereWithSpin::ForgeSU2FromU1"<<endl;
-  RealVector FinalState(this->HilbertSpaceDimension, true);
+  RealSymmetricMatrix TmpDensityMatrix;
+  return TmpDensityMatrix;	  
+
   /*
-  for (int j = 0; j < upStateSpace.HilbertSpaceDimension; ++j)
+  if (subsytemSize <= 0)
     {
-      int * TmpUpState = upStateSpace.StateDescription[j];
-      int TmpPos = upStateSpace.LzMax;
-      while (TmpPos > 0)
+      if ((lzSector == 0) && (nbrBosonSector == 0))
 	{
-	  unsigned long Tmp = TmpUpState & (0x1ul << TmpPos);
-	  TmpUpState |= Tmp << TmpPos;
-	  TmpUpState ^= Tmp;
-	  --TmpPos;
+	  RealSymmetricMatrix TmpDensityMatrix(1);
+	  TmpDensityMatrix.SetMatrixElement(0, 0, 1.0);
+	  return TmpDensityMatrix;
 	}
-      TmpUpState <<= 1;
-      double TmpComponent = upState[j];
-      int Max = 63;
-      while ((TmpUpState & (0x1ul << Max)) == 0x0ul)
-	--Max;
-      int Min = 0;
-      while ((TmpUpState & (0x1ul << Min)) == 0x0ul)
-	++Min;
-      unsigned long TmpUpStateMask = (0x1ul << Max) - 1;
-      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-	if ((this->StateDescription[i] & TmpUpState) == TmpUpState)
-	  {	    
-	    unsigned long TmpUpState3 = this->StateDescription[i] & TmpUpStateMask;
-	    unsigned long TmpUpState2 = TmpUpState3;
-#ifdef  __64_BITS__
-	    TmpUpState3 &= 0x5555555555555555ul;
-	    TmpUpState2 &= 0xaaaaaaaaaaaaaaaaul;
-#else
-	    TmpUpState3 &= 0x55555555ul;
-	    TmpUpState2 &= 0xaaaaaaaaul;
-#endif	    
-	    unsigned long Sign = 0x0;
-	    int Pos = this->LzMax << 1;
-	    while ((Pos > 0) && ((TmpUpState3 & (0x1ul << Pos)) == 0x0ul))
-	      Pos -= 2;
-	    while (Pos > 0)
-	      {
-		unsigned long TmpUpState4 = TmpUpState2 & ((0x1ul << Pos) - 1ul);
-#ifdef  __64_BITS__
-		TmpUpState4 ^= TmpUpState4 >> 32;
-#endif	
-		TmpUpState4 ^= TmpUpState4 >> 16;
-		TmpUpState4 ^= TmpUpState4 >> 8;
-		TmpUpState4 ^= TmpUpState4 >> 4;
-		TmpUpState4 ^= TmpUpState4 >> 2;
-		TmpUpState4 ^= TmpUpState4 >> 1;
-		Sign ^= TmpUpState4;
-		Pos -= 2;
-		while ((Pos > 0) && ((TmpUpState3 & (0x1ul << Pos)) == 0x0ul))
-		  Pos -= 2;
-	      }
-	    if ((Sign & 0x1ul) == 0x0ul)
-	      FinalState[i] = TmpComponent;
-	    else
-	      FinalState[i] = -TmpComponent;
-	  }
+      else
+	{
+	  RealSymmetricMatrix TmpDensityMatrix;
+	  return TmpDensityMatrix;	  
+	}
+    }
+  if (subsytemSize > this->LzMax)
+    {
+      if ((lzSector == this->TotalLz) && (nbrBosonSector == this->NbrBosons))
+	{
+	  RealSymmetricMatrix TmpDensityMatrix(this->HilbertSpaceDimension);
+	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	    for (int j = i; j < this->HilbertSpaceDimension; ++j)
+	      TmpDensityMatrix.SetMatrixElement(i, j, groundState[i] * groundState[j]);
+	}
+      else
+	{
+	  RealSymmetricMatrix TmpDensityMatrix;
+	  return TmpDensityMatrix;	  
+	}
+    }
+  
+  int CurrentLzMaxUp, CurrentLzMaxDown;
+  unsigned TemporaryStateNbrUp;
+  
+  if (subsytemSize == 1)
+    {
+      if (lzSector == 0)
+	{
+	  double TmpValue = 0;
+	  for (int MinIndex = 0; MinIndex < this->HilbertSpaceDimension; ++MinIndex)
+	    {
+	      this->FermionToBoson(this->StateDescriptionUp[MinIndex], this->StateDescriptionDown[MinIndex], this->StateInfo[MinIndex],
+				   TemporaryState, CurrentLzMaxUp, CurrentLzMaxDown, TemporaryStateNbrUp);
+	      if (this->TemporaryState[0] == (unsigned)nbrBosonSector)
+		TmpValue += groundState[MinIndex] * groundState[MinIndex];
+	    }
+	  RealSymmetricMatrix TmpDensityMatrix(1);
+	  TmpDensityMatrix.SetMatrixElement(0, 0, TmpValue);
+	  return TmpDensityMatrix;
+	}
+      else
+	{
+	  RealSymmetricMatrix TmpDensityMatrix;
+	  return TmpDensityMatrix;	  
+	}      
+    }
+  if (nbrBosonSector == 0)
+    {
+      if (lzSector == 0)
+	{
+	  double TmpValue = 0;
+	  int MinIndex = 0;
+	  while ((MinIndex < this->HilbertSpaceDimension) && (this->GetStateLzMax(MinIndex) >= subsytemSize))
+	    {
+	      int TmpPos = 0;
+	      this->FermionToBoson(this->StateDescriptionUp[MinIndex], this->StateDescriptionDown[MinIndex], this->StateInfo[MinIndex],
+				   TemporaryState, CurrentLzMaxUp, CurrentLzMaxDown, TemporaryStateNbrUp);
+	      while ((TmpPos < subsytemSize) && (TemporaryState[TmpPos] == 0))
+		++TmpPos;
+	      if (TmpPos == subsytemSize)
+		{
+		  TmpValue += groundState[MinIndex] * groundState[MinIndex];
+		}
+	      ++MinIndex;
+	    }
+	  RealSymmetricMatrix TmpDensityMatrix(1);
+	  TmpDensityMatrix.SetMatrixElement(0, 0, TmpValue);
+	  return TmpDensityMatrix;
+	}
+      else
+	{
+	  RealSymmetricMatrix TmpDensityMatrix;
+	  return TmpDensityMatrix;	  
+	}
     }
 
-  for (int j = 0; j < downStateSpace.HilbertSpaceDimension; ++j)
+  int ShiftedTotalLz = (this->TotalLz + this->NbrBosons * this->LzMax) >> 1;
+  int ShiftedLzSector = (lzSector + nbrBosonSector * (subsytemSize - 1)) >> 1;
+  int ShiftedLzComplementarySector = ShiftedTotalLz - ShiftedLzSector;
+  if (ShiftedLzComplementarySector < 0)
     {
-      unsigned long TmpDownState = downStateSpace.StateDescription[j];
-      int TmpPos = downStateSpace.LzMax;
-      while (TmpPos > 0)
+      RealSymmetricMatrix TmpDensityMatrix;
+      return TmpDensityMatrix;	  
+    }
+  int NbrBosonsComplementarySector = this->NbrBosons - nbrBosonSector;
+  int MinIndex = 0;
+  int MaxIndex = this->HilbertSpaceDimension - 1;
+  if (nbrBosonSector == 1)
+    {
+      double TmpValue = 0.0;
+      int TmpLzMax = this->GetStateLzMax(MinIndex);
+      while ((MinIndex <= MaxIndex) && (subsytemSize <= TmpLzMax))
 	{
-	  unsigned long Tmp = TmpDownState & (0x1ul << TmpPos);
-	  TmpDownState |= Tmp << TmpPos;
-	  TmpDownState ^= Tmp;
-	  --TmpPos;
+	  this->FermionToBoson(this->StateDescriptionUp[MinIndex], this->StateDescriptionDown[MinIndex], this->StateInfo[MinIndex],
+			       TemporaryState, CurrentLzMaxUp, CurrentLzMaxDown);
+	  if (TemporaryState[ShiftedLzSector] == 1)
+	    {	      
+	      int TmpPos = 0;
+	      int TmpNbrBosons = 0;
+	      while (TmpPos < subsytemSize)
+		TmpNbrBosons += TemporaryState[TmpPos++];
+	      if (TmpNbrBosons == 1)
+		TmpValue += groundState[MinIndex] * groundState[MinIndex];	    
+	    }
+	  ++MinIndex;
+	  if (MinIndex <= MaxIndex)
+	    TmpLzMax = this->GetStateLzMax(MinIndex);
 	}
-      double TmpComponent = downState[j];
-      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-	if ((this->StateDescription[i] & TmpDownState) == TmpDownState)
-	  {
-	    FinalState[i] *= TmpComponent;
-	  }
+      RealSymmetricMatrix TmpDensityMatrix(1, true);
+      TmpDensityMatrix.SetMatrixElement(0, 0, TmpValue);	    
+      return TmpDensityMatrix;
+    }
+  if (NbrBosonsComplementarySector == 0)
+    {
+      if (ShiftedLzComplementarySector != 0)
+	{
+	  RealSymmetricMatrix TmpDensityMatrix;
+	  return TmpDensityMatrix;	  
+	}
+      BosonOnSphereWithSpin TmpDestinationHilbertSpace(nbrBosonSector, lzSector, subsytemSize - 1);
+      cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
+      RealSymmetricMatrix TmpDensityMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
+      MinIndex = this->HilbertSpaceDimension - TmpDestinationHilbertSpace.HilbertSpaceDimension;
+      double TmpValue;
+      for (int i = 0; i < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++i)
+	{
+	  TmpValue = groundState[MinIndex + i];
+	  for (int j = i; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
+	    TmpDensityMatrix.SetMatrixElement(i, j, TmpValue * groundState[MinIndex + j]);
+	}
+      return TmpDensityMatrix;
+    }
+
+
+  int TmpNbrBosons;
+  int TmpTotalLz;
+  int TmpIndex;
+  BosonOnSphereWithSpin TmpDestinationHilbertSpace(nbrBosonSector, lzSector, subsytemSize - 1);
+  
+  cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
+  int* TmpStatePosition = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+  RealSymmetricMatrix TmpDensityMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
+  long TmpNbrNonZeroElements = 0;
+  int TmpComplementarySubsystemLzMax = this->GetStateLzMax(MinIndex);
+  unsigned* TmpComplementarySubsystem = new unsigned[NbrLzValue];
+  while ((MinIndex <= MaxIndex) && (TmpComplementarySubsystemLzMax >= subsytemSize))
+    {
+      this->FermionToBoson(this->StateDescriptionUp[MinIndex], this->StateDescriptionDown[MinIndex], this->StateInfo[MinIndex],
+			   TmpComplementarySubsystem, CurrentLzMaxUp, CurrentLzMaxDown, TemporaryStateNbrUp);
+      TmpIndex = MinIndex + 1;
+      int TmpPos = TmpComplementarySubsystemLzMax;	  
+      int TmpLzMax = TmpPos;
+      while ((TmpIndex <= MaxIndex) && (TmpPos == TmpLzMax))
+	{
+	  if (TmpLzMax == this->GetStateLzMax(TmpIndex))
+	    {
+	      TmpPos = subsytemSize;
+	      this->FermionToBoson(this->StateDescriptionUp[TmpIndex], this->StateDescriptionDown[TmpIndex], this->StateInfo[TmpIndex],
+				   TemporaryState, CurrentLzMaxUp, CurrentLzMaxDown);
+
+	      while ((TmpPos <= TmpLzMax) && (this->TemporaryState[TmpPos] == TmpComplementarySubsystem[TmpPos]))
+		++TmpPos;
+	      if (TmpPos > TmpLzMax)
+		{
+		  ++TmpIndex;
+		  --TmpPos;
+		}
+	      else
+		{
+		  TmpPos = -1;
+		}
+	    }
+	  else
+	    {
+	      TmpPos = -1;
+	    }
+	}
+      TmpNbrBosons = 0;
+      TmpTotalLz = 0;
+      TmpPos = subsytemSize;	  
+      while (TmpPos <= TmpComplementarySubsystemLzMax)
+	{
+	  TmpNbrBosons += TmpComplementarySubsystem[TmpPos];
+	  TmpTotalLz += TmpComplementarySubsystem[TmpPos] * TmpPos;
+	  ++TmpPos;
+	}
+      if ((TmpNbrBosons == NbrBosonsComplementarySector) && (ShiftedLzComplementarySector == TmpTotalLz))
+	{
+	  int Pos = 0;
+	  for (int i = MinIndex; i < TmpIndex; ++i)
+	    {
+	      this->FermionToBoson(this->StateDescriptionUp[i], this->StateDescriptionDown[i], this->StateInfo[i],
+				   TemporaryState, CurrentLzMaxUp, CurrentLzMaxDown);
+	      int TmpLzMax = subsytemSize - 1;
+	      while (TemporaryState[TmpLzMax] == 0) 
+		--TmpLzMax;
+	      TmpStatePosition[Pos] = TmpDestinationHilbertSpace.FindStateIndex(TemporaryState);
+	      ++Pos;
+	    }
+	  int Pos2;
+	  Pos = 0;
+	  int Pos3;
+	  double TmpValue;
+	  for (int i = MinIndex; i < TmpIndex; ++i)
+	    {
+	      Pos2 = 0;
+	      Pos3 = TmpStatePosition[Pos];
+	      TmpValue = groundState[i];
+	      for (int j = MinIndex; j < TmpIndex; ++j)
+		{
+		  if (Pos3 <=  TmpStatePosition[Pos2])
+		    {
+		      TmpDensityMatrix.AddToMatrixElement(Pos3, TmpStatePosition[Pos2], TmpValue * groundState[j]);
+		      ++TmpNbrNonZeroElements;
+		    }
+		  ++Pos2;
+		}
+	      ++Pos;
+	    }
+	}
+      MinIndex = TmpIndex;
+      if (MinIndex <= MaxIndex)
+	TmpComplementarySubsystemLzMax = this->GetStateLzMax(MinIndex);
+    }
+  delete[] TmpStatePosition;
+  if (TmpNbrNonZeroElements > 0)	
+    return TmpDensityMatrix;
+  else
+    {
+      RealSymmetricMatrix TmpDensityMatrixZero;
+      return TmpDensityMatrixZero;
     }
   */
+}
+
+
+
+
+// Project the state from the su2 space
+// to the U(1) space (u1Space)
+//
+// state = state that needs to be projected
+// u1Space = the subspace onto which the projection is carried out
+RealVector BosonOnSphereWithSpin::ForgeU1FromSU2(RealVector& state, BosonOnSphere& u1Space)
+{
+  int Dim2=u1Space.GetHilbertSpaceDimension();
+  RealVector FinalState(u1Space.GetHilbertSpaceDimension(), true);
+  int Rejected=0, Index, LzMax, CurrentLzMaxUp, CurrentLzMaxDown;
+  int *TmpState = new int[NbrLzValue];
+  for (int j = 0; j < this->HilbertSpaceDimension; ++j)    
+    {
+      this->FermionToBoson(this->StateDescriptionUp[j], this->StateDescriptionDown[j], this->StateInfo[j],
+			   TemporaryState, CurrentLzMaxUp, CurrentLzMaxDown);
+
+      for (int i=0; i<NbrLzValue; ++i)
+	TmpState[i] = (this->TemporaryState[i]&0xffff)+(this->TemporaryState[i]>>16);
+      LzMax = std::max(CurrentLzMaxUp,CurrentLzMaxDown);
+      if ((Index=u1Space.FindStateIndex(TmpState, LzMax))<Dim2)
+	{
+	  FinalState[Index] += state[j];
+	}
+      else
+	++Rejected;
+    } //End loop over HilbertSpace
+
+  if (Rejected>0)
+    cout<<"Attention: ForgeU1 rejected "<<Rejected<<" components"<<endl; 
+  FinalState /= FinalState.Norm();
+  delete[] TmpState;
   return FinalState;
 }
 
-// evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Lz sector.
-// 
-// nbrFermionSector = number of particles that belong to the subsytem 
-// lzSector = Lz sector in which the density matrix has to be evaluated 
-// szSector = Sz sector in which the density matrix has to be evaluated 
-// groundState = reference on the total system ground state
-// return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
-
-RealSymmetricMatrix BosonOnSphereWithSpin::EvaluatePartialDensityMatrixParticlePartition (int nbrFermionSector, int lzSector, int szSector, RealVector& groundState)
+// Calculate mean value <Sx> in a given state
+//
+// state = given state
+double BosonOnSphereWithSpin::MeanSxValue(RealVector& state)
 {
-  RealSymmetricMatrix TmpMatrix;
-  return TmpMatrix;
-}
-
-// evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state, using particle partition. The entanglement matrix is only evaluated in a given Lz sector.
-// 
-// nbrFermionSector = number of particles that belong to the subsytem 
-// lzSector = Lz sector in which the density matrix has to be evaluated
-// szSector = Sz sector in which the density matrix has to be evaluated 
-// groundState = reference on the total system ground state
-// removeBinomialCoefficient = remove additional binomial coefficient in case the particle entanglement matrix has to be used for real space cut
-// return value = entanglement matrix of the subsytem (return a wero dimension matrix if the entanglement matrix is equal to zero)
-
-RealMatrix BosonOnSphereWithSpin::EvaluatePartialEntanglementMatrixParticlePartition (int nbrFermionSector, int lzSector, int szSector, RealVector& groundState, bool removeBinomialCoefficient)
-{
-  RealMatrix TmpMatrix;
-  return TmpMatrix;
-}
+  double Coefficient;
+  int Dim = this->HilbertSpaceDimension;
   
+  RealVector FinalState(Dim, true);
+  
+  for (int i = 0; i < Dim; ++i)    
+    for (int j=0; j<=this->LzMax; ++j)
+      {
+	int Index=this->AduAd(i,j,j,Coefficient);
+	if ( (Index<Dim) && (Coefficient != 0.0))
+	  FinalState[Index]+=state[i]*Coefficient*0.5;
+	Index=this->AddAu(i,j,j,Coefficient);
+	if ( (Index<Dim) && (Coefficient != 0.0))
+	  FinalState[Index]+=state[i]*Coefficient*0.5;
+      }
+  return (FinalState*state);
+}
+
+
+// Calculate mean value <Sz> in a given state
+//
+// state = given state
+double BosonOnSphereWithSpin::MeanSzValue(RealVector& state)
+{
+  double Result = 0.0;
+  int Dim = this->HilbertSpaceDimension;
+
+  for (int i = 0; i < Dim; ++i)    
+    Result+=state[i]*state[i]*0.5*(2*this->StateInfo[i]-this->NbrBosons);
+
+  return Result;
+}

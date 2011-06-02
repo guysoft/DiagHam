@@ -1937,20 +1937,22 @@ RealVector BosonOnSphereWithSpinAllSz::ForgeSU2FromTunneling(RealVector& state, 
   unsigned TargetNbrUp = (SzValue+this->NbrBosons)>>1;
   int counter=0;
   double Weight=0.0;
-  int LzSzMax, CurrentLzMaxUp, CurrentLzMaxDown;
+  int TotalLzMax, CurrentLzMaxUp, CurrentLzMaxDown;
+  //int LzSzMax;
   unsigned TemporaryStateNbrUp;
-  int *TmpState = new int[NbrLzValue];
   for (int j = 0; j < this->HilbertSpaceDimension; ++j)    
     {
       if ((StateInfo[j]&0x03ffu) == TargetNbrUp)
 	{
 	  this->FermionToBoson(this->StateDescriptionUp[j], this->StateDescriptionDown[j], this->StateInfo[j],
 			       TemporaryState, CurrentLzMaxUp, CurrentLzMaxDown, TemporaryStateNbrUp);
-	  for (int i=0; i<NbrLzValue; ++i)
-	    TmpState[i]=(int)TemporaryState[i];
-	  LzSzMax = std::max(2*CurrentLzMaxUp+1,2*CurrentLzMaxDown);
+	  // changed interface for BosonOnSphereWithSpin - no LzSzMax value required for FindStateIndex!
+	  //LzSzMax = std::max(2*CurrentLzMaxUp+1,2*CurrentLzMaxDown);
+	  TotalLzMax = std::max(CurrentLzMaxUp,CurrentLzMaxDown);
+	  for (int i=TotalLzMax+1; i<NbrLzValue; ++i)
+	    TemporaryState[i]=0;
 	  ++counter;
-	  FinalState[su2Space.FindStateIndex(TmpState, LzSzMax)] += state[j];
+	  FinalState[su2Space.FindStateIndex(TemporaryState/*, LzSzMax */)] += state[j];
 	  Weight+=state[j]*state[j];
 	}
     }
@@ -1958,7 +1960,6 @@ RealVector BosonOnSphereWithSpinAllSz::ForgeSU2FromTunneling(RealVector& state, 
   cout<<"Weight = "<<Weight<<endl;
   if (fabs(Weight)>1e-12)
     FinalState /= FinalState.Norm();
-  delete[] TmpState;
   return FinalState;  
 
 }

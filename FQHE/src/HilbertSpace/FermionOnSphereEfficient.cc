@@ -715,19 +715,6 @@ int FermionOnSphereEfficient::CheckOrder (int* m, int* n, int nbrIndices)
 // find state index
 //
 // stateDescription = unsigned integer describing the state
-// lzmax = maximum Lz value reached by a fermion in the state (ignored in this class)
-// return value = corresponding index
-int FermionOnSphereEfficient::FindStateIndex(unsigned long stateDescription)
-{
-  int Result = HighBitLookUpTable[stateDescription>>this->HighBitLookUpShift];
-  Result += LowBitLookUpTable[stateDescription&this->LowBitMask];
-  return Result;
-}
-
-
-// find state index
-//
-// stateDescription = unsigned integer describing the state
 // lzmax = maximum Lz value reached by a fermion in the state
 // return value = corresponding index
 

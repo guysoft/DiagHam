@@ -79,7 +79,7 @@
 #include "HilbertSpace/BosonOnSphereHaldaneSymmetricBasisShort.h"
 #include "HilbertSpace/BosonOnSphereHaldaneHugeBasisShort.h"
 #include "HilbertSpace/BosonOnSphereWithSpin.h"
-#include "HilbertSpace/BosonOnSphereWithSpinFast.h"
+#include "HilbertSpace/BosonOnSphereWithSpinOld.h"
 #include "HilbertSpace/BosonOnSphereWithSpinAllSz.h"
 
 #include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
@@ -180,7 +180,7 @@ void ParticleOnSphereManager::AddOptionGroup(OptionManager* manager, const char*
 	  {
 	    // boson options
 	    (*SystemGroup) += new BooleanOption  ('\n', "all-sz", "use Hilbert-space with all values of sz");
-	    (*PrecalculationGroup) += new BooleanOption  ('\n', "use-efficient", "use exhaustive search table");
+	    (*PrecalculationGroup) += new BooleanOption  ('\n', "use-old", "use full integer representation of bosonic states (slow)");
 	  }
 	(*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
 	(*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the haldane or symmetrized bases)",0);
@@ -791,10 +791,10 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU2(int totalLz)
 	{
 	  int SzTotal = this->Options->GetInteger("total-sz");
 	  unsigned long MemorySpace = ((unsigned long) this->Options->GetInteger("fast-search")) << 20;
-	  if ( this->Options->GetBoolean("use-efficient"))
-	    Space = new BosonOnSphereWithSpinFast(NbrBosons, totalLz, LzMax, SzTotal, MemorySpace);
+	  if ( this->Options->GetBoolean("use-old"))
+	    Space = new BosonOnSphereWithSpinOld(NbrBosons, totalLz, LzMax, SzTotal);
 	  else
-	    Space = new BosonOnSphereWithSpin(NbrBosons, totalLz, LzMax, SzTotal);
+	    Space = new BosonOnSphereWithSpin(NbrBosons, totalLz, LzMax, SzTotal, MemorySpace);
 	}
       return Space;
     }
