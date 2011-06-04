@@ -734,95 +734,37 @@ long ParticleOnLatticeWithSpinChernInsulatorHamiltonian::PartialFastMultiplicati
   int TmpNbrM3Values;
   int* TmpM3Values;
 
-  for (int i = firstComponent; i < LastComponent; ++i)
-    {
-      for (int j = 0; j < this->NbrIntraSectorSums; ++j)
-	{
-	  int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
-	  TmpIndices = this->IntraSectorIndicesPerSum[j];
-	  for (int i1 = 0; i1 < Lim; i1 += 2)
-	    {
-	      Coefficient2 = TmpParticles->AuAu(i, TmpIndices[i1], TmpIndices[i1 + 1]);
-	      if (Coefficient2 != 0.0)
-		{
-		  for (int i2 = 0; i2 < Lim; i2 += 2)
-		    {
-		      Index = TmpParticles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-		      if (Index < Dim)
-			{
-			  ++Memory;
-			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-			}
-		    }
-		}
-	      Coefficient2 = TmpParticles->AdAd(i, TmpIndices[i1], TmpIndices[i1 + 1]);
-	      if (Coefficient2 != 0.0)
-		{
-		  for (int i2 = 0; i2 < Lim; i2 += 2)
-		    {
-		      Index = TmpParticles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-		      if (Index < Dim)
-			{
-			  ++Memory;
-			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-			}
-		    }
-		}
-	    }
-	}
-      
-      for (int j = 0; j < this->NbrInterSectorSums; ++j)
-	{
-	  int Lim = 2 * this->NbrInterSectorIndicesPerSum[j];
-	  TmpIndices = this->InterSectorIndicesPerSum[j];
-	  for (int i1 = 0; i1 < Lim; i1 += 2)
-	    {
-	      Coefficient2 = TmpParticles->AuAd(i, TmpIndices[i1], TmpIndices[i1 + 1]);
-	      if (Coefficient2 != 0.0)
-		{
-		  for (int i2 = 0; i2 < Lim; i2 += 2)
-		    {
-		      Index = TmpParticles->AduAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-		      if (Index < Dim)
-			{
-			  ++Memory;
-			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-			}
-		    }
-		}
-	    }
-	}	
-    }    
+  this->EvaluateMNTwoBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
 
-  if ((this->OneBodyInteractionFactorsdowndown != 0) || (this->OneBodyInteractionFactorsupup != 0))
-    {
-      for (int i = firstComponent; i < LastComponent; ++i)
-	{
-	  ++Memory;
-	  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
-	}
-    }
-  if (this->OneBodyInteractionFactorsupdown != 0)
-    {
-      for (int i = firstComponent; i < LastComponent; ++i)
-	{
-	  for (int j=0; j<= this->LzMax; ++j)
-	    {
-	      Index = TmpParticles->AddAu(i, j, j, Coefficient);
-	      if (Index < Dim)
-		{
-		  ++Memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	      Index = TmpParticles->AduAd(i, j, j, Coefficient);
-	      if (Index < Dim)
-		{
-		  ++Memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	    }
-	}
-    }
+//   if ((this->OneBodyInteractionFactorsdowndown != 0) || (this->OneBodyInteractionFactorsupup != 0))
+//     {
+//       for (int i = firstComponent; i < LastComponent; ++i)
+// 	{
+// 	  ++Memory;
+// 	  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+// 	}
+//     }
+//   if (this->OneBodyInteractionFactorsupdown != 0)
+//     {
+//       for (int i = firstComponent; i < LastComponent; ++i)
+// 	{
+// 	  for (int j=0; j<= this->LzMax; ++j)
+// 	    {
+// 	      Index = TmpParticles->AddAu(i, j, j, Coefficient);
+// 	      if (Index < Dim)
+// 		{
+// 		  ++Memory;
+// 		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+// 		}
+// 	      Index = TmpParticles->AduAd(i, j, j, Coefficient);
+// 	      if (Index < Dim)
+// 		{
+// 		  ++Memory;
+// 		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+// 		}
+// 	    }
+// 	}
+//     }
 
   delete TmpParticles;
 
@@ -904,7 +846,7 @@ void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::PartialEnableFastMultip
       this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
 							 this->InteractionPerComponentCoefficient[Pos], TotalPos);
       this->EvaluateMNOneBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
-							 this->InteractionPerComponentCoefficient[Pos], TotalPos);
+      							 this->InteractionPerComponentCoefficient[Pos], TotalPos);
       ++Pos;
     }
 }

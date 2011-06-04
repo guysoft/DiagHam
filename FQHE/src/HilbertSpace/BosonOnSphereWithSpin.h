@@ -46,6 +46,7 @@ using std::hex;
 using std::dec;
 
 class BosonOnSphere;
+class BosonOnSphereShort;
 
 class BosonOnSphereWithSpin :  public ParticleOnSphereWithSpin
 {
@@ -382,6 +383,15 @@ class BosonOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // lzSector = Lz sector in which the density matrix has to be evaluated 
   // return value = density matrix of the subsytem  (return a wero dimension matrix if the density matrix is equal to zero)
   virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int subsytemSize, int nbrBosonSector, int lzSector, RealVector& groundState);
+
+  // create an SU(2) state from two U(1) state
+  //
+  // upState = vector describing the up spin part of the output state
+  // upStateSpace = reference on the Hilbert space associated to the up spin part
+  // downState = vector describing the down spin part of the output state
+  // downStateSpace = reference on the Hilbert space associated to the down spin part  
+  // return value = resluting SU(2) state
+  RealVector ForgeSU2FromU1(RealVector& upState, BosonOnSphere& upStateSpace, RealVector& downState, BosonOnSphere& downStateSpace);
 
   // Project the state from the su2 space
   // to the U(1) space (u1Space)

@@ -28,6 +28,20 @@ using std::ios;
 using std::ofstream;
 
 
+// compute the single particle spectrum 
+//
+// outputFileName = name of the output file
+// nbrSitesX = number of sites in the x direction
+// nbrSitesY = number of sites in the x direction
+// nnHoping = nearest neighbor hoping amplitude
+// nnnHoping =  next nearest neighbor hoping amplitude
+// nnnnHoping =  second next nearest neighbor hoping amplitude
+// mus = sublattice staggered chemical potential 
+// mixingTermNorm = norm of the mixing term coupling the two copies of the checkerboard lattice
+// mixingTermArgv = argument of the mixing term coupling the two copies of the checkerboard lattice
+void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double nnHoping, double nnnHoping, double nnnnHoping, double mus, double mixingTermNorm, double mixingTermArg);
+
+
 int main(int argc, char** argv)
 {
   OptionManager Manager ("FQHEQuantumSpinHallCheckerboardModelTwoBands" , "0.01");
@@ -56,6 +70,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "t1", "nearest neighbor hoping amplitude", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "t2", "next nearest neighbor hoping amplitude", 1.0 - 0.5 * M_SQRT2);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "tpp", "second next nearest neighbor hoping amplitude", 0.5 * (M_SQRT2 - 1.0));
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "mu-s", "sublattice staggered chemical potential", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "mixing-norm", "norm of the mixing term coupling the two copies of the checkerboard lattice", 0.0);
@@ -96,6 +111,12 @@ int main(int argc, char** argv)
   else
     {
       sprintf (EigenvalueOutputFile, "fermions_twoband_quantumspinhall_checkerboardlattice_n_%d_x_%d_y_%d_u_%f_t1_%f_t2_%f_tpp_%f_gx_%f_gy_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+    }
+
+  if (Manager.GetBoolean("singleparticle-spectrum") == true)
+    {
+      ComputeSingleParticleSpectrum(EigenvalueOutputFile, NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"), Manager.GetDouble("mixing-norm"), Manager.GetDouble("mixing-arg") * 2.0 * M_PI);
+      return 0;
     }
 
   int MinKx = 0;
@@ -160,5 +181,79 @@ int main(int argc, char** argv)
 	}
     }
   return 0;
+}
+
+// compute the single particle spectrum 
+//
+// outputFileName = name of the output file
+// nbrSitesX = number of sites in the x direction
+// nbrSitesY = number of sites in the x direction
+// nnHoping = nearest neighbor hoping amplitude
+// nnnHoping =  next nearest neighbor hoping amplitude
+// nnnnHoping =  second next nearest neighbor hoping amplitude
+// mus = sublattice staggered chemical potential 
+// mixingTermNorm = norm of the mixing term coupling the two copies of the checkerboard lattice
+// mixingTermArgv = argument of the mixing term coupling the two copies of the checkerboard lattice
+
+void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double nnHoping, double nnnHoping, double nnnnHoping, double mus, double mixingTermNorm, double mixingTermArg)
+{
+  ofstream File;
+  File.open(outputFileName);
+  File << "# kx    ky     E_{-,1}    E_{-,2}    E_{+,1}    E_{+,2}" << endl;
+  double MinEMinus = 0.0;
+  double MaxEMinus = -10.0;
+  double MinEPlus = 10.0;
+  double MaxEPlus = 0.0;
+  Complex MixingTerm = mixingTermNorm * Phase(mixingTermArg);
+  for (int kx = 0; kx < nbrSitesX; ++kx)
+    {
+      for (int ky = 0; ky < nbrSitesY; ++ky)
+	{
+	  HermitianMatrix TmpOneBodyHamiltonian(4, true);
+	  Complex B1 = 4.0 * nnHoping * Complex (cos (1.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) * cos (1.0 * M_PI * ((double) ky) / ((double) nbrSitesY)) * cos(M_PI * 0.25), 
+					   sin (1.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) * sin (1.0 * M_PI * ((double) ky) / ((double) nbrSitesY)) * sin(M_PI * 0.25));
+	  double d1 = 4.0 * nnnnHoping * cos (2.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) * cos (2.0 * M_PI * ((double) ky) / ((double) nbrSitesY));
+	  double d3 = mus + (2.0 * nnnHoping * (cos (2.0 * M_PI * ((double) kx) / ((double) nbrSitesX))
+						- cos (2.0 * M_PI * ((double) ky) / ((double) nbrSitesY))));
+	  TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d1 + d3);
+	  TmpOneBodyHamiltonian.SetMatrixElement(0, 1, B1);
+	  TmpOneBodyHamiltonian.SetMatrixElement(1, 1, d1 - d3);
+	  B1 = 4.0 * nnHoping * Complex (cos (1.0 * M_PI * ((double) -kx) / ((double) nbrSitesX)) * cos (1.0 * M_PI * ((double) -ky) / ((double) nbrSitesY)) * cos(M_PI * 0.25), 
+					       sin (1.0 * M_PI * ((double) -kx) / ((double) nbrSitesX)) * sin (1.0 * M_PI * ((double) -ky) / ((double) nbrSitesY)) * sin(M_PI * 0.25));
+	  d1 = 4.0 * nnnnHoping * cos (2.0 * M_PI * ((double) -kx) / ((double) nbrSitesX)) * cos (2.0 * M_PI * ((double) -ky) / ((double) nbrSitesY));
+	  d3 = mus + (2.0 * nnnHoping * (cos (2.0 * M_PI * ((double) -kx) / ((double) nbrSitesX))
+					       - cos (2.0 * M_PI * ((double) -ky) / ((double) nbrSitesY))));
+	  TmpOneBodyHamiltonian.SetMatrixElement(2, 2, d1 + d3);
+	  TmpOneBodyHamiltonian.SetMatrixElement(2, 3, Conj(B1));
+	  TmpOneBodyHamiltonian.SetMatrixElement(3, 3, d1 - d3);
+	  TmpOneBodyHamiltonian.SetMatrixElement(0, 3, - I() * MixingTerm);
+	  TmpOneBodyHamiltonian.SetMatrixElement(1, 2, I() * MixingTerm);
+	  RealDiagonalMatrix TmpDiag;
+#ifdef __LAPACK__
+	  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag);
+#else
+	  TmpOneBodyHamiltonian.Diagonalize(TmpDiag);
+#endif   
+	  if (MaxEMinus < TmpDiag(0, 0))
+	    {
+	      MaxEMinus = TmpDiag(0, 0);
+	    }
+	  if (MinEMinus > TmpDiag(0, 0))
+	    {
+	      MinEMinus = TmpDiag(0, 0);
+	    }
+	  if (MaxEPlus < TmpDiag(2, 2))
+	    {
+	      MaxEPlus = TmpDiag(2, 2);
+	    }
+	  if (MinEPlus > TmpDiag(2, 2))
+	    {
+	      MinEPlus = TmpDiag(2, 2);
+	    }
+	  File << (2.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) << " " << (2.0 * M_PI * ((double) ky) / ((double) nbrSitesY)) << " " << TmpDiag(0, 0) << " " << TmpDiag(1, 1) <<  " " << TmpDiag(2, 2) << " " << TmpDiag(3, 3) << endl;
+	}
+      File << endl;
+    }
+  cout << "Spread = " << (MaxEMinus - MinEMinus) << "  Gap = " <<  (MinEPlus - MaxEMinus) << "  Flatening = " << ((MaxEMinus - MinEMinus) / (MinEPlus - MaxEMinus)) << endl;
 }
 

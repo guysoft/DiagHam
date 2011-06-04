@@ -1796,6 +1796,19 @@ RealSymmetricMatrix  BosonOnSphereWithSpin::EvaluatePartialDensityMatrix (int su
 }
 
 
+// create an SU(2) state from two U(1) state
+//
+// upState = vector describing the up spin part of the output state
+// upStateSpace = reference on the Hilbert space associated to the up spin part
+// downState = vector describing the down spin part of the output state
+// downStateSpace = reference on the Hilbert space associated to the down spin part  
+// return value = resluting SU(2) state
+
+RealVector BosonOnSphereWithSpin::ForgeSU2FromU1(RealVector& upState, BosonOnSphere& upStateSpace, RealVector& downState, BosonOnSphere& downStateSpace)
+{
+  RealVector FinalState(this->HilbertSpaceDimension, true);
+  return FinalState;
+}
 
 
 // Project the state from the su2 space
