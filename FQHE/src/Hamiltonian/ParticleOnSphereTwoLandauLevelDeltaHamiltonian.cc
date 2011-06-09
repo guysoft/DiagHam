@@ -282,9 +282,9 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
   else if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic ) 
     {
       // Set the number of possible sums for each sector. 
-      this->NbrUpUpSectorSums     = 2 * this->LzMaxUp - 1; // Ranges from 1 to 2*LzMaxUp-1 for given sector.
-      this->NbrDownDownSectorSums = 2 * this->LzMaxDown - 4; // (Ranges from 3 to LzMaxDown + LzMaxDown - 1)  the -2 is because a sum of 0 or 1 is not possible in the LLL. 
-      this->NbrUpDownSectorSums   = 2 * this->LzMaxUp - 1; // Same as UpUp, ranges from 1 to 2*LzMaxUp-1
+      this->NbrUpUpSectorSums     = 2 * this->LzMaxUp; // Ranges from 1 to 2*LzMaxUp-1 for given sector.
+      this->NbrDownDownSectorSums = 2 * this->LzMaxDown - 1; // (Ranges from 3 to LzMaxDown + LzMaxDown - 1)  the -2 is because a sum of 0 or 1 is not possible in the LLL. 
+      this->NbrUpDownSectorSums   = 2 * this->LzMaxUp ; // Same as UpUp, ranges from 1 to 2*LzMaxUp-1
       
       //Allocate space for sums and set counts to zero.
       this->NbrUpUpSectorIndicesPerSum = new int[this->NbrUpUpSectorSums];
@@ -312,24 +312,37 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
       this->UpUpSectorIndicesPerSum = new int* [this->NbrUpUpSectorSums];
       for (int i = 0; i < this->NbrUpUpSectorSums; ++i)
 	if (this->NbrUpUpSectorIndicesPerSum[i] > 0)
-	{
-	  this->UpUpSectorIndicesPerSum[i] = new int[2 * this->NbrUpUpSectorIndicesPerSum[i]];      
-	  this->NbrUpUpSectorIndicesPerSum[i] = 0;
-	}
+	  {
+	    this->UpUpSectorIndicesPerSum[i] = new int[2 * this->NbrUpUpSectorIndicesPerSum[i]];      
+	    this->NbrUpUpSectorIndicesPerSum[i] = 0;
+	  } 
+	else 
+	  {
+	    this->UpUpSectorIndicesPerSum[i] = 0;
+	  }
       this->UpDownSectorIndicesPerSum = new int* [this->NbrUpDownSectorSums];
       for (int i = 0; i < this->NbrUpDownSectorSums; ++i)
-      if (this->NbrUpDownSectorIndicesPerSum[i] > 0)
-      {
-	  this->UpDownSectorIndicesPerSum[i] = new int[2 * this->NbrUpDownSectorIndicesPerSum[i]];      
-	  this->NbrUpDownSectorIndicesPerSum[i] = 0;
-      }
+        if (this->NbrUpDownSectorIndicesPerSum[i] > 0)
+          {
+	    this->UpDownSectorIndicesPerSum[i] = new int[2 * this->NbrUpDownSectorIndicesPerSum[i]];      
+	    this->NbrUpDownSectorIndicesPerSum[i] = 0;
+          }
+	else 
+	  {
+	    this->UpDownSectorIndicesPerSum[i] = 0;
+	  }
       this->DownDownSectorIndicesPerSum = new int* [this->NbrDownDownSectorSums];
       for (int i = 0; i < this->NbrDownDownSectorSums; ++i)
 	if (this->NbrDownDownSectorIndicesPerSum[i] > 0)
-	{
-	  this->DownDownSectorIndicesPerSum[i] = new int[2 * this->NbrDownDownSectorIndicesPerSum[i]];      
-	  this->NbrDownDownSectorIndicesPerSum[i] = 0;
-	}
+	  {
+	    this->DownDownSectorIndicesPerSum[i] = new int[2 * this->NbrDownDownSectorIndicesPerSum[i]];      
+	    this->NbrDownDownSectorIndicesPerSum[i] = 0;
+	  }
+	else 
+	  {
+	    this->DownDownSectorIndicesPerSum[i] = 0;
+	  }  
+	
 
       // set the indices.
       for (int m1 = 0; m1 <= this->LzMaxUp; ++m1)

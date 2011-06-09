@@ -119,21 +119,21 @@ AbstractQHEOnSphereWithSpinFullHamiltonian::~AbstractQHEOnSphereWithSpinFullHami
   if (this->NbrUpUpSectorSums > 0)
     {
       for (int i = 0; i < this->NbrUpUpSectorSums; ++i)
-	delete[] this->UpUpSectorIndicesPerSum[i];
+	if ( this->UpUpSectorIndicesPerSum[i] != 0 ) delete[] this->UpUpSectorIndicesPerSum[i];
       delete[] this->UpUpSectorIndicesPerSum;
       delete[] this->NbrUpUpSectorIndicesPerSum;
     }
   if (this->NbrUpDownSectorSums > 0)
     {
       for (int i = 0; i < this->NbrUpDownSectorSums; ++i)
-	delete[] this->UpDownSectorIndicesPerSum[i];
+	if ( this->UpDownSectorIndicesPerSum[i] != 0 ) delete[] this->UpDownSectorIndicesPerSum[i];
       delete[] this->UpDownSectorIndicesPerSum;
       delete[] this->NbrUpDownSectorIndicesPerSum;
     }
   if (this->NbrDownDownSectorSums > 0)
     {
       for (int i = 0; i < this->NbrDownDownSectorSums; ++i)
-	delete[] this->DownDownSectorIndicesPerSum[i];
+	if ( this->DownDownSectorIndicesPerSum[i] != 0 ) delete[] this->DownDownSectorIndicesPerSum[i];
       delete[] this->DownDownSectorIndicesPerSum;
       delete[] this->NbrDownDownSectorIndicesPerSum;
     }
