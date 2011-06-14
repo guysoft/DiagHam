@@ -115,6 +115,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption('c',"hard-core","Use Hilbert-space of hard-core bosons");
   (*SystemGroup) += new SingleStringOption  ('e', "external-two-body", "use definition of two-body interactions from a file");
   (*SystemGroup) += new SingleStringOption  ('E', "external-name", "descriptor of external interaction (if in use)","ext");
+  (*SystemGroup) += new SingleStringOption  ('\n', "one-body", "use definition of one-body potential/hoppings from a file (use -E flag to indicate presence in filename)");
   (*SystemGroup) += new BooleanOption  ('\n', "positive-hopping", "choose positive sign of hopping terms", false);
   (*SystemGroup) += new BooleanOption  ('\n', "hopping-only", "evaluate only energy of hopping terms, excluding local potentials", false);
   (*SystemGroup) += new BooleanOption  ('\n', "all-flux", "calculate all values of the flux to test symmetry under n_phi->1-n_phi", false);
@@ -262,7 +263,7 @@ int main(int argc, char** argv)
     Hamiltonian = new ParticleOnLatticeGenericHamiltonian(Space, NbrBosons, Lattice, NbrFluxQuanta, ContactU,
 							  ReverseHopping, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName, Manager.GetDouble("cont-flux"), !Manager.GetBoolean("no-hermitian"), Manager.GetBoolean("hopping-only"));
   else
-    Hamiltonian = new ParticleOnLatticeExternalHamiltonian(Space, NbrBosons, NbrSites, /*OneParticleTerms */ NULL,
+    Hamiltonian = new ParticleOnLatticeExternalHamiltonian(Space, NbrBosons, NbrSites, Manager.GetString("one-body"),
 							   Manager.GetString("external-two-body"), Architecture.GetArchitecture(),
 							   Memory, LoadPrecalculationFileName, !Manager.GetBoolean("no-hermitian"));
 

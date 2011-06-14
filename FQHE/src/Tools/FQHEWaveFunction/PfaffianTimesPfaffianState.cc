@@ -73,7 +73,6 @@ PfaffianTimesPfaffianState::PfaffianTimesPfaffianState(int nbrParticles, int nbr
   this->NbrParticlesPerLayer = nbrParticles/2;
   this->NbrLandauLevels = nbrLandauLevels;
   this->NbrParameters = this->NbrLandauLevels+1; // inherited field
-  cout << "NbrParameters="<<NbrParameters<<endl;
   this->AbsEffectiveFlux = 1;
   this->MRCoeff = MRcoeff;
   int NbrEffectiveFlux = -1;

@@ -110,8 +110,8 @@ BosonOnSphereWithSpin::BosonOnSphereWithSpin (int nbrBosons, int totalLz, int lz
   long UsedMemory = 0;
   UsedMemory += 2*this->HilbertSpaceDimension * sizeof(unsigned long);  // StateDescriptionUp/Down
   UsedMemory += this->HilbertSpaceDimension * sizeof(unsigned); // StateInfo
-  UsedMemory += 0x1l<<(this->LzMax+this->NbrBosonsUp) * sizeof(unsigned long);  // LookUpTableUp 
-  UsedMemory += 0x1l<<(this->LzMax+this->NbrBosonsDown) * sizeof(unsigned long); // LookUpTableDown
+  UsedMemory += (0x1l<<(this->LzMax+this->NbrBosonsUp)) * sizeof(unsigned long);  // LookUpTableUp 
+  UsedMemory += (0x1l<<(this->LzMax+this->NbrBosonsDown)) * sizeof(unsigned long); // LookUpTableDown
   cout << "HS using ";
   PrintMemorySize(cout, UsedMemory)<<endl;
 #endif
@@ -1122,8 +1122,8 @@ void BosonOnSphereWithSpin::GenerateLookUpTable(int memory)
     }
   
   // size of lookup tables
-  long LookUpTableSizeUp = 0x1ul<<(this->LzMax+this->NbrBosonsUp);
-  long LookUpTableSizeDown = 0x1ul<<(this->LzMax+this->NbrBosonsDown);
+  unsigned long LookUpTableSizeUp = 0x1ul<<(this->LzMax+this->NbrBosonsUp);
+  unsigned long LookUpTableSizeDown = 0x1ul<<(this->LzMax+this->NbrBosonsDown);
   // look-up table for up/down spins
   this->LookUpTableUp = new unsigned long[LookUpTableSizeUp];
   this->LookUpTableDown = new unsigned long[LookUpTableSizeDown];

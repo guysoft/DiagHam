@@ -203,7 +203,7 @@ RealVector* AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::LowLevelMult
 	if (this->NBodyFlags[k] == true)
 	  {
 	    for (int i = firstComponent; i < LastComponent; ++i)
-	      this->EvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, k, Coefficient2) ;
+	      this->EvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, k, Coefficient2);
 	  }	    
       this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSources, vDestinations, nbrVectors);
       delete TmpParticles;

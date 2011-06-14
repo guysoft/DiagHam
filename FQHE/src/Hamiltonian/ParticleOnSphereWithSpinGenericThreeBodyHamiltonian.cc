@@ -891,8 +891,9 @@ void    ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::EvaluateInteraction
       delete[] SortedIndicesPerSumSymmetryFactor;
       delete[] TmpInteractionCoeffients;
 
-      cout << "No cross-spin terms implemented in Generic Three-Body Hamiltonian for Bosons!"<<endl;
       this->NbrNIndices[3][1] = 0;
+      if ((this->NbrThreeBodyPseudoPotentials[2]>0)||(this->NbrThreeBodyPseudoPotentials[3]>0))
+	cout << "No cross-spin terms implemented in Generic Three-Body Hamiltonian for Bosons!"<<endl;
     }
   delete[] TmpNormalizationCoeffients;
   if (this->FullTwoBodyFlag == true)

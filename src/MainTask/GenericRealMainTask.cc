@@ -53,6 +53,8 @@
 
 #include "GeneralTools/ConfigurationParser.h"
 #include "GeneralTools/FilenameTools.h"
+#include "GeneralTools/GenericSignalHandler.h"
+
 
 #include <iostream>
 #include <sys/time.h>
@@ -476,6 +478,7 @@ int GenericRealMainTask::ExecuteMainTask()
       RealTriDiagonalSymmetricMatrix TmpMatrix;
       gettimeofday (&(TotalCurrentTime), 0); 
       int CurrentTimeSecond = TotalCurrentTime.tv_sec;
+      GenericSignalHandler Usr1Handler(SIGUSR1);
       while ((Lanczos->TestConvergence() == false) && (((this->DiskFlag == true) && (((this->MaximumAllowedTime == 0) && (CurrentNbrIterLanczos < this->NbrIterLanczos)) || 
 										     ((this->MaximumAllowedTime > 0) && (this->MaximumAllowedTime > (CurrentTimeSecond - StartTimeSecond))))) ||
 						       ((this->DiskFlag == false) && ((this->PartialLanczos == false) && (CurrentNbrIterLanczos < this->MaxNbrIterLanczos)) ||
@@ -485,6 +488,7 @@ int GenericRealMainTask::ExecuteMainTask()
 	    CurrentNbrIterLanczos += this->SizeBlockLanczos;
 	  else
 	    ++CurrentNbrIterLanczos;
+	  Usr1Handler.StartToDeferSignal();
 	  Lanczos->RunLanczosAlgorithm(1);
 	  TmpMatrix.Copy(Lanczos->GetDiagonalizedMatrix());
 	  TmpMatrix.SortMatrixUpOrder();
@@ -503,7 +507,23 @@ int GenericRealMainTask::ExecuteMainTask()
 	      TotalCurrentTime.tv_sec = TotalEndingTime.tv_sec;
 	    }
 	  cout << endl;
-	  if ((this->PartialEigenstateFlag > 0) && ((CurrentNbrIterLanczos % (this->PartialEigenstateFlag * this->SizeBlockLanczos)) == 0))
+
+	  if (Usr1Handler.HavePendingSignal())
+	    {
+	      cout << "Terminating Lanczos iteration on user signal"<<endl;
+	      File << "# Lanczos terminated at step "<<CurrentNbrIterLanczos<<" with precision "<<Precision<<endl;
+	      TmpMatrix.Copy(Lanczos->GetDiagonalizedMatrix());
+	      TmpMatrix.SortMatrixUpOrder();
+	      for (int i = 0; i < this->NbrEigenvalue; ++i)
+		{
+		  cout << (TmpMatrix.DiagonalElement(i) - this->EnergyShift) << " ";
+		  this->WriteResult(File, TmpMatrix.DiagonalElement(i) - this->EnergyShift, true);
+		}
+	      cout << endl;
+	    }
+	  
+	  if ( ((Usr1Handler.HavePendingSignal()) && (this->EvaluateEigenvectors == true))
+	       || ((this->PartialEigenstateFlag > 0) && ((CurrentNbrIterLanczos % (this->PartialEigenstateFlag * this->SizeBlockLanczos)) == 0)))
 	    {
 	      RealVector* Eigenvectors = (RealVector*) Lanczos->GetEigenstates(this->NbrEigenvalue);
 	      if (Eigenvectors != 0)
@@ -522,6 +542,7 @@ int GenericRealMainTask::ExecuteMainTask()
 		  cout << "eigenvectors can't be computed" << endl;
 		}
 	    }
+	  Usr1Handler.ProcessDeferredSignal();
 	}
       if ((Lanczos->TestConvergence() == true) && (CurrentNbrIterLanczos == 0))
 	{

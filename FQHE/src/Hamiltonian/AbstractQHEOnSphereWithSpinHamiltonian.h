@@ -466,8 +466,11 @@ inline void AbstractQHEOnSphereWithSpinHamiltonian::EvaluateMNTwoBodyAddMultiply
 		    {
 		      Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 		      if (Index < Dim)
-			for (int p = 0; p < nbrVectors; ++p)
-			  vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			{
+			  Coefficient *= (*TmpInteractionFactor);
+			  for (int p = 0; p < nbrVectors; ++p)
+			    vDestinations[p][Index] += Coefficient * tmpCoefficients[p];
+			}
 		      ++TmpInteractionFactor;
 		    }
 		}
@@ -481,8 +484,11 @@ inline void AbstractQHEOnSphereWithSpinHamiltonian::EvaluateMNTwoBodyAddMultiply
 		    {
 		      Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 		      if (Index < Dim)
-			for (int p = 0; p < nbrVectors; ++p)
-			  vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			{
+			  Coefficient *= (*TmpInteractionFactor);
+			  for (int p = 0; p < nbrVectors; ++p)
+			    vDestinations[p][Index] += Coefficient * tmpCoefficients[p];
+			}
 		      ++TmpInteractionFactor;
 		    }
 		}
@@ -504,8 +510,11 @@ inline void AbstractQHEOnSphereWithSpinHamiltonian::EvaluateMNTwoBodyAddMultiply
 		    {
 		      Index = particles->AduAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 		      if (Index < Dim)
-			for (int p = 0; p < nbrVectors; ++p)
-			  vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			{
+			  Coefficient *= (*TmpInteractionFactor);
+			  for (int p = 0; p < nbrVectors; ++p)
+			    vDestinations[p][Index] += Coefficient * tmpCoefficients[p];
+			}
 		      ++TmpInteractionFactor;
 		    }
 		}
@@ -533,8 +542,11 @@ inline void AbstractQHEOnSphereWithSpinHamiltonian::EvaluateMNTwoBodyAddMultiply
 		{
 		  Index = particles->AduAdu(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
 		  if (Index < Dim)
-		    for (int l = 0; l < nbrVectors; ++l)
-		      vDestinations[l][Index] += tmpCoefficients[l] * this->M12InteractionFactorsupup[ReducedNbrInteractionFactors] * Coefficient2;
+		    {
+		      Coefficient2 *= this->M12InteractionFactorsupup[ReducedNbrInteractionFactors];
+		      for (int l = 0; l < nbrVectors; ++l)
+			vDestinations[l][Index] += tmpCoefficients[l] * Coefficient2;
+		    }
 		  ++ReducedNbrInteractionFactors;
 		}
 	    }
@@ -556,8 +568,11 @@ inline void AbstractQHEOnSphereWithSpinHamiltonian::EvaluateMNTwoBodyAddMultiply
 		{
 		  Index = particles->AddAdd(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
 		  if (Index < Dim)
-		    for (int l = 0; l < nbrVectors; ++l)
-		      vDestinations[l][Index] += tmpCoefficients[l] * this->M12InteractionFactorsdowndown[ReducedNbrInteractionFactors] * Coefficient2;
+		    {
+		      Coefficient2 *= this->M12InteractionFactorsdowndown[ReducedNbrInteractionFactors];
+		      for (int l = 0; l < nbrVectors; ++l)
+			vDestinations[l][Index] += tmpCoefficients[l] * Coefficient2;
+		    }
 		  ++ReducedNbrInteractionFactors;
 		}
 	    }
@@ -579,8 +594,11 @@ inline void AbstractQHEOnSphereWithSpinHamiltonian::EvaluateMNTwoBodyAddMultiply
 		{
 		  Index = particles->AduAdd(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
 		  if (Index < Dim)
-		    for (int l = 0; l < nbrVectors; ++l)
-		      vDestinations[l][Index] += tmpCoefficients[l] * this->M12InteractionFactorsupdown[ReducedNbrInteractionFactors] * Coefficient2;
+		    {
+		      Coefficient2 *= this->M12InteractionFactorsupdown[ReducedNbrInteractionFactors];
+		      for (int l = 0; l < nbrVectors; ++l)
+			vDestinations[l][Index] += tmpCoefficients[l] * Coefficient2;
+		    }
 		  ++ReducedNbrInteractionFactors;
 		}
 	    }

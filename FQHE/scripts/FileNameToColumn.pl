@@ -249,7 +249,7 @@ sub ProcessFile
 	if ($Value =~ m/$Format/)
 	  {
 	    $Value =~ /$Format/;
-	    for (my $j=1; $j<=@$NbrFinalReplacements[$i]; ++$j)
+	    for (my $j=1; $j <= @$NbrFinalReplacements[$i]; ++$j)
 	      {
 		push(@FinalValues, $$j);
 	      }

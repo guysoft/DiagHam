@@ -324,8 +324,8 @@ inline void AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::EvaluateMNNB
     {
       int TmpNbrNIndices = this->NbrNIndices[nbodyIndex][i];
       int* TmpNIndices = this->NIndices[nbodyIndex][i];
-       int* TmpSpinIndicesUp = this->SpinIndices[nbodyIndex][i << 1]; 
-       int* TmpSpinIndicesDown = this->SpinIndices[nbodyIndex][(i << 1) + 1]; 
+      int* TmpSpinIndicesUp = this->SpinIndices[nbodyIndex][i << 1]; 
+      int* TmpSpinIndicesDown = this->SpinIndices[nbodyIndex][(i << 1) + 1]; 
 //      int TmpSpinIndicesUp = this->SpinIndicesShort[nbodyIndex][i << 1];
 //      int TmpSpinIndicesDown = this->SpinIndicesShort[nbodyIndex][(i << 1) + 1];
       for (long j = 0; j < TmpNbrNIndices; ++j)
