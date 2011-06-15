@@ -1310,7 +1310,7 @@ int FermionOnSphereWithSpin::CarefulFindStateIndex(unsigned long stateDescriptio
 // lzmax = maximum Lz value reached by a fermion in the state
 // return value = corresponding index
 
-int FermionOnSphereWithSpin::FindStateIndex(unsigned long stateDescription, int lzmax)
+  int FermionOnSphereWithSpin::FindStateIndex(unsigned long stateDescription, int lzmax)
 {
   long PosMax = stateDescription >> this->LookUpTableShift[lzmax];
   long PosMin = this->LookUpTable[lzmax][PosMax];

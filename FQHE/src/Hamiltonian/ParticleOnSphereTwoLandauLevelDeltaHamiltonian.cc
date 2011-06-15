@@ -86,6 +86,13 @@ ParticleOnSphereTwoLandauLevelDeltaHamiltonian::ParticleOnSphereTwoLandauLevelDe
   this->LzMaxDown = this->LzMax - 1; // Largest Lz value on LLL
   this->LzMaxUp = this->LzMax; // Largest Lz value on SLL  
   this->ShowIntFactorsFlag = showIntFactorsFlag;
+  this->LzFermionDownShift = 0;
+  this->LzFermionUpShift = 0;
+  
+  if ( this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic ) 
+    {
+      this->LzFermionDownShift = 1;      
+    }
   
   if ( pseudoPotential != NULL )
     {
@@ -134,7 +141,8 @@ ParticleOnSphereTwoLandauLevelDeltaHamiltonian::ParticleOnSphereTwoLandauLevelDe
   this->NbrInterSectorSums = 0;
   this->M1IntraValue = 0;
   this->M1InterValue = 0;  
-
+      
+    
   if (precalculationFileName == 0)
     {
       if (memory > 0)
@@ -282,9 +290,9 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
   else if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic ) 
     {
       // Set the number of possible sums for each sector. 
-      this->NbrUpUpSectorSums     = 2 * this->LzMaxUp; // Ranges from 1 to 2*LzMaxUp-1 for given sector.
-      this->NbrDownDownSectorSums = 2 * this->LzMaxDown - 1; // (Ranges from 3 to LzMaxDown + LzMaxDown - 1)  the -2 is because a sum of 0 or 1 is not possible in the LLL. 
-      this->NbrUpDownSectorSums   = 2 * this->LzMaxUp ; // Same as UpUp, ranges from 1 to 2*LzMaxUp-1
+      this->NbrUpUpSectorSums     = 2 * this->LzMaxUp - 1; // Ranges from 1 to 2*LzMaxUp-1 for given sector.
+      this->NbrDownDownSectorSums = 2 * this->LzMaxDown - 1 - 2; // (Ranges from 3 to LzMaxDown + LzMaxDown - 1)  the -2 is because a sum of 0 or 1 is not possible in the LLL. 
+      this->NbrUpDownSectorSums   = this->LzMaxUp + this->LzMaxDown ; // goes from 1 to LzMaxUp + LzMaxDown
       
       //Allocate space for sums and set counts to zero.
       this->NbrUpUpSectorIndicesPerSum = new int[this->NbrUpUpSectorSums];
@@ -300,13 +308,13 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
       // Count number of combinations that sum to each.
       for (int m1 = 0; m1 <= this->LzMaxUp; ++m1)
 	for (int m2 = 0; m2 <= this->LzMaxUp; ++m2)
-	  if ( m1 != m2 ) this->NbrUpUpSectorIndicesPerSum[m1 + m2]++;   
+	  if ( m1 != m2 ) this->NbrUpUpSectorIndicesPerSum[m1 + m2 - 1]++;   
       for (int m1 = 0; m1 <= this->LzMaxUp; ++m1)
 	for (int m2 = 1; m2 <= this->LzMaxDown; ++m2)
 	  this->NbrUpDownSectorIndicesPerSum[m1 + m2 - 1]++;
       for (int m1 = 1; m1 <= this->LzMaxDown; ++m1)
 	for (int m2 = 1; m2 <= this->LzMaxDown; ++m2)
-	  if ( m1 != m2 ) this->NbrDownDownSectorIndicesPerSum[m1 + m2 - 2]++;
+	  if ( m1 != m2 ) this->NbrDownDownSectorIndicesPerSum[m1 + m2 - 3]++;
 
       // Allocate sapce for indices and reset counters to 0 so can be used as indices.
       this->UpUpSectorIndicesPerSum = new int* [this->NbrUpUpSectorSums];
@@ -350,27 +358,29 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 	  {
 	    if ( m1 != m2 ) 
 	      {
-		this->UpUpSectorIndicesPerSum[(m1 + m2)][this->NbrUpUpSectorIndicesPerSum[(m1 + m2)] << 1] = m1;
-		this->UpUpSectorIndicesPerSum[(m1 + m2)][1 + (this->NbrUpUpSectorIndicesPerSum[(m1 + m2)] << 1)] = m2;
-		++this->NbrUpUpSectorIndicesPerSum[(m1 + m2)];
+		this->UpUpSectorIndicesPerSum[m1 + m2 - 1][this->NbrUpUpSectorIndicesPerSum[m1 + m2 - 1] << 1] = m1;
+		this->UpUpSectorIndicesPerSum[m1 + m2 - 1][(this->NbrUpUpSectorIndicesPerSum[m1 + m2 - 1] << 1) + 1] = m2;
+		++this->NbrUpUpSectorIndicesPerSum[m1 + m2 - 1];
 	      }
 	  }
+	  
       for (int m1 = 0; m1 <= this->LzMaxUp; ++m1)
 	for (int m2 = 1; m2 <= this->LzMaxDown; ++m2)
 	  {
 	    this->UpDownSectorIndicesPerSum[m1 + m2 - 1][this->NbrUpDownSectorIndicesPerSum[(m1 + m2 - 1)] << 1] = m1;
-	    this->UpDownSectorIndicesPerSum[m1 + m2 - 1][1 + (this->NbrUpDownSectorIndicesPerSum[(m1 + m2 - 1)] << 1)] = m2;
+	    this->UpDownSectorIndicesPerSum[m1 + m2 - 1][(this->NbrUpDownSectorIndicesPerSum[(m1 + m2 - 1)] << 1) + 1] = m2 - this->LzFermionDownShift;
 	    ++this->NbrUpDownSectorIndicesPerSum[(m1 + m2 - 1)];
 	  }
+	  
       for (int m1 = 1; m1 <= this->LzMaxDown; ++m1)
 	{
 	for (int m2 = 1; m2 <= this->LzMaxDown; ++m2)
 	  {
 	    if ( m1 != m2 ) 
 	      {
-		this->DownDownSectorIndicesPerSum[m1 + m2 - 2][this->NbrDownDownSectorIndicesPerSum[m1 + m2 - 2] << 1] = m1;
-		this->DownDownSectorIndicesPerSum[m1 + m2 - 2][1 + (this->NbrDownDownSectorIndicesPerSum[m1 + m2 - 2] << 1)] = m2;
-		++this->NbrDownDownSectorIndicesPerSum[m1 + m2 - 2];
+		this->DownDownSectorIndicesPerSum[m1 + m2 - 3][this->NbrDownDownSectorIndicesPerSum[m1 + m2 - 3] << 1] = m1 - this->LzFermionDownShift;
+		this->DownDownSectorIndicesPerSum[m1 + m2 - 3][(this->NbrDownDownSectorIndicesPerSum[m1 + m2 - 3] << 1) + 1] = m2 - this->LzFermionDownShift;
+		++this->NbrDownDownSectorIndicesPerSum[m1 + m2 - 3];
 	      }
 	  }
 	}	
@@ -415,7 +425,8 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
       this->InteractionFactorsDownDownDownDown[i] = 0;
     }
         
-          
+  
+
   long TotalNbrInteractionFactors = 0;
   if ( this->UsePseudoPotentials )  // if pseudopotentials were specified these are used to set the interaction coefficients. 
     {
@@ -425,7 +436,7 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
       ClebschGordanCoefficients ClebschUpDown (this->LzMaxUp, this->LzMaxDown - 1);
       ClebschGordanCoefficients ClebshDownUp (this->LzMaxDown - 1, this->LzMaxUp);
 
-      int J ;
+      int J;
       
       // int m4;
       double ClebschCoef;
@@ -436,349 +447,646 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 	Sign = 1;
       double TmpCoefficient = 0.0;
 
+            
       //Arrays of pseudopotentials from 0-8 where each corresponds to following intereaction.
       //"PseudopotentialsUpUpUpUp","PseudopotentialsUpUpDownDown","PseudopotentialsUpUpUpDown",
       //"PseudopotentialsDownDownUpUp","PseudopotentialsDownDownDownDown","PseudopotentialsDownDownUpDown",
       //"PseudopotentialsUpDownUpUp","PseudopotentialsUpDownDownDown","PseudopotentialsUpDownUpDown";
-			
-			
-      //upup-upup term  
-      for (int i = 0; i < this->NbrUpUpSectorSums; ++i)
+	
+      if (this->Particles->GetParticleStatistic() == ParticleOnSphere::BosonicStatistic ) 
 	{
-	  if (this->NbrUpUpSectorIndicesPerSum[i] > 0)
+	  //upup-upup term  
+	  for (int i = 0; i < this->NbrUpUpSectorSums; ++i)
 	    {
-	      this->InteractionFactorsUpUpUpUp[i] = new double[this->NbrUpUpSectorIndicesPerSum[i] * this->NbrUpUpSectorIndicesPerSum[i]];
-	      int Index = 0;
-	      for (int j1 = 0; j1 < this->NbrUpUpSectorIndicesPerSum[i]; ++j1)
+	      if (this->NbrUpUpSectorIndicesPerSum[i] > 0)
 		{
-		  int m1 = (this->UpUpSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp;
-		  int m2 = (this->UpUpSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxUp;
-		  for (int j2 = 0; j2 < this->NbrUpUpSectorIndicesPerSum[i]; ++j2)
+		  this->InteractionFactorsUpUpUpUp[i] = new double[this->NbrUpUpSectorIndicesPerSum[i] * this->NbrUpUpSectorIndicesPerSum[i]];
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrUpUpSectorIndicesPerSum[i]; ++j1)
 		    {
-		      int m3 = (this->UpUpSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
-		      int m4 = (this->UpUpSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxUp;
-		      
-		      this->InteractionFactorsUpUpUpUp[i][Index] = 0;
-		      for ( J = this->PseudoPotentialMins[0] ; J < this->NbrPseudoPotentialCoeffs[0] + this->PseudoPotentialMins[0] ; J++ ) 
+		      int m1 = (this->UpUpSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp;
+		      int m2 = (this->UpUpSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxUp;
+		      for (int j2 = 0; j2 < this->NbrUpUpSectorIndicesPerSum[i]; ++j2)
 			{
-			  if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
+			  int m3 = (this->UpUpSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
+			  int m4 = (this->UpUpSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxUp;
+			  
+			  this->InteractionFactorsUpUpUpUp[i][Index] = 0;
+			  for ( J = this->PseudoPotentialMins[0] ; J < this->NbrPseudoPotentialCoeffs[0] + this->PseudoPotentialMins[0] ; J++ ) 
 			    {
-			      ClebschCoef = ClebschUpUp.CarefulGetCoefficient(m1,m2,J*2);			     	
-			      //cout << "ClebschCeof: (" << m1 << ", " << m2 << ", " << (J * 1) << ") = " <<  ClebschUpUp.CarefulGetCoefficient(m1,m2,J*2) << endl;
-			      TmpCoefficient = ClebschCoef * ClebschUpUp.CarefulGetCoefficient(m3, m4, J*2);
-			      this->InteractionFactorsUpUpUpUp[i][Index] += this->PseudoPotentials[0][J-this->PseudoPotentialMins[0]] * TmpCoefficient;
+			      if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
+				{
+				  ClebschCoef = ClebschUpUp.CarefulGetCoefficient(m1,m2,J*2);			     	
+				  //cout << "ClebschCeof: (" << m1 << ", " << m2 << ", " << (J * 1) << ") = " <<  ClebschUpUp.CarefulGetCoefficient(m1,m2,J*2) << endl;
+				  TmpCoefficient = ClebschCoef * ClebschUpUp.CarefulGetCoefficient(m3, m4, J*2);
+				  this->InteractionFactorsUpUpUpUp[i][Index] += this->PseudoPotentials[0][J-this->PseudoPotentialMins[0]] * TmpCoefficient;
+				}
 			    }
+			  TotalNbrInteractionFactors++;
+			  ++Index;
 			}
-		      TotalNbrInteractionFactors++;
-		      ++Index;
 		    }
 		}
 	    }
-	}
-	
-	    //cout << "Up Up Down Down" << endl;
-	for (int i = 0; i < this->NbrDownDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
-	{
-	  if (this->NbrDownDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
-	    {
-	      this->InteractionFactorsUpUpDownDown[i] = new double[this->NbrDownDownSectorIndicesPerSum[i] * this->NbrUpUpSectorIndicesPerSum[i+2]]; //for all m1, m2, m3, m4 such that m1 + m2 = m3 + m4 = current_sum
-	      int Index = 0;
-	      for (int j1 = 0; j1 < this->NbrDownDownSectorIndicesPerSum[i]; ++j1)
-		{
-		  int m1 = (this->DownDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxDown - 1;
-		  int m2 = (this->DownDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1;
-		  for (int j2 = 0; j2 < this->NbrUpUpSectorIndicesPerSum[i+2]; ++j2)
-		    {
-		      int m3 = (this->UpUpSectorIndicesPerSum[i+2][j2 << 1] << 1) - this->LzMaxUp;
-		      int m4 = (this->UpUpSectorIndicesPerSum[i+2][(j2 << 1) + 1] << 1) - this->LzMaxUp;
-		      
-		      this->InteractionFactorsUpUpDownDown[i][Index] = 0;
-		      for ( J = this->PseudoPotentialMins[1] ; J < this->NbrPseudoPotentialCoeffs[1] + this->PseudoPotentialMins[1] ; J++ ) 
-			{
-			  if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
-			    {
-			      ClebschCoef = ClebschDownDown.GetCoefficient(m1,m2,J*2);			     			  
-			      TmpCoefficient = ClebschCoef * ClebschUpUp.GetCoefficient(m3, m4, J*2);
-			      this->InteractionFactorsUpUpDownDown[i][Index] += this->PseudoPotentials[1][J-this->PseudoPotentialMins[1]] * TmpCoefficient;
-			    }
-			}
-		      //this->InteractionFactorsUpUpDownDown[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1)/ 2.0 ,0.0,(double)m1/2.0 ,0.0,(double)m2 /2.0,1.0,(double)m3 /2.0 ,1.0,(double)m4/2.0);
-		      //cout << this->LzMaxDown-1.0 << ": " << m1 << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsUpUpDownDown[i][Index] << endl;
-		      ++Index;
-		      TotalNbrInteractionFactors++;
-		    }
-		}
-	    }
-	}
-	
-	//cout << "Up Up Up Down" << endl;
-	for (int i = 0; i < this->NbrUpDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
-	{
-	  if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
-	    {
-	      this->InteractionFactorsUpUpUpDown[i] = new double[this->NbrUpUpSectorIndicesPerSum[i+1] * this->NbrUpDownSectorIndicesPerSum[i]]; //for all m1, m2, m3, m4 such that m1 + m2 = m3 + m4 = current_sum
-	      int Index = 0;
-	      for (int j1 = 0; j1 < this->NbrUpDownSectorIndicesPerSum[i]; ++j1)
-		{
-		  int m1 = (this->UpDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp ;
-		  int m2 = (this->UpDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1;
-		  for (int j2 = 0; j2 < this->NbrUpUpSectorIndicesPerSum[i+1]; ++j2)
-		    {
-		      int m3 = (this->UpUpSectorIndicesPerSum[i+1][j2 << 1] << 1) - this->LzMaxUp;
-		      int m4 = (this->UpUpSectorIndicesPerSum[i+1][(j2 << 1) + 1] << 1) - this->LzMaxUp;
-		      
-		      this->InteractionFactorsUpUpUpDown[i][Index] = 0;
-		      for ( J = this->PseudoPotentialMins[2] ; J < this->NbrPseudoPotentialCoeffs[2] + this->PseudoPotentialMins[2] ; J++ ) 
-			{
-			  if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
-			    {
-			      ClebschCoef = ClebschUpDown.GetCoefficient(m1,m2,J*2);			     			  
-			      TmpCoefficient = ClebschCoef * ClebschUpUp.GetCoefficient(m3, m4, J*2);
-			      this->InteractionFactorsUpUpUpDown[i][Index] += this->PseudoPotentials[2][J-this->PseudoPotentialMins[2]] * TmpCoefficient;
-			    }
-			}
-		      //this->InteractionFactorsUpUpUpDown[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1) /2.0 ,1.0,(double)m1 /2.0 ,0.0,(double)m2 /2.0,1.0,(double)m3 /2.0,1.0,(double)m4/2.0);
-		      //cout << this->LzMaxDown-1.0 << ": " << m1  << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsUpUpUpDown[i][Index] << endl;
-		      ++Index;
-		      TotalNbrInteractionFactors++;
-		    }
-		}
-	    }
-	}
-  
-  
-		
-	//cout << "Down Down Up Up" << endl;
-	for (int i = 0; i < this->NbrDownDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
-	{
-	  if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
-	    {
-	      this->InteractionFactorsDownDownUpUp[i] = new double[this->NbrDownDownSectorIndicesPerSum[i] * this->NbrUpUpSectorIndicesPerSum[i+2]]; //for all m1, m2, m3, m4 such that m1 + m2 = m3 + m4 = current_sum
-	      int Index = 0;
-	      for (int j1 = 0; j1 < this->NbrUpUpSectorIndicesPerSum[i+2]; ++j1)
-		{
-		  int m1 = (this->UpUpSectorIndicesPerSum[i+2][j1 << 1] << 1) - this->LzMaxUp ;
-		  int m2 = (this->UpUpSectorIndicesPerSum[i+2][(j1 << 1) + 1] << 1) - this->LzMaxUp ;
-		  for (int j2 = 0; j2 < this->NbrDownDownSectorIndicesPerSum[i]; ++j2)
-		    {
-		      int m3 = (this->DownDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxDown - 1;
-		      int m4 = (this->DownDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
-		      
-		      this->InteractionFactorsDownDownUpUp[i][Index] = 0;
-		      for ( J = this->PseudoPotentialMins[3] ; J < this->NbrPseudoPotentialCoeffs[3] + this->PseudoPotentialMins[3] ; J++ ) 
-			{
-			  if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
-			    {
-			      ClebschCoef = ClebschUpUp.GetCoefficient(m1,m2,J*2);			     			  
-			      TmpCoefficient = ClebschCoef * ClebschDownDown.GetCoefficient(m3, m4, J*2);
-			      this->InteractionFactorsDownDownUpUp[i][Index] += this->PseudoPotentials[3][J-this->PseudoPotentialMins[3]] * TmpCoefficient;
-			    }
-			}
-		      //this->InteractionFactorsDownDownUpUp[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1) /2.0 ,1.0,(double)m1 /2.0 ,1.0,(double)m2 /2.0,0.0,(double)m3 /2.0,0.0,(double)m4 /2.0);
-		      //cout << this->LzMaxDown-1.0 << ": " << m1  << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsDownDownUpUp[i][Index] << endl;
-		      ++Index;
-		      TotalNbrInteractionFactors++;
-		    }
-		}
-	    }
-	}
-	
-	
+	    
+	  //cout << "Up Up Down Down" << endl;
 	  for (int i = 0; i < this->NbrDownDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
-	{
-	  if (this->NbrDownDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
 	    {
-	      this->InteractionFactorsDownDownDownDown[i] = new double[this->NbrDownDownSectorIndicesPerSum[i] * this->NbrDownDownSectorIndicesPerSum[i]]; //for all m1, m2, m3, m4 such that m1 + m2 = m3 + m4 = current_sum
-	      int Index = 0;
-	      for (int j1 = 0; j1 < this->NbrDownDownSectorIndicesPerSum[i]; ++j1)
+	      if (this->NbrDownDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
 		{
-		  int m1 = (this->DownDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxDown - 1;
-		  int m2 = (this->DownDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1;
-		  for (int j2 = 0; j2 < this->NbrDownDownSectorIndicesPerSum[i]; ++j2)
+		  this->InteractionFactorsUpUpDownDown[i] = new double[this->NbrDownDownSectorIndicesPerSum[i] * this->NbrUpUpSectorIndicesPerSum[i+2]]; //for all m1, m2, m3, m4 such that m1 + m2 = m3 + m4 = current_sum
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrDownDownSectorIndicesPerSum[i]; ++j1)
 		    {
-		      int m3 = (this->DownDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxDown - 1;
-		      int m4 = (this->DownDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
-		      
-		      this->InteractionFactorsDownDownDownDown[i][Index] = 0;
-		      for ( J = this->PseudoPotentialMins[4] ; J < this->NbrPseudoPotentialCoeffs[4] + this->PseudoPotentialMins[4] ; J++ ) 
+		      int m1 = (this->DownDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+		      int m2 = (this->DownDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+		      for (int j2 = 0; j2 < this->NbrUpUpSectorIndicesPerSum[i+2]; ++j2)
 			{
-			  if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
+			  int m3 = (this->UpUpSectorIndicesPerSum[i+2][j2 << 1] << 1) - this->LzMaxUp;
+			  int m4 = (this->UpUpSectorIndicesPerSum[i+2][(j2 << 1) + 1] << 1) - this->LzMaxUp;
+			  
+			  this->InteractionFactorsUpUpDownDown[i][Index] = 0;
+			  for ( J = this->PseudoPotentialMins[1] ; J < this->NbrPseudoPotentialCoeffs[1] + this->PseudoPotentialMins[1] ; J++ ) 
 			    {
-			      ClebschCoef = ClebschDownDown.GetCoefficient(m1,m2,J*2);			     			  
-			      TmpCoefficient = ClebschCoef * ClebschDownDown.GetCoefficient(m3, m4, J*2);
-			      this->InteractionFactorsDownDownDownDown[i][Index] += this->PseudoPotentials[4][J-this->PseudoPotentialMins[4]] * TmpCoefficient;
+			      if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
+				{
+				  ClebschCoef = ClebschDownDown.GetCoefficient(m1,m2,J*2);			     			  
+				  TmpCoefficient = ClebschCoef * ClebschUpUp.GetCoefficient(m3, m4, J*2);
+				  this->InteractionFactorsUpUpDownDown[i][Index] += this->PseudoPotentials[1][J-this->PseudoPotentialMins[1]] * TmpCoefficient;
+				}
 			    }
+			  //this->InteractionFactorsUpUpDownDown[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1)/ 2.0 ,0.0,(double)m1/2.0 ,0.0,(double)m2 /2.0,1.0,(double)m3 /2.0 ,1.0,(double)m4/2.0);
+			  //cout << this->LzMaxDown-1.0 << ": " << m1 << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsUpUpDownDown[i][Index] << endl;
+			  ++Index;
+			  TotalNbrInteractionFactors++;
 			}
-		      //this->InteractionFactorsDownDownDownDown[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1)/2.0 ,0.0,(double)m1/2.0 ,0.0,(double)m2 /2.0 ,0.0,(double)m3/2.0 ,0.0,(double)m4/2.0);
-		      //cout << this->LzMaxDown-1.0 << ": " << m1  << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsDownDownDownDown[i][Index] << endl;
-		      ++Index;
-		      TotalNbrInteractionFactors++;
+		    }
+		}
+	    }
+	    
+	  //cout << "Up Up Up Down" << endl;
+	  for (int i = 0; i < this->NbrUpDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
+	    {
+	      if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+		{
+		  this->InteractionFactorsUpUpUpDown[i] = new double[this->NbrUpUpSectorIndicesPerSum[i+1] * this->NbrUpDownSectorIndicesPerSum[i]]; //for all m1, m2, m3, m4 such that m1 + m2 = m3 + m4 = current_sum
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrUpDownSectorIndicesPerSum[i]; ++j1)
+		    {
+		      int m1 = (this->UpDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp ;
+		      int m2 = (this->UpDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+		      for (int j2 = 0; j2 < this->NbrUpUpSectorIndicesPerSum[i+1]; ++j2)
+			{
+			  int m3 = (this->UpUpSectorIndicesPerSum[i+1][j2 << 1] << 1) - this->LzMaxUp;
+			  int m4 = (this->UpUpSectorIndicesPerSum[i+1][(j2 << 1) + 1] << 1) - this->LzMaxUp;
+			  
+			  this->InteractionFactorsUpUpUpDown[i][Index] = 0;
+			  for ( J = this->PseudoPotentialMins[2] ; J < this->NbrPseudoPotentialCoeffs[2] + this->PseudoPotentialMins[2] ; J++ ) 
+			    {
+			      if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
+				{
+				  ClebschCoef = ClebschUpDown.GetCoefficient(m1,m2,J*2);			     			  
+				  TmpCoefficient = ClebschCoef * ClebschUpUp.GetCoefficient(m3, m4, J*2);
+				  this->InteractionFactorsUpUpUpDown[i][Index] += this->PseudoPotentials[2][J-this->PseudoPotentialMins[2]] * TmpCoefficient;
+				}
+			    }
+			  //this->InteractionFactorsUpUpUpDown[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1) /2.0 ,1.0,(double)m1 /2.0 ,0.0,(double)m2 /2.0,1.0,(double)m3 /2.0,1.0,(double)m4/2.0);
+			  //cout << this->LzMaxDown-1.0 << ": " << m1  << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsUpUpUpDown[i][Index] << endl;
+			  ++Index;
+			  TotalNbrInteractionFactors++;
+			}
+		    }
+		}
+	    }
+      
+      
+		    
+	  //cout << "Down Down Up Up" << endl;
+	  for (int i = 0; i < this->NbrDownDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
+	    {
+	      if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+		{
+		  this->InteractionFactorsDownDownUpUp[i] = new double[this->NbrDownDownSectorIndicesPerSum[i] * this->NbrUpUpSectorIndicesPerSum[i+2]]; //for all m1, m2, m3, m4 such that m1 + m2 = m3 + m4 = current_sum
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrUpUpSectorIndicesPerSum[i+2]; ++j1)
+		    {
+		      int m1 = (this->UpUpSectorIndicesPerSum[i+2][j1 << 1] << 1) - this->LzMaxUp ;
+		      int m2 = (this->UpUpSectorIndicesPerSum[i+2][(j1 << 1) + 1] << 1) - this->LzMaxUp ;
+		      for (int j2 = 0; j2 < this->NbrDownDownSectorIndicesPerSum[i]; ++j2)
+			{
+			  int m3 = (this->DownDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+			  int m4 = (this->DownDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+			  
+			  this->InteractionFactorsDownDownUpUp[i][Index] = 0;
+			  for ( J = this->PseudoPotentialMins[3] ; J < this->NbrPseudoPotentialCoeffs[3] + this->PseudoPotentialMins[3] ; J++ ) 
+			    {
+			      if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
+				{
+				  ClebschCoef = ClebschUpUp.GetCoefficient(m1,m2,J*2);			     			  
+				  TmpCoefficient = ClebschCoef * ClebschDownDown.GetCoefficient(m3, m4, J*2);
+				  this->InteractionFactorsDownDownUpUp[i][Index] += this->PseudoPotentials[3][J-this->PseudoPotentialMins[3]] * TmpCoefficient;
+				}
+			    }
+			  //this->InteractionFactorsDownDownUpUp[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1) /2.0 ,1.0,(double)m1 /2.0 ,1.0,(double)m2 /2.0,0.0,(double)m3 /2.0,0.0,(double)m4 /2.0);
+			  //cout << this->LzMaxDown-1.0 << ": " << m1  << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsDownDownUpUp[i][Index] << endl;
+			  ++Index;
+			  TotalNbrInteractionFactors++;
+			}
+		    }
+		}
+	    }
+	    
+	  //cout << "Down Down Down Down" << endl;  
+	  for (int i = 0; i < this->NbrDownDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
+	    {
+	      if (this->NbrDownDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+		{
+		  this->InteractionFactorsDownDownDownDown[i] = new double[this->NbrDownDownSectorIndicesPerSum[i] * this->NbrDownDownSectorIndicesPerSum[i]]; //for all m1, m2, m3, m4 such that m1 + m2 = m3 + m4 = current_sum
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrDownDownSectorIndicesPerSum[i]; ++j1)
+		    {
+		      int m1 = (this->DownDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+		      int m2 = (this->DownDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+		      for (int j2 = 0; j2 < this->NbrDownDownSectorIndicesPerSum[i]; ++j2)
+			{
+			  int m3 = (this->DownDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+			  int m4 = (this->DownDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+			  
+			  this->InteractionFactorsDownDownDownDown[i][Index] = 0;
+			  for ( J = this->PseudoPotentialMins[4] ; J < this->NbrPseudoPotentialCoeffs[4] + this->PseudoPotentialMins[4] ; J++ ) 
+			    {
+			      if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
+				{
+				  ClebschCoef = ClebschDownDown.GetCoefficient(m1,m2,J*2);			     			  
+				  TmpCoefficient = ClebschCoef * ClebschDownDown.GetCoefficient(m3, m4, J*2);
+				  this->InteractionFactorsDownDownDownDown[i][Index] += this->PseudoPotentials[4][J-this->PseudoPotentialMins[4]] * TmpCoefficient;
+				}
+			    }
+			  //this->InteractionFactorsDownDownDownDown[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1)/2.0 ,0.0,(double)m1/2.0 ,0.0,(double)m2 /2.0 ,0.0,(double)m3/2.0 ,0.0,(double)m4/2.0);
+			  //cout << this->LzMaxDown-1.0 << ": " << m1  << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsDownDownDownDown[i][Index] << endl;
+			  ++Index;
+			  TotalNbrInteractionFactors++;
+			}
+		    }
+		}
+	    }
+	    
+	  //cout << "Down Down Up Down" << endl;
+	  for (int i = 1; i < this->NbrUpDownSectorSums-1; ++i) // go through the possible sums of Lz values with one particle on LLL and one on FLL
+	    {
+	      if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+		{
+		  this->InteractionFactorsDownDownUpDown[i-1] = new double[this->NbrDownDownSectorIndicesPerSum[i-1] * this->NbrUpDownSectorIndicesPerSum[i]]; //for all m1, m2, m3, m4 such that m1 + m2 = m3 + m4 = current_sum
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrUpDownSectorIndicesPerSum[i]; ++j1)
+		    {
+		      int m1 = (this->UpDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp ;
+		      int m2 = (this->UpDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+		      for (int j2 = 0; j2 < this->NbrDownDownSectorIndicesPerSum[i-1]; ++j2)
+			{
+			  int m3 = (this->DownDownSectorIndicesPerSum[i-1][j2 << 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+			  int m4 = (this->DownDownSectorIndicesPerSum[i-1][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+			  
+			  this->InteractionFactorsDownDownUpDown[i-1][Index] = 0;
+			  for ( J = this->PseudoPotentialMins[5] ; J < this->NbrPseudoPotentialCoeffs[5] + this->PseudoPotentialMins[5] ; J++ ) 
+			    {
+			      if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
+				{
+				  ClebschCoef = ClebschUpDown.GetCoefficient(m1,m2,J*2);			     			  
+				  TmpCoefficient = ClebschCoef * ClebschDownDown.GetCoefficient(m3, m4, J*2);
+				  this->InteractionFactorsDownDownUpDown[i-1][Index] += this->PseudoPotentials[5][J-this->PseudoPotentialMins[5]] * TmpCoefficient;
+				} 				 
+			    }
+			  //this->InteractionFactorsDownDownUpDown[i-1][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1) /2.0 ,1.0,(double)m1/2.0 ,0.0,(double)m2/2.0 ,0.0,(double)m3/2.0 ,0.0,(double)m4/2.0);
+			  //cout << this->LzMaxDown-1.0 << ": " << m1  << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsDownDownUpDown[i-1][Index] << endl;
+			  ++Index;
+			  TotalNbrInteractionFactors++;
+			}
+		    }
+		}
+	    }
+	    
+	  //cout << "Up Down Up Up" << endl;
+	  for (int i = 0; i < this->NbrUpDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
+	    {
+	      if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+		{
+		  this->InteractionFactorsUpDownUpUp[i] = new double[this->NbrUpDownSectorIndicesPerSum[i] * this->NbrUpUpSectorIndicesPerSum[i+1]]; //for all m1, m2, m3, m4 such that m1 + m2 = m3 + m4 = current_sum
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrUpUpSectorIndicesPerSum[i+1]; ++j1)
+		    {
+		      int m1 = (this->UpUpSectorIndicesPerSum[i+1][j1 << 1] << 1) - this->LzMaxUp ;
+		      int m2 = (this->UpUpSectorIndicesPerSum[i+1][(j1 << 1) + 1] << 1) - this->LzMaxUp ;
+		      for (int j2 = 0; j2 < this->NbrUpDownSectorIndicesPerSum[i]; ++j2)
+			{
+			  int m3 = (this->UpDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
+			  int m4 = (this->UpDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+			  
+			  this->InteractionFactorsUpDownUpUp[i][Index] = 0;
+			  for ( J = this->PseudoPotentialMins[6] ; J < this->NbrPseudoPotentialCoeffs[6] + this->PseudoPotentialMins[6] ; J++ ) 
+			    {
+			      if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
+				{
+				  ClebschCoef = ClebschUpUp.GetCoefficient(m1,m2,J*2);			     			  
+				  TmpCoefficient = ClebschCoef * ClebschUpDown.GetCoefficient(m3, m4, J*2);
+				  this->InteractionFactorsUpDownUpUp[i][Index] += this->PseudoPotentials[6][J-this->PseudoPotentialMins[6]] * TmpCoefficient;
+				}
+			    }
+			  //this->InteractionFactorsUpDownUpUp[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1)/2.0 ,1.0,(double)m1 /2.0 ,1.0,(double)m2 /2.0,1.0,(double)m3 /2.0,0.0,(double)m4 /2.0);
+			  //cout << this->LzMaxDown-1.0 << ": " << m1 << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsUpDownUpUp[i][Index] << endl;
+			  ++Index;
+			  TotalNbrInteractionFactors++;
+			}
+		    }
+		}
+	    }
+	    
+	  //cout << "Up Down Down Down" << endl;
+	  //now we set the interaction terms where a single operator acts on the first LL and the rest on the LLL 
+	  for (int i = 0; i < this->NbrDownDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
+	    {
+	      if (this->NbrDownDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+		{
+		  this->InteractionFactorsUpDownDownDown[i] = new double[this->NbrDownDownSectorIndicesPerSum[i] * this->NbrUpDownSectorIndicesPerSum[i+1]]; //for all m1, m2, m3, m4 such that m1 + m2 = m3 + m4 = current_sum
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrDownDownSectorIndicesPerSum[i]; ++j1)
+		    {
+		      int m1 = (this->DownDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift ;
+		      int m2 = (this->DownDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+		      for (int j2 = 0; j2 < this->NbrUpDownSectorIndicesPerSum[i+1]; ++j2)
+			{
+			  int m3 = (this->UpDownSectorIndicesPerSum[i+1][j2 << 1] << 1) - this->LzMaxUp;
+			  int m4 = (this->UpDownSectorIndicesPerSum[i+1][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+			  
+			  this->InteractionFactorsUpDownDownDown[i][Index] = 0;
+			  for ( J = this->PseudoPotentialMins[7] ; J < this->NbrPseudoPotentialCoeffs[7] + this->PseudoPotentialMins[7] ; J++ ) 
+			    {
+			      if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
+				{
+				  ClebschCoef = ClebschDownDown.GetCoefficient(m1,m2,J*2);			     			  
+				  TmpCoefficient = ClebschCoef * ClebschUpDown.GetCoefficient(m3, m4, J*2);
+				  this->InteractionFactorsUpDownDownDown[i][Index] += this->PseudoPotentials[7][J-this->PseudoPotentialMins[7]] * TmpCoefficient;
+				}
+			    }
+			  //this->InteractionFactorsUpDownDownDown[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1) /2.0 ,0.0 ,(double)m1 /2.0 ,0.0 ,(double)m2 /2.0,1.0,(double)m3/2.0,0.0,(double)m4/2.0);
+			  //cout << this->LzMaxDown-1.0 << ": " << m1 << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsUpDownDownDown[i][Index] << endl;
+			  ++Index;
+			  TotalNbrInteractionFactors++;
+			}
+		    }
+		}
+	    }
+	    
+	  //cout << "Up Down Up Down" << endl;
+	  for (int i = 0; i < this->NbrUpDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
+	    {
+	      if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+		{
+		  this->InteractionFactorsUpDownUpDown[i] = new double[this->NbrUpDownSectorIndicesPerSum[i] * this->NbrUpDownSectorIndicesPerSum[i]]; //for all m1, m2, m3, m4 such that m1 + m2 = m3 + m4 = current_sum
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrUpDownSectorIndicesPerSum[i]; ++j1)
+		    {
+		      int m1 = (this->UpDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp ;
+		      int m2 = (this->UpDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift ;
+		      for (int j2 = 0; j2 < this->NbrUpDownSectorIndicesPerSum[i]; ++j2)
+			{
+			  int m3 = (this->UpDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
+			  int m4 = (this->UpDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+			  
+			  this->InteractionFactorsUpDownUpDown[i][Index] = 0;
+			  for ( J = this->PseudoPotentialMins[8] ; J < this->NbrPseudoPotentialCoeffs[8] + this->PseudoPotentialMins[8] ; J++ ) 
+			    {
+			      if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
+				{
+				  ClebschCoef = ClebschUpDown.GetCoefficient(m1,m2,J*2);			     			  
+				  TmpCoefficient = ClebschCoef * ClebschUpDown.GetCoefficient(m3, m4, J*2);
+				  this->InteractionFactorsUpDownUpDown[i][Index] += this->PseudoPotentials[8][J-this->PseudoPotentialMins[8]] * TmpCoefficient;
+				}
+			    }			
+			  ++Index;
+			  TotalNbrInteractionFactors++;
+			}
 		    }
 		}
 	    }
 	}
-	
-	//cout << "Down Down Up Down" << endl;
-	for (int i = 1; i < this->NbrUpDownSectorSums-1; ++i) // go through the possible sums of Lz values on LLL
+      else if ( this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic ) 
 	{
-	  if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+	  //upup-upup term  
+	  for (int i = 0; i < this->NbrUpUpSectorSums; ++i)
 	    {
-	      this->InteractionFactorsDownDownUpDown[i-1] = new double[this->NbrDownDownSectorIndicesPerSum[i-1] * this->NbrUpDownSectorIndicesPerSum[i]]; //for all m1, m2, m3, m4 such that m1 + m2 = m3 + m4 = current_sum
-	      int Index = 0;
-	      for (int j1 = 0; j1 < this->NbrUpDownSectorIndicesPerSum[i]; ++j1)
+	      if (this->NbrUpUpSectorIndicesPerSum[i] > 0)
 		{
-		  int m1 = (this->UpDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp ;
-		  int m2 = (this->UpDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1 ;
-		  for (int j2 = 0; j2 < this->NbrDownDownSectorIndicesPerSum[i-1]; ++j2)
+		  this->InteractionFactorsUpUpUpUp[i] = new double[this->NbrUpUpSectorIndicesPerSum[i] * this->NbrUpUpSectorIndicesPerSum[i]];
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrUpUpSectorIndicesPerSum[i]; ++j1)
 		    {
-		      int m3 = (this->DownDownSectorIndicesPerSum[i-1][j2 << 1] << 1) - this->LzMaxDown - 1;
-		      int m4 = (this->DownDownSectorIndicesPerSum[i-1][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
-		      
-		      this->InteractionFactorsDownDownUpDown[i-1][Index] = 0;
-		      for ( J = this->PseudoPotentialMins[5] ; J < this->NbrPseudoPotentialCoeffs[5] + this->PseudoPotentialMins[5] ; J++ ) 
+		      int m1 = (this->UpUpSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp;
+		      int m2 = (this->UpUpSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxUp;
+		      for (int j2 = 0; j2 < this->NbrUpUpSectorIndicesPerSum[i]; ++j2)
 			{
-			  if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
+			  int m3 = (this->UpUpSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
+			  int m4 = (this->UpUpSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxUp;
+			  
+			  this->InteractionFactorsUpUpUpUp[i][Index] = 0;
+			  for ( J = this->PseudoPotentialMins[0] ; J < this->NbrPseudoPotentialCoeffs[0] + this->PseudoPotentialMins[0] ; J++ ) 
 			    {
-			      ClebschCoef = ClebschUpDown.GetCoefficient(m1,m2,J*2);			     			  
-			      TmpCoefficient = ClebschCoef * ClebschDownDown.GetCoefficient(m3, m4, J*2);
-			      this->InteractionFactorsDownDownUpDown[i-1][Index] += this->PseudoPotentials[5][J-this->PseudoPotentialMins[5]] * TmpCoefficient;
-			    } 				 
-			}
-		      //this->InteractionFactorsDownDownUpDown[i-1][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1) /2.0 ,1.0,(double)m1/2.0 ,0.0,(double)m2/2.0 ,0.0,(double)m3/2.0 ,0.0,(double)m4/2.0);
-		      //cout << this->LzMaxDown-1.0 << ": " << m1  << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsDownDownUpDown[i-1][Index] << endl;
-		      ++Index;
-		      TotalNbrInteractionFactors++;
-		    }
-		}
-	    }
-	}
-	
-	//cout << "Up Down Up Up" << endl;
-	for (int i = 0; i < this->NbrUpDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
-	{
-	  if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
-	    {
-	      this->InteractionFactorsUpDownUpUp[i] = new double[this->NbrUpDownSectorIndicesPerSum[i] * this->NbrUpUpSectorIndicesPerSum[i+1]]; //for all m1, m2, m3, m4 such that m1 + m2 = m3 + m4 = current_sum
-	      int Index = 0;
-	      for (int j1 = 0; j1 < this->NbrUpUpSectorIndicesPerSum[i+1]; ++j1)
-		{
-		  int m1 = (this->UpUpSectorIndicesPerSum[i+1][j1 << 1] << 1) - this->LzMaxUp ;
-		  int m2 = (this->UpUpSectorIndicesPerSum[i+1][(j1 << 1) + 1] << 1) - this->LzMaxUp ;
-		  for (int j2 = 0; j2 < this->NbrUpDownSectorIndicesPerSum[i]; ++j2)
-		    {
-		      int m3 = (this->UpDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
-		      int m4 = (this->UpDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
-		      
-		      this->InteractionFactorsUpDownUpUp[i][Index] = 0;
-		      for ( J = this->PseudoPotentialMins[6] ; J < this->NbrPseudoPotentialCoeffs[6] + this->PseudoPotentialMins[6] ; J++ ) 
-			{
-			  if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
-			    {
-			      ClebschCoef = ClebschUpUp.GetCoefficient(m1,m2,J*2);			     			  
-			      TmpCoefficient = ClebschCoef * ClebschUpDown.GetCoefficient(m3, m4, J*2);
-			      this->InteractionFactorsUpDownUpUp[i][Index] += this->PseudoPotentials[6][J-this->PseudoPotentialMins[6]] * TmpCoefficient;
+			      if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
+				{
+				  ClebschCoef = ClebschUpUp.CarefulGetCoefficient(m1,m2,J*2);			     	
+				  //cout << "ClebschCeof: (" << m1 << ", " << m2 << ", " << (J * 1) << ") = " <<  ClebschUpUp.CarefulGetCoefficient(m1,m2,J*2) << endl;
+				  TmpCoefficient = ClebschCoef * ClebschUpUp.CarefulGetCoefficient(m3, m4, J*2);
+				  this->InteractionFactorsUpUpUpUp[i][Index] += this->PseudoPotentials[0][J-this->PseudoPotentialMins[0]] * TmpCoefficient;
+				}
 			    }
+			  TotalNbrInteractionFactors++;
+			  ++Index;
 			}
-		      //this->InteractionFactorsUpDownUpUp[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1)/2.0 ,1.0,(double)m1 /2.0 ,1.0,(double)m2 /2.0,1.0,(double)m3 /2.0,0.0,(double)m4 /2.0);
-		      //cout << this->LzMaxDown-1.0 << ": " << m1 << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsUpDownUpUp[i][Index] << endl;
-		      ++Index;
-		      TotalNbrInteractionFactors++;
 		    }
 		}
 	    }
-	}
-	
-	//cout << "Up Down Down Down" << endl;
-	//now we set the interaction terms where a single operator acts on the first LL and the rest on the LLL 
-	for (int i = 0; i < this->NbrDownDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
-	{
-	  if (this->NbrDownDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+	    
+	  //cout << "Up Up Down Down" << endl;
+	  for (int i = 0; i < this->NbrDownDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
 	    {
-	      this->InteractionFactorsUpDownDownDown[i] = new double[this->NbrDownDownSectorIndicesPerSum[i] * this->NbrUpDownSectorIndicesPerSum[i+1]]; //for all m1, m2, m3, m4 such that m1 + m2 = m3 + m4 = current_sum
-	      int Index = 0;
-	      for (int j1 = 0; j1 < this->NbrDownDownSectorIndicesPerSum[i]; ++j1)
+	      if (this->NbrDownDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
 		{
-		  int m1 = (this->DownDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxDown - 1;
-		  int m2 = (this->DownDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1;
-		  for (int j2 = 0; j2 < this->NbrUpDownSectorIndicesPerSum[i+1]; ++j2)
+		  this->InteractionFactorsUpUpDownDown[i] = new double[this->NbrDownDownSectorIndicesPerSum[i] * this->NbrUpUpSectorIndicesPerSum[i+2]]; //for all m1, m2, m3, m4 such that m1 + m2 = m3 + m4 = current_sum
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrDownDownSectorIndicesPerSum[i]; ++j1)
 		    {
-		      int m3 = (this->UpDownSectorIndicesPerSum[i+1][j2 << 1] << 1) - this->LzMaxUp;
-		      int m4 = (this->UpDownSectorIndicesPerSum[i+1][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
-		      
-		      this->InteractionFactorsUpDownDownDown[i][Index] = 0;
-		      for ( J = this->PseudoPotentialMins[7] ; J < this->NbrPseudoPotentialCoeffs[7] + this->PseudoPotentialMins[7] ; J++ ) 
+		      int m1 = ((this->DownDownSectorIndicesPerSum[i][j1 << 1] + this->LzFermionDownShift) << 1) - this->LzMaxDown - 1;
+		      int m2 = ((this->DownDownSectorIndicesPerSum[i][(j1 << 1) + 1] + this->LzFermionDownShift) << 1) - this->LzMaxDown - 1;
+		      for (int j2 = 0; j2 < this->NbrUpUpSectorIndicesPerSum[i+2]; ++j2)
 			{
-			  if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
+			  int m3 = (this->UpUpSectorIndicesPerSum[i+2][j2 << 1] << 1) - this->LzMaxUp;
+			  int m4 = (this->UpUpSectorIndicesPerSum[i+2][(j2 << 1) + 1] << 1) - this->LzMaxUp;
+			  
+			  this->InteractionFactorsUpUpDownDown[i][Index] = 0;
+			  for ( J = this->PseudoPotentialMins[1] ; J < this->NbrPseudoPotentialCoeffs[1] + this->PseudoPotentialMins[1] ; J++ ) 
 			    {
-			      ClebschCoef = ClebschDownDown.GetCoefficient(m1,m2,J*2);			     			  
-			      TmpCoefficient = ClebschCoef * ClebschUpDown.GetCoefficient(m3, m4, J*2);
-			      this->InteractionFactorsUpDownDownDown[i][Index] += this->PseudoPotentials[7][J-this->PseudoPotentialMins[7]] * TmpCoefficient;
+			      if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
+				{
+				  ClebschCoef = ClebschDownDown.GetCoefficient(m1,m2,J*2);			     			  
+				  TmpCoefficient = ClebschCoef * ClebschUpUp.GetCoefficient(m3, m4, J*2);
+				  this->InteractionFactorsUpUpDownDown[i][Index] += this->PseudoPotentials[1][J-this->PseudoPotentialMins[1]] * TmpCoefficient;
+				}
 			    }
+			  //this->InteractionFactorsUpUpDownDown[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1)/ 2.0 ,0.0,(double)m1/2.0 ,0.0,(double)m2 /2.0,1.0,(double)m3 /2.0 ,1.0,(double)m4/2.0);
+			  //cout << this->LzMaxDown-1.0 << ": " << m1 << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsUpUpDownDown[i][Index] << endl;
+			  ++Index;
+			  TotalNbrInteractionFactors++;
 			}
-		      //this->InteractionFactorsUpDownDownDown[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1) /2.0 ,0.0 ,(double)m1 /2.0 ,0.0 ,(double)m2 /2.0,1.0,(double)m3/2.0,0.0,(double)m4/2.0);
-		      //cout << this->LzMaxDown-1.0 << ": " << m1 << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsUpDownDownDown[i][Index] << endl;
-		      ++Index;
-		      TotalNbrInteractionFactors++;
 		    }
 		}
 	    }
-	}
-	
-	//cout << "Up Down Up Down" << endl;
-	for (int i = 0; i < this->NbrUpDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
-	{
-	  if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+	    
+	    //cout << "Up Up Up Down" << endl;
+	    for (int i = 0; i < this->NbrUpDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
 	    {
-	      this->InteractionFactorsUpDownUpDown[i] = new double[this->NbrUpDownSectorIndicesPerSum[i] * this->NbrUpDownSectorIndicesPerSum[i]]; //for all m1, m2, m3, m4 such that m1 + m2 = m3 + m4 = current_sum
-	      int Index = 0;
-	      for (int j1 = 0; j1 < this->NbrUpDownSectorIndicesPerSum[i]; ++j1)
+	      if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
 		{
-		  int m1 = (this->UpDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp ;
-		  int m2 = (this->UpDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1 ;
-		  for (int j2 = 0; j2 < this->NbrUpDownSectorIndicesPerSum[i]; ++j2)
+		  this->InteractionFactorsUpUpUpDown[i] = new double[this->NbrUpUpSectorIndicesPerSum[i] * this->NbrUpDownSectorIndicesPerSum[i]]; //for all m1, m2, m3, m4 such that m1 + m2 = m3 + m4 = current_sum
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrUpDownSectorIndicesPerSum[i]; ++j1)
 		    {
-		      int m3 = (this->UpDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
-		      int m4 = (this->UpDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
-		      
-		      this->InteractionFactorsUpDownUpDown[i][Index] = 0;
-		      for ( J = this->PseudoPotentialMins[8] ; J < this->NbrPseudoPotentialCoeffs[8] + this->PseudoPotentialMins[8] ; J++ ) 
+		      int m1 = (this->UpDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp ;
+		      int m2 = ((this->UpDownSectorIndicesPerSum[i][(j1 << 1) + 1] + this->LzFermionDownShift) << 1) - this->LzMaxDown - 1;
+		      for (int j2 = 0; j2 < this->NbrUpUpSectorIndicesPerSum[i]; ++j2)
 			{
-			  if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
+			  int m3 = (this->UpUpSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
+			  int m4 = (this->UpUpSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxUp;
+			  
+			  this->InteractionFactorsUpUpUpDown[i][Index] = 0;
+			  for ( J = this->PseudoPotentialMins[2] ; J < this->NbrPseudoPotentialCoeffs[2] + this->PseudoPotentialMins[2] ; J++ ) 
 			    {
-			      ClebschCoef = ClebschUpDown.GetCoefficient(m1,m2,J*2);			     			  
-			      TmpCoefficient = ClebschCoef * ClebschUpDown.GetCoefficient(m3, m4, J*2);
-			      this->InteractionFactorsUpDownUpDown[i][Index] += this->PseudoPotentials[8][J-this->PseudoPotentialMins[8]] * TmpCoefficient;
+			      if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
+				{
+				  ClebschCoef = ClebschUpDown.GetCoefficient(m1,m2,J*2);			     			  
+				  TmpCoefficient = ClebschCoef * ClebschUpUp.GetCoefficient(m3, m4, J*2);
+				  this->InteractionFactorsUpUpUpDown[i][Index] += this->PseudoPotentials[2][J-this->PseudoPotentialMins[2]] * TmpCoefficient;
+				}
 			    }
-			}			
-		      ++Index;
-		      TotalNbrInteractionFactors++;
+			  //this->InteractionFactorsUpUpUpDown[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1) /2.0 ,1.0,(double)m1 /2.0 ,0.0,(double)m2 /2.0,1.0,(double)m3 /2.0,1.0,(double)m4/2.0);
+			  //cout << this->LzMaxDown-1.0 << ": " << m1  << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsUpUpUpDown[i][Index] << endl;
+			  ++Index;
+			  TotalNbrInteractionFactors++;
+			}
 		    }
 		}
 	    }
-	}		    	 
-	
-      /*cout << "Up Up interactions: " << endl;
-      for (int i = 0; i < this->NbrUpUpSectorSums; ++i) // go through the possible sums of Lz values on LLL
-	{
-	  cout << "Sum : " << i  << endl;
-	  if (this->NbrUpUpSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
-	    {	  
-	      for (int j1 = 0; j1 < this->NbrUpUpSectorIndicesPerSum[i]; ++j1)
+      
+      
+		    
+	    //cout << "Down Down Up Up" << endl;
+	    for (int i = 0; i < this->NbrDownDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
+	    {
+	      if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
 		{
-		  int m1 = (this->UpUpSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp;
-		  int m2 = (this->UpUpSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxUp;
-		  for (int j2 = 0; j2 < this->NbrUpUpSectorIndicesPerSum[i]; ++j2)
+		  this->InteractionFactorsDownDownUpUp[i] = new double[this->NbrDownDownSectorIndicesPerSum[i] * this->NbrUpUpSectorIndicesPerSum[i+2]]; //for all m1, m2, m3, m4 such that m1 + m2 = m3 + m4 = current_sum
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrUpUpSectorIndicesPerSum[i+2]; ++j1)
 		    {
-		      int m3 = (this->UpUpSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
-		      int m4 = (this->UpUpSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxUp;
-		      cout << m1/2.0 << ", " << m2/2.0 << ", " << m3/2.0 << ", " << m4/2.0 << ": " << this->InteractionFactorsUpUpUpUp[i][j1*this->NbrUpUpSectorIndicesPerSum[i]+j2] << endl;		  
-		      //this->InteractionFactorsDownDownDownDown[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1)/2.0 ,0.0,(double)m1/2.0 ,0.0,(double)m2 /2.0 ,0.0,(double)m3/2.0 ,0.0,(double)m4/2.0);
+		      int m1 = (this->UpUpSectorIndicesPerSum[i+2][j1 << 1] << 1) - this->LzMaxUp ;
+		      int m2 = (this->UpUpSectorIndicesPerSum[i+2][(j1 << 1) + 1] << 1) - this->LzMaxUp ;
+		      for (int j2 = 0; j2 < this->NbrDownDownSectorIndicesPerSum[i]; ++j2)
+			{
+			  int m3 = ((this->DownDownSectorIndicesPerSum[i][j2 << 1] + this->LzFermionDownShift) << 1) - this->LzMaxDown - 1;
+			  int m4 = ((this->DownDownSectorIndicesPerSum[i][(j2 << 1) + 1] + this->LzFermionDownShift) << 1) - this->LzMaxDown - 1;
+			  
+			  this->InteractionFactorsDownDownUpUp[i][Index] = 0;
+			  for ( J = this->PseudoPotentialMins[3] ; J < this->NbrPseudoPotentialCoeffs[3] + this->PseudoPotentialMins[3] ; J++ ) 
+			    {
+			      if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
+				{
+				  ClebschCoef = ClebschUpUp.GetCoefficient(m1,m2,J*2);			     			  
+				  TmpCoefficient = ClebschCoef * ClebschDownDown.GetCoefficient(m3, m4, J*2);
+				  this->InteractionFactorsDownDownUpUp[i][Index] += this->PseudoPotentials[3][J-this->PseudoPotentialMins[3]] * TmpCoefficient;
+				}
+			    }
+			  //this->InteractionFactorsDownDownUpUp[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1) /2.0 ,1.0,(double)m1 /2.0 ,1.0,(double)m2 /2.0,0.0,(double)m3 /2.0,0.0,(double)m4 /2.0);
+			  //cout << this->LzMaxDown-1.0 << ": " << m1  << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsDownDownUpUp[i][Index] << endl;
+			  ++Index;
+			  TotalNbrInteractionFactors++;
+			}
 		    }
 		}
 	    }
-	}*/
-
-	
+	    
+	    
+	      for (int i = 0; i < this->NbrDownDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
+	    {
+	      if (this->NbrDownDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+		{
+		  this->InteractionFactorsDownDownDownDown[i] = new double[this->NbrDownDownSectorIndicesPerSum[i] * this->NbrDownDownSectorIndicesPerSum[i]]; //for all m1, m2, m3, m4 such that m1 + m2 = m3 + m4 = current_sum
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrDownDownSectorIndicesPerSum[i]; ++j1)
+		    {
+		      int m1 = ((this->DownDownSectorIndicesPerSum[i][j1 << 1] + this->LzFermionDownShift) << 1) - this->LzMaxDown - 1;
+		      int m2 = ((this->DownDownSectorIndicesPerSum[i][(j1 << 1) + 1] + this->LzFermionDownShift) << 1) - this->LzMaxDown - 1;
+		      for (int j2 = 0; j2 < this->NbrDownDownSectorIndicesPerSum[i]; ++j2)
+			{
+			  int m3 = ((this->DownDownSectorIndicesPerSum[i][j2 << 1] + this->LzFermionDownShift) << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+			  int m4 = ((this->DownDownSectorIndicesPerSum[i][(j2 << 1) + 1] + this->LzFermionDownShift) << 1) - this->LzMaxDown - 1;
+			  
+			  this->InteractionFactorsDownDownDownDown[i][Index] = 0;
+			  for ( J = this->PseudoPotentialMins[4] ; J < this->NbrPseudoPotentialCoeffs[4] + this->PseudoPotentialMins[4] ; J++ ) 
+			    {
+			      if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
+				{
+				  ClebschCoef = ClebschDownDown.GetCoefficient(m1,m2,J*2);			     			  
+				  TmpCoefficient = ClebschCoef * ClebschDownDown.GetCoefficient(m3, m4, J*2);
+				  this->InteractionFactorsDownDownDownDown[i][Index] += this->PseudoPotentials[4][J-this->PseudoPotentialMins[4]] * TmpCoefficient;
+				}
+			    }
+			  //this->InteractionFactorsDownDownDownDown[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1)/2.0 ,0.0,(double)m1/2.0 ,0.0,(double)m2 /2.0 ,0.0,(double)m3/2.0 ,0.0,(double)m4/2.0);
+			  //cout << this->LzMaxDown-1.0 << ": " << m1  << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsDownDownDownDown[i][Index] << endl;
+			  ++Index;
+			  TotalNbrInteractionFactors++;
+			}
+		    }
+		}
+	    }
+	    
+	    //cout << "Down Down Up Down" << endl;
+	    for (int i = 2; i < this->NbrDownDownSectorSums + 2; ++i) // go through the possible sums of Lz values with one particle on LLL and one on FLL
+	    {
+	      if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+		{
+		  this->InteractionFactorsDownDownUpDown[i-2] = new double[this->NbrDownDownSectorIndicesPerSum[i-2] * this->NbrUpDownSectorIndicesPerSum[i]]; //for all m1, m2, m3, m4 such that m1 + m2 = m3 + m4 = current_sum
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrUpDownSectorIndicesPerSum[i]; ++j1)
+		    {
+		      int m1 = (this->UpDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp ;
+		      int m2 = ((this->UpDownSectorIndicesPerSum[i][(j1 << 1) + 1] + this->LzFermionDownShift) << 1) - this->LzMaxDown - 1;
+		      for (int j2 = 0; j2 < this->NbrDownDownSectorIndicesPerSum[i-2]; ++j2)
+			{
+			  int m3 = ((this->DownDownSectorIndicesPerSum[i-2][j2 << 1] + this->LzFermionDownShift) << 1) - this->LzMaxDown - 1;
+			  int m4 = ((this->DownDownSectorIndicesPerSum[i-2][(j2 << 1) + 1] + this->LzFermionDownShift) << 1) - this->LzMaxDown - 1;
+			  
+			  this->InteractionFactorsDownDownUpDown[i-2][Index] = 0;
+			  for ( J = this->PseudoPotentialMins[5] ; J < this->NbrPseudoPotentialCoeffs[5] + this->PseudoPotentialMins[5] ; J++ ) 
+			    {
+			      if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
+				{
+				  ClebschCoef = ClebschUpDown.GetCoefficient(m1,m2,J*2);			     			  
+				  TmpCoefficient = ClebschCoef * ClebschDownDown.GetCoefficient(m3, m4, J*2);
+				  this->InteractionFactorsDownDownUpDown[i-2][Index] += this->PseudoPotentials[5][J-this->PseudoPotentialMins[5]] * TmpCoefficient;
+				} 				 
+			    }
+			  //this->InteractionFactorsDownDownUpDown[i-1][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1) /2.0 ,1.0,(double)m1/2.0 ,0.0,(double)m2/2.0 ,0.0,(double)m3/2.0 ,0.0,(double)m4/2.0);
+			  //cout << this->LzMaxDown-1.0 << ": " << m1  << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsDownDownUpDown[i-1][Index] << endl;
+			  ++Index;
+			  TotalNbrInteractionFactors++;
+			}
+		    }
+		}
+	    }
+	    
+	    //cout << "Up Down Up Up" << endl;
+	    for (int i = 0; i < this->NbrUpDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
+	    {
+	      if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+		{
+		  this->InteractionFactorsUpDownUpUp[i] = new double[this->NbrUpDownSectorIndicesPerSum[i] * this->NbrUpUpSectorIndicesPerSum[i]]; //for all m1, m2, m3, m4 such that m1 + m2 = m3 + m4 = current_sum
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrUpUpSectorIndicesPerSum[i]; ++j1)
+		    {
+		      int m1 = (this->UpUpSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp ;
+		      int m2 = (this->UpUpSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxUp ;
+		      for (int j2 = 0; j2 < this->NbrUpDownSectorIndicesPerSum[i]; ++j2)
+			{
+			  int m3 = (this->UpDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
+			  int m4 = ((this->UpDownSectorIndicesPerSum[i][(j2 << 1) + 1] + this->LzFermionDownShift) << 1) - this->LzMaxDown - 1;
+			  
+			  this->InteractionFactorsUpDownUpUp[i][Index] = 0;
+			  for ( J = this->PseudoPotentialMins[6] ; J < this->NbrPseudoPotentialCoeffs[6] + this->PseudoPotentialMins[6] ; J++ ) 
+			    {
+			      if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
+				{
+				  ClebschCoef = ClebschUpUp.GetCoefficient(m1,m2,J*2);			     			  
+				  TmpCoefficient = ClebschCoef * ClebschUpDown.GetCoefficient(m3, m4, J*2);
+				  this->InteractionFactorsUpDownUpUp[i][Index] += this->PseudoPotentials[6][J-this->PseudoPotentialMins[6]] * TmpCoefficient;
+				}
+			    }
+			  //this->InteractionFactorsUpDownUpUp[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1)/2.0 ,1.0,(double)m1 /2.0 ,1.0,(double)m2 /2.0,1.0,(double)m3 /2.0,0.0,(double)m4 /2.0);
+			  //cout << this->LzMaxDown-1.0 << ": " << m1 << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsUpDownUpUp[i][Index] << endl;
+			  ++Index;
+			  TotalNbrInteractionFactors++;
+			}
+		    }
+		}
+	    }
+	    
+	    //cout << "Up Down Down Down" << endl;
+	    //now we set the interaction terms where a single operator acts on the first LL and the rest on the LLL 
+	    for (int i = 0; i < this->NbrDownDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
+	    {
+	      if (this->NbrDownDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+		{
+		  this->InteractionFactorsUpDownDownDown[i] = new double[this->NbrDownDownSectorIndicesPerSum[i] * this->NbrUpDownSectorIndicesPerSum[i+2]]; //for all m1, m2, m3, m4 such that m1 + m2 = m3 + m4 = current_sum
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrDownDownSectorIndicesPerSum[i]; ++j1)
+		    {
+		      int m1 = ((this->DownDownSectorIndicesPerSum[i][j1 << 1] + this->LzFermionDownShift) << 1) - this->LzMaxDown - 1;
+		      int m2 = ((this->DownDownSectorIndicesPerSum[i][(j1 << 1) + 1] + this->LzFermionDownShift) << 1) - this->LzMaxDown - 1;
+		      for (int j2 = 0; j2 < this->NbrUpDownSectorIndicesPerSum[i+2]; ++j2)
+			{
+			  int m3 = (this->UpDownSectorIndicesPerSum[i+2][j2 << 1] << 1) - this->LzMaxUp;
+			  int m4 = ((this->UpDownSectorIndicesPerSum[i+2][(j2 << 1) + 1] + this->LzFermionDownShift )<< 1) - this->LzMaxDown - 1;
+			  
+			  this->InteractionFactorsUpDownDownDown[i][Index] = 0;
+			  for ( J = this->PseudoPotentialMins[7] ; J < this->NbrPseudoPotentialCoeffs[7] + this->PseudoPotentialMins[7] ; J++ ) 
+			    {
+			      if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
+				{
+				  ClebschCoef = ClebschDownDown.GetCoefficient(m1,m2,J*2);			     			  
+				  TmpCoefficient = ClebschCoef * ClebschUpDown.GetCoefficient(m3, m4, J*2);
+				  this->InteractionFactorsUpDownDownDown[i][Index] += this->PseudoPotentials[7][J-this->PseudoPotentialMins[7]] * TmpCoefficient;
+				}
+			    }
+			  //this->InteractionFactorsUpDownDownDown[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1) /2.0 ,0.0 ,(double)m1 /2.0 ,0.0 ,(double)m2 /2.0,1.0,(double)m3/2.0,0.0,(double)m4/2.0);
+			  //cout << this->LzMaxDown-1.0 << ": " << m1 << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsUpDownDownDown[i][Index] << endl;
+			  ++Index;
+			  TotalNbrInteractionFactors++;
+			}
+		    }
+		}
+	    }
+	    
+	    //cout << "Up Down Up Down" << endl;
+	    for (int i = 0; i < this->NbrUpDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
+	    {
+	      if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+		{
+		  this->InteractionFactorsUpDownUpDown[i] = new double[this->NbrUpDownSectorIndicesPerSum[i] * this->NbrUpDownSectorIndicesPerSum[i]]; //for all m1, m2, m3, m4 such that m1 + m2 = m3 + m4 = current_sum
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrUpDownSectorIndicesPerSum[i]; ++j1)
+		    {
+		      int m1 = (this->UpDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp ;
+		      int m2 = ((this->UpDownSectorIndicesPerSum[i][(j1 << 1) + 1] + this->LzFermionDownShift) << 1) - this->LzMaxDown - 1;
+		      for (int j2 = 0; j2 < this->NbrUpDownSectorIndicesPerSum[i]; ++j2)
+			{
+			  int m3 = (this->UpDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
+			  int m4 = ((this->UpDownSectorIndicesPerSum[i][(j2 << 1) + 1] + this->LzFermionDownShift) << 1) - this->LzMaxDown - 1;
+			  
+			  this->InteractionFactorsUpDownUpDown[i][Index] = 0;
+			  for ( J = this->PseudoPotentialMins[8] ; J < this->NbrPseudoPotentialCoeffs[8] + this->PseudoPotentialMins[8] ; J++ ) 
+			    {
+			      if ( abs(m1 + m2) <= (J*2) && abs(m3 + m4) <= (J*2) ) 
+				{
+				  ClebschCoef = ClebschUpDown.GetCoefficient(m1,m2,J*2);			     			  
+				  TmpCoefficient = ClebschCoef * ClebschUpDown.GetCoefficient(m3, m4, J*2);
+				  this->InteractionFactorsUpDownUpDown[i][Index] += this->PseudoPotentials[8][J-this->PseudoPotentialMins[8]] * TmpCoefficient;
+				}
+			    }			
+			  ++Index;
+			  TotalNbrInteractionFactors++;
+			}
+		    }
+		}
+	    }
+	}	      	
     }
   else // otherwise the interaction factors for the delta interaction are set explicitly. 
     {
@@ -794,12 +1102,12 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 	      int Index = 0;
 	      for (int j1 = 0; j1 < this->NbrDownDownSectorIndicesPerSum[i]; ++j1)
 		{
-		  int m1 = (this->DownDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxDown - 1;
-		  int m2 = (this->DownDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1;
+		  int m1 = (this->DownDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+		  int m2 = (this->DownDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
 		  for (int j2 = 0; j2 < this->NbrDownDownSectorIndicesPerSum[i]; ++j2)
 		    {
-		      int m3 = (this->DownDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxDown - 1;
-		      int m4 = (this->DownDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
+		      int m3 = (this->DownDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+		      int m4 = (this->DownDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
 		      
 		      this->InteractionFactorsDownDownDownDown[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1)/2.0 ,0.0,(double)m1/2.0 ,0.0,(double)m2 /2.0 ,0.0,(double)m3/2.0 ,0.0,(double)m4/2.0);
 		      //cout << this->LzMaxDown-1.0 << ": " << m1  << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsDownDownDownDown[i][Index] << endl;
@@ -820,12 +1128,12 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 	      int Index = 0;
 	      for (int j1 = 0; j1 < this->NbrDownDownSectorIndicesPerSum[i]; ++j1)
 		{
-		  int m1 = (this->DownDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxDown - 1;
-		  int m2 = (this->DownDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1;
+		  int m1 = (this->DownDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+		  int m2 = (this->DownDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
 		  for (int j2 = 0; j2 < this->NbrUpDownSectorIndicesPerSum[i+1]; ++j2)
 		    {
 		      int m3 = (this->UpDownSectorIndicesPerSum[i+1][j2 << 1] << 1) - this->LzMaxUp;
-		      int m4 = (this->UpDownSectorIndicesPerSum[i+1][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
+		      int m4 = (this->UpDownSectorIndicesPerSum[i+1][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
 		      
 		      this->InteractionFactorsUpDownDownDown[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1) /2.0 ,0.0 ,(double)m1 /2.0 ,0.0 ,(double)m2 /2.0,1.0,(double)m3/2.0,0.0,(double)m4/2.0);
 		      //cout << this->LzMaxDown-1.0 << ": " << m1 << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsUpDownDownDown[i][Index] << endl;
@@ -845,8 +1153,8 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 	      int Index = 0;
 	      for (int j1 = 0; j1 < this->NbrDownDownSectorIndicesPerSum[i]; ++j1)
 		{
-		  int m1 = (this->DownDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxDown - 1;
-		  int m2 = (this->DownDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1;
+		  int m1 = (this->DownDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+		  int m2 = (this->DownDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
 		  for (int j2 = 0; j2 < this->NbrUpUpSectorIndicesPerSum[i+2]; ++j2)
 		    {
 		      int m3 = (this->UpUpSectorIndicesPerSum[i+2][j2 << 1] << 1) - this->LzMaxUp;
@@ -871,11 +1179,11 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 	      for (int j1 = 0; j1 < this->NbrUpDownSectorIndicesPerSum[i]; ++j1)
 		{
 		  int m1 = (this->UpDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp ;
-		  int m2 = (this->UpDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1 ;
+		  int m2 = (this->UpDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
 		  for (int j2 = 0; j2 < this->NbrDownDownSectorIndicesPerSum[i-1]; ++j2)
 		    {
-		      int m3 = (this->DownDownSectorIndicesPerSum[i-1][j2 << 1] << 1) - this->LzMaxDown - 1;
-		      int m4 = (this->DownDownSectorIndicesPerSum[i-1][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
+		      int m3 = (this->DownDownSectorIndicesPerSum[i-1][j2 << 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+		      int m4 = (this->DownDownSectorIndicesPerSum[i-1][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
 		      
 		      this->InteractionFactorsDownDownUpDown[i-1][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1) /2.0 ,1.0,(double)m1/2.0 ,0.0,(double)m2/2.0 ,0.0,(double)m3/2.0 ,0.0,(double)m4/2.0);
 		      //cout << this->LzMaxDown-1.0 << ": " << m1  << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsDownDownUpDown[i-1][Index] << endl;
@@ -896,11 +1204,11 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 	      for (int j1 = 0; j1 < this->NbrUpDownSectorIndicesPerSum[i]; ++j1)
 		{
 		  int m1 = (this->UpDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp ;
-		  int m2 = (this->UpDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1 ;
+		  int m2 = (this->UpDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
 		  for (int j2 = 0; j2 < this->NbrUpDownSectorIndicesPerSum[i]; ++j2)
 		    {
 		      int m3 = (this->UpDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
-		      int m4 = (this->UpDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
+		      int m4 = (this->UpDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
 		      
 		      this->InteractionFactorsUpDownUpDown[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1) /2.0 ,1.0,(double)m1 /2.0 ,0.0,(double)m2 /2.0,1.0,(double)m3 /2.0,0.0,(double)m4 /2.0);
 		      //cout << this->LzMaxDown-1.0 << ": " << m1  << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsUpDownUpDown[i][Index] << endl;
@@ -921,7 +1229,7 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 	      for (int j1 = 0; j1 < this->NbrUpDownSectorIndicesPerSum[i]; ++j1)
 		{
 		  int m1 = (this->UpDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp ;
-		  int m2 = (this->UpDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1;
+		  int m2 = (this->UpDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
 		  for (int j2 = 0; j2 < this->NbrUpUpSectorIndicesPerSum[i+1]; ++j2)
 		    {
 		      int m3 = (this->UpUpSectorIndicesPerSum[i+1][j2 << 1] << 1) - this->LzMaxUp;
@@ -949,8 +1257,8 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 		  int m2 = (this->UpUpSectorIndicesPerSum[i+2][(j1 << 1) + 1] << 1) - this->LzMaxUp ;
 		  for (int j2 = 0; j2 < this->NbrDownDownSectorIndicesPerSum[i]; ++j2)
 		    {
-		      int m3 = (this->DownDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxDown - 1;
-		      int m4 = (this->DownDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
+		      int m3 = (this->DownDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+		      int m4 = (this->DownDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
 		      
 		      this->InteractionFactorsDownDownUpUp[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1) /2.0 ,1.0,(double)m1 /2.0 ,1.0,(double)m2 /2.0,0.0,(double)m3 /2.0,0.0,(double)m4 /2.0);
 		      //cout << this->LzMaxDown-1.0 << ": " << m1  << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsDownDownUpUp[i][Index] << endl;
@@ -975,7 +1283,7 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 		  for (int j2 = 0; j2 < this->NbrUpDownSectorIndicesPerSum[i]; ++j2)
 		    {
 		      int m3 = (this->UpDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
-		      int m4 = (this->UpDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
+		      int m4 = (this->UpDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
 		      
 		      this->InteractionFactorsUpDownUpUp[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1)/2.0 ,1.0,(double)m1 /2.0 ,1.0,(double)m2 /2.0,1.0,(double)m3 /2.0,0.0,(double)m4 /2.0);
 		      //cout << this->LzMaxDown-1.0 << ": " << m1 << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsUpDownUpUp[i][Index] << endl;
