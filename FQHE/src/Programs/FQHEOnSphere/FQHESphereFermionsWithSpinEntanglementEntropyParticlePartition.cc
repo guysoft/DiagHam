@@ -186,50 +186,38 @@ int main(int argc, char** argv)
     MaxSubsystemNbrParticles = Manager.GetInteger("max-na");
   int SubsystemNbrParticles = Manager.GetInteger("min-na");
 
-//   for (; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
-//     {
-//       int ComplementarySubsystemSize = LzMax + 1 - SubsystemSize;
-//       double EntanglementEntropy = 0.0;
-//       double DensitySum = 0.0;
-//       int MaxSubsystemNbrParticles = NbrParticles;
-//       if (MaxSubsystemNbrParticles > (2 * SubsystemSize))
-// 	MaxSubsystemNbrParticles = 2 * SubsystemSize;
-//       int SubsystemNbrParticles = NbrParticles - (LzMax + 1 - SubsystemSize);
-//       if (SubsystemNbrParticles < 0)
-// 	SubsystemNbrParticles = 0;
-//       for (; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
-// 	{
-// 	  int SubsystemTotalSz = 0;
-// 	  int SubsystemMaxTotalSz = SubsystemNbrParticles;
-// 	  SubsystemTotalSz = -SubsystemNbrParticles; 
-	  
-// 	  for (; SubsystemTotalSz <= SubsystemMaxTotalSz; SubsystemTotalSz += 2)
-// 	    {
-// 	      int SubsystemTotalLz = 0;
-// 	      int SubsystemLzMax = SubsystemSize - 1;
-// 	      int SubsystemNbrParticlesUp = (SubsystemNbrParticles + SubsystemTotalSz) >> 1;
-// 	      int SubsystemNbrParticlesDown = (SubsystemNbrParticles - SubsystemTotalSz) >> 1;
-// 	      int ComplementarySubsystemNbrParticlesUp = NbrParticlesUp - SubsystemNbrParticlesUp;
-// 	      int ComplementarySubsystemNbrParticlesDown = NbrParticlesDown - SubsystemNbrParticlesDown;
-// 	      if ((SubsystemNbrParticlesUp <= SubsystemSize) && (SubsystemNbrParticlesDown <= SubsystemSize) &&
-// 		  (SubsystemNbrParticlesUp >= 0) && (SubsystemNbrParticlesDown >= 0) &&
-// 		  (ComplementarySubsystemNbrParticlesUp <= ComplementarySubsystemSize) && 
-// 		  (ComplementarySubsystemNbrParticlesDown <= ComplementarySubsystemSize) &&
-// 		  (ComplementarySubsystemNbrParticlesUp >= 0) && (ComplementarySubsystemNbrParticlesDown >= 0))
-// 		{
-// 		  int SubsystemMaxTotalLz = (((SubsystemNbrParticlesUp * ((SubsystemLzMax << 1) - SubsystemNbrParticlesUp + 1))
-// 					      + (SubsystemNbrParticlesDown * ((SubsystemLzMax << 1) - SubsystemNbrParticlesDown + 1)))) >> 1;
-// 		  int ComplementarySubsystemMinTotalLz = ((ComplementarySubsystemNbrParticlesUp * (ComplementarySubsystemNbrParticlesUp - 1))
-// 							  + (ComplementarySubsystemNbrParticlesDown * (ComplementarySubsystemNbrParticlesDown - 1))) >> 1;
-// 		  int ComplementarySubsystemMaxTotalLz = ((ComplementarySubsystemSize - 1) * (ComplementarySubsystemNbrParticlesUp + ComplementarySubsystemNbrParticlesDown)) - ComplementarySubsystemMinTotalLz;
-// 		  ComplementarySubsystemMinTotalLz += (ComplementarySubsystemNbrParticlesUp + ComplementarySubsystemNbrParticlesDown) * SubsystemSize;
-// 		  ComplementarySubsystemMaxTotalLz += (ComplementarySubsystemNbrParticlesUp + ComplementarySubsystemNbrParticlesDown) * SubsystemSize;
-// 		  SubsystemTotalLz = ((SubsystemNbrParticlesUp * (SubsystemNbrParticlesUp - 1))
-// 				      + (SubsystemNbrParticlesDown * (SubsystemNbrParticlesDown - 1))) >> 1; 
-// 		  int ShiftedTotalLz = (TotalLz + (NbrParticles * LzMax)) >> 1;
-// 		  for (; SubsystemTotalLz <= SubsystemMaxTotalLz; SubsystemTotalLz++)
-// 		    {
-// 		      int SubsystemTrueTotalLz = ((SubsystemTotalLz << 1) - (SubsystemNbrParticles * SubsystemLzMax));
+  for (; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
+    {
+       double EntanglementEntropy = 0.0;
+       double DensitySum = 0.0;
+       for (; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
+ 	{
+ 	  int SubsystemTotalSz = 0;
+ 	  int SubsystemMaxTotalSz = SubsystemNbrParticles;
+ 	  SubsystemTotalSz = -SubsystemNbrParticles; 
+	  for (; SubsystemTotalSz <= SubsystemMaxTotalSz; SubsystemTotalSz += 2)
+ 	    {
+ 	      int SubsystemTotalLz = 0;
+ 	      int SubsystemNbrParticlesUp = (SubsystemNbrParticles + SubsystemTotalSz) >> 1;
+ 	      int SubsystemNbrParticlesDown = (SubsystemNbrParticles - SubsystemTotalSz) >> 1;
+ 	      int ComplementarySubsystemNbrParticlesUp = NbrParticlesUp - SubsystemNbrParticlesUp;
+ 	      int ComplementarySubsystemNbrParticlesDown = NbrParticlesDown - SubsystemNbrParticlesDown;
+ 	      if ((SubsystemNbrParticlesUp >= 0) && (SubsystemNbrParticlesDown >= 0) &&
+ 		  (ComplementarySubsystemNbrParticlesUp >= 0) && (ComplementarySubsystemNbrParticlesDown >= 0))
+ 		{
+ 		  int SubsystemMaxTotalLz = (((SubsystemNbrParticlesUp * ((LzMax << 1) - SubsystemNbrParticlesUp + 1))
+ 					      + (SubsystemNbrParticlesDown * ((LzMax << 1) - SubsystemNbrParticlesDown + 1)))) >> 1;
+ 		  int ComplementarySubsystemMinTotalLz = ((ComplementarySubsystemNbrParticlesUp * (ComplementarySubsystemNbrParticlesUp - 1))
+ 							  + (ComplementarySubsystemNbrParticlesDown * (ComplementarySubsystemNbrParticlesDown - 1))) >> 1;
+ 		  int ComplementarySubsystemMaxTotalLz = (LzMax * (ComplementarySubsystemNbrParticlesUp + ComplementarySubsystemNbrParticlesDown)) - ComplementarySubsystemMinTotalLz;
+ 		  ComplementarySubsystemMinTotalLz += (ComplementarySubsystemNbrParticlesUp + ComplementarySubsystemNbrParticlesDown) * LzMax;
+ 		  ComplementarySubsystemMaxTotalLz += (ComplementarySubsystemNbrParticlesUp + ComplementarySubsystemNbrParticlesDown) * LzMax;
+ 		  SubsystemTotalLz = ((SubsystemNbrParticlesUp * (SubsystemNbrParticlesUp - 1))
+ 				      + (SubsystemNbrParticlesDown * (SubsystemNbrParticlesDown - 1))) >> 1; 
+ 		  int ShiftedTotalLz = (TotalLz + (NbrParticles * LzMax)) >> 1;
+ 		  for (; SubsystemTotalLz <= SubsystemMaxTotalLz; SubsystemTotalLz++)
+ 		    {
+ 		      int SubsystemTrueTotalLz = ((SubsystemTotalLz << 1) - (SubsystemNbrParticles * LzMax));
 // 		      if (((ShiftedTotalLz - SubsystemTotalLz) <= ComplementarySubsystemMaxTotalLz) &&
 // 			  ((ShiftedTotalLz - SubsystemTotalLz) >= ComplementarySubsystemMinTotalLz) && 
 // 			  ((EigenstateFlag == false) || ((FilterLza == SubsystemTrueTotalLz) && (FilterSza == SubsystemTotalSz))))
@@ -382,12 +370,12 @@ int main(int argc, char** argv)
 // 				    DensityMatrixFile.close();
 // 				  }		  
 // 			      }
-// 			}
-// 		    }
-// 		}
-// 	    }
-// 	}
-//       File << SubsystemSize << " " << (-EntanglementEntropy) << " " << DensitySum << endl;
-//     }
+//		    }
+ 		    }
+ 		}
+ 	    }
+ 	}
+       File << SubsystemNbrParticles << " " << (-EntanglementEntropy) << " " << DensitySum << endl;
+     }
   return 0;
 }
