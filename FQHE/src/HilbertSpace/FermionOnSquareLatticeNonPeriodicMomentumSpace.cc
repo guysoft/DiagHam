@@ -60,23 +60,31 @@ using std::ios;
 // nbrFermions = number of fermions
 // nbrSiteX = number of sites in the x direction
 // nbrSiteY = number of sites in the y direction
+// nbrAllowedKx = number of kx momenta allowed in the space
+// nbrAllowedKy = number of kx momenta allowed in the space
+// minKx = minimum value of kx momenta allowed in the space
+// minKy = minimum value of ky momenta allowed in the space
 // kxMomentum = momentum along the x direction
 // kyMomentum = momentum along the y direction
 // memory = amount of memory granted for precalculations
 
-FermionOnSquareLatticeNonPeriodicMomentumSpace::FermionOnSquareLatticeNonPeriodicMomentumSpace (int nbrFermions, int nbrSiteX, int nbrSiteY, int kxMomentum, int kyMomentum, unsigned long memory)
+FermionOnSquareLatticeNonPeriodicMomentumSpace::FermionOnSquareLatticeNonPeriodicMomentumSpace (int nbrFermions, int nbrSiteX, int nbrSiteY, int nbrAllowedKx, int nbrAllowedKy, int minKx, int minKy, int kxMomentum, int kyMomentum, unsigned long memory)
 {  
   this->NbrFermions = nbrFermions;
   this->IncNbrFermions = this->NbrFermions + 1;
   this->TotalLz = 0;
   this->NbrSiteX = nbrSiteX;
   this->NbrSiteY = nbrSiteY;
+  this->NbrAllowedKx = nbrAllowedKx;
+  this->NbrAllowedKy = nbrAllowedKy;
+  this->MinKx=minKx;
+  this->MinKy=minKy;
   this->KxMomentum = kxMomentum;
   this->KyMomentum = kyMomentum;
   this->LzMax = this->NbrSiteX * this->NbrSiteY;
   this->NbrLzValue = this->LzMax + 1;
   this->MaximumSignLookUp = 16;
-  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0);
+  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->NbrAllowedKx - 1, this->NbrAllowedKy - 1, 0, 0);
   if (this->LargeHilbertSpaceDimension >= (1l << 30))
     this->HilbertSpaceDimension = 0;
   else
@@ -87,11 +95,11 @@ FermionOnSquareLatticeNonPeriodicMomentumSpace::FermionOnSquareLatticeNonPeriodi
       this->TargetSpace = this;
       this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
       this->StateLzMax = new int [this->HilbertSpaceDimension];  
-      this->LargeHilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0, 0l);
+      this->LargeHilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->NbrAllowedKx - 1, this->NbrAllowedKy - 1, 0, 0, 0l);
       int TmpLzMax = this->LzMax;
       for (long i = 0l; i < this->LargeHilbertSpaceDimension; ++i)
 	{
-	  while ((this->StateDescription[i] >> TmpLzMax) == 0x0ul)
+	  while ((this->StateDescription[i] >> TmpLzMax) == 0x0ul && TmpLzMax>0)
 	    --TmpLzMax;
 	  this->StateLzMax[i] = TmpLzMax;
 	}
@@ -135,6 +143,10 @@ FermionOnSquareLatticeNonPeriodicMomentumSpace::FermionOnSquareLatticeNonPeriodi
   this->TotalLz = fermions.TotalLz;
   this->NbrSiteX = fermions.NbrSiteX;
   this->NbrSiteY = fermions.NbrSiteY;
+  this->NbrAllowedKx = fermions.NbrAllowedKx;
+  this->NbrAllowedKy = fermions.NbrAllowedKy;
+  this->MinKx=fermions.MinKx;
+  this->MinKy=fermions.MinKy;
   this->KxMomentum = fermions.KxMomentum;
   this->KyMomentum = fermions.KyMomentum;
   this->LzMax = fermions.LzMax;
@@ -186,6 +198,10 @@ FermionOnSquareLatticeNonPeriodicMomentumSpace& FermionOnSquareLatticeNonPeriodi
   this->LzMax = fermions.LzMax;
   this->NbrSiteX = fermions.NbrSiteX;
   this->NbrSiteY = fermions.NbrSiteY;
+  this->NbrAllowedKx = fermions.NbrAllowedKx;
+  this->NbrAllowedKy = fermions.NbrAllowedKy;
+  this->MinKx=fermions.MinKx;
+  this->MinKy=fermions.MinKy;
   this->KxMomentum = fermions.KxMomentum;
   this->KyMomentum = fermions.KyMomentum;
   this->NbrLzValue = fermions.NbrLzValue;
@@ -210,23 +226,23 @@ AbstractHilbertSpace* FermionOnSquareLatticeNonPeriodicMomentumSpace::Clone()
 // generate all states corresponding to the constraints
 // 
 // nbrFermions = number of fermions
-// currentKx = current momentum along x for a single particle
-// currentKy = current momentum along y for a single particle
+// currentKxShifted = current momentum along x for a single particle, shifted to fit in [0,NbrAllowedKx)
+// currentKyShifted = current momentum along y for a single particle, shifted to fit in [0,NbrAllowedKy)
 // currentTotalKx = current total momentum along x
 // currentTotalKy = current total momentum along y
 // pos = position in StateDescription array where to store states
 // return value = position from which new states have to be stored
 
-long FermionOnSquareLatticeNonPeriodicMomentumSpace::GenerateStates(int nbrFermions, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy, long pos)
+long FermionOnSquareLatticeNonPeriodicMomentumSpace::GenerateStates(int nbrFermions, int currentKxShifted, int currentKyShifted, int currentTotalKx, int currentTotalKy, long pos)
 {
-  if (currentKy < 0)
+  if (currentKyShifted < 0)
     {
-      currentKy = this->NbrSiteY - 1;
-      currentKx--;
+      currentKyShifted = this->NbrAllowedKy - 1;
+      currentKxShifted--;
     }
   if (nbrFermions == 0)
     {
-      if ((currentTotalKx == this->KxMomentum) && (currentTotalKy == this->KyMomentum))
+      if (((currentTotalKx % this->NbrSiteX) == this->KxMomentum) && ((currentTotalKy % this->NbrSiteY) == this->KyMomentum))
 	{
 	  this->StateDescription[pos] = 0x0ul;	  
 	  return (pos + 1l);
@@ -234,23 +250,28 @@ long FermionOnSquareLatticeNonPeriodicMomentumSpace::GenerateStates(int nbrFermi
       else	
 	return pos;
     }
-  if (currentKx < 0)
+  if (currentKxShifted < 0)
     return pos;
+  int currentKx = (currentKxShifted + this->MinKx) % this->NbrSiteX;
+  int currentKy = (currentKyShifted + this->MinKy) % this->NbrSiteY;
   if (nbrFermions == 1)
     {
-      for (int j = currentKy; j >= 0; --j)
+      for (int jShifted = currentKyShifted; jShifted >= 0; --jShifted)
 	{
-	  if (((currentKx + currentTotalKx) == this->KxMomentum) && ((j + currentTotalKy) == this->KyMomentum))
+          int j = (jShifted + this->MinKy) % this->NbrSiteY;
+	  if ((((currentKx + currentTotalKx) % this->NbrSiteX) == this->KxMomentum) && (((j + currentTotalKy) % this->NbrSiteY) == this->KyMomentum))
 	    {
 	      this->StateDescription[pos] = 0x1ul << ((currentKx * this->NbrSiteY) + j);
 	      ++pos;
 	    }
 	}
-      for (int i = currentKx - 1; i >= 0; --i)
+      for (int iShifted = currentKxShifted - 1; iShifted >= 0; --iShifted)
 	{
-	  for (int j = this->NbrSiteY - 1; j >= 0; --j)
+          int i = (iShifted + this->MinKx) % this->NbrSiteX;
+	  for (int jShifted = this->NbrAllowedKy - 1; jShifted >= 0; --jShifted)
 	    {
-	      if (((i + currentTotalKx) == this->KxMomentum) && ((j + currentTotalKy) == this->KyMomentum))
+              int j = (jShifted + this->MinKy) % this->NbrSiteY;
+	      if ((((i + currentTotalKx) % this->NbrSiteX) == this->KxMomentum) && (((j + currentTotalKy) % this->NbrSiteY) == this->KyMomentum))
 		{
  		  this->StateDescription[pos] = 0x1ul << ((i * this->NbrSiteY) + j);
  		  ++pos;
@@ -259,59 +280,64 @@ long FermionOnSquareLatticeNonPeriodicMomentumSpace::GenerateStates(int nbrFermi
 	}
       return pos;
     }
-  long TmpPos = this->GenerateStates(nbrFermions - 1, currentKx, currentKy - 1, currentTotalKx + currentKx, currentTotalKy + currentKy, pos);
+  long TmpPos = this->GenerateStates(nbrFermions - 1, currentKxShifted, currentKyShifted - 1, currentTotalKx + currentKx, currentTotalKy + currentKy, pos);
   unsigned long Mask = 0x1ul << ((currentKx * this->NbrSiteY) + currentKy);
   for (; pos < TmpPos; ++pos)
     this->StateDescription[pos] |= Mask;
-  return this->GenerateStates(nbrFermions, currentKx, currentKy - 1, currentTotalKx, currentTotalKy, pos);
+  return this->GenerateStates(nbrFermions, currentKxShifted, currentKyShifted - 1, currentTotalKx, currentTotalKy, pos);
 };
 
 
 // evaluate Hilbert space dimension
 //
 // nbrFermions = number of fermions
-// currentKx = current momentum along x for a single particle
-// currentKy = current momentum along y for a single particle
+// currentKxShifted = current momentum along x for a single particle, shifted to fit in [0,NbrAllowedKx)
+// currentKyShifted = current momentum along y for a single particle, shifted to fit in [0,NbrAllowedKy)
 // currentTotalKx = current total momentum along x
 // currentTotalKy = current total momentum along y
 // return value = Hilbert space dimension
 
-long FermionOnSquareLatticeNonPeriodicMomentumSpace::EvaluateHilbertSpaceDimension(int nbrFermions, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy)
+long FermionOnSquareLatticeNonPeriodicMomentumSpace::EvaluateHilbertSpaceDimension(int nbrFermions, int currentKxShifted, int currentKyShifted, int currentTotalKx, int currentTotalKy)
 {
-  if (currentKy < 0)
+  if (currentKyShifted < 0)
     {
-      currentKy = this->NbrSiteY - 1;
-      currentKx--;
+      currentKyShifted = this->NbrAllowedKy - 1;
+      currentKxShifted--;
     }
   if (nbrFermions == 0)
     {
-      if ((currentTotalKx  == this->KxMomentum) && (currentTotalKy == this->KyMomentum))
+      if (((currentTotalKx % this->NbrSiteX) == this->KxMomentum) && ((currentTotalKy % this->NbrSiteY) == this->KyMomentum))
 	return 1l;
       else	
 	return 0l;
     }
-  if (currentKx < 0)
+  if (currentKxShifted < 0)
     return 0l;
   long Count = 0;
+  int currentKx = (currentKxShifted + this->MinKx) % this->NbrSiteX;
+  int currentKy = (currentKyShifted + this->MinKy) % this->NbrSiteY;
   if (nbrFermions == 1)
     {
-      for (int j = currentKy; j >= 0; --j)
+      for (int jShifted = currentKyShifted; jShifted >= 0; --jShifted)
 	{
-	  if (((currentKx + currentTotalKx) == this->KxMomentum) && ((j + currentTotalKy) == this->KyMomentum))
+          int j = (jShifted + this->MinKy) % this->NbrSiteY;
+	  if ((((currentKx + currentTotalKx) % this->NbrSiteX) == this->KxMomentum) && (((j + currentTotalKy) % this->NbrSiteY) == this->KyMomentum))
 	    ++Count;
 	}
-      for (int i = currentKx - 1; i >= 0; --i)
+      for (int iShifted = currentKxShifted - 1; iShifted >= 0; --iShifted)
 	{
-	  for (int j = this->NbrSiteY - 1; j >= 0; --j)
+          int i = (iShifted + this->MinKx) % this->NbrSiteX;
+	  for (int jShifted = this->NbrAllowedKy - 1; jShifted >= 0; --jShifted)
 	    {
-	      if (((i + currentTotalKx) == this->KxMomentum) && ((j + currentTotalKy) == this->KyMomentum))
+              int j = (jShifted + this->MinKy) % this->NbrSiteY;
+	      if ((((i + currentTotalKx) % this->NbrSiteX) == this->KxMomentum) && (((j + currentTotalKy) % this->NbrSiteY) == this->KyMomentum))
 		++Count;
 	    }
 	}
       return Count;
     }
-  Count += this->EvaluateHilbertSpaceDimension(nbrFermions - 1, currentKx, currentKy - 1, currentTotalKx + currentKx, currentTotalKy + currentKy);
-  Count += this->EvaluateHilbertSpaceDimension(nbrFermions, currentKx, currentKy - 1, currentTotalKx, currentTotalKy);
+  Count += this->EvaluateHilbertSpaceDimension(nbrFermions - 1, currentKxShifted, currentKyShifted - 1, currentTotalKx + currentKx, currentTotalKy + currentKy);
+  Count += this->EvaluateHilbertSpaceDimension(nbrFermions, currentKxShifted, currentKyShifted - 1, currentTotalKx, currentTotalKy);
   return Count;
 }
 

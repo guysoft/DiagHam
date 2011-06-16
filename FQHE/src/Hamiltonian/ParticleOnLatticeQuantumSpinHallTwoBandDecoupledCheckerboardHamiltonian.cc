@@ -142,42 +142,63 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonian::Ev
   for (int kx = 0; kx < this->NbrSiteX; ++kx)
     for (int ky = 0; ky < this->NbrSiteY; ++ky)
       {
-	HermitianMatrix TmpOneBobyHamiltonian(4, true);
+	HermitianMatrix TmpOneBodyHamiltonian(2, true);
 	int Index = (kx * this->NbrSiteY) + ky;
 	Complex B1 = 4.0 * this->NNHoping * Complex (cos (1.0 * M_PI * (((double) kx) + this->GammaX) / ((double) this->NbrSiteX)) * cos (1.0 * M_PI * (((double) ky) + this->GammaY) / ((double) this->NbrSiteY)) * cos(M_PI * 0.25), 
 						     sin (1.0 * M_PI * (((double) kx) + this->GammaX) / ((double) this->NbrSiteX)) * sin (1.0 * M_PI * (((double) ky) + this->GammaY) / ((double) this->NbrSiteY)) * sin(M_PI * 0.25));
 	double d1 = 4.0 * this->SecondNextNNHoping * cos (2.0 * M_PI * (((double) kx) + this->GammaX) / ((double) this->NbrSiteX)) * cos (2.0 * M_PI * (((double) ky) + this->GammaY) / ((double) this->NbrSiteY));
 	double d3 = 2.0 * this->NextNNHoping * (cos (2.0 * M_PI * (((double) kx) + this->GammaX) / ((double) this->NbrSiteX))
 						- cos (2.0 * M_PI * (((double) ky) + this->GammaY) / ((double) this->NbrSiteY)));
-	TmpOneBobyHamiltonian.SetMatrixElement(0, 0, d1 + d3);
-	TmpOneBobyHamiltonian.SetMatrixElement(0, 1, B1);
-	TmpOneBobyHamiltonian.SetMatrixElement(1, 1, d1 - d3);
+	TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d1 + d3);
+	TmpOneBodyHamiltonian.SetMatrixElement(0, 1, B1);
+	TmpOneBodyHamiltonian.SetMatrixElement(1, 1, d1 - d3);
+	ComplexMatrix TmpMatrix(2, 2, true);
+	TmpMatrix[0][0] = 1.0;
+	TmpMatrix[1][1] = 1.0;
+	RealDiagonalMatrix TmpDiag;
+#ifdef __LAPACK__
+	TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
+#else
+	TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
+#endif   
+ 	ComplexMatrix TmpMatrix2(4, 4, true);
+	TmpMatrix2[0][0] = TmpMatrix[0][0];
+	TmpMatrix2[0][1] = TmpMatrix[0][1];
+	TmpMatrix2[2][0] = TmpMatrix[1][0];
+	TmpMatrix2[2][1] = TmpMatrix[1][1];
+	if (this->FlatBand == false)
+	  {
+	    this->OneBodyInteractionFactorsupup[Index] = TmpDiag(0, 0);
+	  }
+	cout << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << " ";
+	
 	B1 = 4.0 * this->NNHoping * Complex (cos (1.0 * M_PI * (((double) -kx) + this->GammaX) / ((double) this->NbrSiteX)) * cos (1.0 * M_PI * (((double) -ky) + this->GammaY) / ((double) this->NbrSiteY)) * cos(M_PI * 0.25), 
 					     sin (1.0 * M_PI * (((double) -kx) + this->GammaX) / ((double) this->NbrSiteX)) * sin (1.0 * M_PI * (((double) -ky) + this->GammaY) / ((double) this->NbrSiteY)) * sin(M_PI * 0.25));
 	d1 = 4.0 * this->SecondNextNNHoping * cos (2.0 * M_PI * (((double) -kx) + this->GammaX) / ((double) this->NbrSiteX)) * cos (2.0 * M_PI * (((double) -ky) + this->GammaY) / ((double) this->NbrSiteY));
 	d3 = 2.0 * this->NextNNHoping * (cos (2.0 * M_PI * (((double) -kx) + this->GammaX) / ((double) this->NbrSiteX))
 						- cos (2.0 * M_PI * (((double) -ky) + this->GammaY) / ((double) this->NbrSiteY)));
-	TmpOneBobyHamiltonian.SetMatrixElement(2, 2, d1 + d3);
-	TmpOneBobyHamiltonian.SetMatrixElement(2, 3, Conj(B1));
-	TmpOneBobyHamiltonian.SetMatrixElement(3, 3, d1 - d3);
-	ComplexMatrix TmpMatrix(4, 4, true);
+	TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d1 + d3);
+	TmpOneBodyHamiltonian.SetMatrixElement(0, 1, Conj(B1));
+	TmpOneBodyHamiltonian.SetMatrixElement(1, 1, d1 - d3);
 	TmpMatrix[0][0] = 1.0;
 	TmpMatrix[1][1] = 1.0;
-	TmpMatrix[2][2] = 1.0;
-	TmpMatrix[3][3] = 1.0;
-	RealDiagonalMatrix TmpDiag;
+	TmpMatrix[0][1] = 0.0;
+	TmpMatrix[1][0] = 0.0;
 #ifdef __LAPACK__
-	TmpOneBobyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
+	TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
 #else
-	TmpOneBobyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
+	TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
 #endif   
-	OneBodyBasis[Index] = TmpMatrix;	
+	TmpMatrix2[1][2] = TmpMatrix[0][0];
+	TmpMatrix2[1][3] = TmpMatrix[0][1];
+	TmpMatrix2[3][2] = TmpMatrix[1][0];
+	TmpMatrix2[3][3] = TmpMatrix[1][1];
+	OneBodyBasis[Index] = TmpMatrix2;	
 	if (this->FlatBand == false)
 	  {
-	    this->OneBodyInteractionFactorsupup[Index] = TmpDiag(0, 0);
-	    this->OneBodyInteractionFactorsdowndown[Index] = TmpDiag(1, 1);
+	    this->OneBodyInteractionFactorsdowndown[Index] = TmpDiag(0, 0);
 	  }
-	cout << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << " " << TmpDiag(2, 2) << " " << TmpDiag(3, 3) << endl;
+	cout << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << endl;
       }
 
  

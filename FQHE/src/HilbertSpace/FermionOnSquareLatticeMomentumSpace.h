@@ -100,12 +100,25 @@ class FermionOnSquareLatticeMomentumSpace : public FermionOnSphere
   // 
   // subsytemSizeX = number of sites along the x direction that belong to the subsytem
   // subsytemSizeY = number of sites along the y direction that belong to the subsytem
+  // subsytemStartX = x momentum marking the beginning of the rectangluar subsystem
+  // subsytemStartY = y momentum marking the beginning of the rectangluar subsystem
   // nbrParticleSector = number of particles that belong to the subsytem 
   // kxSector = Kx momentum sector in which the entanglement matrix has to be evaluated 
   // kySector = Ky momentum sector in which the entanglement matrix has to be evaluated 
   // groundState = reference on the total system ground state
   // return value = density matrix of the subsytem
-  virtual HermitianMatrix EvaluatePartialDensityMatrixMomentumSpace (int subsytemSizeX, int subsytemSizeY, int nbrParticleSector, int kxSector, int kySector, ComplexVector& groundState);
+  virtual HermitianMatrix EvaluatePartialDensityMatrixMomentumSpace (int subsytemSizeX, int subsytemSizeY, int subsytemStartX, int subsytemStartY, int nbrParticleSector, int kxSector, int kySector, ComplexVector& groundState);
+
+  // core part of the evaluation density matrix momentum space partition calculation
+  // 
+  // minIndex = first index to consider in complementary Hilbert space
+  // nbrIndex = number of indices to consider in complementary Hilbert space
+  // complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e part B)
+  // destinationHilbertSpace = pointer to the destination Hilbert space (i.e. part A)
+  // groundState = reference on the total system ground state
+  // densityMatrix = reference on the density matrix where result has to stored
+  // return value = number of components that have been added to the density matrix
+  virtual long EvaluatePartialDensityMatrixMomentumSpaceCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace, ComplexVector& groundState,  HermitianMatrix* densityMatrix);
   
   // evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix is only evaluated in a given momentum sector and fixed number of particles
   // 

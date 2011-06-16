@@ -46,6 +46,14 @@ class FermionOnSquareLatticeNonPeriodicMomentumSpace : public FermionOnSquareLat
 
  protected:
 
+  // number of x momenta allowe for a single particle
+  int NbrAllowedKx;
+  // number of y momenta allowe for a single particle
+  int NbrAllowedKy;
+  // minimal x momentum allowed for a single particle
+  int MinKx;
+  // minimal y momentum allowed for a single particle
+  int MinKy;
 
  public:
 
@@ -54,10 +62,15 @@ class FermionOnSquareLatticeNonPeriodicMomentumSpace : public FermionOnSquareLat
   // nbrFermions = number of fermions
   // nbrSiteX = number of sites in the x direction
   // nbrSiteY = number of sites in the y direction
+  // nbrAllowedKx = number of kx momenta allowed in the space
+  // nbrAllowedKy = number of kx momenta allowed in the space
+  // minKx = minimum value of kx momenta allowed in the space
+  // minKy = minimum value of ky momenta allowed in the space
   // kxMomentum = momentum along the x direction
   // kyMomentum = momentum along the y direction
   // memory = amount of memory granted for precalculations
-  FermionOnSquareLatticeNonPeriodicMomentumSpace (int nbrFermions, int nbrSiteX, int nbrSiteY, int kxMomentum, int kyMomentum, unsigned long memory = 10000000);
+  FermionOnSquareLatticeNonPeriodicMomentumSpace (int nbrFermions, int nbrSiteX, int nbrSiteY, int nbrAllowedKx, int nbrAllowedKy, int minKx, int minKy,
+                                                  int kxMomentum, int kyMomentum, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
@@ -84,23 +97,23 @@ class FermionOnSquareLatticeNonPeriodicMomentumSpace : public FermionOnSquareLat
   // evaluate Hilbert space dimension
   //
   // nbrFermions = number of fermions
-  // currentKx = current momentum along x for a single particle
-  // currentKy = current momentum along y for a single particle
+  // currentKxShifted = current momentum along x for a single particle, shifted to fit in [0,NbrAllowedKx)
+  // currentKyShifted = current momentum along y for a single particle, shifted to fit in [0,NbrAllowedKy)
   // currentTotalKx = current total momentum along x
   // currentTotalKy = current total momentum along y
   // return value = Hilbert space dimension
-  virtual long EvaluateHilbertSpaceDimension(int nbrFermions, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy);
+  virtual long EvaluateHilbertSpaceDimension(int nbrFermions, int currentKxShifted, int currentKyShifted, int currentTotalKx, int currentTotalKy);
 
   // generate all states corresponding to the constraints
   // 
   // nbrFermions = number of fermions
-  // currentKx = current momentum along x for a single particle
-  // currentKy = current momentum along y for a single particle
+  // currentKxShifted = current momentum along x for a single particle, shifted to fit in [0,NbrAllowedKx)
+  // currentKyShifted = current momentum along y for a single particle, shifted to fit in [0,NbrAllowedKy)
   // currentTotalKx = current total momentum along x
   // currentTotalKy = current total momentum along y
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  virtual long GenerateStates(int nbrFermions, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy, long pos);
+  virtual long GenerateStates(int nbrFermions, int currentKxShifted, int currentKyShifted, int currentTotalKx, int currentTotalKy, long pos);
 
 };
 

@@ -53,6 +53,9 @@ class FermionOnSquareLatticeWithSpinMomentumSpace : public FermionOnSphereWithSp
   // momentum along the y direction
   int KyMomentum;
 
+  // flag to indicate that the Hilbert space should preserve Sz
+  bool SzFlag;
+
  public:
 
   // basic constructor
@@ -64,6 +67,17 @@ class FermionOnSquareLatticeWithSpinMomentumSpace : public FermionOnSphereWithSp
   // kyMomentum = momentum along the y direction
   // memory = amount of memory granted for precalculations
   FermionOnSquareLatticeWithSpinMomentumSpace (int nbrFermions, int nbrSiteX, int nbrSiteY, int kxMomentum, int kyMomentum, unsigned long memory = 10000000);
+
+  // basic constructor when Sz is preserved
+  // 
+  // nbrFermions = number of fermions
+  // nbrSpinUp = number of particles with spin up
+  // nbrSiteX = number of sites in the x direction
+  // nbrSiteY = number of sites in the y direction
+  // kxMomentum = momentum along the x direction
+  // kyMomentum = momentum along the y direction
+  // memory = amount of memory granted for precalculations
+  FermionOnSquareLatticeWithSpinMomentumSpace (int nbrFermions, int nbrSpinUp, int nbrSiteX, int nbrSiteY, int kxMomentum, int kyMomentum, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
@@ -104,6 +118,17 @@ class FermionOnSquareLatticeWithSpinMomentumSpace : public FermionOnSphereWithSp
   // return value = Hilbert space dimension
   virtual long EvaluateHilbertSpaceDimension(int nbrFermions, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy);
 
+  // evaluate Hilbert space dimension with a fixed number of fermions with spin up
+  //
+  // nbrFermions = number of fermions
+  // currentKx = current momentum along x for a single particle
+  // currentKy = current momentum along y for a single particle
+  // currentTotalKx = current total momentum along x
+  // currentTotalKy = current total momentum along y
+  // nbrSpinUp = number of fermions with spin up
+  // return value = Hilbert space dimension
+  virtual long EvaluateHilbertSpaceDimension(int nbrFermions, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy, int nbrSpinUp);
+
   // generate all states corresponding to the constraints
   // 
   // nbrFermions = number of fermions
@@ -114,6 +139,18 @@ class FermionOnSquareLatticeWithSpinMomentumSpace : public FermionOnSphereWithSp
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
   virtual long GenerateStates(int nbrFermions, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy, long pos);
+
+  // generate all states corresponding to the constraints
+  // 
+  // nbrFermions = number of fermions
+  // currentKx = current momentum along x for a single particle
+  // currentKy = current momentum along y for a single particle
+  // currentTotalKx = current total momentum along x
+  // currentTotalKy = current total momentum along y
+  // nbrSpinUp = number of fermions with spin up
+  // pos = position in StateDescription array where to store states
+  // return value = position from which new states have to be stored
+  virtual long GenerateStates(int nbrFermions, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy, int nbrSpinUp, long pos);
 
 };
 

@@ -75,7 +75,8 @@ class AbstractArchitectureOperation
       FQHESphereJastrowDivision = 0x8002,
       FQHESphereMonomialsTimesSlaterProjection = 0x8003,
       FQHESphereParticleEntanglementSpectrumOperation = 0x8004,
-      FQHESphereMultipleMonomialsTimesSlaterProjection = 0x805
+      FQHESphereMultipleMonomialsTimesSlaterProjection = 0x8005,
+      FQHETorusParticleEntanglementSpectrumOperation = 0x8006
     };
 
   // destructor
