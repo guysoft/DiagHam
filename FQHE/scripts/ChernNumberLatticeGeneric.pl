@@ -334,7 +334,7 @@ sub AnalyzeChern
     my $RefS2x = $ReferenceVals[2];
     my $RefS2y = $ReferenceVals[3];
     my $LatticeGeometry = $Lx."x".$Ly;
-    my $CommandLine = "$Program -L ".$LatticeDefinition." -C ".$Lx.",".$Ly." -p $N $Interaction -n $NbrCalculate -m $Memory $Options --show-itertime";
+    my $CommandLine = "$Program -L ".$LatticeDefinition." -C ".$Lx.",".$Ly." -p $N $Interaction -q ".$q." -n $NbrCalculate -m $Memory $Options --show-itertime";
 
     TestVectors ($BaseName, $RefS1x, $RefS1y, $Degeneracy, $CalculateVectors, $CommandLine, \@Multiplet, $HardCore, $u, $LatticeGeometry);
     TestVectors ($BaseName, $RefS2x, $RefS2y, $Degeneracy, $CalculateVectors, $CommandLine, \@Multiplet, $HardCore, $u, $LatticeGeometry);

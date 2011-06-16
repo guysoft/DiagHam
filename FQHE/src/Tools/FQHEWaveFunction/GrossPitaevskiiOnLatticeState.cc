@@ -62,6 +62,7 @@ using std::ostream;
 // oneParticleTerms = file describing single particle terms
 // twoParticleTerms = file describing two-particle terms
 // wavefunction = initial wavefunction
+// randomGenerator = pointer to an external random number generator
 GrossPitaevskiiOnLatticeState::GrossPitaevskiiOnLatticeState(int nbrStates, const char* oneParticleTerms, const char* twoParticleTerms, LatticePhases *latticeGeometry, ComplexVector *wavefunction, AbstractRandomNumberGenerator *randomGenerator)
 {
   if (oneParticleTerms!=NULL)

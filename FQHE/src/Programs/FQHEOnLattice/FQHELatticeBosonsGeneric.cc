@@ -131,6 +131,7 @@ int main(int argc, char** argv)
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
   (*MiscGroup) += new BooleanOption('\n', "optimize-condensate", "optimize a trial condensate wavefunction instead of diagonalizing");
+  (*MiscGroup) += new SingleStringOption('\n', "init-parameters", "file with initial parameters");
   (*MiscGroup) += new SingleDoubleOption('\n', "tolerance", "tolerance for variational parameters in condensate",1e-6);
   (*MiscGroup) += new SingleStringOption('\n', "energy-expectation", "name of the file containing the state vector, whose energy expectation value shall be calculated");
   (*MiscGroup) += new SingleStringOption  ('o', "output-file", "redirect output to this file",NULL);
@@ -377,20 +378,50 @@ int main(int argc, char** argv)
 	    }
 	}
       if (Manager.GetBoolean("optimize-condensate"))
-	{
-	  char *ParameterName = new char[strlen(EigenvectorName)+10];
-	  sprintf(ParameterName,"%s.cond.par",EigenvectorName);
-	  sprintf(EigenvectorName,"%s.cond.vec",EigenvectorName);
-	  GutzwillerOnLatticeWaveFunction Condensate(NbrBosons, HardCore, Space);
+	{	  
+	  int Counter=0;
+	  char* ParameterName = GetUniqueFileName(EigenvectorName,Counter,".cond.par");
+	  char* WaveFunctionName = GetUniqueFileName(EigenvectorName,Counter,".cond.vec");
+	  RealVector *InitialParameters = NULL;
+	  if ((Manager.GetString("init-parameters")!=NULL))
+	    {
+	      InitialParameters = new RealVector;
+	      if (InitialParameters->ReadVector(Manager.GetString("parameters"))==false)
+		{
+		  cout << "Could not read vector of initial parameters" <<Manager.GetString("parameters")<<endl;
+		  exit(1);
+		}
+	    }
+	  GutzwillerOnLatticeWaveFunction Condensate(NbrBosons, HardCore, Space, InitialParameters);
 	  Condensate.SetHamiltonian(Hamiltonian);
 	  Condensate.SetArchitecture(Architecture.GetArchitecture());
 	  Condensate.SetToRandomPhase();
 	  int MaxEval = NbrSites*(NbrBosons+1)*2*Manager.GetInteger("nbr-iter");
 	  double Energy=Condensate.Optimize(Manager.GetDouble("tolerance"), MaxEval);
-	  Condensate.GetLastWaveFunction().WriteVector(EigenvectorName);
+	  Condensate.GetLastWaveFunction().WriteVector(WaveFunctionName);
 	  Condensate.GetVariationalParameters().WriteVector(ParameterName);
-	  cout << "Found condensate state with energy: "<<Energy<<endl<<EigenvectorName<<endl;
+	  cout << "Found condensate state with energy: "<<Energy<<endl<<WaveFunctionName<<endl;
+	  ofstream File;
+	  ifstream TestFile;
+	  char *LogFileName = ReplaceExtensionToFileName(OutputName,"dat","cond.log");
+	  TestFile.open(LogFileName, ios::in);
+	  if (TestFile.is_open())
+	    {
+	      TestFile.close();
+	      File.open(LogFileName, ios::app );
+	    }
+	  else
+	    {
+	      File.open(LogFileName, ios::out );
+	      File << "#Index\tE_tot\tParameterFile"<<endl;
+	    }
+	  File << Counter << "\t" << Energy << "\t"<<ParameterName<<endl;
+	  File.close();
+	  if (InitialParameters!=NULL)
+	    delete InitialParameters;
 	  delete [] ParameterName;
+	  delete [] LogFileName;
+	  delete [] WaveFunctionName;
 	}
       else
 	{

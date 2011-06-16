@@ -51,7 +51,7 @@ using std::endl;
 // hardCore = flag indicating whether double occupations may occur or whether hardcore particles are present
 // space = target-space of many-body state
 // variationalParameters = initial set of trial parameters
-GutzwillerOnLatticeWaveFunction::GutzwillerOnLatticeWaveFunction(int nbrParticles, bool hardCore, ParticleOnLattice *space, RealVector *variationalParameters)
+GutzwillerOnLatticeWaveFunction::GutzwillerOnLatticeWaveFunction(int nbrParticles, bool hardCore, ParticleOnLattice *space, RealVector *variationalParameters, AbstractRandomNumberGenerator *randomGenerator)
 {
   this->NbrParticles = nbrParticles;
   this->Space = space;
@@ -83,9 +83,19 @@ GutzwillerOnLatticeWaveFunction::GutzwillerOnLatticeWaveFunction(int nbrParticle
     }
   else
     this->VariationalParameters = RealVector(NbrVariationalParameters);
-  timeval RandomTime;
-  gettimeofday (&(RandomTime), 0);
-  this->RandomNumbers = new NumRecRandomGenerator(RandomTime.tv_sec);
+  if (randomGenerator!=NULL)
+    {
+      this->RandomNumbers = randomGenerator;
+      ExternalGenerator=true;
+    }
+  else
+    {
+      timeval RandomTime;
+      gettimeofday (&(RandomTime), 0);
+      this->RandomNumbers = new NumRecRandomGenerator(RandomTime.tv_sec);
+      ExternalGenerator=false;
+    }
+    
   this->Dim = Space->GetHilbertSpaceDimension();
   this->Hamiltonian=NULL;
   this->Architecture=NULL;

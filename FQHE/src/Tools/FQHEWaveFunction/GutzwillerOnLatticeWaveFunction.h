@@ -85,6 +85,9 @@ class GutzwillerOnLatticeWaveFunction
   // Architecture
   AbstractArchitecture *Architecture;
 
+  // flag for external generator (no clean-up)
+  bool ExternalGenerator;
+  
   // random number generator
   AbstractRandomNumberGenerator *RandomNumbers;
 
@@ -94,7 +97,7 @@ class GutzwillerOnLatticeWaveFunction
   // hardCore = flag indicating whether double occupations may occur or whether hardcore particles are present
   // space = target-space of many-body state
   // variationalParameters = initial set of trial parameters
-  GutzwillerOnLatticeWaveFunction(int nbrParticles, bool hardCore, ParticleOnLattice *space, RealVector *variationalParameters=NULL);
+  GutzwillerOnLatticeWaveFunction(int nbrParticles, bool hardCore, ParticleOnLattice *space, RealVector *variationalParameters=NULL, AbstractRandomNumberGenerator *randomGenerator=NULL);
 
   // destructor
   ~GutzwillerOnLatticeWaveFunction();
