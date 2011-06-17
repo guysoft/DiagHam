@@ -68,11 +68,12 @@ class ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian : public Abstrac
   // landauLevel = landauLevel to be simulated
   // nbrPseudopotentials = number of pseudopotentials indicated
   // pseudopotentials = pseudopotential coefficients
+  // noWignerEnergy = do not consider the energy contribution from the Wigner crystal 
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
   ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian(ParticleOnTorusWithMagneticTranslations* particles, int nbrParticles, int maxMomentum, int xMomentum,
-							    double ratio, bool haveCoulomb, int landauLevel, int nbrPseudopotentials, double* pseudopotentials, AbstractArchitecture* architecture, long memory = -1, char* precalculationFileName = 0);
+							    double ratio, bool haveCoulomb, int landauLevel, int nbrPseudopotentials, double* pseudopotentials, bool noWignerEnergy, AbstractArchitecture* architecture, long memory = -1, char* precalculationFileName = 0);
 
   // destructor
   //

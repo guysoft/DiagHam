@@ -70,13 +70,14 @@ double MySqrArg;
 // landauLevel = landauLevel to be simulated (GaAs (>=0) or graphene (<0))
 // nbrPseudopotentials = number of pseudopotentials indicated
 // pseudopotentials = pseudopotential coefficients
+// noWignerEnergy = do not consider the energy contribution from the Wigner crystal 
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
 ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian(ParticleOnTorusWithMagneticTranslations* particles, 
 														     int nbrParticles, int maxMomentum, 
-														     int xMomentum, double ratio, bool haveCoulomb, int landauLevel, int nbrPseudopotentials, double* pseudopotentials,
+														     int xMomentum, double ratio, bool haveCoulomb, int landauLevel, int nbrPseudopotentials, double* pseudopotentials, bool noWignerEnergy,
 														     AbstractArchitecture* architecture, long memory, 
 														     char* precalculationFileName)
 {
@@ -117,10 +118,11 @@ ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::ParticleOnTorusCoulom
 	  this->FormFactor=0.5*(LaguerrePolynomial(abs(this->LandauLevel))+LaguerrePolynomial(abs(this->LandauLevel)-1));
 	}
     }
-  cout << "FormFactor="<<this->FormFactor<<endl;
-  if (particles->GetHilbertSpaceDimension()>0)
+  cout << "FormFactor=" << this->FormFactor << endl;
+  if ((particles->GetHilbertSpaceDimension() > 0) && (noWignerEnergy == false))
     this->WignerEnergy = this->EvaluateWignerCrystalEnergy() / 2.0;
-  else this->WignerEnergy = 0.0;
+  else 
+    this->WignerEnergy = 0.0;
   this->Architecture = architecture;
   long MinIndex;
   long MaxIndex;
