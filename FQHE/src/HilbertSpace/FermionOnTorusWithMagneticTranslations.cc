@@ -76,11 +76,11 @@ FermionOnTorusWithMagneticTranslations::FermionOnTorusWithMagneticTranslations (
   this->StateShift = this->MaxMomentum / this->MomentumModulo;
   this->MomentumIncrement = (this->NbrFermions * this->StateShift) % this->MomentumModulo;
   this->ComplementaryStateShift = this->MaxMomentum - this->StateShift;
-  this->MomentumMask = ((unsigned long) 1);
+  this->MomentumMask = 0x1ul;
   for (int i = 1; i < this->StateShift; ++i)
     {
       this->MomentumMask <<= 1;
-      this->MomentumMask |= ((unsigned long) 1);
+      this->MomentumMask |= 0x1ul;
     }
 
   this->MaximumSignLookUp = 16;
@@ -292,7 +292,7 @@ int FermionOnTorusWithMagneticTranslations::GetYMomentumValue(int index)
   int Momentum = 0;
   for (int i = 0; i <= StateMaxMomentum; ++i)
     {
-      Momentum += ((State >> i ) & ((unsigned long) 1)) * i;
+      Momentum += ((State >> i ) & 0x1ul) * i;
     }
   return (Momentum % this->MomentumModulo);
 }
@@ -332,8 +332,8 @@ int FermionOnTorusWithMagneticTranslations::AdAdAA (int index, int m1, int m2, i
 {
   int StateMaxMomentum = this->StateMaxMomentum[index];
   unsigned long State = this->StateDescription[index];
-  if ((n1 > StateMaxMomentum) || (n2 > StateMaxMomentum) || ((State & (((unsigned long) 1) << n1)) == 0) || 
-      ((State & (((unsigned long) 1) << n2)) == 0) || (n1 == n2) || (m1 == m2))
+  if ((n1 > StateMaxMomentum) || (n2 > StateMaxMomentum) || ((State & (0x1ul << n1)) == 0) || 
+      ((State & (0x1ul << n2)) == 0) || (n1 == n2) || (m1 == m2))
     {
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
@@ -346,7 +346,7 @@ int FermionOnTorusWithMagneticTranslations::AdAdAA (int index, int m1, int m2, i
   coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 32)) & this->SignLookUpTableMask[n2 + 32]];
   coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 48)) & this->SignLookUpTableMask[n2 + 48]];
 #endif
-  TmpState &= ~(((unsigned long) 0x1) << n2);
+  TmpState &= ~(0x1ul << n2);
   if (NewMaxMomentum == n2)
     while ((TmpState >> NewMaxMomentum) == 0)
       --NewMaxMomentum;
@@ -356,11 +356,18 @@ int FermionOnTorusWithMagneticTranslations::AdAdAA (int index, int m1, int m2, i
   coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 32)) & this->SignLookUpTableMask[n1 + 32]];
   coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
 #endif
-  TmpState &= ~(((unsigned long) 0x1) << n1);
-  if (NewMaxMomentum == n1)
-    while ((TmpState >> NewMaxMomentum) == 0)
-      --NewMaxMomentum;
-  if ((TmpState & (((unsigned long) 1) << m2))!= 0)
+  TmpState &= ~(0x1ul << n1);
+  if (TmpState == 0x0ul)
+    {
+      NewMaxMomentum = 0;
+    }
+  else
+    {
+      if (NewMaxMomentum == n1)
+	while ((TmpState >> NewMaxMomentum) == 0)
+	  --NewMaxMomentum;
+    }
+  if ((TmpState & (0x1ul << m2))!= 0)
     {
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
@@ -378,8 +385,8 @@ int FermionOnTorusWithMagneticTranslations::AdAdAA (int index, int m1, int m2, i
       coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 48)) & this->SignLookUpTableMask[m2 + 48]];
 #endif
     }
-  TmpState |= (((unsigned long) 0x1) << m2);
-  if ((TmpState & (((unsigned long) 1) << m1))!= 0)
+  TmpState |= (0x1ul << m2);
+  if ((TmpState & (0x1ul << m1))!= 0)
     {
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
@@ -397,7 +404,7 @@ int FermionOnTorusWithMagneticTranslations::AdAdAA (int index, int m1, int m2, i
       coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
 #endif
     }
-  TmpState |= (((unsigned long) 0x1) << m1);
+  TmpState |= (0x1ul << m1);
   TmpState = this->FindCanonicalForm(TmpState, NewMaxMomentum, nbrTranslation);
   if (this->TestXMomentumConstraint(TmpState, NewMaxMomentum) == false)
     {
@@ -406,7 +413,7 @@ int FermionOnTorusWithMagneticTranslations::AdAdAA (int index, int m1, int m2, i
     }
   int TmpIndex = this->FindStateIndex(TmpState, NewMaxMomentum);
   coefficient *= this->RescalingFactors[this->NbrStateInOrbit[index]][this->NbrStateInOrbit[TmpIndex]];
-  coefficient *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> nbrTranslation) & ((unsigned long) 0x1))));
+  coefficient *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> nbrTranslation) & 0x1ul)));
   nbrTranslation *= this->StateShift;
   return TmpIndex;
 }
@@ -421,7 +428,7 @@ double FermionOnTorusWithMagneticTranslations::AdA (int index, int m)
 {
   if (this->StateMaxMomentum[index] < m)
     return 0.0;
-  if ((this->StateDescription[index] & (((unsigned long) 0x1) << m)) == 0)
+  if ((this->StateDescription[index] & (0x1ul << m)) == 0)
     return 0.0;
   else
     return 1.0;
@@ -465,7 +472,7 @@ unsigned long FermionOnTorusWithMagneticTranslations::FindCanonicalForm(unsigned
   if (nbrTranslation != 0)
     {
       maxMomentum = this->MaxMomentum;
-      stateDescription = ((unsigned long) 1) << this->MaxMomentum;
+      stateDescription = 0x1ul << this->MaxMomentum;
       while ((CanonicalState & stateDescription) ==0)      
 	{
 	  --maxMomentum;
@@ -619,7 +626,7 @@ unsigned long FermionOnTorusWithMagneticTranslations::FindCanonicalFormAndTestXM
   if (nbrTranslation != 0)
     {
       maxMomentum = this->MaxMomentum;
-      stateDescription = ((unsigned long) 1) << this->MaxMomentum;
+      stateDescription = 0x1ul << this->MaxMomentum;
       while ((CanonicalState & stateDescription) ==0)      
 	{
 	  --maxMomentum;
@@ -673,7 +680,7 @@ ostream& FermionOnTorusWithMagneticTranslations::PrintState (ostream& Str, int s
 {
   unsigned long TmpState = this->StateDescription[state];
   for (int i = 0; i < this->MaxMomentum; ++i)
-    Str << ((TmpState >> i) & ((unsigned long) 0x1)) << " ";
+    Str << ((TmpState >> i) & 0x1ul) << " ";
 //   Str << "  (" << hex << this->ReorderingSign[state] << dec << ")";
 //   Str << " " << this->FindStateIndex(this->StateDescription[state], this->StateMaxMomentum[state]);
 //   if (this->FindStateIndex(this->StateDescription[state], this->StateMaxMomentum[state]) != state)
@@ -834,14 +841,14 @@ int FermionOnTorusWithMagneticTranslations::GenerateStates(long tmpDimension)
 			    }
 			  if (TmpNbrParticle & 1)
 			    {
-			      TmpReorderingSign |= (((TmpReorderingSign << 1) & (((unsigned long) 0x1) << k))) ^ (((unsigned long) 0x1) << k);
+			      TmpReorderingSign |= (((TmpReorderingSign << 1) & (0x1ul << k))) ^ (0x1ul << k);
 			      // cout << "odd number translated: signs: "<<convBase(TmpReorderingSign,2)<<endl;
 
 			      ++TmpSignature;
 			    }
 			  else
 			    {
-			      TmpReorderingSign |= ((TmpReorderingSign << 1) & (((unsigned long) 0x1) << k));
+			      TmpReorderingSign |= ((TmpReorderingSign << 1) & (0x1ul << k));
 			      // cout << "even number translated: signs: "<<convBase(TmpReorderingSign,2)<<endl;
 			    }			  
 			}
@@ -881,7 +888,7 @@ int FermionOnTorusWithMagneticTranslations::RawGenerateStates(int nbrFermions, i
 	i += this->MaxMomentum;
       for (; i <= currentMaxMomentum; i += this->MaxMomentum)
 	{
-	  this->StateDescription[pos] = ((unsigned long) 1) << i;
+	  this->StateDescription[pos] = 0x1ul << i;
 	  this->StateMaxMomentum[pos] = maxMomentum;
 	  ++pos;
 	}
@@ -889,7 +896,7 @@ int FermionOnTorusWithMagneticTranslations::RawGenerateStates(int nbrFermions, i
     }
   int ReducedCurrentMaxMomentum = currentMaxMomentum - 1;
   int TmpPos = this->RawGenerateStates(nbrFermions - 1, maxMomentum, ReducedCurrentMaxMomentum, pos, currentYMomentum + currentMaxMomentum);
-  unsigned long Mask = ((unsigned long) 1) << currentMaxMomentum;
+  unsigned long Mask = 0x1ul << currentMaxMomentum;
   for (int i = pos; i < TmpPos; i++)
     this->StateDescription[i] |= Mask;
   if (maxMomentum == currentMaxMomentum)
