@@ -158,10 +158,7 @@ int main(int argc, char** argv)
   
   int  L = InitialLz;
 
-  
-  if ((abs(Max) & 1) != (InitialLz & 1))
-    L += 1;
-  
+    
   if ((abs(Max) & 1) != (InitialLz & 1)) //since total Lz goes in steps of 2 make sure we start at the right parity.
     L += 1;
   
@@ -176,6 +173,14 @@ int main(int argc, char** argv)
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	  Memory = Architecture.GetArchitecture()->GetLocalMemory();
+      
+      for ( int i = 0 ; i < Space->GetHilbertSpaceDimension() ; i++ ) 
+	{
+	  cout << i << ": " ;
+	  Space->PrintState(cout, i);
+	  cout << endl;
+	}
+      
       
       // Create data structure for the Hamiltonian.
       AbstractQHEOnSphereHamiltonian* Hamiltonian = 0;

@@ -136,11 +136,7 @@ ParticleOnSphereTwoLandauLevelDeltaHamiltonian::ParticleOnSphereTwoLandauLevelDe
   this->OneBodyInteractionFactorsdowndown = 0;
   this->OneBodyInteractionFactorsupdown = 0;    
   this->L2Hamiltonian = 0;
-  this->S2Hamiltonian = 0;
-  this->NbrIntraSectorSums = 0;
-  this->NbrInterSectorSums = 0;
-  this->M1IntraValue = 0;
-  this->M1InterValue = 0;  
+  this->S2Hamiltonian = 0;  
       
     
   if (precalculationFileName == 0)
@@ -1524,7 +1520,7 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
   this->OneBodyInteractionFactorsUpUp = new double [this->NbrOneBodyInteractionFactorsUpUp];
   this->OneBodyInteractionFactorsUpDown = 0;
   this->OneBodyInteractionFactorsDownUp = 0;
-  this->OneBodyInteractionFactorsDownDown = new double [this->NbrOneBodyInteractionFactorsDownDown]; ;
+  this->OneBodyInteractionFactorsDownDown = new double [this->NbrOneBodyInteractionFactorsDownDown]; 
   this->OneBodyMValuesUpUp = new int[this->NbrOneBodyInteractionFactorsUpUp];
   this->OneBodyMValuesUpDown = 0;
   this->OneBodyMValuesDownUp = 0;

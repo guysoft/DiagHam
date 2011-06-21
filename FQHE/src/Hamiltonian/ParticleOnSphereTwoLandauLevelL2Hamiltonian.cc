@@ -68,14 +68,22 @@ ParticleOnSphereTwoLandauLevelL2Hamiltonian::ParticleOnSphereTwoLandauLevelL2Ham
 									     char* precalculationFileName)
 {
   this->Particles = particles;
-  this->LzMax = lzmax;
+  this->LzMax = lzmax + 2;
+  this->LzMaxUp = this->LzMax;
+  this->LzMaxDown = this->LzMax - 1;
+  this->LzFermionDownShift = 0;
+  this->LzFermionUpShift = 0;   
+  if ( this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic ) 
+    {
+      this->LzFermionDownShift = 1;      
+    }
+  
   this->TotalLz = totalLz;
-  this->NbrLzValue = this->LzMax + 1;
+  this->NbrLzValue = this->LzMax + 1 ;
   this->NbrParticles = nbrParticles;
   this->FastMultiplicationFlag = false;
   this->OneBodyTermFlag = true;
-  this->L2Factor = l2Factor;
-  this->L2Hamiltonian = 0;
+  this->L2Factor = l2Factor;  
   this->Architecture = architecture;
   this->EvaluateInteractionFactors();
   this->HamiltonianShift = 0.25 * this->L2Factor * ((double) (this->TotalLz * this->TotalLz));
@@ -83,10 +91,18 @@ ParticleOnSphereTwoLandauLevelL2Hamiltonian::ParticleOnSphereTwoLandauLevelL2Ham
   long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex;  
-  this->DiskStorageFlag = onDiskCacheFlag;
+  this->DiskStorageFlag = onDiskCacheFlag;  
   this->Memory = memory;
+  this->OneBodyInteractionFactorsupup = 0;
+  this->OneBodyInteractionFactorsdowndown = 0;
+  this->OneBodyInteractionFactorsupdown = 0;    
+  this->L2Hamiltonian = 0;
+  this->S2Hamiltonian = 0;
   this->NbrIntraSectorSums = 0;
   this->NbrInterSectorSums = 0;
+  this->M1IntraValue = 0;
+  this->M1InterValue = 0;
+  
   if (precalculationFileName == 0)
     {
       if (memory > 0)
@@ -223,7 +239,631 @@ List<Matrix*> ParticleOnSphereTwoLandauLevelL2Hamiltonian::RightInteractionOpera
 
 void ParticleOnSphereTwoLandauLevelL2Hamiltonian::EvaluateInteractionFactors()
 {
-  RealMatrix CoefficientsDownDown (this->LzMax + 1, this->LzMax + 1);
+  //set these to 0 so old method not used.
+  this->NbrIntraSectorSums = 0;
+  this->NbrInterSectorSums = 0;
+  this->M1IntraValue = 0;
+  this->M2InterValue = 0;
+
+  //if ( this->Particles->GetParticleStatistic() == ParticleOnSphere::BosonicStatistic ) 
+    //{
+      // Set the number of possible sums for each sector. 
+      this->NbrUpUpSectorSums = 2 * this->LzMaxUp + 1; // Ranges from 0 to 2*LzMax for given sector.
+      this->NbrDownDownSectorSums = 2 * this->LzMaxDown + 1 - 2; // the -2 is because a sum of 0 or 1 is not possible in the LLL.       
+      this->NbrUpDownSectorSums = this->LzMaxUp + this->LzMaxDown; // goes from 1 to LzMaxUp + LzMaxDown
+      
+      //Allocate space for sums and set counts to zero.
+      this->NbrUpUpSectorIndicesPerSum = new int[this->NbrUpUpSectorSums];
+      this->NbrUpDownSectorIndicesPerSum = new int [this->NbrUpDownSectorSums];
+      this->NbrDownDownSectorIndicesPerSum = new int [this->NbrDownDownSectorSums];
+      for (int i = 0; i < this->NbrUpUpSectorSums; ++i)
+	this->NbrUpUpSectorIndicesPerSum[i] = 0;
+      for (int i = 0; i < this->NbrUpDownSectorSums; ++i)
+	this->NbrUpDownSectorIndicesPerSum[i] = 0;
+      for (int i = 0; i < this->NbrDownDownSectorSums; ++i)
+	this->NbrDownDownSectorIndicesPerSum[i] = 0;
+
+      // Count number of combinations that sum to each.
+      for (int m1 = 0; m1 <= this->LzMaxUp; ++m1)
+	for (int m2 = 0; m2 <= this->LzMaxUp; ++m2)
+	  this->NbrUpUpSectorIndicesPerSum[m1 + m2]++;   
+      for (int m1 = 0; m1 <= this->LzMaxUp; ++m1)
+	for (int m2 = 1; m2 <= this->LzMaxDown; ++m2)
+	  this->NbrUpDownSectorIndicesPerSum[m1 + m2 - 1]++;
+      for (int m1 = 1; m1 <= this->LzMaxDown; ++m1)
+	for (int m2 = 1; m2 <= this->LzMaxDown; ++m2)
+	  this->NbrDownDownSectorIndicesPerSum[m1 + m2 - 2]++;
+
+      // Allocate sapce for indices and reset counters to 0 so can be used as indices.
+      this->UpUpSectorIndicesPerSum = new int* [this->NbrUpUpSectorSums];
+      for (int i = 0; i < this->NbrUpUpSectorSums; ++i)
+	if (this->NbrUpUpSectorIndicesPerSum[i] > 0)
+	{
+	  this->UpUpSectorIndicesPerSum[i] = new int[2 * this->NbrUpUpSectorIndicesPerSum[i]];      
+	  this->NbrUpUpSectorIndicesPerSum[i] = 0;
+	}
+      this->UpDownSectorIndicesPerSum = new int* [this->NbrUpDownSectorSums];
+      for (int i = 0; i < this->NbrUpDownSectorSums; ++i)
+      if (this->NbrUpDownSectorIndicesPerSum[i] > 0)
+      {
+	  this->UpDownSectorIndicesPerSum[i] = new int[2 * this->NbrUpDownSectorIndicesPerSum[i]];      
+	  this->NbrUpDownSectorIndicesPerSum[i] = 0;
+      }
+      this->DownDownSectorIndicesPerSum = new int* [this->NbrDownDownSectorSums];
+      for (int i = 0; i < this->NbrDownDownSectorSums; ++i)
+	if (this->NbrDownDownSectorIndicesPerSum[i] > 0)
+	{
+	  this->DownDownSectorIndicesPerSum[i] = new int[2 * this->NbrDownDownSectorIndicesPerSum[i]];      
+	  this->NbrDownDownSectorIndicesPerSum[i] = 0;
+	}
+
+      // set the indices.
+      for (int m1 = 0; m1 <= this->LzMaxUp; ++m1)
+	for (int m2 = 0; m2 <= this->LzMaxUp; ++m2)
+	  {
+	    this->UpUpSectorIndicesPerSum[(m1 + m2)][this->NbrUpUpSectorIndicesPerSum[(m1 + m2)] << 1] = m1;
+	    this->UpUpSectorIndicesPerSum[(m1 + m2)][1 + (this->NbrUpUpSectorIndicesPerSum[(m1 + m2)] << 1)] = m2;
+	    ++this->NbrUpUpSectorIndicesPerSum[(m1 + m2)];
+	  }
+      for (int m1 = 0; m1 <= this->LzMaxUp; ++m1)
+	for (int m2 = 1; m2 <= this->LzMaxDown; ++m2)
+	  {
+	    this->UpDownSectorIndicesPerSum[m1 + m2 - 1][this->NbrUpDownSectorIndicesPerSum[(m1 + m2 - 1)] << 1] = m1;
+	    this->UpDownSectorIndicesPerSum[m1 + m2 - 1][1 + (this->NbrUpDownSectorIndicesPerSum[(m1 + m2 - 1)] << 1)] = m2;
+	    ++this->NbrUpDownSectorIndicesPerSum[(m1 + m2 - 1)];
+	  }
+      for (int m1 = 1; m1 <= this->LzMaxDown; ++m1)
+	for (int m2 = 1; m2 <= this->LzMaxDown; ++m2)
+	  {
+	    this->DownDownSectorIndicesPerSum[m1 + m2 - 2][this->NbrDownDownSectorIndicesPerSum[m1 + m2 - 2] << 1] = m1;
+	    this->DownDownSectorIndicesPerSum[m1 + m2 - 2][1 + (this->NbrDownDownSectorIndicesPerSum[m1 + m2 - 2] << 1)] = m2;
+	    ++this->NbrDownDownSectorIndicesPerSum[m1 + m2 - 2];
+	  }		      
+    /*} 
+  else if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic ) 
+    {
+      // Set the number of possible sums for each sector. 
+      this->NbrUpUpSectorSums     = 2 * this->LzMaxUp - 1; // Ranges from 1 to 2*LzMaxUp-1 for given sector.
+      this->NbrDownDownSectorSums = 2 * this->LzMaxDown - 1 - 2; // (Ranges from 3 to LzMaxDown + LzMaxDown - 1)  the -2 is because a sum of 0 or 1 is not possible in the LLL. 
+      this->NbrUpDownSectorSums   = this->LzMaxUp + this->LzMaxDown ; // goes from 1 to LzMaxUp + LzMaxDown
+      
+      //Allocate space for sums and set counts to zero.
+      this->NbrUpUpSectorIndicesPerSum = new int[this->NbrUpUpSectorSums];
+      this->NbrUpDownSectorIndicesPerSum = new int [this->NbrUpDownSectorSums];
+      this->NbrDownDownSectorIndicesPerSum = new int [this->NbrDownDownSectorSums];
+      for (int i = 0; i < this->NbrUpUpSectorSums; ++i)
+	this->NbrUpUpSectorIndicesPerSum[i] = 0;
+      for (int i = 0; i < this->NbrUpDownSectorSums; ++i)
+	this->NbrUpDownSectorIndicesPerSum[i] = 0;
+      for (int i = 0; i < this->NbrDownDownSectorSums; ++i)
+	this->NbrDownDownSectorIndicesPerSum[i] = 0;
+
+      // Count number of combinations that sum to each.
+      for (int m1 = 0; m1 <= this->LzMaxUp; ++m1)
+	for (int m2 = 0; m2 <= this->LzMaxUp; ++m2)
+	  if ( m1 != m2 ) this->NbrUpUpSectorIndicesPerSum[m1 + m2 - 1]++;   
+      for (int m1 = 0; m1 <= this->LzMaxUp; ++m1)
+	for (int m2 = 1; m2 <= this->LzMaxDown; ++m2)
+	  this->NbrUpDownSectorIndicesPerSum[m1 + m2 - 1]++;
+      for (int m1 = 1; m1 <= this->LzMaxDown; ++m1)
+	for (int m2 = 1; m2 <= this->LzMaxDown; ++m2)
+	  if ( m1 != m2 ) this->NbrDownDownSectorIndicesPerSum[m1 + m2 - 3]++;
+
+      // Allocate sapce for indices and reset counters to 0 so can be used as indices.
+      this->UpUpSectorIndicesPerSum = new int* [this->NbrUpUpSectorSums];
+      for (int i = 0; i < this->NbrUpUpSectorSums; ++i)
+	if (this->NbrUpUpSectorIndicesPerSum[i] > 0)
+	  {
+	    this->UpUpSectorIndicesPerSum[i] = new int[2 * this->NbrUpUpSectorIndicesPerSum[i]];      
+	    this->NbrUpUpSectorIndicesPerSum[i] = 0;
+	  } 
+	else 
+	  {
+	    this->UpUpSectorIndicesPerSum[i] = 0;
+	  }
+      this->UpDownSectorIndicesPerSum = new int* [this->NbrUpDownSectorSums];
+      for (int i = 0; i < this->NbrUpDownSectorSums; ++i)
+        if (this->NbrUpDownSectorIndicesPerSum[i] > 0)
+          {
+	    this->UpDownSectorIndicesPerSum[i] = new int[2 * this->NbrUpDownSectorIndicesPerSum[i]];      
+	    this->NbrUpDownSectorIndicesPerSum[i] = 0;
+          }
+	else 
+	  {
+	    this->UpDownSectorIndicesPerSum[i] = 0;
+	  }
+      this->DownDownSectorIndicesPerSum = new int* [this->NbrDownDownSectorSums];
+      for (int i = 0; i < this->NbrDownDownSectorSums; ++i)
+	if (this->NbrDownDownSectorIndicesPerSum[i] > 0)
+	  {
+	    this->DownDownSectorIndicesPerSum[i] = new int[2 * this->NbrDownDownSectorIndicesPerSum[i]];      
+	    this->NbrDownDownSectorIndicesPerSum[i] = 0;
+	  }
+	else 
+	  {
+	    this->DownDownSectorIndicesPerSum[i] = 0;
+	  }  
+	
+
+      // set the indices.
+      for (int m1 = 0; m1 <= this->LzMaxUp; ++m1)
+	for (int m2 = 0; m2 <= this->LzMaxUp; ++m2)
+	  {
+	    if ( m1 != m2 ) 
+	      {
+		this->UpUpSectorIndicesPerSum[m1 + m2 - 1][this->NbrUpUpSectorIndicesPerSum[m1 + m2 - 1] << 1] = m1;
+		this->UpUpSectorIndicesPerSum[m1 + m2 - 1][(this->NbrUpUpSectorIndicesPerSum[m1 + m2 - 1] << 1) + 1] = m2;
+		++this->NbrUpUpSectorIndicesPerSum[m1 + m2 - 1];
+	      }
+	  }
+	  
+      for (int m1 = 0; m1 <= this->LzMaxUp; ++m1)
+	for (int m2 = 1; m2 <= this->LzMaxDown; ++m2)
+	  {
+	    this->UpDownSectorIndicesPerSum[m1 + m2 - 1][this->NbrUpDownSectorIndicesPerSum[(m1 + m2 - 1)] << 1] = m1;
+	    this->UpDownSectorIndicesPerSum[m1 + m2 - 1][(this->NbrUpDownSectorIndicesPerSum[(m1 + m2 - 1)] << 1) + 1] = m2 - this->LzFermionDownShift;
+	    ++this->NbrUpDownSectorIndicesPerSum[(m1 + m2 - 1)];
+	  }
+	  
+      for (int m1 = 1; m1 <= this->LzMaxDown; ++m1)
+	{
+	for (int m2 = 1; m2 <= this->LzMaxDown; ++m2)
+	  {
+	    if ( m1 != m2 ) 
+	      {
+		this->DownDownSectorIndicesPerSum[m1 + m2 - 3][this->NbrDownDownSectorIndicesPerSum[m1 + m2 - 3] << 1] = m1 - this->LzFermionDownShift;
+		this->DownDownSectorIndicesPerSum[m1 + m2 - 3][(this->NbrDownDownSectorIndicesPerSum[m1 + m2 - 3] << 1) + 1] = m2 - this->LzFermionDownShift;
+		++this->NbrDownDownSectorIndicesPerSum[m1 + m2 - 3];
+	      }
+	  }
+	}	
+	
+    }*/
+    
+  // Create interaction factor arrays and initialise to 0.
+  
+  // the three that end in UpUp
+  this->InteractionFactorsUpUpUpUp = new double* [this->NbrUpUpSectorSums];
+  this->InteractionFactorsUpDownUpUp = new double* [this->NbrUpUpSectorSums];
+  this->InteractionFactorsDownDownUpUp = new double* [this->NbrUpUpSectorSums];
+  //this is prob unnecessary but no harm.
+  for (int i = 0; i < this->NbrUpUpSectorSums; ++i)
+    {
+      this->InteractionFactorsUpUpUpUp[i] = 0;
+      this->InteractionFactorsUpDownUpUp[i] = 0;
+      this->InteractionFactorsDownDownUpUp[i] = 0;
+    }
+  
+  // finally the three that end in Up Down
+  this->InteractionFactorsUpUpUpDown = new double* [this->NbrUpDownSectorSums];
+  this->InteractionFactorsUpDownUpDown = new double* [this->NbrUpDownSectorSums];
+  this->InteractionFactorsDownDownUpDown = new double* [this->NbrUpDownSectorSums];
+  //this is prob unnecessary but no harm.
+  for (int i = 0; i < this->NbrUpDownSectorSums; ++i)
+    {
+      this->InteractionFactorsUpUpUpDown[i] = 0;
+      this->InteractionFactorsUpDownUpDown[i] = 0;
+      this->InteractionFactorsDownDownUpDown[i] = 0;
+    }
+  
+//now the trhee that end in Down Down
+  this->InteractionFactorsDownDownDownDown = new double* [this->NbrDownDownSectorSums];
+  this->InteractionFactorsUpDownDownDown = new double* [this->NbrDownDownSectorSums];
+  this->InteractionFactorsUpUpDownDown = new double* [this->NbrDownDownSectorSums];
+  //this is prob unnecessary but no harm.
+  for (int i = 0; i < this->NbrDownDownSectorSums; ++i)
+    {
+      this->InteractionFactorsUpUpDownDown[i] = 0;
+      this->InteractionFactorsUpDownDownDown[i] = 0;
+      this->InteractionFactorsDownDownDownDown[i] = 0;
+    }
+        
+  this->NbrOneBodyInteractionFactorsDownDown = this->LzMaxDown;        
+  this->OneBodyInteractionFactorsDownDown = new double [this->NbrOneBodyInteractionFactorsDownDown]; 
+  this->OneBodyMValuesDownDown = new int[this->NbrOneBodyInteractionFactorsDownDown];
+  for (int i = 0; i < this->LzMaxDown; ++i)
+    {
+      this->OneBodyMValuesDownDown[i] = i+1;
+      this->OneBodyInteractionFactorsDownDown[i] = 0.0;
+    }
+    
+  this->NbrOneBodyInteractionFactorsUpUp = this->LzMaxUp + 1;        
+  this->OneBodyInteractionFactorsUpUp = new double [this->NbrOneBodyInteractionFactorsUpUp]; 
+  this->OneBodyMValuesUpUp = new int[this->NbrOneBodyInteractionFactorsUpUp];
+  for (int i = 0; i <= this->LzMaxUp; ++i)
+    {
+      this->OneBodyMValuesUpUp[i] = i;
+      this->OneBodyInteractionFactorsUpUp[i] = 0.0;
+    }
+  
+  long TotalNbrInteractionFactors = 0;
+  
+  //when not using pseudopotentials will use expression that was worked out for the delta interaction.
+  
+  //will start with the interactions confined completely to the LLL (Down).
+  //cout << "Down Down Down Down" << endl;
+  for (int i = 0; i < this->NbrDownDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
+    {
+      if (this->NbrDownDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+	{
+	  this->InteractionFactorsDownDownDownDown[i] = new double[this->NbrDownDownSectorIndicesPerSum[i] * this->NbrDownDownSectorIndicesPerSum[i]]; //for all m1, m2, m3, m4 such that m1 + m2 = m3 + m4 = current_sum
+	  int Index = 0;
+	  for (int j1 = 0; j1 < this->NbrDownDownSectorIndicesPerSum[i]; ++j1)
+	    {
+	      int m1 = (this->DownDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+	      int m2 = (this->DownDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+	      for (int j2 = 0; j2 < this->NbrDownDownSectorIndicesPerSum[i]; ++j2)
+		{
+		  int m3 = (this->DownDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+		  int m4 = (this->DownDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+		  if (  m3 == (m1 + 2) && m4 == (m2 - 2))
+		    {
+		      double Q = (double)(this->LzMaxDown-1)/2.0;
+		      double m1r = (double)m1/2.0; 
+		      double m2r = (double)m2/2.0;
+		      if ( m2 != m3 ) 
+			{
+			  this->InteractionFactorsDownDownDownDown[i][Index] = 0.5 * sqrt(Q * (Q + 1.0) - m1r*(m1r + 1.0)) * sqrt(Q * (Q + 1.0) - m2r*(m2r - 1.0));
+			}
+		      else if ( m2 == m3 )
+			{
+			  this->InteractionFactorsDownDownDownDown[i][Index] = 0.5 * sqrt(Q * (Q + 1.0) - m1r*(m1r + 1.0)) * sqrt(Q * (Q + 1.0) - m2r*(m2r - 1.0));
+			  this->OneBodyInteractionFactorsDownDown[((m1 + this->LzMaxDown + 1) >> 1)-1] += 0.5 * sqrt(Q * (Q + 1.0) - m1r*(m1r + 1.0)) * sqrt(Q * (Q + 1.0) - m2r*(m2r - 1.0));
+			}		      
+		    }
+		  else if ( m3 == (m1 - 2) && m4 == (m2 + 2))
+		    {
+		      double Q = (double)(this->LzMaxDown-1)/2.0;
+		      double m1r = (double)m1/2.0; 
+		      double m2r = (double)m2/2.0;
+		      if ( m2 != m3 ) 
+			{
+			  this->InteractionFactorsDownDownDownDown[i][Index] = 0.5 * sqrt(Q * (Q + 1.0) - m1r*(m1r - 1.0)) * sqrt(Q * (Q + 1.0) - m2r*(m2r + 1.0));
+			}
+		      else if ( m2 == m3 ) 
+			{
+			  this->InteractionFactorsDownDownDownDown[i][Index] = 0.5 * sqrt(Q * (Q + 1.0) - m1r*(m1r - 1.0)) * sqrt(Q * (Q + 1.0) - m2r*(m2r + 1.0));
+			  this->OneBodyInteractionFactorsDownDown[((m1 + this->LzMaxDown + 1) >> 1)-1] += 0.5 * sqrt(Q * (Q + 1.0) - m1r*(m1r - 1.0)) * sqrt(Q * (Q + 1.0) - m2r*(m2r + 1.0));
+			}		      
+		    }
+		  else 
+		    {
+		      this->InteractionFactorsDownDownDownDown[i][Index] = 0.0;
+		    }
+		  //cout << this->LzMaxDown-1.0 << ": " << m1  << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsDownDownDownDown[i][Index] << endl;
+		  ++Index;
+		  TotalNbrInteractionFactors++;
+		}
+	    }
+	}
+    }
+    
+  cout << "DownDownDownDown Terms" << endl;
+  for (int i = 0; i < this->NbrDownDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
+    {
+      if (this->NbrDownDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+	{	      
+	  int Index = 0;
+	  for (int j1 = 0; j1 < this->NbrDownDownSectorIndicesPerSum[i]; ++j1)
+	    {
+	      int m1 = (this->DownDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxDown - 1;
+	      int m2 = (this->DownDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1;
+	      for (int j2 = 0; j2 < this->NbrDownDownSectorIndicesPerSum[i]; ++j2)
+		{
+		  int m3 = (this->DownDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxDown - 1;
+		  int m4 = (this->DownDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
+		  cout << "<" << (double)m1/2.0 << ", " << (double)m2/2.0 << "| V | " << (double)m3/2.0 << ", " << (double)m4/2.0 << "> = " << this->InteractionFactorsDownDownDownDown[i][Index] << endl;
+		  ++Index;
+		}
+	    }
+	}
+    }
+    
+  for ( int i = 0 ; i < this->LzMaxDown ; i++ ) 
+    {
+      cout << "One body term on " << this->OneBodyMValuesDownDown[i] << ": " << this->OneBodyInteractionFactorsDownDown[i] << endl ;	  
+    }
+    
+    /*//cout << "Up Down Down Down" << endl;
+    //now we set the interaction terms where a single operator acts on the first LL and the rest on the LLL 
+    for (int i = 0; i < this->NbrDownDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
+    {
+      if (this->NbrDownDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+	{
+	  this->InteractionFactorsUpDownDownDown[i] = new double[this->NbrDownDownSectorIndicesPerSum[i] * this->NbrUpDownSectorIndicesPerSum[i+1]]; //for all m1, m2, m3, m4 such that m1 + m2 = m3 + m4 = current_sum
+	  int Index = 0;
+	  for (int j1 = 0; j1 < this->NbrDownDownSectorIndicesPerSum[i]; ++j1)
+	    {
+	      int m1 = (this->DownDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+	      int m2 = (this->DownDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+	      for (int j2 = 0; j2 < this->NbrUpDownSectorIndicesPerSum[i+1]; ++j2)
+		{
+		  int m3 = (this->UpDownSectorIndicesPerSum[i+1][j2 << 1] << 1) - this->LzMaxUp;
+		  int m4 = (this->UpDownSectorIndicesPerSum[i+1][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+		  
+		  this->InteractionFactorsUpDownDownDown[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1) /2.0 ,0.0 ,(double)m1 /2.0 ,0.0 ,(double)m2 /2.0,1.0,(double)m3/2.0,0.0,(double)m4/2.0);
+		  //cout << this->LzMaxDown-1.0 << ": " << m1 << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsUpDownDownDown[i][Index] << endl;
+		  ++Index;
+		  TotalNbrInteractionFactors++;
+		}
+	    }
+	}
+    }
+    
+    //cout << "Up Up Down Down" << endl;
+    for (int i = 0; i < this->NbrDownDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
+    {
+      if (this->NbrDownDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+	{
+	  this->InteractionFactorsUpUpDownDown[i] = new double[this->NbrDownDownSectorIndicesPerSum[i] * this->NbrUpUpSectorIndicesPerSum[i+2]]; //for all m1, m2, m3, m4 such that m1 + m2 = m3 + m4 = current_sum
+	  int Index = 0;
+	  for (int j1 = 0; j1 < this->NbrDownDownSectorIndicesPerSum[i]; ++j1)
+	    {
+	      int m1 = (this->DownDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+	      int m2 = (this->DownDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+	      for (int j2 = 0; j2 < this->NbrUpUpSectorIndicesPerSum[i+2]; ++j2)
+		{
+		  int m3 = (this->UpUpSectorIndicesPerSum[i+2][j2 << 1] << 1) - this->LzMaxUp;
+		  int m4 = (this->UpUpSectorIndicesPerSum[i+2][(j2 << 1) + 1] << 1) - this->LzMaxUp;
+		  
+		  this->InteractionFactorsUpUpDownDown[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1)/ 2.0 ,0.0,(double)m1/2.0 ,0.0,(double)m2 /2.0,1.0,(double)m3 /2.0 ,1.0,(double)m4/2.0);
+		  //cout << this->LzMaxDown-1.0 << ": " << m1 << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsUpUpDownDown[i][Index] << endl;
+		  ++Index;
+		  TotalNbrInteractionFactors++;
+		}
+	    }
+	}
+    }
+    
+    //cout << "Down Down Up Down" << endl;
+    for (int i = 1; i < this->NbrUpDownSectorSums-1; ++i) // go through the possible sums of Lz values on LLL
+    {
+      if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+	{
+	  this->InteractionFactorsDownDownUpDown[i-1] = new double[this->NbrDownDownSectorIndicesPerSum[i-1] * this->NbrUpDownSectorIndicesPerSum[i]]; //for all m1, m2, m3, m4 such that m1 + m2 = m3 + m4 = current_sum
+	  int Index = 0;
+	  for (int j1 = 0; j1 < this->NbrUpDownSectorIndicesPerSum[i]; ++j1)
+	    {
+	      int m1 = (this->UpDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp ;
+	      int m2 = (this->UpDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+	      for (int j2 = 0; j2 < this->NbrDownDownSectorIndicesPerSum[i-1]; ++j2)
+		{
+		  int m3 = (this->DownDownSectorIndicesPerSum[i-1][j2 << 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+		  int m4 = (this->DownDownSectorIndicesPerSum[i-1][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+		  
+		  this->InteractionFactorsDownDownUpDown[i-1][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1) /2.0 ,1.0,(double)m1/2.0 ,0.0,(double)m2/2.0 ,0.0,(double)m3/2.0 ,0.0,(double)m4/2.0);
+		  //cout << this->LzMaxDown-1.0 << ": " << m1  << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsDownDownUpDown[i-1][Index] << endl;
+		  ++Index;
+		  TotalNbrInteractionFactors++;
+		}
+	    }
+	}
+    }*/
+    
+    //cout << "Up Down Up Down" << endl;
+    for (int i = 0; i < this->NbrUpDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
+    {
+      if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+	{
+	  this->InteractionFactorsUpDownUpDown[i] = new double[this->NbrUpDownSectorIndicesPerSum[i] * this->NbrUpDownSectorIndicesPerSum[i]]; //for all m1, m2, m3, m4 such that m1 + m2 = m3 + m4 = current_sum
+	  int Index = 0;
+	  for (int j1 = 0; j1 < this->NbrUpDownSectorIndicesPerSum[i]; ++j1)
+	    {
+	      int m1 = (this->UpDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp ;
+	      int m2 = (this->UpDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+	      for (int j2 = 0; j2 < this->NbrUpDownSectorIndicesPerSum[i]; ++j2)
+		{
+		  int m3 = (this->UpDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
+		  int m4 = (this->UpDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+		  
+		  if (  m3 == (m1 + 2) && m4 == (m2 - 2))
+		    {
+		      double Qu = (double)(this->LzMaxUp)/2.0;
+		      double Qd = (double)(this->LzMaxDown-1)/2.0;
+		      double m1r = (double)m1/2.0; 
+		      double m2r = (double)m2/2.0;		      
+		      this->InteractionFactorsUpDownUpDown[i][Index] =  sqrt(Qu * (Qu + 1.0) - m1r*(m1r + 1.0)) * sqrt(Qd * (Qd + 1.0) - m2r*(m2r - 1.0));			
+		    }
+		  else if ( m3 == (m1 - 2) && m4 == (m2 + 2))
+		    {
+		      double Qu = (double)(this->LzMaxUp)/2.0;
+		      double Qd = (double)(this->LzMaxDown-1)/2.0;
+		      double m1r = (double)m1/2.0; 
+		      double m2r = (double)m2/2.0;
+		      this->InteractionFactorsUpDownUpDown[i][Index] =  sqrt(Qu * (Qu + 1.0) - m1r*(m1r - 1.0)) * sqrt(Qd * (Qd + 1.0) - m2r*(m2r + 1.0));
+		    }
+		  else 
+		    {
+		      this->InteractionFactorsUpDownUpDown[i][Index] = 0.0;
+		    }		  		  
+		  
+		  ++Index;
+		  TotalNbrInteractionFactors++;
+		}
+	    }
+	}
+    }
+
+  cout << "UpDownUpDown Terms" << endl;
+  for (int i = 0; i < this->NbrUpDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
+    {
+      if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+	{	      
+	  int Index = 0;
+	  for (int j1 = 0; j1 < this->NbrUpDownSectorIndicesPerSum[i]; ++j1)
+	    {
+	      int m1 = (this->UpDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp;
+	      int m2 = (this->UpDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1;
+	      for (int j2 = 0; j2 < this->NbrUpDownSectorIndicesPerSum[i]; ++j2)
+		{
+		  int m3 = (this->UpDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
+		  int m4 = (this->UpDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
+		  cout << "<" << (double)m1/2.0 << ", " << (double)m2/2.0 << "| V | " << (double)m3/2.0 << ", " << (double)m4/2.0 << "> = " << this->InteractionFactorsUpDownUpDown[i][Index] << endl;
+		  ++Index;
+		}
+	    }
+	}
+    }
+
+    //cout << "Up Up Up Down" << endl;
+    /*for (int i = 0; i < this->NbrUpDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
+    {
+      if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+	{
+	  this->InteractionFactorsUpUpUpDown[i] = new double[this->NbrUpUpSectorIndicesPerSum[i+1] * this->NbrUpDownSectorIndicesPerSum[i]]; //for all m1, m2, m3, m4 such that m1 + m2 = m3 + m4 = current_sum
+	  int Index = 0;
+	  for (int j1 = 0; j1 < this->NbrUpDownSectorIndicesPerSum[i]; ++j1)
+	    {
+	      int m1 = (this->UpDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp ;
+	      int m2 = (this->UpDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+	      for (int j2 = 0; j2 < this->NbrUpUpSectorIndicesPerSum[i+1]; ++j2)
+		{
+		  int m3 = (this->UpUpSectorIndicesPerSum[i+1][j2 << 1] << 1) - this->LzMaxUp;
+		  int m4 = (this->UpUpSectorIndicesPerSum[i+1][(j2 << 1) + 1] << 1) - this->LzMaxUp;
+		  
+		  this->InteractionFactorsUpUpUpDown[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1) /2.0 ,1.0,(double)m1 /2.0 ,0.0,(double)m2 /2.0,1.0,(double)m3 /2.0,1.0,(double)m4/2.0);
+		  //cout << this->LzMaxDown-1.0 << ": " << m1  << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsUpUpUpDown[i][Index] << endl;
+		  ++Index;
+		  TotalNbrInteractionFactors++;
+		}
+	    }
+	}
+    }
+    
+    //cout << "Down Down Up Up" << endl;
+    for (int i = 0; i < this->NbrDownDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
+    {
+      if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+	{
+	  this->InteractionFactorsDownDownUpUp[i] = new double[this->NbrDownDownSectorIndicesPerSum[i] * this->NbrUpUpSectorIndicesPerSum[i+2]]; //for all m1, m2, m3, m4 such that m1 + m2 = m3 + m4 = current_sum
+	  int Index = 0;
+	  for (int j1 = 0; j1 < this->NbrUpUpSectorIndicesPerSum[i+2]; ++j1)
+	    {
+	      int m1 = (this->UpUpSectorIndicesPerSum[i+2][j1 << 1] << 1) - this->LzMaxUp ;
+	      int m2 = (this->UpUpSectorIndicesPerSum[i+2][(j1 << 1) + 1] << 1) - this->LzMaxUp ;
+	      for (int j2 = 0; j2 < this->NbrDownDownSectorIndicesPerSum[i]; ++j2)
+		{
+		  int m3 = (this->DownDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+		  int m4 = (this->DownDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+		  
+		  this->InteractionFactorsDownDownUpUp[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1) /2.0 ,1.0,(double)m1 /2.0 ,1.0,(double)m2 /2.0,0.0,(double)m3 /2.0,0.0,(double)m4 /2.0);
+		  //cout << this->LzMaxDown-1.0 << ": " << m1  << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsDownDownUpUp[i][Index] << endl;
+		  ++Index;
+		  TotalNbrInteractionFactors++;
+		}
+	    }
+	}
+    }
+    
+    //cout << "Up Down Up Up" << endl;
+    for (int i = 0; i < this->NbrUpDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
+    {
+      if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+	{
+	  this->InteractionFactorsUpDownUpUp[i] = new double[this->NbrUpDownSectorIndicesPerSum[i] * this->NbrUpUpSectorIndicesPerSum[i+1]]; //for all m1, m2, m3, m4 such that m1 + m2 = m3 + m4 = current_sum
+	  int Index = 0;
+	  for (int j1 = 0; j1 < this->NbrUpUpSectorIndicesPerSum[i+1]; ++j1)
+	    {
+	      int m1 = (this->UpUpSectorIndicesPerSum[i+1][j1 << 1] << 1) - this->LzMaxUp ;
+	      int m2 = (this->UpUpSectorIndicesPerSum[i+1][(j1 << 1) + 1] << 1) - this->LzMaxUp ;
+	      for (int j2 = 0; j2 < this->NbrUpDownSectorIndicesPerSum[i]; ++j2)
+		{
+		  int m3 = (this->UpDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
+		  int m4 = (this->UpDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+		  
+		  this->InteractionFactorsUpDownUpUp[i][Index] = this->CalculateDeltaInteractionFactor((double)(this->LzMaxDown-1)/2.0 ,1.0,(double)m1 /2.0 ,1.0,(double)m2 /2.0,1.0,(double)m3 /2.0,0.0,(double)m4 /2.0);
+		  //cout << this->LzMaxDown-1.0 << ": " << m1 << ", " << m2 << ", " << m3 << ", " << m4 << ": " << this->InteractionFactorsUpDownUpUp[i][Index] << endl;
+		  ++Index;
+		  TotalNbrInteractionFactors++;
+		}
+	    }
+	}
+    }*/
+      
+    //cout << "Up Up Up Up" << endl;    
+    for (int i = 0; i < this->NbrUpUpSectorSums; ++i) // go through the possible sums of Lz values on LLL
+    {
+      if (this->NbrUpUpSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+	{
+	  this->InteractionFactorsUpUpUpUp[i] = new double[this->NbrUpUpSectorIndicesPerSum[i] * this->NbrUpUpSectorIndicesPerSum[i]]; //for all m1, m2, m3, m4 such that m1 + m2 = m3 + m4 = current_sum
+	  int Index = 0;
+	  for (int j1 = 0; j1 < this->NbrUpUpSectorIndicesPerSum[i]; ++j1)
+	    {
+	      int m1 = (this->UpUpSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp ;
+	      int m2 = (this->UpUpSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxUp ;
+	      for (int j2 = 0; j2 < this->NbrUpUpSectorIndicesPerSum[i]; ++j2)
+		{
+		  int m3 = (this->UpUpSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
+		  int m4 = (this->UpUpSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxUp ;
+		  
+		  if (  m3 == (m1 + 2) && m4 == (m2 - 2))
+		    {
+		      double Q = (double)(this->LzMaxUp)/2.0;
+		      double m1r = (double)m1/2.0; 
+		      double m2r = (double)m2/2.0;
+		      if ( m2 != m3 ) 
+			{
+			  this->InteractionFactorsUpUpUpUp[i][Index] = 0.5 * sqrt(Q * (Q + 1.0) - m1r*(m1r + 1.0)) * sqrt(Q * (Q + 1.0) - m2r*(m2r - 1.0));
+			}
+		      else if ( m2 == m3 )
+			{
+			  this->InteractionFactorsUpUpUpUp[i][Index] = 0.5 * sqrt(Q * (Q + 1.0) - m1r*(m1r + 1.0)) * sqrt(Q * (Q + 1.0) - m2r*(m2r - 1.0));
+			  this->OneBodyInteractionFactorsUpUp[((m1 + this->LzMaxUp) >> 1)] += 0.5 * sqrt(Q * (Q + 1.0) - m1r*(m1r + 1.0)) * sqrt(Q * (Q + 1.0) - m2r*(m2r - 1.0));
+			}		      
+		    }
+		  else if ( m3 == (m1 - 2) && m4 == (m2 + 2))
+		    {
+		      double Q = (double)(this->LzMaxUp)/2.0;
+		      double m1r = (double)m1/2.0; 
+		      double m2r = (double)m2/2.0;
+		      if ( m2 != m3 ) 
+			{
+			  this->InteractionFactorsUpUpUpUp[i][Index] = 0.5 * sqrt(Q * (Q + 1.0) - m1r*(m1r - 1.0)) * sqrt(Q * (Q + 1.0) - m2r*(m2r + 1.0));
+			}
+		      else if ( m2 == m3 ) 
+			{
+			  this->InteractionFactorsUpUpUpUp[i][Index] = 0.5 * sqrt(Q * (Q + 1.0) - m1r*(m1r - 1.0)) * sqrt(Q * (Q + 1.0) - m2r*(m2r + 1.0));
+			  this->OneBodyInteractionFactorsUpUp[((m1 + this->LzMaxUp) >> 1)] += 0.5 * sqrt(Q * (Q + 1.0) - m1r*(m1r - 1.0)) * sqrt(Q * (Q + 1.0) - m2r*(m2r + 1.0));
+			}		      
+		    }
+		  else 
+		    {
+		      this->InteractionFactorsUpUpUpUp[i][Index] = 0.0;
+		    }		  		  		  
+		  ++Index;
+		  TotalNbrInteractionFactors++;
+		}
+	    }
+	}
+    }	 
+ 
+  cout << "UpUpUpUp Terms" << endl;
+  for (int i = 0; i < this->NbrUpUpSectorSums; ++i) // go through the possible sums of Lz values on LLL
+    {
+      if (this->NbrUpUpSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+	{	      
+	  int Index = 0;
+	  for (int j1 = 0; j1 < this->NbrUpUpSectorIndicesPerSum[i]; ++j1)
+	    {
+	      int m1 = (this->UpUpSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp;
+	      int m2 = (this->UpUpSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxUp;
+	      for (int j2 = 0; j2 < this->NbrUpUpSectorIndicesPerSum[i]; ++j2)
+		{
+		  int m3 = (this->UpUpSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
+		  int m4 = (this->UpUpSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxUp;
+		  cout << "<" << (double)m1/2.0 << ", " << (double)m2/2.0 << "| V | " << (double)m3/2.0 << ", " << (double)m4/2.0 << "> = " << this->InteractionFactorsUpUpUpUp[i][Index] << endl;
+		  ++Index;
+		}
+	    }
+	}
+    }
+    
+  for ( int i = 0 ; i <= this->LzMaxUp ; i++ ) 
+    {
+      cout << "One body term on " << this->OneBodyMValuesUpUp[i] << ": " << this->OneBodyInteractionFactorsUpUp[i] << endl ;	  
+    }
+ 
+  /*RealMatrix CoefficientsDownDown (this->LzMax + 1, this->LzMax + 1);
   for (int i = 0; i <= this->LzMax; ++i)
     {
       double TmpCoefficient = sqrt(0.25 * ((double) ((((this->LzMax + 2) * this->LzMax) - (((2 * i) - this->LzMax) * ((2 * i) - this->LzMax + 2))))));
@@ -429,6 +1069,10 @@ void ParticleOnSphereTwoLandauLevelL2Hamiltonian::EvaluateInteractionFactors()
   this->OneBodyInteractionFactorsdowndown[this->LzMax] = this->L2Factor * CoefficientsDownDown(this->LzMax - 1, this->LzMax);  
   this->OneBodyInteractionFactorsupdown = NULL;
   cout << "nbr interaction = " << ((2 * (this->NbrM12IntraIndices + this->LzMax)) + 2 + this->NbrM12InterIndices) << endl;
-  cout << "====================================" << endl;
+  cout << "====================================" << endl;*/
+  //this->NbrOneBodyInteractionFactorsUpUp = 0;
+  this->NbrOneBodyInteractionFactorsUpDown = 0;
+  this->NbrOneBodyInteractionFactorsDownUp = 0;
+    
 }
 

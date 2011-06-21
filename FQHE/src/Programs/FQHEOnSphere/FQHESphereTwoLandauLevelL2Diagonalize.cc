@@ -110,8 +110,8 @@ int main(int argc, char** argv)
     }
   else
     {
-      cout << "bosons are not yet implemented" << endl;
-      return -1;
+      cout << "bosons implementation not fully tested" << endl;
+      Space = new BosonOnSphereTwoLandauLevels (NbrParticles, TotalLz, LzMaxUp, LzMaxDown);      
     }
 
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
