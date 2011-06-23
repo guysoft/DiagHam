@@ -336,6 +336,7 @@ double& RealAntisymmetricMatrix::operator () (int i, int j)
 {
   if (i >= j)
     {
+      cout << "Attention: Dummy used in RealAntisymmetricMatrix::operator ()!"<< endl;
       return this->Dummy;
     }
   j -= (i * (i + 1)) / 2 - i * (this->NbrRow + this->Increment - 1) + 1;

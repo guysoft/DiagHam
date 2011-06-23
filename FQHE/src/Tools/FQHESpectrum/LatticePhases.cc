@@ -46,7 +46,7 @@ using std::endl;
 using std::fabs;
 
 // switch for debugging statements
-//#define DEBUG_OUTPUT
+//#define DEBUG_LATTICE_PHASES
 
 // generate the object using options from Option Manager
 //
@@ -197,7 +197,7 @@ LatticePhases::LatticePhases()
 	   << " + ("<<GaugeAxy << "*x +"<<GaugeAyy<<"*y) e_y, "
 	   << "field strength B="<<this->AbsBField<<endl;
     }
-#ifdef DEBUG_OUTPUT
+#ifdef DEBUG_LATTICE_PHASES
   cout << "Attention, the code is currently not functional for gauges involving both Axy and Ayx!"<<endl;
 
   for (int i=0; i<Dimension; ++i)
@@ -246,10 +246,10 @@ LatticePhases::LatticePhases()
 		  // determine tunnelling phase
 		  if (NbrValues[p]<3)
 		    {
-		      TunnellingPhaseMatrix(s1,s2)=0.0;
+		      TunnellingPhaseMatrix.SetMatrixElement(s1,s2,0.0);
 		    }
 		  else		    
-		    TunnellingPhaseMatrix(s1,s2)=strtod(NeighborString[p][2], NULL);
+		    TunnellingPhaseMatrix.SetMatrixElement(s1,s2,strtod(NeighborString[p][2], NULL));
 		}
 	    }
 	}
@@ -264,8 +264,9 @@ LatticePhases::LatticePhases()
       delete [] NbrValues;
     }
   
-#ifdef DEBUG_OUTPUT
+#ifdef DEBUG_LATTICE_PHASES
   cout << "NeighborsInCell="<<endl<<NeighborsInCellMatrix;
+  cout << "TunnellingPhaseMatrix="<<endl<<TunnellingPhaseMatrix;
 #endif
   if (LatticeDefinition.GetAsStringMultipleArray ("NeighborCells", '|', ',', NeighborString, NbrPairs, NbrValues)==false)
     {
@@ -343,8 +344,12 @@ LatticePhases::LatticePhases()
 		  else
 		    {
 		      PhasesAcrossBoundary[d]->SetMatrixElement(s1,s2,strtod(NeighborString[p][2], NULL));
-#ifdef DEBUG_OUTPUT
-		      cout << "Phase between neighbor sites "<<s1<<", "<<s2<<": "<<(*(PhasesAcrossBoundary[d]))(s1,s2)<<endl;
+#ifdef DEBUG_LATTICE_PHASES
+		      {
+			double tmp;
+			PhasesAcrossBoundary[d]->GetMatrixElement(s1,s2,tmp);
+			cout << "Phase between neighbor sites "<<s1<<", "<<s2<<": "<<tmp<<endl;
+		      }
 #endif
 		    }
 		}
@@ -359,10 +364,11 @@ LatticePhases::LatticePhases()
       delete [] NbrValues;
       delete [] NeighborString;
       
-#ifdef DEBUG_OUTPUT
+#ifdef DEBUG_LATTICE_PHASES
       cout << FieldName<<"="<<endl<<*NeighborsAcrossBoundary[d];
+      cout << "Phases("<<FieldName<<")="<<endl<<*(PhasesAcrossBoundary[d]);
 #endif
-    }  
+    }
   
   this->Neighbors = new int*[NbrSites];
   this->NeighborShift = new int**[NbrSites];
@@ -392,7 +398,7 @@ LatticePhases::LatticePhases()
     {
       this->GetCellCoordinates(c, CellCoordinates);
       
-#ifdef DEBUG_OUTPUT
+#ifdef DEBUG_LATTICE_PHASES
       cout << "Cell "<<c<<":"<< CellCoordinates[0]<<", "<<CellCoordinates[1]<<endl;
 #endif
       int Site1, Site2, Site3;
@@ -400,7 +406,7 @@ LatticePhases::LatticePhases()
 	{
 	  Site1 = this->GetSiteNumber(c, i);
 	  
-#ifdef DEBUG_OUTPUT
+#ifdef DEBUG_LATTICE_PHASES
 	  cout << "Site 1="<<Site1<<endl;
 #endif
 	  for (int j=0; j<NbrSitesPerCell; ++j)
@@ -413,10 +419,10 @@ LatticePhases::LatticePhases()
 		  if (this->HaveGauge)
 		    TmpPhases[NbrNeighbors[Site1]] = GetTunnellingPhaseFromGauge(Site1, Site2);
 		  else
-		    TmpPhases[NbrNeighbors[Site1]] = TunnellingPhaseMatrix(Site1%NbrSitesPerCell,Site2%NbrSitesPerCell);
+		    TunnellingPhaseMatrix.GetMatrixElement(Site1%NbrSitesPerCell,Site2%NbrSitesPerCell,TmpPhases[NbrNeighbors[Site1]]);
 		  for (int r=0; r<Dimension; ++r)
 		    TmpNeighborShift[NbrNeighbors[Site1]][r]=0;
-#ifdef DEBUG_OUTPUT
+#ifdef DEBUG_LATTICE_PHASES
 		  cout << "Neighbors "<<Site1<<"->"<<Site2<<" with phase "<<TmpPhases[NbrNeighbors[Site1]]<<endl;
 #endif
 		  ++NbrNeighbors[Site1];
@@ -428,14 +434,14 @@ LatticePhases::LatticePhases()
 		      for (int k=0; k<Dimension; ++k)
 			{
 			  CellCoordinates2[k]=CellCoordinates[k]+NeighborCells[d][k];
-#ifdef DEBUG_OUTPUT
+#ifdef DEBUG_LATTICE_PHASES
 			  cout << "CellCoordinates["<<k<<"]="<<CellCoordinates[k]<< ", "
 			       << "NeighborCells["<<d<<", "<<k<<"]="<<NeighborCells[d][k]<< ", "
 			       << "CellCoordinates2["<<k<<"]="<<CellCoordinates2[k]<<endl;
 #endif
 			}
 		      Site3 = this->GetSiteNumber(CellCoordinates2, j, Translation3);
-#ifdef DEBUG_OUTPUT
+#ifdef DEBUG_LATTICE_PHASES
 		      cout << "Translation3= ["<<Translation3[0]<<", "<<Translation3[1]<<"]"<<endl;
 #endif
 		      TmpNeighbors[NbrNeighbors[Site1]]=Site3;
@@ -443,15 +449,15 @@ LatticePhases::LatticePhases()
 			TmpNeighborShift[NbrNeighbors[Site1]][r]=Translation3[r]/PeriodicRep[r];
 		      if (this->HaveGauge)
 			{
-#ifdef DEBUG_OUTPUT
+#ifdef DEBUG_LATTICE_PHASES
 			  cout << "Evaluating translation phase:"<<endl;
 #endif
 			  TmpPhases[NbrNeighbors[Site1]] = GetTunnellingPhaseFromGauge(Site1, Site3, Translation3);
 			}
 		      else
-			TmpPhases[NbrNeighbors[Site1]]=(*(PhasesAcrossBoundary[d]))(Site1%NbrSitesPerCell,Site3%NbrSitesPerCell);
+			PhasesAcrossBoundary[d]->GetMatrixElement(Site1%NbrSitesPerCell, Site3%NbrSitesPerCell, TmpPhases[NbrNeighbors[Site1]]);
 
-#ifdef DEBUG_OUTPUT
+#ifdef DEBUG_LATTICE_PHASES
 		      cout << "additional neighbors "<<Site1<<"->"<<Site3<<" from NeigborCell "<<d<<" at "<<
 			CellCoordinates2[0]<<", "<<CellCoordinates2[1]<<", "<<j<<" : Site 3="<<Site3
 			   <<" with translation "<<Translation3[0];
@@ -545,7 +551,7 @@ LatticePhases::LatticePhases()
   if (LatticeDefinition["NbrFlux"]!=NULL)
     {
       this->PredefinedFluxFlag=true;
-      this->PredefinedFlux = atoi(LatticeDefinition["NbrFlux"]);
+      this->PredefinedFlux = atoi(LatticeDefinition["NbrFlux"])*NbrCells;
     }
   else
     {
@@ -689,7 +695,7 @@ int LatticePhases::GetSiteNumber(int *cellCoordinates, int sublattice)
 // translation = vector of tranlation back into simulation cell
 int LatticePhases::GetSiteNumber(int *cellCoordinates, int sublattice, int *translation)
 {
-#ifdef DEBUG_OUTPUT
+#ifdef DEBUG_LATTICE_PHASES
   cout << "Periodizing entry"<<Dimension-1<<endl;
 #endif
   int Result=this->Periodize(cellCoordinates[Dimension-1], Dimension-1, translation[Dimension-1]);
@@ -802,7 +808,7 @@ void LatticePhases::GetTranslations(int *t, int* mappings, Complex *phases, doub
 	    }
 	}
     }
-#ifdef DEBUG_OUTPUT
+#ifdef DEBUG_LATTICE_PHASES
   cout << "Translating general lattice by "<<t[0]<<", "<<t[1]<<endl;
   for (int i=0; i<NbrSites; ++i)
     {
@@ -896,7 +902,7 @@ double LatticePhases::GetTunnellingPhaseFromGauge(int s1, int s2, int *cellTrans
       Position2.AddLinearCombination(1.0,SubLatticeVectors[S2Sublattice]);
       CellPosition2.AddLinearCombination(1.0,SubLatticeVectors[S2Sublattice]);
       
-#ifdef DEBUG_OUTPUT
+#ifdef DEBUG_LATTICE_PHASES
       cout << "Position1="<<endl<<Position1;
       cout << "Position2="<<endl<<Position2;
       cout << "Translation="<<endl<<Translation;
@@ -908,7 +914,7 @@ double LatticePhases::GetTunnellingPhaseFromGauge(int s1, int s2, int *cellTrans
 	  Result += 0.5*GaugeAxy*(Position2[1]-Position1[1])*(Position2[0]+Position1[0]);
 	  Result += 0.5*GaugeAyy*(Position2[1]*Position2[1]-Position1[1]*Position1[1]);
 	  // xxx: check signs and prefactors here!
-#ifdef DEBUG_OUTPUT
+#ifdef DEBUG_LATTICE_PHASES
 	  cout << "Raw phase="<<Result;
 #endif
 	  if (Translation.SqrNorm()>1e-14)
@@ -921,7 +927,7 @@ double LatticePhases::GetTunnellingPhaseFromGauge(int s1, int s2, int *cellTrans
 		  MagneticTranslation+=(GaugeAxx*Translation[0]+GaugeAyx*Translation[1])*(CellPosition2[0]+Translation[0]); // (CellPosition2[0]+Translation[0]+0.5*Translation[0]);
 		  
 		  Result += MagneticTranslation;
-#ifdef DEBUG_OUTPUT
+#ifdef DEBUG_LATTICE_PHASES
 		  cout << ", magnetic translation: "<<MagneticTranslation;
 #endif
 		}
@@ -932,12 +938,12 @@ double LatticePhases::GetTunnellingPhaseFromGauge(int s1, int s2, int *cellTrans
 		  // translate in x-direction first:
 		  MagneticTranslation+= (GaugeAxy*Translation[0]+GaugeAyy*Translation[1])*(CellPosition2[1]+Translation[1]); // (CellPosition2[1]+Translation[1]+0.5*Translation[1]);
 		  Result += MagneticTranslation;
-#ifdef DEBUG_OUTPUT
+#ifdef DEBUG_LATTICE_PHASES
 		  cout << ", magnetic translation: "<<MagneticTranslation;
 #endif
 		}
 	    }
-#ifdef DEBUG_OUTPUT
+#ifdef DEBUG_LATTICE_PHASES
 	  cout << ", after corrections"<<Result<<endl;
 #endif
 	}
@@ -999,7 +1005,7 @@ double LatticePhases::GetTranslationPhaseFromGauge(int s1, int s2, int *cellTran
 		  MagneticTranslation+=(GaugeAxx*Translation[0]+GaugeAyx*Translation[1])*(CellPosition2[0]+Translation[0]); // (CellPosition2[0]+Translation[0]+0.5*Translation[0]);
 		  
 		  Result += MagneticTranslation;
-#ifdef DEBUG_OUTPUT
+#ifdef DEBUG_LATTICE_PHASES
 		  cout << ", magnetic translation: "<<MagneticTranslation;
 #endif
 		}

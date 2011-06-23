@@ -6,9 +6,11 @@ use strict 'vars';
 use File::stat;
 use Math::Complex;
 
+# flag allowing to switch on some extra output
+my $Verbose=0;
 
 # hardwire which state to look at
-my $Program="FQHELatticeBosonsGeneric";
+my $Program="FQHELatticeBosonsGeneric --use-lapack";
 my $MatrixProgram="MatrixElement";
 my $Program64Suffix="_64";
 
@@ -32,6 +34,27 @@ my $DiceLattice="NbrSites = 6\n"
   ."NeighborsAcrossBoundary-1_0 = 1,3 | 1,4 | 2,5\n"
   ."UseGauge = yes\n"
   ."GaugeAyx = 1.15470053837925\n";
+
+my $DiceLatticeReal="NbrSites = 6\n"
+  ."Dimension = 2\n"
+  ."LatticeVector0 = 1.73205080756888,0\n"
+  ."LatticeVector1 = 0,3\n"
+  ."SubLatticeVector0 = 0,0\n"
+  ."SubLatticeVector1 = 0,1\n"
+  ."SubLatticeVector2 = 0,2\n"
+  ."SubLatticeVector3 = 0.866025403784439,0.5\n"
+  ."SubLatticeVector4 = 0.866025403784439,1.5\n"
+  ."SubLatticeVector5 = 0.866025403784439,2.5\n"
+  ."NeighborsInCell = 0,1 | 1,2 | 1,3,1 | 1,4 | 2,5 | 4,5,1\n"
+  ."NeighborCells = 0,1 | 1,0 | 0,-1 | -1,0 | 1,1 | -1,-1\n"
+  ."NeighborsAcrossBoundary0_1 = 5,0 | 5,3\n"
+  ."NeighborsAcrossBoundary0_-1 = 0,5 | 3,5\n"
+  ."NeighborsAcrossBoundary1_1 = 5,0,1\n"
+  ."NeighborsAcrossBoundary-1_-1 = 0,5,1\n"
+  ."NeighborsAcrossBoundary1_0 = 3,1 | 4,1 | 5,2\n"
+  ."NeighborsAcrossBoundary-1_0 = 1,3 | 1,4 | 2,5\n"
+  ."UseGauge = no\n"
+  ."NbrFlux = 3\n";
 
 my $EffectiveTriangularLattice="Descriptor = eff_triang\n"
   ."NbrSites = 2\n"
@@ -63,6 +86,8 @@ my $DisplayHelp=0;
 my $AllElements=0;
 my $KeepFiles=0;
 my $UseExtrapolateAnalytical=1;
+my $UseRealRepresentation=0;
+my $RealVectorString="";
 my $NonZeroThreshold = 1e-6;
 my $SolenoidCmd="";
 my $SolenoidStr="";
@@ -169,6 +194,12 @@ while( (defined($ARGV[0])&&$ARGV[0] =~ /^-/ ))
 	  }
 	print ("Evaluating matrix elements for $UnitCells[0]x$UnitCells[1] unit cells\n");
       }
+    if ( $ARGV[0] =~ /-R/ )
+      {
+	print("Using real representation of dice unit cell\n");
+	$UseRealRepresentation=1;
+	$RealVectorString="_re"
+      }
     if ( $ARGV[0] =~ /-s/ )
       {
 	if (length($ARGV[0])>2)
@@ -216,6 +247,8 @@ if ($DisplayHelp)
     print("       -k: keep intermediate files on disk\n");
     print("       -u: ratio of U6 to U3 on 6-fold and 3-fold connected sites of dice lattice\n");
     print("       -a: include all matrix elements, ignoring obvious symmetries\n");
+    print("       -r: write raw amplitudes without using rounding to expected WF amplitudes\n");
+    print("       -R: use real gauge for dice lattice\n");
     print("       -s: use solenoid fluxes (s_x,s_y)\n");
     print("       -v: calculate vectors only\n");
     print("       -z: threshold above which elements are considered as non-zero\n");
@@ -233,6 +266,10 @@ my $NbrCells = $UnitCells[0]*$UnitCells[1];
 my $NbrSites = 2*$NbrCells;
 
 # append lattice geometry to lattice definition
+if ($UseRealRepresentation==1)
+  {
+    $DiceLattice=$DiceLatticeReal;
+  }
 $DiceLattice.="PeriodicRepeat = ".($UnitCells[0]).",".($UnitCells[1])."\n";
 $EffectiveTriangularLattice.="PeriodicRepeat = ".($UnitCells[0]).",".($UnitCells[1])."\n";
 $EffectiveTriangularLattice.="NbrFlux = ".($NbrSites/2)."\n";
@@ -257,15 +294,19 @@ chdir($Directory);
 for (my $i=0; $i<$NbrSites; ++$i)
   {
     # generate lattice definition
-    my $LatticeFile = "DiceDoubledPhases_S".$i."_V_-".abs($Trapping)."_on_$UnitCells[0]x$UnitCells[1].dat";
+    my $LatticeFile = "DiceDoubledPhases".$RealVectorString."_S".$i."_V_-".abs($Trapping)."_on_$UnitCells[0]x$UnitCells[1].dat";
     open (DEFINITION, ">$LatticeFile");
-    my $CurrentDescriptor=$Descriptor."_S".$i."_V_-".abs($Trapping);
+    my $CurrentDescriptor=$Descriptor.$RealVectorString."_S".$i."_V_-".abs($Trapping);
     print DEFINITION ("Descriptor = ".$CurrentDescriptor."\n");
     print DEFINITION ("LocalPotentials = ".GetSiteIndex($i).",-".abs($Trapping)."\n");
     print DEFINITION ($DiceLattice);
     close(DEFINITION);
     # run single particle calculation
     my $Command = "$Program -p 1 -L $LatticeFile -q ".(3*$NbrCells)." -c --eigenstate -n 1 $SolenoidCmd";
+    if ($Verbose==1)
+      {
+	print ("running: $Command\n");
+      }
     system($Command);
   }
 
@@ -307,7 +348,7 @@ if ( $VectorsOnly == 1)
     exit(0);
   }
 
-my $MatrixFile = "MatrixElements_Delta_u_".$RatioU."_".$UnitCells[0]."x".$UnitCells[1].$SolenoidStr.".dat";
+my $MatrixFile = "MatrixElements".$RealVectorString."_Delta_u_".$RatioU."_".$UnitCells[0]."x".$UnitCells[1].$SolenoidStr.".dat";
 open (MATRIX, ">$MatrixFile");
 
 # calculate all matrix elements
@@ -366,16 +407,22 @@ for (my $Index1=0; $Index1<$NbrSites; ++$Index1)
 		    my @OutputLines = split(/\n/,$Output);
 		    chomp (@OutputLines);
 		    my $TmpLength = $#OutputLines+1;
-		
-		    # print ("Output for element $Index1 $Index2 $Index3 $Index4:\n");
-		    # for (my $i=0; $i<$TmpLength; ++$i)
-		    #   {
-		    #     print ($OutputLines[$i]."\n");
-		    #   }
+
+		    if ($Verbose==1)
+		      {
+			print ("Output for element $Index1 $Index2 $Index3 $Index4:\ngenerated by command: $Command");
+			for (my $i=0; $i<$TmpLength; ++$i)
+			  {
+			    print ($OutputLines[$i]."\n");
+			  }
+		      }
 		
 		    #get matrix element for U3:
 		    my @Complex3 = split(/ /,$OutputLines[0]);
-		    #print ("$OutputLines[0] read as $Complex3[0]+I*$Complex3[1]\n");
+		    if ($Verbose==1)
+		      {
+			print ("$OutputLines[0] read as $Complex3[0]+I*$Complex3[1]\n");
+		      }
 		    my $RoundedMultiples3="";
 		    if ($UseExtrapolateAnalytical==1)
 		      {
@@ -414,7 +461,7 @@ close (MATRIX);
 if ($KeepFiles==0)
   {
     system ("rm DiceDoubledPhases_S*_V_-".abs($Trapping)."_on_$UnitCells[0]x$UnitCells[1].dat");
-    system ("rm bosons_lattice_dice_doubled_S*_V_-".abs($Trapping)."_".$UnitCells[0]."x".$UnitCells[1]."_n_1_hardcore".$SolenoidStr."_q_"
+    system ("rm bosons_lattice_dice_doubled".$RealVectorString."_S*_V_-".abs($Trapping)."_".$UnitCells[0]."x".$UnitCells[1]."_n_1_hardcore".$SolenoidStr."_q_"
 	    .(3*$NbrCells)."*");
   }
 
@@ -443,7 +490,7 @@ sub GetSiteIndex
 sub GetLocalWavefunction
   {
     my $SiteIndex = $_[0];
-    return "bosons_lattice_dice_doubled_S".$SiteIndex."_V_-".abs($Trapping)."_".$UnitCells[0]."x".$UnitCells[1]."_n_1_hardcore".$SolenoidStr."_q_"
+    return "bosons_lattice_dice_doubled".$RealVectorString."_S".$SiteIndex."_V_-".abs($Trapping)."_".$UnitCells[0]."x".$UnitCells[1]."_n_1_hardcore".$SolenoidStr."_q_"
       .(3*$NbrCells).".0.vec";
   }
 
@@ -462,7 +509,6 @@ sub ExtrapolateToAnalyticalValue
     # insert known additional prefactors here:
     my $NbrKnown = push (@KnownPrefactors,1.0);
     $NbrKnown = push (@KnownPrefactors,sqrt(2.0));
-
     if (($HaveSolenoid==0)&&(abs($Im)>1e-5)&&(abs(abs($Re/$Im)-1.0)<1e-5))
       {
 	if ($Re*$Im>0.0)

@@ -10,6 +10,7 @@
 #include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
 
 #include "MainTask/QHEOnLatticeMainTask.h"
+#include "MainTask/GenericRealMainTask.h"
 
 #include "Tools/FQHESpectrum/LatticePhases.h"
 #include "Tools/FQHEWaveFunction/GutzwillerOnLatticeWaveFunction.h"
@@ -425,9 +426,27 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  QHEOnLatticeMainTask Task (&Manager, Space, Hamiltonian, NbrFluxQuanta, Shift, OutputName, FirstRun, EigenvectorName);
-	  MainTaskOperation TaskOperation (&Task);
-	  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+	  if (Hamiltonian->IsComplex())
+	    {
+	      QHEOnLatticeMainTask Task (&Manager, Space, Hamiltonian, NbrFluxQuanta, Shift, OutputName, FirstRun, EigenvectorName);
+	      MainTaskOperation TaskOperation (&Task);
+	      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+	    }
+	  else
+	    {
+	      cout << "Attention: could simplify calculation, as this Hamiltonian is purely real!"<<endl;
+	      QHEOnLatticeMainTask Task (&Manager, Space, Hamiltonian, NbrFluxQuanta, Shift, OutputName, FirstRun, EigenvectorName);
+	      MainTaskOperation TaskOperation (&Task);
+	      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+
+// 	      GenericRealMainTask(OptionManager* options, AbstractHilbertSpace* space, LanczosManager* lanczos, 
+// 				  AbstractHamiltonian* hamiltonian, char *subspaceStr, char *subspaceLegend,
+// 				  double shift, char* outputFileName, bool firstRun=true, char* eigenvectorFileName=0);
+
+// 	      GenericRealMainTask Task (&Manager, Space, Hamiltonian, NbrFluxQuanta, Shift, OutputName, FirstRun, EigenvectorName);
+// 	      MainTaskOperation TaskOperation (&Task);
+// 	      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+	    }
 	}
       if (EigenvectorName != 0)
 	{

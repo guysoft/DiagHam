@@ -43,7 +43,7 @@ using std::endl;
 using std::ostream;
 
 // switch for debugging output:
-//#define DEBUG_OUTPUT
+//#define DEBUG_GENERIC_LATTICE_HAMILTONIAN
 
 
 
@@ -77,7 +77,7 @@ ParticleOnLatticeGenericHamiltonian::ParticleOnLatticeGenericHamiltonian(Particl
   this->NbrFluxQuanta=nbrFluxQuanta;
   this->HamiltonianShift=0.0;
   if (LatticeGeometry->HavePredefinedFlux())
-    this->FluxDensity=(double)(LatticeGeometry->GetPredefinedFlux())/(double)(LatticeGeometry->GetNbrSitesPerCell());
+    this->FluxDensity=(double)(LatticeGeometry->GetPredefinedFlux())/(double)(LatticeGeometry->GetNbrSites());
   else
     this->FluxDensity=((double)nbrFluxQuanta)/NbrSites;
   if (overrideFluxDensity!=0.0)
@@ -209,7 +209,7 @@ void ParticleOnLatticeGenericHamiltonian::EvaluateInteractionFactors()
 	{
 	  KineticQi[TmpNumberTerms] = s;
 	  KineticQf[TmpNumberTerms] = Neighbors[n];
-#ifdef DEBUG_OUTPUT
+#ifdef DEBUG_GENERIC_LATTICE_HAMILTONIAN
 	  if (LatticeGeometry->HavePredefinedFlux())
 	    cout << "Using hard-coded flux-density "<<this->FluxDensity<<" and Phase="<<Phases[n]<<endl;
 	  else
@@ -218,7 +218,7 @@ void ParticleOnLatticeGenericHamiltonian::EvaluateInteractionFactors()
 	  
 	  HoppingTerms[TmpNumberTerms] = Polar(1.0,Translations[n][0]*SolenoidX)*Polar(1.0,Translations[n][1]*SolenoidY)*HoppingSign*
 	    Polar(1.0,-2.0*M_PI*this->FluxDensity*Phases[n]);
-#ifdef DEBUG_OUTPUT
+#ifdef DEBUG_GENERIC_LATTICE_HAMILTONIAN
 	  cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms];
 	  cout << " including solenoid flux "<< Polar(1.0,Translations[n][0]*SolenoidX)<<"_x, ";
 	  cout << Polar(1.0,Translations[n][1]*SolenoidY)<<"_y ("<<Translations[n][0]<<","<<Translations[n][1]<<")"<<endl;
@@ -238,7 +238,7 @@ void ParticleOnLatticeGenericHamiltonian::EvaluateInteractionFactors()
 	  KineticQi[TmpNumberTerms] = PotentialPositions[n];
 	  KineticQf[TmpNumberTerms] = KineticQi[TmpNumberTerms];
 	  HoppingTerms[TmpNumberTerms] = Potentials[n];
-#ifdef DEBUG_OUTPUT
+#ifdef DEBUG_GENERIC_LATTICE_HAMILTONIAN
 	  cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<endl;
 #endif
 	  ++TmpNumberTerms;

@@ -9,7 +9,7 @@ use Math::Complex;
 
 # hardwire which state to look at
 my $MatrixElementCode="DiceLatticeModel.pl";
-my $Diagonalizer="FQHELatticeBosonsGeneric";
+my $Diagonalizer="FQHELatticeBosonsGeneric --use-lapack";
 my $OverlapExe="GenericOverlap";
 
 my $CalculateVectors=0;
@@ -24,9 +24,18 @@ $Multiplet[0]=0;
 my $Memory=1000;
 my $Options="";
 my $NbrCalculate=1;
+my $UseRealRepresentation="";
+my $RealVectorString="";
 
 while( (defined($ARGV[0])&&$ARGV[0] =~ /^-/ ))
   {
+    if ( $ARGV[0] =~ /-a/ )
+      {
+	print("Using alternative real representation of dice unit cell\n");
+	$UseRealRepresentation="-R";
+	$RealVectorString="_re"
+      }
+
     if ( $ARGV[0] =~ /-d/ )
       {
 	if (length($ARGV[0])>2)
@@ -189,6 +198,7 @@ if (!defined($ARGV[0]))
     print("       -m: memory for precalculations when calculating vectors\n");
     print("       -q: quantum numbers of states to be considered part of multiplet (-q q1,q2,q3,...)\n");
     print("       -s: number of states to be calculated at each point\n");
+    print("       -a: use alternative real representation of dice lattice (default: Landau gauge)\n");
     exit(1);
   }
 
@@ -455,21 +465,21 @@ sub TestVectors {
 	    {
 	      $SolenoidString = sprintf("_s_%g_%g",$SolenoidX, $SolenoidY);
 	    }
-	  $MatrixElements = sprintf("MatrixElements_Delta_u_%g_%s%s.dat", $InteractionU, $LatticeGeometry, $SolenoidString);
+	  $MatrixElements = sprintf("MatrixElements%s_Delta_u_%g_%s%s.dat", $RealVectorString, $InteractionU, $LatticeGeometry, $SolenoidString);
 	  if ($HardCore==1)
 	    {
-	      $Instruction = sprintf("%s -c -e %s -E ext%s --eigenstate --show-itertime", $Command, $MatrixElements, $SolenoidString);
+	      $Instruction = sprintf("%s -c -e %s -E ext%s%s --eigenstate --show-itertime", $Command, $MatrixElements, $RealVectorString, $SolenoidString);
 	    }
 	  else
 	    {
-	      $Instruction = sprintf("%s -e %s -E ext_u_%g%s --eigenstate --show-itertime ", $Command, $MatrixElements, $InteractionU, $SolenoidString);
+	      $Instruction = sprintf("%s -e %s -E ext%s_u_%g%s --eigenstate --show-itertime ", $Command, $MatrixElements, $RealVectorString, $InteractionU, $SolenoidString);
 	    }
 	  if ( ! -e $MatrixElements )
 	    {
 	      my $TmpGeometry = $LatticeGeometry;
 	      $TmpGeometry =~ s/x/,/;
 	      print ("Need to recalculate matrix elements, first...\n");
-	      my $Instruction2 = "$MatrixElementCode -d ./ -u $InteractionU -s $SolenoidX,$SolenoidY -C $TmpGeometry $RawElements";
+	      my $Instruction2 = "$MatrixElementCode -d ./ -u $InteractionU $UseRealRepresentation -s $SolenoidX,$SolenoidY -C $TmpGeometry $RawElements";
 	      print ("running ".$Instruction2."\n");
 	      system($Instruction2);
 	    }

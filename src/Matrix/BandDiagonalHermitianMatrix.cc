@@ -41,7 +41,7 @@
 #ifdef __LAPACK__
 // binding to the LAPACK zhpev function
 extern "C" void FORTRAN_NAME(zhpev)(const char* jobz, const char* uplo, const int* dimension, const doublecomplex* matrix, const double *eigenvalues, const doublecomplex *eigenvectors, const int* leadingDimension, const doublecomplex *work, const doublereal *rwork, const int* information );
-
+extern "C" void FORTRAN_NAME(zhbev)(const char* jobz, const char* uplo, const int* dimension, const int* numdiag, const doublecomplex* bandmatrixAD, const int* leadingDimensionAB, const double *eigenvalues, const doublecomplex *eigenvectorsZ, const int* leadingDimensionZ, const doublecomplex *work, const doublereal *rwork, const int* information);
 #endif
 
 
@@ -1331,7 +1331,9 @@ RealTriDiagonalSymmetricMatrix& BandDiagonalHermitianMatrix::Tridiagonalize (Rea
 
 RealDiagonalMatrix& BandDiagonalHermitianMatrix::LapackDiagonalize (RealDiagonalMatrix& M, double err, int maxIter)
 {
-  // lazy butt method of doing it: full complex matrix (slow!)
+  // lazy butt method of doing it: full complex matrix (slow!) - should implement call to ZHBEV
+  // to call: extern "C" void FORTRAN_NAME(zhbev)(const char* jobz, const char* uplo, const int* dimension, const int* numdiag, const doublecomplex* bandmatrixAD, const int* leadingDimensionAB, const double *eigenvalues, const doublecomplex *eigenvectorsZ, const int* leadingDimensionZ, const doublecomplex *work, const doublereal *rwork, const int* information);
+
   if (M.GetNbrRow() != this->NbrRow)
     M.Resize(this->NbrRow, this->NbrColumn);
   if (this->NbrRow>500)
