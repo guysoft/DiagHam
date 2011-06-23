@@ -9,7 +9,7 @@ use Math::Complex;
 
 # hardwire which state to look at
 my $MatrixElementCode="DiceLatticeModel.pl";
-my $Diagonalizer="FQHELatticeBosonsGeneric --use-lapack";
+my $Diagonalizer="FQHELatticeBosonsGeneric";
 my $OverlapExe="GenericOverlap";
 
 my $CalculateVectors=0;
@@ -318,7 +318,7 @@ sub AnalyzeChern
     my $RefS2x = $ReferenceVals[2];
     my $RefS2y = $ReferenceVals[3];
     my $LatticeGeometry = $Lx."x".$Ly;
-    my $CommandLine = "$Program -L DiceDoubledEffective_".$Lx."x".$Ly.".dat -p $N -n $NbrCalculate -m $Memory $Options --show-itertime";
+    my $CommandLine = "$Program --use-lapack -L DiceDoubledEffective_".$Lx."x".$Ly.".dat -p $N -n $NbrCalculate -m $Memory $Options --show-itertime";
 
     TestVectors ($BaseName, $RefS1x, $RefS1y, $Degeneracy, $CalculateVectors, $CommandLine, \@Multiplet, $HardCore, $u, $LatticeGeometry);
     TestVectors ($BaseName, $RefS2x, $RefS2y, $Degeneracy, $CalculateVectors, $CommandLine, \@Multiplet, $HardCore, $u, $LatticeGeometry);

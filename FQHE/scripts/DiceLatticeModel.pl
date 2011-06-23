@@ -10,7 +10,7 @@ use Math::Complex;
 my $Verbose=0;
 
 # hardwire which state to look at
-my $Program="FQHELatticeBosonsGeneric --use-lapack";
+my $Program="FQHELatticeBosonsGeneric";
 my $MatrixProgram="MatrixElement";
 my $Program64Suffix="_64";
 
@@ -302,7 +302,7 @@ for (my $i=0; $i<$NbrSites; ++$i)
     print DEFINITION ($DiceLattice);
     close(DEFINITION);
     # run single particle calculation
-    my $Command = "$Program -p 1 -L $LatticeFile -q ".(3*$NbrCells)." -c --eigenstate -n 1 $SolenoidCmd";
+    my $Command = "$Program --use-lapack -p 1 -L $LatticeFile -q ".(3*$NbrCells)." -c --eigenstate -n 1 $SolenoidCmd";
     if ($Verbose==1)
       {
 	print ("running: $Command\n");
