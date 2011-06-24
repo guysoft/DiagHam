@@ -2713,3 +2713,35 @@ void FermionOnSphereTwoLandauLevels::SlaterTimesSlater(unsigned long* slater, un
     }
   delete [] State;
 }
+
+// find state index. not using lookup table at the moment
+//
+// stateDescription = unsigned integer describing the state
+// lzmax = maximum Lz value reached by a fermion in the state
+// return value = corresponding index
+
+int FermionOnSphereTwoLandauLevels::FindStateIndex(unsigned long stateDescription, int lzmax)
+{
+  int start, end, mid;
+  
+  start = 0;					//index of start of range
+  end = this->HilbertSpaceDimension;		//index of end of range + 1 
+  
+  while ( (end - start) > 0 ) 
+    {
+      mid = (start + end) >> 1 ; 		//work out the mid-point
+      if ( stateDescription > this->StateDescription[mid] )	
+	{
+	  end = mid;
+	}
+      else if ( stateDescription < this->StateDescription[mid] )
+	{
+	  start = mid + 1;	  	 
+	}
+      else
+	{
+	  return mid;
+	}
+    }	
+  return this->HilbertSpaceDimension;
+}

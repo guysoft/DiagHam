@@ -148,12 +148,16 @@ int main(int argc, char** argv)
   if ( (NbrFermions % 2) == 1 )
     {
     	Max = NbrFluxQuanta+2;
-    	Max += (NbrFluxQuanta+1)*(NbrFluxQuanta+2) - (NbrFluxQuanta + 1 - (NbrFermions-1)/2)*(NbrFluxQuanta + 1 - (NbrFermions-1)/2 + 1);
+	for ( int i = 0 ; i < (NbrFermions - 1) ; i+=2 )
+	  Max += 2*(NbrFluxQuanta - i);
     } 
   else 
     {
-    	Max = (NbrFluxQuanta+2)*(NbrFluxQuanta+3)/2 - (NbrFluxQuanta + 2 - (NbrFermions)/2)*(NbrFluxQuanta + 2 - (NbrFermions)/2 + 1)/2;
-    	Max += (NbrFluxQuanta+1)*(NbrFluxQuanta+2)/2 - (NbrFluxQuanta + 1 - (NbrFermions)/2)*(NbrFluxQuanta + 1 - (NbrFermions)/2 + 1)/2;
+	Max = NbrFluxQuanta+2;
+	int i;
+	for ( i = 2 ; i < (NbrFermions - 1) ; i+=2 )
+	  Max += 2*(NbrFluxQuanta + 2 - i);    	
+    	Max += (NbrFluxQuanta + 2 - NbrFermions);
     }
   
   int  L = InitialLz;
@@ -174,12 +178,12 @@ int main(int argc, char** argv)
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	  Memory = Architecture.GetArchitecture()->GetLocalMemory();
       
-      for ( int i = 0 ; i < Space->GetHilbertSpaceDimension() ; i++ ) 
+      /*for ( int i = 0 ; i < Space->GetHilbertSpaceDimension() ; i++ ) 
 	{
 	  cout << i << ": " ;
 	  Space->PrintState(cout, i);
 	  cout << endl;
-	}
+	}*/
       
       
       // Create data structure for the Hamiltonian.

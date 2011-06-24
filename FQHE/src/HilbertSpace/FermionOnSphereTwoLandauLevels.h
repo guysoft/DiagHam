@@ -529,6 +529,13 @@ class FermionOnSphereTwoLandauLevels :  public FermionOnSphereWithSpin
   // sortingMap = map in which the generated states and their coefficient will be stored
   // finalSpace = pointer to the final HilbertSpace
   virtual void SlaterTimesSlater(unsigned long* slater, unsigned long* lllslater, map <unsigned long, double> & sortingMap, BosonOnSphereTwoLandauLevels* finalSpace);
+  
+  // find state index. not using lookup table at the moment
+  //
+  // stateDescription = unsigned integer describing the state
+  // lzmax = maximum Lz value reached by a fermion in the state
+  // return value = corresponding index
+  virtual int  FindStateIndex(unsigned long stateDescription, int lzmax);
 };
 
 // convert a fermionic state to its monomial representation

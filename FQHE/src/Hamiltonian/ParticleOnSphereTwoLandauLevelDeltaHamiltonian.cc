@@ -205,9 +205,10 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
   this->NbrIntraSectorSums = 0;
   this->NbrInterSectorSums = 0;
   this->M1IntraValue = 0;
+  this->M2IntraValue = 0;
+  this->M1InterValue = 0;
   this->M2InterValue = 0;
-  
-  
+    
   if ( this->Particles->GetParticleStatistic() == ParticleOnSphere::BosonicStatistic ) 
     {
       // Set the number of possible sums for each sector. 
@@ -409,7 +410,7 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
       this->InteractionFactorsDownDownUpDown[i] = 0;
     }
   
-//now the trhee that end in Down Down
+  //now the trhee that end in Down Down
   this->InteractionFactorsDownDownDownDown = new double* [this->NbrDownDownSectorSums];
   this->InteractionFactorsUpDownDownDown = new double* [this->NbrDownDownSectorSums];
   this->InteractionFactorsUpUpDownDown = new double* [this->NbrDownDownSectorSums];
@@ -837,8 +838,8 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 		}
 	    }
 	    
-	    //cout << "Up Up Up Down" << endl;
-	    for (int i = 0; i < this->NbrUpDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
+	  //cout << "Up Up Up Down" << endl;
+	  for (int i = 0; i < this->NbrUpDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
 	    {
 	      if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
 		{
@@ -872,10 +873,9 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 		}
 	    }
       
-      
-		    
-	    //cout << "Down Down Up Up" << endl;
-	    for (int i = 0; i < this->NbrDownDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
+     		    
+	  //cout << "Down Down Up Up" << endl;
+	  for (int i = 0; i < this->NbrDownDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
 	    {
 	      if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
 		{
@@ -910,7 +910,7 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 	    }
 	    
 	    
-	      for (int i = 0; i < this->NbrDownDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
+	  for (int i = 0; i < this->NbrDownDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
 	    {
 	      if (this->NbrDownDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
 		{
@@ -922,7 +922,7 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 		      int m2 = ((this->DownDownSectorIndicesPerSum[i][(j1 << 1) + 1] + this->LzFermionDownShift) << 1) - this->LzMaxDown - 1;
 		      for (int j2 = 0; j2 < this->NbrDownDownSectorIndicesPerSum[i]; ++j2)
 			{
-			  int m3 = ((this->DownDownSectorIndicesPerSum[i][j2 << 1] + this->LzFermionDownShift) << 1) - this->LzMaxDown - 1 + this->LzFermionDownShift;
+			  int m3 = ((this->DownDownSectorIndicesPerSum[i][j2 << 1] + this->LzFermionDownShift) << 1) - this->LzMaxDown - 1 ;
 			  int m4 = ((this->DownDownSectorIndicesPerSum[i][(j2 << 1) + 1] + this->LzFermionDownShift) << 1) - this->LzMaxDown - 1;
 			  
 			  this->InteractionFactorsDownDownDownDown[i][Index] = 0;
@@ -1533,7 +1533,7 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 
   for (int i = 1; i <= this->LzMaxDown; ++i)
     {
-      this->OneBodyMValuesDownDown[i-1] = i;
+      this->OneBodyMValuesDownDown[i-1] = i - this->LzFermionDownShift;
       this->OneBodyInteractionFactorsDownDown[i-1] = this->TotalCyclotronEnergy[0];
     }
 
@@ -1550,7 +1550,7 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
 // m2 = angular momentum of second operator.
 // l3 = LL of m3, 0 or 1 supported.
 // m3 = angular momentum of third operator.
-// l4 = LL of m4, 0 or 1 supported.
+// l4 = LL of m4, 0 or 1 supported.	
 // m4 = angular momentum of fourth operator.
 //
 // return value = interaction factor with delta interaction

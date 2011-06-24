@@ -191,163 +191,309 @@ inline void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateMNTwoBodyAdd
   double* TmpInteractionFactor;
   int Index;
 
-  
-    
-  // Annihilation operators acting on first LL (UpUp)
-  for (int j = 0; j < this->NbrUpUpSectorSums; ++j) 
-    {
-      for ( int i = 0 ; i < this->NbrUpUpSectorIndicesPerSum[j] ; i++ ) 
-        {
-          Coefficient3 = particles->AuAu(index, this->UpUpSectorIndicesPerSum[j][i << 1], this->UpUpSectorIndicesPerSum[j][(i << 1) + 1]);
-          if ( Coefficient3 != 0.0 )
-            {
-              Coefficient3 *= vSource[index];
-                            
-              // first UpUpUpUp
-              TmpInteractionFactor = this->InteractionFactorsUpUpUpUp[j] + (i * this->NbrUpUpSectorIndicesPerSum[j]);	
-              for ( int k = 0 ; k < this->NbrUpUpSectorIndicesPerSum[j] ; k++ ) 
-                {
-                  Index = particles->AduAdu(this->UpUpSectorIndicesPerSum[j][k << 1], this->UpUpSectorIndicesPerSum[j][(k << 1) + 1], Coefficient);
-		  if (Index < Dim)
-		      vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;
-                  ++TmpInteractionFactor;
-		}
-        	  
-	      // now DownDownUpUp
-	      if ( j >= 2 && j < (this->NbrDownDownSectorSums + 2) ) 
+  if ( this->Particles->GetParticleStatistic() == ParticleOnSphere::BosonicStatistic ) 
+    {      
+      // Annihilation operators acting on first LL (UpUp)
+      for (int j = 0; j < this->NbrUpUpSectorSums; ++j) 
+	{
+	  for ( int i = 0 ; i < this->NbrUpUpSectorIndicesPerSum[j] ; i++ ) 
+	    {
+	      Coefficient3 = particles->AuAu(index, this->UpUpSectorIndicesPerSum[j][i << 1], this->UpUpSectorIndicesPerSum[j][(i << 1) + 1]);
+	      if ( Coefficient3 != 0.0 )
 		{
-		    TmpInteractionFactor = this->InteractionFactorsDownDownUpUp[j-2] + (i * this->NbrDownDownSectorIndicesPerSum[j-2]);	
-		    for ( int k = 0 ; k < this->NbrDownDownSectorIndicesPerSum[j-2] ; k++ ) 
-		      {
-			Index = particles->AddAdd(this->DownDownSectorIndicesPerSum[j-2][k << 1], this->DownDownSectorIndicesPerSum[j-2][(k << 1) + 1], Coefficient);
-			if (Index < Dim)
-			    vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;			    
-			++TmpInteractionFactor;
-		      }	  
-		}
-			    
-		      // now UpDownUpUp
-	      if ( j >= 1 && j < (this->NbrUpDownSectorSums + 1) ) 
-		{
-		    TmpInteractionFactor = this->InteractionFactorsUpDownUpUp[j-1] + (i * this->NbrUpDownSectorIndicesPerSum[j-1]);	
-		    for ( int k = 0 ; k < this->NbrUpDownSectorIndicesPerSum[j-1] ; k++ ) 
-		      {
-			Index = particles->AduAdd(this->UpDownSectorIndicesPerSum[j-1][k << 1], this->UpDownSectorIndicesPerSum[j-1][(k << 1) + 1], Coefficient);
-			if (Index < Dim)
-			    vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;			    
-			++TmpInteractionFactor;
-		      }	  
+		  Coefficient3 *= vSource[index];
+				
+		  // first UpUpUpUp
+		  TmpInteractionFactor = this->InteractionFactorsUpUpUpUp[j] + (i * this->NbrUpUpSectorIndicesPerSum[j]);	
+		  for ( int k = 0 ; k < this->NbrUpUpSectorIndicesPerSum[j] ; k++ ) 
+		    {
+		      Index = particles->AduAdu(this->UpUpSectorIndicesPerSum[j][k << 1], this->UpUpSectorIndicesPerSum[j][(k << 1) + 1], Coefficient);
+		      if (Index < Dim)
+			  vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;
+		      ++TmpInteractionFactor;
+		    }
+		      
+		  // now DownDownUpUp
+		  if ( j >= 2 && j < (this->NbrDownDownSectorSums + 2) ) 
+		    {
+			TmpInteractionFactor = this->InteractionFactorsDownDownUpUp[j-2] + (i * this->NbrDownDownSectorIndicesPerSum[j-2]);	
+			for ( int k = 0 ; k < this->NbrDownDownSectorIndicesPerSum[j-2] ; k++ ) 
+			  {
+			    Index = particles->AddAdd(this->DownDownSectorIndicesPerSum[j-2][k << 1], this->DownDownSectorIndicesPerSum[j-2][(k << 1) + 1], Coefficient);
+			    if (Index < Dim)
+				vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;			    
+			    ++TmpInteractionFactor;
+			  }	  
+		    }
+				
+			  // now UpDownUpUp
+		  if ( j >= 1 && j < (this->NbrUpDownSectorSums + 1) ) 
+		    {
+			TmpInteractionFactor = this->InteractionFactorsUpDownUpUp[j-1] + (i * this->NbrUpDownSectorIndicesPerSum[j-1]);	
+			for ( int k = 0 ; k < this->NbrUpDownSectorIndicesPerSum[j-1] ; k++ ) 
+			  {
+			    Index = particles->AduAdd(this->UpDownSectorIndicesPerSum[j-1][k << 1], this->UpDownSectorIndicesPerSum[j-1][(k << 1) + 1], Coefficient);
+			    if (Index < Dim)
+				vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;			    
+			    ++TmpInteractionFactor;
+			  }	  
+		    }
 		}
 	    }
 	}
-    }
-	
-  // Annihilation operators acting on both levels (UpDown)
-  for (int j = 0; j < this->NbrUpDownSectorSums; ++j) 
-    {
-      for ( int i = 0 ; i < this->NbrUpDownSectorIndicesPerSum[j] ; i++ ) 
-        {
-          Coefficient3 = particles->AuAd(index, this->UpDownSectorIndicesPerSum[j][i << 1], this->UpDownSectorIndicesPerSum[j][(i << 1) + 1]);
-          if ( Coefficient3 != 0.0 )
-            {
-              Coefficient3 *= vSource[index];
-                            
-              // first UpUpUpDown
-              TmpInteractionFactor = this->InteractionFactorsUpUpUpDown[j] + (i * this->NbrUpUpSectorIndicesPerSum[j+1]);	
-              for ( int k = 0 ; k < this->NbrUpUpSectorIndicesPerSum[j+1] ; k++ ) 
-                {
-                  Index = particles->AduAdu(this->UpUpSectorIndicesPerSum[j+1][k << 1], this->UpUpSectorIndicesPerSum[j+1][(k << 1) + 1], Coefficient);
-		  if (Index < Dim)
-		      vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;		      
-                  ++TmpInteractionFactor;
-		}
-        	  
-		// now DownDownUpDown
-		 if ( j >= 1 && j < (this->NbrDownDownSectorSums + 1) ) 
-		  {
-		    TmpInteractionFactor = this->InteractionFactorsDownDownUpDown[j-1] + (i * this->NbrDownDownSectorIndicesPerSum[j-1]);	
-		    for ( int k = 0 ; k < this->NbrDownDownSectorIndicesPerSum[j-1] ; k++ ) 
+	    
+      // Annihilation operators acting on both levels (UpDown)
+      for (int j = 0; j < this->NbrUpDownSectorSums; ++j) 
+	{
+	  for ( int i = 0 ; i < this->NbrUpDownSectorIndicesPerSum[j] ; i++ ) 
+	    {
+	      Coefficient3 = particles->AuAd(index, this->UpDownSectorIndicesPerSum[j][i << 1], this->UpDownSectorIndicesPerSum[j][(i << 1) + 1]);
+	      if ( Coefficient3 != 0.0 )
+		{
+		  Coefficient3 *= vSource[index];
+				
+		  // first UpUpUpDown
+		  TmpInteractionFactor = this->InteractionFactorsUpUpUpDown[j] + (i * this->NbrUpUpSectorIndicesPerSum[j+1]);	
+		  for ( int k = 0 ; k < this->NbrUpUpSectorIndicesPerSum[j+1] ; k++ ) 
+		    {
+		      Index = particles->AduAdu(this->UpUpSectorIndicesPerSum[j+1][k << 1], this->UpUpSectorIndicesPerSum[j+1][(k << 1) + 1], Coefficient);
+		      if (Index < Dim)
+			  vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;		      
+		      ++TmpInteractionFactor;
+		    }
+		      
+		    // now DownDownUpDown
+		    if ( j >= 1 && j < (this->NbrDownDownSectorSums + 1) ) 
 		      {
-			Index = particles->AddAdd(this->DownDownSectorIndicesPerSum[j-1][k << 1], this->DownDownSectorIndicesPerSum[j-1][(k << 1) + 1], Coefficient);
+			TmpInteractionFactor = this->InteractionFactorsDownDownUpDown[j-1] + (i * this->NbrDownDownSectorIndicesPerSum[j-1]);	
+			for ( int k = 0 ; k < this->NbrDownDownSectorIndicesPerSum[j-1] ; k++ ) 
+			  {
+			    Index = particles->AddAdd(this->DownDownSectorIndicesPerSum[j-1][k << 1], this->DownDownSectorIndicesPerSum[j-1][(k << 1) + 1], Coefficient);
+			    if (Index < Dim)
+			      {
+				vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;			    
+			      }
+			    ++TmpInteractionFactor;
+			  }	  
+		      }
+				  
+		    // now UpDownUpDown
+		    TmpInteractionFactor = this->InteractionFactorsUpDownUpDown[j] + (i * this->NbrUpDownSectorIndicesPerSum[j]);	
+		    for ( int k = 0 ; k < this->NbrUpDownSectorIndicesPerSum[j] ; k++ ) 
+		      {
+			Index = particles->AduAdd(this->UpDownSectorIndicesPerSum[j][k << 1], this->UpDownSectorIndicesPerSum[j][(k << 1) + 1], Coefficient);
 			if (Index < Dim)
 			  {
-			    vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;			    
+			    vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;			
 			  }
 			++TmpInteractionFactor;
 		      }	  
 		  }
-			      
-		// now UpDownUpDown
-		TmpInteractionFactor = this->InteractionFactorsUpDownUpDown[j] + (i * this->NbrUpDownSectorIndicesPerSum[j]);	
-		for ( int k = 0 ; k < this->NbrUpDownSectorIndicesPerSum[j] ; k++ ) 
-		  {
-		    Index = particles->AduAdd(this->UpDownSectorIndicesPerSum[j][k << 1], this->UpDownSectorIndicesPerSum[j][(k << 1) + 1], Coefficient);
-		    if (Index < Dim)
-		      {
-			vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;			
-		      }
-		    ++TmpInteractionFactor;
-		  }	  
-	      }
-	 }
-    }
-    
-	
-	
-  // Annihilation operators acting on LLL (DownDown)
-  for (int j = 0; j < this->NbrDownDownSectorSums; ++j) 
-    {
-      for ( int i = 0 ; i < this->NbrDownDownSectorIndicesPerSum[j] ; i++ ) 
-        {
-          Coefficient3 = particles->AdAd(index, this->DownDownSectorIndicesPerSum[j][i << 1], this->DownDownSectorIndicesPerSum[j][(i << 1) + 1]);
-          if ( Coefficient3 != 0.0 )
-            {
-              Coefficient3 *= vSource[index];
-                            
-              // first UpUpDownDown
-              TmpInteractionFactor = this->InteractionFactorsUpUpDownDown[j] + (i * this->NbrUpUpSectorIndicesPerSum[j+2]);	
-              for ( int k = 0 ; k < this->NbrUpUpSectorIndicesPerSum[j+2] ; k++ ) 
-                {
-                  Index = particles->AduAdu(this->UpUpSectorIndicesPerSum[j+2][k << 1], this->UpUpSectorIndicesPerSum[j+2][(k << 1) + 1], Coefficient);
-		  if (Index < Dim)
-		    {
-		       vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;		      
-		    }
-                  ++TmpInteractionFactor;
-		}
-        	  
-	      // now DownDownDownDown
-	      TmpInteractionFactor = this->InteractionFactorsDownDownDownDown[j] + (i * this->NbrDownDownSectorIndicesPerSum[j]);	
-	      for ( int k = 0 ; k < this->NbrDownDownSectorIndicesPerSum[j] ; k++ ) 
-		{
-		  Index = particles->AddAdd(this->DownDownSectorIndicesPerSum[j][k << 1], this->DownDownSectorIndicesPerSum[j][(k << 1) + 1], Coefficient);
-		  if (Index < Dim)
-		    {				      
-		      vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;		      
-		      /*if (index == 3235 && Index == 3235 ) 
-		        {
-			  cout << "Coeff : " << Coefficient << ", Coeff3 : " << Coefficient3 << ", Factor: " << (*TmpInteractionFactor) << ", Dest :" << vDestination[Index] << ", Source: " << vSource[index] <<  endl;
-			}*/
-		    }
-		  ++TmpInteractionFactor;
-		}	  
-
-				
-	      // now UpDownDownDown
-	      TmpInteractionFactor = this->InteractionFactorsUpDownDownDown[j] + (i * this->NbrUpDownSectorIndicesPerSum[j+1]);	
-	      for ( int k = 0 ; k < this->NbrUpDownSectorIndicesPerSum[j+1] ; k++ ) 
-		{
-		  Index = particles->AduAdd(this->UpDownSectorIndicesPerSum[j+1][k << 1], this->UpDownSectorIndicesPerSum[j+1][(k << 1) + 1], Coefficient);
-		  if (Index < Dim)
-		    {
-		      vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;		      
-		    }
-		  ++TmpInteractionFactor;
-		}	  
 	    }
 	}
-    }
+	
+	    
+	    
+      // Annihilation operators acting on LLL (DownDown)
+      for (int j = 0; j < this->NbrDownDownSectorSums; ++j) 
+	{
+	  for ( int i = 0 ; i < this->NbrDownDownSectorIndicesPerSum[j] ; i++ ) 
+	    {
+	      Coefficient3 = particles->AdAd(index, this->DownDownSectorIndicesPerSum[j][i << 1], this->DownDownSectorIndicesPerSum[j][(i << 1) + 1]);
+	      if ( Coefficient3 != 0.0 )
+		{
+		  Coefficient3 *= vSource[index];
+				
+		  // first UpUpDownDown
+		  TmpInteractionFactor = this->InteractionFactorsUpUpDownDown[j] + (i * this->NbrUpUpSectorIndicesPerSum[j+2]);	
+		  for ( int k = 0 ; k < this->NbrUpUpSectorIndicesPerSum[j+2] ; k++ ) 
+		    {
+		      Index = particles->AduAdu(this->UpUpSectorIndicesPerSum[j+2][k << 1], this->UpUpSectorIndicesPerSum[j+2][(k << 1) + 1], Coefficient);
+		      if (Index < Dim)
+			{
+			  vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;		      
+			}
+		      ++TmpInteractionFactor;
+		    }
+		      
+		  // now DownDownDownDown
+		  TmpInteractionFactor = this->InteractionFactorsDownDownDownDown[j] + (i * this->NbrDownDownSectorIndicesPerSum[j]);	
+		  for ( int k = 0 ; k < this->NbrDownDownSectorIndicesPerSum[j] ; k++ ) 
+		    {
+		      Index = particles->AddAdd(this->DownDownSectorIndicesPerSum[j][k << 1], this->DownDownSectorIndicesPerSum[j][(k << 1) + 1], Coefficient);
+		      if (Index < Dim)
+			{				      
+			  vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;			 
+			}
+		      ++TmpInteractionFactor;
+		    }	  
 
+				    
+		  // now UpDownDownDown
+		  TmpInteractionFactor = this->InteractionFactorsUpDownDownDown[j] + (i * this->NbrUpDownSectorIndicesPerSum[j+1]);	
+		  for ( int k = 0 ; k < this->NbrUpDownSectorIndicesPerSum[j+1] ; k++ ) 
+		    {
+		      Index = particles->AduAdd(this->UpDownSectorIndicesPerSum[j+1][k << 1], this->UpDownSectorIndicesPerSum[j+1][(k << 1) + 1], Coefficient);
+		      if (Index < Dim)
+			{
+			  vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;		      
+			}
+		      ++TmpInteractionFactor;
+		    }	  
+		}
+	    }
+	}
+    } 
+  else if ( this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic ) 
+    {  
+      // Annihilation operators acting on first LL (UpUp)
+      for (int j = 0; j < this->NbrUpUpSectorSums; ++j) 
+	{
+	  for ( int i = 0 ; i < this->NbrUpUpSectorIndicesPerSum[j] ; i++ ) 
+	    {
+	      Coefficient3 = particles->AuAu(index, this->UpUpSectorIndicesPerSum[j][i << 1], this->UpUpSectorIndicesPerSum[j][(i << 1) + 1]);
+	      if ( Coefficient3 != 0.0 )
+		{
+		  Coefficient3 *= vSource[index];
+				
+		  // first UpUpUpUp
+		  TmpInteractionFactor = this->InteractionFactorsUpUpUpUp[j] + (i * this->NbrUpUpSectorIndicesPerSum[j]);	
+		  for ( int k = 0 ; k < this->NbrUpUpSectorIndicesPerSum[j] ; k++ ) 
+		    {
+		      Index = particles->AduAdu(this->UpUpSectorIndicesPerSum[j][k << 1], this->UpUpSectorIndicesPerSum[j][(k << 1) + 1], Coefficient);
+		      if (Index < Dim)
+			  vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;
+		      ++TmpInteractionFactor;
+		    }
+		      
+		  // now DownDownUpUp
+		  if ( j >= 2 && j < (this->NbrDownDownSectorSums + 2) ) 
+		    {
+			TmpInteractionFactor = this->InteractionFactorsDownDownUpUp[j-2] + (i * this->NbrDownDownSectorIndicesPerSum[j-2]);	
+			for ( int k = 0 ; k < this->NbrDownDownSectorIndicesPerSum[j-2] ; k++ ) 
+			  {
+			    Index = particles->AddAdd(this->DownDownSectorIndicesPerSum[j-2][k << 1], this->DownDownSectorIndicesPerSum[j-2][(k << 1) + 1], Coefficient);
+			    if (Index < Dim)
+				vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;			    
+			    ++TmpInteractionFactor;
+			  }	  
+		    }
+				
+		  // now UpDownUpUp		  
+		  TmpInteractionFactor = this->InteractionFactorsUpDownUpUp[j] + (i * this->NbrUpDownSectorIndicesPerSum[j]);	
+		  for ( int k = 0 ; k < this->NbrUpDownSectorIndicesPerSum[j] ; k++ ) 
+		    {
+		      Index = particles->AduAdd(this->UpDownSectorIndicesPerSum[j][k << 1], this->UpDownSectorIndicesPerSum[j][(k << 1) + 1], Coefficient);
+		      if (Index < Dim)
+			  vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;			    
+		      ++TmpInteractionFactor;
+		    }	  		    
+		}
+	    }
+	}
+	    
+      // Annihilation operators acting on both levels (UpDown)
+      for (int j = 0; j < this->NbrUpDownSectorSums; ++j) 
+	{
+	  for ( int i = 0 ; i < this->NbrUpDownSectorIndicesPerSum[j] ; i++ ) 
+	    {
+	      Coefficient3 = particles->AuAd(index, this->UpDownSectorIndicesPerSum[j][i << 1], this->UpDownSectorIndicesPerSum[j][(i << 1) + 1]);
+	      if ( Coefficient3 != 0.0 )
+		{
+		  Coefficient3 *= vSource[index];
+				
+		  // first UpUpUpDown
+		  TmpInteractionFactor = this->InteractionFactorsUpUpUpDown[j] + (i * this->NbrUpUpSectorIndicesPerSum[j]);	
+		  for ( int k = 0 ; k < this->NbrUpUpSectorIndicesPerSum[j] ; k++ ) 
+		    {
+		      Index = particles->AduAdu(this->UpUpSectorIndicesPerSum[j][k << 1], this->UpUpSectorIndicesPerSum[j][(k << 1) + 1], Coefficient);
+		      if (Index < Dim)
+			  vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;		      
+		      ++TmpInteractionFactor;
+		    }
+		      
+		    // now DownDownUpDown
+		    if ( j >= 2 && j < (this->NbrDownDownSectorSums + 2) ) 
+		      {
+			TmpInteractionFactor = this->InteractionFactorsDownDownUpDown[j-2] + (i * this->NbrDownDownSectorIndicesPerSum[j-2]);	
+			for ( int k = 0 ; k < this->NbrDownDownSectorIndicesPerSum[j-2] ; k++ ) 
+			  {
+			    Index = particles->AddAdd(this->DownDownSectorIndicesPerSum[j-2][k << 1], this->DownDownSectorIndicesPerSum[j-2][(k << 1) + 1], Coefficient);
+			    if (Index < Dim)
+			      {
+				vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;			    
+			      }
+			    ++TmpInteractionFactor;
+			  }	  
+		      }
+				  
+		    // now UpDownUpDown
+		    TmpInteractionFactor = this->InteractionFactorsUpDownUpDown[j] + (i * this->NbrUpDownSectorIndicesPerSum[j]);	
+		    for ( int k = 0 ; k < this->NbrUpDownSectorIndicesPerSum[j] ; k++ ) 
+		      {
+			Index = particles->AduAdd(this->UpDownSectorIndicesPerSum[j][k << 1], this->UpDownSectorIndicesPerSum[j][(k << 1) + 1], Coefficient);
+			if (Index < Dim)
+			  {
+			    vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;			
+			  }
+			++TmpInteractionFactor;
+		      }	  
+		  }
+	    }
+	}
+	
+	    
+	    
+      // Annihilation operators acting on LLL (DownDown)
+      for (int j = 0; j < this->NbrDownDownSectorSums; ++j) 
+	{
+	  for ( int i = 0 ; i < this->NbrDownDownSectorIndicesPerSum[j] ; i++ ) 
+	    {
+	      Coefficient3 = particles->AdAd(index, this->DownDownSectorIndicesPerSum[j][i << 1], this->DownDownSectorIndicesPerSum[j][(i << 1) + 1]);
+	      if ( Coefficient3 != 0.0 )
+		{
+		  Coefficient3 *= vSource[index];
+				
+		  // first UpUpDownDown
+		  TmpInteractionFactor = this->InteractionFactorsUpUpDownDown[j] + (i * this->NbrUpUpSectorIndicesPerSum[j+2]);	
+		  for ( int k = 0 ; k < this->NbrUpUpSectorIndicesPerSum[j+2] ; k++ ) 
+		    {
+		      Index = particles->AduAdu(this->UpUpSectorIndicesPerSum[j+2][k << 1], this->UpUpSectorIndicesPerSum[j+2][(k << 1) + 1], Coefficient);
+		      if (Index < Dim)
+			{
+			  vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;		      
+			}
+		      ++TmpInteractionFactor;
+		    }
+		      
+		  // now DownDownDownDown
+		  TmpInteractionFactor = this->InteractionFactorsDownDownDownDown[j] + (i * this->NbrDownDownSectorIndicesPerSum[j]);	
+		  for ( int k = 0 ; k < this->NbrDownDownSectorIndicesPerSum[j] ; k++ ) 
+		    {
+		      Index = particles->AddAdd(this->DownDownSectorIndicesPerSum[j][k << 1], this->DownDownSectorIndicesPerSum[j][(k << 1) + 1], Coefficient);
+		      if (Index < Dim)
+			{				      
+			  vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;			  
+			}
+		      ++TmpInteractionFactor;
+		    }	  
+
+				    
+		  // now UpDownDownDown
+		  TmpInteractionFactor = this->InteractionFactorsUpDownDownDown[j] + (i * this->NbrUpDownSectorIndicesPerSum[j+2]);	
+		  for ( int k = 0 ; k < this->NbrUpDownSectorIndicesPerSum[j+2] ; k++ ) 
+		    {
+		      Index = particles->AduAdd(this->UpDownSectorIndicesPerSum[j+2][k << 1], this->UpDownSectorIndicesPerSum[j+2][(k << 1) + 1], Coefficient);
+		      if (Index < Dim)
+			{
+			  vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;		      
+			}
+		      ++TmpInteractionFactor;
+		    }	  
+		}
+	    }
+	}      
+    }
 }
 
 
@@ -935,8 +1081,7 @@ inline void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateMNTwoBodyFas
 			  }	  
 		    }
 				
-			  // now UpDownUpUp
-		  
+		  // now UpDownUpUp		  
 		  TmpInteractionFactor = this->InteractionFactorsUpDownUpUp[j] + (i * this->NbrUpDownSectorIndicesPerSum[j]);	
 		  for ( int k = 0 ; k < this->NbrUpDownSectorIndicesPerSum[j] ; k++ ) 
 		    {
