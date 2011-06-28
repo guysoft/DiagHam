@@ -102,4 +102,7 @@ FermionOnSquareLatticeWithSpinMomentumSpace.cc \
 FermionOnSquareLatticeNonPeriodicMomentumSpace.cc \
 BosonOnSphereFusedBasis.cc \
 BosonOnSphereTensorProductState.cc \
-BosonOnSphereSumTensorProductState.cc
+BosonOnSphereSumTensorProductState.cc \
+FermionOnSquareLatticeMomentumSpaceLong.cc \
+FermionOnSquareLatticeWithSpinMomentumSpaceLong.cc \
+FermionOnCubicLatticeWithSpinMomentumSpace.cc

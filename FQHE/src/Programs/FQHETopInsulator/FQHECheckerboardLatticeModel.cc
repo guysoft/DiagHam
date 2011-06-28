@@ -2,6 +2,8 @@
 
 #include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
+#include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpaceLong.h"
+#include "HilbertSpace/FermionOnSquareLatticeMomentumSpaceLong.h"
 
 #include "Hamiltonian/ParticleOnLatticeWithSpinCheckerboardLatticeHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian.h"
@@ -152,12 +154,20 @@ int main(int argc, char** argv)
 	  cout << "(kx=" << i << ",ky=" << j << ") : " << endl;
  	  if (Manager.GetBoolean("single-band") == false)
  	    {
-	      FermionOnSquareLatticeWithSpinMomentumSpace Space(NbrParticles, NbrSitesX, NbrSitesY, i, j);
-	      cout << "dim = " << Space.GetHilbertSpaceDimension()  << endl;
+	      ParticleOnSphereWithSpin* Space = 0;
+	      if ((NbrSitesX * NbrSitesY) <= 31)
+		{
+		  Space = new FermionOnSquareLatticeWithSpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		}
+	      else
+		{
+		  Space = new FermionOnSquareLatticeWithSpinMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		}
+	      cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
 	      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 		Memory = Architecture.GetArchitecture()->GetLocalMemory();
-	      Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());	
-	      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnLatticeWithSpinCheckerboardLatticeHamiltonian(&Space, NbrParticles, NbrSitesX, NbrSitesY,
+	      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
+	      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnLatticeWithSpinCheckerboardLatticeHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
 														Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"),
 														Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x") * 2.0 * M_PI, Manager.GetDouble("gamma-y") * 2.0 * M_PI, 		     
 														Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
@@ -172,17 +182,31 @@ int main(int argc, char** argv)
 	      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
 	      cout << "------------------------------------" << endl;
 	      delete Hamiltonian;
+	      delete Space;
 	      delete[] EigenstateOutputFile;
 	      delete[] ContentPrefix;
  	    }
  	  else
  	    {
- 	      FermionOnSquareLatticeMomentumSpace Space(NbrParticles, NbrSitesX, NbrSitesY, i, j);
- 	      cout << "dim = " << Space.GetHilbertSpaceDimension()  << endl;
+	      ParticleOnSphere* Space = 0;
+	      if ((NbrSitesX * NbrSitesY) <= 63)
+		{
+		  Space = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		}
+	      else
+		{
+		  Space = new FermionOnSquareLatticeMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		}
+ 	      cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
+// 	      for (long k = 0; k < Space->GetHilbertSpaceDimension(); ++k)
+// 		{
+// 		  Space->PrintState(cout, k) << endl;
+// 		}
+// 	      return 0;
 	      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 		Memory = Architecture.GetArchitecture()->GetLocalMemory();
- 	      Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());	
- 	      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian(&Space, NbrParticles, NbrSitesX, NbrSitesY,
+ 	      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
+ 	      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
 														  Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"),
 														  Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
 														  Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
@@ -213,6 +237,7 @@ int main(int argc, char** argv)
 	      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
 	      cout << "------------------------------------" << endl;
 	      delete Hamiltonian;
+	      delete Space;
 	      delete[] EigenstateOutputFile;
 	      delete[] ContentPrefix;
 	    }

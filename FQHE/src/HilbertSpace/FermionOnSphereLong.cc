@@ -515,6 +515,12 @@ double FermionOnSphereLong::AA (int index, int n1, int n2)
 #endif
   this->ProdATemporaryState &= ~(((ULONGLONG) (0x1)) << n1);
 
+  if (this->ProdATemporaryState == ((ULONGLONG) 0x0ul))
+    {
+      this->ProdALzMax = 0;
+      return Coefficient;      
+    }
+
   while ((this->ProdATemporaryState >> this->ProdALzMax) == ((ULONGLONG) 0))
     --this->ProdALzMax;
   return Coefficient;
@@ -715,9 +721,10 @@ int FermionOnSphereLong::AdA (int index, int m, int n, double& coefficient)
 
 int FermionOnSphereLong::FindStateIndex(ULONGLONG stateDescription, int lzmax)
 {
-  long PosMax = stateDescription >> this->LookUpTableShift[lzmax];
-  long PosMin = this->LookUpTable[lzmax][PosMax];
-  PosMax = this->LookUpTable[lzmax][PosMax + 1];
+  ULONGLONG Tmp = stateDescription >> this->LookUpTableShift[lzmax];
+  cout << stateDescription << " " << lzmax << " " << Tmp << endl;
+  long PosMin = this->LookUpTable[lzmax][Tmp];
+  long PosMax = this->LookUpTable[lzmax][Tmp + 1];
   long PosMid = (PosMin + PosMax) >> 1;
   ULONGLONG CurrentState = this->StateDescription[PosMid];
   while ((PosMax != PosMid) && (CurrentState != stateDescription))

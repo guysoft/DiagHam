@@ -7,9 +7,11 @@
 //                                                                            //
 //                                                                            //
 //                   class of fermions on square lattice with spin            //
-//                                  in momentum space                         //
+//                       in momentum space with up to 128 sites               //
+//                     (for systems with 128 bit integer support)             //
+//           or 64 (on 32 bit systems without 128 bit integer support)        //
 //                                                                            //
-//                        last modification : 16/02/2011                      //
+//                        last modification : 20/06/2011                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -30,7 +32,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpace.h"
+#include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpaceLong.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
 #include "Matrix/ComplexMatrix.h"
@@ -64,7 +66,7 @@ using std::ios;
 // kyMomentum = momentum along the y direction
 // memory = amount of memory granted for precalculations
 
-FermionOnSquareLatticeWithSpinMomentumSpace::FermionOnSquareLatticeWithSpinMomentumSpace (int nbrFermions, int nbrSiteX, int nbrSiteY, int kxMomentum, int kyMomentum, unsigned long memory)
+FermionOnSquareLatticeWithSpinMomentumSpaceLong::FermionOnSquareLatticeWithSpinMomentumSpaceLong (int nbrFermions, int nbrSiteX, int nbrSiteY, int kxMomentum, int kyMomentum, unsigned long memory)
 {  
   this->NbrFermions = nbrFermions;
   this->IncNbrFermions = this->NbrFermions + 1;
@@ -88,15 +90,14 @@ FermionOnSquareLatticeWithSpinMomentumSpace::FermionOnSquareLatticeWithSpinMomen
   if ( this->LargeHilbertSpaceDimension > 0l)
     {
       this->Flag.Initialize();
-      this->TargetSpace = this;
-      this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
+      this->StateDescription = new ULONGLONG [this->HilbertSpaceDimension];
       this->StateHighestBit = new int [this->HilbertSpaceDimension];  
       this->LargeHilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0, 0l);
       this->GenerateLookUpTable(memory);
       
 #ifdef __DEBUG__
       long UsedMemory = 0;
-      UsedMemory += (long) this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
+      UsedMemory += (long) this->HilbertSpaceDimension * (sizeof(ULONGLONG) + sizeof(int));
       cout << "memory requested for Hilbert space = ";
       if (UsedMemory >= 1024)
 	if (UsedMemory >= 1048576)
@@ -129,7 +130,7 @@ FermionOnSquareLatticeWithSpinMomentumSpace::FermionOnSquareLatticeWithSpinMomen
 // kyMomentum = momentum along the y direction
 // memory = amount of memory granted for precalculations
 
-FermionOnSquareLatticeWithSpinMomentumSpace::FermionOnSquareLatticeWithSpinMomentumSpace (int nbrFermions, int nbrSpinUp, int nbrSiteX, int nbrSiteY, int kxMomentum, int kyMomentum, unsigned long memory)
+FermionOnSquareLatticeWithSpinMomentumSpaceLong::FermionOnSquareLatticeWithSpinMomentumSpaceLong (int nbrFermions, int nbrSpinUp, int nbrSiteX, int nbrSiteY, int kxMomentum, int kyMomentum, unsigned long memory)
 {
   this->NbrFermions = nbrFermions;
   this->IncNbrFermions = this->NbrFermions + 1;
@@ -146,6 +147,7 @@ FermionOnSquareLatticeWithSpinMomentumSpace::FermionOnSquareLatticeWithSpinMomen
   this->NbrLzValue = this->LzMax + 1;
   this->MaximumSignLookUp = 16;
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0, this->NbrFermionsUp);
+  cout << "dim1 " << this->LargeHilbertSpaceDimension << endl;
   if (this->LargeHilbertSpaceDimension >= (1l << 30))
     this->HilbertSpaceDimension = 0;
   else
@@ -153,19 +155,15 @@ FermionOnSquareLatticeWithSpinMomentumSpace::FermionOnSquareLatticeWithSpinMomen
   if ( this->LargeHilbertSpaceDimension > 0l)
     {
       this->Flag.Initialize();
-      this->TargetSpace = this;
-      this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
+      this->StateDescription = new ULONGLONG [this->HilbertSpaceDimension];
       this->StateHighestBit = new int [this->HilbertSpaceDimension];  
-      long TmpLargeHilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0, this->NbrFermionsUp, 0l);
-      if (this->LargeHilbertSpaceDimension != TmpLargeHilbertSpaceDimension)
-	{
-	  cout << "error while generating the Hilbert space " << this->LargeHilbertSpaceDimension << " " << TmpLargeHilbertSpaceDimension << endl;
-	}
+      this->LargeHilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0, this->NbrFermionsUp, 0l);
+      cout << "dim2 " << this->LargeHilbertSpaceDimension << endl;
       this->GenerateLookUpTable(memory);
       
 #ifdef __DEBUG__
       long UsedMemory = 0;
-      UsedMemory += (long) this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
+      UsedMemory += (long) this->HilbertSpaceDimension * (sizeof(ULONGLONG) + sizeof(int));
       cout << "memory requested for Hilbert space = ";
       if (UsedMemory >= 1024)
 	if (UsedMemory >= 1048576)
@@ -192,7 +190,7 @@ FermionOnSquareLatticeWithSpinMomentumSpace::FermionOnSquareLatticeWithSpinMomen
 //
 // fermions = reference on the hilbert space to copy to copy
 
-FermionOnSquareLatticeWithSpinMomentumSpace::FermionOnSquareLatticeWithSpinMomentumSpace(const FermionOnSquareLatticeWithSpinMomentumSpace& fermions)
+FermionOnSquareLatticeWithSpinMomentumSpaceLong::FermionOnSquareLatticeWithSpinMomentumSpaceLong(const FermionOnSquareLatticeWithSpinMomentumSpaceLong& fermions)
 {
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
   this->LargeHilbertSpaceDimension = fermions.LargeHilbertSpaceDimension;
@@ -212,7 +210,6 @@ FermionOnSquareLatticeWithSpinMomentumSpace::FermionOnSquareLatticeWithSpinMomen
   this->NbrFermionsDown = fermions.NbrFermionsDown;
   this->StateDescription = fermions.StateDescription;
   this->StateHighestBit = fermions.StateHighestBit;
-  this->HighestBit = fermions.HighestBit;
   this->MaximumLookUpShift = fermions.MaximumLookUpShift;
   this->LookUpTableMemorySize = fermions.LookUpTableMemorySize;
   this->LookUpTableShift = fermions.LookUpTableShift;
@@ -220,16 +217,12 @@ FermionOnSquareLatticeWithSpinMomentumSpace::FermionOnSquareLatticeWithSpinMomen
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
-  if (fermions.TargetSpace != &fermions)
-    this->TargetSpace = fermions.TargetSpace;
-  else
-    this->TargetSpace = this;
 }
 
 // destructor
 //
 
-FermionOnSquareLatticeWithSpinMomentumSpace::~FermionOnSquareLatticeWithSpinMomentumSpace ()
+FermionOnSquareLatticeWithSpinMomentumSpaceLong::~FermionOnSquareLatticeWithSpinMomentumSpaceLong ()
 {
 }
 
@@ -238,17 +231,13 @@ FermionOnSquareLatticeWithSpinMomentumSpace::~FermionOnSquareLatticeWithSpinMome
 // fermions = reference on the hilbert space to copy to copy
 // return value = reference on current hilbert space
 
-FermionOnSquareLatticeWithSpinMomentumSpace& FermionOnSquareLatticeWithSpinMomentumSpace::operator = (const FermionOnSquareLatticeWithSpinMomentumSpace& fermions)
+FermionOnSquareLatticeWithSpinMomentumSpaceLong& FermionOnSquareLatticeWithSpinMomentumSpaceLong::operator = (const FermionOnSquareLatticeWithSpinMomentumSpaceLong& fermions)
 {
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
       delete[] this->StateDescription;
       delete[] this->StateHighestBit;
     }
-  if (fermions.TargetSpace != &fermions)
-    this->TargetSpace = fermions.TargetSpace;
-  else
-    this->TargetSpace = this;
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
   this->LargeHilbertSpaceDimension = fermions.LargeHilbertSpaceDimension;
   this->Flag = fermions.Flag;
@@ -278,9 +267,9 @@ FermionOnSquareLatticeWithSpinMomentumSpace& FermionOnSquareLatticeWithSpinMomen
 //
 // return value = pointer to cloned Hilbert space
 
-AbstractHilbertSpace* FermionOnSquareLatticeWithSpinMomentumSpace::Clone()
+AbstractHilbertSpace* FermionOnSquareLatticeWithSpinMomentumSpaceLong::Clone()
 {
-  return new FermionOnSquareLatticeWithSpinMomentumSpace(*this);
+  return new FermionOnSquareLatticeWithSpinMomentumSpaceLong(*this);
 }
 
 // print a given State
@@ -289,10 +278,10 @@ AbstractHilbertSpace* FermionOnSquareLatticeWithSpinMomentumSpace::Clone()
 // state = ID of the state to print
 // return value = reference on current output stream 
 
-ostream& FermionOnSquareLatticeWithSpinMomentumSpace::PrintState (ostream& Str, int state)
+ostream& FermionOnSquareLatticeWithSpinMomentumSpaceLong::PrintState (ostream& Str, int state)
 {
-  unsigned long TmpState = this->StateDescription[state];
-  unsigned long Tmp;
+  ULONGLONG TmpState = this->StateDescription[state];
+  ULONGLONG Tmp;
   Str << "[";
   for (int i = 0; i < this->NbrLzValue; ++i)
     {
@@ -306,12 +295,12 @@ ostream& FermionOnSquareLatticeWithSpinMomentumSpace::PrintState (ostream& Str, 
     }
   Str << "]";
 //   Str << " " << TmpState; 
-//   Str << " " << hex << TmpState << dec; 
-//   Str << " " << state;
-//   int TmpLzMax = (this->LzMax << 1) + 1;
-//   while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
-//     --TmpLzMax;
-//   Str << " " << this->FindStateIndex(TmpState, TmpLzMax);
+//    Str << " " << hex << TmpState << dec; 
+//    Str << " " << state;
+//    int TmpLzMax = (this->LzMax << 1) + 1;
+//    while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
+//      --TmpLzMax;
+//    Str << " " << this->FindStateIndex(TmpState, TmpLzMax);
   return Str;
 }
 
@@ -325,7 +314,7 @@ ostream& FermionOnSquareLatticeWithSpinMomentumSpace::PrintState (ostream& Str, 
 // pos = position in StateDescription array where to store states
 // return value = position from which new states have to be stored
 
-long FermionOnSquareLatticeWithSpinMomentumSpace::GenerateStates(int nbrFermions, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy, long pos)
+long FermionOnSquareLatticeWithSpinMomentumSpaceLong::GenerateStates(int nbrFermions, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy, long pos)
 {
   if (currentKy < 0)
     {
@@ -336,7 +325,7 @@ long FermionOnSquareLatticeWithSpinMomentumSpace::GenerateStates(int nbrFermions
     {
       if (((currentTotalKx % this->NbrSiteX) == this->KxMomentum) && ((currentTotalKy % this->NbrSiteY) == this->KyMomentum))
 	{
-	  this->StateDescription[pos] = 0x0ul;	  
+	  this->StateDescription[pos] = ((ULONGLONG) 0x0ul);	  
 	  return (pos + 1l);
 	}
       else	
@@ -372,15 +361,15 @@ long FermionOnSquareLatticeWithSpinMomentumSpace::GenerateStates(int nbrFermions
       return pos;
     }
   long TmpPos = this->GenerateStates(nbrFermions - 2, currentKx, currentKy - 1, currentTotalKx + (2 * currentKx), currentTotalKy + (2 * currentKy), pos);
-  unsigned long Mask = 0x3ul << (((currentKx * this->NbrSiteY) + currentKy) << 1);
+  ULONGLONG Mask = ((ULONGLONG) 0x3ul) << (((currentKx * this->NbrSiteY) + currentKy) << 1);
   for (; pos < TmpPos; ++pos)
     this->StateDescription[pos] |= Mask;
   TmpPos = this->GenerateStates(nbrFermions - 1, currentKx, currentKy - 1, currentTotalKx + currentKx, currentTotalKy + currentKy, pos);
-  Mask = 0x2ul << (((currentKx * this->NbrSiteY) + currentKy) << 1);
+  Mask = ((ULONGLONG) 0x2ul) << (((currentKx * this->NbrSiteY) + currentKy) << 1);
   for (; pos < TmpPos; ++pos)
     this->StateDescription[pos] |= Mask;
    TmpPos = this->GenerateStates(nbrFermions - 1, currentKx, currentKy - 1, currentTotalKx + currentKx, currentTotalKy + currentKy, pos);
-   Mask = 0x1ul << (((currentKx * this->NbrSiteY) + currentKy) << 1);
+   Mask = ((ULONGLONG) 0x1ul) << (((currentKx * this->NbrSiteY) + currentKy) << 1);
    for (; pos < TmpPos; ++pos)
      this->StateDescription[pos] |= Mask;
   return this->GenerateStates(nbrFermions, currentKx, currentKy - 1, currentTotalKx, currentTotalKy, pos);
@@ -397,7 +386,7 @@ long FermionOnSquareLatticeWithSpinMomentumSpace::GenerateStates(int nbrFermions
 // pos = position in StateDescription array where to store states
 // return value = position from which new states have to be stored
 
-long FermionOnSquareLatticeWithSpinMomentumSpace::GenerateStates(int nbrFermions, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy, int nbrSpinUp, long pos)
+long FermionOnSquareLatticeWithSpinMomentumSpaceLong::GenerateStates(int nbrFermions, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy, int nbrSpinUp, long pos)
 {
   if (currentKy < 0)
     {
@@ -412,7 +401,7 @@ long FermionOnSquareLatticeWithSpinMomentumSpace::GenerateStates(int nbrFermions
     {
       if (((currentTotalKx % this->NbrSiteX) == this->KxMomentum) && ((currentTotalKy % this->NbrSiteY) == this->KyMomentum))
 	{
-	  this->StateDescription[pos] = 0x0ul;	  
+	  this->StateDescription[pos] = ((ULONGLONG) 0x0ul);	  
 	  return (pos + 1l);
 	}
       else	
@@ -431,16 +420,16 @@ long FermionOnSquareLatticeWithSpinMomentumSpace::GenerateStates(int nbrFermions
 		  this->StateDescription[pos] = 0x2ul << (((currentKx * this->NbrSiteY) + j) << 1);
 		  ++pos;
 		}
-	    }
-	  for (int i = currentKx - 1; i >= 0; --i)
-	    {
-	      for (int j = this->NbrSiteY - 1; j >= 0; --j)
+	      for (int i = currentKx - 1; i >= 0; --i)
 		{
-		  if ((((i + currentTotalKx) % this->NbrSiteX) == this->KxMomentum) && (((j + currentTotalKy) % this->NbrSiteY) == this->KyMomentum))
+		  for (int j = this->NbrSiteY - 1; j >= 0; --j)
 		    {
-		      this->StateDescription[pos] = 0x2ul << (((i * this->NbrSiteY) + j) << 1);
-		      ++pos;
+		      if ((((i + currentTotalKx) % this->NbrSiteX) == this->KxMomentum) && (((j + currentTotalKy) % this->NbrSiteY) == this->KyMomentum))
+			{
+			  this->StateDescription[pos] = 0x2ul << (((i * this->NbrSiteY) + j) << 1);
+			  ++pos;
 			}
+		    }
 		}
 	    }
 	}
@@ -453,15 +442,15 @@ long FermionOnSquareLatticeWithSpinMomentumSpace::GenerateStates(int nbrFermions
 		  this->StateDescription[pos] = 0x1ul << (((currentKx * this->NbrSiteY) + j) << 1);
 		  ++pos;
 		}
-	    }
-	  for (int i = currentKx - 1; i >= 0; --i)
-	    {
-	      for (int j = this->NbrSiteY - 1; j >= 0; --j)
+	      for (int i = currentKx - 1; i >= 0; --i)
 		{
-		  if ((((i + currentTotalKx) % this->NbrSiteX) == this->KxMomentum) && (((j + currentTotalKy) % this->NbrSiteY) == this->KyMomentum))
+		  for (int j = this->NbrSiteY - 1; j >= 0; --j)
 		    {
-		      this->StateDescription[pos] = 0x1ul << (((i * this->NbrSiteY) + j) << 1);
-		      ++pos;
+		      if ((((i + currentTotalKx) % this->NbrSiteX) == this->KxMomentum) && (((j + currentTotalKy) % this->NbrSiteY) == this->KyMomentum))
+			{
+			  this->StateDescription[pos] = 0x1ul << (((i * this->NbrSiteY) + j) << 1);
+			  ++pos;
+			}
 		    }
 		}
 	    }
@@ -469,15 +458,15 @@ long FermionOnSquareLatticeWithSpinMomentumSpace::GenerateStates(int nbrFermions
       return pos;
     }
   long TmpPos = this->GenerateStates(nbrFermions - 2, currentKx, currentKy - 1, currentTotalKx + (2 * currentKx), currentTotalKy + (2 * currentKy), nbrSpinUp - 1, pos);
-  unsigned long Mask = 0x3ul << (((currentKx * this->NbrSiteY) + currentKy) << 1);
+  ULONGLONG Mask = ((ULONGLONG) 0x3ul) << (((currentKx * this->NbrSiteY) + currentKy) << 1);
   for (; pos < TmpPos; ++pos)
     this->StateDescription[pos] |= Mask;
   TmpPos = this->GenerateStates(nbrFermions - 1, currentKx, currentKy - 1, currentTotalKx + currentKx, currentTotalKy + currentKy, nbrSpinUp - 1, pos);
-  Mask = 0x2ul << (((currentKx * this->NbrSiteY) + currentKy) << 1);
+  Mask = ((ULONGLONG) 0x2ul) << (((currentKx * this->NbrSiteY) + currentKy) << 1);
   for (; pos < TmpPos; ++pos)
     this->StateDescription[pos] |= Mask;
   TmpPos = this->GenerateStates(nbrFermions - 1, currentKx, currentKy - 1, currentTotalKx + currentKx, currentTotalKy + currentKy, nbrSpinUp, pos);
-  Mask = 0x1ul << (((currentKx * this->NbrSiteY) + currentKy) << 1);
+  Mask = ((ULONGLONG) 0x1ul) << (((currentKx * this->NbrSiteY) + currentKy) << 1);
   for (; pos < TmpPos; ++pos)
     this->StateDescription[pos] |= Mask;
   return this->GenerateStates(nbrFermions, currentKx, currentKy - 1, currentTotalKx, currentTotalKy, nbrSpinUp, pos);  
@@ -492,7 +481,7 @@ long FermionOnSquareLatticeWithSpinMomentumSpace::GenerateStates(int nbrFermions
 // currentTotalKy = current total momentum along y
 // return value = Hilbert space dimension
 
-long FermionOnSquareLatticeWithSpinMomentumSpace::EvaluateHilbertSpaceDimension(int nbrFermions, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy)
+long FermionOnSquareLatticeWithSpinMomentumSpaceLong::EvaluateHilbertSpaceDimension(int nbrFermions, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy)
 {
   if (currentKy < 0)
     {
@@ -543,7 +532,7 @@ long FermionOnSquareLatticeWithSpinMomentumSpace::EvaluateHilbertSpaceDimension(
 // nbrSpinUp = number of fermions with spin up
 // return value = Hilbert space dimension
 
-long FermionOnSquareLatticeWithSpinMomentumSpace::EvaluateHilbertSpaceDimension(int nbrFermions, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy, int nbrSpinUp)
+long FermionOnSquareLatticeWithSpinMomentumSpaceLong::EvaluateHilbertSpaceDimension(int nbrFermions, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy, int nbrSpinUp)
 {
   if (currentKy < 0)
     {

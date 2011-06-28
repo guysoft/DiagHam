@@ -212,6 +212,28 @@ class ParticleOnLatticeWithSpinChernInsulatorHamiltonian : public AbstractQHEHam
   virtual ComplexVector* LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
 						     int firstComponent, int nbrComponent);
 
+  // multiply a vector by the current hamiltonian for a given range of indices 
+  // and add result to another vector, low level function (no architecture optimization)
+  //
+  // vSource = vector to be multiplied
+  // vDestination = vector at which result has to be added
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = reference on vector where result has been stored
+  virtual ComplexVector& HermitianLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+						      int firstComponent, int nbrComponent);
+ 
+  // multiply a et of vectors by the current hamiltonian for a given range of indices 
+  // and add result to another et of vectors, low level function (no architecture optimization)
+  //
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors at which result has to be added
+  // nbrVectors = number of vectors that have to be evaluated together
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = pointer to the array of vectors where result has been stored
+  virtual ComplexVector* HermitianLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+							      int firstComponent, int nbrComponent);
 
  protected:
  
@@ -234,6 +256,24 @@ class ParticleOnLatticeWithSpinChernInsulatorHamiltonian : public AbstractQHEHam
   virtual void EvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int index, ComplexVector* vSources, 
 						     ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients);
 
+  // 
+  // particles = pointer to the Hilbert space
+  // index = index of the component on which the Hamiltonian has to act on
+  // vSource = vector to be multiplied
+  // vDestination = vector at which result has to be added  
+  virtual void HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int index, ComplexVector& vSource, ComplexVector& vDestination);
+
+  // core part of the AddMultiply method involving the two-body interaction for a set of vectors
+  // 
+  // particles = pointer to the Hilbert space
+  // index = index of the component on which the Hamiltonian has to act on
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors at which result has to be added
+  // nbrVectors = number of vectors that have to be evaluated together
+  // tmpCoefficients = a temporary array whose size is nbrVectors
+  virtual void HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int index, ComplexVector* vSources, 
+							      ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients);
+
   // core part of the FastMultiplication method involving the two-body interaction
   // 
   // particles = pointer to the Hilbert space
@@ -242,7 +282,7 @@ class ParticleOnLatticeWithSpinChernInsulatorHamiltonian : public AbstractQHEHam
   // coefficientArray = array of the numerical coefficients related to the indexArray
   // position = reference on the current position in arrays indexArray and coefficientArray
   virtual void EvaluateMNTwoBodyFastMultiplicationComponent(ParticleOnSphereWithSpin* particles, int index, 
-							  int* indexArray, Complex* coefficientArray, long& position);
+							    int* indexArray, Complex* coefficientArray, long& position);
 
   // core part of the FastMultiplication method involving the one-body interaction
   // 
@@ -297,6 +337,19 @@ class ParticleOnLatticeWithSpinChernInsulatorHamiltonian : public AbstractQHEHam
   // return value = pointer to the array of vectors where result has been stored
   virtual ComplexVector* LowLevelMultipleAddMultiplyPartialFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
   									int firstComponent, int nbrComponent);
+
+  // multiply a et of vectors by the current hamiltonian for a given range of indices 
+  // and add result to another et of vectors, low level function (no architecture optimization)
+  // using partial fast multiply option
+  //
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors at which result has to be added
+  // nbrVectors = number of vectors that have to be evaluated together
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = pointer to the array of vectors where result has been stored
+  virtual ComplexVector* HermitianLowLevelMultipleAddMultiplyPartialFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+										 int firstComponent, int nbrComponent);
 
   // evaluate all interaction factors
   //   
@@ -416,7 +469,7 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
 // tmpCoefficients = a temporary array whose size is nbrVectors
 
 inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int index, ComplexVector* vSources, 
-											  ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients)
+												      ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients)
 {
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
@@ -486,6 +539,227 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
 	    }
 	}
     }
+}
+
+// core part of the AddMultiply method involving the two-body interaction
+// 
+// particles = pointer to the Hilbert space
+// index = index of the component on which the Hamiltonian has to act on
+// vSource = vector to be multiplied
+// vDestination = vector at which result has to be added
+
+inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int index, ComplexVector& vSource, ComplexVector& vDestination)
+{
+  int Dim = particles->GetHilbertSpaceDimension();
+  double Coefficient;
+  double Coefficient3;
+  Complex Coefficient4;
+  int* TmpIndices;
+  Complex* TmpInteractionFactor;
+  Complex TmpSum = 0.0;
+  int Index;
+  for (int j = 0; j < this->NbrIntraSectorSums; ++j)
+    {
+      int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
+      TmpIndices = this->IntraSectorIndicesPerSum[j];
+      for (int i1 = 0; i1 < Lim; i1 += 2)
+	{
+	  Coefficient3 = particles->AuAu(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  if (Coefficient3 != 0.0)
+	    {
+	      TmpInteractionFactor = &(this->InteractionFactorsupup[j][(i1 * Lim) >> 2]);
+	      Coefficient4 = vSource[index];
+	      Coefficient4 *= Coefficient3;
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		  if (Index <= index)
+		    {
+		      if (Index < index)
+			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj(*TmpInteractionFactor);
+		      vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
+		    }
+		  ++TmpInteractionFactor;
+		}
+	    }
+	  Coefficient3 = particles->AdAd(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  if (Coefficient3 != 0.0)
+	    {
+	      TmpInteractionFactor = &(this->InteractionFactorsdowndown[j][(i1 * Lim) >> 2]);
+	      Coefficient4 = vSource[index];
+	      Coefficient4 *= Coefficient3;
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		  if (Index <= index)
+		    {
+		      if (Index < index)
+			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj(*TmpInteractionFactor);
+		      vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
+		    }
+		  ++TmpInteractionFactor;
+		}
+	    }
+	}
+    }
+  for (int j = 0; j < this->NbrInterSectorSums; ++j)
+    {
+      int Lim = 2 * this->NbrInterSectorIndicesPerSum[j];
+      TmpIndices = this->InterSectorIndicesPerSum[j];
+      for (int i1 = 0; i1 < Lim; i1 += 2)
+	{
+	  Coefficient3 = particles->AuAd(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  if (Coefficient3 != 0.0)
+	    {
+	      TmpInteractionFactor = &(this->InteractionFactorsupdown[j][(i1 * Lim) >> 2]);
+	      Coefficient4 = vSource[index];
+	      Coefficient4 *= Coefficient3;
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AduAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		  if (Index <= index)
+		    {
+		      if (Index < index)
+			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj(*TmpInteractionFactor);
+		      vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
+		    }
+		  ++TmpInteractionFactor;
+		}
+	    }
+	} 
+    }
+  vDestination[index] += TmpSum;
+}
+
+// core part of the AddMultiply method involving the two-body interaction for a set of vectors
+// 
+// particles = pointer to the Hilbert space
+// index = index of the component on which the Hamiltonian has to act on
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors at which result has to be added
+// nbrVectors = number of vectors that have to be evaluated together
+// tmpCoefficients = a temporary array whose size is nbrVectors
+
+inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int index, ComplexVector* vSources, 
+													       ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients)
+{
+  int Dim = particles->GetHilbertSpaceDimension();
+  double Coefficient;
+  double Coefficient3;
+  int Index;
+  
+  int* TmpIndices;
+  Complex* TmpInteractionFactor;
+  Complex* TmpSum = new Complex[nbrVectors];
+  for (int j = 0; j < this->NbrIntraSectorSums; ++j)
+    {
+      int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
+      TmpIndices = this->IntraSectorIndicesPerSum[j];
+      for (int i1 = 0; i1 < Lim; i1 += 2)
+	{
+	  Coefficient3 = particles->AuAu(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  if (Coefficient3 != 0.0)
+	    {
+	      TmpInteractionFactor = &(this->InteractionFactorsupup[j][(i1 * Lim) >> 2]);
+	      for (int p = 0; p < nbrVectors; ++p)
+		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		  if (Index <= index)
+		    {
+		      if (Index < index)
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor)) * vSources[p][Index];
+			    }
+			}
+		      else
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			    }
+			}
+		    }
+		  ++TmpInteractionFactor;
+		}
+	    }
+	  Coefficient3 = particles->AdAd(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  if (Coefficient3 != 0.0)
+	    {
+	      TmpInteractionFactor = &(this->InteractionFactorsdowndown[j][(i1 * Lim) >> 2]);
+	      for (int p = 0; p < nbrVectors; ++p)
+		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		  if (Index <= index)
+		    {
+		      if (Index < index)
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor)) * vSources[p][Index];
+			    }
+			}
+		      else
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			    }
+			}
+		    }
+		  ++TmpInteractionFactor;
+		}
+	    }
+	}
+    }
+  for (int j = 0; j < this->NbrInterSectorSums; ++j)
+    {
+      int Lim = 2 * this->NbrInterSectorIndicesPerSum[j];
+      TmpIndices = this->InterSectorIndicesPerSum[j];
+      for (int i1 = 0; i1 < Lim; i1 += 2)
+	{
+	  Coefficient3 = particles->AuAd(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  if (Coefficient3 != 0.0)
+	    {
+	      TmpInteractionFactor = &(this->InteractionFactorsupdown[j][(i1 * Lim) >> 2]);
+	      for (int p = 0; p < nbrVectors; ++p)
+		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AduAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		  if (Index <= index)
+		    {
+		      if (Index < index)
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor)) * vSources[p][Index];
+			    }
+			}
+		      else
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			    }
+			}
+		    }
+		  ++TmpInteractionFactor;
+		}
+	    }
+	}
+    }
+  for (int l = 0; l < nbrVectors; ++l)
+    vDestinations[l][index] += TmpSum[l];
+  delete[] TmpSum;
 }
 
 // core part of the FastMultiplication method involving the two-body interaction

@@ -90,6 +90,7 @@ ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonian::Particl
   long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex;  
+  //  this->HermitianSymmetryFlag = true;
   this->EvaluateInteractionFactors();
   if (memory > 0)
     {

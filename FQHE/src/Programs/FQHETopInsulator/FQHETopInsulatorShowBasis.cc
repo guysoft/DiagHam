@@ -1,6 +1,7 @@
 #include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeNonPeriodicMomentumSpace.h"
+#include "HilbertSpace/FermionOnCubicLatticeWithSpinMomentumSpace.h"
 
 #include "Vector/ComplexVector.h"
 
@@ -38,14 +39,18 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 4);
   (*SystemGroup) += new SingleIntegerOption  ('x', "nbr-sitex", "number of sites along the x direction", 3);
   (*SystemGroup) += new SingleIntegerOption  ('y', "nbr-sitey", "number of sites along the y direction", 3);
+  (*SystemGroup) += new SingleIntegerOption  ('z', "nbr-sitez", "number of sites along the z direction", 3);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "kx", "total momentum along the x direction", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "ky", "total momentum along the y direction", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "kz", "total momentum along the z direction", 0);
   (*SystemGroup) += new SingleIntegerOption  ('s', "nbr-subbands", "number of subbands", 1);
+  (*SystemGroup) += new BooleanOption  ('\n', "3d", "consider a 3d model instead of a 2d model");
   (*SystemGroup) += new BooleanOption  ('\n', "non-periodic", "look at the non-periodic hilbert space with a cut in momentum space described by nbr-allowed-site and min-k");
   (*SystemGroup) += new SingleIntegerOption  ('X', "nbr-allowed-sitex", "number of x momenta allowed for a single particle", 3);
   (*SystemGroup) += new SingleIntegerOption  ('Y', "nbr-allowed-sitey", "number of y momenta allowed for a single particle", 3);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "min-kx", "minimal x momentum allowed for a single particle", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "min-ky", "minimal y momentum allowed for a single particle", 4);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "min-kz", "minimal z momentum allowed for a single particle", 4);
   (*SystemGroup) += new SingleStringOption ('\n', "state", "name of an optional vector state whose component values can be displayed behind each corresponding n-body state");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "hide-component", "hide state components (and thus the corresponding n-body state) whose absolute value is lower than a given error (0 if all components have to be shown", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "no-autodetect", "do not autdetect system parameter from state file name");
@@ -67,12 +72,15 @@ int main(int argc, char** argv)
   int NbrParticles = Manager.GetInteger("nbr-particles"); 
   int NbrSiteX = Manager.GetInteger("nbr-sitex"); 
   int NbrSiteY = Manager.GetInteger("nbr-sitey"); 
+  int NbrSiteZ = Manager.GetInteger("nbr-sitez"); 
   int NbrAllowedKx = Manager.GetInteger("nbr-allowed-sitex"); 
   int NbrAllowedKy = Manager.GetInteger("nbr-allowed-sitey"); 
   int MinKx = Manager.GetInteger("min-kx"); 
   int MinKy = Manager.GetInteger("min-ky");
+  int MinKz = Manager.GetInteger("min-kz");
   int TotalKx = Manager.GetInteger("kx"); 
   int TotalKy = Manager.GetInteger("ky");
+  int TotalKz = Manager.GetInteger("kz");
   if ((Manager.GetString("state") != 0) && (Manager.GetBoolean("no-autodetect") == false))
     {
       double Mass = 0.0;
@@ -87,14 +95,14 @@ int main(int argc, char** argv)
  
   AbstractQHEParticle* Space;
   if (Manager.GetBoolean("non-periodic") == true)
-  {
+    {
       if (Manager.GetInteger("nbr-subbands") == 1)
-          Space = new FermionOnSquareLatticeNonPeriodicMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, NbrAllowedKx, NbrAllowedKy, MinKx, MinKy, TotalKx, TotalKy);
+	Space = new FermionOnSquareLatticeNonPeriodicMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, NbrAllowedKx, NbrAllowedKy, MinKx, MinKy, TotalKx, TotalKy);
       else
-          return 0;
-  }
+	return 0;
+    }
   else
-  {
+    {
       if (Manager.GetInteger("nbr-subbands") == 1)
         {
           Space = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
@@ -103,7 +111,14 @@ int main(int argc, char** argv)
         {
           if (Manager.GetInteger("nbr-subbands") == 2)
             {
-              Space = new FermionOnSquareLatticeWithSpinMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
+	      if (Manager.GetBoolean("3d") == false)
+		{
+		  Space = new FermionOnSquareLatticeWithSpinMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
+		}
+	      else
+		{
+		  Space = new FermionOnCubicLatticeWithSpinMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, NbrSiteZ, TotalKx, TotalKy, TotalKz);
+		}
             }
           else
             {

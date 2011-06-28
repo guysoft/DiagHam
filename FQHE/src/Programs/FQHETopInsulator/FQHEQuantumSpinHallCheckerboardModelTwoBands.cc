@@ -138,27 +138,17 @@ int main(int argc, char** argv)
     {
       for (int j = MinKy; j <= MaxKy; ++j)
 	{
-	  for (int Sz = -NbrParticles; Sz <= NbrParticles; Sz += 2)
+	  if (Manager.GetBoolean("decoupled") == false)
 	    {
-	      cout << "(kx=" << i << ",ky=" << j << ") Sz=" << Sz << " : " << endl;
-	      FermionOnSquareLatticeWithSpinMomentumSpace Space(NbrParticles, (Sz + NbrParticles) / 2, NbrSitesX, NbrSitesY, i, j);
+	      cout << "(kx=" << i << ",ky=" << j << ") " << endl;
+	      FermionOnSquareLatticeWithSpinMomentumSpace Space(NbrParticles, NbrSitesX, NbrSitesY, i, j);
 	      cout << "dim = " << Space.GetHilbertSpaceDimension()  << endl;
 	      Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());	
 	      AbstractQHEHamiltonian* Hamiltonian = 0;
-	      if (Manager.GetBoolean("decoupled") == false)
-		{
-		  Hamiltonian = new ParticleOnLatticeQuantumSpinHallTwoBandCheckerboardHamiltonian(&Space, NbrParticles, NbrSitesX, NbrSitesY,
-												   Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"),
-												   Manager.GetDouble("tpp"), Manager.GetDouble("mixing-norm"), Manager.GetDouble("mixing-arg") * 2.0 * M_PI, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
-												   Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
-		}
-	      else
-		{
-		  Hamiltonian = new ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonian(&Space, NbrParticles, NbrSitesX, NbrSitesY,
-													    Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"),
-													    Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
-													    Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
-		}
+	      Hamiltonian = new ParticleOnLatticeQuantumSpinHallTwoBandCheckerboardHamiltonian(&Space, NbrParticles, NbrSitesX, NbrSitesY,
+											       Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"),
+											       Manager.GetDouble("tpp"), Manager.GetDouble("mixing-norm"), Manager.GetDouble("mixing-arg") * 2.0 * M_PI, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
+											       Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 	      char* ContentPrefix = new char[256];
 	      sprintf (ContentPrefix, "%d %d", i, j);
 	      char* EigenstateOutputFile = new char [512];
@@ -180,6 +170,42 @@ int main(int argc, char** argv)
 	      delete Hamiltonian;
 	      delete[] EigenstateOutputFile;
 	      delete[] ContentPrefix;
+	    }
+	  else
+	    {
+	      for (int Sz = -NbrParticles; Sz <= NbrParticles; Sz += 2)
+		{
+		  cout << "(kx=" << i << ",ky=" << j << ") Sz=" << Sz << " : " << endl;
+		  FermionOnSquareLatticeWithSpinMomentumSpace Space(NbrParticles, (Sz + NbrParticles) / 2, NbrSitesX, NbrSitesY, i, j);
+		  cout << "dim = " << Space.GetHilbertSpaceDimension()  << endl;
+		  Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());	
+		  AbstractQHEHamiltonian* Hamiltonian = 0;
+		  Hamiltonian = new ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonian(&Space, NbrParticles, NbrSitesX, NbrSitesY,
+													    Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"),
+													    Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
+													    Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+		  char* ContentPrefix = new char[256];
+		  sprintf (ContentPrefix, "%d %d %d", i, j, Sz);
+		  char* EigenstateOutputFile = new char [512];
+		  if (Manager.GetBoolean("flat-band") == true)
+		    {
+		      sprintf (EigenstateOutputFile, "fermions_twoband_quantumspinhall_checkerboardlattice_n_%d_x_%d_y_%d_t1_%f_t2_%f_gx_%f_gy_%f_kx_%d_ky_%d_sz_%d", NbrParticles, NbrSitesX, NbrSitesY, 
+			       Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j, Sz);
+		    }
+		  else
+		    {
+		      sprintf (EigenstateOutputFile, "fermions_twoband_quantumspinhall_checkerboardlattice_n_%d_x_%d_y_%d_u_%f_t1_%f_t2_%f_gx_%f_gy_%f_kx_%d_ky_%d_sz_%d", NbrParticles, NbrSitesX, NbrSitesY, 
+			       Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j, Sz);
+		    }
+		  GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
+		  FirstRunFlag = false;
+		  MainTaskOperation TaskOperation (&Task);
+		  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+		  cout << "------------------------------------" << endl;
+		  delete Hamiltonian;
+		  delete[] EigenstateOutputFile;
+		  delete[] ContentPrefix;
+		}
 	    }
 	}
     }
