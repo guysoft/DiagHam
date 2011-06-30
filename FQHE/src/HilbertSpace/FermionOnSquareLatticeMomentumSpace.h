@@ -150,6 +150,12 @@ class FermionOnSquareLatticeMomentumSpace : public FermionOnSphere
   // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
   virtual HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int kxSector, int kySector, ComplexVector& groundState, AbstractArchitecture* architecture = 0);
 
+  // find state index from an array
+  //
+  // stateDescription = array describing the state (stored as kx1,ky1,kx2,ky2,...)
+  // return value = corresponding index, -1 if an error occured
+  virtual int FindStateIndexFromArray(int* stateDescription);
+
  protected:
 
   // evaluate Hilbert space dimension

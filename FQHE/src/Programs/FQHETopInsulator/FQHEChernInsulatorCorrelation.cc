@@ -15,6 +15,7 @@
 #include "Operator/ParticleOnSphereDensityOperator.h"
 
 #include "FunctionBasis/ParticleOnChernInsulatorSingleBandFunctionBasis.h"
+#include "FunctionBasis/ParticleOnCheckerboardLatticeFunctionBasis.h"
 
 #include "GeneralTools/ConfigurationParser.h"
 #include "GeneralTools/FilenameTools.h"
@@ -59,6 +60,10 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\0', "state", "name of the vector file describing the state whose density has to be plotted");
   (*SystemGroup) += new BooleanOption  ('\n', "density", "plot density instead of density-density correlation", false);
   (*SystemGroup) += new BooleanOption  ('\n', "k-space", "compute the density/correlation in momentum space", false);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "t1", "nearest neighbor hoping amplitude", 1.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "t2", "next nearest neighbor hoping amplitude", 1.0 - 0.5 * M_SQRT2);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "tpp", "second next nearest neighbor hoping amplitude", 0.5 * (M_SQRT2 - 1.0));
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "mu-s", "sublattice staggered chemical potential", 0.0);
 
   (*PlotOptionGroup) += new SingleStringOption ('\n', "output", "output file name (default output name replace the .vec extension of the input file with .rho or .rhorho)", 0);
   (*PlotOptionGroup) += new SingleIntegerOption ('\n', "nbr-samplesx", "number of samples along the x direction", 100, true, 10);

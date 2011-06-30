@@ -722,3 +722,19 @@ long FermionOnSquareLatticeMomentumSpace::EvaluatePartialDensityMatrixParticlePa
   delete[] TmpStateCoefficient;
   return TmpNbrNonZeroElements;
 }
+
+// find state index from an array
+//
+// stateDescription = array describing the state (stored as kx1,ky1,kx2,ky2,...)
+// return value = corresponding index, -1 if an error occured
+
+int FermionOnSquareLatticeMomentumSpace::FindStateIndexFromArray(int* stateDescription)
+{
+  unsigned long TmpState = 0x0ul;
+  for (int i = 0; i < this->NbrFermions; ++i)
+    TmpState |= 0x1ul << ((stateDescription[i << 1] * this->NbrSiteY) + stateDescription[(i + 1) << 1]);
+  int TmpLzMax = this->LzMax;
+  while ((TmpState >> TmpLzMax) == 0x0ul)
+    --TmpLzMax;
+  return this->FindStateIndex(TmpState, TmpLzMax);
+}
