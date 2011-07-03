@@ -732,7 +732,7 @@ int FermionOnSquareLatticeMomentumSpace::FindStateIndexFromArray(int* stateDescr
 {
   unsigned long TmpState = 0x0ul;
   for (int i = 0; i < this->NbrFermions; ++i)
-    TmpState |= 0x1ul << ((stateDescription[i << 1] * this->NbrSiteY) + stateDescription[(i + 1) << 1]);
+    TmpState |= 0x1ul << ((stateDescription[i << 1] * this->NbrSiteY) + stateDescription[1 + (i << 1)]);
   int TmpLzMax = this->LzMax;
   while ((TmpState >> TmpLzMax) == 0x0ul)
     --TmpLzMax;

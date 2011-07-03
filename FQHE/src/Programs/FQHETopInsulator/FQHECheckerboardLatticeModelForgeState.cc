@@ -53,7 +53,6 @@ int main(int argc, char** argv)
   Architecture.AddOptionGroup(&Manager);
   Manager += MiscGroup;
 
-  (*SystemGroup) += new SingleStringOption  ('\0', "state", "name of the vector file describing the state whose density has to be plotted");
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 2);
   (*SystemGroup) += new SingleIntegerOption  ('x', "nbr-sitex", "number of sites along the x direction", 3);
   (*SystemGroup) += new SingleIntegerOption  ('y', "nbr-sitey", "number of sites along the y direction", 3);
@@ -61,6 +60,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "t2", "next nearest neighbor hoping amplitude", 1.0 - 0.5 * M_SQRT2);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "tpp", "second next nearest neighbor hoping amplitude", 0.5 * (M_SQRT2 - 1.0));
   (*SystemGroup) += new SingleDoubleOption  ('\n', "mu-s", "sublattice staggered chemical potential", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -74,16 +75,6 @@ int main(int argc, char** argv)
       Manager.DisplayHelp (cout);
       return 0;
     }
-  if (Manager.GetString("state") == 0)
-    {
-      cout << "FQHECheckerboardLatticeModelForgeState requires an input state" << endl;
-      return -1;
-    }
-  if (IsFile(Manager.GetString("state")) == false)
-    {
-      cout << "can't find vector file " << Manager.GetString("state") << endl;
-      return -1;      
-    }
 
   int NbrParticles = Manager.GetInteger("nbr-particles"); 
   int NbrSitesX = Manager.GetInteger("nbr-sitex"); 
@@ -95,8 +86,6 @@ int main(int argc, char** argv)
 
   bool Statistics = true;
   
-  // ParticleOnCheckerboardLatticeFunctionBasis Basis ();
-
   ComplexMatrix* OneBodyBasis = new ComplexMatrix [NbrSitesX * NbrSitesY];
   double GammaX = 0.0;
   double GammaY = 0.0;
@@ -126,6 +115,18 @@ int main(int argc, char** argv)
       }
 
 
+  char* EigenstateListOutputFile = new char [512];
+  if (Manager.GetDouble("mu-s") == 0.0)
+    sprintf (EigenstateListOutputFile, "fermions_singleband_checkerboardlattice_twoparticles_n_%d_x_%d_y_%d_t1_%f_t2_%f_gx_%f_gy_%f.linear", NbrParticles, NbrSitesX, NbrSitesY, 
+	     Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+  else
+    sprintf (EigenstateListOutputFile, "fermions_singleband_checkerboardlattice_twoparticles_n_%d_x_%d_y_%d_t1_%f_t2_%f_gx_%f_gy_%f_mus_%f.linear", NbrParticles, NbrSitesX, NbrSitesY, 
+	     Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+  ofstream File;
+  File.precision(14);
+  File.open(EigenstateListOutputFile, ios::binary | ios::out);
+  File << "# vector_name coefficient" << endl;
+
   for (int i = 0; i < NbrSitesX; ++i)
     {
       for (int j = 0; j < NbrSitesY; ++j)
@@ -138,6 +139,11 @@ int main(int argc, char** argv)
 	      MomentumArray[0] = i;
 	      MomentumArray[1] = j;
 	      int Index = Space->FindStateIndexFromArray(MomentumArray);
+	      int SublatticeIndex = 0;
+	      int LatticeXPosition = 0;
+	      int LatticeYPosition = 0;
+	      State[Index] += Phase(2.0 * M_PI * (((double) i ) * ((0.5 * ((double) SublatticeIndex)) + (double) LatticeXPosition)) / ((double) NbrSitesX) 
+				    + 2.0 * M_PI * (((double) j) * ((0.5 * ((double) SublatticeIndex)) + (double) LatticeYPosition)) / ((double) NbrSitesY)) * Conj(OneBodyBasis[(i * NbrSitesY) + j ][0][SublatticeIndex]);
 	    }
 	  else
 	    {
@@ -165,11 +171,15 @@ int main(int argc, char** argv)
 	    sprintf (EigenstateOutputFile, "fermions_singleband_checkerboardlattice_twoparticles_n_%d_x_%d_y_%d_t1_%f_t2_%f_gx_%f_gy_%f_mus_%f_kx_%d_ky_%d.0.vec", NbrParticles, NbrSitesX, NbrSitesY, 
 		     Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"), i, j);
 	  State.WriteVector(EigenstateOutputFile);
+	  Complex TmpComponent = 1.0;
+	  File << EigenstateOutputFile << " " << TmpComponent << endl;
 	  delete[] EigenstateOutputFile;
 	  delete Space;
 	  delete[] MomentumArray;
 	}
     }
+  File.close();
+  delete[] EigenstateListOutputFile;
 
   return 0;
 }

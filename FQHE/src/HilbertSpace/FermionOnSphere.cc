@@ -798,7 +798,7 @@ int FermionOnSphere::AdA (int index, int m, int n, double& coefficient)
   coefficient *= this->SignLookUpTable[(TmpState >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
 #endif
   TmpState &= ~(((unsigned long) (0x1)) << n);
-  if (NewLzMax == n)
+  if ((TmpState ))
     while ((TmpState >> NewLzMax) == 0)
       --NewLzMax;
   if ((TmpState & (((unsigned long) (0x1)) << m))!= 0)
@@ -849,9 +849,13 @@ long FermionOnSphere::AdA (long index, int m, int n, double& coefficient)
   coefficient *= this->SignLookUpTable[(TmpState >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
 #endif
   TmpState &= ~(((unsigned long) (0x1)) << n);
-  if (NewLzMax == n)
-    while ((TmpState >> NewLzMax) == 0)
-      --NewLzMax;
+  if (TmpState != 0x0ul)
+    {
+      while ((TmpState >> NewLzMax) == 0)
+	--NewLzMax;
+    }
+  else
+    NewLzMax = 0;
   if ((TmpState & (((unsigned long) (0x1)) << m))!= 0)
     {
       coefficient = 0.0;

@@ -83,6 +83,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "t2", "next nearest neighbor hoping amplitude", 1.0 - 0.5 * M_SQRT2);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "tpp", "second next nearest neighbor hoping amplitude", 0.5 * (M_SQRT2 - 1.0));
   (*SystemGroup) += new SingleDoubleOption  ('\n', "mu-s", "sublattice staggered chemical potential", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "coefficients-only", "only compute the one body coefficients that are requested to evaluate the density profile", false);
 
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "use-precomputed", "use precomputed matrix elements to do the plot");
@@ -124,37 +126,9 @@ int main(int argc, char** argv)
       return -1;
     }
 
-  ComplexMatrix* OneBodyBasis = new ComplexMatrix [NbrSitesX * NbrSitesY];
-  double GammaX = 0.0;
-  double GammaY = 0.0;
-  for (int kx = 0; kx < NbrSitesX; ++kx)
-    for (int ky = 0; ky < NbrSitesY; ++ky)
-      {
-	int Index = (kx * NbrSitesY) + ky;
-	Complex B1 = 4.0 * NNHoping * Complex (cos (1.0 * M_PI * (((double) kx) + GammaX) / ((double) NbrSitesX)) * cos (1.0 * M_PI * (((double) ky) + GammaY) / ((double) NbrSitesY)) * cos(M_PI * 0.25), 
-						     sin (1.0 * M_PI * (((double) kx) + GammaX) / ((double) NbrSitesX)) * sin (1.0 * M_PI * (((double) ky) + GammaY) / ((double) NbrSitesY)) * sin(M_PI * 0.25));
-	double d1 = 4.0 * SecondNextNNHoping * cos (2.0 * M_PI * (((double) kx) + GammaX) / ((double) NbrSitesX)) * cos (2.0 * M_PI * (((double) ky) + GammaY) / ((double) NbrSitesY));
-	double d3 =  MuS + (2.0 * NextNNHoping * (cos (2.0 * M_PI * (((double) kx) + GammaX) / ((double) NbrSitesX))
-							      - cos (2.0 * M_PI * (((double) ky) + GammaY) / ((double) NbrSitesY))));
-	HermitianMatrix TmpOneBobyHamiltonian(2, true);
-	TmpOneBobyHamiltonian.SetMatrixElement(0, 0, d1 + d3);
-	TmpOneBobyHamiltonian.SetMatrixElement(0, 1, B1);
-	TmpOneBobyHamiltonian.SetMatrixElement(1, 1, d1 - d3);
-	ComplexMatrix TmpMatrix(2, 2, true);
-	TmpMatrix[0][0] = 1.0;
-	TmpMatrix[1][1] = 1.0;
-	RealDiagonalMatrix TmpDiag;
-#ifdef __LAPACK__
-	TmpOneBobyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
-#else
-	TmpOneBobyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
-#endif   
-	OneBodyBasis[Index] = TmpMatrix;	
-      }
-
   int CurrentKx = 0;
   int CurrentKy = 0;
-  if (FQHEOnSquareLatticeFindSystemInfoFromVectorFileName(InputVectors(0, 0), NbrParticles, NbrSitesX, NbrSitesX, CurrentKx, CurrentKy, Statistics) == false)
+  if (FQHEOnSquareLatticeFindSystemInfoFromVectorFileName(InputVectors(0, 0), NbrParticles, NbrSitesX, NbrSitesY, CurrentKx, CurrentKy, Statistics) == false)
     {
       return -1;      
     }
@@ -165,7 +139,7 @@ int main(int argc, char** argv)
       int TmpNbrSitesY = 0;
       int TmpCurrentKx = 0;
       int TmpCurrentKy = 0;
-      if (FQHEOnSquareLatticeFindSystemInfoFromVectorFileName(InputVectors(0, i), TmpNbrParticles, TmpNbrSitesX, TmpNbrSitesX, TmpCurrentKx, TmpCurrentKy, Statistics) == false)
+      if (FQHEOnSquareLatticeFindSystemInfoFromVectorFileName(InputVectors(0, i), TmpNbrParticles, TmpNbrSitesX, TmpNbrSitesY, TmpCurrentKx, TmpCurrentKy, Statistics) == false)
 	{
 	  return -1;      
 	}
@@ -198,7 +172,7 @@ int main(int argc, char** argv)
   
   //  ParticleOnDiskFunctionBasis Basis(TotalLz);
 
-  int ForceMaxMomentum = NbrSitesX * NbrSitesY;      
+  int ForceMaxMomentum = NbrSitesX * NbrSitesY - 1;      
   //  double Scale = 2.0 * sqrt((double) TotalLz);
   ComplexMatrix PrecalculatedValues(ForceMaxMomentum + 1, ForceMaxMomentum + 1, true);
   ComplexMatrix** RawPrecalculatedValues = new ComplexMatrix*[InputVectors.GetNbrLines()];
@@ -239,7 +213,7 @@ int main(int argc, char** argv)
 	      ComplexVector RightState;
 	      int RightKxMomentum = 0;
 	      int RightKyMomentum = 0;
-	      if (FQHECheckerboardLatticeModelDensityGetHilbertSpace(InputVectors(0, i), NbrParticles, NbrSitesX, NbrSitesY, 
+	      if (FQHECheckerboardLatticeModelDensityGetHilbertSpace(InputVectors(0, j), NbrParticles, NbrSitesX, NbrSitesY, 
 								     RightKxMomentum, RightKyMomentum, Statistics, 
 								     RightSpace, RightState) == false)
 		return -1;
@@ -310,6 +284,35 @@ int main(int argc, char** argv)
 	    }
 	}
     }
+
+  ComplexMatrix* OneBodyBasis = new ComplexMatrix [NbrSitesX * NbrSitesY];
+  double GammaX = 0.0;
+  double GammaY = 0.0;
+  for (int kx = 0; kx < NbrSitesX; ++kx)
+    for (int ky = 0; ky < NbrSitesY; ++ky)
+      {
+	int Index = (kx * NbrSitesY) + ky;
+	Complex B1 = 4.0 * NNHoping * Complex (cos (1.0 * M_PI * (((double) kx) + GammaX) / ((double) NbrSitesX)) * cos (1.0 * M_PI * (((double) ky) + GammaY) / ((double) NbrSitesY)) * cos(M_PI * 0.25), 
+						     sin (1.0 * M_PI * (((double) kx) + GammaX) / ((double) NbrSitesX)) * sin (1.0 * M_PI * (((double) ky) + GammaY) / ((double) NbrSitesY)) * sin(M_PI * 0.25));
+	double d1 = 4.0 * SecondNextNNHoping * cos (2.0 * M_PI * (((double) kx) + GammaX) / ((double) NbrSitesX)) * cos (2.0 * M_PI * (((double) ky) + GammaY) / ((double) NbrSitesY));
+	double d3 =  MuS + (2.0 * NextNNHoping * (cos (2.0 * M_PI * (((double) kx) + GammaX) / ((double) NbrSitesX)) 
+							      - cos (2.0 * M_PI * (((double) ky) + GammaY) / ((double) NbrSitesY))));
+	HermitianMatrix TmpOneBobyHamiltonian(2, true);
+	TmpOneBobyHamiltonian.SetMatrixElement(0, 0, d1 + d3);
+	TmpOneBobyHamiltonian.SetMatrixElement(0, 1, B1);
+	TmpOneBobyHamiltonian.SetMatrixElement(1, 1, d1 - d3);
+	ComplexMatrix TmpMatrix(2, 2, true);
+	TmpMatrix[0][0] = 1.0;
+	TmpMatrix[1][1] = 1.0;
+	RealDiagonalMatrix TmpDiag;
+#ifdef __LAPACK__
+	TmpOneBobyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
+#else
+	TmpOneBobyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
+#endif   
+	OneBodyBasis[Index] = TmpMatrix;	
+      }
+
   ofstream File;
   File.precision(14);
   if (OutputName == 0)
@@ -343,41 +346,25 @@ int main(int argc, char** argv)
 	  {
 	    Complex DensityA = 0.0;
 	    Complex DensityB = 0.0;
+	    for (int m = 0; m <= ForceMaxMomentum; ++m)
+	      {
+		for (int n = 0; n <= ForceMaxMomentum; ++n)
+		  {
+		    int TotalKx1 = m / NbrSitesY;
+		    int TotalKy1 = m % NbrSitesY;
+		    int TotalKx2 = n / NbrSitesY;
+		    int TotalKy2 = n % NbrSitesY;
+		    cout << m << " " << n << endl;
+		    DensityA += Phase(2.0 * M_PI * ((double) ((TotalKx1 - TotalKx2) * i)) / ((double) NbrSitesX) 
+				      + 2.0 * M_PI * ((double) ((TotalKy1 - TotalKy2) * j)) / ((double) NbrSitesY)) * Conj(OneBodyBasis[m][0][0]) * OneBodyBasis[n][0][0] * PrecalculatedValues[m][n];
+		    DensityB += Phase(2.0 * M_PI * (((double) (TotalKx1 - TotalKx2)) * (0.5 + (double) i)) / ((double) NbrSitesX) 
+				      + 2.0 * M_PI * (((double) (TotalKy1 - TotalKy2)) * (0.5 + (double) j)) / ((double) NbrSitesY)) * Conj(OneBodyBasis[m][0][1]) * OneBodyBasis[n][0][1] * PrecalculatedValues[m][n];
+		  }
+	      }
 	    File << i << " " << j << " " << DensityA << endl;
 	    File << (((double) i) + 0.5) << " " << (((double) j) + 0.5) << " " << DensityB << endl;	    
 	  }
-
-//       Complex Tmp (0.0);
-//       double RInc = Scale / ((double) NbrSamples);
-//       NbrSamples *= 2;      
-//       RealVector Value(2, true);
-//       Complex TmpValue;
-//       Complex TmpValue2;
-//       Value[0] = -Scale;
-      
-//       for (int i = 0; i <= NbrSamples; ++i)
-// 	{
-// 	  Value[1] = -Scale;
-// 	  for (int j = 0; j <= NbrSamples; ++j)
-// 	    {
-// 	      Tmp = 0.0;
-// 	      for (int k = 0; k <= ForceMaxMomentum; ++k)
-// 		{
-// 		  Basis.GetFunctionValue(Value, TmpValue, k);
-// 		  for (int l = 0; l <= ForceMaxMomentum; ++l)
-// 		    {
-// 		      Basis.GetFunctionValue(Value, TmpValue2, l);
-// 		      Tmp += PrecalculatedValues[k][l]  * Conj(TmpValue) * TmpValue2;
-// 		    }
-// 		}
-// 	      Tmp *= exp (-0.5 * ((Value[0] * Value[0]) + (Value[1] * Value[1])));
-// 	      File << Value[0] << " " << Value[1] << " " << Tmp.Re << endl;
-// 	      Value[1] += RInc;
-// 	    }
-// 	  File << endl;
-// 	  Value[0] += RInc;
-// 	}
-     }
+    }
   File.close();
 }
 
@@ -414,13 +401,12 @@ bool FQHECheckerboardLatticeModelDensityGetHilbertSpace(char* inputState, int& n
     if ((nbrSitesX * nbrSitesY) <= 31)
 #endif
       {
-	space = new FermionOnSquareLatticeWithSpinMomentumSpace (nbrParticles, nbrSitesX, nbrSitesY, kxMomentum, kyMomentum);
+	space = new FermionOnSquareLatticeMomentumSpace (nbrParticles, nbrSitesX, nbrSitesY, kxMomentum, kyMomentum);
       }
     else
       {
-	space = new FermionOnSquareLatticeWithSpinMomentumSpaceLong (nbrParticles, nbrSitesX, nbrSitesY, kxMomentum, kyMomentum);
+	space = new FermionOnSquareLatticeMomentumSpaceLong (nbrParticles, nbrSitesX, nbrSitesY, kxMomentum, kyMomentum);
       }
-  
   if (space->GetLargeHilbertSpaceDimension() != state.GetLargeVectorDimension())
     {
       cout << "dimension mismatch between the state (" << state.GetLargeVectorDimension() << ") and the Hilbert space (" << space->GetLargeHilbertSpaceDimension() << ")" << endl;
