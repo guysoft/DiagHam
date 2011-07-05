@@ -463,7 +463,7 @@ ComplexVector* ParticleOnLatticeWithSpinChernInsulatorHamiltonian::LowLevelMulti
 // return value = reference on vector where result has been stored
 
 ComplexVector& ParticleOnLatticeWithSpinChernInsulatorHamiltonian::HermitianLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-													  int firstComponent, int nbrComponent)
+												int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
   if (this->FastMultiplicationFlag == false)
@@ -563,7 +563,7 @@ ComplexVector& ParticleOnLatticeWithSpinChernInsulatorHamiltonian::HermitianLowL
 // return value = pointer to the array of vectors where result has been stored
 
 ComplexVector* ParticleOnLatticeWithSpinChernInsulatorHamiltonian::HermitianLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
-														  int firstComponent, int nbrComponent)
+													int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
   if (this->FastMultiplicationFlag == false)
@@ -1060,7 +1060,7 @@ void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EnableFastMultiplicatio
 //       Pos = 0l;
 //       this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, TmpIndexArray, TmpCoefficientArray, Pos);
 //       this->EvaluateMNOneBodyFastMultiplicationComponent(TmpParticles, i, TmpIndexArray, TmpCoefficientArray, Pos);
-//       ++TotalPos;
+       ++TotalPos;
     }
 
   QHEParticlePrecalculationOperation Operation(this, false);
