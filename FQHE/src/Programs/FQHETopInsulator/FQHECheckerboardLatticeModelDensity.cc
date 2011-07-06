@@ -195,6 +195,7 @@ int main(int argc, char** argv)
 								 LeftKxMomentum, LeftKyMomentum, Statistics, 
 								 LeftSpace, LeftState) == false)
 	    return -1;
+	  //	  LeftState[0] = 1.0;
 	  for (int m = 0; m <= ForceMaxMomentum; ++m)
 	    {
 	      int TotalKx = m / NbrSitesY;
@@ -202,7 +203,8 @@ int main(int argc, char** argv)
 	      ParticleOnSphereDensityOperator Operator (LeftSpace, m);
 	      OperatorMatrixElementOperation Operation(&Operator, LeftState, LeftState);
 	      Operation.ApplyOperation(Architecture.GetArchitecture());
-	      Complex Tmp = Operation.GetScalar();
+	      //	      Complex Tmp = Operation.GetScalar();
+	      Complex Tmp = Operator.MatrixElement(LeftState, LeftState);
 	      RawPrecalculatedValues[i][i].AddToMatrixElement(m, m, Tmp);
 	      Tmp *= (Conj(Coefficients[i]) * Coefficients[i]);
 	      PrecalculatedValues.AddToMatrixElement(m, m, Tmp);
@@ -217,6 +219,8 @@ int main(int argc, char** argv)
 								     RightKxMomentum, RightKyMomentum, Statistics, 
 								     RightSpace, RightState) == false)
 		return -1;
+	      //	      RightState[0] = 1.0;
+	      RightSpace->SetTargetSpace(LeftSpace);
 	      for (int m = 0; m <= ForceMaxMomentum; ++m)
 		{
 		  for (int n = 0; n <= ForceMaxMomentum; ++n)
@@ -228,13 +232,13 @@ int main(int argc, char** argv)
 		      if ((((RightKxMomentum - TotalKx2) % NbrSitesX) == ((LeftKxMomentum - TotalKx1) % NbrSitesX))
 			  && (((RightKyMomentum - TotalKy2) % NbrSitesY) == ((LeftKyMomentum - TotalKy1) % NbrSitesY)))
 			{
-			  RightSpace->SetTargetSpace(LeftSpace);
 			  ParticleOnSphereDensityOperator Operator (RightSpace, m, n);
 			  OperatorMatrixElementOperation Operation(&Operator, LeftState, RightState);
 			  Operation.ApplyOperation(Architecture.GetArchitecture());
-			  Complex Tmp = Operation.GetScalar();
+			  //Complex Tmp = Operation.GetScalar();
+			  Complex Tmp = Operator.MatrixElement(LeftState, RightState);
 			  RawPrecalculatedValues[i][j].AddToMatrixElement(m, n, Tmp);
-			  Tmp *= (Conj(Coefficients[i]) * Coefficients[j]);
+			  Tmp *=  (Conj(Coefficients[i]) * Coefficients[j]);
 			  PrecalculatedValues.AddToMatrixElement(m, n, Tmp);
 			  PrecalculatedValues.AddToMatrixElement(n, m, Conj(Tmp));
 			}
@@ -340,7 +344,8 @@ int main(int argc, char** argv)
   
   if (CoefficientOnlyFlag == false)
     {
-      
+      Complex Sum = 0.0;
+      double Normalization = 1.0 / (((double) NbrSitesX) * ((double) NbrSitesY));      
       for (int i = 0; i < NbrSitesX; ++i)
 	for (int j = 0; j < NbrSitesY; ++j)
 	  {
@@ -354,16 +359,18 @@ int main(int argc, char** argv)
 		    int TotalKy1 = m % NbrSitesY;
 		    int TotalKx2 = n / NbrSitesY;
 		    int TotalKy2 = n % NbrSitesY;
-		    cout << m << " " << n << endl;
 		    DensityA += Phase(2.0 * M_PI * ((double) ((TotalKx1 - TotalKx2) * i)) / ((double) NbrSitesX) 
-				      + 2.0 * M_PI * ((double) ((TotalKy1 - TotalKy2) * j)) / ((double) NbrSitesY)) * Conj(OneBodyBasis[m][0][0]) * OneBodyBasis[n][0][0] * PrecalculatedValues[m][n];
+				      + 2.0 * M_PI * ((double) ((TotalKy1 - TotalKy2) * j)) / ((double) NbrSitesY)) * Normalization * Conj(OneBodyBasis[m][0][0]) * OneBodyBasis[n][0][0] * PrecalculatedValues[m][n];
 		    DensityB += Phase(2.0 * M_PI * (((double) (TotalKx1 - TotalKx2)) * (0.5 + (double) i)) / ((double) NbrSitesX) 
-				      + 2.0 * M_PI * (((double) (TotalKy1 - TotalKy2)) * (0.5 + (double) j)) / ((double) NbrSitesY)) * Conj(OneBodyBasis[m][0][1]) * OneBodyBasis[n][0][1] * PrecalculatedValues[m][n];
+				      + 2.0 * M_PI * (((double) (TotalKy1 - TotalKy2)) * (0.5 + (double) j)) / ((double) NbrSitesY)) * Normalization * Conj(OneBodyBasis[m][0][1]) * OneBodyBasis[n][0][1] * PrecalculatedValues[m][n];
 		  }
 	      }
+	    Sum += DensityA;
+	    Sum += DensityB;
 	    File << i << " " << j << " " << DensityA << endl;
 	    File << (((double) i) + 0.5) << " " << (((double) j) + 0.5) << " " << DensityB << endl;	    
 	  }
+      cout << "Sum = " << Sum << endl;
     }
   File.close();
 }

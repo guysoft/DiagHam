@@ -127,6 +127,7 @@ int main(int argc, char** argv)
   File.open(EigenstateListOutputFile, ios::binary | ios::out);
   File << "# vector_name coefficient" << endl;
 
+  double Normalization = 1.0 / sqrt (((double) NbrSitesX) * ((double) NbrSitesY));
   for (int i = 0; i < NbrSitesX; ++i)
     {
       for (int j = 0; j < NbrSitesY; ++j)
@@ -143,7 +144,7 @@ int main(int argc, char** argv)
 	      int LatticeXPosition = 0;
 	      int LatticeYPosition = 0;
 	      State[Index] += Phase(2.0 * M_PI * (((double) i ) * ((0.5 * ((double) SublatticeIndex)) + (double) LatticeXPosition)) / ((double) NbrSitesX) 
-				    + 2.0 * M_PI * (((double) j) * ((0.5 * ((double) SublatticeIndex)) + (double) LatticeYPosition)) / ((double) NbrSitesY)) * Conj(OneBodyBasis[(i * NbrSitesY) + j ][0][SublatticeIndex]);
+				    + 2.0 * M_PI * (((double) j) * ((0.5 * ((double) SublatticeIndex)) + (double) LatticeYPosition)) / ((double) NbrSitesY)) * Normalization * Conj(OneBodyBasis[(i * NbrSitesY) + j ][0][SublatticeIndex]);
 	    }
 	  else
 	    {
@@ -163,17 +164,22 @@ int main(int argc, char** argv)
 		      }
 		  }
 	    }
-	  char* EigenstateOutputFile = new char [512];
-	  if (Manager.GetDouble("mu-s") == 0.0)
-	    sprintf (EigenstateOutputFile, "fermions_singleband_checkerboardlattice_twoparticles_n_%d_x_%d_y_%d_t1_%f_t2_%f_gx_%f_gy_%f_kx_%d_ky_%d.0.vec", NbrParticles, NbrSitesX, NbrSitesY, 
-		     Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j);
-	  else
-	    sprintf (EigenstateOutputFile, "fermions_singleband_checkerboardlattice_twoparticles_n_%d_x_%d_y_%d_t1_%f_t2_%f_gx_%f_gy_%f_mus_%f_kx_%d_ky_%d.0.vec", NbrParticles, NbrSitesX, NbrSitesY, 
-		     Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"), i, j);
-	  State.WriteVector(EigenstateOutputFile);
-	  Complex TmpComponent = 1.0;
-	  File << EigenstateOutputFile << " " << TmpComponent << endl;
-	  delete[] EigenstateOutputFile;
+	  double Norm = State.Norm();
+	  if (Norm > MACHINE_PRECISION)
+	    {
+	      State /= Norm;
+	      char* EigenstateOutputFile = new char [512];
+	      if (Manager.GetDouble("mu-s") == 0.0)
+		sprintf (EigenstateOutputFile, "fermions_singleband_checkerboardlattice_twoparticles_n_%d_x_%d_y_%d_t1_%f_t2_%f_gx_%f_gy_%f_kx_%d_ky_%d.0.vec", NbrParticles, NbrSitesX, NbrSitesY, 
+			 Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j);
+	      else
+		sprintf (EigenstateOutputFile, "fermions_singleband_checkerboardlattice_twoparticles_n_%d_x_%d_y_%d_t1_%f_t2_%f_gx_%f_gy_%f_mus_%f_kx_%d_ky_%d.0.vec", NbrParticles, NbrSitesX, NbrSitesY, 
+			 Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"), i, j);
+	      State.WriteVector(EigenstateOutputFile);
+	      Complex TmpComponent = Norm;
+	      File << EigenstateOutputFile << " " << TmpComponent << endl;
+	      delete[] EigenstateOutputFile;
+	    }
 	  delete Space;
 	  delete[] MomentumArray;
 	}
