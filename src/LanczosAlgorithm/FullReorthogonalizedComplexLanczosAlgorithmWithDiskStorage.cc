@@ -420,20 +420,30 @@ bool FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::TestConvergence
         {
           for (int i = this->NbrEigenvalue - 1; i >= 0; --i)
             {
-              if (fabs(this->DiagonalizedMatrix.DiagonalElement(i) - this->PreviousWantedEigenvalues[i]) > 
-                  (this->EigenvaluePrecision * fabs(this->DiagonalizedMatrix.DiagonalElement(i))))
+              if ((fabs(this->DiagonalizedMatrix.DiagonalElement(i))>this->EigenvaluePrecision) &&
+		  (fabs(this->PreviousWantedEigenvalues[i])>this->EigenvaluePrecision) &&
+		  (fabs(this->DiagonalizedMatrix.DiagonalElement(i) - this->PreviousWantedEigenvalues[i]) > 
+		   (this->EigenvaluePrecision * fabs(this->DiagonalizedMatrix.DiagonalElement(i)))))
                 {
+		  //		  cout << "no strong convergence at i="<<i<<": "<<this->DiagonalizedMatrix.DiagonalElement(i) - this->PreviousWantedEigenvalues[i]<<" vs "<< this->EigenvaluePrecision * fabs(this->DiagonalizedMatrix.DiagonalElement(i))<<endl;
                   return false;
                 }
             }
           return true;
         }
       else
-        if (fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->PreviousLastWantedEigenvalue) < 
-            (this->EigenvaluePrecision * fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1))))
+        if ((fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->PreviousLastWantedEigenvalue) < 
+	     (this->EigenvaluePrecision * fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1)))) ||
+	    ((fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1))<this->EigenvaluePrecision) &&
+	     (fabs(this->PreviousLastWantedEigenvalue)<this->EigenvaluePrecision)))
+	    
           return true;
         else
-          return false;
+	  {
+	    //	    cout << "No convergence:"<<fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->PreviousLastWantedEigenvalue)<<" vs "<<(this->EigenvaluePrecision * fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1)))<<endl;
+	    
+	    return false;
+	  }
     }
   return false;
 }

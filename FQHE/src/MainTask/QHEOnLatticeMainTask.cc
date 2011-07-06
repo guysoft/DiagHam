@@ -653,12 +653,15 @@ int QHEOnLatticeMainTask::ExecuteMainTask()
 		    }
 		  else
 		    {
-		      
+		      cout << "Using FullReorthogonalizedComplexLanczosAlgorithm"<<endl;
 		      Lanczos = new FullReorthogonalizedComplexLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
 		    }
 		}
 	      else
-		Lanczos = new FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage (this->Architecture, this->NbrEigenvalue, this->VectorMemory, this->MaxNbrIterLanczos);
+		{
+		  cout << "Using FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage"<<endl;
+		  Lanczos = new FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage (this->Architecture, this->NbrEigenvalue, this->VectorMemory, this->MaxNbrIterLanczos);
+		}
 	    }
 	  if (this->LanczosPrecision != 0.0)
 	    Lanczos->SetEigenvaluePrecision(this->LanczosPrecision);

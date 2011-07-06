@@ -203,16 +203,19 @@ int main(int argc, char** argv)
       int NbrNeighbors;
       int *Neighbors;
       double *Phases;
+      double *Amplitudes;
       int **PeriodicTranslations;
       for (int s=0; s<NbrSites; ++s)
 	{
 	  Lattice->GetSiteCoordinates(s, CellPosition, Sub);
 	  SitePosition = Lattice->GetSitePosition(CellPosition,Sub);	  
-	  Lattice->GetNeighbors(s, NbrNeighbors, Neighbors, Phases, PeriodicTranslations);
+	  Lattice->GetNeighbors(s, NbrNeighbors, Neighbors, Phases, PeriodicTranslations, Amplitudes);
 	  for (int n=0; n<NbrNeighbors; ++n)
 	    if (Neighbors[n]>s)
 	      {
 		double Current = -2.0*Imag(Conj(ResultingState[NbrSites-s-1])*ResultingState[NbrSites-Neighbors[n]-1]*Polar(1.0, -2.0*M_PI*FluxDensity*Phases[n]));
+		if (Amplitudes!=NULL)
+		  Current *= Amplitudes[n];
 		//cout << "J_"<<s<<","<<Neighbors[n]<<" = "<<Current<<endl;
 		Lattice->GetSiteCoordinates(Neighbors[n], CellPosition, Sub);
 		SitePosition2 = Lattice->GetSitePosition(CellPosition,Sub);

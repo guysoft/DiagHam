@@ -161,6 +161,49 @@ LatticePhases::LatticePhases()
       if (fabs(Rescale-1.0)>1e-10)
 	SubLatticeVectors[i]*=Rescale;
     }
+
+  if (LatticeDefinition.GetAsSingleInteger ("NbrExtParameters", this->NbrExtParameters)==false)
+    {
+      this->NbrExtParameters=1;
+      this->ExtParameters=new double[1];
+      this->ExtParameters[0]=1.0;
+    }
+  else
+    {
+      this->ExtParameters=new double[NbrExtParameters];
+      int TmpDimension = 0;
+      int *TmpParameters = NULL;
+      if ( (*LatticePhases::Options)["external-parameters"] != NULL)
+	TmpParameters = LatticePhases::Options->GetIntegers("external-parameters",TmpDimension);
+      for (int i=0; i<TmpDimension; ++i)
+	this->ExtParameters[i]=TmpParameters[i];
+      if (TmpDimension<NbrExtParameters)
+	{
+	  if (TmpDimension>0)
+	    cout << "Warning: reading only partial parameter list from command line"<<endl;
+	  for (int i=TmpDimension; i<NbrExtParameters; ++i)
+	    {
+	      sprintf(FieldName,"ExtParameter%d",i);
+	      if (LatticeDefinition.GetAsSingleDouble(FieldName, this->ExtParameters[i])==false)
+		{
+		  cout << "Require field "<<FieldName<<" to be defined, or given on command-line via --external-parameters"<<endl;
+		  exit(1);
+		}
+	    }
+	}
+      if (TmpDimension>0)
+	delete [] TmpParameters;
+
+      // enhance lattice descriptor if non-trivial parameters
+      char *NewDescriptor = new char[strlen(this->Descriptor)+4+15*NbrExtParameters];
+      sprintf(NewDescriptor,"%s_ep_%g",Descriptor,ExtParameters[0]);
+      for (int i=1; i<ExtParameters[0]; ++i)
+	{
+	  sprintf(NewDescriptor,"%s_%g",NewDescriptor,ExtParameters[i]);
+	}
+      delete [] this->Descriptor;
+      this->Descriptor=NewDescriptor;
+    }
   
   // determine connectivity, and tunnelling phases
   // two alternate methods: indicate individual tunnelling phases, or give a gauge choice
@@ -209,6 +252,7 @@ LatticePhases::LatticePhases()
   int NbrPairs;
   int *NbrValues;
   RealSymmetricMatrix NeighborsInCellMatrix(NbrSitesPerCell, true);
+  RealSymmetricMatrix NeighborsInCellAmplitudes(NbrSitesPerCell, true);
   RealAntisymmetricMatrix TunnellingPhaseMatrix(NbrSitesPerCell, true);
   if (LatticeDefinition["NeighborsInCell"]!=NULL)
     {
@@ -224,7 +268,7 @@ LatticePhases::LatticePhases()
 	    {
 	      cout << "error while decoding NeighborsInCell in " << this->Options->GetString("lattice-definition") << endl;
 	      cout << "Indicate paires of neighboring sites separated by commas and different pairs by bars: "
-		   << "NeighborsInCell = s1,s2[,phaseA12=0.0] | s3, s4[,phaseA34=0.0] | ..."
+		   << "NeighborsInCell = s1,s2[,phaseA12=0.0,amplitudeParamaterID=0] | s3, s4[,phaseA34=0.0,amplitudeParamaterID=0] | ..."
 		   << "Phases can either be indicated explitly, or will be deduced from gauge if defined"
 		   << " or assumed to be one, otherwise"<<endl;
 	      
@@ -250,6 +294,18 @@ LatticePhases::LatticePhases()
 		    }
 		  else		    
 		    TunnellingPhaseMatrix.SetMatrixElement(s1,s2,strtod(NeighborString[p][2], NULL));
+		  // determine tunnelling amplitude
+		  if (NbrValues[p]<4)
+		    NeighborsInCellAmplitudes.SetMatrixElement(s1,s2,0.0);
+		  else
+		    {
+		      NeighborsInCellAmplitudes.SetMatrixElement(s1,s2,strtod(NeighborString[p][3], NULL));
+		      if (strtod(NeighborString[p][3],NULL)+1.0>(double)NbrExtParameters+1e-10)
+			{
+			  cout << "Not enough external parameters defined for Lattice Defition"<<endl;
+			  exit(1);
+			}
+		    }
 		}
 	    }
 	}
@@ -266,6 +322,7 @@ LatticePhases::LatticePhases()
   
 #ifdef DEBUG_LATTICE_PHASES
   cout << "NeighborsInCell="<<endl<<NeighborsInCellMatrix;
+  cout << "NeighborsInCellAmplitudes="<<endl<<NeighborsInCellAmplitudes;
   cout << "TunnellingPhaseMatrix="<<endl<<TunnellingPhaseMatrix;
 #endif
   if (LatticeDefinition.GetAsStringMultipleArray ("NeighborCells", '|', ',', NeighborString, NbrPairs, NbrValues)==false)
@@ -298,6 +355,7 @@ LatticePhases::LatticePhases()
   delete [] NeighborString;
   delete [] NbrValues;
   RealMatrix **NeighborsAcrossBoundary = new RealMatrix*[NbrNeighborCells];
+  RealMatrix **AmplitudesAcrossBoundary = new RealMatrix*[NbrNeighborCells];
   RealMatrix **PhasesAcrossBoundary = new RealMatrix*[NbrNeighborCells];
   for (int d=0; d<NbrNeighborCells; ++d)
     {
@@ -310,6 +368,7 @@ LatticePhases::LatticePhases()
 	       << ", no connections added."<< endl;
 	}
       NeighborsAcrossBoundary[d] = new RealMatrix(NbrSitesPerCell, NbrSitesPerCell, true);
+      AmplitudesAcrossBoundary[d] = new RealMatrix(NbrSitesPerCell, NbrSitesPerCell, true);
       PhasesAcrossBoundary[d] = new RealMatrix(NbrSitesPerCell, NbrSitesPerCell, true);
       for (int p=0; p<NbrPairs; ++p)
 	{
@@ -320,7 +379,8 @@ LatticePhases::LatticePhases()
 	      cout << "Indicate paires of neighboring sites separated by commas and different pairs by bars: "
 		   << FieldName <<" = s1,s2[,phaseA12] | s3, s4 [,phaseA34] | ..."
 		   << "Phases can either be indicated explitly, or will be deduced from gauge if defined"
-		   << " or assumed to be one, otherwise"<<endl;
+		   << "Amplitudes are given as indices 0,1,2,... referring to the respective external parameters;"
+		   << " both are assumed to be one, otherwise"<<endl;
 	      exit(-1);
 	    }
 	  s1=strtod(NeighborString[p][0], NULL);
@@ -352,6 +412,27 @@ LatticePhases::LatticePhases()
 		      }
 #endif
 		    }
+		  // determine tunnelling amplitude
+		  if (NbrValues[p]<4)
+		    {
+		      AmplitudesAcrossBoundary[d]->SetMatrixElement(s1, s2, 0.0);
+		    }
+		  else
+		    {
+		      AmplitudesAcrossBoundary[d]->SetMatrixElement(s1,s2,strtod(NeighborString[p][3], NULL));
+		      if (strtod(NeighborString[p][3],NULL)+1.0>(double)NbrExtParameters+1e-10)
+			{
+			  cout << "Not enough external parameters defined for Lattice Defition"<<endl;
+			  exit(1);
+			}
+#ifdef DEBUG_LATTICE_PHASES
+		      {
+			double tmp;
+			AmplitudesAcrossBoundary[d]->GetMatrixElement(s1,s2,tmp);
+			cout << "Amplitude between neighbor sites "<<s1<<", "<<s2<<": "<<tmp<<endl;
+		      }
+#endif
+		    }
 		}
 	    }
 	}
@@ -366,6 +447,7 @@ LatticePhases::LatticePhases()
       
 #ifdef DEBUG_LATTICE_PHASES
       cout << FieldName<<"="<<endl<<*NeighborsAcrossBoundary[d];
+      cout << "Amplitudes("<<FieldName<<")="<<endl<<*AmplitudesAcrossBoundary[d];
       cout << "Phases("<<FieldName<<")="<<endl<<*(PhasesAcrossBoundary[d]);
 #endif
     }
@@ -373,6 +455,7 @@ LatticePhases::LatticePhases()
   this->Neighbors = new int*[NbrSites];
   this->NeighborShift = new int**[NbrSites];
   this->TunnellingPhases = new double*[NbrSites];
+  this->TunnellingAmplitudes = new double*[NbrSites];
   this->NbrNeighbors = new int[NbrSites];
   for (int i=0; i<NbrSites; ++i)
     this->NbrNeighbors[i] = 0;
@@ -385,6 +468,8 @@ LatticePhases::LatticePhases()
 	TmpNeighborShift[i][j]=0;
     }
   double *TmpPhases = new double[NbrNeighborCells*NbrSites];
+  int *TmpAmplitudes = new int[NbrNeighborCells*NbrSites];
+  
   
   this->NbrCells = this->PeriodicRep[0];
   for (int d=1; d<Dimension; ++d)
@@ -402,6 +487,7 @@ LatticePhases::LatticePhases()
       cout << "Cell "<<c<<":"<< CellCoordinates[0]<<", "<<CellCoordinates[1]<<endl;
 #endif
       int Site1, Site2, Site3;
+      double TmpD;
       for (int i=0; i<NbrSitesPerCell; ++i)
 	{
 	  Site1 = this->GetSiteNumber(c, i);
@@ -416,6 +502,8 @@ LatticePhases::LatticePhases()
 	      if (NeighborsInCellMatrix(i,j)>0.0)
 		{		  
 		  TmpNeighbors[NbrNeighbors[Site1]]=Site2;
+		  NeighborsInCellAmplitudes.GetMatrixElement(Site1%NbrSitesPerCell,Site2%NbrSitesPerCell,TmpD);
+		  TmpAmplitudes[NbrNeighbors[Site1]]=(int)nearbyint(TmpD);
 		  if (this->HaveGauge)
 		    TmpPhases[NbrNeighbors[Site1]] = GetTunnellingPhaseFromGauge(Site1, Site2);
 		  else
@@ -423,7 +511,10 @@ LatticePhases::LatticePhases()
 		  for (int r=0; r<Dimension; ++r)
 		    TmpNeighborShift[NbrNeighbors[Site1]][r]=0;
 #ifdef DEBUG_LATTICE_PHASES
-		  cout << "Neighbors "<<Site1<<"->"<<Site2<<" with phase "<<TmpPhases[NbrNeighbors[Site1]]<<endl;
+		  cout << "Neighbors "<<Site1<<"->"<<Site2<<" with phase "<<TmpPhases[NbrNeighbors[Site1]];
+		  if (amplitudeID!=0)
+		    cout <<", and with amplitudeID"<<TmpAmplitudes[NbrNeighbors[Site1]];
+		  cout<<endl;
 #endif
 		  ++NbrNeighbors[Site1];
 		}
@@ -447,6 +538,8 @@ LatticePhases::LatticePhases()
 		      TmpNeighbors[NbrNeighbors[Site1]]=Site3;
 		      for (int r=0; r<Dimension; ++r)
 			TmpNeighborShift[NbrNeighbors[Site1]][r]=Translation3[r]/PeriodicRep[r];
+		      AmplitudesAcrossBoundary[d]->GetMatrixElement(Site1%NbrSitesPerCell,Site3%NbrSitesPerCell,TmpD);
+		      TmpAmplitudes[NbrNeighbors[Site1]]=(int)nearbyint(TmpD);
 		      if (this->HaveGauge)
 			{
 #ifdef DEBUG_LATTICE_PHASES
@@ -462,6 +555,8 @@ LatticePhases::LatticePhases()
 			CellCoordinates2[0]<<", "<<CellCoordinates2[1]<<", "<<j<<" : Site 3="<<Site3
 			   <<" with translation "<<Translation3[0];
 		      for (int i=1; i<Dimension; ++i) cout << " "<<Translation3[i];
+		      if (TmpAmplitudes[NbrNeighbors[Site1]]!=0)
+			cout << ", amplitudeID "<<TmpAmplitudes[NbrNeighbors[Site1]];
 		      cout << " and phase "<<TmpPhases[NbrNeighbors[Site1]]<<" Shift "<<TmpNeighborShift[NbrNeighbors[Site1]][0]
 			   << ","<<TmpNeighborShift[NbrNeighbors[Site1]][1]<<endl;
 #endif
@@ -473,6 +568,7 @@ LatticePhases::LatticePhases()
 	    {
 	      Neighbors[Site1] = new int[NbrNeighbors[Site1]];
 	      TunnellingPhases[Site1] = new double[NbrNeighbors[Site1]];
+	      TunnellingAmplitudes[Site1] = new double[NbrNeighbors[Site1]];
 	      NeighborShift[Site1] = new int*[NbrNeighbors[Site1]];
 	      for (int k=0; k<NbrNeighbors[Site1]; ++k)
 		NeighborShift[Site1][k] = new int[Dimension];
@@ -482,6 +578,7 @@ LatticePhases::LatticePhases()
 	    {
 	      Neighbors[Site1][k] = TmpNeighbors[k];
 	      TunnellingPhases[Site1][k] = TmpPhases[k];
+	      TunnellingAmplitudes[Site1][k] = ExtParameters[TmpAmplitudes[k]];
 	      for (int r=0; r<Dimension; ++r)
 		NeighborShift[Site1][k][r]=TmpNeighborShift[k][r];
 	    }
@@ -573,9 +670,11 @@ LatticePhases::LatticePhases()
   for (int d=0; d<NbrNeighborCells; ++d)
     {
       delete NeighborsAcrossBoundary[d];
+      delete AmplitudesAcrossBoundary[d];
       delete PhasesAcrossBoundary[d];
     }
   delete [] NeighborsAcrossBoundary;
+  delete [] AmplitudesAcrossBoundary;
   delete [] PhasesAcrossBoundary;
   delete [] CellCoordinates;
   delete [] CellCoordinates2;
@@ -607,15 +706,19 @@ LatticePhases::~LatticePhases()
 	    }
 	  if (this->TunnellingPhases[i]!=NULL)
 	    delete [] this->TunnellingPhases[i];
+	  if (this->TunnellingAmplitudes[i]!=NULL)
+	    delete [] this->TunnellingAmplitudes[i];
 	}      
       delete [] this->Neighbors;
       delete [] NeighborShift;
       delete [] this->TunnellingPhases;
+      delete [] this->TunnellingAmplitudes;
       delete [] this->NbrNeighbors;
       for (int i=0; i<NbrNeighborCells; ++i)
 	delete [] this->NeighborCells[i];
       delete [] this->NeighborCells;
       delete [] this->Descriptor;
+      delete [] this->ExtParameters;
       if (NbrOneParticlePotentials>0)
 	{
 	  delete[] OneParticlePotentials;
@@ -716,7 +819,8 @@ int LatticePhases::GetSiteNumber(int *cellCoordinates, int sublattice, int *tran
 // Neighbors = array to partner sites
 // phases = values of phase for tunnelling matrix element
 // periodicTranslations = translations into the fundamental domain
-void LatticePhases::GetNeighbors(int nbrSite, int &nbrNeighbors, int * &neighbors, double * &phases, int **&periodicTranslations)
+// amplitudes = (optional) amplitudes of tunneling terms
+void LatticePhases::GetNeighbors(int nbrSite, int &nbrNeighbors, int * &neighbors, double * &phases, int **&periodicTranslations, double *&amplitudes)
 {
   if ((nbrSite>-1)&&(nbrSite<NbrSites))
     {
@@ -724,12 +828,17 @@ void LatticePhases::GetNeighbors(int nbrSite, int &nbrNeighbors, int * &neighbor
       nbrNeighbors = this->NbrNeighbors[nbrSite];
       phases = this->TunnellingPhases[nbrSite];
       periodicTranslations = this->NeighborShift[nbrSite];
+      if (NbrExtParameters>0)
+	amplitudes = this->TunnellingAmplitudes[nbrSite];
+      else
+	amplitudes = NULL;
     }
   else
     {
       nbrNeighbors = 0;
       neighbors = NULL;
       phases = NULL;
+      amplitudes = NULL;
     }
 }
 

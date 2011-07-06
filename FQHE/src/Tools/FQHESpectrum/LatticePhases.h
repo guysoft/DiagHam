@@ -90,6 +90,11 @@ class LatticePhases
   // Matrix containing coordinates of  sublattices 
   RealMatrix SubLatticeVectors;
 
+  // number of optional parameters (in absence of any input taken as one)
+  int NbrExtParameters;
+  // values of optional parameters
+  double *ExtParameters;
+
   // neigborship relations of cells
   int **NeighborCells;
   // and number thereof
@@ -105,6 +110,9 @@ class LatticePhases
 
   // tunnelling phases for tunnelling to existing neighbors, same ordering as array Neighbors
   double **TunnellingPhases;
+  // amplitudes as indices of external parameters
+  double **TunnellingAmplitudes;
+
 
   // local one-particle potentials
   double *OneParticlePotentials;
@@ -171,7 +179,7 @@ class LatticePhases
   // Neighbors = array to partner sites
   // phases = values of phase for tunnelling matrix element
   // periodicTranslations = translations into the fundamental domain
-  void GetNeighbors(int nbrSite, int &nbrNeighbors, int * &neighbors, double * &phases, int **&periodicTranslations);
+  void GetNeighbors(int nbrSite, int &nbrNeighbors, int * &neighbors, double * &phases, int **&periodicTranslations, double *&amplitudes);
 
   // access lattice extension in d-th direction
   int GetLatticeLength(int direction){return this->PeriodicRep[direction];}

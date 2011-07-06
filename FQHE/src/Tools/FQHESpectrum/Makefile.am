@@ -12,4 +12,5 @@ PseudoPotentialGenerator.cc \
 TabulatedDensityProfile.cc \
 InfiniteWellBilayerDensityProfile.cc \
 InfiniteWellMixedDensityProfile.cc \
-LatticePhases.cc
+LatticePhases.cc 
+#LatticePhasesWithSpin.cc
