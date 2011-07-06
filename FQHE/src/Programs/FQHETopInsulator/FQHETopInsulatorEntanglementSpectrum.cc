@@ -63,12 +63,8 @@ int main(int argc, char** argv)
       Error = exp(-Manager.GetDouble("xi-error"));
     }
   int NbrParticles = 0;
-  int NbrFluxQuanta = 0;
-  int TotalKx = 0;
-  int TotalKy = 0;
   int NbrSiteX = 0;
   int NbrSiteY = 0;
-  int TotalSz = 0;
   bool Statistics = true;
   int Modulo = Manager.GetInteger("ky-periodic");
   
@@ -89,8 +85,8 @@ int main(int argc, char** argv)
 //     }
   
   double Mass = 0.0;
-  if (FQHEOnSquareLatticeFindSystemInfoFromVectorFileName(Manager.GetString("density-matrix"),
-							  NbrParticles, NbrSiteX, NbrSiteY, TotalKx, TotalKy, Mass, Statistics) == false)
+  if (FQHEOnSquareLatticeFindSystemInfoFromFileName(Manager.GetString("density-matrix"),
+							  NbrParticles, NbrSiteX, NbrSiteY, Statistics) == false)
     {
       cout << "can't retrieve system informations from the reduced density matrix file name" << endl;
       return -1;
@@ -110,128 +106,6 @@ int main(int argc, char** argv)
 
   if (Manager.GetBoolean("particle-entanglement") == false)
     {
-//       if (DensityMatrix.GetNbrColumns() < 4)
-// 	{
-// 	  cout << "wrong number of columns in " << Manager.GetString("density-matrix") << endl;
-// 	  return -1;
-// 	}
-      
-//       int* LaValues = DensityMatrix.GetAsIntegerArray(0);
-//       int* NaValues = DensityMatrix.GetAsIntegerArray(1);
-//       int* KyValues = DensityMatrix.GetAsIntegerArray(2);
-//       long Index = 0l;
-//       long MaxIndex = DensityMatrix.GetNbrLines();
-//       while ((Index < MaxIndex) && (LaValues[Index] != NbrOrbitalsInPartition))
-// 	++Index;
-      
-//       if (Index < MaxIndex)
-// 	{
-// 	  if (Index < MaxIndex)
-// 	    {
-// 	      double* Coefficients = DensityMatrix.GetAsDoubleArray(3);
-// 	      char* OutputFileName = Manager.GetString("output");
-// 	      if (OutputFileName == 0)
-// 		{
-// 		  char* TmpExtension = new char[256];
-// 		  sprintf(TmpExtension, "la_%d_na_%d.entspec", NbrOrbitalsInPartition, NbrParticlesInPartition);
-// 		  if (strcasestr(Manager.GetString("density-matrix"), "bz2") == 0)
-// 		    {
-// 		      OutputFileName = ReplaceExtensionToFileName(Manager.GetString("density-matrix"), "full.ent", TmpExtension);
-// 		    }
-// 		  else
-// 		    {
-// 		      OutputFileName = ReplaceExtensionToFileName(Manager.GetString("density-matrix"), "full.ent.bz2", TmpExtension);
-// 		    }
-// 		}
-// 	      ofstream File;
-// 	      File.open(OutputFileName, ios::out);
-// 	      File.precision(14);
-// 	      File << "# la na ky shifted_ky lambda -log(lambda)" << endl;
-// 	      if (NbrParticlesInPartition == 0)
-// 		{
-// 		  int TmpIndex = Index;
-// 		  while ((Index < MaxIndex) && (LaValues[Index] == NbrOrbitalsInPartition))
-// 		    {
-// 		      double Tmp = Coefficients[Index];
-// 		      if (Tmp > Error)
-// 			{
-// 			  int TmpKya = (- (KyValues[Index] + ((NbrOrbitalsInPartition - 1 - NbrFluxQuanta) * NaValues[Index])));
-// 			  File << NbrOrbitalsInPartition << " " << NaValues[Index] << " " << KyValues[Index] << " " <<  (0.5 * TmpKya) << " " << Tmp << " " << (-log(Tmp)) << endl;
-// 			  if (TmpKya < MinKa)
-// 			    MinKa = TmpKya;
-// 			  if (TmpKya > MaxKa)
-// 			    MaxKa = TmpKya;
-// 			}
-// 		      ++Index;
-// 		    }
-// 		  KaValueArray = new int[(MaxKa - MinKa + 1) >> 1];
-// 		  for (int i = MinKa; i <= MaxKa; i += 2)
-// 		    KaValueArray[(i - MinKa) >> 1] = 0; 
-// 		  Index = TmpIndex;
-// 		  while ((Index < MaxIndex) && (LaValues[Index] == NbrOrbitalsInPartition))
-// 		    {
-// 		      if (Coefficients[Index] > Error)
-// 			{
-// 			  int TmpKya = (- (KyValues[Index] + ((NbrOrbitalsInPartition - 1 - NbrFluxQuanta) * NaValues[Index])));
-// 			  KaValueArray[(TmpKya - MinKa) >> 1]++; 
-// 			}
-// 		      ++Index;
-// 		    }
-// 		}
-// 	      else
-// 		{
-// 		  while ((Index < MaxIndex) && (NaValues[Index] != NbrParticlesInPartition))
-// 		    ++Index;
-// 		  if (Index < MaxIndex)
-// 		    {
-// 		      int TmpIndex = Index;
-// 		      int Shift = ((NbrOrbitalsInPartition - 1 - NbrFluxQuanta) * NbrParticlesInPartition);
-// 		      while ((Index < MaxIndex) && (LaValues[Index] == NbrOrbitalsInPartition) && (NaValues[Index] == NbrParticlesInPartition))
-// 			{
-// 			  double Tmp = Coefficients[Index];
-// 			  if (Tmp > Error)
-// 			    {
-// 			      int TmpKya = (-(KyValues[Index] + Shift));
-// 			      if (Modulo != 0)
-// 				File << NbrOrbitalsInPartition << " " << NbrParticlesInPartition << " " << (KyValues[Index] % Modulo) << " " << (0.5 * TmpKya) << " " << Tmp << " " << (-log(Tmp)) << endl;
-// 			      else
-// 				File << NbrOrbitalsInPartition << " " << NbrParticlesInPartition << " " << KyValues[Index] << " " << (0.5 * TmpKya) << " " << Tmp << " " << (-log(Tmp)) << endl;
-// 			      if (TmpKya < MinKa)
-// 				MinKa = TmpKya;
-// 			      if (TmpKya > MaxKa)
-// 				MaxKa = TmpKya;
-// 			    }
-// 			  ++Index;
-// 			}	      
-// 		      KaValueArray = new int[(MaxKa - MinKa + 1) >> 1];
-// 		      for (int i = MinKa; i <= MaxKa; i += 2)
-// 			KaValueArray[(i - MinKa) >> 1] = 0; 
-// 		      Index = TmpIndex;
-// 		      while ((Index < MaxIndex) && (LaValues[Index] == NbrOrbitalsInPartition) && (NaValues[Index] == NbrParticlesInPartition))
-// 			{
-// 			  if (Coefficients[Index] > Error)
-// 			    {
-// 			      int TmpKya = (-(KyValues[Index] + Shift));
-// 			      KaValueArray[(TmpKya - MinKa) >> 1]++; 
-// 			    }
-// 			  ++Index;
-// 			}
-// 		    }
-// 		  else
-// 		    {
-// 		      cout << "error, no entanglement spectrum can be computed from current data (invalid number of particles)" << endl;	      
-// 		      return -1;
-// 		    }
-// 		}
-// 	      File.close();
-// 	    }
-// 	}
-//       else
-// 	{
-// 	  cout << "error, no entanglement spectrum can be computed from current data (invalid number of orbitals)" << endl;
-// 	  return -1;
-// 	}
-      
     }
   else
     {
@@ -289,18 +163,21 @@ int main(int argc, char** argv)
 		}
 	      ++Index;
 	    }
- 	  KaValueArray = new int[(MaxKa - MinKa + 1)];
- 	  for (int i = MinKa; i <= MaxKa; ++i)
- 	    KaValueArray[(i - MinKa)] = 0; 
- 	  Index = TmpIndex;
- 	  while ((Index < MaxIndex) && (NaValues[Index] == NbrParticlesInPartition))
- 	    {
- 	      if (Coefficients[Index] > Error)
- 		{
- 		  KaValueArray[(KxValues[Index] + (KyValues[Index] * NbrSiteX) - MinKa)]++; 
- 		}
- 	      ++Index;
- 	    }
+          if (MaxKa>=MinKa)
+          {
+              KaValueArray = new int[(MaxKa - MinKa + 1)];
+              for (int i = MinKa; i <= MaxKa; ++i)
+                KaValueArray[(i - MinKa)] = 0; 
+              Index = TmpIndex;
+              while ((Index < MaxIndex) && (NaValues[Index] == NbrParticlesInPartition))
+                {
+                  if (Coefficients[Index] > Error)
+                    {
+                      KaValueArray[(KxValues[Index] + (KyValues[Index] * NbrSiteX) - MinKa)]++; 
+                    }
+                  ++Index;
+                }
+          }
 	  File.close();	      
 	}
       else

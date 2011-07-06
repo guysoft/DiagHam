@@ -129,6 +129,7 @@ int main(int argc, char** argv)
 
   if (Manager.GetString("state") == 0)
     {
+          cout<< Space->GetHilbertSpaceDimension()<<endl;
       for (int i = 0; i <  Space->GetHilbertSpaceDimension(); ++i)
 	Space->PrintState(cout, i) << endl;;
       cout << endl;
@@ -166,8 +167,10 @@ int main(int argc, char** argv)
 	  cout << NbrHiddenComponents << " hidden components (square normalization error = " << WeightHiddenComponents << " / " << Normalization << ")" << endl;
 	}
       else
+      {
 	for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 	  Space->PrintState(cout, i) << " : "  << State[i] << endl;;
+      }
     }
   delete Space;
   return 0;

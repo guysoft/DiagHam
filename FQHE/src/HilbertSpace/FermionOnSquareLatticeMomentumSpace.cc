@@ -407,7 +407,7 @@ HermitianMatrix FermionOnSquareLatticeMomentumSpace::EvaluatePartialDensityMatri
           return TmpDensityMatrix;
   }
 
-  HermitianMatrix TmpDensityMatrixZero;
+  HermitianMatrix TmpDensityMatrixZero (SubsytemSpace.HilbertSpaceDimension, true);
   return TmpDensityMatrixZero;
 }
 

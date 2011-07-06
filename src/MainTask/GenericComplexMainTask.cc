@@ -509,8 +509,6 @@ int GenericComplexMainTask::ExecuteMainTask()
       for (int i = 0; i < this->NbrEigenvalue; ++i)
 	{
 	  cout << (TmpMatrix.DiagonalElement(i) - this->EnergyShift) << " ";
-	  if  (this->ComputeEnergyFlag == false)
-	    WriteResult(File, TmpMatrix.DiagonalElement(i) - this->EnergyShift);
 	}
       cout << endl;
       if ((this->EvaluateEigenvectors == true) && 
@@ -590,6 +588,14 @@ int GenericComplexMainTask::ExecuteMainTask()
 	  else
 	    {
 	      cout << "eigenvectors can't be computed" << endl;
+	    }
+	}
+      else
+	{
+	  for (int i = 0; i < this->NbrEigenvalue; ++i)
+	    {
+	      if  (this->ComputeEnergyFlag == false)
+		WriteResult(File, TmpMatrix.DiagonalElement(i) - this->EnergyShift);
 	    }
 	}
       gettimeofday (&(TotalEndingTime), 0);

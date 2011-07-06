@@ -410,7 +410,10 @@ int main(int argc, char** argv)
 			  TmpMatrix = Spaces[i]->EvaluateShiftedPartialDensityMatrix(SubsystemSize, ShiftLa, SubsystemNbrParticles, SubsystemTotalLz, GroundStates[i]);
 			  if (WeightFlag == true)
 			    TmpMatrix *= Weights[i];
-			  PartialDensityMatrix += TmpMatrix;
+			  if (PartialDensityMatrix.GetNbrRow() == 0)
+			    PartialDensityMatrix = TmpMatrix;
+			  else
+			    PartialDensityMatrix += TmpMatrix;
 			}
 		      else
 			{

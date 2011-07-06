@@ -2,11 +2,9 @@
 
 #include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
-#include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpaceLong.h"
-#include "HilbertSpace/FermionOnSquareLatticeMomentumSpaceLong.h"
 
-#include "Hamiltonian/ParticleOnLatticeWithSpinCheckerboardLatticeHamiltonian.h"
-#include "Hamiltonian/ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian.h"
+//#include "Hamiltonian/ParticleOnLatticeWithSpinHaldaneModelHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeHaldaneModelSingleBandHamiltonian.h"
 #include "LanczosAlgorithm/LanczosManager.h"
 
 #include "Architecture/ArchitectureManager.h"
@@ -33,18 +31,18 @@ using std::ofstream;
 // compute the single particle spectrum 
 //
 // outputFileName = name of the output file
-// nbrSitesX = number of sites in the x direction
-// nbrSitesY = number of sites in the x direction
+// nbrSiteX = number of sites in the x direction
+// nbrSiteY = number of sites in the x direction
 // nnHoping = nearest neighbor hoping amplitude
 // nnnHoping =  next nearest neighbor hoping amplitude
-// nnnnHoping =  second next nearest neighbor hoping amplitude
+// phi =  Haldane phase on nnn hopping
 // mus = sublattice staggered chemical potential 
-void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double nnHoping, double nnnHoping, double nnnnHoping, double mus);
+void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSiteX, int nbrSiteY, double nnHoping, double nnnHoping, double phi, double mus);
 
 
 int main(int argc, char** argv)
 {
-  OptionManager Manager ("FQHECheckerboardLatticeModel" , "0.01");
+  OptionManager Manager ("FQHEHaldaneModel" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
@@ -68,8 +66,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive nearest neighbor potential strength", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "v-potential", "repulsive nearest next neighbor potential strength", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "t1", "nearest neighbor hoping amplitude", 1.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "t2", "next nearest neighbor hoping amplitude", 1.0 - 0.5 * M_SQRT2);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "tpp", "second next nearest neighbor hoping amplitude", 0.5 * (M_SQRT2 - 1.0));
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "t2", "next nearest neighbor hoping amplitude", 1.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "phi", "Haldane phase on nnn hopping", M_PI/3);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "mu-s", "sublattice staggered chemical potential", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
@@ -86,7 +84,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHECheckerboardLatticeModel -h" << endl;
+      cout << "see man page for option syntax or type FQHEHaldaneModel -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)
@@ -96,8 +94,8 @@ int main(int argc, char** argv)
     }
 
   int NbrParticles = Manager.GetInteger("nbr-particles"); 
-  int NbrSitesX = Manager.GetInteger("nbr-sitex"); 
-  int NbrSitesY = Manager.GetInteger("nbr-sitey"); 
+  int NbrSiteX = Manager.GetInteger("nbr-sitex"); 
+  int NbrSiteY = Manager.GetInteger("nbr-sitey"); 
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
 
   char* CommentLine = new char [256];
@@ -110,44 +108,44 @@ int main(int argc, char** argv)
     if (Manager.GetBoolean("single-band") == false)
       {
         if (Manager.GetDouble("mu-s") == 0.0)
-          sprintf (EigenvalueOutputFile, "fermions_checkerboardlattice_n_%d_x_%d_y_%d_u_%f_v_%f_t1_%f_t2_%f_tpp_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"));
+          sprintf (EigenvalueOutputFile, "fermions_haldane_n_%d_x_%d_y_%d_u_%f_v_%f_t1_%f_t2_%f_phi_%f.dat", NbrParticles, NbrSiteX, NbrSiteY, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("phi"));
         else
-          sprintf (EigenvalueOutputFile, "fermions_checkerboardlattice_n_%d_x_%d_y_%d_u_%f_v_%f_t1_%f_t2_%f_tpp_%f_mus_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"));
+          sprintf (EigenvalueOutputFile, "fermions_haldane_n_%d_x_%d_y_%d_u_%f_v_%f_t1_%f_t2_%f_phi_%f_mus_%f.dat", NbrParticles, NbrSiteX, NbrSiteY, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("phi"), Manager.GetDouble("mu-s"));
       }
     else
       {
         if (Manager.GetBoolean("flat-band") == true)
           {
             if (Manager.GetDouble("mu-s") == 0.0)
-              sprintf (EigenvalueOutputFile, "fermions_singleband_checkerboardlattice_n_%d_x_%d_y_%d_v_%f_t1_%f_t2_%f_tpp_%f_gx_%f_gy_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+              sprintf (EigenvalueOutputFile, "fermions_singleband_haldane_n_%d_x_%d_y_%d_v_%f_t1_%f_t2_%f_phi_%f_gx_%f_gy_%f.dat", NbrParticles, NbrSiteX, NbrSiteY, Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("phi"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
             else
-              sprintf (EigenvalueOutputFile, "fermions_singleband_checkerboardlattice_n_%d_x_%d_y_%d_v_%f_t1_%f_t2_%f_tpp_%f_gx_%f_gy_%f_mus_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+              sprintf (EigenvalueOutputFile, "fermions_singleband_haldane_n_%d_x_%d_y_%d_v_%f_t1_%f_t2_%f_phi_%f_gx_%f_gy_%f_mus_%f.dat", NbrParticles, NbrSiteX, NbrSiteY, Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("phi"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
           }
         else
           {
             if (Manager.GetDouble("mu-s") == 0.0)
-              sprintf (EigenvalueOutputFile, "fermions_singleband_checkerboardlattice_n_%d_x_%d_y_%d_u_%f_v_%f_t1_%f_t2_%f_tpp_%f_gx_%f_gy_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+              sprintf (EigenvalueOutputFile, "fermions_singleband_haldane_n_%d_x_%d_y_%d_u_%f_v_%f_t1_%f_t2_%f_phi_%f_gx_%f_gy_%f.dat", NbrParticles, NbrSiteX, NbrSiteY, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("phi"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
             else
-              sprintf (EigenvalueOutputFile, "fermions_singleband_checkerboardlattice_n_%d_x_%d_y_%d_u_%f_v_%f_t1_%f_t2_%f_tpp_%f_gx_%f_gy_%f_mus_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+              sprintf (EigenvalueOutputFile, "fermions_singleband_haldane_n_%d_x_%d_y_%d_u_%f_v_%f_t1_%f_t2_%f_phi_%f_gx_%f_gy_%f_mus_%f.dat", NbrParticles, NbrSiteX, NbrSiteY, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("phi"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
           }
       }
   }
 
   if (Manager.GetBoolean("singleparticle-spectrum") == true)
     {
-      ComputeSingleParticleSpectrum(EigenvalueOutputFile, NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"));
+      ComputeSingleParticleSpectrum(EigenvalueOutputFile, NbrSiteX, NbrSiteY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("phi"), Manager.GetDouble("mu-s"));
       return 0;
     }
 
   int MinKx = 0;
-  int MaxKx = NbrSitesX - 1;
+  int MaxKx = NbrSiteX - 1;
   if (Manager.GetInteger("only-kx") >= 0)
     {						
       MinKx = Manager.GetInteger("only-kx");
       MaxKx = MinKx;
     }
   int MinKy = 0;
-  int MaxKy = NbrSitesY - 1;
+  int MaxKy = NbrSiteY - 1;
   if (Manager.GetInteger("only-ky") >= 0)
     {						
       MinKy = Manager.GetInteger("only-ky");
@@ -161,61 +159,41 @@ int main(int argc, char** argv)
 	  cout << "(kx=" << i << ",ky=" << j << ") : " << endl;
  	  if (Manager.GetBoolean("single-band") == false)
  	    {
-	      ParticleOnSphereWithSpin* Space = 0;
-	      if ((NbrSitesX * NbrSitesY) <= 31)
-		{
-		  Space = new FermionOnSquareLatticeWithSpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
-		}
-	      else
-		{
-		  Space = new FermionOnSquareLatticeWithSpinMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, i, j);
-		}
-	      cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
-	      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
-		Memory = Architecture.GetArchitecture()->GetLocalMemory();
-	      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
-	      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnLatticeWithSpinCheckerboardLatticeHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
-														Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"),
-														Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x") * 2.0 * M_PI, Manager.GetDouble("gamma-y") * 2.0 * M_PI, 		     
-														Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
-	      char* ContentPrefix = new char[256];
-	      sprintf (ContentPrefix, "%d %d", i, j);
-	      char* EigenstateOutputFile = new char [512];
-	      sprintf (EigenstateOutputFile, "fermions_checkerboardlattice_n_%d_x_%d_y_%d_u_%f_v_%f_t1_%f_t2_%f_kx_%d_ky_%d", NbrParticles, NbrSitesX, NbrSitesY, 
-		       Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), i, j);
-	      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
-	      FirstRunFlag = false;
-	      MainTaskOperation TaskOperation (&Task);
-	      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
-	      cout << "------------------------------------" << endl;
-	      delete Hamiltonian;
-	      delete Space;
-	      delete[] EigenstateOutputFile;
-	      delete[] ContentPrefix;
+                cout << "NotImplemented: only the single-band case is supported at the moment." <<endl;
+                return 1;
+//	      FermionOnSquareLatticeWithSpinMomentumSpace Space(NbrParticles, NbrSiteX, NbrSiteY, i, j);
+//	      cout << "dim = " << Space.GetHilbertSpaceDimension()  << endl;
+//	      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
+//		Memory = Architecture.GetArchitecture()->GetLocalMemory();
+//	      Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());	
+//	      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnLatticeWithSpinHaldaneModelHamiltonian(&Space, NbrParticles, NbrSiteX, NbrSiteY,
+//														Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"),
+//														Manager.GetDouble("phi"), Manager.GetDouble("gamma-x") * 2.0 * M_PI, Manager.GetDouble("gamma-y") * 2.0 * M_PI, 		     
+//														Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+//	      char* ContentPrefix = new char[256];
+//	      sprintf (ContentPrefix, "%d %d", i, j);
+//	      char* EigenstateOutputFile = new char [512];
+//	      sprintf (EigenstateOutputFile, "fermions_haldane_n_%d_x_%d_y_%d_u_%f_v_%f_t1_%f_t2_%f_kx_%d_ky_%d", NbrParticles, NbrSiteX, NbrSiteY, 
+//		       Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), i, j);
+//	      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
+//	      FirstRunFlag = false;
+//	      MainTaskOperation TaskOperation (&Task);
+//	      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+//	      cout << "------------------------------------" << endl;
+//	      delete Hamiltonian;
+//	      delete[] EigenstateOutputFile;
+//	      delete[] ContentPrefix;
  	    }
  	  else
  	    {
-	      ParticleOnSphere* Space = 0;
-	      if ((NbrSitesX * NbrSitesY) <= 63)
-		{
-		  Space = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
-		}
-	      else
-		{
-		  Space = new FermionOnSquareLatticeMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, i, j);
-		}
- 	      cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
-// 	      for (long k = 0; k < Space->GetHilbertSpaceDimension(); ++k)
-// 		{
-// 		  Space->PrintState(cout, k) << endl;
-// 		}
-// 	      return 0;
+ 	      FermionOnSquareLatticeMomentumSpace Space(NbrParticles, NbrSiteX, NbrSiteY, i, j);
+ 	      cout << "dim = " << Space.GetHilbertSpaceDimension()  << endl;
 	      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 		Memory = Architecture.GetArchitecture()->GetLocalMemory();
- 	      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
- 	      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
+ 	      Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());	
+ 	      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnLatticeHaldaneModelSingleBandHamiltonian(&Space, NbrParticles, NbrSiteX, NbrSiteY,
 														  Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"),
-														  Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
+														  Manager.GetDouble("phi"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
 														  Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 	      char* ContentPrefix = new char[256];
 	      sprintf (ContentPrefix, "%d %d", i, j);
@@ -223,19 +201,19 @@ int main(int argc, char** argv)
 	      if (Manager.GetBoolean("flat-band") == true)
 		{
 		  if (Manager.GetDouble("mu-s") == 0.0)
-		    sprintf (EigenstateOutputFile, "fermions_singleband_checkerboardlattice_n_%d_x_%d_y_%d_v_%f_t1_%f_t2_%f_gx_%f_gy_%f_kx_%d_ky_%d", NbrParticles, NbrSitesX, NbrSitesY, 
+		    sprintf (EigenstateOutputFile, "fermions_singleband_haldane_n_%d_x_%d_y_%d_v_%f_t1_%f_t2_%f_gx_%f_gy_%f_kx_%d_ky_%d", NbrParticles, NbrSiteX, NbrSiteY, 
 			     Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j);
 		  else
-		    sprintf (EigenstateOutputFile, "fermions_singleband_checkerboardlattice_n_%d_x_%d_y_%d_v_%f_t1_%f_t2_%f_gx_%f_gy_%f_mus_%f_kx_%d_ky_%d", NbrParticles, NbrSitesX, NbrSitesY, 
+		    sprintf (EigenstateOutputFile, "fermions_singleband_haldane_n_%d_x_%d_y_%d_v_%f_t1_%f_t2_%f_gx_%f_gy_%f_mus_%f_kx_%d_ky_%d", NbrParticles, NbrSiteX, NbrSiteY, 
 			     Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"), i, j);
 		}
 	      else
 		{
 		  if (Manager.GetDouble("mu-s") == 0.0)
-		    sprintf (EigenstateOutputFile, "fermions_singleband_checkerboardlattice_n_%d_x_%d_y_%d_u_%f_v_%f_t1_%f_t2_%f_gx_%f_gy_%f_kx_%d_ky_%d", NbrParticles, NbrSitesX, NbrSitesY, 
+		    sprintf (EigenstateOutputFile, "fermions_singleband_haldane_n_%d_x_%d_y_%d_u_%f_v_%f_t1_%f_t2_%f_gx_%f_gy_%f_kx_%d_ky_%d", NbrParticles, NbrSiteX, NbrSiteY, 
 			     Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j);
 		  else
-		    sprintf (EigenstateOutputFile, "fermions_singleband_checkerboardlattice_n_%d_x_%d_y_%d_u_%f_v_%f_t1_%f_t2_%f_gx_%f_gy_%f_mus_%f_kx_%d_ky_%d", NbrParticles, NbrSitesX, NbrSitesY, 
+		    sprintf (EigenstateOutputFile, "fermions_singleband_haldane_n_%d_x_%d_y_%d_u_%f_v_%f_t1_%f_t2_%f_gx_%f_gy_%f_mus_%f_kx_%d_ky_%d", NbrParticles, NbrSiteX, NbrSiteY, 
 			     Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"), i, j);
 		}
 	      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
@@ -244,7 +222,6 @@ int main(int argc, char** argv)
 	      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
 	      cout << "------------------------------------" << endl;
 	      delete Hamiltonian;
-	      delete Space;
 	      delete[] EigenstateOutputFile;
 	      delete[] ContentPrefix;
 	    }
@@ -256,14 +233,14 @@ int main(int argc, char** argv)
 // compute the single particle spectrum 
 //
 // outputFileName = name of the output file
-// nbrSitesX = number of sites in the x direction
-// nbrSitesY = number of sites in the x direction
+// nbrSiteX = number of sites in the x direction
+// nbrSiteY = number of sites in the x direction
 // nnHoping = nearest neighbor hoping amplitude
 // nnnHoping =  next nearest neighbor hoping amplitude
-// nnnnHoping =  second next nearest neighbor hoping amplitude
+// phase =  Haldane phase on nnn hopping
 // mus = sublattice staggered chemical potential 
 
-void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double nnHoping, double nnnHoping, double nnnnHoping, double mus)
+void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSiteX, int nbrSiteY, double nnHoping, double nnnHoping, double phase, double mus)
 {
   ofstream File;
   File.open(outputFileName);
@@ -272,19 +249,19 @@ void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrS
   double MaxEMinus = -10.0;
   double MinEPlus = 10.0;
   double MaxEPlus = 0.0;
-  for (int kx = 0; kx < nbrSitesX; ++kx)
-    {
-      for (int ky = 0; ky < nbrSitesY; ++ky)
-	{
-	  Complex B1 = 4.0 * nnHoping * Complex (cos (1.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) * cos (1.0 * M_PI * ((double) ky) / ((double) nbrSitesY)) * cos(M_PI * 0.25), 
-					   sin (1.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) * sin (1.0 * M_PI * ((double) ky) / ((double) nbrSitesY)) * sin(M_PI * 0.25));
-	  double d1 = 4.0 * nnnnHoping * cos (2.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) * cos (2.0 * M_PI * ((double) ky) / ((double) nbrSitesY));
-	  double d3 = mus + (2.0 * nnnHoping * (cos (2.0 * M_PI * ((double) kx) / ((double) nbrSitesX))
-						- cos (2.0 * M_PI * ((double) ky) / ((double) nbrSitesY))));
+  for (int kx = 0; kx < nbrSiteX; ++kx)
+  {
+      double x=2*M_PI*((double)kx)/nbrSiteX;
+      for (int ky = 0; ky < nbrSiteY; ++ky)
+      {
+          double y=2*M_PI*((double)ky)/nbrSiteY;
+          Complex B1 = nnHoping * Complex(1 + cos(x+y) + cos(y), - sin(x+y) - sin(y));
+          double d0 = + 2.0 * nnnHoping * cos(phase) * (cos(x) + cos(y) + cos(x+y));
+          double d3 = + 2.0 * nnnHoping * sin(phase) * (sin(x) + sin(y) - sin(x+y)) + mus;
 	  HermitianMatrix TmpOneBobyHamiltonian(2, true);
-	  TmpOneBobyHamiltonian.SetMatrixElement(0, 0, d1 + d3);
+	  TmpOneBobyHamiltonian.SetMatrixElement(0, 0, d0 + d3);
 	  TmpOneBobyHamiltonian.SetMatrixElement(0, 1, B1);
-	  TmpOneBobyHamiltonian.SetMatrixElement(1, 1, d1 - d3);
+	  TmpOneBobyHamiltonian.SetMatrixElement(1, 1, d0 - d3);
 	  RealDiagonalMatrix TmpDiag;
 #ifdef __LAPACK__
 	  TmpOneBobyHamiltonian.LapackDiagonalize(TmpDiag);
@@ -307,7 +284,7 @@ void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrS
 	    {
 	      MinEPlus = TmpDiag(1, 1);
 	    }
-	  File << (2.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) << " " << (2.0 * M_PI * ((double) ky) / ((double) nbrSitesY)) << " " << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << endl;
+	  File << (2.0 * M_PI * ((double) kx) / ((double) nbrSiteX)) << " " << (2.0 * M_PI * ((double) ky) / ((double) nbrSiteY)) << " " << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << endl;
 	}
       File << endl;
     }
