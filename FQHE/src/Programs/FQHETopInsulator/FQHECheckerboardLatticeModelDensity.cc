@@ -195,7 +195,6 @@ int main(int argc, char** argv)
 								 LeftKxMomentum, LeftKyMomentum, Statistics, 
 								 LeftSpace, LeftState) == false)
 	    return -1;
-	  //	  LeftState[0] = 1.0;
 	  for (int m = 0; m <= ForceMaxMomentum; ++m)
 	    {
 	      int TotalKx = m / NbrSitesY;
@@ -219,7 +218,6 @@ int main(int argc, char** argv)
 								     RightKxMomentum, RightKyMomentum, Statistics, 
 								     RightSpace, RightState) == false)
 		return -1;
-	      //	      RightState[0] = 1.0;
 	      RightSpace->SetTargetSpace(LeftSpace);
 	      for (int m = 0; m <= ForceMaxMomentum; ++m)
 		{
@@ -236,7 +234,7 @@ int main(int argc, char** argv)
 			  OperatorMatrixElementOperation Operation(&Operator, LeftState, RightState);
 			  Operation.ApplyOperation(Architecture.GetArchitecture());
 			  //Complex Tmp = Operation.GetScalar();
-			  Complex Tmp = Operator.MatrixElement(LeftState, RightState);
+			  Complex Tmp = -Operator.MatrixElement(LeftState, RightState);
 			  RawPrecalculatedValues[i][j].AddToMatrixElement(m, n, Tmp);
 			  Tmp *=  (Conj(Coefficients[i]) * Coefficients[j]);
 			  PrecalculatedValues.AddToMatrixElement(m, n, Tmp);
@@ -347,29 +345,46 @@ int main(int argc, char** argv)
       Complex Sum = 0.0;
       double Normalization = 1.0 / (((double) NbrSitesX) * ((double) NbrSitesY));      
       for (int i = 0; i < NbrSitesX; ++i)
-	for (int j = 0; j < NbrSitesY; ++j)
-	  {
-	    Complex DensityA = 0.0;
-	    Complex DensityB = 0.0;
-	    for (int m = 0; m <= ForceMaxMomentum; ++m)
-	      {
-		for (int n = 0; n <= ForceMaxMomentum; ++n)
-		  {
-		    int TotalKx1 = m / NbrSitesY;
-		    int TotalKy1 = m % NbrSitesY;
-		    int TotalKx2 = n / NbrSitesY;
-		    int TotalKy2 = n % NbrSitesY;
-		    DensityA += Phase(2.0 * M_PI * ((double) ((TotalKx1 - TotalKx2) * i)) / ((double) NbrSitesX) 
-				      + 2.0 * M_PI * ((double) ((TotalKy1 - TotalKy2) * j)) / ((double) NbrSitesY)) * Normalization * Conj(OneBodyBasis[m][0][0]) * OneBodyBasis[n][0][0] * PrecalculatedValues[m][n];
-		    DensityB += Phase(2.0 * M_PI * (((double) (TotalKx1 - TotalKx2)) * (0.5 + (double) i)) / ((double) NbrSitesX) 
-				      + 2.0 * M_PI * (((double) (TotalKy1 - TotalKy2)) * (0.5 + (double) j)) / ((double) NbrSitesY)) * Normalization * Conj(OneBodyBasis[m][0][1]) * OneBodyBasis[n][0][1] * PrecalculatedValues[m][n];
-		  }
-	      }
-	    Sum += DensityA;
-	    Sum += DensityB;
-	    File << i << " " << j << " " << DensityA << endl;
-	    File << (((double) i) + 0.5) << " " << (((double) j) + 0.5) << " " << DensityB << endl;	    
-	  }
+	{
+	  for (int j = 0; j < NbrSitesY; ++j)
+	    {
+	      Complex DensityA = 0.0;
+	      for (int m = 0; m <= ForceMaxMomentum; ++m)
+		{
+		  for (int n = 0; n <= ForceMaxMomentum; ++n)
+		    {
+		      int TotalKx1 = m / NbrSitesY;
+		      int TotalKy1 = m % NbrSitesY;
+		      int TotalKx2 = n / NbrSitesY;
+		      int TotalKy2 = n % NbrSitesY;
+		      DensityA += Phase(-2.0 * M_PI * ((double) ((TotalKx1 - TotalKx2) * i)) / ((double) NbrSitesX) 
+					- 2.0 * M_PI * ((double) ((TotalKy1 - TotalKy2) * j)) / ((double) NbrSitesY)) * Normalization * Conj(OneBodyBasis[m][0][0]) * OneBodyBasis[n][0][0] * PrecalculatedValues[m][n];
+		    }
+		}
+	      Sum += DensityA;
+	      File << i << " " << j << " " << DensityA.Re << endl;
+	    }
+	  File << endl;
+	  for (int j = 0; j < NbrSitesY; ++j)
+	    {
+	      Complex DensityB = 0.0;
+	      for (int m = 0; m <= ForceMaxMomentum; ++m)
+		{
+		  for (int n = 0; n <= ForceMaxMomentum; ++n)
+		    {
+		      int TotalKx1 = m / NbrSitesY;
+		      int TotalKy1 = m % NbrSitesY;
+		      int TotalKx2 = n / NbrSitesY;
+		      int TotalKy2 = n % NbrSitesY;
+		      DensityB += Phase(-2.0 * M_PI * (((double) (TotalKx1 - TotalKx2)) * (0.5 + (double) i)) / ((double) NbrSitesX) 
+					- 2.0 * M_PI * (((double) (TotalKy1 - TotalKy2)) * (0.5 + (double) j)) / ((double) NbrSitesY)) * Normalization * OneBodyBasis[m][0][1] * Conj(OneBodyBasis[n][0][1]) * PrecalculatedValues[m][n];
+		    }
+		}
+	      Sum += DensityB;
+	      File << (((double) i) + 0.5) << " " << (((double) j) + 0.5) << " " << DensityB.Re << endl;	    
+	    }
+	  File << endl;
+	}
       cout << "Sum = " << Sum << endl;
     }
   File.close();

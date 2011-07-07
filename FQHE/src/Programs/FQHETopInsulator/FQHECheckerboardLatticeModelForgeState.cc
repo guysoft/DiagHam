@@ -53,7 +53,7 @@ int main(int argc, char** argv)
   Architecture.AddOptionGroup(&Manager);
   Manager += MiscGroup;
 
-  (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 2);
+  (*SystemGroup) += new SingleStringOption  ('\n', "input-state", "file describing the state real space occupation");
   (*SystemGroup) += new SingleIntegerOption  ('x', "nbr-sitex", "number of sites along the x direction", 3);
   (*SystemGroup) += new SingleIntegerOption  ('y', "nbr-sitey", "number of sites along the y direction", 3);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "t1", "nearest neighbor hoping amplitude", 1.0);
@@ -75,8 +75,12 @@ int main(int argc, char** argv)
       Manager.DisplayHelp (cout);
       return 0;
     }
+  if (Manager.GetString("input-state") == 0)
+    {
+      cout << "FQHECheckerboardLatticeModelForgeState requires an input state" << endl;
+      return -1;
+    }
 
-  int NbrParticles = Manager.GetInteger("nbr-particles"); 
   int NbrSitesX = Manager.GetInteger("nbr-sitex"); 
   int NbrSitesY = Manager.GetInteger("nbr-sitey"); 
   double NNHoping = Manager.GetDouble("t1");
@@ -86,6 +90,22 @@ int main(int argc, char** argv)
 
   bool Statistics = true;
   
+  MultiColumnASCIIFile InputPositions;
+  if (InputPositions.Parse(Manager.GetString("input-state")) == false)
+    {
+      InputPositions.DumpErrors(cout) << endl;
+      return -1;
+    }
+  if (InputPositions.GetNbrLines() == 0)
+    {
+      cout << "no position provided in " << Manager.GetString("input-state") << endl;
+      return -1;
+    }
+  int NbrParticles = InputPositions.GetNbrLines();
+  int* SublatticeIndex =  InputPositions.GetAsIntegerArray(2);
+  int* LatticeXPosition = InputPositions.GetAsIntegerArray(0);
+  int* LatticeYPosition = InputPositions.GetAsIntegerArray(1);
+
   ComplexMatrix* OneBodyBasis = new ComplexMatrix [NbrSitesX * NbrSitesY];
   double GammaX = 0.0;
   double GammaY = 0.0;
@@ -128,6 +148,7 @@ int main(int argc, char** argv)
   File << "# vector_name coefficient" << endl;
 
   double Normalization = 1.0 / sqrt (((double) NbrSitesX) * ((double) NbrSitesY));
+  double Sum = 0.0;
   for (int i = 0; i < NbrSitesX; ++i)
     {
       for (int j = 0; j < NbrSitesY; ++j)
@@ -140,24 +161,30 @@ int main(int argc, char** argv)
 	      MomentumArray[0] = i;
 	      MomentumArray[1] = j;
 	      int Index = Space->FindStateIndexFromArray(MomentumArray);
-	      int SublatticeIndex = 0;
-	      int LatticeXPosition = 0;
-	      int LatticeYPosition = 0;
-	      State[Index] += Phase(2.0 * M_PI * (((double) i ) * ((0.5 * ((double) SublatticeIndex)) + (double) LatticeXPosition)) / ((double) NbrSitesX) 
-				    + 2.0 * M_PI * (((double) j) * ((0.5 * ((double) SublatticeIndex)) + (double) LatticeYPosition)) / ((double) NbrSitesY)) * Normalization * Conj(OneBodyBasis[(i * NbrSitesY) + j ][0][SublatticeIndex]);
+	      State[Index] += Phase(2.0 * M_PI * (((double) i) * ((0.5 * ((double) SublatticeIndex[0])) + (double) LatticeXPosition[0])) / ((double) NbrSitesX) 
+				    +  2.0 * M_PI * (((double) j) * ((0.5 * ((double) SublatticeIndex[0])) + (double) LatticeYPosition[0])) / ((double) NbrSitesY)) * Normalization * (OneBodyBasis[(i * NbrSitesY) + j ][0][SublatticeIndex[0]]);
 	    }
 	  else
 	    {
 	      for (int kx1 = 0; kx1 < NbrSitesX; ++kx1)
 		for (int kx2 = 0; kx2 < NbrSitesX; ++kx2)
 		  {
-		    if (((kx1 + kx2) % NbrSitesX) == i)
+		    if ((((kx1 + kx2) % NbrSitesX) == i) && (kx1 != kx2))
 		      {
 			for (int ky1 = 0; ky1 < NbrSitesY; ++ky1)
 			  for (int ky2 = 0; ky2 < NbrSitesY; ++ky2)
 			    {
-			      if (((ky1 + ky2) % NbrSitesY) == j)
+			      if ((((ky1 + ky2) % NbrSitesY) == j) && (ky1 != ky2))
 				{
+				  MomentumArray[0] = kx1;
+				  MomentumArray[1] = ky1;
+				  MomentumArray[2] = kx2;
+				  MomentumArray[3] = ky2;
+				  int Index = Space->FindStateIndexFromArray(MomentumArray);
+				  State[Index] += (Phase(2.0 * M_PI * (((double) kx1) * ((0.5 * ((double) SublatticeIndex[0])) + (double) LatticeXPosition[0])) / ((double) NbrSitesX) 
+							 +  2.0 * M_PI * (((double) ky1) * ((0.5 * ((double) SublatticeIndex[0])) + (double) LatticeYPosition[0])) / ((double) NbrSitesY)) * Normalization * (OneBodyBasis[(kx1 * NbrSitesY) + ky1][0][SublatticeIndex[0]]))
+				    * (Phase(2.0 * M_PI * (((double) kx2) * ((0.5 * ((double) SublatticeIndex[1])) + (double) LatticeXPosition[1])) / ((double) NbrSitesX) 
+							 +  2.0 * M_PI * (((double) ky2) * ((0.5 * ((double) SublatticeIndex[1])) + (double) LatticeYPosition[1])) / ((double) NbrSitesY)) * Normalization * (OneBodyBasis[(kx2 * NbrSitesY) + ky2][0][SublatticeIndex[1]]));
 				  
 				}  
 			    }
@@ -167,6 +194,7 @@ int main(int argc, char** argv)
 	  double Norm = State.Norm();
 	  if (Norm > MACHINE_PRECISION)
 	    {
+	      Sum += Norm * Norm;
 	      State /= Norm;
 	      char* EigenstateOutputFile = new char [512];
 	      if (Manager.GetDouble("mu-s") == 0.0)
@@ -184,6 +212,8 @@ int main(int argc, char** argv)
 	  delete[] MomentumArray;
 	}
     }
+  cout << "normalization = " << sqrt(Sum) << endl;
+
   File.close();
   delete[] EigenstateListOutputFile;
 
