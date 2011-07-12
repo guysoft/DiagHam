@@ -816,7 +816,7 @@ bool ComplexBasicBlockLanczosAlgorithm::TestConvergence ()
 	      if (fabs(this->DiagonalizedMatrix.DiagonalElement(i) - this->PreviousWantedEigenvalues[i]) > 
 		  (this->EigenvaluePrecision * fabs(this->DiagonalizedMatrix.DiagonalElement(i))))
 		{
-		  cout << "No strong convergence"<<endl;
+		  //cout << "No strong convergence"<<endl;
 		  return false;
 		}
 	    }
@@ -831,7 +831,7 @@ bool ComplexBasicBlockLanczosAlgorithm::TestConvergence ()
 	    }
 	  else
 	    {
-	      cout << "No convergence:"<<fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->PreviousLastWantedEigenvalue)<<" vs "<<(this->EigenvaluePrecision * fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1)))<<endl;
+	      //	      cout << "No convergence:"<<fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->PreviousLastWantedEigenvalue)<<" vs "<<(this->EigenvaluePrecision * fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1)))<<endl;
 	      return false;
 	    }
 	}
