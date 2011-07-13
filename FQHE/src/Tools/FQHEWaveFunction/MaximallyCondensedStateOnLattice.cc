@@ -131,14 +131,18 @@ ComplexVector MaximallyCondensedStateOnLattice::GetWaveFunction()
   
   
 // optimize wavefunction starting from present settings of VariationalParameters
+// nbrEigenvals = number of eigenvalues that should be summed up for the optimization
 // tolerance = final tolerance on the variational parameters
 // maxIter = maximal number of function evaluations
 //
-double MaximallyCondensedStateOnLattice::Optimize(double tolerance, int maxIter)
+double MaximallyCondensedStateOnLattice::Optimize(int nbrEigenvals, double tolerance, int maxIter)
 {
   double InitialStepSize=1.0;
   int EffectiveNbrVariationalParameters = SphereParametrization.GetNbrParameters();
   this->NbrEvaluations=0;
+  this->NbrEigenvalues=nbrEigenvals;
+  if (this->NbrEigenvalues>DensityMatrixDimension)
+    this->NbrEigenvalues=DensityMatrixDimension-1;
   int NbrPoints = 2 * EffectiveNbrVariationalParameters + 1;
   int rnf;
   double Result;
@@ -206,8 +210,10 @@ double MaximallyCondensedStateOnLattice::EvaluateCondensateFraction(int nbrParam
 	}
     }
   ++this->NbrEvaluations;
-  CurrentHermitianMatrix.Diagonalize(M, Q, 1e-12, 1000);
+  CurrentHermitianMatrix.Diagonalize(M, Q, 1e-12, 1000);  
   this->LastMaximumEV = M[DensityMatrixDimension-1];
+  for (int i=1; i<this->NbrEigenvalues; ++i)
+    this->LastMaximumEV += M[DensityMatrixDimension-1-i];
   return -this->LastMaximumEV;
 }
 

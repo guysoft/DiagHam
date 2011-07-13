@@ -85,6 +85,9 @@ class MaximallyCondensedStateOnLattice
   // coordinates
   ComplexVector ResultingParameters;
 
+  // number of eigenvalues to sum up
+  int NbrEigenvalues;
+  
   // number of evaluations in optimization
   int NbrEvaluations;
 
@@ -148,10 +151,11 @@ class MaximallyCondensedStateOnLattice
   void SetVariationalParameters(RealVector &variationalParameters);
   
   // optimize wavefunction starting from present settings of VariationalParameters
+  // nbrEigenvals = number of eigenvalues that should be summed up for the optimization
   // tolerance = final tolerance on the variational parameters
   // maxIter = maximal number of function evaluations
   //
-  double Optimize(double tolerance, int maxIter);
+  double Optimize(int nbrEigenvals, double tolerance, int maxIter);
 
   double SimplexOptimize(double targetSize, int maxIter, double initialStep=1.0);
 

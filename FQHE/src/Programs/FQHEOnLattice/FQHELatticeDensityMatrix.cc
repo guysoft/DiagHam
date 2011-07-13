@@ -110,6 +110,7 @@ int main(int argc, char** argv)
   (*MiscGroup) += new SingleIntegerOption ('\n',"max-iter","maximum number of iterations for optimizing condensate fraction",250);
   (*MiscGroup) += new SingleDoubleOption ('\n',"opt-tolerance","tolerance for optimizing condensate fraction",1e-4);
   (*MiscGroup) += new BooleanOption  ('\n', "opt-random", "start optimization from a randomized initial condition");
+  (*MiscGroup) += new SingleIntegerOption  ('\n', "opt-target", "target for optimization on sum over first N eigenvalues",1);
   (*MiscGroup) += new BooleanOption  ('\n', "expansion", "obtain expansion image of state(s)");
   (*MiscGroup) += new SingleIntegerOption ('\n',"apply-gauge","Apply a gauge-transform before calculating expansion image - 1:doubled->Dali");
   (*MiscGroup) += new MultipleDoubleOption  ('\n', "exp-offset", "apply offset of momentum values for Fourier-Transform O_x,O_y)",',');
@@ -547,7 +548,7 @@ int main(int argc, char** argv)
 	  cout << "Optimization in subspace"<<endl;
 	  for (int n=0; n<NbrVectors; ++n)
 	    cout << "|"<<n<<" > = "<<VectorFiles[n]<<endl;
-	  BestCondensate->Optimize(Manager.GetDouble("opt-tolerance"), Manager.GetInteger("max-iter"));
+	  BestCondensate->Optimize(Manager.GetDouble("opt-target"), Manager.GetDouble("opt-tolerance"), Manager.GetInteger("max-iter"));
 	  ComplexVector Parameters = BestCondensate->GetVariationalParameters();
 	  cout << "Found condensate: "<< Norm(Parameters[0]) << " |0>";
 	  for (int i=1; i<NbrVectors; ++i)
