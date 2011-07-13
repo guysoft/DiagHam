@@ -29,10 +29,11 @@
 
 
 #include "config.h"
-#include "HilbertSpace/FermionOnLattice.h"
+#include "HilbertSpace/FermionOnLatticeGenericMomentumSpace.h"
 #include "GeneralTools/UnsignedIntegerTools.h"
 #include "MathTools/FactorialCoefficient.h"
 #include "QuantumNumber/NumberParticleQuantumNumber.h"
+#include "QuantumNumber/PeriodicMomentumQuantumNumber.h"
 
 #include <bitset>
 #include <iostream>
@@ -43,7 +44,7 @@ using std::cout;
 using std::endl;
 
 // default constructor
-FermionOnLattice::FermionOnLattice()
+FermionOnLatticeGenericMomentumSpace::FermionOnLatticeGenericMomentumSpace()
 {
   this->NbrFermions=0;
   this->HilbertSpaceDimension=0;
@@ -53,32 +54,33 @@ FermionOnLattice::FermionOnLattice()
 // basic constructor -> yields a square lattice in Landau gauge
 // 
 // nbrFermions = number of bosons
-// lx = length of simulation cell in x-direction
-// ly = length of simulation cell in y-direction
-// nbrFluxQuanta = number of flux quanta piercing the simulation cell
+// nx = number of momenta in simulation cell in x-direction
+// ny = number of momenta in simulation cell in y-direction
+// kx = total momentum in x-direction
+// ky = total momentum in y-direction
+// nbrBands = number of single particle bands
 // memory = memory that can be allocated for precalculations
-// solenoidX = solenoid flux through lattice in x-direction (in units of pi)
-// solenoidY = solenoid flux through lattice in y-direction (in units of pi)
 // verbose = flag indicating if any output is wanted
-FermionOnLattice::FermionOnLattice (int nbrFermions, int lx, int ly, int nbrFluxQuanta, unsigned long memory, double solenoidX, double solenoidY, bool verbose)
+FermionOnLatticeGenericMomentumSpace::FermionOnLatticeGenericMomentumSpace (int nbrFermions, int nx, int ny, int kx, int ky, int nbrBands, unsigned long memory, bool verbose)
 {
   this->NbrFermions = nbrFermions;
-  this->Lx = lx;
-  this->Ly = ly;
-  this->NbrSublattices = 1;  
-  this->NbrStates = Lx*Ly;
+  this->Nx = nx;
+  this->Ny = ny;
+  this->Kx=kx;
+  this->Ky=ky;
+  this->NbrBands = nbrBands;  
+  this->NbrStates = Nx*Ny*NbrBands;
 
 #ifdef __64_BITS__  
-  if (this->NbrStates>64)    
+  if (this->NbrStates>64)  
 #else
   if (this->NbrStates>32)    
 #endif
     {
-      cout<<"FermionOnLattice: Cannot represent the "<<NbrStates<<" states requested in a single word"<<endl;
+      cout<<"FermionOnLatticeGenericMomentumSpace: Cannot represent the "<<NbrStates<<" states requested in a single word"<<endl;
       exit(1);
     }
 
-  this->SetNbrFluxQuanta(nbrFluxQuanta, solenoidX, solenoidY);
   this->Flag.Initialize();
 
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(nbrFermions,NbrStates);
@@ -130,20 +132,16 @@ FermionOnLattice::FermionOnLattice (int nbrFermions, int lx, int ly, int nbrFlux
 // copy constructor (without duplicating datas)
 //
 // fermions = reference on the hilbert space to copy to copy
-FermionOnLattice::FermionOnLattice(const FermionOnLattice& fermions)
+FermionOnLatticeGenericMomentumSpace::FermionOnLatticeGenericMomentumSpace(const FermionOnLatticeGenericMomentumSpace& fermions)
 {
   this->TargetSpace = this;
   this->NbrFermions = fermions.NbrFermions;
-  this->Lx = fermions.Lx;
-  this->Ly = fermions.Ly;
-  this->NbrSublattices = fermions.NbrSublattices;
-  this->NbrFluxQuanta = fermions.NbrFluxQuanta;
-  this->FluxDensity = fermions.FluxDensity;
-  this->LxTranslationPhase = fermions.LxTranslationPhase;
-  this->LyTranslationPhase = fermions.LyTranslationPhase;  
+  this->Nx = fermions.Nx;
+  this->Ny = fermions.Ny;
+  this->Kx = fermions.Kx;
+  this->Ky = fermions.Ky;
+  this->NbrBands = fermions.NbrBands;
   this->NbrStates = fermions.NbrStates;
-  this->SolenoidX = fermions.SolenoidX;
-  this->SolenoidY = fermions.SolenoidY;
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
   this->StateDescription = fermions.StateDescription;
   this->StateHighestBit = fermions.StateHighestBit;
@@ -162,7 +160,7 @@ FermionOnLattice::FermionOnLattice(const FermionOnLattice& fermions)
 // virtual destructor
 //
 
-FermionOnLattice::~FermionOnLattice ()
+FermionOnLatticeGenericMomentumSpace::~FermionOnLatticeGenericMomentumSpace ()
 {
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
@@ -182,7 +180,7 @@ FermionOnLattice::~FermionOnLattice ()
 //
 // fermions = reference on the hilbert space to copy to copy
 // return value = reference on current hilbert space
-FermionOnLattice& FermionOnLattice::operator = (const FermionOnLattice& fermions)
+FermionOnLatticeGenericMomentumSpace& FermionOnLatticeGenericMomentumSpace::operator = (const FermionOnLatticeGenericMomentumSpace& fermions)
 {
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
@@ -201,16 +199,12 @@ FermionOnLattice& FermionOnLattice::operator = (const FermionOnLattice& fermions
   else
     this->TargetSpace = this;
   this->NbrFermions = fermions.NbrFermions;
-    this->Lx = fermions.Lx;
-  this->Ly = fermions.Ly;
-  this->NbrSublattices = fermions.NbrSublattices;
-  this->NbrFluxQuanta = fermions.NbrFluxQuanta;
-  this->FluxDensity = fermions.FluxDensity;
-  this->LxTranslationPhase = fermions.LxTranslationPhase;
-  this->LyTranslationPhase = fermions.LyTranslationPhase;  
+  this->Nx = fermions.Nx;
+  this->Ny = fermions.Ny;
+  this->Kx = fermions.Kx;
+  this->Ky = fermions.Ky;
+  this->NbrBands = fermions.NbrBands;
   this->NbrStates = fermions.NbrStates;
-  this->SolenoidX = fermions.SolenoidX;
-  this->SolenoidY = fermions.SolenoidY;
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
   this->StateDescription = fermions.StateDescription;
   this->StateHighestBit = fermions.StateHighestBit;
@@ -222,7 +216,7 @@ FermionOnLattice& FermionOnLattice::operator = (const FermionOnLattice& fermions
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
-  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = fermions.LargeHilbertSpaceDimension;
   return *this;
 }
 
@@ -230,16 +224,16 @@ FermionOnLattice& FermionOnLattice::operator = (const FermionOnLattice& fermions
 // clone Hilbert space (without duplicating datas)
 //
 // return value = pointer to cloned Hilbert space
-AbstractHilbertSpace* FermionOnLattice::Clone()
+AbstractHilbertSpace* FermionOnLatticeGenericMomentumSpace::Clone()
 {
-  return new FermionOnLattice(*this);
+  return new FermionOnLatticeGenericMomentumSpace(*this);
 }
 
 // set a different target space (for all basic operations)
 //
 // targetSpace = pointer to the target space
 
-void FermionOnLattice::SetTargetSpace(FermionOnLattice* targetSpace)
+void FermionOnLatticeGenericMomentumSpace::SetTargetSpace(FermionOnLatticeGenericMomentumSpace* targetSpace)
 {
   this->TargetSpace=targetSpace;
 }
@@ -248,7 +242,7 @@ void FermionOnLattice::SetTargetSpace(FermionOnLattice* targetSpace)
 //
 // return value = Hilbert space dimension
 
-int FermionOnLattice::GetTargetHilbertSpaceDimension()
+int FermionOnLatticeGenericMomentumSpace::GetTargetHilbertSpaceDimension()
 {
   return this->TargetSpace->GetHilbertSpaceDimension();
 }
@@ -256,7 +250,7 @@ int FermionOnLattice::GetTargetHilbertSpaceDimension()
 // get the particle statistic 
 //
 // return value = particle statistic
-int FermionOnLattice::GetParticleStatistic()
+int FermionOnLatticeGenericMomentumSpace::GetParticleStatistic()
 {
   return AbstractQHEParticle::FermionicStatistic;
 }
@@ -264,9 +258,9 @@ int FermionOnLattice::GetParticleStatistic()
 // get the quantization axis 
 //
 // return value = particle statistic
-char FermionOnLattice::GetLandauGaugeAxis()
+char FermionOnLatticeGenericMomentumSpace::GetLandauGaugeAxis()
 {
-  return 'y';
+  return '\0';
 }
 
 
@@ -274,15 +268,15 @@ char FermionOnLattice::GetLandauGaugeAxis()
 //
 // return value = symmetry id
 
-int FermionOnLattice::GetHilbertSpaceAdditionalSymmetry()
+int FermionOnLatticeGenericMomentumSpace::GetHilbertSpaceAdditionalSymmetry()
 {
-  return ParticleOnLattice::NoSymmetry;
+  return ParticleOnLattice::XTranslations|ParticleOnLattice::YTranslations;
 }
 
 
 // check whether HilbertSpace implements ordering of operators
 //
-bool FermionOnLattice::HaveOrder ()
+bool FermionOnLatticeGenericMomentumSpace::HaveOrder ()
 {
   return true;
 }
@@ -294,7 +288,7 @@ bool FermionOnLattice::HaveOrder ()
 // n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
 // nbrIndices = number of creation (or annihilation) operators
 // return value = 1, if created state is of higher value, 0 if equal, and -1 if lesser value
-int FermionOnLattice::CheckOrder (int* m, int* n, int nbrIndices)
+int FermionOnLatticeGenericMomentumSpace::CheckOrder (int* m, int* n, int nbrIndices)
 {
   unsigned long CreationValue=0x0ul;
   unsigned long AnnihilationValue=0x0ul;
@@ -314,10 +308,12 @@ int FermionOnLattice::CheckOrder (int* m, int* n, int nbrIndices)
 // return a list of all possible quantum numbers 
 //
 // return value = pointer to corresponding quantum number
-List<AbstractQuantumNumber*> FermionOnLattice::GetQuantumNumbers ()
+List<AbstractQuantumNumber*> FermionOnLatticeGenericMomentumSpace::GetQuantumNumbers ()
 {
   List<AbstractQuantumNumber*> TmpList;
   TmpList += new NumberParticleQuantumNumber(this->NbrFermions);
+  TmpList += new PeriodicMomentumQuantumNumber (this->Kx, this->Nx);
+  TmpList += new PeriodicMomentumQuantumNumber (this->Ky, this->Ny);
   return TmpList;
 }
 
@@ -325,9 +321,15 @@ List<AbstractQuantumNumber*> FermionOnLattice::GetQuantumNumbers ()
 //
 // index = index of the state
 // return value = pointer to corresponding quantum number
-AbstractQuantumNumber* FermionOnLattice::GetQuantumNumber (int index)
+AbstractQuantumNumber* FermionOnLatticeGenericMomentumSpace::GetQuantumNumber (int index)
 {
-  return new NumberParticleQuantumNumber(this->NbrFermions);
+  if (index==0)
+    return new NumberParticleQuantumNumber(this->NbrFermions);
+  else if (index==1)
+    return new PeriodicMomentumQuantumNumber (this->Kx, this->Nx);
+  else if (index==2)
+    return new PeriodicMomentumQuantumNumber (this->Ky, this->Ny);
+  return NULL;
 }
 
 // extract subspace with a fixed quantum number
@@ -335,7 +337,7 @@ AbstractQuantumNumber* FermionOnLattice::GetQuantumNumber (int index)
 // q = quantum number value
 // converter = reference on subspace-space converter to use
 // return value = pointer to the new subspace
-AbstractHilbertSpace* FermionOnLattice::ExtractSubspace (AbstractQuantumNumber& q, 
+AbstractHilbertSpace* FermionOnLatticeGenericMomentumSpace::ExtractSubspace (AbstractQuantumNumber& q, 
 						      SubspaceSpaceConverter& converter)
 {
   return 0;
@@ -345,22 +347,17 @@ AbstractHilbertSpace* FermionOnLattice::ExtractSubspace (AbstractQuantumNumber& 
 // get the number of sites
 //
 // return value = number of sites
-int FermionOnLattice::GetNbrSites()
+int FermionOnLatticeGenericMomentumSpace::GetNbrSites()
 {
-  return this->NbrStates;
+  return this->Nx*this->Ny;
 }
 
 // it is possible to change the flux through the simulation cell
 // Attention: this does require the Hamiltonian to be recalculated!!
 // nbrFluxQuanta = number of quanta of flux piercing the simulation cell
-void FermionOnLattice::SetNbrFluxQuanta(int nbrFluxQuanta)
+void FermionOnLatticeGenericMomentumSpace::SetNbrFluxQuanta(int nbrFluxQuanta)
 {
-  this->NbrFluxQuanta = nbrFluxQuanta;
-  this->FluxDensity = ((double)NbrFluxQuanta)/this->NbrStates;
-  //cout << "FluxDensity="<<this->FluxDensity<<endl;
-  this->LxTranslationPhase = Polar(1.0, -2.0*M_PI*FluxDensity*this->Lx);
-  //cout << "LxTranslationPhase= exp(I*"<<2.0*M_PI*FluxDensity*this->Lx<<")="<<LxTranslationPhase<<endl;
-  this->LyTranslationPhase = 1.0;  // no phase for translating in the y-direction in Landau gauge ...
+  cout << "NbrFluxQuanta not defined in FermionOnLatticeGenericMomentumSpace"<<endl;
 }
 
 // change flux through cell and periodic boundary conditions
@@ -368,28 +365,26 @@ void FermionOnLattice::SetNbrFluxQuanta(int nbrFluxQuanta)
 // nbrFluxQuanta = number of quanta of flux piercing the simulation cell
 // solenoidX = new solenoid flux through torus in x-direction
 // solenoidY = new solenoid flux through torus in y-direction
-void FermionOnLattice::SetNbrFluxQuanta(int nbrFluxQuanta, double solenoidX, double solenoidY)
+void FermionOnLatticeGenericMomentumSpace::SetNbrFluxQuanta(int nbrFluxQuanta, double solenoidX, double solenoidY)
 {
-  this->SolenoidX=M_PI*solenoidX;
-  this->SolenoidY=M_PI*solenoidY;
-  this->SetNbrFluxQuanta(nbrFluxQuanta);
+  cout << "NbrFluxQuanta not defined in FermionOnLatticeGenericMomentumSpace"<<endl;
 }
 
 // request solenoid fluxes
 // solenoidX = new solenoid flux through torus in x-direction
 // solenoidY = new solenoid flux through torus in y-direction
 //
-void FermionOnLattice::GetSolenoidFluxes(double &solenoidX, double &solenoidY)
+void FermionOnLatticeGenericMomentumSpace::GetSolenoidFluxes(double &solenoidX, double &solenoidY)
 {
-  solenoidX=this->SolenoidX;
-  solenoidY=this->SolenoidY;
+  solenoidX=0.0;
+  solenoidY=0.0;
 }
 
 
 // obtain the current setting of the flux piercing this lattice
-int FermionOnLattice::GetNbrFluxQuanta()
+int FermionOnLatticeGenericMomentumSpace::GetNbrFluxQuanta()
 {
-  return this->NbrFluxQuanta;
+  return 0;
 }
 
 
@@ -397,7 +392,7 @@ int FermionOnLattice::GetNbrFluxQuanta()
 // for state-coding and quantum numbers of this space
 // state = word to be acted upon
 // q = quantum number of boson to be added
-unsigned long FermionOnLattice::Ad (unsigned long state, int q, double& coefficient)
+unsigned long FermionOnLatticeGenericMomentumSpace::Ad (unsigned long state, int q, double& coefficient)
 {  
   if ((state & (((unsigned long) (0x1)) << q))!= 0)
     {
@@ -419,7 +414,7 @@ unsigned long FermionOnLattice::Ad (unsigned long state, int q, double& coeffici
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int FermionOnLattice::AdAdAA (int index, int m1, int m2, int n1, int n2, double &coefficient)
+int FermionOnLatticeGenericMomentumSpace::AdAdAA (int index, int m1, int m2, int n1, int n2, double &coefficient)
 {
   coefficient = 1.0;
   int StateHighestBit = this->StateHighestBit[index];
@@ -503,7 +498,7 @@ int FermionOnLattice::AdAdAA (int index, int m1, int m2, int n1, int n2, double 
 // n2 = second index for annihilation operator
 // return value =  multiplicative factor
 
-double FermionOnLattice::AA (int index, int n1, int n2)
+double FermionOnLatticeGenericMomentumSpace::AA (int index, int n1, int n2)
 {
   this->ProdATemporaryState = this->StateDescription[index];
 
@@ -542,7 +537,7 @@ double FermionOnLattice::AA (int index, int n1, int n2)
 // coefficient = reference on a multiplicative, trivially one here (unreferenced)
 // return value = index of the destination state 
 
-int FermionOnLattice::AdAd (int m1, int m2, double& coefficient)
+int FermionOnLatticeGenericMomentumSpace::AdAd (int m1, int m2, double& coefficient)
 {
   unsigned long TmpState = this->ProdATemporaryState;
   if ((TmpState & (((unsigned long) (0x1)) << m2))!= 0)
@@ -592,7 +587,7 @@ int FermionOnLattice::AdAd (int m1, int m2, double& coefficient)
 // coefficient = reference on the double where the multiplicative factor has to be stored (always 1.0)
 // return value = index of the destination state 
 
-int FermionOnLattice::AdA (int index, int m, int n, double &coefficient)
+int FermionOnLatticeGenericMomentumSpace::AdA (int index, int m, int n, double &coefficient)
 {
   int StateHighestBit = this->StateHighestBit[index];
   unsigned long State = this->StateDescription[index];  
@@ -658,7 +653,7 @@ int FermionOnLattice::AdA (int index, int m, int n, double &coefficient)
 // index = index of the state on which the operator has to be applied
 // m = index of the creation and annihilation operator
 // return value = coefficient obtained when applying a^+_m a_m
-double FermionOnLattice::AdA (int index, int m)
+double FermionOnLatticeGenericMomentumSpace::AdA (int index, int m)
 {
   int StateHighestBit = this->StateHighestBit[index];
   unsigned long State = this->StateDescription[index];
@@ -676,89 +671,49 @@ double FermionOnLattice::AdA (int index, int m)
 //
 // no diagonal interaction present, derelict function from inheritance
 //
-double FermionOnLattice::AdAdAADiagonal(int index, int nbrInteraction, double *interactionPerQ, int *qValues)
+double FermionOnLatticeGenericMomentumSpace::AdAdAADiagonal(int index, int nbrInteraction, double *interactionPerQ, int *qValues)
 {
   return 0.0;
 }
 
 // code set of quantum numbers posx, posy into a single integer
-// posx = position along x-direction
-// posy = position along y-direction
-// sublattice = sublattice index
+// kx = momentum along x-direction
+// ky = momentum along y-direction
+// band = band index
 // 
-int FermionOnLattice::EncodeQuantumNumber(int posx, int posy, int sublattice, Complex &translationPhase)
+int FermionOnLatticeGenericMomentumSpace::EncodeQuantumNumber(int kx, int ky, int band, Complex &translationPhase)
 {
-  //cout << "Encoding " << posx<<", "<<posy<<": ";
-  int numXTranslations=0, numYTranslations=0;  
-  while (posx<0)
-    {
-      posx+=this->Lx;
-      ++numXTranslations;      
-    }
-  while (posx>=this->Lx)
-    {
-      posx-=this->Lx;
-      --numXTranslations;
-    }
-  while (posy<0)
-    {
-      posy+=this->Ly;
-      ++numYTranslations;      
-    }
-  while (posy>=this->Ly)
-    {
-      posy-=this->Ly;
-      --numYTranslations;
-    }
-  int rst = posx + this->Lx*posy;
-  rst*=this->NbrSublattices;
-  rst+=sublattice;
-  // determine phase for shifting site to the simulation cell:
-  Complex tmpPhase(1.0,0.0);
-  Complex tmpPhase2;
-  translationPhase=tmpPhase;
-  if (numXTranslations>0)
-    tmpPhase2=LxTranslationPhase;
-  else
-    tmpPhase2=Conj(LxTranslationPhase);
-  for (int i=0; i<abs(numXTranslations); ++i)
-    tmpPhase*=tmpPhase2;
-  //cout<<" tmpPhaseX="<<tmpPhase;
-  for (int y=1;y<=posy; ++y)
-    translationPhase*=tmpPhase;
-  translationPhase*=Polar(1.0, SolenoidX*numXTranslations);
-  tmpPhase=1.0;
-  if (numYTranslations>0)
-    tmpPhase2=LyTranslationPhase;
-  else
-    tmpPhase2=Conj(LyTranslationPhase);
-  for (int i=0; i<abs(numYTranslations); ++i)
-    tmpPhase*=tmpPhase2;
-  //cout<<" tmpPhaseY="<<tmpPhase;
-  for (int x=1;x<=posx; ++x)
-    translationPhase*=tmpPhase;
-  //cout << "tX="<<numXTranslations<< ", tY="<<numYTranslations<<", translationPhase= " <<translationPhase<<endl;
-  translationPhase*=Polar(1.0, SolenoidY*numYTranslations);
+  //cout << "Encoding " << kx<<", "<<ky<<": ";
+  while (kx<0)
+    kx+=this->Nx;
+  while (kx>=this->Nx)
+    kx-=this->Nx;
+  while (ky<0)
+    ky+=this->Ny;
+  while (ky>=this->Ny)
+    ky-=this->Ny;
+  int rst = kx + this->Nx*ky;
+  rst+=band*this->Nx*this->Ny;
+  translationPhase=0.0;
   return rst;
 }
 
-// decode a single encoded quantum number q to the set of quantum numbers posx, posy
-// posx = position along x-direction
-// posy = position along y-direction
-void FermionOnLattice::DecodeQuantumNumber(int q, int &posx, int &posy, int &sublattice)
+// decode a single encoded quantum number q to the set of quantum numbers kx, ky
+// kx = momentum along x-direction
+// ky = momentum along y-direction
+void FermionOnLatticeGenericMomentumSpace::DecodeQuantumNumber(int q, int &kx, int &ky, int &band)
 {
-  int m=this->NbrSublattices;
-  sublattice=q%m;
-  posx=(q%(m*Lx))/m;
-  m*=Lx;
-  posy=(q%(m*Ly))/m;  
+  band=q/(this->Nx*this->Ny);
+  q=q%(this->Nx*this->Ny);
+  ky=q/this->Nx;
+  kx=q%this->Nx;
 }
 
 // obtain a list of quantum numbers in state
 // index = index of many-body state to be considered
 // quantumNumbers = integer array of length NbrParticles, to be written with quantum numbers of individual particles
 // normalization = indicating the multiplicity of the state for bosonic spaces
-void FermionOnLattice::ListQuantumNumbers(int index, int *quantumNumbers, double &normalization)
+void FermionOnLatticeGenericMomentumSpace::ListQuantumNumbers(int index, int *quantumNumbers, double &normalization)
 {
   normalization=1.0;
   this->ListQuantumNumbers(index, quantumNumbers);
@@ -766,7 +721,7 @@ void FermionOnLattice::ListQuantumNumbers(int index, int *quantumNumbers, double
 
 // obtain a list of quantum numbers in state
 // quantumNumbers = integer array of length NbrParticles, to be written with quantum numbers of individual particles
-void FermionOnLattice::ListQuantumNumbers(int index, int *quantumNumbers)
+void FermionOnLatticeGenericMomentumSpace::ListQuantumNumbers(int index, int *quantumNumbers)
 {
   unsigned long State = this->StateDescription[index];
   int HighestBit = this->StateHighestBit[index];
@@ -781,51 +736,10 @@ void FermionOnLattice::ListQuantumNumbers(int index, int *quantumNumbers)
 // shiftY = length of translation in y-direction
 // translationPhase = returns phase inccurred by translation
 // return value = index of translated state
-int FermionOnLattice::TranslateState(int index, int shiftX, int shiftY, Complex &translationPhase)
+int FermionOnLatticeGenericMomentumSpace::TranslateState(int index, int shiftX, int shiftY, Complex &translationPhase)
 {
-  int ShiftedStateHighestBit;
-  unsigned long ShiftedState;
-  int TemporaryStateHighestBit = this->StateHighestBit[index];
-  unsigned long TemporaryState = this->StateDescription[index];
-  int FermionsLeft=this->NbrFermions;
-  int Q=TemporaryStateHighestBit;
-  int OldX, OldY, OldSl;
-  int NewQ;
-  int CountYCoordinates=0; // total phase is shiftX * sum_i y_i in Landau gauge
-  Complex PeriodicPhase;
-  Complex CumulatedPhase=1.0;
-  //cout << "TS:";
-  //for (int i=0; i<=TemporaryStateHighestBit; ++i)
-  //  cout << " "<<TemporaryState[i];
-  //cout << endl;
-  ShiftedStateHighestBit=0;
-  ShiftedState=0x0l;
-  while ((Q>-1) && (FermionsLeft>0))
-    {
-      if (TemporaryState&(0x1l<<Q))
-	{
-	  this->DecodeQuantumNumber(Q,OldX, OldY, OldSl);
-	  CountYCoordinates+=OldY;
-	  NewQ=this->EncodeQuantumNumber(OldX+shiftX, OldY+shiftY, OldSl, PeriodicPhase);
-	  CumulatedPhase*=PeriodicPhase;
-	  if (NewQ>ShiftedStateHighestBit)
-	    {	      
-	      ShiftedStateHighestBit=NewQ;
-	    }
-	  ShiftedState|=0x1ul<<NewQ;
-	  --FermionsLeft;
-	}
-      --Q;
-    }
-  // verify sign of phase!
-  //cout << "TranslationPhase for shift by ("<<shiftX<<","<<shiftY<<")="<<Polar(1.0, 2.0*M_PI*FluxDensity*shiftX*CountYCoordinates)<<endl;
-  translationPhase = Polar(1.0, 2.0*M_PI*FluxDensity*shiftX*CountYCoordinates)* Conj(CumulatedPhase);
-  //cout<<"Cumulated Phase="<<Arg(CumulatedPhase)/M_PI<<"pi"<<endl;
-  //cout << "NS:";
-  //for (int i=0; i<=ShiftedStateHighestBit; ++i)
-  //  cout << " "<<ShiftedState[i];
-  //cout << endl;
-  return this->FindStateIndex(ShiftedState, ShiftedStateHighestBit);
+  translationPhase = 0.0;
+  return index;
 }
 
 // find whether there is a translation vector from state i to state f
@@ -834,17 +748,14 @@ int FermionOnLattice::TranslateState(int index, int shiftX, int shiftY, Complex 
 // shiftX = length of translation in x-direction
 // shiftY = length of translation in y-direction
 // return value = final state can be reached by translation
-bool FermionOnLattice::IsTranslation(int i, int f, int &shiftX, int &shiftY)
-{  
-//   int TemporaryStateHighestBit = this->StateHighestBit[i];
-//   unsigned long TemporaryState = this->StateDescription[i];
-//   int ShiftedStateHighestBit = this->StateHighestBit[f];
-//   unsigned long ShiftedState = this->StateDescription[f];
-  
-  // implementation needed...
-  cout << "Implementation of FermionOnLattice::IsTranslation required"<<endl;
-  
-  return true;
+bool FermionOnLatticeGenericMomentumSpace::IsTranslation(int i, int f, int &shiftX, int &shiftY)
+{
+  shiftX=0;
+  shiftY=0;
+  if (i==f)
+    return true;
+  else
+    return false;
 }
 
 
@@ -855,7 +766,7 @@ bool FermionOnLattice::IsTranslation(int i, int f, int &shiftX, int &shiftY)
 // basis = one body real space basis to use
 // return value = wave function evaluated at the given location
 
-Complex FermionOnLattice::EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis)
+Complex FermionOnLatticeGenericMomentumSpace::EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis)
 {
   return this->EvaluateWaveFunction(state, position, basis, 0, this->HilbertSpaceDimension);
 }
@@ -868,7 +779,7 @@ Complex FermionOnLattice::EvaluateWaveFunction (RealVector& state, RealVector& p
 // nextCoordinates = index of the coordinate that will be changed during the next time iteration
 // return value = wave function evaluated at the given location
 
-Complex FermionOnLattice::EvaluateWaveFunctionWithTimeCoherence (RealVector& state, RealVector& position, 
+Complex FermionOnLatticeGenericMomentumSpace::EvaluateWaveFunctionWithTimeCoherence (RealVector& state, RealVector& position, 
 								 AbstractFunctionBasis& basis, int nextCoordinates)
 {
   return this->EvaluateWaveFunctionWithTimeCoherence(state, position, basis, nextCoordinates, 0, 
@@ -883,7 +794,7 @@ Complex FermionOnLattice::EvaluateWaveFunctionWithTimeCoherence (RealVector& sta
 // firstComponent = index of the first component to evaluate
 // nbrComponent = number of components to evaluate
 // return value = wave function evaluated at the given location
-Complex FermionOnLattice::EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis,
+Complex FermionOnLatticeGenericMomentumSpace::EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis,
 						int firstComponent, int nbrComponent)
 {
   return Complex(0.0, 0.0);
@@ -900,7 +811,7 @@ Complex FermionOnLattice::EvaluateWaveFunction (RealVector& state, RealVector& p
 // nbrComponent = number of components to evaluate
 // return value = wave function evaluated at the given location
 
-Complex FermionOnLattice::EvaluateWaveFunctionWithTimeCoherence (RealVector& state, RealVector& position, 
+Complex FermionOnLatticeGenericMomentumSpace::EvaluateWaveFunctionWithTimeCoherence (RealVector& state, RealVector& position, 
 								 AbstractFunctionBasis& basis, 
 								 int nextCoordinates, int firstComponent, 
 								 int nbrComponent)
@@ -912,7 +823,7 @@ Complex FermionOnLattice::EvaluateWaveFunctionWithTimeCoherence (RealVector& sta
 //
 // timeCoherence = true if time coherence has to be used
 
-void FermionOnLattice::InitializeWaveFunctionEvaluation (bool timeCoherence)
+void FermionOnLatticeGenericMomentumSpace::InitializeWaveFunctionEvaluation (bool timeCoherence)
 {
 }
 
@@ -923,7 +834,7 @@ void FermionOnLattice::InitializeWaveFunctionEvaluation (bool timeCoherence)
 // state = ID of the state to print
 // return value = reference on current output stream 
 
-ostream& FermionOnLattice::PrintState (ostream& Str, int state)
+ostream& FermionOnLatticeGenericMomentumSpace::PrintState (ostream& Str, int state)
 {
   unsigned long TmpState = this->StateDescription[state];
   for (int i = 0; i < this->NbrStates; ++i)
@@ -940,7 +851,7 @@ ostream& FermionOnLattice::PrintState (ostream& Str, int state)
 // highestBit = maximum Lz value reached by a fermion in the state
 // return value = corresponding index
 
-int FermionOnLattice::FindStateIndex(unsigned long stateDescription, int highestBit)
+int FermionOnLatticeGenericMomentumSpace::FindStateIndex(unsigned long stateDescription, int highestBit)
 {
   // bitset <32> b = stateDescription;
 //   cout << "in FindStateIndex: desc=" << b<<", highest bit=" << highestBit << endl;
@@ -973,7 +884,7 @@ int FermionOnLattice::FindStateIndex(unsigned long stateDescription, int highest
 // stateDescription = unsigned integer describing the state
 // highestBit = maximum nonzero bit reached by a particle in the state (can be given negative, if not known)
 // return value = corresponding index, or dimension of space, if not found
-int FermionOnLattice::CarefulFindStateIndex(unsigned long stateDescription, int highestBit)
+int FermionOnLatticeGenericMomentumSpace::CarefulFindStateIndex(unsigned long stateDescription, int highestBit)
 {
 //   bitset<20> b=stateDescription;
 //   cout << "Searching " << b <<", bitcount="<<bitcount(stateDescription);
@@ -1002,7 +913,7 @@ int FermionOnLattice::CarefulFindStateIndex(unsigned long stateDescription, int 
 // nbrFermions = number of fermions
 // nbrStates = number of elementary states available
 //
-int FermionOnLattice::EvaluateHilbertSpaceDimension(int nbrFermions,int nbrStates)
+int FermionOnLatticeGenericMomentumSpace::EvaluateHilbertSpaceDimension(int nbrFermions,int nbrStates)
 {  
   FactorialCoefficient F;
   F.SetToOne();
@@ -1018,7 +929,7 @@ int FermionOnLattice::EvaluateHilbertSpaceDimension(int nbrFermions,int nbrState
 //
 // (using routines from UnsignedIntegerTools)
 //
-int FermionOnLattice::GenerateStates(int nbrFermions,int nbrStates)
+int FermionOnLatticeGenericMomentumSpace::GenerateStates(int nbrFermions,int nbrStates)
 {
   int countdown=this->HilbertSpaceDimension-1;
   int presentHighestBit=nbrFermions-1;    
@@ -1045,7 +956,7 @@ int FermionOnLattice::GenerateStates(int nbrFermions,int nbrStates)
 // 
 // memory = memory size that can be allocated for the look-up table
 
-void FermionOnLattice::GenerateLookUpTable(unsigned long memory)
+void FermionOnLatticeGenericMomentumSpace::GenerateLookUpTable(unsigned long memory)
 {
   // evaluate look-up table size
   memory /= (sizeof(int*) * this->NbrStates);

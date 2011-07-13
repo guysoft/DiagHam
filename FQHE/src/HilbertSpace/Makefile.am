@@ -71,6 +71,7 @@ FermionOnSphereWithSpinLzSymmetryLong.cc \
 FermionOnSphereWithSpinSzSymmetryLong.cc \
 ParticleOnSphereManager.cc \
 FermionOnLattice.cc \
+FermionOnLatticeGenericMomentumSpace.cc \
 FermionOnSphereUnnormalizedBasis.cc \
 BosonOnSphereHaldaneHugeBasisShort.cc \
 BosonOnSphereWithSpin.cc \

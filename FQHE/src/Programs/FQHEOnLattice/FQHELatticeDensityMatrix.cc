@@ -548,7 +548,7 @@ int main(int argc, char** argv)
 	  cout << "Optimization in subspace"<<endl;
 	  for (int n=0; n<NbrVectors; ++n)
 	    cout << "|"<<n<<" > = "<<VectorFiles[n]<<endl;
-	  BestCondensate->Optimize(Manager.GetDouble("opt-target"), Manager.GetDouble("opt-tolerance"), Manager.GetInteger("max-iter"));
+	  BestCondensate->Optimize(Manager.GetInteger("opt-target"), Manager.GetDouble("opt-tolerance"), Manager.GetInteger("max-iter"));
 	  ComplexVector Parameters = BestCondensate->GetVariationalParameters();
 	  cout << "Found condensate: "<< Norm(Parameters[0]) << " |0>";
 	  for (int i=1; i<NbrVectors; ++i)

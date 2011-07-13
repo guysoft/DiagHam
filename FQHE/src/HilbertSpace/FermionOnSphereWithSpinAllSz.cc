@@ -103,11 +103,11 @@ FermionOnSphereWithSpinAllSz::FermionOnSphereWithSpinAllSz (int nbrFermions, int
   for (int i=0; i<2*NbrLzValue; ++i)
     {
       MaxTotalLz[i] = new int[NbrFermions+1];
-      for (int nbrFermions=0; nbrFermions<=NbrFermions; ++nbrFermions)
+      for (int f=0; f<=NbrFermions; ++f)
 	{
-	  MaxTotalLz[i][nbrFermions] = 0;
-	  for (int n=0; (n<nbrFermions); ++n)	  
-	    MaxTotalLz[i][nbrFermions] += (i-n)>>1;
+	  MaxTotalLz[i][f] = 0;
+	  for (int n=0; (n<f); ++n)	  
+	    MaxTotalLz[i][f] += (i-n)>>1;
  	}
     }
     
@@ -429,7 +429,7 @@ long FermionOnSphereWithSpinAllSz::GenerateStates(int nbrFermions, int posMax, i
   for (; pos < TmpPos; ++pos)
     this->StateDescription[pos] |= Mask;
   return this->GenerateStates(nbrFermions, posMax - 1, totalLz, pos);
-};
+}
 
 
 // evaluate Hilbert space dimension
