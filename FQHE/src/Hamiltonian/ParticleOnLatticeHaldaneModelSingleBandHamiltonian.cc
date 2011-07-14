@@ -141,7 +141,7 @@ void ParticleOnLatticeHaldaneModelSingleBandHamiltonian::EvaluateInteractionFact
       {
         double y=2*M_PI*((double)ky + this->GammaY)/this->NbrSiteY;
 	int Index = (kx * this->NbrSiteY) + ky;
-        Complex B1 = this->NNHoping * Complex(1 + cos(x+y) + cos(y), - sin(x+y) - sin(y));
+        Complex B1 = this->NNHoping * Complex(1 + cos(x+y) + cos(y), + sin(x+y) + sin(y));
         double d0 = + 2.0 * this->NextNNHoping * cos(this->HaldanePhase) * (cos(x) + cos(y) + cos(x+y));
         double d3 = + 2.0 * this->NextNNHoping * sin(this->HaldanePhase) * (sin(x) + sin(y) - sin(x+y)) + this->MuS;
 	HermitianMatrix TmpOneBobyHamiltonian(2, true);
@@ -215,7 +215,7 @@ void ParticleOnLatticeHaldaneModelSingleBandHamiltonian::EvaluateInteractionFact
 	{
 	  this->InteractionFactors[i] = new Complex[this->NbrSectorIndicesPerSum[i] * this->NbrSectorIndicesPerSum[i]];
 	  int Index = 0;
-	  for (int j1 = 0; j1 < this->NbrSectorIndicesPerSum[i]; ++j1)
+	  for (int j1 = 0; j1 < this->NbrSectorIndicesPerSum[i]; ++j1) // annihilation operators
 	    {
 	      int Index1 = this->SectorIndicesPerSum[i][j1 << 1];
 	      int Index2 = this->SectorIndicesPerSum[i][(j1 << 1) + 1];
@@ -223,7 +223,7 @@ void ParticleOnLatticeHaldaneModelSingleBandHamiltonian::EvaluateInteractionFact
 	      int ky1 = Index1 % this->NbrSiteY;
 	      int kx2 = Index2 / this->NbrSiteY;
 	      int ky2 = Index2 % this->NbrSiteY;
-	      for (int j2 = 0; j2 < this->NbrSectorIndicesPerSum[i]; ++j2)
+	      for (int j2 = 0; j2 < this->NbrSectorIndicesPerSum[i]; ++j2) // creation operators
 		{
 		  int Index3 = this->SectorIndicesPerSum[i][j2 << 1];
 		  int Index4 = this->SectorIndicesPerSum[i][(j2 << 1) + 1];
@@ -231,19 +231,30 @@ void ParticleOnLatticeHaldaneModelSingleBandHamiltonian::EvaluateInteractionFact
 		  int ky3 = Index3 % this->NbrSiteY;
 		  int kx4 = Index4 / this->NbrSiteY;
 		  int ky4 = Index4 % this->NbrSiteY;
- 		  this->InteractionFactors[i][Index] = FactorU * (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]) * this->ComputeTwoBodyMatrixElementAB(kx2, ky2, kx4, ky4);
- 		  this->InteractionFactors[i][Index] -= FactorU * (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]) * this->ComputeTwoBodyMatrixElementAB(kx1, ky1, kx4, ky4);
- 		  this->InteractionFactors[i][Index] -= FactorU * (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1]) * this->ComputeTwoBodyMatrixElementAB(kx2, ky2, kx3, ky3);
- 		  this->InteractionFactors[i][Index] += FactorU * (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1]) * this->ComputeTwoBodyMatrixElementAB(kx1, ky1, kx3, ky3);
+                  // the InteractionFactors is supposed to be the coefficients to   A+_3 A_1 A+_4 A_2
+                  // tricky part: OneBodyBasis[Index] stores the result of LapackDiagonalize
+                  // and its [0][_] elements are the COMPLEX CONJUGATE of wave functions < _ |lower band>. (See the end of HermitianMatrix.cc)
+ 		  this->InteractionFactors[i][Index]  = FactorU * (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1])
+                                                                * this->ComputeTwoBodyMatrixElementAB(kx2, ky2, kx4, ky4);
+ 		  this->InteractionFactors[i][Index] -= FactorU * (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1])
+                                                                * this->ComputeTwoBodyMatrixElementAB(kx1, ky1, kx4, ky4);
+ 		  this->InteractionFactors[i][Index] -= FactorU * (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1])
+                                                                * this->ComputeTwoBodyMatrixElementAB(kx2, ky2, kx3, ky3);
+ 		  this->InteractionFactors[i][Index] += FactorU * (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1])
+                                                                * this->ComputeTwoBodyMatrixElementAB(kx1, ky1, kx3, ky3);
 
- 		  this->InteractionFactors[i][Index] += FactorV * ((Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0])
-								   + (Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1])) * this->ComputeTwoBodyMatrixElementAA(kx2, ky2, kx4, ky4);
- 		  this->InteractionFactors[i][Index] -= FactorV * ((Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0])
-								   + (Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1] * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1])) * this->ComputeTwoBodyMatrixElementAA(kx1, ky1, kx4, ky4);
- 		  this->InteractionFactors[i][Index] -= FactorV * ((Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0])
-								   + (Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1])) * this->ComputeTwoBodyMatrixElementAA(kx2, ky2, kx3, ky3);
- 		  this->InteractionFactors[i][Index] += FactorV * ((Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0])
-								   + (Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1] * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1])) * this->ComputeTwoBodyMatrixElementAA(kx1, ky1, kx3, ky3);
+ 		  this->InteractionFactors[i][Index] += FactorV * (  (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0])
+								   + (Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]))
+                                                                * this->ComputeTwoBodyMatrixElementAA(kx2, ky2, kx4, ky4);
+ 		  this->InteractionFactors[i][Index] -= FactorV * (  (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0])
+								   + (Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1] * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]))
+                                                                * this->ComputeTwoBodyMatrixElementAA(kx1, ky1, kx4, ky4);
+ 		  this->InteractionFactors[i][Index] -= FactorV * (  (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0])
+								   + (Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1]))
+                                                                * this->ComputeTwoBodyMatrixElementAA(kx2, ky2, kx3, ky3);
+ 		  this->InteractionFactors[i][Index] += FactorV * (  (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0])
+								   + (Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1] * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1]))
+                                                                * this->ComputeTwoBodyMatrixElementAA(kx1, ky1, kx3, ky3);
 
 		  this->InteractionFactors[i][Index] *= -2.0;
 
@@ -259,32 +270,32 @@ void ParticleOnLatticeHaldaneModelSingleBandHamiltonian::EvaluateInteractionFact
 
 // compute the matrix element for the two body interaction between two sites A and B 
 //
-// kx1 = momentum along x for the A site
-// ky1 = momentum along y for the A site
-// kx2 = momentum along x for the B site
-// ky2 = momentum along y for the B site
+// kx1 = momentum along x for the creation operator
+// ky1 = momentum along y for the creation operator
+// kx2 = momentum along x for the annihilation operator
+// ky2 = momentum along y for the annihilation operator
 // return value = corresponding matrix element
 
 Complex ParticleOnLatticeHaldaneModelSingleBandHamiltonian::ComputeTwoBodyMatrixElementAB(int kx1, int ky1, int kx2, int ky2)
 {
-  double dx=((double)(kx2-kx1))/this->NbrSiteX;
-  double dy=((double)(ky2-ky1))/this->NbrSiteY;
+  double dx=((double)(kx1-kx2))/this->NbrSiteX;
+  double dy=((double)(ky1-ky2))/this->NbrSiteY;
   Complex Tmp = 1 + Phase(2.0 * M_PI * (dx + dy)) + Phase(2.0 * M_PI * dy);
   return Tmp;
 }
 
 // compute the matrix element for the two body interaction between two A sites (or two B sites) 
 //
-// kx1 = momentum along x for the first A site
-// ky1 = momentum along y for the first A site
-// kx2 = momentum along x for the second A site
-// ky2 = momentum along y for the second A site
+// kx1 = momentum along x for the creation operator
+// ky1 = momentum along y for the creation operator
+// kx2 = momentum along x for the annihilation operator
+// ky2 = momentum along y for the annihilation operator
 // return value = corresponding matrix element
 
 Complex ParticleOnLatticeHaldaneModelSingleBandHamiltonian::ComputeTwoBodyMatrixElementAA(int kx1, int ky1, int kx2, int ky2)
 {
-  double dx=((double)(kx2-kx1))/this->NbrSiteX;
-  double dy=((double)(ky2-ky1))/this->NbrSiteY;
-  Complex Tmp = Phase(2.0 * M_PI * dx) + Phase(2.0 * M_PI * dy) + Phase(2.0 * M_PI * (- dx - dy));
+  double dx=((double)(kx1-kx2))/this->NbrSiteX;
+  double dy=((double)(ky1-ky2))/this->NbrSiteY;
+  Complex Tmp = Phase(2.0 * M_PI * dx) + Phase(2.0 * M_PI * dy) + Phase(2.0 * M_PI * (+ dx + dy));
   return Tmp;
 }

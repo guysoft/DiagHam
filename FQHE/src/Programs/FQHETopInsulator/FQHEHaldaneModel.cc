@@ -255,7 +255,7 @@ void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSiteX, int nbrSi
       for (int ky = 0; ky < nbrSiteY; ++ky)
       {
           double y=2*M_PI*((double)ky)/nbrSiteY;
-          Complex B1 = nnHoping * Complex(1 + cos(x+y) + cos(y), - sin(x+y) - sin(y));
+          Complex B1 = nnHoping * Complex(1 + cos(x+y) + cos(y), + sin(x+y) + sin(y));
           double d0 = + 2.0 * nnnHoping * cos(phase) * (cos(x) + cos(y) + cos(x+y));
           double d3 = + 2.0 * nnnHoping * sin(phase) * (sin(x) + sin(y) - sin(x+y)) + mus;
 	  HermitianMatrix TmpOneBobyHamiltonian(2, true);
