@@ -9,8 +9,9 @@
 //                                                                            //
 //                   class of hamiltonian with particles on                   //
 //               Chern insulator in the single band approximation             //
+//                         and three-body interaction                         //
 //                                                                            //
-//                        last modification : 23/02/2011                      //
+//                        last modification : 13/07/2011                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -30,13 +31,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PARTICLEONLATTICECHERNINSULATORSINGLEBANDHAMILTONIAN_H
-#define PARTICLEONLATTICECHERNINSULATORSINGLEBANDHAMILTONIAN_H
+#ifndef PARTICLEONLATTICECHERNINSULATORSINGLEBANDTHREEBODYHAMILTONIAN_H
+#define PARTICLEONLATTICECHERNINSULATORSINGLEBANDTHREEBODYHAMILTONIAN_H
 
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphere.h"
-#include "Hamiltonian/AbstractQHEHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeChernInsulatorSingleBandHamiltonian.h"
 #include "Vector/ComplexVector.h"
 
 #include <iostream>
@@ -50,56 +51,21 @@ using std::endl;
 class AbstractArchitecture;
 
 
-class ParticleOnLatticeChernInsulatorSingleBandHamiltonian : public AbstractQHEHamiltonian
+class ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian : public ParticleOnLatticeChernInsulatorSingleBandHamiltonian
 {
 
  protected:
   
-  // Hilbert space associated to the system
-  ParticleOnSphere* Particles;
-
-  // number of particles
-  int NbrParticles;
-
-  // number of sites in the x direction
-  int NbrSiteX;
-  // number of sites in the y direction
-  int NbrSiteY;
-  // Max momentum that can be reached written as (kx * NbrSiteY + ky)
-  int LzMax;
-
-  
-  // band parameter
-  double BandParameter;
-
-  // shift to apply to go from precalculation index to the corresponding index in the HilbertSpace
-  int PrecalculationShift;
-
-  // shift to apply to the Hamiltonian diagonal elements
-  double HamiltonianShift;
-
-  // amount of memory (in bytes) that can be used to store precalculated matrix elements
-  long Memory;
-
-
   // number of index sum for the creation (or annhilation) operators for the intra spin sector
-  int NbrSectorSums;
+  int NbrThreeBodySectorSums;
   // array containing the number of index group per index sum for the creation (or annhilation) operators for the intra spin sector
-  int* NbrSectorIndicesPerSum;
-  // array containing the (m1,m2) indices per index sum for the creation (or annhilation) operators for the intra spin sector
-  int** SectorIndicesPerSum;
+  int* NbrThreeBodySectorIndicesPerSum;
+  // array containing the (m1,m2,m3) indices per index sum for the creation (or annhilation) operators for the intra spin sector
+  int** ThreeBodySectorIndicesPerSum;
 
   // arrays containing all interaction factors, the first index correspond correspond to index sum for the creation (or annhilation) operators
-  // the second index is a linearized index (m1,m2) + (n1,n2) * (nbr element in current index sum) (m for creation operators, n for annhilation operators)
-  Complex** InteractionFactors;
-
-  // array that contains all one-body interaction factors for particles with spin up
-  double* OneBodyInteractionFactors;
-  
-  // flag for fast multiplication algorithm
-  bool FastMultiplicationFlag;
-  // step between each precalculated index
-  int FastMultiplicationStep;
+  // the second index is a linearized index (m1,m2,m3) + (n1,n2,n3) * (nbr element in current index sum) (m for creation operators, n for annhilation operators)
+  Complex** ThreeBodyInteractionFactors;
 
   // stored interactions per component
   int *NbrInteractionPerComponent;
@@ -110,15 +76,15 @@ class ParticleOnLatticeChernInsulatorSingleBandHamiltonian : public AbstractQHEH
   Complex** InteractionPerComponentCoefficient;
   // translations of matrix elements per component
   int **InteractionPerComponentNbrTranslation;
-  
-  // flag for implementation of hermitian symmetry
-  bool HermitianSymmetryFlag;
+
+  // true if two body terms are set
+  bool TwoBodyFlag;  
   
  public:
 
   // default constructor
   //
-  ParticleOnLatticeChernInsulatorSingleBandHamiltonian();
+  ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian();
 
   // constructor
   //
@@ -129,36 +95,12 @@ class ParticleOnLatticeChernInsulatorSingleBandHamiltonian : public AbstractQHEH
   // bandParameter = band parameter
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeChernInsulatorSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double bandParameter, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double bandParameter, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //
-  ~ParticleOnLatticeChernInsulatorSingleBandHamiltonian();
+  ~ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian();
   
-  // ask if Hamiltonian implements hermitian symmetry operations
-  //
-  virtual bool IsHermitian();
-
-  // set Hilbert space
-  //
-  // hilbertSpace = pointer to Hilbert space to use
-  virtual void SetHilbertSpace (AbstractHilbertSpace* hilbertSpace);
-
-  // get Hilbert space on which Hamiltonian acts
-  //
-  // return value = pointer to used Hilbert space
-  virtual AbstractHilbertSpace* GetHilbertSpace ();
-
-  // return dimension of Hilbert space where Hamiltonian acts
-  //
-  // return value = corresponding matrix elementdimension
-  virtual int GetHilbertSpaceDimension ();
-  
-  // shift Hamiltonian from a given energy
-  //
-  // shift = shift value
-  virtual void ShiftHamiltonian (double shift);
-
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)
   //
@@ -208,15 +150,15 @@ class ParticleOnLatticeChernInsulatorSingleBandHamiltonian : public AbstractQHEH
 
  protected:
  
-  // core part of the AddMultiply method involving the two-body interaction
+  // core part of the AddMultiply method involving the three-body interaction
   // 
   // particles = pointer to the Hilbert space
   // index = index of the component on which the Hamiltonian has to act on
   // vSource = vector to be multiplied
   // vDestination = vector at which result has to be added  
-  virtual void EvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector& vSource, ComplexVector& vDestination);
+  virtual void EvaluateMNThreeBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector& vSource, ComplexVector& vDestination);
 
-  // core part of the AddMultiply method involving the two-body interaction for a set of vectors
+  // core part of the AddMultiply method involving the three-body interaction for a set of vectors
   // 
   // particles = pointer to the Hilbert space
   // index = index of the component on which the Hamiltonian has to act on
@@ -224,18 +166,18 @@ class ParticleOnLatticeChernInsulatorSingleBandHamiltonian : public AbstractQHEH
   // vDestinations = array of vectors at which result has to be added
   // nbrVectors = number of vectors that have to be evaluated together
   // tmpCoefficients = a temporary array whose size is nbrVectors
-  virtual void EvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector* vSources, 
+  virtual void EvaluateMNThreeBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector* vSources, 
 						     ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients);
 
-  // core part of the AddMultiply method involving the two-body interaction
+  // core part of the AddMultiply method involving the three-body interaction
   // 
   // particles = pointer to the Hilbert space
   // index = index of the component on which the Hamiltonian has to act on
   // vSource = vector to be multiplied
   // vDestination = vector at which result has to be added  
-  virtual void HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector& vSource, ComplexVector& vDestination);
+  virtual void HermitianEvaluateMNThreeBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector& vSource, ComplexVector& vDestination);
 
-  // core part of the AddMultiply method involving the two-body interaction for a set of vectors
+  // core part of the AddMultiply method involving the three-body interaction for a set of vectors
   // 
   // particles = pointer to the Hilbert space
   // index = index of the component on which the Hamiltonian has to act on
@@ -243,62 +185,27 @@ class ParticleOnLatticeChernInsulatorSingleBandHamiltonian : public AbstractQHEH
   // vDestinations = array of vectors at which result has to be added
   // nbrVectors = number of vectors that have to be evaluated together
   // tmpCoefficients = a temporary array whose size is nbrVectors
-  virtual void HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector* vSources, 
+  virtual void HermitianEvaluateMNThreeBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector* vSources, 
 							      ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients);
 
-  // core part of the FastMultiplication method involving the two-body interaction
+  // core part of the FastMultiplication method involving the three-body interaction
   // 
   // particles = pointer to the Hilbert space
   // index = index of the component on which the Hamiltonian has to act on
   // indexArray = array where indices connected to the index-th component through the Hamiltonian
   // coefficientArray = array of the numerical coefficients related to the indexArray
   // position = reference on the current position in arrays indexArray and coefficientArray
-  virtual void EvaluateMNTwoBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index, 
+  virtual void EvaluateMNThreeBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index, 
 							    int* indexArray, Complex* coefficientArray, long& position);
 
-  // core part of the FastMultiplication method involving the one-body interaction
-  // 
-  // particles = pointer to the Hilbert space
-  // index = index of the component on which the Hamiltonian has to act on
-  // indexArray = array where indices connected to the index-th component through the Hamiltonian
-  // coefficientArray = array of the numerical coefficients related to the indexArray
-  // position = reference on the current position in arrays indexArray and coefficientArray
-  virtual void EvaluateMNOneBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index, 
-							    int* indexArray, Complex* coefficientArray, long& position);
-
-  // core part of the AddMultiply method involving the one-body interaction, including loop on vector components
-  // 
-  // particles = pointer to the Hilbert space
-  // firstComponent = first index vector to act on
-  // lastComponent = last index vector to act on (not included)
-  // step = step to go from one component to the other one
-  // vSource = vector to be multiplied
-  // vDestination = vector at which result has to be added
-  virtual void EvaluateMNOneBodyAddMultiplyComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent,
-						     int step, ComplexVector& vSource, ComplexVector& vDestination);
-
-  // core part of the AddMultiply method involving the one-body interaction for a set of vectors, including loop on vector components
-  // 
-  // particles = pointer to the Hilbert space
-  // firstComponent = first index vector to act on
-  // lastComponent = last index vector to act on (not included)
-  // step = step to go from one component to the other one
-  // vSources = array of vectors to be multiplied
-  // vDestinations = array of vectors at which result has to be added
-  // nbrVectors = number of vectors that have to be evaluated together
-  virtual void EvaluateMNOneBodyAddMultiplyComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent,
-						     int step, ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors);
-
-  // core part of the PartialFastMultiplicationMemory method involving two-body term
+  // core part of the PartialFastMultiplicationMemory method involving three-body term
   // 
   // particles = pointer to the Hilbert space
   // firstComponent = index of the first component that has to be precalcualted
   // lastComponent  = index of the last component that has to be precalcualted
   // memory = reference on the amount of memory required for precalculations
-  virtual void EvaluateMNTwoBodyFastMultiplicationMemoryComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent, long& memory);
+  virtual void EvaluateMNThreeBodyFastMultiplicationMemoryComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent, long& memory);
 
-  // multiply a et of vectors by the current hamiltonian for a given range of indices 
-  // and add result to another et of vectors, low level function (no architecture optimization)
   // using partial fast multiply option
   //
   // vSources = array of vectors to be multiplied
@@ -352,14 +259,14 @@ class ParticleOnLatticeChernInsulatorSingleBandHamiltonian : public AbstractQHEH
 
 };
 
-// core part of the AddMultiply method involving the two-body interaction
+// core part of the AddMultiply method involving the three-body interaction
 // 
 // particles = pointer to the Hilbert space
 // index = index of the component on which the Hamiltonian has to act on
 // vSource = vector to be multiplied
 // vDestination = vector at which result has to be added
 
-inline void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::EvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector& vSource, ComplexVector& vDestination)
+inline void ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::EvaluateMNThreeBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector& vSource, ComplexVector& vDestination)
 {
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
@@ -368,21 +275,21 @@ inline void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::EvaluateMNTwoB
   int* TmpIndices;
   Complex* TmpInteractionFactor;
   int Index;
-  for (int j = 0; j < this->NbrSectorSums; ++j)
+  for (int j = 0; j < this->NbrThreeBodySectorSums; ++j)
     {
-      int Lim = 2 * this->NbrSectorIndicesPerSum[j];
-      TmpIndices = this->SectorIndicesPerSum[j];
-      for (int i1 = 0; i1 < Lim; i1 += 2)
+      int Lim = 3 * this->NbrThreeBodySectorIndicesPerSum[j];
+      TmpIndices = this->ThreeBodySectorIndicesPerSum[j];
+      for (int i1 = 0; i1 < Lim; i1 += 3)
 	{
-	  Coefficient3 = particles->AA(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  Coefficient3 = particles->ProdA(index, TmpIndices + i1, 3);
 	  if (Coefficient3 != 0.0)
 	    {
-	      TmpInteractionFactor = &(this->InteractionFactors[j][(i1 * Lim) >> 2]);
+	      TmpInteractionFactor = &(this->ThreeBodyInteractionFactors[j][(i1 * Lim) / 9]);
 	      Coefficient4 = vSource[index];
 	      Coefficient4 *= Coefficient3;
-	      for (int i2 = 0; i2 < Lim; i2 += 2)
+	      for (int i2 = 0; i2 < Lim; i2 += 3)
 		{
-		  Index = particles->AdAd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		  Index = particles->ProdAd(TmpIndices + i2, 3, Coefficient);
 		  if (Index < Dim)
 		    {
 		      vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
@@ -395,7 +302,7 @@ inline void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::EvaluateMNTwoB
 }
 
 
-// core part of the AddMultiply method involving the two-body interaction for a set of vectors
+// core part of the AddMultiply method involving the three-body interaction for a set of vectors
 // 
 // particles = pointer to the Hilbert space
 // index = index of the component on which the Hamiltonian has to act on
@@ -404,8 +311,8 @@ inline void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::EvaluateMNTwoB
 // nbrVectors = number of vectors that have to be evaluated together
 // tmpCoefficients = a temporary array whose size is nbrVectors
 
-inline void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::EvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector* vSources, 
-											  ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients)
+inline void ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::EvaluateMNThreeBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector* vSources, 
+														   ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients)
 {
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
@@ -414,21 +321,21 @@ inline void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::EvaluateMNTwoB
   
   int* TmpIndices;
   Complex* TmpInteractionFactor;
-  for (int j = 0; j < this->NbrSectorSums; ++j)
+  for (int j = 0; j < this->NbrThreeBodySectorSums; ++j)
     {
-      int Lim = 2 * this->NbrSectorIndicesPerSum[j];
-      TmpIndices = this->SectorIndicesPerSum[j];
-      for (int i1 = 0; i1 < Lim; i1 += 2)
+      int Lim = 3 * this->NbrThreeBodySectorIndicesPerSum[j];
+      TmpIndices = this->ThreeBodySectorIndicesPerSum[j];
+      for (int i1 = 0; i1 < Lim; i1 += 3)
 	{
-	  Coefficient3 = particles->AA(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  Coefficient3 = particles->ProdA(index, TmpIndices + i1, 3);
 	  if (Coefficient3 != 0.0)
 	    {
-	      TmpInteractionFactor = &(this->InteractionFactors[j][(i1 * Lim) >> 2]);
+	      TmpInteractionFactor = &(this->ThreeBodyInteractionFactors[j][(i1 * Lim) / 9]);
 	      for (int p = 0; p < nbrVectors; ++p)
 		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
-	      for (int i2 = 0; i2 < Lim; i2 += 2)
+	      for (int i2 = 0; i2 < Lim; i2 += 3)
 		{
-		  Index = particles->AdAd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		  Index = particles->ProdAd(TmpIndices + i2, 3, Coefficient);
 		  if (Index < Dim)
 		    for (int p = 0; p < nbrVectors; ++p)
 		      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
@@ -439,14 +346,14 @@ inline void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::EvaluateMNTwoB
     }
 }
 
-// core part of the AddMultiply method involving the two-body interaction
+// core part of the AddMultiply method involving the three-body interaction
 // 
 // particles = pointer to the Hilbert space
 // index = index of the component on which the Hamiltonian has to act on
 // vSource = vector to be multiplied
 // vDestination = vector at which result has to be added
 
-inline void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector& vSource, ComplexVector& vDestination)
+inline void ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::HermitianEvaluateMNThreeBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector& vSource, ComplexVector& vDestination)
 {
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
@@ -456,21 +363,21 @@ inline void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::HermitianEvalu
   Complex* TmpInteractionFactor;
   int Index;
   Complex TmpSum = 0.0;
-  for (int j = 0; j < this->NbrSectorSums; ++j)
+  for (int j = 0; j < this->NbrThreeBodySectorSums; ++j)
     {
-      int Lim = 2 * this->NbrSectorIndicesPerSum[j];
-      TmpIndices = this->SectorIndicesPerSum[j];
-      for (int i1 = 0; i1 < Lim; i1 += 2)
+      int Lim = 3 * this->NbrThreeBodySectorIndicesPerSum[j];
+      TmpIndices = this->ThreeBodySectorIndicesPerSum[j];
+      for (int i1 = 0; i1 < Lim; i1 += 3)
 	{
-	  Coefficient3 = particles->AA(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  Coefficient3 = particles->ProdA(index, TmpIndices + i1, 3);
 	  if (Coefficient3 != 0.0)
 	    {
-	      TmpInteractionFactor = &(this->InteractionFactors[j][(i1 * Lim) >> 2]);
+	      TmpInteractionFactor = &(this->ThreeBodyInteractionFactors[j][(i1 * Lim) / 9]);
 	      Coefficient4 = vSource[index];
 	      Coefficient4 *= Coefficient3;
-	      for (int i2 = 0; i2 < Lim; i2 += 2)
+	      for (int i2 = 0; i2 < Lim; i2 += 3)
 		{
-		  Index = particles->AdAd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		  Index = particles->ProdAd(TmpIndices + i2, 3, Coefficient);
 		  if (Index <= index)
 		    {
 		      if (Index < index)
@@ -486,7 +393,7 @@ inline void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::HermitianEvalu
 }
 
 
-// core part of the AddMultiply method involving the two-body interaction for a set of vectors
+// core part of the AddMultiply method involving the three-body interaction for a set of vectors
 // 
 // particles = pointer to the Hilbert space
 // index = index of the component on which the Hamiltonian has to act on
@@ -495,7 +402,7 @@ inline void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::HermitianEvalu
 // nbrVectors = number of vectors that have to be evaluated together
 // tmpCoefficients = a temporary array whose size is nbrVectors
 
-inline void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector* vSources, 
+inline void ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::HermitianEvaluateMNThreeBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector* vSources, 
 														 ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients)
 {
   int Dim = particles->GetHilbertSpaceDimension();
@@ -506,21 +413,21 @@ inline void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::HermitianEvalu
   int* TmpIndices;
   Complex* TmpInteractionFactor;
   Complex* TmpSum = new Complex[nbrVectors];
-  for (int j = 0; j < this->NbrSectorSums; ++j)
+  for (int j = 0; j < this->NbrThreeBodySectorSums; ++j)
     {
-      int Lim = 2 * this->NbrSectorIndicesPerSum[j];
-      TmpIndices = this->SectorIndicesPerSum[j];
-      for (int i1 = 0; i1 < Lim; i1 += 2)
+      int Lim = 3 * this->NbrThreeBodySectorIndicesPerSum[j];
+      TmpIndices = this->ThreeBodySectorIndicesPerSum[j];
+      for (int i1 = 0; i1 < Lim; i1 += 3)
 	{
-	  Coefficient3 = particles->AA(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  Coefficient3 = particles->ProdA(index, TmpIndices + i1, 3);
 	  if (Coefficient3 != 0.0)
 	    {
-	      TmpInteractionFactor = &(this->InteractionFactors[j][(i1 * Lim) >> 2]);
+	      TmpInteractionFactor = &(this->ThreeBodyInteractionFactors[j][(i1 * Lim) / 9]);
 	      for (int p = 0; p < nbrVectors; ++p)
 		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
-	      for (int i2 = 0; i2 < Lim; i2 += 2)
+	      for (int i2 = 0; i2 < Lim; i2 += 3)
 		{
-		  Index = particles->AdAd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		  Index = particles->ProdAd(TmpIndices + i2, 3, Coefficient);
 		  if (Index <= index)
 		    {
 		      if (Index < index)
@@ -549,7 +456,7 @@ inline void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::HermitianEvalu
   delete[] TmpSum;
 }
 
-// core part of the FastMultiplication method involving the two-body interaction
+// core part of the FastMultiplication method involving the three-body interaction
 // 
 // particles = pointer to the Hilbert space
 // index = index of the component on which the Hamiltonian has to act on
@@ -557,8 +464,8 @@ inline void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::HermitianEvalu
 // coefficientArray = array of the numerical coefficients related to the indexArray
 // position = reference on the current position in arrays indexArray and coefficientArray
 
-inline void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::EvaluateMNTwoBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index, 
-													       int* indexArray, Complex* coefficientArray, long& position)
+inline void ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::EvaluateMNThreeBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index, 
+															  int* indexArray, Complex* coefficientArray, long& position)
 {
   int Index;
   double Coefficient = 0.0;
@@ -568,20 +475,20 @@ inline void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::EvaluateMNTwoB
   int Dim = particles->GetHilbertSpaceDimension();
   if (this->HermitianSymmetryFlag == false)
     {
-      for (int j = 0; j < this->NbrSectorSums; ++j)
+      for (int j = 0; j < this->NbrThreeBodySectorSums; ++j)
 	{
-	  int Lim = 2 * this->NbrSectorIndicesPerSum[j];
-	  TmpIndices = this->SectorIndicesPerSum[j];
-	  for (int i1 = 0; i1 < Lim; i1 += 2)
+	  int Lim = 3 * this->NbrThreeBodySectorIndicesPerSum[j];
+	  TmpIndices = this->ThreeBodySectorIndicesPerSum[j];
+	  for (int i1 = 0; i1 < Lim; i1 += 3)
 	    {
 	      int AbsoluteIndex = index + this->PrecalculationShift;
-	      Coefficient2 = particles->AA(AbsoluteIndex, TmpIndices[i1], TmpIndices[i1 + 1]);
+	      Coefficient2 = particles->ProdA(AbsoluteIndex, TmpIndices + i1, 3);
 	      if (Coefficient2 != 0.0)
 		{
-		  TmpInteractionFactor = &(this->InteractionFactors[j][(i1 * Lim) >> 2]);
-		  for (int i2 = 0; i2 < Lim; i2 += 2)
+		  TmpInteractionFactor = &(this->ThreeBodyInteractionFactors[j][(i1 * Lim) / 9]);
+		  for (int i2 = 0; i2 < Lim; i2 += 3)
 		    {
-		      Index = particles->AdAd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		      Index = particles->ProdAd(TmpIndices + i2, 3, Coefficient);
 		      if (Index < Dim)
 			{
 			  indexArray[position] = Index;
@@ -596,20 +503,20 @@ inline void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::EvaluateMNTwoB
     }
   else
     {
-      for (int j = 0; j < this->NbrSectorSums; ++j)
+      for (int j = 0; j < this->NbrThreeBodySectorSums; ++j)
 	{
-	  int Lim = 2 * this->NbrSectorIndicesPerSum[j];
-	  TmpIndices = this->SectorIndicesPerSum[j];
-	  for (int i1 = 0; i1 < Lim; i1 += 2)
+	  int Lim = 3 * this->NbrThreeBodySectorIndicesPerSum[j];
+	  TmpIndices = this->ThreeBodySectorIndicesPerSum[j];
+	  for (int i1 = 0; i1 < Lim; i1 += 3)
 	    {
 	      int AbsoluteIndex = index + this->PrecalculationShift;
-	      Coefficient2 = particles->AA(AbsoluteIndex, TmpIndices[i1], TmpIndices[i1 + 1]);
+	      Coefficient2 = particles->ProdA(AbsoluteIndex, TmpIndices + i1, 3);
 	      if (Coefficient2 != 0.0)
 		{
-		  TmpInteractionFactor = &(this->InteractionFactors[j][(i1 * Lim) >> 2]);
-		  for (int i2 = 0; i2 < Lim; i2 += 2)
+		  TmpInteractionFactor = &(this->ThreeBodyInteractionFactors[j][(i1 * Lim) / 9]);
+		  for (int i2 = 0; i2 < Lim; i2 += 3)
 		    {
-		      Index = particles->AdAd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		      Index = particles->ProdAd(TmpIndices + i2, 3, Coefficient);
 		      if (Index <= AbsoluteIndex)
 			{
 			  if (Index == AbsoluteIndex)
@@ -634,96 +541,14 @@ inline void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::EvaluateMNTwoB
 }
 
 
-// core part of the AddMultiply method involving the one-body interaction, including loop on vector components
-// 
-// particles = pointer to the Hilbert space
-// firstComponent = first index vector to act on
-// lastComponent = last index vector to act on (not included)
-// step = step to go from one component to the other one
-// vSource = vector to be multiplied
-// vDestination = vector at which result has to be added
-
-inline void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::EvaluateMNOneBodyAddMultiplyComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent,
-													int step, ComplexVector& vSource, ComplexVector& vDestination)
-{
-  if (this->OneBodyInteractionFactors != 0)
-    {
-      double TmpDiagonal = 0.0;
-      for (int i = firstComponent; i < lastComponent; i += step)
-	{ 
-	  TmpDiagonal = 0.0;
-	  for (int j = 0; j <= this->LzMax; ++j) 
-	    {
-	      TmpDiagonal += this->OneBodyInteractionFactors[j] * particles->AdA(i, j);
-	    }
-	  vDestination[i] += (this->HamiltonianShift + TmpDiagonal)* vSource[i];
-	}
-    }
-}
-
-// core part of the AddMultiply method involving the one-body interaction for a set of vectors, including loop on vector components
-// 
-// particles = pointer to the Hilbert space
-// firstComponent = first index vector to act on
-// lastComponent = last index vector to act on (not included)
-// step = step to go from one component to the other one
-// vSources = array of vectors to be multiplied
-// vDestinations = array of vectors at which result has to be added
-// nbrVectors = number of vectors that have to be evaluated together
-
-inline void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::EvaluateMNOneBodyAddMultiplyComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent,
-													int step, ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors)
-{
-  if (this->OneBodyInteractionFactors != 0) 
-    {
-      double TmpDiagonal = 0.0;
-      for (int p = 0; p < nbrVectors; ++p)
-	{
-	  ComplexVector& TmpSourceVector = vSources[p];
-	  ComplexVector& TmpDestinationVector = vDestinations[p];
-	  for (int i = firstComponent; i < lastComponent; i += step)
-	    { 
-	      TmpDiagonal = 0.0;
-	      for (int j = 0; j <= this->LzMax; ++j) 
-		{
-		  TmpDiagonal += this->OneBodyInteractionFactors[j] * particles->AdA(i, j);
-		}
-	      TmpDestinationVector[i] += (this->HamiltonianShift + TmpDiagonal)* TmpSourceVector[i];
-	    }
-	}
-    }
-}
-
-// core part of the FastMultiplication method involving the one-body interaction
-// 
-// particles = pointer to the Hilbert space
-// index = index of the component on which the Hamiltonian has to act on
-// indexArray = array where indices connected to the index-th component through the Hamiltonian
-// coefficientArray = array of the numerical coefficients related to the indexArray
-// position = reference on the current position in arrays indexArray and coefficientArray
-
-inline void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::EvaluateMNOneBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index, 
-													       int* indexArray, Complex* coefficientArray, long& position)
-{
-  if (this->OneBodyInteractionFactors != 0)
-    {
-      double TmpDiagonal = 0.0;
-      for (int j = 0; j <= this->LzMax; ++j)
-	TmpDiagonal += this->OneBodyInteractionFactors[j] * particles->AdA(index + this->PrecalculationShift, j);
-      indexArray[position] = index + this->PrecalculationShift;
-      coefficientArray[position] = TmpDiagonal;
-      ++position;	  
-    }
-}
-
-// core part of the PartialFastMultiplicationMemory method involving two-body term
+// core part of the PartialFastMultiplicationMemory method involving three-body term
 // 
 // particles = pointer to the Hilbert space
 // firstComponent = index of the first component that has to be precalcualted
 // lastComponent  = index of the last component that has to be precalcualted
 // memory = reference on the amount of memory required for precalculations
 
-inline void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::EvaluateMNTwoBodyFastMultiplicationMemoryComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent, long& memory)
+inline void ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::EvaluateMNThreeBodyFastMultiplicationMemoryComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent, long& memory)
 {
   int Index;
   double Coefficient = 0.0;
@@ -736,18 +561,18 @@ inline void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::EvaluateMNTwoB
 
   for (int i = firstComponent; i < lastComponent; ++i)
     {
-      for (int j = 0; j < this->NbrSectorSums; ++j)
+      for (int j = 0; j < this->NbrThreeBodySectorSums; ++j)
 	{
-	  int Lim = 2 * this->NbrSectorIndicesPerSum[j];
-	  TmpIndices = this->SectorIndicesPerSum[j];
-	  for (int i1 = 0; i1 < Lim; i1 += 2)
+	  int Lim = 3 * this->NbrThreeBodySectorIndicesPerSum[j];
+	  TmpIndices = this->ThreeBodySectorIndicesPerSum[j];
+	  for (int i1 = 0; i1 < Lim; i1 += 3)
 	    {
-	      Coefficient2 = particles->AA(i, TmpIndices[i1], TmpIndices[i1 + 1]);
+	      Coefficient2 = particles->ProdA(i, TmpIndices + i1, 3);
 	      if (Coefficient2 != 0.0)
 		{
-		  for (int i2 = 0; i2 < Lim; i2 += 2)
+		  for (int i2 = 0; i2 < Lim; i2 += 3)
 		    {
-		      Index = particles->AdAd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		      Index = particles->ProdAd(TmpIndices + i2, 3, Coefficient);
 		      if (Index <= i)
 			{
 			  ++memory;
@@ -757,17 +582,10 @@ inline void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::EvaluateMNTwoB
 		}
 	    }
 	}
-    }    
-
-  if (this->OneBodyInteractionFactors != 0)
-    {
-      for (int i = firstComponent; i < lastComponent; ++i)
-	{
-	  ++memory;
-	  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
-	}
+	  
     }
 }
+
 
 
 

@@ -57,13 +57,18 @@ class ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonian : 
   double NextNNHoping;
   // hoping amplitude between second next neareast neighbor sites
   double SecondNextNNHoping;
+  // four times the sublattice staggered chemical potential 
+  double MuS;
   // boundary condition twisting angle along x
   double GammaX;
   // boundary condition twisting angle along y
   double GammaY;
   // nearest neighbor density-density potential strength
   double UPotential;
-
+  // strength of the repulsive on site two body interaction between opposite spins
+  double VPotential;
+  // strength of the repulsive two body neareast neighbor interaction between opposite spins
+  double WPotential;
   // use flat band model
   bool FlatBand;
 
@@ -76,15 +81,18 @@ class ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonian : 
   // nbrSiteX = number of sites in the x direction
   // nbrSiteY = number of sites in the y direction
   // uPotential = strength of the repulsive two body neareast neighbor interaction
+  // vPotential = strength of the repulsive on site two body interaction between opposite spins
+  // wPotential = strength of the repulsive two body neareast neighbor interaction between opposite spins
   // t1 = hoping amplitude between neareast neighbor sites
   // t2 = hoping amplitude between next neareast neighbor sites
   // t2p = hoping amplitude between second next neareast neighbor sites
+  // mus = sublattice staggered chemical potential 
   // gammaX = boundary condition twisting angle along x
   // gammaY = boundary condition twisting angle along y
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double t1, double t2, double t2p, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential, double wPotential, double t1, double t2, double t2p, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //
@@ -99,8 +107,8 @@ class ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonian : 
 
   // compute the matrix element for the two body interaction between two sites A and B  belonging to the same layer
   //
-  // kx1 = momentum along x for the A site
-  // ky1 = momentum along y for the A site
+  // kx1 = momentum along x for the B site
+  // ky1 = momentum along y for the B site
   // kx2 = momentum along x for the B site
   // ky2 = momentum along y for the B site
   // return value = corresponding matrix element
@@ -115,6 +123,14 @@ class ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonian : 
   // return value = corresponding matrix element
   Complex ComputeTwoBodyMatrixElementBUpBDown(int kx1, int ky1, int kx2, int ky2);
     
+  // compute the matrix element for the two body interaction between two sites A and B belonging to different layers
+  //
+  // kx1 = momentum along x for the A site
+  // ky1 = momentum along y for the A site
+  // kx2 = momentum along x for the B site
+  // ky2 = momentum along y for the B site
+  // return value = corresponding matrix element
+  Complex ComputeTwoBodyMatrixElementAUpBDown(int kx1, int ky1, int kx2, int ky2);
 
   // compute the transformation basis contribution to the interaction matrix element
   // 

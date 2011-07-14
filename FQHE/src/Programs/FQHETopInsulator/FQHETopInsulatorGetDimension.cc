@@ -76,6 +76,27 @@ long FermionTwoBandWithSpinEvaluateHilbertSpaceDimension(int nbrParticles, int k
 // return value = Hilbert space dimension
 long FermionCubicLatticeTwoBandEvaluateHilbertSpaceDimension(int nbrParticles, int kxMomentum, int kyMomentum, int kzMomentum, int nbrSiteX, int nbrSiteY, int nbrSiteZ, int currentKx, int currentKy, int currentKz, int currentTotalKx = 0, int currentTotalKy = 0, int currentTotalKz = 0);
 
+// evaluate Hilbert space dimension for fermions on a hypercubic lattice within two bands
+//
+// nbrParticles = number of nbrParticles
+// kxMomentum = momentum along the x direction
+// kyMomentum = momentum along the y direction
+// kzMomentum = momentum along the z direction
+// ktMomentum = momentum along the t direction
+// nbrSiteX = number of sites along x
+// nbrSiteY = number of sites along y
+// nbrSiteZ = number of sites along z
+// nbrSiteT = number of sites along t
+// currentKx = current momentum along x for a single particle
+// currentKy = current momentum along y for a single particle
+// currentKz = current momentum along z for a single particle
+// currentKt = current momentum along t for a single particle
+// currentTotalKx = current total momentum along x
+// currentTotalKy = current total momentum along y
+// currentTotalKz = current total momentum along z
+// currentTotalKt = current total momentum along t
+// return value = Hilbert space dimension
+long FermionHyperCubicLatticeTwoBandEvaluateHilbertSpaceDimension(int nbrParticles, int kxMomentum, int kyMomentum, int kzMomentum, int ktMomentum, int nbrSiteX, int nbrSiteY, int nbrSiteZ, int nbrSiteT, int currentKx, int currentKy, int currentKz, int currentKt, int currentTotalKx = 0, int currentTotalKy = 0, int currentTotalKz = 0, int currentTotalKt = 0);
 
 int main(int argc, char** argv)
 {
@@ -90,10 +111,12 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('x', "nbr-sitex", "number of sites along the x direction", 3);
   (*SystemGroup) += new SingleIntegerOption  ('y', "nbr-sitey", "number of sites along the y direction", 3);
   (*SystemGroup) += new SingleIntegerOption  ('z', "nbr-sitez", "number of sites along the z direction", 3);
+  (*SystemGroup) += new SingleIntegerOption  ('t', "nbr-sitet", "number of sites along the t direction", 3);
   (*SystemGroup) += new SingleIntegerOption  ('s', "nbr-subbands", "number of subbands", 1);
   (*SystemGroup) += new BooleanOption  ('\n', "no-inversion", "do not assume inversion symmetry");
   (*SystemGroup) += new BooleanOption  ('\n', "spin-conserved", "assume that the spin is conserved in the two band model");
   (*SystemGroup) += new BooleanOption  ('\n', "3d", "consider a 3d model instead of a 2d model");
+  (*SystemGroup) += new BooleanOption  ('\n', "4d", "consider a 4d model instead of a 2d model");
   (*OutputGroup) += new BooleanOption  ('\n', "save-disk", "save output on disk");
   (*OutputGroup) += new SingleStringOption ('\n', "output-file", "use this file name instead of statistics_topinsulator_nbrsubbands_n_nbrparticles_x_nbrsitex_y_nbrsitey.dim");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -113,6 +136,7 @@ int main(int argc, char** argv)
   int NbrSitesX = Manager.GetInteger("nbr-sitex"); 
   int NbrSitesY = Manager.GetInteger("nbr-sitey"); 
   int NbrSitesZ = Manager.GetInteger("nbr-sitez"); 
+  int NbrSitesT = Manager.GetInteger("nbr-sitet"); 
   
   if (Manager.GetInteger("nbr-subbands") == 1)
     {
@@ -136,24 +160,42 @@ int main(int argc, char** argv)
 	    {
 	      if (Manager.GetBoolean("3d") == false)
 		{
-		  if ((Manager.GetBoolean("no-inversion") == true) || ((kx <= ((NbrSitesX - kx) % NbrSitesX)) && (ky <= ((NbrSitesY - ky) % NbrSitesY))))
+		  if (Manager.GetBoolean("4d") == false)
 		    {
-		      if (Manager.GetBoolean("spin-conserved") == false)
+		      if ((Manager.GetBoolean("no-inversion") == true) || ((kx <= ((NbrSitesX - kx) % NbrSitesX)) && (ky <= ((NbrSitesY - ky) % NbrSitesY))))
 			{
-			  long Dimension = FermionTwoBandEvaluateHilbertSpaceDimension(NbrParticles, kx, ky, NbrSitesX, NbrSitesY, NbrSitesX - 1, NbrSitesY - 1);
-			  cout << "(kx=" << kx << ",ky=" << ky << ") : " << Dimension << endl;
-			}
-		      else
-			{
-			  long TotalDimension = 0l;
-			  for (int NbrSpinUp = 0; NbrSpinUp <= NbrParticles; ++NbrSpinUp)
+			  if (Manager.GetBoolean("spin-conserved") == false)
 			    {
-			      long Dimension = FermionTwoBandWithSpinEvaluateHilbertSpaceDimension(NbrParticles, kx, ky, NbrSitesX, NbrSitesY, NbrSitesX - 1, NbrSitesY - 1, NbrSpinUp);
-			      TotalDimension += Dimension;
-			      cout << "(kx=" << kx << ",ky=" << ky << ") 2Sz=" << ((2 * NbrSpinUp) - NbrParticles) << " : " << Dimension << endl;			  
+			      long Dimension = FermionTwoBandEvaluateHilbertSpaceDimension(NbrParticles, kx, ky, NbrSitesX, NbrSitesY, NbrSitesX - 1, NbrSitesY - 1);
+			      cout << "(kx=" << kx << ",ky=" << ky << ") : " << Dimension << endl;
 			    }
-			  //		      cout << "(kx=" << kx << ",ky=" << ky << ") : " << TotalDimension << endl;
+			  else
+			    {
+			      long TotalDimension = 0l;
+			      for (int NbrSpinUp = 0; NbrSpinUp <= NbrParticles; ++NbrSpinUp)
+				{
+				  long Dimension = FermionTwoBandWithSpinEvaluateHilbertSpaceDimension(NbrParticles, kx, ky, NbrSitesX, NbrSitesY, NbrSitesX - 1, NbrSitesY - 1, NbrSpinUp);
+				  TotalDimension += Dimension;
+				  cout << "(kx=" << kx << ",ky=" << ky << ") 2Sz=" << ((2 * NbrSpinUp) - NbrParticles) << " : " << Dimension << endl;			  
+				}
+			      //		      cout << "(kx=" << kx << ",ky=" << ky << ") : " << TotalDimension << endl;
+			    }
 			}
+		    }
+		  else
+		    {
+		      long TotalDimension = 0l;
+		      for (int kz = 0; kz < NbrSitesZ; ++kz)
+			{
+			  for (int kt = 0; kt < NbrSitesT; ++kt)
+			    {
+			      long Dimension = FermionHyperCubicLatticeTwoBandEvaluateHilbertSpaceDimension(NbrParticles, kx, ky, kz, kt, NbrSitesX, NbrSitesY, NbrSitesZ, NbrSitesT, NbrSitesX - 1, NbrSitesY - 1, NbrSitesZ - 1, NbrSitesT - 1);
+			      TotalDimension += Dimension;
+			      cout << "(kx=" << kx << ",ky=" << ky << ",kz=" << kz << ",kt=" << kt << ") : " << Dimension << endl;
+			      return 0;
+			    }
+			}
+		      cout << TotalDimension << endl;
 		    }
 		}
 	      else
@@ -411,5 +453,107 @@ long FermionCubicLatticeTwoBandEvaluateHilbertSpaceDimension(int nbrParticles, i
   Count += FermionCubicLatticeTwoBandEvaluateHilbertSpaceDimension(nbrParticles - 2, kxMomentum, kyMomentum, kzMomentum, nbrSiteX, nbrSiteY, nbrSiteZ, currentKx, currentKy, currentKz - 1, currentTotalKx + (2 * currentKx), currentTotalKy + (2 * currentKy), currentTotalKz + (2 * currentKz));
   Count += (2 * FermionCubicLatticeTwoBandEvaluateHilbertSpaceDimension(nbrParticles - 1, kxMomentum, kyMomentum, kzMomentum, nbrSiteX, nbrSiteY, nbrSiteZ, currentKx, currentKy, currentKz - 1, currentTotalKx + currentKx, currentTotalKy + currentKy, currentTotalKz + currentKz));
   Count += FermionCubicLatticeTwoBandEvaluateHilbertSpaceDimension(nbrParticles, kxMomentum, kyMomentum, kzMomentum, nbrSiteX, nbrSiteY, nbrSiteZ, currentKx, currentKy, currentKz - 1, currentTotalKx, currentTotalKy, currentTotalKz);
+  return Count;
+}
+
+// evaluate Hilbert space dimension for fermions on a hypercubic lattice within two bands
+//
+// nbrParticles = number of nbrParticles
+// kxMomentum = momentum along the x direction
+// kyMomentum = momentum along the y direction
+// kzMomentum = momentum along the z direction
+// ktMomentum = momentum along the t direction
+// nbrSiteX = number of sites along x
+// nbrSiteY = number of sites along y
+// nbrSiteZ = number of sites along z
+// nbrSiteT = number of sites along t
+// currentKx = current momentum along x for a single particle
+// currentKy = current momentum along y for a single particle
+// currentKz = current momentum along z for a single particle
+// currentKt = current momentum along t for a single particle
+// currentTotalKx = current total momentum along x
+// currentTotalKy = current total momentum along y
+// currentTotalKz = current total momentum along z
+// currentTotalKt = current total momentum along t
+// return value = Hilbert space dimension
+
+long FermionHyperCubicLatticeTwoBandEvaluateHilbertSpaceDimension(int nbrParticles, int kxMomentum, int kyMomentum, int kzMomentum, int ktMomentum, int nbrSiteX, int nbrSiteY, int nbrSiteZ, int nbrSiteT, int currentKx, int currentKy, int currentKz, int currentKt, int currentTotalKx, int currentTotalKy, int currentTotalKz, int currentTotalKt)
+{
+  cout << nbrParticles << " " <<  kxMomentum << " " <<  kyMomentum << " " <<  kzMomentum << " " <<  ktMomentum << " " <<  nbrSiteX << " " <<  nbrSiteY << " " <<  nbrSiteZ << " " <<  nbrSiteT << " " <<  currentKx << " " <<  currentKy << " " <<  currentKz << " " <<  currentKt << " " <<  currentTotalKx << " " <<  currentTotalKy << " " <<  currentTotalKz << " " <<  currentTotalKt << endl;
+  if (currentKt < 0)
+    {
+      currentKt = nbrSiteT - 1;
+      currentKz--;
+      if (currentKz < 0)
+	{
+	  currentKz = nbrSiteZ - 1;
+	  currentKy--;
+	  if (currentKy < 0)
+	    {
+	      currentKy = nbrSiteY - 1;
+	      currentKx--;
+	    }
+	}
+    }
+  if (nbrParticles == 0)
+    {
+      if (((currentTotalKx % nbrSiteX) == kxMomentum) && ((currentTotalKy % nbrSiteY) == kyMomentum)
+	  && ((currentTotalKz % nbrSiteZ) == kzMomentum) && ((currentTotalKt % nbrSiteT) == ktMomentum))
+	return 1l;
+      else	
+	return 0l;
+    }
+  if (currentKx < 0)
+    return 0l;
+  long Count = 0;
+  if (nbrParticles == 1)
+    {
+      for (int l = currentKt; l >= 0; --l)
+	{
+	  if ((((currentKx + currentTotalKx) % nbrSiteX) == kxMomentum) && (((currentKy + currentTotalKy) % nbrSiteY) == kyMomentum) && 
+	      (((currentKz + currentTotalKz) % nbrSiteZ) == kzMomentum) && (((l + currentTotalKt) % nbrSiteT) == ktMomentum))
+	    Count += 2l;
+	}
+      for (int k = currentKz; k >= 0; --k)
+	{
+	  for (int l = nbrSiteT - 1; l >= 0; --l)
+	    {
+	      if ((((currentKx + currentTotalKx) % nbrSiteX) == kxMomentum) && (((currentKy + currentTotalKy) % nbrSiteY) == kyMomentum) && 
+		  (((k + currentTotalKz) % nbrSiteZ) == kzMomentum) && (((l + currentTotalKt) % nbrSiteT) == ktMomentum))
+		Count += 2l;
+	    }
+	}
+      for (int j = currentKy - 1; j >= 0; --j)
+	{
+	  for (int k = nbrSiteZ - 1; k >= 0; --k)
+	    {
+	      for (int l = nbrSiteT - 1; l >= 0; --l)
+		{
+		  if ((((currentKx + currentTotalKx) % nbrSiteX) == kxMomentum) && (((j + currentTotalKy) % nbrSiteY) == kyMomentum)
+		      && (((k + currentTotalKz) % nbrSiteZ) == kzMomentum) && (((l + currentTotalKt) % nbrSiteT) == ktMomentum))
+		    Count += 2l;
+		}
+	    }
+	}
+      for (int i = currentKx - 1; i >= 0; --i)
+	{
+	  for (int j = nbrSiteY - 1; j >= 0; --j)
+	    {
+	      for (int k = nbrSiteZ - 1; k >= 0; --k)
+		{
+		  for (int l = nbrSiteT - 1; l >= 0; --l)
+		    {
+		      if ((((i + currentTotalKx) % nbrSiteX) == kxMomentum) && (((j + currentTotalKy) % nbrSiteY) == kyMomentum)
+			  && (((k + currentTotalKz) % nbrSiteZ) == kzMomentum) && (((l + currentTotalKt) % nbrSiteT) == ktMomentum))
+			Count += 2l;
+		    }
+		}
+	    }
+	}
+      return Count;
+    }
+  Count += FermionHyperCubicLatticeTwoBandEvaluateHilbertSpaceDimension(nbrParticles - 2, kxMomentum, kyMomentum, kzMomentum, ktMomentum, nbrSiteX, nbrSiteY, nbrSiteZ, nbrSiteT, currentKx, currentKy, currentKz, currentKt - 1, currentTotalKx + (2 * currentKx), currentTotalKy + (2 * currentKy), currentTotalKz + (2 * currentKz), currentTotalKt + (2 * currentKt));
+  Count += (2 * FermionHyperCubicLatticeTwoBandEvaluateHilbertSpaceDimension(nbrParticles - 1, kxMomentum, kyMomentum, kzMomentum, ktMomentum, nbrSiteX, nbrSiteY, nbrSiteZ, nbrSiteT, currentKx, currentKy, currentKz, currentKt - 1, currentTotalKx + currentKx, currentTotalKy + currentKy, currentTotalKz + currentKz, currentTotalKt + currentKt));
+  Count += FermionHyperCubicLatticeTwoBandEvaluateHilbertSpaceDimension(nbrParticles, kxMomentum, kyMomentum, kzMomentum, ktMomentum, nbrSiteX, nbrSiteY, nbrSiteZ, nbrSiteT, currentKx, currentKy, currentKz, currentKt - 1, currentTotalKx, currentTotalKy, currentTotalKz, currentTotalKt);
   return Count;
 }

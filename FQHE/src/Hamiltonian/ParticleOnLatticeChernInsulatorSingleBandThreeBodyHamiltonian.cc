@@ -9,8 +9,9 @@
 //                                                                            //
 //                   class of hamiltonian with particles on                   //
 //               Chern insulator in the single band approximation             //
+//                         and three-body interaction                         //
 //                                                                            //
-//                        last modification : 23/02/2011                      //
+//                        last modification : 13/07/2011                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -31,7 +32,7 @@
 
 
 #include "config.h"
-#include "Hamiltonian/ParticleOnLatticeChernInsulatorSingleBandHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
@@ -52,9 +53,10 @@ using std::ostream;
 // default constructor
 //
 
-ParticleOnLatticeChernInsulatorSingleBandHamiltonian::ParticleOnLatticeChernInsulatorSingleBandHamiltonian()
+ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian()
 {
   this->HermitianSymmetryFlag = true;
+  this->TwoBodyFlag = false;
 }
 
 // constructor
@@ -67,7 +69,7 @@ ParticleOnLatticeChernInsulatorSingleBandHamiltonian::ParticleOnLatticeChernInsu
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
-ParticleOnLatticeChernInsulatorSingleBandHamiltonian::ParticleOnLatticeChernInsulatorSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, 
+ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, 
 												       int nbrSiteY, double bandParameter, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
@@ -87,6 +89,7 @@ ParticleOnLatticeChernInsulatorSingleBandHamiltonian::ParticleOnLatticeChernInsu
   this->PrecalculationShift = (int) MinIndex;  
   this->EvaluateInteractionFactors();
   this->HermitianSymmetryFlag = true;
+  this->TwoBodyFlag = false;
   if (memory > 0)
     {
       long TmpMemory = this->FastMultiplicationMemory(memory);
@@ -115,86 +118,21 @@ ParticleOnLatticeChernInsulatorSingleBandHamiltonian::ParticleOnLatticeChernInsu
 // destructor
 //
 
-ParticleOnLatticeChernInsulatorSingleBandHamiltonian::~ParticleOnLatticeChernInsulatorSingleBandHamiltonian()
+ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::~ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian()
 {
-  for (int i = 0; i < this->NbrSectorSums; ++i)
+  for (int i = 0; i < this->NbrThreeBodySectorSums; ++i)
     {
-      if (this->NbrSectorIndicesPerSum[i] > 0)
+      if (this->NbrThreeBodySectorIndicesPerSum[i] > 0)
 	{
-	  delete[] this->SectorIndicesPerSum[i];
-	  delete[] this->InteractionFactors[i];
+	  delete[] this->ThreeBodySectorIndicesPerSum[i];
+	  delete[] this->ThreeBodyInteractionFactors[i];
 	}
     }
-  delete[] this->InteractionFactors;
-  delete[] this->NbrSectorIndicesPerSum;
-  delete[] this->SectorIndicesPerSum;
-  if (this->OneBodyInteractionFactors != 0)
-    delete[] this->OneBodyInteractionFactors;
-  if (this->FastMultiplicationFlag == true)
-    {
-      long MinIndex;
-      long MaxIndex;
-      this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
-      int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
-      int ReducedDim = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
-      if ((ReducedDim * this->FastMultiplicationStep) != EffectiveHilbertSpaceDimension)
-	++ReducedDim;
-      for (int i = 0; i < ReducedDim; ++i)
-	{
-	  delete[] this->InteractionPerComponentIndex[i];
-	  delete[] this->InteractionPerComponentCoefficient[i];
-	}
-      delete[] this->InteractionPerComponentIndex;
-      delete[] this->InteractionPerComponentCoefficient;
-      delete[] this->NbrInteractionPerComponent;
-    }
+  delete[] this->ThreeBodyInteractionFactors;
+  delete[] this->NbrThreeBodySectorIndicesPerSum;
+  delete[] this->ThreeBodySectorIndicesPerSum;
 }
   
-// ask if Hamiltonian implements hermitian symmetry operations
-//
-
-bool ParticleOnLatticeChernInsulatorSingleBandHamiltonian::IsHermitian()
-{
-  return this->HermitianSymmetryFlag;
-}
-
-// set Hilbert space
-//
-// hilbertSpace = pointer to Hilbert space to use
-
-void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
-{
-  this->Particles = (ParticleOnSphere*) hilbertSpace;
-  this->EvaluateInteractionFactors();
-}
- 
-// get Hilbert space on which Hamiltonian acts
-//
-// return value = pointer to used Hilbert space
-
-AbstractHilbertSpace* ParticleOnLatticeChernInsulatorSingleBandHamiltonian::GetHilbertSpace ()
-{
-  return this->Particles;
-}
-
-// return dimension of Hilbert space where Hamiltonian acts
-//
-// return value = corresponding matrix elementdimension
-
-int ParticleOnLatticeChernInsulatorSingleBandHamiltonian::GetHilbertSpaceDimension ()
-{
-  return this->Particles->GetHilbertSpaceDimension();
-}
-  
-// shift Hamiltonian from a given energy
-//
-// shift = shift value
-
-void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::ShiftHamiltonian (double shift)
-{
-  this->HamiltonianShift = shift;
-}
-
 // multiply a vector by the current hamiltonian for a given range of indices 
 // and add result to another vector, low level function (no architecture optimization)
 //
@@ -204,15 +142,28 @@ void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::ShiftHamiltonian (dou
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-ComplexVector& ParticleOnLatticeChernInsulatorSingleBandHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-										       int firstComponent, int nbrComponent)
+ComplexVector& ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+												  int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
   if (this->FastMultiplicationFlag == false)
     {
       ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
-      for (int i = firstComponent; i < LastComponent; ++i)
-	this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+      if (this->TwoBodyFlag == true)
+	{
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      this->EvaluateMNThreeBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);	  
+	      this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+	    }
+	}
+      else
+	{
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      this->EvaluateMNThreeBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);	  
+	    }
+	}
       this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSource, vDestination);
       delete TmpParticles;
     }
@@ -274,9 +225,22 @@ ComplexVector& ParticleOnLatticeChernInsulatorSingleBandHamiltonian::LowLevelAdd
 	  for (l = 0; l < this->FastMultiplicationStep; ++l)
 	    if (PosMod != l)
 	      {	
-		for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
-		  this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
-		this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent + l, LastComponent, this->FastMultiplicationStep, vSource, vDestination);
+		if (this->TwoBodyFlag == true)
+		  {
+		    for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+		      {
+			this->EvaluateMNThreeBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+			this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+		      }
+		    this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent + l, LastComponent, this->FastMultiplicationStep, vSource, vDestination);
+		  }
+		else
+		  {
+		    for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+		      {
+			this->EvaluateMNThreeBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+		      }
+		  }
 	      }
 	  delete TmpParticles;
 	}
@@ -295,7 +259,7 @@ ComplexVector& ParticleOnLatticeChernInsulatorSingleBandHamiltonian::LowLevelAdd
 // nbrComponent = number of components to evaluate
 // return value = pointer to the array of vectors where result has been stored
 
-ComplexVector* ParticleOnLatticeChernInsulatorSingleBandHamiltonian::LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+ComplexVector* ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
 											       int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
@@ -303,9 +267,22 @@ ComplexVector* ParticleOnLatticeChernInsulatorSingleBandHamiltonian::LowLevelMul
     {
       Complex* Coefficient2 = new Complex [nbrVectors];
       ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
-      for (int i = firstComponent; i < LastComponent; ++i)
-	this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
-      this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSources, vDestinations, nbrVectors);
+      if (this->TwoBodyFlag == true)
+	{
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      this->EvaluateMNThreeBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
+	      this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
+	    }
+	  this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSources, vDestinations, nbrVectors);
+	}
+      else
+	{
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      this->EvaluateMNThreeBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
+	    }
+	}
       delete[] Coefficient2;
       delete TmpParticles;
     }
@@ -363,8 +340,8 @@ ComplexVector* ParticleOnLatticeChernInsulatorSingleBandHamiltonian::LowLevelMul
 // nbrComponent = number of components to evaluate
 // return value = pointer to the array of vectors where result has been stored
 
-ComplexVector* ParticleOnLatticeChernInsulatorSingleBandHamiltonian::LowLevelMultipleAddMultiplyPartialFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
-														    int firstComponent, int nbrComponent)
+ComplexVector* ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::LowLevelMultipleAddMultiplyPartialFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+															     int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
   ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
@@ -410,9 +387,22 @@ ComplexVector* ParticleOnLatticeChernInsulatorSingleBandHamiltonian::LowLevelMul
   for (l = 0; l < this->FastMultiplicationStep; ++l)
     if (PosMod != l)
       {	
-	for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
-	  this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
-	this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent + l, LastComponent, this->FastMultiplicationStep, vSources, vDestinations, nbrVectors);
+	if (this->TwoBodyFlag == true)
+	  {
+	    for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+	      {
+		this->EvaluateMNThreeBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
+		this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
+	      }
+	    this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent + l, LastComponent, this->FastMultiplicationStep, vSources, vDestinations, nbrVectors);
+	  }
+	else
+	  {
+	    for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+	      {
+		this->EvaluateMNThreeBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
+	      }
+	  }
       }
   delete[] Coefficient2;
   delete TmpParticles;
@@ -428,16 +418,29 @@ ComplexVector* ParticleOnLatticeChernInsulatorSingleBandHamiltonian::LowLevelMul
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-ComplexVector& ParticleOnLatticeChernInsulatorSingleBandHamiltonian::HermitianLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-												  int firstComponent, int nbrComponent)
+ComplexVector& ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::HermitianLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+													   int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
   if (this->FastMultiplicationFlag == false)
     {
       ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
-      for (int i = firstComponent; i < LastComponent; ++i)
-	this->HermitianEvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
-      this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSource, vDestination);
+      if (this->TwoBodyFlag == true)
+	{
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      this->HermitianEvaluateMNThreeBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+	      this->HermitianEvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+	    }
+	  this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSource, vDestination);
+	}
+      else
+	{
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      this->HermitianEvaluateMNThreeBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+	    }
+	}
       delete TmpParticles;
     }
   else
@@ -508,8 +511,21 @@ ComplexVector& ParticleOnLatticeChernInsulatorSingleBandHamiltonian::HermitianLo
 	  for (l = 0; l < this->FastMultiplicationStep; ++l)
 	    if (PosMod != l)
 	      {	
-		for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
-		  this->HermitianEvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+		if (this->TwoBodyFlag == true)
+		  {
+		    for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+		      {
+			this->HermitianEvaluateMNThreeBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+			this->HermitianEvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+		      }
+		  }
+		else
+		  {
+		    for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+		      {
+			this->HermitianEvaluateMNThreeBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+		      }
+		  }
 		this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent + l, LastComponent, this->FastMultiplicationStep, vSource, vDestination);
 	      }
 	  delete TmpParticles;
@@ -528,7 +544,7 @@ ComplexVector& ParticleOnLatticeChernInsulatorSingleBandHamiltonian::HermitianLo
 // nbrComponent = number of components to evaluate
 // return value = pointer to the array of vectors where result has been stored
 
-ComplexVector* ParticleOnLatticeChernInsulatorSingleBandHamiltonian::HermitianLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+ComplexVector* ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::HermitianLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
 													  int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
@@ -536,9 +552,22 @@ ComplexVector* ParticleOnLatticeChernInsulatorSingleBandHamiltonian::HermitianLo
     {
       Complex* Coefficient2 = new Complex [nbrVectors];
       ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
-      for (int i = firstComponent; i < LastComponent; ++i)
-	this->HermitianEvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
-      this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSources, vDestinations, nbrVectors);
+      if (this->TwoBodyFlag == true)
+	{
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      this->HermitianEvaluateMNThreeBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
+	      this->HermitianEvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
+	    }
+	  this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSources, vDestinations, nbrVectors);
+	}
+      else
+	{
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      this->HermitianEvaluateMNThreeBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
+	    }
+	}
       delete[] Coefficient2;
       delete TmpParticles;
     }
@@ -606,7 +635,7 @@ ComplexVector* ParticleOnLatticeChernInsulatorSingleBandHamiltonian::HermitianLo
 // nbrComponent = number of components to evaluate
 // return value = pointer to the array of vectors where result has been stored
 
-ComplexVector* ParticleOnLatticeChernInsulatorSingleBandHamiltonian::HermitianLowLevelMultipleAddMultiplyPartialFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+ComplexVector* ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::HermitianLowLevelMultipleAddMultiplyPartialFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
 															     int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
@@ -662,9 +691,22 @@ ComplexVector* ParticleOnLatticeChernInsulatorSingleBandHamiltonian::HermitianLo
   for (l = 0; l < this->FastMultiplicationStep; ++l)
     if (PosMod != l)
       {	
-	for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
-	  this->HermitianEvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
-	this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent + l, LastComponent, this->FastMultiplicationStep, vSources, vDestinations, nbrVectors);
+	if (this->TwoBodyFlag == true)
+	  {
+	    for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+	      {
+		this->HermitianEvaluateMNThreeBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
+		this->HermitianEvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
+	      }
+	    this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent + l, LastComponent, this->FastMultiplicationStep, vSources, vDestinations, nbrVectors);
+	  }
+	else
+	  {
+	    for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+	      {
+		this->HermitianEvaluateMNThreeBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
+	      }
+	  }
       }
   delete[] TmpSum;
   delete[] Coefficient2;
@@ -675,7 +717,7 @@ ComplexVector* ParticleOnLatticeChernInsulatorSingleBandHamiltonian::HermitianLo
 // evaluate all interaction factors
 //   
 
-void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::EvaluateInteractionFactors()
+void ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::EvaluateInteractionFactors()
 {
   long TotalNbrInteractionFactors = 0;
   ComplexMatrix* OneBodyBasis = new ComplexMatrix [this->NbrSiteX * this->NbrSiteY];
@@ -818,7 +860,7 @@ void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::EvaluateInteractionFa
 // allowedMemory = amount of memory that cam be allocated for fast multiplication
 // return value = amount of memory needed
 
-long ParticleOnLatticeChernInsulatorSingleBandHamiltonian::FastMultiplicationMemory(long allowedMemory)
+long ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::FastMultiplicationMemory(long allowedMemory)
 {
   long MinIndex;
   long MaxIndex;
@@ -904,12 +946,16 @@ long ParticleOnLatticeChernInsulatorSingleBandHamiltonian::FastMultiplicationMem
 // lastComponent  = index of the last component that has to be precalcualted
 // return value = number of non-zero matrix element
 
-long ParticleOnLatticeChernInsulatorSingleBandHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int lastComponent)
+long ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int lastComponent)
 {
   long Memory = 0;
   ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
   int LastComponent = lastComponent + firstComponent;
-  this->EvaluateMNTwoBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
+  this->EvaluateMNThreeBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
+  if (this->TwoBodyFlag == true)
+    {
+      this->EvaluateMNTwoBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
+    }
 
   delete TmpParticles;
 
@@ -919,7 +965,7 @@ long ParticleOnLatticeChernInsulatorSingleBandHamiltonian::PartialFastMultiplica
 // enable fast multiplication algorithm
 //
 
-void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::EnableFastMultiplication()
+void ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::EnableFastMultiplication()
 {
   long MinIndex;
   long MaxIndex;
@@ -961,7 +1007,7 @@ void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::EnableFastMultiplicat
 // firstComponent = index of the first component that has to be precalcualted
 // nbrComponent  = index of the last component that has to be precalcualted
 
-void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::PartialEnableFastMultiplication(int firstComponent, int nbrComponent)
+void ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::PartialEnableFastMultiplication(int firstComponent, int nbrComponent)
 {  
   int LastComponent = nbrComponent + firstComponent;
   ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
@@ -978,10 +1024,15 @@ void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::PartialEnableFastMult
   for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
     {
       long TotalPos = 0;
-      this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
-							 this->InteractionPerComponentCoefficient[Pos], TotalPos);
-      this->EvaluateMNOneBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
-							 this->InteractionPerComponentCoefficient[Pos], TotalPos);
+      this->EvaluateMNThreeBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
+							   this->InteractionPerComponentCoefficient[Pos], TotalPos);
+      if (this->TwoBodyFlag == true)
+	{
+	  this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
+							     this->InteractionPerComponentCoefficient[Pos], TotalPos);
+	  this->EvaluateMNOneBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
+							     this->InteractionPerComponentCoefficient[Pos], TotalPos);
+	}
       ++Pos;
     }
 }

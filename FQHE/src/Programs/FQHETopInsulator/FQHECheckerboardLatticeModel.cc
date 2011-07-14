@@ -7,6 +7,8 @@
 
 #include "Hamiltonian/ParticleOnLatticeWithSpinCheckerboardLatticeHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeCheckerboardLatticeSingleBandThreeBodyHamiltonian.h"
+
 #include "LanczosAlgorithm/LanczosManager.h"
 
 #include "Architecture/ArchitectureManager.h"
@@ -67,6 +69,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive nearest neighbor potential strength", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "v-potential", "repulsive nearest next neighbor potential strength", 0.0);
+  (*SystemGroup) += new BooleanOption  ('\n', "three-body", "use a three body interaction instead of a two body interaction");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "t1", "nearest neighbor hoping amplitude", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "t2", "next nearest neighbor hoping amplitude", 1.0 - 0.5 * M_SQRT2);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "tpp", "second next nearest neighbor hoping amplitude", 0.5 * (M_SQRT2 - 1.0));
@@ -100,35 +103,47 @@ int main(int argc, char** argv)
   int NbrSitesY = Manager.GetInteger("nbr-sitey"); 
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
 
+  char* FilePrefix = new char [256];
+  if (Manager.GetBoolean("single-band") == false)
+    {
+      sprintf (FilePrefix, "fermions_checkerboardlattice_n_%d_x_%d_y",  NbrParticles, NbrSitesX, NbrSitesY);
+    }
+  else
+    {
+      if (Manager.GetBoolean("three-body") == false)
+	sprintf (FilePrefix, "fermions_singleband_checkerboardlattice_n_%d_x_%d_y",  NbrParticles, NbrSitesX, NbrSitesY);
+      else
+	sprintf (FilePrefix, "fermions_singleband_threebody_checkerboardlattice_n_%d_x_%d_y",  NbrParticles, NbrSitesX, NbrSitesY);
+    }
   char* CommentLine = new char [256];
-  sprintf (CommentLine, "eigenvalues\n#");
+  sprintf (CommentLine, "eigenvalues\n# kx ky ");
   char* EigenvalueOutputFile = new char [512];
   if (Manager.GetString("eigenvalue-file")!=0)
-      strcpy(EigenvalueOutputFile, Manager.GetString("eigenvalue-file"));
+    strcpy(EigenvalueOutputFile, Manager.GetString("eigenvalue-file"));
   else
   {
     if (Manager.GetBoolean("single-band") == false)
       {
         if (Manager.GetDouble("mu-s") == 0.0)
-          sprintf (EigenvalueOutputFile, "fermions_checkerboardlattice_n_%d_x_%d_y_%d_u_%f_v_%f_t1_%f_t2_%f_tpp_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"));
+          sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_t1_%f_t2_%f_tpp_%f.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"));
         else
-          sprintf (EigenvalueOutputFile, "fermions_checkerboardlattice_n_%d_x_%d_y_%d_u_%f_v_%f_t1_%f_t2_%f_tpp_%f_mus_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"));
+          sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_t1_%f_t2_%f_tpp_%f_mus_%f.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"));
       }
     else
       {
         if (Manager.GetBoolean("flat-band") == true)
           {
             if (Manager.GetDouble("mu-s") == 0.0)
-              sprintf (EigenvalueOutputFile, "fermions_singleband_checkerboardlattice_n_%d_x_%d_y_%d_v_%f_t1_%f_t2_%f_tpp_%f_gx_%f_gy_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+              sprintf (EigenvalueOutputFile, "%s_v_%f_t1_%f_t2_%f_tpp_%f_gx_%f_gy_%f.dat",FilePrefix, Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
             else
-              sprintf (EigenvalueOutputFile, "fermions_singleband_checkerboardlattice_n_%d_x_%d_y_%d_v_%f_t1_%f_t2_%f_tpp_%f_gx_%f_gy_%f_mus_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+              sprintf (EigenvalueOutputFile, "%s_v_%f_t1_%f_t2_%f_tpp_%f_gx_%f_gy_%f_mus_%f.dat",FilePrefix, Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
           }
         else
           {
             if (Manager.GetDouble("mu-s") == 0.0)
-              sprintf (EigenvalueOutputFile, "fermions_singleband_checkerboardlattice_n_%d_x_%d_y_%d_u_%f_v_%f_t1_%f_t2_%f_tpp_%f_gx_%f_gy_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+              sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_t1_%f_t2_%f_tpp_%f_gx_%f_gy_%f.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
             else
-              sprintf (EigenvalueOutputFile, "fermions_singleband_checkerboardlattice_n_%d_x_%d_y_%d_u_%f_v_%f_t1_%f_t2_%f_tpp_%f_gx_%f_gy_%f_mus_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+              sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_t1_%f_t2_%f_tpp_%f_gx_%f_gy_%f_mus_%f.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
           }
       }
   }
@@ -181,7 +196,7 @@ int main(int argc, char** argv)
 	      char* ContentPrefix = new char[256];
 	      sprintf (ContentPrefix, "%d %d", i, j);
 	      char* EigenstateOutputFile = new char [512];
-	      sprintf (EigenstateOutputFile, "fermions_checkerboardlattice_n_%d_x_%d_y_%d_u_%f_v_%f_t1_%f_t2_%f_kx_%d_ky_%d", NbrParticles, NbrSitesX, NbrSitesY, 
+	      sprintf (EigenstateOutputFile, "%s_u_%f_v_%f_t1_%f_t2_%f_kx_%d_ky_%d",FilePrefix, 
 		       Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), i, j);
 	      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
 	      FirstRunFlag = false;
@@ -213,29 +228,40 @@ int main(int argc, char** argv)
 	      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 		Memory = Architecture.GetArchitecture()->GetLocalMemory();
  	      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
- 	      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
-														  Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"),
-														  Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
-														  Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+ 	      AbstractQHEHamiltonian* Hamiltonian = 0;
+	      if (Manager.GetBoolean("three-body") == false)
+		{ 
+		  Hamiltonian = new ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
+											      Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"),
+											      Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
+											      Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+		}
+	      else
+		{ 
+		  Hamiltonian = new ParticleOnLatticeCheckerboardLatticeSingleBandThreeBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
+												       Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"),
+												       Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
+												       Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+		}
 	      char* ContentPrefix = new char[256];
 	      sprintf (ContentPrefix, "%d %d", i, j);
 	      char* EigenstateOutputFile = new char [512];
 	      if (Manager.GetBoolean("flat-band") == true)
 		{
 		  if (Manager.GetDouble("mu-s") == 0.0)
-		    sprintf (EigenstateOutputFile, "fermions_singleband_checkerboardlattice_n_%d_x_%d_y_%d_v_%f_t1_%f_t2_%f_gx_%f_gy_%f_kx_%d_ky_%d", NbrParticles, NbrSitesX, NbrSitesY, 
+		    sprintf (EigenstateOutputFile, "%s_v_%f_t1_%f_t2_%f_gx_%f_gy_%f_kx_%d_ky_%d",FilePrefix, 
 			     Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j);
 		  else
-		    sprintf (EigenstateOutputFile, "fermions_singleband_checkerboardlattice_n_%d_x_%d_y_%d_v_%f_t1_%f_t2_%f_gx_%f_gy_%f_mus_%f_kx_%d_ky_%d", NbrParticles, NbrSitesX, NbrSitesY, 
+		    sprintf (EigenstateOutputFile, "%s_v_%f_t1_%f_t2_%f_gx_%f_gy_%f_mus_%f_kx_%d_ky_%d",FilePrefix, 
 			     Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"), i, j);
 		}
 	      else
 		{
 		  if (Manager.GetDouble("mu-s") == 0.0)
-		    sprintf (EigenstateOutputFile, "fermions_singleband_checkerboardlattice_n_%d_x_%d_y_%d_u_%f_v_%f_t1_%f_t2_%f_gx_%f_gy_%f_kx_%d_ky_%d", NbrParticles, NbrSitesX, NbrSitesY, 
+		    sprintf (EigenstateOutputFile, "%s_u_%f_v_%f_t1_%f_t2_%f_gx_%f_gy_%f_kx_%d_ky_%d",FilePrefix, 
 			     Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j);
 		  else
-		    sprintf (EigenstateOutputFile, "fermions_singleband_checkerboardlattice_n_%d_x_%d_y_%d_u_%f_v_%f_t1_%f_t2_%f_gx_%f_gy_%f_mus_%f_kx_%d_ky_%d", NbrParticles, NbrSitesX, NbrSitesY, 
+		    sprintf (EigenstateOutputFile, "%s_u_%f_v_%f_t1_%f_t2_%f_gx_%f_gy_%f_mus_%f_kx_%d_ky_%d",FilePrefix, 
 			     Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"), i, j);
 		}
 	      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
