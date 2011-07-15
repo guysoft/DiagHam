@@ -111,9 +111,9 @@ int main(int argc, char** argv)
   else
     {
       if (Manager.GetBoolean("three-body") == false)
-	sprintf (FilePrefix, "fermions_singleband_checkerboardlattice_n_%d_x_%d_y",  NbrParticles, NbrSitesX, NbrSitesY);
+	sprintf (FilePrefix, "fermions_singleband_checkerboardlattice_n_%d_x_%d_y_%d",  NbrParticles, NbrSitesX, NbrSitesY);
       else
-	sprintf (FilePrefix, "fermions_singleband_threebody_checkerboardlattice_n_%d_x_%d_y",  NbrParticles, NbrSitesX, NbrSitesY);
+	sprintf (FilePrefix, "fermions_singleband_threebody_checkerboardlattice_n_%d_x_%d_y_%d",  NbrParticles, NbrSitesX, NbrSitesY);
     }
   char* CommentLine = new char [256];
   sprintf (CommentLine, "eigenvalues\n# kx ky ");

@@ -124,7 +124,8 @@ class ParticleOnLatticeCheckerboardLatticeSingleBandThreeBodyHamiltonian : publi
   // kx4 = annihilation momentum along x for the second A site
   // ky4 = annihilation momentum along y for the second A site
   // return value = corresponding matrix element
-  Complex ComputeThreeBodyMatrixElementBAA(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
+  Complex ComputeThreeBodyMatrixElementBAA(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
+  //  Complex ComputeThreeBodyMatrixElementBAA(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
 
   // compute the matrix element for the three body interaction between one site A and two sites B 
   //

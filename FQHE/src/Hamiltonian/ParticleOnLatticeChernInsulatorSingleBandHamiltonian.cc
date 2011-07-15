@@ -141,8 +141,11 @@ ParticleOnLatticeChernInsulatorSingleBandHamiltonian::~ParticleOnLatticeChernIns
 	++ReducedDim;
       for (int i = 0; i < ReducedDim; ++i)
 	{
-	  delete[] this->InteractionPerComponentIndex[i];
-	  delete[] this->InteractionPerComponentCoefficient[i];
+	  if (this->NbrInteractionPerComponent[i] > 0)
+	    {
+	      delete[] this->InteractionPerComponentIndex[i];
+	      delete[] this->InteractionPerComponentCoefficient[i];
+	    }
 	}
       delete[] this->InteractionPerComponentIndex;
       delete[] this->InteractionPerComponentCoefficient;

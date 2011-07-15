@@ -67,16 +67,6 @@ class ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian : public Par
   // the second index is a linearized index (m1,m2,m3) + (n1,n2,n3) * (nbr element in current index sum) (m for creation operators, n for annhilation operators)
   Complex** ThreeBodyInteractionFactors;
 
-  // stored interactions per component
-  int *NbrInteractionPerComponent;
-
-  // indices of matrix elements per component
-  int **InteractionPerComponentIndex;
-  // coefficients of matrix elements per component
-  Complex** InteractionPerComponentCoefficient;
-  // translations of matrix elements per component
-  int **InteractionPerComponentNbrTranslation;
-
   // true if two body terms are set
   bool TwoBodyFlag;  
   
