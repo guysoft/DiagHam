@@ -1318,199 +1318,399 @@ void ParticleOnSphereTwoLandauLevelDeltaHamiltonian::EvaluateInteractionFactors(
     
   if ( this->ShowIntFactorsFlag )
     {
-      //upup-upup term  
-      cout << "UpUpUpUp Terms" << endl ;
-      for (int i = 0; i < this->NbrUpUpSectorSums; ++i)
-	{	   
-	  if (this->NbrUpUpSectorIndicesPerSum[i] > 0)
-	    {	      
-	      int Index = 0;
-	      for (int j1 = 0; j1 < this->NbrUpUpSectorIndicesPerSum[i]; ++j1)
-		{
-		  int m1 = (this->UpUpSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp;
-		  int m2 = (this->UpUpSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxUp;
-		  for (int j2 = 0; j2 < this->NbrUpUpSectorIndicesPerSum[i]; ++j2)
+      
+      if ( this->Particles->GetParticleStatistic() == ParticleOnSphere::BosonicStatistic ) 
+        {
+	  //upup-upup term  
+	  cout << "UpUpUpUp Terms" << endl ;
+	  for (int i = 0; i < this->NbrUpUpSectorSums; ++i)
+	    {	   
+	      if (this->NbrUpUpSectorIndicesPerSum[i] > 0)
+		{	      
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrUpUpSectorIndicesPerSum[i]; ++j1)
 		    {
-		      int m3 = (this->UpUpSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
-		      int m4 = (this->UpUpSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxUp;
-		      cout << "<" << (double)m1/2.0 << ", " << (double)m2/2.0 << "| V | " << (double)m3/2.0 << ", " << (double)m4/2.0 << "> = " << this->InteractionFactorsUpUpUpUp[i][Index] << endl;
-		      ++Index;
+		      int m1 = (this->UpUpSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp;
+		      int m2 = (this->UpUpSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxUp;
+		      for (int j2 = 0; j2 < this->NbrUpUpSectorIndicesPerSum[i]; ++j2)
+			{
+			  int m3 = (this->UpUpSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
+			  int m4 = (this->UpUpSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxUp;
+			  cout << "<" << (double)m1/2.0 << ", " << (double)m2/2.0 << "| V | " << (double)m3/2.0 << ", " << (double)m4/2.0 << "> = " << this->InteractionFactorsUpUpUpUp[i][Index] << endl;
+			  ++Index;
+			}
 		    }
 		}
 	    }
-	}
-	
-      //cout << "Up Up Down Down" << endl;
-      cout << "UpUpDownDown Terms" << endl ;
-      for (int i = 0; i < this->NbrDownDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
-	{
-	  if (this->NbrDownDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
-	    {	      
-	      int Index = 0;
-	      for (int j1 = 0; j1 < this->NbrDownDownSectorIndicesPerSum[i]; ++j1)
-		{
-		  int m1 = (this->DownDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxDown - 1;
-		  int m2 = (this->DownDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1;
-		  for (int j2 = 0; j2 < this->NbrUpUpSectorIndicesPerSum[i+2]; ++j2)
-		    {
-		      int m3 = (this->UpUpSectorIndicesPerSum[i+2][j2 << 1] << 1) - this->LzMaxUp;
-		      int m4 = (this->UpUpSectorIndicesPerSum[i+2][(j2 << 1) + 1] << 1) - this->LzMaxUp;
-		      cout << "<" << (double)m1/2.0 << ", " << (double)m2/2.0 << "| V | " << (double)m3/2.0 << ", " << (double)m4/2.0 << "> = " << this->InteractionFactorsUpUpDownDown[i][Index] << endl;
-		      ++Index;
-		    }
-		}
-	    }
-	}
-		
-      cout << "UpUpUpDown Terms" << endl;
-      for (int i = 0; i < this->NbrUpDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
-	{
-	  if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
-	    {	      
-	      int Index = 0;
-	      for (int j1 = 0; j1 < this->NbrUpDownSectorIndicesPerSum[i]; ++j1)
-		{
-		  int m1 = (this->UpDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp ;
-		  int m2 = (this->UpDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1;
-		  for (int j2 = 0; j2 < this->NbrUpUpSectorIndicesPerSum[i+1]; ++j2)
-		    {
-		      int m3 = (this->UpUpSectorIndicesPerSum[i+1][j2 << 1] << 1) - this->LzMaxUp;
-		      int m4 = (this->UpUpSectorIndicesPerSum[i+1][(j2 << 1) + 1] << 1) - this->LzMaxUp;
-		      cout << "<" << (double)m1/2.0 << ", " << (double)m2/2.0 << "| V | " << (double)m3/2.0 << ", " << (double)m4/2.0 << "> = " << this->InteractionFactorsUpUpUpDown[i][Index] << endl;
-		      ++Index;
-		    }
-		}
-	    }
-	}
-  
-  
-		
-      cout << "DownDownUpUp Terms" << endl;
-      for (int i = 0; i < this->NbrDownDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
-	{
-	  if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
-	    {	    
-	      int Index = 0;
-	      for (int j1 = 0; j1 < this->NbrUpUpSectorIndicesPerSum[i+2]; ++j1)
-		{
-		  int m1 = (this->UpUpSectorIndicesPerSum[i+2][j1 << 1] << 1) - this->LzMaxUp ;
-		  int m2 = (this->UpUpSectorIndicesPerSum[i+2][(j1 << 1) + 1] << 1) - this->LzMaxUp ;
-		  for (int j2 = 0; j2 < this->NbrDownDownSectorIndicesPerSum[i]; ++j2)
-		    {
-		      int m3 = (this->DownDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxDown - 1;
-		      int m4 = (this->DownDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
-		      cout << "<" << (double)m1/2.0 << ", " << (double)m2/2.0 << "| V | " << (double)m3/2.0 << ", " << (double)m4/2.0 << "> = " << this->InteractionFactorsDownDownUpUp[i][Index] << endl;
-		      ++Index;
-		    }
-		}
-	    }
-	}
-	
-      cout << "DownDownDownDown Terms" << endl;
-      for (int i = 0; i < this->NbrDownDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
-	{
-	  if (this->NbrDownDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
-	    {	      
-	      int Index = 0;
-	      for (int j1 = 0; j1 < this->NbrDownDownSectorIndicesPerSum[i]; ++j1)
-		{
-		  int m1 = (this->DownDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxDown - 1;
-		  int m2 = (this->DownDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1;
-		  for (int j2 = 0; j2 < this->NbrDownDownSectorIndicesPerSum[i]; ++j2)
-		    {
-		      int m3 = (this->DownDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxDown - 1;
-		      int m4 = (this->DownDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
-		      cout << "<" << (double)m1/2.0 << ", " << (double)m2/2.0 << "| V | " << (double)m3/2.0 << ", " << (double)m4/2.0 << "> = " << this->InteractionFactorsDownDownDownDown[i][Index] << endl;
-		      ++Index;
-		    }
-		}
-	    }
-	}
-	
-      cout << "DownDownUpDown Terms" << endl;
-      for (int i = 1; i < this->NbrUpDownSectorSums-1; ++i) // go through the possible sums of Lz values on LLL
-	{
-	  if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+	    
+	  //cout << "Up Up Down Down" << endl;
+	  cout << "UpUpDownDown Terms" << endl ;
+	  for (int i = 0; i < this->NbrDownDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
 	    {
-	      int Index = 0;
-	      for (int j1 = 0; j1 < this->NbrUpDownSectorIndicesPerSum[i]; ++j1)
-		{
-		  int m1 = (this->UpDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp ;
-		  int m2 = (this->UpDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1 ;
-		  for (int j2 = 0; j2 < this->NbrDownDownSectorIndicesPerSum[i-1]; ++j2)
+	      if (this->NbrDownDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+		{	      
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrDownDownSectorIndicesPerSum[i]; ++j1)
 		    {
-		      int m3 = (this->DownDownSectorIndicesPerSum[i-1][j2 << 1] << 1) - this->LzMaxDown - 1;
-		      int m4 = (this->DownDownSectorIndicesPerSum[i-1][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
-		      cout << "<" << (double)m1/2.0 << ", " << (double)m2/2.0 << "| V | " << (double)m3/2.0 << ", " << (double)m4/2.0 << "> = " << this->InteractionFactorsDownDownUpDown[i-1][Index] << endl;
-		      ++Index;
+		      int m1 = (this->DownDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxDown - 1;
+		      int m2 = (this->DownDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1;
+		      for (int j2 = 0; j2 < this->NbrUpUpSectorIndicesPerSum[i+2]; ++j2)
+			{
+			  int m3 = (this->UpUpSectorIndicesPerSum[i+2][j2 << 1] << 1) - this->LzMaxUp;
+			  int m4 = (this->UpUpSectorIndicesPerSum[i+2][(j2 << 1) + 1] << 1) - this->LzMaxUp;
+			  cout << "<" << (double)m1/2.0 << ", " << (double)m2/2.0 << "| V | " << (double)m3/2.0 << ", " << (double)m4/2.0 << "> = " << this->InteractionFactorsUpUpDownDown[i][Index] << endl;
+			  ++Index;
+			}
 		    }
 		}
 	    }
-	}
-	
-      cout << "UpDownUpUp Terms" << endl;
-      for (int i = 0; i < this->NbrUpDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
-	{
-	  if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+		    
+	  cout << "UpUpUpDown Terms" << endl;
+	  for (int i = 0; i < this->NbrUpDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
 	    {
-	      int Index = 0;
-	      for (int j1 = 0; j1 < this->NbrUpUpSectorIndicesPerSum[i+1]; ++j1)
-		{
-		  int m1 = (this->UpUpSectorIndicesPerSum[i+1][j1 << 1] << 1) - this->LzMaxUp ;
-		  int m2 = (this->UpUpSectorIndicesPerSum[i+1][(j1 << 1) + 1] << 1) - this->LzMaxUp ;
-		  for (int j2 = 0; j2 < this->NbrUpDownSectorIndicesPerSum[i]; ++j2)
+	      if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+		{	      
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrUpDownSectorIndicesPerSum[i]; ++j1)
 		    {
-		      int m3 = (this->UpDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
-		      int m4 = (this->UpDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
-		      cout << "<" << (double)m1/2.0 << ", " << (double)m2/2.0 << "| V | " << (double)m3/2.0 << ", " << (double)m4/2.0 << "> = " << this->InteractionFactorsUpUpUpDown[i][Index] << endl;
-		      ++Index;
+		      int m1 = (this->UpDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp ;
+		      int m2 = (this->UpDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1;
+		      for (int j2 = 0; j2 < this->NbrUpUpSectorIndicesPerSum[i+1]; ++j2)
+			{
+			  int m3 = (this->UpUpSectorIndicesPerSum[i+1][j2 << 1] << 1) - this->LzMaxUp;
+			  int m4 = (this->UpUpSectorIndicesPerSum[i+1][(j2 << 1) + 1] << 1) - this->LzMaxUp;
+			  cout << "<" << (double)m1/2.0 << ", " << (double)m2/2.0 << "| V | " << (double)m3/2.0 << ", " << (double)m4/2.0 << "> = " << this->InteractionFactorsUpUpUpDown[i][Index] << endl;
+			  ++Index;
+			}
 		    }
 		}
 	    }
-	}
-	
-    cout << "UpDownDownDown Terms" << endl;
-    //now we set the interaction terms where a single operator acts on the first LL and the rest on the LLL 
-    for (int i = 0; i < this->NbrDownDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
-	{
-	  if (this->NbrDownDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+      
+      
+		    
+	  cout << "DownDownUpUp Terms" << endl;
+	  for (int i = 0; i < this->NbrDownDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
 	    {
-	      int Index = 0;
-	      for (int j1 = 0; j1 < this->NbrDownDownSectorIndicesPerSum[i]; ++j1)
-		{
-		  int m1 = (this->DownDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxDown - 1;
-		  int m2 = (this->DownDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1;
-		  for (int j2 = 0; j2 < this->NbrUpDownSectorIndicesPerSum[i+1]; ++j2)
+	      if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+		{	    
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrUpUpSectorIndicesPerSum[i+2]; ++j1)
 		    {
-		      int m3 = (this->UpDownSectorIndicesPerSum[i+1][j2 << 1] << 1) - this->LzMaxUp;
-		      int m4 = (this->UpDownSectorIndicesPerSum[i+1][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
-		      cout << "<" << (double)m1/2.0 << ", " << (double)m2/2.0 << "| V | " << (double)m3/2.0 << ", " << (double)m4/2.0 << "> = " << this->InteractionFactorsUpDownDownDown[i][Index] << endl;
-		      ++Index;
+		      int m1 = (this->UpUpSectorIndicesPerSum[i+2][j1 << 1] << 1) - this->LzMaxUp ;
+		      int m2 = (this->UpUpSectorIndicesPerSum[i+2][(j1 << 1) + 1] << 1) - this->LzMaxUp ;
+		      for (int j2 = 0; j2 < this->NbrDownDownSectorIndicesPerSum[i]; ++j2)
+			{
+			  int m3 = (this->DownDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxDown - 1;
+			  int m4 = (this->DownDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
+			  cout << "<" << (double)m1/2.0 << ", " << (double)m2/2.0 << "| V | " << (double)m3/2.0 << ", " << (double)m4/2.0 << "> = " << this->InteractionFactorsDownDownUpUp[i][Index] << endl;
+			  ++Index;
+			}
 		    }
 		}
 	    }
-	}
-	
-      cout << "UpDownUpDown Terms" << endl;
-      for (int i = 0; i < this->NbrUpDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
-	{
-	  if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum. 
+	    
+	  cout << "DownDownDownDown Terms" << endl;
+	  for (int i = 0; i < this->NbrDownDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
 	    {
-	      int Index = 0;
-	      for (int j1 = 0; j1 < this->NbrUpDownSectorIndicesPerSum[i]; ++j1)
-		{
-		  int m1 = (this->UpDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp ;
-		  int m2 = (this->UpDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1 ;
-		  for (int j2 = 0; j2 < this->NbrUpDownSectorIndicesPerSum[i]; ++j2)
+	      if (this->NbrDownDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+		{	      
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrDownDownSectorIndicesPerSum[i]; ++j1)
 		    {
-		      int m3 = (this->UpDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
-		      int m4 = (this->UpDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;		      
-		      cout << "<" << (double)m1/2.0 << ", " << (double)m2/2.0 << "| V | " << (double)m3/2.0 << ", " << (double)m4/2.0 << "> = " << this->InteractionFactorsUpDownUpDown[i][Index] << endl;	
-		      ++Index;
+		      int m1 = (this->DownDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxDown - 1;
+		      int m2 = (this->DownDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1;
+		      for (int j2 = 0; j2 < this->NbrDownDownSectorIndicesPerSum[i]; ++j2)
+			{
+			  int m3 = (this->DownDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxDown - 1;
+			  int m4 = (this->DownDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
+			  cout << "<" << (double)m1/2.0 << ", " << (double)m2/2.0 << "| V | " << (double)m3/2.0 << ", " << (double)m4/2.0 << "> = " << this->InteractionFactorsDownDownDownDown[i][Index] << endl;
+			  ++Index;
+			}
 		    }
 		}
 	    }
-	}	
+	    
+	  cout << "DownDownUpDown Terms" << endl;
+	  for (int i = 1; i < this->NbrUpDownSectorSums-1; ++i) // go through the possible sums of Lz values on LLL
+	    {
+	      if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+		{
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrUpDownSectorIndicesPerSum[i]; ++j1)
+		    {
+		      int m1 = (this->UpDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp ;
+		      int m2 = (this->UpDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1 ;
+		      for (int j2 = 0; j2 < this->NbrDownDownSectorIndicesPerSum[i-1]; ++j2)
+			{
+			  int m3 = (this->DownDownSectorIndicesPerSum[i-1][j2 << 1] << 1) - this->LzMaxDown - 1;
+			  int m4 = (this->DownDownSectorIndicesPerSum[i-1][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
+			  cout << "<" << (double)m1/2.0 << ", " << (double)m2/2.0 << "| V | " << (double)m3/2.0 << ", " << (double)m4/2.0 << "> = " << this->InteractionFactorsDownDownUpDown[i-1][Index] << endl;
+			  ++Index;
+			}
+		    }
+		}
+	    }
+	    
+	  cout << "UpDownUpUp Terms" << endl;
+	  for (int i = 0; i < this->NbrUpDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
+	    {
+	      if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+		{
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrUpUpSectorIndicesPerSum[i+1]; ++j1)
+		    {
+		      int m1 = (this->UpUpSectorIndicesPerSum[i+1][j1 << 1] << 1) - this->LzMaxUp ;
+		      int m2 = (this->UpUpSectorIndicesPerSum[i+1][(j1 << 1) + 1] << 1) - this->LzMaxUp ;
+		      for (int j2 = 0; j2 < this->NbrUpDownSectorIndicesPerSum[i]; ++j2)
+			{
+			  int m3 = (this->UpDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
+			  int m4 = (this->UpDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
+			  cout << "<" << (double)m1/2.0 << ", " << (double)m2/2.0 << "| V | " << (double)m3/2.0 << ", " << (double)m4/2.0 << "> = " << this->InteractionFactorsUpUpUpDown[i][Index] << endl;
+			  ++Index;
+			}
+		    }
+		}
+	    }
+	    
+	cout << "UpDownDownDown Terms" << endl;
+	//now we set the interaction terms where a single operator acts on the first LL and the rest on the LLL 
+	for (int i = 0; i < this->NbrDownDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
+	    {
+	      if (this->NbrDownDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+		{
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrDownDownSectorIndicesPerSum[i]; ++j1)
+		    {
+		      int m1 = (this->DownDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxDown - 1;
+		      int m2 = (this->DownDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1;
+		      for (int j2 = 0; j2 < this->NbrUpDownSectorIndicesPerSum[i+1]; ++j2)
+			{
+			  int m3 = (this->UpDownSectorIndicesPerSum[i+1][j2 << 1] << 1) - this->LzMaxUp;
+			  int m4 = (this->UpDownSectorIndicesPerSum[i+1][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;
+			  cout << "<" << (double)m1/2.0 << ", " << (double)m2/2.0 << "| V | " << (double)m3/2.0 << ", " << (double)m4/2.0 << "> = " << this->InteractionFactorsUpDownDownDown[i][Index] << endl;
+			  ++Index;
+			}
+		    }
+		}
+	    }
+	    
+	  cout << "UpDownUpDown Terms" << endl;
+	  for (int i = 0; i < this->NbrUpDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
+	    {
+	      if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum. 
+		{
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrUpDownSectorIndicesPerSum[i]; ++j1)
+		    {
+		      int m1 = (this->UpDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp ;
+		      int m2 = (this->UpDownSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxDown - 1 ;
+		      for (int j2 = 0; j2 < this->NbrUpDownSectorIndicesPerSum[i]; ++j2)
+			{
+			  int m3 = (this->UpDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
+			  int m4 = (this->UpDownSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxDown - 1;		      
+			  cout << "<" << (double)m1/2.0 << ", " << (double)m2/2.0 << "| V | " << (double)m3/2.0 << ", " << (double)m4/2.0 << "> = " << this->InteractionFactorsUpDownUpDown[i][Index] << endl;	
+			  ++Index;
+			}
+		    }
+		}
+	    }	
+	}
+      else if ( Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic )
+        {
+	   //upup-upup term  
+	  cout << "UpUpUpUp Terms" << endl ;
+	  for (int i = 0; i < this->NbrUpUpSectorSums; ++i)
+	    {	   
+	      if (this->NbrUpUpSectorIndicesPerSum[i] > 0)
+		{	      
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrUpUpSectorIndicesPerSum[i]; ++j1)
+		    {
+		      int m1 = (this->UpUpSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp;
+		      int m2 = (this->UpUpSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxUp;
+		      for (int j2 = 0; j2 < this->NbrUpUpSectorIndicesPerSum[i]; ++j2)
+			{
+			  int m3 = (this->UpUpSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
+			  int m4 = (this->UpUpSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxUp;
+			  cout << "<" << (double)m1/2.0 << ", " << (double)m2/2.0 << "| V | " << (double)m3/2.0 << ", " << (double)m4/2.0 << "> = " << this->InteractionFactorsUpUpUpUp[i][Index] << endl;
+			  ++Index;
+			}
+		    }
+		}
+	    }
+	    
+	  //cout << "Up Up Down Down" << endl;
+	  cout << "UpUpDownDown Terms" << endl ;
+	  for (int i = 0; i < this->NbrDownDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
+	    {
+	      if (this->NbrDownDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+		{	      
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrDownDownSectorIndicesPerSum[i]; ++j1)
+		    {
+		      int m1 = ((this->DownDownSectorIndicesPerSum[i][j1 << 1]  + this->LzFermionDownShift) << 1) - this->LzMaxDown - 1;
+		      int m2 = ((this->DownDownSectorIndicesPerSum[i][(j1 << 1) + 1]  + this->LzFermionDownShift) << 1) - this->LzMaxDown - 1;
+		      for (int j2 = 0; j2 < this->NbrUpUpSectorIndicesPerSum[i+2]; ++j2)
+			{
+			  int m3 = (this->UpUpSectorIndicesPerSum[i+2][j2 << 1] << 1) - this->LzMaxUp;
+			  int m4 = (this->UpUpSectorIndicesPerSum[i+2][(j2 << 1) + 1] << 1) - this->LzMaxUp;
+			  cout << "<" << (double)m1/2.0 << ", " << (double)m2/2.0 << "| V | " << (double)m3/2.0 << ", " << (double)m4/2.0 << "> = " << this->InteractionFactorsUpUpDownDown[i][Index] << endl;
+			  ++Index;
+			}
+		    }
+		}
+	    }
+		    
+	  cout << "UpUpUpDown Terms" << endl;
+	  for (int i = 0; i < this->NbrUpDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
+	    {
+	      if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+		{	      
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrUpDownSectorIndicesPerSum[i]; ++j1)
+		    {
+		      int m1 = (this->UpDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp ;
+		      int m2 = ((this->UpDownSectorIndicesPerSum[i][(j1 << 1) + 1] + this->LzFermionDownShift ) << 1) - this->LzMaxDown - 1 ;
+		      for (int j2 = 0; j2 < this->NbrUpUpSectorIndicesPerSum[i]; ++j2)
+			{
+			  int m3 = (this->UpUpSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
+			  int m4 = (this->UpUpSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMaxUp;
+			  cout << "<" << (double)m1/2.0 << ", " << (double)m2/2.0 << "| V | " << (double)m3/2.0 << ", " << (double)m4/2.0 << "> = " << this->InteractionFactorsUpUpUpDown[i][Index] << endl;
+			  ++Index;
+			}
+		    }
+		}
+	    }
+      
+      
+		    
+	  cout << "DownDownUpUp Terms" << endl;
+	  for (int i = 0; i < this->NbrDownDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
+	    {
+	      if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+		{	    
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrUpUpSectorIndicesPerSum[i+2]; ++j1)
+		    {
+		      int m1 = (this->UpUpSectorIndicesPerSum[i+2][j1 << 1] << 1) - this->LzMaxUp ;
+		      int m2 = (this->UpUpSectorIndicesPerSum[i+2][(j1 << 1) + 1] << 1) - this->LzMaxUp ;
+		      for (int j2 = 0; j2 < this->NbrDownDownSectorIndicesPerSum[i]; ++j2)
+			{
+			  int m3 = ((this->DownDownSectorIndicesPerSum[i][j2 << 1] + this->LzFermionDownShift ) << 1) - this->LzMaxDown - 1 ;
+			  int m4 = ((this->DownDownSectorIndicesPerSum[i][(j2 << 1) + 1] + this->LzFermionDownShift ) << 1) - this->LzMaxDown - 1;
+			  cout << "<" << (double)m1/2.0 << ", " << (double)m2/2.0 << "| V | " << (double)m3/2.0 << ", " << (double)m4/2.0 << "> = " << this->InteractionFactorsDownDownUpUp[i][Index] << endl;
+			  ++Index;
+			}
+		    }
+		}
+	    }
+	    
+	  cout << "DownDownDownDown Terms" << endl;
+	  for (int i = 0; i < this->NbrDownDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
+	    {
+	      if (this->NbrDownDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+		{	      
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrDownDownSectorIndicesPerSum[i]; ++j1)
+		    {
+		      int m1 = ((this->DownDownSectorIndicesPerSum[i][j1 << 1] + this->LzFermionDownShift )  << 1) - this->LzMaxDown - 1;
+		      int m2 = ((this->DownDownSectorIndicesPerSum[i][(j1 << 1) + 1] + this->LzFermionDownShift )<< 1) - this->LzMaxDown - 1;
+		      for (int j2 = 0; j2 < this->NbrDownDownSectorIndicesPerSum[i]; ++j2)
+			{
+			  int m3 = ((this->DownDownSectorIndicesPerSum[i][j2 << 1] + this->LzFermionDownShift ) << 1) - this->LzMaxDown - 1 ;
+			  int m4 = ((this->DownDownSectorIndicesPerSum[i][(j2 << 1) + 1] + this->LzFermionDownShift ) << 1) - this->LzMaxDown - 1;
+			  cout << "<" << (double)m1/2.0 << ", " << (double)m2/2.0 << "| V | " << (double)m3/2.0 << ", " << (double)m4/2.0 << "> = " << this->InteractionFactorsDownDownDownDown[i][Index] << endl;
+			  ++Index;
+			}
+		    }
+		}
+	    }
+	    
+	  cout << "DownDownUpDown Terms" << endl;
+	  for (int i = 2; i < this->NbrUpDownSectorSums-2; ++i) // go through the possible sums of Lz values on LLL
+	    {
+	      if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+		{
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrUpDownSectorIndicesPerSum[i]; ++j1)
+		    {
+		      int m1 = (this->UpDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp ;
+		      int m2 = ((this->UpDownSectorIndicesPerSum[i][(j1 << 1) + 1] + this->LzFermionDownShift) << 1) - this->LzMaxDown - 1;
+		      for (int j2 = 0; j2 < this->NbrDownDownSectorIndicesPerSum[i-2]; ++j2)
+			{
+			  int m3 = ((this->DownDownSectorIndicesPerSum[i-2][j2 << 1]  + this->LzFermionDownShift) << 1) - this->LzMaxDown - 1;
+			  int m4 = ((this->DownDownSectorIndicesPerSum[i-2][(j2 << 1) + 1]  + this->LzFermionDownShift) << 1) - this->LzMaxDown - 1;
+			  cout << "<" << (double)m1/2.0 << ", " << (double)m2/2.0 << "| V | " << (double)m3/2.0 << ", " << (double)m4/2.0 << "> = " << this->InteractionFactorsDownDownUpDown[i-2][Index] << endl;
+			  ++Index;
+			}
+		    }
+		}
+	    }
+	    
+	  cout << "UpDownUpUp Terms" << endl;
+	  for (int i = 0; i < this->NbrUpDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
+	    {
+	      if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+		{
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrUpUpSectorIndicesPerSum[i]; ++j1)
+		    {
+		      int m1 = (this->UpUpSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp ;
+		      int m2 = (this->UpUpSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMaxUp ;
+		      for (int j2 = 0; j2 < this->NbrUpDownSectorIndicesPerSum[i]; ++j2)
+			{
+			  int m3 = (this->UpDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
+			  int m4 = ((this->UpDownSectorIndicesPerSum[i][(j2 << 1) + 1]+ this->LzFermionDownShift ) << 1) - this->LzMaxDown - 1 ;
+			  cout << "<" << (double)m1/2.0 << ", " << (double)m2/2.0 << "| V | " << (double)m3/2.0 << ", " << (double)m4/2.0 << "> = " << this->InteractionFactorsUpUpUpDown[i][Index] << endl;
+			  ++Index;
+			}
+		    }
+		}
+	    }
+	    
+	cout << "UpDownDownDown Terms" << endl;
+	//now we set the interaction terms where a single operator acts on the first LL and the rest on the LLL 
+	for (int i = 0; i < this->NbrDownDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
+	    {
+	      if (this->NbrDownDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum.
+		{
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrDownDownSectorIndicesPerSum[i]; ++j1)
+		    {
+		      int m1 = ((this->DownDownSectorIndicesPerSum[i][j1 << 1] + this->LzFermionDownShift )<< 1) - this->LzMaxDown - 1;
+		      int m2 = ((this->DownDownSectorIndicesPerSum[i][(j1 << 1) + 1] + this->LzFermionDownShift) << 1) - this->LzMaxDown - 1 ;
+		      for (int j2 = 0; j2 < this->NbrUpDownSectorIndicesPerSum[i+2]; ++j2)
+			{
+			  int m3 = (this->UpDownSectorIndicesPerSum[i+2][j2 << 1] << 1) - this->LzMaxUp;
+			  int m4 = ((this->UpDownSectorIndicesPerSum[i+2][(j2 << 1) + 1] + this->LzFermionDownShift) << 1) - this->LzMaxDown - 1;
+			  cout << "<" << (double)m1/2.0 << ", " << (double)m2/2.0 << "| V | " << (double)m3/2.0 << ", " << (double)m4/2.0 << "> = " << this->InteractionFactorsUpDownDownDown[i][Index] << endl;
+			  ++Index;
+			}
+		    }
+		}
+	    }
+	    
+	  cout << "UpDownUpDown Terms" << endl;
+	  for (int i = 0; i < this->NbrUpDownSectorSums; ++i) // go through the possible sums of Lz values on LLL
+	    {
+	      if (this->NbrUpDownSectorIndicesPerSum[i] > 0) // if there are m1 and m2 values that give this sum. 
+		{
+		  int Index = 0;
+		  for (int j1 = 0; j1 < this->NbrUpDownSectorIndicesPerSum[i]; ++j1)
+		    {
+		      int m1 = (this->UpDownSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMaxUp ;
+		      int m2 = ((this->UpDownSectorIndicesPerSum[i][(j1 << 1) + 1] + this->LzFermionDownShift ) << 1) - this->LzMaxDown - 1 ;
+		      for (int j2 = 0; j2 < this->NbrUpDownSectorIndicesPerSum[i]; ++j2)
+			{
+			  int m3 = (this->UpDownSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMaxUp;
+			  int m4 = ((this->UpDownSectorIndicesPerSum[i][(j2 << 1) + 1] + this->LzFermionDownShift ) << 1) - this->LzMaxDown - 1 ;		      
+			  cout << "<" << (double)m1/2.0 << ", " << (double)m2/2.0 << "| V | " << (double)m3/2.0 << ", " << (double)m4/2.0 << "> = " << this->InteractionFactorsUpDownUpDown[i][Index] << endl;	
+			  ++Index;
+			}
+		    }
+		}
+	    }	
+	}
     }
 
   this->NbrOneBodyInteractionFactorsUpUp = this->LzMaxUp + 1;

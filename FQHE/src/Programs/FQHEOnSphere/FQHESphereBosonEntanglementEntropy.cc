@@ -126,6 +126,8 @@ int main(int argc, char** argv)
   int NbrEigenstates = Manager.GetInteger("nbr-eigenstates");
   int ShiftLa = Manager.GetInteger("shift-la");
   int* TotalLz = 0;
+  int* NbrParticlesArray;
+  int MaxNbrParticles;
   bool Statistics = true;
   int NbrSpaces = 1;
   ParticleOnSphere** Spaces = 0;
@@ -141,6 +143,7 @@ int main(int argc, char** argv)
     {
       GroundStateFiles = new char* [1];
       TotalLz = new int[1];
+      NbrParticlesArray = new int[1];
       Weights = new double[1];
       Weights[0] = 1.0;
       GroundStateFiles[0] = new char [strlen(Manager.GetString("ground-file")) + 1];
@@ -157,6 +160,7 @@ int main(int argc, char** argv)
       NbrSpaces = DegeneratedFile.GetNbrLines();
       GroundStateFiles = new char* [NbrSpaces];
       TotalLz = new int[NbrSpaces];
+      NbrParticlesArray = new int[NbrSpaces];
       for (int i = 0; i < NbrSpaces; ++i)
 	{
 	  GroundStateFiles[i] = new char [strlen(DegeneratedFile(0, i)) + 1];
@@ -179,8 +183,9 @@ int main(int argc, char** argv)
   for (int i = 0; i < NbrSpaces; ++i)
     {
       TotalLz[i] = 0;
+      NbrParticlesArray[i] = NbrParticles;
       if (FQHEOnSphereFindSystemInfoFromVectorFileName(GroundStateFiles[i],
-						       NbrParticles, LzMax, TotalLz[i], Statistics) == false)
+						       NbrParticlesArray[i], LzMax, TotalLz[i], Statistics) == false)
 	{
 	  cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
 	  return -1;
@@ -190,14 +195,20 @@ int main(int argc, char** argv)
 	  cout << GroundStateFiles[i] << " is not a bosonic state" << endl;
 	  return -1;
 	}
-      if (((NbrParticles * LzMax) & 1) != (TotalLz[i] & 1))
+      if (((NbrParticlesArray[i] * LzMax) & 1) != (TotalLz[i] & 1))
 	{
 	  cout << "incompatible values for nbr-particles, nbr-flux and total-lz for ground state file " << GroundStateFiles[i] << endl;
 	  return -1;
+	}	
+      if ( i == 0 ) 
+	{
+	  MaxNbrParticles = NbrParticlesArray[i];
+	} 
+      else if( NbrParticlesArray[i] > MaxNbrParticles )
+	{
+	  MaxNbrParticles = NbrParticlesArray[i];
 	}
     }
-  
-  
   
   GroundStates = new RealVector [NbrSpaces];  
   ComplexGroundStates = new ComplexVector [NbrSpaces];  
@@ -227,9 +238,9 @@ int main(int argc, char** argv)
   for (int i = 0; i < NbrSpaces; ++i)
     {
 #ifdef  __64_BITS__
-      if ((LzMax + NbrParticles - 1) < 63)
+      if ((LzMax + NbrParticlesArray[i] - 1) < 63)
 #else
-	if ((LzMax + NbrParticles - 1) < 31)	
+	if ((LzMax + NbrParticlesArray[i] - 1) < 31)	
 #endif
 	  {
 	    if (Manager.GetBoolean("huge-basis") == true)
@@ -246,11 +257,11 @@ int main(int argc, char** argv)
 		if (Manager.GetBoolean("haldane") == false)
 		  {
 		    if ((SymmetrizedBasis == false) || (TotalLz != 0))
-		      Spaces[i] = new BosonOnSphereShort (NbrParticles, TotalLz[i], LzMax);
+		      Spaces[i] = new BosonOnSphereShort (NbrParticlesArray[i], TotalLz[i], LzMax);
 		    else
 		      {
-			Spaces[i] = new BosonOnSphereShort (NbrParticles, TotalLz[i], LzMax);
-			BosonOnSphereSymmetricBasisShort TmpSpace(NbrParticles, LzMax);
+			Spaces[i] = new BosonOnSphereShort (NbrParticlesArray[i], TotalLz[i], LzMax);
+			BosonOnSphereSymmetricBasisShort TmpSpace(NbrParticlesArray[i], LzMax);
 			RealVector OutputState = TmpSpace.ConvertToNbodyBasis(GroundStates[i], *((BosonOnSphereShort*) Spaces[i]));
 			GroundStates[i] = OutputState;
 		      }
@@ -269,7 +280,7 @@ int main(int argc, char** argv)
 			ReferenceStateDefinition.DumpErrors(cout) << endl;
 			return 0;
 		      }
-		    if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", NbrParticles) == false) || (NbrParticles <= 0))
+		    if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", NbrParticlesArray[i]) == false) || (NbrParticlesArray[i] <= 0))
 		      {
 			cout << "NbrParticles is not defined or as a wrong value" << endl;
 			return 0;
@@ -294,7 +305,7 @@ int main(int argc, char** argv)
 		      Spaces[i] = new BosonOnSphereHaldaneBasisShort(Manager.GetString("load-hilbert"));
 		    else
 		      {
-			Spaces[i] = new BosonOnSphereHaldaneBasisShort(NbrParticles, TotalLz[i], LzMax, ReferenceState);	  
+			Spaces[i] = new BosonOnSphereHaldaneBasisShort(NbrParticlesArray[i], TotalLz[i], LzMax, ReferenceState);	  
 		      }
 		  }
 	      }
@@ -302,11 +313,11 @@ int main(int argc, char** argv)
 	else
 	  {
 	    if ((SymmetrizedBasis == false) || (TotalLz != 0))
-	      Spaces[i] = new BosonOnSphereLong (NbrParticles, TotalLz[i], LzMax);
+	      Spaces[i] = new BosonOnSphereLong (NbrParticlesArray[i], TotalLz[i], LzMax);
 	    else
 	      {
-		Spaces[i] = new BosonOnSphere (NbrParticles, TotalLz[i], LzMax);
-		BosonOnSphereSymmetricBasis TmpSpace(NbrParticles, LzMax);
+		Spaces[i] = new BosonOnSphere (NbrParticlesArray[i], TotalLz[i], LzMax);
+		BosonOnSphereSymmetricBasis TmpSpace(NbrParticlesArray[i], LzMax);
 		RealVector OutputState = TmpSpace.ConvertToNbodyBasis(GroundStates[i], *((BosonOnSphere*) Spaces[i]));
 		GroundStates[i] = OutputState;
 	      }
@@ -356,20 +367,17 @@ int main(int argc, char** argv)
   int SubsystemSize = Manager.GetInteger("min-la");
   if (SubsystemSize < 1)
     SubsystemSize = 1;
-  BinomialCoefficients Coefs(MeanSubsystemSize + NbrParticles - 1);
+  BinomialCoefficients Coefs(MeanSubsystemSize + MaxNbrParticles - 1);
   for (; SubsystemSize <= MeanSubsystemSize; ++SubsystemSize)
     {
       double EntanglementEntropy = 0.0;
-      double DensitySum = 0.0;
-      int MaxSubsystemNbrParticles = NbrParticles;
-      if (MaxSubsystemNbrParticles > SubsystemSize)
-	MaxSubsystemNbrParticles = SubsystemSize;
+      double DensitySum = 0.0;      
       long MaximumSize = 0;
-      for (int i = 0; i <= NbrParticles; ++i)
+      for (int i = 0; i <= MaxNbrParticles; ++i)
 	MaximumSize += Coefs(SubsystemSize + i - 1, i);
       double* TmpDensityMatrixEigenvalues = new double [MaximumSize];
       long TmpDensityMatrixEigenvaluePosition = 0;
-      for (int SubsystemNbrParticles = 0; SubsystemNbrParticles <= NbrParticles; ++SubsystemNbrParticles)
+      for (int SubsystemNbrParticles = 0; SubsystemNbrParticles <= MaxNbrParticles; ++SubsystemNbrParticles)
 	{
 	  int SubsystemTotalLz = 0;
 	  int SubsystemLzMax = SubsystemSize - 1;
@@ -468,7 +476,7 @@ int main(int argc, char** argv)
 					{
 					  sprintf (TmpEigenstateName,
 						   "bosons_sphere_density_n_%d_2s_%d_lz_%d_la_%d_na_%d_lza_%d.%d.vec",
-						   NbrParticles, LzMax, TotalLz[0], SubsystemSize,
+						   MaxNbrParticles, LzMax, TotalLz[0], SubsystemSize,
 						   SubsystemNbrParticles, SubsystemTotalLz, i);
 					  TmpEigenstates[i].WriteVector(TmpEigenstateName);
 					}
@@ -501,7 +509,7 @@ int main(int argc, char** argv)
 					{
 					  sprintf (TmpEigenstateName,
 						   "bosons_sphere_density_n_%d_2s_%d_lz_%d_la_%d_na_%d_lza_%d.%d.vec",
-						   NbrParticles, LzMax, TotalLz[0], SubsystemSize,
+						   MaxNbrParticles, LzMax, TotalLz[0], SubsystemSize,
 						   SubsystemNbrParticles, SubsystemTotalLz, i);
 					  TmpEigenstates[i].WriteVector(TmpEigenstateName);
 					}
@@ -568,9 +576,12 @@ int main(int argc, char** argv)
 		  for (int i = 1; i < NbrSpaces; ++i)
 		    {
 		      HermitianMatrix TmpMatrix = Spaces[i]->EvaluateShiftedPartialDensityMatrix(SubsystemSize, ShiftLa, SubsystemNbrParticles, SubsystemTotalLz, ComplexGroundStates[i]);
-		      if (WeightFlag == true)
-			TmpMatrix *= Weights[i];
-		      PartialDensityMatrix += TmpMatrix;
+		      if ( TmpMatrix .GetNbrRow() > 0 )
+			{
+			  if (WeightFlag == true)
+			    TmpMatrix *= Weights[i];		      
+			  PartialDensityMatrix += TmpMatrix;
+			}
 		    }
 		  if ((NbrSpaces > 1) && (WeightFlag == false))
 		    PartialDensityMatrix /= ((double) NbrSpaces);
@@ -606,7 +617,7 @@ int main(int argc, char** argv)
 				    {
 				      sprintf (TmpEigenstateName,
 					       "bosons_sphere_density_n_%d_2s_%d_lz_%d_la_%d_na_%d_lza_%d.%d.vec",
-					       NbrParticles, LzMax, TotalLz[0], SubsystemSize,
+					       MaxNbrParticles, LzMax, TotalLz[0], SubsystemSize,
 					       SubsystemNbrParticles, SubsystemTotalLz, i);
 				      TmpEigenstates[i].WriteVector(TmpEigenstateName);
 				    }
@@ -639,7 +650,7 @@ int main(int argc, char** argv)
 				    {
 				      sprintf (TmpEigenstateName,
 					       "bosons_sphere_density_n_%d_2s_%d_lz_%d_la_%d_na_%d_lza_%d.%d.vec",
-					       NbrParticles, LzMax, TotalLz[0], SubsystemSize,
+					       MaxNbrParticles, LzMax, TotalLz[0], SubsystemSize,
 					       SubsystemNbrParticles, SubsystemTotalLz, i);
 				      TmpEigenstates[i].WriteVector(TmpEigenstateName);
 				    }
