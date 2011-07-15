@@ -1,4 +1,7 @@
+#include "MathTools/Complex.h"
+
 #include "Vector/RealVector.h"
+#include "Vector/ComplexVector.h"
 #include "Vector/RationalVector.h"
 #include "Vector/LongRationalVector.h"
 
@@ -40,6 +43,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('i', "input-vector", "name of the file containing the ASCII vector");
   (*SystemGroup) += new SingleStringOption  ('o', "output-vector", "name of the file where the vector will be stored in binary");
   (*SystemGroup) += new BooleanOption  ('r', "rational", "indicate that the input vector has rational coefficients");
+  (*SystemGroup) += new BooleanOption  ('c', "complex", "indicate that the input vector has complexl coefficients");
 #ifdef __GMP__
   (*SystemGroup) += new BooleanOption  ('\n', "use-gmp", "use arbitrary precision integers instead of fixed precision integers in rational mode");
 #else
@@ -78,7 +82,7 @@ int main(int argc, char** argv)
       return -1;
     }
 
-  if (Manager.GetBoolean("rational") == false)
+  if (Manager.GetBoolean("rational") == false && Manager.GetBoolean("complex")  == false )
     {
       double* TmpData = AsciiVector.GetAsDoubleArray(0);
       if (TmpData == 0)
@@ -88,6 +92,17 @@ int main(int argc, char** argv)
 	}
       RealVector BinaryVector(TmpData, AsciiVector.GetNbrLines());
       BinaryVector.WriteVector(Manager.GetString("output-vector"));
+    }
+  else if (Manager.GetBoolean("rational") == false && Manager.GetBoolean("complex")  == true )
+    {
+      Complex* TmpData = AsciiVector.GetAsComplexArray(0);
+      if (TmpData == 0)
+	{
+	  AsciiVector.DumpErrors(cout) << endl;
+	  return -1;     
+	}
+      ComplexVector BinaryVector(TmpData, AsciiVector.GetNbrLines());
+      BinaryVector.WriteVector(Manager.GetString("output-vector"));      
     }
   else
     {
