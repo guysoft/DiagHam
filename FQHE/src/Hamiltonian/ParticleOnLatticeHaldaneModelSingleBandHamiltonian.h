@@ -106,19 +106,19 @@ class ParticleOnLatticeHaldaneModelSingleBandHamiltonian : public ParticleOnLatt
 
   // compute the matrix element for the two body interaction between two sites A and B 
   //
-  // kx1 = momentum along x for the A site
-  // ky1 = momentum along y for the A site
-  // kx2 = momentum along x for the B site
-  // ky2 = momentum along y for the B site
+  // kx1 = annihilation momentum along x for the B site
+  // ky1 = annihilation momentum along y for the B site
+  // kx2 = creation momentum along x for the B site
+  // ky2 = creation momentum along y for the B site
   // return value = corresponding matrix element
   Complex ComputeTwoBodyMatrixElementAB(int kx1, int ky1, int kx2, int ky2);
 
   // compute the matrix element for the two body interaction between two A sites (or two B sites) 
   //
-  // kx1 = momentum along x for the first A site
-  // ky1 = momentum along y for the first A site
-  // kx2 = momentum along x for the second A site
-  // ky2 = momentum along y for the second A site
+  // kx1 = annihilation momentum along x for the second site
+  // ky1 = annihilation momentum along y for the second site
+  // kx2 = creation momentum along x for the second site
+  // ky2 = creation momentum along y for the second site
   // return value = corresponding matrix element
   Complex ComputeTwoBodyMatrixElementAA(int kx1, int ky1, int kx2, int ky2);
 

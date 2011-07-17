@@ -106,7 +106,7 @@ int main(int argc, char** argv)
   char* FilePrefix = new char [256];
   if (Manager.GetBoolean("single-band") == false)
     {
-      sprintf (FilePrefix, "fermions_checkerboardlattice_n_%d_x_%d_y",  NbrParticles, NbrSitesX, NbrSitesY);
+      sprintf (FilePrefix, "fermions_checkerboardlattice_n_%d_x_%d_y_%d",  NbrParticles, NbrSitesX, NbrSitesY);
     }
   else
     {

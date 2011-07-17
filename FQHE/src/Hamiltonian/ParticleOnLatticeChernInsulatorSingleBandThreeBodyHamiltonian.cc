@@ -156,6 +156,7 @@ ComplexVector& ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::Lo
 	      this->EvaluateMNThreeBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);	  
 	      this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
 	    }
+          this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSource, vDestination);
 	}
       else
 	{
@@ -164,7 +165,6 @@ ComplexVector& ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::Lo
 	      this->EvaluateMNThreeBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);	  
 	    }
 	}
-      this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSource, vDestination);
       delete TmpParticles;
     }
   else
@@ -518,6 +518,7 @@ ComplexVector& ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::He
 			this->HermitianEvaluateMNThreeBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
 			this->HermitianEvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
 		      }
+                    this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent + l, LastComponent, this->FastMultiplicationStep, vSource, vDestination);
 		  }
 		else
 		  {
@@ -526,7 +527,6 @@ ComplexVector& ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::He
 			this->HermitianEvaluateMNThreeBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
 		      }
 		  }
-		this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent + l, LastComponent, this->FastMultiplicationStep, vSource, vDestination);
 	      }
 	  delete TmpParticles;
 	}

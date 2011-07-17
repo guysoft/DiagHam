@@ -270,10 +270,10 @@ void ParticleOnLatticeHaldaneModelSingleBandHamiltonian::EvaluateInteractionFact
 
 // compute the matrix element for the two body interaction between two sites A and B 
 //
-// kx1 = momentum along x for the creation operator
-// ky1 = momentum along y for the creation operator
-// kx2 = momentum along x for the annihilation operator
-// ky2 = momentum along y for the annihilation operator
+// kx1 = annihilation momentum along x for the B site
+// ky1 = annihilation momentum along y for the B site
+// kx2 = creation momentum along x for the B site
+// ky2 = creation momentum along y for the B site
 // return value = corresponding matrix element
 
 Complex ParticleOnLatticeHaldaneModelSingleBandHamiltonian::ComputeTwoBodyMatrixElementAB(int kx1, int ky1, int kx2, int ky2)
@@ -286,10 +286,10 @@ Complex ParticleOnLatticeHaldaneModelSingleBandHamiltonian::ComputeTwoBodyMatrix
 
 // compute the matrix element for the two body interaction between two A sites (or two B sites) 
 //
-// kx1 = momentum along x for the creation operator
-// ky1 = momentum along y for the creation operator
-// kx2 = momentum along x for the annihilation operator
-// ky2 = momentum along y for the annihilation operator
+// kx1 = annihilation momentum along x for the second site
+// ky1 = annihilation momentum along y for the second site
+// kx2 = creation momentum along x for the second site
+// ky2 = creation momentum along y for the second site
 // return value = corresponding matrix element
 
 Complex ParticleOnLatticeHaldaneModelSingleBandHamiltonian::ComputeTwoBodyMatrixElementAA(int kx1, int ky1, int kx2, int ky2)

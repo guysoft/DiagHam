@@ -55,8 +55,8 @@ using std::ostream;
 // nbrParticles = number of particles
 // nbrSiteX = number of sites in the x direction
 // nbrSiteY = number of sites in the y direction
-// uPotential = strength of the repulsive two body neareast neighbor interaction
-// vPotential = strength of the repulsive three body neareast neighbor interaction
+// uPotential = strength of the repulsive three body neareast neighbor interaction
+// vPotential = strength of the repulsive two body neareast neighbor interaction
 // t1 = hoping amplitude between neareast neighbor sites
 // t2 = hoping amplitude between next neareast neighbor sites
 // t2p = hoping amplitude between second next neareast neighbor sites
@@ -264,7 +264,7 @@ void ParticleOnLatticeCheckerboardLatticeSingleBandThreeBodyHamiltonian::Evaluat
       double FactorU = this->UPotential * 0.5 / pow(((double) (this->NbrSiteX * this->NbrSiteY)), 2);
       double FactorV = this->VPotential * 0.5 / pow(((double) (this->NbrSiteX * this->NbrSiteY)), 2);
       this->ThreeBodyInteractionFactors = new Complex* [this->NbrThreeBodySectorSums];
-      for (int i = 0; i < this->NbrSectorSums; ++i)
+      for (int i = 0; i < this->NbrThreeBodySectorSums; ++i)
 	{
 	  this->ThreeBodyInteractionFactors[i] = new Complex[this->NbrThreeBodySectorIndicesPerSum[i] * this->NbrThreeBodySectorIndicesPerSum[i]];
 	  int Index = 0;
