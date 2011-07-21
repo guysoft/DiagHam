@@ -219,50 +219,53 @@ void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrS
     {
       for (int ky = 0; ky < nbrSitesY; ++ky)
 	{
-	  HermitianMatrix TmpOneBodyHamiltonian(4, true);
-	  Complex B1 = 4.0 * nnHoping * Complex (cos (1.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) * cos (1.0 * M_PI * ((double) ky) / ((double) nbrSitesY)) * cos(M_PI * 0.25), 
-					   sin (1.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) * sin (1.0 * M_PI * ((double) ky) / ((double) nbrSitesY)) * sin(M_PI * 0.25));
-	  double d1 = 4.0 * nnnnHoping * cos (2.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) * cos (2.0 * M_PI * ((double) ky) / ((double) nbrSitesY));
-	  double d3 = mus + (2.0 * nnnHoping * (cos (2.0 * M_PI * ((double) kx) / ((double) nbrSitesX))
-						- cos (2.0 * M_PI * ((double) ky) / ((double) nbrSitesY))));
-	  TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d1 + d3);
-	  TmpOneBodyHamiltonian.SetMatrixElement(0, 1, B1);
-	  TmpOneBodyHamiltonian.SetMatrixElement(1, 1, d1 - d3);
-	  B1 = 4.0 * nnHoping * Complex (cos (1.0 * M_PI * ((double) -kx) / ((double) nbrSitesX)) * cos (1.0 * M_PI * ((double) -ky) / ((double) nbrSitesY)) * cos(M_PI * 0.25), 
-					       sin (1.0 * M_PI * ((double) -kx) / ((double) nbrSitesX)) * sin (1.0 * M_PI * ((double) -ky) / ((double) nbrSitesY)) * sin(M_PI * 0.25));
-	  d1 = 4.0 * nnnnHoping * cos (2.0 * M_PI * ((double) -kx) / ((double) nbrSitesX)) * cos (2.0 * M_PI * ((double) -ky) / ((double) nbrSitesY));
-	  d3 = mus + (2.0 * nnnHoping * (cos (2.0 * M_PI * ((double) -kx) / ((double) nbrSitesX))
-					       - cos (2.0 * M_PI * ((double) -ky) / ((double) nbrSitesY))));
-	  TmpOneBodyHamiltonian.SetMatrixElement(2, 2, d1 + d3);
-	  TmpOneBodyHamiltonian.SetMatrixElement(2, 3, Conj(B1));
-	  TmpOneBodyHamiltonian.SetMatrixElement(3, 3, d1 - d3);
-	  TmpOneBodyHamiltonian.SetMatrixElement(0, 3, - I() * MixingTerm);
-	  TmpOneBodyHamiltonian.SetMatrixElement(1, 2, I() * MixingTerm);
-	  RealDiagonalMatrix TmpDiag;
+	  for (int kz = 0; kz < nbrSitesZ; ++kz)
+	    {
+	      HermitianMatrix TmpOneBodyHamiltonian(4, true);
+	      Complex B1 = 4.0 * nnHoping * Complex (cos (1.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) * cos (1.0 * M_PI * ((double) ky) / ((double) nbrSitesY)) * cos(M_PI * 0.25), 
+						     sin (1.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) * sin (1.0 * M_PI * ((double) ky) / ((double) nbrSitesY)) * sin(M_PI * 0.25));
+	      double d1 = 4.0 * nnnnHoping * cos (2.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) * cos (2.0 * M_PI * ((double) ky) / ((double) nbrSitesY));
+	      double d3 = mus + (2.0 * nnnHoping * (cos (2.0 * M_PI * ((double) kx) / ((double) nbrSitesX))
+						    - cos (2.0 * M_PI * ((double) ky) / ((double) nbrSitesY))));
+	      TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d1 + d3);
+	      TmpOneBodyHamiltonian.SetMatrixElement(0, 1, B1);
+	      TmpOneBodyHamiltonian.SetMatrixElement(1, 1, d1 - d3);
+	      B1 = 4.0 * nnHoping * Complex (cos (1.0 * M_PI * ((double) -kx) / ((double) nbrSitesX)) * cos (1.0 * M_PI * ((double) -ky) / ((double) nbrSitesY)) * cos(M_PI * 0.25), 
+					     sin (1.0 * M_PI * ((double) -kx) / ((double) nbrSitesX)) * sin (1.0 * M_PI * ((double) -ky) / ((double) nbrSitesY)) * sin(M_PI * 0.25));
+	      d1 = 4.0 * nnnnHoping * cos (2.0 * M_PI * ((double) -kx) / ((double) nbrSitesX)) * cos (2.0 * M_PI * ((double) -ky) / ((double) nbrSitesY));
+	      d3 = mus + (2.0 * nnnHoping * (cos (2.0 * M_PI * ((double) -kx) / ((double) nbrSitesX))
+					     - cos (2.0 * M_PI * ((double) -ky) / ((double) nbrSitesY))));
+	      TmpOneBodyHamiltonian.SetMatrixElement(2, 2, d1 + d3);
+	      TmpOneBodyHamiltonian.SetMatrixElement(2, 3, Conj(B1));
+	      TmpOneBodyHamiltonian.SetMatrixElement(3, 3, d1 - d3);
+	      TmpOneBodyHamiltonian.SetMatrixElement(0, 3, - I() * MixingTerm);
+	      TmpOneBodyHamiltonian.SetMatrixElement(1, 2, I() * MixingTerm);
+	      RealDiagonalMatrix TmpDiag;
 #ifdef __LAPACK__
-	  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag);
+	      TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag);
 #else
-	  TmpOneBodyHamiltonian.Diagonalize(TmpDiag);
+	      TmpOneBodyHamiltonian.Diagonalize(TmpDiag);
 #endif   
-	  if (MaxEMinus < TmpDiag(0, 0))
-	    {
-	      MaxEMinus = TmpDiag(0, 0);
+	      if (MaxEMinus < TmpDiag(0, 0))
+		{
+		  MaxEMinus = TmpDiag(0, 0);
+		}
+	      if (MinEMinus > TmpDiag(0, 0))
+		{
+		  MinEMinus = TmpDiag(0, 0);
+		}
+	      if (MaxEPlus < TmpDiag(2, 2))
+		{
+		  MaxEPlus = TmpDiag(2, 2);
+		}
+	      if (MinEPlus > TmpDiag(2, 2))
+		{
+		  MinEPlus = TmpDiag(2, 2);
+		}
+	      File << (2.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) << " " << (2.0 * M_PI * ((double) ky) / ((double) nbrSitesY)) << " " << TmpDiag(0, 0) << " " << TmpDiag(1, 1) <<  " " << TmpDiag(2, 2) << " " << TmpDiag(3, 3) << endl;
 	    }
-	  if (MinEMinus > TmpDiag(0, 0))
-	    {
-	      MinEMinus = TmpDiag(0, 0);
-	    }
-	  if (MaxEPlus < TmpDiag(2, 2))
-	    {
-	      MaxEPlus = TmpDiag(2, 2);
-	    }
-	  if (MinEPlus > TmpDiag(2, 2))
-	    {
-	      MinEPlus = TmpDiag(2, 2);
-	    }
-	  File << (2.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) << " " << (2.0 * M_PI * ((double) ky) / ((double) nbrSitesY)) << " " << TmpDiag(0, 0) << " " << TmpDiag(1, 1) <<  " " << TmpDiag(2, 2) << " " << TmpDiag(3, 3) << endl;
+	  File << endl;
 	}
-      File << endl;
     }
   cout << "Spread = " << (MaxEMinus - MinEMinus) << "  Gap = " <<  (MinEPlus - MaxEMinus) << "  Flatening = " << ((MaxEMinus - MinEMinus) / (MinEPlus - MaxEMinus)) << endl;
 }

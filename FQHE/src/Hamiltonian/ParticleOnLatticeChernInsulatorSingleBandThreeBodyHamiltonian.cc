@@ -951,14 +951,15 @@ long ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::PartialFastM
   long Memory = 0;
   ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
   int LastComponent = lastComponent + firstComponent;
-  this->EvaluateMNThreeBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
+  int* FlagVector = new int [TmpParticles->GetHilbertSpaceDimension()];
+  this->EvaluateMNThreeBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory, FlagVector);
   if (this->TwoBodyFlag == true)
     {
       this->EvaluateMNTwoBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
     }
 
   delete TmpParticles;
-
+  delete[] FlagVector;
   return Memory;
 }
 
@@ -1021,11 +1022,13 @@ void ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::PartialEnabl
       ++Pos;
       PosMod = this->FastMultiplicationStep - PosMod;
     }
+  int* FlagVector = new int [TmpParticles->GetHilbertSpaceDimension()];
+  Complex* SumVector = new Complex[TmpParticles->GetHilbertSpaceDimension()];
   for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
     {
       long TotalPos = 0;
       this->EvaluateMNThreeBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
-							   this->InteractionPerComponentCoefficient[Pos], TotalPos);
+							   this->InteractionPerComponentCoefficient[Pos], TotalPos, FlagVector, SumVector);
       if (this->TwoBodyFlag == true)
 	{
 	  this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
@@ -1035,4 +1038,7 @@ void ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::PartialEnabl
 	}
       ++Pos;
     }
+  delete TmpParticles;
+  delete[] SumVector;
+  delete[] FlagVector;
 }

@@ -185,8 +185,11 @@ class ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian : public Par
   // indexArray = array where indices connected to the index-th component through the Hamiltonian
   // coefficientArray = array of the numerical coefficients related to the indexArray
   // position = reference on the current position in arrays indexArray and coefficientArray
+  // flagVector = temporary array to compress matrix elements
+  // sumVector = temporary array to compress matrix elements
   virtual void EvaluateMNThreeBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index, 
-							    int* indexArray, Complex* coefficientArray, long& position);
+							      int* indexArray, Complex* coefficientArray, long& position, 
+							      int* flagVector, Complex* sumVector);
 
   // core part of the PartialFastMultiplicationMemory method involving three-body term
   // 
@@ -194,7 +197,8 @@ class ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian : public Par
   // firstComponent = index of the first component that has to be precalcualted
   // lastComponent  = index of the last component that has to be precalcualted
   // memory = reference on the amount of memory required for precalculations
-  virtual void EvaluateMNThreeBodyFastMultiplicationMemoryComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent, long& memory);
+  // flagVector = temporary array to compress matrix elements
+  virtual void EvaluateMNThreeBodyFastMultiplicationMemoryComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent, long& memory, int* flagVector);
 
   // using partial fast multiply option
   //
@@ -453,9 +457,11 @@ inline void ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::Hermi
 // indexArray = array where indices connected to the index-th component through the Hamiltonian
 // coefficientArray = array of the numerical coefficients related to the indexArray
 // position = reference on the current position in arrays indexArray and coefficientArray
+// flagVector = temporary array to compress matrix elements
+// sumVector = temporary array to compress matrix elements
 
-inline void ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::EvaluateMNThreeBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index, 
-															  int* indexArray, Complex* coefficientArray, long& position)
+inline void ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::EvaluateMNThreeBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index,
+															  int* indexArray, Complex* coefficientArray, long& position, int* flagVector, Complex* sumVector)
 {
   int Index;
   double Coefficient = 0.0;
@@ -463,6 +469,11 @@ inline void ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::Evalu
   int* TmpIndices;
   Complex* TmpInteractionFactor;
   int Dim = particles->GetHilbertSpaceDimension();
+  for (int j = 0; j < Dim; ++j)
+    {
+      flagVector[j] = 0;
+      sumVector[j] = 0.0;
+    }
   if (this->HermitianSymmetryFlag == false)
     {
       for (int j = 0; j < this->NbrThreeBodySectorSums; ++j)
@@ -481,9 +492,8 @@ inline void ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::Evalu
 		      Index = particles->ProdAd(TmpIndices + i2, 3, Coefficient);
 		      if (Index < Dim)
 			{
-			  indexArray[position] = Index;
-			  coefficientArray[position] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
-			  ++position;
+			  ++flagVector[Index];
+			  sumVector[Index] += Coefficient * Coefficient2 * (*TmpInteractionFactor);
 			}
 		      ++TmpInteractionFactor;
 		    }
@@ -511,21 +521,28 @@ inline void ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::Evalu
 			{
 			  if (Index == AbsoluteIndex)
 			    {
-			      indexArray[position] = Index;
-			      coefficientArray[position] = Coefficient * Coefficient2 * 0.5 * (*TmpInteractionFactor).Re;
-			      ++position;
+			      ++flagVector[Index];
+			      sumVector[Index] += Coefficient * Coefficient2 * 0.5 * (*TmpInteractionFactor);
 			    }
 			  else
 			    {
-			      indexArray[position] = Index;
-			      coefficientArray[position] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
-			      ++position;
+			      ++flagVector[Index];
+			      sumVector[Index] += Coefficient * Coefficient2 * (*TmpInteractionFactor);
 			    }
 			}
 		      ++TmpInteractionFactor;
 		    }
 		}
 	    }
+	}
+    }
+  for (int j = 0; j < Dim; ++j)
+    {
+      if (flagVector[j] != 0)
+	{
+	  indexArray[position] = j;
+	  coefficientArray[position] = sumVector[j];
+	  ++position;
 	}
     }
 }
@@ -537,8 +554,9 @@ inline void ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::Evalu
 // firstComponent = index of the first component that has to be precalcualted
 // lastComponent  = index of the last component that has to be precalcualted
 // memory = reference on the amount of memory required for precalculations
+// flagVector = temporary array to compress matrix elements
 
-inline void ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::EvaluateMNThreeBodyFastMultiplicationMemoryComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent, long& memory)
+inline void ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::EvaluateMNThreeBodyFastMultiplicationMemoryComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent, long& memory, int* flagVector)
 {
   int Index;
   double Coefficient = 0.0;
@@ -549,8 +567,11 @@ inline void ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::Evalu
   int TmpNbrM3Values;
   int* TmpM3Values;
 
+
   for (int i = firstComponent; i < lastComponent; ++i)
     {
+      for (int j = 0; j < Dim; ++j)
+	flagVector[j] = 0;
       for (int j = 0; j < this->NbrThreeBodySectorSums; ++j)
 	{
 	  int Lim = 3 * this->NbrThreeBodySectorIndicesPerSum[j];
@@ -565,15 +586,25 @@ inline void ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::Evalu
 		      Index = particles->ProdAd(TmpIndices + i2, 3, Coefficient);
 		      if (Index <= i)
 			{
-			  ++memory;
-			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			  ++flagVector[Index];
 			}
 		    }
 		}
 	    }
 	}
-	  
+      long Tmp = 0l;
+      for (int j = 0; j < Dim; ++j)
+	{
+	  if (flagVector[j] != 0)
+	    {
+	      ++Tmp;
+	    }
+	}
+      this->NbrInteractionPerComponent[i - this->PrecalculationShift] += Tmp;
+      memory += Tmp;
     }
+
+
 }
 
 
