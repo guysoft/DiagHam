@@ -56,6 +56,10 @@ class ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian : public ParticleOnLatt
   // number of sites in the direction perpendicular to X
   int NbrSiteYZ;
   
+  // distortion of nearest neighbor hoping amplitude in the (111) direction
+  double NNHopingDistortion111;
+  // amplitude of the spin orbit coupling
+  double SpinOrbitCoupling;
   // hoping amplitude between neareast neighbor sites
   double NNHoping;
   // hoping amplitude between next neareast neighbor sites
@@ -66,6 +70,8 @@ class ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian : public ParticleOnLatt
   double GammaX;
   // boundary condition twisting angle along y
   double GammaY;
+  // boundary condition twisting angle along z
+  double GammaZ;
   // nearest neighbor density-density potential strength
   double UPotential;
   // mixing term coupling the two copies of the checkerboard lattice
@@ -84,17 +90,15 @@ class ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian : public ParticleOnLatt
   // nbrSiteY = number of sites in the y direction
   // nbrSiteZ = number of sites in the z direction
   // uPotential = strength of the repulsive two body neareast neighbor interaction
-  // t1 = hoping amplitude between neareast neighbor sites
-  // t2 = hoping amplitude between next neareast neighbor sites
-  // t2p = hoping amplitude between second next neareast neighbor sites
-  // mixingTermNorm = norm of the mixing term coupling the two copies of the checkerboard lattice
-  // mixingTermArgv = argument of the mixing term coupling the two copies of the checkerboard lattice
+  // nnHopingDistortion111 = distortion of nearest neighbor hoping amplitude in the (111) direction
+  // spinOrbitCoupling = amplitude of the spin orbit coupling
   // gammaX = boundary condition twisting angle along x
   // gammaY = boundary condition twisting angle along y
+  // gammaZ = boundary condition twisting angle along z
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, int nbrSiteZ, double uPotential, double t1, double t2, double t2p, double mixingTermNorm, double mixingTermArg, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, int nbrSiteZ, double uPotential, double nnHopingDistortion111, double spinOrbitCoupling, double gammaX, double gammaY, double gammaZ, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //

@@ -955,7 +955,7 @@ long ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::PartialFastM
   this->EvaluateMNThreeBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory, FlagVector);
   if (this->TwoBodyFlag == true)
     {
-      this->EvaluateMNTwoBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
+      this->EvaluateMNTwoBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory, FlagVector);
     }
 
   delete TmpParticles;
@@ -1032,7 +1032,7 @@ void ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::PartialEnabl
       if (this->TwoBodyFlag == true)
 	{
 	  this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
-							     this->InteractionPerComponentCoefficient[Pos], TotalPos);
+							     this->InteractionPerComponentCoefficient[Pos], TotalPos, FlagVector, SumVector);
 	  this->EvaluateMNOneBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
 							     this->InteractionPerComponentCoefficient[Pos], TotalPos);
 	}

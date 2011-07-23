@@ -987,38 +987,10 @@ long ParticleOnLatticeWithSpinChernInsulatorHamiltonian::PartialFastMultiplicati
   int TmpNbrM3Values;
   int* TmpM3Values;
 
-  this->EvaluateMNTwoBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
+  int* FlagVector = new int [TmpParticles->GetHilbertSpaceDimension()];
+  this->EvaluateMNTwoBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory, FlagVector);
 
-//   if ((this->OneBodyInteractionFactorsdowndown != 0) || (this->OneBodyInteractionFactorsupup != 0))
-//     {
-//       for (int i = firstComponent; i < LastComponent; ++i)
-// 	{
-// 	  ++Memory;
-// 	  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
-// 	}
-//     }
-//   if (this->OneBodyInteractionFactorsupdown != 0)
-//     {
-//       for (int i = firstComponent; i < LastComponent; ++i)
-// 	{
-// 	  for (int j=0; j<= this->LzMax; ++j)
-// 	    {
-// 	      Index = TmpParticles->AddAu(i, j, j, Coefficient);
-// 	      if (Index < Dim)
-// 		{
-// 		  ++Memory;
-// 		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-// 		}
-// 	      Index = TmpParticles->AduAd(i, j, j, Coefficient);
-// 	      if (Index < Dim)
-// 		{
-// 		  ++Memory;
-// 		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-// 		}
-// 	    }
-// 	}
-//     }
-
+  delete[] FlagVector;
   delete TmpParticles;
 
   return Memory;
@@ -1093,15 +1065,20 @@ void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::PartialEnableFastMultip
       ++Pos;
       PosMod = this->FastMultiplicationStep - PosMod;
     }
+  int* FlagVector = new int [TmpParticles->GetHilbertSpaceDimension()];
+  Complex* SumVector = new Complex[TmpParticles->GetHilbertSpaceDimension()];
   for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
     {
       long TotalPos = 0;
       this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
-							 this->InteractionPerComponentCoefficient[Pos], TotalPos);
+							 this->InteractionPerComponentCoefficient[Pos], TotalPos, FlagVector, SumVector);
       this->EvaluateMNOneBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
       							 this->InteractionPerComponentCoefficient[Pos], TotalPos);
       ++Pos;
     }
+  delete TmpParticles;
+  delete[] SumVector;
+  delete[] FlagVector;
 }
 
 

@@ -33,13 +33,9 @@ using std::ofstream;
 // nbrSitesX = number of sites in the x direction
 // nbrSitesY = number of sites in the y direction
 // nbrSitesZ = number of sites in the z direction
-// nnHoping = nearest neighbor hoping amplitude
-// nnnHoping =  next nearest neighbor hoping amplitude
-// nnnnHoping =  second next nearest neighbor hoping amplitude
-// mus = sublattice staggered chemical potential 
-// mixingTermNorm = norm of the mixing term coupling the two copies of the checkerboard lattice
-// mixingTermArgv = argument of the mixing term coupling the two copies of the checkerboard lattice
-void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, int nbrSitesZ, double nnHoping, double nnnHoping, double nnnnHoping, double mus, double mixingTermNorm, double mixingTermArg);
+// nnHopingDistortion111 = distortion of nearest neighbor hoping amplitude in the (111) direction
+// spinOrbit = amplitude of the spin orbit coupling
+void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, int nbrSitesZ, double nnHopingDistortion111, double spinOrbit);
 
 
 int main(int argc, char** argv)
@@ -70,14 +66,12 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive nearest neighbor potential strength", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "v-potential", "repulsive on-site potential strength between opposite spins", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "w-potential", "repulsive nearest neighbor potential strength between opposite spins", 0.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "t1", "nearest neighbor hoping amplitude", 1.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "t2", "next nearest neighbor hoping amplitude", 1.0 - 0.5 * M_SQRT2);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "tpp", "second next nearest neighbor hoping amplitude", 0.5 * (M_SQRT2 - 1.0));
+  (*SystemGroup) += new SingleDoubleOption  ('d', "deltat-111", "distortion of the nearest neighbor coupling in the (111) direction", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('l', "lambda-so", "spin orbit coupling (in t unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "mu-s", "sublattice staggered chemical potential", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "mixing-norm", "norm of the mixing term coupling the two copies of the checkerboard lattice", 0.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "mixing-arg", "argument of the mixing term coupling the two copies of the checkerboard lattice (in 2 Pi unit)", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-z", "boundary condition twisting angle along z (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new BooleanOption ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
   (*SystemGroup) += new BooleanOption ('\n', "flat-band", "use flat band model");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
@@ -110,21 +104,21 @@ int main(int argc, char** argv)
   if (Manager.GetBoolean("flat-band") == true)
     {
       if (Manager.GetDouble("mu-s") == 0.0)
-	sprintf (EigenvalueOutputFile, "fermions_quantumspinhall3d_fukanemele_n_%d_x_%d_y_%d_z_%d_v_%f_w_%f_t1_%f_t2_%f_tpp_%f_gx_%f_gy_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	sprintf (EigenvalueOutputFile, "fermions_quantumspinhall3d_fukanemele_n_%d_x_%d_y_%d_z_%d_v_%f_w_%f_dt111_%f_so_%f_gx_%f_gy_%f_gz_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"));
       else
-	sprintf (EigenvalueOutputFile, "fermions_quantumspinhall3d_fukanemele_n_%d_x_%d_y_%d_z_%d_v_%f_w_%f_t1_%f_t2_%f_tpp_%f_gx_%f_gy_%f_mus_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+	sprintf (EigenvalueOutputFile, "fermions_quantumspinhall3d_fukanemele_n_%d_x_%d_y_%d_z_%d_v_%f_w_%f_dt111_%f_so_%f_gx_%f_gy_%f_gz_%f_mus_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Manager.GetDouble("mu-s"));
     }
   else
     {
       if (Manager.GetDouble("mu-s") == 0.0)
-	sprintf (EigenvalueOutputFile, "fermions_quantumspinhall3d_fukanemele_n_%d_x_%d_y_%d_z_%d_u_%f_v_%f_w_%f_t1_%f_t2_%f_tpp_%f_gx_%f_gy_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	sprintf (EigenvalueOutputFile, "fermions_quantumspinhall3d_fukanemele_n_%d_x_%d_y_%d_z_%d_u_%f_v_%f_w_%f_dt111_%f_so_%f_gx_%f_gy_%f_gz_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"));
       else
-	sprintf (EigenvalueOutputFile, "fermions_quantumspinhall3d_fukanemele_n_%d_x_%d_y_%d_z_%d_u_%f_v_%f_w_%f_t1_%f_t2_%f_tpp_%f_gx_%f_gy_%f_mus_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+	sprintf (EigenvalueOutputFile, "fermions_quantumspinhall3d_fukanemele_n_%d_x_%d_y_%d_z_%d_u_%f_v_%f_w_%f_dt111_%f_so_%f_gx_%f_gy_%f_gz_%f_mus_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Manager.GetDouble("mu-s"));
     }
 
   if (Manager.GetBoolean("singleparticle-spectrum") == true)
     {
-      ComputeSingleParticleSpectrum(EigenvalueOutputFile, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"), Manager.GetDouble("mixing-norm"), Manager.GetDouble("mixing-arg") * 2.0 * M_PI);
+      ComputeSingleParticleSpectrum(EigenvalueOutputFile, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"));
       return 0;
     }
 
@@ -162,21 +156,21 @@ int main(int argc, char** argv)
 	      Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());	
 	      AbstractQHEHamiltonian* Hamiltonian = 0;
 	      Hamiltonian = new ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian(&Space, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ,
-											       Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"),
-											       Manager.GetDouble("tpp"), Manager.GetDouble("mixing-norm"), Manager.GetDouble("mixing-arg") * 2.0 * M_PI, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
+											       Manager.GetDouble("u-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"),
+											       Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), 		     
 											       Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 	      char* ContentPrefix = new char[256];
 	      sprintf (ContentPrefix, "%d %d %d", i, j, k);
 	      char* EigenstateOutputFile = new char [512];
 	      if (Manager.GetBoolean("flat-band") == true)
 		{
-		  sprintf (EigenstateOutputFile, "fermions_quantumspinhall3d_fukanemele_n_%d_x_%d_y_%d_z_%d_t1_%f_t2_%f_gx_%f_gy_%f_kx_%d_ky_%d_kz_%d", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, 
-			   Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j, k);
+		  sprintf (EigenstateOutputFile, "fermions_quantumspinhall3d_fukanemele_n_%d_x_%d_y_%d_z_%d_t1_%f_t2_%f_gx_%f_gy_%f_gz_%f_kx_%d_ky_%d_kz_%d", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, 
+			   Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), i, j, k);
 		}
 	      else
 		{
-		  sprintf (EigenstateOutputFile, "fermions_quantumspinhall3d_fukanemele_n_%d_x_%d_y_%d_z_%d_u_%f_t1_%f_t2_%f_gx_%f_gy_%f_kx_%d_ky_%d_kz_%d", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, 
-			   Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j, k);
+		  sprintf (EigenstateOutputFile, "fermions_quantumspinhall3d_fukanemele_n_%d_x_%d_y_%d_z_%d_u_%f_t1_%f_t2_%f_gx_%f_gy_%f_gz_%f_kx_%d_ky_%d_kz_%d", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, 
+			   Manager.GetDouble("u-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), i, j, k);
 		}
 	      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
 	      FirstRunFlag = false;
@@ -198,14 +192,10 @@ int main(int argc, char** argv)
 // nbrSitesX = number of sites in the x direction
 // nbrSitesY = number of sites in the y direction
 // nbrSitesZ = number of sites in the z direction
-// nnHoping = nearest neighbor hoping amplitude
-// nnnHoping =  next nearest neighbor hoping amplitude
-// nnnnHoping =  second next nearest neighbor hoping amplitude
-// mus = sublattice staggered chemical potential 
-// mixingTermNorm = norm of the mixing term coupling the two copies of the checkerboard lattice
-// mixingTermArgv = argument of the mixing term coupling the two copies of the checkerboard lattice
+// nnHopingDistortion111 = distortion of nearest neighbor hoping amplitude in the (111) direction
+// spinOrbit = amplitude of the spin orbit coupling
 
-void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, int nbrSitesZ, double nnHoping, double nnnHoping, double nnnnHoping, double mus, double mixingTermNorm, double mixingTermArg)
+void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, int nbrSitesZ, double nnHopingDistortion111, double spinOrbit)
 {
   ofstream File;
   File.open(outputFileName);
@@ -214,7 +204,9 @@ void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrS
   double MaxEMinus = -10.0;
   double MinEPlus = 10.0;
   double MaxEPlus = 0.0;
-  Complex MixingTerm = mixingTermNorm * Phase(mixingTermArg);
+  double KxFactor = 2.0 * M_PI / ((double) nbrSitesX);
+  double KyFactor = 2.0 * M_PI / ((double) nbrSitesY);
+  double KzFactor = 2.0 * M_PI / ((double) nbrSitesZ);
   for (int kx = 0; kx < nbrSitesX; ++kx)
     {
       for (int ky = 0; ky < nbrSitesY; ++ky)
@@ -222,24 +214,28 @@ void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrS
 	  for (int kz = 0; kz < nbrSitesZ; ++kz)
 	    {
 	      HermitianMatrix TmpOneBodyHamiltonian(4, true);
-	      Complex B1 = 4.0 * nnHoping * Complex (cos (1.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) * cos (1.0 * M_PI * ((double) ky) / ((double) nbrSitesY)) * cos(M_PI * 0.25), 
-						     sin (1.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) * sin (1.0 * M_PI * ((double) ky) / ((double) nbrSitesY)) * sin(M_PI * 0.25));
-	      double d1 = 4.0 * nnnnHoping * cos (2.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) * cos (2.0 * M_PI * ((double) ky) / ((double) nbrSitesY));
-	      double d3 = mus + (2.0 * nnnHoping * (cos (2.0 * M_PI * ((double) kx) / ((double) nbrSitesX))
-						    - cos (2.0 * M_PI * ((double) ky) / ((double) nbrSitesY))));
-	      TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d1 + d3);
-	      TmpOneBodyHamiltonian.SetMatrixElement(0, 1, B1);
-	      TmpOneBodyHamiltonian.SetMatrixElement(1, 1, d1 - d3);
-	      B1 = 4.0 * nnHoping * Complex (cos (1.0 * M_PI * ((double) -kx) / ((double) nbrSitesX)) * cos (1.0 * M_PI * ((double) -ky) / ((double) nbrSitesY)) * cos(M_PI * 0.25), 
-					     sin (1.0 * M_PI * ((double) -kx) / ((double) nbrSitesX)) * sin (1.0 * M_PI * ((double) -ky) / ((double) nbrSitesY)) * sin(M_PI * 0.25));
-	      d1 = 4.0 * nnnnHoping * cos (2.0 * M_PI * ((double) -kx) / ((double) nbrSitesX)) * cos (2.0 * M_PI * ((double) -ky) / ((double) nbrSitesY));
-	      d3 = mus + (2.0 * nnnHoping * (cos (2.0 * M_PI * ((double) -kx) / ((double) nbrSitesX))
-					     - cos (2.0 * M_PI * ((double) -ky) / ((double) nbrSitesY))));
-	      TmpOneBodyHamiltonian.SetMatrixElement(2, 2, d1 + d3);
-	      TmpOneBodyHamiltonian.SetMatrixElement(2, 3, Conj(B1));
-	      TmpOneBodyHamiltonian.SetMatrixElement(3, 3, d1 - d3);
-	      TmpOneBodyHamiltonian.SetMatrixElement(0, 3, - I() * MixingTerm);
-	      TmpOneBodyHamiltonian.SetMatrixElement(1, 2, I() * MixingTerm);
+	      Complex B1 = 1.0 + nnHopingDistortion111 + Phase(0.5 * (((double) ky) * KyFactor) + 0.5 * (((double) kz) * KzFactor))   + Phase(0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) kz) * KzFactor))  + Phase(0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) ky) * KyFactor)) ;
+	      double d3 = spinOrbit * (sin (0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) kz) * KzFactor))
+				       - sin (0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) ky) * KyFactor))
+				       - sin (0.5 * (((double) kx) * KxFactor) - 0.5 * (((double) ky) * KyFactor))
+				       + sin (0.5 * (((double) kx) * KxFactor) - 0.5 * (((double) kz) * KzFactor)));
+	      double d4 = spinOrbit * (sin (0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) kz) * KzFactor))
+				       - sin (0.5 * (((double) ky) * KyFactor) + 0.5 * (((double) kz) * KzFactor))
+				       - sin (0.5 * (((double) ky) * KyFactor) - 0.5 * (((double) kz) * KzFactor))
+				       + sin (0.5 * (((double) ky) * KyFactor) - 0.5 * (((double) kx) * KxFactor)));
+	      double d5 = spinOrbit * (sin (0.5 * (((double) ky) * KyFactor) + 0.5 * (((double) kx) * KxFactor))
+				       - sin (0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) kz) * KzFactor))
+				       - sin (0.5 * (((double) kz) * KzFactor) - 0.5 * (((double) kx) * KxFactor))
+				       + sin (0.5 * (((double) kz) * KzFactor) - 0.5 * (((double) ky) * KyFactor)));
+	      Complex B2 = d3 + I() * d4;
+	      TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d5);
+	      TmpOneBodyHamiltonian.SetMatrixElement(1, 1, -d5);
+	      TmpOneBodyHamiltonian.SetMatrixElement(2, 2, -d5);
+	      TmpOneBodyHamiltonian.SetMatrixElement(3, 3, d5);
+	      TmpOneBodyHamiltonian.SetMatrixElement(0, 2, B1);
+	      TmpOneBodyHamiltonian.SetMatrixElement(1, 3, B1);
+	      TmpOneBodyHamiltonian.SetMatrixElement(0, 1, B2);
+	      TmpOneBodyHamiltonian.SetMatrixElement(2, 3, -B2);
 	      RealDiagonalMatrix TmpDiag;
 #ifdef __LAPACK__
 	      TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag);
@@ -262,7 +258,7 @@ void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrS
 		{
 		  MinEPlus = TmpDiag(2, 2);
 		}
-	      File << (2.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) << " " << (2.0 * M_PI * ((double) ky) / ((double) nbrSitesY)) << " " << TmpDiag(0, 0) << " " << TmpDiag(1, 1) <<  " " << TmpDiag(2, 2) << " " << TmpDiag(3, 3) << endl;
+	      File << (KxFactor * ((double) kx)) << " " << (KyFactor * ((double) ky)) << " " << (KzFactor * ((double) kz)) << " " << TmpDiag(0, 0) << " " << TmpDiag(1, 1) <<  " " << TmpDiag(2, 2) << " " << TmpDiag(3, 3) << endl;
 	    }
 	  File << endl;
 	}

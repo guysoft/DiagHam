@@ -207,7 +207,7 @@ void ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian::EvaluateInteract
 	      }
       double FactorU = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
       if (this->FlatBand == false)
-	FactorU *= this->UPotential;
+ 	FactorU *= this->UPotential;
       double FactorV = this->VPotential * 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
       this->InteractionFactors = new Complex* [this->NbrSectorSums];
       for (int i = 0; i < this->NbrSectorSums; ++i)
@@ -252,6 +252,24 @@ void ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian::EvaluateInteract
 	    }
 	}
     }
+//   double FactorU = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
+//   if (this->FlatBand == false)
+//     {
+//       for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
+// 	for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
+// 	  {
+// 	    int Index1 = (kx1 * this->NbrSiteY) + ky1;	    
+// 	    double Sum = 0.0;
+// 	    for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
+// 	      for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2)
+// 		{
+// 		  int Index2 = (kx2 * this->NbrSiteY) + ky2;
+// 		  Complex Tmp = FactorU * (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index1][0][0] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index2][0][1]) * (this->ComputeTwoBodyMatrixElementAB(kx1, ky1, kx1, ky1) + this->ComputeTwoBodyMatrixElementAB(kx2, ky2, kx2, ky2));		  
+// 		  Sum -= Tmp.Re;
+// 		}
+// 	    this->OneBodyInteractionFactors[Index1] = Sum;
+// 	  }
+//     }
   cout << "nbr interaction = " << TotalNbrInteractionFactors << endl;
   cout << "====================================" << endl;
 }

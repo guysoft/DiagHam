@@ -912,8 +912,10 @@ long ParticleOnLatticeChernInsulatorSingleBandHamiltonian::PartialFastMultiplica
   long Memory = 0;
   ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
   int LastComponent = lastComponent + firstComponent;
-  this->EvaluateMNTwoBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
+  int* FlagVector = new int [TmpParticles->GetHilbertSpaceDimension()];
+  this->EvaluateMNTwoBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory, FlagVector);
 
+  delete[] FlagVector;
   delete TmpParticles;
 
   return Memory;
@@ -978,13 +980,18 @@ void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::PartialEnableFastMult
       ++Pos;
       PosMod = this->FastMultiplicationStep - PosMod;
     }
+  int* FlagVector = new int [TmpParticles->GetHilbertSpaceDimension()];
+  Complex* SumVector = new Complex[TmpParticles->GetHilbertSpaceDimension()];
   for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
     {
       long TotalPos = 0;
       this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
-							 this->InteractionPerComponentCoefficient[Pos], TotalPos);
+							 this->InteractionPerComponentCoefficient[Pos], TotalPos, FlagVector, SumVector);
       this->EvaluateMNOneBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
 							 this->InteractionPerComponentCoefficient[Pos], TotalPos);
       ++Pos;
     }
+  delete TmpParticles;
+  delete[] SumVector;
+  delete[] FlagVector;
 }
