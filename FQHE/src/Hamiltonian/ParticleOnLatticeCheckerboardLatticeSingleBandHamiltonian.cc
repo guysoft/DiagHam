@@ -207,7 +207,7 @@ void ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian::EvaluateInteract
 	      }
       double FactorU = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
       if (this->FlatBand == false)
- 	FactorU *= this->UPotential;
+       	FactorU *= this->UPotential;
       double FactorV = this->VPotential * 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
       this->InteractionFactors = new Complex* [this->NbrSectorSums];
       for (int i = 0; i < this->NbrSectorSums; ++i)
@@ -260,13 +260,23 @@ void ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian::EvaluateInteract
 // 	  {
 // 	    int Index1 = (kx1 * this->NbrSiteY) + ky1;	    
 // 	    double Sum = 0.0;
+// 	    Complex Sum2 = 0.0;
 // 	    for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
 // 	      for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2)
 // 		{
 // 		  int Index2 = (kx2 * this->NbrSiteY) + ky2;
-// 		  Complex Tmp = FactorU * (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index1][0][0] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index2][0][1]) * (this->ComputeTwoBodyMatrixElementAB(kx1, ky1, kx1, ky1) + this->ComputeTwoBodyMatrixElementAB(kx2, ky2, kx2, ky2));		  
+// 		  Complex Tmp = FactorU * ((Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index2][0][0] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index1][0][1] * this->ComputeTwoBodyMatrixElementAB(kx1, ky1, kx2, ky2))
+// 					   + (Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index2][0][1] * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index1][0][0] * this->ComputeTwoBodyMatrixElementAB(kx1, ky1, kx2, ky2))
+// 					   - (Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index1][0][1] * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index2][0][0] * this->ComputeTwoBodyMatrixElementAB(kx1, ky1, kx1, ky1))
+// 					   - (Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index2][0][1] * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index1][0][0] * this->ComputeTwoBodyMatrixElementAB(kx2, ky2, kx2, ky2)));
+// // 		  Complex Tmp = FactorU * ((Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index2][0][0] * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index1][0][0])
+// // 					   + (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index2][0][0] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index1][0][1])
+// // 					   + (Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index2][0][1] * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index1][0][0])
+// // 					   + (Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index2][0][1] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index1][0][1])) * (this->ComputeTwoBodyMatrixElementAB(kx1, ky1, kx2, ky2) + this->ComputeTwoBodyMatrixElementAB(kx2, ky2, kx1, ky1));		  
 // 		  Sum -= Tmp.Re;
+// 		  Sum2 -= Tmp;
 // 		}
+// 	    cout << Sum2 << endl;
 // 	    this->OneBodyInteractionFactors[Index1] = Sum;
 // 	  }
 //     }

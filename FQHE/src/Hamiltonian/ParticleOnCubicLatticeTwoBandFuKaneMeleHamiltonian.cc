@@ -143,52 +143,7 @@ void ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::EvaluateInteractionFact
       this->OneBodyInteractionFactorsdowndown = new double [this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ];
     }
 
-  for (int kx = 0; kx < this->NbrSiteX; ++kx)
-    for (int ky = 0; ky < this->NbrSiteY; ++ky)
-      for (int kz = 0; kz < this->NbrSiteZ; ++kz)
-	{
-	  HermitianMatrix TmpOneBodyHamiltonian(4, true);
-	  int Index = (kx * this->NbrSiteY) + ky;
-	  Complex B1 = 4.0 * this->NNHoping * Complex (cos (1.0 * M_PI * (((double) kx) + this->GammaX) / ((double) this->NbrSiteX)) * cos (1.0 * M_PI * (((double) ky) + this->GammaY) / ((double) this->NbrSiteY)) * cos(M_PI * 0.25), 
-						       sin (1.0 * M_PI * (((double) kx) + this->GammaX) / ((double) this->NbrSiteX)) * sin (1.0 * M_PI * (((double) ky) + this->GammaY) / ((double) this->NbrSiteY)) * sin(M_PI * 0.25));
-	  double d1 = 4.0 * this->SecondNextNNHoping * cos (2.0 * M_PI * (((double) kx) + this->GammaX) / ((double) this->NbrSiteX)) * cos (2.0 * M_PI * (((double) ky) + this->GammaY) / ((double) this->NbrSiteY));
-	  double d3 = 2.0 * this->NextNNHoping * (cos (2.0 * M_PI * (((double) kx) + this->GammaX) / ((double) this->NbrSiteX))
-						  - cos (2.0 * M_PI * (((double) ky) + this->GammaY) / ((double) this->NbrSiteY)));
-	  TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d1 + d3);
-	  TmpOneBodyHamiltonian.SetMatrixElement(0, 1, B1);
-	  TmpOneBodyHamiltonian.SetMatrixElement(1, 1, d1 - d3);
-	  B1 = 4.0 * this->NNHoping * Complex (cos (1.0 * M_PI * (((double) -kx) + this->GammaX) / ((double) this->NbrSiteX)) * cos (1.0 * M_PI * (((double) -ky) + this->GammaY) / ((double) this->NbrSiteY)) * cos(M_PI * 0.25), 
-					       sin (1.0 * M_PI * (((double) -kx) + this->GammaX) / ((double) this->NbrSiteX)) * sin (1.0 * M_PI * (((double) -ky) + this->GammaY) / ((double) this->NbrSiteY)) * sin(M_PI * 0.25));
-	  d1 = 4.0 * this->SecondNextNNHoping * cos (2.0 * M_PI * (((double) -kx) + this->GammaX) / ((double) this->NbrSiteX)) * cos (2.0 * M_PI * (((double) -ky) + this->GammaY) / ((double) this->NbrSiteY));
-	  d3 = 2.0 * this->NextNNHoping * (cos (2.0 * M_PI * (((double) -kx) + this->GammaX) / ((double) this->NbrSiteX))
-					   - cos (2.0 * M_PI * (((double) -ky) + this->GammaY) / ((double) this->NbrSiteY)));
-	  TmpOneBodyHamiltonian.SetMatrixElement(2, 2, d1 + d3);
-	  TmpOneBodyHamiltonian.SetMatrixElement(2, 3, Conj(B1));
-	  TmpOneBodyHamiltonian.SetMatrixElement(3, 3, d1 - d3);
-	  TmpOneBodyHamiltonian.SetMatrixElement(0, 3, - I() * this->MixingTerm);
-	  TmpOneBodyHamiltonian.SetMatrixElement(1, 2, I() * this->MixingTerm);
-	  //	TmpOneBodyHamiltonian.SetMatrixElement(1, 2, - I() * this->MixingTerm);
-	  //	TmpOneBodyHamiltonian.SetMatrixElement(0, 3, I() * this->MixingTerm);
-	  ComplexMatrix TmpMatrix(4, 4, true);
-	  TmpMatrix[0][0] = 1.0;
-	  TmpMatrix[1][1] = 1.0;
-	  TmpMatrix[2][2] = 1.0;
-	  TmpMatrix[3][3] = 1.0;
-	  RealDiagonalMatrix TmpDiag;
-#ifdef __LAPACK__
-	  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
-#else
-	  TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
-#endif   
-	  OneBodyBasis[Index] = TmpMatrix;	
-	  if (this->FlatBand == false)
-	    {
-	      this->OneBodyInteractionFactorsupup[Index] = TmpDiag(0, 0);
-	      this->OneBodyInteractionFactorsdowndown[Index] = TmpDiag(1, 1);
-	    }
-	  cout << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << " " << TmpDiag(2, 2) << " " << TmpDiag(3, 3) << endl;
-	}
-
+  this->ComputeOneBodyMatrices(OneBodyBasis);
  
   this->NbrInterSectorSums = this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ;
   this->NbrInterSectorIndicesPerSum = new int[this->NbrInterSectorSums];
@@ -530,7 +485,7 @@ void ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::EvaluateInteractionFact
   cout << "====================================" << endl;
 }
 
-// compute the matrix element for the two body interaction between two sites A and B belonging to the same layer
+// compute the matrix element for the two body interaction between two sites A and B with up spins
 //
 // kx1 = momentum along x for the A site
 // ky1 = momentum along y for the A site
@@ -545,7 +500,52 @@ Complex ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::ComputeTwoBodyMatrix
   return Tmp;
 }
 
-// compute the matrix element for the two body interaction between two sites A with different layer indices 
+// compute the matrix element for the two body interaction between two sites A and B with down spins
+//
+// kx1 = momentum along x for the A site
+// ky1 = momentum along y for the A site
+// kx2 = momentum along x for the B site
+// ky2 = momentum along y for the B site
+// return value = corresponding matrix element
+
+Complex ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::ComputeTwoBodyMatrixElementADownBDown(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2)
+{
+  Complex Tmp = 2.0 * (cos (M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX)) - ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY))))) 
+		       + cos (M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX)) + ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY))))));
+  return Tmp;
+}
+
+// compute the matrix element for the two body interaction between two sites A and B with opposite spins
+//
+// kx1 = momentum along x for the A site
+// ky1 = momentum along y for the A site
+// kx2 = momentum along x for the B site
+// ky2 = momentum along y for the B site
+// return value = corresponding matrix element
+
+Complex ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::ComputeTwoBodyMatrixElementADownBUp(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2)
+{
+  Complex Tmp = 2.0 * (cos (M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX)) - ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY))))) 
+		       + cos (M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX)) + ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY))))));
+  return Tmp;
+}
+
+// compute the matrix element for the two body interaction between two sites A and B with opposite spins
+//
+// kx1 = momentum along x for the A site
+// ky1 = momentum along y for the A site
+// kx2 = momentum along x for the B site
+// ky2 = momentum along y for the B site
+// return value = corresponding matrix element
+
+Complex ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::ComputeTwoBodyMatrixElementAUpBDown(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2)
+{
+  Complex Tmp = 2.0 * (cos (M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX)) - ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY))))) 
+		       + cos (M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX)) + ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY))))));
+  return Tmp;
+}
+
+// compute the matrix element for the two body interaction between two sites A with opposite spins 
 //
 // kx1 = momentum along x for the first A site
 // ky1 = momentum along y for the first A site
@@ -559,7 +559,7 @@ Complex ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::ComputeTwoBodyMatrix
   return Tmp;
 }
 
-// compute the matrix element for the two body interaction between two sites B with different layer indices 
+// compute the matrix element for the two body interaction between two sites B with opposite spins 
 //
 // kx1 = momentum along x for the first B site
 // ky1 = momentum along y for the first B site
@@ -571,4 +571,62 @@ Complex ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::ComputeTwoBodyMatrix
 {
   Complex Tmp = Phase (M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX)) + ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY)))));
   return Tmp;
+}
+
+// compute the one body transformation matrices and the optional one body band stucture contribution
+//
+// oneBodyBasis = array of one body transformation matrices
+
+void ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis)
+{
+  double KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
+  double KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
+  double KzFactor = 2.0 * M_PI / ((double) this->NbrSiteZ);
+  for (int kx = 0; kx < this->NbrSiteX; ++kx)
+    for (int ky = 0; ky < this->NbrSiteY; ++ky)
+      for (int kz = 0; kz < this->NbrSiteZ; ++kz)
+	{
+	  HermitianMatrix TmpOneBodyHamiltonian(4, true);
+	  int Index = (kx * this->NbrSiteY) + ky;
+	  Complex B1 = 1.0 + this->NNHopingDistortion111 + Phase(0.5 * (((double) ky) * KyFactor) + 0.5 * (((double) kz) * KzFactor))   + Phase(0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) kz) * KzFactor))  + Phase(0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) ky) * KyFactor)) ;
+	  double d3 = this->SpinOrbitCoupling * (sin (0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) kz) * KzFactor))
+						 - sin (0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) ky) * KyFactor))
+						 - sin (0.5 * (((double) kx) * KxFactor) - 0.5 * (((double) ky) * KyFactor))
+						 + sin (0.5 * (((double) kx) * KxFactor) - 0.5 * (((double) kz) * KzFactor)));
+	  double d4 = this->SpinOrbitCoupling * (sin (0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) kz) * KzFactor))
+						 - sin (0.5 * (((double) ky) * KyFactor) + 0.5 * (((double) kz) * KzFactor))
+						 - sin (0.5 * (((double) ky) * KyFactor) - 0.5 * (((double) kz) * KzFactor))
+						 + sin (0.5 * (((double) ky) * KyFactor) - 0.5 * (((double) kx) * KxFactor)));
+	  double d5 = this->SpinOrbitCoupling * (sin (0.5 * (((double) ky) * KyFactor) + 0.5 * (((double) kx) * KxFactor))
+						 - sin (0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) kz) * KzFactor))
+						 - sin (0.5 * (((double) kz) * KzFactor) - 0.5 * (((double) kx) * KxFactor))
+						 + sin (0.5 * (((double) kz) * KzFactor) - 0.5 * (((double) ky) * KyFactor)));
+	  Complex B2 = d3 + I() * d4;
+	  TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d5);
+	  TmpOneBodyHamiltonian.SetMatrixElement(1, 1, -d5);
+	  TmpOneBodyHamiltonian.SetMatrixElement(2, 2, -d5);
+	  TmpOneBodyHamiltonian.SetMatrixElement(3, 3, d5);
+	  TmpOneBodyHamiltonian.SetMatrixElement(0, 2, B1);
+	  TmpOneBodyHamiltonian.SetMatrixElement(1, 3, B1);
+	  TmpOneBodyHamiltonian.SetMatrixElement(0, 1, B2);
+	  TmpOneBodyHamiltonian.SetMatrixElement(2, 3, -B2);
+	  ComplexMatrix TmpMatrix(4, 4, true);
+	  TmpMatrix[0][0] = 1.0;
+	  TmpMatrix[1][1] = 1.0;
+	  TmpMatrix[2][2] = 1.0;
+	  TmpMatrix[3][3] = 1.0;
+	  RealDiagonalMatrix TmpDiag;
+#ifdef __LAPACK__
+	  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
+#else
+	  TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
+#endif   
+	  oneBodyBasis[Index] = TmpMatrix;	
+	  if (this->FlatBand == false)
+	    {
+	      this->OneBodyInteractionFactorsupup[Index] = TmpDiag(0, 0);
+	      this->OneBodyInteractionFactorsdowndown[Index] = TmpDiag(1, 1);
+	    }
+	  cout << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << " " << TmpDiag(2, 2) << " " << TmpDiag(3, 3) << endl;
+	}
 }

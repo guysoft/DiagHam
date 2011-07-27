@@ -122,7 +122,34 @@ class ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian : public ParticleOnLatt
   // return value = corresponding matrix element
   Complex ComputeTwoBodyMatrixElementAUpBUp(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2);
 
-  // compute the matrix element for the two body interaction between two sites A with different layer indices 
+  // compute the matrix element for the two body interaction between two sites A and B with down spins
+  //
+  // kx1 = momentum along x for the A site
+  // ky1 = momentum along y for the A site
+  // kx2 = momentum along x for the B site
+  // ky2 = momentum along y for the B site
+  // return value = corresponding matrix element
+  Complex ComputeTwoBodyMatrixElementADownBDown(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2);
+
+  // compute the matrix element for the two body interaction between two sites A and B with opposite spins
+  //
+  // kx1 = momentum along x for the A site
+  // ky1 = momentum along y for the A site
+  // kx2 = momentum along x for the B site
+  // ky2 = momentum along y for the B site
+  // return value = corresponding matrix element
+  Complex ComputeTwoBodyMatrixElementADownBUp(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2);
+
+  // compute the matrix element for the two body interaction between two sites A and B with opposite spins
+  //
+  // kx1 = momentum along x for the A site
+  // ky1 = momentum along y for the A site
+  // kx2 = momentum along x for the B site
+  // ky2 = momentum along y for the B site
+  // return value = corresponding matrix element
+  Complex ComputeTwoBodyMatrixElementAUpBDown(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2);
+
+  // compute the matrix element for the two body interaction between two sites A with opposite spins 
   //
   // kx1 = momentum along x for the first A site
   // ky1 = momentum along y for the first A site
@@ -133,7 +160,7 @@ class ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian : public ParticleOnLatt
   // return value = corresponding matrix element
   Complex ComputeTwoBodyMatrixElementAUpADown(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2);
 
-  // compute the matrix element for the two body interaction between two sites B with different layer indices 
+  // compute the matrix element for the two body interaction between two sites B with opposite spins 
   //
   // kx1 = momentum along x for the first B site
   // ky1 = momentum along y for the first B site
@@ -164,6 +191,11 @@ class ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian : public ParticleOnLatt
 						int momentumIndex1, int momentumIndex2, int momentumIndex3, int momentumIndex4, 
 						int energyIndex1, int energyIndex2, int energyIndex3, int energyIndex4,
 						int siteIndex1, int siteIndex2, int siteIndex3, int siteIndex4);
+
+  // compute the one body transformation matrices and the optional one body band stucture contribution
+  //
+  // oneBodyBasis = array of one body transformation matrices
+  void ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis);
 
 };
 
