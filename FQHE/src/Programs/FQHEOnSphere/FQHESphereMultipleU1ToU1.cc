@@ -103,11 +103,11 @@ int main(int argc, char** argv)
       cout << "error while retrieving system parameters from file name " << Manager.GetString("state-2") << endl;
       return -1;
     }
-  if (NbrParticles1 != NbrParticles2)
+/*  if (NbrParticles1 != NbrParticles2)
     {
       cout << "error, " << Manager.GetString("state-1") << " and " << Manager.GetString("state-2") << " don't have the same number of particles" << endl;
       return -1;
-    }
+    }*/
   if (NbrFluxQuanta2 != NbrFluxQuanta1)
     {
       cout << "error, " << Manager.GetString("state-1") << " and " << Manager.GetString("state-2") << " don't have the same number of flux quanta" << endl;
@@ -179,11 +179,11 @@ int main(int argc, char** argv)
 	}
     }
 
-  if (NbrParticles1 != NbrParticles2)
+/*  if (NbrParticles1 != NbrParticles2)
     {
       cout << "error, " << Manager.GetString("state-1") << " and " << Manager.GetString("state-2") << " don't have the same number of particles" << endl;
       return -1;
-    }
+    }*/
   if (NbrFluxQuanta2 != NbrFluxQuanta1)
     {
       cout << "error, " << Manager.GetString("state-1") << " and " << Manager.GetString("state-2") << " don't have the same number of flux quanta" << endl;

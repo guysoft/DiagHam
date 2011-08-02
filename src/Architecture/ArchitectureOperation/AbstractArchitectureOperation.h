@@ -76,7 +76,8 @@ class AbstractArchitectureOperation
       FQHESphereMonomialsTimesSlaterProjection = 0x8003,
       FQHESphereParticleEntanglementSpectrumOperation = 0x8004,
       FQHESphereMultipleMonomialsTimesSlaterProjection = 0x8005,
-      FQHETorusParticleEntanglementSpectrumOperation = 0x8006
+      FQHETorusParticleEntanglementSpectrumOperation = 0x8006,
+			FQHESphereMonomialsProductOperation = 0x8007
     };
 
   // destructor

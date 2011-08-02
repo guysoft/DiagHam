@@ -47,13 +47,16 @@
 
 #include <math.h>
 #include <stdlib.h>
+#include <algorithm>
+#include <map>
 
 
 using std::cout;
 using std::endl;
 using std::dec;
 using std::hex;
-
+using std::map;
+using std::pair;
 
 // default constructor
 //
@@ -4170,4 +4173,533 @@ LongRationalVector BosonOnSphereShort::GetLzSymmetricVector(ParticleOnSphere* fi
   return TmpVector;
 }
 
+// Compute the product of two states that belong to the same Hilbert Space
+//
+// firstState = reference on one of the states whose product will be computed
+// secondState = reference on the other state whose product will be computed
+// OutputVector = reference on the vector where the result will be stored
+// FinalSpace = pointer on the Hilbert Space whose the final state belong
 
+void BosonOnSphereShort::BosonicStateTimeBosonicState(RealVector& firstState, RealVector& secondState, RealVector& outputVector, int minIndex, int nbrComponents, BosonOnSphereShort * finalSpace)
+{
+  unsigned long * FinalStates = new unsigned long[finalSpace->GetHilbertSpaceDimension()];
+  long * Weigth = new long [finalSpace->GetHilbertSpaceDimension()];
+  unsigned long * FirstMonomials = new unsigned long[this->NbrBosons];
+  unsigned long * SecondMonomials = new unsigned long[this->NbrBosons];
+  int MaxIndex = minIndex + nbrComponents;
+  for (long i = minIndex; i < MaxIndex; i++)
+    {
+      this->GetMonomial(i,FirstMonomials);
+      int * EqualPowerIndex = new int[this->NbrBosons];
+      int NbrEqualPower = 0;
+      for (int Index = 0; Index < this->NbrBosons-1; Index++)
+	{
+	  if(FirstMonomials[Index] == FirstMonomials[Index+1])
+	    {
+	      EqualPowerIndex[NbrEqualPower] = Index;
+	      NbrEqualPower++;
+	    }
+	}
+      unsigned long NbrStates = this->ProductOfTwoMonomials(FirstMonomials,EqualPowerIndex,NbrEqualPower,FirstMonomials,FinalStates,Weigth,finalSpace);
+      for (long Index = 0l; Index < NbrStates; Index++)
+	{
+	  int TmpLzMax = 2 * this->LzMax + this->NbrBosons - 1;
+	  while ((FinalStates[Index] >> TmpLzMax) == 0x0ul)
+	    --TmpLzMax;
+	  outputVector[finalSpace->FermionBasis->FindStateIndex(FinalStates[Index],TmpLzMax)] += firstState[i]*secondState[i]*Weigth[Index];
+	}
+      
+      for (long j = i + 1l; j < this->HilbertSpaceDimension; j++)
+	{
+	  this->GetMonomial(j,SecondMonomials);	
+	  NbrStates = this->ProductOfTwoMonomials(FirstMonomials,EqualPowerIndex,NbrEqualPower,SecondMonomials,FinalStates,Weigth,finalSpace);
+	  for (long Index = 0; Index < NbrStates; Index++)
+	    {
+	      int TmpLzMax = 2 * this->LzMax + this->NbrBosons - 1;
+	      while ((FinalStates[Index] >> TmpLzMax) == 0x0ul)
+		--TmpLzMax;
+	      outputVector[finalSpace->FermionBasis->FindStateIndex(FinalStates[Index],TmpLzMax)] += (firstState[i]*secondState[j]+firstState[j]*secondState[i])*Weigth[Index];
+	    }
+	}
+    }
+}
+
+// Compute the product of two states that belong to different Hilbert Spaces
+//
+// firstState = reference on one of the states whose product will be computed
+// secondState = reference on the other state whose product will be computed
+// OutputVector = reference on the vector where the result will be stored
+// SecondSpace = pointer on the Hilbert Space whose the second state belong
+// minIndex = first computed component
+// nbrComponents = Nomber of computed components
+// FinalSpace = pointer on the Hilbert Space whose the final state belong
+
+void BosonOnSphereShort::BosonicStateTimeBosonicState(RealVector& firstState, RealVector& secondState, RealVector& outputVector,BosonOnSphereShort * secondSpace,int minIndex,int nbrComponents,BosonOnSphereShort * finalSpace)
+{
+  unsigned long * FinalStates = new unsigned long[finalSpace->GetHilbertSpaceDimension()];
+  long * Weigth = new long [finalSpace->GetHilbertSpaceDimension()];
+  unsigned long * FirstMonomials = new unsigned long[this->NbrBosons];
+  unsigned long * SecondMonomials = new unsigned long[this->NbrBosons];
+  int MaxIndex = minIndex + nbrComponents;
+  for (long i = minIndex; i < MaxIndex; i++)
+    {
+      this->GetMonomial(i,FirstMonomials);
+      int * EqualPowerIndex = new int[this->NbrBosons];
+      int NbrEqualPower = 0;
+      for (int Index = 0; Index < this->NbrBosons-1; Index++)
+	{
+	  if(FirstMonomials[Index] == FirstMonomials[Index+1])
+	    {
+	      EqualPowerIndex[NbrEqualPower] = Index;
+	      NbrEqualPower++;
+	    }
+	}
+      for (long j = 0; j < secondSpace->HilbertSpaceDimension; j++)
+	{
+	  secondSpace->GetMonomial(j,SecondMonomials);
+	  unsigned long NbrStates = this->ProductOfTwoMonomials(FirstMonomials,EqualPowerIndex,NbrEqualPower,SecondMonomials,FinalStates,Weigth,finalSpace);
+	  for (unsigned long Index = 0x0ul; Index < NbrStates; Index++)
+	    {
+	      int TmpLzMax = 2 * finalSpace->LzMax + finalSpace->NbrBosons - 1;
+	      while ((FinalStates[Index] >> TmpLzMax) == 0x0ul)
+		--TmpLzMax;
+	      outputVector[finalSpace->FermionBasis->FindStateIndex(FinalStates[Index],TmpLzMax)]+=firstState[i]*secondState[j]*Weigth[Index];
+	    }
+	}
+    }
+}
+
+
+// Compute the product of two Monomials
+//
+// firstState = array where the monomial representation of the first state is stored
+// secondState = array where the monomial representation of the second state is stored
+// finalStates = reference on the array where the fermionic representation of the states product will be stored
+// weigth = reference on the array where the coefficient of the states product will be stored
+// FinalSpace = pointer on the Hilbert Space whose the final monomials belong
+
+unsigned long BosonOnSphereShort::ProductOfTwoMonomials (unsigned long* firstState,int * equalPowerIndex,const int nbrEqualPower,unsigned long* secondState, unsigned long * & finalStates, long * & weigth,BosonOnSphereShort * finalSpace)
+{
+  unsigned long NbrStates = 0ul;
+  long Coef = 1l;
+  unsigned long State [this->NbrBosons];
+  if(CheckLexiOrder(equalPowerIndex,secondState,nbrEqualPower))
+    {
+      for (int Index=0; Index < this->NbrBosons; Index++)
+	State[Index] = firstState[Index] + secondState[Index];
+      finalStates[0] = finalSpace->ConvertFromMonomial(State);
+      weigth[0] = Coef;
+      NbrStates++;
+    }
+  while (std::prev_permutation(secondState,secondState + this->NbrBosons))
+    {
+      if(CheckLexiOrder(equalPowerIndex,secondState,nbrEqualPower))
+	{
+	  for (int Index=0; Index < this->NbrBosons; Index++)
+	    State[Index] = firstState[Index] + secondState[Index];
+	  SortArrayDownOrdering(State,this->NbrBosons);
+	  Coef = this->ComputeCoefficient(State,firstState);
+	  NbrStates += SearchInArrayAndSetWeight(finalSpace->ConvertFromMonomial(State),finalStates,weigth,NbrStates,Coef);
+	}
+    }
+  return NbrStates;
+}
+
+// Compute the coefficient of a monomial in the decomposition of a product of two monomials
+//
+// state = array where the monomial representation of the state whose coefficient is to be computed is stored
+// firstState = array where the monomial representation of one of the states whose product is computed, is stored
+// return value = coefficient of the monomial stored in state
+
+
+long BosonOnSphereShort::ComputeCoefficient(unsigned long * state,const unsigned long * firstState)
+{
+  int IntegerArray[this->NbrBosons];
+  for (int Index = 0; Index < this->NbrBosons; Index++)
+    IntegerArray [Index] = Index;
+  SortArrayDownOrdering(state,IntegerArray,this->NbrBosons);
+  int Index = 1;
+  int Indice[this->NbrBosons];
+  unsigned long Temp = state[0];
+  long Coef = 1;
+  Indice[0] = IntegerArray[0];
+  long p = 1;
+  int SizeIndice = 1;
+  while (Index < this->NbrBosons-1)
+    {
+      if (Temp == state[Index])
+	{
+	  Indice[SizeIndice] = IntegerArray[Index];
+	  SizeIndice++;
+	}
+      else
+	{
+	  unsigned long Tableau[SizeIndice];
+	  Tableau[0] = firstState [Indice[0]];
+	  for (int Index1 = 1; Index1 < SizeIndice; Index1++)
+	    {
+	      int k = Index1 - 1;
+	      bool Compteur = true;
+	      while ( (k > -1) && (Compteur) )
+		{
+		  if(firstState[Indice[Index1]] <= Tableau[k])
+		    {
+		      Tableau[k+1] = firstState[Indice[Index1]];
+		      Compteur = false;
+		    }
+		  else
+		    {
+		      Tableau[k+1] = Tableau[k];
+		    }
+		  k--;
+		}
+	      if (Compteur == true)
+		{
+		  Tableau[0] = firstState[Indice[Index1]];
+		}
+	    }
+	  p = 1;
+	  while(std::prev_permutation(Tableau,(Tableau + SizeIndice)))
+	    p++;
+	  Coef *= p;
+	  Temp=state[Index];
+	  SizeIndice = 1;
+	  Indice[0] = IntegerArray[Index];
+	}
+      Index++;
+    }
+  if(Temp == state[NbrBosons-1])
+    {
+      Indice[SizeIndice] = IntegerArray[Index];
+      SizeIndice++;
+      unsigned long Tableau[SizeIndice];
+      Tableau[0] = firstState[Indice[0]];
+      for (int Index1 = 1; Index < SizeIndice; Index++)
+	{
+	  int k = Index1 - 1;
+	  bool Compteur = true;
+	  while ( (k > -1) && (Compteur) )
+	    {
+	      if(firstState[Indice[Index1]] <= Tableau[k])
+		{
+		  Tableau[k+1] = firstState[Indice[Index1]];
+		  Compteur = false;
+		}
+	      else
+		{
+		  Tableau[k+1] = Tableau[k];
+		}
+	      k--;
+	    }
+	  if (Compteur == true)
+	    {
+	      Tableau[0] = firstState[Indice[Index1]];
+	    }
+	}
+      p = 1;
+      while(std::prev_permutation(Tableau,(Tableau + SizeIndice)))
+	p++;
+      Coef *= p;
+    }
+  else
+    {
+      unsigned long Tableau[SizeIndice];
+      Tableau[0] = firstState[Indice[0]];
+      for (int Index1 = 1; Index1 < SizeIndice; Index1++)
+	{
+	  int k = Index1-1;
+	  bool Compteur = true;
+	  while ( (k > -1) && (Compteur) )
+	    {
+	      if(firstState[Indice[Index1]] <= Tableau[k])
+		{
+		  Tableau[k+1] = firstState[Indice[Index1]];
+		  Compteur = false;
+		}
+	      else
+		{
+		  Tableau[k+1] = Tableau[k];
+		}
+	      k--;
+	    }
+	  if (Compteur == true)
+	    Tableau[0] = firstState[Indice[Index1]];
+	}
+      p = 1;
+      while(std::prev_permutation(Tableau , (Tableau + SizeIndice)))
+	{
+	  p++;
+	}
+      Coef *= p;
+    }
+  return Coef;
+}
+
+// Compute the product of a bosonic state and a fermionic state
+//
+// firstState = reference on the bosonic state
+// secondState = reference on the fermionic state
+// outputVector = reference on the vector where the result will be stored
+// fermionSpace = pointer on the fermionic Hilbert Space whose the second state belong
+// minIndex = first computed component
+// nbrComponents = Nomber of computed components
+// finalSpace = pointer on the Hilbert Space whose the final state belong
+
+void BosonOnSphereShort::BosonicStateTimeFermionicState(RealVector& bosonState, RealVector& fermionState, RealVector& outputVector, FermionOnSphere * fermionSpace, int minIndex, int nbrComponents, FermionOnSphere * finalSpace)
+{
+  unsigned long * FinalStates = new unsigned long[finalSpace->GetHilbertSpaceDimension()];
+  long * Weigth = new long [finalSpace->GetHilbertSpaceDimension()];
+  unsigned long * Monomial = new unsigned long[this->NbrBosons];
+  unsigned long * Slater = new unsigned long[this->NbrBosons];
+  int MaxIndex = minIndex + nbrComponents;
+  for (long i = minIndex; i < MaxIndex; i++)
+    {
+      if(bosonState[i] != 0)
+	{
+	  this->GetMonomial(i,Monomial);
+	  for (long j = 0; j < fermionSpace->HilbertSpaceDimension; j++)
+	    {
+	      if(fermionState[j] != 0)
+		{
+		  fermionSpace->GetMonomial(j,Slater);
+		  unsigned long NbrStates = this->MonomialsTimesSlater(Slater,Monomial,FinalStates,Weigth,finalSpace);
+		  for (unsigned long Index = 0; Index < NbrStates; Index++)
+		    {
+		      int TmpLzMax = finalSpace->LzMax;
+		      while ((FinalStates[Index] >> TmpLzMax) == 0x0ul)
+			--TmpLzMax;
+		      outputVector[finalSpace->FindStateIndex(FinalStates[Index],TmpLzMax)] += bosonState[i]*fermionState[j]*Weigth[Index];
+		    }
+		}
+	    }
+	}
+    }
+}
+
+// Compute the product of a Monomial and a Slater determinant
+//
+// firstState = array where the monomial representation of the first state is stored
+// secondState = array where the monomial representation of the second state is stored
+// finalStates = reference on the array where the fermionic representation of the states product will be stored
+// weigth = reference on the array where the coefficient of the states product will be stored
+// finalSpace = pointer to the destination Hilbert space
+// return value = number of different states generated by the product
+
+unsigned long BosonOnSphereShort::MonomialsTimesSlater (unsigned long* slater, unsigned long* monomial, unsigned long * & finalStates, long * & weigth, FermionOnSphere * finalSpace)
+{
+  unsigned long NbrStates = 0;
+  long Coef = 1;
+  unsigned long State[this->NbrBosons];
+  bool Bool = true;
+  unsigned long Mask;
+  unsigned long Sign = 0ul;
+  unsigned long TmpState = 0;
+  for (int Index = 0; Index < this->NbrBosons; Index++)
+    State[Index] = slater[Index] + monomial[Index];
+  
+  finalStates[0] = finalSpace->ConvertFromMonomial(State);
+  weigth[0] = Coef;
+  NbrStates++;
+  while (std::prev_permutation(monomial,monomial+this->NbrBosons))
+    {
+      for (int Index = 0; Index < this->NbrBosons; Index++)
+	State[Index] = slater[Index] + monomial[Index];
+      
+      Bool = true;
+      TmpState = 0ul;
+      Sign = 0ul;
+      for(int i = 0; (i < this->NbrBosons) && (Bool == true); i++)
+	{
+	  Mask = (1ul << State[i]);
+	  if ( (TmpState & Mask) != 0ul)
+	    Bool = false;
+	  unsigned long TmpState2 = TmpState & (Mask - 1ul);
+#ifdef _64_BITS__
+	  TmpState2 ^= TmpState2 >> 32;
+#endif
+	  TmpState2 ^= TmpState2 >> 16;
+	  TmpState2 ^= TmpState2 >> 8;
+	  TmpState2 ^= TmpState2 >> 4;
+	  TmpState2 ^= TmpState2 >> 2;
+	  TmpState2 ^= TmpState2 >> 1;
+	  Sign ^= TmpState2;
+	  TmpState |= Mask;
+	}
+      if(Bool == true)
+	{
+	  if ((Sign & 0x1ul) == 0ul)
+	    {
+	      Coef = 1;
+	    }
+	  else
+	    {
+	      Coef = -1;
+	    }
+	  NbrStates += SearchInArrayAndSetWeight(TmpState,finalStates,weigth,NbrStates,Coef);
+	}
+    }
+  return NbrStates;
+}
+
+// Compute the product of two fermionic states that belong to different Hilbert Spaces
+//
+// firstState = reference on one of the states whose product will be computed
+// secondState = reference on the other state whose product will be computed
+// OutputVector = reference on the vector where the result will be stored
+// fermionSpace1 = pointer on the Hilbert Space whose the first state belong to
+// fermionSpace2 = pointer on the Hilbert Space whose the second state belong to 
+// minIndex = first computed component
+// nbrComponents = Nomber of computed components
+
+
+void BosonOnSphereShort::FermionicStateTimeFermionicState(RealVector& fermionState1, RealVector& fermionState2, RealVector& outputVector, FermionOnSphere * fermionSpace1, FermionOnSphere * fermionSpace2, int minIndex, int nbrComponents)
+{
+  unsigned long * FinalStates = new unsigned long [this->GetHilbertSpaceDimension()];
+  long * Weigth = new long [this->GetHilbertSpaceDimension()];
+  unsigned long * Slater1 = new unsigned long[this->NbrBosons];
+  unsigned long * Slater2 = new unsigned long[this->NbrBosons];
+  int MaxIndex = minIndex + nbrComponents;
+  FactorialCoefficient Coefficient;	
+  for (long i = minIndex; i < MaxIndex; i++)
+    {
+      if(fermionState1[i] != 0)
+	{
+	  fermionSpace1->GetMonomial(i,Slater1);
+	  for (long j = 0; j < fermionSpace2->HilbertSpaceDimension; j++)
+	    {
+	      if(fermionState2[j] != 0)
+		{
+		  fermionSpace2->GetMonomial(j,Slater2);
+		  unsigned long NbrStates = this->SlaterTimesSlater(Slater1,Slater2,FinalStates,Weigth);
+		  for (unsigned long Index = 0; Index < NbrStates; Index++)
+		    {
+		      int TmpLzMax = this->LzMax+this->NbrBosons - 1;
+		      while ((FinalStates[Index] >> TmpLzMax) == 0x0ul)
+			--TmpLzMax;
+		      this->FermionToBoson(FinalStates[Index],TmpLzMax,this->TemporaryState,this->TemporaryStateLzMax);
+		      Coefficient.SetToOne();
+		      for(int p = 0; p < this->TemporaryStateLzMax + 1; p++)
+			{
+			  Coefficient.FactorialMultiply(this->TemporaryState[p]);
+			}
+		      outputVector[this->FermionBasis->FindStateIndex(FinalStates[Index],TmpLzMax)] += fermionState1[i]*fermionState2[j]*Coefficient.GetIntegerValue()*Weigth[Index];
+		    }
+		}
+	    }
+	}
+    }
+}
+
+// Compute the product of two Slater determinants
+//
+// slater1 = array where the monomial representation of the first slater is stored
+// slater2 = array where the monomial representation of the second slater is stored
+// finalStates = reference on the array where the fermionic representation of the states product will be stored
+// weigth = reference on the array where the coefficient of the states product will be stored
+
+unsigned long BosonOnSphereShort::SlaterTimesSlater (unsigned long* slater1,unsigned long* slater2, unsigned long * & finalStates, long * & weigth)
+{
+  unsigned long NbrStates = 0;
+  long Coef = 1;
+  unsigned long State [this->NbrBosons];
+  unsigned long TmpState = 0ul;
+  unsigned long Sign = 0ul;
+  unsigned long Mask = 0ul;
+  
+  for (int Index = 0; Index < this->NbrBosons; Index++)
+    {
+      State[Index] = slater1[Index] + slater2[Index];
+    }
+  
+  finalStates[0] = this->ConvertFromMonomial(State);
+  weigth[0] = Coef;
+  NbrStates++;
+  
+  while (std::prev_permutation(slater2,slater2+this->NbrBosons))
+    {
+      for (int Index = 0; Index < this->NbrBosons; Index++)
+	{
+	  State[Index] = slater1[Index] + slater2[Index];
+	}
+      
+      TmpState = 0ul;
+      Sign = 0ul;
+      for (int i = 0; i < this->NbrBosons ; i++)
+	{
+	  Mask = (1ul << slater2[i]);
+	  unsigned long TmpState2 = TmpState & (Mask - 1ul);
+#ifdef  __64_BITS__
+	  TmpState2 ^= TmpState2 >> 32;
+			#endif	
+	  TmpState2 ^= TmpState2 >> 16;
+	  TmpState2 ^= TmpState2 >> 8;
+	  TmpState2 ^= TmpState2 >> 4;
+	  TmpState2 ^= TmpState2 >> 2;
+	  TmpState2 ^= TmpState2 >> 1;
+	  Sign ^= TmpState2;
+	  TmpState |= Mask;
+	}
+      SortArrayDownOrdering(State,this->NbrBosons);
+      
+      if ((Sign & 0x1ul) == 0ul)
+	{
+	  Coef = 1;
+	}
+      else
+	{
+	  Coef = -1;
+	}
+      NbrStates += SearchInArrayAndSetWeight(TmpState,finalStates,weigth,NbrStates,Coef);
+    }
+  return NbrStates;
+}
+
+// Compute the product of two fermionic states that belong to the same Hilbert Spaces
+//
+// fermionState1 = reference on one of the states whose product will be computed
+// fermionState2 = reference on the other state whose product will be computed
+// OutputVector = reference on the vector where the result will be stored
+// fermionSpace = pointer on the fermionic Hilbert Space
+// minIndex = first computed component
+// nbrComponents = Nomber of computed components
+
+void BosonOnSphereShort::FermionicStateTimeFermionicState(RealVector& fermionState1, RealVector& fermionState2, RealVector& outputVector, FermionOnSphere * fermionSpace, int minIndex, int nbrComponents)
+{
+  unsigned long * FinalStates= new unsigned long[this->GetHilbertSpaceDimension()];
+  long * Weigth = new long [this->GetHilbertSpaceDimension()];
+  unsigned long * Slater1 = new unsigned long[this->NbrBosons];
+  unsigned long * Slater2 = new unsigned long[this->NbrBosons];
+  int MaxIndex = minIndex + nbrComponents;
+  FactorialCoefficient Coefficient;	
+  for (long i = minIndex; i < MaxIndex; i++)
+    {
+      if(fermionState1[i] != 0)
+	{
+	  fermionSpace->GetMonomial(i,Slater1);
+	  for (long j = i; j < fermionSpace->HilbertSpaceDimension; j++)
+	    {
+	      if(fermionState2[j] != 0)
+		{
+		  fermionSpace->GetMonomial(j,Slater2);
+		  unsigned long Limit = this->SlaterTimesSlater(Slater1,Slater2,FinalStates,Weigth);
+		  for (unsigned long Index = 0; Index < Limit; Index++)
+		    {
+		      int TmpLzMax = this->LzMax + this->NbrBosons - 1;
+		      while ((FinalStates[Index] >> TmpLzMax) == 0x0ul)
+			--TmpLzMax;
+		      this->FermionToBoson(FinalStates[Index],TmpLzMax,this->TemporaryState,this->TemporaryStateLzMax);
+		      Coefficient.SetToOne();
+		      for(int p = 0; p < this->TemporaryStateLzMax + 1; p++)
+			{
+			  Coefficient.FactorialMultiply(this->TemporaryState[p]);
+			}
+		      if(i == j)
+			outputVector[this->FermionBasis->FindStateIndex(FinalStates[Index],TmpLzMax)] += fermionState1[i]*fermionState2[j]*Coefficient.GetIntegerValue()*Weigth[Index];
+		      else
+			outputVector[this->FermionBasis->FindStateIndex(FinalStates[Index],TmpLzMax)] += (fermionState1[i]*fermionState2[j]+fermionState1[j]*fermionState2[i])*Coefficient.GetIntegerValue()*Weigth[Index];
+		    }
+		}
+	    }
+	}
+    }
+}
