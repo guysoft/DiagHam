@@ -256,6 +256,7 @@ class ParticleOnLatticeWithSpinChernInsulatorHamiltonian : public AbstractQHEHam
   virtual void EvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int index, ComplexVector* vSources, 
 						     ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients);
 
+  // core part of the AddMultiply method involving the two-body interaction
   // 
   // particles = pointer to the Hilbert space
   // index = index of the component on which the Hamiltonian has to act on

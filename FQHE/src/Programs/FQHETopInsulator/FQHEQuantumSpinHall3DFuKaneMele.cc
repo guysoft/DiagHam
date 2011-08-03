@@ -156,7 +156,7 @@ int main(int argc, char** argv)
 	      Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());	
 	      AbstractQHEHamiltonian* Hamiltonian = 0;
 	      Hamiltonian = new ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian(&Space, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ,
-											       Manager.GetDouble("u-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"),
+											       Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"),
 											       Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), 		     
 											       Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 	      char* ContentPrefix = new char[256];
