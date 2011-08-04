@@ -4187,42 +4187,54 @@ void BosonOnSphereShort::BosonicStateTimeBosonicState(RealVector& firstState, Re
   unsigned long * FirstMonomials = new unsigned long[this->NbrBosons];
   unsigned long * SecondMonomials = new unsigned long[this->NbrBosons];
   int MaxIndex = minIndex + nbrComponents;
+  
   for (long i = minIndex; i < MaxIndex; i++)
     {
-      this->GetMonomial(i,FirstMonomials);
-      int * EqualPowerIndex = new int[this->NbrBosons];
-      int NbrEqualPower = 0;
-      for (int Index = 0; Index < this->NbrBosons-1; Index++)
+      if(firstState[i] != 0)
 	{
-	  if(FirstMonomials[Index] == FirstMonomials[Index+1])
+	  this->GetMonomial(i,FirstMonomials);
+	  this->GetMonomial(i, SecondMonomials);
+	  int * EqualPowerIndex = new int[this->NbrBosons];
+	  int NbrEqualPower = 0;
+	  for (int Index = 0; Index < this->NbrBosons-1; Index++)
 	    {
-	      EqualPowerIndex[NbrEqualPower] = Index;
-	      NbrEqualPower++;
+	      if(FirstMonomials[Index] == FirstMonomials[Index+1])
+		{
+		  EqualPowerIndex[NbrEqualPower] = Index;
+		  NbrEqualPower++;
+		}
 	    }
-	}
-      unsigned long NbrStates = this->ProductOfTwoMonomials(FirstMonomials,EqualPowerIndex,NbrEqualPower,FirstMonomials,FinalStates,Weigth,finalSpace);
-      for (long Index = 0l; Index < NbrStates; Index++)
-	{
-	  int TmpLzMax = 2 * this->LzMax + this->NbrBosons - 1;
-	  while ((FinalStates[Index] >> TmpLzMax) == 0x0ul)
-	    --TmpLzMax;
-	  outputVector[finalSpace->FermionBasis->FindStateIndex(FinalStates[Index],TmpLzMax)] += firstState[i]*secondState[i]*Weigth[Index];
-	}
-      
-      for (long j = i + 1l; j < this->HilbertSpaceDimension; j++)
-	{
-	  this->GetMonomial(j,SecondMonomials);	
-	  NbrStates = this->ProductOfTwoMonomials(FirstMonomials,EqualPowerIndex,NbrEqualPower,SecondMonomials,FinalStates,Weigth,finalSpace);
-	  for (long Index = 0; Index < NbrStates; Index++)
+	  
+	  unsigned long NbrStates = this->ProductOfTwoMonomials(FirstMonomials,EqualPowerIndex,NbrEqualPower,SecondMonomials,FinalStates,Weigth,finalSpace);
+	  
+	  for (long Index = 0l; Index < NbrStates; Index++)
 	    {
 	      int TmpLzMax = 2 * this->LzMax + this->NbrBosons - 1;
 	      while ((FinalStates[Index] >> TmpLzMax) == 0x0ul)
 		--TmpLzMax;
-	      outputVector[finalSpace->FermionBasis->FindStateIndex(FinalStates[Index],TmpLzMax)] += (firstState[i]*secondState[j]+firstState[j]*secondState[i])*Weigth[Index];
+	      
+	      outputVector[finalSpace->FermionBasis->FindStateIndex(FinalStates[Index],TmpLzMax)] += firstState[i]*secondState[i]*Weigth[Index];
 	    }
-	}
+	  
+	  for (long j = i + 1l; j < this->HilbertSpaceDimension; j++)
+	    {
+	      if(secondState[j] != 0)
+		{
+		  this->GetMonomial(j,SecondMonomials);	
+		  NbrStates = this->ProductOfTwoMonomials(FirstMonomials,EqualPowerIndex,NbrEqualPower,SecondMonomials,FinalStates,Weigth,finalSpace);
+		  for (long Index = 0; Index < NbrStates; Index++)
+		    {
+		      int TmpLzMax = 2 * this->LzMax + this->NbrBosons - 1;
+		      while ((FinalStates[Index] >> TmpLzMax) == 0x0ul)
+			--TmpLzMax;
+		      outputVector[finalSpace->FermionBasis->FindStateIndex(FinalStates[Index],TmpLzMax)] += (firstState[i]*secondState[j]+firstState[j]*secondState[i])*Weigth[Index];
+		    }
+		}
+	    }
+	} 
     }
 }
+
 
 // Compute the product of two states that belong to different Hilbert Spaces
 //
@@ -4260,7 +4272,7 @@ void BosonOnSphereShort::BosonicStateTimeBosonicState(RealVector& firstState, Re
 	  unsigned long NbrStates = this->ProductOfTwoMonomials(FirstMonomials,EqualPowerIndex,NbrEqualPower,SecondMonomials,FinalStates,Weigth,finalSpace);
 	  for (unsigned long Index = 0x0ul; Index < NbrStates; Index++)
 	    {
-	      int TmpLzMax = 2 * finalSpace->LzMax + finalSpace->NbrBosons - 1;
+	      int TmpLzMax = finalSpace->LzMax + finalSpace->NbrBosons - 1;
 	      while ((FinalStates[Index] >> TmpLzMax) == 0x0ul)
 		--TmpLzMax;
 	      outputVector[finalSpace->FermionBasis->FindStateIndex(FinalStates[Index],TmpLzMax)]+=firstState[i]*secondState[j]*Weigth[Index];
@@ -4283,10 +4295,12 @@ unsigned long BosonOnSphereShort::ProductOfTwoMonomials (unsigned long* firstSta
   unsigned long NbrStates = 0ul;
   long Coef = 1l;
   unsigned long State [this->NbrBosons];
+  
   if(CheckLexiOrder(equalPowerIndex,secondState,nbrEqualPower))
     {
-      for (int Index=0; Index < this->NbrBosons; Index++)
+      for (int Index = 0; Index < this->NbrBosons; Index++)
 	State[Index] = firstState[Index] + secondState[Index];
+	  
       finalStates[0] = finalSpace->ConvertFromMonomial(State);
       weigth[0] = Coef;
       NbrStates++;
@@ -4295,10 +4309,11 @@ unsigned long BosonOnSphereShort::ProductOfTwoMonomials (unsigned long* firstSta
     {
       if(CheckLexiOrder(equalPowerIndex,secondState,nbrEqualPower))
 	{
-	  for (int Index=0; Index < this->NbrBosons; Index++)
+	  for (int Index = 0; Index < this->NbrBosons; Index++)
 	    State[Index] = firstState[Index] + secondState[Index];
-	  SortArrayDownOrdering(State,this->NbrBosons);
 	  Coef = this->ComputeCoefficient(State,firstState);
+	  
+	  SortArrayDownOrdering(State,this->NbrBosons);
 	  NbrStates += SearchInArrayAndSetWeight(finalSpace->ConvertFromMonomial(State),finalStates,weigth,NbrStates,Coef);
 	}
     }
@@ -4314,10 +4329,13 @@ unsigned long BosonOnSphereShort::ProductOfTwoMonomials (unsigned long* firstSta
 
 long BosonOnSphereShort::ComputeCoefficient(unsigned long * state,const unsigned long * firstState)
 {
+ 
   int IntegerArray[this->NbrBosons];
   for (int Index = 0; Index < this->NbrBosons; Index++)
     IntegerArray [Index] = Index;
+
   SortArrayDownOrdering(state,IntegerArray,this->NbrBosons);
+
   int Index = 1;
   int Indice[this->NbrBosons];
   unsigned long Temp = state[0];
@@ -4362,76 +4380,47 @@ long BosonOnSphereShort::ComputeCoefficient(unsigned long * state,const unsigned
 	  while(std::prev_permutation(Tableau,(Tableau + SizeIndice)))
 	    p++;
 	  Coef *= p;
-	  Temp=state[Index];
+	  Temp = state[Index];
 	  SizeIndice = 1;
 	  Indice[0] = IntegerArray[Index];
 	}
       Index++;
     }
+
   if(Temp == state[NbrBosons-1])
     {
       Indice[SizeIndice] = IntegerArray[Index];
       SizeIndice++;
-      unsigned long Tableau[SizeIndice];
-      Tableau[0] = firstState[Indice[0]];
-      for (int Index1 = 1; Index < SizeIndice; Index++)
-	{
-	  int k = Index1 - 1;
-	  bool Compteur = true;
-	  while ( (k > -1) && (Compteur) )
-	    {
-	      if(firstState[Indice[Index1]] <= Tableau[k])
-		{
-		  Tableau[k+1] = firstState[Indice[Index1]];
-		  Compteur = false;
-		}
-	      else
-		{
-		  Tableau[k+1] = Tableau[k];
-		}
-	      k--;
-	    }
-	  if (Compteur == true)
-	    {
-	      Tableau[0] = firstState[Indice[Index1]];
-	    }
-	}
-      p = 1;
-      while(std::prev_permutation(Tableau,(Tableau + SizeIndice)))
-	p++;
-      Coef *= p;
     }
-  else
+
+  unsigned long Tableau[SizeIndice];
+  Tableau[0] = firstState[Indice[0]];
+  for (int Index1 = 1; Index1 < SizeIndice; Index1++)
     {
-      unsigned long Tableau[SizeIndice];
-      Tableau[0] = firstState[Indice[0]];
-      for (int Index1 = 1; Index1 < SizeIndice; Index1++)
+      int k = Index1 - 1;
+      bool Compteur = true;
+      while ( (k > -1) && (Compteur) )
 	{
-	  int k = Index1-1;
-	  bool Compteur = true;
-	  while ( (k > -1) && (Compteur) )
+	  if(firstState[Indice[Index1]] <= Tableau[k])
 	    {
-	      if(firstState[Indice[Index1]] <= Tableau[k])
-		{
-		  Tableau[k+1] = firstState[Indice[Index1]];
-		  Compteur = false;
-		}
-	      else
-		{
-		  Tableau[k+1] = Tableau[k];
-		}
-	      k--;
+	      Tableau[k+1] = firstState[Indice[Index1]];
+	      Compteur = false;
 	    }
-	  if (Compteur == true)
-	    Tableau[0] = firstState[Indice[Index1]];
+	  else
+	    {
+	      Tableau[k+1] = Tableau[k];
+	    }
+	  k--;
 	}
-      p = 1;
-      while(std::prev_permutation(Tableau , (Tableau + SizeIndice)))
+      if (Compteur == true)
 	{
-	  p++;
+	  Tableau[0] = firstState[Indice[Index1]];
 	}
-      Coef *= p;
     }
+  p = 1;
+  while(std::prev_permutation(Tableau,Tableau + SizeIndice))
+    p++;
+  Coef *= p;
   return Coef;
 }
 
@@ -4630,7 +4619,7 @@ unsigned long BosonOnSphereShort::SlaterTimesSlater (unsigned long* slater1,unsi
 	  unsigned long TmpState2 = TmpState & (Mask - 1ul);
 #ifdef  __64_BITS__
 	  TmpState2 ^= TmpState2 >> 32;
-			#endif	
+#endif	
 	  TmpState2 ^= TmpState2 >> 16;
 	  TmpState2 ^= TmpState2 >> 8;
 	  TmpState2 ^= TmpState2 >> 4;
@@ -4649,7 +4638,7 @@ unsigned long BosonOnSphereShort::SlaterTimesSlater (unsigned long* slater1,unsi
 	{
 	  Coef = -1;
 	}
-      NbrStates += SearchInArrayAndSetWeight(TmpState,finalStates,weigth,NbrStates,Coef);
+      NbrStates += SearchInArrayAndSetWeight(this->ConvertFromMonomial(State),finalStates,weigth,NbrStates,Coef);
     }
   return NbrStates;
 }

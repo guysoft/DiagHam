@@ -63,6 +63,7 @@ MonomialsProductOperation::MonomialsProductOperation (ParticleOnSphere* space,Pa
     this->FirstStateFlag = false;
   else
     this->FirstStateFlag = true;
+	this->FinalStateFlag = false;
   this->NormalizeFlag = normalize;
 }
 
@@ -226,7 +227,7 @@ bool MonomialsProductOperation::RawApplyOperation()
 	{
 	  if(this->Squaring == true)
 	    {
-	      ((BosonOnSphereShort *) this->FinalSpace)->FermionicStateTimeFermionicState(*(this->SourceVector1),*(this->SourceVector2),*(this->DestinationVector),((FermionOnSphere *) this->Space1),this->FirstComponent,this->NbrComponent);
+	      ((BosonOnSphereShort *) this->FinalSpace)->FermionicStateTimeFermionicState(*(this->SourceVector1),*(this->SourceVector1),*(this->DestinationVector),((FermionOnSphere *) this->Space1),this->FirstComponent,this->NbrComponent);
 	    }
 	  else
 	    {

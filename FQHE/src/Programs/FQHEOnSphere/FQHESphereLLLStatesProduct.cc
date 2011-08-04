@@ -90,7 +90,7 @@ int main(int argc, char** argv)
 	
   int NbrVectors;
   char** VectorFiles = Manager.GetStrings("states",NbrVectors);
-  char* OutputFileName = ((SingleStringOption*) Manager["bin-output"])->GetString();
+  char* OutputFileName =  Manager.GetString("bin-output");
   char* OutputTxtFileName = ((SingleStringOption*) Manager["txt-output"])->GetString();
   bool FermionFlag = true;
   bool NormalizeFlag = Manager.GetBoolean("normalize");
@@ -103,7 +103,7 @@ int main(int argc, char** argv)
       int TotalLz = 0;
 
       if (NbrParticles == 0)
-	if (FQHEOnSphereFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["state"])->GetString(), NbrParticles, LzMax, TotalLz, FermionFlag) == false)
+	if (FQHEOnSphereFindSystemInfoFromVectorFileName(VectorFiles[0], NbrParticles, LzMax, TotalLz, FermionFlag) == false)
 	  {
 	    return -1;
 	  }
@@ -115,17 +115,16 @@ int main(int argc, char** argv)
 	  return -1;           
 	}
       
-      char* StateFileName = ((SingleStringOption*) Manager["state"])->GetString();
-      if (IsFile(StateFileName) == false)
+      if (IsFile(VectorFiles[0]) == false)
 	{
-	  cout << "state " << StateFileName << " does not exist or can't be opened" << endl;
+	  cout << "state " << VectorFiles[0] << " does not exist or can't be opened" << endl;
 	  return -1;
 	}
       
       RealVector GroundState;
-      if (GroundState.ReadVector (StateFileName) == false)
+      if (GroundState.ReadVector (VectorFiles[0]) == false)
 	{
-	  cout << "can't open vector file " << StateFileName << endl;
+	  cout << "can't open vector file " << VectorFiles[0] << endl;
 	  return -1;      
 	}
       
@@ -173,9 +172,10 @@ int main(int argc, char** argv)
 		  cout << "error while parsing ReferenceState in " << ((SingleStringOption*) Manager["reference-file"])->GetString() << endl;
 		  return -1;     
 		}
-	      if (MaxNbrLz != (LzMax-NbrParticles + 1 + 1))
+	      if (MaxNbrLz != (LzMax + 1))
 		{
 		  cout << "wrong LzMax value in ReferenceState" << endl;
+			cout <<MaxNbrLz <<" " <<LzMax<<endl;
 		  return -1;
 		}
 #ifdef  __64_BITS__
@@ -221,14 +221,8 @@ int main(int argc, char** argv)
       
       ParticleOnSphere * FinalSpace = 0;
       
-      if(FermionFlag == false)
-	{
-	  FinalSpace = new BosonOnSphereShort(NbrParticles, 2*TotalLz, 2*LzMax);
-	}
-      else
-	{
-	  FinalSpace = new FermionOnSphere(NbrParticles, 2*TotalLz, 2*LzMax);
-	}
+      FinalSpace = new BosonOnSphereShort(NbrParticles, 2*TotalLz, 2*LzMax);
+      
       
       
       if (Space->GetHilbertSpaceDimension() != GroundState.GetVectorDimension())

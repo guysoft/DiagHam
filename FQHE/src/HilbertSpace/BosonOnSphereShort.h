@@ -911,7 +911,7 @@ inline unsigned long BosonOnSphereShort::ConvertFromMonomial(unsigned long* init
 
 inline bool BosonOnSphereShort::CheckLexiOrder(int * egal,unsigned long* secondState,int TailleEgal)
 {
-  for (int index=0; index < TailleEgal; ++index)
+  for (int index = 0; index < TailleEgal; ++index)
     {
       if (secondState[egal[index]]<secondState[egal[index]+1])
 	{
