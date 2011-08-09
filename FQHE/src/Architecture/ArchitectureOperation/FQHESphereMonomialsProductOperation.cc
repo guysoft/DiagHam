@@ -429,7 +429,7 @@ bool MonomialsProductOperation::ArchitectureDependentApplyOperation(SMPArchitect
 
 bool MonomialsProductOperation::ArchitectureDependentApplyOperation(SimpleMPIArchitecture* architecture)
 {
-#ifdef __MPI__
+/*#ifdef __MPI__
   if (architecture->IsMasterNode())
     {
       if (architecture->RequestOperation(this->OperationType) == false)
@@ -481,7 +481,7 @@ bool MonomialsProductOperation::ArchitectureDependentApplyOperation(SimpleMPIArc
     }
   
   return true;
-#else
+#else*/
   return this->RawApplyOperation();
-#endif
+//#endif
 }	

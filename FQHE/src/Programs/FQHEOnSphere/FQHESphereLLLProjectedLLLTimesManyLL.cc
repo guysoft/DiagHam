@@ -87,6 +87,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state (should be the one of the bosonic state)");
   (*SystemGroup) += new BooleanOption ('\n',"projection","the state will be projected into the LLL");
+	(*SystemGroup) += new BooleanOption ('\n',"reverse-flux","the fluxes bind to each particle are in the opposite direction than the magnetic field");
   (*SystemGroup) += new BooleanOption  ('\n', "projected-haldane", "use an Haldane basis instead of the usual n-body basis for the projected state");
   (*SystemGroup) += new SingleStringOption  ('\n', "projected-referencefile", "use a file as the definition of the reference state for the projected state (should be the one of the bosonic state)");
   (*SystemGroup) += new BooleanOption ('\n', "resume", "the last calcul will be resumed from its last save step");
@@ -133,6 +134,7 @@ int main(int argc, char** argv)
   int LzMaxFermion = Manager.GetInteger("lzmax");
   int TotalLzFermion = Manager.GetInteger("total-lz");
   bool FermionFlag = false;
+	bool ReverseFluxFlag = Manager.GetBoolean("reverse-flux");
   int Step = Manager.GetInteger("step");
   bool HaldaneBasisFlag = Manager.GetBoolean("haldane");
   bool Projection = Manager.GetBoolean("projection");
@@ -360,7 +362,14 @@ int main(int argc, char** argv)
 	{
 	  if (Manager.GetBoolean("projected-haldane") == false)
 	    {
-	      FinalSpace = new FermionOnSphere (LLLNbrParticles, TotalLzFermion, LzMaxDown + LLLLzMax);
+				if (ReverseFluxFlag == false)
+				{
+					FinalSpace = new FermionOnSphere (LLLNbrParticles, TotalLzFermion, LzMaxDown + LLLLzMax);
+				}
+				else
+				{
+					FinalSpace = new FermionOnSphere (LLLNbrParticles, TotalLzFermion,  LLLLzMax - LzMaxDown);
+				}
 	    }
 	  else
 	    {

@@ -270,7 +270,7 @@ class FermionOnSphereTwoLandauLevels :  public FermionOnSphereWithSpin
   // finalSpace = pointer to the final Hilbert space
   // firstComponent = first component to be computed
   // nbrComponent = number of components to be computed	
-  virtual void BosonicStateTimeFermionicState(RealVector& bosonState, RealVector& fermionState, RealVector& outputVector, BosonOnSphereShort* bosonSpace,FermionOnSphere* finalSpace, int firstComponent, int nbrComponent);
+  virtual void BosonicStateTimeFermionicState(RealVector& bosonState, RealVector& fermionState, RealVector& outputVector, BosonOnSphereShort* bosonSpace,FermionOnSphere* finalSpace, int firstComponent, int nbrComponent,  bool reverseFluxFlag = false);
   
   // compute the projection of the product of a bosonic state and a fermionic state
   //
@@ -380,6 +380,7 @@ class FermionOnSphereTwoLandauLevels :  public FermionOnSphereWithSpin
   // firstComponent = first component to be computed
   // nbrComponent = number of components to be computed
   virtual void LLLFermionicStateTimeFermionicState(RealVector& lllFermionState, RealVector& fermionState, RealVector& outputVector, FermionOnSphere* lllFermionSpace, BosonOnSphereTwoLandauLevels * finalSpace, int firstComponent,int nbrComponent);
+	
   
   // compute the number of particles in each Landau level
   //
@@ -536,6 +537,19 @@ class FermionOnSphereTwoLandauLevels :  public FermionOnSphereWithSpin
   // lzmax = maximum Lz value reached by a fermion in the state
   // return value = corresponding index
   virtual int  FindStateIndex(unsigned long stateDescription, int lzmax);
+	
+	// compute the product and the projection of a Slater determinant and a monomial with flux attachment in the opposite direction than the magnetic field
+// 
+// slater = array where the slater is stored in its monomial representation
+// monomial = array where the monomial is stored in its monomial representation
+// variable = reference on the array where the indice of fermions in the second Landau level is stored
+// nbrVariable = number of fermions in the second Landau level
+// sortingMap = map in which the generated states and their coefficient will be stored
+// finalStates = array where the obtained states are stored in their fermionic representation
+
+virtual void MonomialsTimesSlaterProjectionReverse(unsigned long* slater, unsigned long* monomial, unsigned long * variable, int nbrVariable, map <unsigned long, double> & sortingMap, FermionOnSphere* finalSpace);
+
+
 };
 
 // convert a fermionic state to its monomial representation
