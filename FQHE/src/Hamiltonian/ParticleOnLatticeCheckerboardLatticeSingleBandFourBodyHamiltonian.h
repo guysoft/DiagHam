@@ -223,6 +223,7 @@ class ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian : public
 
 inline Complex ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian::ComputeFourBodyMatrixElementABBB(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4, int kx5, int ky5, int kx6, int ky6, int kx7, int ky7, int kx8, int ky8)
 {
+  return 0.0;
   Complex Tmp = this->XPhaseTable[(kx8 - kx4) + this->XPhaseTableShift] * this->YPhaseTable[(ky6 - ky2) + this->YPhaseTableShift];
   Tmp += this->XPhaseTable[(kx7 + kx8 - kx3 - kx4) + this->XPhaseTableShift] * this->YPhaseTable[(ky8 - ky4) + this->YPhaseTableShift];
   Tmp += this->XPhaseTable[(kx6 + kx7 - kx2 - kx3) + this->XPhaseTableShift] * this->YPhaseTable[(ky7 + ky8 - ky3 - ky4) + this->YPhaseTableShift];
@@ -254,6 +255,7 @@ inline Complex ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian
 
 inline Complex ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian::ComputeFourBodyMatrixElementBAAA(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4, int kx5, int ky5, int kx6, int ky6, int kx7, int ky7, int kx8, int ky8)
 {
+  return 0.0;
   Complex Tmp = this->XPhaseTable[(kx3 + kx4 - kx7 - kx8) + this->XPhaseTableShift] * this->YPhaseTable[(ky4 - ky8) + this->YPhaseTableShift];
   Tmp += this->XPhaseTable[(kx2 + kx3 - kx6 - kx7) + this->XPhaseTableShift] * this->YPhaseTable[(ky3 + ky4 - ky7 -ky8) + this->YPhaseTableShift];
   Tmp += this->XPhaseTable[(kx2 - kx6) + this->XPhaseTableShift] * this->YPhaseTable[(ky2 + ky3 - ky6 - ky7) + this->YPhaseTableShift];
@@ -287,6 +289,18 @@ inline Complex ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian
 {
   Complex Tmp = this->XPhaseTable[(kx2 - kx6) + this->XPhaseTableShift] * this->YPhaseTable[(ky8 - ky4) + this->YPhaseTableShift];
   Tmp += this->XPhaseTable[(kx8 - kx4) + this->XPhaseTableShift] * this->YPhaseTable[(ky2 - ky6) + this->YPhaseTableShift];
+
+  // interaction for ABAB losange configuration 
+/*   Tmp += this->YPhaseTable[(ky2 + ky4 - ky6 - ky8) + this->YPhaseTableShift]; */
+/*   Tmp += this->YPhaseTable[(ky2 + ky8 - ky6 - ky4) + this->YPhaseTableShift]; */
+/*   Tmp += this->XPhaseTable[(kx7 + kx8 - kx3 - kx4) + this->XPhaseTableShift] * this->YPhaseTable[(ky2 + ky3 - ky6 - ky7) + this->YPhaseTableShift]; */
+/*   Tmp += this->XPhaseTable[(kx7 + kx8 - kx3 - kx4) + this->XPhaseTableShift] * this->YPhaseTable[(ky2 + ky7 - ky6 - ky3) + this->YPhaseTableShift]; */
+
+/*   Tmp += this->XPhaseTable[(kx2 + kx4 - kx6 - kx8) + this->XPhaseTableShift]; */
+/*   Tmp += this->XPhaseTable[(kx2 + kx8 - kx6 - kx4) + this->XPhaseTableShift]; */
+/*   Tmp += this->XPhaseTable[(kx2 + kx3 - kx6 - kx7) + this->XPhaseTableShift] * this->YPhaseTable[(ky7 + ky8 - ky3 - ky4) + this->YPhaseTableShift]; */
+/*   Tmp += this->XPhaseTable[(kx2 + kx7 - kx6 - kx3) + this->XPhaseTableShift] * this->YPhaseTable[(ky7 + ky8 - ky3 - ky4) + this->YPhaseTableShift]; */
+
   Tmp *= this->XHalfPhaseTable[(kx3 + kx4 - kx7 - kx8) + this->XPhaseTableShift];
   Tmp *= this->YHalfPhaseTable[(ky3 + ky4 - ky7 - ky8) + this->YPhaseTableShift];
   return Tmp;

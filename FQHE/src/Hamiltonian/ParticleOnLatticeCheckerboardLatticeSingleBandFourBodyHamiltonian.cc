@@ -342,8 +342,8 @@ void ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian::Evaluate
 	  PermutationSign[i] = TmpSign;
 	}
       
-      Complex TmpABBB;
-      Complex TmpBAAA;
+      //      Complex TmpABBB;
+      //      Complex TmpBAAA;
       Complex TmpAABB;
 
       for (int i = 0; i < this->NbrNBodySectorSums; ++i)
@@ -383,8 +383,8 @@ void ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian::Evaluate
 		  for (int l1 = 0; l1 < NbrPermutations; ++l1)
 		    {
 		      int* TmpPerm = Permutations[l1];
-		      TmpABBB = PermutationSign[l1] * Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[3]]][0][1]);
-		      TmpBAAA = PermutationSign[l1] * Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[3]]][0][0]);
+		      //		      TmpABBB = PermutationSign[l1] * Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[3]]][0][1]);
+		      //		      TmpBAAA = PermutationSign[l1] * Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[3]]][0][0]);
 		      TmpAABB = PermutationSign[l1] * Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[3]]][0][1]);
 		      KxInPerm[0] = KxIn[TmpPerm[0]];
 		      KyInPerm[0] = KyIn[TmpPerm[0]];
@@ -397,9 +397,9 @@ void ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian::Evaluate
 		      for (int l2 = 0; l2 < NbrPermutations; ++l2)
 			{
 			  int* TmpPerm2 = Permutations[l2];			  			  
-			  Tmp += TmpABBB * PermutationSign [l2] * OneBodyBasis[IndexOut[TmpPerm2[0]]][0][0] * OneBodyBasis[IndexOut[TmpPerm2[1]]][0][1] * OneBodyBasis[IndexOut[TmpPerm2[2]]][0][1] * OneBodyBasis[IndexOut[TmpPerm2[3]]][0][1] * this->ComputeFourBodyMatrixElementABBB(KxInPerm[0], KyInPerm[0], KxInPerm[1], KyInPerm[1], KxInPerm[2], KyInPerm[2], KxInPerm[3], KyInPerm[3], KxOut[TmpPerm2[0]], KyOut[TmpPerm2[0]], KxOut[TmpPerm2[1]], KyOut[TmpPerm2[1]], KxOut[TmpPerm2[2]], KyOut[TmpPerm2[2]], KxOut[TmpPerm2[3]], KyOut[TmpPerm2[3]]);
+			  //			  Tmp += TmpABBB * PermutationSign [l2] * OneBodyBasis[IndexOut[TmpPerm2[0]]][0][0] * OneBodyBasis[IndexOut[TmpPerm2[1]]][0][1] * OneBodyBasis[IndexOut[TmpPerm2[2]]][0][1] * OneBodyBasis[IndexOut[TmpPerm2[3]]][0][1] * this->ComputeFourBodyMatrixElementABBB(KxInPerm[0], KyInPerm[0], KxInPerm[1], KyInPerm[1], KxInPerm[2], KyInPerm[2], KxInPerm[3], KyInPerm[3], KxOut[TmpPerm2[0]], KyOut[TmpPerm2[0]], KxOut[TmpPerm2[1]], KyOut[TmpPerm2[1]], KxOut[TmpPerm2[2]], KyOut[TmpPerm2[2]], KxOut[TmpPerm2[3]], KyOut[TmpPerm2[3]]);
 		      
-			  Tmp += TmpBAAA * PermutationSign [l2] * OneBodyBasis[IndexOut[TmpPerm2[0]]][0][1] * OneBodyBasis[IndexOut[TmpPerm2[1]]][0][0] * OneBodyBasis[IndexOut[TmpPerm2[2]]][0][0] * OneBodyBasis[IndexOut[TmpPerm2[3]]][0][0] * this->ComputeFourBodyMatrixElementBAAA(KxInPerm[0], KyInPerm[0], KxInPerm[1], KyInPerm[1], KxInPerm[2], KyInPerm[2], KxInPerm[3], KyInPerm[3], KxOut[TmpPerm2[0]], KyOut[TmpPerm2[0]], KxOut[TmpPerm2[1]], KyOut[TmpPerm2[1]], KxOut[TmpPerm2[2]], KyOut[TmpPerm2[2]], KxOut[TmpPerm2[3]], KyOut[TmpPerm2[3]]);
+			  //			  Tmp += TmpBAAA * PermutationSign [l2] * OneBodyBasis[IndexOut[TmpPerm2[0]]][0][1] * OneBodyBasis[IndexOut[TmpPerm2[1]]][0][0] * OneBodyBasis[IndexOut[TmpPerm2[2]]][0][0] * OneBodyBasis[IndexOut[TmpPerm2[3]]][0][0] * this->ComputeFourBodyMatrixElementBAAA(KxInPerm[0], KyInPerm[0], KxInPerm[1], KyInPerm[1], KxInPerm[2], KyInPerm[2], KxInPerm[3], KyInPerm[3], KxOut[TmpPerm2[0]], KyOut[TmpPerm2[0]], KxOut[TmpPerm2[1]], KyOut[TmpPerm2[1]], KxOut[TmpPerm2[2]], KyOut[TmpPerm2[2]], KxOut[TmpPerm2[3]], KyOut[TmpPerm2[3]]);
 
 			  Tmp += TmpAABB * PermutationSign [l2] * OneBodyBasis[IndexOut[TmpPerm2[0]]][0][0] * OneBodyBasis[IndexOut[TmpPerm2[1]]][0][0] * OneBodyBasis[IndexOut[TmpPerm2[2]]][0][1] * OneBodyBasis[IndexOut[TmpPerm2[3]]][0][1] * this->ComputeFourBodyMatrixElementAABB(KxInPerm[0], KyInPerm[0], KxInPerm[1], KyInPerm[1], KxInPerm[2], KyInPerm[2], KxInPerm[3], KyInPerm[3], KxOut[TmpPerm2[0]], KyOut[TmpPerm2[0]], KxOut[TmpPerm2[1]], KyOut[TmpPerm2[1]], KxOut[TmpPerm2[2]], KyOut[TmpPerm2[2]], KxOut[TmpPerm2[3]], KyOut[TmpPerm2[3]]);
  
