@@ -580,7 +580,10 @@ int main(int argc, char** argv)
 			{
 			  if (WeightFlag == true)
 			    TmpMatrix *= Weights[i];		      
-			  PartialDensityMatrix += TmpMatrix;
+			   if (PartialDensityMatrix.GetNbrRow() == 0)
+			    PartialDensityMatrix = TmpMatrix;
+			  else
+			    PartialDensityMatrix += TmpMatrix;
 			}
 		    }
 		  if ((NbrSpaces > 1) && (WeightFlag == false))
