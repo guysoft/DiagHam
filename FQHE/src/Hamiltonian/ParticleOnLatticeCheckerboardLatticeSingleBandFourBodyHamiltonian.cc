@@ -138,10 +138,6 @@ ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian::ParticleOnLat
 
 ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian::~ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian()
 {
-  delete[] this->XPhaseTable;
-  delete[] this->XHalfPhaseTable;
-  delete[] this->YPhaseTable;
-  delete[] this->YHalfPhaseTable;
 }
 
 // evaluate all interaction factors
@@ -342,14 +338,19 @@ void ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian::Evaluate
 	  PermutationSign[i] = TmpSign;
 	}
       
-      //      Complex TmpABBB;
-      //      Complex TmpBAAA;
-      Complex TmpAABB;
+      int TmpLargestSector = 0;
+      for (int i = 0; i < this->NbrNBodySectorSums; ++i)
+	if (this->NbrNBodySectorIndicesPerSum[i] > TmpLargestSector)
+	  TmpLargestSector = this->NbrNBodySectorIndicesPerSum[i];
+
+      Complex* TmpAABBIn1 = new Complex[TmpLargestSector];
+      Complex* TmpAABBIn2 = new Complex[TmpLargestSector];
+      Complex* TmpAABBOut1 = new Complex[TmpLargestSector];
+      Complex* TmpAABBOut2 = new Complex[TmpLargestSector];
 
       for (int i = 0; i < this->NbrNBodySectorSums; ++i)
 	{
 	  this->NBodyInteractionFactors[i] = new Complex[this->NbrNBodySectorIndicesPerSum[i] * this->NbrNBodySectorIndicesPerSum[i]];
-
 	  int Index = 0;
 	  for (int j1 = 0; j1 < this->NbrNBodySectorIndicesPerSum[i]; ++j1)
 	    {
@@ -365,54 +366,115 @@ void ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian::Evaluate
 	      KyIn[2] = IndexIn[2] % this->NbrSiteY;
 	      KxIn[3] = IndexIn[3] / this->NbrSiteY;
 	      KyIn[3] = IndexIn[3] % this->NbrSiteY;	      
+
+	      Complex TmpAABBIn12 = 0.0;
+	      Complex TmpAABBOut12 = 0.0;
+	      Complex TmpAABBIn22 = 0.0;
+	      Complex TmpAABBOut22 = 0.0;
+
+	      for (int l1 = 0; l1 < NbrPermutations; ++l1)
+		{
+		  int* TmpPerm = Permutations[l1];
+
+		  TmpAABBIn12 += PermutationSign[l1] * Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[3]]][0][1]) * this->ComputeFourBodyMatrixElementAABBIn1(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]], KxIn[TmpPerm[3]], KyIn[TmpPerm[3]]);
+		  TmpAABBIn22 += PermutationSign[l1] * Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[3]]][0][1]) * this->ComputeFourBodyMatrixElementAABBIn2(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]], KxIn[TmpPerm[3]], KyIn[TmpPerm[3]]);
+							    
+		  TmpAABBOut12 += PermutationSign[l1] * OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[3]]][0][1] * this->ComputeFourBodyMatrixElementAABBOut1(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]], KxIn[TmpPerm[3]], KyIn[TmpPerm[3]]);
+		  TmpAABBOut22 += PermutationSign[l1] * OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[3]]][0][1] * this->ComputeFourBodyMatrixElementAABBOut2(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]], KxIn[TmpPerm[3]], KyIn[TmpPerm[3]]);
+		}
+	      TmpAABBIn1[j1] = TmpAABBIn12;
+	      TmpAABBOut1[j1] = TmpAABBOut12;
+	      TmpAABBIn2[j1] = TmpAABBIn22;
+	      TmpAABBOut2[j1] = TmpAABBOut22;
+	    }
+	  for (int j1 = 0; j1 < this->NbrNBodySectorIndicesPerSum[i]; ++j1)
+	    {
 	      for (int j2 = 0; j2 < this->NbrNBodySectorIndicesPerSum[i]; ++j2)
 		{
-		  IndexOut[0] = this->NBodySectorIndicesPerSum[i][j2 * 4];
-		  IndexOut[1] = this->NBodySectorIndicesPerSum[i][(j2 * 4) + 1];
-		  IndexOut[2] = this->NBodySectorIndicesPerSum[i][(j2 * 4) + 2];
-		  IndexOut[3] = this->NBodySectorIndicesPerSum[i][(j2 * 4) + 3];
-		  KxOut[0] = IndexOut[0] / this->NbrSiteY;
-		  KyOut[0] = IndexOut[0] % this->NbrSiteY;
-		  KxOut[1] = IndexOut[1] / this->NbrSiteY;
-		  KyOut[1] = IndexOut[1] % this->NbrSiteY;
-		  KxOut[2] = IndexOut[2] / this->NbrSiteY;
-		  KyOut[2] = IndexOut[2] % this->NbrSiteY;
-		  KxOut[3] = IndexOut[3] / this->NbrSiteY;
-		  KyOut[3] = IndexOut[3] % this->NbrSiteY;
-		  Complex Tmp = 0.0;
-		  for (int l1 = 0; l1 < NbrPermutations; ++l1)
-		    {
-		      int* TmpPerm = Permutations[l1];
-		      //		      TmpABBB = PermutationSign[l1] * Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[3]]][0][1]);
-		      //		      TmpBAAA = PermutationSign[l1] * Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[3]]][0][0]);
-		      TmpAABB = PermutationSign[l1] * Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[3]]][0][1]);
-		      KxInPerm[0] = KxIn[TmpPerm[0]];
-		      KyInPerm[0] = KyIn[TmpPerm[0]];
-		      KxInPerm[1] = KxIn[TmpPerm[1]];
-		      KyInPerm[1] = KyIn[TmpPerm[1]];
-		      KxInPerm[2] = KxIn[TmpPerm[2]];
-		      KyInPerm[2] = KyIn[TmpPerm[2]];
-		      KxInPerm[3] = KxIn[TmpPerm[3]];
-		      KyInPerm[3] = KyIn[TmpPerm[3]];
-		      for (int l2 = 0; l2 < NbrPermutations; ++l2)
-			{
-			  int* TmpPerm2 = Permutations[l2];			  			  
-			  //			  Tmp += TmpABBB * PermutationSign [l2] * OneBodyBasis[IndexOut[TmpPerm2[0]]][0][0] * OneBodyBasis[IndexOut[TmpPerm2[1]]][0][1] * OneBodyBasis[IndexOut[TmpPerm2[2]]][0][1] * OneBodyBasis[IndexOut[TmpPerm2[3]]][0][1] * this->ComputeFourBodyMatrixElementABBB(KxInPerm[0], KyInPerm[0], KxInPerm[1], KyInPerm[1], KxInPerm[2], KyInPerm[2], KxInPerm[3], KyInPerm[3], KxOut[TmpPerm2[0]], KyOut[TmpPerm2[0]], KxOut[TmpPerm2[1]], KyOut[TmpPerm2[1]], KxOut[TmpPerm2[2]], KyOut[TmpPerm2[2]], KxOut[TmpPerm2[3]], KyOut[TmpPerm2[3]]);
-		      
-			  //			  Tmp += TmpBAAA * PermutationSign [l2] * OneBodyBasis[IndexOut[TmpPerm2[0]]][0][1] * OneBodyBasis[IndexOut[TmpPerm2[1]]][0][0] * OneBodyBasis[IndexOut[TmpPerm2[2]]][0][0] * OneBodyBasis[IndexOut[TmpPerm2[3]]][0][0] * this->ComputeFourBodyMatrixElementBAAA(KxInPerm[0], KyInPerm[0], KxInPerm[1], KyInPerm[1], KxInPerm[2], KyInPerm[2], KxInPerm[3], KyInPerm[3], KxOut[TmpPerm2[0]], KyOut[TmpPerm2[0]], KxOut[TmpPerm2[1]], KyOut[TmpPerm2[1]], KxOut[TmpPerm2[2]], KyOut[TmpPerm2[2]], KxOut[TmpPerm2[3]], KyOut[TmpPerm2[3]]);
-
-			  Tmp += TmpAABB * PermutationSign [l2] * OneBodyBasis[IndexOut[TmpPerm2[0]]][0][0] * OneBodyBasis[IndexOut[TmpPerm2[1]]][0][0] * OneBodyBasis[IndexOut[TmpPerm2[2]]][0][1] * OneBodyBasis[IndexOut[TmpPerm2[3]]][0][1] * this->ComputeFourBodyMatrixElementAABB(KxInPerm[0], KyInPerm[0], KxInPerm[1], KyInPerm[1], KxInPerm[2], KyInPerm[2], KxInPerm[3], KyInPerm[3], KxOut[TmpPerm2[0]], KyOut[TmpPerm2[0]], KxOut[TmpPerm2[1]], KyOut[TmpPerm2[1]], KxOut[TmpPerm2[2]], KyOut[TmpPerm2[2]], KxOut[TmpPerm2[3]], KyOut[TmpPerm2[3]]);
- 
-			}
-		    }
-		      
-		  this->NBodyInteractionFactors[i][Index] = 2.0 * FactorU * Tmp;
-		  
+		  this->NBodyInteractionFactors[i][Index] = 2.0 * FactorU * ((TmpAABBIn1[j1] * TmpAABBOut1[j2]) + (TmpAABBIn2[j1] * TmpAABBOut2[j2]));
 		  TotalNbrInteractionFactors++;
 		  ++Index;
 		}
 	    }
 	}
+
+      delete[] TmpAABBIn1;
+      delete[] TmpAABBOut1;
+      delete[] TmpAABBIn2;
+      delete[] TmpAABBOut2;
+
+//       // deprecated code, this one is more general but slow as hell
+//       //      Complex TmpABBB;
+//       //      Complex TmpBAAA;
+//       Complex TmpAABB;
+
+//       for (int i = 0; i < this->NbrNBodySectorSums; ++i)
+// 	{
+// 	  this->NBodyInteractionFactors[i] = new Complex[this->NbrNBodySectorIndicesPerSum[i] * this->NbrNBodySectorIndicesPerSum[i]];
+
+// 	  int Index = 0;
+// 	  for (int j1 = 0; j1 < this->NbrNBodySectorIndicesPerSum[i]; ++j1)
+// 	    {
+// 	      IndexIn[0] = this->NBodySectorIndicesPerSum[i][j1 * 4];
+// 	      IndexIn[1] = this->NBodySectorIndicesPerSum[i][(j1 * 4) + 1];
+// 	      IndexIn[2] = this->NBodySectorIndicesPerSum[i][(j1 * 4) + 2];
+// 	      IndexIn[3] = this->NBodySectorIndicesPerSum[i][(j1 * 4) + 3];
+// 	      KxIn[0] = IndexIn[0] / this->NbrSiteY;
+// 	      KyIn[0] = IndexIn[0] % this->NbrSiteY;
+// 	      KxIn[1] = IndexIn[1] / this->NbrSiteY;
+// 	      KyIn[1] = IndexIn[1] % this->NbrSiteY;
+// 	      KxIn[2] = IndexIn[2] / this->NbrSiteY;
+// 	      KyIn[2] = IndexIn[2] % this->NbrSiteY;
+// 	      KxIn[3] = IndexIn[3] / this->NbrSiteY;
+// 	      KyIn[3] = IndexIn[3] % this->NbrSiteY;	      
+// 	      for (int j2 = 0; j2 < this->NbrNBodySectorIndicesPerSum[i]; ++j2)
+// 		{
+// 		  IndexOut[0] = this->NBodySectorIndicesPerSum[i][j2 * 4];
+// 		  IndexOut[1] = this->NBodySectorIndicesPerSum[i][(j2 * 4) + 1];
+// 		  IndexOut[2] = this->NBodySectorIndicesPerSum[i][(j2 * 4) + 2];
+// 		  IndexOut[3] = this->NBodySectorIndicesPerSum[i][(j2 * 4) + 3];
+// 		  KxOut[0] = IndexOut[0] / this->NbrSiteY;
+// 		  KyOut[0] = IndexOut[0] % this->NbrSiteY;
+// 		  KxOut[1] = IndexOut[1] / this->NbrSiteY;
+// 		  KyOut[1] = IndexOut[1] % this->NbrSiteY;
+// 		  KxOut[2] = IndexOut[2] / this->NbrSiteY;
+// 		  KyOut[2] = IndexOut[2] % this->NbrSiteY;
+// 		  KxOut[3] = IndexOut[3] / this->NbrSiteY;
+// 		  KyOut[3] = IndexOut[3] % this->NbrSiteY;
+// 		  Complex Tmp = 0.0;
+// 		  for (int l1 = 0; l1 < NbrPermutations; ++l1)
+// 		    {
+// 		      int* TmpPerm = Permutations[l1];
+// 		      //		      TmpABBB = PermutationSign[l1] * Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[3]]][0][1]);
+// 		      //		      TmpBAAA = PermutationSign[l1] * Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[3]]][0][0]);
+// 		      TmpAABB = PermutationSign[l1] * Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[3]]][0][1]);
+// 		      KxInPerm[0] = KxIn[TmpPerm[0]];
+// 		      KyInPerm[0] = KyIn[TmpPerm[0]];
+// 		      KxInPerm[1] = KxIn[TmpPerm[1]];
+// 		      KyInPerm[1] = KyIn[TmpPerm[1]];
+// 		      KxInPerm[2] = KxIn[TmpPerm[2]];
+// 		      KyInPerm[2] = KyIn[TmpPerm[2]];
+// 		      KxInPerm[3] = KxIn[TmpPerm[3]];
+// 		      KyInPerm[3] = KyIn[TmpPerm[3]];
+// 		      for (int l2 = 0; l2 < NbrPermutations; ++l2)
+// 			{
+// 			  int* TmpPerm2 = Permutations[l2];			  			  
+// 			  //			  Tmp += TmpABBB * PermutationSign [l2] * OneBodyBasis[IndexOut[TmpPerm2[0]]][0][0] * OneBodyBasis[IndexOut[TmpPerm2[1]]][0][1] * OneBodyBasis[IndexOut[TmpPerm2[2]]][0][1] * OneBodyBasis[IndexOut[TmpPerm2[3]]][0][1] * this->ComputeFourBodyMatrixElementABBB(KxInPerm[0], KyInPerm[0], KxInPerm[1], KyInPerm[1], KxInPerm[2], KyInPerm[2], KxInPerm[3], KyInPerm[3], KxOut[TmpPerm2[0]], KyOut[TmpPerm2[0]], KxOut[TmpPerm2[1]], KyOut[TmpPerm2[1]], KxOut[TmpPerm2[2]], KyOut[TmpPerm2[2]], KxOut[TmpPerm2[3]], KyOut[TmpPerm2[3]]);
+		      
+// 			  //			  Tmp += TmpBAAA * PermutationSign [l2] * OneBodyBasis[IndexOut[TmpPerm2[0]]][0][1] * OneBodyBasis[IndexOut[TmpPerm2[1]]][0][0] * OneBodyBasis[IndexOut[TmpPerm2[2]]][0][0] * OneBodyBasis[IndexOut[TmpPerm2[3]]][0][0] * this->ComputeFourBodyMatrixElementBAAA(KxInPerm[0], KyInPerm[0], KxInPerm[1], KyInPerm[1], KxInPerm[2], KyInPerm[2], KxInPerm[3], KyInPerm[3], KxOut[TmpPerm2[0]], KyOut[TmpPerm2[0]], KxOut[TmpPerm2[1]], KyOut[TmpPerm2[1]], KxOut[TmpPerm2[2]], KyOut[TmpPerm2[2]], KxOut[TmpPerm2[3]], KyOut[TmpPerm2[3]]);
+
+// 			  Tmp += TmpAABB * PermutationSign [l2] * OneBodyBasis[IndexOut[TmpPerm2[0]]][0][0] * OneBodyBasis[IndexOut[TmpPerm2[1]]][0][0] * OneBodyBasis[IndexOut[TmpPerm2[2]]][0][1] * OneBodyBasis[IndexOut[TmpPerm2[3]]][0][1] * this->ComputeFourBodyMatrixElementAABB(KxInPerm[0], KyInPerm[0], KxInPerm[1], KyInPerm[1], KxInPerm[2], KyInPerm[2], KxInPerm[3], KyInPerm[3], KxOut[TmpPerm2[0]], KyOut[TmpPerm2[0]], KxOut[TmpPerm2[1]], KyOut[TmpPerm2[1]], KxOut[TmpPerm2[2]], KyOut[TmpPerm2[2]], KxOut[TmpPerm2[3]], KyOut[TmpPerm2[3]]);
+ 
+// 			}
+// 		    }
+		      
+// 		  this->NBodyInteractionFactors[i][Index] = 2.0 * FactorU * Tmp;
+		  
+// 		  TotalNbrInteractionFactors++;
+// 		  ++Index;
+// 		}
+// 	    }
+// 	}
       delete[] PermutationSign;
       for (int i = 0; i < NbrPermutations; ++i)
 	delete[] Permutations[i];
@@ -427,78 +489,3 @@ void ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian::Evaluate
   cout << "====================================" << endl;
 }
 
-// compute the matrix element for the two body interaction between two sites A and B 
-//
-// kx1 = momentum along x for the A site
-// ky1 = momentum along y for the A site
-// kx2 = momentum along x for the B site
-// ky2 = momentum along y for the B site
-// return value = corresponding matrix element
-
-Complex ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian::ComputeTwoBodyMatrixElementAB(int kx1, int ky1, int kx2, int ky2)
-{
-  Complex Tmp = 2.0 * (cos (M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX)) - ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY))))) 
-		       + cos (M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX)) + ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY))))));
-  return Tmp;
-}
-
-
-// compute the one body transformation matrices and the optional one body band stucture contribution
-//
-// oneBodyBasis = array of one body transformation matrices
-
-void ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian::ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis)
-{
-  for (int kx = 0; kx < this->NbrSiteX; ++kx)
-    for (int ky = 0; ky < this->NbrSiteY; ++ky)
-      {
-	int Index = (kx * this->NbrSiteY) + ky;
-	Complex B1 = 4.0 * this->NNHoping * Complex (cos (0.5 * (((double) kx) + this->GammaX) * this->KxFactor) * cos (0.5 * (((double) ky) + this->GammaY) * this->KyFactor) * cos(M_PI * 0.25), 
-						     sin (0.5 * (((double) kx) + this->GammaX) * this->KxFactor) * sin (0.5 * (((double) ky) + this->GammaY) * this->KyFactor) * sin(M_PI * 0.25));
-	double d1 = 4.0 * this->SecondNextNNHoping * cos ((((double) kx) + this->GammaX) * this->KxFactor) * cos ((((double) ky) + this->GammaY) * this->KyFactor);
-	double d3 =  this->MuS + (2.0 * this->NextNNHoping * (cos ((((double) kx) + this->GammaX) * this->KxFactor)
-							      - cos ((((double) ky) + this->GammaY) * this->KyFactor)));
-	HermitianMatrix TmpOneBodyHamiltonian(2, true);
-	TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d1 + d3);
-	TmpOneBodyHamiltonian.SetMatrixElement(0, 1, B1);
-	TmpOneBodyHamiltonian.SetMatrixElement(1, 1, d1 - d3);
-	ComplexMatrix TmpMatrix(2, 2, true);
-	TmpMatrix[0][0] = 1.0;
-	TmpMatrix[1][1] = 1.0;
-	RealDiagonalMatrix TmpDiag;
-#ifdef __LAPACK__
-	TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
-#else
-	TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
-#endif   
-	oneBodyBasis[Index] = TmpMatrix;	
-	if (this->FlatBand == false)
-	  {
-	    this->OneBodyInteractionFactors[Index] = TmpDiag(0, 0);
-	  }
-	cout << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << "  e1=[" << TmpMatrix[0][0] << ", " << TmpMatrix[0][1] << "]  e2=[" << TmpMatrix[1][0] << ", " << TmpMatrix[1][1] << "]" << endl;
-      }
- 
-}
-// compute all the phase precalculation arrays 
-//
-
-void ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian::ComputePhaseArray()
-{
-  this->XPhaseTable = new Complex [2 * this->NBodyValue * this->NbrSiteX];
-  this->XHalfPhaseTable = new Complex [2 * this->NBodyValue * this->NbrSiteX];
-  this->XPhaseTableShift = this->NBodyValue * this->NbrSiteX;
-  for (int i = -this->XPhaseTableShift; i < this->XPhaseTableShift; ++i)
-    {
-      this->XPhaseTable[this->XPhaseTableShift + i] = Phase(this->KxFactor * ((double) i));
-      this->XHalfPhaseTable[this->XPhaseTableShift + i] = Phase(0.5 * this->KxFactor * ((double) i));
-    }
-  this->YPhaseTable = new Complex [2 * this->NBodyValue * this->NbrSiteY];
-  this->YHalfPhaseTable = new Complex [2 * this->NBodyValue * this->NbrSiteY];
-  this->YPhaseTableShift = this->NBodyValue * this->NbrSiteY;
-  for (int i = -this->YPhaseTableShift; i < this->YPhaseTableShift; ++i)
-    {
-      this->YPhaseTable[this->YPhaseTableShift + i] = Phase(this->KyFactor * ((double) i));
-      this->YHalfPhaseTable[this->YPhaseTableShift + i] = Phase(0.5 * this->KyFactor * ((double) i));
-    }
-}

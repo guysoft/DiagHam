@@ -36,7 +36,7 @@
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphere.h"
-#include "Hamiltonian/ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian.h"
 #include "Vector/ComplexVector.h"
 
 #include <iostream>
@@ -47,7 +47,7 @@ using std::cout;
 using std::endl;
 
 
-class ParticleOnLatticeCheckerboardLatticeSingleBandThreeBodyHamiltonian : public ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian
+class ParticleOnLatticeCheckerboardLatticeSingleBandThreeBodyHamiltonian : public ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian
 {
 
  protected:
@@ -72,7 +72,19 @@ class ParticleOnLatticeCheckerboardLatticeSingleBandThreeBodyHamiltonian : publi
   // use flat band model
   bool FlatBand;
   
+  // precalculation tables for cosine and sine factors
+  Complex* XPhaseTable;
+  Complex* YPhaseTable;
+  Complex* XHalfPhaseTable;
+  Complex* YHalfPhaseTable;
+  int XPhaseTableShift;
+  int YPhaseTableShift;
+
  public:
+
+  // default constructor
+  //
+  ParticleOnLatticeCheckerboardLatticeSingleBandThreeBodyHamiltonian();
 
   // constructor
   //
@@ -103,6 +115,15 @@ class ParticleOnLatticeCheckerboardLatticeSingleBandThreeBodyHamiltonian : publi
   // evaluate all interaction factors
   //   
   virtual void EvaluateInteractionFactors();
+
+  // compute the one body transformation matrices and the optional one body band stucture contribution
+  //
+  // oneBodyBasis = array of one body transformation matrices
+  virtual void ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis);
+
+  // compute all the phase precalculation arrays 
+  //
+  virtual void ComputePhaseArray();
 
   // compute the matrix element for the two body interaction between two sites A and B 
   //

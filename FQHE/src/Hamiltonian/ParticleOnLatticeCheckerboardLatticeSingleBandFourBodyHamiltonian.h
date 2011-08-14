@@ -36,7 +36,7 @@
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphere.h"
-#include "Hamiltonian/ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeCheckerboardLatticeSingleBandThreeBodyHamiltonian.h"
 #include "Vector/ComplexVector.h"
 
 #include <iostream>
@@ -47,39 +47,11 @@ using std::cout;
 using std::endl;
 
 
-class ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian : public ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian
+class ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian : public ParticleOnLatticeCheckerboardLatticeSingleBandThreeBodyHamiltonian
 {
 
  protected:
   
-  // hoping amplitude between neareast neighbor sites
-  double NNHoping;
-  // hoping amplitude between next neareast neighbor sites
-  double NextNNHoping;
-  // hoping amplitude between second next neareast neighbor sites
-  double SecondNextNNHoping;
-  // four times the sublattice staggered chemical potential 
-  double MuS;
-  // nearest neighbor density-density-density potential strength
-  double UPotential;
-  // nearest neighbor density-density potential strength
-  double VPotential;
-  // boundary condition twisting angle along x
-  double GammaX;
-  // boundary condition twisting angle along y
-  double GammaY;
-
-  // use flat band model
-  bool FlatBand;
-
-  // precalculation tables for cosine and sine factors
-  Complex* XPhaseTable;
-  Complex* YPhaseTable;
-  Complex* XHalfPhaseTable;
-  Complex* YHalfPhaseTable;
-  int XPhaseTableShift;
-  int YPhaseTableShift;
-
   
  public:
 
@@ -117,24 +89,6 @@ class ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian : public
   //   
   virtual void EvaluateInteractionFactors();
 
-  // compute the one body transformation matrices and the optional one body band stucture contribution
-  //
-  // oneBodyBasis = array of one body transformation matrices
-  virtual void ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis);
-
-  // compute all the phase precalculation arrays 
-  //
-  virtual void ComputePhaseArray();
-
-  // compute the matrix element for the two body interaction between two sites A and B 
-  //
-  // kx1 = momentum along x for the A site
-  // ky1 = momentum along y for the A site
-  // kx2 = momentum along x for the B site
-  // ky2 = momentum along y for the B site
-  // return value = corresponding matrix element
-  Complex ComputeTwoBodyMatrixElementAB(int kx1, int ky1, int kx2, int ky2);
-
   // compute the matrix element for the four body interaction between one site A and three sites B 
   //
   // kx1 = momentum along x of the creation operator of the A site
@@ -145,14 +99,14 @@ class ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian : public
   // ky3 = momentum along y of the creation operator of the second B site
   // kx4 = momentum along x of the creation operator of the third B site
   // ky4 = momentum along y of the creation operator of the third B site
-  // kx5 = momentum along x of the creation operator of the A site
-  // ky5 = momentum along y of the creation operator of the A site
-  // kx6 = momentum along x of the creation operator of the first B site
-  // ky6 = momentum along y of the creation operator of the first B site
-  // kx7 = momentum along x of the creation operator of the second B site
-  // ky7 = momentum along y of the creation operator of the second B site
-  // kx8 = momentum along x of the creation operator of the third B site
-  // ky8 = momentum along y of the creation operator of the third B site
+  // kx5 = momentum along x of the annihilation operator of the A site
+  // ky5 = momentum along y of the annihilation operator of the A site
+  // kx6 = momentum along x of the annihilation operator of the first B site
+  // ky6 = momentum along y of the annihilation operator of the first B site
+  // kx7 = momentum along x of the annihilation operator of the second B site
+  // ky7 = momentum along y of the annihilation operator of the second B site
+  // kx8 = momentum along x of the annihilation operator of the third B site
+  // ky8 = momentum along y of the annihilation operator of the third B site
   // return value = corresponding matrix element
   Complex ComputeFourBodyMatrixElementABBB(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4, int kx5, int ky5, int kx6, int ky6, int kx7, int ky7, int kx8, int ky8);
 
@@ -166,14 +120,14 @@ class ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian : public
   // ky3 = momentum along y of the creation operator of the second A site
   // kx4 = momentum along x of the creation operator of the third A site
   // ky4 = momentum along y of the creation operator of the third A site
-  // kx5 = momentum along x of the creation operator of the B site
-  // ky5 = momentum along y of the creation operator of the B site
-  // kx6 = momentum along x of the creation operator of the first A site
-  // ky6 = momentum along y of the creation operator of the first A site
-  // kx7 = momentum along x of the creation operator of the second A site
-  // ky7 = momentum along y of the creation operator of the second A site
-  // kx8 = momentum along x of the creation operator of the third A site
-  // ky8 = momentum along y of the creation operator of the third A site
+  // kx5 = momentum along x of the annihilation operator of the B site
+  // ky5 = momentum along y of the annihilation operator of the B site
+  // kx6 = momentum along x of the annihilation operator of the first A site
+  // ky6 = momentum along y of the annihilation operator of the first A site
+  // kx7 = momentum along x of the annihilation operator of the second A site
+  // ky7 = momentum along y of the annihilation operator of the second A site
+  // kx8 = momentum along x of the annihilation operator of the third A site
+  // ky8 = momentum along y of the annihilation operator of the third A site
   // return value = corresponding matrix element
   Complex ComputeFourBodyMatrixElementBAAA(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4, int kx5, int ky5, int kx6, int ky6, int kx7, int ky7, int kx8, int ky8);
 
@@ -187,17 +141,68 @@ class ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian : public
   // ky3 = momentum along y of the creation operator of the first B site
   // kx4 = momentum along x of the creation operator of the second B site
   // ky4 = momentum along y of the creation operator of the secnd B site
-  // kx5 = momentum along x of the creation operator of the first A site
-  // ky5 = momentum along y of the creation operator of the first A site
-  // kx6 = momentum along x of the creation operator of the second B site
-  // ky6 = momentum along y of the creation operator of the second B site
-  // kx7 = momentum along x of the creation operator of the first A site
-  // ky7 = momentum along y of the creation operator of the first A site
-  // kx8 = momentum along x of the creation operator of the second A site
-  // ky8 = momentum along y of the creation operator of the second A site
+  // kx5 = momentum along x of the annihilation operator of the first A site
+  // ky5 = momentum along y of the annihilation operator of the first A site
+  // kx6 = momentum along x of the annihilation operator of the second B site
+  // ky6 = momentum along y of the annihilation operator of the second B site
+  // kx7 = momentum along x of the annihilation operator of the first A site
+  // ky7 = momentum along y of the annihilation operator of the first A site
+  // kx8 = momentum along x of the annihilation operator of the second A site
+  // ky8 = momentum along y of the annihilation operator of the second A site
   // return value = corresponding matrix element
   Complex ComputeFourBodyMatrixElementAABB(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4, int kx5, int ky5, int kx6, int ky6, int kx7, int ky7, int kx8, int ky8);
 
+  // compute the matrix element for the creation part of the four body interaction between two sites A and two sites B 
+  //
+  // kx1 = momentum along x of the creation operator of the first A site
+  // ky1 = momentum along y of the creation operator of the first A site
+  // kx2 = momentum along x of the creation operator of the second A site
+  // ky2 = momentum along y of the creation operator of the second A site
+  // kx3 = momentum along x of the creation operator of the first B site
+  // ky3 = momentum along y of the creation operator of the first B site
+  // kx4 = momentum along x of the creation operator of the second B site
+  // ky4 = momentum along y of the creation operator of the secnd B site
+  // return value = corresponding matrix element
+  Complex ComputeFourBodyMatrixElementAABBIn1(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
+
+  // compute the matrix element for the creation part of the four body interaction between two sites A and two sites B 
+  //
+  // kx1 = momentum along x of the creation operator of the first A site
+  // ky1 = momentum along y of the creation operator of the first A site
+  // kx2 = momentum along x of the creation operator of the second A site
+  // ky2 = momentum along y of the creation operator of the second A site
+  // kx3 = momentum along x of the creation operator of the first B site
+  // ky3 = momentum along y of the creation operator of the first B site
+  // kx4 = momentum along x of the creation operator of the second B site
+  // ky4 = momentum along y of the creation operator of the secnd B site
+  // return value = corresponding matrix element  
+  Complex ComputeFourBodyMatrixElementAABBIn2(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
+
+  // compute the matrix element for the annihilation part of the four body interaction between two sites A and two sites B 
+  //
+  // kx5 = momentum along x of the annihilation operator of the first A site
+  // ky5 = momentum along y of the annihilation operator of the first A site
+  // kx6 = momentum along x of the annihilation operator of the second B site
+  // ky6 = momentum along y of the annihilation operator of the second B site
+  // kx7 = momentum along x of the annihilation operator of the first A site
+  // ky7 = momentum along y of the annihilation operator of the first A site
+  // kx8 = momentum along x of the annihilation operator of the second A site
+  // ky8 = momentum along y of the annihilation operator of the second A site
+  // return value = corresponding matrix element
+  Complex ComputeFourBodyMatrixElementAABBOut1(int kx5, int ky5, int kx6, int ky6, int kx7, int ky7, int kx8, int ky8);
+
+  // compute the matrix element for the annihilation part of the four body interaction between two sites A and two sites B 
+  //
+  // kx5 = momentum along x of the annihilation operator of the first A site
+  // ky5 = momentum along y of the annihilation operator of the first A site
+  // kx6 = momentum along x of the annihilation operator of the second B site
+  // ky6 = momentum along y of the annihilation operator of the second B site
+  // kx7 = momentum along x of the annihilation operator of the first A site
+  // ky7 = momentum along y of the annihilation operator of the first A site
+  // kx8 = momentum along x of the annihilation operator of the second A site
+  // ky8 = momentum along y of the annihilation operator of the second A site
+  // return value = corresponding matrix element
+  Complex ComputeFourBodyMatrixElementAABBOut2(int kx5, int ky5, int kx6, int ky6, int kx7, int ky7, int kx8, int ky8);
 
 };
 
@@ -211,14 +216,14 @@ class ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian : public
 // ky3 = momentum along y of the creation operator of the second B site
 // kx4 = momentum along x of the creation operator of the third B site
 // ky4 = momentum along y of the creation operator of the third B site
-// kx5 = momentum along x of the creation operator of the A site
-// ky5 = momentum along y of the creation operator of the A site
-// kx6 = momentum along x of the creation operator of the first B site
-// ky6 = momentum along y of the creation operator of the first B site
-// kx7 = momentum along x of the creation operator of the second B site
-// ky7 = momentum along y of the creation operator of the second B site
-// kx8 = momentum along x of the creation operator of the third B site
-// ky8 = momentum along y of the creation operator of the third B site
+// kx5 = momentum along x of the annihilation operator of the A site
+// ky5 = momentum along y of the annihilation operator of the A site
+// kx6 = momentum along x of the annihilation operator of the first B site
+// ky6 = momentum along y of the annihilation operator of the first B site
+// kx7 = momentum along x of the annihilation operator of the second B site
+// ky7 = momentum along y of the annihilation operator of the second B site
+// kx8 = momentum along x of the annihilation operator of the third B site
+// ky8 = momentum along y of the annihilation operator of the third B site
 // return value = corresponding matrix element
 
 inline Complex ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian::ComputeFourBodyMatrixElementABBB(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4, int kx5, int ky5, int kx6, int ky6, int kx7, int ky7, int kx8, int ky8)
@@ -243,14 +248,14 @@ inline Complex ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian
 // ky3 = momentum along y of the creation operator of the second A site
 // kx4 = momentum along x of the creation operator of the third A site
 // ky4 = momentum along y of the creation operator of the third A site
-// kx5 = momentum along x of the creation operator of the B site
-// ky5 = momentum along y of the creation operator of the B site
-// kx6 = momentum along x of the creation operator of the first A site
-// ky6 = momentum along y of the creation operator of the first A site
-// kx7 = momentum along x of the creation operator of the second A site
-// ky7 = momentum along y of the creation operator of the second A site
-// kx8 = momentum along x of the creation operator of the third A site
-// ky8 = momentum along y of the creation operator of the third A site
+// kx5 = momentum along x of the annihilation operator of the B site
+// ky5 = momentum along y of the annihilation operator of the B site
+// kx6 = momentum along x of the annihilation operator of the first A site
+// ky6 = momentum along y of the annihilation operator of the first A site
+// kx7 = momentum along x of the annihilation operator of the second A site
+// ky7 = momentum along y of the annihilation operator of the second A site
+// kx8 = momentum along x of the annihilation operator of the third A site
+// ky8 = momentum along y of the annihilation operator of the third A site
 // return value = corresponding matrix element
 
 inline Complex ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian::ComputeFourBodyMatrixElementBAAA(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4, int kx5, int ky5, int kx6, int ky6, int kx7, int ky7, int kx8, int ky8)
@@ -275,14 +280,14 @@ inline Complex ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian
 // ky3 = momentum along y of the creation operator of the first B site
 // kx4 = momentum along x of the creation operator of the second B site
 // ky4 = momentum along y of the creation operator of the secnd B site
-// kx5 = momentum along x of the creation operator of the first A site
-// ky5 = momentum along y of the creation operator of the first A site
-// kx6 = momentum along x of the creation operator of the second B site
-// ky6 = momentum along y of the creation operator of the second B site
-// kx7 = momentum along x of the creation operator of the first A site
-// ky7 = momentum along y of the creation operator of the first A site
-// kx8 = momentum along x of the creation operator of the second A site
-// ky8 = momentum along y of the creation operator of the second A site
+// kx5 = momentum along x of the annihilation operator of the first A site
+// ky5 = momentum along y of the annihilation operator of the first A site
+// kx6 = momentum along x of the annihilation operator of the second B site
+// ky6 = momentum along y of the annihilation operator of the second B site
+// kx7 = momentum along x of the annihilation operator of the first A site
+// ky7 = momentum along y of the annihilation operator of the first A site
+// kx8 = momentum along x of the annihilation operator of the second A site
+// ky8 = momentum along y of the annihilation operator of the second A site
 // return value = corresponding matrix element
 
 inline Complex ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian::ComputeFourBodyMatrixElementAABB(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4, int kx5, int ky5, int kx6, int ky6, int kx7, int ky7, int kx8, int ky8)
@@ -305,5 +310,86 @@ inline Complex ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian
   Tmp *= this->YHalfPhaseTable[(ky3 + ky4 - ky7 - ky8) + this->YPhaseTableShift];
   return Tmp;
 }
+
+// compute the matrix element for the creation part of the four body interaction between two sites A and two sites B 
+//
+// kx1 = momentum along x of the creation operator of the first A site
+// ky1 = momentum along y of the creation operator of the first A site
+// kx2 = momentum along x of the creation operator of the second A site
+// ky2 = momentum along y of the creation operator of the second A site
+// kx3 = momentum along x of the creation operator of the first B site
+// ky3 = momentum along y of the creation operator of the first B site
+// kx4 = momentum along x of the creation operator of the second B site
+// ky4 = momentum along y of the creation operator of the secnd B site
+// return value = corresponding matrix element
+
+inline Complex ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian::ComputeFourBodyMatrixElementAABBIn1(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
+{
+  Complex Tmp = this->XPhaseTable[kx2 + this->XPhaseTableShift] * this->YPhaseTable[this->YPhaseTableShift - ky4];
+  Tmp *= this->XHalfPhaseTable[(kx3 + kx4) + this->XPhaseTableShift];
+  Tmp *= this->YHalfPhaseTable[(ky3 + ky4) + this->YPhaseTableShift];
+  return Tmp;
+}
+
+// compute the matrix element for the creation part of the four body interaction between two sites A and two sites B 
+//
+// kx1 = momentum along x of the creation operator of the first A site
+// ky1 = momentum along y of the creation operator of the first A site
+// kx2 = momentum along x of the creation operator of the second A site
+// ky2 = momentum along y of the creation operator of the second A site
+// kx3 = momentum along x of the creation operator of the first B site
+// ky3 = momentum along y of the creation operator of the first B site
+// kx4 = momentum along x of the creation operator of the second B site
+// ky4 = momentum along y of the creation operator of the secnd B site
+// return value = corresponding matrix element
+
+inline Complex ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian::ComputeFourBodyMatrixElementAABBIn2(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
+{
+  Complex Tmp = this->XPhaseTable[this->XPhaseTableShift - kx4] * this->YPhaseTable[ky2 + this->YPhaseTableShift];
+  Tmp *= this->XHalfPhaseTable[(kx3 + kx4) + this->XPhaseTableShift];
+  Tmp *= this->YHalfPhaseTable[(ky3 + ky4) + this->YPhaseTableShift];
+  return Tmp;
+}
+
+// compute the matrix element for the annihilation part of the four body interaction between two sites A and two sites B 
+//
+// kx5 = momentum along x of the annihilation operator of the first A site
+// ky5 = momentum along y of the annihilation operator of the first A site
+// kx6 = momentum along x of the annihilation operator of the second B site
+// ky6 = momentum along y of the annihilation operator of the second B site
+// kx7 = momentum along x of the annihilation operator of the first A site
+// ky7 = momentum along y of the annihilation operator of the first A site
+// kx8 = momentum along x of the annihilation operator of the second A site
+// ky8 = momentum along y of the annihilation operator of the second A site
+// return value = corresponding matrix element
+
+inline Complex ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian::ComputeFourBodyMatrixElementAABBOut1(int kx5, int ky5, int kx6, int ky6, int kx7, int ky7, int kx8, int ky8)
+{
+  Complex Tmp = this->XPhaseTable[this->XPhaseTableShift - kx6] * this->YPhaseTable[ky8 + this->YPhaseTableShift];
+  Tmp *= this->XHalfPhaseTable[this->XPhaseTableShift - kx7 - kx8];
+  Tmp *= this->YHalfPhaseTable[this->YPhaseTableShift - ky7 - ky8];
+  return Tmp;
+}
+
+// compute the matrix element for the annihilation part of the four body interaction between two sites A and two sites B 
+//
+// kx5 = momentum along x of the annihilation operator of the first A site
+// ky5 = momentum along y of the annihilation operator of the first A site
+// kx6 = momentum along x of the annihilation operator of the second B site
+// ky6 = momentum along y of the annihilation operator of the second B site
+// kx7 = momentum along x of the annihilation operator of the first A site
+// ky7 = momentum along y of the annihilation operator of the first A site
+// kx8 = momentum along x of the annihilation operator of the second A site
+// ky8 = momentum along y of the annihilation operator of the second A site
+// return value = corresponding matrix element
+
+inline Complex ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian::ComputeFourBodyMatrixElementAABBOut2(int kx5, int ky5, int kx6, int ky6, int kx7, int ky7, int kx8, int ky8)
+{
+  Complex Tmp = this->XPhaseTable[kx8 + this->XPhaseTableShift] * this->YPhaseTable[this->YPhaseTableShift - ky6];
+  Tmp *= this->XHalfPhaseTable[this->XPhaseTableShift - kx7 - kx8];
+  Tmp *= this->YHalfPhaseTable[this->YPhaseTableShift - ky7 - ky8];
+  return Tmp;
+}
+
 
 #endif
