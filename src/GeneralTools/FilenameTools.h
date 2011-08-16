@@ -131,6 +131,12 @@ int BackUpFile(const char* fileName, const char* optExtension = ".bak");
 // return value = number of lines 
 long GetFileNbrLines (char* fileName);
 
+// get the requested line number from file as a string
+// fileName = file to read
+// nbrLine = line number to return (first line starts at zero)
+// return = line, upon success
+char* GetLineFromFile (char* fileName, int nbrLine);
+
 // get unique filename by appending a counter to a requested name, if necessary
 // inputName = previous file name
 // insertion = string to insert after element

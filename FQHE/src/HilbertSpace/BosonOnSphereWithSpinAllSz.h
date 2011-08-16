@@ -117,7 +117,7 @@ class BosonOnSphereWithSpinAllSz :  public ParticleOnSphereWithSpin
   unsigned ProdATemporaryStateNbrUp;
 
   // flag indicating partial wavefunction calculation
-  bool SubspaceRestriction;;
+  bool SubspaceRestriction;
   // subspace for this restriction
   int SubspaceSz;
 

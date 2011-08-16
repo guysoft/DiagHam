@@ -60,6 +60,9 @@ class OptionManager
   // an optional string that can be displayed with help
   char* ProgramAdditionalInformations;
 
+  // group for global parameters that are defined automatically in all programs
+  OptionGroup* GlobalGroup;
+
  public:
 
   // constructor
@@ -83,11 +86,11 @@ class OptionManager
   // return value = pointer to the option if it has been found, 0 either
   AbstractOption* operator[] (const char* optionName);
 
-  // get an option group from its name
+  // get an option group from its name (also to access "global options")
   //
   // optionGroupName = string containing option group name
   // return value = pointer to the option group if it has been found, 0 either
-  OptionGroup* GetOptionGroup(const char* optionGroupName);
+  OptionGroup* GetOptionGroup(const char* optionGroupName);  
 
   // Proceed running options from command line arguments
   //

@@ -125,7 +125,10 @@ HardCoreBosonOnLattice::HardCoreBosonOnLattice (int nbrBosons, int lx, int ly, i
 // bosons = reference on the hilbert space to copy to copy
 HardCoreBosonOnLattice::HardCoreBosonOnLattice(const HardCoreBosonOnLattice& bosons)
 {
-  this->TargetSpace = this;
+  if (bosons.TargetSpace != &bosons)
+    this->TargetSpace = bosons.TargetSpace;
+  else
+    this->TargetSpace = this;
   this->NbrBosons = bosons.NbrBosons;
   this->Lx = bosons.Lx;
   this->Ly = bosons.Ly;
@@ -222,9 +225,9 @@ AbstractHilbertSpace* HardCoreBosonOnLattice::Clone()
 //
 // targetSpace = pointer to the target space
 
-void HardCoreBosonOnLattice::SetTargetSpace(HardCoreBosonOnLattice* targetSpace)
+void HardCoreBosonOnLattice::SetTargetSpace(ParticleOnLattice* targetSpace)
 {
-  this->TargetSpace=targetSpace;
+  this->TargetSpace=(HardCoreBosonOnLattice*)targetSpace;
 }
 
 // return Hilbert space dimension of the target space

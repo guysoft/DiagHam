@@ -31,9 +31,11 @@
 #include "config.h"
 #include "HilbertSpace/FermionOnLatticeGenericMomentumSpace.h"
 #include "GeneralTools/UnsignedIntegerTools.h"
+#include "GeneralTools/StringTools.h"
 #include "MathTools/FactorialCoefficient.h"
 #include "QuantumNumber/NumberParticleQuantumNumber.h"
 #include "QuantumNumber/PeriodicMomentumQuantumNumber.h"
+
 
 #include <bitset>
 #include <iostream>
@@ -68,7 +70,8 @@ FermionOnLatticeGenericMomentumSpace::FermionOnLatticeGenericMomentumSpace (int 
   this->Ny = ny;
   this->Kx=kx;
   this->Ky=ky;
-  this->NbrBands = nbrBands;  
+  this->NbrBands = nbrBands;
+  this->NbrKPoints = Nx*Ny;
   this->NbrStates = Nx*Ny*NbrBands;
 
 #ifdef __64_BITS__  
@@ -83,16 +86,25 @@ FermionOnLatticeGenericMomentumSpace::FermionOnLatticeGenericMomentumSpace (int 
 
   this->Flag.Initialize();
 
-  this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(nbrFermions,NbrStates);
-  
-  this->StateDescription=new unsigned long[this->HilbertSpaceDimension];
-  this->StateHighestBit=new int[this->HilbertSpaceDimension];  
-  this->GenerateStates(nbrFermions,NbrStates);
+  //this->LargeHilbertSpaceDimension = EvaluateHilbertSpaceDimension(this->NbrFermions, this->Nx-1, this->Ny-1, 0, 0);
+  this->LargeHilbertSpaceDimension = EvaluateHilbertSpaceDimension(this->NbrFermions, this->NbrStates-1, 0, 0);
+  cout << "Dimension count="<<LargeHilbertSpaceDimension<<endl;
+  this->StateDescription=new unsigned long[this->LargeHilbertSpaceDimension];
+  this->StateHighestBit=new int[this->LargeHilbertSpaceDimension];  
+  long TmpDim = this->GenerateStates(this->NbrFermions, this->NbrStates-1, 0, 0, 0);
+  if (TmpDim!=this->LargeHilbertSpaceDimension)
+    {
+      cout << "Dimension mismatch in FermionOnLatticeGenericMomentumSpace!"<<endl;
+      exit(1);
+    }
+  if (this->LargeHilbertSpaceDimension >= (1l << 30))
+    this->HilbertSpaceDimension = 0;
+  else
+    this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
   this->TargetSpace=this;
   
   this->MaximumSignLookUp = 16;
   this->GenerateLookUpTable(memory);
-  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
 //   for (int i=0; i<HilbertSpaceDimension; ++i)
 //     {
@@ -116,13 +128,7 @@ FermionOnLatticeGenericMomentumSpace::FermionOnLatticeGenericMomentumSpace (int 
   if (verbose)
     {
       cout << "memory requested for Hilbert space = ";
-      if (UsedMemory >= 1024)
-	if (UsedMemory >= 1048576)
-	  cout << (UsedMemory >> 20) << "Mo" << endl;
-	else
-	  cout << (UsedMemory >> 10) << "ko" <<  endl;
-      else
-	cout << UsedMemory << endl;
+      PrintMemorySize(cout,UsedMemory)<<endl;
     }
 #endif
   if (verbose)
@@ -142,6 +148,7 @@ FermionOnLatticeGenericMomentumSpace::FermionOnLatticeGenericMomentumSpace(const
   this->Ky = fermions.Ky;
   this->NbrBands = fermions.NbrBands;
   this->NbrStates = fermions.NbrStates;
+  this->NbrKPoints = fermions.NbrKPoints;
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
   this->StateDescription = fermions.StateDescription;
   this->StateHighestBit = fermions.StateHighestBit;
@@ -205,6 +212,7 @@ FermionOnLatticeGenericMomentumSpace& FermionOnLatticeGenericMomentumSpace::oper
   this->Ky = fermions.Ky;
   this->NbrBands = fermions.NbrBands;
   this->NbrStates = fermions.NbrStates;
+  this->NbrKPoints = fermions.NbrKPoints;
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
   this->StateDescription = fermions.StateDescription;
   this->StateHighestBit = fermions.StateHighestBit;
@@ -233,9 +241,9 @@ AbstractHilbertSpace* FermionOnLatticeGenericMomentumSpace::Clone()
 //
 // targetSpace = pointer to the target space
 
-void FermionOnLatticeGenericMomentumSpace::SetTargetSpace(FermionOnLatticeGenericMomentumSpace* targetSpace)
+void FermionOnLatticeGenericMomentumSpace::SetTargetSpace(ParticleOnLattice* targetSpace)
 {
-  this->TargetSpace=targetSpace;
+  this->TargetSpace=(FermionOnLatticeGenericMomentumSpace*)targetSpace;
 }
 
 // return Hilbert space dimension of the target space
@@ -676,38 +684,7 @@ double FermionOnLatticeGenericMomentumSpace::AdAdAADiagonal(int index, int nbrIn
   return 0.0;
 }
 
-// code set of quantum numbers posx, posy into a single integer
-// kx = momentum along x-direction
-// ky = momentum along y-direction
-// band = band index
-// 
-int FermionOnLatticeGenericMomentumSpace::EncodeQuantumNumber(int kx, int ky, int band, Complex &translationPhase)
-{
-  //cout << "Encoding " << kx<<", "<<ky<<": ";
-  while (kx<0)
-    kx+=this->Nx;
-  while (kx>=this->Nx)
-    kx-=this->Nx;
-  while (ky<0)
-    ky+=this->Ny;
-  while (ky>=this->Ny)
-    ky-=this->Ny;
-  int rst = kx + this->Nx*ky;
-  rst+=band*this->Nx*this->Ny;
-  translationPhase=0.0;
-  return rst;
-}
 
-// decode a single encoded quantum number q to the set of quantum numbers kx, ky
-// kx = momentum along x-direction
-// ky = momentum along y-direction
-void FermionOnLatticeGenericMomentumSpace::DecodeQuantumNumber(int q, int &kx, int &ky, int &band)
-{
-  band=q/(this->Nx*this->Ny);
-  q=q%(this->Nx*this->Ny);
-  ky=q/this->Nx;
-  kx=q%this->Nx;
-}
 
 // obtain a list of quantum numbers in state
 // index = index of many-body state to be considered
@@ -907,50 +884,95 @@ int FermionOnLatticeGenericMomentumSpace::CarefulFindStateIndex(unsigned long st
 }
 
 
-
 // evaluate Hilbert space dimension
 //
 // nbrFermions = number of fermions
-// nbrStates = number of elementary states available
-//
-int FermionOnLatticeGenericMomentumSpace::EvaluateHilbertSpaceDimension(int nbrFermions,int nbrStates)
-{  
-  FactorialCoefficient F;
-  F.SetToOne();
-  F.FactorialMultiply(nbrStates);
-  F.FactorialDivide(nbrStates-nbrFermions);
-  F.FactorialDivide(nbrFermions);
-  return (int)F.GetIntegerValue();
+// currentQ = current largest combined quantum number
+// currentTotalKx = current total momentum along x
+// currentTotalKy = current total momentum along y
+// return value = Hilbert space dimension
+
+long FermionOnLatticeGenericMomentumSpace::EvaluateHilbertSpaceDimension(int nbrFermions, int currentQ, int currentTotalKx, int currentTotalKy)
+{
+  if ((nbrFermions == 0) || (currentQ < 0))
+    return 0l;
+  int CurrentKx, CurrentKy, CurrentBand;
+  DecodeQuantumNumber(currentQ, CurrentKx, CurrentKy, CurrentBand);
+  long Count = 0;
+
+  if (nbrFermions == 1)
+    {
+      int ky = this->Ky - (currentTotalKy % this->Ny);
+      if (ky < 0)
+	ky += this->Ny;
+      int kx = this->Kx - (currentTotalKx % this->Nx);
+      if (kx < 0)
+	kx += this->Nx;
+      int Q;
+      for (int b=0; b <= CurrentBand; ++b)
+	{
+	  Q = FastEncodeQuantumNumber(kx, ky, b);
+	  if (Q<=currentQ)
+	    ++Count;
+	}
+      return Count;
+    }
+  
+  int ReducedCurrentQ = currentQ - 1;
+  Count = this->EvaluateHilbertSpaceDimension(nbrFermions-1, ReducedCurrentQ, currentTotalKx+CurrentKx, currentTotalKy+CurrentKy);
+  return Count+EvaluateHilbertSpaceDimension(nbrFermions, ReducedCurrentQ, currentTotalKx, currentTotalKy);
 }
 
-// generate many-body states without any additional symmetries
+
+// generate states with kx and ky symmetries
+//
 // nbrFermions = number of fermions
-// nbrStates = number of elementary states available
-//
-// (using routines from UnsignedIntegerTools)
-//
-int FermionOnLatticeGenericMomentumSpace::GenerateStates(int nbrFermions,int nbrStates)
+// currentQ = current consolidated quantum number
+// currentTotalKx = current total momentum along x
+// currentTotalKy = current total momentum along y
+// pos = position where to start filling states
+// return value = Hilbert space dimension
+
+long FermionOnLatticeGenericMomentumSpace::GenerateStates(int nbrFermions, int currentQ, int currentTotalKx, int currentTotalKy, long pos)
 {
-  int countdown=this->HilbertSpaceDimension-1;
-  int presentHighestBit=nbrFermions-1;    
-  this->StateHighestBit[countdown] = presentHighestBit;
-  this->StateDescription[countdown--]=smallestOne(nbrFermions);
-  while (countdown>-1)
-    {      
-      this->StateDescription[countdown]=nextone(this->StateDescription[countdown+1]);
-      if (this->StateDescription[countdown] & (0x1ul << (presentHighestBit+1)))
-	++presentHighestBit;
-      this->StateHighestBit[countdown]=presentHighestBit;
-      --countdown;
-    }
-  if (this->StateDescription[0]!=biggestOne(nbrFermions, nbrStates))
+  if ((nbrFermions == 0) || (currentQ < 0))
+    return pos;
+  int CurrentKx, CurrentKy, CurrentBand;
+  DecodeQuantumNumber(currentQ, CurrentKx, CurrentKy, CurrentBand);
+  
+  if (nbrFermions == 1)
     {
-      bitset <64> b=this->StateDescription[0];
-      cout << "Error in GenerateStates: Last state is: " << b << endl;
-      exit(1);
+      int ky = this->Ky - (currentTotalKy % this->Ny);
+      if (ky < 0)
+	ky += this->Ny;
+      int kx = this->Kx - (currentTotalKx % this->Nx);
+      if (kx < 0)
+	kx += this->Nx;
+      int Q;
+      for (int b=CurrentBand; b >= 0; --b)
+	{
+	  Q = FastEncodeQuantumNumber(kx, ky, b);
+	  if (Q<=currentQ)
+	    {
+	      this->StateDescription[pos] = 0x1ul << Q;
+	      this->StateHighestBit[pos] = Q;
+	      ++pos;
+	    }
+	}
+      return pos;
     }
-  return 0;
+  
+  int ReducedCurrentQ = currentQ - 1;
+  int TmpPos = this->GenerateStates(nbrFermions-1, ReducedCurrentQ, currentTotalKx+CurrentKx, currentTotalKy+CurrentKy,pos);
+  unsigned long Mask = ((unsigned long) 1) << currentQ;
+  for (int i = pos; i < TmpPos; i++)
+    {
+      this->StateDescription[i] |= Mask;
+      this->StateHighestBit[i] = currentQ;
+    }
+  return GenerateStates(nbrFermions, ReducedCurrentQ, currentTotalKx, currentTotalKy, TmpPos);
 }
+
 
 // generate look-up table associated to current Hilbert space
 // 

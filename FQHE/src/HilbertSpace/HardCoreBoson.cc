@@ -104,7 +104,10 @@ HardCoreBoson::HardCoreBoson(int nbrBosons, int nbrStates, unsigned long memory)
 // bosons = reference on the hilbert space to copy to copy
 HardCoreBoson::HardCoreBoson(const HardCoreBoson& bosons)
 {
-  this->TargetSpace = this;
+  if (bosons.TargetSpace != &bosons)
+    this->TargetSpace = bosons.TargetSpace;
+  else
+    this->TargetSpace = this;
   this->NbrBosons = bosons.NbrBosons;
   this->NbrStates = bosons.NbrStates;
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;

@@ -207,7 +207,7 @@ class HardCoreBosonOnLatticeGeneric :  public ParticleOnLattice
   // set a different target space (for all basic operations)
   //
   // targetSpace = pointer to the target space
-  virtual void SetTargetSpace(HardCoreBosonOnLatticeGeneric* targetSpace);
+  virtual void SetTargetSpace(ParticleOnLattice* targetSpace);
 
   // return Hilbert space dimension of the target space
   //
@@ -241,6 +241,23 @@ class HardCoreBosonOnLatticeGeneric :  public ParticleOnLattice
   // q = quantum number of boson to be added
   // coefficient = reference on the double where the multiplicative factor has to be stored
   virtual unsigned long Ad (unsigned long state, int q, double& coefficient);
+
+  // apply annihilation operator to a word, using the conventions
+  // for state-coding and quantum numbers of this space
+  // state = word to be acted upon
+  // q = quantum number of boson to be added
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  virtual unsigned long A (unsigned long state, int q, double &coefficient);
+
+  // apply a_n1 / a^\dagger_n1 operator to a given state and search in target space
+  //
+  // index = index of the state on which the operator has to be applied
+  // q = index for annihilation operator
+  // coefficient = prefactor
+  // return value =  index in target space
+  virtual int A (int index, int q, double &coefficient);
+  virtual int Ad (int index, int q, double &coefficient);
+
 
   // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state 
   //

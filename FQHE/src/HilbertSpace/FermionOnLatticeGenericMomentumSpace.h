@@ -51,6 +51,9 @@ class FermionOnLatticeGenericMomentumSpace :  public ParticleOnLattice
   // number of States
   int NbrStates;
 
+  // number of K-points
+  int NbrKPoints;
+
     // length in x-direction
   int Nx;
   // length in y-direction
@@ -189,7 +192,7 @@ class FermionOnLatticeGenericMomentumSpace :  public ParticleOnLattice
   // set a different target space (for all basic operations)
   //
   // targetSpace = pointer to the target space
-  virtual void SetTargetSpace(FermionOnLatticeGenericMomentumSpace* targetSpace);
+  virtual void SetTargetSpace(ParticleOnLattice* targetSpace);
 
   // return Hilbert space dimension of the target space
   //
@@ -281,7 +284,15 @@ class FermionOnLatticeGenericMomentumSpace :  public ParticleOnLattice
   // sublattice = sublattice index
   // translationPhase = returns phase occurred from translating the
   //                    site to the fundamental region [0,Lx-1] x [0,Ly-1]
-  virtual int EncodeQuantumNumber(int posx, int posy, int sublattice, Complex &translationPhase);
+  virtual int EncodeQuantumNumber(int posx, int posy, int sublattice, Complex &Phase);
+
+  // code set of quantum numbers posx, posy into a single integer
+  // posx = position along x-direction
+  // posy = position along y-direction
+  // sublattice = sublattice index
+  // translationPhase = returns phase occurred from translating the
+  //                    site to the fundamental region [0,Lx-1] x [0,Ly-1]
+  virtual int FastEncodeQuantumNumber(int posx, int posy, int sublattice);
 
   // decode a single encoded quantum number q to the set of quantum numbers posx, posy, sublattice
   // posx = position along x-direction
@@ -389,16 +400,25 @@ class FermionOnLatticeGenericMomentumSpace :  public ParticleOnLattice
   
   // evaluate Hilbert space dimension
   //
-  // nbrFermions = number of bosons
-  // nbrStates = number of elementary states available
-  //
-  int EvaluateHilbertSpaceDimension(int nbrFermions,int nbrStates);
+  // nbrFermions = number of fermions
+  // currentQ = current largest combined quantum number
+  // currentTotalKx = current total momentum along x
+  // currentTotalKy = current total momentum along y
+  // return value = Hilbert space dimension
+  long EvaluateHilbertSpaceDimension(int nbrFermions, int currentQ, int currentTotalKx, int currentTotalKy);
 
-  // generate many-body states without any additional symmetries
-  // nbrFermions = number of bosons
-  // nbrStates = number of elementary states available
+
+  // generate states with kx and ky symmetries
   //
-  int GenerateStates(int nbrFermions,int nbrStates);
+  // nbrFermions = number of fermions
+  // currentQ = current consolidated quantum number
+  // currentTotalKx = current total momentum along x
+  // currentTotalKy = current total momentum along y
+  // pos = position where to start filling states
+  // return value = Hilbert space dimension
+  
+  long GenerateStates(int nbrFermions, int currentQ, int currentTotalKx, int currentTotalKy, long pos);
+    
 
   // generate look-up table associated to current Hilbert space
   // 
@@ -408,6 +428,53 @@ class FermionOnLatticeGenericMomentumSpace :  public ParticleOnLattice
 
   
 };
+
+
+// decode a single encoded quantum number q to the set of quantum numbers kx, ky
+// kx = momentum along x-direction
+// ky = momentum along y-direction
+inline void FermionOnLatticeGenericMomentumSpace::DecodeQuantumNumber(int q, int &kx, int &ky, int &band)
+{
+  band=q/(this->NbrKPoints);
+  q=q%this->NbrKPoints;
+  ky=q/this->Nx;
+  kx=q%this->Nx;
+}
+
+
+// code set of quantum numbers posx, posy into a single integer
+// kx = momentum along x-direction
+// ky = momentum along y-direction
+// band = band index
+// 
+inline int FermionOnLatticeGenericMomentumSpace::EncodeQuantumNumber(int kx, int ky, int band, Complex &translationPhase)
+{
+  //cout << "Encoding " << kx<<", "<<ky<<": ";
+  while (kx<0)
+    kx+=this->Nx;
+  while (kx>=this->Nx)
+    kx-=this->Nx;
+  while (ky<0)
+    ky+=this->Ny;
+  while (ky>=this->Ny)
+    ky-=this->Ny;
+  int rst = kx + this->Nx*ky;
+  rst+=band*this->NbrKPoints;
+  translationPhase=0.0;
+  return rst;
+}
+
+// code set of quantum numbers posx, posy into a single integer - same as above, but shortened interface
+// code set of quantum numbers posx, posy into a single integer
+// kx = momentum along x-direction
+// ky = momentum along y-direction
+// band = band index
+inline int FermionOnLatticeGenericMomentumSpace::FastEncodeQuantumNumber(int kx, int ky, int band)
+{
+  int rst = kx + this->Nx*ky;
+  rst+=band*this->NbrKPoints;
+  return rst;
+}
 
 #endif
 

@@ -85,6 +85,8 @@ int main(int argc, char** argv)
   bool DensityFlag = Manager.GetBoolean("density");
   bool FluctuationFlag = Manager.GetBoolean("fluctuations");
 
+  
+
   if (NbrVectors==0)
     {
       cout << "At least one vector file is required!"<<endl;

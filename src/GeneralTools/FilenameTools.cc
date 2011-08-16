@@ -462,6 +462,85 @@ long GetFileNbrLines (char* fileName)
   return NbrLines;
 }
 
+// get the requested line number from file as a string
+// fileName = file to read
+// nbrLine = line number to return (first line starts at zero)
+// return = line, upon success
+char* GetLineFromFile (char* fileName, int nbrLine)
+{
+  ifstream File;
+  File.open(fileName, ios::binary | ios::in);
+  if (!File.is_open())
+    {
+      cout << "error : cannot open file " <<  fileName << endl;
+      return 0;
+    }
+  File.seekg(0, ios::end);
+  long Size = File.tellg();
+  long Size2 = Size & (~255l);
+  File.seekg(0, ios::beg);
+  char* TmpBuffer = new char [256];
+  
+  long NbrLines = 0l;
+  int j;
+  long Start=0;
+  long End=0;
+  for (long i = 0; (i < Size2)&&(NbrLines<nbrLine); i += 256l)
+    {
+      File.read(TmpBuffer, 256l);
+      for (j = 0; (j < 256)&&(NbrLines<nbrLine); ++ j)
+	if (TmpBuffer[j] == '\n')
+	  {
+	    ++NbrLines;
+	    if (NbrLines==nbrLine-1)
+	      {
+		Start = File.tellg();
+		Start += j;
+	      }
+	    if (NbrLines==nbrLine)
+	      {
+		End = File.tellg();
+		End +=j;
+	      }
+	  }
+    }  
+  Size &= 255l;
+  if ((End==0)&&(Size > 0))
+    {
+      File.read(TmpBuffer, Size);
+      for (int j = 0; j < Size; ++ j)
+	if (TmpBuffer[j] == '\n')
+	  {
+	    ++NbrLines;
+	    if (NbrLines==nbrLine-1)
+	      {
+		Start = File.tellg();
+		Start += j;
+	      }
+	    if (NbrLines==nbrLine)
+	      {
+		End = File.tellg();
+		End += j;
+	      }
+	  }
+    }
+  if ((Start!=0)&&(End==0)&&(TmpBuffer[Size - 1] != '\n')&&(NbrLines==nbrLine-1))
+    End = Size;
+  delete [] TmpBuffer;
+
+  if ((Start!=0)&&(End!=0))
+    {
+      File.seekg(0, ios::beg);
+      TmpBuffer = new char[End-Start+2];
+      File.read(TmpBuffer, End-Start+1);
+      TmpBuffer[End-Start+1]='\0';
+      return TmpBuffer;
+    }
+  else
+    return 0;
+}
+
+
 
 // get unique filename by appending a counter to a requested name, if necessary
 // inputName = previous file name

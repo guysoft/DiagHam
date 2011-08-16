@@ -51,7 +51,8 @@ using std::endl;
 // hardCore = flag indicating whether double occupations may occur or whether hardcore particles are present
 // space = target-space of many-body state
 // variationalParameters = initial set of trial parameters
-GutzwillerOnLatticeWaveFunction::GutzwillerOnLatticeWaveFunction(int nbrParticles, bool hardCore, ParticleOnLattice *space, RealVector *variationalParameters, AbstractRandomNumberGenerator *randomGenerator)
+// symmetryType = assume some symmetry among parameters 0 = none, 1 = 2xsublattice density
+GutzwillerOnLatticeWaveFunction::GutzwillerOnLatticeWaveFunction(int nbrParticles, bool hardCore, ParticleOnLattice *space, RealVector *variationalParameters, int symmetryType, AbstractRandomNumberGenerator *randomGenerator)
 {
   this->NbrParticles = nbrParticles;
   this->Space = space;
@@ -62,16 +63,26 @@ GutzwillerOnLatticeWaveFunction::GutzwillerOnLatticeWaveFunction(int nbrParticle
 #else
   this->NbrEmptyParameters = this->NbrSites;
 #endif
-  if (this->HardCoreFlag)
+  this->SymmetryType = symmetryType;
+  if (SymmetryType!=0)
     {
-      this->MaxOccupation = 1;
-      this->NbrVariationalParameters = 2*this->NbrSites+this->NbrEmptyParameters;
+      if (SymmetryType==1)
+	{
+	  
+	}
     }
   else
-    {
-      this->MaxOccupation = NbrParticles;
-      this->NbrVariationalParameters = 2*this->NbrParticles*this->NbrSites+this->NbrEmptyParameters;
-    }
+    if (this->HardCoreFlag)
+      {
+	this->MaxOccupation = 1;
+	this->NbrVariationalParameters = 2*this->NbrSites+this->NbrEmptyParameters;
+      }
+    else
+      {
+	this->MaxOccupation = NbrParticles;
+	this->NbrVariationalParameters = 2*this->NbrParticles*this->NbrSites+this->NbrEmptyParameters;
+      }
+
   if (variationalParameters!=NULL)
     {
       this->VariationalParameters = RealVector(*variationalParameters,true);
@@ -360,7 +371,7 @@ double GutzwillerOnLatticeWaveFunction::EvaluateEnergy(int nbrParameters, double
   for (int i=0; i<this->NbrVariationalParameters; ++i)
     this->VariationalParameters[i]=x[i];
 #ifdef SINGLE_EMPTY_PARAMETER
-  if (this->VariationalParameters[0]==0.0)
+  if (fabs(this->VariationalParameters[0])<1e-15)
     this->VariationalParameters[0]=1e-6;
 #endif
   ++this->NbrEvaluations;

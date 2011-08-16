@@ -59,6 +59,9 @@ class GutzwillerOnLatticeWaveFunction
   // flag for hardcore condition
   bool HardCoreFlag;
 
+  // encodes additional symmetry among parameters
+  int SymmetryType;
+
   // dimension of Space
   int Dim;
 
@@ -97,7 +100,8 @@ class GutzwillerOnLatticeWaveFunction
   // hardCore = flag indicating whether double occupations may occur or whether hardcore particles are present
   // space = target-space of many-body state
   // variationalParameters = initial set of trial parameters
-  GutzwillerOnLatticeWaveFunction(int nbrParticles, bool hardCore, ParticleOnLattice *space, RealVector *variationalParameters=NULL, AbstractRandomNumberGenerator *randomGenerator=NULL);
+  // symmetryType = assume some symmetry among parameters 0 = none, 1 = sublattice density
+  GutzwillerOnLatticeWaveFunction(int nbrParticles, bool hardCore, ParticleOnLattice *space, RealVector *variationalParameters=NULL, int symmetryType=0, AbstractRandomNumberGenerator *randomGenerator=NULL);
 
   // destructor
   ~GutzwillerOnLatticeWaveFunction();

@@ -140,7 +140,10 @@ HardCoreBosonOnLatticeGeneric::HardCoreBosonOnLatticeGeneric (int nbrBosons, Lat
 // bosons = reference on the hilbert space to copy to copy
 HardCoreBosonOnLatticeGeneric::HardCoreBosonOnLatticeGeneric(const HardCoreBosonOnLatticeGeneric& bosons)
 {
-  this->TargetSpace = this;
+  if (bosons.TargetSpace != &bosons)
+    this->TargetSpace = bosons.TargetSpace;
+  else
+    this->TargetSpace = this;
   this->NbrBosons = bosons.NbrBosons;
   this->LatticeGeometry = bosons.LatticeGeometry;
   this->Length = bosons.Length;
@@ -286,9 +289,9 @@ AbstractHilbertSpace* HardCoreBosonOnLatticeGeneric::Clone()
 //
 // targetSpace = pointer to the target space
 
-void HardCoreBosonOnLatticeGeneric::SetTargetSpace(HardCoreBosonOnLatticeGeneric* targetSpace)
+void HardCoreBosonOnLatticeGeneric::SetTargetSpace(ParticleOnLattice* targetSpace)
 {
-  this->TargetSpace=targetSpace;
+  this->TargetSpace=(HardCoreBosonOnLatticeGeneric*)targetSpace;
 }
 
 // return Hilbert space dimension of the target space
@@ -449,11 +452,29 @@ unsigned long HardCoreBosonOnLatticeGeneric::Ad (unsigned long state, int q, dou
 {  
   if ((state & (((unsigned long) (0x1)) << q))!= 0)
     {
+      coefficient=0.0;
       return 0x0l;
     }
   coefficient=1.0;
   state |= (((unsigned long) (0x1)) << q);
   return state;
+}
+
+// apply annihilation operator to a word, using the conventions
+// for state-coding and quantum numbers of this space
+// state = word to be acted upon
+// q = quantum number of boson to be added
+// coefficient = reference on the double where the multiplicative factor has to be stored
+unsigned long HardCoreBosonOnLatticeGeneric::A (unsigned long state, int q, double &coefficient)
+{
+  if (state & (((unsigned long) (0x1)) << q))
+    {
+      coefficient=1.0;
+      state |= ~(((unsigned long) (0x1)) << q);
+      return state;
+    }
+  coefficient=0.0;
+  return 0x0l;
 }
 
 
@@ -509,6 +530,62 @@ int HardCoreBosonOnLatticeGeneric::AdAdAA (int index, int m1, int m2, int n1, in
     }
   TmpState |= (((unsigned long) (0x1)) << m1);
   return this->TargetSpace->FindStateIndex(TmpState, NewHighestBit);
+}
+
+
+// apply a_n1 operator to a given state and search in target space
+//
+// index = index of the state on which the operator has to be applied
+// q = index for annihilation operator
+// coefficient = prefactor
+// return value =  index in target space
+
+int HardCoreBosonOnLatticeGeneric::A (int index, int q, double &coefficient)
+{
+  this->ProdATemporaryState = this->StateDescription[index];
+
+  if (((ProdATemporaryState & (((unsigned long) (0x1)) << q)) == 0) )
+    {
+      coefficient = 0.0;
+      return this->TargetSpace->HilbertSpaceDimension;
+    }
+
+  this->ProdAHighestBit = this->StateHighestBit[index];
+
+  this->ProdATemporaryState &= ~(((unsigned long) (0x1)) << q);
+
+  while ((this->ProdAHighestBit>0)&&(this->ProdATemporaryState >> this->ProdAHighestBit) == 0)
+    --this->ProdAHighestBit;
+  coefficient = 1.0;
+  return this->TargetSpace->FindStateIndex(ProdATemporaryState, ProdAHighestBit);
+}
+
+
+// apply a^+_m1 a^+_m2 operator to the state produced using AA method (without destroying it)
+//
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// coefficient = reference on a multiplicative, trivially one here (unreferenced)
+// return value = index of the destination state 
+
+int HardCoreBosonOnLatticeGeneric::Ad (int index, int q, double& coefficient)
+{
+  this->ProdATemporaryState = this->StateDescription[index];
+  
+  if (((ProdATemporaryState & (((unsigned long) (0x1)) << q)) != 0) )
+    {
+      coefficient = 0.0;
+      return this->TargetSpace->HilbertSpaceDimension;
+    }
+  
+  this->ProdAHighestBit = this->StateHighestBit[index];
+  
+  this->ProdATemporaryState |= (((unsigned long) (0x1)) << q);
+
+  while ((this->ProdAHighestBit>0)&&(this->ProdATemporaryState >> this->ProdAHighestBit) == 0)
+    --this->ProdAHighestBit;
+   coefficient = 1.0;
+  return this->TargetSpace->FindStateIndex(ProdATemporaryState, ProdAHighestBit);
 }
 
 
@@ -891,15 +968,18 @@ int HardCoreBosonOnLatticeGeneric::CarefulFindStateIndex(unsigned long stateDesc
 //   cout << "Searching " << b <<", bitcount="<<bitcount(stateDescription);
   if (bitcount(stateDescription)!=this->NbrBosons)
     {
+      cout << "Wrong particle number - state: "<<bitcount(stateDescription)<<" space: "<<this->NbrBosons<<endl;
       return this->HilbertSpaceDimension;
     }
   if (highestBit<0)
     {
+      cout << "Negative highest bit"<<endl;
       highestBit = getHighestBit(stateDescription)-1;
     }
 //   cout << ", highestBit="<<highestBit;
   if (highestBit >= this->NbrStates)
     {
+      cout << "Highest bit out of range"<<endl;
       return this->HilbertSpaceDimension;
     }
 //   cout <<", Found index="<<this->FindStateIndex(stateDescription, highestBit)<<endl;

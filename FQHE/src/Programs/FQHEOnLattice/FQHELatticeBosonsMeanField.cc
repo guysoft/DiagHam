@@ -55,6 +55,7 @@ int main(int argc, char** argv)
   (*OptimizationGroup) += new SingleDoubleOption('\n', "overlap-same", "overlap above which two conf's are considered identical", 0.99);
 
   (*ExportGroup) += new BooleanOption  ('\n', "export", "export a given parameter file (input: parameters)");
+  (*ExportGroup) += new BooleanOption  ('\n', "no-rectify", "take bare one-particle wavefunctions for a given trapping potential");
   (*ExportGroup) += new SingleStringOption  ('\n', "basis-path", "path to basis file","./");
   (*ExportGroup) += new SingleStringOption  ('\n', "basis-pattern", "pattern of basis file names (variable site number given as XX)");
   
@@ -167,6 +168,26 @@ int main(int argc, char** argv)
 	      }
 	  Complex Phase=Polar(1.0,-Arg(BasisStates[i][maxI]));
 	  BasisStates[i]*=Phase;
+	  // rectify absolute values of entries to the case of vanishing trapping potential
+	  if (!Manager.GetBoolean("no-rectify"))
+	    {
+	      for (int n=0; n<NbrSites; ++n)
+		{
+		  if (fabs(Norm(BasisStates[i][n])-1.0/sqrt(2.0))<0.05)
+		    {
+		      BasisStates[i][n]*=1.0/sqrt(2.0)/Norm(BasisStates[i][n]);
+		    }
+		  else if (fabs(Norm(BasisStates[i][n])-1.0/sqrt(12.0))<0.05)
+		    {
+		      BasisStates[i][n]*=1.0/sqrt(12.0)/Norm(BasisStates[i][n]);
+		    }
+		  else if (Norm(BasisStates[i][n])>1e-6)
+		    {
+		      cout << "Unknown amplitude for single-particle wavefunction!"<<endl;
+		      exit(1);
+		    }
+		}
+	    }
 	}
 
       ComplexVector ResultingState;
@@ -299,7 +320,7 @@ int main(int argc, char** argv)
   if (TestFile.is_open())
     {
       TestFile.close();
-      File.open(OutputName, ios::app );
+      File.open(OutputName, ios::app);
     }
   else
     {

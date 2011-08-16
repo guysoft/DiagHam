@@ -29,6 +29,9 @@
 
 #include "config.h"
 #include "GeneralTools/ListIterator.h"
+#include "GeneralTools/FilenameTools.h"
+#include "GeneralTools/StringTools.h"
+#include "GeneralTools/SystemTools.h"
 #include "Options/OptionGroup.h"
 #include "Options/AbstractOption.h"
 #include "Options/OptionManager.h"
@@ -37,6 +40,7 @@
 #include <iostream>
 #include <string.h>
 #include <cstdlib>
+#include <sys/time.h>
 
 
 using std::ostream;
@@ -69,6 +73,14 @@ OptionManager::OptionManager(const char* programName, const char* programVersion
       this->ProgramAdditionalInformations = new char [strlen(programAdditionalInformations) + 1];
       strcpy (this->ProgramAdditionalInformations, programAdditionalInformations);      
     }
+
+  this->GlobalGroup  = new OptionGroup ("global options");
+  /*
+  (*GlobalGroup) += new SingleStringOption  ('\n', "save-command", "save detailed settings of all options to file");
+  (*GlobalGroup) += new SingleStringOption  ('\n', "load-command", "load detailed option parameters from file");
+  */
+  (*GlobalGroup) += new SingleStringOption  ('\n', "append-cmdline", "append command line to file");
+  (*GlobalGroup) += new SingleStringOption  ('\n', "repeat-cmdline", "load command line from file [format: filename.line]");
 }
 
 // destructor
@@ -87,6 +99,7 @@ OptionManager::~OptionManager()
     {
       delete *TmpGroup;
     }
+  delete GlobalGroup;
 }
 
 // add an option group to the manager
@@ -114,6 +127,8 @@ AbstractOption* OptionManager::operator[] (const char* optionName)
     {
       TmpOption = (**TmpGroup)[optionName];
     }
+  if (TmpOption==0)
+    TmpOption = (*GlobalGroup)[optionName];
   return TmpOption; 
 }
 
@@ -131,6 +146,8 @@ OptionGroup* OptionManager::GetOptionGroup(const char* optionGroupName)
       if ((*TmpGroup)->IsGroupName(optionGroupName) == true)
 	return (*TmpGroup);
     }
+  if (GlobalGroup->IsGroupName(optionGroupName) == true)
+    return (GlobalGroup);
   return 0;  
 }
 
@@ -147,6 +164,62 @@ bool OptionManager::ProceedOptions (char** argumentValues, int nbrArgument, ostr
   int Inc;
   ListIterator<OptionGroup*> IterGroup(this->Groups);
   OptionGroup** TmpGroup;
+
+  // check for repeating of stored command line
+  AbstractOption* RepeatOption = (*this)["repeat-cmdline"];
+  while (Pos < nbrArgument)
+    {
+      Inc = RepeatOption->ReadOption(argumentValues, nbrArgument, Pos);
+      if (Inc == -1)
+	{
+	  RepeatOption->PrintError(output);
+	  return false; 
+	}
+      if (Inc > 0)
+	break;
+      ++Pos;
+    }
+  if (this->GetString("repeat-cmdline"))
+    {
+      char **Arguments;
+      int NbrArguments = SplitLine(this->GetString("repeat-cmdline"), Arguments, ',');
+      int NbrLine=1;
+      if (NbrArguments==2)
+	{
+	  NbrLine=strtod(Arguments[0],NULL);
+	}
+      char *CommandFile = Arguments[0];
+      char *Line =  GetLineFromFile (CommandFile, NbrLine);
+      for (int i=0; i<NbrArguments; ++i)
+	delete [] Arguments[i];
+      delete [] Arguments;
+      char **Columns;
+      int NbrColumns = SplitLine(Line, Columns, '\t');
+      if (NbrColumns != 6)
+	{
+	  cout << "Problem with number of columns: command line not identified"<<endl;
+	  exit(1);
+	}
+      NbrArguments = SplitLine(Columns[6], Arguments, ' ');
+      // test same executable
+      char *Path,*StoredFileName;
+      ExtractPathAndFileName (Arguments[0], Path, StoredFileName);
+      if (Path!=NULL) delete [] Path;
+      char *CurrentFileName;
+      ExtractPathAndFileName (argumentValues[0], Path, CurrentFileName);
+      if (Path!=NULL) delete [] Path;
+      if (strcmp(StoredFileName,CurrentFileName)!=0)
+	{
+	  cout << "Could not read command, as executables do not coincide. You can execute the command manually:"<<endl;
+	  cout << Columns[6];
+	  exit(-1);
+	}
+      cout << "Repeating the following command:"<<endl;
+      cout << Columns[6];
+      return this->ProceedOptions (Arguments, NbrArguments, output);
+    }
+  // evaluate other options
+  Pos=1;
   while (Pos < nbrArgument)
     {
       Inc = 0;
@@ -162,10 +235,89 @@ bool OptionManager::ProceedOptions (char** argumentValues, int nbrArgument, ostr
 	}
       if (Inc == 0)
 	{
-	  output << "unknown option " <<  argumentValues[Pos] << endl;
-	  return false;
+	  Inc = this->GlobalGroup->ReadOption(argumentValues, nbrArgument, Pos);
+	  if (Inc == -1)
+	    {
+	      (*TmpGroup)->PrintError(output);
+	      return false; 
+	    }
+	  if (Inc == 0)
+	    {
+	      output << "unknown option " <<  argumentValues[Pos] << endl;
+	      return false;
+	    }
 	}
       Pos += Inc;
+    }
+  // proceed global options:
+
+  /*
+  if (this->GetString("save-command")) // save detailed command line options to file
+    {
+      cout << "option '--save-command' not implemented, yet"<<endl;
+      exit(1);
+    }
+  if (this->GetString("load-command")) // load detailed list of command line options from file
+    {
+      cout << "option '--load-command' not implemented, yet"<<endl;
+      exit(1);
+    }
+  */
+  if (this->GetString("append-cmdline"))
+    {
+      ofstream File;
+      ifstream TestFile;
+      TestFile.open(this->GetString("append-cmdline"), ios::in);
+      long Count;
+      if (TestFile.is_open())
+	{
+	  TestFile.close();
+	  Count=GetFileNbrLines(this->GetString("append-cmdline"));
+	  File.open(this->GetString("append-cmdline"), ios::app);
+	}
+      else
+	{
+	  File.open(this->GetString("append-cmdline"), ios::out );
+	  File << "#item\ttime\thost\tcmd-line"<<endl;
+	  Count=1;
+	}
+      timeval LaunchTime;
+      gettimeofday (&(LaunchTime), 0);
+
+      //Find the current time as a string
+     time_t CurrentTime = time(0);
+     //convert it to tm
+     tm Now=*localtime(&CurrentTime);
+     char TimeStr[BUFSIZ]={0};
+     //Format string determines the conversion specification's behaviour
+     const char Format[]="%m/%d/%y-%X";
+     
+     //strftime - converts date and time to a string
+     if (strftime(TimeStr, sizeof(TimeStr)-1, Format, &Now)<=0)
+       {
+	 std::cout<<"Could not convert time";
+	 exit(1);
+       }
+      
+      char *CmdString = new char[1024];
+      // get full executable path and machine name
+      sprintf(CmdString,"which %s",argumentValues[0]);
+      char *Executable = GetLineOutputFromSystemCommand(CmdString);
+      
+      sprintf(CmdString,"hostname");
+      char *Host = GetLineOutputFromSystemCommand(CmdString);
+
+      sprintf(CmdString,"pwd");
+      char *Pwd = GetLineOutputFromSystemCommand(CmdString);
+
+      //LaunchTime.tv_sec
+      File << Count << "\t" << TimeStr << "\t" << Host << "\t" << Pwd << "\t" << Executable;
+      for (Pos=0; Pos<nbrArgument-1; ++Pos)
+	File << argumentValues[Pos] << " ";
+      File << argumentValues[Pos] << endl;
+
+      delete [] CmdString;
+      delete [] Host;	    
     }
   return true;
 }
@@ -288,6 +440,7 @@ ostream& OptionManager::DisplayHelp (ostream& output)
     {
       (*TmpGroup)->DisplayHelp(output) << endl;
     }
+  GlobalGroup->DisplayHelp(output) << endl;
   return output;
 }
 

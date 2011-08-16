@@ -105,7 +105,10 @@ SingleBosonOnLatticeGeneric::SingleBosonOnLatticeGeneric (LatticePhases *lattice
 // bosons = reference on the hilbert space to copy to copy
 SingleBosonOnLatticeGeneric::SingleBosonOnLatticeGeneric(const SingleBosonOnLatticeGeneric& bosons)
 {
-  this->TargetSpace = this;
+  if (bosons.TargetSpace != &bosons)
+    this->TargetSpace = bosons.TargetSpace;
+  else
+    this->TargetSpace = this;
   this->NbrBosons = bosons.NbrBosons;
   this->LatticeGeometry = bosons.LatticeGeometry;
   this->Length = bosons.Length;
@@ -202,9 +205,9 @@ AbstractHilbertSpace* SingleBosonOnLatticeGeneric::Clone()
 //
 // targetSpace = pointer to the target space
 
-void SingleBosonOnLatticeGeneric::SetTargetSpace(SingleBosonOnLatticeGeneric* targetSpace)
+void SingleBosonOnLatticeGeneric::SetTargetSpace(ParticleOnLattice* targetSpace)
 {
-  this->TargetSpace=targetSpace;
+  this->TargetSpace=(SingleBosonOnLatticeGeneric*)targetSpace;
 }
 
 // return Hilbert space dimension of the target space

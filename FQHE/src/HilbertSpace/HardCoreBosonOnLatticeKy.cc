@@ -158,7 +158,10 @@ HardCoreBosonOnLatticeKy::HardCoreBosonOnLatticeKy(const HardCoreBosonOnLatticeK
   this->LookUpTableMemorySize = bosons.LookUpTableMemorySize;
   this->LookUpTableShift = bosons.LookUpTableShift;
   this->LookUpTable = bosons.LookUpTable;
-  this->TargetSpace = bosons.TargetSpace;
+  if (bosons.TargetSpace != &bosons)
+    this->TargetSpace = bosons.TargetSpace;
+  else
+    this->TargetSpace = this;
   this->Minors = bosons.Minors;
   this->KeptCoordinates = bosons.KeptCoordinates;
   this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
@@ -234,7 +237,10 @@ HardCoreBosonOnLatticeKy& HardCoreBosonOnLatticeKy::operator = (const HardCoreBo
   this->NbrStates = bosons.NbrStates;
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
   this->Flag = bosons.Flag;
-  this->TargetSpace = bosons.TargetSpace;
+  if (bosons.TargetSpace != &bosons)
+    this->TargetSpace = bosons.TargetSpace;
+  else
+    this->TargetSpace = this;
   this->StateDescription = bosons.StateDescription;
   this->StateHighestBit = bosons.StateHighestBit;
   this->MaximumLookUpShift = bosons.MaximumLookUpShift;
@@ -305,6 +311,16 @@ int HardCoreBosonOnLatticeKy::GetNbrSites()
 {
   return this->NbrStates;
 }
+
+// set a different target space (for all basic operations)
+//
+// targetSpace = pointer to the target space
+
+void HardCoreBosonOnLatticeKy::SetTargetSpace(ParticleOnLattice* targetSpace)
+{
+  this->TargetSpace=(HardCoreBosonOnLatticeKy*)targetSpace;
+}
+
 
 // it is possible to change the flux through the simulation cell
 // Attention: this does require the Hamiltonian to be recalculated!!

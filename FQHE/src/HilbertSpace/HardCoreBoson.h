@@ -44,6 +44,7 @@ class HardCoreBoson :  public AbstractQHEParticle
 
   friend class BosonOnLattice;
   friend class BosonOnLatticeGeneric;
+  friend class BosonOnLatticeGenericMomentumSpace;
 
  protected:
 

@@ -185,6 +185,11 @@ class HardCoreBosonOnLatticeKy : public ParticleOnLattice
   virtual AbstractHilbertSpace* ExtractSubspace (AbstractQuantumNumber& q, 
 						 SubspaceSpaceConverter& converter);
 
+  // set a different target space (for all basic operations)
+  //
+  // targetSpace = pointer to the target space
+  void SetTargetSpace(ParticleOnLattice* targetSpace);
+
   // in presence of translation symmetries, it is NOT possible to change the flux through the simulation cell
   // this function is provided for compatibility with the interface, only
   // nbrFluxQuanta = number of quanta of flux piercing the simulation cell

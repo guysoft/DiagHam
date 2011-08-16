@@ -60,6 +60,7 @@ HardCoreBosonOnLattice.cc \
 BosonOnLatticeKy.cc \
 BosonOnLatticeGeneric.cc \
 HardCoreBosonOnLatticeGeneric.cc \
+BosonOnLatticeGenericMomentumSpace.cc \
 FermionOnDiskHaldaneBasis.cc \
 FermionOnDiskLong.cc \
 BosonOnDiskShort.cc \

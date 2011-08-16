@@ -377,6 +377,13 @@ int main(int argc, char** argv)
 	if (fabs(M[DensityMatrixDimension-1-i])>dynamics*M[DensityMatrixDimension-1])
 	  cout << "EV["<<i<<"] = " << M[DensityMatrixDimension-1-i] << endl;
       //cout << "Transition Matrix: "<<endl<<Q<<endl;
+      if (Manager.GetInteger("opt-target")>1)
+	{
+	  double Sum=M[DensityMatrixDimension-1];
+	  for (int i=1; i<Manager.GetInteger("opt-target"); ++i)
+	    Sum-=M[DensityMatrixDimension-1-i];
+	  cout << "EV[0-"<<Manager.GetInteger("opt-target")-1<<"] = " <<Sum<<endl;
+	}
       cout << "First Eigenvector: "<<endl;
       Complex TmpC;
       for (int i=0; i<DensityMatrixDimension; ++i)
@@ -554,7 +561,10 @@ int main(int argc, char** argv)
 	  for (int i=1; i<NbrVectors; ++i)
 	    cout << " + " << Norm(Parameters[i]) << " exp(I*"<<Arg(Parameters[i]) <<") |"<<i<<" >";
 	  cout << endl;
-	  cout << "with EV[0]_max = "<<BestCondensate->GetDensityMatrixEigenvalue()<<endl;
+	  if (Manager.GetInteger("opt-target")==1)
+	    cout << "with EV[0]_max = "<<BestCondensate->GetDensityMatrixEigenvalue()<<endl;
+	  else
+	    cout << "with EV[0-"<<Manager.GetInteger("opt-target")-1<<"]_max = "<<BestCondensate->GetDensityMatrixEigenvalue()<<endl;
 	  if (Manager.GetBoolean("save-vectors"))
 	    {
 	      char *OldBase = RemoveExtensionFromFileName(VectorFiles[0],".vec");

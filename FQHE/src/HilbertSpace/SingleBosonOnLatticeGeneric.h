@@ -170,7 +170,7 @@ class SingleBosonOnLatticeGeneric :  public ParticleOnLattice
   // set a different target space (for all basic operations)
   //
   // targetSpace = pointer to the target space
-  virtual void SetTargetSpace(SingleBosonOnLatticeGeneric* targetSpace);
+  virtual void SetTargetSpace(ParticleOnLattice* targetSpace);
 
   // return Hilbert space dimension of the target space
   //

@@ -48,6 +48,7 @@ ParticleOnLattice::~ParticleOnLattice ()
 
 void ParticleOnLattice::SetTargetSpace(ParticleOnLattice* targetSpace)
 {
+  cout << "Attention: ParticleOnLattice::SetTargetSpace not overloaded!"<<endl;
 }
 
 // return Hilbert space dimension of the target space
@@ -67,6 +68,36 @@ int ParticleOnLattice::GetHilbertSpaceAdditionalSymmetry()
 {
   return ParticleOnLattice::NoSymmetry;
 }
+
+// apply annihilation operator to a word, using the conventions
+// for state-coding and quantum numbers of this space
+// state = word to be acted upon
+// q = quantum number of boson to be added
+// coefficient = reference on the double where the multiplicative factor has to be stored
+unsigned long ParticleOnLattice::A (unsigned long state, int q, double &coefficient)
+{
+  cout << "ParticleOnLattice::A"<<endl;
+  return 0x0ul;
+}
+
+  // apply a_n1 / a^\dagger_n1 operator to a given state and search in target space
+  //
+  // index = index of the state on which the operator has to be applied
+  // q = index for annihilation operator
+  // coefficient = prefactor
+  // return value =  index in target space
+int ParticleOnLattice::A (int index, int q, double &coefficient)
+{
+  cout << "ParticleOnLattice::A"<<endl;
+  return 0x0ul;
+}
+
+int ParticleOnLattice::Ad (int index, int q, double &coefficient)
+{
+  cout << "ParticleOnLattice::Ad"<<endl;
+  return 0x0ul;
+}
+
 
 // apply a^+_q1 a^+_q2 a_r1 a_r2 operator to a given state (with q1+q2=r1+r2)
 //

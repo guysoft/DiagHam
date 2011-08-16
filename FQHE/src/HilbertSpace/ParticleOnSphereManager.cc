@@ -31,14 +31,7 @@
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphereManager.h"
 
-#include "Options/OptionManager.h"
-#include "Options/OptionGroup.h"
-#include "Options/AbstractOption.h"
-#include "Options/BooleanOption.h"
-#include "Options/SingleIntegerOption.h"
-#include "Options/SingleStringOption.h"
-#include "Options/SingleDoubleOption.h"
-
+#include "Options/Options.h"
 
 #include "HilbertSpace/FermionOnSphere.h"
 #include "HilbertSpace/FermionOnSphereEfficient.h"
@@ -89,6 +82,7 @@
 
 #include <stdlib.h>
 #include <cstring>
+#include <iostream>
 
 
 // default constructor

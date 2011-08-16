@@ -289,8 +289,11 @@ void ParticleOnLatticeExternalHamiltonian::EvaluateInteractionFactors()
 	  bool HaveLargerQ3=false, HaveSmallerQ3=false;
 	  TmpNbrQ34Values[0]=0;
 	  int Pos=0;
+	  bool HaveZeroIndex=false;
 	  while (Pos<TmpNbrLines)
 	    {
+	      if ((!HaveZeroIndex)&&((TmpQ1[Pos]==0)||(TmpQ2[Pos]==0)||(TmpQ3[Pos]==0)||(TmpQ4[Pos]==0)))
+		HaveZeroIndex=true;
 	      while ((Pos<TmpNbrLines)&&(TmpQ1[Pos]==oldQ1)&&(TmpQ2[Pos]==oldQ2))
 		{
 		  if (TmpQ1[Pos]>TmpQ2[Pos]) HaveLargerQ1=true;
@@ -335,6 +338,10 @@ void ParticleOnLatticeExternalHamiltonian::EvaluateInteractionFactors()
 		    }
 		  ++Pos;
 		}
+	    }
+	  if (HaveZeroIndex==false)
+	    {
+	      cout << "Warning: quantum number q=0 not found - need to shift indices?"<<endl;
 	    }
 	  ++NbrQ12Indices;
 #ifdef DEBUG_OUTPUT

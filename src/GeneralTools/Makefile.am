@@ -12,4 +12,5 @@ ComplexUniqueArray.cc \
 SmallIntegerArray.cc \
 StringTools.cc \
 BitMarkers.cc \
-GenericSignalHandler.cc
+GenericSignalHandler.cc \
+SystemTools.cc

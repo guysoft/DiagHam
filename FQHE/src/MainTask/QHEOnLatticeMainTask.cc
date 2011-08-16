@@ -709,7 +709,7 @@ int QHEOnLatticeMainTask::ExecuteMainTask()
 			    }
 			  else
 			    {
-			      RealVector* InitialVectors = new RealVector[TmpNbrInitialVectors];
+			      ComplexVector* InitialVectors = new ComplexVector[TmpNbrInitialVectors];
 			      for (int i = 0; i < TmpNbrInitialVectors; ++i)
 				{
 				  InitialVectors[i].ReadVector(VectorFileNames[i]);

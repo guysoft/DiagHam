@@ -133,6 +133,7 @@ int main(int argc, char** argv)
 #endif
   (*MiscGroup) += new BooleanOption('\n', "optimize-condensate", "optimize a trial condensate wavefunction instead of diagonalizing");
   (*MiscGroup) += new SingleStringOption('\n', "init-parameters", "file with initial parameters");
+  (*MiscGroup) += new SingleIntegerOption('\n', "trial-symmetry", "symmetry restrictions to trial state (1=odd/even)",0);
   (*MiscGroup) += new SingleDoubleOption('\n', "tolerance", "tolerance for variational parameters in condensate",1e-6);
   (*MiscGroup) += new SingleStringOption('\n', "energy-expectation", "name of the file containing the state vector, whose energy expectation value shall be calculated");
   (*MiscGroup) += new SingleStringOption  ('o', "output-file", "redirect output to this file",NULL);
@@ -393,7 +394,7 @@ int main(int argc, char** argv)
 		  exit(1);
 		}
 	    }
-	  GutzwillerOnLatticeWaveFunction Condensate(NbrBosons, HardCore, Space, InitialParameters);
+	  GutzwillerOnLatticeWaveFunction Condensate(NbrBosons, HardCore, Space, InitialParameters, Manager.GetInteger("trial-symmetry"));
 	  Condensate.SetHamiltonian(Hamiltonian);
 	  Condensate.SetArchitecture(Architecture.GetArchitecture());
 	  Condensate.SetToRandomPhase();

@@ -239,9 +239,9 @@ AbstractHilbertSpace* FermionOnLattice::Clone()
 //
 // targetSpace = pointer to the target space
 
-void FermionOnLattice::SetTargetSpace(FermionOnLattice* targetSpace)
+void FermionOnLattice::SetTargetSpace(ParticleOnLattice* targetSpace)
 {
-  this->TargetSpace=targetSpace;
+  this->TargetSpace=(FermionOnLattice*)targetSpace;
 }
 
 // return Hilbert space dimension of the target space
