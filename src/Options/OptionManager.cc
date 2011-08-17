@@ -47,6 +47,9 @@ using std::ostream;
 using std::endl;
 using std::cout;
 
+#define QUOTEME(x) #x
+
+
 // constructor
 //
 // groupName = group full name
@@ -81,7 +84,7 @@ OptionManager::OptionManager(const char* programName, const char* programVersion
   */
 #ifdef HAVE_GLOBAL_COMMAND_LOG
   char *TmpC=new char[1024];
-  sprintf (TmpC,"append command line to file [overrides default '%s']",GLOBAL_COMMAND_LOG);
+  sprintf (TmpC,"append command line to file [overrides default '%s']",QUOTEME(GLOBAL_COMMAND_LOG));
   (*GlobalGroup) += new SingleStringOption  ('\n', "append-cmdline", TmpC);
 #else
   (*GlobalGroup) += new SingleStringOption  ('\n', "append-cmdline", "append command line to file");
@@ -280,7 +283,7 @@ bool OptionManager::ProceedOptions (char** argumentValues, int nbrArgument, ostr
       else
 	{
 	  AppendFile = new char[1024];
-	  sprintf (AppendFile,"%s",GLOBAL_COMMAND_LOG);
+	  sprintf (AppendFile,"%s",QUOTEME(GLOBAL_COMMAND_LOG));
 	}
 #else
   if (this->GetString("append-cmdline"))
