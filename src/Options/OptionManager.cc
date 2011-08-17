@@ -79,8 +79,14 @@ OptionManager::OptionManager(const char* programName, const char* programVersion
   (*GlobalGroup) += new SingleStringOption  ('\n', "save-command", "save detailed settings of all options to file");
   (*GlobalGroup) += new SingleStringOption  ('\n', "load-command", "load detailed option parameters from file");
   */
+#ifdef HAVE_GLOBAL_COMMAND_LOG
+  char *TmpC=new char[1024];
+  sprintf (TmpC,"append command line to file [overrides default '%s']",GLOBAL_COMMAND_LOG);
+  (*GlobalGroup) += new SingleStringOption  ('\n', "append-cmdline", TmpC);
+#else
   (*GlobalGroup) += new SingleStringOption  ('\n', "append-cmdline", "append command line to file");
-  (*GlobalGroup) += new SingleStringOption  ('\n', "repeat-cmdline", "load command line from file [format: filename.line]");
+#endif
+  (*GlobalGroup) += new SingleStringInternalOption  ('\n', "repeat-cmdline", "load command line from file [format: filename.line]");
 }
 
 // destructor
@@ -186,7 +192,7 @@ bool OptionManager::ProceedOptions (char** argumentValues, int nbrArgument, ostr
       int NbrLine=1;
       if (NbrArguments==2)
 	{
-	  NbrLine=strtod(Arguments[0],NULL);
+	  NbrLine=strtod(Arguments[1],NULL);
 	}
       char *CommandFile = Arguments[0];
       char *Line =  GetLineFromFile (CommandFile, NbrLine);
@@ -263,41 +269,58 @@ bool OptionManager::ProceedOptions (char** argumentValues, int nbrArgument, ostr
       exit(1);
     }
   */
+#ifdef HAVE_GLOBAL_COMMAND_LOG
+    {
+      char *AppendFile;
+      if (this->GetString("append-cmdline"))
+	{
+	  AppendFile = new char[strlen(this->GetString("append-cmdline"))+1];
+	  strcpy (AppendFile,this->GetString("append-cmdline"));
+	}
+      else
+	{
+	  AppendFile = new char[1024];
+	  sprintf (AppendFile,"%s",GLOBAL_COMMAND_LOG);
+	}
+#else
   if (this->GetString("append-cmdline"))
     {
+      char *AppendFile = new char[strlen(this->GetString("append-cmdline"))+1];
+      strcpy (AppendFile,this->GetString("append-cmdline"));
+#endif
       ofstream File;
       ifstream TestFile;
-      TestFile.open(this->GetString("append-cmdline"), ios::in);
+      TestFile.open(AppendFile, ios::in);
       long Count;
       if (TestFile.is_open())
 	{
 	  TestFile.close();
-	  Count=GetFileNbrLines(this->GetString("append-cmdline"));
-	  File.open(this->GetString("append-cmdline"), ios::app);
+	  Count=GetFileNbrLines(AppendFile);
+	  File.open(AppendFile, ios::app);
 	}
       else
 	{
-	  File.open(this->GetString("append-cmdline"), ios::out );
+	  File.open(AppendFile, ios::out);
 	  File << "#item\ttime\thost\tcmd-line"<<endl;
 	  Count=1;
 	}
       timeval LaunchTime;
       gettimeofday (&(LaunchTime), 0);
-
+      
       //Find the current time as a string
-     time_t CurrentTime = time(0);
-     //convert it to tm
-     tm Now=*localtime(&CurrentTime);
-     char TimeStr[BUFSIZ]={0};
-     //Format string determines the conversion specification's behaviour
-     const char Format[]="%m/%d/%y-%X";
-     
-     //strftime - converts date and time to a string
-     if (strftime(TimeStr, sizeof(TimeStr)-1, Format, &Now)<=0)
-       {
-	 std::cout<<"Could not convert time";
-	 exit(1);
-       }
+      time_t CurrentTime = time(0);
+      //convert it to tm
+      tm Now=*localtime(&CurrentTime);
+      char TimeStr[BUFSIZ]={0};
+      //Format string determines the conversion specification's behaviour
+      const char Format[]="%m/%d/%y-%X";
+      
+      //strftime - converts date and time to a string
+      if (strftime(TimeStr, sizeof(TimeStr)-1, Format, &Now)<=0)
+	{
+	  std::cout<<"Could not convert time";
+	  exit(1);
+	}
       
       char *CmdString = new char[1024];
       // get full executable path and machine name
@@ -317,7 +340,8 @@ bool OptionManager::ProceedOptions (char** argumentValues, int nbrArgument, ostr
       File << argumentValues[Pos] << endl;
 
       delete [] CmdString;
-      delete [] Host;	    
+      delete [] Host;
+      delete [] AppendFile;
     }
   return true;
 }

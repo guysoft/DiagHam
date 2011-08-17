@@ -73,7 +73,7 @@ class GutzwillerOnLatticeWaveFunction
 
   // number of evaluations in optimization
   int NbrEvaluations;
-  
+
   // vector with variational parameters
   // a^0_i real, a^k_i complex (k>1)
   // order: {(a^0_i)_i,(Re(a^1_i),Im(a^1_i))_i,(Re(a^2_i),Im(a^2_i))_i,...}, i=0...N_s, where ()_i signifies a vector for all entries i
@@ -90,7 +90,7 @@ class GutzwillerOnLatticeWaveFunction
 
   // flag for external generator (no clean-up)
   bool ExternalGenerator;
-  
+
   // random number generator
   AbstractRandomNumberGenerator *RandomNumbers;
 
