@@ -328,7 +328,7 @@ AC_MSG_RESULT([${ARG_GLOBAL_COMMAND_LOG}])
 
 if test X${ARG_GLOBAL_COMMAND_LOG} != Xnone; then
    AC_DEFINE(HAVE_GLOBAL_COMMAND_LOG, [],[using global logfile ])
-   AC_DEFINE_UNQUOTED(GLOBAL_COMMAND_LOG, [${ARG_GLOBAL_COMMAND_LOG}],[location of global command log])
+   AC_DEFINE_UNQUOTED(GLOBAL_COMMAND_LOG, ["${ARG_GLOBAL_COMMAND_LOG}"],[location of global command log])
 fi
 
 

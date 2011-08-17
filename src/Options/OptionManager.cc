@@ -83,8 +83,9 @@ OptionManager::OptionManager(const char* programName, const char* programVersion
   (*GlobalGroup) += new SingleStringOption  ('\n', "load-command", "load detailed option parameters from file");
   */
 #ifdef HAVE_GLOBAL_COMMAND_LOG
+  char Buffer[1024]=GLOBAL_COMMAND_LOG;
   char *TmpC=new char[1024];
-  sprintf (TmpC,"append command line to file [overrides default '%s']",QUOTEME(GLOBAL_COMMAND_LOG));
+  sprintf (TmpC,"append command line to file [overrides default '%s']", Buffer );
   (*GlobalGroup) += new SingleStringOption  ('\n', "append-cmdline", TmpC);
 #else
   (*GlobalGroup) += new SingleStringOption  ('\n', "append-cmdline", "append command line to file");
@@ -282,8 +283,9 @@ bool OptionManager::ProceedOptions (char** argumentValues, int nbrArgument, ostr
 	}
       else
 	{
+	  char Buffer[1024]=GLOBAL_COMMAND_LOG;
 	  AppendFile = new char[1024];
-	  sprintf (AppendFile,"%s",QUOTEME(GLOBAL_COMMAND_LOG));
+	  strcpy (AppendFile,Buffer);
 	}
 #else
   if (this->GetString("append-cmdline"))
