@@ -1,7 +1,9 @@
 #include "SystemTools.h"
 
 #include <iostream>
-#include <string>
+#include <cstring>
+#include <cstdlib>
+#include <cstdio>
 
 
 using std::ifstream;
