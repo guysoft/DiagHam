@@ -987,10 +987,8 @@ long ParticleOnLatticeWithSpinChernInsulatorHamiltonian::PartialFastMultiplicati
   int TmpNbrM3Values;
   int* TmpM3Values;
 
-  int* FlagVector = new int [TmpParticles->GetHilbertSpaceDimension()];
-  this->EvaluateMNTwoBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory, FlagVector);
+  this->EvaluateMNTwoBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
 
-  delete[] FlagVector;
   delete TmpParticles;
 
   return Memory;
@@ -1065,20 +1063,16 @@ void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::PartialEnableFastMultip
       ++Pos;
       PosMod = this->FastMultiplicationStep - PosMod;
     }
-  int* FlagVector = new int [TmpParticles->GetHilbertSpaceDimension()];
-  Complex* SumVector = new Complex[TmpParticles->GetHilbertSpaceDimension()];
   for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
     {
       long TotalPos = 0;
       this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
-							 this->InteractionPerComponentCoefficient[Pos], TotalPos, FlagVector, SumVector);
+							 this->InteractionPerComponentCoefficient[Pos], TotalPos);
       this->EvaluateMNOneBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
       							 this->InteractionPerComponentCoefficient[Pos], TotalPos);
       ++Pos;
     }
   delete TmpParticles;
-  delete[] SumVector;
-  delete[] FlagVector;
 }
 
 

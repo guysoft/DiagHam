@@ -282,10 +282,8 @@ class ParticleOnLatticeWithSpinChernInsulatorHamiltonian : public AbstractQHEHam
   // indexArray = array where indices connected to the index-th component through the Hamiltonian
   // coefficientArray = array of the numerical coefficients related to the indexArray
   // position = reference on the current position in arrays indexArray and coefficientArray
-  // flagVector = temporary array to compress matrix elements
-  // sumVector = temporary array to compress matrix elements
   virtual void EvaluateMNTwoBodyFastMultiplicationComponent(ParticleOnSphereWithSpin* particles, int index, 
-							    int* indexArray, Complex* coefficientArray, long& position, int* flagVector, Complex* sumVector);
+							    int* indexArray, Complex* coefficientArray, long& position);
 
   // core part of the FastMultiplication method involving the one-body interaction
   // 
@@ -326,8 +324,7 @@ class ParticleOnLatticeWithSpinChernInsulatorHamiltonian : public AbstractQHEHam
   // firstComponent = index of the first component that has to be precalcualted
   // lastComponent  = index of the last component that has to be precalcualted
   // memory = reference on the amount of memory required for precalculations
-  // flagVector = temporary array to compress matrix elements
-  virtual void EvaluateMNTwoBodyFastMultiplicationMemoryComponent(ParticleOnSphereWithSpin* particles, int firstComponent, int lastComponent, long& memory, int* flagVector);
+  virtual void EvaluateMNTwoBodyFastMultiplicationMemoryComponent(ParticleOnSphereWithSpin* particles, int firstComponent, int lastComponent, long& memory);
 
   // multiply a et of vectors by the current hamiltonian for a given range of indices 
   // and add result to another et of vectors, low level function (no architecture optimization)
@@ -773,11 +770,9 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::HermitianEvaluat
 // indexArray = array where indices connected to the index-th component through the Hamiltonian
 // coefficientArray = array of the numerical coefficients related to the indexArray
 // position = reference on the current position in arrays indexArray and coefficientArray
-// flagVector = temporary array to compress matrix elements
-// sumVector = temporary array to compress matrix elements
 
 inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBodyFastMultiplicationComponent(ParticleOnSphereWithSpin* particles, int index, 
-													     int* indexArray, Complex* coefficientArray, long& position, int* flagVector, Complex* sumVector)
+													     int* indexArray, Complex* coefficientArray, long& position)
 {
   int Index;
   double Coefficient = 0.0;
@@ -785,11 +780,7 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
   int* TmpIndices;
   Complex* TmpInteractionFactor;
   int Dim = particles->GetHilbertSpaceDimension();
-  for (int j = 0; j < Dim; ++j)
-    {
-      flagVector[j] = 0;
-      sumVector[j] = 0.0;
-    }
+
   if (this->HermitianSymmetryFlag == false)
     {
       for (int j = 0; j < this->NbrIntraSectorSums; ++j)
@@ -807,8 +798,9 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
 		      Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 		      if (Index < Dim)
 			{
-			  ++flagVector[Index];
-			  sumVector[Index] += Coefficient * Coefficient2 * (*TmpInteractionFactor);
+                          indexArray[position] = Index;
+			  coefficientArray[position] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
+			  ++position;
 			}
 		      ++TmpInteractionFactor;
 		    }
@@ -822,8 +814,9 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
 		      Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 		      if (Index < Dim)
 			{
-			  ++flagVector[Index];
-			  sumVector[Index] += Coefficient * Coefficient2 * (*TmpInteractionFactor);
+                          indexArray[position] = Index;
+			  coefficientArray[position] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
+			  ++position;
 			}
 		      ++TmpInteractionFactor;
 		    }
@@ -845,8 +838,9 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
 		      Index = particles->AduAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 		      if (Index < Dim)
 			{
-			  ++flagVector[Index];
-			  sumVector[Index] += Coefficient * Coefficient2 * (*TmpInteractionFactor);
+                          indexArray[position] = Index;
+			  coefficientArray[position] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
+			  ++position;
 			}
 		      ++TmpInteractionFactor;
 		    }
@@ -874,13 +868,15 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
 			{
 			  if (Index == AbsoluteIndex)
 			    {
-			      ++flagVector[Index];
-			      sumVector[Index] += 0.5 * Coefficient * Coefficient2 * (*TmpInteractionFactor);
+			      indexArray[position] = Index;
+			      coefficientArray[position] = 0.5 * Coefficient * Coefficient2 * (*TmpInteractionFactor);
+			      ++position;
 			    }
 			  else
 			    {
-			      ++flagVector[Index];
-			      sumVector[Index] += Coefficient * Coefficient2 * (*TmpInteractionFactor);
+			      indexArray[position] = Index;
+			      coefficientArray[position] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
+			      ++position;
 			    }
 			}
 		      ++TmpInteractionFactor;
@@ -897,13 +893,15 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
 			{
 			  if (Index == AbsoluteIndex)
 			    {
-			      ++flagVector[Index];
-			      sumVector[Index] += 0.5 * Coefficient * Coefficient2 * (*TmpInteractionFactor);
+			      indexArray[position] = Index;
+			      coefficientArray[position] = 0.5 * Coefficient * Coefficient2 * (*TmpInteractionFactor);
+			      ++position;
 			    }
 			  else
 			    {
-			      ++flagVector[Index];
-			      sumVector[Index] += Coefficient * Coefficient2 * (*TmpInteractionFactor);
+			      indexArray[position] = Index;
+			      coefficientArray[position] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
+			      ++position;
 			    }
 			}
 		      ++TmpInteractionFactor;
@@ -928,13 +926,15 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
 			{
 			  if (Index == AbsoluteIndex)
 			    {
-			      ++flagVector[Index];
-			      sumVector[Index] += 0.5 * Coefficient * Coefficient2 * (*TmpInteractionFactor);
+			      indexArray[position] = Index;
+			      coefficientArray[position] = 0.5 * Coefficient * Coefficient2 * (*TmpInteractionFactor);
+			      ++position;
 			    }
 			  else
 			    {
-			      ++flagVector[Index];
-			      sumVector[Index] += Coefficient * Coefficient2 * (*TmpInteractionFactor);
+			      indexArray[position] = Index;
+			      coefficientArray[position] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
+			      ++position;
 			    }
 			}
 		      ++TmpInteractionFactor;
@@ -942,15 +942,6 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
 		}
 	    }
 	}  
-    }
-  for (int j = 0; j < Dim; ++j)
-    {
-      if (flagVector[j] != 0)
-	{
-	  indexArray[position] = j;
-	  coefficientArray[position] = sumVector[j];
-	  ++position;
-	}
     }
 }
 
@@ -1197,9 +1188,8 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNOneBod
 // firstComponent = index of the first component that has to be precalcualted
 // lastComponent  = index of the last component that has to be precalcualted
 // memory = reference on the amount of memory required for precalculations
-// flagVector = temporary array to compress matrix elements
 
-inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBodyFastMultiplicationMemoryComponent(ParticleOnSphereWithSpin* particles, int firstComponent, int lastComponent, long& memory, int* flagVector)
+inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBodyFastMultiplicationMemoryComponent(ParticleOnSphereWithSpin* particles, int firstComponent, int lastComponent, long& memory)
 {
   int Index;
   double Coefficient = 0.0;
@@ -1215,8 +1205,6 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
     {
       for (int i = firstComponent; i < lastComponent; ++i)
 	{
-	  for (int j = 0; j < Dim; ++j)
-	    flagVector[j] = 0;
 	  for (int j = 0; j < this->NbrIntraSectorSums; ++j)
 	    {
 	      int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
@@ -1231,7 +1219,8 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
 			  Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 			  if (Index < Dim)
 			    {
-			      ++flagVector[Index];
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
 			    }
 			}
 		    }
@@ -1243,7 +1232,8 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
 			  Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 			  if (Index < Dim)
 			    {
-			      ++flagVector[Index];
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
 			    }
 			}
 		    }
@@ -1264,22 +1254,13 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
 			  Index = particles->AduAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 			  if (Index < Dim)
 			    {
-			      ++flagVector[Index];
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
 			    }
 			}
 		    }
 		}
 	    }	
-	  long Tmp = 0l;
-	  for (int j = 0; j < Dim; ++j)
-	    {
-	      if (flagVector[j] != 0)
-		{
-		  ++Tmp;
-		}
-	    }
-	  this->NbrInteractionPerComponent[i - this->PrecalculationShift] += Tmp;
-	  memory += Tmp;
 	}
       if (this->OneBodyInteractionFactorsupdown != 0)
 	{
@@ -1307,8 +1288,6 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
     {
       for (int i = firstComponent; i < lastComponent; ++i)
 	{
-	  for (int j = 0; j < Dim; ++j)
-	    flagVector[j] = 0;
 	  for (int j = 0; j < this->NbrIntraSectorSums; ++j)
 	    {
 	      int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
@@ -1323,7 +1302,8 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
 			  Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 			  if (Index <= i)
 			    {
-			      ++flagVector[Index];
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
 			    }
 			}
 		    }
@@ -1335,7 +1315,8 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
 			  Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 			  if (Index <= i)
 			    {
-			      ++flagVector[Index];
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
 			    }
 			}
 		    }
@@ -1356,22 +1337,13 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
 			  Index = particles->AduAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 			  if (Index <= i)
 			    {
-			      ++flagVector[Index];
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
 			    }
 			}
 		    }
 		}
 	    }	
-	  long Tmp = 0l;
-	  for (int j = 0; j < Dim; ++j)
-	    {
-	      if (flagVector[j] != 0)
-		{
-		  ++Tmp;
-		}
-	    }
-	  this->NbrInteractionPerComponent[i - this->PrecalculationShift] += Tmp;
-	  memory += Tmp;
 	}
       if (this->OneBodyInteractionFactorsupdown != 0)
 	{

@@ -951,15 +951,13 @@ long ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::PartialFastM
   long Memory = 0;
   ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
   int LastComponent = lastComponent + firstComponent;
-  int* FlagVector = new int [TmpParticles->GetHilbertSpaceDimension()];
-  this->EvaluateMNThreeBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory, FlagVector);
+  this->EvaluateMNThreeBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
   if (this->TwoBodyFlag == true)
     {
-      this->EvaluateMNTwoBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory, FlagVector);
+      this->EvaluateMNTwoBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
     }
 
   delete TmpParticles;
-  delete[] FlagVector;
   return Memory;
 }
 
@@ -1022,23 +1020,19 @@ void ParticleOnLatticeChernInsulatorSingleBandThreeBodyHamiltonian::PartialEnabl
       ++Pos;
       PosMod = this->FastMultiplicationStep - PosMod;
     }
-  int* FlagVector = new int [TmpParticles->GetHilbertSpaceDimension()];
-  Complex* SumVector = new Complex[TmpParticles->GetHilbertSpaceDimension()];
   for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
     {
       long TotalPos = 0;
       this->EvaluateMNThreeBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
-							   this->InteractionPerComponentCoefficient[Pos], TotalPos, FlagVector, SumVector);
+							   this->InteractionPerComponentCoefficient[Pos], TotalPos);
       if (this->TwoBodyFlag == true)
 	{
 	  this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
-							     this->InteractionPerComponentCoefficient[Pos], TotalPos, FlagVector, SumVector);
+							     this->InteractionPerComponentCoefficient[Pos], TotalPos);
 	  this->EvaluateMNOneBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
 							     this->InteractionPerComponentCoefficient[Pos], TotalPos);
 	}
       ++Pos;
     }
   delete TmpParticles;
-  delete[] SumVector;
-  delete[] FlagVector;
 }

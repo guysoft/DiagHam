@@ -142,10 +142,8 @@ class ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian : public ParticleOnLatt
   // indexArray = array where indices connected to the index-th component through the Hamiltonian
   // coefficientArray = array of the numerical coefficients related to the indexArray
   // position = reference on the current position in arrays indexArray and coefficientArray
-  // flagVector = temporary array to compress matrix elements
-  // sumVector = temporary array to compress matrix elements
   virtual void EvaluateMNTwoBodyFastMultiplicationComponent(ParticleOnSphereWithSpin* particles, int index, 
-							    int* indexArray, Complex* coefficientArray, long& position, int* flagVector, Complex* sumVector);
+							    int* indexArray, Complex* coefficientArray, long& position);
 
   // core part of the PartialFastMultiplicationMemory method involving two-body term
   // 
@@ -153,8 +151,7 @@ class ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian : public ParticleOnLatt
   // firstComponent = index of the first component that has to be precalcualted
   // lastComponent  = index of the last component that has to be precalcualted
   // memory = reference on the amount of memory required for precalculations
-  // flagVector = temporary array to compress matrix elements
-  virtual void EvaluateMNTwoBodyFastMultiplicationMemoryComponent(ParticleOnSphereWithSpin* particles, int firstComponent, int lastComponent, long& memory, int* flagVector);
+  virtual void EvaluateMNTwoBodyFastMultiplicationMemoryComponent(ParticleOnSphereWithSpin* particles, int firstComponent, int lastComponent, long& memory);
 
   // evaluate all interaction factors
   //   
@@ -883,11 +880,9 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::HermitianEvaluat
 // indexArray = array where indices connected to the index-th component through the Hamiltonian
 // coefficientArray = array of the numerical coefficients related to the indexArray
 // position = reference on the current position in arrays indexArray and coefficientArray
-// flagVector = temporary array to compress matrix elements
-// sumVector = temporary array to compress matrix elements
 
 inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBodyFastMultiplicationComponent(ParticleOnSphereWithSpin* particles, int index, 
-													     int* indexArray, Complex* coefficientArray, long& position, int* flagVector, Complex* sumVector)
+													     int* indexArray, Complex* coefficientArray, long& position)
 {
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
@@ -897,11 +892,7 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
   int* TmpIndices2;
   Complex* TmpInteractionFactor;
   int Index;
-  for (int j = 0; j < Dim; ++j)
-    {
-      flagVector[j] = 0;
-      sumVector[j] = 0.0;
-    }
+
   if (this->HermitianSymmetryFlag == false)
     {
       for (int j = 0; j < this->NbrIntraSectorSums; ++j)
@@ -921,8 +912,9 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 		      Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 		      if (Index < Dim)
 			{
-			  ++flagVector[Index];
-			  sumVector[Index] += Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			  indexArray[position] = Index;
+			  coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			  ++position;
 			}
 		      ++TmpInteractionFactor;
 		    }
@@ -932,8 +924,9 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 		      Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 		      if (Index < Dim)
 			{
-			  ++flagVector[Index];
-			  sumVector[Index] += Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			  indexArray[position] = Index;
+			  coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			  ++position;
 			}
 		      ++TmpInteractionFactor;
 		    }
@@ -943,8 +936,9 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 		      Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient);
 		      if (Index < Dim)
 			{
-			  ++flagVector[Index];
-			  sumVector[Index] += Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			  indexArray[position] = Index;
+			  coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			  ++position;
 			}
 		      ++TmpInteractionFactor;
 		    }
@@ -958,8 +952,9 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 		      Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 		      if (Index < Dim)
 			{
-			  ++flagVector[Index];
-			  sumVector[Index] += Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			  indexArray[position] = Index;
+			  coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			  ++position;
 			}
 		      ++TmpInteractionFactor;
 		    }
@@ -969,8 +964,9 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 		      Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 		      if (Index < Dim)
 			{
-			  ++flagVector[Index];
-			  sumVector[Index] += Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			  indexArray[position] = Index;
+			  coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			  ++position;
 			}
 		      ++TmpInteractionFactor;
 		    }
@@ -980,8 +976,9 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 		      Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient);
 		      if (Index < Dim)
 			{
-			  ++flagVector[Index];
-			  sumVector[Index] += Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			  indexArray[position] = Index;
+			  coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			  ++position;
 			}
 		      ++TmpInteractionFactor;
 		    }
@@ -998,8 +995,9 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 		      Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 		      if (Index < Dim)
 			{
-			  ++flagVector[Index];
-			  sumVector[Index] += Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			  indexArray[position] = Index;
+			  coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			  ++position;
 			}
 		      ++TmpInteractionFactor;
 		    }
@@ -1009,8 +1007,9 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 		      Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 		      if (Index < Dim)
 			{
-			  ++flagVector[Index];
-			  sumVector[Index] += Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			  indexArray[position] = Index;
+			  coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			  ++position;
 			}
 		      ++TmpInteractionFactor;
 		    }
@@ -1020,8 +1019,9 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 		      Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient);
 		      if (Index < Dim)
 			{
-			  ++flagVector[Index];
-			  sumVector[Index] += Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			  indexArray[position] = Index;
+			  coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			  ++position;
 			}
 		      ++TmpInteractionFactor;
 		    }
@@ -1051,13 +1051,15 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			{
 			  if (Index == AbsoluteIndex)
 			    {
-			      ++flagVector[Index];
-			      sumVector[Index] += 0.5 * Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      indexArray[position] = Index;
+			      coefficientArray[position] = 0.5 * Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      ++position;
 			    }
 			  else
 			    {
-			      ++flagVector[Index];
-			      sumVector[Index] += Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      indexArray[position] = Index;
+			      coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      ++position;
 			    }
 			}
 		      ++TmpInteractionFactor;
@@ -1070,13 +1072,15 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			{
 			  if (Index == AbsoluteIndex)
 			    {
-			      ++flagVector[Index];
-			      sumVector[Index] += 0.5 * Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      indexArray[position] = Index;
+			      coefficientArray[position] = 0.5 * Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      ++position;
 			    }
 			  else
 			    {
-			      ++flagVector[Index];
-			      sumVector[Index] += Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      indexArray[position] = Index;
+			      coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      ++position;
 			    }
 			}
 		      ++TmpInteractionFactor;
@@ -1089,13 +1093,15 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			{
 			  if (Index == AbsoluteIndex)
 			    {
-			      ++flagVector[Index];
-			      sumVector[Index] += 0.5 * Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      indexArray[position] = Index;
+			      coefficientArray[position] = 0.5 * Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      ++position;
 			    }
 			  else
 			    {
-			      ++flagVector[Index];
-			      sumVector[Index] += Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      indexArray[position] = Index;
+			      coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      ++position;
 			    }
 			}
 		      ++TmpInteractionFactor;
@@ -1112,13 +1118,15 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			{
 			  if (Index == AbsoluteIndex)
 			    {
-			      ++flagVector[Index];
-			      sumVector[Index] += 0.5 * Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      indexArray[position] = Index;
+			      coefficientArray[position] = 0.5 * Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      ++position;
 			    }
 			  else
 			    {
-			      ++flagVector[Index];
-			      sumVector[Index] += Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      indexArray[position] = Index;
+			      coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      ++position;
 			    }
 			}
 		      ++TmpInteractionFactor;
@@ -1131,13 +1139,15 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			{
 			  if (Index == AbsoluteIndex)
 			    {
-			      ++flagVector[Index];
-			      sumVector[Index] += 0.5 * Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      indexArray[position] = Index;
+			      coefficientArray[position] = 0.5 * Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      ++position;
 			    }
 			  else
 			    {
-			      ++flagVector[Index];
-			      sumVector[Index] += Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      indexArray[position] = Index;
+			      coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      ++position;
 			    }
 			}
 		      ++TmpInteractionFactor;
@@ -1150,13 +1160,15 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			{
 			  if (Index == AbsoluteIndex)
 			    {
-			      ++flagVector[Index];
-			      sumVector[Index] += 0.5 * Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      indexArray[position] = Index;
+			      coefficientArray[position] = 0.5 * Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      ++position;
 			    }
 			  else
 			    {
-			      ++flagVector[Index];
-			      sumVector[Index] += Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      indexArray[position] = Index;
+			      coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      ++position;
 			    }
 			}
 		      ++TmpInteractionFactor;
@@ -1176,13 +1188,15 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			{
 			  if (Index == AbsoluteIndex)
 			    {
-			      ++flagVector[Index];
-			      sumVector[Index] += 0.5 * Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      indexArray[position] = Index;
+			      coefficientArray[position] = 0.5 * Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      ++position;
 			    }
 			  else
 			    {
-			      ++flagVector[Index];
-			      sumVector[Index] += Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      indexArray[position] = Index;
+			      coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      ++position;
 			    }
 			}
 		      ++TmpInteractionFactor;
@@ -1195,13 +1209,15 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			{
 			  if (Index == AbsoluteIndex)
 			    {
-			      ++flagVector[Index];
-			      sumVector[Index] += 0.5 * Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      indexArray[position] = Index;
+			      coefficientArray[position] = 0.5 * Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      ++position;
 			    }
 			  else
 			    {
-			      ++flagVector[Index];
-			      sumVector[Index] += Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      indexArray[position] = Index;
+			      coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      ++position;
 			    }
 			}
 		      ++TmpInteractionFactor;
@@ -1214,28 +1230,21 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			{
 			  if (Index == AbsoluteIndex)
 			    {
-			      ++flagVector[Index];
-			      sumVector[Index] += 0.5 * Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      indexArray[position] = Index;
+			      coefficientArray[position] = 0.5 * Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      ++position;
 			    }
 			  else
 			    {
-			      ++flagVector[Index];
-			      sumVector[Index] += Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      indexArray[position] = Index;
+			      coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+			      ++position;
 			    }
 			}
 		      ++TmpInteractionFactor;
 		    }
 		}
 	    }
-	}
-    }
-  for (int j = 0; j < Dim; ++j)
-    {
-      if (flagVector[j] != 0)
-	{
-	  indexArray[position] = j;
-	  coefficientArray[position] = sumVector[j];
-	  ++position;
 	}
     }
 }
@@ -1246,9 +1255,8 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 // firstComponent = index of the first component that has to be precalcualted
 // lastComponent  = index of the last component that has to be precalcualted
 // memory = reference on the amount of memory required for precalculations
-// flagVector = temporary array to compress matrix elements
 
-inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBodyFastMultiplicationMemoryComponent(ParticleOnSphereWithSpin* particles, int firstComponent, int lastComponent, long& memory, int* flagVector)
+inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBodyFastMultiplicationMemoryComponent(ParticleOnSphereWithSpin* particles, int firstComponent, int lastComponent, long& memory)
 {
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
@@ -1263,8 +1271,6 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
     {
       for (int i = firstComponent; i < lastComponent; ++i)
 	{
-	  for (int j = 0; j < Dim; ++j)
-	    flagVector[j] = 0;
 	  for (int j = 0; j < this->NbrIntraSectorSums; ++j)
 	    {
 	      int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
@@ -1282,7 +1288,8 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			  Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 			  if (Index < Dim)
 			    {
-			      ++flagVector[Index];
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
 			    }
 			  ++TmpInteractionFactor;
 			}
@@ -1292,7 +1299,8 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			  Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 			  if (Index < Dim)
 			    {
-			      ++flagVector[Index];
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
 			    }
 			  ++TmpInteractionFactor;
 			}
@@ -1302,7 +1310,8 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			  Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient);
 			  if (Index < Dim)
 			    {
-			      ++flagVector[Index];
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
 			    }
 			  ++TmpInteractionFactor;
 			}
@@ -1316,7 +1325,8 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			  Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 			  if (Index < Dim)
 			    {
-			      ++flagVector[Index];
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
 			    }
 			  ++TmpInteractionFactor;
 			}
@@ -1326,7 +1336,8 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			  Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 			  if (Index < Dim)
 			    {
-			      ++flagVector[Index];
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
 			    }
 			  ++TmpInteractionFactor;
 			}
@@ -1336,7 +1347,8 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			  Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient);
 			  if (Index < Dim)
 			    {
-			      ++flagVector[Index];
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
 			    }
 			  ++TmpInteractionFactor;
 			}
@@ -1353,7 +1365,8 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			  Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 			  if (Index < Dim)
 			    {
-			      ++flagVector[Index];
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
 			    }
 			  ++TmpInteractionFactor;
 			}
@@ -1363,7 +1376,8 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			  Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 			  if (Index < Dim)
 			    {
-			      ++flagVector[Index];
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
 			    }
 			  ++TmpInteractionFactor;
 			}
@@ -1373,31 +1387,20 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			  Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient);
 			  if (Index < Dim)
 			    {
-			      ++flagVector[Index];
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
 			    }
 			  ++TmpInteractionFactor;
 			}
 		    }
 		}
 	    }
-	  long Tmp = 0l;
-	  for (int j = 0; j < Dim; ++j)
-	    {
-	      if (flagVector[j] != 0)
-		{
-		  ++Tmp;
-		}
-	    }
-	  this->NbrInteractionPerComponent[i - this->PrecalculationShift] += Tmp;
-	  memory += Tmp;
 	}
     }
   else
     {
       for (int i = firstComponent; i < lastComponent; ++i)
 	{
-	  for (int j = 0; j < Dim; ++j)
-	    flagVector[j] = 0;
 	  for (int j = 0; j < this->NbrIntraSectorSums; ++j)
 	    {
 	      int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
@@ -1415,7 +1418,8 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			  Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 			  if (Index <= i)
 			    {
-			      ++flagVector[Index];
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
 			    }
 			  ++TmpInteractionFactor;
 			}
@@ -1425,7 +1429,8 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			  Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 			  if (Index <= i)
 			    {
-			      ++flagVector[Index];
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
 			    }
 			  ++TmpInteractionFactor;
 			}
@@ -1435,7 +1440,8 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			  Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient);
 			  if (Index <= i)
 			    {
-			      ++flagVector[Index];
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
 			    }
 			  ++TmpInteractionFactor;
 			}
@@ -1449,7 +1455,8 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			  Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 			  if (Index <= i)
 			    {
-			      ++flagVector[Index];
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
 			    }
 			  ++TmpInteractionFactor;
 			}
@@ -1459,7 +1466,8 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			  Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 			  if (Index <= i)
 			    {
-			      ++flagVector[Index];
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
 			    }
 			  ++TmpInteractionFactor;
 			}
@@ -1469,7 +1477,8 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			  Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient);
 			  if (Index <= i)
 			    {
-			      ++flagVector[Index];
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
 			    }
 			  ++TmpInteractionFactor;
 			}
@@ -1486,7 +1495,8 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			  Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 			  if (Index <= i)
 			    {
-			      ++flagVector[Index];
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
 			    }
 			  ++TmpInteractionFactor;
 			}
@@ -1496,7 +1506,8 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			  Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 			  if (Index <= i)
 			    {
-			      ++flagVector[Index];
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
 			    }
 			  ++TmpInteractionFactor;
 			}
@@ -1506,23 +1517,14 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 			  Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient);
 			  if (Index <= i)
 			    {
-			      ++flagVector[Index];
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
 			    }
 			  ++TmpInteractionFactor;
 			}
 		    }
 		}
 	    }
-	  long Tmp = 0l;
-	  for (int j = 0; j < Dim; ++j)
-	    {
-	      if (flagVector[j] != 0)
-		{
-		  ++Tmp;
-		}
-	    }
-	  this->NbrInteractionPerComponent[i - this->PrecalculationShift] += Tmp;
-	  memory += Tmp;
 	}
     }
 }
