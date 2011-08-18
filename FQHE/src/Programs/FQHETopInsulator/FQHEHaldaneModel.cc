@@ -1,10 +1,11 @@
 #include "Options/Options.h"
 
-#include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
+#include "HilbertSpace/FermionOnSquareLatticeMomentumSpaceLong.h"
 
 #include "Hamiltonian/ParticleOnLatticeHaldaneModelSingleBandHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeHaldaneModelSingleBandFourBodyHamiltonian.h"
 #include "LanczosAlgorithm/LanczosManager.h"
 
 #include "Architecture/ArchitectureManager.h"
@@ -63,10 +64,12 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1);
   (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive two-body nearest neighbor potential strength", 1.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive two-body nearest neighbor potential strength", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "v-potential", "repulsive two-body nearest next neighbor potential strength", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "w-potential", "repulsive three-body nearest neighbor potential strength", 1.0);
-  (*SystemGroup) += new BooleanOption  ('\n', "three-body", "enable three-body interaction");
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "s-potential", "repulsive three-body next-to-nearest neighbor potential strength", 0.0);
+  (*SystemGroup) += new BooleanOption  ('\n', "three-body", "use a three-body interaction in addition to a two-body interaction");
+  (*SystemGroup) += new BooleanOption  ('\n', "four-body", "use a four-body interaction in addition to a two-body interaction");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "t1", "nearest neighbor hoping amplitude", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "t2", "next nearest neighbor hoping amplitude", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "phi", "Haldane phase on nnn hopping", M_PI/3);
@@ -75,8 +78,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
   (*SystemGroup) += new BooleanOption  ('\n', "single-band", "project onto the lowest enregy band");
-  (*SystemGroup) += new BooleanOption  ('\n', "flat-band", "use flat band model. if three-body is set, w-potential is set to 1.0 regardless of input, otherwise u-potential is set to 1.0 regardless of input");
+  (*SystemGroup) += new BooleanOption  ('\n', "flat-band", "use flat band model. The n-body interaction strength with largest n is set to unity");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
+  (*SystemGroup) += new SingleStringOption  ('\n', "eigenstate-file", "filename for eigenstates output; to be appended by _kx_#_ky_#.#.vec");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
@@ -109,10 +113,25 @@ int main(int argc, char** argv)
     }
   else
     {
-      if (Manager.GetBoolean("three-body") == false)
-	lenFilePrefix += sprintf (FilePrefix, "fermions_singleband_haldane_n_%d_x_%d_y_%d",  NbrParticles, NbrSiteX, NbrSiteY);
+      if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false))
+          lenFilePrefix += sprintf (FilePrefix, "fermions_singleband_haldane_n_%d_x_%d_y_%d",  NbrParticles, NbrSiteX, NbrSiteY);
       else
-	lenFilePrefix += sprintf (FilePrefix, "fermions_singleband_threebody_haldane_n_%d_x_%d_y_%d",  NbrParticles, NbrSiteX, NbrSiteY);
+      {
+	  if (Manager.GetBoolean("three-body") == true)
+              lenFilePrefix += sprintf (FilePrefix, "fermions_singleband_threebody_haldane_n_%d_x_%d_y_%d",  NbrParticles, NbrSiteX, NbrSiteY);
+          else
+              lenFilePrefix += sprintf (FilePrefix, "fermions_singleband_fourbody_haldane_n_%d_x_%d_y_%d",  NbrParticles, NbrSiteX, NbrSiteY);
+      }
+      if ((Manager.GetBoolean("three-body") == true || Manager.GetBoolean("four-body") == true) && Manager.GetBoolean("flat-band") == false)
+          lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_w_%f", Manager.GetDouble("w-potential"));
+      if ((Manager.GetBoolean("three-body") == true || Manager.GetBoolean("four-body") == true) && Manager.GetDouble("s-potential") != 0.0)
+          lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_s_%f", Manager.GetDouble("s-potential"));
+      if ((Manager.GetBoolean("three-body") == true || Manager.GetBoolean("four-body") == true) || Manager.GetBoolean("flat-band") == false)
+          lenFilePrefix += sprintf (FilePrefix + lenFilePrefix, "_u_%f", Manager.GetDouble("u-potential"));
+      lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_v_%f", Manager.GetDouble("v-potential"));
+      lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_t1_%f_t2_%f_phi_%f_gx_%f_gy_%f", Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("phi"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+      if (Manager.GetDouble("mu-s") != 0.0)
+          lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_mus_%f", Manager.GetDouble("mu-s"));
     }
   char* CommentLine = new char [256];
   sprintf (CommentLine, "eigenvalues\n# kx ky ");
@@ -120,23 +139,7 @@ int main(int argc, char** argv)
   if (Manager.GetString("eigenvalue-file")!=0)
       strcpy(EigenvalueOutputFile, Manager.GetString("eigenvalue-file"));
   else
-  {
-    if (Manager.GetBoolean("single-band") == false)
-      {
-      }
-    else
-      {
-        if (Manager.GetBoolean("three-body") == true && Manager.GetBoolean("flat-band") == false)
-            lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_w_%f", Manager.GetDouble("w-potential"));
-        if (Manager.GetBoolean("three-body") == true || Manager.GetBoolean("flat-band") == false)
-            lenFilePrefix += sprintf (FilePrefix + lenFilePrefix, "_u_%f", Manager.GetDouble("u-potential"));
-        lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_v_%f", Manager.GetDouble("v-potential"));
-        lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_t1_%f_t2_%f_phi_%f_gx_%f_gy_%f", Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("phi"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
-        if (Manager.GetDouble("mu-s") != 0.0)
-            lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_mus_%f", Manager.GetDouble("mu-s"));
-      }
       sprintf (EigenvalueOutputFile, "%s.dat", FilePrefix);
-  }
 
   if (Manager.GetBoolean("singleparticle-spectrum") == true)
     {
@@ -169,37 +172,59 @@ int main(int argc, char** argv)
  	    }
  	  else
  	    {
- 	      FermionOnSquareLatticeMomentumSpace Space(NbrParticles, NbrSiteX, NbrSiteY, i, j);
- 	      cout << "dim = " << Space.GetHilbertSpaceDimension()  << endl;
+	      ParticleOnSphere* Space = 0;
+	      if ((NbrSiteX * NbrSiteY) <= 63)
+		{
+		  Space = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, i, j);
+		}
+	      else
+		{
+		  Space = new FermionOnSquareLatticeMomentumSpaceLong (NbrParticles, NbrSiteX, NbrSiteY, i, j);
+		}
+ 	      cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
 	      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 		Memory = Architecture.GetArchitecture()->GetLocalMemory();
- 	      Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());	
+ 	      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
  	      AbstractQHEHamiltonian* Hamiltonian = 0;
-	      if (Manager.GetBoolean("three-body") == false)
+	      if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false))
               {
-                  Hamiltonian = new ParticleOnLatticeHaldaneModelSingleBandHamiltonian(&Space, NbrParticles, NbrSiteX, NbrSiteY, 
+                  Hamiltonian = new ParticleOnLatticeHaldaneModelSingleBandHamiltonian(Space, NbrParticles, NbrSiteX, NbrSiteY, 
                           Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), 
                           Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("phi"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"),
                           Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
               }
               else
               {
-                  Hamiltonian = new ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonian(&Space, NbrParticles, NbrSiteX, NbrSiteY, 
-                          Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"),
-                          Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("phi"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"),
-                          Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+		  if (Manager.GetBoolean("three-body") == true)
+                  {
+                      Hamiltonian = new ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonian(Space, NbrParticles, NbrSiteX, NbrSiteY, 
+                              Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("s-potential"),
+                              Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("phi"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"),
+                              Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+                  }
+                  else
+                  {
+                      Hamiltonian = new ParticleOnLatticeHaldaneModelSingleBandFourBodyHamiltonian(Space, NbrParticles, NbrSiteX, NbrSiteY, 
+                              Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("s-potential"),
+                              Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("phi"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"),
+                              Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+                  }
               }
 
 	      char* ContentPrefix = new char[256];
 	      sprintf (ContentPrefix, "%d %d", i, j);
 	      char* EigenstateOutputFile = new char [512];
-              sprintf (EigenstateOutputFile, "%s_kx_%d_ky_%d", FilePrefix, i, j);
+              if (Manager.GetString("eigenstate-file")!=0)
+                  sprintf (EigenstateOutputFile, "%s_kx_%d_ky_%d", Manager.GetString("eigenstate-file"), i, j);
+              else
+                  sprintf (EigenstateOutputFile, "%s_kx_%d_ky_%d", FilePrefix, i, j);
 	      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
 	      FirstRunFlag = false;
 	      MainTaskOperation TaskOperation (&Task);
 	      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
 	      cout << "------------------------------------" << endl;
 	      delete Hamiltonian;
+	      delete Space;
 	      delete[] EigenstateOutputFile;
 	      delete[] ContentPrefix;
 	    }
