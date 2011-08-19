@@ -353,7 +353,7 @@ FactorialCoefficient& FactorialCoefficient::FactorialMultiply (long x)
 FactorialCoefficient& FactorialCoefficient::PartialFactorialMultiply (long start, long end)
 {
   if (end <= 1)
-    return *this;
+    return *this;	
   if (start <= 1)
     start = 2;
   for (long i = start; i <= end; ++i)
@@ -406,7 +406,7 @@ FactorialCoefficient& FactorialCoefficient::PartialFactorialDivide (long start, 
 
 FactorialCoefficient& FactorialCoefficient::MultiplyDivide (long x, long y)
 {
-  this->PartialFactorialMultiply(y + 1, x);
+  this->PartialFactorialMultiply(x - y + 1, x);
   this->FactorialDivide(y);  
   return *this;
 }

@@ -81,6 +81,8 @@ class MonomialsProductOperation: public AbstractArchitectureOperation
   
   //true if the result state will be normalized at the end of the calculation
   bool NormalizeFlag;
+	
+	bool ReverseFluxFlag;
 
  public:
   
@@ -96,7 +98,7 @@ class MonomialsProductOperation: public AbstractArchitectureOperation
   // Space = pointer to the HilbertSpace to use
   // sourceVector = vector where the component are stored
   // destinationVector = vector where the result has to be stored 
-  MonomialsProductOperation(ParticleOnSphere * space1,ParticleOnSphere * space2,ParticleOnSphere * FinalSpace,RealVector* sourceVector1, RealVector* sourceVector2, RealVector* destinationVector, bool normalize);
+  MonomialsProductOperation(ParticleOnSphere * space1,ParticleOnSphere * space2,ParticleOnSphere * FinalSpace,RealVector* sourceVector1, RealVector* sourceVector2, RealVector* destinationVector, bool normalize );
 
   // copy constructor 
   //

@@ -94,7 +94,8 @@ class FermionOnSphereThreeLandauLevels : public FermionOnSphereWithSU3Spin
   // finalSpace = pointer to the final Hilbert space
   // firstComponent = first component to be computed
   // nbrComponent = number of components to be computed
-  virtual void BosonicStateTimeFermionicState(RealVector& bosonState, RealVector& fermionState, RealVector& outputVector, BosonOnSphereShort* bosonSpace, FermionOnSphere * finalSpace, int firstComponent,int nbrComponent);
+  // reverseFluxFlag = true if it a reverse flux attachment
+  virtual void BosonicStateTimeFermionicState(RealVector& bosonState, RealVector& fermionState, RealVector& outputVector, BosonOnSphereShort* bosonSpace, FermionOnSphere * finalSpace, int firstComponent,int nbrComponent, bool reverseFluxFlag = false);
   
   // compute the product and the projection of a Slater determinant and a monomial 
   // 
@@ -105,6 +106,16 @@ class FermionOnSphereThreeLandauLevels : public FermionOnSphereWithSU3Spin
   // sortingMap = map in which the generated states and their coefficient will be stored
   // finalSpace = pointer to the final HilbertSpace
   virtual void MonomialsTimesSlaterProjection(unsigned long* slater, unsigned long* monomial, unsigned long* variable, int nbrVariable, map <unsigned long, double> & sortingMap, FermionOnSphere* finalSpace);
+	
+  // compute the product and the projection of a Slater determinant and a monomial with reverse flux attachment
+  // 
+  // slater = array where the slater is stored in its monomial representation
+  // monomial = array where the monomial is stored in its monomial representation
+  // landau =  array where the landau level of fermions is stored
+  // sortingMap = map in which the generated states and their coefficient will be stored
+  // binomialsCoefficient = binomials coefficient needed in the computation
+  // finalSpace = pointer to the final HilbertSpace
+  virtual void MonomialsTimesSlaterProjectionReverse(unsigned long* slater, unsigned long* monomial, unsigned long* landau, map <unsigned long, double> & sortingMap,BinomialCoefficients& binomialsCoefficients, FermionOnSphere* finalSpace);
 	
   // compute the projection of the product of a bosonic state and a fermionic state
   //
@@ -126,7 +137,8 @@ class FermionOnSphereThreeLandauLevels : public FermionOnSphereWithSU3Spin
   // sortingMap = map in which the generated states and their coefficient will be stored
   // finalSpace = pointer to the final HilbertSpace
   virtual void  MonomialsTimesSlaterProjection(unsigned long* slater, unsigned long* monomial, unsigned long* variable, int nbrVariable, map <unsigned long, LongRational> & sortingMap, FermionOnSphere* finalSpace);
-  
+	
+
   // compute the product and the projection of a Slater determinant in the LLL and a Slater determinant in three Landau levels
   //
   // slater = array where the slater determinant in the two landau levels is stored in its monomial representation
@@ -203,7 +215,13 @@ class FermionOnSphereThreeLandauLevels : public FermionOnSphereWithSU3Spin
   // nbrVariable = number of fermions in the second Landau level
   // variable = reference on the array where the indice of fermions in the second Landau and the third level has to be stored
   virtual void ConvertToMonomialVariable(unsigned long state, unsigned long*& slater, int& nbrVariable, unsigned long*& variable);
-
+	
+  // convert a fermionic state to its monomial variable representation
+  //
+  // state = initial fermionic state in its fermionic representation
+  // slater = reference on the array where the monomial representation has to be stored
+  // landau = array where landau level of each fermions has to be stored
+  virtual void ConvertToMonomialLandau(unsigned long state, unsigned long*& slater, unsigned long*& landau);
 };
 
 // convert a fermionique state to its monomial variable representation
@@ -299,7 +317,93 @@ inline void FermionOnSphereThreeLandauLevels::ConvertToMonomialVariable(unsigned
     }
 }
 
+// convert a fermionic state to its monomial variable representation
+//
+// state = initial fermionic state in its fermionic representation
+// slater = reference on the array where the monomial representation has to be stored
+// landau = array where landau level of each fermions has to be stored
+
+inline void FermionOnSphereThreeLandauLevels::ConvertToMonomialLandau(unsigned long state, unsigned long*& slater, unsigned long*& landau)
+{
+  unsigned long Tmp;
+  int TmpPos = 0;
+  for(int i = this->LzMax; i >= 0; i--)
+    {
+      Tmp = ((state >> (3*i)) & ((unsigned long) 0x7));
+      switch (Tmp)
+	{
+	case 0x1l: 
+	  {
+	    slater[TmpPos] = i;
+	    landau[TmpPos] = 0;
+	    TmpPos++;
+	    break;
+	  }
+	case 0x2l:
+	  {
+	    slater[TmpPos] = i;
+	    landau[TmpPos] = 1;
+	    TmpPos++;
+	    break;
+	  }
+	case 0x3l:
+	  {
+	    slater[TmpPos] = i;
+	    landau[TmpPos] = 1;
+	    TmpPos++;
+	    slater[TmpPos] = i;
+	    landau[TmpPos] = 0;
+	    TmpPos++;
+	    break;
+	  }
+	case 0x4l: 
+	  {
+	    slater[TmpPos] = i;
+	    landau[TmpPos] = 2;
+	    TmpPos++;
+	    break;
+	  }
+	case 0x5l:
+	  {
+	    slater[TmpPos] = i;
+	    landau[TmpPos] = 2;
+	    TmpPos++;
+	    slater[TmpPos] = i;
+	    landau[TmpPos] = 0;
+	    TmpPos++;
+	    break;
+	  }
+	case 0x6l:
+	  {
+	    slater[TmpPos] = i;
+	    landau[TmpPos] = 2;
+	    TmpPos++;
+	    slater[TmpPos] = i;
+	    landau[TmpPos] = 1;
+	    TmpPos++;
+	    break;
+	  }
+	case 0x7l:
+	  {
+	    slater[TmpPos] = i;
+	    landau[TmpPos] = 2;
+	    TmpPos++;
+	    slater[TmpPos] = i;
+	    landau[TmpPos] = 1;
+	    TmpPos++;
+	    slater[TmpPos] = i;
+	    landau[TmpPos] = 0;
+	    TmpPos++;
+	    break;
+	  }
+	  break;
+	default : 
+	  {
+	    break;
+	  }
+	}
+    }
+}
 
 #endif
-
 

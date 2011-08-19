@@ -67,7 +67,7 @@ RealVector PutFirstComponentToOne(RealVector& state);
 // fileName = file where the kostka Numbers will be stored
 // nbrLL = number of Landau levels
 
-FQHESphereMultipleMonomialsTimesSlaterProjectionOperation::FQHESphereMultipleMonomialsTimesSlaterProjectionOperation(ParticleOnSphere* fermionSpace, ParticleOnSphere* lllSpace, ParticleOnSphere* finalSpace, int * matchingConditionsIndex, RealVector* lllVector, int nbrLL, int nbrStates, bool projection, bool symmetry,bool normalize,char * outputFileName,int resumingIndex)
+FQHESphereMultipleMonomialsTimesSlaterProjectionOperation::FQHESphereMultipleMonomialsTimesSlaterProjectionOperation(ParticleOnSphere* fermionSpace, ParticleOnSphere* lllSpace, ParticleOnSphere* finalSpace, int * matchingConditionsIndex, RealVector* lllVector, int nbrLL, int nbrStates, bool projection, bool symmetry,bool normalize, char * outputFileName, int resumingIndex, bool reverseFluxFlag)
 {
   this->FermionSpace = fermionSpace;
   this->LLLSpace = lllSpace;
@@ -92,13 +92,14 @@ FQHESphereMultipleMonomialsTimesSlaterProjectionOperation::FQHESphereMultipleMon
   this->Index = -1;
   this->ResumingIndex = resumingIndex;
   this->Rational = false;
+  this->ReverseFluxFlag = reverseFluxFlag;
 }
 
 // constructor 
 //
 
 
-FQHESphereMultipleMonomialsTimesSlaterProjectionOperation::FQHESphereMultipleMonomialsTimesSlaterProjectionOperation(ParticleOnSphere* fermionSpace, ParticleOnSphere* lllSpace, ParticleOnSphere* finalSpace, int * matchingConditionsIndex, LongRationalVector* lllVector, int nbrLL, int nbrStates, bool projection, bool symmetry,bool normalize,char * outputFileName,int resumingIndex)
+FQHESphereMultipleMonomialsTimesSlaterProjectionOperation::FQHESphereMultipleMonomialsTimesSlaterProjectionOperation(ParticleOnSphere* fermionSpace, ParticleOnSphere* lllSpace, ParticleOnSphere* finalSpace, int * matchingConditionsIndex, LongRationalVector* lllVector, int nbrLL, int nbrStates, bool projection, bool symmetry,bool normalize,char * outputFileName,int resumingIndex, bool reverseFluxFlag)
 {
   this->FermionSpace = fermionSpace;
   this->LLLSpace = lllSpace;
@@ -124,6 +125,7 @@ FQHESphereMultipleMonomialsTimesSlaterProjectionOperation::FQHESphereMultipleMon
   this->Index = -1;
   this->ResumingIndex = resumingIndex;
   this->Rational = true;
+  this->ReverseFluxFlag = false;
 }
 
 
@@ -161,6 +163,7 @@ FQHESphereMultipleMonomialsTimesSlaterProjectionOperation::FQHESphereMultipleMon
   this->Index = operation.Index;
   this->ResumingIndex = operation.ResumingIndex;
   this->Rational = operation.Rational;
+  this->ReverseFluxFlag = operation.ReverseFluxFlag;
 }
 
 
@@ -187,19 +190,19 @@ void FQHESphereMultipleMonomialsTimesSlaterProjectionOperation::SetIndex(int ind
   this->Index = index;
   if (this->Index != -1 )
     {
-  char *Tmp;
-  Tmp = strstr(this->OutputFileName,".");
-  if(Tmp==0)
-    cout<<"c'est pas bon"<<endl;
-  sprintf (Tmp,".%d.vec",index);
-  if (this->Rational == true)
-    {
-      (*(this->FermionLongRationalVector))[this->MatchingConditionsIndex[this->Index]] = 1l;
-    }
-  else
-    {
-      (*(this->FermionRealVector))[this->MatchingConditionsIndex[this->Index]] = 1l;
-    }
+      char *Tmp;
+      Tmp = strstr(this->OutputFileName,".");
+      if(Tmp == 0)
+	cout<<"c'est pas bon"<<endl;
+      sprintf (Tmp,".%d.vec",index);
+      if (this->Rational == true)
+	{
+	  (*(this->FermionLongRationalVector))[this->MatchingConditionsIndex[this->Index]] = 1l;
+	}
+      else
+	{
+	  (*(this->FermionRealVector))[this->MatchingConditionsIndex[this->Index]] = 1l;
+	}
     }
 }
 
@@ -224,7 +227,7 @@ bool FQHESphereMultipleMonomialsTimesSlaterProjectionOperation::RawApplyOperatio
     {
       timeval TotalStartingTime;
       gettimeofday (&TotalStartingTime, 0);
-		
+      
       if(this->Rational == true)
 	{
 	  if(this->BosonFlag == true)
@@ -297,10 +300,10 @@ bool FQHESphereMultipleMonomialsTimesSlaterProjectionOperation::RawApplyOperatio
 		  switch (this->NbrLL)
 		    {
 		    case 3:
-		      ((FermionOnSphereThreeLandauLevels *)this->FermionSpace)->BosonicStateTimeFermionicState(*(this->LLLRealVector), *(this->FermionRealVector) , *(this->OutputRealVector), (BosonOnSphereShort*) this->LLLSpace, (FermionOnSphere*)this->FinalSpace,0, this->LLLSpace->GetHilbertSpaceDimension());
+		      ((FermionOnSphereThreeLandauLevels *)this->FermionSpace)->BosonicStateTimeFermionicState(*(this->LLLRealVector), *(this->FermionRealVector) , *(this->OutputRealVector), (BosonOnSphereShort*) this->LLLSpace, (FermionOnSphere*)this->FinalSpace,0, this->LLLSpace->GetHilbertSpaceDimension(),this->ReverseFluxFlag);
 		      break;
 		    case 4:
-		      ((FermionOnSphereFourLandauLevels *)this->FermionSpace)->BosonicStateTimeFermionicState(*(this->LLLRealVector), *(this->FermionRealVector) , *(this->OutputRealVector), (BosonOnSphereShort*) this->LLLSpace, (FermionOnSphere*)this->FinalSpace,0, this->LLLSpace->GetHilbertSpaceDimension());
+		      ((FermionOnSphereFourLandauLevels *)this->FermionSpace)->BosonicStateTimeFermionicState(*(this->LLLRealVector), *(this->FermionRealVector) , *(this->OutputRealVector), (BosonOnSphereShort*) this->LLLSpace, (FermionOnSphere*)this->FinalSpace,0, this->LLLSpace->GetHilbertSpaceDimension(),this->ReverseFluxFlag);
 		      break;
 		    }
 		}
@@ -309,9 +312,9 @@ bool FQHESphereMultipleMonomialsTimesSlaterProjectionOperation::RawApplyOperatio
 		  if( this->Projection == true )
 		    {
 		      if( this->Symmetry == true )
-			((FermionOnSphereTwoLandauLevels *) this->FermionSpace)->BosonicStateTimeFermionicStateSymmetric( *this->LLLRealVector, *this->FermionRealVector, *this->OutputRealVector, (BosonOnSphereShort*) this->LLLSpace, (FermionOnSphere*) this->FinalSpace, 0, this->LLLSpace->GetHilbertSpaceDimension());
+			((FermionOnSphereTwoLandauLevels *) this->FermionSpace)->BosonicStateTimeFermionicStateSymmetric( *this->LLLRealVector, *this->FermionRealVector, *this->OutputRealVector, (BosonOnSphereShort*) this->LLLSpace, (FermionOnSphere*) this->FinalSpace, 0, this->LLLSpace->GetHilbertSpaceDimension(),this->ReverseFluxFlag);
 		      else
-			((FermionOnSphereTwoLandauLevels *)this->FermionSpace)->BosonicStateTimeFermionicState( *this->LLLRealVector, *this->FermionRealVector, *this->OutputRealVector, (BosonOnSphereShort*) this->LLLSpace, (FermionOnSphere*) this->FinalSpace, 0, this->LLLSpace->GetHilbertSpaceDimension());
+			((FermionOnSphereTwoLandauLevels *)this->FermionSpace)->BosonicStateTimeFermionicState( *this->LLLRealVector, *this->FermionRealVector, *this->OutputRealVector, (BosonOnSphereShort*) this->LLLSpace, (FermionOnSphere*) this->FinalSpace, 0, this->LLLSpace->GetHilbertSpaceDimension(),this->ReverseFluxFlag);
 		    }
 		  else
 		    ((FermionOnSphereTwoLandauLevels *) this->FermionSpace)->BosonicStateTimeFermionicState( *this->LLLRealVector, *this->FermionRealVector, *this->OutputRealVector, (BosonOnSphereShort*) this->LLLSpace, (FermionOnSphereTwoLandauLevels*) this->FinalSpace, 0, this->LLLSpace->GetHilbertSpaceDimension());

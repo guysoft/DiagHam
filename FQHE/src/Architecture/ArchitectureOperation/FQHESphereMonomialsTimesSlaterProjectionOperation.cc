@@ -57,7 +57,7 @@ class BosonOnSphereShort;
 // fileName = file where the kostka Numbers will be stored
 // nbrLL = number of Landau levels
 
-FQHESphereMonomialsTimesSlaterProjectionOperation::FQHESphereMonomialsTimesSlaterProjectionOperation(ParticleOnSphere* fermionSpace, ParticleOnSphere* lllSpace, ParticleOnSphere* finalSpace,RealVector* fermionVector, RealVector* lllVector, RealVector* outputVector, int resume, int nbrComponent,bool projection , int step, int nbrLL, bool symmetry)
+FQHESphereMonomialsTimesSlaterProjectionOperation::FQHESphereMonomialsTimesSlaterProjectionOperation(ParticleOnSphere* fermionSpace, ParticleOnSphere* lllSpace, ParticleOnSphere* finalSpace,RealVector* fermionVector, RealVector* lllVector, RealVector* outputVector, int resume, int nbrComponent,bool projection , int step, int nbrLL, bool symmetry, bool reverseFluxFlag)
 {
   this->FirstComponent = resume;
   if(nbrComponent == 0)
@@ -80,6 +80,7 @@ FQHESphereMonomialsTimesSlaterProjectionOperation::FQHESphereMonomialsTimesSlate
   else
     this->BosonFlag = false;
   this->Rational = false;
+  this->ReverseFluxFlag = reverseFluxFlag;
 }
 
 // constructor 
@@ -88,7 +89,7 @@ FQHESphereMonomialsTimesSlaterProjectionOperation::FQHESphereMonomialsTimesSlate
 // fileName = file where the kostka Numbers will be stored
 // nbrLL = number of Landau levels
 
-FQHESphereMonomialsTimesSlaterProjectionOperation::FQHESphereMonomialsTimesSlaterProjectionOperation(ParticleOnSphere* fermionSpace, ParticleOnSphere* lllSpace, ParticleOnSphere* finalSpace,LongRationalVector* fermionVector, LongRationalVector* lllVector, LongRationalVector* outputVector, int resume, int nbrComponent,bool projection , int step, int nbrLL, bool symmetry)
+FQHESphereMonomialsTimesSlaterProjectionOperation::FQHESphereMonomialsTimesSlaterProjectionOperation(ParticleOnSphere* fermionSpace, ParticleOnSphere* lllSpace, ParticleOnSphere* finalSpace,LongRationalVector* fermionVector, LongRationalVector* lllVector, LongRationalVector* outputVector, int resume, int nbrComponent,bool projection , int step, int nbrLL, bool symmetry, bool reverseFluxFlag)
 {
   this->FirstComponent = resume;
   if( nbrComponent == 0)
@@ -111,6 +112,7 @@ FQHESphereMonomialsTimesSlaterProjectionOperation::FQHESphereMonomialsTimesSlate
   else
     this->BosonFlag = false;
   this->Rational = true;
+  this->ReverseFluxFlag = false;
 }
 
 // copy constructor 
@@ -143,6 +145,7 @@ FQHESphereMonomialsTimesSlaterProjectionOperation::FQHESphereMonomialsTimesSlate
     }
   this->BosonFlag = operation.BosonFlag;
   this->Rational = operation.Rational;
+  this->ReverseFluxFlag = operation.ReverseFluxFlag;
 }
   
 // destructor
@@ -209,10 +212,10 @@ bool FQHESphereMonomialsTimesSlaterProjectionOperation::RawApplyOperation()
 	      switch (this->NbrLL)
 		{
 		case 3:
-		  ((FermionOnSphereThreeLandauLevels *)this->FermionSpace)->BosonicStateTimeFermionicState(*this->LLLRealVector, *this->FermionRealVector, *this->OutputRealVector , (BosonOnSphereShort*) this->LLLSpace,(FermionOnSphere*)this->FinalSpace,this->FirstComponent, this->NbrComponent);
+		  ((FermionOnSphereThreeLandauLevels *)this->FermionSpace)->BosonicStateTimeFermionicState(*this->LLLRealVector, *this->FermionRealVector, *this->OutputRealVector , (BosonOnSphereShort*) this->LLLSpace,(FermionOnSphere*)this->FinalSpace,this->FirstComponent, this->NbrComponent, this->ReverseFluxFlag);
 		  break;
 		case 4:
-		  ((FermionOnSphereFourLandauLevels *)this->FermionSpace)->BosonicStateTimeFermionicState(*this->LLLRealVector, *this->FermionRealVector, *this->OutputRealVector, (BosonOnSphereShort*) this->LLLSpace, (FermionOnSphere*)this->FinalSpace,this->FirstComponent, this->NbrComponent);
+		  ((FermionOnSphereFourLandauLevels *)this->FermionSpace)->BosonicStateTimeFermionicState(*this->LLLRealVector, *this->FermionRealVector, *this->OutputRealVector, (BosonOnSphereShort*) this->LLLSpace, (FermionOnSphere*)this->FinalSpace,this->FirstComponent, this->NbrComponent, this->ReverseFluxFlag);
 		  break;
 		}
 	    }
@@ -221,9 +224,9 @@ bool FQHESphereMonomialsTimesSlaterProjectionOperation::RawApplyOperation()
 	      if(this->Projection == true)
 		{
 		  if(this->Symmetry == true)
-		    ((FermionOnSphereTwoLandauLevels *)this->FermionSpace)->BosonicStateTimeFermionicStateSymmetric( *this->LLLRealVector, *this->FermionRealVector, *this->OutputRealVector, (BosonOnSphereShort*) this->LLLSpace, (FermionOnSphere*)this->FinalSpace, this->FirstComponent, this->NbrComponent);
+		    ((FermionOnSphereTwoLandauLevels *)this->FermionSpace)->BosonicStateTimeFermionicStateSymmetric( *this->LLLRealVector, *this->FermionRealVector, *this->OutputRealVector, (BosonOnSphereShort*) this->LLLSpace, (FermionOnSphere*)this->FinalSpace, this->FirstComponent, this->NbrComponent, this->ReverseFluxFlag);
 		  else
-		    ((FermionOnSphereTwoLandauLevels *)this->FermionSpace)->BosonicStateTimeFermionicState( *this->LLLRealVector, *this->FermionRealVector, *this->OutputRealVector, (BosonOnSphereShort*) this->LLLSpace, (FermionOnSphere*) this->FinalSpace, this->FirstComponent, this->NbrComponent);
+		    ((FermionOnSphereTwoLandauLevels *)this->FermionSpace)->BosonicStateTimeFermionicState( *this->LLLRealVector, *this->FermionRealVector, *this->OutputRealVector, (BosonOnSphereShort*) this->LLLSpace, (FermionOnSphere*) this->FinalSpace, this->FirstComponent, this->NbrComponent, this->ReverseFluxFlag);
 		}
 	      else
 		((FermionOnSphereTwoLandauLevels *)this->FermionSpace)->BosonicStateTimeFermionicState( *this->LLLRealVector, *this->FermionRealVector, *this->OutputRealVector, (BosonOnSphereShort*) this->LLLSpace, (FermionOnSphereTwoLandauLevels*)this->FinalSpace, this->FirstComponent,this->NbrComponent);
@@ -309,7 +312,6 @@ bool FQHESphereMonomialsTimesSlaterProjectionOperation::RawApplyOperation()
 		  else
 		    ((FermionOnSphereTwoLandauLevels *)this->FermionSpace)->LLLFermionicStateTimeFermionicState(*this->LLLLongRationalVector, *this->FermionLongRationalVector, *this->OutputLongRationalVector, (FermionOnSphere*)this->LLLSpace, (BosonOnSphereShort*)this->FinalSpace, this->FirstComponent, this->NbrComponent);
 		}
-	      
 	    }
 	}
     }

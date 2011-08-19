@@ -376,30 +376,43 @@ long FermionOnSphereThreeLandauLevels::ShiftedEvaluateHilbertSpaceDimension(int 
 // finalSpace = pointer to the final Hilbert space
 // firstComponent = first component to be computed
 // nbrComponent = number of components to be computed
+// reverseFluxFlag = true if it a reverse flux attachment
 
-void FermionOnSphereThreeLandauLevels::BosonicStateTimeFermionicState(RealVector& bosonState, RealVector& fermionState, RealVector& outputVector, BosonOnSphereShort* bosonSpace, FermionOnSphere* finalSpace, int firstComponent, int nbrComponent)
+void FermionOnSphereThreeLandauLevels::BosonicStateTimeFermionicState(RealVector& bosonState, RealVector& fermionState, RealVector& outputVector, BosonOnSphereShort* bosonSpace, FermionOnSphere* finalSpace, int firstComponent, int nbrComponent, bool reverseFluxFlag)
 {
   map <unsigned long, double> SortingMap;
   map <unsigned long, double>::iterator It;
-
+  
   unsigned long* Monomial = new unsigned long[this->NbrFermions];
   unsigned long* Slater = new unsigned long[this->NbrFermions];
   int NbrMax = firstComponent + nbrComponent;
   int NbrVariable = 0;
   unsigned long* Variable = new unsigned long[this->NbrFermions];
-
+  
+  BinomialCoefficients * TmpBinomials = 0;
+  
+  if (reverseFluxFlag == true)
+    TmpBinomials = new BinomialCoefficients(finalSpace->LzMax + this->LzMax -4);
   for (int j = 0; j < this->HilbertSpaceDimension; j++)
     {
       if(fermionState[j] != 0)
 	{
-	  this->ConvertToMonomialVariable(this->StateDescription[j], Slater,NbrVariable,Variable);
+	  if(reverseFluxFlag == false)
+	    this->ConvertToMonomialVariable(this->StateDescription[j], Slater,NbrVariable,Variable);
+	  else
+	    this->ConvertToMonomialLandau(this->StateDescription[j], Slater, Variable);
+	  
 	  for (int i = firstComponent; i < NbrMax; i++)
 	    {
 	      if(bosonState[i] != 0)
 		{
 		  bosonSpace->GetMonomial(i,Monomial);
-		  this->MonomialsTimesSlaterProjection(Slater,Monomial,Variable,NbrVariable,SortingMap,finalSpace);
-
+		  
+		  if(reverseFluxFlag == false)
+		    this->MonomialsTimesSlaterProjection(Slater,Monomial,Variable,NbrVariable,SortingMap,finalSpace);
+		  else
+		    this->MonomialsTimesSlaterProjectionReverse(Slater,Monomial,Variable,SortingMap,*TmpBinomials,finalSpace);
+		  
 		  for ( It = SortingMap.begin(); It != SortingMap.end(); It++ )
 		    {
 		      int TmpLzMax = finalSpace->LzMax;
@@ -407,9 +420,9 @@ void FermionOnSphereThreeLandauLevels::BosonicStateTimeFermionicState(RealVector
 			--TmpLzMax;
 		      outputVector[finalSpace->FindStateIndex((*It).first,TmpLzMax)] += bosonState[i] * fermionState[j] * (*It).second;
 		    }
-		    SortingMap.clear();
+		  SortingMap.clear();
 		}
-			}
+	    }
 	}
     }
 }
@@ -1195,4 +1208,106 @@ void  FermionOnSphereThreeLandauLevels::LandauLevelOccupationNumber(int state, i
 	  }
 	}
     }
+}
+
+// compute the product and the projection of a Slater determinant and a monomial with reverse flux attachment
+// 
+// slater = array where the slater is stored in its monomial representation
+// monomial = array where the monomial is stored in its monomial representation
+// landau =  array where the landau level of fermions is stored
+// sortingMap = map in which the generated states and their coefficient will be stored
+// binomialsCoefficient = binomials coefficient needed in the computation
+// finalSpace = pointer to the final HilbertSpace
+
+void FermionOnSphereThreeLandauLevels::MonomialsTimesSlaterProjectionReverse(unsigned long* slater, unsigned long* monomial, unsigned long* landau, map <unsigned long, double> & sortingMap, BinomialCoefficients& binomialsCoefficient,  FermionOnSphere* finalSpace)
+{
+  unsigned long * State = new unsigned long[this->NbrFermions];
+  unsigned long TmpState = 0;
+  
+  pair <map <unsigned long, double>::iterator, bool> InsertionResult;
+  
+  bool Bool = true;
+  double Coef = 1.0;
+  
+  double TmpCoef;
+  int LzMaxDown = this->LzMax - 4;
+  long OtherSpaceNphi =  finalSpace->LzMax + LzMaxDown;
+  double TmpCoef2;
+  
+  do
+    {
+      Coef = 1.0;
+      for(int k = 0 ; (k < this->NbrFermions) && (Coef != 0.0); k++)
+	{
+	  TmpCoef = 0.0;
+	  
+	  if((monomial[k] + ((long) slater[k]) >= LzMaxDown + 2l)&&( monomial[k] + ((long) slater[k]) <= (LzMaxDown + 2l +finalSpace->LzMax)))
+	    {
+	      State[k] = monomial[k] + ((long) slater[k]) - LzMaxDown - 2l;
+	      
+	      for (int s = 0; s <= landau[k]; s++)
+		{
+		  if (( slater[k]  > LzMaxDown + 2l + s )||( slater[k] + landau[k] < s + 2 ))
+		    {
+		    }
+		  else
+		    {
+		      TmpCoef2 = binomialsCoefficient.GetNumericalCoefficient(landau[k] , s);
+		      TmpCoef2  *= binomialsCoefficient.GetNumericalCoefficient(LzMaxDown + landau[k], slater[k] + landau[k] - s - 2);
+		      TmpCoef2  /= binomialsCoefficient.GetNumericalCoefficient(OtherSpaceNphi + landau[k], monomial[k] + s);
+		      TmpCoef2/=(OtherSpaceNphi + 1 + landau[k]);
+		      if ( (s & 0x1ul) != 0ul)
+			TmpCoef -= TmpCoef2 ;
+		      else
+			TmpCoef += TmpCoef2;				
+		    }
+		}
+	      TmpCoef *= binomialsCoefficient.GetNumericalCoefficient(finalSpace->LzMax,State[k]);
+	      TmpCoef *= finalSpace->LzMax + 1;
+	      Coef *= TmpCoef;
+	    }
+	  else
+	    {
+	      Coef = 0.0;
+	    }
+	}
+      if(Coef != 0.0)
+	{			
+	  TmpState = 0ul;
+	  unsigned long Mask;
+	  unsigned long Sign = 0ul;
+	  Bool = true;
+	  for(int i = 0; ( i < this->NbrFermions ) && ( Bool == true ); i++)
+	    {
+	      Mask= 1ul << State[i];
+	      if ( (TmpState & Mask) != 0ul)
+		Bool = false;
+	      unsigned long TmpState2 = TmpState & (Mask - 1ul);
+#ifdef _64_BITS__
+	      TmpState2 ^= TmpState2 >> 32;
+#endif
+	      TmpState2 ^= TmpState2 >> 16;
+	      TmpState2 ^= TmpState2 >> 8;
+	      TmpState2 ^= TmpState2 >> 4;
+	      TmpState2 ^= TmpState2 >> 2;
+	      TmpState2 ^= TmpState2 >> 1;
+	      Sign ^= TmpState2;
+	      TmpState |= Mask;
+	    }
+	  if (Bool == true)
+	    {
+	      if ((Sign & 0x1ul) != 0ul)
+		Coef *= -1.0;
+	      
+	      InsertionResult = sortingMap.insert (pair <unsigned long, double> (TmpState, Coef));
+	      
+	      if (InsertionResult.second == false)
+		{
+		  InsertionResult.first->second += Coef;
+		}
+	    }
+	}
+    }
+  while (std::prev_permutation(monomial,monomial+this->NbrFermions));
+  delete [] State;
 }

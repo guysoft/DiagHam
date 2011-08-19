@@ -87,7 +87,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state (should be the one of the bosonic state)");
   (*SystemGroup) += new BooleanOption ('\n',"projection","the state will be projected into the LLL");
-	(*SystemGroup) += new BooleanOption ('\n',"reverse-flux","the fluxes bind to each particle are in the opposite direction than the magnetic field");
+  (*SystemGroup) += new BooleanOption ('\n',"reverse-flux","the fluxes bind to each particle are in the opposite direction than the magnetic field");
   (*SystemGroup) += new BooleanOption  ('\n', "projected-haldane", "use an Haldane basis instead of the usual n-body basis for the projected state");
   (*SystemGroup) += new SingleStringOption  ('\n', "projected-referencefile", "use a file as the definition of the reference state for the projected state (should be the one of the bosonic state)");
   (*SystemGroup) += new BooleanOption ('\n', "resume", "the last calcul will be resumed from its last save step");
@@ -108,8 +108,6 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption ('\n', "nbr-components", "the number of component computed", 0);
   (*SystemGroup) += new SingleIntegerOption ('\n',"step", "number of time the Bosonic will be divided in",1);
   (*OutputGroup) += new BooleanOption ('\n', "normalize", "express the projected state in the normalized basis");
-  (*OutputGroup) += new SingleStringOption ('o', "bin-output", "output the Jack polynomial decomposition into a binary file");
-  (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the Jack polynomial decomposition into a text file");
   (*SystemGroup) += new BooleanOption  ('\n', "rational" , "use rational numbers instead of double precision floating point numbers");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
   
@@ -134,12 +132,10 @@ int main(int argc, char** argv)
   int LzMaxFermion = Manager.GetInteger("lzmax");
   int TotalLzFermion = Manager.GetInteger("total-lz");
   bool FermionFlag = false;
-	bool ReverseFluxFlag = Manager.GetBoolean("reverse-flux");
+  bool ReverseFluxFlag = Manager.GetBoolean("reverse-flux");
   int Step = Manager.GetInteger("step");
   bool HaldaneBasisFlag = Manager.GetBoolean("haldane");
   bool Projection = Manager.GetBoolean("projection");
-  char* OutputFileName = Manager.GetString("bin-output");
-  char* OutputTxtFileName = Manager.GetString("txt-output");
   bool Resume = Manager.GetBoolean("resume");
   int MinComponent = Manager.GetInteger("min-component");
   int NbrComponents = Manager.GetInteger("nbr-components");
@@ -362,14 +358,14 @@ int main(int argc, char** argv)
 	{
 	  if (Manager.GetBoolean("projected-haldane") == false)
 	    {
-				if (ReverseFluxFlag == false)
-				{
-					FinalSpace = new FermionOnSphere (LLLNbrParticles, TotalLzFermion, LzMaxDown + LLLLzMax);
-				}
-				else
-				{
-					FinalSpace = new FermionOnSphere (LLLNbrParticles, TotalLzFermion,  LLLLzMax - LzMaxDown);
-				}
+	      if (ReverseFluxFlag == false)
+		{
+		  FinalSpace = new FermionOnSphere (LLLNbrParticles, TotalLzFermion, LzMaxDown + LLLLzMax);
+		}
+	      else
+		{
+		  FinalSpace = new FermionOnSphere (LLLNbrParticles, TotalLzFermion,  LLLLzMax - LzMaxDown);
+		}
 	    }
 	  else
 	    {
@@ -482,7 +478,88 @@ int main(int argc, char** argv)
 	      }
 	}
     }
-	
+  
+  
+  char * OutputFileName = new char [100];
+  
+  if (Manager.GetBoolean("rational") == false)
+    {
+      if(Projection == false)
+	{
+	  if (LLLFermionFlag == true)
+	    {
+	      sprintf (OutputFileName, "bosons_%s_2ll_n_%d_2s_%d_lz_%d.0.vec",Manager.GetString("interaction-name"), LLLNbrParticles,LzMaxDown + LLLLzMax, TotalLzFermion);
+	    }
+	  else
+	    {
+	      sprintf (OutputFileName, "fermions_%s_2ll_n_%d_2s_%d_lz_%d.0.vec",Manager.GetString("interaction-name"), LLLNbrParticles,LzMaxDown + LLLLzMax, TotalLzFermion);
+	    }
+	}
+      else
+	{
+	  if(ReverseFluxFlag == false)
+	    {
+	      if (LLLFermionFlag == true)
+		{
+		  sprintf (OutputFileName, "bosons_%s_n_%d_2s_%d_lz_%d.0.vec",Manager.GetString("interaction-name"), LLLNbrParticles,LzMaxDown + LLLLzMax, TotalLzFermion);
+		}
+	      else
+		{
+		  sprintf (OutputFileName, "fermions_%s_n_%d_2s_%d_lz_%d.0.vec",Manager.GetString("interaction-name"), LLLNbrParticles,LzMaxDown + LLLLzMax, TotalLzFermion);
+		}
+	    }
+	  else
+	    {
+	      if (LLLFermionFlag == true)
+		{
+		  sprintf (OutputFileName, "bosons_%s_n_%d_2s_%d_lz_%d.0.vec",Manager.GetString("interaction-name"), LLLNbrParticles, LLLLzMax - LzMaxDown, TotalLzFermion);
+		}
+	      else
+		{
+		  sprintf (OutputFileName, "fermions_%s_n_%d_2s_%d_lz_%d.0.vec",Manager.GetString("interaction-name"), LLLNbrParticles,LLLLzMax - LzMaxDown, TotalLzFermion);
+		}
+	    }
+	}
+    }
+  else
+    {
+      if(Projection == false)
+	{
+	  if (LLLFermionFlag == true)
+	    {
+	      sprintf (OutputFileName, "bosons_rational_%s_2ll_n_%d_2s_%d_lz_%d.0.vec",Manager.GetString("interaction-name"), LLLNbrParticles,LzMaxDown + LLLLzMax, TotalLzFermion);
+	    }
+	  else
+	    {
+	      sprintf (OutputFileName, "fermions_rational_%s_2ll_n_%d_2s_%d_lz_%d.0.vec",Manager.GetString("interaction-name"), LLLNbrParticles,LzMaxDown + LLLLzMax, TotalLzFermion);
+	    }
+	}
+      else
+	{
+	  if(ReverseFluxFlag == false)
+	    {
+	      if (LLLFermionFlag == true)
+		{
+		  sprintf (OutputFileName, "bosons_rational_%s_n_%d_2s_%d_lz_%d.0.vec",Manager.GetString("interaction-name"), LLLNbrParticles,LzMaxDown + LLLLzMax, TotalLzFermion);
+		}
+	      else
+		{
+		  sprintf (OutputFileName, "fermions_rational_%s_n_%d_2s_%d_lz_%d.0.vec",Manager.GetString("interaction-name"), LLLNbrParticles,LzMaxDown + LLLLzMax, TotalLzFermion);
+		}
+	    }
+	  else
+	    {
+	      if (LLLFermionFlag == true)
+		{
+		  sprintf (OutputFileName, "bosons_rational_%s_n_%d_2s_%d_lz_%d.0.vec",Manager.GetString("interaction-name"), LLLNbrParticles, LLLLzMax - LzMaxDown, TotalLzFermion);
+		}
+	      else
+		{
+		  sprintf (OutputFileName, "fermions_rational_%s_n_%d_2s_%d_lz_%d.0.vec",Manager.GetString("interaction-name"), LLLNbrParticles,LLLLzMax - LzMaxDown, TotalLzFermion);
+		}
+	    }
+	}
+    }
   
   int * MatchingConditionsIndex = 0;
   int NbrMatchingConditionsIndex = 0;
@@ -528,7 +605,7 @@ int main(int argc, char** argv)
 	      NbrMatchingConditionsIndex++;
 	    }
 	}
-      if(NbrMatchingConditionsIndex==0)
+      if(NbrMatchingConditionsIndex == 0)
 	{
 	  cout <<"No matching conditions state";
 	  return -1;
@@ -630,7 +707,7 @@ int main(int argc, char** argv)
 	      OutputVector = new RealVector(FinalSpace->GetHilbertSpaceDimension(),true);
 	    }
 	  
-	  FQHESphereMonomialsTimesSlaterProjectionOperation Operation(SpaceLL, LLLSpace, FinalSpace, FermionState, &LLLState, OutputVector, MinComponent, NbrComponents, Projection, Step, NbrLL, Symmetric);
+	  FQHESphereMonomialsTimesSlaterProjectionOperation Operation(SpaceLL, LLLSpace, FinalSpace, FermionState, &LLLState, OutputVector, MinComponent, NbrComponents, Projection, Step, NbrLL, Symmetric, ReverseFluxFlag);
 	  
 	  Operation.ApplyOperation(Architecture.GetArchitecture());
 	  if(NbrComponents+MinComponent != FinalSpace->GetHilbertSpaceDimension())
@@ -659,35 +736,15 @@ int main(int argc, char** argv)
 		}
 	    }
 	  
+	  
+	  
 	  (*OutputVector).WriteVector(OutputFileName);
-	  ofstream File;
-	  if(OutputTxtFileName != 0)
-	    {
-	      File.open(OutputTxtFileName, ios::binary | ios::out);
-	      File.precision(14);
-	      for (long i = 0; i < FinalSpace->GetLargeHilbertSpaceDimension(); ++i)
-		{
-		  File << OutputVector[i] << " ";
-		  FinalSpace->PrintStateMonomial(File, i) << endl;
-		}
-	    }	
-	  File.close();
-	  return	0;
+	  return 0;
 	}
       else
 	{
-	  OutputFileName = new char [64];
 	  
-	  if (LLLFermionFlag == true)
-	    {
-	      sprintf (OutputFileName, "bosons_%s_n_%d_2s_%d_lz_%d.0.vec",Manager.GetString("interaction-name"), LLLNbrParticles,LzMaxDown + LLLLzMax, TotalLzFermion);
-	    }
-	  else
-	    {
-	      sprintf (OutputFileName, "fermions_%s_n_%d_2s_%d_lz_%d.0.vec",Manager.GetString("interaction-name"), LLLNbrParticles,LzMaxDown + LLLLzMax, TotalLzFermion);
-	    }
-	  
-	  FQHESphereMultipleMonomialsTimesSlaterProjectionOperation Operation(SpaceLL, LLLSpace, FinalSpace,MatchingConditionsIndex , &LLLState, NbrLL,NbrMatchingConditionsIndex ,Projection, Symmetric,Manager.GetBoolean("normalize"),OutputFileName,ResumingIndex);
+	  FQHESphereMultipleMonomialsTimesSlaterProjectionOperation Operation(SpaceLL, LLLSpace, FinalSpace,MatchingConditionsIndex , &LLLState, NbrLL,NbrMatchingConditionsIndex ,Projection, Symmetric,Manager.GetBoolean("normalize"),OutputFileName,ResumingIndex,ReverseFluxFlag);
 	  Operation.ApplyOperation(Architecture.GetArchitecture());
 	  return 0;
 	}
@@ -785,7 +842,7 @@ int main(int argc, char** argv)
 	    {
 	      OutputVector = new LongRationalVector (FinalSpace->GetHilbertSpaceDimension(),true);
 	    }
-	  FQHESphereMonomialsTimesSlaterProjectionOperation Operation(SpaceLL, LLLSpace, FinalSpace, FermionState, &LLLState, OutputVector, MinComponent, NbrComponents, Projection, Step, NbrLL, Symmetric);
+	  FQHESphereMonomialsTimesSlaterProjectionOperation Operation(SpaceLL, LLLSpace, FinalSpace, FermionState, &LLLState, OutputVector, MinComponent, NbrComponents, Projection, Step, NbrLL, Symmetric, ReverseFluxFlag);
 	  Operation.ApplyOperation(Architecture.GetArchitecture());
 	  
 	  if(NbrComponents+MinComponent!=FinalSpace->GetHilbertSpaceDimension())
@@ -809,36 +866,13 @@ int main(int argc, char** argv)
 	  
 	  (*OutputVector).WriteVector(OutputFileName);
 	  ofstream File;
-	  if(OutputTxtFileName!=0)
-	    {
-	      File.open(OutputTxtFileName, ios::binary | ios::out);
-	      File.precision(14);
-	      for (long i = 0; i < FinalSpace->GetLargeHilbertSpaceDimension(); ++i)
-		{
-		  File << OutputVector[i] << " ";
-		  FinalSpace->PrintStateMonomial(File, i) << endl;
-		}
-	    }
-	  File.close();
 	  return 0;
 	}
       else
 	{
-	  OutputFileName = new char [64];
-	  
-	  if (LLLFermionFlag == true)
-	    {
-	      sprintf (OutputFileName, "bosons_%s_n_%d_2s_%d_lz_%d.0.vec",Manager.GetString("interaction-name"), LLLNbrParticles,LzMaxDown + LLLLzMax, TotalLzFermion);
-	    }
-	  else
-	    {
-	      sprintf (OutputFileName, "fermions_%s_n_%d_2s_%d_lz_%d.0.vec",Manager.GetString("interaction-name"), LLLNbrParticles,LzMaxDown + LLLLzMax, TotalLzFermion);
-	    }
-	  
-	  FQHESphereMultipleMonomialsTimesSlaterProjectionOperation Operation(SpaceLL, LLLSpace, FinalSpace,MatchingConditionsIndex , &LLLState, NbrLL,NbrMatchingConditionsIndex ,Projection, Symmetric,Manager.GetBoolean("normalize"),OutputFileName,ResumingIndex);
+	  FQHESphereMultipleMonomialsTimesSlaterProjectionOperation Operation(SpaceLL, LLLSpace, FinalSpace,MatchingConditionsIndex , &LLLState, NbrLL,NbrMatchingConditionsIndex ,Projection, Symmetric,Manager.GetBoolean("normalize"),OutputFileName,ResumingIndex,ReverseFluxFlag);
 	  Operation.ApplyOperation(Architecture.GetArchitecture());
 	  return 0;
-	  
 	}
     }
 }

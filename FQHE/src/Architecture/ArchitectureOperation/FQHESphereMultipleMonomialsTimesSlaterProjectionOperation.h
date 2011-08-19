@@ -100,6 +100,9 @@ class FQHESphereMultipleMonomialsTimesSlaterProjectionOperation : public Abstrac
   
   // true if the calculation are made with rational
   bool Rational;
+	
+  // true if the flux attached are in the opposite direction to the magnetic field
+  bool ReverseFluxFlag;
   
  public:
   
@@ -110,14 +113,14 @@ class FQHESphereMultipleMonomialsTimesSlaterProjectionOperation : public Abstrac
   // Space = pointer to the HilbertSpace to use
   // fileName = name of the file where the kostka number will be store
   // nbrLL = number of Landau levels
-  FQHESphereMultipleMonomialsTimesSlaterProjectionOperation(ParticleOnSphere* fermionSpace, ParticleOnSphere* lllSpace, ParticleOnSphere* finalSpace, int * matchingConditionsIndex, RealVector* lllVector, int nbrLL, int nbrStates,bool projection, bool symmetry,bool normalize,char * outputFileName,int resumingIndex);
+  FQHESphereMultipleMonomialsTimesSlaterProjectionOperation(ParticleOnSphere* fermionSpace, ParticleOnSphere* lllSpace, ParticleOnSphere* finalSpace, int * matchingConditionsIndex, RealVector* lllVector, int nbrLL, int nbrStates,bool projection, bool symmetry,bool normalize,char * outputFileName, int resumingIndex, bool reverseFluxFlag);
   
   // constructor 
   //
   // Space = pointer to the HilbertSpace to use
   // fileName = name of the file where the kostka number will be store
   // nbrLL = number of Landau levels
-  FQHESphereMultipleMonomialsTimesSlaterProjectionOperation(ParticleOnSphere* fermionSpace, ParticleOnSphere* lllSpace, ParticleOnSphere* finalSpace, int * matchingConditionsIndex, LongRationalVector* lllVector, int nbrLL, int nbrStates,bool projection, bool symmetry,bool normalize,char * outputFileName,int resumingIndex);
+  FQHESphereMultipleMonomialsTimesSlaterProjectionOperation(ParticleOnSphere* fermionSpace, ParticleOnSphere* lllSpace, ParticleOnSphere* finalSpace, int * matchingConditionsIndex, LongRationalVector* lllVector, int nbrLL, int nbrStates,bool projection, bool symmetry,bool normalize,char * outputFileName,int resumingIndex,bool reverseFluxFlag);
   
   // destructor
   //

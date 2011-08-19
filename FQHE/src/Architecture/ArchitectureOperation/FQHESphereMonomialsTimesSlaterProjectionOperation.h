@@ -80,7 +80,7 @@ class FQHESphereMonomialsTimesSlaterProjectionOperation : public AbstractArchite
   // RealVector where the bosonic state is stored
   LongRationalVector * LLLLongRationalVector;
   
-    //true if the result vector is to be projected
+  //true if the result vector is to be projected
   bool Projection;
   
   //true if the result vector is to be normalized
@@ -100,7 +100,10 @@ class FQHESphereMonomialsTimesSlaterProjectionOperation : public AbstractArchite
   
   // true if the mode rational is used
   bool Rational;
-  
+
+  // true if the flux are in the opposite direction to the magnetic field
+  bool ReverseFluxFlag;
+
  public:
   
   // constructor 
@@ -108,7 +111,7 @@ class FQHESphereMonomialsTimesSlaterProjectionOperation : public AbstractArchite
   // Space = pointer to the HilbertSpace to use
   // fileName = name of the file where the kostka number will be store
   // nbrLL = number of Landau levels
-  FQHESphereMonomialsTimesSlaterProjectionOperation(ParticleOnSphere* fermionSpace, ParticleOnSphere* lllSpace, ParticleOnSphere* finalSpace, RealVector* fermionVector, RealVector* lllVector, RealVector* outputVector, int resume, int nbrComponent, bool projection, int step, int nbrLL, bool symmetry);
+  FQHESphereMonomialsTimesSlaterProjectionOperation(ParticleOnSphere* fermionSpace, ParticleOnSphere* lllSpace, ParticleOnSphere* finalSpace, RealVector* fermionVector, RealVector* lllVector, RealVector* outputVector, int resume, int nbrComponent, bool projection, int step, int nbrLL, bool symmetry, bool reverseFluxFlag);
   
   
   // constructor 
@@ -116,7 +119,7 @@ class FQHESphereMonomialsTimesSlaterProjectionOperation : public AbstractArchite
   // Space = pointer to the HilbertSpace to use
   // fileName = name of the file where the kostka number will be store
   // nbrLL = number of Landau levels
-  FQHESphereMonomialsTimesSlaterProjectionOperation(ParticleOnSphere* fermionSpace, ParticleOnSphere* lllSpace, ParticleOnSphere* finalSpace, LongRationalVector* fermionVector, LongRationalVector* lllVector, LongRationalVector* outputVector, int resume, int nbrComponent, bool projection, int step, int nbrLL, bool symmetry);
+  FQHESphereMonomialsTimesSlaterProjectionOperation(ParticleOnSphere* fermionSpace, ParticleOnSphere* lllSpace, ParticleOnSphere* finalSpace, LongRationalVector* fermionVector, LongRationalVector* lllVector, LongRationalVector* outputVector, int resume, int nbrComponent, bool projection, int step, int nbrLL, bool symmetry, bool reverseFluxFlag);
   
   // copy constructor 
   //
