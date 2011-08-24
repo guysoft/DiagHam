@@ -43,6 +43,8 @@ class Vector;
 class RealTriDiagonalSymmetricMatrix;
 class RealSymmetricMatrix;
 class HermitianMatrix;
+class RealMatrix;
+class ComplexMatrix;
 class Complex;
 class Matrix;
 class AbstractHilbertSpace;
@@ -99,12 +101,24 @@ class AbstractHamiltonian
   // return value = reference on  corresponding hermitian matrix
   virtual HermitianMatrix& GetHamiltonian (HermitianMatrix& M);
   
+  // store Hamiltonian into a complex matrix
+  //
+  // M = reference on matrix where Hamiltonian has to be stored
+  // return value = reference on  corresponding complex matrix
+  virtual ComplexMatrix& GetHamiltonian (ComplexMatrix& M);
+  
   // store real part of Hamiltonian into a real symmetric matrix
   //
   // M = reference on matrix where Hamiltonian has to be stored
   // return value = reference on  corresponding real symmetric matrix 
   virtual RealSymmetricMatrix& GetHamiltonian (RealSymmetricMatrix& M);
   
+  // store real part of Hamiltonian into a real matrix
+  //
+  // M = reference on matrix where Hamiltonian has to be stored
+  // return value = reference on  corresponding real matrix 
+  virtual RealMatrix& GetHamiltonian (RealMatrix& M);
+
   // store real part of Hamiltonian into a matrix
   //
   // M = reference on matrix where Hamiltonian has to be stored

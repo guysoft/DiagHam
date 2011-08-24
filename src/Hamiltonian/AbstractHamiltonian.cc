@@ -34,6 +34,8 @@
 #include "Vector/ComplexVector.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
+#include "Matrix/RealMatrix.h"
+#include "Matrix/ComplexMatrix.h"
 #include "Matrix/HermitianMatrix.h"
 #include "MathTools/Complex.h"
 #include "BitmapTools/BitmapPicture/AbstractBitmapPicture.h"
@@ -93,6 +95,31 @@ HermitianMatrix& AbstractHamiltonian::GetHamiltonian (HermitianMatrix& M)
   return M;  
 }
   
+// store Hamiltonian into a complex matrix
+//
+// M = reference on matrix where Hamiltonian has to be stored
+// return value = reference on  corresponding complex matrix
+
+ComplexMatrix& AbstractHamiltonian::GetHamiltonian (ComplexMatrix& M)
+{
+  ComplexVector TmpV1 (this->GetHilbertSpaceDimension(), true);
+  ComplexVector TmpV2 (this->GetHilbertSpaceDimension(), true);
+  for (int i = 0; i < this->GetHilbertSpaceDimension(); i++)
+    {
+      TmpV1[i] = 1.0;
+      if (this->IsHermitian())
+	this->HermitianLowLevelMultiply(TmpV1, TmpV2);
+      else
+	this->LowLevelMultiply(TmpV1, TmpV2);
+      for (int j = 0; j < this->GetHilbertSpaceDimension(); j++)
+	{
+	  M.SetMatrixElement(i, j, TmpV2[j]);
+	}
+      TmpV1[i] = 0.0;
+    }
+  return M;  
+}
+  
 // store real part of Hamiltonian into a real symmetric matrix
 //
 // M = reference on matrix where Hamiltonian has to be stored
@@ -110,6 +137,29 @@ RealSymmetricMatrix& AbstractHamiltonian::GetHamiltonian (RealSymmetricMatrix& M
       else
 	this->LowLevelMultiply(TmpV1, TmpV2);
       for (int j = i; j < this->GetHilbertSpaceDimension(); j++)
+	M.SetMatrixElement(i, j, TmpV2[j]);
+      TmpV1[i] = 0.0;	
+    }
+  return M;
+}
+  
+// store real part of Hamiltonian into a real matrix
+//
+// M = reference on matrix where Hamiltonian has to be stored
+// return value = reference on  corresponding real matrix 
+
+RealMatrix& AbstractHamiltonian::GetHamiltonian (RealMatrix& M)
+{
+  RealVector TmpV1 (this->GetHilbertSpaceDimension(), true);
+  RealVector TmpV2 (this->GetHilbertSpaceDimension(), true);
+  for (int i = 0; i < this->GetHilbertSpaceDimension(); i++)
+    {
+      TmpV1[i] = 1.0;
+      if (this->IsHermitian())
+	this->HermitianLowLevelMultiply(TmpV1, TmpV2);
+      else
+	this->LowLevelMultiply(TmpV1, TmpV2);
+      for (int j = 0; j < this->GetHilbertSpaceDimension(); j++)
 	M.SetMatrixElement(i, j, TmpV2[j]);
       TmpV1[i] = 0.0;	
     }

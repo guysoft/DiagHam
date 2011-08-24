@@ -201,10 +201,37 @@ GenericRealMainTask::GenericRealMainTask(OptionManager* options, AbstractHilbert
     }
   if (((*options)["show-hamiltonian"] != 0) && (options->GetBoolean("show-hamiltonian") == true))
     {
-      RealSymmetricMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension());
+      RealMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension(), this->Hamiltonian->GetHilbertSpaceDimension());
       this->Hamiltonian->GetHamiltonian(HRep);
       cout << HRep << endl;
     }  
+  if (((*options)["test-hermitian"] != 0) && (options->GetBoolean("test-hermitian") == true))
+    {
+      RealMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension(), this->Hamiltonian->GetHilbertSpaceDimension());
+      this->Hamiltonian->GetHamiltonian(HRep);
+      double Tmp1;
+      double Tmp2;
+      cout << "check hermiticity" << endl;
+      double AverageNorm = 0.0;
+      for (int i = 0; i < this->Hamiltonian->GetHilbertSpaceDimension(); ++i)
+	for (int j = i; j < this->Hamiltonian->GetHilbertSpaceDimension(); ++j)
+	  {
+	    HRep.GetMatrixElement(i, j, Tmp1);
+	    AverageNorm += fabs(Tmp1);
+	  }
+      AverageNorm /= 0.5 * ((double) this->Hamiltonian->GetHilbertSpaceDimension()) * ((double) (this->Hamiltonian->GetHilbertSpaceDimension() + 1));
+      for (int i = 0; i < this->Hamiltonian->GetHilbertSpaceDimension(); ++i)
+	for (int j = i; j < this->Hamiltonian->GetHilbertSpaceDimension(); ++j)
+	  {
+	    HRep.GetMatrixElement(i, j, Tmp1);
+	    HRep.GetMatrixElement(j, i, Tmp2);
+	    if (fabs(Tmp1 - Tmp2) > (MACHINE_PRECISION * AverageNorm))
+	      {
+		cout << "error at " << i << " " << j << " : " << Tmp1 << " " << Tmp2 << endl;
+	      }
+	  }
+      cout << "check done" << endl;
+    }
   if (((*options)["lanczos-precision"] != 0) && (options->GetDouble("lanczos-precision") > 0))
     {
       this->LanczosPrecision = options->GetDouble("lanczos-precision");

@@ -230,10 +230,11 @@ void ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::EvaluateInteractionFact
 		  }
       
       double Factor = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ));
-      double FactorAUpADown = Factor * this->VPotential;
+      double FactorAUpADown = Factor * this->VPotential * 0.0;
       double FactorBUpBDown = Factor * this->VPotential;
       if (this->FlatBand == false)
 	Factor *= this->UPotential;
+      Factor = 0.0;
       double FactorAUpBUp = Factor;
       double FactorADownBDown = Factor;
       double FactorAUpBDown = Factor;
@@ -519,10 +520,10 @@ void ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::EvaluateInteractionFact
 	{
 	  this->InteractionFactorsupdownupup[i] = new Complex[this->NbrInterSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
 	  int Index = 0;
-	  for (int j1 = 0; j1 < this->NbrInterSectorIndicesPerSum[i]; ++j1)
+	  for (int j1 = 0; j1 < this->NbrIntraSectorIndicesPerSum[i]; ++j1)
 	    {
-	      int Index1 = this->InterSectorIndicesPerSum[i][j1 << 1];
-	      int Index2 = this->InterSectorIndicesPerSum[i][(j1 << 1) + 1];
+	      int Index1 = this->IntraSectorIndicesPerSum[i][j1 << 1];
+	      int Index2 = this->IntraSectorIndicesPerSum[i][(j1 << 1) + 1];
 	      int kx1 = Index1 / this->NbrSiteYZ;
 	      int ky1 = Index1 % this->NbrSiteYZ;
 	      int kz1 = ky1 % this->NbrSiteZ;
@@ -531,10 +532,10 @@ void ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::EvaluateInteractionFact
 	      int ky2 = Index2 % this->NbrSiteYZ;
 	      int kz2 = ky2 % this->NbrSiteZ;
 	      ky2 /= this->NbrSiteZ;
-	      for (int j2 = 0; j2 < this->NbrIntraSectorIndicesPerSum[i]; ++j2)
+	      for (int j2 = 0; j2 < this->NbrInterSectorIndicesPerSum[i]; ++j2)
 		{
-		  int Index3 = this->IntraSectorIndicesPerSum[i][j2 << 1];
-		  int Index4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1];
+		  int Index3 = this->InterSectorIndicesPerSum[i][j2 << 1];
+		  int Index4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1];
 		  int kx3 = Index3 / this->NbrSiteYZ;
 		  int ky3 = Index3 % this->NbrSiteYZ;
 		  int kz3 = ky3 % this->NbrSiteZ;
@@ -575,10 +576,10 @@ void ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::EvaluateInteractionFact
 	{
 	  this->InteractionFactorsupdowndowndown[i] = new Complex[this->NbrInterSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
 	  int Index = 0;
-	  for (int j1 = 0; j1 < this->NbrInterSectorIndicesPerSum[i]; ++j1)
+	  for (int j1 = 0; j1 < this->NbrIntraSectorIndicesPerSum[i]; ++j1)
 	    {
-	      int Index1 = this->InterSectorIndicesPerSum[i][j1 << 1];
-	      int Index2 = this->InterSectorIndicesPerSum[i][(j1 << 1) + 1];
+	      int Index1 = this->IntraSectorIndicesPerSum[i][j1 << 1];
+	      int Index2 = this->IntraSectorIndicesPerSum[i][(j1 << 1) + 1];
 	      int kx1 = Index1 / this->NbrSiteYZ;
 	      int ky1 = Index1 % this->NbrSiteYZ;
 	      int kz1 = ky1 % this->NbrSiteZ;
@@ -587,10 +588,10 @@ void ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::EvaluateInteractionFact
 	      int ky2 = Index2 % this->NbrSiteYZ;
 	      int kz2 = ky2 % this->NbrSiteZ;
 	      ky2 /= this->NbrSiteZ;
-	      for (int j2 = 0; j2 < this->NbrIntraSectorIndicesPerSum[i]; ++j2)
+	      for (int j2 = 0; j2 < this->NbrInterSectorIndicesPerSum[i]; ++j2)
 		{
-		  int Index3 = this->IntraSectorIndicesPerSum[i][j2 << 1];
-		  int Index4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1];
+		  int Index3 = this->InterSectorIndicesPerSum[i][j2 << 1];
+		  int Index4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1];
 		  int kx3 = Index3 / this->NbrSiteYZ;
 		  int ky3 = Index3 % this->NbrSiteYZ;
 		  int kz3 = ky3 % this->NbrSiteZ;
@@ -631,10 +632,10 @@ void ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::EvaluateInteractionFact
 	{
 	  this->InteractionFactorsupupupdown[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrInterSectorIndicesPerSum[i]];
 	  int Index = 0;
-	  for (int j1 = 0; j1 < this->NbrIntraSectorIndicesPerSum[i]; ++j1)
+	  for (int j1 = 0; j1 < this->NbrInterSectorIndicesPerSum[i]; ++j1)
 	    {
-	      int Index1 = this->IntraSectorIndicesPerSum[i][j1 << 1];
-	      int Index2 = this->IntraSectorIndicesPerSum[i][(j1 << 1) + 1];
+	      int Index1 = this->InterSectorIndicesPerSum[i][j1 << 1];
+	      int Index2 = this->InterSectorIndicesPerSum[i][(j1 << 1) + 1];
 	      int kx1 = Index1 / this->NbrSiteYZ;
 	      int ky1 = Index1 % this->NbrSiteYZ;
 	      int kz1 = ky1 % this->NbrSiteZ;
@@ -643,10 +644,10 @@ void ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::EvaluateInteractionFact
 	      int ky2 = Index2 % this->NbrSiteYZ;
 	      int kz2 = ky2 % this->NbrSiteZ;
 	      ky2 /= this->NbrSiteZ;
-	      for (int j2 = 0; j2 < this->NbrInterSectorIndicesPerSum[i]; ++j2)
+	      for (int j2 = 0; j2 < this->NbrIntraSectorIndicesPerSum[i]; ++j2)
 		{
-		  int Index3 = this->InterSectorIndicesPerSum[i][j2 << 1];
-		  int Index4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1];
+		  int Index3 = this->IntraSectorIndicesPerSum[i][j2 << 1];
+		  int Index4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1];
 		  int kx3 = Index3 / this->NbrSiteYZ;
 		  int ky3 = Index3 % this->NbrSiteYZ;
 		  int kz3 = ky3 % this->NbrSiteZ;
@@ -687,10 +688,10 @@ void ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::EvaluateInteractionFact
 	{
 	  this->InteractionFactorsdowndownupdown[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrInterSectorIndicesPerSum[i]];
 	  int Index = 0;
-	  for (int j1 = 0; j1 < this->NbrIntraSectorIndicesPerSum[i]; ++j1)
+	  for (int j1 = 0; j1 < this->NbrInterSectorIndicesPerSum[i]; ++j1)
 	    {
-	      int Index1 = this->IntraSectorIndicesPerSum[i][j1 << 1];
-	      int Index2 = this->IntraSectorIndicesPerSum[i][(j1 << 1) + 1];
+	      int Index1 = this->InterSectorIndicesPerSum[i][j1 << 1];
+	      int Index2 = this->InterSectorIndicesPerSum[i][(j1 << 1) + 1];
 	      int kx1 = Index1 / this->NbrSiteYZ;
 	      int ky1 = Index1 % this->NbrSiteYZ;
 	      int kz1 = ky1 % this->NbrSiteZ;
@@ -699,10 +700,10 @@ void ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::EvaluateInteractionFact
 	      int ky2 = Index2 % this->NbrSiteYZ;
 	      int kz2 = ky2 % this->NbrSiteZ;
 	      ky2 /= this->NbrSiteZ;
-	      for (int j2 = 0; j2 < this->NbrInterSectorIndicesPerSum[i]; ++j2)
+	      for (int j2 = 0; j2 < this->NbrIntraSectorIndicesPerSum[i]; ++j2)
 		{
-		  int Index3 = this->InterSectorIndicesPerSum[i][j2 << 1];
-		  int Index4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1];
+		  int Index3 = this->IntraSectorIndicesPerSum[i][j2 << 1];
+		  int Index4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1];
 		  int kx3 = Index3 / this->NbrSiteYZ;
 		  int ky3 = Index3 % this->NbrSiteYZ;
 		  int kz3 = ky3 % this->NbrSiteZ;
@@ -736,6 +737,7 @@ void ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::EvaluateInteractionFact
 		}
 	    }
 	}
+
 
       //  updown updown coefficient
       this->InteractionFactorsupdownupdown = new Complex* [this->NbrInterSectorSums];
@@ -812,9 +814,14 @@ void ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::EvaluateInteractionFact
 Complex ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::ComputeTwoBodyMatrixElementAUpBUp(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4)
 {
   Complex Tmp = 1.0 ;
-  Tmp += Phase (0.5 * ((((double) (kx1 - kx3)) * this->KxFactor) + (((double) (ky1 - ky3)) * this->KyFactor)));
-  Tmp += Phase (0.5 * ((((double) (kx1 - kx3)) * this->KxFactor) + (((double) (kz1 - kz3)) * this->KzFactor)));
-  Tmp += Phase (0.5 * ((((double) (ky1 - ky3)) * this->KyFactor) + (((double) (kz1 - kz3)) * this->KzFactor)));
+//   Tmp += Phase (0.5 * ((((double) (kx1 - kx3)) * this->KxFactor) + (((double) (ky1 - ky3)) * this->KyFactor)));
+//   Tmp += Phase (0.5 * ((((double) (kx1 - kx3)) * this->KxFactor) + (((double) (kz1 - kz3)) * this->KzFactor)));
+//   Tmp += Phase (0.5 * ((((double) (ky1 - ky3)) * this->KyFactor) + (((double) (kz1 - kz3)) * this->KzFactor)));
+//   Tmp *= Phase (-0.25 * ((((double) (kx4 - kx2)) * this->KxFactor) + (((double) (ky4 - ky2)) * this->KyFactor)
+// 			+ (((double) (kz4 - kz2)) * this->KzFactor)));
+  Tmp += Phase ((((double) (kx1 - kx3)) * this->KxFactor));
+  Tmp += Phase ((((double) (kz1 - kz3)) * this->KzFactor));
+  Tmp += Phase ((((double) (ky1 - ky3)) * this->KyFactor));
   Tmp *= Phase (0.25 * ((((double) (kx4 - kx2)) * this->KxFactor) + (((double) (ky4 - ky2)) * this->KyFactor)
 			+ (((double) (kz4 - kz2)) * this->KzFactor)));
   return Tmp;
@@ -939,19 +946,34 @@ void ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::ComputeOneBodyMatrices(
 	{
 	  HermitianMatrix TmpOneBodyHamiltonian(4, true);
 	  int Index = ((kx * this->NbrSiteY) + ky) * this->NbrSiteZ + kz;
-	  Complex B1 = 1.0 + this->NNHopingDistortion111 + Phase(0.5 * (((double) ky) * this->KyFactor) + 0.5 * (((double) kz) * this->KzFactor))   + Phase(0.5 * (((double) kx) * this->KxFactor) + 0.5 * (((double) kz) * this->KzFactor))  + Phase(0.5 * (((double) kx) * this->KxFactor) + 0.5 * (((double) ky) * this->KyFactor)) ;
-	  double d3 = this->SpinOrbitCoupling * (sin (0.5 * (((double) kx) * this->KxFactor) + 0.5 * (((double) kz) * this->KzFactor))
-						 - sin (0.5 * (((double) kx) * this->KxFactor) + 0.5 * (((double) ky) * this->KyFactor))
-						 - sin (0.5 * (((double) kx) * this->KxFactor) - 0.5 * (((double) ky) * this->KyFactor))
-						 + sin (0.5 * (((double) kx) * this->KxFactor) - 0.5 * (((double) kz) * this->KzFactor)));
-	  double d4 = this->SpinOrbitCoupling * (sin (0.5 * (((double) kx) * this->KxFactor) + 0.5 * (((double) kz) * this->KzFactor))
-						 - sin (0.5 * (((double) ky) * this->KyFactor) + 0.5 * (((double) kz) * this->KzFactor))
-						 - sin (0.5 * (((double) ky) * this->KyFactor) - 0.5 * (((double) kz) * this->KzFactor))
-						 + sin (0.5 * (((double) ky) * this->KyFactor) - 0.5 * (((double) kx) * this->KxFactor)));
-	  double d5 = this->SpinOrbitCoupling * (sin (0.5 * (((double) ky) * this->KyFactor) + 0.5 * (((double) kx) * this->KxFactor))
-						 - sin (0.5 * (((double) kx) * this->KxFactor) + 0.5 * (((double) kz) * this->KzFactor))
-						 - sin (0.5 * (((double) kz) * this->KzFactor) - 0.5 * (((double) kx) * this->KxFactor))
-						 + sin (0.5 * (((double) kz) * this->KzFactor) - 0.5 * (((double) ky) * this->KyFactor)));
+	  Complex B1 = 1.0 + this->NNHopingDistortion111 + Phase(((double) kx) * this->KxFactor) + Phase(((double) ky) * this->KyFactor) + Phase(((double) kz) * this->KzFactor);
+	  Complex TmpPhase = Phase (-0.25 * ((((double) kx) * this->KxFactor) +(((double) ky) * this->KyFactor) + (((double) kz) * this->KzFactor)));
+	  B1 *= TmpPhase;
+	  //	  Complex B1 = 1.0 + this->NNHopingDistortion111 + Phase(0.5 * (((double) ky) * this->KyFactor) + 0.5 * (((double) kz) * this->KzFactor))   + Phase(0.5 * (((double) kx) * this->KxFactor) + 0.5 * (((double) kz) * this->KzFactor))  + Phase(0.5 * (((double) kx) * this->KxFactor) + 0.5 * (((double) ky) * this->KyFactor)) ;
+// 	  double d3 = this->SpinOrbitCoupling * (sin (0.5 * (((double) kx) * this->KxFactor) + 0.5 * (((double) kz) * this->KzFactor))
+// 						 - sin (0.5 * (((double) kx) * this->KxFactor) + 0.5 * (((double) ky) * this->KyFactor))
+// 						 - sin (0.5 * (((double) kx) * this->KxFactor) - 0.5 * (((double) ky) * this->KyFactor))
+// 						 + sin (0.5 * (((double) kx) * this->KxFactor) - 0.5 * (((double) kz) * this->KzFactor)));
+// 	  double d4 = this->SpinOrbitCoupling * (sin (0.5 * (((double) kx) * this->KxFactor) + 0.5 * (((double) kz) * this->KzFactor))
+// 						 - sin (0.5 * (((double) ky) * this->KyFactor) + 0.5 * (((double) kz) * this->KzFactor))
+// 						 - sin (0.5 * (((double) ky) * this->KyFactor) - 0.5 * (((double) kz) * this->KzFactor))
+// 						 + sin (0.5 * (((double) ky) * this->KyFactor) - 0.5 * (((double) kx) * this->KxFactor)));
+// 	  double d5 = this->SpinOrbitCoupling * (sin (0.5 * (((double) ky) * this->KyFactor) + 0.5 * (((double) kx) * this->KxFactor))
+// 						 - sin (0.5 * (((double) kx) * this->KxFactor) + 0.5 * (((double) kz) * this->KzFactor))
+// 						 - sin (0.5 * (((double) kz) * this->KzFactor) - 0.5 * (((double) kx) * this->KxFactor))
+// 						 + sin (0.5 * (((double) kz) * this->KzFactor) - 0.5 * (((double) ky) * this->KyFactor)));
+	  double d3 = this->SpinOrbitCoupling * (sin ((((double) ky) * this->KyFactor))
+						 - sin ((((double) kz) * this->KzFactor))
+						 - sin ((((double) ky) * this->KyFactor) - (((double) kx) * this->KxFactor))
+						 + sin ((((double) kz) * this->KzFactor) - (((double) kx) * this->KxFactor)));
+	  double d4 = this->SpinOrbitCoupling * (sin ((((double) kz) * this->KzFactor))
+						 - sin ((((double) kx) * this->KxFactor))
+						 - sin ((((double) kz) * this->KzFactor) - (((double) ky) * this->KyFactor))
+						 + sin ((((double) kx) * this->KxFactor) - (((double) ky) * this->KyFactor)));
+	  double d5 = this->SpinOrbitCoupling * (sin ((((double) kx) * this->KxFactor))
+						 - sin ((((double) ky) * this->KyFactor))
+						 - sin ((((double) kx) * this->KxFactor) - (((double) kz) * this->KzFactor))
+						 + sin ((((double) ky) * this->KyFactor) - (((double) kz) * this->KzFactor)));
 	  Complex B2 = d3 + I() * d4;
 	  TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d5);
 	  TmpOneBodyHamiltonian.SetMatrixElement(1, 1, -d5);
@@ -961,6 +983,15 @@ void ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::ComputeOneBodyMatrices(
 	  TmpOneBodyHamiltonian.SetMatrixElement(2, 3, B1);
 	  TmpOneBodyHamiltonian.SetMatrixElement(0, 2, B2);
 	  TmpOneBodyHamiltonian.SetMatrixElement(1, 3, -B2);
+
+// 	  TmpOneBodyHamiltonian.SetMatrixElement(0, 0, 0.0);
+// 	  TmpOneBodyHamiltonian.SetMatrixElement(1, 1, 0.0);
+// 	  TmpOneBodyHamiltonian.SetMatrixElement(2, 2, 1.0);
+// 	  TmpOneBodyHamiltonian.SetMatrixElement(3, 3, 1.0);
+
+
+	  //	  cout << TmpOneBodyHamiltonian << endl;
+
 	  ComplexMatrix TmpMatrix(4, 4, true);
 	  TmpMatrix[0][0] = 1.0;
 	  TmpMatrix[1][1] = 1.0;
@@ -979,5 +1010,6 @@ void ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::ComputeOneBodyMatrices(
 	      this->OneBodyInteractionFactorsdowndown[Index] = TmpDiag(1, 1);
 	    }
 	  cout << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << " " << TmpDiag(2, 2) << " " << TmpDiag(3, 3) << endl;
+	  //	  cout << endl << TmpMatrix << endl;
 	}
 }
