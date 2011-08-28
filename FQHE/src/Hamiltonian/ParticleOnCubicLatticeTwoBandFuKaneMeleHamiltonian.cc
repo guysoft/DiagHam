@@ -230,8 +230,8 @@ void ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::EvaluateInteractionFact
 		  }
       
       double Factor = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ));
-      double FactorAUpADown = Factor * this->VPotential * 0.0;
-      double FactorBUpBDown = Factor * this->VPotential;
+      double FactorAUpADown = Factor * this->VPotential;
+      double FactorBUpBDown = Factor * this->VPotential * 0.0;
       if (this->FlatBand == false)
 	Factor *= this->UPotential;
       Factor = 0.0;
@@ -520,34 +520,35 @@ void ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::EvaluateInteractionFact
 	{
 	  this->InteractionFactorsupdownupup[i] = new Complex[this->NbrInterSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
 	  int Index = 0;
-	  for (int j1 = 0; j1 < this->NbrIntraSectorIndicesPerSum[i]; ++j1)
+	  for (int j2 = 0; j2 < this->NbrIntraSectorIndicesPerSum[i]; ++j2)
 	    {
-	      int Index1 = this->IntraSectorIndicesPerSum[i][j1 << 1];
-	      int Index2 = this->IntraSectorIndicesPerSum[i][(j1 << 1) + 1];
-	      int kx1 = Index1 / this->NbrSiteYZ;
-	      int ky1 = Index1 % this->NbrSiteYZ;
-	      int kz1 = ky1 % this->NbrSiteZ;
-	      ky1 /= this->NbrSiteZ;
-	      int kx2 = Index2 / this->NbrSiteYZ;
-	      int ky2 = Index2 % this->NbrSiteYZ;
-	      int kz2 = ky2 % this->NbrSiteZ;
-	      ky2 /= this->NbrSiteZ;
-	      for (int j2 = 0; j2 < this->NbrInterSectorIndicesPerSum[i]; ++j2)
+	      int Index3 = this->IntraSectorIndicesPerSum[i][j2 << 1];
+	      int Index4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1];
+	      int kx3 = Index3 / this->NbrSiteYZ;
+	      int ky3 = Index3 % this->NbrSiteYZ;
+	      int kz3 = ky3 % this->NbrSiteZ;
+	      ky3 /= this->NbrSiteZ;
+	      int kx4 = Index4 / this->NbrSiteYZ;
+	      int ky4 = Index4 % this->NbrSiteYZ;
+	      int kz4 = ky4 % this->NbrSiteZ;
+	      ky4 /= this->NbrSiteZ;
+	      for (int j1 = 0; j1 < this->NbrInterSectorIndicesPerSum[i]; ++j1)
 		{
-		  int Index3 = this->InterSectorIndicesPerSum[i][j2 << 1];
-		  int Index4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1];
-		  int kx3 = Index3 / this->NbrSiteYZ;
-		  int ky3 = Index3 % this->NbrSiteYZ;
-		  int kz3 = ky3 % this->NbrSiteZ;
-		  ky3 /= this->NbrSiteZ;
-		  int kx4 = Index4 / this->NbrSiteYZ;
-		  int ky4 = Index4 % this->NbrSiteYZ;
-		  int kz4 = ky4 % this->NbrSiteZ;
-		  ky4 /= this->NbrSiteZ;
+		  int Index1 = this->InterSectorIndicesPerSum[i][j1 << 1];
+		  int Index2 = this->InterSectorIndicesPerSum[i][(j1 << 1) + 1];
+		  int kx1 = Index1 / this->NbrSiteYZ;
+		  int ky1 = Index1 % this->NbrSiteYZ;
+		  int kz1 = ky1 % this->NbrSiteZ;
+		  ky1 /= this->NbrSiteZ;
+		  int kx2 = Index2 / this->NbrSiteYZ;
+		  int ky2 = Index2 % this->NbrSiteYZ;
+		  int kz2 = ky2 % this->NbrSiteZ;
+		  ky2 /= this->NbrSiteZ;
                   this->InteractionFactorsupdownupup[i][Index] = 0.0;
                   Tmp = this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 1, 0, 0, 0, 2, 0, 2) * this->ComputeTwoBodyMatrixElementAUpADown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
                   Tmp -= this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 0, 1, 0, 0, 0, 2, 0, 2) * this->ComputeTwoBodyMatrixElementAUpADown(kx1, ky1, kz1, kx2, ky2, kz2, kx4, ky4, kz4, kx3, ky3, kz3);
                   this->InteractionFactorsupdownupup[i][Index] += -2.0 * FactorAUpADown * Tmp;
+		  cout << Index1 << " " <<  Index2 << " " <<  Index3 << " " <<  Index4 << " " << Tmp << endl;
                   Tmp = this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 1, 0, 0, 1, 3, 1, 3) * this->ComputeTwoBodyMatrixElementBUpBDown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
                   Tmp -= this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 0, 1, 0, 0, 1, 3, 1, 3) * this->ComputeTwoBodyMatrixElementBUpBDown(kx1, ky1, kz1, kx2, ky2, kz2, kx4, ky4, kz4, kx3, ky3, kz3);
                   this->InteractionFactorsupdownupup[i][Index] += -2.0 * FactorBUpBDown * Tmp;
@@ -569,37 +570,37 @@ void ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::EvaluateInteractionFact
 		}
 	    }
 	}
-
+      cout << "------------------------" << endl;
       //  updown downdown coefficient
       this->InteractionFactorsupdowndowndown = new Complex* [this->NbrIntraSectorSums];
       for (int i = 0; i < this->NbrIntraSectorSums; ++i)
 	{
 	  this->InteractionFactorsupdowndowndown[i] = new Complex[this->NbrInterSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
 	  int Index = 0;
-	  for (int j1 = 0; j1 < this->NbrIntraSectorIndicesPerSum[i]; ++j1)
+	  for (int j2 = 0; j2 < this->NbrIntraSectorIndicesPerSum[i]; ++j2)
 	    {
-	      int Index1 = this->IntraSectorIndicesPerSum[i][j1 << 1];
-	      int Index2 = this->IntraSectorIndicesPerSum[i][(j1 << 1) + 1];
-	      int kx1 = Index1 / this->NbrSiteYZ;
-	      int ky1 = Index1 % this->NbrSiteYZ;
-	      int kz1 = ky1 % this->NbrSiteZ;
-	      ky1 /= this->NbrSiteZ;
-	      int kx2 = Index2 / this->NbrSiteYZ;
-	      int ky2 = Index2 % this->NbrSiteYZ;
-	      int kz2 = ky2 % this->NbrSiteZ;
-	      ky2 /= this->NbrSiteZ;
-	      for (int j2 = 0; j2 < this->NbrInterSectorIndicesPerSum[i]; ++j2)
+	      int Index3 = this->IntraSectorIndicesPerSum[i][j2 << 1];
+	      int Index4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1];
+	      int kx3 = Index3 / this->NbrSiteYZ;
+	      int ky3 = Index3 % this->NbrSiteYZ;
+	      int kz3 = ky3 % this->NbrSiteZ;
+	      ky3 /= this->NbrSiteZ;
+	      int kx4 = Index4 / this->NbrSiteYZ;
+	      int ky4 = Index4 % this->NbrSiteYZ;
+	      int kz4 = ky4 % this->NbrSiteZ;
+	      ky4 /= this->NbrSiteZ;
+	      for (int j1 = 0; j1 < this->NbrInterSectorIndicesPerSum[i]; ++j1)
 		{
-		  int Index3 = this->InterSectorIndicesPerSum[i][j2 << 1];
-		  int Index4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1];
-		  int kx3 = Index3 / this->NbrSiteYZ;
-		  int ky3 = Index3 % this->NbrSiteYZ;
-		  int kz3 = ky3 % this->NbrSiteZ;
-		  ky3 /= this->NbrSiteZ;
-		  int kx4 = Index4 / this->NbrSiteYZ;
-		  int ky4 = Index4 % this->NbrSiteYZ;
-		  int kz4 = ky4 % this->NbrSiteZ;
-		  ky4 /= this->NbrSiteZ;
+		  int Index1 = this->InterSectorIndicesPerSum[i][j1 << 1];
+		  int Index2 = this->InterSectorIndicesPerSum[i][(j1 << 1) + 1];
+		  int kx1 = Index1 / this->NbrSiteYZ;
+		  int ky1 = Index1 % this->NbrSiteYZ;
+		  int kz1 = ky1 % this->NbrSiteZ;
+		  ky1 /= this->NbrSiteZ;
+		  int kx2 = Index2 / this->NbrSiteYZ;
+		  int ky2 = Index2 % this->NbrSiteYZ;
+		  int kz2 = ky2 % this->NbrSiteZ;
+		  ky2 /= this->NbrSiteZ;
                   this->InteractionFactorsupdowndowndown[i][Index] = 0.0;
                   Tmp = this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 1, 1, 1, 0, 2, 0, 2) * this->ComputeTwoBodyMatrixElementAUpADown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
                   Tmp -= this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 0, 1, 1, 1, 0, 2, 0, 2) * this->ComputeTwoBodyMatrixElementAUpADown(kx1, ky1, kz1, kx2, ky2, kz2, kx4, ky4, kz4, kx3, ky3, kz3);
@@ -632,34 +633,35 @@ void ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::EvaluateInteractionFact
 	{
 	  this->InteractionFactorsupupupdown[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrInterSectorIndicesPerSum[i]];
 	  int Index = 0;
-	  for (int j1 = 0; j1 < this->NbrInterSectorIndicesPerSum[i]; ++j1)
+	  for (int j2 = 0; j2 < this->NbrInterSectorIndicesPerSum[i]; ++j2)
 	    {
-	      int Index1 = this->InterSectorIndicesPerSum[i][j1 << 1];
-	      int Index2 = this->InterSectorIndicesPerSum[i][(j1 << 1) + 1];
-	      int kx1 = Index1 / this->NbrSiteYZ;
-	      int ky1 = Index1 % this->NbrSiteYZ;
-	      int kz1 = ky1 % this->NbrSiteZ;
-	      ky1 /= this->NbrSiteZ;
-	      int kx2 = Index2 / this->NbrSiteYZ;
-	      int ky2 = Index2 % this->NbrSiteYZ;
-	      int kz2 = ky2 % this->NbrSiteZ;
-	      ky2 /= this->NbrSiteZ;
-	      for (int j2 = 0; j2 < this->NbrIntraSectorIndicesPerSum[i]; ++j2)
+	      int Index3 = this->InterSectorIndicesPerSum[i][j2 << 1];
+	      int Index4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1];
+	      int kx3 = Index3 / this->NbrSiteYZ;
+	      int ky3 = Index3 % this->NbrSiteYZ;
+	      int kz3 = ky3 % this->NbrSiteZ;
+	      ky3 /= this->NbrSiteZ;
+	      int kx4 = Index4 / this->NbrSiteYZ;
+	      int ky4 = Index4 % this->NbrSiteYZ;
+	      int kz4 = ky4 % this->NbrSiteZ;
+	      ky4 /= this->NbrSiteZ;
+	      for (int j1 = 0; j1 < this->NbrIntraSectorIndicesPerSum[i]; ++j1)
 		{
-		  int Index3 = this->IntraSectorIndicesPerSum[i][j2 << 1];
-		  int Index4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1];
-		  int kx3 = Index3 / this->NbrSiteYZ;
-		  int ky3 = Index3 % this->NbrSiteYZ;
-		  int kz3 = ky3 % this->NbrSiteZ;
-		  ky3 /= this->NbrSiteZ;
-		  int kx4 = Index4 / this->NbrSiteYZ;
-		  int ky4 = Index4 % this->NbrSiteYZ;
-		  int kz4 = ky4 % this->NbrSiteZ;
-		  ky4 /= this->NbrSiteZ;
+		  int Index1 = this->IntraSectorIndicesPerSum[i][j1 << 1];
+		  int Index2 = this->IntraSectorIndicesPerSum[i][(j1 << 1) + 1];
+		  int kx1 = Index1 / this->NbrSiteYZ;
+		  int ky1 = Index1 % this->NbrSiteYZ;
+		  int kz1 = ky1 % this->NbrSiteZ;
+		  ky1 /= this->NbrSiteZ;
+		  int kx2 = Index2 / this->NbrSiteYZ;
+		  int ky2 = Index2 % this->NbrSiteYZ;
+		  int kz2 = ky2 % this->NbrSiteZ;
+		  ky2 /= this->NbrSiteZ;
                   this->InteractionFactorsupupupdown[i][Index] = 0.0;
                   Tmp = this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 0, 0, 1, 0, 2, 0, 2) * this->ComputeTwoBodyMatrixElementAUpADown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
                   Tmp -= this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 0, 0, 0, 1, 0, 2, 0, 2) * this->ComputeTwoBodyMatrixElementAUpADown(kx2, ky2, kz2, kx1, ky1, kz1, kx3, ky3, kz3, kx4, ky4, kz4);
                   this->InteractionFactorsupupupdown[i][Index] += -2.0 * FactorAUpADown * Tmp;
+		  cout << Index1 << " " <<  Index2 << " " <<  Index3 << " " <<  Index4 << " " << Tmp << endl;
                   Tmp = this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 0, 0, 1, 1, 3, 1, 3) * this->ComputeTwoBodyMatrixElementBUpBDown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
                   Tmp -= this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 0, 0, 0, 1, 1, 3, 1, 3) * this->ComputeTwoBodyMatrixElementBUpBDown(kx2, ky2, kz2, kx1, ky1, kz1, kx3, ky3, kz3, kx4, ky4, kz4);
                   this->InteractionFactorsupupupdown[i][Index] += -2.0 * FactorBUpBDown * Tmp;
@@ -688,30 +690,30 @@ void ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::EvaluateInteractionFact
 	{
 	  this->InteractionFactorsdowndownupdown[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrInterSectorIndicesPerSum[i]];
 	  int Index = 0;
-	  for (int j1 = 0; j1 < this->NbrInterSectorIndicesPerSum[i]; ++j1)
+	  for (int j2 = 0; j2 < this->NbrInterSectorIndicesPerSum[i]; ++j2)
 	    {
-	      int Index1 = this->InterSectorIndicesPerSum[i][j1 << 1];
-	      int Index2 = this->InterSectorIndicesPerSum[i][(j1 << 1) + 1];
-	      int kx1 = Index1 / this->NbrSiteYZ;
-	      int ky1 = Index1 % this->NbrSiteYZ;
-	      int kz1 = ky1 % this->NbrSiteZ;
-	      ky1 /= this->NbrSiteZ;
-	      int kx2 = Index2 / this->NbrSiteYZ;
-	      int ky2 = Index2 % this->NbrSiteYZ;
-	      int kz2 = ky2 % this->NbrSiteZ;
-	      ky2 /= this->NbrSiteZ;
-	      for (int j2 = 0; j2 < this->NbrIntraSectorIndicesPerSum[i]; ++j2)
+	      int Index3 = this->InterSectorIndicesPerSum[i][j2 << 1];
+	      int Index4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1];
+	      int kx3 = Index3 / this->NbrSiteYZ;
+	      int ky3 = Index3 % this->NbrSiteYZ;
+	      int kz3 = ky3 % this->NbrSiteZ;
+	      ky3 /= this->NbrSiteZ;
+	      int kx4 = Index4 / this->NbrSiteYZ;
+	      int ky4 = Index4 % this->NbrSiteYZ;
+	      int kz4 = ky4 % this->NbrSiteZ;
+	      ky4 /= this->NbrSiteZ;
+	      for (int j1 = 0; j1 < this->NbrIntraSectorIndicesPerSum[i]; ++j1)
 		{
-		  int Index3 = this->IntraSectorIndicesPerSum[i][j2 << 1];
-		  int Index4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1];
-		  int kx3 = Index3 / this->NbrSiteYZ;
-		  int ky3 = Index3 % this->NbrSiteYZ;
-		  int kz3 = ky3 % this->NbrSiteZ;
-		  ky3 /= this->NbrSiteZ;
-		  int kx4 = Index4 / this->NbrSiteYZ;
-		  int ky4 = Index4 % this->NbrSiteYZ;
-		  int kz4 = ky4 % this->NbrSiteZ;
-		  ky4 /= this->NbrSiteZ;
+		  int Index1 = this->IntraSectorIndicesPerSum[i][j1 << 1];
+		  int Index2 = this->IntraSectorIndicesPerSum[i][(j1 << 1) + 1];
+		  int kx1 = Index1 / this->NbrSiteYZ;
+		  int ky1 = Index1 % this->NbrSiteYZ;
+		  int kz1 = ky1 % this->NbrSiteZ;
+		  ky1 /= this->NbrSiteZ;
+		  int kx2 = Index2 / this->NbrSiteYZ;
+		  int ky2 = Index2 % this->NbrSiteYZ;
+		  int kz2 = ky2 % this->NbrSiteZ;
+		  ky2 /= this->NbrSiteZ;
                   this->InteractionFactorsdowndownupdown[i][Index] = 0.0;
                   Tmp = this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 1, 1, 0, 1, 0, 2, 0, 2) * this->ComputeTwoBodyMatrixElementAUpADown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
                   Tmp -= this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 1, 1, 0, 1, 0, 2, 0, 2) * this->ComputeTwoBodyMatrixElementAUpADown(kx2, ky2, kz2, kx1, ky1, kz1, kx3, ky3, kz3, kx4, ky4, kz4);
@@ -974,7 +976,7 @@ void ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::ComputeOneBodyMatrices(
 						 - sin ((((double) ky) * this->KyFactor))
 						 - sin ((((double) kx) * this->KxFactor) - (((double) kz) * this->KzFactor))
 						 + sin ((((double) ky) * this->KyFactor) - (((double) kz) * this->KzFactor)));
-	  Complex B2 = d3 + I() * d4;
+	  Complex B2 = d3 - I() * d4;
 	  TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d5);
 	  TmpOneBodyHamiltonian.SetMatrixElement(1, 1, -d5);
 	  TmpOneBodyHamiltonian.SetMatrixElement(2, 2, -d5);

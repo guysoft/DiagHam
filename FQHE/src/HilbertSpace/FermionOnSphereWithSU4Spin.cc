@@ -65,6 +65,10 @@ FermionOnSphereWithSU4Spin::FermionOnSphereWithSU4Spin()
   this->TotalEntanglement = 0;
   this->StateDescription = 0;
   this->StateHighestBit = 0;
+  this->NbrFermionsUpPlus = 0;
+  this->NbrFermionsDownPlus = 0;
+  this->NbrFermionsUpMinus = 0;
+  this->NbrFermionsDownMinus = 0;
   this->MaximumLookUpShift = 0;
   this->LookUpTableMemorySize = 0;
   this->LookUpTableShift = 0;
@@ -225,6 +229,7 @@ FermionOnSphereWithSU4Spin::FermionOnSphereWithSU4Spin(const FermionOnSphereWith
   this->TotalSpin = fermions.TotalSpin;
   this->TotalIsospin = fermions.TotalIsospin;
   this->TotalEntanglement = fermions.TotalEntanglement;
+  this->HighestBit = fermions.HighestBit;
   this->StateDescription = fermions.StateDescription;
   this->StateHighestBit = fermions.StateHighestBit;
   this->MaximumLookUpShift = fermions.MaximumLookUpShift;
@@ -275,6 +280,7 @@ FermionOnSphereWithSU4Spin& FermionOnSphereWithSU4Spin::operator = (const Fermio
   this->TotalSpin = fermions.TotalSpin;
   this->TotalIsospin = fermions.TotalIsospin;
   this->TotalEntanglement = fermions.TotalEntanglement;
+  this->HighestBit = fermions.HighestBit;
   this->StateDescription = fermions.StateDescription;
   this->StateHighestBit = fermions.StateHighestBit;
   this->MaximumLookUpShift = fermions.MaximumLookUpShift;
@@ -382,6 +388,247 @@ double FermionOnSphereWithSU4Spin::AdumAum (int index, int m)
   else
     return 0.0;
 }
+
+// apply a^+_m_up a_n_up operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int FermionOnSphereWithSU4Spin::AdupAup (int index, int m, int n, double& coefficient)
+{
+  m = (m << 2) + 3;
+  n = (n << 2) + 3;
+  return this->GenericAdA(index, m, n, coefficient);
+}
+
+// apply a^+_m_up a_n_um operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int FermionOnSphereWithSU4Spin::AdupAum (int index, int m, int n, double& coefficient)
+{
+  m = (m << 2) + 3;
+  n = (n << 2) + 2;
+  return this->GenericAdA(index, m, n, coefficient);
+}
+
+// apply a^+_m_up a_n_dp operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int FermionOnSphereWithSU4Spin::AdupAdp (int index, int m, int n, double& coefficient)
+{
+  m = (m << 2) + 3;
+  n = (n << 2) + 1;
+  return this->GenericAdA(index, m, n, coefficient);
+}
+
+// apply a^+_m_up a_n_dm operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+  
+int FermionOnSphereWithSU4Spin::AdupAdm (int index, int m, int n, double& coefficient)
+{
+  m = (m << 2) + 3;
+  n = (n << 2);
+  return this->GenericAdA(index, m, n, coefficient);
+}
+
+// apply a^+_m_um a_n_up operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int FermionOnSphereWithSU4Spin::AdumAup (int index, int m, int n, double& coefficient)
+{
+  m = (m << 2) + 2;
+  n = (n << 2) + 3;
+  return this->GenericAdA(index, m, n, coefficient);
+}
+
+// apply a^+_m_um a_n_um operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int FermionOnSphereWithSU4Spin::AdumAum (int index, int m, int n, double& coefficient)
+{
+  m = (m << 2) + 2;
+  n = (n << 2) + 2;
+  return this->GenericAdA(index, m, n, coefficient);
+}
+
+// apply a^+_m_um a_n_dp operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int FermionOnSphereWithSU4Spin::AdumAdp (int index, int m, int n, double& coefficient)
+{
+  m = (m << 2) + 2;
+  n = (n << 2) + 1;
+  return this->GenericAdA(index, m, n, coefficient);
+}
+
+// apply a^+_m_um a_n_dm operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+  
+int FermionOnSphereWithSU4Spin::AdumAdm (int index, int m, int n, double& coefficient)
+{
+  m = (m << 2) + 2;
+  n = (n << 2);
+  return this->GenericAdA(index, m, n, coefficient);
+}
+
+// apply a^+_m_dp a_n_up operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int FermionOnSphereWithSU4Spin::AddpAup (int index, int m, int n, double& coefficient)
+{
+  m = (m << 2) + 1;
+  n = (n << 2) + 3;
+  return this->GenericAdA(index, m, n, coefficient);
+}
+
+// apply a^+_m_dp a_n_um operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int FermionOnSphereWithSU4Spin::AddpAum (int index, int m, int n, double& coefficient)
+{
+  m = (m << 2) + 1;
+  n = (n << 2) + 2;
+  return this->GenericAdA(index, m, n, coefficient);
+}
+
+// apply a^+_m_dp a_n_dp operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int FermionOnSphereWithSU4Spin::AddpAdp (int index, int m, int n, double& coefficient)
+{
+  m = (m << 2) + 1;
+  n = (n << 2) + 1;
+  return this->GenericAdA(index, m, n, coefficient);
+}
+
+// apply a^+_m_dp a_n_dm operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+  
+int FermionOnSphereWithSU4Spin::AddpAdm (int index, int m, int n, double& coefficient)
+{
+  m = (m << 2) + 1;
+  n = (n << 2);
+  return this->GenericAdA(index, m, n, coefficient);
+}
+
+// apply a^+_m_dm a_n_up operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int FermionOnSphereWithSU4Spin::AddmAup (int index, int m, int n, double& coefficient)
+{
+  m = (m << 2);
+  n = (n << 2) + 3;
+  return this->GenericAdA(index, m, n, coefficient);
+}
+
+// apply a^+_m_dm a_n_um operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int FermionOnSphereWithSU4Spin::AddmAum (int index, int m, int n, double& coefficient)
+{
+  m = (m << 2);
+  n = (n << 2) + 2;
+  return this->GenericAdA(index, m, n, coefficient);
+}
+
+// apply a^+_m_dm a_n_dp operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int FermionOnSphereWithSU4Spin::AddmAdp (int index, int m, int n, double& coefficient)
+{
+  m = (m << 2);
+  n = (n << 2) + 1;
+  return this->GenericAdA(index, m, n, coefficient);
+}
+
+// apply a^+_m_dm a_n_dm operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+  
+int FermionOnSphereWithSU4Spin::AddmAdm (int index, int m, int n, double& coefficient)
+{
+  m = (m << 2);
+  n = (n << 2);
+  return this->GenericAdA(index, m, n, coefficient);
+}
+
 
 // find state index
 //

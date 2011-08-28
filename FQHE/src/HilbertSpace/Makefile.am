@@ -108,4 +108,5 @@ BosonOnSphereSumTensorProductState.cc \
 FermionOnSquareLatticeMomentumSpaceLong.cc \
 FermionOnSquareLatticeWithSpinMomentumSpaceLong.cc \
 FermionOnCubicLatticeWithSpinMomentumSpace.cc \
-FermionOnHyperCubicLatticeWithSpinMomentumSpace.cc
+FermionOnHyperCubicLatticeWithSpinMomentumSpace.cc \
+FermionOnCubicLatticeWithSU4SpinMomentumSpace.cc

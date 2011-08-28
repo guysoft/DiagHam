@@ -63,6 +63,17 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   int TotalIsospin;
   // twice the total entanglement value (greater than NbrFermions if there is no constraint on total lEntanglement value)
   int TotalEntanglement;
+  // highest bit in a given state description
+  int HighestBit;
+
+  // number of particles with (up, plus)
+  int NbrFermionsUpPlus;
+  // number of particles with (down, plus)
+  int NbrFermionsDownPlus;
+  // number of particles with (up, minus)
+  int NbrFermionsUpMinus;
+  // number of particles with (down, minus)
+  int NbrFermionsDownMinus;
 
   // array describing each state
   unsigned long* StateDescription;
@@ -189,6 +200,150 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // m = index of the creation and annihilation operator
   // return value = coefficient obtained when applying a^+_m_um a_m_um
   double AdumAum (int index, int m);
+
+  // apply a^+_m_up a_n_up operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AdupAup (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_up a_n_um operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AdupAum (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_up a_n_dp operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AdupAdp (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_up a_n_dm operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AdupAdm (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_um a_n_up operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AdumAup (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_um a_n_um operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AdumAum (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_um a_n_dp operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AdumAdp (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_um a_n_dm operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AdumAdm (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_dp a_n_up operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AddpAup (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_dp a_n_um operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AddpAum (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_dp a_n_dp operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AddpAdp (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_dp a_n_dm operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AddpAdm (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_dm a_n_up operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AddmAup (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_dm a_n_um operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AddmAum (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_dm a_n_dp operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AddmAdp (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_dm a_n_dm operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AddmAdm (int index, int m, int n, double& coefficient);
 
   // apply a_n1_up a_n2_up operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
   //
@@ -389,6 +544,15 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
 
   protected:
 
+  // factorized code for any a^+_m_x a_n_y operator 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = global index of the creation operator
+  // n = global index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  int GenericAdA(int index, int m, int n, double& coefficient);
+
   // find state index
   //
   // stateDescription = unsigned integer describing the state
@@ -465,6 +629,57 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
 inline int FermionOnSphereWithSU4Spin::GetParticleStatistic()
 {
   return AbstractQHEParticle::FermionicStatistic;
+}
+
+// factorized code for any a^+_m_x a_n_y operator 
+//
+// index = index of the state on which the operator has to be applied
+// m = global index of the creation operator
+// n = global index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+inline int FermionOnSphereWithSU4Spin::GenericAdA(int index, int m, int n, double& coefficient)
+{
+  int StateHighestBit = this->StateHighestBit[index];
+  unsigned long State = this->StateDescription[index];
+  if ((n > StateHighestBit) || ((State & (0x1ul << n)) == 0x0ul) )
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }
+  int NewLargestBit = StateHighestBit;
+  coefficient = this->SignLookUpTable[(State >> n) & this->SignLookUpTableMask[n]];
+  coefficient *= this->SignLookUpTable[(State >> (n + 16)) & this->SignLookUpTableMask[n + 16]];
+#ifdef  __64_BITS__
+  coefficient *= this->SignLookUpTable[(State >> (n + 32)) & this->SignLookUpTableMask[n + 32]];
+  coefficient *= this->SignLookUpTable[(State >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
+#endif
+  State &= ~(0x1ul << n);
+  if (State != 0x0ul)
+    while ((State >> NewLargestBit) == 0x0ul)
+      --NewLargestBit;
+
+  if ((State & (0x1ul << m)) != 0x0ul)
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }
+  if (m > NewLargestBit)
+    {
+      NewLargestBit = m;
+    }
+  else
+    {
+      coefficient *= this->SignLookUpTable[(State >> m) & this->SignLookUpTableMask[m]];
+      coefficient *= this->SignLookUpTable[(State >> (m + 16)) & this->SignLookUpTableMask[m + 16]];
+#ifdef  __64_BITS__
+      coefficient *= this->SignLookUpTable[(State >> (m + 32)) & this->SignLookUpTableMask[m + 32]];
+      coefficient *= this->SignLookUpTable[(State >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
+#endif
+    }
+  State |= 0x1ul << m;
+  return this->FindStateIndex(State, NewLargestBit);
 }
 
 #endif

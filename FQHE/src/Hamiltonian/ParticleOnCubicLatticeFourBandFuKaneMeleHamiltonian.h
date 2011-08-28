@@ -8,9 +8,9 @@
 //                        class author: Nicolas Regnault                      //
 //                                                                            //
 //            class of 3d topological insulator based on the Fu-Kane-Mele     //
-//                       model and restricted to two bands                    //
+//                      model and restricted to four bands                    //
 //                                                                            //
-//                        last modification : 18/07/2011                      //
+//                        last modification : 26/08/2011                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -30,12 +30,12 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PARTICLEONCUBICLATTICETWOBANDFUKANEMELECHECKERBOARDHAMILTONIAN_H
-#define PARTICLEONCUBICLATTICETWOBANDFUKANEMELECHECKERBOARDHAMILTONIAN_H
+#ifndef PARTICLEONCUBICLATTICEFOURBANDFUKANEMELECHECKERBOARDHAMILTONIAN_H
+#define PARTICLEONCUBICLATTICEFOURBANDFUKANEMELECHECKERBOARDHAMILTONIAN_H
 
 
 #include "config.h"
-#include "Hamiltonian/ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeQuantumSpinHallFourBandHamiltonian.h"
 #include "Matrix/ComplexMatrix.h"
 
 #include <iostream>
@@ -46,7 +46,7 @@ using std::cout;
 using std::endl;
 
 
-class ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian : public ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian
+class ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian : public ParticleOnLatticeQuantumSpinHallFourBandHamiltonian
 {
 
  protected:
@@ -106,11 +106,11 @@ class ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian : public ParticleOnLatt
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, int nbrSiteZ, double uPotential, double vPotential, double nnHopingDistortion111, double spinOrbitCoupling, double gammaX, double gammaY, double gammaZ, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian(ParticleOnSphereWithSU4Spin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, int nbrSiteZ, double uPotential, double vPotential, double nnHopingDistortion111, double spinOrbitCoupling, double gammaX, double gammaY, double gammaZ, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //
-  ~ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian();
+  ~ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian();
   
 
  protected:
@@ -242,36 +242,12 @@ class ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian : public ParticleOnLatt
 						int energyIndex1, int energyIndex2, int energyIndex3, int energyIndex4,
 						int siteIndex1, int siteIndex2, int siteIndex3, int siteIndex4);
 
-  // compute the one body transformation matrices and the optional one body band stucture contribution
+  // compute the one body hamiltonians related to the band stucture contribution
   //
-  // oneBodyBasis = array of one body transformation matrices
-  void ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis);
+  // oneBodyHamiltonians = array of one body hamiltonians
+  void ComputeOneBodyHamiltonian(HermitianMatrix* oneBodyHamiltonians);
+
 
 };
-
-// compute the transformation basis contribution to the interaction matrix element
-// 
-// oneBodyBasis = array of transformation basis matrices
-// momentumIndex1 = compact momentum index of the first creation operator
-// momentumIndex2 = compact momentum index of the second creation operator
-// momentumIndex3 = compact momentum index of the first annihilation operator
-// momentumIndex4 = compact momentum index of the second annihiliation operator
-// energyIndex1 = energy index of the first creation operator
-// energyIndex2 = energy index of the second creation operator
-// energyIndex3 = energy index of the first annihilation operator
-// energyIndex4 = energy index of the second annihiliation operator
-// siteIndex1 = site index of the first creation operator (0=Aup, 1=Bup, 2=Adown, 3=Bdown)
-// siteIndex2 = site index of the second creation operator (0=Aup, 1=Bup, 2=Adown, 3=Bdown)
-// siteIndex3 = site index of the first annihilation operator (0=Aup, 1=Bup, 2=Adown, 3=Bdown)
-// siteIndex4 = site index of the second annihiliation operator (0=Aup, 1=Bup, 2=Adown, 3=Bdown)
-
-inline Complex ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::ComputeTransfomationBasisContribution(ComplexMatrix* oneBodyBasis,
-													 int momentumIndex1, int momentumIndex2, int momentumIndex3, int momentumIndex4, 
-													 int energyIndex1, int energyIndex2, int energyIndex3, int energyIndex4,
-													 int siteIndex1, int siteIndex2, int siteIndex3, int siteIndex4)
-{
-  return (Conj(oneBodyBasis[momentumIndex1][energyIndex1][siteIndex1]) * oneBodyBasis[momentumIndex3][energyIndex3][siteIndex3] * Conj(oneBodyBasis[momentumIndex2][energyIndex2][siteIndex2]) * oneBodyBasis[momentumIndex4][energyIndex4][siteIndex4]);
-}
-
 
 #endif

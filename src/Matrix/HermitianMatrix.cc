@@ -233,6 +233,34 @@ Matrix* HermitianMatrix::Clone ()
   return ((Matrix*) new HermitianMatrix (*this));
 }
 
+// copy matrix
+//
+// M = matrix to copy
+// return value = refence on current matrix
+
+HermitianMatrix& HermitianMatrix::Copy (HermitianMatrix& M)
+{
+  if (this->NbrRow != M.NbrRow)
+    this->Resize(M.NbrRow, M.NbrColumn);
+  int Pos1 = 0;
+  int Pos2 = 0;
+  for (int i = 0; i < M.NbrColumn; i++)
+    {
+      for (int j = i + 1; j < M.NbrColumn; ++j)
+	{
+	  this->RealOffDiagonalElements[Pos1] = M.RealOffDiagonalElements[Pos2];
+	  this->ImaginaryOffDiagonalElements[Pos1] = M.ImaginaryOffDiagonalElements[Pos2];
+	  ++Pos1;
+	  ++Pos2;
+	}
+      Pos1 += this->Increment;
+      Pos2 += M.Increment;
+      this->DiagonalElements[i] = M.DiagonalElements[i];
+    }
+  return *this;
+}
+
+
 // set a matrix element
 //
 // i = line position

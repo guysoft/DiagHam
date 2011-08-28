@@ -1,8 +1,10 @@
 #include "Options/Options.h"
 
 #include "HilbertSpace/FermionOnCubicLatticeWithSpinMomentumSpace.h"
+#include "HilbertSpace/FermionOnCubicLatticeWithSU4SpinMomentumSpace.h"
 
 #include "Hamiltonian/ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian.h"
+#include "Hamiltonian/ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -74,6 +76,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-z", "boundary condition twisting angle along z (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new BooleanOption ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
   (*SystemGroup) += new BooleanOption ('\n', "flat-band", "use flat band model");
+  (*SystemGroup) += new BooleanOption ('\n', "four-bands", "perform the calculations within the full four band model");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
@@ -102,21 +105,40 @@ int main(int argc, char** argv)
   char* CommentLine = new char [256];
   sprintf (CommentLine, "eigenvalues\n# kx ky kz ");
   char* EigenvalueOutputFile = new char [512];
-  if (Manager.GetBoolean("flat-band") == true)
+  if (Manager.GetBoolean("four-bands") == true)
     {
-      if (Manager.GetDouble("mu-s") == 0.0)
-	sprintf (EigenvalueOutputFile, "fermions_quantumspinhall3d_fukanemele_n_%d_x_%d_y_%d_z_%d_v_%f_w_%f_dt111_%f_so_%f_gx_%f_gy_%f_gz_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"));
+      if (Manager.GetBoolean("flat-band") == true)
+	{
+	  if (Manager.GetDouble("mu-s") == 0.0)
+	    sprintf (EigenvalueOutputFile, "fermions_quantumspinhall3d_fukanemele_fourbands_n_%d_x_%d_y_%d_z_%d_v_%f_w_%f_dt111_%f_so_%f_gx_%f_gy_%f_gz_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"));
+	  else
+	    sprintf (EigenvalueOutputFile, "fermions_quantumspinhall3d_fukanemele_fourbands_n_%d_x_%d_y_%d_z_%d_v_%f_w_%f_dt111_%f_so_%f_gx_%f_gy_%f_gz_%f_mus_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Manager.GetDouble("mu-s"));
+	}
       else
-	sprintf (EigenvalueOutputFile, "fermions_quantumspinhall3d_fukanemele_n_%d_x_%d_y_%d_z_%d_v_%f_w_%f_dt111_%f_so_%f_gx_%f_gy_%f_gz_%f_mus_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Manager.GetDouble("mu-s"));
+	{
+	  if (Manager.GetDouble("mu-s") == 0.0)
+	    sprintf (EigenvalueOutputFile, "fermions_quantumspinhall3d_fukanemele_fourbands_n_%d_x_%d_y_%d_z_%d_u_%f_v_%f_w_%f_dt111_%f_so_%f_gx_%f_gy_%f_gz_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"));
+	  else
+	    sprintf (EigenvalueOutputFile, "fermions_quantumspinhall3d_fukanemele_fourbands_n_%d_x_%d_y_%d_z_%d_u_%f_v_%f_w_%f_dt111_%f_so_%f_gx_%f_gy_%f_gz_%f_mus_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Manager.GetDouble("mu-s"));
+	}
     }
   else
     {
-      if (Manager.GetDouble("mu-s") == 0.0)
-	sprintf (EigenvalueOutputFile, "fermions_quantumspinhall3d_fukanemele_n_%d_x_%d_y_%d_z_%d_u_%f_v_%f_w_%f_dt111_%f_so_%f_gx_%f_gy_%f_gz_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"));
+      if (Manager.GetBoolean("flat-band") == true)
+	{
+	  if (Manager.GetDouble("mu-s") == 0.0)
+	    sprintf (EigenvalueOutputFile, "fermions_quantumspinhall3d_fukanemele_n_%d_x_%d_y_%d_z_%d_v_%f_w_%f_dt111_%f_so_%f_gx_%f_gy_%f_gz_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"));
+	  else
+	    sprintf (EigenvalueOutputFile, "fermions_quantumspinhall3d_fukanemele_n_%d_x_%d_y_%d_z_%d_v_%f_w_%f_dt111_%f_so_%f_gx_%f_gy_%f_gz_%f_mus_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Manager.GetDouble("mu-s"));
+	}
       else
-	sprintf (EigenvalueOutputFile, "fermions_quantumspinhall3d_fukanemele_n_%d_x_%d_y_%d_z_%d_u_%f_v_%f_w_%f_dt111_%f_so_%f_gx_%f_gy_%f_gz_%f_mus_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Manager.GetDouble("mu-s"));
+	{
+	  if (Manager.GetDouble("mu-s") == 0.0)
+	    sprintf (EigenvalueOutputFile, "fermions_quantumspinhall3d_fukanemele_n_%d_x_%d_y_%d_z_%d_u_%f_v_%f_w_%f_dt111_%f_so_%f_gx_%f_gy_%f_gz_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"));
+	  else
+	    sprintf (EigenvalueOutputFile, "fermions_quantumspinhall3d_fukanemele_n_%d_x_%d_y_%d_z_%d_u_%f_v_%f_w_%f_dt111_%f_so_%f_gx_%f_gy_%f_gz_%f_mus_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Manager.GetDouble("mu-s"));
+	}
     }
-
   if (Manager.GetBoolean("singleparticle-spectrum") == true)
     {
       ComputeSingleParticleSpectrum(EigenvalueOutputFile, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"));
@@ -152,35 +174,70 @@ int main(int argc, char** argv)
 	  for (int k = MinKz; k <= MaxKz; ++k)
 	    {
 	      cout << "(kx=" << i << ",ky=" << j << ",kz=" << k << ") " << endl;
-	      FermionOnCubicLatticeWithSpinMomentumSpace Space(NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, i, j, k);
-	      cout << "dim = " << Space.GetHilbertSpaceDimension()  << endl;
-	      Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());	
-	      AbstractQHEHamiltonian* Hamiltonian = 0;
-	      Hamiltonian = new ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian(&Space, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ,
-											       Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"),
-											       Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), 		     
-											       Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
-	      char* ContentPrefix = new char[256];
-	      sprintf (ContentPrefix, "%d %d %d", i, j, k);
-	      char* EigenstateOutputFile = new char [512];
-	      if (Manager.GetBoolean("flat-band") == true)
+	      if (Manager.GetBoolean("four-bands") == false)
 		{
-		  sprintf (EigenstateOutputFile, "fermions_quantumspinhall3d_fukanemele_n_%d_x_%d_y_%d_z_%d_t1_%f_t2_%f_gx_%f_gy_%f_gz_%f_kx_%d_ky_%d_kz_%d", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, 
-			   Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), i, j, k);
+		  FermionOnCubicLatticeWithSpinMomentumSpace Space(NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, i, j, k);
+		  cout << "dim = " << Space.GetHilbertSpaceDimension()  << endl;
+		  Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());	
+		  AbstractQHEHamiltonian* Hamiltonian = 0;
+		  Hamiltonian = new ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian(&Space, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ,
+										       Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"),
+										       Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), 		     
+										       Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+		  char* ContentPrefix = new char[256];
+		  sprintf (ContentPrefix, "%d %d %d", i, j, k);
+		  char* EigenstateOutputFile = new char [512];
+		  if (Manager.GetBoolean("flat-band") == true)
+		    {
+		      sprintf (EigenstateOutputFile, "fermions_quantumspinhall3d_fukanemele_n_%d_x_%d_y_%d_z_%d_t1_%f_t2_%f_gx_%f_gy_%f_gz_%f_kx_%d_ky_%d_kz_%d", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, 
+			       Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), i, j, k);
+		    }
+		  else
+		    {
+		      sprintf (EigenstateOutputFile, "fermions_quantumspinhall3d_fukanemele_n_%d_x_%d_y_%d_z_%d_u_%f_t1_%f_t2_%f_gx_%f_gy_%f_gz_%f_kx_%d_ky_%d_kz_%d", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, 
+			       Manager.GetDouble("u-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), i, j, k);
+		    }
+		  GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
+		  FirstRunFlag = false;
+		  MainTaskOperation TaskOperation (&Task);
+		  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+		  cout << "------------------------------------" << endl;
+		  delete Hamiltonian;
+		  delete[] EigenstateOutputFile;
+		  delete[] ContentPrefix;
 		}
 	      else
 		{
-		  sprintf (EigenstateOutputFile, "fermions_quantumspinhall3d_fukanemele_n_%d_x_%d_y_%d_z_%d_u_%f_t1_%f_t2_%f_gx_%f_gy_%f_gz_%f_kx_%d_ky_%d_kz_%d", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, 
-			   Manager.GetDouble("u-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), i, j, k);
+		  FermionOnCubicLatticeWithSU4SpinMomentumSpace Space(NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, i, j, k);
+		  cout << "dim = " << Space.GetHilbertSpaceDimension()  << endl;
+		  Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());	
+		  AbstractQHEHamiltonian* Hamiltonian = 0;
+		  Hamiltonian = new ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian(&Space, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ,
+											Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"),
+											Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), 		     
+											Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+		  char* ContentPrefix = new char[256];
+		  sprintf (ContentPrefix, "%d %d %d", i, j, k);
+		  char* EigenstateOutputFile = new char [512];
+		  if (Manager.GetBoolean("flat-band") == true)
+		    {
+		      sprintf (EigenstateOutputFile, "fermions_quantumspinhall3d_fukanemele_fourbands_n_%d_x_%d_y_%d_z_%d_t1_%f_t2_%f_gx_%f_gy_%f_gz_%f_kx_%d_ky_%d_kz_%d", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, 
+			       Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), i, j, k);
+		    }
+		  else
+		    {
+		      sprintf (EigenstateOutputFile, "fermions_quantumspinhall3d_fukanemele_fourbands_n_%d_x_%d_y_%d_z_%d_u_%f_t1_%f_t2_%f_gx_%f_gy_%f_gz_%f_kx_%d_ky_%d_kz_%d", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, 
+			       Manager.GetDouble("u-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), i, j, k);
+		    }
+		  GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
+		  FirstRunFlag = false;
+		  MainTaskOperation TaskOperation (&Task);
+		  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+		  cout << "------------------------------------" << endl;
+		  delete Hamiltonian;
+		  delete[] EigenstateOutputFile;
+		  delete[] ContentPrefix;
 		}
-	      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
-	      FirstRunFlag = false;
-	      MainTaskOperation TaskOperation (&Task);
-	      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
-	      cout << "------------------------------------" << endl;
-	      delete Hamiltonian;
-	      delete[] EigenstateOutputFile;
-	      delete[] ContentPrefix;
 	    }
 	}
     }

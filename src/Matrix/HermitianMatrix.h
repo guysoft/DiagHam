@@ -121,6 +121,12 @@ class HermitianMatrix : public Matrix
   // retrun value = pointer on new matrix 
   Matrix* Clone ();
 
+  // copy matrix
+  //
+  // M = matrix to copy
+  // return value = refence on current matrix
+  HermitianMatrix& Copy (HermitianMatrix& M);
+
   // set a matrix element
   //
   // i = line position

@@ -2,6 +2,7 @@
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeNonPeriodicMomentumSpace.h"
 #include "HilbertSpace/FermionOnCubicLatticeWithSpinMomentumSpace.h"
+#include "HilbertSpace/FermionOnCubicLatticeWithSU4SpinMomentumSpace.h"
 #include "HilbertSpace/FermionOnHyperCubicLatticeWithSpinMomentumSpace.h"
 
 #include "Vector/ComplexVector.h"
@@ -137,7 +138,17 @@ int main(int argc, char** argv)
             }
           else
             {
-              return 0;
+	      if (Manager.GetInteger("nbr-subbands") == 4)
+		{
+		  if (Manager.GetBoolean("3d") == true)
+		    {
+		      Space = new FermionOnCubicLatticeWithSU4SpinMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, NbrSiteZ, TotalKx, TotalKy, TotalKz);
+		    }
+		}
+	      else
+		{
+		  return 0;
+		}
             }
         }
   }
