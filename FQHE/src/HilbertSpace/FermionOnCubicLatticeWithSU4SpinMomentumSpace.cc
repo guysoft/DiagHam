@@ -103,7 +103,8 @@ FermionOnCubicLatticeWithSU4SpinMomentumSpace::FermionOnCubicLatticeWithSU4SpinM
 	{
 	  cout << "error while generating the Hilbert space " << this->LargeHilbertSpaceDimension << " " << TmpLargeHilbertSpaceDimension << endl;
 	}
-      cout << "generation done " << endl;
+//      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+//	this->PrintState(cout, i) << " " << hex << this->StateDescription[i] << dec << endl;
       this->GenerateLookUpTable(memory);
       
 #ifdef __DEBUG__
@@ -285,7 +286,7 @@ long FermionOnCubicLatticeWithSU4SpinMomentumSpace::GenerateStates(int nbrFermio
 	}
     }
   if (nbrFermions < 0)
-    return 0l;
+    return pos;
   if (nbrFermions == 0)
     {
       if (((currentTotalKx % this->NbrSiteX) == this->KxMomentum) && ((currentTotalKy % this->NbrSiteY) == this->KyMomentum)
@@ -367,16 +368,9 @@ long FermionOnCubicLatticeWithSU4SpinMomentumSpace::GenerateStates(int nbrFermio
   Mask = 0xeul << ((((currentKx * this->NbrSiteY) + currentKy) * this->NbrSiteZ + currentKz) << 2);
   for (; pos < TmpPos; ++pos)
     this->StateDescription[pos] |= Mask;
+
   TmpPos = this->GenerateStates(nbrFermions - 3, currentKx, currentKy, currentKz - 1, currentTotalKx + (3 * currentKx), currentTotalKy + (3 * currentKy), currentTotalKz + (3 * currentKz), pos);
   Mask = 0xdul << ((((currentKx * this->NbrSiteY) + currentKy) * this->NbrSiteZ + currentKz) << 2);
-  for (; pos < TmpPos; ++pos)
-    this->StateDescription[pos] |= Mask;
-  TmpPos = this->GenerateStates(nbrFermions - 3, currentKx, currentKy, currentKz - 1, currentTotalKx + (3 * currentKx), currentTotalKy + (3 * currentKy), currentTotalKz + (3 * currentKz), pos);
-  Mask = 0xbul << ((((currentKx * this->NbrSiteY) + currentKy) * this->NbrSiteZ + currentKz) << 2);
-  for (; pos < TmpPos; ++pos)
-    this->StateDescription[pos] |= Mask;
-  TmpPos = this->GenerateStates(nbrFermions - 3, currentKx, currentKy, currentKz - 1, currentTotalKx + (3 * currentKx), currentTotalKy + (3 * currentKy), currentTotalKz + (3 * currentKz), pos);
-  Mask = 0x7ul << ((((currentKx * this->NbrSiteY) + currentKy) * this->NbrSiteZ + currentKz) << 2);
   for (; pos < TmpPos; ++pos)
     this->StateDescription[pos] |= Mask;
 
@@ -384,40 +378,57 @@ long FermionOnCubicLatticeWithSU4SpinMomentumSpace::GenerateStates(int nbrFermio
   Mask = 0xcul << ((((currentKx * this->NbrSiteY) + currentKy) * this->NbrSiteZ + currentKz) << 2);
   for (; pos < TmpPos; ++pos)
     this->StateDescription[pos] |= Mask;
+
+  TmpPos = this->GenerateStates(nbrFermions - 3, currentKx, currentKy, currentKz - 1, currentTotalKx + (3 * currentKx), currentTotalKy + (3 * currentKy), currentTotalKz + (3 * currentKz), pos);
+  Mask = 0xbul << ((((currentKx * this->NbrSiteY) + currentKy) * this->NbrSiteZ + currentKz) << 2);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+
   TmpPos = this->GenerateStates(nbrFermions - 2, currentKx, currentKy, currentKz - 1, currentTotalKx + (2 * currentKx), currentTotalKy + (2 * currentKy), currentTotalKz + (2 * currentKz), pos);
   Mask = 0xaul << ((((currentKx * this->NbrSiteY) + currentKy) * this->NbrSiteZ + currentKz) << 2);
   for (; pos < TmpPos; ++pos)
     this->StateDescription[pos] |= Mask;
+
   TmpPos = this->GenerateStates(nbrFermions - 2, currentKx, currentKy, currentKz - 1, currentTotalKx + (2 * currentKx), currentTotalKy + (2 * currentKy), currentTotalKz + (2 * currentKz), pos);
   Mask = 0x9ul << ((((currentKx * this->NbrSiteY) + currentKy) * this->NbrSiteZ + currentKz) << 2);
   for (; pos < TmpPos; ++pos)
     this->StateDescription[pos] |= Mask;
+
+  TmpPos = this->GenerateStates(nbrFermions - 1, currentKx, currentKy, currentKz - 1, currentTotalKx + currentKx, currentTotalKy + currentKy, currentTotalKz + currentKz, pos);
+  Mask = 0x8ul << ((((currentKx * this->NbrSiteY) + currentKy) * this->NbrSiteZ + currentKz) << 2);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+
+  TmpPos = this->GenerateStates(nbrFermions - 3, currentKx, currentKy, currentKz - 1, currentTotalKx + (3 * currentKx), currentTotalKy + (3 * currentKy), currentTotalKz + (3 * currentKz), pos);
+  Mask = 0x7ul << ((((currentKx * this->NbrSiteY) + currentKy) * this->NbrSiteZ + currentKz) << 2);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+
   TmpPos = this->GenerateStates(nbrFermions - 2, currentKx, currentKy, currentKz - 1, currentTotalKx + (2 * currentKx), currentTotalKy + (2 * currentKy), currentTotalKz + (2 * currentKz), pos);
   Mask = 0x6ul << ((((currentKx * this->NbrSiteY) + currentKy) * this->NbrSiteZ + currentKz) << 2);
   for (; pos < TmpPos; ++pos)
     this->StateDescription[pos] |= Mask;
+
   TmpPos = this->GenerateStates(nbrFermions - 2, currentKx, currentKy, currentKz - 1, currentTotalKx + (2 * currentKx), currentTotalKy + (2 * currentKy), currentTotalKz + (2 * currentKz), pos);
   Mask = 0x5ul << ((((currentKx * this->NbrSiteY) + currentKy) * this->NbrSiteZ + currentKz) << 2);
   for (; pos < TmpPos; ++pos)
     this->StateDescription[pos] |= Mask;
+
+  TmpPos = this->GenerateStates(nbrFermions - 1, currentKx, currentKy, currentKz - 1, currentTotalKx + currentKx, currentTotalKy + currentKy, currentTotalKz + currentKz, pos);
+  Mask = 0x4ul << ((((currentKx * this->NbrSiteY) + currentKy) * this->NbrSiteZ + currentKz) << 2);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+
   TmpPos = this->GenerateStates(nbrFermions - 2, currentKx, currentKy, currentKz - 1, currentTotalKx + (2 * currentKx), currentTotalKy + (2 * currentKy), currentTotalKz + (2 * currentKz), pos);
   Mask = 0x3ul << ((((currentKx * this->NbrSiteY) + currentKy) * this->NbrSiteZ + currentKz) << 2);
   for (; pos < TmpPos; ++pos)
     this->StateDescription[pos] |= Mask;
 
-  
-  TmpPos = this->GenerateStates(nbrFermions - 1, currentKx, currentKy, currentKz - 1, currentTotalKx + currentKx, currentTotalKy + currentKy, currentTotalKz + currentKz, pos);
-  Mask = 0x8ul << ((((currentKx * this->NbrSiteY) + currentKy) * this->NbrSiteZ + currentKz) << 2);
-  for (; pos < TmpPos; ++pos)
-    this->StateDescription[pos] |= Mask;
-  TmpPos = this->GenerateStates(nbrFermions - 1, currentKx, currentKy, currentKz - 1, currentTotalKx + currentKx, currentTotalKy + currentKy, currentTotalKz + currentKz, pos);
-  Mask = 0x4ul << ((((currentKx * this->NbrSiteY) + currentKy) * this->NbrSiteZ + currentKz) << 2);
-  for (; pos < TmpPos; ++pos)
-    this->StateDescription[pos] |= Mask;
   TmpPos = this->GenerateStates(nbrFermions - 1, currentKx, currentKy, currentKz - 1, currentTotalKx + currentKx, currentTotalKy + currentKy, currentTotalKz + currentKz, pos);
   Mask = 0x2ul << ((((currentKx * this->NbrSiteY) + currentKy) * this->NbrSiteZ + currentKz) << 2);
   for (; pos < TmpPos; ++pos)
     this->StateDescription[pos] |= Mask;
+
   TmpPos = this->GenerateStates(nbrFermions - 1, currentKx, currentKy, currentKz - 1, currentTotalKx + currentKx, currentTotalKy + currentKy, currentTotalKz + currentKz, pos);
   Mask = 0x1ul << ((((currentKx * this->NbrSiteY) + currentKy) * this->NbrSiteZ + currentKz) << 2);
   for (; pos < TmpPos; ++pos)

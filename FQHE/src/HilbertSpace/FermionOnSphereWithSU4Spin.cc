@@ -1408,8 +1408,13 @@ double FermionOnSphereWithSU4Spin::AupAup (int index, int n1, int n2)
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
 #endif
   this->ProdATemporaryState &= ~(0x1ul << n1);
-  while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
-    --this->ProdALzMax;
+  if (this->ProdATemporaryState != 0x0ul)
+    {
+      while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
+	--this->ProdALzMax;
+    }
+  else
+    this->ProdALzMax = 0;
   return Coefficient;
 }
 
@@ -1444,8 +1449,13 @@ double FermionOnSphereWithSU4Spin::AupAum (int index, int n1, int n2)
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
 #endif
   this->ProdATemporaryState &= ~(0x1ul << n1);
-  while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
-    --this->ProdALzMax;
+  if (this->ProdATemporaryState != 0x0ul)
+    {
+      while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
+	--this->ProdALzMax;
+    }
+  else
+    this->ProdALzMax = 0;
   return Coefficient;
 }
 
@@ -1480,8 +1490,13 @@ double FermionOnSphereWithSU4Spin::AupAdp (int index, int n1, int n2)
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
 #endif
   this->ProdATemporaryState &= ~(0x1ul << n1);
-  while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
-    --this->ProdALzMax;
+  if (this->ProdATemporaryState != 0x0ul)
+    {
+      while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
+	--this->ProdALzMax;
+    }
+  else
+    this->ProdALzMax = 0;
   return Coefficient;
 }
 
@@ -1515,8 +1530,13 @@ double FermionOnSphereWithSU4Spin::AupAdm (int index, int n1, int n2)
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
 #endif
   this->ProdATemporaryState &= ~(0x1ul << n1);
-  while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
-    --this->ProdALzMax;
+  if (this->ProdATemporaryState != 0x0ul)
+    {
+      while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
+	--this->ProdALzMax;
+    }
+  else
+    this->ProdALzMax = 0;
   return Coefficient;
 }
 
@@ -1551,8 +1571,13 @@ double FermionOnSphereWithSU4Spin::AumAum (int index, int n1, int n2)
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
 #endif
   this->ProdATemporaryState &= ~(0x1ul << n1);
-  while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
-    --this->ProdALzMax;
+  if (this->ProdATemporaryState != 0x0ul)
+    {
+      while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
+	--this->ProdALzMax;
+    }
+  else
+    this->ProdALzMax = 0;
   return Coefficient;
 }
 
@@ -1587,8 +1612,13 @@ double FermionOnSphereWithSU4Spin::AumAdp (int index, int n1, int n2)
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
 #endif
   this->ProdATemporaryState &= ~(0x1ul << n1);
-  while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
-    --this->ProdALzMax;
+  if (this->ProdATemporaryState != 0x0ul)
+    {
+      while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
+	--this->ProdALzMax;
+    }
+  else
+    this->ProdALzMax = 0;
   return Coefficient;
 }
 
@@ -1622,8 +1652,13 @@ double FermionOnSphereWithSU4Spin::AumAdm (int index, int n1, int n2)
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
 #endif
   this->ProdATemporaryState &= ~(0x1ul << n1);
-  while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
-    --this->ProdALzMax;
+  if (this->ProdATemporaryState != 0x0ul)
+    {
+      while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
+	--this->ProdALzMax;
+    }
+  else
+    this->ProdALzMax = 0;
   return Coefficient;
 }
 
@@ -1658,8 +1693,13 @@ double FermionOnSphereWithSU4Spin::AdpAdp (int index, int n1, int n2)
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
 #endif
   this->ProdATemporaryState &= ~(0x1ul << n1);
-  while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
-    --this->ProdALzMax;
+  if (this->ProdATemporaryState != 0x0ul)
+    {
+      while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
+	--this->ProdALzMax;
+    }
+  else
+    this->ProdALzMax = 0;
   return Coefficient;
 }
 
@@ -1693,8 +1733,13 @@ double FermionOnSphereWithSU4Spin::AdpAdm (int index, int n1, int n2)
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
 #endif
   this->ProdATemporaryState &= ~(0x1ul << n1);
-  while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
-    --this->ProdALzMax;
+  if (this->ProdATemporaryState != 0x0ul)
+    {
+      while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
+	--this->ProdALzMax;
+    }
+  else
+    this->ProdALzMax = 0;
   return Coefficient;
 }
 
@@ -1727,8 +1772,13 @@ double FermionOnSphereWithSU4Spin::AdmAdm (int index, int n1, int n2)
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
 #endif
   this->ProdATemporaryState &= ~(0x1ul << n1);
-  while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
-    --this->ProdALzMax;
+  if (this->ProdATemporaryState != 0x0ul)
+    {
+      while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
+	--this->ProdALzMax;
+    }
+  else
+    this->ProdALzMax = 0;
   return Coefficient;
 }
 

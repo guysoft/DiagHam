@@ -523,7 +523,7 @@ long FermionCubicLatticeFourBandEvaluateHilbertSpaceDimension(int nbrParticles, 
 	  currentKx--;
 	}
     }
-  if (nbrParticles == 0)
+  if (nbrParticles < 0)
     {
       return 0;
     }
