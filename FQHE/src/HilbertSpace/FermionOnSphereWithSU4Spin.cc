@@ -249,10 +249,11 @@ FermionOnSphereWithSU4Spin::~FermionOnSphereWithSU4Spin ()
 {
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
+      int MaxHighestBit = this->StateHighestBit[0];
       delete[] this->StateDescription;
       delete[] this->StateHighestBit;
       delete[] this->LookUpTableShift;
-      for (int i = 0; i < 2*this->NbrLzValue; ++i)
+      for (int i = 0; i <= MaxHighestBit; ++i)
 	delete[] this->LookUpTable[i];
       delete[] this->LookUpTable;
     }

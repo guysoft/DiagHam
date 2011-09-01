@@ -649,7 +649,7 @@ inline int FermionOnSphereWithSU4Spin::GenericAdA(int index, int m, int n, doubl
       return this->HilbertSpaceDimension;
     }
   int NewLargestBit = StateHighestBit;
-  coefficient = this->SignLookUpTable[(State >> n) & this->SignLookUpTableMask[n]];
+  coefficient = -this->SignLookUpTable[(State >> n) & this->SignLookUpTableMask[n]];
   coefficient *= this->SignLookUpTable[(State >> (n + 16)) & this->SignLookUpTableMask[n + 16]];
 #ifdef  __64_BITS__
   coefficient *= this->SignLookUpTable[(State >> (n + 32)) & this->SignLookUpTableMask[n + 32]];

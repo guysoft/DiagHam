@@ -840,16 +840,39 @@ inline void ParticleOnLatticeQuantumSpinHallFourBandHamiltonian::EvaluateMNOneBo
 {
   if (this->OneBodyInteractionFactorsupup != 0)
     {
+      double Coefficient;
+      int Dim = particles->GetHilbertSpaceDimension();
+      int Index;
       double TmpDiagonal = 0.0;
       for (int i = firstComponent; i < lastComponent; i += step)
 	{ 
 	  TmpDiagonal = 0.0;
 	  for (int j = 0; j <= this->LzMax; ++j) 
 	    {
-	      TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * particles->AdupAup(i, j);
-	      TmpDiagonal += this->OneBodyInteractionFactorsumum[j] * particles->AdumAum(i, j);
-	      TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * particles->AddpAdp(i, j);
-	      TmpDiagonal += this->OneBodyInteractionFactorsumum[j] * particles->AddmAdm(i, j);
+/* 	      TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * particles->AdupAup(i, j); */
+/* 	      TmpDiagonal += this->OneBodyInteractionFactorsumum[j] * particles->AdumAum(i, j); */
+/* 	      TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * particles->AddpAdp(i, j); */
+/* 	      TmpDiagonal += this->OneBodyInteractionFactorsumum[j] * particles->AddmAdm(i, j); */
+	      Index = particles->AdupAup(i, j, j, Coefficient);
+	      if (Index < Dim)
+		{
+		  TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * Coefficient;
+		}
+	      Index = particles->AdumAum(i, j, j, Coefficient);
+	      if (Index < Dim)
+		{
+		  TmpDiagonal += this->OneBodyInteractionFactorsumum[j] * Coefficient;
+		}
+	      Index = particles->AddpAdp(i, j, j, Coefficient);
+	      if (Index < Dim)
+		{
+		  TmpDiagonal += this->OneBodyInteractionFactorsdpdp[j] * Coefficient;
+		}
+	      Index = particles->AddmAdm(i, j, j, Coefficient);
+	      if (Index < Dim)
+		{
+		  TmpDiagonal += this->OneBodyInteractionFactorsdmdm[j] * Coefficient;
+		}
 	    }
 	  vDestination[i] += (this->HamiltonianShift + TmpDiagonal)* vSource[i];
 	}
@@ -1014,8 +1037,31 @@ inline void ParticleOnLatticeQuantumSpinHallFourBandHamiltonian::EvaluateMNOneBo
   if (this->OneBodyInteractionFactorsupup != 0)
     {
       double TmpDiagonal = 0.0;
+/*       int Dim = particles->GetHilbertSpaceDimension(); */
+/*       double Coefficient; */
+/*       int Index; */
       for (int j = 0; j <= this->LzMax; ++j)
 	{
+/* 	  Index = particles->AdupAup(index + this->PrecalculationShift, j, j, Coefficient); */
+/* 	  if (Index < Dim) */
+/* 	    { */
+/* 	      TmpDiagonal += Coefficient; */
+/* 	    } */
+/* 	  Index = particles->AdumAum(index + this->PrecalculationShift, j, j, Coefficient); */
+/* 	  if (Index < Dim) */
+/* 	    { */
+/* 	      TmpDiagonal += Coefficient; */
+/* 	    } */
+/* 	  Index = particles->AddpAdp(index + this->PrecalculationShift, j, j, Coefficient); */
+/* 	  if (Index < Dim) */
+/* 	    { */
+/* 	      TmpDiagonal += Coefficient; */
+/* 	    } */
+/* 	  Index = particles->AddmAdm(index + this->PrecalculationShift, j, j, Coefficient); */
+/* 	  if (Index < Dim) */
+/* 	    { */
+/* 	      TmpDiagonal += Coefficient; */
+/* 	    } */
 	  TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * particles->AdupAup(index + this->PrecalculationShift, j);
 	  TmpDiagonal += this->OneBodyInteractionFactorsumum[j] * particles->AdumAum(index + this->PrecalculationShift, j);	  
 	  TmpDiagonal += this->OneBodyInteractionFactorsdpdp[j] * particles->AddpAdp(index + this->PrecalculationShift, j);	  
@@ -1034,7 +1080,7 @@ inline void ParticleOnLatticeQuantumSpinHallFourBandHamiltonian::EvaluateMNOneBo
 	{
 	  for (int j = 0; j <= this->LzMax; ++j)
 	    {
-	      Index = particles->AdupAum(index + this->PrecalculationShift, j, j, Coefficient);
+ 	      Index = particles->AdupAum(index + this->PrecalculationShift, j, j, Coefficient);
 	      if (Index < Dim)
 		{
 		  indexArray[position] = Index;

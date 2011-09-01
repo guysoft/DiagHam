@@ -107,6 +107,8 @@ ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian::ParticleOnCubicLatticeFourB
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex;  
   this->EvaluateInteractionFactors();
+
+  int Dim = this->Particles->GetHilbertSpaceDimension();
   if (memory > 0)
     {
       long TmpMemory = this->FastMultiplicationMemory(memory);
@@ -189,8 +191,8 @@ void ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian::EvaluateInteractionFac
       OneBodyHamiltonian[i].GetMatrixElement(2, 3, Tmp2);      
       this->OneBodyInteractionFactorsdpdm[i] = Tmp2;
     }
-  this->ComputeOneBodyHamiltonian(OneBodyHamiltonian);
- 
+
+
   this->NbrInterSectorSums = this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ;
   this->NbrInterSectorIndicesPerSum = new int[this->NbrInterSectorSums];
   for (int i = 0; i < this->NbrInterSectorSums; ++i)
@@ -271,8 +273,10 @@ void ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian::EvaluateInteractionFac
 		  }
       
       double Factor = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ));
+      if (this->FlatBand == true)
+	Factor *= this->UPotential;
       double FactorAUpADown = Factor * this->VPotential * 0.0;
-      double FactorBUpBDown = Factor * this->VPotential * 0.0;
+      double FactorBUpBDown = Factor * this->VPotential;
       if (this->FlatBand == false)
 	Factor *= this->UPotential;
       Factor = 0.0;
@@ -320,13 +324,16 @@ void ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian::EvaluateInteractionFac
 		  int kz4 = ky4 % this->NbrSiteZ;
 		  ky4 /= this->NbrSiteZ;
 
+//                   Tmp = this->ComputeTwoBodyMatrixElementAUpADown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
+//                   Tmp -=this->ComputeTwoBodyMatrixElementAUpADown(kx1, ky1, kz1, kx2, ky2, kz2, kx4, ky4, kz4, kx3, ky3, kz3);
+//                   Tmp -= this->ComputeTwoBodyMatrixElementAUpADown(kx2, ky2, kz2, kx1, ky1, kz1, kx3, ky3, kz3, kx4, ky4, kz4);
+//                   Tmp += this->ComputeTwoBodyMatrixElementAUpADown(kx2, ky2, kz2, kx1, ky1, kz1, kx4, ky4, kz4, kx3, ky3, kz3);
+//                   this->InteractionFactorsupupupup[i][Index] = -2.0 * FactorAUpADown * Tmp;
+
                   this->InteractionFactorsupupupup[i][Index] = 0.0;
-                  Tmp = this->ComputeTwoBodyMatrixElementAUpADown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
-                  Tmp -=this->ComputeTwoBodyMatrixElementAUpADown(kx1, ky1, kz1, kx2, ky2, kz2, kx4, ky4, kz4, kx3, ky3, kz3);
-                  Tmp -= this->ComputeTwoBodyMatrixElementAUpADown(kx2, ky2, kz2, kx1, ky1, kz1, kx3, ky3, kz3, kx4, ky4, kz4);
-                  Tmp += this->ComputeTwoBodyMatrixElementAUpADown(kx2, ky2, kz2, kx1, ky1, kz1, kx4, ky4, kz4, kx3, ky3, kz3);
-                  this->InteractionFactorsupupupup[i][Index] += -2.0 * FactorAUpADown * Tmp;
-		  
+                  this->InteractionFactorsumumumum[i][Index] = 0.0;
+                  this->InteractionFactorsdpdpdpdp[i][Index] = 0.0;
+                  this->InteractionFactorsdmdmdmdm[i][Index] = 0.0;		  
 		  ++TotalNbrInteractionFactors;
 		  ++Index;
 		}
@@ -375,9 +382,18 @@ void ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian::EvaluateInteractionFac
 		  int ky4 = Index4 % this->NbrSiteYZ;
 		  int kz4 = ky4 % this->NbrSiteZ;
 		  ky4 /= this->NbrSiteZ;
-                  this->InteractionFactorsupumupum[i][Index] = 0.0;
+                  Tmp = this->ComputeTwoBodyMatrixElementAUpBUp(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
+                  this->InteractionFactorsupumupum[i][Index] = -2.0 * FactorAUpBUp * Tmp;
+                  Tmp = this->ComputeTwoBodyMatrixElementADownBDown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
+                  this->InteractionFactorsdpdmdpdm[i][Index] = -2.0 * FactorADownBDown * Tmp;
+                  Tmp = this->ComputeTwoBodyMatrixElementAUpBDown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
+                  this->InteractionFactorsupdmupdm[i][Index] = -2.0 * FactorAUpBDown * Tmp;
+                  Tmp = this->ComputeTwoBodyMatrixElementADownBUp(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
+                  this->InteractionFactorsumdpumdp[i][Index] = -2.0 * FactorADownBUp * Tmp;
                   Tmp = this->ComputeTwoBodyMatrixElementAUpADown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
-                  this->InteractionFactorsupumupum[i][Index] += -2.0 * FactorAUpADown * Tmp;
+                  this->InteractionFactorsupdpupdp[i][Index] = -2.0 * FactorAUpADown * Tmp;
+                  Tmp = this->ComputeTwoBodyMatrixElementBUpBDown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
+                  this->InteractionFactorsumdmumdm[i][Index] = -2.0 * FactorBUpBDown * Tmp;
 
 		  ++TotalNbrInteractionFactors;
 		  ++Index;
@@ -549,7 +565,7 @@ void ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian::ComputeOneBodyHamilton
 						 - sin ((((double) kz) * this->KzFactor) - (((double) ky) * this->KyFactor))
 						 + sin ((((double) kx) * this->KxFactor) - (((double) ky) * this->KyFactor)));
 	  double d5 = this->SpinOrbitCoupling * (sin ((((double) kx) * this->KxFactor))
-						 - sin ((((double) ky) * this->KyFactor))
+ 						 - sin ((((double) ky) * this->KyFactor))
 						 - sin ((((double) kx) * this->KxFactor) - (((double) kz) * this->KzFactor))
 						 + sin ((((double) ky) * this->KyFactor) - (((double) kz) * this->KzFactor)));
 	  Complex B2 = d3 - I() * d4;
@@ -574,8 +590,15 @@ void ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian::ComputeOneBodyHamilton
 	      TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag);
 #else
 	      TmpOneBodyHamiltonian.Diagonalize(TmpDiag);
-#endif   	      
+#endif   	
 	      oneBodyHamiltonians[Index] /= fabs(TmpDiag(0, 0));
+	      for (int i = 0; i < 4; ++i)
+		{
+		  double Tmp;
+		  oneBodyHamiltonians[Index].GetMatrixElement(i, i, Tmp);
+		  Tmp += 1.0;
+		  oneBodyHamiltonians[Index].SetMatrixElement(i, i, Tmp);
+		}
 	    }
 	}
 }

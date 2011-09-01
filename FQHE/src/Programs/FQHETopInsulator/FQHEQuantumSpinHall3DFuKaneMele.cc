@@ -216,6 +216,22 @@ int main(int argc, char** argv)
 											Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"),
 											Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), 		     
 											Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+		  
+// 		  ComplexMatrix HRep (Hamiltonian->GetHilbertSpaceDimension(), Hamiltonian->GetHilbertSpaceDimension());
+// 		  Hamiltonian->GetHamiltonian(HRep);
+// 		  for (int m = 0; m < Hamiltonian->GetHilbertSpaceDimension(); ++m)
+// 		    for (int n = m; n < Hamiltonian->GetHilbertSpaceDimension(); ++n)
+// 		      {
+// 			Complex Tmp;
+// 			HRep.GetMatrixElement(m, n, Tmp);
+// 			if (Norm(Tmp) != 0.0)
+// 			  {
+// 			    cout << m << " " << n << " : " << Tmp << " ";
+// 			    Space.PrintState(cout, m) << " | ";
+// 			    Space.PrintState(cout, n) << endl;			    
+// 			  }
+// 		      }
+
 		  char* ContentPrefix = new char[256];
 		  sprintf (ContentPrefix, "%d %d %d", i, j, k);
 		  char* EigenstateOutputFile = new char [512];
