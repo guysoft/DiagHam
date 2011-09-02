@@ -618,6 +618,74 @@ inline void ParticleOnLatticeQuantumSpinHallFourBandHamiltonian::EvaluateMNTwoBo
       TmpIndices = this->IntraSectorIndicesPerSum[j];
       for (int i1 = 0; i1 < Lim; i1 += 2)
 	{
+	  Coefficient3 = particles->AupAup(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  if (Coefficient3 != 0.0)
+	    {
+	      TmpInteractionFactor = &(this->InteractionFactorsupupupup[j][(i1 * Lim) >> 2]);
+	      for (int p = 0; p < nbrVectors; ++p)
+		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AdupAdup(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		  if (Index < Dim)
+		    {
+		      for (int p = 0; p < nbrVectors; ++p)
+			vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+		    }
+		  ++TmpInteractionFactor;
+		}
+	    }
+	  Coefficient3 = particles->AumAum(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  if (Coefficient3 != 0.0)
+	    {
+	      TmpInteractionFactor = &(this->InteractionFactorsumumumum[j][(i1 * Lim) >> 2]);
+	      for (int p = 0; p < nbrVectors; ++p)
+		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AdumAdum(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		  if (Index < Dim)
+		    {
+		      for (int p = 0; p < nbrVectors; ++p)
+			vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+		    }
+		  ++TmpInteractionFactor;
+		}
+	    }
+	  Coefficient3 = particles->AdpAdp(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  if (Coefficient3 != 0.0)
+	    {
+	      TmpInteractionFactor = &(this->InteractionFactorsdpdpdpdp[j][(i1 * Lim) >> 2]);
+	      for (int p = 0; p < nbrVectors; ++p)
+		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AddpAddp(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		  if (Index < Dim)
+		    {
+		      for (int p = 0; p < nbrVectors; ++p)
+			vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+		    }
+		  ++TmpInteractionFactor;
+		}
+	    }
+	  Coefficient3 = particles->AdmAdm(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  if (Coefficient3 != 0.0)
+	    {
+	      TmpInteractionFactor = &(this->InteractionFactorsdmdmdmdm[j][(i1 * Lim) >> 2]);
+	      for (int p = 0; p < nbrVectors; ++p)
+		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AddmAddm(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		  if (Index < Dim)
+		    {
+		      for (int p = 0; p < nbrVectors; ++p)
+			vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+		    }
+		  ++TmpInteractionFactor;
+		}
+	    }
 	}
     }
   for (int j = 0; j < this->NbrInterSectorSums; ++j)
@@ -626,6 +694,108 @@ inline void ParticleOnLatticeQuantumSpinHallFourBandHamiltonian::EvaluateMNTwoBo
       TmpIndices = this->InterSectorIndicesPerSum[j];
       for (int i1 = 0; i1 < Lim; i1 += 2)
 	{
+	  Coefficient3 = particles->AupAum(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  if (Coefficient3 != 0.0)
+	    {
+	      TmpInteractionFactor = &(this->InteractionFactorsupumupum[j][(i1 * Lim) >> 2]);
+	      for (int p = 0; p < nbrVectors; ++p)
+		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AdupAdum(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		  if (Index < Dim)
+		    {
+		      for (int p = 0; p < nbrVectors; ++p)
+			vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+		    }
+		  ++TmpInteractionFactor;
+		}
+	    }
+	  Coefficient3 = particles->AupAdp(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  if (Coefficient3 != 0.0)
+	    {
+	      TmpInteractionFactor = &(this->InteractionFactorsupdpupdp[j][(i1 * Lim) >> 2]);
+	      for (int p = 0; p < nbrVectors; ++p)
+		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AdupAddp(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		  if (Index < Dim)
+		    {
+		      for (int p = 0; p < nbrVectors; ++p)
+			vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+		    }
+		  ++TmpInteractionFactor;
+		}
+	    }
+	  Coefficient3 = particles->AupAdm(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  if (Coefficient3 != 0.0)
+	    {
+	      TmpInteractionFactor = &(this->InteractionFactorsupdmupdm[j][(i1 * Lim) >> 2]);
+	      for (int p = 0; p < nbrVectors; ++p)
+		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AdupAddm(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		  if (Index < Dim)
+		    {
+		      for (int p = 0; p < nbrVectors; ++p)
+			vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+		    }
+		  ++TmpInteractionFactor;
+		}
+	    }
+	  Coefficient3 = particles->AumAdp(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  if (Coefficient3 != 0.0)
+	    {
+	      TmpInteractionFactor = &(this->InteractionFactorsumdpumdp[j][(i1 * Lim) >> 2]);
+	      for (int p = 0; p < nbrVectors; ++p)
+		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AdumAddp(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		  if (Index < Dim)
+		    {
+		      for (int p = 0; p < nbrVectors; ++p)
+			vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+		    }
+		  ++TmpInteractionFactor;
+		}
+	    }
+	  Coefficient3 = particles->AumAdm(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  if (Coefficient3 != 0.0)
+	    {
+	      TmpInteractionFactor = &(this->InteractionFactorsumdmumdm[j][(i1 * Lim) >> 2]);
+	      for (int p = 0; p < nbrVectors; ++p)
+		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AdumAddm(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		  if (Index < Dim)
+		    {
+		      for (int p = 0; p < nbrVectors; ++p)
+			vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+		    }
+		  ++TmpInteractionFactor;
+		}
+	    }
+	  Coefficient3 = particles->AdpAdm(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  if (Coefficient3 != 0.0)
+	    {
+	      TmpInteractionFactor = &(this->InteractionFactorsdpdmdpdm[j][(i1 * Lim) >> 2]);
+	      for (int p = 0; p < nbrVectors; ++p)
+		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AddpAddm(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		  if (Index < Dim)
+		    {
+		      for (int p = 0; p < nbrVectors; ++p)
+			vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+		    }
+		  ++TmpInteractionFactor;
+		}
+	    }
 	}
     }
 }
@@ -663,7 +833,7 @@ inline void ParticleOnLatticeQuantumSpinHallFourBandHamiltonian::HermitianEvalua
 	      for (int i2 = 0; i2 < Lim; i2 += 2)
 		{
 		  Index = particles->AdupAdup(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-		  if (Index < Dim)
+		  if (Index <= index)
 		    {
 		      if (Index < index)
 			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj(*TmpInteractionFactor);
@@ -681,7 +851,7 @@ inline void ParticleOnLatticeQuantumSpinHallFourBandHamiltonian::HermitianEvalua
 	      for (int i2 = 0; i2 < Lim; i2 += 2)
 		{
 		  Index = particles->AdumAdum(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-		  if (Index < Dim)
+		  if (Index <= index)
 		    {
 		      if (Index < index)
 			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj(*TmpInteractionFactor);
@@ -699,7 +869,7 @@ inline void ParticleOnLatticeQuantumSpinHallFourBandHamiltonian::HermitianEvalua
 	      for (int i2 = 0; i2 < Lim; i2 += 2)
 		{
 		  Index = particles->AddpAddp(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-		  if (Index < Dim)
+		  if (Index <= index)
 		    {
 		      if (Index < index)
 			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj(*TmpInteractionFactor);
@@ -717,7 +887,7 @@ inline void ParticleOnLatticeQuantumSpinHallFourBandHamiltonian::HermitianEvalua
 	      for (int i2 = 0; i2 < Lim; i2 += 2)
 		{
 		  Index = particles->AddmAddm(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-		  if (Index < Dim)
+		  if (Index <= index)
 		    {
 		      if (Index < index)
 			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj(*TmpInteractionFactor);
@@ -743,7 +913,7 @@ inline void ParticleOnLatticeQuantumSpinHallFourBandHamiltonian::HermitianEvalua
 	      for (int i2 = 0; i2 < Lim; i2 += 2)
 		{
 		  Index = particles->AdupAdum(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-		  if (Index < Dim)
+		  if (Index <= index)
 		    {
 		      if (Index < index)
 			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj(*TmpInteractionFactor);
@@ -761,7 +931,7 @@ inline void ParticleOnLatticeQuantumSpinHallFourBandHamiltonian::HermitianEvalua
 	      for (int i2 = 0; i2 < Lim; i2 += 2)
 		{
 		  Index = particles->AdupAddp(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-		  if (Index < Dim)
+		  if (Index <= index)
 		    {
 		      if (Index < index)
 			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj(*TmpInteractionFactor);
@@ -779,7 +949,7 @@ inline void ParticleOnLatticeQuantumSpinHallFourBandHamiltonian::HermitianEvalua
 	      for (int i2 = 0; i2 < Lim; i2 += 2)
 		{
 		  Index = particles->AdupAddm(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-		  if (Index < Dim)
+		  if (Index <= index)
 		    {
 		      if (Index < index)
 			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj(*TmpInteractionFactor);
@@ -797,7 +967,7 @@ inline void ParticleOnLatticeQuantumSpinHallFourBandHamiltonian::HermitianEvalua
 	      for (int i2 = 0; i2 < Lim; i2 += 2)
 		{
 		  Index = particles->AdumAddp(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-		  if (Index < Dim)
+		  if (Index <= index)
 		    {
 		      if (Index < index)
 			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj(*TmpInteractionFactor);
@@ -815,7 +985,7 @@ inline void ParticleOnLatticeQuantumSpinHallFourBandHamiltonian::HermitianEvalua
 	      for (int i2 = 0; i2 < Lim; i2 += 2)
 		{
 		  Index = particles->AdumAddm(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-		  if (Index < Dim)
+		  if (Index <= index)
 		    {
 		      if (Index < index)
 			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj(*TmpInteractionFactor);
@@ -833,7 +1003,7 @@ inline void ParticleOnLatticeQuantumSpinHallFourBandHamiltonian::HermitianEvalua
 	      for (int i2 = 0; i2 < Lim; i2 += 2)
 		{
 		  Index = particles->AddpAddm(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-		  if (Index < Dim)
+		  if (Index <= index)
 		    {
 		      if (Index < index)
 			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj(*TmpInteractionFactor);
@@ -873,6 +1043,126 @@ inline void ParticleOnLatticeQuantumSpinHallFourBandHamiltonian::HermitianEvalua
       TmpIndices = this->IntraSectorIndicesPerSum[j];
       for (int i1 = 0; i1 < Lim; i1 += 2)
 	{
+	  Coefficient3 = particles->AupAup(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  if (Coefficient3 != 0.0)
+	    {
+	      TmpInteractionFactor = &(this->InteractionFactorsupupupup[j][(i1 * Lim) >> 2]);
+	      for (int p = 0; p < nbrVectors; ++p)
+		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AdupAdup(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		  if (Index <= index)
+		    {
+		      if (Index < index)
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor)) * vSources[p][Index];
+			    }
+			}
+		      else
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			    }
+			}
+		    }
+		  ++TmpInteractionFactor;
+		}
+	    }
+	  Coefficient3 = particles->AumAum(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  if (Coefficient3 != 0.0)
+	    {
+	      TmpInteractionFactor = &(this->InteractionFactorsumumumum[j][(i1 * Lim) >> 2]);
+	      for (int p = 0; p < nbrVectors; ++p)
+		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AdumAdum(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		  if (Index <= index)
+		    {
+		      if (Index < index)
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor)) * vSources[p][Index];
+			    }
+			}
+		      else
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			    }
+			}
+		    }
+		  ++TmpInteractionFactor;
+		}
+	    }
+	  Coefficient3 = particles->AdpAdp(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  if (Coefficient3 != 0.0)
+	    {
+	      TmpInteractionFactor = &(this->InteractionFactorsdpdpdpdp[j][(i1 * Lim) >> 2]);
+	      for (int p = 0; p < nbrVectors; ++p)
+		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AddpAddp(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		  if (Index <= index)
+		    {
+		      if (Index < index)
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor)) * vSources[p][Index];
+			    }
+			}
+		      else
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			    }
+			}
+		    }
+		  ++TmpInteractionFactor;
+		}
+	    }
+	  Coefficient3 = particles->AdmAdm(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  if (Coefficient3 != 0.0)
+	    {
+	      TmpInteractionFactor = &(this->InteractionFactorsdmdmdmdm[j][(i1 * Lim) >> 2]);
+	      for (int p = 0; p < nbrVectors; ++p)
+		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AddmAddm(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		  if (Index <= index)
+		    {
+		      if (Index < index)
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor)) * vSources[p][Index];
+			    }
+			}
+		      else
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			    }
+			}
+		    }
+		  ++TmpInteractionFactor;
+		}
+	    }
 	}
     }
   for (int j = 0; j < this->NbrInterSectorSums; ++j)
@@ -881,6 +1171,186 @@ inline void ParticleOnLatticeQuantumSpinHallFourBandHamiltonian::HermitianEvalua
       TmpIndices = this->InterSectorIndicesPerSum[j];
       for (int i1 = 0; i1 < Lim; i1 += 2)
 	{
+	  Coefficient3 = particles->AupAum(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  if (Coefficient3 != 0.0)
+	    {
+	      TmpInteractionFactor = &(this->InteractionFactorsupumupum[j][(i1 * Lim) >> 2]);
+	      for (int p = 0; p < nbrVectors; ++p)
+		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AdupAdum(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		  if (Index <= index)
+		    {
+		      if (Index < index)
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor)) * vSources[p][Index];
+			    }
+			}
+		      else
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			    }
+			}
+		    }
+		  ++TmpInteractionFactor;
+		}
+	    }
+	  Coefficient3 = particles->AupAdp(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  if (Coefficient3 != 0.0)
+	    {
+	      TmpInteractionFactor = &(this->InteractionFactorsupdpupdp[j][(i1 * Lim) >> 2]);
+	      for (int p = 0; p < nbrVectors; ++p)
+		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AdupAddp(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		  if (Index <= index)
+		    {
+		      if (Index < index)
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor)) * vSources[p][Index];
+			    }
+			}
+		      else
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			    }
+			}
+		    }
+		  ++TmpInteractionFactor;
+		}
+	    }
+	  Coefficient3 = particles->AupAdm(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  if (Coefficient3 != 0.0)
+	    {
+	      TmpInteractionFactor = &(this->InteractionFactorsupdmupdm[j][(i1 * Lim) >> 2]);
+	      for (int p = 0; p < nbrVectors; ++p)
+		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AdupAddm(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		  if (Index <= index)
+		    {
+		      if (Index < index)
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor)) * vSources[p][Index];
+			    }
+			}
+		      else
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			    }
+			}
+		    }
+		  ++TmpInteractionFactor;
+		}
+	    }
+	  Coefficient3 = particles->AumAdp(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  if (Coefficient3 != 0.0)
+	    {
+	      TmpInteractionFactor = &(this->InteractionFactorsumdpumdp[j][(i1 * Lim) >> 2]);
+	      for (int p = 0; p < nbrVectors; ++p)
+		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AdumAddp(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		  if (Index <= index)
+		    {
+		      if (Index < index)
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor)) * vSources[p][Index];
+			    }
+			}
+		      else
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			    }
+			}
+		    }
+		  ++TmpInteractionFactor;
+		}
+	    }
+	  Coefficient3 = particles->AumAdm(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  if (Coefficient3 != 0.0)
+	    {
+	      TmpInteractionFactor = &(this->InteractionFactorsumdmumdm[j][(i1 * Lim) >> 2]);
+	      for (int p = 0; p < nbrVectors; ++p)
+		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AdumAddm(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		  if (Index <= index)
+		    {
+		      if (Index < index)
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor)) * vSources[p][Index];
+			    }
+			}
+		      else
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			    }
+			}
+		    }
+		  ++TmpInteractionFactor;
+		}
+	    }
+	  Coefficient3 = particles->AdpAdm(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  if (Coefficient3 != 0.0)
+	    {
+	      TmpInteractionFactor = &(this->InteractionFactorsdpdmdpdm[j][(i1 * Lim) >> 2]);
+	      for (int p = 0; p < nbrVectors; ++p)
+		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AddpAddm(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		  if (Index <= index)
+		    {
+		      if (Index < index)
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor)) * vSources[p][Index];
+			    }
+			}
+		      else
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			    }
+			}
+		    }
+		  ++TmpInteractionFactor;
+		}
+	    }
 	}
     }
   for (int l = 0; l < nbrVectors; ++l)
@@ -2054,6 +2524,72 @@ inline void ParticleOnLatticeQuantumSpinHallFourBandHamiltonian::EvaluateMNOneBo
 		{
 		  for (int p = 0; p < nbrVectors; ++p)
 		    vDestinations[p][Index] += Coefficient * OneBodyInteractionFactorsupum[j] * vSources[p][i];
+		}
+	      Index = particles->AdupAdp(i + this->PrecalculationShift, j, j, Coefficient);
+	      if (Index < Dim)
+		{
+		  for (int p = 0; p < nbrVectors; ++p)
+		    vDestinations[p][Index] += Coefficient * OneBodyInteractionFactorsupdp[j] * vSources[p][i];
+		}
+	      Index = particles->AdupAdm(i + this->PrecalculationShift, j, j, Coefficient);
+	      if (Index < Dim)
+		{
+		  for (int p = 0; p < nbrVectors; ++p)
+		    vDestinations[p][Index] += Coefficient * OneBodyInteractionFactorsupdm[j] * vSources[p][i];
+		}
+	      Index = particles->AdumAup(i + this->PrecalculationShift, j, j, Coefficient);
+	      if (Index < Dim)
+		{
+		  for (int p = 0; p < nbrVectors; ++p)
+		    vDestinations[p][Index] += Coefficient * Conj(OneBodyInteractionFactorsupum[j]) * vSources[p][i];
+		}
+	      Index = particles->AdumAdp(i + this->PrecalculationShift, j, j, Coefficient);
+	      if (Index < Dim)
+		{
+		  for (int p = 0; p < nbrVectors; ++p)
+		    vDestinations[p][Index] += Coefficient * OneBodyInteractionFactorsumdp[j] * vSources[p][i];
+		}
+	      Index = particles->AdumAdm(i + this->PrecalculationShift, j, j, Coefficient);
+	      if (Index < Dim)
+		{
+		  for (int p = 0; p < nbrVectors; ++p)
+		    vDestinations[p][Index] += Coefficient * OneBodyInteractionFactorsumdm[j] * vSources[p][i];
+		}
+	      Index = particles->AddpAup(i + this->PrecalculationShift, j, j, Coefficient);
+	      if (Index < Dim)
+		{
+		  for (int p = 0; p < nbrVectors; ++p)
+		    vDestinations[p][Index] += Coefficient * Conj(OneBodyInteractionFactorsupdp[j]) * vSources[p][i];
+		}
+	      Index = particles->AddpAum(i + this->PrecalculationShift, j, j, Coefficient);
+	      if (Index < Dim)
+		{
+		  for (int p = 0; p < nbrVectors; ++p)
+		    vDestinations[p][Index] += Coefficient * Conj(OneBodyInteractionFactorsumdp[j]) * vSources[p][i];
+		}
+	      Index = particles->AddpAdm(i + this->PrecalculationShift, j, j, Coefficient);
+	      if (Index < Dim)
+		{
+		  for (int p = 0; p < nbrVectors; ++p)
+		    vDestinations[p][Index] += Coefficient * OneBodyInteractionFactorsdpdm[j] * vSources[p][i];
+		}
+	      Index = particles->AddmAup(i + this->PrecalculationShift, j, j, Coefficient);
+	      if (Index < Dim)
+		{
+		  for (int p = 0; p < nbrVectors; ++p)
+		    vDestinations[p][Index] += Coefficient * Conj(OneBodyInteractionFactorsupdm[j]) * vSources[p][i];
+		}
+	      Index = particles->AddmAum(i + this->PrecalculationShift, j, j, Coefficient);
+	      if (Index < Dim)
+		{
+		  for (int p = 0; p < nbrVectors; ++p)
+		    vDestinations[p][Index] += Coefficient * Conj(OneBodyInteractionFactorsumdm[j]) * vSources[p][i];
+		}
+	      Index = particles->AddmAdp(i + this->PrecalculationShift, j, j, Coefficient);
+	      if (Index < Dim)
+		{
+		  for (int p = 0; p < nbrVectors; ++p)
+		    vDestinations[p][Index] += Coefficient * Conj(OneBodyInteractionFactorsdpdm[j]) * vSources[p][i];
 		}
 	    }
 	}
