@@ -101,7 +101,7 @@ ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian::ParticleOnCubicLatticeFourB
   this->OneBodyInteractionFactorsdpdm = 0;
   this->OneBodyInteractionFactorsdmdm = 0;
   this->FastMultiplicationFlag = false;
-  this->HermitianSymmetryFlag = false;
+  this->HermitianSymmetryFlag = true;
   long MinIndex;
   long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
@@ -275,11 +275,11 @@ void ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian::EvaluateInteractionFac
       double Factor = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ));
       if (this->FlatBand == true)
 	Factor *= this->UPotential;
-      double FactorAUpADown = Factor * this->VPotential * 0.0;
+      double FactorAUpADown = Factor * this->VPotential;
       double FactorBUpBDown = Factor * this->VPotential;
       if (this->FlatBand == false)
 	Factor *= this->UPotential;
-      Factor = 0.0;
+      //      Factor = 0.0;
       double FactorAUpBUp = Factor;
       double FactorADownBDown = Factor;
       double FactorAUpBDown = Factor;

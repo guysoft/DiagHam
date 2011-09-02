@@ -764,6 +764,7 @@ long ParticleOnLatticeQuantumSpinHallFourBandHamiltonian::PartialFastMultiplicat
   int* TmpM3Values;
 
   this->EvaluateMNTwoBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
+  this->EvaluateMNOneBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
 
   delete TmpParticles;
 
@@ -840,7 +841,7 @@ void ParticleOnLatticeQuantumSpinHallFourBandHamiltonian::PartialEnableFastMulti
       this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
 							 this->InteractionPerComponentCoefficient[Pos], TotalPos);
       this->EvaluateMNOneBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
-      							 this->InteractionPerComponentCoefficient[Pos], TotalPos);
+							 this->InteractionPerComponentCoefficient[Pos], TotalPos);
       ++Pos;
     }
   delete TmpParticles;
