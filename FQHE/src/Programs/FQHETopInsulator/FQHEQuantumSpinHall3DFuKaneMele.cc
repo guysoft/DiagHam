@@ -42,6 +42,8 @@ void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrS
 
 int main(int argc, char** argv)
 {
+  cout.precision(14);
+
   OptionManager Manager ("FQHEQuantumSpinHall3DFuKaneMele" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
@@ -228,6 +230,7 @@ int main(int argc, char** argv)
 // 			  {
 // 			    cout << m << " " << n << " : " << Tmp << " ";
 // 			    Space.PrintState(cout, m) << " | ";
+
 // 			    Space.PrintState(cout, n) << endl;			    
 // 			  }
 // 		      }
