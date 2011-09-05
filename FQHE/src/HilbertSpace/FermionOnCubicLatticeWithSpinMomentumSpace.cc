@@ -324,9 +324,9 @@ ostream& FermionOnCubicLatticeWithSpinMomentumSpace::PrintState (ostream& Str, i
       int TmpKz = TmpKy % this->NbrSiteZ;
       TmpKy /= this->NbrSiteZ;
       if ((Tmp & 0x1l) != 0ul)
-	Str << "(" << TmpKx << "," << TmpKy << "," << TmpKz << ",+)";
-      if ((Tmp & 0x2l) != 0ul)
 	Str << "(" << TmpKx << "," << TmpKy << "," << TmpKz << ",-)";
+      if ((Tmp & 0x2l) != 0ul)
+	Str << "(" << TmpKx << "," << TmpKy << "," << TmpKz << ",+)";
     }
   Str << "]";
 //   Str << " " << TmpState; 

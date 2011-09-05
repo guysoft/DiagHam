@@ -303,6 +303,7 @@ void ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::EvaluateInteractionFact
                   Tmp -= this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 0, 0, 0, 0, 2, 1, 2, 1) * this->ComputeTwoBodyMatrixElementADownBUp(kx2, ky2, kz2, kx1, ky1, kz1, kx3, ky3, kz3, kx4, ky4, kz4);
                   Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 0, 0, 0, 0, 2, 1, 2, 1) * this->ComputeTwoBodyMatrixElementADownBUp(kx2, ky2, kz2, kx1, ky1, kz1, kx4, ky4, kz4, kx3, ky3, kz3);
                   this->InteractionFactorsupupupup[i][Index] += -2.0 * FactorADownBUp * Tmp;
+		  cout << Index << " : " << Index1 << " " <<  Index2 << " " <<  Index3 << " " <<  Index4 << " " << this->InteractionFactorsupupupup[i][Index] << endl;
 		  
 		  ++TotalNbrInteractionFactors;
 		  ++Index;
@@ -414,8 +415,6 @@ void ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::EvaluateInteractionFact
                   Tmp -= this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 1, 1, 1, 1, 0, 2, 0, 2) * this->ComputeTwoBodyMatrixElementAUpADown(kx2, ky2, kz2, kx1, ky1, kz1, kx3, ky3, kz3, kx4, ky4, kz4);
                   Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 1, 1, 1, 1, 0, 2, 0, 2) * this->ComputeTwoBodyMatrixElementAUpADown(kx2, ky2, kz2, kx1, ky1, kz1, kx4, ky4, kz4, kx3, ky3, kz3);
                   this->InteractionFactorsdowndowndowndown[i][Index] += -2.0 * FactorAUpADown * Tmp;
-		  cout << Index << " : " << Index1 << " " <<  Index2 << " " <<  Index3 << " " <<  Index4 << " " << Tmp << endl;
-
                   Tmp = this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 1, 1, 1, 1, 1, 3, 1, 3) * this->ComputeTwoBodyMatrixElementBUpBDown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
                   Tmp -= this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 1, 1, 1, 1, 1, 3, 1, 3) * this->ComputeTwoBodyMatrixElementBUpBDown(kx1, ky1, kz1, kx2, ky2, kz2, kx4, ky4, kz4, kx3, ky3, kz3);
                   Tmp -= this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 1, 1, 1, 1, 1, 3, 1, 3) * this->ComputeTwoBodyMatrixElementBUpBDown(kx2, ky2, kz2, kx1, ky1, kz1, kx3, ky3, kz3, kx4, ky4, kz4);
