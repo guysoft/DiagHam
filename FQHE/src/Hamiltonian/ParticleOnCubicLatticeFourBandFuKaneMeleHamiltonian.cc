@@ -57,6 +57,7 @@ using std::ostream;
 // nbrSiteZ = number of sites in the z direction
 // uPotential = strength of the repulsive two body neareast neighbor interaction
 // vPotential = strength of the repulsive two body on site interaction
+// kineticScale = global energy scale of the kinetic energy term (i.e t1 hopping term)
 // nnHopingDistortion111 = distortion of nearest neighbor hoping amplitude in the (111) direction
 // spinOrbitCoupling = amplitude of the spin orbit coupling
 // gammaX = boundary condition twisting angle along x
@@ -67,7 +68,7 @@ using std::ostream;
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
 ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian::ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian(ParticleOnSphereWithSU4Spin* particles, int nbrParticles, int nbrSiteX, 
-												       int nbrSiteY, int nbrSiteZ, double uPotential, double vPotential, double nnHopingDistortion111, double spinOrbitCoupling, double gammaX, double gammaY, double gammaZ, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
+													 int nbrSiteY, int nbrSiteZ, double uPotential, double vPotential, double kineticScale, double nnHopingDistortion111, double spinOrbitCoupling, double gammaX, double gammaY, double gammaZ, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -80,6 +81,7 @@ ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian::ParticleOnCubicLatticeFourB
   this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
   this->KzFactor = 2.0 * M_PI / ((double) this->NbrSiteZ);
   this->HamiltonianShift = 0.0;
+  this->KineticScale = kineticScale;
   this->NNHopingDistortion111 = nnHopingDistortion111;
   this->SpinOrbitCoupling = spinOrbitCoupling;
   this->GammaX = gammaX;
@@ -600,5 +602,6 @@ void ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian::ComputeOneBodyHamilton
 		  oneBodyHamiltonians[Index].SetMatrixElement(i, i, Tmp);
 		}
 	    }
+	  oneBodyHamiltonians[Index] *= this->KineticScale;
 	}
 }

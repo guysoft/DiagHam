@@ -215,12 +215,24 @@ int main(int argc, char** argv)
 		  Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());	
 		  AbstractQHEHamiltonian* Hamiltonian = 0;
 		  Hamiltonian = new ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian(&Space, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ,
-											Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"),
+											Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), 1.0, Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"),
 											Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), 		     
 											Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 		  
-// 		  ComplexMatrix HRep (Hamiltonian->GetHilbertSpaceDimension(), Hamiltonian->GetHilbertSpaceDimension());
-// 		  Hamiltonian->GetHamiltonian(HRep);
+
+		  AbstractQHEHamiltonian* HamiltonianOneBody = new ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian(&Space, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ,
+														       0.0, 0.0, 1.0, Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"),
+											Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), 		     
+											Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+		  AbstractQHEHamiltonian* HamiltonianInteracting = new ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian(&Space, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ,
+															   Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), 0.0, Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"),
+														Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), 		     
+														Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+		  
+
+		  
+		  // 		  ComplexMatrix HRep (Hamiltonian->GetHilbertSpaceDimension(), Hamiltonian->GetHilbertSpaceDimension());
+		  // 		  Hamiltonian->GetHamiltonian(HRep);
 // 		  for (int m = 0; m < Hamiltonian->GetHilbertSpaceDimension(); ++m)
 // 		    for (int n = m; n < Hamiltonian->GetHilbertSpaceDimension(); ++n)
 // 		      {

@@ -36,6 +36,10 @@
 #include "MathTools/Complex.h"
 #include "HilbertSpace/AbstractQHEParticle.h"
 #include "Matrix/RealSymmetricMatrix.h"
+#include "Vector/ComplexVector.h"
+
+
+class AbstractArchitecture;
 
 
 class ParticleOnLattice :  public AbstractQHEParticle

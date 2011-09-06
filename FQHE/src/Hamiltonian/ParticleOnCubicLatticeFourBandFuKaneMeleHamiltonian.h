@@ -63,6 +63,8 @@ class ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian : public ParticleOnLat
   // numerical factor for momentum along z
   double KzFactor;
   
+  // global energy scale of the kinetic energy term (i.e t1 hopping term)
+  double KineticScale;
   // distortion of nearest neighbor hoping amplitude in the (111) direction
   double NNHopingDistortion111;
   // amplitude of the spin orbit coupling
@@ -98,6 +100,7 @@ class ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian : public ParticleOnLat
   // nbrSiteZ = number of sites in the z direction
   // uPotential = strength of the repulsive two body neareast neighbor interaction
   // vPotential = strength of the repulsive two body on site interaction
+  // kineticScale = global energy scale of the kinetic energy term (i.e t1 hopping term)
   // nnHopingDistortion111 = distortion of nearest neighbor hoping amplitude in the (111) direction
   // spinOrbitCoupling = amplitude of the spin orbit coupling
   // gammaX = boundary condition twisting angle along x
@@ -106,7 +109,7 @@ class ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian : public ParticleOnLat
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian(ParticleOnSphereWithSU4Spin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, int nbrSiteZ, double uPotential, double vPotential, double nnHopingDistortion111, double spinOrbitCoupling, double gammaX, double gammaY, double gammaZ, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian(ParticleOnSphereWithSU4Spin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, int nbrSiteZ, double uPotential, double vPotential, double kineticScale, double nnHopingDistortion111, double spinOrbitCoupling, double gammaX, double gammaY, double gammaZ, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //
