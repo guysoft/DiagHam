@@ -13,4 +13,5 @@ FQHESphereParticleEntanglementSpectrumOperation.cc \
 FQHESphereJackGeneratorSumRationalPolynomialOperation.cc \
 FQHESphereMultipleMonomialsTimesSlaterProjectionOperation.cc \
 FQHETorusParticleEntanglementSpectrumOperation.cc \
-FQHESphereMonomialsProductOperation.cc
+FQHESphereMonomialsProductOperation.cc \
+FQHELatticeParticleEntanglementSpectrumOperation.cc

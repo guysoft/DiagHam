@@ -34,6 +34,7 @@
 #include "MathTools/FactorialCoefficient.h"
 #include "QuantumNumber/NumberParticleQuantumNumber.h"
 #include "MathTools/BinomialCoefficients.h"
+#include "Architecture/ArchitectureOperation/FQHELatticeParticleEntanglementSpectrumOperation.h"
 
 #include <bitset>
 #include <iostream>
@@ -1197,8 +1198,9 @@ HermitianMatrix FermionOnLattice::EvaluatePartialDensityMatrixParticlePartition 
   FermionOnLattice SubsytemSpace (nbrParticleSector, this->Lx, this->Ly, this->NbrFluxQuanta, 10000000, this->SolenoidX, this->SolenoidY);
   HermitianMatrix TmpDensityMatrix (SubsytemSpace.GetHilbertSpaceDimension(), true);
   FermionOnLattice ComplementarySpace (ComplementaryNbrParticles, this->Lx, this->Ly, this->NbrFluxQuanta, 10000000, this->SolenoidX, this->SolenoidY);
-  long NbrNonZeroMatrixElements = this->EvaluatePartialDensityMatrixParticlePartitionCore(0, ComplementarySpace.GetHilbertSpaceDimension(), &ComplementarySpace, &SubsytemSpace, groundState, &TmpDensityMatrix);
-  if (NbrNonZeroMatrixElements > 0)	
+  FQHELatticeParticleEntanglementSpectrumOperation Operation(this, &SubsytemSpace, &ComplementarySpace, groundState, TmpDensityMatrix);
+  Operation.ApplyOperation(architecture);
+  if (Operation.GetNbrNonZeroMatrixElements() > 0)	
     return TmpDensityMatrix;
   else
     {

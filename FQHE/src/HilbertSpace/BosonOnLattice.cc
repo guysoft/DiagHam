@@ -37,6 +37,8 @@
 #include "Vector/RealVector.h"
 #include "FunctionBasis/AbstractFunctionBasis.h"
 #include "GeneralTools/UnsignedIntegerTools.h"
+#include "MathTools/BinomialCoefficients.h"
+#include "Architecture/ArchitectureOperation/FQHELatticeParticleEntanglementSpectrumOperation.h"
 
 #include <cmath>
 #include <cstdlib>
@@ -864,4 +866,59 @@ int BosonOnLattice::CarefulFindStateIndex(unsigned long stateDescription, int hi
       
       return this->HilbertSpaceDimension;
     }
+}
+
+// evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. 
+// 
+// nbrBosonSector = number of particles that belong to the subsytem 
+// lzSector = Lz sector in which the density matrix has to be evaluated 
+// groundState = reference on the total system ground state
+// architecture = pointer to the architecture to use parallelized algorithm 
+// return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+
+HermitianMatrix BosonOnLattice::EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, ComplexVector& groundState, AbstractArchitecture* architecture)
+{
+  if (nbrParticleSector == 0)
+    {
+      HermitianMatrix TmpDensityMatrix(1, true);
+      TmpDensityMatrix(0, 0) = 1.0;
+      return TmpDensityMatrix;
+    }
+  if (nbrParticleSector == this->NbrBosons)
+    {
+      HermitianMatrix TmpDensityMatrix(1, true);
+      TmpDensityMatrix(0, 0) = 1.0;
+      return TmpDensityMatrix;
+    }
+  int ComplementaryNbrParticles = this->NbrBosons - nbrParticleSector;
+  BosonOnLattice SubsytemSpace (nbrParticleSector, this->Lx, this->Ly, this->NbrFluxQuanta, 10000000, this->SolenoidX, this->SolenoidY);
+  HermitianMatrix TmpDensityMatrix (SubsytemSpace.GetHilbertSpaceDimension(), true);
+  BosonOnLattice ComplementarySpace (ComplementaryNbrParticles, this->Lx, this->Ly, this->NbrFluxQuanta, 10000000, this->SolenoidX, this->SolenoidY);
+  FQHELatticeParticleEntanglementSpectrumOperation Operation(this, &SubsytemSpace, &ComplementarySpace, groundState, TmpDensityMatrix);
+  Operation.ApplyOperation(architecture);
+  if (Operation.GetNbrNonZeroMatrixElements() > 0)	
+    return TmpDensityMatrix;
+  else
+    {
+      HermitianMatrix TmpDensityMatrixZero;
+      return TmpDensityMatrixZero;
+    }
+}
+
+// core part of the evaluation density matrix particle partition calculation
+// 
+// minIndex = first index to consider in complementary Hilbert space
+// nbrIndex = number of indices to consider in complementary Hilbert space
+// complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e part B)
+// destinationHilbertSpace = pointer to the destination Hilbert space (i.e. part A)
+// groundState = reference on the total system ground state
+// densityMatrix = reference on the density matrix where result has to stored
+// return value = number of components that have been added to the density matrix
+
+long BosonOnLattice::EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnLattice* complementaryHilbertSpace,  ParticleOnLattice* destinationHilbertSpace,
+									  ComplexVector& groundState,  HermitianMatrix* densityMatrix)
+{
+  BosonOnLattice* TmpHilbertSpace =  (BosonOnLattice*) complementaryHilbertSpace;
+  BosonOnLattice* TmpDestinationHilbertSpace =  (BosonOnLattice*) destinationHilbertSpace;
+  return 0;
 }
