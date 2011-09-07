@@ -99,6 +99,8 @@ HardCoreBosonOnLatticeGeneric::HardCoreBosonOnLatticeGeneric (int nbrBosons, Lat
   this->GenerateLookUpTable(memory);
 
   this->CurrentTranslation = new int[2];
+  this->CurrentTranslation[0] = 0;
+  this->CurrentTranslation[1] = 0;
   this->CurrentMappings = new int[NbrStates]; 
   this->CurrentTranslationPhases = new Complex[NbrStates];
 

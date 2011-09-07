@@ -685,6 +685,7 @@ LatticePhases::LatticePhases()
     delete [] TmpNeighborShift[i];
   delete [] TmpNeighborShift;
   delete [] TmpPhases;
+  delete [] TmpAmplitudes;
 }
 
 // destructor
@@ -894,8 +895,8 @@ double* LatticePhases::GetOneParticlePotentials(int &nbrPotentials, int* &positi
 // solenoidFlux = solenoid fluxes in each period of lattice
 void LatticePhases::GetTranslations(int *t, int* mappings, Complex *phases, double* solenoidFlux)
 {
-  int *CellCoordinates = new int[Dimension];
-  int *Translation = new int[Dimension];
+  int CellCoordinates[Dimension];
+  int Translation[Dimension];
   int Sublattice;
   for (int i=0; i<NbrSites; ++i)
     {

@@ -229,7 +229,7 @@ int main(int argc, char** argv)
       for (int s=0; s<NbrSites; ++s)
 	{
 	  Lattice->GetSiteCoordinates(s, CellPosition, Sub);
-	  SitePosition = Lattice->GetSitePosition(CellPosition,Sub);	  
+	  SitePosition = Lattice->GetSitePosition(CellPosition,Sub);
 	  Lattice->GetNeighbors(s, NbrNeighbors, Neighbors, Phases, PeriodicTranslations, Amplitudes);
 	  for (int n=0; n<NbrNeighbors; ++n)
 	    if (Neighbors[n]>s)

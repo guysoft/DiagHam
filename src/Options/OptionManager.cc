@@ -87,10 +87,14 @@ OptionManager::OptionManager(const char* programName, const char* programVersion
   char *TmpC=new char[1024];
   sprintf (TmpC,"append command line to file [overrides default '%s']", Buffer );
   (*GlobalGroup) += new SingleStringOption  ('\n', "append-cmdline", TmpC);
+  delete [] TmpC;
 #else
   (*GlobalGroup) += new SingleStringOption  ('\n', "append-cmdline", "append command line to file");
 #endif
   (*GlobalGroup) += new SingleStringInternalOption  ('\n', "repeat-cmdline", "load command line from file [format: filename.line]");
+#ifdef HAVE_GLOBAL_COMMAND_LOG
+  (*GlobalGroup) += new BooleanOption ('\n',"cmdlog-off","Do not log command line");
+#endif
 }
 
 // destructor
@@ -274,6 +278,7 @@ bool OptionManager::ProceedOptions (char** argumentValues, int nbrArgument, ostr
     }
   */
 #ifdef HAVE_GLOBAL_COMMAND_LOG
+  if (this->GetBoolean("cmdlog-off")==false)
     {
       char *AppendFile;
       if (this->GetString("append-cmdline"))
@@ -326,6 +331,10 @@ bool OptionManager::ProceedOptions (char** argumentValues, int nbrArgument, ostr
 	  std::cout<<"Could not convert time";
 	  exit(1);
 	}
+
+      // alternative:
+      // #include <unistd.h>
+      // char *getcwd(char *buf, size_t size); 
       
       char *CmdString = new char[1024];
       // get full executable path and machine name
@@ -339,12 +348,13 @@ bool OptionManager::ProceedOptions (char** argumentValues, int nbrArgument, ostr
       char *Pwd = GetLineOutputFromSystemCommand(CmdString);
 
       //LaunchTime.tv_sec
-      File << Count << "\t" << TimeStr << "\t" << Host << "\t" << Pwd << "\t" << Executable;
+      File << Count << "\t" << TimeStr << "\t" << Host << "\t" << Pwd << "\t" << Executable << "\t";
       for (Pos=0; Pos<nbrArgument-1; ++Pos)
 	File << argumentValues[Pos] << " ";
       File << argumentValues[Pos] << endl;
-
+      delete [] Executable;
       delete [] CmdString;
+      delete [] Pwd;
       delete [] Host;
       delete [] AppendFile;
     }

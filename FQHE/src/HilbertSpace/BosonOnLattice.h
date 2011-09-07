@@ -345,6 +345,33 @@ class BosonOnLattice : public ParticleOnLattice
   // finalStateLzMax = reference on the integer where the bosonic state maximum Lz value has to be stored
   void FermionToBoson(unsigned long initialState, int initialStateLzMax, unsigned long*& finalState, int& finalStateLzMax);
 
+  // convert a bosonic state to its monomial representation
+  //
+  // initialState = initial  bosonic state
+  // initialStateLzMax = initial bosonic state maximum Lz value
+  // finalState = reference on the array where the monomial representation has to be stored
+  void ConvertToMonomial(unsigned long* initialState, int initialStateLzMax, unsigned long*& finalState);
+
+  // convert a bosonic state to its monomial representation
+  //
+  // initialState = initial bosonic state in its fermionic representation
+  // initialStateLzMax = initial bosonic state maximum Lz value
+  // finalState = reference on the array where the monomial representation has to be stored
+  void ConvertToMonomial(unsigned long initialState, int initialStateLzMax, unsigned long*& finalState);
+
+  // convert a bosonic state from its monomial representation
+  //
+  // initialState = array where the monomial representation is stored
+  // return value = bosonic state in its fermionic representation
+  unsigned long ConvertFromMonomial(unsigned long* initialState);
+
+  // check that the product firstState*secondState is in the lexicographical order
+  //
+  // firstState = array where the monomial representation  of a state is stored
+  // secondState = array where the monomial representation  of another state is stored
+  // return value = true if the product firstState*secondState is in the lexicographical order
+  virtual bool CheckLexiOrder(int * firstState,unsigned long* secondState,int TailleEgal);
+
   // core part of the evaluation density matrix particle partition calculation
   // 
   // minIndex = first index to consider in complementary Hilbert space
@@ -426,6 +453,78 @@ inline void BosonOnLattice::FermionToBoson(unsigned long initialState, int initi
     }
   --finalStateLzMax;
 }
+
+// convert a bosonic state to its monomial representation
+//
+// initialState = initial  bosonic state
+// initialStateLzMax = initial bosonic state maximum Lz value
+// finalState = reference on the array where the monomial representation has to be stored
+
+inline void BosonOnLattice::ConvertToMonomial(unsigned long* initialState, int initialStateLzMax, unsigned long*& finalState)
+{
+  int Index = 0;
+  for (int i = initialStateLzMax; i >= 0; --i)
+    for (unsigned long j = 0l; j < initialState[i]; ++j)
+      finalState[Index++] = i;
+}
+
+// convert a bosonic state to its monomial representation
+//
+// initialState = initial bosonic state in its fermionic representation
+// initialStateLzMax = initial bosonic state maximum Lz value
+// finalState = reference on the array where the monomial representation has to be stored
+
+inline void BosonOnLattice::ConvertToMonomial(unsigned long initialState, int initialStateLzMax, unsigned long*& finalState)
+{
+  int Index = 0;
+  int TmpLz = initialStateLzMax - this->NbrBosons + 1;
+  while (initialStateLzMax >= 0)
+    {
+      while ((initialStateLzMax >= 0) && (((initialState >> initialStateLzMax) & 0x1ul) != 0x0ul))
+	{
+	  finalState[Index++] = TmpLz;
+	  --initialStateLzMax;
+	}
+      while ((initialStateLzMax >= 0) && (((initialState >> initialStateLzMax) & 0x1ul) == 0x0ul))
+	{
+	  --TmpLz;
+	  --initialStateLzMax;
+	}
+    }
+}
+
+// convert a bosonic state from its monomial representation
+//
+// initialState = array where the monomial representation is stored
+// return value = bosonic state in its fermionic representation
+
+inline unsigned long BosonOnLattice::ConvertFromMonomial(unsigned long* initialState)
+{
+  unsigned long Tmp = 0x0ul;
+  for (int i = 0; i < this->NbrBosons; ++i)
+    Tmp |= 0x1ul << (initialState[i] + ((unsigned long) (this->NbrBosons - i)) - 1ul);
+  return Tmp;
+}
+
+
+// check that the product firstState*secondState is in the lexicographical order
+//
+// firstState = array where the monomial representation  of a state is stored
+// secondState = array where the monomial representation  of another state is stored
+// return value = true if the product firstState*secondState is in the lexicographical order
+
+inline bool BosonOnLattice::CheckLexiOrder(int * egal,unsigned long* secondState,int TailleEgal)
+{
+  for (int index = 0; index < TailleEgal; ++index)
+    {
+      if (secondState[egal[index]]<secondState[egal[index]+1])
+	{
+	  return false;
+	}
+    }
+  return true;
+}
+
 
 #endif
 

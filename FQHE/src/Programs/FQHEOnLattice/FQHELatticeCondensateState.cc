@@ -372,11 +372,6 @@ int main(int argc, char** argv)
     {
       if (Manager.GetString("alt-input")!=NULL)
 	{
-	  if (GenericLattice)
-	    {
-	      cout << "General lattice mode does not support alternative input method"<<endl;
-	      exit(1);
-	    }
 	  MultiColumnASCIIFile Parser(' ');
 
 	  if (Parser.Parse(CondensateFile)==false)
@@ -384,51 +379,93 @@ int main(int argc, char** argv)
 	      cout<<"Could not read condensate file "<<CondensateFile<<" !"<<endl;
 	      exit(1);
 	    }
+	  int *x=NULL, *y=NULL, *QuantumNumbers=NULL;
+	  double *theta, *phi;
 
-	  if (Parser.GetNbrColumns()!=4)
+	  if (GenericLattice)
 	    {
-	      cout<<"Error: Four columns, [ x y theta phi ] expected in condensate file !"<<endl;
-	      exit(1);
+	      if (Parser.GetNbrColumns()!=3)
+		{
+		  cout<<"Error: Three columns, [ q theta phi ] expected in condensate file for generic lattice !"<<endl;
+		  exit(1);
+		}
+	      if (Parser.GetNbrLines()!=NbrSites)
+		{
+		  cout<<"Error: Wrong number of lines in condensate file !"<<endl;
+		  exit(1);
+		}
+	      
+	      CondensateState.Resize(NbrSites);
+	      UnoccupiedNorms.Resize(NbrSites);
+	      
+	      QuantumNumbers = Parser.GetAsIntegerArray(0);
+	      theta = Parser.GetAsDoubleArray(1);
+	      phi = Parser.GetAsDoubleArray(2);
 	    }
-	  if (Parser.GetNbrLines()!=NbrSites)
+	  else
 	    {
-	      cout<<"Error: Wrong number of lines in condensate file !"<<endl;
-	      exit(1);
+	      if (Parser.GetNbrColumns()!=4)
+		{
+		  cout<<"Error: Four columns, [ x y theta phi ] expected in condensate file !"<<endl;
+		  exit(1);
+		}
+	      if (Parser.GetNbrLines()!=NbrSites)
+		{
+		  cout<<"Error: Wrong number of lines in condensate file !"<<endl;
+		  exit(1);
+		}
+	      
+	      CondensateState.Resize(NbrSites);
+	      UnoccupiedNorms.Resize(NbrSites);
+	      
+	      x = Parser.GetAsIntegerArray(0);
+	      y = Parser.GetAsIntegerArray(1);
+	      
+	      theta = Parser.GetAsDoubleArray(2);
+	      phi = Parser.GetAsDoubleArray(3);
 	    }
 
-	  CondensateState.Resize(NbrSites);
-	  UnoccupiedNorms.Resize(NbrSites);
-
-	  int *x = Parser.GetAsIntegerArray(0);
-	  int *y = Parser.GetAsIntegerArray(1);
-
-	  double *theta = Parser.GetAsDoubleArray(2);
-	  double *phi = Parser.GetAsDoubleArray(3);
-
-	  ParticleOnLattice *Space = new BosonOnLattice(1, Lx, Ly, NbrFluxQuanta, MemorySpace);
+	  ParticleOnLattice *Space=NULL;
+	  if (GenericLattice==false)
+	    Space = new BosonOnLattice(1, Lx, Ly, NbrFluxQuanta, MemorySpace);
 
 	  int Dim=NbrSites;
 	  Complex Tmp;
+	  int q;
 	  if (Manager.GetInteger("alt-format")==0)
 	    {
 	      if (Manager.GetBoolean("alt-ignore-amplitude"))
 		{
 		  for (int i=0; i<Dim; ++i)
-		    {      
-		      int q = Space->EncodeQuantumNumber(x[i]-1, y[i]-1, 0, Tmp);
+		    {
+		      if (GenericLattice)
+			q = QuantumNumbers[i];
+		      else
+			q = Space->EncodeQuantumNumber(x[i]-1, y[i]-1, 0, Tmp);
 		      CondensateState[Dim-1-q]=Polar(1.0, phi[i]); // CondensateState[Dim-1-q]
 		      UnoccupiedNorms[Dim-1-q]=0.0;
 		    }
 		}
 	      else
 		{
+		  int CellCoordinates[2], Sublattice;
 		  cout << "# x \t y \t vx \t vy"<<endl;
 		  for (int i=0; i<Dim; ++i)
-		    {      
-		      int q = Space->EncodeQuantumNumber(x[i]-1, y[i]-1, 0, Tmp);
+		    {
+		      if (GenericLattice)
+			q = QuantumNumbers[i];
+		      else
+			q = Space->EncodeQuantumNumber(x[i]-1, y[i]-1, 0, Tmp);
 		      CondensateState[Dim-1-q]=Complex(cos(theta[i]/2.0)*cos(phi[i]), cos(theta[i]/2.0)*sin(phi[i])); // CondensateState[Dim-1-q]
 		      UnoccupiedNorms[Dim-1-q]=sin(theta[i]/2.0);
-		      cout <<x[i]-1<<"\t"<<y[i]-1<<"\t"<<CondensateState[Dim-1-q].Re<<"\t"<<CondensateState[Dim-1-q].Im<<endl;
+		      if (GenericLattice==false)
+			cout <<x[i]-1<<"\t"<<y[i]-1<<"\t"<<CondensateState[Dim-1-q].Re<<"\t"<<CondensateState[Dim-1-q].Im<<endl;
+		      else
+			{
+			  Lattice->GetSiteCoordinates(q, CellCoordinates, Sublattice);
+			  RealVector Position = Lattice->GetSitePosition(CellCoordinates, Sublattice);
+			  cout <<Position[0]<<"\t"<<Position[1]<<"\t"<<CondensateState[Dim-1-q].Re<<"\t"<<CondensateState[Dim-1-q].Im<<endl;
+			}
 		    }
 		  cout <<"CondensateState:"<<endl<<CondensateState<<endl;
 		}
@@ -436,15 +473,18 @@ int main(int argc, char** argv)
 	  else if (Manager.GetInteger("alt-format")==1)
 	    {
 	      for (int i=0; i<Dim; ++i)
-		{      
-		  int q = Space->EncodeQuantumNumber(x[i], y[i], 0, Tmp);
+		{
+		  if (GenericLattice)
+		    q = QuantumNumbers[i];
+		  else
+		    q = Space->EncodeQuantumNumber(x[i], y[i], 0, Tmp);
 		  CondensateState[Dim-1-q].Re= theta[i]; 
 		  CondensateState[Dim-1-q].Im= phi[i]; 
 		  UnoccupiedNorms[Dim-1-q]=0.0;
 		}
 	    }
-	  delete Space;      
-      
+	  if (GenericLattice==false)
+	    delete Space;
 	}
       else
 	{

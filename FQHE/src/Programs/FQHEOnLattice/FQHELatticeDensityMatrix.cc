@@ -101,7 +101,8 @@ int main(int argc, char** argv)
   (*OutputGroup) += new SingleDoubleOption  ('r',"dynamic-range","range of density operator eigenvalues to be displayed",1e-5);
   (*OutputGroup) += new BooleanOption  ('\n', "show-translation", "display the matrix defining the translation operator");
   (*OutputGroup) += new BooleanOption  ('\n', "show-basis", "show elements of vector in basis and exit");
-    (*SystemGroup) += new BooleanOption  ('\n', "normalize-phase", "change phase to make largest absolute value real and positive");
+  (*OutputGroup) += new BooleanOption  ('\n', "currents", "calculate expectation values of current operators and exit");
+  (*SystemGroup) += new BooleanOption  ('\n', "normalize-phase", "change phase to make largest absolute value real and positive");
   (*OutputGroup) += new SingleDoubleOption  ('\n', "display-threshold", "only display values larger than threshold",0.0);
   (*MiscGroup) += new SingleIntegerOption ('\n', "nbr-density", "number of density matrix eigenstates to be written out",1);
   (*MiscGroup) += new BooleanOption  ('\n', "joint", "evaluate joint density matrix for multiple vectors");
@@ -288,6 +289,97 @@ int main(int argc, char** argv)
     }
   
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
+
+  if (Manager.GetBoolean("currents"))
+    {
+      if (GenericLattice==false)
+	{
+	  cout << "Calculation of currents not implemented for default square lattice - use a configuration file"<<endl;
+	  exit(1);
+	}
+
+      char* CurrentFieldName = ReplaceExtensionToFileName(VectorFiles[0],"vec","j.dat");
+	    
+      ofstream VectorField;
+      VectorField.open(CurrentFieldName,ios::out);
+      delete [] CurrentFieldName;
+      double FluxDensity;
+      if (NbrFluxQuanta>Lx*Ly)
+	{
+	  FluxDensity=0.5;
+	  cout << "Assuming flux density of n_phi="<<FluxDensity<<endl;
+	}
+      else
+	{
+	  FluxDensity=(double)NbrFluxQuanta/(double)NbrSites;
+	}
+      // calculate current operator
+      RealVector SitePosition, SitePosition2, RelativePosition;
+      int CellPosition[2];
+      int Sub;
+
+      int NbrNeighbors;
+      int *Neighbors;
+      double *Phases;
+      double *Amplitudes;
+      int **PeriodicTranslations;
+      ParticleOnLatticeOneBodyOperator *DensityOperatorOut= new ParticleOnLatticeOneBodyOperator(Space);
+      ParticleOnLatticeOneBodyOperator *DensityOperatorIn= new ParticleOnLatticeOneBodyOperator(Space);
+      for (int s=0; s<NbrSites; ++s)
+	{
+	  Lattice->GetSiteCoordinates(s, CellPosition, Sub);
+	  SitePosition = Lattice->GetSitePosition(CellPosition,Sub);
+	  Lattice->GetNeighbors(s, NbrNeighbors, Neighbors, Phases, PeriodicTranslations, Amplitudes);
+	  ComplexVector TargetState(Space->GetHilbertSpaceDimension()), TargetState2(Space->GetHilbertSpaceDimension());
+	  for (int n=0; n<NbrNeighbors; ++n)
+	    if (Neighbors[n]>s)
+	      {
+		DensityOperatorOut->SetCreationAnnihilationIndex(Neighbors[n],s);
+		DensityOperatorIn->SetCreationAnnihilationIndex(s,Neighbors[n]);
+
+		double *Current = new double[NbrNeighbors];
+		for (int v=0; v<NbrVectors; ++v)
+		  {
+		    VectorOperatorMultiplyOperation Operation (DensityOperatorIn, &(Vectors[v]), &TargetState);
+		    Operation.ApplyOperation(Architecture.GetArchitecture());
+		    VectorOperatorMultiplyOperation Operation2 (DensityOperatorOut, &(Vectors[v]), &TargetState2);
+		    Operation2.ApplyOperation(Architecture.GetArchitecture());
+
+		    Complex PhaseIn = Vectors[v] * TargetState * Polar(1.0, -2.0*M_PI*FluxDensity*Phases[n]);
+
+		    Complex PhaseOut = Vectors[v] * TargetState2 * Polar(1.0, 2.0*M_PI*FluxDensity*Phases[n]);
+
+		    // correct expression for trial states:
+		    // double Current = -2.0*Imag(Conj(ResultingState[NbrSites-s-1])*ResultingState[NbrSites-Neighbors[n]-1]*Polar(1.0, -2.0*M_PI*FluxDensity*Phases[n]));
+		    Current[n] = - Imag(PhaseIn + PhaseOut);
+		    if (Amplitudes!=NULL)
+		      Current[n] *= Amplitudes[n];
+		  }
+		//cout << "J_"<<s<<","<<Neighbors[n]<<" = "<<Current<<endl;
+		Lattice->GetSiteCoordinates(Neighbors[n], CellPosition, Sub);
+		SitePosition2 = Lattice->GetSitePosition(CellPosition,Sub);
+		
+		for (int d=0; d<2; ++d)
+		  SitePosition2.AddLinearCombination((double)(-PeriodicTranslations[n][d]*Lattice->GetLatticeLength(d)),Lattice->GetLatticeVector(d));
+		//cout << "Connection "<<endl<<SitePosition<<"to"<<endl<<SitePosition2<< "(shift "<<PeriodicTranslations[n][0]<<","<< PeriodicTranslations[n][1]<<")"<<endl;
+		RelativePosition.Copy(SitePosition2);
+		RelativePosition.AddLinearCombination(-1.0,SitePosition);
+		RelativePosition/=RelativePosition.Norm();
+		SitePosition2.AddLinearCombination(1.0,SitePosition);
+		SitePosition2*=0.5;
+		
+		VectorField << SitePosition2[0] << "\t" << SitePosition2[1]
+			    << "\t" << RelativePosition[0]*Current[0] << "\t" << RelativePosition[1]*Current[0];
+
+		for (int v=1; v<NbrVectors; ++v)
+		  VectorField << "\t" << RelativePosition[0]*Current[v] << "\t" << RelativePosition[1]*Current[v];
+		VectorField << endl;
+		delete [] Current;
+	      }
+	}
+      delete DensityOperatorOut;
+      delete DensityOperatorIn;
+    }
 
   ParticleOnLatticeOneBodyOperator *DensityOperator= new ParticleOnLatticeOneBodyOperator(Space);
 
@@ -920,4 +1012,5 @@ int main(int argc, char** argv)
   delete [] Vectors;
   delete DensityOperator;
   delete TranslationOperator;
+  if (Lattice!=NULL) delete Lattice;
 }

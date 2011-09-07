@@ -304,6 +304,21 @@ Complex ParticleOnLattice::EvaluateWaveFunctionWithTimeCoherence (RealVector& st
 void ParticleOnLattice::InitializeWaveFunctionEvaluation (bool timeCoherence)
 {
 }
+
+// evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. 
+// 
+// nbrBosonSector = number of particles that belong to the subsytem 
+// lzSector = Lz sector in which the density matrix has to be evaluated 
+// groundState = reference on the total system ground state
+// architecture = pointer to the architecture to use parallelized algorithm 
+// return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+
+HermitianMatrix ParticleOnLattice::EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, ComplexVector& groundState, AbstractArchitecture* architecture)
+{
+  cout << "Attention: calling dummy routine ParticleOnLattice::EvaluatePartialDensityMatrixParticlePartition"<<endl;
+  return HermitianMatrix();
+}
+
                                     
 // core part of the evaluation density matrix particle partition calculation
 // 
