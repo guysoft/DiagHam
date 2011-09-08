@@ -40,12 +40,16 @@
 #include "FunctionBasis/AbstractFunctionBasis.h"
 #include "MathTools/BinomialCoefficients.h"
 #include "GeneralTools/UnsignedIntegerTools.h"
+#include "GeneralTools/ArrayTools.h"
 #include "MathTools/FactorialCoefficient.h"
 #include "GeneralTools/Endian.h"
 
 #include <math.h>
 #include <cstdlib>
 #include <fstream>
+#include <map>
+#include <bitset>
+#include <algorithm>
 
 using std::cout;
 using std::endl;
@@ -54,8 +58,8 @@ using std::dec;
 using std::ofstream;
 using std::ifstream;
 using std::ios;
-
-#include <bitset>
+using std::map;
+using std::pair;
 using std::bitset;
 
 #define WANT_LAPACK
@@ -2279,8 +2283,7 @@ RealVector& FermionOnSphereWithSpin::ConvertFromUnnormalizedMonomial(RealVector&
 {
   int* TmpMonomialReference = new int [this->NbrFermions];
   int* TmpMonomial = new int [this->NbrFermions];
-  double Factor = 1.0 / state[reference];
-  state[reference] = 1.0;
+  double Factor = 1.0;
   double* SqrtCoefficients = new double [this->LzMax + 1];
   double* InvSqrtCoefficients = new double [this->LzMax + 1];
   BinomialCoefficients Binomials(this->LzMax);
@@ -2982,3 +2985,264 @@ RealVector& FermionOnSphereWithSpin::FuseStates (RealVector& outputVector, RealV
   return outputVector;
 }
 
+// compute the product of a monomial and the halperin 110 state
+//
+// slater = array where the monomial representation of the slater determinant for half the number of particles is stored
+// monomial = array where the monomial representation is stored
+// sortingMap = map in which the generated states and their coefficient will be stored
+// nbrPermutations = number of different permutations
+// permutations1 = array where are stored the permutations of the spin up
+// permutations2 = array where are stored the permutations of the spin down
+// initialCoef = inital coefficient in front of the monomial
+
+void FermionOnSphereWithSpin::MonomialsTimesPolarizedSlater(unsigned long * slater, unsigned long * monomial ,map<unsigned long , double> & sortingMap, unsigned long nbrPermutations , unsigned long * permutations1, unsigned long * permutations2,double initialCoef)
+{
+  unsigned long* State = new unsigned long[this->NbrFermions];
+  pair <map <unsigned long, double>::iterator, bool> InsertionResult;
+  
+  int HalfNbrParticles = this->NbrFermions>>1;
+  unsigned long * HalfMonomialsUp = new unsigned long[HalfNbrParticles];
+  unsigned long * HalfMonomialsDown = new unsigned long[HalfNbrParticles];
+  
+  unsigned long TmpState = 0ul;
+  unsigned long Mask = 0ul;
+  unsigned long Sign = 0ul;	
+ 
+  double MonomialFact = initialCoef / (double) MultiplicitiesFactorial(monomial,this->NbrFermions);
+  double TmpCoef;
+  
+  double CoefInitial;
+  
+  for (unsigned long IndexPermutations = 0; IndexPermutations < nbrPermutations ;IndexPermutations++)
+    {
+      unsigned long TmpPermUp = permutations1[IndexPermutations];
+      unsigned long TmpPermDown = permutations2[IndexPermutations];
+      
+      for (int i = 0; i < HalfNbrParticles ; i++)
+	{
+	  HalfMonomialsUp[i] = monomial[(TmpPermUp >> (i * 5)) & 0x1ful];
+	  HalfMonomialsDown[i] = monomial[(TmpPermDown >> (i * 5)) & 0x1ful];
+	}
+      
+      CoefInitial =  ((double)MultiplicitiesFactorial(HalfMonomialsUp,HalfNbrParticles) * MultiplicitiesFactorial(HalfMonomialsDown,HalfNbrParticles)) * MonomialFact;
+      
+      do
+	{
+	  
+	  for (int i = 0; i < HalfNbrParticles ; i++)
+	    State[i] = HalfMonomialsUp[i] + slater[i];
+	  
+	  do
+	    {
+	      TmpCoef = CoefInitial;
+	      for (int i = 0; i < HalfNbrParticles ; i++)
+		State[i+HalfNbrParticles] = HalfMonomialsDown[i] + slater[i];
+	      
+	      TmpState = 0ul;
+	      Sign = 0ul;
+	      bool Bool = true;
+	      
+	      for (int i = 0; (i < HalfNbrParticles )&& (Bool); i++)
+		{
+		  Mask = (1ul << ((State[i]<<1) +1));
+		  if((TmpState & Mask) != 0)
+		    Bool = false;
+		  unsigned long TmpState2 = TmpState & (Mask - 1ul);
+#ifdef  __64_BITS__
+		  TmpState2 ^= TmpState2 >> 32;
+#endif
+		  TmpState2 ^= TmpState2 >> 16;
+		  TmpState2 ^= TmpState2 >> 8;
+		  TmpState2 ^= TmpState2 >> 4;
+		  TmpState2 ^= TmpState2 >> 2;
+		  TmpState2 ^= TmpState2 >> 1;
+		  Sign ^= TmpState2;
+		  TmpState |= Mask;
+		}
+	      
+	      for (int i = HalfNbrParticles; (i < this->NbrFermions)&& (Bool); i++)
+		{
+		  Mask = (1ul << ((State[i]<<1)));
+		  if((TmpState & Mask) != 0)
+		    Bool = false;
+		  unsigned long TmpState2 = TmpState & (Mask - 1ul);
+#ifdef  __64_BITS__
+		  TmpState2 ^= TmpState2 >> 32;
+#endif
+		  TmpState2 ^= TmpState2 >> 16;
+		  TmpState2 ^= TmpState2 >> 8;
+		  TmpState2 ^= TmpState2 >> 4;
+		  TmpState2 ^= TmpState2 >> 2;
+		  TmpState2 ^= TmpState2 >> 1;
+		  Sign ^= TmpState2;
+		  TmpState |= Mask;
+		}
+	      
+	      if (Bool)
+		{
+		  if ((Sign & 0x1ul) != 0ul)
+		    TmpCoef *= -1l;
+		  
+		  InsertionResult = sortingMap.insert (pair <unsigned long, double> (TmpState, TmpCoef));
+		  
+		  if (InsertionResult.second == false)
+		    {
+		      InsertionResult.first->second += TmpCoef;
+		    }	
+		}
+	    }
+	  while (std::prev_permutation(HalfMonomialsDown, HalfMonomialsDown + HalfNbrParticles));
+	}
+      while (std::prev_permutation(HalfMonomialsUp, HalfMonomialsUp + HalfNbrParticles));
+    }
+  delete [] State;
+}
+
+// compute the projection of the product of a monomial in the two lowest LL and the halperin 110 state
+//
+// slater = array where the monomial representation of the slater determinant for half the number of particles is stored
+// monomial = array where the monomial representation is stored
+// sortingMap = map in which the generated states and their coefficient will be stored
+// nbrPermutations = number of different permutations
+// permutations1 = array where are stored the permutations of the spin up
+// permutations2 = array where are stored the permutations of the spin down
+// initialCoef = inital coefficient in front of the monomial
+
+void FermionOnSphereWithSpin::MonomialsTimesPolarizedSlaterProjection(unsigned long * slater, unsigned long * monomial, map<unsigned long , double> & sortingMap, unsigned long nbrPermutations , unsigned long * permutations1, unsigned long * permutations2, double initialCoef)
+{
+  unsigned long* State = new unsigned long[this->NbrFermions];
+  pair <map <unsigned long, double>::iterator, bool> InsertionResult;
+  
+  int HalfNbrParticles = this->NbrFermions>>1;
+  unsigned long * HalfMonomialsUp = new unsigned long[HalfNbrParticles];
+  unsigned long * HalfMonomialsDown = new unsigned long[HalfNbrParticles];
+  double CoefUp = 1.0;
+  double CoefDown = 1.0;
+  unsigned long TmpState = 0ul;
+  unsigned long Mask = 0ul;
+  unsigned long Sign = 0ul;
+	
+  long TmpLzMaxUp = this->LzMax - HalfNbrParticles + 3;
+  long TmpFinalLzMaxUp = 2l + this->LzMax;
+  double InverseFactor = 1.0 / (((double) TmpLzMaxUp) * ((double) TmpFinalLzMaxUp));
+  double CoefInitial;
+  double MonomialFact = initialCoef / (double) MultiplicitiesFactorial(monomial,this->NbrFermions);
+	
+  for (unsigned long IndexPermutations = 0; IndexPermutations < nbrPermutations ; IndexPermutations++)
+    {
+      unsigned long TmpPermUp = permutations1[IndexPermutations];
+      unsigned long TmpPermDown = permutations2[IndexPermutations];
+		
+      for (int i = 0; i < HalfNbrParticles ; i++)
+	{
+	  HalfMonomialsUp[i] = monomial[(TmpPermUp >> (i * 5)) & 0x1ful];
+	  HalfMonomialsDown[i] = monomial[(TmpPermDown >> (i * 5)) & 0x1ful];
+	}
+      
+      CoefInitial =  ((double)MultiplicitiesFactorial(HalfMonomialsUp,HalfNbrParticles) * MultiplicitiesFactorial(HalfMonomialsDown,HalfNbrParticles)) * MonomialFact;
+      
+      
+      do
+	{	
+	  CoefUp = CoefInitial;
+	  
+	  
+	  for(int k = 0 ; (k < HalfNbrParticles) && (CoefUp != 0.0); k++)
+	    {
+	      State[k] = (HalfMonomialsUp[k]>>1) + slater[k];
+	      if ((HalfMonomialsUp[k] & 0x1ul) != 0ul)
+		{
+		  long Numerator = -((HalfMonomialsUp[k]>>1) * TmpFinalLzMaxUp) + (State[k] * TmpLzMaxUp);
+		  if (Numerator == 0l)
+		    CoefUp = 0.0;
+		  else
+		    CoefUp *= ((double) Numerator) * InverseFactor;
+		}
+	      State[k]--;
+	    }
+	  
+	  if (CoefUp != 0.0)
+	    {
+	      do
+		{
+		  CoefDown = 1.0;
+		    
+		  for(int k = 0 ; (k < HalfNbrParticles) && (CoefDown != 0.0); k++)
+		    {
+		      State[k+HalfNbrParticles] = (HalfMonomialsDown[k]>>1) + slater[k];
+		      if ((HalfMonomialsDown[k] & 0x1ul) != 0ul)
+			{
+			  long Numerator = -((HalfMonomialsDown[k]>>1) * TmpFinalLzMaxUp) + (State[HalfNbrParticles + k] * TmpLzMaxUp);
+			  if (Numerator == 0l)
+			    CoefDown = 0.0;
+			  else
+			    CoefDown *= ((double) Numerator) * InverseFactor;
+			}
+		      State[HalfNbrParticles + k]--;
+		    }
+		  
+		  if (CoefDown != 0.0)
+		    {
+		      
+		      TmpState = 0ul;
+		      Sign = 0ul;
+		      bool Bool = true;
+		      
+		      for (int i = 0; (i < HalfNbrParticles )&& (Bool); i++)
+			{
+			  Mask = (1ul << ((State[i]<<1) +1));
+			  if((TmpState & Mask) != 0)
+			    Bool = false;
+			  unsigned long TmpState2 = TmpState & (Mask - 1ul);
+#ifdef  __64_BITS__
+			  TmpState2 ^= TmpState2 >> 32;
+#endif
+			  TmpState2 ^= TmpState2 >> 16;
+			  TmpState2 ^= TmpState2 >> 8;
+			  TmpState2 ^= TmpState2 >> 4;
+			  TmpState2 ^= TmpState2 >> 2;
+			  TmpState2 ^= TmpState2 >> 1;
+			  Sign ^= TmpState2;
+			  TmpState |= Mask;
+			}
+		      
+		      for (int i = HalfNbrParticles; (i < this->NbrFermions)&& (Bool); i++)
+			{
+			  Mask = (1ul << ((State[i]<<1)));
+			  if((TmpState & Mask) != 0)
+			    Bool = false;
+			  unsigned long TmpState2 = TmpState & (Mask - 1ul);
+#ifdef  __64_BITS__
+			  TmpState2 ^= TmpState2 >> 32;
+#endif
+			  TmpState2 ^= TmpState2 >> 16;
+			  TmpState2 ^= TmpState2 >> 8;
+			  TmpState2 ^= TmpState2 >> 4;
+			  TmpState2 ^= TmpState2 >> 2;
+			  TmpState2 ^= TmpState2 >> 1;
+			  Sign ^= TmpState2;
+			  TmpState |= Mask;
+			}
+		      
+		      
+		      if (Bool)
+			{
+			  if ((Sign & 0x1ul) != 0ul)
+			    CoefDown *= -1l;
+			  
+			  InsertionResult = sortingMap.insert (pair <unsigned long, double> (TmpState , CoefDown*CoefUp));
+			  
+			  if (InsertionResult.second == false)
+			    {
+			      InsertionResult.first->second += CoefDown*CoefUp;
+			    }
+			}
+		    }
+		}
+	      while (std::prev_permutation(HalfMonomialsDown, HalfMonomialsDown + HalfNbrParticles));
+	    }
+	}
+      while (std::prev_permutation(HalfMonomialsUp, HalfMonomialsUp + HalfNbrParticles));
+    }
+  delete [] State;
+}

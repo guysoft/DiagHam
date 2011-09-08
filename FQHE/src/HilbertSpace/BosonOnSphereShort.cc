@@ -42,6 +42,7 @@
 #include "MathTools/FactorialCoefficient.h" 
 #include "GeneralTools/StringTools.h"
 #include "GeneralTools/ArrayTools.h"
+#include "GeneralTools/Permutations.h"
 
 #include "Architecture/ArchitectureOperation/FQHESphereParticleEntanglementSpectrumOperation.h"
 
@@ -4692,3 +4693,55 @@ void BosonOnSphereShort::FermionicStateTimeFermionicState(RealVector& fermionSta
 	}
     }
 }
+
+// compute the projection of the product of a bosonic state and the halperin 110 state
+//
+// bosonState = real vector where the bosonic state is stored
+// outputVector = real vector where the result has to be stored
+// fermionSpace = pointer to the fermionic Hilbert space
+// finalSpace = pointer to the final Hilbert space
+// firstComponent = first component to be computed
+// nbrComponent = number of components to be computed
+
+void BosonOnSphereShort::BosonicStateTimePolarizedSlaters(RealVector& bosonState, RealVector& outputVector, FermionOnSphere * fermionSpace , FermionOnSphereWithSpin* finalSpace, int firstComponent,int nbrComponent)
+{
+  map<unsigned long , double> SortingMap;
+  map<unsigned long , double>::iterator It;
+  
+  BinomialCoefficients Binomial(this->NbrBosons);
+  int NbrParticlesPerColor = this->NbrBosons >> 1;
+  unsigned long NbrPermutations = Binomial(this->NbrBosons, NbrParticlesPerColor);
+  unsigned long* Permutations1 = new unsigned long[NbrPermutations];
+  unsigned long* Permutations2 = new unsigned long[NbrPermutations];
+  
+  EvaluatePermutationsOfSubGroups(NbrPermutations,this->NbrBosons, NbrParticlesPerColor, Permutations1, Permutations2);
+  
+  unsigned long* Monomial = new unsigned long[this->NbrBosons];
+  unsigned long* Slater = new unsigned long[fermionSpace->NbrFermions];
+  
+  int NbrMax = firstComponent + nbrComponent;
+  int NbrVariable = 0;
+  
+  fermionSpace->ConvertToMonomial(fermionSpace->StateDescription[0], Slater);
+  
+  for (int j = firstComponent; j < NbrMax; j++)
+    {
+      if(bosonState[j] != 0)
+	{
+	  this->GetMonomial(j, Monomial);
+	  finalSpace->MonomialsTimesPolarizedSlater(Slater, Monomial, SortingMap,NbrPermutations,Permutations1, Permutations2, bosonState[j]);
+	}
+    }
+  
+  for ( It = SortingMap.begin() ; It != SortingMap.end(); It++)
+    {
+      int TmpLzMax = 2 * finalSpace->LzMax + 1;
+      while ((( (*It).first >> TmpLzMax) & 0x1ul) == 0x0ul)
+	--TmpLzMax;
+      outputVector[finalSpace->FindStateIndex((*It).first, TmpLzMax)] += (*It).second;
+    }
+  
+  delete [] Monomial;
+  delete [] Slater;
+}
+

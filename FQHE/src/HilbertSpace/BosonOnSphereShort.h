@@ -36,17 +36,22 @@
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphere.h"
 #include "HilbertSpace/FermionOnSphere.h"
+#include "HilbertSpace/FermionOnSphereWithSpin.h"
 #include "Matrix/RealSymmetricMatrix.h"
 #include "MathTools/LongRational.h"
 #include "Vector/LongRationalVector.h"
 
 #include <iostream>
+#include <map>
 
+using std::map;
 
 using std::cout;
 using std::endl;
 using std::dec;
 using std::hex;
+
+class FermionOnSphereWithSpin;
 
 
 class BosonOnSphereShort :  public ParticleOnSphere
@@ -61,7 +66,8 @@ class BosonOnSphereShort :  public ParticleOnSphere
   friend class FermionOnSphereTwoLandauLevels;
   friend class FermionOnSphereThreeLandauLevels;
   friend class FermionOnSphereFourLandauLevels;
-
+	
+	friend class FermionOnSphereWithSpin;	
 
   friend class BosonOnTorusShort;
 
@@ -666,6 +672,16 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // nbrComponents = Nomber of computed components
   virtual void FermionicStateTimeFermionicState(RealVector& fermionState1, RealVector& fermionState2, RealVector& outputVector, FermionOnSphere * fermionSpace, int minIndex, int nbrComponents);
 
+  // compute the projection of the product of a bosonic state and the halperin 110 state
+  //
+  // bosonState = real vector where the bosonic state is stored
+  // outputVector = real vector where the result has to be stored
+  // fermionSpace = pointer to the fermionic Hilbert space
+  // finalSpace = pointer to the final Hilbert space
+  // firstComponent = first component to be computed
+  // nbrComponent = number of components to be computed	
+  virtual void BosonicStateTimePolarizedSlaters(RealVector& bosonState, RealVector& outputVector, FermionOnSphere * fermionSpace , FermionOnSphereWithSpin* finalSpace, int firstComponent,int nbrComponent);
+	
  protected:
 
   // convert a bosonic state into its fermionic counterpart

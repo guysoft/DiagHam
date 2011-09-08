@@ -42,6 +42,8 @@
 
 #include "MathTools/ClebschGordanCoefficients.h"
 
+#include "GeneralTools/ArrayTools.h"
+
 #include <iostream>
 
 #include <map>
@@ -54,6 +56,7 @@ class BosonOnSphereTwoLandauLevels :  public ParticleOnSphereWithSpin
 {
   
   friend class FermionOnSphereTwoLandauLevels;
+	friend class FermionOnSphereWithSpin;
   
  protected:
 
@@ -373,6 +376,16 @@ class BosonOnSphereTwoLandauLevels :  public ParticleOnSphereWithSpin
   // return value = entanglement matrix of the subsytem (return a wero dimension matrix if the entanglement matrix is equal to zero)
   virtual RealMatrix EvaluatePartialEntanglementMatrixParticlePartition (int nbrBosonSector, int lzSector, RealVector& groundState, bool removeBinomialCoefficient = false);
   
+  // compute the projection of the product of a bosonic state and the halperin 110 state
+  //
+  // bosonState = real vector where the bosonic state is stored
+  // outputVector = real vector where the result has to be stored
+  // fermionSpace = pointer to the fermionic Hilbert space
+  // finalSpace = pointer to the final Hilbert space
+  // firstComponent = first component to be computed
+  // nbrComponent = number of components to be computed
+  virtual void BosonicStateTimePolarizedSlaters(RealVector& bosonState, RealVector& outputVector, FermionOnSphere * fermionSpace , FermionOnSphereWithSpin* finalSpace, int firstComponent,int nbrComponent);
+  
  protected:
 
   // convert a bosonic state into its fermionic counterpart
@@ -389,7 +402,7 @@ class BosonOnSphereTwoLandauLevels :  public ParticleOnSphereWithSpin
   // finalState = reference on the array where the bosonic state has to be stored
   // finalStateLzMax = reference on the integer where the bosonic state maximum Lz value has to be stored
   void FermionToBoson(unsigned long initialState, int initialStateLzMax,unsigned long*& finalState, int& finalStateLzMax);
-
+  
   // convert a fermionic state to its monomial representation
   //
   // index = index of the fermionic state
@@ -402,7 +415,13 @@ class BosonOnSphereTwoLandauLevels :  public ParticleOnSphereWithSpin
   // initialStateLzMax = initial bosonic state maximum Lz value
   // finalState = reference on the array where the monomial representation has to be stored
   void ConvertToMonomial(unsigned long* initialState, int initialStateLzMax, unsigned long*& finalState);
-
+  
+  // convert a fermionic state to its monomial Landau representation
+  //
+  // index = index of the fermionic state
+  // finalState = reference on the array where the monomial representation has to be stored
+  void GetMonomialLandau(long index, unsigned long*& finalState);
+  
   // convert a bosonic state to its monomial representation
   //
   // initialState = initial bosonic state in its fermionic representation
@@ -550,8 +569,6 @@ inline unsigned long BosonOnSphereTwoLandauLevels::BosonToFermion(unsigned long*
 
 inline void BosonOnSphereTwoLandauLevels::FermionToBoson(unsigned long initialState, int initialStateLzMax, unsigned long*& finalState, int& finalStateLzMax)
 {
-
-  
   int pos = 0;
   finalState[pos] = 0;
   unsigned long mask;
@@ -623,6 +640,49 @@ inline void BosonOnSphereTwoLandauLevels::GetMonomial(long index, unsigned long*
     }
 }
 
+// convert a fermionic state to its monomial representation
+//
+// index = index of the fermionic state
+// finalState = reference on the array where the monomial representation has to be stored
+
+inline void BosonOnSphereTwoLandauLevels::GetMonomialLandau(long index, unsigned long*& finalState)
+{
+  int Index = this->NbrBosons-1; //start filling from last element as will have lowest value.
+  unsigned long InitialState = this->StateDescription[index];
+  int Pos  = 0;
+  int StateLzMax = this->StateLzMax[index]; //number of bits away from most significant bits.
+  int TmpLz = 0; // using labels as in bosonic representation where 0 corresponds to largest lz on SLL. 
+  while (Pos <= StateLzMax)
+    {
+#ifdef  __64_BITS__      
+      while ((Pos <= StateLzMax) && (((InitialState >> (63 - Pos)) & 0x1ul) != 0x0ul))
+#else	
+	while ((Pos <= StateLzMax) && (((InitialState >> (31 - Pos)) & 0x1ul) != 0x0ul))	
+#endif	
+	  {
+	    finalState[Index--] = (unsigned long) TmpLz;
+	    ++Pos;
+	  }
+#ifdef  __64_BITS__	
+      while ((Pos <= StateLzMax) && (((InitialState >> (63 - Pos)) & 0x1ul) == 0x0ul))
+#else	
+	while ((Pos <= StateLzMax) && (((InitialState >> (31 - Pos)) & 0x1ul) == 0x0ul))	
+#endif	
+	  {
+	    ++TmpLz;
+	    ++Pos;
+	  }
+    }
+  
+  for (int i = 0 ; i < this->NbrBosons ; i++)
+		{
+		  if (finalState[i] < this->LzMaxUp + 1)
+		    finalState[i] = (GetLzFromIndexU(finalState[i]) <<1) + 1;
+		  else
+		    finalState[i] = GetLzFromIndexD(finalState[i])<<1;
+		}
+  SortArrayDownOrdering(finalState,this->NbrBosons);
+}
 
 // convert a bosonic state to its monomial representation
 //

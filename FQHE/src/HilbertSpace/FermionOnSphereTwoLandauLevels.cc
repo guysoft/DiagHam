@@ -1928,7 +1928,7 @@ void FermionOnSphereTwoLandauLevels::MonomialsTimesSlaterProjection(unsigned lon
 	    {
 	      Mask = (1ul << (State[i] - 1));
 	      if((TmpState&Mask) != 0)
-		Bool=false;
+					Bool=false;
 	      unsigned long TmpState2 = TmpState & (Mask - 1ul);
 #ifdef  __64_BITS__
 	      TmpState2 ^= TmpState2 >> 32;
@@ -2181,7 +2181,7 @@ void FermionOnSphereTwoLandauLevels::LLLFermionicStateTimeFermionicState(LongRat
 		      int FTmpLzMax = finalSpace->LzMax+this->NbrFermions-1;
 		      
 		      while ( ( ( (*It).first >> FTmpLzMax ) & 0x1ul) == 0x0ul)
-			--FTmpLzMax;
+						--FTmpLzMax;
 		      finalSpace->FermionToBoson((*It).first, FTmpLzMax, finalSpace->TemporaryState, finalSpace->TemporaryStateLzMax);
 		      Coefficient.SetToOne();
 		      for(int p = 0; p < finalSpace->TemporaryStateLzMax + 1; p++)

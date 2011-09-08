@@ -33,7 +33,7 @@
 #include "config.h"
 #include "GeneralTools/List.h"
 #include "MathTools/LongRational.h"
-
+#include "MathTools/FactorialCoefficient.h"
 
 // up ordering array sort using quick sort
 //
@@ -1436,6 +1436,36 @@ int SearchInArrayAndSetWeight(ClassName element, ClassName*& array, LongRational
       TmpWeigth = TmpWeigth1;
     }
   return 1;
+}
+
+// compute the product of occupation number factorial of an array
+//
+// array = array where to search 
+// nbrValue = number of values in array
+// return value = product of occupation number factorial
+
+template <class ClassName>
+unsigned long MultiplicitiesFactorial(ClassName*& array, unsigned long nbrValue)
+{
+  ClassName Temp;
+  int p;
+  int Pos = 0;
+  FactorialCoefficient Coefficient;
+  Coefficient.SetToOne();
+	
+  while(Pos < nbrValue)
+    {
+      Temp = array[Pos];
+      Pos++;
+      p = 1;
+      while((Pos < nbrValue)&&(array[Pos] == Temp))
+	{
+	  Pos++;
+	  p++;
+	}
+      Coefficient.FactorialMultiply(p);
+    }
+  return Coefficient.GetIntegerValue();
 }
 
 #endif

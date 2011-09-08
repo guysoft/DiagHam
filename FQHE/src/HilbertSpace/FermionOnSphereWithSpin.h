@@ -37,7 +37,9 @@
 #include "HilbertSpace/ParticleOnSphereWithSpin.h"
 
 #include <iostream>
+#include <map>
 
+using std::map;
 
 class FermionOnSphere;
 
@@ -54,7 +56,9 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   friend class FermionOnSphereWithSpinHaldaneBasis;
   friend class FermionOnSphereWithSpinAllSzLzSymmetry;
 
-
+  friend class BosonOnSphereTwoLandauLevels;
+  friend class BosonOnSphereShort;
+  
  protected:
 
   // number of fermions
@@ -163,18 +167,16 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // return value = pointer to the new subspace
   virtual AbstractHilbertSpace* ExtractSubspace (AbstractQuantumNumber& q, 
 						 SubspaceSpaceConverter& converter);
-
+  
   // set a different target space (for all basic operations)
   //
   // targetSpace = pointer to the target space
-  
   void SetTargetSpace(ParticleOnSphereWithSpin* targetSpace);
-
+  
   
   // return Hilbert space dimension of the target space
   //
   // return value = Hilbert space dimension
-  
   int GetTargetHilbertSpaceDimension();
 
   // save Hilbert space description to disk
@@ -593,7 +595,35 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // initialStateDown = array where the monomial spin down representation is stored
   // return value = state in its fermionic representation
   virtual unsigned long ConvertFromMonomial(int* initialStateUp, int* initialStateDown);
-
+	
+  // convert a  state from its monomial representation
+  //
+  // initialStateUp = array where the monomial spin up representation is stored
+  // initialStateDown = array where the monomial spin down representation is stored
+  // return value = state in its fermionic representation
+  virtual unsigned long ConvertFromMonomial(unsigned long * initialStateUp, unsigned long* initialStateDown);
+  
+  // compute the product of a monomial and the halperin 110 state
+  //
+  // slater = array where the monomial representation of the slater determinant for half the number of particles is stored
+  // monomial = array where the monomial representation is stored
+  // sortingMap = map in which the generated states and their coefficient will be stored
+  // nbrPermutations = number of different permutations
+  // permutations1 = array where are stored the permutations of the spin up
+  // permutations2 = array where are stored the permutations of the spin down
+  // initialCoef = inital coefficient in front of the monomial
+  virtual void MonomialsTimesPolarizedSlater(unsigned long * slater, unsigned long * monomial ,map<unsigned long , double> & sortingMap, unsigned long nbrPermutations , unsigned long * permutations1, unsigned long * permutations2, double initialCoef);
+  
+  // compute the projection of the product of a monomial in the two lowest LL and the halperin 110 state
+  //
+  // slater = array where the monomial representation of the slater determinant for half the number of particles is stored
+  // monomial = array where the monomial representation is stored
+  // sortingMap = map in which the generated states and their coefficient will be stored
+  // nbrPermutations = number of different permutations
+  // permutations1 = array where are stored the permutations of the spin up
+  // permutations2 = array where are stored the permutations of the spin down
+  // initialCoef = inital coefficient in front of the monomial
+  virtual void MonomialsTimesPolarizedSlaterProjection(unsigned long * slater, unsigned long * monomial ,map<unsigned long , double> & sortingMap, unsigned long nbrPermutations , unsigned long * permutations1, unsigned long * permutations2,double initialCoef);
 
 };
 
@@ -634,6 +664,22 @@ inline void FermionOnSphereWithSpin::ConvertToMonomial(unsigned long initialStat
 // return value = state in its fermionic representation
 
 inline unsigned long FermionOnSphereWithSpin::ConvertFromMonomial(int* initialStateUp, int* initialStateDown)
+{
+  unsigned long TmpState = 0x0ul;  
+  for (int j = 0; j < this->NbrFermionsUp; ++j)
+    TmpState |= 0x2ul << (initialStateUp[j] << 1);
+  for (int j = 0; j < this->NbrFermionsDown; ++j)
+    TmpState |= 0x1ul << (initialStateDown[j] << 1);
+  return TmpState;
+}
+
+// convert a  state from its monomial representation
+//
+// initialStateUp = array where the monomial spin up representation is stored
+// initialStateDown = array where the monomial spin down representation is stored
+// return value = state in its fermionic representation
+
+inline unsigned long FermionOnSphereWithSpin::ConvertFromMonomial(unsigned long * initialStateUp, unsigned long * initialStateDown)
 {
   unsigned long TmpState = 0x0ul;  
   for (int j = 0; j < this->NbrFermionsUp; ++j)

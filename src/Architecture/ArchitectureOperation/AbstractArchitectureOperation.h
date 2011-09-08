@@ -78,9 +78,10 @@ class AbstractArchitectureOperation
       FQHESphereMultipleMonomialsTimesSlaterProjection = 0x8005,
       FQHETorusParticleEntanglementSpectrumOperation = 0x8006,
       FQHELatticeParticleEntanglementSpectrumOperation = 0x8007,
-      FQHESphereMonomialsProductOperation = 0x8017
+      FQHESphereMonomialsProductOperation = 0x8017,
+      FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation = 0x8018
     };
-
+  
   // destructor
   //
   virtual ~AbstractArchitectureOperation();
