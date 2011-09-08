@@ -13,7 +13,6 @@ FQHESphereParticleEntanglementSpectrumOperation.cc \
 FQHESphereJackGeneratorSumRationalPolynomialOperation.cc \
 FQHESphereMultipleMonomialsTimesSlaterProjectionOperation.cc \
 FQHETorusParticleEntanglementSpectrumOperation.cc \
-FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation.cc \
 FQHESphereMonomialsProductOperation.cc \
-FQHELatticeParticleEntanglementSpectrumOperation.cc
-
+FQHELatticeParticleEntanglementSpectrumOperation.cc \
+FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation.cc 
