@@ -231,8 +231,11 @@ int main(int argc, char** argv)
 		  
 
 		  
-		  // 		  ComplexMatrix HRep (Hamiltonian->GetHilbertSpaceDimension(), Hamiltonian->GetHilbertSpaceDimension());
-		  // 		  Hamiltonian->GetHamiltonian(HRep);
+		  
+		  HermitianMatrix HRepOneBodyBasis (Hamiltonian->GetHilbertSpaceDimension(), Hamiltonian->GetHilbertSpaceDimension());
+		  HamiltonianOneBody->GetHamiltonian(HRep);
+		  ComplexMatrix HRepOneBodyBasis (Hamiltonian->GetHilbertSpaceDimension(), Hamiltonian->GetHilbertSpaceDimension());
+		  HamiltonianOneBody->GetHamiltonian(HRep);
 // 		  for (int m = 0; m < Hamiltonian->GetHilbertSpaceDimension(); ++m)
 // 		    for (int n = m; n < Hamiltonian->GetHilbertSpaceDimension(); ++n)
 // 		      {
