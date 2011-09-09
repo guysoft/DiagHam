@@ -38,11 +38,12 @@ using std::ofstream;
 // outputFileName = name of the output file
 // nbrSitesX = number of sites in the x direction
 // nbrSitesY = number of sites in the x direction
-// nnHoping = nearest neighbor hoping amplitude
-// nnnHoping =  next nearest neighbor hoping amplitude
-// nnnnHoping =  second next nearest neighbor hoping amplitude
-// mus = sublattice staggered chemical potential 
-void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double nnHoping, double nnnHoping, double nnnnHoping, double mus);
+// t1 = real part of the hoping amplitude between neareast neighbor sites
+// t2 = real part of the hoping amplitude between next neareast neighbor sites
+// lambda1 = imaginary part of the hoping amplitude between neareast neighbor sites
+// lambda1 = imaginary part of the hoping amplitude between next neareast neighbor sites
+// mus = sublattice chemical potential on A sites
+void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double t1, double t2, double lambda1, double lambda2, double mus);
 
 
 int main(int argc, char** argv)
@@ -279,16 +280,17 @@ int main(int argc, char** argv)
 // outputFileName = name of the output file
 // nbrSitesX = number of sites in the x direction
 // nbrSitesY = number of sites in the x direction
-// nnHoping = nearest neighbor hoping amplitude
-// nnnHoping =  next nearest neighbor hoping amplitude
-// nnnnHoping =  second next nearest neighbor hoping amplitude
-// mus = sublattice staggered chemical potential 
+// t1 = real part of the hoping amplitude between neareast neighbor sites
+// t2 = real part of the hoping amplitude between next neareast neighbor sites
+// lambda1 = imaginary part of the hoping amplitude between neareast neighbor sites
+// lambda1 = imaginary part of the hoping amplitude between next neareast neighbor sites
+// mus = sublattice chemical potential on A sites
 
-void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double nnHoping, double nnnHoping, double nnnnHoping, double mus)
+void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double t1, double t2, double lambda1, double lambda2, double mus)
 {
   ofstream File;
   File.open(outputFileName);
-  File << "# kx    ky     E_-    E_-" << endl;
+  File << "# kx    ky     E_1    E_2    E_3" << endl;
   double MinEMinus = 0.0;
   double MaxEMinus = -10.0;
   double MinEPlus = 10.0;
@@ -302,7 +304,7 @@ void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrS
 	  double d1 = 4.0 * nnnnHoping * cos (2.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) * cos (2.0 * M_PI * ((double) ky) / ((double) nbrSitesY));
 	  double d3 = mus + (2.0 * nnnHoping * (cos (2.0 * M_PI * ((double) kx) / ((double) nbrSitesX))
 						- cos (2.0 * M_PI * ((double) ky) / ((double) nbrSitesY))));
-	  HermitianMatrix TmpOneBobyHamiltonian(2, true);
+	  HermitianMatrix TmpOneBobyHamiltonian(3, true);
 	  TmpOneBobyHamiltonian.SetMatrixElement(0, 0, d1 + d3);
 	  TmpOneBobyHamiltonian.SetMatrixElement(0, 1, B1);
 	  TmpOneBobyHamiltonian.SetMatrixElement(1, 1, d1 - d3);
@@ -328,7 +330,7 @@ void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrS
 	    {
 	      MinEPlus = TmpDiag(1, 1);
 	    }
-	  File << (2.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) << " " << (2.0 * M_PI * ((double) ky) / ((double) nbrSitesY)) << " " << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << endl;
+	  File << (2.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) << " " << (2.0 * M_PI * ((double) ky) / ((double) nbrSitesY)) << " " << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << " " << TmpDiag(2, 2) << endl;
 	}
       File << endl;
     }
