@@ -457,7 +457,6 @@ inline void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::EvaluateMNTwoB
 
 inline void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector& vSource, ComplexVector& vDestination)
 {
-  int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
   double Coefficient3;
   Complex Coefficient4;
@@ -507,7 +506,6 @@ inline void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::HermitianEvalu
 inline void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector* vSources, 
 														 ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients)
 {
-  int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
   double Coefficient3;
   int Index;
