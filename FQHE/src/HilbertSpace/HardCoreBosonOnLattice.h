@@ -379,6 +379,17 @@ class HardCoreBosonOnLattice :  public ParticleOnLattice
   // return value = corresponding index, or dimension of space, if not found
   virtual int CarefulFindStateIndex(unsigned long stateDescription, int highestBit);
 
+
+  // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. 
+  // 
+  // nbrBosonSector = number of particles that belong to the subsytem 
+  // lzSector = Lz sector in which the density matrix has to be evaluated 
+  // groundState = reference on the total system ground state
+  // architecture = pointer to the architecture to use parallelized algorithm 
+  // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+  
+  virtual HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, ComplexVector& groundState, AbstractArchitecture* architecture);
+
  protected:
 
   // find state index
@@ -407,6 +418,19 @@ class HardCoreBosonOnLattice :  public ParticleOnLattice
   // memory = memory size that can be allocated for the look-up table
   
   void GenerateLookUpTable(unsigned long memory);
+
+    // core part of the evaluation density matrix particle partition calculation
+  // 
+  // minIndex = first index to consider in complementary Hilbert space
+  // nbrIndex = number of indices to consider in complementary Hilbert space
+  // complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e part B)
+  // destinationHilbertSpace = pointer to the destination Hilbert space (i.e. part A)
+  // groundState = reference on the total system ground state
+  // densityMatrix = reference on the density matrix where result has to stored
+  // return value = number of components that have been added to the density matrix
+  
+  virtual long EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnLattice* complementaryHilbertSpace,  ParticleOnLattice* destinationHilbertSpace,
+								  ComplexVector& groundState,  HermitianMatrix* densityMatrix);
 
   
 };

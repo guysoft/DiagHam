@@ -135,8 +135,8 @@ void ParticleOnLatticeHaldaneModelSingleBandHamiltonian::EvaluateInteractionFact
   if (this->FlatBand == false)
     this->OneBodyInteractionFactors = new double [this->NbrSiteX * this->NbrSiteY];
   for (int kx = 0; kx < this->NbrSiteX; ++kx)
-  {
-    double x=2*M_PI*((double)kx + this->GammaX)/this->NbrSiteX;
+    {
+      double x=2*M_PI*((double)kx + this->GammaX)/this->NbrSiteX;
     for (int ky = 0; ky < this->NbrSiteY; ++ky)
       {
         double y=2*M_PI*((double)ky + this->GammaY)/this->NbrSiteY;

@@ -351,11 +351,11 @@ ostream& PrintMemorySize(ostream &str, unsigned bytes)
   if (bytes >= 1024)
     if (bytes >= 1048576)
       if (bytes >= 1073741824)
-	str << (bytes >> 30) << "Go";
+	str << (bytes >> 30) << "Gb";
       else
-	str << (bytes >> 20) << "Mo";
+	str << (bytes >> 20) << "Mb";
     else
-      str << (bytes >> 10) << "ko";
+      str << (bytes >> 10) << "kb";
   else
     str << bytes;
   return str;
@@ -387,15 +387,31 @@ ostream& PrintMemorySize(ostream &str, unsigned long bytes)
       if (bytes >= 1073741824)
 #ifdef __64_BITS__
 	if (bytes >= (0x1ul<<40))
-	  str << (bytes >> 40) << "To";
+	  {
+	    str  << (bytes >> 40) << ".";
+	    bytes -= ((bytes >> 40) << 40);
+	    bytes *= 100l;
+	    bytes >>= 40;
+	    if (bytes < 10l)
+	      str << "0";
+	    str  << bytes << " Tb ";
+	  }
 	else
 #endif
-	  str << (bytes >> 30) << "Go";
+	  {
+	    str  << (bytes >> 30) << ".";
+	    bytes -= ((bytes >> 30) << 30);
+	    bytes *= 100l;
+	    bytes >>= 30;
+	    if (bytes < 10l)
+	      str << "0";
+	    str  << bytes << " Gb ";
+	  }
       else
-	str << (bytes >> 20) << "Mo";
+	str << (bytes >> 20) << "Mb";
     else
-      str << (bytes >> 10) << "ko";
+      str << (bytes >> 10) << "kb";
   else
-    str << bytes <<"o";
+    str << bytes <<"b";
   return str;
 }

@@ -35,17 +35,20 @@
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
-
+#include "GeneralTools/StringTools.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/QHEParticlePrecalculationOperation.h"
 
 #include <iostream>
+#include <cmath>
 #include <sys/time.h>
 
 
 using std::cout;
 using std::endl;
 using std::ostream;
+using std::sin;
+using std::cos;
 
 
 
@@ -53,36 +56,36 @@ using std::ostream;
 //
 // particles = Hilbert space associated to the system
 // nbrParticles = number of particles
-// nbrSiteX = number of sites in the x direction
-// nbrSiteY = number of sites in the y direction
+// nbrCellX = number of sites in the x direction
+// nbrCellY = number of sites in the y direction
 // uPotential = strength of the repulsive two body neareast neighbor interaction
-// t1 = real part of the hoping amplitude between neareast neighbor sites
-// t2 = real part of the hoping amplitude between next neareast neighbor sites
-// lambda1 = imaginary part of the hoping amplitude between neareast neighbor sites
-// lambda1 = imaginary part of the hoping amplitude between next neareast neighbor sites
+// t1 = real part of the hopping amplitude between neareast neighbor sites
+// t2 = real part of the hopping amplitude between next neareast neighbor sites
+// lambda1 = imaginary part of the hopping amplitude between neareast neighbor sites
+// lambda1 = imaginary part of the hopping amplitude between next neareast neighbor sites
 // mus = sublattice chemical potential on A sites
-// gammaX = boundary condition twisting angle along x
-// gammaY = boundary condition twisting angle along y
+// gammaX = boundary condition twisting angle along e_a (measured in units of 2pi)
+// gammaY = boundary condition twisting angle along e_b (measured in units of 2pi)
 // flatBandFlag = use flat band model
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
-ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ParticleOnLatticeKagomeLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, 
-												       int nbrSiteY, double uPotential, double t1, double t2, double lambda1, double lambda2, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
+ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ParticleOnLatticeKagomeLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrCellX, 
+												       int nbrCellY, double uPotential, double t1, double t2, double lambda1, double lambda2, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
-  this->NbrSiteX = nbrSiteX;
-  this->NbrSiteY = nbrSiteY;
-  this->LzMax = nbrSiteX * nbrSiteY - 1;
+  this->NbrSiteX = nbrCellX;
+  this->NbrSiteY = nbrCellY;
+  this->LzMax = nbrCellX * nbrCellY - 1;
   this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
   this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
 
   this->HamiltonianShift = 0.0;
-
-  this->NNHoping = t1;
-  this->NextNNHoping = t2;
-  this->SecondNextNNHoping = t2p;
+  this->NNHopping = t1;
+  this->NextNNHopping = t2;
+  this->NNSpinOrbit = lambda1;
+  this->NextNNSpinOrbit = lambda2;
   this->MuS = mus;
   this->GammaX = gammaX;
   this->GammaY = gammaY;
@@ -101,24 +104,8 @@ ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ParticleOnLatticeKagomeLatt
   if (memory > 0)
     {
       long TmpMemory = this->FastMultiplicationMemory(memory);
-      if (TmpMemory < 1024)
-	cout  << "fast = " <<  TmpMemory << "b ";
-      else
-	if (TmpMemory < (1 << 20))
-	  cout  << "fast = " << (TmpMemory >> 10) << "kb ";
-	else
-	  if (TmpMemory < (1 << 30))
-	    cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
-	  else
-	    {
-	      cout  << "fast = " << (TmpMemory >> 30) << ".";
-	      TmpMemory -= ((TmpMemory >> 30) << 30);
-	      TmpMemory *= 100l;
-	      TmpMemory >>= 30;
-	      if (TmpMemory < 10l)
-		cout << "0";
-	      cout  << TmpMemory << " Gb ";
-	    }
+      cout << "fast = ";
+      PrintMemorySize(cout, TmpMemory)<< endl;
       this->EnableFastMultiplication();
     }
 }
@@ -139,22 +126,23 @@ void ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::EvaluateInteractionFac
   ComplexMatrix* OneBodyBasis = new ComplexMatrix [this->NbrSiteX * this->NbrSiteY];
   if (this->FlatBand == false)
     this->OneBodyInteractionFactors = new double [this->NbrSiteX * this->NbrSiteY];
- 
+  this->ComputeOneBodyMatrices(OneBodyBasis);
+  
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
       this->NbrSectorSums = this->NbrSiteX * this->NbrSiteY;
       this->NbrSectorIndicesPerSum = new int[this->NbrSectorSums];
       for (int i = 0; i < this->NbrSectorSums; ++i)
 	this->NbrSectorIndicesPerSum[i] = 0;      
-      for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
-	for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
-	  for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
-	    for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
+      for (int k1a = 0; k1a < this->NbrSiteX; ++k1a)
+	for (int k2a = 0; k2a < this->NbrSiteX; ++k2a)
+	  for (int k1b = 0; k1b < this->NbrSiteY; ++k1b)
+	    for (int k2b = 0; k2b < this->NbrSiteY; ++k2b) 
 	      {
-		int Index1 = (kx1 * this->NbrSiteY) + ky1;
-		int Index2 = (kx2 * this->NbrSiteY) + ky2;
+		int Index1 = (k1a * this->NbrSiteY) + k1b;
+		int Index2 = (k2a * this->NbrSiteY) + k2b;
 		if (Index1 < Index2)
-		  ++this->NbrSectorIndicesPerSum[(((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY)];    
+		  ++this->NbrSectorIndicesPerSum[(((k1a + k2a) % this->NbrSiteX) *  this->NbrSiteY) + ((k1b + k2b) % this->NbrSiteY)];    
 	      }
       this->SectorIndicesPerSum = new int* [this->NbrSectorSums];
       for (int i = 0; i < this->NbrSectorSums; ++i)
@@ -165,16 +153,16 @@ void ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::EvaluateInteractionFac
 	      this->NbrSectorIndicesPerSum[i] = 0;
 	    }
 	}
-      for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
-	for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
-	  for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
-	    for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
+      for (int k1a = 0; k1a < this->NbrSiteX; ++k1a)
+	for (int k2a = 0; k2a < this->NbrSiteX; ++k2a)
+	  for (int k1b = 0; k1b < this->NbrSiteY; ++k1b)
+	    for (int k2b = 0; k2b < this->NbrSiteY; ++k2b) 
 	      {
-		int Index1 = (kx1 * this->NbrSiteY) + ky1;
-		int Index2 = (kx2 * this->NbrSiteY) + ky2;
+		int Index1 = (k1a * this->NbrSiteY) + k1b;
+		int Index2 = (k2a * this->NbrSiteY) + k2b;
 		if (Index1 < Index2)
 		  {
-		    int TmpSum = (((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY);
+		    int TmpSum = (((k1a + k2a) % this->NbrSiteX) *  this->NbrSiteY) + ((k1b + k2b) % this->NbrSiteY);
 		    this->SectorIndicesPerSum[TmpSum][this->NbrSectorIndicesPerSum[TmpSum] << 1] = Index1;
 		    this->SectorIndicesPerSum[TmpSum][1 + (this->NbrSectorIndicesPerSum[TmpSum] << 1)] = Index2;
 		    ++this->NbrSectorIndicesPerSum[TmpSum];    
@@ -193,33 +181,33 @@ void ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::EvaluateInteractionFac
 	    {
 	      int Index1 = this->SectorIndicesPerSum[i][j1 << 1];
 	      int Index2 = this->SectorIndicesPerSum[i][(j1 << 1) + 1];
-	      int kx1 = Index1 / this->NbrSiteY;
-	      int ky1 = Index1 % this->NbrSiteY;
-	      int kx2 = Index2 / this->NbrSiteY;
-	      int ky2 = Index2 % this->NbrSiteY;
+	      int k1a = Index1 / this->NbrSiteY;
+	      int k1b = Index1 % this->NbrSiteY;
+	      int k2a = Index2 / this->NbrSiteY;
+	      int k2b = Index2 % this->NbrSiteY;
 	      for (int j2 = 0; j2 < this->NbrSectorIndicesPerSum[i]; ++j2)
 		{
 		  int Index3 = this->SectorIndicesPerSum[i][j2 << 1];
 		  int Index4 = this->SectorIndicesPerSum[i][(j2 << 1) + 1];
-		  int kx3 = Index3 / this->NbrSiteY;
-		  int ky3 = Index3 % this->NbrSiteY;
-		  int kx4 = Index4 / this->NbrSiteY;
-		  int ky4 = Index4 % this->NbrSiteY;
+		  int k3a = Index3 / this->NbrSiteY;
+		  int k3b = Index3 % this->NbrSiteY;
+		  int k4a = Index4 / this->NbrSiteY;
+		  int k4b = Index4 % this->NbrSiteY;
+		  
+ 		  this->InteractionFactors[i][Index] = FactorUAB * (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]) * this->ComputeTwoBodyMatrixElementAB(k2a, k2b, k4a, k4b);
+ 		  this->InteractionFactors[i][Index] -= FactorUAB * (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]) * this->ComputeTwoBodyMatrixElementAB(k1a, k1b, k4a, k4b);
+ 		  this->InteractionFactors[i][Index] -= FactorUAB * (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1]) * this->ComputeTwoBodyMatrixElementAB(k2a, k2b, k3a, k3b);
+ 		  this->InteractionFactors[i][Index] += FactorUAB * (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1]) * this->ComputeTwoBodyMatrixElementAB(k1a, k1b, k3a, k3b);
 
- 		  this->InteractionFactors[i][Index] = FactorUAB * (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]) * this->ComputeTwoBodyMatrixElementAB(kx2, ky2, kx4, ky4);
- 		  this->InteractionFactors[i][Index] -= FactorUAB * (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]) * this->ComputeTwoBodyMatrixElementAB(kx1, ky1, kx4, ky4);
- 		  this->InteractionFactors[i][Index] -= FactorUAB * (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1]) * this->ComputeTwoBodyMatrixElementAB(kx2, ky2, kx3, ky3);
- 		  this->InteractionFactors[i][Index] += FactorUAB * (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1]) * this->ComputeTwoBodyMatrixElementAB(kx1, ky1, kx3, ky3);
+ 		  this->InteractionFactors[i][Index] += FactorUAC * (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index4][0][2]) * this->ComputeTwoBodyMatrixElementAC(k2a, k2b, k4a, k4b);
+ 		  this->InteractionFactors[i][Index] -= FactorUAC * (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index1][0][2]) * OneBodyBasis[Index4][0][2]) * this->ComputeTwoBodyMatrixElementAC(k1a, k1b, k4a, k4b);
+ 		  this->InteractionFactors[i][Index] -= FactorUAC * (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index3][0][2]) * this->ComputeTwoBodyMatrixElementAC(k2a, k2b, k3a, k3b);
+ 		  this->InteractionFactors[i][Index] += FactorUAC * (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index1][0][2]) * OneBodyBasis[Index3][0][2]) * this->ComputeTwoBodyMatrixElementAC(k1a, k1b, k3a, k3b);
 
- 		  this->InteractionFactors[i][Index] += FactorUAC * (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index4][0][2]) * this->ComputeTwoBodyMatrixElementAC(kx2, ky2, kx4, ky4);
- 		  this->InteractionFactors[i][Index] -= FactorUAC * (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index1][0][2]) * OneBodyBasis[Index4][0][2]) * this->ComputeTwoBodyMatrixElementAC(kx1, ky1, kx4, ky4);
- 		  this->InteractionFactors[i][Index] -= FactorUAC * (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index3][0][2]) * this->ComputeTwoBodyMatrixElementAC(kx2, ky2, kx3, ky3);
- 		  this->InteractionFactors[i][Index] += FactorUAC * (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index1][0][2]) * OneBodyBasis[Index3][0][2]) * this->ComputeTwoBodyMatrixElementAC(kx1, ky1, kx3, ky3);
-
- 		  this->InteractionFactors[i][Index] += FactorUBC * (Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1] * Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index4][0][2]) * this->ComputeTwoBodyMatrixElementBC(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
- 		  this->InteractionFactors[i][Index] -= FactorUBC * (Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1] * Conj(OneBodyBasis[Index1][0][2]) * OneBodyBasis[Index4][0][2]) * this->ComputeTwoBodyMatrixElementBC(kx2, ky2, kx1, ky1, kx3, ky3, kx4, ky4);
- 		  this->InteractionFactors[i][Index] -= FactorUBC * (Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1] * Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index3][0][2]) * this->ComputeTwoBodyMatrixElementBC(kx1, ky1, kx2, ky2, kx4, ky4, kx3, ky3);
- 		  this->InteractionFactors[i][Index] += FactorUBC * (Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1] * Conj(OneBodyBasis[Index1][0][2]) * OneBodyBasis[Index3][0][2]) * this->ComputeTwoBodyMatrixElementBC(kx2, ky2, kx1, ky1, kx4, ky4, kx3, ky3);
+ 		  this->InteractionFactors[i][Index] += FactorUBC * (Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1] * Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index4][0][2]) * this->ComputeTwoBodyMatrixElementBC(k1a, k1b, k2a, k2b);
+ 		  this->InteractionFactors[i][Index] -= FactorUBC * (Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1] * Conj(OneBodyBasis[Index1][0][2]) * OneBodyBasis[Index4][0][2]) * this->ComputeTwoBodyMatrixElementBC(k2a, k2b, k1a, k1b);
+ 		  this->InteractionFactors[i][Index] -= FactorUBC * (Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1] * Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index3][0][2]) * this->ComputeTwoBodyMatrixElementBC(k1a, k1b, k2a, k2b);
+ 		  this->InteractionFactors[i][Index] += FactorUBC * (Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1] * Conj(OneBodyBasis[Index1][0][2]) * OneBodyBasis[Index3][0][2]) * this->ComputeTwoBodyMatrixElementBC(k2a, k2b, k1a, k1b);
 
 		  this->InteractionFactors[i][Index] *= -2.0;
 		  TotalNbrInteractionFactors++;
@@ -232,52 +220,52 @@ void ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::EvaluateInteractionFac
   cout << "====================================" << endl;
 }
 
+// conventions adopted for matrix elements:
+// Tang, Mei, Wen: unit cell is triangle on tip. Tip is site A, upper left corner site B and upper right corner C.
+
 // compute the matrix element for the two body interaction between two sites A and B 
 //
-// kx1 = creation momentum along x for the B site
-// ky1 = creation momentum along y for the B site
-// kx2 = annihilation momentum along x for the B site
-// ky2 = annihilation momentum along y for the B site
+// k1a = creation momentum along e_a for the B site
+// k1b = creation momentum along e_b for the B site
+// k2a = annihilation momentum along e_a for the B site
+// k2b = annihilation momentum along e_b for the B site
 // return value = corresponding matrix element
 
-Complex ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementAB(int kx1, int ky1, int kx2, int ky2)
+Complex ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementAB(int k1a, int k1b, int k2a, int k2b)
 {
-  Complex Tmp = 2.0 * (cos (0.5 * ((this->KxFactor * ((double) (kx2 - kx1))) - (this->KyFactor * ((double) (ky2 - ky1)))))
-		       + cos (0.5 * ((this->KxFactor * ((double) (kx2 - kx1))) + (this->KyFactor * ((double) (ky2 - ky1))))));
+  Complex Tmp = 2.0 * cos (0.5 * ((-this->KxFactor * ((double) (k1a - k2a))) + (this->KyFactor * ((double) (k1b - k2b)))));
   return Tmp;
 }
 
 // compute the matrix element for the two body interaction between two sites A and C 
 //
-// kx1 = creation momentum along x for the C site
-// ky1 = creation momentum along y for the C site
-// kx2 = annihilation momentum along x for the C site
-// ky2 = annihilation momentum along y for the C site
+// k1a = creation momentum along e_a for the C site
+// k1b = creation momentum along e_b for the C site
+// k2a = annihilation momentum along e_a for the C site
+// k2b = annihilation momentum along e_b for the C site
 // return value = corresponding matrix element
 
-Complex ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementAC(int kx1, int ky1, int kx2, int ky2)
+Complex ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementAC(int k1a, int k1b, int k2a, int k2b)
 {
-  Complex Tmp = 2.0 * (cos (0.5 * ((this->KxFactor * ((double) (kx2 - kx1))) - (this->KyFactor * ((double) (ky2 - ky1)))))
-		       + cos (0.5 * ((this->KxFactor * ((double) (kx2 - kx1))) + (this->KyFactor * ((double) (ky2 - ky1))))));
+  Complex Tmp = 2.0 * cos (0.5 * this->KyFactor * ((double) (k1b - k2b)));
   return Tmp;
 }
 
 // compute the matrix element for the two body interaction between two sites B and C 
 //
-// kx1 = creation momentum along x for the B site
-// ky1 = creation momentum along y for the B site
-// kx2 = creation momentum along x for the C site
-// ky2 = creation momentum along y for the C site
-// kx3 = annihilation momentum along x for the B site
-// ky3 = annihilation momentum along y for the B site
-// kx4 = annihilation momentum along x for the C site
-// ky4 = annihilation momentum along y for the C site
+// k1a = creation momentum along e_a for the B site
+// k1b = creation momentum along e_b for the B site
+// k2a = creation momentum along e_a for the C site
+// k2b = creation momentum along e_b for the C site
+// k3a = annihilation momentum along e_a for the B site
+// k3b = annihilation momentum along e_b for the B site
+// k4a = annihilation momentum along e_a for the C site
+// k4b = annihilation momentum along e_b for the C site
 // return value = corresponding matrix element
 
-Complex ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementBC(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
+Complex ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementBC(int k1a, int k1b, int k2a, int k2b)
 {
-  Complex Tmp = 2.0 * (cos (0.5 * ((this->KxFactor * ((double) (kx2 - kx1))) - (this->KyFactor * ((double) (ky2 - ky1)))))
-		       + cos (0.5 * ((this->KxFactor * ((double) (kx2 - kx1))) + (this->KyFactor * ((double) (ky2 - ky1))))));
+  Complex Tmp = 2.0 * cos (0.5 * this->KxFactor * ((double) (k1a - k2a)));
   return Tmp;
 }
 
@@ -287,19 +275,20 @@ Complex ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatri
 
 void ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis)
 {
-  for (int kx = 0; kx < this->NbrSiteX; ++kx)
-    for (int ky = 0; ky < this->NbrSiteY; ++ky)
+  double KA, KB;
+  for (int ka = 0; ka < this->NbrSiteX; ++ka)
+    for (int kb = 0; kb < this->NbrSiteY; ++kb)
       {
-	int Index = (kx * this->NbrSiteY) + ky;
-	Complex B1 = 4.0 * this->NNHoping * Complex (cos (0.5 * this->KxFactor * (((double) kx) + this->GammaX)) * cos (0.5 * this->KyFactor * (((double) ky) + this->GammaY)) * cos(M_PI * 0.25), 
-						     sin (0.5 * this->KxFactor * (((double) kx) + this->GammaX)) * sin (0.5 * this->KyFactor * (((double) ky) + this->GammaY)) * sin(M_PI * 0.25));
-	double d1 = 4.0 * this->SecondNextNNHoping * cos (this->KxFactor * (((double) kx) + this->GammaX)) * cos (this->KyFactor * ((ouble) ky) + this->GammaY);
-	double d3 =  this->MuS + (2.0 * this->NextNNHoping * (cos (this->KxFactor * (((double) kx) + this->GammaX))
-							      - cos (this->KyFactor * (((double) ky) + this->GammaY));
+	KA = 0.5 * this->KxFactor * (((double) ka) + this->GammaX);
+	KB = 0.5 * this->KyFactor * (((double) kb) + this->GammaY);
+	int Index = (ka * this->NbrSiteY) + kb;
+	Complex hAB= Complex(-2.0*this->NNHopping,2.0*NNSpinOrbit) * cos(KA) + Complex(-2.0*this->NextNNHopping,-2.0*NextNNSpinOrbit) * cos(2.0*KB-KA);
+	Complex hAC= Complex(-2.0*this->NNHopping,-2.0*NNSpinOrbit) * cos(KB) + Complex(-2.0*this->NextNNHopping,2.0*NextNNSpinOrbit) * cos(KB-2.0*KA);
+	Complex hBC= Complex(-2.0*this->NNHopping,2.0*NNSpinOrbit) * cos(KB-KA) + Complex(-2.0*this->NextNNHopping,-2.0*NextNNSpinOrbit) * cos(KA+KB);
 	HermitianMatrix TmpOneBobyHamiltonian(3, true);
-	TmpOneBobyHamiltonian.SetMatrixElement(0, 0, d1 + d3);
-	TmpOneBobyHamiltonian.SetMatrixElement(0, 1, B1);
-	TmpOneBobyHamiltonian.SetMatrixElement(1, 1, d1 - d3);
+	TmpOneBobyHamiltonian.SetMatrixElement(0, 1, hAB);
+	TmpOneBobyHamiltonian.SetMatrixElement(0, 2, hAC);
+	TmpOneBobyHamiltonian.SetMatrixElement(1, 2, hBC);
 	ComplexMatrix TmpMatrix(3, 3, true);
 	TmpMatrix[0][0] = 1.0;
 	TmpMatrix[1][1] = 1.0;

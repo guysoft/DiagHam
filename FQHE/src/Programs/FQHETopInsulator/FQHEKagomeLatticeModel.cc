@@ -38,12 +38,14 @@ using std::ofstream;
 // outputFileName = name of the output file
 // nbrSitesX = number of sites in the x direction
 // nbrSitesY = number of sites in the x direction
-// t1 = real part of the hoping amplitude between neareast neighbor sites
-// t2 = real part of the hoping amplitude between next neareast neighbor sites
-// lambda1 = imaginary part of the hoping amplitude between neareast neighbor sites
-// lambda1 = imaginary part of the hoping amplitude between next neareast neighbor sites
+// t1 = real part of the hopping amplitude between neareast neighbor sites
+// t2 = real part of the hopping amplitude between next neareast neighbor sites
+// lambda1 = imaginary part of the hopping amplitude between neareast neighbor sites
+// lambda1 = imaginary part of the hopping amplitude between next neareast neighbor sites
 // mus = sublattice chemical potential on A sites
-void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double t1, double t2, double lambda1, double lambda2, double mus);
+// gammaX = boundary condition twisting angle along e_a (measured in units of 2pi)
+// gammaY = boundary condition twisting angle along e_b (measured in units of 2pi)
+void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double t1, double t2, double lambda1, double lambda2, double mus, double gammaX, double gammaY);
 
 
 int main(int argc, char** argv)
@@ -73,10 +75,10 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "three-body", "use a three body interaction instead of a two body interaction");
   (*SystemGroup) += new BooleanOption  ('\n', "four-body", "use a four body interaction instead of a two body interaction");
   (*SystemGroup) += new BooleanOption  ('\n', "five-body", "use a five body interaction instead of a two body interaction");
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "t1", "real part of the nearest neighbor hoping amplitude", 1.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "t2", "real part of the next nearest neighbor hoping amplitude", 0.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "l1", "imaginary part of the nearest neighbor hoping amplitude", 0.5);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "l2", "imaginary part of the next nearest neighbor hoping amplitude", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "t1", "real part of the nearest neighbor hopping amplitude", 1.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "t2", "real part of the next nearest neighbor hopping amplitude", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "l1", "imaginary part of the nearest neighbor hopping amplitude", 0.5);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "l2", "imaginary part of the next nearest neighbor hopping amplitude", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "mu-s", "sublattice chemical potential on A site", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
@@ -142,22 +144,22 @@ int main(int argc, char** argv)
       if (Manager.GetBoolean("flat-band") == true)
 	{
 	  if (Manager.GetDouble("mu-s") == 0.0)
-	    sprintf (EigenvalueOutputFile, "%s_t1_%f_t2_%f_l1_%f_l2_%f_gx_%f_gy_%f.dat",FilePrefix, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	    sprintf (EigenvalueOutputFile, "%s_t1_%g_t2_%g_l1_%g_l2_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 	  else
-	    sprintf (EigenvalueOutputFile, "%s_t1_%f_t2_%f_l1_%f_l2_%f_gx_%f_gy_%f_mus_%f.dat",FilePrefix, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+	    sprintf (EigenvalueOutputFile, "%s_t1_%g_t2_%g_l1_%g_l2_%g_gx_%g_gy_%g_mus_%g.dat",FilePrefix, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
 	}
       else
 	{
 	  if (Manager.GetDouble("mu-s") == 0.0)
-	    sprintf (EigenvalueOutputFile, "%s_u_%f_t1_%f_t2_%f_l1_%f_l2_%f_gx_%f_gy_%f.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	    sprintf (EigenvalueOutputFile, "%s_u_%g_t1_%g_t2_%g_l1_%g_l2_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 	  else
-	    sprintf (EigenvalueOutputFile, "%s_u_%f_t1_%f_t2_%f_l1_%f_l2_%f_gx_%f_gy_%f_mus_%f.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+	    sprintf (EigenvalueOutputFile, "%s_u_%g_t1_%g_t2_%g_l1_%g_l2_%g_gx_%g_gy_%g_mus_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
 	}
     }
 
   if (Manager.GetBoolean("singleparticle-spectrum") == true)
     {
-      ComputeSingleParticleSpectrum(EigenvalueOutputFile, NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"));
+      ComputeSingleParticleSpectrum(EigenvalueOutputFile, NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
       return 0;
     }
 
@@ -245,20 +247,24 @@ int main(int argc, char** argv)
 	      if (Manager.GetBoolean("flat-band") == true)
 		{
 		  if (Manager.GetDouble("mu-s") == 0.0)
-		    sprintf (EigenstateOutputFile, "%s_t1_%f_t2_%f_l1_%f_l2_%f_gx_%f_gy_%f_kx_%d_ky_%d",FilePrefix, 
-			     Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j);
+		    sprintf (EigenstateOutputFile, "%s_t1_%g_t2_%g_l1_%g_l2_%g_gx_%g_gy_%g_ka_%d_kb_%d",FilePrefix, 
+			     Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"),
+			     Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j);
 		  else
-		    sprintf (EigenstateOutputFile, "%s_t1_%f_t2_%f_l1_%f_l2_%f_gx_%f_gy_%f_mus_%f_kx_%d_ky_%d",FilePrefix, 
-			     Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"), i, j);
+		    sprintf (EigenstateOutputFile, "%s_t1_%g_t2_%g_l1_%g_l2_%g_gx_%g_gy_%g_mus_%g_kx_%d_ky_%d",FilePrefix, 
+			     Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"),
+			     Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"), i, j);
 		}
 	      else
 		{
 		  if (Manager.GetDouble("mu-s") == 0.0)
-		    sprintf (EigenstateOutputFile, "%s_u_%f_t1_%f_t2_%f_l1_%f_l2_%f_gx_%f_gy_%f_kx_%d_ky_%d",FilePrefix, 
-			     Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j);
+		    sprintf (EigenstateOutputFile, "%s_u_%g_t1_%g_t2_%g_l1_%g_l2_%g_gx_%g_gy_%g_kx_%d_ky_%d",FilePrefix, 
+			     Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"),
+			     Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j);
 		  else
-		    sprintf (EigenstateOutputFile, "%s_u_%f_t1_%f_t2_%f_l1_%f_l2_%f_gx_%f_gy_%f_mus_%f_kx_%d_ky_%d",FilePrefix, 
-			     Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"), i, j);
+		    sprintf (EigenstateOutputFile, "%s_u_%g_t1_%g_t2_%g_l1_%g_l2_%g_gx_%g_gy_%g_mus_%g_kx_%d_ky_%d",FilePrefix, 
+			     Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"),
+			     Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"), i, j);
 		}
 	    }
 	  GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
@@ -280,13 +286,15 @@ int main(int argc, char** argv)
 // outputFileName = name of the output file
 // nbrSitesX = number of sites in the x direction
 // nbrSitesY = number of sites in the x direction
-// t1 = real part of the hoping amplitude between neareast neighbor sites
-// t2 = real part of the hoping amplitude between next neareast neighbor sites
-// lambda1 = imaginary part of the hoping amplitude between neareast neighbor sites
-// lambda1 = imaginary part of the hoping amplitude between next neareast neighbor sites
+// t1 = real part of the hopping amplitude between neareast neighbor sites
+// t2 = real part of the hopping amplitude between next neareast neighbor sites
+// lambda1 = imaginary part of the hopping amplitude between neareast neighbor sites
+// lambda1 = imaginary part of the hopping amplitude between next neareast neighbor sites
 // mus = sublattice chemical potential on A sites
+// gammaX = boundary condition twisting angle along e_a (measured in units of 2pi)
+// gammaY = boundary condition twisting angle along e_b (measured in units of 2pi)
 
-void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double t1, double t2, double lambda1, double lambda2, double mus)
+void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double t1, double t2, double lambda1, double lambda2, double mus, double gammaX, double gammaY)
 {
   ofstream File;
   File.open(outputFileName);
@@ -295,24 +303,29 @@ void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrS
   double MaxEMinus = -10.0;
   double MinEPlus = 10.0;
   double MaxEPlus = 0.0;
-  for (int kx = 0; kx < nbrSitesX; ++kx)
+  double KA, KB;
+  for (int ka = 0; ka < nbrSitesX; ++ka)
     {
-      for (int ky = 0; ky < nbrSitesY; ++ky)
+      for (int kb = 0; kb < nbrSitesY; ++kb)
 	{
-	  Complex B1 = 4.0 * nnHoping * Complex (cos (1.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) * cos (1.0 * M_PI * ((double) ky) / ((double) nbrSitesY)) * cos(M_PI * 0.25), 
-					   sin (1.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) * sin (1.0 * M_PI * ((double) ky) / ((double) nbrSitesY)) * sin(M_PI * 0.25));
-	  double d1 = 4.0 * nnnnHoping * cos (2.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) * cos (2.0 * M_PI * ((double) ky) / ((double) nbrSitesY));
-	  double d3 = mus + (2.0 * nnnHoping * (cos (2.0 * M_PI * ((double) kx) / ((double) nbrSitesX))
-						- cos (2.0 * M_PI * ((double) ky) / ((double) nbrSitesY))));
+	  KA = M_PI / ((double) nbrSitesX) * (((double) ka) + gammaX);
+	  KB = M_PI / ((double) nbrSitesY) * (((double) kb) + gammaY);
+	  Complex hAB= Complex(-2.0*t1,2.0*lambda1) * cos(KA) + Complex(-2.0*t2,-2.0*lambda2) * cos(2.0*KB-KA);
+	  Complex hAC= Complex(-2.0*t1,-2.0*lambda1) * cos(KB) + Complex(-2.0*t2,2.0*lambda2) * cos(KB-2.0*KA);
+	  Complex hBC= Complex(-2.0*t1,2.0*lambda1) * cos(KB-KA) + Complex(-2.0*t2,-2.0*lambda2) * cos(KA+KB);
 	  HermitianMatrix TmpOneBobyHamiltonian(3, true);
-	  TmpOneBobyHamiltonian.SetMatrixElement(0, 0, d1 + d3);
-	  TmpOneBobyHamiltonian.SetMatrixElement(0, 1, B1);
-	  TmpOneBobyHamiltonian.SetMatrixElement(1, 1, d1 - d3);
+	  TmpOneBobyHamiltonian.SetMatrixElement(0, 1, hAB);
+	  TmpOneBobyHamiltonian.SetMatrixElement(0, 2, hAC);
+	  TmpOneBobyHamiltonian.SetMatrixElement(1, 2, hBC);
+	  ComplexMatrix TmpMatrix(3, 3, true);
+	  TmpMatrix[0][0] = 1.0;
+	  TmpMatrix[1][1] = 1.0;
+	  TmpMatrix[2][2] = 1.0;
 	  RealDiagonalMatrix TmpDiag;
 #ifdef __LAPACK__
-	  TmpOneBobyHamiltonian.LapackDiagonalize(TmpDiag);
+	  TmpOneBobyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
 #else
-	  TmpOneBobyHamiltonian.Diagonalize(TmpDiag);
+	  TmpOneBobyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
 #endif   
 	  if (MaxEMinus < TmpDiag(0, 0))
 	    {
@@ -330,7 +343,12 @@ void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrS
 	    {
 	      MinEPlus = TmpDiag(1, 1);
 	    }
-	  File << (2.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) << " " << (2.0 * M_PI * ((double) ky) / ((double) nbrSitesY)) << " " << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << " " << TmpDiag(2, 2) << endl;
+	  double Kx = KA;
+	  if (Kx > M_PI/2.0) Kx -= M_PI;
+	  double Ky = -KA/sqrt(3.0) + 2.0*KB/sqrt(3.0);
+	  if (Kx/2.0+sqrt(3.0)/2.0*Ky > M_PI/2.0) Ky -= M_PI;
+	  if (-Kx/2.0+sqrt(3.0)/2.0*Ky > M_PI/2.0) Ky -= M_PI;
+	  File << Kx << " " << Ky << " " << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << " " << TmpDiag(2, 2) << endl;
 	}
       File << endl;
     }

@@ -52,18 +52,20 @@ class ParticleOnLatticeKagomeLatticeSingleBandHamiltonian : public ParticleOnLat
 
  protected:
   
-  // hoping amplitude between neareast neighbor sites
-  double NNHoping;
-  // hoping amplitude between next neareast neighbor sites
-  double NextNNHoping;
-  // hoping amplitude between second next neareast neighbor sites
-  double SecondNextNNHoping;
+  // hopping amplitude between neareast neighbor sites
+  double NNHopping;
+  // hopping amplitude between next neareast neighbor sites
+  double NextNNHopping;
+  // spin orbit coupling to neareast neighbor sites
+  double NNSpinOrbit;
+  // spin orbit coupling to next neareast neighbor sites
+  double NextNNSpinOrbit;
+  
   // four times the sublattice staggered chemical potential 
   double MuS;
   // nearest neighbor density-density potential strength
   double UPotential;
-  // second nearest neighbor density-density potential strength
-  double VPotential;
+
   // boundary condition twisting angle along x
   double GammaX;
   // boundary condition twisting angle along y
@@ -81,13 +83,13 @@ class ParticleOnLatticeKagomeLatticeSingleBandHamiltonian : public ParticleOnLat
   // nbrSiteX = number of sites in the x direction
   // nbrSiteY = number of sites in the y direction
   // uPotential = strength of the repulsive two body neareast neighbor interaction
-  // t1 = real part of the hoping amplitude between neareast neighbor sites
-  // t2 = real part of the hoping amplitude between next neareast neighbor sites
-  // lambda1 = imaginary part of the hoping amplitude between neareast neighbor sites
-  // lambda1 = imaginary part of the hoping amplitude between next neareast neighbor sites
+  // t1 = real part of the hopping amplitude between neareast neighbor sites
+  // t2 = real part of the hopping amplitude between next neareast neighbor sites
+  // lambda1 = imaginary part of the hopping amplitude between neareast neighbor sites
+  // lambda1 = imaginary part of the hopping amplitude between next neareast neighbor sites
   // mus = sublattice chemical potential on A sites
-  // gammaX = boundary condition twisting angle along x
-  // gammaY = boundary condition twisting angle along y
+  // gammaX = boundary condition twisting angle along x (measured in units of 2pi)
+  // gammaY = boundary condition twisting angle along y (measured in units of 2pi)
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
@@ -133,7 +135,7 @@ class ParticleOnLatticeKagomeLatticeSingleBandHamiltonian : public ParticleOnLat
   // kx4 = annihilation momentum along x for the C site
   // ky4 = annihilation momentum along y for the C site
   // return value = corresponding matrix element
-  Complex ComputeTwoBodyMatrixElementBC(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
+  Complex ComputeTwoBodyMatrixElementBC(int kx1, int ky1, int kx2, int ky2); // , int kx3, int ky3, int kx4, int ky4
 
   // compute the one body transformation matrices and the optional one body band stucture contribution
   //
