@@ -50,6 +50,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('s', "nbr-subbands", "number of subbands", 1);
   (*SystemGroup) += new BooleanOption  ('\n', "3d", "consider a 3d model instead of a 2d model");
   (*SystemGroup) += new BooleanOption  ('\n', "4d", "consider a 4d model instead of a 2d model");
+  (*SystemGroup) += new BooleanOption  ('\n', "spin-conserved", "assume that the spin is conserved in the two band model");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "sz", "twice the spin Sz value (only useful when --spin-conserved is on)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "non-periodic", "look at the non-periodic hilbert space with a cut in momentum space described by nbr-allowed-site and min-k");
   (*SystemGroup) += new SingleIntegerOption  ('X', "nbr-allowed-sitex", "number of x momenta allowed for a single particle", 3);
   (*SystemGroup) += new SingleIntegerOption  ('Y', "nbr-allowed-sitey", "number of y momenta allowed for a single particle", 3);
@@ -90,6 +92,8 @@ int main(int argc, char** argv)
   int TotalKy = Manager.GetInteger("ky");
   int TotalKz = Manager.GetInteger("kz");
   int TotalKt = Manager.GetInteger("kt");
+  int Sz = Manager.GetInteger("sz");
+
   if ((Manager.GetString("state") != 0) && (Manager.GetBoolean("no-autodetect") == false))
     {
       double Mass = 0.0;
@@ -124,7 +128,14 @@ int main(int argc, char** argv)
 		{
 		  if (Manager.GetBoolean("4d") == false)
 		    {
-		      Space = new FermionOnSquareLatticeWithSpinMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
+		      if (Manager.GetBoolean("spin-conserved") == false)
+			{
+			  Space = new FermionOnSquareLatticeWithSpinMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
+			}
+		      else
+			{
+			  Space = new FermionOnSquareLatticeWithSpinMomentumSpace(NbrParticles, (Sz + NbrParticles) / 2, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
+			}
 		    }
 		  else
 		    {
