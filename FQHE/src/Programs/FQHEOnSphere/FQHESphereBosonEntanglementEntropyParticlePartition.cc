@@ -159,6 +159,8 @@ int main(int argc, char** argv)
   int* TotalLz = 0;
   bool Statistics = true;
   int NbrSpaces = 1;
+  double* Weights =0;
+  bool WeightFlag = false;
   ParticleOnSphere** Spaces = 0;
   RealVector* GroundStates = 0;
   char** GroundStateFiles = 0;
@@ -173,8 +175,10 @@ int main(int argc, char** argv)
     {
       GroundStateFiles = new char* [1];
       TotalLz = new int[1];
+      Weights = new double[1];
+      Weights[0] = 1.0;
       GroundStateFiles[0] = new char [strlen(Manager.GetString("ground-file")) + 1];
-      strcpy (GroundStateFiles[0], Manager.GetString("ground-file"));      
+      strcpy (GroundStateFiles[0], Manager.GetString("ground-file"));            
     }
   else
     {
@@ -183,15 +187,26 @@ int main(int argc, char** argv)
 	{
 	  DegeneratedFile.DumpErrors(cout);
 	  return -1;
+        }
+      NbrSpaces = DegeneratedFile.GetNbrLines();
+      GroundStateFiles = new char* [NbrSpaces];
+      TotalLz = new int[NbrSpaces];
+      for (int i = 0; i < NbrSpaces; ++i)
+	{
+	  GroundStateFiles[i] = new char [strlen(DegeneratedFile(0, i)) + 1];
+	  strcpy (GroundStateFiles[i], DegeneratedFile(0, i));      	   
 	}
-       NbrSpaces = DegeneratedFile.GetNbrLines();
-       GroundStateFiles = new char* [NbrSpaces];
-       TotalLz = new int[NbrSpaces];
-       for (int i = 0; i < NbrSpaces; ++i)
-	 {
-	   GroundStateFiles[i] = new char [strlen(DegeneratedFile(0, i)) + 1];
-	   strcpy (GroundStateFiles[i], DegeneratedFile(0, i));      	   
-	 }
+      if (DegeneratedFile.GetNbrColumns() > 1)
+	{
+	  Weights = DegeneratedFile.GetAsDoubleArray(1);
+	  WeightFlag = true;
+	}
+      else
+	{
+	  Weights = new double[NbrSpaces];
+	  for (int i = 0; i < NbrSpaces; ++i)
+	    Weights[i] = 1.0;
+	} 
     }
 
   for (int i = 0; i < NbrSpaces; ++i)
@@ -386,10 +401,14 @@ int main(int argc, char** argv)
 	      if (SVDFlag == false)
 		{
 		  PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[0], Architecture.GetArchitecture());
+		  if (WeightFlag == true)
+		      PartialDensityMatrix *= Weights[0];
 		}
 	      else
 		{
 		  PartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[0], true);
+		  if (WeightFlag == true)
+		      PartialEntanglementMatrix *= sqrt(Weights[0]);
 		}
 	    }
 	  else
@@ -398,7 +417,7 @@ int main(int argc, char** argv)
 		{
 		  if ((2 * SubsystemNbrParticles) <= NbrParticles)
 		    {
-		      PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixRealSpacePartition(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), GroundStates[0], Architecture.GetArchitecture());
+		      PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixRealSpacePartition(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), GroundStates[0], Architecture.GetArchitecture());		      
 		    }
 		  else
 		    {
@@ -451,11 +470,11 @@ int main(int argc, char** argv)
 		{
 		  if (SVDFlag == false)
 		    {
-		      TmpMatrix =  Spaces[i]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[i], Architecture.GetArchitecture());
+		      TmpMatrix =  Spaces[i]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[i], Architecture.GetArchitecture());		      
 		    }
 		  else
 		    {
-		      TmpEntanglementMatrix = Spaces[i]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[i], false);
+		      TmpEntanglementMatrix = Spaces[i]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[i], false);		      
 		    }
 		}
 	      else
@@ -511,11 +530,29 @@ int main(int argc, char** argv)
 		}
 	      if (SVDFlag == false)
 		{
-		  PartialDensityMatrix += TmpMatrix;
+		  if (WeightFlag == true)
+		      TmpMatrix *= Weights[i];
+		  if ( PartialDensityMatrix.GetNbrRow() != 0 ) 
+		    {
+		      PartialDensityMatrix += TmpMatrix;
+		    }
+		  else
+		    {
+		      PartialDensityMatrix = TmpMatrix;
+		    }
 		}
 	      else
 		{
-		  PartialEntanglementMatrix += TmpEntanglementMatrix;
+		  if (WeightFlag == true)
+		      TmpEntanglementMatrix *= sqrt(Weights[i]);
+		  if ( PartialEntanglementMatrix.GetNbrRow() != 0 )
+		    {
+		      PartialEntanglementMatrix += TmpEntanglementMatrix;
+		    }
+		  else
+		    {	
+		      PartialEntanglementMatrix = TmpEntanglementMatrix;
+		    }
 		}
 	    }
 	  if (NbrSpaces > 1)
