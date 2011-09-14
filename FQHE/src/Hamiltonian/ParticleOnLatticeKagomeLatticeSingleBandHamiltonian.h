@@ -115,6 +115,7 @@ class ParticleOnLatticeKagomeLatticeSingleBandHamiltonian : public ParticleOnLat
   // return value = corresponding matrix element
   Complex ComputeTwoBodyMatrixElementAB(int kx1, int ky1, int kx2, int ky2);
 
+
   // compute the matrix element for the two body interaction between two sites A and C
   //
   // kx1 = creation momentum along x for the C site
@@ -126,16 +127,16 @@ class ParticleOnLatticeKagomeLatticeSingleBandHamiltonian : public ParticleOnLat
 
   // compute the matrix element for the two body interaction between two sites B and C 
   //
-  // kx1 = creation momentum along x for the B site
-  // ky1 = creation momentum along y for the B site
-  // kx2 = creation momentum along x for the C site
-  // ky2 = creation momentum along y for the C site
-  // kx3 = annihilation momentum along x for the B site
-  // ky3 = annihilation momentum along y for the B site
-  // kx4 = annihilation momentum along x for the C site
-  // ky4 = annihilation momentum along y for the C site
+  // k1a = creation momentum along e_a for the B site
+  // k1b = creation momentum along e_b for the B site
+  // k2a = creation momentum along e_a for the A site
+  // k2b = creation momentum along e_b for the A site
+  // k3a = annihilation momentum along e_a for the B site
+  // k3b = annihilation momentum along e_b for the B site
+  // k4a = annihilation momentum along e_a for the A site
+  // k4b = annihilation momentum along e_b for the A site
   // return value = corresponding matrix element
-  Complex ComputeTwoBodyMatrixElementBC(int kx1, int ky1, int kx2, int ky2); // , int kx3, int ky3, int kx4, int ky4
+  Complex ComputeTwoBodyMatrixElementBC(int k1a, int k1b, int k2a, int k2b, int k3a, int k3b, int k4a, int k4b);
 
   // compute the one body transformation matrices and the optional one body band stucture contribution
   //
