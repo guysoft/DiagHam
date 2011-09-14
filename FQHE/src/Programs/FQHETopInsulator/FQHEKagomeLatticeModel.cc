@@ -310,13 +310,25 @@ void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrS
 	{
 	  KA = M_PI / ((double) nbrSitesX) * (((double) ka) + gammaX);
 	  KB = M_PI / ((double) nbrSitesY) * (((double) kb) + gammaY);
-	  Complex hAB= Complex(-2.0*t1,2.0*lambda1) * cos(KA) + Complex(-2.0*t2,-2.0*lambda2) * cos(2.0*KB-KA);
-	  Complex hAC= Complex(-2.0*t1,-2.0*lambda1) * cos(KB) + Complex(-2.0*t2,2.0*lambda2) * cos(KB-2.0*KA);
-	  Complex hBC= Complex(-2.0*t1,2.0*lambda1) * cos(KB-KA) + Complex(-2.0*t2,-2.0*lambda2) * cos(KA+KB);
+	  Complex HAB (-2.0*t1, -2.0*lambda1);
+	  HAB *= cos (KA);
+	  Complex HAC(-2.0*t1, 2.0*lambda1);
+	  HAC *= cos (KB);
+	  Complex HBC(-2.0*t1, -2.0*lambda1);
+	  HBC *= cos(KA-KB);
+	  Complex HAB2 (-2.0*t2, 2.0*lambda2);
+	  HAB2 *= cos (KA-2.0*KB);
+	  Complex HAC2 (-2.0*t2, -2.0*lambda2);
+	  HAC2 *= cos (2.0*KA-KB);
+	  Complex HBC2 (-2.0*t2, 2.0*lambda2);
+	  HBC2 *= cos (KA+KB);
+	  HAB+=HAB2;
+	  HAC+=HAC2;
+	  HBC+=HBC2;
 	  HermitianMatrix TmpOneBobyHamiltonian(3, true);
-	  TmpOneBobyHamiltonian.SetMatrixElement(0, 1, hAB);
-	  TmpOneBobyHamiltonian.SetMatrixElement(0, 2, hAC);
-	  TmpOneBobyHamiltonian.SetMatrixElement(1, 2, hBC);
+	  TmpOneBobyHamiltonian.SetMatrixElement(0, 1, HAB);
+	  TmpOneBobyHamiltonian.SetMatrixElement(0, 2, HAC);
+	  TmpOneBobyHamiltonian.SetMatrixElement(1, 2, HBC);
 	  ComplexMatrix TmpMatrix(3, 3, true);
 	  TmpMatrix[0][0] = 1.0;
 	  TmpMatrix[1][1] = 1.0;
@@ -326,7 +338,7 @@ void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrS
 	  TmpOneBobyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
 #else
 	  TmpOneBobyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
-#endif   
+#endif
 	  if (MaxEMinus < TmpDiag(0, 0))
 	    {
 	      MaxEMinus = TmpDiag(0, 0);
@@ -352,5 +364,5 @@ void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrS
 	}
       File << endl;
     }
-  cout << "Spread = " << (MaxEMinus - MinEMinus) << "  Gap = " <<  (MinEPlus - MaxEMinus) << "  Flatening = " << ((MaxEMinus - MinEMinus) / (MinEPlus - MaxEMinus)) << endl;
+  cout << "Spread = " << (MaxEMinus - MinEMinus) << "  Gap = " <<  (MinEPlus - MaxEMinus) << "  Flattening = " << ((MaxEMinus - MinEMinus) / (MinEPlus - MaxEMinus)) << endl;
 }

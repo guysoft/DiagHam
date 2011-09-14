@@ -284,19 +284,19 @@ void ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ComputeOneBodyMatrices
 	KA = 0.5 * this->KxFactor * (((double) ka) + this->GammaX);
 	KB = 0.5 * this->KyFactor * (((double) kb) + this->GammaY);
 	int Index = (ka * this->NbrSiteY) + kb;
-	Complex HAB (-2.0*this->NNHopping, 2.0*this->NNSpinOrbit);
+	Complex HAB (-2.0*this->NNHopping, -2.0*this->NNSpinOrbit);
 	HAB *= cos (KA);
-	Complex HAC(-2.0*this->NNHopping, -2.0*this->NNSpinOrbit);
+	Complex HAC(-2.0*this->NNHopping, 2.0*this->NNSpinOrbit);
 	HAC *= cos (KB);
 	Complex HBC(-2.0*this->NNHopping, 2.0*this->NNSpinOrbit);
 	HBC *= cos(KA-KB);
 
 	Complex HAB2 (-2.0*this->NextNNHopping, -2.0*this->NextNNSpinOrbit);
-	HAB2 *= cos (2.0*KB-KA);
+	HAB2 *= cos (KA-2.0*KB);
 	Complex HAC2 (-2.0*this->NextNNHopping, 2.0*this->NextNNSpinOrbit);
-	HAC2 *= cos (KB-2.0*KA);
+	HAC2 *= cos (2.0*KA-KB);
 	Complex HBC2 (-2.0*this->NextNNHopping, -2.0*this->NextNNSpinOrbit);
-	HAC2 *= cos (KA+KA);
+	HBC2 *= cos (KA+KB);
 
 	HAB+=HAB2;
 	HAC+=HAC2;
