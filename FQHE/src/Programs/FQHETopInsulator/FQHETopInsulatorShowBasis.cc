@@ -62,6 +62,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption ('\n', "state", "name of an optional vector state whose component values can be displayed behind each corresponding n-body state");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "hide-component", "hide state components (and thus the corresponding n-body state) whose absolute value is lower than a given error (0 if all components have to be shown", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "no-autodetect", "do not autdetect system parameter from state file name");
+  (*SystemGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (not available for the non-periodic momentum space or the case with spin)",0);
   //  (*OutputGroup) += new BooleanOption  ('\n', "save-disk", "save output on disk");
   //  (*OutputGroup) += new SingleStringOption ('\n', "output-file", "use this file name instead of statistics_topinsulator_nbrsubbands_n_nbrparticles_x_nbrsitex_y_nbrsitey.dim");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -119,6 +120,11 @@ int main(int argc, char** argv)
       if (Manager.GetInteger("nbr-subbands") == 1)
         {
           Space = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
+	  if (Manager.GetString("save-hilbert") != 0)
+	    {
+	      Space->WriteHilbertSpace(Manager.GetString("save-hilbert"));
+	      return 0;
+	    }
         }
       else
         {

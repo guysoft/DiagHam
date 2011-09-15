@@ -216,6 +216,44 @@ AbstractHilbertSpace* FermionOnSquareLatticeMomentumSpace::Clone()
   return new FermionOnSquareLatticeMomentumSpace(*this);
 }
 
+// save Hilbert space description to disk
+//
+// fileName = name of the file where the Hilbert space description has to be saved
+// return value = true if no error occured
+bool FermionOnSquareLatticeMomentumSpace::WriteHilbertSpace (char* fileName)
+{
+  ofstream File;
+  File.open(fileName, ios::binary | ios::out);
+  if (!File.is_open())
+    {
+      cout << "can't open the file: " << fileName << endl;
+      return false;
+    }
+  WriteLittleEndian(File, this->HilbertSpaceDimension);
+  WriteLittleEndian(File, this->LargeHilbertSpaceDimension);
+  WriteLittleEndian(File, this->NbrFermions);
+  WriteLittleEndian(File, this->NbrSiteX);
+  WriteLittleEndian(File, this->NbrSiteY);
+  WriteLittleEndian(File, this->KxMomentum);
+  WriteLittleEndian(File, this->KyMomentum);
+  if (this->HilbertSpaceDimension != 0)
+    {
+      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	WriteLittleEndian(File, this->StateDescription[i]);
+      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	WriteLittleEndian(File, this->StateLzMax[i]);
+    }
+  else
+    {
+      for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+	WriteLittleEndian(File, this->StateDescription[i]);
+      for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+	WriteLittleEndian(File, this->StateLzMax[i]);
+    }
+  File.close();
+  return true;
+}
+
 // print a given State
 //
 // Str = reference on current output stream 

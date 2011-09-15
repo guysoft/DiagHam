@@ -47,6 +47,16 @@ AbstractQHEParticle::~AbstractQHEParticle ()
 {
 }
 
+// save Hilbert space description to disk
+//
+// fileName = name of the file where the Hilbert space description has to be saved
+// return value = true if no error occured
+bool AbstractQHEParticle::WriteHilbertSpace (char* fileName)
+{
+  cout << "Warning : WriteHilbertSpace not implemented" <<endl;
+  return false;
+}
+
 // evaluate wave function in real space using a given basis
 //
 // state = vector corresponding to the state in the Fock basis

@@ -62,6 +62,12 @@ class AbstractQHEParticle :  public AbstractHilbertSpace
   // return value = particle statistic
   virtual int GetParticleStatistic() = 0;
 
+  // save Hilbert space description to disk
+  //
+  // fileName = name of the file where the Hilbert space description has to be saved
+  // return value = true if no error occured
+  virtual bool WriteHilbertSpace (char* fileName);
+
   // forge an eigenstate from a description given by a file
   //
   // filename = name of the file that contains the state description
