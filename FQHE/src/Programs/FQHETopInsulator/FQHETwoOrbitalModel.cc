@@ -44,8 +44,18 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('y', "nbr-sitey", "number of sites along the y direction", 3);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive nearest neighbor potential strength", 1.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "v-potential", "repulsive nearest next neighbor potential strength", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "band-parameter", "band structure parameter", 1.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "mu-s", "sublattice staggered chemical potential", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
+  (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
+  (*SystemGroup) += new BooleanOption  ('\n', "single-band", "project onto the lowest enregy band");
+  (*SystemGroup) += new BooleanOption  ('\n', "flat-band", "use flat band model");
+  (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
+  (*SystemGroup) += new SingleStringOption  ('\n', "eigenstate-file", "filename for eigenstates output; to be appended by _kx_#_ky_#.#.vec");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
@@ -69,10 +79,47 @@ int main(int argc, char** argv)
   int NbrSitesY = Manager.GetInteger("nbr-sitey"); 
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
 
+  char* FilePrefix = new char [256];
+  if (Manager.GetBoolean("single-band") == false)
+    {
+      sprintf (FilePrefix, "fermions_checkerboardlattice_n_%d_x_%d_y_%d",  NbrParticles, NbrSitesX, NbrSitesY);
+    }
+  else
+    {
+      if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false) && (Manager.GetBoolean("five-body") == false))
+	{ 
+	  sprintf (FilePrefix, "fermions_singleband_checkerboardlattice_n_%d_x_%d_y_%d",  NbrParticles, NbrSitesX, NbrSitesY);
+	}
+      else
+	{
+	  if (Manager.GetBoolean("three-body") == true)
+	    {
+	      sprintf (FilePrefix, "fermions_singleband_threebody_checkerboardlattice_n_%d_x_%d_y_%d",  NbrParticles, NbrSitesX, NbrSitesY);
+	    }
+	  else
+	    {
+	      if (Manager.GetBoolean("four-body") == true)
+		{
+		  sprintf (FilePrefix, "fermions_singleband_fourbody_checkerboardlattice_n_%d_x_%d_y_%d",  NbrParticles, NbrSitesX, NbrSitesY);
+		}
+	      else
+		{
+		  sprintf (FilePrefix, "fermions_singleband_fivebody_checkerboardlattice_n_%d_x_%d_y_%d",  NbrParticles, NbrSitesX, NbrSitesY);
+		}
+	    }
+	}
+    }
+
   char* CommentLine = new char [256];
-  sprintf (CommentLine, "eigenvalues\n#");
+  sprintf (CommentLine, "eigenvalues\n# kx ky ");
   char* EigenvalueOutputFile = new char [512];
-  sprintf (EigenvalueOutputFile, "fermions_cherninsulator_singleband_n_%d_x_%d_y_%d_m_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("band-parameter"));
+  sprintf (EigenvalueOutputFile, "fermions_singleband_twoorbitalcherninsulator_n_%d_x_%d_y_%d_m_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("band-parameter"));
+
+  if (Manager.GetBoolean("singleparticle-spectrum") == true)
+    {
+      ComputeSingleParticleSpectrum(EigenvalueOutputFile, NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("mu-s"));
+      return 0;
+    }
 
   int MinKx = 0;
   int MaxKx = NbrSitesX - 1;
@@ -111,7 +158,7 @@ int main(int argc, char** argv)
  	  char* ContentPrefix = new char[256];
  	  sprintf (ContentPrefix, "%d %d", i, j);
 	  char* EigenstateOutputFile = new char [512];
-	  sprintf (EigenstateOutputFile, "fermions_cherninsulator_singleband_n_%d_x_%d_y_%d_m_%f_kx_%d_ky_%d", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("band-parameter"), i, j);
+	  sprintf (EigenstateOutputFile, "fermions_singleband_twoorbitalcherninsulator_n_%d_x_%d_y_%d_m_%f_kx_%d_ky_%d", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("band-parameter"), i, j);
  	  GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, 
 				      FirstRunFlag, EigenstateOutputFile);
  	  FirstRunFlag = false;

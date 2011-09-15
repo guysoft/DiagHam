@@ -144,33 +144,33 @@ int main(int argc, char** argv)
   if (Manager.GetString("eigenvalue-file")!=0)
     strcpy(EigenvalueOutputFile, Manager.GetString("eigenvalue-file"));
   else
-  {
-    if (Manager.GetBoolean("single-band") == false)
-      {
-        if (Manager.GetDouble("mu-s") == 0.0)
-          sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_t1_%f_t2_%f_tpp_%f.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"));
-        else
-          sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_t1_%f_t2_%f_tpp_%f_mus_%f.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"));
-      }
-    else
-      {
-        if (Manager.GetBoolean("flat-band") == true)
-          {
-            if (Manager.GetDouble("mu-s") == 0.0)
-              sprintf (EigenvalueOutputFile, "%s_v_%f_t1_%f_t2_%f_tpp_%f_gx_%f_gy_%f.dat",FilePrefix, Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
-            else
-              sprintf (EigenvalueOutputFile, "%s_v_%f_t1_%f_t2_%f_tpp_%f_gx_%f_gy_%f_mus_%f.dat",FilePrefix, Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
-          }
-        else
-          {
-            if (Manager.GetDouble("mu-s") == 0.0)
-              sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_t1_%f_t2_%f_tpp_%f_gx_%f_gy_%f.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
-            else
-              sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_t1_%f_t2_%f_tpp_%f_gx_%f_gy_%f_mus_%f.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
-          }
-      }
-  }
-
+    {
+      if (Manager.GetBoolean("single-band") == false)
+	{
+	  if (Manager.GetDouble("mu-s") == 0.0)
+	    sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_t1_%f_t2_%f_tpp_%f.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"));
+	  else
+	    sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_t1_%f_t2_%f_tpp_%f_mus_%f.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"));
+	}
+      else
+	{
+	  if (Manager.GetBoolean("flat-band") == true)
+	    {
+	      if (Manager.GetDouble("mu-s") == 0.0)
+		sprintf (EigenvalueOutputFile, "%s_v_%f_t1_%f_t2_%f_tpp_%f_gx_%f_gy_%f.dat",FilePrefix, Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	      else
+		sprintf (EigenvalueOutputFile, "%s_v_%f_t1_%f_t2_%f_tpp_%f_gx_%f_gy_%f_mus_%f.dat",FilePrefix, Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+	    }
+	  else
+	    {
+	      if (Manager.GetDouble("mu-s") == 0.0)
+		sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_t1_%f_t2_%f_tpp_%f_gx_%f_gy_%f.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	      else
+		sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_t1_%f_t2_%f_tpp_%f_gx_%f_gy_%f_mus_%f.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+	    }
+	}
+    }
+  
   if (Manager.GetBoolean("singleparticle-spectrum") == true)
     {
       ComputeSingleParticleSpectrum(EigenvalueOutputFile, NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"));
