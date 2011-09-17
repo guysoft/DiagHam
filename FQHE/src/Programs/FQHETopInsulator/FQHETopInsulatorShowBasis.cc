@@ -5,6 +5,8 @@
 #include "HilbertSpace/FermionOnCubicLatticeWithSU4SpinMomentumSpace.h"
 #include "HilbertSpace/FermionOnHyperCubicLatticeWithSpinMomentumSpace.h"
 
+#include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
+
 #include "Vector/ComplexVector.h"
 
 #include "Tools/FQHEFiles/FQHEOnSquareLatticeFileTools.h"
@@ -59,6 +61,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "min-ky", "minimal y momentum allowed for a single particle", 4);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "min-kz", "minimal z momentum allowed for a single particle", 4);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "min-kt", "minimal t momentum allowed for a single particle", 4);
+  (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
   (*SystemGroup) += new SingleStringOption ('\n', "state", "name of an optional vector state whose component values can be displayed behind each corresponding n-body state");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "hide-component", "hide state components (and thus the corresponding n-body state) whose absolute value is lower than a given error (0 if all components have to be shown", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "no-autodetect", "do not autdetect system parameter from state file name");
@@ -108,67 +111,82 @@ int main(int argc, char** argv)
     }
  
   AbstractQHEParticle* Space;
-  if (Manager.GetBoolean("non-periodic") == true)
+  if (Manager.GetBoolean("boson") == true)
     {
-      if (Manager.GetInteger("nbr-subbands") == 1)
-	Space = new FermionOnSquareLatticeNonPeriodicMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, NbrAllowedKx, NbrAllowedKy, MinKx, MinKy, TotalKx, TotalKy);
+      if (Manager.GetBoolean("non-periodic") == true)
+	{
+	  if (Manager.GetInteger("nbr-subbands") == 1)
+	    Space = new FermionOnSquareLatticeNonPeriodicMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, NbrAllowedKx, NbrAllowedKy, MinKx, MinKy, TotalKx, TotalKy);
+	  else
+	    return 0;
+	}
       else
-	return 0;
+	{
+	  if (Manager.GetInteger("nbr-subbands") == 1)
+	    {
+	      Space = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
+	      if (Manager.GetString("save-hilbert") != 0)
+		{
+		  Space->WriteHilbertSpace(Manager.GetString("save-hilbert"));
+		  return 0;
+		}
+	    }
+	  else
+	    {
+	      if (Manager.GetInteger("nbr-subbands") == 2)
+		{
+		  if (Manager.GetBoolean("3d") == false)
+		    {
+		      if (Manager.GetBoolean("4d") == false)
+			{
+			  if (Manager.GetBoolean("spin-conserved") == false)
+			    {
+			      Space = new FermionOnSquareLatticeWithSpinMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
+			    }
+			  else
+			    {
+			      Space = new FermionOnSquareLatticeWithSpinMomentumSpace(NbrParticles, (Sz + NbrParticles) / 2, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
+			    }
+			}
+		      else
+			{
+			  Space = new FermionOnHyperCubicLatticeWithSpinMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, NbrSiteZ, NbrSiteT, TotalKx, TotalKy, TotalKz, TotalKt);
+			}
+		    }
+		  else
+		    {
+		      Space = new FermionOnCubicLatticeWithSpinMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, NbrSiteZ, TotalKx, TotalKy, TotalKz);
+		    }
+		}
+	      else
+		{
+		  if (Manager.GetInteger("nbr-subbands") == 4)
+		    {
+		      if (Manager.GetBoolean("3d") == true)
+			{
+			  Space = new FermionOnCubicLatticeWithSU4SpinMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, NbrSiteZ, TotalKx, TotalKy, TotalKz);
+			}
+		    }
+		  else
+		    {
+		      return 0;
+		    }
+		}
+	    }
+	}
     }
   else
     {
       if (Manager.GetInteger("nbr-subbands") == 1)
-        {
-          Space = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
+	{
+	  Space = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
 	  if (Manager.GetString("save-hilbert") != 0)
 	    {
 	      Space->WriteHilbertSpace(Manager.GetString("save-hilbert"));
 	      return 0;
 	    }
-        }
-      else
-        {
-          if (Manager.GetInteger("nbr-subbands") == 2)
-            {
-	      if (Manager.GetBoolean("3d") == false)
-		{
-		  if (Manager.GetBoolean("4d") == false)
-		    {
-		      if (Manager.GetBoolean("spin-conserved") == false)
-			{
-			  Space = new FermionOnSquareLatticeWithSpinMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
-			}
-		      else
-			{
-			  Space = new FermionOnSquareLatticeWithSpinMomentumSpace(NbrParticles, (Sz + NbrParticles) / 2, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
-			}
-		    }
-		  else
-		    {
-		      Space = new FermionOnHyperCubicLatticeWithSpinMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, NbrSiteZ, NbrSiteT, TotalKx, TotalKy, TotalKz, TotalKt);
-		    }
-		}
-	      else
-		{
-		  Space = new FermionOnCubicLatticeWithSpinMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, NbrSiteZ, TotalKx, TotalKy, TotalKz);
-		}
-            }
-          else
-            {
-	      if (Manager.GetInteger("nbr-subbands") == 4)
-		{
-		  if (Manager.GetBoolean("3d") == true)
-		    {
-		      Space = new FermionOnCubicLatticeWithSU4SpinMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, NbrSiteZ, TotalKx, TotalKy, TotalKz);
-		    }
-		}
-	      else
-		{
-		  return 0;
-		}
-            }
-        }
-  }
+	}
+    }
 
   if (Manager.GetString("state") == 0)
     {

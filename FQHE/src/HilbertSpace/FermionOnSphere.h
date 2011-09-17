@@ -114,6 +114,8 @@ class FermionOnSphere :  public ParticleOnSphere
 
   friend class BosonOnSphereTwoLandauLevels;
 
+  friend class BosonOnSquareLatticeMomentumSpace;
+
  protected:
 
   // number of fermions
