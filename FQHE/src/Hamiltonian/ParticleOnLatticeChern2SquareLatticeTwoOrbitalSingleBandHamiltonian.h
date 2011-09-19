@@ -5,12 +5,12 @@
 //                                                                            //
 //                  Copyright (C) 2001-2007 Nicolas Regnault                  //
 //                                                                            //
-//                          class author: Yang-Le Wu                          //
+//          class author: Yang-Le Wu, Zlatko Papic and Nicolas Regnault       //
 //                                                                            //
 //     class of 2-orbital square lattice model with interacting particles     //
-//                       in the single band approximation                     // 
+//    in the single band approximation, with Chern number 2  for each band    // 
 //                                                                            //
-//                        last modification : 11/09/2011                      //
+//                        last modification : 19/09/2011                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -30,13 +30,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PARTICLEONLATTICESQUARELATTICETWOORBITALSINGLEBANDHAMILTONIAN_H
-#define PARTICLEONLATTICESQUARELATTICETWOORBITALSINGLEBANDHAMILTONIAN_H
+#ifndef PARTICLEONLATTICECHERN2SQUARELATTICETWOORBITALSINGLEBANDHAMILTONIAN_H
+#define PARTICLEONLATTICECHERN2SQUARELATTICETWOORBITALSINGLEBANDHAMILTONIAN_H
 
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphere.h"
-#include "Hamiltonian/ParticleOnLatticeChernInsulatorSingleBandHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian.h"
 #include "Vector/ComplexVector.h"
 
 #include <iostream>
@@ -47,36 +47,12 @@ using std::cout;
 using std::endl;
 
 
-class ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian : public ParticleOnLatticeChernInsulatorSingleBandHamiltonian
+class ParticleOnLatticeChern2SquareLatticeTwoOrbitalSingleBandHamiltonian : public ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian
 {
 
  protected:
   
-  // imag part of the inter-orbital hopping amplitude between nearest neighbors along the x direction
-  double NNHoppingInterX;
-  // the inter-orbital hopping amplitude between nearest neighbors along the y direction
-  double NNHoppingInterY;
-  // the intra-orbital hopping amplitude between nearest neighbors
-  double NNHoppingIntra;
-  // four times the sublattice staggered chemical potential 
-  double MuS;
-  // nearest neighbor density-density potential strength
-  double UPotential;
-  // second nearest neighbor density-density potential strength
-  double VPotential;
-  // boundary condition twisting angle along x
-  double GammaX;
-  // boundary condition twisting angle along y
-  double GammaY;
-
-  // use flat band model
-  bool FlatBand;
-  
  public:
-
-  // default constructor
-  //
-  ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian();
 
   // constructor
   //
@@ -95,11 +71,11 @@ class ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian : public Par
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential, double t1, double t2, double t3, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory=-1);
+  ParticleOnLatticeChern2SquareLatticeTwoOrbitalSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential, double t1, double t2, double t3, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory=-1);
 
   // destructor
   //
-  ~ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian();
+  ~ParticleOnLatticeChern2SquareLatticeTwoOrbitalSingleBandHamiltonian();
   
 
  protected:

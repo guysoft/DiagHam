@@ -31,7 +31,7 @@
 
 
 #include "config.h"
-#include "Hamiltonian/ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeChern2SquareLatticeTwoOrbitalSingleBandHamiltonian.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
@@ -48,13 +48,6 @@ using std::endl;
 using std::ostream;
 
 
-
-// default constructor
-//
-
-ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian::ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian()
-{
-}
 
 // constructor
 //
@@ -74,8 +67,8 @@ ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian::ParticleOnLattice
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
-ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian::ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential,
-        double t1, double t2, double t3, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
+ParticleOnLatticeChern2SquareLatticeTwoOrbitalSingleBandHamiltonian::ParticleOnLatticeChern2SquareLatticeTwoOrbitalSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential,
+																	 double t1, double t2, double t3, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -117,14 +110,14 @@ ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian::ParticleOnLattice
 // destructor
 //
 
-ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian::~ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian()
+ParticleOnLatticeChern2SquareLatticeTwoOrbitalSingleBandHamiltonian::~ParticleOnLatticeChern2SquareLatticeTwoOrbitalSingleBandHamiltonian()
 {
 }
 
 // evaluate all interaction factors
 //   
 
-void ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian::EvaluateInteractionFactors()
+void ParticleOnLatticeChern2SquareLatticeTwoOrbitalSingleBandHamiltonian::EvaluateInteractionFactors()
 {
   long TotalNbrInteractionFactors = 0;
   ComplexMatrix* OneBodyBasis = new ComplexMatrix [this->NbrSiteX * this->NbrSiteY];
@@ -252,7 +245,7 @@ void ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian::EvaluateInte
 // ky4 = creation momentum along y for the second site
 // return value = corresponding matrix element
 
-Complex ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian::ComputeTwoBodyMatrixElementNN(int kx2, int ky2, int kx4, int ky4)
+Complex ParticleOnLatticeChern2SquareLatticeTwoOrbitalSingleBandHamiltonian::ComputeTwoBodyMatrixElementNN(int kx2, int ky2, int kx4, int ky4)
 {
   double dx = ((double)(kx2-kx4)) * this->KxFactor;
   double dy = ((double)(ky2-ky4)) * this->KyFactor;
@@ -264,7 +257,7 @@ Complex ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian::ComputeTw
 //
 // oneBodyBasis = array of one body transformation matrices
 
-void ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian::ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis)
+void ParticleOnLatticeChern2SquareLatticeTwoOrbitalSingleBandHamiltonian::ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis)
 {
   for (int kx = 0; kx < this->NbrSiteX; ++kx)
   {
