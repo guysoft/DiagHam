@@ -179,6 +179,16 @@ class FermionOnSphere :  public ParticleOnSphere
   // memory = amount of memory granted for precalculations
   FermionOnSphere (int nbrFermions, int totalLz, int lzMax, unsigned long memory = 10000000);
 
+  // constructor using an external array for state description
+  // 
+  // nbrFermions = number of fermions
+  // totalLz = momentum total value
+  // lzMax = maximum Lz value reached by a fermion
+  // stateDescription = array that gives each state description (data are not duplicated)
+  // hilbertSpaceDimension = Hilbert space dimension
+  // memory = amount of memory granted for precalculations
+  FermionOnSphere (int nbrFermions, int totalLz, int lzMax, unsigned long* stateDescription, long hilbertSpaceDimension, unsigned long memory = 10000000);
+
   // copy constructor (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy

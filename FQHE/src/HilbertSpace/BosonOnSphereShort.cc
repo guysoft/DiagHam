@@ -147,7 +147,8 @@ BosonOnSphereShort::~BosonOnSphereShort ()
 	      delete[] this->Minors[i];
 	  delete[] this->Minors;
 	}
-      delete this->KeptCoordinates;
+      if (this->KeptCoordinates != 0)
+	delete this->KeptCoordinates;
     }
 }
 

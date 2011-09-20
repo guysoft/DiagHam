@@ -111,7 +111,7 @@ int main(int argc, char** argv)
     }
  
   AbstractQHEParticle* Space;
-  if (Manager.GetBoolean("boson") == true)
+  if (Manager.GetBoolean("boson") == false)
     {
       if (Manager.GetBoolean("non-periodic") == true)
 	{

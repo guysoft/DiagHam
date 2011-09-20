@@ -124,6 +124,74 @@ FermionOnSphere::FermionOnSphere (int nbrFermions, int totalLz, int lzMax, unsig
 #endif
 }
 
+// constructor using an external array for state description
+// 
+// nbrFermions = number of fermions
+// totalLz = momentum total value
+// lzMax = maximum Lz value reached by a fermion
+// stateDescription = array that gives each state description (data are not duplicated)
+// hilbertSpaceDimension = Hilbert space dimension
+// memory = amount of memory granted for precalculations
+
+FermionOnSphere::FermionOnSphere (int nbrFermions, int totalLz, int lzMax, unsigned long* stateDescription, long hilbertSpaceDimension, unsigned long memory)
+{
+  this->TargetSpace = this;
+  this->NbrFermions = nbrFermions;
+  this->IncNbrFermions = this->NbrFermions + 1;
+  this->TotalLz = totalLz;
+  this->LzMax = lzMax;
+  this->NbrLzValue = this->LzMax + 1;
+#ifdef __64_BITS__
+  this->InvertShift = 32 - ((this->LzMax + 1) >> 1);
+#else
+  this->InvertShift = 16 - ((this->LzMax + 1 ) >> 1);
+#endif
+  if ((this->LzMax & 1) == 0)
+    this->InvertUnshift = this->InvertShift - 1;
+  else
+    this->InvertUnshift = this->InvertShift;
+  this->LargeHilbertSpaceDimension = hilbertSpaceDimension;
+  if (this->LargeHilbertSpaceDimension >= (1l << 30))
+    this->HilbertSpaceDimension = 0;
+  else
+    this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+  this->Flag.Initialize();
+  this->StateLzMax = new int [this->LargeHilbertSpaceDimension];
+  this->StateDescription = stateDescription;
+  if (this->NbrFermions > 0)
+    {
+      int TmpLzMax = this->LzMax;
+      for (long i = 0l; i < this->LargeHilbertSpaceDimension; ++i)
+	{
+	  while ((this->StateDescription[i] >> TmpLzMax) == 0x0ul)
+	    --TmpLzMax;
+	  this->StateLzMax[i] = TmpLzMax;
+	}
+    }
+  else
+    {
+      this->StateDescription[0] = 0x0ul; 
+      this->StateLzMax[0] = 0;
+    }
+  this->MaximumSignLookUp = 16;
+  this->GenerateLookUpTable(memory);
+#ifdef __DEBUG__
+  unsigned long UsedMemory = 0;
+  UsedMemory += ((unsigned long) this->LargeHilbertSpaceDimension) * (sizeof(unsigned long) + sizeof(int));
+  UsedMemory += this->NbrLzValue * sizeof(int);
+  UsedMemory += this->NbrLzValue * ((unsigned long) this->LookUpTableMemorySize) * sizeof(int);
+  UsedMemory +=  (1 << this->MaximumSignLookUp) * sizeof(double);
+  cout << "memory requested for Hilbert space = ";
+  if (UsedMemory >= 1024)
+    if (UsedMemory >= 1048576)
+      cout << (UsedMemory >> 20) << "Mo" << endl;
+    else
+      cout << (UsedMemory >> 10) << "ko" <<  endl;
+  else
+    cout << UsedMemory << endl;
+#endif
+}
+
 // copy constructor (without duplicating datas)
 //
 // fermions = reference on the hilbert space to copy to copy

@@ -4,6 +4,7 @@
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpaceLong.h"
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpaceLong.h"
+#include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
 
 #include "Hamiltonian/ParticleOnLatticeWithSpinCheckerboardLatticeHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian.h"
@@ -69,6 +70,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1);
   (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
+  (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive nearest neighbor potential strength", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "v-potential", "repulsive nearest next neighbor potential strength", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "three-body", "use a three body interaction instead of a two body interaction");
@@ -108,32 +110,42 @@ int main(int argc, char** argv)
   int NbrSitesY = Manager.GetInteger("nbr-sitey"); 
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
 
-  char* FilePrefix = new char [256];
+  char* StatisticPrefix = new char [16];
+  if (Manager.GetBoolean("boson") == false)
+    {
+      sprintf (StatisticPrefix, "fermions");
+    }
+  else
+    {
+      sprintf (StatisticPrefix, "bosons");
+    }
+  
+  char* FilePrefix = new char [512];
   if (Manager.GetBoolean("single-band") == false)
     {
-      sprintf (FilePrefix, "fermions_checkerboardlattice_n_%d_x_%d_y_%d",  NbrParticles, NbrSitesX, NbrSitesY);
+      sprintf (FilePrefix, "%s_checkerboardlattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
     }
   else
     {
       if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false) && (Manager.GetBoolean("five-body") == false))
 	{ 
-	  sprintf (FilePrefix, "fermions_singleband_checkerboardlattice_n_%d_x_%d_y_%d",  NbrParticles, NbrSitesX, NbrSitesY);
+	  sprintf (FilePrefix, "%s_singleband_checkerboardlattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
 	}
       else
 	{
 	  if (Manager.GetBoolean("three-body") == true)
 	    {
-	      sprintf (FilePrefix, "fermions_singleband_threebody_checkerboardlattice_n_%d_x_%d_y_%d",  NbrParticles, NbrSitesX, NbrSitesY);
+	      sprintf (FilePrefix, "%s_singleband_threebody_checkerboardlattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
 	    }
 	  else
 	    {
 	      if (Manager.GetBoolean("four-body") == true)
 		{
-		  sprintf (FilePrefix, "fermions_singleband_fourbody_checkerboardlattice_n_%d_x_%d_y_%d",  NbrParticles, NbrSitesX, NbrSitesY);
+		  sprintf (FilePrefix, "%s_singleband_fourbody_checkerboardlattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
 		}
 	      else
 		{
-		  sprintf (FilePrefix, "fermions_singleband_fivebody_checkerboardlattice_n_%d_x_%d_y_%d",  NbrParticles, NbrSitesX, NbrSitesY);
+		  sprintf (FilePrefix, "%s_singleband_fivebody_checkerboardlattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
 		}
 	    }
 	}
@@ -234,13 +246,20 @@ int main(int argc, char** argv)
  	  else
  	    {
 	      ParticleOnSphere* Space = 0;
-	      if ((NbrSitesX * NbrSitesY) <= 63)
+	      if (Manager.GetBoolean("boson") == false)
 		{
-		  Space = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		  if ((NbrSitesX * NbrSitesY) <= 63)
+		    {
+		      Space = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		    }
+		  else
+		    {
+		      Space = new FermionOnSquareLatticeMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		    }
 		}
 	      else
 		{
-		  Space = new FermionOnSquareLatticeMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		      Space = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
 		}
  	      cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
 	      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)

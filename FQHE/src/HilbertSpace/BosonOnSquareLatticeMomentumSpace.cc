@@ -83,29 +83,27 @@ BosonOnSquareLatticeMomentumSpace::BosonOnSquareLatticeMomentumSpace (int nbrBos
   this->KyMomentum = kyMomentum;
   this->LzMax = this->NbrSiteX * this->NbrSiteY;
   this->NbrLzValue = this->LzMax + 1;
+  this->Minors = 0;
+  this->KeptCoordinates = 0;
   this->TemporaryState = new unsigned long [this->NbrLzValue];
   this->ProdATemporaryState = new unsigned long [this->NbrLzValue];
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0);
+  cout << "dim = " << this->LargeHilbertSpaceDimension << endl;
   if (this->LargeHilbertSpaceDimension >= (1l << 30))
     this->HilbertSpaceDimension = 0;
   else
     this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
   if ( this->LargeHilbertSpaceDimension > 0l)
     {
-      this->FermionBasis = new FermionOnSphere(0, 0, this->LzMax);
       this->Flag.Initialize();
       this->TargetSpace = this;
-      this->FermionBasis->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
-      this->FermionBasis->StateLzMax = new int [this->LargeHilbertSpaceDimension];  
-      this->LargeHilbertSpaceDimension = this->GenerateStates(this->NbrBosons, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0, this->LzMax + this->NbrBosons, 0l);
-      int TmpLzMax = this->LzMax;
-      for (long i = 0l; i < this->LargeHilbertSpaceDimension; ++i)
+      unsigned long* TmpStateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
+      long TmpLargeHilbertSpaceDimension = this->GenerateStates(TmpStateDescription, this->NbrBosons, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0, this->LzMax + this->NbrBosons, 0l);
+      if (TmpLargeHilbertSpaceDimension != this->LargeHilbertSpaceDimension)
 	{
-	  while ((this->FermionBasis->StateDescription[i] >> TmpLzMax) == 0x0ul)
-	    --TmpLzMax;
-	  this->FermionBasis->StateLzMax[i] = TmpLzMax;
+	  cout << "error while generating the Hilbert space : get " << TmpLargeHilbertSpaceDimension << " , should be " << this->LargeHilbertSpaceDimension << endl;
 	}
-      this->FermionBasis->GenerateLookUpTable(memory);      
+      this->FermionBasis = new FermionOnSphere(this->NbrBosons, 0, this->LzMax + this->NbrBosons - 1, TmpStateDescription, this->LargeHilbertSpaceDimension);
 #ifdef __DEBUG__
       long UsedMemory = 0;
       UsedMemory += (long) this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
@@ -145,12 +143,14 @@ BosonOnSquareLatticeMomentumSpace::BosonOnSquareLatticeMomentumSpace(const Boson
   this->TotalLz = bosons.TotalLz;
   this->NbrSiteX = bosons.NbrSiteX;
   this->NbrSiteY = bosons.NbrSiteY;
+  this->LzMax = bosons.LzMax;
+  this->NbrLzValue = bosons.NbrLzValue;
+  this->Minors = 0;
+  this->KeptCoordinates = 0;
   this->TemporaryState = new unsigned long [this->NbrLzValue];
   this->ProdATemporaryState = new unsigned long [this->NbrLzValue];
   this->KxMomentum = bosons.KxMomentum;
   this->KyMomentum = bosons.KyMomentum;
-  this->LzMax = bosons.LzMax;
-  this->NbrLzValue = bosons.NbrLzValue;
   this->FermionBasis = (FermionOnSphere*) bosons.FermionBasis->Clone();
   if (bosons.TargetSpace != &bosons)
     this->TargetSpace = bosons.TargetSpace;
@@ -183,11 +183,13 @@ BosonOnSquareLatticeMomentumSpace& BosonOnSquareLatticeMomentumSpace::operator =
   this->IncNbrBosons = bosons.IncNbrBosons;
   this->TotalLz = bosons.TotalLz;
   this->LzMax = bosons.LzMax;
+  this->NbrLzValue = bosons.NbrLzValue;
+  this->Minors = 0;
+  this->KeptCoordinates = 0;
   this->NbrSiteX = bosons.NbrSiteX;
   this->NbrSiteY = bosons.NbrSiteY;
   this->KxMomentum = bosons.KxMomentum;
   this->KyMomentum = bosons.KyMomentum;
-  this->NbrLzValue = bosons.NbrLzValue;
   this->FermionBasis = (FermionOnSphere*) bosons.FermionBasis->Clone();
   this->TemporaryState = new unsigned long [this->NbrLzValue];
   this->ProdATemporaryState = new unsigned long [this->NbrLzValue];
@@ -251,7 +253,7 @@ ostream& BosonOnSquareLatticeMomentumSpace::PrintState (ostream& Str, int state)
 {
   this->FermionToBoson(this->FermionBasis->StateDescription[state], this->FermionBasis->StateLzMax[state], this->TemporaryState, this->TemporaryStateLzMax);
   Str << "[";
-  for (int i = 0; i < this->NbrLzValue; ++i)
+  for (int i = 0; i <= this->TemporaryStateLzMax; ++i)
     {
       if (this->TemporaryState[i] > 0)
 	{
@@ -262,11 +264,13 @@ ostream& BosonOnSquareLatticeMomentumSpace::PrintState (ostream& Str, int state)
 	}
     }
   Str << "]";
+  //  Str << hex << this->FermionBasis->StateDescription[state] << " " << this->FermionBasis->StateLzMax[state] << " " << this->TemporaryStateLzMax << endl;
   return Str;
 }
 
 // generate all states corresponding to the constraints
 // 
+// stateDescription = array that gives each state description
 // nbrBosons = number of bosons
 // currentKx = current momentum along x for a single particle
 // currentKy = current momentum along y for a single particle
@@ -276,7 +280,7 @@ ostream& BosonOnSquareLatticeMomentumSpace::PrintState (ostream& Str, int state)
 // pos = position in StateDescription array where to store states
 // return value = position from which new states have to be stored
   
-long BosonOnSquareLatticeMomentumSpace::GenerateStates(int nbrBosons, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy, int currentFermionicPosition, long pos)
+long BosonOnSquareLatticeMomentumSpace::GenerateStates(unsigned long* stateDescription, int nbrBosons, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy, int currentFermionicPosition, long pos)
 {
 
   if (nbrBosons < 0)
@@ -290,7 +294,7 @@ long BosonOnSquareLatticeMomentumSpace::GenerateStates(int nbrBosons, int curren
     {
       if (((currentTotalKx % this->NbrSiteX) == this->KxMomentum) && ((currentTotalKy % this->NbrSiteY) == this->KyMomentum))
 	{
-	  this->FermionBasis->StateDescription[pos] = 0x0ul;	  
+	  stateDescription[pos] = 0x0ul;	  
 	  return (pos + 1l);
 	}
       else	
@@ -301,12 +305,12 @@ long BosonOnSquareLatticeMomentumSpace::GenerateStates(int nbrBosons, int curren
 
   for (int k = nbrBosons; k > 0; --k)
     {
-      long TmpPos = this->GenerateStates(nbrBosons - k, currentKx, currentKy - 1, currentTotalKx + (k * currentKx), currentTotalKy + (k * currentKy), currentFermionicPosition - k - 1, pos);
+      long TmpPos = this->GenerateStates(stateDescription, nbrBosons - k, currentKx, currentKy - 1, currentTotalKx + (k * currentKx), currentTotalKy + (k * currentKy), currentFermionicPosition - k - 1, pos);
       unsigned long Mask = ((0x1ul << k) - 0x1ul) << (currentFermionicPosition - k - 1);
       for (; pos < TmpPos; ++pos)
-	this->FermionBasis->StateDescription[pos] |= Mask;
+	stateDescription[pos] |= Mask;
     }
-  return this->GenerateStates(nbrBosons, currentKx, currentKy - 1, currentTotalKx, currentTotalKy, currentFermionicPosition - 1, pos);
+  return this->GenerateStates(stateDescription, nbrBosons, currentKx, currentKy - 1, currentTotalKx, currentTotalKy, currentFermionicPosition - 1, pos);
 };
 
 

@@ -176,6 +176,7 @@ class BosonOnSquareLatticeMomentumSpace : public BosonOnSphereShort
 
   // generate all states corresponding to the constraints
   // 
+  // stateDescription = array that gives each state description
   // nbrBosons = number of bosons
   // currentKx = current momentum along x for a single particle
   // currentKy = current momentum along y for a single particle
@@ -184,7 +185,7 @@ class BosonOnSquareLatticeMomentumSpace : public BosonOnSphereShort
   // currentFermionicPosition = current fermionic position within the state description
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  virtual long GenerateStates(int nbrBosons, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy, int currentFermionicPosition, long pos);
+  virtual long GenerateStates(unsigned long* stateDescription, int nbrBosons, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy, int currentFermionicPosition, long pos);
 
   // core part of the evaluation density matrix particle partition calculation
   // 
