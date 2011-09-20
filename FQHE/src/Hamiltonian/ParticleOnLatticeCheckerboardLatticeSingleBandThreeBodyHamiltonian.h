@@ -146,7 +146,6 @@ class ParticleOnLatticeCheckerboardLatticeSingleBandThreeBodyHamiltonian : publi
   // ky4 = annihilation momentum along y for the second A site
   // return value = corresponding matrix element
   Complex ComputeThreeBodyMatrixElementBAA(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
-  //  Complex ComputeThreeBodyMatrixElementBAA(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
 
   // compute the matrix element for the three body interaction between one site A and two sites B 
   //
@@ -160,6 +159,40 @@ class ParticleOnLatticeCheckerboardLatticeSingleBandThreeBodyHamiltonian : publi
   // ky4 = annihilation momentum along y for the second B site
   // return value = corresponding matrix element
   Complex ComputeThreeBodyMatrixElementABB(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
+
+  // compute the matrix element for the on-site three body interaction related to sites A
+  //
+  // kx1 = first creation momentum along x for the first A site
+  // ky1 = first creation momentum along y for the first A site
+  // kx2 = second creation momentum along x for the second A site
+  // ky2 = second creation momentum along y for the second A site
+  // kx3 = third creation momentum along x for the second A site
+  // ky3 = third creation momentum along y for the second A site
+  // kx4 = first annihilation momentum along x for the first A site
+  // ky4 = first annihilation momentum along y for the first A site
+  // kx5 = second annihilation momentum along x for the second A site
+  // ky5 = second annihilation momentum along y for the second A site
+  // kx6 = third annihilation momentum along x for the second A site
+  // ky6 = third annihilation momentum along y for the second A site
+  // return value = corresponding matrix element
+  Complex ComputeThreeBodyMatrixElementOnSiteAAA(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
+
+  // compute the matrix element for the on-site three body interaction related to sites A
+  //
+  // kx1 = first creation momentum along x for the first A site
+  // ky1 = first creation momentum along y for the first A site
+  // kx2 = second creation momentum along x for the second A site
+  // ky2 = second creation momentum along y for the second A site
+  // kx3 = third creation momentum along x for the second A site
+  // ky3 = third creation momentum along y for the second A site
+  // kx4 = first annihilation momentum along x for the first A site
+  // ky4 = first annihilation momentum along y for the first A site
+  // kx5 = second annihilation momentum along x for the second A site
+  // ky5 = second annihilation momentum along y for the second A site
+  // kx6 = third annihilation momentum along x for the second A site
+  // ky6 = third annihilation momentum along y for the second A site
+  // return value = corresponding matrix element
+  Complex ComputeThreeBodyMatrixElementOnSiteBBB(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
 
   // compute the matrix element for the two body interaction between two A sites (or two B sites) 
   //
