@@ -7,10 +7,10 @@
 //                                                                            //
 //                        class author: Nicolas Regnault                      //
 //                                                                            //
-//            class of 3d topological insulator based on the Fu-Kane-Mele     //
+//            class of 3d topological insulator based on the simple TI        //
 //                       model and restricted to two bands                    //
 //                                                                            //
-//                        last modification : 18/07/2011                      //
+//                        last modification : 20/09/2011                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -30,12 +30,12 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PARTICLEONCUBICLATTICETWOBANDFUKANEMELECHECKERBOARDHAMILTONIAN_H
-#define PARTICLEONCUBICLATTICETWOBANDFUKANEMELECHECKERBOARDHAMILTONIAN_H
+#ifndef PARTICLEONCUBICLATTICETWOBANDSIMPLETICHECKERBOARDHAMILTONIAN_H
+#define PARTICLEONCUBICLATTICETWOBANDSIMPLETICHECKERBOARDHAMILTONIAN_H
 
 
 #include "config.h"
-#include "Hamiltonian/ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian.h"
+#include "Hamiltonian/ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian.h"
 #include "Matrix/ComplexMatrix.h"
 
 #include <iostream>
@@ -46,52 +46,15 @@ using std::cout;
 using std::endl;
 
 
-class ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian : public ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian
+class ParticleOnCubicLatticeTwoBandSimpleTIHamiltonian : public ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian
 {
 
  protected:
  
-  // number of sites in the z direction
-  int NbrSiteZ;
-  // number of sites in the direction perpendicular to X
-  int NbrSiteYZ;
-
-  // numerical factor for momentum along x
-  double KxFactor;
-  // numerical factor for momentum along y
-  double KyFactor;
-  // numerical factor for momentum along z
-  double KzFactor;
-  
-  // distortion of nearest neighbor hoping amplitude in the (111) direction
-  double NNHopingDistortion111;
-  // amplitude of the spin orbit coupling
-  double SpinOrbitCoupling;
-  // hoping amplitude between neareast neighbor sites
-  double NNHoping;
-  // hoping amplitude between next neareast neighbor sites
-  double NextNNHoping;
-  // hoping amplitude between second next neareast neighbor sites
-  double SecondNextNNHoping;
-  // boundary condition twisting angle along x
-  double GammaX;
-  // boundary condition twisting angle along y
-  double GammaY;
-  // boundary condition twisting angle along z
-  double GammaZ;
-  // nearest neighbor density-density potential strength
-  double UPotential;
-  // strength of the repulsive two body on site interaction
-  double VPotential;
-
-  // use flat band model
-  bool FlatBand;
+  // mass term of the simple TI model
+  double Mass;
 
  public:
-
-  // default constructor
-  //
-  ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian();
 
   // constructor
   //
@@ -100,21 +63,21 @@ class ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian : public ParticleOnLatt
   // nbrSiteX = number of sites in the x direction
   // nbrSiteY = number of sites in the y direction
   // nbrSiteZ = number of sites in the z direction
-  // uPotential = strength of the repulsive two body neareast neighbor interaction
-  // vPotential = strength of the repulsive two body on site interaction
-  // nnHopingDistortion111 = distortion of nearest neighbor hoping amplitude in the (111) direction
-  // spinOrbitCoupling = amplitude of the spin orbit coupling
+  // uPotential = repulsive on-site potential strength between different orbitals
+  // vPotential = repulsive on-site potential strength between opposite spins
+  // mass = mass term of the simple TI model
   // gammaX = boundary condition twisting angle along x
   // gammaY = boundary condition twisting angle along y
   // gammaZ = boundary condition twisting angle along z
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, int nbrSiteZ, double uPotential, double vPotential, double nnHopingDistortion111, double spinOrbitCoupling, double gammaX, double gammaY, double gammaZ, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnCubicLatticeTwoBandSimpleTIHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, int nbrSiteZ, double uPotential, double vPotential, double mass, 
+						   double gammaX, double gammaY, double gammaZ, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //
-  ~ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian();
+  ~ParticleOnCubicLatticeTwoBandSimpleTIHamiltonian();
   
 
  protected:
@@ -138,7 +101,7 @@ class ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian : public ParticleOnLatt
   // ky4 = momentum along y for the annihilation operator on B site with spin up
   // kz4 = momentum along z for the annihilation operator on B site with spin up
   // return value = corresponding matrix element
-  virtual Complex ComputeTwoBodyMatrixElementAUpBUp(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4);
+  Complex ComputeTwoBodyMatrixElementAUpBUp(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4);
 
   // compute the matrix element for the two body interaction between two sites A and B with down spins
   //
@@ -155,7 +118,7 @@ class ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian : public ParticleOnLatt
   // ky4 = momentum along y for the annihilation operator on B site with spin down
   // kz4 = momentum along z for the annihilation operator on B site with spin down
   // return value = corresponding matrix element
-  virtual Complex ComputeTwoBodyMatrixElementADownBDown(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4);
+  Complex ComputeTwoBodyMatrixElementADownBDown(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4);
   
   // compute the matrix element for the two body interaction between two sites A and B with opposite spins
   //
@@ -172,7 +135,7 @@ class ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian : public ParticleOnLatt
   // ky4 = momentum along y for the annihilation operator on B site with spin up
   // kz4 = momentum along z for the annihilation operator on B site with spin up
   // return value = corresponding matrix element
-  virtual Complex ComputeTwoBodyMatrixElementADownBUp(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4);
+  Complex ComputeTwoBodyMatrixElementADownBUp(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4);
 
   // compute the matrix element for the two body interaction between two sites A and B with opposite spins
   //
@@ -189,7 +152,7 @@ class ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian : public ParticleOnLatt
   // ky4 = momentum along y for the annihilation operator on B site with spin down
   // kz4 = momentum along z for the annihilation operator on B site with spin down
   // return value = corresponding matrix element
-  virtual Complex ComputeTwoBodyMatrixElementAUpBDown(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4);
+  Complex ComputeTwoBodyMatrixElementAUpBDown(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4);
 
   // compute the matrix element for the two body interaction between two sites A with opposite spins 
   //
@@ -206,7 +169,7 @@ class ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian : public ParticleOnLatt
   // ky4 = momentum along y for the annihilation operator on A site with spin down
   // kz4 = momentum along z for the annihilation operator on A site with spin down
   // return value = corresponding matrix element
-  virtual Complex ComputeTwoBodyMatrixElementAUpADown(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4);
+  Complex ComputeTwoBodyMatrixElementAUpADown(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4);
 
   // compute the matrix element for the two body interaction between two sites B with opposite spins 
   //
@@ -223,7 +186,7 @@ class ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian : public ParticleOnLatt
   // ky4 = momentum along y for the annihilation operator on B site with spin down
   // kz4 = momentum along z for the annihilation operator on B site with spin down
   // return value = corresponding matrix element
-  virtual Complex ComputeTwoBodyMatrixElementBUpBDown(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4);
+  Complex ComputeTwoBodyMatrixElementBUpBDown(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4);
     
 
   // compute the transformation basis contribution to the interaction matrix element
@@ -241,15 +204,15 @@ class ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian : public ParticleOnLatt
   // siteIndex2 = site index of the second creation operator (0=Aup, 1=Bup, 2=Adown, 3=Bdown)
   // siteIndex3 = site index of the first annihilation operator (0=Aup, 1=Bup, 2=Adown, 3=Bdown)
   // siteIndex4 = site index of the second annihiliation operator (0=Aup, 1=Bup, 2=Adown, 3=Bdown)
-  virtual Complex ComputeTransfomationBasisContribution(ComplexMatrix* oneBodyBasis,
-							int momentumIndex1, int momentumIndex2, int momentumIndex3, int momentumIndex4, 
-							int energyIndex1, int energyIndex2, int energyIndex3, int energyIndex4,
-							int siteIndex1, int siteIndex2, int siteIndex3, int siteIndex4);
-  
+  Complex ComputeTransfomationBasisContribution(ComplexMatrix* oneBodyBasis,
+						int momentumIndex1, int momentumIndex2, int momentumIndex3, int momentumIndex4, 
+						int energyIndex1, int energyIndex2, int energyIndex3, int energyIndex4,
+						int siteIndex1, int siteIndex2, int siteIndex3, int siteIndex4);
+
   // compute the one body transformation matrices and the optional one body band stucture contribution
   //
   // oneBodyBasis = array of one body transformation matrices
-  virtual void ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis);
+  void ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis);
 
 };
 
@@ -269,10 +232,10 @@ class ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian : public ParticleOnLatt
 // siteIndex3 = site index of the first annihilation operator (0=Aup, 1=Bup, 2=Adown, 3=Bdown)
 // siteIndex4 = site index of the second annihiliation operator (0=Aup, 1=Bup, 2=Adown, 3=Bdown)
 
-inline Complex ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::ComputeTransfomationBasisContribution(ComplexMatrix* oneBodyBasis,
-													 int momentumIndex1, int momentumIndex2, int momentumIndex3, int momentumIndex4, 
-													 int energyIndex1, int energyIndex2, int energyIndex3, int energyIndex4,
-													 int siteIndex1, int siteIndex2, int siteIndex3, int siteIndex4)
+inline Complex ParticleOnCubicLatticeTwoBandSimpleTIHamiltonian::ComputeTransfomationBasisContribution(ComplexMatrix* oneBodyBasis,
+												       int momentumIndex1, int momentumIndex2, int momentumIndex3, int momentumIndex4, 
+												       int energyIndex1, int energyIndex2, int energyIndex3, int energyIndex4,
+												       int siteIndex1, int siteIndex2, int siteIndex3, int siteIndex4)
 {
   return (Conj(oneBodyBasis[momentumIndex1][energyIndex1][siteIndex1]) * Conj(oneBodyBasis[momentumIndex2][energyIndex2][siteIndex2]) * oneBodyBasis[momentumIndex3][energyIndex3][siteIndex3] * oneBodyBasis[momentumIndex4][energyIndex4][siteIndex4]);
 }
