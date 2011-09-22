@@ -30,6 +30,7 @@
 #include "Options/OptionGroup.h"
 #include "Options/AbstractOption.h"
 #include "Options/BooleanOption.h"
+#include "Options/BooleanInternalOption.h"
 #include "Options/SingleIntegerOption.h"
 #include "Options/MultipleIntegerOption.h"
 #include "Options/SingleIntegerInternalOption.h"
