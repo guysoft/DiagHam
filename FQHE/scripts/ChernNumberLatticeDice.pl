@@ -10,7 +10,7 @@ use Math::Complex;
 # hardwire which state to look at
 my $MatrixElementCode="DiceLatticeModel.pl";
 my $Diagonalizer="FQHELatticeBosonsGeneric";
-my $OverlapExe="GenericOverlap";
+my $OverlapBin="GenericOverlap";
 
 my $CalculateVectors=0;
 my $RawElements="";
@@ -318,7 +318,7 @@ sub AnalyzeChern
     my $RefS2x = $ReferenceVals[2];
     my $RefS2y = $ReferenceVals[3];
     my $LatticeGeometry = $Lx."x".$Ly;
-    my $CommandLine = "$Program --use-lapack -L DiceDoubledEffective_".$Lx."x".$Ly.".dat -p $N -n $NbrCalculate -m $Memory $Options --show-itertime";
+    my $CommandLine = "$Program --cmdlog-off --use-lapack -L DiceDoubledEffective_".$Lx."x".$Ly.".dat -p $N -n $NbrCalculate -m $Memory $Options --show-itertime";
 
     TestVectors ($BaseName, $RefS1x, $RefS1y, $Degeneracy, $CalculateVectors, $CommandLine, \@Multiplet, $HardCore, $u, $LatticeGeometry);
     TestVectors ($BaseName, $RefS2x, $RefS2y, $Degeneracy, $CalculateVectors, $CommandLine, \@Multiplet, $HardCore, $u, $LatticeGeometry);
@@ -355,7 +355,7 @@ sub AnalyzeChern
 	    TestVectors ($BaseName, $SolenoidX, $SolenoidY, $Degeneracy, $CalculateVectors, $CommandLine, \@Multiplet, $HardCore, $u, $LatticeGeometry);
 	    my $Alpha;
 	    my $Beta;
-	    my $OvlCommand="$OverlapExe --quiet -s -c ";
+	    my $OvlCommand="$OverlapBin --cmdlog-off --quiet -s -c ";
 	    my @Matrix1;
 	    my @Matrix2;
 	    my @Overlaps;
@@ -479,7 +479,7 @@ sub TestVectors {
 	      my $TmpGeometry = $LatticeGeometry;
 	      $TmpGeometry =~ s/x/,/;
 	      print ("Need to recalculate matrix elements, first...\n");
-	      my $Instruction2 = "$MatrixElementCode -d ./ -u $InteractionU $UseRealRepresentation -s $SolenoidX,$SolenoidY -C $TmpGeometry $RawElements";
+	      my $Instruction2 = "$MatrixElementCode --cmdlog-off -d ./ -u $InteractionU $UseRealRepresentation -s $SolenoidX,$SolenoidY -C $TmpGeometry $RawElements";
 	      print ("running ".$Instruction2."\n");
 	      system($Instruction2);
 	    }

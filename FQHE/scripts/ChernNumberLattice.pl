@@ -10,7 +10,7 @@ use Math::Complex;
 # hardwire which state to look at
 my $Program_32="FQHELatticeBosons";
 my $Program_64="FQHELatticeBosons_64";
-my $OverlapExe="GenericOverlap";
+my $OverlapBin="GenericOverlap";
 
 my $CalculateVectors=0;
 my $NbrGrid=20;
@@ -299,7 +299,7 @@ sub AnalyzeChern
     my $RefS2x = $ReferenceVals[2];
     my $RefS2y = $ReferenceVals[3];
 
-    my $CommandLine = "$Program -p $N -x $x -y $y $Interaction -q $q -n $NbrCalculate -m $Memory $Options";
+    my $CommandLine = "$Program --cmdlog-off -p $N -x $x -y $y $Interaction -q $q -n $NbrCalculate -m $Memory $Options";
 
     TestVectors ($BaseName, $RefS1x, $RefS1y, $Degeneracy, $CalculateVectors, $CommandLine, \@Multiplet);
     TestVectors ($BaseName, $RefS2x, $RefS2y, $Degeneracy, $CalculateVectors, $CommandLine, \@Multiplet);
@@ -336,7 +336,7 @@ sub AnalyzeChern
 	    TestVectors ($BaseName, $SolenoidX, $SolenoidY, $Degeneracy, $CalculateVectors, $CommandLine, \@Multiplet);
 	    my $Alpha;
 	    my $Beta;
-	    my $OvlCommand="GenericOverlap --quiet -s -c ";
+	    my $OvlCommand="$OverlapBin --cmdlog-off --quiet -s -c ";
 	    my @Matrix1;
 	    my @Matrix2;
 	    my @Overlaps;

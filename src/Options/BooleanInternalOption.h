@@ -5,9 +5,9 @@
 //                  Copyright (C) 1998-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                         class of single double option                      //
+//                            class of boolean option                         //
 //                                                                            //
-//                        last modification : 16/09/2001                      //
+//                        last modification : 19/08/2001                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -27,50 +27,49 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef SINGLEDOUBLEINTERNALOPTION_H
-#define SINGLEDOUBLEINTERNALOPTION_H
+#ifndef BOOLEANINTERNALOPTION_H
+#define BOOLEANINTERNALOPTION_H
 
 
 #include "config.h"
 #include "Options/AbstractOption.h"
-#include "Options/SingleDoubleOption.h"
+#include "Options/BooleanOption.h"
+#include <string>
 
-class SingleDoubleInternalOption : public  SingleDoubleOption
+class BooleanInternalOption : public BooleanOption
 {
 
-  private:
-  bool extFlag;
+ protected:
+  
+  bool ExtFlag;
+
   
  public:
-
-  enum
-  {
-    NoError = 0,
-    NotAnDouble = 1,
-    Greater = 2,
-    Lower = 3,
-    NoDouble = 4
-  };
 
   // constructor from default datas
   //
   // optionCode = character associated to the option
   // optionName = string corresponding to option name
   // optionDescription = string describing option (used for -h option)
-  // defaultValue = double default value
+  // defaultValue = boolean default value
   // external = flag to indicate whether visible to the external world (in help output);
-  // minValueFlag = flag to indicates an double minimum value
-  // minValue = double minimum value 
-  // maxValueFlag = flag to indicates an double maximum value
-  // maxValue = double maximum value (no maximum value if lower or equal to minValue) 
-  SingleDoubleInternalOption(char optionCode, char* optionName, char* optionDescription, double defaultValue = 0, 
-			     bool external=false, bool minValueFlag = false, double minValue = 0.0, 
-			     bool maxValueFlag = false, double maxValue = 0.0);
+  BooleanInternalOption(char optionCode, const char* optionName, const char* optionDescription, bool defaultValue = false, bool external=false);
+
+  // constructor from default datas
+  //
+  // optionCode = character associated to the option
+  // optionName = string corresponding to option name
+  // optionDescription = string describing option (used for -h option)
+  // trueString = string output by Manager.GetFormattedString if optionvalue is true
+  // falseString = string output by Manager.GetFormattedString if optionvalue is false
+  // defaultValue = boolean default value
+  // external = flag to indicate whether visible to the external world (in help output);
+  BooleanInternalOption(char optionCode, const char* optionName, const char* optionDescription,
+			const char* trueString, const char* falseString, bool defaultValue = false, bool external=false);
 
   // destructor
   //
-  ~SingleDoubleInternalOption();
-
+  ~BooleanInternalOption();
 
   // print the current option and its values
   //  
@@ -85,17 +84,10 @@ class SingleDoubleInternalOption : public  SingleDoubleOption
   // return value = reference on current output stream
   ostream& DisplayHelp (ostream& output);
 
-
-  // Set double
+  // Set Boolean value
   // set to newVal
   // 
-  void SetDouble(double newVal);
-
-  // multiply with factor
-  // returns: new value of internal variable
-  //
-  double Multiply(double factor);
-  
+  void SetBoolean(bool newVal);
 
 
 };

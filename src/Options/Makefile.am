@@ -4,6 +4,7 @@ noinst_LIBRARIES=libOptions.a
 
 libOptions_a_SOURCES=AbstractOption.cc \
 BooleanOption.cc \
+BooleanInternalOption.cc \
 SingleDoubleOption.cc \
 SingleDoubleInternalOption.cc \
 MultipleDoubleOption.cc \
@@ -19,3 +20,4 @@ MultipleStringOption.cc \
 MultipleStringOption.h \
 OptionGroup.cc \
 OptionManager.cc
+

@@ -94,6 +94,8 @@ OptionManager::OptionManager(const char* programName, const char* programVersion
   (*GlobalGroup) += new SingleStringInternalOption  ('\n', "repeat-cmdline", "load command line from file [format: filename.line]");
 #ifdef HAVE_GLOBAL_COMMAND_LOG
   (*GlobalGroup) += new BooleanOption ('\n',"cmdlog-off","Do not log command line");
+#else
+  (*GlobalGroup) += new BooleanInternalOption ('\n',"cmdlog-off","Do not log command line");
 #endif
 }
 
