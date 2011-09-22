@@ -479,7 +479,7 @@ sub TestVectors {
 	      my $TmpGeometry = $LatticeGeometry;
 	      $TmpGeometry =~ s/x/,/;
 	      print ("Need to recalculate matrix elements, first...\n");
-	      my $Instruction2 = "$MatrixElementCode --cmdlog-off -d ./ -u $InteractionU $UseRealRepresentation -s $SolenoidX,$SolenoidY -C $TmpGeometry $RawElements";
+	      my $Instruction2 = "$MatrixElementCode -d ./ -u $InteractionU $UseRealRepresentation -s $SolenoidX,$SolenoidY -C $TmpGeometry $RawElements";
 	      print ("running ".$Instruction2."\n");
 	      system($Instruction2);
 	    }

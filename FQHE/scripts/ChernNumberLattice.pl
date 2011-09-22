@@ -228,10 +228,11 @@ $tmp = `status`;
 if ( $tmp =~ /x86_64/ )
   {
     $Program = $Program_64;
+    $OverlapBin = "$OverlapBin_64";
   }
 else
   {
-    $Program = $Program_32;	
+    $Program = $Program_32;
   }
 
 my $TmpFile;

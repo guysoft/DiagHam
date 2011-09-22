@@ -302,7 +302,7 @@ for (my $i=0; $i<$NbrSites; ++$i)
     print DEFINITION ($DiceLattice);
     close(DEFINITION);
     # run single particle calculation
-    my $Command = "$Program --use-lapack -p 1 -L $LatticeFile -q ".(3*$NbrCells)." -c --eigenstate -n 1 $SolenoidCmd";
+    my $Command = "$Program --cmdlog-off --use-lapack -p 1 -L $LatticeFile -q ".(3*$NbrCells)." -c --eigenstate -n 1 $SolenoidCmd";
     if ($Verbose==1)
       {
 	print ("running: $Command\n");
@@ -401,7 +401,7 @@ for (my $Index1=0; $Index1<$NbrSites; ++$Index1)
 		     && ((abs($Y3-$Y4)<2)||(abs($Y3-$Y4)>$UnitCells[1]-2)) )
 		  {
 		    # call MatrixElement evaluator: 4,3: creation operators, 2,1 annihilation operators
-		    my $Command = "$MatrixProgram -c --gauge --quiet --interaction $InteractionFile ".GetLocalWavefunction($Index4)." "
+		    my $Command = "$MatrixProgram --cmdlog-off -c --gauge --quiet --interaction $InteractionFile ".GetLocalWavefunction($Index4)." "
 		      .GetLocalWavefunction($Index3)." ".GetLocalWavefunction($Index2)." ".GetLocalWavefunction($Index1);
 		    my $Output = `$Command`;
 		    my @OutputLines = split(/\n/,$Output);
