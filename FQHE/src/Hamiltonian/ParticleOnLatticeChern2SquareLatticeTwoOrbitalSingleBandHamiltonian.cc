@@ -266,8 +266,8 @@ void ParticleOnLatticeChern2SquareLatticeTwoOrbitalSingleBandHamiltonian::Comput
       {
         double y=((double)ky + this->GammaY) * this->KyFactor;
 	int Index = (kx * this->NbrSiteY) + ky;
-        Complex B1 = 2 * Complex(this->NNHoppingInterX * sin(x), - this->NNHoppingInterY * sin(y));
-        double d3 = this->MuS - 2 * this->NNHoppingIntra * (cos(x) + cos(y));
+        Complex B1 = 2 * Complex(this->NNHoppingInterX * sin(x + y), - this->NNHoppingInterY * sin(x - y));
+        double d3 = this->MuS - 2 * this->NNHoppingIntra * (cos(x + y) + cos(x - y));
 	HermitianMatrix TmpOneBodyHamiltonian(2, true);
 	TmpOneBodyHamiltonian.SetMatrixElement(0, 0, + d3);
 	TmpOneBodyHamiltonian.SetMatrixElement(0, 1, B1);

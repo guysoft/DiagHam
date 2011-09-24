@@ -114,13 +114,13 @@ int main(int argc, char** argv)
   else
     {
       if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false))
-          lenFilePrefix += sprintf (FilePrefix, "fermions_singleband_haldane_n_%d_x_%d_y_%d",  NbrParticles, NbrSiteX, NbrSiteY);
+          lenFilePrefix += sprintf (FilePrefix, "fermions_singleband_chern2_n_%d_x_%d_y_%d",  NbrParticles, NbrSiteX, NbrSiteY);
       else
       {
 	  if (Manager.GetBoolean("three-body") == true)
-              lenFilePrefix += sprintf (FilePrefix, "fermions_singleband_threebody_haldane_n_%d_x_%d_y_%d",  NbrParticles, NbrSiteX, NbrSiteY);
+              lenFilePrefix += sprintf (FilePrefix, "fermions_singleband_threebody_chern2_n_%d_x_%d_y_%d",  NbrParticles, NbrSiteX, NbrSiteY);
           else
-              lenFilePrefix += sprintf (FilePrefix, "fermions_singleband_fourbody_haldane_n_%d_x_%d_y_%d",  NbrParticles, NbrSiteX, NbrSiteY);
+              lenFilePrefix += sprintf (FilePrefix, "fermions_singleband_fourbody_chern2_n_%d_x_%d_y_%d",  NbrParticles, NbrSiteX, NbrSiteY);
       }
       if ((Manager.GetBoolean("three-body") == true || Manager.GetBoolean("four-body") == true) && Manager.GetBoolean("flat-band") == false)
           lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_w_%f", Manager.GetDouble("w-potential"));
@@ -256,8 +256,8 @@ void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSiteX, int nbrSi
       for (int ky = 0; ky < nbrSiteY; ++ky)
       {
           double y=2*M_PI*((double)ky)/nbrSiteY;
-          Complex B1 = 2 * Complex(t1 * sin(x), - t2 * sin(y));
-          double d3 = mus - 2 * t3 * (cos(x) + cos(y));
+          Complex B1 = 2 * Complex(t1 * sin(x + y), - t2 * sin(x - y));
+          double d3 = mus - 2 * t3 * (cos(x + y) + cos(x - y));
 	  HermitianMatrix TmpOneBodyHamiltonian(2, true);
 	  TmpOneBodyHamiltonian.SetMatrixElement(0, 0, + d3);
 	  TmpOneBodyHamiltonian.SetMatrixElement(0, 1, B1);
