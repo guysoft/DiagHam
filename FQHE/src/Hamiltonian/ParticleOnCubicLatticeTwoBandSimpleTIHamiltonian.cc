@@ -231,10 +231,9 @@ void ParticleOnCubicLatticeTwoBandSimpleTIHamiltonian::EvaluateInteractionFactor
       
       double Factor = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ));
       double FactorAUpADown = Factor * this->VPotential;
-      double FactorBUpBDown = Factor * this->VPotential * 0.0;
+      double FactorBUpBDown = Factor * this->VPotential;
       if (this->FlatBand == false)
 	Factor *= this->UPotential;
-      Factor = 0.0;
       double FactorAUpBUp = Factor;
       double FactorADownBDown = Factor;
       double FactorAUpBDown = Factor;
@@ -303,7 +302,6 @@ void ParticleOnCubicLatticeTwoBandSimpleTIHamiltonian::EvaluateInteractionFactor
                   Tmp -= this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 0, 0, 0, 0, 2, 1, 2, 1) * this->ComputeTwoBodyMatrixElementADownBUp(kx2, ky2, kz2, kx1, ky1, kz1, kx3, ky3, kz3, kx4, ky4, kz4);
                   Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 0, 0, 0, 0, 2, 1, 2, 1) * this->ComputeTwoBodyMatrixElementADownBUp(kx2, ky2, kz2, kx1, ky1, kz1, kx4, ky4, kz4, kx3, ky3, kz3);
                   this->InteractionFactorsupupupup[i][Index] += -2.0 * FactorADownBUp * Tmp;
-		  cout << Index << " : " << Index1 << " " <<  Index2 << " " <<  Index3 << " " <<  Index4 << " " << this->InteractionFactorsupupupup[i][Index] << endl;
 		  
 		  ++TotalNbrInteractionFactors;
 		  ++Index;
@@ -549,7 +547,6 @@ void ParticleOnCubicLatticeTwoBandSimpleTIHamiltonian::EvaluateInteractionFactor
                   Tmp = this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 1, 0, 0, 0, 2, 0, 2) * this->ComputeTwoBodyMatrixElementAUpADown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
                   Tmp -= this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 0, 1, 0, 0, 0, 2, 0, 2) * this->ComputeTwoBodyMatrixElementAUpADown(kx1, ky1, kz1, kx2, ky2, kz2, kx4, ky4, kz4, kx3, ky3, kz3);
                   this->InteractionFactorsupdownupup[i][Index] += -2.0 * FactorAUpADown * Tmp;
-		  //		  cout << Index1 << " " <<  Index2 << " " <<  Index3 << " " <<  Index4 << " " << Tmp << endl;
                   Tmp = this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 1, 0, 0, 1, 3, 1, 3) * this->ComputeTwoBodyMatrixElementBUpBDown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
                   Tmp -= this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 0, 1, 0, 0, 1, 3, 1, 3) * this->ComputeTwoBodyMatrixElementBUpBDown(kx1, ky1, kz1, kx2, ky2, kz2, kx4, ky4, kz4, kx3, ky3, kz3);
                   this->InteractionFactorsupdownupup[i][Index] += -2.0 * FactorBUpBDown * Tmp;
@@ -571,7 +568,6 @@ void ParticleOnCubicLatticeTwoBandSimpleTIHamiltonian::EvaluateInteractionFactor
 		}
 	    }
 	}
-      cout << "------------------------" << endl;
       //  updown downdown coefficient
       this->InteractionFactorsupdowndowndown = new Complex* [this->NbrIntraSectorSums];
       for (int i = 0; i < this->NbrIntraSectorSums; ++i)
@@ -662,7 +658,6 @@ void ParticleOnCubicLatticeTwoBandSimpleTIHamiltonian::EvaluateInteractionFactor
                   Tmp = this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 0, 0, 1, 0, 2, 0, 2) * this->ComputeTwoBodyMatrixElementAUpADown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
                   Tmp -= this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 0, 0, 0, 1, 0, 2, 0, 2) * this->ComputeTwoBodyMatrixElementAUpADown(kx2, ky2, kz2, kx1, ky1, kz1, kx3, ky3, kz3, kx4, ky4, kz4);
                   this->InteractionFactorsupupupdown[i][Index] += -2.0 * FactorAUpADown * Tmp;
-		  //		  cout << Index1 << " " <<  Index2 << " " <<  Index3 << " " <<  Index4 << " " << Tmp << endl;
                   Tmp = this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 0, 0, 1, 1, 3, 1, 3) * this->ComputeTwoBodyMatrixElementBUpBDown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
                   Tmp -= this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 0, 0, 0, 1, 1, 3, 1, 3) * this->ComputeTwoBodyMatrixElementBUpBDown(kx2, ky2, kz2, kx1, ky1, kz1, kx3, ky3, kz3, kx4, ky4, kz4);
                   this->InteractionFactorsupupupdown[i][Index] += -2.0 * FactorBUpBDown * Tmp;
@@ -816,17 +811,7 @@ void ParticleOnCubicLatticeTwoBandSimpleTIHamiltonian::EvaluateInteractionFactor
 
 Complex ParticleOnCubicLatticeTwoBandSimpleTIHamiltonian::ComputeTwoBodyMatrixElementAUpBUp(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4)
 {
-  Complex Tmp = 1.0 ;
-//   Tmp += Phase (0.5 * ((((double) (kx1 - kx3)) * this->KxFactor) + (((double) (ky1 - ky3)) * this->KyFactor)));
-//   Tmp += Phase (0.5 * ((((double) (kx1 - kx3)) * this->KxFactor) + (((double) (kz1 - kz3)) * this->KzFactor)));
-//   Tmp += Phase (0.5 * ((((double) (ky1 - ky3)) * this->KyFactor) + (((double) (kz1 - kz3)) * this->KzFactor)));
-//   Tmp *= Phase (-0.25 * ((((double) (kx4 - kx2)) * this->KxFactor) + (((double) (ky4 - ky2)) * this->KyFactor)
-// 			+ (((double) (kz4 - kz2)) * this->KzFactor)));
-  Tmp += Phase ((((double) (kx1 - kx3)) * this->KxFactor));
-  Tmp += Phase ((((double) (kz1 - kz3)) * this->KzFactor));
-  Tmp += Phase ((((double) (ky1 - ky3)) * this->KyFactor));
-  Tmp *= Phase (0.25 * ((((double) (kx4 - kx2)) * this->KxFactor) + (((double) (ky4 - ky2)) * this->KyFactor)
-			+ (((double) (kz4 - kz2)) * this->KzFactor)));
+  Complex Tmp = 0.0 ;
   return Tmp;
 }
 
@@ -933,7 +918,7 @@ Complex ParticleOnCubicLatticeTwoBandSimpleTIHamiltonian::ComputeTwoBodyMatrixEl
 
 Complex ParticleOnCubicLatticeTwoBandSimpleTIHamiltonian::ComputeTwoBodyMatrixElementBUpBDown(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4)
 {
-  Complex Tmp = Phase (0.25  * ((((double) (kx4 + kx3 - kx1 - kx2)) * this->KxFactor) + (((double) (ky4 + ky3 - ky1 - ky2)) * this->KyFactor) + (((double) (kz4 + kz3 - kz1 - kz2)) * this->KzFactor)));
+  Complex Tmp = 1.0;
   return Tmp;
 }
 
@@ -949,51 +934,18 @@ void ParticleOnCubicLatticeTwoBandSimpleTIHamiltonian::ComputeOneBodyMatrices(Co
 	{
 	  HermitianMatrix TmpOneBodyHamiltonian(4, true);
 	  int Index = ((kx * this->NbrSiteY) + ky) * this->NbrSiteZ + kz;
-	  Complex B1 = 1.0 + this->NNHopingDistortion111 + Phase(((double) kx) * this->KxFactor) + Phase(((double) ky) * this->KyFactor) + Phase(((double) kz) * this->KzFactor);
-	  Complex TmpPhase = Phase (-0.25 * ((((double) kx) * this->KxFactor) +(((double) ky) * this->KyFactor) + (((double) kz) * this->KzFactor)));
-	  B1 *= TmpPhase;
-	  //	  Complex B1 = 1.0 + this->NNHopingDistortion111 + Phase(0.5 * (((double) ky) * this->KyFactor) + 0.5 * (((double) kz) * this->KzFactor))   + Phase(0.5 * (((double) kx) * this->KxFactor) + 0.5 * (((double) kz) * this->KzFactor))  + Phase(0.5 * (((double) kx) * this->KxFactor) + 0.5 * (((double) ky) * this->KyFactor)) ;
-// 	  double d3 = this->SpinOrbitCoupling * (sin (0.5 * (((double) kx) * this->KxFactor) + 0.5 * (((double) kz) * this->KzFactor))
-// 						 - sin (0.5 * (((double) kx) * this->KxFactor) + 0.5 * (((double) ky) * this->KyFactor))
-// 						 - sin (0.5 * (((double) kx) * this->KxFactor) - 0.5 * (((double) ky) * this->KyFactor))
-// 						 + sin (0.5 * (((double) kx) * this->KxFactor) - 0.5 * (((double) kz) * this->KzFactor)));
-// 	  double d4 = this->SpinOrbitCoupling * (sin (0.5 * (((double) kx) * this->KxFactor) + 0.5 * (((double) kz) * this->KzFactor))
-// 						 - sin (0.5 * (((double) ky) * this->KyFactor) + 0.5 * (((double) kz) * this->KzFactor))
-// 						 - sin (0.5 * (((double) ky) * this->KyFactor) - 0.5 * (((double) kz) * this->KzFactor))
-// 						 + sin (0.5 * (((double) ky) * this->KyFactor) - 0.5 * (((double) kx) * this->KxFactor)));
-// 	  double d5 = this->SpinOrbitCoupling * (sin (0.5 * (((double) ky) * this->KyFactor) + 0.5 * (((double) kx) * this->KxFactor))
-// 						 - sin (0.5 * (((double) kx) * this->KxFactor) + 0.5 * (((double) kz) * this->KzFactor))
-// 						 - sin (0.5 * (((double) kz) * this->KzFactor) - 0.5 * (((double) kx) * this->KxFactor))
-// 						 + sin (0.5 * (((double) kz) * this->KzFactor) - 0.5 * (((double) ky) * this->KyFactor)));
-	  double d3 = this->SpinOrbitCoupling * (sin ((((double) ky) * this->KyFactor))
-						 - sin ((((double) kz) * this->KzFactor))
-						 - sin ((((double) ky) * this->KyFactor) - (((double) kx) * this->KxFactor))
-						 + sin ((((double) kz) * this->KzFactor) - (((double) kx) * this->KxFactor)));
-	  double d4 = this->SpinOrbitCoupling * (sin ((((double) kz) * this->KzFactor))
-						 - sin ((((double) kx) * this->KxFactor))
-						 - sin ((((double) kz) * this->KzFactor) - (((double) ky) * this->KyFactor))
-						 + sin ((((double) kx) * this->KxFactor) - (((double) ky) * this->KyFactor)));
-	  double d5 = this->SpinOrbitCoupling * (sin ((((double) kx) * this->KxFactor))
-						 - sin ((((double) ky) * this->KyFactor))
-						 - sin ((((double) kx) * this->KxFactor) - (((double) kz) * this->KzFactor))
-						 + sin ((((double) ky) * this->KyFactor) - (((double) kz) * this->KzFactor)));
-	  Complex B2 = d3 - I() * d4;
-	  TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d5);
-	  TmpOneBodyHamiltonian.SetMatrixElement(1, 1, -d5);
-	  TmpOneBodyHamiltonian.SetMatrixElement(2, 2, -d5);
-	  TmpOneBodyHamiltonian.SetMatrixElement(3, 3, d5);
-	  TmpOneBodyHamiltonian.SetMatrixElement(0, 1, B1);
-	  TmpOneBodyHamiltonian.SetMatrixElement(2, 3, B1);
-	  TmpOneBodyHamiltonian.SetMatrixElement(0, 2, B2);
-	  TmpOneBodyHamiltonian.SetMatrixElement(1, 3, -B2);
-
-// 	  TmpOneBodyHamiltonian.SetMatrixElement(0, 0, 0.0);
-// 	  TmpOneBodyHamiltonian.SetMatrixElement(1, 1, 0.0);
-// 	  TmpOneBodyHamiltonian.SetMatrixElement(2, 2, 1.0);
-// 	  TmpOneBodyHamiltonian.SetMatrixElement(3, 3, 1.0);
-
-
-	  //	  cout << TmpOneBodyHamiltonian << endl;
+	  Complex d2 (sin (((double) ky) * this->KyFactor), -sin (((double) kz) * this->KzFactor));
+	  double d1 = sin (((double) kx) * this->KxFactor);
+	  double d3 = (this->Mass - cos (((double) kx) * this->KxFactor) - cos (((double) ky) * this->KyFactor) 
+		       - cos (((double) kz) * this->KzFactor));
+	  TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d3);
+	  TmpOneBodyHamiltonian.SetMatrixElement(1, 1, -d3);
+	  TmpOneBodyHamiltonian.SetMatrixElement(2, 2, d3);
+	  TmpOneBodyHamiltonian.SetMatrixElement(3, 3, -d3);
+	  TmpOneBodyHamiltonian.SetMatrixElement(0, 1, d1);
+	  TmpOneBodyHamiltonian.SetMatrixElement(2, 3, d1);
+	  TmpOneBodyHamiltonian.SetMatrixElement(0, 3, d2);
+	  TmpOneBodyHamiltonian.SetMatrixElement(1, 2, d2);
 
 	  ComplexMatrix TmpMatrix(4, 4, true);
 	  TmpMatrix[0][0] = 1.0;
@@ -1012,8 +964,6 @@ void ParticleOnCubicLatticeTwoBandSimpleTIHamiltonian::ComputeOneBodyMatrices(Co
 	      this->OneBodyInteractionFactorsupup[Index] = TmpDiag(0, 0);
 	      this->OneBodyInteractionFactorsdowndown[Index] = TmpDiag(1, 1);
 	    }
-	  cout << "Index = " << Index << endl;
 	  cout << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << " " << TmpDiag(2, 2) << " " << TmpDiag(3, 3) << endl;
-	  cout << endl << TmpMatrix << endl;
 	}
 }

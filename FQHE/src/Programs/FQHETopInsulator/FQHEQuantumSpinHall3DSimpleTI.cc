@@ -2,6 +2,7 @@
 
 #include "HilbertSpace/FermionOnCubicLatticeWithSpinMomentumSpace.h"
 #include "HilbertSpace/FermionOnCubicLatticeWithSU4SpinMomentumSpace.h"
+#include "HilbertSpace/FermionOnCubicLatticeWithSU4SpinMomentumSpaceLong.h"
 
 #include "Hamiltonian/ParticleOnCubicLatticeTwoBandSimpleTIHamiltonian.h"
 #include "Hamiltonian/ParticleOnCubicLatticeFourBandSimpleTIHamiltonian.h"
@@ -98,6 +99,7 @@ int main(int argc, char** argv)
   int NbrSitesX = Manager.GetInteger("nbr-sitex"); 
   int NbrSitesY = Manager.GetInteger("nbr-sitey"); 
   int NbrSitesZ = Manager.GetInteger("nbr-sitez"); 
+  int TotalNbrSites = NbrSitesX * NbrSitesY * NbrSitesZ;
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
 
   char* CommentLine = new char [256];
@@ -194,11 +196,24 @@ int main(int argc, char** argv)
 		}
 	      else
 		{
-		  FermionOnCubicLatticeWithSU4SpinMomentumSpace Space(NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, i, j, k);
-		  cout << "dim = " << Space.GetHilbertSpaceDimension()  << endl;
-		  Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());	
+		  ParticleOnSphereWithSU4Spin* Space = 0;
+		  cout << TotalNbrSites << endl;
+#ifdef __128_BIT_LONGLONG__
+		  if (TotalNbrSites <= 15)
+#else
+		  if (TotalNbrSites <= 7)
+#endif
+		    {
+		      Space = new FermionOnCubicLatticeWithSU4SpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, i, j, k);
+		    }
+		  else
+		    {
+		      Space = new FermionOnCubicLatticeWithSU4SpinMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, i, j, k);
+		    }
+		  cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
+		  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
 		  AbstractQHEHamiltonian* Hamiltonian = 0;
-		  Hamiltonian = new ParticleOnCubicLatticeFourBandSimpleTIHamiltonian(&Space, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ,
+		  Hamiltonian = new ParticleOnCubicLatticeFourBandSimpleTIHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ,
 											Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("mass"),
 											Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), 		     
 											Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
@@ -282,62 +297,52 @@ void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrS
   double KxFactor = 2.0 * M_PI / ((double) nbrSitesX);
   double KyFactor = 2.0 * M_PI / ((double) nbrSitesY);
   double KzFactor = 2.0 * M_PI / ((double) nbrSitesZ);
-//   for (int kx = 0; kx < nbrSitesX; ++kx)
-//     {
-//       for (int ky = 0; ky < nbrSitesY; ++ky)
-// 	{
-// 	  for (int kz = 0; kz < nbrSitesZ; ++kz)
-// 	    {
-// 	      HermitianMatrix TmpOneBodyHamiltonian(4, true);
-// 	      Complex B1 = 1.0 + nnHopingDistortion111 + Phase(0.5 * (((double) ky) * KyFactor) + 0.5 * (((double) kz) * KzFactor))   + Phase(0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) kz) * KzFactor))  + Phase(0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) ky) * KyFactor)) ;
-// 	      double d3 = spinOrbit * (sin (0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) kz) * KzFactor))
-// 				       - sin (0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) ky) * KyFactor))
-// 				       - sin (0.5 * (((double) kx) * KxFactor) - 0.5 * (((double) ky) * KyFactor))
-// 				       + sin (0.5 * (((double) kx) * KxFactor) - 0.5 * (((double) kz) * KzFactor)));
-// 	      double d4 = spinOrbit * (sin (0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) kz) * KzFactor))
-// 				       - sin (0.5 * (((double) ky) * KyFactor) + 0.5 * (((double) kz) * KzFactor))
-// 				       - sin (0.5 * (((double) ky) * KyFactor) - 0.5 * (((double) kz) * KzFactor))
-// 				       + sin (0.5 * (((double) ky) * KyFactor) - 0.5 * (((double) kx) * KxFactor)));
-// 	      double d5 = spinOrbit * (sin (0.5 * (((double) ky) * KyFactor) + 0.5 * (((double) kx) * KxFactor))
-// 				       - sin (0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) kz) * KzFactor))
-// 				       - sin (0.5 * (((double) kz) * KzFactor) - 0.5 * (((double) kx) * KxFactor))
-// 				       + sin (0.5 * (((double) kz) * KzFactor) - 0.5 * (((double) ky) * KyFactor)));
-// 	      Complex B2 = d3 + I() * d4;
-// 	      TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d5);
-// 	      TmpOneBodyHamiltonian.SetMatrixElement(1, 1, -d5);
-// 	      TmpOneBodyHamiltonian.SetMatrixElement(2, 2, -d5);
-// 	      TmpOneBodyHamiltonian.SetMatrixElement(3, 3, d5);
-// 	      TmpOneBodyHamiltonian.SetMatrixElement(0, 2, B1);
-// 	      TmpOneBodyHamiltonian.SetMatrixElement(1, 3, B1);
-// 	      TmpOneBodyHamiltonian.SetMatrixElement(0, 1, B2);
-// 	      TmpOneBodyHamiltonian.SetMatrixElement(2, 3, -B2);
-// 	      RealDiagonalMatrix TmpDiag;
-// #ifdef __LAPACK__
-// 	      TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag);
-// #else
-// 	      TmpOneBodyHamiltonian.Diagonalize(TmpDiag);
-// #endif   
-// 	      if (MaxEMinus < TmpDiag(0, 0))
-// 		{
-// 		  MaxEMinus = TmpDiag(0, 0);
-// 		}
-// 	      if (MinEMinus > TmpDiag(0, 0))
-// 		{
-// 		  MinEMinus = TmpDiag(0, 0);
-// 		}
-// 	      if (MaxEPlus < TmpDiag(2, 2))
-// 		{
-// 		  MaxEPlus = TmpDiag(2, 2);
-// 		}
-// 	      if (MinEPlus > TmpDiag(2, 2))
-// 		{
-// 		  MinEPlus = TmpDiag(2, 2);
-// 		}
-// 	      File << (KxFactor * ((double) kx)) << " " << (KyFactor * ((double) ky)) << " " << (KzFactor * ((double) kz)) << " " << TmpDiag(0, 0) << " " << TmpDiag(1, 1) <<  " " << TmpDiag(2, 2) << " " << TmpDiag(3, 3) << endl;
-// 	    }
-// 	  File << endl;
-// 	}
-//     }
+  for (int kx = 0; kx < nbrSitesX; ++kx)
+    {
+      for (int ky = 0; ky < nbrSitesY; ++ky)
+	{
+	  for (int kz = 0; kz < nbrSitesZ; ++kz)
+	    {
+	      HermitianMatrix TmpOneBodyHamiltonian(4, true);
+	      Complex d2 (sin (((double) ky) * KyFactor), -sin (((double) kz) * KzFactor));
+	      double d1 = sin (((double) kx) * KxFactor);
+	      double d3 = (mass - cos (((double) kx) * KxFactor) - cos (((double) ky) * KyFactor) 
+			   - cos (((double) kz) * KzFactor));
+	      TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d3);
+	      TmpOneBodyHamiltonian.SetMatrixElement(1, 1, -d3);
+	      TmpOneBodyHamiltonian.SetMatrixElement(2, 2, d3);
+	      TmpOneBodyHamiltonian.SetMatrixElement(3, 3, -d3);
+	      TmpOneBodyHamiltonian.SetMatrixElement(0, 1, d1);
+	      TmpOneBodyHamiltonian.SetMatrixElement(2, 3, d1);
+	      TmpOneBodyHamiltonian.SetMatrixElement(0, 3, d2);
+	      TmpOneBodyHamiltonian.SetMatrixElement(1, 2, d2);
+	      RealDiagonalMatrix TmpDiag;
+#ifdef __LAPACK__
+	      TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag);
+#else
+	      TmpOneBodyHamiltonian.Diagonalize(TmpDiag);
+#endif   
+	      if (MaxEMinus < TmpDiag(0, 0))
+		{
+		  MaxEMinus = TmpDiag(0, 0);
+		}
+	      if (MinEMinus > TmpDiag(0, 0))
+		{
+		  MinEMinus = TmpDiag(0, 0);
+		}
+	      if (MaxEPlus < TmpDiag(2, 2))
+		{
+		  MaxEPlus = TmpDiag(2, 2);
+		}
+	      if (MinEPlus > TmpDiag(2, 2))
+		{
+		  MinEPlus = TmpDiag(2, 2);
+		}
+	      File << (KxFactor * ((double) kx)) << " " << (KyFactor * ((double) ky)) << " " << (KzFactor * ((double) kz)) << " " << TmpDiag(0, 0) << " " << TmpDiag(1, 1) <<  " " << TmpDiag(2, 2) << " " << TmpDiag(3, 3) << endl;
+	    }
+	  File << endl;
+	}
+    }
   cout << "Spread = " << (MaxEMinus - MinEMinus) << "  Gap = " <<  (MinEPlus - MaxEMinus) << "  Flatening = " << ((MaxEMinus - MinEMinus) / (MinEPlus - MaxEMinus)) << endl;
 }
 

@@ -89,6 +89,7 @@ class FermionOnSphere :  public ParticleOnSphere
   friend class FermionOnSphereWithSpinLong;
   friend class FermionOnSphereWithSU3Spin;
   friend class FermionOnSphereWithSU4Spin;  
+  friend class FermionOnSphereWithSU4SpinLong;
   friend class FermionOnSphereWithSpinSqueezedBasis;
   friend class FermionOnSphereTwoLandauLevels;
   friend class FermionOnSphereThreeLandauLevels;
@@ -185,7 +186,8 @@ class FermionOnSphere :  public ParticleOnSphere
   // totalLz = momentum total value
   // lzMax = maximum Lz value reached by a fermion
   // stateDescription = array that gives each state description (data are not duplicated)
-  // hilbertSpaceDimension = Hilbert space dimension
+  
+// hilbertSpaceDimension = Hilbert space dimension
   // memory = amount of memory granted for precalculations
   FermionOnSphere (int nbrFermions, int totalLz, int lzMax, unsigned long* stateDescription, long hilbertSpaceDimension, unsigned long memory = 10000000);
 

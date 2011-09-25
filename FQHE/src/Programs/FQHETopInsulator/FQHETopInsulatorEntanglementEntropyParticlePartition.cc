@@ -21,6 +21,7 @@
 #include "Tools/FQHEFiles/FQHEOnSquareLatticeFileTools.h"
 
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
+#include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
 
 #include <iostream>
 #include <cstring>
@@ -78,7 +79,6 @@ int main(int argc, char** argv)
   bool LapackFlag = Manager.GetBoolean("use-lapack");
 #endif
   char* DensityMatrixFileName = Manager.GetString("density-matrix");
-  FermionOnSquareLatticeMomentumSpace** Spaces = 0;
   ComplexVector* GroundStates = 0;
   char** GroundStateFiles = 0;
   int* TotalKx = 0;
@@ -176,19 +176,6 @@ int main(int argc, char** argv)
 	return -1;      
       }
 
-  Spaces = new FermionOnSquareLatticeMomentumSpace*[NbrSpaces];
-  for (int i = 0; i < NbrSpaces; ++i)
-    {
-      Spaces[i] = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKx[i], TotalKy[i]);
-      
-      if (Spaces[i]->GetLargeHilbertSpaceDimension() != GroundStates[i].GetLargeVectorDimension())
-	{
-	  cout << "dimension mismatch between Hilbert space and ground state" << endl;
-	  return 0;
-	}
-    }
-
-
   if (DensityMatrixFileName != 0)
     {
       ofstream DensityMatrixFile;
@@ -197,127 +184,278 @@ int main(int argc, char** argv)
       DensityMatrixFile << endl;
       DensityMatrixFile.close();
     }
-
-  ofstream File;
-  if (Manager.GetString("output-file") != 0)
-    File.open(Manager.GetString("output-file"), ios::binary | ios::out);
-  else
+ 
+  if (Statistics == true)
     {
-      char* TmpFileName = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", "partent");
-      if (TmpFileName == 0)
+      FermionOnSquareLatticeMomentumSpace** Spaces = new FermionOnSquareLatticeMomentumSpace*[NbrSpaces];
+      for (int i = 0; i < NbrSpaces; ++i)
 	{
-	  cout << "no vec extension was find in " << GroundStateFiles[0] << " file name" << endl;
-	  return 0;
-	}
-      File.open(TmpFileName, ios::binary | ios::out);
-      delete[] TmpFileName;
-    }
-  File.precision(14);
-  cout.precision(14);
-
-  int MaxSubsystemNbrParticles = (NbrParticles >> 1) + (NbrParticles & 1);
-  if (Manager.GetInteger("max-na") > 0)
-    MaxSubsystemNbrParticles = Manager.GetInteger("max-na");
-  int SubsystemNbrParticles = Manager.GetInteger("min-na");
-
-  for (; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
-    {
-      double EntanglementEntropy = 0.0;
-      double DensitySum = 0.0;
-      for (int SubsystemTotalKx = 0; SubsystemTotalKx < NbrSiteX; ++SubsystemTotalKx)
-	{
-	  for (int SubsystemTotalKy = 0; SubsystemTotalKy < NbrSiteY; ++SubsystemTotalKy)
-	    {
+	  Spaces[i] = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKx[i], TotalKy[i]);
 	  
-	      cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Kx=" << SubsystemTotalKx << " Ky=" << SubsystemTotalKy << endl;
-	      timeval TotalStartingTime;
-	      timeval TotalEndingTime;
-	      if (ShowTimeFlag == true)
+	  if (Spaces[i]->GetLargeHilbertSpaceDimension() != GroundStates[i].GetLargeVectorDimension())
+	    {
+	      cout << "dimension mismatch between Hilbert space and ground state" << endl;
+	      return 0;
+	    }
+	}
+      
+      ofstream File;
+      if (Manager.GetString("output-file") != 0)
+	File.open(Manager.GetString("output-file"), ios::binary | ios::out);
+      else
+	{
+	  char* TmpFileName = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", "partent");
+	  if (TmpFileName == 0)
+	    {
+	      cout << "no vec extension was find in " << GroundStateFiles[0] << " file name" << endl;
+	      return 0;
+	    }
+	  File.open(TmpFileName, ios::binary | ios::out);
+	  delete[] TmpFileName;
+	}
+      File.precision(14);
+      cout.precision(14);
+      
+      int MaxSubsystemNbrParticles = (NbrParticles >> 1) + (NbrParticles & 1);
+      if (Manager.GetInteger("max-na") > 0)
+	MaxSubsystemNbrParticles = Manager.GetInteger("max-na");
+      int SubsystemNbrParticles = Manager.GetInteger("min-na");
+      
+      for (; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
+	{
+	  double EntanglementEntropy = 0.0;
+	  double DensitySum = 0.0;
+	  for (int SubsystemTotalKx = 0; SubsystemTotalKx < NbrSiteX; ++SubsystemTotalKx)
+	    {
+	      for (int SubsystemTotalKy = 0; SubsystemTotalKy < NbrSiteY; ++SubsystemTotalKy)
 		{
-		  gettimeofday (&(TotalStartingTime), 0);
-		}
-	      HermitianMatrix PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStates[0], Architecture.GetArchitecture());
-	      PartialDensityMatrix *= Coefficients[0];
-	      for (int i = 1; i < NbrSpaces; ++i)
-		{
-		  HermitianMatrix TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStates[i], Architecture.GetArchitecture());
-		  TmpMatrix *= Coefficients[i];
-		  PartialDensityMatrix += TmpMatrix;
-		}
-	      if (ShowTimeFlag == true)
-		{
-		  gettimeofday (&(TotalEndingTime), 0);
-		  double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
-					((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
-		  cout << "reduced density matrix evaluated in " << Dt << "s" << endl;
-		}
-	      if (PartialDensityMatrix.GetNbrRow() > 1)
-		{
+		  
+		  cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Kx=" << SubsystemTotalKx << " Ky=" << SubsystemTotalKy << endl;
+		  timeval TotalStartingTime;
+		  timeval TotalEndingTime;
 		  if (ShowTimeFlag == true)
 		    {
 		      gettimeofday (&(TotalStartingTime), 0);
 		    }
-		  RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
-#ifdef __LAPACK__
-		  if (LapackFlag == true)
+		  HermitianMatrix PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStates[0], Architecture.GetArchitecture());
+		  PartialDensityMatrix *= Coefficients[0];
+		  for (int i = 1; i < NbrSpaces; ++i)
 		    {
-		      PartialDensityMatrix.LapackDiagonalize(TmpDiag);
-		    }
-		  else
-		    {
-		      PartialDensityMatrix.Diagonalize(TmpDiag);
-		    }
-#else
-		  PartialDensityMatrix.Diagonalize(TmpDiag);
-#endif		  
-		  TmpDiag.SortMatrixDownOrder();
-		  if (DensityMatrixFileName != 0)
-		    {
-		      ofstream DensityMatrixFile;
-		      DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
-		      DensityMatrixFile.precision(14);
-		      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
-			DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalKx << " " << SubsystemTotalKy << " " << TmpDiag[i] << endl;
-		      DensityMatrixFile.close();
-		    }
-		  for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
-		    {
-		      if (TmpDiag[i] > 1e-14)
-			{
-			  EntanglementEntropy += TmpDiag[i] * log(TmpDiag[i]);
-			  DensitySum +=TmpDiag[i];
-			}
+		      HermitianMatrix TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStates[i], Architecture.GetArchitecture());
+		      TmpMatrix *= Coefficients[i];
+		      PartialDensityMatrix += TmpMatrix;
 		    }
 		  if (ShowTimeFlag == true)
 		    {
 		      gettimeofday (&(TotalEndingTime), 0);
 		      double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
 					    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
-		      cout << "diagonalization done in " << Dt << "s" << endl;
+		      cout << "reduced density matrix evaluated in " << Dt << "s" << endl;
 		    }
-		}
-	      else
-		if (PartialDensityMatrix.GetNbrRow() == 1)
-		  {
-		    double TmpValue = PartialDensityMatrix(0,0);
-		    if (DensityMatrixFileName != 0)
+		  if (PartialDensityMatrix.GetNbrRow() > 1)
+		    {
+		      if (ShowTimeFlag == true)
+			{
+			  gettimeofday (&(TotalStartingTime), 0);
+			}
+		      RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
+#ifdef __LAPACK__
+		      if (LapackFlag == true)
+			{
+			  PartialDensityMatrix.LapackDiagonalize(TmpDiag);
+			}
+		      else
+			{
+			  PartialDensityMatrix.Diagonalize(TmpDiag);
+			}
+#else
+		      PartialDensityMatrix.Diagonalize(TmpDiag);
+#endif		  
+		      TmpDiag.SortMatrixDownOrder();
+		      if (DensityMatrixFileName != 0)
+			{
+			  ofstream DensityMatrixFile;
+			  DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
+			  DensityMatrixFile.precision(14);
+			  for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+			    DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalKx << " " << SubsystemTotalKy << " " << TmpDiag[i] << endl;
+			  DensityMatrixFile.close();
+			}
+		      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+			{
+			  if (TmpDiag[i] > 1e-14)
+			    {
+			      EntanglementEntropy += TmpDiag[i] * log(TmpDiag[i]);
+			      DensitySum +=TmpDiag[i];
+			    }
+			}
+		      if (ShowTimeFlag == true)
+			{
+			  gettimeofday (&(TotalEndingTime), 0);
+			  double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+						((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
+			  cout << "diagonalization done in " << Dt << "s" << endl;
+			}
+		    }
+		  else
+		    if (PartialDensityMatrix.GetNbrRow() == 1)
 		      {
-			ofstream DensityMatrixFile;
-			DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
-			DensityMatrixFile.precision(14);
-			DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalKx << " " << SubsystemTotalKy << " " << TmpValue << endl;
-			DensityMatrixFile.close();
-		      }		  
-		    if (TmpValue > 1e-14)
-		      {
-			EntanglementEntropy += TmpValue * log(TmpValue);
-			DensitySum += TmpValue;
-		      }
+			double TmpValue = PartialDensityMatrix(0,0);
+			if (DensityMatrixFileName != 0)
+			  {
+			    ofstream DensityMatrixFile;
+			    DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
+			    DensityMatrixFile.precision(14);
+			    DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalKx << " " << SubsystemTotalKy << " " << TmpValue << endl;
+			    DensityMatrixFile.close();
+			  }		  
+			if (TmpValue > 1e-14)
+			  {
+			    EntanglementEntropy += TmpValue * log(TmpValue);
+			    DensitySum += TmpValue;
+			  }
 		  }
+		}
+	    }
+	  File << SubsystemNbrParticles << " " << (-EntanglementEntropy) << " " << DensitySum << " " << (1.0 - DensitySum) << endl;
+	}
+      File.close();
+    }
+  else
+    {
+      BosonOnSquareLatticeMomentumSpace** Spaces = new BosonOnSquareLatticeMomentumSpace*[NbrSpaces];
+      for (int i = 0; i < NbrSpaces; ++i)
+	{
+	  Spaces[i] = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKx[i], TotalKy[i]);
+	  
+	  if (Spaces[i]->GetLargeHilbertSpaceDimension() != GroundStates[i].GetLargeVectorDimension())
+	    {
+	      cout << "dimension mismatch between Hilbert space and ground state" << endl;
+	      return 0;
 	    }
 	}
-      File << SubsystemNbrParticles << " " << (-EntanglementEntropy) << " " << DensitySum << " " << (1.0 - DensitySum) << endl;
+      
+      ofstream File;
+      if (Manager.GetString("output-file") != 0)
+	File.open(Manager.GetString("output-file"), ios::binary | ios::out);
+      else
+	{
+	  char* TmpFileName = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", "partent");
+	  if (TmpFileName == 0)
+	    {
+	      cout << "no vec extension was find in " << GroundStateFiles[0] << " file name" << endl;
+	      return 0;
+	    }
+	  File.open(TmpFileName, ios::binary | ios::out);
+	  delete[] TmpFileName;
+	}
+      File.precision(14);
+      cout.precision(14);
+      
+      int MaxSubsystemNbrParticles = (NbrParticles >> 1) + (NbrParticles & 1);
+      if (Manager.GetInteger("max-na") > 0)
+	MaxSubsystemNbrParticles = Manager.GetInteger("max-na");
+      int SubsystemNbrParticles = Manager.GetInteger("min-na");
+      
+      for (; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
+	{
+	  double EntanglementEntropy = 0.0;
+	  double DensitySum = 0.0;
+	  for (int SubsystemTotalKx = 0; SubsystemTotalKx < NbrSiteX; ++SubsystemTotalKx)
+	    {
+	      for (int SubsystemTotalKy = 0; SubsystemTotalKy < NbrSiteY; ++SubsystemTotalKy)
+		{
+		  
+		  cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Kx=" << SubsystemTotalKx << " Ky=" << SubsystemTotalKy << endl;
+		  timeval TotalStartingTime;
+		  timeval TotalEndingTime;
+		  if (ShowTimeFlag == true)
+		    {
+		      gettimeofday (&(TotalStartingTime), 0);
+		    }
+		  HermitianMatrix PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStates[0], Architecture.GetArchitecture());
+		  PartialDensityMatrix *= Coefficients[0];
+		  for (int i = 1; i < NbrSpaces; ++i)
+		    {
+		      HermitianMatrix TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStates[i], Architecture.GetArchitecture());
+		      TmpMatrix *= Coefficients[i];
+		      PartialDensityMatrix += TmpMatrix;
+		    }
+		  if (ShowTimeFlag == true)
+		    {
+		      gettimeofday (&(TotalEndingTime), 0);
+		      double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+					    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
+		      cout << "reduced density matrix evaluated in " << Dt << "s" << endl;
+		    }
+		  if (PartialDensityMatrix.GetNbrRow() > 1)
+		    {
+		      if (ShowTimeFlag == true)
+			{
+			  gettimeofday (&(TotalStartingTime), 0);
+			}
+		      RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
+#ifdef __LAPACK__
+		      if (LapackFlag == true)
+			{
+			  PartialDensityMatrix.LapackDiagonalize(TmpDiag);
+			}
+		      else
+			{
+			  PartialDensityMatrix.Diagonalize(TmpDiag);
+			}
+#else
+		      PartialDensityMatrix.Diagonalize(TmpDiag);
+#endif		  
+		      TmpDiag.SortMatrixDownOrder();
+		      if (DensityMatrixFileName != 0)
+			{
+			  ofstream DensityMatrixFile;
+			  DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
+			  DensityMatrixFile.precision(14);
+			  for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+			    DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalKx << " " << SubsystemTotalKy << " " << TmpDiag[i] << endl;
+			  DensityMatrixFile.close();
+			}
+		      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+			{
+			  if (TmpDiag[i] > 1e-14)
+			    {
+			      EntanglementEntropy += TmpDiag[i] * log(TmpDiag[i]);
+			      DensitySum +=TmpDiag[i];
+			    }
+			}
+		      if (ShowTimeFlag == true)
+			{
+			  gettimeofday (&(TotalEndingTime), 0);
+			  double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+						((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
+			  cout << "diagonalization done in " << Dt << "s" << endl;
+			}
+		    }
+		  else
+		    if (PartialDensityMatrix.GetNbrRow() == 1)
+		      {
+			double TmpValue = PartialDensityMatrix(0,0);
+			if (DensityMatrixFileName != 0)
+			  {
+			    ofstream DensityMatrixFile;
+			    DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
+			    DensityMatrixFile.precision(14);
+			    DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalKx << " " << SubsystemTotalKy << " " << TmpValue << endl;
+			    DensityMatrixFile.close();
+			  }		  
+			if (TmpValue > 1e-14)
+			  {
+			    EntanglementEntropy += TmpValue * log(TmpValue);
+			    DensitySum += TmpValue;
+			  }
+		  }
+		}
+	    }
+	  File << SubsystemNbrParticles << " " << (-EntanglementEntropy) << " " << DensitySum << " " << (1.0 - DensitySum) << endl;
+	}
+      File.close();
     }
-  File.close();
   return 0;
 }
