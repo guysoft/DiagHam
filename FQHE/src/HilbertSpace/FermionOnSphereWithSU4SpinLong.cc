@@ -344,7 +344,7 @@ AbstractHilbertSpace* FermionOnSphereWithSU4SpinLong::ExtractSubspace (AbstractQ
 
 double  FermionOnSphereWithSU4SpinLong::AddpAdp (int index, int m)
 {
-  if ((this->StateDescription[index] & (0x2l << (m << 2))) != 0)
+  if ((this->StateDescription[index] & (((ULONGLONG) 0x2l) << (m << 2))) != ((ULONGLONG) 0x0ul))
     return 1.0;
   else
     return 0.0;
@@ -358,7 +358,7 @@ double  FermionOnSphereWithSU4SpinLong::AddpAdp (int index, int m)
 
 double FermionOnSphereWithSU4SpinLong::AdupAup (int index, int m)
 {
-  if ((this->StateDescription[index] & (0x8l << (m << 2))) != 0)
+  if ((this->StateDescription[index] & (((ULONGLONG) 0x8l) << (m << 2))) != ((ULONGLONG) 0x0ul))
     return 1.0;
   else
     return 0.0;
@@ -372,7 +372,7 @@ double FermionOnSphereWithSU4SpinLong::AdupAup (int index, int m)
 
 double FermionOnSphereWithSU4SpinLong::AddmAdm (int index, int m)
 {
-  if ((this->StateDescription[index] & (0x1l << (m << 2))) != 0)
+  if ((this->StateDescription[index] & (((ULONGLONG) 0x1l) << (m << 2))) != ((ULONGLONG) 0x0ul))
     return 1.0;
   else
     return 0.0;
@@ -386,7 +386,7 @@ double FermionOnSphereWithSU4SpinLong::AddmAdm (int index, int m)
 
 double FermionOnSphereWithSU4SpinLong::AdumAum (int index, int m)
 {
-  if ((this->StateDescription[index] & (0x4l << (m << 2))) != 0)
+  if ((this->StateDescription[index] & (((ULONGLONG) 0x4l) << (m << 2))) != ((ULONGLONG) 0x0ul))
     return 1.0;
   else
     return 0.0;
@@ -642,8 +642,6 @@ int FermionOnSphereWithSU4SpinLong::AddmAdm (int index, int m, int n, double& co
 int FermionOnSphereWithSU4SpinLong::FindStateIndex(ULONGLONG stateDescription, int lzmax)
 {
   ULONGLONG CurrentState = stateDescription >> this->LookUpTableShift[lzmax];
-//  cout << hex << stateDescription << dec << " " << lzmax << " " << endl;
-//  cout << this->LookUpTableShift[lzmax] << endl;
   int PosMin = this->LookUpTable[lzmax][CurrentState];
   int PosMax = this->LookUpTable[lzmax][CurrentState+ 1];
   int PosMid = (PosMin + PosMax) >> 1;
@@ -1075,19 +1073,19 @@ void FermionOnSphereWithSU4SpinLong::GenerateLookUpTable(unsigned long memory)
 #ifdef __128_BIT_LONGLONG__
   this->SignLookUpTableMask = new ULONGLONG [256];
   for (int i = 0; i < 112; ++i)
-    this->SignLookUpTableMask[i] = (ULONGLONG) 0xffff;
+    this->SignLookUpTableMask[i] = (ULONGLONG) 0xfffful;
   for (int i = 112; i < 128; ++i)
-    this->SignLookUpTableMask[i] = ((ULONGLONG) 0xffff) >> (i - 112);
+    this->SignLookUpTableMask[i] = ((ULONGLONG) 0xfffful) >> (i - 112);
   for (int i = 128; i < 256; ++i)
-    this->SignLookUpTableMask[i] = (ULONGLONG) 0;  
+    this->SignLookUpTableMask[i] = (ULONGLONG) 0x0ul;  
 #else
   this->SignLookUpTableMask = new ULONGLONG [128];
   for (int i = 0; i < 48; ++i)
-    this->SignLookUpTableMask[i] = (ULONGLONG) 0xffff;
+    this->SignLookUpTableMask[i] = (ULONGLONG) 0xfffful;
   for (int i = 48; i < 64; ++i)
-    this->SignLookUpTableMask[i] = ((ULONGLONG) 0xffff) >> (i - 48);
+    this->SignLookUpTableMask[i] = ((ULONGLONG) 0xfffful) >> (i - 48);
   for (int i = 64; i < 128; ++i)
-    this->SignLookUpTableMask[i] = (ULONGLONG) 0;
+    this->SignLookUpTableMask[i] = (ULONGLONG) 0x0ul;
 #endif
 }
 

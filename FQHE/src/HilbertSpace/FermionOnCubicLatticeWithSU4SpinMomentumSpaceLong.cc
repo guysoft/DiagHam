@@ -105,9 +105,9 @@ FermionOnCubicLatticeWithSU4SpinMomentumSpaceLong::FermionOnCubicLatticeWithSU4S
 	{
 	  cout << "error while generating the Hilbert space " << this->LargeHilbertSpaceDimension << " " << TmpLargeHilbertSpaceDimension << endl;
 	}
-      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
- 	this->PrintState(cout, i) << " " << hex << (this->StateDescription[i] >> 64) << " " << this->StateDescription[i] << dec << endl;
       this->GenerateLookUpTable(memory);
+      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+  	this->PrintState(cout, i) << endl;
       
 #ifdef __DEBUG__
       long UsedMemory = 0;
@@ -261,6 +261,7 @@ ostream& FermionOnCubicLatticeWithSU4SpinMomentumSpaceLong::PrintState (ostream&
 	Str << "(" << TmpKx << "," << TmpKy << "," << TmpKz << ",d,B)";
     }
   Str << "]";
+  Str << " " << state << " " << this->FindStateIndex (TmpState, this->StateHighestBit[state]);
   return Str;
 }
 

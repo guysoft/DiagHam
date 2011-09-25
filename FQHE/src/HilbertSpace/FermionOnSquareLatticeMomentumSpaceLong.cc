@@ -238,13 +238,6 @@ ostream& FermionOnSquareLatticeMomentumSpaceLong::PrintState (ostream& Str, int 
 	Str << "(" << TmpKx << "," << TmpKy << ")";
     }
   Str << "]";
-  Str << " " << TmpState; 
-  Str << " " << hex << TmpState << dec; 
-  Str << " " << state;
-  int TmpLzMax = this->LzMax + 1;
-  while (((TmpState >> TmpLzMax) & ((ULONGLONG) 0x1ul)) == ((ULONGLONG) 0x0ul))
-    --TmpLzMax;
-  Str << " " << this->FindStateIndex(TmpState, TmpLzMax);
   return Str;
 }
 

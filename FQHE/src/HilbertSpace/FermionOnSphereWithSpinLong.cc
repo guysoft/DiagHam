@@ -262,10 +262,10 @@ ULONGLONG FermionOnSphereWithSpinLong::Ad (ULONGLONG state, int m, int s, double
       coefficient *= this->SignLookUpTable[(state >> (m + 32)) & this->SignLookUpTableMask[m + 32]];
       coefficient *= this->SignLookUpTable[(state >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
 #ifdef __128_BIT_LONGLONG__
-      coefficient *= this->SignLookUpTable[(state >> (n2 + 64)) & this->SignLookUpTableMask[n2 + 64]];
-      coefficient *= this->SignLookUpTable[(state >> (n2 + 80)) & this->SignLookUpTableMask[n2 + 80]];
-      coefficient *= this->SignLookUpTable[(state >> (n2 + 96)) & this->SignLookUpTableMask[n2 + 96]];
-      coefficient *= this->SignLookUpTable[(state >> (n2 + 112)) & this->SignLookUpTableMask[n2 + 112]];
+      coefficient *= this->SignLookUpTable[(state >> (m + 64)) & this->SignLookUpTableMask[m + 64]];
+      coefficient *= this->SignLookUpTable[(state >> (m + 80)) & this->SignLookUpTableMask[m + 80]];
+      coefficient *= this->SignLookUpTable[(state >> (m + 96)) & this->SignLookUpTableMask[m + 96]];
+      coefficient *= this->SignLookUpTable[(state >> (m + 112)) & this->SignLookUpTableMask[m + 112]];
 #endif
 
     }

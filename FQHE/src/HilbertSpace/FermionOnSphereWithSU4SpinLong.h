@@ -668,15 +668,15 @@ inline int FermionOnSphereWithSU4SpinLong::GenericAdA(int index, int m, int n, d
       return this->HilbertSpaceDimension;
     }
   int NewLargestBit = StateHighestBit;
-  coefficient = -this->SignLookUpTable[(State >> n) & this->SignLookUpTableMask[m]];
-  coefficient *= this->SignLookUpTable[(State >> (n + 16))  & this->SignLookUpTableMask[m + 16]];
-  coefficient *= this->SignLookUpTable[(State >> (n + 32)) & this->SignLookUpTableMask[m + 32]];
-  coefficient *= this->SignLookUpTable[(State >> (n + 48)) & this->SignLookUpTableMask[m + 48]];
+  coefficient = -this->SignLookUpTable[(State >> n) & this->SignLookUpTableMask[n]];
+  coefficient *= this->SignLookUpTable[(State >> (n + 16))  & this->SignLookUpTableMask[n + 16]];
+  coefficient *= this->SignLookUpTable[(State >> (n + 32)) & this->SignLookUpTableMask[n + 32]];
+  coefficient *= this->SignLookUpTable[(State >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
 #ifdef __128_BIT_LONGLONG__
-  coefficient *= this->SignLookUpTable[(State >> (n + 64)) & this->SignLookUpTableMask[n2 + 64]];
-  coefficient *= this->SignLookUpTable[(State >> (n + 80)) & this->SignLookUpTableMask[n2 + 80]];
-  coefficient *= this->SignLookUpTable[(State >> (n + 96)) & this->SignLookUpTableMask[n2 + 96]];
-  coefficient *= this->SignLookUpTable[(State >> (n + 112)) & this->SignLookUpTableMask[n2 + 112]];
+  coefficient *= this->SignLookUpTable[(State >> (n + 64)) & this->SignLookUpTableMask[n + 64]];
+  coefficient *= this->SignLookUpTable[(State >> (n + 80)) & this->SignLookUpTableMask[n + 80]];
+  coefficient *= this->SignLookUpTable[(State >> (n + 96)) & this->SignLookUpTableMask[n + 96]];
+  coefficient *= this->SignLookUpTable[(State >> (n + 112)) & this->SignLookUpTableMask[n + 112]];
 #endif
   State &= ~(((ULONGLONG) 0x1ul) << n);
   if (State != ((ULONGLONG) 0x0ul))
@@ -699,10 +699,10 @@ inline int FermionOnSphereWithSU4SpinLong::GenericAdA(int index, int m, int n, d
       coefficient *= this->SignLookUpTable[(State >> (m + 32)) & this->SignLookUpTableMask[m + 32]];
       coefficient *= this->SignLookUpTable[(State >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
 #ifdef __128_BIT_LONGLONG__
-      coefficient *= this->SignLookUpTable[(State >> (m + 64)) & this->SignLookUpTableMask[n2 + 64]];
-      coefficient *= this->SignLookUpTable[(State >> (m + 80)) & this->SignLookUpTableMask[n2 + 80]];
-      coefficient *= this->SignLookUpTable[(State >> (m + 96)) & this->SignLookUpTableMask[n2 + 96]];
-      coefficient *= this->SignLookUpTable[(State >> (m + 112)) & this->SignLookUpTableMask[n2 + 112]];
+      coefficient *= this->SignLookUpTable[(State >> (m + 64)) & this->SignLookUpTableMask[m + 64]];
+      coefficient *= this->SignLookUpTable[(State >> (m + 80)) & this->SignLookUpTableMask[m + 80]];
+      coefficient *= this->SignLookUpTable[(State >> (m + 96)) & this->SignLookUpTableMask[m + 96]];
+      coefficient *= this->SignLookUpTable[(State >> (m + 112)) & this->SignLookUpTableMask[m + 112]];
 #endif
     }
   State |= ((ULONGLONG) 0x1ul) << m;

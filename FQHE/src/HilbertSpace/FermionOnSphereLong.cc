@@ -722,7 +722,6 @@ int FermionOnSphereLong::AdA (int index, int m, int n, double& coefficient)
 int FermionOnSphereLong::FindStateIndex(ULONGLONG stateDescription, int lzmax)
 {
   ULONGLONG Tmp = stateDescription >> this->LookUpTableShift[lzmax];
-  cout << stateDescription << " " << lzmax << " " << Tmp << endl;
   long PosMin = this->LookUpTable[lzmax][Tmp];
   long PosMax = this->LookUpTable[lzmax][Tmp + 1];
   long PosMid = (PosMin + PosMax) >> 1;

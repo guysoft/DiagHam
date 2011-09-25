@@ -153,8 +153,36 @@ typedef struct { doublereal r, i; } doublecomplex;
 
 // define long long types (128 bits on x86_64 architecture, 64 bits elsewhere)
 
+#ifdef __x86_64__
+
+#ifdef __INTEL_COMPILER
+
+#define __128_BIT_LONGLONG__
+#define LONGLONG __m128i
+#define ULONGLONG __m128i
+
+#else
+
+typedef int int128_t __attribute__((__mode__(TI)));
+typedef unsigned int uint128_t __attribute__((__mode__(TI)));
+
+#define __128_BIT_LONGLONG__
+#define LONGLONG int128_t
+#define ULONGLONG uint128_t
+
+#endif
+
+#else
+
 #define LONGLONG long long
 #define ULONGLONG unsigned long long
+
+#endif
+
+// define long long types (128 bits on x86_64 architecture, 64 bits elsewhere)
+
+//#define LONGLONG long long
+//#define ULONGLONG unsigned long long
 //#define LONGLONG __int128_t
 //#define ULONGLONG __uint128_t
 
