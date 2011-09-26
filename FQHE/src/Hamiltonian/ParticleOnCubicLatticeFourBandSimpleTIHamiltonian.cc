@@ -7,10 +7,10 @@
 //                                                                            //
 //                        class author: Nicolas Regnault                      //
 //                                                                            //
-//            class of 3d topological insulator based on the Fu-Kane-Mele     //
+//            class of 3d topological insulator based on the simple TI        //
 //                       model and restricted to four bands                   //
 //                                                                            //
-//                        last modification : 26/08/2011                      //
+//                        last modification : 20/09/2011                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -564,28 +564,53 @@ void ParticleOnCubicLatticeFourBandSimpleTIHamiltonian::ComputeOneBodyHamiltonia
 	    }
 	  else
 	    {
+	      ComplexMatrix OneBodyBasis(4, 4);
+	      OneBodyBasis.SetToIdentity();
 	      oneBodyHamiltonians[Index].Copy(TmpOneBodyHamiltonian);
 	      RealDiagonalMatrix TmpDiag;
+#ifdef __LAPACK__
+	      TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, OneBodyBasis);
+#else
+	      TmpOneBodyHamiltonian.Diagonalize(TmpDiag, OneBodyBasis);
+#endif   
+ 	      for (int i = 0; i < 4; ++i)
+ 		{
+ 		  cout << TmpDiag(i, i) << " ";
+ 		}
+	      oneBodyHamiltonians[Index].ClearMatrix();
+// 	      double Tmp = 1.0;
+// 	      oneBodyHamiltonians[Index].SetMatrixElement(2, 2, Tmp);
+// 	      oneBodyHamiltonians[Index].SetMatrixElement(3, 3, Tmp);
+	      double Tmp = TmpDiag(0, 0);
+	      oneBodyHamiltonians[Index].SetMatrixElement(0, 0, Tmp);
+	      Tmp = TmpDiag(1, 1);
+	      oneBodyHamiltonians[Index].SetMatrixElement(1, 1, Tmp);
+	      Tmp = TmpDiag(2, 2);
+	      oneBodyHamiltonians[Index].SetMatrixElement(2, 2, Tmp);
+	      Tmp = TmpDiag(3, 3);
+	      oneBodyHamiltonians[Index].SetMatrixElement(3, 3, Tmp);
+	      oneBodyHamiltonians[Index].Conjugate(OneBodyBasis);
+	      TmpOneBodyHamiltonian.Copy(oneBodyHamiltonians[Index]);
 #ifdef __LAPACK__
 	      TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag);
 #else
 	      TmpOneBodyHamiltonian.Diagonalize(TmpDiag);
 #endif   
-	      for (int i = 0; i < 4; ++i)
-		{
-		  cout << TmpDiag(i, i) << " ";
-		}
-	      cout << endl;	      
-	      oneBodyHamiltonians[Index] /= fabs(TmpDiag(0, 0));
-	      cout  << 	      oneBodyHamiltonians[Index] << endl;
-	      for (int i = 0; i < 4; ++i)
-		{
-		  double Tmp;
-		  oneBodyHamiltonians[Index].GetMatrixElement(i, i, Tmp);
-		  Tmp += 1.0;		  
-		  oneBodyHamiltonians[Index].SetMatrixElement(i, i, Tmp);
-		}
-	      cout  << 	      oneBodyHamiltonians[Index] << endl;
+ 	      for (int i = 0; i < 4; ++i)
+ 		{
+ 		  cout << TmpDiag(i, i) << " ";
+ 		}
+ 	      cout << endl;	      
+// 	      oneBodyHamiltonians[Index] /= fabs(TmpDiag(0, 0));
+// 	      cout  << 	      oneBodyHamiltonians[Index] << endl;
+// 	      for (int i = 0; i < 4; ++i)
+// 		{
+// 		  double Tmp;
+// 		  oneBodyHamiltonians[Index].GetMatrixElement(i, i, Tmp);
+// 		  Tmp += 1.0;		  
+// 		  oneBodyHamiltonians[Index].SetMatrixElement(i, i, Tmp);
+// 		}
+// 	      cout  << 	      oneBodyHamiltonians[Index] << endl;
 	    }
 	}
 }

@@ -380,6 +380,35 @@ void RealMatrix::ResizeAndClean (int nbrRow, int nbrColumn)
   return;
 }
 
+// Set all entries in matrix to zero
+//
+
+void RealMatrix::ClearMatrix ()
+{
+  for (int i = 0; i < this->NbrColumn; i++)
+    this->Columns[i].ClearVector();
+  return;
+}
+
+// set matrix to identity 
+//
+
+void RealMatrix::SetToIdentity()
+{
+  this->ClearMatrix();
+  if (this->NbrColumn <= this->NbrRow)
+    {
+      for (int i = 0; i < this->NbrColumn; i++)
+	this->Columns[i][i] = 1.0;
+    }
+  else
+    {
+      for (int i = 0; i < this->NbrRow; i++)
+	this->Columns[i][i] = 1.0;
+    }
+}
+
+
 // add two matrices
 //
 // M1 = first matrix

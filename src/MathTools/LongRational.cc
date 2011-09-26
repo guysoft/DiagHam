@@ -895,20 +895,20 @@ LongRational& LongRational::Power2Multiply (long x)
 
 ostream& operator << (ostream& str, LongRational& x)
 {
-   if (x.Denominator > 0l)
-     {
-       if (x.Denominator == 1l)
- 	str << x.Numerator;
-       else
- 	str << x.Numerator << "/" << x.Denominator;
+  if (x.Denominator > ((LONGLONG) 0l))
+    {
+      if (x.Denominator == ((LONGLONG) 1l))
+	str << ((long) x.Numerator);
+      else
+	str << ((long) x.Numerator) << "/" << ((long) x.Denominator);
      }
-   else
-     {
-       if (x.Denominator == -1l)
- 	str << (-x.Numerator);
-       else
- 	str << (-x.Numerator) << "/" << (-x.Denominator);
-     }
+  else
+    {
+      if (x.Denominator == ((LONGLONG) -1l))
+	str << (-((long) x.Numerator));
+      else
+	str << (-((long) x.Numerator)) << "/" << (-((long) x.Denominator));
+    }
   return str;
 }
 

@@ -111,6 +111,10 @@ class ComplexMatrix : public Matrix
   // retrun value = pointer on new matrix 
   Matrix* Clone ();  
 
+  // set matrix to identity 
+  //
+  void SetToIndentity();
+
   // set a matrix element
   //
   // i = line position
@@ -203,6 +207,9 @@ class ComplexMatrix : public Matrix
   //
   void ClearMatrix ();
 
+  // set matrix to identity 
+  //
+  void SetToIdentity();
 
   // add two matrices
   //

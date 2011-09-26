@@ -426,6 +426,25 @@ void ComplexMatrix::ClearMatrix ()
   return;
 }
 
+// set matrix to identity 
+//
+
+void ComplexMatrix::SetToIdentity()
+{
+  this->ClearMatrix();
+  if (this->NbrColumn <= this->NbrRow)
+    {
+      for (int i = 0; i < this->NbrColumn; i++)
+	this->Columns[i][i] = 1.0;
+    }
+  else
+    {
+      for (int i = 0; i < this->NbrRow; i++)
+	this->Columns[i][i] = 1.0;
+    }
+}
+
+
 // add two matrices
 //
 // M1 = first matrix
