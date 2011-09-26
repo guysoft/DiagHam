@@ -570,15 +570,22 @@ void ParticleOnCubicLatticeFourBandSimpleTIHamiltonian::ComputeOneBodyHamiltonia
 	      TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag);
 #else
 	      TmpOneBodyHamiltonian.Diagonalize(TmpDiag);
-#endif   	
+#endif   
+	      for (int i = 0; i < 4; ++i)
+		{
+		  cout << TmpDiag(i, i) << " ";
+		}
+	      cout << endl;	      
 	      oneBodyHamiltonians[Index] /= fabs(TmpDiag(0, 0));
+	      cout  << 	      oneBodyHamiltonians[Index] << endl;
 	      for (int i = 0; i < 4; ++i)
 		{
 		  double Tmp;
 		  oneBodyHamiltonians[Index].GetMatrixElement(i, i, Tmp);
-		  Tmp += 1.0;
+		  Tmp += 1.0;		  
 		  oneBodyHamiltonians[Index].SetMatrixElement(i, i, Tmp);
 		}
+	      cout  << 	      oneBodyHamiltonians[Index] << endl;
 	    }
 	}
 }
