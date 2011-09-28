@@ -142,6 +142,7 @@ int main(int argc, char** argv)
   (*MiscGroup) += new SingleStringOption('\n', "energy-expectation", "name of the file containing the state vector, whose energy expectation value shall be calculated");
   (*MiscGroup) += new SingleStringOption  ('o', "output-file", "redirect output to this file",NULL);
   (*MiscGroup) += new BooleanOption  ('\n', "test-hamiltonian", "test hermiticity of Hamiltonian");
+  (*MiscGroup) += new BooleanOption  ('\n', "force-complex", "always use complex vectors, even if Hamiltonian is real");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   Manager.StandardProceedings(argv, argc, cout);
@@ -435,7 +436,7 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  if (Hamiltonian->IsComplex())
+	  if (Hamiltonian->IsComplex()||Manager.GetBoolean("force-complex"))
 	    {
 	      QHEOnLatticeMainTask Task (&Manager, Space, Hamiltonian, NbrFluxQuanta, Shift, OutputName, FirstRun, EigenvectorName);
 	      MainTaskOperation TaskOperation (&Task);
