@@ -230,6 +230,11 @@ class ComplexVector : public Vector
   // return value = reference on current vector
   Vector& ClearVectorSegment (long start, long nbrComponent);
 
+  // apply standard phase conventions for this vector
+  //
+  // maxIndex = component with maximum amplitude that was set to real
+  ComplexVector& SetStandardPhase(long &maxIndex);
+
   // change sign of a vector
   //
   // return value = reference on current vector

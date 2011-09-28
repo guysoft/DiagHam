@@ -153,8 +153,7 @@ AbstractOption* OptionManager::operator[] (const char* optionName)
 // optionGroupName = string containing option group name
 // return value = pointer to the option group if it has been found, 0 either
 
-OptionGroup* OptionManager::GetOptionGroup(const char* optionGroupName)
-{
+OptionGroup* OptionManager::GetOptionGroup(const char* optionGroupName){
   ListIterator<OptionGroup*> IterGroup(this->Groups);
   OptionGroup** TmpGroup;
   while ((TmpGroup = IterGroup()))

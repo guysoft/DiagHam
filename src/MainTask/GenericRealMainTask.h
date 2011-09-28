@@ -127,6 +127,8 @@ class GenericRealMainTask: public AbstractMainTask
   bool FirstRun;
   // flag that indicate if eigenstates have to be computed and saved at a given frequency
   int PartialEigenstateFlag;
+  // flag that indicates if to fake complex vectors
+  bool FakeComplex;
 
  public:
 
@@ -142,9 +144,10 @@ class GenericRealMainTask: public AbstractMainTask
   // outputFileName = name of the file where results have to be stored
   // firstRun = flag that indicates if it the first time the main task is used
   // eigenvectorFileName = prefix to add to the name of each file that will contain an eigenvector
+  // fakeComplex = fake complex problem : read and save vectors as complex vectors
   GenericRealMainTask(OptionManager* options, AbstractHilbertSpace* space, LanczosManager* lanczos, 
 		      AbstractHamiltonian* hamiltonian, char *subspaceStr, char *subspaceLegend,
-		      double shift, char* outputFileName, bool firstRun=true, char* eigenvectorFileName=0);
+		      double shift, char* outputFileName, bool firstRun=true, char* eigenvectorFileName=0, bool fakeComplex=false);
   
   // destructor
   //  

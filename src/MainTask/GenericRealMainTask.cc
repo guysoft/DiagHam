@@ -55,6 +55,8 @@
 #include "GeneralTools/FilenameTools.h"
 #include "GeneralTools/GenericSignalHandler.h"
 
+#include "Vector/ComplexVector.h"
+
 
 #include <iostream>
 #include <sys/time.h>
@@ -84,7 +86,7 @@ using std::ofstream;
 
 GenericRealMainTask::GenericRealMainTask(OptionManager* options, AbstractHilbertSpace* space, LanczosManager* lanczos, 
 					 AbstractHamiltonian* hamiltonian, char *subspaceStr, char *subspaceLegend,
-					 double shift, char* outputFileName, bool firstRun, char* eigenvectorFileName)
+					 double shift, char* outputFileName, bool firstRun, char* eigenvectorFileName, bool fakeComplex)
 {
   this->OutputFileName = new char [strlen(outputFileName) + 1];
   strncpy(this->OutputFileName, outputFileName, strlen(outputFileName));
@@ -259,6 +261,7 @@ GenericRealMainTask::GenericRealMainTask(OptionManager* options, AbstractHilbert
       this->PartialEigenstateFlag = options->GetInteger("partial-eigenstate");
     }
   this->FirstRun = firstRun;
+  this->FakeComplex=fakeComplex;
 }
  
 // destructor
@@ -346,7 +349,13 @@ int GenericRealMainTask::ExecuteMainTask()
 			{
 			  this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
 			  sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, j);
-			  Q[j].WriteVector(TmpVectorName);
+			  if (FakeComplex)
+			    {
+			      ComplexVector TmpVector(Q[j],true);
+			      TmpVector.WriteVector(TmpVectorName);
+			    }
+			  else
+			    Q[j].WriteVector(TmpVectorName);
 			  cout << ((TmpEigenvector * Q[j]) - this->EnergyShift) << " " << endl;		  
 			}
 		      cout << endl;			  
@@ -392,7 +401,13 @@ int GenericRealMainTask::ExecuteMainTask()
 			{
 			  this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
 			  sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, j);
-			  Q[j].WriteVector(TmpVectorName);
+			  if (FakeComplex)
+			    {
+			      ComplexVector TmpVector(Q[j],true);
+			      TmpVector.WriteVector(TmpVectorName);
+			    }
+			  else
+			    Q[j].WriteVector(TmpVectorName);
 			  cout << ((TmpEigenvector * Q[j]) - this->EnergyShift) << " " << endl;		  
 			}	      
 		      cout << endl;
@@ -426,7 +441,13 @@ int GenericRealMainTask::ExecuteMainTask()
 	      RealVector TmpEigenvector(1);
 	      TmpEigenvector[0]=1.0;
 	      sprintf (TmpVectorName, "%s.0.vec", this->EigenvectorFileName);
-	      TmpEigenvector.WriteVector(TmpVectorName);
+	      if (FakeComplex)
+		{
+		  ComplexVector TmpVector(TmpEigenvector,true);
+		  TmpVector.WriteVector(TmpVectorName);
+		}
+	      else
+		TmpEigenvector.WriteVector(TmpVectorName);
 	      delete [] TmpVectorName;
 	    }
 	}
@@ -451,10 +472,23 @@ int GenericRealMainTask::ExecuteMainTask()
 	      if (this->InitialVectorFileName == 0)
 		Lanczos->InitializeLanczosAlgorithm();
 	      else
-		{	   
-		  RealVector InitialVector;
-		  InitialVector.ReadVector(this->InitialVectorFileName);
-		  Lanczos->InitializeLanczosAlgorithm(InitialVector);
+		{
+		  if (FakeComplex)
+		    {
+		      ComplexVector TmpVector;
+		      TmpVector.ReadVector(this->InitialVectorFileName);
+		      long tmpL;
+		      TmpVector.SetStandardPhase(tmpL);
+		      RealVector InitialVector(TmpVector);
+		      InitialVector.Normalize();
+		      Lanczos->InitializeLanczosAlgorithm(InitialVector);
+		    }
+		  else
+		    {
+		      RealVector InitialVector;
+		      InitialVector.ReadVector(this->InitialVectorFileName);
+		      Lanczos->InitializeLanczosAlgorithm(InitialVector);
+		    }
 		}
 	    }
 	  else
@@ -479,9 +513,14 @@ int GenericRealMainTask::ExecuteMainTask()
 		      else
 			{
 			  RealVector* InitialVectors = new RealVector[TmpNbrInitialVectors];
+			  ComplexVector TmpVector;
+			  long tmpL;
 			  for (int i = 0; i < TmpNbrInitialVectors; ++i)
 			    {
-			      InitialVectors[i].ReadVector(VectorFileNames[i]);
+			      TmpVector.ReadVector(VectorFileNames[i]);
+			      TmpVector.SetStandardPhase(tmpL);
+			      InitialVectors[i]=RealVector(TmpVector);
+			      InitialVectors[i].Normalize();
 			    }
 			  Lanczos->InitializeLanczosAlgorithm(InitialVectors, TmpNbrInitialVectors);		  
 			  delete[] InitialVectors;
@@ -558,8 +597,14 @@ int GenericRealMainTask::ExecuteMainTask()
 		  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 32];
 		  for (int i = 0; i < this->NbrEigenvalue; ++i)
 		    {
-		      sprintf (TmpVectorName, "%s.%d.part.%d.vec", this->EigenvectorFileName, i, CurrentNbrIterLanczos);		  
-		      Eigenvectors[i].WriteVector(TmpVectorName);
+		      sprintf (TmpVectorName, "%s.%d.part.%d.vec", this->EigenvectorFileName, i, CurrentNbrIterLanczos);
+		      if (FakeComplex)
+			{
+			  ComplexVector TmpVector(Eigenvectors[i],true);
+			  TmpVector.WriteVector(TmpVectorName);
+			}
+		      else
+			Eigenvectors[i].WriteVector(TmpVectorName);
 		    }
 		  delete[] TmpVectorName;
 		  delete[] Eigenvectors;
@@ -656,7 +701,13 @@ int GenericRealMainTask::ExecuteMainTask()
 			{
 			  sprintf (TmpVectorName, "%s.%d.part.vec", this->EigenvectorFileName, i);		  
 			}
-		      Eigenvectors[i].WriteVector(TmpVectorName);
+		      if (FakeComplex)
+			{
+			  ComplexVector TmpVector(Eigenvectors[i],true);
+			  TmpVector.WriteVector(TmpVectorName);
+			}
+		      else
+			Eigenvectors[i].WriteVector(TmpVectorName);
 		    }
 		  if (this->ComputeEnergyFlag == true)
 		    {

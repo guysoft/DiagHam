@@ -251,6 +251,7 @@ if ( $tmp =~ /x86_64/ )
     $Extension="_64";
   }
 my $Program = $Diagonalizer.$Extension;
+$OverlapBin .= $Extension;
 
 print ("Using command line options: ".$Options."\n");
 

@@ -23,6 +23,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
+
+#include "MathTools/Complex.h"
 #include "Vector/ComplexVector.h"
 #include "Matrix/RealMatrix.h"
 #include "Matrix/ComplexMatrix.h"
@@ -48,7 +50,7 @@ ComplexVector::ComplexVector()
 {
   this->Components = 0;
   this->Dimension = 0;
-  this->VectorId = 0;
+ this->VectorId = 0;
   this->TrueDimension = this->Dimension;
   this->LargeDimension = 0l;
   this->LargeTrueDimension = 0l;
@@ -700,6 +702,26 @@ Vector& ComplexVector::ClearVectorSegment (long start, long nbrComponent)
   return *this;
 }
 
+// apply standard phase conventions for this vector
+//
+// maxIndex = component with maximum amplitude that was set to real
+ComplexVector& ComplexVector::SetStandardPhase(long &maxIndex)
+{
+  maxIndex=0;
+  double maxN=0.0;
+  double SqrNorm;
+  for (long n=0; n<this->LargeDimension; ++n)
+    {
+      SqrNorm = this->Components[n].Re*this->Components[n].Re + this->Components[n].Im*this->Components[n].Im;
+      if (SqrNorm>maxN)
+      {
+	maxIndex=n;
+	maxN=SqrNorm;
+      }
+    }
+  (*this)*=Phase(-Arg(this->Components[maxIndex]));
+  return *this;
+}
 
 
 // change sign of a vector

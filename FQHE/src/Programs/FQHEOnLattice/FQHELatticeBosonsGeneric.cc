@@ -15,6 +15,8 @@
 #include "Tools/FQHESpectrum/LatticePhases.h"
 #include "Tools/FQHEWaveFunction/GutzwillerOnLatticeWaveFunction.h"
 
+#include "LanczosAlgorithm/LanczosManager.h"
+
 #include "GeneralTools/FilenameTools.h"
 
 #include "Options/Options.h"
@@ -104,6 +106,8 @@ int main(int argc, char** argv)
   LatticePhases::AddOptionGroup(&Manager);
   Architecture.AddOptionGroup(&Manager);
   QHEOnLatticeMainTask::AddOptionGroup(&Manager);
+  LanczosManager Lanczos(false);  // functions in parallel to complex lattice main task...
+  Lanczos.AddOptionGroup(&Manager);
   Manager += PrecalculationGroup;
   Manager += ToolsGroup;
   Manager += MiscGroup;
@@ -357,13 +361,17 @@ int main(int argc, char** argv)
 	  }
       }
 
+  char *SubspaceLegend=new char[20];
+  strcpy(SubspaceLegend,"NbrFlux");
+  char* SubspaceStr=new char[5];
   for (int iter=0; iter<NbrFluxValues; ++iter, ++NbrFluxQuanta)
     {
       cout << "----------------------------------------------------------------" << endl;
       cout << "NbrFluxQuanta="<<NbrFluxQuanta<<endl;
       
       if (!FirstRun) Hamiltonian->SetNbrFluxQuanta(NbrFluxQuanta);
-  
+      
+      sprintf(SubspaceStr,"%d",NbrFluxQuanta);
       char* EigenvectorName = 0;
       if ((Manager.GetBoolean("eigenstate")||(Manager.GetBoolean("optimize-condensate"))))
 	{
@@ -435,18 +443,14 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      cout << "Attention: could simplify calculation, as this Hamiltonian is purely real!"<<endl;
-	      QHEOnLatticeMainTask Task (&Manager, Space, Hamiltonian, NbrFluxQuanta, Shift, OutputName, FirstRun, EigenvectorName);
-	      MainTaskOperation TaskOperation (&Task);
-	      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
-
-// 	      GenericRealMainTask(OptionManager* options, AbstractHilbertSpace* space, LanczosManager* lanczos, 
-// 				  AbstractHamiltonian* hamiltonian, char *subspaceStr, char *subspaceLegend,
-// 				  double shift, char* outputFileName, bool firstRun=true, char* eigenvectorFileName=0);
-
-// 	      GenericRealMainTask Task (&Manager, Space, Hamiltonian, NbrFluxQuanta, Shift, OutputName, FirstRun, EigenvectorName);
+// 	      cout << "Attention: could simplify calculation, as this Hamiltonian is purely real!"<<endl;
+// 	      QHEOnLatticeMainTask Task (&Manager, Space, Hamiltonian, NbrFluxQuanta, Shift, OutputName, FirstRun, EigenvectorName);
 // 	      MainTaskOperation TaskOperation (&Task);
 // 	      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+	      GenericRealMainTask Task(&Manager, (AbstractHilbertSpace*)Space, &Lanczos, (AbstractHamiltonian*)Hamiltonian, SubspaceStr, SubspaceLegend,
+				  Shift, OutputName, FirstRun, EigenvectorName, /* FakeComplex */ true);
+	      MainTaskOperation TaskOperation (&Task);
+	      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
 	    }
 	}
       if (EigenvectorName != 0)
@@ -462,5 +466,7 @@ int main(int argc, char** argv)
   delete Lattice;
   delete [] LatticeName;
   delete [] OutputName;
+  delete [] SubspaceLegend;
+  delete [] SubspaceStr;
   return 0;
 }
