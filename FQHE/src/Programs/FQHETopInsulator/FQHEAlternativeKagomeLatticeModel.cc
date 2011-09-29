@@ -115,20 +115,20 @@ int main(int argc, char** argv)
   else
     {
       if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false))
-          lenFilePrefix += sprintf (FilePrefix, "fermions_singleband_kagome_n_%d_x_%d_y_%d",  NbrParticles, NbrSiteX, NbrSiteY);
+	lenFilePrefix += sprintf (FilePrefix, "fermions_singleband_kagome_band_%d_n_%d_x_%d_y_%d",  BandIndex, NbrParticles, NbrSiteX, NbrSiteY);
       else
-      {
+	{
 	  if (Manager.GetBoolean("three-body") == true)
-              lenFilePrefix += sprintf (FilePrefix, "fermions_singleband_threebody_kagome_n_%d_x_%d_y_%d",  NbrParticles, NbrSiteX, NbrSiteY);
+	    lenFilePrefix += sprintf (FilePrefix, "fermions_singleband_threebody_kagome_band_%d_n_%d_x_%d_y_%d",  BandIndex, NbrParticles, NbrSiteX, NbrSiteY);
           else
-              lenFilePrefix += sprintf (FilePrefix, "fermions_singleband_fourbody_kagome_n_%d_x_%d_y_%d",  NbrParticles, NbrSiteX, NbrSiteY);
-      }
+	    lenFilePrefix += sprintf (FilePrefix, "fermions_singleband_fourbody_kagome_band_%d_n_%d_x_%d_y_%d",  BandIndex, NbrParticles, NbrSiteX, NbrSiteY);
+	}
       if ((Manager.GetBoolean("three-body") == true || Manager.GetBoolean("four-body") == true) && Manager.GetBoolean("flat-band") == false)
-          lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_w_%f", Manager.GetDouble("w-potential"));
+	lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_w_%f", Manager.GetDouble("w-potential"));
       if ((Manager.GetBoolean("three-body") == true || Manager.GetBoolean("four-body") == true) && Manager.GetDouble("s-potential") != 0.0)
-          lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_s_%f", Manager.GetDouble("s-potential"));
+	lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_s_%f", Manager.GetDouble("s-potential"));
       if ((Manager.GetBoolean("three-body") == true || Manager.GetBoolean("four-body") == true) || Manager.GetBoolean("flat-band") == false)
-          lenFilePrefix += sprintf (FilePrefix + lenFilePrefix, "_u_%f", Manager.GetDouble("u-potential"));
+	lenFilePrefix += sprintf (FilePrefix + lenFilePrefix, "_u_%f", Manager.GetDouble("u-potential"));
       lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_v_%f", Manager.GetDouble("v-potential"));
       lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_t1_%f_t2_%f_l1_%f_l2_%f_gx_%f_gy_%f", Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
     }
