@@ -60,10 +60,16 @@ class ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian : public Pa
   double NNRashba;
   // Rashba coupling between next nearest neighbor sites
   double NextNNRashba;
+
+  // index of the band that has to be partially filled
+  int BandIndex;
+
+
   // nearest neighbor density-density potential strength
   double UPotential;
   // second nearest neighbor density-density potential strength
   double VPotential;
+
   // boundary condition twisting angle along x
   double GammaX;
   // boundary condition twisting angle along y
@@ -88,10 +94,11 @@ class ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian : public Pa
   // l2 = Rashba coupling between next nearest neighbor sites
   // gammaX = boundary condition twisting angle along x
   // gammaY = boundary condition twisting angle along y
+  // bandIndex = index of the band that has to be partially filled
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential, double t1, double t2, double l1, double l2, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential, double t1, double t2, double l1, double l2, double gammaX, double gammaY, int bandIndex, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //

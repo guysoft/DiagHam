@@ -211,6 +211,18 @@ class ComplexMatrix : public Matrix
   //
   void SetToIdentity();
 
+  // conjugate a complex matrix with an unitary matrix (Ut M U)
+  //
+  // UnitaryM = unitary matrix to use
+  // return value = conjugated matrix
+  ComplexMatrix Conjugate(ComplexMatrix& UnitaryM);
+
+  // conjugate an complex matrix with a complex transposed unitary matrix (U M Ut)
+  //
+  // UnitaryM = unitary matrix to use
+  // return value = conjugated matrix  
+  ComplexMatrix InvConjugate(ComplexMatrix& UnitaryM);
+
   // add two matrices
   //
   // M1 = first matrix

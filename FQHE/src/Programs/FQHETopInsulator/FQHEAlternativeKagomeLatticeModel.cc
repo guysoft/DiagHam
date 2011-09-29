@@ -73,6 +73,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "t2", "next nearest neighbor hoping amplitude", -0.3);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "l1", "Rashba coupling between nearest neighbor sites", 0.28);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "l2", "Rashba coupling between next nearest neighbor sites", 0.2);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "band-index", "index of the band that has to be partially filled, should be 0 (lower band), 1 or 2 (upper band)", 0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
@@ -101,6 +102,7 @@ int main(int argc, char** argv)
   int NbrParticles = Manager.GetInteger("nbr-particles"); 
   int NbrSiteX = Manager.GetInteger("nbr-sitex"); 
   int NbrSiteY = Manager.GetInteger("nbr-sitey"); 
+  int BandIndex = Manager.GetInteger("band-index");
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
 
   char* FilePrefix = new char [512];
@@ -113,13 +115,13 @@ int main(int argc, char** argv)
   else
     {
       if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false))
-          lenFilePrefix += sprintf (FilePrefix, "fermions_singleband_haldane_n_%d_x_%d_y_%d",  NbrParticles, NbrSiteX, NbrSiteY);
+          lenFilePrefix += sprintf (FilePrefix, "fermions_singleband_kagome_n_%d_x_%d_y_%d",  NbrParticles, NbrSiteX, NbrSiteY);
       else
       {
 	  if (Manager.GetBoolean("three-body") == true)
-              lenFilePrefix += sprintf (FilePrefix, "fermions_singleband_threebody_haldane_n_%d_x_%d_y_%d",  NbrParticles, NbrSiteX, NbrSiteY);
+              lenFilePrefix += sprintf (FilePrefix, "fermions_singleband_threebody_kagome_n_%d_x_%d_y_%d",  NbrParticles, NbrSiteX, NbrSiteY);
           else
-              lenFilePrefix += sprintf (FilePrefix, "fermions_singleband_fourbody_haldane_n_%d_x_%d_y_%d",  NbrParticles, NbrSiteX, NbrSiteY);
+              lenFilePrefix += sprintf (FilePrefix, "fermions_singleband_fourbody_kagome_n_%d_x_%d_y_%d",  NbrParticles, NbrSiteX, NbrSiteY);
       }
       if ((Manager.GetBoolean("three-body") == true || Manager.GetBoolean("four-body") == true) && Manager.GetBoolean("flat-band") == false)
           lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_w_%f", Manager.GetDouble("w-potential"));
@@ -187,7 +189,7 @@ int main(int argc, char** argv)
               {
                   Hamiltonian = new ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSiteX, NbrSiteY, 
                           Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), 
-                          Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"),
+												   Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), BandIndex,
                           Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
               }
               else
@@ -196,7 +198,7 @@ int main(int argc, char** argv)
                   {
                       Hamiltonian = new ParticleOnLatticeAlternativeKagomeLatticeSingleBandThreeBodyHamiltonian(Space, NbrParticles, NbrSiteX, NbrSiteY, 
                               Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("s-potential"),
-                              Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"),
+														Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), BandIndex,
                               Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
                   }
                   else

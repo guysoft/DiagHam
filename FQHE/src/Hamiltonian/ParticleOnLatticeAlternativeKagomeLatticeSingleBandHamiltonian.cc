@@ -63,11 +63,12 @@ using std::ostream;
 // l2 = Rashba coupling between next nearest neighbor sites
 // gammaX = boundary condition twisting angle along x
 // gammaY = boundary condition twisting angle along y
+// bandIndex = index of the band that has to be partially filled
 // flatBandFlag = use flat band model
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
-ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian::ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential, double t1, double t2, double l1, double l2, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
+ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian::ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential, double t1, double t2, double l1, double l2, double gammaX, double gammaY, int bandIndex, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -88,6 +89,7 @@ ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian::ParticleOnLattic
   this->Memory = memory;
   this->OneBodyInteractionFactors = 0;
   this->FastMultiplicationFlag = false;
+  this->BandIndex = bandIndex;
   long MinIndex;
   long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
@@ -244,82 +246,82 @@ void ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian::EvaluateInt
                   Complex sumU = 0.;
                   Complex sumV = 0.;
 
-                  sumU += Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0]
-                        * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
+                  sumU += Conj(OneBodyBasis[Index1][this->BandIndex][0]) * OneBodyBasis[Index3][this->BandIndex][0]
+                        * Conj(OneBodyBasis[Index2][this->BandIndex][1]) * OneBodyBasis[Index4][this->BandIndex][1]
                         * this->ComputeTwoBodyMatrixElementNNAB(kx2, ky2, kx4, ky4);
-                  sumU += Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1]
-                        * Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index4][0][2]
+                  sumU += Conj(OneBodyBasis[Index1][this->BandIndex][1]) * OneBodyBasis[Index3][this->BandIndex][1]
+                        * Conj(OneBodyBasis[Index2][this->BandIndex][2]) * OneBodyBasis[Index4][this->BandIndex][2]
                         * this->ComputeTwoBodyMatrixElementNNBC(kx2, ky2, kx4, ky4);
-                  sumU += Conj(OneBodyBasis[Index1][0][2]) * OneBodyBasis[Index3][0][2]
-                        * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
+                  sumU += Conj(OneBodyBasis[Index1][this->BandIndex][2]) * OneBodyBasis[Index3][this->BandIndex][2]
+                        * Conj(OneBodyBasis[Index2][this->BandIndex][0]) * OneBodyBasis[Index4][this->BandIndex][0]
                         * this->ComputeTwoBodyMatrixElementNNCA(kx2, ky2, kx4, ky4);
-                  sumU -= Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1]
+                  sumU -= Conj(OneBodyBasis[Index1][this->BandIndex][0]) * OneBodyBasis[Index4][this->BandIndex][0]
+                        * Conj(OneBodyBasis[Index2][this->BandIndex][1]) * OneBodyBasis[Index3][this->BandIndex][1]
                         * this->ComputeTwoBodyMatrixElementNNAB(kx2, ky2, kx3, ky3);
-                  sumU -= Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
-                        * Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index3][0][2]
+                  sumU -= Conj(OneBodyBasis[Index1][this->BandIndex][1]) * OneBodyBasis[Index4][this->BandIndex][1]
+                        * Conj(OneBodyBasis[Index2][this->BandIndex][2]) * OneBodyBasis[Index3][this->BandIndex][2]
                         * this->ComputeTwoBodyMatrixElementNNBC(kx2, ky2, kx3, ky3);
-                  sumU -= Conj(OneBodyBasis[Index1][0][2]) * OneBodyBasis[Index4][0][2]
-                        * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0]
+                  sumU -= Conj(OneBodyBasis[Index1][this->BandIndex][2]) * OneBodyBasis[Index4][this->BandIndex][2]
+                        * Conj(OneBodyBasis[Index2][this->BandIndex][0]) * OneBodyBasis[Index3][this->BandIndex][0]
                         * this->ComputeTwoBodyMatrixElementNNCA(kx2, ky2, kx3, ky3);
-                  sumU -= Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0]
-                        * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
+                  sumU -= Conj(OneBodyBasis[Index2][this->BandIndex][0]) * OneBodyBasis[Index3][this->BandIndex][0]
+                        * Conj(OneBodyBasis[Index1][this->BandIndex][1]) * OneBodyBasis[Index4][this->BandIndex][1]
                         * this->ComputeTwoBodyMatrixElementNNAB(kx1, ky1, kx4, ky4);
-                  sumU -= Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1]
-                        * Conj(OneBodyBasis[Index1][0][2]) * OneBodyBasis[Index4][0][2]
+                  sumU -= Conj(OneBodyBasis[Index2][this->BandIndex][1]) * OneBodyBasis[Index3][this->BandIndex][1]
+                        * Conj(OneBodyBasis[Index1][this->BandIndex][2]) * OneBodyBasis[Index4][this->BandIndex][2]
                         * this->ComputeTwoBodyMatrixElementNNBC(kx1, ky1, kx4, ky4);
-                  sumU -= Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index3][0][2]
-                        * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
+                  sumU -= Conj(OneBodyBasis[Index2][this->BandIndex][2]) * OneBodyBasis[Index3][this->BandIndex][2]
+                        * Conj(OneBodyBasis[Index1][this->BandIndex][0]) * OneBodyBasis[Index4][this->BandIndex][0]
                         * this->ComputeTwoBodyMatrixElementNNCA(kx1, ky1, kx4, ky4);
-                  sumU += Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1]
+                  sumU += Conj(OneBodyBasis[Index2][this->BandIndex][0]) * OneBodyBasis[Index4][this->BandIndex][0]
+                        * Conj(OneBodyBasis[Index1][this->BandIndex][1]) * OneBodyBasis[Index3][this->BandIndex][1]
                         * this->ComputeTwoBodyMatrixElementNNAB(kx1, ky1, kx3, ky3);
-                  sumU += Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
-                        * Conj(OneBodyBasis[Index1][0][2]) * OneBodyBasis[Index3][0][2]
+                  sumU += Conj(OneBodyBasis[Index2][this->BandIndex][1]) * OneBodyBasis[Index4][this->BandIndex][1]
+                        * Conj(OneBodyBasis[Index1][this->BandIndex][2]) * OneBodyBasis[Index3][this->BandIndex][2]
                         * this->ComputeTwoBodyMatrixElementNNBC(kx1, ky1, kx3, ky3);
-                  sumU += Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index4][0][2]
-                        * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0]
+                  sumU += Conj(OneBodyBasis[Index2][this->BandIndex][2]) * OneBodyBasis[Index4][this->BandIndex][2]
+                        * Conj(OneBodyBasis[Index1][this->BandIndex][0]) * OneBodyBasis[Index3][this->BandIndex][0]
                         * this->ComputeTwoBodyMatrixElementNNCA(kx1, ky1, kx3, ky3);
 
 
 
 
 
-                  sumV += Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0]
-                        * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
+                  sumV += Conj(OneBodyBasis[Index1][this->BandIndex][0]) * OneBodyBasis[Index3][this->BandIndex][0]
+                        * Conj(OneBodyBasis[Index2][this->BandIndex][1]) * OneBodyBasis[Index4][this->BandIndex][1]
                         * this->ComputeTwoBodyMatrixElementNNNAB(kx2, ky2, kx4, ky4);
-                  sumV += Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1]
-                        * Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index4][0][2]
+                  sumV += Conj(OneBodyBasis[Index1][this->BandIndex][1]) * OneBodyBasis[Index3][this->BandIndex][1]
+                        * Conj(OneBodyBasis[Index2][this->BandIndex][2]) * OneBodyBasis[Index4][this->BandIndex][2]
                         * this->ComputeTwoBodyMatrixElementNNNBC(kx2, ky2, kx4, ky4);
-                  sumV += Conj(OneBodyBasis[Index1][0][2]) * OneBodyBasis[Index3][0][2]
-                        * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
+                  sumV += Conj(OneBodyBasis[Index1][this->BandIndex][2]) * OneBodyBasis[Index3][this->BandIndex][2]
+                        * Conj(OneBodyBasis[Index2][this->BandIndex][0]) * OneBodyBasis[Index4][this->BandIndex][0]
                         * this->ComputeTwoBodyMatrixElementNNNCA(kx2, ky2, kx4, ky4);
-                  sumV -= Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1]
+                  sumV -= Conj(OneBodyBasis[Index1][this->BandIndex][0]) * OneBodyBasis[Index4][this->BandIndex][0]
+                        * Conj(OneBodyBasis[Index2][this->BandIndex][1]) * OneBodyBasis[Index3][this->BandIndex][1]
                         * this->ComputeTwoBodyMatrixElementNNNAB(kx2, ky2, kx3, ky3);
-                  sumV -= Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
-                        * Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index3][0][2]
+                  sumV -= Conj(OneBodyBasis[Index1][this->BandIndex][1]) * OneBodyBasis[Index4][this->BandIndex][1]
+                        * Conj(OneBodyBasis[Index2][this->BandIndex][2]) * OneBodyBasis[Index3][this->BandIndex][2]
                         * this->ComputeTwoBodyMatrixElementNNNBC(kx2, ky2, kx3, ky3);
-                  sumV -= Conj(OneBodyBasis[Index1][0][2]) * OneBodyBasis[Index4][0][2]
-                        * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0]
+                  sumV -= Conj(OneBodyBasis[Index1][this->BandIndex][2]) * OneBodyBasis[Index4][this->BandIndex][2]
+                        * Conj(OneBodyBasis[Index2][this->BandIndex][0]) * OneBodyBasis[Index3][this->BandIndex][0]
                         * this->ComputeTwoBodyMatrixElementNNNCA(kx2, ky2, kx3, ky3);
-                  sumV -= Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0]
-                        * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
+                  sumV -= Conj(OneBodyBasis[Index2][this->BandIndex][0]) * OneBodyBasis[Index3][this->BandIndex][0]
+                        * Conj(OneBodyBasis[Index1][this->BandIndex][1]) * OneBodyBasis[Index4][this->BandIndex][1]
                         * this->ComputeTwoBodyMatrixElementNNNAB(kx1, ky1, kx4, ky4);
-                  sumV -= Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1]
-                        * Conj(OneBodyBasis[Index1][0][2]) * OneBodyBasis[Index4][0][2]
+                  sumV -= Conj(OneBodyBasis[Index2][this->BandIndex][1]) * OneBodyBasis[Index3][this->BandIndex][1]
+                        * Conj(OneBodyBasis[Index1][this->BandIndex][2]) * OneBodyBasis[Index4][this->BandIndex][2]
                         * this->ComputeTwoBodyMatrixElementNNNBC(kx1, ky1, kx4, ky4);
-                  sumV -= Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index3][0][2]
-                        * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
+                  sumV -= Conj(OneBodyBasis[Index2][this->BandIndex][2]) * OneBodyBasis[Index3][this->BandIndex][2]
+                        * Conj(OneBodyBasis[Index1][this->BandIndex][0]) * OneBodyBasis[Index4][this->BandIndex][0]
                         * this->ComputeTwoBodyMatrixElementNNNCA(kx1, ky1, kx4, ky4);
-                  sumV += Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1]
+                  sumV += Conj(OneBodyBasis[Index2][this->BandIndex][0]) * OneBodyBasis[Index4][this->BandIndex][0]
+                        * Conj(OneBodyBasis[Index1][this->BandIndex][1]) * OneBodyBasis[Index3][this->BandIndex][1]
                         * this->ComputeTwoBodyMatrixElementNNNAB(kx1, ky1, kx3, ky3);
-                  sumV += Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
-                        * Conj(OneBodyBasis[Index1][0][2]) * OneBodyBasis[Index3][0][2]
+                  sumV += Conj(OneBodyBasis[Index2][this->BandIndex][1]) * OneBodyBasis[Index4][this->BandIndex][1]
+                        * Conj(OneBodyBasis[Index1][this->BandIndex][2]) * OneBodyBasis[Index3][this->BandIndex][2]
                         * this->ComputeTwoBodyMatrixElementNNNBC(kx1, ky1, kx3, ky3);
-                  sumV += Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index4][0][2]
-                        * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0]
+                  sumV += Conj(OneBodyBasis[Index2][this->BandIndex][2]) * OneBodyBasis[Index4][this->BandIndex][2]
+                        * Conj(OneBodyBasis[Index1][this->BandIndex][0]) * OneBodyBasis[Index3][this->BandIndex][0]
                         * this->ComputeTwoBodyMatrixElementNNNCA(kx1, ky1, kx3, ky3);
 
 

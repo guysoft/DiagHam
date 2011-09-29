@@ -181,6 +181,10 @@ class HermitianMatrix : public Matrix
   // nbrColumn = new number of columns
   void ResizeAndClean (int nbrRow, int nbrColumn);
 
+  // Set all entries in matrix to zero
+  //
+  void ClearMatrix ();
+
   // return reference on real part of a given matrix element
   // to access the full complex valued matrix element, use GetMatrixElement
   //

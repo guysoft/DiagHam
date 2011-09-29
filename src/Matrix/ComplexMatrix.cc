@@ -202,8 +202,7 @@ ComplexMatrix::ComplexMatrix(Matrix& M)
 	  for (int j = 0; j < this->NbrColumn; ++j)
 	    {
 	      M.GetMatrixElement(j, i, Tmp);
-	      this->Columns[i].Re(j) = Tmp.Re;
-	      this->Columns[i].Im(j) = Tmp.Im;
+	      this->Columns[i][j] = Tmp;
 	    }
 	}
       this->MatrixType = Matrix::ComplexElements;
@@ -444,6 +443,49 @@ void ComplexMatrix::SetToIdentity()
     }
 }
 
+// conjugate an complex matrix with an unitary matrix (Ut M U)
+//
+// UnitaryM = unitary matrix to use
+// return value = conjugated matrix
+
+ComplexMatrix ComplexMatrix::Conjugate(ComplexMatrix& UnitaryM)
+{
+  ComplexMatrix TmpMatrix (UnitaryM.NbrRow, UnitaryM.NbrRow, true);
+  for (int i = 0; i < UnitaryM.NbrRow; ++i)
+    for (int j = 0; j < UnitaryM.NbrRow; ++j)
+      {
+	Complex Tmp = 0.0;
+	for (int k = 0; k < UnitaryM.NbrRow; ++k)
+	  for (int l = 0; l < UnitaryM.NbrRow; ++l)
+	    {
+	      Tmp += Conj(UnitaryM.Columns[i][k]) * this->Columns[l][k] * UnitaryM.Columns[j][l];
+	    }
+	TmpMatrix.Columns[j][i] = Tmp;
+      }
+  return TmpMatrix;
+}
+
+// conjugate an complex matrix with a complex transposed unitary matrix (U M Ut)
+//
+// UnitaryM = unitary matrix to use
+// return value = conjugated matrix  
+
+ComplexMatrix ComplexMatrix::InvConjugate(ComplexMatrix& UnitaryM)
+{
+  ComplexMatrix TmpMatrix (UnitaryM.NbrRow, UnitaryM.NbrRow, true);
+  for (int i = 0; i < UnitaryM.NbrRow; ++i)
+    for (int j = 0; j < UnitaryM.NbrRow; ++j)
+      {
+	Complex Tmp = 0.0;
+	for (int k = 0; k < UnitaryM.NbrRow; ++k)
+	  for (int l = 0; l < UnitaryM.NbrRow; ++l)
+	    {
+	      Tmp += UnitaryM.Columns[k][i] * this->Columns[l][k] * Conj(UnitaryM.Columns[l][j]);
+	    }
+	this->Columns[j][i] = Tmp;
+      }
+  return TmpMatrix;
+}
 
 // add two matrices
 //

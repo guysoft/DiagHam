@@ -7,10 +7,10 @@
 //                                                                            //
 //                        class author: Nicolas Regnault                      //
 //                                                                            //
-//            class of 3d topological insulator based on the simple TI        //
+//            class of 2d topological insulator based on the simple TI        //
 //                       model and restricted to four bands                   //
 //                                                                            //
-//                        last modification : 20/09/2011                      //
+//                        last modification : 27/09/2011                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -31,7 +31,7 @@
 
 
 #include "config.h"
-#include "Hamiltonian/ParticleOnCubicLatticeFourBandSimpleTIHamiltonian.h"
+#include "Hamiltonian/ParticleOnSquareLatticeFourBandSimpleTIHamiltonian.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
@@ -54,38 +54,32 @@ using std::ostream;
 // nbrParticles = number of particles
 // nbrSiteX = number of sites in the x direction
 // nbrSiteY = number of sites in the y direction
-// nbrSiteZ = number of sites in the z direction
 // uPotential = strength of the repulsive two body on site interactions
 // vPotential = trength of the repulsive two body neareast neighbor interaction
 // kineticScale = global energy scale of the kinetic energy term (i.e t1 hopping term)
 // mass = mass term of the simple TI model
 // gammaX = boundary condition twisting angle along x
 // gammaY = boundary condition twisting angle along y
-// gammaZ = boundary condition twisting angle along z
 // flatBandFlag = use flat band model
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
-ParticleOnCubicLatticeFourBandSimpleTIHamiltonian::ParticleOnCubicLatticeFourBandSimpleTIHamiltonian(ParticleOnSphereWithSU4Spin* particles, int nbrParticles, int nbrSiteX, 
-												     int nbrSiteY, int nbrSiteZ, double uPotential, double vPotential, 
-												     double mass, double gammaX, double gammaY, 
-												     double gammaZ, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
+ParticleOnSquareLatticeFourBandSimpleTIHamiltonian::ParticleOnSquareLatticeFourBandSimpleTIHamiltonian(ParticleOnSphereWithSU4Spin* particles, int nbrParticles, int nbrSiteX, 
+												       int nbrSiteY, double uPotential, double vPotential, 
+												       double mass, double gammaX, double gammaY, 
+												       bool flatBandFlag, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
   this->NbrSiteX = nbrSiteX;
   this->NbrSiteY = nbrSiteY;
-  this->NbrSiteZ = nbrSiteZ;
-  this->NbrSiteYZ = this->NbrSiteY * this->NbrSiteZ;
-  this->LzMax = nbrSiteX * nbrSiteY * nbrSiteZ - 1;
+  this->LzMax = nbrSiteX * nbrSiteY - 1;
   this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
   this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
-  this->KzFactor = 2.0 * M_PI / ((double) this->NbrSiteZ);
   this->HamiltonianShift = 0.0;
   this->Mass = mass;
   this->GammaX = gammaX;
   this->GammaY = gammaY;
-  this->GammaZ = gammaZ;
   this->FlatBand = flatBandFlag;
   this->UPotential = uPotential;
   this->VPotential = vPotential;
@@ -138,17 +132,17 @@ ParticleOnCubicLatticeFourBandSimpleTIHamiltonian::ParticleOnCubicLatticeFourBan
 // destructor
 //
 
-ParticleOnCubicLatticeFourBandSimpleTIHamiltonian::~ParticleOnCubicLatticeFourBandSimpleTIHamiltonian()
+ParticleOnSquareLatticeFourBandSimpleTIHamiltonian::~ParticleOnSquareLatticeFourBandSimpleTIHamiltonian()
 {
 }
   
 // evaluate all interaction factors
 //   
 
-void ParticleOnCubicLatticeFourBandSimpleTIHamiltonian::EvaluateInteractionFactors()
+void ParticleOnSquareLatticeFourBandSimpleTIHamiltonian::EvaluateInteractionFactors()
 {
   long TotalNbrInteractionFactors = 0;
-  int NbrSites = this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ;
+  int NbrSites = this->NbrSiteX * this->NbrSiteY;
   HermitianMatrix*OneBodyHamiltonian  = new HermitianMatrix [NbrSites];
   this->ComputeOneBodyHamiltonian(OneBodyHamiltonian);
 
@@ -194,11 +188,11 @@ void ParticleOnCubicLatticeFourBandSimpleTIHamiltonian::EvaluateInteractionFacto
     }
 
 
-  this->NbrInterSectorSums = this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ;
+  this->NbrInterSectorSums = this->NbrSiteX * this->NbrSiteY;
   this->NbrInterSectorIndicesPerSum = new int[this->NbrInterSectorSums];
   for (int i = 0; i < this->NbrInterSectorSums; ++i)
     this->NbrInterSectorIndicesPerSum[i] = 0;
-  this->NbrIntraSectorSums = this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ;
+  this->NbrIntraSectorSums = this->NbrSiteX * this->NbrSiteY;
   this->NbrIntraSectorIndicesPerSum = new int[this->NbrIntraSectorSums];
   for (int i = 0; i < this->NbrIntraSectorSums; ++i)
     this->NbrIntraSectorIndicesPerSum[i] = 0;      
@@ -207,9 +201,7 @@ void ParticleOnCubicLatticeFourBandSimpleTIHamiltonian::EvaluateInteractionFacto
     for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
       for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
 	for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2)      
-	  for (int kz1 = 0; kz1 < this->NbrSiteZ; ++kz1)
-	    for (int kz2 = 0; kz2 < this->NbrSiteZ; ++kz2)      
-	      ++this->NbrInterSectorIndicesPerSum[((((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY)) * this->NbrSiteZ + ((kz1 + kz2) % this->NbrSiteZ)];    
+	  ++this->NbrInterSectorIndicesPerSum[((((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY))];    
   this->InterSectorIndicesPerSum = new int* [this->NbrInterSectorSums];
   for (int i = 0; i < this->NbrInterSectorSums; ++i)
     {
@@ -223,14 +215,12 @@ void ParticleOnCubicLatticeFourBandSimpleTIHamiltonian::EvaluateInteractionFacto
     for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
       for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
 	for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2)    
-	  for (int kz1 = 0; kz1 < this->NbrSiteZ; ++kz1)
-	    for (int kz2 = 0; kz2 < this->NbrSiteZ; ++kz2)      
-	      {
-		int TmpSum = ((((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY)) * this->NbrSiteZ + ((kz1 + kz2) % this->NbrSiteZ);
-		this->InterSectorIndicesPerSum[TmpSum][this->NbrInterSectorIndicesPerSum[TmpSum] << 1] = ((kx1 * this->NbrSiteY) + ky1) * this->NbrSiteZ + kz1;
-		this->InterSectorIndicesPerSum[TmpSum][1 + (this->NbrInterSectorIndicesPerSum[TmpSum] << 1)] = ((kx2 * this->NbrSiteY) + ky2) * this->NbrSiteZ + kz2;
-		++this->NbrInterSectorIndicesPerSum[TmpSum];    
-	      }
+	  {
+	    int TmpSum = ((((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY));
+	    this->InterSectorIndicesPerSum[TmpSum][this->NbrInterSectorIndicesPerSum[TmpSum] << 1] = ((kx1 * this->NbrSiteY) + ky1);
+	    this->InterSectorIndicesPerSum[TmpSum][1 + (this->NbrInterSectorIndicesPerSum[TmpSum] << 1)] = ((kx2 * this->NbrSiteY) + ky2);
+	    ++this->NbrInterSectorIndicesPerSum[TmpSum];    
+	  }
  
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
@@ -238,14 +228,12 @@ void ParticleOnCubicLatticeFourBandSimpleTIHamiltonian::EvaluateInteractionFacto
 	for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
 	  for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
 	    for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
-	      for (int kz1 = 0; kz1 < this->NbrSiteZ; ++kz1)
-		for (int kz2 = 0; kz2 < this->NbrSiteZ; ++kz2)      
-		  {
-		    int Index1 = ((kx1 * this->NbrSiteY) + ky1) * this->NbrSiteZ + kz1;
-		    int Index2 = ((kx2 * this->NbrSiteY) + ky2) * this->NbrSiteZ + kz2;
-		    if (Index1 < Index2)
-		      ++this->NbrIntraSectorIndicesPerSum[((((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY)) * this->NbrSiteZ + ((kz1 + kz2) % this->NbrSiteZ)];    
-		  }
+	      {
+		int Index1 = ((kx1 * this->NbrSiteY) + ky1);
+		int Index2 = ((kx2 * this->NbrSiteY) + ky2);
+		if (Index1 < Index2)
+		  ++this->NbrIntraSectorIndicesPerSum[((((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY))];    
+	      }
       this->IntraSectorIndicesPerSum = new int* [this->NbrIntraSectorSums];
       for (int i = 0; i < this->NbrIntraSectorSums; ++i)
 	{
@@ -259,21 +247,19 @@ void ParticleOnCubicLatticeFourBandSimpleTIHamiltonian::EvaluateInteractionFacto
 	for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
 	  for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
 	    for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
-	      for (int kz1 = 0; kz1 < this->NbrSiteZ; ++kz1)
-		for (int kz2 = 0; kz2 < this->NbrSiteZ; ++kz2)      
+	      {
+		int Index1 = ((kx1 * this->NbrSiteY) + ky1);
+		int Index2 = ((kx2 * this->NbrSiteY) + ky2);
+		if (Index1 < Index2)
 		  {
-		    int Index1 = ((kx1 * this->NbrSiteY) + ky1) * this->NbrSiteZ + kz1;
-		    int Index2 = ((kx2 * this->NbrSiteY) + ky2) * this->NbrSiteZ + kz2;
-		    if (Index1 < Index2)
-		      {
-			int TmpSum = ((((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY)) * this->NbrSiteZ + ((kz1 + kz2) % this->NbrSiteZ);
-			this->IntraSectorIndicesPerSum[TmpSum][this->NbrIntraSectorIndicesPerSum[TmpSum] << 1] = Index1;
-			this->IntraSectorIndicesPerSum[TmpSum][1 + (this->NbrIntraSectorIndicesPerSum[TmpSum] << 1)] = Index2;
-			++this->NbrIntraSectorIndicesPerSum[TmpSum];    
-		      }
+		    int TmpSum = ((((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY));
+		    this->IntraSectorIndicesPerSum[TmpSum][this->NbrIntraSectorIndicesPerSum[TmpSum] << 1] = Index1;
+		    this->IntraSectorIndicesPerSum[TmpSum][1 + (this->NbrIntraSectorIndicesPerSum[TmpSum] << 1)] = Index2;
+		    ++this->NbrIntraSectorIndicesPerSum[TmpSum];    
 		  }
+	      }
       
-      double Factor = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ));
+      double Factor = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
       double FactorAUpADown = Factor * this->VPotential;
       double FactorBUpBDown = Factor * this->VPotential;
       Factor *= this->UPotential;
@@ -300,33 +286,18 @@ void ParticleOnCubicLatticeFourBandSimpleTIHamiltonian::EvaluateInteractionFacto
 	    {
 	      int Index1 = this->IntraSectorIndicesPerSum[i][j1 << 1];
 	      int Index2 = this->IntraSectorIndicesPerSum[i][(j1 << 1) + 1];
-	      int kx1 = Index1 / this->NbrSiteYZ;
-	      int ky1 = Index1 % this->NbrSiteYZ;
-	      int kz1 = ky1 % this->NbrSiteZ;
-	      ky1 /= this->NbrSiteZ;
-	      int kx2 = Index2 / this->NbrSiteYZ;
-	      int ky2 = Index2 % this->NbrSiteYZ;
-	      int kz2 = ky2 % this->NbrSiteZ;
-	      ky2 /= this->NbrSiteZ;
+	      int kx1 = Index1 / this->NbrSiteY;
+	      int ky1 = Index1 % this->NbrSiteY;
+	      int kx2 = Index2 / this->NbrSiteY;
+	      int ky2 = Index2 % this->NbrSiteY;
 	      for (int j2 = 0; j2 < this->NbrIntraSectorIndicesPerSum[i]; ++j2)
 		{
 		  int Index3 = this->IntraSectorIndicesPerSum[i][j2 << 1];
 		  int Index4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1];
-		  int kx3 = Index3 / this->NbrSiteYZ;
-		  int ky3 = Index3 % this->NbrSiteYZ;
-		  int kz3 = ky3 % this->NbrSiteZ;
-		  ky3 /= this->NbrSiteZ;
-		  int kx4 = Index4 / this->NbrSiteYZ;
-		  int ky4 = Index4 % this->NbrSiteYZ;
-		  int kz4 = ky4 % this->NbrSiteZ;
-		  ky4 /= this->NbrSiteZ;
-
-//                   Tmp = this->ComputeTwoBodyMatrixElementAUpADown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
-//                   Tmp -=this->ComputeTwoBodyMatrixElementAUpADown(kx1, ky1, kz1, kx2, ky2, kz2, kx4, ky4, kz4, kx3, ky3, kz3);
-//                   Tmp -= this->ComputeTwoBodyMatrixElementAUpADown(kx2, ky2, kz2, kx1, ky1, kz1, kx3, ky3, kz3, kx4, ky4, kz4);
-//                   Tmp += this->ComputeTwoBodyMatrixElementAUpADown(kx2, ky2, kz2, kx1, ky1, kz1, kx4, ky4, kz4, kx3, ky3, kz3);
-//                   this->InteractionFactorsupupupup[i][Index] = -2.0 * FactorAUpADown * Tmp;
-
+		  int kx3 = Index3 / this->NbrSiteY;
+		  int ky3 = Index3 % this->NbrSiteY;
+		  int kx4 = Index4 / this->NbrSiteY;
+		  int ky4 = Index4 % this->NbrSiteY;
                   this->InteractionFactorsupupupup[i][Index] = 0.0;
                   this->InteractionFactorsumumumum[i][Index] = 0.0;
                   this->InteractionFactorsdpdpdpdp[i][Index] = 0.0;
@@ -359,37 +330,29 @@ void ParticleOnCubicLatticeFourBandSimpleTIHamiltonian::EvaluateInteractionFacto
 	    {
 	      int Index1 = this->InterSectorIndicesPerSum[i][j1 << 1];
 	      int Index2 = this->InterSectorIndicesPerSum[i][(j1 << 1) + 1];
-	      int kx1 = Index1 / this->NbrSiteYZ;
-	      int ky1 = Index1 % this->NbrSiteYZ;
-	      int kz1 = ky1 % this->NbrSiteZ;
-	      ky1 /= this->NbrSiteZ;
-	      int kx2 = Index2 / this->NbrSiteYZ;
-	      int ky2 = Index2 % this->NbrSiteYZ;
-	      int kz2 = ky2 % this->NbrSiteZ;
-	      ky2 /= this->NbrSiteZ;
+	      int kx1 = Index1 / this->NbrSiteY;
+	      int ky1 = Index1 % this->NbrSiteY;
+	      int kx2 = Index2 / this->NbrSiteY;
+	      int ky2 = Index2 % this->NbrSiteY;
 	      for (int j2 = 0; j2 < this->NbrInterSectorIndicesPerSum[i]; ++j2)
 		{
 		  int Index3 = this->InterSectorIndicesPerSum[i][j2 << 1];
 		  int Index4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1];
-		  int kx3 = Index3 / this->NbrSiteYZ;
-		  int ky3 = Index3 % this->NbrSiteYZ;
-		  int kz3 = ky3 % this->NbrSiteZ;
-		  ky3 /= this->NbrSiteZ;
-		  int kx4 = Index4 / this->NbrSiteYZ;
-		  int ky4 = Index4 % this->NbrSiteYZ;
-		  int kz4 = ky4 % this->NbrSiteZ;
-		  ky4 /= this->NbrSiteZ;
-                  Tmp = this->ComputeTwoBodyMatrixElementAUpBUp(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
+		  int kx3 = Index3 / this->NbrSiteY;
+		  int ky3 = Index3 % this->NbrSiteY;
+		  int kx4 = Index4 / this->NbrSiteY;
+		  int ky4 = Index4 % this->NbrSiteY;
+                  Tmp = this->ComputeTwoBodyMatrixElementAUpBUp(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
                   this->InteractionFactorsupumupum[i][Index] = -2.0 * FactorAUpBUp * Tmp;
-                  Tmp = this->ComputeTwoBodyMatrixElementADownBDown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
+                  Tmp = this->ComputeTwoBodyMatrixElementADownBDown(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
                   this->InteractionFactorsdpdmdpdm[i][Index] = -2.0 * FactorADownBDown * Tmp;
-                  Tmp = this->ComputeTwoBodyMatrixElementAUpBDown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
+                  Tmp = this->ComputeTwoBodyMatrixElementAUpBDown(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
                   this->InteractionFactorsupdmupdm[i][Index] = -2.0 * FactorAUpBDown * Tmp;
-                  Tmp = this->ComputeTwoBodyMatrixElementADownBUp(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
+                  Tmp = this->ComputeTwoBodyMatrixElementADownBUp(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
                   this->InteractionFactorsumdpumdp[i][Index] = -2.0 * FactorADownBUp * Tmp;
-                  Tmp = this->ComputeTwoBodyMatrixElementAUpADown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
+                  Tmp = this->ComputeTwoBodyMatrixElementAUpADown(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
                   this->InteractionFactorsupdpupdp[i][Index] = -2.0 * FactorAUpADown * Tmp;
-                  Tmp = this->ComputeTwoBodyMatrixElementBUpBDown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
+                  Tmp = this->ComputeTwoBodyMatrixElementBUpBDown(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
                   this->InteractionFactorsumdmumdm[i][Index] = -2.0 * FactorBUpBDown * Tmp;
 
 		  ++TotalNbrInteractionFactors;
@@ -408,19 +371,15 @@ void ParticleOnCubicLatticeFourBandSimpleTIHamiltonian::EvaluateInteractionFacto
 //
 // kx1 = momentum along x for the creation operator on A site with spin up
 // ky1 = momentum along y for the creation operator on A site with spin up
-// kz1 = momentum along z for the creation operator on A site with spin up
 // kx2 = momentum along x for the creation operator on B site with spin up
 // ky2 = momentum along y for the creation operator on B site with spin up
-// kz2 = momentum along z for the creation operator on B site with spin up
 // kx3 = momentum along x for the annihilation operator on A site with spin up
 // ky3 = momentum along y for the annihilation operator on A site with spin up
-// kz3 = momentum along z for the annihilation operator on A site with spin up
 // kx4 = momentum along x for the annihilation operator on B site with spin up
 // ky4 = momentum along y for the annihilation operator on B site with spin up
-// kz4 = momentum along z for the annihilation operator on B site with spin up
 // return value = corresponding matrix element
 
-Complex ParticleOnCubicLatticeFourBandSimpleTIHamiltonian::ComputeTwoBodyMatrixElementAUpBUp(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4)
+Complex ParticleOnSquareLatticeFourBandSimpleTIHamiltonian::ComputeTwoBodyMatrixElementAUpBUp(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
 {
   Complex Tmp = 1.0 ;
   return Tmp;
@@ -430,82 +389,66 @@ Complex ParticleOnCubicLatticeFourBandSimpleTIHamiltonian::ComputeTwoBodyMatrixE
 //
 // kx1 = momentum along x for the creation operator on A site with spin down
 // ky1 = momentum along y for the creation operator on A site with spin down
-// kz1 = momentum along z for the creation operator on A site with spin down
 // kx2 = momentum along x for the creation operator on B site with spin down
 // ky2 = momentum along y for the creation operator on B site with spin down
-// kz2 = momentum along z for the creation operator on B site with spin down
 // kx3 = momentum along x for the annihilation operator on A site with spin down
 // ky3 = momentum along y for the annihilation operator on A site with spin down
-// kz3 = momentum along z for the annihilation operator on A site with spin down
 // kx4 = momentum along x for the annihilation operator on B site with spin down
 // ky4 = momentum along y for the annihilation operator on B site with spin down
-// kz4 = momentum along z for the annihilation operator on B site with spin down
 // return value = corresponding matrix element
 
-Complex ParticleOnCubicLatticeFourBandSimpleTIHamiltonian::ComputeTwoBodyMatrixElementADownBDown(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4)
+Complex ParticleOnSquareLatticeFourBandSimpleTIHamiltonian::ComputeTwoBodyMatrixElementADownBDown(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
 {
-  return this->ComputeTwoBodyMatrixElementAUpBUp(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
+  return this->ComputeTwoBodyMatrixElementAUpBUp(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
 }
 
 // compute the matrix element for the two body interaction between two sites A and B with opposite spins
 //
 // kx1 = momentum along x for the creation operator on A site with spin down
 // ky1 = momentum along y for the creation operator on A site with spin down
-// kz1 = momentum along z for the creation operator on A site with spin down
 // kx2 = momentum along x for the creation operator on B site with spin up
 // ky2 = momentum along y for the creation operator on B site with spin up
-// kz2 = momentum along z for the creation operator on B site with spin up
 // kx3 = momentum along x for the annihilation operator on A site with spin down
 // ky3 = momentum along y for the annihilation operator on A site with spin down
-// kz3 = momentum along z for the annihilation operator on A site with spin down
 // kx4 = momentum along x for the annihilation operator on B site with spin up
 // ky4 = momentum along y for the annihilation operator on B site with spin up
-// kz4 = momentum along z for the annihilation operator on B site with spin up
 // return value = corresponding matrix element
 
-Complex ParticleOnCubicLatticeFourBandSimpleTIHamiltonian::ComputeTwoBodyMatrixElementADownBUp(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4)
+Complex ParticleOnSquareLatticeFourBandSimpleTIHamiltonian::ComputeTwoBodyMatrixElementADownBUp(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
 {
-  return this->ComputeTwoBodyMatrixElementAUpBUp(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
+  return this->ComputeTwoBodyMatrixElementAUpBUp(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
 }
 
 // compute the matrix element for the two body interaction between two sites A and B with opposite spins
 //
 // kx1 = momentum along x for the creation operator on A site with spin up
 // ky1 = momentum along y for the creation operator on A site with spin up
-// kz1 = momentum along z for the creation operator on A site with spin up
 // kx2 = momentum along x for the creation operator on B site with spin down
 // ky2 = momentum along y for the creation operator on B site with spin down
-// kz2 = momentum along z for the creation operator on B site with spin down
 // kx3 = momentum along x for the annihilation operator on A site with spin up
 // ky3 = momentum along y for the annihilation operator on A site with spin up
-// kz3 = momentum along z for the annihilation operator on A site with spin up
 // kx4 = momentum along x for the annihilation operator on B site with spin down
 // ky4 = momentum along y for the annihilation operator on B site with spin down
-// kz4 = momentum along z for the annihilation operator on B site with spin down
 // return value = corresponding matrix element
 
-Complex ParticleOnCubicLatticeFourBandSimpleTIHamiltonian::ComputeTwoBodyMatrixElementAUpBDown(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4)
+Complex ParticleOnSquareLatticeFourBandSimpleTIHamiltonian::ComputeTwoBodyMatrixElementAUpBDown(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
 {
-  return this->ComputeTwoBodyMatrixElementAUpBUp(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
+  return this->ComputeTwoBodyMatrixElementAUpBUp(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
 }
 
 // compute the matrix element for the two body interaction between two sites A with opposite spins 
 //
 // kx1 = momentum along x for the creation operator on A site with spin up
 // ky1 = momentum along y for the creation operator on A site with spin up
-// kz1 = momentum along z for the creation operator on A site with spin up
 // kx2 = momentum along x for the creation operator on A site with spin down
 // ky2 = momentum along y for the creation operator on A site with spin down
-// kz2 = momentum along z for the creation operator on A site with spin down
 // kx3 = momentum along x for the annihilation operator on A site with spin up
 // ky3 = momentum along y for the annihilation operator on A site with spin up
-// kz3 = momentum along z for the annihilation operator on A site with spin up
 // kx4 = momentum along x for the annihilation operator on A site with spin down
 // ky4 = momentum along y for the annihilation operator on A site with spin down
-// kz4 = momentum along z for the annihilation operator on A site with spin down
 // return value = corresponding matrix element
 
-Complex ParticleOnCubicLatticeFourBandSimpleTIHamiltonian::ComputeTwoBodyMatrixElementAUpADown(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4)
+Complex ParticleOnSquareLatticeFourBandSimpleTIHamiltonian::ComputeTwoBodyMatrixElementAUpADown(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
 {
   Complex Tmp = 1.0;
   return Tmp;
@@ -515,19 +458,15 @@ Complex ParticleOnCubicLatticeFourBandSimpleTIHamiltonian::ComputeTwoBodyMatrixE
 //
 // kx1 = momentum along x for the creation operator on B site with spin up
 // ky1 = momentum along y for the creation operator on B site with spin up
-// kz1 = momentum along z for the creation operator on B site with spin up
 // kx2 = momentum along x for the creation operator on B site with spin down
 // ky2 = momentum along y for the creation operator on B site with spin down
-// kz2 = momentum along z for the creation operator on B site with spin down
 // kx3 = momentum along x for the annihilation operator on B site with spin up
 // ky3 = momentum along y for the annihilation operator on B site with spin up
-// kz3 = momentum along z for the annihilation operator on B site with spin up
 // kx4 = momentum along x for the annihilation operator on B site with spin down
 // ky4 = momentum along y for the annihilation operator on B site with spin down
-// kz4 = momentum along z for the annihilation operator on B site with spin down
 // return value = corresponding matrix element
 
-Complex ParticleOnCubicLatticeFourBandSimpleTIHamiltonian::ComputeTwoBodyMatrixElementBUpBDown(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4)
+Complex ParticleOnSquareLatticeFourBandSimpleTIHamiltonian::ComputeTwoBodyMatrixElementBUpBDown(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
 {
   Complex Tmp = 1.0;
   return Tmp;
@@ -537,52 +476,50 @@ Complex ParticleOnCubicLatticeFourBandSimpleTIHamiltonian::ComputeTwoBodyMatrixE
 //
 // oneBodyHamiltonians = array of one body hamiltonians
 
-void ParticleOnCubicLatticeFourBandSimpleTIHamiltonian::ComputeOneBodyHamiltonian(HermitianMatrix* oneBodyHamiltonians)
+void ParticleOnSquareLatticeFourBandSimpleTIHamiltonian::ComputeOneBodyHamiltonian(HermitianMatrix* oneBodyHamiltonians)
 {
   for (int kx = 0; kx < this->NbrSiteX; ++kx)
     for (int ky = 0; ky < this->NbrSiteY; ++ky)
-      for (int kz = 0; kz < this->NbrSiteZ; ++kz)
-	{
-	  HermitianMatrix TmpOneBodyHamiltonian(4, true);
-	  int Index = ((kx * this->NbrSiteY) + ky) * this->NbrSiteZ + kz;
-	  Complex d2 (sin (((double) ky) * this->KyFactor), -sin (((double) kz) * this->KzFactor));
-	  double d1 = sin (((double) kx) * this->KxFactor);
-	  double d3 = (this->Mass - cos (((double) kx) * this->KxFactor) - cos (((double) ky) * this->KyFactor) 
-		       - cos (((double) kz) * this->KzFactor));
-	  TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d3);
-	  TmpOneBodyHamiltonian.SetMatrixElement(1, 1, -d3);
-	  TmpOneBodyHamiltonian.SetMatrixElement(2, 2, d3);
-	  TmpOneBodyHamiltonian.SetMatrixElement(3, 3, -d3);
-	  TmpOneBodyHamiltonian.SetMatrixElement(0, 1, d1);
-	  TmpOneBodyHamiltonian.SetMatrixElement(2, 3, d1);
-	  TmpOneBodyHamiltonian.SetMatrixElement(0, 3, d2);
-	  TmpOneBodyHamiltonian.SetMatrixElement(1, 2, d2);
-
-	  if (this->FlatBand == false)
-	    {
-	      oneBodyHamiltonians[Index] = TmpOneBodyHamiltonian;
-	    }
-	  else
-	    {
-	      ComplexMatrix OneBodyBasis(4, 4);
-	      OneBodyBasis.SetToIdentity();
-	      oneBodyHamiltonians[Index].Copy(TmpOneBodyHamiltonian);
-	      RealDiagonalMatrix TmpDiag;
+      {
+	HermitianMatrix TmpOneBodyHamiltonian(4, true);
+	int Index = (kx * this->NbrSiteY) + ky;
+	Complex d2 (sin (((double) ky) * this->KyFactor), 0.0);
+	double d1 = sin (((double) kx) * this->KxFactor);
+	double d3 = (this->Mass - cos (((double) kx) * this->KxFactor) - cos (((double) ky) * this->KyFactor));
+	TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d3);
+	TmpOneBodyHamiltonian.SetMatrixElement(1, 1, -d3);
+	TmpOneBodyHamiltonian.SetMatrixElement(2, 2, d3);
+	TmpOneBodyHamiltonian.SetMatrixElement(3, 3, -d3);
+	TmpOneBodyHamiltonian.SetMatrixElement(0, 1, d1);
+	TmpOneBodyHamiltonian.SetMatrixElement(2, 3, d1);
+	TmpOneBodyHamiltonian.SetMatrixElement(0, 3, d2);
+	TmpOneBodyHamiltonian.SetMatrixElement(1, 2, d2);
+	
+	if (this->FlatBand == false)
+	  {
+	    oneBodyHamiltonians[Index] = TmpOneBodyHamiltonian;
+	  }
+	else
+	  {
+	    ComplexMatrix OneBodyBasis(4, 4);
+	    OneBodyBasis.SetToIdentity();
+	    oneBodyHamiltonians[Index].Copy(TmpOneBodyHamiltonian);
+	    RealDiagonalMatrix TmpDiag;
 #ifdef __LAPACK__
-	      TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, OneBodyBasis);
+	    TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, OneBodyBasis);
 #else
-	      TmpOneBodyHamiltonian.Diagonalize(TmpDiag, OneBodyBasis);
+	    TmpOneBodyHamiltonian.Diagonalize(TmpDiag, OneBodyBasis);
 #endif   
- 	      for (int i = 0; i < 4; ++i)
- 		{
- 		  cout << TmpDiag(i, i) << " ";
- 		}
- 	      cout << endl;
-	      TmpOneBodyHamiltonian.ClearMatrix();
-	      double Tmp = 1.0;
-	      TmpOneBodyHamiltonian.SetMatrixElement(2, 2, Tmp);
-	      TmpOneBodyHamiltonian.SetMatrixElement(3, 3, Tmp);
-	      oneBodyHamiltonians[Index] = TmpOneBodyHamiltonian.InvConjugate(OneBodyBasis);
-	    }
-	}
+	    for (int i = 0; i < 4; ++i)
+	      {
+		cout << TmpDiag(i, i) << " ";
+	      }
+	    cout << endl;
+	    TmpOneBodyHamiltonian.ClearMatrix();
+	    double Tmp = 1.0;
+	    TmpOneBodyHamiltonian.SetMatrixElement(2, 2, Tmp);
+	    TmpOneBodyHamiltonian.SetMatrixElement(3, 3, Tmp);
+	    oneBodyHamiltonians[Index] = TmpOneBodyHamiltonian.InvConjugate(OneBodyBasis);
+	  }
+      }
 }

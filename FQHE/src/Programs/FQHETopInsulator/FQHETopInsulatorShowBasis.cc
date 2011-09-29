@@ -1,6 +1,7 @@
 #include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeNonPeriodicMomentumSpace.h"
+#include "HilbertSpace/FermionOnSquareLatticeWithSU4SpinMomentumSpace.h"
 #include "HilbertSpace/FermionOnCubicLatticeWithSpinMomentumSpace.h"
 #include "HilbertSpace/FermionOnCubicLatticeWithSU4SpinMomentumSpace.h"
 #include "HilbertSpace/FermionOnHyperCubicLatticeWithSpinMomentumSpace.h"
@@ -156,7 +157,7 @@ int main(int argc, char** argv)
 		  else
 		    {
 		      Space = new FermionOnCubicLatticeWithSpinMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, NbrSiteZ, TotalKx, TotalKy, TotalKz);
-		    }
+		    }		
 		}
 	      else
 		{
@@ -165,6 +166,10 @@ int main(int argc, char** argv)
 		      if (Manager.GetBoolean("3d") == true)
 			{
 			  Space = new FermionOnCubicLatticeWithSU4SpinMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, NbrSiteZ, TotalKx, TotalKy, TotalKz);
+			}
+		      else 
+			{
+			  Space = new FermionOnSquareLatticeWithSU4SpinMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
 			}
 		    }
 		  else
