@@ -259,7 +259,7 @@ int main(int argc, char** argv)
 		}
 	      else
 		{
-		      Space = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		  Space = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
 		}
  	      cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
 	      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)

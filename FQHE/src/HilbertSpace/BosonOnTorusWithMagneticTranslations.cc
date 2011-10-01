@@ -382,7 +382,7 @@ int BosonOnTorusWithMagneticTranslations::FindStateIndex(BosonOnTorusState& stat
 ostream& BosonOnTorusWithMagneticTranslations::PrintState (ostream& Str, int state)
 {
   this->StateDescription[state].PrintState(Str, this->ReducedNbrState, this->RemainderNbrState);
-  Str  << " position = " << FindStateIndex(this->StateDescription[state]);
+  //  Str  << " position = " << FindStateIndex(this->StateDescription[state]);
 /*  int Max = this->StateMaxMomentum[state];
   int i = 0;
   for (; i <= Max; ++i)

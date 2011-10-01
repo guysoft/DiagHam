@@ -64,7 +64,6 @@ class ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian : public Pa
   // index of the band that has to be partially filled
   int BandIndex;
 
-
   // nearest neighbor density-density potential strength
   double UPotential;
   // second nearest neighbor density-density potential strength
@@ -165,6 +164,42 @@ class ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian : public Pa
   // ky4 = creation momentum along y for the second site
   // return value = corresponding matrix element
   Complex ComputeTwoBodyMatrixElementNNNCA(int kx2, int ky2, int kx4, int ky4);
+
+  // compute the matrix element for on-site two body interaction involving A sites
+  //
+  // return value = corresponding matrix element
+  Complex ComputeTwoBodyMatrixElementOnSiteAA();
+
+  // compute the matrix element for on-site two body interaction involving B sites
+  //
+  // kx1 = first creation momentum along x for the B site
+  // ky1 = first creation momentum along y for the B site
+  // kx2 = second creation momentum along x for the B site
+  // ky2 = second creation momentum along y for the B site
+  // kx3 = first annihilation momentum along x for the B site
+  // ky3 = first annihilation momentum along y for the B site
+  // kx4 = second annihilation momentum along x for the B site
+  // ky4 = second annihilation momentum along y for the B site
+  // return value = corresponding matrix element
+  Complex ComputeTwoBodyMatrixElementOnSiteBB(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
+
+  // compute the matrix element for on-site two body interaction involving C sites
+  //
+  // kx1 = first creation momentum along x for the C site
+  // ky1 = first creation momentum along y for the C site
+  // kx2 = second creation momentum along x for the C site
+  // ky2 = second creation momentum along y for the C site
+  // kx3 = first annihilation momentum along x for the C site
+  // ky3 = first annihilation momentum along y for the C site
+  // kx4 = second annihilation momentum along x for the C site
+  // ky4 = second annihilation momentum along y for the C site
+  // return value = corresponding matrix element
+  Complex ComputeTwoBodyMatrixElementOnSiteCC(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
+
+  // compute the one body transformation matrices and the optional one body band stucture contribution
+  //
+  // oneBodyBasis = array of one body transformation matrices
+  virtual void ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis);
 
 };
 

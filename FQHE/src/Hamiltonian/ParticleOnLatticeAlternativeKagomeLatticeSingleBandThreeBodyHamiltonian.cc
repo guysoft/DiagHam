@@ -162,7 +162,7 @@ void ParticleOnLatticeAlternativeKagomeLatticeSingleBandThreeBodyHamiltonian::Ev
   this->ComputeOneBodyMatrices(OneBodyBasis);
  
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
-  {
+    {
       this->NbrSectorSums = this->NbrSiteX * this->NbrSiteY;
       this->NbrSectorIndicesPerSum = new int[this->NbrSectorSums];
       for (int i = 0; i < this->NbrSectorSums; ++i)
@@ -592,7 +592,55 @@ void ParticleOnLatticeAlternativeKagomeLatticeSingleBandThreeBodyHamiltonian::Ev
 	}
       cout << "nbr 3-body interaction = " << TotalNbrInteractionFactors << endl;
       cout << "====================================" << endl;
-  }
+    }
+  else
+    {
+      this->NbrNBodySectorSums = this->NbrSiteX * this->NbrSiteY;
+      this->NbrNBodySectorIndicesPerSum = new int[this->NbrNBodySectorSums];
+      for (int i = 0; i < this->NbrNBodySectorSums; ++i)
+	this->NbrNBodySectorIndicesPerSum[i] = 0;      
+      for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
+	for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
+	  for (int kx3 = 0; kx3 < this->NbrSiteX; ++kx3)
+	    for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
+	      for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
+		for (int ky3 = 0; ky3 < this->NbrSiteY; ++ky3) 
+		  {
+		    int Index1 = (kx1 * this->NbrSiteY) + ky1;
+		    int Index2 = (kx2 * this->NbrSiteY) + ky2;
+		    int Index3 = (kx3 * this->NbrSiteY) + ky3;
+		    if ((Index1 <= Index2) && (Index2 <= Index3))
+		      ++this->NbrNBodySectorIndicesPerSum[(((kx1 + kx2 + kx3) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2 + ky3) % this->NbrSiteY)];    
+		  }
+      this->NBodySectorIndicesPerSum = new int* [this->NbrNBodySectorSums];
+      for (int i = 0; i < this->NbrNBodySectorSums; ++i)
+	{
+	  if (this->NbrNBodySectorIndicesPerSum[i]  > 0)
+	    {
+	      this->NBodySectorIndicesPerSum[i] = new int[this->NBodyValue * this->NbrNBodySectorIndicesPerSum[i]];      
+	      this->NbrNBodySectorIndicesPerSum[i] = 0;
+	    }
+	}
+      for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
+	for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
+	  for (int kx3 = 0; kx3 < this->NbrSiteX; ++kx3)
+	    for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
+	      for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
+		for (int ky3 = 0; ky3 < this->NbrSiteY; ++ky3) 
+		  {
+		    int Index1 = (kx1 * this->NbrSiteY) + ky1;
+		    int Index2 = (kx2 * this->NbrSiteY) + ky2;
+		    int Index3 = (kx3 * this->NbrSiteY) + ky3;
+		    if ((Index1 <= Index2) && (Index2 <= Index3))
+		      {
+			int TmpSum = (((kx1 + kx2 + kx3) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2 + ky3) % this->NbrSiteY);
+			this->NBodySectorIndicesPerSum[TmpSum][this->NbrNBodySectorIndicesPerSum[TmpSum] * 3] = Index1;
+			this->NBodySectorIndicesPerSum[TmpSum][1 + (this->NbrNBodySectorIndicesPerSum[TmpSum] * 3)] = Index2;
+			this->NBodySectorIndicesPerSum[TmpSum][2 + (this->NbrNBodySectorIndicesPerSum[TmpSum] * 3)] = Index3;
+			++this->NbrNBodySectorIndicesPerSum[TmpSum];    
+		      }
+		  }
+    }
 }
 
 // compute the matrix element for the two body interaction between two sites A and B 
@@ -757,6 +805,7 @@ void ParticleOnLatticeAlternativeKagomeLatticeSingleBandThreeBodyHamiltonian::Co
       }
   }
 }
+
 // compute all the phase precalculation arrays 
 //
 
