@@ -1,4 +1,4 @@
- ////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 //                                                                            //
 //                                                                            //
 //                            DiagHam  version 0.01                           //
@@ -168,9 +168,9 @@ void ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::EvaluateInteractionFac
 		    ++this->NbrSectorIndicesPerSum[TmpSum];    
 		  }
 	      }
-      double FactorUAB = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
-      double FactorUAC = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
-      double FactorUBC = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
+      double FactorUAB = this->UPotential * 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
+      double FactorUAC = this->UPotential * 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
+      double FactorUBC = this->UPotential * 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
 
       this->InteractionFactors = new Complex* [this->NbrSectorSums];
       for (int i = 0; i < this->NbrSectorSums; ++i)
@@ -236,6 +236,7 @@ void ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::EvaluateInteractionFac
 Complex ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementAB(int k1a, int k1b, int k2a, int k2b)
 {
   Complex Tmp = 2.0 * cos (0.5 * (this->KxFactor * ((double) (k2a - k1a))));
+  //Complex Tmp = Phase (0.5 * (this->KxFactor * ((double) (k2a - k1a))));
   return Tmp;
 }
 
@@ -250,6 +251,7 @@ Complex ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatri
 Complex ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementAC(int k1a, int k1b, int k2a, int k2b)
 {
   Complex Tmp = 2.0 * cos (0.5 * (this->KyFactor * ((double) (k2b - k1b))));
+  //Complex Tmp = Phase (0.5 * (this->KyFactor * ((double) (k2b - k1b))));
   return Tmp;
 }
 
@@ -268,6 +270,7 @@ Complex ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatri
 Complex ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementBC(int k1a, int k1b, int k2a, int k2b, int k3a, int k3b, int k4a, int k4b)
 {
   Complex Tmp = 2.0 * cos (0.5 * ((this->KxFactor * ((double) (k3a - k1a))) + (this->KyFactor * ((double) (k4b - k2b)))));
+  //Complex Tmp = Phase(0.5 * ((this->KxFactor * ((double) (k3a - k1a))) + (this->KyFactor * ((double) (k4b - k2b)))));
   return Tmp;
 }
 
@@ -288,14 +291,14 @@ void ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ComputeOneBodyMatrices
 	HAB *= cos (KA);
 	Complex HAC(-2.0*this->NNHopping, 2.0*this->NNSpinOrbit);
 	HAC *= cos (KB);
-	Complex HBC(-2.0*this->NNHopping, 2.0*this->NNSpinOrbit);
+	Complex HBC(-2.0*this->NNHopping, -2.0*this->NNSpinOrbit);
 	HBC *= cos(KA-KB);
 
-	Complex HAB2 (-2.0*this->NextNNHopping, -2.0*this->NextNNSpinOrbit);
+	Complex HAB2 (-2.0*this->NextNNHopping, 2.0*this->NextNNSpinOrbit);
 	HAB2 *= cos (KA-2.0*KB);
-	Complex HAC2 (-2.0*this->NextNNHopping, 2.0*this->NextNNSpinOrbit);
+	Complex HAC2 (-2.0*this->NextNNHopping, -2.0*this->NextNNSpinOrbit);
 	HAC2 *= cos (2.0*KA-KB);
-	Complex HBC2 (-2.0*this->NextNNHopping, -2.0*this->NextNNSpinOrbit);
+	Complex HBC2 (-2.0*this->NextNNHopping, 2.0*this->NextNNSpinOrbit);
 	HBC2 *= cos (KA+KB);
 
 	HAB+=HAB2;
