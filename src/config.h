@@ -157,9 +157,10 @@ typedef struct { doublereal r, i; } doublecomplex;
 
 #ifdef __INTEL_COMPILER
 
-#define __128_BIT_LONGLONG__
+// #define __128_BIT_LONGLONG__
 #define LONGLONG long long
 #define ULONGLONG long long
+
 #else
 
 typedef int int128_t __attribute__((__mode__(TI)));
