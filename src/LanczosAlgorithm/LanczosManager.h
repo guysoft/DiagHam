@@ -74,8 +74,9 @@ class LanczosManager
   //
   // architecture = pointer to the architecture to use within the Lanczos algorithm
   // forceEigenstateComputation = if true, force computation of eigenstates
+  // useLapack = true if some Lanczos algorithms should rely on the Lapack library
   // return value = pointer to the Lanczos algorithm
-  AbstractLanczosAlgorithm* GetLanczosAlgorithm(AbstractArchitecture* architecture, bool forceEigenstateComputation = false);
+  AbstractLanczosAlgorithm* GetLanczosAlgorithm(AbstractArchitecture* architecture, bool forceEigenstateComputation = false, bool useLapack = false);
 
   // delete last created Lanczos object
   //

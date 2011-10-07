@@ -40,6 +40,7 @@
 #include "LanczosAlgorithm/BasicLanczosAlgorithmWithGroundState.h"
 #include "LanczosAlgorithm/BasicLanczosAlgorithmWithGroundStateDiskStorage.h"
 #include "LanczosAlgorithm/BasicBlockLanczosAlgorithm.h"
+
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithm.h"
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithmWithDiskStorage.h"
 #include "LanczosAlgorithm/FullReorthogonalizedBlockLanczosAlgorithm.h"
@@ -50,6 +51,7 @@
 #include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithGroundState.h"
 #include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithEigenstates.h"
 #include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithGroundStateFastDisk.h"
+#include "LanczosAlgorithm/ComplexBasicBlockLanczosAlgorithm.h"
 #include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithm.h"
 #include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage.h"
 
@@ -135,10 +137,11 @@ void LanczosManager::AddOptionGroup(OptionManager* manager)
 //
 // architecture = pointer to the architecture to use within the Lanczos algorithm
 // forceEigenstateComputation = if true, force computation of eigenstates
+// useLapack = true if some Lanczos algorithms should rely on the Lapack library
 // return value = pointer to the Lanczos algorithm
 
 
-AbstractLanczosAlgorithm* LanczosManager::GetLanczosAlgorithm(AbstractArchitecture* architecture, bool forceEigenstateComputation)
+AbstractLanczosAlgorithm* LanczosManager::GetLanczosAlgorithm(AbstractArchitecture* architecture, bool forceEigenstateComputation, bool useLapack)
 {
   if ((this->Options != 0) && (this->LanczosAlgorithm == 0))
     {      
@@ -148,50 +151,53 @@ AbstractLanczosAlgorithm* LanczosManager::GetLanczosAlgorithm(AbstractArchitectu
       int NbrIterLanczos = ((SingleIntegerOption*) (*(this->Options))["nbr-iter"])->GetInteger();
       int NbrEigenvalue = ((SingleIntegerOption*) (*(this->Options))["nbr-eigen"])->GetInteger();
       bool BlockLanczosFlag = ((BooleanOption*) (*(this->Options))["block-lanczos"])->GetBoolean();
-      int SizeBlockLanczos = ((SingleIntegerOption*) (*(this->Options))["block-size"])->GetInteger();
-      bool VectorMemory = ((SingleIntegerOption*) (*(this->Options))["nbr-vector"])->GetInteger();
+      int SizeBlockLanczos = this->Options->GetInteger("block-size");
+      int VectorMemory = this->Options->GetInteger("nbr-vector");
       bool EvaluateEigenvectors = ((BooleanOption*) (*(this->Options))["eigenstate"])->GetBoolean();
       //char* InitialVectorFileName = ((SingleStringOption*) (*(this->Options))["initial-vector"])->GetString();
       //bool PartialLanczos = ((BooleanOption*) (*(this->Options))["partial-lanczos"])->GetBoolean();
       //double LanczosPrecision = ((SingleDoubleOption*) (*(this->Options))["lanczos-precision"])->GetDouble();
-      bool FastDiskFlag = ((BooleanOption*) (*(this->Options))["fast-disk"])->GetBoolean();
+      bool FastDiskFlag = this->Options->GetBoolean("fast-disk");
       bool ResumeFastDiskFlag = ((BooleanOption*) (*(this->Options))["resume-fastdisk"])->GetBoolean();
       bool FullReorthogonalizationFlag = ((BooleanOption*) (*(this->Options))["force-reorthogonalize"])->GetBoolean();
       bool LapackFlag = false;
       if (((*(this->Options))["use-lapack"])!=NULL)
 	LapackFlag = ((BooleanOption*) (*(this->Options))["use-lapack"])->GetBoolean();
-
-      if ((NbrEigenvalue > 1) || (EvaluateEigenvectors == false))
-	{
-	  FastDiskFlag = false;
-	  ResumeFastDiskFlag = false;
-	}
+//       if ((NbrEigenvalue > 1) || (EvaluateEigenvectors == false))
+// 	{
+// 	  FastDiskFlag = false;
+// 	  ResumeFastDiskFlag = false;
+// 	}
       if (this->ComplexFlag == false)
 	{
 	  if ((NbrEigenvalue == 1) && (FullReorthogonalizationFlag == false))
 	    {
 	      if (DiskFlag == false)
-		if ((EvaluateEigenvectors == true) || (forceEigenstateComputation == true))
-		  {
-		    cout << "using BasicLanczosAlgorithmWithGroundState"<<endl;
-		    this->LanczosAlgorithm = new BasicLanczosAlgorithmWithGroundState(architecture, MaxNbrIterLanczos, FastDiskFlag, ResumeFastDiskFlag);
-		  }
-		else
-		  {
-		    cout << "using BasicLanczosAlgorithm" << endl;
-		    this->LanczosAlgorithm = new BasicLanczosAlgorithm(architecture, NbrEigenvalue, MaxNbrIterLanczos);
-		  }
+		{
+		  if ((EvaluateEigenvectors == true) || (forceEigenstateComputation == true))
+		    {
+		      cout << "Using BasicLanczosAlgorithmWithGroundState" << endl;      
+		      this->LanczosAlgorithm = new BasicLanczosAlgorithmWithGroundState(architecture, MaxNbrIterLanczos, FastDiskFlag, ResumeFastDiskFlag);
+		    }
+		  else
+		    {
+		      cout << "Using BasicLanczosAlgorithm" << endl;      
+		      this->LanczosAlgorithm = new BasicLanczosAlgorithm(architecture, NbrEigenvalue, MaxNbrIterLanczos);
+		    }
+		}
 	      else
-		if ((EvaluateEigenvectors == true) || (forceEigenstateComputation == true))
-		  {
-		    cout << "using BasicLanczosAlgorithmWithGroundStateDiskStorage" << endl;
-		    this->LanczosAlgorithm = new BasicLanczosAlgorithmWithGroundStateDiskStorage(architecture, NbrIterLanczos, MaxNbrIterLanczos);
-		  }
-		else
-		  {
-		    cout << "using BasicLanczosAlgorithmWithDiskStorage" << endl;
-		    this->LanczosAlgorithm = new BasicLanczosAlgorithmWithDiskStorage(architecture, NbrEigenvalue, MaxNbrIterLanczos);
-		  }
+		{
+		  if ((EvaluateEigenvectors == true) || (forceEigenstateComputation == true))
+		    {
+		      cout << "Using BasicLanczosAlgorithmWithGroundStateDiskStorage" << endl;      
+		      this->LanczosAlgorithm = new BasicLanczosAlgorithmWithGroundStateDiskStorage(architecture, NbrIterLanczos, MaxNbrIterLanczos);
+		    }
+		  else
+		    {
+		      cout << "Using BasicLanczosAlgorithmWithDiskStorage" << endl;      
+		      this->LanczosAlgorithm = new BasicLanczosAlgorithmWithDiskStorage(architecture, NbrEigenvalue, MaxNbrIterLanczos);
+		    }
+		}
 	    }
 	  else
 	    {
@@ -199,27 +205,27 @@ AbstractLanczosAlgorithm* LanczosManager::GetLanczosAlgorithm(AbstractArchitectu
 		{
 		  if (BlockLanczosFlag == true)
 		    {
-		      if ((FullReorthogonalizationFlag == true)||(NbrEigenvalue>SizeBlockLanczos))
+		      if ((FullReorthogonalizationFlag == true) || (NbrEigenvalue > SizeBlockLanczos))
 			{
-			  cout << "using FullReorthogonalizedBlockLanczosAlgorithm" << endl;
+			  cout << "Using FullReorthogonalizedBlockLanczosAlgorithm"<<endl;
 			  this->LanczosAlgorithm = new FullReorthogonalizedBlockLanczosAlgorithm (architecture, NbrEigenvalue, SizeBlockLanczos, MaxNbrIterLanczos);
 			}
 		      else
 			{
-			  cout << "using BasicBlockLanczosAlgorithm"<<endl;
+			  cout << "Using BasicBlockLanczosAlgorithm"<<endl;
 			  this->LanczosAlgorithm = new BasicBlockLanczosAlgorithm (architecture, NbrEigenvalue, SizeBlockLanczos, MaxNbrIterLanczos, 
-								    FastDiskFlag, ResumeFastDiskFlag, false, LapackFlag);
+										   FastDiskFlag, ResumeFastDiskFlag, false, useLapack);
 			}
 		    }
 		  else
 		    {
-		      cout << "using FullReorthogonalizedLanczosAlgorithm" << endl;
+		      cout << "Using FullReorthogonalizedLanczosAlgorithm" << endl;
 		      this->LanczosAlgorithm = new FullReorthogonalizedLanczosAlgorithm (architecture, NbrEigenvalue, MaxNbrIterLanczos);
 		    }
 		}
 	      else
 		{
-		  cout << "using FullReorthogonalizedLanczosAlgorithmWithDiskStorage" << endl;
+		  cout << "Using FullReorthogonalizedLanczosAlgorithmWithDiskStorage" << endl;
 		  this->LanczosAlgorithm = new FullReorthogonalizedLanczosAlgorithmWithDiskStorage (architecture, NbrEigenvalue, VectorMemory, MaxNbrIterLanczos);
 		}
 	    }
@@ -231,24 +237,24 @@ AbstractLanczosAlgorithm* LanczosManager::GetLanczosAlgorithm(AbstractArchitectu
 	      if (DiskFlag == false)
 		if (EvaluateEigenvectors == true)
 		  {
-		    cout << "Using ComplexBasicLanczosAlgorithmWithGroundStateFastDisk"<<endl;
+		    cout << "Using ComplexBasicLanczosAlgorithmWithGroundStateFastDisk" << endl;
 		    this->LanczosAlgorithm = new ComplexBasicLanczosAlgorithmWithGroundStateFastDisk(architecture, MaxNbrIterLanczos , FastDiskFlag, ResumeFastDiskFlag);
 		  }
 		else
 		  {
-		    cout << "using ComplexBasicLanczosAlgorithm" << endl;
+		    cout << "Using ComplexBasicLanczosAlgorithm" << endl;
 		    this->LanczosAlgorithm = new ComplexBasicLanczosAlgorithm(architecture, NbrEigenvalue, MaxNbrIterLanczos);
 		  }
 	      else
 		if (EvaluateEigenvectors == true)
 		  {
-		    cout << "Complex Lanczos Algorithm with GroundState and Disk Storage not implemented!"<<endl;
+		    cout << "Complex Lanczos Algorithm with GroundState and Disk Storage not implemented!" << endl;
 		    exit(1);
 		    //this->LanczosAlgorithm = new ComplexBasicLanczosAlgorithmWithGroundStateDiskStorage(architecture, NbrIterLanczos, MaxNbrIterLanczos);
 		  }
 		else
 		  {
-		    cout << "using ComplexBasicLanczosAlgorithmWithDiskStorage" << endl;
+		    cout << "Using ComplexBasicLanczosAlgorithmWithDiskStorage" << endl;
 		    this->LanczosAlgorithm = new ComplexBasicLanczosAlgorithmWithDiskStorage(architecture, NbrEigenvalue, MaxNbrIterLanczos);
 		  }
 	    }
@@ -256,12 +262,32 @@ AbstractLanczosAlgorithm* LanczosManager::GetLanczosAlgorithm(AbstractArchitectu
 	    {
 	      if (DiskFlag == false)
 		{
-		  cout << "using FullReorthogonalizedComplexLanczosAlgorithm" << endl;
-		  this->LanczosAlgorithm = new FullReorthogonalizedComplexLanczosAlgorithm (architecture, NbrEigenvalue, MaxNbrIterLanczos);
+		  if (BlockLanczosFlag == true)
+		    {
+		      if (FullReorthogonalizationFlag == true)
+			{
+			  cout << "reorthogonalized block lanczos is not yet defined: ComplexFullReorthogonalizedBlockLanczosAlgorithm missing"<<endl;
+			  cout << "using non-reorthogonalized algorithm 'ComplexBasicBlockLanczosAlgorithm'"<<endl;
+			  //Lanczos = new ComplexFullReorthogonalizedBlockLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->SizeBlockLanczos, this->MaxNbrIterLanczos, false, this->LapackFlag);
+			  this->LanczosAlgorithm = new ComplexBasicBlockLanczosAlgorithm (architecture, NbrEigenvalue, SizeBlockLanczos, MaxNbrIterLanczos, 
+											  FastDiskFlag, ResumeFastDiskFlag, false, useLapack);			  
+			}
+		      else
+			{
+			  cout << "Using ComplexBasicBlockLanczosAlgorithm" << endl;
+			  this->LanczosAlgorithm = new ComplexBasicBlockLanczosAlgorithm (architecture, NbrEigenvalue, SizeBlockLanczos, MaxNbrIterLanczos, 
+											  FastDiskFlag, ResumeFastDiskFlag, false, useLapack);
+			}
+		    }
+		  else
+		    {
+		      cout << "Using FullReorthogonalizedComplexLanczosAlgorithm" << endl;
+		      this->LanczosAlgorithm = new FullReorthogonalizedComplexLanczosAlgorithm (architecture, NbrEigenvalue, MaxNbrIterLanczos);
+		    }
 		}
 	      else
 		{
-		  cout << "using FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage" << endl;
+		  cout << "Using FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage" << endl;
 		  this->LanczosAlgorithm = new FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage (architecture, NbrEigenvalue, VectorMemory, MaxNbrIterLanczos);
 		}
 	    }

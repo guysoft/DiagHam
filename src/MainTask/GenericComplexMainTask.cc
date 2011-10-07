@@ -417,7 +417,7 @@ int GenericComplexMainTask::ExecuteMainTask()
     }
   else
     {
-      AbstractLanczosAlgorithm* Lanczos = AlgorithmManager->GetLanczosAlgorithm(this->Architecture, this->EvaluateEigenvectors);
+      AbstractLanczosAlgorithm* Lanczos = AlgorithmManager->GetLanczosAlgorithm(this->Architecture, this->EvaluateEigenvectors, this->LapackFlag);
       if (this->LanczosPrecision != 0.0)
 	Lanczos->SetEigenvaluePrecision(this->LanczosPrecision);
       double GroundStateEnergy;

@@ -76,6 +76,13 @@ class BandDiagonalHermitianMatrix : public Matrix
   // dummy variable used if an element outside diagonal or upper(lower) diagonal is requested
   double Dummy;
 
+  // temporary variables when using Lapack
+  int LapackWorkAreaDimension;
+  doublecomplex* LapackMatrix;
+  doublecomplex* LapackEVMatrix;
+  doublecomplex* LapackWorkingArea;
+  double* LapackRealWorkingArea;  
+
  public:
 
   // default constructor
@@ -307,12 +314,6 @@ class BandDiagonalHermitianMatrix : public Matrix
   // return value = reference on real tridiagonal symmetric matrix
   RealDiagonalMatrix& LapackDiagonalize (RealDiagonalMatrix& M, ComplexMatrix& Q, double err = 1e-7, int maxIter = 50);
 
- private:
-  int LapackWorkAreaDimension;
-  doublecomplex *LapackMatrix;
-  doublecomplex *LapackEVMatrix;
-  doublecomplex *LapackWorkingArea;
-  double *LapackRealWorkingArea;  
 
 #endif
 
