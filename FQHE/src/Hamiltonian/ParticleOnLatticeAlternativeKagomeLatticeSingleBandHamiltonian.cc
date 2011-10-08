@@ -530,6 +530,7 @@ Complex ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian::ComputeT
 
 Complex ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementOnSiteBB(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
 {
+  return Phase(0.5 * this->KxFactor * ((double) (kx4 + kx3 - kx2 -kx1)));
 }
 
 // compute the matrix element for on-site two body interaction involving C sites
@@ -546,6 +547,7 @@ Complex ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian::ComputeT
 
 Complex ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementOnSiteCC(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
 {
+  return Phase(0.5 * this->KyFactor * ((double) (ky4 + ky3 - ky2 -ky1)));
 }
 
 // compute the one body transformation matrices and the optional one body band stucture contribution

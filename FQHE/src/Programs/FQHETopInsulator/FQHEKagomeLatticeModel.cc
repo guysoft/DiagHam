@@ -4,6 +4,7 @@
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpaceLong.h"
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpaceLong.h"
+#include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
 
 #include "Hamiltonian/ParticleOnLatticeKagomeLatticeSingleBandHamiltonian.h"
 //#include "Hamiltonian/ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian.h"
@@ -69,7 +70,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('x', "nbr-sitex", "number of sites along the x direction", 3);
   (*SystemGroup) += new SingleIntegerOption  ('y', "nbr-sitey", "number of sites along the y direction", 3);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1);  (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
+
   (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive nearest neighbor potential strength", 1.0);
   (*SystemGroup) += new BooleanOption  ('\n', "three-body", "use a three body interaction instead of a two body interaction");
@@ -79,6 +81,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "t2", "real part of the next nearest neighbor hopping amplitude", -0.3);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "l1", "imaginary part of the nearest neighbor hopping amplitude", 0.28);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "l2", "imaginary part of the next nearest neighbor hopping amplitude", 0.2);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "band-index", "index of the band that has to be partially filled, should be 0 (lower band), 1 or 2 (upper band)", 0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "mu-s", "sublattice chemical potential on A site", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
@@ -109,27 +112,37 @@ int main(int argc, char** argv)
   int NbrSitesY = Manager.GetInteger("nbr-sitey"); 
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
 
+  char* StatisticPrefix = new char [16];
+  if (Manager.GetBoolean("boson") == false)
+    {
+      sprintf (StatisticPrefix, "fermions");
+    }
+  else
+    {
+      sprintf (StatisticPrefix, "bosons");
+    }
+
   char* FilePrefix = new char [256];
 
   if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false) && (Manager.GetBoolean("five-body") == false))
     { 
-      sprintf (FilePrefix, "fermions_singleband_kagomelattice_n_%d_x_%d_y_%d",  NbrParticles, NbrSitesX, NbrSitesY);
+      sprintf (FilePrefix, "%s_singleband_kagomelattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
     }
   else
     {
       if (Manager.GetBoolean("three-body") == true)
 	{
-	  sprintf (FilePrefix, "fermions_singleband_threebody_kagomelattice_n_%d_x_%d_y_%d",  NbrParticles, NbrSitesX, NbrSitesY);
+	  sprintf (FilePrefix, "%s_singleband_threebody_kagomelattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
 	}
       else
 	{
 	  if (Manager.GetBoolean("four-body") == true)
 	    {
-	      sprintf (FilePrefix, "fermions_singleband_fourbody_kagomelattice_n_%d_x_%d_y_%d",  NbrParticles, NbrSitesX, NbrSitesY);
+	      sprintf (FilePrefix, "%s_singleband_fourbody_kagomelattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
 	    }
 	  else
 	    {
-	      sprintf (FilePrefix, "fermions_singleband_fivebody_kagomelattice_n_%d_x_%d_y_%d",  NbrParticles, NbrSitesX, NbrSitesY);
+	      sprintf (FilePrefix, "%s_singleband_fivebody_kagomelattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
 	    }
 	}
     }
@@ -185,13 +198,20 @@ int main(int argc, char** argv)
 	  cout << "(kx=" << i << ",ky=" << j << ") : " << endl;
 
 	  ParticleOnSphere* Space = 0;
-	  if ((NbrSitesX * NbrSitesY) <= 63)
+	  if (Manager.GetBoolean("boson") == false)
 	    {
-	      Space = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+	      if ((NbrSitesX * NbrSitesY) <= 63)
+		{
+		  Space = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		}
+	      else
+		{
+		  Space = new FermionOnSquareLatticeMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		}
 	    }
 	  else
 	    {
-	      Space = new FermionOnSquareLatticeMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+	      Space = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
 	    }
 	  cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
 	  if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
