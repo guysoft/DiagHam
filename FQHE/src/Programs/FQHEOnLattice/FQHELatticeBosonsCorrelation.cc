@@ -67,6 +67,7 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new BooleanOption  ('\n', "density", "plot density insted of density-density correlation", false);
   (*SystemGroup) += new BooleanOption  ('\n', "fluctuations", "plot local density fluctuations", false);
+  (*SystemGroup) += new BooleanOption  ('\n', "all-ops", "plot all available operators", false);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);  
   (*MiscGroup) += new BooleanOption  ('g', "gnuplot", "format output for gnuplot, and make plot");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -81,12 +82,14 @@ int main(int argc, char** argv)
 
   int NbrVectors;
   char** VectorFiles = Manager.GetStrings("states",NbrVectors);
-
+  bool CorrelationFlag = Manager.GetBoolean("density");
   bool DensityFlag = Manager.GetBoolean("density");
   bool FluctuationFlag = Manager.GetBoolean("fluctuations");
+  bool AllOps = Manager.GetBoolean("all-ops");
 
+  if (DensityFlag||FluctuationFlag)
+    CorrelationFlag=false;
   
-
   if (NbrVectors==0)
     {
       cout << "At least one vector file is required!"<<endl;
@@ -161,6 +164,7 @@ int main(int argc, char** argv)
 	}
       VectorDimension=State.GetVectorDimension();
       char* OutputNameCorr = new char [64 + strlen (VectorFiles[i])];
+      char* OutputNameBase = new char [64 + strlen (VectorFiles[i])];
       char* ending;
       if ((ending=strstr(VectorFiles[i],".vec"))!=0)
 	{
@@ -169,30 +173,35 @@ int main(int argc, char** argv)
 	    {
 	      ending = last;
 	    }
-	  strncpy(OutputNameCorr, VectorFiles[i], ending-VectorFiles[i]);
-	  OutputNameCorr[ending-VectorFiles[i]]='\0';
+	  strncpy(OutputNameBase, VectorFiles[i], ending-VectorFiles[i]);
+	  OutputNameBase[ending-VectorFiles[i]]='\0';
 	}
       else
-	strcpy(OutputNameCorr, VectorFiles[i]);
+	strcpy(OutputNameBase, VectorFiles[i]);
       if (ReferenceSite!=0)
-	sprintf (OutputNameCorr, "%s_ref_%d", OutputNameCorr, ReferenceSite);
+	sprintf (OutputNameBase, "%s_ref_%d", OutputNameBase, ReferenceSite);
       char* PlotNameCmd=0;
       char* PlotNamePS=0;
       if (Plot)
 	{
 	  PlotNameCmd = new char  [10 + strlen (VectorFiles[i])];
 	  PlotNamePS = new char  [10 + strlen (VectorFiles[i])];
-	  sprintf (PlotNameCmd, "%s.gp", OutputNameCorr);
-	  sprintf (PlotNamePS, "%s.ps", OutputNameCorr);
+	  sprintf (PlotNameCmd, "%s.gp", OutputNameBase);
+	  sprintf (PlotNamePS, "%s.ps", OutputNameBase);
 	}
-      if (FluctuationFlag == false)
+      if (AllOps == false)
 	{
-	  if (DensityFlag == false)
-	    sprintf (OutputNameCorr, "%s.rho_rho.dat", OutputNameCorr);
-	  else
-	    sprintf (OutputNameCorr, "%s.rho.dat", OutputNameCorr);
+	  if (FluctuationFlag == false)
+	    {
+	      if (DensityFlag == false)
+		sprintf (OutputNameCorr, "%s.rho_rho.dat", OutputNameBase);
+	      else
+		sprintf (OutputNameCorr, "%s.rho.dat", OutputNameBase);
+	    }
+	  else sprintf (OutputNameCorr, "%s.sigma_rho.dat", OutputNameBase);
 	}
-      else sprintf (OutputNameCorr, "%s.sigma_rho.dat", OutputNameCorr);
+      else
+	sprintf (OutputNameCorr, "%s_CHANNEL.dat", OutputNameBase);
       
 	
       cout << "<in  "<<VectorFiles[i]<<endl<<">out "<<OutputNameCorr<<endl;
@@ -220,14 +229,13 @@ int main(int argc, char** argv)
 	}
       ofstream File;
       File.precision(14);
-      File.open(OutputNameCorr, ios::binary | ios::out);      
       Complex Tmp;
       int CellPosition[2];
       RealVector SitePosition;
-      if (FluctuationFlag == false)
+      if ((CorrelationFlag == true)||(AllOps == true))
 	{
-	  if (DensityFlag == false)
-	    {
+	  sprintf (OutputNameCorr, "%s.rho_rho.dat", OutputNameBase);
+	      File.open(OutputNameCorr, ios::binary | ios::out);
 	      File << "# density-density correlation for " << VectorFiles[i]<< endl;
 	      File << "# x\ty\tg"<< endl;
 	      ParticleOnLatticeOneBodyOperator Operator0 (Space, ReferenceSite, ReferenceSite);
@@ -265,9 +273,12 @@ int main(int argc, char** argv)
 		    }
 		  if (Plot) File << endl;
 		}
-	    }
-	  else
-	    {
+	      File.close();
+	}
+      if ((DensityFlag == true)||(AllOps==true))
+	{
+	      sprintf (OutputNameCorr, "%s.rho.dat", OutputNameBase);
+	      File.open(OutputNameCorr, ios::binary | ios::out);
 	      File << "# density-profile for " << VectorFiles[i]<< endl;
 	      File << "# x\ty\tg"<< endl;
 	      for (int x = 0; x < Lx; ++x)
@@ -295,10 +306,12 @@ int main(int argc, char** argv)
 		      }
 		  if (Plot) File << endl;
 		}
-	    }
+	      File.close();
 	}
-      else
+      if ((FluctuationFlag == true)||(AllOps==true))
 	{
+	  sprintf (OutputNameCorr, "%s.sigma_rho.dat", OutputNameBase);
+	  File.open(OutputNameCorr, ios::binary | ios::out);
 	  File << "# local density fluctuations for " << VectorFiles[i]<< endl;
 	  File << "# x\ty\tg"<< endl;
 	  for (int x = 0; x < Lx; ++x)
@@ -332,8 +345,8 @@ int main(int argc, char** argv)
 		}
 	      if (Plot) File << endl;
 	    }
+	  File.close();
 	}
-      File.close();
       if (Plot)
 	{
 	  File.open(PlotNameCmd, ios::binary | ios::out);      
