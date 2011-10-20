@@ -487,18 +487,18 @@ double BosonOnLatticeKy::AA (int index, int r1, int r2)
     this->ProdATemporaryState[i] = 0ul;
   double Coefficient = this->ProdATemporaryState[r2];
   --this->ProdATemporaryState[r2];
-  if ((r2==TemporaryStateHighestBit)&&(this->ProdATemporaryState[r2]==0)&&(TemporaryStateHighestBit>0))
+  if ((r2==this->ProdATemporaryStateHighestBit)&&(this->ProdATemporaryState[r2]==0)&&(this->ProdATemporaryStateHighestBit>0))
     {
-      --ProdATemporaryStateHighestBit;
-      while (ProdATemporaryState[TemporaryStateHighestBit] == 0)
-	--ProdATemporaryStateHighestBit;
+      --this->ProdATemporaryStateHighestBit;
+      while (ProdATemporaryState[this->ProdATemporaryStateHighestBit] == 0)
+	--this->ProdATemporaryStateHighestBit;
     }
   Coefficient *= this->ProdATemporaryState[r1];
   --this->ProdATemporaryState[r1];
-  if ((r1==TemporaryStateHighestBit)&&(this->ProdATemporaryState[r1]==0)&&(TemporaryStateHighestBit>0))
+  if ((r1==this->ProdATemporaryStateHighestBit)&&(this->ProdATemporaryState[r1]==0)&&(this->ProdATemporaryStateHighestBit>0))
     {
       --ProdATemporaryStateHighestBit;
-      while (ProdATemporaryState[TemporaryStateHighestBit] == 0)
+      while (ProdATemporaryState[this->ProdATemporaryStateHighestBit] == 0)
 	--ProdATemporaryStateHighestBit;
     }
   return sqrt(Coefficient);
@@ -516,14 +516,15 @@ int BosonOnLatticeKy::AdAd (int q1, int q2, double& coefficient)
 {
   for (int i = 0; i < this->NbrStates; ++i)
     this->TemporaryState[i] = this->ProdATemporaryState[i];
+	this->TemporaryStateHighestBit = this->ProdATemporaryStateHighestBit;
   ++this->TemporaryState[q2];
   coefficient = this->TemporaryState[q2];
-  if (q2 > TemporaryStateHighestBit)
+  if (q2 > this->TemporaryStateHighestBit)
     TemporaryStateHighestBit = q2;
   ++this->TemporaryState[q1];
   coefficient *= this->TemporaryState[q1];
-  if (q1 > TemporaryStateHighestBit)
-    TemporaryStateHighestBit = q1;
+  if (q1 > this->TemporaryStateHighestBit)
+    this->TemporaryStateHighestBit = q1;
   coefficient = sqrt(coefficient);  
   return this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateHighestBit), this->TemporaryStateHighestBit + this->NbrBosons - 1);
 }
