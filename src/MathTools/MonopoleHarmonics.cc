@@ -90,7 +90,7 @@ double MonopoleHarmonics::GetValue(int n, double x)
 {
   if ((n>0)&&((x==1.0)||(x==-1.0)))
     return 0.0;
-  double XFactor = std::pow(1.0-x,(MomentumTwoM-ChargeTwoQ)/4.0)*std::pow(1.0+x,(MomentumTwoM+ChargeTwoQ)/4.0);
+  double XFactor = pow(1.0-x,(MomentumTwoM-ChargeTwoQ)/4.0)*pow(1.0+x,(MomentumTwoM+ChargeTwoQ)/4.0);
   double JacobiValue = Jacobi->GetValue(JacobiOffset+n,x);
   return NormPrefactor[n] * JacobiValue * XFactor;
 }
@@ -110,7 +110,7 @@ double * MonopoleHarmonics::GetValues(double x)
     }
   else
     {
-      double XFactor = std::pow(1.0-x,(MomentumTwoM-ChargeTwoQ)/4.0)*std::pow(1.0+x,(MomentumTwoM+ChargeTwoQ)/4.0);
+      double XFactor = pow(1.0-x,(MomentumTwoM-ChargeTwoQ)/4.0)*pow(1.0+x,(MomentumTwoM+ChargeTwoQ)/4.0);
       double *JacobiValues = Jacobi->GetValues(x);
       int minN=(JacobiOffset>0?0:-JacobiOffset);
       for (int i=0; i<minN; ++i)

@@ -77,11 +77,13 @@ class BandDiagonalHermitianMatrix : public Matrix
   double Dummy;
 
   // temporary variables when using Lapack
+#ifdef __LAPACK__
   int LapackWorkAreaDimension;
   doublecomplex* LapackMatrix;
   doublecomplex* LapackEVMatrix;
   doublecomplex* LapackWorkingArea;
   double* LapackRealWorkingArea;  
+#endif
 
  public:
 
