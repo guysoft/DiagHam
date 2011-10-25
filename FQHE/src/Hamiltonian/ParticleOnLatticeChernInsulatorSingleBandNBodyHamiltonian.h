@@ -258,7 +258,7 @@ class ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian : public Particl
   // permutations = arrays where permuted indices will be stored
   // permutationSign = array with the sign of each permutation (initialized only when dealing with fermionic statistics)
   // return value = number of permutations
-  int ComputePermutations(int** permutations, double* permutationSign);
+  int ComputePermutations(int**& permutations, double*& permutationSign);
 
 };
 

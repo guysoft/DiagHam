@@ -1046,7 +1046,7 @@ void ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::PartialEnableFas
 // permutationSign = array with the sign of each permutation (initialized only when dealing with fermionic statistics)
 // return value = number of permutations
 
-int ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::ComputePermutations(int** permutations, double* permutationSign)
+int ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::ComputePermutations(int**& permutations, double*& permutationSign)
 {
   int NbrPermutations = 1;
   for (int i = 1; i <= this->NBodyValue; ++i)
