@@ -2,6 +2,7 @@
 
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpaceLong.h"
+#include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
 
 #include "Hamiltonian/ParticleOnLatticeHaldaneModelSingleBandHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonian.h"
@@ -63,6 +64,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('y', "nbr-sitey", "number of sites along the y direction", 3);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1);
+  (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive two-body nearest neighbor potential strength", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "v-potential", "repulsive two-body nearest next neighbor potential strength", 0.0);
@@ -104,6 +106,17 @@ int main(int argc, char** argv)
   int NbrSiteY = Manager.GetInteger("nbr-sitey"); 
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
 
+
+  char* StatisticPrefix = new char [16];
+  if (Manager.GetBoolean("boson") == false)
+    {
+      sprintf (StatisticPrefix, "fermions");
+    }
+  else
+    {
+      sprintf (StatisticPrefix, "bosons");
+    }
+
   char* FilePrefix = new char [512];
   int lenFilePrefix=0;
   if (Manager.GetBoolean("single-band") == false)
@@ -114,13 +127,13 @@ int main(int argc, char** argv)
   else
     {
       if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false))
-          lenFilePrefix += sprintf (FilePrefix, "fermions_singleband_haldane_n_%d_x_%d_y_%d",  NbrParticles, NbrSiteX, NbrSiteY);
+          lenFilePrefix += sprintf (FilePrefix, "%s_singleband_haldane_n_%d_x_%d_y_%d",  StatisticPrefix, NbrParticles, NbrSiteX, NbrSiteY);
       else
       {
 	  if (Manager.GetBoolean("three-body") == true)
-              lenFilePrefix += sprintf (FilePrefix, "fermions_singleband_threebody_haldane_n_%d_x_%d_y_%d",  NbrParticles, NbrSiteX, NbrSiteY);
+              lenFilePrefix += sprintf (FilePrefix, "%s_singleband_threebody_haldane_n_%d_x_%d_y_%d",  StatisticPrefix, NbrParticles, NbrSiteX, NbrSiteY);
           else
-              lenFilePrefix += sprintf (FilePrefix, "fermions_singleband_fourbody_haldane_n_%d_x_%d_y_%d",  NbrParticles, NbrSiteX, NbrSiteY);
+              lenFilePrefix += sprintf (FilePrefix, "%s_singleband_fourbody_haldane_n_%d_x_%d_y_%d",  StatisticPrefix, NbrParticles, NbrSiteX, NbrSiteY);
       }
       if ((Manager.GetBoolean("three-body") == true || Manager.GetBoolean("four-body") == true) && Manager.GetBoolean("flat-band") == false)
           lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_w_%f", Manager.GetDouble("w-potential"));
@@ -173,13 +186,20 @@ int main(int argc, char** argv)
  	  else
  	    {
 	      ParticleOnSphere* Space = 0;
-	      if ((NbrSiteX * NbrSiteY) <= 63)
+	      if (Manager.GetBoolean("boson") == false)
 		{
-		  Space = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, i, j);
+		  if ((NbrSiteX * NbrSiteY) <= 63)
+		    {
+		      Space = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, i, j);
+		    }
+		  else
+		    {
+		      Space = new FermionOnSquareLatticeMomentumSpaceLong (NbrParticles, NbrSiteX, NbrSiteY, i, j);
+		    }
 		}
 	      else
 		{
-		  Space = new FermionOnSquareLatticeMomentumSpaceLong (NbrParticles, NbrSiteX, NbrSiteY, i, j);
+		  Space = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, i, j);
 		}
  	      cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
 	      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)

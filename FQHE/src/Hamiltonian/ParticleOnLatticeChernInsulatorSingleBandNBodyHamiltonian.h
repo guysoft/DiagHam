@@ -253,6 +253,13 @@ class ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian : public Particl
   // nbrComponent  = index of the last component that has to be precalcualted
   virtual void PartialEnableFastMultiplication(int firstComponent, int nbrComponent);
 
+  // compute the permutation array for the interaction indices
+  // 
+  // permutations = arrays where permuted indices will be stored
+  // permutationSign = array with the sign of each permutation (initialized only when dealing with fermionic statistics)
+  // return value = number of permutations
+  int ComputePermutations(int** permutations, double* permutationSign);
+
 };
 
 // core part of the AddMultiply method involving the n-body interaction

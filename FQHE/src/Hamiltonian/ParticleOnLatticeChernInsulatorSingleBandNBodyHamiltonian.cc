@@ -1038,3 +1038,90 @@ void ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::PartialEnableFas
     }
   delete TmpParticles;
 }
+
+
+// compute the permutation array for the interaction indices
+// 
+// permutations = arrays where permuted indices will be stored
+// permutationSign = array with the sign of each permutation (initialized only when dealing with fermionic statistics)
+// return value = number of permutations
+
+int ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::ComputePermutations(int** permutations, double* permutationSign)
+{
+  int NbrPermutations = 1;
+  for (int i = 1; i <= this->NBodyValue; ++i)
+    NbrPermutations *= i;
+  permutations = new int*[NbrPermutations];
+
+  permutations[0] = new int [this->NBodyValue];
+  for (int i = 0; i < this->NBodyValue; ++i)
+    permutations[0][i] = i;
+
+  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+    {
+      permutationSign = new double[NbrPermutations]; 
+      permutationSign[0] = 1.0;
+      double TmpSign = 1.0;
+      for (int i = 1; i < NbrPermutations; ++i)
+	{
+	  permutations[i] = new int [this->NBodyValue];
+	  for (int j = 0; j < this->NBodyValue; ++j)
+	    permutations[i][j] = permutations[i - 1][j];
+	  int* TmpArrayPerm = permutations[i];
+	  int Pos1 = this->NBodyValue - 1;
+	  while (TmpArrayPerm[Pos1 - 1] >= TmpArrayPerm[Pos1])
+	    --Pos1;
+	  --Pos1;
+	  int Pos2 = this->NBodyValue - 1;      
+	  while (TmpArrayPerm[Pos2] <= TmpArrayPerm[Pos1])
+	    --Pos2;
+	  int TmpIndex = TmpArrayPerm[Pos1];
+	  TmpArrayPerm[Pos1] = TmpArrayPerm[Pos2];
+	  TmpArrayPerm[Pos2] = TmpIndex;
+	  TmpSign *= -1.0;
+	  Pos2 = this->NBodyValue - 1;   
+	  Pos1++;
+	  while (Pos1 < Pos2)
+	    {
+	      TmpIndex = TmpArrayPerm[Pos1];
+	      TmpArrayPerm[Pos1] = TmpArrayPerm[Pos2];
+	      TmpArrayPerm[Pos2] = TmpIndex;
+	      ++Pos1;
+	      --Pos2;
+	      TmpSign *= -1.0;
+	    }
+	  permutationSign[i] = TmpSign;
+	}
+    }
+  else
+    {
+      for (int i = 1; i < NbrPermutations; ++i)
+	{
+	  permutations[i] = new int [this->NBodyValue];
+	  for (int j = 0; j < this->NBodyValue; ++j)
+	    permutations[i][j] = permutations[i - 1][j];
+	  int* TmpArrayPerm = permutations[i];
+	  int Pos1 = this->NBodyValue - 1;
+	  while (TmpArrayPerm[Pos1 - 1] >= TmpArrayPerm[Pos1])
+	    --Pos1;
+	  --Pos1;
+	  int Pos2 = this->NBodyValue - 1;      
+	  while (TmpArrayPerm[Pos2] <= TmpArrayPerm[Pos1])
+	    --Pos2;
+	  int TmpIndex = TmpArrayPerm[Pos1];
+	  TmpArrayPerm[Pos1] = TmpArrayPerm[Pos2];
+	  TmpArrayPerm[Pos2] = TmpIndex;
+	  Pos2 = this->NBodyValue - 1;   
+	  Pos1++;
+	  while (Pos1 < Pos2)
+	    {
+	      TmpIndex = TmpArrayPerm[Pos1];
+	      TmpArrayPerm[Pos1] = TmpArrayPerm[Pos2];
+	      TmpArrayPerm[Pos2] = TmpIndex;
+	      ++Pos1;
+	      --Pos2;
+	    }
+	}
+    }
+  return NbrPermutations;
+}
