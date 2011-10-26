@@ -169,12 +169,36 @@ int main(int argc, char** argv)
 
 
   GroundStates = new ComplexVector [NbrSpaces];  
+  int TotalNbrSites = NbrSiteX * NbrSiteY;
+  int* NbrGroundStatePerMomentumSector = new int[TotalNbrSites];
+  ComplexVector** GroundStatePerMomentumSector = new ComplexVector*[TotalNbrSites];
+  for (int i = 0; i < TotalNbrSites; ++i)
+    {
+      NbrGroundStatePerMomentumSector[i] = 0;
+      GroundStatePerMomentumSector[i] = 0;
+    }
   for (int i = 0; i < NbrSpaces; ++i)
-    if (GroundStates[i].ReadVector (GroundStateFiles[i]) == false)
-      {
-	cout << "can't open vector file " << GroundStateFiles[i] << endl;
-	return -1;      
-      }
+    {
+      if (GroundStates[i].ReadVector (GroundStateFiles[i]) == false)
+	{
+	  cout << "can't open vector file " << GroundStateFiles[i] << endl;
+	  return -1;      
+	}
+      int TmpIndex = ((TotalKx[i] * NbrSiteY) + TotalKy[i]);
+      NbrGroundStatePerMomentumSector[TmpIndex]++; 
+    }
+  for (int i = 0; i < TotalNbrSites; ++i)
+    {
+      if (NbrGroundStatePerMomentumSector[i] > 0)
+	GroundStatePerMomentumSector[i] = new ComplexVector[NbrGroundStatePerMomentumSector[i]];
+      NbrGroundStatePerMomentumSector[i] = 0;
+    }
+  for (int i = 0; i < NbrSpaces; ++i)
+    {
+      int TmpIndex = ((TotalKx[i] * NbrSiteY) + TotalKy[i]);
+      GroundStatePerMomentumSector[TmpIndex][NbrGroundStatePerMomentumSector[i]] = GroundStates[i];
+      NbrGroundStatePerMomentumSector[i]++;
+    }  
 
   if (DensityMatrixFileName != 0)
     {
@@ -187,12 +211,20 @@ int main(int argc, char** argv)
  
   if (Statistics == true)
     {
-      FermionOnSquareLatticeMomentumSpace** Spaces = new FermionOnSquareLatticeMomentumSpace*[NbrSpaces];
+      int MaxNbrSpaces = NbrSiteX * NbrSiteY;
+      FermionOnSquareLatticeMomentumSpace** Spaces = new FermionOnSquareLatticeMomentumSpace*[MaxNbrSpaces];
+      for (int i = 0; i < MaxNbrSpaces; ++i)
+	{
+	  Spaces[i] = 0;
+	}
       for (int i = 0; i < NbrSpaces; ++i)
 	{
-	  Spaces[i] = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKx[i], TotalKy[i]);
-	  
-	  if (Spaces[i]->GetLargeHilbertSpaceDimension() != GroundStates[i].GetLargeVectorDimension())
+	  int TmpIndex = ((TotalKx[i] * NbrSiteY) + TotalKy[i]);
+	  if (Spaces[TmpIndex] == 0)
+	    {
+	      Spaces[TmpIndex] = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKx[i], TotalKy[i]);
+	    }
+	  if (Spaces[TmpIndex]->GetLargeHilbertSpaceDimension() != GroundStates[i].GetLargeVectorDimension())
 	    {
 	      cout << "dimension mismatch between Hilbert space and ground state" << endl;
 	      return 0;
@@ -237,11 +269,13 @@ int main(int argc, char** argv)
 		    {
 		      gettimeofday (&(TotalStartingTime), 0);
 		    }
-		  HermitianMatrix PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStates[0], Architecture.GetArchitecture());
+		  int TmpIndex = ((TotalKx[0] * NbrSiteY) + TotalKy[0]);
+		  HermitianMatrix PartialDensityMatrix = Spaces[TmpIndex]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStates[0], Architecture.GetArchitecture());
 		  PartialDensityMatrix *= Coefficients[0];
 		  for (int i = 1; i < NbrSpaces; ++i)
 		    {
-		      HermitianMatrix TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStates[i], Architecture.GetArchitecture());
+		      TmpIndex = ((TotalKx[i] * NbrSiteY) + TotalKy[i]);
+		      HermitianMatrix TmpMatrix = Spaces[TmpIndex]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStates[i], Architecture.GetArchitecture());
 		      TmpMatrix *= Coefficients[i];
 		      PartialDensityMatrix += TmpMatrix;
 		    }
@@ -323,12 +357,20 @@ int main(int argc, char** argv)
     }
   else
     {
-      BosonOnSquareLatticeMomentumSpace** Spaces = new BosonOnSquareLatticeMomentumSpace*[NbrSpaces];
+      int MaxNbrSpaces = NbrSiteX * NbrSiteY;
+      BosonOnSquareLatticeMomentumSpace** Spaces = new BosonOnSquareLatticeMomentumSpace*[MaxNbrSpaces];
+      for (int i = 0; i < MaxNbrSpaces; ++i)
+	{
+	  Spaces[i] = 0;
+	}
       for (int i = 0; i < NbrSpaces; ++i)
 	{
-	  Spaces[i] = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKx[i], TotalKy[i]);
-	  
-	  if (Spaces[i]->GetLargeHilbertSpaceDimension() != GroundStates[i].GetLargeVectorDimension())
+	  int TmpIndex = ((TotalKx[i] * NbrSiteY) + TotalKy[i]);
+	  if (Spaces[TmpIndex] == 0)
+	    {
+	      Spaces[TmpIndex] = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKx[i], TotalKy[i]);
+	    }
+	  if (Spaces[TmpIndex]->GetLargeHilbertSpaceDimension() != GroundStates[i].GetLargeVectorDimension())
 	    {
 	      cout << "dimension mismatch between Hilbert space and ground state" << endl;
 	      return 0;
@@ -373,11 +415,13 @@ int main(int argc, char** argv)
 		    {
 		      gettimeofday (&(TotalStartingTime), 0);
 		    }
-		  HermitianMatrix PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStates[0], Architecture.GetArchitecture());
+		  int TmpIndex = ((TotalKx[0] * NbrSiteY) + TotalKy[0]);
+		  HermitianMatrix PartialDensityMatrix = Spaces[TmpIndex]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStates[0], Architecture.GetArchitecture());
 		  PartialDensityMatrix *= Coefficients[0];
 		  for (int i = 1; i < NbrSpaces; ++i)
 		    {
-		      HermitianMatrix TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStates[i], Architecture.GetArchitecture());
+		      TmpIndex = ((TotalKx[i] * NbrSiteY) + TotalKy[i]);
+		      HermitianMatrix TmpMatrix = Spaces[TmpIndex]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStates[i], Architecture.GetArchitecture());
 		      TmpMatrix *= Coefficients[i];
 		      PartialDensityMatrix += TmpMatrix;
 		    }

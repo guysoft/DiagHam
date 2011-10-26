@@ -32,6 +32,8 @@
 #include "HilbertSpace/ParticleOnSphere.h"
 #include "MathTools/LongRational.h"
 #include "Vector/LongRationalVector.h"
+#include "Matrix/HermitianMatrix.h"
+#include "Vector/ComplexVector.h"
 
 #include <iostream>
 
@@ -517,6 +519,33 @@ long ParticleOnSphere::EvaluatePartialDensityMatrixParticlePartitionCore (int mi
 									  ComplexVector& groundState, HermitianMatrix* densityMatrix)
 {
   return 0l;
+}
+
+// core part of the evaluation density matrix particle partition calculation involving a sum of projetors 
+// 
+// minIndex = first index to consider in source Hilbert space
+// nbrIndex = number of indices to consider in source Hilbert space
+// complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e. part B)
+// nbrGroundStates = number of projectors
+// destinationHilbertSpace = pointer to the destination Hilbert space  (i.e. part A)
+// groundStates = array of degenerate groundstates associated to each projector
+// weights = array of weights in front of each projector
+// densityMatrix = reference on the density matrix where result has to stored
+// return value = number of components that have been added to the density matrix
+
+long ParticleOnSphere::EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace,
+									  int nbrGroundStates, ComplexVector* groundStates, double* weights, HermitianMatrix* densityMatrix)
+{
+  HermitianMatrix TmpDensityMatrix(densityMatrix->GetNbrRow());
+  long Tmp = 0l;
+  for (int i = 0; i < nbrGroundStates; ++i)
+    {
+      TmpDensityMatrix.ClearMatrix();
+      this->EvaluatePartialDensityMatrixParticlePartitionCore(minIndex, nbrIndex, complementaryHilbertSpace, destinationHilbertSpace, groundStates[i], &TmpDensityMatrix);
+      TmpDensityMatrix *= weights[i];
+      (*densityMatrix) += TmpDensityMatrix;
+    }
+  return Tmp;
 }
 
 

@@ -54,6 +54,7 @@ FQHESphereParticleEntanglementSpectrumOperation::FQHESphereParticleEntanglementS
   this->IncompleteBetaThetaTop = 0; 
   this->IncompleteBetaThetaBottom = 0; 
   this->PhiRange = 0.0;
+  this->NbrGroundStates = 0;
   this->NbrNonZeroElements = 0l;
   this->FirstComponent = 0;
   this->NbrComponent = 0;
@@ -78,6 +79,44 @@ FQHESphereParticleEntanglementSpectrumOperation::FQHESphereParticleEntanglementS
   this->DestinationHilbertSpace = (ParticleOnSphere*) destinationSpace->Clone();
   this->ComplementaryHilbertSpace = (ParticleOnSphere*) complementarySpace->Clone();
   this->ComplexGroundState = groundState;
+  this->ComplexDensityMatrix = densityMatrix;
+  this->NbrGroundStates = 0;
+  this->IncompleteBetaThetaTop = 0; 
+  this->IncompleteBetaThetaBottom = 0; 
+  this->PhiRange = 0.0;
+  this->NbrNonZeroElements = 0l;
+  this->FirstComponent = 0;
+  this->NbrComponent = 0;
+  this->LargeFirstComponent = 0;
+  this->LargeNbrComponent = this->ComplementaryHilbertSpace->GetLargeHilbertSpaceDimension();
+  this->OperationType = AbstractArchitectureOperation::FQHESphereParticleEntanglementSpectrumOperation;
+  this->LocalOperations = 0;
+  this->NbrLocalOperations = 0;
+}
+
+// constructor when using a sum of projectors
+//
+// fullSpace = pointer to the full Hilbert space to use
+// destinationHilbertSpace = pointer to the destination Hilbert space (i.e. part A)
+// complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e. part B)
+// nbrGroundStates = number of projectors
+// groundStates = array of degenerate groundstates associated to each projector
+// weights = array of weights in front of each projector
+// densityMatrix = reference on the density matrix where result has to stored
+
+FQHESphereParticleEntanglementSpectrumOperation::FQHESphereParticleEntanglementSpectrumOperation(ParticleOnSphere* fullSpace, ParticleOnSphere* destinationSpace, ParticleOnSphere* complementarySpace, int nbrGroundStates, ComplexVector* groundStates, double* weights, HermitianMatrix& densityMatrix)
+{
+  this->FullSpace  = (ParticleOnSphere*) fullSpace->Clone();
+  this->DestinationHilbertSpace = (ParticleOnSphere*) destinationSpace->Clone();
+  this->ComplementaryHilbertSpace = (ParticleOnSphere*) complementarySpace->Clone();
+  this->NbrGroundStates = nbrGroundStates;
+  this->ComplexGroundStates = new ComplexVector[this->NbrGroundStates];
+  this->GroundStateWeights = new double[this->NbrGroundStates];
+  for (int i = 0; i < this->NbrGroundStates; ++i)
+    {
+      this->ComplexGroundStates[i] = groundStates[i];
+      this->GroundStateWeights[i] = weights[i];
+    }
   this->ComplexDensityMatrix = densityMatrix;
   this->IncompleteBetaThetaTop = 0; 
   this->IncompleteBetaThetaBottom = 0; 
@@ -113,6 +152,7 @@ FQHESphereParticleEntanglementSpectrumOperation::FQHESphereParticleEntanglementS
   this->IncompleteBetaThetaTop = incompleteBetaThetaTop; 
   this->IncompleteBetaThetaBottom = incompleteBetaThetaBottom; 
   this->PhiRange = phiRange;
+  this->NbrGroundStates = 0;
   this->NbrNonZeroElements = 0l;
   this->FirstComponent = 0;
   this->NbrComponent = 0;
@@ -136,6 +176,22 @@ FQHESphereParticleEntanglementSpectrumOperation::FQHESphereParticleEntanglementS
   this->DensityMatrix = operation.DensityMatrix;
   this->ComplexGroundState = operation.ComplexGroundState;
   this->ComplexDensityMatrix = operation.ComplexDensityMatrix;
+  this->NbrGroundStates = operation.NbrGroundStates;
+  if (this->NbrGroundStates > 0)
+    {
+      this->ComplexGroundStates = new ComplexVector[this->NbrGroundStates];
+      this->GroundStateWeights = new double[this->NbrGroundStates];
+      for (int i = 0; i < this->NbrGroundStates; ++i)
+	{
+	  this->ComplexGroundStates[i] = operation.ComplexGroundStates[i];
+	  this->GroundStateWeights[i] = operation.GroundStateWeights[i];
+	}
+    }
+  else
+    {
+      this->ComplexGroundStates = 0;
+      this->GroundStateWeights = 0;
+    }
   this->IncompleteBetaThetaTop = operation.IncompleteBetaThetaTop; 
   this->IncompleteBetaThetaBottom = operation.IncompleteBetaThetaBottom; 
   this->PhiRange = operation.PhiRange;
@@ -162,6 +218,11 @@ FQHESphereParticleEntanglementSpectrumOperation::~FQHESphereParticleEntanglement
 	}
       delete[] this->LocalOperations;
     }
+  if (this->NbrGroundStates > 0)
+    {
+      delete[] this->ComplexGroundStates;
+      delete[] this->GroundStateWeights;
+    }
   delete this->FullSpace;
   delete this->DestinationHilbertSpace;
   delete this->ComplementaryHilbertSpace;
@@ -184,13 +245,20 @@ bool FQHESphereParticleEntanglementSpectrumOperation::RawApplyOperation()
 {
   if (this->IncompleteBetaThetaTop == 0)
     {
-      if (this->ComplexGroundState.GetLargeVectorDimension() == 0l)
+      if (this->NbrGroundStates == 0)
 	{
-	  this->NbrNonZeroElements = this->FullSpace->EvaluatePartialDensityMatrixParticlePartitionCore(this->LargeFirstComponent, this->LargeNbrComponent, this->ComplementaryHilbertSpace, this->DestinationHilbertSpace, this->GroundState, &this->DensityMatrix);
+	  if (this->ComplexGroundState.GetLargeVectorDimension() == 0l)
+	    {
+	      this->NbrNonZeroElements = this->FullSpace->EvaluatePartialDensityMatrixParticlePartitionCore(this->LargeFirstComponent, this->LargeNbrComponent, this->ComplementaryHilbertSpace, this->DestinationHilbertSpace, this->GroundState, &this->DensityMatrix);
+	    }
+	  else
+	    {
+	      this->NbrNonZeroElements = this->FullSpace->EvaluatePartialDensityMatrixParticlePartitionCore(this->LargeFirstComponent, this->LargeNbrComponent, this->ComplementaryHilbertSpace, this->DestinationHilbertSpace, this->ComplexGroundState, &this->ComplexDensityMatrix);
+	    }
 	}
       else
 	{
-	  this->NbrNonZeroElements = this->FullSpace->EvaluatePartialDensityMatrixParticlePartitionCore(this->LargeFirstComponent, this->LargeNbrComponent, this->ComplementaryHilbertSpace, this->DestinationHilbertSpace, this->ComplexGroundState, &this->ComplexDensityMatrix);
+	  this->NbrNonZeroElements = this->FullSpace->EvaluatePartialDensityMatrixParticlePartitionCore(this->LargeFirstComponent, this->LargeNbrComponent, this->ComplementaryHilbertSpace, this->DestinationHilbertSpace, this->NbrGroundStates, this->ComplexGroundStates, this->GroundStateWeights, &this->ComplexDensityMatrix);
 	}
     }
   else

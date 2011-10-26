@@ -64,6 +64,13 @@ class FQHESphereParticleEntanglementSpectrumOperation: public AbstractPrecalcula
   HermitianMatrix ComplexDensityMatrix;
   // upper bound on the number of non zero matrix element in the reduced density matrix
   long NbrNonZeroElements;
+  // number of projectors
+  int NbrGroundStates;
+  // array of degenerate groundstates associated to each projector
+  ComplexVector* ComplexGroundStates;
+  // array of weights in front of each projector
+  double* GroundStateWeights;
+
 
   // pointer to the array where the top part coefficients are stored
   double* IncompleteBetaThetaTop;
@@ -96,6 +103,17 @@ class FQHESphereParticleEntanglementSpectrumOperation: public AbstractPrecalcula
   // groundState = reference on the total system ground state
   // densityMatrix = reference on the density matrix where result has to stored
   FQHESphereParticleEntanglementSpectrumOperation(ParticleOnSphere* fullSpace, ParticleOnSphere* destinationSpace, ParticleOnSphere* complementarySpace, ComplexVector& groundState, HermitianMatrix& densityMatrix);
+
+  // constructor when using a sum of projectors
+  //
+  // fullSpace = pointer to the full Hilbert space to use
+  // destinationHilbertSpace = pointer to the destination Hilbert space (i.e. part A)
+  // complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e. part B)
+  // nbrGroundStates = number of projectors
+  // groundStates = array of degenerate groundstates associated to each projector
+  // weights = array of weights in front of each projector
+  // densityMatrix = reference on the density matrix where result has to stored
+  FQHESphereParticleEntanglementSpectrumOperation(ParticleOnSphere* fullSpace, ParticleOnSphere* destinationSpace, ParticleOnSphere* complementarySpace, int nbrGroundStates, ComplexVector* groundStates, double* weights, HermitianMatrix& densityMatrix);
 
   // constructor 
   //
