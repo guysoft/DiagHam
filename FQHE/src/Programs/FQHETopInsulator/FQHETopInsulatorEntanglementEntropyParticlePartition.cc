@@ -172,10 +172,12 @@ int main(int argc, char** argv)
   int TotalNbrSites = NbrSiteX * NbrSiteY;
   int* NbrGroundStatePerMomentumSector = new int[TotalNbrSites];
   ComplexVector** GroundStatePerMomentumSector = new ComplexVector*[TotalNbrSites];
+  double** CoefficientPerMomentumSector = new double*[TotalNbrSites];
   for (int i = 0; i < TotalNbrSites; ++i)
     {
       NbrGroundStatePerMomentumSector[i] = 0;
       GroundStatePerMomentumSector[i] = 0;
+      CoefficientPerMomentumSector[i] = 0;
     }
   for (int i = 0; i < NbrSpaces; ++i)
     {
@@ -190,13 +192,17 @@ int main(int argc, char** argv)
   for (int i = 0; i < TotalNbrSites; ++i)
     {
       if (NbrGroundStatePerMomentumSector[i] > 0)
-	GroundStatePerMomentumSector[i] = new ComplexVector[NbrGroundStatePerMomentumSector[i]];
+	{
+	  GroundStatePerMomentumSector[i] = new ComplexVector[NbrGroundStatePerMomentumSector[i]];
+	  CoefficientPerMomentumSector[i] = new double[NbrGroundStatePerMomentumSector[i]];
+	}
       NbrGroundStatePerMomentumSector[i] = 0;
     }
   for (int i = 0; i < NbrSpaces; ++i)
     {
       int TmpIndex = ((TotalKx[i] * NbrSiteY) + TotalKy[i]);
       GroundStatePerMomentumSector[TmpIndex][NbrGroundStatePerMomentumSector[i]] = GroundStates[i];
+      CoefficientPerMomentumSector[TmpIndex][NbrGroundStatePerMomentumSector[i]] = Coefficients[i];
       NbrGroundStatePerMomentumSector[i]++;
     }  
 
@@ -269,15 +275,35 @@ int main(int argc, char** argv)
 		    {
 		      gettimeofday (&(TotalStartingTime), 0);
 		    }
-		  int TmpIndex = ((TotalKx[0] * NbrSiteY) + TotalKy[0]);
-		  HermitianMatrix PartialDensityMatrix = Spaces[TmpIndex]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStates[0], Architecture.GetArchitecture());
-		  PartialDensityMatrix *= Coefficients[0];
-		  for (int i = 1; i < NbrSpaces; ++i)
+		  int TmpIndex = 0;
+		  while (NbrGroundStatePerMomentumSector[TmpIndex] == 0)
+		    ++TmpIndex;
+		  HermitianMatrix PartialDensityMatrix;
+		  if (NbrGroundStatePerMomentumSector[TmpIndex] == 1)
 		    {
-		      TmpIndex = ((TotalKx[i] * NbrSiteY) + TotalKy[i]);
-		      HermitianMatrix TmpMatrix = Spaces[TmpIndex]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStates[i], Architecture.GetArchitecture());
-		      TmpMatrix *= Coefficients[i];
-		      PartialDensityMatrix += TmpMatrix;
+		      PartialDensityMatrix = Spaces[TmpIndex]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStatePerMomentumSector[TmpIndex][0], Architecture.GetArchitecture());
+		      PartialDensityMatrix *= CoefficientPerMomentumSector[TmpIndex][0];
+		    }
+		  else
+		    {
+		      PartialDensityMatrix = Spaces[TmpIndex]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, NbrGroundStatePerMomentumSector[TmpIndex], GroundStatePerMomentumSector[TmpIndex], CoefficientPerMomentumSector[TmpIndex], Architecture.GetArchitecture());
+		    }
+		  for (; TmpIndex < NbrSpaces; ++TmpIndex)
+		    {
+		      if (NbrGroundStatePerMomentumSector[TmpIndex] != 0)
+			{
+			  if (NbrGroundStatePerMomentumSector[TmpIndex] == 1)
+			    {
+			      HermitianMatrix TmpMatrix = Spaces[TmpIndex]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStatePerMomentumSector[TmpIndex][0], Architecture.GetArchitecture());
+			      TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][0];
+			      PartialDensityMatrix += TmpMatrix;
+			    }
+			  else
+			    {
+			      HermitianMatrix TmpMatrix = Spaces[TmpIndex]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, NbrGroundStatePerMomentumSector[TmpIndex], GroundStatePerMomentumSector[TmpIndex], CoefficientPerMomentumSector[TmpIndex], Architecture.GetArchitecture());
+			      PartialDensityMatrix += TmpMatrix;
+			    }
+			}
 		    }
 		  if (ShowTimeFlag == true)
 		    {
