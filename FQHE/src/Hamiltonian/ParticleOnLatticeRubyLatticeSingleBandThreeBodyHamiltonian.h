@@ -259,14 +259,14 @@ class ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian : public Partic
 
   // compute the matrix element for the annihilation part of the three body on site interaction for the A1 sites 
   //
-  // kx6 = momentum along x of the first annihilation operator
-  // ky6 = momentum along y of the first annihilation operator
-  // kx7 = momentum along x of the second annihilation operator
-  // ky7 = momentum along y of the secondannihilation operator
-  // kx8 = momentum along x of the third annihilation operator
-  // ky8 = momentum along y of the third annihilation operator
+  // kx4 = momentum along x of the first annihilation operator
+  // ky4 = momentum along y of the first annihilation operator
+  // kx5 = momentum along x of the second annihilation operator
+  // ky5 = momentum along y of the secondannihilation operator
+  // kx6 = momentum along x of the third annihilation operator
+  // ky6 = momentum along y of the third annihilation operator
   // return value = corresponding matrix element
-  Complex ComputeThreeBodyMatrixElementOnSiteA1A1A1Out(int kx6, int ky6, int kx7, int ky7, int kx8, int ky8);
+  Complex ComputeThreeBodyMatrixElementOnSiteA1A1A1Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
 
   // compute the matrix element for the creation part of the three body on site interaction for the A2 sites 
   //
@@ -281,14 +281,14 @@ class ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian : public Partic
 
   // compute the matrix element for the annihilation part of the three body on site interaction for the A2 sites 
   //
-  // kx6 = momentum along x of the first annihilation operator
-  // ky6 = momentum along y of the first annihilation operator
-  // kx7 = momentum along x of the second annihilation operator
-  // ky7 = momentum along y of the secondannihilation operator
-  // kx8 = momentum along x of the third annihilation operator
-  // ky8 = momentum along y of the third annihilation operator
+  // kx4 = momentum along x of the first annihilation operator
+  // ky4 = momentum along y of the first annihilation operator
+  // kx5 = momentum along x of the second annihilation operator
+  // ky5 = momentum along y of the secondannihilation operator
+  // kx6 = momentum along x of the third annihilation operator
+  // ky6 = momentum along y of the third annihilation operator
   // return value = corresponding matrix element
-  Complex ComputeThreeBodyMatrixElementOnSiteA2A2A2Out(int kx6, int ky6, int kx7, int ky7, int kx8, int ky8);
+  Complex ComputeThreeBodyMatrixElementOnSiteA2A2A2Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
 
   // compute the matrix element for the creation part of the three body on site interaction for the A3 sites 
   //
@@ -303,14 +303,14 @@ class ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian : public Partic
 
   // compute the matrix element for the annihilation part of the three body on site interaction for the A3 sites 
   //
-  // kx6 = momentum along x of the first annihilation operator
-  // ky6 = momentum along y of the first annihilation operator
-  // kx7 = momentum along x of the second annihilation operator
-  // ky7 = momentum along y of the secondannihilation operator
-  // kx8 = momentum along x of the third annihilation operator
-  // ky8 = momentum along y of the third annihilation operator
+  // kx4 = momentum along x of the first annihilation operator
+  // ky4 = momentum along y of the first annihilation operator
+  // kx5 = momentum along x of the second annihilation operator
+  // ky5 = momentum along y of the secondannihilation operator
+  // kx6 = momentum along x of the third annihilation operator
+  // ky6 = momentum along y of the third annihilation operator
   // return value = corresponding matrix element
-  Complex ComputeThreeBodyMatrixElementOnSiteA3A3A3Out(int kx6, int ky6, int kx7, int ky7, int kx8, int ky8);
+  Complex ComputeThreeBodyMatrixElementOnSiteA3A3A3Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
 
   // compute the matrix element for the creation part of the three body on site interaction for the A4 sites 
   //
@@ -325,14 +325,14 @@ class ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian : public Partic
 
   // compute the matrix element for the annihilation part of the three body on site interaction for the A4 sites 
   //
-  // kx6 = momentum along x of the first annihilation operator
-  // ky6 = momentum along y of the first annihilation operator
-  // kx7 = momentum along x of the second annihilation operator
-  // ky7 = momentum along y of the secondannihilation operator
-  // kx8 = momentum along x of the third annihilation operator
-  // ky8 = momentum along y of the third annihilation operator
+  // kx4 = momentum along x of the first annihilation operator
+  // ky4 = momentum along y of the first annihilation operator
+  // kx5 = momentum along x of the second annihilation operator
+  // ky5 = momentum along y of the secondannihilation operator
+  // kx6 = momentum along x of the third annihilation operator
+  // ky6 = momentum along y of the third annihilation operator
   // return value = corresponding matrix element
-  Complex ComputeThreeBodyMatrixElementOnSiteA4A4A4Out(int kx6, int ky6, int kx7, int ky7, int kx8, int ky8);
+  Complex ComputeThreeBodyMatrixElementOnSiteA4A4A4Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
 
   // compute the matrix element for the creation part of the three body on site interaction for the A5 sites 
   //
@@ -347,14 +347,14 @@ class ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian : public Partic
 
   // compute the matrix element for the annihilation part of the three body on site interaction for the A5 sites 
   //
-  // kx6 = momentum along x of the first annihilation operator
-  // ky6 = momentum along y of the first annihilation operator
-  // kx7 = momentum along x of the second annihilation operator
-  // ky7 = momentum along y of the secondannihilation operator
-  // kx8 = momentum along x of the third annihilation operator
-  // ky8 = momentum along y of the third annihilation operator
+  // kx4 = momentum along x of the first annihilation operator
+  // ky4 = momentum along y of the first annihilation operator
+  // kx5 = momentum along x of the second annihilation operator
+  // ky5 = momentum along y of the secondannihilation operator
+  // kx6 = momentum along x of the third annihilation operator
+  // ky6 = momentum along y of the third annihilation operator
   // return value = corresponding matrix element
-  Complex ComputeThreeBodyMatrixElementOnSiteA5A5A5Out(int kx6, int ky6, int kx7, int ky7, int kx8, int ky8);
+  Complex ComputeThreeBodyMatrixElementOnSiteA5A5A5Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
 
   // compute the matrix element for the creation part of the three body on site interaction for the A6 sites 
   //
@@ -369,17 +369,746 @@ class ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian : public Partic
 
   // compute the matrix element for the annihilation part of the three body on site interaction for the A6 sites 
   //
-  // kx6 = momentum along x of the first annihilation operator
-  // ky6 = momentum along y of the first annihilation operator
-  // kx7 = momentum along x of the second annihilation operator
-  // ky7 = momentum along y of the secondannihilation operator
-  // kx8 = momentum along x of the third annihilation operator
-  // ky8 = momentum along y of the third annihilation operator
+  // kx4 = momentum along x of the first annihilation operator
+  // ky4 = momentum along y of the first annihilation operator
+  // kx5 = momentum along x of the second annihilation operator
+  // ky5 = momentum along y of the secondannihilation operator
+  // kx6 = momentum along x of the third annihilation operator
+  // ky6 = momentum along y of the third annihilation operator
   // return value = corresponding matrix element
-  Complex ComputeThreeBodyMatrixElementOnSiteA6A6A6Out(int kx6, int ky6, int kx7, int ky7, int kx8, int ky8);
+  Complex ComputeThreeBodyMatrixElementOnSiteA6A6A6Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
 
+  // compute the matrix element for the creation part of the three body interaction between sites A1, A3 and A5
+  //
+  // kx1 = momentum along x of the creation operator of the A1 site
+  // ky1 = momentum along y of the creation operator of the A1 site
+  // kx2 = momentum along x of the creation operator of the A3 site
+  // ky2 = momentum along y of the creation operator of the A3 site
+  // kx3 = momentum along x of the creation operator of the A5 site
+  // ky3 = momentum along y of the creation operator of the A5 site
+  // return value = corresponding matrix element
+   Complex ComputeThreeBodyMatrixElementA1A3A5In(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3);
+
+  // compute the matrix element for the annihilation part of the three body interaction between sites A1, A3 and A5 
+  //
+  // kx4 = momentum along x of the annihilation operator of the A1 site
+  // ky4 = momentum along y of the annihilation operator of the A1 site
+  // kx5 = momentum along x of the annihilation operator of the A3 site
+  // ky5 = momentum along y of the annihilation operator of the A3 site
+  // kx6 = momentum along x of the annihilation operator of the A5 site
+  // ky6 = momentum along y of the annihilation operator of the A5 site
+  // return value = corresponding matrix element
+  Complex ComputeThreeBodyMatrixElementA1A3A5Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
+
+  // compute the matrix element for the creation part of the three body interaction between sites A2, A4 and A6
+  //
+  // kx1 = momentum along x of the creation operator of the A2 site
+  // ky1 = momentum along y of the creation operator of the A2 site
+  // kx2 = momentum along x of the creation operator of the A4 site
+  // ky2 = momentum along y of the creation operator of the A4 site
+  // kx3 = momentum along x of the creation operator of the A6 site
+  // ky3 = momentum along y of the creation operator of the A6 site
+  // return value = corresponding matrix element
+   Complex ComputeThreeBodyMatrixElementA2A4A6In(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3);
+
+  // compute the matrix element for the annihilation part of the three body interaction between sites A2, A4 and A6 
+  //
+  // kx4 = momentum along x of the annihilation operator of the A2 site
+  // ky4 = momentum along y of the annihilation operator of the A2 site
+  // kx5 = momentum along x of the annihilation operator of the A4 site
+  // ky5 = momentum along y of the annihilation operator of the A4 site
+  // kx6 = momentum along x of the annihilation operator of the A6 site
+  // ky6 = momentum along y of the annihilation operator of the A6 site
+  // return value = corresponding matrix element
+  Complex ComputeThreeBodyMatrixElementA2A4A6Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
+
+  // compute the matrix element for the creation part of the three body interaction between sites A1, A2 and A5
+  //
+  // kx1 = momentum along x of the creation operator of the A1 site
+  // ky1 = momentum along y of the creation operator of the A1 site
+  // kx2 = momentum along x of the creation operator of the A2 site
+  // ky2 = momentum along y of the creation operator of the A2 site
+  // kx3 = momentum along x of the creation operator of the A5 site
+  // ky3 = momentum along y of the creation operator of the A5 site
+  // return value = corresponding matrix element
+   Complex ComputeThreeBodyMatrixElementA1A2A5In(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3);
+
+  // compute the matrix element for the annihilation part of the three body interaction between sites A1, A2 and A5 
+  //
+  // kx4 = momentum along x of the annihilation operator of the A1 site
+  // ky4 = momentum along y of the annihilation operator of the A1 site
+  // kx5 = momentum along x of the annihilation operator of the A2 site
+  // ky5 = momentum along y of the annihilation operator of the A2 site
+  // kx6 = momentum along x of the annihilation operator of the A5 site
+  // ky6 = momentum along y of the annihilation operator of the A5 site
+  // return value = corresponding matrix element
+  Complex ComputeThreeBodyMatrixElementA1A2A5Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
+
+  // compute the matrix element for the creation part of the three body interaction between sites A1, A4 and A5
+  //
+  // kx1 = momentum along x of the creation operator of the A1 site
+  // ky1 = momentum along y of the creation operator of the A1 site
+  // kx2 = momentum along x of the creation operator of the A4 site
+  // ky2 = momentum along y of the creation operator of the A4 site
+  // kx3 = momentum along x of the creation operator of the A5 site
+  // ky3 = momentum along y of the creation operator of the A5 site
+  // return value = corresponding matrix element
+   Complex ComputeThreeBodyMatrixElementA1A4A5In(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3);
+
+  // compute the matrix element for the annihilation part of the three body interaction between sites A1, A4 and A5 
+  //
+  // kx4 = momentum along x of the annihilation operator of the A1 site
+  // ky4 = momentum along y of the annihilation operator of the A1 site
+  // kx5 = momentum along x of the annihilation operator of the A4 site
+  // ky5 = momentum along y of the annihilation operator of the A4 site
+  // kx6 = momentum along x of the annihilation operator of the A5 site
+  // ky6 = momentum along y of the annihilation operator of the A5 site
+  // return value = corresponding matrix element
+  Complex ComputeThreeBodyMatrixElementA1A4A5Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
+
+  // compute the matrix element for the creation part of the three body interaction between sites A2, A4 and A5
+  //
+  // kx1 = momentum along x of the creation operator of the A2 site
+  // ky1 = momentum along y of the creation operator of the A2 site
+  // kx2 = momentum along x of the creation operator of the A4 site
+  // ky2 = momentum along y of the creation operator of the A4 site
+  // kx3 = momentum along x of the creation operator of the A5 site
+  // ky3 = momentum along y of the creation operator of the A5 site
+  // return value = corresponding matrix element
+   Complex ComputeThreeBodyMatrixElementA2A4A5In(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3);
+
+  // compute the matrix element for the annihilation part of the three body interaction between sites A2, A4 and A5 
+  //
+  // kx4 = momentum along x of the annihilation operator of the A2 site
+  // ky4 = momentum along y of the annihilation operator of the A2 site
+  // kx5 = momentum along x of the annihilation operator of the A4 site
+  // ky5 = momentum along y of the annihilation operator of the A4 site
+  // kx6 = momentum along x of the annihilation operator of the A5 site
+  // ky6 = momentum along y of the annihilation operator of the A5 site
+  // return value = corresponding matrix element
+  Complex ComputeThreeBodyMatrixElementA2A4A5Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
+
+  // compute the matrix element for the creation part of the three body interaction between sites A1, A2 and A4
+  //
+  // kx1 = momentum along x of the creation operator of the A1 site
+  // ky1 = momentum along y of the creation operator of the A1 site
+  // kx2 = momentum along x of the creation operator of the A2 site
+  // ky2 = momentum along y of the creation operator of the A2 site
+  // kx3 = momentum along x of the creation operator of the A4 site
+  // ky3 = momentum along y of the creation operator of the A4 site
+  // return value = corresponding matrix element
+   Complex ComputeThreeBodyMatrixElementA1A2A4In(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3);
+
+  // compute the matrix element for the annihilation part of the three body interaction between sites A1, A2 and A4 
+  //
+  // kx4 = momentum along x of the annihilation operator of the A1 site
+  // ky4 = momentum along y of the annihilation operator of the A1 site
+  // kx5 = momentum along x of the annihilation operator of the A2 site
+  // ky5 = momentum along y of the annihilation operator of the A2 site
+  // kx6 = momentum along x of the annihilation operator of the A4 site
+  // ky6 = momentum along y of the annihilation operator of the A4 site
+  // return value = corresponding matrix element
+  Complex ComputeThreeBodyMatrixElementA1A2A4Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
+
+  // compute the matrix element for the creation part of the three body interaction between sites A1, A2 and A6
+  //
+  // kx1 = momentum along x of the creation operator of the A1 site
+  // ky1 = momentum along y of the creation operator of the A1 site
+  // kx2 = momentum along x of the creation operator of the A2 site
+  // ky2 = momentum along y of the creation operator of the A2 site
+  // kx3 = momentum along x of the creation operator of the A6 site
+  // ky3 = momentum along y of the creation operator of the A6 site
+  // return value = corresponding matrix element
+   Complex ComputeThreeBodyMatrixElementA1A3A6In(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3);
+
+  // compute the matrix element for the annihilation part of the three body interaction between sites A1, A2 and A6 
+  //
+  // kx4 = momentum along x of the annihilation operator of the A1 site
+  // ky4 = momentum along y of the annihilation operator of the A1 site
+  // kx5 = momentum along x of the annihilation operator of the A2 site
+  // ky5 = momentum along y of the annihilation operator of the A2 site
+  // kx6 = momentum along x of the annihilation operator of the A6 site
+  // ky6 = momentum along y of the annihilation operator of the A6 site
+  // return value = corresponding matrix element
+  Complex ComputeThreeBodyMatrixElementA1A3A6Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
+
+  // compute the matrix element for the creation part of the three body interaction between sites A1, A3 and A4
+  //
+  // kx1 = momentum along x of the creation operator of the A1 site
+  // ky1 = momentum along y of the creation operator of the A1 site
+  // kx2 = momentum along x of the creation operator of the A3 site
+  // ky2 = momentum along y of the creation operator of the A3 site
+  // kx3 = momentum along x of the creation operator of the A4 site
+  // ky3 = momentum along y of the creation operator of the A4 site
+  // return value = corresponding matrix element
+   Complex ComputeThreeBodyMatrixElementA1A3A4In(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3);
+
+  // compute the matrix element for the annihilation part of the three body interaction between sites A1, A3 and A4 
+  //
+  // kx4 = momentum along x of the annihilation operator of the A1 site
+  // ky4 = momentum along y of the annihilation operator of the A1 site
+  // kx5 = momentum along x of the annihilation operator of the A3 site
+  // ky5 = momentum along y of the annihilation operator of the A3 site
+  // kx6 = momentum along x of the annihilation operator of the A4 site
+  // ky6 = momentum along y of the annihilation operator of the A4 site
+  // return value = corresponding matrix element
+  Complex ComputeThreeBodyMatrixElementA1A3A4Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
+
+  // compute the matrix element for the creation part of the three body interaction between sites A1, A4 and A6
+  //
+  // kx1 = momentum along x of the creation operator of the A1 site
+  // ky1 = momentum along y of the creation operator of the A1 site
+  // kx2 = momentum along x of the creation operator of the A4 site
+  // ky2 = momentum along y of the creation operator of the A4 site
+  // kx3 = momentum along x of the creation operator of the A6 site
+  // ky3 = momentum along y of the creation operator of the A6 site
+  // return value = corresponding matrix element
+   Complex ComputeThreeBodyMatrixElementA1A4A6In(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3);
+
+  // compute the matrix element for the annihilation part of the three body interaction between sites A1, A4 and A6 
+  //
+  // kx4 = momentum along x of the annihilation operator of the A1 site
+  // ky4 = momentum along y of the annihilation operator of the A1 site
+  // kx5 = momentum along x of the annihilation operator of the A4 site
+  // ky5 = momentum along y of the annihilation operator of the A4 site
+  // kx6 = momentum along x of the annihilation operator of the A6 site
+  // ky6 = momentum along y of the annihilation operator of the A6 site
+  // return value = corresponding matrix element
+  Complex ComputeThreeBodyMatrixElementA1A4A6Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
+
+  // compute the matrix element for the creation part of the three body interaction between sites A3, A4 and A6
+  //
+  // kx1 = momentum along x of the creation operator of the A3 site
+  // ky1 = momentum along y of the creation operator of the A3 site
+  // kx2 = momentum along x of the creation operator of the A4 site
+  // ky2 = momentum along y of the creation operator of the A4 site
+  // kx3 = momentum along x of the creation operator of the A6 site
+  // ky3 = momentum along y of the creation operator of the A6 site
+  // return value = corresponding matrix element
+   Complex ComputeThreeBodyMatrixElementA3A4A6In(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3);
+
+  // compute the matrix element for the annihilation part of the three body interaction between sites A3, A4 and A6 
+  //
+  // kx4 = momentum along x of the annihilation operator of the A3 site
+  // ky4 = momentum along y of the annihilation operator of the A3 site
+  // kx5 = momentum along x of the annihilation operator of the A4 site
+  // ky5 = momentum along y of the annihilation operator of the A4 site
+  // kx6 = momentum along x of the annihilation operator of the A6 site
+  // ky6 = momentum along y of the annihilation operator of the A6 site
+  // return value = corresponding matrix element
+  Complex ComputeThreeBodyMatrixElementA3A4A6Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
+
+  // compute the matrix element for the creation part of the three body interaction between sites A2, A5 and A6
+  //
+  // kx1 = momentum along x of the creation operator of the A2 site
+  // ky1 = momentum along y of the creation operator of the A2 site
+  // kx2 = momentum along x of the creation operator of the A5 site
+  // ky2 = momentum along y of the creation operator of the A5 site
+  // kx3 = momentum along x of the creation operator of the A6 site
+  // ky3 = momentum along y of the creation operator of the A6 site
+  // return value = corresponding matrix element
+   Complex ComputeThreeBodyMatrixElementA2A5A6In(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3);
+
+  // compute the matrix element for the annihilation part of the three body interaction between sites A2, A5 and A6 
+  //
+  // kx4 = momentum along x of the annihilation operator of the A2 site
+  // ky4 = momentum along y of the annihilation operator of the A2 site
+  // kx5 = momentum along x of the annihilation operator of the A5 site
+  // ky5 = momentum along y of the annihilation operator of the A5 site
+  // kx6 = momentum along x of the annihilation operator of the A6 site
+  // ky6 = momentum along y of the annihilation operator of the A6 site
+  // return value = corresponding matrix element
+  Complex ComputeThreeBodyMatrixElementA2A5A6Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
+
+  // compute the matrix element for the creation part of the three body interaction between sites A2, A3 and A6
+  //
+  // kx1 = momentum along x of the creation operator of the A2 site
+  // ky1 = momentum along y of the creation operator of the A2 site
+  // kx2 = momentum along x of the creation operator of the A3 site
+  // ky2 = momentum along y of the creation operator of the A3 site
+  // kx3 = momentum along x of the creation operator of the A6 site
+  // ky3 = momentum along y of the creation operator of the A6 site
+  // return value = corresponding matrix element
+   Complex ComputeThreeBodyMatrixElementA2A3A6In(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3);
+
+  // compute the matrix element for the annihilation part of the three body interaction between sites A2, A3 and A6 
+  //
+  // kx4 = momentum along x of the annihilation operator of the A2 site
+  // ky4 = momentum along y of the annihilation operator of the A2 site
+  // kx5 = momentum along x of the annihilation operator of the A3 site
+  // ky5 = momentum along y of the annihilation operator of the A3 site
+  // kx6 = momentum along x of the annihilation operator of the A6 site
+  // ky6 = momentum along y of the annihilation operator of the A6 site
+  // return value = corresponding matrix element
+  Complex ComputeThreeBodyMatrixElementA2A3A6Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
+
+  // compute the matrix element for the creation part of the three body interaction between sites A2, A3 and A5
+  //
+  // kx1 = momentum along x of the creation operator of the A2 site
+  // ky1 = momentum along y of the creation operator of the A2 site
+  // kx2 = momentum along x of the creation operator of the A3 site
+  // ky2 = momentum along y of the creation operator of the A3 site
+  // kx3 = momentum along x of the creation operator of the A5 site
+  // ky3 = momentum along y of the creation operator of the A5 site
+  // return value = corresponding matrix element
+   Complex ComputeThreeBodyMatrixElementA2A3A5In(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3);
+
+  // compute the matrix element for the annihilation part of the three body interaction between sites A2, A3 and A5 
+  //
+  // kx4 = momentum along x of the annihilation operator of the A2 site
+  // ky4 = momentum along y of the annihilation operator of the A2 site
+  // kx5 = momentum along x of the annihilation operator of the A3 site
+  // ky5 = momentum along y of the annihilation operator of the A3 site
+  // kx6 = momentum along x of the annihilation operator of the A5 site
+  // ky6 = momentum along y of the annihilation operator of the A5 site
+  // return value = corresponding matrix element
+  Complex ComputeThreeBodyMatrixElementA2A3A5Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
+
+  // compute the matrix element for the creation part of the three body interaction between sites A6, A3 and A5
+  //
+  // kx1 = momentum along x of the creation operator of the A6 site
+  // ky1 = momentum along y of the creation operator of the A6 site
+  // kx2 = momentum along x of the creation operator of the A3 site
+  // ky2 = momentum along y of the creation operator of the A3 site
+  // kx3 = momentum along x of the creation operator of the A5 site
+  // ky3 = momentum along y of the creation operator of the A5 site
+  // return value = corresponding matrix element
+   Complex ComputeThreeBodyMatrixElementA6A3A5In(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3);
+
+  // compute the matrix element for the annihilation part of the three body interaction between sites A6, A3 and A5 
+  //
+  // kx4 = momentum along x of the annihilation operator of the A6 site
+  // ky4 = momentum along y of the annihilation operator of the A6 site
+  // kx5 = momentum along x of the annihilation operator of the A3 site
+  // ky5 = momentum along y of the annihilation operator of the A3 site
+  // kx6 = momentum along x of the annihilation operator of the A5 site
+  // ky6 = momentum along y of the annihilation operator of the A5 site
+  // return value = corresponding matrix element
+  Complex ComputeThreeBodyMatrixElementA6A3A5Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
 
 };
+
+// compute the matrix element for the creation part of the three body interaction between sites A1, A3 and A5
+//
+// kx1 = momentum along x of the creation operator of the A1 site
+// ky1 = momentum along y of the creation operator of the A1 site
+// kx2 = momentum along x of the creation operator of the A3 site
+// ky2 = momentum along y of the creation operator of the A3 site
+// kx3 = momentum along x of the creation operator of the A5 site
+// ky3 = momentum along y of the creation operator of the A5 site
+// return value = corresponding matrix element
+
+inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementA1A3A5In(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3)
+{
+  return 1.0;
+}
+
+// compute the matrix element for the annihilation part of the three body interaction between sites A1, A3 and A5 
+//
+// kx6 = momentum along x of the annihilation operator of the A1 site
+// ky4 = momentum along y of the annihilation operator of the A1 site
+// kx5 = momentum along x of the annihilation operator of the A3 site
+// ky5 = momentum along y of the annihilation operator of the A3 site
+// kx6 = momentum along x of the annihilation operator of the A5 site
+// ky6 = momentum along y of the annihilation operator of the A5 site
+// return value = corresponding matrix element
+
+inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementA1A3A5Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6)
+{
+  return 1.0;
+}
+
+// compute the matrix element for the creation part of the three body interaction between sites A2, A4 and A6
+//
+// kx1 = momentum along x of the creation operator of the A2 site
+// ky1 = momentum along y of the creation operator of the A2 site
+// kx2 = momentum along x of the creation operator of the A4 site
+// ky2 = momentum along y of the creation operator of the A4 site
+// kx3 = momentum along x of the creation operator of the A6 site
+// ky3 = momentum along y of the creation operator of the A6 site
+// return value = corresponding matrix element
+
+inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementA2A4A6In(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3)
+{
+  return 1.0;
+}
+
+// compute the matrix element for the annihilation part of the three body interaction between sites A2, A4 and A6 
+//
+// kx4 = momentum along x of the annihilation operator of the A2 site
+// ky4 = momentum along y of the annihilation operator of the A2 site
+// kx5 = momentum along x of the annihilation operator of the A4 site
+// ky5 = momentum along y of the annihilation operator of the A4 site
+// kx6 = momentum along x of the annihilation operator of the A6 site
+// ky6 = momentum along y of the annihilation operator of the A6 site
+// return value = corresponding matrix element
+
+inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementA2A4A6Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6)
+{
+  return 1.0;
+}
+
+// compute the matrix element for the creation part of the three body interaction between sites A1, A2 and A5
+//
+// kx1 = momentum along x of the creation operator of the A1 site
+// ky1 = momentum along y of the creation operator of the A1 site
+// kx2 = momentum along x of the creation operator of the A2 site
+// ky2 = momentum along y of the creation operator of the A2 site
+// kx3 = momentum along x of the creation operator of the A5 site
+// ky3 = momentum along y of the creation operator of the A5 site
+// return value = corresponding matrix element
+
+inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementA1A2A5In(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3)
+{
+  return 1.0;
+}
+
+// compute the matrix element for the annihilation part of the three body interaction between sites A1, A2 and A5 
+//
+// kx4 = momentum along x of the annihilation operator of the A1 site
+// ky4 = momentum along y of the annihilation operator of the A1 site
+// kx5 = momentum along x of the annihilation operator of the A2 site
+// ky5 = momentum along y of the annihilation operator of the A2 site
+// kx6 = momentum along x of the annihilation operator of the A5 site
+// ky6 = momentum along y of the annihilation operator of the A5 site
+// return value = corresponding matrix element
+
+inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementA1A2A5Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6)
+{
+  return 1.0;
+}
+
+// compute the matrix element for the creation part of the three body interaction between sites A1, A4 and A5
+//
+// kx1 = momentum along x of the creation operator of the A1 site
+// ky1 = momentum along y of the creation operator of the A1 site
+// kx2 = momentum along x of the creation operator of the A4 site
+// ky2 = momentum along y of the creation operator of the A4 site
+// kx3 = momentum along x of the creation operator of the A5 site
+// ky3 = momentum along y of the creation operator of the A5 site
+// return value = corresponding matrix element
+
+inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementA1A4A5In(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3)
+{
+  return 1.0;
+}
+
+// compute the matrix element for the annihilation part of the three body interaction between sites A1, A4 and A5 
+//
+// kx4 = momentum along x of the annihilation operator of the A1 site
+// ky4 = momentum along y of the annihilation operator of the A1 site
+// kx5 = momentum along x of the annihilation operator of the A4 site
+// ky5 = momentum along y of the annihilation operator of the A4 site
+// kx6 = momentum along x of the annihilation operator of the A5 site
+// ky6 = momentum along y of the annihilation operator of the A5 site
+// return value = corresponding matrix element
+
+inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementA1A4A5Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6)
+{
+  return 1.0;
+}
+
+// compute the matrix element for the creation part of the three body interaction between sites A2, A4 and A5
+//
+// kx1 = momentum along x of the creation operator of the A2 site
+// ky1 = momentum along y of the creation operator of the A2 site
+// kx2 = momentum along x of the creation operator of the A4 site
+// ky2 = momentum along y of the creation operator of the A4 site
+// kx3 = momentum along x of the creation operator of the A5 site
+// ky3 = momentum along y of the creation operator of the A5 site
+// return value = corresponding matrix element
+
+inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementA2A4A5In(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3)
+{
+  return 1.0;
+}
+
+// compute the matrix element for the annihilation part of the three body interaction between sites A2, A4 and A5 
+//
+// kx4 = momentum along x of the annihilation operator of the A2 site
+// ky4 = momentum along y of the annihilation operator of the A2 site
+// kx5 = momentum along x of the annihilation operator of the A4 site
+// ky5 = momentum along y of the annihilation operator of the A4 site
+// kx6 = momentum along x of the annihilation operator of the A5 site
+// ky6 = momentum along y of the annihilation operator of the A5 site
+// return value = corresponding matrix element
+
+inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementA2A4A5Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6)
+{
+  return 1.0;
+}
+
+// compute the matrix element for the creation part of the three body interaction between sites A1, A2 and A4
+//
+// kx1 = momentum along x of the creation operator of the A1 site
+// ky1 = momentum along y of the creation operator of the A1 site
+// kx2 = momentum along x of the creation operator of the A2 site
+// ky2 = momentum along y of the creation operator of the A2 site
+// kx3 = momentum along x of the creation operator of the A4 site
+// ky3 = momentum along y of the creation operator of the A4 site
+// return value = corresponding matrix element
+
+inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementA1A2A4In(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3)
+{
+  return 1.0;
+}
+
+// compute the matrix element for the annihilation part of the three body interaction between sites A1, A2 and A4 
+//
+// kx4 = momentum along x of the annihilation operator of the A1 site
+// ky4 = momentum along y of the annihilation operator of the A1 site
+// kx5 = momentum along x of the annihilation operator of the A2 site
+// ky5 = momentum along y of the annihilation operator of the A2 site
+// kx6 = momentum along x of the annihilation operator of the A4 site
+// ky6 = momentum along y of the annihilation operator of the A4 site
+// return value = corresponding matrix element
+
+inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementA1A2A4Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6)
+{
+  return 1.0;
+}
+
+// compute the matrix element for the creation part of the three body interaction between sites A1, A2 and A6
+//
+// kx1 = momentum along x of the creation operator of the A1 site
+// ky1 = momentum along y of the creation operator of the A1 site
+// kx2 = momentum along x of the creation operator of the A2 site
+// ky2 = momentum along y of the creation operator of the A2 site
+// kx3 = momentum along x of the creation operator of the A6 site
+// ky3 = momentum along y of the creation operator of the A6 site
+// return value = corresponding matrix element
+
+inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementA1A3A6In(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3)
+{
+  return Phase(-this->KxFactor * ((double) kx3));
+}
+
+// compute the matrix element for the annihilation part of the three body interaction between sites A1, A2 and A6 
+//
+// kx4 = momentum along x of the annihilation operator of the A1 site
+// ky4 = momentum along y of the annihilation operator of the A1 site
+// kx5 = momentum along x of the annihilation operator of the A2 site
+// ky5 = momentum along y of the annihilation operator of the A2 site
+// kx6 = momentum along x of the annihilation operator of the A6 site
+// ky6 = momentum along y of the annihilation operator of the A6 site
+// return value = corresponding matrix element
+
+inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementA1A3A6Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6)
+{
+  return Phase(this->KxFactor * ((double) kx6));
+}
+
+// compute the matrix element for the creation part of the three body interaction between sites A1, A3 and A4
+//
+// kx1 = momentum along x of the creation operator of the A1 site
+// ky1 = momentum along y of the creation operator of the A1 site
+// kx2 = momentum along x of the creation operator of the A3 site
+// ky2 = momentum along y of the creation operator of the A3 site
+// kx3 = momentum along x of the creation operator of the A4 site
+// ky3 = momentum along y of the creation operator of the A4 site
+// return value = corresponding matrix element
+
+inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementA1A3A4In(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3)
+{
+  return Phase(-this->KxFactor * ((double) kx3));
+}
+
+// compute the matrix element for the annihilation part of the three body interaction between sites A1, A3 and A4 
+//
+// kx4 = momentum along x of the annihilation operator of the A1 site
+// ky4 = momentum along y of the annihilation operator of the A1 site
+// kx5 = momentum along x of the annihilation operator of the A3 site
+// ky5 = momentum along y of the annihilation operator of the A3 site
+// kx6 = momentum along x of the annihilation operator of the A4 site
+// ky6 = momentum along y of the annihilation operator of the A4 site
+// return value = corresponding matrix element
+
+inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementA1A3A4Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6)
+{
+  return Phase(this->KxFactor * ((double) kx6));
+}
+
+// compute the matrix element for the creation part of the three body interaction between sites A1, A4 and A6
+//
+// kx1 = momentum along x of the creation operator of the A1 site
+// ky1 = momentum along y of the creation operator of the A1 site
+// kx2 = momentum along x of the creation operator of the A4 site
+// ky2 = momentum along y of the creation operator of the A4 site
+// kx3 = momentum along x of the creation operator of the A6 site
+// ky3 = momentum along y of the creation operator of the A6 site
+// return value = corresponding matrix element
+
+inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementA1A4A6In(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3)
+{
+  return Phase(-this->KxFactor * ((double) (kx2 + kx3)));
+}
+
+// compute the matrix element for the annihilation part of the three body interaction between sites A1, A4 and A6 
+//
+// kx4 = momentum along x of the annihilation operator of the A1 site
+// ky4 = momentum along y of the annihilation operator of the A1 site
+// kx5 = momentum along x of the annihilation operator of the A4 site
+// ky5 = momentum along y of the annihilation operator of the A4 site
+// kx6 = momentum along x of the annihilation operator of the A6 site
+// ky6 = momentum along y of the annihilation operator of the A6 site
+// return value = corresponding matrix element
+
+inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementA1A4A6Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6)
+{
+  return Phase(this->KxFactor * ((double) (kx5 + kx6)));
+}
+
+// compute the matrix element for the creation part of the three body interaction between sites A3, A4 and A6
+//
+// kx1 = momentum along x of the creation operator of the A3 site
+// ky1 = momentum along y of the creation operator of the A3 site
+// kx2 = momentum along x of the creation operator of the A4 site
+// ky2 = momentum along y of the creation operator of the A4 site
+// kx3 = momentum along x of the creation operator of the A6 site
+// ky3 = momentum along y of the creation operator of the A6 site
+// return value = corresponding matrix element
+
+inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementA3A4A6In(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3)
+{
+  return Phase(-this->KxFactor * ((double) (kx2 + kx3)));
+}
+
+// compute the matrix element for the annihilation part of the three body interaction between sites A3, A4 and A6 
+//
+// kx4 = momentum along x of the annihilation operator of the A3 site
+// ky4 = momentum along y of the annihilation operator of the A3 site
+// kx5 = momentum along x of the annihilation operator of the A4 site
+// ky5 = momentum along y of the annihilation operator of the A4 site
+// kx6 = momentum along x of the annihilation operator of the A6 site
+// ky6 = momentum along y of the annihilation operator of the A6 site
+// return value = corresponding matrix element
+
+inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementA3A4A6Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6)
+{
+  return Phase(this->KxFactor * ((double) (kx5 + kx6)));
+}
+
+// compute the matrix element for the creation part of the three body interaction between sites A2, A5 and A6
+//
+// kx1 = momentum along x of the creation operator of the A2 site
+// ky1 = momentum along y of the creation operator of the A2 site
+// kx2 = momentum along x of the creation operator of the A5 site
+// ky2 = momentum along y of the creation operator of the A5 site
+// kx3 = momentum along x of the creation operator of the A6 site
+// ky3 = momentum along y of the creation operator of the A6 site
+// return value = corresponding matrix element
+
+inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementA2A5A6In(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3)
+{
+  return Phase(this->KxFactor * ((double) kx2) + this->KyFactor * ((double) ky2));
+}
+
+// compute the matrix element for the annihilation part of the three body interaction between sites A2, A5 and A6 
+//
+// kx4 = momentum along x of the annihilation operator of the A2 site
+// ky4 = momentum along y of the annihilation operator of the A2 site
+// kx5 = momentum along x of the annihilation operator of the A5 site
+// ky5 = momentum along y of the annihilation operator of the A5 site
+// kx6 = momentum along x of the annihilation operator of the A6 site
+// ky6 = momentum along y of the annihilation operator of the A6 site
+// return value = corresponding matrix element
+
+inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementA2A5A6Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6)
+{
+  return Phase(-this->KxFactor * ((double) kx5) - this->KyFactor * ((double) ky5));
+}
+
+// compute the matrix element for the creation part of the three body interaction between sites A2, A3 and A6
+//
+// kx1 = momentum along x of the creation operator of the A2 site
+// ky1 = momentum along y of the creation operator of the A2 site
+// kx2 = momentum along x of the creation operator of the A3 site
+// ky2 = momentum along y of the creation operator of the A3 site
+// kx3 = momentum along x of the creation operator of the A6 site
+// ky3 = momentum along y of the creation operator of the A6 site
+// return value = corresponding matrix element
+
+inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementA2A3A6In(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3)
+{
+  return Phase(this->KxFactor * ((double) kx2) + this->KyFactor * ((double) ky2));
+}
+
+// compute the matrix element for the annihilation part of the three body interaction between sites A2, A3 and A6 
+//
+// kx4 = momentum along x of the annihilation operator of the A2 site
+// ky4 = momentum along y of the annihilation operator of the A2 site
+// kx5 = momentum along x of the annihilation operator of the A3 site
+// ky5 = momentum along y of the annihilation operator of the A3 site
+// kx6 = momentum along x of the annihilation operator of the A6 site
+// ky6 = momentum along y of the annihilation operator of the A6 site
+// return value = corresponding matrix element
+
+inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementA2A3A6Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6)
+{
+  return Phase(-this->KxFactor * ((double) kx5) - this->KyFactor * ((double) ky5));
+}
+
+// compute the matrix element for the creation part of the three body interaction between sites A2, A3 and A5
+//
+// kx1 = momentum along x of the creation operator of the A2 site
+// ky1 = momentum along y of the creation operator of the A2 site
+// kx2 = momentum along x of the creation operator of the A3 site
+// ky2 = momentum along y of the creation operator of the A3 site
+// kx3 = momentum along x of the creation operator of the A5 site
+// ky3 = momentum along y of the creation operator of the A5 site
+// return value = corresponding matrix element
+
+inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementA2A3A5In(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3)
+{
+  return Phase(this->KxFactor * ((double) (kx2 + kx3)) + this->KyFactor * ((double) (ky2 + ky3)));
+}
+
+// compute the matrix element for the annihilation part of the three body interaction between sites A2, A3 and A5 
+//
+// kx4 = momentum along x of the annihilation operator of the A2 site
+// ky4 = momentum along y of the annihilation operator of the A2 site
+// kx5 = momentum along x of the annihilation operator of the A3 site
+// ky5 = momentum along y of the annihilation operator of the A3 site
+// kx6 = momentum along x of the annihilation operator of the A5 site
+// ky6 = momentum along y of the annihilation operator of the A5 site
+// return value = corresponding matrix element
+
+inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementA2A3A5Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6)
+{
+  return Phase(-this->KxFactor * ((double) (kx5 + kx6)) - this->KyFactor * ((double) (ky5 + ky6)));
+}
+
+// compute the matrix element for the creation part of the three body interaction between sites A6, A3 and A5
+//
+// kx1 = momentum along x of the creation operator of the A6 site
+// ky1 = momentum along y of the creation operator of the A6 site
+// kx2 = momentum along x of the creation operator of the A3 site
+// ky2 = momentum along y of the creation operator of the A3 site
+// kx3 = momentum along x of the creation operator of the A5 site
+// ky3 = momentum along y of the creation operator of the A5 site
+// return value = corresponding matrix element
+
+inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementA6A3A5In(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3)
+{
+  return Phase(this->KxFactor * ((double) (kx2 + kx3)) + this->KyFactor * ((double) (ky2 + ky3)));
+}
+
+// compute the matrix element for the annihilation part of the three body interaction between sites A6, A3 and A5 
+//
+// kx4 = momentum along x of the annihilation operator of the A6 site
+// ky4 = momentum along y of the annihilation operator of the A6 site
+// kx5 = momentum along x of the annihilation operator of the A3 site
+// ky5 = momentum along y of the annihilation operator of the A3 site
+// kx6 = momentum along x of the annihilation operator of the A5 site
+// ky6 = momentum along y of the annihilation operator of the A5 site
+// return value = corresponding matrix element
+
+inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementA6A3A5Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6)
+{
+  return Phase(-this->KxFactor * ((double) (kx5 + kx6)) - this->KyFactor * ((double) (ky5 + ky6)));
+}
+
+
 
 
 // compute the matrix element for the creation part of the three body on site interaction for the A1 sites 
@@ -399,15 +1128,15 @@ inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::Compu
 
 // compute the matrix element for the annihilation part of the three body on site interaction for the A1 sites 
 //
-// kx6 = momentum along x of the first annihilation operator
-// ky6 = momentum along y of the first annihilation operator
-// kx7 = momentum along x of the second annihilation operator
-// ky7 = momentum along y of the secondannihilation operator
-// kx8 = momentum along x of the third annihilation operator
-// ky8 = momentum along y of the third annihilation operator
+// kx4 = momentum along x of the first annihilation operator
+// ky4 = momentum along y of the first annihilation operator
+// kx5 = momentum along x of the second annihilation operator
+// ky5 = momentum along y of the secondannihilation operator
+// kx6 = momentum along x of the third annihilation operator
+// ky6 = momentum along y of the third annihilation operator
 // return value = corresponding matrix element
 
-inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementOnSiteA1A1A1Out(int kx6, int ky6, int kx7, int ky7, int kx8, int ky8)
+inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementOnSiteA1A1A1Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6)
 {
   return 1.0;
 }
@@ -429,15 +1158,15 @@ inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::Compu
 
 // compute the matrix element for the annihilation part of the three body on site interaction for the A2 sites 
 //
-// kx6 = momentum along x of the first annihilation operator
-// ky6 = momentum along y of the first annihilation operator
-// kx7 = momentum along x of the second annihilation operator
-// ky7 = momentum along y of the secondannihilation operator
-// kx8 = momentum along x of the third annihilation operator
-// ky8 = momentum along y of the third annihilation operator
+// kx4 = momentum along x of the first annihilation operator
+// ky4 = momentum along y of the first annihilation operator
+// kx5 = momentum along x of the second annihilation operator
+// ky5 = momentum along y of the secondannihilation operator
+// kx6 = momentum along x of the third annihilation operator
+// ky6 = momentum along y of the third annihilation operator
 // return value = corresponding matrix element
 
-inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementOnSiteA2A2A2Out(int kx6, int ky6, int kx7, int ky7, int kx8, int ky8)
+inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementOnSiteA2A2A2Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6)
 {
   return 1.0;
 }
@@ -459,15 +1188,15 @@ inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::Compu
 
 // compute the matrix element for the annihilation part of the three body on site interaction for the A3 sites 
 //
-// kx6 = momentum along x of the first annihilation operator
-// ky6 = momentum along y of the first annihilation operator
-// kx7 = momentum along x of the second annihilation operator
-// ky7 = momentum along y of the secondannihilation operator
-// kx8 = momentum along x of the third annihilation operator
-// ky8 = momentum along y of the third annihilation operator
+// kx4 = momentum along x of the first annihilation operator
+// ky4 = momentum along y of the first annihilation operator
+// kx5 = momentum along x of the second annihilation operator
+// ky5 = momentum along y of the secondannihilation operator
+// kx6 = momentum along x of the third annihilation operator
+// ky6 = momentum along y of the third annihilation operator
 // return value = corresponding matrix element
 
-inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementOnSiteA3A3A3Out(int kx6, int ky6, int kx7, int ky7, int kx8, int ky8)
+inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementOnSiteA3A3A3Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6)
 {
   return 1.0;
 }
@@ -489,15 +1218,15 @@ inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::Compu
 
 // compute the matrix element for the annihilation part of the three body on site interaction for the A4 sites 
 //
-// kx6 = momentum along x of the first annihilation operator
-// ky6 = momentum along y of the first annihilation operator
-// kx7 = momentum along x of the second annihilation operator
-// ky7 = momentum along y of the secondannihilation operator
-// kx8 = momentum along x of the third annihilation operator
-// ky8 = momentum along y of the third annihilation operator
+// kx4 = momentum along x of the first annihilation operator
+// ky4 = momentum along y of the first annihilation operator
+// kx5 = momentum along x of the second annihilation operator
+// ky5 = momentum along y of the secondannihilation operator
+// kx6 = momentum along x of the third annihilation operator
+// ky6 = momentum along y of the third annihilation operator
 // return value = corresponding matrix element
 
-inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementOnSiteA4A4A4Out(int kx6, int ky6, int kx7, int ky7, int kx8, int ky8)
+inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementOnSiteA4A4A4Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6)
 {
   return 1.0;
 }
@@ -519,15 +1248,15 @@ inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::Compu
 
 // compute the matrix element for the annihilation part of the three body on site interaction for the A5 sites 
 //
-// kx6 = momentum along x of the first annihilation operator
-// ky6 = momentum along y of the first annihilation operator
-// kx7 = momentum along x of the second annihilation operator
-// ky7 = momentum along y of the secondannihilation operator
-// kx8 = momentum along x of the third annihilation operator
-// ky8 = momentum along y of the third annihilation operator
+// kx4 = momentum along x of the first annihilation operator
+// ky4 = momentum along y of the first annihilation operator
+// kx5 = momentum along x of the second annihilation operator
+// ky5 = momentum along y of the secondannihilation operator
+// kx6 = momentum along x of the third annihilation operator
+// ky6 = momentum along y of the third annihilation operator
 // return value = corresponding matrix element
 
-inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementOnSiteA5A5A5Out(int kx6, int ky6, int kx7, int ky7, int kx8, int ky8)
+inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementOnSiteA5A5A5Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6)
 {
   return 1.0;
 }
@@ -549,15 +1278,15 @@ inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::Compu
 
 // compute the matrix element for the annihilation part of the three body on site interaction for the A6 sites 
 //
-// kx6 = momentum along x of the first annihilation operator
-// ky6 = momentum along y of the first annihilation operator
-// kx7 = momentum along x of the second annihilation operator
-// ky7 = momentum along y of the secondannihilation operator
-// kx8 = momentum along x of the third annihilation operator
-// ky8 = momentum along y of the third annihilation operator
+// kx4 = momentum along x of the first annihilation operator
+// ky4 = momentum along y of the first annihilation operator
+// kx5 = momentum along x of the second annihilation operator
+// ky5 = momentum along y of the secondannihilation operator
+// kx6 = momentum along x of the third annihilation operator
+// ky6 = momentum along y of the third annihilation operator
 // return value = corresponding matrix element
 
-inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementOnSiteA6A6A6Out(int kx6, int ky6, int kx7, int ky7, int kx8, int ky8)
+inline Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementOnSiteA6A6A6Out(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6)
 {
   return 1.0;
 }

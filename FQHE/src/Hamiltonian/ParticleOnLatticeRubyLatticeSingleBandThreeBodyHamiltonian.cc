@@ -259,18 +259,10 @@ void ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::EvaluateInterac
       double* PermutationSign = 0; 
       int NbrPermutations = this->ComputePermutations(Permutations, PermutationSign);
       
-      Complex TmpABBBB;
-      Complex TmpBAAAA;
-
       int TmpLargestSector = 0;
       for (int i = 0; i < this->NbrNBodySectorSums; ++i)
 	if (this->NbrNBodySectorIndicesPerSum[i] > TmpLargestSector)
 	  TmpLargestSector = this->NbrNBodySectorIndicesPerSum[i];
-
-      Complex* TmpA1A3A5In = new Complex[TmpLargestSector];
-      Complex* TmpA1A3A5Out = new Complex[TmpLargestSector];
-      Complex* TmpA2A4A6In = new Complex[TmpLargestSector];
-      Complex* TmpA2A4A6Out = new Complex[TmpLargestSector];
 
       int KxIn[3];
       int KyIn[3];
@@ -279,6 +271,35 @@ void ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::EvaluateInterac
       double FactorU = this->UPotential * 0.5 / pow(((double) (this->NbrSiteX * this->NbrSiteY)), 2);
       double FactorV = this->VPotential * 0.5 / pow(((double) (this->NbrSiteX * this->NbrSiteY)), 2);
       this->NBodyInteractionFactors = new Complex* [this->NbrNBodySectorSums];
+
+      Complex* TmpA1A3A5In = new Complex[TmpLargestSector];
+      Complex* TmpA1A3A5Out = new Complex[TmpLargestSector];
+      Complex* TmpA2A4A6In = new Complex[TmpLargestSector];
+      Complex* TmpA2A4A6Out = new Complex[TmpLargestSector];
+      Complex* TmpA1A2A5In = new Complex[TmpLargestSector];
+      Complex* TmpA1A2A5Out = new Complex[TmpLargestSector];
+      Complex* TmpA1A4A5In = new Complex[TmpLargestSector];
+      Complex* TmpA1A4A5Out = new Complex[TmpLargestSector];
+      Complex* TmpA2A4A5In = new Complex[TmpLargestSector];
+      Complex* TmpA2A4A5Out = new Complex[TmpLargestSector];
+      Complex* TmpA1A2A4In = new Complex[TmpLargestSector];
+      Complex* TmpA1A2A4Out = new Complex[TmpLargestSector];
+      Complex* TmpA1A3A6In = new Complex[TmpLargestSector];
+      Complex* TmpA1A3A6Out = new Complex[TmpLargestSector];
+      Complex* TmpA1A3A4In = new Complex[TmpLargestSector];
+      Complex* TmpA1A3A4Out = new Complex[TmpLargestSector];
+      Complex* TmpA1A4A6In = new Complex[TmpLargestSector];
+      Complex* TmpA1A4A6Out = new Complex[TmpLargestSector];
+      Complex* TmpA3A4A6In = new Complex[TmpLargestSector];
+      Complex* TmpA3A4A6Out = new Complex[TmpLargestSector];
+      Complex* TmpA2A5A6In = new Complex[TmpLargestSector];
+      Complex* TmpA2A5A6Out = new Complex[TmpLargestSector];
+      Complex* TmpA2A3A6In = new Complex[TmpLargestSector];
+      Complex* TmpA2A3A6Out = new Complex[TmpLargestSector];
+      Complex* TmpA2A3A5In = new Complex[TmpLargestSector];
+      Complex* TmpA2A3A5Out = new Complex[TmpLargestSector];
+      Complex* TmpA6A3A5In = new Complex[TmpLargestSector];
+      Complex* TmpA6A3A5Out = new Complex[TmpLargestSector];
 
       for (int i = 0; i < this->NbrNBodySectorSums; ++i)
 	{
@@ -296,45 +317,149 @@ void ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::EvaluateInterac
 	      KxIn[2] = IndexIn[2] / this->NbrSiteY;
 	      KyIn[2] = IndexIn[2] % this->NbrSiteY;
 
-	      Complex TmpABBBBIn2 = 0.0;
-	      Complex TmpABBBBOut2 = 0.0;
-	      Complex TmpBAAAAIn2 = 0.0;
-	      Complex TmpBAAAAOut2 = 0.0;
+    	      Complex TmpA1A3A5In2 = 0.0;
+	      Complex TmpA1A3A5Out2 = 0.0;
+    	      Complex TmpA2A4A6In2 = 0.0;
+	      Complex TmpA2A4A6Out2 = 0.0;
+    	      Complex TmpA1A2A5In2 = 0.0;
+	      Complex TmpA1A2A5Out2 = 0.0;
+    	      Complex TmpA1A4A5In2 = 0.0;
+	      Complex TmpA1A4A5Out2 = 0.0;
+    	      Complex TmpA2A4A5In2 = 0.0;
+	      Complex TmpA2A4A5Out2 = 0.0;
+    	      Complex TmpA1A2A4In2 = 0.0;
+	      Complex TmpA1A2A4Out2 = 0.0;
+    	      Complex TmpA1A3A6In2 = 0.0;
+	      Complex TmpA1A3A6Out2 = 0.0;
+    	      Complex TmpA1A3A4In2 = 0.0;
+	      Complex TmpA1A3A4Out2 = 0.0;
+    	      Complex TmpA1A4A6In2 = 0.0;
+	      Complex TmpA1A4A6Out2 = 0.0;
+    	      Complex TmpA3A4A6In2 = 0.0;
+	      Complex TmpA3A4A6Out2 = 0.0;
+    	      Complex TmpA2A5A6In2 = 0.0;
+	      Complex TmpA2A5A6Out2 = 0.0;
+    	      Complex TmpA2A3A6In2 = 0.0;
+	      Complex TmpA2A3A6Out2 = 0.0;
+    	      Complex TmpA2A3A5In2 = 0.0;
+	      Complex TmpA2A3A5Out2 = 0.0;
+    	      Complex TmpA6A3A5In2 = 0.0;
+	      Complex TmpA6A3A5Out2 = 0.0;
 
 	      for (int l1 = 0; l1 < NbrPermutations; ++l1)
 		{
 		  int* TmpPerm = Permutations[l1];
+ 		  TmpA1A3A5In2 += PermutationSign[l1] * Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][2] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][4]) * this->ComputeThreeBodyMatrixElementA1A3A5In(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
+ 		  TmpA2A4A6In2 += PermutationSign[l1] * Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][3] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][5]) * this->ComputeThreeBodyMatrixElementA2A4A6In(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
+ 		  TmpA1A2A5In2 += PermutationSign[l1] * Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][4]) * this->ComputeThreeBodyMatrixElementA1A2A5In(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
+ 		  TmpA1A4A5In2 += PermutationSign[l1] * Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][3] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][4]) * this->ComputeThreeBodyMatrixElementA1A4A5In(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
+ 		  TmpA2A4A5In2 += PermutationSign[l1] * Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][3] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][4]) * this->ComputeThreeBodyMatrixElementA2A4A5In(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
+ 		  TmpA1A2A4In2 += PermutationSign[l1] * Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][3]) * this->ComputeThreeBodyMatrixElementA1A2A4In(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
+ 		  TmpA1A3A6In2 += PermutationSign[l1] * Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][2] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][5]) * this->ComputeThreeBodyMatrixElementA1A3A6In(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
+ 		  TmpA1A3A4In2 += PermutationSign[l1] * Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][2] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][3]) * this->ComputeThreeBodyMatrixElementA1A3A4In(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
+ 		  TmpA1A4A6In2 += PermutationSign[l1] * Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][3] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][5]) * this->ComputeThreeBodyMatrixElementA1A4A6In(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
+ 		  TmpA3A4A6In2 += PermutationSign[l1] * Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][2] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][3] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][5]) * this->ComputeThreeBodyMatrixElementA3A4A6In(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
+ 		  TmpA2A5A6In2 += PermutationSign[l1] * Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][4] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][5]) * this->ComputeThreeBodyMatrixElementA2A5A6In(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
+ 		  TmpA2A3A6In2 += PermutationSign[l1] * Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][2] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][5]) * this->ComputeThreeBodyMatrixElementA2A3A6In(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
+ 		  TmpA2A3A5In2 += PermutationSign[l1] * Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][2] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][4]) * this->ComputeThreeBodyMatrixElementA2A3A5In(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
+ 		  TmpA6A3A5In2 += PermutationSign[l1] * Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][5] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][2] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][4]) * this->ComputeThreeBodyMatrixElementA6A3A5In(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
 
-// 		  TmpABBBBIn2 += PermutationSign[l1] * Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[3]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[4]]][0][1]) * this->ComputeFiveBodyMatrixElementABBBBIn(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]], KxIn[TmpPerm[3]], KyIn[TmpPerm[3]], KxIn[TmpPerm[4]], KyIn[TmpPerm[4]]);
-// 		  TmpBAAAAIn2 += PermutationSign[l1] * Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[3]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[4]]][0][0]) * this->ComputeFiveBodyMatrixElementBAAAAIn(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]], KxIn[TmpPerm[3]], KyIn[TmpPerm[3]], KxIn[TmpPerm[4]], KyIn[TmpPerm[4]]);
-		  
-// 		  TmpABBBBOut2 += PermutationSign[l1] * OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[3]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[4]]][0][1] * this->ComputeFiveBodyMatrixElementABBBBOut(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]], KxIn[TmpPerm[3]], KyIn[TmpPerm[3]], KxIn[TmpPerm[4]], KyIn[TmpPerm[4]]);
-// 		  TmpBAAAAOut2 += PermutationSign[l1] * OneBodyBasis[IndexIn[TmpPerm[0]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[3]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[4]]][0][0] * this->ComputeFiveBodyMatrixElementBAAAAOut(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]], KxIn[TmpPerm[3]], KyIn[TmpPerm[3]], KxIn[TmpPerm[4]], KyIn[TmpPerm[4]]);
- 		}
-
-// 	      TmpABBBBIn[j1] = TmpABBBBIn2;
-// 	      TmpABBBBOut[j1] = TmpABBBBOut2;
-// 	      TmpBAAAAIn[j1] = TmpBAAAAIn2;
-// 	      TmpBAAAAOut[j1] = TmpBAAAAOut2;
-
+ 		  TmpA1A3A5Out2 += PermutationSign[l1] * OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][2] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][4] * this->ComputeThreeBodyMatrixElementA1A3A5Out(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
+ 		  TmpA2A4A6Out2 += PermutationSign[l1] * OneBodyBasis[IndexIn[TmpPerm[0]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][3] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][5] * this->ComputeThreeBodyMatrixElementA2A4A6Out(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
+ 		  TmpA1A2A5Out2 += PermutationSign[l1] * OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][4] * this->ComputeThreeBodyMatrixElementA1A2A5Out(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
+ 		  TmpA1A4A5Out2 += PermutationSign[l1] * OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][3] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][4] * this->ComputeThreeBodyMatrixElementA1A4A5Out(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
+ 		  TmpA2A4A5Out2 += PermutationSign[l1] * OneBodyBasis[IndexIn[TmpPerm[0]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][3] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][4] * this->ComputeThreeBodyMatrixElementA2A4A5Out(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
+ 		  TmpA1A2A4Out2 += PermutationSign[l1] * OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][3] * this->ComputeThreeBodyMatrixElementA1A2A4Out(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
+ 		  TmpA1A3A6Out2 += PermutationSign[l1] * OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][2] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][5] * this->ComputeThreeBodyMatrixElementA1A3A6Out(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
+ 		  TmpA1A3A4Out2 += PermutationSign[l1] * OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][2] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][3] * this->ComputeThreeBodyMatrixElementA1A3A4Out(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
+ 		  TmpA1A4A6Out2 += PermutationSign[l1] * OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][3] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][5] * this->ComputeThreeBodyMatrixElementA1A4A6Out(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
+ 		  TmpA3A4A6Out2 += PermutationSign[l1] * OneBodyBasis[IndexIn[TmpPerm[0]]][0][2] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][3] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][5] * this->ComputeThreeBodyMatrixElementA3A4A6Out(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
+ 		  TmpA2A5A6Out2 += PermutationSign[l1] * OneBodyBasis[IndexIn[TmpPerm[0]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][4] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][5] * this->ComputeThreeBodyMatrixElementA2A5A6Out(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
+ 		  TmpA2A3A6Out2 += PermutationSign[l1] * OneBodyBasis[IndexIn[TmpPerm[0]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][2] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][5] * this->ComputeThreeBodyMatrixElementA2A3A6Out(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
+ 		  TmpA2A3A5Out2 += PermutationSign[l1] * OneBodyBasis[IndexIn[TmpPerm[0]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][2] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][4] * this->ComputeThreeBodyMatrixElementA2A3A5Out(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
+ 		  TmpA6A3A5Out2 += PermutationSign[l1] * OneBodyBasis[IndexIn[TmpPerm[0]]][0][5] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][2] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][4] * this->ComputeThreeBodyMatrixElementA6A3A5Out(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
+		}
+	      TmpA1A3A5In[j1] = TmpA1A3A5In2;
+	      TmpA1A3A5Out[j1] = TmpA1A3A5Out2;
+	      TmpA2A4A6In[j1] = TmpA2A4A6In2;
+	      TmpA2A4A6Out[j1] = TmpA2A4A6Out2;
+	      TmpA1A2A5In[j1] = TmpA1A2A5In2;
+	      TmpA1A2A5Out[j1] = TmpA1A2A5Out2;
+	      TmpA1A4A5In[j1] = TmpA1A4A5In2;
+	      TmpA1A4A5Out[j1] = TmpA1A4A5Out2;
+	      TmpA2A4A5In[j1] = TmpA2A4A5In2;
+	      TmpA2A4A5Out[j1] = TmpA2A4A5Out2;
+	      TmpA1A2A4In[j1] = TmpA1A2A4In2;
+	      TmpA1A2A4Out[j1] = TmpA1A2A4Out2;
+	      TmpA1A3A6In[j1] = TmpA1A3A6In2;
+	      TmpA1A3A6Out[j1] = TmpA1A3A6Out2;
+	      TmpA1A3A4In[j1] = TmpA1A3A4In2;
+	      TmpA1A3A4Out[j1] = TmpA1A3A4Out2;
+	      TmpA1A4A6In[j1] = TmpA1A4A6In2;
+	      TmpA1A4A6Out[j1] = TmpA1A4A6Out2;
+	      TmpA3A4A6In[j1] = TmpA3A4A6In2;
+	      TmpA3A4A6Out[j1] = TmpA3A4A6Out2;
+	      TmpA2A5A6In[j1] = TmpA2A5A6In2;
+	      TmpA2A5A6Out[j1] = TmpA2A5A6Out2;
+	      TmpA2A3A6In[j1] = TmpA2A3A6In2;
+	      TmpA2A3A6Out[j1] = TmpA2A3A6Out2;
+	      TmpA2A3A5In[j1] = TmpA2A3A5In2;
+	      TmpA2A3A5Out[j1] = TmpA2A3A5Out2;
+	      TmpA6A3A5In[j1] = TmpA6A3A5In2;
+	      TmpA6A3A5Out[j1] = TmpA6A3A5Out2;
 	    }
-
+	  
 	  for (int j1 = 0; j1 < this->NbrNBodySectorIndicesPerSum[i]; ++j1)
 	    {
 	      for (int j2 = 0; j2 < this->NbrNBodySectorIndicesPerSum[i]; ++j2)
 		{
-		  //		  this->NBodyInteractionFactors[i][Index] = -2.0 * FactorU * ((TmpABBBBIn[j1] * TmpABBBBOut[j2]) + (TmpBAAAAIn[j1] * TmpBAAAAOut[j2]));
+		  this->NBodyInteractionFactors[i][Index] = 2.0 * FactorU * ((TmpA1A3A5In[j1] * TmpA1A3A5Out[j2])
+									     + (TmpA2A4A6In[j1] * TmpA2A4A6Out[j2])
+									     + (TmpA1A2A5In[j1] * TmpA1A2A5Out[j2])
+									     + (TmpA1A4A5In[j1] * TmpA1A4A5Out[j2])
+									     + (TmpA2A4A5In[j1] * TmpA2A4A5Out[j2])
+									     + (TmpA1A2A4In[j1] * TmpA1A2A4Out[j2])
+									     + (TmpA1A3A6In[j1] * TmpA1A3A6Out[j2])
+									     + (TmpA1A3A4In[j1] * TmpA1A3A4Out[j2])
+									     + (TmpA1A4A6In[j1] * TmpA1A4A6Out[j2])
+									     + (TmpA3A4A6In[j1] * TmpA3A4A6Out[j2])
+									     + (TmpA2A5A6In[j1] * TmpA2A5A6Out[j2])
+									     + (TmpA2A3A6In[j1] * TmpA2A3A6Out[j2])
+									     + (TmpA2A3A5In[j1] * TmpA2A3A5Out[j2])
+									     + (TmpA6A3A5In[j1] * TmpA6A3A5Out[j2]));
 		  TotalNbrInteractionFactors++;
 		  ++Index;
 		}
 	    }
 	}
-
-
       delete[] TmpA1A3A5In;
       delete[] TmpA1A3A5Out;
       delete[] TmpA2A4A6In;
       delete[] TmpA2A4A6Out;
+      delete[] TmpA1A2A5In;
+      delete[] TmpA1A2A5Out;
+      delete[] TmpA1A4A5In;
+      delete[] TmpA1A4A5Out;
+      delete[] TmpA2A4A5In;
+      delete[] TmpA2A4A5Out;
+      delete[] TmpA1A2A4In;
+      delete[] TmpA1A2A4Out;
+      delete[] TmpA1A3A6In;
+      delete[] TmpA1A3A6Out;
+      delete[] TmpA1A3A4In;
+      delete[] TmpA1A3A4Out;
+      delete[] TmpA1A4A6In;
+      delete[] TmpA1A4A6Out;
+      delete[] TmpA3A4A6In;
+      delete[] TmpA3A4A6Out;
+      delete[] TmpA2A5A6In;
+      delete[] TmpA2A5A6Out;
+      delete[] TmpA2A3A6In;
+      delete[] TmpA2A3A6Out;
+      delete[] TmpA2A3A5In;
+      delete[] TmpA2A3A5Out;
+      delete[] TmpA6A3A5In;
+      delete[] TmpA6A3A5Out;
     }
   else
     {
