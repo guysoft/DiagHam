@@ -201,9 +201,9 @@ int main(int argc, char** argv)
   for (int i = 0; i < NbrSpaces; ++i)
     {
       int TmpIndex = ((TotalKx[i] * NbrSiteY) + TotalKy[i]);
-      GroundStatePerMomentumSector[TmpIndex][NbrGroundStatePerMomentumSector[i]] = GroundStates[i];
-      CoefficientPerMomentumSector[TmpIndex][NbrGroundStatePerMomentumSector[i]] = Coefficients[i];
-      NbrGroundStatePerMomentumSector[i]++;
+      GroundStatePerMomentumSector[TmpIndex][NbrGroundStatePerMomentumSector[TmpIndex]] = GroundStates[i];
+      CoefficientPerMomentumSector[TmpIndex][NbrGroundStatePerMomentumSector[TmpIndex]] = Coefficients[i];
+      NbrGroundStatePerMomentumSector[TmpIndex]++;
     }  
 
   if (DensityMatrixFileName != 0)
@@ -288,7 +288,8 @@ int main(int argc, char** argv)
 		    {
 		      PartialDensityMatrix = Spaces[TmpIndex]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, NbrGroundStatePerMomentumSector[TmpIndex], GroundStatePerMomentumSector[TmpIndex], CoefficientPerMomentumSector[TmpIndex], Architecture.GetArchitecture());
 		    }
-		  for (; TmpIndex < NbrSpaces; ++TmpIndex)
+		  ++TmpIndex;
+		  for (; TmpIndex < TotalNbrSites; ++TmpIndex)
 		    {
 		      if (NbrGroundStatePerMomentumSector[TmpIndex] != 0)
 			{
