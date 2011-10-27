@@ -1,4 +1,4 @@
- ////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 //                                                                            //
 //                                                                            //
 //                            DiagHam  version 0.01                           //
@@ -56,11 +56,11 @@ using std::ostream;
 // nbrSiteX = number of sites in the x direction
 // nbrSiteY = number of sites in the y direction
 // uPotential = strength of the repulsive two body neareast neighbor interaction
-// t1 = real part of the hoping amplitude between neareast neighbor sites
-// t2 = real part of the hoping amplitude between next neareast neighbor sites
-// lambda1 = imaginary part of the hoping amplitude between neareast neighbor sites
-// lambda1 = imaginary part of the hoping amplitude between next neareast neighbor sites
-// mus = sublattice chemical potential on A sites
+// t = nearest neighbor hopping amplitude
+// epsilon = on site energy for site 3
+// lambda = Rashba spin orbit coupling strength
+// bfield1 = magnetic field strength on sites 1 and 2
+// bfield3 = magnetic field strength on site 3
 // gammaX = boundary condition twisting angle along x
 // gammaY = boundary condition twisting angle along y
 // flatBandFlag = use flat band model
@@ -68,7 +68,7 @@ using std::ostream;
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
 ParticleOnLatticeChern2DiceLatticeSingleBandHamiltonian::ParticleOnLatticeChern2DiceLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, 
-												       int nbrSiteY, double uPotential, double t1, double t2, double lambda1, double lambda2, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
+												       int nbrSiteY, double uPotential, double t, double epsilon, double lambda, double bfield1, double bfield3, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -80,11 +80,11 @@ ParticleOnLatticeChern2DiceLatticeSingleBandHamiltonian::ParticleOnLatticeChern2
 
   this->HamiltonianShift = 0.0;
 
-  this->T1Hoping = t1;
-  this->T2Hoping = t2;
-  this->Lambda1Hoping = lambda1;
-  this->Lambda2Hoping = lambda2;
-  this->MuS = mus;
+  this->THopping = t;
+  this->Epsilon = epsilon;
+  this->Lambda = lambda;
+  this->BField1 = bfield1;
+  this->BField3 = bfield3;
   this->GammaX = gammaX;
   this->GammaY = gammaY;
   this->FlatBand = flatBandFlag;
@@ -286,35 +286,55 @@ Complex ParticleOnLatticeChern2DiceLatticeSingleBandHamiltonian::ComputeTwoBodyM
 
 void ParticleOnLatticeChern2DiceLatticeSingleBandHamiltonian::ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis)
 {
+  double KX;
+  double KY;
   for (int kx = 0; kx < this->NbrSiteX; ++kx)
-    for (int ky = 0; ky < this->NbrSiteY; ++ky)
-      {
-	int Index = (kx * this->NbrSiteY) + ky;
-	Complex HAB (this->T1Hoping, -this->Lambda1Hoping);
-	HAB *= cos (0.5 * this->KxFactor * ((double) kx));
-	Complex HAC(this->T1Hoping, this->Lambda1Hoping);
-	HAC *= cos (0.5 * this->KyFactor * ((double) ky));
-	Complex HBC(this->T1Hoping, this->Lambda1Hoping);
-	HBC *= cos (0.5 * (this->KxFactor * ((double) kx) - this->KyFactor * ((double) ky)));
-	HermitianMatrix TmpOneBobyHamiltonian(3, true);
-	TmpOneBobyHamiltonian.SetMatrixElement(0, 1, HAB);
-	TmpOneBobyHamiltonian.SetMatrixElement(0, 2, HAC);
-	TmpOneBobyHamiltonian.SetMatrixElement(1, 2, HBC);
-	ComplexMatrix TmpMatrix(3, 3, true);
-	TmpMatrix[0][0] = 1.0;
-	TmpMatrix[1][1] = 1.0;
-	TmpMatrix[2][2] = 1.0;
-	RealDiagonalMatrix TmpDiag;
+    {
+      for (int ky = 0; ky < this->NbrSiteY; ++ky)
+	{
+	  KX = this->KxFactor * (((double) kx) + this->GammaX);
+	  KY = this->KyFactor * (((double) ky) + this->GammaY);
+	  int Index = (kx * this->NbrSiteY) + ky;
+	  
+	  Complex PhaseX = Phase(KX);
+	  Complex PhaseXY = Phase(KX + KY);
+	  
+	  HermitianMatrix TmpOneBodyHamiltonian(6, true);
+// 	  TmpOneBodyHamiltonian.SetMatrixElement(0, 2, Conj(CT));
+// 	  TmpOneBodyHamiltonian.SetMatrixElement(0, 4, CT);
+// 	  TmpOneBodyHamiltonian.SetMatrixElement(2, 4, Conj(CT));
+// 	  TmpOneBodyHamiltonian.SetMatrixElement(1, 3, Conj(CT));
+// 	  TmpOneBodyHamiltonian.SetMatrixElement(1, 5, CT);
+// 	  TmpOneBodyHamiltonian.SetMatrixElement(3, 5, Conj(CT));
+
+// 	  TmpOneBodyHamiltonian.SetMatrixElement(0, 1, CT1);
+// 	  TmpOneBodyHamiltonian.SetMatrixElement(3, 4, CT1);
+// 	  TmpOneBodyHamiltonian.SetMatrixElement(0, 5, Conj(CT1) * Conj(PhaseX));
+// 	  TmpOneBodyHamiltonian.SetMatrixElement(1, 2, CT1 * PhaseXY);
+// 	  TmpOneBodyHamiltonian.SetMatrixElement(2, 3, CT1 * Conj(PhaseX));	
+// 	  TmpOneBodyHamiltonian.SetMatrixElement(4, 5, CT1 * Conj(PhaseXY));
+
+// 	  TmpOneBodyHamiltonian.SetMatrixElement(0, 3, this->T4Hopping * (1.0 + Conj(PhaseX)));
+// 	  TmpOneBodyHamiltonian.SetMatrixElement(1, 4, this->T4Hopping * (1.0 + PhaseXY));
+// 	  TmpOneBodyHamiltonian.SetMatrixElement(2, 5, this->T4Hopping * (Conj(PhaseX) + Conj(PhaseXY)));
+
+	  TmpOneBodyHamiltonian *= -1.0;
+
+	  ComplexMatrix TmpMatrix(6, 6, true);
+	  TmpMatrix.SetToIdentity();
+	  RealDiagonalMatrix TmpDiag;
 #ifdef __LAPACK__
-	TmpOneBobyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
+	  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
 #else
-	TmpOneBobyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
-#endif   
-	oneBodyBasis[Index] = TmpMatrix;	
-	if (this->FlatBand == false)
-	  {
-	    this->OneBodyInteractionFactors[Index] = TmpDiag(0, 0);
+	  TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
+#endif
+	  oneBodyBasis[Index] = TmpMatrix;
+	  if (this->FlatBand == false)
+	    {
+	      this->OneBodyInteractionFactors[Index] = 0.5 * TmpDiag(0, 0);
 	  }
-	cout << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << " " << TmpDiag(2, 2) << endl;
-      }
+	  cout << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << " " << TmpDiag(2, 2) << " " 
+	       << TmpDiag(3, 3) << " " << TmpDiag(4, 4) << " " << TmpDiag(5, 5) << endl;
+	}
+    }
 }

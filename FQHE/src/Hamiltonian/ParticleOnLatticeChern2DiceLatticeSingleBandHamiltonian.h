@@ -52,18 +52,17 @@ class ParticleOnLatticeChern2DiceLatticeSingleBandHamiltonian : public ParticleO
 
  protected:
   
-  // real part of the hoping amplitude between neareast neighbor sites
-  double T1Hoping;
-  // real part of the hoping amplitude between next neareast neighbor sites
-  double T2Hoping;
-  // imaginary part of the hoping amplitude between neareast neighbor sites
-  double Lambda1Hoping;
-  // imaginary part of the hoping amplitude between next neareast neighbor sites
-  double Lambda2Hoping;
+  // hopping amplitude between neareast neighbor sites
+  double THopping;
+  // on site energy for site 3
+  double Epsilon;
+  // Rashba spin orbit coupling strength
+  double Lambda;
+  // magnetic field strength on sites 1 and 2
+  double BField1;
+  // magnetic field strength on site 3
+  double BField3;
 
-
-  // four times the sublattice staggered chemical potential on site A
-  double MuS;
   // on site density-density potential strength
   double UPotential;
   // boundary condition twisting angle along x
@@ -83,17 +82,17 @@ class ParticleOnLatticeChern2DiceLatticeSingleBandHamiltonian : public ParticleO
   // nbrSiteX = number of sites in the x direction
   // nbrSiteY = number of sites in the y direction
   // uPotential = strength of the repulsive two body neareast neighbor interaction
-  // t1 = real part of the hoping amplitude between neareast neighbor sites
-  // t2 = real part of the hoping amplitude between next neareast neighbor sites
-  // lambda1 = imaginary part of the hoping amplitude between neareast neighbor sites
-  // lambda1 = imaginary part of the hoping amplitude between next neareast neighbor sites
-  // mus = sublattice chemical potential on A sites
+  // t = nearest neighbor hopping amplitude
+  // epsilon = on site energy for site 3
+  // lambda = Rashba spin orbit coupling strength
+  // bfield1 = magnetic field strength on sites 1 and 2
+  // bfield3 = magnetic field strength on site 3
   // gammaX = boundary condition twisting angle along x
   // gammaY = boundary condition twisting angle along y
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeChern2DiceLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double t1, double t2, double lambda1, double lambda2, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnLatticeChern2DiceLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double t, double espilon, double lambda, double bfield1, double bfield3, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //

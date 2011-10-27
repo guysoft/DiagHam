@@ -4,6 +4,7 @@
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpaceLong.h"
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpaceLong.h"
+#include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
 
 #include "Hamiltonian/ParticleOnLatticeChern2DiceLatticeSingleBandHamiltonian.h"
 //#include "Hamiltonian/ParticleOnLatticeChern2DiceLatticeSingleBandThreeBodyHamiltonian.h"
@@ -34,18 +35,18 @@ using std::ofstream;
 
 
 // compute the single particle spectrum 
-//
+// 
 // outputFileName = name of the output file
 // nbrSitesX = number of sites in the x direction
 // nbrSitesY = number of sites in the x direction
-// t1 = real part of the hopping amplitude between neareast neighbor sites
-// t2 = real part of the hopping amplitude between next neareast neighbor sites
-// lambda1 = imaginary part of the hopping amplitude between neareast neighbor sites
-// lambda1 = imaginary part of the hopping amplitude between next neareast neighbor sites
-// mus = sublattice chemical potential on A sites
+// t = nearest neighbor hopping amplitude
+// epsilon = on site energy for site 3
+// lambda = Rashba spin orbit coupling strength
+// bfield1 = magnetic field strength on sites 1 and 2
+// bfield3 = magnetic field strength on site 3
 // gammaX = boundary condition twisting angle along e_a (measured in units of 2pi)
 // gammaY = boundary condition twisting angle along e_b (measured in units of 2pi)
-void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double t1, double t2, double lambda1, double lambda2, double mus, double gammaX, double gammaY);
+void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double t, double epsilon, double lambda, double bfield1, double bfield3, double gammaX, double gammaY);
 
 
 int main(int argc, char** argv)
@@ -70,16 +71,17 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('y', "nbr-sitey", "number of sites along the y direction", 3);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1);
+  (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive nearest neighbor potential strength", 1.0);
   (*SystemGroup) += new BooleanOption  ('\n', "three-body", "use a three body interaction instead of a two body interaction");
   (*SystemGroup) += new BooleanOption  ('\n', "four-body", "use a four body interaction instead of a two body interaction");
   (*SystemGroup) += new BooleanOption  ('\n', "five-body", "use a five body interaction instead of a two body interaction");
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "t1", "real part of the nearest neighbor hopping amplitude", 1.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "t2", "real part of the next nearest neighbor hopping amplitude", 0.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "l1", "imaginary part of the nearest neighbor hopping amplitude", 0.5);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "l2", "imaginary part of the next nearest neighbor hopping amplitude", 0.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "mu-s", "sublattice chemical potential on A site", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "t", "nearest neighbor hopping amplitude", 1.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "epsilon", "on site energy for site 3", 0.5);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "lambda", "Rashba spin orbit coupling strength", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "B1", "magnetic field strength on sites 1 and 2", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "B3", "magnetic field strength on site 3", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
@@ -109,27 +111,37 @@ int main(int argc, char** argv)
   int NbrSitesY = Manager.GetInteger("nbr-sitey"); 
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
 
+  char* StatisticPrefix = new char [16];
+  if (Manager.GetBoolean("boson") == false)
+    {
+      sprintf (StatisticPrefix, "fermions");
+    }
+  else
+    {
+      sprintf (StatisticPrefix, "bosons");
+    }
+
   char* FilePrefix = new char [256];
 
   if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false) && (Manager.GetBoolean("five-body") == false))
     { 
-      sprintf (FilePrefix, "fermions_singleband_kagomelattice_n_%d_x_%d_y_%d",  NbrParticles, NbrSitesX, NbrSitesY);
+      sprintf (FilePrefix, "%s_singleband_chern2dicelattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
     }
   else
     {
       if (Manager.GetBoolean("three-body") == true)
 	{
-	  sprintf (FilePrefix, "fermions_singleband_threebody_kagomelattice_n_%d_x_%d_y_%d",  NbrParticles, NbrSitesX, NbrSitesY);
+	  sprintf (FilePrefix, "%s_singleband_threebody_chern2dicelattice_n_%d_x_%d_y_%d",StatisticPrefix,  NbrParticles, NbrSitesX, NbrSitesY);
 	}
       else
 	{
 	  if (Manager.GetBoolean("four-body") == true)
 	    {
-	      sprintf (FilePrefix, "fermions_singleband_fourbody_kagomelattice_n_%d_x_%d_y_%d",  NbrParticles, NbrSitesX, NbrSitesY);
+	      sprintf (FilePrefix, "%s_singleband_fourbody_chern2dicelattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
 	    }
 	  else
 	    {
-	      sprintf (FilePrefix, "fermions_singleband_fivebody_kagomelattice_n_%d_x_%d_y_%d",  NbrParticles, NbrSitesX, NbrSitesY);
+	      sprintf (FilePrefix, "%s_singleband_fivebody_chern2dicelattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
 	    }
 	}
     }
@@ -143,23 +155,17 @@ int main(int argc, char** argv)
     {
       if (Manager.GetBoolean("flat-band") == true)
 	{
-	  if (Manager.GetDouble("mu-s") == 0.0)
-	    sprintf (EigenvalueOutputFile, "%s_t1_%g_t2_%g_l1_%g_l2_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
-	  else
-	    sprintf (EigenvalueOutputFile, "%s_t1_%g_t2_%g_l1_%g_l2_%g_gx_%g_gy_%g_mus_%g.dat",FilePrefix, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+	  sprintf (EigenvalueOutputFile, "%s_t_%g_epsilon_%g_lambda_%g_B3_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("t"), Manager.GetDouble("epsilon"), Manager.GetDouble("lambda"), Manager.GetDouble("B1"), Manager.GetDouble("B3"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 	}
       else
 	{
-	  if (Manager.GetDouble("mu-s") == 0.0)
-	    sprintf (EigenvalueOutputFile, "%s_u_%g_t1_%g_t2_%g_l1_%g_l2_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
-	  else
-	    sprintf (EigenvalueOutputFile, "%s_u_%g_t1_%g_t2_%g_l1_%g_l2_%g_gx_%g_gy_%g_mus_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+	  sprintf (EigenvalueOutputFile, "%s_u_%g_t_%g_epsilon_%g_lambda_%g_B3_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("t"), Manager.GetDouble("epsilon"), Manager.GetDouble("lambda"), Manager.GetDouble("B1"), Manager.GetDouble("B3"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 	}
     }
 
   if (Manager.GetBoolean("singleparticle-spectrum") == true)
     {
-      ComputeSingleParticleSpectrum(EigenvalueOutputFile, NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+      ComputeSingleParticleSpectrum(EigenvalueOutputFile, NbrSitesX, NbrSitesY, Manager.GetDouble("t"), Manager.GetDouble("epsilon"), Manager.GetDouble("lambda"), Manager.GetDouble("B1"), Manager.GetDouble("B3"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
       return 0;
     }
 
@@ -185,13 +191,20 @@ int main(int argc, char** argv)
 	  cout << "(kx=" << i << ",ky=" << j << ") : " << endl;
 
 	  ParticleOnSphere* Space = 0;
-	  if ((NbrSitesX * NbrSitesY) <= 63)
+	  if (Manager.GetBoolean("boson") == false)
 	    {
-	      Space = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+	      if ((NbrSitesX * NbrSitesY) <= 63)
+		{
+		  Space = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		}
+	      else
+		{
+		  Space = new FermionOnSquareLatticeMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		}
 	    }
 	  else
 	    {
-	      Space = new FermionOnSquareLatticeMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+	      Space = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
 	    }
 	  cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
 	  if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
@@ -201,8 +214,8 @@ int main(int argc, char** argv)
 	  if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false) && (Manager.GetBoolean("five-body") == false))
 	    { 
 	      Hamiltonian = new ParticleOnLatticeChern2DiceLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
-										    Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"),
-										    Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
+										    Manager.GetDouble("u-potential"), Manager.GetDouble("t"), Manager.GetDouble("epsilon"), Manager.GetDouble("lambda"), Manager.GetDouble("B1"),
+										    Manager.GetDouble("B3"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
 										    Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 	    }
 	  else
@@ -211,7 +224,7 @@ int main(int argc, char** argv)
 		{
 		  Hamiltonian = 0;
 // 		  Hamiltonian = new ParticleOnLatticeChern2DiceLatticeSingleBandThreeBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
-// 												 Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"),
+// 												 Manager.GetDouble("u-potential"), Manager.GetDouble("t"), Manager.GetDouble("epsilon"), Manager.GetDouble("lambda"), Manager.GetDouble("B1"),
 // 												 Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
 // 												 Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 		}
@@ -221,7 +234,7 @@ int main(int argc, char** argv)
 		    {
 		      Hamiltonian = 0;
 // 		      Hamiltonian = new ParticleOnLatticeChern2DiceLatticeSingleBandFourBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
-// 												    Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"),
+// 												    Manager.GetDouble("u-potential"), Manager.GetDouble("t"), Manager.GetDouble("epsilon"), Manager.GetDouble("lambda"), Manager.GetDouble("B1"),
 // 												    Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
 // 												    Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 		    }
@@ -229,7 +242,7 @@ int main(int argc, char** argv)
 		    {
 		      Hamiltonian = 0;
 // 		      Hamiltonian = new ParticleOnLatticeChern2DiceLatticeSingleBandFiveBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
-// 												    Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"),
+// 												    Manager.GetDouble("u-potential"), Manager.GetDouble("t"), Manager.GetDouble("epsilon"), Manager.GetDouble("lambda"), Manager.GetDouble("B1"),
 // 												    Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
 // 												    Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 		    }
@@ -246,25 +259,15 @@ int main(int argc, char** argv)
 	    {
 	      if (Manager.GetBoolean("flat-band") == true)
 		{
-		  if (Manager.GetDouble("mu-s") == 0.0)
-		    sprintf (EigenstateOutputFile, "%s_t1_%g_t2_%g_l1_%g_l2_%g_gx_%g_gy_%g_ka_%d_kb_%d",FilePrefix, 
-			     Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"),
-			     Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j);
-		  else
-		    sprintf (EigenstateOutputFile, "%s_t1_%g_t2_%g_l1_%g_l2_%g_gx_%g_gy_%g_mus_%g_kx_%d_ky_%d",FilePrefix, 
-			     Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"),
-			     Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"), i, j);
+		  sprintf (EigenstateOutputFile, "%s_t_%g_epsilon_%g_lambda_%g_B1_%g_B3_%g_gx_%g_gy_%g_kx_%d_ky_%d",FilePrefix, 
+			   Manager.GetDouble("t"), Manager.GetDouble("epsilon"), Manager.GetDouble("lambda"), Manager.GetDouble("B1"), Manager.GetDouble("B3"),
+			   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j);
 		}
 	      else
 		{
-		  if (Manager.GetDouble("mu-s") == 0.0)
-		    sprintf (EigenstateOutputFile, "%s_u_%g_t1_%g_t2_%g_l1_%g_l2_%g_gx_%g_gy_%g_kx_%d_ky_%d",FilePrefix, 
-			     Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"),
-			     Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j);
-		  else
-		    sprintf (EigenstateOutputFile, "%s_u_%g_t1_%g_t2_%g_l1_%g_l2_%g_gx_%g_gy_%g_mus_%g_kx_%d_ky_%d",FilePrefix, 
-			     Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"),
-			     Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"), i, j);
+		  sprintf (EigenstateOutputFile, "%s_u_%g_t_%g_epsilon_%g_lambda_%g_B1_%g_B3_%g_gx_%g_gy_%g_kx_%d_ky_%d",FilePrefix, 
+			   Manager.GetDouble("u-potential"), Manager.GetDouble("t"), Manager.GetDouble("epsilon"), Manager.GetDouble("lambda"),
+			   Manager.GetDouble("B1"), Manager.GetDouble("B3"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j);
 		}
 	    }
 	  GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
@@ -286,58 +289,70 @@ int main(int argc, char** argv)
 // outputFileName = name of the output file
 // nbrSitesX = number of sites in the x direction
 // nbrSitesY = number of sites in the x direction
-// t1 = real part of the hopping amplitude between neareast neighbor sites
-// t2 = real part of the hopping amplitude between next neareast neighbor sites
-// lambda1 = imaginary part of the hopping amplitude between neareast neighbor sites
-// lambda1 = imaginary part of the hopping amplitude between next neareast neighbor sites
-// mus = sublattice chemical potential on A sites
+// t = nearest neighbor hopping amplitude
+// epsilon = on site energy for site 3
+// lambda = Rashba spin orbit coupling strength
+// bfield1 = magnetic field strength on sites 1 and 2
+// bfield3 = magnetic field strength on site 3
 // gammaX = boundary condition twisting angle along e_a (measured in units of 2pi)
 // gammaY = boundary condition twisting angle along e_b (measured in units of 2pi)
 
-void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double t1, double t2, double lambda1, double lambda2, double mus, double gammaX, double gammaY)
+void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double t, double epsilon, double lambda, double bfield1, double bfield3, double gammaX, double gammaY)
 {
   ofstream File;
   File.open(outputFileName);
-  File << "# kx    ky     E_1    E_2    E_3" << endl;
+  File << "# kx    ky     E_1    E_2    E_3    E_4    E_5    E_6" << endl;
   double MinEMinus = 0.0;
   double MaxEMinus = -10.0;
   double MinEPlus = 10.0;
   double MaxEPlus = 0.0;
-  double KA, KB;
-  for (int ka = 0; ka < nbrSitesX; ++ka)
+  double KX, KY;
+  for (int kx = 0; kx < nbrSitesX; ++kx)
     {
-      for (int kb = 0; kb < nbrSitesY; ++kb)
+      for (int ky = 0; ky < nbrSitesY; ++ky)
 	{
-	  KA = M_PI / ((double) nbrSitesX) * (((double) ka) + gammaX);
-	  KB = M_PI / ((double) nbrSitesY) * (((double) kb) + gammaY);
-	  Complex HAB (-2.0*t1, -2.0*lambda1);
-	  HAB *= cos (KA);
-	  Complex HAC(-2.0*t1, 2.0*lambda1);
-	  HAC *= cos (KB);
-	  Complex HBC(-2.0*t1, -2.0*lambda1);
-	  HBC *= cos(KA-KB);
-	  Complex HAB2 (-2.0*t2, 2.0*lambda2);
-	  HAB2 *= cos (KA-2.0*KB);
-	  Complex HAC2 (-2.0*t2, -2.0*lambda2);
-	  HAC2 *= cos (2.0*KA-KB);
-	  Complex HBC2 (-2.0*t2, 2.0*lambda2);
-	  HBC2 *= cos (KA+KB);
-	  HAB+=HAB2;
-	  HAC+=HAC2;
-	  HBC+=HBC2;
-	  HermitianMatrix TmpOneBobyHamiltonian(3, true);
-	  TmpOneBobyHamiltonian.SetMatrixElement(0, 1, HAB);
-	  TmpOneBobyHamiltonian.SetMatrixElement(0, 2, HAC);
-	  TmpOneBobyHamiltonian.SetMatrixElement(1, 2, HBC);
-	  ComplexMatrix TmpMatrix(3, 3, true);
-	  TmpMatrix[0][0] = 1.0;
-	  TmpMatrix[1][1] = 1.0;
-	  TmpMatrix[2][2] = 1.0;
+	  KX = 2.0 * M_PI / ((double) nbrSitesX) * ((double) kx);
+	  KY = 2.0 * M_PI / ((double) nbrSitesY) * ((double) ky);
+// 	  Complex CT (tr, ti);
+// 	  Complex CT (tr, ti);
+	  Complex PhaseX = Phase(KX);
+	  Complex PhaseXY = Phase(KX + KY);
+
+	  HermitianMatrix TmpOneBodyHamiltonian(6, true);
+// 	  TmpOneBodyHamiltonian.SetMatrixElement(0, 2, Conj(CT));
+// 	  TmpOneBodyHamiltonian.SetMatrixElement(0, 4, CT);
+// 	  TmpOneBodyHamiltonian.SetMatrixElement(2, 4, Conj(CT));
+// 	  TmpOneBodyHamiltonian.SetMatrixElement(1, 3, Conj(CT));
+// 	  TmpOneBodyHamiltonian.SetMatrixElement(1, 5, CT);
+// 	  TmpOneBodyHamiltonian.SetMatrixElement(3, 5, Conj(CT));
+
+// 	  TmpOneBodyHamiltonian.SetMatrixElement(0, 1, CT);
+// 	  TmpOneBodyHamiltonian.SetMatrixElement(3, 4, CT1);
+// 	  TmpOneBodyHamiltonian.SetMatrixElement(0, 5, Conj(CT1) * Conj(PhaseX));
+// 	  TmpOneBodyHamiltonian.SetMatrixElement(1, 2, CT1 * PhaseXY);
+// 	  TmpOneBodyHamiltonian.SetMatrixElement(2, 3, CT1 * Conj(PhaseX));	
+// 	  TmpOneBodyHamiltonian.SetMatrixElement(4, 5, CT1 * Conj(PhaseXY));
+
+// 	  TmpOneBodyHamiltonian.SetMatrixElement(0, 3, t4 * (1.0 + Conj(PhaseX)));
+// 	  TmpOneBodyHamiltonian.SetMatrixElement(1, 4, t4 * (1.0 + PhaseXY));
+// 	  TmpOneBodyHamiltonian.SetMatrixElement(2, 5, t4 * (Conj(PhaseX) + Conj(PhaseXY)));
+
+	  TmpOneBodyHamiltonian.SetMatrixElement(0, 0, bfield1);
+	  TmpOneBodyHamiltonian.SetMatrixElement(1, 1, -bfield1);
+	  TmpOneBodyHamiltonian.SetMatrixElement(2, 2, bfield1);
+	  TmpOneBodyHamiltonian.SetMatrixElement(3, 3, -bfield1);
+	  TmpOneBodyHamiltonian.SetMatrixElement(4, 4, epsilon + bfield3);
+	  TmpOneBodyHamiltonian.SetMatrixElement(5, 5, epsilon - bfield3);
+
+	  TmpOneBodyHamiltonian *= -1.0;
+
+	  ComplexMatrix TmpMatrix(6, 6, true);
+	  TmpMatrix.SetToIdentity();
 	  RealDiagonalMatrix TmpDiag;
 #ifdef __LAPACK__
-	  TmpOneBobyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
+	  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
 #else
-	  TmpOneBobyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
+	  TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
 #endif
 	  if (MaxEMinus < TmpDiag(0, 0))
 	    {
@@ -355,12 +370,16 @@ void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrS
 	    {
 	      MinEPlus = TmpDiag(1, 1);
 	    }
-	  double Kx = KA;
-	  if (Kx > M_PI/2.0) Kx -= M_PI;
-	  double Ky = -KA/sqrt(3.0) + 2.0*KB/sqrt(3.0);
-	  if (Kx/2.0+sqrt(3.0)/2.0*Ky > M_PI/2.0) Ky -= M_PI;
-	  if (-Kx/2.0+sqrt(3.0)/2.0*Ky > M_PI/2.0) Ky -= M_PI;
-	  File << Kx << " " << Ky << " " << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << " " << TmpDiag(2, 2) << endl;
+	  double Kx = KX;
+	  if (Kx > M_PI) 
+	    Kx -= M_PI;
+	  double Ky = (KX + 2.0 * KY) /sqrt(3.0);
+	  if (Ky  > M_PI) 
+	    Ky -= M_PI;
+	  if (Ky < -M_PI) 
+	    Ky += M_PI;
+	  File << Kx << " " << Ky << " " << KX << " " << KY << " " << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << " " << TmpDiag(2, 2)  
+	       << " " << TmpDiag(3, 3) << " " << TmpDiag(4, 4) << " " << TmpDiag(5, 5) << endl;
 	}
       File << endl;
     }
