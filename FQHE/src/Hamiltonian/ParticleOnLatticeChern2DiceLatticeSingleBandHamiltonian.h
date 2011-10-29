@@ -107,34 +107,18 @@ class ParticleOnLatticeChern2DiceLatticeSingleBandHamiltonian : public ParticleO
 
   // compute the matrix element for the on-site two body interaction for site A 
   //
-  // kx1 = creation momentum along x for the B site
-  // ky1 = creation momentum along y for the B site
-  // kx2 = annihilation momentum along x for the B site
-  // ky2 = annihilation momentum along y for the B site
   // return value = corresponding matrix element
-  Complex ComputeTwoBodyMatrixElementOnSiteA(int kx1, int ky1, int kx2, int ky2);
+  Complex ComputeTwoBodyMatrixElementOnSiteA();
 
   // compute the matrix element for the on-site two body interaction for site B 
   //
-  // kx1 = creation momentum along x for the C site
-  // ky1 = creation momentum along y for the C site
-  // kx2 = annihilation momentum along x for the C site
-  // ky2 = annihilation momentum along y for the C site
   // return value = corresponding matrix element
-  Complex ComputeTwoBodyMatrixElementOnSiteB(int kx1, int ky1, int kx2, int ky2);
+  Complex ComputeTwoBodyMatrixElementOnSiteB();
 
   // compute the matrix element for the on-site two body interaction for site C 
   //
-  // kx1 = creation momentum along x for the B site
-  // ky1 = creation momentum along y for the B site
-  // kx2 = creation momentum along x for the C site
-  // ky2 = creation momentum along y for the C site
-  // kx3 = annihilation momentum along x for the B site
-  // ky3 = annihilation momentum along y for the B site
-  // kx4 = annihilation momentum along x for the C site
-  // ky4 = annihilation momentum along y for the C site
   // return value = corresponding matrix element
-  Complex ComputeTwoBodyMatrixElementOnSiteC(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
+  Complex ComputeTwoBodyMatrixElementOnSiteC();
 
   // compute the one body transformation matrices and the optional one body band stucture contribution
   //
