@@ -451,4 +451,51 @@ long FermionOnSquareLatticeWithSU4SpinMomentumSpace::EvaluateHilbertSpaceDimensi
   return Count;
 }
 
+// convert a state from one SU(4) basis to another, transforming the one body basis in each momentum sector
+//
+// initialState = state to transform  
+// targetState = vector where the transformed state has to be stored
+// oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+
+void FermionOnSquareLatticeWithSU4SpinMomentumSpace::TransformOneBodyBasis(ComplexVector& initialState, ComplexVector& targetState, ComplexMatrix* oneBodyBasis)
+{
+  int* TmpMomentumIndices = new int [this->NbrFermions];
+  int* TmpSU4Indices = new int [this->NbrFermions];
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    {
+      unsigned long TmpState = this->StateDescription[i];
+      unsigned long Tmp;
+      int TmpLzMax = this->NbrLzValue << 2;
+      int TmpIndex = 0;
+      for (int j = this->LzMax; j >= 0; --j)
+	{
+	  Tmp = (TmpState >> (j << 2)) & 0xful;;
+	  if ((Tmp & 0x8ul) != 0x0ul)
+	    {
+	      TmpMomentumIndices[TmpIndex] = j;
+	      TmpSU4Indices[TmpIndex] = 3;
+	      ++TmpIndex;
+	    }
+	  if ((Tmp & 0x4ul) != 0x0ul)
+	    {
+	      TmpMomentumIndices[TmpIndex] = j;
+	      TmpSU4Indices[TmpIndex] = 2;
+	      ++TmpIndex;
+	    }
+	  if ((Tmp & 0x2ul) != 0x0ul)
+	    {
+	      TmpMomentumIndices[TmpIndex] = j;
+	      TmpSU4Indices[TmpIndex] = 1;
+	      ++TmpIndex;
+	    }
+	  if ((Tmp & 0x1ul) != 0x0ul)
+	    {
+	      TmpMomentumIndices[TmpIndex] = j;
+	      TmpSU4Indices[TmpIndex] = 0;
+	      ++TmpIndex;
+	    }
+	  
+	}
+    }
+}
 

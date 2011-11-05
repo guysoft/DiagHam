@@ -278,21 +278,22 @@ void ParticleOnLatticeChern2DiceLatticeSingleBandHamiltonian::ComputeOneBodyMatr
 	  KX = this->KxFactor * (((double) kx) + this->GammaX);
 	  KY = this->KyFactor * (((double) ky) + this->GammaY);
 	  int Index = (kx * this->NbrSiteY) + ky;
-	  
- 	  Complex GammaK = this->THopping * (1.0 + Phase(KX) + Phase(KY));
- 	  Complex GammaKPlus = I() * this->Lambda * (1.0 + Phase(KX + (2.0 * M_PI / 3.0)) + Phase(KY + (4.0 * M_PI / 3.0)));
- 	  Complex GammaKMinus = I() * this->Lambda * (1.0 + Phase(KX - (2.0 * M_PI / 3.0)) + Phase(KY - (4.0 * M_PI / 3.0)));
-	  
+
+          double angle = 2.0 * M_PI / 3.0;
+          Complex GammaK = this->THopping * (1.0 + Phase(-KX) + Phase(-KY));
+          Complex GammaP = this->Lambda * (1.0 + Phase(-KX + angle) + Phase(-KY - angle));
+          Complex GammaM = this->Lambda * (1.0 + Phase(-KX - angle) + Phase(-KY + angle));
+
 	  HermitianMatrix TmpOneBodyHamiltonian(6, true);
  	  TmpOneBodyHamiltonian.SetMatrixElement(0, 4, Conj(GammaK));
  	  TmpOneBodyHamiltonian.SetMatrixElement(1, 5, Conj(GammaK));
- 	  TmpOneBodyHamiltonian.SetMatrixElement(0, 5, Conj(GammaKPlus));
- 	  TmpOneBodyHamiltonian.SetMatrixElement(1, 4, Conj(GammaKMinus));
+ 	  TmpOneBodyHamiltonian.SetMatrixElement(0, 5, I()*Conj(GammaP));
+ 	  TmpOneBodyHamiltonian.SetMatrixElement(1, 4, I()*Conj(GammaM));
 
  	  TmpOneBodyHamiltonian.SetMatrixElement(2, 4, GammaK);
  	  TmpOneBodyHamiltonian.SetMatrixElement(3, 5, GammaK);
- 	  TmpOneBodyHamiltonian.SetMatrixElement(2, 5, GammaKMinus);
- 	  TmpOneBodyHamiltonian.SetMatrixElement(3, 4, GammaKPlus);
+ 	  TmpOneBodyHamiltonian.SetMatrixElement(2, 5, I()*GammaM);
+ 	  TmpOneBodyHamiltonian.SetMatrixElement(3, 4, I()*GammaP);
 
 	  TmpOneBodyHamiltonian.SetMatrixElement(0, 0, this->BField1);
 	  TmpOneBodyHamiltonian.SetMatrixElement(1, 1, -this->BField1);

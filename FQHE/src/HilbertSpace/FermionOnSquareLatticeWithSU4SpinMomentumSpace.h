@@ -98,6 +98,14 @@ class FermionOnSquareLatticeWithSU4SpinMomentumSpace : public FermionOnSphereWit
   // return value = reference on current output stream 
   virtual ostream& PrintState (ostream& Str, int state);
 
+  // convert a state from one SU(4) basis to another, transforming the one body basis in each momentum sector
+  //
+  // initialState = state to transform  
+  // targetState = vector where the transformed state has to be stored
+  // oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+  virtual void TransformOneBodyBasis(ComplexVector& initialState, ComplexVector& targetState, ComplexMatrix* oneBodyBasis);
+
+
  protected:
 
   // evaluate Hilbert space dimension
