@@ -48,7 +48,7 @@ int main(int argc, char** argv)
 {
   cout.precision(14);
 
-  OptionManager Manager ("FQHETorusBosonsDelta" , "0.01");
+  OptionManager Manager ("FQHETorusBosonsCoulomb" , "0.01");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
@@ -104,7 +104,7 @@ int main(int argc, char** argv)
   bool FirstRun = true;
   
   char* OutputNameLz = new char [256];
-  sprintf (OutputNameLz, "bosons_torus_kysym_delta_n_%d_2s_%d_ratio_%f.dat", NbrParticles, MaxMomentum, XRatio);
+  sprintf (OutputNameLz, "bosons_torus_kysym_coulomb_n_%d_2s_%d_ratio_%f.dat", NbrParticles, MaxMomentum, XRatio);
   ofstream File;
   File.open(OutputNameLz, ios::binary | ios::out);
   File.precision(14);
@@ -124,7 +124,7 @@ int main(int argc, char** argv)
 #ifdef  __64_BITS__
       if ((MaxMomentum + NbrParticles - 1) < 63)
 #else
-	if ((MaxMomentum + NbrParticles - 1) < 31)	
+	if ((MaxMomentum + NbrParticles - 1) < 1)	
 #endif
 	  {
 	    Space = new BosonOnTorusShort(NbrParticles, MaxMomentum, Momentum);	    
@@ -139,7 +139,7 @@ int main(int argc, char** argv)
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
 
-      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnTorusDeltaHamiltonian (Space, NbrParticles, MaxMomentum, XRatio, Architecture.GetArchitecture(), Memory);
+      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnTorusCoulombHamiltonian (Space, NbrParticles, MaxMomentum, XRatio, Architecture.GetArchitecture(), Memory);
 
       double Shift = -10.0;
       Hamiltonian->ShiftHamiltonian(Shift);
@@ -147,7 +147,7 @@ int main(int argc, char** argv)
       if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
 	{
 	  EigenvectorName = new char [256];
-	  sprintf (EigenvectorName, "bosons_torus_kysym_delta_n_%d_2s_%d_ratio_%f_ky_%d", NbrParticles, MaxMomentum, XRatio, Momentum);
+	  sprintf (EigenvectorName, "bosons_torus_kysym_coulomb_n_%d_2s_%d_ratio_%f_ky_%d", NbrParticles, MaxMomentum, XRatio, Momentum);
 	}
       FQHEOnTorusMainTask Task (&Manager, Space, Hamiltonian, Momentum, Shift, OutputNameLz, FirstRun, EigenvectorName);
       MainTaskOperation TaskOperation (&Task);

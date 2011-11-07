@@ -2,214 +2,159 @@
 #include "Matrix/RealSymmetricMatrix.h"
 
 #include "HilbertSpace/FermionOnTorus.h"
+
 #include "Hamiltonian/ParticleOnTorusCoulombHamiltonian.h"
 
-#include "LanczosAlgorithm/BasicLanczosAlgorithm.h"
-#include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithm.h"
+#include "LanczosAlgorithm/LanczosManager.h"
+
+#include "MainTask/FQHEOnTorusMainTask.h"
+
+#include "Architecture/ArchitectureManager.h"
+#include "Architecture/AbstractArchitecture.h"
 #include "Architecture/MonoProcessorArchitecture.h"
 #include "Architecture/SMPArchitecture.h"
 
-#include "GeneralTools/ListIterator.h"
-#include "QuantumNumber/AbstractQuantumNumber.h"
-#include "HilbertSpace/SubspaceSpaceConverter.h"
+#include "Architecture/ArchitectureOperation/MainTaskOperation.h"
 
+#include "QuantumNumber/AbstractQuantumNumber.h"
+
+#include "GeneralTools/ListIterator.h"
+
+#include "Options/OptionManager.h"
+#include "Options/OptionGroup.h"
 #include "Options/AbstractOption.h"
 #include "Options/BooleanOption.h"
 #include "Options/SingleIntegerOption.h"
 #include "Options/SingleDoubleOption.h"
+#include "Options/SingleStringOption.h"
 
 #include <iostream>
 #include <stdlib.h>
 #include <math.h>
 #include <sys/time.h>
 #include <stdio.h>
-#include <fstream>
 
 
+using std::ios;
 using std::cout;
 using std::endl;
 using std::ofstream;
-using std::ios;
 
 
 int main(int argc, char** argv)
 {
   cout.precision(14);
 
-  BooleanOption HelpOption ('h', "help", "display this help");
-  BooleanOption SMPOption ('S', "SMP", "enable SMP mode");
-  SingleIntegerOption SMPNbrProcessorOption ('\n', "processors", "number of processors to use in SMP mode", 2);
-  SingleIntegerOption IterationOption ('i', "iter-max", "maximum number of lanczos iteration", 3000);
-  SingleIntegerOption NbrEigenvaluesOption ('n', "nbr-eigen", "number of eigenvalues", 40);
-  BooleanOption GroundOption ('g', "ground", "restrict to the largest subspace");
-  SingleIntegerOption NbrFermionOption ('p', "nbr-particles", "number of particles", 5);
-  SingleIntegerOption MaxMomentumOption ('l', "max-momentum", "maximum momentum for a single particle", 15);
-  SingleIntegerOption MomentumOption ('m', "momentum", "constraint on the total momentum modulo the maximum momentum (negative if none)", -1);
-  SingleDoubleOption XRatioOption ('r', "ratio", "ratio between lengths along the x and y directions (-1 if has to be taken equal to nbr-particles/4)", -1);
-  SingleIntegerOption MaxFullDiagonalizationOption ('f', "max-full", "maximum hilbert space size allowed to use full diagonalization", 300);
+  OptionManager Manager ("FQHETorusFermionsCoulomb" , "0.01");
+  OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
+  OptionGroup* MiscGroup = new OptionGroup ("misc options");
+  OptionGroup* SystemGroup = new OptionGroup ("system options");
+  OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
 
-  List<AbstractOption*> OptionList;
-  OptionList += &HelpOption;
-  OptionList += &SMPOption;
-  OptionList += &GroundOption;
-  OptionList += &SMPNbrProcessorOption;
-  OptionList += &IterationOption;
-  OptionList += &NbrEigenvaluesOption;
-  OptionList += &NbrFermionOption;
-  OptionList += &MaxMomentumOption;
-  OptionList += &MomentumOption;
-  OptionList += &XRatioOption;
-  OptionList += &MaxFullDiagonalizationOption;
-  if (ProceedOptions(argv, argc, OptionList) == false)
+  ArchitectureManager Architecture;
+  LanczosManager Lanczos(false);
+
+  Manager += SystemGroup;
+  Architecture.AddOptionGroup(&Manager);
+  Lanczos.AddOptionGroup(&Manager);
+  Manager += PrecalculationGroup;
+  Manager += ToolsGroup;
+  Manager += MiscGroup;
+
+  (*SystemGroup) += new SingleIntegerOption ('p', "nbr-particles", "number of particles", 6);
+  (*SystemGroup) += new SingleIntegerOption ('l', "max-momentum", "maximum momentum for a single particle", 18);
+  (*SystemGroup) += new SingleIntegerOption ('y', "ky-momentum", "constraint on the total momentum modulo the maximum momentum (negative if none)", -1);
+  (*SystemGroup) += new SingleDoubleOption ('r', "ratio", "ratio between the two torus lengths", 1.0);
+  (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
+  (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
+  (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
+
+  (*PrecalculationGroup) += new BooleanOption ('\n', "disk-cache", "use disk cache for fast multiplication", false);
+  (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
+  (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
+  (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-precalculation", "save precalculation in a file",0);
+
+#ifdef __LAPACK__
+  (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
+#endif
+  (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
+
+  (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
+
+  if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type QHEFermionsTorus -h" << endl;
+      cout << "see man page for option syntax or type FQHETorusFermionsLaplacianDelta -h" << endl;
       return -1;
     }
-  if (HelpOption.GetBoolean() == true)
+  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
     {
-      DisplayHelp (OptionList, cout);
+      Manager.DisplayHelp (cout);
       return 0;
     }
 
 
-  bool GroundFlag = GroundOption.GetBoolean();
-  bool SMPFlag = SMPOption.GetBoolean();
-  int NbrProcessor = SMPNbrProcessorOption.GetInteger();
-  int MaxNbrIterLanczos = IterationOption.GetInteger();
-  int NbrEigenvalue = NbrEigenvaluesOption.GetInteger();
-  int NbrFermions = NbrFermionOption.GetInteger();
-  int MaxMomentum = MaxMomentumOption.GetInteger();
-  int Momentum = MomentumOption.GetInteger();
-  int MaxFullDiagonalization = MaxFullDiagonalizationOption.GetInteger();
-  double XRatio = NbrFermions / 4.0;
-  if (XRatioOption.GetDouble() > 0)
-    {
-       XRatio = XRatioOption.GetDouble();
-    }
-  int InvNu = 3;
-//  int MaxMomentum = InvNu * NbrFermions;
-  int L = 0;
-  double GroundStateEnergy = 0.0;
-
-  char* OutputNameLz = new char [512];
-  sprintf (OutputNameLz, "fermions_torus_coulomb_n_%d_2s_%d_ratio_%f.dat", NbrFermions, MaxMomentum, XRatio);
+  int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
+  int MaxMomentum = ((SingleIntegerOption*) Manager["max-momentum"])->GetInteger();
+  int Momentum = ((SingleIntegerOption*) Manager["ky-momentum"])->GetInteger();
+  double XRatio = ((SingleDoubleOption*) Manager["ratio"])->GetDouble();
+  long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
+  bool FirstRun = true;
+  
+  char* OutputNameLz = new char [256];
+  sprintf (OutputNameLz, "fermions_torus_kysym_coulomb_n_%d_2s_%d_ratio_%f.dat", NbrParticles, MaxMomentum, XRatio);
   ofstream File;
   File.open(OutputNameLz, ios::binary | ios::out);
   File.precision(14);
-
-
-  
-  AbstractArchitecture* Architecture = 0;
-  if (SMPFlag == false)
-    Architecture = new MonoProcessorArchitecture;
-  else
-    Architecture = new SMPArchitecture(NbrProcessor);
 
   int Max = (MaxMomentum - 1);
   if (Momentum < 0)
     Momentum = 0;
   else
     Max = Momentum;
-
+  
   for (; Momentum <= Max; ++Momentum)
     {     
       cout << "----------------------------------------------------------------" << endl;
       cout << " Ratio = " << XRatio << endl;
-      FermionOnTorus TotalSpace (NbrFermions, MaxMomentum, Momentum);
-      cout << " Total Hilbert space dimension = " << TotalSpace.GetHilbertSpaceDimension() << endl;
-      cout << "momentum = " << Momentum << endl;
-/*      for (int i = 0; i < TotalSpace.GetHilbertSpaceDimension(); ++i)
+
+      ParticleOnTorus* Space = 0;
+#ifdef  __64_BITS__
+      if (MaxMomentum < 63)
+#else
+	if (MaxMomentum < 31)	
+#endif
+	  {
+	    Space = new FermionOnTorus(NbrParticles, MaxMomentum, Momentum);	    
+	  }
+      cout << " Hilbert space dimension = " << Space->GetHilbertSpaceDimension() << endl;
+
+      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
+      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
+	Memory = Architecture.GetArchitecture()->GetLocalMemory();
+
+      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnTorusCoulombHamiltonian (Space, NbrParticles, MaxMomentum, XRatio, Architecture.GetArchitecture(), Memory);
+
+      double Shift = -10.0;
+      Hamiltonian->ShiftHamiltonian(Shift);
+      char* EigenvectorName = 0;
+      if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
 	{
-	  cout << i << " = ";
-	  TotalSpace.PrintState(cout, i) << endl;
+	  EigenvectorName = new char [256];
+	  sprintf (EigenvectorName, "fermions_torus_kysym_coulomb_n_%d_2s_%d_ratio_%f_ky_%d", NbrParticles, MaxMomentum, XRatio, Momentum);
 	}
-      cout << endl << endl;*/
-      AbstractArchitecture* Architecture = 0;
-      if (SMPFlag == false)
-	Architecture = new MonoProcessorArchitecture;
-      else
-	Architecture = new SMPArchitecture(NbrProcessor);
-      AbstractHamiltonian* Hamiltonian = new ParticleOnTorusCoulombHamiltonian (&TotalSpace, NbrFermions, MaxMomentum, XRatio);
-      if (Hamiltonian->GetHilbertSpaceDimension() < MaxFullDiagonalization)
+      FQHEOnTorusMainTask Task (&Manager, Space, Hamiltonian, Momentum, Shift, OutputNameLz, FirstRun, EigenvectorName);
+      MainTaskOperation TaskOperation (&Task);
+      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+      if (EigenvectorName != 0)
 	{
-	  RealSymmetricMatrix HRep (Hamiltonian->GetHilbertSpaceDimension());
-	  Hamiltonian->GetHamiltonian(HRep);
-//	  cout << HRep << endl;
-	  if (Hamiltonian->GetHilbertSpaceDimension() > 1)
-	    {
-	      RealTriDiagonalSymmetricMatrix TmpTriDiag (Hamiltonian->GetHilbertSpaceDimension());
-	      HRep.Householder(TmpTriDiag, 1e-7);
-	      TmpTriDiag.Diagonalize();
-	      TmpTriDiag.SortMatrixUpOrder();
-	      if (L == 0)
-		GroundStateEnergy = TmpTriDiag.DiagonalElement(0);
-	      for (int j = 0; j < Hamiltonian->GetHilbertSpaceDimension() ; j++)
-		{
-		  File << Momentum << " " << TmpTriDiag.DiagonalElement(j) << endl;
-		}
-	      cout << endl;
-	    }
-	  else
-	    {
-	      File << Momentum << " " << HRep(0, 0) << endl;
-	    }
+	  delete[] EigenvectorName;
 	}
-      else
-	{
-	  FullReorthogonalizedLanczosAlgorithm Lanczos(Architecture, NbrEigenvalue, MaxNbrIterLanczos);
-	  double Precision = 1.0;
-	  double PreviousLowest = 1e50;
-	  double Lowest = PreviousLowest;
-	  int CurrentNbrIterLanczos = NbrEigenvalue + 3;
-	  Lanczos.SetHamiltonian(Hamiltonian);
-	  Lanczos.InitializeLanczosAlgorithm();
-	  cout << "Run Lanczos Algorithm" << endl;
-	  timeval TotalStartingTime;
-	  timeval TotalEndingTime;
-	  double Dt;
-	  gettimeofday (&(TotalStartingTime), 0);
-	  Lanczos.RunLanczosAlgorithm(NbrEigenvalue + 2);
-	  RealTriDiagonalSymmetricMatrix TmpMatrix;
-	  while ((Precision > 1e-14) && (CurrentNbrIterLanczos++ < MaxNbrIterLanczos))
-	    {
-	      Lanczos.RunLanczosAlgorithm(1);
-	      TmpMatrix.Copy(Lanczos.GetDiagonalizedMatrix());
-	      TmpMatrix.SortMatrixUpOrder();
-	      Lowest = TmpMatrix.DiagonalElement(NbrEigenvalue);
-	      Precision = fabs((PreviousLowest - Lowest) / PreviousLowest);
-	      PreviousLowest = Lowest; 
-	      cout << TmpMatrix.DiagonalElement(0) << " " << Lowest << " " << Precision << " "<< endl;
-	    }
-	  if (CurrentNbrIterLanczos >= MaxNbrIterLanczos)
-	    {
-	      cout << "too much Lanczos iterations" << endl;
-	      File << "too much Lanczos iterations" << endl;
-	      File.close();
-	      exit(0);
-	    }
-	  GroundStateEnergy = TmpMatrix.DiagonalElement(0);
-	  cout << endl;
-	  cout << TmpMatrix.DiagonalElement(0) << " " << Lowest << " " << Precision << "  Nbr of iterations = " 
-	       << CurrentNbrIterLanczos << endl;
-	  for (int i = 0; i <= NbrEigenvalue; ++i)
-	    {
-	      cout << TmpMatrix.DiagonalElement(i) << " ";
-	      File << Momentum << " " << TmpMatrix.DiagonalElement(i) << endl;
-	    }
-	  cout << endl;
-	  gettimeofday (&(TotalEndingTime), 0);
-	  cout << "------------------------------------------------------------------" << endl << endl;;
-	  Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
-	    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);
-	  cout << "time = " << Dt << endl;
-	}
-      cout << "----------------------------------------------------------------" << endl;
-      cout << " ground state energy = " << GroundStateEnergy << endl;
-      cout << " energy per particle in the ground state = " << (GroundStateEnergy / (double) NbrFermions) << endl;
+      if (FirstRun == true)
+	FirstRun = false;
       delete Hamiltonian;
+      delete Space;
     }
   File.close();
-
 
   return 0;
 }

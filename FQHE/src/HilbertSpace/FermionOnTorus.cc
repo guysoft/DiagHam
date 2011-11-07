@@ -141,6 +141,8 @@ FermionOnTorus::FermionOnTorus(const FermionOnTorus& fermions)
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
   this->Flag = fermions.Flag;
+  this->LookUpTableShift = fermions.LookUpTableShift;
+  this->LookUpTable = fermions.LookUpTable;
 }
 
 // constructor from full datas (with no constraint on the total momentum)
@@ -276,6 +278,8 @@ FermionOnTorus& FermionOnTorus::operator = (const FermionOnTorus& fermions)
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
   this->Flag = fermions.Flag;
+  this->LookUpTableShift = fermions.LookUpTableShift;
+  this->LookUpTable = fermions.LookUpTable;
   return *this;
 }
 
