@@ -551,7 +551,7 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
 
 inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int index, ComplexVector& vSource, ComplexVector& vDestination)
 {
-  int Dim = particles->GetHilbertSpaceDimension();
+  //int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
   double Coefficient3;
   Complex Coefficient4;
@@ -644,7 +644,7 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::HermitianEvaluat
 inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int index, ComplexVector* vSources, 
 													       ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients)
 {
-  int Dim = particles->GetHilbertSpaceDimension();
+  //int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
   double Coefficient3;
   int Index;
@@ -1197,9 +1197,6 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
   int* TmpIndices;
   // double* TmpInteractionFactor;
   int Dim = particles->GetHilbertSpaceDimension();
-  int SumIndices;
-  int TmpNbrM3Values;
-  int* TmpM3Values;
 
   if (this->HermitianSymmetryFlag == false)
     {

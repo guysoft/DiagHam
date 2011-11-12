@@ -41,7 +41,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <fstream>
-
+#include "MathTools/Complex.h"
 
 #ifdef HAVE_LAPACK
 
@@ -390,8 +390,79 @@ void RealSymmetricMatrix::SetMatrixElement(int i, int j, double x)
 // x = new value for matrix element
 void RealSymmetricMatrix::SetMatrixElement(int i, int j, const Complex& x)
 {
-  return;
+  if ((i >= this->NbrRow) || (j >= this->NbrColumn))
+    return;
+  if (i == j)
+    {
+      this->DiagonalElements[i] = Real(x);
+    }
+  else
+    {
+      if (i > j)
+	{
+	  int tmp = j;
+	  j = i;
+	  i = tmp;
+	}
+      j -= (i * (i + 1)) / 2 - i * (this->NbrRow + this->Increment - 1) + 1;
+      this->OffDiagonalElements[j] = Real(x);
+    }
 }
+
+// set a matrix element
+//
+// i = line position
+// j = column position
+// x = new value for matrix element
+
+void RealSymmetricMatrix::GetMatrixElement(int i, int j, double &x) const
+{
+  if ((i >= this->NbrRow) || (j >= this->NbrColumn))
+    return;
+  if (i == j)
+    {
+      x = this->DiagonalElements[i];
+    }
+  else
+    {
+      if (i > j)
+	{
+	  int tmp = j;
+	  j = i;
+	  i = tmp;
+	}
+      j -= (i * (i + 1)) / 2 - i * (this->NbrRow + this->Increment - 1) + 1;
+      x = this->OffDiagonalElements[j];
+    }
+}
+
+// set a matrix element
+//
+// i = line position
+// j = column position
+// x = new value for matrix element
+void RealSymmetricMatrix::GetMatrixElement(int i, int j, Complex& x) const
+{
+  if ((i >= this->NbrRow) || (j >= this->NbrColumn))
+    return;
+  x.Im = 0.0;
+  if (i == j)
+    {
+      x.Re = this->DiagonalElements[i];
+    }
+  else
+    {
+      if (i > j)
+	{
+	  int tmp = j;
+	  j = i;
+	  i = tmp;
+	}
+      j -= (i * (i + 1)) / 2 - i * (this->NbrRow + this->Increment - 1) + 1;
+      x.Re = this->OffDiagonalElements[j];
+    }
+}
+
 
 // add a value to a matrix element
 //

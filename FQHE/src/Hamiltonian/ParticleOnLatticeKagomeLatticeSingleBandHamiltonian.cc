@@ -311,6 +311,8 @@ void ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::EvaluateInteractionFac
     }
   cout << "nbr interaction = " << TotalNbrInteractionFactors << endl;
   cout << "====================================" << endl;
+
+  delete [] OneBodyBasis;
 }
 
 // conventions adopted for matrix elements:

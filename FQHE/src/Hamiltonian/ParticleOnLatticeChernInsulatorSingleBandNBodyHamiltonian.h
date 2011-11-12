@@ -358,7 +358,7 @@ inline void ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::EvaluateM
 
 inline void ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::HermitianEvaluateMNNBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector& vSource, ComplexVector& vDestination)
 {
-  int Dim = particles->GetHilbertSpaceDimension();
+  //int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
   double Coefficient3;
   Complex Coefficient4;
@@ -408,7 +408,7 @@ inline void ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::Hermitian
 inline void ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::HermitianEvaluateMNNBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector* vSources, 
 														 ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients)
 {
-  int Dim = particles->GetHilbertSpaceDimension();
+  //int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
   double Coefficient3;
   int Index;
@@ -558,11 +558,6 @@ inline void ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::EvaluateM
   double Coefficient = 0.0;
   double Coefficient2 = 0.0;
   int* TmpIndices;
-  int Dim = particles->GetHilbertSpaceDimension();
-  int SumIndices;
-  int TmpNbrM3Values;
-  int* TmpM3Values;
-
 
   for (int i = firstComponent; i < lastComponent; ++i)
     {

@@ -117,6 +117,7 @@ ParticleOnLatticeChernInsulatorSingleBandHamiltonian::ParticleOnLatticeChernInsu
 
 ParticleOnLatticeChernInsulatorSingleBandHamiltonian::~ParticleOnLatticeChernInsulatorSingleBandHamiltonian()
 {
+  cout << "destructor"<<endl;
   for (int i = 0; i < this->NbrSectorSums; ++i)
     {
       if (this->NbrSectorIndicesPerSum[i] > 0)
@@ -913,7 +914,8 @@ long ParticleOnLatticeChernInsulatorSingleBandHamiltonian::PartialFastMultiplica
   ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
   int LastComponent = lastComponent + firstComponent;
   this->EvaluateMNTwoBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
-
+  this->EvaluateMNOneBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
+  
   delete TmpParticles;
 
   return Memory;

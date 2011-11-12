@@ -975,17 +975,9 @@ long ParticleOnLatticeWithSpinChernInsulatorHamiltonian::FastMultiplicationMemor
 
 long ParticleOnLatticeWithSpinChernInsulatorHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int lastComponent)
 {
-  int Index;
-  double Coefficient = 0.0;
-  double Coefficient2 = 0.0;
   long Memory = 0;
-  int* TmpIndices;
   ParticleOnSphereWithSpin* TmpParticles = (ParticleOnSphereWithSpin*) this->Particles->Clone();
   int LastComponent = lastComponent + firstComponent;
-  int Dim = this->Particles->GetHilbertSpaceDimension();
-  int SumIndices;
-  int TmpNbrM3Values;
-  int* TmpM3Values;
 
   this->EvaluateMNTwoBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
 
@@ -1003,9 +995,6 @@ void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EnableFastMultiplicatio
   long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
-  int* TmpIndexArray;
-  Complex* TmpCoefficientArray;
-  long Pos;
   timeval TotalStartingTime2;
   timeval TotalEndingTime2;
   double Dt2;
@@ -1016,8 +1005,7 @@ void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EnableFastMultiplicatio
     ++ReducedSpaceDimension;
   this->InteractionPerComponentIndex = new int* [ReducedSpaceDimension];
   this->InteractionPerComponentCoefficient = new Complex* [ReducedSpaceDimension];
-  ParticleOnSphereWithSpin* TmpParticles = (ParticleOnSphereWithSpin*) this->Particles;
-  int Dim = TmpParticles->GetHilbertSpaceDimension();
+  //ParticleOnSphereWithSpin* TmpParticles = (ParticleOnSphereWithSpin*) this->Particles;
   int TotalPos = 0;
   
 

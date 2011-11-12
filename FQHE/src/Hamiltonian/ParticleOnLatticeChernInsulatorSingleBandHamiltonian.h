@@ -306,6 +306,14 @@ class ParticleOnLatticeChernInsulatorSingleBandHamiltonian : public AbstractQHEH
   // memory = reference on the amount of memory required for precalculations
   virtual void EvaluateMNTwoBodyFastMultiplicationMemoryComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent, long& memory);
 
+  // core part of the PartialFastMultiplicationMemory method involving one-body term
+  // 
+  // particles = pointer to the Hilbert space
+  // firstComponent = index of the first component that has to be precalcualted
+  // lastComponent  = index of the last component that has to be precalcualted
+  // memory = reference on the amount of memory required for precalculations
+  virtual void EvaluateMNOneBodyFastMultiplicationMemoryComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent, long& memory);
+
   // multiply a et of vectors by the current hamiltonian for a given range of indices 
   // and add result to another et of vectors, low level function (no architecture optimization)
   // using partial fast multiply option
@@ -737,10 +745,6 @@ inline void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::EvaluateMNTwoB
   double Coefficient = 0.0;
   double Coefficient2 = 0.0;
   int* TmpIndices;
-  int Dim = particles->GetHilbertSpaceDimension();
-  int SumIndices;
-  int TmpNbrM3Values;
-  int* TmpM3Values;
 
   for (int i = firstComponent; i < lastComponent; ++i)
     {
@@ -765,8 +769,18 @@ inline void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::EvaluateMNTwoB
 		}
 	    }
 	}
-    }    
+    }
+}
 
+// core part of the PartialFastMultiplicationMemory method involving two-body term
+// 
+// particles = pointer to the Hilbert space
+// firstComponent = index of the first component that has to be precalcualted
+// lastComponent  = index of the last component that has to be precalcualted
+// memory = reference on the amount of memory required for precalculations
+
+inline void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::EvaluateMNOneBodyFastMultiplicationMemoryComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent, long& memory)
+{
   if (this->OneBodyInteractionFactors != 0)
     {
       for (int i = firstComponent; i < lastComponent; ++i)

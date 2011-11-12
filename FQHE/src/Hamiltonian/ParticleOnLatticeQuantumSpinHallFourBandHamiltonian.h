@@ -412,7 +412,6 @@ inline void ParticleOnLatticeQuantumSpinHallFourBandHamiltonian::EvaluateMNTwoBo
   double Coefficient3;
   Complex Coefficient4;
   int* TmpIndices;
-  int* TmpIndices2;
   Complex* TmpInteractionFactor;
   int Index;
   for (int j = 0; j < this->NbrIntraSectorSums; ++j)
@@ -610,7 +609,6 @@ inline void ParticleOnLatticeQuantumSpinHallFourBandHamiltonian::EvaluateMNTwoBo
   double Coefficient3;
   int Index;
   int* TmpIndices;
-  int* TmpIndices2;
   Complex* TmpInteractionFactor;
   for (int j = 0; j < this->NbrIntraSectorSums; ++j)
     {
@@ -809,12 +807,11 @@ inline void ParticleOnLatticeQuantumSpinHallFourBandHamiltonian::EvaluateMNTwoBo
 
 inline void ParticleOnLatticeQuantumSpinHallFourBandHamiltonian::HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphereWithSU4Spin* particles, int index, ComplexVector& vSource, ComplexVector& vDestination)
 {
-  int Dim = particles->GetHilbertSpaceDimension();
+  //int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
   double Coefficient3;
   Complex Coefficient4;
   int* TmpIndices;
-  int* TmpIndices2;
   Complex* TmpInteractionFactor;
   int Index;
   Complex TmpSum = 0.0;
@@ -1029,12 +1026,11 @@ inline void ParticleOnLatticeQuantumSpinHallFourBandHamiltonian::HermitianEvalua
 inline void ParticleOnLatticeQuantumSpinHallFourBandHamiltonian::HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphereWithSU4Spin* particles, int index, ComplexVector* vSources, 
 													       ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients)
 {
-  int Dim = particles->GetHilbertSpaceDimension();
+  //int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
   double Coefficient3;
   int Index;
   int* TmpIndices;
-  int* TmpIndices2;
   Complex* TmpInteractionFactor;
   Complex* TmpSum = new Complex[nbrVectors];
   for (int j = 0; j < this->NbrIntraSectorSums; ++j)
@@ -1374,7 +1370,6 @@ inline void ParticleOnLatticeQuantumSpinHallFourBandHamiltonian::EvaluateMNTwoBo
   double Coefficient3;
   Complex Coefficient4;
   int* TmpIndices;
-  int* TmpIndices2;
   Complex* TmpInteractionFactor;
   int Index;
 
@@ -1843,7 +1838,6 @@ inline void ParticleOnLatticeQuantumSpinHallFourBandHamiltonian::EvaluateMNTwoBo
   double Coefficient3;
   Complex Coefficient4;
   int* TmpIndices;
-  int* TmpIndices2;
   int Index;
 
   if (this->HermitianSymmetryFlag == false)
@@ -2163,10 +2157,7 @@ inline void ParticleOnLatticeQuantumSpinHallFourBandHamiltonian::EvaluateMNOneBo
 {
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
-  double Coefficient3;
   Complex Coefficient4;
-  int* TmpIndices;
-  int* TmpIndices2;
   int Index;
 
   if (this->HermitianSymmetryFlag == false)

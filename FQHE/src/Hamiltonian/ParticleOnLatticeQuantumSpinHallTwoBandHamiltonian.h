@@ -451,7 +451,7 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::EvaluateMNTwoBod
 
 inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int index, ComplexVector& vSource, ComplexVector& vDestination)
 {
-  int Dim = particles->GetHilbertSpaceDimension();
+  //int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
   double Coefficient3;
   Complex Coefficient4;
@@ -614,7 +614,7 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::HermitianEvaluat
 inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int index, ComplexVector* vSources, 
 													       ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients)
 {
-  int Dim = particles->GetHilbertSpaceDimension();
+  //int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
   double Coefficient3;
   int Index;

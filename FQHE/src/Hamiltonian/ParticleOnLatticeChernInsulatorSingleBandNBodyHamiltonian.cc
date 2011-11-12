@@ -166,6 +166,8 @@ ComplexVector& ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::LowLev
 	    {
 	      this->EvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);	  
 	    }
+	  if (this->OneBodyInteractionFactors != 0)
+	    this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSource, vDestination);
 	}
       delete TmpParticles;
     }
@@ -243,6 +245,8 @@ ComplexVector& ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::LowLev
 			this->EvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
 		      }
 		  }
+		if (this->OneBodyInteractionFactors != 0)
+		  this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent + l, LastComponent, this->FastMultiplicationStep, vSource, vDestination);
 	      }
 	  delete TmpParticles;
 	}
@@ -284,6 +288,8 @@ ComplexVector* ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::LowLev
 	    {
 	      this->EvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
 	    }
+	  if (this->OneBodyInteractionFactors != 0)
+	    this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSources, vDestinations, nbrVectors);
 	}
       delete[] Coefficient2;
       delete TmpParticles;
@@ -404,6 +410,8 @@ ComplexVector* ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::LowLev
 	      {
 		this->EvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
 	      }
+	    if (this->OneBodyInteractionFactors != 0)
+	      this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent + l, LastComponent, this->FastMultiplicationStep, vSources, vDestinations, nbrVectors);
 	  }
       }
   delete[] Coefficient2;
@@ -442,6 +450,8 @@ ComplexVector& ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::Hermit
 	    {
 	      this->HermitianEvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
 	    }
+	  if (this->OneBodyInteractionFactors != 0)
+	    this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSource, vDestination);
 	}
       delete TmpParticles;
     }
@@ -528,6 +538,8 @@ ComplexVector& ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::Hermit
 		      {
 			this->HermitianEvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
 		      }
+		    if (this->OneBodyInteractionFactors != 0)
+		      this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent + l, LastComponent, this->FastMultiplicationStep, vSource, vDestination);
 		  }
 	      }
 	  delete TmpParticles;
@@ -569,6 +581,8 @@ ComplexVector* ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::Hermit
 	    {
 	      this->HermitianEvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
 	    }
+	  if (this->OneBodyInteractionFactors != 0)
+	    this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSources, vDestinations, nbrVectors);
 	}
       delete[] Coefficient2;
       delete TmpParticles;
@@ -708,6 +722,8 @@ ComplexVector* ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::Hermit
 	      {
 		this->HermitianEvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
 	      }
+	    if (this->OneBodyInteractionFactors != 0)
+	      this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent + l, LastComponent, this->FastMultiplicationStep, vSources, vDestinations, nbrVectors);
 	  }
       }
   delete[] TmpSum;
@@ -958,6 +974,10 @@ long ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::PartialFastMulti
     {
       this->EvaluateMNTwoBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
     }
+  if (this->OneBodyInteractionFactors != 0)
+    {
+      this->EvaluateMNOneBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
+    }
 
   delete TmpParticles;
   return Memory;
@@ -1028,12 +1048,11 @@ void ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::PartialEnableFas
       this->EvaluateMNNBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
 							   this->InteractionPerComponentCoefficient[Pos], TotalPos);
       if (this->TwoBodyFlag == true)
-	{
-	  this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
-							     this->InteractionPerComponentCoefficient[Pos], TotalPos);
-	  this->EvaluateMNOneBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
-							     this->InteractionPerComponentCoefficient[Pos], TotalPos);
-	}
+	this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
+							   this->InteractionPerComponentCoefficient[Pos], TotalPos);
+      if (this->OneBodyInteractionFactors != 0)
+	this->EvaluateMNOneBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
+							   this->InteractionPerComponentCoefficient[Pos], TotalPos);
       ++Pos;
     }
   delete TmpParticles;

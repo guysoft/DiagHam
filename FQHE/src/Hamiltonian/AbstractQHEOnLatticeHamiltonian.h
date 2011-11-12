@@ -785,10 +785,10 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateFastMultiplicationComponent
   int TmpInteractionPerComponent = this->NbrRealInteractionPerComponent[position]+this->NbrComplexInteractionPerComponent[position];
   //       cout << "Interactions for component "<<i<<":  real "<< this->NbrRealInteractionPerComponent[position]<<" complex "
   // 	   << this->NbrComplexInteractionPerComponent[position] <<endl;
-  this->InteractionPerComponentIndex[position] = new int [TmpInteractionPerComponent];
-  this->InteractionPerComponentCoefficientIndex[position] = new unsigned short [TmpInteractionPerComponent];      
-  indexArray = this->InteractionPerComponentIndex[position];
-  coefficientIndexArray = this->InteractionPerComponentCoefficientIndex[position];
+  //this->InteractionPerComponentIndex[position] = new int [TmpInteractionPerComponent];
+  //this->InteractionPerComponentCoefficientIndex[position] = new unsigned short [TmpInteractionPerComponent];      
+  //indexArray = this->InteractionPerComponentIndex[position];
+  //coefficientIndexArray = this->InteractionPerComponentCoefficientIndex[position];
   PosR = 0;  // counter for position of real matrix elements
   PosC = this->NbrRealInteractionPerComponent[position];  // counter for position of complex matrix elements
 
