@@ -117,7 +117,6 @@ ParticleOnLatticeChernInsulatorSingleBandHamiltonian::ParticleOnLatticeChernInsu
 
 ParticleOnLatticeChernInsulatorSingleBandHamiltonian::~ParticleOnLatticeChernInsulatorSingleBandHamiltonian()
 {
-  cout << "destructor"<<endl;
   for (int i = 0; i < this->NbrSectorSums; ++i)
     {
       if (this->NbrSectorIndicesPerSum[i] > 0)
