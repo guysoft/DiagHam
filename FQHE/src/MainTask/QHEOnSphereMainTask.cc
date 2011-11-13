@@ -763,8 +763,8 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 	}
       if (CurrentNbrIterLanczos >= this->MaxNbrIterLanczos)
 	{
-	  cout << "too much Lanczos iterations" << endl;
-	  File << "too much Lanczos iterations" << endl;
+	  cout << "too many Lanczos iterations" << endl;
+	  File << "too many Lanczos iterations" << endl;
 	  File.close();
 	  return 1;
 	}

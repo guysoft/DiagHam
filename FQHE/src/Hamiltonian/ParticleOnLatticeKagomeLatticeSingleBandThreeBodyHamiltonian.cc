@@ -490,9 +490,7 @@ void ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::EvaluateInter
 	}
       else
 	{
-	  double FactorU = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
-	  if (this->FlatBand == false)
-	    FactorU *= this->UPotential;
+	  double FactorU = this->UPotential*0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
 	  this->InteractionFactors = new Complex* [this->NbrSectorSums];
 	  for (int i = 0; i < this->NbrSectorSums; ++i)
 	    {
