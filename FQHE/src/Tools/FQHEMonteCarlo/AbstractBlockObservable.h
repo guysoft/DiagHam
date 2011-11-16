@@ -28,58 +28,30 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef ABSTRACTOBSERVABLE_H
-#define ABSTRACTOBSERVABLE_H
+#ifndef ABSTRACTBLOCKOBSERVABLE_H
+#define ABSTRACTBLOCKOBSERVABLE_H
 
 #include "config.h"
 
 #include <iostream>
+#include "AbstractObservable.h"
+#include "MathTools/Complex.h"
 
-class AbstractParticleCollection;
-
-class AbstractObservable
+class AbstractBlockObservable : public AbstractObservable
 {
- protected:
-  unsigned Type;
   
  public:
   
-  enum Properties{
-    RealObservableT = 0x1u,
-    ComplexObservableT = 0x2u,
-    VectorValued = 0x4u
-  };
-  
   // destructor
-  virtual ~AbstractObservable();
+  virtual ~AbstractBlockObservable();
 
   // call to make an observation
   // weight = relative weight of this sample
-  virtual void RecordValue(double weight) = 0;
+  virtual void RecordRealValue(Complex *weights) = 0;
 
-  // print legend to the given stream
-  // all = flag indicating whether to print all, or shortened information
-  virtual void PrintLegend(std::ostream &output, bool all = false) = 0;
-
-  // print status to the given stream
-  // all = flag indicating whether to print all, or shortened information
-  virtual void PrintStatus(std::ostream &output, bool all = false) = 0;
-
-  // request whether observable should be printed
-  //
-  virtual bool IncludeInPrint();
-
-  // set print status
-  //
-  virtual void IncludeInPrint(bool newStatus);
-
-  // print formatted data suitable for plotting
-  // ouput = the target stream
-  virtual void WriteDataFile(std::ostream &output) = 0;
-
-  // set particle collection that the observable operates on
-  // system = particle collection
-  virtual void SetParticleCollection(AbstractParticleCollection *system) = 0;
+  // call to make an observation
+  // weight = relative weight of this sample
+  virtual void RecordValue(Complex *weights) = 0;
   
 };
 

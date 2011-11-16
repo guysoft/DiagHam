@@ -36,6 +36,7 @@
 #include "LaughlinWithSpinSamplingFunction.h"
 #include "LaughlinSamplingFunction.h"
 #include "HalperinSamplingFunction.h"
+#include "MRBlockSamplingFunction.h"
 
 #include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
 
@@ -50,10 +51,11 @@ using std::cout;
 //
 // geometry = id of the geometry to use
 
-QHESamplingFunctionManager::QHESamplingFunctionManager(int geometry)
+QHESamplingFunctionManager::QHESamplingFunctionManager(int geometry, bool blockAlgorithm)
 {
   this->GeometryID = geometry;
   this->Options = 0;
+  this->BlockAlgorithm = blockAlgorithm;
 }
 
 // destructor
@@ -66,7 +68,7 @@ QHESamplingFunctionManager::~QHESamplingFunctionManager()
 // add an option group containing all options related to the wave functions
 //
 // manager = pointer to the option manager
-
+// blockAlgorithm = flag indicating whether block symmetric Monte Carlo shall be used
 void QHESamplingFunctionManager::AddOptionGroup(OptionManager* manager)
 {
   this->Options = manager;
@@ -74,15 +76,26 @@ void QHESamplingFunctionManager::AddOptionGroup(OptionManager* manager)
   (*(this->Options)) += SamplingFunctionGroup;
   (*SamplingFunctionGroup) += new BooleanOption ('\n', "list-sampling-functions", "list all available sampling fuctions");
   (*SamplingFunctionGroup) += new SingleStringOption  ('\n', "sampler", "name of the test wave fuction",0);
-  if (this->GeometryID & QHESamplingFunctionManager::SphereGeometry)
+  if (this->BlockAlgorithm)
     {
-      (*SamplingFunctionGroup) += new SingleIntegerOption  ('\n', "laughlin-exponent", "power to which the jastrow factors in sampling function are raised",2);
-      //(*SamplingFunctionGroup) += new SingleStringOption  ('\n', "xxx", "description",0);
+      if (this->GeometryID & QHESamplingFunctionManager::SphereGeometry)
+	{
+	  (*SamplingFunctionGroup) += new SingleIntegerOption  ('\n', "laughlin-exponent", "power to which the jastrow factors in sampling function are raised",2);
+	  //(*SamplingFunctionGroup) += new SingleStringOption  ('\n', "xxx", "description",0);
+	}
     }
-  else if (this->GeometryID & QHESamplingFunctionManager::SphereWithSpinGeometry)
+  else
     {
-      (*SamplingFunctionGroup) += new SingleIntegerOption  ('\n', "laughlin-exponent", "power to which the jastrow factors in sampling function are raised",2);
-      (*SamplingFunctionGroup) += new MultipleIntegerOption  ('\n', "SHC", "coefficients (k,l,m) of sampling Halperin wavefunction",',' ,',', "1,1,1");
+      if (this->GeometryID & QHESamplingFunctionManager::SphereGeometry)
+	{
+	  (*SamplingFunctionGroup) += new SingleIntegerOption  ('\n', "laughlin-exponent", "power to which the jastrow factors in sampling function are raised",2);
+	  //(*SamplingFunctionGroup) += new SingleStringOption  ('\n', "xxx", "description",0);
+	}
+      else if (this->GeometryID & QHESamplingFunctionManager::SphereWithSpinGeometry)
+	{
+	  (*SamplingFunctionGroup) += new SingleIntegerOption  ('\n', "laughlin-exponent", "power to which the jastrow factors in sampling function are raised",2);
+	  (*SamplingFunctionGroup) += new MultipleIntegerOption  ('\n', "SHC", "coefficients (k,l,m) of sampling Halperin wavefunction",',' ,',', "1,1,1");
+	}
     }
 }
 
@@ -93,21 +106,31 @@ void QHESamplingFunctionManager::AddOptionGroup(OptionManager* manager)
 ostream& QHESamplingFunctionManager::ShowAvalaibleSamplingFunctions (ostream& str)
 {
   str << "list of avalaible sampling functions:" << endl;
-  if (this->GeometryID == QHESamplingFunctionManager::SphereGeometry)
+  if (this->BlockAlgorithm)
     {
-      str << "  * laughlin : laughlin-type wavefunction" << endl;
+      if (this->GeometryID == QHESamplingFunctionManager::SphereGeometry)
+	{
+	  str << "  * MR: Moore-Read wavefunction" << endl;
+	}
     }
   else
-    if (this->GeometryID == QHESamplingFunctionManager::DiskGeometry)
-      {
-	str << "  no sampling functions, yet" << endl;	
-      }
-    else
-      if (this->GeometryID == QHESamplingFunctionManager::SphereWithSpinGeometry)
-	{	  
-	  str << "  * laughlin : uncorrelated layer each with a laughlin-type wavefunction" << endl;
-	  str << "  * halperin : general halperin wavefunctions (z-z)^k (w-w)^l (z-w)^m (set by SHC)" << endl;
+    {
+      if (this->GeometryID == QHESamplingFunctionManager::SphereGeometry)
+	{
+	  str << "  * laughlin : laughlin-type wavefunction" << endl;
 	}
+      else
+	if (this->GeometryID == QHESamplingFunctionManager::DiskGeometry)
+	  {
+	    str << "  no sampling functions, yet" << endl;	
+	  }
+	else
+	  if (this->GeometryID == QHESamplingFunctionManager::SphereWithSpinGeometry)
+	    {	  
+	      str << "  * laughlin : uncorrelated layer each with a laughlin-type wavefunction" << endl;
+	      str << "  * halperin : general halperin wavefunctions (z-z)^k (w-w)^l (z-w)^m (set by SHC)" << endl;
+	    }
+    }
   return str;
 }
 
@@ -119,6 +142,18 @@ void QHESamplingFunctionManager::TestForShow(ostream& str)
       this->ShowAvalaibleSamplingFunctions(str);
       exit(0);
     }
+}
+
+
+// get the wave function corresponding to the option constraints
+//
+// return value = pointer to the wave function (null if an error occurs)
+AbstractMCBlockSamplingFunction* QHESamplingFunctionManager::GetBlockSamplingFunction()
+{
+  if (this->BlockAlgorithm)
+    return (AbstractMCBlockSamplingFunction*)(this->GetSamplingFunction());
+  else
+    return 0;
 }
   
 // get the wave function corresponding to the option constraints
@@ -134,56 +169,78 @@ AbstractMCSamplingFunction* QHESamplingFunctionManager::GetSamplingFunction()
     {
       return 0;
     }
-  if (this->GeometryID == QHESamplingFunctionManager::SphereGeometry)
+  if (this->BlockAlgorithm)
     {
-      if ((strcmp (this->Options->GetString("sampler"), "laughlin") == 0))
+      if (this->GeometryID == QHESamplingFunctionManager::SphereGeometry)
 	{
-	  int N = this->Options->GetInteger("nbr-particles");	      
-	  int m = this->Options->GetInteger("laughlin-exponent");
-	  AbstractMCSamplingFunction* rst  = new LaughlinSamplingFunction(N,m);
-	  return rst;
+	  if ((strcmp (this->Options->GetString("sampler"), "MR") == 0))
+	    {
+	      int N = this->Options->GetInteger("nbr-particles");	      
+	      //	      int m = this->Options->GetInteger("laughlin-exponent");
+	      if (N&1)
+		{
+		  cout << "Require even number of particles in MR wavefunction"<<endl;
+		  exit(1);
+		}
+	      AbstractMCSamplingFunction* rst  = new MRBlockSamplingFunction(N/2 /*, sqrCriticalDistance*/);
+	      return rst;
+	    }
+	  return 0;
 	}
-      return 0;
     }
-  else
-    if (this->GeometryID == QHESamplingFunctionManager::DiskGeometry)
-      {
-	// none implemented for the moment
-	return 0;
-      }
-    else
-      if (this->GeometryID == QHESamplingFunctionManager::SphereWithSpinGeometry)
+  else // no block algorithm
+    { 
+      if (this->GeometryID == QHESamplingFunctionManager::SphereGeometry)
 	{
 	  if ((strcmp (this->Options->GetString("sampler"), "laughlin") == 0))
 	    {
 	      int N = this->Options->GetInteger("nbr-particles");	      
 	      int m = this->Options->GetInteger("laughlin-exponent");
-	      AbstractMCSamplingFunction* rst  = new LaughlinWithSpinSamplingFunction(N,m);
-	      return rst;
-	    }
-	  if ((strcmp (this->Options->GetString("sampler"), "halperin") == 0))
-	    {
-	      int N= this->Options->GetInteger("nbr-particles");
-	      int length;
-	      int *Params = Options->GetIntegers("SHC",length);
-	      if (length != 3)
-		{
-		  cout << "the Halperin sampling function requires precisely three parameters -SHC k,l,m !"<<endl;
-		  exit(-1);
-		}
-	      int K,L,M;
-	      K = Params[0];
-	      L = Params[1];
-	      M = Params[2];
-	      delete [] Params;
-	      int NbrUp=-1;
-	      if ((*this->Options)["total-sz"]!=NULL)
-		NbrUp = (N + this->Options->GetInteger("total-sz"))/2;
-	      HalperinSamplingFunction* rst = new HalperinSamplingFunction(N, K, L, M, NbrUp);
+	      AbstractMCSamplingFunction* rst  = new LaughlinSamplingFunction(N,m);
 	      return rst;
 	    }
 	  return 0;
 	}
+      else
+	if (this->GeometryID == QHESamplingFunctionManager::DiskGeometry)
+	  {
+	    // none implemented for the moment
+	    return 0;
+	  }
+	else
+	  if (this->GeometryID == QHESamplingFunctionManager::SphereWithSpinGeometry)
+	    {
+	      if ((strcmp (this->Options->GetString("sampler"), "laughlin") == 0))
+		{
+		  int N = this->Options->GetInteger("nbr-particles");	      
+		  int m = this->Options->GetInteger("laughlin-exponent");
+		  AbstractMCSamplingFunction* rst  = new LaughlinWithSpinSamplingFunction(N,m);
+		  return rst;
+		}
+	      if ((strcmp (this->Options->GetString("sampler"), "halperin") == 0))
+		{
+		  int N= this->Options->GetInteger("nbr-particles");
+		  int length;
+		  int *Params = Options->GetIntegers("SHC",length);
+		  if (length != 3)
+		    {
+		      cout << "the Halperin sampling function requires precisely three parameters -SHC k,l,m !"<<endl;
+		      exit(-1);
+		    }
+		  int K,L,M;
+		  K = Params[0];
+		  L = Params[1];
+		  M = Params[2];
+		  delete [] Params;
+		  int NbrUp=-1;
+		  if ((*this->Options)["total-sz"]!=NULL)
+		    NbrUp = (N + this->Options->GetInteger("total-sz"))/2;
+		  HalperinSamplingFunction* rst = new HalperinSamplingFunction(N, K, L, M, NbrUp);
+		  return rst;
+		}
+	      return 0;
+	    }
+    }
   return 0;
 }
 
@@ -228,9 +285,17 @@ int QHESamplingFunctionManager::GetWaveFunctionType()
 {
   if ((*(this->Options))["sampler"] == 0)
     return QHESamplingFunctionManager::InvalidWaveFunction;
-  if (strcmp (this->Options->GetString("sampler"), "laughlin") == 0)
-    return QHESamplingFunctionManager::Laughlin;
-  if (strcmp (this->Options->GetString("sampler"), "halperin") == 0)
-    return QHESamplingFunctionManager::Halperin;  
+  if (BlockAlgorithm)
+    {
+      if (strcmp (this->Options->GetString("sampler"), "MR") == 0)
+	return QHESamplingFunctionManager::MooreReadBlock;
+    }
+  else
+    {
+      if (strcmp (this->Options->GetString("sampler"), "laughlin") == 0)
+	return QHESamplingFunctionManager::Laughlin;
+      if (strcmp (this->Options->GetString("sampler"), "halperin") == 0)
+	return QHESamplingFunctionManager::Halperin;
+    }
   return QHESamplingFunctionManager::InvalidWaveFunction;
 }

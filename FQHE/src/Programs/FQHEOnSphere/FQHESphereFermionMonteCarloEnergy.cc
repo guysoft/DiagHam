@@ -39,7 +39,7 @@ int main(int argc, char** argv)
   cout.precision(14);
 
   // some running options and help
-  OptionManager Manager ("QHEFermionsOverlap" , "0.01");
+  OptionManager Manager ("FQHESphereFermionMonteCarloEnergy" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* MonteCarloGroup = new OptionGroup ("Monte Carlo options");

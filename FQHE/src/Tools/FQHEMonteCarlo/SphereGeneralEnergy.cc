@@ -23,7 +23,7 @@ SphereGeneralEnergy::SphereGeneralEnergy()
 // parameters = file describing parameters of the interaction
 SphereGeneralEnergy::SphereGeneralEnergy(int nbrFlux, const char* parameters)
 {
-  this->Type=AbstractObservable::RealObservable;
+  this->Type=AbstractObservable::RealObservableT;
   this->NbrFlux = nbrFlux;
   this->Values = new WeightedRealObservable();
   this->NbrObservations=0;

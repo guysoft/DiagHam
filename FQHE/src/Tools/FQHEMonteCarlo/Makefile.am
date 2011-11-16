@@ -7,6 +7,7 @@ LaughlinWithSpinSamplingFunction.cc \
 QHESamplingFunctionManager.cc \
 SimpleMonteCarloOnSphereAlgorithm.cc \
 AbstractObservable.cc \
+AbstractBlockObservable.cc \
 ParticleOnSphereCollection.cc \
 AbstractParticleCollection.cc \
 SphereBilayerCoulombEnergy.cc \
@@ -17,4 +18,8 @@ TrivialSamplingFunction.cc \
 SphereGeneralEnergy.cc \
 SphereWithSpinGeneralEnergy.cc \
 SphereTwoBodyCorrelator.cc \
-SphereBilayerTwoBodyCorrelator.cc
+SphereBilayerTwoBodyCorrelator.cc \
+BlockMonteCarloOnSphereAlgorithm.cc \
+AbstractMCBlockSamplingFunction.cc \
+MRBlockSamplingFunction.cc \
+SphereBlockCoulombEnergy.cc

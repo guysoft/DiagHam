@@ -23,7 +23,7 @@ SphereBilayerCoulombEnergy::SphereBilayerCoulombEnergy()
 // spacing = spacing of further layer separations
 SphereBilayerCoulombEnergy::SphereBilayerCoulombEnergy(int nbrFlux, int nbrSeparations, double lowestSeparation, double spacing)
 {
-  this->Type=AbstractObservable::VectorValued||AbstractObservable::RealObservable;
+  this->Type=AbstractObservable::VectorValued||AbstractObservable::RealObservableT;
   if (nbrSeparations <= 0)
     {
       cout << "Number of layer separation must be > 0 in SphereBilayerCoulombEnergy" << endl;

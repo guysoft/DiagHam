@@ -26,7 +26,7 @@ SphereWithSpinGeneralEnergy::SphereWithSpinGeneralEnergy()
 // parametersIntra2 = file describing parameters of the interaction (intra-spin, other spin-channel)
 SphereWithSpinGeneralEnergy::SphereWithSpinGeneralEnergy(int nbrUp, int nbrFlux, const char* parametersInter, const char* parametersIntra, const char* parametersIntra2)
 {
-  this->Type=AbstractObservable::RealObservable;
+  this->Type=AbstractObservable::RealObservableT;
   this->NbrUp = nbrUp;
   this->NbrFlux = nbrFlux;
   this->NbrParticles = 0;
@@ -194,7 +194,7 @@ SphereWithSpinGeneralEnergy::SphereWithSpinGeneralEnergy(int nbrUp, int nbrFlux,
 // parameters = file describing parameters of the interaction (all spin channels UpUp, UpDown, DownDown)
 SphereWithSpinGeneralEnergy::SphereWithSpinGeneralEnergy(int nbrUp, int nbrFlux, const char* parameters)
 {
-  this->Type=AbstractObservable::RealObservable;
+  this->Type=AbstractObservable::RealObservableT;
   this->NbrUp = nbrUp;
   this->NbrParticles = 0;
   this->NbrFlux = nbrFlux;

@@ -21,7 +21,7 @@ SphereCoulombEnergy::SphereCoulombEnergy()
 // width = simple model of finite layer width for 1/sqrt(w^2+r^2)
 SphereCoulombEnergy::SphereCoulombEnergy(int nbrFlux, double width)
 {
-  this->Type=AbstractObservable::RealObservable;
+  this->Type=AbstractObservable::RealObservableT;
   this->NbrFlux = nbrFlux;
   this->WidthSqr=width*width;
   cout << "nbrFlux="<<nbrFlux<<endl;

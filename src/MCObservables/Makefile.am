@@ -11,5 +11,6 @@ MCHistoryRecord.cc \
 WeightedRealObservable.cc \
 WeightedRealVectorObservable.cc \
 WeightedComplexObservable.cc \
-WeightedComplexVectorObservable.cc 
+WeightedComplexVectorObservable.cc \
+ComplexVectorObservable.cc 
 

@@ -43,7 +43,7 @@ using std::ostream;
 class OptionManager;
 class Abstract1DComplexFunction;
 class AbstractMCSamplingFunction;
-
+class AbstractMCBlockSamplingFunction;
 
 class QHESamplingFunctionManager
 {
@@ -57,6 +57,9 @@ class QHESamplingFunctionManager
   int GeometryID;
 
   int SamplingfunctionID;
+
+  // flag for block algorithm
+  bool BlockAlgorithm;
 
  public:
 
@@ -74,12 +77,13 @@ class QHESamplingFunctionManager
       InvalidWaveFunction = 0x00000,
       Laughlin = 0x00103,
       Halperin = 0x00104,
+      MooreReadBlock = 0x10001
     };
   
   // constructor
   //
   // geometry = id of the geometry to use
-  QHESamplingFunctionManager(int geometry = QHESamplingFunctionManager::SphereGeometry);
+  QHESamplingFunctionManager(int geometry = QHESamplingFunctionManager::SphereGeometry, bool blockAlgorithm=false);
 
   // destructor
   //
@@ -102,6 +106,11 @@ class QHESamplingFunctionManager
   //
   // return value = pointer to the wave function (null if an error occurs)
   AbstractMCSamplingFunction* GetSamplingFunction();
+
+  // get the wave function corresponding to the option constraints
+  //
+  // return value = pointer to the wave function (null if an error occurs)
+  AbstractMCBlockSamplingFunction* GetBlockSamplingFunction();
 
   // get a description of the returned wave function
   //
