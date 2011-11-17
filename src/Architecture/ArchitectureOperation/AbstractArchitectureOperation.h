@@ -79,7 +79,8 @@ class AbstractArchitectureOperation
       FQHETorusParticleEntanglementSpectrumOperation = 0x8006,
       FQHELatticeParticleEntanglementSpectrumOperation = 0x8007,
       FQHESphereMonomialsProductOperation = 0x8017,
-      FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation = 0x8018
+      FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation = 0x8018,
+      FQHESphereSymmetrizeU1U1StateOperation = 0x8020
     };
   
   // destructor

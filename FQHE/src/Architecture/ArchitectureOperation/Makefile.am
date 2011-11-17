@@ -15,4 +15,5 @@ FQHESphereMultipleMonomialsTimesSlaterProjectionOperation.cc \
 FQHETorusParticleEntanglementSpectrumOperation.cc \
 FQHESphereMonomialsProductOperation.cc \
 FQHELatticeParticleEntanglementSpectrumOperation.cc \
-FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation.cc 
+FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation.cc \
+FQHESphereSymmetrizeU1U1StateOperation.cc

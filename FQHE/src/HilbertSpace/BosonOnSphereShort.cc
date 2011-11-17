@@ -45,6 +45,7 @@
 #include "GeneralTools/Permutations.h"
 
 #include "Architecture/ArchitectureOperation/FQHESphereParticleEntanglementSpectrumOperation.h"
+#include "Architecture/ArchitectureOperation/FQHESphereSymmetrizeU1U1StateOperation.h"
 
 #include <math.h>
 #include <stdlib.h>
@@ -4014,15 +4015,39 @@ int BosonOnSphereShort::GeneratePairs(unsigned long* Monomial, long* weigthVecto
 // unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
 // return value = symmetrized state
 
-RealVector BosonOnSphereShort::SymmetrizeU1U1State (RealVector& leftVector, RealVector& rightVector, 
-						    BosonOnSphereShort* leftSpace, BosonOnSphereShort* rightSpace, bool unnormalizedBasisFlag)
+RealVector BosonOnSphereShort::SymmetrizeU1U1State (RealVector& leftVector, RealVector& rightVector, BosonOnSphereShort* leftSpace, BosonOnSphereShort* rightSpace, bool unnormalizedBasisFlag, AbstractArchitecture* architecture)
 {
-  RealVector SymmetrizedVector (this->LargeHilbertSpaceDimension);
+  RealVector SymmetrizedVector (this->LargeHilbertSpaceDimension,true);
+
+  FQHESphereSymmetrizeU1U1StateOperation Operation (this, leftSpace, rightSpace, &SymmetrizedVector, &leftVector, &rightVector, unnormalizedBasisFlag);
+  Operation.ApplyOperation(architecture);
+
+  if ( unnormalizedBasisFlag == false )
+    SymmetrizedVector /= SymmetrizedVector.Norm();
+
+  return SymmetrizedVector;
+}
+
+
+// symmetrized a product of two uncoupled states 
+//
+// outputVector = reference on the vector which will contain the symmetrozed state
+// leftVector = reference on the vector associated to the first color
+// rightVector = reference on the vector associated to the second color
+// leftSpace = pointer to the Hilbert space of the first color
+// rightSpace = pointer to the Hilbert space of the second color
+// unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+// return value = symmetrized state
+
+void BosonOnSphereShort::SymmetrizeU1U1StateCore (RealVector& symmetrizedVector, RealVector& leftVector, RealVector& rightVector, BosonOnSphereShort* leftSpace, BosonOnSphereShort* rightSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents)
+{
+  unsigned long LastComponent = firstComponent + nbrComponents;
+  
   FactorialCoefficient Factorial1;
   FactorialCoefficient Factorial2;
   if (unnormalizedBasisFlag == true)
     {
-      for (long i = 0l; i < leftSpace->LargeHilbertSpaceDimension; ++i)
+      for (long i = firstComponent; i < LastComponent; ++i)
 	{
 	  this->FermionToBoson(leftSpace->FermionBasis->StateDescription[i], leftSpace->FermionBasis->StateLzMax[i], 
 			       leftSpace->TemporaryState, leftSpace->TemporaryStateLzMax);
@@ -4059,14 +4084,14 @@ RealVector BosonOnSphereShort::SymmetrizeU1U1State (RealVector& leftVector, Real
 		  for (k = 0; k <= this->TemporaryStateLzMax; ++k)
 		    if (this->TemporaryState[k] > 1)
 		      Factorial2.FactorialMultiply(this->TemporaryState[k]);	      
-		  SymmetrizedVector[TmpPos] += Factorial2.GetNumericalValue() * TmpCoefficient * rightVector[j];
+		  symmetrizedVector[TmpPos] += Factorial2.GetNumericalValue() * TmpCoefficient * rightVector[j];
 		}
 	    }
 	}
     }
   else
     {
-      for (long i = 0l; i < leftSpace->LargeHilbertSpaceDimension; ++i)
+      for (long i = firstComponent; i < LastComponent; ++i)
 	{
 	  this->FermionToBoson(leftSpace->FermionBasis->StateDescription[i], leftSpace->FermionBasis->StateLzMax[i], 
 			       leftSpace->TemporaryState, leftSpace->TemporaryStateLzMax);
@@ -4103,13 +4128,11 @@ RealVector BosonOnSphereShort::SymmetrizeU1U1State (RealVector& leftVector, Real
 		  for (k = 0; k <= this->TemporaryStateLzMax; ++k)
 		    if (this->TemporaryState[k] > 1)
 		      Factorial2.FactorialMultiply(this->TemporaryState[k]);	      
-		  SymmetrizedVector[TmpPos] += sqrt(Factorial2.GetNumericalValue()) * TmpCoefficient * rightVector[j];
+		  symmetrizedVector[TmpPos] += sqrt(Factorial2.GetNumericalValue()) * TmpCoefficient * rightVector[j];
 		}
 	    }
-	}
-      SymmetrizedVector /= SymmetrizedVector.Norm();
+	}     
     }
-  return SymmetrizedVector;
 }
 
 // request whether state with given index satisfies a general Pauli exclusion principle

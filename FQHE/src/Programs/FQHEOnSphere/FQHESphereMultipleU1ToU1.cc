@@ -18,6 +18,9 @@
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
 #include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
 
+#include "Architecture/ArchitectureManager.h"
+#include "Architecture/AbstractArchitecture.h"
+#include "Architecture/ArchitectureOperation/FQHESphereSymmetrizeU1U1StateOperation.h"
 
 #include <iostream>
 #include <cstring>
@@ -37,10 +40,15 @@ int main(int argc, char** argv)
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* OutputGroup = new OptionGroup ("output options");
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
+	
+  ArchitectureManager Architecture;
+	
   Manager += SystemGroup;
   Manager += OutputGroup;
+  Architecture.AddOptionGroup(&Manager);
   Manager += PrecalculationGroup;
   Manager += MiscGroup;
+  
   (*SystemGroup) += new SingleStringOption  ('1', "state-1", "vector file that corresponds to the first component");
   (*SystemGroup) += new SingleStringOption  ('2', "state-2", "vector file that corresponds to the second component");
   (*SystemGroup) += new BooleanOption  ('\n', "haldane-1", "use squeezed basis instead of the usual n-body basis for the first component");
@@ -93,6 +101,7 @@ int main(int argc, char** argv)
       cout << "error while retrieving system parameters from file name " << Manager.GetString("state-1") << endl;
       return -1;
     }
+  
   int NbrParticles2 = 0; 
   int NbrFluxQuanta2 = 0; 
   int TotalLz2 = 0;
@@ -103,17 +112,17 @@ int main(int argc, char** argv)
       cout << "error while retrieving system parameters from file name " << Manager.GetString("state-2") << endl;
       return -1;
     }
-/*  if (NbrParticles1 != NbrParticles2)
-    {
+  /*  if (NbrParticles1 != NbrParticles2)
+      {
       cout << "error, " << Manager.GetString("state-1") << " and " << Manager.GetString("state-2") << " don't have the same number of particles" << endl;
       return -1;
-    }*/
+      }*/
   if (NbrFluxQuanta2 != NbrFluxQuanta1)
     {
       cout << "error, " << Manager.GetString("state-1") << " and " << Manager.GetString("state-2") << " don't have the same number of flux quanta" << endl;
       return -1;
     }
-
+  
 
   RealVector State1;
   if (State1.ReadVector (Manager.GetString("state-1")) == false)
@@ -140,7 +149,7 @@ int main(int argc, char** argv)
     {
       Space1 = new BosonOnSphereShort(NbrParticles1, TotalLz1, NbrFluxQuanta1);	       
     }
-
+  
   BosonOnSphereShort* Space2 = 0;
   if (Manager.GetBoolean("haldane-2") == true)
     {
@@ -153,7 +162,7 @@ int main(int argc, char** argv)
     {
       Space2 = new BosonOnSphereShort(NbrParticles2, TotalLz2, NbrFluxQuanta2);	       
     }
-
+  
   char* OutputFileName = 0;
   if (Manager.GetString("output-file") != 0)
     {
@@ -220,9 +229,10 @@ int main(int argc, char** argv)
     {
       TargetSpace = new BosonOnSphereShort(NbrParticles1 + NbrParticles2, TotalLz1 + TotalLz2, NbrFluxQuanta2);	       
     }
-
-
-  RealVector OutputState = TargetSpace->SymmetrizeU1U1State(State1, State2, Space1, Space2, Manager.GetBoolean("unnormalized-basis"));
+    
+  RealVector OutputState = TargetSpace->SymmetrizeU1U1State (State1 , State2, Space1 , Space2 , Manager.GetBoolean("unnormalized-basis") , Architecture.GetArchitecture());
+    
+	
   if (OutputState.WriteVector(OutputFileName) == false)
     {
       cout << "error while writing output state " << OutputFileName << endl;
