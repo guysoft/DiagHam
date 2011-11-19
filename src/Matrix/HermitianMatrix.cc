@@ -84,7 +84,7 @@ HermitianMatrix::HermitianMatrix(int dimension, bool zero)
   this->MatrixType = Matrix::ComplexElements | Matrix::Hermitian;
   this->DiagonalElements = new double [this->NbrRow];
   this->RealOffDiagonalElements = new double [(((long) this->NbrRow) * (((long) this->NbrRow) - 1)) / 2l];
-this->ImaginaryOffDiagonalElements = new double [(((long) this->NbrRow) * (((long) this->NbrRow) - 1)) / 2l];
+  this->ImaginaryOffDiagonalElements = new double [(((long) this->NbrRow) * (((long) this->NbrRow) - 1)) / 2l];
   if (zero == true)
     {
       int pos = 0;
@@ -124,7 +124,7 @@ HermitianMatrix::HermitianMatrix(double* diagonal, double* realOffDiagonal, doub
   this->Increment = (this->TrueNbrRow - this->NbrRow);
   this->MatrixType = Matrix::ComplexElements | Matrix::Hermitian;
 #ifdef __LAPACK__
-  this->LapackWorkAreaDimension=0;
+   this->LapackWorkAreaDimension=0;
 #endif
 }
 
@@ -155,6 +155,48 @@ HermitianMatrix::HermitianMatrix(const HermitianMatrix& M)
 
 HermitianMatrix::HermitianMatrix(const RealTriDiagonalSymmetricMatrix& M) 
 {
+#ifdef __LAPACK__
+  this->LapackWorkAreaDimension=0;
+#endif
+}
+
+// copy constructor from a complex matrix, keeping only the upper triangular part  (duplicating all data)
+//
+// M = matrix to copy
+
+HermitianMatrix::HermitianMatrix(const ComplexMatrix& M)
+{
+  if (M.NbrRow >= M.NbrColumn)
+    {
+      this->NbrRow = M.NbrColumn;
+    }
+  else
+    {
+      this->NbrRow = M.NbrRow;
+    }
+  this->NbrColumn = this->NbrRow;
+  this->TrueNbrRow = this->NbrRow;
+  this->TrueNbrColumn = this->NbrColumn;
+  this->Increment = (this->TrueNbrRow - this->NbrRow);
+  this->Flag.Initialize();
+  this->MatrixType = Matrix::ComplexElements | Matrix::Hermitian;
+  this->DiagonalElements = new double [this->NbrRow];
+  this->RealOffDiagonalElements = new double [(((long) this->NbrRow) * (((long) this->NbrRow) - 1)) / 2l];
+  this->ImaginaryOffDiagonalElements = new double [(((long) this->NbrRow) * (((long) this->NbrRow) - 1)) / 2l];
+  Complex Tmp;
+  long Index = 0l;
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      M.GetMatrixElement(i, i, Tmp);
+      this->DiagonalElements[i] = Tmp.Re;
+      for (int j = i + 1; j < this->NbrRow; ++j)
+	{
+	  M.GetMatrixElement(i, j, Tmp);
+	  this->RealOffDiagonalElements[Index] = Tmp.Re;
+	  this->ImaginaryOffDiagonalElements[Index] = Tmp.Im;
+	  ++Index;
+	}
+    }
 #ifdef __LAPACK__
   this->LapackWorkAreaDimension=0;
 #endif

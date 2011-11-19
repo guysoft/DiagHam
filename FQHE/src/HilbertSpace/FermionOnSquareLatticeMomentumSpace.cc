@@ -946,3 +946,73 @@ int FermionOnSquareLatticeMomentumSpace::FindStateIndexFromArray(int* stateDescr
     --TmpLzMax;
   return this->FindStateIndex(TmpState, TmpLzMax);
 }
+
+// apply the inversion symmetry i.e (k_x,k_y)->(-k_x,-k_y) to a state 
+//
+// inputstate = reference on the input state
+// inputSpace = pointer to the Hilbert space associated to the input state
+// return value = resulting state 
+
+ComplexVector FermionOnSquareLatticeMomentumSpace::InversionSymmetry(ComplexVector& state, FermionOnSquareLatticeMomentumSpace* inputSpace)
+{
+  ComplexVector OutputState (this->HilbertSpaceDimension, true);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    {
+      unsigned long TmpState2 = this->StateDescription[i];
+      unsigned long TmpState = 0x0ul;
+      unsigned long Mask;
+      unsigned long TmpState3;
+      unsigned long MaskSign = 0x0ul;
+      int TmpKx = 0;
+      int TmpKy = 0;
+      for (int j = 0; j <= this->LzMax; ++j)
+	{
+	  if ((TmpState2 & (0x1ul << (TmpKx * this->NbrSiteY + TmpKy))) != 0x0ul)
+	    {
+	      Mask = 0x1ul << (((this->NbrSiteX - TmpKx) % this->NbrSiteX) * this->NbrSiteY + ((this->NbrSiteY - TmpKy) % this->NbrSiteY));
+	      TmpState3 = TmpState & (Mask - 0x1ul);
+#ifdef __64_BITS__
+	      TmpState3 ^= (TmpState3 >> 32);
+#endif
+	      TmpState3 ^= (TmpState3 >> 16);
+	      TmpState3 ^= (TmpState3 >> 8);
+	      TmpState3 ^= (TmpState3 >> 4);
+	      TmpState3 ^= (TmpState3 >> 2);
+	      MaskSign ^= (TmpState3 ^ (TmpState3 >> 1)) & 0x1ul;
+	      TmpState |= Mask;
+	    }
+	  ++TmpKy;
+	  if (TmpKy == this->NbrSiteY)
+	    {
+	      TmpKy = 0;
+	      ++TmpKx;
+	    }
+	}
+      int TmpLzMax = inputSpace->LzMax;
+      while ((TmpState >> TmpLzMax) == 0x0ul)
+	--TmpLzMax;
+      int Index = inputSpace->FindStateIndex(TmpState, TmpLzMax);
+      cout << i << " " << Index << " : " << hex << TmpState << " " 
+	   << TmpState2 << dec << " : " ;
+      this->PrintState(cout, i) << " ";
+      this->PrintState(cout, Index) << " : ";
+      cout << state[i] << " " << state[Index] << " " << SqrNorm(state[i]) << " " << SqrNorm(state[Index]) << endl;
+      if (Index < inputSpace->HilbertSpaceDimension)
+	{
+	  if (MaskSign == 0ul)
+	    {
+	      OutputState[i] = state[Index];
+	    }
+	  else
+	    {
+	      OutputState[i] = -state[Index];
+	    }
+	}
+      else 
+	{
+	  cout << "error" << endl;
+	}
+    }
+  return OutputState;
+}
+

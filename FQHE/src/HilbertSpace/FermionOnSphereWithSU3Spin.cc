@@ -642,7 +642,7 @@ long FermionOnSphereWithSU3Spin::ShiftedEvaluateHilbertSpaceDimension(int nbrFer
 // totalY = three time the total Y value
 // return value = Hilbert space dimension
 
-int FermionOnSphereWithSU3Spin::EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalTz, int totalY)
+long FermionOnSphereWithSU3Spin::EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalTz, int totalY)
 {
   int N1 = (2 * nbrFermions) + totalY + (3 * totalTz);
   int N2 = (2 * nbrFermions) + totalY - (3 * totalTz);

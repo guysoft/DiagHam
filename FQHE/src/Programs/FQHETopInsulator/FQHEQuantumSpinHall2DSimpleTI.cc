@@ -38,6 +38,13 @@ using std::ofstream;
 // mass = mass term of the simple TI model
 void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double mass);
 
+// compute the single particle tranformation matrices 
+//
+// nbrSitesX = number of sites in the x direction
+// nbrSitesY = number of sites in the y direction
+// mass = mass term of the simple TI model
+ComplexMatrix* ComputeSingleParticleTransformationMatrices(int nbrSitesX, int nbrSitesY, double mass);
+
 
 int main(int argc, char** argv)
 {
@@ -204,36 +211,32 @@ int main(int argc, char** argv)
 										   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"),  		     
 										   Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 	      
-	      
-	      // 		  AbstractQHEHamiltonian* HamiltonianOneBody = new ParticleOnSquareLatticeFourBandSimpleTIHamiltonian(&Space, NbrParticles, NbrSitesX, NbrSitesY,
-	      // 														     0.0, 0.0, 1.0, Manager.GetDouble("mass"),
-	      // 														     Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
-	      // 														     Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
-// 		  AbstractQHEHamiltonian* HamiltonianInteracting = new ParticleOnSquareLatticeFourBandSimpleTIHamiltonian(&Space, NbrParticles, NbrSitesX, NbrSitesY,
-// 															 Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), 0.0, Manager.GetDouble("mass"),
-// 															 Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
-// 															 Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
-		  
+	      ComplexMatrix* OneBodyBasis = ComputeSingleParticleTransformationMatrices(NbrSitesX, NbrSitesY, Manager.GetDouble("mass"));
+	      for (int k = 0; k < (NbrSitesX * NbrSitesY); ++k)
+		cout << "k = " << k << " : " << endl <<  OneBodyBasis[k] << endl;
+	      ComplexMatrix NBodyTransformationMatrix = ((FermionOnSquareLatticeWithSU4SpinMomentumSpace*) Space)->TransformationMatrixOneBodyBasis(OneBodyBasis);
+	      ComplexMatrix HRep (Hamiltonian->GetHilbertSpaceDimension(), Hamiltonian->GetHilbertSpaceDimension());
+	      Hamiltonian->GetHamiltonian(HRep);
+	      cout << "Hinitial = " << endl << HRep << endl;
+	      //HRep.SetToIdentity();
+	      ComplexMatrix TransformedHRep = HRep.Conjugate(NBodyTransformationMatrix);
+	      //	      cout << TransformedHRep << endl;
+	      FermionOnSquareLatticeWithSpinMomentumSpace* TargetSpace = new FermionOnSquareLatticeWithSpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+	      ComplexMatrix SU4SU2TransformationMatrix = ((FermionOnSquareLatticeWithSU4SpinMomentumSpace*) Space)->TransformationMatrixSU4ToSU2(TargetSpace, 0, 1);
+	      cout << SU4SU2TransformationMatrix << endl;
+	      cout << TransformedHRep << endl;
+	      ComplexMatrix TransformedHRep2 = TransformedHRep.InvConjugate(SU4SU2TransformationMatrix);
+	      cout << TransformedHRep2 << endl;
 
-		  
-		  
-// 		  HermitianMatrix HRepOneBodyBasis (Hamiltonian->GetHilbertSpaceDimension(), Hamiltonian->GetHilbertSpaceDimension());
-// 		  HamiltonianOneBody->GetHamiltonian(HRep);
-// 		  ComplexMatrix HRepOneBodyBasis (Hamiltonian->GetHilbertSpaceDimension(), Hamiltonian->GetHilbertSpaceDimension());
-// 		  HamiltonianOneBody->GetHamiltonian(HRep);
-// 		  for (int m = 0; m < Hamiltonian->GetHilbertSpaceDimension(); ++m)
-// 		    for (int n = m; n < Hamiltonian->GetHilbertSpaceDimension(); ++n)
-// 		      {
-// 			Complex Tmp;
-// 			HRep.GetMatrixElement(m, n, Tmp);
-// 			if (Norm(Tmp) != 0.0)
-// 			  {
-// 			    cout << m << " " << n << " : " << Tmp << " ";
-// 			    Space.PrintState(cout, m) << " | ";
-
-// 			    Space.PrintState(cout, n) << endl;			    
-// 			  }
-// 		      }
+	      RealDiagonalMatrix TmpDiag;
+	      HermitianMatrix HRep2(TransformedHRep2);
+#ifdef __LAPACK__
+	      HRep2.LapackDiagonalize(TmpDiag);
+#else
+	      HRep2.Diagonalize(TmpDiag);
+#endif   
+	      for (int l = 0; l < TmpDiag.GetNbrRow(); ++l)
+		cout << TmpDiag(l, l) << endl;
 
 	      char* ContentPrefix = new char[256];
 	      sprintf (ContentPrefix, "%d %d", i, j);
@@ -323,5 +326,46 @@ void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrS
       File << endl;
     }
   cout << "Spread = " << (MaxEMinus - MinEMinus) << "  Gap = " <<  (MinEPlus - MaxEMinus) << "  Flatening = " << ((MaxEMinus - MinEMinus) / (MinEPlus - MaxEMinus)) << endl;
+}
+
+// compute the single particle tranformation matrices 
+//
+// nbrSitesX = number of sites in the x direction
+// nbrSitesY = number of sites in the y direction
+// mass = mass term of the simple TI model
+
+ComplexMatrix* ComputeSingleParticleTransformationMatrices(int nbrSitesX, int nbrSitesY, double mass)
+{
+  ComplexMatrix* OneBodyBasis = new ComplexMatrix[nbrSitesX * nbrSitesY];
+  double KxFactor = 2.0 * M_PI / ((double) nbrSitesX);
+  double KyFactor = 2.0 * M_PI / ((double) nbrSitesY);
+  for (int kx = 0; kx < nbrSitesX; ++kx)
+    {
+      for (int ky = 0; ky < nbrSitesY; ++ky)
+	{
+	  int Index = (kx * nbrSitesY) + ky;
+	  HermitianMatrix TmpOneBodyHamiltonian(4, true);
+	  Complex d2 (sin (((double) ky) * KyFactor), 0.0);
+	  double d1 = sin (((double) kx) * KxFactor);
+	  double d3 = (mass - cos (((double) kx) * KxFactor) - cos (((double) ky) * KyFactor));
+	  TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d3);
+	  TmpOneBodyHamiltonian.SetMatrixElement(1, 1, -d3);
+	  TmpOneBodyHamiltonian.SetMatrixElement(2, 2, d3);
+	  TmpOneBodyHamiltonian.SetMatrixElement(3, 3, -d3);
+	  TmpOneBodyHamiltonian.SetMatrixElement(0, 1, d1);
+	  TmpOneBodyHamiltonian.SetMatrixElement(2, 3, d1);
+	  TmpOneBodyHamiltonian.SetMatrixElement(0, 3, d2);
+	  TmpOneBodyHamiltonian.SetMatrixElement(1, 2, d2);
+	  RealDiagonalMatrix TmpDiag;
+	  OneBodyBasis[Index] = ComplexMatrix (4, 4);
+	  OneBodyBasis[Index].SetToIdentity();
+#ifdef __LAPACK__
+	  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, OneBodyBasis[Index]);
+#else
+	  TmpOneBodyHamiltonian.Diagonalize(TmpDiag, OneBodyBasis[Index]);
+#endif   
+	}
+    }
+  return OneBodyBasis;
 }
 

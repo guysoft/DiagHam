@@ -6,10 +6,10 @@
 //                    Copyright (C) 2001-2011 Nicolas Regnault                //
 //                                                                            //
 //                                                                            //
-//              class of fermions on a square lattice with SU(4) spin         //
+//              class of fermions on a square lattice with SU(3) spin         //
 //                                in momentum space                           //
 //                                                                            //
-//                        last modification : 26/09/2011                      //
+//                        last modification : 08/11/2011                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,19 +29,17 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef FERMIONONSQUARELATTICEWITHSU4SPINMOMENTUMSPACE_H
-#define FERMIONONSQUARELATTICEWITHSU4SPINMOMENTUMSPACE_H
+#ifndef FERMIONONSQUARELATTICEWITHSU3SPINMOMENTUMSPACE_H
+#define FERMIONONSQUARELATTICEWITHSU3SPINMOMENTUMSPACE_H
 
 #include "config.h"
-#include "HilbertSpace/FermionOnSphereWithSU4Spin.h"
-#include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpace.h"
-
+#include "HilbertSpace/FermionOnSphereWithSU3Spin.h"
 
 #include <iostream>
 
 
 
-class FermionOnSquareLatticeWithSU4SpinMomentumSpace : public FermionOnSphereWithSU4Spin
+class FermionOnSquareLatticeWithSU3SpinMomentumSpace : public FermionOnSphereWithSU3Spin
 {
 
  protected:
@@ -71,22 +69,22 @@ class FermionOnSquareLatticeWithSU4SpinMomentumSpace : public FermionOnSphereWit
   // kxMomentum = momentum along the x direction
   // kyMomentum = momentum along the y direction
   // memory = amount of memory granted for precalculations
-  FermionOnSquareLatticeWithSU4SpinMomentumSpace (int nbrFermions, int nbrSiteX, int nbrSiteY, int kxMomentum, int kyMomentum, unsigned long memory = 10000000);
+  FermionOnSquareLatticeWithSU3SpinMomentumSpace (int nbrFermions, int nbrSiteX, int nbrSiteY, int kxMomentum, int kyMomentum, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
-  FermionOnSquareLatticeWithSU4SpinMomentumSpace(const FermionOnSquareLatticeWithSU4SpinMomentumSpace& fermions);
+  FermionOnSquareLatticeWithSU3SpinMomentumSpace(const FermionOnSquareLatticeWithSU3SpinMomentumSpace& fermions);
 
   // destructor
   //
-  ~FermionOnSquareLatticeWithSU4SpinMomentumSpace ();
+  ~FermionOnSquareLatticeWithSU3SpinMomentumSpace ();
 
   // assignement (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space
-  FermionOnSquareLatticeWithSU4SpinMomentumSpace& operator = (const FermionOnSquareLatticeWithSU4SpinMomentumSpace& fermions);
+  FermionOnSquareLatticeWithSU3SpinMomentumSpace& operator = (const FermionOnSquareLatticeWithSU3SpinMomentumSpace& fermions);
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -99,27 +97,6 @@ class FermionOnSquareLatticeWithSU4SpinMomentumSpace : public FermionOnSphereWit
   // state = ID of the state to print
   // return value = reference on current output stream 
   virtual ostream& PrintState (ostream& Str, int state);
-
-  // convert a state from one SU(4) basis to another, transforming the one body basis in each momentum sector
-  //
-  // initialState = state to transform  
-  // targetState = vector where the transformed state has to be stored
-  // oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
-  virtual void TransformOneBodyBasis(ComplexVector& initialState, ComplexVector& targetState, ComplexMatrix* oneBodyBasis);
-
-  // compute the transformation matrix from one SU(4) basis to another, transforming the one body basis in each momentum sector
-  //
-  // oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
-  // return value = transformation matrix
-  virtual ComplexMatrix TransformationMatrixOneBodyBasis(ComplexMatrix* oneBodyBasis);
-
-  // compute the projection matrix from the SU(4) Hilbert space to an SU(2) Hilbert space
-  // 
-  // targetSpace = pointer to the SU(2) Hilbert space
-  // spinUp = index of the component that has to be consider as a spin up
-  // spinDown = index of the component that has to be consider as a spin down
-  // return value = projection matrix
-  virtual ComplexMatrix TransformationMatrixSU4ToSU2(FermionOnSquareLatticeWithSpinMomentumSpace* targetSpace, int spinUp = 0, int spinDown = 1);
 
  protected:
 
@@ -144,17 +121,6 @@ class FermionOnSquareLatticeWithSU4SpinMomentumSpace : public FermionOnSphereWit
   // return value = position from which new states have to be stored
   virtual long GenerateStates(int nbrFermions, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy, long pos);
 
-  // recursive part of the convertion from a state from one SU(4) basis to another, transforming the one body basis in each momentum sector
-  //
-  // targetState = vector where the transformed state has to be stored
-  // coefficient = current coefficient to assign
-  // position = current particle consider in the n-body state
-  // momentumIndices = array that gives the momentum partition of the initial n-body state
-  // initialSU4Indices = array that gives the spin dressing the initial n-body state
-  // currentSU4Indices = array that gives the spin dressing the current transformed n-body state
-  // oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
-  void TransformOneBodyBasisRecursive(ComplexVector& targetState, Complex coefficient,
-				      int position, int* momentumIndices, int* initialSU4Indices, int* currentSU4Indices, ComplexMatrix* oneBodyBasis);
 
 };
 

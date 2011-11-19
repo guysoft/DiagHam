@@ -114,4 +114,5 @@ BosonOnSquareLatticeMomentumSpace.cc \
 FermionOnSphereWithSU4SpinLong.cc \
 FermionOnCubicLatticeWithSU4SpinMomentumSpaceLong.cc \
 FermionOnSquareLatticeWithSU4SpinMomentumSpace.cc \
-FermionOnSquareLatticeWithSU4SpinMomentumSpaceLong.cc
+FermionOnSquareLatticeWithSU4SpinMomentumSpaceLong.cc \
+FermionOnSquareLatticeWithSU3SpinMomentumSpace.cc

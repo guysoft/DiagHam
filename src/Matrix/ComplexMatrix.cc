@@ -450,9 +450,9 @@ void ComplexMatrix::SetToIdentity()
 
 ComplexMatrix ComplexMatrix::Conjugate(ComplexMatrix& UnitaryM)
 {
-  ComplexMatrix TmpMatrix (UnitaryM.NbrRow, UnitaryM.NbrRow, true);
-  for (int i = 0; i < UnitaryM.NbrRow; ++i)
-    for (int j = 0; j < UnitaryM.NbrRow; ++j)
+  ComplexMatrix TmpMatrix (UnitaryM.NbrColumn, UnitaryM.NbrColumn, true);
+  for (int i = 0; i < UnitaryM.NbrColumn; ++i)
+    for (int j = 0; j < UnitaryM.NbrColumn; ++j)
       {
 	Complex Tmp = 0.0;
 	for (int k = 0; k < UnitaryM.NbrRow; ++k)
@@ -477,12 +477,12 @@ ComplexMatrix ComplexMatrix::InvConjugate(ComplexMatrix& UnitaryM)
     for (int j = 0; j < UnitaryM.NbrRow; ++j)
       {
 	Complex Tmp = 0.0;
-	for (int k = 0; k < UnitaryM.NbrRow; ++k)
-	  for (int l = 0; l < UnitaryM.NbrRow; ++l)
+	for (int k = 0; k < UnitaryM.NbrColumn; ++k)
+	  for (int l = 0; l < UnitaryM.NbrColumn; ++l)
 	    {
 	      Tmp += UnitaryM.Columns[k][i] * this->Columns[l][k] * Conj(UnitaryM.Columns[l][j]);
 	    }
-	this->Columns[j][i] = Tmp;
+	TmpMatrix.Columns[j][i] = Tmp;
       }
   return TmpMatrix;
 }

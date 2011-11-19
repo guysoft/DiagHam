@@ -100,6 +100,11 @@ class HermitianMatrix : public Matrix
   // M = matrix to copy
   HermitianMatrix(const RealTriDiagonalSymmetricMatrix& M);
 
+  // copy constructor from a complex matrix, keeping only the upper triangular part  (duplicating all data)
+  //
+  // M = matrix to copy
+  HermitianMatrix(const ComplexMatrix& M);
+
   // destructor
   //
   ~HermitianMatrix();

@@ -182,6 +182,13 @@ class FermionOnSquareLatticeMomentumSpace : public FermionOnSphere
   virtual long EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace,
 								  int nbrGroundStates, ComplexVector* groundStates, double* weights, HermitianMatrix* densityMatrix);
 
+  // apply the inversion symmetry i.e (k_x,k_y)->(-k_x,-k_y) to a state 
+  //
+  // inputstate = reference on the input state
+  // inputSpace = pointer to the Hilbert space associated to the input state
+  // return value = resulting state 
+  virtual ComplexVector InversionSymmetry(ComplexVector& state, FermionOnSquareLatticeMomentumSpace* inputSpace);
+
   // find state index from an array
   //
   // stateDescription = array describing the state (stored as kx1,ky1,kx2,ky2,...)

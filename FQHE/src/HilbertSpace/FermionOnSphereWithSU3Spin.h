@@ -316,7 +316,7 @@ class FermionOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
   // totalTz = twice the total Tz value
   // totalY = three time the total Y value
   // return value = Hilbert space dimension
-  virtual int EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalTz, int totalY);
+  virtual long EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalTz, int totalY);
 
   // evaluate Hilbert space dimension
   //
