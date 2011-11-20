@@ -596,7 +596,7 @@ void FermionOnSquareLatticeWithSU4SpinMomentumSpace::TransformOneBodyBasisRecurs
 	  MaskSign ^= (TmpState2 ^ (TmpState2 >> 1)) & 0x1ul;
 	  TmpState |= Mask;
 	}
-      int TmpLzMax = (this->LzMax << 2) + 1;
+      int TmpLzMax = this->NbrLzValue << 2;
       while ((TmpState >> TmpLzMax) == 0x0ul)
 	--TmpLzMax;
       int Index = this->FindStateIndex(TmpState, TmpLzMax);
@@ -616,13 +616,13 @@ void FermionOnSquareLatticeWithSU4SpinMomentumSpace::TransformOneBodyBasisRecurs
   else
     {
       currentSU4Indices[position] = 0;
-      this->TransformOneBodyBasisRecursive(targetState, coefficient * (oneBodyBasis[momentumIndices[position]][initialSU4Indices[position]][0]), position + 1, momentumIndices, initialSU4Indices, currentSU4Indices, oneBodyBasis);
+      this->TransformOneBodyBasisRecursive(targetState, coefficient * (oneBodyBasis[momentumIndices[position]][3 - initialSU4Indices[position]][3]), position + 1, momentumIndices, initialSU4Indices, currentSU4Indices, oneBodyBasis);
       currentSU4Indices[position] = 1;
-      this->TransformOneBodyBasisRecursive(targetState, coefficient * (oneBodyBasis[momentumIndices[position]][initialSU4Indices[position]][1]), position + 1, momentumIndices, initialSU4Indices, currentSU4Indices, oneBodyBasis);
+      this->TransformOneBodyBasisRecursive(targetState, coefficient * (oneBodyBasis[momentumIndices[position]][3 - initialSU4Indices[position]][2]), position + 1, momentumIndices, initialSU4Indices, currentSU4Indices, oneBodyBasis);
       currentSU4Indices[position] = 2;
-      this->TransformOneBodyBasisRecursive(targetState, coefficient * (oneBodyBasis[momentumIndices[position]][initialSU4Indices[position]][2]), position + 1, momentumIndices, initialSU4Indices, currentSU4Indices, oneBodyBasis);
+      this->TransformOneBodyBasisRecursive(targetState, coefficient * (oneBodyBasis[momentumIndices[position]][3 - initialSU4Indices[position]][1]), position + 1, momentumIndices, initialSU4Indices, currentSU4Indices, oneBodyBasis);
       currentSU4Indices[position] = 3;
-      this->TransformOneBodyBasisRecursive(targetState, coefficient * (oneBodyBasis[momentumIndices[position]][initialSU4Indices[position]][3]), position + 1, momentumIndices, initialSU4Indices, currentSU4Indices, oneBodyBasis);
+      this->TransformOneBodyBasisRecursive(targetState, coefficient * (oneBodyBasis[momentumIndices[position]][3 - initialSU4Indices[position]][0]), position + 1, momentumIndices, initialSU4Indices, currentSU4Indices, oneBodyBasis);
     }
 }
 

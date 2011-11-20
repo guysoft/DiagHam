@@ -212,20 +212,25 @@ int main(int argc, char** argv)
 										   Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 	      
 	      ComplexMatrix* OneBodyBasis = ComputeSingleParticleTransformationMatrices(NbrSitesX, NbrSitesY, Manager.GetDouble("mass"));
-	      for (int k = 0; k < (NbrSitesX * NbrSitesY); ++k)
-		cout << "k = " << k << " : " << endl <<  OneBodyBasis[k] << endl;
+// 	      for (int k = 0; k < (NbrSitesX * NbrSitesY); ++k)
+// 		cout << "k = " << k << " : " << endl <<  OneBodyBasis[k] << endl;
 	      ComplexMatrix NBodyTransformationMatrix = ((FermionOnSquareLatticeWithSU4SpinMomentumSpace*) Space)->TransformationMatrixOneBodyBasis(OneBodyBasis);
 	      ComplexMatrix HRep (Hamiltonian->GetHilbertSpaceDimension(), Hamiltonian->GetHilbertSpaceDimension());
 	      Hamiltonian->GetHamiltonian(HRep);
-	      cout << "Hinitial = " << endl << HRep << endl;
+// 	      cout << "Hinitial = " << endl << HRep << endl;
+// 	      cout << "NBodyTransformationMatrix = " << endl << NBodyTransformationMatrix << endl;
 	      //HRep.SetToIdentity();
 	      ComplexMatrix TransformedHRep = HRep.Conjugate(NBodyTransformationMatrix);
+// 	      for (int k = 0; k < TransformedHRep.GetNbrRow(); ++k)
+// 		cout << TransformedHRep[k][k] << endl;
 	      //	      cout << TransformedHRep << endl;
 	      FermionOnSquareLatticeWithSpinMomentumSpace* TargetSpace = new FermionOnSquareLatticeWithSpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
-	      ComplexMatrix SU4SU2TransformationMatrix = ((FermionOnSquareLatticeWithSU4SpinMomentumSpace*) Space)->TransformationMatrixSU4ToSU2(TargetSpace, 0, 1);
-	      cout << SU4SU2TransformationMatrix << endl;
-	      cout << TransformedHRep << endl;
+	      ComplexMatrix SU4SU2TransformationMatrix = ((FermionOnSquareLatticeWithSU4SpinMomentumSpace*) Space)->TransformationMatrixSU4ToSU2(TargetSpace, 2, 3);
+//	      cout << SU4SU2TransformationMatrix << endl;
+//	      cout << TransformedHRep << endl;
 	      ComplexMatrix TransformedHRep2 = TransformedHRep.InvConjugate(SU4SU2TransformationMatrix);
+	      if (Manager.GetDouble("u-potential") != 0.0)
+	      TransformedHRep2 /= Manager.GetDouble("u-potential");
 	      cout << TransformedHRep2 << endl;
 
 	      RealDiagonalMatrix TmpDiag;
