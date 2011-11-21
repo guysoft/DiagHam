@@ -211,7 +211,7 @@ void ComplexBasicLanczosAlgorithmWithDiskStorage::RunLanczosAlgorithm (int nbrIt
     }
   ComplexVector* TmpVector = new ComplexVector[2];
   double* TmpCoefficient = new double[2];
-  cout << this->Index << " " << Dimension << endl;
+  //cout << this->Index << " " << Dimension << endl;
   for (int i = this->Index + 2; i < Dimension; ++i)
     {
       TmpVector[0] = this->V1;

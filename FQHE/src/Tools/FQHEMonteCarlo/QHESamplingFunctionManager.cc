@@ -105,7 +105,7 @@ void QHESamplingFunctionManager::AddOptionGroup(OptionManager* manager)
 
 ostream& QHESamplingFunctionManager::ShowAvalaibleSamplingFunctions (ostream& str)
 {
-  str << "list of avalaible sampling functions:" << endl;
+  str << "list of avalaible sampling functions (indicate one with option --sampler):" << endl;
   if (this->BlockAlgorithm)
     {
       if (this->GeometryID == QHESamplingFunctionManager::SphereGeometry)

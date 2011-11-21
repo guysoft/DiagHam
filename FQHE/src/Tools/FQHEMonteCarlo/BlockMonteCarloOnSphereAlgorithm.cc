@@ -127,10 +127,10 @@ void BlockMonteCarloOnSphereAlgorithm::AddObservable(AbstractObservable *O, int 
 // frequency = integer value indicating on which microsteps observations are being made
 void BlockMonteCarloOnSphereAlgorithm::AddBlockObservable(AbstractBlockObservable *O, int frequency)
 {
-  if (this->NbrObservables<this->MaxNbrObservables)
+  if (this->NbrBlockObservables<this->MaxNbrObservables)
     {
-      this->Frequencies[this->NbrObservables]=frequency;
-      this->Observables[this->NbrObservables++]=O;
+      this->BlockFrequencies[this->NbrBlockObservables]=frequency;
+      this->BlockObservables[this->NbrBlockObservables++]=O;
     }
   else
     {
@@ -196,12 +196,14 @@ void BlockMonteCarloOnSphereAlgorithm::Simulate(ostream &Output)
     }
   Output << endl;
   int s=0;
+  cout << "NbrBlocks="<<NbrBlocks<<endl;
   for (int d=0; d<NbrDisplay; ++d)
     {
       for (/* s */; s<(d+1)*DisplaySteps; ++s)
 	{
 	  this->PerformMicroSteps(DensityOfSamples);
 	  this->TargetFunction->GetAllBlockAmplitudes(BlockAmplitudes);
+	  //if (s%500) cout << "BlockAmplitudes[0]="<<BlockAmplitudes[0]<<endl;
 	  *TotalAmplitude=0.0;
 	  for (int i=0; i<NbrBlocks; ++i)
 	    *TotalAmplitude += BlockAmplitudes[i];
@@ -214,7 +216,12 @@ void BlockMonteCarloOnSphereAlgorithm::Simulate(ostream &Output)
       for (int i=0; i<NbrObservables; ++i)
 	{
 	  Output << "\t";
-	  Observables[i]->PrintStatus(Output);
+	  Observables[i]->PrintStatus(Output);	  
+	}
+      for (int i=0; i<NbrBlockObservables; ++i)
+	{
+	  Output << "\t";
+	  BlockObservables[i]->PrintStatus(Output);	  
 	}
       Output << endl;
     }
@@ -275,4 +282,10 @@ void BlockMonteCarloOnSphereAlgorithm::WriteObservations(ostream &str)
       if (Observables[i]->IncludeInPrint())
 	Observables[i]->WriteDataFile(str);
     }
+  for (int i=0; i<NbrBlockObservables; ++i)
+    {
+      if (BlockObservables[i]->IncludeInPrint())
+	BlockObservables[i]->WriteDataFile(str);
+    }
+
 }

@@ -77,6 +77,9 @@ class ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian : public Part
   double ThreeBodyPotential;
   // nearest neighbor density-density potential strength
   double UPotential;
+  // next nearest neighbor density-density potential strength
+  double VPotential;
+
   
  public:
 
@@ -92,6 +95,7 @@ class ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian : public Part
   // nbrSiteY = number of sites in the y direction
   // threeBodyPotential = strength of the repulsive three body neareast neighbor interaction
   // uPotential = strength of the repulsive two body neareast neighbor interaction
+  // vPotential = strength of the repulsive two body next neareast neighbor interaction
   // t1 = real part of the hopping amplitude between neareast neighbor sites
   // t2 = real part of the hopping amplitude between next neareast neighbor sites
   // lambda1 = imaginary part of the hopping amplitude between neareast neighbor sites
@@ -103,7 +107,7 @@ class ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian : public Part
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrCellX, 
-							       int nbrCellY, double threeBodyPotential, double uPotential, double t1, double t2, double lambda1, double lambda2, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+							       int nbrCellY, double threeBodyPotential, double uPotential, double vPotential, double t1, double t2, double lambda1, double lambda2, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
   
   // destructor
   //

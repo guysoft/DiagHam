@@ -50,6 +50,7 @@ MRBlockSamplingFunction::MRBlockSamplingFunction(int nbrParticlesPerBlock, doubl
 {
   this->NbrParticlesPerBlock=nbrParticlesPerBlock;
   this->NbrParticles=2*NbrParticlesPerBlock;
+  this->JastrowExponent=1;
   this->System=NULL;
   this->ElementNorm=1.0;
 
@@ -79,7 +80,8 @@ MRBlockSamplingFunction::MRBlockSamplingFunction(int nbrParticlesPerBlock, doubl
   Prefactor.FactorialMultiply(NbrParticlesPerBlock);
   for (int k=0; k<NbrBlocks; ++k)
     {
-      FactorialCoefficient Factor(Prefactor);
+      FactorialCoefficient Factor;
+      Factor = Prefactor;
       Factor.FactorialDivide(k);
       Factor.FactorialDivide(k);
       Factor.FactorialDivide(NbrParticlesPerBlock-k);
@@ -165,7 +167,7 @@ double MRBlockSamplingFunction::GetTransitionRatio()
   // get the estimate of the full function value calculated over all Blocks for the given system of particles
 Complex MRBlockSamplingFunction::GetFunctionValue()
 {
-  cout << "Attention: MRBlockSamplingFunction::GetFunctionValue() yields the sampling block, only!"<<endl;
+  //cout << "Attention: MRBlockSamplingFunction::GetFunctionValue() yields the sampling block, only!"<<endl;
   Complex Result = 1.0;
   for (int i=1;i<NbrParticlesPerBlock;++i)
     for (int j=0;j<i;++j)
@@ -182,7 +184,14 @@ Complex MRBlockSamplingFunction::GetFunctionValue()
   
   return Result;
 
-}  
+}
+
+// get number of flux quanta, or degree of underlying polynomial for simulation wavefunction
+int MRBlockSamplingFunction::GetNbrFluxQuanta()
+{
+  return (2*(NbrParticlesPerBlock -1) + JastrowExponent*(NbrParticles-1));
+}
+
 
 // get the estimate of the sampling function value calculated over the sampling block only, for the given system of particles
 Complex MRBlockSamplingFunction::GetSamplingBlockValue()
@@ -277,14 +286,14 @@ void MRBlockSamplingFunction::GetBlockAmplitude(int nbrBlock, Complex &amplitude
   amplitude=1.0;
   for (int i=1;i<NbrParticlesPerBlock;++i)
     for (int j=0;j<i;++j)
-      amplitude *= this->ElementNorm*JastrowElements[SymIndex(i, j)];
+      amplitude *= this->ElementNorm*JastrowElements[SymIndex(j, i)];
   for (int i=NbrParticlesPerBlock;i<NbrParticles;++i)
     for (int j=NbrParticlesPerBlock;j<i;++j)
-      amplitude *= this->ElementNorm*JastrowElements[SymIndex(i, j)];
+      amplitude *= this->ElementNorm*JastrowElements[SymIndex(j, i)];
   amplitude*=amplitude;
   if (nbrBlock == 0)
     {
-      amplitude.Re = BlockWeights[0] * Norm(amplitude) * AbsJ * AbsJ;
+      amplitude.Re = BlockWeights[0] * Norm(amplitude) * AbsJ;
       amplitude.Im = 0.0;
       return;
     }
@@ -295,30 +304,55 @@ void MRBlockSamplingFunction::GetBlockAmplitude(int nbrBlock, Complex &amplitude
 
   amplitude=1.0;
   // Block I
-  for (int i=nbrBlock+2;i<NbrParticlesPerBlock;++i)
-    for (int j=nbrBlock+1;j<i;++j)
-      amplitude *= this->ElementNorm*JastrowElements[SymIndex(i, j)];
-  for (int i=NbrParticlesPerBlock+1;i<NbrParticlesPerBlock+nbrBlock+1;++i)
+  int ToSwap = nbrBlock-1;
+  for (int i=ToSwap+2;i<NbrParticlesPerBlock;++i)
+    for (int j=ToSwap+1;j<i;++j)
+      amplitude *= this->ElementNorm*JastrowElements[SymIndex(j, i)];
+  for (int i=NbrParticlesPerBlock+1;i<NbrParticlesPerBlock+ToSwap+1;++i)
     for (int j=NbrParticlesPerBlock;j<i;++j)
-      amplitude *= this->ElementNorm*JastrowElements[SymIndex(i, j)];
-  for (int i=NbrParticlesPerBlock;i<NbrParticlesPerBlock+nbrBlock+1;++i)
-    for (int j=nbrBlock+1;j<NbrParticlesPerBlock;++j)
+      amplitude *= this->ElementNorm*JastrowElements[SymIndex(j, i)];
+  for (int i=NbrParticlesPerBlock;i<NbrParticlesPerBlock+ToSwap+1;++i)
+    for (int j=ToSwap+1;j<NbrParticlesPerBlock;++j)
       amplitude *= -this->ElementNorm*JastrowElements[SymIndex(j, i)];
   // Block II
-  for (int i=NbrParticlesPerBlock+nbrBlock+2;i<NbrParticles;++i)
-    for (int j=NbrParticlesPerBlock+nbrBlock+1;j<i;++j)
-      amplitude *= this->ElementNorm*JastrowElements[SymIndex(i, j)];
-  for (int i=1;i<nbrBlock+1;++i)
+  for (int i=NbrParticlesPerBlock+ToSwap+2;i<NbrParticles;++i)
+    for (int j=NbrParticlesPerBlock+ToSwap+1;j<i;++j)
+      amplitude *= this->ElementNorm*JastrowElements[SymIndex(j, i)];
+  for (int i=1;i<ToSwap+1;++i)
     for (int j=0;j<i;++j)
-      amplitude *= this->ElementNorm*JastrowElements[SymIndex(i, j)];
-  for (int i=0;i<nbrBlock+1;++i)
-    for (int j=NbrParticlesPerBlock+nbrBlock+1;j<NbrParticles;++j)
+      amplitude *= this->ElementNorm*JastrowElements[SymIndex(j, i)];
+  for (int i=0;i<ToSwap+1;++i)
+    for (int j=NbrParticlesPerBlock+ToSwap+1;j<NbrParticles;++j)
       amplitude *= this->ElementNorm*JastrowElements[SymIndex(i, j)];
 
   amplitude *= amplitude;
 
-  amplitude = BlockWeights[nbrBlock] * Conj(amplitude)*AbsJ*AbsJ;
+  amplitude = BlockWeights[nbrBlock] * Conj(amplitude)*ArgPhi0*AbsJ;
 
+
+#ifdef TESTING_MRBLOCKSAMPLINGFUNCTION
+  // testing using the explicit permutations
+  Complex NewAmplitude=1.0;
+  int Sign=0,Index;
+  for (int i=1;i<NbrParticlesPerBlock;++i)
+    for (int j=0;j<i;++j)
+      {
+	Index = AsymIndex(BlockPermutations[nbrBlock][j], BlockPermutations[nbrBlock][i],Sign);
+	NewAmplitude *= Sign*this->ElementNorm*JastrowElements[Index];
+      }
+  for (int i=NbrParticlesPerBlock;i<NbrParticles;++i)
+    for (int j=NbrParticlesPerBlock;j<i;++j)
+      {
+	Index = AsymIndex(BlockPermutations[nbrBlock][j], BlockPermutations[nbrBlock][i],Sign);
+	NewAmplitude *= Sign*this->ElementNorm*JastrowElements[Index];
+      }
+  NewAmplitude*=NewAmplitude;
+  NewAmplitude = BlockWeights[nbrBlock] * Conj(NewAmplitude)*ArgPhi0*AbsJ;
+
+  if (Norm(NewAmplitude-amplitude)>1e-10)
+    cout << "serious discrepancy B"<<nbrBlock<<": "<<amplitude<<" vs "<<NewAmplitude<<endl;
+#endif
+  
 }
 
 // get the Monte Carlo amplitude for the requested block with nbrPermute particles exchanged
@@ -326,19 +360,20 @@ void MRBlockSamplingFunction::GetBlockAmplitude(int nbrBlock, Complex &amplitude
 void MRBlockSamplingFunction::GetAllBlockAmplitudes(Complex *amplitudes)
 {
   this->EvaluateTable();
-  double AbsJSqr=Norm(JastrowFactor);
-  AbsJSqr*=AbsJSqr;
+  double AbsJ=Norm(JastrowFactor);
+
   // first step: evaluate block 0 (without permutations)
   amplitudes[0]=1.0;
   for (int i=1;i<NbrParticlesPerBlock;++i)
     for (int j=0;j<i;++j)
-      amplitudes[0] *= this->ElementNorm*JastrowElements[SymIndex(i, j)];
+      amplitudes[0] *= this->ElementNorm*JastrowElements[SymIndex(j, i)];
   for (int i=NbrParticlesPerBlock;i<NbrParticles;++i)
     for (int j=NbrParticlesPerBlock;j<i;++j)
-      amplitudes[0] *= this->ElementNorm*JastrowElements[SymIndex(i, j)];
+      amplitudes[0] *= this->ElementNorm*JastrowElements[SymIndex(j, i)];
   //complex phase of Block 0
   Complex ArgPhi0 = amplitudes[0]*amplitudes[0];
   ArgPhi0 *= 1.0/Norm(ArgPhi0);
+  //cout <<"AbsJ="<<AbsJ<<", amplitudes[0]="<< amplitudes[0] << endl;
   
   bool ProblemWithPrevious=false;
   // to proceed: evaluate blocks one by one from previous - k: position of last particle to be swapped
@@ -348,24 +383,25 @@ void MRBlockSamplingFunction::GetAllBlockAmplitudes(Complex *amplitudes)
       if (CriticalFlag && ( ProblemWithPrevious || (this->CriticalParticles[k>>USHIFT]&(0x1ul<<(k%ULENGTH)))
 			    ||(this->CriticalParticles[(k+NbrParticlesPerBlock)>>USHIFT]&(0x1ul<<((k+NbrParticlesPerBlock)%ULENGTH)))))
 	{
+	  ProblemWithPrevious=true;
 	  amplitudes[k+1]=1.0;
 	  // Block I
 	  for (int i=k+2;i<NbrParticlesPerBlock;++i)
 	    for (int j=k+1;j<i;++j)
-	      amplitudes[k+1] *= this->ElementNorm*JastrowElements[SymIndex(i, j)];
+	      amplitudes[k+1] *= this->ElementNorm*JastrowElements[SymIndex(j, i)];
 	  for (int i=NbrParticlesPerBlock+1;i<NbrParticlesPerBlock+k+1;++i)
 	    for (int j=NbrParticlesPerBlock;j<i;++j)
-	      amplitudes[k+1] *= this->ElementNorm*JastrowElements[SymIndex(i, j)];
+	      amplitudes[k+1] *= this->ElementNorm*JastrowElements[SymIndex(j, i)];
 	  for (int i=NbrParticlesPerBlock;i<NbrParticlesPerBlock+k+1;++i)
 	    for (int j=k+1;j<NbrParticlesPerBlock;++j)
 	      amplitudes[k+1] *= -this->ElementNorm*JastrowElements[SymIndex(j, i)];
 	  // Block II
 	  for (int i=NbrParticlesPerBlock+k+2;i<NbrParticles;++i)
 	    for (int j=NbrParticlesPerBlock+k+1;j<i;++j)
-	      amplitudes[k+1] *= this->ElementNorm*JastrowElements[SymIndex(i, j)];
+	      amplitudes[k+1] *= this->ElementNorm*JastrowElements[SymIndex(j, i)];
 	  for (int i=1;i<k+1;++i)
 	    for (int j=0;j<i;++j)
-	      amplitudes[k+1] *= this->ElementNorm*JastrowElements[SymIndex(i, j)];
+	      amplitudes[k+1] *= this->ElementNorm*JastrowElements[SymIndex(j, i)];
 	  for (int i=0;i<k+1;++i)
 	    for (int j=NbrParticlesPerBlock+k+1;j<NbrParticles;++j)
 	      amplitudes[k+1] *= this->ElementNorm*JastrowElements[SymIndex(i, j)];
@@ -405,14 +441,25 @@ void MRBlockSamplingFunction::GetAllBlockAmplitudes(Complex *amplitudes)
 	    Num *= -JastrowElements[SymIndex(k,NbrParticlesPerBlock+i)];
 	  
 	  amplitudes[k+1]=amplitudes[k]*Num/Den;
-	  
+
+	  ProblemWithPrevious=false;
 	}
     }
 
   for (int i=0; i<NbrBlocks; ++i)
-    amplitudes[i] *= amplitudes[i] * ArgPhi0 * (AbsJSqr * BlockWeights[i]);
-  
+    amplitudes[i] = Conj(amplitudes[i]*amplitudes[i]) * ArgPhi0 * (AbsJ * BlockWeights[i]);
 
+#ifdef TESTING_MRBLOCKSAMPLINGFUNCTION
+  Complex TmpC;
+  for (int i=0; i<NbrBlocks; ++i)
+    {
+      this->GetBlockAmplitude(i, TmpC);
+      //if (Norm(TmpC-amplitudes[i])>1e-10)
+	//cout << "discrepancy B"<<i<<": "<<TmpC<<" vs "<<amplitudes[i]<<endl;
+      amplitudes[i] = TmpC;
+    }
+
+#endif  
 }
 
 
@@ -442,11 +489,12 @@ void MRBlockSamplingFunction::EvaluateTable()
   for (int i=0; i<NbrParticles>>USHIFT; ++i)
     this->CriticalParticles[i] = 0x0ul;
   this->CriticalFlag=false;
+  JastrowFactor=1.0;
   for (int i = 0; i < this->NbrParticles; ++i)
     {
       for (int j = 0; j < i; ++j)
 	{
-	  int Index = SymIndex(i, j);
+	  int Index = SymIndex(j, i);
 	  
 	  JastrowElements[Index] = ((this->SpinorUCoordinates[i] * this->SpinorVCoordinates[j]) - (this->SpinorUCoordinates[j] * this->SpinorVCoordinates[i]));
 	  //check if critical value was encountered

@@ -31,7 +31,7 @@
 #ifndef MRBLOCKSAMPLINGFUNCTION_H
 #define MRBLOCKSAMPLINGFUNCTION_H
 
-#define TESTING_MRBLOCKSAMPLINGFUNCTION_H
+#define TESTING_MRBLOCKSAMPLINGFUNCTION
 
 #include "AbstractMCBlockSamplingFunction.h"
 
@@ -74,6 +74,9 @@ class MRBlockSamplingFunction : public AbstractMCBlockSamplingFunction
   bool CriticalFlag;
 
   Complex JastrowFactor;
+
+  // optional: exponent of overall Jastrow factor
+  int JastrowExponent;
   
  public:
   // constructor
@@ -93,7 +96,10 @@ class MRBlockSamplingFunction : public AbstractMCBlockSamplingFunction
   // get the full function value for a system of particles
   virtual Complex GetFunctionValue();
 
-    // get the estimate of the sampling function value calculated over the sampling block only, for the given system of particles
+  // get number of flux quanta, or degree of underlying polynomial for simulation wavefunction
+  virtual int GetNbrFluxQuanta();
+  
+  // get the estimate of the sampling function value calculated over the sampling block only, for the given system of particles
   virtual Complex GetSamplingBlockValue();
 
   // get the current phase of the sampling function
@@ -134,13 +140,16 @@ class MRBlockSamplingFunction : public AbstractMCBlockSamplingFunction
   // get linearized index for symmetric array
   inline int SymIndex(int i,int j);
 
+  // same function, with sign for exchange
+  inline int AsymIndex(int i, int j, int &sign);
+
   // precalculate Jastrow factor elements
   void EvaluateTable();
   
   
 };
 
-#ifdef TESTING_MRBLOCKSAMPLINGFUNCTION_H
+#ifdef TESTING_MRBLOCKSAMPLINGFUNCTION
 #include <iostream>
 using std::cout;
 using std::endl;
@@ -148,18 +157,36 @@ using std::endl;
 
 inline int MRBlockSamplingFunction::SymIndex(int i, int j)
 {
-#ifdef TESTING_MRBLOCKSAMPLINGFUNCTION_H
+#ifdef TESTING_MRBLOCKSAMPLINGFUNCTION
   if (i<j)
 #endif
     return (this->NbrParticles*i-i*(i-1)/2+j-i);
-#ifdef TESTING_MRBLOCKSAMPLINGFUNCTION_H
+#ifdef TESTING_MRBLOCKSAMPLINGFUNCTION
   else
     {
-      cout << "Attention, need sign IN SymIndex!"<<endl;
+      cout << "Attention, need sign IN SymIndex: i="<<i<<", j="<<j<<" !"<<endl;
       //return (this->NbrParticles*j-j*(j-1)/2+i-j);
       return 0;
     }
 #endif
 }
 
-#endif 
+
+#ifdef TESTING_MRBLOCKSAMPLINGFUNCTION
+inline int MRBlockSamplingFunction::AsymIndex(int i, int j, int &sign)
+{
+  if (i<j)
+    {
+      sign=1;
+      return (this->NbrParticles*i-i*(i-1)/2+j-i);
+    }
+  else
+    {
+      sign=-1;
+      return (this->NbrParticles*j-j*(j-1)/2+i-j);
+    }
+}
+#endif
+
+
+#endif  // END CLASS

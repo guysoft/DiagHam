@@ -120,7 +120,7 @@ class BlockMonteCarloOnSphereAlgorithm
   // add a block observable for detailed views of the contribution of individual terms in the symmetric expansion
   // O = pointer to the observable to be added
   // frequency = integer value indicating on which microsteps observations are being made
-  void AddBlockObservable(AbstractBlockObservable *O, int frequency);
+  void AddBlockObservable(AbstractBlockObservable *O, int frequency = 1);
 
   // thermalize system with a number of microsteps
   // time = number of microsteps

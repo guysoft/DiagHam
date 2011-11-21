@@ -66,6 +66,7 @@ ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::ParticleOnLatticeK
 // nbrSiteY = number of sites in the y direction
 // threeBodyPotential = strength of the repulsive three body neareast neighbor interaction
 // uPotential = strength of the repulsive two body neareast neighbor interaction
+// vPotential = strength of the repulsive two body neareast neighbor interaction
 // t1 = real part of the hopping amplitude between neareast neighbor sites
 // t2 = real part of the hopping amplitude between next neareast neighbor sites
 // lambda1 = imaginary part of the hopping amplitude between neareast neighbor sites
@@ -78,7 +79,7 @@ ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::ParticleOnLatticeK
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
 ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrCellX, 
-															   int nbrCellY, double threeBodyPotential, double uPotential, double t1, double t2, double lambda1, double lambda2, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
+															   int nbrCellY, double threeBodyPotential, double uPotential, double vPotential, double t1, double t2, double lambda1, double lambda2, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -103,6 +104,7 @@ ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::ParticleOnLatticeK
   this->FlatBand = flatBandFlag;
   this->ThreeBodyPotential = threeBodyPotential;
   this->UPotential = uPotential;
+  this->VPotential = vPotential;
 
   this->Architecture = architecture;
   this->Memory = memory;
@@ -257,8 +259,8 @@ void ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::EvaluateInter
                       // tricky part: OneBodyBasis[Index] stores the result of LapackDiagonalize
                       // and its [0][_] elements are the COMPLEX CONJUGATE of wave functions < _ |lower band>. (See the end of HermitianMatrix.cc)
 		      
-                      Complex sumU = 0.;
-                      Complex sumV = 0.;
+                      Complex sumU = 0.0;
+                      Complex sumV = 0.0;
 
 		      sumU = (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0] *
 			      Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1])
@@ -491,6 +493,8 @@ void ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::EvaluateInter
       else
 	{
 	  double FactorU = this->UPotential*0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
+	  double FactorV = this->VPotential*0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
+	  
 	  this->InteractionFactors = new Complex* [this->NbrSectorSums];
 	  for (int i = 0; i < this->NbrSectorSums; ++i)
 	    {
@@ -513,7 +517,7 @@ void ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::EvaluateInter
 		      int kx4 = Index4 / this->NbrSiteY;
 		      int ky4 = Index4 % this->NbrSiteY;
 
-		      Complex sumU=0.0;
+		      Complex sumU=0.0, sumV=0.0;
 		      sumU = (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]) * this->ComputeTwoBodyMatrixElementOnSiteAA();
 		      sumU += (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]) * this->ComputeTwoBodyMatrixElementOnSiteAA();
 		      sumU += (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0]) * this->ComputeTwoBodyMatrixElementOnSiteAA();
@@ -529,12 +533,58 @@ void ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::EvaluateInter
 		      sumU += (Conj(OneBodyBasis[Index1][0][2]) * OneBodyBasis[Index4][0][2] * Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index3][0][2]) * this->ComputeTwoBodyMatrixElementOnSiteCC(kx1, ky1, kx2, ky2, kx4, ky4, kx3, ky3);
 		      sumU += (Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index4][0][2] * Conj(OneBodyBasis[Index1][0][2]) * OneBodyBasis[Index3][0][2]) * this->ComputeTwoBodyMatrixElementOnSiteCC(kx2, ky2, kx1, ky1, kx4, ky4, kx3, ky3);
 
-		      if (Index3 == Index4)
-			sumU *= 0.5;
-		      if (Index1 == Index2)
-			sumU *= 0.5;
+		      sumV = (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0] *
+			      Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1])
+			* this->ComputeTwoBodyMatrixElementAB(kx2, ky2, kx4, ky4);
+		      sumV -= (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0] *
+			       Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1])
+			* this->ComputeTwoBodyMatrixElementAB(kx1, ky1, kx4, ky4);
+		      sumV -= (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0] *
+			       Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1])
+			* this->ComputeTwoBodyMatrixElementAB(kx2, ky2, kx3, ky3);
+		      sumV += (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0] *
+			       Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1])
+			* this->ComputeTwoBodyMatrixElementAB(kx1, ky1, kx3, ky3);
+		      
+		      sumV += (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0] *
+			       Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index4][0][2])
+			* this->ComputeTwoBodyMatrixElementAC(kx2, ky2, kx4, ky4);
+		      sumV -= (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0] *
+			       Conj(OneBodyBasis[Index1][0][2]) * OneBodyBasis[Index4][0][2])
+			* this->ComputeTwoBodyMatrixElementAC(kx1, ky1, kx4, ky4);
+		      sumV -= (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0] *
+			       Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index3][0][2])
+			* this->ComputeTwoBodyMatrixElementAC(kx2, ky2, kx3, ky3);
+		      sumV += (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0] *
+			       Conj(OneBodyBasis[Index1][0][2]) * OneBodyBasis[Index3][0][2])
+			* this->ComputeTwoBodyMatrixElementAC(kx1, ky1, kx3, ky3);
+		      
+		      sumV += (Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1] *
+			       Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index4][0][2])
+			* this->ComputeTwoBodyMatrixElementBC(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
+		      sumV -= (Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1] *
+			       Conj(OneBodyBasis[Index1][0][2]) * OneBodyBasis[Index4][0][2])
+			* this->ComputeTwoBodyMatrixElementBC(kx2, ky2, kx1, ky1, kx3, ky3, kx4, ky4);
+		      sumV -= (Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1] *
+			       Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index3][0][2])
+			* this->ComputeTwoBodyMatrixElementBC(kx1, ky1, kx2, ky2, kx4, ky4, kx3, ky3);
+		      sumV += (Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1] *
+			       Conj(OneBodyBasis[Index1][0][2]) * OneBodyBasis[Index3][0][2])
+			* this->ComputeTwoBodyMatrixElementBC(kx2, ky2, kx1, ky1, kx4, ky4, kx3, ky3);
 
-		      this->InteractionFactors[i][Index] = 2.0 * FactorU * sumU;
+
+		      if (Index3 == Index4)
+			{
+			  sumU *= 0.5;
+			  sumV *= 0.5;
+			}
+		      if (Index1 == Index2)
+			{
+			  sumU *= 0.5;
+			  sumV *= 0.5;
+			}
+
+		      this->InteractionFactors[i][Index] = 2.0 * FactorU * sumU + 2.0 * FactorV * sumV;
 
 		      TotalNbrInteractionFactors++;
 		      ++Index;

@@ -36,11 +36,7 @@
 #include "AbstractMCSamplingFunction.h"
 
 class AbstractMCBlockSamplingFunction : public AbstractMCSamplingFunction
-{
- protected:
-  // pointer to the ensemble of particles that shall be examined in MonteCarlo
-  AbstractParticleCollection *System;
-  
+{  
  public:
   // virtual destructor
   virtual ~AbstractMCBlockSamplingFunction();
@@ -60,6 +56,9 @@ class AbstractMCBlockSamplingFunction : public AbstractMCSamplingFunction
 
   // accessor routine for NbrBlocks
   virtual int GetNbrBlocks()=0;
+
+  // get number of flux quanta, or degree of underlying polynomial for simulation wavefunction
+  virtual int GetNbrFluxQuanta() = 0;
 
   // get the Monte Carlo amplitude for the requested block with nbrPermute particles exchanged
   // nbrBlock = nbrPermute = number of particles to exchange between blocks
