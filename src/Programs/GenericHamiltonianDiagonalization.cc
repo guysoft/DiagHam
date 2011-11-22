@@ -3,6 +3,7 @@
 #include "Matrix/RealMatrix.h"
 
 #include "Hamiltonian/FileBasedHamiltonian.h"
+#include "Hamiltonian/FileBasedHermitianHamiltonian.h"
 #include "HilbertSpace/UndescribedHilbertSpace.h"
 
 #include "Architecture/ArchitectureManager.h"
@@ -12,6 +13,7 @@
 #include "LanczosAlgorithm/LanczosManager.h"
 
 #include "MainTask/GenericRealMainTask.h"
+#include "MainTask/GenericComplexMainTask.h"
 
 #include "GeneralTools/FilenameTools.h"
 
@@ -55,6 +57,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleStringOption ('\0', "hamiltonian", "text file where the hamiltonian matrix elements are stored");
   (*SystemGroup) += new  BooleanOption ('\n', "fortran", "assume indices are 1-based instead of 0-based (i.e. fortran index convention)");
   (*SystemGroup) += new  SingleIntegerOption ('\n', "skip-lines", "skip the first n-tf lines of the input file", 0);
+  (*SystemGroup) += new  SingleIntegerOption ('\n', "data-column", "index of the column that contains the matrix elements (or their real part)", 0);
+  (*SystemGroup) += new BooleanOption  ('c', "complex", "indicate that the Hamiltonian is complex");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "prefix to use for output file names", "dummy");
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
@@ -84,14 +88,31 @@ int main(int argc, char** argv)
       return -1;
     }
 
-  FileBasedHamiltonian Hamiltonian (Manager.GetString("hamiltonian"), 0, false, Manager.GetBoolean("fortran"), Manager.GetInteger("skip-lines"));
+  AbstractHamiltonian* Hamiltonian = 0;
+  if (Manager.GetBoolean("complex") == false)
+    {
+      Hamiltonian  = new FileBasedHamiltonian(Manager.GetString("hamiltonian"), Manager.GetInteger("data-column"), false, Manager.GetBoolean("fortran"), Manager.GetInteger("skip-lines"));
+    }
+  else
+    {
+      Hamiltonian  = new FileBasedHermitianHamiltonian(Manager.GetString("hamiltonian"), Manager.GetInteger("data-column"), false, Manager.GetBoolean("fortran"), Manager.GetInteger("skip-lines"));
+    }
 
   char* CommentLine = new char [strlen(Manager.GetString("hamiltonian")) + 256];
   sprintf (CommentLine, "eigenvalues of %s\n #", Manager.GetString("hamiltonian"));
 
-  GenericRealMainTask Task(&Manager, Hamiltonian.GetHilbertSpace(), &Lanczos, &Hamiltonian, " ", CommentLine, 0.0,  Manager.GetString("output-file"));
-  MainTaskOperation TaskOperation (&Task);
-  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+  if (Manager.GetBoolean("complex") == false)
+    {
+      GenericRealMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, " ", CommentLine, 0.0,  Manager.GetString("output-file"));
+      MainTaskOperation TaskOperation (&Task);
+      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+    }
+  else
+    {
+      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, " ", CommentLine, 0.0,  Manager.GetString("output-file"));
+      MainTaskOperation TaskOperation (&Task);
+      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+    }
 
   return 0;
 }

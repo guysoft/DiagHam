@@ -73,7 +73,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive on-site potential strength between different orbitals", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "v-potential", "repulsive on-site potential strength between opposite spins", 1.0);
-  (*SystemGroup) += new SingleDoubleOption  ('m', "mass", "mass parameter of the simple TI model", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "mass", "mass parameter of the simple TI model", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new BooleanOption ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
@@ -210,38 +210,43 @@ int main(int argc, char** argv)
 										   Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("mass"),
 										   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"),  		     
 										   Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
-	      
-	      ComplexMatrix* OneBodyBasis = ComputeSingleParticleTransformationMatrices(NbrSitesX, NbrSitesY, Manager.GetDouble("mass"));
-// 	      for (int k = 0; k < (NbrSitesX * NbrSitesY); ++k)
-// 		cout << "k = " << k << " : " << endl <<  OneBodyBasis[k] << endl;
-	      ComplexMatrix NBodyTransformationMatrix = ((FermionOnSquareLatticeWithSU4SpinMomentumSpace*) Space)->TransformationMatrixOneBodyBasis(OneBodyBasis);
-	      ComplexMatrix HRep (Hamiltonian->GetHilbertSpaceDimension(), Hamiltonian->GetHilbertSpaceDimension());
-	      Hamiltonian->GetHamiltonian(HRep);
-// 	      cout << "Hinitial = " << endl << HRep << endl;
-// 	      cout << "NBodyTransformationMatrix = " << endl << NBodyTransformationMatrix << endl;
-	      //HRep.SetToIdentity();
-	      ComplexMatrix TransformedHRep = HRep.Conjugate(NBodyTransformationMatrix);
-// 	      for (int k = 0; k < TransformedHRep.GetNbrRow(); ++k)
-// 		cout << TransformedHRep[k][k] << endl;
-	      //	      cout << TransformedHRep << endl;
-	      FermionOnSquareLatticeWithSpinMomentumSpace* TargetSpace = new FermionOnSquareLatticeWithSpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
-	      ComplexMatrix SU4SU2TransformationMatrix = ((FermionOnSquareLatticeWithSU4SpinMomentumSpace*) Space)->TransformationMatrixSU4ToSU2(TargetSpace, 2, 3);
-//	      cout << SU4SU2TransformationMatrix << endl;
-//	      cout << TransformedHRep << endl;
-	      ComplexMatrix TransformedHRep2 = TransformedHRep.InvConjugate(SU4SU2TransformationMatrix);
-	      if (Manager.GetDouble("u-potential") != 0.0)
-	      TransformedHRep2 /= Manager.GetDouble("u-potential");
-	      cout << TransformedHRep2 << endl;
 
-	      RealDiagonalMatrix TmpDiag;
-	      HermitianMatrix HRep2(TransformedHRep2);
+	      bool DebuggingSU4ToSU2 = false;
+	      if (DebuggingSU4ToSU2 == true)
+		{
+		  ComplexMatrix* OneBodyBasis = ComputeSingleParticleTransformationMatrices(NbrSitesX, NbrSitesY, Manager.GetDouble("mass"));
+		  // 	      for (int k = 0; k < (NbrSitesX * NbrSitesY); ++k)
+		  // 		cout << "k = " << k << " : " << endl <<  OneBodyBasis[k] << endl;
+		  ComplexMatrix NBodyTransformationMatrix = ((FermionOnSquareLatticeWithSU4SpinMomentumSpace*) Space)->TransformationMatrixOneBodyBasis(OneBodyBasis);
+		  ComplexMatrix HRep (Hamiltonian->GetHilbertSpaceDimension(), Hamiltonian->GetHilbertSpaceDimension());
+		  Hamiltonian->GetHamiltonian(HRep);
+		  // 	      cout << "Hinitial = " << endl << HRep << endl;
+		  // 	      cout << "NBodyTransformationMatrix = " << endl << NBodyTransformationMatrix << endl;
+		  //HRep.SetToIdentity();
+		  ComplexMatrix TransformedHRep = HRep.Conjugate(NBodyTransformationMatrix);
+		  // 	      for (int k = 0; k < TransformedHRep.GetNbrRow(); ++k)
+		  // 		cout << TransformedHRep[k][k] << endl;
+		  //	      cout << TransformedHRep << endl;
+		  FermionOnSquareLatticeWithSpinMomentumSpace* TargetSpace = new FermionOnSquareLatticeWithSpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		  ComplexMatrix SU4SU2TransformationMatrix = ((FermionOnSquareLatticeWithSU4SpinMomentumSpace*) Space)->TransformationMatrixSU4ToSU2(TargetSpace, 2, 3);
+		  //	      cout << SU4SU2TransformationMatrix << endl;
+		  //	      cout << TransformedHRep << endl;
+		  ComplexMatrix TransformedHRep2 = TransformedHRep.InvConjugate(SU4SU2TransformationMatrix);
+		  if (Manager.GetDouble("u-potential") != 0.0)
+		    TransformedHRep2 /= Manager.GetDouble("u-potential");
+		  //	      cout << TransformedHRep2 << endl;
+
+		  RealDiagonalMatrix TmpDiag;
+		  HermitianMatrix HRep2(TransformedHRep2);
+		  cout << HRep2 << endl;
 #ifdef __LAPACK__
-	      HRep2.LapackDiagonalize(TmpDiag);
+		  HRep2.LapackDiagonalize(TmpDiag);
 #else
-	      HRep2.Diagonalize(TmpDiag);
+		  HRep2.Diagonalize(TmpDiag);
 #endif   
-	      for (int l = 0; l < TmpDiag.GetNbrRow(); ++l)
-		cout << TmpDiag(l, l) << endl;
+		  for (int l = 0; l < TmpDiag.GetNbrRow(); ++l)
+		    cout << TmpDiag(l, l) << endl;
+		}
 
 	      char* ContentPrefix = new char[256];
 	      sprintf (ContentPrefix, "%d %d", i, j);

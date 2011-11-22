@@ -6,9 +6,10 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//   class of hamiltonian where matrix elements are stored in a text file     //
+//                   class of herimitian hamiltonian where                    //
+//                 matrix elements are stored in a text file                  //
 //                                                                            //
-//                        last modification : 31/03/2010                      //
+//                        last modification : 22/11/2011                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,7 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "Hamiltonian/FileBasedHamiltonian.h"
+#include "Hamiltonian/FileBasedHermitianHamiltonian.h"
 #include "MathTools/Complex.h" 
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
@@ -52,7 +53,7 @@ using std::endl;
 // fortranIndices = indicates that indices use fortran convention (i.e. 1 based)
 // nbrSkippedLines = number of lines to skip in the input file
 
-FileBasedHamiltonian::FileBasedHamiltonian(char* fileName, int elementColumnIndex, bool symmetricFlag, bool fortranIndices, int nbrSkippedLines)
+FileBasedHermitianHamiltonian::FileBasedHermitianHamiltonian(char* fileName, int elementColumnIndex, bool symmetricFlag, bool fortranIndices, int nbrSkippedLines)
 {
   this->NbrElements = GetFileNbrLines(fileName);
   this->SymmetricStorageFlag = symmetricFlag;
@@ -62,7 +63,7 @@ FileBasedHamiltonian::FileBasedHamiltonian(char* fileName, int elementColumnInde
     {
       this->RowIndices = new int [this->NbrElements];
       this->ColumnIndices = new int [this->NbrElements];
-      this->MatrixElements = new double [this->NbrElements];
+      this->MatrixElements = new Complex [this->NbrElements];
       ifstream File;
       File.open(fileName, ios::binary | ios::in);
       if (nbrSkippedLines > 0)
@@ -81,17 +82,17 @@ FileBasedHamiltonian::FileBasedHamiltonian(char* fileName, int elementColumnInde
 	case 0:
 	  for (long i = 0; i < this->NbrElements; ++i)
 	    {
-	      File >> this->MatrixElements[i] >> this->ColumnIndices[i] >> this->RowIndices[i];
+	      File >> this->MatrixElements[i].Re >> this->MatrixElements[i].Im >> this->ColumnIndices[i] >> this->RowIndices[i];
 	    }
 	  break;
 	case 1:
 	  for (long i = 0; i < this->NbrElements; ++i)
-	    File >> this->ColumnIndices[i] >> this->MatrixElements[i] >> this->RowIndices[i];
+	    File >> this->ColumnIndices[i] >> this->MatrixElements[i].Re >> this->MatrixElements[i].Im >> this->RowIndices[i];
 	  break;
 	case 2:
 	  for (long i = 0; i < this->NbrElements; ++i)
 	    {
-	      File >> this->ColumnIndices[i] >> this->RowIndices[i] >> this->MatrixElements[i];
+	      File >> this->ColumnIndices[i] >> this->RowIndices[i] >> this->MatrixElements[i].Re >> this->MatrixElements[i].Im;
 	    }
 	  break;
 	}
@@ -129,7 +130,7 @@ FileBasedHamiltonian::FileBasedHamiltonian(char* fileName, int elementColumnInde
 // destructor
 //
 
-FileBasedHamiltonian::~FileBasedHamiltonian() 
+FileBasedHermitianHamiltonian::~FileBasedHermitianHamiltonian() 
 {
   delete[] this->RowIndices;
   delete[] this->ColumnIndices;
@@ -140,7 +141,7 @@ FileBasedHamiltonian::~FileBasedHamiltonian()
 //
 // hilbertSpace = pointer to Hilbert space to use
 
-void FileBasedHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace) 
+void FileBasedHermitianHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace) 
 {
   this->HilbertSpace = hilbertSpace;
 }
@@ -149,7 +150,7 @@ void FileBasedHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
 //
 // return value = pointer to used Hilbert space
 
-AbstractHilbertSpace* FileBasedHamiltonian::GetHilbertSpace ()
+AbstractHilbertSpace* FileBasedHermitianHamiltonian::GetHilbertSpace ()
 {
   return this->HilbertSpace;
 }
@@ -158,7 +159,7 @@ AbstractHilbertSpace* FileBasedHamiltonian::GetHilbertSpace ()
 //
 // return value = corresponding matrix elementdimension
 
-int FileBasedHamiltonian::GetHilbertSpaceDimension () 
+int FileBasedHermitianHamiltonian::GetHilbertSpaceDimension () 
 {
   return this->HilbertSpace->GetHilbertSpaceDimension();
 }
@@ -167,7 +168,7 @@ int FileBasedHamiltonian::GetHilbertSpaceDimension ()
 //
 // shift = shift value
 
-void FileBasedHamiltonian::ShiftHamiltonian (double shift) 
+void FileBasedHermitianHamiltonian::ShiftHamiltonian (double shift) 
 {
   this->HamiltonianShift = shift;
 }
@@ -179,7 +180,7 @@ void FileBasedHamiltonian::ShiftHamiltonian (double shift)
 // V2 = vector to right multiply with current matrix
 // return value = corresponding matrix element
 
-Complex FileBasedHamiltonian::MatrixElement (RealVector& V1, RealVector& V2) 
+Complex FileBasedHermitianHamiltonian::MatrixElement (RealVector& V1, RealVector& V2) 
 {
   return Complex();
 }
@@ -190,7 +191,7 @@ Complex FileBasedHamiltonian::MatrixElement (RealVector& V1, RealVector& V2)
 // V2 = vector to right multiply with current matrix
 // return value = corresponding matrix element
 
-Complex FileBasedHamiltonian::MatrixElement (ComplexVector& V1, ComplexVector& V2) 
+Complex FileBasedHermitianHamiltonian::MatrixElement (ComplexVector& V1, ComplexVector& V2) 
 {
   return Complex();
 }
@@ -204,8 +205,8 @@ Complex FileBasedHamiltonian::MatrixElement (ComplexVector& V1, ComplexVector& V
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-RealVector& FileBasedHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
-						     int firstComponent, int nbrComponent)
+ComplexVector& FileBasedHermitianHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+							       int firstComponent, int nbrComponent)
 {
   long StartingIndex = 0;
   long LastIndex = this->NbrElements - 1;
@@ -248,7 +249,7 @@ RealVector& FileBasedHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealV
 // nbrComponent = number of components to evaluate
 // return value = pointer to the array of vectors where result has been stored
 
-RealVector* FileBasedHamiltonian::LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, int firstComponent, int nbrComponent)
+ComplexVector* FileBasedHermitianHamiltonian::LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, int firstComponent, int nbrComponent)
 {
   long StartingIndex = 0;
   long LastIndex = this->NbrElements - 1;
@@ -268,7 +269,7 @@ RealVector* FileBasedHamiltonian::LowLevelMultipleAddMultiply(RealVector* vSourc
   if (StartingIndex < 0)
     StartingIndex = 0;
   int LastComponent = firstComponent + nbrComponent;
-  double TmpMatrixElement;
+  Complex TmpMatrixElement;
   int InputIndex;
   int OutputIndex;
   while ((StartingIndex < this->NbrElements) && (this->RowIndices[StartingIndex] < LastComponent))
@@ -284,8 +285,8 @@ RealVector* FileBasedHamiltonian::LowLevelMultipleAddMultiply(RealVector* vSourc
     {
       for (int k= 0; k < nbrVectors; ++k)
 	{
-	  RealVector& TmpDestination = vDestinations[k];
-	  RealVector& TmpSource = vSources[k];
+	  ComplexVector& TmpDestination = vDestinations[k];
+	  ComplexVector& TmpSource = vSources[k];
 	  for (int i = firstComponent; i < LastComponent; ++i)
 	    TmpDestination[i] += this->HamiltonianShift * TmpSource[i];
 	}
