@@ -226,7 +226,7 @@ int main(int argc, char** argv)
 											Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), 		     
 											Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 		  
-		  bool DebuggingSU4ToSU2 = false;
+		  bool DebuggingSU4ToSU2 = true;
 		  if (DebuggingSU4ToSU2 == true)
 		    {
 		      ComplexMatrix* OneBodyBasis = ComputeSingleParticleTransformationMatrices(NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("mass"));
