@@ -542,6 +542,27 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // return value = resulting SU(2) state
   virtual RealVector ForgeSU2FromSU4(RealVector& state, FermionOnSphereWithSpin& su2Space);
 
+  // convert a state from one SU(4) basis to another, transforming the one body basis in each momentum sector
+  //
+  // initialState = state to transform  
+  // targetState = vector where the transformed state has to be stored
+  // oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+  virtual void TransformOneBodyBasis(ComplexVector& initialState, ComplexVector& targetState, ComplexMatrix* oneBodyBasis);
+
+  // compute the transformation matrix from one SU(4) basis to another, transforming the one body basis in each momentum sector
+  //
+  // oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+  // return value = transformation matrix
+  virtual ComplexMatrix TransformationMatrixOneBodyBasis(ComplexMatrix* oneBodyBasis);
+
+  // compute the projection matrix from the SU(4) Hilbert space to an SU(2) Hilbert space
+  // 
+  // targetSpace = pointer to the SU(2) Hilbert space
+  // spinUp = index of the component that has to be consider as a spin up
+  // spinDown = index of the component that has to be consider as a spin down
+  // return value = projection matrix
+  virtual ComplexMatrix TransformationMatrixSU4ToSU2(FermionOnSphereWithSpin* targetSpace, int spinUp = 0, int spinDown = 1);
+
   protected:
 
   // factorized code for any a^+_m_x a_n_y operator 
@@ -619,6 +640,18 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
   long GenerateStates(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin, int totalEntanglement, long pos);
+
+  // recursive part of the convertion from a state from one SU(4) basis to another, transforming the one body basis in each momentum sector
+  //
+  // targetState = vector where the transformed state has to be stored
+  // coefficient = current coefficient to assign
+  // position = current particle consider in the n-body state
+  // momentumIndices = array that gives the momentum partition of the initial n-body state
+  // initialSU4Indices = array that gives the spin dressing the initial n-body state
+  // currentSU4Indices = array that gives the spin dressing the current transformed n-body state
+  // oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+  void TransformOneBodyBasisRecursive(ComplexVector& targetState, Complex coefficient,
+				      int position, int* momentumIndices, int* initialSU4Indices, int* currentSU4Indices, ComplexMatrix* oneBodyBasis);
 
 };
 
