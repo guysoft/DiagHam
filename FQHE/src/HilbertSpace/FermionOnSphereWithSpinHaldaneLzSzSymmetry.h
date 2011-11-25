@@ -36,6 +36,7 @@
 
 #include "config.h"
 #include "HilbertSpace/FermionOnSphereWithSpinLzSzSymmetry.h"
+#include "HilbertSpace/BosonOnSphereShort.h"
 
 #include <iostream>
 
@@ -54,6 +55,11 @@ class FermionOnSphereWithSpinHaldaneLzSzSymmetry :  public FermionOnSphereWithSp
   unsigned long* TmpGeneratedStates;
   int* TmpGeneratedStatesLzMax;
   unsigned long* KeepStateFlag;
+  
+  // array storing the number of permutation used to texture a state
+  int* NbrPermutations;
+  // array storing the permutations used to texture a state
+  unsigned long** Permutations;
 
  public:
 
@@ -74,6 +80,19 @@ class FermionOnSphereWithSpinHaldaneLzSzSymmetry :  public FermionOnSphereWithSp
 					      bool minusSzParity, bool minusLzParity,
 					      int** rootPartitions, int nbrRootPartitions, 
 					      unsigned long memory = 10000000);
+					      
+  // textureless constructor
+  // 
+  // nbrFermions = number of fermions
+  // lzMax = twice the maximum Lz value reached by a fermion
+  // minusSzParity = select the  Sz <-> -Sz symmetric sector with negative parity
+  // minusLzParity = select the  Lz <-> -Lz symmetric sector with negative parity
+  // texturelessRootPartition = root partition describing the squeezed basis, spin texture has to be added on top of it   
+  // memory = amount of memory granted for precalculations
+  FermionOnSphereWithSpinHaldaneLzSzSymmetry (int nbrFermions, int lzMax,
+					      bool minusSzParity, bool minusLzParity,
+					      int* texturelessRootPartition, 
+					      unsigned long memory = 10000000);					      
 
   // copy constructor (without duplicating datas)
   //
@@ -126,6 +145,18 @@ class FermionOnSphereWithSpinHaldaneLzSzSymmetry :  public FermionOnSphereWithSp
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
   virtual long GenerateSqueezedStates(int lzMax, unsigned long referenceState, long pos, long& memory);
+  
+   // generate all squeezed states from a textureless root partition
+  // 
+  // lzMax = momentum maximum value for a fermion in the state
+  // totalLz = momentum total value
+  // pos = position in StateDescription array where to store states
+  // return value = position from which new states have to be stored
+  virtual long GenerateSqueezedTexturelessStates(int lzMax, unsigned long referenceState, long pos, BosonOnSphereShort *bosonSpace, long& memory);
+  
+  // evaluate all permutations requested to sapply spin texture
+  //
+  void EvaluatePermutations();
 
 };
 

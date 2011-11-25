@@ -311,4 +311,102 @@ bool FQHEGetRootPartitionSU2 (char* rootFileName, int& nbrParticles, int& lzMax,
 }
 
 
+// get the root partition from a file in the SU2 case
+// 
+// rootFileName = name of the file that contains the root description
+// nbrParticles = reference on the number of particles
+// lzMax = reference on twice the maximum Lz value
+// referenceStates = array where the root partition descriptions will be stored
+// nbrReferenceStates = number of root partitions that have been extracted
+// texturelessFlag = flag to indicate whether or not to consider spin texture when performing squeezing
+// return value = true if no error occured
+
+bool FQHEGetRootPartitionSU2 (char* rootFileName, int& nbrParticles, int& lzMax, 
+			      int**& referenceStates, int& nbrReferenceStates, bool &texturelessFlag)
+{
+  ConfigurationParser ReferenceStateDefinition;
+  if (ReferenceStateDefinition.Parse(rootFileName) == false)
+    {
+      ReferenceStateDefinition.DumpErrors(cout) << endl;
+      return false;
+    }
+  if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", nbrParticles) == false) || (nbrParticles <= 0))
+    {
+      cout << "NbrParticles is not defined or as a wrong value" << endl;
+      return false;
+    }
+  if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", lzMax) == false) || (lzMax < 0))
+    {
+      cout << "LzMax is not defined or as a wrong value" << endl;
+      return false;
+    }
+  if (ReferenceStateDefinition.GetAsBoolean("Textureless", texturelessFlag) == false)
+    {
+      texturelessFlag = false;
+    }  
+  char*** TmpReferenceStates;
+  int* NbrLzMaxPerStates;
+  if (ReferenceStateDefinition.GetAsStringMultipleArray("ReferenceStates", '|', ' ', TmpReferenceStates, nbrReferenceStates, NbrLzMaxPerStates) == false)
+    {
+      cout << "error while parsing ReferenceStates in " << rootFileName << endl;
+      return false;     
+    }
+  bool HaveExtendedFormat=false;
+  bool *StateHaveExtendedFormat=new bool[nbrReferenceStates];
+  int TotalReferenceStates=0;
+  for (int i = 0; i < nbrReferenceStates; ++i)
+    {
+      StateHaveExtendedFormat[i]=false;
+      if (NbrLzMaxPerStates[i] != (lzMax + 1))
+	{
+	  cout << "wrong LzMax value in ReferenceState " << i << endl;
+	  return false;     
+	}
+      for (int j = 0; j <= lzMax; ++j)
+	{
+	  if ((TmpReferenceStates[i][j][0] == 's') || (TmpReferenceStates[i][j][0] == 'S'))
+	    {
+	      StateHaveExtendedFormat[i]=true;
+	      HaveExtendedFormat=true;
+	    }
+	}
+      if (StateHaveExtendedFormat[i])
+	TotalReferenceStates+=CountExtendedRootStates(lzMax, TmpReferenceStates[i]);
+      else
+	++TotalReferenceStates;
+    }
+  cout << "total: "<<TotalReferenceStates<<" root states"<<endl;
+  referenceStates = new int*[TotalReferenceStates];
+  int pos=0;
+  for (int i = 0; i < nbrReferenceStates; ++i)
+    {
+      if (StateHaveExtendedFormat[i])
+	{
+	  GenerateExtendedRootStates(lzMax, pos, referenceStates, TmpReferenceStates[i]);
+	}
+      else
+	{
+	  referenceStates[pos] = new int [lzMax + 1];
+	  for (int j = 0; j <= lzMax; ++j)
+	    {
+	      if (TmpReferenceStates[i][j][0] == '0')
+		referenceStates[pos][j] = 0;
+	      else
+		if ((TmpReferenceStates[i][j][0] == 'x') || (TmpReferenceStates[i][j][0] == 'X'))
+		  referenceStates[pos][j] = 3;
+		else
+		  if ((TmpReferenceStates[i][j][0] == 'u') || (TmpReferenceStates[i][j][0] == 'U'))
+		    referenceStates[pos][j] = 2;
+		  else
+		    if ((TmpReferenceStates[i][j][0] == 'd') || (TmpReferenceStates[i][j][0] == 'D'))
+		      referenceStates[pos][j] = 1;	  
+	    }
+	  ++pos;
+	}
+    }
+  nbrReferenceStates = TotalReferenceStates;
+  return true;
+}
+
+
 

@@ -715,25 +715,49 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU2(int totalLz)
 	{
 	  int** ReferenceStates = 0;
 	  int NbrReferenceStates;
+	  bool TexturelessFlag; 
 	  if (this->Options->GetString("reference-file") == 0)
 	    {
 	      cout << "error, a reference file is needed for fermions in Haldane basis" << endl;
 	      return 0;
 	    }
-	  if (FQHEGetRootPartitionSU2(this->Options->GetString("reference-file"), NbrFermions, LzMax, ReferenceStates, NbrReferenceStates) == false)
+	  if (FQHEGetRootPartitionSU2(this->Options->GetString("reference-file"), NbrFermions, LzMax, ReferenceStates, NbrReferenceStates, TexturelessFlag) == false)
 	    {
 	      cout << "error while parsing " << this->Options->GetString("reference-file") << endl;	      
 	      return 0;
 	    }
 	  if ((SzSymmetrizedBasis == true) && (SzTotal == 0) && (LzSymmetrizedBasis == true) && (totalLz == 0))
-	    {
+	    {	      	      
 #ifdef __64_BITS__
 	      if (LzMax <= 31)
 #else
 		if (LzMax <= 15)
 #endif
 		  {
-		    Space = new FermionOnSphereWithSpinHaldaneLzSzSymmetry(NbrFermions, LzMax, this->Options->GetBoolean("minus-szparity"), this->Options->GetBoolean("minus-lzparity"), ReferenceStates, NbrReferenceStates);
+		    if ( TexturelessFlag == false )
+		      {		    
+			Space = new FermionOnSphereWithSpinHaldaneLzSzSymmetry(NbrFermions, LzMax, this->Options->GetBoolean("minus-szparity"), this->Options->GetBoolean("minus-lzparity"), ReferenceStates, NbrReferenceStates);
+		      }
+		    else
+		      {
+			 int *TexturelessReferenceState = new int[LzMax+1];
+			 for ( int i = 0 ; i < (LzMax + 1) ; i++ )
+			   {
+			      if ( ReferenceStates[0][i] == 3 ) 
+				{
+				    TexturelessReferenceState[i] = 2;
+				}
+			      else if ( (ReferenceStates[0][i] == 1) || (ReferenceStates[0][i] == 2) ) 
+				{
+				    TexturelessReferenceState[i] = 1;
+				}
+			      else
+				{
+				    TexturelessReferenceState[i] = 0;
+				}
+			    }
+			Space = new FermionOnSphereWithSpinHaldaneLzSzSymmetry(NbrFermions, LzMax, this->Options->GetBoolean("minus-szparity"), this->Options->GetBoolean("minus-lzparity"), TexturelessReferenceState);
+		      }
 		  }
 		else
 		  {
@@ -749,7 +773,30 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU2(int totalLz)
 		if (LzMax <= 15)
 #endif
 		  {
-		    Space = new FermionOnSphereWithSpinHaldaneBasis(NbrFermions, totalLz, LzMax, SzTotal, ReferenceStates, NbrReferenceStates);
+		    if ( TexturelessFlag == false ) 
+		      {
+			  Space = new FermionOnSphereWithSpinHaldaneBasis(NbrFermions, totalLz, LzMax, SzTotal, ReferenceStates, NbrReferenceStates);
+		      }
+		    else
+		      {
+			  int *TexturelessReferenceState = new int[LzMax+1];
+			  for ( int i = 0 ; i < (LzMax + 1) ; i++ )
+			    {
+				if ( ReferenceStates[0][i] == 3 ) 
+				  {
+				      TexturelessReferenceState[i] = 2;
+				  }
+				else if ( (ReferenceStates[0][i] == 1) || (ReferenceStates[0][i] == 2) ) 
+				  {
+				      TexturelessReferenceState[i] = 1;
+				  }
+				else
+				  {
+				      TexturelessReferenceState[i] = 0;
+				  }
+			    }
+			  Space = new FermionOnSphereWithSpinHaldaneBasis(NbrFermions, totalLz, LzMax, SzTotal, TexturelessReferenceState);
+		      }
 		  }
 		else
 		  {

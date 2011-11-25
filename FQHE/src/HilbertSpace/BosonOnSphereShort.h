@@ -67,7 +67,9 @@ class BosonOnSphereShort :  public ParticleOnSphere
   friend class FermionOnSphereThreeLandauLevels;
   friend class FermionOnSphereFourLandauLevels;
 	
-	friend class FermionOnSphereWithSpin;	
+  friend class FermionOnSphereWithSpin;
+  friend class FermionOnSphereWithSpinHaldaneBasis;	
+  friend class FermionOnSphereWithSpinHaldaneLzSzSymmetry;	
 
   friend class BosonOnTorusShort;
 
@@ -559,6 +561,13 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // stateDescription = string describing the state
   // return value = corresponding index, -1 if an error occured
   virtual int FindStateIndex(char* stateDescription);
+  
+  // find state index from unsigned long representation
+  //
+  // stateDescription = integer describint the state
+  // lzMax = the lzmax of the state
+  // return value = corresponding index, -1 if an error occured
+  virtual int FindStateIndex(unsigned long int stateDescription, int lzMax);
 
   // get Lz component of a component
   //

@@ -4,6 +4,7 @@
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
 #include "HilbertSpace/FermionOnSphereUnlimited.h"
 #include "HilbertSpace/ParticleOnSphereWithSpin.h"
+#include "HilbertSpace/FermionOnSphereWithSpinHaldaneBasis.h"
 #include "HilbertSpace/FermionOnSphereWithSU4Spin.h"
 #include "HilbertSpace/FermionOnSphereWithSU3Spin.h"
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
@@ -188,7 +189,48 @@ int main(int argc, char** argv)
 	}
       else
  	if (SU2SpinFlag == true)
-	  Space = new FermionOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
+	  {
+	    if (HaldaneBasisFlag == false)
+	      {
+		Space = new FermionOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
+	      }
+	    else
+	      {
+		 int LzMax = NbrFluxQuanta;
+		 int** ReferenceStates = 0;
+		 int NbrReferenceStates;
+		 bool TexturelessFlag; 
+		 if (FQHEGetRootPartitionSU2(Manager.GetString("reference-file"), NbrParticles, LzMax, ReferenceStates, NbrReferenceStates, TexturelessFlag) == false)
+		  {
+		    cout << "error while parsing " << Manager.GetString("reference-file") << endl;	      
+		    return 0;
+		  }
+		 if ( TexturelessFlag == false ) 
+		  {
+		      Space = new FermionOnSphereWithSpinHaldaneBasis(NbrParticles, TotalLz, LzMax, TotalSz, ReferenceStates, NbrReferenceStates);
+		  }
+		else
+		  {
+		    int *TexturelessReferenceState = new int[LzMax+1];
+		    for ( int i = 0 ; i < (LzMax + 1) ; i++ )
+		      {
+			  if ( ReferenceStates[0][i] == 3 ) 
+			    {
+				TexturelessReferenceState[i] = 2;
+			    }
+			  else if ( (ReferenceStates[0][i] == 1) || (ReferenceStates[0][i] == 2) ) 
+			    {
+				TexturelessReferenceState[i] = 1;
+			    }
+			  else
+			    {
+				TexturelessReferenceState[i] = 0;
+			    }
+		      }
+		    Space = new FermionOnSphereWithSpinHaldaneBasis(NbrParticles, TotalLz, LzMax, TotalSz, TexturelessReferenceState);
+		  }
+	      }	    
+	  }
 	else 
 	  if (AllSzFlag == true)
 	    Space = new FermionOnSphereWithSpinAllSz(NbrParticles, TotalLz, NbrFluxQuanta);

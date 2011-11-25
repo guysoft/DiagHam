@@ -35,13 +35,13 @@
 
 #include "config.h"
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
+#include "HilbertSpace/BosonOnSphereShort.h"
 
 #include <iostream>
 
 
 class FermionOnSphereWithSpinHaldaneBasis :  public FermionOnSphereWithSpin
-{
-
+{   
  protected:
 
   // array of root partitions describing the squeezed basis
@@ -84,9 +84,9 @@ class FermionOnSphereWithSpinHaldaneBasis :  public FermionOnSphereWithSpin
   // totalLz = twice the momentum total value
   // lzMax = twice the maximum Lz value reached by a fermion
   // totalSpin = twice the total spin value
-  // texturelessRootPartition = root partition describing the squeezed basis, spin texture has to be added on top of it 
+  // texturelessRootPartition = root partition describing the squeezed basis, spin texture has to be added on top of it   
   // memory = amount of memory granted for precalculations
-  FermionOnSphereWithSpinHaldaneBasis (int nbrFermions, int& totalLz, int lzMax, int totalSpin, int* texturelessRootPartition, unsigned long memory);
+  FermionOnSphereWithSpinHaldaneBasis (int nbrFermions, int& totalLz, int lzMax, int totalSpin, int* texturelessRootPartitiom, unsigned long memory  = 10000000);
 
   // copy constructor (without duplicating datas)
   //
@@ -153,7 +153,7 @@ class FermionOnSphereWithSpinHaldaneBasis :  public FermionOnSphereWithSpin
   // totalLz = momentum total value
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  long GenerateSqueezedTexturelessStates(int lzMax, unsigned long referenceState, long pos, long& memory);
+  long GenerateSqueezedTexturelessStates(int lzMax, unsigned long referenceState, long pos, BosonOnSphereShort *bosonSpace, long& memory);
 
   // evaluate all permutations requested to sapply spin texture
   //
