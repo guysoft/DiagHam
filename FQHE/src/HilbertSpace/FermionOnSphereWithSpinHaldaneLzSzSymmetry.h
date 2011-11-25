@@ -88,10 +88,12 @@ class FermionOnSphereWithSpinHaldaneLzSzSymmetry :  public FermionOnSphereWithSp
   // minusSzParity = select the  Sz <-> -Sz symmetric sector with negative parity
   // minusLzParity = select the  Lz <-> -Lz symmetric sector with negative parity
   // texturelessRootPartition = root partition describing the squeezed basis, spin texture has to be added on top of it   
+  // nbrRootPartitions = number of root partitions
+  // texturelessFlag = flag to indicate textureless squeezing.
   // memory = amount of memory granted for precalculations
   FermionOnSphereWithSpinHaldaneLzSzSymmetry (int nbrFermions, int lzMax,
 					      bool minusSzParity, bool minusLzParity,
-					      int* texturelessRootPartition, 
+					      int** texturelessRootPartition, int nbrRootPartitions, bool texturelessFlag,					      
 					      unsigned long memory = 10000000);					      
 
   // copy constructor (without duplicating datas)

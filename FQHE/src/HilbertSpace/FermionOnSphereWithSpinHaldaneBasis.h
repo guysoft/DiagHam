@@ -85,8 +85,12 @@ class FermionOnSphereWithSpinHaldaneBasis :  public FermionOnSphereWithSpin
   // lzMax = twice the maximum Lz value reached by a fermion
   // totalSpin = twice the total spin value
   // texturelessRootPartition = root partition describing the squeezed basis, spin texture has to be added on top of it   
+  // nbrRootPartitions = number of root partitions
+  // texturelessFlag = argument to signify that this is to use textureless squeezing
   // memory = amount of memory granted for precalculations
-  FermionOnSphereWithSpinHaldaneBasis (int nbrFermions, int& totalLz, int lzMax, int totalSpin, int* texturelessRootPartitiom, unsigned long memory  = 10000000);
+  FermionOnSphereWithSpinHaldaneBasis (int nbrFermions, int& totalLz, int lzMax, int totalSpin, 
+				       int** texturelessRootPartitiom, int nbrRootPartitions, bool texturelessFlag,
+				       unsigned long memory  = 10000000);
 
   // copy constructor (without duplicating datas)
   //

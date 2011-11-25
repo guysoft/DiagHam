@@ -487,10 +487,12 @@ FermionOnSphereWithSpinHaldaneLzSzSymmetry::FermionOnSphereWithSpinHaldaneLzSzSy
 // minusSzParity = select the  Sz <-> -Sz symmetric sector with negative parity
 // minusLzParity = select the  Lz <-> -Lz symmetric sector with negative parity
 // texturelessRootPartition = root partition describing the squeezed basis, spin texture has to be added on top of it   
+// nbrRootPartitions = number of root partitions
+// texturelessFlag = flag to indicate textureless squeezing.
 // memory = amount of memory granted for precalculations
 
 FermionOnSphereWithSpinHaldaneLzSzSymmetry::FermionOnSphereWithSpinHaldaneLzSzSymmetry (int nbrFermions, int lzMax, bool minusSzParity, bool minusLzParity, 
-											int* texturelessRootPartition, unsigned long memory)
+											int** texturelessRootPartition, int nbrRootPartitions, bool texturelessFlag, unsigned long memory)
 {
   this->NbrFermions = nbrFermions;
   this->IncNbrFermions = this->NbrFermions + 1;
@@ -537,35 +539,47 @@ FermionOnSphereWithSpinHaldaneLzSzSymmetry::FermionOnSphereWithSpinHaldaneLzSzSy
   else
     this->LzSzSameParityFlag = false;    
   
-  this->NbrRootPartitions = 1;
-  this->RootPartitions = new unsigned long [this->NbrRootPartitions];
-  this->RootPartitions[0] = 0x0ul;
-  int TmpTotalLz = 0;
-  for (int i = 0; i <= this->LzMax; ++i)
+  this->NbrRootPartitions = nbrRootPartitions;
+  this->RootPartitions = new unsigned long [this->NbrRootPartitions];  
+  
+  for ( int j = 0 ; j < nbrRootPartitions; j++ )
     {
-      if (texturelessRootPartition[i] != 0)
+      this->RootPartitions[j] = 0x0ul;
+      int TmpTotalLz = 0;
+      for (int i = 0; i <= this->LzMax; ++i)
 	{
-	  switch (texturelessRootPartition[i])
+	  if (texturelessRootPartition[j][i] != 0)
 	    {
-	    case 1:
-	      {
-		this->RootPartitions[0] |= 0x1ul << (2 * i);
-		TmpTotalLz += i;
-	      }
-	      break;
-	    case 2:
-	      {
-		this->RootPartitions[0] |= 0x2ul << (2 * i);
-		TmpTotalLz += i;
-		TmpTotalLz += i;
-	      }
-	      break;
+	      switch (texturelessRootPartition[j][i])
+		{
+		case 1:
+		  {
+		    this->RootPartitions[j] |= 0x1ul << (2 * i);
+		    TmpTotalLz += i;
+		  }
+		  break;
+		case 2:
+		  {
+		    this->RootPartitions[j] |= 0x2ul << (2 * i);
+		    TmpTotalLz += i;
+		    TmpTotalLz += i;
+		  }
+		  break;
+		}
 	    }
 	}
-    }
-  //this->TotalLz = TmpTotalLz;
-  //this->TotalLz = ((this->TotalLz << 1) - (this->LzMax * this->NbrFermions));
-  //totalLz = this->TotalLz;
+      if ( j == 0 ) 
+	{
+	  this->TotalLz = TmpTotalLz;
+	}
+      else
+	{
+	  if ( this->TotalLz != TmpTotalLz)
+	    cout << "warning : root partition " << j << "does not have the same TotalLz as root partition 0" << endl;
+	}
+    }    
+
+  this->TotalLz = ((this->TotalLz << 1) - (this->LzMax * this->NbrFermions));
 
   BosonOnSphereShort *Space = new BosonOnSphereShort(this->NbrFermions, 0, this->LzMax);
  
@@ -579,11 +593,7 @@ FermionOnSphereWithSpinHaldaneLzSzSymmetry::FermionOnSphereWithSpinHaldaneLzSzSy
     {
       this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
     }
-  this->Flag.Initialize();
-  
-  
-  //this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
-  //this->StateHighestBit = new int [this->HilbertSpaceDimension];  
+  this->Flag.Initialize();      
  
 #ifdef  __64_BITS__
   long ReducedHilbertSpaceDimension = (this->LargeHilbertSpaceDimension >> 6) + 1;
@@ -597,42 +607,39 @@ FermionOnSphereWithSpinHaldaneLzSzSymmetry::FermionOnSphereWithSpinHaldaneLzSzSy
   int MaxSweeps = (this->NbrFermions * (this->NbrFermions - 1)) >> 1;  
   this->TmpGeneratedStates =  new unsigned long [MaxSweeps * 1000];
   this->TmpGeneratedStatesLzMax = new int [MaxSweeps * 1000];
-  long Memory = 0l;
-  int TmpLzMax;
   
-  unsigned long TmpState = 0x0ul;
-   int NbrBosonsPlaced = 0;
-   for ( int CurrentLz = 0 ; CurrentLz <= this->LzMax  ; CurrentLz++)
-      {
-	if ( ((this->RootPartitions[0] >> (CurrentLz << 1)) & 0x03l ) == 0x01l )
-	  {
-	    TmpState += 0x01l << (CurrentLz + NbrBosonsPlaced);
-	    NbrBosonsPlaced++;
-	  }
-	else if ( ((this->RootPartitions[0] >> (CurrentLz << 1)) & 0x03l ) == 0x02l )
-	  {
-	    TmpState += 0x03l << ( CurrentLz + NbrBosonsPlaced);
-	    NbrBosonsPlaced+= 2;
-	  }
-      }            
-    TmpLzMax = this->LzMax + this->NbrFermions;
-    while ( ((TmpState >> TmpLzMax) & 0x01ul)  == 0x0ul ) 
-      {
-	TmpLzMax--;
-      }  
-  
-  //while (((this->RootPartitions[0] >> TmpLzMax) & 0x1ul) == 0x0ul)
-  //  --TmpLzMax;
-  //int TmpIndex = Space->FindStateIndex(this->RootPartitions[0], TmpLzMax);
-  int TmpIndex = Space->FindStateIndex(TmpState, TmpLzMax);
-  
-   TmpLzMax = 2 * this->LzMax + 1;    
+  for ( int j = 0 ; j < this->NbrRootPartitions ; j++ )
+    {
+      long Memory = 0l;      
+      unsigned long TmpState = 0x0ul;
+      int NbrBosonsPlaced = 0;   
+      for ( int CurrentLz = 0 ; CurrentLz <= this->LzMax  ; CurrentLz++)
+	{
+	  if ( ((this->RootPartitions[j] >> (CurrentLz << 1)) & 0x03l ) == 0x01l )
+	    {
+	      TmpState += 0x01l << (CurrentLz + NbrBosonsPlaced);
+	      NbrBosonsPlaced++;
+	    }
+	  else if ( ((this->RootPartitions[j] >> (CurrentLz << 1)) & 0x03l ) == 0x02l )
+	    {
+	      TmpState += 0x03l << ( CurrentLz + NbrBosonsPlaced);
+	      NbrBosonsPlaced+= 2;
+	    }
+	}            
+      int TmpLzMax = this->LzMax + this->NbrFermions;
+      while ( ((TmpState >> TmpLzMax) & 0x01ul)  == 0x0ul ) 
+	{
+	  TmpLzMax--;
+	}  
+      int TmpIndex = Space->FindStateIndex(TmpState, TmpLzMax);
+      TmpLzMax = 2 * this->LzMax + 1;    
 #ifdef  __64_BITS__
-  this->KeepStateFlag[TmpIndex >> 6] |= 0x1l << (TmpIndex & 0x3f);
+      this->KeepStateFlag[TmpIndex >> 6] |= 0x1l << (TmpIndex & 0x3f);
 #else
-  this->KeepStateFlag[TmpIndex >> 5] |= 0x1l << (TmpIndex & 0x1f);
+      this->KeepStateFlag[TmpIndex >> 5] |= 0x1l << (TmpIndex & 0x1f);
 #endif  
-  this->GenerateSqueezedTexturelessStates(TmpLzMax, this->RootPartitions[0], 1, Space, Memory);  
+      this->GenerateSqueezedTexturelessStates(TmpLzMax, this->RootPartitions[j], 1, Space, Memory);  
+    }  
 
   long NewHilbertSpaceDimension = 0;
   unsigned long TmpKeepStateFlag;
@@ -787,10 +794,10 @@ FermionOnSphereWithSpinHaldaneLzSzSymmetry::FermionOnSphereWithSpinHaldaneLzSzSy
 		  TmpDressedState2 += (0x01ul << (Positions[k]<<1));
 		}
 	    }
-	  TmpLzMax = 2*this->LzMax + 1;
+	  int TmpLzMax = 2*this->LzMax + 1;
 	  while ( ((TmpDressedState2 >> TmpLzMax ) & 0x1ul) == 0x0ul)
 	      --TmpLzMax;
-	  TmpIndex = this->FindStateIndex(TmpDressedState2, TmpLzMax);
+	  int TmpIndex = this->FindStateIndex(TmpDressedState2, TmpLzMax);
 #ifdef __64_BITS__
 	  if (((this->KeepStateFlag[TmpIndex >> 6] >> (TmpIndex & 0x3f)) & 0x1l) == 0x0l ) 
 	    {	      
@@ -1294,8 +1301,104 @@ long FermionOnSphereWithSpinHaldaneLzSzSymmetry::GenerateSqueezedStates(int lzMa
 RealVector FermionOnSphereWithSpinHaldaneLzSzSymmetry::ConvertToNbodyBasis(RealVector& state, FermionOnSphereWithSpin& nbodyBasis)
 {
   RealVector TmpVector (nbodyBasis.GetHilbertSpaceDimension(), true);
-//   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-//     TmpVector[nbodyBasis.FindStateIndex(this->StateDescription[i], this->StateHighestBit[i])] = state[i];
+  unsigned long TmpState;
+  unsigned long Signature;  
+  int NewLzMax;
+  int TmpIndex;
+  for (int i = 0; i < nbodyBasis.GetHilbertSpaceDimension(); ++i)
+    {
+      Signature = nbodyBasis.StateDescription[i];
+      TmpState = this->GetSignedCanonicalState(Signature);
+      Signature = TmpState & FERMION_SPHERE_SU2_SYMMETRIC_BIT;
+      unsigned long TmpState2 = TmpState;
+      TmpState &= FERMION_SPHERE_SU2_SYMMETRIC_MASK;
+      NewLzMax = 1 + (this->LzMax << 1);
+      while ((TmpState >> NewLzMax) == 0x0ul)
+	--NewLzMax;	 
+      switch (Signature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT)
+	{
+	case 0x0ul:
+	  {
+	    if (this->LzSzSameParityFlag == true)
+	      {
+		Signature = TmpState;
+		this->GetStateSingletParity(Signature);
+		if (((1.0 - 2.0 * ((double) ((Signature >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul))) * this->SzParitySign) > 0.0)
+		  {
+		    TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
+		    if ( TmpIndex < this->HilbertSpaceDimension ) 
+		      {		    
+			TmpVector[i] = state[TmpIndex];
+		      }
+		  }
+	      }
+	  }
+	  break;
+	case FERMION_SPHERE_SU2_LZ_SZ_SYMMETRIC_BIT :
+	  {
+	    if (this->LzSzSameParityFlag == true)
+	      {
+		Signature = TmpState;
+		this->GetStateSingletParity(Signature);
+		double TmpSign = (1.0 - 2.0 * ((double) ((Signature >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul)));
+		TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
+		if ( TmpIndex < this->HilbertSpaceDimension ) 
+		  {		    		  
+		    TmpVector[i] = ((1.0 + ((double) (((TmpState2 >> FERMION_SPHERE_SU2_SZ_TRANSFORMATION_SHIFT) 
+						   | (TmpState2 >> FERMION_SPHERE_SU2_LZ_TRANSFORMATION_SHIFT)) & 0x1ul)) * ((TmpSign * this->SzParitySign) - 1.0))
+				* state[TmpIndex] * M_SQRT1_2);
+		  }
+	      }		
+	  }
+	  break;
+	case FERMION_SPHERE_SU2_SZ_SYMMETRIC_TEST :
+	  {
+	    Signature = TmpState;
+	    this->GetStateSingletParity(Signature);
+	    double TmpSign = (1.0 - 2.0 * ((double) ((Signature >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul)));
+	    if ((TmpSign * this->LzParitySign) > 0.0)
+	      {
+		TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
+		if ( TmpIndex < this->HilbertSpaceDimension ) 
+		  {		    		  
+		    TmpVector[i] = ((1.0 + ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SZ_TRANSFORMATION_SHIFT) & 0x1ul)) * ((TmpSign * this->SzParitySign) - 1.0))
+				* state[TmpIndex] * M_SQRT1_2);
+		  }
+	      }
+	  }
+	  break;
+	case FERMION_SPHERE_SU2_LZ_SYMMETRIC_TEST :
+	  {
+	    Signature = TmpState;
+	    this->GetStateSingletParity(Signature);
+	    double TmpSign = (1.0 - 2.0 * ((double) ((Signature >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul)));
+	    if ((TmpSign * this->SzParitySign) > 0.0)
+	      {
+		TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
+		if ( TmpIndex < this->HilbertSpaceDimension ) 
+		  {		    		  
+		    TmpVector[i] = ((1.0 + ((double) ((TmpState2 >> FERMION_SPHERE_SU2_LZ_TRANSFORMATION_SHIFT) & 0x1ul)) * ((TmpSign * this->LzParitySign) - 1.0))
+				* state[TmpIndex] * M_SQRT1_2);
+		  }
+	      }
+	  }
+	  break;
+	default:
+	  {
+	    Signature = TmpState;
+	    this->GetStateSingletParity(Signature);
+	    double TmpSign = (1.0 - 2.0 * ((double) ((Signature >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul)));
+	    TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
+	    if ( TmpIndex < this->HilbertSpaceDimension ) 
+	      {		    		  
+		TmpVector[i] = ((1.0 + ((double) ((TmpState2 >> FERMION_SPHERE_SU2_LZ_TRANSFORMATION_SHIFT) & 0x1ul)) * ((TmpSign * this->LzParitySign) - 1.0))
+			    * (1.0 + ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SZ_TRANSFORMATION_SHIFT) & 0x1ul)) * ((TmpSign * this->SzParitySign) - 1.0))
+			    * state[TmpIndex] * 0.5);
+	      }
+	  }
+	  break;
+	}
+    }
   return TmpVector;
 }
 

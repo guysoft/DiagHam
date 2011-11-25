@@ -127,13 +127,44 @@ int main(int argc, char** argv)
       cout << "error, a reference file is needed for fermions in Haldane basis" << endl;
       return 0;
     }
-  if (FQHEGetRootPartitionSU2(Manager.GetString("reference-file"), NbrParticles, NbrFluxQuanta, ReferenceStates, NbrReferenceStates) == false)
+  bool TexturelessFlag;
+  if (FQHEGetRootPartitionSU2(Manager.GetString("reference-file"), NbrParticles, NbrFluxQuanta, ReferenceStates, NbrReferenceStates, TexturelessFlag) == false)
     {
       cout << "error while parsing " << Manager.GetString("reference-file") << endl;	      
       return 0;
     }      
-  FermionOnSphereWithSpinHaldaneBasis InitialSpace(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz, ReferenceStates, NbrReferenceStates);
-  if ((ReverseFlag == false) && (InitialSpace.GetHilbertSpaceDimension() != State.GetVectorDimension()))
+    
+  FermionOnSphereWithSpinHaldaneBasis *InitialSpace;
+  if ( TexturelessFlag == false)
+    {
+      InitialSpace = new FermionOnSphereWithSpinHaldaneBasis (NbrParticles, TotalLz, NbrFluxQuanta, TotalSz, ReferenceStates, NbrReferenceStates);
+    }
+  else
+    {
+      int LzMax = NbrFluxQuanta;
+      int **TexturelessReferenceState = new int*[NbrReferenceStates];
+      for ( int j = 0 ; j < NbrReferenceStates ; j++ ) 
+      {
+	TexturelessReferenceState[j] = new int[LzMax+1];
+	for ( int i = 0 ; i < (LzMax + 1) ; i++ )
+	  {
+	    if ( ReferenceStates[j][i] == 3 ) 
+	      {
+		  TexturelessReferenceState[j][i] = 2;
+	      }
+	    else if ( (ReferenceStates[j][i] == 1) || (ReferenceStates[j][i] == 2) ) 
+	      {
+		  TexturelessReferenceState[j][i] = 1;
+	      }
+	    else
+	      {
+		  TexturelessReferenceState[j][i] = 0;
+	      }
+	  }
+      }		
+      InitialSpace = new FermionOnSphereWithSpinHaldaneBasis (NbrParticles, TotalLz, NbrFluxQuanta, TotalSz, TexturelessReferenceState, NbrReferenceStates, true);
+    }
+  if ((ReverseFlag == false) && (InitialSpace->GetHilbertSpaceDimension() != State.GetVectorDimension()))
     {
       cout << "dimension mismatch between Hilbert space and input state" << endl;
     }
@@ -144,9 +175,9 @@ int main(int argc, char** argv)
     }	    
   RealVector OutputState;
   if (ReverseFlag == false)
-    OutputState = InitialSpace.ConvertToNbodyBasis(State, TargetSpace);
+    OutputState = InitialSpace->ConvertToNbodyBasis(State, TargetSpace);
   else
-    OutputState = InitialSpace.ConvertFromNbodyBasis(State, TargetSpace);
+    OutputState = InitialSpace->ConvertFromNbodyBasis(State, TargetSpace);
   if (OutputState.WriteVector(OutputFileName) == false)
     {
       cout << "error while writing output state " << OutputFileName << endl;

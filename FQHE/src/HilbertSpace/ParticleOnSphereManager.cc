@@ -740,23 +740,27 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU2(int totalLz)
 		      }
 		    else
 		      {
-			 int *TexturelessReferenceState = new int[LzMax+1];
-			 for ( int i = 0 ; i < (LzMax + 1) ; i++ )
-			   {
-			      if ( ReferenceStates[0][i] == 3 ) 
-				{
-				    TexturelessReferenceState[i] = 2;
-				}
-			      else if ( (ReferenceStates[0][i] == 1) || (ReferenceStates[0][i] == 2) ) 
-				{
-				    TexturelessReferenceState[i] = 1;
-				}
-			      else
-				{
-				    TexturelessReferenceState[i] = 0;
-				}
-			    }
-			Space = new FermionOnSphereWithSpinHaldaneLzSzSymmetry(NbrFermions, LzMax, this->Options->GetBoolean("minus-szparity"), this->Options->GetBoolean("minus-lzparity"), TexturelessReferenceState);
+			 int **TexturelessReferenceState = new int*[NbrReferenceStates];
+			 for ( int j = 0 ; j < NbrReferenceStates ; j++ ) 
+			  {
+			    TexturelessReferenceState[j] = new int[LzMax+1];
+			    for ( int i = 0 ; i < (LzMax + 1) ; i++ )
+			      {
+				if ( ReferenceStates[j][i] == 3 ) 
+				  {
+				      TexturelessReferenceState[j][i] = 2;
+				  }
+				else if ( (ReferenceStates[j][i] == 1) || (ReferenceStates[j][i] == 2) ) 
+				  {
+				      TexturelessReferenceState[j][i] = 1;
+				  }
+				else
+				  {
+				      TexturelessReferenceState[j][i] = 0;
+				  }
+			      }
+			  }			  
+			Space = new FermionOnSphereWithSpinHaldaneLzSzSymmetry(NbrFermions, LzMax, this->Options->GetBoolean("minus-szparity"), this->Options->GetBoolean("minus-lzparity"), TexturelessReferenceState, NbrReferenceStates, true);
 		      }
 		  }
 		else
@@ -778,24 +782,28 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU2(int totalLz)
 			  Space = new FermionOnSphereWithSpinHaldaneBasis(NbrFermions, totalLz, LzMax, SzTotal, ReferenceStates, NbrReferenceStates);
 		      }
 		    else
-		      {
-			  int *TexturelessReferenceState = new int[LzMax+1];
-			  for ( int i = 0 ; i < (LzMax + 1) ; i++ )
-			    {
-				if ( ReferenceStates[0][i] == 3 ) 
+		      {			  
+			 int **TexturelessReferenceState = new int*[NbrReferenceStates];
+			 for ( int j = 0 ; j < NbrReferenceStates ; j++ ) 
+			  {
+			    TexturelessReferenceState[j] = new int[LzMax+1];
+			    for ( int i = 0 ; i < (LzMax + 1) ; i++ )
+			      {
+			        if ( ReferenceStates[j][i] == 3 ) 
 				  {
-				      TexturelessReferenceState[i] = 2;
+				      TexturelessReferenceState[j][i] = 2;
 				  }
-				else if ( (ReferenceStates[0][i] == 1) || (ReferenceStates[0][i] == 2) ) 
+				else if ( (ReferenceStates[j][i] == 1) || (ReferenceStates[j][i] == 2) ) 
 				  {
-				      TexturelessReferenceState[i] = 1;
+				      TexturelessReferenceState[j][i] = 1;
 				  }
 				else
 				  {
-				      TexturelessReferenceState[i] = 0;
+				      TexturelessReferenceState[j][i] = 0;
 				  }
-			    }
-			  Space = new FermionOnSphereWithSpinHaldaneBasis(NbrFermions, totalLz, LzMax, SzTotal, TexturelessReferenceState);
+			      }
+			  }	
+			Space = new FermionOnSphereWithSpinHaldaneBasis(NbrFermions, totalLz, LzMax, SzTotal, TexturelessReferenceState, NbrReferenceStates, true);
 		      }
 		  }
 		else

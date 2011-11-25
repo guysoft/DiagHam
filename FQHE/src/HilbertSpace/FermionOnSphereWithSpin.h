@@ -56,6 +56,7 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   friend class FermionOnSphereWithSpinAllSz;
   friend class FermionOnSphereWithSpinHaldaneBasis;
   friend class FermionOnSphereWithSpinAllSzLzSymmetry;
+  friend class FermionOnSphereWithSpinHaldaneLzSzSymmetry;
 
   friend class BosonOnSphereTwoLandauLevels;
   friend class BosonOnSphereShort;
