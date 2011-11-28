@@ -68,6 +68,11 @@ class ParticleOnSphereDensityDensityOperator : public AbstractOperator
   ParticleOnSphereDensityDensityOperator(ParticleOnSphere* particle, int creationIndex1, int creationIndex2,
 					 int annihilationIndex1, int annihilationIndex2);
 
+  // copy constructor
+  //
+  // oper = operator to copy
+  ParticleOnSphereDensityDensityOperator(ParticleOnSphereDensityDensityOperator& oper);
+
   // destructor
   //
   ~ParticleOnSphereDensityDensityOperator();
