@@ -6,6 +6,7 @@
 
 #include "Hamiltonian/ParticleOnCubicLatticeTwoBandSimpleTIHamiltonian.h"
 #include "Hamiltonian/ParticleOnCubicLatticeFourBandSimpleTIHamiltonian.h"
+#include "Hamiltonian/ExplicitHamiltonian.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -84,6 +85,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
   (*SystemGroup) += new BooleanOption ('\n', "flat-band", "use flat band model");
   (*SystemGroup) += new BooleanOption ('\n', "four-bands", "perform the calculations within the full four band model");
+  (*SystemGroup) += new BooleanOption ('\n', "project-fourbands", "project the hamiltonian from the four band model to the two band model");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
@@ -204,7 +206,7 @@ int main(int argc, char** argv)
 		}
 	      else
 		{
-		  ParticleOnSphereWithSU4Spin* Space = 0;
+		  ParticleOnSphere* Space = 0;
 		  cout << TotalNbrSites << endl;
 #ifdef __128_BIT_LONGLONG__
 		  if (TotalNbrSites <= 15)
@@ -220,45 +222,32 @@ int main(int argc, char** argv)
 		    }
 		  cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
 		  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
-		  AbstractQHEHamiltonian* Hamiltonian = 0;
-		  Hamiltonian = new ParticleOnCubicLatticeFourBandSimpleTIHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ,
+		  AbstractHamiltonian* Hamiltonian = 0;
+		  Hamiltonian = new ParticleOnCubicLatticeFourBandSimpleTIHamiltonian((ParticleOnSphereWithSU4Spin*) Space, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ,
 											Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("mass"),
 											Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), 		     
 											Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 		  
-		  bool DebuggingSU4ToSU2 = true;
-		  if (DebuggingSU4ToSU2 == true)
+		  if (Manager.GetBoolean("project-fourbands") == true)
 		    {
 		      ComplexMatrix* OneBodyBasis = ComputeSingleParticleTransformationMatrices(NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("mass"));
 		      ComplexMatrix NBodyTransformationMatrix = ((FermionOnCubicLatticeWithSU4SpinMomentumSpace*) Space)->TransformationMatrixOneBodyBasis(OneBodyBasis);
 		      ComplexMatrix HRep (Hamiltonian->GetHilbertSpaceDimension(), Hamiltonian->GetHilbertSpaceDimension());
 		      Hamiltonian->GetHamiltonian(HRep);
-		      // 	      cout << "Hinitial = " << endl << HRep << endl;
-		      // 	      cout << "NBodyTransformationMatrix = " << endl << NBodyTransformationMatrix << endl;
-		      //HRep.SetToIdentity();
 		      ComplexMatrix TransformedHRep = HRep.Conjugate(NBodyTransformationMatrix);
-		      // 	      for (int k = 0; k < TransformedHRep.GetNbrRow(); ++k)
-		      // 		cout << TransformedHRep[k][k] << endl;
-		      //	      cout << TransformedHRep << endl;
 		      FermionOnCubicLatticeWithSpinMomentumSpace* TargetSpace = new FermionOnCubicLatticeWithSpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, i, j, k);
 		      ComplexMatrix SU4SU2TransformationMatrix = ((FermionOnCubicLatticeWithSU4SpinMomentumSpace*) Space)->TransformationMatrixSU4ToSU2(TargetSpace, 2, 3);
-		      //	      cout << SU4SU2TransformationMatrix << endl;
-		      //	      cout << TransformedHRep << endl;
 		      ComplexMatrix TransformedHRep2 = TransformedHRep.InvConjugate(SU4SU2TransformationMatrix);
 		      if (Manager.GetDouble("u-potential") != 0.0)
 			TransformedHRep2 /= Manager.GetDouble("u-potential");
-		      //	      cout << TransformedHRep2 << endl;
 		      
 		      RealDiagonalMatrix TmpDiag;
 		      HermitianMatrix HRep2(TransformedHRep2);
-		      cout << HRep2 << endl;
-#ifdef __LAPACK__
-		      HRep2.LapackDiagonalize(TmpDiag);
-#else
-		      HRep2.Diagonalize(TmpDiag);
-#endif   
-		      for (int l = 0; l < TmpDiag.GetNbrRow(); ++l)
-			cout << TmpDiag(l, l) << endl;
+		      delete Hamiltonian;
+		      delete Space;
+		      delete[] OneBodyBasis;
+		      Hamiltonian = new ExplicitHamiltonian(TargetSpace, &HRep2);
+		      Space = TargetSpace;
 		    }
 
 		  char* ContentPrefix = new char[256];

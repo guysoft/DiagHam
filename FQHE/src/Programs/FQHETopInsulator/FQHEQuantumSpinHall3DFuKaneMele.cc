@@ -2,9 +2,11 @@
 
 #include "HilbertSpace/FermionOnCubicLatticeWithSpinMomentumSpace.h"
 #include "HilbertSpace/FermionOnCubicLatticeWithSU4SpinMomentumSpace.h"
+#include "HilbertSpace/FermionOnCubicLatticeWithSU4SpinMomentumSpaceLong.h"
 
 #include "Hamiltonian/ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian.h"
 #include "Hamiltonian/ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian.h"
+#include "Hamiltonian/ExplicitHamiltonian.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -38,6 +40,15 @@ using std::ofstream;
 // nnHopingDistortion111 = distortion of nearest neighbor hoping amplitude in the (111) direction
 // spinOrbit = amplitude of the spin orbit coupling
 void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, int nbrSitesZ, double nnHopingDistortion111, double spinOrbit);
+
+// compute the single particle tranformation matrices 
+//
+// nbrSitesX = number of sites in the x direction
+// nbrSitesY = number of sites in the y direction
+// nbrSitesZ = number of sites in the z direction
+// nnHopingDistortion111 = distortion of nearest neighbor hoping amplitude in the (111) direction
+// spinOrbit = amplitude of the spin orbit coupling
+ComplexMatrix* ComputeSingleParticleTransformationMatrices(int nbrSitesX, int nbrSitesY, int nbrSitesZ, double nnHopingDistortion111, double spinOrbit);
 
 
 int main(int argc, char** argv)
@@ -79,6 +90,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
   (*SystemGroup) += new BooleanOption ('\n', "flat-band", "use flat band model");
   (*SystemGroup) += new BooleanOption ('\n', "four-bands", "perform the calculations within the full four band model");
+  (*SystemGroup) += new BooleanOption ('\n', "project-fourbands", "project the hamiltonian from the four band model to the two band model");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
@@ -102,6 +114,7 @@ int main(int argc, char** argv)
   int NbrSitesX = Manager.GetInteger("nbr-sitex"); 
   int NbrSitesY = Manager.GetInteger("nbr-sitey"); 
   int NbrSitesZ = Manager.GetInteger("nbr-sitez"); 
+  int TotalNbrSites = NbrSitesX * NbrSitesY * NbrSitesZ;
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
 
   char* CommentLine = new char [256];
@@ -210,45 +223,49 @@ int main(int argc, char** argv)
 		}
 	      else
 		{
-		  FermionOnCubicLatticeWithSU4SpinMomentumSpace Space(NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, i, j, k);
-		  cout << "dim = " << Space.GetHilbertSpaceDimension()  << endl;
-		  Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());	
-		  AbstractQHEHamiltonian* Hamiltonian = 0;
-		  Hamiltonian = new ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian(&Space, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ,
+		  ParticleOnSphere* Space = 0;
+#ifdef __128_BIT_LONGLONG__
+		  if (TotalNbrSites <= 15)
+#else
+		  if (TotalNbrSites <= 7)
+#endif
+		    {
+		      Space = new FermionOnCubicLatticeWithSU4SpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, i, j, k);
+		    }
+		  else
+		    {
+		      Space = new FermionOnCubicLatticeWithSU4SpinMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, i, j, k);
+		    }
+		  cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
+		  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
+		  AbstractHamiltonian* Hamiltonian = 0;
+		  Hamiltonian = new ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian((ParticleOnSphereWithSU4Spin*) Space, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ,
 											Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), 1.0, Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"),
 											Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), 		     
 											Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
-		  
 
-		  AbstractQHEHamiltonian* HamiltonianOneBody = new ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian(&Space, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ,
-														       0.0, 0.0, 1.0, Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"),
-											Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), 		     
-											Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
-		  AbstractQHEHamiltonian* HamiltonianInteracting = new ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian(&Space, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ,
-															   Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), 0.0, Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"),
-														Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), 		     
-														Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
-		  
+		  if (Manager.GetBoolean("project-fourbands") == true)
+		    {
+		      ComplexMatrix* OneBodyBasis = ComputeSingleParticleTransformationMatrices(NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"));
+		      ComplexMatrix NBodyTransformationMatrix = ((FermionOnCubicLatticeWithSU4SpinMomentumSpace*) Space)->TransformationMatrixOneBodyBasis(OneBodyBasis);
+		      ComplexMatrix HRep (Hamiltonian->GetHilbertSpaceDimension(), Hamiltonian->GetHilbertSpaceDimension());
+		      Hamiltonian->GetHamiltonian(HRep);
+		      ComplexMatrix TransformedHRep = HRep.Conjugate(NBodyTransformationMatrix);
+		      FermionOnCubicLatticeWithSpinMomentumSpace* TargetSpace = new FermionOnCubicLatticeWithSpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, i, j, k);
+		      ComplexMatrix SU4SU2TransformationMatrix = ((FermionOnCubicLatticeWithSU4SpinMomentumSpace*) Space)->TransformationMatrixSU4ToSU2(TargetSpace, 2, 3);
+		      ComplexMatrix TransformedHRep2 = TransformedHRep.InvConjugate(SU4SU2TransformationMatrix);
+		      if (Manager.GetDouble("u-potential") != 0.0)
+			TransformedHRep2 /= Manager.GetDouble("u-potential");
+		      
+		      RealDiagonalMatrix TmpDiag;
+		      HermitianMatrix HRep2(TransformedHRep2);
+		      delete Hamiltonian;
+		      delete Space;
+		      delete[] OneBodyBasis;
+		      Hamiltonian = new ExplicitHamiltonian(TargetSpace, &HRep2);
+		      Space = TargetSpace;
+		    }
 
-		  
-		  
-// 		  HermitianMatrix HRepOneBodyBasis (Hamiltonian->GetHilbertSpaceDimension(), Hamiltonian->GetHilbertSpaceDimension());
-// 		  HamiltonianOneBody->GetHamiltonian(HRep);
-// 		  ComplexMatrix HRepOneBodyBasis (Hamiltonian->GetHilbertSpaceDimension(), Hamiltonian->GetHilbertSpaceDimension());
-// 		  HamiltonianOneBody->GetHamiltonian(HRep);
-// 		  for (int m = 0; m < Hamiltonian->GetHilbertSpaceDimension(); ++m)
-// 		    for (int n = m; n < Hamiltonian->GetHilbertSpaceDimension(); ++n)
-// 		      {
-// 			Complex Tmp;
-// 			HRep.GetMatrixElement(m, n, Tmp);
-// 			if (Norm(Tmp) != 0.0)
-// 			  {
-// 			    cout << m << " " << n << " : " << Tmp << " ";
-// 			    Space.PrintState(cout, m) << " | ";
-
-// 			    Space.PrintState(cout, n) << endl;			    
-// 			  }
-// 		      }
 
 		  char* ContentPrefix = new char[256];
 		  sprintf (ContentPrefix, "%d %d %d", i, j, k);
@@ -356,5 +373,63 @@ void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrS
 	}
     }
   cout << "Spread = " << (MaxEMinus - MinEMinus) << "  Gap = " <<  (MinEPlus - MaxEMinus) << "  Flatening = " << ((MaxEMinus - MinEMinus) / (MinEPlus - MaxEMinus)) << endl;
+}
+
+// compute the single particle tranformation matrices 
+//
+// nbrSitesX = number of sites in the x direction
+// nbrSitesY = number of sites in the y direction
+// nbrSitesZ = number of sites in the z direction
+// nnHopingDistortion111 = distortion of nearest neighbor hoping amplitude in the (111) direction
+// spinOrbit = amplitude of the spin orbit coupling
+
+ComplexMatrix* ComputeSingleParticleTransformationMatrices(int nbrSitesX, int nbrSitesY, int nbrSitesZ, double nnHopingDistortion111, double spinOrbit)
+{
+  ComplexMatrix* OneBodyBasis = new ComplexMatrix[nbrSitesX * nbrSitesY * nbrSitesZ];
+  double KxFactor = 2.0 * M_PI / ((double) nbrSitesX);
+  double KyFactor = 2.0 * M_PI / ((double) nbrSitesY);
+  double KzFactor = 2.0 * M_PI / ((double) nbrSitesZ);
+  for (int kx = 0; kx < nbrSitesX; ++kx)
+    {
+      for (int ky = 0; ky < nbrSitesY; ++ky)
+	{
+	  for (int kz = 0; kz < nbrSitesZ; ++kz)
+	    {
+	      int Index = ((kx * nbrSitesY) + ky) * nbrSitesZ + kz;
+	      HermitianMatrix TmpOneBodyHamiltonian(4, true);
+	      Complex B1 = 1.0 + nnHopingDistortion111 + Phase(0.5 * (((double) ky) * KyFactor) + 0.5 * (((double) kz) * KzFactor))   + Phase(0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) kz) * KzFactor))  + Phase(0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) ky) * KyFactor)) ;
+	      double d3 = spinOrbit * (sin (0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) kz) * KzFactor))
+				       - sin (0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) ky) * KyFactor))
+				       - sin (0.5 * (((double) kx) * KxFactor) - 0.5 * (((double) ky) * KyFactor))
+				       + sin (0.5 * (((double) kx) * KxFactor) - 0.5 * (((double) kz) * KzFactor)));
+	      double d4 = spinOrbit * (sin (0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) kz) * KzFactor))
+				       - sin (0.5 * (((double) ky) * KyFactor) + 0.5 * (((double) kz) * KzFactor))
+				       - sin (0.5 * (((double) ky) * KyFactor) - 0.5 * (((double) kz) * KzFactor))
+				       + sin (0.5 * (((double) ky) * KyFactor) - 0.5 * (((double) kx) * KxFactor)));
+	      double d5 = spinOrbit * (sin (0.5 * (((double) ky) * KyFactor) + 0.5 * (((double) kx) * KxFactor))
+				       - sin (0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) kz) * KzFactor))
+				       - sin (0.5 * (((double) kz) * KzFactor) - 0.5 * (((double) kx) * KxFactor))
+				       + sin (0.5 * (((double) kz) * KzFactor) - 0.5 * (((double) ky) * KyFactor)));
+	      Complex B2 = d3 + I() * d4;
+	      TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d5);
+	      TmpOneBodyHamiltonian.SetMatrixElement(1, 1, -d5);
+	      TmpOneBodyHamiltonian.SetMatrixElement(2, 2, -d5);
+	      TmpOneBodyHamiltonian.SetMatrixElement(3, 3, d5);
+	      TmpOneBodyHamiltonian.SetMatrixElement(0, 2, B1);
+	      TmpOneBodyHamiltonian.SetMatrixElement(1, 3, B1);
+	      TmpOneBodyHamiltonian.SetMatrixElement(0, 1, B2);
+	      TmpOneBodyHamiltonian.SetMatrixElement(2, 3, -B2);
+	      RealDiagonalMatrix TmpDiag;
+	      OneBodyBasis[Index] = ComplexMatrix (4, 4);
+	      OneBodyBasis[Index].SetToIdentity();
+#ifdef __LAPACK__
+	      TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, OneBodyBasis[Index]);
+#else
+	      TmpOneBodyHamiltonian.Diagonalize(TmpDiag, OneBodyBasis[Index]);
+#endif   
+	    }
+	}
+    }
+  return OneBodyBasis;
 }
 
