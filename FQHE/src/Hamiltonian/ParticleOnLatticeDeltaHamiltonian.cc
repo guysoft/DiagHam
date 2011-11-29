@@ -60,7 +60,7 @@ using std::ostream;
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 // hermitianFlag = flag indicating whether to use hermitian symmetry
-ParticleOnLatticeDeltaHamiltonian::ParticleOnLatticeDeltaHamiltonian(ParticleOnLattice* particles, int nbrParticles, int lx, int ly, int nbrFluxQuanta, double contactInteractionU, bool reverseHopping, double deltaPotential, double randomPotential, AbstractArchitecture* architecture, unsigned long memory, char* precalculationFileName, bool hermitianFlag)
+ParticleOnLatticeDeltaHamiltonian::ParticleOnLatticeDeltaHamiltonian(ParticleOnLattice* particles, int nbrParticles, int lx, int ly, int nbrFluxQuanta, double contactInteractionU, bool reverseHopping, double deltaPotential, double randomPotential, AbstractArchitecture* architecture, int nbrBody, unsigned long memory, char* precalculationFileName, bool hermitianFlag)
 {
   this->Particles=particles;
   this->NbrParticles=nbrParticles;
@@ -329,8 +329,8 @@ void ParticleOnLatticeDeltaHamiltonian::EvaluateInteractionFactors()
   if ((this->Particles->GetParticleStatistic() == ParticleOnLattice::BosonicStatistic) && (this->ContactInteractionU!=0.0))
     {
       cout << "adding interaction terms"<<endl;
-      this->NbrDiagonalInteractionFactors=this->NbrSites;
-      this->DiagonalInteractionFactors=new double[NbrDiagonalInteractionFactors];
+      this->NbrDiagonalInteractionFactors = this->NbrSites;
+      this->DiagonalInteractionFactors = new double[NbrDiagonalInteractionFactors];
       this->DiagonalQValues=new int[NbrDiagonalInteractionFactors];
       for (int i=0; i<NbrDiagonalInteractionFactors; ++i)
 	{
@@ -342,6 +342,4 @@ void ParticleOnLatticeDeltaHamiltonian::EvaluateInteractionFactors()
     {
       NbrDiagonalInteractionFactors=0;
     }
-    
-  
 }

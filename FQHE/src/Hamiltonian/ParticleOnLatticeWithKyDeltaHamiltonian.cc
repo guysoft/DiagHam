@@ -44,6 +44,22 @@ using std::ostream;
 // switch for debugging output:
 //#define DEBUG_OUTPUT
 
+// default constructor
+//
+ParticleOnLatticeWithKyDeltaHamiltonian::ParticleOnLatticeWithKyDeltaHamiltonian()
+{
+  this->NbrQ12Indices=0;
+  this->NbrRealInteractionPerComponent=0;
+  this->NbrComplexInteractionPerComponent=0;
+  this->LoadBalancingArray=0;
+  this->NbrBalancedTasks=0;
+  this->FastMultiplicationStep=0;
+  this->HermitianSymmetryFlag=false;
+  this->HaveComplexMatrixElements=true;
+  this->HaveTestedForComplexMatrixElement=false;
+	this->HaveKySymmetry=true;
+}
+
 
 // constructor for contact interactions on a square lattice
 //

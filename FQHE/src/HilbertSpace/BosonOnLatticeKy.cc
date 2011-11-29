@@ -487,18 +487,18 @@ double BosonOnLatticeKy::AA (int index, int r1, int r2)
     this->ProdATemporaryState[i] = 0ul;
   double Coefficient = this->ProdATemporaryState[r2];
   --this->ProdATemporaryState[r2];
-  if ((r2==this->ProdATemporaryStateHighestBit)&&(this->ProdATemporaryState[r2]==0)&&(this->ProdATemporaryStateHighestBit>0))
+  if ((r2==TemporaryStateHighestBit)&&(this->ProdATemporaryState[r2]==0)&&(TemporaryStateHighestBit>0))
     {
-      --this->ProdATemporaryStateHighestBit;
-      while (ProdATemporaryState[this->ProdATemporaryStateHighestBit] == 0)
-	--this->ProdATemporaryStateHighestBit;
+      --ProdATemporaryStateHighestBit;
+      while (ProdATemporaryState[TemporaryStateHighestBit] == 0)
+	--ProdATemporaryStateHighestBit;
     }
   Coefficient *= this->ProdATemporaryState[r1];
   --this->ProdATemporaryState[r1];
-  if ((r1==this->ProdATemporaryStateHighestBit)&&(this->ProdATemporaryState[r1]==0)&&(this->ProdATemporaryStateHighestBit>0))
+  if ((r1==TemporaryStateHighestBit)&&(this->ProdATemporaryState[r1]==0)&&(TemporaryStateHighestBit>0))
     {
       --ProdATemporaryStateHighestBit;
-      while (ProdATemporaryState[this->ProdATemporaryStateHighestBit] == 0)
+      while (ProdATemporaryState[TemporaryStateHighestBit] == 0)
 	--ProdATemporaryStateHighestBit;
     }
   return sqrt(Coefficient);
@@ -516,19 +516,73 @@ int BosonOnLatticeKy::AdAd (int q1, int q2, double& coefficient)
 {
   for (int i = 0; i < this->NbrStates; ++i)
     this->TemporaryState[i] = this->ProdATemporaryState[i];
-	this->TemporaryStateHighestBit = this->ProdATemporaryStateHighestBit;
   ++this->TemporaryState[q2];
   coefficient = this->TemporaryState[q2];
-  if (q2 > this->TemporaryStateHighestBit)
+  if (q2 > TemporaryStateHighestBit)
     TemporaryStateHighestBit = q2;
   ++this->TemporaryState[q1];
   coefficient *= this->TemporaryState[q1];
-  if (q1 > this->TemporaryStateHighestBit)
-    this->TemporaryStateHighestBit = q1;
+  if (q1 > TemporaryStateHighestBit)
+    TemporaryStateHighestBit = q1;
   coefficient = sqrt(coefficient);  
   return this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateHighestBit), this->TemporaryStateHighestBit + this->NbrBosons - 1);
 }
 
+// apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
+//
+// index = index of the state on which the operator has to be applied
+// n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
+// nbrIndices = number of creation (or annihilation) operators
+// return value =  multiplicative factor   
+
+double BosonOnLatticeKy::ProdA (int index, int* n, int nbrIndices)
+{
+  this->FermionToBoson(this->StateDescription[index], this->StateHighestBit[index], this->ProdATemporaryState, this->ProdATemporaryStateHighestBit);
+  for (int i = this->ProdATemporaryStateHighestBit + 1; i < this->NbrStates; ++i)
+    this->ProdATemporaryState[i] = 0;
+  unsigned long TmpCoefficient = 1ul;
+  for (int i = nbrIndices - 1; i >= 0; --i)
+    {
+      if (n[i] > this->ProdATemporaryStateHighestBit)
+	return 0.0;
+      unsigned long& Tmp = this->ProdATemporaryState[n[i]];
+      if (Tmp == 0)
+	return 0.0;
+      TmpCoefficient *= Tmp;
+      --Tmp;
+      if ((n[i] == this->ProdATemporaryStateHighestBit)&&(this->ProdATemporaryState[n[i]]==0)&&(this->ProdATemporaryStateHighestBit>0))
+	{
+	  --this->ProdATemporaryStateHighestBit;
+	  while (this->ProdATemporaryState[this->ProdATemporaryStateHighestBit] == 0)
+	    this->ProdATemporaryStateHighestBit--;
+	}
+    }
+  return sqrt((double) TmpCoefficient);
+}
+  
+// apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
+//
+// m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+// nbrIndices = number of creation (or annihilation) operators
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int BosonOnLatticeKy::ProdAd (int* m, int nbrIndices, double& coefficient)
+{
+  this->TemporaryStateHighestBit=this->ProdATemporaryStateHighestBit;
+  for (int i = 0; i < this->NbrStates; ++i)
+    this->TemporaryState[i] = this->ProdATemporaryState[i];
+  
+  int TmpCoefficient = 1;
+  for (int i = 0; i < nbrIndices; ++i)
+    {
+      if(m[i] > this->TemporaryStateHighestBit)
+				this->TemporaryStateHighestBit = m[i];
+      TmpCoefficient *= ++this->TemporaryState[m[i]];
+    }
+  coefficient = sqrt((double) TmpCoefficient);
+  return this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateHighestBit), this->TemporaryStateHighestBit + this->NbrBosons - 1);
+}
 
 // apply a^+_q a_q operator to a given state 
 //

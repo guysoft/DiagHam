@@ -1,6 +1,6 @@
-#include "HilbertSpace/BosonOnLattice.h"
-#include "HilbertSpace/HardCoreBosonOnLattice.h"
-#include "Hamiltonian/ParticleOnLatticeDeltaHamiltonian.h"
+#include "HilbertSpace/BosonOnLatticeKy.h"
+#include "HilbertSpace/HardCoreBosonOnLatticeKy.h"
+#include "Hamiltonian/ParticleOnLatticeWithKyNBodyDeltaHamiltonian.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -9,17 +9,14 @@
 
 #include "MainTask/QHEOnLatticeMainTask.h"
 
-#include "Tools/FQHEWaveFunction/GutzwillerOnLatticeWaveFunction.h"
-
 #include "GeneralTools/FilenameTools.h"
 
 #include "Options/Options.h"
 
 #include <iostream>
 #include <cstdlib>
-#include <cmath>
-#include <cstring>
 #include <climits>
+#include <cmath>
 #include <sys/time.h>
 #include <stdio.h>
 
@@ -81,7 +78,7 @@ int main(int argc, char** argv)
 {
   cout.precision(14);
 
-  OptionManager Manager ("FQHELatticeBosons" , "0.01");  
+  OptionManager Manager ("FQHELatticeBosonsKySymNBodyHardcore" , "0.01");  
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
@@ -93,25 +90,24 @@ int main(int argc, char** argv)
   Architecture.AddOptionGroup(&Manager);
   QHEOnLatticeMainTask::AddOptionGroup(&Manager);
   Manager += PrecalculationGroup;
-  Manager += ToolsGroup;
+	Manager += ToolsGroup;
   Manager += MiscGroup;
 
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 8);
   (*SystemGroup) += new SingleIntegerOption  ('x', "lx", "length in x-direction of given lattice", 5);
   (*SystemGroup) += new SingleIntegerOption  ('y', "ly", "length in y-direction of given lattice", 1);
   (*SystemGroup) += new SingleIntegerOption  ('q', "flux", "number of flux quanta piercing the lattice (-1=all)", -1);
-	(*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-body", "number of body involed in the contact interaction", 2);
-  (*SystemGroup) += new SingleDoubleOption  ('u', "contactU", "prefactor U of the contact interaction (kinetic term ~ 1)", 1.0);
-  (*SystemGroup) += new MultipleDoubleOption  ('s', "solenoid-flux", "twist in periodic boundary conditions phi_x[,phi_y])",',');
+  (*SystemGroup) += new SingleIntegerOption  ('k', "ky", "constraint of momentum in y-direction (-1=all)", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-body", "number of body involved in the hardcore", 2);
+	
+  (*SystemGroup) += new SingleDoubleOption  ('u', "contactU", "prefactor U of the three-body contact interaction (kinetic term ~ 1)", 1.0);
+	
   (*SystemGroup) += new BooleanOption('c',"hard-core","Use Hilbert-space of hard-core bosons");
-  (*SystemGroup) += new SingleStringOption('l',"landau-axis","potential in the Landau gauge along axis","y");
-  
-  (*SystemGroup) += new SingleDoubleOption  ('d', "deltaPotential", "Introduce a delta-potential at the origin", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('R', "randomPotential", "Introduce a random potential at all sites", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "positive-hopping", "choose positive sign of hopping terms", false);
   (*SystemGroup) += new BooleanOption  ('\n', "all-flux", "calculate all values of the flux to test symmetry under n_phi->1-n_phi", false);
+  (*SystemGroup) += new BooleanOption  ('\n', "all-ky", "calculate all values of the flux to test symmetry under ky->ky_max-ky", false);
 
-  (*PrecalculationGroup) += new BooleanOption ('\n', "no-hermitian", "do not use hermitian symmetry of the hamiltonian");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-precalculation", "save precalculation in a file",0);
@@ -119,8 +115,6 @@ int main(int argc, char** argv)
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
-  (*MiscGroup) += new BooleanOption('\n', "optimize-condensate", "optimize a trial condensate wavefunction instead of diagonalizing");
-  (*MiscGroup) += new SingleDoubleOption('\n', "tolerance", "tolerance for variational parameters in condensate",1e-6);
   (*MiscGroup) += new SingleStringOption('\n', "energy-expectation", "name of the file containing the state vector, whose energy expectation value shall be calculated");
   (*MiscGroup) += new SingleStringOption  ('o', "output-file", "redirect output to this file",NULL);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -132,29 +126,17 @@ int main(int argc, char** argv)
   int Ly = Manager.GetInteger("ly");
   int NbrFluxQuanta = Manager.GetInteger("flux");
   int NbrSites = Lx*Ly;
-  double SolenoidX=0.0, SolenoidY=0.0;
-  {
-    int tmpI;
-    double *Fluxes=Manager.GetDoubles("solenoid-flux", tmpI);
-    if (tmpI>0) SolenoidX=Fluxes[0];
-    if (tmpI>1) SolenoidY=Fluxes[1];
-    
-    if (tmpI>0) delete [] Fluxes;
-  }
+	int NbrBody = Manager.GetInteger("nbr-body");
   bool ReverseHopping = Manager.GetBoolean("positive-hopping");
   bool HardCore = Manager.GetBoolean("hard-core");
-  char LandauQuantization = Manager.GetString("landau-axis")[0];
   double ContactU = Manager.GetDouble("contactU");
-	int NbrBody = Manager.GetInteger("nbr-body");
   if (HardCore) ContactU=0.0;
-  double Delta = Manager.GetDouble("deltaPotential");
   double Random = Manager.GetDouble("randomPotential");
   if (ULONG_MAX>>20 < (unsigned long)Manager.GetInteger("memory"))
     cout << "Warning: integer overflow in memory request - you might want to use 64 bit code."<<endl;
   unsigned long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
   unsigned long MemorySpace = ((unsigned long) Manager.GetInteger("fast-search")) << 20;
   char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");
-  bool FirstRun = true;
 
   if (Manager.GetString("energy-expectation") != 0 ) Memory = 0x0l;
 
@@ -170,75 +152,46 @@ int main(int argc, char** argv)
 
   char* OutputName;
   char reverseHoppingString[4]="";
-  char deltaString[20]="";
-  char interactionStr[100]="";
+  char randomString[20]="";
+  char kyString[20]="";
+  char interactionStr[20]="";
   if ( (OutputName = Manager.GetString("output-file")) == NULL)
     {
       OutputName = new char [256];      
       if (ReverseHopping)
-	sprintf(reverseHoppingString,"rh_");
-      if (Delta!=0.0)
-	sprintf(deltaString,"d_%g_",Delta);
+	sprintf(reverseHoppingString,"_rh");
       if (Random!=0.0)
-	sprintf(deltaString,"R_%g_",Random);
-      if ((HardCore)&&(LandauQuantization=='x'))
-	{
-	  //sprintf(interactionStr,"_qx_hardcore");
-	  // LandauQuantization not defined yet for hardcore bosons!
-	  sprintf(interactionStr,"_hardcore");
-	}
+	sprintf(randomString,"_R_%g",Random);
+      if (HardCore)
+	sprintf(interactionStr,"_hardcore");
+      else sprintf(interactionStr,"_u_%g", ContactU);
+      if (Manager.GetInteger("ky")>=0)
+	sprintf(kyString,"_k_%ld",Manager.GetInteger("ky"));
       else
-	{
-	  if (HardCore)
-	    sprintf(interactionStr,"_hardcore");
-	  else
-	    {
-	      if (LandauQuantization=='x')
-		sprintf(interactionStr,"_qx_u_%g", ContactU);
-	      else
-		sprintf(interactionStr,"_u_%g", ContactU);
-	    }	  
-	}
-      if ((SolenoidX!=0.0)||(SolenoidY!=0.0))
-	    {
-	      sprintf(interactionStr,"%s_s_%g_%g",interactionStr,SolenoidX,SolenoidY);
-	    }
+	sprintf(kyString,"_k");
       if (NbrFluxValues == 1)
-	sprintf (OutputName, "bosons_lattice_n_%d_x_%d_y_%d%s_%s%sq_%d.dat", NbrBosons, Lx, Ly, interactionStr, reverseHoppingString, deltaString, NbrFluxQuanta);
+	sprintf (OutputName, "bosons_lattice_n_%d_x_%d_y_%d%s%s%s%s_q_%d.dat", NbrBosons, Lx, Ly, interactionStr, reverseHoppingString, randomString, kyString, NbrFluxQuanta);
       else
-	sprintf (OutputName, "bosons_lattice_n_%d_x_%d_y_%d%s_%s%sq.dat", NbrBosons, Lx, Ly, interactionStr, reverseHoppingString, deltaString);
+	sprintf (OutputName, "bosons_lattice_n_%d_x_%d_y_%d%s%s%s%s_q.dat", NbrBosons, Lx, Ly, interactionStr, reverseHoppingString, randomString, kyString);
     }
-  ParticleOnLattice* Space;
-  if (HardCore)
-    Space =new HardCoreBosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace, SolenoidX, SolenoidY);
-  else Space = new BosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace, SolenoidX, SolenoidY, LandauQuantization);
+  ParticleOnLattice* Space=0;
   
-  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
+  AbstractQHEOnLatticeHamiltonian* Hamiltonian=0;
   
-  AbstractQHEOnLatticeHamiltonian* Hamiltonian;
-  Hamiltonian = new ParticleOnLatticeDeltaHamiltonian(Space, NbrBosons, Lx, Ly, NbrFluxQuanta, ContactU, ReverseHopping, Delta,
-						      Random, Architecture.GetArchitecture(),NbrBody, Memory, LoadPrecalculationFileName,
-						      !Manager.GetBoolean("no-hermitian"));
-
-
-	/*int NbrDiagonalInteractionFactors = NbrSites;
-  double * DiagonalInteractionFactors = new double[NbrDiagonalInteractionFactors];
-  int * DiagonalQValues=new int[NbrDiagonalInteractionFactors];
-  for (int i=0; i<NbrDiagonalInteractionFactors; ++i)
-	{
-	  DiagonalQValues[i]=i;
-	  DiagonalInteractionFactors[i]=ContactU;
-	}
-	
-	for (int i = 0 ; i < Space->GetHilbertSpaceDimension(); i ++)
-	{
-		cout <<"i = "<<i<<" "<<Space->PrintState(cout, i)<<" "<<Space->ProdAdProdADiagonal(i,2, NbrDiagonalInteractionFactors,
-							   DiagonalInteractionFactors, DiagonalQValues)<<" "<<Space->AdAdAADiagonal(i, NbrDiagonalInteractionFactors,
-							 DiagonalInteractionFactors, DiagonalQValues) <<endl;
-
-	}*/
   if (Manager.GetString("energy-expectation") != 0 )
 	{
+	  if (HardCore)
+	    {
+	      cout << "Hard-Core bosons not defined with translations!"<<endl;
+	      exit(1);
+	      //Space =new HardCoreBosonOnLatticeKy(NbrBosons, Lx, Ly, Manager.GetInteger("ky"), NbrFluxQuanta, MemorySpace);
+	    }
+	  else Space = new BosonOnLatticeKy(NbrBosons, Lx, Ly, Manager.GetInteger("ky"), NbrFluxQuanta, MemorySpace);
+	  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
+		
+	  Hamiltonian = new ParticleOnLatticeWithKyNBodyDeltaHamiltonian(Space, NbrBosons, Lx, Ly, ((BosonOnLatticeKy*)Space)->GetMaximumKy(),  NbrFluxQuanta,NbrBody, 0.0, ContactU, ReverseHopping, Random, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName);
+
+		
 	  char* StateFileName = Manager.GetString("energy-expectation");
 	  if (IsFile(StateFileName) == false)
 	    {
@@ -310,51 +263,67 @@ int main(int argc, char** argv)
 // 	if (Norm(one-two)>1e-10)
 // 	  cout << "Discrepancy in "<<j<<": "<<one << " vs " << two << endl;
 //       }  
-
+  bool FirstRun=true;
 
   for (int iter=0; iter<NbrFluxValues; ++iter, ++NbrFluxQuanta)
     {
-      cout << "----------------------------------------------------------------" << endl;
+      cout << "================================================================" << endl;
       cout << "NbrFluxQuanta="<<NbrFluxQuanta<<endl;
-      
-      if (!FirstRun) Hamiltonian->SetNbrFluxQuanta(NbrFluxQuanta);
-  
-      char* EigenvectorName = 0;
-      if ((Manager.GetBoolean("eigenstate")||(Manager.GetBoolean("optimize-condensate"))))
+
+      int Ky = Manager.GetInteger("ky");
+      int MaxK = (Ky<0?1:Ky+1);
+      int UpperLimit = MaxK;      
+      for (int k=(Ky>=0?Ky:0); k<UpperLimit; ++k)
 	{
-	  EigenvectorName = new char [64];
-	  sprintf (EigenvectorName, "bosons_lattice_n_%d_x_%d_y_%d%s_%s%sq_%d", NbrBosons, Lx, Ly, interactionStr, reverseHoppingString, deltaString, NbrFluxQuanta);
-	}
-      if (Manager.GetBoolean("optimize-condensate"))
-	{
-	  char *ParameterName = new char[strlen(EigenvectorName)+10];
-	  sprintf(ParameterName,"%s.cond.par",EigenvectorName);
-	  sprintf(EigenvectorName,"%s.cond.vec",EigenvectorName);
-	  GutzwillerOnLatticeWaveFunction Condensate(NbrBosons, HardCore, Space);
-	  Condensate.SetHamiltonian(Hamiltonian);
-	  Condensate.SetArchitecture(Architecture.GetArchitecture());
-	  Condensate.SetToRandomPhase();
-	  int MaxEval = NbrSites*(NbrBosons+1)*2*Manager.GetInteger("nbr-iter");
-	  double Energy=Condensate.Optimize(Manager.GetDouble("tolerance"), MaxEval);
-	  Condensate.GetLastWaveFunction().WriteVector(EigenvectorName);
-	  Condensate.GetVariationalParameters().WriteVector(ParameterName);
-	  cout << "Found condensate state with energy: "<<Energy<<endl<<EigenvectorName<<endl;
-	  delete [] ParameterName;
-	}
-      else
-	{
-	  QHEOnLatticeMainTask Task (&Manager, Space, Hamiltonian, NbrFluxQuanta, 0.0, OutputName, FirstRun, EigenvectorName);
+	  if (Space!=0) delete Space;
+	  if (Hamiltonian!=0) delete Hamiltonian;
+
+	  if (HardCore)
+	    {
+	      cout << "Hard-Core bosons not defined with translations!"<<endl;
+	      exit(1);
+	      //Space =new HardCoreBosonOnLatticeKy(NbrBosons, Lx, Ly, k, NbrFluxQuanta, MemorySpace);
+	    }
+	  else Space = new BosonOnLatticeKy(NbrBosons, Lx, Ly, k, NbrFluxQuanta, MemorySpace);
+	  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
+	  
+	  if (Ky<0)
+	    {
+	      MaxK = ((BosonOnLatticeKy*)Space)->GetMaximumKy();
+	      cout << "Maximum Ky="<<MaxK-1<<endl;
+	      if (Manager.GetBoolean("all-ky"))
+		{
+		  UpperLimit = MaxK;
+		}
+	      else
+		{
+		  UpperLimit = (MaxK+2)/2;
+		  cout << "Evaluating up to Ky="<<UpperLimit-1<<endl;
+		}
+	    }
+	  
+	  cout << "Momentum Ky="<<k<<": dim="<<Space->GetHilbertSpaceDimension()<<endl;
+	  
+	   Hamiltonian = new ParticleOnLatticeWithKyNBodyDeltaHamiltonian(Space, NbrBosons, Lx, Ly, ((BosonOnLatticeKy*)Space)->GetMaximumKy(),  NbrFluxQuanta,NbrBody, 0.0, ContactU, ReverseHopping, Random, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName);  
+          
+	  char* EigenvectorName = 0;
+	  if (Manager.GetBoolean("eigenstate"))	
+	    {
+	      EigenvectorName = new char [100];	      
+	      sprintf (EigenvectorName, "bosons_lattice_n_%d_x_%d_y_%d%s%s%s_k_%d_q_%d", NbrBosons, Lx, Ly, interactionStr, reverseHoppingString, randomString, k, NbrFluxQuanta);
+	    }
+	  QHEOnLatticeMainTask Task (&Manager, Space, Hamiltonian, NbrFluxQuanta, 0.0, OutputName, FirstRun, EigenvectorName, k);
 	  MainTaskOperation TaskOperation (&Task);
 	  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+	  FirstRun=false;
+	  if (EigenvectorName != 0)
+	    {
+	      delete[] EigenvectorName;
+	    }
+	  cout << "----------------------------------------------------------------" << endl;
 	}
-      if (EigenvectorName != 0)
-	{
-	  delete[] EigenvectorName;
-	}
-      if (FirstRun == true)
-	FirstRun = false;
     }
-  
+  cout << "================================================================" << endl;
   delete Hamiltonian;
   delete Space;  
 

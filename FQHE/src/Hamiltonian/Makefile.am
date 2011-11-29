@@ -109,4 +109,6 @@ ParticleOnSquareLatticeFourBandSimpleTIHamiltonian.cc \
 ParticleOnSquareLatticeTwoBandSimpleTIHamiltonian.cc \
 ParticleOnLatticeRubyLatticeSingleBandHamiltonian.cc \
 ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian.cc \
-ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian.cc
+ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian.cc \
+ParticleOnLatticeWithKyNBodyDeltaHamiltonian.cc
+

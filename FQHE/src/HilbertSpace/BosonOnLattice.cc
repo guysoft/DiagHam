@@ -573,8 +573,55 @@ double BosonOnLattice::AdAdAADiagonal(int index, int nbrInteraction, double *int
   return result;
 }
 
-
-
+// apply \sum q U_q a^+_q a_q ( a^+_q a_q - 1 )
+// index = index of the state on which the operator has to be applied
+// NbrInteraction = number of q-values in sum, if equals NbrStates, ordered sequence 0,...,NbrStates-1 assumed
+// QValues = array of quantum numbers where an interaction is present
+// InteractionPerQ = coefficient U_q of the interaction
+//
+/*
+double BosonOnLattice::ProdAdProdADiagonal(int index, int nbrOperators, int nbrInteraction, double *interactionPerQ, int *qValues)
+{
+  this->FermionToBoson(this->HardCoreBasis->StateDescription[index], this->HardCoreBasis->StateHighestBit[index], this->TemporaryState, this->TemporaryStateHighestBit);
+  int BosonsLeft=this->NbrBosons;
+  double result=0.0;
+	double TmpResult = 0.0;
+  if (nbrInteraction==NbrStates)
+    {
+      int Q=TemporaryStateHighestBit;
+      while ((Q>-1) && (BosonsLeft>=nbrOperators))
+	{
+	  if (this->TemporaryState[Q]!= 0)
+	    {
+				TmpResult = interactionPerQ[Q];
+				for (int j = 0 ; j< nbrOperators; j++)
+					TmpResult *= (TemporaryState[Q]-j);
+	      result+=TmpResult;
+	      BosonsLeft-=TemporaryState[Q];
+	    }
+	  --Q;
+	}
+    }
+  else // cannot assume ordered set of qValues
+    {
+      for (int i=0; (i<nbrInteraction)&&(BosonsLeft>=nbrOperators); ++i)
+	{
+	  int Q=qValues[i];
+		TmpResult = interactionPerQ[Q];
+		for (int j = 0 ; j< nbrOperators; j++)
+			TmpResult *= (TemporaryState[Q]-j);
+		result+=TmpResult;
+		BosonsLeft-=TemporaryState[Q];	  
+	}
+		}
+//   cout << "state:";
+//   for (int i=0; i<NbrStates; ++i)
+//     cout << " " << TemporaryState[i];
+//   cout << " (hb "<<TemporaryStateHighestBit<<") -> result = " << result<<endl;
+    
+  return result;
+}
+*/
 // code set of quantum numbers posx, posy into a single integer
 // posx = position along x-direction
 // posy = position along y-direction

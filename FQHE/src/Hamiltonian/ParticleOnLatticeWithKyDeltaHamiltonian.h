@@ -49,6 +49,7 @@ class MathematicaOutput;
 
 class ParticleOnLatticeWithKyDeltaHamiltonian : public AbstractQHEOnLatticeHamiltonian
 {
+
  protected:
   // strength of on-site delta-interaction
   double ContactInteractionU;
@@ -63,6 +64,10 @@ class ParticleOnLatticeWithKyDeltaHamiltonian : public AbstractQHEOnLatticeHamil
   bool ReverseHopping;
 
  public:
+
+  // default constructor
+  //
+  ParticleOnLatticeWithKyDeltaHamiltonian();
 
   // constructor for contact interactions on a square lattice
   //

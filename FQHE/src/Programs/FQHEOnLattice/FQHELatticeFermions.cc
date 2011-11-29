@@ -123,6 +123,7 @@ int main(int argc, char** argv)
   double ContactU = Manager.GetDouble("contactU");
   double Delta = Manager.GetDouble("deltaPotential");
   double Random = Manager.GetDouble("randomPotential");
+	int NbrBody = 2;
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
   unsigned long MemorySpace = ((unsigned long) Manager.GetInteger("fast-search")) << 20;
   char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");
@@ -166,7 +167,7 @@ int main(int argc, char** argv)
   
   AbstractQHEOnLatticeHamiltonian* Hamiltonian;
   Hamiltonian = new ParticleOnLatticeDeltaHamiltonian(Space, NbrFermions, Lx, Ly, NbrFluxQuanta, ContactU,
-						      ReverseHopping, Delta, Random, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName);
+						      ReverseHopping, Delta, Random, Architecture.GetArchitecture(),NbrBody, Memory, LoadPrecalculationFileName);
 
   if (Manager.GetString("energy-expectation") != 0 )
 	{

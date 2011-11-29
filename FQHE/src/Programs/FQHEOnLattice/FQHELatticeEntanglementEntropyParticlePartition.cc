@@ -198,6 +198,7 @@ int main(int argc, char** argv)
   for (int i = 1; i < NbrSpaces; ++i)
     {
       TmpStatistics=true;
+			TmpNbrParticles =0;
       if (GenericLattice)
 	{
 	  if (strstr(GroundStateFiles[i], LatticeName)==0)
@@ -221,6 +222,7 @@ int main(int argc, char** argv)
 	}
       if ((TmpNbrParticles!=NbrParticles)||(TmpHardCore!=HardCore)||(TmpStatistics!=Statistics))
 	{
+		cout <<"i = " <<i<<" " << TmpNbrParticles << " " <<NbrParticles<< " " <<TmpHardCore <<" "<< HardCore<<endl;
 	  cout << "Error : Particle number and hardcore condition need to be the same for all vectors in multiplet."<<endl;
 	  return -1;
 	}
