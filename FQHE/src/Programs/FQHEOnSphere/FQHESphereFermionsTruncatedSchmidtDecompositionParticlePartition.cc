@@ -63,10 +63,10 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the system (override autodetection from input file name if greater or equal to zero)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "na", "number of particles for the A part", 1);
+  (*SystemGroup) += new SingleDoubleOption  ('c', "cut-off", "minus log of the cut-off to apply to the reduced density matrix eigenvalues", 32);
 
-  (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with partent extension");
-  (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
-  (*OutputGroup) += new BooleanOption ('\n', "density-eigenstate", "compute the eigenstates of the reduced density matrix");
+  (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with trunc.vec extension)");
+  (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with full.parent extension) to store the reduced density matrix eigenvalues");
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
 #ifdef __LAPACK__
@@ -106,13 +106,15 @@ int main(int argc, char** argv)
 #ifdef __LAPACK__
   bool LapackFlag = Manager.GetBoolean("use-lapack");
 #endif
-  char* DensityMatrixFileName = Manager.GetString("density-matrix");
   int TotalLz = 0;
   bool Statistics = true;
   bool SVDFlag = Manager.GetBoolean("use-svd");
+  char* DensityMatrixFileName = 0;
+  double EigenvalueCutOff = exp(- Manager.GetDouble("cut-off"));
+  double SVDEigenvalueCutOff = exp(- 0.5 * Manager.GetDouble("cut-off"));
 
   ParticleOnSphere* Space = 0;
-  RealVector GroundState = 0;
+  RealVector GroundState;
   char* GroundStateFile = 0;
 
   GroundStateFile = new char [strlen(Manager.GetString("ground-file")) + 1];
@@ -140,6 +142,21 @@ int main(int argc, char** argv)
     {
       cout << "can't open vector file " << GroundStateFile << endl;
       return -1;      
+    }
+
+  if (Manager.GetString("density-matrix") != 0)
+    {
+      DensityMatrixFileName = new char [strlen(Manager.GetString("density-matrix")) + 1];
+      strcpy (DensityMatrixFileName, Manager.GetString("density-matrix"));      
+    }
+  else
+    {
+      DensityMatrixFileName = ReplaceExtensionToFileName(GroundStateFile, "vec", "full.parent");
+      if (DensityMatrixFileName == 0)
+	{
+	  cout << "no vec extension was find in " << GroundStateFile << " file name" << endl;
+	  return 0;
+	}
     }
 
 
@@ -226,6 +243,7 @@ int main(int argc, char** argv)
       return 0;
     }
 
+  RealVector SchmidtDecomposedState(GroundState.GetVectorDimension(), true);
 
   if (DensityMatrixFileName != 0)
     {
@@ -246,6 +264,8 @@ int main(int argc, char** argv)
 
   double EntanglementEntropy = 0.0;
   double DensitySum = 0.0;
+  double TruncatedEntanglementEntropy = 0.0;
+  double TruncatedDensitySum = 0.0;
   
   int ComplementarySubsystemNbrParticles = NbrParticles - SubsystemNbrParticles;
   int SubsystemMaxTotalLz = SubsystemNbrParticles * LzMax - (SubsystemNbrParticles * (SubsystemNbrParticles - 1));
@@ -286,16 +306,36 @@ int main(int argc, char** argv)
 	  else
 	    {
 	      RealMatrix AVectors (PartialDensityMatrix.GetNbrRow(), PartialDensityMatrix.GetNbrRow(), true);
-	      RealMatrix BVectors (PartialDensityMatrix.GetNbrColumns(), PartialDensityMatrix.GetNbrColumns(), true);
+	      RealMatrix BVectors (PartialDensityMatrix.GetNbrColumn(), PartialDensityMatrix.GetNbrColumn(), true);
 	      double* TmpValues = PartialEntanglementMatrix.SingularValueDecomposition(AVectors, BVectors);
 	      int TmpDimension = PartialEntanglementMatrix.GetNbrColumn();
 	      if (TmpDimension > PartialEntanglementMatrix.GetNbrRow())
 		{
 		  TmpDimension = PartialEntanglementMatrix.GetNbrRow();
 		}
+	      int NbrKeptEigenvalues = 0;
 	      for (int i = 0; i < TmpDimension; ++i)
-		TmpValues[i] *= TmpValues[i];
+		{
+		  if (TmpValues[i] > SVDEigenvalueCutOff)
+		    {
+		      ++NbrKeptEigenvalues;
+		    }
+		}
+	      if (NbrKeptEigenvalues > 0)
+		{
+		  Space->RebuildStateFromSchmidtDecompositionParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, SchmidtDecomposedState, 
+									       NbrKeptEigenvalues, TmpValues, AVectors, BVectors);
+		}
 	      
+	      for (int i = 0; i < TmpDimension; ++i)
+		{
+		  TmpValues[i] *= TmpValues[i];
+		  if (TmpValues[i] > EigenvalueCutOff)
+		    {
+		      TruncatedEntanglementEntropy -= TmpValues[i] * log(TmpValues[i]);
+		      TruncatedDensitySum += TmpValues[i];
+		    }
+		}
 	      TmpDiag = RealDiagonalMatrix(TmpValues, TmpDimension);
 	    }
 	      
@@ -306,7 +346,14 @@ int main(int argc, char** argv)
 	      DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
 	      DensityMatrixFile.precision(14);
 	      for (int i = 0; i < TmpDiag.GetNbrRow(); ++i)
-		DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpDiag[i] << endl;
+		{
+		  DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpDiag[i] << endl;
+		  if (TmpDiag[i] > 0.0)
+		    {
+		      EntanglementEntropy -= TmpDiag[i] * log(TmpDiag[i]);
+		      DensitySum += TmpDiag[i];
+		    }
+		}
 	      DensityMatrixFile.close();
 	    }
 	}
@@ -322,12 +369,33 @@ int main(int argc, char** argv)
 		DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpValue << endl;
 		DensityMatrixFile.close();
 	      }		  
-	    if (TmpValue > 1e-14)
+	    if (TmpValue > 0.0)
 	      {
 		EntanglementEntropy += TmpValue * log(TmpValue);
 		DensitySum += TmpValue;
 	      }
+	    if (TmpValue > SVDEigenvalueCutOff)
+	      {
+		TruncatedEntanglementEntropy -= TmpValue * log(TmpValue);
+		TruncatedDensitySum += TmpValue;
+	      }
 	  }
+    }
+  cout << "total trace = " << DensitySum << "   total entanglement entropy = " << EntanglementEntropy << endl;
+  cout << "truncated trace = " << TruncatedDensitySum << "   truncated entanglement entropy = " << TruncatedEntanglementEntropy << endl;
+  if (Manager.GetString("output-file") != 0)
+    SchmidtDecomposedState.WriteVector(Manager.GetString("output-file"));
+  else
+    {
+      char* TmpFileName;
+      TmpFileName = ReplaceExtensionToFileName(Manager.GetString("ground-file"), "vec", "trunc.vec");
+      if (TmpFileName == 0)
+	{
+	  cout << "no vec extension was find in " << Manager.GetString("ground-file") << " file name" << endl;
+	  return 0;
+	}
+      SchmidtDecomposedState.WriteVector(TmpFileName);
+      delete[] TmpFileName;
     }
   return 0;
 }

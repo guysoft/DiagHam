@@ -3166,6 +3166,75 @@ RealVector& FermionOnSphere::EvaluatePartialSchmidtDecompositionParticlePartitio
 }
 
 
+// rebuild a state from its Schmidt decomposition for the particle partition
+// 
+// nbrParticleSector = number of particles that belong to the subsytem (i.e. part A)
+// lzSector = Lz sector in which the density matrix has to be evaluated  (i.e. part A)
+// schmidtDecomposedState = reference on the vector to which the rebuild state will be added
+// nbrSingularValues = number of singular values (can be lower than the actual number of ingular values to perform a truncation)
+// singularValues = array containing the singular values
+// aVectors = matrix than contains the singular vectors of the part A
+// bVectors = matrix than contains the singular vectors of the part B
+
+void FermionOnSphere::RebuildStateFromSchmidtDecompositionParticlePartition(int nbrParticleSector, int lzSector, RealVector& schmidtDecomposedState, 
+									    int nbrSingularValues, double* singularValues, RealMatrix& aVectors, RealMatrix& bVectors)
+{
+  FermionOnSphere TmpDestinationHilbertSpace(nbrParticleSector, lzSector, this->LzMax);
+  cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
+  FermionOnSphere TmpHilbertSpace(this->NbrFermions - nbrParticleSector, this->TotalLz - lzSector, this->LzMax);
+
+
+  cout << "   A = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << " " << aVectors.GetNbrRow() << " " << aVectors.GetNbrColumn() << endl;
+  cout << "   B = " << TmpHilbertSpace.HilbertSpaceDimension << " " << bVectors.GetNbrRow() << " " << bVectors.GetNbrColumn() << endl;
+ 
+ for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
+    {
+      int Pos = 0;
+      unsigned long TmpState = TmpHilbertSpace.StateDescription[MinIndex];
+      for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
+	{
+	  unsigned long TmpState2 = TmpDestinationHilbertSpace.StateDescription[j];
+	  if ((TmpState & TmpState2) == 0x0ul)
+	    {
+	      int TmpLzMax = this->LzMax;
+	      unsigned long TmpState3 = TmpState | TmpState2;
+	      while ((TmpState3 >> TmpLzMax) == 0x0ul)
+		--TmpLzMax;
+	      int TmpPos = this->FindStateIndex(TmpState3, TmpLzMax);
+	      if (TmpPos != this->HilbertSpaceDimension)
+		{
+ 		  double Coefficient = 1.0;
+		  unsigned long Sign = 0x0ul;
+		  int Pos2 = TmpDestinationHilbertSpace.LzMax;
+		  while ((Pos2 > 0) && (TmpState2 != 0x0ul))
+		    {
+		      while (((TmpState2 >> Pos2) & 0x1ul) == 0x0ul)
+			--Pos2;
+		      TmpState3 = TmpState & ((0x1ul << (Pos2 + 1)) - 1ul);
+#ifdef  __64_BITS__
+		      TmpState3 ^= TmpState3 >> 32;
+#endif	
+		      TmpState3 ^= TmpState3 >> 16;
+		      TmpState3 ^= TmpState3 >> 8;
+		      TmpState3 ^= TmpState3 >> 4;
+		      TmpState3 ^= TmpState3 >> 2;
+		      TmpState3 ^= TmpState3 >> 1;
+		      Sign ^= TmpState3;
+		      TmpState2 &= ~(0x1ul << Pos2);
+		      --Pos2;
+		    }
+ 		  if ((Sign & 0x1ul) == 0x0ul)		  
+ 		    Coefficient = 1.0;
+ 		  else
+ 		    Coefficient = -1.0;
+		  for (int i = 0; i < nbrSingularValues; ++i)
+		    schmidtDecomposedState[TmpPos] += Coefficient * singularValues[i] * aVectors[MinIndex][i] * bVectors[j][i];
+		}
+	    }
+	}
+    }
+}
+
 // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using real space partition. The density matrix is only evaluated in a given Lz sector.
 // 
 // nbrFermionSector = number of particles that belong to the subsytem 

@@ -87,6 +87,32 @@ RealMatrix::RealMatrix(int nbrRow, int nbrColumn, bool zero)
   this->MatrixType = Matrix::RealElements;
 }
 
+// constructor for one dimensional array
+//
+// array = one dimensional array where the matrix elements are stored (all components of the first column, then all components of the second column,...)
+// nbrRow = number of rows
+// nbrColumn = number of columns
+// zero = tue if matrix elements have to be set to zero
+
+RealMatrix::RealMatrix(double* array, int nbrRow, int nbrColumn)
+{
+  this->ColumnGarbageFlag = new int;
+  *(this->ColumnGarbageFlag) = 1;
+  this->NbrColumn = nbrColumn;
+  this->NbrRow = nbrRow;
+  this->TrueNbrRow = this->NbrRow;
+  this->TrueNbrColumn = this->NbrColumn;
+  this->Columns = new RealVector [this->NbrColumn];
+  long Index = 0;
+  for (int i = 0; i < this->NbrColumn; i++)
+    {
+      this->Columns[i] = RealVector (this->NbrRow);
+      for (int j = 0; j < this->NbrRow; j++)
+	this->Columns[i][j] = array[Index++];
+    }
+  this->MatrixType = Matrix::RealElements;
+}
+
 // constructor from matrix elements (without duplicating datas)
 //
 // columns = pointer an array of vector
@@ -971,7 +997,7 @@ double* RealMatrix::SingularValueDecomposition(RealMatrix& uMatrix, RealMatrix& 
   int IntegerWorkingAreaSize = -1;
   double TmpWorkingArea;
   int TmpIntegerWorkingArea;
-  char Jobz = 'N';
+  char Jobz = 'S';
   double* TmpMatrix = new double [this->NbrRow * this->NbrColumn];
   int TotalIndex = 0;
   for (int j = 0; j < this->NbrColumn; ++j)
@@ -982,15 +1008,22 @@ double* RealMatrix::SingularValueDecomposition(RealMatrix& uMatrix, RealMatrix& 
 	  ++TotalIndex;
 	}
     }
-  double* TmpUMatrix = new double [this->NbrColumn];
-  double* TmpVMatrix = new double [this->NbrRow];
-  int DummySize = 1;
-  FORTRAN_NAME(dgesdd)(&Jobz, &this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrRow, SigmaMatrix, TmpUMatrix, &DummySize, TmpVMatrix, &DummySize, &TmpWorkingArea, &WorkingAreaSize, &TmpIntegerWorkingArea, &Information);
+  double* TmpUMatrix = new double [this->NbrRow * this->NbrRow];
+  double* TmpVMatrix = new double [MinDimension * this->NbrColumn];
+  int SizeLDU = this->NbrRow;
+  int SizeLDVT = MinDimension;
+  FORTRAN_NAME(dgesdd)(&Jobz, &this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrRow, SigmaMatrix, TmpUMatrix, &SizeLDU, TmpVMatrix, &SizeLDVT, &TmpWorkingArea, &WorkingAreaSize, &TmpIntegerWorkingArea, &Information);
   WorkingAreaSize = (int) TmpWorkingArea;
   double* WorkingArea = new double [WorkingAreaSize];
   IntegerWorkingAreaSize = TmpIntegerWorkingArea;
   int* IntegerWorkingArea = new int [IntegerWorkingAreaSize];
-  FORTRAN_NAME(dgesdd)(&Jobz, &this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrRow, SigmaMatrix, TmpUMatrix, &DummySize, TmpVMatrix, &DummySize, WorkingArea, &WorkingAreaSize, IntegerWorkingArea, &Information);
+  FORTRAN_NAME(dgesdd)(&Jobz, &this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrRow, SigmaMatrix, TmpUMatrix, &SizeLDU, TmpVMatrix, &SizeLDVT, WorkingArea, &WorkingAreaSize, IntegerWorkingArea, &Information);
+  uMatrix = RealMatrix(TmpUMatrix, this->NbrRow, this->NbrRow);
+  vMatrix = RealMatrix(TmpVMatrix, MinDimension, this->NbrColumn);
+  delete[] TmpUMatrix;
+  delete[] TmpVMatrix;
+  delete[] WorkingArea;
+  delete[] IntegerWorkingArea;
   return SigmaMatrix;
 #else
   return 0;

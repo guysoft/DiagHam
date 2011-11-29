@@ -82,6 +82,14 @@ class RealMatrix : public Matrix
   // nbrColumn = number of columns
   RealMatrix(RealVector* columns, int nbrColumn);
 
+  // constructor for one dimensional array
+  //
+  // array = one dimensional array where the matrix elements are stored (all components of the first column, then all components of the second column,...)
+  // nbrRow = number of rows
+  // nbrColumn = number of columns
+  // zero = tue if matrix elements have to be set to zero
+  RealMatrix(double* array, int nbrRow, int nbrColumn);
+
   // copy constructor (without duplicating datas)
   //
   // M = matrix to copy

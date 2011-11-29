@@ -461,7 +461,19 @@ class ParticleOnSphere :  public AbstractQHEParticle
   virtual RealVector& EvaluatePartialSchmidtDecompositionParticlePartition(int nbrParticleSector, int lzSector, double eigenvalueCut,
 									   RealVector& groundState, RealVector& rebuiltSchmidtGroundState,
 									   RealDiagonalMatrix& diagonalizedDensityMatrix, RealMatrix& transformationMatrix);
-  
+
+  // rebuild a state from its Schmidt decomposition for the particle partition
+  // 
+  // nbrParticleSector = number of particles that belong to the subsytem (i.e. part A)
+  // lzSector = Lz sector in which the density matrix has to be evaluated  (i.e. part A)
+  // schmidtDecomposedState = reference on the vector to which the rebuild state will be added
+  // nbrSingularValues = number of singular values (can be lower than the actual number of ingular values to perform a truncation)
+  // singularValues = array containing the singular values
+  // aVectors = matrix than contains the singular vectors of the part A
+  // bVectors = matrix than contains the singular vectors of the part B
+  virtual void RebuildStateFromSchmidtDecompositionParticlePartition(int nbrParticleSector, int lzSector, RealVector& schmidtDecomposedState, 
+									     int nbrSingularValues, double* singularValues, RealMatrix& aVectors, RealMatrix& bVectors);
+
   // find state index from a string
   //
   // stateDescription = string describing the state

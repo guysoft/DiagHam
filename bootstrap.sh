@@ -3,3 +3,7 @@ aclocal
 automake
 autoconf
 autoheader
+aclocal
+automake
+autoconf
+autoheader
