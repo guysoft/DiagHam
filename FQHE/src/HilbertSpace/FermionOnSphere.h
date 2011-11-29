@@ -485,6 +485,20 @@ class FermionOnSphere :  public ParticleOnSphere
   // return value = entanglement matrix of the subsytem (return a wero dimension matrix if the entanglement matrix is equal to zero)
   virtual RealMatrix EvaluatePartialEntanglementMatrixParticlePartition (int nbrFermionSector, int lzSector, RealVector& groundState, bool removeBinomialCoefficient = false);
   
+  // compute part of the Schmidt decomposition for the particle partition, allowing cut in the reduced denisty matrix eigenvalue space
+  // 
+  // nbrFermionSector = number of particles that belong to the subsytem 
+  // lzSector = Lz sector in which the density matrix has to be evaluated 
+  // groundState = reference on the total system ground state
+  // eigenvalueCut = discard all contribution from the reduced density matrix whose eigenvalues is lower than eigenvalueCut
+  // rebuiltSchmidtGroundState = reference on the state to whose current sector contribution to the Schmidt decomposition will be added 
+  // diagonalizedDensityMatrix = reference on the diagonalized reduced density matrix associated to the current sector (with down ordered diagonal elements)
+  // transformationMatrix =  reference on the transformation matric that diagonalizes the reduced density matrix
+  // return value = reference on rebuiltSchmidtGroundState
+  virtual RealVector& EvaluatePartialSchmidtDecompositionParticlePartition(int nbrFermionSector, int lzSector, double eigenvalueCut,
+									   RealVector& groundState, RealVector& rebuiltSchmidtGroundState,
+									   RealDiagonalMatrix& diagonalizedDensityMatrix, RealMatrix& transformationMatrix);
+
   // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using real space partition. The density matrix is only evaluated in a given Lz sector.
   // 
   // nbrFermionSector = number of particles that belong to the subsytem 

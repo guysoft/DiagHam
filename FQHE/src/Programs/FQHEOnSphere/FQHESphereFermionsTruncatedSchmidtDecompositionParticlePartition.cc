@@ -285,7 +285,9 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      double* TmpValues = PartialEntanglementMatrix.SingularValueDecomposition();
+	      RealMatrix AVectors (PartialDensityMatrix.GetNbrRow(), PartialDensityMatrix.GetNbrRow(), true);
+	      RealMatrix BVectors (PartialDensityMatrix.GetNbrColumns(), PartialDensityMatrix.GetNbrColumns(), true);
+	      double* TmpValues = PartialEntanglementMatrix.SingularValueDecomposition(AVectors, BVectors);
 	      int TmpDimension = PartialEntanglementMatrix.GetNbrColumn();
 	      if (TmpDimension > PartialEntanglementMatrix.GetNbrRow())
 		{

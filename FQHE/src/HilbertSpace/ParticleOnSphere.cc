@@ -715,6 +715,24 @@ RealVector& ParticleOnSphere::EvaluatePartialSchmidtDecomposition(int subsytemSi
   return rebuiltSchmidtGroundState;
 }
 
+// compute part of the Schmidt decomposition for the particle partition, allowing cut in the reduced denisty matrix eigenvalue space
+// 
+// nbrParticleSector = number of particles that belong to the subsytem 
+// lzSector = Lz sector in which the density matrix has to be evaluated 
+// groundState = reference on the total system ground state
+// eigenvalueCut = discard all contribution from the reduced density matrix whose eigenvalues is lower than eigenvalueCut
+// rebuiltSchmidtGroundState = reference on the state to whose current sector contribution to the Schmidt decomposition will be added 
+// diagonalizedDensityMatrix = reference on the diagonalized reduced density matrix associated to the current sector (with down ordered diagonal elements)
+// transformationMatrix =  reference on the transformation matric that diagonalizes the reduced density matrix
+// return value = reference on rebuiltSchmidtGroundState
+
+RealVector& ParticleOnSphere::EvaluatePartialSchmidtDecompositionParticlePartition(int nbrParticleSector, int lzSector, double eigenvalueCut,
+										   RealVector& groundState, RealVector& rebuiltSchmidtGroundState,
+										   RealDiagonalMatrix& diagonalizedDensityMatrix, RealMatrix& transformationMatrix)
+{
+  return rebuiltSchmidtGroundState;
+}
+  
 // find state index from a string
 //
 // stateDescription = string describing the state

@@ -2913,6 +2913,259 @@ RealMatrix FermionOnSphere::EvaluatePartialEntanglementMatrixParticlePartition(i
     }
 }
 
+// compute part of the Schmidt decomposition for the particle partition, allowing cut in the reduced denisty matrix eigenvalue space
+// 
+// nbrParticleSector = number of particles that belong to the subsytem 
+// lzSector = Lz sector in which the density matrix has to be evaluated 
+// groundState = reference on the total system ground state
+// eigenvalueCut = discard all contribution from the reduced density matrix whose eigenvalues is lower than eigenvalueCut
+// rebuiltSchmidtGroundState = reference on the state to whose current sector contribution to the Schmidt decomposition will be added 
+// diagonalizedDensityMatrix = reference on the diagonalized reduced density matrix associated to the current sector (with down ordered diagonal elements)
+// transformationMatrix =  reference on the transformation matric that diagonalizes the reduced density matrix
+// return value = reference on rebuiltSchmidtGroundState
+
+RealVector& FermionOnSphere::EvaluatePartialSchmidtDecompositionParticlePartition(int nbrParticleSector, int lzSector, double eigenvalueCut,
+										  RealVector& groundState, RealVector& rebuiltSchmidtGroundState,
+										  RealDiagonalMatrix& diagonalizedDensityMatrix, RealMatrix& transformationMatrix)
+{
+  if (nbrParticleSector <= 0)
+    {
+      return rebuiltSchmidtGroundState;
+    }
+  if (nbrParticleSector >= this->NbrFermions)
+    {
+      for (long i = 0l; i < groundState.GetLargeVectorDimension(); ++i)
+	rebuiltSchmidtGroundState[i] = groundState[i];
+      return rebuiltSchmidtGroundState;
+    }
+
+  int NbrKeptEigenvalues = 0;  
+  for (int i = 0; i < diagonalizedDensityMatrix.GetNbrRow(); ++i)
+    if (diagonalizedDensityMatrix[i] >=  eigenvalueCut)
+      ++NbrKeptEigenvalues;
+  if (NbrKeptEigenvalues == 0)
+    return rebuiltSchmidtGroundState;
+
+  int TmpIndex;
+  int ShiftedTotalLz = (this->TotalLz + this->NbrFermions * this->LzMax) >> 1;
+  int ShiftedLzSector = (lzSector + nbrParticleSector * this->LzMax) >> 1;
+  int ShiftedLzComplementarySector = ShiftedTotalLz - ShiftedLzSector;
+  int NbrFermionsComplementarySector = this->NbrFermions - nbrParticleSector;
+  int MinIndex = 0;
+  int MaxIndex = this->HilbertSpaceDimension - 1;
+  BinomialCoefficients TmpBinomial (this->NbrFermions);
+  double TmpInvBinomial = 1.0 / (TmpBinomial(this->NbrFermions, nbrParticleSector));
+  
+  unsigned long TmpComplementarySubsystem;
+  int TmpNbrFermions;
+  int TmpTotalLz;
+  int TmpNbrOne[] = {  
+    0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 
+    1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
+    1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
+    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+    1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
+    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+    3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
+    1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
+    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+    3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
+    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+    3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
+    3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
+    4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8};
+  int TmpSumOccupation[] = {
+    0, 0, 1, 1, 2, 2, 3, 3, 3, 3, 4, 4, 5, 5, 6, 6,
+    4, 4, 5, 5, 6, 6, 7, 7, 7, 7, 8, 8, 9, 9, 10, 10,
+    5, 5, 6, 6, 7, 7, 8, 8, 8, 8, 9, 9, 10, 10, 11, 11,
+    9, 9, 10, 10, 11, 11, 12, 12, 12, 12, 13, 13, 14, 14, 15, 15,
+    6, 6, 7, 7, 8, 8, 9, 9, 9, 9, 10, 10, 11, 11, 12, 12,
+    10, 10, 11, 11, 12, 12, 13, 13, 13, 13, 14, 14, 15, 15, 16, 16,
+    11, 11, 12, 12, 13, 13, 14, 14, 14, 14, 15, 15, 16, 16, 17, 17,
+    15, 15, 16, 16, 17, 17, 18, 18, 18, 18, 19, 19, 20, 20, 21, 21,
+    7, 7, 8, 8, 9, 9, 10, 10, 10, 10, 11, 11, 12, 12, 13, 13,
+    11, 11, 12, 12, 13, 13, 14, 14, 14, 14, 15, 15, 16, 16, 17, 17,
+    12, 12, 13, 13, 14, 14, 15, 15, 15, 15, 16, 16, 17, 17, 18, 18,
+    16, 16, 17, 17, 18, 18, 19, 19, 19, 19, 20, 20, 21, 21, 22, 22,
+    13, 13, 14, 14, 15, 15, 16, 16, 16, 16, 17, 17, 18, 18, 19, 19,
+    17, 17, 18, 18, 19, 19, 20, 20, 20, 20, 21, 21, 22, 22, 23, 23,
+    18, 18, 19, 19, 20, 20, 21, 21, 21, 21, 22, 22, 23, 23, 24, 24,
+    22, 22, 23, 23, 24, 24, 25, 25, 25, 25, 26, 26, 27, 27, 28, 28};
+  int TmpPartialNbrOne;
+  
+  if (nbrParticleSector <= 1)
+    {
+      unsigned long Key = 0x0ul;
+      if (nbrParticleSector == 1)
+	Key = 0x1ul << ShiftedLzSector;
+      while (MinIndex <= MaxIndex)
+	{
+	  if ((this->StateDescription[MinIndex] & Key) == Key)
+	    rebuiltSchmidtGroundState[MinIndex] += groundState[MinIndex];
+	  ++MinIndex;
+	}
+      return rebuiltSchmidtGroundState;
+    }
+  else
+    {
+      FermionOnSphere TmpDestinationHilbertSpace(nbrParticleSector, lzSector, this->LzMax);
+      cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
+      int* TmpStatePosition = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+      int* TmpStatePosition2 = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+      double* TmpStateCoefficient = new double [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+      RealMatrix TmpMatrix (TmpDestinationHilbertSpace.HilbertSpaceDimension, TmpDestinationHilbertSpace.HilbertSpaceDimension);
+      for (int i = 0; i < TmpMatrix.GetNbrRow(); ++i)
+	for (int j = 0; j < TmpMatrix.GetNbrRow(); ++j)
+	  {
+	    double Tmp = 0.0;
+	    for (int k = 0; k < NbrKeptEigenvalues; ++k)
+	      Tmp += transformationMatrix(i, k) * transformationMatrix(j, k);
+	    TmpMatrix(i, j) = Tmp;
+	  }
+      FermionOnSphere TmpHilbertSpace(NbrFermionsComplementarySector, this->TotalLz - lzSector, this->LzMax);
+	
+      for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
+	{
+	  int Pos = 0;
+	  unsigned long TmpState = TmpHilbertSpace.StateDescription[MinIndex];
+	  for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
+	    {
+	      unsigned long TmpState2 = TmpDestinationHilbertSpace.StateDescription[j];
+	      if ((TmpState & TmpState2) == 0x0ul)
+		{
+		  int TmpLzMax = this->LzMax;
+		  unsigned long TmpState3 = TmpState | TmpState2;
+		  while ((TmpState3 >> TmpLzMax) == 0x0ul)
+		    --TmpLzMax;
+		  int TmpPos = this->FindStateIndex(TmpState3, TmpLzMax);
+		  if (TmpPos != this->HilbertSpaceDimension)
+		    {
+		      double Coefficient = TmpInvBinomial;
+		      unsigned long Sign = 0x0ul;
+		      int Pos2 = TmpDestinationHilbertSpace.LzMax;
+		      while ((Pos2 > 0) && (TmpState2 != 0x0ul))
+			{
+			  while (((TmpState2 >> Pos2) & 0x1ul) == 0x0ul)
+			    --Pos2;
+			  TmpState3 = TmpState & ((0x1ul << (Pos2 + 1)) - 1ul);
+#ifdef  __64_BITS__
+			  TmpState3 ^= TmpState3 >> 32;
+#endif	
+			  TmpState3 ^= TmpState3 >> 16;
+			  TmpState3 ^= TmpState3 >> 8;
+			  TmpState3 ^= TmpState3 >> 4;
+			  TmpState3 ^= TmpState3 >> 2;
+			  TmpState3 ^= TmpState3 >> 1;
+			  Sign ^= TmpState3;
+			  TmpState2 &= ~(0x1ul << Pos2);
+			  --Pos2;
+			}
+		      if ((Sign & 0x1ul) == 0x0ul)		  
+			Coefficient *= 1.0;
+		      else
+			Coefficient *= -1.0;
+		      TmpStatePosition[Pos] = TmpPos;
+		      TmpStatePosition2[Pos] = j;
+		      TmpStateCoefficient[Pos] = Coefficient;
+		      ++Pos;
+		    }
+		}
+	    }
+// 	  if (Pos != 0)
+// 	    {
+// 	      ++TmpNbrNonZeroElements;
+// 	      for (int j = 0; j < Pos; ++j)
+// 		{
+// 		  int Pos2 = TmpStatePosition2[j];
+// 		  double TmpValue = groundState[TmpStatePosition[j]] * TmpStateCoefficient[j];
+// 		  for (int k = 0; k < Pos; ++k)
+// 		    if (TmpStatePosition2[k] >= Pos2)
+// 		      {
+// 			TmpDensityMatrix.AddToMatrixElement(Pos2, TmpStatePosition2[k], TmpValue * groundState[TmpStatePosition[k]] * TmpStateCoefficient[k]);
+// 		      }
+// 		}
+// 	    }
+	}
+
+//       while (MinIndex <= MaxIndex)
+// 	{
+// 	  TmpIndex = MinIndex;
+// 	  TmpComplementarySubsystem = this->StateDescription[TmpIndex] & TmpMask;
+// 	  ++TmpIndex;
+// 	  while ((TmpIndex <= MaxIndex) && ((this->StateDescription[TmpIndex] & TmpMask) == TmpComplementarySubsystem))
+// 	    ++TmpIndex;
+// 	  TmpPartialNbrOne = TmpNbrOne[TmpComplementarySubsystem & 0xffl];
+// 	  TmpNbrFermions = TmpPartialNbrOne;
+// 	  TmpTotalLz = TmpSumOccupation[TmpComplementarySubsystem & 0xffl];
+// 	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 8) & 0xffl];
+// 	  TmpNbrFermions += TmpPartialNbrOne;
+// 	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 8) & 0xffl];
+// 	  TmpTotalLz += TmpPartialNbrOne << 3;
+// 	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 16) & 0xffl];
+// 	  TmpNbrFermions += TmpPartialNbrOne;
+// 	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 16) & 0xffl];
+// 	  TmpTotalLz += TmpPartialNbrOne << 4;
+// 	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 24) & 0xffl];
+// 	  TmpNbrFermions += TmpPartialNbrOne;
+// 	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 24) & 0xffl];
+// 	  TmpTotalLz += TmpPartialNbrOne * 24;
+// #ifdef  __64_BITS__
+// 	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 32) & 0xffl];
+// 	  TmpNbrFermions += TmpPartialNbrOne;
+// 	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 32) & 0xffl];
+// 	  TmpTotalLz += TmpPartialNbrOne << 5;
+// 	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 40) & 0xffl];
+// 	  TmpNbrFermions += TmpPartialNbrOne;
+// 	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 40) & 0xffl];
+// 	  TmpTotalLz += TmpPartialNbrOne * 40;
+// 	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 48) & 0xffl];
+// 	  TmpNbrFermions += TmpPartialNbrOne;
+// 	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 48) & 0xffl];
+// 	  TmpTotalLz += TmpPartialNbrOne * 48;
+// 	  TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 56) & 0xffl];      
+// 	  TmpNbrFermions += TmpPartialNbrOne;
+// 	  TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 56) & 0xffl];
+// 	  TmpTotalLz += TmpPartialNbrOne * 56;
+// #endif
+// 	  if ((TmpNbrFermions == NbrFermionsComplementarySector) && (ShiftedLzComplementarySector == TmpTotalLz))
+// 	    {
+// 	      int Pos = 0;
+// 	      for (int i = MinIndex; i < TmpIndex; ++i)
+// 		{
+// 		  unsigned long TmpState = this->StateDescription[i] & TmpSubsystemMask;
+// 		  int TmpLzMax = subsytemSize - 1;
+// 		  while ((TmpState & (0x1ul << TmpLzMax)) == 0x0ul)
+// 		    --TmpLzMax;
+// 		  TmpStatePosition[Pos] = TmpDestinationHilbertSpace.FindStateIndex(TmpState, TmpLzMax);
+// 		  ++Pos;
+// 		}
+// 	      int Pos2;
+// 	      Pos = 0;
+// 	      for (int i = MinIndex; i < TmpIndex; ++i)
+// 		{
+// 		  Pos2 = 0;
+// 		  double Tmp = 0.0;
+// 		  for (int j = MinIndex; j < TmpIndex; ++j)
+// 		    {
+// 		      Tmp += groundState[j] * TmpMatrix(TmpStatePosition[Pos], TmpStatePosition[Pos2]);
+// 		      ++Pos2;
+// 		    }
+// 		  rebuiltSchmidtGroundState[i] = Tmp;
+// 		  ++Pos;
+// 		}
+// 	    }
+// 	  MinIndex = TmpIndex;
+//    }
+      delete[] TmpStatePosition2;
+      delete[] TmpStatePosition;
+      delete[] TmpStateCoefficient;
+    }
+  return rebuiltSchmidtGroundState;
+}
+
+
 // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using real space partition. The density matrix is only evaluated in a given Lz sector.
 // 
 // nbrFermionSector = number of particles that belong to the subsytem 
