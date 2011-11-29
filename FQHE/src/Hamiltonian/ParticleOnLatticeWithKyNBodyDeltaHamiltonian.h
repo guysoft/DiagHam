@@ -63,27 +63,27 @@ class ParticleOnLatticeWithKyNBodyDeltaHamiltonian : public ParticleOnLatticeWit
   int* NbrNBodySectorIndicesPerSum;
   // array containing the (m1,m2,m3) indices per index sum for the creation (or annhilation) operators for the intra spin sector
   int** NBodySectorIndicesPerSum;
-
+  
   // arrays containing all interaction factors, the first index correspond correspond to index sum for the creation (or annhilation) operators
   // the second index is a linearized index (m1,m2,m3) + (n1,n2,n3) * (nbr element in current index sum) (m for creation operators, n for annhilation operators)
   Complex** NBodyInteractionFactors;
-
+  
   // true if one/two body terms are set
   bool TwoBodyFlag;  
-
+  
   // number of interacting particles
   int NBodyValue;
   // square value of NBodyValue
   int SqrNBodyValue;
-
+  
   double NBodyContactInteraction;
-
+  
  public:
-
+  
   // default constructor
   //
   ParticleOnLatticeWithKyNBodyDeltaHamiltonian();
-
+  
   // constructor
   //
   // particles = Hilbert space associated to the system
@@ -112,9 +112,8 @@ class ParticleOnLatticeWithKyNBodyDeltaHamiltonian : public ParticleOnLatticeWit
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  virtual ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-					     int firstComponent, int nbrComponent);
- 
+  virtual ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination,int firstComponent, int nbrComponent);
+  
   // multiply a et of vectors by the current hamiltonian for a given range of indices 
   // and add result to another et of vectors, low level function (no architecture optimization)
   //
@@ -124,9 +123,8 @@ class ParticleOnLatticeWithKyNBodyDeltaHamiltonian : public ParticleOnLatticeWit
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = pointer to the array of vectors where result has been stored
-  virtual ComplexVector* LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
-						     int firstComponent, int nbrComponent);
-
+  virtual ComplexVector* LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, int firstComponent, int nbrComponent);
+  
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)
   //
@@ -135,8 +133,7 @@ class ParticleOnLatticeWithKyNBodyDeltaHamiltonian : public ParticleOnLatticeWit
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  virtual ComplexVector& HermitianLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-						      int firstComponent, int nbrComponent);
+  virtual ComplexVector& HermitianLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent);
  
   // multiply a et of vectors by the current hamiltonian for a given range of indices 
   // and add result to another et of vectors, low level function (no architecture optimization)
@@ -147,9 +144,8 @@ class ParticleOnLatticeWithKyNBodyDeltaHamiltonian : public ParticleOnLatticeWit
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = pointer to the array of vectors where result has been stored
-  virtual ComplexVector* HermitianLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
-							      int firstComponent, int nbrComponent);
-
+  virtual ComplexVector* HermitianLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors,int firstComponent, int nbrComponent);
+  
 
  protected:
  
@@ -160,7 +156,7 @@ class ParticleOnLatticeWithKyNBodyDeltaHamiltonian : public ParticleOnLatticeWit
   // vSource = vector to be multiplied
   // vDestination = vector at which result has to be added  
   virtual void EvaluateMNNBodyAddMultiplyComponent(ParticleOnLattice* particles, int index, ComplexVector& vSource, ComplexVector& vDestination);
-
+  
   // core part of the AddMultiply method involving the n-body interaction for a set of vectors
   // 
   // particles = pointer to the Hilbert space
@@ -169,9 +165,8 @@ class ParticleOnLatticeWithKyNBodyDeltaHamiltonian : public ParticleOnLatticeWit
   // vDestinations = array of vectors at which result has to be added
   // nbrVectors = number of vectors that have to be evaluated together
   // tmpCoefficients = a temporary array whose size is nbrVectors
-  virtual void EvaluateMNNBodyAddMultiplyComponent(ParticleOnLattice* particles, int index, ComplexVector* vSources, 
-						     ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients);
-
+  virtual void EvaluateMNNBodyAddMultiplyComponent(ParticleOnLattice* particles, int index, ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients);
+  
   // core part of the AddMultiply method involving the n-body interaction
   // 
   // particles = pointer to the Hilbert space
@@ -179,7 +174,7 @@ class ParticleOnLatticeWithKyNBodyDeltaHamiltonian : public ParticleOnLatticeWit
   // vSource = vector to be multiplied
   // vDestination = vector at which result has to be added  
   virtual void HermitianEvaluateMNNBodyAddMultiplyComponent(ParticleOnLattice* particles, int index, ComplexVector& vSource, ComplexVector& vDestination);
-
+  
   // core part of the AddMultiply method involving the n-body interaction for a set of vectors
   // 
   // particles = pointer to the Hilbert space
@@ -198,8 +193,7 @@ class ParticleOnLatticeWithKyNBodyDeltaHamiltonian : public ParticleOnLatticeWit
   // indexArray = array where indices connected to the index-th component through the Hamiltonian
   // coefficientArray = array of the numerical coefficients related to the indexArray
   // position = reference on the current position in arrays indexArray and coefficientArray
-  virtual void EvaluateMNNBodyFastMultiplicationComponent(ParticleOnLattice* particles, int index, 
-							      int* indexArray, unsigned short* coefficientArray, int& positionR, int & positionC);
+  virtual void EvaluateMNNBodyFastMultiplicationComponent(ParticleOnLattice* particles, int index, int* indexArray, unsigned short* coefficientArray, int& positionR, int & positionC);
 
   // core part of the PartialFastMultiplicationMemory method involving n-body term
   // 
@@ -208,7 +202,7 @@ class ParticleOnLatticeWithKyNBodyDeltaHamiltonian : public ParticleOnLatticeWit
   // lastComponent  = index of the last component that has to be precalcualted
   // memory = reference on the amount of memory required for precalculations
   virtual void EvaluateMNNBodyFastMultiplicationMemoryComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, long& memory);
-
+  
   // using partial fast multiply option
   //
   // vSources = array of vectors to be multiplied
@@ -217,9 +211,8 @@ class ParticleOnLatticeWithKyNBodyDeltaHamiltonian : public ParticleOnLatticeWit
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = pointer to the array of vectors where result has been stored
-  virtual ComplexVector* LowLevelMultipleAddMultiplyPartialFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
-									int firstComponent, int nbrComponent);
-
+  virtual ComplexVector* LowLevelMultipleAddMultiplyPartialFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, int firstComponent, int nbrComponent);
+  
   // multiply a set of vectors by the current hamiltonian for a given range of indices 
   // and add result to another et of vectors, low level function (no architecture optimization)
   // using partial fast multiply option
@@ -235,7 +228,7 @@ class ParticleOnLatticeWithKyNBodyDeltaHamiltonian : public ParticleOnLatticeWit
   // evaluate all interaction factors
   //   
   virtual void EvaluateInteractionFactors();
-
+  
   // test the amount of memory needed for fast multiplication algorithm
   //
   // allowedMemory = amount of memory that cam be allocated for fast multiplication
@@ -254,10 +247,9 @@ class ParticleOnLatticeWithKyNBodyDeltaHamiltonian : public ParticleOnLatticeWit
   // firstComponent = index of the first component that has to be precalcualted
   // nbrComponent  = index of the last component that has to be precalcualted
   virtual void PartialEnableFastMultiplication(int firstComponent, int nbrComponent);
-	
-	virtual long GetAllSymmetricIndices (int nbrValues, int nbrIndices, int*& nbrSortedIndicesPerSum, 
-									    int**& sortedIndicesPerSum, double**& sortedIndicesPerSumSymmetryFactor);
-
+  
+  virtual long GetAllSymmetricIndices (int nbrValues, int nbrIndices, int*& nbrSortedIndicesPerSum, int**& sortedIndicesPerSum, double**& sortedIndicesPerSumSymmetryFactor);
+  
 };
 
 
@@ -465,8 +457,7 @@ inline void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::HermitianEvaluateMNNBo
 // coefficientArray = array of the numerical coefficients related to the indexArray
 // position = reference on the current position in arrays indexArray and coefficientArray
 
-inline void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::EvaluateMNNBodyFastMultiplicationComponent(ParticleOnLattice* particles, int index,
-												     int* indexArray, unsigned short* coefficientIndexArray, int& positionR, int & positionC)
+inline void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::EvaluateMNNBodyFastMultiplicationComponent(ParticleOnLattice* particles, int index, int* indexArray, unsigned short* coefficientIndexArray, int& positionR, int & positionC)
 {
   int Index;
   int tmpElementPos;
@@ -476,9 +467,7 @@ inline void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::EvaluateMNNBodyFastMul
   Complex* TmpInteractionFactor;
   int Dim = particles->GetHilbertSpaceDimension();
   int AbsoluteIndex = index + this->PrecalculationShift;
-  //cout <<"index = " <<  AbsoluteIndex<<endl;
-  //particles->PrintState(cout, AbsoluteIndex);
-  //cout <<endl;
+  
   if (this->HermitianSymmetryFlag == false)
     {
       for (int j = 0; j < this->NbrNBodySectorSums; ++j)
@@ -488,29 +477,17 @@ inline void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::EvaluateMNNBodyFastMul
 	  for (int i1 = 0; i1 < Lim; i1 += this->NBodyValue)
 	    {
 	      Coefficient2 = particles->ProdA(AbsoluteIndex, TmpIndices + i1, this->NBodyValue);
-	      //for(int i= 0 ;i < this->NBodyValue; i ++)
-	      //	cout <<(*(TmpIndices + i1+i))<<" ";
-	      //cout <<endl;
+	      
 	      if (Coefficient2 != 0.0)
 		{
-		  
 		  for (int i2 = 0; i2 < Lim; i2 += this->NBodyValue)
 		    {
 		      TmpInteractionFactor = &(this->NBodyInteractionFactors[j][(i1 * Lim / this->SqrNBodyValue) + i2/this->NBodyValue]);
 		      Index = particles->ProdAd(TmpIndices + i2, this->NBodyValue, Coefficient);
-		      //     for(int i= 0 ;i < this->NBodyValue; i ++) 
-		      //cout <<(*(TmpIndices + i2+ i ))<<" "; 
-		      //cout <<endl; 
-		      
 		      if (Index < Dim)
 			{
 			  if (fabs( TmpInteractionFactor->Im)<LATTICEHAMILTONIAN_IDENTICAL_ELEMENT_THRESHOLD) // real element
 			    {
-			      //      cout <<"Interaction factor : "<<TmpInteractionFactor->Re<<endl;
-			      //cout << "positionR  = " <<positionR <<endl;
-			      //cout << "Index = "<<Index <<endl;
-			      //particles->PrintState(cout,Index);
-			      //cout <<endl;
 			      indexArray[positionR] = Index;
 			      tmpElementPos = RealInteractionCoefficients.InsertElement(Coefficient * Coefficient2 * TmpInteractionFactor->Re);
 			      if (tmpElementPos > USHRT_MAX )
@@ -533,7 +510,6 @@ inline void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::EvaluateMNNBodyFastMul
 			      coefficientIndexArray[positionC] = (unsigned short) tmpElementPos;
 			      ++positionC;
 			    }
-			  
 			}
 		      ++TmpInteractionFactor;
 		    }
@@ -543,8 +519,8 @@ inline void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::EvaluateMNNBodyFastMul
     }
   else
     {
-			cout <<"Not Yet Implemented"<<endl;
-			exit(1);
+      cout <<"Not Yet Implemented"<<endl;
+      exit(1);
 //       for (int j = 0; j < this->NbrNBodySectorSums; ++j)
 // 	{
 // 	  int Lim = this->NBodyValue * this->NbrNBodySectorIndicesPerSum[j];
@@ -576,7 +552,7 @@ inline void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::EvaluateMNNBodyFastMul
 // 			}
 // 		      ++TmpInteractionFactor;
 // 		    }
-
+      
     }
 }
 
@@ -604,33 +580,18 @@ inline void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::EvaluateMNNBodyFastMul
       
       for (int j = 0; j < this->NbrNBodySectorSums; ++j)
 	{
-	  //cout <<"Sum = "<<j<<endl;
 	  int Lim = this->NBodyValue * this->NbrNBodySectorIndicesPerSum[j];
 	  TmpIndices = this->NBodySectorIndicesPerSum[j];
 	  for (int i1 = 0; i1 < Lim; i1 += this->NBodyValue)
 	    {
 	      
-	     // particles->PrintState(cout,i)<<endl;
-	      
-	     /* for (int tmp = 0 ; tmp<this->NBodyValue;tmp++)
-		cout <<(*(TmpIndices + i1 + tmp));
-	      cout <<endl;*/
-				
-	      
 	      Coefficient2 = particles->ProdA(i, TmpIndices + i1, this->NBodyValue);
-	      //cout <<endl;
-	      
 	      if (Coefficient2 != 0.0)
 		{
 		  
 		  for (int i2 = 0; i2 < Lim; i2 += this->NBodyValue)
 		    {
-		      /*for (int tmp = 0 ; tmp<this->NBodyValue;tmp++)
-			cout <<(*(TmpIndices + i2 + tmp));
-		      cout <<endl;*/
-
 		      Index = particles->ProdAd(TmpIndices + i2, this->NBodyValue, Coefficient);
-		      //particles->PrintState(cout,Index)<<endl;
 		      if (Index <= Dim)
 			{
 			  ++this->NbrRealInteractionPerComponent[i - this->PrecalculationShift];
@@ -639,12 +600,9 @@ inline void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::EvaluateMNNBodyFastMul
 		    }
 		}
 	    }
-	  
 	}
     }
 }
-
-
 
 
 #endif

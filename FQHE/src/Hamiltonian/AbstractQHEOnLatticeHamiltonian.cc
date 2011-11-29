@@ -611,21 +611,20 @@ Complex AbstractQHEOnLatticeHamiltonian::MatrixElement (ComplexVector& V1, Compl
 
 ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent)
 {
-	cout <<"use new code" <<endl;
-	int LastComponent = firstComponent + nbrComponent;
+  int LastComponent = firstComponent + nbrComponent;
   if (this->FastMultiplicationFlag == false)
     {
       ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
-			for (int i = firstComponent; i < LastComponent; ++i)
-				this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
-			this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSource, vDestination);
+      for (int i = firstComponent; i < LastComponent; ++i)
+	this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+      this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSource, vDestination);
       delete TmpParticles;
     }
   else // fast calculation enabled
     {
       if (this->FastMultiplicationStep == 1)
 	{
-		this->LowLevelAddMultiplyFastMultiply(vSource, vDestination, firstComponent, LastComponent);
+	  this->LowLevelAddMultiplyFastMultiply(vSource, vDestination, firstComponent, LastComponent);
 	}
       else
 	{
@@ -644,40 +643,39 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiply(ComplexVecto
 
 ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiplyFastMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int lastComponent)
 {
-	cout <<"use new code" <<endl;
-	int* TmpIndexArray;
-	unsigned short* TmpCoefficientIndexArray;
-	double TmpRe, TmpIm;
-	unsigned short TmpNbrRealInteraction;
-	unsigned short TmpNbrComplexInteraction;
-	Complex *TmpCPtr;
-	int k = firstComponent;
-	firstComponent -= this->PrecalculationShift;
-	lastComponent -= this->PrecalculationShift;
-	  for (int i = firstComponent; i < lastComponent; ++i, ++k)
-	    {
-	      TmpNbrRealInteraction = this->NbrRealInteractionPerComponent[i];
-	      TmpNbrComplexInteraction = this->NbrComplexInteractionPerComponent[i];
-	      TmpIndexArray = this->InteractionPerComponentIndex[i];
-	      TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[i];
-	      TmpRe = vSource[k].Re;
-	      TmpIm = vSource[k].Im;
-	      int Pos=0;
-	      for (; Pos < TmpNbrRealInteraction; ++Pos)
-		{
-		  vDestination.Re(TmpIndexArray[Pos]) +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]]*TmpRe;
-		  vDestination.Im(TmpIndexArray[Pos]) +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]]*TmpIm;
-		}
-	      for (int j=0; j < TmpNbrComplexInteraction; ++j, ++Pos)
-		{
-		  TmpCPtr= &(ComplexInteractionCoefficients[TmpCoefficientIndexArray[Pos]]);
-		  vDestination.Re(TmpIndexArray[Pos]) +=  TmpCPtr->Re*TmpRe-TmpCPtr->Im*TmpIm;
-		  vDestination.Im(TmpIndexArray[Pos]) +=  TmpCPtr->Re*TmpIm+TmpCPtr->Im*TmpRe;		  
-		}
-	      vDestination.Re(k) += this->HamiltonianShift * TmpRe;
-	      vDestination.Im(k) += this->HamiltonianShift * TmpIm;	      
-	    }
-	    return vDestination;
+  int* TmpIndexArray;
+  unsigned short* TmpCoefficientIndexArray;
+  double TmpRe, TmpIm;
+  unsigned short TmpNbrRealInteraction;
+  unsigned short TmpNbrComplexInteraction;
+  Complex *TmpCPtr;
+  int k = firstComponent;
+  firstComponent -= this->PrecalculationShift;
+  lastComponent -= this->PrecalculationShift;
+  for (int i = firstComponent; i < lastComponent; ++i, ++k)
+    {
+      TmpNbrRealInteraction = this->NbrRealInteractionPerComponent[i];
+      TmpNbrComplexInteraction = this->NbrComplexInteractionPerComponent[i];
+      TmpIndexArray = this->InteractionPerComponentIndex[i];
+      TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[i];
+      TmpRe = vSource[k].Re;
+      TmpIm = vSource[k].Im;
+      int Pos=0;
+      for (; Pos < TmpNbrRealInteraction; ++Pos)
+	{
+	  vDestination.Re(TmpIndexArray[Pos]) +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]]*TmpRe;
+	  vDestination.Im(TmpIndexArray[Pos]) +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]]*TmpIm;
+	}
+      for (int j=0; j < TmpNbrComplexInteraction; ++j, ++Pos)
+	{
+	  TmpCPtr= &(ComplexInteractionCoefficients[TmpCoefficientIndexArray[Pos]]);
+	  vDestination.Re(TmpIndexArray[Pos]) +=  TmpCPtr->Re*TmpRe-TmpCPtr->Im*TmpIm;
+	  vDestination.Im(TmpIndexArray[Pos]) +=  TmpCPtr->Re*TmpIm+TmpCPtr->Im*TmpRe;		  
+	}
+      vDestination.Re(k) += this->HamiltonianShift * TmpRe;
+      vDestination.Im(k) += this->HamiltonianShift * TmpIm;	      
+    }
+  return vDestination;
 }
 
 // multiply a vector by the current hamiltonian for a given range of indices 
@@ -738,16 +736,16 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiplyPartialFastMu
 
   firstComponent += this->PrecalculationShift;
   LastComponent += this->PrecalculationShift;
-	
-	ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
+  
+  ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
   for (int k = 0; k < this->FastMultiplicationStep; ++k)
     if (PosMod != k)
       {
-				
-		for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
-			this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
-		this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent + k, LastComponent, this->FastMultiplicationStep, vSource, vDestination);
-	  }
+	
+	for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
+	  this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+	this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent + k, LastComponent, this->FastMultiplicationStep, vSource, vDestination);
+      }
   delete TmpParticles;
   return vDestination;
 }
@@ -763,8 +761,8 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiplyPartialFastMu
 // return value = reference on vector where result has been stored
 
 ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiplyDiskStorage(ComplexVector& vSource, ComplexVector& vDestination, 
-									   int firstComponent, int nbrComponent)
-  {
+									       int firstComponent, int nbrComponent)
+{
   cout << "Attention: AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiplyDiskStorage must be defined" << endl;
   return vDestination;
 }
@@ -781,24 +779,24 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiplyDiskStorage(C
 // return value = pointer to the array of vectors where result has been stored
 
 ComplexVector* AbstractQHEOnLatticeHamiltonian::LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
-									int firstComponent, int nbrComponent)
+									    int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
   if (this->FastMultiplicationFlag == false)
     {
-			Complex* Coefficient2 = new Complex [nbrVectors];
-			ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
-			for (int i = firstComponent; i < LastComponent; ++i)
-				this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
+      Complex* Coefficient2 = new Complex [nbrVectors];
+      ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
+      for (int i = firstComponent; i < LastComponent; ++i)
+	this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
       this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles , firstComponent , LastComponent , 1 , vSources , vDestinations,nbrVectors);
-			delete [] Coefficient2;
+      delete [] Coefficient2;
       delete TmpParticles;
     }
   else // fast calculation enabled
     {
       if (this->FastMultiplicationStep == 1)
 	{
-		this->LowLevelMultipleAddMultiplyFastMultiply(vSources, vDestinations, nbrVectors , firstComponent , LastComponent);
+	  this->LowLevelMultipleAddMultiplyFastMultiply(vSources, vDestinations, nbrVectors , firstComponent , LastComponent);
 	}
       else
 	{
@@ -817,47 +815,46 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::LowLevelMultipleAddMultiply(Comp
 
 ComplexVector* AbstractQHEOnLatticeHamiltonian::LowLevelMultipleAddMultiplyFastMultiply(ComplexVector* vSources, ComplexVector * vDestinations,  int nbrVectors, int firstComponent, int lastComponent)
 {
-	cout <<"use new code" <<endl;
-	  int* TmpIndexArray;
-	  int Index;
-	  double TmpRealCoefficient;
-	  unsigned short* TmpCoefficientIndexArray;
-	  unsigned short TmpNbrRealInteraction;
-	  unsigned short TmpNbrComplexInteraction;
-		Complex TmpCoefficient;
-	  Complex* Coefficient2 = new Complex [nbrVectors];
-	  int k = firstComponent;
-	  firstComponent -= this->PrecalculationShift;
-	  lastComponent -= this->PrecalculationShift;
-	  for (int i = firstComponent; i < lastComponent; ++i, ++k)
-	    {
-	      TmpNbrRealInteraction = this->NbrRealInteractionPerComponent[i];
-	      TmpNbrComplexInteraction = this->NbrComplexInteractionPerComponent[i];
-	      TmpIndexArray = this->InteractionPerComponentIndex[i];
-	      TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[i];
-	      for (int l = 0; l < nbrVectors; ++l)
-		{
-		  Coefficient2[l] = vSources[l][k];
-		  vDestinations[l][k] += this->HamiltonianShift * Coefficient2[l];
-		}
-	      int Pos=0;
-	      for (; Pos < TmpNbrRealInteraction; ++Pos)
-		{
-		  Index = TmpIndexArray[Pos];
-		  TmpRealCoefficient = RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]];
-		  for (int l = 0; l < nbrVectors; ++l)
-		    vDestinations[l][Index] +=  TmpRealCoefficient * Coefficient2[l];
-		}
-	      for (int j=0; j < TmpNbrComplexInteraction; ++j, ++Pos)
-		{
-		  Index = TmpIndexArray[Pos];
-		  TmpCoefficient = ComplexInteractionCoefficients[TmpCoefficientIndexArray[Pos]];
-		  for (int l = 0; l < nbrVectors; ++l)
-		    vDestinations[l][Index] +=  TmpCoefficient * Coefficient2[l];
-		}
-	    }
-	  delete [] Coefficient2;
-		return vDestinations;
+  int* TmpIndexArray;
+  int Index;
+  double TmpRealCoefficient;
+  unsigned short* TmpCoefficientIndexArray;
+  unsigned short TmpNbrRealInteraction;
+  unsigned short TmpNbrComplexInteraction;
+  Complex TmpCoefficient;
+  Complex* Coefficient2 = new Complex [nbrVectors];
+  int k = firstComponent;
+  firstComponent -= this->PrecalculationShift;
+  lastComponent -= this->PrecalculationShift;
+  for (int i = firstComponent; i < lastComponent; ++i, ++k)
+    {
+      TmpNbrRealInteraction = this->NbrRealInteractionPerComponent[i];
+      TmpNbrComplexInteraction = this->NbrComplexInteractionPerComponent[i];
+      TmpIndexArray = this->InteractionPerComponentIndex[i];
+      TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[i];
+      for (int l = 0; l < nbrVectors; ++l)
+	{
+	  Coefficient2[l] = vSources[l][k];
+	  vDestinations[l][k] += this->HamiltonianShift * Coefficient2[l];
+	}
+      int Pos=0;
+      for (; Pos < TmpNbrRealInteraction; ++Pos)
+	{
+	  Index = TmpIndexArray[Pos];
+	  TmpRealCoefficient = RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]];
+	  for (int l = 0; l < nbrVectors; ++l)
+	    vDestinations[l][Index] +=  TmpRealCoefficient * Coefficient2[l];
+	}
+      for (int j=0; j < TmpNbrComplexInteraction; ++j, ++Pos)
+	{
+	  Index = TmpIndexArray[Pos];
+	  TmpCoefficient = ComplexInteractionCoefficients[TmpCoefficientIndexArray[Pos]];
+	  for (int l = 0; l < nbrVectors; ++l)
+	    vDestinations[l][Index] +=  TmpCoefficient * Coefficient2[l];
+	}
+    }
+  delete [] Coefficient2;
+  return vDestinations;
 }
 
 
@@ -907,20 +904,20 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::LowLevelMultipleAddMultiplyDiskS
 
 ComplexVector& AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination,  int firstComponent, int nbrComponent)
 {
-	int LastComponent = firstComponent + nbrComponent;
+  int LastComponent = firstComponent + nbrComponent;
   if (this->FastMultiplicationFlag == false)
     {
       ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
-			this->EvaluateMNOneBodyConjugateAddMultiplyComponent(TmpParticles,firstComponent,LastComponent,1, vSource, vDestination);
-			for (int i = firstComponent; i < LastComponent; ++i)
-				this->EvaluateMNTwoBodyConjugateAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+      this->EvaluateMNOneBodyConjugateAddMultiplyComponent(TmpParticles,firstComponent,LastComponent,1, vSource, vDestination);
+      for (int i = firstComponent; i < LastComponent; ++i)
+	this->EvaluateMNTwoBodyConjugateAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
       delete TmpParticles;
     }
   else // fast calculation enabled
     {
       if (this->FastMultiplicationStep == 1)
 	{
-		this->ConjugateLowLevelAddMultiplyFastMultiply(vSource,  vDestination, firstComponent, LastComponent);
+	  this->ConjugateLowLevelAddMultiplyFastMultiply(vSource,  vDestination, firstComponent, LastComponent);
 	}
       else
 	{
@@ -940,29 +937,29 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelAddMultiply(Com
 ComplexVector& AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelAddMultiplyFastMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 										   int firstComponent, int lastComponent)
 {
-		int* TmpIndexArray;
-	  unsigned short* TmpCoefficientIndexArray;
-	  Complex TmpSum;
-	  unsigned short TmpNbrRealInteraction;
-	  unsigned short TmpNbrComplexInteraction;
-	  int k = firstComponent;
-	  firstComponent -= this->PrecalculationShift;
-	  lastComponent -= this->PrecalculationShift;
-	  for (int i = firstComponent; i < lastComponent; ++i, ++k)
-	    {
-	      TmpNbrRealInteraction = this->NbrRealInteractionPerComponent[i];
-	      TmpNbrComplexInteraction = this->NbrComplexInteractionPerComponent[i];
-	      TmpIndexArray = this->InteractionPerComponentIndex[i];
-	      TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[i];
-	      TmpSum=0.0;
-	      int Pos=0;
-	      for (; Pos < TmpNbrRealInteraction; ++Pos)
-		TmpSum +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]]*vSource[TmpIndexArray[Pos]];
-	      for (int j=0; j < TmpNbrComplexInteraction; ++j, ++Pos)
-		TmpSum +=  Conj(ComplexInteractionCoefficients[TmpCoefficientIndexArray[Pos]])*vSource[TmpIndexArray[Pos]];
-	      vDestination[k] += TmpSum + this->HamiltonianShift * vSource[k];
-	    }
-	    return vDestination;
+  int* TmpIndexArray;
+  unsigned short* TmpCoefficientIndexArray;
+  Complex TmpSum;
+  unsigned short TmpNbrRealInteraction;
+  unsigned short TmpNbrComplexInteraction;
+  int k = firstComponent;
+  firstComponent -= this->PrecalculationShift;
+  lastComponent -= this->PrecalculationShift;
+  for (int i = firstComponent; i < lastComponent; ++i, ++k)
+    {
+      TmpNbrRealInteraction = this->NbrRealInteractionPerComponent[i];
+      TmpNbrComplexInteraction = this->NbrComplexInteractionPerComponent[i];
+      TmpIndexArray = this->InteractionPerComponentIndex[i];
+      TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[i];
+      TmpSum=0.0;
+      int Pos=0;
+      for (; Pos < TmpNbrRealInteraction; ++Pos)
+	TmpSum +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]]*vSource[TmpIndexArray[Pos]];
+      for (int j=0; j < TmpNbrComplexInteraction; ++j, ++Pos)
+	TmpSum +=  Conj(ComplexInteractionCoefficients[TmpCoefficientIndexArray[Pos]])*vSource[TmpIndexArray[Pos]];
+      vDestination[k] += TmpSum + this->HamiltonianShift * vSource[k];
+    }
+  return vDestination;
 }	
 
 
@@ -977,7 +974,7 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelAddMultiplyFast
 // return value = reference on vector where result has been stored
 
 ComplexVector& AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelAddMultiplyPartialFastMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-										   int firstComponent, int nbrComponent)
+												int firstComponent, int nbrComponent)
 {
   int Index;
   Complex TmpInteraction;
@@ -1026,10 +1023,10 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelAddMultiplyPart
 	this->EvaluateMNOneBodyConjugateAddMultiplyComponent(TmpParticles, firstComponent + k, LastComponent, this->FastMultiplicationStep, vSource,vDestination);
 	
 	for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
-		  {
-				this->EvaluateMNTwoBodyConjugateAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
-			}
-			}
+	  {
+	    this->EvaluateMNTwoBodyConjugateAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+	  }
+      }
   delete TmpParticles;
   return vDestination;
 }
@@ -1046,7 +1043,7 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelAddMultiplyPart
 
 ComplexVector& AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelAddMultiplyDiskStorage(ComplexVector& vSource, ComplexVector& vDestination, 
 									   int firstComponent, int nbrComponent)
-  {
+{
   cout << "Attention: AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelAddMultiplyDiskStorage must be defined" << endl;
   return vDestination;
 }
@@ -1065,22 +1062,22 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelAddMultiplyDisk
 ComplexVector* AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
-
+  
   if (this->FastMultiplicationFlag == false)
     {
-			Complex * TmpCoefficients = new Complex [nbrVectors];
+      Complex * TmpCoefficients = new Complex [nbrVectors];
       ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
-			this->EvaluateMNOneBodyConjugateAddMultiplyComponent(TmpParticles, firstComponent,LastComponent,1, vSources, vDestinations , nbrVectors);
-			for (int i =   firstComponent; i <LastComponent; i++)
-				this->EvaluateMNTwoBodyConjugateAddMultiplyComponent(TmpParticles, i ,  vSources, vDestinations, nbrVectors,  TmpCoefficients);
-			delete [] TmpCoefficients;
-	delete TmpParticles;
-	}	  
+      this->EvaluateMNOneBodyConjugateAddMultiplyComponent(TmpParticles, firstComponent,LastComponent,1, vSources, vDestinations , nbrVectors);
+      for (int i =   firstComponent; i <LastComponent; i++)
+	this->EvaluateMNTwoBodyConjugateAddMultiplyComponent(TmpParticles, i ,  vSources, vDestinations, nbrVectors,  TmpCoefficients);
+      delete [] TmpCoefficients;
+      delete TmpParticles;
+    }	  
   else // fast calculation enabled
     {
       if (this->FastMultiplicationStep == 1)
 	{
-		this->ConjugateLowLevelMultipleAddMultiplyFastMultiply(vSources,vDestinations, nbrVectors,firstComponent, LastComponent);
+	  this->ConjugateLowLevelMultipleAddMultiplyFastMultiply(vSources,vDestinations, nbrVectors,firstComponent, LastComponent);
 	}
       else
 	{
@@ -1109,46 +1106,46 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelMultipleAddMult
 // return value = pointer to the array of vectors where result has been stored
 
 ComplexVector* AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelMultipleAddMultiplyFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
-											   int firstComponent, int lastComponent)
+												 int firstComponent, int lastComponent)
 {
-	Complex TmpCoefficient;
-	int* TmpIndexArray;
-	int Index;
-	double TmpRealCoefficient;
-	unsigned short* TmpCoefficientIndexArray;
-	unsigned short TmpNbrRealInteraction;
-	unsigned short TmpNbrComplexInteraction;
-	Complex* TmpSum = new Complex [nbrVectors];
-	int k = firstComponent;
-	firstComponent -= this->PrecalculationShift;
-	lastComponent -= this->PrecalculationShift;
-	for (int i = firstComponent; i < lastComponent; ++i, ++k)
-	    {
-	      TmpNbrRealInteraction = this->NbrRealInteractionPerComponent[i];
-	      TmpNbrComplexInteraction = this->NbrComplexInteractionPerComponent[i];
-	      TmpIndexArray = this->InteractionPerComponentIndex[i];
-	      TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[i];
-	      for (int l = 0; l < nbrVectors; ++l)
-		TmpSum[l] = 0.0;
-	      int Pos=0;
-	      for (; Pos < TmpNbrRealInteraction; ++Pos)
-		{
-		  Index = TmpIndexArray[Pos];
-		  TmpRealCoefficient = RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]];
-		  for (int l = 0; l < nbrVectors; ++l)
-		    TmpSum[l] +=  TmpRealCoefficient * vSources[l][Index];
-		}
-	      for (int j=0; j < TmpNbrComplexInteraction; ++j, ++Pos)
-		{
-		  Index = TmpIndexArray[Pos];
-		  TmpCoefficient = Conj(ComplexInteractionCoefficients[TmpCoefficientIndexArray[Pos]]);
-		  for (int l = 0; l < nbrVectors; ++l)
-		    vDestinations[l][Index] +=  TmpCoefficient * vSources[l][Index];
-		}
-	      for (int l = 0; l < nbrVectors; ++l)
-		TmpSum[l] += TmpSum[l] + this->HamiltonianShift * vSources[l][k];
-	    }
-	  delete [] TmpSum;  
+  Complex TmpCoefficient;
+  int* TmpIndexArray;
+  int Index;
+  double TmpRealCoefficient;
+  unsigned short* TmpCoefficientIndexArray;
+  unsigned short TmpNbrRealInteraction;
+  unsigned short TmpNbrComplexInteraction;
+  Complex* TmpSum = new Complex [nbrVectors];
+  int k = firstComponent;
+  firstComponent -= this->PrecalculationShift;
+  lastComponent -= this->PrecalculationShift;
+  for (int i = firstComponent; i < lastComponent; ++i, ++k)
+    {
+      TmpNbrRealInteraction = this->NbrRealInteractionPerComponent[i];
+      TmpNbrComplexInteraction = this->NbrComplexInteractionPerComponent[i];
+      TmpIndexArray = this->InteractionPerComponentIndex[i];
+      TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[i];
+      for (int l = 0; l < nbrVectors; ++l)
+	TmpSum[l] = 0.0;
+      int Pos=0;
+      for (; Pos < TmpNbrRealInteraction; ++Pos)
+	{
+	  Index = TmpIndexArray[Pos];
+	  TmpRealCoefficient = RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]];
+	  for (int l = 0; l < nbrVectors; ++l)
+	    TmpSum[l] +=  TmpRealCoefficient * vSources[l][Index];
+	}
+      for (int j=0; j < TmpNbrComplexInteraction; ++j, ++Pos)
+	{
+	  Index = TmpIndexArray[Pos];
+	  TmpCoefficient = Conj(ComplexInteractionCoefficients[TmpCoefficientIndexArray[Pos]]);
+	  for (int l = 0; l < nbrVectors; ++l)
+	    vDestinations[l][Index] +=  TmpCoefficient * vSources[l][Index];
+	}
+      for (int l = 0; l < nbrVectors; ++l)
+	TmpSum[l] += TmpSum[l] + this->HamiltonianShift * vSources[l][k];
+    }
+  delete [] TmpSum;  
   return vDestinations;
 }
 
@@ -1164,7 +1161,7 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelMultipleAddMult
 // return value = pointer to the array of vectors where result has been stored
 
 ComplexVector* AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelMultipleAddMultiplyPartialFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
-											   int firstComponent, int nbrComponent)
+													int firstComponent, int nbrComponent)
 {
   cout << "Calling non-defined function AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelMultipleAddMultiplyPartialFastMultiply"<<endl;
   return vDestinations;
@@ -1182,7 +1179,7 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelMultipleAddMult
 // return value = pointer to the array of vectors where result has been stored
 
 ComplexVector* AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelMultipleAddMultiplyDiskStorage(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
-										   int firstComponent, int nbrComponent)
+												int firstComponent, int nbrComponent)
 {
   cout << "Calling non-defined function AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelMultipleAddMultiplyDiskStorage!"<<endl;
   return vDestinations;
@@ -1200,7 +1197,7 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelMultipleAddMult
 ComplexVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
-	if (this->FastMultiplicationFlag == false)
+  if (this->FastMultiplicationFlag == false)
     {
       ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
       for (int i = firstComponent; i < LastComponent; ++i)
@@ -1212,7 +1209,7 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiply(Com
     {
       if (this->FastMultiplicationStep == 1)
 	{
-		this->HermitianLowLevelAddMultiplyFastMultiply(vSource, vDestination, firstComponent, LastComponent);
+	  this->HermitianLowLevelAddMultiplyFastMultiply(vSource, vDestination, firstComponent, LastComponent);
 	}
       else
 	{
@@ -1242,41 +1239,38 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiply(Com
 ComplexVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiplyFastMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 										   int firstComponent, int lastComponent)
 {
-	int* TmpIndexArray;
-	unsigned short* TmpCoefficientIndexArray;
-	Complex TmpElement;
-	unsigned short TmpNbrRealInteraction;
-	unsigned short TmpNbrComplexInteraction;
-	Complex TmpSum;
-	int k = firstComponent;
-	firstComponent -= this->PrecalculationShift;
-	lastComponent -= this->PrecalculationShift;
-	for (int i = firstComponent; i < lastComponent; ++i, ++k)
+  int* TmpIndexArray;
+  unsigned short* TmpCoefficientIndexArray;
+  Complex TmpElement;
+  unsigned short TmpNbrRealInteraction;
+  unsigned short TmpNbrComplexInteraction;
+  Complex TmpSum;
+  int k = firstComponent;
+  firstComponent -= this->PrecalculationShift;
+  lastComponent -= this->PrecalculationShift;
+  for (int i = firstComponent; i < lastComponent; ++i, ++k)
+    {
+      TmpNbrRealInteraction = this->NbrRealInteractionPerComponent[i];
+      TmpNbrComplexInteraction = this->NbrComplexInteractionPerComponent[i];
+      TmpIndexArray = this->InteractionPerComponentIndex[i];
+      TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[i];
+      TmpElement = vSource[k];
+      TmpSum = 0.0;
+      int Pos=0;
+      for (; Pos < TmpNbrRealInteraction; ++Pos)
 	{
-		TmpNbrRealInteraction = this->NbrRealInteractionPerComponent[i];
-		TmpNbrComplexInteraction = this->NbrComplexInteractionPerComponent[i];
-		TmpIndexArray = this->InteractionPerComponentIndex[i];
-		TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[i];
-		TmpElement = vSource[k];
-		TmpSum = 0.0;
-		int Pos=0;
-		for (; Pos < TmpNbrRealInteraction; ++Pos)
-		{
-			vDestination[TmpIndexArray[Pos]] +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]]*TmpElement;
-			TmpSum +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]] * vSource[TmpIndexArray[Pos]];
-		}
-		for (int j=0; j < TmpNbrComplexInteraction; ++j, ++Pos)
-		{
-			vDestination[TmpIndexArray[Pos]] +=  ComplexInteractionCoefficients[TmpCoefficientIndexArray[Pos]]*TmpElement;
-			TmpSum +=  Conj(ComplexInteractionCoefficients[TmpCoefficientIndexArray[Pos]]) * vSource[TmpIndexArray[Pos]];
-		}
-		vDestination[k] += TmpSum + this->HamiltonianShift * TmpElement;
+	  vDestination[TmpIndexArray[Pos]] +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]]*TmpElement;
+	  TmpSum +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]] * vSource[TmpIndexArray[Pos]];
 	}
-	
-	return vDestination;
+      for (int j=0; j < TmpNbrComplexInteraction; ++j, ++Pos)
+	{
+	  vDestination[TmpIndexArray[Pos]] +=  ComplexInteractionCoefficients[TmpCoefficientIndexArray[Pos]]*TmpElement;
+	  TmpSum +=  Conj(ComplexInteractionCoefficients[TmpCoefficientIndexArray[Pos]]) * vSource[TmpIndexArray[Pos]];
+	}
+      vDestination[k] += TmpSum + this->HamiltonianShift * TmpElement;
+    }
+  return vDestination;
 }
-
-
 
 // multiply a vector by the current hamiltonian for a given range of indices 
 // and add result to another vector, low level function (no architecture optimization)
@@ -1289,7 +1283,7 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiplyFast
 // return value = reference on vector where result has been stored
 
 ComplexVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiplyPartialFastMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-										   int firstComponent, int nbrComponent)
+												int firstComponent, int nbrComponent)
 {
   int Index;
   int LastComponent = firstComponent + nbrComponent;
@@ -1336,7 +1330,7 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiplyPart
       l += this->FastMultiplicationStep;
       ++Pos;
     }
-
+  
   firstComponent += this->PrecalculationShift;
   LastComponent += this->PrecalculationShift;
   for (int k = 0; k < this->FastMultiplicationStep; ++k)
@@ -1344,10 +1338,9 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiplyPart
       {
 	this->HermitianEvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent + k, LastComponent,this->FastMultiplicationStep, vSource, vDestination);
 	for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
-		  {
-				this->HermitianEvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
-			}
-	
+	  {
+	    this->HermitianEvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+	  }
       }
   delete TmpParticles;
   return vDestination;
@@ -1364,8 +1357,8 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiplyPart
 // return value = reference on vector where result has been stored
 
 ComplexVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiplyDiskStorage(ComplexVector& vSource, ComplexVector& vDestination, 
-									   int firstComponent, int nbrComponent)
-  {
+											int firstComponent, int nbrComponent)
+{
   cout << "Attention: AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiplyDiskStorage must be defined" << endl;
   return vDestination;
 }
@@ -1386,13 +1379,13 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::HermitianLowLevelMultipleAddMult
   int LastComponent = firstComponent + nbrComponent;
   if (this->FastMultiplicationFlag == false)
     {
-			Complex* TmpCoefficients = new Complex [nbrVectors];
+      Complex* TmpCoefficients = new Complex [nbrVectors];
       ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
-			this->HermitianEvaluateMNOneBodyAddMultiplyComponent(TmpParticles,firstComponent, LastComponent, 1, vSources, vDestinations,nbrVectors);
-			    for (int i = firstComponent; i < LastComponent; ++i)
-		{
-			this->HermitianEvaluateMNTwoBodyAddMultiplyComponent(TmpParticles,i , vSources,  vDestinations,  nbrVectors, TmpCoefficients);
-		}
+      this->HermitianEvaluateMNOneBodyAddMultiplyComponent(TmpParticles,firstComponent, LastComponent, 1, vSources, vDestinations,nbrVectors);
+      for (int i = firstComponent; i < LastComponent; ++i)
+	{
+	  this->HermitianEvaluateMNTwoBodyAddMultiplyComponent(TmpParticles,i , vSources,  vDestinations,  nbrVectors, TmpCoefficients);
+	}
       delete [] TmpCoefficients;
       delete TmpParticles;
     }
@@ -1400,7 +1393,7 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::HermitianLowLevelMultipleAddMult
     {
       if (this->FastMultiplicationStep == 1)
 	{
-		this->HermitianLowLevelMultipleAddMultiplyPartialFastMultiply( vSources, vDestinations, nbrVectors, firstComponent, LastComponent);
+	  this->HermitianLowLevelMultipleAddMultiplyPartialFastMultiply( vSources, vDestinations, nbrVectors, firstComponent, LastComponent);
 	}
       else
 	{
@@ -1431,57 +1424,57 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::HermitianLowLevelMultipleAddMult
 
 ComplexVector* AbstractQHEOnLatticeHamiltonian::HermitianLowLevelMultipleAddMultiplyFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, int firstComponent, int lastComponent)
 {
-	int* TmpIndexArray;
-	int Index;
-	double TmpRealCoefficient;
-	Complex TmpCoefficient;
-	unsigned short* TmpCoefficientIndexArray;
-	unsigned short TmpNbrRealInteraction;
-	unsigned short TmpNbrComplexInteraction;
-	Complex* Coefficient2 = new Complex [nbrVectors];
-	Complex* TmpSum = new Complex[nbrVectors];
-	for (int l = 0; l < nbrVectors; ++l)
-		TmpSum[l] = 0.0;
-	int k = firstComponent;
-	firstComponent -= this->PrecalculationShift;
-	lastComponent -= this->PrecalculationShift;
-	for (int i = firstComponent; i < lastComponent; ++i, ++k)
+  int* TmpIndexArray;
+  int Index;
+  double TmpRealCoefficient;
+  Complex TmpCoefficient;
+  unsigned short* TmpCoefficientIndexArray;
+  unsigned short TmpNbrRealInteraction;
+  unsigned short TmpNbrComplexInteraction;
+  Complex* Coefficient2 = new Complex [nbrVectors];
+  Complex* TmpSum = new Complex[nbrVectors];
+  for (int l = 0; l < nbrVectors; ++l)
+    TmpSum[l] = 0.0;
+  int k = firstComponent;
+  firstComponent -= this->PrecalculationShift;
+  lastComponent -= this->PrecalculationShift;
+  for (int i = firstComponent; i < lastComponent; ++i, ++k)
+    {
+      TmpNbrRealInteraction = this->NbrRealInteractionPerComponent[i];
+      TmpNbrComplexInteraction = this->NbrComplexInteractionPerComponent[i];
+      TmpIndexArray = this->InteractionPerComponentIndex[i];
+      TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[i];
+      for (int l = 0; l < nbrVectors; ++l)
 	{
-		TmpNbrRealInteraction = this->NbrRealInteractionPerComponent[i];
-		TmpNbrComplexInteraction = this->NbrComplexInteractionPerComponent[i];
-		TmpIndexArray = this->InteractionPerComponentIndex[i];
-		TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[i];
-		for (int l = 0; l < nbrVectors; ++l)
-		{
-			TmpSum[l] = 0.0;
-			Coefficient2[l] = vSources[l][k];
-		}
-		int Pos=0;
-		for (; Pos < TmpNbrRealInteraction; ++Pos)
-		{
-			Index = TmpIndexArray[Pos];
-			TmpRealCoefficient = RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]];
-			for (int l = 0; l < nbrVectors; ++l)
-			{
-				vDestinations[l][Index] +=  TmpRealCoefficient * Coefficient2[l];
-				TmpSum[l] += TmpRealCoefficient * vSources[l][Index];
-			}
-		}
-		for (int j = 0; j < TmpNbrComplexInteraction; ++j, ++Pos)
-		{
-			Index = TmpIndexArray[Pos];
-			TmpCoefficient = ComplexInteractionCoefficients[TmpCoefficientIndexArray[Pos]];
-			for (int l = 0; l < nbrVectors; ++l)
-				vDestinations[l][Index] +=  TmpCoefficient * Coefficient2[l];
-			TmpCoefficient.Conjugate();
-			for (int l = 0; l < nbrVectors; ++l)
-				TmpSum[l] += TmpCoefficient * vSources[l][Index];
-		}
-		for (int l = 0; l < nbrVectors; ++l)
-			vDestinations[l][k] += TmpSum[l] + this->HamiltonianShift * Coefficient2[l];
+	  TmpSum[l] = 0.0;
+	  Coefficient2[l] = vSources[l][k];
 	}
-	delete [] Coefficient2;
-	return vDestinations;
+      int Pos=0;
+      for (; Pos < TmpNbrRealInteraction; ++Pos)
+	{
+	  Index = TmpIndexArray[Pos];
+	  TmpRealCoefficient = RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]];
+	  for (int l = 0; l < nbrVectors; ++l)
+	    {
+	      vDestinations[l][Index] +=  TmpRealCoefficient * Coefficient2[l];
+	      TmpSum[l] += TmpRealCoefficient * vSources[l][Index];
+	    }
+	}
+      for (int j = 0; j < TmpNbrComplexInteraction; ++j, ++Pos)
+	{
+	  Index = TmpIndexArray[Pos];
+	  TmpCoefficient = ComplexInteractionCoefficients[TmpCoefficientIndexArray[Pos]];
+	  for (int l = 0; l < nbrVectors; ++l)
+	    vDestinations[l][Index] +=  TmpCoefficient * Coefficient2[l];
+	  TmpCoefficient.Conjugate();
+	  for (int l = 0; l < nbrVectors; ++l)
+	    TmpSum[l] += TmpCoefficient * vSources[l][Index];
+	}
+      for (int l = 0; l < nbrVectors; ++l)
+	vDestinations[l][k] += TmpSum[l] + this->HamiltonianShift * Coefficient2[l];
+    }
+  delete [] Coefficient2;
+  return vDestinations;
 }
 
 
@@ -1498,7 +1491,7 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::HermitianLowLevelMultipleAddMult
 // return value = pointer to the array of vectors where result has been stored
 
 ComplexVector* AbstractQHEOnLatticeHamiltonian::HermitianLowLevelMultipleAddMultiplyPartialFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
-											   int firstComponent, int nbrComponent)
+													int firstComponent, int nbrComponent)
 {
   cout << "Calling non-defined function AbstractQHEOnLatticeHamiltonian::HermitianLowLevelMultipleAddMultiplyPartialFastMultiply"<<endl;
   return vDestinations;
@@ -1516,7 +1509,7 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::HermitianLowLevelMultipleAddMult
 // return value = pointer to the array of vectors where result has been stored
 
 ComplexVector* AbstractQHEOnLatticeHamiltonian::HermitianLowLevelMultipleAddMultiplyDiskStorage(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
-										   int firstComponent, int nbrComponent)
+												int firstComponent, int nbrComponent)
 {
   cout << "Calling non-defined function AbstractQHEOnLatticeHamiltonian::HermitianLowLevelMultipleAddMultiplyDiskStorage!"<<endl;
   return vDestinations;
@@ -1537,18 +1530,17 @@ RealVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiply(RealVector& vSo
   int LastComponent = firstComponent + nbrComponent;
   if (this->FastMultiplicationFlag == false)
     {
-			ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
-			for (int i = firstComponent; i < LastComponent; ++i)
-				this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
-			this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSource, vDestination);
+      ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
+      for (int i = firstComponent; i < LastComponent; ++i)
+	this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+      this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSource, vDestination);
       delete TmpParticles;
     }
   else // fast calculation enabled
     {
       if (this->FastMultiplicationStep == 1)
 	{
-		this->LowLevelAddMultiplyFastMultiply(vSource, vDestination, firstComponent, LastComponent);
-
+	  this->LowLevelAddMultiplyFastMultiply(vSource, vDestination, firstComponent, LastComponent);
 	}
       else
 	{
@@ -1562,7 +1554,6 @@ RealVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiply(RealVector& vSo
 	    }
 	}
     }
-
   return vDestination;
 }
 
@@ -1579,27 +1570,27 @@ RealVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiply(RealVector& vSo
 RealVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiplyFastMultiply(RealVector& vSource, RealVector& vDestination, 
 										   int firstComponent, int lastComponent)
 {
-	int* TmpIndexArray;
-	unsigned short* TmpCoefficientIndexArray;
-	double TmpRe;
-	unsigned short TmpNbrRealInteraction;
-	int k = firstComponent;
-	firstComponent -= this->PrecalculationShift;
-	lastComponent -= this->PrecalculationShift;
-	for (int i = firstComponent; i < lastComponent; ++i, ++k)
+  int* TmpIndexArray;
+  unsigned short* TmpCoefficientIndexArray;
+  double TmpRe;
+  unsigned short TmpNbrRealInteraction;
+  int k = firstComponent;
+  firstComponent -= this->PrecalculationShift;
+  lastComponent -= this->PrecalculationShift;
+  for (int i = firstComponent; i < lastComponent; ++i, ++k)
+    {
+      TmpNbrRealInteraction = this->NbrRealInteractionPerComponent[i];
+      TmpIndexArray = this->InteractionPerComponentIndex[i];
+      TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[i];
+      TmpRe = vSource[k];
+      int Pos=0;
+      for (; Pos < TmpNbrRealInteraction; ++Pos)
 	{
-		TmpNbrRealInteraction = this->NbrRealInteractionPerComponent[i];
-		TmpIndexArray = this->InteractionPerComponentIndex[i];
-		TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[i];
-		TmpRe = vSource[k];
-		int Pos=0;
-		for (; Pos < TmpNbrRealInteraction; ++Pos)
-			{
-				vDestination[TmpIndexArray[Pos]] +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]]*TmpRe;
-			}
-			vDestination[k] += this->HamiltonianShift * TmpRe;
+	  vDestination[TmpIndexArray[Pos]] +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]]*TmpRe;
 	}
-	return vDestination;
+      vDestination[k] += this->HamiltonianShift * TmpRe;
+    }
+  return vDestination;
 }
 
 
@@ -1651,17 +1642,17 @@ RealVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiplyPartialFastMulti
       l += this->FastMultiplicationStep;
       ++Pos;
     }
-
+  
   firstComponent += this->PrecalculationShift;
   LastComponent += this->PrecalculationShift;
   for (int k = 0; k < this->FastMultiplicationStep; ++k)
     if (PosMod != k)
       {
-				
-		for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
-			this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
-		this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent + k, LastComponent, this->FastMultiplicationStep, vSource, vDestination);
-	  }
+	
+	for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
+	  this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+	this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent + k, LastComponent, this->FastMultiplicationStep, vSource, vDestination);
+      }
   delete TmpParticles;
   return vDestination;
 }
@@ -1677,8 +1668,8 @@ RealVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiplyPartialFastMulti
 // return value = reference on vector where result has been stored
 
 RealVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiplyDiskStorage(RealVector& vSource, RealVector& vDestination, 
-									   int firstComponent, int nbrComponent)
-  {
+									    int firstComponent, int nbrComponent)
+{
   cout << "Attention: AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiplyDiskStorage must be defined" << endl;
   return vDestination;
 }
@@ -1695,25 +1686,24 @@ RealVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiplyDiskStorage(Real
 // return value = pointer to the array of vectors where result has been stored
 
 RealVector* AbstractQHEOnLatticeHamiltonian::LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
-									int firstComponent, int nbrComponent)
+									 int firstComponent, int nbrComponent)
 {
-	
-	  int LastComponent = firstComponent + nbrComponent;
+  int LastComponent = firstComponent + nbrComponent;
   if (this->FastMultiplicationFlag == false)
     {
-			double* Coefficient2 = new double [nbrVectors];
-			ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
-			for (int i = firstComponent; i < LastComponent; ++i)
-				this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
+      double* Coefficient2 = new double [nbrVectors];
+      ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
+      for (int i = firstComponent; i < LastComponent; ++i)
+	this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
       this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles , firstComponent , LastComponent , 1 , vSources , vDestinations,nbrVectors);
-			delete [] Coefficient2;
+      delete [] Coefficient2;
       delete TmpParticles;
     }
   else // fast calculation enabled
     {
       if (this->FastMultiplicationStep == 1)
 	{
-		this->LowLevelMultipleAddMultiplyPartialFastMultiply(vSources, vDestinations, nbrVectors, firstComponent, LastComponent);
+	  this->LowLevelMultipleAddMultiplyPartialFastMultiply(vSources, vDestinations, nbrVectors, firstComponent, LastComponent);
 	}
       else
 	{
@@ -1732,38 +1722,38 @@ RealVector* AbstractQHEOnLatticeHamiltonian::LowLevelMultipleAddMultiply(RealVec
 
 
 RealVector* AbstractQHEOnLatticeHamiltonian::LowLevelMultipleAddMultiplyFastMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
-											   int firstComponent, int lastComponent)
+										     int firstComponent, int lastComponent)
 {
-	int* TmpIndexArray;
-	int Index;
-	double TmpRealCoefficient;
-	unsigned short* TmpCoefficientIndexArray;
-	unsigned short TmpNbrRealInteraction;
-	double* Coefficient2 = new double [nbrVectors];
-	int k = firstComponent;
-	firstComponent -= this->PrecalculationShift;
-	lastComponent -= this->PrecalculationShift;
-	for (int i = firstComponent; i < lastComponent; ++i, ++k)
+  int* TmpIndexArray;
+  int Index;
+  double TmpRealCoefficient;
+  unsigned short* TmpCoefficientIndexArray;
+  unsigned short TmpNbrRealInteraction;
+  double* Coefficient2 = new double [nbrVectors];
+  int k = firstComponent;
+  firstComponent -= this->PrecalculationShift;
+  lastComponent -= this->PrecalculationShift;
+  for (int i = firstComponent; i < lastComponent; ++i, ++k)
+    {
+      TmpNbrRealInteraction = this->NbrRealInteractionPerComponent[i];
+      TmpIndexArray = this->InteractionPerComponentIndex[i];
+      TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[i];
+      for (int l = 0; l < nbrVectors; ++l)
 	{
-		TmpNbrRealInteraction = this->NbrRealInteractionPerComponent[i];
-		TmpIndexArray = this->InteractionPerComponentIndex[i];
-		TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[i];
-		for (int l = 0; l < nbrVectors; ++l)
-		{
-			Coefficient2[l] = vSources[l][k];
-			vDestinations[l][k] += this->HamiltonianShift * Coefficient2[l];
-		}
-		int Pos=0;
-		for (; Pos < TmpNbrRealInteraction; ++Pos)
-		{
-			Index = TmpIndexArray[Pos];
-			TmpRealCoefficient = RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]];
-			for (int l = 0; l < nbrVectors; ++l)
-				vDestinations[l][Index] +=  TmpRealCoefficient * Coefficient2[l];
-		}
+	  Coefficient2[l] = vSources[l][k];
+	  vDestinations[l][k] += this->HamiltonianShift * Coefficient2[l];
 	}
-	delete [] Coefficient2;
-	return vDestinations;
+      int Pos=0;
+      for (; Pos < TmpNbrRealInteraction; ++Pos)
+	{
+	  Index = TmpIndexArray[Pos];
+	  TmpRealCoefficient = RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]];
+	  for (int l = 0; l < nbrVectors; ++l)
+	    vDestinations[l][Index] +=  TmpRealCoefficient * Coefficient2[l];
+	}
+    }
+  delete [] Coefficient2;
+  return vDestinations;
 }
 
 // multiply a set of vectors by the current hamiltonian for a given range of indices 
@@ -1796,7 +1786,7 @@ RealVector* AbstractQHEOnLatticeHamiltonian::LowLevelMultipleAddMultiplyPartialF
 // return value = pointer to the array of vectors where result has been stored
 
 RealVector* AbstractQHEOnLatticeHamiltonian::LowLevelMultipleAddMultiplyDiskStorage(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
-										   int firstComponent, int nbrComponent)
+										    int firstComponent, int nbrComponent)
 {
   cout << "Calling non-defined function AbstractQHEOnLatticeHamiltonian::LowLevelMultipleAddMultiplyDiskStorage!"<<endl;
   return vDestinations;
@@ -1813,21 +1803,21 @@ RealVector* AbstractQHEOnLatticeHamiltonian::LowLevelMultipleAddMultiplyDiskStor
 
 RealVector& AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelAddMultiply(RealVector& vSource,RealVector& vDestination,  int firstComponent, int nbrComponent)
 {
-	int LastComponent = firstComponent + nbrComponent;
+  int LastComponent = firstComponent + nbrComponent;
   if (this->FastMultiplicationFlag == false)
     {
       ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
-			this->EvaluateMNOneBodyConjugateAddMultiplyComponent(TmpParticles,firstComponent,LastComponent,1, vSource, vDestination);
-			for (int i = firstComponent; i < LastComponent; ++i)
-				this->EvaluateMNTwoBodyConjugateAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+      this->EvaluateMNOneBodyConjugateAddMultiplyComponent(TmpParticles,firstComponent,LastComponent,1, vSource, vDestination);
+      for (int i = firstComponent; i < LastComponent; ++i)
+	this->EvaluateMNTwoBodyConjugateAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
       delete TmpParticles;
     }
   else // fast calculation enabled
     {
       if (this->FastMultiplicationStep == 1)
-			{
-				this->ConjugateLowLevelAddMultiplyFastMultiply(vSource, vDestination,firstComponent, LastComponent);
-			}
+	{
+	  this->ConjugateLowLevelAddMultiplyFastMultiply(vSource, vDestination,firstComponent, LastComponent);
+	}
       else
 	{
 	  if (this->DiskStorageFlag == false)
@@ -1857,25 +1847,25 @@ RealVector& AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelAddMultiply(RealVe
 RealVector& AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelAddMultiplyFastMultiply(RealVector& vSource, RealVector& vDestination, 
 										   int firstComponent, int lastComponent)
 {
-	int* TmpIndexArray;
-	unsigned short* TmpCoefficientIndexArray;
-	double TmpSum;
-	unsigned short TmpNbrRealInteraction;
-	int k = firstComponent;
-	firstComponent -= this->PrecalculationShift;
-	lastComponent -= this->PrecalculationShift;
-	for (int i = firstComponent; i < lastComponent; ++i, ++k)
-	{
-		TmpNbrRealInteraction = this->NbrRealInteractionPerComponent[i];
-		TmpIndexArray = this->InteractionPerComponentIndex[i];
-		TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[i];
-		TmpSum=0.0;
-		int Pos=0;
-		for (; Pos < TmpNbrRealInteraction; ++Pos)
-			TmpSum +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]]*vSource[TmpIndexArray[Pos]];
-		vDestination[k] += TmpSum + this->HamiltonianShift * vSource[k];
-	}
-	return vDestination;
+  int* TmpIndexArray;
+  unsigned short* TmpCoefficientIndexArray;
+  double TmpSum;
+  unsigned short TmpNbrRealInteraction;
+  int k = firstComponent;
+  firstComponent -= this->PrecalculationShift;
+  lastComponent -= this->PrecalculationShift;
+  for (int i = firstComponent; i < lastComponent; ++i, ++k)
+    {
+      TmpNbrRealInteraction = this->NbrRealInteractionPerComponent[i];
+      TmpIndexArray = this->InteractionPerComponentIndex[i];
+      TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[i];
+      TmpSum=0.0;
+      int Pos=0;
+      for (; Pos < TmpNbrRealInteraction; ++Pos)
+	TmpSum +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]]*vSource[TmpIndexArray[Pos]];
+      vDestination[k] += TmpSum + this->HamiltonianShift * vSource[k];
+    }
+  return vDestination;
 }
 
 
@@ -1891,7 +1881,7 @@ RealVector& AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelAddMultiplyFastMul
 // return value = reference on vector where result has been stored
 
 RealVector& AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelAddMultiplyPartialFastMultiply(RealVector& vSource, RealVector& vDestination, 
-										   int firstComponent, int nbrComponent)
+											     int firstComponent, int nbrComponent)
 {
   int Index;
   double TmpInteraction;
@@ -1929,16 +1919,16 @@ RealVector& AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelAddMultiplyPartial
 
   firstComponent += this->PrecalculationShift;
   LastComponent += this->PrecalculationShift;
-   for (int k = 0; k < this->FastMultiplicationStep; ++k)
+  for (int k = 0; k < this->FastMultiplicationStep; ++k)
     if (PosMod != k)
       {
 	this->EvaluateMNOneBodyConjugateAddMultiplyComponent(TmpParticles, firstComponent + k, LastComponent, this->FastMultiplicationStep, vSource,vDestination);
 	
 	for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
-		  {
-				this->EvaluateMNTwoBodyConjugateAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
-			}
-			}
+	  {
+	    this->EvaluateMNTwoBodyConjugateAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+	  }
+      }
   delete TmpParticles;
   return vDestination;
 }
@@ -1955,7 +1945,7 @@ RealVector& AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelAddMultiplyPartial
 
 RealVector& AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelAddMultiplyDiskStorage(RealVector& vSource, RealVector& vDestination, 
 									   int firstComponent, int nbrComponent)
-  {
+{
   cout << "Attention: AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelAddMultiplyDiskStorage must be defined" << endl;
   return vDestination;
 }
@@ -1972,25 +1962,25 @@ RealVector& AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelAddMultiplyDiskSto
 // return value = pointer to the array of vectors where result has been stored
 
 RealVector* AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
-									int firstComponent, int nbrComponent)
+										  int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
-	  if (this->FastMultiplicationFlag == false)
+  if (this->FastMultiplicationFlag == false)
     {
-			double * TmpCoefficients = new double [nbrVectors];
+      double * TmpCoefficients = new double [nbrVectors];
       int Index;
       ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
-			this->EvaluateMNOneBodyConjugateAddMultiplyComponent(TmpParticles, firstComponent,LastComponent,1, vSources, vDestinations , nbrVectors);
-			for (int i =   firstComponent; i <LastComponent; i++)
-				this->EvaluateMNTwoBodyConjugateAddMultiplyComponent(TmpParticles, i ,  vSources, vDestinations, nbrVectors,  TmpCoefficients);
-	  delete [] TmpCoefficients;
-	delete TmpParticles;
-	}	  
-	else // fast calculation enabled
+      this->EvaluateMNOneBodyConjugateAddMultiplyComponent(TmpParticles, firstComponent,LastComponent,1, vSources, vDestinations , nbrVectors);
+      for (int i =   firstComponent; i <LastComponent; i++)
+	this->EvaluateMNTwoBodyConjugateAddMultiplyComponent(TmpParticles, i ,  vSources, vDestinations, nbrVectors,  TmpCoefficients);
+      delete [] TmpCoefficients;
+      delete TmpParticles;
+    }	  
+  else // fast calculation enabled
     {
       if (this->FastMultiplicationStep == 1)
 	{
-		this->ConjugateLowLevelMultipleAddMultiplyPartialFastMultiply(vSources, vDestinations, nbrVectors, firstComponent, LastComponent);
+	  this->ConjugateLowLevelMultipleAddMultiplyPartialFastMultiply(vSources, vDestinations, nbrVectors, firstComponent, LastComponent);
 	}
       else
 	{
@@ -2019,37 +2009,37 @@ RealVector* AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelMultipleAddMultipl
 // return value = pointer to the array of vectors where result has been stored
 
 RealVector* AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelMultipleAddMultiplyFastMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
-											   int firstComponent, int lastComponent)
+											      int firstComponent, int lastComponent)
 {
-	int* TmpIndexArray;
-	  int Index;
-	  double TmpRealCoefficient;
-	  unsigned short* TmpCoefficientIndexArray;
-	  unsigned short TmpNbrRealInteraction;
-	  double* TmpSum = new double [nbrVectors];
-	  int k = firstComponent;
-	  firstComponent -= this->PrecalculationShift;
-	  lastComponent -= this->PrecalculationShift;
-		for (int i = firstComponent; i < lastComponent; ++i, ++k)
-		{
-			TmpNbrRealInteraction = this->NbrRealInteractionPerComponent[i];
-			TmpIndexArray = this->InteractionPerComponentIndex[i];
-			TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[i];
-			for (int l = 0; l < nbrVectors; ++l)
-				TmpSum[l] = 0.0;
-			int Pos=0;
-			for (; Pos < TmpNbrRealInteraction; ++Pos)
-			{
-				Index = TmpIndexArray[Pos];
-				TmpRealCoefficient = RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]];
-				for (int l = 0; l < nbrVectors; ++l)
-					TmpSum[l] +=  TmpRealCoefficient * vSources[l][Index];
-			}
-			for (int l = 0; l < nbrVectors; ++l)
-				TmpSum[l] += TmpSum[l] + this->HamiltonianShift * vSources[l][k];
-		}
-		delete [] TmpSum;
-		return vDestinations;
+  int* TmpIndexArray;
+  int Index;
+  double TmpRealCoefficient;
+  unsigned short* TmpCoefficientIndexArray;
+  unsigned short TmpNbrRealInteraction;
+  double* TmpSum = new double [nbrVectors];
+  int k = firstComponent;
+  firstComponent -= this->PrecalculationShift;
+  lastComponent -= this->PrecalculationShift;
+  for (int i = firstComponent; i < lastComponent; ++i, ++k)
+    {
+      TmpNbrRealInteraction = this->NbrRealInteractionPerComponent[i];
+      TmpIndexArray = this->InteractionPerComponentIndex[i];
+      TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[i];
+      for (int l = 0; l < nbrVectors; ++l)
+	TmpSum[l] = 0.0;
+      int Pos=0;
+      for (; Pos < TmpNbrRealInteraction; ++Pos)
+	{
+	  Index = TmpIndexArray[Pos];
+	  TmpRealCoefficient = RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]];
+	  for (int l = 0; l < nbrVectors; ++l)
+	    TmpSum[l] +=  TmpRealCoefficient * vSources[l][Index];
+	}
+      for (int l = 0; l < nbrVectors; ++l)
+	TmpSum[l] += TmpSum[l] + this->HamiltonianShift * vSources[l][k];
+    }
+  delete [] TmpSum;
+  return vDestinations;
 }
 
 
@@ -2101,11 +2091,11 @@ RealVector* AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelMultipleAddMultipl
 RealVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
-	if (this->FastMultiplicationFlag == false)
+  if (this->FastMultiplicationFlag == false)
     {
       ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
       for (int i = firstComponent; i < LastComponent; ++i)
-				this->HermitianEvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+	this->HermitianEvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
       this->HermitianEvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSource, vDestination);
       delete TmpParticles;
     }
@@ -2113,7 +2103,7 @@ RealVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiply(RealVe
     {
       if (this->FastMultiplicationStep == 1)
 	{
-		this->HermitianLowLevelAddMultiplyFastMultiply(vSource, vDestination, firstComponent, LastComponent);
+	  this->HermitianLowLevelAddMultiplyFastMultiply(vSource, vDestination, firstComponent, LastComponent);
 	}
       else
 	{
@@ -2143,32 +2133,32 @@ RealVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiply(RealVe
 RealVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiplyFastMultiply(RealVector& vSource, RealVector& vDestination, 
 										   int firstComponent, int lastComponent)
 {
-	int* TmpIndexArray;
-	unsigned short* TmpCoefficientIndexArray;
-	double TmpElement;
-	unsigned short TmpNbrRealInteraction;
-	unsigned short TmpNbrComplexInteraction;
-	double TmpSum;
-	int k = firstComponent;
-	firstComponent -= this->PrecalculationShift;
-	lastComponent -= this->PrecalculationShift;
-	for (int i = firstComponent; i < lastComponent; ++i, ++k)
+  int* TmpIndexArray;
+  unsigned short* TmpCoefficientIndexArray;
+  double TmpElement;
+  unsigned short TmpNbrRealInteraction;
+  unsigned short TmpNbrComplexInteraction;
+  double TmpSum;
+  int k = firstComponent;
+  firstComponent -= this->PrecalculationShift;
+  lastComponent -= this->PrecalculationShift;
+  for (int i = firstComponent; i < lastComponent; ++i, ++k)
+    {
+      TmpNbrRealInteraction = this->NbrRealInteractionPerComponent[i];
+      TmpNbrComplexInteraction = this->NbrComplexInteractionPerComponent[i];
+      TmpIndexArray = this->InteractionPerComponentIndex[i];
+      TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[i];
+      TmpElement = vSource[k];
+      TmpSum = 0.0;
+      int Pos=0;
+      for (; Pos < TmpNbrRealInteraction; ++Pos)
 	{
-		TmpNbrRealInteraction = this->NbrRealInteractionPerComponent[i];
-		TmpNbrComplexInteraction = this->NbrComplexInteractionPerComponent[i];
-		TmpIndexArray = this->InteractionPerComponentIndex[i];
-		TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[i];
-		TmpElement = vSource[k];
-		TmpSum = 0.0;
-		int Pos=0;
-		for (; Pos < TmpNbrRealInteraction; ++Pos)
-		{
-			vDestination[TmpIndexArray[Pos]] +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]]*TmpElement;
-			TmpSum +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]] * vSource[TmpIndexArray[Pos]];
-		}
-		vDestination[k] += TmpSum + this->HamiltonianShift * TmpElement;
+	  vDestination[TmpIndexArray[Pos]] +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]]*TmpElement;
+	  TmpSum +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]] * vSource[TmpIndexArray[Pos]];
 	}
-	return vDestination;
+      vDestination[k] += TmpSum + this->HamiltonianShift * TmpElement;
+    }
+  return vDestination;
 }
 
 // multiply a vector by the current hamiltonian for a given range of indices 
@@ -2182,7 +2172,7 @@ RealVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiplyFastMul
 // return value = reference on vector where result has been stored
 
 RealVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiplyPartialFastMultiply(RealVector& vSource, RealVector& vDestination, 
-										   int firstComponent, int nbrComponent)
+											     int firstComponent, int nbrComponent)
 {
   int Index;
   int LastComponent = firstComponent + nbrComponent;
@@ -2230,12 +2220,11 @@ RealVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiplyPartial
   for (int k = 0; k < this->FastMultiplicationStep; ++k)
     if (PosMod != k)
       {
-				this->HermitianEvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent + k, LastComponent,this->FastMultiplicationStep, vSource, vDestination);
+	this->HermitianEvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent + k, LastComponent,this->FastMultiplicationStep, vSource, vDestination);
 	for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
-		  {
-				this->HermitianEvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
-			}
-	
+	  {
+	    this->HermitianEvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+	  }
       }
   delete TmpParticles;
   return vDestination;
@@ -2271,16 +2260,16 @@ RealVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiplyDiskSto
 
 RealVector* AbstractQHEOnLatticeHamiltonian::HermitianLowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, int firstComponent, int nbrComponent)
 {
-	int LastComponent = firstComponent + nbrComponent;
+  int LastComponent = firstComponent + nbrComponent;
   if (this->FastMultiplicationFlag == false)
     {
-			double* TmpCoefficients = new double [nbrVectors];
+      double* TmpCoefficients = new double [nbrVectors];
       ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
-			this->HermitianEvaluateMNOneBodyAddMultiplyComponent(TmpParticles,firstComponent, LastComponent, 1, vSources, vDestinations,nbrVectors);
-			    for (int i = firstComponent; i < LastComponent; ++i)
-		{
-			this->HermitianEvaluateMNTwoBodyAddMultiplyComponent(TmpParticles,i , vSources,  vDestinations,  nbrVectors, TmpCoefficients);
-		}
+      this->HermitianEvaluateMNOneBodyAddMultiplyComponent(TmpParticles,firstComponent, LastComponent, 1, vSources, vDestinations,nbrVectors);
+      for (int i = firstComponent; i < LastComponent; ++i)
+	{
+	  this->HermitianEvaluateMNTwoBodyAddMultiplyComponent(TmpParticles,i , vSources,  vDestinations,  nbrVectors, TmpCoefficients);
+	}
       delete [] TmpCoefficients;
       delete TmpParticles;
     }
@@ -2288,7 +2277,7 @@ RealVector* AbstractQHEOnLatticeHamiltonian::HermitianLowLevelMultipleAddMultipl
     {
       if (this->FastMultiplicationStep == 1)
 	{
-		this->HermitianLowLevelMultipleAddMultiplyPartialFastMultiply(vSources, vDestinations, nbrVectors, firstComponent, LastComponent);
+	  this->HermitianLowLevelMultipleAddMultiplyPartialFastMultiply(vSources, vDestinations, nbrVectors, firstComponent, LastComponent);
 	}
       else
 	{
@@ -2319,44 +2308,44 @@ RealVector* AbstractQHEOnLatticeHamiltonian::HermitianLowLevelMultipleAddMultipl
 RealVector* AbstractQHEOnLatticeHamiltonian::HermitianLowLevelMultipleAddMultiplyFastMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
 											   int firstComponent, int lastComponent)
 {
-	  int* TmpIndexArray;
-	  int Index;
-	  double TmpRealCoefficient;
-	  unsigned short* TmpCoefficientIndexArray;
-	  unsigned short TmpNbrRealInteraction;
-	  double* Coefficient2 = new double [nbrVectors];
-	  double* TmpSum = new double[nbrVectors];
+  int* TmpIndexArray;
+  int Index;
+  double TmpRealCoefficient;
+  unsigned short* TmpCoefficientIndexArray;
+  unsigned short TmpNbrRealInteraction;
+  double* Coefficient2 = new double [nbrVectors];
+  double* TmpSum = new double[nbrVectors];
+  for (int l = 0; l < nbrVectors; ++l)
+    TmpSum[l] = 0.0;
+  int k = firstComponent;
+  firstComponent -= this->PrecalculationShift;
+  lastComponent -= this->PrecalculationShift;
+  for (int i = firstComponent; i < lastComponent; ++i, ++k)
+    {
+      TmpNbrRealInteraction = this->NbrRealInteractionPerComponent[i];
+      TmpIndexArray = this->InteractionPerComponentIndex[i];
+      TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[i];
+      for (int l = 0; l < nbrVectors; ++l)
+	{
+	  TmpSum[l] = 0.0;
+	  Coefficient2[l] = vSources[l][k];
+	}
+      int Pos=0;
+      for (; Pos < TmpNbrRealInteraction; ++Pos)
+	{
+	  Index = TmpIndexArray[Pos];
+	  TmpRealCoefficient = RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]];
 	  for (int l = 0; l < nbrVectors; ++l)
-			TmpSum[l] = 0.0;
-	  int k = firstComponent;
-	  firstComponent -= this->PrecalculationShift;
-	  lastComponent -= this->PrecalculationShift;
-	  for (int i = firstComponent; i < lastComponent; ++i, ++k)
 	    {
-	      TmpNbrRealInteraction = this->NbrRealInteractionPerComponent[i];
-	      TmpIndexArray = this->InteractionPerComponentIndex[i];
-	      TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[i];
-	      for (int l = 0; l < nbrVectors; ++l)
-		{
-		  TmpSum[l] = 0.0;
-		  Coefficient2[l] = vSources[l][k];
-		}
-	      int Pos=0;
-	      for (; Pos < TmpNbrRealInteraction; ++Pos)
-		{
-		  Index = TmpIndexArray[Pos];
-		  TmpRealCoefficient = RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]];
-		  for (int l = 0; l < nbrVectors; ++l)
-		    {
-		      vDestinations[l][Index] +=  TmpRealCoefficient * Coefficient2[l];
-		      TmpSum[l] += TmpRealCoefficient * vSources[l][Index];
-		    }
-		}
-	      for (int l = 0; l < nbrVectors; ++l)
-		vDestinations[l][k] += TmpSum[l] + this->HamiltonianShift * Coefficient2[l];
+	      vDestinations[l][Index] +=  TmpRealCoefficient * Coefficient2[l];
+	      TmpSum[l] += TmpRealCoefficient * vSources[l][Index];
 	    }
-	  delete [] Coefficient2;	
-		return vDestinations;
+	}
+      for (int l = 0; l < nbrVectors; ++l)
+	vDestinations[l][k] += TmpSum[l] + this->HamiltonianShift * Coefficient2[l];
+    }
+  delete [] Coefficient2;	
+  return vDestinations;
 }
 	
 // multiply a set of vectors by the current hamiltonian for a given range of indices 
@@ -2389,7 +2378,7 @@ RealVector* AbstractQHEOnLatticeHamiltonian::HermitianLowLevelMultipleAddMultipl
 // return value = pointer to the array of vectors where result has been stored
 
 RealVector* AbstractQHEOnLatticeHamiltonian::HermitianLowLevelMultipleAddMultiplyDiskStorage(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
-										   int firstComponent, int nbrComponent)
+											     int firstComponent, int nbrComponent)
 {
   cout << "Calling non-defined function AbstractQHEOnLatticeHamiltonian::HermitianLowLevelMultipleAddMultiplyDiskStorage!"<<endl;
   return vDestinations;
@@ -2458,7 +2447,7 @@ bool AbstractQHEOnLatticeHamiltonian::GetLoadBalancing(int nbrTasks, long* &segm
 	    }
 	  LoadBalancingArray[nbrTasks]=MaxIndex+1;
 	  SegmentSize[nbrTasks-1]=TmpNbrElement;
-
+	  
 	  cout << "LoadBalancingArray=[ ("<<LoadBalancingArray[1]-LoadBalancingArray[0]<<", "<<SegmentSize[0]<<")";
 	  for (int i=1; i<nbrTasks; ++i)
 	    cout <<" ("<<LoadBalancingArray[i+1]-LoadBalancingArray[i]<<", "<<SegmentSize[i]<<")";
@@ -2512,7 +2501,7 @@ long AbstractQHEOnLatticeHamiltonian::FastMultiplicationMemory(long allowedMemor
   double Dt2;
   gettimeofday (&(TotalStartingTime2), 0);
   cout << "start memory" << endl;
-
+  
   QHEParticlePrecalculationOperation Operation(this);
   Operation.ApplyOperation(this->Architecture);
   long Memory = 0;
@@ -2596,12 +2585,12 @@ long AbstractQHEOnLatticeHamiltonian::FastMultiplicationMemory(long allowedMemor
 //
 long AbstractQHEOnLatticeHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int nbrComponent)
 {
-	long Memory = 0;
-	ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
+  long Memory = 0;
+  ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
   int LastComponent =  nbrComponent + firstComponent;
-	this->EvaluateMNOneBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
+  this->EvaluateMNOneBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
   this->EvaluateMNTwoBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
-
+  
   delete TmpParticles;
   return Memory;
 }
@@ -2625,15 +2614,15 @@ void AbstractQHEOnLatticeHamiltonian::EnableFastMultiplication()
     ++ReducedSpaceDimension;
   this->InteractionPerComponentIndex = new int* [ReducedSpaceDimension];
   this->InteractionPerComponentCoefficientIndex = new unsigned short* [ReducedSpaceDimension];
-
-    // allocate all memory at the outset:
+  
+  // allocate all memory at the outset:
   for (int i = 0; i < ReducedSpaceDimension; ++i)
     {
       this->InteractionPerComponentIndex[i] = new int [this->NbrRealInteractionPerComponent[i] + this->NbrComplexInteractionPerComponent[i]];
       this->InteractionPerComponentCoefficientIndex[i] = new unsigned short [this->NbrRealInteractionPerComponent[i]
 									     +this->NbrComplexInteractionPerComponent[i]];
     }
-
+  
   QHEParticlePrecalculationOperation Operation(this, false);
   Operation.ApplyOperation(this->Architecture);
       
@@ -2666,7 +2655,7 @@ void AbstractQHEOnLatticeHamiltonian::PartialEnableFastMultiplication(int firstC
 {
   int LastComponent = nbrComponent + firstComponent;
   ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
-
+  
   firstComponent -= this->PrecalculationShift;
   LastComponent -= this->PrecalculationShift;
   long Pos = firstComponent / this->FastMultiplicationStep; 
@@ -2678,23 +2667,23 @@ void AbstractQHEOnLatticeHamiltonian::PartialEnableFastMultiplication(int firstC
     }
   for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
     {
-			int PosR = 0;
-			int PosC = this->NbrRealInteractionPerComponent[Pos];
-			this->EvaluateMNOneBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], this->InteractionPerComponentCoefficientIndex[Pos], PosR,PosC);
-			this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
-																												 this->InteractionPerComponentCoefficientIndex[Pos], PosR,PosC);
-			++Pos;
+      int PosR = 0;
+      int PosC = this->NbrRealInteractionPerComponent[Pos];
+      this->EvaluateMNOneBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], this->InteractionPerComponentCoefficientIndex[Pos], PosR,PosC);
+      this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
+							 this->InteractionPerComponentCoefficientIndex[Pos], PosR,PosC);
+      ++Pos;
     }
-
- 
-//   long TotalPos = ((firstComponent - this->PrecalculationShift - 1) / this->FastMultiplicationStep) + 1;
-//   int InitalPos = ((firstComponent - 1) / this->FastMultiplicationStep) + 1;
-//   InitalPos *= this->FastMultiplicationStep;
-//   for (int i = InitalPos; i < LastComponent; i += this->FastMultiplicationStep)
-//     {
-//       this->EvaluateFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[TotalPos], 
-// 						this->InteractionPerComponentCoefficientIndex[TotalPos], TotalPos);
-//     }
+  
+  
+  //   long TotalPos = ((firstComponent - this->PrecalculationShift - 1) / this->FastMultiplicationStep) + 1;
+  //   int InitalPos = ((firstComponent - 1) / this->FastMultiplicationStep) + 1;
+  //   InitalPos *= this->FastMultiplicationStep;
+  //   for (int i = InitalPos; i < LastComponent; i += this->FastMultiplicationStep)
+  //     {
+  //       this->EvaluateFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[TotalPos], 
+  // 						this->InteractionPerComponentCoefficientIndex[TotalPos], TotalPos);
+  //     }
   
   delete TmpParticles;
 }

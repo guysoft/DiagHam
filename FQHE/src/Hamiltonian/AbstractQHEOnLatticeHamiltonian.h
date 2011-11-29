@@ -58,7 +58,7 @@ using std::endl;
 
 class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
 {
-
+  
   friend class QHEParticlePrecalculationOperation;
 
  protected:
@@ -317,7 +317,7 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
 							      int firstComponent, int nbrComponent);
 
 
-    // multiply a vector by the current hamiltonian for a given range of indices 
+  // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)
   //
   // vSource = vector to be multiplied<
@@ -325,8 +325,28 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  virtual RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
-					     int firstComponent, int nbrComponent);
+  virtual RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, int firstComponent, int nbrComponent);
+  
+  // multiply a et of vectors by the current hamiltonian for a given range of indices 
+  // and add result to another et of vectors, low level function (no architecture optimization)
+  //
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors at which result has to be added
+  // nbrVectors = number of vectors that have to be evaluated together
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = pointer to the array of vectors where result has been stored
+  virtual RealVector* LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, int firstComponent, int nbrComponent);
+  
+  // multiply a vector by the current hamiltonian for a given range of indices 
+  // and add result to another vector, low level function (no architecture optimization)
+  //
+  // vSource = vector to be multiplied<
+  // vDestination = vector at which result has to be added
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = reference on vector where result has been stored
+  virtual RealVector& ConjugateLowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, int firstComponent, int nbrComponent);
 
   // multiply a et of vectors by the current hamiltonian for a given range of indices 
   // and add result to another et of vectors, low level function (no architecture optimization)
@@ -337,8 +357,7 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = pointer to the array of vectors where result has been stored
-  virtual RealVector* LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
-						     int firstComponent, int nbrComponent);
+  virtual RealVector* ConjugateLowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, int firstComponent, int nbrComponent);
 
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)
@@ -348,8 +367,7 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  virtual RealVector& ConjugateLowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
-						      int firstComponent, int nbrComponent);
+  virtual RealVector& HermitianLowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, int firstComponent, int nbrComponent);
 
   // multiply a et of vectors by the current hamiltonian for a given range of indices 
   // and add result to another et of vectors, low level function (no architecture optimization)
@@ -360,31 +378,7 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = pointer to the array of vectors where result has been stored
-  virtual RealVector* ConjugateLowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
-							      int firstComponent, int nbrComponent);
-
-  // multiply a vector by the current hamiltonian for a given range of indices 
-  // and add result to another vector, low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied<
-  // vDestination = vector at which result has to be added
-  // firstComponent = index of the first component to evaluate
-  // nbrComponent = number of components to evaluate
-  // return value = reference on vector where result has been stored
-  virtual RealVector& HermitianLowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
-						      int firstComponent, int nbrComponent);
-
-  // multiply a et of vectors by the current hamiltonian for a given range of indices 
-  // and add result to another et of vectors, low level function (no architecture optimization)
-  //
-  // vSources = array of vectors to be multiplied
-  // vDestinations = array of vectors at which result has to be added
-  // nbrVectors = number of vectors that have to be evaluated together
-  // firstComponent = index of the first component to evaluate
-  // nbrComponent = number of components to evaluate
-  // return value = pointer to the array of vectors where result has been stored
-  virtual RealVector* HermitianLowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
-							      int firstComponent, int nbrComponent);
+  virtual RealVector* HermitianLowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, int firstComponent, int nbrComponent);
 
  
   // return a list of left interaction operators
@@ -414,10 +408,9 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  virtual ComplexVector& LowLevelAddMultiplyPartialFastMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-								int firstComponent, int nbrComponent);
+  virtual ComplexVector& LowLevelAddMultiplyPartialFastMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent);
 	
-	// multiply a vector by the current hamiltonian for a given range of indices 
+  // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)
   // using partial fast multiply option
   //
@@ -426,7 +419,7 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-	virtual ComplexVector& LowLevelAddMultiplyFastMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int lastComponent);
+  virtual ComplexVector& LowLevelAddMultiplyFastMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int lastComponent);
 
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)
@@ -437,9 +430,8 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  virtual ComplexVector& LowLevelAddMultiplyDiskStorage(ComplexVector& vSource, ComplexVector& vDestination, 
-							int firstComponent, int nbrComponent);
-
+  virtual ComplexVector& LowLevelAddMultiplyDiskStorage(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent);
+  
   // multiply a et of vectors by the current hamiltonian for a given range of indices 
   // and add result to another et of vectors, low level function (no architecture optimization)
   // using partial fast multiply option
@@ -450,9 +442,8 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = pointer to the array of vectors where result has been stored
-  virtual ComplexVector* LowLevelMultipleAddMultiplyPartialFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
-									int firstComponent, int nbrComponent);
-
+  virtual ComplexVector* LowLevelMultipleAddMultiplyPartialFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, int firstComponent, int nbrComponent);
+  
   // multiply a et of vectors by the current hamiltonian for a given range of indices 
   // and add result to another et of vectors, low level function (no architecture optimization)
   // using disk storage option
@@ -463,10 +454,9 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = pointer to the array of vectors where result has been stored
-  virtual ComplexVector* LowLevelMultipleAddMultiplyDiskStorage(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
-								int firstComponent, int nbrComponent);
-	
-	// multiply a et of vectors by the current hamiltonian for a given range of indices 
+  virtual ComplexVector* LowLevelMultipleAddMultiplyDiskStorage(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, int firstComponent, int nbrComponent);
+  
+  // multiply a et of vectors by the current hamiltonian for a given range of indices 
   // and add result to another et of vectors, low level function (no architecture optimization)
   // using disk storage option
   //
@@ -476,8 +466,8 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = pointer to the array of vectors where result has been stored
-	virtual ComplexVector* LowLevelMultipleAddMultiplyFastMultiply(ComplexVector* vSources, ComplexVector * vDestinations,  int nbrVectors, int firstComponent, int lastComponent);
-
+  virtual ComplexVector* LowLevelMultipleAddMultiplyFastMultiply(ComplexVector* vSources, ComplexVector * vDestinations,  int nbrVectors, int firstComponent, int lastComponent);
+  
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)
   // using partial fast multiply option
@@ -487,9 +477,8 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  virtual ComplexVector& ConjugateLowLevelAddMultiplyPartialFastMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-									 int firstComponent, int nbrComponent);
-
+  virtual ComplexVector& ConjugateLowLevelAddMultiplyPartialFastMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent);
+  
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)
   // using disk storage option
@@ -499,8 +488,7 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  virtual ComplexVector& ConjugateLowLevelAddMultiplyDiskStorage(ComplexVector& vSource, ComplexVector& vDestination, 
-								 int firstComponent, int nbrComponent);
+  virtual ComplexVector& ConjugateLowLevelAddMultiplyDiskStorage(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent);
 	
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)
@@ -523,8 +511,7 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = pointer to the array of vectors where result has been stored
-  virtual ComplexVector* ConjugateLowLevelMultipleAddMultiplyPartialFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
-										 int firstComponent, int nbrComponent);
+  virtual ComplexVector* ConjugateLowLevelMultipleAddMultiplyPartialFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, int firstComponent, int nbrComponent);
 	
   // multiply a set of vectors by the current hamiltonian for a given range of indices 
   // and add result to another et of vectors, low level function (no architecture optimization)
@@ -600,7 +587,7 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // return value = pointer to the array of vectors where result has been stored
   virtual ComplexVector* HermitianLowLevelMultipleAddMultiplyPartialFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, int firstComponent, int nbrComponent);
 	
-	  // multiply a et of vectors by the current hamiltonian for a given range of indices 
+  // multiply a et of vectors by the current hamiltonian for a given range of indices 
   // and add result to another et of vectors, low level function (no architecture optimization)
   // using partial fast multiply option
   //
@@ -625,7 +612,7 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   virtual ComplexVector* HermitianLowLevelMultipleAddMultiplyDiskStorage(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
 									 int firstComponent, int nbrComponent);
 
-    // multiply a vector by the current hamiltonian for a given range of indices 
+  // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)
   // using partial fast multiply option
   //
@@ -636,18 +623,18 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // return value = reference on vector where result has been stored
   virtual RealVector& LowLevelAddMultiplyPartialFastMultiply(RealVector& vSource, RealVector& vDestination, 
 								int firstComponent, int nbrComponent);
-	
-	// multiply a vector by the current hamiltonian for a given range of indices 
-	// and add result to another vector, low level function (no architecture optimization)
-	// using partial fast multiply option
-	//
-	// vSource = vector to be multiplied
-	// vDestination = vector at which result has to be added
-	// firstComponent = index of the first component to evaluate
-	// nbrComponent = number of components to evaluate
-	// return value = reference on vector where result has been stored
-	virtual RealVector& LowLevelAddMultiplyFastMultiply(RealVector& vSource, RealVector& vDestination, 
-										   int firstComponent, int lastComponent);
+  
+  // multiply a vector by the current hamiltonian for a given range of indices 
+  // and add result to another vector, low level function (no architecture optimization)
+  // using partial fast multiply option
+  //
+  // vSource = vector to be multiplied
+  // vDestination = vector at which result has to be added
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = reference on vector where result has been stored
+  virtual RealVector& LowLevelAddMultiplyFastMultiply(RealVector& vSource, RealVector& vDestination, 
+						      int firstComponent, int lastComponent);
 	
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)
@@ -674,7 +661,7 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   virtual RealVector* LowLevelMultipleAddMultiplyPartialFastMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
 									int firstComponent, int nbrComponent);
 	
-	// multiply a et of vectors by the current hamiltonian for a given range of indices 
+  // multiply a et of vectors by the current hamiltonian for a given range of indices 
   // and add result to another et of vectors, low level function (no architecture optimization)
   // using partial fast multiply option
   //
@@ -684,7 +671,7 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = pointer to the array of vectors where result has been stored
-	virtual RealVector* LowLevelMultipleAddMultiplyFastMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
+  virtual RealVector* LowLevelMultipleAddMultiplyFastMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
 											   int firstComponent, int lastComponent);
 
   // multiply a et of vectors by the current hamiltonian for a given range of indices 
@@ -710,18 +697,18 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
   virtual RealVector& ConjugateLowLevelAddMultiplyPartialFastMultiply(RealVector& vSource, RealVector& vDestination, 
-									 int firstComponent, int nbrComponent);
-	
-	// multiply a vector by the current hamiltonian for a given range of indices 
-	// and add result to another vector, low level function (no architecture optimization)
-	// using partial fast multiply option
-	//
-	// vSource = vector to be multiplied
-	// vDestination = vector at which result has to be added
-	// firstComponent = index of the first component to evaluate
-	// nbrComp	onent = number of components to evaluate
-	// return value = reference on vector where result has been stored
-	virtual RealVector& ConjugateLowLevelAddMultiplyFastMultiply(RealVector& vSource, RealVector& vDestination, int firstComponent, int lastComponent);
+								      int firstComponent, int nbrComponent);
+  
+  // multiply a vector by the current hamiltonian for a given range of indices 
+  // and add result to another vector, low level function (no architecture optimization)
+  // using partial fast multiply option
+  //
+  // vSource = vector to be multiplied
+  // vDestination = vector at which result has to be added
+  // firstComponent = index of the first component to evaluate
+  // nbrComp	onent = number of components to evaluate
+  // return value = reference on vector where result has been stored
+  virtual RealVector& ConjugateLowLevelAddMultiplyFastMultiply(RealVector& vSource, RealVector& vDestination, int firstComponent, int lastComponent);
 
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)
@@ -747,19 +734,19 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // return value = pointer to the array of vectors where result has been stored
   virtual RealVector* ConjugateLowLevelMultipleAddMultiplyPartialFastMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
 										 int firstComponent, int nbrComponent);
-	
-	// multiply a set of vectors by the current hamiltonian for a given range of indices 
-	// and add result to another et of vectors, low level function (no architecture optimization)
-	// using partial fast multiply option
-	//
-	// vSources = array of vectors to be multiplied
-	// vDestinations = array of vectors at which result has to be added
-	// nbrVectors = number of vectors that have to be evaluated together
-	// firstComponent = index of the first component to evaluate
-	// nbrComponent = number of components to evaluate
-	// return value = pointer to the array of vectors where result has been stored
-	virtual RealVector* ConjugateLowLevelMultipleAddMultiplyFastMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
-																																			 int firstComponent, int lastComponent);
+  
+  // multiply a set of vectors by the current hamiltonian for a given range of indices 
+  // and add result to another et of vectors, low level function (no architecture optimization)
+  // using partial fast multiply option
+  //
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors at which result has to be added
+  // nbrVectors = number of vectors that have to be evaluated together
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = pointer to the array of vectors where result has been stored
+  virtual RealVector* ConjugateLowLevelMultipleAddMultiplyFastMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
+								       int firstComponent, int lastComponent);
 
   // multiply a et of vectors by the current hamiltonian for a given range of indices 
   // and add result to another et of vectors, low level function (no architecture optimization)
@@ -784,19 +771,19 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
   virtual RealVector& HermitianLowLevelAddMultiplyPartialFastMultiply(RealVector& vSource, RealVector& vDestination, 
-									 int firstComponent, int nbrComponent);
-	
-	
-	// multiply a vector by the current hamiltonian for a given range of indices 
-	// and add result to another vector, low level function (no architecture optimization)
-	// using partial fast multiply option
-	//
-	// vSource = vector to be multiplied
-	// vDestination = vector at which result has to be added
-	// firstComponent = index of the first component to evaluate
-	// nbrComponent = number of components to evaluate
-	// return value = reference on vector where result has been stored
-	virtual RealVector& HermitianLowLevelAddMultiplyFastMultiply(RealVector& vSource, RealVector& vDestination, 
+								      int firstComponent, int nbrComponent);
+  
+  
+  // multiply a vector by the current hamiltonian for a given range of indices 
+  // and add result to another vector, low level function (no architecture optimization)
+  // using partial fast multiply option
+  //
+  // vSource = vector to be multiplied
+  // vDestination = vector at which result has to be added
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = reference on vector where result has been stored
+  virtual RealVector& HermitianLowLevelAddMultiplyFastMultiply(RealVector& vSource, RealVector& vDestination, 
 										   int firstComponent, int lastComponent);
 
   // multiply a vector by the current hamiltonian for a given range of indices 
@@ -824,7 +811,7 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   virtual RealVector* HermitianLowLevelMultipleAddMultiplyPartialFastMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
 										 int firstComponent, int nbrComponent);
 	
-	 // multiply a et of vectors by the current hamiltonian for a given range of indices 
+  // multiply a et of vectors by the current hamiltonian for a given range of indices 
   // and add result to another et of vectors, low level function (no architecture optimization)
   // using partial fast multiply option
   //
@@ -903,7 +890,7 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   void EvaluateMNOneBodyFastMultiplicationComponent(ParticleOnLattice* particles, int index, 
 					   int* indexArray, unsigned short* coefficientIndexArray,int& positionR, int & positionC);
 	
-	  // core part of the FastMultiplication method involving 1- and 2-body terms and diagonal elements
+  // core part of the FastMultiplication method involving 1- and 2-body terms and diagonal elements
   // 
   // particles = pointer to the Hilbert space
   // index = index of the component on which the Hamiltonian has to act on
@@ -912,8 +899,8 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // position = reference on the current position in arrays indexArray and coefficientArray
   void EvaluateMNTwoBodyFastMultiplicationComponent(ParticleOnLattice* particles, int index, 
 					   int* indexArray, unsigned short* coefficientIndexArray, int & positionR, int & positionC);
-	
-	// core part of the AddMultiply method involving the one-body interaction, including loop on vector components
+  
+  // core part of the AddMultiply method involving the one-body interaction, including loop on vector components
   // 
   // particles = pointer to the Hilbert space
   // firstComponent = first index vector to act on
@@ -923,19 +910,18 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // vDestination = vector at which result has to be added
   virtual void EvaluateMNOneBodyAddMultiplyComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, int step, ComplexVector& vSource, ComplexVector& vDestination);
 	
-	// core part of the AddMultiply method involving the one-body interaction for a set of vectors, including loop on vector components
-// 
-// particles = pointer to the Hilbert space
-// firstComponent = first index vector to act on
-// lastComponent = last index vector to act on (not included)
-// step = step to go from one component to the other one
-// vSources = array of vectors to be multiplied
-// vDestinations = array of vectors at which result has to be added
-// nbrVectors = number of vectors that have to be evaluated together
-
-virtual void EvaluateMNOneBodyAddMultiplyComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, int step, ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors);
-
-	// core part of the AddMultiply method involving the one-body interaction, including loop on vector components
+  // core part of the AddMultiply method involving the one-body interaction for a set of vectors, including loop on vector components
+  // 
+  // particles = pointer to the Hilbert space
+  // firstComponent = first index vector to act on
+  // lastComponent = last index vector to act on (not included)
+  // step = step to go from one component to the other one
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors at which result has to be added
+  // nbrVectors = number of vectors that have to be evaluated together
+  virtual void EvaluateMNOneBodyAddMultiplyComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, int step, ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors);
+  
+  // core part of the AddMultiply method involving the one-body interaction, including loop on vector components
   // 
   // particles = pointer to the Hilbert space
   // firstComponent = first index vector to act on
@@ -944,20 +930,19 @@ virtual void EvaluateMNOneBodyAddMultiplyComponent(ParticleOnLattice* particles,
   // vSource = vector to be multiplied
   // vDestination = vector at which result has to be added
   virtual void EvaluateMNOneBodyAddMultiplyComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, int step, RealVector& vSource, RealVector& vDestination);
-	
-	// core part of the AddMultiply method involving the one-body interaction for a set of vectors, including loop on vector components
-// 
-// particles = pointer to the Hilbert space
-// firstComponent = first index vector to act on
-// lastComponent = last index vector to act on (not included)
-// step = step to go from one component to the other one
-// vSources = array of vectors to be multiplied
-// vDestinations = array of vectors at which result has to be added
-// nbrVectors = number of vectors that have to be evaluated together
+  
+  // core part of the AddMultiply method involving the one-body interaction for a set of vectors, including loop on vector components
+  // 
+  // particles = pointer to the Hilbert space
+  // firstComponent = first index vector to act on
+  // lastComponent = last index vector to act on (not included)
+  // step = step to go from one component to the other one
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors at which result has to be added
+  // nbrVectors = number of vectors that have to be evaluated together
+  virtual void EvaluateMNOneBodyAddMultiplyComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, int step, RealVector* vSources, RealVector* vDestinations, int nbrVectors);
 
-virtual void EvaluateMNOneBodyAddMultiplyComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, int step, RealVector* vSources, RealVector* vDestinations, int nbrVectors);
-
-	// core part of the AddMultiply method involving the one-body interaction, including loop on vector components
+  // core part of the AddMultiply method involving the one-body interaction, including loop on vector components
   // 
   // particles = pointer to the Hilbert space
   // firstComponent = first index vector to act on
@@ -966,20 +951,19 @@ virtual void EvaluateMNOneBodyAddMultiplyComponent(ParticleOnLattice* particles,
   // vSource = vector to be multiplied
   // vDestination = vector at which result has to be added
   virtual void EvaluateMNOneBodyConjugateAddMultiplyComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, int step, ComplexVector& vSource, ComplexVector& vDestination);
-	
-	// core part of the AddMultiply method involving the one-body interaction for a set of vectors, including loop on vector components
-// 
-// particles = pointer to the Hilbert space
-// firstComponent = first index vector to act on
-// lastComponent = last index vector to act on (not included)
-// step = step to go from one component to the other one
-// vSources = array of vectors to be multiplied
-// vDestinations = array of vectors at which result has to be added
-// nbrVectors = number of vectors that have to be evaluated together
-
-virtual void EvaluateMNOneBodyConjugateAddMultiplyComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, int step, ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors);
-
-	// core part of the AddMultiply method involving the one-body interaction, including loop on vector components
+  
+  // core part of the AddMultiply method involving the one-body interaction for a set of vectors, including loop on vector components
+  // 
+  // particles = pointer to the Hilbert space
+  // firstComponent = first index vector to act on
+  // lastComponent = last index vector to act on (not included)
+  // step = step to go from one component to the other one
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors at which result has to be added
+  // nbrVectors = number of vectors that have to be evaluated together
+  virtual void EvaluateMNOneBodyConjugateAddMultiplyComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, int step, ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors);
+  
+  // core part of the AddMultiply method involving the one-body interaction, including loop on vector components
   // 
   // particles = pointer to the Hilbert space
   // firstComponent = first index vector to act on
@@ -989,89 +973,86 @@ virtual void EvaluateMNOneBodyConjugateAddMultiplyComponent(ParticleOnLattice* p
   // vDestination = vector at which result has to be added
   virtual void EvaluateMNOneBodyConjugateAddMultiplyComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, int step, RealVector& vSource, RealVector& vDestination);
 	
-	// core part of the AddMultiply method involving the one-body interaction for a set of vectors, including loop on vector components
-// 
-// particles = pointer to the Hilbert space
-// firstComponent = first index vector to act on
-// lastComponent = last index vector to act on (not included)
-// step = step to go from one component to the other one
-// vSources = array of vectors to be multiplied
-// vDestinations = array of vectors at which result has to be added
-// nbrVectors = number of vectors that have to be evaluated together
-
-virtual void EvaluateMNOneBodyConjugateAddMultiplyComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, int step, RealVector* vSources, RealVector* vDestinations, int nbrVectors);
+  // core part of the AddMultiply method involving the one-body interaction for a set of vectors, including loop on vector components
+  // 
+  // particles = pointer to the Hilbert space
+  // firstComponent = first index vector to act on
+  // lastComponent = last index vector to act on (not included)
+  // step = step to go from one component to the other one
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors at which result has to be added
+  // nbrVectors = number of vectors that have to be evaluated together
+  virtual void EvaluateMNOneBodyConjugateAddMultiplyComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, int step, RealVector* vSources, RealVector* vDestinations, int nbrVectors);
+  
+  virtual void HermitianEvaluateMNOneBodyAddMultiplyComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, int step, ComplexVector& vSource, ComplexVector& vDestination);
+  
+  virtual void HermitianEvaluateMNOneBodyAddMultiplyComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, int step, RealVector& vSource, RealVector& vDestination);
+  
+  virtual void HermitianEvaluateMNOneBodyAddMultiplyComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, int step, ComplexVector * vSources, ComplexVector* vDestinations, int nbrVectors);
+  
+  virtual void HermitianEvaluateMNOneBodyAddMultiplyComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, int step, RealVector* vSources, RealVector* vDestinations, int nbrVectors);
+  
+  
 	
-virtual void HermitianEvaluateMNOneBodyAddMultiplyComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, int step, ComplexVector& vSource, ComplexVector& vDestination);
-
-virtual void HermitianEvaluateMNOneBodyAddMultiplyComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, int step, RealVector& vSource, RealVector& vDestination);
-
-virtual void HermitianEvaluateMNOneBodyAddMultiplyComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, int step, ComplexVector * vSources, ComplexVector* vDestinations, int nbrVectors);
-
-virtual void HermitianEvaluateMNOneBodyAddMultiplyComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, int step, RealVector* vSources, RealVector* vDestinations, int nbrVectors);
-
-
-	
-	// core part of the AddMultiply method involving the two-body interaction
-// 
-// particles = pointer to the Hilbert space
-// index = index of the component on which the Hamiltonian has to act on
-// vSource = vector to be multiplied
+  // core part of the AddMultiply method involving the two-body interaction
+  // 
+  // particles = pointer to the Hilbert space
+  // index = index of the component on which the Hamiltonian has to act on
+  // vSource = vector to be multiplied
 // vDestination = vector at which result has to be added
-
-	virtual void EvaluateMNTwoBodyAddMultiplyComponent(ParticleOnLattice* particles, int index, ComplexVector& vSource, ComplexVector& vDestination);
-	
-	virtual void EvaluateMNTwoBodyAddMultiplyComponent(ParticleOnLattice* particles, int index, ComplexVector* vSources,  ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients);
-	
-	virtual void EvaluateMNTwoBodyAddMultiplyComponent(ParticleOnLattice* particles, int index, RealVector& vSource, RealVector& vDestination);
-	
-	virtual void EvaluateMNTwoBodyAddMultiplyComponent(ParticleOnLattice* particles, int index, RealVector* vSources,  RealVector* vDestinations, int nbrVectors, double* tmpCoefficients);
-	
-	// core part of the AddMultiply method involving the two-body interaction
-	// 
-	// particles = pointer to the Hilbert space
-	// index = index of the component on which the Hamiltonian has to act on
-	// vSource = vector to be multiplied
-	// vDestination = vector at which result has to be added
-	
-	virtual void HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnLattice* particles, int index, ComplexVector& vSource, ComplexVector& vDestination);
-	
-	virtual void HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnLattice* particles, int index, ComplexVector* vSources,  ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients);
-	
-	virtual void HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnLattice* particles, int index, RealVector& vSource, RealVector& vDestination);
-	
-	virtual void HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnLattice* particles, int index, RealVector* vSources,  RealVector* vDestinations, int nbrVectors, double* tmpCoefficients);
-
-	
-	virtual void EvaluateMNTwoBodyConjugateAddMultiplyComponent(ParticleOnLattice* particles, int index, ComplexVector&  vSources,  ComplexVector&  vDestinations);
-	
-	
-	virtual void EvaluateMNTwoBodyConjugateAddMultiplyComponent(ParticleOnLattice* particles, int index, ComplexVector* vSources,  ComplexVector* vDestinations, int nbrVectors, Complex * tmpCoefficients);
-	
-	
-	virtual void EvaluateMNTwoBodyConjugateAddMultiplyComponent(ParticleOnLattice* particles, int index, RealVector&  vSources,  RealVector& vDestinations);
-	
-	
-	virtual void EvaluateMNTwoBodyConjugateAddMultiplyComponent(ParticleOnLattice* particles, int index, RealVector* vSources,  RealVector* vDestinations, int nbrVectors, double* tmpCoefficients);
-	
-	
-	// core part of the PartialFastMultiplicationMemory method involving one-body term
-	// 
-	// particles = pointer to the Hilbert space
-	// firstComponent = index of the first component that has to be precalcualted
-	// lastComponent  = index of the last component that has to be precalcualted
-	// memory = reference on the amount of memory required for precalculations
-	
-	virtual void EvaluateMNOneBodyFastMultiplicationMemoryComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, long& memory);
-	
-	
-	// core part of the PartialFastMultiplicationMemory method involving two-body term
-	// 
-	// particles = pointer to the Hilbert space
-	// firstComponent = index of the first component that has to be precalcualted
-	// lastComponent  = index of the last component that has to be precalcualted
-	// memory = reference on the amount of memory required for precalculations
-	
-	virtual void EvaluateMNTwoBodyFastMultiplicationMemoryComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, long& memory);
+  
+  virtual void EvaluateMNTwoBodyAddMultiplyComponent(ParticleOnLattice* particles, int index, ComplexVector& vSource, ComplexVector& vDestination);
+  
+  virtual void EvaluateMNTwoBodyAddMultiplyComponent(ParticleOnLattice* particles, int index, ComplexVector* vSources,  ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients);
+  
+  virtual void EvaluateMNTwoBodyAddMultiplyComponent(ParticleOnLattice* particles, int index, RealVector& vSource, RealVector& vDestination);
+  
+  virtual void EvaluateMNTwoBodyAddMultiplyComponent(ParticleOnLattice* particles, int index, RealVector* vSources,  RealVector* vDestinations, int nbrVectors, double* tmpCoefficients);
+  
+  // core part of the AddMultiply method involving the two-body interaction
+  // 
+  // particles = pointer to the Hilbert space
+  // index = index of the component on which the Hamiltonian has to act on
+  // vSource = vector to be multiplied
+  // vDestination = vector at which result has to be added
+  
+  virtual void HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnLattice* particles, int index, ComplexVector& vSource, ComplexVector& vDestination);
+  
+  virtual void HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnLattice* particles, int index, ComplexVector* vSources,  ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients);
+  
+  virtual void HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnLattice* particles, int index, RealVector& vSource, RealVector& vDestination);
+  
+  virtual void HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnLattice* particles, int index, RealVector* vSources,  RealVector* vDestinations, int nbrVectors, double* tmpCoefficients);
+  
+  
+  virtual void EvaluateMNTwoBodyConjugateAddMultiplyComponent(ParticleOnLattice* particles, int index, ComplexVector&  vSources,  ComplexVector&  vDestinations);
+  
+  
+  virtual void EvaluateMNTwoBodyConjugateAddMultiplyComponent(ParticleOnLattice* particles, int index, ComplexVector* vSources,  ComplexVector* vDestinations, int nbrVectors, Complex * tmpCoefficients);
+  
+  
+  virtual void EvaluateMNTwoBodyConjugateAddMultiplyComponent(ParticleOnLattice* particles, int index, RealVector&  vSources,  RealVector& vDestinations);
+  
+  
+  virtual void EvaluateMNTwoBodyConjugateAddMultiplyComponent(ParticleOnLattice* particles, int index, RealVector* vSources,  RealVector* vDestinations, int nbrVectors, double* tmpCoefficients);
+  
+  
+  // core part of the PartialFastMultiplicationMemory method involving one-body term
+  // 
+  // particles = pointer to the Hilbert space
+  // firstComponent = index of the first component that has to be precalcualted
+  // lastComponent  = index of the last component that has to be precalcualted
+  // memory = reference on the amount of memory required for precalculations
+  virtual void EvaluateMNOneBodyFastMultiplicationMemoryComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, long& memory);
+  
+  
+  // core part of the PartialFastMultiplicationMemory method involving two-body term
+  // 
+  // particles = pointer to the Hilbert space
+  // firstComponent = index of the first component that has to be precalcualted
+  // lastComponent  = index of the last component that has to be precalcualted
+  // memory = reference on the amount of memory required for precalculations
+  virtual void EvaluateMNTwoBodyFastMultiplicationMemoryComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, long& memory);
 	
 };
 
@@ -1085,7 +1066,7 @@ virtual void HermitianEvaluateMNOneBodyAddMultiplyComponent(ParticleOnLattice* p
 // position = reference on the current position in arrays indexArray and coefficientArray
 
 inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyFastMultiplicationComponent(ParticleOnLattice* particles, int index, 
-										 int* indexArray, unsigned short* coefficientIndexArray, int& positionR, int & positionC)
+											  int* indexArray, unsigned short* coefficientIndexArray, int& positionR, int & positionC)
 {
   int qi, qf;
   int Index2;
@@ -1148,9 +1129,7 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
   int tmpElementPos;
   double Coefficient;
   int Dim = this->Particles->GetHilbertSpaceDimension();
-  //       cout << "Interactions for component "<<i<<":  real "<< this->NbrRealInteractionPerComponent[position]<<" complex "
-  // 	   << this->NbrComplexInteractionPerComponent[position] <<endl;    
-
+  
 
   // four-fermion interactions:
   if (this->NbrQ12Indices == 0) // full storage
@@ -1248,13 +1227,13 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
 	    ProcessedNbrInteractionFactors += this->NbrQ34Values[i12];
 	}
     }
-      
+  
   // separated diagonal terms as these will be the general rule for contact interactions
   if (NbrDiagonalInteractionFactors>0)
     {
       // need additional symmetry factor of 1/2 in hermitian mode, as diagonal elements will not be treated separately if stored in memory!
       Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors,
-						 DiagonalInteractionFactors, DiagonalQValues);
+					      DiagonalInteractionFactors, DiagonalQValues);
       if (this->IsHermitian())
 	Coefficient *= 0.5;
       if (fabs(Coefficient)>LATTICEHAMILTONIAN_IDENTICAL_ELEMENT_THRESHOLD)
@@ -1285,37 +1264,22 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
 
 inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyAddMultiplyComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, int step, ComplexVector& vSource, ComplexVector& vDestination)
 {
-	cout <<"Use new code "<<endl;
-	if (this->NbrHoppingTerms>0)
+  if (this->NbrHoppingTerms>0)
+    {
+      int Dim = particles->GetHilbertSpaceDimension();  
+      double Coefficient;
+      // deal with kinetic energy terms first!      
+      int qi;
+      int qf;
+      int Index;
+      double TmpInteractionRe,TmpInteractionIm;
+      int ReducedNbrHoppingTerms = NbrHoppingTerms-1;
+      for (int j = 0; j < ReducedNbrHoppingTerms; ++j) 
 	{
- int Dim = particles->GetHilbertSpaceDimension();  
- double Coefficient;
-	// deal with kinetic energy terms first!      
-	int qi;
-	int qf;
-	int Index;
-	double TmpInteractionRe,TmpInteractionIm;
-		  int ReducedNbrHoppingTerms = NbrHoppingTerms-1;
-	  for (int j = 0; j < ReducedNbrHoppingTerms; ++j) 
-	    {
-	      qi = this->KineticQi[j];
-	      qf = this->KineticQf[j];
-				TmpInteractionRe = this->HoppingTerms[j].Re;
-	      TmpInteractionIm = this->HoppingTerms[j].Im;
-	      for (int i = firstComponent; i < lastComponent; i += step)
-		{
-		  Index = particles->AdA(i, qf, qi, Coefficient);
-		  if (Index < Dim)
-		    {
-		      vDestination.Re(Index) += Coefficient * (TmpInteractionRe*vSource[i].Re - TmpInteractionIm*vSource[i].Im);
-		      vDestination.Im(Index) += Coefficient * (TmpInteractionRe*vSource[i].Im + TmpInteractionIm*vSource[i].Re);
-		    }
-		}
-	    }
-	  qi = this->KineticQi[ReducedNbrHoppingTerms];
-	  qf = this->KineticQf[ReducedNbrHoppingTerms];
-	  TmpInteractionRe = this->HoppingTerms[ReducedNbrHoppingTerms].Re;
-	  TmpInteractionIm = this->HoppingTerms[ReducedNbrHoppingTerms].Im;
+	  qi = this->KineticQi[j];
+	  qf = this->KineticQf[j];
+	  TmpInteractionRe = this->HoppingTerms[j].Re;
+	  TmpInteractionIm = this->HoppingTerms[j].Im;
 	  for (int i = firstComponent; i < lastComponent; i += step)
 	    {
 	      Index = particles->AdA(i, qf, qi, Coefficient);
@@ -1324,9 +1288,23 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyAddMultiplyCompone
 		  vDestination.Re(Index) += Coefficient * (TmpInteractionRe*vSource[i].Re - TmpInteractionIm*vSource[i].Im);
 		  vDestination.Im(Index) += Coefficient * (TmpInteractionRe*vSource[i].Im + TmpInteractionIm*vSource[i].Re);
 		}
-	      vDestination[i] += this->HamiltonianShift * vSource[i];
-	    } 
+	    }
 	}
+      qi = this->KineticQi[ReducedNbrHoppingTerms];
+      qf = this->KineticQf[ReducedNbrHoppingTerms];
+      TmpInteractionRe = this->HoppingTerms[ReducedNbrHoppingTerms].Re;
+      TmpInteractionIm = this->HoppingTerms[ReducedNbrHoppingTerms].Im;
+      for (int i = firstComponent; i < lastComponent; i += step)
+	{
+	  Index = particles->AdA(i, qf, qi, Coefficient);
+	  if (Index < Dim)
+	    {
+	      vDestination.Re(Index) += Coefficient * (TmpInteractionRe*vSource[i].Re - TmpInteractionIm*vSource[i].Im);
+	      vDestination.Im(Index) += Coefficient * (TmpInteractionRe*vSource[i].Im + TmpInteractionIm*vSource[i].Re);
+	    }
+	  vDestination[i] += this->HamiltonianShift * vSource[i];
+	} 
+    }
 }
 
 // core part of the AddMultiply method involving the one-body interaction, including loop on vector components
@@ -1340,34 +1318,21 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyAddMultiplyCompone
 
 inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyConjugateAddMultiplyComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, int step, ComplexVector& vSource, ComplexVector& vDestination)
 {
-	cout <<"Use new code "<<endl;
-	if (this->NbrHoppingTerms>0)
+  if (this->NbrHoppingTerms>0)
+    {
+      int Dim = particles->GetHilbertSpaceDimension();  
+      double Coefficient;
+      // deal with kinetic energy terms first!      
+      int qi;
+      int qf;
+      int Index;
+      Complex TmpInteraction;
+      int ReducedNbrHoppingTerms = NbrHoppingTerms-1;
+      for (int j = 0; j < ReducedNbrHoppingTerms; ++j) 
 	{
- int Dim = particles->GetHilbertSpaceDimension();  
- double Coefficient;
-	// deal with kinetic energy terms first!      
-	int qi;
-	int qf;
-	int Index;
-Complex TmpInteraction;
-		  int ReducedNbrHoppingTerms = NbrHoppingTerms-1;
-	  for (int j = 0; j < ReducedNbrHoppingTerms; ++j) 
-	    {
-	      qi = this->KineticQi[j];
-	      qf = this->KineticQf[j];
-				TmpInteraction = this->HoppingTerms[j];
-	      for (int i = firstComponent; i < lastComponent; i += step)
-		{
-		  Index = particles->AdA(i, qf, qi, Coefficient);
-		  if (Index < Dim)
-		    {
-					vDestination[i] += Coefficient * Conj(TmpInteraction) * vSource[Index];
-		    }
-		}
-	    }
-	  qi = this->KineticQi[ReducedNbrHoppingTerms];
-	  qf = this->KineticQf[ReducedNbrHoppingTerms];
-	  TmpInteraction = this->HoppingTerms[ReducedNbrHoppingTerms];
+	  qi = this->KineticQi[j];
+	  qf = this->KineticQf[j];
+	  TmpInteraction = this->HoppingTerms[j];
 	  for (int i = firstComponent; i < lastComponent; i += step)
 	    {
 	      Index = particles->AdA(i, qf, qi, Coefficient);
@@ -1375,9 +1340,21 @@ Complex TmpInteraction;
 		{
 		  vDestination[i] += Coefficient * Conj(TmpInteraction) * vSource[Index];
 		}
-	      vDestination[i] += this->HamiltonianShift * vSource[i];
-	    } 
+	    }
 	}
+      qi = this->KineticQi[ReducedNbrHoppingTerms];
+      qf = this->KineticQf[ReducedNbrHoppingTerms];
+      TmpInteraction = this->HoppingTerms[ReducedNbrHoppingTerms];
+      for (int i = firstComponent; i < lastComponent; i += step)
+	{
+	  Index = particles->AdA(i, qf, qi, Coefficient);
+	  if (Index < Dim)
+	    {
+	      vDestination[i] += Coefficient * Conj(TmpInteraction) * vSource[Index];
+	    }
+	  vDestination[i] += this->HamiltonianShift * vSource[i];
+	} 
+    }
 }
 
 // core part of the AddMultiply method involving the two-body interaction
@@ -1389,69 +1366,68 @@ Complex TmpInteraction;
 
 inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyAddMultiplyComponent(ParticleOnLattice* particles, int index, ComplexVector& vSource, ComplexVector& vDestination)
 {
-	cout <<"Use new code "<<endl;
-	int Dim = particles->GetHilbertSpaceDimension(); 
-	double Coefficient;
-	int Index;
-	
-     if (this->NbrQ12Indices == 0) // full storage
-	{ 	  
-	  for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+  int Dim = particles->GetHilbertSpaceDimension(); 
+  double Coefficient;
+  int Index;
+  
+  if (this->NbrQ12Indices == 0) // full storage
+    { 	  
+      for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+	{
+	  int q1 = this->Q1Value[j];
+	  int q2 = this->Q2Value[j];
+	  int q3 = this->Q3Value[j];
+	  int q4 = this->Q4Value[j];
+	  Index = particles->AdAdAA(index, q1, q2, q3, q4, Coefficient);
+	  if (Index < Dim)
 	    {
-	      int q1 = this->Q1Value[j];
-	      int q2 = this->Q2Value[j];
-	      int q3 = this->Q3Value[j];
-	      int q4 = this->Q4Value[j];
-		 Index = particles->AdAdAA(index, q1, q2, q3, q4, Coefficient);
+	      vDestination[Index] += Coefficient * this->InteractionFactors[j] * vSource[index];
+	    }
+	}
+    }
+  else // intelligent storage
+    {
+      double Coefficient2, TmpRe, TmpIm;
+      double TmpInteractionRe,TmpInteractionIm;
+      int ProcessedNbrInteractionFactors;
+      int TmpNbrQ34Values;
+      int* TmpQ3Values;
+      int* TmpQ4Values;
+      ProcessedNbrInteractionFactors = 0;
+      for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
+	{
+	  Coefficient = particles->AA(index, this->Q1Value[i12], this->Q2Value[i12]);
+	  if (Coefficient != 0.0)
+	    {
+	      TmpRe = vSource[index].Re*Coefficient;
+	      TmpIm = vSource[index].Im*Coefficient;
+	      TmpNbrQ34Values = this->NbrQ34Values[i12];
+	      TmpQ3Values = this->Q3PerQ12[i12];
+	      TmpQ4Values = this->Q4PerQ12[i12];
+	      for (int i34 = 0; i34 < TmpNbrQ34Values; ++i34)
+		{
+		  Index = particles->AdAd(TmpQ3Values[i34], TmpQ4Values[i34], Coefficient2);
 		  if (Index < Dim)
 		    {
-					vDestination[Index] += Coefficient * this->InteractionFactors[j] * vSource[index];
+		      TmpInteractionRe = this->InteractionFactors[ProcessedNbrInteractionFactors].Re;
+		      TmpInteractionIm = this->InteractionFactors[ProcessedNbrInteractionFactors].Im;
+		      vDestination.Re(Index) += Coefficient2 * (TmpRe*TmpInteractionRe-TmpIm*TmpInteractionIm);
+		      vDestination.Im(Index) += Coefficient2 * (TmpRe*TmpInteractionIm+TmpIm*TmpInteractionRe);
 		    }
-		}
-	}
-      else // intelligent storage
-	{
-	  double Coefficient2, TmpRe, TmpIm;
-		double TmpInteractionRe,TmpInteractionIm;
-	  int ProcessedNbrInteractionFactors;
-	  int TmpNbrQ34Values;
-	  int* TmpQ3Values;
-	  int* TmpQ4Values;
-	  ProcessedNbrInteractionFactors = 0;
-	      for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
-		{
-		  Coefficient = particles->AA(index, this->Q1Value[i12], this->Q2Value[i12]);
-		  if (Coefficient != 0.0)
-		    {
-		      TmpRe = vSource[index].Re*Coefficient;
-		      TmpIm = vSource[index].Im*Coefficient;
-		      TmpNbrQ34Values = this->NbrQ34Values[i12];
-		      TmpQ3Values = this->Q3PerQ12[i12];
-		      TmpQ4Values = this->Q4PerQ12[i12];
-		      for (int i34 = 0; i34 < TmpNbrQ34Values; ++i34)
-			{
-			  Index = particles->AdAd(TmpQ3Values[i34], TmpQ4Values[i34], Coefficient2);
-			  if (Index < Dim)
-			    {
-			      TmpInteractionRe = this->InteractionFactors[ProcessedNbrInteractionFactors].Re;
-			      TmpInteractionIm = this->InteractionFactors[ProcessedNbrInteractionFactors].Im;
-			      vDestination.Re(Index) += Coefficient2 * (TmpRe*TmpInteractionRe-TmpIm*TmpInteractionIm);
-			      vDestination.Im(Index) += Coefficient2 * (TmpRe*TmpInteractionIm+TmpIm*TmpInteractionRe);
-			    }
-			  ++ProcessedNbrInteractionFactors;
-			}
-		    }
-		  else
-		    ProcessedNbrInteractionFactors += this->NbrQ34Values[i12];
+		  ++ProcessedNbrInteractionFactors;
 		}
 	    }
-
-      // separated diagonal terms as these will be the general rule for contact interactions
-      if (NbrDiagonalInteractionFactors>0)
-	{
-	      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors, DiagonalInteractionFactors, DiagonalQValues);
-	      vDestination[index] +=  Coefficient * vSource[index];
+	  else
+	    ProcessedNbrInteractionFactors += this->NbrQ34Values[i12];
 	}
+    }
+  
+  // separated diagonal terms as these will be the general rule for contact interactions
+  if (NbrDiagonalInteractionFactors>0)
+    {
+      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors, DiagonalInteractionFactors, DiagonalQValues);
+      vDestination[index] +=  Coefficient * vSource[index];
+    }
 }
 
 
@@ -1464,65 +1440,64 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyAddMultiplyCompone
 
 inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyConjugateAddMultiplyComponent(ParticleOnLattice* particles, int index, ComplexVector& vSource, ComplexVector& vDestination)
 {
-	cout <<"Use new code "<<endl;
-	int Dim = particles->GetHilbertSpaceDimension(); 
-	double Coefficient;
-	int Index;
-	
-     if (this->NbrQ12Indices == 0) // full storage
-	{ 	  
-	  for (int j = 0; j < this->NbrInteractionFactors; ++j) 
-	    {
-	      int q1 = this->Q1Value[j];
-	      int q2 = this->Q2Value[j];
-	      int q3 = this->Q3Value[j];
-	      int q4 = this->Q4Value[j];
-		 Index = particles->AdAdAA(index, q1, q2, q3, q4, Coefficient);
-		  if (Index < Dim)
-		    {
-					vDestination[index] += Conj(Coefficient * this->InteractionFactors[j]) * vSource[Index];
-		    }
-		}
-	}
-      else // intelligent storage
+  int Dim = particles->GetHilbertSpaceDimension(); 
+  double Coefficient;
+  int Index;
+  
+  if (this->NbrQ12Indices == 0) // full storage
+    { 	  
+      for (int j = 0; j < this->NbrInteractionFactors; ++j) 
 	{
-	  double Coefficient2;
-		Complex TmpSum;
-	  int ProcessedNbrInteractionFactors= 0;
-	  int TmpNbrQ34Values;
-	  int* TmpQ3Values;
-	  int* TmpQ4Values;
-	      for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
-		{
-		  Coefficient = particles->AA(index, this->Q1Value[i12], this->Q2Value[i12]);
-		  if (Coefficient != 0.0)
-		    {
-		      TmpNbrQ34Values = this->NbrQ34Values[i12];
-		      TmpQ3Values = this->Q3PerQ12[i12];
-		      TmpQ4Values = this->Q4PerQ12[i12];
-		      for (int i34 = 0; i34 < TmpNbrQ34Values; ++i34)
+	  int q1 = this->Q1Value[j];
+	  int q2 = this->Q2Value[j];
+	  int q3 = this->Q3Value[j];
+	  int q4 = this->Q4Value[j];
+	  Index = particles->AdAdAA(index, q1, q2, q3, q4, Coefficient);
+	  if (Index < Dim)
+	    {
+	      vDestination[index] += Conj(Coefficient * this->InteractionFactors[j]) * vSource[Index];
+	    }
+	}
+    }
+  else // intelligent storage
+    {
+      double Coefficient2;
+      Complex TmpSum;
+      int ProcessedNbrInteractionFactors= 0;
+      int TmpNbrQ34Values;
+      int* TmpQ3Values;
+      int* TmpQ4Values;
+      for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
+	{
+	  Coefficient = particles->AA(index, this->Q1Value[i12], this->Q2Value[i12]);
+	  if (Coefficient != 0.0)
+	    {
+	      TmpNbrQ34Values = this->NbrQ34Values[i12];
+	      TmpQ3Values = this->Q3PerQ12[i12];
+	      TmpQ4Values = this->Q4PerQ12[i12];
+	      for (int i34 = 0; i34 < TmpNbrQ34Values; ++i34)
 			{
 			  Index = particles->AdAd(TmpQ3Values[i34], TmpQ4Values[i34], Coefficient2);
 			  if (Index < Dim)
 			    {
-						TmpSum += (Coefficient*Coefficient2)*Conj(this->InteractionFactors[ProcessedNbrInteractionFactors])*vSource[Index];	
+			      TmpSum += (Coefficient*Coefficient2)*Conj(this->InteractionFactors[ProcessedNbrInteractionFactors])*vSource[Index];	
 			    }
 			  ++ProcessedNbrInteractionFactors;
 			}
-		    }
-		  else
-		    ProcessedNbrInteractionFactors += this->NbrQ34Values[i12];
-		}
-		vDestination[index]+=TmpSum;
 	    }
-
-      // separated diagonal terms as these will be the general rule for contact interactions
-      if (NbrDiagonalInteractionFactors>0)
-	{
-	      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors, DiagonalInteractionFactors, DiagonalQValues);
-				if (Coefficient != 0.0)
-					vDestination[index] +=  Coefficient * vSource[index];
+	  else
+	    ProcessedNbrInteractionFactors += this->NbrQ34Values[i12];
 	}
+      vDestination[index]+=TmpSum;
+    }
+  
+  // separated diagonal terms as these will be the general rule for contact interactions
+  if (NbrDiagonalInteractionFactors>0)
+    {
+      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors, DiagonalInteractionFactors, DiagonalQValues);
+      if (Coefficient != 0.0)
+	vDestination[index] +=  Coefficient * vSource[index];
+    }
 }
 
 // core part of the AddMultiply method involving the one-body interaction for a set of vectors, including loop on vector components
@@ -1537,52 +1512,52 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyConjugateAddMultip
 
 inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyAddMultiplyComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, int step, ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors)
 {
-cout <<"Use new code "<<endl;
-    if (this->NbrHoppingTerms>0)
+  if (this->NbrHoppingTerms>0)
+    {
+      int Dim = particles->GetHilbertSpaceDimension(); 
+      int Index;
+      double Coefficient;
+      Complex TmpInteraction;
+      Complex TmpCoefficient;
+      
+      // deal with kinetic energy terms first!      
+      int qi;
+      int qf;
+      int ReducedNbrHoppingTerms = NbrHoppingTerms-1;
+      for (int j = 0; j < ReducedNbrHoppingTerms; ++j) 
 	{
-		int Dim = particles->GetHilbertSpaceDimension(); 
-		int Index;
-		double Coefficient;
-		Complex TmpInteraction;
-		Complex TmpCoefficient;
-	  // deal with kinetic energy terms first!      
-	  int qi;
-	  int qf;
-	  int ReducedNbrHoppingTerms = NbrHoppingTerms-1;
-	  for (int j = 0; j < ReducedNbrHoppingTerms; ++j) 
-	    {
-	      qi = this->KineticQi[j];
-	      qf = this->KineticQf[j];
-	      TmpInteraction = this->HoppingTerms[j];
-	      for (int i = firstComponent; i < lastComponent; i += step)
-		{
-		  Index = particles->AdA(i, qf, qi, Coefficient);
-		  if (Index < Dim)
-		    {
-		      TmpCoefficient = Coefficient * TmpInteraction;
-		      for (int l = 0; l < nbrVectors; ++l)
-			vDestinations[l][Index] += TmpCoefficient * vSources[l][i];
-		    }
-		}
-	    }
-	  qi = this->KineticQi[ReducedNbrHoppingTerms];
-	  qf = this->KineticQf[ReducedNbrHoppingTerms];
-	  TmpInteraction = this->HoppingTerms[ReducedNbrHoppingTerms];
+	  qi = this->KineticQi[j];
+	  qf = this->KineticQf[j];
+	  TmpInteraction = this->HoppingTerms[j];
 	  for (int i = firstComponent; i < lastComponent; i += step)
 	    {
-	      //cout << "element "<<qi<<"->"<<qf<<" on "<<i<<": "; 
 	      Index = particles->AdA(i, qf, qi, Coefficient);
-	      //cout << "target: "<<Index<<endl;
 	      if (Index < Dim)
 		{
 		  TmpCoefficient = Coefficient * TmpInteraction;
 		  for (int l = 0; l < nbrVectors; ++l)
 		    vDestinations[l][Index] += TmpCoefficient * vSources[l][i];
 		}
-	      for (int l = 0; l < nbrVectors; ++l)
-		vDestinations[l][i] += this->HamiltonianShift * vSources[l][i];
 	    }
 	}
+      qi = this->KineticQi[ReducedNbrHoppingTerms];
+      qf = this->KineticQf[ReducedNbrHoppingTerms];
+      TmpInteraction = this->HoppingTerms[ReducedNbrHoppingTerms];
+      for (int i = firstComponent; i < lastComponent; i += step)
+	{
+	  //cout << "element "<<qi<<"->"<<qf<<" on "<<i<<": "; 
+	  Index = particles->AdA(i, qf, qi, Coefficient);
+	  //cout << "target: "<<Index<<endl;
+	  if (Index < Dim)
+	    {
+	      TmpCoefficient = Coefficient * TmpInteraction;
+	      for (int l = 0; l < nbrVectors; ++l)
+		vDestinations[l][Index] += TmpCoefficient * vSources[l][i];
+	    }
+	  for (int l = 0; l < nbrVectors; ++l)
+	    vDestinations[l][i] += this->HamiltonianShift * vSources[l][i];
+	}
+    }
 }
 
 // core part of the AddMultiply method involving the one-body interaction for a set of vectors, including loop on vector components
@@ -1597,52 +1572,53 @@ cout <<"Use new code "<<endl;
 
 inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyConjugateAddMultiplyComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, int step, ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors)
 {
-cout <<"Use new code "<<endl;
-    if (this->NbrHoppingTerms>0)
+  if (this->NbrHoppingTerms>0)
+    {
+      int Dim = particles->GetHilbertSpaceDimension(); 
+      int Index;
+      double Coefficient;
+      Complex TmpInteraction;
+      Complex TmpCoefficient;
+
+      // deal with kinetic energy terms first!      
+      
+      int qi;
+      int qf;
+      int ReducedNbrHoppingTerms = NbrHoppingTerms-1;
+      for (int j = 0; j < ReducedNbrHoppingTerms; ++j) 
 	{
-		int Dim = particles->GetHilbertSpaceDimension(); 
-		int Index;
-		double Coefficient;
-		Complex TmpInteraction;
-		Complex TmpCoefficient;
-	  // deal with kinetic energy terms first!      
-	  int qi;
-	  int qf;
-	  int ReducedNbrHoppingTerms = NbrHoppingTerms-1;
-	  for (int j = 0; j < ReducedNbrHoppingTerms; ++j) 
-	    {
-	      qi = this->KineticQi[j];
-	      qf = this->KineticQf[j];
-	      TmpInteraction = Conj(this->HoppingTerms[j]);
-	      for (int i = firstComponent; i < lastComponent; i += step)
-		{
-		  Index = particles->AdA(i, qf, qi, Coefficient);
-		  if (Index < Dim)
-		    {
-		      TmpCoefficient = Coefficient * TmpInteraction;
-		      for (int l = 0; l < nbrVectors; ++l)
-			vDestinations[l][i] += TmpCoefficient * vSources[l][Index];
-		    }
-		}
-	    }
-	  qi = this->KineticQi[ReducedNbrHoppingTerms];
-	  qf = this->KineticQf[ReducedNbrHoppingTerms];
-	  TmpInteraction = Conj(this->HoppingTerms[ReducedNbrHoppingTerms]);
+	  qi = this->KineticQi[j];
+	  qf = this->KineticQf[j];
+	  TmpInteraction = Conj(this->HoppingTerms[j]);
 	  for (int i = firstComponent; i < lastComponent; i += step)
 	    {
-	      //cout << "element "<<qi<<"->"<<qf<<" on "<<i<<": "; 
 	      Index = particles->AdA(i, qf, qi, Coefficient);
-	      //cout << "target: "<<Index<<endl;
 	      if (Index < Dim)
 		{
 		  TmpCoefficient = Coefficient * TmpInteraction;
 		  for (int l = 0; l < nbrVectors; ++l)
 		    vDestinations[l][i] += TmpCoefficient * vSources[l][Index];
 		}
-	      for (int l = 0; l < nbrVectors; ++l)
-		vDestinations[l][i] += this->HamiltonianShift * vSources[l][i];
 	    }
 	}
+      qi = this->KineticQi[ReducedNbrHoppingTerms];
+      qf = this->KineticQf[ReducedNbrHoppingTerms];
+      TmpInteraction = Conj(this->HoppingTerms[ReducedNbrHoppingTerms]);
+      for (int i = firstComponent; i < lastComponent; i += step)
+	{
+	  //cout << "element "<<qi<<"->"<<qf<<" on "<<i<<": "; 
+	  Index = particles->AdA(i, qf, qi, Coefficient);
+	  //cout << "target: "<<Index<<endl;
+	  if (Index < Dim)
+	    {
+	      TmpCoefficient = Coefficient * TmpInteraction;
+	      for (int l = 0; l < nbrVectors; ++l)
+		vDestinations[l][i] += TmpCoefficient * vSources[l][Index];
+	    }
+	  for (int l = 0; l < nbrVectors; ++l)
+	    vDestinations[l][i] += this->HamiltonianShift * vSources[l][i];
+	}
+    }
 }
 
 // core part of the AddMultiply method involving the two-body interaction for a set of vectors
@@ -1656,75 +1632,73 @@ cout <<"Use new code "<<endl;
 
 inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyAddMultiplyComponent(ParticleOnLattice* particles, int index, ComplexVector* vSources,  ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients)
 {
-	cout <<"Use new code "<<endl;
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
   double Coefficient3;
   int Index;
-	Complex TmpInteraction;
-	Complex TmpCoefficient;
-	if (this->NbrQ12Indices == 0) // full storage
-	{ 	  
-	  for (int j = 0; j < NbrInteractionFactors; ++j) 
+  Complex TmpInteraction;
+  Complex TmpCoefficient;
+  if (this->NbrQ12Indices == 0) // full storage
+    { 	  
+      for (int j = 0; j < NbrInteractionFactors; ++j) 
+	{
+	  int q1 = this->Q1Value[j];
+	  int q2 = this->Q2Value[j];
+	  int q3 = this->Q3Value[j];
+	  int q4 = this->Q4Value[j];
+	  TmpInteraction = this->InteractionFactors[j];
+	  Index = particles->AdAdAA(index, q1, q2, q3, q4, Coefficient);
+	  if (Index < Dim)
 	    {
-	      int q1 = this->Q1Value[j];
-	      int q2 = this->Q2Value[j];
-	      int q3 = this->Q3Value[j];
-	      int q4 = this->Q4Value[j];
-	      TmpInteraction = this->InteractionFactors[j];
-		  Index = particles->AdAdAA(index, q1, q2, q3, q4, Coefficient);
-		  if (Index < Dim)
-		    {
-		      TmpCoefficient = Coefficient * TmpInteraction;
-		      for (int l = 0; l < nbrVectors; ++l)
-			vDestinations[l][Index] += TmpCoefficient * vSources[l][index];
-		    }
+	      TmpCoefficient = Coefficient * TmpInteraction;
+	      for (int l = 0; l < nbrVectors; ++l)
+		vDestinations[l][Index] += TmpCoefficient * vSources[l][index];
 	    }
 	}
-      else // intelligent storage
-	{
-	  double Coefficient2;
-	  int ProcessedNbrInteractionFactors;
-	  int TmpNbrQ34Values;
-	  int* TmpQ3Values;
-	  int* TmpQ4Values;
-	  Complex* TmpCoefficients = new Complex[nbrVectors];
-	      ProcessedNbrInteractionFactors = 0;
-	      for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
-		{
-		  Coefficient = particles->AA(index, this->Q1Value[i12], this->Q2Value[i12]);
-		  if (Coefficient != 0.0)
-		    {
-		      for (int l = 0; l < nbrVectors; ++l)
-			tmpCoefficients[l] = vSources[l][index]*Coefficient;
-		      TmpNbrQ34Values = this->NbrQ34Values[i12];
-		      TmpQ3Values = this->Q3PerQ12[i12];
-		      TmpQ4Values = this->Q4PerQ12[i12];
-		      for (int i34 = 0; i34 < TmpNbrQ34Values; ++i34)
-			{
-			  Index = particles->AdAd(TmpQ3Values[i34], TmpQ4Values[i34], Coefficient2);
-			  if (Index < Dim)
-			    {
-			      TmpCoefficient = this->InteractionFactors[ProcessedNbrInteractionFactors] * Coefficient2;
-			      for (int l = 0; l < nbrVectors; ++l)
-				vDestinations[l][Index] += TmpCoefficient * TmpCoefficients[l];
-			    }
-			  ++ProcessedNbrInteractionFactors;
-			}
-				}
-		  else
-		    ProcessedNbrInteractionFactors += this->NbrQ34Values[i12];
-		}
-	}	  
-
-      // separated diagonal terms as these will be the general rule for contact interactions
-      if (this->NbrDiagonalInteractionFactors > 0)
-	{
-	      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors , DiagonalInteractionFactors, DiagonalQValues);
-	      for (int l = 0; l < nbrVectors; ++l)
-					vDestinations[l][index] +=  Coefficient * vSources[l][index];
 	}
-      
+  else // intelligent storage
+    {
+      double Coefficient2;
+      int ProcessedNbrInteractionFactors;
+      int TmpNbrQ34Values;
+      int* TmpQ3Values;
+      int* TmpQ4Values;
+      Complex* TmpCoefficients = new Complex[nbrVectors];
+      ProcessedNbrInteractionFactors = 0;
+      for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
+	{
+	  Coefficient = particles->AA(index, this->Q1Value[i12], this->Q2Value[i12]);
+	  if (Coefficient != 0.0)
+	    {
+	      for (int l = 0; l < nbrVectors; ++l)
+		tmpCoefficients[l] = vSources[l][index]*Coefficient;
+	      TmpNbrQ34Values = this->NbrQ34Values[i12];
+	      TmpQ3Values = this->Q3PerQ12[i12];
+	      TmpQ4Values = this->Q4PerQ12[i12];
+	      for (int i34 = 0; i34 < TmpNbrQ34Values; ++i34)
+		{
+		  Index = particles->AdAd(TmpQ3Values[i34], TmpQ4Values[i34], Coefficient2);
+		  if (Index < Dim)
+		    {
+		      TmpCoefficient = this->InteractionFactors[ProcessedNbrInteractionFactors] * Coefficient2;
+		      for (int l = 0; l < nbrVectors; ++l)
+			vDestinations[l][Index] += TmpCoefficient * TmpCoefficients[l];
+		    }
+		  ++ProcessedNbrInteractionFactors;
+		}
+	    }
+	  else
+	    ProcessedNbrInteractionFactors += this->NbrQ34Values[i12];
+	}
+    }	  
+  
+  // separated diagonal terms as these will be the general rule for contact interactions
+  if (this->NbrDiagonalInteractionFactors > 0)
+    {
+      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors , DiagonalInteractionFactors, DiagonalQValues);
+      for (int l = 0; l < nbrVectors; ++l)
+	vDestinations[l][index] +=  Coefficient * vSources[l][index];
+    }
 }
 
 // core part of the AddMultiply method involving the two-body interaction for a set of vectors
@@ -1738,75 +1712,73 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyAddMultiplyCompone
 
 inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyConjugateAddMultiplyComponent(ParticleOnLattice* particles, int index, ComplexVector* vSources,  ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients)
 {
-	cout <<"Use new code "<<endl;
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
   double Coefficient3;
   int Index;
-	Complex TmpInteraction;
-	Complex TmpCoefficient;
-	if (this->NbrQ12Indices == 0) // full storage
-	{ 	  
-	  for (int j = 0; j < NbrInteractionFactors; ++j) 
+  Complex TmpInteraction;
+  Complex TmpCoefficient;
+  if (this->NbrQ12Indices == 0) // full storage
+    { 	  
+      for (int j = 0; j < NbrInteractionFactors; ++j) 
+	{
+	  int q1 = this->Q1Value[j];
+	  int q2 = this->Q2Value[j];
+	  int q3 = this->Q3Value[j];
+	  int q4 = this->Q4Value[j];
+	  TmpInteraction = Conj(this->InteractionFactors[j]);
+	  Index = particles->AdAdAA(index, q1, q2, q3, q4, Coefficient);
+	  if (Index < Dim)
 	    {
-	      int q1 = this->Q1Value[j];
-	      int q2 = this->Q2Value[j];
-	      int q3 = this->Q3Value[j];
-	      int q4 = this->Q4Value[j];
-	      TmpInteraction = Conj(this->InteractionFactors[j]);
-		  Index = particles->AdAdAA(index, q1, q2, q3, q4, Coefficient);
-		  if (Index < Dim)
-		    {
-		      TmpCoefficient = Coefficient * TmpInteraction;
-		      for (int l = 0; l < nbrVectors; ++l)
-			vDestinations[l][index] += TmpCoefficient * vSources[l][Index];
-		    }
+	      TmpCoefficient = Coefficient * TmpInteraction;
+	      for (int l = 0; l < nbrVectors; ++l)
+		vDestinations[l][index] += TmpCoefficient * vSources[l][Index];
 	    }
 	}
-      else // intelligent storage
+    }
+  else // intelligent storage
+    {
+      double Coefficient2;
+      int ProcessedNbrInteractionFactors= 0;
+      int TmpNbrQ34Values;
+      int* TmpQ3Values;
+      int* TmpQ4Values;
+      for (int l = 0; l < nbrVectors; ++l)
+	tmpCoefficients[l] = 0.0;
+      for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
 	{
-	  double Coefficient2;
-	  int ProcessedNbrInteractionFactors= 0;
-	  int TmpNbrQ34Values;
-	  int* TmpQ3Values;
-	  int* TmpQ4Values;
-		for (int l = 0; l < nbrVectors; ++l)
-			tmpCoefficients[l] = 0.0;
-	      for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
+	  Coefficient = particles->AA(index, this->Q1Value[i12], this->Q2Value[i12]);
+	  if (Coefficient != 0.0)
+	    {
+	      TmpNbrQ34Values = this->NbrQ34Values[i12];
+	      TmpQ3Values = this->Q3PerQ12[i12];
+	      TmpQ4Values = this->Q4PerQ12[i12];
+	      for (int i34 = 0; i34 < TmpNbrQ34Values; ++i34)
 		{
-		  Coefficient = particles->AA(index, this->Q1Value[i12], this->Q2Value[i12]);
-		  if (Coefficient != 0.0)
+		  Index = particles->AdAd(TmpQ3Values[i34], TmpQ4Values[i34], Coefficient2);
+		  if (Index < Dim)
 		    {
-		      TmpNbrQ34Values = this->NbrQ34Values[i12];
-		      TmpQ3Values = this->Q3PerQ12[i12];
-		      TmpQ4Values = this->Q4PerQ12[i12];
-		      for (int i34 = 0; i34 < TmpNbrQ34Values; ++i34)
-			{
-			  Index = particles->AdAd(TmpQ3Values[i34], TmpQ4Values[i34], Coefficient2);
-			  if (Index < Dim)
-			    {
-			      TmpCoefficient = Conj(this->InteractionFactors[ProcessedNbrInteractionFactors])*(Coefficient * Coefficient2);
-			      for (int l = 0; l < nbrVectors; ++l)
-				tmpCoefficients[l] += TmpCoefficient * vSources[l][Index];
-			    }
-			  ++ProcessedNbrInteractionFactors;
-			}
-				}
-		  else
-		    ProcessedNbrInteractionFactors += this->NbrQ34Values[i12];
+		      TmpCoefficient = Conj(this->InteractionFactors[ProcessedNbrInteractionFactors])*(Coefficient * Coefficient2);
+		      for (int l = 0; l < nbrVectors; ++l)
+			tmpCoefficients[l] += TmpCoefficient * vSources[l][Index];
+		    }
+		  ++ProcessedNbrInteractionFactors;
 		}
-		for (int l = 0; l < nbrVectors; ++l)
-		vDestinations[l][index] += tmpCoefficients[l];
-	}	  
-
-      // separated diagonal terms as these will be the general rule for contact interactions
-      if (this->NbrDiagonalInteractionFactors > 0)
-	{
-	      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors , DiagonalInteractionFactors, DiagonalQValues);
-	      for (int l = 0; l < nbrVectors; ++l)
-					vDestinations[l][index] +=  Coefficient * vSources[l][index];
+	    }
+	  else
+	    ProcessedNbrInteractionFactors += this->NbrQ34Values[i12];
 	}
-      
+      for (int l = 0; l < nbrVectors; ++l)
+	vDestinations[l][index] += tmpCoefficients[l];
+    }	  
+  
+  // separated diagonal terms as these will be the general rule for contact interactions
+  if (this->NbrDiagonalInteractionFactors > 0)
+    {
+      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors , DiagonalInteractionFactors, DiagonalQValues);
+      for (int l = 0; l < nbrVectors; ++l)
+	vDestinations[l][index] +=  Coefficient * vSources[l][index];
+    }
 }
 
 // core part of the AddMultiply method involving the two-body interaction
@@ -1818,114 +1790,100 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyConjugateAddMultip
 
 inline void AbstractQHEOnLatticeHamiltonian::HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnLattice* particles, int index, ComplexVector& vSource, ComplexVector& vDestination)
 {	
-	cout <<"Use new code "<<endl;
-	Complex TmpInteraction;
-	int Index;
-	int Dim = particles->GetHilbertSpaceDimension();
-	double Coefficient;
-	    // four-fermion interactions:
-      if (this->NbrQ12Indices == 0) // full storage
+  Complex TmpInteraction;
+  int Index;
+  int Dim = particles->GetHilbertSpaceDimension();
+  double Coefficient;
+  // four-fermion interactions:
+  if (this->NbrQ12Indices == 0) // full storage
+    {
+      for (int j = 0; j < this->NbrInteractionFactors; ++j) 
 	{
-	  for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+	  int q1 = this->Q1Value[j];
+	  int q2 = this->Q2Value[j];
+	  int q3 = this->Q3Value[j];
+	  int q4 = this->Q4Value[j];
+	  TmpInteraction = this->InteractionFactors[j];
+	  Index = particles->AdAdAA(index, q1, q2, q3, q4, Coefficient);
+	  if (Index < Dim)
 	    {
-	      int q1 = this->Q1Value[j];
-	      int q2 = this->Q2Value[j];
-	      int q3 = this->Q3Value[j];
-	      int q4 = this->Q4Value[j];
-	      TmpInteraction = this->InteractionFactors[j];
-		  Index = particles->AdAdAA(index, q1, q2, q3, q4, Coefficient);
-		  if (Index < Dim)
-		    {
-		      vDestination[Index] += Coefficient * TmpInteraction*vSource[index];
-		      vDestination[index] += Coefficient * Conj(TmpInteraction)*vSource[Index];
-		    }
+	      vDestination[Index] += Coefficient * TmpInteraction*vSource[index];
+	      vDestination[index] += Coefficient * Conj(TmpInteraction)*vSource[Index];
 	    }
 	}
-      else // intelligent storage
+    }
+  else // intelligent storage
+    {
+      double Coefficient2;
+      Complex TmpSum;
+      Complex TmpCoefficient;
+      int ProcessedNbrInteractionFactors;
+      int TmpNbrQ34Values;
+      int* TmpQ3Values;
+      int* TmpQ4Values;
+      TmpSum=0.0;
+      ProcessedNbrInteractionFactors = 0;
+      for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
 	{
-	  double Coefficient2;
-	  Complex TmpSum;
-	  Complex TmpCoefficient;
-	  int ProcessedNbrInteractionFactors;
-	  int TmpNbrQ34Values;
-	  int* TmpQ3Values;
-	  int* TmpQ4Values;
-	      TmpSum=0.0;
-	      ProcessedNbrInteractionFactors = 0;
-	      for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
+	  Coefficient = particles->AA(index, this->Q1Value[i12], this->Q2Value[i12]);
+	  if (Coefficient != 0.0)
+	    {
+	      //cout << "Non-zero: a_"<<this->Q1Value[i12]<<" a_"<< this->Q2Value[i12]<<"| "<<i<<">  [following: "<<NbrQ34Values[i12]<<"]"<<endl;
+	      TmpCoefficient = vSource[index];
+	      TmpNbrQ34Values = this->NbrQ34Values[i12];
+	      TmpQ3Values = this->Q3PerQ12[i12];
+	      TmpQ4Values = this->Q4PerQ12[i12];
+	      for (int i34 = 0; i34 < TmpNbrQ34Values; ++i34)
 		{
-		  Coefficient = particles->AA(index, this->Q1Value[i12], this->Q2Value[i12]);
-		  if (Coefficient != 0.0)
+		  Index = particles->AdAd(TmpQ3Values[i34], TmpQ4Values[i34], Coefficient2);
+		  //cout << "Testing a^+_"<<TmpQ3Values[i34]<<" a^+_"<< TmpQ4Values[i34]<<" ";
+		  if (Index < Dim)
 		    {
-		      //cout << "Non-zero: a_"<<this->Q1Value[i12]<<" a_"<< this->Q2Value[i12]<<"| "<<i<<">  [following: "<<NbrQ34Values[i12]<<"]"<<endl;
-		      TmpCoefficient = vSource[index];
-		      TmpNbrQ34Values = this->NbrQ34Values[i12];
-		      TmpQ3Values = this->Q3PerQ12[i12];
-		      TmpQ4Values = this->Q4PerQ12[i12];
-		      for (int i34 = 0; i34 < TmpNbrQ34Values; ++i34)
-			{
-			  Index = particles->AdAd(TmpQ3Values[i34], TmpQ4Values[i34], Coefficient2);
-			  //cout << "Testing a^+_"<<TmpQ3Values[i34]<<" a^+_"<< TmpQ4Values[i34]<<" ";
-			  if (Index < Dim)
-			    {
-			      // cout << " -> "<<Index<<endl;
-			      TmpInteraction = this->InteractionFactors[ProcessedNbrInteractionFactors];
-			      Coefficient2*=Coefficient;
-			      vDestination[Index] += Coefficient2 * TmpCoefficient * TmpInteraction;
-			      //cout << "H["<<i<<", "<<Index<<"]="<<Coefficient2 * TmpInteraction<<endl;
-			      TmpSum += Coefficient2*Conj(TmpInteraction)*vSource[Index];
-			      //cout << "H["<<Index<<", "<<i<<"]="<<Coefficient2 * Conj(TmpInteraction)<<endl;
-			    }
-// 			  else
-// 			    cout << " -> ZERO"<<endl;
-			  ++ProcessedNbrInteractionFactors;
-			}
+		      // cout << " -> "<<Index<<endl;
+		      TmpInteraction = this->InteractionFactors[ProcessedNbrInteractionFactors];
+		      Coefficient2*=Coefficient;
+		      vDestination[Index] += Coefficient2 * TmpCoefficient * TmpInteraction;
+		      //cout << "H["<<i<<", "<<Index<<"]="<<Coefficient2 * TmpInteraction<<endl;
+		      TmpSum += Coefficient2*Conj(TmpInteraction)*vSource[Index];
+		      //cout << "H["<<Index<<", "<<i<<"]="<<Coefficient2 * Conj(TmpInteraction)<<endl;
 		    }
-		  else
-		    ProcessedNbrInteractionFactors += this->NbrQ34Values[i12];
+		  // 			  else
+		  // 			    cout << " -> ZERO"<<endl;
+		  ++ProcessedNbrInteractionFactors;
 		}
-	      vDestination[index] += TmpSum;
-	}	  
-      // separated diagonal terms as these will be the general rule for contact interactions
-      if (this->NbrDiagonalInteractionFactors > 0)
-	{
-	      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors,
-							DiagonalInteractionFactors, DiagonalQValues);
-	      vDestination[index] +=  Coefficient * vSource[index];
 	    }
+	  else
+	    ProcessedNbrInteractionFactors += this->NbrQ34Values[i12];
+	}
+      vDestination[index] += TmpSum;
+    }	  
+  // separated diagonal terms as these will be the general rule for contact interactions
+  if (this->NbrDiagonalInteractionFactors > 0)
+    {
+      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors,
+					      DiagonalInteractionFactors, DiagonalQValues);
+      vDestination[index] +=  Coefficient * vSource[index];
+    }
 }
 
 inline void AbstractQHEOnLatticeHamiltonian::HermitianEvaluateMNOneBodyAddMultiplyComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, int step, ComplexVector& vSource, ComplexVector& vDestination)
 {
-	cout <<"Use new code "<<endl;
-	if (NbrHoppingTerms>0)
+  if (NbrHoppingTerms>0)
+    {
+      int Index;
+      double Coefficient;
+      Complex TmpInteraction;
+      int Dim = particles->GetHilbertSpaceDimension();
+      
+      // deal with kinetic energy terms first!      
+      int qi;
+      int qf;
+      int ReducedNbrHoppingTerms = NbrHoppingTerms-1;
+      for (int j = 0; j < ReducedNbrHoppingTerms; ++j) 
 	{
-			int Index;
-	double Coefficient;
-	Complex TmpInteraction;
-	int Dim = particles->GetHilbertSpaceDimension();
-	  // deal with kinetic energy terms first!      
-	  int qi;
-	  int qf;
-	  int ReducedNbrHoppingTerms = NbrHoppingTerms-1;
-	  for (int j = 0; j < ReducedNbrHoppingTerms; ++j) 
-	    {
-	      qi = this->KineticQi[j];
-	      qf = this->KineticQf[j];
-	      TmpInteraction = this->HoppingTerms[j];
-	      for (int i = firstComponent; i < lastComponent; i += step)
-		{
-		  Index = particles->AdA(i, qf, qi, Coefficient);
-		  if (Index < Dim)
-		    {
-		      vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
-		      vDestination[i] += Coefficient * Conj(TmpInteraction) * vSource[Index];
-		    }
-		}
-	    }
-	  qi = this->KineticQi[ReducedNbrHoppingTerms];
-	  qf = this->KineticQf[ReducedNbrHoppingTerms];
-	  TmpInteraction = this->HoppingTerms[ReducedNbrHoppingTerms];
+	  qi = this->KineticQi[j];
+	  qf = this->KineticQf[j];
+	  TmpInteraction = this->HoppingTerms[j];
 	  for (int i = firstComponent; i < lastComponent; i += step)
 	    {
 	      Index = particles->AdA(i, qf, qi, Coefficient);
@@ -1934,9 +1892,22 @@ inline void AbstractQHEOnLatticeHamiltonian::HermitianEvaluateMNOneBodyAddMultip
 		  vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
 		  vDestination[i] += Coefficient * Conj(TmpInteraction) * vSource[Index];
 		}
-	      vDestination[i] += this->HamiltonianShift * vSource[i];
 	    }
 	}
+      qi = this->KineticQi[ReducedNbrHoppingTerms];
+      qf = this->KineticQf[ReducedNbrHoppingTerms];
+      TmpInteraction = this->HoppingTerms[ReducedNbrHoppingTerms];
+      for (int i = firstComponent; i < lastComponent; i += step)
+	{
+	  Index = particles->AdA(i, qf, qi, Coefficient);
+	  if (Index < Dim)
+	    {
+	      vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
+	      vDestination[i] += Coefficient * Conj(TmpInteraction) * vSource[Index];
+	    }
+	  vDestination[i] += this->HamiltonianShift * vSource[i];
+	}
+    }
 }
 
 // core part of the AddMultiply method involving the one-body interaction for a set of vectors, including loop on vector components
@@ -1951,58 +1922,59 @@ inline void AbstractQHEOnLatticeHamiltonian::HermitianEvaluateMNOneBodyAddMultip
 
 inline void AbstractQHEOnLatticeHamiltonian::HermitianEvaluateMNOneBodyAddMultiplyComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, int step, ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors)
 {
-cout <<"Use new code "<<endl;
-    if (this->NbrHoppingTerms>0)
+  if (this->NbrHoppingTerms>0)
+    {
+      int Dim = particles->GetHilbertSpaceDimension(); 
+      int Index;
+      double Coefficient;
+      Complex TmpInteraction;
+      Complex TmpCoefficient;
+	
+      // deal with kinetic energy terms first!      
+      int qi;
+      int qf;
+      int ReducedNbrHoppingTerms = NbrHoppingTerms-1;
+      for (int j = 0; j < ReducedNbrHoppingTerms; ++j) 
 	{
-		int Dim = particles->GetHilbertSpaceDimension(); 
-		int Index;
-		double Coefficient;
-		Complex TmpInteraction;
-		Complex TmpCoefficient;
-	  // deal with kinetic energy terms first!      
-	  int qi;
-	  int qf;
-	  int ReducedNbrHoppingTerms = NbrHoppingTerms-1;
-	  for (int j = 0; j < ReducedNbrHoppingTerms; ++j) 
-	    {
-	      qi = this->KineticQi[j];
-	      qf = this->KineticQf[j];
-	      TmpInteraction = this->HoppingTerms[j];
-	      for (int i = firstComponent; i < lastComponent; i += step)
-		{
-		  Index = particles->AdA(i, qf, qi, Coefficient);
-		  if (Index < Dim)
-		    {
-		      TmpCoefficient = Coefficient * TmpInteraction;
-		      for (int l = 0; l < nbrVectors; ++l)
-			vDestinations[l][Index] += TmpCoefficient * vSources[l][i];
-					      TmpCoefficient.Conjugate();
-		      for (int l = 0; l < nbrVectors; ++l)
-			vDestinations[l][i] += TmpCoefficient * vSources[l][Index];
-		    }
-		}
-	    }
-	  qi = this->KineticQi[ReducedNbrHoppingTerms];
-	  qf = this->KineticQf[ReducedNbrHoppingTerms];
-	  TmpInteraction = this->HoppingTerms[ReducedNbrHoppingTerms];
+	  qi = this->KineticQi[j];
+	  qf = this->KineticQf[j];
+	  TmpInteraction = this->HoppingTerms[j];
 	  for (int i = firstComponent; i < lastComponent; i += step)
 	    {
-	      //cout << "element "<<qi<<"->"<<qf<<" on "<<i<<": "; 
 	      Index = particles->AdA(i, qf, qi, Coefficient);
-	      //cout << "target: "<<Index<<endl;
 	      if (Index < Dim)
 		{
 		  TmpCoefficient = Coefficient * TmpInteraction;
 		  for (int l = 0; l < nbrVectors; ++l)
 		    vDestinations[l][Index] += TmpCoefficient * vSources[l][i];
-					  TmpCoefficient.Conjugate();
+		  TmpCoefficient.Conjugate();
 		  for (int l = 0; l < nbrVectors; ++l)
 		    vDestinations[l][i] += TmpCoefficient * vSources[l][Index];
 		}
-	      for (int l = 0; l < nbrVectors; ++l)
-		vDestinations[l][i] += this->HamiltonianShift * vSources[l][i];
 	    }
 	}
+
+      qi = this->KineticQi[ReducedNbrHoppingTerms];
+      qf = this->KineticQf[ReducedNbrHoppingTerms];
+      TmpInteraction = this->HoppingTerms[ReducedNbrHoppingTerms];
+      for (int i = firstComponent; i < lastComponent; i += step)
+	{
+	  //cout << "element "<<qi<<"->"<<qf<<" on "<<i<<": "; 
+	  Index = particles->AdA(i, qf, qi, Coefficient);
+	  //cout << "target: "<<Index<<endl;
+	  if (Index < Dim)
+	    {
+	      TmpCoefficient = Coefficient * TmpInteraction;
+	      for (int l = 0; l < nbrVectors; ++l)
+		vDestinations[l][Index] += TmpCoefficient * vSources[l][i];
+	      TmpCoefficient.Conjugate();
+	      for (int l = 0; l < nbrVectors; ++l)
+		vDestinations[l][i] += TmpCoefficient * vSources[l][Index];
+	    }
+	  for (int l = 0; l < nbrVectors; ++l)
+	    vDestinations[l][i] += this->HamiltonianShift * vSources[l][i];
+	}
+    }
 }
 
 // core part of the AddMultiply method involving the two-body interaction for a set of vectors
@@ -2016,82 +1988,80 @@ cout <<"Use new code "<<endl;
 
 inline void AbstractQHEOnLatticeHamiltonian::HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnLattice* particles, int index, ComplexVector* vSources,  ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients)
 {
-	cout <<"Use new code "<<endl;
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
   double Coefficient3;
   int Index;
-	Complex TmpInteraction;
-	Complex TmpCoefficient;
-	if (this->NbrQ12Indices == 0) // full storage
-	{ 	  
-	  for (int j = 0; j < NbrInteractionFactors; ++j) 
+  Complex TmpInteraction;
+  Complex TmpCoefficient;
+  if (this->NbrQ12Indices == 0) // full storage
+    { 	  
+      for (int j = 0; j < NbrInteractionFactors; ++j) 
+	{
+	  int q1 = this->Q1Value[j];
+	  int q2 = this->Q2Value[j];
+	  int q3 = this->Q3Value[j];
+	  int q4 = this->Q4Value[j];
+	  TmpInteraction = this->InteractionFactors[j];
+	  Index = particles->AdAdAA(index, q1, q2, q3, q4, Coefficient);
+	  if (Index < Dim)
 	    {
-	      int q1 = this->Q1Value[j];
-	      int q2 = this->Q2Value[j];
-	      int q3 = this->Q3Value[j];
-	      int q4 = this->Q4Value[j];
-	      TmpInteraction = this->InteractionFactors[j];
-		  Index = particles->AdAdAA(index, q1, q2, q3, q4, Coefficient);
-		  if (Index < Dim)
-		    {
-		      TmpCoefficient = Coefficient * TmpInteraction;
-		      for (int l = 0; l < nbrVectors; ++l)
-			vDestinations[l][Index] += TmpCoefficient * vSources[l][index];
-					      TmpCoefficient.Conjugate();
-		      for (int l = 0; l < nbrVectors; ++l)
-			vDestinations[l][index] += TmpCoefficient * vSources[l][Index];
-		    }
+	      TmpCoefficient = Coefficient * TmpInteraction;
+	      for (int l = 0; l < nbrVectors; ++l)
+		vDestinations[l][Index] += TmpCoefficient * vSources[l][index];
+	      TmpCoefficient.Conjugate();
+	      for (int l = 0; l < nbrVectors; ++l)
+		vDestinations[l][index] += TmpCoefficient * vSources[l][Index];
 	    }
 	}
-      else // intelligent storage
+    }
+  else // intelligent storage
+    {
+      double Coefficient2;
+      int ProcessedNbrInteractionFactors = 0;
+      int TmpNbrQ34Values;
+      int* TmpQ3Values;
+      int* TmpQ4Values;
+      ProcessedNbrInteractionFactors = 0;
+      for (int l = 0; l < nbrVectors; ++l)
+	tmpCoefficients[l] = 0.0;
+      for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
 	{
-	  double Coefficient2;
-	  int ProcessedNbrInteractionFactors = 0;
-	  int TmpNbrQ34Values;
-	  int* TmpQ3Values;
-	  int* TmpQ4Values;
-	      ProcessedNbrInteractionFactors = 0;
-				for (int l = 0; l < nbrVectors; ++l)
-		tmpCoefficients[l] = 0.0;
-	      for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
+	  Coefficient = particles->AA(index, this->Q1Value[i12], this->Q2Value[i12]);
+	  if (Coefficient != 0.0)
+	    {
+	      TmpNbrQ34Values = this->NbrQ34Values[i12];
+	      TmpQ3Values = this->Q3PerQ12[i12];
+	      TmpQ4Values = this->Q4PerQ12[i12];
+	      for (int i34 = 0; i34 < TmpNbrQ34Values; ++i34)
 		{
-		  Coefficient = particles->AA(index, this->Q1Value[i12], this->Q2Value[i12]);
-		  if (Coefficient != 0.0)
+		  Index = particles->AdAd(TmpQ3Values[i34], TmpQ4Values[i34], Coefficient2);
+		  if (Index < Dim)
 		    {
-		      TmpNbrQ34Values = this->NbrQ34Values[i12];
-		      TmpQ3Values = this->Q3PerQ12[i12];
-		      TmpQ4Values = this->Q4PerQ12[i12];
-		      for (int i34 = 0; i34 < TmpNbrQ34Values; ++i34)
-			{
-			  Index = particles->AdAd(TmpQ3Values[i34], TmpQ4Values[i34], Coefficient2);
-			  if (Index < Dim)
-			    {
-			      TmpCoefficient = this->InteractionFactors[ProcessedNbrInteractionFactors] * Coefficient2 *Coefficient;
-			      for (int l = 0; l < nbrVectors; ++l)
-				vDestinations[l][Index] += TmpCoefficient * vSources[l][index];
-				TmpCoefficient.Conjugate();
-			      for (int l = 0; l < nbrVectors; ++l)
-				tmpCoefficients[l] += TmpCoefficient * vSources[l][Index];
-			    }
-			  ++ProcessedNbrInteractionFactors;
-			}
-				}
-		  else
-		    ProcessedNbrInteractionFactors += this->NbrQ34Values[i12];
+		      TmpCoefficient = this->InteractionFactors[ProcessedNbrInteractionFactors] * Coefficient2 *Coefficient;
+		      for (int l = 0; l < nbrVectors; ++l)
+			vDestinations[l][Index] += TmpCoefficient * vSources[l][index];
+		      TmpCoefficient.Conjugate();
+		      for (int l = 0; l < nbrVectors; ++l)
+			tmpCoefficients[l] += TmpCoefficient * vSources[l][Index];
+		    }
+		  ++ProcessedNbrInteractionFactors;
 		}
-		for (int l = 0; l < nbrVectors; ++l)
-		vDestinations[l][index] += tmpCoefficients[l];
-	}	  
-
-      // separated diagonal terms as these will be the general rule for contact interactions
-      if (this->NbrDiagonalInteractionFactors > 0)
-	{
-	      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors , DiagonalInteractionFactors, DiagonalQValues);
-	      for (int l = 0; l < nbrVectors; ++l)
-					vDestinations[l][index] +=  Coefficient * vSources[l][index];
+	    }
+	  else
+	    ProcessedNbrInteractionFactors += this->NbrQ34Values[i12];
 	}
-      
+      for (int l = 0; l < nbrVectors; ++l)
+	vDestinations[l][index] += tmpCoefficients[l];
+    }	  
+  
+  // separated diagonal terms as these will be the general rule for contact interactions
+  if (this->NbrDiagonalInteractionFactors > 0)
+    {
+      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors , DiagonalInteractionFactors, DiagonalQValues);
+      for (int l = 0; l < nbrVectors; ++l)
+	vDestinations[l][index] +=  Coefficient * vSources[l][index];
+    }
 }
 
 
@@ -2104,63 +2074,62 @@ inline void AbstractQHEOnLatticeHamiltonian::HermitianEvaluateMNTwoBodyAddMultip
 
 inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyAddMultiplyComponent(ParticleOnLattice* particles, int index, RealVector& vSource, RealVector& vDestination)
 {
-	cout <<"Use new code "<<endl;
-	int Dim = particles->GetHilbertSpaceDimension(); 
-	double Coefficient;
-	int Index;
-	
-     if (this->NbrQ12Indices == 0) // full storage
-	{ 	  
-	  for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+  int Dim = particles->GetHilbertSpaceDimension(); 
+  double Coefficient;
+  int Index;
+  
+  if (this->NbrQ12Indices == 0) // full storage
+    { 	  
+      for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+	{
+	  int q1 = this->Q1Value[j];
+	  int q2 = this->Q2Value[j];
+	  int q3 = this->Q3Value[j];
+	  int q4 = this->Q4Value[j];
+	  Index = particles->AdAdAA(index, q1, q2, q3, q4, Coefficient);
+	  if (Index < Dim)
 	    {
-	      int q1 = this->Q1Value[j];
-	      int q2 = this->Q2Value[j];
-	      int q3 = this->Q3Value[j];
-	      int q4 = this->Q4Value[j];
-		 Index = particles->AdAdAA(index, q1, q2, q3, q4, Coefficient);
+	      vDestination[Index] += Coefficient * this->InteractionFactors[j].Re * vSource[index];
+	    }
+	}
+    }
+  else // intelligent storage
+    {
+      double Coefficient2, TmpRe;
+      int ProcessedNbrInteractionFactors;
+      int TmpNbrQ34Values;
+      int* TmpQ3Values;
+      int* TmpQ4Values;
+      ProcessedNbrInteractionFactors = 0;
+      for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
+	{
+	  Coefficient = particles->AA(index, this->Q1Value[i12], this->Q2Value[i12]);
+	  if (Coefficient != 0.0)
+	    {
+	      TmpRe = vSource[index]*Coefficient;
+	      TmpNbrQ34Values = this->NbrQ34Values[i12];
+	      TmpQ3Values = this->Q3PerQ12[i12];
+	      TmpQ4Values = this->Q4PerQ12[i12];
+	      for (int i34 = 0; i34 < TmpNbrQ34Values; ++i34)
+		{
+		  Index = particles->AdAd(TmpQ3Values[i34], TmpQ4Values[i34], Coefficient2);
 		  if (Index < Dim)
 		    {
-					vDestination[Index] += Coefficient * this->InteractionFactors[j].Re * vSource[index];
+		      vDestination[Index] += Coefficient2 * TmpRe * this->InteractionFactors[ProcessedNbrInteractionFactors].Re;
 		    }
-		}
-	}
-      else // intelligent storage
-	{
-	  double Coefficient2, TmpRe;
-	  int ProcessedNbrInteractionFactors;
-	  int TmpNbrQ34Values;
-	  int* TmpQ3Values;
-	  int* TmpQ4Values;
-	  ProcessedNbrInteractionFactors = 0;
-	      for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
-		{
-		  Coefficient = particles->AA(index, this->Q1Value[i12], this->Q2Value[i12]);
-		  if (Coefficient != 0.0)
-		    {
-		      TmpRe = vSource[index]*Coefficient;
-		      TmpNbrQ34Values = this->NbrQ34Values[i12];
-		      TmpQ3Values = this->Q3PerQ12[i12];
-		      TmpQ4Values = this->Q4PerQ12[i12];
-		      for (int i34 = 0; i34 < TmpNbrQ34Values; ++i34)
-			{
-			  Index = particles->AdAd(TmpQ3Values[i34], TmpQ4Values[i34], Coefficient2);
-			  if (Index < Dim)
-			    {
- vDestination[Index] += Coefficient2 * TmpRe * this->InteractionFactors[ProcessedNbrInteractionFactors].Re;
-			    }
-			  ++ProcessedNbrInteractionFactors;
-			}
-		    }
-		  else
-		    ProcessedNbrInteractionFactors += this->NbrQ34Values[i12];
+		  ++ProcessedNbrInteractionFactors;
 		}
 	    }
-
-      // separated diagonal terms as these will be the general rule for contact interactions
-      if (NbrDiagonalInteractionFactors>0)
+	  else
+	    ProcessedNbrInteractionFactors += this->NbrQ34Values[i12];
+	}
+    }
+  
+  // separated diagonal terms as these will be the general rule for contact interactions
+  if (NbrDiagonalInteractionFactors>0)
 	{
-	      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors, DiagonalInteractionFactors, DiagonalQValues);
-	      vDestination[index] +=  Coefficient * vSource[index];
+	  Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors, DiagonalInteractionFactors, DiagonalQValues);
+	  vDestination[index] +=  Coefficient * vSource[index];
 	}
 }
 
@@ -2175,44 +2144,44 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyAddMultiplyCompone
 
 inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyAddMultiplyComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, int step, RealVector& vSource, RealVector& vDestination)
 {
-	cout <<"Use new code "<<endl;
-	if (this->NbrHoppingTerms>0)
+  if (this->NbrHoppingTerms>0)
+    {
+      int Dim = particles->GetHilbertSpaceDimension();  
+      double Coefficient;
+      // deal with kinetic energy terms first!      
+      int qi;
+      int qf;
+      int Index;
+      double TmpInteraction;
+      int ReducedNbrHoppingTerms = NbrHoppingTerms-1;
+      for (int j = 0; j < ReducedNbrHoppingTerms; ++j) 
 	{
- int Dim = particles->GetHilbertSpaceDimension();  
- double Coefficient;
-	// deal with kinetic energy terms first!      
-	int qi;
-	int qf;
-	int Index;
-	double TmpInteraction;
-		  int ReducedNbrHoppingTerms = NbrHoppingTerms-1;
-	  for (int j = 0; j < ReducedNbrHoppingTerms; ++j) 
-	    {
-	      qi = this->KineticQi[j];
-	      qf = this->KineticQf[j];
-				TmpInteraction = this->HoppingTerms[j].Re;
-	      for (int i = firstComponent; i < lastComponent; i += step)
-		{
-		  Index = particles->AdA(i, qf, qi, Coefficient);
-		  if (Index < Dim)
-		    {
-					vDestination[Index] += Coefficient * TmpInteraction*vSource[i];
-		    }
-		}
-	    }
-	  qi = this->KineticQi[ReducedNbrHoppingTerms];
-	  qf = this->KineticQf[ReducedNbrHoppingTerms];
-		TmpInteraction = this->HoppingTerms[ReducedNbrHoppingTerms].Re;
+	  qi = this->KineticQi[j];
+	  qf = this->KineticQf[j];
+	  TmpInteraction = this->HoppingTerms[j].Re;
 	  for (int i = firstComponent; i < lastComponent; i += step)
 	    {
 	      Index = particles->AdA(i, qf, qi, Coefficient);
 	      if (Index < Dim)
 		{
-			vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
+		  vDestination[Index] += Coefficient * TmpInteraction*vSource[i];
 		}
-	      vDestination[i] += this->HamiltonianShift * vSource[i];
-	    } 
+	    }
 	}
+      
+      qi = this->KineticQi[ReducedNbrHoppingTerms];
+      qf = this->KineticQf[ReducedNbrHoppingTerms];
+      TmpInteraction = this->HoppingTerms[ReducedNbrHoppingTerms].Re;
+      for (int i = firstComponent; i < lastComponent; i += step)
+	{
+	  Index = particles->AdA(i, qf, qi, Coefficient);
+	  if (Index < Dim)
+	    {
+		  vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
+		}
+	  vDestination[i] += this->HamiltonianShift * vSource[i];
+	} 
+    }
 }
 
 // core part of the AddMultiply method involving the one-body interaction for a set of vectors, including loop on vector components
@@ -2227,52 +2196,51 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyAddMultiplyCompone
 
 inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyAddMultiplyComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, int step, RealVector* vSources, RealVector* vDestinations, int nbrVectors)
 {
-cout <<"Use new code "<<endl;
-    if (this->NbrHoppingTerms>0)
+  if (this->NbrHoppingTerms>0)
+    {
+      int Dim = particles->GetHilbertSpaceDimension(); 
+      int Index;
+      double Coefficient;
+      double TmpInteraction;
+      double TmpCoefficient;
+      // deal with kinetic energy terms first!      
+      int qi;
+      int qf;
+      int ReducedNbrHoppingTerms = NbrHoppingTerms-1;
+      for (int j = 0; j < ReducedNbrHoppingTerms; ++j) 
 	{
-		int Dim = particles->GetHilbertSpaceDimension(); 
-		int Index;
-		double Coefficient;
-  double TmpInteraction;
-  double TmpCoefficient;
-	  // deal with kinetic energy terms first!      
-	  int qi;
-	  int qf;
-	  int ReducedNbrHoppingTerms = NbrHoppingTerms-1;
-	  for (int j = 0; j < ReducedNbrHoppingTerms; ++j) 
-	    {
-	      qi = this->KineticQi[j];
-	      qf = this->KineticQf[j];
-	      TmpInteraction = this->HoppingTerms[j].Re;
-	      for (int i = firstComponent; i < lastComponent; i += step)
-		{
-		  Index = particles->AdA(i, qf, qi, Coefficient);
-		  if (Index < Dim)
-		    {
-		      TmpCoefficient = Coefficient * TmpInteraction;
-		      for (int l = 0; l < nbrVectors; ++l)
-			vDestinations[l][Index] += TmpCoefficient * vSources[l][i];
-		    }
-		}
-	    }
-	  qi = this->KineticQi[ReducedNbrHoppingTerms];
-	  qf = this->KineticQf[ReducedNbrHoppingTerms];
-	  TmpInteraction = this->HoppingTerms[ReducedNbrHoppingTerms].Re;
+	  qi = this->KineticQi[j];
+	  qf = this->KineticQf[j];
+	  TmpInteraction = this->HoppingTerms[j].Re;
 	  for (int i = firstComponent; i < lastComponent; i += step)
 	    {
-	      //cout << "element "<<qi<<"->"<<qf<<" on "<<i<<": "; 
 	      Index = particles->AdA(i, qf, qi, Coefficient);
-	      //cout << "target: "<<Index<<endl;
 	      if (Index < Dim)
 		{
 		  TmpCoefficient = Coefficient * TmpInteraction;
 		  for (int l = 0; l < nbrVectors; ++l)
 		    vDestinations[l][Index] += TmpCoefficient * vSources[l][i];
 		}
-	      for (int l = 0; l < nbrVectors; ++l)
-		vDestinations[l][i] += this->HamiltonianShift * vSources[l][i];
 	    }
 	}
+      qi = this->KineticQi[ReducedNbrHoppingTerms];
+      qf = this->KineticQf[ReducedNbrHoppingTerms];
+      TmpInteraction = this->HoppingTerms[ReducedNbrHoppingTerms].Re;
+      for (int i = firstComponent; i < lastComponent; i += step)
+	{
+	  //cout << "element "<<qi<<"->"<<qf<<" on "<<i<<": "; 
+	  Index = particles->AdA(i, qf, qi, Coefficient);
+	  //cout << "target: "<<Index<<endl;
+	  if (Index < Dim)
+	    {
+	      TmpCoefficient = Coefficient * TmpInteraction;
+	      for (int l = 0; l < nbrVectors; ++l)
+		vDestinations[l][Index] += TmpCoefficient * vSources[l][i];
+	    }
+	  for (int l = 0; l < nbrVectors; ++l)
+	    vDestinations[l][i] += this->HamiltonianShift * vSources[l][i];
+	}
+    }
 }
 
 // core part of the AddMultiply method involving the two-body interaction for a set of vectors
@@ -2286,72 +2254,70 @@ cout <<"Use new code "<<endl;
 
 inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyAddMultiplyComponent(ParticleOnLattice* particles, int index, RealVector* vSources,  RealVector* vDestinations, int nbrVectors, double* tmpCoefficients)
 {
-	cout <<"Use new code "<<endl;
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
   double Coefficient3;
   int Index;
-	double TmpCoefficient;
-	if (this->NbrQ12Indices == 0) // full storage
-	{ 	  
-	  for (int j = 0; j < NbrInteractionFactors; ++j) 
+  double TmpCoefficient;
+  if (this->NbrQ12Indices == 0) // full storage
+    { 	  
+      for (int j = 0; j < NbrInteractionFactors; ++j) 
+	{
+	  int q1 = this->Q1Value[j];
+	  int q2 = this->Q2Value[j];
+	  int q3 = this->Q3Value[j];
+	  int q4 = this->Q4Value[j];
+	  Index = particles->AdAdAA(index, q1, q2, q3, q4, Coefficient);
+	  if (Index < Dim)
 	    {
-	      int q1 = this->Q1Value[j];
-	      int q2 = this->Q2Value[j];
-	      int q3 = this->Q3Value[j];
-	      int q4 = this->Q4Value[j];
-		  Index = particles->AdAdAA(index, q1, q2, q3, q4, Coefficient);
-		  if (Index < Dim)
-		    {
-		      TmpCoefficient = Coefficient * this->InteractionFactors[j].Re;
-		      for (int l = 0; l < nbrVectors; ++l)
-			vDestinations[l][Index] += TmpCoefficient * vSources[l][index];
-		    }
+	      TmpCoefficient = Coefficient * this->InteractionFactors[j].Re;
+	      for (int l = 0; l < nbrVectors; ++l)
+		vDestinations[l][Index] += TmpCoefficient * vSources[l][index];
 	    }
 	}
-      else // intelligent storage
+    }
+  else // intelligent storage
+    {
+      double Coefficient2;
+      int ProcessedNbrInteractionFactors;
+      int TmpNbrQ34Values;
+      int* TmpQ3Values;
+      int* TmpQ4Values;
+      ProcessedNbrInteractionFactors = 0;
+      for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
 	{
-	  double Coefficient2;
-	  int ProcessedNbrInteractionFactors;
-	  int TmpNbrQ34Values;
-	  int* TmpQ3Values;
-	  int* TmpQ4Values;
-	      ProcessedNbrInteractionFactors = 0;
-	      for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
-		{
-		  Coefficient = particles->AA(index, this->Q1Value[i12], this->Q2Value[i12]);
-		  if (Coefficient != 0.0)
-		    {
-		      for (int l = 0; l < nbrVectors; ++l)
-			tmpCoefficients[l] = vSources[l][index]*Coefficient;
-		      TmpNbrQ34Values = this->NbrQ34Values[i12];
-		      TmpQ3Values = this->Q3PerQ12[i12];
-		      TmpQ4Values = this->Q4PerQ12[i12];
-		      for (int i34 = 0; i34 < TmpNbrQ34Values; ++i34)
-			{
-			  Index = particles->AdAd(TmpQ3Values[i34], TmpQ4Values[i34], Coefficient2);
-			  if (Index < Dim)
-			    {
-			      TmpCoefficient = this->InteractionFactors[ProcessedNbrInteractionFactors].Re  * Coefficient2;
-			      for (int l = 0; l < nbrVectors; ++l)
-				vDestinations[l][Index] += TmpCoefficient * tmpCoefficients[l];
-			    }
-			  ++ProcessedNbrInteractionFactors;
-			}
-				}
-		  else
-		    ProcessedNbrInteractionFactors += this->NbrQ34Values[i12];
-		}
-	}	  
-
-      // separated diagonal terms as these will be the general rule for contact interactions
-      if (this->NbrDiagonalInteractionFactors > 0)
-	{
-	      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors , DiagonalInteractionFactors, DiagonalQValues);
+	  Coefficient = particles->AA(index, this->Q1Value[i12], this->Q2Value[i12]);
+	  if (Coefficient != 0.0)
+	    {
 	      for (int l = 0; l < nbrVectors; ++l)
-					vDestinations[l][index] +=  Coefficient * vSources[l][index];
+		tmpCoefficients[l] = vSources[l][index]*Coefficient;
+	      TmpNbrQ34Values = this->NbrQ34Values[i12];
+	      TmpQ3Values = this->Q3PerQ12[i12];
+	      TmpQ4Values = this->Q4PerQ12[i12];
+	      for (int i34 = 0; i34 < TmpNbrQ34Values; ++i34)
+		{
+		  Index = particles->AdAd(TmpQ3Values[i34], TmpQ4Values[i34], Coefficient2);
+		  if (Index < Dim)
+		    {
+		      TmpCoefficient = this->InteractionFactors[ProcessedNbrInteractionFactors].Re  * Coefficient2;
+		      for (int l = 0; l < nbrVectors; ++l)
+			vDestinations[l][Index] += TmpCoefficient * tmpCoefficients[l];
+		    }
+		  ++ProcessedNbrInteractionFactors;
+		}
+	    }
+	  else
+	    ProcessedNbrInteractionFactors += this->NbrQ34Values[i12];
 	}
-      
+    }	  
+  
+  // separated diagonal terms as these will be the general rule for contact interactions
+  if (this->NbrDiagonalInteractionFactors > 0)
+    {
+      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors , DiagonalInteractionFactors, DiagonalQValues);
+      for (int l = 0; l < nbrVectors; ++l)
+	vDestinations[l][index] +=  Coefficient * vSources[l][index];
+    }
 }
 
 // core part of the AddMultiply method involving the one-body interaction, including loop on vector components
@@ -2365,44 +2331,43 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyAddMultiplyCompone
 
 inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyConjugateAddMultiplyComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, int step, RealVector& vSource, RealVector& vDestination)
 {
-	cout <<"Use new code "<<endl;
-	if (this->NbrHoppingTerms>0)
+  if (this->NbrHoppingTerms>0)
+    {
+      int Dim = particles->GetHilbertSpaceDimension();  
+      double Coefficient;
+      // deal with kinetic energy terms first!      
+      int qi;
+      int qf;
+      int Index;
+      double TmpInteraction;
+      int ReducedNbrHoppingTerms = NbrHoppingTerms-1;
+      for (int j = 0; j < ReducedNbrHoppingTerms; ++j) 
 	{
- int Dim = particles->GetHilbertSpaceDimension();  
- double Coefficient;
-	// deal with kinetic energy terms first!      
-	int qi;
-	int qf;
-	int Index;
-double TmpInteraction;
-		  int ReducedNbrHoppingTerms = NbrHoppingTerms-1;
-	  for (int j = 0; j < ReducedNbrHoppingTerms; ++j) 
-	    {
-	      qi = this->KineticQi[j];
-	      qf = this->KineticQf[j];
-				TmpInteraction = this->HoppingTerms[j].Re;
-	      for (int i = firstComponent; i < lastComponent; i += step)
-		{
-		  Index = particles->AdA(i, qf, qi, Coefficient);
-		  if (Index < Dim)
-		    {
-					vDestination[i] += Coefficient * TmpInteraction *vSource[Index];
-		    }
-		}
-	    }
-	  qi = this->KineticQi[ReducedNbrHoppingTerms];
-	  qf = this->KineticQf[ReducedNbrHoppingTerms];
-	  TmpInteraction = this->HoppingTerms[ReducedNbrHoppingTerms].Re;
+	  qi = this->KineticQi[j];
+	  qf = this->KineticQf[j];
+	  TmpInteraction = this->HoppingTerms[j].Re;
 	  for (int i = firstComponent; i < lastComponent; i += step)
 	    {
 	      Index = particles->AdA(i, qf, qi, Coefficient);
 	      if (Index < Dim)
 		{
-		  vDestination[i] += Coefficient * TmpInteraction * vSource[Index];
+		  vDestination[i] += Coefficient * TmpInteraction *vSource[Index];
 		}
-	      vDestination[i] += this->HamiltonianShift * vSource[i];
-	    } 
+	    }
 	}
+      qi = this->KineticQi[ReducedNbrHoppingTerms];
+      qf = this->KineticQf[ReducedNbrHoppingTerms];
+      TmpInteraction = this->HoppingTerms[ReducedNbrHoppingTerms].Re;
+      for (int i = firstComponent; i < lastComponent; i += step)
+	{
+	  Index = particles->AdA(i, qf, qi, Coefficient);
+	  if (Index < Dim)
+	    {
+	      vDestination[i] += Coefficient * TmpInteraction * vSource[Index];
+	    }
+	  vDestination[i] += this->HamiltonianShift * vSource[i];
+	} 
+    }
 }
 
 // core part of the AddMultiply method involving the two-body interaction
@@ -2414,66 +2379,66 @@ double TmpInteraction;
 
 inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyConjugateAddMultiplyComponent(ParticleOnLattice* particles, int index, RealVector& vSource, RealVector& vDestination)
 {
-	cout <<"Use new code "<<endl;
-	int Dim = particles->GetHilbertSpaceDimension(); 
-	double Coefficient;
-	int Index;
-	
-     if (this->NbrQ12Indices == 0) // full storage
-	{ 	  
-	  for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+  int Dim = particles->GetHilbertSpaceDimension(); 
+  double Coefficient;
+  int Index;
+  
+  if (this->NbrQ12Indices == 0) // full storage
+    { 	  
+      for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+	{
+	  int q1 = this->Q1Value[j];
+	  int q2 = this->Q2Value[j];
+	  int q3 = this->Q3Value[j];
+	  int q4 = this->Q4Value[j];
+	  Index = particles->AdAdAA(index, q1, q2, q3, q4, Coefficient);
+	  if (Index < Dim)
 	    {
-	      int q1 = this->Q1Value[j];
-	      int q2 = this->Q2Value[j];
-	      int q3 = this->Q3Value[j];
-	      int q4 = this->Q4Value[j];
-		 Index = particles->AdAdAA(index, q1, q2, q3, q4, Coefficient);
+	      vDestination[index] += Coefficient * this->InteractionFactors[j].Re * vSource[Index];
+	    }
+	}
+    }
+  else // intelligent storage
+    {
+      double Coefficient2;
+      double TmpSum = 0.0;
+      int ProcessedNbrInteractionFactors= 0;
+      int TmpNbrQ34Values;
+      int* TmpQ3Values;
+      int* TmpQ4Values;
+      for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
+	{
+	  Coefficient = particles->AA(index, this->Q1Value[i12], this->Q2Value[i12]);
+	  if (Coefficient != 0.0)
+	    {
+	      TmpNbrQ34Values = this->NbrQ34Values[i12];
+	      TmpQ3Values = this->Q3PerQ12[i12];
+	      TmpQ4Values = this->Q4PerQ12[i12];
+	      for (int i34 = 0; i34 < TmpNbrQ34Values; ++i34)
+		{
+		  Index = particles->AdAd(TmpQ3Values[i34], TmpQ4Values[i34], Coefficient2);
 		  if (Index < Dim)
 		    {
-					vDestination[index] += Coefficient * this->InteractionFactors[j].Re * vSource[Index];
+		      TmpSum += (Coefficient*Coefficient2)*this->InteractionFactors[ProcessedNbrInteractionFactors].Re*vSource[Index];
 		    }
+		  ++ProcessedNbrInteractionFactors;
 		}
-	}
-      else // intelligent storage
-	{
-	  double Coefficient2;
-		double TmpSum = 0.0;
-	  int ProcessedNbrInteractionFactors= 0;
-	  int TmpNbrQ34Values;
-	  int* TmpQ3Values;
-	  int* TmpQ4Values;
-	      for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
-		{
-		  Coefficient = particles->AA(index, this->Q1Value[i12], this->Q2Value[i12]);
-		  if (Coefficient != 0.0)
-		    {
-		      TmpNbrQ34Values = this->NbrQ34Values[i12];
-		      TmpQ3Values = this->Q3PerQ12[i12];
-		      TmpQ4Values = this->Q4PerQ12[i12];
-		      for (int i34 = 0; i34 < TmpNbrQ34Values; ++i34)
-			{
-			  Index = particles->AdAd(TmpQ3Values[i34], TmpQ4Values[i34], Coefficient2);
-			  if (Index < Dim)
-			    {
-						TmpSum += (Coefficient*Coefficient2)*this->InteractionFactors[ProcessedNbrInteractionFactors].Re*vSource[Index];
-			    }
-			  ++ProcessedNbrInteractionFactors;
-			}
-		    }
-		  else
-		    ProcessedNbrInteractionFactors += this->NbrQ34Values[i12];
-		}
-		vDestination[index] += TmpSum;
 	    }
-
-      // separated diagonal terms as these will be the general rule for contact interactions
-      if (this->NbrDiagonalInteractionFactors > 0)
-	{
-	      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors, DiagonalInteractionFactors, DiagonalQValues);
-				if (Coefficient != 0.0)
-					vDestination[index] +=  Coefficient * vSource[index];
+	  else
+	    ProcessedNbrInteractionFactors += this->NbrQ34Values[i12];
 	}
+      vDestination[index] += TmpSum;
+    }
+  
+  // separated diagonal terms as these will be the general rule for contact interactions
+  if (this->NbrDiagonalInteractionFactors > 0)
+    {
+      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors, DiagonalInteractionFactors, DiagonalQValues);
+      if (Coefficient != 0.0)
+	vDestination[index] +=  Coefficient * vSource[index];
+    }
 }
+
 // core part of the AddMultiply method involving the one-body interaction for a set of vectors, including loop on vector components
 // 
 // particles = pointer to the Hilbert space
@@ -2486,37 +2451,22 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyConjugateAddMultip
 
 inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyConjugateAddMultiplyComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, int step, RealVector* vSources, RealVector* vDestinations, int nbrVectors)
 {
-cout <<"Use new code "<<endl;
-    if (this->NbrHoppingTerms>0)
+  if (this->NbrHoppingTerms>0)
+    {
+      int Dim = particles->GetHilbertSpaceDimension(); 
+      int Index;
+      double Coefficient;
+      double TmpInteraction;
+      double TmpCoefficient;
+      // deal with kinetic energy terms first!      
+      int qi;
+      int qf;
+      int ReducedNbrHoppingTerms = NbrHoppingTerms-1;
+      for (int j = 0; j < ReducedNbrHoppingTerms; ++j) 
 	{
-		int Dim = particles->GetHilbertSpaceDimension(); 
-		int Index;
-		double Coefficient;
-		double TmpInteraction;
-		double TmpCoefficient;
-	  // deal with kinetic energy terms first!      
-	  int qi;
-	  int qf;
-	  int ReducedNbrHoppingTerms = NbrHoppingTerms-1;
-	  for (int j = 0; j < ReducedNbrHoppingTerms; ++j) 
-	    {
-	      qi = this->KineticQi[j];
-	      qf = this->KineticQf[j];
-	      TmpInteraction = this->HoppingTerms[j].Re;
-	      for (int i = firstComponent; i < lastComponent; i += step)
-		{
-		  Index = particles->AdA(i, qf, qi, Coefficient);
-		  if (Index < Dim)
-		    {
-		      TmpCoefficient = Coefficient * TmpInteraction;
-		      for (int l = 0; l < nbrVectors; ++l)
-			vDestinations[l][i] += TmpCoefficient * vSources[l][Index];
-		    }
-		}
-	    }
-	  qi = this->KineticQi[ReducedNbrHoppingTerms];
-	  qf = this->KineticQf[ReducedNbrHoppingTerms];
-	  TmpInteraction = this->HoppingTerms[ReducedNbrHoppingTerms].Re;
+	  qi = this->KineticQi[j];
+	  qf = this->KineticQf[j];
+	  TmpInteraction = this->HoppingTerms[j].Re;
 	  for (int i = firstComponent; i < lastComponent; i += step)
 	    {
 	      Index = particles->AdA(i, qf, qi, Coefficient);
@@ -2526,10 +2476,24 @@ cout <<"Use new code "<<endl;
 		  for (int l = 0; l < nbrVectors; ++l)
 		    vDestinations[l][i] += TmpCoefficient * vSources[l][Index];
 		}
-	      for (int l = 0; l < nbrVectors; ++l)
-		vDestinations[l][i] += this->HamiltonianShift * vSources[l][i];
 	    }
 	}
+      qi = this->KineticQi[ReducedNbrHoppingTerms];
+      qf = this->KineticQf[ReducedNbrHoppingTerms];
+      TmpInteraction = this->HoppingTerms[ReducedNbrHoppingTerms].Re;
+      for (int i = firstComponent; i < lastComponent; i += step)
+	{
+	  Index = particles->AdA(i, qf, qi, Coefficient);
+	  if (Index < Dim)
+	    {
+	      TmpCoefficient = Coefficient * TmpInteraction;
+	      for (int l = 0; l < nbrVectors; ++l)
+		vDestinations[l][i] += TmpCoefficient * vSources[l][Index];
+	    }
+	  for (int l = 0; l < nbrVectors; ++l)
+	    vDestinations[l][i] += this->HamiltonianShift * vSources[l][i];
+	}
+    }
 }
 
 // core part of the AddMultiply method involving the two-body interaction for a set of vectors
@@ -2543,106 +2507,90 @@ cout <<"Use new code "<<endl;
 
 inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyConjugateAddMultiplyComponent(ParticleOnLattice* particles, int index, RealVector* vSources,  RealVector* vDestinations, int nbrVectors, double* tmpCoefficients)
 {
-	cout <<"Use new code "<<endl;
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
   double Coefficient3;
   int Index;
-	double TmpCoefficient;
-	if (this->NbrQ12Indices == 0) // full storage
-	{ 	  
-	  for (int j = 0; j < NbrInteractionFactors; ++j) 
+  double TmpCoefficient;
+  if (this->NbrQ12Indices == 0) // full storage
+    { 	  
+      for (int j = 0; j < NbrInteractionFactors; ++j) 
+	{
+	  int q1 = this->Q1Value[j];
+	  int q2 = this->Q2Value[j];
+	  int q3 = this->Q3Value[j];
+	  int q4 = this->Q4Value[j];
+	  Index = particles->AdAdAA(index, q1, q2, q3, q4, Coefficient);
+	  if (Index < Dim)
 	    {
-	      int q1 = this->Q1Value[j];
-	      int q2 = this->Q2Value[j];
-	      int q3 = this->Q3Value[j];
-	      int q4 = this->Q4Value[j];
-		  Index = particles->AdAdAA(index, q1, q2, q3, q4, Coefficient);
-		  if (Index < Dim)
-		    {
-		      TmpCoefficient = Coefficient * this->InteractionFactors[j].Re;
-		      for (int l = 0; l < nbrVectors; ++l)
-			vDestinations[l][index] += TmpCoefficient * vSources[l][Index];
-		    }
+	      TmpCoefficient = Coefficient * this->InteractionFactors[j].Re;
+	      for (int l = 0; l < nbrVectors; ++l)
+		vDestinations[l][index] += TmpCoefficient * vSources[l][Index];
 	    }
 	}
-      else // intelligent storage
+    }
+  else // intelligent storage
+    {
+      double Coefficient2;
+      int ProcessedNbrInteractionFactors= 0;
+      int TmpNbrQ34Values;
+      int* TmpQ3Values;
+      int* TmpQ4Values;
+      for (int l = 0; l < nbrVectors; ++l)
+	tmpCoefficients[l] = 0.0;
+      for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
 	{
-	  double Coefficient2;
-	  int ProcessedNbrInteractionFactors= 0;
-	  int TmpNbrQ34Values;
-	  int* TmpQ3Values;
-	  int* TmpQ4Values;
-		for (int l = 0; l < nbrVectors; ++l)
-		tmpCoefficients[l] = 0.0;
-	      for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
+	  Coefficient = particles->AA(index, this->Q1Value[i12], this->Q2Value[i12]);
+	  if (Coefficient != 0.0)
+	    {
+	      TmpNbrQ34Values = this->NbrQ34Values[i12];
+	      TmpQ3Values = this->Q3PerQ12[i12];
+	      TmpQ4Values = this->Q4PerQ12[i12];
+	      for (int i34 = 0; i34 < TmpNbrQ34Values; ++i34)
 		{
-		  Coefficient = particles->AA(index, this->Q1Value[i12], this->Q2Value[i12]);
-		  if (Coefficient != 0.0)
+		  Index = particles->AdAd(TmpQ3Values[i34], TmpQ4Values[i34], Coefficient2);
+		  if (Index < Dim)
 		    {
-		      TmpNbrQ34Values = this->NbrQ34Values[i12];
-		      TmpQ3Values = this->Q3PerQ12[i12];
-		      TmpQ4Values = this->Q4PerQ12[i12];
-		      for (int i34 = 0; i34 < TmpNbrQ34Values; ++i34)
-			{
-			  Index = particles->AdAd(TmpQ3Values[i34], TmpQ4Values[i34], Coefficient2);
-			  if (Index < Dim)
-			    {
-			      TmpCoefficient = this->InteractionFactors[ProcessedNbrInteractionFactors].Re * Coefficient * Coefficient2;
-			      for (int l = 0; l < nbrVectors; ++l)
-				tmpCoefficients[l]+= TmpCoefficient * vSources[l][Index];
-			    }
-			  ++ProcessedNbrInteractionFactors;
-			}
-				}
-		  else
-		    ProcessedNbrInteractionFactors += this->NbrQ34Values[i12];
+		      TmpCoefficient = this->InteractionFactors[ProcessedNbrInteractionFactors].Re * Coefficient * Coefficient2;
+		      for (int l = 0; l < nbrVectors; ++l)
+			tmpCoefficients[l]+= TmpCoefficient * vSources[l][Index];
+		    }
+		  ++ProcessedNbrInteractionFactors;
 		}
-		for (int l = 0; l < nbrVectors; ++l)
-			vDestinations[l][index] += tmpCoefficients[l];
-	}	  
-
-      // separated diagonal terms as these will be the general rule for contact interactions
-      if (this->NbrDiagonalInteractionFactors > 0)
-	{
-	      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors , DiagonalInteractionFactors, DiagonalQValues);
-	      for (int l = 0; l < nbrVectors; ++l)
-					vDestinations[l][index] +=  Coefficient * vSources[l][index];
+	    }
+	  else
+	    ProcessedNbrInteractionFactors += this->NbrQ34Values[i12];
 	}
-      
+      for (int l = 0; l < nbrVectors; ++l)
+	vDestinations[l][index] += tmpCoefficients[l];
+    }	  
+  
+  // separated diagonal terms as these will be the general rule for contact interactions
+  if (this->NbrDiagonalInteractionFactors > 0)
+    {
+      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors , DiagonalInteractionFactors, DiagonalQValues);
+      for (int l = 0; l < nbrVectors; ++l)
+	vDestinations[l][index] +=  Coefficient * vSources[l][index];
+    }
 }
 
 inline void AbstractQHEOnLatticeHamiltonian::HermitianEvaluateMNOneBodyAddMultiplyComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, int step, RealVector& vSource, RealVector& vDestination)
 {
-	cout <<"Use new code "<<endl;
-	if (NbrHoppingTerms>0)
+  if (NbrHoppingTerms>0)
+    {
+      int Index;
+      double Coefficient;
+      double TmpInteraction;
+      int Dim = particles->GetHilbertSpaceDimension();
+      // deal with kinetic energy terms first!      
+      int qi;
+      int qf;
+      int ReducedNbrHoppingTerms = NbrHoppingTerms-1;
+      for (int j = 0; j < ReducedNbrHoppingTerms; ++j) 
 	{
-			int Index;
-	double Coefficient;
-	double TmpInteraction;
-	int Dim = particles->GetHilbertSpaceDimension();
-	  // deal with kinetic energy terms first!      
-	  int qi;
-	  int qf;
-	  int ReducedNbrHoppingTerms = NbrHoppingTerms-1;
-	  for (int j = 0; j < ReducedNbrHoppingTerms; ++j) 
-	    {
-	      qi = this->KineticQi[j];
-	      qf = this->KineticQf[j];
-	      TmpInteraction = this->HoppingTerms[j].Re;
-	      for (int i = firstComponent; i < lastComponent; i += step)
-		{
-		  Index = particles->AdA(i, qf, qi, Coefficient);
-		  if (Index < Dim)
-		    {
-		      vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
-		      vDestination[i] += Coefficient * TmpInteraction * vSource[Index];
-		    }
-		}
-	    }
-	  qi = this->KineticQi[ReducedNbrHoppingTerms];
-	  qf = this->KineticQf[ReducedNbrHoppingTerms];
-	  TmpInteraction = this->HoppingTerms[ReducedNbrHoppingTerms].Re;
+	  qi = this->KineticQi[j];
+	  qf = this->KineticQf[j];
+	  TmpInteraction = this->HoppingTerms[j].Re;
 	  for (int i = firstComponent; i < lastComponent; i += step)
 	    {
 	      Index = particles->AdA(i, qf, qi, Coefficient);
@@ -2651,9 +2599,22 @@ inline void AbstractQHEOnLatticeHamiltonian::HermitianEvaluateMNOneBodyAddMultip
 		  vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
 		  vDestination[i] += Coefficient * TmpInteraction * vSource[Index];
 		}
-	      vDestination[i] += this->HamiltonianShift * vSource[i];
 	    }
 	}
+      qi = this->KineticQi[ReducedNbrHoppingTerms];
+      qf = this->KineticQf[ReducedNbrHoppingTerms];
+      TmpInteraction = this->HoppingTerms[ReducedNbrHoppingTerms].Re;
+      for (int i = firstComponent; i < lastComponent; i += step)
+	{
+	  Index = particles->AdA(i, qf, qi, Coefficient);
+	  if (Index < Dim)
+	    {
+	      vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
+	      vDestination[i] += Coefficient * TmpInteraction * vSource[Index];
+	    }
+	  vDestination[i] += this->HamiltonianShift * vSource[i];
+	}
+    }
 }
 
 // core part of the AddMultiply method involving the two-body interaction
@@ -2665,79 +2626,79 @@ inline void AbstractQHEOnLatticeHamiltonian::HermitianEvaluateMNOneBodyAddMultip
 
 inline void AbstractQHEOnLatticeHamiltonian::HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnLattice* particles, int index, RealVector& vSource, RealVector& vDestination)
 {	
-	cout <<"Use new code "<<endl;
-	double TmpInteraction;
-	int Index;
-	int Dim = particles->GetHilbertSpaceDimension();
-	double Coefficient;
-	    // four-fermion interactions:
-      if (this->NbrQ12Indices == 0) // full storage
+  double TmpInteraction;
+  int Index;
+  int Dim = particles->GetHilbertSpaceDimension();
+  double Coefficient;
+  // four-fermion interactions:
+  if (this->NbrQ12Indices == 0) // full storage
+    {
+      for (int j = 0; j < this->NbrInteractionFactors; ++j) 
 	{
-	  for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+	  int q1 = this->Q1Value[j];
+	  int q2 = this->Q2Value[j];
+	  int q3 = this->Q3Value[j];
+	  int q4 = this->Q4Value[j];
+	  TmpInteraction = this->InteractionFactors[j].Re;
+	  Index = particles->AdAdAA(index, q1, q2, q3, q4, Coefficient);
+	  if (Index < Dim)
 	    {
-	      int q1 = this->Q1Value[j];
-	      int q2 = this->Q2Value[j];
-	      int q3 = this->Q3Value[j];
-	      int q4 = this->Q4Value[j];
-	      TmpInteraction = this->InteractionFactors[j].Re;
-		  Index = particles->AdAdAA(index, q1, q2, q3, q4, Coefficient);
-		  if (Index < Dim)
-		    {
-		      vDestination[Index] += Coefficient * TmpInteraction * vSource[index];
-		      vDestination[index] += Coefficient * TmpInteraction * vSource[Index];
-		    }
+	      vDestination[Index] += Coefficient * TmpInteraction * vSource[index];
+	      vDestination[index] += Coefficient * TmpInteraction * vSource[Index];
 	    }
 	}
-      else // intelligent storage
+    }
+  else // intelligent storage
+    {
+      double Coefficient2;
+      double TmpSum = 0.0;
+      double TmpCoefficient;
+      int ProcessedNbrInteractionFactors= 0;
+      int TmpNbrQ34Values;
+      int* TmpQ3Values;
+      int* TmpQ4Values;
+      
+      for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
 	{
-	  double Coefficient2;
-	  double TmpSum = 0.0;
-	  double TmpCoefficient;
-	  int ProcessedNbrInteractionFactors= 0;
-	  int TmpNbrQ34Values;
-	  int* TmpQ3Values;
-	  int* TmpQ4Values;
-
-	      for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
+	  Coefficient = particles->AA(index, this->Q1Value[i12], this->Q2Value[i12]);
+	  if (Coefficient != 0.0)
+	    {
+	      //cout << "Non-zero: a_"<<this->Q1Value[i12]<<" a_"<< this->Q2Value[i12]<<"| "<<i<<">  [following: "<<NbrQ34Values[i12]<<"]"<<endl;
+	      TmpCoefficient = vSource[index];
+	      TmpNbrQ34Values = this->NbrQ34Values[i12];
+	      TmpQ3Values = this->Q3PerQ12[i12];
+	      TmpQ4Values = this->Q4PerQ12[i12];
+	      for (int i34 = 0; i34 < TmpNbrQ34Values; ++i34)
 		{
-		  Coefficient = particles->AA(index, this->Q1Value[i12], this->Q2Value[i12]);
-		  if (Coefficient != 0.0)
+		  Index = particles->AdAd(TmpQ3Values[i34], TmpQ4Values[i34], Coefficient2);
+		  //cout << "Testing a^+_"<<TmpQ3Values[i34]<<" a^+_"<< TmpQ4Values[i34]<<" ";
+		  if (Index < Dim)
 		    {
-		      //cout << "Non-zero: a_"<<this->Q1Value[i12]<<" a_"<< this->Q2Value[i12]<<"| "<<i<<">  [following: "<<NbrQ34Values[i12]<<"]"<<endl;
-		      TmpCoefficient = vSource[index];
-		      TmpNbrQ34Values = this->NbrQ34Values[i12];
-		      TmpQ3Values = this->Q3PerQ12[i12];
-		      TmpQ4Values = this->Q4PerQ12[i12];
-		      for (int i34 = 0; i34 < TmpNbrQ34Values; ++i34)
-			{
-			  Index = particles->AdAd(TmpQ3Values[i34], TmpQ4Values[i34], Coefficient2);
-			  //cout << "Testing a^+_"<<TmpQ3Values[i34]<<" a^+_"<< TmpQ4Values[i34]<<" ";
-			  if (Index < Dim)
-			    {
-			      // cout << " -> "<<Index<<endl;
-			      TmpInteraction = this->InteractionFactors[ProcessedNbrInteractionFactors].Re;
-			      Coefficient2*=Coefficient;
-			      vDestination[Index] += Coefficient2 * TmpCoefficient * this->InteractionFactors[ProcessedNbrInteractionFactors].Re;
-			      //cout << "H["<<i<<", "<<Index<<"]="<<Coefficient2 * TmpInteraction<<endl;
-			      TmpSum += Coefficient2 * TmpInteraction * vSource[Index];
-			      //cout << "H["<<Index<<", "<<i<<"]="<<Coefficient2 * Conj(TmpInteraction)<<endl;
-			    }
-// 			  else
-// 			    cout << " -> ZERO"<<endl;
-			  ++ProcessedNbrInteractionFactors;
-			}
+		      // cout << " -> "<<Index<<endl;
+		      TmpInteraction = this->InteractionFactors[ProcessedNbrInteractionFactors].Re;
+		      Coefficient2*=Coefficient;
+		      vDestination[Index] += Coefficient2 * TmpCoefficient * this->InteractionFactors[ProcessedNbrInteractionFactors].Re;
+		      //cout << "H["<<i<<", "<<Index<<"]="<<Coefficient2 * TmpInteraction<<endl;
+		      TmpSum += Coefficient2 * TmpInteraction * vSource[Index];
+		      //cout << "H["<<Index<<", "<<i<<"]="<<Coefficient2 * Conj(TmpInteraction)<<endl;
 		    }
-		  else
-		    ProcessedNbrInteractionFactors += this->NbrQ34Values[i12];
+		  // 			  else
+		  // 			    cout << " -> ZERO"<<endl;
+		  ++ProcessedNbrInteractionFactors;
 		}
-	      vDestination[index] += TmpSum;
-	}	  
-      // separated diagonal terms as these will be the general rule for contact interactions
-      if (this->NbrDiagonalInteractionFactors > 0)
-			{
-	      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors, DiagonalInteractionFactors, DiagonalQValues);
-	      vDestination[index] +=  Coefficient * vSource[index];
 	    }
+	  else
+	    ProcessedNbrInteractionFactors += this->NbrQ34Values[i12];
+	}
+      vDestination[index] += TmpSum;
+    }
+  
+  // separated diagonal terms as these will be the general rule for contact interactions
+  if (this->NbrDiagonalInteractionFactors > 0)
+    {
+      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors, DiagonalInteractionFactors, DiagonalQValues);
+      vDestination[index] +=  Coefficient * vSource[index];
+    }
 }
 
 // core part of the AddMultiply method involving the one-body interaction for a set of vectors, including loop on vector components
@@ -2752,58 +2713,57 @@ inline void AbstractQHEOnLatticeHamiltonian::HermitianEvaluateMNTwoBodyAddMultip
 
 inline void AbstractQHEOnLatticeHamiltonian::HermitianEvaluateMNOneBodyAddMultiplyComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, int step, RealVector* vSources, RealVector* vDestinations, int nbrVectors)
 {
-cout <<"Use new code "<<endl;
-    if (this->NbrHoppingTerms>0)
+  if (this->NbrHoppingTerms>0)
+    {
+      int Dim = particles->GetHilbertSpaceDimension(); 
+      int Index;
+      double Coefficient;
+      double TmpInteraction;
+      double TmpCoefficient;
+      // deal with kinetic energy terms first!      
+      int qi;
+      int qf;
+      int ReducedNbrHoppingTerms = NbrHoppingTerms-1;
+      for (int j = 0; j < ReducedNbrHoppingTerms; ++j) 
 	{
-		int Dim = particles->GetHilbertSpaceDimension(); 
-		int Index;
-		double Coefficient;
-  double TmpInteraction;
-  double TmpCoefficient;
-	  // deal with kinetic energy terms first!      
-	  int qi;
-	  int qf;
-	  int ReducedNbrHoppingTerms = NbrHoppingTerms-1;
-	  for (int j = 0; j < ReducedNbrHoppingTerms; ++j) 
-	    {
-	      qi = this->KineticQi[j];
-	      qf = this->KineticQf[j];
-	      TmpInteraction = this->HoppingTerms[j].Re;
-	      for (int i = firstComponent; i < lastComponent; i += step)
-		{
-		  Index = particles->AdA(i, qf, qi, Coefficient);
-		  if (Index < Dim)
-		    {
-		      TmpCoefficient = Coefficient * TmpInteraction;
-		      for (int l = 0; l < nbrVectors; ++l)
-					{
-			vDestinations[l][Index] += TmpCoefficient * vSources[l][i];
-			vDestinations[l][i] += TmpCoefficient * vSources[l][Index];
-					}
-		    }
-		}
-	    }
-	  qi = this->KineticQi[ReducedNbrHoppingTerms];
-	  qf = this->KineticQf[ReducedNbrHoppingTerms];
-	  TmpInteraction = this->HoppingTerms[ReducedNbrHoppingTerms].Re;
+	  qi = this->KineticQi[j];
+	  qf = this->KineticQf[j];
+	  TmpInteraction = this->HoppingTerms[j].Re;
 	  for (int i = firstComponent; i < lastComponent; i += step)
 	    {
-	      //cout << "element "<<qi<<"->"<<qf<<" on "<<i<<": "; 
 	      Index = particles->AdA(i, qf, qi, Coefficient);
-	      //cout << "target: "<<Index<<endl;
 	      if (Index < Dim)
 		{
 		  TmpCoefficient = Coefficient * TmpInteraction;
-		      for (int l = 0; l < nbrVectors; ++l)
-					{
-			vDestinations[l][Index] += TmpCoefficient * vSources[l][i];
-			vDestinations[l][i] += TmpCoefficient * vSources[l][Index];
-					}
+		  for (int l = 0; l < nbrVectors; ++l)
+		    {
+		      vDestinations[l][Index] += TmpCoefficient * vSources[l][i];
+		      vDestinations[l][i] += TmpCoefficient * vSources[l][Index];
+		    }
 		}
-	      for (int l = 0; l < nbrVectors; ++l)
-		vDestinations[l][i] += this->HamiltonianShift * vSources[l][i];
 	    }
 	}
+      qi = this->KineticQi[ReducedNbrHoppingTerms];
+      qf = this->KineticQf[ReducedNbrHoppingTerms];
+      TmpInteraction = this->HoppingTerms[ReducedNbrHoppingTerms].Re;
+      for (int i = firstComponent; i < lastComponent; i += step)
+	{
+	  //cout << "element "<<qi<<"->"<<qf<<" on "<<i<<": "; 
+	  Index = particles->AdA(i, qf, qi, Coefficient);
+	      //cout << "target: "<<Index<<endl;
+	  if (Index < Dim)
+	    {
+	      TmpCoefficient = Coefficient * TmpInteraction;
+	      for (int l = 0; l < nbrVectors; ++l)
+		{
+		  vDestinations[l][Index] += TmpCoefficient * vSources[l][i];
+		  vDestinations[l][i] += TmpCoefficient * vSources[l][Index];
+		}
+	    }
+	  for (int l = 0; l < nbrVectors; ++l)
+	    vDestinations[l][i] += this->HamiltonianShift * vSources[l][i];
+	}
+    }
 }
 
 // core part of the AddMultiply method involving the two-body interaction for a set of vectors
@@ -2817,79 +2777,77 @@ cout <<"Use new code "<<endl;
 
 inline void AbstractQHEOnLatticeHamiltonian::HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnLattice* particles, int index, RealVector* vSources,  RealVector* vDestinations, int nbrVectors, double* tmpCoefficients)
 {
-	cout <<"Use new code "<<endl;
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
   double Coefficient3;
   int Index;
-	double TmpCoefficient;
-	if (this->NbrQ12Indices == 0) // full storage
-	{ 	  
-	  for (int j = 0; j < NbrInteractionFactors; ++j) 
+  double TmpCoefficient;
+  if (this->NbrQ12Indices == 0) // full storage
+    { 	  
+      for (int j = 0; j < NbrInteractionFactors; ++j) 
+	{
+	  int q1 = this->Q1Value[j];
+	  int q2 = this->Q2Value[j];
+	  int q3 = this->Q3Value[j];
+	  int q4 = this->Q4Value[j];
+	  Index = particles->AdAdAA(index, q1, q2, q3, q4, Coefficient);
+	  if (Index < Dim)
 	    {
-	      int q1 = this->Q1Value[j];
-	      int q2 = this->Q2Value[j];
-	      int q3 = this->Q3Value[j];
-	      int q4 = this->Q4Value[j];
-		  Index = particles->AdAdAA(index, q1, q2, q3, q4, Coefficient);
-		  if (Index < Dim)
-		    {
-		      TmpCoefficient = Coefficient * this->InteractionFactors[j].Re;
-		      for (int l = 0; l < nbrVectors; ++l)
-					{
-			vDestinations[l][Index] += TmpCoefficient * vSources[l][index];
-			vDestinations[l][index] += TmpCoefficient * vSources[l][Index];
-					}
-		    }
+	      TmpCoefficient = Coefficient * this->InteractionFactors[j].Re;
+	      for (int l = 0; l < nbrVectors; ++l)
+		{
+		  vDestinations[l][Index] += TmpCoefficient * vSources[l][index];
+		  vDestinations[l][index] += TmpCoefficient * vSources[l][Index];
+		}
 	    }
 	}
-      else // intelligent storage
+    }
+  else // intelligent storage
+    {
+      double Coefficient2;
+      int ProcessedNbrInteractionFactors = 0;
+      int TmpNbrQ34Values;
+      int* TmpQ3Values;
+      int* TmpQ4Values;
+      for (int l = 0; l < nbrVectors; ++l)
+	tmpCoefficients[l] = 0.0;
+      for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
 	{
-	  double Coefficient2;
-	  int ProcessedNbrInteractionFactors = 0;
-	  int TmpNbrQ34Values;
-	  int* TmpQ3Values;
-	  int* TmpQ4Values;
-				for (int l = 0; l < nbrVectors; ++l)
-		tmpCoefficients[l] = 0.0;
-	      for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
+	  Coefficient = particles->AA(index, this->Q1Value[i12], this->Q2Value[i12]);
+	  if (Coefficient != 0.0)
+	    {
+	      TmpNbrQ34Values = this->NbrQ34Values[i12];
+	      TmpQ3Values = this->Q3PerQ12[i12];
+	      TmpQ4Values = this->Q4PerQ12[i12];
+	      for (int i34 = 0; i34 < TmpNbrQ34Values; ++i34)
 		{
-		  Coefficient = particles->AA(index, this->Q1Value[i12], this->Q2Value[i12]);
-		  if (Coefficient != 0.0)
+		  Index = particles->AdAd(TmpQ3Values[i34], TmpQ4Values[i34], Coefficient2);
+		  if (Index < Dim)
 		    {
-		      TmpNbrQ34Values = this->NbrQ34Values[i12];
-		      TmpQ3Values = this->Q3PerQ12[i12];
-		      TmpQ4Values = this->Q4PerQ12[i12];
-		      for (int i34 = 0; i34 < TmpNbrQ34Values; ++i34)
+		      TmpCoefficient = this->InteractionFactors[ProcessedNbrInteractionFactors].Re  * Coefficient2 *Coefficient;
+		      for (int l = 0; l < nbrVectors; ++l)
 			{
-			  Index = particles->AdAd(TmpQ3Values[i34], TmpQ4Values[i34], Coefficient2);
-			  if (Index < Dim)
-			    {
-			      TmpCoefficient = this->InteractionFactors[ProcessedNbrInteractionFactors].Re  * Coefficient2 *Coefficient;
-			      for (int l = 0; l < nbrVectors; ++l)
-						{
-							vDestinations[l][Index] += TmpCoefficient * vSources[l][index];
-							tmpCoefficients[l] += TmpCoefficient * vSources[l][Index];
-						}
-					}
-			  ++ProcessedNbrInteractionFactors;
+			  vDestinations[l][Index] += TmpCoefficient * vSources[l][index];
+			  tmpCoefficients[l] += TmpCoefficient * vSources[l][Index];
 			}
-				}
-		  else
-		    ProcessedNbrInteractionFactors += this->NbrQ34Values[i12];
+		    }
+		  ++ProcessedNbrInteractionFactors;
 		}
-		for (int l = 0; l < nbrVectors; ++l)
-		vDestinations[l][index] += tmpCoefficients[l];
-	}	  
-
-      // separated diagonal terms as these will be the general rule for contact interactions
-      if (this->NbrDiagonalInteractionFactors > 0)
-	{
-	    Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors , DiagonalInteractionFactors, DiagonalQValues);
-	      for (int l = 0; l < nbrVectors; ++l)
-					vDestinations[l][index] +=  Coefficient * vSources[l][index];
+	    }
+	  else
+	    ProcessedNbrInteractionFactors += this->NbrQ34Values[i12];
 	}
-      
+      for (int l = 0; l < nbrVectors; ++l)
+	vDestinations[l][index] += tmpCoefficients[l];
+    }	  
+  
+  // separated diagonal terms as these will be the general rule for contact interactions
+  if (this->NbrDiagonalInteractionFactors > 0)
+    {
+      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors , DiagonalInteractionFactors, DiagonalQValues);
+      for (int l = 0; l < nbrVectors; ++l)
+	vDestinations[l][index] +=  Coefficient * vSources[l][index];
+    }
 }
 
 // core part of the PartialFastMultiplicationMemory method involving two-body term
@@ -2905,7 +2863,7 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
   double Coefficient = 0.0;
   double Coefficient2 = 0.0;
   int Dim = particles->GetHilbertSpaceDimension();
-if (this->NbrQ12Indices == 0) // full storage
+  if (this->NbrQ12Indices == 0) // full storage
     {
       for (int j = 0; j < NbrInteractionFactors; ++j) 
 	{
@@ -2984,8 +2942,8 @@ if (this->NbrQ12Indices == 0) // full storage
       for (int i = firstComponent; i < lastComponent; ++i)
 	{
 	  Coefficient = particles->AdAdAADiagonal(i, NbrDiagonalInteractionFactors, DiagonalInteractionFactors, DiagonalQValues);
-	      ++memory;
-	      ++this->NbrRealInteractionPerComponent[i - this->PrecalculationShift];
+	  ++memory;
+	  ++this->NbrRealInteractionPerComponent[i - this->PrecalculationShift];
 	}
     }
 }
@@ -2999,9 +2957,9 @@ if (this->NbrQ12Indices == 0) // full storage
 
 inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyFastMultiplicationMemoryComponent(ParticleOnLattice* particles, int firstComponent, int lastComponent, long& memory)
 {
-	int Index;
+  int Index;
   double Coefficient;
-	int Dim = particles->GetHilbertSpaceDimension();
+  int Dim = particles->GetHilbertSpaceDimension();
   // deal with kinetic energy terms first!      
   int qi;
   int qf;
@@ -3016,7 +2974,7 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyFastMultiplication
 	      Index = particles->AdA(i, qf, qi, Coefficient);
 	      if (Index < Dim)
 		{
-			++memory;			
+		  ++memory;			
 		  ++this->NbrRealInteractionPerComponent[i - this->PrecalculationShift];		
 		}
 	    }
@@ -3027,7 +2985,7 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyFastMultiplication
 	    {
 	      Index = particles->AdA(i, qf, qi, Coefficient);
 	      
-				if (Index < Dim)
+	      if (Index < Dim)
 		{
 		  ++memory;
 		  ++this->NbrComplexInteractionPerComponent[i - this->PrecalculationShift];

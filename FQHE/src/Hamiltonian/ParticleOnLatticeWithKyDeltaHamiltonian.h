@@ -101,7 +101,7 @@ class ParticleOnLatticeWithKyDeltaHamiltonian : public AbstractQHEOnLatticeHamil
   // H = Hamiltonian to print
   // return value = reference on output stream
   friend ostream& operator << (ostream& Str, ParticleOnLatticeWithKyDeltaHamiltonian& H);
-
+  
   // Mathematica Output Stream overload
   //
   // Str = reference on Mathematica output stream
@@ -110,7 +110,7 @@ class ParticleOnLatticeWithKyDeltaHamiltonian : public AbstractQHEOnLatticeHamil
   friend MathematicaOutput& operator << (MathematicaOutput& Str, ParticleOnLatticeWithKyDeltaHamiltonian& H);
 
  private:
- 
+  
   // evaluate all interaction factors
   //   
   void EvaluateInteractionFactors();

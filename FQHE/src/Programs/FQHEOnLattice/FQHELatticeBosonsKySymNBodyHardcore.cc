@@ -83,16 +83,16 @@ int main(int argc, char** argv)
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
-
+  
   ArchitectureManager Architecture;
 
   Manager += SystemGroup;
   Architecture.AddOptionGroup(&Manager);
   QHEOnLatticeMainTask::AddOptionGroup(&Manager);
   Manager += PrecalculationGroup;
-	Manager += ToolsGroup;
+  Manager += ToolsGroup;
   Manager += MiscGroup;
-
+  
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 8);
   (*SystemGroup) += new SingleIntegerOption  ('x', "lx", "length in x-direction of given lattice", 5);
   (*SystemGroup) += new SingleIntegerOption  ('y', "ly", "length in y-direction of given lattice", 1);
@@ -126,7 +126,7 @@ int main(int argc, char** argv)
   int Ly = Manager.GetInteger("ly");
   int NbrFluxQuanta = Manager.GetInteger("flux");
   int NbrSites = Lx*Ly;
-	int NbrBody = Manager.GetInteger("nbr-body");
+  int NbrBody = Manager.GetInteger("nbr-body");
   bool ReverseHopping = Manager.GetBoolean("positive-hopping");
   bool HardCore = Manager.GetBoolean("hard-core");
   double ContactU = Manager.GetDouble("contactU");
@@ -137,9 +137,9 @@ int main(int argc, char** argv)
   unsigned long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
   unsigned long MemorySpace = ((unsigned long) Manager.GetInteger("fast-search")) << 20;
   char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");
-
+  
   if (Manager.GetString("energy-expectation") != 0 ) Memory = 0x0l;
-
+  
   int NbrFluxValues = 1;
   if (NbrFluxQuanta == -1)
     {
@@ -149,7 +149,7 @@ int main(int argc, char** argv)
       else
 	NbrFluxValues = (NbrSites+2)/2;
     }
-
+  
   char* OutputName;
   char reverseHoppingString[4]="";
   char randomString[20]="";
@@ -179,48 +179,48 @@ int main(int argc, char** argv)
   AbstractQHEOnLatticeHamiltonian* Hamiltonian=0;
   
   if (Manager.GetString("energy-expectation") != 0 )
+    {
+      if (HardCore)
 	{
-	  if (HardCore)
-	    {
-	      cout << "Hard-Core bosons not defined with translations!"<<endl;
-	      exit(1);
-	      //Space =new HardCoreBosonOnLatticeKy(NbrBosons, Lx, Ly, Manager.GetInteger("ky"), NbrFluxQuanta, MemorySpace);
-	    }
-	  else Space = new BosonOnLatticeKy(NbrBosons, Lx, Ly, Manager.GetInteger("ky"), NbrFluxQuanta, MemorySpace);
-	  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
-		
-	  Hamiltonian = new ParticleOnLatticeWithKyNBodyDeltaHamiltonian(Space, NbrBosons, Lx, Ly, ((BosonOnLatticeKy*)Space)->GetMaximumKy(),  NbrFluxQuanta,NbrBody, 0.0, ContactU, ReverseHopping, Random, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName);
-
-		
-	  char* StateFileName = Manager.GetString("energy-expectation");
-	  if (IsFile(StateFileName) == false)
-	    {
-	      cout << "state " << StateFileName << " does not exist or can't be opened" << endl;
-	      return -1;           
-	    }
-	  ComplexVector State;
-	  if (State.ReadVector(StateFileName) == false)
-	    {
-	      cout << "error while reading " << StateFileName << endl;
-	      return -1;
-	    }
-	  if (State.GetVectorDimension()!=Space->GetHilbertSpaceDimension())
-	    {
-	      cout << "error: vector and Hilbert-space have unequal dimensions"<<endl;
-	      return -1;
-	    }
-	  ComplexVector TmpState(Space->GetHilbertSpaceDimension());
-	  VectorHamiltonianMultiplyOperation Operation (Hamiltonian, &State, &TmpState);
-	  Operation.ApplyOperation(Architecture.GetArchitecture());
-	  Complex EnergyValue = State*TmpState;
-	  cout << "< Energy > = "<<EnergyValue<<endl;
-	  return 0;
+	  cout << "Hard-Core bosons not defined with translations!"<<endl;
+	  exit(1);
+	  //Space =new HardCoreBosonOnLatticeKy(NbrBosons, Lx, Ly, Manager.GetInteger("ky"), NbrFluxQuanta, MemorySpace);
 	}
-
-//   // testing Hamiltonian:
+      else Space = new BosonOnLatticeKy(NbrBosons, Lx, Ly, Manager.GetInteger("ky"), NbrFluxQuanta, MemorySpace);
+      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
+      
+      Hamiltonian = new ParticleOnLatticeWithKyNBodyDeltaHamiltonian(Space, NbrBosons, Lx, Ly, ((BosonOnLatticeKy*)Space)->GetMaximumKy(),  NbrFluxQuanta,NbrBody, 0.0, ContactU, ReverseHopping, Random, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName);
+      
+      
+      char* StateFileName = Manager.GetString("energy-expectation");
+      if (IsFile(StateFileName) == false)
+	{
+	  cout << "state " << StateFileName << " does not exist or can't be opened" << endl;
+	  return -1;           
+	}
+      ComplexVector State;
+      if (State.ReadVector(StateFileName) == false)
+	{
+	  cout << "error while reading " << StateFileName << endl;
+	  return -1;
+	}
+      if (State.GetVectorDimension()!=Space->GetHilbertSpaceDimension())
+	{
+	  cout << "error: vector and Hilbert-space have unequal dimensions"<<endl;
+	  return -1;
+	}
+      ComplexVector TmpState(Space->GetHilbertSpaceDimension());
+      VectorHamiltonianMultiplyOperation Operation (Hamiltonian, &State, &TmpState);
+      Operation.ApplyOperation(Architecture.GetArchitecture());
+      Complex EnergyValue = State*TmpState;
+      cout << "< Energy > = "<<EnergyValue<<endl;
+      return 0;
+    }
   
-//   ComplexMatrix HRe(Hamiltonian->GetHilbertSpaceDimension(),Hamiltonian->GetHilbertSpaceDimension());
-//   ComplexMatrix HIm(Hamiltonian->GetHilbertSpaceDimension(),Hamiltonian->GetHilbertSpaceDimension());
+  //   // testing Hamiltonian:
+  
+  //   ComplexMatrix HRe(Hamiltonian->GetHilbertSpaceDimension(),Hamiltonian->GetHilbertSpaceDimension());
+  //   ComplexMatrix HIm(Hamiltonian->GetHilbertSpaceDimension(),Hamiltonian->GetHilbertSpaceDimension());
 //   GetHamiltonian(Hamiltonian,HRe);
 //   GetHamiltonianIm(Hamiltonian,HIm);
 //   Complex one, two, M_I(0.0,1.0);
@@ -264,12 +264,12 @@ int main(int argc, char** argv)
 // 	  cout << "Discrepancy in "<<j<<": "<<one << " vs " << two << endl;
 //       }  
   bool FirstRun=true;
-
+  
   for (int iter=0; iter<NbrFluxValues; ++iter, ++NbrFluxQuanta)
     {
       cout << "================================================================" << endl;
       cout << "NbrFluxQuanta="<<NbrFluxQuanta<<endl;
-
+      
       int Ky = Manager.GetInteger("ky");
       int MaxK = (Ky<0?1:Ky+1);
       int UpperLimit = MaxK;      
@@ -277,7 +277,7 @@ int main(int argc, char** argv)
 	{
 	  if (Space!=0) delete Space;
 	  if (Hamiltonian!=0) delete Hamiltonian;
-
+	  
 	  if (HardCore)
 	    {
 	      cout << "Hard-Core bosons not defined with translations!"<<endl;
@@ -304,7 +304,7 @@ int main(int argc, char** argv)
 	  
 	  cout << "Momentum Ky="<<k<<": dim="<<Space->GetHilbertSpaceDimension()<<endl;
 	  
-	   Hamiltonian = new ParticleOnLatticeWithKyNBodyDeltaHamiltonian(Space, NbrBosons, Lx, Ly, ((BosonOnLatticeKy*)Space)->GetMaximumKy(),  NbrFluxQuanta,NbrBody, 0.0, ContactU, ReverseHopping, Random, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName);  
+	  Hamiltonian = new ParticleOnLatticeWithKyNBodyDeltaHamiltonian(Space, NbrBosons, Lx, Ly, ((BosonOnLatticeKy*)Space)->GetMaximumKy(),  NbrFluxQuanta,NbrBody, 0.0, ContactU, ReverseHopping, Random, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName);  
           
 	  char* EigenvectorName = 0;
 	  if (Manager.GetBoolean("eigenstate"))	
@@ -326,6 +326,6 @@ int main(int argc, char** argv)
   cout << "================================================================" << endl;
   delete Hamiltonian;
   delete Space;  
-
+  
   return 0;
 }

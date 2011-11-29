@@ -54,10 +54,10 @@ ParticleOnLatticeWithKyDeltaHamiltonian::ParticleOnLatticeWithKyDeltaHamiltonian
   this->LoadBalancingArray=0;
   this->NbrBalancedTasks=0;
   this->FastMultiplicationStep=0;
-  this->HermitianSymmetryFlag=false;
-  this->HaveComplexMatrixElements=true;
+  this->HermitianSymmetryFlag = false;
+  this->HaveComplexMatrixElements = true;
   this->HaveTestedForComplexMatrixElement=false;
-	this->HaveKySymmetry=true;
+  this->HaveKySymmetry = true;
 }
 
 
@@ -364,6 +364,7 @@ void ParticleOnLatticeWithKyDeltaHamiltonian::EvaluateInteractionFactors()
 			++Pos;
 		      }
 		}
+      
       this->NbrInteractionFactors = 0;
       this->Q1Value = new int [Pos];
       this->Q2Value = new int [Pos];
@@ -373,6 +374,7 @@ void ParticleOnLatticeWithKyDeltaHamiltonian::EvaluateInteractionFactors()
       cout << "nbr interaction = " << Pos << endl;
       Pos = 0;
       MaxCoefficient *= MACHINE_PRECISION;
+      
       for (int i=0; i<Lx; ++i)
 	for (int s=0; s<p; ++s)
 	  for (int k1 = 0; k1 < this->KyMax; ++k1)
@@ -408,8 +410,4 @@ void ParticleOnLatticeWithKyDeltaHamiltonian::EvaluateInteractionFactors()
     {
       this->NbrInteractionFactors = 0;
     }
-
-  
-    
-  
 }
