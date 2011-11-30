@@ -78,6 +78,11 @@ class ParticleOnLatticeWithSpinChernInsulatorHamiltonian : public AbstractQHEHam
   // use flat band model
   bool FlatBand;
 
+  // numerical factor for momentum along x
+  double KxFactor;
+  // numerical factor for momentum along y
+  double KyFactor;
+
   // shift to apply to go from precalculation index to the corresponding index in the HilbertSpace
   int PrecalculationShift;
 

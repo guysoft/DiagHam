@@ -110,5 +110,5 @@ ParticleOnSquareLatticeTwoBandSimpleTIHamiltonian.cc \
 ParticleOnLatticeRubyLatticeSingleBandHamiltonian.cc \
 ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian.cc \
 ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian.cc \
-ParticleOnLatticeWithKyNBodyDeltaHamiltonian.cc
-
+ParticleOnLatticeWithKyNBodyDeltaHamiltonian.cc \
+ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian.cc
