@@ -103,13 +103,16 @@ RealMatrix::RealMatrix(double* array, int nbrRow, int nbrColumn)
   this->TrueNbrRow = this->NbrRow;
   this->TrueNbrColumn = this->NbrColumn;
   this->Columns = new RealVector [this->NbrColumn];
-  long Index = 0;
   for (int i = 0; i < this->NbrColumn; i++)
     {
       this->Columns[i] = RealVector (this->NbrRow);
-      for (int j = 0; j < this->NbrRow; j++)
-	this->Columns[i][j] = array[Index++];
     }
+  
+  long Index = 0;
+  for (int j = 0; j < this->NbrRow; j++)
+    for (int i = 0; i < this->NbrColumn; i++)
+      this->Columns[i][j] = array[Index++];
+
   this->MatrixType = Matrix::RealElements;
 }
 
@@ -871,6 +874,21 @@ RealMatrix& RealMatrix::Transpose ()
   return *this;
 }
 
+// duplicate and transpose a matrix
+//
+// return value = transposed matrix
+
+RealMatrix RealMatrix::DuplicateAndTranspose ()
+{
+  RealMatrix TmpMatrix(this->NbrColumn, this->NbrRow);
+  for (int i = 0; i < this->NbrRow; ++i)
+    for (int j = 0; j < this->NbrColumn; ++j)
+      {
+	TmpMatrix.Columns[i][j] = this->Columns[j][i];
+      }
+  return TmpMatrix;
+}
+
 // evaluate matrix determinant (skrewing up matrix elements)
 //
 // return value = matrix determinant 
@@ -1009,9 +1027,9 @@ double* RealMatrix::SingularValueDecomposition(RealMatrix& uMatrix, RealMatrix& 
 	}
     }
   double* TmpUMatrix = new double [this->NbrRow * this->NbrRow];
-  double* TmpVMatrix = new double [MinDimension * this->NbrColumn];
+  double* TmpVMatrix = new double [this->NbrColumn * this->NbrColumn];
   int SizeLDU = this->NbrRow;
-  int SizeLDVT = MinDimension;
+  int SizeLDVT = MinDimension;//this->NbrColumn;
   FORTRAN_NAME(dgesdd)(&Jobz, &this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrRow, SigmaMatrix, TmpUMatrix, &SizeLDU, TmpVMatrix, &SizeLDVT, &TmpWorkingArea, &WorkingAreaSize, &TmpIntegerWorkingArea, &Information);
   WorkingAreaSize = (int) TmpWorkingArea;
   double* WorkingArea = new double [WorkingAreaSize];
@@ -1019,7 +1037,7 @@ double* RealMatrix::SingularValueDecomposition(RealMatrix& uMatrix, RealMatrix& 
   int* IntegerWorkingArea = new int [IntegerWorkingAreaSize];
   FORTRAN_NAME(dgesdd)(&Jobz, &this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrRow, SigmaMatrix, TmpUMatrix, &SizeLDU, TmpVMatrix, &SizeLDVT, WorkingArea, &WorkingAreaSize, IntegerWorkingArea, &Information);
   uMatrix = RealMatrix(TmpUMatrix, this->NbrRow, this->NbrRow);
-  vMatrix = RealMatrix(TmpVMatrix, MinDimension, this->NbrColumn);
+  vMatrix = RealMatrix(TmpVMatrix, this->NbrColumn, MinDimension);
   delete[] TmpUMatrix;
   delete[] TmpVMatrix;
   delete[] WorkingArea;

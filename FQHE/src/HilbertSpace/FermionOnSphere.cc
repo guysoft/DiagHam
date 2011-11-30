@@ -3174,7 +3174,7 @@ RealVector& FermionOnSphere::EvaluatePartialSchmidtDecompositionParticlePartitio
 // nbrSingularValues = number of singular values (can be lower than the actual number of ingular values to perform a truncation)
 // singularValues = array containing the singular values
 // aVectors = matrix than contains the singular vectors of the part A
-// bVectors = matrix than contains the singular vectors of the part B
+// bVectors = transposed matrix than contains the singular vectors of the part B
 
 void FermionOnSphere::RebuildStateFromSchmidtDecompositionParticlePartition(int nbrParticleSector, int lzSector, RealVector& schmidtDecomposedState, 
 									    int nbrSingularValues, double* singularValues, RealMatrix& aVectors, RealMatrix& bVectors)
@@ -3183,11 +3183,12 @@ void FermionOnSphere::RebuildStateFromSchmidtDecompositionParticlePartition(int 
   cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
   FermionOnSphere TmpHilbertSpace(this->NbrFermions - nbrParticleSector, this->TotalLz - lzSector, this->LzMax);
 
-
-  cout << "   A = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << " " << aVectors.GetNbrRow() << " " << aVectors.GetNbrColumn() << endl;
-  cout << "   B = " << TmpHilbertSpace.HilbertSpaceDimension << " " << bVectors.GetNbrRow() << " " << bVectors.GetNbrColumn() << endl;
+ //  cout << "   A = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << " " << aVectors.GetNbrRow() << " " << aVectors.GetNbrColumn() << endl;
+//   cout << "   B = " << TmpHilbertSpace.HilbertSpaceDimension << " " << bVectors.GetNbrRow() << " " << bVectors.GetNbrColumn() << endl;
  
- for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
+  BinomialCoefficients TmpBinomial (this->NbrFermions);
+  double TmpInvBinomial = 1.0 / sqrt(TmpBinomial(this->NbrFermions, nbrParticleSector));
+  for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
     {
       int Pos = 0;
       unsigned long TmpState = TmpHilbertSpace.StateDescription[MinIndex];
@@ -3203,7 +3204,7 @@ void FermionOnSphere::RebuildStateFromSchmidtDecompositionParticlePartition(int 
 	      int TmpPos = this->FindStateIndex(TmpState3, TmpLzMax);
 	      if (TmpPos != this->HilbertSpaceDimension)
 		{
- 		  double Coefficient = 1.0;
+ 		  double Coefficient;
 		  unsigned long Sign = 0x0ul;
 		  int Pos2 = TmpDestinationHilbertSpace.LzMax;
 		  while ((Pos2 > 0) && (TmpState2 != 0x0ul))
@@ -3224,11 +3225,11 @@ void FermionOnSphere::RebuildStateFromSchmidtDecompositionParticlePartition(int 
 		      --Pos2;
 		    }
  		  if ((Sign & 0x1ul) == 0x0ul)		  
- 		    Coefficient = 1.0;
+ 		    Coefficient = TmpInvBinomial;
  		  else
- 		    Coefficient = -1.0;
+ 		    Coefficient = -TmpInvBinomial;
 		  for (int i = 0; i < nbrSingularValues; ++i)
-		    schmidtDecomposedState[TmpPos] += Coefficient * singularValues[i] * aVectors[MinIndex][i] * bVectors[j][i];
+		    schmidtDecomposedState[TmpPos] += Coefficient * singularValues[i] * aVectors[j][i] * bVectors[i][MinIndex];
 		}
 	    }
 	}

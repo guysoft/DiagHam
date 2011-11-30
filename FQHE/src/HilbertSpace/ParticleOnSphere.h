@@ -470,7 +470,7 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // nbrSingularValues = number of singular values (can be lower than the actual number of ingular values to perform a truncation)
   // singularValues = array containing the singular values
   // aVectors = matrix than contains the singular vectors of the part A
-  // bVectors = matrix than contains the singular vectors of the part B
+  // bVectors = transposed matrix than contains the singular vectors of the part B
   virtual void RebuildStateFromSchmidtDecompositionParticlePartition(int nbrParticleSector, int lzSector, RealVector& schmidtDecomposedState, 
 									     int nbrSingularValues, double* singularValues, RealMatrix& aVectors, RealMatrix& bVectors);
 

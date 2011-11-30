@@ -289,11 +289,12 @@ int main(int argc, char** argv)
 	{
 	  PartialEntanglementMatrix = Space->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundState,false);
 	}      
-      if ((PartialDensityMatrix.GetNbrRow() > 1)||(PartialEntanglementMatrix.GetNbrRow() >= 1))
+      if ((PartialDensityMatrix.GetNbrRow() > 1) || (SVDFlag == true))
 	{
-	  RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
+	  RealDiagonalMatrix TmpDiag;
 	  if (SVDFlag == false)
 	    {
+	      TmpDiag = RealDiagonalMatrix(PartialDensityMatrix.GetNbrRow());
 #ifdef __LAPACK__
 	      if (LapackFlag == true)
 		PartialDensityMatrix.LapackDiagonalize(TmpDiag);
@@ -305,26 +306,32 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      RealMatrix AVectors (PartialDensityMatrix.GetNbrRow(), PartialDensityMatrix.GetNbrRow(), true);
-	      RealMatrix BVectors (PartialDensityMatrix.GetNbrColumn(), PartialDensityMatrix.GetNbrColumn(), true);
-	      double* TmpValues = PartialEntanglementMatrix.SingularValueDecomposition(AVectors, BVectors);
+	      RealMatrix AVectors;
+	      RealMatrix BTVectors;	  
+	      double* TmpValues = PartialEntanglementMatrix.SingularValueDecomposition(AVectors, BTVectors);
 	      int TmpDimension = PartialEntanglementMatrix.GetNbrColumn();
 	      if (TmpDimension > PartialEntanglementMatrix.GetNbrRow())
 		{
 		  TmpDimension = PartialEntanglementMatrix.GetNbrRow();
 		}
 	      int NbrKeptEigenvalues = 0;
+	      double* TmpTruncatedValues = new double[TmpDimension];
 	      for (int i = 0; i < TmpDimension; ++i)
 		{
 		  if (TmpValues[i] > SVDEigenvalueCutOff)
-		    {
+		    {		      
 		      ++NbrKeptEigenvalues;
+		      TmpTruncatedValues[i] = TmpValues[i];
+		    }
+		  else
+		    {
+		      TmpTruncatedValues[i] = 0.0;
 		    }
 		}
 	      if (NbrKeptEigenvalues > 0)
-		{
+		{		  
 		  Space->RebuildStateFromSchmidtDecompositionParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, SchmidtDecomposedState, 
-									       NbrKeptEigenvalues, TmpValues, AVectors, BVectors);
+									       TmpDimension, TmpTruncatedValues, AVectors, BTVectors);
 		}
 	      
 	      for (int i = 0; i < TmpDimension; ++i)
@@ -337,6 +344,7 @@ int main(int argc, char** argv)
 		    }
 		}
 	      TmpDiag = RealDiagonalMatrix(TmpValues, TmpDimension);
+	      delete[] TmpTruncatedValues;
 	    }
 	      
 	  TmpDiag.SortMatrixDownOrder();

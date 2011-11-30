@@ -314,6 +314,11 @@ class RealMatrix : public Matrix
   // return value = reference on current matrix
   RealMatrix& Transpose ();
 
+  // duplicate and transpose a matrix
+  //
+  // return value = transposed matrix
+  RealMatrix DuplicateAndTranspose();
+    
   // evaluate matrix determinant (skrewing up matrix elements)
   //
   // return value = matrix determinant 
