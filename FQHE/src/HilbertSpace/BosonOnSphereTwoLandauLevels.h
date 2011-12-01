@@ -385,6 +385,19 @@ class BosonOnSphereTwoLandauLevels :  public ParticleOnSphereWithSpin
   // firstComponent = first component to be computed
   // nbrComponent = number of components to be computed
   virtual void BosonicStateTimePolarizedSlaters(RealVector& bosonState, RealVector& outputVector, FermionOnSphere * fermionSpace , FermionOnSphereWithSpin* finalSpace, int firstComponent,int nbrComponent);
+
+// compute the projection of the product of a bosonic state and the halperin 110 state
+//
+// bosonState = real vector where the bosonic state is stored
+// outputVector = real vector where the result has to be stored
+// fermionSpace = pointer to the fermionic Hilbert space
+// finalSpace = pointer to the final Hilbert space
+// firstComponent = first component to be computed
+// nbrComponent = number of components to be computed
+
+  virtual void BosonicStateTimePolarizedSlatersLzSymmetry(RealVector& bosonState, RealVector& outputVector, FermionOnSphere * fermionSpace , FermionOnSphereWithSpin* finalSpace, int firstComponent,int nbrComponent);
+	
+	inline int GetSymmetricStateIndex (int index);
   
  protected:
 
@@ -815,5 +828,57 @@ inline double BosonOnSphereTwoLandauLevels::GetConfigNorm(long index)
     }
   return sqrt(Value);
 }
+
+inline int BosonOnSphereTwoLandauLevels::GetSymmetricStateIndex (int index)
+{
+	int Index = this->NbrBosons-1; //start filling from last element as will have lowest value.
+  unsigned long InitialState = this->StateDescription[index];
+  int Pos  = 0;
+  int StateLzMax = this->StateLzMax[index]; //number of bits away from most significant bits.
+  int TmpLz = 0; // using labels as in bosonic representation where 0 corresponds to largest lz on SLL. 
+  while (Pos <= StateLzMax)
+    {
+#ifdef  __64_BITS__      
+      while ((Pos <= StateLzMax) && (((InitialState >> (63 - Pos)) & 0x1ul) != 0x0ul))
+#else	
+	while ((Pos <= StateLzMax) && (((InitialState >> (31 - Pos)) & 0x1ul) != 0x0ul))	
+#endif	
+	  {
+	    this->TemporaryState[Index--] = (unsigned long) TmpLz;
+	    ++Pos;
+	  }
+#ifdef  __64_BITS__	
+      while ((Pos <= StateLzMax) && (((InitialState >> (63 - Pos)) & 0x1ul) == 0x0ul))
+#else	
+	while ((Pos <= StateLzMax) && (((InitialState >> (31 - Pos)) & 0x1ul) == 0x0ul))	
+#endif	
+	  {
+	    ++TmpLz;
+	    ++Pos;
+	  }
+    }
+  
+  for (int i = 0 ; i < this->NbrBosons ; i++)
+    {
+      
+      if (this->TemporaryState[i] < this->LzMaxUp + 1)
+	this->TemporaryState[i] = GetIndexFromLzU(this->LzMax - GetLzFromIndexU(this->TemporaryState[i]));
+      else
+	this->TemporaryState[i] = GetIndexFromLzD(this->LzMax -GetLzFromIndexD(this->TemporaryState[i]));
+    }
+  
+  SortArrayDownOrdering(this->TemporaryState,this->NbrBosons);
+	
+	for (int i = 0 ; i < this->NbrBosons ; i++)
+		{
+			cout <<this->TemporaryState[i]<<" ";
+		}
+		cout <<endl;
+// 	this->TemporaryStateLzMax = this->NbrLzValue - 1;
+//   while (this->TemporaryState[this->TemporaryStateLzMax] == 0)
+//     --this->TemporaryStateLzMax;
+  return this->FindStateIndex(this->ConvertFromMonomial(this->TemporaryState));	
+}
+
 
 #endif

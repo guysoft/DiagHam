@@ -228,6 +228,8 @@ class ParticleOnLatticeWithKyNBodyDeltaHamiltonian : public ParticleOnLatticeWit
 	virtual ComplexVector& LowLevelAddMultiplyPartialFastMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent);
 	
 	virtual ComplexVector& ConjugateLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination,  int firstComponent, int nbrComponent);
+	
+	virtual void EvaluateMNNBodyConjugateAddMultiplyComponent(ParticleOnLattice* particles, int index, ComplexVector& vSource, ComplexVector& vDestination);
 
   // evaluate all interaction factors
   //   
@@ -603,5 +605,76 @@ inline void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::EvaluateMNNBodyFastMul
     }
 }
 
+
+// core part of the AddMultiply method involving the two-body interaction
+// 
+// particles = pointer to the Hilbert space
+// index = index of the component on which the Hamiltonian has to act on
+// vSource = vector to be multiplied
+// vDestination = vector at which result has to be added
+
+inline void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::EvaluateMNNBodyConjugateAddMultiplyComponent(ParticleOnLattice* particles, int index, ComplexVector& vSource, ComplexVector& vDestination)
+{
+	cout <<" Called not defined ParticleOnLatticeWithKyNBodyDeltaHamiltonian::EvaluateMNNBodyConjugateAddMultiplyComponent "<<endl;
+	return;
+  int Dim = particles->GetHilbertSpaceDimension(); 
+  double Coefficient;
+  int Index;
+  
+  if (this->NbrQ12Indices == 0) // full storage
+    { 	  
+      for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+	{
+	  int q1 = this->Q1Value[j];
+	  int q2 = this->Q2Value[j];
+	  int q3 = this->Q3Value[j];
+	  int q4 = this->Q4Value[j];
+	  Index = particles->AdAdAA(index, q1, q2, q3, q4, Coefficient);
+	  if (Index < Dim)
+	    {
+	      vDestination[index] += Conj(Coefficient * this->InteractionFactors[j]) * vSource[Index];
+	    }
+	}
+    }
+  else // intelligent storage
+    {
+      double Coefficient2;
+      Complex TmpSum;
+      int ProcessedNbrInteractionFactors= 0;
+      int TmpNbrQ34Values;
+      int* TmpQ3Values;
+      int* TmpQ4Values;
+      for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
+	{
+	  Coefficient = particles->AA(index, this->Q1Value[i12], this->Q2Value[i12]);
+	  if (Coefficient != 0.0)
+	    {
+	      TmpNbrQ34Values = this->NbrQ34Values[i12];
+	      TmpQ3Values = this->Q3PerQ12[i12];
+	      TmpQ4Values = this->Q4PerQ12[i12];
+	      for (int i34 = 0; i34 < TmpNbrQ34Values; ++i34)
+			{
+			  Index = particles->AdAd(TmpQ3Values[i34], TmpQ4Values[i34], Coefficient2);
+			  if (Index < Dim)
+			    {
+			      TmpSum += (Coefficient*Coefficient2)*Conj(this->InteractionFactors[ProcessedNbrInteractionFactors])*vSource[Index];	
+			    }
+			  ++ProcessedNbrInteractionFactors;
+			}
+	    }
+	  else
+	    ProcessedNbrInteractionFactors += this->NbrQ34Values[i12];
+	}
+      vDestination[index]+=TmpSum;
+    }
+  
+  // separated diagonal terms as these will be the general rule for contact interactions
+  if (NbrDiagonalInteractionFactors>0)
+    {
+      Coefficient = particles->AdAdAADiagonal(index, NbrDiagonalInteractionFactors, DiagonalInteractionFactors, DiagonalQValues);
+      if (Coefficient != 0.0)
+	vDestination[index] +=  Coefficient * vSource[index];
+    }
+}
 
 #endif

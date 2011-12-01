@@ -256,7 +256,47 @@ ComplexVector* ParticleOnLatticeWithKyNBodyDeltaHamiltonian::LowLevelMultipleAdd
 
 ComplexVector& ParticleOnLatticeWithKyNBodyDeltaHamiltonian::ConjugateLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination,  int firstComponent, int nbrComponent)
 {
-	cout << "Calling non-defined function ParticleOnLatticeWithKyNBodyDeltaHamiltonian::ConjugateLowLevelAddMultiply"<<endl;
+  int LastComponent = firstComponent + nbrComponent;
+  if (this->FastMultiplicationFlag == false)
+    {
+      ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
+      this->EvaluateMNOneBodyConjugateAddMultiplyComponent(TmpParticles,firstComponent,LastComponent,1, vSource, vDestination);
+			if(this->TwoBodyFlag == true)
+			{
+				for (int i = firstComponent; i < LastComponent; ++i)
+				{
+					this->EvaluateMNTwoBodyConjugateAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+					this->EvaluateMNNBodyConjugateAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+				}
+				
+			}
+			else
+			{
+				for (int i = firstComponent; i < LastComponent; ++i)
+				{
+					this->EvaluateMNNBodyConjugateAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+				}
+			}
+      delete TmpParticles;
+    }
+  else // fast calculation enabled
+    {
+      if (this->FastMultiplicationStep == 1)
+	{
+	  this->ConjugateLowLevelAddMultiplyFastMultiply(vSource,  vDestination, firstComponent, LastComponent);
+	}
+      else
+	{
+	  if (this->DiskStorageFlag == false)
+	    {
+	      this->LowLevelAddMultiplyPartialFastMultiply(vSource, vDestination, firstComponent, nbrComponent);
+	    }
+	  else
+	    {
+	      this->LowLevelAddMultiplyDiskStorage(vSource, vDestination, firstComponent, nbrComponent);
+	    }
+	}
+    }
   return vDestination;
 }
 
