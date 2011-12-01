@@ -145,6 +145,7 @@ bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::RawApplyOper
 
 bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::ArchitectureDependentApplyOperation(SMPArchitecture* architecture)
 {
+	char * SaveFileName = "fermions_su2_slater_sym_tmp.vec";
   int Step = (int) this->NbrComponent / (this->NbrStage*architecture->GetNbrThreads());
   int TmpFirstComponent = this->FirstComponent;
   int ReducedNbrThreads = architecture->GetNbrThreads() - 1;
@@ -181,6 +182,7 @@ bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::Architecture
 	{
 	  (*(this->OutputVector)) += (*(TmpOperations[i]->OutputVector));
 	}
+	   this->OutputVector->WriteVector(SaveFileName);
       }
     
     for (int i = 0; i < ReducedNbrThreads; ++i)

@@ -144,9 +144,13 @@ ParticleOnLatticeWithKyNBodyDeltaHamiltonian::~ParticleOnLatticeWithKyNBodyDelta
 	  delete[] this->NBodyInteractionFactors[i];
 	}
     }
-  delete[] this->NBodyInteractionFactors;
-  delete[] this->NbrNBodySectorIndicesPerSum;
-  delete[] this->NBodySectorIndicesPerSum;
+
+  if ( this->NBodyContactInteraction != 0.0 )
+    {
+      delete[] this->NBodyInteractionFactors;
+      delete[] this->NbrNBodySectorIndicesPerSum;
+      delete[] this->NBodySectorIndicesPerSum;
+    }
 }
   
 // multiply a vector by the current hamiltonian for a given range of indices 
@@ -161,6 +165,7 @@ ParticleOnLatticeWithKyNBodyDeltaHamiltonian::~ParticleOnLatticeWithKyNBodyDelta
 ComplexVector& ParticleOnLatticeWithKyNBodyDeltaHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
+
   if (this->FastMultiplicationFlag == false)
     {
       ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
@@ -179,6 +184,7 @@ ComplexVector& ParticleOnLatticeWithKyNBodyDeltaHamiltonian::LowLevelAddMultiply
 	    {
 	      this->EvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);	  
 	    }
+	  this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSource, vDestination);
 	}
       delete TmpParticles;
     }
@@ -190,7 +196,7 @@ ComplexVector& ParticleOnLatticeWithKyNBodyDeltaHamiltonian::LowLevelAddMultiply
 	}
       else
 	{
-	  this->LowLevelAddMultiplyPartialFastMultiply(vSource, vDestination, firstComponent, nbrComponent);
+	   this->LowLevelAddMultiplyPartialFastMultiply(vSource, vDestination, firstComponent, nbrComponent);
 	}
     }
   return vDestination;
@@ -248,6 +254,13 @@ ComplexVector* ParticleOnLatticeWithKyNBodyDeltaHamiltonian::LowLevelMultipleAdd
   return vDestinations;
 }
 
+ComplexVector& ParticleOnLatticeWithKyNBodyDeltaHamiltonian::ConjugateLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination,  int firstComponent, int nbrComponent)
+{
+	cout << "Calling non-defined function ParticleOnLatticeWithKyNBodyDeltaHamiltonian::ConjugateLowLevelAddMultiply"<<endl;
+  return vDestination;
+}
+
+
 // multiply a set of vectors by the current hamiltonian for a given range of indices 
 // and add result to another et of vectors, low level function (no architecture optimization)
 // using partial fast multiply option
@@ -261,7 +274,7 @@ ComplexVector* ParticleOnLatticeWithKyNBodyDeltaHamiltonian::LowLevelMultipleAdd
 
 ComplexVector* ParticleOnLatticeWithKyNBodyDeltaHamiltonian::LowLevelMultipleAddMultiplyPartialFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, int firstComponent, int nbrComponent)
 {
-  cout << "Calling non-defined function AbstractQHEOnLatticeHamiltonian::LowLevelMultipleAddMultiplyPartialFastMultiply"<<endl;
+  cout << "Calling non-defined function ParticleOnLatticeWithKyNBodyDeltaHamiltonian::LowLevelMultipleAddMultiplyPartialFastMultiply"<<endl;
   return vDestinations;
   
   /*	
@@ -303,9 +316,9 @@ ComplexVector* ParticleOnLatticeWithKyNBodyDeltaHamiltonian::LowLevelMultipleAdd
 	}
       l += this->FastMultiplicationStep;
       ++Pos;
-    }
-  firstComponent += this->PrecalculationShift;
-  LastComponent += this->PrecalculationShift;
+      }
+      firstComponent += this->PrecalculationShift;
+      LastComponent += this->PrecalculationShift;
   for (l = 0; l < this->FastMultiplicationStep; ++l)
     if (PosMod != l)
       {	
@@ -315,10 +328,10 @@ ComplexVector* ParticleOnLatticeWithKyNBodyDeltaHamiltonian::LowLevelMultipleAdd
 	      {
 		this->EvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
 		this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
+		}
 	      }
-	  }
-	else
-	  {
+	      else
+	      {
 	    for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
 	      {
 		this->EvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
@@ -360,8 +373,8 @@ ComplexVector& ParticleOnLatticeWithKyNBodyDeltaHamiltonian::HermitianLowLevelAd
 	    {
 	      this->HermitianEvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
 	    }
-	}	
-      this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSource, vDestination);
+	}
+      this->HermitianEvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSource, vDestination);
       
       delete TmpParticles;
     }
@@ -412,6 +425,7 @@ ComplexVector* ParticleOnLatticeWithKyNBodyDeltaHamiltonian::HermitianLowLevelMu
 	    {
 	      this->HermitianEvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
 	    }
+	  this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSources, vDestinations, nbrVectors);
 	}
       delete[] Coefficient2;
       delete TmpParticles;
@@ -638,6 +652,8 @@ void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::EvaluateInteractionFactors()
   
   long TotalNbrInteractionFactors = 0;
   
+  this->NbrNBodySectorSums = 0;
+
   if ((this->Particles->GetParticleStatistic() == ParticleOnLattice::BosonicStatistic) && (this->NBodyContactInteraction != 0.0))
     {
       this->NbrNBodySectorSums = this->Lx * this->Ly;
@@ -1038,3 +1054,88 @@ long ParticleOnLatticeWithKyNBodyDeltaHamiltonian::GetAllSymmetricIndices (int n
    return NbrElements;
 }
 
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and add result to another vector, low level function (no architecture optimization)
+// using partial fast multiply option
+//
+// vSource = vector to be multiplied
+// vDestination = vector at which result has to be added
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+ComplexVector& ParticleOnLatticeWithKyNBodyDeltaHamiltonian::LowLevelAddMultiplyPartialFastMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent)
+{
+  double TmpInteractionRe,TmpInteractionIm;
+  int LastComponent = firstComponent + nbrComponent;
+  int* TmpIndexArray;
+  unsigned short* TmpCoefficientIndexArray;
+  double TmpRe, TmpIm;
+  Complex *TmpCPtr;
+  int TmpNbrRealInteraction;
+  int TmpNbrComplexInteraction;
+  firstComponent -= this->PrecalculationShift;
+  LastComponent -= this->PrecalculationShift;
+  int Pos = firstComponent / this->FastMultiplicationStep; 
+  int PosMod = firstComponent % this->FastMultiplicationStep;
+  if (PosMod != 0)
+    {
+      ++Pos;
+      PosMod = this->FastMultiplicationStep - PosMod;
+    }
+  int l =  PosMod + firstComponent + this->PrecalculationShift;
+  for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
+    {
+      TmpNbrRealInteraction = this->NbrRealInteractionPerComponent[Pos];
+      TmpNbrComplexInteraction = this->NbrComplexInteractionPerComponent[Pos];
+      TmpIndexArray = this->InteractionPerComponentIndex[Pos];
+      TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[Pos];
+      TmpRe = vSource[l].Re;
+      TmpIm = vSource[l].Im;
+      int Pos2=0;
+      for (; Pos2 < TmpNbrRealInteraction; ++Pos2)
+	{
+	  vDestination.Re(TmpIndexArray[Pos2]) +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos2]]*TmpRe;
+	  vDestination.Im(TmpIndexArray[Pos2]) +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos2]]*TmpIm;
+	}
+      for (int j=0; j < TmpNbrComplexInteraction; ++j, ++Pos2)
+	{
+	  TmpCPtr= &(ComplexInteractionCoefficients[TmpCoefficientIndexArray[Pos2]]);
+	  vDestination.Re(TmpIndexArray[Pos2]) +=  TmpCPtr->Re*TmpRe-TmpCPtr->Im*TmpIm;
+	  vDestination.Im(TmpIndexArray[Pos2]) +=  TmpCPtr->Re*TmpIm+TmpCPtr->Im*TmpRe;		  
+	}
+      vDestination.Re(l) += this->HamiltonianShift * TmpRe;
+      vDestination.Im(l) += this->HamiltonianShift * TmpIm;	      
+      l += this->FastMultiplicationStep;
+      ++Pos;
+    }
+
+  firstComponent += this->PrecalculationShift;
+  LastComponent += this->PrecalculationShift;
+  
+  ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
+  for (int k = 0; k < this->FastMultiplicationStep; ++k)
+    if (PosMod != k)
+      {
+	if (this->TwoBodyFlag == true)
+	{
+		for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
+		{
+			this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+			this->EvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+		}
+		
+	}
+	else
+	{
+		for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
+		{
+			this->EvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+		}
+	}
+	this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent + k, LastComponent, this->FastMultiplicationStep, vSource, vDestination);
+			}
+
+	delete TmpParticles;
+  return vDestination;
+}
