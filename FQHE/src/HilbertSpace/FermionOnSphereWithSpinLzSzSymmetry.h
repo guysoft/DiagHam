@@ -95,6 +95,7 @@ static  unsigned long FermionOnSphereWithSpinLzInvertTable[] = {0x0ul, 0x40ul, 0
 
 class FermionOnSphereWithSpinLzSzSymmetry :  public FermionOnSphereWithSpin
 {
+  friend class FermionOnSphereWithSpinHaldaneLzSzSymmetry;
 
  protected:
 
@@ -372,7 +373,7 @@ class FermionOnSphereWithSpinLzSzSymmetry :  public FermionOnSphereWithSpin
   // state = reference on the state that has been produced with the AdxAdy operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state
-  virtual int SymmetrizeAdAdResult(unsigned long& state, double& coefficient);
+  virtual int SymmetrizeAdAdResult(unsigned long& state, double& coefficient);      
 
 };
 
@@ -634,6 +635,8 @@ inline int FermionOnSphereWithSpinLzSzSymmetry::SymmetrizeAdAdResult(unsigned lo
     }
   return this->HilbertSpaceDimension;
 }
+
+
 
 #endif
 

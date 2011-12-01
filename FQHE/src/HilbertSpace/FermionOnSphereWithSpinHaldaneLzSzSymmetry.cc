@@ -41,15 +41,21 @@
 #include "Vector/RealVector.h"
 #include "FunctionBasis/AbstractFunctionBasis.h"
 #include "MathTools/BinomialCoefficients.h"
+#include "MathTools/FactorialCoefficient.h"
 #include "GeneralTools/UnsignedIntegerTools.h"
+#include "GeneralTools/ArrayTools.h"
 #include <math.h>
 #include <bitset>
+#include <algorithm>
 
 using std::cout;
 using std::endl;
 using std::hex;
 using std::dec;
 using std::bitset;
+using std::pair;
+using std::map;
+
 
 #define WANT_LAPACK
 
@@ -1585,6 +1591,268 @@ void FermionOnSphereWithSpinHaldaneLzSzSymmetry::EvaluatePermutations()
       TmpNbrFermions += 2;
     }
   return;
+}
+
+
+// compute the projection of the product of a monomial in the two lowest LL and the halperin 110 state
+//
+// slater = array where the monomial representation of the slater determinant for half the number of particles is stored
+// monomial = array where the monomial representation is stored
+// sortingMap = map in which the generated states and their coefficient will be stored
+// nbrPermutations = number of different permutations
+// permutations1 = array where are stored the permutations of the spin up
+// permutations2 = array where are stored the permutations of the spin down
+// initialCoef = inital coefficient in front of the monomial
+
+void FermionOnSphereWithSpinHaldaneLzSzSymmetry::MonomialsTimesPolarizedSlaterProjection(unsigned long * slater, unsigned long * monomial, map<unsigned long , double> & sortingMap, unsigned long nbrPermutations , unsigned long * permutations1, unsigned long * permutations2, double initialCoef)
+{
+  unsigned long* State = new unsigned long[this->NbrFermions];
+  pair <map <unsigned long, double>::iterator, bool> InsertionResult;
+  
+  int HalfNbrParticles = this->NbrFermions>>1;
+  unsigned long * HalfMonomialsUp = new unsigned long[HalfNbrParticles];
+  unsigned long * HalfMonomialsDown = new unsigned long[HalfNbrParticles];
+  double CoefUp = 1.0;
+  double CoefDown = 1.0;
+  unsigned long TmpState = 0ul;
+  unsigned long Mask = 0ul;
+  unsigned long Sign = 0ul;
+	
+  long TmpLzMaxUp = this->LzMax - HalfNbrParticles + 3;
+  long TmpFinalLzMaxUp = 2l + this->LzMax;
+  double InverseFactor = 1.0 / (((double) TmpLzMaxUp) * ((double) TmpFinalLzMaxUp));
+  double CoefInitial;
+  double MonomialFact = initialCoef / (double) MultiplicitiesFactorial(monomial,this->NbrFermions);
+	
+  for (unsigned long IndexPermutations = 0; IndexPermutations < nbrPermutations ; IndexPermutations++)
+    {
+      unsigned long TmpPermUp = permutations1[IndexPermutations];
+      unsigned long TmpPermDown = permutations2[IndexPermutations];
+		
+      for (int i = 0; i < HalfNbrParticles ; i++)
+	{
+	  HalfMonomialsUp[i] = monomial[(TmpPermUp >> (i * 5)) & 0x1ful];
+	  HalfMonomialsDown[i] = monomial[(TmpPermDown >> (i * 5)) & 0x1ful];
+	}
+      
+      CoefInitial =  ((double)MultiplicitiesFactorial(HalfMonomialsUp,HalfNbrParticles) * MultiplicitiesFactorial(HalfMonomialsDown,HalfNbrParticles)) * MonomialFact;
+      
+      
+      do
+	{	
+	  CoefUp = CoefInitial;
+	  
+	  
+	  for(int k = 0 ; (k < HalfNbrParticles) && (CoefUp != 0.0); k++)
+	    {
+	      State[k] = (HalfMonomialsUp[k]>>1) + slater[k];
+	      if ((HalfMonomialsUp[k] & 0x1ul) != 0ul)
+		{
+		  long Numerator = -((HalfMonomialsUp[k]>>1) * TmpFinalLzMaxUp) + (State[k] * TmpLzMaxUp);
+		  if (Numerator == 0l)
+		    CoefUp = 0.0;
+		  else
+		    CoefUp *= ((double) Numerator) * InverseFactor;
+		}
+	      State[k]--;
+	    }
+	  
+	  if (CoefUp != 0.0)
+	    {
+	      do
+		{
+		  CoefDown = 1.0;
+		    
+		  for(int k = 0 ; (k < HalfNbrParticles) && (CoefDown != 0.0); k++)
+		    {
+		      State[k+HalfNbrParticles] = (HalfMonomialsDown[k]>>1) + slater[k];
+		      if ((HalfMonomialsDown[k] & 0x1ul) != 0ul)
+			{
+			  long Numerator = -((HalfMonomialsDown[k]>>1) * TmpFinalLzMaxUp) + (State[HalfNbrParticles + k] * TmpLzMaxUp);
+			  if (Numerator == 0l)
+			    CoefDown = 0.0;
+			  else
+			    CoefDown *= ((double) Numerator) * InverseFactor;
+			}
+		      State[HalfNbrParticles + k]--;
+		    }
+		  
+		  if (CoefDown != 0.0)
+		    {
+		      
+		      TmpState = 0ul;
+		      Sign = 0ul;
+		      bool Bool = true;
+		      
+		      for (int i = 0; (i < HalfNbrParticles )&& (Bool); i++)
+			{
+			  Mask = (1ul << ((State[i]<<1) +1));
+			  if((TmpState & Mask) != 0)
+			    Bool = false;
+			  unsigned long TmpState2 = TmpState & (Mask - 1ul);
+#ifdef  __64_BITS__
+			  TmpState2 ^= TmpState2 >> 32;
+#endif
+			  TmpState2 ^= TmpState2 >> 16;
+			  TmpState2 ^= TmpState2 >> 8;
+			  TmpState2 ^= TmpState2 >> 4;
+			  TmpState2 ^= TmpState2 >> 2;
+			  TmpState2 ^= TmpState2 >> 1;
+			  Sign ^= TmpState2;
+			  TmpState |= Mask;
+			}
+		      
+		      for (int i = HalfNbrParticles; (i < this->NbrFermions)&& (Bool); i++)
+			{
+			  Mask = (1ul << ((State[i]<<1)));
+			  if((TmpState & Mask) != 0)
+			    Bool = false;
+			  unsigned long TmpState2 = TmpState & (Mask - 1ul);
+#ifdef  __64_BITS__
+			  TmpState2 ^= TmpState2 >> 32;
+#endif
+			  TmpState2 ^= TmpState2 >> 16;
+			  TmpState2 ^= TmpState2 >> 8;
+			  TmpState2 ^= TmpState2 >> 4;
+			  TmpState2 ^= TmpState2 >> 2;
+			  TmpState2 ^= TmpState2 >> 1;
+			  Sign ^= TmpState2;
+			  TmpState |= Mask;
+			}
+		      
+		      
+		      if (Bool)
+			{
+			  if ((Sign & 0x1ul) != 0ul)
+			    CoefDown *= -1l;
+			  
+			  double TmpCoef = CoefDown*CoefUp;
+			  unsigned long NewTmpState = TmpState;
+			  //int TmpIndex = this->SymmetrizeAdAdResult(NewTmpState, TmpCoef);
+			  int TmpIndex =  this->ConvertToSymmetricNbodyBasis(TmpCoef, NewTmpState);
+			  if ( TmpIndex < this->HilbertSpaceDimension )
+			    {
+			      //cout << TmpState << " -> " << NewTmpState << " (" << TmpIndex << "), Coeff: " << CoefDown*CoefUp << " -> " << TmpCoef << endl;			      
+			      //InsertionResult = sortingMap.insert (pair <unsigned long, double> (TmpState , CoefDown*CoefUp));
+			      InsertionResult = sortingMap.insert (pair <unsigned long, double> (NewTmpState , TmpCoef));
+			      
+			      if (InsertionResult.second == false)
+				{
+				  InsertionResult.first->second += TmpCoef;
+				}
+			    }
+			}
+		    }
+		}
+	      while (std::prev_permutation(HalfMonomialsDown, HalfMonomialsDown + HalfNbrParticles));
+	    }
+	}
+      while (std::prev_permutation(HalfMonomialsUp, HalfMonomialsUp + HalfNbrParticles));
+    }
+  delete [] State;
+}
+
+// convert a given coefficient of state from the usual n-body basis to the symmetric basis
+//
+// coefficient = coefficient of configuration in usual n-body basis
+// stateDescription = configuration in usual n-body basis
+// return value = index in this basis.
+
+int FermionOnSphereWithSpinHaldaneLzSzSymmetry::ConvertToSymmetricNbodyBasis(double& coefficient, unsigned long& stateDescription)
+{
+  //RealVector TmpVector (this->GetHilbertSpaceDimension(), true);
+  unsigned long TmpState;
+  unsigned long Signature;  
+  int NewLzMax;
+  
+  Signature = stateDescription;
+  TmpState = this->GetSignedCanonicalState(Signature);
+  Signature = TmpState & FERMION_SPHERE_SU2_SYMMETRIC_BIT;
+  unsigned long TmpState2 = TmpState;
+  TmpState &= FERMION_SPHERE_SU2_SYMMETRIC_MASK;
+  NewLzMax = 1 + (this->LzMax << 1);
+  while ((TmpState >> NewLzMax) == 0x0ul)
+   --NewLzMax;	 
+  stateDescription = TmpState;
+  //switch (Signature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT)
+  switch (Signature & FERMION_SPHERE_SU2_SYMMETRIC_BIT)
+    {
+    case 0x0ul:
+      {
+	if (this->LzSzSameParityFlag == true)
+	  {
+	    Signature = TmpState;
+	    this->GetStateSingletParity(Signature);
+	    if (((1.0 - 2.0 * ((double) ((Signature >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul))) * this->SzParitySign) > 0.0)
+	      {		
+		return this->FindStateIndex(TmpState, NewLzMax);		
+	      }
+	  }
+      }
+      break;
+    case FERMION_SPHERE_SU2_LZ_SZ_SYMMETRIC_BIT :
+      {
+	if (this->LzSzSameParityFlag == true)
+	  {
+	    Signature = TmpState;
+	    this->GetStateSingletParity(Signature);
+	    double TmpSign = (1.0 - 2.0 * ((double) ((Signature >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul)));	    
+// 	    TmpVector[this->FindStateIndex(TmpState, NewLzMax)] += ((1.0 + ((double) (((TmpState2 >> FERMION_SPHERE_SU2_SZ_TRANSFORMATION_SHIFT) 
+// 											| (TmpState2 >> FERMION_SPHERE_SU2_LZ_TRANSFORMATION_SHIFT)) & 0x1ul)) * ((TmpSign * this->SzParitySign) - 1.0))
+// 								    * state[i] * M_SQRT1_2);
+	    coefficient = ((1.0 + ((double) (((TmpState2 >> FERMION_SPHERE_SU2_SZ_TRANSFORMATION_SHIFT) 
+											| (TmpState2 >> FERMION_SPHERE_SU2_LZ_TRANSFORMATION_SHIFT)) & 0x1ul)) * ((TmpSign * this->SzParitySign) - 1.0))
+								    * coefficient * M_SQRT1_2);
+	    return this->FindStateIndex(TmpState, NewLzMax);
+	  }		
+      }
+      break;
+    case FERMION_SPHERE_SU2_SZ_SYMMETRIC_TEST :
+      {
+	Signature = TmpState;
+	this->GetStateSingletParity(Signature);
+	double TmpSign = (1.0 - 2.0 * ((double) ((Signature >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul)));
+	if ((TmpSign * this->LzParitySign) > 0.0)
+	  {
+// 	    TmpVector[this->FindStateIndex(TmpState, NewLzMax)] += ((1.0 + ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SZ_TRANSFORMATION_SHIFT) & 0x1ul)) * ((TmpSign * this->SzParitySign) - 1.0))
+// 								    * state[i] * M_SQRT1_2);
+	    coefficient = ((1.0 + ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SZ_TRANSFORMATION_SHIFT) & 0x1ul)) * ((TmpSign * this->SzParitySign) - 1.0))
+								    * coefficient * M_SQRT1_2);
+	    return this->FindStateIndex(TmpState, NewLzMax);
+	  }
+      }
+      break;
+    case FERMION_SPHERE_SU2_LZ_SYMMETRIC_TEST :
+      {
+	Signature = TmpState;
+	this->GetStateSingletParity(Signature);
+	double TmpSign = (1.0 - 2.0 * ((double) ((Signature >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul)));
+	if ((TmpSign * this->SzParitySign) > 0.0)
+	  {
+	    //TmpVector[this->FindStateIndex(TmpState, NewLzMax)] += ((1.0 + ((double) ((TmpState2 >> FERMION_SPHERE_SU2_LZ_TRANSFORMATION_SHIFT) & 0x1ul)) * ((TmpSign * this->LzParitySign) - 1.0))
+	//							     * state[i] * M_SQRT1_2);
+	    coefficient = ((1.0 + ((double) ((TmpState2 >> FERMION_SPHERE_SU2_LZ_TRANSFORMATION_SHIFT) & 0x1ul)) * ((TmpSign * this->LzParitySign) - 1.0))
+								    * coefficient * M_SQRT1_2);
+	    return this->FindStateIndex(TmpState, NewLzMax);
+	  }
+      }
+      break;
+    default:
+      {
+	Signature = TmpState;
+	this->GetStateSingletParity(Signature);
+	double TmpSign = (1.0 - 2.0 * ((double) ((Signature >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul)));
+// 	TmpVector[this->FindStateIndex(TmpState, NewLzMax)] += ((1.0 + ((double) ((TmpState2 >> FERMION_SPHERE_SU2_LZ_TRANSFORMATION_SHIFT) & 0x1ul)) * ((TmpSign * this->LzParitySign) - 1.0))
+// 								* (1.0 + ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SZ_TRANSFORMATION_SHIFT) & 0x1ul)) * ((TmpSign * this->SzParitySign) - 1.0))
+// 								* state[i] * 0.5);
+	coefficient = ((1.0 + ((double) ((TmpState2 >> FERMION_SPHERE_SU2_LZ_TRANSFORMATION_SHIFT) & 0x1ul)) * ((TmpSign * this->LzParitySign) - 1.0))
+								* (1.0 + ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SZ_TRANSFORMATION_SHIFT) & 0x1ul)) * ((TmpSign * this->SzParitySign) - 1.0))
+								* coefficient * 0.5);
+	return this->FindStateIndex(TmpState, NewLzMax);
+      }
+      break;
+    }    
+  return this->HilbertSpaceDimension;  
 }
 
 
