@@ -234,6 +234,8 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian::Evaluate
       double FactorBUpBDown = FactorAUpBUp * this->VPotential;
       double FactorCUpCDown = FactorAUpBUp * this->VPotential;
       double FactorAUpBDown = FactorAUpBUp * this->WPotential;
+      double FactorAUpCDown = FactorAUpBUp * this->WPotential;
+      double FactorBUpCDown = FactorAUpBUp * this->WPotential;
       if (this->FlatBand == false)
 	FactorAUpBUp *= this->UPotential;
       this->InteractionFactorsupup = new Complex* [this->NbrIntraSectorSums];
@@ -287,29 +289,56 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian::Evaluate
  		  this->InteractionFactorsupup[i][Index] -= FactorBUpBDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 0, 0, 0, 0, 1, 4, 1, 4) * this->ComputeTwoBodyMatrixElementBUpBDown(kx1, ky1, kx2, ky2, kx4, ky4, kx3, ky3);
  		  this->InteractionFactorsupup[i][Index] += FactorBUpBDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 0, 0, 0, 0, 1, 4, 1, 4) * this->ComputeTwoBodyMatrixElementBUpBDown(kx2, ky2, kx1, ky1, kx4, ky4, kx3, ky3);
 
- 		  this->InteractionFactorsupup[i][Index] += FactorCUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 0, 0, 0, 1, 4, 1, 4) * this->ComputeTwoBodyMatrixElementCUpCDown(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
- 		  this->InteractionFactorsupup[i][Index] -= FactorCUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 0, 0, 0, 0, 1, 4, 1, 4) * this->ComputeTwoBodyMatrixElementCUpCDown(kx2, ky2, kx1, ky1, kx3, ky3, kx4, ky4);
- 		  this->InteractionFactorsupup[i][Index] -= FactorCUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 0, 0, 0, 0, 1, 4, 1, 4) * this->ComputeTwoBodyMatrixElementCUpCDown(kx1, ky1, kx2, ky2, kx4, ky4, kx3, ky3);
- 		  this->InteractionFactorsupup[i][Index] += FactorCUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 0, 0, 0, 0, 1, 4, 1, 4) * this->ComputeTwoBodyMatrixElementCUpCDown(kx2, ky2, kx1, ky1, kx4, ky4, kx3, ky3);
+ 		  this->InteractionFactorsupup[i][Index] += FactorCUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 0, 0, 0, 2, 5, 2, 5) * this->ComputeTwoBodyMatrixElementCUpCDown(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
+ 		  this->InteractionFactorsupup[i][Index] -= FactorCUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 0, 0, 0, 0, 2, 5, 2, 5) * this->ComputeTwoBodyMatrixElementCUpCDown(kx2, ky2, kx1, ky1, kx3, ky3, kx4, ky4);
+ 		  this->InteractionFactorsupup[i][Index] -= FactorCUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 0, 0, 0, 0, 2, 5, 2, 5) * this->ComputeTwoBodyMatrixElementCUpCDown(kx1, ky1, kx2, ky2, kx4, ky4, kx3, ky3);
+ 		  this->InteractionFactorsupup[i][Index] += FactorCUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 0, 0, 0, 0, 2, 5, 2, 5) * this->ComputeTwoBodyMatrixElementCUpCDown(kx2, ky2, kx1, ky1, kx4, ky4, kx3, ky3);
+
+ 		  this->InteractionFactorsupup[i][Index] += FactorAUpBDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 0, 0, 0, 0, 4, 0, 4) * this->ComputeTwoBodyMatrixElementAUpBDown(kx2, ky2, kx4, ky4);
+ 		  this->InteractionFactorsupup[i][Index] -= FactorAUpBDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 0, 0, 0, 0, 0, 4, 0, 4) * this->ComputeTwoBodyMatrixElementAUpBDown(kx1, ky1, kx4, ky4);
+ 		  this->InteractionFactorsupup[i][Index] -= FactorAUpBDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 0, 0, 0, 0, 0, 4, 0, 4) * this->ComputeTwoBodyMatrixElementAUpBDown(kx2, ky2, kx3, ky3);
+ 		  this->InteractionFactorsupup[i][Index] += FactorAUpBDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 0, 0, 0, 0, 0, 4, 0, 4) * this->ComputeTwoBodyMatrixElementAUpBDown(kx1, ky1, kx3, ky3);
+ 		  this->InteractionFactorsupup[i][Index] += FactorAUpBDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 0, 0, 0, 3, 1, 3, 1) * this->ComputeTwoBodyMatrixElementAUpBDown(kx2, ky2, kx4, ky4);
+ 		  this->InteractionFactorsupup[i][Index] -= FactorAUpBDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 0, 0, 0, 0, 3, 1, 3, 1) * this->ComputeTwoBodyMatrixElementAUpBDown(kx1, ky1, kx4, ky4);
+ 		  this->InteractionFactorsupup[i][Index] -= FactorAUpBDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 0, 0, 0, 0, 3, 1, 3, 1) * this->ComputeTwoBodyMatrixElementAUpBDown(kx2, ky2, kx3, ky3);
+ 		  this->InteractionFactorsupup[i][Index] += FactorAUpBDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 0, 0, 0, 0, 3, 1, 3, 1) * this->ComputeTwoBodyMatrixElementAUpBDown(kx1, ky1, kx3, ky3);
+
+ 		  this->InteractionFactorsupup[i][Index] += FactorAUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 0, 0, 0, 0, 5, 0, 5) * this->ComputeTwoBodyMatrixElementAUpCDown(kx2, ky2, kx4, ky4);
+ 		  this->InteractionFactorsupup[i][Index] -= FactorAUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 0, 0, 0, 0, 0, 5, 0, 5) * this->ComputeTwoBodyMatrixElementAUpCDown(kx1, ky1, kx4, ky4);
+ 		  this->InteractionFactorsupup[i][Index] -= FactorAUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 0, 0, 0, 0, 0, 5, 0, 5) * this->ComputeTwoBodyMatrixElementAUpCDown(kx2, ky2, kx3, ky3);
+ 		  this->InteractionFactorsupup[i][Index] += FactorAUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 0, 0, 0, 0, 0, 5, 0, 5) * this->ComputeTwoBodyMatrixElementAUpCDown(kx1, ky1, kx3, ky3);
+ 		  this->InteractionFactorsupup[i][Index] += FactorAUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 0, 0, 0, 3, 2, 3, 2) * this->ComputeTwoBodyMatrixElementAUpCDown(kx2, ky2, kx4, ky4);
+ 		  this->InteractionFactorsupup[i][Index] -= FactorAUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 0, 0, 0, 0, 3, 2, 3, 2) * this->ComputeTwoBodyMatrixElementAUpCDown(kx1, ky1, kx4, ky4);
+ 		  this->InteractionFactorsupup[i][Index] -= FactorAUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 0, 0, 0, 0, 3, 2, 3, 2) * this->ComputeTwoBodyMatrixElementAUpCDown(kx2, ky2, kx3, ky3);
+ 		  this->InteractionFactorsupup[i][Index] += FactorAUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 0, 0, 0, 0, 3, 2, 3, 2) * this->ComputeTwoBodyMatrixElementAUpCDown(kx1, ky1, kx3, ky3);
+
+ 		  this->InteractionFactorsupup[i][Index] += FactorBUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 0, 0, 0, 1, 5, 1, 5) * this->ComputeTwoBodyMatrixElementBUpCDown(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
+ 		  this->InteractionFactorsupup[i][Index] -= FactorBUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 0, 0, 0, 0, 1, 5, 1, 5) * this->ComputeTwoBodyMatrixElementBUpCDown(kx2, ky2, kx1, ky1, kx3, ky3, kx4, ky4);
+ 		  this->InteractionFactorsupup[i][Index] -= FactorBUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 0, 0, 0, 0, 1, 5, 1, 5) * this->ComputeTwoBodyMatrixElementBUpCDown(kx1, ky1, kx2, ky2, kx4, ky4, kx3, ky3);
+ 		  this->InteractionFactorsupup[i][Index] += FactorBUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 0, 0, 0, 0, 1, 5, 1, 5) * this->ComputeTwoBodyMatrixElementBUpCDown(kx2, ky2, kx1, ky1, kx4, ky4, kx3, ky3);
+ 		  this->InteractionFactorsupup[i][Index] += FactorBUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 0, 0, 0, 4, 2, 4, 2) * this->ComputeTwoBodyMatrixElementBUpCDown(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
+ 		  this->InteractionFactorsupup[i][Index] -= FactorBUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 0, 0, 0, 0, 4, 2, 4, 2) * this->ComputeTwoBodyMatrixElementBUpCDown(kx2, ky2, kx1, ky1, kx3, ky3, kx4, ky4);
+ 		  this->InteractionFactorsupup[i][Index] -= FactorBUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 0, 0, 0, 0, 4, 2, 4, 2) * this->ComputeTwoBodyMatrixElementBUpCDown(kx1, ky1, kx2, ky2, kx4, ky4, kx3, ky3);
+ 		  this->InteractionFactorsupup[i][Index] += FactorBUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 0, 0, 0, 0, 4, 2, 4, 2) * this->ComputeTwoBodyMatrixElementBUpCDown(kx2, ky2, kx1, ky1, kx4, ky4, kx3, ky3);
 
 
 
 // downdown downdown coefficient
 
- 		  this->InteractionFactorsdowndown[i][Index] = FactorAUpBUp * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 1, 1, 1, 1, 0, 1, 0, 1) * this->ComputeTwoBodyMatrixElementAUpBUp(kx2, ky2, kx4, ky4);
- 		  this->InteractionFactorsdowndown[i][Index] -= FactorAUpBUp * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 1, 1, 1, 1, 0, 1, 0, 1) * this->ComputeTwoBodyMatrixElementAUpBUp(kx1, ky1, kx4, ky4);
- 		  this->InteractionFactorsdowndown[i][Index] -= FactorAUpBUp * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 1, 1, 1, 1, 0, 1, 0, 1) * this->ComputeTwoBodyMatrixElementAUpBUp(kx2, ky2, kx3, ky3);
- 		  this->InteractionFactorsdowndown[i][Index] += FactorAUpBUp * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 1, 1, 1, 1, 0, 1, 0, 1) * this->ComputeTwoBodyMatrixElementAUpBUp(kx1, ky1, kx3, ky3);
+ 		  this->InteractionFactorsdowndown[i][Index] = FactorAUpBUp * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 1, 1, 1, 1, 3, 4, 3, 4) * this->ComputeTwoBodyMatrixElementAUpBUp(kx2, ky2, kx4, ky4);
+ 		  this->InteractionFactorsdowndown[i][Index] -= FactorAUpBUp * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 1, 1, 1, 1, 3, 4, 3, 4) * this->ComputeTwoBodyMatrixElementAUpBUp(kx1, ky1, kx4, ky4);
+ 		  this->InteractionFactorsdowndown[i][Index] -= FactorAUpBUp * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 1, 1, 1, 1, 3, 4, 3, 4) * this->ComputeTwoBodyMatrixElementAUpBUp(kx2, ky2, kx3, ky3);
+ 		  this->InteractionFactorsdowndown[i][Index] += FactorAUpBUp * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 1, 1, 1, 1, 3, 4, 3, 4) * this->ComputeTwoBodyMatrixElementAUpBUp(kx1, ky1, kx3, ky3);
 
- 		  this->InteractionFactorsdowndown[i][Index] += FactorAUpCUp * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 1, 1, 1, 1, 0, 2, 0, 2) * this->ComputeTwoBodyMatrixElementAUpCUp(kx2, ky2, kx4, ky4);
- 		  this->InteractionFactorsdowndown[i][Index] -= FactorAUpCUp * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 1, 1, 1, 1, 0, 2, 0, 2) * this->ComputeTwoBodyMatrixElementAUpCUp(kx1, ky1, kx4, ky4);
- 		  this->InteractionFactorsdowndown[i][Index] -= FactorAUpCUp * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 1, 1, 1, 1, 0, 2, 0, 2) * this->ComputeTwoBodyMatrixElementAUpCUp(kx2, ky2, kx3, ky3);
- 		  this->InteractionFactorsdowndown[i][Index] += FactorAUpCUp * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 1, 1, 1, 1, 0, 2, 0, 2) * this->ComputeTwoBodyMatrixElementAUpCUp(kx1, ky1, kx3, ky3);
+ 		  this->InteractionFactorsdowndown[i][Index] += FactorAUpCUp * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 1, 1, 1, 1, 3, 5, 3, 5) * this->ComputeTwoBodyMatrixElementAUpCUp(kx2, ky2, kx4, ky4);
+ 		  this->InteractionFactorsdowndown[i][Index] -= FactorAUpCUp * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 1, 1, 1, 1, 3, 5, 3, 5) * this->ComputeTwoBodyMatrixElementAUpCUp(kx1, ky1, kx4, ky4);
+ 		  this->InteractionFactorsdowndown[i][Index] -= FactorAUpCUp * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 1, 1, 1, 1, 3, 5, 3, 5) * this->ComputeTwoBodyMatrixElementAUpCUp(kx2, ky2, kx3, ky3);
+ 		  this->InteractionFactorsdowndown[i][Index] += FactorAUpCUp * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 1, 1, 1, 1, 3, 5, 3, 5) * this->ComputeTwoBodyMatrixElementAUpCUp(kx1, ky1, kx3, ky3);
 
- 		  this->InteractionFactorsdowndown[i][Index] += FactorBUpCUp * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 1, 1, 1, 1, 1, 2, 1, 2) * this->ComputeTwoBodyMatrixElementBUpCUp(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
- 		  this->InteractionFactorsdowndown[i][Index] -= FactorBUpCUp * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 1, 1, 1, 1, 1, 2, 1, 2) * this->ComputeTwoBodyMatrixElementBUpCUp(kx2, ky2, kx1, ky1, kx3, ky3, kx4, ky4);
- 		  this->InteractionFactorsdowndown[i][Index] -= FactorBUpCUp * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 1, 1, 1, 1, 1, 2, 1, 2) * this->ComputeTwoBodyMatrixElementBUpCUp(kx1, ky1, kx2, ky2, kx4, ky4, kx3, ky3);
- 		  this->InteractionFactorsdowndown[i][Index] += FactorBUpCUp * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 1, 1, 1, 1, 1, 2, 1, 2) * this->ComputeTwoBodyMatrixElementBUpCUp(kx2, ky2, kx1, ky1, kx4, ky4, kx3, ky3);
+ 		  this->InteractionFactorsdowndown[i][Index] += FactorBUpCUp * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 1, 1, 1, 1, 4, 5, 4, 5) * this->ComputeTwoBodyMatrixElementBUpCUp(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
+ 		  this->InteractionFactorsdowndown[i][Index] -= FactorBUpCUp * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 1, 1, 1, 1, 4, 5, 4, 5) * this->ComputeTwoBodyMatrixElementBUpCUp(kx2, ky2, kx1, ky1, kx3, ky3, kx4, ky4);
+ 		  this->InteractionFactorsdowndown[i][Index] -= FactorBUpCUp * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 1, 1, 1, 1, 4, 5, 4, 5) * this->ComputeTwoBodyMatrixElementBUpCUp(kx1, ky1, kx2, ky2, kx4, ky4, kx3, ky3);
+ 		  this->InteractionFactorsdowndown[i][Index] += FactorBUpCUp * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 1, 1, 1, 1, 4, 5, 4, 5) * this->ComputeTwoBodyMatrixElementBUpCUp(kx2, ky2, kx1, ky1, kx4, ky4, kx3, ky3);
 
  		  this->InteractionFactorsdowndown[i][Index] += FactorAUpADown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 1, 1, 1, 1, 0, 3, 0, 3);
  		  this->InteractionFactorsdowndown[i][Index] -= FactorAUpADown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 1, 1, 1, 1, 0, 3, 0, 3);
@@ -321,10 +350,37 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian::Evaluate
  		  this->InteractionFactorsdowndown[i][Index] -= FactorBUpBDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 1, 1, 1, 1, 1, 4, 1, 4) * this->ComputeTwoBodyMatrixElementBUpBDown(kx1, ky1, kx2, ky2, kx4, ky4, kx3, ky3);
  		  this->InteractionFactorsdowndown[i][Index] += FactorBUpBDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 1, 1, 1, 1, 1, 4, 1, 4) * this->ComputeTwoBodyMatrixElementBUpBDown(kx2, ky2, kx1, ky1, kx4, ky4, kx3, ky3);
 
- 		  this->InteractionFactorsdowndown[i][Index] += FactorCUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 1, 1, 1, 1, 1, 4, 1, 4) * this->ComputeTwoBodyMatrixElementCUpCDown(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
- 		  this->InteractionFactorsdowndown[i][Index] -= FactorCUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 1, 1, 1, 1, 1, 4, 1, 4) * this->ComputeTwoBodyMatrixElementCUpCDown(kx2, ky2, kx1, ky1, kx3, ky3, kx4, ky4);
- 		  this->InteractionFactorsdowndown[i][Index] -= FactorCUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 1, 1, 1, 1, 1, 4, 1, 4) * this->ComputeTwoBodyMatrixElementCUpCDown(kx1, ky1, kx2, ky2, kx4, ky4, kx3, ky3);
- 		  this->InteractionFactorsdowndown[i][Index] += FactorCUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 1, 1, 1, 1, 1, 4, 1, 4) * this->ComputeTwoBodyMatrixElementCUpCDown(kx2, ky2, kx1, ky1, kx4, ky4, kx3, ky3);
+ 		  this->InteractionFactorsdowndown[i][Index] += FactorCUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 1, 1, 1, 1, 2, 5, 2, 5) * this->ComputeTwoBodyMatrixElementCUpCDown(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
+ 		  this->InteractionFactorsdowndown[i][Index] -= FactorCUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 1, 1, 1, 1, 2, 5, 2, 5) * this->ComputeTwoBodyMatrixElementCUpCDown(kx2, ky2, kx1, ky1, kx3, ky3, kx4, ky4);
+ 		  this->InteractionFactorsdowndown[i][Index] -= FactorCUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 1, 1, 1, 1, 2, 5, 2, 5) * this->ComputeTwoBodyMatrixElementCUpCDown(kx1, ky1, kx2, ky2, kx4, ky4, kx3, ky3);
+ 		  this->InteractionFactorsdowndown[i][Index] += FactorCUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 1, 1, 1, 1, 2, 5, 2, 5) * this->ComputeTwoBodyMatrixElementCUpCDown(kx2, ky2, kx1, ky1, kx4, ky4, kx3, ky3);
+
+ 		  this->InteractionFactorsdowndown[i][Index] += FactorAUpBDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 1, 1, 1, 1, 0, 4, 0, 4) * this->ComputeTwoBodyMatrixElementAUpBDown(kx2, ky2, kx4, ky4);
+ 		  this->InteractionFactorsdowndown[i][Index] -= FactorAUpBDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 1, 1, 1, 1, 0, 4, 0, 4) * this->ComputeTwoBodyMatrixElementAUpBDown(kx1, ky1, kx4, ky4);
+ 		  this->InteractionFactorsdowndown[i][Index] -= FactorAUpBDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 1, 1, 1, 1, 0, 4, 0, 4) * this->ComputeTwoBodyMatrixElementAUpBDown(kx2, ky2, kx3, ky3);
+ 		  this->InteractionFactorsdowndown[i][Index] += FactorAUpBDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 1, 1, 1, 1, 0, 4, 0, 4) * this->ComputeTwoBodyMatrixElementAUpBDown(kx1, ky1, kx3, ky3);
+ 		  this->InteractionFactorsdowndown[i][Index] += FactorAUpBDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 1, 1, 1, 1, 3, 1, 3, 1) * this->ComputeTwoBodyMatrixElementAUpBDown(kx2, ky2, kx4, ky4);
+ 		  this->InteractionFactorsdowndown[i][Index] -= FactorAUpBDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 1, 1, 1, 1, 3, 1, 3, 1) * this->ComputeTwoBodyMatrixElementAUpBDown(kx1, ky1, kx4, ky4);
+ 		  this->InteractionFactorsdowndown[i][Index] -= FactorAUpBDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 1, 1, 1, 1, 3, 1, 3, 1) * this->ComputeTwoBodyMatrixElementAUpBDown(kx2, ky2, kx3, ky3);
+ 		  this->InteractionFactorsdowndown[i][Index] += FactorAUpBDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 1, 1, 1, 1, 3, 1, 3, 1) * this->ComputeTwoBodyMatrixElementAUpBDown(kx1, ky1, kx3, ky3);
+
+ 		  this->InteractionFactorsdowndown[i][Index] += FactorAUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 1, 1, 1, 1, 0, 5, 0, 5) * this->ComputeTwoBodyMatrixElementAUpCDown(kx2, ky2, kx4, ky4);
+ 		  this->InteractionFactorsdowndown[i][Index] -= FactorAUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 1, 1, 1, 1, 0, 5, 0, 5) * this->ComputeTwoBodyMatrixElementAUpCDown(kx1, ky1, kx4, ky4);
+ 		  this->InteractionFactorsdowndown[i][Index] -= FactorAUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 1, 1, 1, 1, 0, 5, 0, 5) * this->ComputeTwoBodyMatrixElementAUpCDown(kx2, ky2, kx3, ky3);
+ 		  this->InteractionFactorsdowndown[i][Index] += FactorAUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 1, 1, 1, 1, 0, 5, 0, 5) * this->ComputeTwoBodyMatrixElementAUpCDown(kx1, ky1, kx3, ky3);
+ 		  this->InteractionFactorsdowndown[i][Index] += FactorAUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 1, 1, 1, 1, 3, 2, 3, 2) * this->ComputeTwoBodyMatrixElementAUpCDown(kx2, ky2, kx4, ky4);
+ 		  this->InteractionFactorsdowndown[i][Index] -= FactorAUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 1, 1, 1, 1, 3, 2, 3, 2) * this->ComputeTwoBodyMatrixElementAUpCDown(kx1, ky1, kx4, ky4);
+ 		  this->InteractionFactorsdowndown[i][Index] -= FactorAUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 1, 1, 1, 1, 3, 2, 3, 2) * this->ComputeTwoBodyMatrixElementAUpCDown(kx2, ky2, kx3, ky3);
+ 		  this->InteractionFactorsdowndown[i][Index] += FactorAUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 1, 1, 1, 1, 3, 2, 3, 2) * this->ComputeTwoBodyMatrixElementAUpCDown(kx1, ky1, kx3, ky3);
+
+ 		  this->InteractionFactorsdowndown[i][Index] += FactorBUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 1, 1, 1, 1, 1, 5, 1, 5) * this->ComputeTwoBodyMatrixElementBUpCDown(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
+ 		  this->InteractionFactorsdowndown[i][Index] -= FactorBUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 1, 1, 1, 1, 1, 5, 1, 5) * this->ComputeTwoBodyMatrixElementBUpCDown(kx2, ky2, kx1, ky1, kx3, ky3, kx4, ky4);
+ 		  this->InteractionFactorsdowndown[i][Index] -= FactorBUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 1, 1, 1, 1, 1, 5, 1, 5) * this->ComputeTwoBodyMatrixElementBUpCDown(kx1, ky1, kx2, ky2, kx4, ky4, kx3, ky3);
+ 		  this->InteractionFactorsdowndown[i][Index] += FactorBUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 1, 1, 1, 1, 1, 5, 1, 5) * this->ComputeTwoBodyMatrixElementBUpCDown(kx2, ky2, kx1, ky1, kx4, ky4, kx3, ky3);
+ 		  this->InteractionFactorsdowndown[i][Index] += FactorBUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 1, 1, 1, 1, 4, 2, 4, 2) * this->ComputeTwoBodyMatrixElementBUpCDown(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
+ 		  this->InteractionFactorsdowndown[i][Index] -= FactorBUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 1, 1, 1, 1, 4, 2, 4, 2) * this->ComputeTwoBodyMatrixElementBUpCDown(kx2, ky2, kx1, ky1, kx3, ky3, kx4, ky4);
+ 		  this->InteractionFactorsdowndown[i][Index] -= FactorBUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 1, 1, 1, 1, 4, 2, 4, 2) * this->ComputeTwoBodyMatrixElementBUpCDown(kx1, ky1, kx2, ky2, kx4, ky4, kx3, ky3);
+ 		  this->InteractionFactorsdowndown[i][Index] += FactorBUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 1, 1, 1, 1, 4, 2, 4, 2) * this->ComputeTwoBodyMatrixElementBUpCDown(kx2, ky2, kx1, ky1, kx4, ky4, kx3, ky3);
 
 		  TotalNbrInteractionFactors += 2;
 		  ++Index;
@@ -354,21 +410,36 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian::Evaluate
 		  int kx4 = Index4 / this->NbrSiteY;
 		  int ky4 = Index4 % this->NbrSiteY;
 
-		  this->InteractionFactorsupdown[i][Index] = 0.0;
-
-//  		  this->InteractionFactorsupdown[i][Index] = Factor * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 1, 0, 1, 0, 1, 0, 1) * this->ComputeTwoBodyMatrixElementAUpBUp(kx2, ky2, kx4, ky4);
+  		  this->InteractionFactorsupdown[i][Index] = FactorAUpBUp * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 1, 0, 1, 0, 1, 0, 1) * this->ComputeTwoBodyMatrixElementAUpBUp(kx2, ky2, kx4, ky4);
 
 
-//  		  this->InteractionFactorsupdown[i][Index] += Factor * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 1, 0, 1, 2, 3, 2, 3) * this->ComputeTwoBodyMatrixElementAUpBUp(kx2, ky2, kx4, ky4);
-
-//  		  this->InteractionFactorsupdown[i][Index] += FactorAUpADown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 1, 0, 1, 0, 2, 0, 2);
-
-//  		  this->InteractionFactorsupdown[i][Index] += FactorAUpADown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 1, 0, 1, 1, 3, 1, 3) * this->ComputeTwoBodyMatrixElementBUpBDown(kx2, ky2, kx4, ky4) * this->ComputeTwoBodyMatrixElementBUpBDown(kx1, ky1, kx3, ky3);
-
-//  		  this->InteractionFactorsupdown[i][Index] += FactorAUpBDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 1, 0, 1, 0, 3, 0, 3) * this->ComputeTwoBodyMatrixElementAUpBUp(kx2, ky2, kx4, ky4);
+  		  this->InteractionFactorsupdown[i][Index] += FactorAUpCUp * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 1, 0, 1, 0, 2, 0, 2) * this->ComputeTwoBodyMatrixElementAUpCUp(kx2, ky2, kx4, ky4);
 
 
-//  		  this->InteractionFactorsupdown[i][Index] += FactorAUpBDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 1, 0, 1, 2, 1, 2, 1) * this->ComputeTwoBodyMatrixElementAUpBUp(kx2, ky2, kx4, ky4);
+  		  this->InteractionFactorsupdown[i][Index] += FactorBUpCUp * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 1, 0, 1, 1, 2, 1, 2) * this->ComputeTwoBodyMatrixElementBUpCUp(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
+
+  		  this->InteractionFactorsupdown[i][Index] += FactorAUpBUp * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 1, 0, 1, 3, 4, 3, 4) * this->ComputeTwoBodyMatrixElementADownBDown(kx2, ky2, kx4, ky4);
+
+
+  		  this->InteractionFactorsupdown[i][Index] += FactorAUpCUp * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 1, 0, 1, 3, 5, 3, 5) * this->ComputeTwoBodyMatrixElementADownCDown(kx2, ky2, kx4, ky4);
+
+
+  		  this->InteractionFactorsupdown[i][Index] += FactorBUpCUp * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 1, 0, 1, 4, 5, 4, 5) * this->ComputeTwoBodyMatrixElementBDownCDown(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
+
+ 		  this->InteractionFactorsupdown[i][Index] += FactorAUpADown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 1, 0, 1, 0, 3, 0, 3);
+
+ 		  this->InteractionFactorsupdown[i][Index] += FactorBUpBDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 1, 0, 1, 1, 4, 1, 4) * this->ComputeTwoBodyMatrixElementBUpBDown(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
+
+ 		  this->InteractionFactorsupdown[i][Index] += FactorCUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 1, 0, 1, 2, 5, 2, 5) * this->ComputeTwoBodyMatrixElementCUpCDown(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
+
+  		  this->InteractionFactorsupdown[i][Index] += FactorAUpBDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 1, 0, 1, 0, 4, 0, 4) * this->ComputeTwoBodyMatrixElementAUpBDown(kx2, ky2, kx4, ky4);
+  		  this->InteractionFactorsupdown[i][Index] += FactorAUpBDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 1, 0, 1, 3, 1, 3, 1) * this->ComputeTwoBodyMatrixElementAUpBDown(kx2, ky2, kx4, ky4);
+
+  		  this->InteractionFactorsupdown[i][Index] += FactorAUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 1, 0, 1, 0, 5, 0, 5) * this->ComputeTwoBodyMatrixElementAUpCDown(kx2, ky2, kx4, ky4);
+  		  this->InteractionFactorsupdown[i][Index] += FactorAUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 1, 0, 1, 3, 2, 3, 2) * this->ComputeTwoBodyMatrixElementAUpCDown(kx2, ky2, kx4, ky4);
+
+  		  this->InteractionFactorsupdown[i][Index] += FactorBUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 1, 0, 1, 1, 5, 1, 5) * this->ComputeTwoBodyMatrixElementBUpCDown(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
+  		  this->InteractionFactorsupdown[i][Index] += FactorBUpCDown * this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 1, 0, 1, 4, 2, 4, 2) * this->ComputeTwoBodyMatrixElementBUpCDown(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
 
 		  TotalNbrInteractionFactors++;
 		  ++Index;
@@ -472,6 +543,49 @@ Complex ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian::Compu
   return this->ComputeTwoBodyMatrixElementBUpCUp(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
 }
 
+// compute the matrix element for the two body interaction between two sites A and B belonging to different layers
+//
+// kx1 = creation momentum along x for the B site
+// ky1 = creation momentum along y for the B site
+// kx2 = annihilation momentum along x for the B site
+// ky2 = annihilation momentum along y for the B site
+// return value = corresponding matrix element
+
+Complex ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian::ComputeTwoBodyMatrixElementAUpBDown(int kx1, int ky1, int kx2, int ky2)
+{
+  return this->ComputeTwoBodyMatrixElementAUpBUp(kx1, ky1, kx2, ky2);
+}
+
+// compute the matrix element for the two body interaction between two sites A and C belonging to different layers
+//
+// kx1 = creation momentum along x for the C site
+// ky1 = creation momentum along y for the C site
+// kx2 = annihilation momentum along x for the C site
+// ky2 = annihilation momentum along y for the C site
+// return value = corresponding matrix element
+
+Complex ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian::ComputeTwoBodyMatrixElementAUpCDown(int kx1, int ky1, int kx2, int ky2)
+{
+  return this->ComputeTwoBodyMatrixElementAUpCUp(kx1, ky1, kx2, ky2);
+}
+
+// compute the matrix element for the two body interaction between two sites B and C belonging to different layers
+//
+// kx1 = creation momentum along x for the B site
+// ky1 = creation momentum along y for the B site
+// kx2 = creation momentum along x for the C site
+// ky2 = creation momentum along y for the C site
+// kx3 = annihilation momentum along x for the B site
+// ky3 = annihilation momentum along y for the B site
+// kx4 = annihilation momentum along x for the C site
+// ky4 = annihilation momentum along y for the C site
+// return value = corresponding matrix element
+
+Complex ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian::ComputeTwoBodyMatrixElementBUpCDown(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
+{
+  return this->ComputeTwoBodyMatrixElementBUpCUp(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
+}
+
 // compute the matrix element for the two body interaction between two sites A with different layer indices 
 //
 // kx1 = first creation momentum along x for the A site
@@ -485,8 +599,7 @@ Complex ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian::Compu
 
 Complex ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian::ComputeTwoBodyMatrixElementAUpADown(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
 {
-  Complex Tmp = 0.0;
-  return Tmp;
+  return 1.0;
 }
     
 // compute the matrix element for the two body interaction between two sites B with different layer indices 
@@ -502,8 +615,7 @@ Complex ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian::Compu
 
 Complex ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian::ComputeTwoBodyMatrixElementBUpBDown(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
 {
-  Complex Tmp = 0.0;
-  return Tmp;
+  return Phase(0.5 * this->KxFactor * ((double) (kx4 + kx3 - kx2 -kx1)));
 }
 
 // compute the matrix element for the two body interaction between two sites C with different layer indices 
@@ -519,8 +631,7 @@ Complex ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian::Compu
 
 Complex ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian::ComputeTwoBodyMatrixElementCUpCDown(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
 {
-  Complex Tmp = 0.0;
-  return Tmp;
+  return Phase(0.5 * this->KyFactor * ((double) (ky4 + ky3 - ky2 -ky1)));
 }
     
 // compute the one body transformation matrices and the optional one body band stucture contribution
@@ -534,6 +645,7 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian::ComputeO
     for (int ky = 0; ky < this->NbrSiteY; ++ky)
       {
 	int Index = (kx * this->NbrSiteY) + ky;
+	oneBodyBasis[Index] = ComplexMatrix(6, 6, true);
 
 	KX = 0.5 * this->KxFactor * (((double) kx) + this->GammaX);
 	KY = 0.5 * this->KyFactor * (((double) ky) + this->GammaY);
@@ -570,7 +682,7 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian::ComputeO
 #endif
 	for (int i = 0; i < 3; ++i)
 	  for (int j = 0; j < 3; ++j)
-	    oneBodyBasis[Index][i][j] = TmpMatrix[i][j];
+	    oneBodyBasis[Index][2 * i][j] = TmpMatrix[i][j];
 	if (this->FlatBand == false)
 	  {
 	    this->OneBodyInteractionFactorsupup[Index] = 0.5 * TmpDiag(0, 0);
@@ -609,7 +721,7 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian::ComputeO
 #endif
 	for (int i = 0; i < 3; ++i)
 	  for (int j = 0; j < 3; ++j)
-	    oneBodyBasis[Index][3 + i][3 + j] = TmpMatrix[i][j];
+	    oneBodyBasis[Index][2 * i + 1][3 + j] = TmpMatrix[i][j];
 	if (this->FlatBand == false)
 	  {
 	    this->OneBodyInteractionFactorsdowndown[Index] = 0.5 * TmpDiag(0, 0);

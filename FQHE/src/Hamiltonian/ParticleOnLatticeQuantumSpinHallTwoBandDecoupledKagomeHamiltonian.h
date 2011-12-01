@@ -172,6 +172,37 @@ class ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian : public
   // return value = corresponding matrix element
   Complex ComputeTwoBodyMatrixElementBDownCDown(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
 
+  // compute the matrix element for the two body interaction between two sites A and B belonging to different layers
+  //
+  // kx1 = creation momentum along x for the B site
+  // ky1 = creation momentum along y for the B site
+  // kx2 = annihilation momentum along x for the B site
+  // ky2 = annihilation momentum along y for the B site
+  // return value = corresponding matrix element
+  Complex ComputeTwoBodyMatrixElementAUpBDown(int kx1, int ky1, int kx2, int ky2);
+
+  // compute the matrix element for the two body interaction between two sites A and C belonging to different layers
+  //
+  // kx1 = creation momentum along x for the C site
+  // ky1 = creation momentum along y for the C site
+  // kx2 = annihilation momentum along x for the C site
+  // ky2 = annihilation momentum along y for the C site
+  // return value = corresponding matrix element
+  Complex ComputeTwoBodyMatrixElementAUpCDown(int kx1, int ky1, int kx2, int ky2);
+
+  // compute the matrix element for the two body interaction between two sites B and C belonging to different layers
+  //
+  // kx1 = creation momentum along x for the B site
+  // ky1 = creation momentum along y for the B site
+  // kx2 = creation momentum along x for the C site
+  // ky2 = creation momentum along y for the C site
+  // kx3 = annihilation momentum along x for the B site
+  // ky3 = annihilation momentum along y for the B site
+  // kx4 = annihilation momentum along x for the C site
+  // ky4 = annihilation momentum along y for the C site
+  // return value = corresponding matrix element
+  Complex ComputeTwoBodyMatrixElementBUpCDown(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
+
   // compute the matrix element for the two body interaction between two sites A with different layer indices 
   //
   // kx1 = first creation momentum along x for the A site
