@@ -1766,7 +1766,7 @@ int FermionOnSphereWithSpinHaldaneLzSzSymmetry::ConvertToSymmetricNbodyBasis(dou
   int NewLzMax;
   
   Signature = stateDescription;
-  TmpState = this->GetSignedCanonicalState(Signature);
+  TmpState = this->GetSignedCanonicalState(Signature);  
   Signature = TmpState & FERMION_SPHERE_SU2_SYMMETRIC_BIT;
   unsigned long TmpState2 = TmpState;
   TmpState &= FERMION_SPHERE_SU2_SYMMETRIC_MASK;

@@ -9,6 +9,7 @@
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
 #include "HilbertSpace/BosonOnSphereTwoLandauLevels.h"
 #include "HilbertSpace/FermionOnSphereWithSpinHaldaneLzSzSymmetry.h"
+#include "HilbertSpace/FermionOnSphereWithSpinHaldaneBasis.h"
 
 #include "Options/Options.h"
 #include "Options/OptionManager.h"
@@ -105,6 +106,7 @@ int main(int argc, char** argv)
   int NbrParticles = 0;
   int LzMax = 0;
   int TotalLz = 0;
+  int TotalSz = 0;
   bool FermionFlag = false;
   if (FQHEOnSphereFindSystemInfoFromVectorFileName(Manager.GetString("state"), NbrParticles, LzMax, TotalLz, FermionFlag) == false)
    {
@@ -130,49 +132,67 @@ int main(int argc, char** argv)
     {
        FinalSpace = new FermionOnSphereWithSpin (NbrParticles,TotalLz, LzMax + HalfNbrParticles - 1,0);
     }
-  else
+  else if (Manager.GetString("reference-file") != 0 )
     {
-      if (Manager.GetString("reference-file") != 0 && Manager.GetBoolean("lzsymmetrized-basis") && Manager.GetBoolean("szsymmetrized-basis") )
-	{		      
-	  bool LzMinusParity = ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean();      
-	  bool SzMinusParity = ((BooleanOption*) Manager["minus-szparity"])->GetBoolean();
-	  int** ReferenceStates = 0;
-	  int NbrReferenceStates;		    
-	  bool TexturelessFlag;
-	  if (FQHEGetRootPartitionSU2(Manager.GetString("reference-file"), NbrParticles, LzMax, ReferenceStates, NbrReferenceStates, TexturelessFlag) == false)
-	    {
-	      cout << "error while parsing " << Manager.GetString("reference-file") << endl;	      
-	      return 0;
-	    }      		  		  
-	  if (TexturelessFlag == false ) 
-	    {	
-		FinalSpace = new FermionOnSphereWithSpinHaldaneLzSzSymmetry(NbrParticles, LzMax, SzMinusParity, LzMinusParity, ReferenceStates, NbrReferenceStates);
+      int** ReferenceStates = 0;
+      int NbrReferenceStates;		    
+      bool TexturelessFlag;
+      if (FQHEGetRootPartitionSU2(Manager.GetString("reference-file"), NbrParticles, LzMax, ReferenceStates, NbrReferenceStates, TexturelessFlag) == false)
+	{
+	  cout << "error while parsing " << Manager.GetString("reference-file") << endl;	      
+	  return 0;
+	}      		  		         
+      if (TexturelessFlag == false ) 
+	{	
+	  if ( Manager.GetBoolean("lzsymmetrized-basis") && Manager.GetBoolean("szsymmetrized-basis") )
+	    {		      
+	      bool LzMinusParity = ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean();      
+	      bool SzMinusParity = ((BooleanOption*) Manager["minus-szparity"])->GetBoolean();	  	  
+	      FinalSpace = new FermionOnSphereWithSpinHaldaneLzSzSymmetry(NbrParticles, LzMax, SzMinusParity, LzMinusParity, ReferenceStates, NbrReferenceStates);
 	    }
 	  else
-	    {			  			    
-		int **TexturelessReferenceState = new int*[NbrReferenceStates];
-		for ( int j = 0 ; j < NbrReferenceStates ; j++ ) 
-		  {
-		    TexturelessReferenceState[j] = new int[LzMax+1];
-		    for ( int i = 0 ; i < (LzMax + 1) ; i++ )
-		      {
-			if ( ReferenceStates[j][i] == 3 ) 
-			  {
-			      TexturelessReferenceState[j][i] = 2;
-			  }
-			else if ( (ReferenceStates[j][i] == 1) || (ReferenceStates[j][i] == 2) ) 
-			  {
-			      TexturelessReferenceState[j][i] = 1;
-			  }
-			else
-			  {
-			      TexturelessReferenceState[j][i] = 0;
-			  }
-		      }
-		  }	
+	    {
+	      FinalSpace = new FermionOnSphereWithSpinHaldaneBasis(NbrParticles, TotalLz, LzMax, TotalSz, ReferenceStates, NbrReferenceStates);
+	    }	    
+	}
+      else
+	{			  			    
+	  int **TexturelessReferenceState = new int*[NbrReferenceStates];
+	  for ( int j = 0 ; j < NbrReferenceStates ; j++ ) 
+	    {
+	      TexturelessReferenceState[j] = new int[LzMax+1];
+	      for ( int i = 0 ; i < (LzMax + 1) ; i++ )
+		{
+		  if ( ReferenceStates[j][i] == 3 ) 
+		    {
+			TexturelessReferenceState[j][i] = 2;
+		    }
+		  else if ( (ReferenceStates[j][i] == 1) || (ReferenceStates[j][i] == 2) ) 
+		    {
+			TexturelessReferenceState[j][i] = 1;
+		    }
+		  else
+		    {
+			TexturelessReferenceState[j][i] = 0;
+		    }
+		}
+	    }	
+	  if ( Manager.GetBoolean("lzsymmetrized-basis") && Manager.GetBoolean("szsymmetrized-basis") )
+	    {		      
+	      bool LzMinusParity = ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean();      
+	      bool SzMinusParity = ((BooleanOption*) Manager["minus-szparity"])->GetBoolean();
 	      FinalSpace = new FermionOnSphereWithSpinHaldaneLzSzSymmetry(NbrParticles, LzMax, SzMinusParity, LzMinusParity, TexturelessReferenceState, NbrReferenceStates, true);
 	    }
+	  else
+	    {
+	      FinalSpace = new FermionOnSphereWithSpinHaldaneBasis(NbrParticles, TotalLz, LzMax, TotalSz, TexturelessReferenceState, NbrReferenceStates, true);
+	    }
 	}
+    }    
+  else
+    {
+      cout << "error, no reference file." << endl;
+      return 0;
     }
 	
   RealVector OutputVector(FinalSpace->GetHilbertSpaceDimension(),true);
