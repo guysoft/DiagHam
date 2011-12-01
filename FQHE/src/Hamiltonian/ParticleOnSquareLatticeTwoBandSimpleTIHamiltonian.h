@@ -73,6 +73,10 @@ class ParticleOnSquareLatticeTwoBandSimpleTIHamiltonian : public ParticleOnLatti
 
  public:
 
+  // default constructor
+  //
+  ParticleOnSquareLatticeTwoBandSimpleTIHamiltonian();
+
   // constructor
   //
   // particles = Hilbert space associated to the system
@@ -112,7 +116,7 @@ class ParticleOnSquareLatticeTwoBandSimpleTIHamiltonian : public ParticleOnLatti
   // kx4 = momentum along x for the annihilation operator on B site with spin up
   // ky4 = momentum along y for the annihilation operator on B site with spin up
   // return value = corresponding matrix element
-  Complex ComputeTwoBodyMatrixElementAUpBUp(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
+  virtual Complex ComputeTwoBodyMatrixElementAUpBUp(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
 
   // compute the matrix element for the two body interaction between two sites A and B with down spins
   //
@@ -125,7 +129,7 @@ class ParticleOnSquareLatticeTwoBandSimpleTIHamiltonian : public ParticleOnLatti
   // kx4 = momentum along x for the annihilation operator on B site with spin down
   // ky4 = momentum along y for the annihilation operator on B site with spin down
   // return value = corresponding matrix element
-  Complex ComputeTwoBodyMatrixElementADownBDown(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
+  virtual Complex ComputeTwoBodyMatrixElementADownBDown(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
   
   // compute the matrix element for the two body interaction between two sites A and B with opposite spins
   //
@@ -138,7 +142,7 @@ class ParticleOnSquareLatticeTwoBandSimpleTIHamiltonian : public ParticleOnLatti
   // kx4 = momentum along x for the annihilation operator on B site with spin up
   // ky4 = momentum along y for the annihilation operator on B site with spin up
   // return value = corresponding matrix element
-  Complex ComputeTwoBodyMatrixElementADownBUp(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
+  virtual Complex ComputeTwoBodyMatrixElementADownBUp(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
 
   // compute the matrix element for the two body interaction between two sites A and B with opposite spins
   //
@@ -151,7 +155,7 @@ class ParticleOnSquareLatticeTwoBandSimpleTIHamiltonian : public ParticleOnLatti
   // kx4 = momentum along x for the annihilation operator on B site with spin down
   // ky4 = momentum along y for the annihilation operator on B site with spin down
   // return value = corresponding matrix element
-  Complex ComputeTwoBodyMatrixElementAUpBDown(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
+  virtual Complex ComputeTwoBodyMatrixElementAUpBDown(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
 
   // compute the matrix element for the two body interaction between two sites A with opposite spins 
   //
@@ -164,7 +168,7 @@ class ParticleOnSquareLatticeTwoBandSimpleTIHamiltonian : public ParticleOnLatti
   // kx4 = momentum along x for the annihilation operator on A site with spin down
   // ky4 = momentum along y for the annihilation operator on A site with spin down
   // return value = corresponding matrix element
-  Complex ComputeTwoBodyMatrixElementAUpADown(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
+  virtual Complex ComputeTwoBodyMatrixElementAUpADown(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
 
   // compute the matrix element for the two body interaction between two sites B with opposite spins 
   //
@@ -177,7 +181,7 @@ class ParticleOnSquareLatticeTwoBandSimpleTIHamiltonian : public ParticleOnLatti
   // kx4 = momentum along x for the annihilation operator on B site with spin down
   // ky4 = momentum along y for the annihilation operator on B site with spin down
   // return value = corresponding matrix element
-  Complex ComputeTwoBodyMatrixElementBUpBDown(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
+  virtual Complex ComputeTwoBodyMatrixElementBUpBDown(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
     
 
   // compute the transformation basis contribution to the interaction matrix element
@@ -195,15 +199,15 @@ class ParticleOnSquareLatticeTwoBandSimpleTIHamiltonian : public ParticleOnLatti
   // siteIndex2 = site index of the second creation operator (0=Aup, 1=Bup, 2=Adown, 3=Bdown)
   // siteIndex3 = site index of the first annihilation operator (0=Aup, 1=Bup, 2=Adown, 3=Bdown)
   // siteIndex4 = site index of the second annihiliation operator (0=Aup, 1=Bup, 2=Adown, 3=Bdown)
-  Complex ComputeTransfomationBasisContribution(ComplexMatrix* oneBodyBasis,
-						int momentumIndex1, int momentumIndex2, int momentumIndex3, int momentumIndex4, 
-						int energyIndex1, int energyIndex2, int energyIndex3, int energyIndex4,
-						int siteIndex1, int siteIndex2, int siteIndex3, int siteIndex4);
+  virtual Complex ComputeTransfomationBasisContribution(ComplexMatrix* oneBodyBasis,
+							int momentumIndex1, int momentumIndex2, int momentumIndex3, int momentumIndex4, 
+							int energyIndex1, int energyIndex2, int energyIndex3, int energyIndex4,
+							int siteIndex1, int siteIndex2, int siteIndex3, int siteIndex4);
 
   // compute the one body transformation matrices and the optional one body band stucture contribution
   //
   // oneBodyBasis = array of one body transformation matrices
-  void ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis);
+  virtual void ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis);
 
 };
 
