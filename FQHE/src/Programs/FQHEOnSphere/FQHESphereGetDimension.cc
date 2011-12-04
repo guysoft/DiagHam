@@ -100,6 +100,17 @@ long FermionSU4ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, 
 // return value = Hilbert space dimension
 long FermionSU3ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int nbrN1, int nbrN2, int nbrN3);
 
+// evaluate Hilbert space dimension for bosons with SU(3) spin
+//
+// nbrBosons = number of bosons
+// lzMax = momentum maximum value for a boson
+// totalLz = momentum total value
+// nbrN1 = number of particles with quantum number Tz=+1/2 and Y=+1/3
+// nbrN2 = number of particles with quantum number Tz=-1/2 and Y=+1/3
+// nbrN3 = number of particles with quantum number Tz=0 and Y=-2/3
+// return value = Hilbert space dimension
+long BosonSU3ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz, int nbrN1, int nbrN2, int nbrN3);
+
 // evaluate Hilbert space dimension for fermions in two Landau levels
 //
 // nbrFermions = number of fermions
@@ -155,6 +166,14 @@ ostream& BosonSU2WriteDimension(ostream& output, int nbrParticles, int nbrFluxQu
 // nbrFluxQuanta = number of flux quanta
 // return value = reference on the output stream
 ostream& FermionSU3WriteDimension(ostream& output, int nbrParticles, int nbrFluxQuanta);
+
+// save dimensions in a given output stream for bosons with SU(3) spin
+//
+// output = reference on the output stream
+// nbrParticles = number of particles
+// nbrFluxQuanta = number of flux quanta
+// return value = reference on the output stream
+ostream& BosonSU3WriteDimension(ostream& output, int nbrParticles, int nbrFluxQuanta);
 
 // save dimensions in a given output stream for fermions with SU(4) spin
 //
@@ -435,8 +454,36 @@ int main(int argc, char** argv)
     {
       if (Manager.GetBoolean("boson") == true)
 	{
-	  cout << "SU(3) mode not yet available" << endl;	
-	  return -1;
+	  if (Manager.GetBoolean("ground-only") == true)
+	    {
+	      int MeanNbrParticles = NbrParticles / 3;
+	      cout << BosonSU3ShiftedEvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, (LzMin + (NbrFluxQuanta * NbrParticles)) >> 1, 
+								   MeanNbrParticles, MeanNbrParticles, (NbrParticles - (2 * MeanNbrParticles))) << endl;
+	    }
+	  else
+	    {
+	      if (Manager.GetBoolean("save-disk") == true)
+		{
+		  char* OutputFileName = 0;
+		  if (Manager.GetString("output-file") == 0)
+		    {
+		      OutputFileName = new char[256];
+		      sprintf (OutputFileName, "bosons_sphere_su3_n_%d_2s_%d.dim", NbrParticles, NbrFluxQuanta);
+		    }
+		  else
+		    {
+		      OutputFileName = new char[strlen(Manager.GetString("output-file")) + 1];
+		      strcpy (OutputFileName, Manager.GetString("output-file"));
+		    }		  
+		  ofstream File;
+		  File.open(OutputFileName, ios::binary | ios::out);
+		  BosonSU3WriteDimension(File, NbrParticles, NbrFluxQuanta);
+		  File.close();
+		  delete[] OutputFileName;
+		}
+	      else
+		BosonSU3WriteDimension (cout, NbrParticles, NbrFluxQuanta);
+	    }	      
 	}
       else
 	{
@@ -477,7 +524,7 @@ int main(int argc, char** argv)
 	    }	      
 	}
       return 0;
-    }
+     }
   if (Manager.GetBoolean("2-ll") == true)
     {
       if (Manager.GetBoolean("boson") == true)
@@ -960,6 +1007,38 @@ long FermionSU3ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, 
 	   + FermionSU3ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz, nbrN1, nbrN2, nbrN3));
 }
 
+// evaluate Hilbert space dimension for bosons with SU(3) spin
+//
+// nbrBosons = number of bosons
+// lzMax = momentum maximum value for a boson
+// totalLz = momentum total value
+// nbrN1 = number of particles with quantum number Tz=+1/2 and Y=+1/3
+// nbrN2 = number of particles with quantum number Tz=-1/2 and Y=+1/3
+// nbrN3 = number of particles with quantum number Tz=0 and Y=-2/3
+// return value = Hilbert space dimension
+
+long BosonSU3ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz, int nbrN1, int nbrN2, int nbrN3)
+{
+  if ((nbrBosons < 0) || (totalLz < 0) || (lzMax < 0) || (nbrN1 < 0) || (nbrN2 < 0) || (nbrN3 < 0) || (lzMax < 0))
+    return 0l;
+  if ((nbrBosons == 0) && (totalLz == 0))
+    return 1l;
+  if (nbrBosons == 1)
+    {
+      if (lzMax >= totalLz)
+	return 1l;
+      else
+	return 0l;
+    }
+  long Tmp = 0l;
+  for (int i = nbrN1; i >= 0; --i)
+    for (int j = nbrN2; j >= 0; --j)
+      for (int k = nbrN3; k >= 0; --k)
+	Tmp += BosonSU3ShiftedEvaluateHilbertSpaceDimension(nbrBosons - (i + j + k), lzMax - 1, totalLz - (lzMax * (i + j + k)), 
+							    nbrN1 - i, nbrN2 - j, nbrN3 - k);
+  return  Tmp;
+}
+
 // evaluate Hilbert space dimension for fermions in two Landau levels
 //
 // nbrFermions = number of fermions
@@ -1247,6 +1326,47 @@ ostream& FermionSU3WriteDimension(ostream& output, int nbrParticles, int nbrFlux
 		       << LzDimension[(Max - Min) >> 1] << endl;
 		delete[] LzDimension;	      
 	      }
+	  }
+      }
+  return output;
+}
+
+// save dimensions in a given output stream for bosons with SU(3) spin
+//
+// output = reference on the output stream
+// nbrParticles = number of particles
+// nbrFluxQuanta = number of flux quanta
+// return value = reference on the output stream
+
+ostream& BosonSU3WriteDimension(ostream& output, int nbrParticles, int nbrFluxQuanta)
+{
+  output << "# Hilbert space dimension in each L and Lz sector for " << nbrParticles << " bosons" << endl;
+  output << "# with SU(3) spin on the sphere geometry with " << nbrFluxQuanta << " flux quanta" << endl;
+  output << "#" << endl << "#  dimensions for each subspaces with the following convention " << endl 
+	 << "# (twice the total Tz value) (three time the total Y value) (twice the total Lz/L value) (dimension of the subspace with fixed Lz, Tz, Y) (dimension of the subspace with fixed L, Lz=L, Tz, Y)" << endl << endl;
+  for (int Tz = 0; Tz <= nbrParticles; ++Tz)
+    for (int Y = - 2 * nbrParticles; Y <= nbrParticles; Y += 3)
+      {
+	int N1 = (2 * nbrParticles) + Y + (3 * Tz);
+	int N2 = (2 * nbrParticles) + Y - (3 * Tz);
+	int N3 = nbrParticles - Y;
+	if ((N1 >= 0) && (N2 >= 0) && (N3 >= 0) && ((N1 % 6) == 0) && ((N2 % 6) == 0) && ((N3 % 3) == 0))
+	  {
+	    N1 /= 6;
+	    N2 /= 6;
+	    N3 /= 3;
+	    int Min = (nbrParticles * nbrFluxQuanta) & 1;
+	    int Max  = nbrFluxQuanta * nbrParticles;
+	    long* LzDimension = new long [((Max - Min) >> 1) + 1];
+	    for (int Lz = Min; Lz <= Max; Lz += 2)
+	      LzDimension[(Lz - Min) >> 1] = BosonSU3ShiftedEvaluateHilbertSpaceDimension(nbrParticles, nbrFluxQuanta, 
+											  (Lz + (nbrParticles * nbrFluxQuanta)) >> 1, N1, N2, N3);
+	    for (int Lz = Min; Lz < Max; Lz += 2)
+	      output << Tz << " " << Y << " " << Lz << " " << LzDimension[(Lz - Min) >> 1] << " " 
+		     << (LzDimension[(Lz - Min) >> 1] - LzDimension[((Lz - Min) >> 1) + 1]) << endl;
+	    output << Tz << " " << Y << " " << Max << " " << LzDimension[(Max - Min) >> 1] << " " 
+		   << LzDimension[(Max - Min) >> 1] << endl;
+	    delete[] LzDimension;	      
 	  }
       }
   return output;

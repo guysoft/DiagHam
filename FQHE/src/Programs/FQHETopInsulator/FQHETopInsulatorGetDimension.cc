@@ -58,6 +58,34 @@ long FermionTwoBandEvaluateHilbertSpaceDimension(int nbrParticles, int kxMomentu
 // return value = Hilbert space dimension
 long FermionTwoBandWithSpinEvaluateHilbertSpaceDimension(int nbrParticles, int kxMomentum, int kyMomentum, int nbrSiteX, int nbrSiteY, int currentKx, int currentKy, int nbrSpinUp, int currentTotalKx = 0, int currentTotalKy = 0);
 
+// evaluate Hilbert space dimension for bosons within two band
+//
+// nbrParticles = number of nbrParticles
+// kxMomentum = total momentum along x
+// kyMomentum = total momentum along y
+// nbrSiteX = number of sites along x
+// nbrSiteY = number of sites along y
+// currentKx = current momentum along x for a single particle
+// currentKy = current momentum along y for a single particle
+// currentTotalKx = current total momentum along x
+// currentTotalKy = current total momentum along y
+// return value = Hilbert space dimension
+long BosonTwoBandEvaluateHilbertSpaceDimension(int nbrParticles, int kxMomentum, int kyMomentum, int nbrSiteX, int nbrSiteY, int currentKx, int currentKy, int currentTotalKx = 0, int currentTotalKy = 0);
+
+// evaluate Hilbert space dimension for bosons within three band
+//
+// nbrParticles = number of nbrParticles
+// kxMomentum = total momentum along x
+// kyMomentum = total momentum along y
+// nbrSiteX = number of sites along x
+// nbrSiteY = number of sites along y
+// currentKx = current momentum along x for a single particle
+// currentKy = current momentum along y for a single particle
+// currentTotalKx = current total momentum along x
+// currentTotalKy = current total momentum along y
+// return value = Hilbert space dimension
+long BosonThreeBandEvaluateHilbertSpaceDimension(int nbrParticles, int kxMomentum, int kyMomentum, int nbrSiteX, int nbrSiteY, int currentKx, int currentKy, int currentTotalKx = 0, int currentTotalKy = 0);
+
 // evaluate Hilbert space dimension for fermions on a cubic lattice within two bands
 //
 // nbrParticles = number of nbrParticles
@@ -131,6 +159,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('z', "nbr-sitez", "number of sites along the z direction", 3);
   (*SystemGroup) += new SingleIntegerOption  ('t', "nbr-sitet", "number of sites along the t direction", 3);
   (*SystemGroup) += new SingleIntegerOption  ('s', "nbr-subbands", "number of subbands", 1);
+  (*SystemGroup) += new BooleanOption  ('\n', "bosons", "use bosonic statistics instead of fermionic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "no-inversion", "do not assume inversion symmetry");
   (*SystemGroup) += new BooleanOption  ('\n', "spin-conserved", "assume that the spin is conserved in the two band model");
   (*SystemGroup) += new BooleanOption  ('\n', "3d", "consider a 3d model instead of a 2d model");
@@ -164,7 +193,11 @@ int main(int argc, char** argv)
 	    {
 	      if ((Manager.GetBoolean("no-inversion") == true) || ((kx <= ((NbrSitesX - kx) % NbrSitesX)) && (ky <= ((NbrSitesY - ky) % NbrSitesY))))
 		{
-		  long Dimension = FermionSingleBandEvaluateHilbertSpaceDimension(NbrParticles, kx, ky, NbrSitesX, NbrSitesY, NbrSitesX - 1, NbrSitesY - 1);
+		  long Dimension = 0;
+		  if (Manager.GetBoolean("bosons") == false)
+		    Dimension = FermionSingleBandEvaluateHilbertSpaceDimension(NbrParticles, kx, ky, NbrSitesX, NbrSitesY, NbrSitesX - 1, NbrSitesY - 1);
+		  else
+		    cout << "warning : not implemented for bosons" << endl;
 		  cout << "(kx=" << kx << ",ky=" << ky << ") : " << Dimension << endl;
 		}
 	    }
@@ -184,7 +217,11 @@ int main(int argc, char** argv)
 			{
 			  if (Manager.GetBoolean("spin-conserved") == false)
 			    {
-			      long Dimension = FermionTwoBandEvaluateHilbertSpaceDimension(NbrParticles, kx, ky, NbrSitesX, NbrSitesY, NbrSitesX - 1, NbrSitesY - 1);
+			      long Dimension = 0l;
+			      if (Manager.GetBoolean("bosons") == false)
+				Dimension = FermionTwoBandEvaluateHilbertSpaceDimension(NbrParticles, kx, ky, NbrSitesX, NbrSitesY, NbrSitesX - 1, NbrSitesY - 1);
+			      else
+				Dimension = BosonTwoBandEvaluateHilbertSpaceDimension(NbrParticles, kx, ky, NbrSitesX, NbrSitesY, NbrSitesX - 1, NbrSitesY - 1);
 			      cout << "(kx=" << kx << ",ky=" << ky << ") : " << Dimension << endl;
 			    }
 			  else
@@ -192,7 +229,11 @@ int main(int argc, char** argv)
 			      long TotalDimension = 0l;
 			      for (int NbrSpinUp = 0; NbrSpinUp <= NbrParticles; ++NbrSpinUp)
 				{
-				  long Dimension = FermionTwoBandWithSpinEvaluateHilbertSpaceDimension(NbrParticles, kx, ky, NbrSitesX, NbrSitesY, NbrSitesX - 1, NbrSitesY - 1, NbrSpinUp);
+				  long Dimension = 0l;
+				  if (Manager.GetBoolean("bosons") == false)
+				    Dimension = FermionTwoBandWithSpinEvaluateHilbertSpaceDimension(NbrParticles, kx, ky, NbrSitesX, NbrSitesY, NbrSitesX - 1, NbrSitesY - 1, NbrSpinUp);
+				  else
+				    cout << "warning : not implemented for bosons" << endl;
 				  TotalDimension += Dimension;
 				  cout << "(kx=" << kx << ",ky=" << ky << ") 2Sz=" << ((2 * NbrSpinUp) - NbrParticles) << " : " << Dimension << endl;			  
 				}
@@ -207,7 +248,11 @@ int main(int argc, char** argv)
 			{
 			  for (int kt = 0; kt < NbrSitesT; ++kt)
 			    {
-			      long Dimension = FermionHyperCubicLatticeTwoBandEvaluateHilbertSpaceDimension(NbrParticles, kx, ky, kz, kt, NbrSitesX, NbrSitesY, NbrSitesZ, NbrSitesT, NbrSitesX - 1, NbrSitesY - 1, NbrSitesZ - 1, NbrSitesT - 1);
+			      long Dimension = 0l;
+			      if (Manager.GetBoolean("bosons") == false)
+				Dimension = FermionHyperCubicLatticeTwoBandEvaluateHilbertSpaceDimension(NbrParticles, kx, ky, kz, kt, NbrSitesX, NbrSitesY, NbrSitesZ, NbrSitesT, NbrSitesX - 1, NbrSitesY - 1, NbrSitesZ - 1, NbrSitesT - 1);
+			      else
+				cout << "warning : not implemented for bosons" << endl;
 			      TotalDimension += Dimension;
 			      cout << "(kx=" << kx << ",ky=" << ky << ",kz=" << kz << ",kt=" << kt << ") : " << Dimension << endl;
 			      return 0;
@@ -221,7 +266,11 @@ int main(int argc, char** argv)
 		  long TotalDimension = 0l;
 		  for (int kz = 0; kz < NbrSitesZ; ++kz)
 		    {
-		      long Dimension = FermionCubicLatticeTwoBandEvaluateHilbertSpaceDimension(NbrParticles, kx, ky, kz, NbrSitesX, NbrSitesY, NbrSitesZ, NbrSitesX - 1, NbrSitesY - 1, NbrSitesZ - 1);
+		      long Dimension  = 0l;
+		      if (Manager.GetBoolean("bosons") == false)
+			Dimension = FermionCubicLatticeTwoBandEvaluateHilbertSpaceDimension(NbrParticles, kx, ky, kz, NbrSitesX, NbrSitesY, NbrSitesZ, NbrSitesX - 1, NbrSitesY - 1, NbrSitesZ - 1);
+		      else
+			cout << "warning : not implemented for bosons" << endl;
 		      TotalDimension += Dimension;
 		      cout << "(kx=" << kx << ",ky=" << ky << ",kz=" << kz << ") : " << Dimension << endl;
 		    }
@@ -230,6 +279,54 @@ int main(int argc, char** argv)
 	    }
 	}
     }
+
+  if (Manager.GetInteger("nbr-subbands") == 3)
+    {
+      for (int kx = 0; kx < NbrSitesX; ++kx)
+	{
+	  for (int ky = 0; ky < NbrSitesY; ++ky)
+	    {
+	      if (Manager.GetBoolean("3d") == false)
+		{
+		  if (Manager.GetBoolean("4d") == false)
+		    {
+		      if ((Manager.GetBoolean("no-inversion") == true) || 
+			  ((kx <= ((NbrSitesX - kx) % NbrSitesX)) && (ky <= ((NbrSitesY - ky) % NbrSitesY))))
+			{
+			  if (Manager.GetBoolean("spin-conserved") == false)
+			    {
+			      long Dimension = 0l;
+			      if (Manager.GetBoolean("bosons") == false)
+				{
+				  cout << "warning : not implemented for fermions" << endl;
+				}
+			      else
+				Dimension = BosonThreeBandEvaluateHilbertSpaceDimension(NbrParticles, kx, ky, NbrSitesX, NbrSitesY, NbrSitesX - 1, NbrSitesY - 1);
+			      cout << "(kx=" << kx << ",ky=" << ky << ") : " << Dimension << endl;
+			    }
+			  else
+			    {
+			      cout << "warning : not implemented" << endl;
+			      return 0;
+			    }
+			}
+		    }
+		  else
+		    {
+		      
+		      cout << "warning : not implemented for 4d" << endl;
+		      return 0;
+		    }
+		}
+	      else
+		{
+		  cout << "warning : not implemented for 3d" << endl;
+		  return 0;
+		}
+	    }
+	}
+    }
+
   if (Manager.GetInteger("nbr-subbands") == 4)
     {
       for (int kx = 0; kx < NbrSitesX; ++kx)
@@ -241,7 +338,11 @@ int main(int argc, char** argv)
 		  long TotalDimension = 0l;
 		  for (int kz = 0; kz < NbrSitesZ; ++kz)
 		    {
-		      long Dimension = FermionCubicLatticeFourBandEvaluateHilbertSpaceDimension(NbrParticles, kx, ky, kz, NbrSitesX, NbrSitesY, NbrSitesZ, NbrSitesX - 1, NbrSitesY - 1, NbrSitesZ - 1);
+		      long Dimension  = 0l;
+		      if (Manager.GetBoolean("bosons") == false)
+			Dimension = FermionCubicLatticeFourBandEvaluateHilbertSpaceDimension(NbrParticles, kx, ky, kz, NbrSitesX, NbrSitesY, NbrSitesZ, NbrSitesX - 1, NbrSitesY - 1, NbrSitesZ - 1);
+		      else
+			cout << "warning : not implemented for bosons" << endl;
 		      TotalDimension += Dimension;
 		      cout << "(kx=" << kx << ",ky=" << ky << ",kz=" << kz << ") : " << Dimension << endl;
 		    }
@@ -413,6 +514,110 @@ long FermionTwoBandWithSpinEvaluateHilbertSpaceDimension(int nbrParticles, int k
   Count += FermionTwoBandWithSpinEvaluateHilbertSpaceDimension(nbrParticles - 1, kxMomentum, kyMomentum, nbrSiteX, nbrSiteY, currentKx, currentKy - 1, nbrSpinUp, currentTotalKx + currentKx, currentTotalKy + currentKy);
   Count += FermionTwoBandWithSpinEvaluateHilbertSpaceDimension(nbrParticles - 1, kxMomentum, kyMomentum, nbrSiteX, nbrSiteY, currentKx, currentKy - 1, nbrSpinUp - 1, currentTotalKx + currentKx, currentTotalKy + currentKy);
   Count += FermionTwoBandWithSpinEvaluateHilbertSpaceDimension(nbrParticles, kxMomentum, kyMomentum, nbrSiteX, nbrSiteY, currentKx, currentKy - 1, nbrSpinUp, currentTotalKx, currentTotalKy);
+  return Count;
+}
+
+// evaluate Hilbert space dimension for bosons within two bands
+//
+// nbrParticles = number of nbrParticles
+// kxMomentum = total momentum along x
+// kyMomentum = total momentum along y
+// nbrSiteX = number of sites along x
+// nbrSiteY = number of sites along y
+// currentKx = current momentum along x for a single particle
+// currentKy = current momentum along y for a single particle
+// currentTotalKx = current total momentum along x
+// currentTotalKy = current total momentum along y
+// return value = Hilbert space dimension
+
+long BosonTwoBandEvaluateHilbertSpaceDimension(int nbrParticles, int kxMomentum, int kyMomentum, int nbrSiteX, int nbrSiteY, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy)
+{
+  if (currentKy < 0)
+    {
+      currentKy = nbrSiteY - 1;
+      currentKx--;
+    }
+  if (nbrParticles == 0)
+    {
+      if (((currentTotalKx % nbrSiteX) == kxMomentum) && ((currentTotalKy % nbrSiteY) == kyMomentum))
+	return 1l;
+      else	
+	return 0l;
+    }
+  if (currentKx < 0)
+    return 0l;
+  long Count = 0;
+  if (nbrParticles == 1)
+    {
+      for (int j = currentKy; j >= 0; --j)
+	{
+	  if ((((currentKx + currentTotalKx) % nbrSiteX) == kxMomentum) && (((j + currentTotalKy) % nbrSiteY) == kyMomentum))
+	    Count += 2l;
+	}
+      for (int i = currentKx - 1; i >= 0; --i)
+	{
+	  for (int j = nbrSiteY - 1; j >= 0; --j)
+	    {
+	      if ((((i + currentTotalKx) % nbrSiteX) == kxMomentum) && (((j + currentTotalKy) % nbrSiteY) == kyMomentum))
+		Count += 2l;
+	    }
+	}
+      return Count;
+    }
+  for (int i = nbrParticles; i >= 0; --i)
+    Count += ((long) i + 1l) * BosonTwoBandEvaluateHilbertSpaceDimension(nbrParticles - i, kxMomentum, kyMomentum, nbrSiteX, nbrSiteY, currentKx, currentKy - 1, currentTotalKx + (i * currentKx), currentTotalKy + (i * currentKy));
+  return Count;
+}
+
+// evaluate Hilbert space dimension for bosons within three bands
+//
+// nbrParticles = number of nbrParticles
+// kxMomentum = total momentum along x
+// kyMomentum = total momentum along y
+// nbrSiteX = number of sites along x
+// nbrSiteY = number of sites along y
+// currentKx = current momentum along x for a single particle
+// currentKy = current momentum along y for a single particle
+// currentTotalKx = current total momentum along x
+// currentTotalKy = current total momentum along y
+// return value = Hilbert space dimension
+
+long BosonThreeBandEvaluateHilbertSpaceDimension(int nbrParticles, int kxMomentum, int kyMomentum, int nbrSiteX, int nbrSiteY, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy)
+{
+  if (currentKy < 0)
+    {
+      currentKy = nbrSiteY - 1;
+      currentKx--;
+    }
+  if (nbrParticles == 0)
+    {
+      if (((currentTotalKx % nbrSiteX) == kxMomentum) && ((currentTotalKy % nbrSiteY) == kyMomentum))
+	return 1l;
+      else	
+	return 0l;
+    }
+  if (currentKx < 0)
+    return 0l;
+  long Count = 0;
+  if (nbrParticles == 1)
+    {
+      for (int j = currentKy; j >= 0; --j)
+	{
+	  if ((((currentKx + currentTotalKx) % nbrSiteX) == kxMomentum) && (((j + currentTotalKy) % nbrSiteY) == kyMomentum))
+	    Count += 3l;
+	}
+      for (int i = currentKx - 1; i >= 0; --i)
+	{
+	  for (int j = nbrSiteY - 1; j >= 0; --j)
+	    {
+	      if ((((i + currentTotalKx) % nbrSiteX) == kxMomentum) && (((j + currentTotalKy) % nbrSiteY) == kyMomentum))
+		Count += 3l;
+	    }
+	}
+      return Count;
+    }
+  for (int i = nbrParticles; i >= 0; --i)
+    Count += ((((long) i + 1l) * ((long) i + 2l)) / 2l) * BosonThreeBandEvaluateHilbertSpaceDimension(nbrParticles - i, kxMomentum, kyMomentum, nbrSiteX, nbrSiteY, currentKx, currentKy - 1, currentTotalKx + (i * currentKx), currentTotalKy + (i * currentKy));
   return Count;
 }
 
