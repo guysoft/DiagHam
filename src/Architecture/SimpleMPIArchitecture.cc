@@ -664,4 +664,22 @@ char* SimpleMPIArchitecture::DumpLog(const char* header, const char* footer)
 }
 
 
+// write vector in a file 
+//
+// vector = vector to write
+// fileName = name of the file where the vector has to be stored
+// return value = true if no error occurs
+  
+bool SimpleMPIArchitecture::WriteVector(RealVector& vector, const char* fileName)
+{
+#ifdef __MPI__
+  MPI::COMM_WORLD.Barrier();
+  if ( this->IsMasterNode() )
+    {
+      return vector.WriteVector(fileName);
+    }
+#else
+  return vector.WriteVector(fileName);
+#endif
+}
 

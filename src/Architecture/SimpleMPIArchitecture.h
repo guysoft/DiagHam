@@ -35,6 +35,7 @@
 #include "config.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "Vector/Vector.h"
+#include <math.h>
 
 #ifdef __MPI__
 #include <mpi.h>
@@ -116,6 +117,16 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   //
   // return value = number of slave nodes
   virtual int GetNbrSlaveNodes();
+  
+  // indicate how many nodes are available
+  //
+  // return value = number of nodes
+  virtual int GetNbrNodes();
+  
+  // get the rank of the current node
+  //
+  // return value = rank of current node
+  virtual int GetNodeNbr();
 
   // get the architecture used on the local MPI node
   //
@@ -265,9 +276,15 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // footer = optional footer to add at the end of the log file
   // return value = string or 0 if an error occured or log is not available
   virtual char* DumpLog(const char* header = 0, const char* footer = 0);
+  
+  // write vector in a file 
+  //
+  // vector = vector to write
+  // fileName = name of the file where the vector has to be stored
+  // return value = true if no error occurs
+  virtual bool WriteVector(RealVector& vector, const char* fileName);
 
 };
-
 // indicate if the local node is the master node
 // 
 // return value = true if the local node is the master node
@@ -331,5 +348,25 @@ inline int SimpleMPIArchitecture::GetNbrSlaveNodes()
 {
   return (this->NbrMPINodes - 1);
 }
+
+// indicate how many nodes there are
+//
+// return value = number of nodes
+
+inline int SimpleMPIArchitecture::GetNbrNodes()
+{
+  return this->NbrMPINodes;
+}
+
+// indicate number of current node
+//
+// return value = number of the current node
+
+inline int SimpleMPIArchitecture::GetNodeNbr()
+{
+  return this->MPIRank;
+}
+
+
 
 #endif

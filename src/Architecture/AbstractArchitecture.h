@@ -156,6 +156,13 @@ class AbstractArchitecture
   // footer = optional footer to add at the end of the log file
   // return value = string or 0 if an error occured or log is not available
   virtual char* DumpLog(const char* header = 0, const char* footer = 0);
+  
+  // write vector in a file 
+  //
+  // vector = vector to write
+  // fileName = name of the file where the vector has to be stored
+  // return value = true if no error occurs
+  virtual bool WriteVector(RealVector& vector, const char* fileName);
 
  protected:
 

@@ -4008,7 +4008,14 @@ Vector& RealVector::SumVector(MPI::Intracomm& communicator, int id)
     {
       TmpComponents = new double [this->Dimension];
     }
-  communicator.Reduce(this->Components, TmpComponents, this->Dimension, MPI::DOUBLE, MPI::SUM, id);
+  try
+    {
+      communicator.Reduce(this->Components, TmpComponents, this->Dimension, MPI::DOUBLE, MPI::SUM, id);
+    } 
+  catch ( MPI::Exception e)
+    {
+      cout << "MPI ERROR: " << e.Get_error_code() << " -" << e.Get_error_string()  << endl;
+    }  
   if (id == communicator.Get_rank())
     {
       for (int i = 0; i < this->Dimension; ++i)

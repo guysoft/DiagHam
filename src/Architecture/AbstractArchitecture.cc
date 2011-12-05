@@ -167,3 +167,14 @@ char* AbstractArchitecture::DumpLog(const char* header, const char* footer)
 {
   return 0;
 }
+
+// write vector in a file 
+//
+// vector = vector to write
+// fileName = name of the file where the vector has to be stored
+// return value = true if no error occurs
+
+bool AbstractArchitecture::WriteVector(RealVector& vector, const char* fileName)
+{
+  return vector.WriteVector(fileName);
+}
