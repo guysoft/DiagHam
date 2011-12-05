@@ -330,6 +330,14 @@ class FermionOnSphereWithSpinLzSzSymmetry :  public FermionOnSphereWithSpin
   //
   // timeCoherence = true if time coherence has to be used
   virtual void InitializeWaveFunctionEvaluation (bool timeCoherence = false);
+
+  // get canonical expression of a given state and its symmetry and which transformations have been done to get the canonical expression
+  //
+  // initialState = state that has to be converted to its canonical expression
+  // lzMax = maximum lz value
+  // coefficient = phase from exchanging all lz vals
+  // return value = flipped configuration  
+  static unsigned long ApplyLzSymmetry (unsigned long initialState, int lzMax, double& coefficient);
   
   protected:
 
@@ -636,6 +644,81 @@ inline int FermionOnSphereWithSpinLzSzSymmetry::SymmetrizeAdAdResult(unsigned lo
   return this->HilbertSpaceDimension;
 }
 
+
+// get canonical expression of a given state and its symmetry and which transformations have been done to get the canonical expression
+//
+// initialState = state that has to be converted to its canonical expression
+// lzMax = maximum lz value
+// coefficient = phase from exchanging all lz vals
+// return value = flipped configuration
+
+inline unsigned long FermionOnSphereWithSpinLzSzSymmetry::ApplyLzSymmetry (unsigned long initialState, int lzMax, double &coefficient)
+{
+  int InvertShift, InvertUnshift;
+  #ifdef __64_BITS__
+  if ((lzMax & 1) == 0)
+    {
+      InvertShift = 32 - lzMax;
+      InvertUnshift = InvertShift - 2;
+    }
+  else
+    {
+      InvertShift = 32 - (lzMax + 1);
+      InvertUnshift = InvertShift;
+    }
+#else
+  if ((lzMax & 1) != 0)
+    {
+      InvertShift = 16 - (lzMax + 1);
+      InvertUnshift = InvertShift;
+    }
+  else
+    {
+      InvertShift = 16 - lzMax;
+      InvertUnshift = InvertShift - 1;
+    }
+#endif
+  initialState <<= InvertShift;
+#ifdef __64_BITS__
+  unsigned long TmpState = FermionOnSphereWithSpinLzInvertTable[initialState & 0xff] << 56;
+  TmpState |= FermionOnSphereWithSpinLzInvertTable[(initialState >> 8) & 0xff] << 48;
+  TmpState |= FermionOnSphereWithSpinLzInvertTable[(initialState >> 16) & 0xff] << 40;
+  TmpState |= FermionOnSphereWithSpinLzInvertTable[(initialState >> 24) & 0xff] << 32;
+  TmpState |= FermionOnSphereWithSpinLzInvertTable[(initialState >> 32) & 0xff] << 24;
+  TmpState |= FermionOnSphereWithSpinLzInvertTable[(initialState >> 40) & 0xff] << 16;
+  TmpState |= FermionOnSphereWithSpinLzInvertTable[(initialState >> 48) & 0xff] << 8;
+  TmpState |= FermionOnSphereWithSpinLzInvertTable[initialState >> 56];  
+#else
+  unsigned long TmpState = FermionOnSphereWithSpinLzInvertTable[initialState & 0xff] << 24;
+  TmpState |= FermionOnSphereWithSpinLzInvertTable[(initialState >> 8) & 0xff] << 16;
+  TmpState |= FermionOnSphereWithSpinLzInvertTable[(initialState >> 16) & 0xff] << 8;
+  TmpState |= FermionOnSphereWithSpinLzInvertTable[initialState >> 24];
+#endif
+  initialState >>= InvertShift;
+  TmpState >>= InvertUnshift;    
+  unsigned long TmpState2 = initialState;
+  TmpState2 &= (TmpState2 >> 1);
+  TmpState2 &= FERMION_SPHERE_SU2_SZ_MASK;
+#ifdef __64_BITS__
+  TmpState2 ^= (TmpState2 >> 32);
+#endif
+  TmpState2 ^= (TmpState2 >> 16);
+  TmpState2 ^= (TmpState2 >> 8);
+  TmpState2 ^= (TmpState2 >> 4);
+  TmpState2 ^= (TmpState2 >> 2);
+  initialState |= (TmpState2 & 1) << FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT;  
+  
+  if ( ((initialState >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x01ul ) != 0 )
+    {
+      coefficient *= -1.0;
+    }
+  else
+    {      
+      coefficient *= 1.0;      
+    }  
+  
+  return TmpState;
+}
 
 
 #endif

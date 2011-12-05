@@ -71,6 +71,8 @@ class FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation : public Abs
   // true if 2LL are considered
   bool TwoLandauLevels;
   
+  bool TwoLandauLevelLz;
+  
  public:
   
   // constructor 
@@ -78,7 +80,7 @@ class FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation : public Abs
   // Space = pointer to the HilbertSpace to use
   // fileName = name of the file where the kostka number will be store
   // nbrLL = number of Landau levels
-  FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation(ParticleOnSphere * initialSpace, FermionOnSphere * fermionSpace, FermionOnSphereWithSpin * finalSpace, RealVector* bosonicVector, RealVector* outputVector, bool twoLandauLevels , int nbrStage = 20);
+  FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation(ParticleOnSphere * initialSpace, FermionOnSphere * fermionSpace, FermionOnSphereWithSpin * finalSpace, RealVector* bosonicVector, RealVector* outputVector, bool twoLandauLevels, bool twoLandauLevelLz, int nbrStage = 20);
   
   // copy constructor 
   //
@@ -88,6 +90,22 @@ class FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation : public Abs
   // destructor
   //
   ~FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation();
+  
+   // This function calculates the size for a process when using multiple processes. 
+  //
+  // n = total size
+  // rank = rank of process
+  // size = number of processes
+  // return value = size for process
+  static int GetRankChunkSize(int n, int rank, int size);
+  
+  // This function calculates the starting index for a process when using multiple processes. 
+  //
+  // n = total size
+  // rank = rank of process
+  // size = number of processes
+  // return value = starting index for process
+  static int GetRankChunkStart(int n, int rank, int size);
   
  protected:
   
@@ -130,6 +148,59 @@ class FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation : public Abs
   bool ArchitectureDependentApplyOperation(SimpleMPIArchitecture* architecture);
   
 };
+
+
+// This function calculates the size for a process when using multiple processes. 
+//
+// n = total size
+// rank = rank of process
+// size = number of processes
+// return value = size for process
+
+inline int FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::GetRankChunkSize(int n, int rank, int size) 
+{
+  int  MaxChunk, MinChunk, CutOff; 
+  
+  MinChunk = (int)floor((double)n / (double)size); 
+  MaxChunk = (int)ceil((double)n / (double)size);
+  CutOff = n - (size * MinChunk); 
+  
+  if ( rank < CutOff ) 
+    {
+      return MaxChunk;
+    } 
+  else 
+    {
+      return MinChunk;
+    }
+}
+
+
+// This function calculates the starting index for a process when using multiple processes. 
+//
+// n = total size
+// rank = rank of process
+// size = number of processes
+// return value = starting index for process
+
+inline int FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::GetRankChunkStart(int n, int rank, int size)
+{
+  int  MaxChunk, MinChunk, CutOff; 
+  
+  MinChunk = (int)floor((double)n / (double)size); 
+  MaxChunk =(int)ceil((double)n / (double)size);
+  CutOff = n - (size * MinChunk); 
+
+  if ( rank < CutOff ) 
+    {
+      return rank * MaxChunk;
+    } 
+  else 
+    {
+      return (CutOff * MaxChunk) + ((rank - CutOff) * MinChunk);
+    }
+}
+
 
 
 #endif	

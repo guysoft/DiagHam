@@ -33,6 +33,7 @@
 #include "HilbertSpace/BosonOnSphere.h"
 #include "HilbertSpace/BosonOnSphereTwoLandauLevels.h"
 #include "HilbertSpace/FermionOnSphereTwoLandauLevels.h"
+#include "HilbertSpace/FermionOnSphereWithSpinLzSzSymmetry.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
 #include "Matrix/ComplexMatrix.h"
@@ -1926,21 +1927,39 @@ void BosonOnSphereTwoLandauLevels::BosonicStateTimePolarizedSlatersLzSymmetry(Re
     {
       if(bosonState[j] != 0)
 	{
-	  if( this->GetSymmetricStateIndex(j) >= j)
+	  int SymmtricIndex = this->GetSymmetricStateIndex(j);
+	  if( SymmtricIndex > j)
 	    {
-	      this->GetMonomialLandau(j, Monomial);
-	   
+	      this->GetMonomialLandau(j, Monomial);	   
 	      finalSpace->MonomialsTimesPolarizedSlaterProjection(Slater, Monomial, SortingMap,NbrPermutations,Permutations1, Permutations2, bosonState[j]);	  
+	    }
+	  else if ( SymmtricIndex ==  j)
+	    {
+	      this->GetMonomialLandau(j, Monomial);	   
+	      finalSpace->MonomialsTimesPolarizedSlaterProjection(Slater, Monomial, SortingMap,NbrPermutations,Permutations1, Permutations2, bosonState[j]*0.5);	  
 	    }
 	}
     }
   
+  unsigned long TmpState;
   for ( It = SortingMap.begin() ; It != SortingMap.end(); It++)
     {
       int TmpLzMax = 2 * finalSpace->LzMax + 1;
       while ((( (*It).first >> TmpLzMax) & 0x1ul) == 0x0ul)
 	--TmpLzMax;
       outputVector[finalSpace->FindStateIndex((*It).first, TmpLzMax)] += (*It).second;
+      
+      double Coefficient = 1.0 - 2.0* ((double)(NbrParticlesPerColor & 0x1ul)) ;
+      unsigned long SymmetricState = FermionOnSphereWithSpinLzSzSymmetry::ApplyLzSymmetry((*It).first, finalSpace->LzMax, Coefficient);      
+            
+      TmpLzMax = 2 * finalSpace->LzMax + 1;
+      while ((( SymmetricState >> TmpLzMax) & 0x1ul) == 0x0ul)
+	--TmpLzMax;
+      int TmpIndex = finalSpace->FindStateIndex(SymmetricState, TmpLzMax);
+      if ( TmpIndex < this->HilbertSpaceDimension ) 
+	{
+	  outputVector[TmpIndex] += (*It).second * Coefficient; 
+	}	
     }
   
   delete [] Monomial;

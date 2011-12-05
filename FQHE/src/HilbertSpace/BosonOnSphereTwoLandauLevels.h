@@ -831,7 +831,7 @@ inline double BosonOnSphereTwoLandauLevels::GetConfigNorm(long index)
 
 inline int BosonOnSphereTwoLandauLevels::GetSymmetricStateIndex (int index)
 {
-	int Index = this->NbrBosons-1; //start filling from last element as will have lowest value.
+  int Index = this->NbrBosons-1; //start filling from last element as will have lowest value.
   unsigned long InitialState = this->StateDescription[index];
   int Pos  = 0;
   int StateLzMax = this->StateLzMax[index]; //number of bits away from most significant bits.
@@ -869,11 +869,11 @@ inline int BosonOnSphereTwoLandauLevels::GetSymmetricStateIndex (int index)
   
   SortArrayDownOrdering(this->TemporaryState,this->NbrBosons);
 	
-	for (int i = 0 ; i < this->NbrBosons ; i++)
-		{
-			cout <<this->TemporaryState[i]<<" ";
-		}
-		cout <<endl;
+// 	for (int i = 0 ; i < this->NbrBosons ; i++)
+// 		{
+// 			cout <<this->TemporaryState[i]<<" ";
+// 		}
+// 		cout <<endl;
 // 	this->TemporaryStateLzMax = this->NbrLzValue - 1;
 //   while (this->TemporaryState[this->TemporaryStateLzMax] == 0)
 //     --this->TemporaryStateLzMax;

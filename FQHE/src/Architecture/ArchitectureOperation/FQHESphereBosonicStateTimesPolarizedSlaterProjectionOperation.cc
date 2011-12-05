@@ -50,7 +50,7 @@ using std::cout;
 using std::endl;
 using std::ios;
 
-FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation(ParticleOnSphere * initialSpace, FermionOnSphere * fermionSpace, FermionOnSphereWithSpin * finalSpace, RealVector* bosonicVector, RealVector* outputVector,bool twoLandauLevels,int nbrStage)
+FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation(ParticleOnSphere * initialSpace, FermionOnSphere * fermionSpace, FermionOnSphereWithSpin * finalSpace, RealVector* bosonicVector, RealVector* outputVector,bool twoLandauLevels,bool twoLandauLevelLz, int nbrStage)
 {
   this->FirstComponent = 0;	
   this->NbrComponent = initialSpace->GetHilbertSpaceDimension();
@@ -62,6 +62,7 @@ FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::FQHESphereBosonic
   this->BosonicVector = bosonicVector;
   this->NbrStage = nbrStage;
   this->TwoLandauLevels = twoLandauLevels;
+  this->TwoLandauLevelLz = twoLandauLevelLz;
 }
 
 // copy constructor 
@@ -78,6 +79,7 @@ FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::FQHESphereBosonic
   this->OutputVector =  operation.OutputVector;
   this->BosonicVector = operation.BosonicVector;
   this->TwoLandauLevels = operation.TwoLandauLevels;
+  this->TwoLandauLevelLz= operation.TwoLandauLevelLz;
 }
 
 // destructor
@@ -127,7 +129,16 @@ bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::RawApplyOper
   gettimeofday (&TotalStartingTime, 0);
   
   if (this->TwoLandauLevels)
-    ((BosonOnSphereTwoLandauLevels * )this->InitialSpace)->BosonicStateTimePolarizedSlaters(*this->BosonicVector, *this->OutputVector,this->FermionSpace , this->FinalSpace, this->FirstComponent ,this->NbrComponent);
+    {
+      if ( this->TwoLandauLevelLz ) 
+	{
+	  ((BosonOnSphereTwoLandauLevels * )this->InitialSpace)->BosonicStateTimePolarizedSlatersLzSymmetry(*this->BosonicVector, *this->OutputVector,this->FermionSpace , this->FinalSpace, this->FirstComponent ,this->NbrComponent);
+	}
+      else
+	{
+	  ((BosonOnSphereTwoLandauLevels * )this->InitialSpace)->BosonicStateTimePolarizedSlaters(*this->BosonicVector, *this->OutputVector,this->FermionSpace , this->FinalSpace, this->FirstComponent ,this->NbrComponent);
+	}
+    }
   else
     ((BosonOnSphereShort *)this->InitialSpace)->BosonicStateTimePolarizedSlaters(*this->BosonicVector, *this->OutputVector,this->FermionSpace , this->FinalSpace, this->FirstComponent ,this->NbrComponent);
 	
@@ -145,7 +156,7 @@ bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::RawApplyOper
 
 bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::ArchitectureDependentApplyOperation(SMPArchitecture* architecture)
 {
-	char * SaveFileName = "fermions_su2_slater_sym_tmp.vec";
+  char * SaveFileName = "fermions_su2_slater_sym_tmp.vec";
   int Step = (int) this->NbrComponent / (this->NbrStage*architecture->GetNbrThreads());
   int TmpFirstComponent = this->FirstComponent;
   int ReducedNbrThreads = architecture->GetNbrThreads() - 1;
@@ -208,6 +219,7 @@ bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::Architecture
     return true;
 }
 
+
 // apply operation for SimpleMPI architecture
 //
 // architecture = pointer to the architecture
@@ -215,50 +227,19 @@ bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::Architecture
 
 bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::ArchitectureDependentApplyOperation(SimpleMPIArchitecture* architecture)
 {
-#ifdef __MPI__
-  if (architecture->IsMasterNode())
+#ifdef __MPI__  
+  this->OutputVector->ClearVector();
+  for ( int Stage = 0; Stage < this->NbrStage ; Stage++ )
+  //for ( int Stage = 0; Stage < 1 ; Stage++ )
     {
-      this->OutputVector->ClearVector();
-      RealVector* TmpVector = (RealVector*) this->OutputVector->EmptyClone(true);
-      int Step = (int) this->NbrComponent / (architecture->GetNbrSlaveNodes());
-      int TmpFirstComponent = this->FirstComponent;
-      int TmpRange[2];
-      int TmpNbrSlaves = architecture->GetNbrSlaveNodes();
-      int TmpSlaveID = 0;
-      for (int i = 0; (i < TmpNbrSlaves) && (Step >= 0); ++i)
-	{
-	  TmpRange[0] = TmpFirstComponent;
-	   TmpRange[1] = Step;
-	   TmpFirstComponent += Step;
-	   if (TmpFirstComponent >= (this->FirstComponent +this->NbrComponent))
-	     Step = this->FirstComponent + this->NbrComponent - TmpFirstComponent;
-	}
-      while ((Step > 0) && ((TmpSlaveID = architecture->WaitAnySlave())))
-	{
-	  architecture->SumVector(*(this->OutputVector));
-	}
-      while ((TmpNbrSlaves > 0) && ((TmpSlaveID = architecture->WaitAnySlave())))
-	{
-	  --TmpNbrSlaves;
-	  architecture->SumVector(*(this->OutputVector));
-	}
-    }
-  else
-    {
-      int TmpRange[2];
-      int TmpNbrElement = 0;
-      while ((architecture->ReceiveFromMaster(TmpRange, TmpNbrElement) == true) && (TmpRange[1] > 0))
-	{
-	  this->OutputVector->ClearVector();
-	  this->SetIndicesRange(TmpRange[0], TmpRange[1]); 
-	  if (architecture->GetLocalArchitecture()->GetArchitectureID() == AbstractArchitecture::SMP)
-	    this->ArchitectureDependentApplyOperation((SMPArchitecture*) architecture->GetLocalArchitecture());
-	  else
-	    this->RawApplyOperation();
-	  architecture->SendDone();
-	  architecture->SumVector(*(this->OutputVector));
-	}
-    }
+      int StageDimension = this->GetRankChunkSize(this->InitialSpace->GetHilbertSpaceDimension(), Stage,  NbrStage);
+      int StageStart = this->GetRankChunkStart(this->InitialSpace->GetHilbertSpaceDimension(), Stage,  NbrStage);
+      this->SetIndicesRange(StageStart +this->GetRankChunkStart(StageDimension, architecture->GetNodeNbr(),  architecture->GetNbrNodes()), 
+				       this->GetRankChunkSize(StageDimension, architecture->GetNodeNbr(),  architecture->GetNbrNodes())); 
+      this->RawApplyOperation();	  
+    }    
+  MPI_Barrier(MPI_COMM_WORLD);
+  architecture->SumVector(*(this->OutputVector));
   return true;
 #else
   return this->RawApplyOperation();

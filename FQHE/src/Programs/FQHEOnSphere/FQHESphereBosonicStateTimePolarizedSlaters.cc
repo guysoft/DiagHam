@@ -13,7 +13,7 @@
 
 #include "Options/Options.h"
 #include "Options/OptionManager.h"
-#include "Options/OptionGroup.h"
+#include "Options/OptionGroup.h"                      
 #include "Options/AbstractOption.h"
 #include "Options/BooleanOption.h"
 #include "Options/SingleIntegerOption.h"
@@ -59,11 +59,11 @@ int main(int argc, char** argv)
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* OutputGroup = new OptionGroup ("output options");
   
-	ArchitectureManager Architecture;
+  ArchitectureManager Architecture;
 	
   Manager += SystemGroup;
   Manager += MiscGroup;
-	Architecture.AddOptionGroup(&Manager);
+  Architecture.AddOptionGroup(&Manager);
   Manager += OutputGroup;
 	
   (*SystemGroup) += new SingleStringOption ('\0', "state", "name of the vector file in the 2LL");
@@ -80,6 +80,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "minus-szparity", "select the  Sz <-> -Sz symmetric sector with negative parity");
   (*SystemGroup) += new BooleanOption  ('\n', "minus-lzparity", "select the  Lz <-> -Lz symmetric sector with negative parity");  
   (*OutputGroup) += new BooleanOption ('\n', "normalize", "the output vector will be normalize on the factory",false);
+  (*OutputGroup) += new BooleanOption ('\n', "2-ll-lz", "use lz symmetry to reduce number of 2-ll boson configs taken",false);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 	
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -95,6 +96,7 @@ int main(int argc, char** argv)
     }
  
   bool LL2 = Manager.GetBoolean("2-ll"); 
+  bool LzSym = Manager.GetBoolean("2-ll-lz"); 
  
   RealVector InitialState;
   if (InitialState.ReadVector(Manager.GetString("state")) == false)
@@ -197,13 +199,13 @@ int main(int argc, char** argv)
 	
   RealVector OutputVector(FinalSpace->GetHilbertSpaceDimension(),true);
 	
-  FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation Operation(InitialSpace, SlaterSpace, FinalSpace, &InitialState, &OutputVector,LL2);
-	
-  Operation.ApplyOperation(Architecture.GetArchitecture());
+  FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation Operation(InitialSpace, SlaterSpace, FinalSpace, &InitialState, &OutputVector,LL2,LzSym);	
+  Operation.ApplyOperation(Architecture.GetArchitecture());    
+  
 
   if(Manager.GetBoolean("normalize"))
     FinalSpace->ConvertFromUnnormalizedMonomial(OutputVector,0l,true);
 	
-  OutputVector.WriteVector(Manager.GetString("bin-output"));	
+  Architecture.GetArchitecture()->WriteVector(OutputVector, Manager.GetString("bin-output"));
 }
 
