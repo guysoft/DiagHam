@@ -339,6 +339,12 @@ class FermionOnSphereWithSpinLzSzSymmetry :  public FermionOnSphereWithSpin
   // return value = flipped configuration  
   static unsigned long ApplyLzSymmetry (unsigned long initialState, int lzMax, double& coefficient);
   
+  // Apply the Sz operator to flip all the spins
+  //
+  // initialState = state that has to be converted to its canonical expression
+  // return value = flipped configuration
+  static unsigned long ApplySzSymmetry (unsigned long initialState, double &coefficient);
+  
   protected:
 
   // find state index
@@ -717,6 +723,40 @@ inline unsigned long FermionOnSphereWithSpinLzSzSymmetry::ApplyLzSymmetry (unsig
       coefficient *= 1.0;      
     }  
   
+  return TmpState;
+}
+
+
+// Apply the Sz operator to flip all the spins
+//
+// initialState = state that has to be converted to its canonical expression
+// return value = flipped configuration
+
+inline unsigned long FermionOnSphereWithSpinLzSzSymmetry::ApplySzSymmetry (unsigned long initialState, double& coefficient)
+{
+  unsigned long TmpState = ((initialState >> 1) ^ initialState) & FERMION_SPHERE_SU2_SZ_MASK;
+  TmpState |= TmpState << 1;
+  TmpState ^= initialState; 
+  unsigned long TmpState2 = initialState;
+  TmpState2 &= (TmpState2 >> 1);
+  TmpState2 &= FERMION_SPHERE_SU2_SZ_MASK;
+#ifdef __64_BITS__
+  TmpState2 ^= (TmpState2 >> 32);
+#endif
+  TmpState2 ^= (TmpState2 >> 16);
+  TmpState2 ^= (TmpState2 >> 8);
+  TmpState2 ^= (TmpState2 >> 4);
+  TmpState2 ^= (TmpState2 >> 2);
+  initialState |= (TmpState2 & 1) << FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT;  
+  
+  if ( ((initialState >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x01ul ) != 0 )
+    {
+      coefficient *= -1.0;
+    }
+  else
+    {      
+      coefficient *= 1.0;      
+    }  
   return TmpState;
 }
 

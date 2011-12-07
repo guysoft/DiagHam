@@ -50,7 +50,7 @@ using std::cout;
 using std::endl;
 using std::ios;
 
-FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation(ParticleOnSphere * initialSpace, FermionOnSphere * fermionSpace, FermionOnSphereWithSpin * finalSpace, RealVector* bosonicVector, RealVector* outputVector,bool twoLandauLevels,bool twoLandauLevelLz, int nbrMPIStage, int nbrSMPStage)
+FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation(ParticleOnSphere * initialSpace, FermionOnSphere * fermionSpace, FermionOnSphereWithSpin * finalSpace, RealVector* bosonicVector, RealVector* outputVector,bool twoLandauLevels,bool twoLandauLevelLz, bool twoLandauLevelSz, int nbrMPIStage, int nbrSMPStage)
 {
   this->FirstComponent = 0;	
   this->NbrComponent = initialSpace->GetHilbertSpaceDimension();
@@ -64,6 +64,7 @@ FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::FQHESphereBosonic
   this->NbrSMPStage = nbrSMPStage;
   this->TwoLandauLevels = twoLandauLevels;
   this->TwoLandauLevelLz = twoLandauLevelLz;
+  this->TwoLandauLevelSz = twoLandauLevelSz;
   this->MPINodeNbr = 0; 
 }
 
@@ -84,6 +85,7 @@ FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::FQHESphereBosonic
   this->NbrSMPStage = operation.NbrSMPStage;
   this->TwoLandauLevels = operation.TwoLandauLevels;
   this->TwoLandauLevelLz= operation.TwoLandauLevelLz;
+  this->TwoLandauLevelSz= operation.TwoLandauLevelSz;
   this->MPINodeNbr = operation.MPINodeNbr;
 }
 
@@ -137,7 +139,14 @@ bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::RawApplyOper
     {
       if ( this->TwoLandauLevelLz ) 
 	{
-	  ((BosonOnSphereTwoLandauLevels * )this->InitialSpace)->BosonicStateTimePolarizedSlatersLzSymmetry(*this->BosonicVector, *this->OutputVector,this->FermionSpace , this->FinalSpace, this->FirstComponent ,this->NbrComponent);
+	  if ( this->TwoLandauLevelSz ) 
+	    {
+	      ((BosonOnSphereTwoLandauLevels * )this->InitialSpace)->BosonicStateTimePolarizedSlatersLzSzSymmetry(*this->BosonicVector, *this->OutputVector,this->FermionSpace , this->FinalSpace, this->FirstComponent ,this->NbrComponent);
+	    }
+	  else
+	    {
+	      ((BosonOnSphereTwoLandauLevels * )this->InitialSpace)->BosonicStateTimePolarizedSlatersLzSymmetry(*this->BosonicVector, *this->OutputVector,this->FermionSpace , this->FinalSpace, this->FirstComponent ,this->NbrComponent);
+	    }
 	}
       else
 	{
@@ -190,16 +199,17 @@ bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::Architecture
 	  TmpOperations[i]->OutputVector->ClearVector();
 	}
       architecture->SendJobs();
-      //cout << TmpFirstComponent << " /  " << this->NbrComponent << " (" << ((TmpFirstComponent * 100) / this->NbrComponent) << "%)                   \r";
-      //cout << TmpFirstComponent << " /  " << this->NbrComponent << " (" << ((TmpFirstComponent * 100) / this->NbrComponent) << "%)                   \n";
-      //cout.flush();      
       for (int i = 1; i < architecture->GetNbrThreads(); ++i)
 	{
 	  (*(this->OutputVector)) += (*(TmpOperations[i]->OutputVector));	
 	}
-      this->OutputVector->WriteVector(SaveFileName);
-    }
+      //cout << TmpFirstComponent << " /  " << this->NbrComponent << " (" << ((TmpFirstComponent * 100) / this->NbrComponent) << "%)                   \r";
+      //cout << TmpFirstComponent << " /  " << this->NbrComponent << " (" << ((TmpFirstComponent * 100) / this->NbrComponent) << "%)                   \n";
+      //cout.flush();      
   
+      //sthis->OutputVector->WriteVector(SaveFileName);
+    }
+
   for (int i = 1; i < architecture->GetNbrThreads(); ++i)
     {	
       delete TmpOperations[i]->OutputVector;

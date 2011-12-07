@@ -89,5 +89,63 @@ inline void EvaluatePermutationsOfSubGroups(unsigned long nbrPermutations, int n
   return;
 }
 
+// evaluate all the different way to split the permutations of a given in two sub groups but exclude ones which are symmetric with higher index (not compulsorily the same number of elements in the two subgroups)
+//
+// nbrPermutations = number of different permutations
+// nbrElement = number of element in the permutations
+// nbrElementPerColor = number of element in the first group
+// permutations1 = array where will be stored the permutations of the first group
+// permutations2 = array where will be stored the permutations of the second group
+
+inline void EvaluatePermutationsOfSubGroupsSymmetric(unsigned long nbrPermutations, int nbrElement, int nbrElementPerColor, unsigned long * permutations1, unsigned long * permutations2)
+{
+  unsigned long MinValue = (0x1ul << nbrElementPerColor) - 0x1ul;
+  unsigned long MaxValue = MinValue << (nbrElement - nbrElementPerColor);
+  unsigned long* TmpArrayPerm = new unsigned long [nbrElement];
+  unsigned long Mask = (0x1ul << nbrElement) - 1;
+  nbrPermutations = 0;
+  for (; MinValue <= MaxValue; ++MinValue)
+    {
+      int Count = 0;
+      int Pos = 0;
+      while ((Pos < nbrElement) && (Count <= nbrElementPerColor))
+	{
+	  if (((MinValue >> Pos) & 0x1ul) != 0x0ul)
+	    ++Count;
+	  ++Pos;
+	}
+      if (Count == nbrElementPerColor && (MinValue < ((~MinValue) & Mask  )) )
+	{
+	  int Pos1 = 0;
+	  int Pos2 = nbrElementPerColor;
+	  for (Pos = 0; Pos < nbrElement; ++Pos)
+	    {
+	      if (((MinValue >> Pos) & 0x1ul) != 0x0ul)
+		{
+		  TmpArrayPerm[Pos1] = (unsigned long) Pos;
+		  ++Pos1;
+		}
+	      else
+		{
+		  TmpArrayPerm[Pos2] = (unsigned long) Pos;
+		  ++Pos2;
+		}
+	    }
+	  unsigned long TmpPerm2 = 0ul;
+	  unsigned long TmpPerm3 = 0ul;
+	  for (int i = 0; i < nbrElementPerColor; ++i)
+	    {
+	      TmpPerm2 |= TmpArrayPerm[i] << (i * 5);
+	      TmpPerm3 |= TmpArrayPerm[i + nbrElementPerColor] << (i *5);
+	    }
+	  permutations1[nbrPermutations] = TmpPerm2;
+	  permutations2[nbrPermutations] = TmpPerm3;	      
+	  ++nbrPermutations;
+	}
+    }
+  delete[] TmpArrayPerm;
+  return;
+}
+
 
 #endif

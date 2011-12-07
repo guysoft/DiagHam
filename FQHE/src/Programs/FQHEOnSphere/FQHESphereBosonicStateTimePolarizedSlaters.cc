@@ -81,6 +81,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "minus-lzparity", "select the  Lz <-> -Lz symmetric sector with negative parity");  
   
   (*SystemGroup) += new BooleanOption ('\n', "2-ll-lz", "use lz symmetry to reduce number of 2-ll boson configs taken",false);
+  (*SystemGroup) += new BooleanOption ('\n', "2-ll-sz", "use sz symmetry to reduce number of 2-ll boson configs taken",false);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "mpi-stages", "the number of stages divide into when using MPI  (default is 20)", 20);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "smp-stages", "the number of stages divide into when using SMP  (default is 20)", 20);
   (*OutputGroup) += new BooleanOption ('\n', "normalize", "the output vector will be normalize on the factory",false);
@@ -100,7 +101,8 @@ int main(int argc, char** argv)
  
   bool LL2 = Manager.GetBoolean("2-ll"); 
   bool LzSym = Manager.GetBoolean("2-ll-lz");   
- 
+  bool SzSym = Manager.GetBoolean("2-ll-sz");  
+  
   RealVector InitialState;
   if (InitialState.ReadVector(Manager.GetString("state")) == false)
     {
@@ -202,7 +204,7 @@ int main(int argc, char** argv)
 	
   RealVector OutputVector(FinalSpace->GetHilbertSpaceDimension(),true);
 	
-  FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation Operation(InitialSpace, SlaterSpace, FinalSpace, &InitialState, &OutputVector,LL2,LzSym, Manager.GetInteger("mpi-stages"), Manager.GetInteger("smp-stages"));	
+  FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation Operation(InitialSpace, SlaterSpace, FinalSpace, &InitialState, &OutputVector,LL2,LzSym, SzSym, Manager.GetInteger("mpi-stages"), Manager.GetInteger("smp-stages"));	
   Operation.ApplyOperation(Architecture.GetArchitecture());    
   
 

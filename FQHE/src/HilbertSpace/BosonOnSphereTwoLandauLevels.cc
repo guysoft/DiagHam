@@ -1978,67 +1978,87 @@ void BosonOnSphereTwoLandauLevels::BosonicStateTimePolarizedSlatersLzSymmetry(Re
 // firstComponent = first component to be computed
 // nbrComponent = number of components to be computed
 
-// void BosonOnSphereTwoLandauLevels::BosonicStateTimePolarizedSlatersLzSzSymmetry(RealVector& bosonState, RealVector& outputVector, FermionOnSphere * fermionSpace , FermionOnSphereWithSpin* finalSpace, int firstComponent,int nbrComponent)
-// {
-//   map<unsigned long , double> SortingMap;
-//   map<unsigned long , double>::iterator It;
-//   
-//   BinomialCoefficients Binomial(this->NbrBosons);
-//   int NbrParticlesPerColor = this->NbrBosons >> 1;
-//   unsigned long NbrPermutations = Binomial(this->NbrBosons, NbrParticlesPerColor);
-//   unsigned long* Permutations1 = new unsigned long[NbrPermutations];
-//   unsigned long* Permutations2 = new unsigned long[NbrPermutations];
-//   
-//   EvaluatePermutationsOfSubGroups(NbrPermutations,this->NbrBosons, NbrParticlesPerColor, Permutations1, Permutations2);
-//   
-//   unsigned long* Monomial = new unsigned long[this->NbrBosons];
-//   unsigned long* Slater = new unsigned long[fermionSpace->NbrFermions];
-//   
-//   int NbrMax = firstComponent + nbrComponent;
-//   int NbrVariable = 0;
-//   
-//   fermionSpace->ConvertToMonomial(fermionSpace->StateDescription[0], Slater);
-//   
-//   for (int j = firstComponent; j < NbrMax; j++)
-//     {
-//       if(bosonState[j] != 0)
-// 	{
-// 	  int SymmtricIndex = this->GetSymmetricStateIndex(j);
-// 	  if( SymmtricIndex > j)
-// 	    {
-// 	      this->GetMonomialLandau(j, Monomial);	   
-// 	      finalSpace->MonomialsTimesPolarizedSlaterProjection(Slater, Monomial, SortingMap,NbrPermutations,Permutations1, Permutations2, bosonState[j]);	  
-// 	    }
-// 	  else if ( SymmtricIndex ==  j)
-// 	    {
-// 	      this->GetMonomialLandau(j, Monomial);	   
-// 	      finalSpace->MonomialsTimesPolarizedSlaterProjection(Slater, Monomial, SortingMap,NbrPermutations,Permutations1, Permutations2, bosonState[j]*0.5);	  
-// 	    }
-// 	}
-//     }
-//   
-//   unsigned long TmpState;
-//   for ( It = SortingMap.begin() ; It != SortingMap.end(); It++)
-//     {
-//       int TmpLzMax = 2 * finalSpace->LzMax + 1;
-//       while ((( (*It).first >> TmpLzMax) & 0x1ul) == 0x0ul)
-// 	--TmpLzMax;
-//       outputVector[finalSpace->FindStateIndex((*It).first, TmpLzMax)] += (*It).second;
-//       
-//       double Coefficient = 1.0 - 2.0* ((double)(NbrParticlesPerColor & 0x1ul)) ;
-//       unsigned long SymmetricState = FermionOnSphereWithSpinLzSzSymmetry::ApplyLzSymmetry((*It).first, finalSpace->LzMax, Coefficient);      
-//             
-//       TmpLzMax = 2 * finalSpace->LzMax + 1;
-//       while ((( SymmetricState >> TmpLzMax) & 0x1ul) == 0x0ul)
-// 	--TmpLzMax;
-//       int TmpIndex = finalSpace->FindStateIndex(SymmetricState, TmpLzMax);
-//       if ( TmpIndex < this->HilbertSpaceDimension ) 
-// 	{
-// 	  outputVector[TmpIndex] += (*It).second * Coefficient; 
-// 	}	
-//     }
-//   
-//   delete [] Monomial;
-//   delete [] Slater;
-// }
-// 
+void BosonOnSphereTwoLandauLevels::BosonicStateTimePolarizedSlatersLzSzSymmetry(RealVector& bosonState, RealVector& outputVector, FermionOnSphere * fermionSpace , FermionOnSphereWithSpin* finalSpace, int firstComponent,int nbrComponent)
+{
+  map<unsigned long , double> SortingMap;
+  map<unsigned long , double>::iterator It;
+  
+  BinomialCoefficients Binomial(this->NbrBosons);
+  int NbrParticlesPerColor = this->NbrBosons >> 1;
+  unsigned long NbrPermutations = Binomial(this->NbrBosons, NbrParticlesPerColor) / 2;
+  unsigned long* Permutations1 = new unsigned long[NbrPermutations];
+  unsigned long* Permutations2 = new unsigned long[NbrPermutations];
+  
+  EvaluatePermutationsOfSubGroupsSymmetric(NbrPermutations, this->NbrBosons, NbrParticlesPerColor, Permutations1, Permutations2);
+  
+  unsigned long* Monomial = new unsigned long[this->NbrBosons];
+  unsigned long* Slater = new unsigned long[fermionSpace->NbrFermions];
+  
+  int NbrMax = firstComponent + nbrComponent;
+  int NbrVariable = 0;
+  
+  fermionSpace->ConvertToMonomial(fermionSpace->StateDescription[0], Slater);
+  
+  for (int j = firstComponent; j < NbrMax; j++)
+    {
+      if(bosonState[j] != 0)
+	{
+	  int SymmtricIndex = this->GetSymmetricStateIndex(j);
+	  if( SymmtricIndex > j)
+	    {
+	      this->GetMonomialLandau(j, Monomial);	   
+	      finalSpace->MonomialsTimesPolarizedSlaterProjection(Slater, Monomial, SortingMap,NbrPermutations,Permutations1, Permutations2, bosonState[j]);	  
+	    }
+	  else if ( SymmtricIndex ==  j)
+	    {
+	      this->GetMonomialLandau(j, Monomial);	   
+	      finalSpace->MonomialsTimesPolarizedSlaterProjection(Slater, Monomial, SortingMap,NbrPermutations,Permutations1, Permutations2, bosonState[j]*0.5);	  
+	    }
+	}
+    }
+  
+  unsigned long TmpState;
+  for ( It = SortingMap.begin() ; It != SortingMap.end(); It++)
+    {
+      int TmpLzMax = 2 * finalSpace->LzMax + 1;
+      while ((( (*It).first >> TmpLzMax) & 0x1ul) == 0x0ul)
+	--TmpLzMax;
+      outputVector[finalSpace->FindStateIndex((*It).first, TmpLzMax)] += (*It).second;
+      
+      double Coefficient = 1.0 - 2.0* ((double)(NbrParticlesPerColor & 0x1ul)) ;
+      unsigned long SymmetricState = FermionOnSphereWithSpinLzSzSymmetry::ApplyLzSymmetry((*It).first, finalSpace->LzMax, Coefficient);      
+            
+      TmpLzMax = 2 * finalSpace->LzMax + 1;
+      while ((( SymmetricState >> TmpLzMax) & 0x1ul) == 0x0ul)
+	--TmpLzMax;
+      int TmpIndex = finalSpace->FindStateIndex(SymmetricState, TmpLzMax);
+      if ( TmpIndex < this->HilbertSpaceDimension ) 
+	{
+	  outputVector[TmpIndex] += (*It).second * Coefficient; 
+	}
+	
+      double SzCoefficient =  1.0 - 2.0* ((double)(NbrParticlesPerColor & 0x1ul)); 
+      unsigned long SzSymmetricState =  FermionOnSphereWithSpinLzSzSymmetry::ApplySzSymmetry((*It).first, SzCoefficient);
+      TmpLzMax = 2 * finalSpace->LzMax + 1;
+      while ((( SzSymmetricState >> TmpLzMax) & 0x1ul) == 0x0ul)
+	--TmpLzMax;
+      outputVector[finalSpace->FindStateIndex(SzSymmetricState, TmpLzMax)] += (*It).second*SzCoefficient;
+      
+      Coefficient = 1.0 - 2.0* ((double)(NbrParticlesPerColor & 0x1ul)) ;
+      Coefficient *= SzCoefficient;
+      SymmetricState = FermionOnSphereWithSpinLzSzSymmetry::ApplyLzSymmetry(SzSymmetricState, finalSpace->LzMax, Coefficient);      
+            
+      TmpLzMax = 2 * finalSpace->LzMax + 1;
+      while ((( SymmetricState >> TmpLzMax) & 0x1ul) == 0x0ul)
+	--TmpLzMax;
+      TmpIndex = finalSpace->FindStateIndex(SymmetricState, TmpLzMax);
+      if ( TmpIndex < this->HilbertSpaceDimension ) 
+	{
+	  outputVector[TmpIndex] += (*It).second * Coefficient; 
+	}
+    }
+  
+  delete [] Monomial;
+  delete [] Slater;
+}
+

@@ -75,8 +75,13 @@ class FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation : public Abs
   // true if 2LL are considered
   bool TwoLandauLevels;
   
+  // true if we use Lz symmetry on 2LL bosonic state
   bool TwoLandauLevelLz;
   
+  // true if we use Sz symmetry on other parts
+  bool TwoLandauLevelSz;
+  
+  // number of MPI process. If not using MPI this is 0
   int MPINodeNbr;
   
  public:
@@ -86,7 +91,7 @@ class FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation : public Abs
   // Space = pointer to the HilbertSpace to use
   // fileName = name of the file where the kostka number will be store
   // nbrLL = number of Landau levels
-  FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation(ParticleOnSphere * initialSpace, FermionOnSphere * fermionSpace, FermionOnSphereWithSpin * finalSpace, RealVector* bosonicVector, RealVector* outputVector, bool twoLandauLevels, bool twoLandauLevelLz, int nbrMPIStage = 20, int nbrSMPStage = 20);
+  FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation(ParticleOnSphere * initialSpace, FermionOnSphere * fermionSpace, FermionOnSphereWithSpin * finalSpace, RealVector* bosonicVector, RealVector* outputVector, bool twoLandauLevels, bool twoLandauLevelLz, bool twoLandauLevelSz, int nbrMPIStage = 20, int nbrSMPStage = 20);
   
   // copy constructor 
   //
