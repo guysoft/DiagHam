@@ -3107,7 +3107,7 @@ void FermionOnSphereWithSpin::MonomialsTimesPolarizedSlater(unsigned long * slat
 // permutations1 = array where are stored the permutations of the spin up
 // permutations2 = array where are stored the permutations of the spin down
 // initialCoef = inital coefficient in front of the monomial
-
+/*
 void FermionOnSphereWithSpin::MonomialsTimesPolarizedSlaterProjection(unsigned long * slater, unsigned long * monomial, map<unsigned long , double> & sortingMap, unsigned long nbrPermutations , unsigned long * permutations1, unsigned long * permutations2, double initialCoef)
 {
   unsigned long* State = new unsigned long[this->NbrFermions];
@@ -3257,10 +3257,10 @@ void FermionOnSphereWithSpin::MonomialsTimesPolarizedSlaterProjection(unsigned l
       while (std::prev_permutation(HalfMonomialsUp, HalfMonomialsUp + HalfNbrParticles));
     }
   delete [] State;
-}
+}*/
 
 
-/*// compute the projection of the product of a monomial in the two lowest LL and the halperin 110 state
+// compute the projection of the product of a monomial in the two lowest LL and the halperin 110 state
 //
 // slater = array where the monomial representation of the slater determinant for half the number of particles is stored
 // monomial = array where the monomial representation is stored
@@ -3337,16 +3337,17 @@ void FermionOnSphereWithSpin::MonomialsTimesPolarizedSlaterProjection(unsigned l
 	  HalfMonomialsDown[i] = monomial[(TmpPermDown >> (i * 5)) & 0x1ful];
 	}
       
-      CoefInitial =  ((double)MultiplicitiesFactorial(HalfMonomialsUp,HalfNbrParticles) * MultiplicitiesFactorial(HalfMonomialsDown,HalfNbrParticles)) * MonomialFact;
+      //CoefInitial =  ((double)MultiplicitiesFactorial(HalfMonomialsUp,HalfNbrParticles) * MultiplicitiesFactorial(HalfMonomialsDown,HalfNbrParticles)) * MonomialFact;
       
-      
-      do
-	{	
-	  CoefUp = CoefInitial;
-	  	  
+      CoefInitial =  MonomialFact;
+      for ( int SlaterPermIndexUp = 0 ; SlaterPermIndexUp < NbrSlaterPermutations; SlaterPermIndexUp++ )
+	{
+	  
+	  CoefUp = CoefInitial * SlaterSigns[SlaterPermIndexUp];
+	  
 	  for(int k = 0 ; k < HalfNbrParticles ; k++)
 	    {
-	      State[k] = (HalfMonomialsUp[k]>>1) + slater[k];
+	      State[k] = (HalfMonomialsUp[k]>>1) + SlaterPermutations[SlaterPermIndexUp][k];
 	      if ((HalfMonomialsUp[k] & 0x1ul) != 0ul) //not zero so have to project
 		{
 		  long Numerator = -((HalfMonomialsUp[k]>>1) * TmpFinalLzMaxUp) + (State[k] * TmpLzMaxUp);
@@ -3365,7 +3366,7 @@ void FermionOnSphereWithSpin::MonomialsTimesPolarizedSlaterProjection(unsigned l
 	    {
 	      for ( int SlaterPermIndex = 0 ; SlaterPermIndex < NbrSlaterPermutations; SlaterPermIndex++ )
 		{
-		  CoefDown = 1.0;		    
+		  CoefDown = SlaterSigns[SlaterPermIndex];		    
 		  for(int k = 0 ; k < HalfNbrParticles ; k++)
 		    {
 		      State[k+HalfNbrParticles] = (HalfMonomialsDown[k]>>1) + SlaterPermutations[SlaterPermIndex][k];
@@ -3410,8 +3411,8 @@ void FermionOnSphereWithSpin::MonomialsTimesPolarizedSlaterProjection(unsigned l
 			  Sign ^= TmpState2;
 			  TmpState |= Mask;
 			}
-		      
-		      if ( Bool ) 
+
+                      if ( Bool ) 
 			{
 			  for (int i = HalfNbrParticles; i < this->NbrFermions ; i++)
 			    {
@@ -3440,11 +3441,11 @@ void FermionOnSphereWithSpin::MonomialsTimesPolarizedSlaterProjection(unsigned l
 			  if ((Sign & 0x1ul) != 0ul)
 			    CoefDown *= -1l;
 			  
-			  InsertionResult = sortingMap.insert (pair <unsigned long, double> (TmpState , CoefDown*CoefUp*SlaterSigns[SlaterPermIndex]));
+			  InsertionResult = sortingMap.insert (pair <unsigned long, double> (TmpState , CoefDown*CoefUp));
 			  
 			  if (InsertionResult.second == false)
 			    {
-			      InsertionResult.first->second += CoefDown*CoefUp*SlaterSigns[SlaterPermIndex];
+			      InsertionResult.first->second += CoefDown*CoefUp;
 			    }
 			}
 		    }
@@ -3452,7 +3453,7 @@ void FermionOnSphereWithSpin::MonomialsTimesPolarizedSlaterProjection(unsigned l
 	      //while (std::prev_permutation(HalfMonomialsDown, HalfMonomialsDown + HalfNbrParticles));
 	    }
 	}
-      while (std::prev_permutation(HalfMonomialsUp, HalfMonomialsUp + HalfNbrParticles));
+      //while (std::prev_permutation(HalfMonomialsUp, HalfMonomialsUp + HalfNbrParticles));
     }
   for ( int SlaterPermIndex = 0 ; SlaterPermIndex < NbrSlaterPermutations; SlaterPermIndex++ )
     {
@@ -3461,4 +3462,4 @@ void FermionOnSphereWithSpin::MonomialsTimesPolarizedSlaterProjection(unsigned l
   delete [] SlaterPermutations;
   delete [] SlaterSigns;
   delete [] State;
-}*/
+}
