@@ -50,6 +50,8 @@ class AbstractArchitectureOperation;
 
 class SimpleMPIArchitecture : public AbstractArchitecture
 {
+  
+ friend class FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation;
 
  protected:
 

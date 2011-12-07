@@ -193,15 +193,17 @@ BosonOnSphereTwoLandauLevels::BosonOnSphereTwoLandauLevels(const BosonOnSphereTw
   this->SignLookUpTable = bosons.SignLookUpTable;
   this->SignLookUpTableMask = bosons.SignLookUpTableMask;
   this->MaximumSignLookUp = bosons.MaximumSignLookUp;
-  this->ProdATemporaryState = bosons.ProdATemporaryState;
-  this->TemporaryState = bosons.TemporaryState;
+  this->ProdATemporaryState = new unsigned long[this->NbrLzValue];
+  this->TemporaryState = new unsigned long[this->NbrLzValue];
 }
 
 // destructor
 //
 
 BosonOnSphereTwoLandauLevels::~BosonOnSphereTwoLandauLevels ()
-{
+{	
+  delete [] this->ProdATemporaryState;
+  delete [] this->TemporaryState;
 }
 
 // assignement (without duplicating datas)

@@ -31,6 +31,7 @@
 #include "config.h"
 #include "Architecture/ArchitectureOperation/AbstractArchitectureOperation.h"
 #include "Architecture/AbstractArchitecture.h"
+#include "Architecture/MixedMPISMPArchitecture.h"
 
 #include <iostream>
 
@@ -61,9 +62,9 @@ bool AbstractArchitectureOperation::ApplyOperation(AbstractArchitecture* archite
     case AbstractArchitecture::SMP:
       return this->ArchitectureDependentApplyOperation((SMPArchitecture*) architecture);
     case AbstractArchitecture::SimpleMPI:
-      return this->ArchitectureDependentApplyOperation((SimpleMPIArchitecture*) architecture);
-    case AbstractArchitecture::MixedMPISMP:
-      return this->ArchitectureDependentApplyOperation((SimpleMPIArchitecture*) architecture);  
+      return this->ArchitectureDependentApplyOperation((SimpleMPIArchitecture*) architecture);	      
+    case AbstractArchitecture::MixedMPISMP:      
+      return this->ArchitectureDependentApplyOperation((SimpleMPIArchitecture*) architecture);	      
     default:
       return this->RawApplyOperation();
     }

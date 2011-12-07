@@ -34,6 +34,7 @@
 
 #include "config.h"
 #include "Architecture/ArchitectureOperation/AbstractArchitectureOperation.h"
+#include "Architecture/MixedMPISMPArchitecture.h"
 #include "HilbertSpace/FermionOnSphere.h"
 #include "HilbertSpace/BosonOnSphereTwoLandauLevels.h"
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
@@ -66,12 +67,17 @@ class FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation : public Abs
   RealVector * BosonicVector;
   
   // number of part in which the initial bosonic vector will be separated
-  int NbrStage;
+  int NbrMPIStage;
+  
+  // number of part in which the initial bosonic vector will be separated
+  int NbrSMPStage;
   
   // true if 2LL are considered
   bool TwoLandauLevels;
   
   bool TwoLandauLevelLz;
+  
+  int MPINodeNbr;
   
  public:
   
@@ -80,7 +86,7 @@ class FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation : public Abs
   // Space = pointer to the HilbertSpace to use
   // fileName = name of the file where the kostka number will be store
   // nbrLL = number of Landau levels
-  FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation(ParticleOnSphere * initialSpace, FermionOnSphere * fermionSpace, FermionOnSphereWithSpin * finalSpace, RealVector* bosonicVector, RealVector* outputVector, bool twoLandauLevels, bool twoLandauLevelLz, int nbrStage = 20);
+  FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation(ParticleOnSphere * initialSpace, FermionOnSphere * fermionSpace, FermionOnSphereWithSpin * finalSpace, RealVector* bosonicVector, RealVector* outputVector, bool twoLandauLevels, bool twoLandauLevelLz, int nbrMPIStage = 20, int nbrSMPStage = 20);
   
   // copy constructor 
   //
@@ -146,6 +152,12 @@ class FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation : public Abs
   // architecture = pointer to the architecture
   // return value = true if no error occurs
   bool ArchitectureDependentApplyOperation(SimpleMPIArchitecture* architecture);
+  
+//   // apply operation for MixedMPISMP architecture
+//   //
+//   // architecture = pointer to the architecture
+//   // return value = true if no error occurs
+//   bool ArchitectureDependentApplyOperation(MixedMPISMPArchitecture* architecture);
   
 };
 
