@@ -158,7 +158,7 @@ bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::RawApplyOper
 	
   timeval TotalEndingTime;
   gettimeofday (&TotalEndingTime, 0);
-  double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) +(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));
+  this->ExecutionTime   = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) +(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));
   //cout << this->FirstComponent << " " <<  this->NbrComponent << " : " << Dt << "s" << endl;
   return true;
 }
@@ -199,6 +199,15 @@ bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::Architecture
 	  TmpOperations[i]->OutputVector->ClearVector();
 	}
       architecture->SendJobs();
+      if (architecture->VerboseMode() == true)
+	{
+	  char TmpString[512];
+	  for (int i = 0; i < architecture->GetNbrThreads(); ++i)
+	    {
+	      sprintf (TmpString, "FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation core operation stage %d on SMP id %d done in %.3f seconds", p,  i, TmpOperations[i]->ExecutionTime);
+	      architecture->AddToLog(TmpString);
+	    }
+	}
       for (int i = 1; i < architecture->GetNbrThreads(); ++i)
 	{
 	  (*(this->OutputVector)) += (*(TmpOperations[i]->OutputVector));	
@@ -228,7 +237,7 @@ bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::Architecture
 
 bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::ArchitectureDependentApplyOperation(SimpleMPIArchitecture* architecture)
 {
-#ifdef __MPI__  
+#ifdef __MPI__    
   this->MPINodeNbr = architecture->GetNodeNbr();
   this->OutputVector->ClearVector();
   for ( int Stage = 0; Stage < this->NbrMPIStage ; Stage++ )  
@@ -237,6 +246,8 @@ bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::Architecture
       int StageStart = this->GetRankChunkStart(this->InitialSpace->GetHilbertSpaceDimension(), Stage,  NbrMPIStage);
       this->SetIndicesRange(StageStart +this->GetRankChunkStart(StageDimension,  this->MPINodeNbr,  architecture->GetNbrNodes()), 
 				       this->GetRankChunkSize(StageDimension,  this->MPINodeNbr,  architecture->GetNbrNodes())); 
+      timeval TotalStartingTime;
+      gettimeofday (&TotalStartingTime, 0);				       
       switch (architecture->GetArchitectureID())
 	{	 
 	  case AbstractArchitecture::MixedMPISMP:
@@ -245,10 +256,20 @@ bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::Architecture
 	  default:
 	    this->RawApplyOperation();
 	    break;
-	}									             
+	}		
+	timeval TotalEndingTime;
+	gettimeofday (&TotalEndingTime, 0);
+	this->ExecutionTime   = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) +(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));
+	if (architecture->VerboseMode() == true)	
+	  {
+	    char TmpString[512];      
+	    sprintf (TmpString, "FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation process operation stage %d on MPI id %d done in %.3f seconds", Stage, this->MPINodeNbr, this->ExecutionTime);
+	    architecture->AddToLog(TmpString);
+	  }
     }    
   MPI_Barrier(MPI_COMM_WORLD);
   architecture->SumVector(*(this->OutputVector));
+  
   return true;
 #else
   return this->RawApplyOperation();

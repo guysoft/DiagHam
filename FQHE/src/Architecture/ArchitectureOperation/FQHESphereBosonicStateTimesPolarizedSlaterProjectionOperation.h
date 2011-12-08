@@ -84,6 +84,9 @@ class FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation : public Abs
   // number of MPI process. If not using MPI this is 0
   int MPINodeNbr;
   
+  // execution time measured in RawApply
+  double ExecutionTime;
+  
  public:
   
   // constructor 
