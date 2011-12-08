@@ -7,6 +7,7 @@
 #include "HilbertSpace/FermionOnHyperCubicLatticeWithSpinMomentumSpace.h"
 
 #include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
+#include "HilbertSpace/BosonOnSquareLatticeWithSU3SpinMomentumSpace.h"
 
 #include "Vector/ComplexVector.h"
 
@@ -185,6 +186,15 @@ int main(int argc, char** argv)
       if (Manager.GetInteger("nbr-subbands") == 1)
 	{
 	  Space = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
+	  if (Manager.GetString("save-hilbert") != 0)
+	    {
+	      Space->WriteHilbertSpace(Manager.GetString("save-hilbert"));
+	      return 0;
+	    }
+	}
+      if (Manager.GetInteger("nbr-subbands") == 3)
+	{
+	  Space = new BosonOnSquareLatticeWithSU3SpinMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
 	  if (Manager.GetString("save-hilbert") != 0)
 	    {
 	      Space->WriteHilbertSpace(Manager.GetString("save-hilbert"));

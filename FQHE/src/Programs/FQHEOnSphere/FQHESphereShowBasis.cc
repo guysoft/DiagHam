@@ -134,7 +134,7 @@ int main(int argc, char** argv)
     {
       if (TwoLLFlag == false)
 	{
-	  if (SU2SpinFlag == false)
+	  if ((SU2SpinFlag == false) && (SU3SpinFlag == false))
 	    {
 	      if (HaldaneBasisFlag == false)
 		{

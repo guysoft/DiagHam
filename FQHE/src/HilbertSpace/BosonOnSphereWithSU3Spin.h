@@ -61,6 +61,15 @@ class BosonOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
   // three time the total Y value
   int TotalY;
 
+  // lzmax value for the fermionic states associated to the type 1 particles
+  int N1LzMax;
+  // lzmax value for the fermionic states associated to the type 1 particles
+  int N2LzMax;
+  // lzmax value for the fermionic states associated to the type 1 particles
+  int N3LzMax;
+  // largest lzmax value for the fermionic states among N1LzMax, N2LzMax and N3LzMax
+  int FermionicLzMax;
+
   // temporay array describing the type 1 particle occupation number of each state, only used during the Hilbert space generation
   unsigned long* StateDescription1;
   // temporay array describing the type 2 particle occupation number of each state, only used during the Hilbert space generation
@@ -68,37 +77,34 @@ class BosonOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
   // temporay array describing the type 3 particle occupation number of each state, only used during the Hilbert space generation
   unsigned long* StateDescription3;
 
-  // array describing each state
-  unsigned long* StateDescription;
-  // array giving maximum Lz value reached for a boson in a given state
-  int* StateHighestBit;
+  // sorted array that contains each unique configuration for the type 1 particles
+  unsigned long* UniqueStateDescription1;
+  // number of time each unique configuration for the type 1 particles appears in StateDescription1
+  int* UniqueStateDescriptionSubArraySize1;
+  // number of unique configurations for the type 1 particles
+  long NbrUniqueStateDescription1;
+  // number of unique configurations for the type 2 particles per unique type 1 particle configuration 
+  int* NbrUniqueStateDescription2;
+  // unique configurations for the type 2 particles per unique type 1 particle configuration 
+  unsigned long** UniqueStateDescription2;
+  // number of time each unique configuration for the type 2 particles appears in StateDescription2 having the same type 1 particle configucation
+  int** UniqueStateDescriptionSubArraySize2;
+  // first time a unique combination of type 1 and type 2 particle configurations appears in the Hilbert space
+  int** FirstIndexUniqueStateDescription2;
 
-  // maximum shift used for searching a position in the look-up table
-  int MaximumLookUpShift;
-  // memory used for the look-up table in a given lzmax sector
-  unsigned long LookUpTableMemorySize;
-  // shift used in each lzmax sector
-  int* LookUpTableShift;
-  // look-up table with two entries : the first one used lzmax value of the state an the second 
-  int** LookUpTable;
+  // temporary state used when applying operators for type 1 particles
+  unsigned long* TemporaryState1;
+  // temporary state used when applying operators for type 2 particles
+  unsigned long* TemporaryState2;
+  // temporary state used when applying operators for type 3 particles
+  unsigned long* TemporaryState3;
 
-  // a table containing ranging from 0 to 2^MaximumSignLookUp - 1
-  double* SignLookUpTable;
-  // a table containing the mask on the bits to keep for each shift that is requested by sign evaluation
-  unsigned long* SignLookUpTableMask;
-  // number to evalute size of SignLookUpTable
-  int MaximumSignLookUp;
-
-  // temporary state used when applying ProdA operator in the sector 1
-  unsigned long ProdATemporaryState;
-  // temporary state used when applying ProdA operator in the sector 1
-  unsigned long ProdATemporaryState1;
-  // temporary state used when applying ProdA operator in the sector 2
-  unsigned long ProdATemporaryState2;
-  // temporary state used when applying ProdA operator int the sector 3
-  unsigned long ProdATemporaryState3;
-  // Lz maximum value associated to temporary state used when applying ProdA operator
-  int ProdALzMax;
+  // temporary state used when applying ProdA operator for type 1 particles
+  unsigned long* ProdATemporaryState1;
+  // temporary state used when applying ProdA operator for type 2 particles
+  unsigned long* ProdATemporaryState2;
+  // temporary state used when applying ProdA operator for type 3 particles
+  unsigned long* ProdATemporaryState3;
 
  public:
 
@@ -180,6 +186,87 @@ class BosonOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
   // m = index of the creation and annihilation operator
   // return value = coefficient obtained when applying a^+_m_3 a_m_3
   virtual double Ad3A3 (int index, int m);
+
+  // apply a^+_m_1 a_n_1 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Ad1A1 (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_1 a_n_2 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Ad1A2 (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_1 a_n_3 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Ad1A3 (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_2 a_n_1 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Ad2A1 (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_2 a_n_2 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Ad2A2 (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_2 a_n_3 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Ad2A3 (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_3 a_n_1 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Ad3A1 (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_3 a_n_2 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Ad3A2 (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_3 a_n_3 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Ad3A3 (int index, int m, int n, double& coefficient);
 
   // apply a_n1_1 a_n2_1 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
   //
@@ -288,13 +375,12 @@ class BosonOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
 
   // find state index
   //
-  // stateDescription1 = unsigned integer describing the state in the 1 sector
-  // stateDescription2 = unsigned integer describing the state in the 2 sector
-  // stateDescription3 = unsigned integer describing the state in the 3 sector
-  // lzmax = maximum Lz value reached by a boson in the state
+  // stateDescription1 = unsigned integer describing the fermionic state for type 1 particles
+  // stateDescription2 = unsigned integer describing the fermionic state for type 2 particles
+  // stateDescription3 = unsigned integer describing the fermionic state for type 3 particles
   // return value = corresponding index
-  virtual int FindStateIndex(unsigned long stateDescription1, unsigned long stateDescription2, unsigned long stateDescription3, 
-			     int lzmax);
+  virtual int FindStateIndex(unsigned long stateDescription1, unsigned long stateDescription2, unsigned long stateDescription3);
+
 
 
   // evaluate Hilbert space dimension
@@ -305,7 +391,7 @@ class BosonOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
   // totalTz = twice the total Tz value
   // totalY = three time the total Y value
   // return value = Hilbert space dimension
-  virtual int EvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz, int totalTz, int totalY);
+  virtual long EvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz, int totalTz, int totalY);
 
   // evaluate Hilbert space dimension
   //
@@ -333,7 +419,60 @@ class BosonOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
   // nbrN3 = number of particles with quantum number Tz=0 and Y=-2/3
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  virtual long GenerateStates(int nbrBosons, int lzMax, int totalLz, int nbrN1, int nbrN2, int nbrN3, long pos);
+  virtual long GenerateStates(int nbrBosons, int lzMax1, int lzMax2, int lzMax3, int totalLz, int nbrN1, int nbrN2, int nbrN3, long pos);
+
+  // convert a bosonic state into its fermionic counterpart
+  //
+  // initialState = reference on the array where initial bosonic state is stored
+  // return value = corresponding fermionic state
+  virtual unsigned long BosonToFermion(unsigned long*& initialState);
+
+  // convert a bosonic state into its fermionic counterpart
+  //
+  // initialState1 = reference on the array where initial bosonic state for the type 1 particles is stored
+  // initialState2 = reference on the array where initial bosonic state for the type 2 particles is stored
+  // initialState3 = reference on the array where initial bosonic state for the type 3 particles is stored
+  // finalState1 = reference on the corresponding fermionic state for the type 1 particles
+  // finalState2 = reference on the corresponding fermionic state for the type 2 particles
+  // finalState3 = reference on the corresponding fermionic state for the type 3 particles
+  virtual void BosonToFermion(unsigned long*& initialState1, unsigned long*& initialState2, unsigned long*& initialState3, 
+			      unsigned long& finalState1, unsigned long& finalState2, unsigned long& finalState3);
+
+  // convert a fermionic state into its bosonic  counterpart
+  //
+  // initialState = initial fermionic state
+  // initialStateLzMax= maximum lz value reached by the fermionic state
+  // finalState = reference on the array where the bosonic state for the type 1 particles has to be stored
+  virtual void FermionToBoson(unsigned long initialState, int initialStateLzMax, unsigned long*& finalState);
+
+  // convert a fermionic state into its bosonic  counterpart
+  //
+  // initialState1 = initial fermionic state for the type 1 particles
+  // initialState2 = initial fermionic state for the type 2 particles
+  // initialState3 = initial fermionic state for the type 3 particles
+  // finalState1 = reference on the array where the bosonic state for the type 1 particles has to be stored
+  // finalState2 = reference on the array where the bosonic state for the type 2 particles has to be stored
+  // finalState3 = reference on the array where the bosonic state for the type 3 particles has to be stored
+  virtual void FermionToBoson(unsigned long initialState1, unsigned long initialState2, unsigned long initialState3,
+			      unsigned long*& finalState1, unsigned long*& finalState2, unsigned long*& finalState3);
+
+  // apply generic a^+_m1_i a^+_m2_j operator to the state produced using A*A* method (without destroying it)
+  //
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // temporaryStatei= reference on the temporary array for the type i particles
+  // temporaryStatej= reference on the temporary array for the type j particles
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state
+  virtual int AdiAdj (int m1, int m2, unsigned long*& temporaryStatei, unsigned long*& temporaryStatej, double& coefficient);
+
+  // find state index
+  //
+  // stateDescription1 = array describing the bosonic state for type 1 particles
+  // stateDescription2 = array describing the bosonic state for type 2 particles
+  // stateDescription3 = array describing the bosonic state for type 3 particles
+  // return value = corresponding index
+  virtual int FindStateIndex(unsigned long*& stateDescription1, unsigned long*& stateDescription2, unsigned long*& stateDescription3);
 
 };
 
@@ -344,6 +483,251 @@ class BosonOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
 inline int BosonOnSphereWithSU3Spin::GetParticleStatistic()
 {
   return AbstractQHEParticle::BosonicStatistic;
+}
+
+// convert a bosonic state into its fermionic counterpart
+//
+// initialState = reference on the array where initial bosonic state is stored
+// return value = corresponding fermionic state
+
+inline unsigned long BosonOnSphereWithSU3Spin::BosonToFermion(unsigned long*& initialState)
+{
+  unsigned long FinalState = 0x0ul;
+  unsigned long Shift = 0;
+  for (int i = 0; i <= this->LzMax; ++i)
+    {
+      FinalState |= ((1ul << initialState[i]) - 1ul) << Shift;
+      Shift += initialState[i];
+      ++Shift;
+    }
+  return FinalState;
+}
+
+// convert a bosonic state into its fermionic counterpart
+//
+// initialState1 = reference on the array where initial bosonic state for the type 1 particles is stored
+// initialState2 = reference on the array where initial bosonic state for the type 2 particles is stored
+// initialState3 = reference on the array where initial bosonic state for the type 3 particles is stored
+// finalState1 = reference on the corresponding fermionic state for the type 1 particles
+// finalState2 = reference on the corresponding fermionic state for the type 2 particles
+// finalState3 = reference on the corresponding fermionic state for the type 3 particles
+
+inline void BosonOnSphereWithSU3Spin::BosonToFermion(unsigned long*& initialState1, unsigned long*& initialState2, unsigned long*& initialState3, 
+						     unsigned long& finalState1, unsigned long& finalState2, unsigned long& finalState3)
+{
+  finalState1 = 0x0ul;
+  unsigned long Shift = 0;
+  for (int i = 0; i <= this->LzMax; ++i)
+    {
+      finalState1 |= ((1ul << initialState1[i]) - 1ul) << Shift;
+      Shift += initialState1[i];
+      ++Shift;
+    }
+  finalState2 = 0x0ul;
+  Shift = 0;
+  for (int i = 0; i <= this->LzMax; ++i)
+    {
+      finalState2 |= ((1ul << initialState2[i]) - 1ul) << Shift;
+      Shift += initialState2[i];
+      ++Shift;
+    }
+  finalState3 = 0x0ul;
+  Shift = 0;
+  for (int i = 0; i <= this->LzMax; ++i)
+    {
+      finalState3 |= ((1ul << initialState3[i]) - 1ul) << Shift;
+      Shift += initialState3[i];
+      ++Shift;
+    }
+}
+
+// convert a fermionic state into its bosonic  counterpart
+//
+// initialState = initial fermionic state
+// initialStateLzMax= maximum lz value reached by the fermionic state
+// finalState = reference on the array where the bosonic state for the type 1 particles has to be stored
+
+inline void BosonOnSphereWithSU3Spin::FermionToBoson(unsigned long initialState, int initialStateLzMax, unsigned long*& finalState)
+{
+  int FinalStateLzMax = 0;
+  while ((initialStateLzMax >= 0) && ((initialState >> initialStateLzMax) == 0x0ul))
+    --initialStateLzMax;
+  while (initialStateLzMax >= 0)
+    {
+      unsigned long TmpState = (~initialState - 1ul) ^ (~initialState);
+      TmpState &= ~(TmpState >> 1);
+#ifdef  __64_BITS__
+      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaaaaaaaaaul) != 0);
+      TmpPower |= ((TmpState & 0xccccccccccccccccul) != 0) << 1;
+      TmpPower |= ((TmpState & 0xf0f0f0f0f0f0f0f0ul) != 0) << 2;
+      TmpPower |= ((TmpState & 0xff00ff00ff00ff00ul) != 0) << 3;      
+      TmpPower |= ((TmpState & 0xffff0000ffff0000ul) != 0) << 4;      
+      TmpPower |= ((TmpState & 0xffffffff00000000ul) != 0) << 5;      
+#else
+      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaul) != 0);
+      TmpPower |= ((TmpState & 0xccccccccul) != 0) << 1;
+      TmpPower |= ((TmpState & 0xf0f0f0f0ul) != 0) << 2;
+      TmpPower |= ((TmpState & 0xff00ff00ul) != 0) << 3;      
+      TmpPower |= ((TmpState & 0xffff0000ul) != 0) << 4;      
+#endif
+      finalState[FinalStateLzMax] = (unsigned long) TmpPower;
+      ++TmpPower;
+      initialState >>= TmpPower;
+      ++FinalStateLzMax;
+      initialStateLzMax -= TmpPower;
+    }
+  for (; FinalStateLzMax <= this->LzMax; ++FinalStateLzMax)
+    finalState[FinalStateLzMax] = 0x0ul;
+}
+
+
+// convert a fermionic state into its bosonic  counterpart
+//
+// initialState1 = initial fermionic state for the type 1 particles
+// initialState2 = initial fermionic state for the type 2 particles
+// initialState3 = initial fermionic state for the type 3 particles
+// finalState1 = reference on the array where the bosonic state for the type 1 particles has to be stored
+// finalState2 = reference on the array where the bosonic state for the type 2 particles has to be stored
+// finalState3 = reference on the array where the bosonic state for the type 3 particles has to be stored
+
+inline void BosonOnSphereWithSU3Spin::FermionToBoson(unsigned long initialState1, unsigned long initialState2, unsigned long initialState3,
+						     unsigned long*& finalState1, unsigned long*& finalState2, unsigned long*& finalState3)
+{
+  int FinalStateLzMax = 0;
+  int InitialStateLzMax = this->N1LzMax;
+  while ((InitialStateLzMax >= 0) && ((initialState1 >> InitialStateLzMax) == 0x0ul))
+    --InitialStateLzMax;
+  while (InitialStateLzMax >= 0)
+    {
+      unsigned long TmpState = (~initialState1 - 1ul) ^ (~initialState1);
+      TmpState &= ~(TmpState >> 1);
+#ifdef  __64_BITS__
+      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaaaaaaaaaul) != 0);
+      TmpPower |= ((TmpState & 0xccccccccccccccccul) != 0) << 1;
+      TmpPower |= ((TmpState & 0xf0f0f0f0f0f0f0f0ul) != 0) << 2;
+      TmpPower |= ((TmpState & 0xff00ff00ff00ff00ul) != 0) << 3;      
+      TmpPower |= ((TmpState & 0xffff0000ffff0000ul) != 0) << 4;      
+      TmpPower |= ((TmpState & 0xffffffff00000000ul) != 0) << 5;      
+#else
+      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaul) != 0);
+      TmpPower |= ((TmpState & 0xccccccccul) != 0) << 1;
+      TmpPower |= ((TmpState & 0xf0f0f0f0ul) != 0) << 2;
+      TmpPower |= ((TmpState & 0xff00ff00ul) != 0) << 3;      
+      TmpPower |= ((TmpState & 0xffff0000ul) != 0) << 4;      
+#endif
+      finalState1[FinalStateLzMax] = (unsigned long) TmpPower;
+      ++TmpPower;
+      initialState1 >>= TmpPower;
+      ++FinalStateLzMax;
+      InitialStateLzMax -= TmpPower;
+    }
+  for (; FinalStateLzMax <= this->LzMax; ++FinalStateLzMax)
+    finalState1[FinalStateLzMax] = 0x0ul;
+
+  FinalStateLzMax = 0;
+  InitialStateLzMax = this->N2LzMax;
+  while ((InitialStateLzMax >= 0) && ((initialState2 >> InitialStateLzMax) == 0x0ul))
+    --InitialStateLzMax;
+  while (InitialStateLzMax >= 0)
+    {
+      unsigned long TmpState = (~initialState2 - 1ul) ^ (~initialState2);
+      TmpState &= ~(TmpState >> 1);
+#ifdef  __64_BITS__
+      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaaaaaaaaaul) != 0);
+      TmpPower |= ((TmpState & 0xccccccccccccccccul) != 0) << 1;
+      TmpPower |= ((TmpState & 0xf0f0f0f0f0f0f0f0ul) != 0) << 2;
+      TmpPower |= ((TmpState & 0xff00ff00ff00ff00ul) != 0) << 3;      
+      TmpPower |= ((TmpState & 0xffff0000ffff0000ul) != 0) << 4;      
+      TmpPower |= ((TmpState & 0xffffffff00000000ul) != 0) << 5;      
+#else
+      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaul) != 0);
+      TmpPower |= ((TmpState & 0xccccccccul) != 0) << 1;
+      TmpPower |= ((TmpState & 0xf0f0f0f0ul) != 0) << 2;
+      TmpPower |= ((TmpState & 0xff00ff00ul) != 0) << 3;      
+      TmpPower |= ((TmpState & 0xffff0000ul) != 0) << 4;      
+#endif
+      finalState2[FinalStateLzMax] = (unsigned long) TmpPower;
+      ++TmpPower;
+      initialState2 >>= TmpPower;
+      ++FinalStateLzMax;
+      InitialStateLzMax -= TmpPower;
+    }
+  for (; FinalStateLzMax <= this->LzMax; ++FinalStateLzMax)
+    finalState2[FinalStateLzMax] = 0x0ul;
+
+  FinalStateLzMax = 0;
+  InitialStateLzMax = this->N3LzMax;
+  while ((InitialStateLzMax >= 0) && ((initialState3 >> InitialStateLzMax) == 0x0ul))
+    --InitialStateLzMax;
+  while (InitialStateLzMax >= 0)
+    {
+      unsigned long TmpState = (~initialState3 - 1ul) ^ (~initialState3);
+      TmpState &= ~(TmpState >> 1);
+#ifdef  __64_BITS__
+      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaaaaaaaaaul) != 0);
+      TmpPower |= ((TmpState & 0xccccccccccccccccul) != 0) << 1;
+      TmpPower |= ((TmpState & 0xf0f0f0f0f0f0f0f0ul) != 0) << 2;
+      TmpPower |= ((TmpState & 0xff00ff00ff00ff00ul) != 0) << 3;      
+      TmpPower |= ((TmpState & 0xffff0000ffff0000ul) != 0) << 4;      
+      TmpPower |= ((TmpState & 0xffffffff00000000ul) != 0) << 5;      
+#else
+      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaul) != 0);
+      TmpPower |= ((TmpState & 0xccccccccul) != 0) << 1;
+      TmpPower |= ((TmpState & 0xf0f0f0f0ul) != 0) << 2;
+      TmpPower |= ((TmpState & 0xff00ff00ul) != 0) << 3;      
+      TmpPower |= ((TmpState & 0xffff0000ul) != 0) << 4;      
+#endif
+      finalState3[FinalStateLzMax] = (unsigned long) TmpPower;
+      ++TmpPower;
+      initialState3 >>= TmpPower;
+      ++FinalStateLzMax;
+      InitialStateLzMax -= TmpPower;
+    }
+  for (; FinalStateLzMax <= this->LzMax; ++FinalStateLzMax)
+    finalState3[FinalStateLzMax] = 0x0ul;
+
+}
+
+// apply generic a^+_m1_i a^+_m2_j operator to the state produced using A*A* method (without destroying it)
+//
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// temporaryStatei= reference on the temporary array for the type i particles
+// temporaryStatej= reference on the temporary array for the type j particles
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state
+
+inline int BosonOnSphereWithSU3Spin::AdiAdj (int m1, int m2, unsigned long*& temporaryStatei, unsigned long*& temporaryStatej,
+					     double& coefficient)
+{
+  for (int i = 0; i < this->NbrLzValue; ++i)
+    {
+      this->TemporaryState1[i] = this->ProdATemporaryState1[i];
+      this->TemporaryState2[i] = this->ProdATemporaryState2[i];
+      this->TemporaryState3[i] = this->ProdATemporaryState3[i];
+    }
+  ++temporaryStatei[m2];
+  coefficient = temporaryStatei[m2];
+  ++temporaryStatej[m1];
+  coefficient *= temporaryStatej[m1];
+  coefficient = sqrt(coefficient);
+  return this->FindStateIndex(this->TemporaryState1, this->TemporaryState2, this->TemporaryState3);
+}
+
+// find state index
+//
+// stateDescription1 = array describing the bosonic state for type 1 particles
+// stateDescription2 = array describing the bosonic state for type 2 particles
+// stateDescription3 = array describing the bosonic state for type 3 particles
+// return value = corresponding index
+
+inline int BosonOnSphereWithSU3Spin::FindStateIndex(unsigned long*& stateDescription1, unsigned long*& stateDescription2, unsigned long*& stateDescription3)
+{
+  unsigned long Tmp1;
+  unsigned long Tmp2;
+  unsigned long Tmp3;
+  this->BosonToFermion(stateDescription1, stateDescription2, stateDescription3, Tmp1, Tmp2, Tmp3);
+  return this->FindStateIndex(Tmp1, Tmp2, Tmp3);
 }
 
 #endif

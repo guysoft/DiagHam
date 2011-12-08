@@ -1019,10 +1019,12 @@ long FermionSU3ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, 
 
 long BosonSU3ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz, int nbrN1, int nbrN2, int nbrN3)
 {
-  if ((nbrBosons < 0) || (totalLz < 0) || (lzMax < 0) || (nbrN1 < 0) || (nbrN2 < 0) || (nbrN3 < 0) || (lzMax < 0))
+  if ((nbrBosons < 0) || (totalLz < 0) || (nbrN1 < 0) || (nbrN2 < 0) || (nbrN3 < 0))
     return 0l;
   if ((nbrBosons == 0) && (totalLz == 0))
     return 1l;
+  if (lzMax < 0)
+    return 0l;
   if (nbrBosons == 1)
     {
       if (lzMax >= totalLz)

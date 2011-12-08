@@ -35,6 +35,7 @@
 #include "MathTools/LongRational.h"
 #include "MathTools/FactorialCoefficient.h"
 
+
 // up ordering array sort using quick sort
 //
 // array = pointer to the array
@@ -1467,5 +1468,276 @@ unsigned long MultiplicitiesFactorial(ClassName*& array, unsigned long nbrValue)
     }
   return Coefficient.GetIntegerValue();
 }
+
+// down ordering array sort using quick sort, each element being made of three smaller elements
+//
+// array1 = pointer to the array of  the element first part 
+// array2 = pointer to the array of  the element second part 
+// array3 = pointer to the array of  the element part part 
+// nbrValue = nbr of value in the array
+
+template <class ClassName>
+void SortArrayDownOrdering(ClassName* array1, ClassName* array2, ClassName* array3, long nbrValue)
+{
+  switch (nbrValue)
+    {
+    case 0:
+      return;
+    case 1:
+      return;
+    case 2:
+      {
+	if (array1[0] < array1[1])
+	  {
+	    ClassName TmpElement = array1[0];
+	    array1[0] = array1[1];
+	    array1[1] = TmpElement;
+	    TmpElement = array2[0];
+	    array2[0] = array2[1];
+	    array2[1] = TmpElement;
+	    TmpElement = array3[0];
+	    array3[0] = array3[1];
+	    array3[1] = TmpElement;
+	  }
+	else
+	  {
+	    if (array1[0] == array1[1])
+	      {
+		if (array2[0] < array2[1])
+		  {	
+		    ClassName TmpElement = array2[0];
+		    array2[0] = array2[1];
+		    array2[1] = TmpElement;
+		    TmpElement = array3[0];
+		    array3[0] = array3[1];
+		    array3[1] = TmpElement;
+		  }
+	      }
+	  }
+	return;
+      }
+      break;
+    case 3:
+      {
+	ClassName TmpElement;
+	if (array1[0] < array1[1])
+	  {
+	    TmpElement = array1[0];
+	    array1[0] = array1[1];
+	    array1[1] = TmpElement;
+	    TmpElement = array2[0];
+	    array2[0] = array2[1];
+	    array2[1] = TmpElement;
+	    TmpElement = array3[0];
+	    array3[0] = array3[1];
+	    array3[1] = TmpElement;
+	  }
+	else
+	  {
+	    if (array1[0] == array1[1])
+	      {
+		if (array2[0] < array2[1])
+		  {
+		    TmpElement = array2[0];
+		    array2[0] = array2[1];
+		    array2[1] = TmpElement;
+		    TmpElement = array3[0];
+		    array3[0] = array3[1];
+		    array3[1] = TmpElement;
+		  }
+	      }
+	  }
+	if (array1[1] < array1[2])
+	  {
+	    TmpElement = array1[1];
+	    array1[1] = array1[2];
+	    array1[2] = TmpElement;
+	    TmpElement = array2[1];
+	    array2[1] = array2[2];
+	    array2[2] = TmpElement;
+	    TmpElement = array3[1];
+	    array3[1] = array3[2];
+	    array3[2] = TmpElement;
+	  }	
+	else
+	  {
+	    if (array1[1] == array1[2])
+	      {
+		if (array2[1] < array2[2])
+		  {
+		    TmpElement = array2[1];
+		    array2[1] = array2[2];
+		    array2[2] = TmpElement;
+		    TmpElement = array3[1];
+		    array3[1] = array3[2];
+		    array3[2] = TmpElement;
+		  }	
+	      }
+	  }
+	if (array1[0] < array1[1])
+	  {
+	    TmpElement = array1[0];
+	    array1[0] = array1[1];
+	    array1[1] = TmpElement;
+	    TmpElement = array2[0];
+	    array2[0] = array2[1];
+	    array2[1] = TmpElement;
+	    TmpElement = array3[0];
+	    array3[0] = array3[1];
+	    array3[1] = TmpElement;
+	  }	
+	else
+	  {
+	    if (array1[0] == array1[1])
+	      {
+		if (array2[0] < array2[1])
+		  {
+		    TmpElement = array2[0];
+		    array2[0] = array2[1];
+		    array2[1] = TmpElement;
+		    TmpElement = array3[0];
+		    array3[0] = array3[1];
+		    array3[1] = TmpElement;
+		  }	
+	      }
+	  }
+	return;
+      }
+      break;
+    default:
+      {
+	int j = nbrValue - 1;
+	int i = nbrValue >> 1;
+	ClassName TmpElement;
+	if (array1[0] <  array1[i])
+	  {
+	    TmpElement = array1[i];
+	    array1[i] = array1[0];
+	    array1[0] = TmpElement;
+	    TmpElement = array2[i];
+	    array2[i] = array2[0];
+	    array2[0] = TmpElement;
+	    TmpElement = array3[i];
+	    array3[i] = array3[0];
+	    array3[0] = TmpElement;
+	  }
+	else
+	  {
+	    if (array1[0] ==  array1[i])
+	      {
+		if (array2[0] <  array2[i])
+		  {
+		    TmpElement = array2[i];
+		    array2[i] = array2[0];
+		    array2[0] = TmpElement;
+		    TmpElement = array3[i];
+		    array3[i] = array3[0];
+		    array3[0] = TmpElement;
+		  }
+	      }
+	  }
+	if (array1[i] <  array1[j])
+	  {
+	    TmpElement = array1[i];
+	    array1[i] = array1[j];
+	    array1[j] = TmpElement;
+	    TmpElement = array2[i];
+	    array2[i] = array2[j];
+	    array2[j] = TmpElement;
+	    TmpElement = array3[i];
+	    array3[i] = array3[j];
+	    array3[j] = TmpElement;
+	  }
+	else
+	  {
+	    if (array1[i] == array1[j])
+	      {
+		if (array2[i] <  array2[j])
+		  {
+		    TmpElement = array2[i];
+		    array2[i] = array2[j];
+		    array2[j] = TmpElement;
+		    TmpElement = array3[i];
+		    array3[i] = array3[j];
+		    array3[j] = TmpElement;
+		  }
+	      }
+	  }
+	if (array1[0] <  array1[i])
+	  {
+	    TmpElement = array1[i];
+	    array1[i] = array1[0];
+	    array1[0] = TmpElement;
+	    TmpElement = array2[i];
+	    array2[i] = array2[0];
+	    array2[0] = TmpElement;
+	    TmpElement = array3[i];
+	    array3[i] = array3[0];
+	    array3[0] = TmpElement;
+	  }
+	else
+	  {
+	    if (array1[0] ==  array1[i])
+	      {
+		if (array2[0] <  array2[i])
+		  {
+		    TmpElement = array2[i];
+		    array2[i] = array2[0];
+		    array2[0] = TmpElement;
+		    TmpElement = array3[i];
+		    array3[i] = array3[0];
+		    array3[0] = TmpElement;
+		  }
+	      }
+	  }
+	--j;
+	ClassName Pivot1 = array1[i];
+	array1[i] = array1[j];
+	array1[j] = Pivot1;
+	ClassName Pivot2 = array2[i];
+	array2[i] = array2[j];
+	array2[j] = Pivot2;
+	ClassName Pivot3 = array3[i];
+	array3[i] = array3[j];
+	array3[j] = Pivot3;
+	i = 0;
+	while (true)
+	  {
+	    ++i; 
+ 	    --j;
+	    while ((array1[i] > Pivot1) || ((array1[i] == Pivot1) && (array2[i] > Pivot2)) ||
+		   ((array1[i] == Pivot1) && (array2[i] == Pivot2) && (array3[i] > Pivot3)))
+	      ++i;
+	    while ((array1[j] < Pivot1) || ((array1[j] == Pivot1) && (array2[j] < Pivot2)) ||
+		   ((array1[j] == Pivot1) && (array2[j] == Pivot2) && (array3[j] < Pivot3)))
+	      --j;
+	    if (i < j)
+	      {
+		TmpElement = array1[i];
+		array1[i] = array1[j];
+		array1[j] = TmpElement;	    
+		TmpElement = array2[i];
+		array2[i] = array2[j];
+		array2[j] = TmpElement;	    
+		TmpElement = array3[i];
+		array3[i] = array3[j];
+		array3[j] = TmpElement;	    
+	      }
+	    else
+	      break;
+	  }	
+	array1[nbrValue - 2] = array1[i];
+	array1[i] = Pivot1;
+	array2[nbrValue - 2] = array2[i];
+	array2[i] = Pivot2;
+	array3[nbrValue - 2] = array3[i];
+	array3[i] = Pivot3;
+	SortArrayDownOrdering(array1, array2, array3, i);
+	SortArrayDownOrdering(&(array1[i + 1]), &(array2[i + 1]), &(array3[i + 1]), nbrValue - i - 1);	
+      }
+    }
+  return;
+}
+
 
 #endif
