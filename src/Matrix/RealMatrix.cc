@@ -1030,10 +1030,10 @@ double* RealMatrix::SingularValueDecomposition(RealMatrix& uMatrix, RealMatrix& 
   double* TmpVMatrix = new double [this->NbrColumn * this->NbrColumn];
   int SizeLDU = this->NbrRow;
   int SizeLDVT = MinDimension;//this->NbrColumn;
-  FORTRAN_NAME(dgesdd)(&Jobz, &this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrRow, SigmaMatrix, TmpUMatrix, &SizeLDU, TmpVMatrix, &SizeLDVT, &TmpWorkingArea, &WorkingAreaSize, &TmpIntegerWorkingArea, &Information);
+  FORTRAN_NAME(dgesdd)(&Jobz, &this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrRow, SigmaMatrix, TmpUMatrix, &SizeLDU, TmpVMatrix, &SizeLDVT, &TmpWorkingArea, &WorkingAreaSize, &TmpIntegerWorkingArea, &Information); 
   WorkingAreaSize = (int) TmpWorkingArea;
   double* WorkingArea = new double [WorkingAreaSize];
-  IntegerWorkingAreaSize = TmpIntegerWorkingArea;
+  IntegerWorkingAreaSize = 8 * MinDimension;
   int* IntegerWorkingArea = new int [IntegerWorkingAreaSize];
   FORTRAN_NAME(dgesdd)(&Jobz, &this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrRow, SigmaMatrix, TmpUMatrix, &SizeLDU, TmpVMatrix, &SizeLDVT, WorkingArea, &WorkingAreaSize, IntegerWorkingArea, &Information);
   uMatrix = RealMatrix(TmpUMatrix, this->NbrRow, this->NbrRow);

@@ -3183,9 +3183,14 @@ void FermionOnSphere::RebuildStateFromSchmidtDecompositionParticlePartition(int 
   cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
   FermionOnSphere TmpHilbertSpace(this->NbrFermions - nbrParticleSector, this->TotalLz - lzSector, this->LzMax);
 
- //  cout << "   A = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << " " << aVectors.GetNbrRow() << " " << aVectors.GetNbrColumn() << endl;
-//   cout << "   B = " << TmpHilbertSpace.HilbertSpaceDimension << " " << bVectors.GetNbrRow() << " " << bVectors.GetNbrColumn() << endl;
- 
+  cout << "   A = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << " " << aVectors.GetNbrRow() << " " << aVectors.GetNbrColumn() << endl;
+  cout << aVectors << endl;
+  cout << "   B = " << TmpHilbertSpace.HilbertSpaceDimension << " " << bVectors.GetNbrRow() << " " << bVectors.GetNbrColumn() << endl;
+  cout << bVectors << endl;
+  cout << "eigenvalues : ";
+  for (int i = 0; i < nbrSingularValues; ++i)
+    cout << singularValues[i] << " ";
+  cout << endl;
   BinomialCoefficients TmpBinomial (this->NbrFermions);
   double TmpInvBinomial = 1.0 / sqrt(TmpBinomial(this->NbrFermions, nbrParticleSector));
   for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
@@ -3229,11 +3234,16 @@ void FermionOnSphere::RebuildStateFromSchmidtDecompositionParticlePartition(int 
  		  else
  		    Coefficient = -TmpInvBinomial;
 		  for (int i = 0; i < nbrSingularValues; ++i)
-		    schmidtDecomposedState[TmpPos] += Coefficient * singularValues[i] * aVectors[j][i] * bVectors[i][MinIndex];
+		    {
+		      schmidtDecomposedState[TmpPos] += Coefficient * singularValues[i] * aVectors[j][i] * bVectors[i][MinIndex];
+		      // schmidtDecomposedState[TmpPos] += Coefficient * singularValues[i] * aVectors[j][i] * bVectors[MinIndex][i];
+		    }
 		}
 	    }
 	}
     }
+  cout << schmidtDecomposedState<< endl;
+  cout << "---------------------" << endl;
 }
 
 // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using real space partition. The density matrix is only evaluated in a given Lz sector.

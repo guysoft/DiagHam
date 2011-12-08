@@ -289,7 +289,7 @@ int main(int argc, char** argv)
 	{
 	  PartialEntanglementMatrix = Space->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundState,false);
 	}      
-      if ((PartialDensityMatrix.GetNbrRow() > 1) || (SVDFlag == true))
+      if ((PartialDensityMatrix.GetNbrRow() > 0) || (PartialEntanglementMatrix.GetNbrRow() > 0))
 	{
 	  RealDiagonalMatrix TmpDiag;
 	  if (SVDFlag == false)
@@ -333,7 +333,7 @@ int main(int argc, char** argv)
 		  Space->RebuildStateFromSchmidtDecompositionParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, SchmidtDecomposedState, 
 									       TmpDimension, TmpTruncatedValues, AVectors, BTVectors);
 		}
-	      
+	      cout << "number of kept eigenvalues = " << NbrKeptEigenvalues << endl;
 	      for (int i = 0; i < TmpDimension; ++i)
 		{
 		  TmpValues[i] *= TmpValues[i];
@@ -365,29 +365,29 @@ int main(int argc, char** argv)
 	      DensityMatrixFile.close();
 	    }
 	}
-      else
-	if (PartialDensityMatrix.GetNbrRow() == 1)
-	  {
-	    double TmpValue = PartialDensityMatrix(0,0);
-	    if (DensityMatrixFileName != 0)
-	      {
-		ofstream DensityMatrixFile;
-		DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
-		DensityMatrixFile.precision(14);
-		DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpValue << endl;
-		DensityMatrixFile.close();
-	      }		  
-	    if (TmpValue > 0.0)
-	      {
-		EntanglementEntropy += TmpValue * log(TmpValue);
-		DensitySum += TmpValue;
-	      }
-	    if (TmpValue > SVDEigenvalueCutOff)
-	      {
-		TruncatedEntanglementEntropy -= TmpValue * log(TmpValue);
-		TruncatedDensitySum += TmpValue;
-	      }
-	  }
+//       else
+// 	if (PartialDensityMatrix.GetNbrRow() == 1)
+// 	  {
+// 	    double TmpValue = PartialDensityMatrix(0,0);
+// 	    if (DensityMatrixFileName != 0)
+// 	      {
+// 		ofstream DensityMatrixFile;
+// 		DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
+// 		DensityMatrixFile.precision(14);
+// 		DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpValue << endl;
+// 		DensityMatrixFile.close();
+// 	      }		  
+// 	    if (TmpValue > 0.0)
+// 	      {
+// 		EntanglementEntropy += TmpValue * log(TmpValue);
+// 		DensitySum += TmpValue;
+// 	      }
+// 	    if (TmpValue > SVDEigenvalueCutOff)
+// 	      {
+// 		TruncatedEntanglementEntropy -= TmpValue * log(TmpValue);
+// 		TruncatedDensitySum += TmpValue;
+// 	      }
+// 	  }
     }
   cout << "total trace = " << DensitySum << "   total entanglement entropy = " << EntanglementEntropy << endl;
   cout << "truncated trace = " << TruncatedDensitySum << "   truncated entanglement entropy = " << TruncatedEntanglementEntropy << endl;
