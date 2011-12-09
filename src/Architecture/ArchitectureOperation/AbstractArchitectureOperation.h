@@ -98,6 +98,11 @@ class AbstractArchitectureOperation
   // return value = true if no error occurs
   virtual bool ApplyOperation(AbstractArchitecture* architecture);
   
+  // apply an SMP round robin operation 
+  //
+  // return value = true if no error occurs
+  virtual bool ApplyOperationSMPRoundRobin(SMPArchitecture* architecture);
+  
   // get operation type
   //
   // return value = code corresponding to the operation
@@ -107,6 +112,11 @@ class AbstractArchitectureOperation
   //
   // return value = true if no error occurs
   virtual bool RawApplyOperation() = 0;
+  
+  // apply operation (architecture independent)
+  //
+  // return value = true if no error occurs
+  
   
  protected:
 

@@ -87,6 +87,9 @@ class FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation : public Abs
   // execution time measured in RawApply
   double ExecutionTime;
   
+  // array with size of SMP stages used to distribute work
+  bool *SMPStages; 
+  
  public:
   
   // constructor 
@@ -148,6 +151,12 @@ class FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation : public Abs
   //
   // return value = true if no error occurs
   bool RawApplyOperation();
+  
+  // apply operation for SMP using round robin scheduling
+  //
+  //  architecture = instance of architecture class
+  // return value = true if no error occurs
+  bool ApplyOperationSMPRoundRobin(SMPArchitecture* architecture);
   
   // apply operation for SMP architecture
   //

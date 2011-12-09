@@ -55,6 +55,7 @@ struct ThreadMainParameter
   int ThreadState;
 
   AbstractArchitectureOperation* Operation;
+  AbstractArchitecture* Architecture;
   
 };
 
@@ -118,6 +119,11 @@ class SMPArchitecture : public AbstractArchitecture
   //
   // nbrJobs = optional parameter that indicates how many jobs have to be sent (0 if all)
   void SendJobs (int nbrJobs = 0);
+  
+  // send jobs to threads
+  //
+  // nbrJobs = optional parameter that indicates how many jobs have to be sent (0 if all)
+  void SendJobsRoundRobin (int nbrJobs = 0);
 
   // indicate if the log file option is activated
   //
@@ -138,6 +144,14 @@ class SMPArchitecture : public AbstractArchitecture
   // return value = string or 0 if an error occured or log is not available
   char* DumpLog(const char* header = 0, const char* footer = 0);
 
+  // attempt to lock the mutex and block until it is available
+  //
+  void LockMutex( );
+  
+  // Unlock mutex
+  //
+  void UnLockMutex( );  
+  
 };
 
 // get the  number of threads that run simultaneously
@@ -156,6 +170,22 @@ inline int SMPArchitecture::GetNbrThreads()
 inline bool SMPArchitecture::VerboseMode()
 {
   return this->VerboseModeFlag;
+}
+
+// attempt to lock the mutex and block until it is available
+//
+  
+inline void SMPArchitecture::LockMutex()
+{
+  pthread_mutex_lock(this->ThreadParameters->mut);
+}
+ 
+// Unlock mutex
+// 
+ 
+inline void SMPArchitecture::UnLockMutex()
+{
+  pthread_mutex_unlock(this->ThreadParameters->mut);
 }
 
 #endif

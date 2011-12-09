@@ -626,6 +626,18 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // permutations2 = array where are stored the permutations of the spin down
   // initialCoef = inital coefficient in front of the monomial
   virtual void MonomialsTimesPolarizedSlaterProjection(unsigned long * slater, unsigned long * monomial ,map<unsigned long , double> & sortingMap, unsigned long nbrPermutations , unsigned long * permutations1, unsigned long * permutations2,double initialCoef);
+  
+  // compute the projection of the product of a monomial in the two lowest LL and the halperin 110 state
+  //
+  // slaterPermutations = array of arrays where the monomial representation of the slater determinant for half the number of particles for each permutation are stored
+  // slaterSigns = array of the signs for each permutation of 
+  // monomial = array where the monomial representation is stored
+  // sortingMap = map in which the generated states and their coefficient will be stored
+  // nbrPermutations = number of different permutations
+  // permutations1 = array where are stored the permutations of the spin up
+  // permutations2 = array where are stored the permutations of the spin down
+  // initialCoef = inital coefficient in front of the monomial
+  virtual void MonomialsTimesPolarizedSlaterProjection(unsigned long** slaterPermutations, double *slaterSigns, int nbrSlaterPermutations, unsigned long * monomial, map<unsigned long , double> & sortingMap, unsigned long nbrPermutations , unsigned long * permutations1, unsigned long * permutations2, double initialCoef);
 
 };
 

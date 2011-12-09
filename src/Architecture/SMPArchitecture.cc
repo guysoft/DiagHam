@@ -55,6 +55,12 @@ using std::endl;
 // return value = unused pointer (null)
 void* ThreadExecuteOperation(void* param);
 
+// thread for operation using round robin scheduling
+//
+// param = pointer to additional parameters, has to be cast into ThreadMainParameter pointer
+// return value = unused pointer (null)
+void* ThreadExecuteOperationRoundRobin(void* param);
+
 
 // constructor
 //
@@ -92,6 +98,7 @@ SMPArchitecture::SMPArchitecture(int nbrThreads, char* logFile)
     {
       this->ThreadParameters[i].ThreadState = SMPArchitecture::Wait;
       this->ThreadParameters[i].ThreadID = i;
+      this->ThreadParameters[i].Architecture = this;
     }
 #endif
 }
@@ -170,6 +177,58 @@ void SMPArchitecture::SendJobs (int nbrJobs)
 
 }
   
+ 
+// send jobs to threads
+//
+// nbrJobs = optional parameter that indicates how many jobs have to be sent (0 if all)
+
+void SMPArchitecture::SendJobsRoundRobin (int nbrJobs)
+{
+  int Flag = 0;
+  void* ret;
+#ifdef __SMP__
+  pthread_mutex_t mut = PTHREAD_MUTEX_INITIALIZER;
+#endif
+  if ((nbrJobs <= 0) || (nbrJobs > this->NbrThreads))
+    {
+      nbrJobs = this->NbrThreads;
+    }
+  int ReducedNbrThreads =  nbrJobs - 1;
+  for (int i = 0; i < ReducedNbrThreads; ++i)
+    {
+      this->ThreadParameters[i].ThreadID = i;
+      this->ThreadParameters[i].Flag = &Flag;
+#ifdef __SMP__
+      this->ThreadParameters[i].mut = &mut;
+#endif
+    }
+  this->ThreadParameters[ReducedNbrThreads].ThreadID = ReducedNbrThreads;
+  this->ThreadParameters[ReducedNbrThreads].Flag = &Flag;
+#ifdef __SMP__
+  this->ThreadParameters[ReducedNbrThreads].mut = &mut;
+#endif
+
+#ifdef __SMP__
+  pthread_t* Threads2 = new pthread_t [nbrJobs];
+  for (int i = 0; i < nbrJobs; ++i)
+    {
+      int code;
+      if ( (code = pthread_create (&(Threads2[i]), (const pthread_attr_t *)NULL, ThreadExecuteOperationRoundRobin, (void*) &(this->ThreadParameters[i])))!=0 )
+	{
+	  cout << "error, cannot create thread" << endl;
+	  cout << "pthread_create exit code: "<<code<<endl;
+	  exit(1);
+	}
+    }
+  for (int i = 0; i < nbrJobs; ++i)
+    {
+      (void) pthread_join (Threads2[i], &ret);
+    }
+  delete[] Threads2;
+#endif
+
+} 
+  
 // thread for multiplicationmain function
 //
 // param = pointer to additional parameters, has to be cast into ThreadMainParameter pointer
@@ -180,6 +239,23 @@ void* ThreadExecuteOperation(void* param)
 #ifdef __SMP__
   ThreadMainParameter* LocalThreadParamater = (ThreadMainParameter*) param;
   LocalThreadParamater->Operation->RawApplyOperation();
+  pthread_mutex_lock(LocalThreadParamater->mut);
+  (*(LocalThreadParamater->Flag)) = LocalThreadParamater->ThreadID;
+  pthread_mutex_unlock(LocalThreadParamater->mut);
+#endif
+  return 0;
+}
+
+// thread for operation using round robin scheduling
+//
+// param = pointer to additional parameters, has to be cast into ThreadMainParameter pointer
+// return value = unused pointer (null)
+
+void* ThreadExecuteOperationRoundRobin(void* param)
+{
+#ifdef __SMP__
+  ThreadMainParameter* LocalThreadParamater = (ThreadMainParameter*) param;
+  LocalThreadParamater->Operation->ApplyOperationSMPRoundRobin((SMPArchitecture*)LocalThreadParamater->Architecture);
   pthread_mutex_lock(LocalThreadParamater->mut);
   (*(LocalThreadParamater->Flag)) = LocalThreadParamater->ThreadID;
   pthread_mutex_unlock(LocalThreadParamater->mut);

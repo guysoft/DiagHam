@@ -99,4 +99,13 @@ bool AbstractArchitectureOperation::ArchitectureDependentApplyOperation(SimpleMP
 {
   return this->RawApplyOperation();
 }
+
+// apply an SMP round robin operation 
+//
+// return value = true if no error occurs
+  
+bool AbstractArchitectureOperation::ApplyOperationSMPRoundRobin(SMPArchitecture* architecture)
+{
+  return this->RawApplyOperation();
+}
   

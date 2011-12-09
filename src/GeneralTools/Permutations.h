@@ -32,6 +32,8 @@
 #ifndef PERMUTATIONS_H
 #define PERMUTATIONS_H
 
+#include <algorithm>
+
 // evaluate all the different way to split the permutations of a given in two sub groups (not compulsorily the same number of elements in the two subgroups)
 //
 // nbrPermutations = number of different permutations
@@ -145,6 +147,53 @@ inline void EvaluatePermutationsOfSubGroupsSymmetric(unsigned long nbrPermutatio
     }
   delete[] TmpArrayPerm;
   return;
+}
+
+// evaluate all the different permutations of a given monomial and keep track of the signs
+//
+// nbrParticles = number of different permutations
+// monomial = array storing the monomial
+// nbrPermutations = reference to the number of permutations
+// monomialPermutatiosn = reference to array where permutations will be stored
+// permutationSigns = reference to array where permutation signs will be stored
+
+inline void EvaluateMonomialPermutations(int nbrParticles, unsigned long* monomial, int& nbrPermutations, unsigned long**& monomialPermutations, double*& permutationSigns)
+{
+  FactorialCoefficient *FactCoef = new FactorialCoefficient();
+  FactCoef->FactorialMultiply(nbrParticles);
+  monomialPermutations = new unsigned long*[FactCoef->GetIntegerValue()];  
+  permutationSigns = new double[FactCoef->GetIntegerValue()];
+  delete FactCoef;
+  unsigned long* TmpPermutation = new unsigned long[nbrParticles];
+  unsigned long* TmpPermutation2 = new unsigned long[nbrParticles];
+  unsigned long* TmpPermutation3 = new unsigned long[nbrParticles];
+  memcpy(TmpPermutation, monomial, sizeof(unsigned long) * nbrParticles);
+  int NumPermutations;
+  
+  nbrPermutations = 0;
+  do 
+    {
+      monomialPermutations[nbrPermutations] = new unsigned long[nbrParticles];      
+      memcpy(monomialPermutations[nbrPermutations], TmpPermutation, sizeof(unsigned long) * nbrParticles);
+      
+      memcpy(TmpPermutation2, monomial, sizeof(unsigned long) * nbrParticles);
+      memcpy(TmpPermutation3, monomialPermutations[nbrPermutations], sizeof(unsigned long) * nbrParticles);
+      NumPermutations = 0;
+      SortArrayDownOrdering(TmpPermutation3,  TmpPermutation2, nbrParticles, NumPermutations);
+      if ( (NumPermutations & 0x1) == 1 )
+	{
+	  permutationSigns[nbrPermutations] = -1.0;
+	}
+      else
+	{
+	  permutationSigns[nbrPermutations] = 1.0;
+	}
+      nbrPermutations++;
+    }
+  while (std::prev_permutation(TmpPermutation, TmpPermutation + nbrParticles));
+  delete [] TmpPermutation;
+  delete [] TmpPermutation2;
+  delete [] TmpPermutation3;
 }
 
 

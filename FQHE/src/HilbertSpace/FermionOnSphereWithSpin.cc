@@ -3467,7 +3467,8 @@ void FermionOnSphereWithSpin::MonomialsTimesPolarizedSlaterProjection(unsigned l
 
 // compute the projection of the product of a monomial in the two lowest LL and the halperin 110 state
 //
-// slater = array where the monomial representation of the slater determinant for half the number of particles is stored
+// slaterPermutations = array of arrays where the monomial representation of the slater determinant for half the number of particles for each permutation are stored
+// slaterSigns = array of the signs for each permutation of 
 // monomial = array where the monomial representation is stored
 // sortingMap = map in which the generated states and their coefficient will be stored
 // nbrPermutations = number of different permutations
@@ -3475,7 +3476,7 @@ void FermionOnSphereWithSpin::MonomialsTimesPolarizedSlaterProjection(unsigned l
 // permutations2 = array where are stored the permutations of the spin down
 // initialCoef = inital coefficient in front of the monomial
 
-/*void FermionOnSphereWithSpin::MonomialsTimesPolarizedSlaterProjection(int ** slater, double *slaterSigns, int nbrSlaterPermutations, unsigned long * monomial, map<unsigned long , double> & sortingMap, unsigned long nbrPermutations , unsigned long * permutations1, unsigned long * permutations2, double initialCoef)
+void FermionOnSphereWithSpin::MonomialsTimesPolarizedSlaterProjection(unsigned long ** slaterPermutations, double *slaterSigns, int nbrSlaterPermutations, unsigned long * monomial, map<unsigned long , double> & sortingMap, unsigned long nbrPermutations , unsigned long * permutations1, unsigned long * permutations2, double initialCoef)
 {
   unsigned long* State = new unsigned long[this->NbrFermions];
   pair <map <unsigned long, double>::iterator, bool> InsertionResult;
@@ -3495,42 +3496,7 @@ void FermionOnSphereWithSpin::MonomialsTimesPolarizedSlaterProjection(unsigned l
   double CoefInitial;
   double MonomialFact = initialCoef / (double) MultiplicitiesFactorial(monomial,this->NbrFermions);
     
-  FactorialCoefficient *FactCoef = new FactorialCoefficient();
-  FactCoef->FactorialMultiply(HalfNbrParticles);
-  unsigned long** SlaterPermutations = new unsigned long*[FactCoef->GetIntegerValue()];  
-  double *SlaterSigns = new double[FactCoef->GetIntegerValue()];
-  delete FactCoef;
-  unsigned long* TmpSlaterPermutation = new unsigned long[HalfNbrParticles];
-  unsigned long* TmpSlaterPermutation2 = new unsigned long[HalfNbrParticles];
-  unsigned long* TmpSlaterPermutation3 = new unsigned long[HalfNbrParticles];
-  memcpy(TmpSlaterPermutation, slater, sizeof(unsigned long) * HalfNbrParticles);
-  int NumPermutations;
-  
-  int NbrSlaterPermutations = 0;
-  do 
-    {
-      SlaterPermutations[NbrSlaterPermutations] = new unsigned long[this->NbrFermions];      
-      memcpy(SlaterPermutations[NbrSlaterPermutations], TmpSlaterPermutation, sizeof(unsigned long) * HalfNbrParticles);
-      
-      memcpy(TmpSlaterPermutation2, slater, sizeof(unsigned long) * HalfNbrParticles);
-      memcpy(TmpSlaterPermutation3, SlaterPermutations[NbrSlaterPermutations], sizeof(unsigned long) * HalfNbrParticles);
-      NumPermutations = 0;
-      SortArrayDownOrdering(TmpSlaterPermutation3,  TmpSlaterPermutation2, HalfNbrParticles, NumPermutations);
-      if ( (NumPermutations & 0x1) == 1 )
-	{
-	  SlaterSigns[NbrSlaterPermutations] = -1.0;
-	}
-      else
-	{
-	  SlaterSigns[NbrSlaterPermutations] = 1.0;
-	}
-      NbrSlaterPermutations++;
-    }
-  while (std::prev_permutation(TmpSlaterPermutation, TmpSlaterPermutation + HalfNbrParticles));
-  delete [] TmpSlaterPermutation;
-  delete [] TmpSlaterPermutation2;
-  delete [] TmpSlaterPermutation3;
-	
+  	
   for (unsigned long IndexPermutations = 0; IndexPermutations < nbrPermutations ; IndexPermutations++)
     {
       unsigned long TmpPermUp = permutations1[IndexPermutations];
@@ -3545,14 +3511,14 @@ void FermionOnSphereWithSpin::MonomialsTimesPolarizedSlaterProjection(unsigned l
       //CoefInitial =  ((double)MultiplicitiesFactorial(HalfMonomialsUp,HalfNbrParticles) * MultiplicitiesFactorial(HalfMonomialsDown,HalfNbrParticles)) * MonomialFact;
       
       CoefInitial =  MonomialFact;
-      for ( int SlaterPermIndexUp = 0 ; SlaterPermIndexUp < NbrSlaterPermutations; SlaterPermIndexUp++ )
+      for ( int SlaterPermIndexUp = 0 ; SlaterPermIndexUp < nbrSlaterPermutations; SlaterPermIndexUp++ )
 	{
 	  
-	  CoefUp = CoefInitial * SlaterSigns[SlaterPermIndexUp];
+	  CoefUp = CoefInitial * slaterSigns[SlaterPermIndexUp];
 	  
 	  for(int k = 0 ; k < HalfNbrParticles ; k++)
 	    {
-	      State[k] = (HalfMonomialsUp[k]>>1) + SlaterPermutations[SlaterPermIndexUp][k];
+	      State[k] = (HalfMonomialsUp[k]>>1) + slaterPermutations[SlaterPermIndexUp][k];
 	      if ((HalfMonomialsUp[k] & 0x1ul) != 0ul) //not zero so have to project
 		{
 		  long Numerator = -((HalfMonomialsUp[k]>>1) * TmpFinalLzMaxUp) + (State[k] * TmpLzMaxUp);
@@ -3569,12 +3535,12 @@ void FermionOnSphereWithSpin::MonomialsTimesPolarizedSlaterProjection(unsigned l
 	  
 	  if (CoefUp != 0.0)
 	    {
-	      for ( int SlaterPermIndex = 0 ; SlaterPermIndex < NbrSlaterPermutations; SlaterPermIndex++ )
+	      for ( int SlaterPermIndex = 0 ; SlaterPermIndex < nbrSlaterPermutations; SlaterPermIndex++ )
 		{
-		  CoefDown = SlaterSigns[SlaterPermIndex];		    
+		  CoefDown = slaterSigns[SlaterPermIndex];		    
 		  for(int k = 0 ; k < HalfNbrParticles ; k++)
 		    {
-		      State[k+HalfNbrParticles] = (HalfMonomialsDown[k]>>1) + SlaterPermutations[SlaterPermIndex][k];
+		      State[k+HalfNbrParticles] = (HalfMonomialsDown[k]>>1) + slaterPermutations[SlaterPermIndex][k];
 		      if ((HalfMonomialsDown[k] & 0x1ul) != 0ul)
 			{
 			  long Numerator = -((HalfMonomialsDown[k]>>1) * TmpFinalLzMaxUp) + (State[HalfNbrParticles + k] * TmpLzMaxUp);
@@ -3659,12 +3625,6 @@ void FermionOnSphereWithSpin::MonomialsTimesPolarizedSlaterProjection(unsigned l
 	    }
 	}
       //while (std::prev_permutation(HalfMonomialsUp, HalfMonomialsUp + HalfNbrParticles));
-    }
-  for ( int SlaterPermIndex = 0 ; SlaterPermIndex < NbrSlaterPermutations; SlaterPermIndex++ )
-    {
-      delete [] SlaterPermutations[SlaterPermIndex];
-    }
-  delete [] SlaterPermutations;
-  delete [] SlaterSigns;
+    }  
   delete [] State;
-}*/
+}

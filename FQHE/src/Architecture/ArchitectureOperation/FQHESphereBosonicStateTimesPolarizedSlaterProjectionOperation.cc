@@ -87,6 +87,7 @@ FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::FQHESphereBosonic
   this->TwoLandauLevelLz= operation.TwoLandauLevelLz;
   this->TwoLandauLevelSz= operation.TwoLandauLevelSz;
   this->MPINodeNbr = operation.MPINodeNbr;
+  this->SMPStages = operation.SMPStages;
 }
 
 // destructor
@@ -163,12 +164,120 @@ bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::RawApplyOper
   return true;
 }
 
+// apply operation for SMP using round robin scheduling
+//
+//  architecture = instance of architecture class
+// return value = true if no error occurs
+
+bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::ApplyOperationSMPRoundRobin(SMPArchitecture* architecture)
+{    
+  timeval TotalStartingTime;
+  gettimeofday (&TotalStartingTime, 0);
+  
+  int NbrComponents = this->NbrComponent;
+  int FirstComponent = this->FirstComponent;
+  
+  int StageIdx=0;
+  while ( StageIdx < this->NbrSMPStage ) 
+    {
+      architecture->LockMutex();
+      if ( this->SMPStages[StageIdx] == false )
+	{
+	  this->SMPStages[StageIdx] = true;
+	  architecture->UnLockMutex();
+	  this->SetIndicesRange(FirstComponent + this->GetRankChunkStart(NbrComponents, StageIdx,  this->NbrSMPStage),  this->GetRankChunkSize(NbrComponents, StageIdx,  this->NbrSMPStage));
+	  this->RawApplyOperation();
+	}
+      else
+	{
+	  architecture->UnLockMutex();
+	}
+      StageIdx++;
+    }
+    
+  timeval TotalEndingTime;
+  gettimeofday (&TotalEndingTime, 0);
+  this->ExecutionTime   = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) +(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));  
+  return true;
+}
+
 // apply operation for SMP architecture
 //
 // architecture = pointer to the architecture
 // return value = true if no error occurs
 
 bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::ArchitectureDependentApplyOperation(SMPArchitecture* architecture)
+{  
+  char SaveFileName[200];
+  sprintf(SaveFileName, "fermions_su2_slater_sym_tmp%d.vec",this->MPINodeNbr);        
+  int NbrComponent = this->NbrComponent;
+	
+  this->SMPStages = new bool[this->NbrSMPStage];
+  for ( int i = 0 ; i < this->NbrSMPStage ; i++ )
+    {
+      this->SMPStages[i] = false;
+    }
+  
+  FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation** TmpOperations = new FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation* [architecture->GetNbrThreads()];
+  for(int i = 0 ;i < architecture->GetNbrThreads() ;i++)
+    {
+      TmpOperations[i] = (FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation*) this->Clone();
+      architecture->SetThreadOperation(TmpOperations[i], i);
+    }
+  for (int i = 1; i < architecture->GetNbrThreads(); ++i)
+    {
+      TmpOperations[i]->SetOutputVector((RealVector*)this->OutputVector->EmptyClone(true));
+    }
+     
+ 
+    
+  architecture->SendJobsRoundRobin();
+  if (architecture->VerboseMode() == true)
+    {
+      char TmpString[512];
+      for (int i = 0; i < architecture->GetNbrThreads(); ++i)
+	{
+	  sprintf (TmpString, "FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation core operation on SMP id %d done in %.3f seconds",  i, TmpOperations[i]->ExecutionTime);
+	  architecture->AddToLog(TmpString);
+	}
+    }
+  for (int i = 1; i < architecture->GetNbrThreads(); ++i)
+    {
+      (*(this->OutputVector)) += (*(TmpOperations[i]->OutputVector));	
+    }
+
+  
+//       int StageStart = this->FirstComponent + this->GetRankChunkStart(NbrComponent, p,  this->NbrSMPStage);
+//       int StageSize = this->GetRankChunkSize(NbrComponent, p,  this->NbrSMPStage);
+//       for (int i = 0; i < architecture->GetNbrThreads() ; ++i)
+// 	{	
+// 	  TmpOperations[i]->SetIndicesRange(StageStart + this->GetRankChunkStart(StageSize, i, architecture->GetNbrThreads()) ,
+// 								    this->GetRankChunkSize(StageSize, i, architecture->GetNbrThreads()) );	    
+// 	}	
+//       for (int i = 1; i < architecture->GetNbrThreads(); ++i)
+// 	{
+// 	  TmpOperations[i]->OutputVector->ClearVector();
+// 	}
+//   
+      
+
+  for (int i = 1; i < architecture->GetNbrThreads(); ++i)
+    {	
+      delete TmpOperations[i]->OutputVector;
+      delete TmpOperations[i];
+    }
+  delete TmpOperations[0];
+  delete[] TmpOperations;
+  delete[] this->SMPStages;
+  return true;
+}
+
+// apply operation for SMP architecture
+//
+// architecture = pointer to the architecture
+// return value = true if no error occurs
+
+/*bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::ArchitectureDependentApplyOperation(SMPArchitecture* architecture)
 {  
   char SaveFileName[200];
   sprintf(SaveFileName, "fermions_su2_slater_sym_tmp%d.vec",this->MPINodeNbr);        
@@ -227,7 +336,7 @@ bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::Architecture
   delete TmpOperations[0];
   delete[] TmpOperations;
   return true;
-}
+}*/
 
 
 // apply operation for SimpleMPI architecture

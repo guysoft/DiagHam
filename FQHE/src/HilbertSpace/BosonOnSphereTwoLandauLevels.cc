@@ -1991,13 +1991,17 @@ void BosonOnSphereTwoLandauLevels::BosonicStateTimePolarizedSlatersLzSzSymmetry(
   
   EvaluatePermutationsOfSubGroupsSymmetric(NbrPermutations, this->NbrBosons, NbrParticlesPerColor, Permutations1, Permutations2);
   
-  unsigned long* Monomial = new unsigned long[this->NbrBosons];
-  unsigned long* Slater = new unsigned long[fermionSpace->NbrFermions];
-  
+  int NbrSlaterPermutations;
+  unsigned long* Slater = new unsigned long[fermionSpace->NbrFermions];  
+  unsigned long** SlaterPermutations;
+  double *SlaterSigns;
   int NbrMax = firstComponent + nbrComponent;
-  int NbrVariable = 0;
-  
+  int NbrVariable = 0;  
   fermionSpace->ConvertToMonomial(fermionSpace->StateDescription[0], Slater);
+  EvaluateMonomialPermutations(fermionSpace->NbrFermions, Slater, NbrSlaterPermutations, SlaterPermutations, SlaterSigns );
+  
+  unsigned long* Monomial = new unsigned long[this->NbrBosons];
+  
   
   for (int j = firstComponent; j < NbrMax; j++)
     {
@@ -2007,15 +2011,16 @@ void BosonOnSphereTwoLandauLevels::BosonicStateTimePolarizedSlatersLzSzSymmetry(
 	  if( SymmtricIndex > j)
 	    {
 	      this->GetMonomialLandau(j, Monomial);	   
-	      finalSpace->MonomialsTimesPolarizedSlaterProjection(Slater, Monomial, SortingMap,NbrPermutations,Permutations1, Permutations2, bosonState[j]);	  
+	      finalSpace->MonomialsTimesPolarizedSlaterProjection(SlaterPermutations, SlaterSigns, NbrSlaterPermutations, Monomial, SortingMap, NbrPermutations,Permutations1, Permutations2, bosonState[j]);	  
 	    }
 	  else if ( SymmtricIndex ==  j)
 	    {
 	      this->GetMonomialLandau(j, Monomial);	   
-	      finalSpace->MonomialsTimesPolarizedSlaterProjection(Slater, Monomial, SortingMap,NbrPermutations,Permutations1, Permutations2, bosonState[j]*0.5);	  
+	      finalSpace->MonomialsTimesPolarizedSlaterProjection(SlaterPermutations, SlaterSigns, NbrSlaterPermutations, Monomial, SortingMap,NbrPermutations,Permutations1, Permutations2, bosonState[j]*0.5);	  
 	    }
 	}
     }
+ 
   
   unsigned long TmpState;
   for ( It = SortingMap.begin() ; It != SortingMap.end(); It++)
@@ -2057,7 +2062,15 @@ void BosonOnSphereTwoLandauLevels::BosonicStateTimePolarizedSlatersLzSzSymmetry(
 	  outputVector[TmpIndex] += (*It).second * Coefficient; 
 	}
     }
-  
+    
+  for ( int i = 0 ; i < NbrSlaterPermutations ; i++ )
+    {
+      delete[] SlaterPermutations[i];
+    }
+  delete [] SlaterPermutations;
+  delete [] SlaterSigns;
+  delete [] Permutations1;
+  delete [] Permutations2;
   delete [] Monomial;
   delete [] Slater;
 }
