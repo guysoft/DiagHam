@@ -144,3 +144,120 @@ void ParticleOnSphereWithSU3Spin::InitializeWaveFunctionEvaluation (bool timeCoh
 {
 }
                                     
+// apply a^+_m_1 a_n_1 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad1A1 (int index, int m, int n, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_1 a_n_2 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad1A2 (int index, int m, int n, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_1 a_n_3 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad1A3 (int index, int m, int n, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_2 a_n_1 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad2A1 (int index, int m, int n, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_2 a_n_2 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad2A2 (int index, int m, int n, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_2 a_n_3 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad2A3 (int index, int m, int n, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_3 a_n_1 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad3A1 (int index, int m, int n, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_3 a_n_2 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad3A2 (int index, int m, int n, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_3 a_n_3 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad3A3 (int index, int m, int n, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}
+

@@ -2484,8 +2484,8 @@ inline void ParticleOnLatticeQuantumSpinHallFourBandHamiltonian::EvaluateMNOneBo
 		{
 		  TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * particles->AdupAup(i, j);
 		  TmpDiagonal += this->OneBodyInteractionFactorsumum[j] * particles->AdumAum(i, j);
-		  TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * particles->AddpAdp(i, j);
-		  TmpDiagonal += this->OneBodyInteractionFactorsumum[j] * particles->AddmAdm(i, j);
+		  TmpDiagonal += this->OneBodyInteractionFactorsdpdp[j] * particles->AddpAdp(i, j);
+		  TmpDiagonal += this->OneBodyInteractionFactorsdmdm[j] * particles->AddmAdm(i, j);
 		}
 	      TmpDestinationVector[i] += (this->HamiltonianShift + TmpDiagonal)* TmpSourceVector[i];
 	    }

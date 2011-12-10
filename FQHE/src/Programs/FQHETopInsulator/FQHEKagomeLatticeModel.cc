@@ -1,15 +1,19 @@
 #include "Options/Options.h"
 
+#include "HilbertSpace/FermionOnSquareLatticeWithSU3SpinMomentumSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpaceLong.h"
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpaceLong.h"
 #include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
+#include "HilbertSpace/BosonOnSquareLatticeWithSU3SpinMomentumSpace.h"
 
 #include "Hamiltonian/ParticleOnLatticeKagomeLatticeSingleBandHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian.h"
 //#include "Hamiltonian/ParticleOnLatticeKagomeLatticeSingleBandFourBodyHamiltonian.h"
 //#include "Hamiltonian/ParticleOnLatticeKagomeLatticeSingleBandFiveBodyHamiltonian.h"
+
+#include "Hamiltonian/ParticleOnLatticeKagomeLatticeThreeBandHamiltonian.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -85,6 +89,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "l1", "imaginary part of the nearest neighbor hopping amplitude", 0.28);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "l2", "imaginary part of the next nearest neighbor hopping amplitude", 0.2);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "band-index", "index of the band that has to be partially filled, should be 0 (lower band), 1 or 2 (upper band)", 0);
+  (*SystemGroup) += new BooleanOption  ('\n', "three-bands", "use the full three band model", 0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "mu-s", "sublattice chemical potential on A site", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);

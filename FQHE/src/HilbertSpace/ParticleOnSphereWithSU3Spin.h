@@ -96,6 +96,87 @@ class ParticleOnSphereWithSU3Spin :  public ParticleOnSphere
   // return value = coefficient obtained when applying a^+_m_3 a_m_3
   virtual double Ad3A3 (int index, int m) = 0;
 
+  // apply a^+_m_1 a_n_1 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Ad1A1 (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_1 a_n_2 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Ad1A2 (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_1 a_n_3 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Ad1A3 (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_2 a_n_1 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Ad2A1 (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_2 a_n_2 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Ad2A2 (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_2 a_n_3 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Ad2A3 (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_3 a_n_1 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Ad3A1 (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_3 a_n_2 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Ad3A2 (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_3 a_n_3 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Ad3A3 (int index, int m, int n, double& coefficient);
+
   // apply a_n1_1 a_n2_1 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
   //
   // index = index of the state on which the operator has to be applied
