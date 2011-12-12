@@ -178,9 +178,14 @@ bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::ApplyOperati
   int FirstComponent = this->FirstComponent;
   
   int StageIdx=0;
+  bool locked = false;
   while ( StageIdx < this->NbrSMPStage ) 
     {
-      architecture->LockMutex();
+      if ( ! locked )	
+        {
+          architecture->LockMutex();
+          locked = true;
+        }
       if ( this->SMPStages[StageIdx] == false )
 	{
 	  this->SMPStages[StageIdx] = true;
@@ -188,11 +193,11 @@ bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::ApplyOperati
 	  this->SetIndicesRange(FirstComponent + this->GetRankChunkStart(NbrComponents, StageIdx,  this->NbrSMPStage),  this->GetRankChunkSize(NbrComponents, StageIdx,  this->NbrSMPStage));
 	  this->RawApplyOperation();
 	}
-      else
-	{
-	  architecture->UnLockMutex();
-	}
       StageIdx++;
+    }
+  if ( locked )
+    {
+      architecture->UnLockMutex();
     }
     
   timeval TotalEndingTime;
