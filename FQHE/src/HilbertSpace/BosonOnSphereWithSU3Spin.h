@@ -501,8 +501,11 @@ class BosonOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
   // initialSU3Indices = array that gives the spin dressing the initial n-body state
   // currentSU3Indices = array that gives the spin dressing the current transformed n-body state
   // oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+  // occupationCoefficient = invert of the coefficient that comes from the initial state occupation number 
+  // occupationCoefficientArray = array that provides 1/2 ln (N!)
   void TransformOneBodyBasisRecursive(ComplexVector& targetState, Complex coefficient,
-				      int position, int* momentumIndices, int* initialSU3Indices, int* currentSU3Indices, ComplexMatrix* oneBodyBasis);
+				      int position, int* momentumIndices, int* initialSU3Indices, int* currentSU3Indices, ComplexMatrix* oneBodyBasis, 
+				      double occupationCoefficient, double* occupationCoefficientArray);
 
 };
 

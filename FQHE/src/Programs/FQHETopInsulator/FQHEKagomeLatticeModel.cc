@@ -392,13 +392,13 @@ int main(int argc, char** argv)
 		      ComplexMatrix NBodyTransformationMatrix = ((BosonOnSquareLatticeWithSU3SpinMomentumSpace*) Space)->TransformationMatrixOneBodyBasis(OneBodyBasis);
 		      TransformedHRep = HRep.Conjugate(NBodyTransformationMatrix);
 		      TargetSpace = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
-		      SU3U1TransformationMatrix = ((BosonOnSquareLatticeWithSU3SpinMomentumSpace*) Space)->TransformationMatrixSU3ToU1((BosonOnSquareLatticeMomentumSpace*) TargetSpace);
+		      SU3U1TransformationMatrix = ((BosonOnSquareLatticeWithSU3SpinMomentumSpace*) Space)->TransformationMatrixSU3ToU1((BosonOnSquareLatticeMomentumSpace*) TargetSpace, 2);
 		    }
 
-		  cout << SU3U1TransformationMatrix << endl;
  		  ComplexMatrix TransformedHRep2 = TransformedHRep.InvConjugate(SU3U1TransformationMatrix);
- 		  TransformedHRep2 /= Manager.GetDouble("u-potential");
-		    
+		  if (Manager.GetDouble("u-potential") != 0.0)
+		    TransformedHRep2 /= Manager.GetDouble("u-potential");
+
  		  RealDiagonalMatrix TmpDiag;
  		  HermitianMatrix HRep2(TransformedHRep2);
  		  delete Hamiltonian;

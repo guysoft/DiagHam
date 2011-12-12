@@ -1160,11 +1160,16 @@ void BosonOnSphereWithSU3Spin::TransformOneBodyBasis(ComplexVector& initialState
   int* TmpMomentumIndices = new int [this->NbrBosons];
   int* TmpSU3Indices = new int [this->NbrBosons];
   int* TmpSU3Indices2 = new int [this->NbrBosons];
+  double* OccupationCoefficientArray = new double [this->NbrBosons + 1];
+  OccupationCoefficientArray[0] = 0.0;
+  for (int i = 1; i <= this->NbrBosons; ++i)
+    OccupationCoefficientArray[i] = OccupationCoefficientArray[i - 1] + 0.5 * log((double) i);
   targetState.ClearVector();
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     {
       this->FermionToBoson(this->StateDescription1[i], this->StateDescription2[i], this->StateDescription3[i],
 			   this->TemporaryState1, this->TemporaryState2, this->TemporaryState3); 
+      double OccupationCoefficient = 0.0;
       int TmpIndex = 0;
       for (int j = this->LzMax; j >= 0; --j)
 	{
@@ -1186,9 +1191,13 @@ void BosonOnSphereWithSU3Spin::TransformOneBodyBasis(ComplexVector& initialState
 	      TmpSU3Indices[TmpIndex] = 0;
 	      ++TmpIndex;	      
 	    }
+	  OccupationCoefficient -= OccupationCoefficientArray[this->TemporaryState1[j]];
+	  OccupationCoefficient -= OccupationCoefficientArray[this->TemporaryState2[j]];
+	  OccupationCoefficient -= OccupationCoefficientArray[this->TemporaryState3[j]];
 	}
-      this->TransformOneBodyBasisRecursive(targetState, initialState[i], 0, TmpMomentumIndices, TmpSU3Indices, TmpSU3Indices2, oneBodyBasis);
+      this->TransformOneBodyBasisRecursive(targetState, initialState[i], 0, TmpMomentumIndices, TmpSU3Indices, TmpSU3Indices2, oneBodyBasis, OccupationCoefficient, OccupationCoefficientArray);
     }
+  delete[] OccupationCoefficientArray;
   delete[] TmpMomentumIndices;
   delete[] TmpSU3Indices;
   delete[] TmpSU3Indices2;
@@ -1205,11 +1214,16 @@ ComplexMatrix BosonOnSphereWithSU3Spin::TransformationMatrixOneBodyBasis(Complex
   int* TmpSU3Indices = new int [this->NbrBosons];
   int* TmpSU3Indices2 = new int [this->NbrBosons];
   ComplexMatrix TmpMatrix(this->HilbertSpaceDimension, this->HilbertSpaceDimension, true);
+  double* OccupationCoefficientArray = new double [this->NbrBosons + 1];
+  OccupationCoefficientArray[0] = 0.0;
+  for (int i = 1; i <= this->NbrBosons; ++i)
+    OccupationCoefficientArray[i] = OccupationCoefficientArray[i - 1] + 0.5 * log((double) i);
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     {
       this->FermionToBoson(this->StateDescription1[i], this->StateDescription2[i], this->StateDescription3[i],
 			   this->TemporaryState1, this->TemporaryState2, this->TemporaryState3); 
       int TmpIndex = 0;
+      double OccupationCoefficient = 0.0;
       for (int j = this->LzMax; j >= 0; --j)
 	{
 	  for (int l = 0; l < this->TemporaryState3[j]; ++l)
@@ -1230,12 +1244,17 @@ ComplexMatrix BosonOnSphereWithSU3Spin::TransformationMatrixOneBodyBasis(Complex
 	      TmpSU3Indices[TmpIndex] = 0;
 	      ++TmpIndex;	      
 	    }
+	  OccupationCoefficient -= OccupationCoefficientArray[this->TemporaryState1[j]];
+	  OccupationCoefficient -= OccupationCoefficientArray[this->TemporaryState2[j]];
+	  OccupationCoefficient -= OccupationCoefficientArray[this->TemporaryState3[j]];
 	}
-      this->TransformOneBodyBasisRecursive(TmpMatrix[i], 1.0, 0, TmpMomentumIndices, TmpSU3Indices, TmpSU3Indices2, oneBodyBasis);
+      this->TransformOneBodyBasisRecursive(TmpMatrix[i], 1.0, 0, TmpMomentumIndices, TmpSU3Indices, TmpSU3Indices2, oneBodyBasis,
+					   OccupationCoefficient, OccupationCoefficientArray);
     }
   delete[] TmpMomentumIndices;
   delete[] TmpSU3Indices;
   delete[] TmpSU3Indices2;
+  delete[] OccupationCoefficientArray;
   return TmpMatrix;
 }
 
@@ -1248,9 +1267,12 @@ ComplexMatrix BosonOnSphereWithSU3Spin::TransformationMatrixOneBodyBasis(Complex
 // initialSU3Indices = array that gives the spin dressing the initial n-body state
 // currentSU3Indices = array that gives the spin dressing the current transformed n-body state
 // oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+// occupationCoefficient = invert of the coefficient that comes from the initial state occupation number 
+// occupationCoefficientArray = array that provides 1/2 ln (N!)
 
 void BosonOnSphereWithSU3Spin::TransformOneBodyBasisRecursive(ComplexVector& targetState, Complex coefficient,
-							      int position, int* momentumIndices, int* initialSU3Indices, int* currentSU3Indices, ComplexMatrix* oneBodyBasis) 
+							      int position, int* momentumIndices, int* initialSU3Indices, int* currentSU3Indices, ComplexMatrix* oneBodyBasis,
+							      double occupationCoefficient, double* occupationCoefficientArray) 
 {
   if (position == this->NbrBosons)
     {
@@ -1278,18 +1300,25 @@ void BosonOnSphereWithSU3Spin::TransformOneBodyBasisRecursive(ComplexVector& tar
       int Index = this->FindStateIndex(this->TemporaryState1, this->TemporaryState2, this->TemporaryState3);
       if (Index < this->HilbertSpaceDimension)
 	{
-	  targetState[Index] += coefficient;
+	  
+	  for (int i = 0; i <= this->LzMax; ++i)
+	    {
+	      occupationCoefficient += occupationCoefficientArray[this->TemporaryState1[i]];
+	      occupationCoefficient += occupationCoefficientArray[this->TemporaryState2[i]];
+	      occupationCoefficient += occupationCoefficientArray[this->TemporaryState3[i]];
+	    }
+	  targetState[Index] += coefficient * exp (occupationCoefficient);
 	}
       return;      
     }
   else
     {
       currentSU3Indices[position] = 0;
-      this->TransformOneBodyBasisRecursive(targetState, coefficient * (oneBodyBasis[momentumIndices[position]][2 - initialSU3Indices[position]][2]), position + 1, momentumIndices, initialSU3Indices, currentSU3Indices, oneBodyBasis);
+      this->TransformOneBodyBasisRecursive(targetState, coefficient * (oneBodyBasis[momentumIndices[position]][2 - initialSU3Indices[position]][2]), position + 1, momentumIndices, initialSU3Indices, currentSU3Indices, oneBodyBasis, occupationCoefficient, occupationCoefficientArray);
       currentSU3Indices[position] = 1;
-      this->TransformOneBodyBasisRecursive(targetState, coefficient * (oneBodyBasis[momentumIndices[position]][2 - initialSU3Indices[position]][1]), position + 1, momentumIndices, initialSU3Indices, currentSU3Indices, oneBodyBasis);
+      this->TransformOneBodyBasisRecursive(targetState, coefficient * (oneBodyBasis[momentumIndices[position]][2 - initialSU3Indices[position]][1]), position + 1, momentumIndices, initialSU3Indices, currentSU3Indices, oneBodyBasis, occupationCoefficient, occupationCoefficientArray);
       currentSU3Indices[position] = 2;
-      this->TransformOneBodyBasisRecursive(targetState, coefficient * (oneBodyBasis[momentumIndices[position]][2 - initialSU3Indices[position]][0]), position + 1, momentumIndices, initialSU3Indices, currentSU3Indices, oneBodyBasis);
+      this->TransformOneBodyBasisRecursive(targetState, coefficient * (oneBodyBasis[momentumIndices[position]][2 - initialSU3Indices[position]][0]), position + 1, momentumIndices, initialSU3Indices, currentSU3Indices, oneBodyBasis, occupationCoefficient, occupationCoefficientArray);
     }
 }
 
