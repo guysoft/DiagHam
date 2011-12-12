@@ -178,3 +178,15 @@ bool AbstractArchitecture::WriteVector(RealVector& vector, const char* fileName)
 {
   return vector.WriteVector(fileName);
 }
+
+
+// read vector in a file 
+//
+// vector = vector to read
+// fileName = name of the file where the vector is read from
+// return value = true if no error occurs
+
+bool AbstractArchitecture::ReadVector(RealVector& vector, const char* fileName)
+{
+  return vector.ReadVector(fileName);
+}

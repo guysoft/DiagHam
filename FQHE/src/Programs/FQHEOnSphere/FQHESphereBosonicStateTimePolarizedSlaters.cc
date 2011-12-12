@@ -75,6 +75,8 @@ int main(int argc, char** argv)
   // (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total lz value of the system (0 if it has to be guessed from file name)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
+  (*SystemGroup) += new SingleStringOption  ('\n', "resume-file", "use this file as the partial vector to resume from");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "resume-idx", "use this file as the partial vector to resume from", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "lzsymmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0, override auto-detection from file name)");
   (*SystemGroup) += new BooleanOption  ('\n', "szsymmetrized-basis", "use Sz <-> -Sz symmetrized version of the basis (only valid if total-sz=0, override auto-detection from file name)");
   (*SystemGroup) += new BooleanOption  ('\n', "minus-szparity", "select the  Sz <-> -Sz symmetric sector with negative parity");
@@ -131,6 +133,14 @@ int main(int argc, char** argv)
       cout << "dimension mismatch between the state (" << InitialState.GetVectorDimension() << ") and the Hilbert space (" << InitialSpace->GetHilbertSpaceDimension() << ")" << endl;
       return -1;
     }
+    
+  if ( LL2 == true)
+    {
+      int OldDimension = InitialSpace->GetHilbertSpaceDimension();
+      int NewDimension = ((BosonOnSphereTwoLandauLevels*)InitialSpace)->RemoveZeros(InitialState);      
+      cout << "Removing zero valued elements: " << OldDimension << " -> " << NewDimension << endl;
+    }
+    
   int HalfNbrParticles = NbrParticles >> 1;
   FermionOnSphere * SlaterSpace = new FermionOnSphere (HalfNbrParticles,0,HalfNbrParticles-1);
 	
@@ -203,8 +213,18 @@ int main(int argc, char** argv)
     }
 	
   RealVector OutputVector(FinalSpace->GetHilbertSpaceDimension(),true);
+  
+  int ResumeIdx = Manager.GetInteger("resume-idx");
+  if (Manager.GetString("resume-file") != 0 )
+    {
+      if ( Architecture.GetArchitecture()->ReadVector(OutputVector, Manager.GetString("resume-file")) == false )
+	{
+	  cout << "error while reading " << Manager.GetString("resume-file") << endl;
+	  return -1;
+	}		
+    }
 	
-  FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation Operation(InitialSpace, SlaterSpace, FinalSpace, &InitialState, &OutputVector,LL2,LzSym, SzSym, Manager.GetInteger("mpi-stages"), Manager.GetInteger("smp-stages"));	
+  FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation Operation(InitialSpace, SlaterSpace, FinalSpace, &InitialState, &OutputVector,LL2,LzSym, SzSym, Manager.GetInteger("mpi-stages"), Manager.GetInteger("smp-stages"), ResumeIdx);	
   Operation.ApplyOperation(Architecture.GetArchitecture());    
   
 

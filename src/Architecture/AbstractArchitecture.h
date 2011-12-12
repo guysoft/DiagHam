@@ -163,6 +163,13 @@ class AbstractArchitecture
   // fileName = name of the file where the vector has to be stored
   // return value = true if no error occurs
   virtual bool WriteVector(RealVector& vector, const char* fileName);
+  
+  // read a vector from a file but only on master
+  //
+  // vector = vector to read
+  // fileName = name of the file where the vector is read from
+  // return value = true if no error occurs
+  virtual bool ReadVector(RealVector& vector, const char* fileName);
 
  protected:
 

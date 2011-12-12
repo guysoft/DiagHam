@@ -384,7 +384,7 @@ class BosonOnSphereTwoLandauLevels :  public ParticleOnSphereWithSpin
   // finalSpace = pointer to the final Hilbert space
   // firstComponent = first component to be computed
   // nbrComponent = number of components to be computed
-  virtual void BosonicStateTimePolarizedSlaters(RealVector& bosonState, RealVector& outputVector, FermionOnSphere * fermionSpace , FermionOnSphereWithSpin* finalSpace, int firstComponent,int nbrComponent);
+  virtual void BosonicStateTimePolarizedSlaters(RealVector& bosonState, RealVector& outputVector, FermionOnSphere * fermionSpace , FermionOnSphereWithSpin* finalSpace, int firstComponent,int nbrComponent, unsigned long** slaterPermutations, double *slaterSigns, int nbrSlaterPermutations);
 
   // compute the projection of the product of a bosonic state and the halperin 110 state
   //
@@ -394,7 +394,7 @@ class BosonOnSphereTwoLandauLevels :  public ParticleOnSphereWithSpin
   // finalSpace = pointer to the final Hilbert space
   // firstComponent = first component to be computed
   // nbrComponent = number of components to be computed
-  virtual void BosonicStateTimePolarizedSlatersLzSymmetry(RealVector& bosonState, RealVector& outputVector, FermionOnSphere * fermionSpace , FermionOnSphereWithSpin* finalSpace, int firstComponent,int nbrComponent);
+  virtual void BosonicStateTimePolarizedSlatersLzSymmetry(RealVector& bosonState, RealVector& outputVector, FermionOnSphere * fermionSpace , FermionOnSphereWithSpin* finalSpace, int firstComponent,int nbrComponent, unsigned long** slaterPermutations, double *slaterSigns, int nbrSlaterPermutations);
 
   
   // compute the projection of the product of a bosonic state and the halperin 110 state
@@ -405,13 +405,19 @@ class BosonOnSphereTwoLandauLevels :  public ParticleOnSphereWithSpin
   // finalSpace = pointer to the final Hilbert space
   // firstComponent = first component to be computed
   // nbrComponent = number of components to be computed
-  virtual void BosonicStateTimePolarizedSlatersLzSzSymmetry(RealVector& bosonState, RealVector& outputVector, FermionOnSphere * fermionSpace , FermionOnSphereWithSpin* finalSpace, int firstComponent,int nbrComponent);
+  virtual void BosonicStateTimePolarizedSlatersLzSzSymmetry(RealVector& bosonState, RealVector& outputVector, FermionOnSphere * fermionSpace , FermionOnSphereWithSpin* finalSpace, int firstComponent,int nbrComponent, unsigned long** slaterPermutations, double *slaterSigns, int nbrSlaterPermutations);
 
   // compute  the lz symmetric state with given index
   //
   // index = index of configuration
   // return = lz symmstric configuration
   inline int GetSymmetricStateIndex (int index);
+  
+  // remove all zeros from the vector and remove corresponding state information
+  //
+  // initialState = reference to the vector in question  
+  // return = new size of the space
+  int RemoveZeros(RealVector& initialState);
   
  protected:
 
@@ -878,8 +884,7 @@ inline int BosonOnSphereTwoLandauLevels::GetSymmetricStateIndex (int index)
     }
   
   for (int i = 0 ; i < this->NbrBosons ; i++)
-    {
-      
+    {      
       if (this->TemporaryState[i] < this->LzMaxUp + 1)
 	this->TemporaryState[i] = GetIndexFromLzU(this->LzMax - GetLzFromIndexU(this->TemporaryState[i]));
       else

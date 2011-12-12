@@ -50,9 +50,10 @@ using std::cout;
 using std::endl;
 using std::ios;
 
-FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation(ParticleOnSphere * initialSpace, FermionOnSphere * fermionSpace, FermionOnSphereWithSpin * finalSpace, RealVector* bosonicVector, RealVector* outputVector,bool twoLandauLevels,bool twoLandauLevelLz, bool twoLandauLevelSz, int nbrMPIStage, int nbrSMPStage)
+FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation(ParticleOnSphere * initialSpace, FermionOnSphere * fermionSpace, FermionOnSphereWithSpin * finalSpace, RealVector* bosonicVector, RealVector* outputVector,bool twoLandauLevels,bool twoLandauLevelLz, bool twoLandauLevelSz, int nbrMPIStage, int nbrSMPStage, int resumeIdx)
 {
-  this->FirstComponent = 0;	
+  this->Cloned = false;
+  this->FirstComponent = resumeIdx;	
   this->NbrComponent = initialSpace->GetHilbertSpaceDimension();
   this->FermionSpace = fermionSpace;
   this->InitialSpace = initialSpace;
@@ -65,7 +66,14 @@ FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::FQHESphereBosonic
   this->TwoLandauLevels = twoLandauLevels;
   this->TwoLandauLevelLz = twoLandauLevelLz;
   this->TwoLandauLevelSz = twoLandauLevelSz;
-  this->MPINodeNbr = 0; 
+  this->MPINodeNbr = 0;       
+  this->ResumeIdx = resumeIdx;
+  unsigned long* Slater = new unsigned long[this->FermionSpace->NbrFermions];       
+  fermionSpace->ConvertToMonomial(this->FermionSpace->StateDescription[0], Slater);
+  EvaluateMonomialPermutations(fermionSpace->NbrFermions, Slater, this->NbrSlaterPermutations, this->SlaterPermutations, this->SlaterSigns );
+  delete[] Slater;
+  this->SMPStages = new int[1];  
+  
 }
 
 // copy constructor 
@@ -73,6 +81,7 @@ FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::FQHESphereBosonic
 // operation = reference on operation to copy
 FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation(const FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation & operation)	
 {
+  this->Cloned = true;
   this->FirstComponent = operation.FirstComponent;	
   this->NbrComponent 	= operation.NbrComponent;
   this->FermionSpace = operation.FermionSpace;		
@@ -88,6 +97,10 @@ FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::FQHESphereBosonic
   this->TwoLandauLevelSz= operation.TwoLandauLevelSz;
   this->MPINodeNbr = operation.MPINodeNbr;
   this->SMPStages = operation.SMPStages;
+  this->NbrSlaterPermutations = operation.NbrSlaterPermutations;
+  this->SlaterPermutations = operation.SlaterPermutations;
+  this->SlaterSigns = operation.SlaterSigns;
+  this->ResumeIdx = operation.ResumeIdx;
 }
 
 // destructor
@@ -95,6 +108,16 @@ FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::FQHESphereBosonic
 
 FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::~FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation()
 {
+  if ( ! this->Cloned )
+    {
+      for ( int i = 0 ; i < this->NbrSlaterPermutations ; i++ )
+	{
+	  delete[] this->SlaterPermutations[i];
+	}
+      delete [] this->SlaterPermutations;
+      delete [] this->SlaterSigns;
+      delete [] this->SMPStages;
+    }
 }
 
 // set range of indices
@@ -142,20 +165,20 @@ bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::RawApplyOper
 	{
 	  if ( this->TwoLandauLevelSz ) 
 	    {
-	      ((BosonOnSphereTwoLandauLevels * )this->InitialSpace)->BosonicStateTimePolarizedSlatersLzSzSymmetry(*this->BosonicVector, *this->OutputVector,this->FermionSpace , this->FinalSpace, this->FirstComponent ,this->NbrComponent);
+	      ((BosonOnSphereTwoLandauLevels * )this->InitialSpace)->BosonicStateTimePolarizedSlatersLzSzSymmetry(*this->BosonicVector, *this->OutputVector, this->FermionSpace , this->FinalSpace, this->FirstComponent ,this->NbrComponent, this->SlaterPermutations, this->SlaterSigns, this->NbrSlaterPermutations);
 	    }
 	  else
 	    {
-	      ((BosonOnSphereTwoLandauLevels * )this->InitialSpace)->BosonicStateTimePolarizedSlatersLzSymmetry(*this->BosonicVector, *this->OutputVector,this->FermionSpace , this->FinalSpace, this->FirstComponent ,this->NbrComponent);
+	      ((BosonOnSphereTwoLandauLevels * )this->InitialSpace)->BosonicStateTimePolarizedSlatersLzSymmetry(*this->BosonicVector, *this->OutputVector, this->FermionSpace , this->FinalSpace, this->FirstComponent ,this->NbrComponent, this->SlaterPermutations, this->SlaterSigns, this->NbrSlaterPermutations);
 	    }
 	}
       else
 	{
-	  ((BosonOnSphereTwoLandauLevels * )this->InitialSpace)->BosonicStateTimePolarizedSlaters(*this->BosonicVector, *this->OutputVector,this->FermionSpace , this->FinalSpace, this->FirstComponent ,this->NbrComponent);
+	  ((BosonOnSphereTwoLandauLevels * )this->InitialSpace)->BosonicStateTimePolarizedSlaters( *this->BosonicVector, *this->OutputVector,this->FermionSpace , this->FinalSpace, this->FirstComponent ,this->NbrComponent, this->SlaterPermutations, this->SlaterSigns, this->NbrSlaterPermutations);
 	}
     }
   else
-    ((BosonOnSphereShort *)this->InitialSpace)->BosonicStateTimePolarizedSlaters(*this->BosonicVector, *this->OutputVector,this->FermionSpace , this->FinalSpace, this->FirstComponent ,this->NbrComponent);
+    ((BosonOnSphereShort *)this->InitialSpace)->BosonicStateTimePolarizedSlaters( *this->BosonicVector, *this->OutputVector,this->FermionSpace , this->FinalSpace, this->FirstComponent ,this->NbrComponent);
 	
   timeval TotalEndingTime;
   gettimeofday (&TotalEndingTime, 0);
@@ -177,27 +200,31 @@ bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::ApplyOperati
   int NbrComponents = this->NbrComponent;
   int FirstComponent = this->FirstComponent;
   
+  int NbrStages = this->NbrSMPStage*architecture->GetNbrThreads();
   int StageIdx=0;
   bool locked = false;
-  while ( StageIdx < this->NbrSMPStage ) 
+  while ( StageIdx < NbrStages ) 
     {
       if ( ! locked )	
         {
           architecture->LockMutex();
           locked = true;
         }
-      if ( this->SMPStages[StageIdx] == false )
-	{
-	  this->SMPStages[StageIdx] = true;
+      StageIdx = this->SMPStages[0];
+      if ( StageIdx < NbrStages ) 
+	{	  
+	  this->SMPStages[0]++;
 	  architecture->UnLockMutex();
-	  this->SetIndicesRange(FirstComponent + this->GetRankChunkStart(NbrComponents, StageIdx,  this->NbrSMPStage),  this->GetRankChunkSize(NbrComponents, StageIdx,  this->NbrSMPStage));
+	  locked = false;
+	  this->SetIndicesRange(FirstComponent + this->GetRankChunkStart(NbrComponents, StageIdx,  NbrStages),  this->GetRankChunkSize(NbrComponents, StageIdx,  NbrStages));
 	  this->RawApplyOperation();
-	}
-      StageIdx++;
+	  StageIdx++;
+	}      	
     }
   if ( locked )
     {
       architecture->UnLockMutex();
+      locked = false;
     }
     
   timeval TotalEndingTime;
@@ -217,11 +244,12 @@ bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::Architecture
   sprintf(SaveFileName, "fermions_su2_slater_sym_tmp%d.vec",this->MPINodeNbr);        
   int NbrComponent = this->NbrComponent;
 	
-  this->SMPStages = new bool[this->NbrSMPStage];
-  for ( int i = 0 ; i < this->NbrSMPStage ; i++ )
+  /*this->SMPStages = new bool[this->NbrSMPStage*architecture->GetNbrThreads()];
+  for ( int i = 0 ; i < this->NbrSMPStage*architecture->GetNbrThreads() ; i++ )
     {
       this->SMPStages[i] = false;
-    }
+    }*/
+  this->SMPStages[0] = 0;
   
   FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation** TmpOperations = new FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation* [architecture->GetNbrThreads()];
   for(int i = 0 ;i < architecture->GetNbrThreads() ;i++)
@@ -232,9 +260,7 @@ bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::Architecture
   for (int i = 1; i < architecture->GetNbrThreads(); ++i)
     {
       TmpOperations[i]->SetOutputVector((RealVector*)this->OutputVector->EmptyClone(true));
-    }
-     
- 
+    }      
     
   architecture->SendJobsRoundRobin();
   if (architecture->VerboseMode() == true)
@@ -272,8 +298,7 @@ bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::Architecture
       delete TmpOperations[i];
     }
   delete TmpOperations[0];
-  delete[] TmpOperations;
-  delete[] this->SMPStages;
+  delete[] TmpOperations;  
   return true;
 }
 
@@ -352,12 +377,27 @@ bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::Architecture
 bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::ArchitectureDependentApplyOperation(SimpleMPIArchitecture* architecture)
 {
 #ifdef __MPI__    
-  this->MPINodeNbr = architecture->GetNodeNbr();
-  this->OutputVector->ClearVector();
-  for ( int Stage = 0; Stage < this->NbrMPIStage ; Stage++ )  
+  this->MPINodeNbr = architecture->GetNodeNbr();  
+  int NbrComponents = this->NbrComponent;
+  int FirstComponent = this->FirstComponent;
+  int StartingStage = 0;
+  for ( int Stage = StartingStage; Stage < this->NbrMPIStage ; Stage++ )  
     {
-      int StageDimension = this->GetRankChunkSize(this->InitialSpace->GetHilbertSpaceDimension(), Stage,  NbrMPIStage);
-      int StageStart = this->GetRankChunkStart(this->InitialSpace->GetHilbertSpaceDimension(), Stage,  NbrMPIStage);
+      if ( !architecture->IsMasterNode() )
+	{
+	  this->OutputVector->ClearVector();
+	}
+      int StageDimension = this->GetRankChunkSize(NbrComponents, Stage,  this->NbrMPIStage);
+      int StageStart = this->GetRankChunkStart(NbrComponents, Stage,  this->NbrMPIStage);
+      if ( this->ResumeIdx >= (StageStart  + StageDimension) )
+	{
+	  continue;
+	}
+      else if ( this->ResumeIdx >= StageStart) 
+	{      
+	  StageDimension =  StageDimension - (this->ResumeIdx - StageStart);
+	  StageStart = this->ResumeIdx; 
+	}	        	
       this->SetIndicesRange(StageStart +this->GetRankChunkStart(StageDimension,  this->MPINodeNbr,  architecture->GetNbrNodes()), 
 				       this->GetRankChunkSize(StageDimension,  this->MPINodeNbr,  architecture->GetNbrNodes())); 
       timeval TotalStartingTime;
@@ -380,10 +420,13 @@ bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::Architecture
 	    sprintf (TmpString, "FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation process operation stage %d on MPI id %d done in %.3f seconds", Stage, this->MPINodeNbr, this->ExecutionTime);
 	    architecture->AddToLog(TmpString);
 	  }
+	MPI::COMM_WORLD.Barrier();
+	architecture->SumVector(*(this->OutputVector));	
+	char SaveFileName[200];	
+	sprintf(SaveFileName, "fermions_su2_slater_sym_tmp_stage_%d_element_%d.vec", Stage, StageStart + StageDimension);  
+	architecture->WriteVector(*(this->OutputVector), SaveFileName);
     }    
-  MPI_Barrier(MPI_COMM_WORLD);
-  architecture->SumVector(*(this->OutputVector));
-  
+      
   return true;
 #else
   return this->RawApplyOperation();

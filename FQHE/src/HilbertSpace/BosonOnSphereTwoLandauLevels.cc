@@ -1851,7 +1851,7 @@ RealMatrix BosonOnSphereTwoLandauLevels::EvaluatePartialEntanglementMatrixPartic
 // firstComponent = first component to be computed
 // nbrComponent = number of components to be computed
 
-void BosonOnSphereTwoLandauLevels::BosonicStateTimePolarizedSlaters(RealVector& bosonState, RealVector& outputVector, FermionOnSphere * fermionSpace , FermionOnSphereWithSpin* finalSpace, int firstComponent,int nbrComponent)
+void BosonOnSphereTwoLandauLevels::BosonicStateTimePolarizedSlaters(RealVector& bosonState, RealVector& outputVector, FermionOnSphere * fermionSpace , FermionOnSphereWithSpin* finalSpace, int firstComponent,int nbrComponent, unsigned long** slaterPermutations, double *slaterSigns, int nbrSlaterPermutations)
 {
   map<unsigned long , double> SortingMap;
   map<unsigned long , double>::iterator It;
@@ -1864,13 +1864,10 @@ void BosonOnSphereTwoLandauLevels::BosonicStateTimePolarizedSlaters(RealVector& 
   
   EvaluatePermutationsOfSubGroups(NbrPermutations,this->NbrBosons, NbrParticlesPerColor, Permutations1, Permutations2);
   
-  unsigned long* Monomial = new unsigned long[this->NbrBosons];
-  unsigned long* Slater = new unsigned long[fermionSpace->NbrFermions];
+  unsigned long* Monomial = new unsigned long[this->NbrBosons];  
   
   int NbrMax = firstComponent + nbrComponent;
-  int NbrVariable = 0;
-  
-  fermionSpace->ConvertToMonomial(fermionSpace->StateDescription[0], Slater);
+  int NbrVariable = 0;    
   
   for (int j = firstComponent; j < NbrMax; j++)
     {
@@ -1878,7 +1875,7 @@ void BosonOnSphereTwoLandauLevels::BosonicStateTimePolarizedSlaters(RealVector& 
 	{
 	  this->GetMonomialLandau(j, Monomial);
 	  
-	  finalSpace->MonomialsTimesPolarizedSlaterProjection(Slater, Monomial, SortingMap,NbrPermutations,Permutations1, Permutations2, bosonState[j]);	  
+	  finalSpace->MonomialsTimesPolarizedSlaterProjection(slaterPermutations, slaterSigns, nbrSlaterPermutations, Monomial, SortingMap,NbrPermutations,Permutations1, Permutations2, bosonState[j]);	  
 	}
     }
   
@@ -1891,7 +1888,6 @@ void BosonOnSphereTwoLandauLevels::BosonicStateTimePolarizedSlaters(RealVector& 
     }
   
   delete [] Monomial;
-  delete [] Slater;
 }
 
 
@@ -1904,7 +1900,7 @@ void BosonOnSphereTwoLandauLevels::BosonicStateTimePolarizedSlaters(RealVector& 
 // firstComponent = first component to be computed
 // nbrComponent = number of components to be computed
 
-void BosonOnSphereTwoLandauLevels::BosonicStateTimePolarizedSlatersLzSymmetry(RealVector& bosonState, RealVector& outputVector, FermionOnSphere * fermionSpace , FermionOnSphereWithSpin* finalSpace, int firstComponent,int nbrComponent)
+void BosonOnSphereTwoLandauLevels::BosonicStateTimePolarizedSlatersLzSymmetry(RealVector& bosonState, RealVector& outputVector, FermionOnSphere * fermionSpace , FermionOnSphereWithSpin* finalSpace, int firstComponent,int nbrComponent, unsigned long** slaterPermutations, double *slaterSigns, int nbrSlaterPermutations)
 {
   map<unsigned long , double> SortingMap;
   map<unsigned long , double>::iterator It;
@@ -1917,13 +1913,11 @@ void BosonOnSphereTwoLandauLevels::BosonicStateTimePolarizedSlatersLzSymmetry(Re
   
   EvaluatePermutationsOfSubGroups(NbrPermutations,this->NbrBosons, NbrParticlesPerColor, Permutations1, Permutations2);
   
-  unsigned long* Monomial = new unsigned long[this->NbrBosons];
-  unsigned long* Slater = new unsigned long[fermionSpace->NbrFermions];
+  unsigned long* Monomial = new unsigned long[this->NbrBosons];  
   
   int NbrMax = firstComponent + nbrComponent;
   int NbrVariable = 0;
-  
-  fermionSpace->ConvertToMonomial(fermionSpace->StateDescription[0], Slater);
+    
   
   for (int j = firstComponent; j < NbrMax; j++)
     {
@@ -1933,12 +1927,12 @@ void BosonOnSphereTwoLandauLevels::BosonicStateTimePolarizedSlatersLzSymmetry(Re
 	  if( SymmtricIndex > j)
 	    {
 	      this->GetMonomialLandau(j, Monomial);	   
-	      finalSpace->MonomialsTimesPolarizedSlaterProjection(Slater, Monomial, SortingMap,NbrPermutations,Permutations1, Permutations2, bosonState[j]);	  
+	      finalSpace->MonomialsTimesPolarizedSlaterProjection(slaterPermutations, slaterSigns, nbrSlaterPermutations, Monomial, SortingMap,NbrPermutations,Permutations1, Permutations2, bosonState[j]);	  
 	    }
 	  else if ( SymmtricIndex ==  j)
 	    {
 	      this->GetMonomialLandau(j, Monomial);	   
-	      finalSpace->MonomialsTimesPolarizedSlaterProjection(Slater, Monomial, SortingMap,NbrPermutations,Permutations1, Permutations2, bosonState[j]*0.5);	  
+	      finalSpace->MonomialsTimesPolarizedSlaterProjection(slaterPermutations, slaterSigns, nbrSlaterPermutations,  Monomial, SortingMap,NbrPermutations,Permutations1, Permutations2, bosonState[j]*0.5);	  
 	    }
 	}
     }
@@ -1964,8 +1958,7 @@ void BosonOnSphereTwoLandauLevels::BosonicStateTimePolarizedSlatersLzSymmetry(Re
 	}	
     }
   
-  delete [] Monomial;
-  delete [] Slater;
+  delete [] Monomial;  
 }
 
 
@@ -1978,7 +1971,7 @@ void BosonOnSphereTwoLandauLevels::BosonicStateTimePolarizedSlatersLzSymmetry(Re
 // firstComponent = first component to be computed
 // nbrComponent = number of components to be computed
 
-void BosonOnSphereTwoLandauLevels::BosonicStateTimePolarizedSlatersLzSzSymmetry(RealVector& bosonState, RealVector& outputVector, FermionOnSphere * fermionSpace , FermionOnSphereWithSpin* finalSpace, int firstComponent,int nbrComponent)
+void BosonOnSphereTwoLandauLevels::BosonicStateTimePolarizedSlatersLzSzSymmetry(RealVector& bosonState, RealVector& outputVector, FermionOnSphere * fermionSpace , FermionOnSphereWithSpin* finalSpace, int firstComponent,int nbrComponent, unsigned long** slaterPermutations, double *slaterSigns, int nbrSlaterPermutations)
 {
   map<unsigned long , double> SortingMap;
   map<unsigned long , double>::iterator It;
@@ -1991,14 +1984,8 @@ void BosonOnSphereTwoLandauLevels::BosonicStateTimePolarizedSlatersLzSzSymmetry(
   
   EvaluatePermutationsOfSubGroupsSymmetric(NbrPermutations, this->NbrBosons, NbrParticlesPerColor, Permutations1, Permutations2);
   
-  int NbrSlaterPermutations;
-  unsigned long* Slater = new unsigned long[fermionSpace->NbrFermions];  
-  unsigned long** SlaterPermutations;
-  double *SlaterSigns;
   int NbrMax = firstComponent + nbrComponent;
-  int NbrVariable = 0;  
-  fermionSpace->ConvertToMonomial(fermionSpace->StateDescription[0], Slater);
-  EvaluateMonomialPermutations(fermionSpace->NbrFermions, Slater, NbrSlaterPermutations, SlaterPermutations, SlaterSigns );
+  int NbrVariable = 0;   
   
   unsigned long* Monomial = new unsigned long[this->NbrBosons];
   
@@ -2011,12 +1998,12 @@ void BosonOnSphereTwoLandauLevels::BosonicStateTimePolarizedSlatersLzSzSymmetry(
 	  if( SymmtricIndex > j)
 	    {
 	      this->GetMonomialLandau(j, Monomial);	   
-	      finalSpace->MonomialsTimesPolarizedSlaterProjection(SlaterPermutations, SlaterSigns, NbrSlaterPermutations, Monomial, SortingMap, NbrPermutations,Permutations1, Permutations2, bosonState[j]);	  
+	      finalSpace->MonomialsTimesPolarizedSlaterProjection(slaterPermutations, slaterSigns, nbrSlaterPermutations, Monomial, SortingMap, NbrPermutations,Permutations1, Permutations2, bosonState[j]);	  
 	    }
 	  else if ( SymmtricIndex ==  j)
 	    {
 	      this->GetMonomialLandau(j, Monomial);	   
-	      finalSpace->MonomialsTimesPolarizedSlaterProjection(SlaterPermutations, SlaterSigns, NbrSlaterPermutations, Monomial, SortingMap,NbrPermutations,Permutations1, Permutations2, bosonState[j]*0.5);	  
+	      finalSpace->MonomialsTimesPolarizedSlaterProjection(slaterPermutations, slaterSigns, nbrSlaterPermutations, Monomial, SortingMap,NbrPermutations,Permutations1, Permutations2, bosonState[j]*0.5);	  
 	    }
 	}
     }
@@ -2037,7 +2024,7 @@ void BosonOnSphereTwoLandauLevels::BosonicStateTimePolarizedSlatersLzSzSymmetry(
       while ((( SymmetricState >> TmpLzMax) & 0x1ul) == 0x0ul)
 	--TmpLzMax;
       int TmpIndex = finalSpace->FindStateIndex(SymmetricState, TmpLzMax);
-      if ( TmpIndex < this->HilbertSpaceDimension ) 
+      if ( TmpIndex < finalSpace->HilbertSpaceDimension ) 
 	{
 	  outputVector[TmpIndex] += (*It).second * Coefficient; 
 	}
@@ -2057,21 +2044,62 @@ void BosonOnSphereTwoLandauLevels::BosonicStateTimePolarizedSlatersLzSzSymmetry(
       while ((( SymmetricState >> TmpLzMax) & 0x1ul) == 0x0ul)
 	--TmpLzMax;
       TmpIndex = finalSpace->FindStateIndex(SymmetricState, TmpLzMax);
-      if ( TmpIndex < this->HilbertSpaceDimension ) 
+      if ( TmpIndex < finalSpace->HilbertSpaceDimension ) 
 	{
 	  outputVector[TmpIndex] += (*It).second * Coefficient; 
 	}
     }
     
-  for ( int i = 0 ; i < NbrSlaterPermutations ; i++ )
-    {
-      delete[] SlaterPermutations[i];
-    }
-  delete [] SlaterPermutations;
-  delete [] SlaterSigns;
+  
   delete [] Permutations1;
   delete [] Permutations2;
-  delete [] Monomial;
-  delete [] Slater;
+  delete [] Monomial;  
+}
+
+
+// remove all zeros from the vector and remove corresponding state information
+//
+// initialState = reference to the vector in question  
+// return = new size of the space
+
+int BosonOnSphereTwoLandauLevels::RemoveZeros(RealVector& initialState)
+{
+  int NbrNonZero = 0;
+  
+  for ( int i = 0 ; i < this->HilbertSpaceDimension ; i++ )
+    {
+      if ( initialState[i] != 0 )
+	{
+	  NbrNonZero += 1;
+	}
+    }
+  
+  double* NonZeroElements = new double[NbrNonZero];
+  unsigned long* NonZeroStateDescription = new unsigned long[NbrNonZero];
+  int* NonZeroStateLzMax = new int[NbrNonZero];
+  
+  NbrNonZero = 0;
+  for ( int i = 0 ; i < this->HilbertSpaceDimension ; i++ )
+    {
+      if ( initialState[i] != 0 )
+	{
+	  NonZeroElements[NbrNonZero] = initialState[i];
+	  NonZeroStateDescription[NbrNonZero] = this->StateDescription[i];
+	  NonZeroStateLzMax[NbrNonZero] = this->StateLzMax[i];
+	  NbrNonZero++;	  
+	}
+    } 
+  
+  RealVector NonZeroVector(NonZeroElements, NbrNonZero);
+  initialState = NonZeroVector;
+  
+  delete[] this->StateDescription;
+  delete[] this->StateLzMax;
+  this->StateDescription = NonZeroStateDescription;
+  this->StateLzMax = NonZeroStateLzMax;  
+  
+  this->HilbertSpaceDimension = NbrNonZero;
+  
+  return NbrNonZero;
 }
 

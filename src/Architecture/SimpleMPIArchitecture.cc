@@ -678,6 +678,49 @@ bool SimpleMPIArchitecture::WriteVector(RealVector& vector, const char* fileName
     {
       return vector.WriteVector(fileName);
     }
+  else
+    {
+      return true;
+    }
+#else
+  return vector.WriteVector(fileName);
+#endif
+}
+
+
+// read a vector from a file but only on master
+//
+// vector = vector to read
+// fileName = name of the file where the vector is read from
+// return value = true if no error occurs
+  
+bool SimpleMPIArchitecture::ReadVector(RealVector& vector, const char* fileName)
+{
+#ifdef __MPI__
+  MPI::COMM_WORLD.Barrier();
+  int Value = 0;
+  if ( this->IsMasterNode() )
+    {
+      if ( vector.ReadVector(fileName) )
+	{
+	  Value = 1;
+	}
+      else
+	{
+	  Value = 0;
+	}
+      this->BroadcastToSlaves(Value);
+    }
+  else
+    {
+      this->BroadcastToSlaves(Value);
+    }
+  if ( Value == 1 ) 
+    {
+      return true;
+    }
+  else 
+    return false;
 #else
   return vector.WriteVector(fileName);
 #endif

@@ -38,6 +38,7 @@
 #include "HilbertSpace/FermionOnSphere.h"
 #include "HilbertSpace/BosonOnSphereTwoLandauLevels.h"
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
+#include "GeneralTools/Permutations.h"
 
 
 
@@ -88,7 +89,22 @@ class FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation : public Abs
   double ExecutionTime;
   
   // array with size of SMP stages used to distribute work
-  bool *SMPStages; 
+  int *SMPStages; 
+  
+  // the number of permutations of the slater monomial
+  int NbrSlaterPermutations;
+  
+  // array of permutations for slater monomial
+  unsigned long** SlaterPermutations;
+  
+  //Array of signs for each permutation
+  double *SlaterSigns;
+  
+  //true if this is a cloned copy
+  bool Cloned;
+  
+  // Index to start from
+  int ResumeIdx;
   
  public:
   
@@ -97,7 +113,7 @@ class FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation : public Abs
   // Space = pointer to the HilbertSpace to use
   // fileName = name of the file where the kostka number will be store
   // nbrLL = number of Landau levels
-  FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation(ParticleOnSphere * initialSpace, FermionOnSphere * fermionSpace, FermionOnSphereWithSpin * finalSpace, RealVector* bosonicVector, RealVector* outputVector, bool twoLandauLevels, bool twoLandauLevelLz, bool twoLandauLevelSz, int nbrMPIStage = 20, int nbrSMPStage = 20);
+  FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation(ParticleOnSphere * initialSpace, FermionOnSphere * fermionSpace, FermionOnSphereWithSpin * finalSpace, RealVector* bosonicVector, RealVector* outputVector, bool twoLandauLevels, bool twoLandauLevelLz, bool twoLandauLevelSz, int nbrMPIStage = 20, int nbrSMPStage = 20, int resumeIdx = 0);
   
   // copy constructor 
   //
@@ -123,7 +139,7 @@ class FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation : public Abs
   // size = number of processes
   // return value = starting index for process
   static int GetRankChunkStart(int n, int rank, int size);
-  
+    
  protected:
   
   // set range of indices
@@ -229,7 +245,5 @@ inline int FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::GetRan
       return (CutOff * MaxChunk) + ((rank - CutOff) * MinChunk);
     }
 }
-
-
 
 #endif	
