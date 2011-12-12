@@ -75,6 +75,8 @@ class BosonOnSphereShort :  public ParticleOnSphere
 
   friend class BosonOnSphereTwoLandauLevels;
 
+  friend class BosonOnSphereWithSU3Spin;
+
  protected:
 
   // the fermionic Hilbert space associated to the bosonic one

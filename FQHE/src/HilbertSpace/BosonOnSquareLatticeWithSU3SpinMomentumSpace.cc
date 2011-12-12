@@ -128,6 +128,12 @@ BosonOnSquareLatticeWithSU3SpinMomentumSpace::BosonOnSquareLatticeWithSU3SpinMom
 //       for (long i = 0; i < TmpLargeHilbertSpaceDimension; ++i)
 // 	cout << i << " : " << hex << this->StateDescription1[i] << " " << this->StateDescription2[i] << " " << this->StateDescription3[i] << dec << endl;
       this->GenerateLookUpTable(memory);
+      double Dummy;
+//       for (int i = 0; i < this->LzMax; ++i)
+// 	{
+// 	  for (int j = 0; j < this->HilbertSpaceDimension; ++j)
+// 	    cout << "Ad3A3 " << i << " on " << j << " = " << this->Ad3A3(j, i, i, Dummy) << endl;
+// 	}
 #ifdef __DEBUG__
       long UsedMemory = 0;
       UsedMemory += (long) this->HilbertSpaceDimension * (4 * sizeof(unsigned long));
@@ -176,6 +182,7 @@ BosonOnSquareLatticeWithSU3SpinMomentumSpace::BosonOnSquareLatticeWithSU3SpinMom
   this->StateDescription1 = bosons.StateDescription1;
   this->StateDescription2 = bosons.StateDescription2;
   this->StateDescription3 = bosons.StateDescription3;
+  this->NbrUniqueStateDescription1 = bosons.NbrUniqueStateDescription1;
   this->UniqueStateDescription1 = bosons.UniqueStateDescription1;
   this->UniqueStateDescriptionSubArraySize1 = bosons.UniqueStateDescriptionSubArraySize1;
   this->NbrUniqueStateDescription2 = bosons.NbrUniqueStateDescription2;
@@ -249,6 +256,7 @@ BosonOnSquareLatticeWithSU3SpinMomentumSpace& BosonOnSquareLatticeWithSU3SpinMom
   this->StateDescription1 = bosons.StateDescription1;
   this->StateDescription2 = bosons.StateDescription2;
   this->StateDescription3 = bosons.StateDescription3;
+  this->NbrUniqueStateDescription1 = bosons.NbrUniqueStateDescription1;
   this->UniqueStateDescription1 = bosons.UniqueStateDescription1;
   this->UniqueStateDescriptionSubArraySize1 = bosons.UniqueStateDescriptionSubArraySize1;
   this->NbrUniqueStateDescription2 = bosons.NbrUniqueStateDescription2;

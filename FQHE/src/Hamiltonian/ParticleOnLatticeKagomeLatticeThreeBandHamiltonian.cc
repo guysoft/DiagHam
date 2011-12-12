@@ -322,18 +322,120 @@ void ParticleOnLatticeKagomeLatticeThreeBandHamiltonian::EvaluateInteractionFact
 		  int ky3 = Index3 % this->NbrSiteY;
 		  int kx4 = Index4 / this->NbrSiteY;
 		  int ky4 = Index4 % this->NbrSiteY;
-                  Tmp = this->ComputeTwoBodyMatrixElementAUpBUp(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
-                  this->InteractionFactors1212[i][Index] = -2.0 * FactorAUpBUp * Tmp;
-                  Tmp = this->ComputeTwoBodyMatrixElementADownBUp(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
-                  this->InteractionFactors2323[i][Index] = -2.0 * FactorADownBUp * Tmp;
-                  Tmp = this->ComputeTwoBodyMatrixElementAUpADown(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
-                  this->InteractionFactors1313[i][Index] = -2.0 * FactorAUpADown * Tmp;
+//                   Tmp = this->ComputeTwoBodyMatrixElementAUpBUp(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
+//                   this->InteractionFactors1212[i][Index] = -2.0 * FactorAUpBUp * Tmp;
+//                   Tmp = this->ComputeTwoBodyMatrixElementADownBUp(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
+//                   this->InteractionFactors2323[i][Index] = -2.0 * FactorADownBUp * Tmp;
+//                   Tmp = this->ComputeTwoBodyMatrixElementAUpADown(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
+//                   this->InteractionFactors1313[i][Index] = -2.0 * FactorAUpADown * Tmp;
 
 		  ++TotalNbrInteractionFactors;
 		  ++Index;
 		}
 	    }
 	}
+    }
+  else
+    {
+      for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
+	for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
+	  for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
+	    for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
+	      {
+		int Index1 = (kx1 * this->NbrSiteY) + ky1;
+		int Index2 = (kx2 * this->NbrSiteY) + ky2;
+		if (Index1 <= Index2)
+		  ++this->NbrIntraSectorIndicesPerSum[(((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY)];    
+	      }
+      this->IntraSectorIndicesPerSum = new int* [this->NbrIntraSectorSums];
+      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
+	{
+	  if (this->NbrIntraSectorIndicesPerSum[i]  > 0)
+	    {
+	      this->IntraSectorIndicesPerSum[i] = new int[2 * this->NbrIntraSectorIndicesPerSum[i]];      
+	      this->NbrIntraSectorIndicesPerSum[i] = 0;
+	    }
+	}
+      for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
+	for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
+	  for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
+	    for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
+	      {
+		int Index1 = ((kx1 * this->NbrSiteY) + ky1);
+		int Index2 = ((kx2 * this->NbrSiteY) + ky2);
+		if (Index1 <= Index2)
+		  {
+		    int TmpSum = (((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY);
+		    this->IntraSectorIndicesPerSum[TmpSum][this->NbrIntraSectorIndicesPerSum[TmpSum] << 1] = Index1;
+		    this->IntraSectorIndicesPerSum[TmpSum][1 + (this->NbrIntraSectorIndicesPerSum[TmpSum] << 1)] = Index2;
+		    ++this->NbrIntraSectorIndicesPerSum[TmpSum];    
+		  }
+	      }
+      double FactorU = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
+//      if (this->FlatBand == false)
+      FactorU *= this->UPotential;
+
+      this->InteractionFactors1111 = new Complex* [this->NbrIntraSectorSums];
+      this->InteractionFactors2222 = new Complex* [this->NbrIntraSectorSums];
+      this->InteractionFactors3333 = new Complex* [this->NbrIntraSectorSums];
+      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
+	{
+	  this->InteractionFactors1111[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
+	  this->InteractionFactors2222[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
+	  this->InteractionFactors3333[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
+	  int Index = 0;
+	  for (int j1 = 0; j1 < this->NbrIntraSectorIndicesPerSum[i]; ++j1)
+	    {
+	      int Index1 = this->IntraSectorIndicesPerSum[i][j1 << 1];
+	      int Index2 = this->IntraSectorIndicesPerSum[i][(j1 << 1) + 1];
+	      int kx1 = Index1 / this->NbrSiteY;
+	      int ky1 = Index1 % this->NbrSiteY;
+	      int kx2 = Index2 / this->NbrSiteY;
+	      int ky2 = Index2 % this->NbrSiteY;
+	      for (int j2 = 0; j2 < this->NbrIntraSectorIndicesPerSum[i]; ++j2)
+		{
+		  int Index3 = this->IntraSectorIndicesPerSum[i][j2 << 1];
+		  int Index4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1];
+		  int kx3 = Index3 / this->NbrSiteY;
+		  int ky3 = Index3 % this->NbrSiteY;
+		  int kx4 = Index4 / this->NbrSiteY;
+		  int ky4 = Index4 % this->NbrSiteY;
+		  this->InteractionFactors1111[i][Index] = FactorU * this->ComputeTwoBodyMatrixElementOnSiteAA();
+ 		  this->InteractionFactors1111[i][Index] += FactorU * this->ComputeTwoBodyMatrixElementOnSiteAA();
+ 		  this->InteractionFactors1111[i][Index] += FactorU * this->ComputeTwoBodyMatrixElementOnSiteAA();
+ 		  this->InteractionFactors1111[i][Index] += FactorU * this->ComputeTwoBodyMatrixElementOnSiteAA();
+
+ 		  this->InteractionFactors2222[i][Index] = FactorU * this->ComputeTwoBodyMatrixElementOnSiteBB(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
+ 		  this->InteractionFactors2222[i][Index] += FactorU * this->ComputeTwoBodyMatrixElementOnSiteBB(kx2, ky2, kx1, ky1, kx3, ky3, kx4, ky4);
+ 		  this->InteractionFactors2222[i][Index] += FactorU * this->ComputeTwoBodyMatrixElementOnSiteBB(kx1, ky1, kx2, ky2, kx4, ky4, kx3, ky3);
+ 		  this->InteractionFactors2222[i][Index] += FactorU * this->ComputeTwoBodyMatrixElementOnSiteBB(kx2, ky2, kx1, ky1, kx4, ky4, kx3, ky3);
+
+ 		  this->InteractionFactors3333[i][Index] = FactorU * this->ComputeTwoBodyMatrixElementOnSiteCC(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
+ 		  this->InteractionFactors3333[i][Index] += FactorU * this->ComputeTwoBodyMatrixElementOnSiteCC(kx2, ky2, kx1, ky1, kx3, ky3, kx4, ky4);
+ 		  this->InteractionFactors3333[i][Index] += FactorU * this->ComputeTwoBodyMatrixElementOnSiteCC(kx1, ky1, kx2, ky2, kx4, ky4, kx3, ky3);
+ 		  this->InteractionFactors3333[i][Index] += FactorU * this->ComputeTwoBodyMatrixElementOnSiteCC(kx2, ky2, kx1, ky1, kx4, ky4, kx3, ky3);
+
+		  if (Index3 == Index4)
+		    {
+		      this->InteractionFactors1111[i][Index] *= 0.5;
+		      this->InteractionFactors2222[i][Index] *= 0.5;
+		      this->InteractionFactors3333[i][Index] *= 0.5;
+		    }
+		  if (Index1 == Index2)
+		    {
+		      this->InteractionFactors1111[i][Index] *= 0.5;
+		      this->InteractionFactors2222[i][Index] *= 0.5;
+		      this->InteractionFactors3333[i][Index] *= 0.5;
+		    }
+		  this->InteractionFactors1111[i][Index] *= 2.0;
+		  this->InteractionFactors2222[i][Index] *= 2.0;
+		  this->InteractionFactors3333[i][Index] *= 2.0;
+		  ++TotalNbrInteractionFactors;
+		  ++Index;
+		}
+	    }
+	}
+      this->NbrInterSectorSums = 0;
     }
 
   delete[] OneBodyHamiltonian;

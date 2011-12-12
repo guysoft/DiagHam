@@ -74,24 +74,30 @@ ParticleOnLatticeQuantumSpinHallThreeBandHamiltonian::~ParticleOnLatticeQuantumS
 
   if (this->InteractionFactors1111 != 0)
     {
-      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
+      if (this->NbrIntraSectorSums > 0)
 	{
-	  delete[] this->InteractionFactors1111[i];
-	  delete[] this->InteractionFactors2222[i];
-	  delete[] this->InteractionFactors3333[i];
+	  for (int i = 0; i < this->NbrIntraSectorSums; ++i)
+	    {
+	      delete[] this->InteractionFactors1111[i];
+	      delete[] this->InteractionFactors2222[i];
+	      delete[] this->InteractionFactors3333[i];
+	    }
+	  delete[] this->InteractionFactors1111;
+	  delete[] this->InteractionFactors2222;
+	  delete[] this->InteractionFactors3333;
 	}
-      delete[] this->InteractionFactors1111;
-      delete[] this->InteractionFactors2222;
-      delete[] this->InteractionFactors3333;
-      for (int i = 0; i < this->NbrInterSectorSums; ++i)
+      if (this->NbrInterSectorSums > 0)
 	{
-	  delete[] InteractionFactors1212[i];
-	  delete[] InteractionFactors1313[i];
-	  delete[] InteractionFactors2323[i];
+	  for (int i = 0; i < this->NbrInterSectorSums; ++i)
+	    {
+	      delete[] InteractionFactors1212[i];
+	      delete[] InteractionFactors1313[i];
+	      delete[] InteractionFactors2323[i];
+	    }
+	  delete[] this->InteractionFactors1212;
+	  delete[] this->InteractionFactors1313;
+	  delete[] this->InteractionFactors2323;
 	}
-      delete[] this->InteractionFactors1212;
-      delete[] this->InteractionFactors1313;
-      delete[] this->InteractionFactors2323;
     }
   delete[] this->NbrIntraSectorIndicesPerSum;
   delete[] this->NbrInterSectorIndicesPerSum;

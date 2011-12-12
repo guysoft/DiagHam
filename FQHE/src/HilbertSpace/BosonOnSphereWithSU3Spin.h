@@ -371,6 +371,26 @@ class BosonOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
   // return value = reference on current output stream 
   virtual ostream& PrintState (ostream& Str, int state);
 
+  // convert a state from one SU(3) basis to another, transforming the one body basis in each momentum sector
+  //
+  // initialState = state to transform  
+  // targetState = vector where the transformed state has to be stored
+  // oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+  virtual void TransformOneBodyBasis(ComplexVector& initialState, ComplexVector& targetState, ComplexMatrix* oneBodyBasis);
+
+  // compute the transformation matrix from one SU(3) basis to another, transforming the one body basis in each momentum sector
+  //
+  // oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+  // return value = transformation matrix
+  virtual ComplexMatrix TransformationMatrixOneBodyBasis(ComplexMatrix* oneBodyBasis);
+
+  // compute the projection matrix from the SU(3) Hilbert space to an U(1) Hilbert space
+  // 
+  // targetSpace = pointer to the U(1) Hilbert space
+  // type = type of particles that has to be kept (0 for type 1, 1 for type 2, 2 for type 3
+  // return value = projection matrix
+  virtual ComplexMatrix TransformationMatrixSU3ToU1(BosonOnSphereShort* targetSpace, int type = 0);
+
   protected:
 
   // find state index
@@ -380,8 +400,6 @@ class BosonOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
   // stateDescription3 = unsigned integer describing the fermionic state for type 3 particles
   // return value = corresponding index
   virtual int FindStateIndex(unsigned long stateDescription1, unsigned long stateDescription2, unsigned long stateDescription3);
-
-
 
   // evaluate Hilbert space dimension
   //
@@ -473,6 +491,18 @@ class BosonOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
   // stateDescription3 = array describing the bosonic state for type 3 particles
   // return value = corresponding index
   virtual int FindStateIndex(unsigned long*& stateDescription1, unsigned long*& stateDescription2, unsigned long*& stateDescription3);
+
+  // recursive part of the convertion from a state from one SU(3) basis to another, transforming the one body basis in each momentum sector
+  //
+  // targetState = vector where the transformed state has to be stored
+  // coefficient = current coefficient to assign
+  // position = current particle consider in the n-body state
+  // momentumIndices = array that gives the momentum partition of the initial n-body state
+  // initialSU3Indices = array that gives the spin dressing the initial n-body state
+  // currentSU3Indices = array that gives the spin dressing the current transformed n-body state
+  // oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+  void TransformOneBodyBasisRecursive(ComplexVector& targetState, Complex coefficient,
+				      int position, int* momentumIndices, int* initialSU3Indices, int* currentSU3Indices, ComplexMatrix* oneBodyBasis);
 
 };
 

@@ -3183,6 +3183,8 @@ void FermionOnSphere::RebuildStateFromSchmidtDecompositionParticlePartition(int 
   cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
   FermionOnSphere TmpHilbertSpace(this->NbrFermions - nbrParticleSector, this->TotalLz - lzSector, this->LzMax);
 
+//  schmidtDecomposedState.ClearVector();
+
   cout << "   A = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << " " << aVectors.GetNbrRow() << " " << aVectors.GetNbrColumn() << endl;
   cout << aVectors << endl;
   cout << "   B = " << TmpHilbertSpace.HilbertSpaceDimension << " " << bVectors.GetNbrRow() << " " << bVectors.GetNbrColumn() << endl;
