@@ -152,6 +152,11 @@ class SMPArchitecture : public AbstractArchitecture
   //
   void UnLockMutex( );  
   
+  // get the id of the current threads
+  //
+  // return = thread id
+  int GetThreadID();
+  
 };
 
 // get the  number of threads that run simultaneously
@@ -186,6 +191,15 @@ inline void SMPArchitecture::LockMutex()
 inline void SMPArchitecture::UnLockMutex()
 {
   pthread_mutex_unlock(this->ThreadParameters->mut);
+}
+
+// get the id of the current threads
+//
+// return = thread id
+
+inline int SMPArchitecture::GetThreadID()
+{
+  return this->ThreadParameters->ThreadID;
 }
 
 #endif

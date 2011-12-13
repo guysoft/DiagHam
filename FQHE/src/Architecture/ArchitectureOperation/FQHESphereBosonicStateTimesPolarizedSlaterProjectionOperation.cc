@@ -214,6 +214,12 @@ bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::ApplyOperati
       if ( StageIdx < NbrStages ) 
 	{	  
 	  this->SMPStages[0]++;	  
+	  if (architecture->VerboseMode() == true)
+	    {
+	      char TmpString[512];
+	      sprintf (TmpString, "FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation core operation on SMP id %d starting stage %d",  architecture->GetThreadID(), StageIdx);
+	      architecture->AddToLog(TmpString);
+	    }
 	  architecture->UnLockMutex();
 	  locked = false;
 	  this->SetIndicesRange(FirstComponent + this->GetRankChunkStart(NbrComponents, StageIdx,  NbrStages),  this->GetRankChunkSize(NbrComponents, StageIdx,  NbrStages));
