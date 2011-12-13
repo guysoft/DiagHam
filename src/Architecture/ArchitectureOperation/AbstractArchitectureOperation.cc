@@ -104,7 +104,7 @@ bool AbstractArchitectureOperation::ArchitectureDependentApplyOperation(SimpleMP
 //
 // return value = true if no error occurs
   
-bool AbstractArchitectureOperation::ApplyOperationSMPRoundRobin(SMPArchitecture* architecture)
+bool AbstractArchitectureOperation::ApplyOperationSMPRoundRobin(SMPArchitecture* architecture, int threadID)
 {
   return this->RawApplyOperation();
 }

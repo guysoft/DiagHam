@@ -192,17 +192,18 @@ bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::RawApplyOper
 //  architecture = instance of architecture class
 // return value = true if no error occurs
 
-bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::ApplyOperationSMPRoundRobin(SMPArchitecture* architecture)
-{    
-  timeval TotalStartingTime;
-  gettimeofday (&TotalStartingTime, 0);
-  
+bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::ApplyOperationSMPRoundRobin(SMPArchitecture* architecture, int threadID)
+{      
   int NbrComponents = this->NbrComponent;
   int FirstComponent = this->FirstComponent;
   
+  timeval TotalStartingTime;
+  gettimeofday (&TotalStartingTime, 0);
   int NbrStages = this->NbrSMPStage*architecture->GetNbrThreads();
   int StageIdx=0;
   bool locked = false;
+  char TmpString[512];
+  sprintf(TmpString,"");
   while ( StageIdx < NbrStages ) 
     {
       if ( ! locked )	
@@ -214,16 +215,20 @@ bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::ApplyOperati
       if ( StageIdx < NbrStages ) 
 	{	  
 	  this->SMPStages[0]++;	  
-	  if (architecture->VerboseMode() == true)
+	  if (architecture->VerboseMode() == true && strcmp(TmpString,"") != 0 )
 	    {
-	      char TmpString[512];
-	      sprintf (TmpString, "FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation core operation on SMP id %d starting stage %d",  architecture->GetThreadID(), StageIdx);
-	      architecture->AddToLog(TmpString);
+	      architecture->AddToLog(TmpString);	      
 	    }
 	  architecture->UnLockMutex();
 	  locked = false;
+	  timeval TotalStartingTime2;
+	  gettimeofday (&TotalStartingTime2, 0);
 	  this->SetIndicesRange(FirstComponent + this->GetRankChunkStart(NbrComponents, StageIdx,  NbrStages),  this->GetRankChunkSize(NbrComponents, StageIdx,  NbrStages));
 	  this->RawApplyOperation();
+	  timeval TotalEndingTime2;
+	  gettimeofday (&TotalEndingTime2, 0);
+	  sprintf (TmpString, "FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation core operation on SMP id %d finished stage %d with size %d in %.4f",  threadID, StageIdx, this->GetRankChunkSize(NbrComponents, StageIdx,  NbrStages),
+		   (((double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec)) +(((double) (TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec)) / 1000000.0)) );	      
 	  StageIdx++;
 	}      	
     }

@@ -255,7 +255,7 @@ void* ThreadExecuteOperationRoundRobin(void* param)
 {
 #ifdef __SMP__
   ThreadMainParameter* LocalThreadParamater = (ThreadMainParameter*) param;
-  LocalThreadParamater->Operation->ApplyOperationSMPRoundRobin((SMPArchitecture*)LocalThreadParamater->Architecture);
+  LocalThreadParamater->Operation->ApplyOperationSMPRoundRobin((SMPArchitecture*)LocalThreadParamater->Architecture, LocalThreadParamater->ThreadID);
   pthread_mutex_lock(LocalThreadParamater->mut);
   (*(LocalThreadParamater->Flag)) = LocalThreadParamater->ThreadID;
   pthread_mutex_unlock(LocalThreadParamater->mut);

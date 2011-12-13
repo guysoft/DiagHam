@@ -172,7 +172,7 @@ class FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation : public Abs
   //
   //  architecture = instance of architecture class
   // return value = true if no error occurs
-  bool ApplyOperationSMPRoundRobin(SMPArchitecture* architecture);
+  bool ApplyOperationSMPRoundRobin(SMPArchitecture* architecture, int threadID);
   
   // apply operation for SMP architecture
   //

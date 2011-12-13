@@ -101,7 +101,7 @@ class AbstractArchitectureOperation
   // apply an SMP round robin operation 
   //
   // return value = true if no error occurs
-  virtual bool ApplyOperationSMPRoundRobin(SMPArchitecture* architecture);
+  virtual bool ApplyOperationSMPRoundRobin(SMPArchitecture* architecture, int threadID);
   
   // get operation type
   //
