@@ -417,7 +417,7 @@ class BosonOnSphereTwoLandauLevels :  public ParticleOnSphereWithSpin
   //
   // initialState = reference to the vector in question  
   // return = new size of the space
-  int RemoveZeros(RealVector& initialState);
+  int RemoveZeros(RealVector& initialState, bool lzSym = false);
   
  protected:
 

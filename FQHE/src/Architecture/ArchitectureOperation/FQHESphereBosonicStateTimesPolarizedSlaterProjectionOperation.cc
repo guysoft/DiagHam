@@ -213,7 +213,7 @@ bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::ApplyOperati
       StageIdx = this->SMPStages[0];
       if ( StageIdx < NbrStages ) 
 	{	  
-	  this->SMPStages[0]++;
+	  this->SMPStages[0]++;	  
 	  architecture->UnLockMutex();
 	  locked = false;
 	  this->SetIndicesRange(FirstComponent + this->GetRankChunkStart(NbrComponents, StageIdx,  NbrStages),  this->GetRankChunkSize(NbrComponents, StageIdx,  NbrStages));
@@ -272,11 +272,11 @@ bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::Architecture
 	  architecture->AddToLog(TmpString);
 	}
     }
+    
   for (int i = 1; i < architecture->GetNbrThreads(); ++i)
     {
       (*(this->OutputVector)) += (*(TmpOperations[i]->OutputVector));	
     }
-
   
 //       int StageStart = this->FirstComponent + this->GetRankChunkStart(NbrComponent, p,  this->NbrSMPStage);
 //       int StageSize = this->GetRankChunkSize(NbrComponent, p,  this->NbrSMPStage);

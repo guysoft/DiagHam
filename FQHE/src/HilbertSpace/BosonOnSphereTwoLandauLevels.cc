@@ -1921,20 +1921,20 @@ void BosonOnSphereTwoLandauLevels::BosonicStateTimePolarizedSlatersLzSymmetry(Re
   
   for (int j = firstComponent; j < NbrMax; j++)
     {
-      if(bosonState[j] != 0)
-	{
-	  int SymmtricIndex = this->GetSymmetricStateIndex(j);
-	  if( SymmtricIndex > j)
-	    {
+//       if(bosonState[j] != 0)
+// 	{
+// 	  int SymmtricIndex = this->GetSymmetricStateIndex(j);
+// 	  if( SymmtricIndex > j)
+// 	    {
 	      this->GetMonomialLandau(j, Monomial);	   
 	      finalSpace->MonomialsTimesPolarizedSlaterProjection(slaterPermutations, slaterSigns, nbrSlaterPermutations, Monomial, SortingMap,NbrPermutations,Permutations1, Permutations2, bosonState[j]);	  
-	    }
-	  else if ( SymmtricIndex ==  j)
-	    {
-	      this->GetMonomialLandau(j, Monomial);	   
-	      finalSpace->MonomialsTimesPolarizedSlaterProjection(slaterPermutations, slaterSigns, nbrSlaterPermutations,  Monomial, SortingMap,NbrPermutations,Permutations1, Permutations2, bosonState[j]*0.5);	  
-	    }
-	}
+// 	    }
+// 	  else if ( SymmtricIndex ==  j)
+// 	    {
+// 	      this->GetMonomialLandau(j, Monomial);	   
+// 	      finalSpace->MonomialsTimesPolarizedSlaterProjection(slaterPermutations, slaterSigns, nbrSlaterPermutations,  Monomial, SortingMap,NbrPermutations,Permutations1, Permutations2, bosonState[j]*0.5);	  
+// 	    }
+// 	}
     }
   
   unsigned long TmpState;
@@ -1992,20 +1992,20 @@ void BosonOnSphereTwoLandauLevels::BosonicStateTimePolarizedSlatersLzSzSymmetry(
   
   for (int j = firstComponent; j < NbrMax; j++)
     {
-      if(bosonState[j] != 0)
-	{
-	  int SymmtricIndex = this->GetSymmetricStateIndex(j);
-	  if( SymmtricIndex > j)
-	    {
+//       if(bosonState[j] != 0)
+// 	{
+// 	  int SymmtricIndex = this->GetSymmetricStateIndex(j);
+// 	  if( SymmtricIndex > j)
+// 	    {
 	      this->GetMonomialLandau(j, Monomial);	   
 	      finalSpace->MonomialsTimesPolarizedSlaterProjection(slaterPermutations, slaterSigns, nbrSlaterPermutations, Monomial, SortingMap, NbrPermutations,Permutations1, Permutations2, bosonState[j]);	  
-	    }
-	  else if ( SymmtricIndex ==  j)
-	    {
-	      this->GetMonomialLandau(j, Monomial);	   
-	      finalSpace->MonomialsTimesPolarizedSlaterProjection(slaterPermutations, slaterSigns, nbrSlaterPermutations, Monomial, SortingMap,NbrPermutations,Permutations1, Permutations2, bosonState[j]*0.5);	  
-	    }
-	}
+// 	    }
+// 	  else if ( SymmtricIndex ==  j)
+// 	    {
+// 	      this->GetMonomialLandau(j, Monomial);	   
+// 	      finalSpace->MonomialsTimesPolarizedSlaterProjection(slaterPermutations, slaterSigns, nbrSlaterPermutations, Monomial, SortingMap,NbrPermutations,Permutations1, Permutations2, bosonState[j]*0.5);	  
+// 	    }
+// 	}
     }
  
   
@@ -2062,7 +2062,7 @@ void BosonOnSphereTwoLandauLevels::BosonicStateTimePolarizedSlatersLzSzSymmetry(
 // initialState = reference to the vector in question  
 // return = new size of the space
 
-int BosonOnSphereTwoLandauLevels::RemoveZeros(RealVector& initialState)
+int BosonOnSphereTwoLandauLevels::RemoveZeros(RealVector& initialState, bool lzSym)
 {
   int NbrNonZero = 0;
   
@@ -2070,7 +2070,17 @@ int BosonOnSphereTwoLandauLevels::RemoveZeros(RealVector& initialState)
     {
       if ( initialState[i] != 0 )
 	{
-	  NbrNonZero += 1;
+	  if ( lzSym ) 
+	    {
+	      if ( this->GetSymmetricStateIndex(i) >= i )  
+		{
+		  NbrNonZero += 1;	  
+		}
+	    }
+	  else
+	    {
+	      NbrNonZero += 1;	  
+	    }
 	}
     }
   
@@ -2079,14 +2089,36 @@ int BosonOnSphereTwoLandauLevels::RemoveZeros(RealVector& initialState)
   int* NonZeroStateLzMax = new int[NbrNonZero];
   
   NbrNonZero = 0;
+  int SymmetricIndex;
   for ( int i = 0 ; i < this->HilbertSpaceDimension ; i++ )
     {
       if ( initialState[i] != 0 )
 	{
-	  NonZeroElements[NbrNonZero] = initialState[i];
-	  NonZeroStateDescription[NbrNonZero] = this->StateDescription[i];
-	  NonZeroStateLzMax[NbrNonZero] = this->StateLzMax[i];
-	  NbrNonZero++;	  
+	  if ( lzSym ) 
+	    {
+	      SymmetricIndex = this->GetSymmetricStateIndex(i);
+	      if ( SymmetricIndex  > i )  
+		{
+		  NonZeroElements[NbrNonZero] = initialState[i];
+		  NonZeroStateDescription[NbrNonZero] = this->StateDescription[i];
+		  NonZeroStateLzMax[NbrNonZero] = this->StateLzMax[i];
+		  NbrNonZero++;
+		}
+	      else if ( SymmetricIndex == i ) 
+		{
+		  NonZeroElements[NbrNonZero] = initialState[i] * 0.5;
+		  NonZeroStateDescription[NbrNonZero] = this->StateDescription[i];
+		  NonZeroStateLzMax[NbrNonZero] = this->StateLzMax[i];
+		  NbrNonZero++;
+		}
+	    }
+	  else
+	    {
+	      NonZeroElements[NbrNonZero] = initialState[i];
+	      NonZeroStateDescription[NbrNonZero] = this->StateDescription[i];
+	      NonZeroStateLzMax[NbrNonZero] = this->StateLzMax[i];
+	      NbrNonZero++;
+	    }
 	}
     } 
   

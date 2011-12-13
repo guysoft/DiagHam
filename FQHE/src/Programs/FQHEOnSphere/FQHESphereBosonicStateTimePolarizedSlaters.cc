@@ -136,8 +136,8 @@ int main(int argc, char** argv)
     
   if ( LL2 == true)
     {
-      int OldDimension = InitialSpace->GetHilbertSpaceDimension();
-      int NewDimension = ((BosonOnSphereTwoLandauLevels*)InitialSpace)->RemoveZeros(InitialState);      
+      int OldDimension = InitialSpace->GetHilbertSpaceDimension();           
+      int NewDimension = ((BosonOnSphereTwoLandauLevels*)InitialSpace)->RemoveZeros(InitialState, LzSym);      
       cout << "Removing zero valued elements: " << OldDimension << " -> " << NewDimension << endl;
     }
     
