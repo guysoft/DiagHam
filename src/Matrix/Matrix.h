@@ -242,6 +242,15 @@ class Matrix
   // return value = true if no error occurs
   virtual bool WriteAsciiMatrix (char* fileName);
 
+  // write matrix in a file in ascii mode, storing only its non zero elements, 
+  // first column being the row index, second being the column index, the third is the matrix element real part and the fourth column the matrix element imaginary part
+  //
+  // fileName = name of the file where the matrix has to be stored
+  // error = threshold below which a matrix element is considered to be null
+  // zeroBased = indices are written starting from zero (i.e. C convention)
+  // return value = true if no error occurs
+  virtual bool SparseWriteAsciiMatrix (char* fileName, double error = 0.0, bool zeroBased = true);
+
   // read matrix from a file 
   //
   // fileName = name of the file where the matrix has to be read

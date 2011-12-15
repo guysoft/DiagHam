@@ -554,7 +554,7 @@ long BosonOnSphereWithSU3Spin::GenerateStates(int nbrBosons, int lzMax1, int lzM
 // memory = memory size that can be allocated for the look-up table
 
 void BosonOnSphereWithSU3Spin::GenerateLookUpTable(unsigned long memory)
-{
+{  
   long TmpUniquePartition = 1l;
   for (long i = 1l; i < this->LargeHilbertSpaceDimension; ++i)
     {

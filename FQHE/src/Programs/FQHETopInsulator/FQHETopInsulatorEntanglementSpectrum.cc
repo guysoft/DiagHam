@@ -32,15 +32,13 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
   (*SystemGroup) += new SingleStringOption  ('\0', "density-matrix", "file containing the reduced density matrix");  
   (*SystemGroup) += new SingleIntegerOption ('n', "nbr-particles", "number of particles in the A part", 0l);
-  //  (*SystemGroup) += new SingleIntegerOption ('l', "nbr-orbitals", "number of orbitals in the A part", 0l);
-  //  (*SystemGroup) += new SingleIntegerOption ('s', "sz-value", "twice the Sz value of A part (SU(2) mode only)", 0l);
-  //  (*SystemGroup) += new BooleanOption  ('\n', "su2-spin", "consider particles with SU(2) spin (override autodetection from the reduced density matrix file name)");
   (*SystemGroup) += new SingleStringOption  ('o', "output", "output name for the entanglement spectrum (default name replace density-matrix full.ent extension with la_x_na_y.entspec)");
   (*SystemGroup) += new SingleDoubleOption  ('e', "eigenvalue-error", "lowest acceptable reduced density matrix eigenvalue", 1e-14);   (*SystemGroup) += new SingleDoubleOption  ('\n', "xi-error", "minus log of the lowest acceptable reduced density matrix eigenvalue (o if error control relies on the eigenvalue-error option)", 0);  
   (*SystemGroup) += new BooleanOption ('\n', "show-minmaxkya", "show minimum an maximum Ky value that can be reached");
   (*SystemGroup) += new BooleanOption ('\n', "show-counting", "show degeneracy counting for each Ky value");
   (*SystemGroup) += new BooleanOption ('\n', "particle-entanglement", "compute particle entanglement spectrum");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "ky-periodic", "set the periodicity for for the ky momentum (0 if non-periodic )", 0);
+  (*SystemGroup) += new BooleanOption  ('\n', "3d", "consider a 3d model instead of a 2d model");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -65,8 +63,10 @@ int main(int argc, char** argv)
   int NbrParticles = 0;
   int NbrSiteX = 0;
   int NbrSiteY = 0;
+  int NbrSiteZ = 0;
   bool Statistics = true;
   int Modulo = Manager.GetInteger("ky-periodic");
+  bool Flag3d = Manager.GetBoolean("3d");
   
   if (Manager.GetString("density-matrix") == 0)
     {
@@ -74,23 +74,26 @@ int main(int argc, char** argv)
       return -1;
     }
 
-//   bool SU2SpinFlag = false;
-//   if (strcasestr(Manager.GetString("density-matrix"), "_su2_") != 0)
-//     {
-//       SU2SpinFlag = true;
-//     }
-//   else
-//     {
-//       SU2SpinFlag = Manager.GetBoolean("su2-spin");      
-//     }
-  
-  double Mass = 0.0;
-  if (FQHEOnSquareLatticeFindSystemInfoFromFileName(Manager.GetString("density-matrix"),
-							  NbrParticles, NbrSiteX, NbrSiteY, Statistics) == false)
+  if (Flag3d == true)
     {
-      cout << "can't retrieve system informations from the reduced density matrix file name" << endl;
-      return -1;
-    } 
+      if (FQHEOnCubicLatticeFindSystemInfoFromFileName(Manager.GetString("density-matrix"),
+						       NbrParticles, NbrSiteX, NbrSiteY, NbrSiteZ, Statistics) == false)
+	{
+	  cout << "can't retrieve system informations from the reduced density matrix file name" << endl;
+	  return -1;
+	} 
+    }
+  else
+    {
+      NbrSiteZ = 1;
+      double Mass = 0.0;
+      if (FQHEOnSquareLatticeFindSystemInfoFromFileName(Manager.GetString("density-matrix"),
+							NbrParticles, NbrSiteX, NbrSiteY, Statistics) == false)
+	{
+	  cout << "can't retrieve system informations from the reduced density matrix file name" << endl;
+	  return -1;
+	} 
+    }
 
   MultiColumnASCIIFile DensityMatrix;
   if (DensityMatrix.Parse(Manager.GetString("density-matrix")) == false)
@@ -118,6 +121,9 @@ int main(int argc, char** argv)
       int* NaValues = DensityMatrix.GetAsIntegerArray(0);
       int* KxValues = DensityMatrix.GetAsIntegerArray(1);
       int* KyValues = DensityMatrix.GetAsIntegerArray(2);
+      int* KzValues = 0;
+      if (Flag3d == true)
+	KzValues = DensityMatrix.GetAsIntegerArray(3);
       long Index = 0l;
       long MaxIndex = DensityMatrix.GetNbrLines();
       while ((Index < MaxIndex) && (NaValues[Index] != NbrParticlesInPartition))
@@ -125,7 +131,11 @@ int main(int argc, char** argv)
 
       if (Index < MaxIndex)
 	{
-	  double* Coefficients = DensityMatrix.GetAsDoubleArray(3);
+	  double* Coefficients = 0;
+	  if (Flag3d == true)
+	    Coefficients = DensityMatrix.GetAsDoubleArray(4);
+	  else
+	    Coefficients = DensityMatrix.GetAsDoubleArray(3);
 	  char* OutputFileName = Manager.GetString("output");
 	  if (OutputFileName == 0)
 	    {
@@ -143,7 +153,10 @@ int main(int argc, char** argv)
 	  ofstream File;
 	  File.open(OutputFileName, ios::out);
 	  File.precision(14);
-	  File << "# na kx ky linearized_k lambda -log(lambda)";
+	  if (Flag3d == true)
+	    File << "# na kx ky kz linearized_k lambda -log(lambda)";
+	  else
+	    File << "# na kx ky linearized_k lambda -log(lambda)";
 	  File << endl;
 	  int TmpIndex = Index;
 	  while ((Index < MaxIndex) && (NaValues[Index] == NbrParticlesInPartition))
@@ -153,8 +166,18 @@ int main(int argc, char** argv)
 		{
 		  int TmpKxa = KxValues[Index];
 		  int TmpKya = KyValues[Index];
-		  int TmpLinearizedK = TmpKxa + (TmpKya * NbrSiteX);
-		  File << NbrParticlesInPartition << " " << TmpKxa << " " << TmpKya << " " << TmpLinearizedK << " " << Tmp << " " << (-log(Tmp));
+		  int TmpLinearizedK = 0;
+		  if (Flag3d == true)
+		    {
+		      int TmpKza = KzValues[Index];
+		      TmpLinearizedK = (TmpKxa + ((TmpKya + (TmpKza * NbrSiteY)) * NbrSiteX));
+		      File << NbrParticlesInPartition << " " << TmpKxa << " " << TmpKya << " " << TmpKza << " " << TmpLinearizedK << " " << Tmp << " " << (-log(Tmp));
+		    }
+		  else
+		    {
+		      TmpLinearizedK = (TmpKxa + (TmpKya * NbrSiteX));
+		      File << NbrParticlesInPartition << " " << TmpKxa << " " << TmpKya << " " << TmpLinearizedK << " " << Tmp << " " << (-log(Tmp));
+		    }
 		  File << endl;
  		  if (TmpLinearizedK < MinKa)
  		    MinKa = TmpLinearizedK;
@@ -163,8 +186,8 @@ int main(int argc, char** argv)
 		}
 	      ++Index;
 	    }
-          if (MaxKa>=MinKa)
-          {
+          if (MaxKa >= MinKa)
+	    {
               KaValueArray = new int[(MaxKa - MinKa + 1)];
               for (int i = MinKa; i <= MaxKa; ++i)
                 KaValueArray[(i - MinKa)] = 0; 
@@ -177,7 +200,7 @@ int main(int argc, char** argv)
                     }
                   ++Index;
                 }
-          }
+	    }
 	  File.close();	      
 	}
       else
@@ -202,10 +225,24 @@ int main(int argc, char** argv)
  	}
        cout << "total degeneracy counting " << TotalDegenracy << endl;
        cout << "degeneracy counting : " << endl;
-       for (int i = MinKa; i <= MaxKa; ++i)
- 	{
- 	  cout << i << " (kx=" << (i % NbrSiteX) << ", ky=" << (i / NbrSiteX) << ") = "<< KaValueArray[(i - MinKa)] << endl; 
- 	}
+       if (Flag3d == true)
+	 {
+	   for (int i = MinKa; i <= MaxKa; ++i)
+	     {
+	       cout << i << " (kx=" << (i % NbrSiteX) << ", ky=" << (i / NbrSiteX) << ") = "<< KaValueArray[(i - MinKa)] << endl; 
+	     }
+	 }
+       else
+	 {
+	   for (int i = MinKa; i <= MaxKa; ++i)
+	     {
+	       int TmpKx = i % (NbrSiteX * NbrSiteY);
+	       int TmpKz = i / (NbrSiteX * NbrSiteY);
+	       int TmpKy = (i / NbrSiteX) % NbrSiteY;
+	       cout << i << " (kx=" << TmpKx << ", ky=" << TmpKy << ", kz=" 
+		    << TmpKz << ") = "<< KaValueArray[(i - MinKa)] << endl; 
+	     }
+	 }
      }
 
   return 0;

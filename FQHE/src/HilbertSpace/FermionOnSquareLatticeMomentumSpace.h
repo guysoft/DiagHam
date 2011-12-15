@@ -168,20 +168,6 @@ class FermionOnSquareLatticeMomentumSpace : public FermionOnSphere
   virtual HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int kxSector, int kySector, 
 									 int nbrGroundStates, ComplexVector* groundStates, double* weights, AbstractArchitecture* architecture = 0);
 
-  // core part of the evaluation density matrix particle partition calculation involving a sum of projetors 
-  // 
-  // minIndex = first index to consider in source Hilbert space
-  // nbrIndex = number of indices to consider in source Hilbert space
-  // complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e. part B)
-  // destinationHilbertSpace = pointer to the destination Hilbert space  (i.e. part A)
-  // nbrGroundStates = number of projectors
-  // groundStates = array of degenerate groundstates associated to each projector
-  // weights = array of weights in front of each projector
-  // densityMatrix = reference on the density matrix where result has to stored
-  // return value = number of components that have been added to the density matrix
-  virtual long EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace,
-								  int nbrGroundStates, ComplexVector* groundStates, double* weights, HermitianMatrix* densityMatrix);
-
   // apply the inversion symmetry i.e (k_x,k_y)->(-k_x,-k_y) to a state 
   //
   // inputstate = reference on the input state
@@ -229,6 +215,20 @@ class FermionOnSquareLatticeMomentumSpace : public FermionOnSphere
   // return value = number of components that have been added to the density matrix
   virtual long EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace,
 								  ComplexVector& groundState,  HermitianMatrix* densityMatrix);
+
+  // core part of the evaluation density matrix particle partition calculation involving a sum of projetors 
+  // 
+  // minIndex = first index to consider in source Hilbert space
+  // nbrIndex = number of indices to consider in source Hilbert space
+  // complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e. part B)
+  // destinationHilbertSpace = pointer to the destination Hilbert space  (i.e. part A)
+  // nbrGroundStates = number of projectors
+  // groundStates = array of degenerate groundstates associated to each projector
+  // weights = array of weights in front of each projector
+  // densityMatrix = reference on the density matrix where result has to stored
+  // return value = number of components that have been added to the density matrix
+  virtual long EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace,
+								  int nbrGroundStates, ComplexVector* groundStates, double* weights, HermitianMatrix* densityMatrix);
 
 };
 

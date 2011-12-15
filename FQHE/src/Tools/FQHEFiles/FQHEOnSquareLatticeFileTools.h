@@ -70,5 +70,30 @@ bool FQHEOnSquareLatticeFindSystemInfoFromVectorFileName(char* filename, int& nb
 // return value = true if no error occured
 bool FQHEOnSquareLatticeFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& nbrSiteX, int& nbrSiteY, int& momentumX, int& momentumY, double& mass, bool& statistics);
 
+// try to guess system information from file name for a cubic lattice
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles 
+// nbrSiteX = reference to the number sites along the x direction
+// nbrSiteY = reference to the number sites along the y direction
+// nbrSiteZ = reference to the number sites along the z direction
+// statistics = reference to flag for fermionic statistics (true for fermion, false for bosons, grab it only if initial value is true)
+// return value = true if no error occured
+bool FQHEOnCubicLatticeFindSystemInfoFromFileName(char* filename, int& nbrParticles, int& nbrSiteX, int& nbrSiteY, int& nbrSiteZ, bool& statistics);
+
+// try to guess system information from file name for a cubic lattice
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles 
+// nbrSiteX = reference to the number sites along the x direction
+// nbrSiteY = reference to the number sites along the y direction
+// nbrSiteZ = reference to the number sites along the y direction
+// momentumX = reference to the momentum along the x direction
+// momentumY = reference to the momentum along the y direction
+// momentumZ = reference to the momentum along the z direction
+// statistics = reference to flag for fermionic statistics (true for fermion, false for bosons, grab it only if initial value is true)
+// return value = true if no error occured
+bool FQHEOnCubicLatticeFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& nbrSiteX, int& nbrSiteY, int& nbrSiteZ, int& momentumX, int& momentumY, int& momentumZ, bool& statistics);
+
 
 #endif

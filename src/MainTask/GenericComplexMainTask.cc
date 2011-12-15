@@ -200,6 +200,12 @@ GenericComplexMainTask::GenericComplexMainTask(OptionManager* options, AbstractH
       this->Hamiltonian->GetHamiltonian(HRep);
       cout << HRep << endl;
     }  
+  if (((*options)["export-hamiltonian"] != 0) && (options->GetString("export-hamiltonian") != 0))
+    {
+      HermitianMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension(), true);
+      this->Hamiltonian->GetHamiltonian(HRep);
+      HRep.SparseWriteAsciiMatrix(options->GetString("export-hamiltonian"));
+    }  
   if (((*options)["test-hermitian"] != 0) && (options->GetBoolean("test-hermitian") == true))
     {
       ComplexMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension(), this->Hamiltonian->GetHilbertSpaceDimension());

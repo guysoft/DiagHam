@@ -35,6 +35,7 @@
 #include "config.h"
 #include "Architecture/ArchitectureOperation/AbstractPrecalculationOperation.h"
 #include "HilbertSpace/ParticleOnSphere.h"
+#include "HilbertSpace/ParticleOnSphereWithSpin.h"
 #include "Vector/ComplexVector.h"
 
 class AbstractFunctionBasis;
@@ -48,12 +49,13 @@ class FQHESphereParticleEntanglementSpectrumOperation: public AbstractPrecalcula
 
  protected:
 
-  // fullSpace = pointer to the full Hilbert space to use
+  // pointer to the full Hilbert space to use
   ParticleOnSphere* FullSpace;
-  // destinationHilbertSpace = pointer to the destination Hilbert space (i.e. part A)
+  // pointer to the destination Hilbert space (i.e. part A)
   ParticleOnSphere* DestinationHilbertSpace;
   // pointer to the complementary Hilbert space (i.e. part B)
   ParticleOnSphere* ComplementaryHilbertSpace;
+
   // total system ground state
   RealVector GroundState;
   // reduced density matrix where result is stored

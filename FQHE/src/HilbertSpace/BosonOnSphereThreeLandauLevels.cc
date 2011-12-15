@@ -3,13 +3,13 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                    Copyright (C) 2001-2011 Nicolas Regnault                //
+//                   Copyright (C) 2001-2005 Nicolas Regnault                 //
 //                                                                            //
 //                                                                            //
-//               class of bosons on a square lattice with SU(3) spin          //
-//                                in momentum space                           //
+//                    class of bosons on sphere including three               //
+//                                  Landau levels                             //
 //                                                                            //
-//                        last modification : 06/12/2011                      //
+//                        last modification : 15/12/2011                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -30,54 +30,62 @@
 
 
 #include "config.h"
-#include "HilbertSpace/BosonOnSquareLatticeWithSU3SpinMomentumSpace.h"
+#include "HilbertSpace/BosonOnSphereThreeLandauLevels.h"
+#include "HilbertSpace/BosonOnSphere.h"
+#include "HilbertSpace/BosonOnSphereShort.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
 #include "Matrix/ComplexMatrix.h"
-#include "Matrix/ComplexLapackDeterminant.h"
 #include "Vector/RealVector.h"
 #include "FunctionBasis/AbstractFunctionBasis.h"
 #include "MathTools/BinomialCoefficients.h"
 #include "GeneralTools/UnsignedIntegerTools.h"
-#include "MathTools/FactorialCoefficient.h"
-#include "GeneralTools/Endian.h"
 #include "GeneralTools/ArrayTools.h"
+#include "MathTools/FactorialCoefficient.h"
 
 #include <math.h>
 #include <cstdlib>
-#include <fstream>
+#include <algorithm>
+#include <map>
 
 using std::cout;
 using std::endl;
 using std::hex;
 using std::dec;
-using std::ofstream;
-using std::ifstream;
-using std::ios;
+using std::map;
+using std::pair;
 
+
+// default constructor
+// 
+
+BosonOnSphereThreeLandauLevels::BosonOnSphereThreeLandauLevels ()
+{
+}
 
 // basic constructor
 // 
 // nbrBosons = number of bosons
-// nbrSiteX = number of sites in the x direction
-// nbrSiteY = number of sites in the y direction
-// kxMomentum = momentum along the x direction
-// kyMomentum = momentum along the y direction
+// totalLz = twice the momentum total value
+// lzMax = twice the maximum Lz value reached by a boson
 // memory = amount of memory granted for precalculations
 
-BosonOnSquareLatticeWithSU3SpinMomentumSpace::BosonOnSquareLatticeWithSU3SpinMomentumSpace (int nbrBosons, int nbrSiteX, int nbrSiteY, int kxMomentum, int kyMomentum, unsigned long memory)
-{  
+BosonOnSphereThreeLandauLevels::BosonOnSphereThreeLandauLevels (int nbrBosons, int totalLz, int lzMax, unsigned long memory)
+{
   this->NbrBosons = nbrBosons;
   this->IncNbrBosons = this->NbrBosons + 1;
-  this->TotalLz = 0;
-  this->TotalTz = 0;
+  this->TotalLz = totalLz;
   this->TotalY = 0;
-  this->NbrSiteX = nbrSiteX;
-  this->NbrSiteY = nbrSiteY;
-  this->KxMomentum = kxMomentum;
-  this->KyMomentum = kyMomentum;
-  this->LzMax = this->NbrSiteX * this->NbrSiteY;
+  this->TotalTz = 0;
+  this->LzMax = lzMax + 4;
+  this->NbrBosons = nbrBosons;
+  this->IncNbrBosons = this->NbrBosons + 1;
+  this->N1LzMax = this->LzMax + this->NbrBosons - 1;
+  this->N2LzMax = this->LzMax + this->NbrBosons - 1;
+  this->N3LzMax = this->LzMax + this->NbrBosons - 1;
+  this->FermionicLzMax = this->N1LzMax;
   this->NbrLzValue = this->LzMax + 1;
+
   this->Flag.Initialize();
   this->TemporaryState1 = new unsigned long[this->NbrLzValue];
   this->TemporaryState2 = new unsigned long[this->NbrLzValue];
@@ -86,11 +94,7 @@ BosonOnSquareLatticeWithSU3SpinMomentumSpace::BosonOnSquareLatticeWithSU3SpinMom
   this->ProdATemporaryState2 = new unsigned long[this->NbrLzValue];
   this->ProdATemporaryState3 = new unsigned long[this->NbrLzValue];
 
-  this->N1LzMax = this->LzMax + this->NbrBosons - 1;
-  this->N2LzMax = this->LzMax + this->NbrBosons - 1;
-  this->N3LzMax = this->LzMax + this->NbrBosons - 1;
-  this->FermionicLzMax = this->N1LzMax;
-  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0);
+  this->LargeHilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->NbrBosons, this->LzMax - 4, this->LzMax, (this->TotalLz + (this->NbrBosons * this->LzMax)) >> 1);
   if (this->LargeHilbertSpaceDimension >= (1l << 30))
     this->HilbertSpaceDimension = 0;
   else
@@ -101,7 +105,9 @@ BosonOnSquareLatticeWithSU3SpinMomentumSpace::BosonOnSquareLatticeWithSU3SpinMom
       this->StateDescription2 = new unsigned long [this->LargeHilbertSpaceDimension];
       this->StateDescription3 = new unsigned long [this->LargeHilbertSpaceDimension];
       this->Flag.Initialize();
-      long TmpLargeHilbertSpaceDimension = this->GenerateStates(this->NbrBosons, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0, this->LzMax + this->NbrBosons, this->LzMax + this->NbrBosons, this->LzMax + this->NbrBosons, 0l);
+      //            long TmpLargeHilbertSpaceDimension = this->GenerateStates(this->NbrBosons, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0, this->LzMax + this->NbrBosons, this->LzMax + this->NbrBosons, this->LzMax + this->NbrBosons, 0l);
+   long TmpLargeHilbertSpaceDimension = this->GenerateStates(this->NbrBosons, this->LzMax - 4, this->LzMax, (this->TotalLz + (this->NbrBosons * this->LzMax)) >> 1, 0l);
+
       if (this->LargeHilbertSpaceDimension != TmpLargeHilbertSpaceDimension)
 	{
 	  cout << "error while generating the Hilbert space " << this->LargeHilbertSpaceDimension << " " << TmpLargeHilbertSpaceDimension << endl;
@@ -145,12 +151,8 @@ BosonOnSquareLatticeWithSU3SpinMomentumSpace::BosonOnSquareLatticeWithSU3SpinMom
 //
 // bosons = reference on the hilbert space to copy to copy
 
-BosonOnSquareLatticeWithSU3SpinMomentumSpace::BosonOnSquareLatticeWithSU3SpinMomentumSpace(const BosonOnSquareLatticeWithSU3SpinMomentumSpace& bosons)
+BosonOnSphereThreeLandauLevels::BosonOnSphereThreeLandauLevels(const BosonOnSphereThreeLandauLevels& bosons)
 {
-  this->NbrSiteX = bosons.NbrSiteX;
-  this->NbrSiteY = bosons.NbrSiteY;
-  this->KxMomentum = bosons.KxMomentum;
-  this->KyMomentum = bosons.KyMomentum;
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
   this->Flag = bosons.Flag;
   this->NbrBosons = bosons.NbrBosons;
@@ -186,7 +188,7 @@ BosonOnSquareLatticeWithSU3SpinMomentumSpace::BosonOnSquareLatticeWithSU3SpinMom
 // destructor
 //
 
-BosonOnSquareLatticeWithSU3SpinMomentumSpace::~BosonOnSquareLatticeWithSU3SpinMomentumSpace ()
+BosonOnSphereThreeLandauLevels::~BosonOnSphereThreeLandauLevels ()
 {
 }
 
@@ -195,7 +197,7 @@ BosonOnSquareLatticeWithSU3SpinMomentumSpace::~BosonOnSquareLatticeWithSU3SpinMo
 // bosons = reference on the hilbert space to copy to copy
 // return value = reference on current hilbert space
 
-BosonOnSquareLatticeWithSU3SpinMomentumSpace& BosonOnSquareLatticeWithSU3SpinMomentumSpace::operator = (const BosonOnSquareLatticeWithSU3SpinMomentumSpace& bosons)
+BosonOnSphereThreeLandauLevels& BosonOnSphereThreeLandauLevels::operator = (const BosonOnSphereThreeLandauLevels& bosons)
 {
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
@@ -221,10 +223,7 @@ BosonOnSquareLatticeWithSU3SpinMomentumSpace& BosonOnSquareLatticeWithSU3SpinMom
   delete[] this->ProdATemporaryState1;
   delete[] this->ProdATemporaryState2;
   delete[] this->ProdATemporaryState3;
-  this->NbrSiteX = bosons.NbrSiteX;
-  this->NbrSiteY = bosons.NbrSiteY;
-  this->KxMomentum = bosons.KxMomentum;
-  this->KyMomentum = bosons.KyMomentum;
+
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
   this->Flag = bosons.Flag;
   this->NbrBosons = bosons.NbrBosons;
@@ -262,149 +261,170 @@ BosonOnSquareLatticeWithSU3SpinMomentumSpace& BosonOnSquareLatticeWithSU3SpinMom
 //
 // return value = pointer to cloned Hilbert space
 
-AbstractHilbertSpace* BosonOnSquareLatticeWithSU3SpinMomentumSpace::Clone()
+AbstractHilbertSpace* BosonOnSphereThreeLandauLevels::Clone()
 {
-  return new BosonOnSquareLatticeWithSU3SpinMomentumSpace(*this);
-}
-
-// print a given State
-//
-// Str = reference on current output stream 
-// state = ID of the state to print
-// return value = reference on current output stream 
-
-ostream& BosonOnSquareLatticeWithSU3SpinMomentumSpace::PrintState (ostream& Str, int state)
-{
-  this->FermionToBoson(this->StateDescription1[state], this->StateDescription2[state], this->StateDescription3[state],
-		       TemporaryState1, TemporaryState2, TemporaryState3); 
-
-  unsigned long Tmp;
-  Str << "[";
-  for (int i = 0; i <= this->LzMax; ++i)
-    {
-      int TmpKx = i / this->NbrSiteY;
-      int TmpKy = i % this->NbrSiteY;
-      if (this->TemporaryState1[i] > 0)
-	{
-	  for (int j = 0; j < this->TemporaryState1[i]; ++j)
-	    Str << "(" << TmpKx << "," << TmpKy << ",A)";
-	}
-      if (this->TemporaryState2[i] > 0)
-	{
-	  for (int j = 0; j < this->TemporaryState2[i]; ++j)
-	    Str << "(" << TmpKx << "," << TmpKy << ",B)";
-	}
-      if (this->TemporaryState3[i] > 0)
-	{
-	  for (int j = 0; j < this->TemporaryState3[i]; ++j)
-	    Str << "(" << TmpKx << "," << TmpKy << ",C)";
-	}
-    }
-  Str << "]";
-  return Str;
+  return new BosonOnSphereThreeLandauLevels(*this);
 }
 
 // generate all states corresponding to the constraints
 // 
 // nbrBosons = number of bosons
-// currentKx = current momentum along x for a single particle
-// currentKy = current momentum along y for a single particle
-// currentTotalKx = current total momentum along x
-// currentTotalKy = current total momentum along y
-// currentFermionicPosition1 = current fermionic position within the state description for the type 1 particles
-// currentFermionicPosition2 = current fermionic position within the state description for the type 2 particles
-// currentFermionicPosition3 = current fermionic position within the state description for the type 3 particles
+// nbrFluxQuanta = number of flux quanta
+// lzMax = momentum maximum value for a boson in the state
+// totalLz = momentum total value
 // pos = position in StateDescription array where to store states
 // return value = position from which new states have to be stored
 
-long BosonOnSquareLatticeWithSU3SpinMomentumSpace::GenerateStates(int nbrBosons, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy, int currentFermionicPosition1, int currentFermionicPosition2, int currentFermionicPosition3, long pos)
+long BosonOnSphereThreeLandauLevels::GenerateStates(int nbrBosons, int nbrFluxQuanta, int lzMax, int totalLz, long pos)
 {
-  if (currentKy < 0)
-    {
-      currentKy = this->NbrSiteY - 1;
-      currentKx--;
-    }
-  if (nbrBosons == 0)
-    {
-      if (((currentTotalKx % this->NbrSiteX) == this->KxMomentum) && ((currentTotalKy % this->NbrSiteY) == this->KyMomentum))
-	{
- 	  this->StateDescription1[pos] = 0x0ul;
- 	  this->StateDescription2[pos] = 0x0ul;
- 	  this->StateDescription3[pos] = 0x0ul;
-	  return (pos + 1l);
-	}
-      else	
-	return pos;
-    }
-  if (currentKx < 0)
+  if ((nbrBosons < 0) || (totalLz < 0))
     return pos;
-  for (int i = nbrBosons; i >= 0; --i)
+  if ((nbrBosons == 0) && (totalLz == 0))
     {
-      unsigned long Mask1 = ((0x1ul << i) - 0x1ul) << (currentFermionicPosition1 - i - 1);
-      for (int j = nbrBosons - i; j >= 0; --j)
-	{
-	  unsigned long Mask2 = ((0x1ul << j) - 0x1ul) << (currentFermionicPosition2 - j - 1);
-	  for (int k = nbrBosons - i - j; k >= 0; --k)
-	    {
-	      long TmpPos = this->GenerateStates(nbrBosons - i - j - k, currentKx, currentKy - 1, currentTotalKx + ((i + j + k) * currentKx), currentTotalKy + ((i + j + k) * currentKy), currentFermionicPosition1 - i - 1, currentFermionicPosition2 - j - 1, currentFermionicPosition3 - k - 1, pos);
-	      unsigned long Mask3 = ((0x1ul << k) - 0x1ul) << (currentFermionicPosition3 - k - 1);
-	      for (; pos < TmpPos; ++pos)
-		{
- 		  this->StateDescription1[pos] |= Mask1;
- 		  this->StateDescription2[pos] |= Mask2;
- 		  this->StateDescription3[pos] |= Mask3;
-		}
-	    }
-	}
+      //      this->StateDescription[pos] = 0x0ul;
+      return (pos + 1l);
     }
-  return pos;
-};
+  if (lzMax < 0) 
+    return pos;
+    
+//   if (nbrBosons == 1) 
+//     {
+//       if (lzMax >= totalLz)
+// 	{
+// 	  if (((nbrFluxQuanta + 4) >= totalLz) && (totalLz >= 0))
+// 	    {
+// 	      this->StateDescription[pos] = 0x4ul << (totalLz * 3);
+// 	      ++pos;
+// 	    }
+// 	  if (((nbrFluxQuanta + 3) >= totalLz) && (totalLz >= 1))
+// 	    {
+// 	      this->StateDescription[pos] = 0x2ul << (totalLz * 3);
+// 	      ++pos;
+// 	    }
+// 	  if (((nbrFluxQuanta + 2) >= totalLz) && (totalLz >= 2))
+// 	    {
+// 	      this->StateDescription[pos] = 0x1ul << (totalLz * 3);
+// 	      ++pos;
+// 	    }
+// 	}
+//       return pos;
+//     }
+
+  if ((lzMax == 0) && (totalLz != 0))
+    return pos;
+
+  long TmpPos = pos;
+//   unsigned long Mask = 0x0ul;
+//   if ((lzMax <= (nbrFluxQuanta + 4)) && (lzMax >= 0))
+//     {
+//       if ((lzMax <= (nbrFluxQuanta + 3)) && (lzMax >= 1))
+// 	{
+// 	  if ((lzMax <= (nbrFluxQuanta + 2)) && (lzMax >= 2))
+// 	    {
+// 	      TmpPos = this->GenerateStates(nbrBosons - 3, nbrFluxQuanta, lzMax - 1, totalLz - (3 * lzMax), pos);
+// 	      Mask = 0x7ul << (lzMax * 3);
+// 	      for (; pos < TmpPos; ++pos)
+// 		this->StateDescription[pos] |= Mask;
+// 	    }
+// 	  TmpPos = this->GenerateStates(nbrBosons - 2, nbrFluxQuanta, lzMax - 1, totalLz - (2 * lzMax), pos);
+// 	  Mask = 0x6ul << (lzMax * 3);
+// 	  for (; pos < TmpPos; ++pos)
+// 	    this->StateDescription[pos] |= Mask;
+// 	}
+//       if ((lzMax <= (nbrFluxQuanta + 2)) && (lzMax >= 2))
+// 	{
+// 	  TmpPos = this->GenerateStates(nbrBosons - 2, nbrFluxQuanta, lzMax - 1, totalLz - (2 * lzMax), pos);
+// 	  Mask = 0x5ul << (lzMax * 3);
+// 	  for (; pos < TmpPos; ++pos)
+// 	    this->StateDescription[pos] |= Mask;
+// 	}
+//       TmpPos = this->GenerateStates(nbrBosons - 1, nbrFluxQuanta, lzMax - 1, totalLz - lzMax, pos);
+//       Mask = 0x4ul << (lzMax * 3);
+//       for (; pos < TmpPos; ++pos)
+// 	this->StateDescription[pos] |= Mask;
+//     }
+//   if ((lzMax <= (nbrFluxQuanta + 3)) && (lzMax >= 1))
+//     {
+//       if ((lzMax <= (nbrFluxQuanta + 2)) && (lzMax >= 2))
+// 	{
+// 	  TmpPos = this->GenerateStates(nbrBosons - 2, nbrFluxQuanta, lzMax - 1, totalLz - (2 * lzMax), pos);
+// 	  Mask = 0x3ul << (lzMax * 3);
+// 	  for (; pos < TmpPos; ++pos)
+// 	    this->StateDescription[pos] |= Mask;
+// 	}
+//       TmpPos = this->GenerateStates(nbrBosons - 1, nbrFluxQuanta, lzMax - 1, totalLz - lzMax, pos);
+//       Mask = 0x2ul << (lzMax * 3);
+//       for (; pos < TmpPos; ++pos)
+// 	this->StateDescription[pos] |= Mask;
+//     }
+//   if ((lzMax <= (nbrFluxQuanta + 2)) && (lzMax >= 2))    
+//     {
+//       TmpPos = this->GenerateStates(nbrBosons - 1, nbrFluxQuanta, lzMax - 1, totalLz - lzMax, pos);
+//       Mask = 0x1ul << (lzMax * 3);
+//       for (; pos < TmpPos; ++pos)
+// 	this->StateDescription[pos] |= Mask;
+//     }
+  return this->GenerateStates(nbrBosons, nbrFluxQuanta, lzMax - 1, totalLz, pos);
+}
 
 
 // evaluate Hilbert space dimension
 //
 // nbrBosons = number of bosons
-// currentKx = current momentum along x for a single particle
-// currentKy = current momentum along y for a single particle
-// currentTotalKx = current total momentum along x
-// currentTotalKy = current total momentum along y
+// nbrFluxQuanta = number of flux quanta
+// lzMax = momentum maximum value for a boson
+// totalLz = momentum total value
 // return value = Hilbert space dimension
 
-long BosonOnSquareLatticeWithSU3SpinMomentumSpace::EvaluateHilbertSpaceDimension(int nbrBosons, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy)
+long BosonOnSphereThreeLandauLevels::ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int nbrFluxQuanta, int lzMax, int totalLz)
 {
-  if (currentKy < 0)
-    {
-      currentKy = this->NbrSiteY - 1;
-      currentKx--;
-    }
-  if (nbrBosons == 0)
-    {
-      if (((currentTotalKx % this->NbrSiteX) == this->KxMomentum) && ((currentTotalKy % this->NbrSiteY) == this->KyMomentum))
-	return 1l;
-      else	
-	return 0l;
-    }
-  if (currentKx < 0)
+  if ((nbrBosons < 0) || (totalLz < 0))
     return 0l;
-  long Count = 0;
-  if (nbrBosons == 1)
+  if ((nbrBosons == 0) && (totalLz == 0))
+    return 1l;
+  if (lzMax < 0) 
+    return 0l;
+    
+  if (nbrBosons == 1) 
     {
-      for (int j = currentKy; j >= 0; --j)
+      long Tmp = 0l;
+      if (lzMax >= totalLz)
 	{
-	  if ((((currentKx + currentTotalKx) % this->NbrSiteX) == this->KxMomentum) && (((j + currentTotalKy) % this->NbrSiteY) == this->KyMomentum))
-	    Count += 3l;
+	  if (((nbrFluxQuanta + 4) >= totalLz) && (totalLz >= 0))
+	    ++Tmp;
+	  if (((nbrFluxQuanta + 3) >= totalLz) && (totalLz >= 1))
+	    ++Tmp;
+	  if (((nbrFluxQuanta + 2) >= totalLz) && (totalLz >= 2))
+	    ++Tmp;
 	}
-      for (int i = currentKx - 1; i >= 0; --i)
-	{
-	  for (int j = this->NbrSiteY - 1; j >= 0; --j)
-	    {
-	      if ((((i + currentTotalKx) % this->NbrSiteX) == this->KxMomentum) && (((j + currentTotalKy) % this->NbrSiteY) == this->KyMomentum))
-		Count += 3l;
-	    }
-	}
-      return Count;
+      return Tmp;
     }
-  for (int i = nbrBosons; i >= 0; --i)
-    Count += ((((long) i + 1l) * ((long) i + 2l)) / 2l) * this->EvaluateHilbertSpaceDimension(nbrBosons - i, currentKx, currentKy - 1, currentTotalKx + (i * currentKx), currentTotalKy + (i * currentKy));
-  return Count;
+
+  if ((lzMax == 0) && (totalLz != 0))
+    return 0l;
+
+  long Tmp = 0l;
+  if ((lzMax <= (nbrFluxQuanta + 4)) && (lzMax >= 0))
+    {
+      if ((lzMax <= (nbrFluxQuanta + 3)) && (lzMax >= 1))
+	{
+	  if ((lzMax <= (nbrFluxQuanta + 2)) && (lzMax >= 2))
+	    Tmp += this->ShiftedEvaluateHilbertSpaceDimension(nbrBosons - 3, nbrFluxQuanta, lzMax - 1, totalLz - (3 * lzMax));
+	  Tmp += this->ShiftedEvaluateHilbertSpaceDimension(nbrBosons - 2, nbrFluxQuanta, lzMax - 1, totalLz - (2 * lzMax));
+	}
+      if ((lzMax <= (nbrFluxQuanta + 2)) && (lzMax >= 2))
+	Tmp += this->ShiftedEvaluateHilbertSpaceDimension(nbrBosons - 2, nbrFluxQuanta, lzMax - 1, totalLz - (2 * lzMax));
+      Tmp += this->ShiftedEvaluateHilbertSpaceDimension(nbrBosons - 1, nbrFluxQuanta, lzMax - 1, totalLz - lzMax);
+    }
+  if ((lzMax <= (nbrFluxQuanta + 3)) && (lzMax >= 1))
+    {
+      if ((lzMax <= (nbrFluxQuanta + 2)) && (lzMax >= 2))
+	Tmp += this->ShiftedEvaluateHilbertSpaceDimension(nbrBosons - 2, nbrFluxQuanta, lzMax - 1, totalLz - (2 * lzMax));
+      Tmp += this->ShiftedEvaluateHilbertSpaceDimension(nbrBosons - 1, nbrFluxQuanta, lzMax - 1, totalLz - lzMax);
+    }
+  if ((lzMax <= (nbrFluxQuanta + 2)) && (lzMax >= 2))    
+    Tmp += this->ShiftedEvaluateHilbertSpaceDimension(nbrBosons - 1, nbrFluxQuanta, lzMax - 1, totalLz - lzMax);
+  Tmp += this->ShiftedEvaluateHilbertSpaceDimension(nbrBosons, nbrFluxQuanta, lzMax - 1, totalLz);
+  return Tmp;
 }
+

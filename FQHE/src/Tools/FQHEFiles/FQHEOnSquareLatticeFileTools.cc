@@ -249,3 +249,133 @@ bool FQHEOnSquareLatticeFindSystemInfoFromVectorFileName(char* filename, int& nb
   return true;
 }
 
+// try to guess system information from file name for a cubic lattice
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles 
+// nbrSiteX = reference to the number sites along the x direction
+// nbrSiteY = reference to the number sites along the y direction
+// nbrSiteZ = reference to the number sites along the z direction
+// statistics = reference to flag for fermionic statistics (true for fermion, false for bosons, grab it only if initial value is true)
+// return value = true if no error occured
+
+bool FQHEOnCubicLatticeFindSystemInfoFromFileName(char* filename, int& nbrParticles, int& nbrSiteX, int& nbrSiteY, int& nbrSiteZ, bool& statistics)
+{
+  if (FQHEOnSquareLatticeFindSystemInfoFromFileName(filename, nbrParticles, nbrSiteX, nbrSiteY, statistics) == false)
+    {
+      return false;
+    }
+  char* StrNbrParticles = strstr(filename, "_z_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 3;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	{
+	  StrNbrParticles[SizeString] = '\0';
+	  nbrSiteZ = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = '_';
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      nbrSiteZ = 0;
+    }
+  return true;
+}
+
+// try to guess system information from file name for a cubic lattice
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles 
+// nbrSiteX = reference to the number sites along the x direction
+// nbrSiteY = reference to the number sites along the y direction
+// nbrSiteZ = reference to the number sites along the y direction
+// momentumX = reference to the momentum along the x direction
+// momentumY = reference to the momentum along the y direction
+// momentumZ = reference to the momentum along the z direction
+// statistics = reference to flag for fermionic statistics (true for fermion, false for bosons, grab it only if initial value is true)
+// return value = true if no error occured
+
+bool FQHEOnCubicLatticeFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& nbrSiteX, int& nbrSiteY, int& nbrSiteZ, int& momentumX, int& momentumY, int& momentumZ, bool& statistics)
+{
+  if (FQHEOnSquareLatticeFindSystemInfoFromVectorFileName(filename, nbrParticles, nbrSiteX, nbrSiteY, momentumX, momentumY, statistics) == false)
+    {
+      return false;
+    }
+  char* StrNbrParticles;
+  StrNbrParticles = strstr(filename, "_ky_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 4;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	{
+	  StrNbrParticles[SizeString] = '\0';
+	  momentumY = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = '_';
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      momentumY = 0;
+    }
+  StrNbrParticles = strstr(filename, "_kz_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 4;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '.') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if ((StrNbrParticles[SizeString] == '.') && (SizeString != 0))
+	{
+	  StrNbrParticles[SizeString] = '\0';
+	  momentumZ = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = '.';
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      momentumZ = 0;
+    }
+  StrNbrParticles = strstr(filename, "_z_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 3;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	{
+	  StrNbrParticles[SizeString] = '\0';
+	  nbrSiteZ = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = '_';
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      nbrSiteZ = 0;
+    }
+  return true;
+}
+

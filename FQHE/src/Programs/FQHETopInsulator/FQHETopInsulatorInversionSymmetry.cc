@@ -15,6 +15,7 @@
 #include "Tools/FQHEFiles/FQHEOnSquareLatticeFileTools.h"
 
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
+#include "HilbertSpace/FermionOnCubicLatticeWithSpinMomentumSpace.h"
 #include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
 
 #include <iostream>
@@ -41,6 +42,7 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
 
   (*SystemGroup) += new SingleStringOption  ('\0', "input-state", "name of the file corresponding to the state on which inversion symmetry will be applied");
+  (*SystemGroup) += new BooleanOption  ('\n', "3d", "consider a 3d model instead of a 2d model");
   (*OutputGroup) += new SingleStringOption ('o', "output-state", "use this output file name instead of the one that can be deduced from the input state file name");
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -67,22 +69,39 @@ int main(int argc, char** argv)
       return -1;
     }
 
+  bool Flag3d = Manager.GetBoolean("3d");
   int TotalKx = 0;
   int TotalKy = 0;
+  int TotalKz = 0;
   int NbrParticles = 0;
   int NbrSiteX = 0;
   int NbrSiteY = 0;
+  int NbrSiteZ = 0;
   bool Statistics = true;
   double Mass = 0.0;
-  if (FQHEOnSquareLatticeFindSystemInfoFromVectorFileName(Manager.GetString("input-state"),
-							  NbrParticles, NbrSiteX, NbrSiteY, TotalKx, TotalKy, Mass, Statistics) == false)
+  if  (Flag3d == false)
     {
-      cout << "error while retrieving system parameters from file name " << Manager.GetString("input-state") << endl;
-      return -1;
+      NbrSiteZ = 1;
+      if (FQHEOnSquareLatticeFindSystemInfoFromVectorFileName(Manager.GetString("input-state"),
+							      NbrParticles, NbrSiteX, NbrSiteY, TotalKx, TotalKy, Mass, Statistics) == false)
+	{
+	  cout << "error while retrieving system parameters from file name " << Manager.GetString("input-state") << endl;
+	  return -1;
+	}
+    }
+  else
+    {
+      if (FQHEOnCubicLatticeFindSystemInfoFromVectorFileName(Manager.GetString("input-state"),
+							     NbrParticles, NbrSiteX, NbrSiteY, NbrSiteZ, TotalKx, TotalKy, TotalKz, Statistics) == false)
+	{
+	  cout << "error while retrieving system parameters from file name " << Manager.GetString("input-state") << endl;
+	  return -1;
+	}      
     }
 
   int InvertTotalKx = (NbrSiteX - TotalKx) % NbrSiteX;
   int InvertTotalKy = (NbrSiteY - TotalKy) % NbrSiteY;
+  int InvertTotalKz = (NbrSiteZ - TotalKz) % NbrSiteZ;
 
   ComplexVector InputState;
   ComplexVector OutputState;
@@ -94,13 +113,26 @@ int main(int argc, char** argv)
 
   if (Statistics == true)
     {
-      FermionOnSquareLatticeMomentumSpace* InputSpace = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
-      FermionOnSquareLatticeMomentumSpace* OutputSpace = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, InvertTotalKx, InvertTotalKy);
-      cout << "inversion symmetry from (N=" << NbrParticles << ",Nx=" << NbrSiteX << ",Ny=" << NbrSiteY << ",kx=" << TotalKx << ",kx=" << TotalKy << ") to (N=" 
-	   << NbrParticles << ",Nx=" << NbrSiteX << ",Ny=" << NbrSiteY << ",kx=" << InvertTotalKx << ",kx=" << InvertTotalKy << ")" << endl; 
-      OutputState = OutputSpace->InversionSymmetry(InputState, InputSpace);
-      delete InputSpace;
-      delete OutputSpace;
+      if  (Flag3d == false)
+	{
+	  FermionOnSquareLatticeMomentumSpace* InputSpace = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
+	  FermionOnSquareLatticeMomentumSpace* OutputSpace = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, InvertTotalKx, InvertTotalKy);
+	  cout << "inversion symmetry from (N=" << NbrParticles << ",Nx=" << NbrSiteX << ",Ny=" << NbrSiteY << ",kx=" << TotalKx << ",kx=" << TotalKy << ") to (N=" 
+	       << NbrParticles << ",Nx=" << NbrSiteX << ",Ny=" << NbrSiteY << ",kx=" << InvertTotalKx << ",ky=" << InvertTotalKy << ")" << endl; 
+	  OutputState = OutputSpace->InversionSymmetry(InputState, InputSpace);
+	  delete InputSpace;
+	  delete OutputSpace;
+	}
+      else
+	{
+	  FermionOnCubicLatticeWithSpinMomentumSpace* InputSpace = new FermionOnCubicLatticeWithSpinMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, NbrSiteZ, TotalKx, TotalKy, TotalKz);
+	  FermionOnCubicLatticeWithSpinMomentumSpace* OutputSpace = new FermionOnCubicLatticeWithSpinMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, NbrSiteZ, InvertTotalKx, InvertTotalKy, InvertTotalKz);
+	  cout << "inversion symmetry from (N=" << NbrParticles << ",Nx=" << NbrSiteX << ",Ny=" << NbrSiteY << ",Nz=" << NbrSiteZ << ",kx=" << TotalKx << ",kx=" << TotalKy << ") to (N=" 
+	       << NbrParticles << ",Nx=" << NbrSiteX << ",Ny=" << NbrSiteY << ",kx=" << InvertTotalKx << ",ky=" << InvertTotalKy << ",kz=" << InvertTotalKz << ")" << endl; 
+	  OutputState = OutputSpace->InversionSymmetry(InputState, InputSpace);
+	  delete InputSpace;
+	  delete OutputSpace;
+	}
     }
   else
     {
@@ -111,12 +143,27 @@ int main(int argc, char** argv)
     {
       OutputFileName = new char [32 + strlen(Manager.GetString("input-state"))];
       char* PrefixPosition = strstr (Manager.GetString("input-state"), "kx_");
-      char* SuffixPosition = strstr (Manager.GetString("input-state"), "ky_");
+      char* SuffixPosition = 0;
+      if (Flag3d == false)
+	{
+	  SuffixPosition = strstr (Manager.GetString("input-state"), "ky_");
+	}
+      else
+	{
+	  SuffixPosition = strstr (Manager.GetString("input-state"), "kz_");
+	}
       SuffixPosition += 3;
       while (((*SuffixPosition) >= '0') && ((*SuffixPosition) <= '9') && ((*SuffixPosition) != '\0'))
 	++SuffixPosition;
       (*PrefixPosition) = '\0';
-      sprintf (OutputFileName, "%skx_%d_ky_%d%s", Manager.GetString("input-state"), InvertTotalKx, InvertTotalKy, SuffixPosition);
+      if (Flag3d == false)
+	{
+	  sprintf (OutputFileName, "%skx_%d_ky_%d%s", Manager.GetString("input-state"), InvertTotalKx, InvertTotalKy, SuffixPosition);
+	}
+      else
+	{
+	  sprintf (OutputFileName, "%skx_%d_ky_%d_kz_%d%s", Manager.GetString("input-state"), InvertTotalKx, InvertTotalKy, InvertTotalKz, SuffixPosition);
+	}
       (*PrefixPosition) = 'k';
     }
   else
