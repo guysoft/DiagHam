@@ -56,14 +56,14 @@ FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::FQHESphereBosonic
   this->FirstComponent = resumeIdx;	
   this->NbrComponent = initialSpace->GetHilbertSpaceDimension();
   this->FermionSpace = fermionSpace;
-	this->FermionSpaceDown = 0;
+  this->FermionSpaceDown = 0;
   this->InitialSpace = initialSpace;
   this->FinalSpace = finalSpace;
   this->OperationType = AbstractArchitectureOperation::FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation;
   this->OutputVector =  outputVector;
   this->BosonicVector = bosonicVector;
-	this->IndexUp = 0;
-	this->IndexDown = 0;
+  this->IndexUp = 0;
+  this->IndexDown = 0;
   this->NbrMPIStage = nbrMPIStage;
   this->NbrSMPStage = nbrSMPStage;
   this->TwoLandauLevels = twoLandauLevels;
@@ -85,9 +85,9 @@ FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::FQHESphereBosonic
   this->FirstComponent = resumeIdx;	
   this->NbrComponent = initialSpace->GetHilbertSpaceDimension();
   this->FermionSpace = fermionSpace;
-	this->FermionSpaceDown = fermionSpaceDown;
-	this->IndexUp = indexUp;
-	this->IndexDown = indexDown;
+  this->FermionSpaceDown = fermionSpaceDown;
+  this->IndexUp = indexUp;
+  this->IndexDown = indexDown;
   this->InitialSpace = initialSpace;
   this->FinalSpace = finalSpace;
   this->OperationType = AbstractArchitectureOperation::FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation;
@@ -100,8 +100,8 @@ FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::FQHESphereBosonic
   this->TwoLandauLevelSz = twoLandauLevelSz;
   this->MPINodeNbr = 0;       
   this->ResumeIdx = resumeIdx;
-	this->SlaterPermutations = 0;
-	this->SlaterSigns = 0;
+  this->SlaterPermutations = 0;
+  this->SlaterSigns = 0;
   this->SMPStages = new int[1]; 
 }
 
@@ -114,7 +114,7 @@ FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::FQHESphereBosonic
   this->FirstComponent = operation.FirstComponent;	
   this->NbrComponent 	= operation.NbrComponent;
   this->FermionSpace = operation.FermionSpace;		
-	this->FermionSpaceDown = operation.FermionSpaceDown;
+  this->FermionSpaceDown = operation.FermionSpaceDown;
   this->InitialSpace = (BosonOnSphereTwoLandauLevels *)operation.InitialSpace->Clone();	
   this->FinalSpace = (FermionOnSphereWithSpin *) operation.FinalSpace->Clone();
   this->OperationType = AbstractArchitectureOperation::FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation;
@@ -122,8 +122,8 @@ FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::FQHESphereBosonic
   this->BosonicVector = operation.BosonicVector;
   this->NbrMPIStage = operation.NbrMPIStage;
   this->NbrSMPStage = operation.NbrSMPStage;
-	this->IndexDown = operation.IndexDown;
-	this->IndexUp = operation.IndexUp;
+  this->IndexDown = operation.IndexDown;
+  this->IndexUp = operation.IndexUp;
   this->TwoLandauLevels = operation.TwoLandauLevels;
   this->TwoLandauLevelLz= operation.TwoLandauLevelLz;
   this->TwoLandauLevelSz= operation.TwoLandauLevelSz;
@@ -142,12 +142,15 @@ FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::~FQHESphereBosoni
 {
   if ( ! this->Cloned )
     {
-      for ( int i = 0 ; i < this->NbrSlaterPermutations ; i++ )
+      if (this->FermionSpaceDown == 0)
 	{
-	  delete[] this->SlaterPermutations[i];
+	  for ( int i = 0 ; i < this->NbrSlaterPermutations ; i++ )
+	    {
+	      delete[] this->SlaterPermutations[i];
+	    }
+	  delete [] this->SlaterPermutations;
+	  delete [] this->SlaterSigns;
 	}
-      delete [] this->SlaterPermutations;
-      delete [] this->SlaterSigns;
       delete [] this->SMPStages;
     }
 }
