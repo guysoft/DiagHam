@@ -52,6 +52,7 @@
 #include <cstdlib>
 #include <map>
 
+
 using std::cout;
 using std::endl;
 using std::hex;
@@ -1861,7 +1862,7 @@ void BosonOnSphereTwoLandauLevels::BosonicStateTimePolarizedSlaters(RealVector& 
   unsigned long NbrPermutations = Binomial(this->NbrBosons, NbrParticlesPerColor);
   unsigned long* Permutations1 = new unsigned long[NbrPermutations];
   unsigned long* Permutations2 = new unsigned long[NbrPermutations];
-  
+
   EvaluatePermutationsOfSubGroups(NbrPermutations,this->NbrBosons, NbrParticlesPerColor, Permutations1, Permutations2);
   
   unsigned long* Monomial = new unsigned long[this->NbrBosons];  
@@ -2135,3 +2136,59 @@ int BosonOnSphereTwoLandauLevels::RemoveZeros(RealVector& initialState, bool lzS
   return NbrNonZero;
 }
 
+// compute the projection of the product of a bosonic state and the halperin 110 state
+//
+// bosonState = real vector where the bosonic state is stored
+// outputVector = real vector where the result has to be stored
+// fermionSpace = pointer to the fermionic Hilbert space
+// finalSpace = pointer to the final Hilbert space
+// firstComponent = first component to be computed
+// nbrComponent = number of components to be computed
+
+void BosonOnSphereTwoLandauLevels::BosonicStateTimePolarizedSlaters(RealVector& bosonState, RealVector& outputVector, FermionOnSphere * fermionSpaceUp,  FermionOnSphere * fermionSpaceDown, FermionOnSphereWithSpin* finalSpace , int indexUp , int indexDown, int firstComponent,int nbrComponent)
+{
+	
+	int NbrMax = firstComponent + nbrComponent;
+	BinomialCoefficients Binomial(this->NbrBosons);
+  int NbrParticlesPerColor = finalSpace->NbrFermionsUp;
+  unsigned long NbrPermutations = Binomial(this->NbrBosons, NbrParticlesPerColor);
+	
+	unsigned long* Permutations1 = new unsigned long[NbrPermutations];
+	unsigned long* Permutations2 = new unsigned long[NbrPermutations];
+	EvaluatePermutationsOfSubGroups(NbrPermutations,this->NbrBosons, NbrParticlesPerColor, Permutations1, Permutations2);
+	
+  unsigned long* SlaterUp = new unsigned long[finalSpace->NbrFermionsUp];
+  unsigned long* SlaterDown = new unsigned long[finalSpace->NbrFermionsDown];
+		unsigned long* Monomial = new unsigned long[this->NbrBosons];  
+		
+  map<unsigned long , double> SortingMap;
+  map<unsigned long , double>::iterator It;
+
+	fermionSpaceUp->GetMonomial(indexUp,SlaterUp);
+	fermionSpaceDown->GetMonomial(indexDown,SlaterDown);
+	 
+      
+ 
+  for (int j = firstComponent; j < NbrMax; j++)
+    {
+      if(bosonState[j] != 0)
+	{
+		this->GetMonomialLandau(j, Monomial);
+		finalSpace->MonomialsTimesPolarizedSlater(SlaterUp, SlaterDown, Monomial , SortingMap, NbrPermutations , Permutations1, Permutations2,bosonState[j]);	  
+	}
+    }
+  	
+  for ( It = SortingMap.begin() ; It != SortingMap.end(); It++)
+    {
+      int TmpLzMax = 2 * finalSpace->LzMax + 1;
+      while ((( (*It).first >> TmpLzMax) & 0x1ul) == 0x0ul)
+				--TmpLzMax;
+      outputVector[finalSpace->FindStateIndex((*It).first, TmpLzMax)] += (*It).second;
+    }
+   
+	delete [] SlaterUp;
+	delete [] SlaterDown;
+  delete [] Permutations1;
+	delete [] Permutations2;
+  delete [] Monomial;
+}

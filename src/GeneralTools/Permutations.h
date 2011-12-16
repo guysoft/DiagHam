@@ -44,8 +44,9 @@
 
 inline void EvaluatePermutationsOfSubGroups(unsigned long nbrPermutations, int nbrElement, int nbrElementPerColor, unsigned long * permutations1, unsigned long * permutations2)
 {
+	unsigned long NbrElementOtherColor = nbrElement - nbrElementPerColor;
   unsigned long MinValue = (0x1ul << nbrElementPerColor) - 0x1ul;
-  unsigned long MaxValue = MinValue << (nbrElement - nbrElementPerColor);
+  unsigned long MaxValue = MinValue << (NbrElementOtherColor);
   unsigned long* TmpArrayPerm = new unsigned long [nbrElement];
   nbrPermutations = 0;
   for (; MinValue <= MaxValue; ++MinValue)
@@ -80,8 +81,11 @@ inline void EvaluatePermutationsOfSubGroups(unsigned long nbrPermutations, int n
 	  for (int i = 0; i < nbrElementPerColor; ++i)
 	    {
 	      TmpPerm2 |= TmpArrayPerm[i] << (i * 5);
-	      TmpPerm3 |= TmpArrayPerm[i + nbrElementPerColor] << (i *5);
-	    }
+			}
+	    for (int i = 0; i < NbrElementOtherColor; ++i)
+	    {
+				TmpPerm3 |= TmpArrayPerm[i + nbrElementPerColor]<< (i*5);
+			}
 	  permutations1[nbrPermutations] = TmpPerm2;
 	  permutations2[nbrPermutations] = TmpPerm3;	      
 	  ++nbrPermutations;

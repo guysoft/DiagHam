@@ -638,6 +638,8 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // permutations2 = array where are stored the permutations of the spin down
   // initialCoef = inital coefficient in front of the monomial
   virtual void MonomialsTimesPolarizedSlaterProjection(unsigned long** slaterPermutations, double *slaterSigns, int nbrSlaterPermutations, unsigned long * monomial, map<unsigned long , double> & sortingMap, unsigned long nbrPermutations , unsigned long * permutations1, unsigned long * permutations2, double initialCoef);
+	
+	virtual void MonomialsTimesPolarizedSlater(unsigned long * slaterUp, unsigned long * slaterDown, unsigned long * monomial ,map<unsigned long , double> & sortingMap, unsigned long nbrPermutations , unsigned long * permutations1, unsigned long * permutations2,double initialCoef);
 
 };
 

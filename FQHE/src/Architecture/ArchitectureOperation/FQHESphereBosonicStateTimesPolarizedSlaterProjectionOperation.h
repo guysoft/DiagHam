@@ -60,6 +60,13 @@ class FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation : public Abs
   
   // pointer to the initial Fermionic HilbertSpace
   FermionOnSphere * FermionSpace;
+	
+	// pointer to the initial Fermionic HilbertSpace
+  FermionOnSphere * FermionSpaceDown;
+	
+	int IndexUp;
+	
+	int IndexDown;
   
   // RealVector where the result will be store
   RealVector * OutputVector;
@@ -81,6 +88,7 @@ class FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation : public Abs
   
   // true if we use Sz symmetry on other parts
   bool TwoLandauLevelSz;
+	
   
   // number of MPI process. If not using MPI this is 0
   int MPINodeNbr;
@@ -114,6 +122,14 @@ class FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation : public Abs
   // fileName = name of the file where the kostka number will be store
   // nbrLL = number of Landau levels
   FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation(ParticleOnSphere * initialSpace, FermionOnSphere * fermionSpace, FermionOnSphereWithSpin * finalSpace, RealVector* bosonicVector, RealVector* outputVector, bool twoLandauLevels, bool twoLandauLevelLz, bool twoLandauLevelSz, int nbrMPIStage = 20, int nbrSMPStage = 20, int resumeIdx = 0);
+	
+	
+	  // constructor 
+  //
+  // Space = pointer to the HilbertSpace to use
+  // fileName = name of the file where the kostka number will be store
+  // nbrLL = number of Landau levels
+  FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation(ParticleOnSphere * initialSpace, FermionOnSphere * fermionSpace,FermionOnSphere * fermionSpaceDown, FermionOnSphereWithSpin * finalSpace, RealVector* bosonicVector, RealVector* outputVector,int indexUp, int indexDown, bool twoLandauLevels, bool twoLandauLevelLz, bool twoLandauLevelSz, int nbrMPIStage = 20, int nbrSMPStage = 20, int resumeIdx = 0);
   
   // copy constructor 
   //

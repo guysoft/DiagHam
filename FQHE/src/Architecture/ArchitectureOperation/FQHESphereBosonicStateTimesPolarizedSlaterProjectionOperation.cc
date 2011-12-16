@@ -50,12 +50,44 @@ using std::cout;
 using std::endl;
 using std::ios;
 
-FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation(ParticleOnSphere * initialSpace, FermionOnSphere * fermionSpace, FermionOnSphereWithSpin * finalSpace, RealVector* bosonicVector, RealVector* outputVector,bool twoLandauLevels,bool twoLandauLevelLz, bool twoLandauLevelSz, int nbrMPIStage, int nbrSMPStage, int resumeIdx)
+FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation(ParticleOnSphere * initialSpace, FermionOnSphere * fermionSpace, FermionOnSphereWithSpin * finalSpace, RealVector* bosonicVector, RealVector* outputVector,bool twoLandauLevels, bool twoLandauLevelLz, bool twoLandauLevelSz, int nbrMPIStage, int nbrSMPStage, int resumeIdx)
 {
   this->Cloned = false;
   this->FirstComponent = resumeIdx;	
   this->NbrComponent = initialSpace->GetHilbertSpaceDimension();
   this->FermionSpace = fermionSpace;
+	this->FermionSpaceDown = 0;
+  this->InitialSpace = initialSpace;
+  this->FinalSpace = finalSpace;
+  this->OperationType = AbstractArchitectureOperation::FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation;
+  this->OutputVector =  outputVector;
+  this->BosonicVector = bosonicVector;
+	this->IndexUp = 0;
+	this->IndexDown = 0;
+  this->NbrMPIStage = nbrMPIStage;
+  this->NbrSMPStage = nbrSMPStage;
+  this->TwoLandauLevels = twoLandauLevels;
+  this->TwoLandauLevelLz = twoLandauLevelLz;
+  this->TwoLandauLevelSz = twoLandauLevelSz;
+  this->MPINodeNbr = 0;       
+  this->ResumeIdx = resumeIdx;
+  unsigned long* Slater = new unsigned long[this->FermionSpace->NbrFermions];       
+  fermionSpace->ConvertToMonomial(this->FermionSpace->StateDescription[0], Slater);
+  EvaluateMonomialPermutations(fermionSpace->NbrFermions, Slater, this->NbrSlaterPermutations, this->SlaterPermutations, this->SlaterSigns );
+  delete[] Slater;
+  this->SMPStages = new int[1]; 
+}
+
+
+FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation(ParticleOnSphere * initialSpace, FermionOnSphere * fermionSpace,FermionOnSphere * fermionSpaceDown, FermionOnSphereWithSpin * finalSpace, RealVector* bosonicVector, RealVector* outputVector, int indexUp, int indexDown, bool twoLandauLevels, bool twoLandauLevelLz, bool twoLandauLevelSz, int nbrMPIStage, int nbrSMPStage, int resumeIdx)
+{
+  this->Cloned = false;
+  this->FirstComponent = resumeIdx;	
+  this->NbrComponent = initialSpace->GetHilbertSpaceDimension();
+  this->FermionSpace = fermionSpace;
+	this->FermionSpaceDown = fermionSpaceDown;
+	this->IndexUp = indexUp;
+	this->IndexDown = indexDown;
   this->InitialSpace = initialSpace;
   this->FinalSpace = finalSpace;
   this->OperationType = AbstractArchitectureOperation::FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation;
@@ -68,12 +100,9 @@ FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::FQHESphereBosonic
   this->TwoLandauLevelSz = twoLandauLevelSz;
   this->MPINodeNbr = 0;       
   this->ResumeIdx = resumeIdx;
-  unsigned long* Slater = new unsigned long[this->FermionSpace->NbrFermions];       
-  fermionSpace->ConvertToMonomial(this->FermionSpace->StateDescription[0], Slater);
-  EvaluateMonomialPermutations(fermionSpace->NbrFermions, Slater, this->NbrSlaterPermutations, this->SlaterPermutations, this->SlaterSigns );
-  delete[] Slater;
-  this->SMPStages = new int[1];  
-  
+	this->SlaterPermutations = 0;
+	this->SlaterSigns = 0;
+  this->SMPStages = new int[1]; 
 }
 
 // copy constructor 
@@ -85,6 +114,7 @@ FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::FQHESphereBosonic
   this->FirstComponent = operation.FirstComponent;	
   this->NbrComponent 	= operation.NbrComponent;
   this->FermionSpace = operation.FermionSpace;		
+	this->FermionSpaceDown = operation.FermionSpaceDown;
   this->InitialSpace = (BosonOnSphereTwoLandauLevels *)operation.InitialSpace->Clone();	
   this->FinalSpace = (FermionOnSphereWithSpin *) operation.FinalSpace->Clone();
   this->OperationType = AbstractArchitectureOperation::FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation;
@@ -92,6 +122,8 @@ FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::FQHESphereBosonic
   this->BosonicVector = operation.BosonicVector;
   this->NbrMPIStage = operation.NbrMPIStage;
   this->NbrSMPStage = operation.NbrSMPStage;
+	this->IndexDown = operation.IndexDown;
+	this->IndexUp = operation.IndexUp;
   this->TwoLandauLevels = operation.TwoLandauLevels;
   this->TwoLandauLevelLz= operation.TwoLandauLevelLz;
   this->TwoLandauLevelSz= operation.TwoLandauLevelSz;
@@ -158,9 +190,14 @@ bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::RawApplyOper
 {
   timeval TotalStartingTime;
   gettimeofday (&TotalStartingTime, 0);
-  
-  if (this->TwoLandauLevels)
-    {
+		if (this->TwoLandauLevels)
+		{
+			if (this->FermionSpaceDown != 0)
+			{
+				((BosonOnSphereTwoLandauLevels * )this->InitialSpace)->BosonicStateTimePolarizedSlaters( *this->BosonicVector, *this->OutputVector,this->FermionSpace,this->FermionSpaceDown , this->FinalSpace,this->IndexUp, this->IndexDown, this->FirstComponent ,this->NbrComponent);
+			}
+			else
+			{
       if ( this->TwoLandauLevelLz ) 
 	{
 	  if ( this->TwoLandauLevelSz ) 
@@ -177,8 +214,10 @@ bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::RawApplyOper
 	  ((BosonOnSphereTwoLandauLevels * )this->InitialSpace)->BosonicStateTimePolarizedSlaters( *this->BosonicVector, *this->OutputVector,this->FermionSpace , this->FinalSpace, this->FirstComponent ,this->NbrComponent, this->SlaterPermutations, this->SlaterSigns, this->NbrSlaterPermutations);
 	}
     }
+		}
   else
     ((BosonOnSphereShort *)this->InitialSpace)->BosonicStateTimePolarizedSlaters( *this->BosonicVector, *this->OutputVector,this->FermionSpace , this->FinalSpace, this->FirstComponent ,this->NbrComponent);
+	
 	
   timeval TotalEndingTime;
   gettimeofday (&TotalEndingTime, 0);
