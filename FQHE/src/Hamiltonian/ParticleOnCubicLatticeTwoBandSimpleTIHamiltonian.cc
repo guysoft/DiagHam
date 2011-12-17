@@ -1013,12 +1013,14 @@ void ParticleOnCubicLatticeTwoBandSimpleTIHamiltonian::ComputeOneBodyMatrices(Co
     for (int ky = 0; ky < this->NbrSiteY; ++ky)
       for (int kz = 0; kz < this->NbrSiteZ; ++kz)
 	{
+	  double Kx = (((double) kx) + this->GammaX) * this->KxFactor;
+	  double Ky = (((double) ky) + this->GammaY) * this->KyFactor;
+	  double Kz = (((double) kz) + this->GammaZ) * this->KzFactor;
 	  HermitianMatrix TmpOneBodyHamiltonian(4, true);
 	  int Index = ((kx * this->NbrSiteY) + ky) * this->NbrSiteZ + kz;
-	  Complex d2 (sin (((double) ky) * this->KyFactor), -sin (((double) kz) * this->KzFactor));
-	  double d1 = sin (((double) kx) * this->KxFactor);
-	  double d3 = (this->Mass - cos (((double) kx) * this->KxFactor) - cos (((double) ky) * this->KyFactor) 
-		       - cos (((double) kz) * this->KzFactor));
+	  Complex d2 (sin (Ky), -sin (Kz));
+	  double d1 = sin (Kx);
+	  double d3 = (this->Mass - cos (Kx) - cos (Ky) - cos (Kz));
 	  TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d3);
 	  TmpOneBodyHamiltonian.SetMatrixElement(1, 1, -d3);
 	  TmpOneBodyHamiltonian.SetMatrixElement(2, 2, d3);
