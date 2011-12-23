@@ -56,6 +56,7 @@ using std::ostream;
 // nbrSiteY = number of sites in the y direction
 // uPotential = strength of the repulsive two body neareast neighbor interaction with identical spin
 // vPotential = strength of the repulsive on site two body interaction with opposite spin
+// wPotential = strength of the repulsive two body neareast neighbor interaction between opposite spins
 // t1 = hoping amplitude between neareast neighbor sites
 // t2 = hoping amplitude between next neareast neighbor sites
 // t2p = hoping amplitude between second next neareast neighbor sites
@@ -68,7 +69,7 @@ using std::ostream;
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
 ParticleOnLatticeQuantumSpinHallTwoBandCheckerboardHamiltonian::ParticleOnLatticeQuantumSpinHallTwoBandCheckerboardHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, 
-															       int nbrSiteY, double uPotential, double vPotential, double t1, double t2, double t2p, double mixingTermNorm, double mixingTermArg, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
+															       int nbrSiteY, double uPotential, double vPotential, double wPotential, double t1, double t2, double t2p, double mixingTermNorm, double mixingTermArg, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -85,6 +86,7 @@ ParticleOnLatticeQuantumSpinHallTwoBandCheckerboardHamiltonian::ParticleOnLattic
   this->FlatBand = flatBandFlag;
   this->UPotential = uPotential;
   this->VPotential = vPotential;
+  this->WPotential = wPotential;
 
   this->Architecture = architecture;
   this->Memory = memory;

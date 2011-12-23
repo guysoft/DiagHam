@@ -1064,7 +1064,7 @@ double BosonOnSphereWithSU3Spin::A3A3 (int index, int n1, int n2)
 {
   this->FermionToBoson(this->StateDescription3[index], this->N3LzMax, this->ProdATemporaryState3);
   if ((this->ProdATemporaryState3[n1] == 0) || (this->ProdATemporaryState3[n2] == 0)
-      || ((n1 == n2) && (this->ProdATemporaryState2[n1] == 1)))    
+      || ((n1 == n2) && (this->ProdATemporaryState3[n1] == 1)))    
     {
       return 0.0;
     }

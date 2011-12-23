@@ -76,6 +76,7 @@ class BosonOnSphereShort :  public ParticleOnSphere
   friend class BosonOnSphereTwoLandauLevels;
 
   friend class BosonOnSphereWithSU3Spin;
+  friend class BosonOnSphereWithSU4Spin;
 
  protected:
 

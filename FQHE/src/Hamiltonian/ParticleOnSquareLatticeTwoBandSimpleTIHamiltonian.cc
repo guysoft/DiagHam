@@ -89,6 +89,7 @@ ParticleOnSquareLatticeTwoBandSimpleTIHamiltonian::ParticleOnSquareLatticeTwoBan
   this->FlatBand = flatBandFlag;
   this->UPotential = uPotential;
   this->VPotential = vPotential;
+  this->WPotential = uPotential;
   this->Architecture = architecture;
   this->Memory = memory;
   this->OneBodyInteractionFactorsupup = 0;
@@ -225,12 +226,12 @@ void ParticleOnSquareLatticeTwoBandSimpleTIHamiltonian::EvaluateInteractionFacto
       double Factor = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
       double FactorAUpADown = Factor * this->VPotential;
       double FactorBUpBDown = Factor * this->VPotential;
+      double FactorAUpBDown = Factor * this->WPotential;
+      double FactorADownBUp = Factor * this->WPotential;
       if (this->FlatBand == false)
 	Factor *= this->UPotential;
       double FactorAUpBUp = Factor;
       double FactorADownBDown = Factor;
-      double FactorAUpBDown = Factor;
-      double FactorADownBUp = Factor;
 
       Complex Tmp;
 

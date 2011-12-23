@@ -118,4 +118,6 @@ FermionOnSquareLatticeWithSU4SpinMomentumSpaceLong.cc \
 FermionOnSquareLatticeWithSU3SpinMomentumSpace.cc \
 BosonOnSphereWithSU3Spin.cc \
 BosonOnSquareLatticeWithSU3SpinMomentumSpace.cc \
-BosonOnSphereThreeLandauLevels.cc
+BosonOnSphereThreeLandauLevels.cc \
+BosonOnSphereWithSU4Spin.cc \
+BosonOnSquareLatticeWithSU4SpinMomentumSpace.cc

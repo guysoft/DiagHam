@@ -3237,8 +3237,7 @@ void FermionOnSphere::RebuildStateFromSchmidtDecompositionParticlePartition(int 
  		    Coefficient = -TmpInvBinomial;
 		  for (int i = 0; i < nbrSingularValues; ++i)
 		    {
-		      schmidtDecomposedState[TmpPos] += Coefficient * singularValues[i] * aVectors[j][i] * bVectors[i][MinIndex];
-		      // schmidtDecomposedState[TmpPos] += Coefficient * singularValues[i] * aVectors[j][i] * bVectors[MinIndex][i];
+		      schmidtDecomposedState[TmpPos] += Coefficient * singularValues[i] * aVectors[j][i] * bVectors[MinIndex][i];
 		    }
 		}
 	    }

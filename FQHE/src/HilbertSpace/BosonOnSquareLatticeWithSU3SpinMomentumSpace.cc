@@ -160,9 +160,9 @@ BosonOnSquareLatticeWithSU3SpinMomentumSpace::BosonOnSquareLatticeWithSU3SpinMom
   this->TotalY = bosons.TotalY;
   this->LzMax = bosons.LzMax;
   this->NbrLzValue = bosons.NbrLzValue;
-  this->N1LzMax = bosons.LzMax;
-  this->N2LzMax = bosons.LzMax;
-  this->N3LzMax = bosons.LzMax;
+  this->N1LzMax = bosons.N1LzMax;
+  this->N2LzMax = bosons.N2LzMax;
+  this->N3LzMax = bosons.N3LzMax;
   this->FermionicLzMax = bosons.FermionicLzMax;
   this->LargeHilbertSpaceDimension = bosons.LargeHilbertSpaceDimension;
   this->TemporaryState1 = new unsigned long[this->NbrLzValue];
@@ -234,9 +234,9 @@ BosonOnSquareLatticeWithSU3SpinMomentumSpace& BosonOnSquareLatticeWithSU3SpinMom
   this->TotalY = bosons.TotalY;
   this->LzMax = bosons.LzMax;
   this->NbrLzValue = bosons.NbrLzValue;
-  this->N1LzMax = bosons.LzMax;
-  this->N2LzMax = bosons.LzMax;
-  this->N3LzMax = bosons.LzMax;
+  this->N1LzMax = bosons.N1LzMax;
+  this->N2LzMax = bosons.N2LzMax;
+  this->N3LzMax = bosons.N3LzMax;
   this->FermionicLzMax = bosons.FermionicLzMax;
   this->LargeHilbertSpaceDimension = bosons.LargeHilbertSpaceDimension;
   this->TemporaryState1 = new unsigned long[this->NbrLzValue];
