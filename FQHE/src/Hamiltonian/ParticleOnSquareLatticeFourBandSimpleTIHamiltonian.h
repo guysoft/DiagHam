@@ -67,11 +67,17 @@ class ParticleOnSquareLatticeFourBandSimpleTIHamiltonian : public ParticleOnLatt
   double UPotential;
   // strength of the repulsive two body on site interaction
   double VPotential;
+  // strength of the repulsive two body different site opposite spin interaction
+  double WPotential;
 
   // use flat band model
   bool FlatBand;
 
  public:
+
+  // default constructor
+  //
+  ParticleOnSquareLatticeFourBandSimpleTIHamiltonian();
 
   // constructor
   //

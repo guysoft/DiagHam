@@ -1902,13 +1902,11 @@ void SortArrayDownOrdering(ClassName* array1, ClassName* array2, ClassName* arra
 	  {
 	    ++i; 
  	    --j;
-	    while ((array1[i] > Pivot1) || ((array1[i] == Pivot1) && (array2[i] > Pivot2)) ||
-		   ((array1[i] == Pivot1) && (array2[i] == Pivot2) && (array3[i] > Pivot3)) ||
-		   ((array1[i] == Pivot1) && (array2[i] == Pivot2) && (array3[i] == Pivot3) && (array4[i] > Pivot4)))
+	    while (QuadElementLessThan(Pivot1, Pivot2, Pivot3, Pivot4,
+				       array1[i], array2[i], array3[i], array4[i]) == true)
 	      ++i;
-	    while ((array1[j] < Pivot1) || ((array1[j] == Pivot1) && (array2[j] < Pivot2)) ||
-		   ((array1[j] == Pivot1) && (array2[j] == Pivot2) && (array3[j] < Pivot3)) || 
-		   ((array1[j] == Pivot1) && (array2[j] == Pivot2) && (array3[j] == Pivot3) && (array4[j] < Pivot4)))
+	    while (QuadElementLessThan(array1[j], array2[j], array3[j], array4[j], 
+				       Pivot1, Pivot2, Pivot3, Pivot4) == true)
 	      --j;
 	    if (i < j)
 	      {
