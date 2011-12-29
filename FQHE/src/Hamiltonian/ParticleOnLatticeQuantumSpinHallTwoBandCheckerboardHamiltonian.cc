@@ -76,6 +76,8 @@ ParticleOnLatticeQuantumSpinHallTwoBandCheckerboardHamiltonian::ParticleOnLattic
   this->NbrSiteX = nbrSiteX;
   this->NbrSiteY = nbrSiteY;
   this->LzMax = nbrSiteX * nbrSiteY - 1;
+  this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
+  this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
   this->HamiltonianShift = 0.0;
   this->NNHoping = t1;
   this->NextNNHoping = t2;
@@ -146,9 +148,8 @@ ParticleOnLatticeQuantumSpinHallTwoBandCheckerboardHamiltonian::~ParticleOnLatti
 
 Complex ParticleOnLatticeQuantumSpinHallTwoBandCheckerboardHamiltonian::ComputeTwoBodyMatrixElementAUpBUp(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
 {
-  Complex Tmp = 2.0 * (cos (M_PI * ((((double) (kx4 - kx2)) / ((double) this->NbrSiteX)) - ((((double) (ky4 - ky2)) / ((double) this->NbrSiteY))))) 
-		       + cos (M_PI * ((((double) (kx4 - kx2)) / ((double) this->NbrSiteX)) + ((((double) (ky4 - ky2)) / ((double) this->NbrSiteY))))));
-  return Tmp;
+  return (2.0 * (cos (0.5 * ((this->KxFactor * ((double) (kx4 - kx2))) - (this->KyFactor * ((double) (ky4 - ky2)))))
+		 + cos (0.5 * ((this->KxFactor * ((double) (kx4 - kx2))) + (this->KyFactor * ((double) (ky4 - ky2)))))));
 }
 
 // compute the matrix element for the two body interaction between two sites A and B with down spins
@@ -165,9 +166,8 @@ Complex ParticleOnLatticeQuantumSpinHallTwoBandCheckerboardHamiltonian::ComputeT
 
 Complex ParticleOnLatticeQuantumSpinHallTwoBandCheckerboardHamiltonian::ComputeTwoBodyMatrixElementADownBDown(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
 {
-  Complex Tmp = 2.0 * (cos (M_PI * ((((double) (kx4 - kx2)) / ((double) this->NbrSiteX)) - ((((double) (ky4 - ky2)) / ((double) this->NbrSiteY))))) 
-		       + cos (M_PI * ((((double) (kx4 - kx2)) / ((double) this->NbrSiteX)) + ((((double) (ky4 - ky2)) / ((double) this->NbrSiteY))))));
-  return Tmp;
+  return (2.0 * (cos (0.5 * ((this->KxFactor * ((double) (kx4 - kx2))) - (this->KyFactor * ((double) (ky4 - ky2)))))
+		 + cos (0.5 * ((this->KxFactor * ((double) (kx4 - kx2))) + (this->KyFactor * ((double) (ky4 - ky2)))))));
 }
   
 // compute the matrix element for the two body interaction between two sites A and B with opposite spins
@@ -184,9 +184,8 @@ Complex ParticleOnLatticeQuantumSpinHallTwoBandCheckerboardHamiltonian::ComputeT
 
 Complex ParticleOnLatticeQuantumSpinHallTwoBandCheckerboardHamiltonian::ComputeTwoBodyMatrixElementADownBUp(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
 {
-  Complex Tmp = 2.0 * (cos (M_PI * ((((double) (kx4 - kx2)) / ((double) this->NbrSiteX)) - ((((double) (ky4 - ky2)) / ((double) this->NbrSiteY))))) 
-		       + cos (M_PI * ((((double) (kx4 - kx2)) / ((double) this->NbrSiteX)) + ((((double) (ky4 - ky2)) / ((double) this->NbrSiteY))))));
-  return Tmp;
+  return (2.0 * (cos (0.5 * ((this->KxFactor * ((double) (kx3 - kx1))) - (this->KyFactor * ((double) (ky3 - ky1)))))
+		 + cos (0.5 * ((this->KxFactor * ((double) (kx3 - kx1))) + (this->KyFactor * ((double) (ky3 - ky1)))))));
 }
 
 // compute the matrix element for the two body interaction between two sites A and B with opposite spins
@@ -203,9 +202,8 @@ Complex ParticleOnLatticeQuantumSpinHallTwoBandCheckerboardHamiltonian::ComputeT
 
 Complex ParticleOnLatticeQuantumSpinHallTwoBandCheckerboardHamiltonian::ComputeTwoBodyMatrixElementAUpBDown(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
 {
-  Complex Tmp = 2.0 * (cos (M_PI * ((((double) (kx4 - kx2)) / ((double) this->NbrSiteX)) - ((((double) (ky4 - ky2)) / ((double) this->NbrSiteY))))) 
-		       + cos (M_PI * ((((double) (kx4 - kx2)) / ((double) this->NbrSiteX)) + ((((double) (ky4 - ky2)) / ((double) this->NbrSiteY))))));
-  return Tmp;
+  return (2.0 * (cos (0.5 * ((this->KxFactor * ((double) (kx4 - kx2))) - (this->KyFactor * ((double) (ky4 - ky2)))))
+		 + cos (0.5 * ((this->KxFactor * ((double) (kx4 - kx2))) + (this->KyFactor * ((double) (ky4 - ky2)))))));
 }
 
 // compute the matrix element for the two body interaction between two sites A with opposite spins 
@@ -240,8 +238,8 @@ Complex ParticleOnLatticeQuantumSpinHallTwoBandCheckerboardHamiltonian::ComputeT
 
 Complex ParticleOnLatticeQuantumSpinHallTwoBandCheckerboardHamiltonian::ComputeTwoBodyMatrixElementBUpBDown(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
 {
-  Complex Tmp = Phase (M_PI * ((((double) (kx4 + kx3 - kx2 - kx1)) / ((double) this->NbrSiteX)) + ((((double) (ky4 + ky3 - ky2 - ky1)) / ((double) this->NbrSiteY)))));
-  return Tmp;
+  return  Phase (0.5 * ((this->KxFactor * ((double) (kx4 + kx3 - kx2 - kx1))) +
+			(this->KyFactor * ((double) (ky4 + ky3 - ky2 - ky1)))));
 }
 
 
@@ -256,19 +254,21 @@ void ParticleOnLatticeQuantumSpinHallTwoBandCheckerboardHamiltonian::ComputeOneB
       {
 	HermitianMatrix TmpOneBodyHamiltonian(4, true);
 	int Index = ((kx * this->NbrSiteY) + ky);
-	Complex B1 = 4.0 * this->NNHoping * Complex (cos (1.0 * M_PI * (((double) kx) + this->GammaX) / ((double) this->NbrSiteX)) * cos (1.0 * M_PI * (((double) ky) + this->GammaY) / ((double) this->NbrSiteY)) * cos(M_PI * 0.25), 
-						     sin (1.0 * M_PI * (((double) kx) + this->GammaX) / ((double) this->NbrSiteX)) * sin (1.0 * M_PI * (((double) ky) + this->GammaY) / ((double) this->NbrSiteY)) * sin(M_PI * 0.25));
-	double d1 = 4.0 * this->SecondNextNNHoping * cos (2.0 * M_PI * (((double) kx) + this->GammaX) / ((double) this->NbrSiteX)) * cos (2.0 * M_PI * (((double) ky) + this->GammaY) / ((double) this->NbrSiteY));
-	double d3 = 2.0 * this->NextNNHoping * (cos (2.0 * M_PI * (((double) kx) + this->GammaX) / ((double) this->NbrSiteX))
-						- cos (2.0 * M_PI * (((double) ky) + this->GammaY) / ((double) this->NbrSiteY)));
+	double TmpKx = (((double) kx) + this->GammaX) * this->KxFactor;
+	double TmpKy = (((double) ky) + this->GammaY) * this->KyFactor;
+	Complex B1 = 4.0 * this->NNHoping * Complex (cos (0.5 * TmpKx) * cos (0.5 * TmpKy) * cos(M_PI * 0.25), 
+						     sin (0.5 * TmpKx) * sin (0.5 * TmpKy) * sin(M_PI * 0.25));
+	double d1 = 4.0 * this->SecondNextNNHoping * cos (TmpKx) * cos (TmpKy);
+	double d3 = 2.0 * this->NextNNHoping * (cos (TmpKx) - cos (TmpKy));
 	TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d1 + d3);
 	TmpOneBodyHamiltonian.SetMatrixElement(0, 1, B1);
 	TmpOneBodyHamiltonian.SetMatrixElement(1, 1, d1 - d3);
-	B1 = 4.0 * this->NNHoping * Complex (cos (1.0 * M_PI * (((double) -kx) + this->GammaX) / ((double) this->NbrSiteX)) * cos (1.0 * M_PI * (((double) -ky) + this->GammaY) / ((double) this->NbrSiteY)) * cos(M_PI * 0.25), 
-					     sin (1.0 * M_PI * (((double) -kx) + this->GammaX) / ((double) this->NbrSiteX)) * sin (1.0 * M_PI * (((double) -ky) + this->GammaY) / ((double) this->NbrSiteY)) * sin(M_PI * 0.25));
-	d1 = 4.0 * this->SecondNextNNHoping * cos (2.0 * M_PI * (((double) -kx) + this->GammaX) / ((double) this->NbrSiteX)) * cos (2.0 * M_PI * (((double) -ky) + this->GammaY) / ((double) this->NbrSiteY));
-	d3 = 2.0 * this->NextNNHoping * (cos (2.0 * M_PI * (((double) -kx) + this->GammaX) / ((double) this->NbrSiteX))
-						- cos (2.0 * M_PI * (((double) -ky) + this->GammaY) / ((double) this->NbrSiteY)));
+	TmpKx = (((double) -kx) + this->GammaX) * this->KxFactor;
+	TmpKy = (((double) -ky) + this->GammaY) * this->KyFactor;
+	B1 = 4.0 * this->NNHoping * Complex (cos (0.5 * TmpKx) * cos (0.5 * TmpKy) * cos(M_PI * 0.25), 
+						     sin (0.5 * TmpKx) * sin (0.5 * TmpKy) * sin(M_PI * 0.25));
+	d1 = 4.0 * this->SecondNextNNHoping * cos (TmpKx) * cos (TmpKy);
+	d3 = 2.0 * this->NextNNHoping * (cos (TmpKx) - cos (TmpKy));
 	TmpOneBodyHamiltonian.SetMatrixElement(2, 2, d1 + d3);
 	TmpOneBodyHamiltonian.SetMatrixElement(2, 3, Conj(B1));
 	TmpOneBodyHamiltonian.SetMatrixElement(3, 3, d1 - d3);

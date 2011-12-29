@@ -1095,7 +1095,7 @@ HermitianMatrix HermitianMatrix::Conjugate(ComplexMatrix& UnitaryM)
   HermitianMatrix TmpMatrix (UnitaryM.NbrRow, true);
   Complex Tmp2;
   for (int i = 0; i < UnitaryM.NbrRow; ++i)
-    for (int j = 0; j < UnitaryM.NbrRow; ++j)
+    for (int j = i; j < UnitaryM.NbrRow; ++j)
       {
 	Complex Tmp = 0.0;
 	for (int k = 0; k < UnitaryM.NbrRow; ++k)
@@ -1103,7 +1103,7 @@ HermitianMatrix HermitianMatrix::Conjugate(ComplexMatrix& UnitaryM)
 	    Complex Tmp3 = 0.0; 
 	    for (int l = 0; l < UnitaryM.NbrRow; ++l)
 	      {
-		this->GetMatrixElement(l, k, Tmp2);
+		this->GetMatrixElement(k, l, Tmp2);
 		Tmp3 +=  Tmp2 * UnitaryM.Columns[j][l];
 	      }
 	    Tmp += Tmp3 * Conj(UnitaryM.Columns[i][k]);

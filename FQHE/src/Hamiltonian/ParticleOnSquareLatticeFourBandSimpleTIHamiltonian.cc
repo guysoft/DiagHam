@@ -181,17 +181,17 @@ void ParticleOnSquareLatticeFourBandSimpleTIHamiltonian::EvaluateInteractionFact
       OneBodyHamiltonian[i].GetMatrixElement(3, 3, Tmp1);      
       this->OneBodyInteractionFactorsdmdm[i] = Tmp1;
 
-      OneBodyHamiltonian[i].GetMatrixElement(0, 1, Tmp2);      
+      OneBodyHamiltonian[i].GetMatrixElement(1, 0, Tmp2);      
       this->OneBodyInteractionFactorsupum[i] = Tmp2;
-      OneBodyHamiltonian[i].GetMatrixElement(0, 2, Tmp2);      
+      OneBodyHamiltonian[i].GetMatrixElement(2, 0, Tmp2);      
       this->OneBodyInteractionFactorsupdp[i] = Tmp2;
-      OneBodyHamiltonian[i].GetMatrixElement(0, 3, Tmp2);      
+      OneBodyHamiltonian[i].GetMatrixElement(3, 0, Tmp2);      
       this->OneBodyInteractionFactorsupdm[i] = Tmp2;
-      OneBodyHamiltonian[i].GetMatrixElement(1, 2, Tmp2);      
+      OneBodyHamiltonian[i].GetMatrixElement(2, 1, Tmp2);      
       this->OneBodyInteractionFactorsumdp[i] = Tmp2;
-      OneBodyHamiltonian[i].GetMatrixElement(1, 3, Tmp2);      
+      OneBodyHamiltonian[i].GetMatrixElement(3, 1, Tmp2);      
       this->OneBodyInteractionFactorsumdm[i] = Tmp2;
-      OneBodyHamiltonian[i].GetMatrixElement(2, 3, Tmp2);      
+      OneBodyHamiltonian[i].GetMatrixElement(3, 2, Tmp2);      
       this->OneBodyInteractionFactorsdpdm[i] = Tmp2;
     }
 
