@@ -35,7 +35,7 @@
 
 
 #include "config.h"
-#include "Hamiltonian/ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian.h"
 #include "Matrix/ComplexMatrix.h"
 
 #include <iostream>
@@ -46,15 +46,45 @@ using std::cout;
 using std::endl;
 
 
-class ParticleOnCubicLatticeTwoBandSimpleTIHamiltonian : public ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian
+class ParticleOnCubicLatticeTwoBandSimpleTIHamiltonian : public ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian
 {
 
  protected:
  
+  // number of sites in the z direction
+  int NbrSiteZ;
+  // number of sites in the direction perpendicular to X
+  int NbrSiteYZ;
+
+  // numerical factor for momentum along x
+  double KxFactor;
+  // numerical factor for momentum along y
+  double KyFactor;
+  // numerical factor for momentum along z
+  double KzFactor;
+  
   // mass term of the simple TI model
   double Mass;
 
+  // boundary condition twisting angle along x
+  double GammaX;
+  // boundary condition twisting angle along y
+  double GammaY;
+  // boundary condition twisting angle along z
+  double GammaZ;
+  // nearest neighbor density-density potential strength
+  double UPotential;
+  // strength of the repulsive two body on site interaction
+  double VPotential;
+
+  // use flat band model
+  bool FlatBand;
+
  public:
+
+  // default constructor
+  //
+  ParticleOnCubicLatticeTwoBandSimpleTIHamiltonian();
 
   // constructor
   //

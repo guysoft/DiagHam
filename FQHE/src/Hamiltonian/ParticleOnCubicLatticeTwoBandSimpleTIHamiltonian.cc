@@ -48,6 +48,13 @@ using std::endl;
 using std::ostream;
 
 
+// default constructor
+//
+
+ParticleOnCubicLatticeTwoBandSimpleTIHamiltonian::ParticleOnCubicLatticeTwoBandSimpleTIHamiltonian()
+{
+}
+
 // constructor
 //
 // particles = Hilbert space associated to the system

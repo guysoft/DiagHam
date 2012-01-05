@@ -35,7 +35,7 @@
 
 
 #include "config.h"
-#include "Hamiltonian/ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian.h"
+#include "Hamiltonian/ParticleOnCubicLatticeTwoBandSimpleTIHamiltonian.h"
 #include "Matrix/ComplexMatrix.h"
 
 #include <iostream>
@@ -46,23 +46,11 @@ using std::cout;
 using std::endl;
 
 
-class ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian : public ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian
+class ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian : public ParticleOnCubicLatticeTwoBandSimpleTIHamiltonian
 {
 
  protected:
  
-  // number of sites in the z direction
-  int NbrSiteZ;
-  // number of sites in the direction perpendicular to X
-  int NbrSiteYZ;
-
-  // numerical factor for momentum along x
-  double KxFactor;
-  // numerical factor for momentum along y
-  double KyFactor;
-  // numerical factor for momentum along z
-  double KzFactor;
-  
   // distortion of nearest neighbor hoping amplitude in the (111) direction
   double NNHopingDistortion111;
   // amplitude of the spin orbit coupling
@@ -73,19 +61,6 @@ class ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian : public ParticleOnLatt
   double NextNNHoping;
   // hoping amplitude between second next neareast neighbor sites
   double SecondNextNNHoping;
-  // boundary condition twisting angle along x
-  double GammaX;
-  // boundary condition twisting angle along y
-  double GammaY;
-  // boundary condition twisting angle along z
-  double GammaZ;
-  // nearest neighbor density-density potential strength
-  double UPotential;
-  // strength of the repulsive two body on site interaction
-  double VPotential;
-
-  // use flat band model
-  bool FlatBand;
 
  public:
 
@@ -119,9 +94,9 @@ class ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian : public ParticleOnLatt
 
  protected:
  
-  // evaluate all interaction factors
-  //   
-  virtual void EvaluateInteractionFactors();
+/*   // evaluate all interaction factors */
+/*   //    */
+/*   virtual void EvaluateInteractionFactors(); */
 
   // compute the matrix element for the two body interaction between two sites A and B  belonging to the same layer
   //

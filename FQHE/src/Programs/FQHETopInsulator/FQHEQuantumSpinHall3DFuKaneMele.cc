@@ -252,7 +252,7 @@ int main(int argc, char** argv)
 		      Hamiltonian->GetHamiltonian(HRep);
 		      ComplexMatrix TransformedHRep = HRep.Conjugate(NBodyTransformationMatrix);
 		      FermionOnCubicLatticeWithSpinMomentumSpace* TargetSpace = new FermionOnCubicLatticeWithSpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, i, j, k);
-		      ComplexMatrix SU4SU2TransformationMatrix = ((FermionOnCubicLatticeWithSU4SpinMomentumSpace*) Space)->TransformationMatrixSU4ToSU2(TargetSpace, 2, 3);
+		      ComplexMatrix SU4SU2TransformationMatrix = ((FermionOnCubicLatticeWithSU4SpinMomentumSpace*) Space)->TransformationMatrixSU4ToSU2(TargetSpace, 0, 1);
 		      ComplexMatrix TransformedHRep2 = TransformedHRep.InvConjugate(SU4SU2TransformationMatrix);
 		      if (Manager.GetDouble("u-potential") != 0.0)
 			TransformedHRep2 /= Manager.GetDouble("u-potential");
