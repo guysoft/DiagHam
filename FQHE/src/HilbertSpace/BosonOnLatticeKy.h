@@ -197,7 +197,7 @@ class BosonOnLatticeKy : public ParticleOnLattice
   // return value = pointer to the new subspace
   virtual AbstractHilbertSpace* ExtractSubspace (AbstractQuantumNumber& q, 
 						 SubspaceSpaceConverter& converter);
-
+  
   // in presence of translation symmetries, it is NOT possible to change the flux through the simulation cell
   // this function is provided for compatibility with the interface, only
   // nbrFluxQuanta = number of quanta of flux piercing the simulation cell
@@ -274,7 +274,7 @@ class BosonOnLatticeKy : public ParticleOnLattice
   // return value = index of the destination state 
   int AdA (int index, int q, int r, double& coefficient);
 	
-	// apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
+  // apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
   //
   // index = index of the state on which the operator has to be applied
   // n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
@@ -288,7 +288,6 @@ class BosonOnLatticeKy : public ParticleOnLattice
   // nbrIndices = number of creation (or annihilation) operators
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  
   virtual int ProdAd (int* m, int nbrIndices, double& coefficient);
 
   // apply \sum q U_q a^+_q a_q ( a^+_q a_q - 1 )
@@ -349,7 +348,7 @@ class BosonOnLatticeKy : public ParticleOnLattice
   // extract the momentum ky from a quantum number q
   // return: momentum ky (in range 0...Kmax-1)
   int DecodeKy(int q);
-
+  
   // translate a state by a multiple of the lattice vectors
   // shiftX = length of translation in x-direction
   // shiftY = length of translation in y-direction
@@ -379,7 +378,7 @@ class BosonOnLatticeKy : public ParticleOnLattice
   // highestBit = maximum nonzero bit reached by a particle in the state (can be given negative, if not known)
   // return value = corresponding index, or dimension of space, if not found
   virtual int CarefulFindStateIndex(unsigned long stateDescription, int highestBit);
-
+  
   // conversion to generic (full) many-body representation in real-space basis
   // state: many-body state in Ky-momentum basis
   // nbodyBasis: full Hilbert-space in real-space representation
@@ -393,6 +392,26 @@ class BosonOnLatticeKy : public ParticleOnLattice
   // nbrComponent = number of components to evaluate
   // returns: vector in many-body basis of targetSpace
   virtual ComplexVector& ConvertToNbodyBasis(ComplexVector& state, ParticleOnLattice &nbodyBasis, int firstComponent, int nbrComponent);
+	
+  // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. 
+  // 
+  // nbrBosonSector = number of particles that belong to the subsytem 
+  // kySector = Ky sector in which the density matrix has to be evaluated 
+  // groundState = reference on the total system ground state
+  // architecture = pointer to the architecture to use parallelized algorithm 
+  // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)	
+  virtual HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int kySector, ComplexVector& groundState, AbstractArchitecture* architecture);
+
+  // core part of the evaluation density matrix particle partition calculation
+  // 
+  // minIndex = first index to consider in complementary Hilbert space
+  // nbrIndex = number of indices to consider in complementary Hilbert space
+  // complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e part B)
+  // destinationHilbertSpace = pointer to the destination Hilbert space (i.e. part A)
+  // groundState = reference on the total system ground state
+  // densityMatrix = reference on the density matrix where result has to stored
+  // return value = number of components that have been added to the density matrix
+  virtual long EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnLattice* complementaryHilbertSpace,  ParticleOnLattice* destinationHilbertSpace, ComplexVector& groundState,  HermitianMatrix* densityMatrix);
   
  protected:
 
@@ -452,8 +471,7 @@ class BosonOnLatticeKy : public ParticleOnLattice
   // initialState = reference on the array where initialbosonic  state is stored
   // initialStateLzMax = reference on the initial bosonic state maximum Lz value
   // finalStateHighestBit = reference on the value where highest bit of fermionic represenation should be stored
-  // return value = corresponding fermionic state
-  
+  // return value = corresponding fermionic state  
   unsigned long BosonToFermion(unsigned long*& initialState, int& initialStateLzMax, int &finalStateHighestBit);
 
   // convert a fermionic state into its bosonic  counterpart

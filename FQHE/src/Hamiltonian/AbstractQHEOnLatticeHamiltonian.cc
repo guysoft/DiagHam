@@ -661,8 +661,15 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiplyFastMultiply(
       TmpRe = vSource[k].Re;
       TmpIm = vSource[k].Im;
       int Pos=0;
+			//cout <<"i = "<< i<<endl;
+			//cout <<"TmpNbrRealInteraction = "<<TmpNbrRealInteraction<<endl;
       for (; Pos < TmpNbrRealInteraction; ++Pos)
 	{
+		/*cout <<"TmpIndexArray[Pos] = "<<TmpIndexArray[Pos]<<endl;
+		cout <<"vDestination.Re(TmpIndexArray[Pos]) = " << vDestination.Re(TmpIndexArray[Pos])<<endl;
+		cout <<"TmpCoefficientIndexArray[Pos] = "<<TmpCoefficientIndexArray[Pos]<<endl;
+		cout <<"TmpRe = " <<TmpRe<<endl;
+		cout <<" RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]] = "<<RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]]<<endl;*/
 	  vDestination.Re(TmpIndexArray[Pos]) +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]]*TmpRe;
 	  vDestination.Im(TmpIndexArray[Pos]) +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]]*TmpIm;
 	}
@@ -923,7 +930,7 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelAddMultiply(Com
 	{
 	  if (this->DiskStorageFlag == false)
 	    {
-	      this->LowLevelAddMultiplyPartialFastMultiply(vSource, vDestination, firstComponent, nbrComponent);
+	      this->ConjugateLowLevelAddMultiplyPartialFastMultiply(vSource, vDestination, firstComponent, nbrComponent);
 	    }
 	  else
 	    {
@@ -2618,6 +2625,7 @@ void AbstractQHEOnLatticeHamiltonian::EnableFastMultiplication()
   // allocate all memory at the outset:
   for (int i = 0; i < ReducedSpaceDimension; ++i)
     {
+			//cout <<"i = "<< i << this->NbrRealInteractionPerComponent[i]<<" "<<this->NbrComplexInteractionPerComponent[i]<<endl;
       this->InteractionPerComponentIndex[i] = new int [this->NbrRealInteractionPerComponent[i] + this->NbrComplexInteractionPerComponent[i]];
       this->InteractionPerComponentCoefficientIndex[i] = new unsigned short [this->NbrRealInteractionPerComponent[i]
 									     +this->NbrComplexInteractionPerComponent[i]];

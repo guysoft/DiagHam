@@ -103,7 +103,7 @@ ParticleOnLatticeWithKyNBodyDeltaHamiltonian::ParticleOnLatticeWithKyNBodyDeltaH
   this->TwoBodyFlag = false;
   this->DiskStorageFlag = false;
   if(this->TwoBodyFlag == false)
-    NbrInteractionFactors = 0;
+    this->NbrInteractionFactors = 0;
   if (precalculationFileName == 0)
     {
       if (memory > 0)
@@ -136,17 +136,18 @@ ParticleOnLatticeWithKyNBodyDeltaHamiltonian::ParticleOnLatticeWithKyNBodyDeltaH
 
 ParticleOnLatticeWithKyNBodyDeltaHamiltonian::~ParticleOnLatticeWithKyNBodyDeltaHamiltonian()
 {
-  for (int i = 0; i < this->NbrNBodySectorSums; ++i)
-    {
-      if (this->NbrNBodySectorIndicesPerSum[i] > 0)
+	
+	if ( this->NBodyContactInteraction != 0.0 )
+	{
+		for (int i = 0; i < this->NbrNBodySectorSums; ++i)
+		{
+			if (this->NbrNBodySectorIndicesPerSum[i] > 0)
 	{
 	  delete[] this->NBodySectorIndicesPerSum[i];
 	  delete[] this->NBodyInteractionFactors[i];
 	}
     }
 
-  if ( this->NBodyContactInteraction != 0.0 )
-    {
       delete[] this->NBodyInteractionFactors;
       delete[] this->NbrNBodySectorIndicesPerSum;
       delete[] this->NBodySectorIndicesPerSum;
@@ -176,7 +177,7 @@ ComplexVector& ParticleOnLatticeWithKyNBodyDeltaHamiltonian::LowLevelAddMultiply
 	      this->EvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);	  
 	      this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
 	    }
-          this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSource, vDestination);
+	    this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSource, vDestination);
 	}
       else
 	{
@@ -220,7 +221,7 @@ ComplexVector* ParticleOnLatticeWithKyNBodyDeltaHamiltonian::LowLevelMultipleAdd
     {
       Complex* Coefficient2 = new Complex [nbrVectors];
       ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
-      if (this->TwoBodyFlag == true)
+			if (this->TwoBodyFlag == true)
 	{
 	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
@@ -235,7 +236,7 @@ ComplexVector* ParticleOnLatticeWithKyNBodyDeltaHamiltonian::LowLevelMultipleAdd
 	      this->EvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
 	    }
 	}
-      this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSources, vDestinations, nbrVectors);
+	this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSources, vDestinations, nbrVectors);
       
       delete[] Coefficient2;
       delete TmpParticles;
@@ -289,7 +290,7 @@ ComplexVector& ParticleOnLatticeWithKyNBodyDeltaHamiltonian::ConjugateLowLevelAd
 	{
 	  if (this->DiskStorageFlag == false)
 	    {
-	      this->LowLevelAddMultiplyPartialFastMultiply(vSource, vDestination, firstComponent, nbrComponent);
+	      this->ConjugateLowLevelAddMultiplyPartialFastMultiply(vSource, vDestination, firstComponent, nbrComponent);
 	    }
 	  else
 	    {
@@ -300,6 +301,77 @@ ComplexVector& ParticleOnLatticeWithKyNBodyDeltaHamiltonian::ConjugateLowLevelAd
   return vDestination;
 }
 
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and add result to another vector, low level function (no architecture optimization)
+// using partial fast multiply option
+//
+// vSource = vector to be multiplied
+// vDestination = vector at which result has to be added
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+ComplexVector& ParticleOnLatticeWithKyNBodyDeltaHamiltonian::ConjugateLowLevelAddMultiplyPartialFastMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent)
+{
+	
+	cout <<"calling non degined function ParticleOnLatticeWithKyNBodyDeltaHamiltonian::ConjugateLowLevelAddMultiplyPartialFastMultiply"<<endl;
+	exit(1);
+	return vDestination;
+ /* int Index;
+  Complex TmpInteraction;
+  int LastComponent = firstComponent + nbrComponent;
+  int Dim = this->Particles->GetHilbertSpaceDimension();
+  double Coefficient;
+  Complex TmpSum=0.0;
+  ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
+  int* TmpIndexArray;
+  unsigned short* TmpCoefficientIndexArray;
+  Complex TmpC;
+  int TmpNbrRealInteraction;
+  int TmpNbrComplexInteraction;
+  firstComponent -= this->PrecalculationShift;
+  LastComponent -= this->PrecalculationShift;
+  int Pos = firstComponent / this->FastMultiplicationStep; 
+  int PosMod = firstComponent % this->FastMultiplicationStep;
+  if (PosMod != 0)
+    {
+      ++Pos;
+      PosMod = this->FastMultiplicationStep - PosMod;
+    }
+  int l =  PosMod + firstComponent + this->PrecalculationShift;
+  for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
+    {
+      TmpNbrRealInteraction = this->NbrRealInteractionPerComponent[Pos];
+      TmpNbrComplexInteraction = this->NbrComplexInteractionPerComponent[Pos];
+      TmpIndexArray = this->InteractionPerComponentIndex[Pos];
+      TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[Pos];
+      TmpSum=0.0;
+      int Pos2=0;
+      for (; Pos2 < TmpNbrRealInteraction; ++Pos2)
+	TmpSum +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos2]]*vSource[TmpIndexArray[Pos2]];
+      for (int j=0; j < TmpNbrComplexInteraction; ++j, ++Pos2)
+	TmpSum +=  Conj(ComplexInteractionCoefficients[TmpCoefficientIndexArray[Pos2]])*vSource[TmpIndexArray[Pos2]];
+      vDestination[l] += this->HamiltonianShift * vSource[l];
+      l += this->FastMultiplicationStep;
+      ++Pos;
+    }
+
+  firstComponent += this->PrecalculationShift;
+  LastComponent += this->PrecalculationShift;
+  for (int k = 0; k < this->FastMultiplicationStep; ++k)
+    if (PosMod != k)
+      {
+	this->EvaluateMNOneBodyConjugateAddMultiplyComponent(TmpParticles, firstComponent + k, LastComponent, this->FastMultiplicationStep, vSource,vDestination);
+	
+	for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
+	  {
+	    this->EvaluateMNTwoBodyConjugateAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+	  }
+      }
+  delete TmpParticles;
+  return vDestination;*/
+}
 
 // multiply a set of vectors by the current hamiltonian for a given range of indices 
 // and add result to another et of vectors, low level function (no architecture optimization)
@@ -484,6 +556,12 @@ ComplexVector* ParticleOnLatticeWithKyNBodyDeltaHamiltonian::HermitianLowLevelMu
   return vDestinations;
 }
 
+ComplexVector* ParticleOnLatticeWithKyNBodyDeltaHamiltonian::ConjugateLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, int firstComponent, int nbrComponent)
+{	
+	cout << "Calling non-defined function ParticleOnLatticeWithKyNBodyDeltaHamiltonian::ConjugateLowLevelMultipleAddMultiply"<<endl;
+  return vDestinations;
+
+}
 // multiply a set of vectors by the current hamiltonian for a given range of indices 
 // and add result to another et of vectors, low level function (no architecture optimization)
 // using partial fast multiply option
@@ -652,7 +730,9 @@ void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::EvaluateInteractionFactors()
 		    KineticQi[this->NbrHoppingTerms] = Particles->EncodeQuantumNumber(i, compositeKy, 0, TranslationPhase);
 		    compositeKy2 = k*p;
 		    KineticQf[this->NbrHoppingTerms] = Particles->EncodeQuantumNumber(i, compositeKy2, 0, TranslationPhase);
-		    HoppingTerms[this->NbrHoppingTerms] = HoppingSign*Phase*TranslationPhase*Polar(1.0,-2.0*M_PI*((double)k/KyMax-this->FluxDensity*(double)i));
+		    //HoppingTerms[this->NbrHoppingTerms] = HoppingSign*Phase*TranslationPhase
+				//*Polar(1.0,-2.0*M_PI*((double)k/KyMax-this->FluxDensity*(double)i));
+				HoppingTerms[this->NbrHoppingTerms] = HoppingSign*Conj(Phase)*TranslationPhase*Polar(1.0,-2.0*M_PI*((double)k/KyMax));
 		  }		
 #ifdef DEBUG_OUTPUT
 		if (TranslationPhase!=1.0)
@@ -666,8 +746,9 @@ void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::EvaluateInteractionFactors()
 		    KineticQi[this->NbrHoppingTerms] = Particles->EncodeQuantumNumber(i, compositeKy, 0, TranslationPhase);
 		    compositeKy2 = k*p+p-1;
 		    KineticQf[this->NbrHoppingTerms] = Particles->EncodeQuantumNumber(i, compositeKy2, 0, TranslationPhase);
-		    HoppingTerms[this->NbrHoppingTerms] = HoppingSign*Conj(Phase)*TranslationPhase
-		      *Polar(1.0,2.0*M_PI*((double)k/KyMax-this->FluxDensity*(double)i));
+		    //HoppingTerms[this->NbrHoppingTerms] = HoppingSign*Conj(Phase)*TranslationPhase
+		      //*Polar(1.0,2.0*M_PI*((double)k/KyMax-this->FluxDensity*(double)i));
+				HoppingTerms[this->NbrHoppingTerms] = HoppingSign*Phase*TranslationPhase*Polar(1.0,2.0*M_PI*((double)k/KyMax));
 		  }
 		else
 		  {
@@ -700,18 +781,18 @@ void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::EvaluateInteractionFactors()
       this->NbrNBodySectorIndicesPerSum = new int[this->NbrNBodySectorSums];
       
       for (int i = 0; i < this->NbrNBodySectorSums; ++i)
-	this->NbrNBodySectorIndicesPerSum[i] = 0;
+				this->NbrNBodySectorIndicesPerSum[i] = 0;
       
       double Strength = 1;
       for (int i = 2 ; i<= this->NBodyValue ; i++)
-	Strength *= i*i;
+				Strength *= i*i;
       
       for (int i = 2 ; i<= this->NBodyValue ; i++)
-	Strength /= ((double)KyMax);
+				Strength /= ((double)KyMax);
       
       Strength *= this->NBodyContactInteraction;
       
-      
+      cout <<"Strength "<< Strength<<endl;
       double ** TmpSortedIndicesPerSumSymmetryFactor;
       int * TmpNbrBodySectorIndicesPerSum;
       int ** TmpNBodySectorIndicesPerSum;
@@ -719,26 +800,22 @@ void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::EvaluateInteractionFactors()
       int TmpNbrSum = this->Ly;
       GetAllSymmetricIndices (this->KyMax, this->NBodyValue, TmpNbrBodySectorIndicesPerSum, TmpNBodySectorIndicesPerSum, TmpSortedIndicesPerSumSymmetryFactor);
       
-      double ** SortedIndicesPerSumSymmetryFactor;
-      
-      for (int i=0; i<Lx; ++i)
-	for (int Sum = 0; Sum < TmpNbrSum; Sum++)
-	  {
-	    this->NbrNBodySectorIndicesPerSum[i + this->Lx * Sum] += TmpNbrBodySectorIndicesPerSum[Sum];
-	  }
+			for (int i=0; i<Lx; ++i)
+				for (int Sum = 0; Sum < TmpNbrSum; Sum++)
+				{
+					this->NbrNBodySectorIndicesPerSum[i + this->Lx * Sum] += TmpNbrBodySectorIndicesPerSum[Sum];
+				}
       
       this->NBodySectorIndicesPerSum = new int* [this->NbrNBodySectorSums];
-      SortedIndicesPerSumSymmetryFactor = new double * [this->NbrNBodySectorSums];
       
       for (int i = 0; i < this->NbrNBodySectorSums; ++i)
-	{
-	  if (this->NbrNBodySectorIndicesPerSum[i]  > 0)
-	    {
-	      this->NBodySectorIndicesPerSum[i] = new int[this->NBodyValue * this->NbrNBodySectorIndicesPerSum[i]];      
-	      SortedIndicesPerSumSymmetryFactor[i] = new double [this->NbrNBodySectorIndicesPerSum[i]];
-	      this->NbrNBodySectorIndicesPerSum[i] = 0;
-	    }
-	}
+			{
+				if (this->NbrNBodySectorIndicesPerSum[i]  > 0)
+				{
+					this->NBodySectorIndicesPerSum[i] = new int[this->NBodyValue * this->NbrNBodySectorIndicesPerSum[i]];      
+					this->NbrNBodySectorIndicesPerSum[i] = 0;
+				}
+			}
       
       for (int i=0; i<Lx; ++i)
 	for (int Sum = 0; Sum < TmpNbrSum; Sum++)
@@ -750,25 +827,42 @@ void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::EvaluateInteractionFactors()
 		  {
 		    this->NBodySectorIndicesPerSum[TmpSum][this->NbrNBodySectorIndicesPerSum[TmpSum] * this->NBodyValue + TmpPos] = i + this->Lx * TmpNBodySectorIndicesPerSum[Sum][IndexinSum * this->NBodyValue +TmpPos];
 		  }
-		SortedIndicesPerSumSymmetryFactor[TmpSum][this->NbrNBodySectorIndicesPerSum[TmpSum]] = TmpSortedIndicesPerSumSymmetryFactor[Sum][IndexinSum];
+		//SortedIndicesPerSumSymmetryFactor[TmpSum][this->NbrNBodySectorIndicesPerSum[TmpSum]] = TmpSortedIndicesPerSumSymmetryFactor[Sum][IndexinSum];
 		++this->NbrNBodySectorIndicesPerSum[TmpSum];
 	      }
 	    
 	  }
+	  
+	  	/*for (int Sum = 0; Sum < this->NbrNBodySectorSums; Sum++)
+		  {
+		    cout <<"Sum = " << Sum <<endl;
+		    for (int i = 0; i <  this->NbrNBodySectorIndicesPerSum[Sum]; i++)
+				{
+					for(int TmpPos = 0; TmpPos< this->NBodyValue; TmpPos++)
+					{
+						cout <<this->NBodySectorIndicesPerSum[Sum][i * this->NBodyValue +TmpPos]<<" ";
+					}
+					cout <<endl<<SortedIndicesPerSumSymmetryFactor[Sum][i]<<endl<<endl;
+				}
+		  }*/
       
       this->NBodyInteractionFactors = new Complex* [this->NbrNBodySectorSums];
       
       for (int i = 0; i < this->NbrNBodySectorSums; ++i)
 	{
+		//cout <<"Sum = "<<i <<endl;
 	  this->NBodyInteractionFactors[i] = new Complex[this->NbrNBodySectorIndicesPerSum[i] * this->NbrNBodySectorIndicesPerSum[i]];
-	  
+	  int k = i / this->Lx;
 	  int Index = 0;
 	  for (int j1 = 0; j1 < this->NbrNBodySectorIndicesPerSum[i]; ++j1) // annihilation operators
 	    { 
 	      for (int j2 = 0; j2 < this->NbrNBodySectorIndicesPerSum[i]; ++j2)
 		// creation operators
 		{
-		  this->NBodyInteractionFactors[i][Index] =  Strength * SortedIndicesPerSumSymmetryFactor[i][j1] * SortedIndicesPerSumSymmetryFactor[i][j2];
+			//cout << "j1  = " << j1<<"; j2 = "<<j2<<"; Index = "<<Index<<endl;
+		  this->NBodyInteractionFactors[i][Index] =  Strength * TmpSortedIndicesPerSumSymmetryFactor[k][j1] * TmpSortedIndicesPerSumSymmetryFactor[k][j2];
+			//this->NBodyInteractionFactors[i][Index] =  Strength * SortedIndicesPerSumSymmetryFactor[i][j1] * SortedIndicesPerSumSymmetryFactor[i][j2];
+			//cout <<this->NBodyInteractionFactors[i][Index];
 		  TotalNbrInteractionFactors++;
 		  ++Index;
 		}
@@ -777,12 +871,10 @@ void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::EvaluateInteractionFactors()
       
       for (int Sum = 0; Sum < TmpNbrSum; Sum++)
 	{
-	  delete [] SortedIndicesPerSumSymmetryFactor[Sum];
 	  delete [] TmpSortedIndicesPerSumSymmetryFactor[Sum];
 	}
       
       delete [] TmpSortedIndicesPerSumSymmetryFactor;
-      delete [] SortedIndicesPerSumSymmetryFactor;
       delete [] TmpNbrBodySectorIndicesPerSum;
       delete [] TmpNBodySectorIndicesPerSum;
     }
@@ -942,16 +1034,16 @@ void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::PartialEnableFastMultiplicati
     {
       int PosR = 0;
       int PosC = this->NbrRealInteractionPerComponent[Pos];
-      this->EvaluateMNOneBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
-							 this->InteractionPerComponentCoefficientIndex[Pos], PosR,PosC);
-      this->EvaluateMNNBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
-						       this->InteractionPerComponentCoefficientIndex[Pos], PosR,PosC);
-      if (this->TwoBodyFlag == true)
-	{
-	  this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], this->InteractionPerComponentCoefficientIndex[Pos],PosR,PosC);
-	}
-      ++Pos;
-    }
+			this->EvaluateMNOneBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
+																												 this->InteractionPerComponentCoefficientIndex[Pos], PosR,PosC);
+			this->EvaluateMNNBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
+																											 this->InteractionPerComponentCoefficientIndex[Pos], PosR,PosC);
+			if (this->TwoBodyFlag == true)
+			{
+				this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], this->InteractionPerComponentCoefficientIndex[Pos],PosR,PosC);
+			}
+			++Pos;
+		}
     
   delete TmpParticles;
 }

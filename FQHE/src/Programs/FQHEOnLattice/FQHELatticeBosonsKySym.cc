@@ -91,7 +91,8 @@ int main(int argc, char** argv)
   QHEOnLatticeMainTask::AddOptionGroup(&Manager);
   Manager += PrecalculationGroup;
   Manager += MiscGroup;
-
+	Manager += ToolsGroup;
+	
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 8);
   (*SystemGroup) += new SingleIntegerOption  ('x', "lx", "length in x-direction of given lattice", 5);
   (*SystemGroup) += new SingleIntegerOption  ('y', "ly", "length in y-direction of given lattice", 1);

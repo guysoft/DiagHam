@@ -39,6 +39,7 @@
 #include "Vector/RealVector.h"
 #include "FunctionBasis/AbstractFunctionBasis.h"
 #include "GeneralTools/UnsignedIntegerTools.h"
+#include "Architecture/ArchitectureOperation/FQHELatticeParticleEntanglementSpectrumOperation.h"
 
 #include <cmath>
 #include <cstdlib>
@@ -487,19 +488,19 @@ double BosonOnLatticeKy::AA (int index, int r1, int r2)
     this->ProdATemporaryState[i] = 0ul;
   double Coefficient = this->ProdATemporaryState[r2];
   --this->ProdATemporaryState[r2];
-  if ((r2==TemporaryStateHighestBit)&&(this->ProdATemporaryState[r2]==0)&&(TemporaryStateHighestBit>0))
+  if ((r2==this->ProdATemporaryStateHighestBit)&&(this->ProdATemporaryState[r2]==0)&&(this->ProdATemporaryStateHighestBit>0))
     {
-      --ProdATemporaryStateHighestBit;
-      while (ProdATemporaryState[TemporaryStateHighestBit] == 0)
+      --this->ProdATemporaryStateHighestBit;
+      while (ProdATemporaryState[this->ProdATemporaryStateHighestBit] == 0)
 	--ProdATemporaryStateHighestBit;
     }
   Coefficient *= this->ProdATemporaryState[r1];
   --this->ProdATemporaryState[r1];
-  if ((r1==TemporaryStateHighestBit)&&(this->ProdATemporaryState[r1]==0)&&(TemporaryStateHighestBit>0))
+  if ((r1==this->ProdATemporaryStateHighestBit)&&(this->ProdATemporaryState[r1]==0)&&(this->ProdATemporaryStateHighestBit>0))
     {
-      --ProdATemporaryStateHighestBit;
-      while (ProdATemporaryState[TemporaryStateHighestBit] == 0)
-	--ProdATemporaryStateHighestBit;
+      --this->ProdATemporaryStateHighestBit;
+      while (ProdATemporaryState[this->ProdATemporaryStateHighestBit] == 0)
+	--this->ProdATemporaryStateHighestBit;
     }
   return sqrt(Coefficient);
 }
@@ -516,6 +517,7 @@ int BosonOnLatticeKy::AdAd (int q1, int q2, double& coefficient)
 {
   for (int i = 0; i < this->NbrStates; ++i)
     this->TemporaryState[i] = this->ProdATemporaryState[i];
+	this->TemporaryStateHighestBit = this->ProdATemporaryStateHighestBit;
   ++this->TemporaryState[q2];
   coefficient = this->TemporaryState[q2];
   if (q2 > TemporaryStateHighestBit)
@@ -1398,3 +1400,155 @@ void BosonOnLatticeKy::ExpandBasisState (int nbrOperators, int *quantumNumbers, 
     }
 }
 
+
+// evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. 
+// 
+// nbrBosonSector = number of particles that belong to the subsytem 
+// kySector = Ky sector in which the density matrix has to be evaluated 
+// groundState = reference on the total system ground state
+// architecture = pointer to the architecture to use parallelized algorithm 
+// return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+
+HermitianMatrix BosonOnLatticeKy::EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int kySector, ComplexVector& groundState, AbstractArchitecture* architecture)
+{
+  if (nbrParticleSector == 0)
+    {
+      HermitianMatrix TmpDensityMatrix(1, true);
+      TmpDensityMatrix(0, 0) = 1.0;
+      return TmpDensityMatrix;
+    }
+  
+  if (nbrParticleSector == this->NbrBosons)
+    {
+      if (kySector = this->Ky)
+	{
+	  HermitianMatrix TmpDensityMatrix(1, true);
+	  TmpDensityMatrix(0, 0) = 1.0;
+	  return TmpDensityMatrix;
+	}
+      else
+	{
+	  HermitianMatrix TmpDensityMatrix;
+	  return TmpDensityMatrix;	
+	}
+    }
+  
+  int ComplementaryNbrParticles = this->NbrBosons - nbrParticleSector;
+  BosonOnLatticeKy SubsytemSpace (nbrParticleSector, this->Lx, this->Ly , kySector , this->NbrFluxQuanta, 10000000);
+  HermitianMatrix TmpDensityMatrix (SubsytemSpace.GetHilbertSpaceDimension(), true);
+  int ComplementaryKySector = this->Ky - kySector;
+  if (ComplementaryKySector < 0)
+    ComplementaryKySector += this->Kmax;
+  if (ComplementaryKySector >= this->Kmax)
+    ComplementaryKySector -= this->Kmax;
+  BosonOnLatticeKy ComplementarySpace (ComplementaryNbrParticles, this->Lx, this->Ly, ComplementaryKySector , this->NbrFluxQuanta, 10000000);
+  FQHELatticeParticleEntanglementSpectrumOperation Operation(this, &SubsytemSpace, &ComplementarySpace, groundState, TmpDensityMatrix);
+  Operation.ApplyOperation(architecture);
+	if (Operation.GetNbrNonZeroMatrixElements() > 0)	
+    return TmpDensityMatrix;
+  else
+    {
+      HermitianMatrix TmpDensityMatrixZero;
+      return TmpDensityMatrixZero;
+    }
+}
+
+// core part of the evaluation density matrix particle partition calculation
+// 
+// minIndex = first index to consider in complementary Hilbert space
+// nbrIndex = number of indices to consider in complementary Hilbert space
+// complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e part B)
+// destinationHilbertSpace = pointer to the destination Hilbert space (i.e. part A)
+// groundState = reference on the total system ground state
+// densityMatrix = reference on the density matrix where result has to stored
+// return value = number of components that have been added to the density matrix
+
+long BosonOnLatticeKy::EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnLattice* complementaryHilbertSpace,  ParticleOnLattice* destinationHilbertSpace, ComplexVector& groundState,  HermitianMatrix* densityMatrix)
+{
+  BosonOnLatticeKy* TmpHilbertSpace =  (BosonOnLatticeKy*) complementaryHilbertSpace;
+  BosonOnLatticeKy* TmpDestinationHilbertSpace =  (BosonOnLatticeKy*) destinationHilbertSpace;
+  int ComplementaryNbrBosonSector = TmpHilbertSpace->NbrBosons;
+  int NbrBosonSector = TmpDestinationHilbertSpace->NbrBosons;
+  int* TmpStatePosition = new int [TmpDestinationHilbertSpace->HilbertSpaceDimension];
+  int* TmpStatePosition2 = new int [TmpDestinationHilbertSpace->HilbertSpaceDimension];
+  double* TmpStateCoefficient = new double [TmpDestinationHilbertSpace->HilbertSpaceDimension];
+  int MaxIndex = minIndex + nbrIndex;
+  long TmpNbrNonZeroElements = 0l;
+  
+  double* LogFactorials = new double[this->NbrBosons + 1];
+  LogFactorials[0] = 0.0;
+  LogFactorials[1] = 0.0;
+  for (int i = 2 ; i <= this->NbrBosons; ++i)
+    LogFactorials[i] = LogFactorials[i - 1] + log((double) i); 
+  double* TmpDestinationLogFactorials = new double [TmpDestinationHilbertSpace->HilbertSpaceDimension];
+  double TmpLogBinomial = LogFactorials[this->NbrBosons] - LogFactorials[ComplementaryNbrBosonSector] - LogFactorials[NbrBosonSector];
+  
+  for (int i = 0; i < TmpDestinationHilbertSpace->HilbertSpaceDimension; ++i)
+    {
+      TmpDestinationHilbertSpace->FermionToBoson(TmpDestinationHilbertSpace->StateDescription[i], TmpDestinationHilbertSpace->StateHighestBit[i], TmpDestinationHilbertSpace->TemporaryState, TmpDestinationHilbertSpace->TemporaryStateHighestBit);
+      double TmpFactor = 0.0;
+      for (int k = 0; k <= TmpDestinationHilbertSpace->TemporaryStateHighestBit; ++k)
+	TmpFactor += LogFactorials[TmpDestinationHilbertSpace->TemporaryState[k]];
+      TmpDestinationLogFactorials[i] =  TmpFactor;
+    }
+  for (; minIndex < MaxIndex; ++minIndex)    
+    {
+      int Pos = 0;
+      TmpHilbertSpace->FermionToBoson(TmpHilbertSpace->StateDescription[minIndex], TmpHilbertSpace->StateHighestBit[minIndex], TmpHilbertSpace->TemporaryState, TmpHilbertSpace->TemporaryStateHighestBit);
+      double TmpHilbertSpaceFactorial = 0.0;
+      for (int k = 0; k <= TmpHilbertSpace->TemporaryStateHighestBit; ++k)
+	TmpHilbertSpaceFactorial += LogFactorials[TmpHilbertSpace->TemporaryState[k]];
+      for (int j = 0; j < TmpDestinationHilbertSpace->HilbertSpaceDimension; ++j)
+	{
+	  for (int i = 0; i < this->NbrStates; i++)
+	    this->TemporaryState[i] = 0;
+	  TmpDestinationHilbertSpace->FermionToBoson(TmpDestinationHilbertSpace->StateDescription[j], TmpDestinationHilbertSpace->StateHighestBit[j], TmpDestinationHilbertSpace->TemporaryState, TmpDestinationHilbertSpace->TemporaryStateHighestBit);
+	  
+	  if (TmpHilbertSpace->TemporaryStateHighestBit >TmpDestinationHilbertSpace->TemporaryStateHighestBit)
+	    this->TemporaryStateHighestBit = TmpHilbertSpace->TemporaryStateHighestBit;
+	  else
+	    this->TemporaryStateHighestBit = TmpDestinationHilbertSpace->TemporaryStateHighestBit;
+	  
+	  for (int i = 0; i <= TmpHilbertSpace->TemporaryStateHighestBit; i++)
+	    this->TemporaryState[i] += TmpHilbertSpace->TemporaryState[i];
+	  for (int i = 0; i <= TmpDestinationHilbertSpace->TemporaryStateHighestBit; i++)
+	    this->TemporaryState[i] += TmpDestinationHilbertSpace->TemporaryState[i];
+	  
+	  int TmpPos = this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateHighestBit), this->TemporaryStateHighestBit + this->NbrBosons - 1);
+	  
+	  if (TmpPos != this->HilbertSpaceDimension)
+	    {
+	      double TmpFactorial = 0.0;	      
+	      for (int k = 0; k <= this->TemporaryStateHighestBit; ++k)
+		TmpFactorial += LogFactorials[this->TemporaryState[k]];
+	      TmpFactorial -= TmpHilbertSpaceFactorial + TmpDestinationLogFactorials[j] + TmpLogBinomial;
+	      TmpFactorial *= 0.5; 
+	      
+	      TmpStatePosition[Pos] = TmpPos;
+	      TmpStatePosition2[Pos] = j;
+	      TmpStateCoefficient[Pos] = exp(TmpFactorial);
+	      ++Pos;
+	    }
+	}
+      if (Pos != 0)
+	{
+	  ++TmpNbrNonZeroElements;
+	  for (int j = 0; j < Pos; ++j)
+	    {
+	      int Pos2 = TmpStatePosition2[j];
+	      Complex TmpValue = Conj(groundState[TmpStatePosition[j]]) * TmpStateCoefficient[j];
+	      for (int k = 0; k < Pos; ++k)
+		if (TmpStatePosition2[k] >= Pos2)
+		  {
+		    densityMatrix->AddToMatrixElement(Pos2, TmpStatePosition2[k], TmpValue * groundState[TmpStatePosition[k]] * TmpStateCoefficient[k]);
+		    ++TmpNbrNonZeroElements;
+		  }
+	    }
+	}
+    }
+  delete[] TmpStatePosition;
+  delete[] TmpStatePosition2;
+  delete[] TmpStateCoefficient;
+  delete[] TmpDestinationLogFactorials;
+  return TmpNbrNonZeroElements;
+}

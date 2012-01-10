@@ -64,6 +64,7 @@ int main(int argc, char** argv)
 
   int NbrVectors;
   char** VectorFiles = Manager.GetStrings("input-files",NbrVectors);
+
   int VectorDimension=0;
   ComplexVector *Vectors = new ComplexVector[NbrVectors];
   Complex *Phases = new Complex[NbrVectors];
@@ -128,12 +129,12 @@ int main(int argc, char** argv)
 	Space =new HardCoreBosonOnLattice(NbrParticles, Lx, Ly, NbrFluxQuanta, MemorySpace);
       else Space = new BosonOnLattice(NbrParticles, Lx, Ly, NbrFluxQuanta, MemorySpace);
     }
-
-  if (Space->GetHilbertSpaceDimension() != VectorDimension)
-    {
-      cout << "Dimension of vectors does not match the size of the Hilbert-Space!"<<endl;
-      exit(1);	
-    }
+    if(NbrVectors  != 0 )
+			if (Space->GetHilbertSpaceDimension() != VectorDimension)
+			{
+				cout << "Dimension of vectors does not match the size of the Hilbert-Space!"<<endl;
+				exit(1);	
+			}
 
   if (Manager.GetBoolean("first-real"))
     {      

@@ -1068,6 +1068,7 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
 inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyFastMultiplicationComponent(ParticleOnLattice* particles, int index, 
 											  int* indexArray, unsigned short* coefficientIndexArray, int& positionR, int & positionC)
 {
+	//cout <<"Index " << index<<endl;
   int qi, qf;
   int Index2;
   int tmpElementPos;
@@ -1079,7 +1080,8 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyFastMultiplication
       qi = this->KineticQi[j];
       qf = this->KineticQf[j];
       // considering: this->HoppingTerms[j			
-      Index2 = particles->AdA(index, qf, qi, Coefficient);	  
+      Index2 = particles->AdA(index, qf, qi, Coefficient);	
+			//cout << "Element ("<<qi<<"->"<<qf<<"): "<<Coefficient<<endl;
       if (Index2 < Dim)
 	{
 	  //cout << "Element ("<<qi<<"->"<<qf<<"): "<<Coefficient<<endl;
@@ -1098,8 +1100,7 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyFastMultiplication
 	  else
 	    {
 	      indexArray[positionC] = Index2;
-	      tmpElementPos = ComplexInteractionCoefficients.InsertElement
-		(Coefficient*this->HoppingTerms[j]);
+	      tmpElementPos = ComplexInteractionCoefficients.InsertElement(Coefficient*this->HoppingTerms[j]);
 	      if (tmpElementPos > USHRT_MAX )
 		{
 		  cout << "Error: too many different complex matrix elements for fast storage"<<endl;
@@ -1108,7 +1109,7 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyFastMultiplication
 	      coefficientIndexArray[positionC] = (unsigned short) tmpElementPos;
 	      ++positionC;
 	    }
-	  //cout << "Hopping connecting :"<<Index2<<", "<<i<<": "<<Coefficient*this->HoppingTerms[j]<<endl;
+	  //cout << "Hopping connecting : "<<index<<" to "<<Index2<<", "<<": "<<Coefficient*this->HoppingTerms[j]<<endl;
 	}
     }
 }
@@ -1236,8 +1237,7 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
 					      DiagonalInteractionFactors, DiagonalQValues);
       if (this->IsHermitian())
 	Coefficient *= 0.5;
-      if (fabs(Coefficient)>LATTICEHAMILTONIAN_IDENTICAL_ELEMENT_THRESHOLD)
-	{
+
 	  indexArray[positionR] = index;
 	  tmpElementPos = RealInteractionCoefficients.InsertElement(Coefficient);
 	  if (tmpElementPos > USHRT_MAX )
@@ -1248,7 +1248,7 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
 	  coefficientIndexArray[positionR] = (unsigned short) tmpElementPos;
 	  ++positionR;
 	  //cout << "diag - connecting :"<<i<<", "<<i<<": "<<Coefficient<<endl;
-	}	   
+		   
     }
 }
 
@@ -2553,7 +2553,7 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyConjugateAddMultip
 		    {
 		      TmpCoefficient = this->InteractionFactors[ProcessedNbrInteractionFactors].Re * Coefficient * Coefficient2;
 		      for (int l = 0; l < nbrVectors; ++l)
-			tmpCoefficients[l]+= TmpCoefficient * vSources[l][Index];
+			tmpCoefficients[l] += TmpCoefficient * vSources[l][Index];
 		    }
 		  ++ProcessedNbrInteractionFactors;
 		}

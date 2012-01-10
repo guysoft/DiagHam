@@ -461,7 +461,7 @@ void FermionOnSphereThreeLandauLevels::MonomialsTimesSlaterProjection(unsigned l
       PowerOut = (long) State[variable[k]>>1];
       if( (variable[k] & 0x1ul) == 0ul )
 	{
-	  Numerator = (PowerIn-0x1ul)*(0x2ul+finalSpace->LzMax)-(PowerOut-0x1ul)*(this->LzMax-0x2ul);
+	  Numerator = -(PowerIn-0x1ul)*(0x2ul+finalSpace->LzMax)+(PowerOut-0x1ul)*(this->LzMax-0x2ul);
 	  if(Numerator == 0x0l)
 	    Coef = 0.0;
 	  else
@@ -525,7 +525,7 @@ void FermionOnSphereThreeLandauLevels::MonomialsTimesSlaterProjection(unsigned l
 	  PowerOut = (long) State[variable[k]>>1];
 	  if( (variable[k] & 0x1ul) == 0ul)
 	    {
-	      Numerator = (PowerIn-0x1ul)*(0x2ul+finalSpace->LzMax) - (PowerOut-0x1ul)*(this->LzMax-0x2ul);
+	      Numerator = -(PowerIn-0x1ul)*(0x2ul+finalSpace->LzMax) + (PowerOut-0x1ul)*(this->LzMax-0x2ul);
 	      if(Numerator == 0x0l)
 		Coef = 0.0;
 	      else
@@ -659,7 +659,7 @@ void FermionOnSphereThreeLandauLevels::MonomialsTimesSlaterProjection(unsigned l
       PowerOut = (long) State[variable[k]>>1];
       if( (variable[k] & 0x1ul) == 0ul)
 	{
-	  Numerator = (PowerIn-0x1ul)*(0x2ul+finalSpace->LzMax)-(PowerOut-0x1ul)*(this->LzMax-0x2ul);
+	  Numerator = -(PowerIn-0x1ul)*(0x2ul+finalSpace->LzMax)+(PowerOut-0x1ul)*(this->LzMax-0x2ul);
 	  if(Numerator == 0x0l)
 	    Coef = 0l;
 	  else
@@ -728,7 +728,7 @@ void FermionOnSphereThreeLandauLevels::MonomialsTimesSlaterProjection(unsigned l
 	  PowerOut = (long) State[variable[k]>>1];
 	  if((variable[k] & 0x1ul) == 0ul)
 	    {
-	      Numerator = (PowerIn-0x1ul)*(0x2ul+finalSpace->LzMax)-(PowerOut-0x1ul)*(this->LzMax-0x2ul);
+	      Numerator = -(PowerIn-0x1ul)*(0x2ul+finalSpace->LzMax)+(PowerOut-0x1ul)*(this->LzMax-0x2ul);
 	      if(Numerator == 0x0l)
 		Coef = 0l;
 	      else
@@ -874,7 +874,7 @@ void FermionOnSphereThreeLandauLevels::SlaterTimesSlaterProjection(unsigned long
       PowerOut = (long) State[variable[k]>>1];
       if((variable[k] & 0x1ul) == 0ul)
 	{
-	  Numerator = (PowerIn-0x1ul)*(0x2ul+finalSpace->LzMax)-(PowerOut-0x1ul)*(this->LzMax-0x2ul);
+	  Numerator = -(PowerIn-0x1ul)*(0x2ul+finalSpace->LzMax) + (PowerOut-0x1ul)*(this->LzMax-0x2ul);
 	  if(Numerator == 0x0l)
 	    Coef = 0.0;
 	  else
@@ -915,7 +915,7 @@ void FermionOnSphereThreeLandauLevels::SlaterTimesSlaterProjection(unsigned long
 	  PowerOut = (long) State[variable[k]>>1];
 	  if((variable[k] & 0x1ul) == 0ul)
 	    {
-	      Numerator=(PowerIn-0x1ul)*(0x2ul+finalSpace->LzMax)-(PowerOut-0x1ul)*(this->LzMax-0x2ul);
+	      Numerator= -(PowerIn-0x1ul)*(0x2ul+finalSpace->LzMax) + (PowerOut-0x1ul)*(this->LzMax-0x2ul);
 	      if(Numerator == 0x0l)
 		Coef = 0.0;
 	      else
@@ -1049,7 +1049,7 @@ void FermionOnSphereThreeLandauLevels::SlaterTimesSlaterProjection(unsigned long
       PowerOut = (long) State[variable[k]>>1];
       if((variable[k] & 0x1ul) == 0ul)
 	{
-	  Numerator = (PowerIn-0x1l)*(0x2l+finalSpace->LzMax)-(PowerOut-0x1l)*(this->LzMax-0x2l);
+	  Numerator = -(PowerIn-0x1l)*(0x2l+finalSpace->LzMax)+(PowerOut-0x1l)*(this->LzMax-0x2l);
 	  if(Numerator == 0x0l)
 	    Coef = 0l;
 	  else
@@ -1096,7 +1096,7 @@ void FermionOnSphereThreeLandauLevels::SlaterTimesSlaterProjection(unsigned long
 	  PowerOut = (long) State[variable[k]>>1];
 	  if((variable[k] & 0x1ul) == 0ul)
 	    {
-	      Numerator = (PowerIn-0x1l)*(0x2l+finalSpace->LzMax)-(PowerOut-0x1l)*(this->LzMax-0x2l);
+	      Numerator = -(PowerIn-0x1l)*(0x2l+finalSpace->LzMax)+(PowerOut-0x1l)*(this->LzMax-0x2l);
 	      if(Numerator == 0x0l)
 		Coef = 0l;
 	      else

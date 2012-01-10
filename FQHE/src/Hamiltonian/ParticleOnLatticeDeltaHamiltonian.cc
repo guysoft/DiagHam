@@ -202,9 +202,9 @@ void ParticleOnLatticeDeltaHamiltonian::EvaluateInteractionFactors()
 	      KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i+1, j, 0, TranslationPhase);
 	      HoppingTerms[TmpNumberTerms] = HoppingSign*TranslationPhase;
 #ifdef DEBUG_OUTPUT
-	      if (TranslationPhase!=1.0)
-		cout << "(i="<<i<<"->"<<i+1<<") Translation ["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="
-		     <<TranslationPhase<<endl;
+				if (TranslationPhase!=1.0)
+					cout << "(i="<<i<<"->"<<i+1<<") Translation ["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="
+					<<TranslationPhase<<endl;
 	      cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
 #endif
 	      ++TmpNumberTerms;

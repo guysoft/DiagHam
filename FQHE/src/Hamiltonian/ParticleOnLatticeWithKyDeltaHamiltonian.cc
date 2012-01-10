@@ -209,6 +209,7 @@ void ParticleOnLatticeWithKyDeltaHamiltonian::EvaluateInteractionFactors()
   for (int i=0; i<Lx; ++i) 
     {
       Complex Phase=Polar(1.0,2.0*M_PI*this->FluxDensity*(double)i);
+			cout <<"Phase = "<<Phase<<endl;
       for (int k=0; k<KyMax; ++k)
 	for (int s=0; s<p; ++s)
 	  {
@@ -218,9 +219,10 @@ void ParticleOnLatticeWithKyDeltaHamiltonian::EvaluateInteractionFactors()
 	    HoppingTerms[this->NbrHoppingTerms] = HoppingSign*TranslationPhase;	    
 
 #ifdef DEBUG_OUTPUT
+			cout << "k="<<k<<", "<<"s="<<s<<" x_0="<<i<<endl;
 	    if (TranslationPhase!=1.0)
 	      cout << "(i="<<i<<"->"<<i+1<<") Translation ["<<KineticQi[this->NbrHoppingTerms]<<"->"<<KineticQf[this->NbrHoppingTerms]<<"]="<<TranslationPhase<<endl;
-	    cout << "k="<<k<<", "<<"s="<<s<<" x_0="<<i<<endl;
+	    
 	    cout << "x: H["<<KineticQi[this->NbrHoppingTerms]<<"->"<<KineticQf[this->NbrHoppingTerms]<<"]="<<HoppingTerms[this->NbrHoppingTerms]<<" tP="<<TranslationPhase<<endl;
 #endif
 	    ++this->NbrHoppingTerms;
@@ -242,7 +244,7 @@ void ParticleOnLatticeWithKyDeltaHamiltonian::EvaluateInteractionFactors()
 	      {
 		KineticQi[this->NbrHoppingTerms] = Particles->EncodeQuantumNumber(i, k, 0, TranslationPhase);
 		KineticQf[this->NbrHoppingTerms] = KineticQi[this->NbrHoppingTerms];
-		HoppingTerms[this->NbrHoppingTerms] = HoppingSign*2.0*cos(2.0*M_PI*((double)k/Ly-this->FluxDensity*(double)i));
+		HoppingTerms[this->NbrHoppingTerms] = HoppingSign*2.0*cos(2.0*M_PI*((double)k/Ly -this->FluxDensity*(double)i));
 #ifdef DEBUG_OUTPUT
 		cout << "y - p=1: H["<<KineticQi[this->NbrHoppingTerms]<<"->"<<KineticQf[this->NbrHoppingTerms]<<"]="<<HoppingTerms[this->NbrHoppingTerms]<<endl;
 #endif
@@ -262,14 +264,17 @@ void ParticleOnLatticeWithKyDeltaHamiltonian::EvaluateInteractionFactors()
 		    KineticQi[this->NbrHoppingTerms] = Particles->EncodeQuantumNumber(i, compositeKy, 0, TranslationPhase);
 		    compositeKy2 = k*p;
 		    KineticQf[this->NbrHoppingTerms] = Particles->EncodeQuantumNumber(i, compositeKy2, 0, TranslationPhase);
-		    HoppingTerms[this->NbrHoppingTerms] = HoppingSign*Phase*TranslationPhase
-		      *Polar(1.0,-2.0*M_PI*((double)k/KyMax-this->FluxDensity*(double)i));
+		    //HoppingTerms[this->NbrHoppingTerms] = HoppingSign*Phase*TranslationPhase
+				//*Polar(1.0,-2.0*M_PI*((double)k/KyMax-this->FluxDensity*(double)i));
+				HoppingTerms[this->NbrHoppingTerms] = HoppingSign*Conj(Phase)*TranslationPhase*Polar(1.0,-2.0*M_PI*((double)k/KyMax));
 		  }		
 #ifdef DEBUG_OUTPUT
 		if (TranslationPhase!=1.0)
-		  cout << "(sk)="<<compositeKy<<"->"<<compositeKy2<<") Translation ["<<KineticQi[this->NbrHoppingTerms]<<"->"<<KineticQf[this->NbrHoppingTerms]<<"]="
-				 <<TranslationPhase<<endl;
+			cout << "(sk)="<<compositeKy<<"->"<<compositeKy2<<") Translation ["<<KineticQi[this->NbrHoppingTerms]<<"->"<<KineticQf[this->NbrHoppingTerms]<<"]="<<TranslationPhase<<endl;
+		
 		cout << "y - p>1: H["<<KineticQi[this->NbrHoppingTerms]<<"->"<<KineticQf[this->NbrHoppingTerms]<<"]="<<HoppingTerms[this->NbrHoppingTerms]<<" tP="<<TranslationPhase<<endl;
+		if(s == p -1)
+			cout <<"Supplementary Phase = "<<Polar(1.0,-2.0*M_PI*((double)k/KyMax-this->FluxDensity*(double)i))<<endl;
 #endif
 		++this->NbrHoppingTerms;
 		if (s==0)
@@ -277,8 +282,9 @@ void ParticleOnLatticeWithKyDeltaHamiltonian::EvaluateInteractionFactors()
 		    KineticQi[this->NbrHoppingTerms] = Particles->EncodeQuantumNumber(i, compositeKy, 0, TranslationPhase);
 		    compositeKy2 = k*p+p-1;
 		    KineticQf[this->NbrHoppingTerms] = Particles->EncodeQuantumNumber(i, compositeKy2, 0, TranslationPhase);
-		    HoppingTerms[this->NbrHoppingTerms] = HoppingSign*Conj(Phase)*TranslationPhase
-		      *Polar(1.0,2.0*M_PI*((double)k/KyMax-this->FluxDensity*(double)i));
+		    //HoppingTerms[this->NbrHoppingTerms] = HoppingSign*Conj(Phase)*TranslationPhase
+		      //*Polar(1.0,2.0*M_PI*((double)k/KyMax-this->FluxDensity*(double)i));
+				HoppingTerms[this->NbrHoppingTerms] = HoppingSign*Phase*TranslationPhase*Polar(1.0,2.0*M_PI*((double)k/KyMax));
 		  }
 		else
 		  {
@@ -292,6 +298,8 @@ void ParticleOnLatticeWithKyDeltaHamiltonian::EvaluateInteractionFactors()
 		  cout << "(sk)="<<compositeKy<<"->"<<compositeKy2<<") Translation ["<<KineticQi[this->NbrHoppingTerms]<<"->"<<KineticQf[this->NbrHoppingTerms]<<"]="
 				 <<TranslationPhase<<endl;
 		cout << "y - p>1: H["<<KineticQi[this->NbrHoppingTerms]<<"->"<<KineticQf[this->NbrHoppingTerms]<<"]="<<HoppingTerms[this->NbrHoppingTerms]<<" tP="<<TranslationPhase<<endl;
+		if (s==0)
+			cout <<"Supplementary Phase = "<<Polar(1.0,2.0*M_PI*((double)k/KyMax-this->FluxDensity*(double)i))<<endl;
 #endif
 		++this->NbrHoppingTerms;
 	      }

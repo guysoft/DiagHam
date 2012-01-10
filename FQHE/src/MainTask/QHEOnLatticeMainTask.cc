@@ -264,6 +264,33 @@ QHEOnLatticeMainTask::QHEOnLatticeMainTask(OptionManager* options, AbstractHilbe
       this->Hamiltonian->GetHamiltonian(HRep);
       cout << HRep << endl;
     }  
+      if (((*options)["test-hermitian"] != 0) && (options->GetBoolean("test-hermitian") == true))
+    {
+      ComplexMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension(), this->Hamiltonian->GetHilbertSpaceDimension());
+      this->Hamiltonian->GetHamiltonian(HRep);
+      Complex Tmp1;
+      Complex Tmp2;
+      cout << "check hermiticity" << endl;
+      double AverageNorm = 0.0;
+      for (int i = 0; i < this->Hamiltonian->GetHilbertSpaceDimension(); ++i)
+	for (int j = i; j < this->Hamiltonian->GetHilbertSpaceDimension(); ++j)
+	  {
+	    HRep.GetMatrixElement(i, j, Tmp1);
+	    AverageNorm += Norm(Tmp1);
+	  }
+      AverageNorm /= 0.5 * ((double) this->Hamiltonian->GetHilbertSpaceDimension()) * ((double) (this->Hamiltonian->GetHilbertSpaceDimension() + 1));
+      for (int i = 0; i < this->Hamiltonian->GetHilbertSpaceDimension(); ++i)
+	for (int j = i; j < this->Hamiltonian->GetHilbertSpaceDimension(); ++j)
+	  {
+	    HRep.GetMatrixElement(i, j, Tmp1);
+	    HRep.GetMatrixElement(j, i, Tmp2);
+	    if (Norm(Tmp1 - Conj(Tmp2)) > (MACHINE_PRECISION * AverageNorm))
+	      {
+		cout << "error at " << i << " " << j << " : " << Tmp1 << " " << Tmp2 << endl;
+	      }
+	  }
+      cout << "check done" << endl;
+    }
   if (((*options)["lanczos-precision"] != 0) && (((SingleDoubleOption*) (*options)["lanczos-precision"])->GetDouble() > 0.0))
     {
       this->LanczosPrecision = ((SingleDoubleOption*) (*options)["lanczos-precision"])->GetDouble();
@@ -1055,6 +1082,9 @@ void QHEOnLatticeMainTask::DiagonalizeInHilbertSubspace(char* subspaceDescriptio
 void QHEOnLatticeMainTask::AddOptionGroup(OptionManager *optionManager)
 {
   OptionGroup* LanczosGroup;
+	OptionGroup* TestGroup = new OptionGroup ("Test options");
+	(*optionManager) += TestGroup;
+	(*TestGroup) += new BooleanOption  ('\n', "test-hermitian", "test-hermitian", false);
   if (optionManager->GetOptionGroup("Lanczos options")==0)
     {
       LanczosGroup  = new OptionGroup ("Lanczos options");
