@@ -255,7 +255,7 @@ int main(int argc, char** argv)
 		  gettimeofday (&(TotalStartingTime), 0);
 		}
 	      HermitianMatrix PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKy, GroundStates[0], Architecture.GetArchitecture());
-				cout << "Subsystem Hilbert space dimension = " <<Spaces[0]->GetLargeHilbertSpaceDimension()<<endl;
+				cout << "Subsystem Hilbert space dimension = " << PartialDensityMatrix.GetNbrRow()<<endl;
 	      PartialDensityMatrix *= Coefficients[0];
 	      for (int i = 1; i < NbrSpaces; ++i)
 		{
