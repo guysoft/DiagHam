@@ -243,7 +243,7 @@ bool HamiltonianFullDiagonalizeOperation::RawApplyOperation()
 
 bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(SimpleMPIArchitecture* architecture)
 {
-#ifdef __MPI__
+#ifdef __SCALAPACK__
   if (architecture->IsMasterNode())
     {
       if (architecture->RequestOperation(this->OperationType) == false)
