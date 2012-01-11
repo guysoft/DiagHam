@@ -90,8 +90,6 @@ if test X${USE_PKG_LAPACK_ONLY} = Xyes; then
   AC_DEFINE(HAVE_LAPACK_ONLY,,[define if we are using LAPACK only])
 fi
 
-
-
 #
 # Finding GSL libraries
 #
@@ -163,56 +161,6 @@ fi
 AC_SUBST(GSL_INCLUDES)
 AC_SUBST(GSL_LIBS)
 
-#dnl test if using ARPACK
-#AC_ARG_ENABLE(arpack, [AC_HELP_STRING([--enable-arpack],[enable ARPACK support])], [HAVE_PKG_ARPACK=$enableval],[HAVE_PKG_ARPACK=no])
-#
-#AC_ARG_WITH(arpack-libs,[AC_HELP_STRING([--with-arpack-libs="LIBS"],[ARPACK libraries @<:@"-larpack"@:>@])],
-#[if test "x$withval" = "x"; then
-#  USER_DEFINED_ARPACK=no
-#else
-#  ARPACK_LIBS=${withval}
-#  AC_MSG_CHECKING(user-defined ARPACK libraries)
-#  AC_MSG_RESULT([${ARPACK_LIBS}])
-#  USER_DEFINED_ARPACK=yes
-#fi
-#]
-#)
-# 
-#
-#ARPACKPP_ROOT="$HOME/ARPACK/arpack++"
-#USER_DEFINED_ARPACKPP_INCLUDE=no
-#AC_ARG_WITH(arpackpp-dir,[AC_HELP_STRING([--with-arpackpp-dir=DIR],[ARPACK++ root directory @<:@"$HOME/ARPACK/arpack++"@:>@])],
-#[ARPACKPP_ROOT=${withval}
-#AC_MSG_CHECKING(user-defined ARPACK++ directory)
-#AC_MSG_RESULT([${ARPACKPP_ROOT}])
-#USER_DEFINED_ARPACKPP_INCLUDE=yes
-#]
-#)
-#
-#ARPACKPP_INCLUDE="${ARPACKPP_ROOT}/include"
-#
-#USER_DEFINED_ARPACK_DIR=no
-#AC_ARG_WITH(arpack-libdir,
-#[AC_HELP_STRING([--with-arpack-libdir=DIR],[ARPACK library directory @<:@$HOME/ARPACK@:>@])],
-#[
-#ARPACK_LIBDIR=${withval}
-#USER_DEFINED_ARPACK_DIR=yes
-#AC_MSG_CHECKING(user-defined ARPACK library directory)
-#AC_MSG_RESULT([${ARPACK_LIBDIR}])
-#]
-#)
-#
-#AC_MSG_CHECKING(whether we are using ARPACK)
-#AC_MSG_RESULT([${HAVE_PKG_ARPACK}])
-#
-#if test X${HAVE_PKG_ARPACK} = Xyes; then
-#  AC_DEFINE(HAVE_ARPACK,,[define if we are using ARPACK])
-#  AC_LANG_PUSH(Fortran 77)
-#  if test X${USER_DEFINED_ARPACK_DIR} = Xno; then
-#     AC_CHECK_LIB(arpack, dseigt, [HAVE_PKG_ARPACK=$enableval, ARPACK_LIBS=-larpack], AC_MSG_ERROR(ARPACK lib not found))
-#  fi
-#  AC_LANG_POP(Fortran 77)
-#fi
 
 dnl Cheks for bz2 library
 
@@ -314,6 +262,75 @@ if test -n "${MPI_CXX}"; then
   fi
 
 fi
+
+dnl parse scalapack option
+
+#AC_ARG_ENABLE(scalapack, [AC_HELP_STRING([--enable-scalapack],[enable SCALAPACK support])], [HAVE_PKG_SCALAPACK=$enableval],[HAVE_PKG_SCALAPACK=no])
+#
+#USER_DEFINED_SCALAPACK=no
+#AC_ARG_WITH(scalapack-libs,[AC_HELP_STRING([--with-scalapack-libs="LIBS"],[SCALAPACK libraries @<:@"-lscalapack "@:>@])],
+#[SCALAPACK_LIBS=${withval}
+#AC_MSG_CHECKING(user-defined SCALAPACK libraries)
+#AC_MSG_RESULT([${SCALAPACK_LIBS}])
+#USER_DEFINED_SCALAPACK=yes
+#]
+#)
+#
+#AC_MSG_CHECKING(whether we are using SCALAPACK)
+#AC_MSG_RESULT([${HAVE_PKG_SCALAPACK}])
+#
+#if test X${HAVE_PKG_SCALAPACK} = Xyes; then
+# AC_DEFINE(HAVE_SCALAPACK,,[define if we are using SCALAPACK])
+# AC_CHECK_LIB(scalapack, pdsytrd, [HAVE_PKG_SCALAPACK=$enableval; SCALAPACK_LIBS="-lscalapack"], AC_MSG_ERROR(SCALAPACK lib not found))
+#fi
+
+
+AC_ARG_ENABLE(scalapack, [AC_HELP_STRING([--enable-scalapack],[enable SCALAPACK support])], [HAVE_PKG_SCALAPACK=$enableval],[HAVE_PKG_SCALAPACK=no])
+
+USER_DEFINED_SCALAPACK=no
+AC_ARG_WITH(scalapack-libs,[AC_HELP_STRING([--with-scalapack-libs="LIBS"],[SCALAPACK libraries @<:@"-lscalapack -lg2c"@:>@])],
+[SCALAPACK_LIBS=${withval}
+AC_MSG_CHECKING(user-defined SCALAPACK libraries)
+AC_MSG_RESULT([${SCALAPACK_LIBS}])
+USER_DEFINED_SCALAPACK=yes
+]
+)
+
+AC_ARG_WITH(scalapack-libdir,
+[AC_HELP_STRING([--with-scalapack-libdir=DIR],[SCALAPACK library directory @<:@SCALAPACKROOT/lib@:>@])],
+[
+SCALAPACK_LIBDIR=-L${withval}
+AC_MSG_CHECKING(user-defined SCALAPACK library directory)
+AC_MSG_RESULT([${SCALAPACK_LIBDIR}])
+]
+)
+
+AC_MSG_CHECKING(whether we are using SCALAPACK)
+AC_MSG_RESULT([${HAVE_PKG_SCALAPACK}])
+
+if test X${HAVE_PKG_MPI} = Xno; then
+  AC_MSG_ERROR([SCALAPACK requires MPI.])
+fi
+if test X${HAVE_PKG_LAPACK} = Xno; then
+  AC_MSG_ERROR([SCALAPACK requires LAPACK.])
+fi
+if test X${HAVE_PKG_SCALAPACK} = Xyes; then
+ AC_DEFINE(HAVE_SCALAPACK,,[define if we are using SCALAPACK])
+ AC_LANG_PUSH([Fortran])
+ if test X${USER_DEFINED_SCALAPACK} = Xno; then
+    AC_CHECK_LIB(scalapack, pdsytrd, [HAVE_PKG_SCALAPACK=$enableval; SCALAPACK_LIBS="-lscalapack"], AC_MSG_ERROR(SCALAPACK lib not found), ${SCALAPACK_LIBDIR} -lmpi -lblas -llapack)
+ fi
+ AC_LANG_POP([Fortran])
+ if test X${USER_DEFINED_LAPACK} = Xno; then
+	AC_CHECK_LIB(f2c, main,FORTRAN2C_LIBS="-lf2c",
+	AC_CHECK_LIB(g2c, main,FORTRAN2C_LIBS="-lg2c",
+	AC_CHECK_LIB(gfortran, main,FORTRAN2C_LIBS="-lgfortran",AC_MSG_ERROR(can't link fortran to c++: no f2c, g2c or gfortran lib found))))
+  fi
+fi
+
+AM_CONDITIONAL(BUILD_SCALAPACK, test X${HAVE_PKG_SCALAPACK} = Xyes)
+
+
 
 dnl check byte ordering
 
@@ -462,6 +479,8 @@ AC_SUBST(MATH_LIBS)
 AC_SUBST(THREAD_LIBS)
 AC_SUBST(BLAS_LIBS)
 AC_SUBST(LAPACK_LIBS)
+AC_SUBST(SCALAPACK_LIBS)
+AC_SUBST(SCALAPACK_LIBDIR)
 #AC_SUBST(ARPACK_LIBS)
 AC_SUBST(FORTRAN2C_LIBS)
 AC_SUBST(BZ2_LIBS)

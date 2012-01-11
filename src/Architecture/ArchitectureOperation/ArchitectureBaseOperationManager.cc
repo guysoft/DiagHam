@@ -32,6 +32,7 @@
 #include "Architecture/ArchitectureOperation/ArchitectureBaseOperationManager.h"
 #include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
 #include "Architecture/ArchitectureOperation/MultipleVectorHamiltonianMultiplyOperation.h"
+#include "Architecture/ArchitectureOperation/HamiltonianFullDiagonalizeOperation.h"
 
 
 // constructor
@@ -71,6 +72,11 @@ bool ArchitectureBaseOperationManager::IsHandled(int operationID)
 	return true;
       else
 	return false;
+    case AbstractArchitectureOperation::HamiltonianFullDiagonalize:
+      if (this->Hamiltonian != 0)
+	return true;
+      else
+	return false;
     default:
       return false; 
     }
@@ -96,6 +102,11 @@ AbstractArchitectureOperation* ArchitectureBaseOperationManager::GetOperation(in
     case AbstractArchitectureOperation::MultipleVectorHamiltonianMultiply:
       if (this->Hamiltonian != 0)
 	return new MultipleVectorHamiltonianMultiplyOperation(this->Hamiltonian, this->Architecture);
+      else
+	return 0;
+    case AbstractArchitectureOperation::HamiltonianFullDiagonalize:
+      if (this->Hamiltonian != 0)
+	return new HamiltonianFullDiagonalizeOperation(this->Hamiltonian, this->Architecture);
       else
 	return 0;
     default:

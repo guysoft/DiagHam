@@ -35,6 +35,7 @@
 
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
+#include "Architecture/ArchitectureOperation/HamiltonianFullDiagonalizeOperation.h"
 
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/HermitianMatrix.h"
@@ -169,6 +170,14 @@ GenericComplexMainTask::GenericComplexMainTask(OptionManager* options, AbstractH
   else
     {
       this->LapackFlag = false;
+    }
+  if ((*options)["use-scalapack"] != 0)
+    {
+      this->ScalapackFlag = options->GetBoolean("use-scalapack");
+    }
+  else
+    {
+      this->ScalapackFlag = false;
     }
   if ((*options)["limit-time"] != 0)
     {
@@ -312,29 +321,85 @@ int GenericComplexMainTask::ExecuteMainTask()
     {
       this->Hamiltonian->SavePrecalculation(this->SavePrecalculationFileName);
     }
-  if (this->Hamiltonian->GetHilbertSpaceDimension()==0) return 0;
+  if (this->Hamiltonian->GetHilbertSpaceDimension() == 0)
+    return 0;
   if (this->Hamiltonian->GetHilbertSpaceDimension() < this->FullDiagonalizationLimit)
     {
-      HermitianMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension(), true);
-      this->Hamiltonian->GetHamiltonian(HRep);
-      if (this->Hamiltonian->GetHilbertSpaceDimension() > 1)
+#ifdef __SCALAPACK__      
+      if (this->ScalapackFlag == true)
 	{
-#ifdef __LAPACK__
-	  if (this->LapackFlag == true)
+	  if ((this->Architecture->GetArchitectureID() & AbstractArchitecture::WithCommunicator) == 0)
 	    {
-	      RealDiagonalMatrix TmpDiag (this->Hamiltonian->GetHilbertSpaceDimension());
-	      if (this->EvaluateEigenvectors == false)
+	      cout << "error : SCALAPACK requires a MPI enable architecture" << endl;
+	      return 1;
+	    }	  
+	  HamiltonianFullDiagonalizeOperation Operation1 (this->Hamiltonian, true, true);
+	  Operation1.ApplyOperation(this->Architecture);
+	}
+      else
+	{
+#endif
+	  HermitianMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension(), true);
+	  this->Hamiltonian->GetHamiltonian(HRep);
+	  if (this->Hamiltonian->GetHilbertSpaceDimension() > 1)
+	    {
+#ifdef __LAPACK__
+	      if (this->LapackFlag == true)
 		{
-		  HRep.LapackDiagonalize(TmpDiag);
-		  for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
-		    this->WriteResult(File, TmpDiag[j] - this->EnergyShift);
+		  RealDiagonalMatrix TmpDiag (this->Hamiltonian->GetHilbertSpaceDimension());
+		  if (this->EvaluateEigenvectors == false)
+		    {
+		      HRep.LapackDiagonalize(TmpDiag);
+		      for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
+			this->WriteResult(File, TmpDiag[j] - this->EnergyShift);
+		    }
+		  else
+		    {
+		      ComplexMatrix Q(this->Hamiltonian->GetHilbertSpaceDimension(), this->Hamiltonian->GetHilbertSpaceDimension());
+		      HRep.LapackDiagonalize(TmpDiag, Q);
+		      if (this->EvaluateEigenvectors == true)
+			{
+			  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
+			  ComplexVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
+			  for (int j = 0; j < this->NbrEigenvalue; ++j)
+			    {
+			      this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
+			      sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, j);
+			      Q[j].WriteVector(TmpVectorName);
+			      cout << ((TmpEigenvector * Q[j]) - this->EnergyShift) << " " << endl;		  
+			    }
+			  cout << endl;			  
+			  delete[] TmpVectorName;
+			}
+		      
+		      for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
+			{
+			  this->WriteResult(File,TmpDiag[j] - this->EnergyShift, false);
+			  if (this->ComputeEnergyFlag == true)
+			    {
+			      ComplexVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
+			      this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
+			      File << " " << ((TmpEigenvector * Q[j]) - this->EnergyShift);
+			    }
+			  File << endl;
+			}
+		    }
 		}
 	      else
 		{
-		  ComplexMatrix Q(this->Hamiltonian->GetHilbertSpaceDimension(), this->Hamiltonian->GetHilbertSpaceDimension());
-		  HRep.LapackDiagonalize(TmpDiag, Q);
-		  if (this->EvaluateEigenvectors == true)
+#endif
+		  RealDiagonalMatrix EVs(this->Hamiltonian->GetHilbertSpaceDimension());
+		  if (this->EvaluateEigenvectors == false)
+		    {		  
+		      HRep.Diagonalize(EVs, /* error */ 1e-10 , /* maxIter */ 250);  
+		      for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
+			this->WriteResult(File, EVs[j] - this->EnergyShift);
+		    }
+		  else
 		    {
+		      ComplexMatrix Q(this->Hamiltonian->GetHilbertSpaceDimension(), this->Hamiltonian->GetHilbertSpaceDimension());
+		      HRep.Diagonalize(EVs, Q, /* error */ 1e-10 , /* maxIter */ 250);
+		      
 		      char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
 		      ComplexVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
 		      for (int j = 0; j < this->NbrEigenvalue; ++j)
@@ -342,84 +407,46 @@ int GenericComplexMainTask::ExecuteMainTask()
 			  this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
 			  sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, j);
 			  Q[j].WriteVector(TmpVectorName);
-			  cout << ((TmpEigenvector * Q[j]) - this->EnergyShift) << " " << endl;		  
+			  cout << ((Q[j]*TmpEigenvector) - this->EnergyShift) << " " << endl;
 			}
-		      cout << endl;			  
+		      cout << endl;
 		      delete[] TmpVectorName;
-		    }
-		  
-		  for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
-		    {
-		      this->WriteResult(File,TmpDiag[j] - this->EnergyShift, false);
-		      if (this->ComputeEnergyFlag == true)
+		      
+		      for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
 			{
-			  ComplexVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
-			  this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
-			  File << " " << ((TmpEigenvector * Q[j]) - this->EnergyShift);
-			}
-		      File << endl;
+			  this->WriteResult(File, EVs[j] - this->EnergyShift, false);
+			  if (this->ComputeEnergyFlag == true)
+			    {
+			      ComplexVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
+			      this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
+			      File << " " << ((Q[j]*TmpEigenvector) - this->EnergyShift);
+			    }
+			  File << endl;
+			}		  
 		    }
+#ifdef __LAPACK__
 		}
+#endif
 	    }
 	  else
 	    {
-#endif
-	      RealDiagonalMatrix EVs(this->Hamiltonian->GetHilbertSpaceDimension());
-	      if (this->EvaluateEigenvectors == false)
-		{		  
-		  HRep.Diagonalize(EVs, /* error */ 1e-10 , /* maxIter */ 250);  
-		  for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
-		    this->WriteResult(File, EVs[j] - this->EnergyShift);
-		}
-	      else
+	      this->WriteResult(File, HRep(0, 0)  - this->EnergyShift, false);
+	      if (this->ComputeEnergyFlag == true)
+		File << " " << (HRep(0, 0)  - this->EnergyShift) ;
+	      File << endl;	      
+	      if (this->EvaluateEigenvectors)
 		{
-		  ComplexMatrix Q(this->Hamiltonian->GetHilbertSpaceDimension(), this->Hamiltonian->GetHilbertSpaceDimension());
-		  HRep.Diagonalize(EVs, Q, /* error */ 1e-10 , /* maxIter */ 250);
-		  
 		  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
-		  ComplexVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
-		  for (int j = 0; j < this->NbrEigenvalue; ++j)
-		    {
-		      this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
-		      sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, j);
-		      Q[j].WriteVector(TmpVectorName);
-		      cout << ((Q[j]*TmpEigenvector) - this->EnergyShift) << " " << endl;
-		    }
-		  cout << endl;
-		  delete[] TmpVectorName;
-
-		  for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
-		    {
-		      this->WriteResult(File, EVs[j] - this->EnergyShift, false);
-		      if (this->ComputeEnergyFlag == true)
-			{
-			  ComplexVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
-			  this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
-			  File << " " << ((Q[j]*TmpEigenvector) - this->EnergyShift);
-			}
-		      File << endl;
-		    }		  
+		  ComplexVector TmpEigenvector(1);
+		  TmpEigenvector[0]=1.0;
+		  sprintf (TmpVectorName, "%s.0.vec", this->EigenvectorFileName);
+		  TmpEigenvector.WriteVector(TmpVectorName);
+		  delete [] TmpVectorName;
 		}
-#ifdef __LAPACK__
 	    }
+#ifdef __SCALAPACK__      
+	}
 #endif
-	}
-      else
-	{
-	  this->WriteResult(File, HRep(0, 0)  - this->EnergyShift, false);
-	  if (this->ComputeEnergyFlag == true)
-	    File << " " << (HRep(0, 0)  - this->EnergyShift) ;
-	  File << endl;	      
-	  if (this->EvaluateEigenvectors)
-	    {
-	      char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
-	      ComplexVector TmpEigenvector(1);
-	      TmpEigenvector[0]=1.0;
-	      sprintf (TmpVectorName, "%s.0.vec", this->EigenvectorFileName);
-	      TmpEigenvector.WriteVector(TmpVectorName);
-	      delete [] TmpVectorName;
-	    }
-	}
     }
   else
     {

@@ -115,6 +115,8 @@ class GenericRealMainTask: public AbstractMainTask
   bool PartialLanczos;
   // use LAPACK libraries instead of DiagHam libraries
   bool LapackFlag;
+  // use SCALAPACK libraries instead of DiagHam and/or Lapack libraries
+  bool ScalapackFlag;
   // name of the file that contains the vector files used to describe the Hilbert subspace
   char* ReducedHilbertSpaceDescription;  
   // define Lanczos precision for eigenvalues (0 if automatically defined by the program)

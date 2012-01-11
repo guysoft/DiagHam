@@ -81,6 +81,10 @@ typedef struct { doublereal r, i; } doublecomplex;
 #define __LAPACKONLY__
 #endif
 
+// SCALAPACK flag
+#ifdef HAVE_SCALAPACK
+#define __SCALAPACK__
+#endif
 
 // bz2 flag
 #ifdef HAVE_BZ2

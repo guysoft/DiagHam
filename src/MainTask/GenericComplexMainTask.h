@@ -115,6 +115,8 @@ class GenericComplexMainTask: public AbstractMainTask
   bool PartialLanczos;
   // use LAPACK libraries instead of DiagHam libraries
   bool LapackFlag;
+  // use SCALAPACK libraries instead of DiagHam and/or Lapack libraries
+  bool ScalapackFlag;
   // name of the file that contains the vector files used to describe the Hilbert subspace
   char* ReducedHilbertSpaceDescription;  
   // define Lanczos precision for eigenvalues (0 if automatically defined by the program)
@@ -141,8 +143,8 @@ class GenericComplexMainTask: public AbstractMainTask
   // firstRun = flag that indicates if it the first time the main task is used
   // eigenvectorFileName = prefix to add to the name of each file that will contain an eigenvector
   GenericComplexMainTask(OptionManager* options, AbstractHilbertSpace* space, LanczosManager* lanczos, 
-		      AbstractHamiltonian* hamiltonian, char *subspaceStr, char *subspaceLegend,
-		      double shift, char* outputFileName, bool firstRun=true, char* eigenvectorFileName=0);
+			 AbstractHamiltonian* hamiltonian, char *subspaceStr, char *subspaceLegend,
+			 double shift, char* outputFileName, bool firstRun=true, char* eigenvectorFileName=0);
   
   // destructor
   //  

@@ -58,6 +58,7 @@ class AbstractArchitectureOperation
       AddComplexLinearCombination = 0x10,
       MultipleComplexScalarProduct = 0x20,
       MultipleVectorHamiltonianMultiply = 0x40,
+      HamiltonianFullDiagonalize = 0x41,
       Generic = 0x100,
       HamiltonianPrecalculation = 0x200,
       QHEOperation = 0x10000,

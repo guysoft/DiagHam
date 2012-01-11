@@ -16,4 +16,5 @@ AbstractScalarSumOperation.cc \
 MainTaskOperation.cc \
 AbstractArchitectureOperationManager.cc \
 ArchitectureBaseOperationManager.cc \
-OperatorMatrixElementOperation.cc
+OperatorMatrixElementOperation.cc \
+HamiltonianFullDiagonalizeOperation.cc 
