@@ -346,6 +346,8 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
       
       Information = 0; 
       const char* JobZ = "N";
+      if (this->EigenstateFlag == true)
+	JobZ = "V";
       const char* Range = "A";
       const char* UpperLower = "U";
       int LocalStartingRowIndex = 1;
@@ -359,7 +361,9 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
       int NbrFoundEigenstates = 0;
       double* Eigenvalues = new double [TmpGlobalNbrRow];
       double OrthogonalizationFactor = -1.0;
-      doublecomplex* Eigenstates = new doublecomplex [LocalLeadingDimension * LocalLeadingDimension];
+      doublecomplex* Eigenstates = 0;
+      if (this->EigenstateFlag == true)
+	Eigenstates = new doublecomplex [LocalLeadingDimension * LocalLeadingDimension];
       int LocalRowEigenstateIndex = 1;
       int LocalColumnEigenstateIndex = 1;
       int* IFail = new int[TmpGlobalNbrRow];
@@ -486,7 +490,10 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
 	}
 
       Information = 0; 
-      const char* JobZ = "V";
+      const char* JobZ = "N";
+      if (this->EigenstateFlag == true)
+	JobZ = "V";
+
       const char* Range = "A";
       const char* UpperLower = "U";
       int LocalStartingRowIndex = 1;
@@ -500,7 +507,9 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
       int NbrFoundEigenstates = 0;
       double* Eigenvalues = new double [TmpGlobalNbrRow];
       double OrthogonalizationFactor = -1.0;
-      double* Eigenstates = new double [LocalLeadingDimension * LocalLeadingDimension];
+      double* Eigenstates = 0;
+      if (this->EigenstateFlag == true)
+	Eigenstates = new double [LocalLeadingDimension * LocalLeadingDimension];
       int LocalRowEigenstateIndex = 1;
       int LocalColumnEigenstateIndex = 1;
       int* IFail = new int[TmpGlobalNbrRow];

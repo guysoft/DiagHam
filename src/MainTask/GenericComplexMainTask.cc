@@ -333,7 +333,7 @@ int GenericComplexMainTask::ExecuteMainTask()
 	      cout << "error : SCALAPACK requires a MPI enable architecture" << endl;
 	      return 1;
 	    }	  
-	  HamiltonianFullDiagonalizeOperation Operation1 (this->Hamiltonian, true, true);
+	  HamiltonianFullDiagonalizeOperation Operation1 (this->Hamiltonian, true, this->EvaluateEigenvectors);
 	  Operation1.ApplyOperation(this->Architecture);
 	}
       else
