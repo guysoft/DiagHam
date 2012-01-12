@@ -34,6 +34,9 @@
 
 #include "config.h"
 #include "Architecture/ArchitectureOperation/AbstractArchitectureOperation.h"
+#include "Matrix/RealDiagonalMatrix.h"
+#include "Matrix/RealMatrix.h"
+#include "Matrix/ComplexMatrix.h"
 
 
 class AbstractHamiltonian;
@@ -58,8 +61,20 @@ class HamiltonianFullDiagonalizeOperation: public AbstractArchitectureOperation
 
   // true if the hamiltonian is complex
   bool ComplexFlag;
+
   // true if the eigenstates have to be computed
   bool EigenstateFlag ;
+  // number of eigenstates that have to be computed
+  int NbrEigenstates; 
+
+  // matrix where the eigenvalues will be stored
+  RealDiagonalMatrix DiagonalizedMatrix;
+
+  // matrix where the eigenstates will be stored (for a real hamiltonian)
+  RealMatrix RealEigenstates;
+  // matrix where the eigenstates will be stored (for a complex hamiltonian)
+  ComplexMatrix ComplexEigenstates;
+
 
  public:
   
@@ -68,7 +83,8 @@ class HamiltonianFullDiagonalizeOperation: public AbstractArchitectureOperation
   // hamiltonian = pointer to the hamiltonian to use
   // complexFlag = true if the hamiltonian is complex
   // eigenstateFlag = true if the eigenstates have to be computed
-  HamiltonianFullDiagonalizeOperation(AbstractHamiltonian* hamiltonian, bool complexFlag, bool eigenstateFlag);
+  // nbrEigenstates = number of eigenstates that have to be computed (<=0 if all eigenstates have to be computed)
+  HamiltonianFullDiagonalizeOperation(AbstractHamiltonian* hamiltonian, bool complexFlag = false, bool eigenstateFlag = false, int nbrEigenstates = 0);
 
   // copy constructor 
   //
@@ -95,6 +111,11 @@ class HamiltonianFullDiagonalizeOperation: public AbstractArchitectureOperation
   // return value = true if no error occurs
   bool RawApplyOperation();
 
+  // get the diagonalized hamiltonian
+  //
+  // return value = diagonalized hamiltonian
+  RealDiagonalMatrix GetDiagonalizedHamiltonian();
+
  protected:
 
   // apply operation for SimpleMPI architecture
@@ -104,5 +125,14 @@ class HamiltonianFullDiagonalizeOperation: public AbstractArchitectureOperation
   bool ArchitectureDependentApplyOperation(SimpleMPIArchitecture* architecture);
   
 };
+
+// get the diagonalized hamiltonian
+//
+// return value = diagonalized hamiltonian
+
+inline RealDiagonalMatrix HamiltonianFullDiagonalizeOperation::GetDiagonalizedHamiltonian()
+{
+  return this->DiagonalizedMatrix;
+}
 
 #endif

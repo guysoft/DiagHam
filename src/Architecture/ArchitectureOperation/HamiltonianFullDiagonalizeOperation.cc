@@ -35,7 +35,6 @@
 #include "Vector/ComplexVector.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
-#include "Matrix/RealDiagonalMatrix.h"
 #include "Architecture/SMPArchitecture.h"
 #include "Architecture/SimpleMPIArchitecture.h"
 #include "Matrix/RealMatrix.h"
@@ -160,13 +159,15 @@ extern "C" void FORTRAN_NAME(pdsyev) (const char* jobz, const char* uplo,
 // hamiltonian = pointer to the hamiltonian to use
 // complexFlag = true if the hamiltonian is complex
 // eigenstateFlag = true if the eigenstates have to be computed
+// nbrEigenstates = number of eigenstates that have to be computed (<=0 if all eigenstates have to be computed)
 
-HamiltonianFullDiagonalizeOperation::HamiltonianFullDiagonalizeOperation (AbstractHamiltonian* hamiltonian, bool complexFlag, bool eigenstateFlag)
+HamiltonianFullDiagonalizeOperation::HamiltonianFullDiagonalizeOperation (AbstractHamiltonian* hamiltonian, bool complexFlag, bool eigenstateFlag, int nbrEigenstates)
 {
   this->Hamiltonian = hamiltonian;
   this->OperationType = AbstractArchitectureOperation::HamiltonianFullDiagonalize;
   this->ComplexFlag = complexFlag;
   this->EigenstateFlag = eigenstateFlag;
+  this->NbrEigenstates = nbrEigenstates;
 }
 
 // copy constructor 
@@ -179,6 +180,7 @@ HamiltonianFullDiagonalizeOperation::HamiltonianFullDiagonalizeOperation(const H
   this->OperationType = AbstractArchitectureOperation::HamiltonianFullDiagonalize;
   this->ComplexFlag = operation.ComplexFlag;
   this->EigenstateFlag = operation.EigenstateFlag;
+  this->NbrEigenstates = operation.NbrEigenstates;
 }
   
 // constructor from a master node information
@@ -202,6 +204,8 @@ HamiltonianFullDiagonalizeOperation::HamiltonianFullDiagonalizeOperation(Abstrac
     this->EigenstateFlag = true;
   else
     this->EigenstateFlag = false;
+  TmpFlag = 0;
+  architecture->BroadcastToSlaves(this->NbrEigenstates);
 }
   
 // destructor
@@ -259,6 +263,7 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
       if (this->EigenstateFlag == true)
 	TmpFlag = 1;
       architecture->BroadcastToSlaves(TmpFlag);
+      architecture->BroadcastToSlaves(this->NbrEigenstates);
     }
 
 
@@ -283,17 +288,18 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
   int NbrColumnPerBlock = 64;
   int Information = 0;
   int TmpZero = 0;
-  int LocalLeadingDimension = FORTRAN_NAME(numroc) (&TmpGlobalNbrRow, &NbrRowPerBlock, &LocalNodeRow, &TmpZero, &NbrNodePerRow);
+  int LocalLeadingDimensionRow = FORTRAN_NAME(numroc) (&TmpGlobalNbrRow, &NbrRowPerBlock, &LocalNodeRow, &TmpZero, &NbrNodePerRow);
+  int LocalLeadingDimensionColumn = FORTRAN_NAME(numroc) (&TmpGlobalNbrColumn, &NbrColumnPerBlock, &LocalNodeColumn, &TmpZero, &NbrNodePerColumn);
   FORTRAN_NAME(descinit) (Desc, &TmpGlobalNbrRow, &TmpGlobalNbrColumn, &NbrRowPerBlock, &NbrColumnPerBlock,
-			  &TmpZero, &TmpZero, &Context, &LocalLeadingDimension, &Information);
+			  &TmpZero, &TmpZero, &Context, &LocalLeadingDimensionRow, &Information);
   
   
   int* DescEingenstateMatrix = new int[9];
   FORTRAN_NAME(descinit) (DescEingenstateMatrix, &TmpGlobalNbrRow, &TmpGlobalNbrColumn, &NbrRowPerBlock, &NbrColumnPerBlock,
-			  &TmpZero, &TmpZero, &Context, &LocalLeadingDimension, &Information);
+			  &TmpZero, &TmpZero, &Context, &LocalLeadingDimensionRow, &Information);
    
   
-  cout << LocalNodeRow << "," << LocalNodeColumn << "  LocalLeadingDimension = " << LocalLeadingDimension << endl;
+  cout << LocalNodeRow << "," << LocalNodeColumn << "  LocalLeadingDimensionRow = " << LocalLeadingDimensionRow << endl;
   
   const char* DoublePrecisionMachineParameterIndex = "U";
   double UnderflowThreshold = FORTRAN_NAME(pdlamch) (&Context, DoublePrecisionMachineParameterIndex);  
@@ -302,7 +308,7 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
     {
       HermitianMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension(), true);
       this->Hamiltonian->GetHamiltonian(HRep);
-      doublecomplex* LocalScalapackMatrix = new doublecomplex[LocalLeadingDimension * LocalLeadingDimension];
+      doublecomplex* LocalScalapackMatrix = new doublecomplex[LocalLeadingDimensionRow * LocalLeadingDimensionColumn];
       
       Complex Tmp;
       doublecomplex TmpElement;
@@ -320,9 +326,9 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
 //       if (architecture->IsMasterNode())
 // 	{
 // 	  int Truc = 0;
-// 	  for (int j = 1; j <= LocalLeadingDimension; ++j)
+// 	  for (int j = 1; j <= LocalLeadingDimensionRow; ++j)
 // 	    {
-// 	      for (int i = 1; i <= LocalLeadingDimension; ++i)
+// 	      for (int i = 1; i <= LocalLeadingDimensionRow; ++i)
 // 		{
 // 		  cout << "a"<< Truc << " " << LocalScalapackMatrix[Truc].r << "," << LocalScalapackMatrix[Truc].i << " ";
 // 		  ++Truc;
@@ -333,9 +339,9 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
 //       else
 // 	{
 // 	  int Truc = 0;
-// 	  for (int j = 1; j <= LocalLeadingDimension; ++j)
+// 	  for (int j = 1; j <= LocalLeadingDimensionRow; ++j)
 // 	    {
-// 	      for (int i = 1; i <= LocalLeadingDimension; ++i)
+// 	      for (int i = 1; i <= LocalLeadingDimensionRow; ++i)
 // 		{
 // 		  cout << "b" << Truc << " " << LocalScalapackMatrix[Truc].r << "," << LocalScalapackMatrix[Truc].i << " ";
 // 		  ++Truc;
@@ -363,7 +369,7 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
       double OrthogonalizationFactor = -1.0;
       doublecomplex* Eigenstates = 0;
       if (this->EigenstateFlag == true)
-	Eigenstates = new doublecomplex [LocalLeadingDimension * LocalLeadingDimension];
+	Eigenstates = new doublecomplex [LocalLeadingDimensionRow * LocalLeadingDimensionColumn];
       int LocalRowEigenstateIndex = 1;
       int LocalColumnEigenstateIndex = 1;
       int* IFail = new int[TmpGlobalNbrRow];
@@ -462,22 +468,32 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
 
       NbrFoundEigenvalues = TmpGlobalNbrRow;
       
-//       cout << "Information = " << Information << endl;
-//       if (architecture->IsMasterNode())
-// 	{
-// 	  cout << "NbrFoundEigenvalues = " << NbrFoundEigenvalues << endl;
-// 	  for (int i = 0; i < NbrFoundEigenvalues; ++i)
-// 	    {
-// 	      cout << i << " : " << Eigenvalues[i] << endl;
-// 	    }      
-// 	}
+      if (architecture->IsMasterNode())
+ 	{
+ 	  this->DiagonalizedMatrix = RealDiagonalMatrix (Eigenvalues, this->Hamiltonian->GetHilbertSpaceDimension());
+	  if (this->EigenstateFlag == true)
+	    {
+	    }
+ 	}
+      else
+	{
+	  if (this->EigenstateFlag == true)
+	    {
+	    }
+	  delete[] Eigenvalues;
+	}
+      if (this->EigenstateFlag == true)
+	delete[] Eigenstates;
+      delete[] ScalapackWorkingArea;
+      delete[] ScalapackRWorkingArea;
+      delete[] LocalScalapackMatrix;
     }
   else
     {
       RealSymmetricMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension(), true);
       this->Hamiltonian->GetHamiltonian(HRep);
       
-      double* LocalScalapackMatrix = new double[LocalLeadingDimension * LocalLeadingDimension];
+      double* LocalScalapackMatrix = new double[LocalLeadingDimensionRow * LocalLeadingDimensionColumn];
       
       double Tmp;
       for (int j = 1; j <= TmpGlobalNbrRow; ++j)
@@ -509,7 +525,7 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
       double OrthogonalizationFactor = -1.0;
       double* Eigenstates = 0;
       if (this->EigenstateFlag == true)
-	Eigenstates = new double [LocalLeadingDimension * LocalLeadingDimension];
+	Eigenstates = new double [LocalLeadingDimensionRow * LocalLeadingDimensionColumn];
       int LocalRowEigenstateIndex = 1;
       int LocalColumnEigenstateIndex = 1;
       int* IFail = new int[TmpGlobalNbrRow];
@@ -594,8 +610,8 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
 // 	  for (int i = 0; i < NbrFoundEigenstates; ++i)
 // 	    {
 // 	      cout << "eigenstate " << i << " : ";
-// 	      for (int j = 0; j < LocalLeadingDimension; ++j)
-// 		cout << Eigenstates[j + (i * LocalLeadingDimension)] << " ";
+// 	      for (int j = 0; j < LocalLeadingDimensionRow; ++j)
+// 		cout << Eigenstates[j + (i * LocalLeadingDimensionRow)] << " ";
 // 	      cout << endl;
 // 	    }
 	  cout << "------------------------" << endl;
