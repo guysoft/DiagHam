@@ -116,6 +116,16 @@ class HamiltonianFullDiagonalizeOperation: public AbstractArchitectureOperation
   // return value = diagonalized hamiltonian
   RealDiagonalMatrix GetDiagonalizedHamiltonian();
 
+  // get the hamiltonian eigenstates
+  //
+  // eigenstates = reference on the matrix where the eigenstates will be stored
+  void GetHamiltonianEigenstates(RealMatrix& eigenstates);
+
+  // get the hamiltonian eigenstates
+  //
+  // eigenstates = reference on the matrix where the eigenstates will be stored
+  void GetHamiltonianEigenstates(ComplexMatrix& eigenstates);
+
  protected:
 
   // apply operation for SimpleMPI architecture
@@ -133,6 +143,24 @@ class HamiltonianFullDiagonalizeOperation: public AbstractArchitectureOperation
 inline RealDiagonalMatrix HamiltonianFullDiagonalizeOperation::GetDiagonalizedHamiltonian()
 {
   return this->DiagonalizedMatrix;
+}
+
+// get the hamiltonian eigenstates
+//
+// eigenstates = reference on the matrix where the eigenstates will be stored
+
+inline void HamiltonianFullDiagonalizeOperation::GetHamiltonianEigenstates(RealMatrix& eigenstates)
+{
+  eigenstates = this->RealEigenstates;
+}
+
+// get the hamiltonian eigenstates
+//
+// eigenstates = reference on the matrix where the eigenstates will be stored
+
+inline void HamiltonianFullDiagonalizeOperation::GetHamiltonianEigenstates(ComplexMatrix& eigenstates)
+{
+  eigenstates = this->ComplexEigenstates;
 }
 
 #endif

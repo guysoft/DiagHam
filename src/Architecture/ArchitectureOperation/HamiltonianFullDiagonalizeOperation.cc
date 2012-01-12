@@ -168,6 +168,8 @@ HamiltonianFullDiagonalizeOperation::HamiltonianFullDiagonalizeOperation (Abstra
   this->ComplexFlag = complexFlag;
   this->EigenstateFlag = eigenstateFlag;
   this->NbrEigenstates = nbrEigenstates;
+  if (this->NbrEigenstates <= 0)
+    this->NbrEigenstates = this->Hamiltonian->GetHilbertSpaceDimension();
 }
 
 // copy constructor 
@@ -323,33 +325,6 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
 	    }
 	}
       
-//       if (architecture->IsMasterNode())
-// 	{
-// 	  int Truc = 0;
-// 	  for (int j = 1; j <= LocalLeadingDimensionRow; ++j)
-// 	    {
-// 	      for (int i = 1; i <= LocalLeadingDimensionRow; ++i)
-// 		{
-// 		  cout << "a"<< Truc << " " << LocalScalapackMatrix[Truc].r << "," << LocalScalapackMatrix[Truc].i << " ";
-// 		  ++Truc;
-// 		}
-// 	      cout << endl;
-// 	    }
-// 	}
-//       else
-// 	{
-// 	  int Truc = 0;
-// 	  for (int j = 1; j <= LocalLeadingDimensionRow; ++j)
-// 	    {
-// 	      for (int i = 1; i <= LocalLeadingDimensionRow; ++i)
-// 		{
-// 		  cout << "b" << Truc << " " << LocalScalapackMatrix[Truc].r << "," << LocalScalapackMatrix[Truc].i << " ";
-// 		  ++Truc;
-// 		}
-// 	      cout << endl;
-// 	    }
-// 	}
-      
       Information = 0; 
       const char* JobZ = "N";
       if (this->EigenstateFlag == true)
@@ -473,6 +448,7 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
  	  this->DiagonalizedMatrix = RealDiagonalMatrix (Eigenvalues, this->Hamiltonian->GetHilbertSpaceDimension());
 	  if (this->EigenstateFlag == true)
 	    {
+	      this->ComplexEigenstates = ComplexMatrix (this->Hamiltonian->GetHilbertSpaceDimension(), this->NbrEigenstates, true);
 	    }
  	}
       else

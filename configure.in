@@ -308,12 +308,15 @@ AC_MSG_RESULT([${SCALAPACK_LIBDIR}])
 AC_MSG_CHECKING(whether we are using SCALAPACK)
 AC_MSG_RESULT([${HAVE_PKG_SCALAPACK}])
 
-if test X${HAVE_PKG_MPI} = Xno; then
-  AC_MSG_ERROR([SCALAPACK requires MPI.])
+if test X${HAVE_PKG_SCALAPACK} = Xyes; then
+  if test X${HAVE_PKG_MPI} = Xno; then
+    AC_MSG_ERROR([SCALAPACK requires MPI.])
+  fi
+  if test X${HAVE_PKG_LAPACK} = Xno; then
+    AC_MSG_ERROR([SCALAPACK requires LAPACK.])
+  fi
 fi
-if test X${HAVE_PKG_LAPACK} = Xno; then
-  AC_MSG_ERROR([SCALAPACK requires LAPACK.])
-fi
+
 if test X${HAVE_PKG_SCALAPACK} = Xyes; then
  AC_DEFINE(HAVE_SCALAPACK,,[define if we are using SCALAPACK])
  AC_LANG_PUSH([Fortran])
