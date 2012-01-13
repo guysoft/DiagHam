@@ -86,6 +86,7 @@ int main(int argc, char** argv)
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
   (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
+  (*ToolsGroup) += new SingleStringOption  ('\n', "export-hamiltonian", "export hamiltonian in an ASCII column formatted file", 0);
   (*ToolsGroup) += new BooleanOption  ('\n', "test-hermitian", "show matrix representation of the hamiltonian");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
