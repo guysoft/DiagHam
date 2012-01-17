@@ -256,7 +256,7 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
 	{
 	  return false;
 	}
-       
+      
       int TmpFlag = 0;
       if (this->ComplexFlag == true)
 	TmpFlag = 1;
@@ -267,12 +267,12 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
       architecture->BroadcastToSlaves(TmpFlag);
       architecture->BroadcastToSlaves(this->NbrEigenstates);
     }
-
+  
   
   long TmpMinimumIndex = 0;
   long TmpMaximumIndex = 0;
   architecture->GetTypicalRange(TmpMinimumIndex, TmpMaximumIndex);
-
+  
   int Context;
   int NbrNodePerColumn = architecture->GetNbrNodes();
   int NbrNodePerRow = (int) sqrt((double) NbrNodePerColumn);
@@ -301,21 +301,19 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
   int* DescEingenstateMatrix = new int[9];
   FORTRAN_NAME(descinit) (DescEingenstateMatrix, &TmpGlobalNbrRow, &TmpGlobalNbrColumn, &NbrRowPerBlock, &NbrColumnPerBlock,
 			  &TmpZero, &TmpZero, &Context, &LocalLeadingDimensionRow, &Information);
-   
+  
   
   const char* DoublePrecisionMachineParameterIndex = "U";
   double UnderflowThreshold = FORTRAN_NAME(pdlamch) (&Context, DoublePrecisionMachineParameterIndex);  
-
+  
   if (this->ComplexFlag == true)
     {
-      HermitianMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension(), true);
-      this->Hamiltonian->GetHamiltonian(HRep);
       doublecomplex* LocalScalapackMatrix = new doublecomplex[LocalLeadingDimensionRow * LocalLeadingDimensionColumn];
       
       timeval TotalStartingTime;
       if ((architecture->IsMasterNode()) && (architecture->VerboseMode()))
 	gettimeofday (&TotalStartingTime, 0);
-
+      
       Complex Tmp;
       doublecomplex TmpElement;
       ComplexVector InputVector (this->Hamiltonian->GetHilbertSpaceDimension());
@@ -329,39 +327,24 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
 	      this->Hamiltonian->Multiply(InputVector, OutputVector, j - 1, 1);
 	    }
 	  architecture->BroadcastVector(TmpNode, OutputVector);
-	  if (architecture->IsMasterNode())
-	    {
-	      for (int k = 0; k < TmpGlobalNbrRow; ++k)
-		{
-		  Complex Tmp;
-		  HRep.GetMatrixElement(j - 1, k, Tmp);
-		  cout << (j - 1) << " " << k << " : " << OutputVector[k] << " " << Tmp << endl;
-		}
-	    }
 	  for (int i = 1; i <= TmpGlobalNbrRow; ++i)
 	    {
-// 	      HRep.GetMatrixElement(i - 1, j - 1, Tmp);
-// 	      TmpElement.r = Tmp.Re;
-// 	      TmpElement.i = Tmp.Im;
-//	      HRep.GetMatrixElement(i - 1, j - 1, Tmp);
 	      TmpElement.r = OutputVector[i - 1].Re;
 	      TmpElement.i = OutputVector[i - 1].Im;
 	      FORTRAN_NAME(pzelset) (LocalScalapackMatrix, &i, &j, Desc, &TmpElement);
 	    }
 	}
-      if (architecture->IsMasterNode())
-	cout << HRep << endl;
-//    if ((architecture->IsMasterNode()) && (architecture->VerboseMode()))
-//      {
-//        timeval TotalEndingTime;
-//        gettimeofday (&TotalEndingTime, 0);
-//        double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 
-// 		     (((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));		      
-//        char TmpString[256];
-//        sprintf (TmpString, "HamiltonianFullDiagonalizeOperation fill matrix operation done in %.3f seconds", Dt);
-//        architecture->AddToLog(TmpString, true);
-//        gettimeofday (&TotalStartingTime, 0);
-//      }
+      if ((architecture->IsMasterNode()) && (architecture->VerboseMode()))
+	{
+	  timeval TotalEndingTime;
+	  gettimeofday (&TotalEndingTime, 0);
+	  double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 
+			(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));		      
+	  char TmpString[256];
+	  sprintf (TmpString, "HamiltonianFullDiagonalizeOperation fill matrix operation done in %.3f seconds", Dt);
+	  architecture->AddToLog(TmpString, true);
+	  gettimeofday (&TotalStartingTime, 0);
+	}
       
       Information = 0; 
       const char* JobZ = "N";
@@ -394,52 +377,15 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
       int ScalapackRWorkingAreaSize = -1; 
       int* ScalapackIWorkingArea = new int[10];
       int ScalapackIWorkingAreaSize = -1;
-  
+      
       for (int i = 0; i < TmpGlobalNbrRow; ++i)
 	Eigenvalues[i] = 0.0;
       
-//       FORTRAN_NAME(pzheevx)(JobZ, Range, UpperLower, 
-// 			    &TmpGlobalNbrRow, LocalScalapackMatrix, 
-// 			    &LocalStartingRowIndex, &LocalStartingColumnIndex, Desc, 
-// 			    &SpectrumLowerBound, &SpectrumUpperBound, &SpectrumLowerIndex, &SpectrumUpperIndex,
-// 			    &AbsoluteErrorTolerance, &NbrFoundEigenvalues, 
-// 			    &NbrFoundEigenstates, Eigenvalues,
-// 			    &OrthogonalizationFactor, Eigenstates, 
-// 			    &LocalRowEigenstateIndex, &LocalColumnEigenstateIndex, DescEingenstateMatrix,
-// 			    ScalapackWorkingArea, &ScalapackWorkingAreaSize, 
-// 			    ScalapackRWorkingArea, &ScalapackRWorkingAreaSize, 
-// 			    ScalapackIWorkingArea, &ScalapackIWorkingAreaSize, 
-// 			    IFail, ICluster, Gap, &Information);  
-      
-//       ScalapackWorkingAreaSize = (int) ScalapackWorkingArea[0].r;
-//       ScalapackRWorkingAreaSize = (int) ScalapackRWorkingArea[0];
-//       ScalapackIWorkingAreaSize = ScalapackIWorkingArea[0];
-//       delete[] ScalapackWorkingArea;
-//       delete[] ScalapackRWorkingArea;
-//       delete[] ScalapackIWorkingArea;
-//       ScalapackWorkingArea = new doublecomplex[ScalapackWorkingAreaSize];
-//       ScalapackRWorkingArea = new double [ScalapackRWorkingAreaSize];
-//       ScalapackIWorkingArea = new int [ScalapackIWorkingAreaSize];
-      
-//       FORTRAN_NAME(pzheevx)(JobZ, Range, UpperLower, 
-// 			    &TmpGlobalNbrRow, LocalScalapackMatrix, 
-// 			    &LocalStartingRowIndex, &LocalStartingColumnIndex, Desc, 
-// 			    &SpectrumLowerBound, &SpectrumUpperBound, &SpectrumLowerIndex, &SpectrumUpperIndex,
-// 			    &AbsoluteErrorTolerance, &NbrFoundEigenvalues, 
-// 			    &NbrFoundEigenstates, Eigenvalues,
-// 			    &OrthogonalizationFactor, Eigenstates, 
-// 			    &LocalRowEigenstateIndex, &LocalColumnEigenstateIndex, DescEingenstateMatrix,
-// 			    ScalapackWorkingArea, &ScalapackWorkingAreaSize, 
-// 			    ScalapackRWorkingArea, &ScalapackRWorkingAreaSize, 
-// 			    ScalapackIWorkingArea, &ScalapackIWorkingAreaSize, 
-// 			    IFail, ICluster, Gap, &Information); 
-
-
       if (architecture->IsMasterNode())
 	{
 	  cout << "starting diagonalization" << endl;
 	}
-
+      
       FORTRAN_NAME(pzheev)(JobZ, UpperLower, 
 			   &TmpGlobalNbrRow, LocalScalapackMatrix, 
 			   &LocalStartingRowIndex, &LocalStartingColumnIndex, Desc, 
@@ -467,18 +413,18 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
 			   ScalapackRWorkingArea, &ScalapackRWorkingAreaSize, 
 			   &Information);  
 
-//       if ((architecture->IsMasterNode()) && (architecture->VerboseMode()))
-//      {
-//        timeval TotalEndingTime;
-//        gettimeofday (&TotalEndingTime, 0);
-//        double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 
-// 		     (((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));		      
-//        char TmpString[256];
-//        sprintf (TmpString, "HamiltonianFullDiagonalizeOperation diagonalization operation done in %.3f seconds", Dt);
-//        architecture->AddToLog(TmpString, true);
-//      }
-
-
+      if ((architecture->IsMasterNode()) && (architecture->VerboseMode()))
+	{
+	  timeval TotalEndingTime;
+	  gettimeofday (&TotalEndingTime, 0);
+	  double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 
+			(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));		      
+	  char TmpString[256];
+	  sprintf (TmpString, "HamiltonianFullDiagonalizeOperation diagonalization operation done in %.3f seconds", Dt);
+	  architecture->AddToLog(TmpString, true);
+	}
+      
+      
       NbrFoundEigenvalues = TmpGlobalNbrRow;
       
       if (architecture->IsMasterNode())
@@ -504,26 +450,47 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
     }
   else
     {
-      RealSymmetricMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension(), true);
-      this->Hamiltonian->GetHamiltonian(HRep);
+      timeval TotalStartingTime;
+      if ((architecture->IsMasterNode()) && (architecture->VerboseMode()))
+	gettimeofday (&TotalStartingTime, 0);
       
       double* LocalScalapackMatrix = new double[LocalLeadingDimensionRow * LocalLeadingDimensionColumn];
       
       double Tmp;
+      RealVector InputVector (this->Hamiltonian->GetHilbertSpaceDimension());
+      RealVector OutputVector (this->Hamiltonian->GetHilbertSpaceDimension());
       for (int j = 1; j <= TmpGlobalNbrRow; ++j)
 	{
-	  for (int i = 1; i <= TmpGlobalNbrRow; ++i)
+	  int TmpNode = architecture->GetNodeIDFromIndex(j - 1);
+	  if (TmpNode ==  architecture->GetNodeNbr())
 	    {
-	      HRep.GetMatrixElement(i - 1, j - 1, Tmp);
-	      FORTRAN_NAME(pdelset) (LocalScalapackMatrix, &i, &j, Desc, &Tmp);
+	      InputVector[j - 1] = 1.0;
+	      this->Hamiltonian->Multiply(InputVector, OutputVector, j - 1, 1);
 	    }
+	  architecture->BroadcastVector(TmpNode, OutputVector);
+  	  for (int i = 1; i <= TmpGlobalNbrRow; ++i)
+	    {
+	      FORTRAN_NAME(pdelset) (LocalScalapackMatrix, &i, &j, Desc, &(OutputVector[i - 1]));
+	    }
+	}
+      
+      if ((architecture->IsMasterNode()) && (architecture->VerboseMode()))
+	{
+	  timeval TotalEndingTime;
+	  gettimeofday (&TotalEndingTime, 0);
+	  double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 
+			(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));		      
+	  char TmpString[256];
+	  sprintf (TmpString, "HamiltonianFullDiagonalizeOperation fill matrix operation done in %.3f seconds", Dt);
+	  architecture->AddToLog(TmpString, true);
+	  gettimeofday (&TotalStartingTime, 0);
 	}
 
       Information = 0; 
       const char* JobZ = "N";
       if (this->EigenstateFlag == true)
 	JobZ = "V";
-
+      
       const char* Range = "A";
       const char* UpperLower = "U";
       int LocalStartingRowIndex = 1;
@@ -553,39 +520,6 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
       for (int i = 0; i < TmpGlobalNbrRow; ++i)
 	Eigenvalues[i] = 0.0;
       
-//       FORTRAN_NAME(pdsyevx)(JobZ, Range, UpperLower, 
-// 			    &TmpGlobalNbrRow, LocalScalapackMatrix, 
-// 			    &LocalStartingRowIndex, &LocalStartingColumnIndex, Desc, 
-// 			    &SpectrumLowerBound, &SpectrumUpperBound, &SpectrumLowerIndex, &SpectrumUpperIndex,
-// 			    &AbsoluteErrorTolerance, &NbrFoundEigenvalues, 
-// 			    &NbrFoundEigenstates, Eigenvalues,
-// 			    &OrthogonalizationFactor, Eigenstates, 
-// 			    &LocalRowEigenstateIndex, &LocalColumnEigenstateIndex, DescEingenstateMatrix,
-// 			    ScalapackWorkingArea, &ScalapackWorkingAreaSize, 
-// 			    ScalapackIWorkingArea, &ScalapackIWorkingAreaSize, 
-// 			    IFail, ICluster, Gap, &Information);  
-      
-//       ScalapackWorkingAreaSize = (int) ScalapackWorkingArea[0];
-//       ScalapackIWorkingAreaSize = ScalapackIWorkingArea[0];
-//       delete[] ScalapackWorkingArea;
-//       delete[] ScalapackIWorkingArea;
-//       ScalapackWorkingArea = new double[ScalapackWorkingAreaSize];
-//       ScalapackIWorkingArea = new int [ScalapackIWorkingAreaSize];
-
-//       cout << "ScalapackWorkingAreaSize = " << ScalapackWorkingAreaSize << "  ScalapackIWorkingAreaSize = " << ScalapackIWorkingAreaSize << endl;
- 
-//       FORTRAN_NAME(pdsyevx)(JobZ, Range, UpperLower, 
-// 			    &TmpGlobalNbrRow, LocalScalapackMatrix, 
-// 			    &LocalStartingRowIndex, &LocalStartingColumnIndex, Desc, 
-// 			    &SpectrumLowerBound, &SpectrumUpperBound, &SpectrumLowerIndex, &SpectrumUpperIndex,
-// 			    &AbsoluteErrorTolerance, &NbrFoundEigenvalues, 
-// 			    &NbrFoundEigenstates, Eigenvalues,
-// 			    &OrthogonalizationFactor, Eigenstates, 
-// 			    &LocalRowEigenstateIndex, &LocalColumnEigenstateIndex, DescEingenstateMatrix,
-// 			    ScalapackWorkingArea, &ScalapackWorkingAreaSize, 
-// 			    ScalapackIWorkingArea, &ScalapackIWorkingAreaSize, 
-// 			    IFail, ICluster, Gap, &Information); 
-      
       FORTRAN_NAME(pdsyev)(JobZ, UpperLower, 
 			   &TmpGlobalNbrRow, LocalScalapackMatrix, 
 			   &LocalStartingRowIndex, &LocalStartingColumnIndex, Desc, 
@@ -598,9 +532,9 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
       ScalapackWorkingAreaSize = (int) ScalapackWorkingArea[0];
       delete[] ScalapackWorkingArea;
       ScalapackWorkingArea = new double[ScalapackWorkingAreaSize];
-
+      
       cout << "ScalapackWorkingAreaSize = " << ScalapackWorkingAreaSize << "  ScalapackIWorkingAreaSize = " << ScalapackIWorkingAreaSize << endl;
- 
+      
       FORTRAN_NAME(pdsyev)(JobZ, UpperLower, 
 			   &TmpGlobalNbrRow, LocalScalapackMatrix, 
 			   &LocalStartingRowIndex, &LocalStartingColumnIndex, Desc, 
@@ -609,6 +543,17 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
 			   &LocalRowEigenstateIndex, &LocalColumnEigenstateIndex, DescEingenstateMatrix,
 			   ScalapackWorkingArea, &ScalapackWorkingAreaSize, 
 			   &Information); 
+
+      if ((architecture->IsMasterNode()) && (architecture->VerboseMode()))
+	{
+	  timeval TotalEndingTime;
+	  gettimeofday (&TotalEndingTime, 0);
+	  double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 
+			(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));		      
+	  char TmpString[256];
+	  sprintf (TmpString, "HamiltonianFullDiagonalizeOperation diagonalization operation done in %.3f seconds", Dt);
+	  architecture->AddToLog(TmpString, true);
+	}
 
       NbrFoundEigenvalues = TmpGlobalNbrRow;
       NbrFoundEigenstates = TmpGlobalNbrRow;
@@ -629,11 +574,11 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
 // 	      cout << endl;
 // 	    }
 	  cout << "------------------------" << endl;
-	  RealDiagonalMatrix TmpDiag (this->Hamiltonian->GetHilbertSpaceDimension());
-	  RealMatrix Q(this->Hamiltonian->GetHilbertSpaceDimension(), this->Hamiltonian->GetHilbertSpaceDimension());
-	  HRep.LapackDiagonalize(TmpDiag, Q);
-	  for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
-	    cout << j << " : " << TmpDiag[j] << endl;
+// 	  RealDiagonalMatrix TmpDiag (this->Hamiltonian->GetHilbertSpaceDimension());
+// 	  RealMatrix Q(this->Hamiltonian->GetHilbertSpaceDimension(), this->Hamiltonian->GetHilbertSpaceDimension());
+// 	  HRep.LapackDiagonalize(TmpDiag, Q);
+// 	  for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
+// 	    cout << j << " : " << TmpDiag[j] << endl;
 // 	  for (int i = 0; i < this->Hamiltonian->GetHilbertSpaceDimension(); ++i)
 // 	    {
 // 	      cout << "eigenstate " << i << " : ";

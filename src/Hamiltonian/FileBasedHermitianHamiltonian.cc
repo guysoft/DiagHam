@@ -225,7 +225,8 @@ ComplexVector& FileBasedHermitianHamiltonian::LowLevelAddMultiply(ComplexVector&
     --StartingIndex;
   if (StartingIndex < 0)
     StartingIndex = 0;
-  cout << firstComponent << " " <<  nbrComponent  << " " << StartingIndex << endl;
+  if (this->RowIndices[StartingIndex] != firstComponent)
+    ++StartingIndex;
   int LastComponent = firstComponent + nbrComponent;
   while ((StartingIndex < this->NbrElements) && (this->RowIndices[StartingIndex] < LastComponent))
     {
