@@ -2738,7 +2738,7 @@ Vector& ComplexVector::SendVector(MPI::Intracomm& communicator, int id)
 // return value = reference on the current vector
 
 Vector& ComplexVector::BroadcastVector(MPI::Intracomm& communicator,  int id)
-{
+{  
   int TmpVectorType = this->VectorType;
   int TmpDimension = this->Dimension;
   int Acknowledge = 0;
@@ -2757,7 +2757,7 @@ Vector& ComplexVector::BroadcastVector(MPI::Intracomm& communicator,  int id)
       for (int i = 0; i < NbrMPINodes; ++i)
 	if (id != i)
 	  {
-	    communicator.Recv(&Acknowledge, 1, MPI::INT, i, 1);      
+	    communicator.Recv(&Acknowledge, 1, MPI::INT, i, 1);  
 	    if (Acknowledge == 1)
 	      Flag = true;
 	  }

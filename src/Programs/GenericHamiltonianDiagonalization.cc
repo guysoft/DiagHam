@@ -98,8 +98,11 @@ int main(int argc, char** argv)
     }
   else
     {
+      Lanczos.SetComplexAlgorithms();
       Hamiltonian  = new FileBasedHermitianHamiltonian(Manager.GetString("hamiltonian"), Manager.GetInteger("data-column"), false, Manager.GetBoolean("fortran"), Manager.GetInteger("skip-lines"));
     }
+
+  Architecture.GetArchitecture()->SetDimension(Hamiltonian->GetHilbertSpaceDimension());	
 
   char* CommentLine = new char [strlen(Manager.GetString("hamiltonian")) + 256];
   sprintf (CommentLine, "eigenvalues of %s\n #", Manager.GetString("hamiltonian"));

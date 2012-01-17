@@ -268,6 +268,10 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
       architecture->BroadcastToSlaves(this->NbrEigenstates);
     }
 
+  
+  long TmpMinimumIndex = 0;
+  long TmpMaximumIndex = 0;
+  architecture->GetTypicalRange(TmpMinimumIndex, TmpMaximumIndex);
 
   int Context;
   int NbrNodePerColumn = architecture->GetNbrNodes();
@@ -280,8 +284,6 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
   int LocalNodeRow;
   int LocalNodeColumn;
   FORTRAN_NAME(blacs_gridinfo) (&Context, &NbrNodePerRow, &NbrNodePerColumn, &LocalNodeRow, &LocalNodeColumn);
-  cout << "NbrNodePerRow=" << NbrNodePerRow << " NbrNodePerColumn=" << NbrNodePerColumn 
-       << "   LocalNodeRow=" << LocalNodeRow << "   LocalNodeColumn=" << LocalNodeColumn << endl; 
   
   int* Desc = new int[9];
   int TmpGlobalNbrRow = this->Hamiltonian->GetHilbertSpaceDimension();
@@ -301,8 +303,6 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
 			  &TmpZero, &TmpZero, &Context, &LocalLeadingDimensionRow, &Information);
    
   
-  cout << LocalNodeRow << "," << LocalNodeColumn << "  LocalLeadingDimensionRow = " << LocalLeadingDimensionRow << endl;
-  
   const char* DoublePrecisionMachineParameterIndex = "U";
   double UnderflowThreshold = FORTRAN_NAME(pdlamch) (&Context, DoublePrecisionMachineParameterIndex);  
 
@@ -312,18 +312,56 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
       this->Hamiltonian->GetHamiltonian(HRep);
       doublecomplex* LocalScalapackMatrix = new doublecomplex[LocalLeadingDimensionRow * LocalLeadingDimensionColumn];
       
+      timeval TotalStartingTime;
+      if ((architecture->IsMasterNode()) && (architecture->VerboseMode()))
+	gettimeofday (&TotalStartingTime, 0);
+
       Complex Tmp;
       doublecomplex TmpElement;
+      ComplexVector InputVector (this->Hamiltonian->GetHilbertSpaceDimension());
+      ComplexVector OutputVector (this->Hamiltonian->GetHilbertSpaceDimension());
       for (int j = 1; j <= TmpGlobalNbrRow; ++j)
 	{
+	  int TmpNode = architecture->GetNodeIDFromIndex(j - 1);
+	  if (TmpNode ==  architecture->GetNodeNbr())
+	    {
+	      InputVector[j - 1] = 1.0;
+	      this->Hamiltonian->Multiply(InputVector, OutputVector, j - 1, 1);
+	    }
+	  architecture->BroadcastVector(TmpNode, OutputVector);
+	  if (architecture->IsMasterNode())
+	    {
+	      for (int k = 0; k < TmpGlobalNbrRow; ++k)
+		{
+		  Complex Tmp;
+		  HRep.GetMatrixElement(j - 1, k, Tmp);
+		  cout << (j - 1) << " " << k << " : " << OutputVector[k] << " " << Tmp << endl;
+		}
+	    }
 	  for (int i = 1; i <= TmpGlobalNbrRow; ++i)
 	    {
-	      HRep.GetMatrixElement(i - 1, j - 1, Tmp);
-	      TmpElement.r = Tmp.Re;
-	      TmpElement.i = Tmp.Im;
+// 	      HRep.GetMatrixElement(i - 1, j - 1, Tmp);
+// 	      TmpElement.r = Tmp.Re;
+// 	      TmpElement.i = Tmp.Im;
+//	      HRep.GetMatrixElement(i - 1, j - 1, Tmp);
+	      TmpElement.r = OutputVector[i - 1].Re;
+	      TmpElement.i = OutputVector[i - 1].Im;
 	      FORTRAN_NAME(pzelset) (LocalScalapackMatrix, &i, &j, Desc, &TmpElement);
 	    }
 	}
+      if (architecture->IsMasterNode())
+	cout << HRep << endl;
+//    if ((architecture->IsMasterNode()) && (architecture->VerboseMode()))
+//      {
+//        timeval TotalEndingTime;
+//        gettimeofday (&TotalEndingTime, 0);
+//        double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 
+// 		     (((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));		      
+//        char TmpString[256];
+//        sprintf (TmpString, "HamiltonianFullDiagonalizeOperation fill matrix operation done in %.3f seconds", Dt);
+//        architecture->AddToLog(TmpString, true);
+//        gettimeofday (&TotalStartingTime, 0);
+//      }
       
       Information = 0; 
       const char* JobZ = "N";
@@ -401,8 +439,6 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
 	{
 	  cout << "starting diagonalization" << endl;
 	}
-      timeval TotalStartingTime;
-      gettimeofday (&TotalStartingTime, 0);
 
       FORTRAN_NAME(pzheev)(JobZ, UpperLower, 
 			   &TmpGlobalNbrRow, LocalScalapackMatrix, 
@@ -431,15 +467,17 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
 			   ScalapackRWorkingArea, &ScalapackRWorkingAreaSize, 
 			   &Information);  
 
-      timeval TotalEndingTime;
-      gettimeofday (&TotalEndingTime, 0);
-      
-      if (architecture->IsMasterNode())
-	{
-	  double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 
-			(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));		      
-	  cout << "diagonalization done in " << Dt << "s" << endl;
-	}
+//       if ((architecture->IsMasterNode()) && (architecture->VerboseMode()))
+//      {
+//        timeval TotalEndingTime;
+//        gettimeofday (&TotalEndingTime, 0);
+//        double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 
+// 		     (((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));		      
+//        char TmpString[256];
+//        sprintf (TmpString, "HamiltonianFullDiagonalizeOperation diagonalization operation done in %.3f seconds", Dt);
+//        architecture->AddToLog(TmpString, true);
+//      }
+
 
       NbrFoundEigenvalues = TmpGlobalNbrRow;
       

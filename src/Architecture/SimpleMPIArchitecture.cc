@@ -155,6 +155,19 @@ void SimpleMPIArchitecture::GetTypicalRange (long& minIndex, long& maxIndex)
   maxIndex = this->MaximumIndex;
 }
   
+// get the ID of the node that handles a given index
+//
+// index = index to check
+// return value = corresponding node ID
+
+int SimpleMPIArchitecture::GetNodeIDFromIndex(long index)
+{
+  int TmpID = 0;
+  while (index > this->MaximumIndices[TmpID]) 
+    ++TmpID;
+  return TmpID;
+}
+
 // set dimension of the Hilbert space on which the architecture has to work
 // 
 // dimension = dimension of the Hilbert space
@@ -182,9 +195,25 @@ void SimpleMPIArchitecture::SetDimension (long dimension)
       Tmp += this->ClusterPerformanceArray[this->MPIRank];      
       this->MaximumIndex = (long) (Tmp * ((double) dimension)) - (long) 1;
     }
-//   this->MinimumIndex = (long) 0;
-//   this->MaximumIndex = dimension - 1;
-  cout << this->MPIRank << " " << this->MinimumIndex << " " << this->MaximumIndex << endl;
+  this->MinimumIndices = new long[this->NbrMPINodes];
+  this->MaximumIndices = new long[this->NbrMPINodes];
+  if (this->MasterNodeFlag)
+    {
+      this->MinimumIndices[0] = this->MinimumIndex;
+      this->MaximumIndices[0] = this->MaximumIndex;
+      for (int i = 1; i < this->NbrMPINodes; ++i)
+	{
+	  MPI::COMM_WORLD.Recv(&(this->MinimumIndices[i]), 2, MPI::INT, i, 1);      
+	  MPI::COMM_WORLD.Recv(&(this->MaximumIndices[i]), 2, MPI::INT, i, 1);      
+	}
+    }
+  else
+    {
+      MPI::COMM_WORLD.Send(&this->MinimumIndex, 2, MPI::INT, 0, 1); 
+      MPI::COMM_WORLD.Send(&this->MaximumIndex, 2, MPI::INT, 0, 1); 
+    }
+  MPI::COMM_WORLD.Bcast(this->MinimumIndices, 2 * this->NbrMPINodes, MPI::INT, 0);
+  MPI::COMM_WORLD.Bcast(this->MaximumIndices, 2 * this->NbrMPINodes, MPI::INT, 0);
 }
 
 // request an operation to the slave nodes and wait till they are ready to get operation parameters
@@ -338,7 +367,7 @@ bool SimpleMPIArchitecture::SendToSlaves(int slaveID, int* values, int nbrValues
 #endif  
 }
 
-// receive an integer array from master node to the current slave node
+// receive an integer array from master node to the given slave node
 // 
 // values = array of integesr to broadcast
 // nbrValues = number of element in the array
@@ -348,6 +377,114 @@ bool SimpleMPIArchitecture::ReceiveFromMaster(int* values, int& nbrValues)
 {
 #ifdef __MPI__
   MPI::COMM_WORLD.Recv(values, nbrValues, MPI::INT, 0, 1);
+  return true;
+#else
+  return false;
+#endif  
+}
+
+// send an integer array from the current slave node to master node
+// 
+// values = array of integesr to broadcast
+// nbrValues = number of element in the array
+// return value = true if no error occured
+  
+bool SimpleMPIArchitecture::SendToMaster(int* values, int& nbrValues)
+{
+#ifdef __MPI__
+  if (!this->MasterNodeFlag)
+    {
+      int Acknowledge = 1;
+      MPI::COMM_WORLD.Send(values, nbrValues, MPI::INT, 0, 1); 
+      return true;
+    }
+#endif
+  return false;
+}
+
+// receive an integer array from master node to the current slave node
+// 
+// slaveID = slave ID
+// values = array of integesr to broadcast
+// nbrValues = number of element in the array
+// return value = true if no error occured
+
+bool SimpleMPIArchitecture::ReceiveFromSlave(int slaveID, int* values, int& nbrValues)
+{
+#ifdef __MPI__
+  MPI::COMM_WORLD.Recv(values, nbrValues, MPI::INT, slaveID + 1, 1);
+  return true;
+#else
+  return false;
+#endif  
+}
+
+// send a double array from the current slave node to master node
+// 
+// values = array of integesr to broadcast
+// nbrValues = number of element in the array
+// return value = true if no error occured
+  
+bool SimpleMPIArchitecture::SendToMaster(double* values, int& nbrValues)
+{
+#ifdef __MPI__
+  if (!this->MasterNodeFlag)
+    {
+      int Acknowledge = 1;
+      MPI::COMM_WORLD.Send(values, nbrValues, MPI::DOUBLE, 0, 1); 
+      return true;
+    }
+#endif
+  return false;
+}
+
+// receive a double array from master node to the current slave node
+// 
+// slaveID = slave ID
+// values = array of integesr to broadcast
+// nbrValues = number of element in the array
+// return value = true if no error occured
+
+bool SimpleMPIArchitecture::ReceiveFromSlave(int slaveID, double* values, int& nbrValues)
+{
+#ifdef __MPI__
+  MPI::COMM_WORLD.Recv(values, nbrValues, MPI::DOUBLE, slaveID + 1, 1);
+  return true;
+#else
+  return false;
+#endif  
+}
+
+// send a double complex array from the current slave node to master node
+// 
+// values = array of integesr to broadcast
+// nbrValues = number of element in the array
+// return value = true if no error occured
+  
+bool SimpleMPIArchitecture::SendToMaster(doublecomplex* values, int& nbrValues)
+{
+#ifdef __MPI__
+  if (!this->MasterNodeFlag)
+    {
+      int Acknowledge = 1;
+      MPI::COMM_WORLD.Send(values, nbrValues, MPI::DOUBLE, 0, 1); 
+      return true;
+    }
+#endif
+  return false;
+}
+
+// receive a double complex array from master node to the current slave node
+// 
+// slaveID = slave ID
+// values = array of integesr to broadcast
+// nbrValues = number of element in the array
+// return value = true if no error occured
+
+bool SimpleMPIArchitecture::ReceiveFromSlave(int slaveID, doublecomplex* values, int& nbrValues)
+{
+#ifdef __MPI__
+  MPI::COMM_WORLD.Recv(values, nbrValues, MPI::DOUBLE, slaveID + 1, 1);
   return true;
 #else
   return false;
@@ -406,6 +543,19 @@ Vector* SimpleMPIArchitecture::BroadcastVector(Vector* vector)
       }
 #endif  
   return 0;
+}
+
+// broadcast a vector from a node to the others 
+//
+// nodeID = id of the mode that broadcasts its vector
+// vector = pointer to the vector to broadcast or to the vector where the content will be stored
+
+void SimpleMPIArchitecture::BroadcastVector(int nodeID, Vector& vector)
+{
+#ifdef __MPI__
+  vector.BroadcastVector(MPI::COMM_WORLD, nodeID);
+#endif  
+  return;
 }
 
 // scatter a vector upon each slave node

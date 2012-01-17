@@ -221,8 +221,11 @@ bool VectorHamiltonianMultiplyOperation::RawApplyOperation()
       this->Hamiltonian->HermitianMultiply((*(this->SourceVector)), (*(this->DestinationVector)), this->FirstComponent, 
 					   this->NbrComponent);
     }
-  else this->Hamiltonian->Multiply((*(this->SourceVector)), (*(this->DestinationVector)), this->FirstComponent, 
-			      this->NbrComponent);
+  else
+    { 
+      this->Hamiltonian->Multiply((*(this->SourceVector)), (*(this->DestinationVector)), this->FirstComponent, 
+				  this->NbrComponent);
+    }
   
   gettimeofday (&(TotalEndingTime2), 0);
   this->ExecutionTime = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 

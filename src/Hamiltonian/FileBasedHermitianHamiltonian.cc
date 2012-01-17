@@ -92,7 +92,7 @@ FileBasedHermitianHamiltonian::FileBasedHermitianHamiltonian(char* fileName, int
 	case 2:
 	  for (long i = 0; i < this->NbrElements; ++i)
 	    {
-	      File >> this->ColumnIndices[i] >> this->RowIndices[i] >> this->MatrixElements[i].Re >> this->MatrixElements[i].Im;
+	      File >> this->RowIndices[i] >> this->ColumnIndices[i] >> this->MatrixElements[i].Re >> this->MatrixElements[i].Im;
 	    }
 	  break;
 	}
@@ -206,7 +206,7 @@ Complex FileBasedHermitianHamiltonian::MatrixElement (ComplexVector& V1, Complex
 // return value = reference on vector where result has been stored
 
 ComplexVector& FileBasedHermitianHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-							       int firstComponent, int nbrComponent)
+								  int firstComponent, int nbrComponent)
 {
   long StartingIndex = 0;
   long LastIndex = this->NbrElements - 1;
@@ -225,6 +225,7 @@ ComplexVector& FileBasedHermitianHamiltonian::LowLevelAddMultiply(ComplexVector&
     --StartingIndex;
   if (StartingIndex < 0)
     StartingIndex = 0;
+  cout << firstComponent << " " <<  nbrComponent  << " " << StartingIndex << endl;
   int LastComponent = firstComponent + nbrComponent;
   while ((StartingIndex < this->NbrElements) && (this->RowIndices[StartingIndex] < LastComponent))
     {

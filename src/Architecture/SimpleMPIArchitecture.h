@@ -76,6 +76,10 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   long MinimumIndex;
   // maximum index on which the current MPI node can act
   long MaximumIndex;
+  // minimum index on which MPI nodes can act
+  long* MinimumIndices;
+  // maximum index on which MPI nodes can act
+  long* MaximumIndices;
 
   // name of the optional log file to allow code profiling on MPI architecture
   char* LogFile;
@@ -105,6 +109,12 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   //            architecture doesn't support this feature)
   virtual void GetTypicalRange (long& minIndex, long& maxIndex);
   
+  // get the ID of the node that handles a given index
+  //
+  // index = index to check
+  // return value = corresponding node ID
+  virtual int GetNodeIDFromIndex(long index);
+
   // set dimension of the Hilbert space on which the architecture has to work
   // 
   // dimension = dimension of the Hilbert space
@@ -191,6 +201,51 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // return value = true if no error occured
   virtual bool ReceiveFromMaster(int* values, int& nbrValues);
 
+  // send an integer array from the current slave node to master node
+  // 
+  // values = array of integesr to broadcast
+  // nbrValues = number of element in the array
+  // return value = true if no error occured
+  virtual bool SendToMaster(int* values, int& nbrValues);
+
+  // receive an integer array from master node to the current slave node
+  // 
+  // slaveID = slave ID
+  // values = array of integesr to broadcast
+  // nbrValues = number of element in the array
+  // return value = true if no error occured
+  virtual bool ReceiveFromSlave(int slaveID, int* values, int& nbrValues);
+
+  // send a double array from the current slave node to master node
+  // 
+  // values = array of integesr to broadcast
+  // nbrValues = number of element in the array
+  // return value = true if no error occured
+  virtual bool SendToMaster(double* values, int& nbrValues);
+
+  // receive a double array from master node to the current slave node
+  // 
+  // slaveID = slave ID
+  // values = array of integesr to broadcast
+  // nbrValues = number of element in the array
+  // return value = true if no error occured
+  virtual bool ReceiveFromSlave(int slaveID, double* values, int& nbrValues);
+
+  // send a double complex array from the current slave node to master node
+  // 
+  // values = array of integesr to broadcast
+  // nbrValues = number of element in the array
+  // return value = true if no error occured
+  virtual bool SendToMaster(doublecomplex* values, int& nbrValues);
+
+  // receive a double complex array from master node to the current slave node
+  // 
+  // slaveID = slave ID
+  // values = array of integesr to broadcast
+  // nbrValues = number of element in the array
+  // return value = true if no error occured
+  virtual bool ReceiveFromSlave(int slaveID, doublecomplex* values, int& nbrValues);
+
   // broadcast a double from master node to slave nodes
   // 
   // value = integer to broadcast
@@ -209,6 +264,12 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // vector = pointer to the vector tobroadcast  (only usefull for the master node)
   // return value = pointer to the broadcasted vector or null pointer if an error occured
   virtual Vector* BroadcastVector(Vector* vector = 0);
+
+  // broadcast a vector from a node to the others 
+  //
+  // nodeID = id of the mode that broadcasts its vector
+  // vector = vector to broadcast or to the vector where the content will be stored
+  void BroadcastVector(int nodeID, Vector& vector);
 
   // scatter a vector upon each slave node
   //
