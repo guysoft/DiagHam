@@ -365,7 +365,10 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
       double OrthogonalizationFactor = -1.0;
       doublecomplex* Eigenstates = 0;
       if (this->EigenstateFlag == true)
-	Eigenstates = new doublecomplex [LocalLeadingDimensionRow * LocalLeadingDimensionColumn];
+	{
+	  cout << "test = " << LocalLeadingDimensionRow << " " << LocalLeadingDimensionColumn << endl;
+	  Eigenstates = new doublecomplex [LocalLeadingDimensionRow * LocalLeadingDimensionColumn];
+	}
       int LocalRowEigenstateIndex = 1;
       int LocalColumnEigenstateIndex = 1;
       int* IFail = new int[TmpGlobalNbrRow];
@@ -375,8 +378,6 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
       int ScalapackWorkingAreaSize = -1;
       double* ScalapackRWorkingArea = new  double[10];
       int ScalapackRWorkingAreaSize = -1; 
-      int* ScalapackIWorkingArea = new int[10];
-      int ScalapackIWorkingAreaSize = -1;
       
       for (int i = 0; i < TmpGlobalNbrRow; ++i)
 	Eigenvalues[i] = 0.0;
@@ -400,8 +401,8 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
       ScalapackRWorkingAreaSize = (int) ScalapackRWorkingArea[0];
       delete[] ScalapackWorkingArea;
       delete[] ScalapackRWorkingArea;
-      ScalapackWorkingArea = new doublecomplex[ScalapackWorkingAreaSize];
-      ScalapackRWorkingArea = new double [ScalapackRWorkingAreaSize];
+      ScalapackWorkingArea = new doublecomplex[ScalapackWorkingAreaSize * 10];
+      ScalapackRWorkingArea = new double [ScalapackRWorkingAreaSize * 10];
       
       FORTRAN_NAME(pzheev)(JobZ, UpperLower, 
 			   &TmpGlobalNbrRow, LocalScalapackMatrix, 
@@ -412,6 +413,8 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
 			   ScalapackWorkingArea, &ScalapackWorkingAreaSize, 
 			   ScalapackRWorkingArea, &ScalapackRWorkingAreaSize, 
 			   &Information);  
+
+      cout << "toto done" << endl;
 
       if ((architecture->IsMasterNode()) && (architecture->VerboseMode()))
 	{
@@ -432,13 +435,146 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
  	  this->DiagonalizedMatrix = RealDiagonalMatrix (Eigenvalues, this->Hamiltonian->GetHilbertSpaceDimension());
 	  if (this->EigenstateFlag == true)
 	    {
+	      if ((architecture->IsMasterNode()) && (architecture->VerboseMode()))
+		gettimeofday (&TotalStartingTime, 0);
 	      this->ComplexEigenstates = ComplexMatrix (this->Hamiltonian->GetHilbertSpaceDimension(), this->NbrEigenstates, true);
+	      for (int SlaveID = 0; SlaveID < architecture->GetNbrSlaveNodes(); ++SlaveID)
+		{
+		  int TmpLocalNodeRow = 0;
+		  int TmpLocalNodeColumn = 0;
+		  int TmpLocalLeadingDimensionRow = 0;
+		  int TmpLocalLeadingDimensionColumn = 0;
+		  int TmpNbr = 1;
+		  architecture->ReceiveFromSlave(SlaveID, &TmpLocalNodeRow, TmpNbr);
+		  architecture->ReceiveFromSlave(SlaveID, &TmpLocalNodeColumn, TmpNbr);
+		  architecture->ReceiveFromSlave(SlaveID, &TmpLocalLeadingDimensionRow, TmpNbr);
+		  architecture->ReceiveFromSlave(SlaveID, &TmpLocalLeadingDimensionColumn, TmpNbr);
+		  cout << "receiving " << TmpLocalNodeRow << " " << TmpLocalNodeColumn << " " << TmpLocalLeadingDimensionRow 
+		       << " " << TmpLocalLeadingDimensionColumn << endl;
+		  int TmpSize = TmpLocalLeadingDimensionRow * TmpLocalLeadingDimensionColumn;
+		  doublecomplex* TmpEigenstates = new doublecomplex [TmpSize];
+		  architecture->ReceiveFromSlave(SlaveID, TmpEigenstates, TmpSize);
+		  int TmpNbrBlockPerRow = TmpLocalLeadingDimensionRow / NbrRowPerBlock;
+		  if ((TmpNbrBlockPerRow * NbrRowPerBlock) !=  TmpLocalLeadingDimensionRow)
+		    ++TmpNbrBlockPerRow;
+		  int TmpNbrBlockPerColumn = TmpLocalLeadingDimensionColumn / NbrColumnPerBlock;
+		  if ((TmpNbrBlockPerColumn * NbrColumnPerBlock) !=  TmpLocalLeadingDimensionColumn)
+		    ++TmpNbrBlockPerColumn;
+		  Complex Tmp;
+		  for (int j = 0; j < TmpNbrBlockPerColumn; ++j)
+		    {
+		      int TmpGlobalColumnIndex = (TmpLocalNodeColumn + j * NbrNodePerColumn) * NbrColumnPerBlock;
+		      if (TmpGlobalColumnIndex < this->NbrEigenstates)
+			{
+			  int TmpLocalNbrColumnInBlock = NbrColumnPerBlock;
+			  int TmpGlobalLastColumnIndex = TmpGlobalColumnIndex + TmpLocalNbrColumnInBlock;
+			  if (TmpGlobalLastColumnIndex > this->NbrEigenstates)
+			    TmpGlobalLastColumnIndex = this->NbrEigenstates;
+
+			  for (int i = 0; i < TmpNbrBlockPerRow; ++i)
+			    {
+			      int TmpGlobalRowIndex = (TmpLocalNodeRow + j * NbrNodePerRow) * NbrRowPerBlock;
+			      int TmpLocalNbrRowInBlock = NbrRowPerBlock;
+			      int TmpGlobalLastRowIndex = TmpGlobalRowIndex + TmpLocalNbrRowInBlock;
+			      if (TmpGlobalLastRowIndex > this->Hamiltonian->GetHilbertSpaceDimension())
+				TmpGlobalLastRowIndex = this->Hamiltonian->GetHilbertSpaceDimension();
+			      int TmpLocalColumnIndex = j * NbrColumnPerBlock;
+			      for (; TmpGlobalColumnIndex < TmpGlobalLastColumnIndex; ++TmpGlobalColumnIndex)
+				{
+				  int TmpLocalRowIndex = i * NbrRowPerBlock;
+				  for (; TmpGlobalRowIndex < TmpGlobalLastRowIndex; ++TmpGlobalRowIndex)
+				    {
+				      Tmp.Re = TmpEigenstates[(TmpLocalColumnIndex * TmpLocalLeadingDimensionColumn) + TmpLocalRowIndex].r;
+				      Tmp.Im = TmpEigenstates[(TmpLocalColumnIndex * TmpLocalLeadingDimensionColumn) + TmpLocalRowIndex].i;
+				      this->ComplexEigenstates.SetMatrixElement(TmpGlobalRowIndex, TmpGlobalColumnIndex, Tmp);
+				      ++TmpLocalRowIndex;
+				    }
+				  ++TmpLocalColumnIndex;
+				}
+			    }
+			}
+		    }
+		  delete[] TmpEigenstates;	      
+		}
+
+	      int TmpNbrBlockPerRow = LocalLeadingDimensionRow / NbrRowPerBlock;
+	      if ((TmpNbrBlockPerRow * NbrRowPerBlock) !=  LocalLeadingDimensionRow)
+		++TmpNbrBlockPerRow;
+	      int TmpNbrBlockPerColumn = LocalLeadingDimensionColumn / NbrColumnPerBlock;
+	      if ((TmpNbrBlockPerColumn * NbrColumnPerBlock) !=  LocalLeadingDimensionColumn)
+		++TmpNbrBlockPerColumn;
+	      Complex Tmp;
+	      for (int j = 0; j < TmpNbrBlockPerColumn; ++j)
+		{
+		  int TmpGlobalColumnIndex = (LocalNodeColumn + j * NbrNodePerColumn) * NbrColumnPerBlock;
+		  if (TmpGlobalColumnIndex < this->NbrEigenstates)
+		    {
+		      int TmpLocalNbrColumnInBlock = NbrColumnPerBlock;
+		      int TmpGlobalLastColumnIndex = TmpGlobalColumnIndex + TmpLocalNbrColumnInBlock;
+		      if (TmpGlobalLastColumnIndex > this->NbrEigenstates)
+			TmpGlobalLastColumnIndex = this->NbrEigenstates;
+		      for (int i = 0; i < TmpNbrBlockPerRow; ++i)
+			{
+			  int TmpGlobalRowIndex = (LocalNodeRow + j * NbrNodePerRow) * NbrRowPerBlock;
+			  int TmpLocalNbrRowInBlock = NbrRowPerBlock;
+			  int TmpGlobalLastRowIndex = TmpGlobalRowIndex + TmpLocalNbrRowInBlock;
+			  if (TmpGlobalLastRowIndex > this->Hamiltonian->GetHilbertSpaceDimension())
+			    TmpGlobalLastRowIndex = this->Hamiltonian->GetHilbertSpaceDimension();
+			  int TmpLocalColumnIndex = j * NbrColumnPerBlock;
+			  for (; TmpGlobalColumnIndex < TmpGlobalLastColumnIndex; ++TmpGlobalColumnIndex)
+			    {
+			      int TmpLocalRowIndex = i * NbrRowPerBlock;
+			      for (int TmpGlobalRowIndex2 = TmpGlobalRowIndex; TmpGlobalRowIndex2 < TmpGlobalLastRowIndex; ++TmpGlobalRowIndex2)
+				{
+				  Tmp.Re = Eigenstates[(TmpLocalColumnIndex * LocalLeadingDimensionRow) + TmpLocalRowIndex].r;
+				  Tmp.Im = Eigenstates[(TmpLocalColumnIndex * LocalLeadingDimensionRow) + TmpLocalRowIndex].i;
+// 				  Tmp.Re = Eigenstates[(TmpLocalRowIndex * LocalLeadingDimensionColumn) + TmpLocalColumnIndex].r;
+// 				  Tmp.Im = Eigenstates[(TmpLocalRowIndex * LocalLeadingDimensionColumn) + TmpLocalColumnIndex].i;
+				  this->ComplexEigenstates.SetMatrixElement(TmpGlobalRowIndex2, TmpGlobalColumnIndex, Tmp);
+				  ++TmpLocalRowIndex;
+				}
+			      ++TmpLocalColumnIndex;
+			    }
+			}
+		    }
+		}
+// 	      for (int i = 0; i <  this->NbrEigenstates; ++i)
+// 		cout  << this->ComplexEigenstates[i] << endl;
+// 	      cout << "this->NbrEigenstates = " << this->NbrEigenstates << endl;
+// 	      for (int i = 0 ; i < LocalLeadingDimensionColumn; ++i)
+// 		{
+// 		  for (int j = 0 ; j < LocalLeadingDimensionColumn; ++j)
+// 		    {
+// 		      Complex Tmp;
+// 		      Tmp.Re = Eigenstates[(i * LocalLeadingDimensionColumn) + j].r;
+// 		      Tmp.Im = Eigenstates[(i * LocalLeadingDimensionColumn) + j].i;
+// 		      cout << Tmp << " ";
+// 		    }
+// 		  cout << endl;
+// 		}
+	      if ((architecture->IsMasterNode()) && (architecture->VerboseMode()))
+		{
+		  timeval TotalEndingTime;
+		  gettimeofday (&TotalEndingTime, 0);
+		  double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 
+				(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));		      
+		  char TmpString[256];
+		  sprintf (TmpString, "HamiltonianFullDiagonalizeOperation reassembling eigenstates done in %.3f seconds", Dt);
+		  architecture->AddToLog(TmpString, true);
+		}      
 	    }
  	}
       else
 	{
 	  if (this->EigenstateFlag == true)
 	    {
+	      int TmpSize = LocalLeadingDimensionRow * LocalLeadingDimensionColumn;
+	      int TmpNbrElement = 1;
+	      architecture->SendToMaster(&LocalNodeRow, TmpNbrElement);
+	      architecture->SendToMaster(&LocalNodeColumn, TmpNbrElement);
+	      architecture->SendToMaster(&LocalLeadingDimensionRow, TmpNbrElement);
+	      architecture->SendToMaster(&LocalLeadingDimensionColumn, TmpNbrElement);
+	      architecture->SendToMaster(Eigenstates, TmpSize);
 	    }
 	  delete[] Eigenvalues;
 	}

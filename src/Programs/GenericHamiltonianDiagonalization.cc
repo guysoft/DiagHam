@@ -60,6 +60,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleIntegerOption ('\n', "data-column", "index of the column that contains the matrix elements (or their real part)", 0);
   (*SystemGroup) += new BooleanOption  ('c', "complex", "indicate that the Hamiltonian is complex");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "prefix to use for output file names", "dummy");
+  (*OutputGroup) += new SingleStringOption ('\n', "eigenstate-file", "prefix to use for the eigenstate output file names", "dummy");
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -107,15 +108,17 @@ int main(int argc, char** argv)
   char* CommentLine = new char [strlen(Manager.GetString("hamiltonian")) + 256];
   sprintf (CommentLine, "eigenvalues of %s\n #", Manager.GetString("hamiltonian"));
 
+  char* EigenvectorFileName = Manager.GetString("eigenstate-file");
+  
   if (Manager.GetBoolean("complex") == false)
     {
-      GenericRealMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, " ", CommentLine, 0.0,  Manager.GetString("output-file"));
+      GenericRealMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, " ", CommentLine, 0.0,  Manager.GetString("output-file"), true, EigenvectorFileName);
       MainTaskOperation TaskOperation (&Task);
       TaskOperation.ApplyOperation(Architecture.GetArchitecture());
     }
   else
     {
-      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, " ", CommentLine, 0.0,  Manager.GetString("output-file"));
+      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, " ", CommentLine, 0.0,  Manager.GetString("output-file"), true, EigenvectorFileName);
       MainTaskOperation TaskOperation (&Task);
       TaskOperation.ApplyOperation(Architecture.GetArchitecture());
     }
