@@ -39,6 +39,8 @@ using std::cout;
 
 #ifdef HAVE_LAPACK
 
+// TODO: review which of the lapack functions are used based on the selection of parallelized routines!
+
 // binding to the LAPACK dgesvd function
 //
 extern "C" void FORTRAN_NAME(dgesvd)(const char* jobu, const char* jobv, const int* nbrRow, const int* nbrColumn, const double* matrix, const int* leadingDimension,

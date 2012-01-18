@@ -197,22 +197,26 @@ void SimpleMPIArchitecture::SetDimension (long dimension)
     }
   this->MinimumIndices = new long[this->NbrMPINodes];
   this->MaximumIndices = new long[this->NbrMPINodes];
-#ifdef __MPI__
   if (this->MasterNodeFlag)
     {
       this->MinimumIndices[0] = this->MinimumIndex;
       this->MaximumIndices[0] = this->MaximumIndex;
+#ifdef __MPI__
       for (int i = 1; i < this->NbrMPINodes; ++i)
 	{
 	  MPI::COMM_WORLD.Recv(&(this->MinimumIndices[i]), 2, MPI::INT, i, 1);      
 	  MPI::COMM_WORLD.Recv(&(this->MaximumIndices[i]), 2, MPI::INT, i, 1);      
 	}
+#endif 
     }
   else
     {
+#ifdef __MPI__      
       MPI::COMM_WORLD.Send(&this->MinimumIndex, 2, MPI::INT, 0, 1); 
-      MPI::COMM_WORLD.Send(&this->MaximumIndex, 2, MPI::INT, 0, 1); 
+      MPI::COMM_WORLD.Send(&this->MaximumIndex, 2, MPI::INT, 0, 1);
+#endif
     }
+#ifdef __MPI__      
   MPI::COMM_WORLD.Bcast(this->MinimumIndices, 2 * this->NbrMPINodes, MPI::INT, 0);
   MPI::COMM_WORLD.Bcast(this->MaximumIndices, 2 * this->NbrMPINodes, MPI::INT, 0);
 #endif

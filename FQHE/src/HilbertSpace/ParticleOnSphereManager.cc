@@ -161,7 +161,7 @@ void ParticleOnSphereManager::AddOptionGroup(OptionManager* manager, const char*
     case 2:
       {
 	(*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the z component of the total spin of the system", 0);
-	if (this->FermionFlag) // symmetrized bases not defined for bosons at the moment
+	if (this->FermionFlag == true) // symmetrized bases not defined for bosons at the moment
 	  {
 	    (*SystemGroup) += new BooleanOption  ('\n', "lzsymmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
 	    (*SystemGroup) += new BooleanOption  ('\n', "szsymmetrized-basis", "use Sz <-> -Sz symmetrized version of the basis (only valid if total-sz=0)");
@@ -170,7 +170,7 @@ void ParticleOnSphereManager::AddOptionGroup(OptionManager* manager, const char*
 	    (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
 	    (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
 	  }
-	else
+	if (this->BosonFlag == true)
 	  {
 	    // boson options
 	    (*SystemGroup) += new BooleanOption  ('\n', "all-sz", "use Hilbert-space with all values of sz");

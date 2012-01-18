@@ -83,6 +83,7 @@ ExtendedHalperinWavefunction::ExtendedHalperinWavefunction(int nbrParticles, int
   this->T=t;
   this->U=u;
   this->V=v;
+  this->B=b;
   // cout << "P="<<P<<" Q="<<Q<<" R="<<R<<" S="<<S<<endl;
   if ( (moveJastrowInside) && (P!=0) && (R==1))
     {

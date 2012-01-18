@@ -902,6 +902,7 @@ void QHEOnSphereMainTask::DiagonalizeInHilbertSubspace(char* subspaceDescription
       cout << "Vectors are not defined or have a wrong value in " << subspaceDescription << endl;
       return;
     }
+  int SpaceDimension = this->Space->GetHilbertSpaceDimension();
   RealMatrix Basis (this->Space->GetHilbertSpaceDimension(), TmpHilbertSpaceDimension);
   char* DirectoryName = ReducedBasis["Directory"];
   char* TmpName;
@@ -922,6 +923,11 @@ void QHEOnSphereMainTask::DiagonalizeInHilbertSubspace(char* subspaceDescription
 	    delete[] VectorFileNames[j];
 	  delete[] VectorFileNames;
 	  return;
+	}
+      if (Basis[i].GetVectorDimension() != SpaceDimension)
+	{
+	  cout << "Error: basis vector '"<<TmpName<< "' does not match the dimension of the Hilbert space."<<endl;
+	  exit(1);
 	}
       if (DirectoryName != 0)
 	delete[] TmpName;
