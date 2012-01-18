@@ -197,6 +197,7 @@ void SimpleMPIArchitecture::SetDimension (long dimension)
     }
   this->MinimumIndices = new long[this->NbrMPINodes];
   this->MaximumIndices = new long[this->NbrMPINodes];
+#ifdef __MPI__
   if (this->MasterNodeFlag)
     {
       this->MinimumIndices[0] = this->MinimumIndex;
@@ -214,6 +215,7 @@ void SimpleMPIArchitecture::SetDimension (long dimension)
     }
   MPI::COMM_WORLD.Bcast(this->MinimumIndices, 2 * this->NbrMPINodes, MPI::INT, 0);
   MPI::COMM_WORLD.Bcast(this->MaximumIndices, 2 * this->NbrMPINodes, MPI::INT, 0);
+#endif
 }
 
 // request an operation to the slave nodes and wait till they are ready to get operation parameters

@@ -466,7 +466,7 @@ bool Matrix::SparseWriteAsciiMatrix (char* fileName, double error, bool zeroBase
 		{
 		  this->GetMatrixElement(i, j, Tmp);
 		  if (fabs(Tmp) > error)
-		    cout << i << " " << j << " " << Tmp << endl;
+		    File << i << " " << j << " " << Tmp << endl;
 		}
 	    }      
 	}
@@ -478,7 +478,7 @@ bool Matrix::SparseWriteAsciiMatrix (char* fileName, double error, bool zeroBase
 		{
 		  this->GetMatrixElement(i, j, Tmp);
 		  if (fabs(Tmp) > error)
-		    cout << (i + 1) << " " << (j + 1) << " " << Tmp << endl;
+		    File << (i + 1) << " " << (j + 1) << " " << Tmp << endl;
 		}
 	    }      
 	}
@@ -494,7 +494,7 @@ bool Matrix::SparseWriteAsciiMatrix (char* fileName, double error, bool zeroBase
 		{
 		  this->GetMatrixElement(i, j, Tmp);
 		  if (Norm(Tmp) > error)
-		    cout << i << " " << j << " " << Tmp.Re << " " << Tmp.Im << endl;
+		    File << i << " " << j << " " << Tmp.Re << " " << Tmp.Im << endl;
 		}
 	    }      
 	}
@@ -506,7 +506,7 @@ bool Matrix::SparseWriteAsciiMatrix (char* fileName, double error, bool zeroBase
 		{
 		  this->GetMatrixElement(i, j, Tmp);
 		  if (Norm(Tmp) > error)
-		    cout << (i + 1) << " " << (j + 1) << " " << Tmp.Re << " " << Tmp.Im << endl;
+		    File << (i + 1) << " " << (j + 1) << " " << Tmp.Re << " " << Tmp.Im << endl;
 		}
 	    }      
 	}
