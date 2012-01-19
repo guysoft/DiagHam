@@ -87,15 +87,19 @@ ComplexBasicBlockLanczosAlgorithm::ComplexBasicBlockLanczosAlgorithm(AbstractArc
     {
       this->TridiagonalizedMatrix = RealTriDiagonalSymmetricMatrix(this->MaximumNumberIteration, true);
       this->DiagonalizedMatrix = RealTriDiagonalSymmetricMatrix(this->MaximumNumberIteration, true);
-      this->ReducedMatrix = BandDiagonalHermitianMatrix(this->MaximumNumberIteration, this->BlockSize, true);
-      this->TemporaryReducedMatrix = BandDiagonalHermitianMatrix(this->MaximumNumberIteration, this->BlockSize, true);
+       this->ReducedMatrix = BandDiagonalHermitianMatrix(this->MaximumNumberIteration, this->BlockSize, true);
+       this->TemporaryReducedMatrix = BandDiagonalHermitianMatrix(this->MaximumNumberIteration, this->BlockSize, true);
+//      this->ReducedMatrix = HermitianMatrix(this->MaximumNumberIteration, true);
+//      this->TemporaryReducedMatrix = HermitianMatrix(this->MaximumNumberIteration, strue);
     }
   else
     {
       this->TridiagonalizedMatrix = RealTriDiagonalSymmetricMatrix();
       this->DiagonalizedMatrix = RealTriDiagonalSymmetricMatrix();
-      this->ReducedMatrix = BandDiagonalHermitianMatrix();
-      this->TemporaryReducedMatrix = BandDiagonalHermitianMatrix();
+       this->ReducedMatrix = BandDiagonalHermitianMatrix();
+       this->TemporaryReducedMatrix = BandDiagonalHermitianMatrix();
+//       this->ReducedMatrix = HermitianMatrix();
+//       this->TemporaryReducedMatrix = HermitianMatrix();
     }
   this->Architecture = architecture;
   this->Flag.Initialize();
@@ -168,22 +172,22 @@ void ComplexBasicBlockLanczosAlgorithm::InitializeLanczosAlgorithm()
       int Dimension = this->Hamiltonian->GetHilbertSpaceDimension();
       this->LanczosVectors[0] = ComplexVector (Dimension);
       for (int i = 0; i < Dimension; i++)
-	this->LanczosVectors[0][i] = (drand48() - 0.5) * 2.0;
+	this->LanczosVectors[0][i] = drand48() * Phase (2.0 * M_PI * drand48());
       this->LanczosVectors[0] /= this->LanczosVectors[0].Norm();
       Complex* TmpCoef = new Complex [this->NbrEigenvalue];
       for (int j = 1; j < this->BlockSize; ++j)
 	{
 	  this->LanczosVectors[j] = ComplexVector (Dimension);
 	  for (int i = 0; i < Dimension; ++i)
-	    this->LanczosVectors[j][i] = (drand48() - 0.5) * 2.0;
+	    this->LanczosVectors[j][i] = drand48() * Phase (2.0 * M_PI * drand48());
 	  for (int i = 0; i < j; ++i)
-	    TmpCoef[i] = this->LanczosVectors[j] * this->LanczosVectors[i];
+	    TmpCoef[i] = this->LanczosVectors[i] * this->LanczosVectors[j];
 	  for (int i = 0; i < j; ++i)
 	    this->LanczosVectors[j].AddLinearCombination(-TmpCoef[i], this->LanczosVectors[i]);
 	  double TmpNorm = this->LanczosVectors[j].Norm();
 	  this->LanczosVectors[j] /= TmpNorm;
 	}
-      //this->TestOrthogonality(this->LanczosVectors,BlockSize);
+      this->TestOrthogonality(this->LanczosVectors,BlockSize);
       delete[] TmpCoef;
       if (this->DiskFlag == false)
 	{	  
@@ -378,8 +382,13 @@ Vector* ComplexBasicBlockLanczosAlgorithm::GetEigenstates(int nbrEigenstates)
 #ifdef __LAPACK__
   if (this->LapackFlag == true)
     {
+//       RealDiagonalMatrix TmpDiag (SortedDiagonalizedMatrix.GetNbrColumn());
+//       this->TemporaryReducedMatrix.LapackDiagonalize(TmpDiag, TmpEigenvector);
+//       for (int i = 0; i < SortedDiagonalizedMatrix.GetNbrColumn(); ++i)
+// 	SortedDiagonalizedMatrix.DiagonalElement(i) = TmpDiag[i];
+      HermitianMatrix DumbMatrix (this->ReducedMatrix);
       RealDiagonalMatrix TmpDiag (SortedDiagonalizedMatrix.GetNbrColumn());
-      this->TemporaryReducedMatrix.LapackDiagonalize(TmpDiag, TmpEigenvector);
+      DumbMatrix.LapackDiagonalize(TmpDiag, TmpEigenvector);
       for (int i = 0; i < SortedDiagonalizedMatrix.GetNbrColumn(); ++i)
 	SortedDiagonalizedMatrix.DiagonalElement(i) = TmpDiag[i];
     }
@@ -411,7 +420,7 @@ Vector* ComplexBasicBlockLanczosAlgorithm::GetEigenstates(int nbrEigenstates)
       for (int i = 0; i < this->BlockSize; ++i)
 	{
 	  MultipleComplexScalarProductOperation Operation2 (&(this->LanczosVectors[i + this->BlockSize]), this->LanczosVectors,   
-							i + 1, this->TemporaryCoefficients);
+							    i + 1, this->TemporaryCoefficients);
 	  Operation2.ApplyOperation(this->Architecture);
 	  for (int j = 0; j <= i; ++j)
 	    {
@@ -824,7 +833,7 @@ bool ComplexBasicBlockLanczosAlgorithm::TestConvergence ()
 // columnShift = shift to apply to matrix column index to reach the upper leftmost element
 
 void ComplexBasicBlockLanczosAlgorithm::ReorthogonalizeVectors (ComplexVector* vectors, int nbrVectors, BandDiagonalHermitianMatrix& matrix,
-							 int rowShift, int columnShift)
+								int rowShift, int columnShift)
 {
   double TmpNorm = vectors[0].Norm();
   matrix(rowShift, columnShift) = TmpNorm;
@@ -832,8 +841,8 @@ void ComplexBasicBlockLanczosAlgorithm::ReorthogonalizeVectors (ComplexVector* v
   for (int i = 1; i < nbrVectors; ++i)
     {
       MultipleComplexScalarProductOperation Operation (&(vectors[i]), 
-						    vectors,   
-						    i, this->TemporaryCoefficients);
+						       vectors,   
+						       i, this->TemporaryCoefficients);
       Operation.ApplyOperation(this->Architecture);
       for (int j = 0; j < i; ++j)
 	{
@@ -853,21 +862,22 @@ void ComplexBasicBlockLanczosAlgorithm::ReorthogonalizeVectors (ComplexVector* v
 
 void ComplexBasicBlockLanczosAlgorithm::TestOrthogonality (ComplexVector* vectors, int nbrVectors, ComplexVector* otherVectors, int nbrOtherVectors)
 {
+  cout << "checking orthogonality" << endl;
   Complex Sp;
-  for (int i=1; i<nbrVectors; ++i)
+  for (int i = 1; i < nbrVectors; ++i)
     for (int j=0; j<i; ++j)
       {
-	Sp = vectors[i]*vectors[j];
-	if (Norm(Sp)>1e-13)
-	  cout << "Orthogonality problem: Sp="<<Sp<<endl;
+	Sp = vectors[i] * vectors[j];
+	if (Norm(Sp) > 1e-13)
+	  cout << "Orthogonality problem: Sp=" << Sp << endl;
       }
-  if (otherVectors!=NULL)
-    for (int i=0; i<nbrVectors; ++i)
-      for (int j=0; j<nbrOtherVectors; ++j)
+  if (otherVectors != NULL)
+    for (int i = 0; i < nbrVectors; ++i)
+      for (int j = 0; j < nbrOtherVectors; ++j)
 	{
-	  Sp = vectors[i]*otherVectors[j];
+	  Sp = vectors[i] * otherVectors[j];
 	  if (Norm(Sp)>1e-13)
-	    cout << "Orthogonality problem with other vectors: Sp="<<Sp<<endl;
+	    cout << "Orthogonality problem with other vectors: Sp=" << Sp << endl;
 	}
 
 }

@@ -53,6 +53,7 @@
 #include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithGroundStateFastDisk.h"
 #include "LanczosAlgorithm/ComplexBasicBlockLanczosAlgorithm.h"
 #include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithm.h"
+#include "LanczosAlgorithm/FullReorthogonalizedComplexBlockLanczosAlgorithm.h"
 #include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage.h"
 
 
@@ -266,11 +267,11 @@ AbstractLanczosAlgorithm* LanczosManager::GetLanczosAlgorithm(AbstractArchitectu
 		    {
 		      if (FullReorthogonalizationFlag == true)
 			{
-			  cout << "reorthogonalized block lanczos is not yet defined: ComplexFullReorthogonalizedBlockLanczosAlgorithm missing"<<endl;
-			  cout << "using non-reorthogonalized algorithm 'ComplexBasicBlockLanczosAlgorithm'"<<endl;
-			  //Lanczos = new ComplexFullReorthogonalizedBlockLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->SizeBlockLanczos, this->MaxNbrIterLanczos, false, this->LapackFlag);
-			  this->LanczosAlgorithm = new ComplexBasicBlockLanczosAlgorithm (architecture, NbrEigenvalue, SizeBlockLanczos, MaxNbrIterLanczos, 
-											  FastDiskFlag, ResumeFastDiskFlag, false, useLapack);			  
+//			  cout << "reorthogonalized block lanczos is not yet defined: ComplexFullReorthogonalizedBlockLanczosAlgorithm missing"<<endl;
+			  cout << "using FullReorthogonalizedComplexBlockLanczosAlgorithm"<<endl;
+			  this->LanczosAlgorithm = new FullReorthogonalizedComplexBlockLanczosAlgorithm (architecture, NbrEigenvalue, SizeBlockLanczos, MaxNbrIterLanczos, false, useLapack);
+			  //this->LanczosAlgorithm = new ComplexBasicBlockLanczosAlgorithm (architecture, NbrEigenvalue, SizeBlockLanczos, MaxNbrIterLanczos, 
+//											  FastDiskFlag, ResumeFastDiskFlag, false, useLapack);			  
 			}
 		      else
 			{
