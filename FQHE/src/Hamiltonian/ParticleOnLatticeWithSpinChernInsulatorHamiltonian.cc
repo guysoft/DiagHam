@@ -1054,9 +1054,9 @@ void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::PartialEnableFastMultip
   for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
     {
       long TotalPos = 0;
-      this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
+      this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i + this->PrecalculationShift, this->InteractionPerComponentIndex[Pos], 
 							 this->InteractionPerComponentCoefficient[Pos], TotalPos);
-      this->EvaluateMNOneBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
+      this->EvaluateMNOneBodyFastMultiplicationComponent(TmpParticles, i + this->PrecalculationShift, this->InteractionPerComponentIndex[Pos], 
       							 this->InteractionPerComponentCoefficient[Pos], TotalPos);
       ++Pos;
     }
