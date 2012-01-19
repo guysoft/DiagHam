@@ -261,6 +261,8 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // return value = true if no error occured
   virtual bool ReceiveFromSlave(int slaveID, double* values, long& nbrValues);
 
+#ifdef __LAPACK__
+
   // send a double complex array from the current slave node to master node
   //  
   // values = array of integesr to broadcast
@@ -290,6 +292,7 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // nbrValues = number of element in the array
   // return value = true if no error occured
   virtual bool ReceiveFromSlave(int slaveID, doublecomplex* values, long& nbrValues);
+#endif
 
   // broadcast a double from master node to slave nodes
   // 

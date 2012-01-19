@@ -533,6 +533,7 @@ bool SimpleMPIArchitecture::ReceiveFromSlave(int slaveID, double* values, long& 
 #endif  
 }
 
+#ifdef __LAPACK__
 
 // send a double complex array from the current slave node to master node
 // 
@@ -605,6 +606,8 @@ bool SimpleMPIArchitecture::ReceiveFromSlave(int slaveID, doublecomplex* values,
   return false;
 #endif  
 }
+
+#endif
 
 // broadcast a double from master node to slave nodes
 // 
