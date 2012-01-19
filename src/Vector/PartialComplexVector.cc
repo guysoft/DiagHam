@@ -602,9 +602,9 @@ Vector& PartialComplexVector::ReassembleVector(MPI::Intracomm& communicator, int
     {
       int TmpArray[2];
       TmpArray[0] = this->IndexShift;
-      TmpArray[1] = this->RealDimension;
+      TmpArray[1] = this->Dimension;
       communicator.Send(TmpArray, 2, MPI::INT, id, 1);
-      communicator.Send(this->Components, 2 * this->RealDimension, MPI::DOUBLE, id, 1);  
+      communicator.Send(this->Components, 2 * this->Dimension, MPI::DOUBLE, id, 1);  
     }
   return *this;
 }
