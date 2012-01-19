@@ -1074,13 +1074,14 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNOneBodyFastMultiplication
   int tmpElementPos;
   double Coefficient;
   int Dim = this->Particles->GetHilbertSpaceDimension();
+  int AbsoluteIndex = index + this->PrecalculationShift;
   // deal with kinetic energy terms first!             
   for (int j = 0; j < NbrHoppingTerms; ++j)
     {
       qi = this->KineticQi[j];
       qf = this->KineticQf[j];
       // considering: this->HoppingTerms[j			
-      Index2 = particles->AdA(index, qf, qi, Coefficient);	
+      Index2 = particles->AdA(AbsoluteIndex, qf, qi, Coefficient);	
 			//cout << "Element ("<<qi<<"->"<<qf<<"): "<<Coefficient<<endl;
       if (Index2 < Dim)
 	{
