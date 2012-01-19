@@ -160,6 +160,10 @@ extern "C" void FORTRAN_NAME(pdsyev) (const char* jobz, const char* uplo,
 HamiltonianFullDiagonalizeOperation::HamiltonianFullDiagonalizeOperation (AbstractHamiltonian* hamiltonian, bool complexFlag, bool eigenstateFlag, int nbrEigenstates)
 {
   this->Hamiltonian = hamiltonian;
+  if (this->Hamiltonian->IsHermitian() == true)
+    {
+      this->UseHermitianFlag = true;
+    }
   this->OperationType = AbstractArchitectureOperation::HamiltonianFullDiagonalize;
   this->ComplexFlag = complexFlag;
   this->EigenstateFlag = eigenstateFlag;
@@ -175,6 +179,10 @@ HamiltonianFullDiagonalizeOperation::HamiltonianFullDiagonalizeOperation (Abstra
 HamiltonianFullDiagonalizeOperation::HamiltonianFullDiagonalizeOperation(const HamiltonianFullDiagonalizeOperation& operation)
 {
   this->Hamiltonian = operation.Hamiltonian;
+  if (this->Hamiltonian->IsHermitian() == true)
+    {
+      this->UseHermitianFlag = true;
+    }
   this->OperationType = AbstractArchitectureOperation::HamiltonianFullDiagonalize;
   this->ComplexFlag = operation.ComplexFlag;
   this->EigenstateFlag = operation.EigenstateFlag;
@@ -189,6 +197,10 @@ HamiltonianFullDiagonalizeOperation::HamiltonianFullDiagonalizeOperation(const H
 HamiltonianFullDiagonalizeOperation::HamiltonianFullDiagonalizeOperation(AbstractHamiltonian* hamiltonian, SimpleMPIArchitecture* architecture)
 {
   this->Hamiltonian = hamiltonian;
+  if (this->Hamiltonian->IsHermitian() == true)
+    {
+      this->UseHermitianFlag = true;
+    }
   this->OperationType = AbstractArchitectureOperation::HamiltonianFullDiagonalize;
   int TmpFlag = 0;
   architecture->BroadcastToSlaves(TmpFlag);
@@ -316,8 +328,17 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
 	  int TmpNode = architecture->GetNodeIDFromIndex(j - 1);
 	  if (TmpNode ==  architecture->GetNodeNbr())
 	    {
-	      InputVector[j - 1] = 1.0;
-	      this->Hamiltonian->Multiply(InputVector, OutputVector, j - 1, 1);
+	      if (this->Hamiltonian->IsHermitian() == true)
+		{
+		  InputVector.ClearVector();
+		  InputVector[j - 1] = 1.0;
+		  this->Hamiltonian->HermitianMultiply(InputVector, OutputVector, j - 1, 1);
+		}
+	      else
+		{
+		  InputVector[j - 1] = 1.0;
+		  this->Hamiltonian->Multiply(InputVector, OutputVector, j - 1, 1);
+		}
 	    }
 	  architecture->BroadcastVector(TmpNode, OutputVector);
 	  for (int i = 1; i <= TmpGlobalNbrRow; ++i)
@@ -327,6 +348,7 @@ bool HamiltonianFullDiagonalizeOperation::ArchitectureDependentApplyOperation(Si
 	      FORTRAN_NAME(pzelset) (LocalScalapackMatrix, &i, &j, Desc, &TmpElement);
 	    }
 	}
+
       if ((architecture->IsMasterNode()) && (architecture->VerboseMode()))
 	{
 	  timeval TotalEndingTime;

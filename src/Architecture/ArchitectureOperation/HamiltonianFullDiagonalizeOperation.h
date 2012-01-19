@@ -55,6 +55,8 @@ class HamiltonianFullDiagonalizeOperation: public AbstractArchitectureOperation
 
   // pointer to the hamiltonian
   AbstractHamiltonian* Hamiltonian;
+  // use full hermitian structure of the hamiltonian
+  bool UseHermitianFlag;
 
   // execution time measured in RawApply
   double ExecutionTime;
