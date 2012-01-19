@@ -206,7 +206,7 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // values = array of integesr to broadcast
   // nbrValues = number of element in the array
   // return value = true if no error occured
-  virtual bool SendToMaster(int* values, int& nbrValues);
+  virtual bool SendToMaster(int* values, int nbrValues);
 
   // receive an integer array from master node to the current slave node
   // 
@@ -216,12 +216,27 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // return value = true if no error occured
   virtual bool ReceiveFromSlave(int slaveID, int* values, int& nbrValues);
 
+  // send an integer array from the current slave node to master node
+  // 
+  // values = array of integesr to broadcast
+  // nbrValues = number of element in the array
+  // return value = true if no error occured
+  virtual bool SendToMaster(int* values, long nbrValues);
+
+  // receive an integer array from master node to the current slave node
+  // 
+  // slaveID = slave ID
+  // values = array of integesr to broadcast
+  // nbrValues = number of element in the array
+  // return value = true if no error occured
+  virtual bool ReceiveFromSlave(int slaveID, int* values, long& nbrValues);
+
   // send a double array from the current slave node to master node
   // 
   // values = array of integesr to broadcast
   // nbrValues = number of element in the array
   // return value = true if no error occured
-  virtual bool SendToMaster(double* values, int& nbrValues);
+  virtual bool SendToMaster(double* values, int nbrValues);
 
   // receive a double array from master node to the current slave node
   // 
@@ -231,12 +246,27 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // return value = true if no error occured
   virtual bool ReceiveFromSlave(int slaveID, double* values, int& nbrValues);
 
-  // send a double complex array from the current slave node to master node
+  // send a double array from the current slave node to master node
   // 
   // values = array of integesr to broadcast
   // nbrValues = number of element in the array
   // return value = true if no error occured
-  virtual bool SendToMaster(doublecomplex* values, int& nbrValues);
+  virtual bool SendToMaster(double* values, long nbrValues);
+
+  // receive a double array from master node to the current slave node
+  // 
+  // slaveID = slave ID
+  // values = array of integesr to broadcast
+  // nbrValues = number of element in the array
+  // return value = true if no error occured
+  virtual bool ReceiveFromSlave(int slaveID, double* values, long& nbrValues);
+
+  // send a double complex array from the current slave node to master node
+  //  
+  // values = array of integesr to broadcast
+  // nbrValues = number of element in the array
+  // return value = true if no error occured
+  virtual bool SendToMaster(doublecomplex* values, int nbrValues);
 
   // receive a double complex array from master node to the current slave node
   // 
@@ -245,6 +275,21 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // nbrValues = number of element in the array
   // return value = true if no error occured
   virtual bool ReceiveFromSlave(int slaveID, doublecomplex* values, int& nbrValues);
+
+  // send a double complex array from the current slave node to master node
+  //  
+  // values = array of integesr to broadcast
+  // nbrValues = number of element in the array
+  // return value = true if no error occured
+  virtual bool SendToMaster(doublecomplex* values, long nbrValues);
+
+  // receive a double complex array from master node to the current slave node
+  // 
+  // slaveID = slave ID
+  // values = array of integesr to broadcast
+  // nbrValues = number of element in the array
+  // return value = true if no error occured
+  virtual bool ReceiveFromSlave(int slaveID, doublecomplex* values, long& nbrValues);
 
   // broadcast a double from master node to slave nodes
   // 

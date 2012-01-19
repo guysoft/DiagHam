@@ -395,7 +395,7 @@ bool SimpleMPIArchitecture::ReceiveFromMaster(int* values, int& nbrValues)
 // nbrValues = number of element in the array
 // return value = true if no error occured
   
-bool SimpleMPIArchitecture::SendToMaster(int* values, int& nbrValues)
+bool SimpleMPIArchitecture::SendToMaster(int* values, int nbrValues)
 {
 #ifdef __MPI__
   if (!this->MasterNodeFlag)
@@ -425,13 +425,49 @@ bool SimpleMPIArchitecture::ReceiveFromSlave(int slaveID, int* values, int& nbrV
 #endif  
 }
 
+// send an integer array from the current slave node to master node
+// 
+// values = array of integesr to broadcast
+// nbrValues = number of element in the array
+// return value = true if no error occured
+  
+bool SimpleMPIArchitecture::SendToMaster(int* values, long nbrValues)
+{
+#ifdef __MPI__
+  if (!this->MasterNodeFlag)
+    {
+      int Acknowledge = 1;
+      MPI::COMM_WORLD.Send(values, nbrValues, MPI::INT, 0, 1); 
+      return true;
+    }
+#endif
+  return false;
+}
+
+// receive an integer array from master node to the current slave node
+// 
+// slaveID = slave ID
+// values = array of integesr to broadcast
+// nbrValues = number of element in the array
+// return value = true if no error occured
+
+bool SimpleMPIArchitecture::ReceiveFromSlave(int slaveID, int* values, long& nbrValues)
+{
+#ifdef __MPI__
+  MPI::COMM_WORLD.Recv(values, nbrValues, MPI::INT, slaveID + 1, 1);
+  return true;
+#else
+  return false;
+#endif  
+}
+
 // send a double array from the current slave node to master node
 // 
 // values = array of integesr to broadcast
 // nbrValues = number of element in the array
 // return value = true if no error occured
   
-bool SimpleMPIArchitecture::SendToMaster(double* values, int& nbrValues)
+bool SimpleMPIArchitecture::SendToMaster(double* values, int nbrValues)
 {
 #ifdef __MPI__
   if (!this->MasterNodeFlag)
@@ -461,19 +497,56 @@ bool SimpleMPIArchitecture::ReceiveFromSlave(int slaveID, double* values, int& n
 #endif  
 }
 
-// send a double complex array from the current slave node to master node
+// send a double array from the current slave node to master node
 // 
 // values = array of integesr to broadcast
 // nbrValues = number of element in the array
 // return value = true if no error occured
   
-bool SimpleMPIArchitecture::SendToMaster(doublecomplex* values, int& nbrValues)
+bool SimpleMPIArchitecture::SendToMaster(double* values, long nbrValues)
 {
 #ifdef __MPI__
   if (!this->MasterNodeFlag)
     {
       int Acknowledge = 1;
       MPI::COMM_WORLD.Send(values, nbrValues, MPI::DOUBLE, 0, 1); 
+      return true;
+    }
+#endif
+  return false;
+}
+
+// receive a double array from master node to the current slave node
+// 
+// slaveID = slave ID
+// values = array of integesr to broadcast
+// nbrValues = number of element in the array
+// return value = true if no error occured
+
+bool SimpleMPIArchitecture::ReceiveFromSlave(int slaveID, double* values, long& nbrValues)
+{
+#ifdef __MPI__
+  MPI::COMM_WORLD.Recv(values, nbrValues, MPI::DOUBLE, slaveID + 1, 1);
+  return true;
+#else
+  return false;
+#endif  
+}
+
+
+// send a double complex array from the current slave node to master node
+// 
+// values = array of integesr to broadcast
+// nbrValues = number of element in the array
+// return value = true if no error occured
+  
+bool SimpleMPIArchitecture::SendToMaster(doublecomplex* values, int nbrValues)
+{
+#ifdef __MPI__
+  if (!this->MasterNodeFlag)
+    {
+      int Acknowledge = 1;
+      MPI::COMM_WORLD.Send(values, nbrValues, MPI::DOUBLE_COMPLEX, 0, 1); 
       return true;
     }
 #endif
@@ -490,7 +563,43 @@ bool SimpleMPIArchitecture::SendToMaster(doublecomplex* values, int& nbrValues)
 bool SimpleMPIArchitecture::ReceiveFromSlave(int slaveID, doublecomplex* values, int& nbrValues)
 {
 #ifdef __MPI__
-  MPI::COMM_WORLD.Recv(values, nbrValues, MPI::DOUBLE, slaveID + 1, 1);
+  MPI::COMM_WORLD.Recv(values, nbrValues, MPI::DOUBLE_COMPLEX, slaveID + 1, 1);
+  return true;
+#else
+  return false;
+#endif  
+}
+
+// send a double complex array from the current slave node to master node
+// 
+// values = array of integesr to broadcast
+// nbrValues = number of element in the array
+// return value = true if no error occured
+  
+bool SimpleMPIArchitecture::SendToMaster(doublecomplex* values, long nbrValues)
+{
+#ifdef __MPI__
+  if (!this->MasterNodeFlag)
+    {
+      int Acknowledge = 1;
+      MPI::COMM_WORLD.Send(values, nbrValues, MPI::DOUBLE_COMPLEX, 0, 1); 
+      return true;
+    }
+#endif
+  return false;
+}
+
+// receive a double complex array from master node to the current slave node
+// 
+// slaveID = slave ID
+// values = array of integesr to broadcast
+// nbrValues = number of element in the array
+// return value = true if no error occured
+
+bool SimpleMPIArchitecture::ReceiveFromSlave(int slaveID, doublecomplex* values, long& nbrValues)
+{
+#ifdef __MPI__
+  MPI::COMM_WORLD.Recv(values, nbrValues, MPI::DOUBLE_COMPLEX, slaveID + 1, 1);
   return true;
 #else
   return false;
