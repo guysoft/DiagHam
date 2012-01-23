@@ -326,7 +326,7 @@ void HermitianMatrix::SetMatrixElement(int i, int j, double x)
 	  i = tmp;
 	}
       long Tmp = (long) j;
-      Tmp -= ((long) i) * ((long) (i - 2 * this->NbrRow - this->Increment + 3)) / 2l + 1l;
+      Tmp -= ((long) i) * ((long) (i - 2 * (this->NbrRow + this->Increment) + 3)) / 2l + 1l;
       this->RealOffDiagonalElements[Tmp] = x;
       this->ImaginaryOffDiagonalElements[Tmp] = 0.0;	        
     }
@@ -352,14 +352,14 @@ void HermitianMatrix::SetMatrixElement(int i, int j, const Complex& x)
       if (i > j)
 	{
 	  long Tmp = (long) i;
-	  Tmp -= ((long) j) * ((long) (j - 2 * this->NbrRow - this->Increment + 3)) / 2l + 1l;
+	  Tmp -= ((long) j) * ((long) (j - 2 * (this->NbrRow + this->Increment) + 3)) / 2l + 1l;
 	  this->RealOffDiagonalElements[Tmp] = x.Re;
 	  this->ImaginaryOffDiagonalElements[Tmp] = -x.Im;	        
 	}
       else
 	{
 	  long Tmp = (long) j;
-	  Tmp -= ((long) i) * ((long) (i - 2 * this->NbrRow - this->Increment + 3)) / 2l + 1l;
+	  Tmp -= ((long) i) * ((long) (i - 2 * (this->NbrRow + this->Increment) + 3)) / 2l + 1l;
 	  this->RealOffDiagonalElements[Tmp] = x.Re;
 	  this->ImaginaryOffDiagonalElements[Tmp] = x.Im;	        
 	}
@@ -389,7 +389,7 @@ void HermitianMatrix::GetMatrixElement(int i, int j, double& x) const
 	  i = tmp;
 	}
       long Tmp = (long) j;
-      Tmp -= ((long) i) * ((long) (i - 2 * this->NbrRow - this->Increment + 3)) / 2l + 1l;
+      Tmp -= ((long) i) * ((long) (i - 2 * (this->NbrRow + this->Increment) + 3)) / 2l + 1l;
       x = this->RealOffDiagonalElements[Tmp];
     }
 }
@@ -413,14 +413,14 @@ void HermitianMatrix::GetMatrixElement(int i, int j, Complex& x) const
       if (i > j)
 	{
 	  long Tmp = (long) i;
-	  Tmp -= ((long) j) * ((long) (j - 2 * this->NbrRow - this->Increment + 3)) / 2l + 1l;
+	  Tmp -= ((long) j) * ((long) (j - 2 * (this->NbrRow + this->Increment) + 3)) / 2l + 1l;
 	  x.Re = this->RealOffDiagonalElements[Tmp];
 	  x.Im = -this->ImaginaryOffDiagonalElements[Tmp];
 	}
       else
 	{
 	  long Tmp = (long) j;
-	  Tmp -= ((long) i) * ((long) (i - 2 * this->NbrRow - this->Increment + 3)) / 2l + 1l;
+	  Tmp -= ((long) i) * ((long) (i - 2 * (this->NbrRow + this->Increment) + 3)) / 2l + 1l;
 	  x.Re = this->RealOffDiagonalElements[Tmp];
 	  x.Im = this->ImaginaryOffDiagonalElements[Tmp];
 	}
@@ -450,7 +450,7 @@ void HermitianMatrix::AddToMatrixElement(int i, int j, double x)
 	  i = tmp;
 	}
       long Tmp = (long) j;
-      Tmp -= ((long) i) * ((long) (i - 2 * this->NbrRow - this->Increment + 3)) / 2l + 1l;
+      Tmp -= ((long) i) * ((long) (i - 2 * (this->NbrRow + this->Increment) + 3)) / 2l + 1l;
       this->RealOffDiagonalElements[Tmp] += x;
     }
 }
@@ -476,14 +476,14 @@ void HermitianMatrix::AddToMatrixElement(int i, int j, const Complex& x)
 	  if (i > j)
 	    {
 	      long Tmp = (long) i;
-	      Tmp -= ((long) j) * ((long) (j - 2 * this->NbrRow - this->Increment + 3)) / 2l + 1l;
+	      Tmp -= ((long) j) * ((long) (j - 2 * (this->NbrRow + this->Increment) + 3)) / 2l + 1l;
 	      this->RealOffDiagonalElements[Tmp] += x.Re;
 	      this->ImaginaryOffDiagonalElements[Tmp] -= x.Im;	        
 	    }
 	  else
 	    {
 	      long Tmp = (long) j;
-	      Tmp -= ((long) i) * ((long) (i - 2 * this->NbrRow - this->Increment + 3)) / 2l + 1l;
+	      Tmp -= ((long) i) * ((long) (i - 2 * (this->NbrRow + this->Increment) + 3)) / 2l + 1l;
 	      this->RealOffDiagonalElements[Tmp] += x.Re;
 	      this->ImaginaryOffDiagonalElements[Tmp] += x.Im;	        
 	    }
@@ -504,6 +504,7 @@ void HermitianMatrix::Resize (int nbrRow, int nbrColumn)
     {
       this->NbrRow = nbrRow;
       this->NbrColumn = nbrColumn;
+      this->Increment = (this->TrueNbrRow - this->NbrRow);
       return;
     }
   double* TmpDiag = new double [nbrRow];
@@ -525,6 +526,7 @@ void HermitianMatrix::Resize (int nbrRow, int nbrColumn)
 	  ++l;
 	  ++k;
 	}
+      l += this->Increment;
       for (int j = this->NbrRow; j < nbrRow; j++)
 	{
 	  TmpRealOffDiag[k] = 0.0;
@@ -686,7 +688,7 @@ double& HermitianMatrix::operator () (int i, int j)
 	  i = tmp;
 	}
       long Tmp = (long) j;
-      Tmp -= ((long) i) * ((long) (i - 2 * this->NbrRow - this->Increment + 3)) / 2l + 1l;
+      Tmp -= ((long) i) * ((long) (i - 2 * (this->NbrRow + this->Increment) + 3)) / 2l + 1l;
       return this->RealOffDiagonalElements[Tmp];
     }
 }

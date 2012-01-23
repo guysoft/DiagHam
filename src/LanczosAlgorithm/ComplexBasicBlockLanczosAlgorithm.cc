@@ -496,8 +496,10 @@ Vector* ComplexBasicBlockLanczosAlgorithm::GetEigenstates(int nbrEigenstates)
 	      this->LanczosVectors[k + this->BlockSize] = this->LanczosVectors[k + (2 * this->BlockSize)];
 	      this->LanczosVectors[k + (2 * this->BlockSize)] = TmpVector;
 	    }
-	  cout << i << "/" << this->Index  << "           \r";
- 	  cout.flush();
+// 	  cout << i << "/" << this->Index  << "           \r";
+//  	  cout.flush();
+	  this->Diagonalize();
+	  cout << i << " " << this->DiagonalizedMatrix.DiagonalElement(0) << endl;
 	}
     }
   else
@@ -612,10 +614,9 @@ void ComplexBasicBlockLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter)
 	      this->ReducedMatrix.SetMatrixElement(this->BlockSize + i, this->BlockSize + j, Conj(this->TemporaryCoefficients[j]));
 	    }
 	}
- 
       nbrIter -= 2;
       this->Index = 2;
-	}
+    }
   else
     {
       Dimension = this->ReducedMatrix.GetNbrRow() + (nbrIter * this->BlockSize);
@@ -661,6 +662,14 @@ void ComplexBasicBlockLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter)
 
 	  this->ReorthogonalizeVectors(&(this->LanczosVectors[2 * this->BlockSize]), this->BlockSize, this->ReducedMatrix, 
 				       NewVectorPosition - this->BlockSize, NewVectorPosition);
+	  
+// 	  cout << "NewVectorPosition = " << NewVectorPosition << endl;
+
+// 	  if (this->Index == 4)
+// 	    {
+// 	      cout << this->ReducedMatrix << endl;
+// 	      exit(0);
+// 	    }
 // 	  cout << "Test ortho after"<<endl;
 // 	  this->TestOrthogonality(&(this->LanczosVectors[2 * this->BlockSize]),BlockSize, &(this->LanczosVectors[BlockSize]),BlockSize);
 	  if (this->DiskFlag == true)
@@ -734,6 +743,13 @@ void ComplexBasicBlockLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter)
 // 	    }
 	  
 	}
+
+//       if (this->Index == 4)
+// 	{
+// 	  cout << this->ReducedMatrix << endl;
+// 	  exit(0);
+// 	}
+
       ++this->Index;
     }
   if (this->PreviousLastWantedEigenvalue != 0.0)

@@ -1459,13 +1459,27 @@ ostream& operator << (ostream& Str, const BandDiagonalHermitianMatrix& P)
 	Str << "0    ";
       for (; j < i; ++j)
 	{
-	  Str << P.RealUpperOffDiagonalElements[i - j - 1][j] << "+"<<P.ImaginaryUpperOffDiagonalElements[i - j - 1][j] <<"i    ";
+	  Str << P.RealUpperOffDiagonalElements[i - j - 1][j];
+	  if (P.ImaginaryUpperOffDiagonalElements[i - j - 1][j] > 0.0)
+	    Str << -P.ImaginaryUpperOffDiagonalElements[i - j - 1][j] << "i    ";
+	  else
+	    if (P.ImaginaryUpperOffDiagonalElements[i - j - 1][j] != 0.0)
+	      Str <<  "+" << -P.ImaginaryUpperOffDiagonalElements[i - j - 1][j] << "i    ";
+	    else
+	      Str << "    ";
 	}
       Str << P.DiagonalElements[i] << "    ";
       ++j;
       for (; ((j <= (P.NbrBands + i)) && (j < P.NbrColumn)); ++j)
 	{
-	  Str << P.RealUpperOffDiagonalElements[j - i - 1][i] << "+"<<P.ImaginaryUpperOffDiagonalElements[j - i - 1][i] <<"i    ";
+	  Str << P.RealUpperOffDiagonalElements[j - i - 1][i];
+	  if (P.ImaginaryUpperOffDiagonalElements[j - i - 1][i] < 0.0)
+	    Str << P.ImaginaryUpperOffDiagonalElements[j - i - 1][i] <<"i    ";
+	  else
+	    if (P.ImaginaryUpperOffDiagonalElements[j - i - 1][i] != 0.0)
+	      Str << "+" << P.ImaginaryUpperOffDiagonalElements[j - i - 1][i] <<"i    ";
+	    else
+	      Str << "    ";
 	}
       for (; j < P.NbrColumn; j++)
 	Str << "0    ";
