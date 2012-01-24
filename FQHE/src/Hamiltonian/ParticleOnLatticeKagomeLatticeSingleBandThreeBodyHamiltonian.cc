@@ -440,7 +440,7 @@ void ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::EvaluateInter
       delete [] Permutations;
       delete [] PermutationSign;
     }
-  else
+  else // bosonic statistics
     {
       this->NbrSectorSums = this->NbrSiteX * this->NbrSiteY;
       this->NbrSectorIndicesPerSum = new int[this->NbrSectorSums];
@@ -536,10 +536,10 @@ void ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::EvaluateInter
 		      sumV = (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0] *
 			      Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1])
 			* this->ComputeTwoBodyMatrixElementAB(kx2, ky2, kx4, ky4);
-		      sumV -= (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0] *
+		      sumV += (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0] *
 			       Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1])
 			* this->ComputeTwoBodyMatrixElementAB(kx1, ky1, kx4, ky4);
-		      sumV -= (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0] *
+		      sumV += (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0] *
 			       Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1])
 			* this->ComputeTwoBodyMatrixElementAB(kx2, ky2, kx3, ky3);
 		      sumV += (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0] *
@@ -549,10 +549,10 @@ void ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::EvaluateInter
 		      sumV += (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0] *
 			       Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index4][0][2])
 			* this->ComputeTwoBodyMatrixElementAC(kx2, ky2, kx4, ky4);
-		      sumV -= (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0] *
+		      sumV += (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0] *
 			       Conj(OneBodyBasis[Index1][0][2]) * OneBodyBasis[Index4][0][2])
 			* this->ComputeTwoBodyMatrixElementAC(kx1, ky1, kx4, ky4);
-		      sumV -= (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0] *
+		      sumV += (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0] *
 			       Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index3][0][2])
 			* this->ComputeTwoBodyMatrixElementAC(kx2, ky2, kx3, ky3);
 		      sumV += (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0] *
@@ -562,10 +562,10 @@ void ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::EvaluateInter
 		      sumV += (Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1] *
 			       Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index4][0][2])
 			* this->ComputeTwoBodyMatrixElementBC(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
-		      sumV -= (Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1] *
+		      sumV += (Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1] *
 			       Conj(OneBodyBasis[Index1][0][2]) * OneBodyBasis[Index4][0][2])
 			* this->ComputeTwoBodyMatrixElementBC(kx2, ky2, kx1, ky1, kx3, ky3, kx4, ky4);
-		      sumV -= (Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1] *
+		      sumV += (Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1] *
 			       Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index3][0][2])
 			* this->ComputeTwoBodyMatrixElementBC(kx1, ky1, kx2, ky2, kx4, ky4, kx3, ky3);
 		      sumV += (Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1] *

@@ -794,7 +794,7 @@ Complex ParticleOnLatticeCheckerboardLatticeSingleBandThreeBodyHamiltonian::Comp
 
 // compute the matrix element for the on-site three body interaction related to sites A
 //
-// kx1 = first creation momentum along x for the first A site
+ // kx1 = first creation momentum along x for the first A site
 // ky1 = first creation momentum along y for the first A site
 // kx2 = second creation momentum along x for the second A site
 // ky2 = second creation momentum along y for the second A site

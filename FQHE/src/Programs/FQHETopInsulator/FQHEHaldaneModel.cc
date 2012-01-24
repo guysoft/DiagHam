@@ -35,11 +35,11 @@ using std::ofstream;
 // outputFileName = name of the output file
 // nbrSiteX = number of sites in the x direction
 // nbrSiteY = number of sites in the x direction
-// nnHoping = nearest neighbor hoping amplitude
-// nnnHoping =  next nearest neighbor hoping amplitude
+// nnHopping = nearest neighbor hoping amplitude
+// nnnHopping =  next nearest neighbor hoping amplitude
 // phi =  Haldane phase on nnn hopping
 // mus = sublattice staggered chemical potential 
-void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSiteX, int nbrSiteY, double nnHoping, double nnnHoping, double phi, double mus);
+void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSiteX, int nbrSiteY, double nnHopping, double nnnHopping, double nnnnHopping, double phi, double mus);
 
 
 int main(int argc, char** argv)
@@ -68,12 +68,13 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive two-body nearest neighbor potential strength", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "v-potential", "repulsive two-body nearest next neighbor potential strength", 0.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "w-potential", "repulsive three-body nearest neighbor potential strength", 1.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "w-potential", "repulsive three-body nearest neighbor potential strength", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "s-potential", "repulsive three-body next-to-nearest neighbor potential strength", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "three-body", "use a three-body interaction in addition to a two-body interaction");
   (*SystemGroup) += new BooleanOption  ('\n', "four-body", "use a four-body interaction in addition to a two-body interaction");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "t1", "nearest neighbor hoping amplitude", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "t2", "next nearest neighbor hoping amplitude", 1.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "t3", "next to next nearest neighbor hoping amplitude", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "phi", "Haldane phase on nnn hopping", M_PI/3);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "mu-s", "sublattice staggered chemical potential", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
@@ -144,7 +145,7 @@ int main(int argc, char** argv)
       if ((Manager.GetBoolean("three-body") == true || Manager.GetBoolean("four-body") == true) || Manager.GetBoolean("flat-band") == false)
           lenFilePrefix += sprintf (FilePrefix + lenFilePrefix, "_u_%f", Manager.GetDouble("u-potential"));
       lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_v_%f", Manager.GetDouble("v-potential"));
-      lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_t1_%f_t2_%f_phi_%f_gx_%f_gy_%f", Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("phi"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+      lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_t1_%f_t2_%f_t3_%f_phi_%f_gx_%f_gy_%f", Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), Manager.GetDouble("phi"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
       if (Manager.GetDouble("mu-s") != 0.0)
           lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_mus_%f", Manager.GetDouble("mu-s"));
     }
@@ -158,7 +159,7 @@ int main(int argc, char** argv)
 
   if (Manager.GetBoolean("singleparticle-spectrum") == true)
     {
-      ComputeSingleParticleSpectrum(EigenvalueOutputFile, NbrSiteX, NbrSiteY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("phi"), Manager.GetDouble("mu-s"));
+      ComputeSingleParticleSpectrum(EigenvalueOutputFile, NbrSiteX, NbrSiteY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), Manager.GetDouble("phi"), Manager.GetDouble("mu-s"));
       return 0;
     }
 
@@ -221,7 +222,8 @@ int main(int argc, char** argv)
                   {
                       Hamiltonian = new ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonian(Space, NbrParticles, NbrSiteX, NbrSiteY, 
                               Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("s-potential"),
-                              Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("phi"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"),
+			      Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), Manager.GetDouble("phi"), Manager.GetDouble("mu-s"), 
+			      Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"),
                               Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
                   }
                   else
@@ -260,19 +262,19 @@ int main(int argc, char** argv)
 // outputFileName = name of the output file
 // nbrSiteX = number of sites in the x direction
 // nbrSiteY = number of sites in the x direction
-// nnHoping = nearest neighbor hoping amplitude
-// nnnHoping =  next nearest neighbor hoping amplitude
+// nnHopping = nearest neighbor hoping amplitude
+// nnnHopping =  next nearest neighbor hoping amplitude
 // phase =  Haldane phase on nnn hopping
 // mus = sublattice staggered chemical potential 
 
-void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSiteX, int nbrSiteY, double nnHoping, double nnnHoping, double phase, double mus)
+void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSiteX, int nbrSiteY, double nnHopping, double nnnHopping, double nnnnHopping, double phase, double mus)
 {
   ofstream File;
   File.open(outputFileName);
   File << "# kx    ky     E_-    E_-" << endl;
   double MinEMinus = 0.0;
-  double MaxEMinus = -10.0;
-  double MinEPlus = 10.0;
+  double MaxEMinus = -1000.0;
+  double MinEPlus = 1000.0;
   double MaxEPlus = 0.0;
   for (int kx = 0; kx < nbrSiteX; ++kx)
   {
@@ -280,12 +282,22 @@ void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSiteX, int nbrSi
       for (int ky = 0; ky < nbrSiteY; ++ky)
       {
           double y=2*M_PI*((double)ky)/nbrSiteY;
-          Complex B1 = nnHoping * Complex(1 + cos(x+y) + cos(y), + sin(x+y) + sin(y));
-          double d0 = + 2.0 * nnnHoping * cos(phase) * (cos(x) + cos(y) + cos(x+y));
-          double d3 = + 2.0 * nnnHoping * sin(phase) * (sin(x) + sin(y) - sin(x+y)) + mus;
+
+	  Complex B1 = - nnHopping * Complex(1 + cos(x+y) + cos(y), + sin(x+y) + sin(y));
+	  Complex B2 = - nnnnHopping * Complex(2* cos(x) + cos(x+2*y),  sin(x+2*y));
+          double d0 = - 2.0 * nnnHopping * cos(phase) * (cos(x) + cos(y) + cos(x+y));
+          double d3 = - 2.0 * nnnHopping * sin(phase) * (sin(x) + sin(y) - sin(x+y)) + mus;
+
+	  // My Convention
+          // Complex B1 = - nnHopping * Complex(1 + cos(x) + cos(y), - sin(x) - sin(y));
+	  // Complex B2 = - nnnnHopping * Complex(cos(x+y)+2*cos(x-y),-sin(x+y) );
+          // double d0 = - 2.0 * nnnHopping * cos(phase) * (cos(x) + cos(y) + cos(x-y));
+          // double d3 = - 2.0 * nnnHopping * sin(phase) * (sin(x) - sin(y) - sin(x-y)) + mus;
+
+
 	  HermitianMatrix TmpOneBobyHamiltonian(2, true);
 	  TmpOneBobyHamiltonian.SetMatrixElement(0, 0, d0 + d3);
-	  TmpOneBobyHamiltonian.SetMatrixElement(0, 1, B1);
+	  TmpOneBobyHamiltonian.SetMatrixElement(0, 1, B1+B2);
 	  TmpOneBobyHamiltonian.SetMatrixElement(1, 1, d0 - d3);
 	  RealDiagonalMatrix TmpDiag;
 #ifdef __LAPACK__
@@ -313,5 +325,5 @@ void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSiteX, int nbrSi
 	}
       File << endl;
     }
-  cout << "Spread = " << (MaxEMinus - MinEMinus) << "  Gap = " <<  (MinEPlus - MaxEMinus) << "  Flatening = " << ((MaxEMinus - MinEMinus) / (MinEPlus - MaxEMinus)) << endl;
+  cout << "Spread = " << (MaxEMinus - MinEMinus) << "  Gap = " <<  (MinEPlus - MaxEMinus) << "  Flatening = " << ((MinEPlus - MaxEMinus) /(MaxEMinus - MinEMinus) ) << endl;
 }

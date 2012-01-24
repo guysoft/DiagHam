@@ -98,7 +98,10 @@ int main(int argc, char** argv)
   bool DiskCacheFlag = ((BooleanOption*) Manager["disk-cache"])->GetBoolean();
   bool FirstRun = true;
   char* OutputNameLz = new char [256 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
-  sprintf (OutputNameLz, "fermions_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax, TotalSz);
+  if (strcmp ("fermions", Manager.GetString("statistics")) == 0)
+    sprintf (OutputNameLz, "fermions_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax, TotalSz);
+  else
+    sprintf (OutputNameLz, "bosons_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax, TotalSz);
 
 
   ParticleOnSphereWithSpin* Space =  (ParticleOnSphereWithSpin*) ParticleManager.GetHilbertSpace(TotalLz);

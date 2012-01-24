@@ -56,6 +56,8 @@ class ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonian : public Parti
   double NNHoping;
   // hoping amplitude between next neareast neighbor sites
   double NextNNHoping;
+  // hoping amplitude between next to next neareast neighbor sites
+  double NextNextNNHoping;
   // phase on nnn hopping
   double HaldanePhase;
   // four times the sublattice staggered chemical potential 
@@ -102,6 +104,7 @@ class ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonian : public Parti
   // sPotential = strength of the repulsive three body next-to-nearest neighbor interaction
   // t1 = hoping amplitude between neareast neighbor sites
   // t2 = hoping amplitude between next neareast neighbor sites
+  // t3 = hoping amplitude between next to next neareast neighbor sites
   // phi =  Haldane phase on nnn hopping
   // mus = sublattice staggered chemical potential 
   // gammaX = boundary condition twisting angle along x
@@ -111,7 +114,7 @@ class ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonian : public Parti
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, 
           double uPotential, double vPotential, double wPotential, double sPotential,
-          double t1, double t2, double phi, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+							      double t1, double t2, double t3, double phi, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //
@@ -177,6 +180,27 @@ class ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonian : public Parti
   // return value = corresponding matrix element
   Complex ComputeThreeBodyMatrixElementAAA(int kx2, int ky2, int kx3, int ky3, int kx5, int ky5, int kx6, int ky6);
 
+  // compute the matrix element for on-site two body interaction involving A sites
+  //
+  // return value = corresponding matrix element
+
+  Complex ComputeTwoBodyMatrixElementOnSiteAA();
+
+
+  // compute the matrix element for on-site two body interaction involving B sites
+  //
+  // kx1 = first creation momentum along x for the B site
+  // ky1 = first creation momentum along y for the B site
+  // kx2 = second creation momentum along x for the B site
+  // ky2 = second creation momentum along y for the B site
+  // kx3 = first annihilation momentum along x for the B site
+  // ky3 = first annihilation momentum along y for the B site
+  // kx4 = second annihilation momentum along x for the B site
+  // ky4 = second annihilation momentum along y for the B site
+  // return value = corresponding matrix element
+
+  Complex ComputeTwoBodyMatrixElementOnSiteBB(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
+
   // compute the matrix element for the on-site three body interaction related to sites A
   //
   // kx1 = first creation momentum along x for the first A site
@@ -213,5 +237,7 @@ class ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonian : public Parti
 
 
 };
+
+
 
 #endif
