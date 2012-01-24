@@ -291,8 +291,6 @@ Vector* FullReorthogonalizedComplexBlockLanczosAlgorithm::GetEigenstates(int nbr
   ComplexVector* Eigenstates = new ComplexVector [nbrEigenstates];
   ComplexMatrix TmpEigenvector (this->ReducedMatrix.GetNbrRow(), this->ReducedMatrix.GetNbrRow(), true);
   TmpEigenvector.SetToIdentity();
-//   for (int i = 0; i < this->ReducedMatrix.GetNbrRow(); ++i)
-//     TmpEigenvector(i, i) = 1.0;
 
   RealTriDiagonalSymmetricMatrix SortedDiagonalizedMatrix (this->ReducedMatrix.GetNbrRow());
   this->TemporaryReducedMatrix.Copy(this->ReducedMatrix);
@@ -309,12 +307,17 @@ Vector* FullReorthogonalizedComplexBlockLanczosAlgorithm::GetEigenstates(int nbr
   else
     {
 #endif
-//       this->TemporaryReducedMatrix.Tridiagonalize(SortedDiagonalizedMatrix, 1e-7, TmpEigenvector);
-//       SortedDiagonalizedMatrix.Diagonalize(TmpEigenvector);
+      RealDiagonalMatrix TmpDiag (SortedDiagonalizedMatrix.GetNbrColumn());
+      this->TemporaryReducedMatrix.Diagonalize(TmpDiag, TmpEigenvector);
+      for (int i = 0; i < SortedDiagonalizedMatrix.GetNbrColumn(); ++i)
+	{
+	  SortedDiagonalizedMatrix.DiagonalElement(i) = TmpDiag[i];
+	}
 #ifdef __LAPACK__
     }
 #endif
-  //  SortedDiagonalizedMatrix.SortMatrixUpOrder(TmpEigenvector);
+  SortedDiagonalizedMatrix.SortMatrixUpOrder(TmpEigenvector);
+
   Complex* TmpCoefficents = new Complex [this->ReducedMatrix.GetNbrRow()];
   for (int i = 0; i < nbrEigenstates; ++i) 
     {

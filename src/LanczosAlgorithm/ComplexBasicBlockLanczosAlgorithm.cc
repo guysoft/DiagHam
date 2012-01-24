@@ -374,23 +374,22 @@ Vector* ComplexBasicBlockLanczosAlgorithm::GetEigenstates(int nbrEigenstates)
   Complex TmpC;
   ComplexVector* Eigenstates = new ComplexVector [this->BlockSize];
   ComplexMatrix TmpEigenvector (this->ReducedMatrix.GetNbrRow(), this->ReducedMatrix.GetNbrRow(), true);
-  for (int i = 0; i < this->ReducedMatrix.GetNbrRow(); ++i)
-    TmpEigenvector.SetMatrixElement(i, i, 1.0);
+  TmpEigenvector.SetToIdentity();
 
   RealTriDiagonalSymmetricMatrix SortedDiagonalizedMatrix (this->ReducedMatrix.GetNbrRow());
   this->TemporaryReducedMatrix.Copy(this->ReducedMatrix);
 #ifdef __LAPACK__
   if (this->LapackFlag == true)
     {
+       RealDiagonalMatrix TmpDiag (SortedDiagonalizedMatrix.GetNbrColumn());
+       this->TemporaryReducedMatrix.LapackDiagonalize(TmpDiag, TmpEigenvector);
+       for (int i = 0; i < SortedDiagonalizedMatrix.GetNbrColumn(); ++i)
+ 	SortedDiagonalizedMatrix.DiagonalElement(i) = TmpDiag[i];
+//       HermitianMatrix DumbMatrix (this->ReducedMatrix);
 //       RealDiagonalMatrix TmpDiag (SortedDiagonalizedMatrix.GetNbrColumn());
-//       this->TemporaryReducedMatrix.LapackDiagonalize(TmpDiag, TmpEigenvector);
+//       DumbMatrix.LapackDiagonalize(TmpDiag, TmpEigenvector);
 //       for (int i = 0; i < SortedDiagonalizedMatrix.GetNbrColumn(); ++i)
 // 	SortedDiagonalizedMatrix.DiagonalElement(i) = TmpDiag[i];
-      HermitianMatrix DumbMatrix (this->ReducedMatrix);
-      RealDiagonalMatrix TmpDiag (SortedDiagonalizedMatrix.GetNbrColumn());
-      DumbMatrix.LapackDiagonalize(TmpDiag, TmpEigenvector);
-      for (int i = 0; i < SortedDiagonalizedMatrix.GetNbrColumn(); ++i)
-	SortedDiagonalizedMatrix.DiagonalElement(i) = TmpDiag[i];
     }
   else
     {
@@ -407,11 +406,10 @@ Vector* ComplexBasicBlockLanczosAlgorithm::GetEigenstates(int nbrEigenstates)
     {
       for (int i = 0; i < this->BlockSize; ++i)
 	{
-	  TmpEigenvector.GetMatrixElement(0, i, TmpC);
-	  Eigenstates[i].Copy(this->InitialStates[0], TmpC);
-	  for (int j = 1; j < this->BlockSize; ++j)
-	    TmpEigenvector.GetMatrixElement(j, i, TmpCoefficents[j - 1]);
-	  AddComplexLinearCombinationOperation Operation (&(Eigenstates[i]), &(this->InitialStates[1]), this->BlockSize - 1,  TmpCoefficents);
+	  for (int j = 0; j < this->BlockSize; ++j)
+	    TmpEigenvector.GetMatrixElement(j, i, TmpCoefficents[j]);
+	  Eigenstates[i].Copy(this->InitialStates[0], TmpCoefficents[0]);
+	  AddComplexLinearCombinationOperation Operation (&(Eigenstates[i]), &(this->InitialStates[1]), this->BlockSize - 1,  &(TmpCoefficents[1]));
 	  Operation.ApplyOperation(this->Architecture);
 	  this->LanczosVectors[i].Copy(this->InitialStates[i]);
 	}       
@@ -424,7 +422,7 @@ Vector* ComplexBasicBlockLanczosAlgorithm::GetEigenstates(int nbrEigenstates)
 	  Operation2.ApplyOperation(this->Architecture);
 	  for (int j = 0; j <= i; ++j)
 	    {
-	      this->ReducedMatrix.SetMatrixElement(i, j, Conj(this->TemporaryCoefficients[j]));
+	      this->ReducedMatrix.SetMatrixElement(j, i, this->TemporaryCoefficients[j]);
 	    }
 	}
       for (int i = 0; i < this->BlockSize; ++i)
@@ -447,25 +445,25 @@ Vector* ComplexBasicBlockLanczosAlgorithm::GetEigenstates(int nbrEigenstates)
  	  Operation5.ApplyOperation(this->Architecture);
  	}
 
-      for (int i = 1; i < this->Index; ++i)
+      for (int nbrIter = 1; nbrIter < this->Index; ++nbrIter)
 	{
-	  this->ReducedMatrix.Resize((i + 1) * this->BlockSize, (i + 1) * this->BlockSize);
-	  int NewVectorPosition = i * this->BlockSize;
+	  this->ReducedMatrix.Resize((nbrIter + 1) * this->BlockSize, (nbrIter + 1) * this->BlockSize);
+	  int NewVectorPosition = nbrIter * this->BlockSize;
 	  MultipleVectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &(this->LanczosVectors[this->BlockSize]), 
 								 &(this->LanczosVectors[2 * this->BlockSize]), this->BlockSize);
 	  Operation2.ApplyOperation(this->Architecture);
 	  for (int k = 0; k < this->BlockSize; ++k)
 	    {
 	      MultipleComplexScalarProductOperation Operation (&(this->LanczosVectors[k + (2 * this->BlockSize)]), 
-							    &(this->LanczosVectors[this->BlockSize]),   
-							    k + 1, this->TemporaryCoefficients);
+							       &(this->LanczosVectors[this->BlockSize]),   
+							       k + 1, this->TemporaryCoefficients);
 	      Operation.ApplyOperation(this->Architecture);
 	      for (int j = 0; j <= k; ++j)
 		{
-		  this->ReducedMatrix.SetMatrixElement(NewVectorPosition + k, NewVectorPosition + j, Conj(this->TemporaryCoefficients[j]));
+		  this->ReducedMatrix.SetMatrixElement(NewVectorPosition + j, NewVectorPosition + k, this->TemporaryCoefficients[j]);
 		}
 	    }
-	  int Lim = (i - 1) * this->BlockSize;
+	  int Lim = (nbrIter - 1) * this->BlockSize;
 	  for (int j = 0; j < this->BlockSize; ++j)
 	    {
 	      for (int k = j; k < (2 * this->BlockSize); ++k)
@@ -480,11 +478,10 @@ Vector* ComplexBasicBlockLanczosAlgorithm::GetEigenstates(int nbrEigenstates)
 	    }
 	  this->ReorthogonalizeVectors(&(this->LanczosVectors[2 * this->BlockSize]), this->BlockSize, this->ReducedMatrix, 
 				       NewVectorPosition - this->BlockSize, NewVectorPosition);
-	  //this->TestOrthogonality(&(this->LanczosVectors[2*this->BlockSize]),BlockSize,&(this->LanczosVectors[0]),2*BlockSize);
  	  for (int k = 0; k < this->BlockSize; ++k)
  	    {
  	      for (int j = 0; j < this->BlockSize; ++j)
-		TmpEigenvector.GetMatrixElement(((i + 1) * this->BlockSize) + j, k, TmpCoefficents[j]);
+		TmpEigenvector.GetMatrixElement(((nbrIter + 1) * this->BlockSize) + j, k, TmpCoefficents[j]);
  	      AddComplexLinearCombinationOperation Operation5 (&(Eigenstates[k]), &(this->LanczosVectors[2 * this->BlockSize]), this->BlockSize,  TmpCoefficents);
  	      Operation5.ApplyOperation(this->Architecture);
  	    }
@@ -499,7 +496,7 @@ Vector* ComplexBasicBlockLanczosAlgorithm::GetEigenstates(int nbrEigenstates)
 // 	  cout << i << "/" << this->Index  << "           \r";
 //  	  cout.flush();
 	  this->Diagonalize();
-	  cout << i << " " << this->DiagonalizedMatrix.DiagonalElement(0) << endl;
+	  cout << nbrIter << " " << this->DiagonalizedMatrix.DiagonalElement(0) << endl;
 	}
     }
   else
@@ -611,7 +608,7 @@ void ComplexBasicBlockLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter)
 	  Operation2.ApplyOperation(this->Architecture);
 	  for (int j = 0; j <= i; ++j)
 	    {
-	      this->ReducedMatrix.SetMatrixElement(this->BlockSize + i, this->BlockSize + j, Conj(this->TemporaryCoefficients[j]));
+	      this->ReducedMatrix.SetMatrixElement(this->BlockSize + j, this->BlockSize + i, this->TemporaryCoefficients[j]);
 	    }
 	}
       nbrIter -= 2;
@@ -684,6 +681,7 @@ void ComplexBasicBlockLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter)
 	      this->LanczosVectors[k + (2 * this->BlockSize)] = TmpVector;
 	    }
 	}
+
       MultipleVectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &(this->LanczosVectors[this->BlockSize]), 
 							     &(this->LanczosVectors[2 * this->BlockSize]), this->BlockSize);
       Operation2.ApplyOperation(this->Architecture);
@@ -707,7 +705,7 @@ void ComplexBasicBlockLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter)
 	  for (int j = 0; j <= k; ++j)
 	    {
 	      this->TemporaryCoefficients[j] = Conj(this->TemporaryCoefficients[j]);
-	      this->ReducedMatrix.SetMatrixElement(NewVectorPosition + k, NewVectorPosition + j, Conj(this->TemporaryCoefficients[j]));
+	      this->ReducedMatrix.SetMatrixElement(NewVectorPosition + k, NewVectorPosition + j, this->TemporaryCoefficients[j]);
 	    }      
 	}
       
@@ -825,7 +823,6 @@ void ComplexBasicBlockLanczosAlgorithm::ReorthogonalizeVectors (ComplexVector* v
 	{
 	  this->TemporaryCoefficients[j] = Conj(this->TemporaryCoefficients[j]);		  
 	  matrix.SetMatrixElement(rowShift + i, columnShift + j, this->TemporaryCoefficients[j]);
-	  // xxx TESTING HERE
 	  this->TemporaryCoefficients[j] *= -1.0;
 	}
       AddComplexLinearCombinationOperation Operation2 (&(vectors[i]), vectors, 
