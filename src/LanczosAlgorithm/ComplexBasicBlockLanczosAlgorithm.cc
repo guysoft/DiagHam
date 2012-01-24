@@ -641,37 +641,12 @@ void ComplexBasicBlockLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter)
 							       2 * this->BlockSize - j,
 							       this->TemporaryCoefficients);	  
 	      Operation2.ApplyOperation(this->Architecture);
-	      
-	      	      
-// 	      for (int k=j; k< 2*this->BlockSize; ++k)
-// 		{
-// 		  Complex TmpC;
-// 		  TmpV1.Copy(this->LanczosVectors[k]);
-// 		  TmpC=TmpV1*TmpV2;
-// 		  if (Norm(-TmpC-this->TemporaryCoefficients[k-j])>1e-13)
-// 		    cout << "2 - Problem with SP at step "<<k<<" "<<-TmpC<<" vs "<<this->TemporaryCoefficients[k-j]<<endl;
-// 		  TmpV2.AddLinearCombination(-TmpC,TmpV1);
-// 		  //TmpV2.AddLinearCombination(this->TemporaryCoefficients[j],TmpV1);
-// 		  if (Norm(TmpV1*TmpV2)>1e-13)
-// 		    cout << "2 - Problem with orthogonalization at step "<<k<<endl;
-// 		}
 
 	    }
-	  //cout << "Test ortho before"<<endl;
-	  //this->TestOrthogonality(&(this->LanczosVectors[2*this->BlockSize]),BlockSize,&(this->LanczosVectors[BlockSize]),2*BlockSize);
-
+	      
 	  this->ReorthogonalizeVectors(&(this->LanczosVectors[2 * this->BlockSize]), this->BlockSize, this->ReducedMatrix, 
 				       NewVectorPosition - this->BlockSize, NewVectorPosition);
 	  
-// 	  cout << "NewVectorPosition = " << NewVectorPosition << endl;
-
-// 	  if (this->Index == 4)
-// 	    {
-// 	      cout << this->ReducedMatrix << endl;
-// 	      exit(0);
-// 	    }
-// 	  cout << "Test ortho after"<<endl;
-// 	  this->TestOrthogonality(&(this->LanczosVectors[2 * this->BlockSize]),BlockSize, &(this->LanczosVectors[BlockSize]),BlockSize);
 	  if (this->DiskFlag == true)
 	    {
 	      char* TmpVectorName = new char [256];
@@ -730,26 +705,12 @@ void ComplexBasicBlockLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter)
 							   k + 1, this->TemporaryCoefficients);
 	  Operation.ApplyOperation(this->Architecture);
 	  for (int j = 0; j <= k; ++j)
-	    this->ReducedMatrix.SetMatrixElement(NewVectorPosition + k, NewVectorPosition + j, Conj(this->TemporaryCoefficients[j]));
-	  	      
-// 	  // testing
-// 	  TmpV2.Copy(this->LanczosVectors[k + 2*this->BlockSize]);
-// 	  for (int j = 0; j <= k; ++j)
-// 	    {
-// 	      TmpV1.Copy(this->LanczosVectors[this->BlockSize+k]);
-// 	      TmpSp = (TmpV1 * TmpV2);
-// 	      if (Norm(TmpSp-Conj(this->TemporaryCoefficients[k]))>1e-13)
-// 		cout << "at 3 - SP["<<j<<","<<k<<"]: "<<TmpSp<<" vs "<<this->TemporaryCoefficients[k]<<endl;
-// 	    }
-	  
+	    {
+	      this->TemporaryCoefficients[j] = Conj(this->TemporaryCoefficients[j]);
+	      this->ReducedMatrix.SetMatrixElement(NewVectorPosition + k, NewVectorPosition + j, Conj(this->TemporaryCoefficients[j]));
+	    }      
 	}
-
-//       if (this->Index == 4)
-// 	{
-// 	  cout << this->ReducedMatrix << endl;
-// 	  exit(0);
-// 	}
-
+      
       ++this->Index;
     }
   if (this->PreviousLastWantedEigenvalue != 0.0)

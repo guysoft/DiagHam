@@ -363,8 +363,6 @@ void FullReorthogonalizedComplexBlockLanczosAlgorithm::RunLanczosAlgorithm (int 
 	}
 
 
-//      cout <<  this->ReducedMatrix << endl;
-      
       for (int i = 0; i < this->BlockSize; ++i)
 	{
 	  for (int j = 0; j < this->BlockSize; ++j)
@@ -379,8 +377,6 @@ void FullReorthogonalizedComplexBlockLanczosAlgorithm::RunLanczosAlgorithm (int 
 
       this->ReorthogonalizeVectors(&(this->LanczosVectors[this->BlockSize]), this->BlockSize, this->ReducedMatrix, 0, this->BlockSize);
       
-      this->TestOrthogonality(this->LanczosVectors,  2 * this->BlockSize);
-
       for (int k = 0; k < this->BlockSize; ++k)
 	this->LanczosVectors[k + (2 * this->BlockSize)] = ComplexVector(this->Hamiltonian->GetHilbertSpaceDimension());
       MultipleVectorHamiltonianMultiplyOperation Operation3 (this->Hamiltonian, &(this->LanczosVectors[this->BlockSize]), 
@@ -399,26 +395,13 @@ void FullReorthogonalizedComplexBlockLanczosAlgorithm::RunLanczosAlgorithm (int 
 	    }
 	}
 
-
-//      cout <<  this->ReducedMatrix << endl;
       nbrIter -= 2;
       this->Index = 2;
     }
   else
     {
-//       if (this->Index == 4)
-// 	{
-// 	  cout << this->ReducedMatrix << endl;
-// 	  //	  exit(0);
-// 	}
-//       cout << "resizing ..." << endl;
       Dimension = this->ReducedMatrix.GetNbrRow() + (nbrIter * this->BlockSize);
       this->ReducedMatrix.Resize(Dimension, Dimension);
-//       if (this->Index == 4)
-// 	{
-// 	  cout << this->ReducedMatrix << endl;
-// 	  exit(0);
-// 	}
     }
   for (; nbrIter > 0; --nbrIter)
     {
@@ -429,7 +412,6 @@ void FullReorthogonalizedComplexBlockLanczosAlgorithm::RunLanczosAlgorithm (int 
 	{
 	  for (int k = j; k < (2 * this->BlockSize); ++k)
 	    {
-	      this->TemporaryCoefficients[k - j] = Conj(this->TemporaryCoefficients[k - j]);
 	      this->ReducedMatrix.GetMatrixElement(Lim + this->BlockSize + j, Lim + k, this->TemporaryCoefficients[k - j]);
 	      this->TemporaryCoefficients[k - j] *= -1.0;
 	    }
@@ -459,13 +441,6 @@ void FullReorthogonalizedComplexBlockLanczosAlgorithm::RunLanczosAlgorithm (int 
 
       this->ReorthogonalizeVectors(&(this->LanczosVectors[NewVectorPosition]), this->BlockSize, this->ReducedMatrix, 
 				   NewVectorPosition - this->BlockSize, NewVectorPosition);  
-      //      cout << "NewVectorPosition = " << NewVectorPosition << endl;
-
-//       if (this->Index == 4)
-// 	{
-// 	  cout << this->ReducedMatrix << endl;
-// 	  exit(0);
-// 	}
 
       for (int k = 0; k < this->BlockSize; ++k)
 	this->LanczosVectors[k + this->BlockSize + NewVectorPosition] = ComplexVector(this->Hamiltonian->GetHilbertSpaceDimension());
@@ -486,13 +461,6 @@ void FullReorthogonalizedComplexBlockLanczosAlgorithm::RunLanczosAlgorithm (int 
 	    }
 	}
 
-//       if (this->Index == 4)
-// 	{
-// 	  cout << this->ReducedMatrix << endl;
-// 	  exit(0);
-// 	}
-
-//      cout <<  this->ReducedMatrix << endl;
       ++this->Index;
     }
   if (this->PreviousLastWantedEigenvalue != 0.0)
