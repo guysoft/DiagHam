@@ -51,7 +51,7 @@ using std::endl;
 
 
 // special flag to track the method used in matrix-vector multiplication, for debugging purpose only
-//#define __DEBUG_MATRIXVECTOR_MULT__
+// #define __DEBUG_MATRIXVECTOR_MULT__
 
 // destructor
 //

@@ -1,5 +1,6 @@
 #include "HilbertSpace/BosonOnLatticeKy.h"
 #include "HilbertSpace/HardCoreBosonOnLatticeKy.h"
+#include "HilbertSpace/BosonOnLatticeKyLong.h"
 #include "Hamiltonian/ParticleOnLatticeWithKyNBodyDeltaHamiltonian.h"
 
 #include "Architecture/ArchitectureManager.h"
@@ -155,6 +156,7 @@ int main(int argc, char** argv)
   char randomString[20]="";
   char kyString[20]="";
   char interactionStr[20]="";
+
   if ( (OutputName = Manager.GetString("output-file")) == NULL)
     {
       OutputName = new char [256];      
@@ -186,11 +188,29 @@ int main(int argc, char** argv)
 	  exit(1);
 	  //Space =new HardCoreBosonOnLatticeKy(NbrBosons, Lx, Ly, Manager.GetInteger("ky"), NbrFluxQuanta, MemorySpace);
 	}
-      else Space = new BosonOnLatticeKy(NbrBosons, Lx, Ly, Manager.GetInteger("ky"), NbrFluxQuanta, MemorySpace);
+      else 
+	{
+	  if (NbrBosons + NbrSites - 1 <63)
+	    {
+	      Space = new BosonOnLatticeKy(NbrBosons, Lx, Ly, Manager.GetInteger("ky"), NbrFluxQuanta, MemorySpace);
+	    }
+	  else
+	    {
+	      if (NbrBosons + NbrSites - 1 <127)
+		{
+		  Space = new BosonOnLatticeKyLong(NbrBosons, Lx, Ly, Manager.GetInteger("ky"), NbrFluxQuanta, MemorySpace);
+		}
+	      else
+		{
+		  cout <<"The number of coding bits needded excesses 128 which is not supported"<<endl;
+		  exit(1);
+		}
+	    }
+	}
+      
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       
       Hamiltonian = new ParticleOnLatticeWithKyNBodyDeltaHamiltonian(Space, NbrBosons, Lx, Ly, ((BosonOnLatticeKy*)Space)->GetMaximumKy(),  NbrFluxQuanta,NbrBody, 0.0, ContactU, ReverseHopping, Random, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName);
-      
       
       char* StateFileName = Manager.GetString("energy-expectation");
       if (IsFile(StateFileName) == false)
@@ -275,8 +295,10 @@ int main(int argc, char** argv)
       int UpperLimit = MaxK;      
       for (int k=(Ky>=0?Ky:0); k<UpperLimit; ++k)
 	{
-	  if (Space!=0) delete Space;
-	  if (Hamiltonian!=0) delete Hamiltonian;
+	  if (Space!=0) 
+	    delete Space;
+	  if (Hamiltonian!=0) 
+	    delete Hamiltonian;
 	  
 	  if (HardCore)
 	    {
@@ -284,7 +306,26 @@ int main(int argc, char** argv)
 	      exit(1);
 	      //Space =new HardCoreBosonOnLatticeKy(NbrBosons, Lx, Ly, k, NbrFluxQuanta, MemorySpace);
 	    }
-	  else Space = new BosonOnLatticeKy(NbrBosons, Lx, Ly, k, NbrFluxQuanta, MemorySpace);
+	  else 
+	    {
+	      if (NbrBosons + NbrSites - 1 <63)
+		{
+		  Space = new BosonOnLatticeKy(NbrBosons, Lx, Ly, k, NbrFluxQuanta, MemorySpace);
+		}
+	      else
+		{
+		  if (NbrBosons + NbrSites - 1 <127)
+		    {
+		      Space = new BosonOnLatticeKyLong(NbrBosons, Lx, Ly, k, NbrFluxQuanta, MemorySpace);
+		    }
+		  else
+		    {
+		      cout <<"The number of coding bits needded excesses 128 which is not supported"<<endl;
+		      exit(1);
+		    }
+		}
+	    }
+	  
 	  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
 	  
 	  if (Ky<0)

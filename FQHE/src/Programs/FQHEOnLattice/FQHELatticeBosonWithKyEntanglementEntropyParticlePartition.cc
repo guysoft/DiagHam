@@ -16,6 +16,7 @@
 #include "Tools/FQHEFiles/QHEOnLatticeFileTools.h"
 
 #include "HilbertSpace/BosonOnLatticeKy.h"
+#include "HilbertSpace/BosonOnLatticeKyLong.h"
 
 #include <iostream>
 #include <cstring>
@@ -66,7 +67,7 @@ int main(int argc, char** argv)
 #endif
   char* DensityMatrixFileName = Manager.GetString("density-matrix");
   unsigned long MemorySpace = ((unsigned long) Manager.GetInteger("fast-search")) << 20;
-  BosonOnLatticeKy** Spaces = 0;
+  ParticleOnLattice** Spaces = 0;
   double Interaction=-1.0;
   int TmpI=-1;
   bool HardCore=false;
@@ -186,7 +187,7 @@ int main(int argc, char** argv)
 	return -1;      
       }
 
-  Spaces = new BosonOnLatticeKy*[NbrSpaces];
+  Spaces = new ParticleOnLattice*[NbrSpaces];
   for (int i = 0; i < NbrSpaces; ++i)
     {
       if (Statistics)
@@ -196,7 +197,10 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  Spaces[i] = new BosonOnLatticeKy(NbrParticles, Lx, Ly,KyMomentum[i], NbrFluxQuanta, MemorySpace);
+	  if(NbrParticles + Lx *Ly -1 < 64)
+	    Spaces[i] = new BosonOnLatticeKy(NbrParticles, Lx, Ly,KyMomentum[i], NbrFluxQuanta, MemorySpace);
+	  else
+	    Spaces[i] = new BosonOnLatticeKyLong(NbrParticles, Lx, Ly,KyMomentum[i], NbrFluxQuanta, MemorySpace);
 	}
       
       if (Spaces[i]->GetLargeHilbertSpaceDimension() != GroundStates[i].GetLargeVectorDimension())

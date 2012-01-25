@@ -93,6 +93,7 @@ int main(int argc, char** argv)
 	{
 	  KySymmetry=true;
 	}
+	
       
       bool tmpB, haveVector=false;
       for (int i=0; i<NbrVectors; ++i)
@@ -116,11 +117,14 @@ int main(int argc, char** argv)
 	}
     }
   
+  if (( NbrVectors == 0 )&&(Ky != 0))
+		KySymmetry = true;
   ParticleOnLattice *Space;
   if (KySymmetry)
     {
       cout << "N="<<NbrParticles<<", Lx="<<Lx<<", Ly="<<Ly<<", Q="<<NbrFluxQuanta<<", Ky="<<Ky<<endl;
       Space = new BosonOnLatticeKy(NbrParticles, Lx, Ly, Ky, NbrFluxQuanta, MemorySpace);      
+			cout <<"Hilbert Space dimension = "<< Space->GetHilbertSpaceDimension()<<endl;
     }
   else
     {

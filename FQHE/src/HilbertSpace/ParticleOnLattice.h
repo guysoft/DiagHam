@@ -83,6 +83,10 @@ class ParticleOnLattice :  public AbstractQHEParticle
   // return value = symmetry id
   virtual int GetHilbertSpaceAdditionalSymmetry();
 
+  // get maximum possible momentum for this geometry
+  // return = maximum value of Ky
+  virtual int GetMaximumKy();
+
   // set a different target space (for all basic operations)
   //
   // targetSpace = pointer to the target space

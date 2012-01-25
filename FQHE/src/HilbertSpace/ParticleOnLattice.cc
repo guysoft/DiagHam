@@ -80,12 +80,12 @@ unsigned long ParticleOnLattice::A (unsigned long state, int q, double &coeffici
   return 0x0ul;
 }
 
-  // apply a_n1 / a^\dagger_n1 operator to a given state and search in target space
-  //
-  // index = index of the state on which the operator has to be applied
-  // q = index for annihilation operator
-  // coefficient = prefactor
-  // return value =  index in target space
+// apply a_n1 / a^\dagger_n1 operator to a given state and search in target space
+//
+// index = index of the state on which the operator has to be applied
+// q = index for annihilation operator
+// coefficient = prefactor
+// return value =  index in target space
 int ParticleOnLattice::A (int index, int q, double &coefficient)
 {
   cout << "ParticleOnLattice::A"<<endl;
@@ -150,7 +150,7 @@ int ParticleOnLattice::AdAd (int q1, int q2, double& coefficient)
 
 double ParticleOnLattice::ProdA (int index, int* n, int nbrIndices)
 {
-	return 0.0;
+  return 0.0;
 }
 
 // apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
@@ -162,7 +162,7 @@ double ParticleOnLattice::ProdA (int index, int* n, int nbrIndices)
 
 int ParticleOnLattice::ProdAd (int* m, int nbrIndices, double& coefficient)
 {
-	return this->HilbertSpaceDimension;
+  return this->HilbertSpaceDimension;
 }
 
 
@@ -210,9 +210,8 @@ double ParticleOnLattice::AdAdAADiagonal(int index, int nbrInteraction, double *
 //
 double ParticleOnLattice::ProdAdProdADiagonal(int index,int nbrBody, int nbrInteraction, double *interactionPerQ, int *qValues)
 {
-	  cout << "ParticleOnLattice::AdAdAA"<<endl;
+  cout << "ParticleOnLattice::AdAdAA"<<endl;
   return this->HilbertSpaceDimension;
-	
 }
 
 // check whether HilbertSpace implements ordering of operators
@@ -228,6 +227,7 @@ bool ParticleOnLattice::HaveOrder ()
 // n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
 // nbrIndices = number of creation (or annihilation) operators
 // return value = 1, if created state is of higher value, 0 if equal, and -1 if lesser value
+
 int ParticleOnLattice::CheckOrder (int* m, int* n, int nbrIndices)
 {
   return 0;
@@ -237,6 +237,7 @@ int ParticleOnLattice::CheckOrder (int* m, int* n, int nbrIndices)
 
 // obtain a list of quantum numbers in state
 // quantumNumbers = integer array of length NbrParticles, to be written with quantum numbers of individual particles
+
 void ParticleOnLattice::ListQuantumNumbers(int index, int *quantumNumbers)
 {
   double tmp;
@@ -247,6 +248,7 @@ void ParticleOnLattice::ListQuantumNumbers(int index, int *quantumNumbers)
 // apply a gauge transformation
 // phases = phases in array ordered according to the quantum number q
 // input = vector that has to be transformed according to that gauge
+
 ComplexVector& ParticleOnLattice::GaugeTransformVector(double *phases, ComplexVector& input)
 {
   cout << "Ignoring gauge transform: method needs XXXOnLattice::GaugeTransformVector needs to be implemented!"<<endl;
@@ -257,6 +259,7 @@ ComplexVector& ParticleOnLattice::GaugeTransformVector(double *phases, ComplexVe
 // state: many-body state in Ky-momentum basis
 // nbodyBasis: full Hilbert-space in real-space representation
 // returns: vector in many-body basis of targetSpace
+
 ComplexVector& ParticleOnLattice::ConvertToNbodyBasis(ComplexVector& state, ParticleOnLattice &nbodyBasis)
 {
   return this->ConvertToNbodyBasis(state, nbodyBasis, 0, this->GetHilbertSpaceDimension());
@@ -268,6 +271,7 @@ ComplexVector& ParticleOnLattice::ConvertToNbodyBasis(ComplexVector& state, Part
 // firstComponent = index of the first component to evaluate
 // nbrComponent = number of components to evaluate
 // returns: vector in many-body basis of targetSpace
+
 ComplexVector& ParticleOnLattice::ConvertToNbodyBasis(ComplexVector& state, ParticleOnLattice &nbodyBasis, int firstComponent, int nbrComponent)
 {
   return state;
@@ -294,11 +298,9 @@ Complex ParticleOnLattice::EvaluateWaveFunction (RealVector& state, RealVector& 
 // nextCoordinates = index of the coordinate that will be changed during the next time iteration
 // return value = wave function evaluated at the given location
 
-Complex ParticleOnLattice::EvaluateWaveFunctionWithTimeCoherence (RealVector& state, RealVector& position, 
-								 AbstractFunctionBasis& basis, int nextCoordinates)
+Complex ParticleOnLattice::EvaluateWaveFunctionWithTimeCoherence (RealVector& state, RealVector& position, AbstractFunctionBasis& basis, int nextCoordinates)
 {
-  return this->EvaluateWaveFunctionWithTimeCoherence(state, position, basis, nextCoordinates, 0, 
-						     this->HilbertSpaceDimension);
+  return this->EvaluateWaveFunctionWithTimeCoherence(state, position, basis, nextCoordinates, 0, this->HilbertSpaceDimension);
 }
 
 // evaluate wave function in real space using a given basis and only for agiven range of components
@@ -309,8 +311,7 @@ Complex ParticleOnLattice::EvaluateWaveFunctionWithTimeCoherence (RealVector& st
 // firstComponent = index of the first component to evaluate
 // nbrComponent = number of components to evaluate
 // return value = wave function evaluated at the given location
-Complex ParticleOnLattice::EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis,
-						int firstComponent, int nbrComponent)
+Complex ParticleOnLattice::EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis, int firstComponent, int nbrComponent)
 {
   return Complex(0.0, 0.0);
 }
@@ -326,10 +327,7 @@ Complex ParticleOnLattice::EvaluateWaveFunction (RealVector& state, RealVector& 
 // nbrComponent = number of components to evaluate
 // return value = wave function evaluated at the given location
 
-Complex ParticleOnLattice::EvaluateWaveFunctionWithTimeCoherence (RealVector& state, RealVector& position, 
-								 AbstractFunctionBasis& basis, 
-								 int nextCoordinates, int firstComponent, 
-								 int nbrComponent)
+Complex ParticleOnLattice::EvaluateWaveFunctionWithTimeCoherence (RealVector& state, RealVector& position, AbstractFunctionBasis& basis, int nextCoordinates, int firstComponent, int nbrComponent)
 {
   return Complex(0.0, 0.0);
 }
@@ -382,8 +380,16 @@ HermitianMatrix ParticleOnLattice::EvaluatePartialDensityMatrixParticlePartition
 // densityMatrix = reference on the density matrix where result has to stored
 // return value = number of components that have been added to the density matrix
 
-long ParticleOnLattice::EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnLattice* complementaryHilbertSpace,  ParticleOnLattice* destinationHilbertSpace,
-									   ComplexVector& groundState,  HermitianMatrix* densityMatrix)
+long ParticleOnLattice::EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnLattice* complementaryHilbertSpace,  ParticleOnLattice* destinationHilbertSpace, ComplexVector& groundState,  HermitianMatrix* densityMatrix)
 {
   return 0l;
+}
+
+
+// get maximum possible momentum for this geometry
+// return = maximum value of Ky
+int ParticleOnLattice::GetMaximumKy()
+{
+  cout <<"Calling ill defined function ParticleOnLattice::GetMaximumKy()"<<endl; 
+  return 0;
 }

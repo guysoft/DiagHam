@@ -225,15 +225,15 @@ class ParticleOnLatticeWithKyNBodyDeltaHamiltonian : public ParticleOnLatticeWit
   // return value = pointer to the array of vectors where result has been stored
   virtual ComplexVector* HermitianLowLevelMultipleAddMultiplyPartialFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, int firstComponent, int nbrComponent);
 	
-	virtual ComplexVector& LowLevelAddMultiplyPartialFastMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent);
+  virtual ComplexVector& LowLevelAddMultiplyPartialFastMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent);
 	
-	virtual ComplexVector& ConjugateLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination,  int firstComponent, int nbrComponent);
+  virtual ComplexVector& ConjugateLowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination,  int firstComponent, int nbrComponent);
 	
-	virtual ComplexVector* ConjugateLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, int firstComponent, int nbrComponent);
+  virtual ComplexVector* ConjugateLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, int firstComponent, int nbrComponent);
 	
-	virtual void EvaluateMNNBodyConjugateAddMultiplyComponent(ParticleOnLattice* particles, int index, ComplexVector& vSource, ComplexVector& vDestination);
+  virtual void EvaluateMNNBodyConjugateAddMultiplyComponent(ParticleOnLattice* particles, int index, ComplexVector& vSource, ComplexVector& vDestination);
 	
-	virtual ComplexVector& ConjugateLowLevelAddMultiplyPartialFastMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent);
+  virtual ComplexVector& ConjugateLowLevelAddMultiplyPartialFastMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent);
 
   // evaluate all interaction factors
   //   
@@ -291,7 +291,7 @@ inline void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::EvaluateMNNBodyAddMult
 	    {
 	      Coefficient4 = vSource[index];
 	      Coefficient4 *= Coefficient3;
-				TmpInteractionFactor = &(this->NBodyInteractionFactors[j][(i1 * Lim / this->SqrNBodyValue)]);
+	      TmpInteractionFactor = &(this->NBodyInteractionFactors[j][(i1 * Lim / this->SqrNBodyValue)]);
 	      for (int i2 = 0; i2 < Lim; i2 += this->NBodyValue)
 		{
 		  //TmpInteractionFactor = &(this->NBodyInteractionFactors[j][(i1 * Lim / this->SqrNBodyValue) + i2/this->NBodyValue]);	  
@@ -335,7 +335,7 @@ inline void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::EvaluateMNNBodyAddMult
 	  Coefficient3 = particles->ProdA(index, TmpIndices + i1, this->NBodyValue);
 	  if (Coefficient3 != 0.0)
 	    {
-				TmpInteractionFactor = &(this->NBodyInteractionFactors[j][(i1 * Lim / this->SqrNBodyValue)]);
+	      TmpInteractionFactor = &(this->NBodyInteractionFactors[j][(i1 * Lim / this->SqrNBodyValue)]);
 	      for (int p = 0; p < nbrVectors; ++p)
 		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
 	      for (int i2 = 0; i2 < Lim; i2 += this->NBodyValue)
@@ -347,7 +347,7 @@ inline void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::EvaluateMNNBodyAddMult
 		    for (int p = 0; p < nbrVectors; ++p)
 		      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
 				
-			TmpInteractionFactor++;	
+		  TmpInteractionFactor++;	
 		}
 	    }
 	}
@@ -363,7 +363,7 @@ inline void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::EvaluateMNNBodyAddMult
 
 inline void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::HermitianEvaluateMNNBodyAddMultiplyComponent(ParticleOnLattice* particles, int index, ComplexVector& vSource, ComplexVector& vDestination)
 {
-	cout <<" Calling ParticleOnLatticeWithKyNBodyDeltaHamiltonian::HermitianEvaluateMNNBodyAddMultiplyComponent Maybe faulty" <<endl;
+  cout <<" Calling ParticleOnLatticeWithKyNBodyDeltaHamiltonian::HermitianEvaluateMNNBodyAddMultiplyComponent Maybe faulty" <<endl;
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
   double Coefficient3;
@@ -383,7 +383,7 @@ inline void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::HermitianEvaluateMNNBo
 	    {
 	      Coefficient4 = vSource[index];
 	      Coefficient4 *= Coefficient3;
-				TmpInteractionFactor = &(this->NBodyInteractionFactors[j][(i1 * Lim / this->SqrNBodyValue)]);
+	      TmpInteractionFactor = &(this->NBodyInteractionFactors[j][(i1 * Lim / this->SqrNBodyValue)]);
 	      for (int i2 = 0; i2 < Lim; i2 += this->NBodyValue)
 		{
 		  //TmpInteractionFactor = &(this->NBodyInteractionFactors[j][(i1 * Lim / this->SqrNBodyValue) + i2/this->NBodyValue]);
@@ -391,7 +391,7 @@ inline void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::HermitianEvaluateMNNBo
 		  if (Index <= index)
 		    {
 		      if (Index < index)
-						TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj(*TmpInteractionFactor);
+			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj(*TmpInteractionFactor);
 		      vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
 		    }
 		    TmpInteractionFactor++;
@@ -431,7 +431,7 @@ inline void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::HermitianEvaluateMNNBo
 	  Coefficient3 = particles->ProdA(index, TmpIndices + i1, this->NBodyValue);
 	  if (Coefficient3 != 0.0)
 	    {
-				TmpInteractionFactor = &(this->NBodyInteractionFactors[j][(i1 * Lim / this->SqrNBodyValue)]);
+	      TmpInteractionFactor = &(this->NBodyInteractionFactors[j][(i1 * Lim / this->SqrNBodyValue)]);
 	      for (int p = 0; p < nbrVectors; ++p)
 		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
 	      for (int i2 = 0; i2 < Lim; i2 += this->NBodyValue)
@@ -497,7 +497,7 @@ inline void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::EvaluateMNNBodyFastMul
 	      
 	      if (Coefficient2 != 0.0)
 		{
-			TmpInteractionFactor = &(this->NBodyInteractionFactors[j][(i1 * Lim / this->SqrNBodyValue)]);
+		  TmpInteractionFactor = &(this->NBodyInteractionFactors[j][(i1 * Lim / this->SqrNBodyValue)]);
 		  for (int i2 = 0; i2 < Lim; i2 += this->NBodyValue)
 		    {
 		      //TmpInteractionFactor = &(this->NBodyInteractionFactors[j][(i1 * Lim / this->SqrNBodyValue) + i2/this->NBodyValue]);
@@ -602,11 +602,9 @@ inline void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::EvaluateMNNBodyFastMul
 	  TmpIndices = this->NBodySectorIndicesPerSum[j];
 	  for (int i1 = 0; i1 < Lim; i1 += this->NBodyValue)
 	    {
-	      
 	      Coefficient2 = particles->ProdA(i, TmpIndices + i1, this->NBodyValue);
 	      if (Coefficient2 != 0.0)
 		{
-		  
 		  for (int i2 = 0; i2 < Lim; i2 += this->NBodyValue)
 		    {
 		      Index = particles->ProdAd(TmpIndices + i2, this->NBodyValue, Coefficient);
@@ -632,7 +630,7 @@ inline void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::EvaluateMNNBodyFastMul
 
 inline void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::EvaluateMNNBodyConjugateAddMultiplyComponent(ParticleOnLattice* particles, int index, ComplexVector& vSource, ComplexVector& vDestination)
 {
-	int Dim = particles->GetHilbertSpaceDimension();
+  int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
   double Coefficient3;
   Complex Coefficient4;
