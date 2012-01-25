@@ -1776,8 +1776,8 @@ RealDiagonalMatrix& HermitianMatrix::LapackDiagonalize (RealDiagonalMatrix& M, C
   if (LapackEVMatrix==NULL)
     LapackEVMatrix = new doublecomplex[((long) this->NbrRow) * ((long) this->NbrRow)];
   int Information = 0;  
-  char Jobz = 'V';
-  char UpperLower = 'U';
+  const char* Jobz = "V";
+  const char* UpperLower = "U";
   int TotalIndex = 0;
   for (int j = 0; j < this->NbrRow; ++j)
     {
@@ -1792,7 +1792,7 @@ RealDiagonalMatrix& HermitianMatrix::LapackDiagonalize (RealDiagonalMatrix& M, C
       LapackMatrix[TotalIndex].i = 0.0;
       ++TotalIndex;      
     }
-  FORTRAN_NAME(zhpev)(&Jobz, &UpperLower, &this->NbrRow, LapackMatrix, M.DiagonalElements, LapackEVMatrix, &this->NbrRow, LapackWorkingArea, LapackRealWorkingArea, &Information);
+  FORTRAN_NAME(zhpev)(Jobz, UpperLower, &this->NbrRow, LapackMatrix, M.DiagonalElements, LapackEVMatrix, &this->NbrRow, LapackWorkingArea, LapackRealWorkingArea, &Information);
   
   TotalIndex=0;
   for (int i = 0; i < this->NbrRow; ++i)
