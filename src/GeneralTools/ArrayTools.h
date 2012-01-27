@@ -36,6 +36,11 @@
 #include "MathTools/FactorialCoefficient.h"
 
 
+#include <iostream>
+
+using std::cout;
+using std::endl;
+
 // up ordering array sort using quick sort
 //
 // array = pointer to the array
@@ -1469,6 +1474,142 @@ unsigned long MultiplicitiesFactorial(ClassName*& array, unsigned long nbrValue)
   return Coefficient.GetIntegerValue();
 }
 
+// down ordering array sort using quick sort, each element being made of two smaller elements
+//
+// array1 = pointer to the array of  the element first part 
+// array2 = pointer to the array of  the element second part 
+// nbrValue = nbr of value in the array
+
+template <class ClassName>
+void SortDoubleElementArrayDownOrdering(ClassName* array1, ClassName* array2, long nbrValue)
+{
+  cout << "entering " << nbrValue << endl;;
+  for (long i = 0 ; i < nbrValue; ++i)
+    cout << array1[0] << " " << array2[0] << endl;
+  switch (nbrValue)
+    {
+    case 0:
+      return;
+    case 1:
+      return;
+    case 2:
+      {
+	if (DoubleElementLessThan(array1[0], array2[0], array1[1], array2[1]) == true)
+	  {
+	    ClassName TmpElement = array1[0];
+	    array1[0] = array1[1];
+	    array1[1] = TmpElement;
+	    TmpElement = array2[0];
+	    array2[0] = array2[1];
+	    array2[1] = TmpElement;
+	  }
+	return;
+      }
+      break;
+    case 3:
+      {
+	ClassName TmpElement;
+	if (DoubleElementLessThan(array1[0], array2[0], array1[1], array2[1]) == true)
+	  {
+	    TmpElement = array1[0];
+	    array1[0] = array1[1];
+	    array1[1] = TmpElement;
+	    TmpElement = array2[0];
+	    array2[0] = array2[1];
+	    array2[1] = TmpElement;
+	  }
+	if (DoubleElementLessThan(array1[1], array2[1], array1[2], array2[2]) == true)
+	  {
+	    TmpElement = array1[1];
+	    array1[1] = array1[2];
+	    array1[2] = TmpElement;
+	    TmpElement = array2[1];
+	    array2[1] = array2[2];
+	    array2[2] = TmpElement;
+	  }	
+	if (DoubleElementLessThan(array1[0], array2[0], array1[1], array2[1]) == true)
+	  {
+	    TmpElement = array1[0];
+	    array1[0] = array1[1];
+	    array1[1] = TmpElement;
+	    TmpElement = array2[0];
+	    array2[0] = array2[1];
+	    array2[1] = TmpElement;
+	  }
+	return;
+      }
+      break;
+    default:
+      {
+	int j = nbrValue - 1;
+	int i = nbrValue >> 1;
+	ClassName TmpElement;
+	if (DoubleElementLessThan(array1[0], array2[0], array1[i], array2[i]) == true)
+	  {
+	    TmpElement = array1[0];
+	    array1[0] = array1[1];
+	    array1[1] = TmpElement;
+	    TmpElement = array2[0];
+	    array2[0] = array2[1];
+	    array2[1] = TmpElement;
+	  }
+	if (DoubleElementLessThan(array1[i], array2[i], array1[j], array2[j]) == true)
+	  {
+	    TmpElement = array1[i];
+	    array1[i] = array1[j];
+	    array1[j] = TmpElement;
+	    TmpElement = array2[i];
+	    array2[i] = array2[j];
+	    array2[j] = TmpElement;
+	  }
+	if (DoubleElementLessThan(array1[0], array2[0], array1[i], array2[i]) == true)
+	  {
+	    TmpElement = array1[0];
+	    array1[0] = array1[1];
+	    array1[1] = TmpElement;
+	    TmpElement = array2[0];
+	    array2[0] = array2[1];
+	    array2[1] = TmpElement;
+	  }
+	--j;
+	ClassName Pivot1 = array1[i];
+	array1[i] = array1[j];
+	array1[j] = Pivot1;
+	ClassName Pivot2 = array2[i];
+	array2[i] = array2[j];
+	array2[j] = Pivot2;
+	i = 0;
+	while (true)
+	  {
+	    ++i; 
+ 	    --j;
+	    while (DoubleElementLessThan(Pivot1, Pivot2, array1[i], array2[i]) == true)
+	      ++i;
+	    while (DoubleElementLessThan(array1[j], array2[j], Pivot1, Pivot2) == true)
+	      --j;
+	    if (i < j)
+	      {
+		TmpElement = array1[i];
+		array1[i] = array1[j];
+		array1[j] = TmpElement;	    
+		TmpElement = array2[i];
+		array2[i] = array2[j];
+		array2[j] = TmpElement;	    
+	      }
+	    else
+	      break;
+	  }	
+	array1[nbrValue - 2] = array1[i];
+	array1[i] = Pivot1;
+	array2[nbrValue - 2] = array2[i];
+	array2[i] = Pivot2;
+	SortDoubleElementArrayDownOrdering(array1, array2, i);
+	SortDoubleElementArrayDownOrdering(&(array1[i + 1]), &(array2[i + 1]), nbrValue - i - 1);	
+      }
+    }
+  return;
+}
+
 // down ordering array sort using quick sort, each element being made of three smaller elements
 //
 // array1 = pointer to the array of  the element first part 
@@ -1477,7 +1618,7 @@ unsigned long MultiplicitiesFactorial(ClassName*& array, unsigned long nbrValue)
 // nbrValue = nbr of value in the array
 
 template <class ClassName>
-void SortArrayDownOrdering(ClassName* array1, ClassName* array2, ClassName* array3, long nbrValue)
+void SortTripleElementArrayDownOrdering(ClassName* array1, ClassName* array2, ClassName* array3, long nbrValue)
 {
   switch (nbrValue)
     {
@@ -1487,7 +1628,8 @@ void SortArrayDownOrdering(ClassName* array1, ClassName* array2, ClassName* arra
       return;
     case 2:
       {
-	if (array1[0] < array1[1])
+	if (TripleElementLessThan(array1[0], array2[0], array3[0], 
+				  array1[1], array2[1], array3[1]) == true)
 	  {
 	    ClassName TmpElement = array1[0];
 	    array1[0] = array1[1];
@@ -1499,28 +1641,14 @@ void SortArrayDownOrdering(ClassName* array1, ClassName* array2, ClassName* arra
 	    array3[0] = array3[1];
 	    array3[1] = TmpElement;
 	  }
-	else
-	  {
-	    if (array1[0] == array1[1])
-	      {
-		if (array2[0] < array2[1])
-		  {	
-		    ClassName TmpElement = array2[0];
-		    array2[0] = array2[1];
-		    array2[1] = TmpElement;
-		    TmpElement = array3[0];
-		    array3[0] = array3[1];
-		    array3[1] = TmpElement;
-		  }
-	      }
-	  }
 	return;
       }
       break;
     case 3:
       {
 	ClassName TmpElement;
-	if (array1[0] < array1[1])
+	if (TripleElementLessThan(array1[0], array2[0], array3[0], 
+				  array1[1], array2[1], array3[1]) == true)
 	  {
 	    TmpElement = array1[0];
 	    array1[0] = array1[1];
@@ -1532,22 +1660,8 @@ void SortArrayDownOrdering(ClassName* array1, ClassName* array2, ClassName* arra
 	    array3[0] = array3[1];
 	    array3[1] = TmpElement;
 	  }
-	else
-	  {
-	    if (array1[0] == array1[1])
-	      {
-		if (array2[0] < array2[1])
-		  {
-		    TmpElement = array2[0];
-		    array2[0] = array2[1];
-		    array2[1] = TmpElement;
-		    TmpElement = array3[0];
-		    array3[0] = array3[1];
-		    array3[1] = TmpElement;
-		  }
-	      }
-	  }
-	if (array1[1] < array1[2])
+	if (TripleElementLessThan(array1[1], array2[1], array3[1], 
+				  array1[2], array2[2], array3[2]) == true)
 	  {
 	    TmpElement = array1[1];
 	    array1[1] = array1[2];
@@ -1559,22 +1673,8 @@ void SortArrayDownOrdering(ClassName* array1, ClassName* array2, ClassName* arra
 	    array3[1] = array3[2];
 	    array3[2] = TmpElement;
 	  }	
-	else
-	  {
-	    if (array1[1] == array1[2])
-	      {
-		if (array2[1] < array2[2])
-		  {
-		    TmpElement = array2[1];
-		    array2[1] = array2[2];
-		    array2[2] = TmpElement;
-		    TmpElement = array3[1];
-		    array3[1] = array3[2];
-		    array3[2] = TmpElement;
-		  }	
-	      }
-	  }
-	if (array1[0] < array1[1])
+	if (TripleElementLessThan(array1[0], array2[0], array3[0], 
+				  array1[1], array2[1], array3[1]) == true)
 	  {
 	    TmpElement = array1[0];
 	    array1[0] = array1[1];
@@ -1585,21 +1685,6 @@ void SortArrayDownOrdering(ClassName* array1, ClassName* array2, ClassName* arra
 	    TmpElement = array3[0];
 	    array3[0] = array3[1];
 	    array3[1] = TmpElement;
-	  }	
-	else
-	  {
-	    if (array1[0] == array1[1])
-	      {
-		if (array2[0] < array2[1])
-		  {
-		    TmpElement = array2[0];
-		    array2[0] = array2[1];
-		    array2[1] = TmpElement;
-		    TmpElement = array3[0];
-		    array3[0] = array3[1];
-		    array3[1] = TmpElement;
-		  }	
-	      }
 	  }
 	return;
       }
@@ -1609,34 +1694,21 @@ void SortArrayDownOrdering(ClassName* array1, ClassName* array2, ClassName* arra
 	int j = nbrValue - 1;
 	int i = nbrValue >> 1;
 	ClassName TmpElement;
-	if (array1[0] <  array1[i])
+	if (TripleElementLessThan(array1[0], array2[0], array3[0], 
+				  array1[i], array2[i], array3[i]) == true)
 	  {
-	    TmpElement = array1[i];
-	    array1[i] = array1[0];
-	    array1[0] = TmpElement;
-	    TmpElement = array2[i];
-	    array2[i] = array2[0];
-	    array2[0] = TmpElement;
-	    TmpElement = array3[i];
-	    array3[i] = array3[0];
-	    array3[0] = TmpElement;
+	    TmpElement = array1[0];
+	    array1[0] = array1[1];
+	    array1[1] = TmpElement;
+	    TmpElement = array2[0];
+	    array2[0] = array2[1];
+	    array2[1] = TmpElement;
+	    TmpElement = array3[0];
+	    array3[0] = array3[1];
+	    array3[1] = TmpElement;
 	  }
-	else
-	  {
-	    if (array1[0] ==  array1[i])
-	      {
-		if (array2[0] <  array2[i])
-		  {
-		    TmpElement = array2[i];
-		    array2[i] = array2[0];
-		    array2[0] = TmpElement;
-		    TmpElement = array3[i];
-		    array3[i] = array3[0];
-		    array3[0] = TmpElement;
-		  }
-	      }
-	  }
-	if (array1[i] <  array1[j])
+	if (TripleElementLessThan(array1[i], array2[i], array3[i], 
+				  array1[j], array2[j], array3[j]) == true)
 	  {
 	    TmpElement = array1[i];
 	    array1[i] = array1[j];
@@ -1648,47 +1720,18 @@ void SortArrayDownOrdering(ClassName* array1, ClassName* array2, ClassName* arra
 	    array3[i] = array3[j];
 	    array3[j] = TmpElement;
 	  }
-	else
+	if (TripleElementLessThan(array1[0], array2[0], array3[0], 
+				  array1[i], array2[i], array3[i]) == true)
 	  {
-	    if (array1[i] == array1[j])
-	      {
-		if (array2[i] <  array2[j])
-		  {
-		    TmpElement = array2[i];
-		    array2[i] = array2[j];
-		    array2[j] = TmpElement;
-		    TmpElement = array3[i];
-		    array3[i] = array3[j];
-		    array3[j] = TmpElement;
-		  }
-	      }
-	  }
-	if (array1[0] <  array1[i])
-	  {
-	    TmpElement = array1[i];
-	    array1[i] = array1[0];
-	    array1[0] = TmpElement;
-	    TmpElement = array2[i];
-	    array2[i] = array2[0];
-	    array2[0] = TmpElement;
-	    TmpElement = array3[i];
-	    array3[i] = array3[0];
-	    array3[0] = TmpElement;
-	  }
-	else
-	  {
-	    if (array1[0] ==  array1[i])
-	      {
-		if (array2[0] <  array2[i])
-		  {
-		    TmpElement = array2[i];
-		    array2[i] = array2[0];
-		    array2[0] = TmpElement;
-		    TmpElement = array3[i];
-		    array3[i] = array3[0];
-		    array3[0] = TmpElement;
-		  }
-	      }
+	    TmpElement = array1[0];
+	    array1[0] = array1[1];
+	    array1[1] = TmpElement;
+	    TmpElement = array2[0];
+	    array2[0] = array2[1];
+	    array2[1] = TmpElement;
+	    TmpElement = array3[0];
+	    array3[0] = array3[1];
+	    array3[1] = TmpElement;
 	  }
 	--j;
 	ClassName Pivot1 = array1[i];
@@ -1705,11 +1748,11 @@ void SortArrayDownOrdering(ClassName* array1, ClassName* array2, ClassName* arra
 	  {
 	    ++i; 
  	    --j;
-	    while ((array1[i] > Pivot1) || ((array1[i] == Pivot1) && (array2[i] > Pivot2)) ||
-		   ((array1[i] == Pivot1) && (array2[i] == Pivot2) && (array3[i] > Pivot3)))
+	    while (TripleElementLessThan(Pivot1, Pivot2, Pivot3, 
+					 array1[i], array2[i], array3[i]) == true)
 	      ++i;
-	    while ((array1[j] < Pivot1) || ((array1[j] == Pivot1) && (array2[j] < Pivot2)) ||
-		   ((array1[j] == Pivot1) && (array2[j] == Pivot2) && (array3[j] < Pivot3)))
+	    while (TripleElementLessThan(array1[j], array2[j], array3[j], 
+					 Pivot1, Pivot2, Pivot3) == true)
 	      --j;
 	    if (i < j)
 	      {
@@ -1732,8 +1775,8 @@ void SortArrayDownOrdering(ClassName* array1, ClassName* array2, ClassName* arra
 	array2[i] = Pivot2;
 	array3[nbrValue - 2] = array3[i];
 	array3[i] = Pivot3;
-	SortArrayDownOrdering(array1, array2, array3, i);
-	SortArrayDownOrdering(&(array1[i + 1]), &(array2[i + 1]), &(array3[i + 1]), nbrValue - i - 1);	
+	SortTripleElementArrayDownOrdering(array1, array2, array3, i);
+	SortTripleElementArrayDownOrdering(&(array1[i + 1]), &(array2[i + 1]), &(array3[i + 1]), nbrValue - i - 1);	
       }
     }
   return;
@@ -1748,7 +1791,7 @@ void SortArrayDownOrdering(ClassName* array1, ClassName* array2, ClassName* arra
 // nbrValue = nbr of value in the array
 
 template <class ClassName>
-void SortArrayDownOrdering(ClassName* array1, ClassName* array2, ClassName* array3, ClassName* array4, long nbrValue)
+void SortQuadElementArrayDownOrdering(ClassName* array1, ClassName* array2, ClassName* array3, ClassName* array4, long nbrValue)
 {
   switch (nbrValue)
     {
@@ -1933,24 +1976,66 @@ void SortArrayDownOrdering(ClassName* array1, ClassName* array2, ClassName* arra
 	array3[nbrValue - 2] = array3[i];
 	array3[i] = Pivot3;
 	array4[nbrValue - 2] = array4[i];
-	array4[i] = Pivot3;
-	SortArrayDownOrdering(array1, array2, array3, array4, i);
-	SortArrayDownOrdering(&(array1[i + 1]), &(array2[i + 1]), &(array3[i + 1]), &(array4[i + 1]), nbrValue - i - 1);	
+	array4[i] = Pivot4;
+	SortQuadElementArrayDownOrdering(array1, array2, array3, array4, i);
+	SortQuadElementArrayDownOrdering(&(array1[i + 1]), &(array2[i + 1]), &(array3[i + 1]), &(array4[i + 1]), nbrValue - i - 1);	
       }
     }
   return;
 }
 
+// less operator (A < B) for two elements made of two smaller elements
+//
+// elementA1 = first part of A
+// elementA2 = second part of A
+// elementB1 = first part of B
+// elementB2 = second part of B
+// return = true if A < B
+
+template <class ClassName>
+inline bool DoubleElementLessThan (ClassName& elementA1, ClassName& elementA2, ClassName& elementB1, ClassName& elementB2)
+{
+  return ((elementA1 < elementB1) || ((elementA1 == elementB1) && (elementA2 < elementB2)));
+}
+
+// less operator (A < B) for two elements made of three smaller elements
+//
+// elementA1 = first part of A
+// elementA2 = second part of A
+// elementA3 = third part of A
+// elementB1 = first part of B
+// elementB2 = second part of B
+// elementB3 = third part of B
+// return = true if A < B
+
+template <class ClassName>
+inline bool TripleElementLessThan (ClassName& elementA1, ClassName& elementA2, ClassName& elementA3, 
+				   ClassName& elementB1, ClassName& elementB2, ClassName& elementB3)
+{
+  return ((elementA1 < elementB1) || ((elementA1 == elementB1) && 
+				      ((elementA2 < elementB2) || ((elementA2 == elementB2) && (elementA3 < elementB3)))));
+}
+
+// less operator (A < B) for two elements made of four smaller elements
+//
+// elementA1 = first part of A
+// elementA2 = second part of A
+// elementA3 = third part of A
+// elementA4 = fourth part of A
+// elementB1 = first part of B
+// elementB2 = second part of B
+// elementB3 = third part of B
+// elementB4 = fourth part of B
+// return = true if A < B
+
 template <class ClassName>
 inline bool QuadElementLessThan (ClassName& elementA1, ClassName& elementA2, ClassName& elementA3, ClassName& elementA4, 
 				 ClassName& elementB1, ClassName& elementB2, ClassName& elementB3, ClassName& elementB4)
 {
-  if ((elementA1 < elementB1) || ((elementA1 == elementB1) && 
-				  ((elementA2 < elementB2) || ((elementA2 == elementB2) && ((elementA3 < elementB3) ||
-											    ((elementA3 == elementB3) && (elementA4 < elementB4)))))))
-    {
-      return true;
-    }
-  return false;
+  return ((elementA1 < elementB1) || ((elementA1 == elementB1) && 
+				      ((elementA2 < elementB2) || ((elementA2 == elementB2) && ((elementA3 < elementB3) ||
+												((elementA3 == elementB3) && (elementA4 < elementB4)))))));
 }
+
+
 #endif

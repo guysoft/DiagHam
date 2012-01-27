@@ -130,7 +130,7 @@ BosonOnSphereThreeLandauLevels::BosonOnSphereThreeLandauLevels (int nbrBosons, i
 	    Tmp += (TmpState >> j) & 0x1ul;
 	  this->StateDescription3[i] >>= this->NbrBosons - Tmp; 
 	}
-      SortArrayDownOrdering<unsigned long>(this->StateDescription1, this->StateDescription2, this->StateDescription3, TmpLargeHilbertSpaceDimension);
+      SortTripleElementArrayDownOrdering<unsigned long>(this->StateDescription1, this->StateDescription2, this->StateDescription3, TmpLargeHilbertSpaceDimension);
       this->GenerateLookUpTable(memory);
 #ifdef __DEBUG__
       long UsedMemory = 0;

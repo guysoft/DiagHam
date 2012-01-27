@@ -121,4 +121,6 @@ BosonOnSquareLatticeWithSU3SpinMomentumSpace.cc \
 BosonOnSphereThreeLandauLevels.cc \
 BosonOnSphereWithSU4Spin.cc \
 BosonOnSquareLatticeWithSU4SpinMomentumSpace.cc \
-BosonOnLatticeKyLong.cc
+BosonOnLatticeKyLong.cc \
+BosonOnSphereWithSU2Spin.cc \
+BosonOnSquareLatticeWithSU2SpinMomentumSpace.cc

@@ -134,7 +134,7 @@ BosonOnSquareLatticeWithSU4SpinMomentumSpace::BosonOnSquareLatticeWithSU4SpinMom
 	    Tmp += (TmpState >> j) & 0x1ul;
 	  this->StateDescriptionDownMinus[i] >>= this->NbrBosons - Tmp; 
 	}
-      SortArrayDownOrdering<unsigned long>(this->StateDescriptionUpPlus, this->StateDescriptionUpMinus, 
+      SortQuadElementArrayDownOrdering<unsigned long>(this->StateDescriptionUpPlus, this->StateDescriptionUpMinus, 
 					   this->StateDescriptionDownPlus, this->StateDescriptionDownMinus, TmpLargeHilbertSpaceDimension);
       this->GenerateLookUpTable(memory);
 #ifdef __DEBUG__

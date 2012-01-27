@@ -68,7 +68,6 @@ BosonOnSquareLatticeWithSpinMomentumSpace::BosonOnSquareLatticeWithSpinMomentumS
 {  
   this->NbrBosons = nbrBosons;
   this->IncNbrBosons = this->NbrBosons + 1;
-  this->SzFlag = false;
   this->TotalLz = 0;
   this->TotalSpin = 0;
   this->NbrBosonsUp = 0;
@@ -79,20 +78,38 @@ BosonOnSquareLatticeWithSpinMomentumSpace::BosonOnSquareLatticeWithSpinMomentumS
   this->KyMomentum = kyMomentum;
   this->LzMax = this->NbrSiteX * this->NbrSiteY;
   this->NbrLzValue = this->LzMax + 1;
-  this->MaximumSignLookUp = 16;
+
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0);
   if (this->LargeHilbertSpaceDimension >= (1l << 30))
     this->HilbertSpaceDimension = 0;
   else
     this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
-  if ( this->LargeHilbertSpaceDimension > 0l)
+  if (this->LargeHilbertSpaceDimension > 0l)
     {
+      this->TemporaryState = new unsigned [this->NbrLzValue];
+      this->ProdATemporaryState = new unsigned [this->NbrLzValue];
       this->Flag.Initialize();
-      this->TargetSpace = this;
-      this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
-      this->StateHighestBit = new int [this->HilbertSpaceDimension];  
-      this->LargeHilbertSpaceDimension = this->GenerateStates(this->NbrBosons, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0, 0l);
+      this->StateDescription = new unsigned* [this->HilbertSpaceDimension];
+      this->StateLzMaxUp = new unsigned [this->HilbertSpaceDimension];
+      this->StateLzMaxDown = new unsigned [this->HilbertSpaceDimension];
+      int TmpLzMax = this->LzMax;
+      if (this->ShiftedTotalLz < TmpLzMax)
+	{
+	  TmpLzMax = this->ShiftedTotalLz;	  
+	}
+
+      long TmpDim = GenerateStates(this->NbrBosons, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0, 0l);
+      
+      if (TmpDim!=this->HilbertSpaceDimension)
+	cout << "Count inconsistent: "<<TmpDim<<" vs " << this->HilbertSpaceDimension<<endl;
+
       this->GenerateLookUpTable(memory);
+      this->CoherenceFactors=new double[NbrBosons * NbrBosons + 1];
+      for (int i=0; i< (NbrBosons * NbrBosons + 1); ++i)
+	this->CoherenceFactors[i] = sqrt((double)i);
+      this->KeptCoordinates = new int;
+      (*(this->KeptCoordinates)) = -1;
+      this->Minors = 0;
       
 #ifdef __DEBUG__
       long UsedMemory = 0;
@@ -131,6 +148,76 @@ BosonOnSquareLatticeWithSpinMomentumSpace::BosonOnSquareLatticeWithSpinMomentumS
 
 BosonOnSquareLatticeWithSpinMomentumSpace::BosonOnSquareLatticeWithSpinMomentumSpace (int nbrBosons, int nbrSpinUp, int nbrSiteX, int nbrSiteY, int kxMomentum, int kyMomentum, unsigned long memory)
 {
+  this->NbrBosons = nbrBosons;
+  this->IncNbrBosons = this->NbrBosons + 1;
+  this->TotalLz = 0;
+  this->NbrBosonsUp = nbrSpinUp;
+  this->NbrBosonsDown = this->NbrBosons - this->NbrBosons;
+  this->TotalSpin = this->NbrBosonsUp - this->NbrBosonsDown;
+  this->NbrSiteX = nbrSiteX;
+  this->NbrSiteY = nbrSiteY;
+  this->KxMomentum = kxMomentum;
+  this->KyMomentum = kyMomentum;
+  this->LzMax = this->NbrSiteX * this->NbrSiteY;
+  this->NbrLzValue = this->LzMax + 1;
+
+  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0, this->NbrBosonsUp);
+  if (this->LargeHilbertSpaceDimension >= (1l << 30))
+    this->HilbertSpaceDimension = 0;
+  else
+    this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+  if (this->LargeHilbertSpaceDimension > 0l)
+    {
+      this->TemporaryState = new unsigned [this->NbrLzValue];
+      this->ProdATemporaryState = new unsigned [this->NbrLzValue];
+      this->Flag.Initialize();
+      this->StateDescription = new unsigned* [this->HilbertSpaceDimension];
+      this->StateLzMaxUp = new unsigned [this->HilbertSpaceDimension];
+      this->StateLzMaxDown = new unsigned [this->HilbertSpaceDimension];
+      int TmpLzMax = this->LzMax;
+      if (this->ShiftedTotalLz < TmpLzMax)
+	{
+	  TmpLzMax = this->ShiftedTotalLz;	  
+	}
+
+      long TmpDim = GenerateStates(this->NbrBosons, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0, this->NbrBosonsUp, 0l);
+      
+      if (TmpDim!=this->HilbertSpaceDimension)
+	cout << "Count inconsistent: "<<TmpDim<<" vs " << this->HilbertSpaceDimension<<endl;
+
+      this->GenerateLookUpTable(memory);
+      this->CoherenceFactors=new double[NbrBosons * NbrBosons + 1];
+      for (int i=0; i< (NbrBosons * NbrBosons + 1); ++i)
+	this->CoherenceFactors[i] = sqrt((double)i);
+      this->KeptCoordinates = new int;
+      (*(this->KeptCoordinates)) = -1;
+      this->Minors = 0;
+      
+#ifdef __DEBUG__
+      long UsedMemory = 0;
+      UsedMemory += (long) this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
+      cout << "memory requested for Hilbert space = ";
+      if (UsedMemory >= 1024)
+	if (UsedMemory >= 1048576)
+	  cout << (UsedMemory >> 20) << "Mo" << endl;
+	else
+	  cout << (UsedMemory >> 10) << "ko" <<  endl;
+      else
+	cout << UsedMemory << endl;
+      UsedMemory = this->NbrLzValue * sizeof(int);
+      UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
+      cout << "memory requested for lookup table = ";
+      if (UsedMemory >= 1024)
+	if (UsedMemory >= 1048576)
+	  cout << (UsedMemory >> 20) << "Mo" << endl;
+	else
+	  cout << (UsedMemory >> 10) << "ko" <<  endl;
+      else
+	cout << UsedMemory << endl;
+#endif
+    }
+
+
   this->NbrBosons = nbrBosons;
   this->IncNbrBosons = this->NbrBosons + 1;
   this->SzFlag = true;
@@ -579,10 +666,9 @@ long BosonOnSquareLatticeWithSpinMomentumSpace::EvaluateHilbertSpaceDimension(in
 	}
       return Count;
     }
-  Count += this->EvaluateHilbertSpaceDimension(nbrBosons - 2, currentKx, currentKy - 1, currentTotalKx + (2 * currentKx), currentTotalKy + (2 * currentKy), nbrSpinUp - 1);
-  Count += this->EvaluateHilbertSpaceDimension(nbrBosons - 1, currentKx, currentKy - 1, currentTotalKx + currentKx, currentTotalKy + currentKy, nbrSpinUp);
-  Count += this->EvaluateHilbertSpaceDimension(nbrBosons - 1, currentKx, currentKy - 1, currentTotalKx + currentKx, currentTotalKy + currentKy, nbrSpinUp - 1);
-  Count += this->EvaluateHilbertSpaceDimension(nbrBosons, currentKx, currentKy - 1, currentTotalKx, currentTotalKy, nbrSpinUp);
+  for (int i = nbrBosons; i >= 0; --i)
+    for (int j = i; j >= 0; --j)
+      Count += this->EvaluateHilbertSpaceDimension(nbrBosons - i, currentKx, currentKy - 1, currentTotalKx + (i * currentKx), currentTotalKy + (i * currentKy), nbrSpinUp - j);
   return Count;
 }
 
