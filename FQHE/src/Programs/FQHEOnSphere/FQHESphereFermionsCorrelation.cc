@@ -84,7 +84,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('r', "radians", "set units to radians instead of magnetic lengths", false);
   (*SystemGroup) += new BooleanOption  ('c', "chord", "use chord distance instead of distance on the sphere", false);
   (*SystemGroup) += new BooleanOption  ('\n', "density", "plot density insted of density-density correlation", false);
-  (*SystemGroup) += new BooleanOption  ('\n', "structure-factor", "evaluate LLL structure factor instead of (density-)density (use with radians option)", false);
+  (*SystemGroup) += new BooleanOption  ('\n', "structure-factor", "evaluate the projected structure factor instead of (density-)density (use with radians option)", false);
+  (*SystemGroup) += new BooleanOption  ('\n', "guidingcenter-structurefactor", "evaluate the guiding center structure factor instead of (density-)density", false);
   (*SystemGroup) += new BooleanOption  ('\n', "coefficients-only", "only compute the one or two body coefficients that are requested to evaluate the density-density correlation", false);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "huge-memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
@@ -115,6 +116,7 @@ int main(int argc, char** argv)
   unsigned long MemorySpace = ((unsigned long) Manager.GetInteger("fast-search")) << 20;
   bool DensityFlag = Manager.GetBoolean("density");
   bool StructureFactorFlag = Manager.GetBoolean("structure-factor");
+  bool GuidingCenterStructureFactorFlag = Manager.GetBoolean("guidingcenter-structurefactor");
   bool ChordFlag = Manager.GetBoolean("chord");
   bool HaldaneBasisFlag = Manager.GetBoolean("haldane");
   bool SymmetrizedBasis = Manager.GetBoolean("symmetrized-basis");
@@ -309,9 +311,69 @@ int main(int argc, char** argv)
 
   cout << Space->GetHilbertSpaceDimension() << endl;
 
-  if (StructureFactorFlag == true)
+  if (GuidingCenterStructureFactorFlag == true)
    {
-     cout<<"Structure factor is evaluated for LLL; " << endl;
+     cout<<"Evaluating the guiding-center structure factor: " << endl;
+     cout<<"S_L = <rho_{L,0}rho_{L,0}>, where rho_{L,M}=\sum_m sqrt{2L+1}C_{m0m}^{SLS} c_m^+ c_m" << endl;
+     cout<<"Normalization 1/N_{orb}, for L->infty S->nu-1/nu^2" << endl;
+     ofstream File;
+     File.precision(14);
+     if (Manager.GetString("output-file") != 0)
+       File.open(Manager.GetString("output-file"), ios::binary | ios::out);
+     else
+      {
+        cout << "Enter output file! " << endl;
+        exit(1);
+      }
+  
+     RealVector State;
+     if (State.ReadVectorTest(Manager.GetString("eigenstate")) == true)
+      {
+        if (State.ReadVector (Manager.GetString("eigenstate")) == false)
+	  {
+	    cout << "can't open vector file " << Manager.GetString("eigenstate") << endl;
+	    return -1;      
+	  }
+
+        Complex* DensityMatEl;
+        DensityMatEl = new Complex[LzMax + 1];
+
+	//cout<<"Density: ";
+        for (int i = 0; i <= LzMax; ++i)
+         {
+           ParticleOnSphereDensityOperator Operator (Space, i);
+           DensityMatEl[i] = Operator.MatrixElement(State, State);
+	   //cout<<"i= "<<i<<" "<<DensityMatEl[i]<<" ";
+         }
+        cout<<endl;
+
+       double S = 0.5 * (double)LzMax;
+       ClebschGordanCoefficients CoeffLLS(LzMax, LzMax);  
+       for (int L = 0; L <= LzMax; ++L)
+        {
+          Complex SumIJ(0.0,0.0);
+          for (int i = 0; i <= LzMax; ++i)
+           {
+            for (int j = 0; j <= LzMax; ++j)
+	     {        
+               double Factor = (LzMax + 1.0) * pow(-1.0, 2*LzMax - i - j) * CoeffLLS.GetCoefficient(((j << 1) - LzMax), -((j << 1) - LzMax), L << 1) * CoeffLLS.GetCoefficient(((i << 1) - LzMax), -((i << 1) - LzMax), L << 1);
+               ParticleOnSphereDensityDensityOperator Operator (Space, i, j, i, j);
+               SumIJ +=  Factor * Operator.MatrixElement(State, State);
+               if (i != j)
+                 SumIJ += Factor * DensityMatEl[j]; 
+                
+	     }
+           }     
+         cout << L <<" "<< -(1.0/(double)(LzMax + 1)) * SumIJ.Re << " " << -(1.0/(double)(LzMax + 1)) * SumIJ.Im <<endl;
+         File << L <<" "<< -(1.0/(double)(LzMax + 1)) * SumIJ.Re << " " << -(1.0/(double)(LzMax + 1)) * SumIJ.Im <<endl;
+        }
+       delete[] DensityMatEl;
+       return 0;
+     } 
+   }
+  else if (StructureFactorFlag == true)
+   {
+     cout<<"Projected structure factor is evaluated for LLL; " << endl;
      cout<<"use normalization convention from He, Simon & Halperin." << endl;
      ofstream File;
      File.precision(14);
@@ -369,6 +431,7 @@ int main(int argc, char** argv)
        return 0;
      } 
    }
+
 
 
   AbstractFunctionBasis* Basis;
