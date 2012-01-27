@@ -1112,17 +1112,18 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelMultipleAddMult
 // nbrComponent = number of components to evaluate
 // return value = pointer to the array of vectors where result has been stored
 
-ComplexVector* AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelMultipleAddMultiplyFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
-												 int firstComponent, int lastComponent)
+ComplexVector* AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelMultipleAddMultiplyFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors,  int firstComponent, int lastComponent)
 {
   Complex TmpCoefficient;
-  int* TmpIndexArray;
   int Index;
   double TmpRealCoefficient;
+	
+	int* TmpIndexArray;
   unsigned short* TmpCoefficientIndexArray;
   unsigned short TmpNbrRealInteraction;
   unsigned short TmpNbrComplexInteraction;
   Complex* TmpSum = new Complex [nbrVectors];
+	
   int k = firstComponent;
   firstComponent -= this->PrecalculationShift;
   lastComponent -= this->PrecalculationShift;
@@ -1132,8 +1133,10 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelMultipleAddMult
       TmpNbrComplexInteraction = this->NbrComplexInteractionPerComponent[i];
       TmpIndexArray = this->InteractionPerComponentIndex[i];
       TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[i];
+			
       for (int l = 0; l < nbrVectors; ++l)
-	TmpSum[l] = 0.0;
+				TmpSum[l] = 0.0;
+			
       int Pos=0;
       for (; Pos < TmpNbrRealInteraction; ++Pos)
 	{
@@ -1147,12 +1150,13 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelMultipleAddMult
 	  Index = TmpIndexArray[Pos];
 	  TmpCoefficient = Conj(ComplexInteractionCoefficients[TmpCoefficientIndexArray[Pos]]);
 	  for (int l = 0; l < nbrVectors; ++l)
-	    vDestinations[l][Index] +=  TmpCoefficient * vSources[l][Index];
+	    TmpSum[l] +=  TmpCoefficient * vSources[l][Index];
 	}
       for (int l = 0; l < nbrVectors; ++l)
-	TmpSum[l] += TmpSum[l] + this->HamiltonianShift * vSources[l][k];
+	vDestinations[l][i] += TmpSum[l] + this->HamiltonianShift * vSources[l][i];
     }
   delete [] TmpSum;  
+	
   return vDestinations;
 }
 

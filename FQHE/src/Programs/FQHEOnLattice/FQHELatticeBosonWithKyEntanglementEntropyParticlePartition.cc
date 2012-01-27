@@ -252,91 +252,90 @@ int main(int argc, char** argv)
       for ( int SubsystemTotalKy = 0 ; SubsystemTotalKy < Spaces[0]->GetMaximumKy() ;SubsystemTotalKy++)
 	{
 	  cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " Ky=" << SubsystemTotalKy << endl;
-	      timeval TotalStartingTime;
-	      timeval TotalEndingTime;
+	  timeval TotalStartingTime;
+	  timeval TotalEndingTime;
+	  if (ShowTimeFlag == true)
+	    {
+	      gettimeofday (&(TotalStartingTime), 0);
+	    }
+	  HermitianMatrix PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKy, GroundStates[0], Architecture.GetArchitecture());
+	  cout << "Subsystem Hilbert space dimension = " << PartialDensityMatrix.GetNbrRow()<<endl;
+	  PartialDensityMatrix *= Coefficients[0];
+	  for (int i = 1; i < NbrSpaces; ++i)
+	    {
+	      HermitianMatrix TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles,SubsystemTotalKy, GroundStates[i], Architecture.GetArchitecture());
+	      TmpMatrix *= Coefficients[i];
+	      PartialDensityMatrix += TmpMatrix;
+	    }
+	  if (ShowTimeFlag == true)
+	    {
+	      gettimeofday (&(TotalEndingTime), 0);
+	      double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
+	      cout << "reduced density matrix evaluated in " << Dt << "s" << endl;
+	    }
+	  if (PartialDensityMatrix.GetNbrRow() > 1)
+	    {
 	      if (ShowTimeFlag == true)
 		{
 		  gettimeofday (&(TotalStartingTime), 0);
 		}
-	      HermitianMatrix PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKy, GroundStates[0], Architecture.GetArchitecture());
-				cout << "Subsystem Hilbert space dimension = " << PartialDensityMatrix.GetNbrRow()<<endl;
-	      PartialDensityMatrix *= Coefficients[0];
-	      for (int i = 1; i < NbrSpaces; ++i)
+	      RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
+#ifdef __LAPACK__
+	      if (LapackFlag == true)
 		{
-		  HermitianMatrix TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles,SubsystemTotalKy, GroundStates[i], Architecture.GetArchitecture());
-		  TmpMatrix *= Coefficients[i];
-		  PartialDensityMatrix += TmpMatrix;
+		  PartialDensityMatrix.LapackDiagonalize(TmpDiag);
+		}
+	      else
+		{
+		  PartialDensityMatrix.Diagonalize(TmpDiag);
+		}
+#else
+	      PartialDensityMatrix.Diagonalize(TmpDiag);
+#endif		  
+	      TmpDiag.SortMatrixDownOrder();
+	      if (DensityMatrixFileName != 0)
+		{
+		  ofstream DensityMatrixFile;
+		  DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
+		  DensityMatrixFile.precision(14);
+		  for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+		    DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalKy<<" " << TmpDiag[i] << endl;
+		  DensityMatrixFile.close();
+		}
+	      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+		{
+		  if (TmpDiag[i] > 1e-14)
+		    {
+		      EntanglementEntropy += TmpDiag[i] * log(TmpDiag[i]);
+		      DensitySum +=TmpDiag[i];
+		    }
 		}
 	      if (ShowTimeFlag == true)
 		{
 		  gettimeofday (&(TotalEndingTime), 0);
-		  double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
-					((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
-		  cout << "reduced density matrix evaluated in " << Dt << "s" << endl;
+		  double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
+		  cout << "diagonalization done in " << Dt << "s" << endl;
 		}
-	      if (PartialDensityMatrix.GetNbrRow() > 1)
-		{
-		  if (ShowTimeFlag == true)
-		    {
-		      gettimeofday (&(TotalStartingTime), 0);
-		    }
-		  RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
-#ifdef __LAPACK__
-		  if (LapackFlag == true)
-		    {
-		      PartialDensityMatrix.LapackDiagonalize(TmpDiag);
-		    }
-		  else
-		    {
-		      PartialDensityMatrix.Diagonalize(TmpDiag);
-		    }
-#else
-		  PartialDensityMatrix.Diagonalize(TmpDiag);
-#endif		  
-		  TmpDiag.SortMatrixDownOrder();
-		  if (DensityMatrixFileName != 0)
-		    {
-		      ofstream DensityMatrixFile;
-		      DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
-		      DensityMatrixFile.precision(14);
-		      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
-			DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalKy<<" " << TmpDiag[i] << endl;
-		      DensityMatrixFile.close();
-		    }
-		  for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
-		    {
-		      if (TmpDiag[i] > 1e-14)
-			{
-			  EntanglementEntropy += TmpDiag[i] * log(TmpDiag[i]);
-			  DensitySum +=TmpDiag[i];
-			}
-		    }
-		  if (ShowTimeFlag == true)
-		    {
-		      gettimeofday (&(TotalEndingTime), 0);
-		      double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
-		      cout << "diagonalization done in " << Dt << "s" << endl;
-		    }
-		}
-	      else
-		if (PartialDensityMatrix.GetNbrRow() == 1)
+	    }
+	  else
+	    if (PartialDensityMatrix.GetNbrRow() == 1)
+	      {
+		double TmpValue = PartialDensityMatrix(0,0);
+		if (DensityMatrixFileName != 0)
 		  {
-		    double TmpValue = PartialDensityMatrix(0,0);
-		    if (DensityMatrixFileName != 0)
-		      {
-			ofstream DensityMatrixFile;
-			DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
-			DensityMatrixFile.precision(14);
-			DensityMatrixFile << SubsystemNbrParticles << " "<<SubsystemTotalKy<<" " << TmpValue << endl;
-			DensityMatrixFile.close();
-		      }		  
-		    if (TmpValue > 1e-14)
-		      {
-			EntanglementEntropy += TmpValue * log(TmpValue);
-			DensitySum += TmpValue;
-		      }
+		    ofstream DensityMatrixFile;
+		    DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
+		    DensityMatrixFile.precision(14);
+		    DensityMatrixFile << SubsystemNbrParticles << " "<<SubsystemTotalKy<<" " << TmpValue << endl;
+		    DensityMatrixFile.close();
+		  }		  
+		if (TmpValue > 1e-14)
+		  {
+		    EntanglementEntropy += TmpValue * log(TmpValue);
+		    DensitySum += TmpValue;
 		  }
-	      File << SubsystemNbrParticles << " " << (-EntanglementEntropy) << " " << DensitySum << " " << (1.0 - DensitySum) << endl;
+	      }
+	  File << SubsystemNbrParticles << " " << (-EntanglementEntropy) << " " << DensitySum << " " << (1.0 - DensitySum) << endl;
 	}
     }
   File.close();

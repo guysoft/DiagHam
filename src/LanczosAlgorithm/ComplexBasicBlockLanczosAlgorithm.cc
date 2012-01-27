@@ -558,6 +558,7 @@ void ComplexBasicBlockLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter)
 	this->LanczosVectors[k + this->BlockSize] = ComplexVector(this->Hamiltonian->GetHilbertSpaceDimension());
       MultipleVectorHamiltonianMultiplyOperation Operation (this->Hamiltonian, this->LanczosVectors, &(this->LanczosVectors[this->BlockSize]), this->BlockSize);
       Operation.ApplyOperation(this->Architecture);
+			
       for (int i = 0; i < this->BlockSize; ++i)
 	{
 	  MultipleComplexScalarProductOperation Operation2 (&(this->LanczosVectors[i + this->BlockSize]), this->LanczosVectors,   

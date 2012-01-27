@@ -1310,7 +1310,6 @@ ComplexVector* ParticleOnLatticeWithKyNBodyDeltaHamiltonian::ConjugateLowLevelMu
 	  //this->EvaluateMNNBodyConjugateAddMultiplyComponent(TmpParticles, i ,  vSources, vDestinations, nbrVectors,  TmpCoefficients);
 	  
 	}
-      
       delete [] TmpCoefficients;
       delete TmpParticles;
     }	  
