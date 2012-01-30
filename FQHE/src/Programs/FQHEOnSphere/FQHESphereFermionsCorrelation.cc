@@ -314,7 +314,7 @@ int main(int argc, char** argv)
   if (GuidingCenterStructureFactorFlag == true)
    {
      cout<<"Evaluating the guiding-center structure factor: " << endl;
-     cout<<"S_L = <rho_{L,0}rho_{L,0}>, where rho_{L,M}=\sum_m sqrt{2L+1}C_{m0m}^{SLS} c_m^+ c_m" << endl;
+     cout<<"S_L = <rho_{L,0}rho_{L,0}>, where rho_{L,M}=\\sum_m \\sqrt{2L+1}C_{m0m}^{SLS} c_m^+ c_m" << endl;
      cout<<"Normalization 1/N_{orb}, for L->infty S->nu-1/nu^2" << endl;
      ofstream File;
      File.precision(14);
@@ -347,7 +347,7 @@ int main(int argc, char** argv)
          }
         cout<<endl;
 
-       double S = 0.5 * (double)LzMax;
+	//double S = 0.5 * (double)LzMax;
        ClebschGordanCoefficients CoeffLLS(LzMax, LzMax);  
        for (int L = 0; L <= LzMax; ++L)
         {
