@@ -257,7 +257,7 @@ ostream& BosonOnSquareLatticeWithSU2SpinMomentumSpace::PrintState (ostream& Str,
 	}
     }
   Str << "]";
-  Str << " = " << this->StateDescriptionUp[state] << "," << this->StateDescriptionDown[state];
+  //  Str << " = " << this->StateDescriptionUp[state] << "," << this->StateDescriptionDown[state];
   return Str;
 }
 

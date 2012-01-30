@@ -36,11 +36,6 @@
 #include "MathTools/FactorialCoefficient.h"
 
 
-#include <iostream>
-
-using std::cout;
-using std::endl;
-
 // up ordering array sort using quick sort
 //
 // array = pointer to the array
@@ -1483,9 +1478,6 @@ unsigned long MultiplicitiesFactorial(ClassName*& array, unsigned long nbrValue)
 template <class ClassName>
 void SortDoubleElementArrayDownOrdering(ClassName* array1, ClassName* array2, long nbrValue)
 {
-  cout << "entering " << nbrValue << endl;;
-  for (long i = 0 ; i < nbrValue; ++i)
-    cout << array1[0] << " " << array2[0] << endl;
   switch (nbrValue)
     {
     case 0:
@@ -1547,11 +1539,11 @@ void SortDoubleElementArrayDownOrdering(ClassName* array1, ClassName* array2, lo
 	if (DoubleElementLessThan(array1[0], array2[0], array1[i], array2[i]) == true)
 	  {
 	    TmpElement = array1[0];
-	    array1[0] = array1[1];
-	    array1[1] = TmpElement;
+	    array1[0] = array1[i];
+	    array1[i] = TmpElement;
 	    TmpElement = array2[0];
-	    array2[0] = array2[1];
-	    array2[1] = TmpElement;
+	    array2[0] = array2[i];
+	    array2[i] = TmpElement;
 	  }
 	if (DoubleElementLessThan(array1[i], array2[i], array1[j], array2[j]) == true)
 	  {
@@ -1565,11 +1557,11 @@ void SortDoubleElementArrayDownOrdering(ClassName* array1, ClassName* array2, lo
 	if (DoubleElementLessThan(array1[0], array2[0], array1[i], array2[i]) == true)
 	  {
 	    TmpElement = array1[0];
-	    array1[0] = array1[1];
-	    array1[1] = TmpElement;
+	    array1[0] = array1[i];
+	    array1[i] = TmpElement;
 	    TmpElement = array2[0];
-	    array2[0] = array2[1];
-	    array2[1] = TmpElement;
+	    array2[0] = array2[i];
+	    array2[i] = TmpElement;
 	  }
 	--j;
 	ClassName Pivot1 = array1[i];
@@ -1698,14 +1690,14 @@ void SortTripleElementArrayDownOrdering(ClassName* array1, ClassName* array2, Cl
 				  array1[i], array2[i], array3[i]) == true)
 	  {
 	    TmpElement = array1[0];
-	    array1[0] = array1[1];
-	    array1[1] = TmpElement;
+	    array1[0] = array1[i];
+	    array1[i] = TmpElement;
 	    TmpElement = array2[0];
-	    array2[0] = array2[1];
-	    array2[1] = TmpElement;
+	    array2[0] = array2[i];
+	    array2[i] = TmpElement;
 	    TmpElement = array3[0];
-	    array3[0] = array3[1];
-	    array3[1] = TmpElement;
+	    array3[0] = array3[i];
+	    array3[i] = TmpElement;
 	  }
 	if (TripleElementLessThan(array1[i], array2[i], array3[i], 
 				  array1[j], array2[j], array3[j]) == true)
@@ -1724,14 +1716,14 @@ void SortTripleElementArrayDownOrdering(ClassName* array1, ClassName* array2, Cl
 				  array1[i], array2[i], array3[i]) == true)
 	  {
 	    TmpElement = array1[0];
-	    array1[0] = array1[1];
-	    array1[1] = TmpElement;
+	    array1[0] = array1[i];
+	    array1[i] = TmpElement;
 	    TmpElement = array2[0];
-	    array2[0] = array2[1];
-	    array2[1] = TmpElement;
+	    array2[0] = array2[i];
+	    array2[i] = TmpElement;
 	    TmpElement = array3[0];
-	    array3[0] = array3[1];
-	    array3[1] = TmpElement;
+	    array3[0] = array3[i];
+	    array3[i] = TmpElement;
 	  }
 	--j;
 	ClassName Pivot1 = array1[i];
@@ -1883,17 +1875,17 @@ void SortQuadElementArrayDownOrdering(ClassName* array1, ClassName* array2, Clas
 				array1[i], array2[i], array3[i], array4[i]) == true)
 	  {
 	    TmpElement = array1[0];
-	    array1[0] = array1[1];
-	    array1[1] = TmpElement;
+	    array1[0] = array1[i];
+	    array1[i] = TmpElement;
 	    TmpElement = array2[0];
-	    array2[0] = array2[1];
-	    array2[1] = TmpElement;
+	    array2[0] = array2[i];
+	    array2[i] = TmpElement;
 	    TmpElement = array3[0];
-	    array3[0] = array3[1];
-	    array3[1] = TmpElement;
+	    array3[0] = array3[i];
+	    array3[i] = TmpElement;
 	    TmpElement = array4[0];
-	    array4[0] = array4[1];
-	    array4[1] = TmpElement;
+	    array4[0] = array4[i];
+	    array4[i] = TmpElement;
 	  }
 	if (QuadElementLessThan(array1[i], array2[i], array3[i], array4[i], 
 				array1[j], array2[j], array3[j], array4[j]) == true)
@@ -1915,17 +1907,17 @@ void SortQuadElementArrayDownOrdering(ClassName* array1, ClassName* array2, Clas
 				array1[i], array2[i], array3[i], array4[i]) == true)
 	  {
 	    TmpElement = array1[0];
-	    array1[0] = array1[1];
-	    array1[1] = TmpElement;
+	    array1[0] = array1[i];
+	    array1[i] = TmpElement;
 	    TmpElement = array2[0];
-	    array2[0] = array2[1];
-	    array2[1] = TmpElement;
+	    array2[0] = array2[i];
+	    array2[i] = TmpElement;
 	    TmpElement = array3[0];
-	    array3[0] = array3[1];
-	    array3[1] = TmpElement;
+	    array3[0] = array3[i];
+	    array3[i] = TmpElement;
 	    TmpElement = array4[0];
-	    array4[0] = array4[1];
-	    array4[1] = TmpElement;
+	    array4[0] = array4[i];
+	    array4[i] = TmpElement;
 	  }
 	--j;
 	ClassName Pivot1 = array1[i];
