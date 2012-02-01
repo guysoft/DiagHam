@@ -123,4 +123,5 @@ BosonOnSphereWithSU4Spin.cc \
 BosonOnSquareLatticeWithSU4SpinMomentumSpace.cc \
 BosonOnLatticeKyLong.cc \
 BosonOnSphereWithSU2Spin.cc \
-BosonOnSquareLatticeWithSU2SpinMomentumSpace.cc
+BosonOnSquareLatticeWithSU2SpinMomentumSpace.cc \
+BosonOnTorusWithMagneticTranslationsShort.cc
