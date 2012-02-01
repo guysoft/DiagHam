@@ -46,7 +46,7 @@ int main(int argc, char** argv)
   cout.precision(14);
 
   // some running options and help
-  OptionManager Manager ("QHEFermionsTorusWithTranslation" , "0.01");
+  OptionManager Manager ("FQHETorusFermionsWithTranslation" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
@@ -72,7 +72,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('L', "landau-level", "Landau-level to be simulated", 0);
   (*SystemGroup) += new SingleStringOption  ('\n', "interaction-file", "file describing the interaction");
   (*SystemGroup) += new BooleanOption  ('\n', "all-points", "calculate all points", false);
-  (*SystemGroup) += new BooleanOption  ('\n', "no-wigner", "do not consider the energy contribution from the Wigner crystal", false);
+  (*SystemGroup) += new BooleanOption  ('\n', "add-wigner", "consider the energy contribution from the Wigner crystal", false);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 
 						      500);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
@@ -84,7 +84,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type QHEFermionsTorusWithTranslation -h" << endl;
+      cout << "see man page for option syntax or type FQHETorusFermionsWithTranslation -h" << endl;
       return -1;
     }
   if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
@@ -342,7 +342,7 @@ int main(int argc, char** argv)
       Architecture.GetArchitecture()->SetDimension(TotalSpace->GetHilbertSpaceDimension());
 
       AbstractQHEHamiltonian* Hamiltonian = new ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian (TotalSpace, 
-													   NbrFermions, MaxMomentum, XMomentum, XRatio, HaveCoulomb, LandauLevel, NbrPseudopotentials, Pseudopotentials, Manager.GetBoolean("no-wigner"),
+													   NbrFermions, MaxMomentum, XMomentum, XRatio, HaveCoulomb, LandauLevel, NbrPseudopotentials, Pseudopotentials, !Manager.GetBoolean("add-wigner"),
 													   Architecture.GetArchitecture(), 
 													   Memory, LoadPrecalculationFile);
       
