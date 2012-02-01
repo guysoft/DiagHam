@@ -41,6 +41,12 @@
 #include <iostream>
 
 
+using std::cout;
+using std::endl;
+using std::hex;
+using std::dec;
+
+
 class BosonOnTorusWithMagneticTranslationsShort :  public ParticleOnTorusWithMagneticTranslations
 {
 
@@ -52,6 +58,8 @@ class BosonOnTorusWithMagneticTranslationsShort :  public ParticleOnTorusWithMag
   int IncNbrBosons;
   // number of flux quanta
   int MaxMomentum;
+  // number of flux quanta for the fermionic representation
+  int FermionicMaxMomentum;
   // number of Ky values in a state
   int NbrKyValue;
 
@@ -86,6 +94,8 @@ class BosonOnTorusWithMagneticTranslationsShort :  public ParticleOnTorusWithMag
   int StateShift;
   // complementary shift (with respect to MaxMomentum) to StateShift
   int ComplementaryStateShift;
+  // mask that corresponds to last bit that can be set to one
+  unsigned long LastMomentumMask;
 
   // temporary state used when applying operators
   unsigned long* TemporaryState;
@@ -237,6 +247,25 @@ public:
   // return value = true if the state satisfy the x momentum constraint
   bool TestXMomentumConstraint(unsigned long stateDescription);
 
+  // find canonical form of a state description
+  //
+  // stateDescription = fermionic representation of the state
+  // nbrTranslation = number of translation needed to obtain the canonical form
+  // return value = canonical form of a state description (fermionic representation)
+  unsigned long FindCanonicalForm(unsigned long stateDescription, int& nbrTranslation);
+ 
+  // find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to the x momentum constraint
+  //
+  // stateDescription = fermionic representation of the state
+  // nbrTranslation = number of translation needed to obtain the canonical form
+  // return value = canonical form of a state description (fermionic representation) and -1 in nbrTranslation if the state does not fit the x momentum constraint
+  unsigned long FindCanonicalFormAndTestXMomentumConstraint(unsigned long stateDescription, int& nbrTranslation);
+
+  // apply a single translation to a bosonic state in its fermionic representation
+  //
+  // stateDescription = state to translate
+  inline void ApplySingleTranslation(unsigned long& stateDescription);
+
   // convert a bosonic state into its fermionic counterpart
   //
   // initialState = reference on the array where initialbosonic  state is stored
@@ -262,35 +291,29 @@ public:
   // evaluate Hilbert space dimension
   //
   // nbrBosons = number of bosons
-  // maxMomentum = momentum maximum value for a boson in the state
   // currentKyMax = momentum maximum value for bosons that are still to be placed
   // currentMomentum = current value of the momentum
   // return value = Hilbert space dimension
-  long EvaluateHilbertSpaceDimension(int nbrBosons, int maxMomentum, int currentKyMax, int currentMomentum);
+  long EvaluateHilbertSpaceDimension(int nbrBosons, int currentKyMax, int currentMomentum);
 
   // generate look-up table associated to current Hilbert space
   // 
   // memeory = memory size that can be allocated for the look-up table
   void GenerateLookUpTable(int memory);
 
-  // generate all states corresponding to the constraints
+  // generate all states with both the kx and ky constraint
   // 
-  // nbrBosons = number of bosons
-  // maxMomentum = momentum maximum value for a boson in the state
-  // currentKyMax = momentum maximum value for bosons that are still to be placed
-  // pos = position in StateDescription array where to store states
-  // return value = position from which new states have to be stored
-  int GenerateStates(int nbrBosons, int maxMomentum, int currentKyMax, int pos);
+  // return value = new dimension of the Hilbert space
+  long GenerateStates();
 
-  // generate all states corresponding to the constraints
+  // generate all states corresponding to the ky constraint  without taking care of the kx constraint
   // 
   // nbrBosons = number of bosons
-  // maxMomentum = momentum maximum value for a boson in the state
   // currentKyMax = momentum maximum value for bosons that are still to be placed
   // pos = position in StateDescription array where to store states
   // currentMomentum = current value of the momentum
   // return value = position from which new states have to be stored
-  int GenerateStates(int nbrBosons, int maxMomentum, int currentKyMax, int pos, int currentMomentum);
+  long RawGenerateStates(int nbrBosons, int currentKyMax, long pos, int currentMomentum);
 
   // convert a bosonic state to its monomial representation
   //
@@ -432,14 +455,108 @@ inline void BosonOnTorusWithMagneticTranslationsShort::ConvertToMonomial(unsigne
 
 inline int BosonOnTorusWithMagneticTranslationsShort::FindNumberXTranslation(unsigned long stateDescription)
 {
-//  unsigned long TmpState = (stateDescription >> this->StateShift) | ((stateDescription & this->MomentumMask) << this->ComplementaryStateShift);
-  int index = 1;  
-/*   while (TmpState != stateDescription) */
-/*     { */
-/*       TmpState = (TmpState >> this->StateShift) | ((TmpState & this->MomentumMask) << this->ComplementaryStateShift); */
-/*       ++index; */
-/*     } */
-  return index;
+  unsigned long TmpState = stateDescription;
+  this->ApplySingleTranslation(TmpState);
+  int Index = 1;  
+  while (TmpState != stateDescription)
+    {
+      this->ApplySingleTranslation(TmpState);
+      ++Index;  
+    }
+  return Index;
+}
+
+// find canonical form of a state description
+//
+// stateDescription = fermionic representation of the state
+// nbrTranslation = number of translation needed to obtain the canonical form
+// return value = canonical form of a state description (fermionic representation)
+
+inline unsigned long BosonOnTorusWithMagneticTranslationsShort::FindCanonicalForm(unsigned long stateDescription, int& nbrTranslation)
+{
+  nbrTranslation = 0;
+  unsigned long CanonicalState = stateDescription;
+  for (int i = 0; i < this->MomentumModulo; ++i)
+    {
+      this->ApplySingleTranslation(stateDescription);
+      if (stateDescription < CanonicalState)
+	{
+	  CanonicalState = stateDescription;
+	  nbrTranslation = 1;
+	}
+    }
+  return CanonicalState;
+}
+
+// find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to the x momentum constraint
+//
+// stateDescription = fermionic representation of the state
+// nbrTranslation = number of translation needed to obtain the canonical form
+// return value = canonical form of a state description (fermionic representation) and -1 in nbrTranslation if the state does not fit the x momentum constraint
+
+inline unsigned long BosonOnTorusWithMagneticTranslationsShort::FindCanonicalFormAndTestXMomentumConstraint(unsigned long stateDescription, int& nbrTranslation)
+{
+  nbrTranslation = 0;
+  unsigned long CanonicalState = stateDescription;
+  unsigned long InitialStateDescription = stateDescription;
+  int Index = 0;
+  int OrbitSize = 0;
+  while (Index < this->MomentumModulo)
+    {
+      this->ApplySingleTranslation(stateDescription);
+      ++Index;
+      ++OrbitSize;
+      if (stateDescription != InitialStateDescription)
+	{
+	  if (stateDescription < CanonicalState)
+	    {
+	      CanonicalState = stateDescription;
+	      nbrTranslation = Index;
+	    }
+	}
+      else
+	{
+	  Index = this->MomentumModulo;
+	}
+    }
+
+  if (((this->KxMomentum * OrbitSize) % this->MomentumModulo) != 0)
+    {
+      nbrTranslation = -1;
+    }
+
+  return CanonicalState;
+}
+
+
+// apply a single translation to a bosonic state in its fermionic representation
+//
+// stateDescription = state to translate
+
+inline void BosonOnTorusWithMagneticTranslationsShort::ApplySingleTranslation(unsigned long& stateDescription)
+{
+  //  cout << "in : " << hex << stateDescription << dec << " ";
+  for (int i = 0; i < this->StateShift;)
+    {
+      while ((i < this->StateShift) && ((stateDescription & 0x1ul) == 0x0ul))
+	{
+	  stateDescription >>= 1;
+	  //	  cout << hex << "a:" <<stateDescription << dec << " ";
+	  ++i;
+	}
+      if (i < this->StateShift)
+	{
+	  while ((stateDescription & 0x1ul) == 0x1ul)
+	    {
+	      stateDescription >>= 1;
+	      stateDescription |= this->LastMomentumMask;
+	    }
+	  stateDescription >>= 1;	  
+	  //	  cout << hex << "b:" << stateDescription << dec << " ";
+	  ++i;
+	}
+    }
+  //  cout << "out : " << hex << stateDescription << dec << endl;
 }
 
 // test if a state and its translated version can be used to create a state corresponding to the x momentum constraint

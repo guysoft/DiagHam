@@ -3,6 +3,7 @@
 
 #include "HilbertSpace/BosonOnTorus.h"
 #include "HilbertSpace/BosonOnTorusWithMagneticTranslations.h"
+#include "HilbertSpace/BosonOnTorusWithMagneticTranslationsShort.h"
 #include "HilbertSpace/BosonOnTorusState.h"
 
 #include "Hamiltonian/ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian.h"
@@ -185,18 +186,18 @@ int main(int argc, char** argv)
     YMaxMomentum = YMomentum;
 
   int NbrMomenta;
-  int *XMomenta;
-  int *YMomenta;
-  int *Multiplicities = NULL;
+  int* XMomenta;
+  int* YMomenta;
+  int* Multiplicities = NULL;
   int CenterX=0, CenterY=0;
 
-  if (GenerateMomenta==false)
+  if (GenerateMomenta == false)
     {
       NbrMomenta=1;
       XMomenta = new int[1];
       YMomenta = new int[1];
-      XMomenta[0]=XMomentum;
-      YMomenta[0]=YMomentum;
+      XMomenta[0] = XMomentum;
+      YMomenta[0] = YMomentum;
     }
   else
     {
@@ -334,7 +335,7 @@ int main(int argc, char** argv)
       
       cout << "----------------------------------------------------------------" << endl;
       cout << " Ratio = " << XRatio << endl;
-      BosonOnTorusWithMagneticTranslations* TotalSpace = new BosonOnTorusWithMagneticTranslations(NbrBosons, MaxMomentum, XMomentum, YMomentum);
+      BosonOnTorusWithMagneticTranslationsShort* TotalSpace = new BosonOnTorusWithMagneticTranslationsShort(NbrBosons, MaxMomentum, XMomentum, YMomentum);
       Architecture.GetArchitecture()->SetDimension(TotalSpace->GetHilbertSpaceDimension());
 
       AbstractQHEHamiltonian* Hamiltonian = new ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian (TotalSpace, 
@@ -353,7 +354,7 @@ int main(int argc, char** argv)
       double Shift = 0.0;
       FQHEOnTorusMainTask Task (&Manager, TotalSpace, Hamiltonian, YMomentum, Shift, OutputName, FirstRun, EigenvectorName);
       Task.SetKxValue(XMomentum);
-      if (Multiplicities!=0)
+      if (Multiplicities != 0)
 	Task.SetMultiplicity(Multiplicities[Pos]);
       MainTaskOperation TaskOperation (&Task);
       TaskOperation.ApplyOperation(Architecture.GetArchitecture());

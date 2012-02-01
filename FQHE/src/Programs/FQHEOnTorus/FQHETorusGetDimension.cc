@@ -1,5 +1,6 @@
 #include "HilbertSpace/BosonOnTorus.h"
 #include "HilbertSpace/BosonOnTorusWithMagneticTranslations.h"
+#include "HilbertSpace/BosonOnTorusWithMagneticTranslationsShort.h"
 #include "HilbertSpace/FermionOnTorus.h"
 #include "HilbertSpace/FermionOnTorusWithMagneticTranslations.h"
 
@@ -65,7 +66,7 @@ int main(int argc, char** argv)
       for (int x = 0; x < MomentumModulo; ++x)
 	for (int y = 0; y < MomentumModulo; ++y)
 	  {
-	    BosonOnTorusWithMagneticTranslations Space (NbrParticles, NbrFluxQuanta, x, y);
+	    BosonOnTorusWithMagneticTranslationsShort Space (NbrParticles, NbrFluxQuanta, x, y);
 	    Dimensions[x][y] = Space.GetHilbertSpaceDimension();
 	    TotalDimension += Space.GetHilbertSpaceDimension();
 	  }

@@ -1,6 +1,7 @@
 #include "HilbertSpace/BosonOnTorus.h"
 #include "HilbertSpace/BosonOnTorusShort.h"
 #include "HilbertSpace/BosonOnTorusWithMagneticTranslations.h"
+#include "HilbertSpace/BosonOnTorusWithMagneticTranslationsShort.h"
 #include "HilbertSpace/FermionOnTorus.h"
 #include "HilbertSpace/FermionOnTorusWithMagneticTranslations.h"
 
@@ -79,7 +80,7 @@ int main(int argc, char** argv)
 	  int Ky = Manager.GetInteger("ky-momentum") % NbrFluxQuanta;
 	  if (Manager.GetBoolean("boson") == true)
 	    {
-	      BosonOnTorusWithMagneticTranslations Space (NbrParticles, NbrFluxQuanta, Kx, Ky);
+	      BosonOnTorusWithMagneticTranslationsShort Space (NbrParticles, NbrFluxQuanta, Kx, Ky);
 	      for (int i = 0; i <  Space.GetHilbertSpaceDimension(); ++i)
 		Space.PrintState(cout, i) << endl;
 	      cout << endl;

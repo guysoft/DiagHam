@@ -795,13 +795,13 @@ long BosonOnTorusShort::EvaluateHilbertSpaceDimension(int nbrBosons, int maxMome
   long TmpNbrStates = 0l;
   while (TmpNbrBosons < nbrBosons)
     {
-     TmpNbrStates += this->GenerateStates(TmpNbrBosons, maxMomentum, ReducedCurrentKyMax, currentMomentum + (nbrBosons - TmpNbrBosons) * currentKyMax);
+     TmpNbrStates += this->EvaluateHilbertSpaceDimension(TmpNbrBosons, maxMomentum, ReducedCurrentKyMax, currentMomentum + (nbrBosons - TmpNbrBosons) * currentKyMax);
      ++TmpNbrBosons;
     }
   if (maxMomentum == currentKyMax)
-    return TmpNbrStates + this->GenerateStates(nbrBosons, ReducedCurrentKyMax, ReducedCurrentKyMax, currentMomentum);
+    return TmpNbrStates + this->EvaluateHilbertSpaceDimension(nbrBosons, ReducedCurrentKyMax, ReducedCurrentKyMax, currentMomentum);
   else
-    return TmpNbrStates + this->GenerateStates(nbrBosons, maxMomentum, ReducedCurrentKyMax, currentMomentum);
+    return TmpNbrStates + this->EvaluateHilbertSpaceDimension(nbrBosons, maxMomentum, ReducedCurrentKyMax, currentMomentum);
 }
 
 // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Lz sector and fixed number of particles

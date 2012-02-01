@@ -116,6 +116,7 @@ FQHEOnTorusMainTask::FQHEOnTorusMainTask(OptionManager* options, AbstractHilbert
   this->KyValue = kyValue;
   this->KxValue = 0;
   this->KyOnlyFlag = true;
+  this->MultiplicityFlag = false;
   this->EnergyShift = shift;
   this->ResumeFlag = ((BooleanOption*) (*options)["resume"])->GetBoolean();
   this->DiskFlag = ((BooleanOption*) (*options)["disk"])->GetBoolean();
@@ -1018,12 +1019,12 @@ int FQHEOnTorusMainTask::ExecuteMainTask()
 
 void FQHEOnTorusMainTask::WriteResult(ofstream& file, double value, bool terminate)
 {
-  if (KyOnlyFlag)
+  if (this->KyOnlyFlag)
     file << this->KyValue << " ";
   else
     file << this->KxValue << " " << this->KyValue << " ";
   file << value;
-  if (MultiplicityFlag)
+  if (this->MultiplicityFlag)
     file << " " << this->Multiplicity;
   if (terminate)
     file << endl;
@@ -1158,5 +1159,25 @@ void FQHEOnTorusMainTask::DiagonalizeInHilbertSubspace(char* subspaceDescription
   for (int j= 0; j < TmpHilbertSpaceDimension; ++j)
     delete[] VectorFileNames[j];
   delete[] VectorFileNames;
+}
+
+// set a kx-value
+//
+// kxValue = kx value
+
+void FQHEOnTorusMainTask::SetKxValue(int kxValue)
+{
+  this->KyOnlyFlag = false; 
+  this->KxValue = kxValue;
+}
+
+// set multiplicity of a given momentum sector
+//
+// multiplicity = sector multiplicity
+
+void FQHEOnTorusMainTask::SetMultiplicity(int multiplicity) 
+{
+  this->MultiplicityFlag = true; 
+  this->Multiplicity = multiplicity;
 }
 

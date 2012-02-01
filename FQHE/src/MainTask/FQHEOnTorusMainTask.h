@@ -87,10 +87,14 @@ class FQHEOnTorusMainTask: public QHEOnDiskMainTask
   int ExecuteMainTask();
 
   // set a kx-value
-  void SetKxValue(int kxValue) {this->KyOnlyFlag=false; this->KxValue=kxValue;}
+  //
+  // kxValue = kx value
+  void SetKxValue(int kxValue);
 
-  // set a kx-value
-  void SetMultiplicity(int multiplicity) {this->MultiplicityFlag=true; this->Multiplicity=multiplicity;}
+  // set multiplicity of a given momentum sector
+  //
+  // multiplicity = sector multiplicity
+  void SetMultiplicity(int multiplicity);
 
  protected:
   

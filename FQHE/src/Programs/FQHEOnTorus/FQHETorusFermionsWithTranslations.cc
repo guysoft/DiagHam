@@ -46,7 +46,7 @@ int main(int argc, char** argv)
   cout.precision(14);
 
   // some running options and help
-  OptionManager Manager ("FQHETorusFermionsWithTranslation" , "0.01");
+  OptionManager Manager ("FQHETorusFermionsWithTranslations" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
@@ -84,7 +84,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHETorusFermionsWithTranslation -h" << endl;
+      cout << "see man page for option syntax or type FQHETorusFermionsWithTranslations -h" << endl;
       return -1;
     }
   if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
