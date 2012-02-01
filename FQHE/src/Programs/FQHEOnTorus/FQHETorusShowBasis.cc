@@ -186,7 +186,7 @@ int main(int argc, char** argv)
 		      int NbrHiddenComponents = 0;
 		      double WeightHiddenComponents = 0.0;
 		      double Normalization = 0.0;
-		      ComplexVector State;
+		      RealVector State;
 		      if (State.ReadVector(Manager.GetString("state")) == false)
 			{
 			  cout << "error while reading " << Manager.GetString("state") << endl;

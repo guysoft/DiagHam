@@ -177,6 +177,10 @@ class ParticleOnLatticeKagomeLatticeTwoBandHamiltonian : public ParticleOnLattic
   // oneBodyHamiltonians = array of one body hamiltonians
   virtual void ComputeOneBodyHamiltonian(HermitianMatrix* oneBodyHamiltonians);
 
+  // compute the one body transformation matrices and the optional one body band stucture contribution
+  //
+  // oneBodyBasis = array of one body transformation matrices
+  virtual void ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis);
 
 };
 

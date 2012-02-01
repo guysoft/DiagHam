@@ -13,6 +13,7 @@
 //#include "Hamiltonian/ParticleOnLatticeKagomeLatticeSingleBandFourBodyHamiltonian.h"
 //#include "Hamiltonian/ParticleOnLatticeKagomeLatticeSingleBandFiveBodyHamiltonian.h"
 
+#include "Hamiltonian/ParticleOnLatticeKagomeLatticeTwoBandHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeKagomeLatticeThreeBandHamiltonian.h"
 
 #include "Hamiltonian/ExplicitHamiltonian.h"
@@ -102,6 +103,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "l1", "imaginary part of the nearest neighbor hopping amplitude", 0.28);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "l2", "imaginary part of the next nearest neighbor hopping amplitude", 0.2);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "band-index", "index of the band that has to be partially filled, should be 0 (lower band), 1 or 2 (upper band)", 0);
+  (*SystemGroup) += new BooleanOption  ('\n', "two-bands", "use the two lowest energy bands", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "three-bands", "use the full three band model", 0);
   (*SystemGroup) += new BooleanOption ('\n', "project-threebands", "project the hamiltonian from the thre band model to the single band model");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "mu-s", "sublattice chemical potential on A site", 0.0);
@@ -149,7 +151,7 @@ int main(int argc, char** argv)
 
   char* FilePrefix = new char [256];
 
-  if (Manager.GetBoolean("three-bands") == false)
+  if ((Manager.GetBoolean("three-bands") == false) && (Manager.GetBoolean("two-bands") == false))
     {
       if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false) && (Manager.GetBoolean("five-body") == false))
 	{ 
@@ -185,34 +187,40 @@ int main(int argc, char** argv)
     }
   else
     {
-      if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false) && (Manager.GetBoolean("five-body") == false))
-	{ 
-	  sprintf (FilePrefix, "%s_threeband_kagomelattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+      if (Manager.GetBoolean("three-bands") == false)
+	{
 	}
       else
 	{
-	  if (Manager.GetBoolean("three-body") == true)
-	    {
-	      if (Manager.GetBoolean("flat-band") == true)
-		sprintf (FilePrefix, "%s_threeband_flat_threebody_kagomelattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
-	      else
-		sprintf (FilePrefix, "%s_threeband_threebody_kagomelattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+	  if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false) && (Manager.GetBoolean("five-body") == false))
+	    { 
+	      sprintf (FilePrefix, "%s_threeband_kagomelattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
 	    }
 	  else
 	    {
-	      if (Manager.GetBoolean("four-body") == true)
+	      if (Manager.GetBoolean("three-body") == true)
 		{
 		  if (Manager.GetBoolean("flat-band") == true)
-		    sprintf (FilePrefix, "%s_threeband_flat_fourbody_kagomelattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+		    sprintf (FilePrefix, "%s_threeband_flat_threebody_kagomelattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
 		  else
-		    sprintf (FilePrefix, "%s_threeband_fourbody_kagomelattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+		    sprintf (FilePrefix, "%s_threeband_threebody_kagomelattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
 		}
 	      else
 		{
-		  if (Manager.GetBoolean("flat-band") == true)
-		    sprintf (FilePrefix, "%s_threeband_flat_fivebody_kagomelattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+		  if (Manager.GetBoolean("four-body") == true)
+		    {
+		      if (Manager.GetBoolean("flat-band") == true)
+			sprintf (FilePrefix, "%s_threeband_flat_fourbody_kagomelattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+		      else
+			sprintf (FilePrefix, "%s_threeband_fourbody_kagomelattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+		    }
 		  else
-		    sprintf (FilePrefix, "%s_threeband_fivebody_kagomelattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+		    {
+		      if (Manager.GetBoolean("flat-band") == true)
+			sprintf (FilePrefix, "%s_threeband_flat_fivebody_kagomelattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+		      else
+			sprintf (FilePrefix, "%s_threeband_fivebody_kagomelattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+		    }
 		}
 	    }
 	}

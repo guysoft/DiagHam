@@ -398,8 +398,8 @@ int FermionOnTorus::AdAdAA (int index, int m1, int m2, int n1, int n2, double& c
 {
   int StateKyMax = this->StateKyMax[index];
   unsigned long State = this->StateDescription[index];
-  if ((n1 > StateKyMax) || (n2 > StateKyMax) || ((State & (((unsigned long) (0x1)) << n1)) == 0) || 
-      ((State & (((unsigned long) (0x1)) << n2)) == 0) || (n1 == n2) || (m1 == m2))
+  if ((n1 > StateKyMax) || (n2 > StateKyMax) || ((State & (0x1ul << n1)) == 0) || 
+      ((State & (0x1ul << n2)) == 0) || (n1 == n2) || (m1 == m2))
     {
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
@@ -412,21 +412,39 @@ int FermionOnTorus::AdAdAA (int index, int m1, int m2, int n1, int n2, double& c
   coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 32)) & this->SignLookUpTableMask[n2 + 32]];
   coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 48)) & this->SignLookUpTableMask[n2 + 48]];
 #endif
-  TmpState &= ~(((unsigned long) (0x1)) << n2);
+  TmpState &= ~(0x1ul << n2);
   if (NewKyMax == n2)
-    while ((TmpState >> NewKyMax) == 0)
-      --NewKyMax;
+    {
+      if (TmpState != 0x0ul)
+	{
+	  while ((TmpState >> NewKyMax) == 0)
+	    --NewKyMax;
+	}
+      else
+	{
+	  NewKyMax = 0;
+	}
+    }
   coefficient *= this->SignLookUpTable[(TmpState >> n1) & this->SignLookUpTableMask[n1]];
   coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 16))  & this->SignLookUpTableMask[n1 + 16]];
 #ifdef  __64_BITS__
   coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 32)) & this->SignLookUpTableMask[n1 + 32]];
   coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
 #endif
-  TmpState &= ~(((unsigned long) (0x1)) << n1);
+  TmpState &= ~(0x1ul << n1);
   if (NewKyMax == n1)
-    while ((TmpState >> NewKyMax) == 0)
-      --NewKyMax;
-  if ((TmpState & (((unsigned long) (0x1)) << m2))!= 0)
+    {
+      if (TmpState != 0x0ul)
+	{
+	  while ((TmpState >> NewKyMax) == 0)
+	    --NewKyMax;
+	}
+      else
+	{
+	  NewKyMax = 0;
+	}
+    }
+  if ((TmpState & (0x1ul << m2))!= 0)
     {
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
@@ -444,8 +462,8 @@ int FermionOnTorus::AdAdAA (int index, int m1, int m2, int n1, int n2, double& c
       coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 48)) & this->SignLookUpTableMask[m2 + 48]];
 #endif
     }
-  TmpState |= (((unsigned long) (0x1)) << m2);
-  if ((TmpState & (((unsigned long) (0x1)) << m1))!= 0)
+  TmpState |= (0x1ul << m2);
+  if ((TmpState & (0x1ul << m1))!= 0)
     {
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
@@ -463,7 +481,7 @@ int FermionOnTorus::AdAdAA (int index, int m1, int m2, int n1, int n2, double& c
       coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
 #endif
     }
-  TmpState |= (((unsigned long) (0x1)) << m1);
+  TmpState |= (0x1ul << m1);
   return this->FindStateIndex(TmpState, NewKyMax);
 }
 
@@ -477,7 +495,7 @@ double FermionOnTorus::AdA (int index, int m)
 {
   if (this->StateKyMax[index] < m)
     return 0.0;
-  if ((this->StateDescription[index] & (((unsigned long) (0x1)) << m)) == 0)
+  if ((this->StateDescription[index] & (0x1ul << m)) == 0)
     return 0.0;
   else
     return 1.0;
@@ -496,7 +514,7 @@ Matrix& FermionOnTorus::A (int i, Matrix& M)
   int StateKyMax;
   unsigned long State;
   double Coefficient;
-  unsigned long GlobalMask = (((unsigned long) (0x1)) << i);
+  unsigned long GlobalMask = (0x1ul << i);
   for (int j = 0; j < this->HilbertSpaceDimension; ++j)
     {
       StateKyMax = this->StateKyMax[j];
@@ -535,7 +553,7 @@ Matrix& FermionOnTorus::Ad (int i, Matrix& M)
   int StateKyMax;
   unsigned long State;
   double Coefficient;
-  unsigned long GlobalMask = (((unsigned long) (0x1)) << i);
+  unsigned long GlobalMask = (0x1ul << i);
   for (int j = 0; j < this->HilbertSpaceDimension; ++j)
     {
       StateKyMax = this->StateKyMax[j];
@@ -588,7 +606,7 @@ ostream& FermionOnTorus::PrintState (ostream& Str, int state)
 {
   unsigned long TmpState = this->StateDescription[state];
   for (int i = 0; i < this->KyMax; ++i)
-    Str << ((TmpState >> i) & ((unsigned long) (0x1))) << " ";
+    Str << ((TmpState >> i) & 0x1ul) << " ";
   return Str;
 }
 
@@ -608,7 +626,7 @@ int FermionOnTorus::GenerateStates(int nbrFermions, int maxMomentum, int current
     {
       for (int i = currentKyMax; i >= 0; --i)
 	{
-	  this->StateDescription[pos] = ((unsigned long) (0x1)) << i;
+	  this->StateDescription[pos] = 0x1ul << i;
 	  this->StateKyMax[pos] = maxMomentum;
 	  ++pos;
 	}
