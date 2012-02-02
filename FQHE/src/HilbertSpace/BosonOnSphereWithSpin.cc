@@ -1882,3 +1882,93 @@ double BosonOnSphereWithSpin::MeanSzValue(RealVector& state)
 
   return Result;
 }
+
+
+
+// Compute the product of two states that belong to different Hilbert Spaces
+//
+// firstState = reference on one of the states whose product will be computed
+// polarizedState = reference on the other state whose product will be computed
+// OutputVector = reference on the vector where the result will be stored
+// PolarizedSpace = pointer on the Hilbert Space whose the polarized state belong
+// minIndex = first computed component
+// nbrComponents = Nomber of computed components
+// FinalSpace = pointer on the Hilbert Space whose the final state belong
+
+void BosonOnSphereWithSpin::BosonicStateWithSpinTimesBosonicState(RealVector& spinfulState, RealVector& polarizedState, RealVector& outputVector,BosonOnSphereShort * polarizedSpace,int minIndex,int nbrComponents, BosonOnSphereWithSpin * finalSpace)
+{
+  /*
+  unsigned long * FinalStates = new unsigned long[finalSpace->GetHilbertSpaceDimension()];
+  long * Weigth = new long [finalSpace->GetHilbertSpaceDimension()];
+  unsigned long * FirstMonomials = new unsigned long[this->NbrBosons];
+  unsigned long * SecondMonomials = new unsigned long[this->NbrBosons];
+  int MaxIndex = minIndex + nbrComponents;
+  for (long i = minIndex; i < MaxIndex; i++)
+    {
+      this->GetMonomial(i,FirstMonomials);
+      int * EqualPowerIndex = new int[this->NbrBosons];
+      int NbrEqualPower = 0;
+      for (int Index = 0; Index < this->NbrBosons-1; Index++)
+	{
+	  if(FirstMonomials[Index] == FirstMonomials[Index+1])
+	    {
+	      EqualPowerIndex[NbrEqualPower] = Index;
+	      NbrEqualPower++;
+	    }
+	}
+      for (long j = 0; j < secondSpace->HilbertSpaceDimension; j++)
+	{
+	  secondSpace->GetMonomial(j,SecondMonomials);
+	  unsigned long NbrStates = this->ProductOfTwoMonomials(FirstMonomials,EqualPowerIndex,NbrEqualPower,SecondMonomials,FinalStates,Weigth,finalSpace);
+	  for (unsigned long Index = 0x0ul; Index < NbrStates; Index++)
+	    {
+	      int TmpLzMax = finalSpace->LzMax + finalSpace->NbrBosons - 1;
+	      while ((FinalStates[Index] >> TmpLzMax) == 0x0ul)
+		--TmpLzMax;
+	      outputVector[finalSpace->FermionBasis->FindStateIndex(FinalStates[Index],TmpLzMax)]+=firstState[i]*secondState[j]*Weigth[Index];
+	    }
+	}
+    }
+  */
+}
+
+
+// Compute the product of two Monomials
+//
+// spinfulState = array where the monomial representation of the first state is stored
+// polarizedState = array where the monomial representation of the second state is stored
+// finalStates = reference on the array where the fermionic representation of the states product will be stored
+// weight = reference on the array where the coefficient of the states product will be stored
+// FinalSpace = pointer on the Hilbert Space whose the final monomials belong
+
+unsigned long BosonOnSphereWithSpin::ProductOfTwoMonomials (unsigned long* spinfulState,int * equalPowerIndex,const int nbrEqualPower,unsigned long* polarizedState, unsigned long * & finalStates, long * & weight, BosonOnSphereWithSpin * finalSpace)
+{
+  /*
+  unsigned long NbrStates = 0ul;
+  long Coef = 1l;
+  unsigned long State [this->NbrBosons];
+  
+  if(CheckLexiOrder(equalPowerIndex,secondState,nbrEqualPower))
+    {
+      for (int Index = 0; Index < this->NbrBosons; Index++)
+	State[Index] = firstState[Index] + secondState[Index];
+	  
+      finalStates[0] = finalSpace->ConvertFromMonomial(State);
+      weigth[0] = Coef;
+      NbrStates++;
+    }
+  while (std::prev_permutation(secondState,secondState + this->NbrBosons))
+    {
+      if(CheckLexiOrder(equalPowerIndex,secondState,nbrEqualPower))
+	{
+	  for (int Index = 0; Index < this->NbrBosons; Index++)
+	    State[Index] = firstState[Index] + secondState[Index];
+	  Coef = this->ComputeCoefficient(State,firstState);
+	  
+	  SortArrayDownOrdering(State,this->NbrBosons);
+	  NbrStates += SearchInArrayAndSetWeight(finalSpace->ConvertFromMonomial(State),finalStates,weigth,NbrStates,Coef);
+	}
+    }
+  return NbrStates;
+  */
+}

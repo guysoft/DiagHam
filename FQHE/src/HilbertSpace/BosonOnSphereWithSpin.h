@@ -429,6 +429,20 @@ class BosonOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // return value = twice the Lz component
   virtual int GetLzValue(int j=0);
 
+  
+  // Compute the product of two states that belong to different Hilbert Spaces
+  //
+  // firstState = reference on one of the states whose product will be computed
+  // polarizedState = reference on the other state whose product will be computed
+  // OutputVector = reference on the vector where the result will be stored
+  // PolarizedSpace = pointer on the Hilbert Space whose the polarized state belong
+  // minIndex = first computed component
+  // nbrComponents = Nomber of computed components
+  // FinalSpace = pointer on the Hilbert Space whose the final state belong
+
+  void BosonicStateWithSpinTimesBosonicState(RealVector& spinfulState, RealVector& polarizedState, RealVector& outputVector,BosonOnSphereShort * polarizedSpace,int minIndex,int nbrComponents, BosonOnSphereWithSpin * finalSpace);
+
+
  protected:
 
   // find state index
@@ -525,6 +539,17 @@ class BosonOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // auxArray = auxiliary array
   //
   void ShellSortAux(unsigned length, unsigned long* sortArray, unsigned *auxArray, int *auxArray2);
+
+  
+  // Compute the product of two Monomials
+  //
+  // spinfulState = array where the monomial representation of the first state is stored
+  // polarizedState = array where the monomial representation of the second state is stored
+  // finalStates = reference on the array where the fermionic representation of the states product will be stored
+  // weight = reference on the array where the coefficient of the states product will be stored
+  // FinalSpace = pointer on the Hilbert Space whose the final monomials belong
+  unsigned long ProductOfTwoMonomials (unsigned long* spinfulState,int * equalPowerIndex,const int nbrEqualPower,unsigned long* polarizedState, unsigned long * & finalStates, long * & weight, BosonOnSphereWithSpin * finalSpace);
+
 
 
 };
