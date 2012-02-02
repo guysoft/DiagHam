@@ -324,20 +324,39 @@ void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrS
 	{
 	  for (int kz = 0; kz < nbrSitesZ; ++kz)
 	    {
+	      double TmpKx = ((double) kx) * KxFactor;
+	      double TmpKy = ((double) ky) * KyFactor;
+	      double TmpKz = ((double) kz) * KzFactor;
+
 	      HermitianMatrix TmpOneBodyHamiltonian(4, true);
-	      Complex B1 = 1.0 + nnHopingDistortion111 + Phase(0.5 * (((double) ky) * KyFactor) + 0.5 * (((double) kz) * KzFactor))   + Phase(0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) kz) * KzFactor))  + Phase(0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) ky) * KyFactor)) ;
-	      double d3 = spinOrbit * (sin (0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) kz) * KzFactor))
-				       - sin (0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) ky) * KyFactor))
-				       - sin (0.5 * (((double) kx) * KxFactor) - 0.5 * (((double) ky) * KyFactor))
-				       + sin (0.5 * (((double) kx) * KxFactor) - 0.5 * (((double) kz) * KzFactor)));
-	      double d4 = spinOrbit * (sin (0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) kz) * KzFactor))
-				       - sin (0.5 * (((double) ky) * KyFactor) + 0.5 * (((double) kz) * KzFactor))
-				       - sin (0.5 * (((double) ky) * KyFactor) - 0.5 * (((double) kz) * KzFactor))
-				       + sin (0.5 * (((double) ky) * KyFactor) - 0.5 * (((double) kx) * KxFactor)));
-	      double d5 = spinOrbit * (sin (0.5 * (((double) ky) * KyFactor) + 0.5 * (((double) kx) * KxFactor))
-				       - sin (0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) kz) * KzFactor))
-				       - sin (0.5 * (((double) kz) * KzFactor) - 0.5 * (((double) kx) * KxFactor))
-				       + sin (0.5 * (((double) kz) * KzFactor) - 0.5 * (((double) ky) * KyFactor)));
+// 	      Complex B1 = 1.0 + nnHopingDistortion111 + Phase(0.5 * (((double) ky) * KyFactor) + 0.5 * (((double) kz) * KzFactor))   + Phase(0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) kz) * KzFactor))  + Phase(0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) ky) * KyFactor)) ;
+// 	      double d3 = spinOrbit * (sin (0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) kz) * KzFactor))
+// 				       - sin (0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) ky) * KyFactor))
+// 				       - sin (0.5 * (((double) kx) * KxFactor) - 0.5 * (((double) ky) * KyFactor))
+// 				       + sin (0.5 * (((double) kx) * KxFactor) - 0.5 * (((double) kz) * KzFactor)));
+// 	      double d4 = spinOrbit * (sin (0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) kz) * KzFactor))
+// 				       - sin (0.5 * (((double) ky) * KyFactor) + 0.5 * (((double) kz) * KzFactor))
+// 				       - sin (0.5 * (((double) ky) * KyFactor) - 0.5 * (((double) kz) * KzFactor))
+// 				       + sin (0.5 * (((double) ky) * KyFactor) - 0.5 * (((double) kx) * KxFactor)));
+// 	      double d5 = spinOrbit * (sin (0.5 * (((double) ky) * KyFactor) + 0.5 * (((double) kx) * KxFactor))
+// 				       - sin (0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) kz) * KzFactor))
+// 				       - sin (0.5 * (((double) kz) * KzFactor) - 0.5 * (((double) kx) * KxFactor))
+// 				       + sin (0.5 * (((double) kz) * KzFactor) - 0.5 * (((double) ky) * KyFactor)));
+
+	      Complex B1 = 1.0 + nnHopingDistortion111 + Phase(1.0 * TmpKx)   + Phase(1.0 * TmpKy)  + Phase(1.0 * TmpKz) ;
+	      double d3 = spinOrbit * (sin (1.0 * TmpKy)
+				       - sin (1.0 * TmpKz)
+				       - sin (1.0 * (TmpKy - TmpKx))
+				       + sin (1.0 * (TmpKz - TmpKx)));
+	      double d4 = spinOrbit * (sin (1.0 * TmpKz)
+				       - sin (1.0 * TmpKx)
+				       - sin (1.0 * (TmpKz - TmpKy))
+				       + sin (1.0 * (TmpKx - TmpKy)));
+	      double d5 = spinOrbit * (sin (1.0 * TmpKx)
+				       - sin (1.0 * TmpKy)
+				       - sin (1.0 * (TmpKx - TmpKz))
+				       + sin (1.0 * (TmpKy - TmpKz)));
+
 	      Complex B2 = d3 + I() * d4;
 	      TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d5);
 	      TmpOneBodyHamiltonian.SetMatrixElement(1, 1, -d5);
@@ -397,21 +416,39 @@ ComplexMatrix* ComputeSingleParticleTransformationMatrices(int nbrSitesX, int nb
 	{
 	  for (int kz = 0; kz < nbrSitesZ; ++kz)
 	    {
+	      double TmpKx = ((double) kx) * KxFactor;
+	      double TmpKy = ((double) ky) * KyFactor;
+	      double TmpKz = ((double) kz) * KzFactor;
 	      int Index = ((kx * nbrSitesY) + ky) * nbrSitesZ + kz;
 	      HermitianMatrix TmpOneBodyHamiltonian(4, true);
-	      Complex B1 = 1.0 + nnHopingDistortion111 + Phase(0.5 * (((double) ky) * KyFactor) + 0.5 * (((double) kz) * KzFactor))   + Phase(0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) kz) * KzFactor))  + Phase(0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) ky) * KyFactor)) ;
-	      double d3 = spinOrbit * (sin (0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) kz) * KzFactor))
-				       - sin (0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) ky) * KyFactor))
-				       - sin (0.5 * (((double) kx) * KxFactor) - 0.5 * (((double) ky) * KyFactor))
-				       + sin (0.5 * (((double) kx) * KxFactor) - 0.5 * (((double) kz) * KzFactor)));
-	      double d4 = spinOrbit * (sin (0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) kz) * KzFactor))
-				       - sin (0.5 * (((double) ky) * KyFactor) + 0.5 * (((double) kz) * KzFactor))
-				       - sin (0.5 * (((double) ky) * KyFactor) - 0.5 * (((double) kz) * KzFactor))
-				       + sin (0.5 * (((double) ky) * KyFactor) - 0.5 * (((double) kx) * KxFactor)));
-	      double d5 = spinOrbit * (sin (0.5 * (((double) ky) * KyFactor) + 0.5 * (((double) kx) * KxFactor))
-				       - sin (0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) kz) * KzFactor))
-				       - sin (0.5 * (((double) kz) * KzFactor) - 0.5 * (((double) kx) * KxFactor))
-				       + sin (0.5 * (((double) kz) * KzFactor) - 0.5 * (((double) ky) * KyFactor)));
+// 	      Complex B1 = 1.0 + nnHopingDistortion111 + Phase(0.5 * (TmpKy + TmpKz))   + Phase(0.5 * (TmpKx + TmpKz))  + Phase(0.5 * (TmpKx + TmpKy)) ;
+// 	      double d3 = spinOrbit * (sin (0.5 * (TmpKx + TmpKz))
+// 				       - sin (0.5 * (TmpKx + TmpKy))
+// 				       - sin (0.5 * (TmpKx - TmpKy))
+// 				       + sin (0.5 * (TmpKx - TmpKz)));
+// 	      double d4 = spinOrbit * (sin (0.5 * (TmpKx + TmpKz))
+// 				       - sin (0.5 * (TmpKy + TmpKz))
+// 				       - sin (0.5 * (TmpKy - TmpKz))
+// 				       + sin (0.5 * (TmpKy - TmpKx)));
+// 	      double d5 = spinOrbit * (sin (0.5 * (TmpKy + TmpKx))
+// 				       - sin (0.5 * (TmpKx + TmpKz))
+// 				       - sin (0.5 * (TmpKz - TmpKx))
+// 				       + sin (0.5 * (TmpKz - TmpKy)));
+
+	      Complex B1 = 1.0 + nnHopingDistortion111 + Phase(1.0 * TmpKx)   + Phase(1.0 * TmpKy)  + Phase(1.0 * TmpKz) ;
+	      double d3 = spinOrbit * (sin (1.0 * TmpKy)
+				       - sin (1.0 * TmpKz)
+				       - sin (1.0 * (TmpKy - TmpKx))
+				       + sin (1.0 * (TmpKz - TmpKx)));
+	      double d4 = spinOrbit * (sin (1.0 * TmpKz)
+				       - sin (1.0 * TmpKx)
+				       - sin (1.0 * (TmpKz - TmpKy))
+				       + sin (1.0 * (TmpKx - TmpKy)));
+	      double d5 = spinOrbit * (sin (1.0 * TmpKx)
+				       - sin (1.0 * TmpKy)
+				       - sin (1.0 * (TmpKx - TmpKz))
+				       + sin (1.0 * (TmpKy - TmpKz)));
+
 	      Complex B2 = d3 + I() * d4;
 	      TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d5);
 	      TmpOneBodyHamiltonian.SetMatrixElement(1, 1, -d5);
