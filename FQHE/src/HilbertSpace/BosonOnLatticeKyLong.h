@@ -518,7 +518,7 @@ inline ULONGLONG BosonOnLatticeKyLong::BosonToFermion(unsigned long*& initialSta
   unsigned long Shift = 0;
   for (int i = 0; i <= initialStateLzMax; ++i)
     {
-      TmpState |= ( ((ULONGLONG) (1ul << initialState[i])) - ((ULONGLONG) 1ul )) << Shift;
+      TmpState |= ((((ULONGLONG) 0x1ul) << initialState[i]) - ((ULONGLONG) 0x1ul)) << Shift;
       Shift += initialState[i];
       ++Shift;
     }
@@ -539,7 +539,7 @@ inline ULONGLONG BosonOnLatticeKyLong::BosonToFermion(unsigned long*& initialSta
   unsigned long Shift = 0;
   for (int i = 0; i <= initialStateLzMax; ++i)
     {
-      TmpState |= ( ((ULONGLONG) (1ul << initialState[i])) - ((ULONGLONG) 1ul )) << Shift;
+      TmpState |= ((((ULONGLONG) 0x1ul) << initialState[i]) - ((ULONGLONG) 0x1ul)) << Shift;
       Shift += initialState[i];
       ++Shift;
     }  
@@ -559,24 +559,24 @@ inline void BosonOnLatticeKyLong::FermionToBoson(ULONGLONG initialState, int ini
   finalStateLzMax = 0;
   while (initialStateLzMax >= 0)
     {
-      ULONGLONG TmpState = (~initialState - (ULONGLONG) 1ul) ^ (~initialState);
+      ULONGLONG TmpState = (~initialState - (ULONGLONG) 0x1ul) ^ (~initialState);
       TmpState &= ~(TmpState >> 1);
       //cout << hex << initialState << "  " << TmpState << dec << endl;
 #ifdef __128_BIT_LONGLONG__
-      unsigned int TmpPower = ((TmpState & ((((ULONGLONG) 0xaaaaaaaaaaaaaaaaul ) << 64 ) | ( (ULONGLONG) 0xaaaaaaaaaaaaaaaaul))) != 0);
-      TmpPower |= ((TmpState & ((((ULONGLONG) 0xccccccccccccccccul ) << 64 ) | ( (ULONGLONG) 0xccccccccccccccccul))) != 0) << 1;
-      TmpPower |= ((TmpState & ((((ULONGLONG) 0xf0f0f0f0f0f0f0f0ul ) << 64 ) | ( (ULONGLONG) 0xf0f0f0f0f0f0f0f0ul))) != 0) << 2;
-      TmpPower |= ((TmpState & ((((ULONGLONG) 0xff00ff00ff00ff00ul ) << 64 ) | ( (ULONGLONG) 0xff00ff00ff00ff00ul))) != 0) << 3;
-      TmpPower |= ((TmpState & ((((ULONGLONG) 0xffff0000ffff0000ul ) << 64 ) | ( (ULONGLONG) 0xffff0000ffff0000ul))) != 0) << 4;
-      TmpPower |= ((TmpState & ((((ULONGLONG) 0xffffffff00000000ul ) << 64 ) | ( (ULONGLONG) 0xffffffff00000000ul))) != 0) << 5;
+      unsigned int TmpPower = ((TmpState & ((((ULONGLONG) 0xaaaaaaaaaaaaaaaaul ) << 64) | ( (ULONGLONG) 0xaaaaaaaaaaaaaaaaul))) != ((ULONGLONG) 0x0ul));
+      TmpPower |= ((TmpState & ((((ULONGLONG) 0xccccccccccccccccul ) << 64 ) | ( (ULONGLONG) 0xccccccccccccccccul))) != ((ULONGLONG) 0x0ul)) << 1;
+      TmpPower |= ((TmpState & ((((ULONGLONG) 0xf0f0f0f0f0f0f0f0ul ) << 64 ) | ( (ULONGLONG) 0xf0f0f0f0f0f0f0f0ul))) != ((ULONGLONG) 0x0ul)) << 2;
+      TmpPower |= ((TmpState & ((((ULONGLONG) 0xff00ff00ff00ff00ul ) << 64 ) | ( (ULONGLONG) 0xff00ff00ff00ff00ul))) != ((ULONGLONG) 0x0ul)) << 3;
+      TmpPower |= ((TmpState & ((((ULONGLONG) 0xffff0000ffff0000ul ) << 64 ) | ( (ULONGLONG) 0xffff0000ffff0000ul))) != ((ULONGLONG) 0x0ul)) << 4;
+      TmpPower |= ((TmpState & ((((ULONGLONG) 0xffffffff00000000ul ) << 64 ) | ( (ULONGLONG) 0xffffffff00000000ul))) != ((ULONGLONG) 0x0ul)) << 5;
       TmpPower |= ((TmpState & ((((ULONGLONG) 0xfffffffffffffffful ) << 64 ) | ( (ULONGLONG) 0x0ul))) != 0) << 6;
 #else
-      unsigned int TmpPower = ((TmpState & ((((ULONGLONG) 0xaaaaaaaaul ) << 32 ) | ( (ULONGLONG) 0xaaaaaaaaul))) != 0);
-      TmpPower |= ((TmpState & ((((ULONGLONG) 0xccccccccccccccccul ) << 32 ) | ( (ULONGLONG) 0xccccccccul))) != 0) << 1;
-      TmpPower |= ((TmpState & ((((ULONGLONG) 0xf0f0f0f0ul ) << 32 ) | ( (ULONGLONG) 0xf0f0f0f0ul))) != 0) << 2;
-      TmpPower |= ((TmpState & ((((ULONGLONG) 0xff00ff00ul ) << 32 ) | ( (ULONGLONG) 0xff00ff00ul))) != 0) << 3;
-      TmpPower |= ((TmpState & ((((ULONGLONG) 0xffff0000ul ) << 32 ) | ( (ULONGLONG) 0xffff0000ul))) != 0) << 4;
-      TmpPower |= ((TmpState & ((((ULONGLONG) 0xfffffffful ) << 32 ) | ( (ULONGLONG) 0x0ul))) != 0) << 5;
+      unsigned int TmpPower = ((TmpState & ((((ULONGLONG) 0xaaaaaaaaul ) << 32 ) | ( (ULONGLONG) 0xaaaaaaaaul))) != ((ULONGLONG) 0x0ul));
+      TmpPower |= ((TmpState & ((((ULONGLONG) 0xccccccccccccccccul ) << 32 ) | ( (ULONGLONG) 0xccccccccul))) != ((ULONGLONG) 0x0ul)) << 1;
+      TmpPower |= ((TmpState & ((((ULONGLONG) 0xf0f0f0f0ul ) << 32 ) | ( (ULONGLONG) 0xf0f0f0f0ul))) != ((ULONGLONG) 0x0ul)) << 2;
+      TmpPower |= ((TmpState & ((((ULONGLONG) 0xff00ff00ul ) << 32 ) | ( (ULONGLONG) 0xff00ff00ul))) != ((ULONGLONG) 0x0ul)) << 3;
+      TmpPower |= ((TmpState & ((((ULONGLONG) 0xffff0000ul ) << 32 ) | ( (ULONGLONG) 0xffff0000ul))) != ((ULONGLONG) 0x0ul)) << 4;
+      TmpPower |= ((TmpState & ((((ULONGLONG) 0xfffffffful ) << 32 ) | ( (ULONGLONG) 0x0ul))) != ((ULONGLONG) 0x0ul)) << 5;
 #endif
       //cout << TmpPower << endl;
       finalState[finalStateLzMax] = (unsigned long) TmpPower;

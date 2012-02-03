@@ -1375,7 +1375,7 @@ ComplexVector& BosonOnLatticeKyLong::ConvertToNbodyBasis(ComplexVector& state, P
       if (Norm(state[i])>1e-15)
 	{
 	  this->ListQuantumNumbers(i,QuantumNumbers,Normalization);
-	  this->ExpandBasisState(this->NbrBosons, QuantumNumbers, 0x0ul, Conj(state[i])/Normalization);
+	  this->ExpandBasisState(this->NbrBosons, QuantumNumbers, ((ULONGLONG) 0x0ul), Conj(state[i])/Normalization);
 	}
     }
   return TargetVector;
@@ -1420,7 +1420,7 @@ void BosonOnLatticeKyLong::ExpandBasisState (int nbrOperators, int *quantumNumbe
 
 //cout << "Recursing with state: "<<ResultingState<<endl;
 	  
-	  if (ResultingState!=0x0ul)
+	  if (ResultingState != ((ULONGLONG) 0x0ul))
 	    this->ExpandBasisState(nbrOperators-1, quantumNumbers, ResultingState, prefactor*AdFactor*NewFactor*Polar(1.0,ExpFactor*r));
 	}
     }
