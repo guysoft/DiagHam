@@ -369,7 +369,7 @@ bool FQHESphereBosonsWithSpinLandauLevelLiftOperation::ArchitectureDependentAppl
       switch (architecture->GetArchitectureID())
 	{	 
 	  case AbstractArchitecture::MixedMPISMP:
-	    this->ArchitectureDependentApplyOperation((SMPArchitecture*)architecture->LocalArchitecture); 
+	    this->ArchitectureDependentApplyOperation((SMPArchitecture*) architecture->GetLocalArchitecture()); 
 	    break;
 	  default:
 	    this->RawApplyOperation();
