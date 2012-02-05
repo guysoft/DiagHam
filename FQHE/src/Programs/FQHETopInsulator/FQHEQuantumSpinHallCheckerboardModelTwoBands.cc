@@ -95,8 +95,12 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
   (*SystemGroup) += new BooleanOption ('\n', "flat-band", "use flat band model");
   (*SystemGroup) += new BooleanOption ('\n', "decoupled", "assume two decoupled copies of the checkerboard lattice");
+  (*SystemGroup) += new BooleanOption ('\n', "fixed-sz", "fix the Sz value when considering two decoupled copies of the checkerboard lattice");
+  (*SystemGroup) += new SingleIntegerOption ('\n', "sz-value", "twice the fixed Sz value", 0);
   (*SystemGroup) += new BooleanOption ('\n', "four-bands", "perform the calculations within the full four band model");
   (*SystemGroup) += new BooleanOption ('\n', "project-fourbands", "project the hamiltonian from the four band model to the two band model");
+  (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
+  (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
@@ -350,7 +354,14 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      for (int Sz = -NbrParticles; Sz <= NbrParticles; Sz += 2)
+	      int MinSz = -NbrParticles;
+	      int MaxSz = NbrParticles;
+	      if (Manager.GetBoolean("fixed-sz") == true)
+		{
+		  MinSz = Manager.GetInteger("sz-value");
+		  MaxSz = MinSz;
+		}
+	      for (int Sz = -MinSz; Sz <= MaxSz; Sz += 2)
 		{
 		  cout << "(kx=" << i << ",ky=" << j << ") Sz=" << Sz << " : " << endl;
 		  FermionOnSquareLatticeWithSpinMomentumSpace Space(NbrParticles, (Sz + NbrParticles) / 2, NbrSitesX, NbrSitesY, i, j);

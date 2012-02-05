@@ -171,7 +171,14 @@ class GenericComplexMainTask: public AbstractMainTask
   // file = stream to write to
   // value = numerical value to be printed after columns for flux and momentum (if defined)
   // terminate = indicate if line should be terminated with endl
-  void WriteResult(ofstream& file, double value, bool terminate=true);
+  virtual void WriteResult(ofstream& file, double value, bool terminate=true);
+
+  // do the Hamiltonian diagonalization in a given Hilbert subspace
+  //
+  // subspaceDescription = name of the file that contains the vector files used to describe the Hilbert subspace
+  // file = reference on the output file stream where eigenvalues have to be stored
+  virtual void DiagonalizeInHilbertSubspace(char* subspaceDescription, ofstream& file);
+    
 };
 
 #endif
