@@ -361,7 +361,7 @@ int main(int argc, char** argv)
 		  MinSz = Manager.GetInteger("sz-value");
 		  MaxSz = MinSz;
 		}
-	      for (int Sz = -MinSz; Sz <= MaxSz; Sz += 2)
+	      for (int Sz = MinSz; Sz <= MaxSz; Sz += 2)
 		{
 		  cout << "(kx=" << i << ",ky=" << j << ") Sz=" << Sz << " : " << endl;
 		  FermionOnSquareLatticeWithSpinMomentumSpace Space(NbrParticles, (Sz + NbrParticles) / 2, NbrSitesX, NbrSitesY, i, j);

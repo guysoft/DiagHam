@@ -835,7 +835,7 @@ void GenericComplexMainTask::DiagonalizeInHilbertSubspace(char* subspaceDescript
 	  RealDiagonalMatrix TmpDiag (TmpHilbertSpaceDimension);
 	  if (this->EvaluateEigenvectors == false)
 	    {
-	      HRep.LapackDiagonalize(TmpDiag);
+	      HRep.Diagonalize(TmpDiag);
 	    }
 	  else
 	    {

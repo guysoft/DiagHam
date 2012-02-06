@@ -338,11 +338,15 @@ int main(int argc, char** argv)
       BosonOnTorusWithMagneticTranslationsShort* TotalSpace = new BosonOnTorusWithMagneticTranslationsShort(NbrBosons, MaxMomentum, XMomentum, YMomentum);
       Architecture.GetArchitecture()->SetDimension(TotalSpace->GetHilbertSpaceDimension());
 
-      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian (TotalSpace, 
-													   NbrBosons, MaxMomentum, XMomentum, XRatio, HaveCoulomb, LandauLevel, NbrPseudopotentials, Pseudopotentials, !Manager.GetBoolean("add-wigner"),
-													   Architecture.GetArchitecture(), 
-													   Memory, LoadPrecalculationFile);
+//       AbstractQHEHamiltonian* Hamiltonian = new ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian (TotalSpace, 
+// 													   NbrBosons, MaxMomentum, XMomentum, XRatio, HaveCoulomb, LandauLevel, NbrPseudopotentials, Pseudopotentials, !Manager.GetBoolean("add-wigner"),
+// 													   Architecture.GetArchitecture(), 
+// 													   Memory, LoadPrecalculationFile);
       
+      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian (TotalSpace, 
+													   NbrBosons, MaxMomentum, XMomentum, XRatio, Architecture.GetArchitecture(), 
+													 Memory, LoadPrecalculationFile);
+
       char* EigenvectorName = 0;
       if (Manager.GetBoolean("eigenstate"))	
 	{
