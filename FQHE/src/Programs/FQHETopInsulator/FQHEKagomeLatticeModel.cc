@@ -424,14 +424,16 @@ int main(int argc, char** argv)
 	  char* ContentPrefix = new char[256];
 	  sprintf (ContentPrefix, "%d %d", i, j);
 	  char* EigenstateOutputFile;
-	  if (Manager.GetString("eigenstate-file")!=0)
+	  if (Manager.GetString("eigenstate-file") != 0)
 	    {
 	      EigenstateOutputFile = new char [512];
 	      sprintf (EigenstateOutputFile, "%s_kx_%d_ky_%d", Manager.GetString("eigenstate-file"), i, j);
 	    }
 	  else
 	    {
-	      EigenstateOutputFile = RemoveExtensionFromFileName(EigenvalueOutputFile,".dat");
+	      char* TmpExtention = new char [512];
+	      sprintf (TmpExtention, "_kx_%d_ky_%d", i, j);
+	      EigenstateOutputFile = ReplaceExtensionToFileName(EigenvalueOutputFile, ".dat", TmpExtention);
 	    }
 	  GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
 	  FirstRunFlag = false;

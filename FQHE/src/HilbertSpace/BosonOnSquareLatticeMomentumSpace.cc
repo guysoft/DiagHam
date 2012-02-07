@@ -665,14 +665,14 @@ long BosonOnSquareLatticeMomentumSpace::EvaluatePartialDensityMatrixParticlePart
 		 this->TemporaryState[k] += TmpDestinationHilbertSpace->TemporaryState[k];
 	     }
 	   unsigned long TmpState = this->BosonToFermion(this->TemporaryState, TmpLzMax);
-	   TmpLzMax = this->FermionBasis->LzMax;
-	   while ((TmpState >> TmpLzMax) == 0x0ul)
-	     --TmpLzMax;
-	   int TmpPos = this->FermionBasis->FindStateIndex(TmpState, TmpLzMax);
+	   int TmpFermionicLzMax = this->FermionBasis->LzMax;
+	   while ((TmpState >> TmpFermionicLzMax) == 0x0ul)
+	     --TmpFermionicLzMax;
+	   int TmpPos = this->FermionBasis->FindStateIndex(TmpState, TmpFermionicLzMax);
 	   if (TmpPos != this->HilbertSpaceDimension)
 	     {
 	       double TmpFactorial = 0.0;	      
-	       for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
+	       for (int k = 0; k <= TmpLzMax; ++k)
 		 TmpFactorial += LogFactorials[this->TemporaryState[k]];
 	       TmpFactorial -= TmpHilbertSpaceFactorial + TmpDestinationLogFactorials[j] + TmpLogBinomial;
 	       TmpFactorial *= 0.5; 
