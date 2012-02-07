@@ -145,7 +145,7 @@ int main(int argc, char** argv)
 		   TotalSpin, XRatio,YMomentum2);
 	}
       
-      FQHEOnTorusMainTask Task (&Manager, &Space, Hamiltonian, YMomentum2, Shift, OutputFileName, FirstRun, EigenvectorName);
+      FQHEOnTorusMainTask Task (&Manager, &Space, &Lanczos, Hamiltonian, YMomentum2, Shift, OutputFileName, FirstRun, EigenvectorName);
       MainTaskOperation TaskOperation (&Task);
       TaskOperation.ApplyOperation(Architecture.GetArchitecture());
       if (EigenvectorName != 0)

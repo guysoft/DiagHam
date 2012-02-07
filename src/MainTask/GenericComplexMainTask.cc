@@ -72,6 +72,7 @@ using std::ofstream;
 //  
 // options = pointer to the options managers containing all running options
 // space = pointer to the current Hilbert space
+// lanczos = pointer to the Lanczos manager
 // hamiltonian = pointer to the current Hamiltonian
 // subspaceStr = string to prepend in output file for each eigenvalue in this subspace
 // subspaceLegend = legend indicating contents of subspaceStr to include in output file

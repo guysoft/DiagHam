@@ -93,10 +93,14 @@ class SimpleMPIArchitecture : public AbstractArchitecture
     SynchronizeSignal = 0x6fffffff
   };
 
+  // default constructor
+  //
+  SimpleMPIArchitecture();
+
   // constructor
   //
   // logFile = name of the optional log file to allow code profiling on MPI architecture
-  SimpleMPIArchitecture(char* logFile = 0);
+  SimpleMPIArchitecture(char* logFile);
   
   // destructor
   //

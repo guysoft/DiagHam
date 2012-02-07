@@ -53,7 +53,7 @@ int main(int argc, char** argv)
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
 
   ArchitectureManager Architecture;
-  LanczosManager Lanczos(false);
+  LanczosManager Lanczos(true);
   
   Manager += SystemGroup;
   Architecture.AddOptionGroup(&Manager);
@@ -356,7 +356,7 @@ int main(int argc, char** argv)
 	  delete [] TmpName;
 	}
       double Shift = 0.0;
-      FQHEOnTorusMainTask Task (&Manager, TotalSpace, Hamiltonian, YMomentum, Shift, OutputName, FirstRun, EigenvectorName);
+      FQHEOnTorusMainTask Task (&Manager, TotalSpace, &Lanczos, Hamiltonian, YMomentum, Shift, OutputName, FirstRun, EigenvectorName);
       Task.SetKxValue(XMomentum);
       if (Multiplicities != 0)
 	Task.SetMultiplicity(Multiplicities[Pos]);

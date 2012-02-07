@@ -44,14 +44,8 @@
 #include "HilbertSpace/AbstractHilbertSpace.h"
 #include "Hamiltonian/AbstractQHEHamiltonian.h"
 
-#include "LanczosAlgorithm/BasicLanczosAlgorithm.h"
-#include "LanczosAlgorithm/BasicLanczosAlgorithmWithDiskStorage.h"
-#include "LanczosAlgorithm/BasicLanczosAlgorithmWithGroundState.h"
-#include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithm.h"
-#include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithmWithDiskStorage.h"
-#include "LanczosAlgorithm/FullReorthogonalizedBlockLanczosAlgorithm.h"
-#include "LanczosAlgorithm/BasicBlockLanczosAlgorithm.h"
-#include "LanczosAlgorithm/BasicLanczosAlgorithmWithGroundStateDiskStorage.h"
+#include "LanczosAlgorithm/LanczosManager.h"
+#include "LanczosAlgorithm/AbstractLanczosAlgorithm.h"
 
 #include "LanczosAlgorithm/ComplexBasicLanczosAlgorithm.h"
 #include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithDiskStorage.h"
@@ -87,6 +81,7 @@ using std::ofstream;
 //  
 // options = pointer to the options managers containing all running options
 // space = pointer to the current Hilbert space
+// lanczos = pointer to the Lanczos manager
 // hamiltonian = pointer to the current Hamiltonian
 // kyValue = total momentum value of the system along the y-axis
 // shift = energy shift that is applied to the hamiltonian
@@ -94,7 +89,7 @@ using std::ofstream;
 // firstRun = flag that indicates if it the first time the main task is used
 // eigenvectorFileName = prefix to add to the name of each file that will contain an eigenvector
 
-FQHEOnTorusMainTask::FQHEOnTorusMainTask(OptionManager* options, AbstractHilbertSpace* space, 
+FQHEOnTorusMainTask::FQHEOnTorusMainTask(OptionManager* options, AbstractHilbertSpace* space, LanczosManager* lanczos, 
 					 AbstractQHEHamiltonian* hamiltonian, int kyValue, double shift, char* outputFileName,
 					 bool firstRun, char* eigenvectorFileName)
 {
@@ -117,6 +112,7 @@ FQHEOnTorusMainTask::FQHEOnTorusMainTask(OptionManager* options, AbstractHilbert
   this->KxValue = 0;
   this->KyOnlyFlag = true;
   this->MultiplicityFlag = false;
+  this->AlgorithmManager = lanczos;
   this->EnergyShift = shift;
   this->ResumeFlag = ((BooleanOption*) (*options)["resume"])->GetBoolean();
   this->DiskFlag = ((BooleanOption*) (*options)["disk"])->GetBoolean();
@@ -396,47 +392,7 @@ int FQHEOnTorusMainTask::ExecuteMainTask()
 	}
       else
 	{
-	  AbstractLanczosAlgorithm* Lanczos;
-	  if ((this->NbrEigenvalue == 1) && (this->FullReorthogonalizationFlag == false))
-	    {
-	      if (this->DiskFlag == false)
-		if (this->EvaluateEigenvectors == true)
-		  Lanczos = new BasicLanczosAlgorithmWithGroundState(this->Architecture, this->MaxNbrIterLanczos, this->FastDiskFlag, this->ResumeFastDiskFlag);
-		else
-		  Lanczos = new BasicLanczosAlgorithm(this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
-	      else
-		if (this->EvaluateEigenvectors == true)
-		  Lanczos = new BasicLanczosAlgorithmWithGroundStateDiskStorage(this->Architecture, this->NbrIterLanczos, this->MaxNbrIterLanczos);
-		else
-		  Lanczos = new BasicLanczosAlgorithmWithDiskStorage(this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
-	    }
-	  else
-	    {
-	      if (this->FullReorthogonalizationFlag == true)
-		{
-		  if (this->DiskFlag == false)
-		    {
-		      if (this->BlockLanczosFlag == true)
-			Lanczos = new FullReorthogonalizedBlockLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->SizeBlockLanczos, this->MaxNbrIterLanczos, false, this->LapackFlag);
-		      else
-			Lanczos = new FullReorthogonalizedLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
-		    }
-		  else
-		    Lanczos = new FullReorthogonalizedLanczosAlgorithmWithDiskStorage (this->Architecture, this->NbrEigenvalue, this->VectorMemory, this->MaxNbrIterLanczos);
-		}
-	      else
-		{
-		  if (this->BlockLanczosFlag == true)
-		    Lanczos = new BasicBlockLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->SizeBlockLanczos, this->MaxNbrIterLanczos, 
-							      this->FastDiskFlag, this->ResumeFastDiskFlag, false, this->LapackFlag);
-		  else
-		    Lanczos = new FullReorthogonalizedLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
-		}
-	    }
-	  if (this->LanczosReorthogonalization != 0)
-	    {
-	      Lanczos->ForceOrthogonalization(this->LanczosReorthogonalization);
-	    }
+	  AbstractLanczosAlgorithm* Lanczos = AlgorithmManager->GetLanczosAlgorithm(this->Architecture, this->EvaluateEigenvectors, this->LapackFlag);
 	  if (this->LanczosPrecision != 0.0)
 	    Lanczos->SetEigenvaluePrecision(this->LanczosPrecision);
 	  double GroundStateEnergy;
@@ -782,58 +738,7 @@ int FQHEOnTorusMainTask::ExecuteMainTask()
 	}
       else
 	{
-	  AbstractLanczosAlgorithm* Lanczos;
-	  if ((this->NbrEigenvalue == 1) && (this->FullReorthogonalizationFlag == false))
-	    {
-	      if (this->DiskFlag == false)
-		if (this->EvaluateEigenvectors == true)
-		  //Lanczos = new ComplexBasicLanczosAlgorithmWithGroundState(this->Architecture, this->MaxNbrIterLanczos);// replaced by more elaborate algorithm with fast-disk option -> still need to check that one
-		  {
-		    cout << "Using ComplexBasicLanczosAlgorithmWithGroundStateFastDisk"<<endl;
-		    Lanczos = new ComplexBasicLanczosAlgorithmWithGroundStateFastDisk(this->Architecture, this->MaxNbrIterLanczos , this->FastDiskFlag, this->ResumeFastDiskFlag);
-		  }
-		else
-		  Lanczos = new ComplexBasicLanczosAlgorithm(this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
-	      else
-		if (this->EvaluateEigenvectors == true)
-		  {
-		    cout << "Complex Lanczos Algorithm with GroundState and Disk Storage not implemented!"<<endl;
-		    exit(1);
-		    //Lanczos = new ComplexBasicLanczosAlgorithmWithGroundStateDiskStorage(this->Architecture, this->NbrIterLanczos, this->MaxNbrIterLanczos);
-		  }
-		else
-		  Lanczos = new ComplexBasicLanczosAlgorithmWithDiskStorage(this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
-	    }
-	  else
-	    {
-	      if (this->DiskFlag == false)
-		{
-		  if (this->BlockLanczosFlag == true)
-		    {
-		      if (this->FullReorthogonalizationFlag == true)
-			{
-			  cout << "reorthogonalized block lanczos is not yet defined: ComplexFullReorthogonalizedBlockLanczosAlgorithm missing"<<endl;
-			  cout << "using non-reorthogonalized algorithm 'ComplexBasicBlockLanczosAlgorithm'"<<endl;
-			  //Lanczos = new ComplexFullReorthogonalizedBlockLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->SizeBlockLanczos, this->MaxNbrIterLanczos, false, this->LapackFlag);
-			  Lanczos = new ComplexBasicBlockLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->SizeBlockLanczos, this->MaxNbrIterLanczos, 
-									   this->FastDiskFlag, this->ResumeFastDiskFlag, false, this->LapackFlag);
-			  
-			}
-		      else
-			{
-			  cout << "Using ComplexBasicBlockLanczosAlgorithm"<<endl;
-			  Lanczos = new ComplexBasicBlockLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->SizeBlockLanczos, this->MaxNbrIterLanczos, 
-									   this->FastDiskFlag, this->ResumeFastDiskFlag, false, this->LapackFlag);
-			}
-		    }
-		  else
-		    {
-		      Lanczos = new FullReorthogonalizedComplexLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
-		    }
-		}
-	      else
-		Lanczos = new FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage (this->Architecture, this->NbrEigenvalue, this->VectorMemory, this->MaxNbrIterLanczos);
-	    }
+	  AbstractLanczosAlgorithm* Lanczos = AlgorithmManager->GetLanczosAlgorithm(this->Architecture, this->EvaluateEigenvectors, this->LapackFlag);
 	  if (this->LanczosPrecision != 0.0)
 	    Lanczos->SetEigenvaluePrecision(this->LanczosPrecision);
 	  double GroundStateEnergy;

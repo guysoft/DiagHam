@@ -173,7 +173,7 @@ int main(int argc, char** argv)
 	      sprintf (EigenvectorName, "bosons_torus_kysym_haffnian_n_%d_2s_%d_ratio_%f_ky_%d", NbrParticles, MaxMomentum, XRatio, Momentum);
 	    }
 	}
-      FQHEOnTorusMainTask Task (&Manager, Space, Hamiltonian, Momentum, Shift, OutputNameLz, FirstRun, EigenvectorName);
+      FQHEOnTorusMainTask Task (&Manager, Space, &Lanczos, Hamiltonian, Momentum, Shift, OutputNameLz, FirstRun, EigenvectorName);
       MainTaskOperation TaskOperation (&Task);
       TaskOperation.ApplyOperation(Architecture.GetArchitecture());
       if (EigenvectorName != 0)

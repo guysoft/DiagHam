@@ -35,6 +35,7 @@
 #include "config.h"
 
 #include "MainTask/QHEOnDiskMainTask.h"
+#include "LanczosAlgorithm/LanczosManager.h"
 
 #include <iostream>
 using std::ofstream;
@@ -61,19 +62,23 @@ class FQHEOnTorusMainTask: public QHEOnDiskMainTask
   // value of multiplicity
   int Multiplicity;
 
+  // pointer to Lanczos manager
+  LanczosManager* AlgorithmManager;
+
  public:
 
   // constructor
   //  
   // options = pointer to the options managers containing all running options
   // space = pointer to the current Hilbert space
+  // lanczos = pointer to the Lanczos algorithm manager
   // hamiltonian = pointer to the current Hamiltonian
   // kyValue = total momentum value of the system along the y-axis
   // shift = energy shift that is applied to the hamiltonian
   // outputFileName = name of the file where results have to be stored
   // firstRun = flag that indicates if it the first time the main task is used
   // eigenvectorFileName = prefix to add to the name of each file that will contain an eigenvector
-  FQHEOnTorusMainTask(OptionManager* options, AbstractHilbertSpace* space, 
+  FQHEOnTorusMainTask(OptionManager* options, AbstractHilbertSpace* space, LanczosManager* lanczos, 
 		      AbstractQHEHamiltonian* hamiltonian, int kyValue, double shift, char* outputFileName,
 		      bool firstRun = true, char* eigenvectorFileName = 0);
   

@@ -53,6 +53,13 @@ using std::cout;
 using std::endl;
 
 
+// default constructor
+//
+
+SimpleMPIArchitecture::SimpleMPIArchitecture()
+{
+}
+
 // constructor
 //
 // logFile = name of the optional log file to allow code profiling on MPI architecture

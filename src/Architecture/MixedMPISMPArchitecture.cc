@@ -65,6 +65,9 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* lo
   this->PerformanceIndex = 1.0;
   this->ArchitectureID = AbstractArchitecture::MixedMPISMP;
 #ifdef __MPI__
+  MPI::Init();
+  this->NbrMPINodes = MPI::COMM_WORLD.Get_size();
+  this->MPIRank = MPI::COMM_WORLD.Get_rank();
   this->NbrCPUPerNode = new int [this->NbrMPINodes];
   this->ClusterMemoryArray = new long [this->NbrMPINodes];
 
