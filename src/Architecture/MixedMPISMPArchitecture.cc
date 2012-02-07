@@ -70,6 +70,7 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* lo
   this->MPIRank = MPI::COMM_WORLD.Get_rank();
   this->NbrCPUPerNode = new int [this->NbrMPINodes];
   this->ClusterMemoryArray = new long [this->NbrMPINodes];
+  this->ClusterPerformanceArray = new double [this->NbrMPINodes];
 
   char* TmpLocalHostname = new char [512];
   gethostname(TmpLocalHostname, 511);
@@ -269,7 +270,7 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* lo
     }
   if (this->NbrCPUPerNode[this->MPIRank] > 1)
     {
-      delete this->LocalArchitecture;
+      //      delete this->LocalArchitecture;
       if (logFile == 0)
 	{
 	  this->LocalArchitecture = new SMPArchitecture(this->NbrCPUPerNode[this->MPIRank]);
@@ -281,6 +282,10 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* lo
 	  this->LocalArchitecture = new SMPArchitecture(this->NbrCPUPerNode[this->MPIRank], TmpLogFileName);
 	  delete[] TmpLogFileName;
 	}
+    }
+  else
+    {
+      this->LocalArchitecture = new MonoProcessorArchitecture;
     }
 }
   
