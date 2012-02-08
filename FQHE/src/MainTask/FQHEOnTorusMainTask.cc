@@ -596,7 +596,6 @@ int FQHEOnTorusMainTask::ExecuteMainTask()
 	  Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
 	    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);
 	  cout << "time = " << Dt << endl;
-	  delete Lanczos;
 	}
       cout << "----------------------------------------------------------------" << endl;
       File.close();
@@ -907,7 +906,6 @@ int FQHEOnTorusMainTask::ExecuteMainTask()
 	  Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
 	    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);
 	  cout << "time = " << Dt << endl;
-	  delete Lanczos;
 	}
       cout << "----------------------------------------------------------------" << endl;
     }
