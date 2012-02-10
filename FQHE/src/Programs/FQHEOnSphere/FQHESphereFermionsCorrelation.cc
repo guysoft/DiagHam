@@ -84,6 +84,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('r', "radians", "set units to radians instead of magnetic lengths", false);
   (*SystemGroup) += new BooleanOption  ('c', "chord", "use chord distance instead of distance on the sphere", false);
   (*SystemGroup) += new BooleanOption  ('\n', "density", "plot density insted of density-density correlation", false);
+  (*SystemGroup) += new BooleanOption  ('\n', "pair-amplitude", "evaluate pair amplitudes", false);
+  (*SystemGroup) += new BooleanOption  ('\n', "energy-expectation", "evaluate energy expectation value from pair amplitudes", false);
+  (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
   (*SystemGroup) += new BooleanOption  ('\n', "structure-factor", "evaluate the projected structure factor instead of (density-)density (use with radians option)", false);
   (*SystemGroup) += new BooleanOption  ('\n', "guidingcenter-structurefactor", "evaluate the guiding center structure factor instead of (density-)density", false);
   (*SystemGroup) += new BooleanOption  ('\n', "coefficients-only", "only compute the one or two body coefficients that are requested to evaluate the density-density correlation", false);
@@ -117,6 +120,8 @@ int main(int argc, char** argv)
   bool DensityFlag = Manager.GetBoolean("density");
   bool StructureFactorFlag = Manager.GetBoolean("structure-factor");
   bool GuidingCenterStructureFactorFlag = Manager.GetBoolean("guidingcenter-structurefactor");
+  bool PairAmplitudeFlag = Manager.GetBoolean("pair-amplitude");
+  bool EnergyExpectationFlag = Manager.GetBoolean("energy-expectation");
   bool ChordFlag = Manager.GetBoolean("chord");
   bool HaldaneBasisFlag = Manager.GetBoolean("haldane");
   bool SymmetrizedBasis = Manager.GetBoolean("symmetrized-basis");
@@ -432,6 +437,82 @@ int main(int argc, char** argv)
      } 
    }
 
+   if (PairAmplitudeFlag == true)
+   {
+     cout<<"Evaluating the pair amplitudes <xi_{J,M}^+ xi_{J,M}>" << endl;
+     cout<<"assuming M can be set to zero"<<endl;
+     cout<<"xi_{J,M}=\sum_{m1,m2} C_{m2m1M}^{SSJ} c_m1 c_m2 "<<endl;
+     cout<<"Total energy = \sum_{J,M} V_J <xi_{J,M}^+ xi_{J,M}>"<<endl;
+     ofstream File;
+     File.precision(14);
+     if (Manager.GetString("output-file") != 0)
+       File.open(Manager.GetString("output-file"), ios::binary | ios::out);
+     else
+      {
+        cout << "Enter output file! " << endl;
+        exit(1);
+      }
+  
+     RealVector State;
+     if (State.ReadVectorTest(Manager.GetString("eigenstate")) == true)
+      {
+        if (State.ReadVector (Manager.GetString("eigenstate")) == false)
+	  {
+	    cout << "can't open vector file " << Manager.GetString("eigenstate") << endl;
+	    return -1;      
+	  }
+
+       ClebschGordanCoefficients CoeffLLS(LzMax, LzMax);
+       Complex TotalEnergy (0.0, 0.0);
+       double* PseudoPotentials = 0;
+       if (EnergyExpectationFlag)
+        {
+          ConfigurationParser InteractionDefinition;
+          if (InteractionDefinition.Parse(Manager.GetString("interaction-file")) == false)
+ 	   {
+	     InteractionDefinition.DumpErrors(cout) << endl;
+ 	     return -1;
+ 	   }
+          int TmpNbrPseudoPotentials;
+          if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials", ' ', PseudoPotentials, TmpNbrPseudoPotentials) == false)
+ 	   {
+	     cout << "Weights is not defined or has a wrong value in " << Manager.GetString("interaction-file") << endl;
+	     return -1;
+	   }
+          cout << "LzMax= " << TmpNbrPseudoPotentials << " " << LzMax << endl;
+          if (TmpNbrPseudoPotentials != (LzMax +1))
+ 	   {
+	     cout << "Invalid number of pseudo-potentials" << endl;
+	     return -1;	  
+	   }
+         }
+
+
+       for (int L = 0; L <= LzMax; ++L)
+        {
+          Complex PairAmpL(0.0,0.0);
+          for (int m1 = 0; m1 <= LzMax; ++m1)
+           {
+            for (int m3 = 0; m3 <= LzMax; ++m3)
+	     {        
+               double Factor = CoeffLLS.GetCoefficient(((m1 << 1) - LzMax), -((m1 << 1) - LzMax), 2*LzMax - (L << 1)) * CoeffLLS.GetCoefficient(-((m3 << 1) - LzMax), ((m3 << 1) - LzMax), 2*LzMax - (L << 1));
+               ParticleOnSphereDensityDensityOperator Operator (Space, m1, LzMax - m1, m3, LzMax - m3);
+               PairAmpL += Factor * Operator.MatrixElement(State, State);              
+	     }
+           }     
+         cout << L <<" "<< PairAmpL.Re << " " << PairAmpL.Im <<endl;
+         File << L <<" "<< PairAmpL.Re << " " << PairAmpL.Im <<endl;
+         if (EnergyExpectationFlag)
+   	   TotalEnergy += (2*(LzMax-L)+1) * PairAmpL * PseudoPotentials[L];
+        }
+
+      if (EnergyExpectationFlag)
+ 	cout << "Twice total energy: " <<TotalEnergy<<endl;
+
+       delete [] PseudoPotentials;
+       return 0;
+     } 
+   }
 
 
   AbstractFunctionBasis* Basis;
