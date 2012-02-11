@@ -209,7 +209,15 @@ class FermionOnTorus :  public ParticleOnTorus
   // return value = density matrix of the subsytem  (return a wero dimension matrix if the density matrix is equal to zero)
   virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int subsytemSize, int nbrBosonSector, int kySector, RealVector& groundState);
 
- private:
+  // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Ky sector.
+  // 
+  // nbrFermionSector = number of particles that belong to the subsytem 
+  // kySector = Ky sector in which the density matrix has to be evaluated 
+  // groundState = reference on the total system ground state
+  // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+  virtual RealSymmetricMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrFermionSector, int kySector, RealVector& groundState);
+
+ protected:
 
   // find state index
   //
@@ -249,6 +257,18 @@ class FermionOnTorus :  public ParticleOnTorus
   // currentMomentum = current value of the momentum
   // return value = position from which new states have to be stored
   int GenerateStates(int nbrFermions, int maxMomentum, int currentKyMax, int pos, int currentMomentum);
+
+  // core part of the evaluation density matrix particle partition calculation
+  // 
+  // minIndex = first index to consider in complementary Hilbert space
+  // nbrIndex = number of indices to consider in complementary Hilbert space
+  // complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e part B)
+  // destinationHilbertSpace = pointer to the destination Hilbert space (i.e. part A)
+  // groundState = reference on the total system ground state
+  // densityMatrix = reference on the density matrix where result has to stored
+  // return value = number of components that have been added to the density matrix
+  long EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnTorus* complementaryHilbertSpace,  ParticleOnTorus* destinationHilbertSpace,
+							  RealVector& groundState,  RealSymmetricMatrix* densityMatrix);
 
 };
 

@@ -335,9 +335,9 @@ ComplexVector::ComplexVector(MPI::Intracomm& communicator, int id, bool broadcas
     if (TmpArray[2] == 2)
       {
 	if (broadcast == true)
-	  communicator.Bcast(this->Components, 2 * this->Dimension, MPI::DOUBLE, id);      
+	  communicator.Bcast(this->Components, 2l * this->Dimension, MPI::DOUBLE, id);      
 	else
-	  communicator.Recv(this->Components, 2 * this->Dimension, MPI::DOUBLE, id, 1);   
+	  communicator.Recv(this->Components, 2l * this->Dimension, MPI::DOUBLE, id, 1);   
       }
   this->TrueDimension = this->Dimension;
   this->LargeDimension = (long) this->Dimension;
@@ -2956,7 +2956,8 @@ Vector* ComplexVector::BroadcastClone(MPI::Intracomm& communicator, int id)
       TmpArray[1] = this->VectorId;
       TmpArray[2] = 2;
       communicator.Bcast(TmpArray, 3, MPI::INT, id);      
-      communicator.Bcast(this->Components, 2 * this->Dimension, MPI::DOUBLE, id);      
+      cout << "this->Dimension " << this->Dimension << endl;
+      communicator.Bcast(this->Components, 2l * this->Dimension, MPI::DOUBLE, id);      
     }
   else
     {

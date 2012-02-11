@@ -946,3 +946,160 @@ RealSymmetricMatrix FermionOnTorus::EvaluatePartialDensityMatrix (int subsytemSi
       return TmpDensityMatrixZero;
     }
 }
+
+// evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Ky sector.
+// 
+// nbrFermionSector = number of particles that belong to the subsytem 
+// kySector = Ky sector in which the density matrix has to be evaluated 
+// groundState = reference on the total system ground state
+// return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+
+RealSymmetricMatrix  FermionOnTorus::EvaluatePartialDensityMatrixParticlePartition (int nbrFermionSector, int kySector, RealVector& groundState)
+{  
+  if (nbrFermionSector == 0)
+    {
+      if (kySector == 0)
+	{
+	  RealSymmetricMatrix TmpDensityMatrix(1);
+	  TmpDensityMatrix.SetMatrixElement(0, 0, 1.0);
+	  return TmpDensityMatrix;
+	}
+      else
+	{
+	  RealSymmetricMatrix TmpDensityMatrix;
+	  return TmpDensityMatrix;	  
+	}
+    }
+
+  if (nbrFermionSector == this->NbrFermions)
+    {
+      if (kySector == this->TotalKy)
+	{
+	  RealSymmetricMatrix TmpDensityMatrix(1);
+	  TmpDensityMatrix.SetMatrixElement(0, 0, 1.0);
+	  return TmpDensityMatrix;
+	}
+      else
+	{
+	  RealSymmetricMatrix TmpDensityMatrix;
+	  return TmpDensityMatrix;	  
+	}
+    }
+
+  int ComplementaryNbrFermionSector = this->NbrFermions - nbrFermionSector;
+  int ComplementaryKySector = this->TotalKy - kySector;
+  if (ComplementaryKySector < 0)
+    ComplementaryKySector += this->KyMax;
+  if (ComplementaryKySector >= this->KyMax)
+    ComplementaryKySector -= this->KyMax;
+
+
+  FermionOnTorus SubsytemSpace (nbrFermionSector, this->KyMax, kySector);
+  RealSymmetricMatrix TmpDensityMatrix(SubsytemSpace.GetHilbertSpaceDimension(), true);
+  FermionOnTorus ComplementarySpace(ComplementaryNbrFermionSector, this->KyMax, ComplementaryKySector);
+  cout << "subsystem Hilbert space dimension = " << SubsytemSpace.GetHilbertSpaceDimension() << endl;
+
+   
+  long TmpNbrNonZeroElements = 0;
+
+  TmpNbrNonZeroElements = this->EvaluatePartialDensityMatrixParticlePartitionCore(0, ComplementarySpace.GetHilbertSpaceDimension(), &ComplementarySpace, &SubsytemSpace, groundState, &TmpDensityMatrix);
+  if (TmpNbrNonZeroElements > 0)
+    {
+      return TmpDensityMatrix;
+    }
+  else
+    {
+      RealSymmetricMatrix TmpDensityMatrixZero;
+      return TmpDensityMatrixZero;
+    }
+}
+
+// core part of the evaluation density matrix particle partition calculation
+// 
+// minIndex = first index to consider in complementary Hilbert space
+// nbrIndex = number of indices to consider in complementary Hilbert space
+// complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e part B)
+// destinationHilbertSpace = pointer to the destination Hilbert space (i.e. part A)
+// groundState = reference on the total system ground state
+// densityMatrix = reference on the density matrix where result has to stored
+// return value = number of components that have been added to the density matrix
+
+long FermionOnTorus::EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnTorus* complementaryHilbertSpace,  ParticleOnTorus* destinationHilbertSpace,
+									RealVector& groundState,  RealSymmetricMatrix* densityMatrix)
+{
+  FermionOnTorus* TmpHilbertSpace =  (FermionOnTorus*) complementaryHilbertSpace;
+  FermionOnTorus* TmpDestinationHilbertSpace =  (FermionOnTorus*) destinationHilbertSpace;
+  int* TmpStatePosition = new int [TmpDestinationHilbertSpace->HilbertSpaceDimension];
+  int* TmpStatePosition2 = new int [TmpDestinationHilbertSpace->HilbertSpaceDimension];
+  double* TmpStateCoefficient = new double [TmpDestinationHilbertSpace->HilbertSpaceDimension];
+  int MaxIndex = minIndex + nbrIndex;
+  long TmpNbrNonZeroElements = 0l;
+  BinomialCoefficients TmpBinomial (this->NbrFermions);
+  double TmpInvBinomial = 1.0 / sqrt(TmpBinomial(this->NbrFermions, TmpDestinationHilbertSpace->NbrFermions));
+  for (; minIndex < MaxIndex; ++minIndex)    
+    {
+      int Pos = 0;
+      unsigned long TmpState = TmpHilbertSpace->StateDescription[minIndex];
+      for (int j = 0; j < TmpDestinationHilbertSpace->HilbertSpaceDimension; ++j)
+	{
+	  unsigned long TmpState2 = TmpDestinationHilbertSpace->StateDescription[j];
+	  if ((TmpState & TmpState2) == 0x0ul)
+	    {
+ 	      int TmpKyMax = this->KyMax;
+	      unsigned long TmpState3 = TmpState | TmpState2;
+	      while ((TmpState3 >> TmpKyMax) == 0x0ul)
+		--TmpKyMax;
+	      int TmpPos = this->FindStateIndex(TmpState3, TmpKyMax);
+	      if (TmpPos != this->HilbertSpaceDimension)
+		{
+		  double Coefficient = TmpInvBinomial;
+		  unsigned long Sign = 0x0ul;
+		  int Pos2 = TmpDestinationHilbertSpace->KyMax;
+		  while ((Pos2 > 0) && (TmpState2 != 0x0ul))
+		    {
+		      while (((TmpState2 >> Pos2) & 0x1ul) == 0x0ul)
+			--Pos2;
+		      TmpState3 = TmpState & ((0x1ul << (Pos2 + 1)) - 1ul);
+#ifdef  __64_BITS__
+		      TmpState3 ^= TmpState3 >> 32;
+#endif	
+		      TmpState3 ^= TmpState3 >> 16;
+		      TmpState3 ^= TmpState3 >> 8;
+		      TmpState3 ^= TmpState3 >> 4;
+		      TmpState3 ^= TmpState3 >> 2;
+		      TmpState3 ^= TmpState3 >> 1;
+		      Sign ^= TmpState3;
+		      TmpState2 &= ~(0x1ul << Pos2);
+		      --Pos2;
+		    }
+ 		  if ((Sign & 0x1ul) == 0x0ul)		  
+ 		    Coefficient *= 1.0;
+ 		  else
+ 		    Coefficient *= -1.0;
+		  TmpStatePosition[Pos] = TmpPos;
+		  TmpStatePosition2[Pos] = j;
+		  TmpStateCoefficient[Pos] = Coefficient;
+		  ++Pos;
+		}
+	    }
+	}
+      if (Pos != 0)
+	{
+	  ++TmpNbrNonZeroElements;
+	  for (int j = 0; j < Pos; ++j)
+	    {
+	      int Pos2 = TmpStatePosition2[j];
+	      double TmpValue = groundState[TmpStatePosition[j]] * TmpStateCoefficient[j];
+	      for (int k = 0; k < Pos; ++k)
+		if (TmpStatePosition2[k] >= Pos2)
+		  {
+		    densityMatrix->AddToMatrixElement(Pos2, TmpStatePosition2[k], TmpValue * groundState[TmpStatePosition[k]] * TmpStateCoefficient[k]);
+		  }
+	    }
+	}
+    }
+  delete[] TmpStatePosition;
+  delete[] TmpStatePosition2;
+  delete[] TmpStateCoefficient;
+  return TmpNbrNonZeroElements;
+}
