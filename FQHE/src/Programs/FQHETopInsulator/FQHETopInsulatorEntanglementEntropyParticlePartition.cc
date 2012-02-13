@@ -350,7 +350,7 @@ int main(int argc, char** argv)
 			    }
 			  else
 			    {
-// 			      PartialDensityMatrix = ((BosonOnSquareLatticeMomentumSpace*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, NbrGroundStatePerMomentumSector[TmpIndex], GroundStatePerMomentumSector[TmpIndex], CoefficientPerMomentumSector[TmpIndex], Architecture.GetArchitecture());
+ 			      PartialDensityMatrix = ((BosonOnSquareLatticeMomentumSpace*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, NbrGroundStatePerMomentumSector[TmpIndex], GroundStatePerMomentumSector[TmpIndex], CoefficientPerMomentumSector[TmpIndex], Architecture.GetArchitecture());
 			    }
 			}
 		    }
