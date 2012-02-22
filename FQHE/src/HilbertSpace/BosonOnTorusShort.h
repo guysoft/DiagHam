@@ -58,7 +58,14 @@ class BosonOnTorusShort :  public ParticleOnTorus
   int TotalKy;
   // index of the momentum orbit
   bool TotalKyFlag;
-  int GCDKyMax;
+  //  GCD of nbrBosons and maxMomentum
+  int MomentumModulo;
+
+
+  // shift that has to be done on a state for each translation of the canonical form research
+  int StateShift;
+  // mask that corresponds to last bit that can be set to one
+  unsigned long LastMomentumMask;
 
   // array describing each state
   unsigned long* StateDescription;
@@ -246,6 +253,12 @@ class BosonOnTorusShort :  public ParticleOnTorus
   // kySector = Ky sector in which the density matrix has to be evaluated 
   // return value = density matrix of the subsytem  (return a wero dimension matrix if the density matrix is equal to zero)
   virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int subsytemSize, int nbrBosonSector, int kySector, RealVector& groundState);
+
+  // apply a magnetic translation along x to a given state
+  //
+  // index = state index 
+  // return value = translated state index
+  virtual int ApplyXMagneticTranslation(int index);
 
  protected:
 

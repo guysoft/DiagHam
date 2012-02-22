@@ -51,8 +51,8 @@ class ParticleOnTorusThreeBodyHardcoreHamiltonian : public AbstractQHEOnTorusNBo
 
  protected:
 
-  
-
+  // strength of the additional two body delta interaction
+  double TwoBodyDeltaStrength;
 
  public:
 
@@ -65,11 +65,12 @@ class ParticleOnTorusThreeBodyHardcoreHamiltonian : public AbstractQHEOnTorusNBo
   // particles = Hilbert space associated to the system
   // nbrParticles = number of particles
   // lzmax = maximum Lz value reached by a particle in the state
+  // twoBodyDeltaStrength = strength of the additional two body delta interaction
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnTorusThreeBodyHardcoreHamiltonian(ParticleOnTorus* particles, int nbrParticles, int lzmax,double ratio,
+  ParticleOnTorusThreeBodyHardcoreHamiltonian(ParticleOnTorus* particles, int nbrParticles, int lzmax,double ratio, double twoBodyDeltaStrength,
 					      AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
 					      char* precalculationFileName = 0);
 
@@ -111,6 +112,73 @@ class ParticleOnTorusThreeBodyHardcoreHamiltonian : public AbstractQHEOnTorusNBo
   //   
   virtual void EvaluateInteractionFactors();
 	
+  // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
+  //
+  // m1 = first index
+  // m2 = second index
+  // m3 = third index
+  // m4 = fourth index
+  // return value = numerical coefficient
+  virtual double EvaluateTwoBodyInteractionCoefficient(int m1, int m2, int m3, int m4);
+
+  // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a+_m3 a_n1 a_n2 a_n3 coupling term, symmetrized on the n indices
+  //
+  // m1 = first creation operator index
+  // m2 = second creation operator index
+  // m3 = third creation operator index
+  // n1 = first annihilation operator index
+  // n2 = second annihilation operator index
+  // n3 = thrid annihilation operator index
+  // return value = numerical coefficient
+  inline double EvaluateInteractionNIndexSymmetrizedCoefficient(int m1, int m2, int m3, int n1,int n2, int n3);
+
 };
+
+// evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a+_m3 a_n1 a_n2 a_n3 coupling term, symmetrized on the n indices
+//
+// m1 = first creation operator index
+// m2 = second creation operator index
+// m3 = third creation operator index
+// n1 = first annihilation operator index
+// n2 = second annihilation operator index
+// n3 = thrid annihilation operator index
+// return value = numerical coefficient
+
+inline double ParticleOnTorusThreeBodyHardcoreHamiltonian::EvaluateInteractionNIndexSymmetrizedCoefficient(int m1, int m2, int m3, int n1,int n2, int n3)
+{  
+  double TmpInteraction;
+  if (n1 != n2)
+    {
+      if (n2 != n3)
+	{	  
+	  TmpInteraction  = this->EvaluateInteractionCoefficient(m1, m2, m3, n1, n2, n3);
+	  TmpInteraction += this->EvaluateInteractionCoefficient(m1, m2, m3, n1, n3, n2);
+	  TmpInteraction += this->EvaluateInteractionCoefficient(m1, m2, m3, n2, n1, n3);
+	  TmpInteraction += this->EvaluateInteractionCoefficient(m1, m2, m3, n2, n3, n1);
+	  TmpInteraction += this->EvaluateInteractionCoefficient(m1, m2, m3, n3, n1, n2);
+	  TmpInteraction += this->EvaluateInteractionCoefficient(m1, m2, m3, n3, n2, n1);
+	}
+      else
+	{	  
+	  TmpInteraction  = this->EvaluateInteractionCoefficient(m1, m2, m3, n1, n2, n3);
+	  TmpInteraction += this->EvaluateInteractionCoefficient(m1, m2, m3, n2, n1, n3);
+	  TmpInteraction += this->EvaluateInteractionCoefficient(m1, m2, m3, n3, n2, n1);
+	}
+    }
+  else
+    {
+      if (n2 != n3)
+	{	  
+	  TmpInteraction  = this->EvaluateInteractionCoefficient(m1, m2, m3, n1, n2, n3);
+	  TmpInteraction += this->EvaluateInteractionCoefficient(m1, m2, m3, n1, n3, n2);
+	  TmpInteraction += this->EvaluateInteractionCoefficient(m1, m2, m3, n2, n1, n3);
+	}
+      else
+	{	  
+	  TmpInteraction  = this->EvaluateInteractionCoefficient(m1, m2, m3, n1, n2, n3);
+	}
+    }
+  return TmpInteraction;
+}
 
 #endif

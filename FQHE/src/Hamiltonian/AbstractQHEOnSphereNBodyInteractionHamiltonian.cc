@@ -53,12 +53,23 @@ using std::ofstream;
 using std::ifstream;
 using std::ios;
 
+// default constructor
+//
+
+AbstractQHEOnSphereNBodyInteractionHamiltonian::AbstractQHEOnSphereNBodyInteractionHamiltonian()
+{
+  this->M4Value = 0;
+}
 
 // destructor
 //
 
 AbstractQHEOnSphereNBodyInteractionHamiltonian::~AbstractQHEOnSphereNBodyInteractionHamiltonian()
 {
+  if (this->M4Value != 0)
+    {
+      delete[] this->M4Value;
+    }
 }
 
 // ask if Hamiltonian implements hermitian symmetry operations
@@ -165,7 +176,10 @@ RealVector& AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelAddMultiply(
 		 m1 = this->M1Value[j];
 		 m2 = this->M2Value[j];
 		 m3 = this->M3Value[j];
-		 m4 = m1 + m2 - m3;
+		 if (this->M4Value != 0)
+		   m4 = this->M4Value[j];
+		 else
+		   m4 = m1 + m2 - m3;
 		 TmpTwoBodyInteraction = this->InteractionFactors[j];
 		 for (int i = firstComponent; i < LastComponent; ++i)
 		   {
@@ -343,7 +357,10 @@ RealVector& AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelAddMultiply(
 				m2 = this->M2Value[j];
 				m3 = this->M3Value[j];
 				TmpTwoBodyInteraction = this->InteractionFactors[j];
-				m4 = m1 + m2 - m3;
+				if (this->M4Value != 0)
+				  m4 = this->M4Value[j];
+				else
+				  m4 = m1 + m2 - m3;
 				for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
 				  {
 				    Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
@@ -593,7 +610,10 @@ RealVector* AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelMultipleAddM
 		 m1 = this->M1Value[j];
 		 m2 = this->M2Value[j];
 		 m3 = this->M3Value[j];
-		 m4 = m1 + m2 - m3;
+		 if (this->M4Value != 0)
+		   m4 = this->M4Value[j];
+		 else
+		   m4 = m1 + m2 - m3;
 		 TmpTwoBodyInteraction = this->InteractionFactors[j];
 		 for (int i = firstComponent; i < LastComponent; ++i)
 		   {
@@ -813,7 +833,10 @@ RealVector* AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelMultipleAddM
 				m2 = this->M2Value[j];
 				m3 = this->M3Value[j];
 				TmpTwoBodyInteraction = this->InteractionFactors[j];
-				m4 = m1 + m2 - m3;
+				if (this->M4Value != 0)
+				  m4 = this->M4Value[j];
+				else
+				  m4 = m1 + m2 - m3;
 				for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
 				  {
 				    Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
@@ -1087,7 +1110,10 @@ long AbstractQHEOnSphereNBodyInteractionHamiltonian::PartialFastMultiplicationMe
 	        m1 = this->M1Value[j];
 	        m2 = this->M2Value[j];
 	        m3 = this->M3Value[j];
-	        m4 = m1 + m2 - m3;
+		if (this->M4Value != 0)
+		  m4 = this->M4Value[j];
+		else
+		  m4 = m1 + m2 - m3;
 	        Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
 		if (Index < this->Particles->GetHilbertSpaceDimension())
 		 {
@@ -1255,6 +1281,7 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::PartialEnableFastMultiplica
   int m1;
   int m2;
   int m3;
+  int m4;
   
   for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
     {
@@ -1314,7 +1341,11 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::PartialEnableFastMultiplica
 		  m1 = this->M1Value[j];
 		  m2 = this->M2Value[j];
 		  m3 = this->M3Value[j];
-		  Index = TmpParticles->AdAdAA(i, m1, m2, m3, m1 + m2 - m3, Coefficient);
+		  if (this->M4Value != 0)
+		    m4 = this->M4Value[j];
+		  else
+		    m4 = m1 + m2 - m3;
+		  Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
 		  if (Index < TmpParticles->GetHilbertSpaceDimension())
 		    {
 		      TmpIndexArray[Pos] = Index;
@@ -1407,6 +1438,7 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::EnableFastMultiplicationWit
   int m1;
   int m2;
   int m3;
+  int m4;
   this->MaxNbrInteractionPerComponent = 0;
 
   long TotalPos = 0l;
@@ -1486,7 +1518,11 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::EnableFastMultiplicationWit
 		      m1 = this->M1Value[j];
 		      m2 = this->M2Value[j];
 		      m3 = this->M3Value[j];
-		      Index = this->Particles->AdAdAA(i, m1, m2, m3, m1 + m2 - m3, Coefficient);
+		      if (this->M4Value != 0)
+			m4 = this->M4Value[j];
+		      else
+			m4 = m1 + m2 - m3;
+		      Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
 		      if (Index < this->Particles->GetHilbertSpaceDimension())
 			{
 			  TmpIndexArray[Pos] = Index;

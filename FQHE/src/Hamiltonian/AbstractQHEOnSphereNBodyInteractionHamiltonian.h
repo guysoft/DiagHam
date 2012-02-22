@@ -81,8 +81,14 @@ class AbstractQHEOnSphereNBodyInteractionHamiltonian : public AbstractQHEOnSpher
   // interaction factor (first index for the  n-body interaction type, second index is index of the annihilation operator indices, third is the index on group of creation indices)
   double*** MNNBodyInteractionFactors;
 
+  // arrays for indices attached to each interaction factor
+  int* M4Value;
 
  public:
+
+  // default constructor
+  //
+  AbstractQHEOnSphereNBodyInteractionHamiltonian();
 
   // destructor
   //

@@ -60,9 +60,9 @@ ParticleOnTorusHaffnianHamiltonian::ParticleOnTorusHaffnianHamiltonian()
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
-ParticleOnTorusHaffnianHamiltonian::ParticleOnTorusHaffnianHamiltonian(ParticleOnTorus* particles, int nbrParticles, int lzmax, double ratio,
-										       AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, 
-										       char* precalculationFileName)
+ParticleOnTorusHaffnianHamiltonian::ParticleOnTorusHaffnianHamiltonian(ParticleOnTorus* particles, int nbrParticles, int lzmax, double ratio, 
+								       AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, 
+								       char* precalculationFileName)
 {
   this->Particles = particles;
   this->LzMax = lzmax;

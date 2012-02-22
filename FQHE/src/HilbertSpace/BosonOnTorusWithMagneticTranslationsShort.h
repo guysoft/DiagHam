@@ -74,7 +74,6 @@ class BosonOnTorusWithMagneticTranslationsShort :  public ParticleOnTorusWithMag
 
   // index of the momentum orbit
   int TotalKy;
-  int GCDKyMax;
 
   // array describing each state
   unsigned long* StateDescription;
@@ -535,13 +534,11 @@ inline unsigned long BosonOnTorusWithMagneticTranslationsShort::FindCanonicalFor
 
 inline void BosonOnTorusWithMagneticTranslationsShort::ApplySingleTranslation(unsigned long& stateDescription)
 {
-  //  cout << "in : " << hex << stateDescription << dec << " ";
   for (int i = 0; i < this->StateShift;)
     {
       while ((i < this->StateShift) && ((stateDescription & 0x1ul) == 0x0ul))
 	{
 	  stateDescription >>= 1;
-	  //	  cout << hex << "a:" <<stateDescription << dec << " ";
 	  ++i;
 	}
       if (i < this->StateShift)
@@ -552,11 +549,9 @@ inline void BosonOnTorusWithMagneticTranslationsShort::ApplySingleTranslation(un
 	      stateDescription |= this->LastMomentumMask;
 	    }
 	  stateDescription >>= 1;	  
-	  //	  cout << hex << "b:" << stateDescription << dec << " ";
 	  ++i;
 	}
     }
-  //  cout << "out : " << hex << stateDescription << dec << endl;
 }
 
 // test if a state and its translated version can be used to create a state corresponding to the x momentum constraint

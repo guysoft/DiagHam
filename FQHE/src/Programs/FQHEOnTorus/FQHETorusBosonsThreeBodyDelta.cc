@@ -73,6 +73,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
   (*SystemGroup) += new BooleanOption  ('\n', "haffnian", "use the haffnian three-body hamiltonian instead of the hardcore three-body hamiltonian");
+  (*SystemGroup) += new SingleDoubleOption ('\n', "twobody-delta", "strength of the two body delta interaction (0 if no  delta interaction  has to be added)", 0.0);
 
   (*PrecalculationGroup) += new BooleanOption ('\n', "disk-cache", "use disk cache for fast multiplication", false);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
@@ -108,7 +109,15 @@ int main(int argc, char** argv)
   char* OutputNameLz = new char [256];
   if (Manager.GetBoolean("haffnian") == false)
     {
-      sprintf (OutputNameLz, "bosons_torus_kysym_threebodydelta_n_%d_2s_%d_ratio_%f.dat", NbrParticles, MaxMomentum, XRatio);
+      if (Manager.GetDouble("twobody-delta") == 0.0)
+	{
+	  sprintf (OutputNameLz, "bosons_torus_kysym_threebodydelta_n_%d_2s_%d_ratio_%f.dat", NbrParticles, MaxMomentum, XRatio);
+	}
+      else
+	{
+	  sprintf (OutputNameLz, "bosons_torus_kysym_threebodydelta_%f_delta_n_%d_2s_%d_ratio_%f.dat", 
+		   Manager.GetDouble("twobody-delta"), NbrParticles, MaxMomentum, XRatio);
+	}
     }
   else
     {
@@ -152,7 +161,8 @@ int main(int argc, char** argv)
       AbstractQHEHamiltonian* Hamiltonian = 0;
       if (Manager.GetBoolean("haffnian") == false)
 	{
-	  Hamiltonian = new ParticleOnTorusThreeBodyHardcoreHamiltonian(Space, NbrParticles, MaxMomentum - 1, XRatio, Architecture.GetArchitecture(), Memory);
+	  Hamiltonian = new ParticleOnTorusThreeBodyHardcoreHamiltonian(Space, NbrParticles, MaxMomentum - 1, XRatio, 
+									Manager.GetDouble("twobody-delta"), Architecture.GetArchitecture(), Memory);
 	}
       else
 	{
@@ -166,7 +176,15 @@ int main(int argc, char** argv)
 	  EigenvectorName = new char [256];
 	  if (Manager.GetBoolean("haffnian") == false)
 	    {
-	      sprintf (EigenvectorName, "bosons_torus_kysym_threebodydelta_n_%d_2s_%d_ratio_%f_ky_%d", NbrParticles, MaxMomentum, XRatio, Momentum);
+	      if (Manager.GetDouble("twobody-delta") == 0.0)
+		{
+		  sprintf (EigenvectorName, "bosons_torus_kysym_threebodydelta_n_%d_2s_%d_ratio_%f_ky_%d", NbrParticles, MaxMomentum, XRatio, Momentum);
+		}
+	      else
+		{
+		  sprintf (EigenvectorName, "bosons_torus_kysym_threebodydelta_%f_delta_n_%d_2s_%d_ratio_%f_ky_%d", 
+			   Manager.GetDouble("twobody-delta"), NbrParticles, MaxMomentum, XRatio, Momentum);
+		}
 	    }
 	  else
 	    {

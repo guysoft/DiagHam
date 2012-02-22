@@ -93,6 +93,12 @@ class ParticleOnTorus :  public ParticleOnSphere
   // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
   virtual RealSymmetricMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrBosonSector, int kySector, RealVector& groundState);
 
+  // apply a magnetic translation along x to a given state
+  //
+  // index = state index 
+  // return value = translated state index
+  virtual int ApplyXMagneticTranslation(int index);
+
 };
 
 #endif

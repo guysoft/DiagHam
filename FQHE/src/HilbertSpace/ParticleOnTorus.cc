@@ -52,3 +52,14 @@ RealSymmetricMatrix ParticleOnTorus::EvaluatePartialDensityMatrixParticlePartiti
   RealSymmetricMatrix TmpDensityMatrix;
   return TmpDensityMatrix;
 }
+
+// apply a magnetic translation along x to a given state
+//
+// index = state index 
+// return value = translated state index
+
+int ParticleOnTorus::ApplyXMagneticTranslation(int index)
+{
+  return -1;
+}
+  

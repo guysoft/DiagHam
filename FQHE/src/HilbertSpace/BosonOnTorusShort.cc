@@ -68,6 +68,10 @@ BosonOnTorusShort::BosonOnTorusShort (int nbrBosons, int maxMomentum)
   this->TemporaryState = new unsigned long [this->KyMax + 1];
   this->ProdATemporaryState = new unsigned long [this->KyMax + 1];
 
+  this->MomentumModulo = FindGCD(this->NbrBosons, this->KyMax);
+  this->StateShift = this->KyMax / this->MomentumModulo;
+  this->LastMomentumMask = 0x1ul << (this->KyMax + this->NbrBosons - 1);
+
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->KyMax);
   this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   this->Flag.Initialize();
@@ -105,7 +109,11 @@ BosonOnTorusShort::BosonOnTorusShort (int nbrBosons, int maxMomentum, int moment
   this->NbrKyValue = this->KyMax + 1;
   this->TotalKy = momentumConstraint;
   this->TotalKyFlag = true;
-  this->GCDKyMax = FindGCD(this->NbrBosons, this->KyMax);
+
+  this->MomentumModulo = FindGCD(this->NbrBosons, this->KyMax);
+  this->StateShift = this->KyMax / this->MomentumModulo;
+  this->LastMomentumMask = 0x1ul << (this->KyMax + this->NbrBosons - 1);
+
   this->TemporaryState = new unsigned long [this->KyMax + 1];
   this->ProdATemporaryState = new unsigned long [this->KyMax + 1];
 
@@ -145,7 +153,10 @@ BosonOnTorusShort::BosonOnTorusShort(const BosonOnTorusShort& bosons)
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
   this->LargeHilbertSpaceDimension = this->LargeHilbertSpaceDimension;
   this->StateDescription = bosons.StateDescription;
+  this->MomentumModulo = bosons.MomentumModulo;
   this->StateKyMax = bosons.StateKyMax;
+  this->StateShift = bosons.StateShift;
+  this->LastMomentumMask = bosons.LastMomentumMask;
   this->TemporaryState = new unsigned long [this->KyMax + 1];
   this->Flag = bosons.Flag;
   this->TemporaryState = new unsigned long [this->KyMax + 1];
@@ -191,6 +202,9 @@ BosonOnTorusShort& BosonOnTorusShort::operator = (const BosonOnTorusShort& boson
   this->LargeHilbertSpaceDimension = this->LargeHilbertSpaceDimension;
   this->StateDescription = bosons.StateDescription;
   this->StateKyMax = bosons.StateKyMax;
+  this->MomentumModulo = bosons.MomentumModulo;
+  this->StateShift = bosons.StateShift;
+  this->LastMomentumMask = bosons.LastMomentumMask;
   this->TemporaryState = new unsigned long [this->KyMax + 1];
   this->ProdATemporaryState = new unsigned long [this->KyMax + 1];
   this->LookUpTableMemorySize = bosons.LookUpTableMemorySize;
@@ -1270,3 +1284,37 @@ RealSymmetricMatrix BosonOnTorusShort::EvaluatePartialDensityMatrix (int subsyte
       return TmpDensityMatrixZero;
     }
 }
+
+// apply a magnetic translation along x to a given state
+//
+// index = state index 
+// return value = translated state index
+
+int BosonOnTorusShort::ApplyXMagneticTranslation(int index)
+{
+  unsigned long TmpState = this->StateDescription[index];
+  for (int i = 0; i < this->StateShift;)
+    {
+      while ((i < this->StateShift) && ((TmpState & 0x1ul) == 0x0ul))
+	{
+	  TmpState >>= 1;
+	  ++i;
+	}
+      if (i < this->StateShift)
+	{
+	  while ((TmpState & 0x1ul) == 0x1ul)
+	    {
+	      TmpState >>= 1;
+	      TmpState |= this->LastMomentumMask;
+	    }
+	  TmpState >>= 1;	  
+	  ++i;
+	}
+    }
+  int TmpKyMax = this->NbrBosons + this->KyMax - 1;
+  while ((TmpState >> TmpKyMax) == 0x0ul)
+    --TmpKyMax;
+  return this->FindStateIndex(TmpState, TmpKyMax);
+}
+
+
