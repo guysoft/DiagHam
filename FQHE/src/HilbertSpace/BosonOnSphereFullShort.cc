@@ -123,21 +123,6 @@ BosonOnSphereFullShort::BosonOnSphereFullShort(const BosonOnSphereFullShort& bos
 
 BosonOnSphereFullShort::~BosonOnSphereFullShort ()
 {
-  if (this->FermionBasis != 0)
-    delete this->FermionBasis;
-  delete[] this->TemporaryState;
-  delete[] this->ProdATemporaryState;
-  if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
-    {
-      if (this->Minors != 0)
-	{
-	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-	    if (this->Minors[i] != 0)
-	      delete[] this->Minors[i];
-	  delete[] this->Minors;
-	}
-      delete this->KeptCoordinates;
-    }
 }
 
 // assignement (without duplicating datas)

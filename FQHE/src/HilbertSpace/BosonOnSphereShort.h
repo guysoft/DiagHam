@@ -52,7 +52,7 @@ using std::dec;
 using std::hex;
 
 class FermionOnSphereWithSpin;
-
+class BosonOnSphereFullShort;
 
 class BosonOnSphereShort :  public ParticleOnSphere
 {
@@ -707,7 +707,10 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // nbrComponent = number of components to be computed	
   virtual void BosonicStateTimePolarizedSlaters(RealVector& bosonState, RealVector& outputVector, FermionOnSphere * fermionSpace , FermionOnSphereWithSpin* finalSpace, int firstComponent,int nbrComponent);
 	
- protected:
+  
+  virtual void EvaluatePartialDensityMatrixMultipartiteParticlePartition(ParticleOnSphere * spaceA, ParticleOnSphere * spaceB, ParticleOnSphere * spaceC,  RealVector groundstate, RealSymmetricMatrix* densityMatrix, AbstractArchitecture* architecture = 0);
+ 
+  protected:
 
   // convert a bosonic state into its fermionic counterpart
   //

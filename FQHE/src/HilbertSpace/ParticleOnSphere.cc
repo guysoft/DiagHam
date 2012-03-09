@@ -595,7 +595,7 @@ long ParticleOnSphere::EvaluatePartialDensityMatrixRealSpacePartitionCore (int m
 
 RealMatrix ParticleOnSphere::EvaluatePartialEntanglementMatrixParticlePartition (int nbrBosonSector, int lzSector, RealVector& groundState, bool removeBinomialCoefficient)
 {
-	cout <<"Tu l'as dans le cul"<<endl;
+  cout <<"calling non defined function ParticleOnSphere::EvaluatePartialEntanglementMatrixParticlePartition"<<endl;
   RealMatrix PartialEntanglementMatrix;
   return PartialEntanglementMatrix;  
 }
@@ -1008,4 +1008,10 @@ LongRationalVector ParticleOnSphere::GetLzSymmetricVector(ParticleOnSphere* fina
 
 void ParticleOnSphere::LandauLevelOccupationNumber(int state, int* lLOccupationConfiguration)
 {
+}
+
+void ParticleOnSphere::EvaluatePartialDensityMatrixMultipartiteParticlePartition(ParticleOnSphere * spaceA, ParticleOnSphere * spaceB,ParticleOnSphere * spaceC,  RealVector groundstate, RealSymmetricMatrix* densityMatrix, AbstractArchitecture* architecture)
+{
+  cout <<"calling non defined function ParticleOnSphere::EvaluatePartialDensityMatrixMultipartiteParticlePartition"<<endl;
+  return ;  
 }

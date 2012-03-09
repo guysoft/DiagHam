@@ -54,6 +54,8 @@ class ParticleOnSphereMultipleGroupNBodyHardCoreHamiltonian : public ParticleOnS
   // number of particle that interact simultaneously through the hard core interaction for the each group
   int* NbrNBodys;
   
+ // bool * GroupsNBodyFlags;
+  
  public:
 
   // default constructor
@@ -91,8 +93,258 @@ class ParticleOnSphereMultipleGroupNBodyHardCoreHamiltonian : public ParticleOnS
   // evaluate all interaction factors
   //   
   void EvaluateInteractionFactors();
+  
+  double EvaluateInteractionCoefficient(int m1, int m2, int m3,int m4, int n1,int n2, int n3, int n4, double ** TmpInteractionCoeffients);
+  
+  inline double EvaluateSymmetrizedInteractionCoefficient(int m1, int m2, int m3,int m4, int n1,int n2, int n3,int n4, double ** TmpInteractionCoeffients);
 
 
 };
+
+
+// evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a+_m3 a_n1 a_n2 a_n3 coupling term, symmetrized on the n indices
+//
+// m1 = first creation operator index
+// m2 = second creation operator index
+// m3 = third creation operator index
+// n1 = first annihilation operator index
+// n2 = second annihilation operator index
+// n3 = thrid annihilation operator index
+// return value = numerical coefficient
+
+inline double ParticleOnSphereMultipleGroupNBodyHardCoreHamiltonian::EvaluateSymmetrizedInteractionCoefficient(int m1, int m2, int m3,int m4, int n1,int n2, int n3,int n4,double ** TmpInteractionCoeffients)
+{  
+  double UltimateCoef = 0.0;
+		    
+		    if ( n1 !=  n2)
+		    {
+		      if ( n2 !=  n3)
+			{
+			  if ( n3 !=  n4)
+			  {
+			    
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n1, n2,  n3,  n4,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n1, n2,  n4,  n3,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n1, n3,  n2,  n4,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n1, n3,  n4,  n2,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n1, n4,  n2,  n3,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n1, n4,  n3,  n2,  TmpInteractionCoeffients);
+			  
+			  
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 			  
+			  
+			  
+			   UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n2, n1,  n3,  n4,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n2, n1,  n4,  n3,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n2, n3,  n1,  n4,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n2, n3,  n4,  n1,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n2, n4,  n1,  n3,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n2, n4,  n3,  n1,  TmpInteractionCoeffients);
+			  
+			  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 			  
+			  
+			  
+			   UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n3, n2,  n1,  n4,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n3, n2,  n4,  n1,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n3, n1,  n2,  n4,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n3, n1,  n4,  n2,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n3, n4,  n2,  n1,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n3, n4,  n1,  n2,  TmpInteractionCoeffients);
+			  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 			  
+			  
+			  
+			   UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n4, n2,  n3,  n1,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n4, n2,  n1,  n3,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n4, n3,  n2,  n1,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n4, n3,  n1,  n2,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n4, n1,  n2,  n3,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n4, n1,  n3,  n2,  TmpInteractionCoeffients);
+			  
+			  }
+			  else //  n3 ==  n4
+			  {
+			    UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n1, n2,  n3,  n4,  TmpInteractionCoeffients);
+			  			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n1, n3,  n2,  n4,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n1, n3,  n4,  n2,  TmpInteractionCoeffients);
+			  
+			  
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 			  
+			  
+			  
+			   UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n2, n1,  n3,  n4,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n2, n3,  n1,  n4,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n2, n3,  n4,  n1,  TmpInteractionCoeffients);
+			  
+			  
+ //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 			  
+			  
+			  
+			   UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n3, n2,  n1,  n4,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n3, n2,  n4,  n1,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n3, n1,  n2,  n4,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n3, n1,  n4,  n2,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n3, n4,  n2,  n1,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n3, n4,  n1,  n2,  TmpInteractionCoeffients);
+			  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 			  
+			  }
+			}
+			else
+			{
+			  if ( n3 !=  n4) //( n2 ==  n3) 
+			  {
+			    
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n1, n2,  n3,  n4,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n1, n2,  n4,  n3,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n1, n4,  n2,  n3,  TmpInteractionCoeffients);
+			  
+			  
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 			  
+			  
+			  
+			   UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n2, n1,  n3,  n4,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n2, n1,  n4,  n3,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n2, n3,  n1,  n4,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n2, n3,  n4,  n1,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n2, n4,  n1,  n3,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n2, n4,  n3,  n1,  TmpInteractionCoeffients);
+			  
+			  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 			  
+			  
+			  
+			   UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n4, n2,  n3,  n1,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n4, n2,  n1,  n3,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n4, n1,  n2,  n3,  TmpInteractionCoeffients);
+			    
+			  }
+			  else  //( n3 ==  n4) && ( n2 ==  n3)
+			  {
+			    UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n1, n2,  n3,  n4,  TmpInteractionCoeffients);
+			  
+			   UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n2, n1,  n3,  n4,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n2, n3,  n1,  n4,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n2, n3,  n4,  n1,  TmpInteractionCoeffients);
+			  
+			  }
+			}
+		    }
+			  else //( n1 ==  n2)
+			    {
+			      if ( n2 !=  n3)
+			      {
+				if ( n3 !=  n4)
+				{
+				  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n1, n2,  n3,  n4,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n1, n2,  n4,  n3,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n1, n3,  n2,  n4,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n1, n3,  n4,  n2,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n1, n4,  n2,  n3,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n1, n4,  n3,  n2,  TmpInteractionCoeffients);
+			  
+			  
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 			  
+			  
+			   UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n3, n2,  n1,  n4,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n3, n2,  n4,  n1,  TmpInteractionCoeffients);
+			  
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n3, n4,  n1,  n2,  TmpInteractionCoeffients);
+			  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 			  
+			  
+			  
+			   UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n4, n2,  n3,  n1,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n4, n2,  n1,  n3,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n4, n3,  n1,  n2,  TmpInteractionCoeffients);
+			      
+				}
+				else //( n1 ==  n2) && ( n3 ==  n4)
+				{
+				  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n1, n2,  n3,  n4,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n1, n3,  n2,  n4,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n1, n3,  n4,  n2,  TmpInteractionCoeffients);
+			  
+			  
+			   UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n3, n2,  n1,  n4,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n3, n2,  n4,  n1,  TmpInteractionCoeffients);
+			  
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n3, n4,  n1,  n2,  TmpInteractionCoeffients);
+			  
+				  
+				}
+			      }
+			      else //( n1 ==  n2 ==  n3)
+				{
+				  if ( n3 !=  n4)
+				  {
+				    UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n1, n2,  n3,  n4,  TmpInteractionCoeffients);
+			  
+			   UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n1, n2,  n4,  n3,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n1, n4,  n2,  n3,  TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n4, n1,  n2,  n3,  TmpInteractionCoeffients);
+				    
+				    
+				  }
+				else
+				{
+				   UltimateCoef += this->EvaluateInteractionCoefficient(m1,m2,m3,m4, n1, n2,  n3,  n4,  TmpInteractionCoeffients);
+				}
+				}
+			    }
+				return UltimateCoef;
+}
+
 
 #endif

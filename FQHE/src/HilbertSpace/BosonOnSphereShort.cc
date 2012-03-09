@@ -31,6 +31,7 @@
 
 #include "config.h"
 #include "HilbertSpace/BosonOnSphereShort.h"
+#include "HilbertSpace/BosonOnSphereFullShort.h"
 #include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
 #include "HilbertSpace/BosonOnSphere.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
@@ -46,7 +47,6 @@
 
 #include "Architecture/ArchitectureOperation/FQHESphereParticleEntanglementSpectrumOperation.h"
 #include "Architecture/ArchitectureOperation/FQHESphereSymmetrizeU1U1StateOperation.h"
-
 #include <math.h>
 #include <stdlib.h>
 #include <algorithm>
@@ -2050,8 +2050,7 @@ RealSymmetricMatrix  BosonOnSphereShort::EvaluatePartialDensityMatrixParticlePar
 // densityMatrix = reference on the density matrix where result has to stored
 // return value = number of components that have been added to the density matrix
 
-long BosonOnSphereShort::EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace,
- 									    RealVector& groundState,  RealSymmetricMatrix* densityMatrix)
+long BosonOnSphereShort::EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace, RealVector& groundState, RealSymmetricMatrix* densityMatrix)
 {
    BosonOnSphereShort* TmpHilbertSpace =  (BosonOnSphereShort*) complementaryHilbertSpace;
    BosonOnSphereShort* TmpDestinationHilbertSpace =  (BosonOnSphereShort*) destinationHilbertSpace;
@@ -4781,3 +4780,273 @@ void BosonOnSphereShort::BosonicStateTimePolarizedSlaters(RealVector& bosonState
   delete [] Slater;
 }
 
+
+void BosonOnSphereShort::EvaluatePartialDensityMatrixMultipartiteParticlePartition( ParticleOnSphere * spaceA, ParticleOnSphere * spaceB, ParticleOnSphere * spaceC,  RealVector groundState, RealSymmetricMatrix* densityMatrix, AbstractArchitecture* architecture)
+{
+  BosonOnSphereFullShort * SpaceA = ((BosonOnSphereFullShort *) spaceA); 
+  BosonOnSphereFullShort * SpaceB = ((BosonOnSphereFullShort *) spaceB);
+  BosonOnSphereShort * SpaceC = ((BosonOnSphereShort *) spaceC);
+  unsigned long* TmpMonomialA = new unsigned long [SpaceA->NbrBosons];
+  unsigned long* TmpMonomialB = new unsigned long [SpaceB->NbrBosons];
+  unsigned long* TmpMonomialC = new unsigned long [SpaceC->NbrBosons]; 
+  unsigned long* TmpMonomial = new unsigned long [this->NbrBosons];
+  
+  long TensorStateDimension = SpaceA->HilbertSpaceDimension *  SpaceB->HilbertSpaceDimension;
+  
+  int* TmpStatePositionFinal = new int [TensorStateDimension];
+  int* TmpStatePositionA = new int [TensorStateDimension];
+  int* TmpStatePositionB = new int [TensorStateDimension];
+  double* TmpStateCoefficient = new double [TensorStateDimension];
+  long TmpNbrNonZeroElements = 0l;
+  long MinIndex = 0l;
+  long MaxIndex =  SpaceC->HilbertSpaceDimension;
+  double* LogFactorials = new double[this->NbrBosons + 1];
+   LogFactorials[0] = 0.0;
+   LogFactorials[1] = 0.0;
+   for (int i = 2 ; i <= this->NbrBosons; ++i)
+     LogFactorials[i] = LogFactorials[i - 1] + log((double) i); 
+   
+   double* TmpLogFactorialsA = new double [SpaceA->HilbertSpaceDimension];
+   double* TmpLogFactorialsB = new double [SpaceB->HilbertSpaceDimension];
+   double TmpLogBinomial = LogFactorials[this->NbrBosons] - LogFactorials[SpaceA->NbrBosons] - LogFactorials[SpaceB->NbrBosons] - LogFactorials[SpaceC->NbrBosons];
+
+  for (int i = 0; i < SpaceA->HilbertSpaceDimension; ++i)
+    {
+      SpaceA->FermionToBoson(SpaceA->FermionBasis->StateDescription[i], SpaceA->FermionBasis->StateLzMax[i], SpaceA->TemporaryState, SpaceA->TemporaryStateLzMax);
+      double TmpFactor = 0.0;
+      for (int k = 0; k <= SpaceA->TemporaryStateLzMax; ++k)
+	TmpFactor += LogFactorials[SpaceA->TemporaryState[k]];
+      TmpLogFactorialsA[i] =  TmpFactor;
+    }
+    
+    for (int i = 0; i < SpaceB->HilbertSpaceDimension; ++i)
+    {
+      SpaceB->FermionToBoson(SpaceB->FermionBasis->StateDescription[i], SpaceB->FermionBasis->StateLzMax[i], SpaceB->TemporaryState, SpaceB->TemporaryStateLzMax);
+      double TmpFactor = 0.0;
+      for (int k = 0; k <= SpaceB->TemporaryStateLzMax; ++k)
+	TmpFactor += LogFactorials[SpaceB->TemporaryState[k]];
+      TmpLogFactorialsB[i] =  TmpFactor;
+    }
+    
+    
+    
+   for (; MinIndex < MaxIndex; ++MinIndex)    
+     {
+      int Pos = 0;
+      SpaceC->ConvertToMonomial(SpaceC->FermionBasis->StateDescription[MinIndex], SpaceC->FermionBasis->StateLzMax[MinIndex], TmpMonomialC);
+      SpaceC->FermionToBoson(SpaceC->FermionBasis->StateDescription[MinIndex], SpaceC->FermionBasis->StateLzMax[MinIndex], SpaceC->TemporaryState, SpaceC->TemporaryStateLzMax);
+      
+      double TmpSpaceCFactorial = 0.0;
+      for (int k = 0; k <= SpaceC->TemporaryStateLzMax; ++k)
+	TmpSpaceCFactorial += LogFactorials[SpaceC->TemporaryState[k]];
+      
+      //cout <<"A space dimension = " <<SpaceA->HilbertSpaceDimension<<endl;
+      for (int IndexSpaceA = 0; IndexSpaceA < SpaceA->HilbertSpaceDimension; IndexSpaceA++)
+	{
+	  SpaceA->ConvertToMonomial(SpaceA->FermionBasis->StateDescription[IndexSpaceA], SpaceA->FermionBasis->StateLzMax[IndexSpaceA], TmpMonomialA);
+	//cout <<"B space dimension = " <<SpaceB->HilbertSpaceDimension<<endl;
+	  for (int IndexSpaceB = 0; IndexSpaceB < SpaceB->HilbertSpaceDimension; IndexSpaceB++)
+	{
+	  SpaceB->ConvertToMonomial(SpaceB->FermionBasis->StateDescription[IndexSpaceB], SpaceB->FermionBasis->StateLzMax[IndexSpaceB], TmpMonomialB);
+	  //cout <<" SpaceA->GetLzValue(IndexSpaceA) = " <<SpaceA->GetLzValue(IndexSpaceA)<<" SpaceB->GetLzValue(IndexSpaceB)"<< SpaceB->GetLzValue(IndexSpaceB)<<endl;
+	  //cout <<"this->TotalLz = "<<this->TotalLz<<endl;
+	  //cout <<" SpaceC->TotalLz "<< SpaceC->TotalLz<<endl;
+	  if ( SpaceA->GetLzValue(IndexSpaceA) + SpaceB->GetLzValue(IndexSpaceB) == this->TotalLz - SpaceC->TotalLz)
+	  {
+	  int TmpIndexA = 0;
+	  int TmpIndexB = 0;
+	  int TmpIndexC = 0;
+	  int TmpIndexTotal = 0;
+	  
+	  /*cout <<"A = ";
+	  for (int i = 0; i< SpaceA->NbrBosons; i++)
+	    {
+	     cout << TmpMonomialA[i]<<" ";
+	    }
+	    cout << "Lz = "<<SpaceA->GetLzValue(IndexSpaceA)<<endl;
+	  cout <<"B = ";
+	    for (int i = 0; i< SpaceB->NbrBosons; i++)
+	    {
+	     cout << TmpMonomialB[i]<<" ";
+	    }
+	    cout << "Lz = "<<SpaceB->GetLzValue(IndexSpaceB)<<endl;
+	    cout <<"C = ";
+	    for (int i = 0; i< SpaceC->NbrBosons; i++)
+	    {
+	     cout << TmpMonomialC[i]<<" ";
+	    }
+	    cout <<endl;*/
+	    
+	  while ((TmpIndexA < SpaceA->NbrBosons) && (TmpIndexB < SpaceB->NbrBosons) && (TmpIndexC < SpaceC->NbrBosons)) 
+	    {
+	      while ( (TmpIndexA < SpaceA->NbrBosons) && (TmpMonomialB[TmpIndexB] <= TmpMonomialA[TmpIndexA]) && (TmpMonomialC[TmpIndexC] <= TmpMonomialA[TmpIndexA]))
+		{
+		  TmpMonomial[TmpIndexTotal] = TmpMonomialA[TmpIndexA];
+		  ++TmpIndexA;
+		  ++TmpIndexTotal;		  
+		}
+		
+	      if (TmpIndexA < SpaceA->NbrBosons)
+		{
+		  while ((TmpIndexB < SpaceB->NbrBosons) && (TmpMonomialA[TmpIndexA] <= TmpMonomialB[TmpIndexB])&& (TmpMonomialC[TmpIndexC] <= TmpMonomialB[TmpIndexB]))
+		    {
+		      TmpMonomial[TmpIndexTotal] = TmpMonomialB[TmpIndexB];
+		      ++TmpIndexB;
+		      ++TmpIndexTotal;		  
+		    }
+		}
+		
+		if ((TmpIndexA < SpaceA->NbrBosons)&&(TmpIndexB < SpaceB->NbrBosons))
+		{
+		  while ((TmpIndexC < SpaceC->NbrBosons) && (TmpMonomialA[TmpIndexA] <= TmpMonomialC[TmpIndexC])&& (TmpMonomialB[TmpIndexB] <= TmpMonomialC[TmpIndexC]))
+		    {
+		      TmpMonomial[TmpIndexTotal] = TmpMonomialC[TmpIndexC];
+		      ++TmpIndexC;
+		      ++TmpIndexTotal;		  
+		    }
+		}
+	    }
+	    
+	  while ((TmpIndexA < SpaceA->NbrBosons) && (TmpIndexB < SpaceB->NbrBosons))
+	    {
+	      while ( (TmpIndexA < SpaceA->NbrBosons) && (TmpMonomialB[TmpIndexB] <= TmpMonomialA[TmpIndexA]))
+		{
+		  TmpMonomial[TmpIndexTotal] = TmpMonomialA[TmpIndexA];
+		  ++TmpIndexA;
+		  ++TmpIndexTotal;		  
+		}
+		if (TmpIndexA < SpaceA->NbrBosons)
+		{
+		  while ((TmpIndexB < SpaceB->NbrBosons) && (TmpMonomialA[TmpIndexA] <= TmpMonomialB[TmpIndexB]))
+		    {
+		      TmpMonomial[TmpIndexTotal] = TmpMonomialB[TmpIndexB];
+		      ++TmpIndexB;
+		      ++TmpIndexTotal;		  
+		    }
+		}
+	    }
+	    
+	    while ((TmpIndexA < SpaceA->NbrBosons) && (TmpIndexC < SpaceC->NbrBosons))
+	    {
+	      while ( (TmpIndexA < SpaceA->NbrBosons) && (TmpMonomialC[TmpIndexC] <= TmpMonomialA[TmpIndexA]))
+		{
+		  TmpMonomial[TmpIndexTotal] = TmpMonomialA[TmpIndexA];
+		  ++TmpIndexA;
+		  ++TmpIndexTotal;		  
+		}
+		if (TmpIndexA < SpaceA->NbrBosons)
+		{
+		  while ((TmpIndexC < SpaceC->NbrBosons) && (TmpMonomialA[TmpIndexA] <= TmpMonomialC[TmpIndexC]))
+		    {
+		      TmpMonomial[TmpIndexTotal] = TmpMonomialC[TmpIndexC];
+		      ++TmpIndexC;
+		      ++TmpIndexTotal;		  
+		    }
+		}
+	    }
+	    
+	    while ((TmpIndexB < SpaceB->NbrBosons) && (TmpIndexC < SpaceC->NbrBosons))
+	    {
+	      while ( (TmpIndexB < SpaceB->NbrBosons) && (TmpMonomialC[TmpIndexC] <= TmpMonomialB[TmpIndexB]))
+		{
+		  TmpMonomial[TmpIndexTotal] = TmpMonomialB[TmpIndexB];
+		  ++TmpIndexB;
+		  ++TmpIndexTotal;		  
+		}
+		if (TmpIndexB < SpaceB->NbrBosons)
+		{
+		  while ((TmpIndexC < SpaceC->NbrBosons) && (TmpMonomialB[TmpIndexB] <= TmpMonomialC[TmpIndexC]))
+		    {
+		      TmpMonomial[TmpIndexTotal] = TmpMonomialC[TmpIndexC];
+		      ++TmpIndexC;
+		      ++TmpIndexTotal;		  
+		    }
+		}
+	    }
+	    
+	  while (TmpIndexA < SpaceA->NbrBosons)
+	    {
+	      TmpMonomial[TmpIndexTotal] = TmpMonomialA[TmpIndexA];
+	      ++TmpIndexA;
+	      ++TmpIndexTotal;		  
+	    }
+	    
+	    while (TmpIndexB < SpaceB->NbrBosons)
+	    {
+	      TmpMonomial[TmpIndexTotal] = TmpMonomialB[TmpIndexB];
+	      ++TmpIndexB;
+	      ++TmpIndexTotal;		  
+	    }
+	    while (TmpIndexC < SpaceC->NbrBosons)
+	    {
+	      TmpMonomial[TmpIndexTotal] = TmpMonomialC[TmpIndexC];
+	      ++TmpIndexC;
+	      ++TmpIndexTotal;		  
+	    }
+	    /*
+	    for (int i = 0; i< this->NbrBosons; i++)
+	    {
+	     cout << TmpMonomial[i]<<" ";
+	    }
+	    cout <<endl;*/
+	    
+	  unsigned long TmpState = this->ConvertFromMonomial(TmpMonomial);
+	  int TmpPos = this->FermionBasis->FindStateIndex(TmpState,  TmpMonomial[0] + this->NbrBosons - 1);
+	  if(TmpPos == this->HilbertSpaceDimension)
+	  {
+	    cout <<"Danger"<<endl;
+	    exit(-1);
+	  }
+	  if (TmpPos != this->HilbertSpaceDimension)
+	    {
+	      this->FermionToBoson(TmpState, TmpMonomial[0] + this->NbrBosons - 1, this->TemporaryState, this->TemporaryStateLzMax);
+	      double TmpFactorial = 0.0;	      
+	      for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
+		TmpFactorial += LogFactorials[this->TemporaryState[k]];
+	      TmpFactorial -= TmpSpaceCFactorial + TmpLogFactorialsA[IndexSpaceA] + TmpLogFactorialsB[IndexSpaceB]+ TmpLogBinomial;
+	      TmpFactorial *= 0.5; 
+	      TmpStatePositionFinal[Pos] = TmpPos;
+	      TmpStatePositionA[Pos] = IndexSpaceA;
+	      TmpStatePositionB[Pos] = IndexSpaceB;
+	      TmpStateCoefficient[Pos] = exp(TmpFactorial);
+	     // cout << TmpPos<<" "<<IndexSpaceA<<" "<<IndexSpaceB<<" "<<TmpStateCoefficient[Pos]<<endl;
+	      ++Pos;
+	    }
+  
+  
+	  }
+	}
+	}
+	if (Pos != 0)
+	{
+	  ++TmpNbrNonZeroElements;
+	  for (int j = 0; j < Pos; ++j)
+	    {
+	      int PosA = TmpStatePositionA[j];
+	      int PosB = TmpStatePositionB[j];
+	      int TensorProductPosL = PosB * SpaceA->HilbertSpaceDimension + PosA;
+	      double TmpValue = groundState[TmpStatePositionFinal[j]] * TmpStateCoefficient[j];
+	      
+	      for (int k = 0; k < Pos; ++k)
+	      {
+		int TensorProductPosC = TmpStatePositionB[k] * SpaceA->HilbertSpaceDimension + TmpStatePositionA[k];
+		if (TensorProductPosC >= TensorProductPosL)
+		  {
+		    densityMatrix->AddToMatrixElement(TensorProductPosL, TensorProductPosC, TmpValue * groundState[TmpStatePositionFinal[k]] * TmpStateCoefficient[k]);
+		    ++TmpNbrNonZeroElements;
+		  }
+	      }
+	    }
+	}
+     }
+  delete [] TmpLogFactorialsA;
+  delete [] TmpLogFactorialsB;
+  delete [] TmpMonomialA;
+  delete [] TmpMonomialB;
+  delete [] TmpMonomialC;
+  delete [] TmpMonomial;
+  delete [] TmpStatePositionFinal; 
+  delete [] TmpStatePositionA;
+  delete [] TmpStatePositionB;
+  delete [] TmpStateCoefficient;
+}

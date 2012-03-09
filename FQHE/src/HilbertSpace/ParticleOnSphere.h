@@ -661,7 +661,7 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // lLOccupationConfiguration = array where the decomposition will be store
   virtual void LandauLevelOccupationNumber(int state, int* lLOccupationConfiguration);
 
-
+  virtual void EvaluatePartialDensityMatrixMultipartiteParticlePartition(ParticleOnSphere * spaceA, ParticleOnSphere * spaceB, ParticleOnSphere * spaceC,  RealVector groundstate, RealSymmetricMatrix* densityMatrix, AbstractArchitecture* architecture = 0);
 };
 
 #endif

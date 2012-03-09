@@ -66,9 +66,7 @@ ParticleOnSphereMultipleGroupNBodyHardCoreHamiltonian::ParticleOnSphereMultipleG
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
-ParticleOnSphereMultipleGroupNBodyHardCoreHamiltonian::ParticleOnSphereMultipleGroupNBodyHardCoreHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, int nbrGroups, int* nbrNBodys, double l2Factor,
-													     AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag,
-													     char* precalculationFileName)
+ParticleOnSphereMultipleGroupNBodyHardCoreHamiltonian::ParticleOnSphereMultipleGroupNBodyHardCoreHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, int nbrGroups, int* nbrNBodys, double l2Factor, AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag,  char* precalculationFileName)
 {
   this->Particles = particles;
   this->LzMax = lzmax;
@@ -80,13 +78,27 @@ ParticleOnSphereMultipleGroupNBodyHardCoreHamiltonian::ParticleOnSphereMultipleG
 
   this->NbrGroups = nbrGroups;
   this->NbrNBodys = new int [this->NbrGroups];
+  
   this->NbrNbody = 0;
   for (int i = 0; i < this->NbrGroups; ++i)
     {
       this->NbrNBodys[i] = nbrNBodys[i];
       this->NbrNbody += this->NbrNBodys[i];
     }
+    
   this->MaxNBody = this->NbrNbody;
+  
+//   this->GroupsNBodyFlags = new bool [this->MaxNBody + 1];
+//   for (int k = 0; k <= this->MaxNBody; ++k)
+//     {
+//       this->GroupsNBodyFlags[k] = false;
+//     }
+//     
+//     for (int i = 0; i < this->NbrGroups; ++i)
+//     {
+//       this->GroupsNBodyFlags[this->NbrNBodys[i]]= true;
+//     }
+    
   this->NBodyFlags = new bool [this->MaxNBody + 1];
   this->NBodyInteractionFactors = new double** [this->MaxNBody + 1];
   this->NBodyInteractionWeightFactors = new double [this->MaxNBody + 1];
@@ -216,41 +228,67 @@ void ParticleOnSphereMultipleGroupNBodyHardCoreHamiltonian::EvaluateInteractionF
     }
   else
     {
+      double Coefficient;
+      double InverseRadiusSquare = 2.0 / ((double) this->LzMax);
+      double ** TmpInteractionCoeffients = new double * [this->NbrGroups];
+      for (int i = 0; i < this->NbrGroups; i++)
+      {
+	cout <<"i = "<< i <<" Nbr Body: "<<this->NbrNBodys[i] <<endl;
+	TmpInteractionCoeffients[i] = new double[this->LzMax * this->NbrNBodys[i] + 1];
+	
+	double TmpCoefficient;
+	TmpInteractionCoeffients[i][0] = 1.0;
+	TmpInteractionCoeffients[i][1] = 1.0;
+	for (int k = 2; k <= this->LzMax * this->NbrNBodys[i]; ++k)
+	    {
+	      TmpCoefficient = 1.0;
+	      for (int j = 1; j < k; ++j)
+		 {
+		   double Coefficient2 = TmpInteractionCoeffients[i][j];
+		    TmpInteractionCoeffients[i][j] += TmpCoefficient;
+		    TmpCoefficient = Coefficient2;
+		  }
+		TmpInteractionCoeffients[i][k] = 1.0;
+	      }
+	     
+// 	     cout<< "TmpInteractionCoeffients[i] : ";
+// 	     for (int k = 0; k <= this->LzMax * this->NbrNBodys[i]; ++k)
+// 	    {
+// 	     cout <<  TmpInteractionCoeffients[i][k] << " ";
+// 	    }
+// 	    cout <<endl;
+	    
+	    Coefficient = 4.0 * M_PI / (((double) this->NbrNBodys[i] * this->LzMax) + 1.0);
+
+	    for (int k = 2; k <= this->NbrNBodys[i]; k++)
+	      {	  
+		
+		Coefficient *= InverseRadiusSquare;
+	      }
+	      
+	      
+	    for (int p = 0; p <= this->LzMax * this->NbrNBodys[i]; p++)
+	      TmpInteractionCoeffients[i][p] = (Coefficient / TmpInteractionCoeffients[i][p]);
+      }
+      
       for (int k = 2; k <= this->MaxNBody; ++k)
 	if (this->NBodyFlags[k] == true) 
 	  {
 	    this->MinSumIndices[k] = 0;
 	    this->MaxSumIndices[k] = this->LzMax * k;
-	    double* TmpInteractionCoeffients = new double[this->MaxSumIndices[k] + 1];
-	    double Coefficient;
-	    TmpInteractionCoeffients[0] = 1.0;
-	    TmpInteractionCoeffients[1] = 1.0;
-	    for (int i = 2; i <= this->MaxSumIndices[k]; ++i)
-	      {
-		Coefficient = 1.0;
-		for (int j = 1; j < i; ++j)
-		  {
-		    double Coefficient2 = TmpInteractionCoeffients[j];
-		    TmpInteractionCoeffients[j] += Coefficient;
-		    Coefficient = Coefficient2;
-		  }
-		TmpInteractionCoeffients[i] = 1.0;
-	      }
-	    Coefficient = 4.0 * M_PI / (((double) this->MaxSumIndices[k]) + 1.0);
-	    double Radius = 2.0 / ((double) this->LzMax);
-	    for (int i = 2; i <= k; ++i)
-	      {
-		Coefficient *= (double) (i * i);	  
-		Coefficient *= Radius;
-	      }
-	    for (int i = 0; i <= this->MaxSumIndices[k]; ++i)
-	      TmpInteractionCoeffients[i] = sqrt(Coefficient / TmpInteractionCoeffients[i]);
+	    
+	      
 
 	    double** SortedIndicesPerSumSymmetryFactor;
 	    GetAllSymmetricIndices(this->NbrLzValue, k, this->NbrSortedIndicesPerSum[k], this->SortedIndicesPerSum[k],
 				   SortedIndicesPerSumSymmetryFactor);
-
-
+  
+// 	    for (int l = 2; l <= this->NbrNbody; ++l)
+// 	      {
+// 		this->NBodyInteractionWeightFactors[k] *= (double) (l * l);
+// 	      }
+// 	    cout <<"this->NBodyInteractionWeightFactors[k] = "<< this->NBodyInteractionWeightFactors[k]<<endl;
+	    
 	    long TmpNbrNIndices = 0;
 	    for (int MinSum = 0; MinSum <= this->MaxSumIndices[k]; ++MinSum)
 	      TmpNbrNIndices += this->NbrSortedIndicesPerSum[k][MinSum];
@@ -274,20 +312,281 @@ void ParticleOnSphereMultipleGroupNBodyHardCoreHamiltonian::EvaluateInteractionF
 		    int* TmpMIndices = this->MIndices[k][TmpNbrNIndices];
 		    int* TmpMIndices2 = this->SortedIndicesPerSum[k][MinSum];
 		    double* TmpInteraction = this->MNNBodyInteractionFactors[k][TmpNbrNIndices];
-		    Coefficient = TmpSymmetryFactors[i] * this->NBodyInteractionWeightFactors[k] * TmpInteractionCoeffients[MinSum] * TmpInteractionCoeffients[MinSum];
+		    
+		    
+		    Coefficient = this->NBodyInteractionWeightFactors[k];//TmpSymmetryFactors[i] * this->NBodyInteractionWeightFactors[k];
 		    for (int l = 0; l < k; ++l)
-		      Coefficient *= TmpNormalizationCoeffients[TmpNIndices2[l]];		    		      
+		      Coefficient *= TmpNormalizationCoeffients[TmpNIndices2[l]];
+		    
+		    int * TmpMIndicesTry = new int[k];
+		    int * TmpNIndicesTry = new int[k];
+		    
+		    
+		    for (int p = 0 ; p <k ; p++)
+		    {
+		      TmpNIndicesTry[p] = TmpNIndices2[p]; 
+		      //cout << TmpNIndicesTry[p]<< " ";
+		    }
+		    //cout <<endl;
+		    //cout <<"TmpSymmetryFactors[i] = "<<TmpSymmetryFactors[i]<<endl;
+		      
+		    //Coefficient *= TmpInteractionCoeffients[MinSum] * TmpInteractionCoeffients[MinSum];
+		      
 		    for (int j = 0; j < Lim; ++j)
 		      {
-			double Coefficient2 = TmpSymmetryFactors[j];
+			//cout <<"j ="<<j <<endl; 
+			for (int p = 0 ; p <k ; p++)
+		    {
+		      TmpMIndicesTry[p] = TmpMIndices2[p]; 
+		      //cout << TmpMIndicesTry[p]<< " ";
+		    }
+		    //cout <<endl;
+		    //cout <<"TmpSymmetryFactors[j] = "<<TmpSymmetryFactors[j]<<endl;
+		    
+		    double UltimateCoef = 0.0;
+		    
+		    if (TmpMIndicesTry[0] != TmpMIndicesTry[1])
+		    {
+		      if (TmpMIndicesTry[1] != TmpMIndicesTry[2])
+			{
+			  if (TmpMIndicesTry[2] != TmpMIndicesTry[3])
+			  {
+			    
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[0],TmpMIndicesTry[1], TmpMIndicesTry[2], TmpMIndicesTry[3],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[0],TmpMIndicesTry[1], TmpMIndicesTry[3], TmpMIndicesTry[2],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[0],TmpMIndicesTry[2], TmpMIndicesTry[1], TmpMIndicesTry[3],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[0],TmpMIndicesTry[2], TmpMIndicesTry[3], TmpMIndicesTry[1],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[0],TmpMIndicesTry[3], TmpMIndicesTry[1], TmpMIndicesTry[2],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[0],TmpMIndicesTry[3], TmpMIndicesTry[2], TmpMIndicesTry[1],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 			  
+			  
+			  
+			   UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[1],TmpMIndicesTry[0], TmpMIndicesTry[2], TmpMIndicesTry[3],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[1],TmpMIndicesTry[0], TmpMIndicesTry[3], TmpMIndicesTry[2],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[1],TmpMIndicesTry[2], TmpMIndicesTry[0], TmpMIndicesTry[3],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[1],TmpMIndicesTry[2], TmpMIndicesTry[3], TmpMIndicesTry[0],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[1],TmpMIndicesTry[3], TmpMIndicesTry[0], TmpMIndicesTry[2],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[1],TmpMIndicesTry[3], TmpMIndicesTry[2], TmpMIndicesTry[0],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 			  
+			  
+			  
+			   UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[2],TmpMIndicesTry[1], TmpMIndicesTry[0], TmpMIndicesTry[3],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[2],TmpMIndicesTry[1], TmpMIndicesTry[3], TmpMIndicesTry[0],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[2],TmpMIndicesTry[0], TmpMIndicesTry[1], TmpMIndicesTry[3],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[2],TmpMIndicesTry[0], TmpMIndicesTry[3], TmpMIndicesTry[1],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[2],TmpMIndicesTry[3], TmpMIndicesTry[1], TmpMIndicesTry[0],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[2],TmpMIndicesTry[3], TmpMIndicesTry[0], TmpMIndicesTry[1],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 			  
+			  
+			  
+			   UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[3],TmpMIndicesTry[1], TmpMIndicesTry[2], TmpMIndicesTry[0],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[3],TmpMIndicesTry[1], TmpMIndicesTry[0], TmpMIndicesTry[2],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[3],TmpMIndicesTry[2], TmpMIndicesTry[1], TmpMIndicesTry[0],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[3],TmpMIndicesTry[2], TmpMIndicesTry[0], TmpMIndicesTry[1],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[3],TmpMIndicesTry[0], TmpMIndicesTry[1], TmpMIndicesTry[2],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[3],TmpMIndicesTry[0], TmpMIndicesTry[2], TmpMIndicesTry[1],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  }
+			  else // TmpMIndicesTry[2] == TmpMIndicesTry[3]
+			  {
+			    UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[0],TmpMIndicesTry[1], TmpMIndicesTry[2], TmpMIndicesTry[3],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[0],TmpMIndicesTry[2], TmpMIndicesTry[1], TmpMIndicesTry[3],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[0],TmpMIndicesTry[2], TmpMIndicesTry[3], TmpMIndicesTry[1],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 			  
+			  
+			  
+			   UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[1],TmpMIndicesTry[0], TmpMIndicesTry[2], TmpMIndicesTry[3],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[1],TmpMIndicesTry[2], TmpMIndicesTry[0], TmpMIndicesTry[3],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[1],TmpMIndicesTry[2], TmpMIndicesTry[3], TmpMIndicesTry[0],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  
+ //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 			  
+			  
+			  
+			   UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[2],TmpMIndicesTry[1], TmpMIndicesTry[0], TmpMIndicesTry[3],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[2],TmpMIndicesTry[1], TmpMIndicesTry[3], TmpMIndicesTry[0],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[2],TmpMIndicesTry[0], TmpMIndicesTry[1], TmpMIndicesTry[3],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[2],TmpMIndicesTry[0], TmpMIndicesTry[3], TmpMIndicesTry[1],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[2],TmpMIndicesTry[3], TmpMIndicesTry[1], TmpMIndicesTry[0],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[2],TmpMIndicesTry[3], TmpMIndicesTry[0], TmpMIndicesTry[1],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 			  
+			  }
+			}
+			else
+			{
+			  if (TmpMIndicesTry[2] != TmpMIndicesTry[3]) //(TmpMIndices2[1] == TmpMIndices2[2]) 
+			  {
+			    
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[0],TmpMIndicesTry[1], TmpMIndicesTry[2], TmpMIndicesTry[3],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[0],TmpMIndicesTry[1], TmpMIndicesTry[3], TmpMIndicesTry[2],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[0],TmpMIndicesTry[3], TmpMIndicesTry[1], TmpMIndicesTry[2],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 			  
+			  
+			  
+			   UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[1],TmpMIndicesTry[0], TmpMIndicesTry[2], TmpMIndicesTry[3],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[1],TmpMIndicesTry[0], TmpMIndicesTry[3], TmpMIndicesTry[2],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[1],TmpMIndicesTry[2], TmpMIndicesTry[0], TmpMIndicesTry[3],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[1],TmpMIndicesTry[2], TmpMIndicesTry[3], TmpMIndicesTry[0],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[1],TmpMIndicesTry[3], TmpMIndicesTry[0], TmpMIndicesTry[2],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[1],TmpMIndicesTry[3], TmpMIndicesTry[2], TmpMIndicesTry[0],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 			  
+			  
+			  
+			   UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[3],TmpMIndicesTry[1], TmpMIndicesTry[2], TmpMIndicesTry[0],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[3],TmpMIndicesTry[1], TmpMIndicesTry[0], TmpMIndicesTry[2],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[3],TmpMIndicesTry[0], TmpMIndicesTry[1], TmpMIndicesTry[2],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			    
+			  }
+			  else  //(TmpMIndices2[2] == TmpMIndices2[3]) && (TmpMIndices2[1] == TmpMIndices2[2])
+			  {
+			    UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[0],TmpMIndicesTry[1], TmpMIndicesTry[2], TmpMIndicesTry[3],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			   UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[1],TmpMIndicesTry[0], TmpMIndicesTry[2], TmpMIndicesTry[3],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[1],TmpMIndicesTry[2], TmpMIndicesTry[0], TmpMIndicesTry[3],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[1],TmpMIndicesTry[2], TmpMIndicesTry[3], TmpMIndicesTry[0],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  }
+			}
+		    }
+			  else //(TmpMIndices2[0] == TmpMIndices2[1])
+			    {
+			      if (TmpMIndicesTry[1] != TmpMIndicesTry[2])
+			      {
+				if (TmpMIndicesTry[2] != TmpMIndicesTry[3])
+				{
+				  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[0],TmpMIndicesTry[1], TmpMIndicesTry[2], TmpMIndicesTry[3],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[0],TmpMIndicesTry[1], TmpMIndicesTry[3], TmpMIndicesTry[2],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[0],TmpMIndicesTry[2], TmpMIndicesTry[1], TmpMIndicesTry[3],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[0],TmpMIndicesTry[2], TmpMIndicesTry[3], TmpMIndicesTry[1],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[0],TmpMIndicesTry[3], TmpMIndicesTry[1], TmpMIndicesTry[2],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[0],TmpMIndicesTry[3], TmpMIndicesTry[2], TmpMIndicesTry[1],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 			  
+			  
+			   UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[2],TmpMIndicesTry[1], TmpMIndicesTry[0], TmpMIndicesTry[3],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[2],TmpMIndicesTry[1], TmpMIndicesTry[3], TmpMIndicesTry[0],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[2],TmpMIndicesTry[3], TmpMIndicesTry[0], TmpMIndicesTry[1],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 			  
+			  
+			  
+			   UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[3],TmpMIndicesTry[1], TmpMIndicesTry[2], TmpMIndicesTry[0],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[3],TmpMIndicesTry[1], TmpMIndicesTry[0], TmpMIndicesTry[2],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[3],TmpMIndicesTry[2], TmpMIndicesTry[0], TmpMIndicesTry[1],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			      
+				}
+				else //(TmpMIndices2[0] == TmpMIndices2[1]) && (TmpMIndices2[2] == TmpMIndices2[3])
+				{
+				  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[0],TmpMIndicesTry[1], TmpMIndicesTry[2], TmpMIndicesTry[3],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[0],TmpMIndicesTry[2], TmpMIndicesTry[1], TmpMIndicesTry[3],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[0],TmpMIndicesTry[2], TmpMIndicesTry[3], TmpMIndicesTry[1],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  
+			   UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[2],TmpMIndicesTry[1], TmpMIndicesTry[0], TmpMIndicesTry[3],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[2],TmpMIndicesTry[1], TmpMIndicesTry[3], TmpMIndicesTry[0],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[2],TmpMIndicesTry[3], TmpMIndicesTry[0], TmpMIndicesTry[1],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+				  
+				}
+			      }
+			      else //(TmpMIndices2[0] == TmpMIndices2[1] == TmpMIndices2[2])
+				{
+				  if (TmpMIndicesTry[2] != TmpMIndicesTry[3])
+				  {
+				    UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[0],TmpMIndicesTry[1], TmpMIndicesTry[2], TmpMIndicesTry[3],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			   UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[0],TmpMIndicesTry[1], TmpMIndicesTry[3], TmpMIndicesTry[2],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[0],TmpMIndicesTry[3], TmpMIndicesTry[1], TmpMIndicesTry[2],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+			  
+			  UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[3],TmpMIndicesTry[0], TmpMIndicesTry[1], TmpMIndicesTry[2],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+				    
+				    
+				  }
+				else
+				{
+				   UltimateCoef += this->EvaluateSymmetrizedInteractionCoefficient(TmpMIndicesTry[0],TmpMIndicesTry[1], TmpMIndicesTry[2], TmpMIndicesTry[3],TmpNIndicesTry[0],TmpNIndicesTry[1], TmpNIndicesTry[2], TmpNIndicesTry[3], TmpInteractionCoeffients);
+				}
+				
+				  
+				}
+			}
+			  
+			//cout <<"UltimateCoef = "<< UltimateCoef<<endl;
+			double Coefficient2 = 1.0;//TmpSymmetryFactors[j];
 			for (int l = 0; l < k; ++l)
 			  {
 			    Coefficient2 *= TmpNormalizationCoeffients[(*TmpMIndices2)];		    
 			    (*TmpMIndices) = (*TmpMIndices2);			
 			    ++TmpMIndices;
 			    ++TmpMIndices2;
-			  }			
-			TmpInteraction[j] = Coefficient * Coefficient2;
+			  }
+			  
+			TmpInteraction[j] = Coefficient * Coefficient2 * UltimateCoef;
+			//cout << TmpInteraction[j]<<endl;
 		      }
 		    for (int j = 0; j < k; ++j)
 		      {
@@ -302,6 +601,9 @@ void ParticleOnSphereMultipleGroupNBodyHardCoreHamiltonian::EvaluateInteractionF
 	      {
 		delete[] SortedIndicesPerSumSymmetryFactor[MinSum];
 	      }
+	      for (int i = 0 ; i< this->NbrGroups; i++)
+		delete[] TmpInteractionCoeffients[i];
+	      
 	    delete[] SortedIndicesPerSumSymmetryFactor;
 	    delete[] TmpInteractionCoeffients;
 	  }
@@ -504,3 +806,28 @@ void ParticleOnSphereMultipleGroupNBodyHardCoreHamiltonian::EvaluateInteractionF
     }
 }
 
+
+
+double ParticleOnSphereMultipleGroupNBodyHardCoreHamiltonian::EvaluateInteractionCoefficient(int m1, int m2, int m3,int m4, int n1,int n2, int n3, int n4, double ** TmpInteractionCoeffients)
+{
+  double UltimateCoef=0.0;
+  if ( m1+m2 == n1+n2) 
+  {
+	//cout <<"first if"<<endl;
+	UltimateCoef += TmpInteractionCoeffients[0][m1+m2] * TmpInteractionCoeffients[0][m3+m4];
+      }
+      
+     if  ( m1+m3 == n1+n3)
+     {
+	//cout <<"second if"<<endl;
+	UltimateCoef += TmpInteractionCoeffients[0][m1+m3] * TmpInteractionCoeffients[0][m2+m4];
+    }
+		      
+	if ( m1+m4 == n1+n4) 
+	    {
+	//cout <<"third if"<<endl;
+	UltimateCoef += TmpInteractionCoeffients[0][m1+m4] * TmpInteractionCoeffients[0][m2+m3];
+	    }
+	    
+  return UltimateCoef;	  
+}
