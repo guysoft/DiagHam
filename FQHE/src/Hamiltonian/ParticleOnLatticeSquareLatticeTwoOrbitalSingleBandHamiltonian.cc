@@ -75,7 +75,7 @@ ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian::ParticleOnLattice
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
-ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian::ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential,
+ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian::ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double uabPotential, double vPotential,
 															     double t1, double t2, double t3, int foldingFactor, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
@@ -96,6 +96,7 @@ ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian::ParticleOnLattice
   this->GammaY = gammaY;
   this->FlatBand = flatBandFlag;
   this->UPotential = uPotential;
+  this->UABPotential = uabPotential;
   this->VPotential = vPotential;
 
   this->Architecture = architecture;
@@ -283,8 +284,10 @@ void ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian::EvaluateInte
 		  }
 	      }
       double FactorU = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
-      if (this->FlatBand == false)
+      double FactorUAB = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
+      //     if (this->FlatBand == false)
 	FactorU *= this->UPotential;
+	FactorUAB *= this->UABPotential;
       this->InteractionFactors = new Complex* [this->NbrSectorSums];
       for (int i = 0; i < this->NbrSectorSums; ++i)
 	{
@@ -307,15 +310,16 @@ void ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian::EvaluateInte
 		  int kx4 = Index4 / this->NbrSiteY;
 		  int ky4 = Index4 % this->NbrSiteY;
 
-                  Complex sumU = 0.;
+                  Complex sumUAB = 0.;
+		  Complex sumU = 0.;
 
-                  sumU += Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0]
+                  sumUAB += Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0]
                         * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1];
-                  sumU += Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
+                  sumUAB += Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
                         * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1];
-                  sumU += Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0]
+                  sumUAB += Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0]
                         * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1];
-                  sumU += Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
+                  sumUAB += Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
                         * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1];
 
                   sumU += Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0]
@@ -336,12 +340,12 @@ void ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian::EvaluateInte
                   sumU += Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
                         * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1];
 
-		  this->InteractionFactors[i][Index] = 2.0 * FactorU * sumU;
-
 		  if (Index3 == Index4)
-		    this->InteractionFactors[i][Index] *= 0.5;
+		    sumU *= 0.5;
 		  if (Index1 == Index2)
-		    this->InteractionFactors[i][Index] *= 0.5;
+		    sumU *= 0.5;
+
+		  this->InteractionFactors[i][Index] = 2.0 * ( FactorU * sumU + FactorUAB * sumUAB );
 
 		  TotalNbrInteractionFactors++;
 		  ++Index;
@@ -401,7 +405,7 @@ void ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian::ComputeOneBo
 	oneBodyBasis[Index] = TmpMatrix;	
 	if (this->FlatBand == false)
 	  {
-	    this->OneBodyInteractionFactors[Index] = TmpDiag(0, 0);
+	    this->OneBodyInteractionFactors[Index] = TmpDiag(0, 0); // needs a O.5 factor ?
 	  }
 	cout << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << "  e1=[" << TmpMatrix[0][0] << ", " << TmpMatrix[0][1] << "]  e2=[" << TmpMatrix[1][0] << ", " << TmpMatrix[1][1] << "]" << endl;
       }

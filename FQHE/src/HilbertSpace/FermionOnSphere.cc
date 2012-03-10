@@ -1383,7 +1383,7 @@ Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& po
   Complex Value;
   Complex Tmp;
   RealVector TmpCoordinates(2);
-  double *VectorNorms = new double[LzMax];
+  double *VectorNorms = new double[LzMax+1];
   for (int i = 0; i <= this->LzMax; ++i)
     VectorNorms[i]=0.0;
   int Pos;
@@ -1486,7 +1486,7 @@ void FermionOnSphere::EvaluateWaveFunctions (RealVector* states, int nbrStates, 
   RealVector TmpCoordinates(2);
   int Pos;
   int Lz;
-  double *VectorNorms = new double[LzMax];
+  double *VectorNorms = new double[LzMax+1];
   for (int i = 0; i <= this->LzMax; ++i)
     VectorNorms[i]=0.0;
   for (int j = 0; j < this->NbrFermions; ++j)

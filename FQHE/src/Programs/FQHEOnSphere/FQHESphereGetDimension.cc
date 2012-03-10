@@ -383,8 +383,7 @@ int main(int argc, char** argv)
 	Sz = 1;
       if (Manager.GetBoolean("boson") == true)
 	{
-	  cout << "SU(2) mode not yet available" << endl;	
-	  return -1;
+
 	  if (Manager.GetBoolean("ground-only") == true)
 	    cout << BosonSU2ShiftedEvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, (LzMin + (NbrFluxQuanta * NbrParticles)) >> 1, 
 								 (Sz + NbrParticles) >> 1) << endl;
@@ -746,17 +745,6 @@ long FermionSU2ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, 
 	   + FermionSU2ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz, totalSpin));
 }
 
-// evaluate Hilbert space dimension for bosons with SU(2) spin
-//
-// nbrBosons = number of fermions
-// lzMax = momentum maximum value for a fermion
-// totalLz = momentum total value (with shift nbrBosons * lzMax)
-// totalSpin = number of particles with spin up
-// return value = Hilbert space dimension
-
-long BosonSU2ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz, int totalSpin)
-{
-}
 
 // evaluate Hilbert space dimension for fermions with SU(2)xSU(2) spin
 //
@@ -1265,13 +1253,13 @@ ostream& BosonSU2WriteDimension(ostream& output, int nbrParticles, int nbrFluxQu
     {
       int NUp = nbrParticles + Sz;
       int NDown = nbrParticles - Sz;
-      if ((NUp >= 0) && (NDown >=0) && ((NUp & 0x1) == 0) && ((NDown & 0x1) == 0))
+      if ((NUp >= 0) && (NDown >=0))// && ((NUp & 0x1) == 0) && ((NDown & 0x1) == 0))
 	{
 	  NUp >>= 1;
 	  NDown >>= 1;
 	  int Min = (nbrParticles * nbrFluxQuanta) & 1;
-	  int Max  = ((((nbrFluxQuanta - NUp + 1) * NUp) + ((nbrFluxQuanta - NDown + 1) * NDown)));
-	  if ((Max >=  Min) && (NUp <= (nbrFluxQuanta + 1)) && (NDown <= (nbrFluxQuanta + 1)))
+	  int Max  = ((((nbrFluxQuanta + 1) * NUp) + ((nbrFluxQuanta + 1) * NDown)));
+	  if (Max >=  Min)
 	    {
 	      long* LzDimension = new long [((Max - Min) >> 1) + 1];
 	      for (int Lz = Min; Lz <= Max; Lz += 2)
@@ -1578,5 +1566,48 @@ long Boson2LLShiftedEvaluateFullHilbertSpaceDimension(int nbrBosons, int lzMax, 
 	Tmp += Boson2LLShiftedEvaluateFullHilbertSpaceDimension(nbrBosons, lzMax+1, totalLz, LzMaxUp, LzMaxDown);
     }
     return Tmp;
+}
+
+
+// evaluate Hilbert space dimension
+//
+// nbrBosons = number of bosons
+// lzMax = momentum maximum value for a boson
+// totalLz = momentum total value
+// totalSpin = twice the total spin value
+// return value = Hilbert space dimension
+
+long BosonSU2EvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz, int totalSpin)
+{
+  return BosonSU2ShiftedEvaluateHilbertSpaceDimension(nbrBosons, lzMax, 
+						      (totalLz + lzMax * nbrBosons) >> 1, (totalSpin + nbrBosons) >> 1);
+}
+
+// evaluate Hilbert space dimension
+//
+// nbrBosons = number of fermions
+// lzMax = momentum maximum value for a fermion
+// totalLz = momentum total value
+// totalSpin = number of particles with spin up
+// return value = Hilbert space dimension      
+
+long BosonSU2ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz, int totalSpin)
+{
+  if ((nbrBosons < 0) || (totalLz < 0)  || (totalSpin < 0) || (totalSpin > nbrBosons) || ((lzMax * nbrBosons) < totalLz))
+    return 0l;
+    
+  if (nbrBosons == 1) 
+    if (lzMax >= totalLz)
+      return 1l;
+    else
+      return 0l;
+  if (totalLz == 0)
+    return 1l;
+
+  unsigned long Tmp = 0l;  
+  for (int i = totalSpin; i >= 0; --i)
+    for (int j = (nbrBosons - totalSpin); j >= 0; --j)
+      Tmp += BosonSU2ShiftedEvaluateHilbertSpaceDimension(nbrBosons - (i + j), lzMax - 1, totalLz - (lzMax * (i + j)), totalSpin - i);
+  return Tmp;  
 }
 

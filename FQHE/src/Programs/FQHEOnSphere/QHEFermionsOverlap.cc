@@ -4,6 +4,7 @@
 #include "FunctionBasis/ParticleOnSphereFunctionBasis.h"
 
 #include "Tools/FQHEWaveFunction/QHEWaveFunctionManager.h"
+#include "Tools/FQHEWaveFunction/PolarizedProductWavefunction.h"
 #include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
 #include "MathTools/NumericalAnalysis/Abstract1DComplexTrialFunction.h"
 #include "Tools/FQHEWaveFunction/PfaffianOnSphereWaveFunction.h"
@@ -85,6 +86,7 @@ int main(int argc, char** argv)
 
   Manager += SystemGroup;
   WaveFunctionManager.AddOptionGroup(&Manager);
+  PolarizedProductWavefunction::AddPolarizedProductStateOptionGroup(Manager);
   Manager += MonteCarloGroup;
   Architecture.AddOptionGroup(&Manager);
   Manager += MiscGroup;
@@ -188,8 +190,13 @@ int main(int argc, char** argv)
 	  }
       
     }
+
+  Abstract1DComplexFunction* TestWaveFunction = NULL;
+  if (Manager.GetBoolean("product-state"))
+    TestWaveFunction = new PolarizedProductWavefunction(Architecture.GetArchitecture(), Manager, NbrFermions, LzMax, Lz, &WaveFunctionManager);
+  else
+    TestWaveFunction = WaveFunctionManager.GetWaveFunction();
   
-  Abstract1DComplexFunction* TestWaveFunction = WaveFunctionManager.GetWaveFunction();
   
   if (TestWaveFunction == 0)
     {
@@ -413,6 +420,10 @@ int main(int argc, char** argv)
   int Accepted = 0;
   bool NoTimeCoherence=!(Manager.GetBoolean("with-timecoherence"));
   int TimeCoherence;
+
+  if (Manager.GetBoolean("product-state"))
+    ((PolarizedProductWavefunction*)TestWaveFunction)->TestSymmetries(Particles);
+
 
   if (HistoryMode == 4) // continuing to work on old History
     {

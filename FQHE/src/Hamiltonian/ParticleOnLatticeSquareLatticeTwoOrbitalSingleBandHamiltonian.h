@@ -64,6 +64,8 @@ class ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian : public Par
   double MuS;
   // nearest neighbor density-density potential strength
   double UPotential;
+  // nearest neighbor density-density potential strength AB for bosons
+  double UABPotential;
   // second nearest neighbor density-density potential strength
   double VPotential;
   // boundary condition twisting angle along x
@@ -98,7 +100,7 @@ class ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian : public Par
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential, double t1, double t2, double t3, 
+  ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double uabPotential, double vPotential, double t1, double t2, double t3, 
 								int foldingFactor, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory=-1);
 
   // destructor

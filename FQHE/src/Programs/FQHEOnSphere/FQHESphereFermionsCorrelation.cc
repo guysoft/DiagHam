@@ -339,6 +339,11 @@ int main(int argc, char** argv)
 	    cout << "can't open vector file " << Manager.GetString("eigenstate") << endl;
 	    return -1;      
 	  }
+	if (Space->GetLargeHilbertSpaceDimension()!=State.GetLargeVectorDimension())
+	  {
+	    cout << "Dimension mismatch between state and Hilbert space!"<<endl;
+	    return -1;
+	  }
 
         Complex* DensityMatEl;
         DensityMatEl = new Complex[LzMax + 1];
@@ -398,6 +403,11 @@ int main(int argc, char** argv)
 	    cout << "can't open vector file " << Manager.GetString("eigenstate") << endl;
 	    return -1;      
 	  }
+	if (Space->GetLargeHilbertSpaceDimension()!=State.GetLargeVectorDimension())
+	  {
+	    cout << "Dimension mismatch between state and Hilbert space!"<<endl;
+	    return -1;
+	  }
 
         Complex* DensityMatEl;
         DensityMatEl = new Complex[LzMax + 1];
@@ -441,8 +451,8 @@ int main(int argc, char** argv)
    {
      cout<<"Evaluating the pair amplitudes <xi_{J,M}^+ xi_{J,M}>" << endl;
      cout<<"assuming M can be set to zero"<<endl;
-     cout<<"xi_{J,M}=\sum_{m1,m2} C_{m2m1M}^{SSJ} c_m1 c_m2 "<<endl;
-     cout<<"Total energy = \sum_{J,M} V_J <xi_{J,M}^+ xi_{J,M}>"<<endl;
+     cout<<"xi_{J,M}=\\sum_{m1,m2} C_{m2m1M}^{SSJ} c_m1 c_m2 "<<endl;
+     cout<<"Total energy = \\sum_{J,M} V_J <xi_{J,M}^+ xi_{J,M}>"<<endl;
      ofstream File;
      File.precision(14);
      if (Manager.GetString("output-file") != 0)
@@ -537,6 +547,12 @@ int main(int argc, char** argv)
 	  cout << "can't open vector file " << Manager.GetString("eigenstate") << endl;
 	  return -1;      
 	}
+      if (Space->GetLargeHilbertSpaceDimension()!=State.GetLargeVectorDimension())
+	  {
+	    cout << "Dimension mismatch between state and Hilbert space!"<<endl;
+	    return -1;
+	  }
+      
       if (DensityFlag == false)
 	for (int i = 0; i <= LzMax; ++i)
 	  {
@@ -559,6 +575,11 @@ int main(int argc, char** argv)
 	  cout << "can't open vector file " << Manager.GetString("eigenstate") << endl;
 	  return -1;      
 	}
+      if (Space->GetLargeHilbertSpaceDimension()!=State.GetLargeVectorDimension())
+	  {
+	    cout << "Dimension mismatch between state and Hilbert space!"<<endl;
+	    return -1;
+	  }
       if (DensityFlag == false)
 	for (int i = 0; i <= LzMax; ++i)
 	  {

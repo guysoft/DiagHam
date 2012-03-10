@@ -3,12 +3,13 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2001-2002 Nicolas Regnault                  //
+//                    Copyright (C) 2001-2011 Nicolas Regnault                //
 //                                                                            //
 //                                                                            //
-//                    class of abstract 1D complex function                   //
+//                          class of bosons on square lattice                 //
+//                                  in momentum space                         //
 //                                                                            //
-//                        last modification : 01/09/2004                      //
+//                        last modification : 16/09/2011                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,34 +29,34 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
+#ifndef PARTICLEONSQUARELATTICEWANNIERINTERFACE_H
+#define PARTICLEONSQUARELATTICEWANNIERINTERFACE_H
+
 #include "config.h"
-#include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
 
-#include <iostream>
+//#include "HilbertSpace/ParticleOnTorus.h"
 
-using std::cout;
-using std::endl;
+class ParticleOnTorus;
 
-// virtual destructor
-//
-
-Abstract1DComplexFunction::~Abstract1DComplexFunction()
+class ParticleOnSquareLatticeWannierInterface
 {
-}
-// change the normalization of the funtion by a multiplicative factor
-// factor = factor to be multiplied
-void Abstract1DComplexFunction::Renormalize(double factor)
-{
-}
 
-// set wavefunction to one for a given set of particle coordinates
-void Abstract1DComplexFunction::AdaptNorm(RealVector& x)
-{
-  cout << "Dummy normalization"<<endl;
-}
+ protected:
+
+ public:
+
+  // virtual destructor
+  virtual ~ParticleOnSquareLatticeWannierInterface();
+
+  // get total momentum in the linearized momentum index (moduly N_phi)
+  // index = state to operate on
+  virtual int GetLinearizedMomentum(int index) = 0;
+
+  // get total momentum in the linearized momentum index (moduly N_phi)
+  // state = index of state to operate on
+  virtual int ProjectToTorus(ParticleOnTorus *torusSpace, int state) = 0;
+
   
-// utility function to set the right dynamic interval for Monte-Carlo
-void Abstract1DComplexFunction::AdaptAverageMCNorm(int thermalize , int average)
-{
-  cout << "Dummy normalization"<<endl;
-}
+};
+
+#endif

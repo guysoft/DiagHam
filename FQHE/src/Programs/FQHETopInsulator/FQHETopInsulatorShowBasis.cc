@@ -7,6 +7,7 @@
 #include "HilbertSpace/FermionOnHyperCubicLatticeWithSpinMomentumSpace.h"
 
 #include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
+#include "HilbertSpace/BosonOnSquareLatticeWannierSpace.h"
 #include "HilbertSpace/BosonOnSquareLatticeWithSU2SpinMomentumSpace.h"
 #include "HilbertSpace/BosonOnSquareLatticeWithSU3SpinMomentumSpace.h"
 
@@ -65,6 +66,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "min-kz", "minimal z momentum allowed for a single particle", 4);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "min-kt", "minimal t momentum allowed for a single particle", 4);
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
+  (*SystemGroup) += new BooleanOption  ('\n', "wannier", "use wannier wavefunction basis");
   (*SystemGroup) += new SingleStringOption ('\n', "state", "name of an optional vector state whose component values can be displayed behind each corresponding n-body state");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "hide-component", "hide state components (and thus the corresponding n-body state) whose absolute value is lower than a given error (0 if all components have to be shown", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "no-autodetect", "do not autdetect system parameter from state file name");
@@ -186,7 +188,14 @@ int main(int argc, char** argv)
     {
       if (Manager.GetInteger("nbr-subbands") == 1)
 	{
-	  Space = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
+	  if (Manager.GetBoolean("wannier"))
+	    {
+	      Space = new BosonOnSquareLatticeWannierSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKy);
+	    }
+	  else
+	    {
+	      Space = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
+	    }
 	  if (Manager.GetString("save-hilbert") != 0)
 	    {
 	      Space->WriteHilbertSpace(Manager.GetString("save-hilbert"));

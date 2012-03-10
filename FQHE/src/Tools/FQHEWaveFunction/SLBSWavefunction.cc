@@ -402,7 +402,7 @@ void SLBSWavefunction::EvaluateTables()
 
   double Factor = M_PI * 0.5;
   this->Chi1=1.0;
-  for (int i = 0; i < this->NbrParticles; ++i)
+  for (int i = 1; i < this->NbrParticles; ++i)
     for (int j = 0; j < i; ++j)
       Chi1*=(Jij[i][j]*Factor);
 

@@ -42,7 +42,8 @@
 
 class BosonOnTorusShort :  public ParticleOnTorus
 {
-
+  friend class BosonOnSquareLatticeWannierSpace;
+  
  protected:
 
   // number of bosons

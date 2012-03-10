@@ -253,7 +253,7 @@ HundRuleCFStates::HundRuleCFStates(int nbrParticles, int nbrEffectiveFlux, int j
   for (int i=0; i<=TotalL; ++i)
     {
       cout << "State[M="<<(2*i-TotalL)/2.0<<"]= ";
-       cout << TermsPerLz[i][0];
+      cout << TermsPerLz[i][0];
       for (int k=1; k<this->NbrTermsPerLz[i]; ++k)
 	cout << " + "<<TermsPerLz[i][k];
       cout << endl;

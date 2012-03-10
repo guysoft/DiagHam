@@ -48,7 +48,8 @@ class Abstract1DComplexFunction
     {
       Basic = 0x1u,
       OnSphere = 0x2u,
-      Trial = 0x4u
+      Trial = 0x4u,
+      Normalizable = 0x10000
     };
     
 
@@ -74,6 +75,14 @@ class Abstract1DComplexFunction
   // get function properties, and possible extensions of interface 
   // 
   virtual unsigned GetProperties() {return Abstract1DComplexFunction::Basic;}
+
+  // set wavefunction to one for a given set of particle coordinates
+  virtual void AdaptNorm(RealVector& x);
+  
+  // utility function to set the right dynamic interval for Monte-Carlo
+  virtual void AdaptAverageMCNorm(int thermalize = 500 , int average = 1000);
+
+  
 };
 
 #endif

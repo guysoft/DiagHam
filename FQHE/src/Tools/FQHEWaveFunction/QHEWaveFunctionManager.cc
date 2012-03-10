@@ -270,7 +270,7 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
       if (strcmp (this->Options->GetString("test-wavefunction"), "SLBS") == 0)
 	{
 	  int N=this->Options->GetInteger("nbr-particles");
-	  int levels=this->Options->GetBoolean("CF-levels");
+	  int levels=this->Options->GetInteger("CF-levels");
 	  SLBSWavefunction *rst = new SLBSWavefunction(N, levels);
 	  rst->AdaptAverageMCNorm();
 	  return rst;
@@ -362,7 +362,20 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	{
 	  int N = this->Options->GetInteger("nbr-particles");
 	  int JastrowP = this->Options->GetInteger("nbr-flux")/2;
-	  int effectiveFlux = this->Options->GetInteger("lzmax")-2*JastrowP*(N-1);
+	  int RelevantLzMax = this->Options->GetInteger("lzmax");
+	  if ((*this->Options)["product-state"]!=NULL)
+	    if (this->Options->GetBoolean("product-state"))
+	      {
+		if (this->Options->GetInteger("second-lzmax")==0)
+		  {
+		    cout << "When using an analytic trial state for the second factor in a product state, please indicate --second-lzmax!"<<endl;
+		    RelevantLzMax = this->Options->GetInteger("lzmax");
+		    cout << "Defaulting to total lzmax = "<< RelevantLzMax << endl;
+		  }
+		else
+		  RelevantLzMax = this->Options->GetInteger("second-lzmax");
+	    }
+	  int effectiveFlux = RelevantLzMax-2*JastrowP*(N-1);
 	  int overrideL = this->Options->GetInteger("hund-L2");
 	  if (JastrowP==0)
 	    {

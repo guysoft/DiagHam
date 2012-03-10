@@ -149,6 +149,11 @@ int main(int argc, char** argv)
 		{
 		  OutputFileName = ReplaceExtensionToFileName(Manager.GetString("density-matrix"), "full.parent.bz2", TmpExtension);
 		}
+	      if (OutputFileName==0)
+		{
+		  cout << "Problem generating output file name"<<endl;
+		  return -1;
+		}
 	    }
 	  ofstream File;
 	  File.open(OutputFileName, ios::out);

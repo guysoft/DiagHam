@@ -65,4 +65,5 @@ GutzwillerOnLatticeWaveFunction.cc \
 GrossPitaevskiiOnLatticeState.cc \
 MaximallyCondensedStateOnLattice.cc \
 NASSOnSphereWaveFunction.cc \
-PfaffianTimesPfaffianState.cc
+PfaffianTimesPfaffianState.cc \
+PolarizedProductWavefunction.cc

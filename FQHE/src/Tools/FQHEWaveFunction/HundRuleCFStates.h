@@ -190,10 +190,10 @@ class HundRuleCFStates : public Abstract1DComplexFunctionOnSphere
 
 
   // set wavefunction to one for a given set of particle coordinates
-  void AdaptNorm(RealVector& x);
+  virtual void AdaptNorm(RealVector& x);
   
   // utility function to set the right dynamic interval for Monte-Carlo
-  void AdaptAverageMCNorm(int thermalize = 500 , int average = 1000);
+  virtual void AdaptAverageMCNorm(int thermalize = 500 , int average = 1000);
 
 
  private:

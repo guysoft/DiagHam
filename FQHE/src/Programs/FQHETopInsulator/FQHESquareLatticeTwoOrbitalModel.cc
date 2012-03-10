@@ -67,6 +67,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive on-site Hubbard potential strength", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "uab-potential", "repulsive on-site Hubbard potential strength - ab for bosons", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "v-potential", "repulsive two-body nearest neighbor potential strength", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "w-potential", "repulsive three-body nearest neighbor potential strength", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "s-potential", "repulsive three-body next-to-nearest neighbor potential strength", 0.0);
@@ -84,8 +85,6 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "flat-band", "use flat band model. The n-body interaction strength with largest n is set to unity");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenstate-file", "filename for eigenstates output; to be appended by _kx_#_ky_#.#.vec");
-  (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
-  (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
@@ -143,8 +142,8 @@ int main(int argc, char** argv)
           lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_w_%f", Manager.GetDouble("w-potential"));
       if ((Manager.GetBoolean("three-body") == true || Manager.GetBoolean("four-body") == true) && Manager.GetDouble("s-potential") != 0.0)
           lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_s_%f", Manager.GetDouble("s-potential"));
-      if ((Manager.GetBoolean("three-body") == true || Manager.GetBoolean("four-body") == true) || Manager.GetBoolean("flat-band") == false)
-          lenFilePrefix += sprintf (FilePrefix + lenFilePrefix, "_u_%f", Manager.GetDouble("u-potential"));
+      //     if ((Manager.GetBoolean("three-body") == true || Manager.GetBoolean("four-body") == true) || Manager.GetBoolean("flat-band") == false)
+      lenFilePrefix += sprintf (FilePrefix + lenFilePrefix, "_u_%f_uab_%f", Manager.GetDouble("u-potential"), Manager.GetDouble("uab-potential") );
       lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_v_%f", Manager.GetDouble("v-potential"));
       if (Manager.GetInteger("folding") == 1)
 	{
@@ -154,6 +153,10 @@ int main(int argc, char** argv)
 	{
 	  lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_t1_%f_t2_%f_t3_%f_mus_%f_f_%ld_gx_%f_gy_%f", Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), Manager.GetDouble("mu-s"), Manager.GetInteger("folding"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 	}
+    }
+  if(Manager.GetBoolean("flat-band")==true)
+    {
+      lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_flatband");
     }
   char* CommentLine = new char [256];
   sprintf (CommentLine, "eigenvalues\n# kx ky ");
@@ -219,7 +222,7 @@ int main(int argc, char** argv)
 	      if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false))
 		{
                   Hamiltonian = new ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian(Space, NbrParticles, NbrSiteX, NbrSiteY, 
-												  Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), 
+												  Manager.GetDouble("u-potential"), Manager.GetDouble("uab-potential"), Manager.GetDouble("v-potential"), 
 												  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), Manager.GetInteger("folding"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"),
 												  Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 		}

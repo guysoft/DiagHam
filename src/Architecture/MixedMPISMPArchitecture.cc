@@ -146,7 +146,9 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* lo
 			  if (strcmp("master", ClusterFile(0,j)) == 0) 
 			    {
 			      DefaultMasterCPUs = TmpNbrCPUNode[j];
-			      DefaultMasterPerformance  = TmpClusterPerformanceArray[j];
+			      DefaultMasterPerformance  = (double)DefaultMasterCPUs;
+			      if (TmpClusterPerformanceArray !=0)
+				DefaultMasterPerformance *= TmpClusterPerformanceArray[j];
 			      DefaultMasterMemory = TmpClusterMemoryArray[j];
 			      OverrideMaster=true;
 			      j = ClusterFile.GetNbrLines();
