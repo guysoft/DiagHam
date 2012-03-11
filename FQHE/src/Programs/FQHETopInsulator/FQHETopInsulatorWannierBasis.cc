@@ -4,6 +4,7 @@
 #include "HilbertSpace/ParticleOnSquareLatticeWannierInterface.h"
 
 #include "Vector/ComplexVector.h"
+#include "Vector/RealVector.h"
 
 #include "Tools/FQHEFiles/FQHEOnSquareLatticeFileTools.h"
 
@@ -169,7 +170,7 @@ int main(int argc, char** argv)
 
   if (Manager.GetString("torus")!=NULL)
     {
-      ComplexVector ReferenceState;
+      RealVector ReferenceState;
       if (ReferenceState.ReadVector(Manager.GetString("torus")) == false)
 	{
 	  cout << "error while reading " << Manager.GetString("torus") << endl;
@@ -180,7 +181,9 @@ int main(int argc, char** argv)
 	  cout << "dimension mismatch between the state (" << ReferenceState.GetVectorDimension() << ") and the Hilbert space (" << TargetSpace->GetHilbertSpaceDimension() << ")" << endl;
 	  return -1;
 	}
-      cout << "Overlap with torus eigenstate:         "<<ReferenceState*TorusState<<endl;
+      Complex Ovl=ReferenceState*TorusState;
+      cout << "Overlap with torus eigenstate:         "<<Ovl<<endl;
+      cout << "               square overlap:         "<<SqrNorm(Ovl)<<endl;
     }
   
   char *Output = Manager.GetString("output-file");
