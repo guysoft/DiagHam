@@ -724,7 +724,7 @@ int main(int argc, char** argv)
 	      File.close();
 	    }
 	  
-	  if(Projection == true)
+	  if((Projection == true)||(NbrLL == 2))
 	    {
 	      if(Manager.GetBoolean("normalize"))
 		{

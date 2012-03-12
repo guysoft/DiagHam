@@ -102,7 +102,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-body", "number of body involved in the hardcore", 2);
 	
   (*SystemGroup) += new SingleDoubleOption  ('u', "contactU", "prefactor U of the three-body contact interaction (kinetic term ~ 1)", 1.0);
-	
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "2body", "coefficient of an additional 2-body contact interaction", 0.0);
   (*SystemGroup) += new BooleanOption('c',"hard-core","Use Hilbert-space of hard-core bosons");
   (*SystemGroup) += new SingleDoubleOption  ('R', "randomPotential", "Introduce a random potential at all sites", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "positive-hopping", "choose positive sign of hopping terms", false);
@@ -138,6 +138,7 @@ int main(int argc, char** argv)
   unsigned long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
   unsigned long MemorySpace = ((unsigned long) Manager.GetInteger("fast-search")) << 20;
   char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");
+  double TwoBodyU = Manager.GetDouble("2body");
   
   if (Manager.GetString("energy-expectation") != 0 ) Memory = 0x0l;
   
@@ -210,7 +211,7 @@ int main(int argc, char** argv)
       
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       
-      Hamiltonian = new ParticleOnLatticeWithKyNBodyDeltaHamiltonian(Space, NbrBosons, Lx, Ly, ((BosonOnLatticeKy*)Space)->GetMaximumKy(),  NbrFluxQuanta,NbrBody, 0.0, ContactU, ReverseHopping, Random, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName);
+      Hamiltonian = new ParticleOnLatticeWithKyNBodyDeltaHamiltonian(Space, NbrBosons, Lx, Ly, ((BosonOnLatticeKy*)Space)->GetMaximumKy(),  NbrFluxQuanta,NbrBody, TwoBodyU, ContactU, ReverseHopping, Random, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName);
       
       char* StateFileName = Manager.GetString("energy-expectation");
       if (IsFile(StateFileName) == false)

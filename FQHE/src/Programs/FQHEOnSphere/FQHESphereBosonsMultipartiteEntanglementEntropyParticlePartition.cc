@@ -396,7 +396,11 @@ int main(int argc, char** argv)
  	    
 	  
 	    Spaces[0]->EvaluatePartialDensityMatrixMultipartiteParticlePartition(&SpaceA, &SpaceB, &SpaceC,  GroundStates[0],&PartialDensityMatrix, Architecture.GetArchitecture());
-
+	    for (int i = 1; i < NbrSpaces; ++i)
+	    {
+		 Spaces[i]->EvaluatePartialDensityMatrixMultipartiteParticlePartition(&SpaceA, &SpaceB, &SpaceC,  GroundStates[i],&PartialDensityMatrix, Architecture.GetArchitecture());
+	    }
+	    PartialDensityMatrix /= ((double) NbrSpaces);
 	  if (ShowTimeFlag == true)
 	    {
 	      gettimeofday (&(TotalEndingTime), 0);

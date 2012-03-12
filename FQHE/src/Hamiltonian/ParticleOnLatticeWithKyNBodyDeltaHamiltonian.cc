@@ -87,7 +87,10 @@ ParticleOnLatticeWithKyNBodyDeltaHamiltonian::ParticleOnLatticeWithKyNBodyDeltaH
   this->NBodyValue = nbrBody;
   this->SqrNBodyValue = this->NBodyValue * this->NBodyValue;
   this->FluxDensity = ((double)nbrFluxQuanta)/NbrCells;
+  this->TwoBodyFlag = false;
   this->ContactInteractionU = contactInteractionU;
+  if(this->ContactInteractionU != 0.0)
+    this->TwoBodyFlag = true;
   this->NBodyContactInteraction = nBodyContactInteraction;
   this->ReverseHopping = reverseHopping;
   this->DeltaPotential = 0.0;
@@ -100,7 +103,6 @@ ParticleOnLatticeWithKyNBodyDeltaHamiltonian::ParticleOnLatticeWithKyNBodyDeltaH
   this->PrecalculationShift = (int) MinIndex;  
   this->EvaluateInteractionFactors();
   this->HaveKySymmetry = true;
-  this->TwoBodyFlag = false;
   this->DiskStorageFlag = false;
   if(this->TwoBodyFlag == false)
     this->NbrInteractionFactors = 0;
@@ -877,7 +879,98 @@ void ParticleOnLatticeWithKyNBodyDeltaHamiltonian::EvaluateInteractionFactors()
     {
       TotalNbrInteractionFactors = 0l;
     }
-  
+    if ((this->Particles->GetParticleStatistic() == ParticleOnLattice::BosonicStatistic) && (this->TwoBodyFlag))
+    {
+      // general four-particle interactions:
+      int Pos=0;
+      int k4;
+      double* TmpCoefficient = new double [Lx * p * KyMax * KyMax * KyMax];
+      double Strength = this->ContactInteractionU / KyMax;  // Check Amplitude!!
+      double MaxCoefficient = 0.0;
+      for (int i=0; i<Lx; ++i)
+	for (int s=0; s<p; ++s)
+	  for (int k1 = 0; k1 < this->KyMax; ++k1)
+	    for (int k2 = 0; k2 <= k1; ++k2)
+	      for (int k3 = 0; k3 < this->KyMax; ++k3)
+		{
+		  k4 = k1 + k2 - k3;
+		  if (k4 < 0)
+		    k4 += this->KyMax;
+		  else
+		    if (k4 >= this->KyMax)
+		      k4 -= this->KyMax;
+		  if (k3 > k4)
+		    {
+		      if (k1 != k2)
+			{
+			  TmpCoefficient[Pos] = 4.0*Strength;
+			}
+		      else
+			TmpCoefficient[Pos] = 2.0*Strength;
+		      if (MaxCoefficient < fabs(TmpCoefficient[Pos]))
+			MaxCoefficient = fabs(TmpCoefficient[Pos]);
+		      ++Pos;
+		    }
+		  else
+		    if (k3 == k4)
+		      {
+			if (k1 != k2)
+			  TmpCoefficient[Pos] = 2.0*Strength;
+			else
+			  TmpCoefficient[Pos] = Strength;
+			if (MaxCoefficient < fabs(TmpCoefficient[Pos]))
+			  MaxCoefficient = fabs(TmpCoefficient[Pos]);
+			++Pos;
+		      }
+		}
+      
+      this->NbrInteractionFactors = 0;
+      this->Q1Value = new int [Pos];
+      this->Q2Value = new int [Pos];
+      this->Q3Value = new int [Pos];
+      this->Q4Value = new int [Pos];
+      this->InteractionFactors = new Complex [Pos];
+      cout << "nbr interaction = " << Pos << endl;
+      Pos = 0;
+      MaxCoefficient *= MACHINE_PRECISION;
+      
+      for (int i=0; i<Lx; ++i)
+	for (int s=0; s<p; ++s)
+	  for (int k1 = 0; k1 < this->KyMax; ++k1)
+	    for (int k2 = 0; k2 <= k1; ++k2)
+	      for (int k3 = 0; k3 < this->KyMax; ++k3)
+		{
+		  k4 = k1 + k2 - k3;
+		  if (k4 < 0)
+		    k4 += this->KyMax;
+		  else
+		    if (k4 >= this->KyMax)
+		      k4 -= this->KyMax;
+		  if (k3 >= k4)
+		    {
+		      if (fabs(TmpCoefficient[Pos]) > MaxCoefficient)
+			{
+			  this->InteractionFactors[this->NbrInteractionFactors] = TmpCoefficient[Pos];
+			  this->Q1Value[this->NbrInteractionFactors] = Particles->EncodeQuantumNumber(i, k1*p+s, 0, TranslationPhase);
+			  this->Q2Value[this->NbrInteractionFactors] = Particles->EncodeQuantumNumber(i, k2*p+s, 0, TranslationPhase);
+			  this->Q3Value[this->NbrInteractionFactors] = Particles->EncodeQuantumNumber(i, k3*p+s, 0, TranslationPhase);
+			  this->Q4Value[this->NbrInteractionFactors] = Particles->EncodeQuantumNumber(i, k4*p+s, 0, TranslationPhase);
+#ifdef DEBUG_OUTPUT
+			  cout << "4-body term: "<<this->InteractionFactors[this->NbrInteractionFactors]<< " a^\\dag_"<< this->Q4Value[this->NbrInteractionFactors]<<"a^\\dag_"<<this->Q3Value[this->NbrInteractionFactors]<<"a_"<<this->Q2Value[this->NbrInteractionFactors]<<"a_"<<this->Q1Value[this->NbrInteractionFactors]<<endl;
+#endif
+			  ++this->NbrInteractionFactors;
+			}
+		      ++Pos;
+		    }
+		}
+      delete [] TmpCoefficient;
+    }
+  else // no such interactions
+    {
+      this->NbrInteractionFactors = 0;
+    }
+    
+  cout << "nbr interaction Twobody= " << this->NbrInteractionFactors << endl;
   cout << "nbr interaction Nbody= " << TotalNbrInteractionFactors << endl;
   cout << "====================================" << endl;
 }
