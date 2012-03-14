@@ -54,6 +54,9 @@ class BosonOnSquareLatticeWithSU2SpinMomentumSpace : public BosonOnSphereWithSU2
   // momentum along the y direction
   int KyMomentum;
 
+  // flag to indicate that the Hilbert space should preserve Sz
+  bool SzFlag;
+
  public:
 
   // basic constructor
@@ -65,6 +68,17 @@ class BosonOnSquareLatticeWithSU2SpinMomentumSpace : public BosonOnSphereWithSU2
   // kyMomentum = momentum along the y direction
   // memory = amount of memory granted for precalculations
   BosonOnSquareLatticeWithSU2SpinMomentumSpace (int nbrBosons, int nbrSiteX, int nbrSiteY, int kxMomentum, int kyMomentum, unsigned long memory = 10000000);
+
+  // basic constructor when Sz is conserved
+  // 
+  // nbrBosons = number of bosons
+  // nbrSpinUp = number of particles with spin up
+  // nbrSiteX = number of sites in the x direction
+  // nbrSiteY = number of sites in the y direction
+  // kxMomentum = momentum along the x direction
+  // kyMomentum = momentum along the y direction
+  // memory = amount of memory granted for precalculations
+  BosonOnSquareLatticeWithSU2SpinMomentumSpace (int nbrBosons, int nbrSpinUp, int nbrSiteX, int nbrSiteY, int kxMomentum, int kyMomentum, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
@@ -105,6 +119,17 @@ class BosonOnSquareLatticeWithSU2SpinMomentumSpace : public BosonOnSphereWithSU2
   // return value = Hilbert space dimension
   virtual long EvaluateHilbertSpaceDimension(int nbrBosons, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy);
 
+  // evaluate Hilbert space dimension with a fixed number of bosons with spin up
+  //
+  // nbrBosons = number of bosons
+  // currentKx = current momentum along x for a single particle
+  // currentKy = current momentum along y for a single particle
+  // currentTotalKx = current total momentum along x
+  // currentTotalKy = current total momentum along y
+  // nbrSpinUp = number of particles with spin up
+  // return value = Hilbert space dimension
+  virtual long EvaluateHilbertSpaceDimension(int nbrBosons, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy, int nbrSpinUp);
+
   // generate all states corresponding to the constraints
   // 
   // nbrBosons = number of bosons
@@ -118,6 +143,21 @@ class BosonOnSquareLatticeWithSU2SpinMomentumSpace : public BosonOnSphereWithSU2
   // return value = position from which new states have to be stored
   virtual long GenerateStates(int nbrBosons, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy, 
 			      int currentFermionicPositionUp, int currentFermionicPositionDown, long pos);
+
+  // generate all states corresponding to the constraints
+  // 
+  // nbrBosons = number of bosons
+  // currentKx = current momentum along x for a single particle
+  // currentKy = current momentum along y for a single particle
+  // currentTotalKx = current total momentum along x
+  // currentTotalKy = current total momentum along y
+  // currentFermionicPositionUp = current fermionic position within the state description for the spin up
+  // currentFermionicPositionDown = current fermionic position within the state description for the spin down
+  // nbrSpinUp = number of particles with spin up
+  // pos = position in StateDescription array where to store states
+  // return value = position from which new states have to be stored
+  virtual long GenerateStates(int nbrBosons, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy, 
+			      int currentFermionicPositionUp, int currentFermionicPositionDown, int nbrSpinUp, long pos);
 
 
 };

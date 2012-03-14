@@ -239,7 +239,7 @@ void ParticleOnCubicLatticeTwoBandSimpleTIHamiltonian::EvaluateInteractionFactor
       double Factor = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ));
       double FactorAUpADown = Factor * this->VPotential;
       double FactorBUpBDown = Factor * this->VPotential;
-      if (this->FlatBand == false)
+      if ((this->FlatBand == false) || (this->VPotential != 0.0))
 	Factor *= this->UPotential;
       double FactorAUpBUp = Factor;
       double FactorADownBDown = Factor;

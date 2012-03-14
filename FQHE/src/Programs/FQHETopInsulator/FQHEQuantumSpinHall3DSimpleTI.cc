@@ -18,6 +18,7 @@
 #include "Matrix/RealDiagonalMatrix.h"
 
 #include "MainTask/GenericComplexMainTask.h"
+#include "GeneralTools/FilenameTools.h"
 
 #include <iostream>
 #include <cstring>
@@ -122,26 +123,13 @@ int main(int argc, char** argv)
   char* EigenvalueOutputFile = new char [512];
   if (Manager.GetBoolean("four-bands") == true)
     {
-      if (Manager.GetBoolean("flat-band") == true)
-	{
-	  sprintf (EigenvalueOutputFile, "fermions_quantumspinhall3d_simpleti_fourbands_n_%d_x_%d_y_%d_z_%d_v_%f_m_%f_gx_%f_gy_%f_gz_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("v-potential"), Manager.GetDouble("mass"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"));
-	}
-      else
-	{
-	  sprintf (EigenvalueOutputFile, "fermions_quantumspinhall3d_simpleti_fourbands_n_%d_x_%d_y_%d_z_%d_u_%f_v_%f_m_%f_gx_%f_gy_%f_gz_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("mass"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"));
-	}
+      sprintf (EigenvalueOutputFile, "fermions_quantumspinhall3d_simpleti_fourbands_n_%d_x_%d_y_%d_z_%d_u_%f_v_%f_m_%f_gx_%f_gy_%f_gz_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("mass"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"));
     }
   else
     {
-      if (Manager.GetBoolean("flat-band") == true)
-	{
-	  sprintf (EigenvalueOutputFile, "fermions_quantumspinhall3d_simpleti_n_%d_x_%d_y_%d_z_%d_v_%f_m_%f_gx_%f_gy_%f_gz_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("v-potential"), Manager.GetDouble("mass"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"));
-	}
-      else
-	{
-	  sprintf (EigenvalueOutputFile, "fermions_quantumspinhall3d_simpleti_n_%d_x_%d_y_%d_z_%d_u_%f_v_%f_m_%f_gx_%f_gy_%f_gz_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("mass"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"));
-	}
+      sprintf (EigenvalueOutputFile, "fermions_quantumspinhall3d_simpleti_n_%d_x_%d_y_%d_z_%d_u_%f_v_%f_m_%f_gx_%f_gy_%f_gz_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("mass"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"));
     }
+
   if (Manager.GetBoolean("singleparticle-spectrum") == true)
     {
       ComputeSingleParticleSpectrum(EigenvalueOutputFile, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("mass"));
@@ -190,16 +178,10 @@ int main(int argc, char** argv)
 		  char* ContentPrefix = new char[256];
 		  sprintf (ContentPrefix, "%d %d %d", i, j, k);
 		  char* EigenstateOutputFile = new char [512];
-		  if (Manager.GetBoolean("flat-band") == true)
-		    {
-		      sprintf (EigenstateOutputFile, "fermions_quantumspinhall3d_simpleti_n_%d_x_%d_y_%d_z_%d_m_%f_gx_%f_gy_%f_gz_%f_kx_%d_ky_%d_kz_%d", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, 
-			       Manager.GetDouble("mass"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), i, j, k);
-		    }
-		  else
-		    {
-		      sprintf (EigenstateOutputFile, "fermions_quantumspinhall3d_simpleti_n_%d_x_%d_y_%d_z_%d_u_%f_m_%f_gx_%f_gy_%f_gz_%f_kx_%d_ky_%d_kz_%d", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, 
-			       Manager.GetDouble("u-potential"), Manager.GetDouble("mass"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), i, j, k);
-		    }
+		  char* TmpExtention = new char [512];
+		  sprintf (TmpExtention, "_kx_%d_ky_%d_kz_%d", i, j, k);
+		  EigenstateOutputFile = ReplaceExtensionToFileName(EigenvalueOutputFile, ".dat", TmpExtention);
+
 		  GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
 		  FirstRunFlag = false;
 		  MainTaskOperation TaskOperation (&Task);
@@ -258,16 +240,10 @@ int main(int argc, char** argv)
 		  char* ContentPrefix = new char[256];
 		  sprintf (ContentPrefix, "%d %d %d", i, j, k);
 		  char* EigenstateOutputFile = new char [512];
-		  if (Manager.GetBoolean("flat-band") == true)
-		    {
-		      sprintf (EigenstateOutputFile, "fermions_quantumspinhall3d_simpleti_fourbands_n_%d_x_%d_y_%d_z_%d_m_%f_gx_%f_gy_%f_gz_%f_kx_%d_ky_%d_kz_%d", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, 
-			       Manager.GetDouble("mass"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), i, j, k);
-		    }
-		  else
-		    {
-		      sprintf (EigenstateOutputFile, "fermions_quantumspinhall3d_simpleti_fourbands_n_%d_x_%d_y_%d_z_%d_u_%f_m_%f_gx_%f_gy_%f_gz_%f_kx_%d_ky_%d_kz_%d", NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, 
-			       Manager.GetDouble("u-potential"), Manager.GetDouble("mass"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), i, j, k);
-		    }
+		  char* TmpExtention = new char [512];
+		  sprintf (TmpExtention, "_kx_%d_ky_%d_kz_%d", i, j, k);
+		  EigenstateOutputFile = ReplaceExtensionToFileName(EigenvalueOutputFile, ".dat", TmpExtention);
+
 		  GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
 		  FirstRunFlag = false;
 		  MainTaskOperation TaskOperation (&Task);

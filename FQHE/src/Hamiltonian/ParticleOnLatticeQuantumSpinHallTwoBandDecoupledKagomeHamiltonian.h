@@ -239,6 +239,99 @@ class ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian : public
   // ky4 = second annihilation momentum along y for the C site
   Complex ComputeTwoBodyMatrixElementCUpCDown(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
     
+  // compute the matrix element for on-site two body interaction involving A sites and spin up-up
+  //
+  // return value = corresponding matrix element
+  Complex ComputeTwoBodyMatrixElementOnSiteAUpAUp();
+
+  // compute the matrix element for on-site two body interaction involving A sites and spin up-down
+  //
+  // return value = corresponding matrix element
+  Complex ComputeTwoBodyMatrixElementOnSiteAUpADown();
+  
+  // compute the matrix element for on-site two body interaction involving A sites and spin down-down
+  //
+  // return value = corresponding matrix element  
+  Complex ComputeTwoBodyMatrixElementOnSiteADownADown();
+
+  // compute the matrix element for on-site two body interaction involving B sites and spin up-up
+  //
+  // kx1 = first creation momentum along x for the B site
+  // ky1 = first creation momentum along y for the B site
+  // kx2 = second creation momentum along x for the B site
+  // ky2 = second creation momentum along y for the B site
+  // kx3 = first annihilation momentum along x for the B site
+  // ky3 = first annihilation momentum along y for the B site
+  // kx4 = second annihilation momentum along x for the B site
+  // ky4 = second annihilation momentum along y for the B site
+  // return value = corresponding matrix element
+  Complex ComputeTwoBodyMatrixElementOnSiteBUpBUp(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
+
+  // compute the matrix element for on-site two body interaction involving B sites and spin up-down
+  //
+  // kx1 = first creation momentum along x for the B site
+  // ky1 = first creation momentum along y for the B site
+  // kx2 = second creation momentum along x for the B site
+  // ky2 = second creation momentum along y for the B site
+  // kx3 = first annihilation momentum along x for the B site
+  // ky3 = first annihilation momentum along y for the B site
+  // kx4 = second annihilation momentum along x for the B site
+  // ky4 = second annihilation momentum along y for the B site
+  // return value = corresponding matrix element  
+  Complex ComputeTwoBodyMatrixElementOnSiteBUpBDown(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
+
+  // compute the matrix element for on-site two body interaction involving B sites and spin down-down
+  //
+  // kx1 = first creation momentum along x for the B site
+  // ky1 = first creation momentum along y for the B site
+  // kx2 = second creation momentum along x for the B site
+  // ky2 = second creation momentum along y for the B site
+  // kx3 = first annihilation momentum along x for the B site
+  // ky3 = first annihilation momentum along y for the B site
+  // kx4 = second annihilation momentum along x for the B site
+  // ky4 = second annihilation momentum along y for the B site
+  // return value = corresponding matrix element
+  Complex ComputeTwoBodyMatrixElementOnSiteBDownBDown(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
+
+  // compute the matrix element for on-site two body interaction involving C sites and spin up-up
+  //
+  // kx1 = first creation momentum along x for the C site
+  // ky1 = first creation momentum along y for the C site
+  // kx2 = second creation momentum along x for the C site
+  // ky2 = second creation momentum along y for the C site
+  // kx3 = first annihilation momentum along x for the C site
+  // ky3 = first annihilation momentum along y for the C site
+  // kx4 = second annihilation momentum along x for the C site
+  // ky4 = second annihilation momentum along y for the C site
+  // return value = corresponding matrix element  
+  Complex ComputeTwoBodyMatrixElementOnSiteCUpCUp(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
+
+  // compute the matrix element for on-site two body interaction involving C sites and spin up-down
+  //
+  // kx1 = first creation momentum along x for the C site
+  // ky1 = first creation momentum along y for the C site
+  // kx2 = second creation momentum along x for the C site
+  // ky2 = second creation momentum along y for the C site
+  // kx3 = first annihilation momentum along x for the C site
+  // ky3 = first annihilation momentum along y for the C site
+  // kx4 = second annihilation momentum along x for the C site
+  // ky4 = second annihilation momentum along y for the C site
+  // return value = corresponding matrix element
+  Complex ComputeTwoBodyMatrixElementOnSiteCUpCDown(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
+
+  // compute the matrix element for on-site two body interaction involving C sites and spin down-down
+  //
+  // kx1 = first creation momentum along x for the C site
+  // ky1 = first creation momentum along y for the C site
+  // kx2 = second creation momentum along x for the C site
+  // ky2 = second creation momentum along y for the C site
+  // kx3 = first annihilation momentum along x for the C site
+  // ky3 = first annihilation momentum along y for the C site
+  // kx4 = second annihilation momentum along x for the C site
+  // ky4 = second annihilation momentum along y for the C site
+  // return value = corresponding matrix element
+  Complex ComputeTwoBodyMatrixElementOnSiteCDownCDown(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
+
   // compute the one body transformation matrices and the optional one body band stucture contribution
   //
   // oneBodyBasis = array of one body transformation matrices (the leftmost upper block for the spin up, the rightmsdt lower block for the spin down)

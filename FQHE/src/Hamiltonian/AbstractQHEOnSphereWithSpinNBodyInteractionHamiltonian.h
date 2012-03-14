@@ -170,6 +170,19 @@ class AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian : public AbstractQH
   virtual long GetAllSymmetricIndices (int nbrValues, int nbrIndices, int*& nbrSortedIndicesPerSum, int**& sortedIndicesPerSum,
 				       double**& sortedIndicesPerSumSymmetryFactor);
 
+  // get all indices needed to characterize a  tensor made of two completly symmetric  sets of indices, sorted by the sum of the indices
+  //
+  // nbrValues = number of different values an index can have
+  // nbrIndicesUp = number of indices for the first set of indices (i.e. spin up)
+  // nbrIndicesDown = number of indices for the first set of indices (i.e. spin down), warning nbrIndicesDown should lower of equal to nbrIndicesUp
+  // nbrSortedIndicesPerSum = reference on a array where the number of group of indices per each index sum value is stored
+  // sortedIndicesPerSum = reference on a array where group of indices are stored (first array dimension corresponding to sum of the indices)
+  // sortedIndicesPerSumSymmetryFactor = reference on a array where symmetry factor (aka inverse of the product of the factorial of the number 
+  //                                      of time each index appears) are stored (first array dimension corresponding to sum of the indices)
+  // return value = total number of index groups
+  virtual long GetAllTwoSetSymmetricIndices (int nbrValues, int nbrIndicesUp, int nbrIndicesDown, int*& nbrSortedIndicesPerSum, int**& sortedIndicesPerSum,
+					     double**& sortedIndicesPerSumSymmetryFactor);
+
   // core part of the AddMultiply method involving n-body term
   // 
   // particles = pointer to the Hilbert space

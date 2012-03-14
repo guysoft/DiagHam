@@ -69,8 +69,11 @@ BosonOnSquareLatticeWithSU2SpinMomentumSpace::BosonOnSquareLatticeWithSU2SpinMom
 {  
   this->NbrBosons = nbrBosons;
   this->IncNbrBosons = this->NbrBosons + 1;
+  this->SzFlag = false;
   this->TotalLz = 0;
   this->TotalSpin = 0;
+  this->NbrBosonsUp = 0;
+  this->NbrBosonsDown = 0;
   this->NbrSiteX = nbrSiteX;
   this->NbrSiteY = nbrSiteY;
   this->KxMomentum = kxMomentum;
@@ -131,6 +134,72 @@ BosonOnSquareLatticeWithSU2SpinMomentumSpace::BosonOnSquareLatticeWithSU2SpinMom
     }
 }
 
+// basic constructor when Sz is conserved
+// 
+// nbrBosons = number of bosons
+// nbrSpinUp = number of particles with spin up
+// nbrSiteX = number of sites in the x direction
+// nbrSiteY = number of sites in the y direction
+// kxMomentum = momentum along the x direction
+// kyMomentum = momentum along the y direction
+// memory = amount of memory granted for precalculations
+
+BosonOnSquareLatticeWithSU2SpinMomentumSpace::BosonOnSquareLatticeWithSU2SpinMomentumSpace (int nbrBosons, int nbrSpinUp, int nbrSiteX, int nbrSiteY, int kxMomentum, int kyMomentum, unsigned long memory)
+{
+  this->NbrBosons = nbrBosons;
+  this->IncNbrBosons = this->NbrBosons + 1;
+  this->SzFlag = true;
+  this->TotalLz = 0;
+  this->TotalSpin = 0;
+  this->NbrBosonsUp = nbrSpinUp;
+  this->NbrBosonsDown = this->NbrBosons - this->NbrBosonsUp;
+  this->NbrSiteX = nbrSiteX;
+  this->NbrSiteY = nbrSiteY;
+  this->KxMomentum = kxMomentum;
+  this->KyMomentum = kyMomentum;
+  this->LzMax = this->NbrSiteX * this->NbrSiteY;
+  this->NbrLzValue = this->LzMax + 1;
+  this->Flag.Initialize();
+  this->TemporaryStateUp = new unsigned long[this->NbrLzValue];
+  this->TemporaryStateDown = new unsigned long[this->NbrLzValue];
+  this->ProdATemporaryStateUp = new unsigned long[this->NbrLzValue];
+  this->ProdATemporaryStateDown = new unsigned long[this->NbrLzValue];
+
+  this->NUpLzMax = this->LzMax + this->NbrBosonsUp - 1;
+  this->NDownLzMax = this->LzMax + this->NbrBosonsDown - 1;
+  this->FermionicLzMax = this->NUpLzMax;
+  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0, this->NbrBosonsUp);
+  if (this->LargeHilbertSpaceDimension >= (1l << 30))
+    this->HilbertSpaceDimension = 0;
+  else
+    this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+  if ( this->LargeHilbertSpaceDimension > 0l)
+    {
+      this->StateDescriptionUp = new unsigned long [this->LargeHilbertSpaceDimension];
+      this->StateDescriptionDown = new unsigned long [this->LargeHilbertSpaceDimension];
+      this->Flag.Initialize();
+      long TmpLargeHilbertSpaceDimension = this->GenerateStates(this->NbrBosons, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0, this->LzMax + this->NbrBosonsUp, this->LzMax + this->NbrBosonsDown, this->NbrBosonsUp, 0l);
+      if (this->LargeHilbertSpaceDimension != TmpLargeHilbertSpaceDimension)
+	{
+	  cout << "error while generating the Hilbert space " << this->LargeHilbertSpaceDimension << " " << TmpLargeHilbertSpaceDimension << endl;
+	}
+      SortDoubleElementArrayDownOrdering<unsigned long>(this->StateDescriptionUp, this->StateDescriptionDown, TmpLargeHilbertSpaceDimension);
+      this->GenerateLookUpTable(memory);
+#ifdef __DEBUG__
+      long UsedMemory = 0;
+      UsedMemory += (long) this->HilbertSpaceDimension * (4 * sizeof(unsigned long));
+      cout << "memory requested for Hilbert space = ";
+      if (UsedMemory >= 1024)
+	if (UsedMemory >= 1048576)
+	  cout << (UsedMemory >> 20) << "Mo" << endl;
+	else
+	  cout << (UsedMemory >> 10) << "ko" <<  endl;
+      else
+	cout << UsedMemory << endl;
+#endif
+    }
+}
+
 // copy constructor (without duplicating datas)
 //
 // bosons = reference on the hilbert space to copy to copy
@@ -147,6 +216,9 @@ BosonOnSquareLatticeWithSU2SpinMomentumSpace::BosonOnSquareLatticeWithSU2SpinMom
   this->IncNbrBosons = bosons.IncNbrBosons;
   this->TotalLz = bosons.TotalLz;
   this->TotalSpin = bosons.TotalSpin;
+  this->SzFlag = bosons.SzFlag;
+  this->NbrBosonsUp = bosons.NbrBosonsUp;
+  this->NbrBosonsDown = bosons.NbrBosonsDown;
   this->LzMax = bosons.LzMax;
   this->NbrLzValue = bosons.NbrLzValue;
   this->NUpLzMax = bosons.NUpLzMax;
@@ -201,6 +273,9 @@ BosonOnSquareLatticeWithSU2SpinMomentumSpace& BosonOnSquareLatticeWithSU2SpinMom
   this->IncNbrBosons = bosons.IncNbrBosons;
   this->TotalLz = bosons.TotalLz;
   this->TotalSpin = bosons.TotalSpin;
+  this->SzFlag = bosons.SzFlag;
+  this->NbrBosonsUp = bosons.NbrBosonsUp;
+  this->NbrBosonsDown = bosons.NbrBosonsDown;
   this->LzMax = bosons.LzMax;
   this->NbrLzValue = bosons.NbrLzValue;
   this->NUpLzMax = bosons.NUpLzMax;
@@ -310,6 +385,58 @@ long BosonOnSquareLatticeWithSU2SpinMomentumSpace::GenerateStates(int nbrBosons,
   return pos;
 };
 
+// generate all states corresponding to the constraints
+// 
+// nbrBosons = number of bosons
+// currentKx = current momentum along x for a single particle
+// currentKy = current momentum along y for a single particle
+// currentTotalKx = current total momentum along x
+// currentTotalKy = current total momentum along y
+// currentFermionicPositionUp = current fermionic position within the state description for the spin up
+// currentFermionicPositionDown = current fermionic position within the state description for the spin down
+// nbrSpinUp = number of particles with spin up
+// pos = position in StateDescription array where to store states
+// return value = position from which new states have to be stored
+
+long BosonOnSquareLatticeWithSU2SpinMomentumSpace::GenerateStates(int nbrBosons, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy, 
+								  int currentFermionicPositionUp, int currentFermionicPositionDown, int nbrSpinUp, long pos)
+{
+  if (currentKy < 0)
+    {
+      currentKy = this->NbrSiteY - 1;
+      currentKx--;
+    }
+  if ((nbrSpinUp < 0) || (nbrSpinUp > nbrBosons))
+    return 0l;
+  if (nbrBosons == 0)
+    {
+      if (((currentTotalKx % this->NbrSiteX) == this->KxMomentum) && ((currentTotalKy % this->NbrSiteY) == this->KyMomentum))
+	{
+ 	  this->StateDescriptionUp[pos] = 0x0ul;
+ 	  this->StateDescriptionDown[pos] = 0x0ul;
+	  return (pos + 1l);
+	}
+      else	
+	return pos;
+    }
+  if (currentKx < 0)
+    return pos;
+  for (int i = nbrSpinUp; i >= 0; --i)
+    {
+      unsigned long MaskUp = ((0x1ul << i) - 0x1ul) << (currentFermionicPositionUp - i - 1);
+      for (int j = nbrBosons - i; j >= 0; --j)
+	{
+	  long TmpPos = this->GenerateStates(nbrBosons - i - j, currentKx, currentKy - 1, currentTotalKx + ((i + j) * currentKx), currentTotalKy + ((i + j) * currentKy), currentFermionicPositionUp - i - 1, currentFermionicPositionDown - j - 1, nbrSpinUp - i, pos);
+	  unsigned long MaskDown = ((0x1ul << j) - 0x1ul) << (currentFermionicPositionDown - j - 1);
+	  for (; pos < TmpPos; ++pos)
+	    {
+	      this->StateDescriptionUp[pos] |= MaskUp;
+	      this->StateDescriptionDown[pos] |= MaskDown;
+	    }
+	}
+    }
+  return pos;
+}
 
 // evaluate Hilbert space dimension
 //
@@ -358,3 +485,58 @@ long BosonOnSquareLatticeWithSU2SpinMomentumSpace::EvaluateHilbertSpaceDimension
     Count += (((long) i) + 1l) * this->EvaluateHilbertSpaceDimension(nbrBosons - i, currentKx, currentKy - 1, currentTotalKx + (i * currentKx), currentTotalKy + (i * currentKy));
   return Count;
 }
+
+// evaluate Hilbert space dimension with a fixed number of bosons with spin up
+//
+// nbrBosons = number of bosons
+// currentKx = current momentum along x for a single particle
+// currentKy = current momentum along y for a single particle
+// currentTotalKx = current total momentum along x
+// currentTotalKy = current total momentum along y
+// nbrSpinUp = number of particles with spin up
+// return value = Hilbert space dimension
+
+long BosonOnSquareLatticeWithSU2SpinMomentumSpace::EvaluateHilbertSpaceDimension(int nbrBosons, int currentKx, int currentKy, int currentTotalKx, int currentTotalKy, int nbrSpinUp)
+{
+  if (currentKy < 0)
+    {
+      currentKy = this->NbrSiteY - 1;
+      currentKx--;
+    }
+
+  if ((nbrSpinUp < 0) || (nbrSpinUp > nbrBosons))
+    return 0l;
+
+  if (nbrBosons == 0)
+    {
+      if (((currentTotalKx % this->NbrSiteX) == this->KxMomentum) && ((currentTotalKy % this->NbrSiteY) == this->KyMomentum))
+	return 1l;
+      else	
+	return 0l;
+    }
+  if (currentKx < 0)
+    return 0l;
+  long Count = 0;
+  if (nbrBosons == 1)
+    {
+      for (int j = currentKy; j >= 0; --j)
+	{
+	  if ((((currentKx + currentTotalKx) % this->NbrSiteX) == this->KxMomentum) && (((j + currentTotalKy) % this->NbrSiteY) == this->KyMomentum))
+	    Count++;
+	}
+      for (int i = currentKx - 1; i >= 0; --i)
+	{
+	  for (int j = this->NbrSiteY - 1; j >= 0; --j)
+	    {
+	      if ((((i + currentTotalKx) % this->NbrSiteX) == this->KxMomentum) && (((j + currentTotalKy) % this->NbrSiteY) == this->KyMomentum))
+		Count++;
+	    }
+	}
+      return Count;
+    }
+  for (int i = nbrBosons; i >= 0; --i)
+    for (int j = i; j >= 0; --j)
+      Count += this->EvaluateHilbertSpaceDimension(nbrBosons - i, currentKx, currentKy - 1, currentTotalKx + (i * currentKx), currentTotalKy + (i * currentKy), nbrSpinUp -j);
+  return Count;
+}
+

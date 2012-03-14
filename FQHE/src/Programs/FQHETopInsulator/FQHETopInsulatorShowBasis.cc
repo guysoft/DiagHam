@@ -10,6 +10,7 @@
 #include "HilbertSpace/BosonOnSquareLatticeWannierSpace.h"
 #include "HilbertSpace/BosonOnSquareLatticeWithSU2SpinMomentumSpace.h"
 #include "HilbertSpace/BosonOnSquareLatticeWithSU3SpinMomentumSpace.h"
+#include "HilbertSpace/BosonOnSquareLatticeWithSU4SpinMomentumSpace.h"
 
 #include "Vector/ComplexVector.h"
 
@@ -210,12 +211,16 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      // Space = new BosonOnSquareLatticeWithSU2SpinMomentumSpace (NbrParticles (Sz + NbrParticles) / 2, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
+	      Space = new BosonOnSquareLatticeWithSU2SpinMomentumSpace (NbrParticles, (Sz + NbrParticles) / 2, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
 	    }
 	}
       if (Manager.GetInteger("nbr-subbands") == 3)
 	{
 	  Space = new BosonOnSquareLatticeWithSU3SpinMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
+	}
+      if (Manager.GetInteger("nbr-subbands") == 4)
+	{
+	  Space = new BosonOnSquareLatticeWithSU4SpinMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
 	}
       if (Manager.GetString("save-hilbert") != 0)
 	{

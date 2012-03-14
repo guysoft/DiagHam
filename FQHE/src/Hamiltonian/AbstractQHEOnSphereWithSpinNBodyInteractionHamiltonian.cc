@@ -892,6 +892,9 @@ long  AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::GetAllTwoSetSkewSy
       int MinSumDown = (nbrIndicesDown * (nbrIndicesDown - 1)) / 2;
       int MaxSum = MaxSumUp + MaxSumDown;
       int MinSum = MinSumUp + MinSumDown;
+      sortedIndicesPerSum = new int* [MaxSum + 1];
+      for (int i = 0; i <= MaxSum; ++i)
+	nbrSortedIndicesPerSum[i] = 0;
       for (int i = MinSum; i <= MaxSum; ++i)
 	{
 	  int TmpMinSumUp = i - MaxSumDown;
@@ -922,6 +925,176 @@ long  AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::GetAllTwoSetSkewSy
 			TmpSortedIndicesPerSum[Pos2++] = TmpSortedIndicesPerSumUp2[Pos + l];
 		      for (int l = 0; l < nbrIndicesDown; ++l)
 			TmpSortedIndicesPerSum[Pos2++] = TmpSortedIndicesPerSumDown2[Pos3++];		      
+		    }
+		  Pos += nbrIndicesUp;
+		}
+	    }
+	}
+      for (long i = MinSumDown; i <= MaxSumDown; ++i)
+	delete[] TmpSortedIndicesPerSumDown[i];
+      delete[] TmpNbrSortedIndicesPerSumDown;
+      delete[] TmpSortedIndicesPerSumDown;
+    }
+  for (long i = MinSumUp; i <= MaxSumUp; ++i)
+    delete[] TmpSortedIndicesPerSumUp[i];
+  delete[] TmpNbrSortedIndicesPerSumUp;
+  delete[] TmpSortedIndicesPerSumUp;
+  return NbrElements;
+}
+
+// get all indices needed to characterize a  tensor made of two completly symmetric  sets of indices, sorted by the sum of the indices
+//
+// nbrValues = number of different values an index can have
+// nbrIndicesUp = number of indices for the first set of indices (i.e. spin up)
+// nbrIndicesDown = number of indices for the first set of indices (i.e. spin down), warning nbrIndicesDown should lower of equal to nbrIndicesUp
+// nbrSortedIndicesPerSum = reference on a array where the number of group of indices per each index sum value is stored
+// sortedIndicesPerSum = reference on a array where group of indices are stored (first array dimension corresponding to sum of the indices)
+// sortedIndicesPerSumSymmetryFactor = reference on a array where symmetry factor (aka inverse of the product of the factorial of the number 
+//                                      of time each index appears) are stored (first array dimension corresponding to sum of the indices)
+// return value = total number of index groups
+
+long AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::GetAllTwoSetSymmetricIndices (int nbrValues, int nbrIndicesUp, int nbrIndicesDown, int*& nbrSortedIndicesPerSum, int**& sortedIndicesPerSum,
+											   double**& sortedIndicesPerSumSymmetryFactor)
+{
+  int* TmpNbrSortedIndicesPerSumUp;
+  int** TmpSortedIndicesPerSumUp;
+  double** TmpSortedIndicesPerSumSymmetryFactorUp;
+  this->GetAllSymmetricIndices(nbrValues, nbrIndicesUp, TmpNbrSortedIndicesPerSumUp, TmpSortedIndicesPerSumUp,
+			       TmpSortedIndicesPerSumSymmetryFactorUp);
+  int MaxSumUp = (nbrValues - 1) * nbrIndicesUp;
+  int MinSumUp = 0;
+  long NbrElements = 0l;
+  if (nbrIndicesDown == 1)
+    {
+      int MaxSum = MaxSumUp + nbrValues - 1;
+      int MinSum = MinSumUp;
+      nbrSortedIndicesPerSum = new int [MaxSum + 1];
+      sortedIndicesPerSum = new int* [MaxSum + 1];
+      sortedIndicesPerSumSymmetryFactor = new double* [MaxSum + 1];
+      for (int i = 0; i <= MaxSum; ++i)
+	nbrSortedIndicesPerSum[i] = 0;
+      nbrSortedIndicesPerSum[MinSum] = TmpNbrSortedIndicesPerSumUp[MinSumUp];
+      sortedIndicesPerSum[MinSum] = new int [nbrSortedIndicesPerSum[MinSum] * (nbrIndicesUp + 1)];     
+      sortedIndicesPerSumSymmetryFactor[MinSum] = new double [nbrSortedIndicesPerSum[MinSum]];
+      int Lim = nbrSortedIndicesPerSum[MinSum];
+      int* TmpSortedIndicesPerSum = sortedIndicesPerSum[MinSum];
+      int* TmpSortedIndicesPerSumUp2 = TmpSortedIndicesPerSumUp[MinSum];
+      double* TmpSortedIndicesPerSumSymmetryFactor = sortedIndicesPerSumSymmetryFactor[MinSum];
+      double* TmpSortedIndicesPerSumSymmetryFactorUp2 = TmpSortedIndicesPerSumSymmetryFactorUp[MinSum];
+	int Pos = 0;
+      int Pos2 = 0;
+      for (int i = 0; i < Lim; ++i)
+	{
+	  for (int j = 0; j < nbrIndicesUp; ++j)
+	    {
+	      TmpSortedIndicesPerSum[Pos2++] = TmpSortedIndicesPerSumUp2[Pos++];
+	    }
+	  TmpSortedIndicesPerSum[Pos2++] = 0;
+	  TmpSortedIndicesPerSumSymmetryFactor[i] = TmpSortedIndicesPerSumSymmetryFactorUp2[i];
+	}
+      nbrSortedIndicesPerSum[MaxSum] = TmpNbrSortedIndicesPerSumUp[MaxSumUp];
+      sortedIndicesPerSum[MaxSum] = new int [nbrSortedIndicesPerSum[MaxSum] * (nbrIndicesUp + 1)];     
+      sortedIndicesPerSumSymmetryFactor[MaxSum] = new double [nbrSortedIndicesPerSum[MaxSum]];
+      Lim = nbrSortedIndicesPerSum[MaxSum];
+      TmpSortedIndicesPerSum = sortedIndicesPerSum[MaxSum];
+      TmpSortedIndicesPerSumUp2 = TmpSortedIndicesPerSumUp[MaxSumUp];
+      TmpSortedIndicesPerSumSymmetryFactor = sortedIndicesPerSumSymmetryFactor[MaxSum];
+      TmpSortedIndicesPerSumSymmetryFactorUp2 = TmpSortedIndicesPerSumSymmetryFactorUp[MaxSumUp];
+      Pos = 0;
+      Pos2 = 0;
+      for (int i = 0; i < Lim; ++i)
+	{
+	  for (int j = 0; j < nbrIndicesUp; ++j)
+	    TmpSortedIndicesPerSum[Pos2++] = TmpSortedIndicesPerSumUp2[Pos++];
+	  TmpSortedIndicesPerSum[Pos2++] = nbrValues - 1;
+	  TmpSortedIndicesPerSumSymmetryFactor[i] = TmpSortedIndicesPerSumSymmetryFactorUp2[i];
+	}
+      for (int i = MinSum + 1; i < MaxSum; ++i)
+	{
+	  int TmpMinSumUp = i - nbrValues + 1;
+	  if (TmpMinSumUp < MinSumUp)
+	    TmpMinSumUp = MinSumUp;
+	  int TmpMaxSumUp = i;
+	  if (TmpMaxSumUp > MaxSumUp)
+	    TmpMaxSumUp = MaxSumUp;
+	  for (int j = TmpMinSumUp; j <= TmpMaxSumUp; ++j)
+	    nbrSortedIndicesPerSum[i] += TmpNbrSortedIndicesPerSumUp[j];
+	  NbrElements += (long) nbrSortedIndicesPerSum[i];
+	  sortedIndicesPerSum[i] = new int [nbrSortedIndicesPerSum[i] * (nbrIndicesUp + 1)];
+	  sortedIndicesPerSumSymmetryFactor[i] = new double [nbrSortedIndicesPerSum[i]];
+	  int Pos2 = 0;
+	  int* TmpSortedIndicesPerSum = sortedIndicesPerSum[i];
+	  double* TmpSortedIndicesPerSumSymmetryFactor = sortedIndicesPerSumSymmetryFactor[i];
+	  int Pos3 = 0;
+	  for (int j = TmpMinSumUp; j <= TmpMaxSumUp; ++j)
+	    {
+	      int* TmpSortedIndicesPerSumUp2 = TmpSortedIndicesPerSumUp[j];
+	      double* TmpSortedIndicesPerSumSymmetryFactorUp2 = TmpSortedIndicesPerSumSymmetryFactorUp[j];
+	      int Lim = TmpNbrSortedIndicesPerSumUp[j];
+	      int Pos = 0;
+	      for (int k = 0; k < Lim; ++k)
+		{
+		  for (int l = 0; l < nbrIndicesUp; ++l)
+		    TmpSortedIndicesPerSum[Pos2++] = TmpSortedIndicesPerSumUp2[Pos++];
+		  TmpSortedIndicesPerSum[Pos2++] = i - j;
+		  TmpSortedIndicesPerSumSymmetryFactor[Pos3++] = TmpSortedIndicesPerSumSymmetryFactorUp2[k];
+		}
+	    }
+	}
+    }
+  else
+    {
+      int* TmpNbrSortedIndicesPerSumDown;
+      int** TmpSortedIndicesPerSumDown;
+      double** TmpSortedIndicesPerSumSymmetryFactorDown;
+      this->GetAllSymmetricIndices(nbrValues, nbrIndicesDown, TmpNbrSortedIndicesPerSumDown, TmpSortedIndicesPerSumDown,
+				   TmpSortedIndicesPerSumSymmetryFactorDown);
+      int MaxSumDown = (nbrValues - 1) * nbrIndicesDown;
+      int MinSumDown = 0;
+      int MaxSum = MaxSumUp + MaxSumDown;
+      int MinSum = MinSumUp + MinSumDown;
+      sortedIndicesPerSum = new int* [MaxSum + 1];
+      sortedIndicesPerSumSymmetryFactor = new double* [MaxSum + 1];
+      for (int i = 0; i <= MaxSum; ++i)
+	nbrSortedIndicesPerSum[i] = 0;
+      for (int i = MinSum; i <= MaxSum; ++i)
+	{
+	  int TmpMinSumUp = i - MaxSumDown;
+	  if (TmpMinSumUp < MinSumUp)
+	    TmpMinSumUp = MinSumUp;
+	  int TmpMaxSumUp = i - MinSumDown;
+	  if (TmpMaxSumUp > MaxSumUp)
+	    TmpMaxSumUp = MaxSumUp;
+	  for (int j = TmpMinSumUp; j <= TmpMaxSumUp; ++j)
+	    nbrSortedIndicesPerSum[i] += TmpNbrSortedIndicesPerSumUp[j] * TmpNbrSortedIndicesPerSumDown[i - j];
+	  NbrElements += (long) nbrSortedIndicesPerSum[i];
+	  sortedIndicesPerSum[i] = new int [nbrSortedIndicesPerSum[i] * (nbrIndicesUp + nbrIndicesDown)];
+	  sortedIndicesPerSumSymmetryFactor[i] = new double [nbrSortedIndicesPerSum[i]];
+	  int Pos2 = 0;
+	  int* TmpSortedIndicesPerSum = sortedIndicesPerSum[i];
+	  double* TmpSortedIndicesPerSumSymmetryFactor = sortedIndicesPerSumSymmetryFactor[i];
+	  for (int j = TmpMinSumUp; j <= TmpMaxSumUp; ++j)
+	    {
+	      int* TmpSortedIndicesPerSumUp2 = TmpSortedIndicesPerSumUp[j];
+	      double* TmpSortedIndicesPerSumSymmetryFactorUp2 = TmpSortedIndicesPerSumSymmetryFactorUp[j];
+	      int Lim = TmpNbrSortedIndicesPerSumUp[j];
+	      int Pos = 0;
+	      int Pos4 = 0;
+	      for (int k = 0; k < Lim; ++k)
+		{
+		  int Pos3 = 0;
+		  int* TmpSortedIndicesPerSumDown2 = TmpSortedIndicesPerSumDown[i - j];
+		  double* TmpSortedIndicesPerSumSymmetryFactorDown2 = TmpSortedIndicesPerSumSymmetryFactorDown[i - j];
+		  int Lim2 = TmpNbrSortedIndicesPerSumDown[i - j];
+		  for (int m = 0; m < Lim2; ++m)
+		    {
+		      for (int l = 0; l < nbrIndicesUp; ++l)
+			TmpSortedIndicesPerSum[Pos2++] = TmpSortedIndicesPerSumUp2[Pos + l];
+		      for (int l = 0; l < nbrIndicesDown; ++l)
+			TmpSortedIndicesPerSum[Pos2++] = TmpSortedIndicesPerSumDown2[Pos3++];		      
+		      TmpSortedIndicesPerSumSymmetryFactor[Pos4] = (TmpSortedIndicesPerSumSymmetryFactorUp2[k] * 
+								    TmpSortedIndicesPerSumSymmetryFactorDown2[m]);
+		      ++Pos4;
 		    }
 		  Pos += nbrIndicesUp;
 		}

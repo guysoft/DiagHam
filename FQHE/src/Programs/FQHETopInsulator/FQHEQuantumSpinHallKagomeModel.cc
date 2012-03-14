@@ -1,6 +1,7 @@
 #include "Options/Options.h"
 
 #include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpace.h"
+#include "HilbertSpace/BosonOnSquareLatticeWithSU2SpinMomentumSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
 
 //#include "Hamiltonian/ParticleOnLatticeQuantumSpinHallTwoBandKagomeHamiltonian.h"
@@ -15,6 +16,7 @@
 #include "Matrix/RealDiagonalMatrix.h"
 
 #include "MainTask/GenericComplexMainTask.h"
+#include "GeneralTools/FilenameTools.h"
 
 #include <iostream>
 #include <cstring>
@@ -65,6 +67,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('y', "nbr-sitey", "number of sites along the y direction", 3);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1);
+  (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive nearest neighbor potential strength between identical spins", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "v-potential", "repulsive on-site potential strength between opposite spins", 1.0);
@@ -81,6 +84,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
   (*SystemGroup) += new BooleanOption ('\n', "flat-band", "use flat band model");
   (*SystemGroup) += new BooleanOption ('\n', "decoupled", "assume two decoupled copies of the kagome lattice");
+  (*SystemGroup) += new BooleanOption ('\n', "fixed-sz", "fix the Sz value when considering two decoupled copies of the checkerboard lattice");
+  (*SystemGroup) += new SingleIntegerOption ('\n', "sz-value", "twice the fixed Sz value", 0);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
@@ -88,6 +93,8 @@ int main(int argc, char** argv)
 #ifdef __SCALAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-scalapack", "use SCALAPACK libraries instead of DiagHam or LAPACK libraries");
 #endif
+  (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
+  (*ToolsGroup) += new BooleanOption  ('\n', "test-hermitian", "test if the hamiltonian is hermitian");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -108,20 +115,29 @@ int main(int argc, char** argv)
 
   char* CommentLine = new char [256];
   sprintf (CommentLine, "eigenvalues\n# kx ky E");
+  char* StatisticPrefix = new char [16];
+  if (Manager.GetBoolean("boson") == false)
+    {
+      sprintf (StatisticPrefix, "fermions");
+    }
+  else
+    {
+      sprintf (StatisticPrefix, "bosons");
+    }
   char* EigenvalueOutputFile = new char [512];
   if (Manager.GetBoolean("flat-band") == true)
     {
       if (Manager.GetDouble("mu-s") == 0.0)
-	sprintf (EigenvalueOutputFile, "fermions_twoband_quantumspinhall_kagome_n_%d_x_%d_y_%d_v_%f_w_%f_t1_%f_t2_%f_l1_%f_l2_%f_gx_%f_gy_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	sprintf (EigenvalueOutputFile, "%s_twoband_quantumspinhall_kagome_n_%d_x_%d_y_%d_v_%f_w_%f_t1_%f_t2_%f_l1_%f_l2_%f_gx_%f_gy_%f.dat", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
       else
-	sprintf (EigenvalueOutputFile, "fermions_twoband_quantumspinhall_kagome_n_%d_x_%d_y_%d_v_%f_w_%f_t1_%f_t2_%f_l1_%f_l2_%f_gx_%f_gy_%f_mus_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+	sprintf (EigenvalueOutputFile, "%s_twoband_quantumspinhall_kagome_n_%d_x_%d_y_%d_v_%f_w_%f_t1_%f_t2_%f_l1_%f_l2_%f_gx_%f_gy_%f_mus_%f.dat", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
     }
   else
     {
       if (Manager.GetDouble("mu-s") == 0.0)
-	sprintf (EigenvalueOutputFile, "fermions_twoband_quantumspinhall_kagome_n_%d_x_%d_y_%d_u_%f_v_%f_w_%f_t1_%f_t2_%f_l1_%f_l2_%f_gx_%f_gy_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	sprintf (EigenvalueOutputFile, "%s_twoband_quantumspinhall_kagome_n_%d_x_%d_y_%d_u_%f_v_%f_w_%f_t1_%f_t2_%f_l1_%f_l2_%f_gx_%f_gy_%f.dat", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
       else
-	sprintf (EigenvalueOutputFile, "fermions_twoband_quantumspinhall_kagome_n_%d_x_%d_y_%d_u_%f_v_%f_w_%f_t1_%f_t2_%f_l1_%f_l2_%f_gx_%f_gy_%f_mus_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+	sprintf (EigenvalueOutputFile, "%s_twoband_quantumspinhall_kagome_n_%d_x_%d_y_%d_u_%f_v_%f_w_%f_t1_%f_t2_%f_l1_%f_l2_%f_gx_%f_gy_%f_mus_%f.dat", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
     }
 
   if (Manager.GetBoolean("singleparticle-spectrum") == true)
@@ -152,27 +168,28 @@ int main(int argc, char** argv)
 	  if (Manager.GetBoolean("decoupled") == false)
 	    {
 	      cout << "(kx=" << i << ",ky=" << j << ") " << endl;
-	      FermionOnSquareLatticeWithSpinMomentumSpace Space(NbrParticles, NbrSitesX, NbrSitesY, i, j);
-	      cout << "dim = " << Space.GetHilbertSpaceDimension()  << endl;
-	      Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());	
-	      AbstractQHEHamiltonian* Hamiltonian = 0;
-// new ParticleOnLatticeQuantumSpinHallTwoBandKagomeHamiltonian(&Space, NbrParticles, NbrSitesX, NbrSitesY,
-// 											       Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"),
-// 											       Manager.GetDouble("tpp"), Manager.GetDouble("mixing-norm"), Manager.GetDouble("mixing-arg") * 2.0 * M_PI, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
-// 											       Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
-		char* ContentPrefix = new char[256];
-	      sprintf (ContentPrefix, "%d %d", i, j);
-	      char* EigenstateOutputFile = new char [512];
-	      if (Manager.GetBoolean("flat-band") == true)
+	      ParticleOnSphereWithSpin* Space = 0;
+	      if (Manager.GetBoolean("boson") == false)
 		{
-		  sprintf (EigenstateOutputFile, "fermions_twoband_quantumspinhall_kagome_n_%d_x_%d_y_%d_t1_%f_t2_%f_l1_%f_l2_%f_gx_%f_gy_%f_kx_%d_ky_%d", NbrParticles, NbrSitesX, NbrSitesY, 
-			   Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j);
+		  Space = new FermionOnSquareLatticeWithSpinMomentumSpace(NbrParticles, NbrSitesX, NbrSitesY, i, j);
 		}
 	      else
 		{
-		  sprintf (EigenstateOutputFile, "fermions_twoband_quantumspinhall_kagome_n_%d_x_%d_y_%d_u_%f_t1_%f_t2_%f_l1_%f_l2_%f_gx_%f_gy_%f_kx_%d_ky_%d", NbrParticles, NbrSitesX, NbrSitesY, 
-			   Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j);
+		  Space = new BosonOnSquareLatticeWithSU2SpinMomentumSpace(NbrParticles, NbrSitesX, NbrSitesY, i, j);
 		}
+	      cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
+	      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
+	      AbstractQHEHamiltonian* Hamiltonian = 0;
+// new ParticleOnLatticeQuantumSpinHallTwoBandKagomeHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
+// 											       Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"),
+// 											       Manager.GetDouble("tpp"), Manager.GetDouble("mixing-norm"), Manager.GetDouble("mixing-arg") * 2.0 * M_PI, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
+// 											       Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+	      char* ContentPrefix = new char[256];
+	      sprintf (ContentPrefix, "%d %d", i, j);
+	      char* EigenstateOutputFile = new char [512];
+	      char* TmpExtention = new char [512];
+	      sprintf (TmpExtention, "_kx_%d_ky_%d", i, j);
+	      EigenstateOutputFile = ReplaceExtensionToFileName(EigenvalueOutputFile, ".dat", TmpExtention);
 	      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
 	      FirstRunFlag = false;
 	      MainTaskOperation TaskOperation (&Task);
@@ -181,17 +198,33 @@ int main(int argc, char** argv)
 	      delete Hamiltonian;
 	      delete[] EigenstateOutputFile;
 	      delete[] ContentPrefix;
+	      delete Space;
 	    }
 	  else
 	    {
-	      for (int Sz = -NbrParticles; Sz <= NbrParticles; Sz += 2)
+	      int MinSz = -NbrParticles;
+	      int MaxSz = NbrParticles;
+	      if (Manager.GetBoolean("fixed-sz") == true)
+		{
+		  MinSz = Manager.GetInteger("sz-value");
+		  MaxSz = MinSz;
+		}
+	      for (int Sz = MinSz; Sz <= MaxSz; Sz += 2)
 		{
 		  cout << "(kx=" << i << ",ky=" << j << ") Sz=" << Sz << " : " << endl;
-		  FermionOnSquareLatticeWithSpinMomentumSpace Space(NbrParticles, (Sz + NbrParticles) / 2, NbrSitesX, NbrSitesY, i, j);
-		  cout << "dim = " << Space.GetHilbertSpaceDimension()  << endl;
-		  Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());	
+		  ParticleOnSphereWithSpin* Space = 0;
+		  if (Manager.GetBoolean("boson") == false)
+		    {
+		      Space = new FermionOnSquareLatticeWithSpinMomentumSpace (NbrParticles, (Sz + NbrParticles) / 2, NbrSitesX, NbrSitesY, i, j);
+		    }
+		  else
+		    {
+		      Space = new BosonOnSquareLatticeWithSU2SpinMomentumSpace (NbrParticles, (Sz + NbrParticles) / 2, NbrSitesX, NbrSitesY, i, j);
+		    }
+		  cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
+		  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
 		  AbstractQHEHamiltonian* Hamiltonian = 0;
-		  Hamiltonian = new ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian(&Space, NbrParticles, NbrSitesX, NbrSitesY,
+		  Hamiltonian = new ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
 												      Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), 
 												      Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"),
 												      Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
@@ -199,24 +232,9 @@ int main(int argc, char** argv)
 		  char* ContentPrefix = new char[256];
 		  sprintf (ContentPrefix, "%d %d %d", i, j, Sz);
 		  char* EigenstateOutputFile = new char [512];
-		  if (Manager.GetBoolean("flat-band") == true)
-		    {
-		      if (Manager.GetDouble("mu-s") == 0.0)
-			sprintf (EigenstateOutputFile, "fermions_twoband_quantumspinhall_kagome_n_%d_x_%d_y_%d_v_%f_w_%f_t1_%f_t2_%f_l1_%f_l2_%f_gx_%f_gy_%f_kx_%d_ky_%d_sz_%d", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), 
-				 Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j, Sz);
-		      else
-			sprintf (EigenstateOutputFile, "fermions_twoband_quantumspinhall_kagome_n_%d_x_%d_y_%d_v_%f_w_%f_t1_%f_t2_%f_l1_%f_l2_%f_gx_%f_gy_%f_mus_%f_kx_%d_ky_%d_sz_%d", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), 
-				 Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"), i, j, Sz);
-		    }
-		  else
-		    {
-		      if (Manager.GetDouble("mu-s") == 0.0)
-			sprintf (EigenstateOutputFile, "fermions_twoband_quantumspinhall_kagome_n_%d_x_%d_y_%d_u_%f_v_%f_w_%f_t1_%f_t2_%f_l1_%f_l2_%f_gx_%f_gy_%f_kx_%d_ky_%d_sz_%d", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), 
-				 Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j, Sz);
-		      else
-			sprintf (EigenstateOutputFile, "fermions_twoband_quantumspinhall_kagome_n_%d_x_%d_y_%d_u_%f_v_%f_w_%f_t1_%f_t2_%f_l1_%f_l2_%f_gx_%f_gy_%f_mus_%f_kx_%d_ky_%d_sz_%d", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), 
-				 Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"), i, j, Sz);
-		    }
+		  char* TmpExtention = new char [512];
+		  sprintf (TmpExtention, "_kx_%d_ky_%d_sz_%d", i, j, Sz);
+		  EigenstateOutputFile = ReplaceExtensionToFileName(EigenvalueOutputFile, ".dat", TmpExtention);
 		  GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
 		  FirstRunFlag = false;
 		  MainTaskOperation TaskOperation (&Task);
@@ -225,6 +243,7 @@ int main(int argc, char** argv)
 		  delete Hamiltonian;
 		  delete[] EigenstateOutputFile;
 		  delete[] ContentPrefix;
+		  delete Space;
 		}
 	    }
 	}

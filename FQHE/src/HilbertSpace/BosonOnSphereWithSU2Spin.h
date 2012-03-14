@@ -251,6 +251,24 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
   // return value = index of the destination state 
   virtual int AddAdd (int m1, int m2, double& coefficient);
 
+  // apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
+  // spinIndices = array of spin indixes associated to each annihilation operators first index corresponding to the leftmost operator, 0 stands for spin down and 1 stands for spin up)
+  // nbrIndices = number of creation (or annihilation) operators
+  // return value =  multiplicative factor 
+  virtual double ProdA (int index, int* n, int* spinIndices, int nbrIndices);
+
+  // apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
+  //
+  // m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+  // spinIndices = array of spin indixes associated to each annihilation operators first index corresponding to the leftmost operator, 0 stands for spin down and 1 stands for spin up)
+  // nbrIndices = number of creation (or annihilation) operators
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int ProdAd (int* m, int* spinIndices, int nbrIndices, double& coefficient);
+
   // print a given State
   //
   // Str = reference on current output stream 
