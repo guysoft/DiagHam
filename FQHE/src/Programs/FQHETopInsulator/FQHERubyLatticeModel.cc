@@ -21,6 +21,7 @@
 #include "Matrix/RealDiagonalMatrix.h"
 
 #include "MainTask/GenericComplexMainTask.h"
+#include "GeneralTools/FilenameTools.h"
 
 #include <iostream>
 #include <cstring>
@@ -161,17 +162,37 @@ int main(int argc, char** argv)
     {
       if (Manager.GetBoolean("flat-band") == true)
 	{
-	  if (Manager.GetDouble("mu-s") == 0.0)
-	    sprintf (EigenvalueOutputFile, "%s_tr_%g_ti_%g_t1r_%g_t1i_%g_t4_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("tr"), Manager.GetDouble("ti"), Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	  if (Manager.GetDouble("v-potential") == 0.0)
+	    {
+	      if (Manager.GetDouble("mu-s") == 0.0)
+		sprintf (EigenvalueOutputFile, "%s_tr_%g_ti_%g_t1r_%g_t1i_%g_t4_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("tr"), Manager.GetDouble("ti"), Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	      else
+		sprintf (EigenvalueOutputFile, "%s_tr_%g_ti_%g_t1r_%g_t1i_%g_t4_%g_gx_%g_gy_%g_mus_%g.dat",FilePrefix, Manager.GetDouble("tr"), Manager.GetDouble("ti"), Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+	    }
 	  else
-	    sprintf (EigenvalueOutputFile, "%s_tr_%g_ti_%g_t1r_%g_t1i_%g_t4_%g_gx_%g_gy_%g_mus_%g.dat",FilePrefix, Manager.GetDouble("tr"), Manager.GetDouble("ti"), Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+	    {
+	      if (Manager.GetDouble("mu-s") == 0.0)
+		sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_tr_%g_ti_%g_t1r_%g_t1i_%g_t4_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("tr"), Manager.GetDouble("ti"), Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	      else
+		sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_tr_%g_ti_%g_t1r_%g_t1i_%g_t4_%g_gx_%g_gy_%g_mus_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("tr"), Manager.GetDouble("ti"), Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+	    }
 	}
       else
 	{
-	  if (Manager.GetDouble("mu-s") == 0.0)
-	    sprintf (EigenvalueOutputFile, "%s_u_%g_tr_%g_ti_%g_t1r_%g_t1i_%g_t4_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("tr"), Manager.GetDouble("ti"), Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	  if (Manager.GetDouble("v-potential") == 0.0)
+	    {
+	      if (Manager.GetDouble("mu-s") == 0.0)
+		sprintf (EigenvalueOutputFile, "%s_u_%g_tr_%g_ti_%g_t1r_%g_t1i_%g_t4_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("tr"), Manager.GetDouble("ti"), Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	      else
+		sprintf (EigenvalueOutputFile, "%s_u_%g_tr_%g_ti_%g_t1r_%g_t1i_%g_t4_%g_gx_%g_gy_%g_mus_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("tr"), Manager.GetDouble("ti"), Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+	    }
 	  else
-	    sprintf (EigenvalueOutputFile, "%s_u_%g_tr_%g_ti_%g_t1r_%g_t1i_%g_t4_%g_gx_%g_gy_%g_mus_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("tr"), Manager.GetDouble("ti"), Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+	    {
+	      if (Manager.GetDouble("mu-s") == 0.0)
+		sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_tr_%g_ti_%g_t1r_%g_t1i_%g_t4_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("tr"), Manager.GetDouble("ti"), Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	      else
+		sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_tr_%g_ti_%g_t1r_%g_t1i_%g_t4_%g_gx_%g_gy_%g_mus_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("tr"), Manager.GetDouble("ti"), Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+	    }
 	}
     }
 
@@ -226,9 +247,9 @@ int main(int argc, char** argv)
 	  if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false) && (Manager.GetBoolean("five-body") == false))
 	    { 
 	      Hamiltonian = new ParticleOnLatticeRubyLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
-										    Manager.GetDouble("u-potential"), Manager.GetDouble("tr"), Manager.GetDouble("ti"), Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"),
-										    Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
-										    Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+										  Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("tr"), Manager.GetDouble("ti"), Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"),
+										  Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
+										  Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 	    }
 	  else
 	    { 
@@ -268,28 +289,9 @@ int main(int argc, char** argv)
 	    sprintf (EigenstateOutputFile, "%s_kx_%d_ky_%d", Manager.GetString("eigenstate-file"), i, j);
 	  else
 	    {
-	      if (Manager.GetBoolean("flat-band") == true)
-		{
-		  if (Manager.GetDouble("mu-s") == 0.0)
-		    sprintf (EigenstateOutputFile, "%s_tr_%g_ti_%g_t1r_%g_t1i_%g_t4_%g_gx_%g_gy_%g_kx_%d_ky_%d",FilePrefix, 
-			     Manager.GetDouble("tr"), Manager.GetDouble("ti"), Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"),
-			     Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j);
-		  else
-		    sprintf (EigenstateOutputFile, "%s_tr_%g_ti_%g_t1r_%g_t1i_%g_t4_%g_gx_%g_gy_%g_mus_%g_kx_%d_ky_%d",FilePrefix, 
-			     Manager.GetDouble("tr"), Manager.GetDouble("ti"), Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"),
-			     Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"), i, j);
-		}
-	      else
-		{
-		  if (Manager.GetDouble("mu-s") == 0.0)
-		    sprintf (EigenstateOutputFile, "%s_u_%g_tr_%g_ti_%g_t1r_%g_t1i_%g_t4_%g_gx_%g_gy_%g_kx_%d_ky_%d",FilePrefix, 
-			     Manager.GetDouble("u-potential"), Manager.GetDouble("tr"), Manager.GetDouble("ti"), Manager.GetDouble("t1r"),
-			     Manager.GetDouble("t1i"), Manager.GetDouble("t4"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j);
-		  else
-		    sprintf (EigenstateOutputFile, "%s_u_%g_tr_%g_ti_%g_t1r_%g_t1i_%g_t4_%g_gx_%g_gy_%g_mus_%g_kx_%d_ky_%d",FilePrefix, 
-			     Manager.GetDouble("u-potential"), Manager.GetDouble("tr"), Manager.GetDouble("ti"), Manager.GetDouble("t1r"),
-			     Manager.GetDouble("t1i"), Manager.GetDouble("t4"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"), i, j);
-		}
+	      char* TmpExtention = new char [512];
+	      sprintf (TmpExtention, "_kx_%d_ky_%d", i, j);
+	      EigenstateOutputFile = ReplaceExtensionToFileName(EigenvalueOutputFile, ".dat", TmpExtention);
 	    }
 	  GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
 	  FirstRunFlag = false;

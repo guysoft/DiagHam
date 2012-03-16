@@ -59,6 +59,7 @@ using std::cos;
 // nbrCellX = number of sites in the x direction
 // nbrCellY = number of sites in the y direction
 // uPotential = strength of the repulsive two body neareast neighbor interaction
+// vPotential = strength of the repulsive two body next neareast neighbor interaction
 // tr = real part of the hopping amplitude between neareast neighbor sites with same parity
 // ti = imaginary part of the hopping amplitude between neareast neighbor sites with same parity
 // t1r = real part of the hopping amplitude next neareast neighbor sites with different parity
@@ -72,7 +73,7 @@ using std::cos;
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
 ParticleOnLatticeRubyLatticeSingleBandHamiltonian::ParticleOnLatticeRubyLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrCellX, 
-												       int nbrCellY, double uPotential, double tr, double ti, double t1r, double t1i, double t4, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
+												       int nbrCellY, double uPotential, double vPotential, double tr, double ti, double t1r, double t1i, double t4, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -93,6 +94,7 @@ ParticleOnLatticeRubyLatticeSingleBandHamiltonian::ParticleOnLatticeRubyLatticeS
   this->GammaY = gammaY;
   this->FlatBand = flatBandFlag;
   this->UPotential = uPotential;
+  this->VPotential = vPotential;
 
   this->Architecture = architecture;
   this->Memory = memory;
@@ -314,6 +316,21 @@ void ParticleOnLatticeRubyLatticeSingleBandHamiltonian::EvaluateInteractionFacto
 		  }
 	      }
       double FactorU = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
+      FactorU = 0.0;
+      
+      double FactorVA1A2 = this->VPotential * 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
+      double FactorVA1A3 = this->VPotential * 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
+      double FactorVA1A5 = this->VPotential * 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
+      double FactorVA1A6 = this->VPotential * 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
+      double FactorVA2A3 = this->VPotential * 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
+      double FactorVA2A4 = this->VPotential * 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
+      double FactorVA2A6 = this->VPotential * 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
+      double FactorVA3A4 = this->VPotential * 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
+      double FactorVA3A5 = this->VPotential * 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
+      double FactorVA4A5 = this->VPotential * 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
+      double FactorVA4A6 = this->VPotential * 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
+      double FactorVA5A6 = this->VPotential * 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
+      
       if (this->FlatBand == false)
 	FactorU *= this->UPotential;
       this->InteractionFactors = new Complex* [this->NbrSectorSums];
@@ -366,6 +383,66 @@ void ParticleOnLatticeRubyLatticeSingleBandHamiltonian::EvaluateInteractionFacto
  		  this->InteractionFactors[i][Index] += FactorU * (Conj(OneBodyBasis[Index2][0][5]) * OneBodyBasis[Index3][0][5] * Conj(OneBodyBasis[Index1][0][5]) * OneBodyBasis[Index4][0][5]) * this->ComputeTwoBodyMatrixElementOnSiteA6A6();
  		  this->InteractionFactors[i][Index] += FactorU * (Conj(OneBodyBasis[Index1][0][5]) * OneBodyBasis[Index4][0][5] * Conj(OneBodyBasis[Index2][0][5]) * OneBodyBasis[Index3][0][5]) * this->ComputeTwoBodyMatrixElementOnSiteA6A6();
  		  this->InteractionFactors[i][Index] += FactorU * (Conj(OneBodyBasis[Index2][0][5]) * OneBodyBasis[Index4][0][5] * Conj(OneBodyBasis[Index1][0][5]) * OneBodyBasis[Index3][0][5]) * this->ComputeTwoBodyMatrixElementOnSiteA6A6();
+
+		   this->InteractionFactors[i][Index] += FactorVA1A2 * (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]) * this->ComputeTwoBodyMatrixElementA1A2();
+ 		  this->InteractionFactors[i][Index] += FactorVA1A2 * (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]) * this->ComputeTwoBodyMatrixElementA1A2();
+ 		  this->InteractionFactors[i][Index] += FactorVA1A2 * (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1]) * this->ComputeTwoBodyMatrixElementA1A2();
+ 		  this->InteractionFactors[i][Index] += FactorVA1A2 * (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1]) * this->ComputeTwoBodyMatrixElementA1A2();
+
+ 		  this->InteractionFactors[i][Index] += FactorVA1A3 * (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index4][0][2]) * this->ComputeTwoBodyMatrixElementA1A3();
+ 		  this->InteractionFactors[i][Index] += FactorVA1A3 * (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index1][0][2]) * OneBodyBasis[Index4][0][2]) * this->ComputeTwoBodyMatrixElementA1A3();
+ 		  this->InteractionFactors[i][Index] += FactorVA1A3 * (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index3][0][2]) * this->ComputeTwoBodyMatrixElementA1A3();
+ 		  this->InteractionFactors[i][Index] += FactorVA1A3 * (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index1][0][2]) * OneBodyBasis[Index3][0][2]) * this->ComputeTwoBodyMatrixElementA1A3();
+
+ 		  this->InteractionFactors[i][Index] += FactorVA1A5 * (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index2][0][4]) * OneBodyBasis[Index4][0][4]) * this->ComputeTwoBodyMatrixElementA1A5();
+ 		  this->InteractionFactors[i][Index] += FactorVA1A5 * (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index1][0][4]) * OneBodyBasis[Index4][0][4]) * this->ComputeTwoBodyMatrixElementA1A5();
+ 		  this->InteractionFactors[i][Index] += FactorVA1A5 * (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index2][0][4]) * OneBodyBasis[Index3][0][4]) * this->ComputeTwoBodyMatrixElementA1A5();
+ 		  this->InteractionFactors[i][Index] += FactorVA1A5 * (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index1][0][4]) * OneBodyBasis[Index3][0][4]) * this->ComputeTwoBodyMatrixElementA1A5();
+
+ 		  this->InteractionFactors[i][Index] += FactorVA1A6 * (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index2][0][5]) * OneBodyBasis[Index4][0][5]) * this->ComputeTwoBodyMatrixElementA1A6(kx2, ky2, kx4, ky4);
+ 		  this->InteractionFactors[i][Index] += FactorVA1A6 * (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index1][0][5]) * OneBodyBasis[Index4][0][5]) * this->ComputeTwoBodyMatrixElementA1A6(kx1, ky1, kx4, ky4);
+ 		  this->InteractionFactors[i][Index] += FactorVA1A6 * (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index2][0][5]) * OneBodyBasis[Index3][0][5]) * this->ComputeTwoBodyMatrixElementA1A6(kx2, ky2, kx3, ky3);
+ 		  this->InteractionFactors[i][Index] += FactorVA1A6 * (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index1][0][5]) * OneBodyBasis[Index3][0][5]) * this->ComputeTwoBodyMatrixElementA1A6(kx1, ky1, kx3, ky3);
+
+ 		  this->InteractionFactors[i][Index] += FactorVA2A3 * (Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1] * Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index4][0][2]) * this->ComputeTwoBodyMatrixElementA2A3(kx2, ky2, kx4, ky4);
+ 		  this->InteractionFactors[i][Index] += FactorVA2A3 * (Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1] * Conj(OneBodyBasis[Index1][0][2]) * OneBodyBasis[Index4][0][2]) * this->ComputeTwoBodyMatrixElementA2A3(kx1, ky1, kx4, ky4);
+ 		  this->InteractionFactors[i][Index] += FactorVA2A3 * (Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1] * Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index3][0][2]) * this->ComputeTwoBodyMatrixElementA2A3(kx2, ky2, kx3, ky3);
+ 		  this->InteractionFactors[i][Index] += FactorVA2A3 * (Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1] * Conj(OneBodyBasis[Index1][0][2]) * OneBodyBasis[Index3][0][2]) * this->ComputeTwoBodyMatrixElementA2A3(kx1, ky1, kx3, ky3);
+
+ 		  this->InteractionFactors[i][Index] += FactorVA2A4 * (Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1] * Conj(OneBodyBasis[Index2][0][3]) * OneBodyBasis[Index4][0][3]) * this->ComputeTwoBodyMatrixElementA2A4();
+ 		  this->InteractionFactors[i][Index] += FactorVA2A4 * (Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1] * Conj(OneBodyBasis[Index1][0][3]) * OneBodyBasis[Index4][0][3]) * this->ComputeTwoBodyMatrixElementA2A4();
+ 		  this->InteractionFactors[i][Index] += FactorVA2A4 * (Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1] * Conj(OneBodyBasis[Index2][0][3]) * OneBodyBasis[Index3][0][3]) * this->ComputeTwoBodyMatrixElementA2A4();
+ 		  this->InteractionFactors[i][Index] += FactorVA2A4 * (Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1] * Conj(OneBodyBasis[Index1][0][3]) * OneBodyBasis[Index3][0][3]) * this->ComputeTwoBodyMatrixElementA2A4();
+
+ 		  this->InteractionFactors[i][Index] += FactorVA2A6 * (Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1] * Conj(OneBodyBasis[Index2][0][5]) * OneBodyBasis[Index4][0][5]) * this->ComputeTwoBodyMatrixElementA2A6();
+ 		  this->InteractionFactors[i][Index] += FactorVA2A6 * (Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1] * Conj(OneBodyBasis[Index1][0][5]) * OneBodyBasis[Index4][0][5]) * this->ComputeTwoBodyMatrixElementA2A6();
+ 		  this->InteractionFactors[i][Index] += FactorVA2A6 * (Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1] * Conj(OneBodyBasis[Index2][0][5]) * OneBodyBasis[Index3][0][5]) * this->ComputeTwoBodyMatrixElementA2A6();
+ 		  this->InteractionFactors[i][Index] += FactorVA2A6 * (Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1] * Conj(OneBodyBasis[Index1][0][5]) * OneBodyBasis[Index3][0][5]) * this->ComputeTwoBodyMatrixElementA2A6();
+
+ 		  this->InteractionFactors[i][Index] += FactorVA3A4 * (Conj(OneBodyBasis[Index1][0][2]) * OneBodyBasis[Index3][0][2] * Conj(OneBodyBasis[Index2][0][3]) * OneBodyBasis[Index4][0][3]) * this->ComputeTwoBodyMatrixElementA3A4(kx2, ky2, kx4, ky4);
+ 		  this->InteractionFactors[i][Index] += FactorVA3A4 * (Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index3][0][2] * Conj(OneBodyBasis[Index1][0][3]) * OneBodyBasis[Index4][0][3]) * this->ComputeTwoBodyMatrixElementA3A4(kx1, ky1, kx4, ky4);
+ 		  this->InteractionFactors[i][Index] += FactorVA3A4 * (Conj(OneBodyBasis[Index1][0][2]) * OneBodyBasis[Index4][0][2] * Conj(OneBodyBasis[Index2][0][3]) * OneBodyBasis[Index3][0][3]) * this->ComputeTwoBodyMatrixElementA3A4(kx2, ky2, kx3, ky3);
+ 		  this->InteractionFactors[i][Index] += FactorVA3A4 * (Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index4][0][2] * Conj(OneBodyBasis[Index1][0][3]) * OneBodyBasis[Index3][0][3]) * this->ComputeTwoBodyMatrixElementA3A4(kx1, ky1, kx3, ky3);
+
+ 		  this->InteractionFactors[i][Index] += FactorVA3A5 * (Conj(OneBodyBasis[Index1][0][2]) * OneBodyBasis[Index3][0][2] * Conj(OneBodyBasis[Index2][0][4]) * OneBodyBasis[Index4][0][4]) * this->ComputeTwoBodyMatrixElementA3A5();
+ 		  this->InteractionFactors[i][Index] += FactorVA3A5 * (Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index3][0][2] * Conj(OneBodyBasis[Index1][0][4]) * OneBodyBasis[Index4][0][4]) * this->ComputeTwoBodyMatrixElementA3A5();
+ 		  this->InteractionFactors[i][Index] += FactorVA3A5 * (Conj(OneBodyBasis[Index1][0][2]) * OneBodyBasis[Index4][0][2] * Conj(OneBodyBasis[Index2][0][4]) * OneBodyBasis[Index3][0][4]) * this->ComputeTwoBodyMatrixElementA3A5();
+ 		  this->InteractionFactors[i][Index] += FactorVA3A5 * (Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index4][0][2] * Conj(OneBodyBasis[Index1][0][4]) * OneBodyBasis[Index3][0][4]) * this->ComputeTwoBodyMatrixElementA3A5();
+
+ 		  this->InteractionFactors[i][Index] += FactorVA4A5 * (Conj(OneBodyBasis[Index1][0][3]) * OneBodyBasis[Index3][0][3] * Conj(OneBodyBasis[Index2][0][4]) * OneBodyBasis[Index4][0][4]) * this->ComputeTwoBodyMatrixElementA4A5();
+ 		  this->InteractionFactors[i][Index] += FactorVA4A5 * (Conj(OneBodyBasis[Index2][0][3]) * OneBodyBasis[Index3][0][3] * Conj(OneBodyBasis[Index1][0][4]) * OneBodyBasis[Index4][0][4]) * this->ComputeTwoBodyMatrixElementA4A5();
+ 		  this->InteractionFactors[i][Index] += FactorVA4A5 * (Conj(OneBodyBasis[Index1][0][3]) * OneBodyBasis[Index4][0][3] * Conj(OneBodyBasis[Index2][0][4]) * OneBodyBasis[Index3][0][4]) * this->ComputeTwoBodyMatrixElementA4A5();
+ 		  this->InteractionFactors[i][Index] += FactorVA4A5 * (Conj(OneBodyBasis[Index2][0][3]) * OneBodyBasis[Index4][0][3] * Conj(OneBodyBasis[Index1][0][4]) * OneBodyBasis[Index3][0][4]) * this->ComputeTwoBodyMatrixElementA4A5();
+
+ 		  this->InteractionFactors[i][Index] += FactorVA4A6 * (Conj(OneBodyBasis[Index1][0][3]) * OneBodyBasis[Index3][0][3] * Conj(OneBodyBasis[Index2][0][5]) * OneBodyBasis[Index4][0][5]) * this->ComputeTwoBodyMatrixElementA4A6();
+ 		  this->InteractionFactors[i][Index] += FactorVA4A6 * (Conj(OneBodyBasis[Index2][0][3]) * OneBodyBasis[Index3][0][3] * Conj(OneBodyBasis[Index1][0][5]) * OneBodyBasis[Index4][0][5]) * this->ComputeTwoBodyMatrixElementA4A6();
+ 		  this->InteractionFactors[i][Index] += FactorVA4A6 * (Conj(OneBodyBasis[Index1][0][3]) * OneBodyBasis[Index4][0][3] * Conj(OneBodyBasis[Index2][0][5]) * OneBodyBasis[Index3][0][5]) * this->ComputeTwoBodyMatrixElementA4A6();
+ 		  this->InteractionFactors[i][Index] += FactorVA4A6 * (Conj(OneBodyBasis[Index2][0][3]) * OneBodyBasis[Index4][0][3] * Conj(OneBodyBasis[Index1][0][5]) * OneBodyBasis[Index3][0][5]) * this->ComputeTwoBodyMatrixElementA4A6();
+
+ 		  this->InteractionFactors[i][Index] += FactorVA5A6 * (Conj(OneBodyBasis[Index1][0][4]) * OneBodyBasis[Index3][0][4] * Conj(OneBodyBasis[Index2][0][5]) * OneBodyBasis[Index4][0][5]) * this->ComputeTwoBodyMatrixElementA5A6(kx2, ky2, kx4, ky4);
+ 		  this->InteractionFactors[i][Index] += FactorVA5A6 * (Conj(OneBodyBasis[Index2][0][4]) * OneBodyBasis[Index3][0][4] * Conj(OneBodyBasis[Index1][0][5]) * OneBodyBasis[Index4][0][5]) * this->ComputeTwoBodyMatrixElementA5A6(kx1, ky1, kx4, ky4);
+ 		  this->InteractionFactors[i][Index] += FactorVA5A6 * (Conj(OneBodyBasis[Index1][0][4]) * OneBodyBasis[Index4][0][4] * Conj(OneBodyBasis[Index2][0][5]) * OneBodyBasis[Index3][0][5]) * this->ComputeTwoBodyMatrixElementA5A6(kx2, ky2, kx3, ky3);
+ 		  this->InteractionFactors[i][Index] += FactorVA5A6 * (Conj(OneBodyBasis[Index2][0][4]) * OneBodyBasis[Index4][0][4] * Conj(OneBodyBasis[Index1][0][5]) * OneBodyBasis[Index3][0][5]) * this->ComputeTwoBodyMatrixElementA5A6(kx1, ky1, kx3, ky3);
 
 
 		  if (Index3 == Index4)

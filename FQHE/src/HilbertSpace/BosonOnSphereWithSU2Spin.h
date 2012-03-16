@@ -37,6 +37,9 @@
 
 #include <iostream>
 
+using std::cout;
+using std::endl;
+
 
 class BosonOnSphereShort;
 
@@ -583,10 +586,10 @@ inline int BosonOnSphereWithSU2Spin::AdiAdj (int m1, int m2, unsigned long*& tem
       this->TemporaryStateUp[i] = this->ProdATemporaryStateUp[i];
       this->TemporaryStateDown[i] = this->ProdATemporaryStateDown[i];
     }
-  ++temporaryStatei[m2];
-  coefficient = temporaryStatei[m2];
-  ++temporaryStatej[m1];
-  coefficient *= temporaryStatej[m1];
+  ++temporaryStatej[m2];
+  coefficient = temporaryStatej[m2];
+  ++temporaryStatei[m1];
+  coefficient *= temporaryStatei[m1];
   coefficient = sqrt(coefficient);
   return this->FindStateIndex(this->TemporaryStateUp, this->TemporaryStateDown);
 }

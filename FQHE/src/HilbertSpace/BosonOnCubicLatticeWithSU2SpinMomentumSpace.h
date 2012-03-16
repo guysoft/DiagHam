@@ -6,10 +6,10 @@
 //                    Copyright (C) 2001-2011 Nicolas Regnault                //
 //                                                                            //
 //                                                                            //
-//                   class of fermions on cubic lattice with spin             //
-//                                  in momentum space                         //
+//                 class of bosons on a cubic lattice with SU(2) spin         //
+//                                in momentum space                           //
 //                                                                            //
-//                        last modification : 23/06/2011                      //
+//                        last modification : 15/03/2012                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,17 +29,17 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef FERMIONONCUBICLATTICEWITHSPINMOMENTUMSPACE_H
-#define FERMIONONCUBICLATTICEWITHSPINMOMENTUMSPACE_H
+#ifndef BOSONONCUBICLATTICEWITHSU2SPINMOMENTUMSPACE_H
+#define BOSONONCUBICLATTICEWITHSU2SPINMOMENTUMSPACE_H
 
 #include "config.h"
-#include "HilbertSpace/FermionOnSphereWithSpin.h"
+#include "HilbertSpace/BosonOnSphereWithSU2Spin.h"
 
 #include <iostream>
 
 
 
-class FermionOnCubicLatticeWithSpinMomentumSpace : public FermionOnSphereWithSpin
+class BosonOnCubicLatticeWithSU2SpinMomentumSpace : public BosonOnSphereWithSU2Spin
 {
 
  protected:
@@ -67,7 +67,7 @@ class FermionOnCubicLatticeWithSpinMomentumSpace : public FermionOnSphereWithSpi
 
   // basic constructor
   // 
-  // nbrFermions = number of fermions
+  // nbrBosons = number of bosons
   // nbrSiteX = number of sites in the x direction
   // nbrSiteY = number of sites in the y direction
   // nbrSiteZ = number of sites in the z direction
@@ -75,11 +75,12 @@ class FermionOnCubicLatticeWithSpinMomentumSpace : public FermionOnSphereWithSpi
   // kyMomentum = momentum along the y direction
   // kzMomentum = momentum along the z direction
   // memory = amount of memory granted for precalculations
-  FermionOnCubicLatticeWithSpinMomentumSpace (int nbrFermions, int nbrSiteX, int nbrSiteY, int nbrSiteZ, int kxMomentum, int kyMomentum, int kzMomentum, unsigned long memory = 10000000);
+  BosonOnCubicLatticeWithSU2SpinMomentumSpace (int nbrBosons, int nbrSiteX, int nbrSiteY, int nbrSiteZ,
+					       int kxMomentum, int kyMomentum, int kzMomentum, unsigned long memory = 10000000);
 
-  // basic constructor when Sz is preserved
+  // basic constructor when Sz is conserved
   // 
-  // nbrFermions = number of fermions
+  // nbrBosons = number of bosons
   // nbrSpinUp = number of particles with spin up
   // nbrSiteX = number of sites in the x direction
   // nbrSiteY = number of sites in the y direction
@@ -88,22 +89,23 @@ class FermionOnCubicLatticeWithSpinMomentumSpace : public FermionOnSphereWithSpi
   // kyMomentum = momentum along the y direction
   // kzMomentum = momentum along the z direction
   // memory = amount of memory granted for precalculations
-  FermionOnCubicLatticeWithSpinMomentumSpace (int nbrFermions, int nbrSpinUp, int nbrSiteX, int nbrSiteY, int nbrSiteZ, int kxMomentum, int kyMomentum, int kzMomentum, unsigned long memory = 10000000);
+  BosonOnCubicLatticeWithSU2SpinMomentumSpace (int nbrBosons, int nbrSpinUp, int nbrSiteX, int nbrSiteY, int nbrSiteZ,
+					       int kxMomentum, int kyMomentum, int kzMomentum, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
-  // fermions = reference on the hilbert space to copy to copy
-  FermionOnCubicLatticeWithSpinMomentumSpace(const FermionOnCubicLatticeWithSpinMomentumSpace& fermions);
+  // bosons = reference on the hilbert space to copy to copy
+  BosonOnCubicLatticeWithSU2SpinMomentumSpace(const BosonOnCubicLatticeWithSU2SpinMomentumSpace& bosons);
 
   // destructor
   //
-  ~FermionOnCubicLatticeWithSpinMomentumSpace ();
+  ~BosonOnCubicLatticeWithSU2SpinMomentumSpace ();
 
   // assignement (without duplicating datas)
   //
-  // fermions = reference on the hilbert space to copy to copy
+  // bosons = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space
-  FermionOnCubicLatticeWithSpinMomentumSpace& operator = (const FermionOnCubicLatticeWithSpinMomentumSpace& fermions);
+  BosonOnCubicLatticeWithSU2SpinMomentumSpace& operator = (const BosonOnCubicLatticeWithSU2SpinMomentumSpace& bosons);
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -142,18 +144,11 @@ class FermionOnCubicLatticeWithSpinMomentumSpace : public FermionOnSphereWithSpi
   virtual HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int kxSector, int kySector, int kzSector, 
 									 int nbrGroundStates, ComplexVector* groundStates, double* weights, AbstractArchitecture* architecture = 0);
 
-  // apply the inversion symmetry i.e (k_x,k_y,k_z)->(-k_x,-k_y,-k_z) to a state 
-  //
-  // inputstate = reference on the input state
-  // inputSpace = pointer to the Hilbert space associated to the input state
-  // return value = resulting state 
-  ComplexVector InversionSymmetry(ComplexVector& state, FermionOnCubicLatticeWithSpinMomentumSpace* inputSpace);
-
  protected:
 
   // evaluate Hilbert space dimension
   //
-  // nbrFermions = number of fermions
+  // nbrBosons = number of bosons
   // currentKx = current momentum along x for a single particle
   // currentKy = current momentum along y for a single particle
   // currentKz = current momentum along z for a single particle
@@ -161,47 +156,57 @@ class FermionOnCubicLatticeWithSpinMomentumSpace : public FermionOnSphereWithSpi
   // currentTotalKy = current total momentum along y
   // currentTotalKz = current total momentum along z
   // return value = Hilbert space dimension
-  virtual long EvaluateHilbertSpaceDimension(int nbrFermions, int currentKx, int currentKy, int currentKz, int currentTotalKx, int currentTotalKy, int currentTotalKz);
+  virtual long EvaluateHilbertSpaceDimension(int nbrBosons, int currentKx, int currentKy, int currentKz, 
+					     int currentTotalKx, int currentTotalKy, int currentTotalKz);
 
-  // evaluate Hilbert space dimension with a fixed number of fermions with spin up
+  // evaluate Hilbert space dimension with a fixed number of bosons with spin up
   //
-  // nbrFermions = number of fermions
+  // nbrBosons = number of bosons
   // currentKx = current momentum along x for a single particle
   // currentKy = current momentum along y for a single particle
   // currentKz = current momentum along z for a single particle
   // currentTotalKx = current total momentum along x
   // currentTotalKy = current total momentum along y
   // currentTotalKz = current total momentum along z
-  // nbrSpinUp = number of fermions with spin up
+  // nbrSpinUp = number of particles with spin up
   // return value = Hilbert space dimension
-  virtual long EvaluateHilbertSpaceDimension(int nbrFermions, int currentKx, int currentKy, int currentKz, int currentTotalKx, int currentTotalKy, int currentTotalKz, int nbrSpinUp);
+  virtual long EvaluateHilbertSpaceDimension(int nbrBosons, int currentKx, int currentKy, int currentKz,
+					     int currentTotalKx, int currentTotalKy, int currentTotalKz, int nbrSpinUp);
 
   // generate all states corresponding to the constraints
   // 
-  // nbrFermions = number of fermions
+  // nbrBosons = number of bosons
   // currentKx = current momentum along x for a single particle
   // currentKy = current momentum along y for a single particle
   // currentKz = current momentum along z for a single particle
   // currentTotalKx = current total momentum along x
   // currentTotalKy = current total momentum along y
   // currentTotalKz = current total momentum along z
+  // currentFermionicPositionUp = current fermionic position within the state description for the spin up
+  // currentFermionicPositionDown = current fermionic position within the state description for the spin down
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  virtual long GenerateStates(int nbrFermions, int currentKx, int currentKy, int currentKz, int currentTotalKx, int currentTotalKy, int currentTotalKz, long pos);
+  virtual long GenerateStates(int nbrBosons, int currentKx, int currentKy, int currentKz, 
+			      int currentTotalKx, int currentTotalKy, int currentTotalKz, 
+			      int currentFermionicPositionUp, int currentFermionicPositionDown, long pos);
 
   // generate all states corresponding to the constraints
   // 
-  // nbrFermions = number of fermions
+  // nbrBosons = number of bosons
   // currentKx = current momentum along x for a single particle
   // currentKy = current momentum along y for a single particle
   // currentKz = current momentum along z for a single particle
   // currentTotalKx = current total momentum along x
   // currentTotalKy = current total momentum along y
   // currentTotalKz = current total momentum along z
-  // nbrSpinUp = number of fermions with spin up
+  // currentFermionicPositionUp = current fermionic position within the state description for the spin up
+  // currentFermionicPositionDown = current fermionic position within the state description for the spin down
+  // nbrSpinUp = number of particles with spin up
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  virtual long GenerateStates(int nbrFermions, int currentKx, int currentKy, int currentKz, int currentTotalKx, int currentTotalKy, int currentTotalKz, int nbrSpinUp, long pos);
+  virtual long GenerateStates(int nbrBosons, int currentKx, int currentKy, int currentKz, 
+			      int currentTotalKx, int currentTotalKy, int currentTotalKz, 
+			      int currentFermionicPositionUp, int currentFermionicPositionDown, int nbrSpinUp, long pos);
 
   // core part of the evaluation density matrix particle partition calculation
   // 
@@ -228,6 +233,7 @@ class FermionOnCubicLatticeWithSpinMomentumSpace : public FermionOnSphereWithSpi
   // return value = number of components that have been added to the density matrix
   virtual long EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace,
 								  int nbrGroundStates, ComplexVector* groundStates, double* weights, HermitianMatrix* densityMatrix);
+
 
 };
 

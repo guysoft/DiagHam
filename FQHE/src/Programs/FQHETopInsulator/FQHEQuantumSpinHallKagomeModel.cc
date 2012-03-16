@@ -114,7 +114,15 @@ int main(int argc, char** argv)
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
 
   char* CommentLine = new char [256];
-  sprintf (CommentLine, "eigenvalues\n# kx ky E");
+  if (Manager.GetBoolean("decoupled") == false)
+    {
+      sprintf (CommentLine, "eigenvalues\n# kx ky E");
+    }
+  else
+    {
+      sprintf (CommentLine, "eigenvalues\n# kx ky Sz E");
+    }
+
   char* StatisticPrefix = new char [16];
   if (Manager.GetBoolean("boson") == false)
     {

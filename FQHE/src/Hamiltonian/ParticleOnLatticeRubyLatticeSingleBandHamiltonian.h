@@ -68,6 +68,8 @@ class ParticleOnLatticeRubyLatticeSingleBandHamiltonian : public ParticleOnLatti
   // nearest neighbor density-density potential strength
   double UPotential;
 
+  // next nearest neighbor density-density potential strength
+  double VPotential;
   // boundary condition twisting angle along x
   double GammaX;
   // boundary condition twisting angle along y
@@ -85,6 +87,7 @@ class ParticleOnLatticeRubyLatticeSingleBandHamiltonian : public ParticleOnLatti
   // nbrSiteX = number of sites in the x direction
   // nbrSiteY = number of sites in the y direction
   // uPotential = strength of the repulsive two body neareast neighbor interaction
+  // vPotential = strength of the repulsive two body next neareast neighbor interaction
   // tr = real part of the hopping amplitude between neareast neighbor sites with same parity
   // ti = imaginary part of the hopping amplitude between neareast neighbor sites with same parity
   // t1r = real part of the hopping amplitude next neareast neighbor sites with different parity
@@ -96,7 +99,7 @@ class ParticleOnLatticeRubyLatticeSingleBandHamiltonian : public ParticleOnLatti
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeRubyLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double tr, double ti, double t1r, double t1i, double t4, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnLatticeRubyLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential, double tr, double ti, double t1r, double t1i, double t4, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //
