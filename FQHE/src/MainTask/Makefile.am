@@ -6,4 +6,4 @@ libQHEMainTask_a_SOURCES=QHEOnSphereMainTask.cc \
 QHEOnDiskMainTask.cc \
 QHEOnSphereOverlapMainTask.cc \
 QHEOnLatticeMainTask.cc \
-FQHEOnTorusMainTask.cc
+FQHEOnTorusMainTask.cc 

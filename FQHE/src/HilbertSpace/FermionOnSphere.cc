@@ -426,9 +426,12 @@ int FermionOnSphere::AdAdAA (int index, int m1, int m2, int n1, int n2, double& 
   coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
 #endif
   TmpState &= ~(0x1ul << n1);
-  if (NewLzMax == n1)
-    while ((TmpState >> NewLzMax) == 0x0ul)
-      --NewLzMax;
+  if (TmpState == 0x0ul)
+      NewLzMax = 0;
+  else
+    if (NewLzMax == n1)
+      while ((TmpState >> NewLzMax) == 0x0ul)
+        --NewLzMax;
   if ((TmpState & (0x1ul << m2)) != 0x0ul)
     {
       coefficient = 0.0;
@@ -509,9 +512,12 @@ int FermionOnSphere::AdAdAASafe (int index, int m1, int m2, int n1, int n2, doub
   coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
 #endif
   TmpState &= ~(0x1ul << n1);
-  if (NewLzMax == n1)
-    while (((TmpState >> NewLzMax) == 0x0ul) && (NewLzMax > 0))
-      --NewLzMax;
+  if (TmpState == 0x0ul)
+      NewLzMax = 0;
+  else
+    if (NewLzMax == n1)
+      while (((TmpState >> NewLzMax) == 0x0ul) && (NewLzMax > 0))
+        --NewLzMax;
   if ((TmpState & (0x1ul << m2)) != 0x0ul)
     {
       coefficient = 0.0;
