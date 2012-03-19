@@ -316,8 +316,7 @@ void ParticleOnLatticeRubyLatticeSingleBandHamiltonian::EvaluateInteractionFacto
 		  }
 	      }
       double FactorU = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
-      FactorU = 0.0;
-      
+            
       double FactorVA1A2 = this->VPotential * 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
       double FactorVA1A3 = this->VPotential * 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
       double FactorVA1A5 = this->VPotential * 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));

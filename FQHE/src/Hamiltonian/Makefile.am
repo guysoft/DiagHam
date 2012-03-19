@@ -117,5 +117,6 @@ ParticleOnLatticeKagomeLatticeThreeBandHamiltonian.cc \
 ParticleOnLatticeQuantumSpinHallFourBandCheckerboardHamiltonian.cc \
 ParticleOnLatticeKagomeLatticeTwoBandHamiltonian.cc \
 ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier.cc \
+ParticleOnLatticeQuantumSpinHallTwoBandKagomeHamiltonian.cc \
 AbstractQHEOnCylinderHamiltonian.cc \
 ParticleOnCylinderLaplacianDeltaHamiltonian.cc
