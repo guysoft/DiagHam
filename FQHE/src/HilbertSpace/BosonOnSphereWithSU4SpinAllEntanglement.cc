@@ -29,7 +29,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/BosonOnSphereWithSU4Spin.h"
+#include "HilbertSpace/BosonOnSphereWithSU4SpinAllEntanglement.h"
 #include "HilbertSpace/BosonOnSphere.h"
 #include "HilbertSpace/BosonOnSphereShort.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
@@ -39,8 +39,9 @@
 #include "FunctionBasis/AbstractFunctionBasis.h"
 #include "MathTools/BinomialCoefficients.h"
 #include "GeneralTools/UnsignedIntegerTools.h"
+#include "GeneralTools/StringTools.h"
 
-#include <math.h>
+#include <cmath>
 #include <cstdlib>
 
 using std::cout;
@@ -48,11 +49,13 @@ using std::endl;
 using std::hex;
 using std::dec;
 
+// flag for switching testing output
+//#define TEST_SU4_ALL_E
 
 // default constructor
 // 
 
-BosonOnSphereWithSU4Spin::BosonOnSphereWithSU4Spin ()
+BosonOnSphereWithSU4SpinAllEntanglement::BosonOnSphereWithSU4SpinAllEntanglement ()
 {
 }
 
@@ -61,97 +64,95 @@ BosonOnSphereWithSU4Spin::BosonOnSphereWithSU4Spin ()
 // nbrBosons = number of bosons
 // totalLz = twice the momentum total value
 // lzMax = twice the maximum Lz value reached by a boson
-// totalSpin = twice the total spin value
-// totalIsospin = twice the total isospin value
-// totalEntanglement = twice the total entanglement value
+// totalSz = twice the total sz projection
+// totalIsospin = twice the total isospin value (number imbalance between Plus and Minus)
 // memory = amount of memory granted for precalculations
 
-BosonOnSphereWithSU4Spin::BosonOnSphereWithSU4Spin (int nbrBosons, int totalLz, int lzMax, int totalSpin, int totalIsospin, int totalEntanglement,
+BosonOnSphereWithSU4SpinAllEntanglement::BosonOnSphereWithSU4SpinAllEntanglement (int nbrBosons, int totalLz, int lzMax, int totalSz, int totalIsospin,
 						    unsigned long memory)
 {
   this->NbrBosons = nbrBosons;
   this->IncNbrBosons = this->NbrBosons + 1;
   this->TotalLz = totalLz;
-  this->TotalSpin = totalSpin;
+  this->TotalSpin = totalSz;
   this->TotalIsospin = totalIsospin;
-  this->TotalEntanglement = totalEntanglement;
   this->LzMax = lzMax;
   this->NbrLzValue = this->LzMax + 1;
   this->Flag.Initialize();
-  this->TemporaryStateUpPlus = new unsigned long[this->NbrLzValue];
-  this->TemporaryStateUpMinus = new unsigned long[this->NbrLzValue];
-  this->TemporaryStateDownPlus = new unsigned long[this->NbrLzValue];
-  this->TemporaryStateDownMinus = new unsigned long[this->NbrLzValue];
-  this->ProdATemporaryStateUpPlus = new unsigned long[this->NbrLzValue];
-  this->ProdATemporaryStateUpMinus = new unsigned long[this->NbrLzValue];
-  this->ProdATemporaryStateDownPlus = new unsigned long[this->NbrLzValue];
-  this->ProdATemporaryStateDownMinus = new unsigned long[this->NbrLzValue];
 
-  int NUpPlus = this->NbrBosons + this->TotalSpin + this->TotalIsospin + this->TotalEntanglement;
-  int NUpMinus = this->NbrBosons + this->TotalSpin - this->TotalIsospin - this->TotalEntanglement;
-  int NDownPlus = this->NbrBosons - this->TotalSpin + this->TotalIsospin - this->TotalEntanglement;
-  int NDownMinus = this->NbrBosons - this->TotalSpin - this->TotalIsospin + this->TotalEntanglement;
-  this->NUpPlusLzMax = this->LzMax + NUpPlus - 1;
-  this->NUpMinusLzMax = this->LzMax + NUpMinus - 1;
-  this->NDownPlusLzMax = this->LzMax + NDownPlus - 1;
-  this->NDownMinusLzMax = this->LzMax + NDownMinus - 1;
-  this->FermionicLzMax = this->NUpPlusLzMax;
-  if (this->NUpMinusLzMax > this->FermionicLzMax)
-    this->FermionicLzMax = this->NUpMinusLzMax;
-  if (this->NDownPlusLzMax > this->FermionicLzMax)
-    this->FermionicLzMax = this->NDownPlusLzMax;
-  if (this->NDownMinusLzMax > this->FermionicLzMax)
-    this->FermionicLzMax = this->NDownMinusLzMax;
-  if ((NUpPlus < 0) || ((NUpPlus & 0x3) != 0) || (NUpMinus < 0) || ((NUpMinus & 0x3) != 0) ||
-      (NDownPlus < 0) || ((NDownPlus & 0x3) != 0) || (NDownMinus < 0) || ((NDownMinus & 0x3) != 0))
-    this->LargeHilbertSpaceDimension = 0l;
+  this->TemporaryStatePlus = new unsigned long[2*this->NbrLzValue];
+  this->TemporaryStateMinus = new unsigned long[2*this->NbrLzValue];
+  
+  this->TemporaryStateUpPlus = this->TemporaryStatePlus;
+  this->TemporaryStateUpMinus = this->TemporaryStateMinus;
+  this->TemporaryStateDownPlus = this->TemporaryStatePlus + this->NbrLzValue;
+  this->TemporaryStateDownMinus = this->TemporaryStateMinus + this->NbrLzValue;
+
+  this->ProdATemporaryStatePlus = new unsigned long[2*this->NbrLzValue];
+  this->ProdATemporaryStateMinus = new unsigned long[2*this->NbrLzValue];
+  
+  this->ProdATemporaryStateUpPlus = this->ProdATemporaryStatePlus;
+  this->ProdATemporaryStateUpMinus = this->ProdATemporaryStateMinus;
+  this->ProdATemporaryStateDownPlus = this->ProdATemporaryStatePlus + this->NbrLzValue;
+  this->ProdATemporaryStateDownMinus = this->ProdATemporaryStateMinus + this->NbrLzValue;
+
+  int NUp = this->NbrBosons + this->TotalSpin;
+  int NDown = this->NbrBosons - this->TotalSpin;
+  int NPlus = this->NbrBosons + this->TotalIsospin;
+  int NMinus = this->NbrBosons - this->TotalIsospin;
+  this->NPlusLzMax = 2*this->LzMax + NPlus;
+  this->NMinusLzMax = 2*this->LzMax + NMinus;
+
+  if ((NUp < 0) || ((NUp & 0x1) != 0) || (NMinus < 0) || ((NMinus & 0x1) != 0) ||
+      (NDown < 0) || ((NDown & 0x1) != 0) || (NPlus < 0) || ((NPlus & 0x1) != 0))
+    {
+      cout << "Error: TotalSz and TotalIsoSpin need to have the same parity as nbrBosons !"<<endl;
+      this->LargeHilbertSpaceDimension = 0l;
+    }
   else
     {
-      NUpPlus >>= 2;
-      NUpMinus >>= 2;
-      NDownPlus >>= 2;
-      NDownMinus >>= 2;
-      this->LargeHilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->NbrBosons, this->LzMax, (this->TotalLz + (this->NbrBosons * this->LzMax)) >> 1, NUpPlus, NUpMinus, NDownPlus, NDownMinus);
+      NUp >>= 1;
+      NMinus >>= 1;
+      NDown >>= 1;
+      NPlus >>= 1;
+      this->LargeHilbertSpaceDimension = EvaluateHilbertSpaceDimension(NbrBosons, LzMax, NPlus, TotalLz, NUp);
     }
-  this->StateDescriptionUpPlus = new unsigned long [this->LargeHilbertSpaceDimension];
-  this->StateDescriptionUpMinus = new unsigned long [this->LargeHilbertSpaceDimension];
-  this->StateDescriptionDownPlus = new unsigned long [this->LargeHilbertSpaceDimension];
-  this->StateDescriptionDownMinus = new unsigned long [this->LargeHilbertSpaceDimension];
-  long TmpHilbertSpaceDimension = this->GenerateStates(this->NbrBosons, this->LzMax, this->LzMax, this->LzMax, this->LzMax, (this->TotalLz + (this->NbrBosons * this->LzMax)) >> 1, 
-						       NUpPlus, NUpMinus, NDownPlus, NDownMinus, 0l);
-//   for (int i = 0; i < TmpHilbertSpaceDimension; ++i)
-//     cout << i << " : " << hex << this->StateDescriptionUpPlus[i] << " " << this->StateDescriptionUpMinus[i] << " " << this->StateDescriptionDownPlus[i] << dec << endl;
+  this->StateDescriptionPlus =  new unsigned long [this->LargeHilbertSpaceDimension];
+  this->StateDescriptionMinus =  new unsigned long [this->LargeHilbertSpaceDimension];
+  long TmpHilbertSpaceDimension = this->GenerateStates(NbrBosons, 4*LzMax+3, NPlus, (TotalLz + LzMax * NbrBosons) >> 1, NUp, 0l);
+#ifdef TEST_SU4_ALL_E
+  for (int i = 0; i < TmpHilbertSpaceDimension; ++i)
+    cout << i << " : " << hex << this->StateDescriptionPlus[i] << " " << this->StateDescriptionMinus[i] << dec << endl;  
+#endif
   if (TmpHilbertSpaceDimension != this->LargeHilbertSpaceDimension)
     {
       cout << TmpHilbertSpaceDimension << " " << this->LargeHilbertSpaceDimension << endl;
-      cout << "Mismatch in State-count and State Generation in BosonOnSphereWithSU4Spin!" << endl;
+      cout << "Mismatch in State-count and State Generation in BosonOnSphereWithSU4SpinAllEntanglement!" << endl;
       exit(1);
     }
   this->LargeHilbertSpaceDimension = TmpHilbertSpaceDimension;
   this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
-  cout << "Hilbert space dimension = " << this->HilbertSpaceDimension << endl;  
-
-
-
+  cout << "Hilbert space dimension = " << this->HilbertSpaceDimension << endl;
   this->GenerateLookUpTable(memory);
-//   for (int i = 0; i < this->HilbertSpaceDimension; ++i)	
-//     {
-//       cout << i << " : ";
-//       this->PrintState(cout, i);
-//       cout << this->FindStateIndex(this->StateDescriptionUpPlus[i], this->StateDescriptionUpMinus[i], this->StateDescriptionDownPlus[i]);
-//       cout << endl;
-//     }
+#ifdef TEST_SU4_ALL_E
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)	
+    {
+      cout << i << " : ";
+      this->PrintState(cout, i);
+      int Searched = this->FindStateIndex(this->StateDescriptionPlus[i], this->StateDescriptionMinus[i]);
+      cout << Searched << endl;
+      if (Searched!=i)
+	cout << "Error finding state "<<i<<endl;
+    }
+#endif
+
 #ifdef __DEBUG__
-   int UsedMemory = 0;
-   UsedMemory += this->HilbertSpaceDimension * (4 * sizeof(unsigned long));
-   cout << "memory requested for Hilbert space = ";
-   if (UsedMemory >= 1024)
-    if (UsedMemory >= 1048576)
-      cout << (UsedMemory >> 20) << "Mo" << endl;
-    else
-      cout << (UsedMemory >> 10) << "ko" <<  endl;
-  else
-    cout << UsedMemory << endl;
+  long UsedMemory = LookUpMemorySize;
+  UsedMemory += this->HilbertSpaceDimension * (2 * sizeof(unsigned long));
+  cout << "memory requested for Hilbert space = ";
+  PrintMemorySize (cout,UsedMemory);
+  cout << ", including search tables of ";
+  PrintMemorySize (cout,LookUpMemorySize)<<endl;
 #endif
 }
 
@@ -159,7 +160,7 @@ BosonOnSphereWithSU4Spin::BosonOnSphereWithSU4Spin (int nbrBosons, int totalLz, 
 //
 // bosons = reference on the hilbert space to copy to copy
 
-BosonOnSphereWithSU4Spin::BosonOnSphereWithSU4Spin(const BosonOnSphereWithSU4Spin& bosons)
+BosonOnSphereWithSU4SpinAllEntanglement::BosonOnSphereWithSU4SpinAllEntanglement(const BosonOnSphereWithSU4SpinAllEntanglement& bosons)
 {
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
   this->Flag = bosons.Flag;
@@ -175,60 +176,60 @@ BosonOnSphereWithSU4Spin::BosonOnSphereWithSU4Spin(const BosonOnSphereWithSU4Spi
   this->FermionicLzMax = bosons.FermionicLzMax;
   this->TotalSpin = bosons.TotalSpin;
   this->TotalIsospin = bosons.TotalIsospin;
-  this->TotalEntanglement = bosons.TotalEntanglement;
   this->LargeHilbertSpaceDimension = bosons.LargeHilbertSpaceDimension;
-  this->TemporaryStateUpPlus = new unsigned long[this->NbrLzValue];
-  this->TemporaryStateUpMinus = new unsigned long[this->NbrLzValue];
-  this->TemporaryStateDownPlus = new unsigned long[this->NbrLzValue];
-  this->TemporaryStateDownMinus = new unsigned long[this->NbrLzValue];
-  this->ProdATemporaryStateUpPlus = new unsigned long[this->NbrLzValue];
-  this->ProdATemporaryStateUpMinus = new unsigned long[this->NbrLzValue];
-  this->ProdATemporaryStateDownPlus = new unsigned long[this->NbrLzValue];
-  this->ProdATemporaryStateDownMinus = new unsigned long[this->NbrLzValue];
-  this->StateDescriptionUpPlus = bosons.StateDescriptionUpPlus;
-  this->StateDescriptionUpMinus = bosons.StateDescriptionUpMinus;
-  this->StateDescriptionDownPlus = bosons.StateDescriptionDownPlus;
-  this->StateDescriptionDownMinus = bosons.StateDescriptionDownMinus;
-  this->UniqueStateDescriptionUpPlus = bosons.UniqueStateDescriptionUpPlus;
-  this->UniqueStateDescriptionSubArraySizeUpPlus = bosons.UniqueStateDescriptionSubArraySizeUpPlus;
-  this->NbrUniqueStateDescriptionUpMinus = bosons.NbrUniqueStateDescriptionUpMinus;
-  this->UniqueStateDescriptionUpMinus = bosons.UniqueStateDescriptionUpMinus;
-  this->UniqueStateDescriptionSubArraySizeUpMinus = bosons.UniqueStateDescriptionSubArraySizeUpMinus;
-  this->FirstIndexUniqueStateDescriptionUpMinus = bosons.FirstIndexUniqueStateDescriptionUpMinus;
+
+  this->TemporaryStatePlus = new unsigned long[2*this->NbrLzValue];
+  this->TemporaryStateMinus = new unsigned long[2*this->NbrLzValue];
+  
+  this->TemporaryStateUpPlus = this->TemporaryStatePlus;
+  this->TemporaryStateUpMinus = this->TemporaryStateMinus;
+  this->TemporaryStateDownPlus = this->TemporaryStatePlus + this->NbrLzValue;
+  this->TemporaryStateDownMinus = this->TemporaryStateMinus + this->NbrLzValue;
+
+  this->ProdATemporaryStatePlus = new unsigned long[2*this->NbrLzValue];
+  this->ProdATemporaryStateMinus = new unsigned long[2*this->NbrLzValue];
+  
+  this->ProdATemporaryStateUpPlus = this->ProdATemporaryStatePlus;
+  this->ProdATemporaryStateUpMinus = this->ProdATemporaryStateMinus;
+  this->ProdATemporaryStateDownPlus = this->ProdATemporaryStatePlus + this->NbrLzValue;
+  this->ProdATemporaryStateDownMinus = this->ProdATemporaryStateMinus + this->NbrLzValue;
+    
+  this->StateDescriptionPlus = bosons.StateDescriptionPlus;
+  this->StateDescriptionMinus = bosons.StateDescriptionMinus;
+
+  this->FullLookUp = bosons.FullLookUp;
+  this->LookUpTablePlus = bosons.LookUpTablePlus;
+  this->LookUpTableMinus = bosons.LookUpTableMinus;
+  this->NbrUniqueStateDescriptionPlus = bosons.NbrUniqueStateDescriptionPlus;
+  this->UniqueStateDescriptionPlus = bosons.UniqueStateDescriptionPlus;
+  this->UniqueStateDescriptionSubArrayIndicesPlus = bosons.UniqueStateDescriptionSubArrayIndicesPlus;
+  this->LookUpMemorySize = bosons.LookUpMemorySize;
 }
 
 // destructor
 //
 
-BosonOnSphereWithSU4Spin::~BosonOnSphereWithSU4Spin ()
+BosonOnSphereWithSU4SpinAllEntanglement::~BosonOnSphereWithSU4SpinAllEntanglement ()
 {
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
-      delete[] this->StateDescriptionUpPlus;
-      delete[] this->StateDescriptionUpMinus;
-      delete[] this->StateDescriptionDownPlus;
-      delete[] this->StateDescriptionDownMinus;
-      delete[] this->UniqueStateDescriptionUpPlus;
-      delete[] this->UniqueStateDescriptionSubArraySizeUpPlus;
-      delete[] this->NbrUniqueStateDescriptionUpMinus;
-      for (long i = 0l; i < this->NbrUniqueStateDescriptionUpPlus; ++i)
+      delete[] this->StateDescriptionPlus;
+      delete[] this->StateDescriptionMinus;
+      if (FullLookUp)
 	{
-	  delete[] this->UniqueStateDescriptionUpMinus[i];
-	  delete[] this->UniqueStateDescriptionSubArraySizeUpMinus[i];
-	  delete[] this->FirstIndexUniqueStateDescriptionUpMinus[i];
+	  delete [] LookUpTablePlus;
+	  delete [] LookUpTableMinus;
 	}
-      delete[] this->UniqueStateDescriptionUpMinus;
-      delete[] this->UniqueStateDescriptionSubArraySizeUpMinus;
-      delete[] this->FirstIndexUniqueStateDescriptionUpMinus;
+      else
+	{
+	  delete[] this->UniqueStateDescriptionPlus;
+	  delete[] this->UniqueStateDescriptionSubArrayIndicesPlus;
+	}
     }
-  delete[] this->TemporaryStateUpPlus;
-  delete[] this->TemporaryStateUpMinus;
-  delete[] this->TemporaryStateDownPlus;
-  delete[] this->TemporaryStateDownMinus;
-  delete[] this->ProdATemporaryStateUpPlus;
-  delete[] this->ProdATemporaryStateUpMinus;
-  delete[] this->ProdATemporaryStateDownPlus;
-  delete[] this->ProdATemporaryStateDownMinus;
+  delete[] this->TemporaryStatePlus;
+  delete[] this->TemporaryStateMinus;
+  delete[] this->ProdATemporaryStatePlus;
+  delete[] this->ProdATemporaryStateMinus;
 }
 
 // assignement (without duplicating datas)
@@ -236,35 +237,27 @@ BosonOnSphereWithSU4Spin::~BosonOnSphereWithSU4Spin ()
 // bosons = reference on the hilbert space to copy to copy
 // return value = reference on current hilbert space
 
-BosonOnSphereWithSU4Spin& BosonOnSphereWithSU4Spin::operator = (const BosonOnSphereWithSU4Spin& bosons)
+BosonOnSphereWithSU4SpinAllEntanglement& BosonOnSphereWithSU4SpinAllEntanglement::operator = (const BosonOnSphereWithSU4SpinAllEntanglement& bosons)
 {
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
-      delete[] this->StateDescriptionUpPlus;
-      delete[] this->StateDescriptionUpMinus;
-      delete[] this->StateDescriptionDownPlus;
-      delete[] this->StateDescriptionDownMinus;
-      delete[] this->UniqueStateDescriptionUpPlus;
-      delete[] this->UniqueStateDescriptionSubArraySizeUpPlus;
-      delete[] this->NbrUniqueStateDescriptionUpMinus;
-      for (long i = 0l; i < this->NbrUniqueStateDescriptionUpPlus; ++i)
+      delete[] this->StateDescriptionPlus;
+      delete[] this->StateDescriptionMinus;
+      if (FullLookUp)
 	{
-	  delete[] this->UniqueStateDescriptionUpMinus[i];
-	  delete[] this->UniqueStateDescriptionSubArraySizeUpMinus[i];
-	  delete[] this->FirstIndexUniqueStateDescriptionUpMinus[i];
+	  delete [] LookUpTablePlus;
+	  delete [] LookUpTableMinus;
 	}
-      delete[] this->UniqueStateDescriptionUpMinus;
-      delete[] this->UniqueStateDescriptionSubArraySizeUpMinus;
-      delete[] this->FirstIndexUniqueStateDescriptionUpMinus;
+      else
+	{
+	  delete[] this->UniqueStateDescriptionPlus;
+	  delete[] this->UniqueStateDescriptionSubArrayIndicesPlus;
+	}
     }
-  delete[] this->TemporaryStateUpPlus;
-  delete[] this->TemporaryStateUpMinus;
-  delete[] this->TemporaryStateDownPlus;
-  delete[] this->TemporaryStateDownMinus;
-  delete[] this->ProdATemporaryStateUpPlus;
-  delete[] this->ProdATemporaryStateUpMinus;
-  delete[] this->ProdATemporaryStateDownPlus;
-  delete[] this->ProdATemporaryStateDownMinus;
+  delete[] this->TemporaryStatePlus;
+  delete[] this->TemporaryStateMinus;
+  delete[] this->ProdATemporaryStatePlus;
+  delete[] this->ProdATemporaryStateMinus;
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
   this->Flag = bosons.Flag;
   this->NbrBosons = bosons.NbrBosons;
@@ -272,7 +265,6 @@ BosonOnSphereWithSU4Spin& BosonOnSphereWithSU4Spin::operator = (const BosonOnSph
   this->TotalLz = bosons.TotalLz;
   this->TotalSpin = bosons.TotalSpin;
   this->TotalIsospin = bosons.TotalIsospin;
-  this->TotalEntanglement = bosons.TotalEntanglement;
   this->LzMax = bosons.LzMax;
   this->NbrLzValue = bosons.NbrLzValue;
   this->NUpPlusLzMax = bosons.LzMax;
@@ -281,24 +273,32 @@ BosonOnSphereWithSU4Spin& BosonOnSphereWithSU4Spin::operator = (const BosonOnSph
   this->NDownMinusLzMax = bosons.LzMax;
   this->FermionicLzMax = bosons.FermionicLzMax;
   this->LargeHilbertSpaceDimension = bosons.LargeHilbertSpaceDimension;
-  this->TemporaryStateUpPlus = new unsigned long[this->NbrLzValue];
-  this->TemporaryStateUpMinus = new unsigned long[this->NbrLzValue];
-  this->TemporaryStateDownPlus = new unsigned long[this->NbrLzValue];
-  this->TemporaryStateDownMinus = new unsigned long[this->NbrLzValue];
-  this->ProdATemporaryStateUpPlus = new unsigned long[this->NbrLzValue];
-  this->ProdATemporaryStateUpMinus = new unsigned long[this->NbrLzValue];
-  this->ProdATemporaryStateDownPlus = new unsigned long[this->NbrLzValue];
-  this->ProdATemporaryStateDownMinus = new unsigned long[this->NbrLzValue];
-  this->StateDescriptionUpPlus = bosons.StateDescriptionUpPlus;
-  this->StateDescriptionUpMinus = bosons.StateDescriptionUpMinus;
-  this->StateDescriptionDownPlus = bosons.StateDescriptionDownPlus;
-  this->StateDescriptionDownMinus = bosons.StateDescriptionDownMinus;
-  this->UniqueStateDescriptionUpPlus = bosons.UniqueStateDescriptionUpPlus;
-  this->UniqueStateDescriptionSubArraySizeUpPlus = bosons.UniqueStateDescriptionSubArraySizeUpPlus;
-  this->NbrUniqueStateDescriptionUpMinus = bosons.NbrUniqueStateDescriptionUpMinus;
-  this->UniqueStateDescriptionUpMinus = bosons.UniqueStateDescriptionUpMinus;
-  this->UniqueStateDescriptionSubArraySizeUpMinus = bosons.UniqueStateDescriptionSubArraySizeUpMinus;
-  this->FirstIndexUniqueStateDescriptionUpMinus = bosons.FirstIndexUniqueStateDescriptionUpMinus;
+  
+  this->TemporaryStatePlus = new unsigned long[2*this->NbrLzValue];
+  this->TemporaryStateMinus = new unsigned long[2*this->NbrLzValue];
+  
+  this->TemporaryStateUpPlus = this->TemporaryStatePlus;
+  this->TemporaryStateUpMinus = this->TemporaryStateMinus;
+  this->TemporaryStateDownPlus = this->TemporaryStatePlus + this->NbrLzValue;
+  this->TemporaryStateDownMinus = this->TemporaryStateMinus + this->NbrLzValue;
+
+  this->ProdATemporaryStatePlus = new unsigned long[2*this->NbrLzValue];
+  this->ProdATemporaryStateMinus = new unsigned long[2*this->NbrLzValue];
+  
+  this->ProdATemporaryStateUpPlus = this->ProdATemporaryStatePlus;
+  this->ProdATemporaryStateUpMinus = this->ProdATemporaryStateMinus;
+  this->ProdATemporaryStateDownPlus = this->ProdATemporaryStatePlus + this->NbrLzValue;
+  this->ProdATemporaryStateDownMinus = this->ProdATemporaryStateMinus + this->NbrLzValue;
+
+  this->StateDescriptionPlus = bosons.StateDescriptionPlus;
+  this->StateDescriptionMinus = bosons.StateDescriptionMinus;
+  this->FullLookUp = bosons.FullLookUp;
+  this->LookUpTablePlus = bosons.LookUpTablePlus;
+  this->LookUpTableMinus = bosons.LookUpTableMinus;
+  this->NbrUniqueStateDescriptionPlus = bosons.NbrUniqueStateDescriptionPlus;
+  this->UniqueStateDescriptionPlus = bosons.UniqueStateDescriptionPlus;
+  this->UniqueStateDescriptionSubArrayIndicesPlus = bosons.UniqueStateDescriptionSubArrayIndicesPlus;
+  this->LookUpMemorySize = bosons.LookUpMemorySize;
   return *this;
 }
 
@@ -306,16 +306,16 @@ BosonOnSphereWithSU4Spin& BosonOnSphereWithSU4Spin::operator = (const BosonOnSph
 //
 // return value = pointer to cloned Hilbert space
 
-AbstractHilbertSpace* BosonOnSphereWithSU4Spin::Clone()
+AbstractHilbertSpace* BosonOnSphereWithSU4SpinAllEntanglement::Clone()
 {
-  return new BosonOnSphereWithSU4Spin(*this);
+  return new BosonOnSphereWithSU4SpinAllEntanglement(*this);
 }
 
 // return a list of all possible quantum numbers 
 //
 // return value = pointer to corresponding quantum number
 
-List<AbstractQuantumNumber*> BosonOnSphereWithSU4Spin::GetQuantumNumbers ()
+List<AbstractQuantumNumber*> BosonOnSphereWithSU4SpinAllEntanglement::GetQuantumNumbers ()
 {
   List<AbstractQuantumNumber*> TmpList;
   TmpList += new SzQuantumNumber (this->TotalLz);
@@ -327,7 +327,7 @@ List<AbstractQuantumNumber*> BosonOnSphereWithSU4Spin::GetQuantumNumbers ()
 // index = index of the state
 // return value = pointer to corresponding quantum number
 
-AbstractQuantumNumber* BosonOnSphereWithSU4Spin::GetQuantumNumber (int index)
+AbstractQuantumNumber* BosonOnSphereWithSU4SpinAllEntanglement::GetQuantumNumber (int index)
 {
   return new SzQuantumNumber (this->TotalLz);
 }
@@ -338,7 +338,7 @@ AbstractQuantumNumber* BosonOnSphereWithSU4Spin::GetQuantumNumber (int index)
 // converter = reference on subspace-space converter to use
 // return value = pointer to the new subspace
 
-AbstractHilbertSpace* BosonOnSphereWithSU4Spin::ExtractSubspace (AbstractQuantumNumber& q, 
+AbstractHilbertSpace* BosonOnSphereWithSU4SpinAllEntanglement::ExtractSubspace (AbstractQuantumNumber& q, 
 								 SubspaceSpaceConverter& converter)
 {
   return 0;
@@ -350,10 +350,10 @@ AbstractHilbertSpace* BosonOnSphereWithSU4Spin::ExtractSubspace (AbstractQuantum
 // m = index of the creation and annihilation operator
 // return value = coefficient obtained when applying a^+_m_um a_m_um
 
-double  BosonOnSphereWithSU4Spin::AdupAup (int index, int m)
+double  BosonOnSphereWithSU4SpinAllEntanglement::AdupAup (int index, int m)
 {
-  this->FermionToBoson(this->StateDescriptionUpPlus[index], this->NUpPlusLzMax, this->TemporaryStateUpPlus);
-  return (double) (this->TemporaryStateUpPlus[m]);  
+  this->FermionToBoson(this->StateDescriptionPlus[index], this->NPlusLzMax, this->TemporaryStatePlus);
+  return (double) (this->TemporaryStateUpPlus[m]);
 }
 
 // apply a^+_m_um a_m_um operator to a given state  (only spin up isospin minus)
@@ -362,9 +362,9 @@ double  BosonOnSphereWithSU4Spin::AdupAup (int index, int m)
 // m = index of the creation and annihilation operator
 // return value = coefficient obtained when applying a^+_m_um a_m_um
 
-double BosonOnSphereWithSU4Spin::AdumAum (int index, int m)
+double BosonOnSphereWithSU4SpinAllEntanglement::AdumAum (int index, int m)
 {
-  this->FermionToBoson(this->StateDescriptionUpMinus[index], this->NUpMinusLzMax, this->TemporaryStateUpMinus);
+  this->FermionToBoson(this->StateDescriptionMinus[index], this->NMinusLzMax, this->TemporaryStateMinus);
   return (double) (this->TemporaryStateUpMinus[m]);  
 }
  
@@ -374,10 +374,10 @@ double BosonOnSphereWithSU4Spin::AdumAum (int index, int m)
 // m = index of the creation and annihilation operator
 // return value = coefficient obtained when applying a^+_m_dm a_m_dm
 
-double BosonOnSphereWithSU4Spin::AddpAdp (int index, int m)
+double BosonOnSphereWithSU4SpinAllEntanglement::AddpAdp (int index, int m)
 {
-  this->FermionToBoson(this->StateDescriptionDownPlus[index], this->NDownPlusLzMax, this->TemporaryStateDownPlus);
-  return (double) (this->TemporaryStateDownPlus[m]);  
+  this->FermionToBoson(this->StateDescriptionPlus[index], this->NPlusLzMax, this->TemporaryStatePlus);
+  return (double) (this->TemporaryStateDownPlus[m]);
 }
 
 // apply a^+_m_dm a_m_dm operator to a given state (only spin down isospin minus)
@@ -386,92 +386,11 @@ double BosonOnSphereWithSU4Spin::AddpAdp (int index, int m)
 // m = index of the creation and annihilation operator
 // return value = coefficient obtained when applying a^+_m_dm a_m_dm
 
-double BosonOnSphereWithSU4Spin::AddmAdm (int index, int m)
+double BosonOnSphereWithSU4SpinAllEntanglement::AddmAdm (int index, int m)
 {
-  this->FermionToBoson(this->StateDescriptionDownMinus[index], this->NDownMinusLzMax, this->TemporaryStateDownMinus);
+  this->FermionToBoson(this->StateDescriptionMinus[index], this->NMinusLzMax, this->TemporaryStateMinus);
   return (double) (this->TemporaryStateDownMinus[m]);  
 }
-
-// find state index
-//
-// stateDescriptionUpPlus = unsigned integer describing the fermionic state for type up-plus particles
-// stateDescriptionUpMinus = unsigned integer describing the fermionic state for type up-minus particles
-// stateDescriptionDownPlus = unsigned integer describing the fermionic state for type down-plus particles
-// stateDescriptionDownMinus = unsigned integer describing the fermionic state for type down-minus particles
-// return value = corresponding index
-
-int BosonOnSphereWithSU4Spin::FindStateIndex(unsigned long stateDescriptionUpPlus, unsigned long stateDescriptionUpMinus, 
-					     unsigned long stateDescriptionDownPlus, unsigned long stateDescriptionDownMinus)
-{
-//  cout << hex << stateDescriptionUpPlus << " " << stateDescriptionUpMinus << " " << stateDescriptionDownPlus << dec << endl;
-  int PosMin = 0;
-  int PosMax = this->NbrUniqueStateDescriptionUpPlus - 1;
-  int PosMid = (PosMin + PosMax) >> 1;
-//  cout << "entering " << PosMin << " " << PosMax << endl;
-  unsigned long CurrentState = this->UniqueStateDescriptionUpPlus[PosMid];
-  while ((PosMax > PosMin) && (CurrentState != stateDescriptionUpPlus))
-    {
-       if (CurrentState > stateDescriptionUpPlus)
-	 {
-	   PosMin = PosMid + 1;
-	 }
-       else
- 	{
- 	  PosMax = PosMid - 1;
-	} 
-       PosMid = (PosMin + PosMax) >> 1;
-       CurrentState = this->UniqueStateDescriptionUpPlus[PosMid];
-    }
-  if (CurrentState != stateDescriptionUpPlus)
-    PosMid = PosMax;
-//  cout << "pass 1 : " << PosMid << endl;
-  unsigned long* TmpStateDescriptionArray = this->UniqueStateDescriptionUpMinus[PosMid];
-  int* TmpFirstIndexUniqueStateDescriptionUpMinus = this->FirstIndexUniqueStateDescriptionUpMinus[PosMid];
-  int* TmpUniqueStateDescriptionSubArraySizeUpMinus = this->UniqueStateDescriptionSubArraySizeUpMinus[PosMid];
-  PosMin = 0;
-  PosMax = this->NbrUniqueStateDescriptionUpMinus[PosMid] - 1;
-  PosMid = (PosMin + PosMax) >> 1;
-//  cout << "entring pass 2 : " << PosMin << " " << PosMax << endl;
-  CurrentState = TmpStateDescriptionArray[PosMid];
-  while ((PosMax > PosMin) && (CurrentState != stateDescriptionUpMinus))
-    {
-       if (CurrentState > stateDescriptionUpMinus)
-	 {
-	   PosMin = PosMid + 1;
-	 }
-       else
- 	{
- 	  PosMax = PosMid - 1;
-	} 
-       PosMid = (PosMin + PosMax) >> 1;
-       CurrentState = TmpStateDescriptionArray[PosMid];
-    }
-  if (CurrentState != stateDescriptionUpMinus)
-    PosMid = PosMax;
-  PosMin = TmpFirstIndexUniqueStateDescriptionUpMinus[PosMid];
-  PosMax = PosMin + TmpUniqueStateDescriptionSubArraySizeUpMinus[PosMid] - 1;
-//  cout << "pass2 : " << PosMin << " " << PosMax << endl;
-  PosMid = (PosMin + PosMax) >> 1;
-  CurrentState = this->StateDescriptionDownPlus[PosMid];
-  while ((PosMax > PosMin) && (CurrentState != stateDescriptionDownPlus))
-    {
-       if (CurrentState > stateDescriptionDownPlus)
-	 {
-	   PosMin = PosMid + 1;
-	 }
-       else
- 	{
- 	  PosMax = PosMid - 1;
-	} 
-       PosMid = (PosMin + PosMax) >> 1;
-       CurrentState = this->StateDescriptionDownPlus[PosMid];
-    }
-  if (CurrentState != stateDescriptionDownPlus)
-    return PosMax;
-  else
-    return PosMid;
-}
-
 
 
 // print a given State
@@ -480,13 +399,10 @@ int BosonOnSphereWithSU4Spin::FindStateIndex(unsigned long stateDescriptionUpPlu
 // state = ID of the state to print
 // return value = reference on current output stream 
 
-ostream& BosonOnSphereWithSU4Spin::PrintState (ostream& Str, int state)
+ostream& BosonOnSphereWithSU4SpinAllEntanglement::PrintState (ostream& Str, int state)
 {
-  this->FermionToBoson(this->StateDescriptionUpPlus[state], this->StateDescriptionUpMinus[state], 
-		       this->StateDescriptionDownPlus[state], this->StateDescriptionDownMinus[state],
-		       this->TemporaryStateUpPlus, this->TemporaryStateUpMinus,
-		       this->TemporaryStateDownPlus, this->TemporaryStateDownMinus); 
-
+  this->FermionToBoson(this->StateDescriptionPlus[state], this->StateDescriptionMinus[state], 
+		       this->TemporaryStatePlus, this->TemporaryStateMinus);
   Str << " | ";
   for (int i = this->LzMax; i >=0 ; --i)
     {
@@ -496,261 +412,276 @@ ostream& BosonOnSphereWithSU4Spin::PrintState (ostream& Str, int state)
   return Str;
 }
 
-// generate all states corresponding to the constraints
-// 
-// nbrBosons = number of bosons
-// lzMax1 = momentum maximum value for a boson in the state with up-plus
-// lzMax2 = momentum maximum value for a boson in the state with up-minus
-// lzMax3 = momentum maximum value for a boson in the state with down-plus
-// lzMax4 = momentum maximum value for a boson in the state with down-minus
-// totalLz = momentum total value
-// nbrNUpPlus = number of particles with quantum up-plus
-// nbrNUpMinus = number of particles with quantum up-minus
-// nbrNDownPlus = number of particles with quantum down-plus
-// nbrNDownMinus = number of particles with quantum down-minus
-// pos = position in StateDescription array where to store states
-// return value = position from which new states have to be stored
-
-long BosonOnSphereWithSU4Spin::GenerateStates(int nbrBosons, int lzMax1, int lzMax2, int lzMax3, int lzMax4, int totalLz, 
-					      int nbrNUpPlus, int nbrNUpMinus, int nbrNDownPlus, int nbrNDownMinus, long pos)
-{
-  if ((nbrBosons < 0) || (totalLz < 0) || (nbrNUpPlus < 0) || (nbrNUpMinus < 0) || (nbrNDownPlus < 0) || (nbrNDownMinus < 0))
-    return pos;
-  if ((nbrBosons == 0) && (totalLz == 0))
-    {
-      this->StateDescriptionUpPlus[pos] = 0x0ul;
-      this->StateDescriptionUpMinus[pos] = 0x0ul;
-      this->StateDescriptionDownPlus[pos] = 0x0ul;
-      this->StateDescriptionDownMinus[pos] = 0x0ul;
-      return (pos + 1l);
-    }
-  if ((lzMax1 < 0) || (lzMax2 < 0) || (lzMax3 < 0) || (lzMax4 < 0))
-    return pos;
-
-  if (nbrBosons == 1) 
-    {
-      if ((nbrNDownMinus == 1) && (lzMax4 >= totalLz))
-	{
-	  this->StateDescriptionUpPlus[pos] = 0x0ul;
-	  this->StateDescriptionUpMinus[pos] = 0x0ul;
-	  this->StateDescriptionDownPlus[pos] = 0x0ul;
-	  this->StateDescriptionDownMinus[pos] = 0x1ul << totalLz;
-	  return (pos + 1l);
-	}
-      return pos;
-    }
-
-  long TmpPos;
-  unsigned long Mask1;
-  unsigned long Mask2;
-  unsigned long Mask3;
-  unsigned long Mask4;
-
-  if (nbrNUpPlus == 0)
-    {
-      if (nbrNUpMinus == 0)
-	{
-	  if (nbrNDownPlus == 0)
-	    {
-	      for (int l = nbrNDownMinus; l > 0; --l)
-		{
-		  TmpPos = this->GenerateStates(nbrBosons - l, 0, 0, 0, lzMax4 - 1, totalLz - (lzMax4 * l), 
-						0, 0, 0, nbrNDownMinus - l, pos); 
-		  Mask4 = ((0x1ul << l) - 1ul) << (lzMax4 + nbrNDownMinus - l);
-		  for (; pos < TmpPos; ++pos)
-		    {
-		      this->StateDescriptionDownMinus[pos] |= Mask4;
-		    }
-		}
-	      pos = this->GenerateStates(nbrBosons, 0, 0, 0, lzMax4 - 1, totalLz, 0, 0, 0, nbrNDownMinus, pos);
-	      return pos;
-	    }
-	  for (int k = nbrNDownPlus; k > 0; --k)
-	    {
-	      TmpPos = this->GenerateStates(nbrBosons - k, 0, 0, lzMax3 - 1, lzMax4, totalLz - (lzMax3 * k), 
-					    0, 0, nbrNDownPlus - k, nbrNDownMinus, pos); 
-	      Mask3 = ((0x1ul << k) - 1ul) << (lzMax3 + nbrNDownPlus - k);
-	      for (; pos < TmpPos; ++pos)
-		{
-		  this->StateDescriptionDownPlus[pos] |= Mask3;
-		}
-	    }
-	  pos = this->GenerateStates(nbrBosons, 0, 0, lzMax3 - 1, lzMax4, totalLz, 0, 0, nbrNDownPlus, nbrNDownMinus, pos);
-	  return pos;
-	}
-      TmpPos = this->GenerateStates(nbrBosons - nbrNUpMinus, 0, 0, lzMax3, lzMax4, totalLz - (lzMax2 * nbrNUpMinus), 
-				    0, 0, nbrNDownPlus, nbrNDownMinus, pos); 
-      Mask2 = ((0x1ul << nbrNUpMinus) - 1ul) << lzMax2;
-      for (; pos < TmpPos; ++pos)
-	this->StateDescriptionUpMinus[pos] |= Mask2;
-      for (int j = nbrNUpMinus - 1; j > 0; --j)
-	{
-	  TmpPos = this->GenerateStates(nbrBosons - j, 0, lzMax2 - 1, lzMax3, lzMax4, totalLz - (lzMax2 * j), 
-					0, nbrNUpMinus - j, nbrNDownPlus, nbrNDownMinus, pos); 
-	  Mask2 = ((0x1ul << j) - 1ul) << (lzMax2 + nbrNUpMinus - j);
-	  for (; pos < TmpPos; ++pos)
-	    this->StateDescriptionUpMinus[pos] |= Mask2;
-	}
-      pos = this->GenerateStates(nbrBosons, 0, lzMax2 - 1, lzMax3, lzMax4, totalLz, 
-				 0, nbrNUpMinus, nbrNDownPlus, nbrNDownMinus, pos);
-      return pos;
-    }
-  
-  TmpPos = this->GenerateStates(nbrBosons - nbrNUpPlus, 0, lzMax2, lzMax3, lzMax4, totalLz - (lzMax1 * nbrNUpPlus), 
-				0, nbrNUpMinus, nbrNDownPlus, nbrNDownMinus, pos); 
-  Mask1 = ((0x1ul << nbrNUpPlus) - 1ul) << lzMax1;
-  for (; pos < TmpPos; ++pos)
-    this->StateDescriptionUpPlus[pos] |= Mask1;
-  for (int i = nbrNUpPlus - 1; i > 0; --i)
-    {
-      TmpPos = this->GenerateStates(nbrBosons - i, lzMax1 - 1, lzMax2, lzMax3, lzMax4, totalLz - (lzMax1 * i), 
-				    nbrNUpPlus - i, nbrNUpMinus, nbrNDownPlus, nbrNDownMinus, pos); 
-      Mask1 = ((0x1ul << i) - 1ul) << (lzMax1 + nbrNUpPlus - i);
-      for (; pos < TmpPos; ++pos)
-	{
-	  this->StateDescriptionUpPlus[pos] |= Mask1;
-	}
-    }
-  pos = this->GenerateStates(nbrBosons, lzMax1 - 1, lzMax2, lzMax3, lzMax4, totalLz, 
-			     nbrNUpPlus, nbrNUpMinus, nbrNDownPlus, nbrNDownMinus, pos);
-  return pos;
-};
-
 
 // generate look-up table associated to current Hilbert space
 // 
 // memory = memory size that can be allocated for the look-up table
 
-void BosonOnSphereWithSU4Spin::GenerateLookUpTable(unsigned long memory)
-{  
-  long TmpUniquePartition = 1l;
-  for (long i = 1l; i < this->LargeHilbertSpaceDimension; ++i)
-    {
-      while ((i < this->LargeHilbertSpaceDimension) && (this->StateDescriptionUpPlus[i - 1] == this->StateDescriptionUpPlus[i]))
-	{
-	  ++i;
-	}
-      if (i < this->LargeHilbertSpaceDimension)
-	++TmpUniquePartition;
-    }
+void BosonOnSphereWithSU4SpinAllEntanglement::GenerateLookUpTable(unsigned long memory)
+{
 
-  this->NbrUniqueStateDescriptionUpPlus = TmpUniquePartition;
-  this->UniqueStateDescriptionUpPlus = new unsigned long [this->NbrUniqueStateDescriptionUpPlus];
-  this->UniqueStateDescriptionSubArraySizeUpPlus = new int [this->NbrUniqueStateDescriptionUpPlus];
-  TmpUniquePartition = 0l;
-  this->UniqueStateDescriptionUpPlus[0l] = this->StateDescriptionUpPlus[0l];
-  this->UniqueStateDescriptionSubArraySizeUpPlus[0l] = 1;
-  for (long i = 1l; i < this->LargeHilbertSpaceDimension; ++i)
+#ifdef TEST_SU4_ALL_E
+  unsigned long LastPlusPart=StateDescriptionPlus[0];
+  int BlockStartIndex=0;
+  int BlockLength=1;
+  int NbrBlocks=1;
+  unsigned long LastMinusPart=StateDescriptionMinus[0];
+  for (long i=1; i<LargeHilbertSpaceDimension; ++i)
     {
-      while ((i < this->LargeHilbertSpaceDimension) && (this->StateDescriptionUpPlus[i - 1] == this->StateDescriptionUpPlus[i]))
+      if (StateDescriptionPlus[i]!=LastPlusPart)
 	{
-	  ++this->UniqueStateDescriptionSubArraySizeUpPlus[TmpUniquePartition];
-	  ++i;
-	}
-      if (i < this->LargeHilbertSpaceDimension)
-	{
-	  ++TmpUniquePartition;
-	  this->UniqueStateDescriptionUpPlus[TmpUniquePartition] = this->StateDescriptionUpPlus[i];
-	  this->UniqueStateDescriptionSubArraySizeUpPlus[TmpUniquePartition] = 1; 
-	}
-    }
-
-  this->NbrUniqueStateDescriptionUpMinus = new int [this->NbrUniqueStateDescriptionUpPlus];
-  TmpUniquePartition = 0;
-  long TmpIndex = 0l;
-  while (TmpIndex < this->LargeHilbertSpaceDimension)
-    {
-      long Lim = TmpIndex + this->UniqueStateDescriptionSubArraySizeUpPlus[TmpUniquePartition];
-      this->NbrUniqueStateDescriptionUpMinus[TmpUniquePartition] = 1;
-      ++TmpIndex;
-      while (TmpIndex < Lim)
-	{
-	  while ((TmpIndex < Lim) && (this->StateDescriptionUpMinus[TmpIndex - 1] == this->StateDescriptionUpMinus[TmpIndex]))
-	    ++TmpIndex;
-	  if (TmpIndex < Lim)
+	  if (LastPlusPart < StateDescriptionPlus[i])
 	    {
-	      ++this->NbrUniqueStateDescriptionUpMinus[TmpUniquePartition];
-	      ++TmpIndex;
+	      cout << "States not monotonously ordered in index 1 at block "<<NbrBlocks<<", line "<<i<<endl;
+	    }
+	  BlockStartIndex=i;
+	  BlockLength=1;
+	  LastPlusPart=StateDescriptionPlus[i];
+	  ++NbrBlocks;
+	}
+      else
+	{
+	  if (LastMinusPart <= StateDescriptionMinus[i])
+	    {
+	      cout << "States not monotonously ordered in index 2 for block "<<NbrBlocks<<" starting at "<<BlockStartIndex<<endl;
+	    }
+	  ++BlockLength;
+	}
+      LastMinusPart=StateDescriptionMinus[i];
+    }
+#endif
+
+  // set shift for higher bits
+  int MaxLookUpSize = (NPlusLzMax>NMinusLzMax ? NPlusLzMax+1 : NMinusLzMax+1);
+  if (MaxLookUpSize<std::log((double)memory)/std::log(2.0)/sizeof(unsigned long))
+    {
+      cout << "Using full look-up table"<<endl;
+      this->FullLookUp=true;
+      int LookUpSizePlus = NPlusLzMax+1;
+      int LookUpSizeMinus = NMinusLzMax+1;
+      // look-up table for higher bits
+      this->LookUpTablePlus = new unsigned long[0x1l<<LookUpSizePlus];
+      // look-up table with two entries : the first one used lzmax value of the state an the second 
+      this->LookUpTableMinus = new unsigned long[0x1l<<LookUpSizeMinus];
+      this->LookUpMemorySize = ((0x1l<<LookUpSizePlus)+(0x1l<<LookUpSizeMinus))*sizeof(unsigned long);
+      unsigned long LastPlusValue = this->StateDescriptionPlus[0];
+      this->LookUpTablePlus[LastPlusValue]=0;
+      this->LookUpTableMinus[this->StateDescriptionMinus[0]]=0;
+      unsigned SectorCount=1;
+      for (long i=1; i<this->LargeHilbertSpaceDimension; ++i)
+	{
+	  if (LastPlusValue!=this->StateDescriptionPlus[i])
+	    {
+	      LastPlusValue=this->StateDescriptionPlus[i];
+	      this->LookUpTablePlus[LastPlusValue]=i;
+	      this->LookUpTableMinus[this->StateDescriptionMinus[i]]=0;
+	      SectorCount=1;
+	    }
+	  else
+	    {
+	      this->LookUpTableMinus[this->StateDescriptionMinus[i]]=SectorCount;
+	      ++SectorCount;
 	    }
 	}
-      ++TmpUniquePartition;
     }
-  this->UniqueStateDescriptionUpMinus = new unsigned long* [this->NbrUniqueStateDescriptionUpPlus];
-  this->UniqueStateDescriptionSubArraySizeUpMinus = new int* [this->NbrUniqueStateDescriptionUpPlus];
-  this->FirstIndexUniqueStateDescriptionUpMinus = new int* [this->NbrUniqueStateDescriptionUpPlus];
-  for (long i = 0l; i < this->NbrUniqueStateDescriptionUpPlus; ++i)
+  else
     {
-      this->UniqueStateDescriptionUpMinus[i] = new unsigned long [this->NbrUniqueStateDescriptionUpMinus[i]];
-      this->UniqueStateDescriptionSubArraySizeUpMinus[i] = new int [this->NbrUniqueStateDescriptionUpMinus[i]];
-      this->FirstIndexUniqueStateDescriptionUpMinus[i] = new int [this->NbrUniqueStateDescriptionUpMinus[i]];
-    }
-
-  TmpUniquePartition = 0;
-  TmpIndex = 0l;
-  while (TmpIndex < this->LargeHilbertSpaceDimension)
-    {
-      long Lim = TmpIndex + this->UniqueStateDescriptionSubArraySizeUpPlus[TmpUniquePartition];
-      int TmpUniquePartition2 = 0;
-      this->UniqueStateDescriptionUpMinus[TmpUniquePartition][TmpUniquePartition2] = this->StateDescriptionUpMinus[TmpIndex];
-      this->UniqueStateDescriptionSubArraySizeUpMinus[TmpUniquePartition][TmpUniquePartition2] = 1;
-      this->FirstIndexUniqueStateDescriptionUpMinus[TmpUniquePartition][TmpUniquePartition2] = TmpIndex;
-      ++TmpIndex;
-      while (TmpIndex < Lim)
+      cout << "partial look-up not fully implemented, yet: using no look-up table"<<endl;
+      this->FullLookUp=false;
+      long TmpUniquePartition = 1l;
+      for (long i = 1l; i < this->LargeHilbertSpaceDimension; ++i)
 	{
-	  while ((TmpIndex < Lim) && (this->StateDescriptionUpMinus[TmpIndex - 1] == this->StateDescriptionUpMinus[TmpIndex]))
+	  while ((i < this->LargeHilbertSpaceDimension) && (this->StateDescriptionPlus[i - 1] == this->StateDescriptionPlus[i]))
 	    {
-	      ++this->UniqueStateDescriptionSubArraySizeUpMinus[TmpUniquePartition][TmpUniquePartition2];	      
-	      ++TmpIndex;
+	      ++i;
 	    }
-	  if (TmpIndex < Lim)
+	  if (i < this->LargeHilbertSpaceDimension)
+	    ++TmpUniquePartition;
+	}
+      
+      this->NbrUniqueStateDescriptionPlus = TmpUniquePartition;
+      this->UniqueStateDescriptionPlus = new unsigned long [this->NbrUniqueStateDescriptionPlus];
+      this->UniqueStateDescriptionSubArrayIndicesPlus = new int [this->NbrUniqueStateDescriptionPlus+1];
+      this->LookUpMemorySize = this->NbrUniqueStateDescriptionPlus*sizeof(unsigned long ) + (this->NbrUniqueStateDescriptionPlus+1) * sizeof(int );
+      TmpUniquePartition = 0l;
+      this->UniqueStateDescriptionPlus[0l] = this->StateDescriptionPlus[0l];
+      this->UniqueStateDescriptionSubArrayIndicesPlus[0l] = 0;
+      for (long i = 1l; i < this->LargeHilbertSpaceDimension; ++i)
+	{
+	  while ((i < this->LargeHilbertSpaceDimension) && (this->StateDescriptionPlus[i - 1] == this->StateDescriptionPlus[i]))
 	    {
-	      ++TmpUniquePartition2;
-	      this->UniqueStateDescriptionUpMinus[TmpUniquePartition][TmpUniquePartition2] = this->StateDescriptionUpMinus[TmpIndex];
-	      this->UniqueStateDescriptionSubArraySizeUpMinus[TmpUniquePartition][TmpUniquePartition2] = 1;
-	      this->FirstIndexUniqueStateDescriptionUpMinus[TmpUniquePartition][TmpUniquePartition2] = TmpIndex;
-	      ++TmpIndex;
+	      ++i;
+	    }
+	  if (i < this->LargeHilbertSpaceDimension)
+	    {
+	      ++TmpUniquePartition;
+	      this->UniqueStateDescriptionPlus[TmpUniquePartition] = this->StateDescriptionPlus[i];
+	      this->UniqueStateDescriptionSubArrayIndicesPlus[TmpUniquePartition] = i; 
 	    }
 	}
-      ++TmpUniquePartition;
+      this->UniqueStateDescriptionSubArrayIndicesPlus[this->NbrUniqueStateDescriptionPlus] = this->HilbertSpaceDimension;
     }
 }
+
+// generate all states corresponding to the constraints
+// 
+// nbrBosons = number of bosons remaining to be placed
+// lzMax = momentum maximum value for a boson in the state 
+// currentLzMax = momentum maximum value for bosons that are still to be placed
+//                (counting from 0 to lzMax for down and lzMax+1 to 2LzMax+1 for up)
+// totalLz = momentum total value
+// nPlus = remaining number of particles in plus / block I
+// nUp = remaining number of particles with spin up
+// pos = position in StateDescription array where to store states
+// return value = position from which new states have to be stored
+
+long BosonOnSphereWithSU4SpinAllEntanglement::GenerateStates(int nbrBosons, int currentLzMax, int nPlus, int totalLz, int nUp, long pos)
+{
+  int CurrentBlock = currentLzMax/(this->NbrLzValue<<1);
+  int CurrentMomentum = currentLzMax%(this->NbrLzValue<<1);
+  int CurrentSpinUp = CurrentMomentum/(this->NbrLzValue);
+  CurrentMomentum = CurrentMomentum%this->NbrLzValue;
+  
+  if ((nbrBosons < 0) || (nPlus < 0 ) || (nUp<0) || (currentLzMax < 0) || (totalLz < 0) || ((currentLzMax<NbrLzValue)&&((nbrBosons * CurrentMomentum) < totalLz)))
+    return pos;
+  if (nbrBosons == 0)
+    {
+      if ((totalLz == 0)&&(nPlus==0)&&(nUp==0))
+	{
+	  this->StateDescriptionPlus[pos] = 0x0ul;
+	  this->StateDescriptionMinus[pos] = 0x0ul;
+	  return (pos + 1l);
+	}
+      else return pos;
+    }
+  if (currentLzMax<NbrLzValue)
+    {
+      if ((nbrBosons == 1)&&(nUp == 0)&&(nPlus == 0))
+	{
+	  if (currentLzMax >= totalLz)
+	    {
+	      this->StateDescriptionPlus[pos] = 0x0ul;
+	      this->StateDescriptionMinus[pos] = 0x1ul<<totalLz;
+	      return (pos + 1l);
+	    }
+	  else return pos;
+	}
+    }
+  int ReducedCurrentLzMax = currentLzMax - 1;
+  long TmpPos;
+  int MaxToPlace = nbrBosons;
+  int NumberShift = nbrBosons;
+  int SpinShift = 0;
+  unsigned long* CurrentStateDescription=this->StateDescriptionMinus;
+  if (CurrentBlock==1)
+    {
+      MaxToPlace = nPlus;
+      NumberShift = nPlus;
+      CurrentStateDescription=this->StateDescriptionPlus;
+    }
+  if (CurrentSpinUp==1)
+    SpinShift = NbrLzValue;
+  unsigned long Mask;
+  for (int ToPlace=MaxToPlace; ToPlace>=0; --ToPlace)
+    {
+      TmpPos = this->GenerateStates(nbrBosons-ToPlace, ReducedCurrentLzMax, nPlus-ToPlace*CurrentBlock,
+				    totalLz-ToPlace*CurrentMomentum, nUp-ToPlace*CurrentSpinUp, pos);
+      
+      Mask = ((0x1ul << ToPlace) - 1ul) << (CurrentMomentum + NumberShift - ToPlace + SpinShift);
+      for (; pos < TmpPos; ++pos)
+	CurrentStateDescription[pos] |= Mask;
+    }
+  return pos;
+}
+
 
 // evaluate Hilbert space dimension
 //
 // nbrBosons = number of bosons
 // lzMax = momentum maximum value for a boson
 // totalLz = momentum total value
-// nbrNUpPlus = number of particles with quantum number up-plus
-// nbrNUpMinus = number of particles with quantum number up-minus
-// nbrNDownPlus = number of particles with quantum number down-plus
-// nbrNDownMinus = number of particles with quantum number down-minus
+// totalNPlus = total number of particles in block I
+// totalNUp = total number of particles with up spin
 // return value = Hilbert space dimension
 
-long BosonOnSphereWithSU4Spin::ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz, 
-								    int nbrNUpPlus, int nbrNUpMinus, int nbrNDownPlus, int nbrNDownMinus)
+long BosonOnSphereWithSU4SpinAllEntanglement::EvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalNPlus, int totalLz, int totalNUp)
 {
-  if ((nbrBosons < 0) || (totalLz < 0) || (nbrNUpPlus < 0) || (nbrNUpMinus < 0) || (nbrNDownPlus < 0) || (nbrNDownMinus < 0))
-    return 0l;
-  if ((nbrBosons == 0) && (totalLz == 0))
-    return 1l;
-  if (lzMax < 0)
-    return 0l;
-  if (nbrBosons == 1)
-    {
-      if (lzMax >= totalLz)
-	return 1l;
-      else
-	return 0l;
-    }
-  long Tmp = 0l;
-  for (int i = nbrNUpPlus; i >= 0; --i)
-    for (int j = nbrNUpMinus; j >= 0; --j)
-      for (int k = nbrNDownPlus; k >= 0; --k)
-	for (int l = nbrNDownMinus; l >= 0; --l)
-	  Tmp += this->ShiftedEvaluateHilbertSpaceDimension(nbrBosons - (i + j + k + l), lzMax - 1, totalLz - (lzMax * (i + j + k + l)), 
-							    nbrNUpPlus - i, nbrNUpMinus - j, nbrNDownPlus - k, nbrNDownMinus - l);
-  return  Tmp;
+  return this->ShiftedEvaluateHilbertSpaceDimension(nbrBosons, 4*lzMax+3, totalNPlus, (totalLz + lzMax * nbrBosons) >> 1,totalNUp, 0);
 }
+
+
+// generate all states corresponding to the constraints
+// 
+// nbrBosons = number of bosons remaining to be placed
+// lzMax = momentum maximum value for a boson in the state 
+// currentLzMax = momentum maximum value for bosons that are still to be placed
+//                (counting from 0 to lzMax for down and lzMax+1 to 2LzMax+1 for up)
+// totalLz = momentum total value
+// pos = position in StateDescription array where to store states
+// return value = position from which new states have to be stored
+
+long BosonOnSphereWithSU4SpinAllEntanglement::ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int currentLzMax, int nPlus, int totalLz, int nUp, int level)
+{
+  int CurrentBlock = currentLzMax/(this->NbrLzValue<<1);
+  int CurrentMomentum = currentLzMax%(this->NbrLzValue<<1);
+  int CurrentSpinUp = CurrentMomentum/(this->NbrLzValue);
+  CurrentMomentum = CurrentMomentum%this->NbrLzValue;
+  
+//   for (int i=0; i<level; ++i) cout << "  ";
+//   cout << "SEV(n="<<nbrBosons<<", lz="<<currentLzMax<<", nP="<<nPlus<<", totalLz="<<totalLz<<", nUp="<<nUp<<") - Block="<<CurrentBlock<<", Lz="<<CurrentMomentum<<" Sz="<<CurrentSpinUp<<endl;
+  if ((nbrBosons < 0) || (nPlus < 0 ) || (nUp<0) || (currentLzMax < 0) || (totalLz < 0) || ((currentLzMax<NbrLzValue)&&((nbrBosons * CurrentMomentum) < totalLz)))
+    {
+//       for (int i=0; i<level; ++i) cout << "  ";
+//       cout << "c0 - add 0"<<endl;
+      return 0;
+    }
+  if (nbrBosons == 0)
+    {
+      if ((totalLz == 0)&&(nPlus==0)&&(nUp==0))
+	{
+//  	  for (int i=0; i<level; ++i) cout << "  ";
+//  	  cout << "c1 - add 1"<<endl;
+	  return 1;
+	}
+      else
+	{
+//  	  for (int i=0; i<level; ++i) cout << "  ";	  
+//  	  cout << "c1 - add 0"<<endl;
+	  return 0;
+	}
+    }
+  if (currentLzMax<NbrLzValue)
+    {
+      if ((nbrBosons == 1)&&(nUp == 0)&&(nPlus == 0))
+	{
+	  if (currentLzMax >= totalLz)
+	    {
+// 	      for (int i=0; i<level; ++i) cout << "  ";
+// 	      cout << "c2 - add 1"<<endl;
+	      return 1;
+	    }
+	  else
+	    {
+// 	      for (int i=0; i<level; ++i) cout << "  ";
+// 	      cout << "c2 - add 0"<<endl;
+	      return 0;
+	    }
+	}
+    }
+  int ReducedCurrentLzMax = currentLzMax - 1;
+  long TmpDim = 0;
+  int MaxToPlace = nbrBosons;
+  if (CurrentBlock==1) MaxToPlace = nPlus;
+  for (int ToPlace=MaxToPlace; ToPlace>=0; --ToPlace)
+    TmpDim += this->ShiftedEvaluateHilbertSpaceDimension(nbrBosons-ToPlace, ReducedCurrentLzMax, nPlus-ToPlace*CurrentBlock,
+							 totalLz-ToPlace*CurrentMomentum, nUp-ToPlace*CurrentSpinUp, level+1);
+//   for (int i=0; i<level; ++i) cout << "  ";
+//   cout << "add: "<<TmpDim<<endl;
+  return TmpDim;
+}
+
+
+
 
 // apply a^+_m_up a_n_dp operator to a given state 
 //
@@ -760,9 +691,9 @@ long BosonOnSphereWithSU4Spin::ShiftedEvaluateHilbertSpaceDimension(int nbrBoson
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int BosonOnSphereWithSU4Spin::AdupAup (int index, int m, int n, double& coefficient)
+int BosonOnSphereWithSU4SpinAllEntanglement::AdupAup (int index, int m, int n, double& coefficient)
 {
-  this->FermionToBoson(this->StateDescriptionUpPlus[index], this->NUpPlusLzMax, this->TemporaryStateUpPlus);
+  this->FermionToBoson(this->StateDescriptionPlus[index], this->NPlusLzMax, this->TemporaryStatePlus);
   if (this->TemporaryStateUpPlus[n] == 0)
     { 
       coefficient = 0.0;
@@ -773,8 +704,7 @@ int BosonOnSphereWithSU4Spin::AdupAup (int index, int m, int n, double& coeffici
   ++this->TemporaryStateUpPlus[m];
   coefficient *= (double) this->TemporaryStateUpPlus[m];
   coefficient = sqrt(coefficient);  
-  return this->FindStateIndex(this->BosonToFermion(this->TemporaryStateUpPlus), this->StateDescriptionUpMinus[index], 
-			      this->StateDescriptionDownPlus[index], this->StateDescriptionDownMinus[index]);  
+  return this->FindStateIndex(this->BosonToFermion(this->TemporaryStatePlus), this->StateDescriptionMinus[index]);
 }
 
 // apply a^+_m_up a_n_um operator to a given state 
@@ -785,10 +715,9 @@ int BosonOnSphereWithSU4Spin::AdupAup (int index, int m, int n, double& coeffici
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int BosonOnSphereWithSU4Spin::AdupAum (int index, int m, int n, double& coefficient)
+int BosonOnSphereWithSU4SpinAllEntanglement::AdupAum (int index, int m, int n, double& coefficient)
 {
-  this->FermionToBoson(this->StateDescriptionUpPlus[index], this->NUpPlusLzMax, this->TemporaryStateUpPlus);
-  this->FermionToBoson(this->StateDescriptionUpMinus[index], this->NUpMinusLzMax, this->TemporaryStateUpMinus);
+  this->FermionToBoson(this->StateDescriptionMinus[index], this->NMinusLzMax, this->TemporaryStateMinus);
   if (this->TemporaryStateUpMinus[n] == 0)
     { 
       coefficient = 0.0;
@@ -796,11 +725,11 @@ int BosonOnSphereWithSU4Spin::AdupAum (int index, int m, int n, double& coeffici
     }
   coefficient = (double) this->TemporaryStateUpMinus[n];
   --this->TemporaryStateUpMinus[n];
+  this->FermionToBoson(this->StateDescriptionPlus[index], this->NPlusLzMax, this->TemporaryStatePlus);
   ++this->TemporaryStateUpPlus[m];
   coefficient *= (double) this->TemporaryStateUpPlus[m];
   coefficient = sqrt(coefficient);  
-  return this->FindStateIndex(this->BosonToFermion(this->TemporaryStateUpPlus), this->BosonToFermion(this->TemporaryStateUpMinus), 
-			      this->StateDescriptionDownPlus[index], this->StateDescriptionDownMinus[index]);  
+  return this->FindStateIndex(this->BosonToFermion(this->TemporaryStatePlus), this->BosonToFermion(this->TemporaryStateMinus)); 
 }
 
 // apply a^+_m_up a_n_dp operator to a given state 
@@ -811,10 +740,9 @@ int BosonOnSphereWithSU4Spin::AdupAum (int index, int m, int n, double& coeffici
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int BosonOnSphereWithSU4Spin::AdupAdp (int index, int m, int n, double& coefficient)
+int BosonOnSphereWithSU4SpinAllEntanglement::AdupAdp (int index, int m, int n, double& coefficient)
 {
-  this->FermionToBoson(this->StateDescriptionUpPlus[index], this->NUpPlusLzMax, this->TemporaryStateUpPlus);
-  this->FermionToBoson(this->StateDescriptionDownPlus[index], this->NDownPlusLzMax, this->TemporaryStateDownPlus);
+  this->FermionToBoson(this->StateDescriptionPlus[index], this->NPlusLzMax, this->TemporaryStatePlus);
   if (this->TemporaryStateDownPlus[n] == 0)
     { 
       coefficient = 0.0;
@@ -825,8 +753,7 @@ int BosonOnSphereWithSU4Spin::AdupAdp (int index, int m, int n, double& coeffici
   ++this->TemporaryStateUpPlus[m];
   coefficient *= (double) this->TemporaryStateUpPlus[m];
   coefficient = sqrt(coefficient);  
-  return this->FindStateIndex(this->BosonToFermion(this->TemporaryStateUpPlus), this->StateDescriptionUpMinus[index],
-			      this->BosonToFermion(this->TemporaryStateDownPlus), this->StateDescriptionDownMinus[index]);  
+  return this->FindStateIndex(this->BosonToFermion(this->TemporaryStatePlus), this->StateDescriptionMinus[index]);
 }
 
 // apply a^+_m_up a_n_dm operator to a given state 
@@ -837,10 +764,9 @@ int BosonOnSphereWithSU4Spin::AdupAdp (int index, int m, int n, double& coeffici
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int BosonOnSphereWithSU4Spin::AdupAdm (int index, int m, int n, double& coefficient)
+int BosonOnSphereWithSU4SpinAllEntanglement::AdupAdm (int index, int m, int n, double& coefficient)
 {
-  this->FermionToBoson(this->StateDescriptionUpPlus[index], this->NUpPlusLzMax, this->TemporaryStateUpPlus);
-  this->FermionToBoson(this->StateDescriptionDownMinus[index], this->NDownMinusLzMax, this->TemporaryStateDownMinus);
+  this->FermionToBoson(this->StateDescriptionMinus[index], this->NMinusLzMax, this->TemporaryStateMinus);
   if (this->TemporaryStateDownMinus[n] == 0)
     { 
       coefficient = 0.0;
@@ -848,11 +774,11 @@ int BosonOnSphereWithSU4Spin::AdupAdm (int index, int m, int n, double& coeffici
     }
   coefficient = (double) this->TemporaryStateDownMinus[n];
   --this->TemporaryStateDownMinus[n];
+  this->FermionToBoson(this->StateDescriptionPlus[index], this->NPlusLzMax, this->TemporaryStatePlus);
   ++this->TemporaryStateUpPlus[m];
   coefficient *= (double) this->TemporaryStateUpPlus[m];
   coefficient = sqrt(coefficient);  
-  return this->FindStateIndex(this->BosonToFermion(this->TemporaryStateUpPlus), this->StateDescriptionUpMinus[index],
-			      this->StateDescriptionDownPlus[index], this->BosonToFermion(this->TemporaryStateDownMinus));  
+  return this->FindStateIndex(this->BosonToFermion(this->TemporaryStatePlus), this->BosonToFermion(this->TemporaryStateMinus));
 }
 
 // apply a^+_m_um a_n_up operator to a given state 
@@ -863,10 +789,9 @@ int BosonOnSphereWithSU4Spin::AdupAdm (int index, int m, int n, double& coeffici
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int BosonOnSphereWithSU4Spin::AdumAup (int index, int m, int n, double& coefficient)
+int BosonOnSphereWithSU4SpinAllEntanglement::AdumAup (int index, int m, int n, double& coefficient)
 {
-  this->FermionToBoson(this->StateDescriptionUpPlus[index], this->NUpPlusLzMax, this->TemporaryStateUpPlus);
-  this->FermionToBoson(this->StateDescriptionUpMinus[index], this->NUpMinusLzMax, this->TemporaryStateUpMinus);
+  this->FermionToBoson(this->StateDescriptionPlus[index], this->NPlusLzMax, this->TemporaryStatePlus);
   if (this->TemporaryStateUpPlus[n] == 0)
     { 
       coefficient = 0.0;
@@ -874,11 +799,11 @@ int BosonOnSphereWithSU4Spin::AdumAup (int index, int m, int n, double& coeffici
     }
   coefficient = (double) this->TemporaryStateUpPlus[n];
   --this->TemporaryStateUpPlus[n];
+  this->FermionToBoson(this->StateDescriptionMinus[index], this->NMinusLzMax, this->TemporaryStateMinus);
   ++this->TemporaryStateUpMinus[m];
   coefficient *= (double) this->TemporaryStateUpMinus[m];
   coefficient = sqrt(coefficient);  
-  return this->FindStateIndex(this->BosonToFermion(this->TemporaryStateUpPlus), this->BosonToFermion(this->TemporaryStateUpMinus), 
-			      this->StateDescriptionDownPlus[index], this->StateDescriptionDownMinus[index]);  
+  return this->FindStateIndex(this->BosonToFermion(this->TemporaryStatePlus), this->BosonToFermion(this->TemporaryStateMinus));
 }
 
 // apply a^+_m_um a_n_um operator to a given state 
@@ -889,9 +814,9 @@ int BosonOnSphereWithSU4Spin::AdumAup (int index, int m, int n, double& coeffici
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int BosonOnSphereWithSU4Spin::AdumAum (int index, int m, int n, double& coefficient)
+int BosonOnSphereWithSU4SpinAllEntanglement::AdumAum (int index, int m, int n, double& coefficient)
 {
-  this->FermionToBoson(this->StateDescriptionUpMinus[index], this->NUpMinusLzMax, this->TemporaryStateUpMinus);
+  this->FermionToBoson(this->StateDescriptionMinus[index], this->NMinusLzMax, this->TemporaryStateMinus);
   if (this->TemporaryStateUpMinus[n] == 0)
     { 
       coefficient = 0.0;
@@ -902,8 +827,7 @@ int BosonOnSphereWithSU4Spin::AdumAum (int index, int m, int n, double& coeffici
   ++this->TemporaryStateUpMinus[m];
   coefficient *= (double) this->TemporaryStateUpMinus[m];
   coefficient = sqrt(coefficient);  
-  return this->FindStateIndex(this->StateDescriptionUpPlus[index], this->BosonToFermion(this->TemporaryStateUpMinus), 
-			      this->StateDescriptionDownPlus[index], this->StateDescriptionDownMinus[index]);  
+  return this->FindStateIndex(this->StateDescriptionPlus[index], this->BosonToFermion(this->TemporaryStateMinus)); 
 }
 
 // apply a^+_m_um a_n_dp operator to a given state 
@@ -914,10 +838,9 @@ int BosonOnSphereWithSU4Spin::AdumAum (int index, int m, int n, double& coeffici
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int BosonOnSphereWithSU4Spin::AdumAdp (int index, int m, int n, double& coefficient)
+int BosonOnSphereWithSU4SpinAllEntanglement::AdumAdp (int index, int m, int n, double& coefficient)
 {
-  this->FermionToBoson(this->StateDescriptionDownPlus[index], this->NDownPlusLzMax, this->TemporaryStateDownPlus);
-  this->FermionToBoson(this->StateDescriptionUpMinus[index], this->NUpMinusLzMax, this->TemporaryStateUpMinus);
+  this->FermionToBoson(this->StateDescriptionPlus[index], this->NPlusLzMax, this->TemporaryStatePlus);
   if (this->TemporaryStateDownPlus[n] == 0)
     { 
       coefficient = 0.0;
@@ -925,11 +848,11 @@ int BosonOnSphereWithSU4Spin::AdumAdp (int index, int m, int n, double& coeffici
     }
   coefficient = (double) this->TemporaryStateDownPlus[n];
   --this->TemporaryStateDownPlus[n];
+  this->FermionToBoson(this->StateDescriptionMinus[index], this->NMinusLzMax, this->TemporaryStateMinus);
   ++this->TemporaryStateUpMinus[m];
   coefficient *= (double) this->TemporaryStateUpMinus[m];
   coefficient = sqrt(coefficient);  
-  return this->FindStateIndex(this->StateDescriptionUpPlus[index], this->BosonToFermion(this->TemporaryStateUpMinus), 
-			      this->BosonToFermion(this->TemporaryStateDownPlus), this->StateDescriptionDownMinus[index]);  
+  return this->FindStateIndex(this->BosonToFermion(this->TemporaryStatePlus), this->BosonToFermion(this->TemporaryStateMinus));
 }
 
 // apply a^+_m_um a_n_dp operator to a given state 
@@ -940,10 +863,9 @@ int BosonOnSphereWithSU4Spin::AdumAdp (int index, int m, int n, double& coeffici
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int BosonOnSphereWithSU4Spin::AdumAdm (int index, int m, int n, double& coefficient)
+int BosonOnSphereWithSU4SpinAllEntanglement::AdumAdm (int index, int m, int n, double& coefficient)
 {
-  this->FermionToBoson(this->StateDescriptionDownMinus[index], this->NDownMinusLzMax, this->TemporaryStateDownMinus);
-  this->FermionToBoson(this->StateDescriptionUpMinus[index], this->NUpMinusLzMax, this->TemporaryStateUpMinus);
+  this->FermionToBoson(this->StateDescriptionMinus[index], this->NMinusLzMax, this->TemporaryStateMinus);
   if (this->TemporaryStateDownMinus[n] == 0)
     { 
       coefficient = 0.0;
@@ -954,8 +876,7 @@ int BosonOnSphereWithSU4Spin::AdumAdm (int index, int m, int n, double& coeffici
   ++this->TemporaryStateUpMinus[m];
   coefficient *= (double) this->TemporaryStateUpMinus[m];
   coefficient = sqrt(coefficient);  
-  return this->FindStateIndex(this->StateDescriptionUpPlus[index], this->BosonToFermion(this->TemporaryStateUpMinus), 
-			      this->StateDescriptionDownPlus[index], this->BosonToFermion(this->TemporaryStateDownMinus));
+  return this->FindStateIndex(this->StateDescriptionPlus[index], this->BosonToFermion(this->TemporaryStateMinus));
 }
 
 // apply a^+_m_dp a_n_up operator to a given state 
@@ -966,10 +887,9 @@ int BosonOnSphereWithSU4Spin::AdumAdm (int index, int m, int n, double& coeffici
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int BosonOnSphereWithSU4Spin::AddpAup (int index, int m, int n, double& coefficient)
+int BosonOnSphereWithSU4SpinAllEntanglement::AddpAup (int index, int m, int n, double& coefficient)
 {
-  this->FermionToBoson(this->StateDescriptionUpPlus[index], this->NUpPlusLzMax, this->TemporaryStateUpPlus);
-  this->FermionToBoson(this->StateDescriptionDownPlus[index], this->NDownPlusLzMax, this->TemporaryStateDownPlus);
+  this->FermionToBoson(this->StateDescriptionPlus[index], this->NPlusLzMax, this->TemporaryStatePlus);
   if (this->TemporaryStateUpPlus[n] == 0)
     { 
       coefficient = 0.0;
@@ -980,8 +900,7 @@ int BosonOnSphereWithSU4Spin::AddpAup (int index, int m, int n, double& coeffici
   ++this->TemporaryStateDownPlus[m];
   coefficient *= (double) this->TemporaryStateDownPlus[m];
   coefficient = sqrt(coefficient);  
-  return this->FindStateIndex(this->BosonToFermion(this->TemporaryStateUpPlus), this->StateDescriptionUpMinus[index],
-			      this->BosonToFermion(this->TemporaryStateDownPlus), this->StateDescriptionDownMinus[index]);  
+  return this->FindStateIndex(this->BosonToFermion(this->TemporaryStatePlus), this->StateDescriptionMinus[index]);
 }
 
 // apply a^+_m_dp a_n_um operator to a given state 
@@ -992,10 +911,9 @@ int BosonOnSphereWithSU4Spin::AddpAup (int index, int m, int n, double& coeffici
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int BosonOnSphereWithSU4Spin::AddpAum (int index, int m, int n, double& coefficient)
+int BosonOnSphereWithSU4SpinAllEntanglement::AddpAum (int index, int m, int n, double& coefficient)
 {
-  this->FermionToBoson(this->StateDescriptionDownPlus[index], this->NDownPlusLzMax, this->TemporaryStateDownPlus);
-  this->FermionToBoson(this->StateDescriptionUpMinus[index], this->NUpMinusLzMax, this->TemporaryStateUpMinus);
+  this->FermionToBoson(this->StateDescriptionMinus[index], this->NMinusLzMax, this->TemporaryStateMinus);
   if (this->TemporaryStateUpMinus[n] == 0)
     { 
       coefficient = 0.0;
@@ -1003,11 +921,11 @@ int BosonOnSphereWithSU4Spin::AddpAum (int index, int m, int n, double& coeffici
     }
   coefficient = (double) this->TemporaryStateUpMinus[n];
   --this->TemporaryStateUpMinus[n];
+  this->FermionToBoson(this->StateDescriptionPlus[index], this->NPlusLzMax, this->TemporaryStatePlus);
   ++this->TemporaryStateDownPlus[m];
   coefficient *= (double) this->TemporaryStateDownPlus[m];
   coefficient = sqrt(coefficient);  
-  return this->FindStateIndex(this->StateDescriptionUpPlus[index], this->BosonToFermion(this->TemporaryStateUpMinus), 
-			      this->BosonToFermion(this->TemporaryStateDownPlus), this->StateDescriptionDownMinus[index]);  
+  return this->FindStateIndex(this->BosonToFermion(this->TemporaryStatePlus), this->BosonToFermion(this->TemporaryStateMinus));
 }
 
 // apply a^+_m_dp a_n_dp operator to a given state 
@@ -1018,9 +936,9 @@ int BosonOnSphereWithSU4Spin::AddpAum (int index, int m, int n, double& coeffici
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int BosonOnSphereWithSU4Spin::AddpAdp (int index, int m, int n, double& coefficient)
+int BosonOnSphereWithSU4SpinAllEntanglement::AddpAdp (int index, int m, int n, double& coefficient)
 {
-  this->FermionToBoson(this->StateDescriptionDownPlus[index], this->NDownPlusLzMax, this->TemporaryStateDownPlus);
+  this->FermionToBoson(this->StateDescriptionPlus[index], this->NPlusLzMax, this->TemporaryStatePlus);
   if (this->TemporaryStateDownPlus[n] == 0)
     { 
       coefficient = 0.0;
@@ -1031,8 +949,7 @@ int BosonOnSphereWithSU4Spin::AddpAdp (int index, int m, int n, double& coeffici
   ++this->TemporaryStateDownPlus[m];
   coefficient *= (double) this->TemporaryStateDownPlus[m];
   coefficient = sqrt(coefficient);  
-  return this->FindStateIndex(this->StateDescriptionUpPlus[index], this->StateDescriptionUpMinus[index], 
-			      this->BosonToFermion(this->TemporaryStateDownPlus), this->StateDescriptionDownMinus[index]);  
+  return this->FindStateIndex(this->BosonToFermion(this->TemporaryStatePlus), this->StateDescriptionMinus[index]);  
 }
 
 // apply a^+_m_dp a_n_dm operator to a given state 
@@ -1043,10 +960,9 @@ int BosonOnSphereWithSU4Spin::AddpAdp (int index, int m, int n, double& coeffici
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int BosonOnSphereWithSU4Spin::AddpAdm (int index, int m, int n, double& coefficient)
+int BosonOnSphereWithSU4SpinAllEntanglement::AddpAdm (int index, int m, int n, double& coefficient)
 {
-  this->FermionToBoson(this->StateDescriptionDownPlus[index], this->NDownPlusLzMax, this->TemporaryStateDownPlus);
-  this->FermionToBoson(this->StateDescriptionDownMinus[index], this->NDownMinusLzMax, this->TemporaryStateDownMinus);
+  this->FermionToBoson(this->StateDescriptionMinus[index], this->NMinusLzMax, this->TemporaryStateMinus);
   if (this->TemporaryStateDownMinus[n] == 0)
     { 
       coefficient = 0.0;
@@ -1054,11 +970,11 @@ int BosonOnSphereWithSU4Spin::AddpAdm (int index, int m, int n, double& coeffici
     }
   coefficient = (double) this->TemporaryStateDownMinus[n];
   --this->TemporaryStateDownMinus[n];
+  this->FermionToBoson(this->StateDescriptionPlus[index], this->NPlusLzMax, this->TemporaryStatePlus);
   ++this->TemporaryStateDownPlus[m];
   coefficient *= (double) this->TemporaryStateDownPlus[m];
   coefficient = sqrt(coefficient);  
-  return this->FindStateIndex(this->StateDescriptionUpPlus[index], this->StateDescriptionUpMinus[index], 
-			      this->BosonToFermion(this->TemporaryStateDownPlus), this->BosonToFermion(this->TemporaryStateDownMinus));  
+  return this->FindStateIndex(this->BosonToFermion(this->TemporaryStatePlus), this->BosonToFermion(this->TemporaryStateMinus));
 }
 
 // apply a^+_m_dm a_n_up operator to a given state 
@@ -1069,10 +985,9 @@ int BosonOnSphereWithSU4Spin::AddpAdm (int index, int m, int n, double& coeffici
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int BosonOnSphereWithSU4Spin::AddmAup (int index, int m, int n, double& coefficient)
+int BosonOnSphereWithSU4SpinAllEntanglement::AddmAup (int index, int m, int n, double& coefficient)
 {
-  this->FermionToBoson(this->StateDescriptionUpPlus[index], this->NUpPlusLzMax, this->TemporaryStateUpPlus);
-  this->FermionToBoson(this->StateDescriptionDownMinus[index], this->NDownMinusLzMax, this->TemporaryStateDownMinus);
+  this->FermionToBoson(this->StateDescriptionPlus[index], this->NPlusLzMax, this->TemporaryStatePlus);
   if (this->TemporaryStateUpPlus[n] == 0)
     { 
       coefficient = 0.0;
@@ -1080,11 +995,11 @@ int BosonOnSphereWithSU4Spin::AddmAup (int index, int m, int n, double& coeffici
     }
   coefficient = (double) this->TemporaryStateUpPlus[n];
   --this->TemporaryStateUpPlus[n];
+  this->FermionToBoson(this->StateDescriptionMinus[index], this->NMinusLzMax, this->TemporaryStateMinus);
   ++this->TemporaryStateDownMinus[m];
   coefficient *= (double) this->TemporaryStateDownMinus[m];
   coefficient = sqrt(coefficient);  
-  return this->FindStateIndex(this->BosonToFermion(this->TemporaryStateUpPlus), this->StateDescriptionUpMinus[index],
-			      this->StateDescriptionDownPlus[index], this->BosonToFermion(this->TemporaryStateDownMinus));  
+  return this->FindStateIndex(this->BosonToFermion(this->TemporaryStatePlus), this->BosonToFermion(this->TemporaryStateMinus));
 }
 
 // apply a^+_m_dm a_n_um operator to a given state 
@@ -1095,10 +1010,9 @@ int BosonOnSphereWithSU4Spin::AddmAup (int index, int m, int n, double& coeffici
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int BosonOnSphereWithSU4Spin::AddmAum (int index, int m, int n, double& coefficient)
+int BosonOnSphereWithSU4SpinAllEntanglement::AddmAum (int index, int m, int n, double& coefficient)
 {
-  this->FermionToBoson(this->StateDescriptionUpMinus[index], this->NUpMinusLzMax, this->TemporaryStateUpMinus);
-  this->FermionToBoson(this->StateDescriptionDownMinus[index], this->NDownMinusLzMax, this->TemporaryStateDownMinus);
+  this->FermionToBoson(this->StateDescriptionMinus[index], this->NMinusLzMax, this->TemporaryStateMinus);
   if (this->TemporaryStateUpMinus[n] == 0)
     { 
       coefficient = 0.0;
@@ -1109,8 +1023,7 @@ int BosonOnSphereWithSU4Spin::AddmAum (int index, int m, int n, double& coeffici
   ++this->TemporaryStateDownMinus[m];
   coefficient *= (double) this->TemporaryStateDownMinus[m];
   coefficient = sqrt(coefficient);  
-  return this->FindStateIndex(this->StateDescriptionUpPlus[index], this->BosonToFermion(this->TemporaryStateUpMinus), 
-			      this->StateDescriptionDownPlus[index], this->BosonToFermion(this->TemporaryStateDownMinus));  
+  return this->FindStateIndex(this->StateDescriptionPlus[index], this->BosonToFermion(this->TemporaryStateMinus));
 }
 
 // apply a^+_m_dm a_n_dp operator to a given state 
@@ -1121,22 +1034,21 @@ int BosonOnSphereWithSU4Spin::AddmAum (int index, int m, int n, double& coeffici
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int BosonOnSphereWithSU4Spin::AddmAdp (int index, int m, int n, double& coefficient)
+int BosonOnSphereWithSU4SpinAllEntanglement::AddmAdp (int index, int m, int n, double& coefficient)
 {
-  this->FermionToBoson(this->StateDescriptionDownPlus[index], this->NDownPlusLzMax, this->TemporaryStateDownPlus);
-  this->FermionToBoson(this->StateDescriptionDownMinus[index], this->NDownMinusLzMax, this->TemporaryStateDownMinus);
+  this->FermionToBoson(this->StateDescriptionPlus[index], this->NPlusLzMax, this->TemporaryStatePlus);
   if (this->TemporaryStateDownPlus[n] == 0)
     { 
       coefficient = 0.0;
       return this->HilbertSpaceDimension;      
     }
+  this->FermionToBoson(this->StateDescriptionMinus[index], this->NMinusLzMax, this->TemporaryStateMinus);
   coefficient = (double) this->TemporaryStateDownPlus[n];
   --this->TemporaryStateDownPlus[n];
   ++this->TemporaryStateDownMinus[m];
   coefficient *= (double) this->TemporaryStateDownMinus[m];
   coefficient = sqrt(coefficient);  
-  return this->FindStateIndex(this->StateDescriptionUpPlus[index], this->StateDescriptionUpMinus[index], 
-			      this->BosonToFermion(this->TemporaryStateDownPlus), this->BosonToFermion(this->TemporaryStateDownMinus));  
+  return this->FindStateIndex(this->BosonToFermion(this->TemporaryStatePlus), this->BosonToFermion(this->TemporaryStateMinus));
 }
 
 // apply a^+_m_dm a_n_dm operator to a given state 
@@ -1147,9 +1059,9 @@ int BosonOnSphereWithSU4Spin::AddmAdp (int index, int m, int n, double& coeffici
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int BosonOnSphereWithSU4Spin::AddmAdm (int index, int m, int n, double& coefficient)
+int BosonOnSphereWithSU4SpinAllEntanglement::AddmAdm (int index, int m, int n, double& coefficient)
 {
-  this->FermionToBoson(this->StateDescriptionDownMinus[index], this->NDownMinusLzMax, this->TemporaryStateDownMinus);
+  this->FermionToBoson(this->StateDescriptionMinus[index], this->NMinusLzMax, this->TemporaryStateMinus);
   if (this->TemporaryStateDownMinus[n] == 0)
     { 
       coefficient = 0.0;
@@ -1160,8 +1072,7 @@ int BosonOnSphereWithSU4Spin::AddmAdm (int index, int m, int n, double& coeffici
   ++this->TemporaryStateDownPlus[m];
   coefficient *= (double) this->TemporaryStateDownMinus[m];
   coefficient = sqrt(coefficient);  
-  return this->FindStateIndex(this->StateDescriptionUpPlus[index], this->StateDescriptionUpMinus[index], 
-			      this->StateDescriptionDownPlus[index], this->BosonToFermion(this->TemporaryStateDownMinus));  
+  return this->FindStateIndex(this->StateDescriptionPlus[index], this->BosonToFermion(this->TemporaryStateMinus));
 }
 
 // apply a_n1_up a_n2_up operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
@@ -1171,16 +1082,14 @@ int BosonOnSphereWithSU4Spin::AddmAdm (int index, int m, int n, double& coeffici
 // n2 = second index for annihilation operator
 // return value =  multiplicative factor
 
-double BosonOnSphereWithSU4Spin::AupAup (int index, int n1, int n2)
+double BosonOnSphereWithSU4SpinAllEntanglement::AupAup (int index, int n1, int n2)
 {
-  this->FermionToBoson(this->StateDescriptionUpPlus[index], this->NUpPlusLzMax, this->ProdATemporaryStateUpPlus);
+  this->FermionToBoson(this->StateDescriptionPlus[index], this->NPlusLzMax, this->ProdATemporaryStatePlus);
   if ((this->ProdATemporaryStateUpPlus[n1] == 0) || (this->ProdATemporaryStateUpPlus[n2] == 0) || ((n1 == n2) && (this->ProdATemporaryStateUpPlus[n1] == 1)))
     {
       return 0.0;
     }
-  this->FermionToBoson(this->StateDescriptionUpMinus[index], this->NUpMinusLzMax, this->ProdATemporaryStateUpMinus);
-  this->FermionToBoson(this->StateDescriptionDownPlus[index], this->NDownPlusLzMax, this->ProdATemporaryStateDownPlus);
-  this->FermionToBoson(this->StateDescriptionDownMinus[index], this->NDownMinusLzMax, this->ProdATemporaryStateDownMinus);
+  this->FermionToBoson(this->StateDescriptionMinus[index], this->NMinusLzMax, this->ProdATemporaryStateMinus);
   double Coefficient = this->ProdATemporaryStateUpPlus[n2];
   --this->ProdATemporaryStateUpPlus[n2];
   Coefficient *= this->ProdATemporaryStateUpPlus[n1];
@@ -1195,16 +1104,18 @@ double BosonOnSphereWithSU4Spin::AupAup (int index, int n1, int n2)
 // n2 = second index for annihilation operator
 // return value =  multiplicative factor
 
-double BosonOnSphereWithSU4Spin::AupAum (int index, int n1, int n2)
+double BosonOnSphereWithSU4SpinAllEntanglement::AupAum (int index, int n1, int n2)
 {
-  this->FermionToBoson(this->StateDescriptionUpPlus[index], this->NUpPlusLzMax, this->ProdATemporaryStateUpPlus);
-  this->FermionToBoson(this->StateDescriptionUpMinus[index], this->NUpMinusLzMax, this->ProdATemporaryStateUpMinus);
-  if ((this->ProdATemporaryStateUpPlus[n1] == 0) || (this->ProdATemporaryStateUpMinus[n2] == 0))
+  this->FermionToBoson(this->StateDescriptionPlus[index], this->NPlusLzMax, this->ProdATemporaryStatePlus);
+  if (this->ProdATemporaryStateUpPlus[n1] == 0)
     {
       return 0.0;
     }
-  this->FermionToBoson(this->StateDescriptionDownPlus[index], this->NDownPlusLzMax, this->ProdATemporaryStateDownPlus);
-  this->FermionToBoson(this->StateDescriptionDownMinus[index], this->NDownMinusLzMax, this->ProdATemporaryStateDownMinus);
+  this->FermionToBoson(this->StateDescriptionMinus[index], this->NMinusLzMax, this->ProdATemporaryStateMinus);
+  if (this->ProdATemporaryStateUpMinus[n2] == 0)
+    {
+      return 0.0;
+    }
   double Coefficient = this->ProdATemporaryStateUpMinus[n2];
   --this->ProdATemporaryStateUpMinus[n2];
   Coefficient *= this->ProdATemporaryStateUpPlus[n1];
@@ -1219,16 +1130,14 @@ double BosonOnSphereWithSU4Spin::AupAum (int index, int n1, int n2)
 // n2 = second index for annihilation operator
 // return value =  multiplicative factor
 
-double BosonOnSphereWithSU4Spin::AupAdp (int index, int n1, int n2)
+double BosonOnSphereWithSU4SpinAllEntanglement::AupAdp (int index, int n1, int n2)
 {
-  this->FermionToBoson(this->StateDescriptionUpPlus[index], this->NUpPlusLzMax, this->ProdATemporaryStateUpPlus);
-  this->FermionToBoson(this->StateDescriptionDownPlus[index], this->NDownPlusLzMax, this->ProdATemporaryStateDownPlus);
+  this->FermionToBoson(this->StateDescriptionPlus[index], this->NPlusLzMax, this->ProdATemporaryStatePlus);
   if ((this->ProdATemporaryStateUpPlus[n1] == 0) || (this->ProdATemporaryStateDownPlus[n2] == 0))
     {
       return 0.0;
     }
-  this->FermionToBoson(this->StateDescriptionUpMinus[index], this->NUpMinusLzMax, this->ProdATemporaryStateUpMinus);
-  this->FermionToBoson(this->StateDescriptionDownMinus[index], this->NDownMinusLzMax, this->ProdATemporaryStateDownMinus);
+  this->FermionToBoson(this->StateDescriptionMinus[index], this->NMinusLzMax, this->ProdATemporaryStateMinus);
   double Coefficient = this->ProdATemporaryStateDownPlus[n2];
   --this->ProdATemporaryStateDownPlus[n2];
   Coefficient *= this->ProdATemporaryStateUpPlus[n1];
@@ -1243,16 +1152,18 @@ double BosonOnSphereWithSU4Spin::AupAdp (int index, int n1, int n2)
 // n2 = second index for annihilation operator
 // return value =  multiplicative factor
 
-double BosonOnSphereWithSU4Spin::AupAdm (int index, int n1, int n2)
+double BosonOnSphereWithSU4SpinAllEntanglement::AupAdm (int index, int n1, int n2)
 {
-  this->FermionToBoson(this->StateDescriptionUpPlus[index], this->NUpPlusLzMax, this->ProdATemporaryStateUpPlus);
-  this->FermionToBoson(this->StateDescriptionDownMinus[index], this->NDownMinusLzMax, this->ProdATemporaryStateDownMinus);
-  if ((this->ProdATemporaryStateUpPlus[n1] == 0) || (this->ProdATemporaryStateDownMinus[n2] == 0))
+  this->FermionToBoson(this->StateDescriptionPlus[index], this->NPlusLzMax, this->ProdATemporaryStatePlus);
+  if (this->ProdATemporaryStateUpPlus[n1] == 0)
     {
       return 0.0;
     }
-  this->FermionToBoson(this->StateDescriptionUpMinus[index], this->NUpMinusLzMax, this->ProdATemporaryStateUpMinus);
-  this->FermionToBoson(this->StateDescriptionDownPlus[index], this->NDownPlusLzMax, this->ProdATemporaryStateDownPlus);
+  this->FermionToBoson(this->StateDescriptionMinus[index], this->NMinusLzMax, this->ProdATemporaryStateMinus);
+  if (this->ProdATemporaryStateDownMinus[n2] == 0)
+    {
+      return 0.0;
+    }
   double Coefficient = this->ProdATemporaryStateDownMinus[n2];
   --this->ProdATemporaryStateDownMinus[n2];
   Coefficient *= this->ProdATemporaryStateUpPlus[n1];
@@ -1267,17 +1178,15 @@ double BosonOnSphereWithSU4Spin::AupAdm (int index, int n1, int n2)
 // n2 = second index for annihilation operator
 // return value =  multiplicative factor
 
-double BosonOnSphereWithSU4Spin::AumAum (int index, int n1, int n2)
+double BosonOnSphereWithSU4SpinAllEntanglement::AumAum (int index, int n1, int n2)
 {
-  this->FermionToBoson(this->StateDescriptionUpMinus[index], this->NUpMinusLzMax, this->ProdATemporaryStateUpMinus);
+  this->FermionToBoson(this->StateDescriptionMinus[index], this->NMinusLzMax, this->ProdATemporaryStateMinus);
   if ((this->ProdATemporaryStateUpMinus[n1] == 0) || (this->ProdATemporaryStateUpMinus[n2] == 0)
       || ((n1 == n2) && (this->ProdATemporaryStateUpMinus[n1] == 1)))
     {
       return 0.0;
     }
-  this->FermionToBoson(this->StateDescriptionUpPlus[index], this->NUpPlusLzMax, this->ProdATemporaryStateUpPlus);
-  this->FermionToBoson(this->StateDescriptionDownPlus[index], this->NDownPlusLzMax, this->ProdATemporaryStateDownPlus);
-  this->FermionToBoson(this->StateDescriptionDownMinus[index], this->NDownMinusLzMax, this->ProdATemporaryStateDownMinus);
+  this->FermionToBoson(this->StateDescriptionPlus[index], this->NPlusLzMax, this->ProdATemporaryStatePlus);
   double Coefficient = this->ProdATemporaryStateUpMinus[n2];
   --this->ProdATemporaryStateUpMinus[n2];
   Coefficient *= this->ProdATemporaryStateUpMinus[n1];
@@ -1292,16 +1201,18 @@ double BosonOnSphereWithSU4Spin::AumAum (int index, int n1, int n2)
 // n2 = second index for annihilation operator
 // return value =  multiplicative factor
 
-double BosonOnSphereWithSU4Spin::AumAdp (int index, int n1, int n2)
+double BosonOnSphereWithSU4SpinAllEntanglement::AumAdp (int index, int n1, int n2)
 {
-  this->FermionToBoson(this->StateDescriptionUpMinus[index], this->NUpMinusLzMax, this->ProdATemporaryStateUpMinus);
-  this->FermionToBoson(this->StateDescriptionDownPlus[index], this->NDownPlusLzMax, this->ProdATemporaryStateDownPlus);
-  if ((this->ProdATemporaryStateUpMinus[n1] == 0) || (this->ProdATemporaryStateDownPlus[n2] == 0))
+  this->FermionToBoson(this->StateDescriptionMinus[index], this->NMinusLzMax, this->ProdATemporaryStateMinus);
+  if (this->ProdATemporaryStateUpMinus[n1] == 0)
     {
       return 0.0;
     }
-  this->FermionToBoson(this->StateDescriptionUpPlus[index], this->NUpPlusLzMax, this->ProdATemporaryStateUpPlus);
-  this->FermionToBoson(this->StateDescriptionDownMinus[index], this->NDownMinusLzMax, this->ProdATemporaryStateDownMinus);
+  this->FermionToBoson(this->StateDescriptionPlus[index], this->NPlusLzMax, this->ProdATemporaryStatePlus);
+  if (this->ProdATemporaryStateDownPlus[n2] == 0)
+    {
+      return 0.0;
+    }
   double Coefficient = this->ProdATemporaryStateDownPlus[n2];
   --this->ProdATemporaryStateDownPlus[n2];
   Coefficient *= this->ProdATemporaryStateUpMinus[n1];
@@ -1316,16 +1227,14 @@ double BosonOnSphereWithSU4Spin::AumAdp (int index, int n1, int n2)
 // n2 = second index for annihilation operator
 // return value =  multiplicative factor
 
-double BosonOnSphereWithSU4Spin::AumAdm (int index, int n1, int n2)
+double BosonOnSphereWithSU4SpinAllEntanglement::AumAdm (int index, int n1, int n2)
 {
-  this->FermionToBoson(this->StateDescriptionUpMinus[index], this->NUpMinusLzMax, this->ProdATemporaryStateUpMinus);
-  this->FermionToBoson(this->StateDescriptionDownMinus[index], this->NDownMinusLzMax, this->ProdATemporaryStateDownMinus);
+  this->FermionToBoson(this->StateDescriptionMinus[index], this->NMinusLzMax, this->ProdATemporaryStateMinus);
   if ((this->ProdATemporaryStateUpMinus[n1] == 0) || (this->ProdATemporaryStateDownMinus[n2] == 0))
     {
       return 0.0;
     }
-  this->FermionToBoson(this->StateDescriptionUpPlus[index], this->NUpPlusLzMax, this->ProdATemporaryStateUpPlus);
-  this->FermionToBoson(this->StateDescriptionDownPlus[index], this->NDownPlusLzMax, this->ProdATemporaryStateDownPlus);
+  this->FermionToBoson(this->StateDescriptionPlus[index], this->NPlusLzMax, this->ProdATemporaryStatePlus);
   double Coefficient = this->ProdATemporaryStateDownMinus[n2];
   --this->ProdATemporaryStateDownMinus[n2];
   Coefficient *= this->ProdATemporaryStateUpMinus[n1];
@@ -1340,17 +1249,15 @@ double BosonOnSphereWithSU4Spin::AumAdm (int index, int n1, int n2)
 // n2 = second index for annihilation operator
 // return value =  multiplicative factor
 
-double BosonOnSphereWithSU4Spin::AdpAdp (int index, int n1, int n2)
+double BosonOnSphereWithSU4SpinAllEntanglement::AdpAdp (int index, int n1, int n2)
 {
-  this->FermionToBoson(this->StateDescriptionDownPlus[index], this->NDownPlusLzMax, this->ProdATemporaryStateDownPlus);
+  this->FermionToBoson(this->StateDescriptionPlus[index], this->NPlusLzMax, this->ProdATemporaryStatePlus);
   if ((this->ProdATemporaryStateDownPlus[n1] == 0) || (this->ProdATemporaryStateDownPlus[n2] == 0)
       || ((n1 == n2) && (this->ProdATemporaryStateDownPlus[n1] == 1)))    
     {
       return 0.0;
     }
-  this->FermionToBoson(this->StateDescriptionUpPlus[index], this->NUpPlusLzMax, this->ProdATemporaryStateUpPlus);
-  this->FermionToBoson(this->StateDescriptionUpMinus[index], this->NUpMinusLzMax, this->ProdATemporaryStateUpMinus);
-  this->FermionToBoson(this->StateDescriptionDownMinus[index], this->NDownMinusLzMax, this->ProdATemporaryStateDownMinus);
+  this->FermionToBoson(this->StateDescriptionMinus[index], this->NMinusLzMax, this->ProdATemporaryStateMinus);
   double Coefficient = this->ProdATemporaryStateDownPlus[n2];
   --this->ProdATemporaryStateDownPlus[n2];
   Coefficient *= this->ProdATemporaryStateDownPlus[n1];
@@ -1365,16 +1272,18 @@ double BosonOnSphereWithSU4Spin::AdpAdp (int index, int n1, int n2)
 // n2 = second index for annihilation operator
 // return value =  multiplicative factor
 
-double BosonOnSphereWithSU4Spin::AdpAdm (int index, int n1, int n2)
+double BosonOnSphereWithSU4SpinAllEntanglement::AdpAdm (int index, int n1, int n2)
 {
-  this->FermionToBoson(this->StateDescriptionDownPlus[index], this->NDownPlusLzMax, this->ProdATemporaryStateDownPlus);
-  this->FermionToBoson(this->StateDescriptionDownMinus[index], this->NDownMinusLzMax, this->ProdATemporaryStateDownMinus);
-  if ((this->ProdATemporaryStateDownPlus[n1] == 0) || (this->ProdATemporaryStateDownMinus[n2] == 0))
+  this->FermionToBoson(this->StateDescriptionPlus[index], this->NPlusLzMax, this->ProdATemporaryStatePlus);
+  if (this->ProdATemporaryStateDownPlus[n1] == 0) 
     {
       return 0.0;
     }
-  this->FermionToBoson(this->StateDescriptionUpPlus[index], this->NUpPlusLzMax, this->ProdATemporaryStateUpPlus);
-  this->FermionToBoson(this->StateDescriptionUpMinus[index], this->NUpMinusLzMax, this->ProdATemporaryStateUpMinus);
+  this->FermionToBoson(this->StateDescriptionMinus[index], this->NMinusLzMax, this->ProdATemporaryStateMinus);
+  if (this->ProdATemporaryStateDownMinus[n2] == 0)
+    {
+      return 0.0;
+    }
   double Coefficient = this->ProdATemporaryStateDownMinus[n2];
   --this->ProdATemporaryStateDownMinus[n2];
   Coefficient *= this->ProdATemporaryStateDownPlus[n1];
@@ -1389,17 +1298,15 @@ double BosonOnSphereWithSU4Spin::AdpAdm (int index, int n1, int n2)
 // n2 = second index for annihilation operator
 // return value =  multiplicative factor
 
-double BosonOnSphereWithSU4Spin::AdmAdm (int index, int n1, int n2)
+double BosonOnSphereWithSU4SpinAllEntanglement::AdmAdm (int index, int n1, int n2)
 {
-  this->FermionToBoson(this->StateDescriptionDownMinus[index], this->NDownMinusLzMax, this->ProdATemporaryStateDownMinus);
+  this->FermionToBoson(this->StateDescriptionMinus[index], this->NMinusLzMax, this->ProdATemporaryStateMinus);
   if ((this->ProdATemporaryStateDownMinus[n1] == 0) || (this->ProdATemporaryStateDownMinus[n2] == 0)
       || ((n1 == n2) && (this->ProdATemporaryStateDownMinus[n1] == 1)))    
     {
       return 0.0;
     }
-  this->FermionToBoson(this->StateDescriptionUpPlus[index], this->NUpPlusLzMax, this->ProdATemporaryStateUpPlus);
-  this->FermionToBoson(this->StateDescriptionUpMinus[index], this->NUpMinusLzMax, this->ProdATemporaryStateUpMinus);
-  this->FermionToBoson(this->StateDescriptionDownPlus[index], this->NDownPlusLzMax, this->ProdATemporaryStateDownPlus);
+  this->FermionToBoson(this->StateDescriptionPlus[index], this->NPlusLzMax, this->ProdATemporaryStatePlus);
   double Coefficient = this->ProdATemporaryStateDownPlus[n2];
   --this->ProdATemporaryStateDownPlus[n2];
   Coefficient *= this->ProdATemporaryStateDownPlus[n1];
@@ -1414,7 +1321,7 @@ double BosonOnSphereWithSU4Spin::AdmAdm (int index, int n1, int n2)
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state
 
-int BosonOnSphereWithSU4Spin::AdupAdup (int m1, int m2, double& coefficient)
+int BosonOnSphereWithSU4SpinAllEntanglement::AdupAdup (int m1, int m2, double& coefficient)
 {
   return this->AdiAdj(m1, m2, this->TemporaryStateUpPlus, this->TemporaryStateUpPlus, coefficient);
 }
@@ -1426,7 +1333,7 @@ int BosonOnSphereWithSU4Spin::AdupAdup (int m1, int m2, double& coefficient)
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state
 
-int BosonOnSphereWithSU4Spin::AdupAdum (int m1, int m2, double& coefficient)
+int BosonOnSphereWithSU4SpinAllEntanglement::AdupAdum (int m1, int m2, double& coefficient)
 {
   return this->AdiAdj(m1, m2, this->TemporaryStateUpPlus, this->TemporaryStateUpMinus, coefficient);
 }
@@ -1438,7 +1345,7 @@ int BosonOnSphereWithSU4Spin::AdupAdum (int m1, int m2, double& coefficient)
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state
 
-int BosonOnSphereWithSU4Spin::AdupAddp (int m1, int m2, double& coefficient)
+int BosonOnSphereWithSU4SpinAllEntanglement::AdupAddp (int m1, int m2, double& coefficient)
 {
   return this->AdiAdj(m1, m2, this->TemporaryStateUpPlus, this->TemporaryStateDownPlus, coefficient);
 }
@@ -1450,7 +1357,7 @@ int BosonOnSphereWithSU4Spin::AdupAddp (int m1, int m2, double& coefficient)
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state
 
-int BosonOnSphereWithSU4Spin::AdupAddm (int m1, int m2, double& coefficient)
+int BosonOnSphereWithSU4SpinAllEntanglement::AdupAddm (int m1, int m2, double& coefficient)
 {
   return this->AdiAdj(m1, m2, this->TemporaryStateUpPlus, this->TemporaryStateDownMinus, coefficient);
 }
@@ -1462,7 +1369,7 @@ int BosonOnSphereWithSU4Spin::AdupAddm (int m1, int m2, double& coefficient)
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state
 
-int BosonOnSphereWithSU4Spin::AdumAdum (int m1, int m2, double& coefficient)
+int BosonOnSphereWithSU4SpinAllEntanglement::AdumAdum (int m1, int m2, double& coefficient)
 {
   return this->AdiAdj(m1, m2, this->TemporaryStateUpMinus, this->TemporaryStateUpMinus, coefficient);
 }
@@ -1474,7 +1381,7 @@ int BosonOnSphereWithSU4Spin::AdumAdum (int m1, int m2, double& coefficient)
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state
 
-int BosonOnSphereWithSU4Spin::AdumAddp (int m1, int m2, double& coefficient)
+int BosonOnSphereWithSU4SpinAllEntanglement::AdumAddp (int m1, int m2, double& coefficient)
 {
   return this->AdiAdj(m1, m2, this->TemporaryStateUpMinus, this->TemporaryStateDownPlus, coefficient);
 }
@@ -1486,7 +1393,7 @@ int BosonOnSphereWithSU4Spin::AdumAddp (int m1, int m2, double& coefficient)
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state
 
-int BosonOnSphereWithSU4Spin::AdumAddm (int m1, int m2, double& coefficient)
+int BosonOnSphereWithSU4SpinAllEntanglement::AdumAddm (int m1, int m2, double& coefficient)
 {
   return this->AdiAdj(m1, m2, this->TemporaryStateUpMinus, this->TemporaryStateDownMinus, coefficient);
 }
@@ -1498,7 +1405,7 @@ int BosonOnSphereWithSU4Spin::AdumAddm (int m1, int m2, double& coefficient)
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state
 
-int BosonOnSphereWithSU4Spin::AddpAddp (int m1, int m2, double& coefficient)
+int BosonOnSphereWithSU4SpinAllEntanglement::AddpAddp (int m1, int m2, double& coefficient)
 {
   return this->AdiAdj(m1, m2, this->TemporaryStateDownPlus, this->TemporaryStateDownPlus, coefficient);
 }
@@ -1510,7 +1417,7 @@ int BosonOnSphereWithSU4Spin::AddpAddp (int m1, int m2, double& coefficient)
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state
 
-int BosonOnSphereWithSU4Spin::AddpAddm (int m1, int m2, double& coefficient)
+int BosonOnSphereWithSU4SpinAllEntanglement::AddpAddm (int m1, int m2, double& coefficient)
 {
   return this->AdiAdj(m1, m2, this->TemporaryStateDownPlus, this->TemporaryStateDownMinus, coefficient);
 }
@@ -1522,18 +1429,20 @@ int BosonOnSphereWithSU4Spin::AddpAddm (int m1, int m2, double& coefficient)
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state
 
-int BosonOnSphereWithSU4Spin::AddmAddm (int m1, int m2, double& coefficient)
+int BosonOnSphereWithSU4SpinAllEntanglement::AddmAddm (int m1, int m2, double& coefficient)
 {
   return this->AdiAdj(m1, m2, this->TemporaryStateDownMinus, this->TemporaryStateDownMinus, coefficient);
 }
 
+
+/*
 // convert a state from one SU(4) basis to another, transforming the one body basis in each momentum sector
 //
 // initialState = state to transform  
 // targetState = vector where the transformed state has to be stored
 // oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
 
-void BosonOnSphereWithSU4Spin::TransformOneBodyBasis(ComplexVector& initialState, ComplexVector& targetState, ComplexMatrix* oneBodyBasis)
+void BosonOnSphereWithSU4SpinAllEntanglement::TransformOneBodyBasis(ComplexVector& initialState, ComplexVector& targetState, ComplexMatrix* oneBodyBasis)
 {
   int* TmpMomentumIndices = new int [this->NbrBosons];
   int* TmpSU4Indices = new int [this->NbrBosons];
@@ -1595,7 +1504,7 @@ void BosonOnSphereWithSU4Spin::TransformOneBodyBasis(ComplexVector& initialState
 // oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
 // return value = transformation matrix
 
-ComplexMatrix BosonOnSphereWithSU4Spin::TransformationMatrixOneBodyBasis(ComplexMatrix* oneBodyBasis)
+ComplexMatrix BosonOnSphereWithSU4SpinAllEntanglement::TransformationMatrixOneBodyBasis(ComplexMatrix* oneBodyBasis)
 {
   int* TmpMomentumIndices = new int [this->NbrBosons];
   int* TmpSU4Indices = new int [this->NbrBosons];
@@ -1666,7 +1575,7 @@ ComplexMatrix BosonOnSphereWithSU4Spin::TransformationMatrixOneBodyBasis(Complex
 // occupationCoefficient = invert of the coefficient that comes from the initial state occupation number 
 // occupationCoefficientArray = array that provides 1/2 ln (N!)
 
-void BosonOnSphereWithSU4Spin::TransformOneBodyBasisRecursive(ComplexVector& targetState, Complex coefficient,
+void BosonOnSphereWithSU4SpinAllEntanglement::TransformOneBodyBasisRecursive(ComplexVector& targetState, Complex coefficient,
 							      int position, int* momentumIndices, int* initialSU4Indices, int* currentSU4Indices, ComplexMatrix* oneBodyBasis,
 							      double occupationCoefficient, double* occupationCoefficientArray) 
 {
@@ -1732,13 +1641,13 @@ void BosonOnSphereWithSU4Spin::TransformOneBodyBasisRecursive(ComplexVector& tar
 // type = type of particles that has to be kept (0 for type up-plus, 1 for type up-minus, 2 for type down-plus, 3 for type down-minus)
 // return value = projection matrix
 
-ComplexMatrix BosonOnSphereWithSU4Spin::TransformationMatrixSU4ToU1(BosonOnSphereShort* targetSpace, int type)
+ComplexMatrix BosonOnSphereWithSU4SpinAllEntanglement::TransformationMatrixSU4ToU1(BosonOnSphereShort* targetSpace, int type)
 {
   ComplexMatrix TmpMatrix (targetSpace->HilbertSpaceDimension, this->HilbertSpaceDimension, true);
-  unsigned long* TmpStateDescription=0;
-  unsigned long* TmpStateDescriptionOther1=0;
-  unsigned long* TmpStateDescriptionOther2=0;
-  unsigned long* TmpStateDescriptionOther3=0;
+  unsigned long* TmpStateDescription=NULL;
+  unsigned long* TmpStateDescriptionOther1=NULL;
+  unsigned long* TmpStateDescriptionOther2=NULL;
+  unsigned long* TmpStateDescriptionOther3=NULL;
   switch (type)
     {
     case 0:
@@ -1792,3 +1701,4 @@ ComplexMatrix BosonOnSphereWithSU4Spin::TransformationMatrixSU4ToU1(BosonOnSpher
     }
   return TmpMatrix;
 }
+*/

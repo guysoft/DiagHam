@@ -75,6 +75,8 @@
 #include "HilbertSpace/BosonOnSphereWithSU2Spin.h"
 #include "HilbertSpace/BosonOnSphereWithSpinOld.h"
 #include "HilbertSpace/BosonOnSphereWithSpinAllSz.h"
+#include "HilbertSpace/BosonOnSphereWithSU4Spin.h"
+#include "HilbertSpace/BosonOnSphereWithSU4SpinAllEntanglement.h"
 
 #include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
 
@@ -199,8 +201,8 @@ void ParticleOnSphereManager::AddOptionGroup(OptionManager* manager, const char*
       break;
     case 4:
       {
-	(*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the z component of the total spin of the system", 0);
-	(*SystemGroup) += new SingleIntegerOption  ('i', "total-isosz", "twice the z component of the total isospin (i.e valley SU(2) degeneracy) of the system", 0);
+	(*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the total Sz projection", 0);
+	(*SystemGroup) += new SingleIntegerOption  ('i', "total-isosz", "twice the total isospin operator", 0);
 	(*SystemGroup) += new BooleanOption  ('\n', "use-entanglement", "use a define value for the spin-isopsin entanglement of the system");
 	(*SystemGroup) += new SingleIntegerOption  ('e', "total-entanglement", "twice the projection of the total spin-isopsin entanglement of the system", 0);
 	(*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
@@ -974,14 +976,14 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU3(int totalLz)
 
 ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU4(int totalLz)
 {
+  int NbrParticles = this->Options->GetInteger("nbr-particles");
+  int LzMax = this->Options->GetInteger("lzmax");
+  int SzTotal = this->Options->GetInteger("total-sz");
+  int IsoSzTotal = this->Options->GetInteger("total-isosz");
+  int TotalEntanglement = this->Options->GetInteger("total-entanglement");
+  unsigned long MemorySpace = ((unsigned long) this->Options->GetInteger("fast-search")) << 20;
   if (this->BosonFlag == false)
     {
-      int NbrFermions = this->Options->GetInteger("nbr-particles");
-      int LzMax = this->Options->GetInteger("lzmax");
-      int SzTotal = this->Options->GetInteger("total-sz");
-      int IsoSzTotal = this->Options->GetInteger("total-isosz");
-      int TotalEntanglement = this->Options->GetInteger("total-entanglement");
-      unsigned long MemorySpace = ((unsigned long) this->Options->GetInteger("fast-search")) << 20;
       ParticleOnSphereWithSU4Spin* Space;
 #ifdef __64_BITS__
       if (LzMax <= 15)
@@ -990,9 +992,9 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU4(int totalLz)
 #endif
         {
 	  if (this->Options->GetBoolean("use-entanglement"))
-	    Space = new FermionOnSphereWithSU4Spin(NbrFermions, totalLz, LzMax, SzTotal, IsoSzTotal, TotalEntanglement, MemorySpace);
+	    Space = new FermionOnSphereWithSU4Spin(NbrParticles, totalLz, LzMax, SzTotal, IsoSzTotal, TotalEntanglement, MemorySpace);
 	  else
-	    Space = new FermionOnSphereWithSU4Spin(NbrFermions, totalLz, LzMax, SzTotal, IsoSzTotal, MemorySpace);
+	    Space = new FermionOnSphereWithSU4Spin(NbrParticles, totalLz, LzMax, SzTotal, IsoSzTotal, MemorySpace);
         }
       else
 	{
@@ -1008,7 +1010,17 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU4(int totalLz)
     }
   else
     {
-      return 0;
+      ParticleOnSphereWithSU4Spin* Space;
+      if (this->Options->GetBoolean("use-entanglement"))
+	Space = new BosonOnSphereWithSU4Spin(NbrParticles, totalLz, LzMax, SzTotal, IsoSzTotal, TotalEntanglement, MemorySpace);
+      else
+	Space = new BosonOnSphereWithSU4SpinAllEntanglement(NbrParticles, totalLz, LzMax, SzTotal, IsoSzTotal, MemorySpace);
+      if (Space->GetHilbertSpaceDimension()==0)
+	{
+	  cout << "zero dimension Hilbert space" << endl;
+	  return 0;
+	}
+      return Space;
     }
 }
 

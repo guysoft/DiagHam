@@ -28,8 +28,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef BOSONONSPHEREWITHSU4SPIN_H
-#define BOSONONSPHEREWITHSU4SPIN_H
+#ifndef BOSONONSPHEREWITHSU4SPINALLENTANGLEMENT_H
+#define BOSONONSPHEREWITHSU4SPINALLENTANGLEMENT_H
 
 
 #include "config.h"
@@ -41,7 +41,7 @@
 class BosonOnSphereShort;
 
 
-class BosonOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
+class BosonOnSphereWithSU4SpinAllEntanglement : public ParticleOnSphereWithSU4Spin
 {
 
  protected:
@@ -60,9 +60,14 @@ class BosonOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   int TotalSpin;
   // twice the total isospin value
   int TotalIsospin;
-  // twice the total entanglement value
-  int TotalEntanglement;
 
+  // effective LzMax in fermionic coding of block I / plus states
+  int NPlusLzMax;
+  // effective LzMax in fermionic coding of block II / minus states
+  int NMinusLzMax;
+
+  
+  // old stuffs
   // lzmax value for the fermionic states associated to the type up-plus particles
   int NUpPlusLzMax;
   // lzmax value for the fermionic states associated to the type up-minus particles
@@ -75,30 +80,33 @@ class BosonOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   int FermionicLzMax;
 
   // temporay array describing the type up-plus particle occupation number of each state, only used during the Hilbert space generation
-  unsigned long* StateDescriptionUpPlus;
+  unsigned long* StateDescriptionPlus;
   // temporay array describing the type up-minus particle occupation number of each state, only used during the Hilbert space generation
-  unsigned long* StateDescriptionUpMinus;
-  // temporay array describing the type down-plus particle occupation number of each state, only used during the Hilbert space generation
-  unsigned long* StateDescriptionDownPlus;
-  // temporay array describing the type down-minus occupation number of each state, only used during the Hilbert space generation
-  unsigned long* StateDescriptionDownMinus;
+  unsigned long* StateDescriptionMinus;
 
-  // sorted array that contains each unique configuration for the type up-plus particles
-  unsigned long* UniqueStateDescriptionUpPlus;
-  // number of time each unique configuration for the type up-plus particles appears in StateDescriptionUpPlus
-  int* UniqueStateDescriptionSubArraySizeUpPlus;
-  // number of unique configurations for the type up-plus particles
-  long NbrUniqueStateDescriptionUpPlus;
-  // number of unique configurations for the type up-minus particles per unique type up-plus particle configuration 
-  int* NbrUniqueStateDescriptionUpMinus;
-  // unique configurations for the type up-minus particles per unique type up-plus particle configuration 
-  unsigned long** UniqueStateDescriptionUpMinus;
-  // number of time each unique configuration for the type up-minus particles appears in StateDescription2 having the same type up-plus particle configucation
-  int** UniqueStateDescriptionSubArraySizeUpMinus;
-  // first time a unique combination of type up-plus and type up-minus particle configurations appears in the Hilbert space
-  int** FirstIndexUniqueStateDescriptionUpMinus;
+  // flag indicating whether full look-up table is present
+  bool FullLookUp;
+  // size of memory used for storage
+  long LookUpMemorySize;
+  // full look-up table for plus spins (used for small systems)
+  unsigned long* LookUpTablePlus;
+  // full look-up table for plus spins (used for small systems)
+  unsigned long* LookUpTableMinus;
 
-  // temporary state used when applying operators for type up-plus particles
+  // look-up for large systems:
+  // sorted array that contains each unique configuration for the type plus particles
+  unsigned long* UniqueStateDescriptionPlus;
+  // number of time each unique configuration for the type plus particles appears in StateDescriptionUpPlus
+  int* UniqueStateDescriptionSubArrayIndicesPlus;
+  // number of unique configurations for the type plus particles
+  long NbrUniqueStateDescriptionPlus;
+
+  // temporary state used when applying operators for type up-plus particles (actual memory)
+  unsigned long* TemporaryStatePlus;
+  // temporary state used when applying operators for type up-minus particles
+  unsigned long* TemporaryStateMinus;
+
+  // temporary state used when applying operators for type up-plus particles (pointers to segments of above)
   unsigned long* TemporaryStateUpPlus;
   // temporary state used when applying operators for type up-minus particles
   unsigned long* TemporaryStateUpMinus;
@@ -107,7 +115,12 @@ class BosonOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // temporary state used when applying operators for type down-minus particles
   unsigned long* TemporaryStateDownMinus;
 
-  // temporary state used when applying ProdA operator for type up-plus particles
+  // temporary state used when applying ProdA operator for type up-plus particles (actual memory)
+  unsigned long* ProdATemporaryStatePlus;
+  // temporary state used when applying ProdA operator for type up-minus particles
+  unsigned long* ProdATemporaryStateMinus;
+  
+  // temporary state used when applying ProdA operator for type up-plus particles (pointers to segments of above)
   unsigned long* ProdATemporaryStateUpPlus;
   // temporary state used when applying ProdA operator for type up-minus particles
   unsigned long* ProdATemporaryStateUpMinus;
@@ -120,33 +133,34 @@ class BosonOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
 
   // default constructor
   // 
-  BosonOnSphereWithSU4Spin ();
+  BosonOnSphereWithSU4SpinAllEntanglement ();
 
   // basic constructor
-  // 
-  // nbrBosons = number of bosons
-  // totalLz = twice the momentum total value
-  // lzMax = twice the maximum Lz value reached by a boson
-  // totalSpin = twice the total spin value
-  // totalIsospin = twice the total isospin value
-  // totalEntanglement = twice the total entanglement value
-  // memory = amount of memory granted for precalculations
-  BosonOnSphereWithSU4Spin (int nbrBosons, int totalLz, int lzMax, int totalSpin, int totalIsospin, int totalEntanglement, unsigned long memory = 10000000);
+// 
+// nbrBosons = number of bosons
+// totalLz = twice the momentum total value
+// lzMax = twice the maximum Lz value reached by a boson
+// totalSz = twice the total sz projection
+// totalIsospin = twice the total isospin value (number imbalance between Plus and Minus)
+// memory = amount of memory granted for precalculations
+
+BosonOnSphereWithSU4SpinAllEntanglement (int nbrBosons, int totalLz, int lzMax, int totalSz, int totalIsospin,
+					 unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
   // bosons = reference on the hilbert space to copy to copy
-  BosonOnSphereWithSU4Spin(const BosonOnSphereWithSU4Spin& bosons);
+  BosonOnSphereWithSU4SpinAllEntanglement(const BosonOnSphereWithSU4SpinAllEntanglement& bosons);
 
   // destructor
   //
-  virtual ~BosonOnSphereWithSU4Spin ();
+  virtual ~BosonOnSphereWithSU4SpinAllEntanglement ();
 
   // assignement (without duplicating datas)
   //
   // bosons = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space
-  BosonOnSphereWithSU4Spin& operator = (const BosonOnSphereWithSU4Spin& bosons);
+  BosonOnSphereWithSU4SpinAllEntanglement& operator = (const BosonOnSphereWithSU4SpinAllEntanglement& bosons);
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -516,6 +530,7 @@ class BosonOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // return value = reference on current output stream 
   virtual ostream& PrintState (ostream& Str, int state);
 
+  /*
   // convert a state from one SU(4) basis to another, transforming the one body basis in each momentum sector
   //
   // initialState = state to transform  
@@ -535,31 +550,42 @@ class BosonOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // type = type of particles that has to be kept (0 for type up-plus, 1 for type up-minus, 2 for type down-plus, 3 for type down-minus)
   // return value = projection matrix
   virtual ComplexMatrix TransformationMatrixSU4ToU1(BosonOnSphereShort* targetSpace, int type = 0);
+  */
 
   protected:
 
   // find state index
   //
-  // stateDescriptionUpPlus = unsigned integer describing the fermionic state for type up-plus particles
-  // stateDescriptionUpMins = unsigned integer describing the fermionic state for type up-minus particles
-  // stateDescriptionDownPlus = unsigned integer describing the fermionic state for type down-plus particles
-  // stateDescriptionDownMinus = unsigned integer describing the fermionic state for type down-plus particles
+  // stateDescriptionPlus = unsigned integer describing the fermionic state for type plus particles
+  // stateDescriptionMinus = unsigned integer describing the fermionic state for type minus particles
   // return value = corresponding index
-  virtual int FindStateIndex(unsigned long stateDescriptionUpPlus, unsigned long stateDescriptionUpMinus, 
-			     unsigned long stateDescriptionDownPlus, unsigned long stateDescriptionDownMinus);
+  virtual inline int FindStateIndex(unsigned long stateDescriptionPlus, unsigned long stateDescriptionMinus); 
+
 
   // evaluate Hilbert space dimension
   //
   // nbrBosons = number of bosons
   // lzMax = momentum maximum value for a boson
   // totalLz = momentum total value
-  // nbrNUpPlus = number of particles with quantum number up-plus
-  // nbrNUpMinus = number of particles with quantum number up-minus
-  // nbrNDownPlus = number of particles with quantum number down-plus
-  // nbrNDownMinus = number of particles with quantum number down-minus
-  // return value = Hilbert space dimension
-  virtual long ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz, 
-						    int nbrNUpPlus, int nbrNUpMinus, int nbrNDownPlus, int nbrNDownMinus);
+  // totalNPlus = total number of particles in block I
+  // totalSz = total spin quantum number Sz
+  // return value = Hilbert space dimension  
+  long EvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalNPlus, int totalLz, int totalSz);
+
+  
+
+  // generate all states corresponding to the constraints
+  // 
+  // nbrBosons = number of bosons remaining to be placed
+  // lzMax = momentum maximum value for a boson in the state 
+  // currentLzMax = momentum maximum value for bosons that are still to be placed
+  //                (counting from 0 to lzMax for down and lzMax+1 to 2LzMax+1 for up)
+  // totalLz = momentum total value
+  // pos = position in StateDescription array where to store states
+  // return value = position from which new states have to be stored
+  
+  virtual long ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int currentLzMax, int nPlus, int totalLz, int totalSz, int level);
+
 
   // generate look-up table associated to current Hilbert space
   // 
@@ -568,20 +594,18 @@ class BosonOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
 
   // generate all states corresponding to the constraints
   // 
-  // nbrBosons = number of bosons
-  // lzMax1 = momentum maximum value for a boson in the state with up-plus
-  // lzMax2 = momentum maximum value for a boson in the state with up-minus
-  // lzMax3 = momentum maximum value for a boson in the state with down-plus
-  // lzMax4 = momentum maximum value for a boson in the state with down-minus
+  // nbrBosons = number of bosons remaining to be placed
+  // lzMax = momentum maximum value for a boson in the state 
+  // currentLzMax = momentum maximum value for bosons that are still to be placed
+  //                (counting from 0 to lzMax for down and lzMax+1 to 2LzMax+1 for up)
   // totalLz = momentum total value
-  // nbrNUpPlus = number of particles with up-plus
-  // nbrNUpMinus = number of particles with up-minus
-  // nbrNDownPlus = number of particles with down-plus
-  // nbrNDownMinus = number of particles with down-minus
+  // nPlus = remaining number of particles in plus / block I
+  // nUp = remaining number of particles with spin up
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  virtual long GenerateStates(int nbrBosons, int lzMax1, int lzMax2, int lzMax3, int lzMax4, int totalLz, 
-			      int nbrNUpPlus, int nbrNUpMinus, int nbrNDownPlus, int nbrNDownMinus, long pos);
+  
+  long GenerateStates(int nbrBosons, int currentLzMax, int nPlus, int totalLz, int nUp, long pos);
+
 
   // convert a bosonic state into its fermionic counterpart
   //
@@ -599,10 +623,8 @@ class BosonOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // finalStateUpMinus = reference on the corresponding fermionic state for the type up-minus particles
   // finalStateDownPlus = reference on the corresponding fermionic state for the type down-plus particles
   // finalStateDownMinus = reference on the corresponding fermionic state for the type down-minus particles
-  virtual void BosonToFermion(unsigned long*& initialStateUpPlus, unsigned long*& initialStateUpMinus, 
-			      unsigned long*& initialStateDownPlus, unsigned long*& initialStateDownMius, 
-			      unsigned long& finalStateUpPlus, unsigned long& finalStateUpMinus, 
-			      unsigned long& finalStateDownPlus, unsigned long& finalStateDownMinus);
+  virtual void BosonToFermion(unsigned long*& initialStatePlus, unsigned long*& initialStateMinus, 
+			      unsigned long& finalStatePlus, unsigned long& finalStateMinus);
 
   // convert a fermionic state into its bosonic  counterpart
   //
@@ -621,10 +643,8 @@ class BosonOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // finalStateUpMinus = reference on the array where the bosonic state for the type up-minus particles has to be stored
   // finalStateDownPlus = reference on the array where the bosonic state for the type down-plus particles has to be stored
   // finalStateDownMinus = reference on the array where the bosonic state for the type down-minus particles has to be stored
-  virtual void FermionToBoson(unsigned long initialStateUpPlus, unsigned long initialStateUpMinus,
-			      unsigned long initialStateDownPlus, unsigned long initialStateDownMius,
-			      unsigned long*& finalStateUpPlus, unsigned long*& finalStateUpMinus, 
-			      unsigned long*& finalStateDownPlus, unsigned long*& finalStateDownMinus);
+  virtual void FermionToBoson(unsigned long initialStatePlus, unsigned long initialStateMinus,
+			      unsigned long*& finalStatePlus, unsigned long*& finalStateMinus);
 
   // apply generic a^+_m1_i a^+_m2_j operator to the state produced using A*A* method (without destroying it)
   //
@@ -643,8 +663,7 @@ class BosonOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // stateDescriptionDownPlus = array describing the bosonic state for type down-plus particles
   // stateDescriptionDownMinus = array describing the bosonic state for type down-minus particles
   // return value = corresponding index
-  virtual int FindStateIndex(unsigned long*& stateDescriptionUpPlus, unsigned long*& stateDescriptionUpMinus, 
-			     unsigned long*& stateDescriptionDownPlus, unsigned long*& stateDescriptionDownMinus);
+  virtual int FindStateIndex(unsigned long*& stateDescriptionPlus, unsigned long*& stateDescriptionMinus);
 
   // recursive part of the convertion from a state from one SU(4) basis to another, transforming the one body basis in each momentum sector
   //
@@ -667,17 +686,61 @@ class BosonOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
 //
 // return value = particle statistic
 
-inline int BosonOnSphereWithSU4Spin::GetParticleStatistic()
+inline int BosonOnSphereWithSU4SpinAllEntanglement::GetParticleStatistic()
 {
   return AbstractQHEParticle::BosonicStatistic;
 }
+
+/*
+
+// convert a fermionic state into its bosonic  counterpart
+//
+// initialState = initial fermionic state
+// initialStateLzMax = initial fermionic state maximum Lz value
+// finalState = reference on the array where the bosonic state has to be stored
+// finalStateLzMax = reference on the integer where the bosonic state maximum Lz value has to be stored
+
+inline void BosonOnSphereWithSU4SpinAllEntanglement::FermionToBoson(unsigned long initialState, int initialStateLzMax, unsigned long*& finalState, int& finalStateLzMax)
+{
+  finalStateLzMax = 0;
+  while (initialStateLzMax >= 0)
+    {
+      unsigned long TmpState = (~initialState - 1ul) ^ (~initialState);
+      TmpState &= ~(TmpState >> 1);
+//      cout << hex << initialState << "  " << TmpState << dec << endl;
+#ifdef  __64_BITS__
+      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaaaaaaaaaul) != 0);
+      TmpPower |= ((TmpState & 0xccccccccccccccccul) != 0) << 1;
+      TmpPower |= ((TmpState & 0xf0f0f0f0f0f0f0f0ul) != 0) << 2;
+      TmpPower |= ((TmpState & 0xff00ff00ff00ff00ul) != 0) << 3;      
+      TmpPower |= ((TmpState & 0xffff0000ffff0000ul) != 0) << 4;      
+      TmpPower |= ((TmpState & 0xffffffff00000000ul) != 0) << 5;      
+#else
+      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaul) != 0);
+      TmpPower |= ((TmpState & 0xccccccccul) != 0) << 1;
+      TmpPower |= ((TmpState & 0xf0f0f0f0ul) != 0) << 2;
+      TmpPower |= ((TmpState & 0xff00ff00ul) != 0) << 3;      
+      TmpPower |= ((TmpState & 0xffff0000ul) != 0) << 4;      
+#endif
+//      cout << TmpPower << endl;
+      finalState[finalStateLzMax] = (unsigned long) TmpPower;
+      ++TmpPower;
+      initialState >>= TmpPower;
+      ++finalStateLzMax;
+      initialStateLzMax -= TmpPower;
+    }
+  --finalStateLzMax;
+}
+*/
+
+// old boson to fermion conversions:
 
 // convert a bosonic state into its fermionic counterpart
 //
 // initialState = reference on the array where initial bosonic state is stored
 // return value = corresponding fermionic state
 
-inline unsigned long BosonOnSphereWithSU4Spin::BosonToFermion(unsigned long*& initialState)
+inline unsigned long BosonOnSphereWithSU4SpinAllEntanglement::BosonToFermion(unsigned long*& initialState)
 {
   unsigned long FinalState = 0x0ul;
   unsigned long Shift = 0;
@@ -690,52 +753,31 @@ inline unsigned long BosonOnSphereWithSU4Spin::BosonToFermion(unsigned long*& in
   return FinalState;
 }
 
+
 // convert a bosonic state into its fermionic counterpart
 //
-// initialStateUpPlus = reference on the array where initial bosonic state for the type up-plus particles is stored
-// initialStateUpMinus = reference on the array where initial bosonic state for the type up-minus particles is stored
-// initialStateDownPlus = reference on the array where initial bosonic state for the type down-plus particles is stored
-// initialStateDownMinus = reference on the array where initial bosonic state for the type down-minus particles is stored
-// finalStateUpPlus = reference on the corresponding fermionic state for the type up-plus particles
-// finalStateUpMinus = reference on the corresponding fermionic state for the type up-minus particles
-// finalStateDownPlus = reference on the corresponding fermionic state for the type down-plus particles
-// finalStateDownMinus = reference on the corresponding fermionic state for the type down-minus particles
+// initialStatePlus = reference on the array where initial bosonic state for the type up-plus particles is stored
+// initialStateMinus = reference on the array where initial bosonic state for the type up-minus particles is stored
+// finalStatePlus = reference on the corresponding fermionic state for the type up-plus particles
+// finalStateMinus = reference on the corresponding fermionic state for the type up-minus particles
 
-inline void BosonOnSphereWithSU4Spin::BosonToFermion(unsigned long*& initialStateUpPlus, unsigned long*& initialStateUpMinus, 
-						     unsigned long*& initialStateDownPlus, unsigned long*& initialStateDownMinus, 
-						     unsigned long& finalStateUpPlus, unsigned long& finalStateUpMinus, 
-						     unsigned long& finalStateDownPlus, unsigned long& finalStateDownMinus)
+inline void BosonOnSphereWithSU4SpinAllEntanglement::BosonToFermion(unsigned long*& initialStatePlus, unsigned long*& initialStateMinus, 
+								    unsigned long& finalStatePlus, unsigned long& finalStateMinus) 
 {
-  finalStateUpPlus = 0x0ul;
+  finalStatePlus = 0x0ul;
   unsigned long Shift = 0;
-  for (int i = 0; i <= this->LzMax; ++i)
+  for (int i = 0; i < 2*(this->LzMax+1); ++i)
     {
-      finalStateUpPlus |= ((1ul << initialStateUpPlus[i]) - 1ul) << Shift;
-      Shift += initialStateUpPlus[i];
+      finalStatePlus |= ((1ul << initialStatePlus[i]) - 1ul) << Shift;
+      Shift += initialStatePlus[i];
       ++Shift;
     }
-  finalStateUpMinus = 0x0ul;
+  finalStateMinus = 0x0ul;
   Shift = 0;
-  for (int i = 0; i <= this->LzMax; ++i)
+  for (int i = 0; i < 2*(this->LzMax+1); ++i)
     {
-      finalStateUpMinus |= ((1ul << initialStateUpMinus[i]) - 1ul) << Shift;
-      Shift += initialStateUpMinus[i];
-      ++Shift;
-    }
-  finalStateDownPlus = 0x0ul;
-  Shift = 0;
-  for (int i = 0; i <= this->LzMax; ++i)
-    {
-      finalStateDownPlus |= ((1ul << initialStateDownPlus[i]) - 1ul) << Shift;
-      Shift += initialStateDownPlus[i];
-      ++Shift;
-    }
-  finalStateDownMinus = 0x0ul;
-  Shift = 0;
-  for (int i = 0; i <= this->LzMax; ++i)
-    {
-      finalStateDownMinus |= ((1ul << initialStateDownMinus[i]) - 1ul) << Shift;
-      Shift += initialStateDownMinus[i];
+      finalStateMinus |= ((1ul << initialStateMinus[i]) - 1ul) << Shift;
+      Shift += initialStateMinus[i];
       ++Shift;
     }
 }
@@ -746,7 +788,7 @@ inline void BosonOnSphereWithSU4Spin::BosonToFermion(unsigned long*& initialStat
 // initialStateLzMax= maximum lz value reached by the fermionic state
 // finalState = reference on the array where the bosonic state for the type up-plus particles has to be stored
 
-inline void BosonOnSphereWithSU4Spin::FermionToBoson(unsigned long initialState, int initialStateLzMax, unsigned long*& finalState)
+inline void BosonOnSphereWithSU4SpinAllEntanglement::FermionToBoson(unsigned long initialState, int initialStateLzMax, unsigned long*& finalState)
 {
   int FinalStateLzMax = 0;
   while ((initialStateLzMax >= 0) && ((initialState >> initialStateLzMax) == 0x0ul))
@@ -782,27 +824,21 @@ inline void BosonOnSphereWithSU4Spin::FermionToBoson(unsigned long initialState,
 
 // convert a fermionic state into its bosonic  counterpart
 //
-// initialStateUpPlus = initial fermionic state for the type up-plus particles
-// initialStateUpMinus = initial fermionic state for the type up-minus particles
-// initialStateDownPlus = initial fermionic state for the type down-plus particles
-// initialStateDownMinus = initial fermionic state for the type down-minus particles
-// finalStateUpPlus = reference on the array where the bosonic state for the type up-plus particles has to be stored
-// finalStateUpMinus = reference on the array where the bosonic state for the type up-minus particles has to be stored
-// finalStateDownPlus = reference on the array where the bosonic state for the type down-plus particles has to be stored
-// finalStateDownMinus = reference on the array where the bosonic state for the type down-minus particles has to be stored
+// initialStatePlus = initial fermionic state for the type up-plus particles
+// initialStateMinus = initial fermionic state for the type up-minus particles
+// finalStatePlus = reference on the array where the bosonic state for the type up-plus particles has to be stored
+// finalStateMinus = reference on the array where the bosonic state for the type up-minus particles has to be stored
 
-inline void BosonOnSphereWithSU4Spin::FermionToBoson(unsigned long initialStateUpPlus, unsigned long initialStateUpMinus, 
-						     unsigned long initialStateDownPlus, unsigned long initialStateDownMinus,
-						     unsigned long*& finalStateUpPlus, unsigned long*& finalStateUpMinus, 
-						     unsigned long*& finalStateDownPlus, unsigned long*& finalStateDownMinus)
+inline void BosonOnSphereWithSU4SpinAllEntanglement::FermionToBoson(unsigned long initialStatePlus, unsigned long initialStateMinus, 
+								    unsigned long*& finalStatePlus, unsigned long*& finalStateMinus)
 {
   int FinalStateLzMax = 0;
-  int InitialStateLzMax = this->NUpPlusLzMax;
-  while ((InitialStateLzMax >= 0) && ((initialStateUpPlus >> InitialStateLzMax) == 0x0ul))
+  int InitialStateLzMax = this->NPlusLzMax;
+  while ((InitialStateLzMax >= 0) && ((initialStatePlus >> InitialStateLzMax) == 0x0ul))
     --InitialStateLzMax;
   while (InitialStateLzMax >= 0)
     {
-      unsigned long TmpState = (~initialStateUpPlus - 1ul) ^ (~initialStateUpPlus);
+      unsigned long TmpState = (~initialStatePlus - 1ul) ^ (~initialStatePlus);
       TmpState &= ~(TmpState >> 1);
 #ifdef  __64_BITS__
       unsigned int TmpPower = ((TmpState & 0xaaaaaaaaaaaaaaaaul) != 0);
@@ -818,22 +854,22 @@ inline void BosonOnSphereWithSU4Spin::FermionToBoson(unsigned long initialStateU
       TmpPower |= ((TmpState & 0xff00ff00ul) != 0) << 3;      
       TmpPower |= ((TmpState & 0xffff0000ul) != 0) << 4;      
 #endif
-      finalStateUpPlus[FinalStateLzMax] = (unsigned long) TmpPower;
+      finalStatePlus[FinalStateLzMax] = (unsigned long) TmpPower;
       ++TmpPower;
-      initialStateUpPlus >>= TmpPower;
+      initialStatePlus >>= TmpPower;
       ++FinalStateLzMax;
       InitialStateLzMax -= TmpPower;
     }
   for (; FinalStateLzMax <= this->LzMax; ++FinalStateLzMax)
-    finalStateUpPlus[FinalStateLzMax] = 0x0ul;
+    finalStatePlus[FinalStateLzMax] = 0x0ul;
 
   FinalStateLzMax = 0;
-  InitialStateLzMax = this->NUpMinusLzMax;
-  while ((InitialStateLzMax >= 0) && ((initialStateUpMinus >> InitialStateLzMax) == 0x0ul))
+  InitialStateLzMax = this->NMinusLzMax;
+  while ((InitialStateLzMax >= 0) && ((initialStateMinus >> InitialStateLzMax) == 0x0ul))
     --InitialStateLzMax;
   while (InitialStateLzMax >= 0)
     {
-      unsigned long TmpState = (~initialStateUpMinus - 1ul) ^ (~initialStateUpMinus);
+      unsigned long TmpState = (~initialStateMinus - 1ul) ^ (~initialStateMinus);
       TmpState &= ~(TmpState >> 1);
 #ifdef  __64_BITS__
       unsigned int TmpPower = ((TmpState & 0xaaaaaaaaaaaaaaaaul) != 0);
@@ -849,76 +885,14 @@ inline void BosonOnSphereWithSU4Spin::FermionToBoson(unsigned long initialStateU
       TmpPower |= ((TmpState & 0xff00ff00ul) != 0) << 3;      
       TmpPower |= ((TmpState & 0xffff0000ul) != 0) << 4;      
 #endif
-      finalStateUpMinus[FinalStateLzMax] = (unsigned long) TmpPower;
+      finalStateMinus[FinalStateLzMax] = (unsigned long) TmpPower;
       ++TmpPower;
-      initialStateUpMinus >>= TmpPower;
+      initialStateMinus >>= TmpPower;
       ++FinalStateLzMax;
       InitialStateLzMax -= TmpPower;
     }
   for (; FinalStateLzMax <= this->LzMax; ++FinalStateLzMax)
-    finalStateUpMinus[FinalStateLzMax] = 0x0ul;
-
-  FinalStateLzMax = 0;
-  InitialStateLzMax = this->NDownPlusLzMax;
-  while ((InitialStateLzMax >= 0) && ((initialStateDownPlus >> InitialStateLzMax) == 0x0ul))
-    --InitialStateLzMax;
-  while (InitialStateLzMax >= 0)
-    {
-      unsigned long TmpState = (~initialStateDownPlus - 1ul) ^ (~initialStateDownPlus);
-      TmpState &= ~(TmpState >> 1);
-#ifdef  __64_BITS__
-      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaaaaaaaaaul) != 0);
-      TmpPower |= ((TmpState & 0xccccccccccccccccul) != 0) << 1;
-      TmpPower |= ((TmpState & 0xf0f0f0f0f0f0f0f0ul) != 0) << 2;
-      TmpPower |= ((TmpState & 0xff00ff00ff00ff00ul) != 0) << 3;      
-      TmpPower |= ((TmpState & 0xffff0000ffff0000ul) != 0) << 4;      
-      TmpPower |= ((TmpState & 0xffffffff00000000ul) != 0) << 5;      
-#else
-      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaul) != 0);
-      TmpPower |= ((TmpState & 0xccccccccul) != 0) << 1;
-      TmpPower |= ((TmpState & 0xf0f0f0f0ul) != 0) << 2;
-      TmpPower |= ((TmpState & 0xff00ff00ul) != 0) << 3;      
-      TmpPower |= ((TmpState & 0xffff0000ul) != 0) << 4;      
-#endif
-      finalStateDownPlus[FinalStateLzMax] = (unsigned long) TmpPower;
-      ++TmpPower;
-      initialStateDownPlus >>= TmpPower;
-      ++FinalStateLzMax;
-      InitialStateLzMax -= TmpPower;
-    }
-  for (; FinalStateLzMax <= this->LzMax; ++FinalStateLzMax)
-    finalStateDownPlus[FinalStateLzMax] = 0x0ul;
-
-  FinalStateLzMax = 0;
-  InitialStateLzMax = this->NDownMinusLzMax;
-  while ((InitialStateLzMax >= 0) && ((initialStateDownMinus >> InitialStateLzMax) == 0x0ul))
-    --InitialStateLzMax;
-  while (InitialStateLzMax >= 0)
-    {
-      unsigned long TmpState = (~initialStateDownMinus - 1ul) ^ (~initialStateDownMinus);
-      TmpState &= ~(TmpState >> 1);
-#ifdef  __64_BITS__
-      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaaaaaaaaaul) != 0);
-      TmpPower |= ((TmpState & 0xccccccccccccccccul) != 0) << 1;
-      TmpPower |= ((TmpState & 0xf0f0f0f0f0f0f0f0ul) != 0) << 2;
-      TmpPower |= ((TmpState & 0xff00ff00ff00ff00ul) != 0) << 3;      
-      TmpPower |= ((TmpState & 0xffff0000ffff0000ul) != 0) << 4;      
-      TmpPower |= ((TmpState & 0xffffffff00000000ul) != 0) << 5;      
-#else
-      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaul) != 0);
-      TmpPower |= ((TmpState & 0xccccccccul) != 0) << 1;
-      TmpPower |= ((TmpState & 0xf0f0f0f0ul) != 0) << 2;
-      TmpPower |= ((TmpState & 0xff00ff00ul) != 0) << 3;      
-      TmpPower |= ((TmpState & 0xffff0000ul) != 0) << 4;      
-#endif
-      finalStateDownMinus[FinalStateLzMax] = (unsigned long) TmpPower;
-      ++TmpPower;
-      initialStateDownMinus >>= TmpPower;
-      ++FinalStateLzMax;
-      InitialStateLzMax -= TmpPower;
-    }
-  for (; FinalStateLzMax <= this->LzMax; ++FinalStateLzMax)
-    finalStateDownMinus[FinalStateLzMax] = 0x0ul;
+    finalStateMinus[FinalStateLzMax] = 0x0ul;
 }
 
 // apply generic a^+_m1_i a^+_m2_j operator to the state produced using A*A* method (without destroying it)
@@ -930,8 +904,8 @@ inline void BosonOnSphereWithSU4Spin::FermionToBoson(unsigned long initialStateU
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state
 
-inline int BosonOnSphereWithSU4Spin::AdiAdj (int m1, int m2, unsigned long*& temporaryStatei, unsigned long*& temporaryStatej,
-					     double& coefficient)
+inline int BosonOnSphereWithSU4SpinAllEntanglement::AdiAdj (int m1, int m2, unsigned long*& temporaryStatei, unsigned long*& temporaryStatej,
+							    double& coefficient)
 {
   for (int i = 0; i < this->NbrLzValue; ++i)
     {
@@ -945,8 +919,7 @@ inline int BosonOnSphereWithSU4Spin::AdiAdj (int m1, int m2, unsigned long*& tem
   ++temporaryStatej[m1];
   coefficient *= temporaryStatej[m1];
   coefficient = sqrt(coefficient);
-  return this->FindStateIndex(this->TemporaryStateUpPlus, this->TemporaryStateUpMinus, 
-			      this->TemporaryStateDownPlus, this->TemporaryStateDownMinus);
+  return this->FindStateIndex(this->TemporaryStatePlus, this->TemporaryStateMinus);
 }
 
 // find state index
@@ -957,17 +930,77 @@ inline int BosonOnSphereWithSU4Spin::AdiAdj (int m1, int m2, unsigned long*& tem
 // stateDescriptionDownMinus = array describing the bosonic state for type down-minus particles
 // return value = corresponding index
 
-inline int BosonOnSphereWithSU4Spin::FindStateIndex(unsigned long*& stateDescriptionUpPlus, unsigned long*& stateDescriptionUpMinus,
-						    unsigned long*& stateDescriptionDownPlus, unsigned long*& stateDescriptionDownMinus)
+inline int BosonOnSphereWithSU4SpinAllEntanglement::FindStateIndex(unsigned long*& stateDescriptionPlus, unsigned long*& stateDescriptionMinus)
 {
   unsigned long Tmp1;
   unsigned long Tmp2;
-  unsigned long Tmp3;
-  unsigned long Tmp4;
-  this->BosonToFermion(stateDescriptionUpPlus, stateDescriptionUpMinus, stateDescriptionDownPlus, stateDescriptionDownMinus,
-		       Tmp1, Tmp2, Tmp3, Tmp4);
-  return this->FindStateIndex(Tmp1, Tmp2, Tmp3, Tmp4);
+  this->BosonToFermion(stateDescriptionPlus, stateDescriptionMinus, Tmp1, Tmp2);
+  return this->FindStateIndex(Tmp1, Tmp2);
 }
+
+// find state index
+//
+// stateDescriptionPlus = unsigned integer describing the fermionic state for type up-plus particles
+// stateDescriptionMinus = unsigned integer describing the fermionic state for type up-minus particles
+// return value = corresponding index
+
+int BosonOnSphereWithSU4SpinAllEntanglement::FindStateIndex(unsigned long stateDescriptionPlus, unsigned long stateDescriptionMinus)
+{
+  std::cout << "searching "<< std::hex << stateDescriptionPlus << " " << stateDescriptionMinus << std::dec << std::endl;
+  if (FullLookUp)
+    {
+      int Result = LookUpTablePlus[stateDescriptionPlus];
+      Result += LookUpTableMinus[stateDescriptionMinus];
+      return Result;
+    }
+  else
+    {
+      int PosMin = 0;
+      int PosMax = this->NbrUniqueStateDescriptionPlus - 1;
+      int PosMid = (PosMin + PosMax) >> 1;
+      //  cout << "entering " << PosMin << " " << PosMax << endl;
+      unsigned long CurrentState = this->UniqueStateDescriptionPlus[PosMid];
+      while ((PosMax > PosMin) && (CurrentState != stateDescriptionPlus))
+	{
+	  if (CurrentState > stateDescriptionPlus)
+	    {
+	      PosMin = PosMid + 1;
+	    }
+	  else
+	    {
+	      PosMax = PosMid - 1;
+	    } 
+	  PosMid = (PosMin + PosMax) >> 1;
+	  CurrentState = this->UniqueStateDescriptionPlus[PosMid];
+	}
+      if (CurrentState != stateDescriptionPlus)
+	PosMid = PosMax;
+      //  cout << "pass 1 : " << PosMid << endl;
+      PosMin = UniqueStateDescriptionSubArrayIndicesPlus[PosMid];
+      PosMax = UniqueStateDescriptionSubArrayIndicesPlus[PosMid+1]-1;
+      PosMid = (PosMin + PosMax) >> 1;
+      //  cout << "entring pass 2 : " << PosMin << " " << PosMax << endl;
+      CurrentState = StateDescriptionMinus[PosMid];
+      while ((PosMax > PosMin) && (CurrentState != stateDescriptionMinus))
+	{
+	  if (CurrentState > stateDescriptionMinus)
+	    {
+	      PosMin = PosMid + 1;
+	    }
+	  else
+	    {
+	      PosMax = PosMid - 1;
+	    } 
+	  PosMid = (PosMin + PosMax) >> 1;
+	  CurrentState = StateDescriptionMinus[PosMid];
+	}
+      if (CurrentState != stateDescriptionMinus)
+	return PosMax;
+      else
+	return PosMid;
+    }
+}
+
 
 #endif
 

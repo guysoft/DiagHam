@@ -1896,12 +1896,12 @@ double BosonOnSphereWithSpin::MeanSzValue(RealVector& state)
 // FinalSpace = pointer on the Hilbert Space whose the final state belong
 
 void BosonOnSphereWithSpin::BosonicStateWithSpinTimesBosonicState(RealVector& spinfulState, RealVector& polarizedState, RealVector& outputVector,BosonOnSphereShort * polarizedSpace,int minIndex,int nbrComponents, BosonOnSphereWithSpin * finalSpace)
-{
-  /*
+{ 
   unsigned long * FinalStates = new unsigned long[finalSpace->GetHilbertSpaceDimension()];
-  long * Weigth = new long [finalSpace->GetHilbertSpaceDimension()];
+  long * Weight = new long [finalSpace->GetHilbertSpaceDimension()];
   unsigned long * FirstMonomials = new unsigned long[this->NbrBosons];
   unsigned long * SecondMonomials = new unsigned long[this->NbrBosons];
+  /*
   int MaxIndex = minIndex + nbrComponents;
   for (long i = minIndex; i < MaxIndex; i++)
     {
@@ -1919,13 +1919,13 @@ void BosonOnSphereWithSpin::BosonicStateWithSpinTimesBosonicState(RealVector& sp
       for (long j = 0; j < secondSpace->HilbertSpaceDimension; j++)
 	{
 	  secondSpace->GetMonomial(j,SecondMonomials);
-	  unsigned long NbrStates = this->ProductOfTwoMonomials(FirstMonomials,EqualPowerIndex,NbrEqualPower,SecondMonomials,FinalStates,Weigth,finalSpace);
+	  unsigned long NbrStates = this->ProductOfTwoMonomials(FirstMonomials,EqualPowerIndex,NbrEqualPower,SecondMonomials,FinalStates,Weight,finalSpace);
 	  for (unsigned long Index = 0x0ul; Index < NbrStates; Index++)
 	    {
 	      int TmpLzMax = finalSpace->LzMax + finalSpace->NbrBosons - 1;
 	      while ((FinalStates[Index] >> TmpLzMax) == 0x0ul)
 		--TmpLzMax;
-	      outputVector[finalSpace->FermionBasis->FindStateIndex(FinalStates[Index],TmpLzMax)]+=firstState[i]*secondState[j]*Weigth[Index];
+	      outputVector[finalSpace->FermionBasis->FindStateIndex(FinalStates[Index],TmpLzMax)]+=firstState[i]*secondState[j]*Weight[Index];
 	    }
 	}
     }
