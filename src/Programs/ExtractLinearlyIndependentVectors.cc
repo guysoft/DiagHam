@@ -1,5 +1,8 @@
 #include "Vector/RealVector.h"
+#include "Vector/ComplexVector.h"
 
+#include "Matrix/ComplexMatrix.h"
+#include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
 #include "Matrix/RealMatrix.h"
@@ -44,6 +47,7 @@ int main(int argc, char** argv)
   Manager += ToolsGroup;
   Manager += MiscGroup;
 
+  (*SystemGroup) += new BooleanOption  ('c', "complex", "Assume vectors consist of complex numbers");
   (*SystemGroup) += new  SingleStringOption ('b', "basis", "name of the file that contains the vector files used to describe the basis");
   (*SystemGroup) += new BooleanOption ('\n', "check-only", "check how many vectors are linearly independent without extracting the basis");
   (*SystemGroup) += new SingleDoubleOption ('\n', "error", "bound above which vectors are consider as linearly independent", 1e-10);
@@ -82,7 +86,110 @@ int main(int argc, char** argv)
       return -1;
     }
 
-  RealVector* Basis = new RealVector[NbrVectors];
+if(Manager.GetBoolean("complex") == true)
+{
+  ComplexVector * Basis = new ComplexVector[NbrVectors];
+     HermitianMatrix HRep(NbrVectors);
+  char* DirectoryName = ReducedBasis["Directory"];
+  char* TmpName;
+  for (int i = 0; i < NbrVectors; ++i)
+    {
+      TmpName = VectorFileNames[i];
+      if (DirectoryName != 0)
+	{
+	  TmpName = ConcatenatePathAndFileName(DirectoryName, TmpName);
+	}
+      cout << "reading vector " << TmpName << endl;
+      if (Basis[i].ReadVector(TmpName) == false)
+	{
+	  cout << "error while reading " << TmpName << endl;
+	  if (DirectoryName != 0)
+	    delete[] DirectoryName;
+	  for (int j = 0; j < NbrVectors; ++j)
+	    delete[] VectorFileNames[j];
+	  delete[] VectorFileNames;
+	  return -1;
+	}
+      if (DirectoryName != 0)
+	delete[] TmpName;
+    }   
+  for (int i = 0; i < NbrVectors; ++i)
+    for (int j = 0; j < NbrVectors; ++j)
+      HRep.SetMatrixElement(i ,j, Basis[j] * Basis[i]);
+  
+  RealDiagonalMatrix TmpDiag (NbrVectors);
+
+
+  if (Manager.GetBoolean("check-only") == true)	
+    {
+#ifdef __LAPACK__
+      if (Manager.GetBoolean("use-lapack") == true)
+	HRep.LapackDiagonalize(TmpDiag);
+      else
+	HRep.Diagonalize(TmpDiag);
+#else
+      HRep.Diagonalize(TmpDiag);
+#endif		  
+      int Count = 0;
+      for (int i = 0; i < NbrVectors; ++i)
+	{
+	  cout << TmpDiag[i] << " ";
+	  if (fabs(TmpDiag[i]) > Error)
+	    Count++;
+	}
+      cout << endl;
+      cout << Count << " linearly independent vectors" << endl;
+    }
+  else
+    {
+      ComplexMatrix TmpEigenvector (NbrVectors, NbrVectors, true);	      
+      for (int l = 0; l < NbrVectors; ++l)
+	TmpEigenvector(l, l) = 1.0;
+#ifdef __LAPACK__
+      if (Manager.GetBoolean("use-lapack") == true)
+	HRep.LapackDiagonalize(TmpDiag, TmpEigenvector);
+      else
+	HRep.Diagonalize(TmpDiag, TmpEigenvector);
+#else
+      HRep.Diagonalize(TmpDiag, TmpEigenvector);
+#endif
+      char* OutputVectorFileName = new char [strlen(VectorPrefix) + 32];
+      int TmpDimension = Basis[0].GetVectorDimension();
+      int Count = 0;
+      for (int i = 0; i < NbrVectors; ++i)
+	{
+	  cout << TmpDiag[i] << " ";
+	  if (fabs(TmpDiag[i]) > Error)
+	    {
+	      ComplexVector TmpVector (TmpDimension, true);
+	      for (int j = 0; j < NbrVectors; ++j)
+		for (int k = 0; k < TmpDimension; ++k)
+		  {
+		    TmpVector[k] += TmpEigenvector[i][j] * Basis[j][k];
+		  }
+	      TmpVector /= TmpVector.Norm();
+	      sprintf (OutputVectorFileName, "%s%d.vec", VectorPrefix, Count);
+	      TmpVector.WriteVector(OutputVectorFileName);
+	      Count++;
+	    }
+	}
+      cout << endl;
+      cout << Count << " linearly independent vectors" << endl;
+      delete[] OutputVectorFileName;
+    }
+
+  if (DirectoryName != 0)
+    delete[] DirectoryName;
+  for (int j = 0; j < NbrVectors; ++j)
+    delete[] VectorFileNames[j];
+  delete[] VectorFileNames;
+  return 0;
+  
+}
+else
+{
+  RealVector * Basis = new RealVector[NbrVectors];
+
   char* DirectoryName = ReducedBasis["Directory"];
   char* TmpName;
   for (int i = 0; i < NbrVectors; ++i)
@@ -106,12 +213,11 @@ int main(int argc, char** argv)
       if (DirectoryName != 0)
 	delete[] TmpName;
     }
- 
-  RealSymmetricMatrix HRep (NbrVectors);
+
+  RealSymmetricMatrix HRep(NbrVectors);
   for (int i = 0; i < NbrVectors; ++i)
     for (int j = 0; j < NbrVectors; ++j)
       HRep(i ,j) = Basis[j] * Basis[i];
-
   RealDiagonalMatrix TmpDiag (NbrVectors);
 
 
@@ -179,4 +285,5 @@ int main(int argc, char** argv)
     delete[] VectorFileNames[j];
   delete[] VectorFileNames;
   return 0;
+}
 }
