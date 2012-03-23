@@ -45,6 +45,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption('c',"hard-core","Use Hilbert-space of hard-core bosons (~Gutzwiller projection)");
   (*SystemGroup) += new BooleanOption('n',"no-hard-core","Do not use Hilbert-space of hard-core bosons (overriding detection from filename)");
   (*SystemGroup) += new BooleanOption('r',"first-real","Multiply each vector with a phase such that the first non-zero coefficient is real");
+  (*SystemGroup) += new BooleanOption('P',"polar","Show coefficients in the polar (abs,phase) representation");
   (*SystemGroup) += new SingleIntegerOption('e',"real-element","Index of element to be made real with option 'first-real'",0);
 
   (*SystemGroup) += new SingleIntegerOption  ('k', "ky", "constraint of momentum in y-direction", 0);
@@ -155,11 +156,23 @@ int main(int argc, char** argv)
   for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
     {
       Space->PrintState(cout, i);
-      if (NbrVectors>0)
-	cout << " : " << "("<<Real(Vectors[0][i]*Phases[0])<<"+I*"<<Imag(Vectors[0][i]*Phases[0])<<")";
-      for (int k=1; k<NbrVectors; ++k)
-	cout << "  " << "("<<Real(Vectors[k][i]*Phases[k])<<"+I*"<<Imag(Vectors[k][i]*Phases[k])<<")";
-      cout << endl;
+      if (Manager.GetBoolean("polar"))
+	{
+	  if (NbrVectors>0)
+	    cout << " : " << "("<<Norm(Vectors[0][i])<<", "<<Arg(Vectors[0][i]*Phases[0])<<")";
+	  for (int k=1; k<NbrVectors; ++k)
+	    cout << "  " << "("<<Norm(Vectors[k][i])<<", "<<Arg(Vectors[k][i]*Phases[k])<<")";
+	  cout << endl;
+
+	}
+      else
+	{
+	  if (NbrVectors>0)
+	    cout << " : " << "("<<Real(Vectors[0][i]*Phases[0])<<"+I*"<<Imag(Vectors[0][i]*Phases[0])<<")";
+	  for (int k=1; k<NbrVectors; ++k)
+	    cout << "  " << "("<<Real(Vectors[k][i]*Phases[k])<<"+I*"<<Imag(Vectors[k][i]*Phases[k])<<")";
+	  cout << endl;
+	}
     }
 
   
