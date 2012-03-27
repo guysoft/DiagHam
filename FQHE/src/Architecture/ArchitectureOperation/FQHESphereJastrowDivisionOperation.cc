@@ -190,3 +190,4 @@ bool FQHESphereJastrowDivisionOperation::ArchitectureDependentApplyOperation(SMP
   return true;
 }
 
+

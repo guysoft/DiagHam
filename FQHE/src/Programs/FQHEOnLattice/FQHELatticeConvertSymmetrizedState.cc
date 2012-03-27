@@ -36,7 +36,7 @@ int main(int argc, char** argv)
   Manager += OutputGroup;
   Manager += MiscGroup;
   Architecture.AddOptionGroup(&Manager);
-  (*SystemGroup) += new SingleStringOption  ('\0', "input-file", "input state file name");
+  (*SystemGroup) += new MultipleStringOption  ('\0', "input-file", "input state file name");
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('x', "lx", "length in x-direction of given lattice", 0);
   (*SystemGroup) += new SingleIntegerOption  ('y', "ly", "length in y-direction of given lattice", 0);
@@ -63,23 +63,24 @@ int main(int argc, char** argv)
       cout << "error, one input file should be provided. See man page for option syntax or type FQHELatticeConvertSymmetrizedState -h" << endl;
       return -1;
     }
-  if (IsFile(Manager.GetString("input-file")) == false)
-    {
-      cout << "can't open file " << Manager.GetString("input-file") << endl;
-    }
-  if ((Manager.GetInteger("split")!=0)&&(Manager.GetInteger("segment-index")>Manager.GetInteger("split")-1))
+
+if ((Manager.GetInteger("split")!=0)&&(Manager.GetInteger("segment-index")>Manager.GetInteger("split")-1))
     {
       cout << "Segment index has to be chosen in interval [0,nbr-split]"<<endl;
       exit(1);
     }
-  int NbrParticles = Manager.GetInteger("nbr-particles");
-  int Lx = Manager.GetInteger("lx");
-  int Ly = Manager.GetInteger("ly");
+      int NbrVectors;
+  char** VectorFiles = Manager.GetStrings("input-file", NbrVectors);
+
+  int *NbrParticles = new int [NbrVectors];
+  int *Lx = new int [NbrVectors];
+  int *Ly = new int [NbrVectors];
   int Ky = Manager.GetInteger("ky");
-  int NbrFluxQuanta = Manager.GetInteger("flux");
+  int *NbrFluxQuanta = new int [NbrVectors];
   unsigned long MemorySpace = 9 << 20;
 
-  char* InputFileName = Manager.GetString("input-file");
+
+  
   bool SymmetrizeFlag = Manager.GetBoolean("symmetrize");
 
   bool Statistics=false;
@@ -87,11 +88,29 @@ int main(int argc, char** argv)
   bool InverseFlag = Manager.GetBoolean("inverse");
   int NbrComponent = Manager.GetInteger("nbr-component");
 
-  if (FQHEOnLatticeFindSystemInfoFromFileName1(InputFileName, NbrParticles, Lx, Ly, NbrFluxQuanta, Statistics, HardCore) == false)
+  for(int i = 0; i < NbrVectors; i++)
+    {
+      NbrParticles[i] = 0;
+      Lx[i] = 0;
+      Ly[i]= 0;
+      NbrFluxQuanta[i] = 0;
+  if (FQHEOnLatticeFindSystemInfoFromFileName1(VectorFiles[i], NbrParticles[i], Lx[i], Ly[i], NbrFluxQuanta[i], Statistics, HardCore) == false)
     {
       cout<<"Please use standard file-names, or indicate all system parameters!"<<endl;
       exit(1);
-    }  
+    }
+    }
+    
+    for(int i = 1; i < NbrVectors; i++)
+    {
+      if((NbrParticles[i] != NbrParticles[i - 1]) || (Lx[i] != Lx[i - 1]) || (Ly[i] != Ly[i - 1]) || 
+	 (NbrFluxQuanta[i] != NbrFluxQuanta[i - 1]))
+	{ 
+	  cout << "Vectors are not all in the same HilbertSpace." << endl;
+	  return -1;
+	}
+    }
+    
   HardCore=(HardCore||Manager.GetBoolean("hard-core"));
   if (Manager.GetBoolean("no-hard-core"))
     HardCore=false;
@@ -102,24 +121,46 @@ int main(int argc, char** argv)
 	Statistics = false;
     }
 
-  ComplexVector State;
-  if (State.ReadVector (InputFileName) == false)
+  ComplexVector * InputState = new ComplexVector[NbrVectors];
+  
+  for(int i = 0; i < NbrVectors; i++)
     {
-      cout << "can't open vector file " << Manager.GetString("input-file") << endl;
-      return -1;      
+      if (IsFile(VectorFiles[i]) == false)
+	{
+	  cout << "state " << VectorFiles[i] << " does not exist or can't be opened" << endl;
+	  return -1;
+	}
+      if(InputState[i].ReadVector(VectorFiles[i]) == false)
+	{
+	  cout << "error while reading " << VectorFiles[i] << endl;
+	  return -1;
+	}
     }
 
   cout << "Using the following system info: "<<endl;
-  cout << "N="<<NbrParticles<<", Lx="<<Lx<<", Ly="<<Ly<<", N_phi="<<NbrFluxQuanta<<", Ky="<<Ky<<endl;
+  cout << "N="<<NbrParticles[0]<<", Lx="<<Lx[0]<<", Ly="<<Ly[0]<<", N_phi="<<NbrFluxQuanta[0]<<", Ky="<<Ky<<endl;
 
-  char *OutputName = Manager.GetString("output-file");
-  if (OutputName==NULL)
+  char** VectorFilesOut = new char*[NbrVectors];
+  VectorFilesOut[0] = Manager.GetString("output-file");
+  if (VectorFilesOut[0]==NULL)
     {
-      OutputName = new char[strlen(Manager.GetString("input-file"))+20];
+      VectorFilesOut[0] = new char[strlen(Manager.GetString("input-file"))+20];
       if (Manager.GetInteger("split")!=0)	
-	sprintf(OutputName,"%s.seg_%ld-%ld",Manager.GetString("input-file"),Manager.GetInteger("segment-index"),
+	sprintf(VectorFilesOut[0],"%s.seg_%ld-%ld",Manager.GetString("input-file"),Manager.GetInteger("segment-index"),
 		Manager.GetInteger("split"));
-      else sprintf(OutputName,"%s.full",Manager.GetString("input-file"));
+      else sprintf(VectorFilesOut[0],"%s.full",Manager.GetString("input-file"));
+      if(InverseFlag == true)
+      {
+	
+      for(int i = 0; i < NbrVectors; i++)
+	{
+	  VectorFilesOut[i] = new char [strlen (VectorFiles[i])+ 32];
+	  char* TmpPos = VectorFilesOut[i];
+	  char* TmpPos2 = strstr(VectorFiles[i], "_q_");
+	  strncpy (TmpPos,VectorFilesOut[i],TmpPos2-VectorFilesOut[i]);
+	  sprintf (TmpPos, "_k_%d%s", Ky, TmpPos2);
+	}
+      }
     }
 
   if (Statistics == true)
@@ -130,14 +171,14 @@ int main(int argc, char** argv)
     }
   else
     {
-      ComplexVector OutputState;
-      BosonOnLatticeKy InitialSpace(NbrParticles, Lx, Ly, Ky, NbrFluxQuanta, MemorySpace); 
-      BosonOnLattice TargetSpace (NbrParticles, Lx, Ly, NbrFluxQuanta, MemorySpace);
+      ComplexVector * OutputState = new ComplexVector[NbrVectors];
+      BosonOnLatticeKy InitialSpace(NbrParticles[0], Lx[0], Ly[0], Ky, NbrFluxQuanta[0], MemorySpace); 
+      BosonOnLattice TargetSpace (NbrParticles[0], Lx[0], Ly[0], NbrFluxQuanta[0], MemorySpace);
       if(NbrComponent == 0)
 	NbrComponent = InitialSpace.GetHilbertSpaceDimension();
       if (SymmetrizeFlag)
 	{
-	  if (TargetSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
+	  if (TargetSpace.GetHilbertSpaceDimension() != InputState[0].GetVectorDimension())
 	    {
 	      cout << "dimension mismatch between Hilbert space and input state" << endl;
 	      return -1;
@@ -149,17 +190,17 @@ int main(int argc, char** argv)
 	{
 	  if(InverseFlag == true)
 	  {
-	    if (TargetSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
+	    if (TargetSpace.GetHilbertSpaceDimension() != InputState[0].GetVectorDimension())
 	    {
 	      cout << "dimension mismatch between Hilbert space and input state" << endl;
 	      return -1;
 	    }
 	    
-	    OutputState = InitialSpace.ConvertFromNbodyBasis(State, TargetSpace,NbrComponent,Architecture.GetArchitecture());
+	    OutputState = InitialSpace.ConvertFromNbodyBasis(InputState, TargetSpace,NbrVectors,NbrComponent,Architecture.GetArchitecture());
 	  }
 	  else
 	  {
-	  if (InitialSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
+	  if (InitialSpace.GetHilbertSpaceDimension() != InputState[0].GetVectorDimension())
 	    {
 	      cout << "dimension mismatch between Hilbert space and input state" << endl;
 	      return -1;
@@ -172,18 +213,21 @@ int main(int argc, char** argv)
 	      if (Manager.GetInteger("segment-index")==Manager.GetInteger("split")-1)
 		StopD=InitialSpace.GetHilbertSpaceDimension();
 	      cout<<"Converting segment ["<<StartD<<", "<<StopD<<"]"<<endl;
-	      OutputState = InitialSpace.ConvertToNbodyBasis(State, TargetSpace, StartD, StopD-StartD);
+	      OutputState[0] = InitialSpace.ConvertToNbodyBasis(InputState[0], TargetSpace, StartD, StopD-StartD);
 	    }
 	  else
-	    OutputState = InitialSpace.ConvertToNbodyBasis(State, TargetSpace);
+	    OutputState[0] = InitialSpace.ConvertToNbodyBasis(InputState[0], TargetSpace);
 	  }
 	}
-      if (OutputState.WriteVector(OutputName) == false)
+	for(int i=0; i < NbrVectors; i++)
 	{
-	  cout << "error while writing output state " << OutputName << endl;
+      if (OutputState[i].WriteVector(VectorFilesOut[i]) == false)
+	{
+	  cout << "error while writing output state " << VectorFilesOut[i] << endl;
 	  return -1;
 	}
+	}
     }
-  delete [] OutputName;
+  delete [] VectorFilesOut;
 }
 

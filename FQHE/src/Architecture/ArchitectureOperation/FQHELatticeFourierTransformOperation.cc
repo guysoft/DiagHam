@@ -49,7 +49,7 @@ using std::endl;
 // destinationVector = array of vectors where the resulting bosonic states have to be stored
 // nbrStates = number of states to handle
 
-FQHELatticeFourierTransformOperation::FQHELatticeFourierTransformOperation (BosonOnLattice * fullSpace, BosonOnLatticeKy * kySpace, ComplexVector* sourceVector, int nbrComponent,ComplexVector* destinationVector)
+FQHELatticeFourierTransformOperation::FQHELatticeFourierTransformOperation (BosonOnLattice * fullSpace, BosonOnLatticeKy * kySpace, ComplexVector* sourceVector, int nbrComponent,ComplexVector* destinationVector, int nbrVectors)
 {
   this->FirstComponent = 0;
   this->NbrComponent = nbrComponent;
@@ -58,6 +58,7 @@ FQHELatticeFourierTransformOperation::FQHELatticeFourierTransformOperation (Boso
   this->SourceVector = sourceVector;
   this->DestinationVector = destinationVector;
   this->OperationType = AbstractArchitectureOperation::FQHELatticeFourierTransformOperation;
+  this->NbrVectors = nbrVectors;
 }
 
 
@@ -74,6 +75,7 @@ FQHELatticeFourierTransformOperation::FQHELatticeFourierTransformOperation(const
   this->SourceVector = operation.SourceVector;
   this->DestinationVector = operation.DestinationVector;
   this->OperationType = AbstractArchitectureOperation::FQHELatticeFourierTransformOperation;
+  this->NbrVectors = operation.NbrVectors;
 }
 
 // destructor
@@ -123,7 +125,7 @@ bool FQHELatticeFourierTransformOperation::RawApplyOperation()
 {
    timeval TotalStartingTime;
       gettimeofday (&TotalStartingTime, 0);
-  this->KySpace->ConvertFromNbodyBasis((*this->SourceVector),*this->DestinationVector, *this->FullSpace,this->FirstComponent, this->NbrComponent);
+  this->KySpace->ConvertFromNbodyBasis( this->SourceVector,this->DestinationVector, *this->FullSpace,this->NbrVectors, this->FirstComponent, this->NbrComponent);
 
    timeval TotalEndingTime;
    gettimeofday (&TotalEndingTime, 0);
@@ -154,23 +156,29 @@ bool FQHELatticeFourierTransformOperation::ArchitectureDependentApplyOperation(S
       architecture->SetThreadOperation(TmpOperations[i], i);
       TmpOperations[i]->SetIndicesRange(TmpFirstComponent, Step);
       TmpFirstComponent += Step;
-      TmpOperations[i]->SetDestinationVector((ComplexVector *) this->DestinationVector->EmptyClone(true));
     }
   TmpOperations[ReducedNbrThreads] = (FQHELatticeFourierTransformOperation*) this->Clone();
   TmpOperations[ReducedNbrThreads]->SetDestinationVector((ComplexVector *) this->DestinationVector->EmptyClone(true));
   architecture->SetThreadOperation(TmpOperations[ReducedNbrThreads], ReducedNbrThreads);
   TmpOperations[ReducedNbrThreads]->SetIndicesRange(TmpFirstComponent, this->FirstComponent + this->NbrComponent - TmpFirstComponent);
   
+  for (int i = 1; i < architecture->GetNbrThreads(); ++i)
+    {
+      ComplexVector * TmpVector=new ComplexVector[this->NbrVectors];
+      for(int k = 0; k < this->NbrVectors; k++)
+	TmpVector[k] = ComplexVector(this->KySpace->GetHilbertSpaceDimension(), true);
+      TmpOperations[i]->SetDestinationVector(TmpVector);
+    }
   architecture->SendJobs();
   
   for (int i = 1; i < architecture->GetNbrThreads(); i++)
     {
-      (*this->DestinationVector) += (*TmpOperations[i]->DestinationVector);
-      delete TmpOperations[i]->DestinationVector;
+      for(int k = 0; k < this->NbrVectors; k++)
+	this->DestinationVector[k] += TmpOperations[i]->DestinationVector[k];
+      delete[] TmpOperations[i]->DestinationVector;
       delete TmpOperations[i];
     }
-  (*this->DestinationVector) += (*TmpOperations[0]->DestinationVector);
-  delete TmpOperations[0]->DestinationVector;
+    
   delete TmpOperations[0];
   delete[] TmpOperations;
    return true;

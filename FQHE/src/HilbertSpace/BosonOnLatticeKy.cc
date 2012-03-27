@@ -1565,14 +1565,19 @@ long BosonOnLatticeKy::EvaluatePartialDensityMatrixParticlePartitionCore (int mi
 // state: many-body state in Ky-momentum basis
 // nbodyBasis: full Hilbert-space in real-space representation
 // returns: vector in many-body basis of targetSpace
-ComplexVector& BosonOnLatticeKy::ConvertFromNbodyBasis(ComplexVector& initialState, BosonOnLattice &nbodyBasis, int NbrComponent, AbstractArchitecture * architecture)
+ComplexVector* BosonOnLatticeKy::ConvertFromNbodyBasis(ComplexVector* initialState, BosonOnLattice &nbodyBasis,int nbrVectors, int NbrComponent, AbstractArchitecture * architecture)
 {
-  ComplexVector * TmpV =new ComplexVector(this->HilbertSpaceDimension,true);
-  FQHELatticeFourierTransformOperation Operation(&nbodyBasis, this, &initialState,NbrComponent,TmpV);
+  ComplexVector * TmpV = new ComplexVector[nbrVectors];
+  for (int i = 0; i <nbrVectors; i++)
+    TmpV[i] = ComplexVector(this->GetHilbertSpaceDimension(),true);
+  FQHELatticeFourierTransformOperation Operation(&nbodyBasis, this, initialState,NbrComponent,TmpV,nbrVectors);
   Operation.ApplyOperation(architecture);
-  cout << "Norm was:" << TmpV->Norm() << endl;
-  (*TmpV)/=TmpV->Norm();
-  return *TmpV;
+  for (int i = 0; i <nbrVectors; i++)
+  {
+    cout << "Norm was:" << TmpV[i].Norm() << endl;
+    TmpV[i]/=TmpV[i].Norm();
+  }
+  return TmpV;
 }
 
 
@@ -1582,9 +1587,8 @@ ComplexVector& BosonOnLatticeKy::ConvertFromNbodyBasis(ComplexVector& initialSta
 // firstComponent = index of the first component to evaluate
 // nbrComponent = number of components to evaluate
 // returns: vector in many-body basis of targetSpace
-void BosonOnLatticeKy::ConvertFromNbodyBasis(ComplexVector& initialState,ComplexVector& finalState, ParticleOnLattice &nbodyBasis, long firstComponent, long nbrComponent)
+void BosonOnLatticeKy::ConvertFromNbodyBasis(ComplexVector * initialState,ComplexVector * finalState, ParticleOnLattice &nbodyBasis, int nbrVectors, long firstComponent, long nbrComponent)
 {
-  this->TargetVector = initialState;
   this->FullSpace = ((BosonOnLattice*)&nbodyBasis);
   int *QuantumNumbers = new int[this->NbrBosons];
   double Normalization;
@@ -1593,7 +1597,7 @@ void BosonOnLatticeKy::ConvertFromNbodyBasis(ComplexVector& initialState,Complex
   for (long i = firstComponent; i < LastComponent; ++i)
     {
 	  this->ListQuantumNumbers(i,QuantumNumbers,Normalization);
-	  this->ProjectBasisState(this->NbrBosons, QuantumNumbers, 0x0ul, finalState[i],Complex(1/Normalization));
+	  this->ProjectBasisState(this->NbrBosons, QuantumNumbers, 0x0ul,initialState, finalState , i, nbrVectors ,Complex(1/Normalization));
     }
 }
 
@@ -1605,7 +1609,7 @@ void BosonOnLatticeKy::ConvertFromNbodyBasis(ComplexVector& initialState,Complex
 // prefactor = previous coefficients applied to state
 // 
 // in last stage of recursion, writes to this->TargetVector using the Hilbert-Space this->FullSpace
-void BosonOnLatticeKy::ProjectBasisState (int nbrOperators, int *quantumNumbers, unsigned long state, Complex & vectorElement, Complex prefactor)
+void BosonOnLatticeKy::ProjectBasisState (int nbrOperators, int *quantumNumbers, unsigned long state, ComplexVector *initialState, ComplexVector *finalState, long index, int nbrVectors, Complex prefactor)
 {
   int Index;
   unsigned long ResultingState;
@@ -1628,7 +1632,7 @@ void BosonOnLatticeKy::ProjectBasisState (int nbrOperators, int *quantumNumbers,
 	  ResultingState = this->FullSpace->Ad(state,TargetQ, AdFactor);
 	  //cout << "Recursing with state: "<<ResultingState<<endl;
 	  if (ResultingState!=0x0ul)
-	    this->ProjectBasisState(nbrOperators-1, quantumNumbers, ResultingState, vectorElement,prefactor*NewFactor*Polar(1.0,ExpFactor*r)*AdFactor);
+	    this->ProjectBasisState(nbrOperators-1, quantumNumbers, ResultingState,initialState,  finalState , index, nbrVectors, prefactor*NewFactor*Polar(1.0,ExpFactor*r)*AdFactor);
 	}
     }
   else
@@ -1643,7 +1647,8 @@ void BosonOnLatticeKy::ProjectBasisState (int nbrOperators, int *quantumNumbers,
 	    {	      
 	      if ((Index=FullSpace->CarefulFindStateIndex(ResultingState,-1))<FullSpace->GetHilbertSpaceDimension())
 		{
-		  vectorElement += this->TargetVector[Index]*NewFactor*Polar(1.0,ExpFactor*r)*prefactor*AdFactor;
+		  for (int k = 0; k< nbrVectors; k++)
+		  finalState[k][index] += initialState[k][Index]*NewFactor*Polar(1.0,ExpFactor*r)*prefactor*AdFactor;
 		  //cout << "Adding "<< prefactor*AdFactor*NewFactor*Polar(1.0,ExpFactor*r) <<" to component "<<Index<<endl;
 		}
 	    }

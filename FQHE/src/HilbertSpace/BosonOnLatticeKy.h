@@ -397,7 +397,7 @@ class BosonOnLatticeKy : public ParticleOnLattice
   // state: many-body state in Ky-momentum basis
   // nbodyBasis: full Hilbert-space in real-space representation
   // returns: vector in many-body basis of targetSpace
-  virtual ComplexVector& ConvertFromNbodyBasis(ComplexVector& state, BosonOnLattice &nbodyBasis, int NbrComponent, AbstractArchitecture * architecture);
+  virtual ComplexVector* ConvertFromNbodyBasis(ComplexVector* state, BosonOnLattice &nbodyBasis,int nbrVectors, int NbrComponent, AbstractArchitecture * architecture);
 
   // conversion to generic (full) many-body representation in real-space basis
   // state: many-body state in Ky-momentum basis
@@ -405,7 +405,7 @@ class BosonOnLatticeKy : public ParticleOnLattice
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // returns: vector in many-body basis of targetSpace
-  virtual void ConvertFromNbodyBasis(ComplexVector& initialState, ComplexVector& finalState, ParticleOnLattice &nbodyBasis, long firstComponent, long nbrComponent);
+  virtual void ConvertFromNbodyBasis(ComplexVector * initialState, ComplexVector * finalState, ParticleOnLattice &nbodyBasis, int nbrVectors, long firstComponent, long nbrComponent);
   
   // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. 
   // 
@@ -471,7 +471,7 @@ class BosonOnLatticeKy : public ParticleOnLattice
   // 
   // in last stage of recursion, writes to this->TargetVector using the Hilbert-Space this->FullSpace
   void ExpandBasisState (int nbrOperators, int *quantumNumbers, unsigned long state, Complex prefactor);	
-  void ProjectBasisState (int nbrOperators, int *quantumNumbers, unsigned long state, Complex & vectorElement, Complex prefactor);
+  void ProjectBasisState (int nbrOperators, int *quantumNumbers, unsigned long state, ComplexVector *initialVector,ComplexVector * finalVector, long index,int nbrVectors, Complex prefactor);
 
   // convert a bosonic state into its fermionic counterpart
   //
