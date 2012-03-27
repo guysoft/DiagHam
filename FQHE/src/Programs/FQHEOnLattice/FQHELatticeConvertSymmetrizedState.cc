@@ -48,7 +48,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('b', "boson", "use bosonic statistics (override autodetection from input file name)");
   (*SystemGroup) += new BooleanOption  ('r', "symmetrize", "symmetrize state (instead of unsymmetrizing it)");
   (*SystemGroup) += new BooleanOption  ('i', "inverse", "symmetrize state (instead of unsymmetrizing it)");
-  (*ProcessGroup) += new SingleIntegerOption  ('s', "split", "split vector in multiple segments", 0);
+  (*ProcessGroup) += new SingleIntegerOption  ('\n', "nbr-component", "compute only a certain number of component", 0) ;
+ 
+  (*ProcessGroup) += new SingleIntegerOption  ('s', "split", "split vector in multiple segments", 0) ;
   (*ProcessGroup) += new SingleIntegerOption  ('i', "segment-index", "number of segment to be calculated by this process", 0);
   
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the default name un-symmetrized.vec");
@@ -83,6 +85,8 @@ int main(int argc, char** argv)
   bool Statistics=false;
   bool HardCore=false;
   bool InverseFlag = Manager.GetBoolean("inverse");
+  int NbrComponent = Manager.GetInteger("nbr-component");
+
   if (FQHEOnLatticeFindSystemInfoFromFileName1(InputFileName, NbrParticles, Lx, Ly, NbrFluxQuanta, Statistics, HardCore) == false)
     {
       cout<<"Please use standard file-names, or indicate all system parameters!"<<endl;
@@ -129,6 +133,8 @@ int main(int argc, char** argv)
       ComplexVector OutputState;
       BosonOnLatticeKy InitialSpace(NbrParticles, Lx, Ly, Ky, NbrFluxQuanta, MemorySpace); 
       BosonOnLattice TargetSpace (NbrParticles, Lx, Ly, NbrFluxQuanta, MemorySpace);
+      if(NbrComponent == 0)
+	NbrComponent = InitialSpace.GetHilbertSpaceDimension();
       if (SymmetrizeFlag)
 	{
 	  if (TargetSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
@@ -149,7 +155,7 @@ int main(int argc, char** argv)
 	      return -1;
 	    }
 	    
-	    OutputState = InitialSpace.ConvertFromNbodyBasis(State, TargetSpace,Architecture.GetArchitecture());
+	    OutputState = InitialSpace.ConvertFromNbodyBasis(State, TargetSpace,NbrComponent,Architecture.GetArchitecture());
 	  }
 	  else
 	  {

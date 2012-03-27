@@ -48,7 +48,6 @@
 
 using std::bitset;
 
-
 using std::cout;
 using std::endl;
 
@@ -73,7 +72,7 @@ BosonOnLatticeKy::BosonOnLatticeKy ()
 // ky = many-body momentum in y-direction
 // nbrFluxQuanta = number of flux quanta piercing the simulation cell
 // memory = memory that can be allocated for precalculations
-BosonOnLatticeKy::BosonOnLatticeKy (int nbrBosons, int lx, int ly, int ky, int nbrFluxQuanta, unsigned long memory)
+BosonOnLatticeKy::BosonOnLatticeKy (int nbrBosons, int lx, int ly, int ky, int nbrFluxQuanta, unsigned long memory, bool normalTranslation)
 {
   this->NbrBosons = nbrBosons;
   this->Lx = lx;
@@ -99,25 +98,35 @@ BosonOnLatticeKy::BosonOnLatticeKy (int nbrBosons, int lx, int ly, int ky, int n
   this->LxTranslationPhase = Polar(1.0, -2.0*M_PI*FluxDensity*this->Lx);
   this->LyTranslationPhase = 1.0;  // no phase for translating in the y-direction in Landau gauge...
 
-  for (int i=1; i<=Ly; ++i)
-    if ((i*NbrFluxQuanta)%Ly == 0)
-      {
-	this->TranslationCell = i;
-	break;
-      }
-  if (Ly % TranslationCell != 0)
+  if (normalTranslation == false)
+	{
+	  for (int i=1; i<=Ly; ++i)
+	    if ((i*NbrFluxQuanta)%Ly == 0)
+	      {
+		this->TranslationCell = i;
+		break;
+	      }
+	  
+	  if (Ly % TranslationCell != 0)
+	    {
+	      cout << "System has no translation symmetries along the y-direction, please calculate in real-space!"<<endl;
+	    }
+	  // maximum many-body momentum (Ly / TranslationCell)
+	  this->Kmax = Ly / TranslationCell;
+	  
+	}
+  else
     {
-      cout << "System has no translation symmetries along the y-direction, please calculate in real-space!"<<endl;
+      this->Kmax = Ly;
+      this->TranslationCell = 1;
     }
-  // maximum many-body momentum (Ly / TranslationCell)
-  this->Kmax = Ly / TranslationCell;
-
+  
   if( ky >= Kmax )
     {
       cout << "Attention, requested total momentum Ky="<<ky<<" is outside of fundamental BZ!"<<endl;
     }
   this->Ky = ky % Kmax;
-
+  
   this->HilbertSpaceDimension = EvaluateHilbertSpaceDimension(nbrBosons, NbrStates-1, NbrStates-1, 0);
 
   this->StateDescription=new unsigned long[this->HilbertSpaceDimension];
@@ -187,7 +196,7 @@ BosonOnLatticeKy::BosonOnLatticeKy(const BosonOnLatticeKy& bosons)
 
 BosonOnLatticeKy::~BosonOnLatticeKy ()
 {
-  if (this->HilbertSpaceDimension != 0) 
+  /*if (this->HilbertSpaceDimension != 0) 
     {
       if ((this->Flag.Shared() == false) && (this->Flag.Used() == true))
 	{
@@ -213,7 +222,7 @@ BosonOnLatticeKy::~BosonOnLatticeKy ()
 	  delete[] this->Minors;
 	}
       delete this->KeptCoordinates;
-    }
+    }*/
 }
 
 // assignement (without duplicating datas)
@@ -1556,10 +1565,10 @@ long BosonOnLatticeKy::EvaluatePartialDensityMatrixParticlePartitionCore (int mi
 // state: many-body state in Ky-momentum basis
 // nbodyBasis: full Hilbert-space in real-space representation
 // returns: vector in many-body basis of targetSpace
-ComplexVector& BosonOnLatticeKy::ConvertFromNbodyBasis(ComplexVector& initialState, BosonOnLattice &nbodyBasis,AbstractArchitecture * architecture)
+ComplexVector& BosonOnLatticeKy::ConvertFromNbodyBasis(ComplexVector& initialState, BosonOnLattice &nbodyBasis, int NbrComponent, AbstractArchitecture * architecture)
 {
   ComplexVector * TmpV =new ComplexVector(this->HilbertSpaceDimension,true);
-  FQHELatticeFourierTransformOperation Operation(&nbodyBasis, this, &initialState,TmpV);
+  FQHELatticeFourierTransformOperation Operation(&nbodyBasis, this, &initialState,NbrComponent,TmpV);
   Operation.ApplyOperation(architecture);
   cout << "Norm was:" << TmpV->Norm() << endl;
   (*TmpV)/=TmpV->Norm();
