@@ -49,10 +49,10 @@ using std::endl;
 // destinationVector = array of vectors where the resulting bosonic states have to be stored
 // nbrStates = number of states to handle
 
-FQHELatticeFourierTransformOperation::FQHELatticeFourierTransformOperation (BosonOnLattice * fullSpace, BosonOnLatticeKy * kySpace, ComplexVector* sourceVector, ComplexVector* destinationVector)
+FQHELatticeFourierTransformOperation::FQHELatticeFourierTransformOperation (BosonOnLattice * fullSpace, BosonOnLatticeKy * kySpace, ComplexVector* sourceVector, int nbrComponent,ComplexVector* destinationVector)
 {
   this->FirstComponent = 0;
-  this->NbrComponent = kySpace->GetHilbertSpaceDimension();
+  this->NbrComponent = nbrComponent;
   this->FullSpace =(BosonOnLattice*) fullSpace->Clone();
   this->KySpace = (BosonOnLatticeKy*) kySpace->Clone();
   this->SourceVector = sourceVector;

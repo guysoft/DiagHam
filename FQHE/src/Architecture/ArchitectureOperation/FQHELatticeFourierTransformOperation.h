@@ -71,7 +71,7 @@ class FQHELatticeFourierTransformOperation : public AbstractArchitectureOperatio
   // sourceVector = array of vectors describing the fermionic states
   // destinationVector = array of vectors where the resulting bosonic states have to be stored
   // nbrStates = number of states to handle
-  FQHELatticeFourierTransformOperation(BosonOnLattice * fullSpace, BosonOnLatticeKy * kySpace, ComplexVector* sourceVector, ComplexVector* destinationVector);
+  FQHELatticeFourierTransformOperation(BosonOnLattice * fullSpace, BosonOnLatticeKy * kySpace, ComplexVector* sourceVector,int nbrComponent, ComplexVector* destinationVector);
     
   // copy constructor 
   //
