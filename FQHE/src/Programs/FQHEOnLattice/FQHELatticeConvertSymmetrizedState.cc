@@ -138,11 +138,11 @@ if ((Manager.GetInteger("split")!=0)&&(Manager.GetInteger("segment-index")>Manag
   VectorFilesOut[0] = Manager.GetString("output-file");
   if (VectorFilesOut[0]==NULL)
     {
-      VectorFilesOut[0] = new char[strlen(Manager.GetString("input-file"))+20];
+      VectorFilesOut[0] = new char[strlen(VectorFiles[0])+20];
       if (Manager.GetInteger("split")!=0)	
-	sprintf(VectorFilesOut[0],"%s.seg_%ld-%ld",Manager.GetString("input-file"),Manager.GetInteger("segment-index"),
+	sprintf(VectorFilesOut[0],"%s.seg_%ld-%ld",VectorFiles[0],Manager.GetInteger("segment-index"),
 		Manager.GetInteger("split"));
-      else sprintf(VectorFilesOut[0],"%s.full",Manager.GetString("input-file"));
+      else sprintf(VectorFilesOut[0],"%s.full",VectorFiles[0]);
       if(InverseFlag == true)
       {
 	
