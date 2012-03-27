@@ -136,7 +136,7 @@ class BosonOnLatticeKy : public ParticleOnLattice
   // ky = many-body momentum in y-direction
   // nbrFluxQuanta = number of flux quanta piercing the simulation cell
   // memory = memory that can be allocated for precalculations
-  BosonOnLatticeKy (int nbrBosons, int lx, int ly, int ky, int nbrFluxQuanta, unsigned long memory = 10000000);
+  BosonOnLatticeKy (int nbrBosons, int lx, int ly, int ky, int nbrFluxQuanta, unsigned long memory = 10000000,bool normalTranslation= false);
 
 
   // copy constructor (without duplicating datas)
@@ -397,7 +397,7 @@ class BosonOnLatticeKy : public ParticleOnLattice
   // state: many-body state in Ky-momentum basis
   // nbodyBasis: full Hilbert-space in real-space representation
   // returns: vector in many-body basis of targetSpace
-  virtual ComplexVector& ConvertFromNbodyBasis(ComplexVector& state, BosonOnLattice &nbodyBasis,AbstractArchitecture * architecture);
+  virtual ComplexVector& ConvertFromNbodyBasis(ComplexVector& state, BosonOnLattice &nbodyBasis, int NbrComponent, AbstractArchitecture * architecture);
 
   // conversion to generic (full) many-body representation in real-space basis
   // state: many-body state in Ky-momentum basis
