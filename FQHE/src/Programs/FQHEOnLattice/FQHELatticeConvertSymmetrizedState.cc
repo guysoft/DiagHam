@@ -58,12 +58,6 @@ int main(int argc, char** argv)
 
   Manager.StandardProceedings(argv, argc, cout);
 
-  if (Manager.GetString("input-file") == 0)
-    {
-      cout << "error, one input file should be provided. See man page for option syntax or type FQHELatticeConvertSymmetrizedState -h" << endl;
-      return -1;
-    }
-
 if ((Manager.GetInteger("split")!=0)&&(Manager.GetInteger("segment-index")>Manager.GetInteger("split")-1))
     {
       cout << "Segment index has to be chosen in interval [0,nbr-split]"<<endl;
