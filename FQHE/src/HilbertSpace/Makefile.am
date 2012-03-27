@@ -129,4 +129,6 @@ BosonOnTorusWithMagneticTranslationsShort.cc \
 BosonOnSquareLatticeWannierSpace.cc \
 ParticleOnSquareLatticeWannierInterface.cc \
 BosonOnCubicLatticeWithSU2SpinMomentumSpace.cc \
-BosonOnCubicLatticeWithSU4SpinMomentumSpace.cc
+BosonOnCubicLatticeWithSU4SpinMomentumSpace.cc \
+HardCoreBosonLong.cc \
+BosonOnLatticeLong.cc
