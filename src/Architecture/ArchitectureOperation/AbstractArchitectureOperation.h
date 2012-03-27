@@ -82,7 +82,8 @@ class AbstractArchitectureOperation
       FQHESphereMonomialsProductOperation = 0x8017,
       FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation = 0x8018,
       FQHESphereSymmetrizeU1U1StateOperation = 0x8020,
-      FQHESphereBosonsWithSpinLandauLevelLiftOperation = 0x8022
+      FQHESphereBosonsWithSpinLandauLevelLiftOperation = 0x8022,
+      FQHELatticeFourierTransformOperation = 0x8024
     };
   
   // destructor

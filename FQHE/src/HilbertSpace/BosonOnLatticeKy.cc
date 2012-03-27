@@ -40,7 +40,7 @@
 #include "FunctionBasis/AbstractFunctionBasis.h"
 #include "GeneralTools/UnsignedIntegerTools.h"
 #include "Architecture/ArchitectureOperation/FQHELatticeParticleEntanglementSpectrumOperation.h"
-
+#include "Architecture/ArchitectureOperation/FQHELatticeFourierTransformOperation.h"
 #include <cmath>
 #include <cstdlib>
 
@@ -166,14 +166,14 @@ BosonOnLatticeKy::BosonOnLatticeKy(const BosonOnLatticeKy& bosons)
   this->NbrCodingBits = bosons.NbrCodingBits;
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
   this->Flag = bosons.Flag;
-
+  this->Kmax = bosons.Kmax;
   this->StateDescription = bosons.StateDescription;
   this->StateHighestBit = bosons.StateHighestBit;
   this->MaximumLookUpShift = bosons.MaximumLookUpShift;
   this->LookUpTableMemorySize = bosons.LookUpTableMemorySize;
   this->LookUpTableShift = bosons.LookUpTableShift;
   this->LookUpTable = bosons.LookUpTable;
-  
+  this->TranslationCell = bosons.TranslationCell;
   this->Minors = bosons.Minors;
   this->KeptCoordinates = bosons.KeptCoordinates;
   this->TemporaryState = new unsigned long [this->NbrStates];
@@ -1345,7 +1345,6 @@ ComplexVector& BosonOnLatticeKy::ConvertToNbodyBasis(ComplexVector& state, Parti
   return TargetVector;
 }
 
-
 // recursive expansion of an operator-product of creation operators in k
 // in the full n-body basis
 // nbrOperators = number of operators N remaining to be applied
@@ -1551,4 +1550,94 @@ long BosonOnLatticeKy::EvaluatePartialDensityMatrixParticlePartitionCore (int mi
   delete[] TmpStateCoefficient;
   delete[] TmpDestinationLogFactorials;
   return TmpNbrNonZeroElements;
+}
+
+// conversion to generic (full) many-body representation in real-space basis
+// state: many-body state in Ky-momentum basis
+// nbodyBasis: full Hilbert-space in real-space representation
+// returns: vector in many-body basis of targetSpace
+ComplexVector& BosonOnLatticeKy::ConvertFromNbodyBasis(ComplexVector& initialState, BosonOnLattice &nbodyBasis,AbstractArchitecture * architecture)
+{
+  ComplexVector * TmpV =new ComplexVector(this->HilbertSpaceDimension,true);
+  FQHELatticeFourierTransformOperation Operation(&nbodyBasis, this, &initialState,TmpV);
+  Operation.ApplyOperation(architecture);
+  cout << "Norm was:" << TmpV->Norm() << endl;
+  (*TmpV)/=TmpV->Norm();
+  return *TmpV;
+}
+
+
+// conversion to generic (full) many-body representation in real-space basis
+// state: many-body state in Ky-momentum basis
+// nbodyBasis: full Hilbert-space in real-space representation
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// returns: vector in many-body basis of targetSpace
+void BosonOnLatticeKy::ConvertFromNbodyBasis(ComplexVector& initialState,ComplexVector& finalState, ParticleOnLattice &nbodyBasis, long firstComponent, long nbrComponent)
+{
+  this->TargetVector = initialState;
+  this->FullSpace = ((BosonOnLattice*)&nbodyBasis);
+  int *QuantumNumbers = new int[this->NbrBosons];
+  double Normalization;
+  // bitset <32> b;
+  long LastComponent=firstComponent+nbrComponent;
+  for (long i = firstComponent; i < LastComponent; ++i)
+    {
+	  this->ListQuantumNumbers(i,QuantumNumbers,Normalization);
+	  this->ProjectBasisState(this->NbrBosons, QuantumNumbers, 0x0ul, finalState[i],Complex(1/Normalization));
+    }
+}
+
+// recursive expansion of an operator-product of creation operators in k
+// in the full n-body basis
+// nbrOperators = number of operators N remaining to be applied
+// quantumNumbers = array of quantum numbers q1,...qN of creation operators
+// state = state to be acted upon
+// prefactor = previous coefficients applied to state
+// 
+// in last stage of recursion, writes to this->TargetVector using the Hilbert-Space this->FullSpace
+void BosonOnLatticeKy::ProjectBasisState (int nbrOperators, int *quantumNumbers, unsigned long state, Complex & vectorElement, Complex prefactor)
+{
+  int Index;
+  unsigned long ResultingState;
+  int cK, K, N, S, Subl, TargetQ;
+  double NewFactor = sqrt((double)1.0/(double)Kmax);
+  double AdFactor;
+  Complex TranslationPhase;
+  this->DecodeQuantumNumber(quantumNumbers[nbrOperators-1], N, cK, Subl);
+  //cout << "Decoded step 1 QN "<<quantumNumbers[nbrOperators-1]<<" -> N="<<N<<", cK="<<cK<<", Subl="<<Subl<<endl;
+  this->DecodeCompositeMomentum(cK, K, S);
+  //cout << "Decoded step 2 QN "<<quantumNumbers[nbrOperators-1]<<" -> N="<<N<<", K="<<K<<", S="<<S<<", Subl="<<Subl<<endl;
+  double ExpFactor = 2.0*M_PI*(double)K/(double)Kmax;
+  
+  if (nbrOperators>1)
+    {
+      for (int r=0; r<this->Kmax; ++r)
+	{
+	  TargetQ=this->FullSpace->EncodeQuantumNumber(N, TranslationCell*r+S, Subl, TranslationPhase);
+	  //cout << "r="<<r<<": TargetQ="<<TargetQ<< " (x="<<N<<" y="<<TranslationCell*r+S<<"), applying onto state " << state << endl;	  
+	  ResultingState = this->FullSpace->Ad(state,TargetQ, AdFactor);
+	  //cout << "Recursing with state: "<<ResultingState<<endl;
+	  if (ResultingState!=0x0ul)
+	    this->ProjectBasisState(nbrOperators-1, quantumNumbers, ResultingState, vectorElement,prefactor*NewFactor*Polar(1.0,ExpFactor*r)*AdFactor);
+	}
+    }
+  else
+    {
+      for (int r=0; r<this->Kmax; ++r)
+	{
+	  TargetQ=this->FullSpace->EncodeQuantumNumber(N, TranslationCell*r+S, Subl, TranslationPhase);
+	  //cout << "r="<<r<<": TargetQ="<<TargetQ<< " (x="<<N<<" y="<<TranslationCell*r+S<<"), applying onto state " << state << endl;
+	  ResultingState = this->FullSpace->Ad(state,TargetQ, AdFactor);
+	  //cout << "Finishing with state: "<<ResultingState<<endl;
+	  if (ResultingState!=0x0ul)
+	    {	      
+	      if ((Index=FullSpace->CarefulFindStateIndex(ResultingState,-1))<FullSpace->GetHilbertSpaceDimension())
+		{
+		  vectorElement += this->TargetVector[Index]*NewFactor*Polar(1.0,ExpFactor*r)*prefactor*AdFactor;
+		  //cout << "Adding "<< prefactor*AdFactor*NewFactor*Polar(1.0,ExpFactor*r) <<" to component "<<Index<<endl;
+		}
+	    }
+	}
+    }
 }

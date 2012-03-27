@@ -39,7 +39,7 @@
 #include "GeneralTools/UnsignedIntegerTools.h"
 #include "MathTools/BinomialCoefficients.h"
 #include "Architecture/ArchitectureOperation/FQHELatticeParticleEntanglementSpectrumOperation.h"
-
+#include "MathTools/FactorialCoefficient.h" 
 #include <cmath>
 #include <cstdlib>
 
@@ -1080,4 +1080,114 @@ long BosonOnLattice::EvaluatePartialDensityMatrixParticlePartitionCore (int minI
    delete[] TmpStateCoefficient;
    delete[] TmpDestinationLogFactorials;
    return TmpNbrNonZeroElements;
+}
+
+
+// symmetrized a product of two uncoupled states 
+//
+// outputVector = reference on the vector which will contain the symmetrozed state
+// leftVector = reference on the vector associated to the first color
+// rightVector = reference on the vector associated to the second color
+// leftSpace = pointer to the Hilbert space of the first color
+// rightSpace = pointer to the Hilbert space of the second color
+// unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+// return value = symmetrized state
+
+void BosonOnLattice::SymmetrizeU1U1State (ComplexVector& symmetrizedVector, ComplexVector& leftVector, ComplexVector& rightVector, BosonOnLattice* leftSpace, BosonOnLattice* rightSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents)
+{
+  unsigned long LastComponent = firstComponent + nbrComponents;
+  
+  FactorialCoefficient Factorial1;
+  FactorialCoefficient Factorial2;
+  if (unnormalizedBasisFlag == true)
+    {
+      for (long i = firstComponent; i < LastComponent; ++i)
+	{
+	  this->FermionToBoson(leftSpace->HardCoreBasis->StateDescription[i], leftSpace->HardCoreBasis->StateHighestBit[i], 
+			       leftSpace->TemporaryState, leftSpace->TemporaryStateHighestBit);
+	  for (int k = leftSpace->TemporaryStateHighestBit + 1;  k < leftSpace->NbrStates; ++k)
+	    leftSpace->TemporaryState[k] = 0;
+	  Complex TmpCoefficient = leftVector[i];
+	  Factorial1.SetToOne();
+	  Factorial1.Power2Divide(leftSpace->NbrBosons);
+	  for (int k = 0; k <= leftSpace->TemporaryStateHighestBit; ++k)
+	    if (leftSpace->TemporaryState[k] > 1)
+	      Factorial1.FactorialDivide(leftSpace->TemporaryState[k]);
+	  
+	  for (long j = 0l; j < rightSpace->LargeHilbertSpaceDimension; ++j)
+	    {
+	      this->FermionToBoson(rightSpace->HardCoreBasis->StateDescription[j], rightSpace->HardCoreBasis->StateHighestBit[j], 
+				   rightSpace->TemporaryState, rightSpace->TemporaryStateHighestBit);
+	      int k = 0;
+	      for (; k <= rightSpace->TemporaryStateHighestBit; ++k)
+		this->TemporaryState[k] = leftSpace->TemporaryState[k] + rightSpace->TemporaryState[k];
+	      this->TemporaryStateHighestBit = rightSpace->TemporaryStateHighestBit;
+	      if (leftSpace->TemporaryStateHighestBit > rightSpace->TemporaryStateHighestBit)
+		{
+		  for (; k <= leftSpace->TemporaryStateHighestBit; ++k)
+		    this->TemporaryState[k] = leftSpace->TemporaryState[k];
+		  this->TemporaryStateHighestBit = leftSpace->TemporaryStateHighestBit;
+		}
+	      int TmpPos = this->HardCoreBasis->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateHighestBit), this->TemporaryStateHighestBit + this->NbrBosons - 1);
+	      if (TmpPos < this->HilbertSpaceDimension)
+		{
+		  Factorial2 = Factorial1;
+		  for (k = 0; k <= rightSpace->TemporaryStateHighestBit; ++k)
+		    if (rightSpace->TemporaryState[k] > 1)
+		      Factorial2.FactorialDivide(rightSpace->TemporaryState[k]);
+		  for (k = 0; k <= this->TemporaryStateHighestBit; ++k)
+		    if (this->TemporaryState[k] > 1)
+		      Factorial2.FactorialMultiply(this->TemporaryState[k]);	      
+		  symmetrizedVector[TmpPos] += Factorial2.GetNumericalValue() * TmpCoefficient * rightVector[j];
+		}
+	    }
+	}
+    }
+  else
+    {
+      for (long i = firstComponent; i < LastComponent; ++i)
+	{
+	  this->FermionToBoson(leftSpace->HardCoreBasis->StateDescription[i], leftSpace->HardCoreBasis->StateHighestBit[i], 
+			       leftSpace->TemporaryState, leftSpace->TemporaryStateHighestBit);
+	  for (int k = leftSpace->TemporaryStateHighestBit + 1;  k < leftSpace->NbrStates; ++k)
+	    leftSpace->TemporaryState[k] = 0;
+	  Complex TmpCoefficient = leftVector[i];
+	  Factorial1.SetToOne();
+	  Factorial1.Power2Divide(leftSpace->NbrBosons);
+	  for (int k = 0; k <= leftSpace->TemporaryStateHighestBit; ++k)
+	    if (leftSpace->TemporaryState[k] > 1)
+	      Factorial1.FactorialDivide(leftSpace->TemporaryState[k]);
+	  
+	  for (long j = 0l; j < rightSpace->LargeHilbertSpaceDimension; ++j)
+	    {
+	      this->FermionToBoson(rightSpace->HardCoreBasis->StateDescription[j], rightSpace->HardCoreBasis->StateHighestBit[j], 
+				   rightSpace->TemporaryState, rightSpace->TemporaryStateHighestBit);
+	     
+	      int k = 0;
+	      for (; k <= rightSpace->TemporaryStateHighestBit; ++k)
+		this->TemporaryState[k] = leftSpace->TemporaryState[k] + rightSpace->TemporaryState[k];
+	      this->TemporaryStateHighestBit = rightSpace->TemporaryStateHighestBit;
+	      if (leftSpace->TemporaryStateHighestBit > rightSpace->TemporaryStateHighestBit)
+		{
+		  for (; k <= leftSpace->TemporaryStateHighestBit; ++k)
+		    this->TemporaryState[k] = leftSpace->TemporaryState[k];
+		  this->TemporaryStateHighestBit = leftSpace->TemporaryStateHighestBit;
+		}
+	      int TmpPos = this->HardCoreBasis->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateHighestBit), this->TemporaryStateHighestBit + this->NbrBosons - 1);
+	      if (TmpPos < this->HilbertSpaceDimension)
+		{
+		  Factorial2 = Factorial1;
+		  for (k = 0; k <= rightSpace->TemporaryStateHighestBit; ++k)
+		    if (rightSpace->TemporaryState[k] > 1)
+		      Factorial2.FactorialDivide(rightSpace->TemporaryState[k]);
+		  for (k = 0; k <= this->TemporaryStateHighestBit; ++k)
+		    if (this->TemporaryState[k] > 1)
+		      Factorial2.FactorialMultiply(this->TemporaryState[k]);	      
+		  symmetrizedVector[TmpPos] += sqrt(Factorial2.GetNumericalValue()) * TmpCoefficient * rightVector[j];
+		}
+	    }
+	}     
+    }
+      if ( unnormalizedBasisFlag == false )
+   symmetrizedVector /= symmetrizedVector.Norm();
 }

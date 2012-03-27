@@ -383,6 +383,9 @@ class BosonOnLattice : public ParticleOnLattice
   // return value = number of components that have been added to the density matrix
   virtual long EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnLattice* complementaryHilbertSpace,  ParticleOnLattice* destinationHilbertSpace,
 								  ComplexVector& groundState,  HermitianMatrix* densityMatrix);
+
+public:
+  virtual void SymmetrizeU1U1State (ComplexVector& symmetrizedVector, ComplexVector& leftVector, ComplexVector& rightVector, BosonOnLattice* leftSpace, BosonOnLattice* rightSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents);
   
 };
 

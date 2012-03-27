@@ -9,7 +9,8 @@
 #include "GeneralTools/ConfigurationParser.h"
 
 #include "Tools/FQHEFiles/QHEOnLatticeFileTools.h"
-
+#include "Architecture/ArchitectureManager.h"
+#include "Architecture/AbstractArchitecture.h"
 #include <iostream>
 #include <cstring>
 #include <stdlib.h>
@@ -28,10 +29,13 @@ int main(int argc, char** argv)
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* ProcessGroup = new OptionGroup ("process options");
   OptionGroup* OutputGroup = new OptionGroup ("output options");
+  ArchitectureManager Architecture;
+  
   Manager += SystemGroup;
   Manager += ProcessGroup;
   Manager += OutputGroup;
   Manager += MiscGroup;
+  Architecture.AddOptionGroup(&Manager);
   (*SystemGroup) += new SingleStringOption  ('\0', "input-file", "input state file name");
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('x', "lx", "length in x-direction of given lattice", 0);
@@ -43,7 +47,7 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new BooleanOption  ('b', "boson", "use bosonic statistics (override autodetection from input file name)");
   (*SystemGroup) += new BooleanOption  ('r', "symmetrize", "symmetrize state (instead of unsymmetrizing it)");
-
+  (*SystemGroup) += new BooleanOption  ('i', "inverse", "symmetrize state (instead of unsymmetrizing it)");
   (*ProcessGroup) += new SingleIntegerOption  ('s', "split", "split vector in multiple segments", 0);
   (*ProcessGroup) += new SingleIntegerOption  ('i', "segment-index", "number of segment to be calculated by this process", 0);
   
@@ -76,11 +80,10 @@ int main(int argc, char** argv)
   char* InputFileName = Manager.GetString("input-file");
   bool SymmetrizeFlag = Manager.GetBoolean("symmetrize");
 
-  double Interaction=0.0;
-  int TmpI=-1;
   bool Statistics=false;
   bool HardCore=false;
-  if (FQHEOnLatticeFindSystemInfoWithKyFromVectorFileName(InputFileName, NbrParticles, Lx, Ly, Ky, Interaction, NbrFluxQuanta, TmpI, Statistics, HardCore) == false)
+  bool InverseFlag = Manager.GetBoolean("inverse");
+  if (FQHEOnLatticeFindSystemInfoFromFileName1(InputFileName, NbrParticles, Lx, Ly, NbrFluxQuanta, Statistics, HardCore) == false)
     {
       cout<<"Please use standard file-names, or indicate all system parameters!"<<endl;
       exit(1);
@@ -125,7 +128,7 @@ int main(int argc, char** argv)
     {
       ComplexVector OutputState;
       BosonOnLatticeKy InitialSpace(NbrParticles, Lx, Ly, Ky, NbrFluxQuanta, MemorySpace); 
-      BosonOnLattice TargetSpace(NbrParticles, Lx, Ly, NbrFluxQuanta, MemorySpace);
+      BosonOnLattice TargetSpace (NbrParticles, Lx, Ly, NbrFluxQuanta, MemorySpace);
       if (SymmetrizeFlag)
 	{
 	  if (TargetSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
@@ -138,6 +141,18 @@ int main(int argc, char** argv)
 	}
       else
 	{
+	  if(InverseFlag == true)
+	  {
+	    if (TargetSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
+	    {
+	      cout << "dimension mismatch between Hilbert space and input state" << endl;
+	      return -1;
+	    }
+	    
+	    OutputState = InitialSpace.ConvertFromNbodyBasis(State, TargetSpace,Architecture.GetArchitecture());
+	  }
+	  else
+	  {
 	  if (InitialSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
 	    {
 	      cout << "dimension mismatch between Hilbert space and input state" << endl;
@@ -155,6 +170,7 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    OutputState = InitialSpace.ConvertToNbodyBasis(State, TargetSpace);
+	  }
 	}
       if (OutputState.WriteVector(OutputName) == false)
 	{

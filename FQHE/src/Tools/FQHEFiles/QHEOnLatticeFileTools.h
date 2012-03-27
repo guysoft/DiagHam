@@ -38,6 +38,9 @@
 // return = true if general lattice
 bool FQHEOnLatticeHaveGeneralLattice(char* filename);
 
+
+bool FQHEOnLatticeFindSystemInfoFromFileName1(char* filename, int& nbrParticles, int& lx, int& ly, int &flux, bool& statistics, bool& hardcore);
+
 // try to guess system information from file name
 //
 // filename = file name

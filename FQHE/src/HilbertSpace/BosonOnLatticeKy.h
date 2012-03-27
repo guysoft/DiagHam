@@ -392,7 +392,21 @@ class BosonOnLatticeKy : public ParticleOnLattice
   // nbrComponent = number of components to evaluate
   // returns: vector in many-body basis of targetSpace
   virtual ComplexVector& ConvertToNbodyBasis(ComplexVector& state, ParticleOnLattice &nbodyBasis, int firstComponent, int nbrComponent);
-	
+
+  // conversion to generic (full) many-body representation in real-space basis
+  // state: many-body state in Ky-momentum basis
+  // nbodyBasis: full Hilbert-space in real-space representation
+  // returns: vector in many-body basis of targetSpace
+  virtual ComplexVector& ConvertFromNbodyBasis(ComplexVector& state, BosonOnLattice &nbodyBasis,AbstractArchitecture * architecture);
+
+  // conversion to generic (full) many-body representation in real-space basis
+  // state: many-body state in Ky-momentum basis
+  // nbodyBasis: full Hilbert-space in real-space representation (should be object of type BosonOnLattice)
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // returns: vector in many-body basis of targetSpace
+  virtual void ConvertFromNbodyBasis(ComplexVector& initialState, ComplexVector& finalState, ParticleOnLattice &nbodyBasis, long firstComponent, long nbrComponent);
+  
   // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. 
   // 
   // nbrBosonSector = number of particles that belong to the subsytem 
@@ -456,8 +470,8 @@ class BosonOnLatticeKy : public ParticleOnLattice
   // prefactor = previous coefficients applied to state
   // 
   // in last stage of recursion, writes to this->TargetVector using the Hilbert-Space this->FullSpace
-  void ExpandBasisState (int nbrOperators, int *quantumNumbers, unsigned long state, Complex prefactor);
-
+  void ExpandBasisState (int nbrOperators, int *quantumNumbers, unsigned long state, Complex prefactor);	
+  void ProjectBasisState (int nbrOperators, int *quantumNumbers, unsigned long state, Complex & vectorElement, Complex prefactor);
 
   // convert a bosonic state into its fermionic counterpart
   //

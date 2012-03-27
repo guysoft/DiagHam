@@ -62,6 +62,152 @@ bool FQHEOnLatticeHaveGeneralLattice(char* filename)
 // statistics = reference to flag for fermionic statistics (true for fermion, false for bosons, grab it only if initial value is true)
 // hardcore = returns true if hardcore bosons encountered
 // return value = true if no error occured
+bool FQHEOnLatticeFindSystemInfoFromFileName1(char* filename, int& nbrParticles, int& lx, int& ly, int &flux, bool& statistics, bool& hardcore)
+{
+  char* StrNbrParticles;
+  if (nbrParticles == 0)
+    {
+      StrNbrParticles = strstr(filename, "_n_");
+      if (StrNbrParticles != 0)
+	{
+	  StrNbrParticles += 3;
+	  int SizeString = 0;
+	  while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+		 && (StrNbrParticles[SizeString] <= '9'))
+	    ++SizeString;
+	  if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	    {
+	      StrNbrParticles[SizeString] = '\0';
+	      nbrParticles = atoi(StrNbrParticles);
+	      StrNbrParticles[SizeString] = '_';
+	      StrNbrParticles += SizeString;
+	    }
+	  else
+	    StrNbrParticles = 0;
+	}
+      if (StrNbrParticles == 0)
+	{
+	  cout << "can't guess number of particles from file name " << filename << endl;
+	  return false;            
+	}
+    }
+  if (lx == 0)
+    {
+      StrNbrParticles = strstr(filename, "_x_");
+      if (StrNbrParticles != 0)
+	{
+	  StrNbrParticles += 3;
+	  int SizeString = 0;
+	  while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+		 && (StrNbrParticles[SizeString] <= '9'))
+	    ++SizeString;
+	  if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	    {
+	      StrNbrParticles[SizeString] = '\0';
+	      lx = atoi(StrNbrParticles);
+	      StrNbrParticles[SizeString] = '_';
+	      StrNbrParticles += SizeString;
+	    }
+	  else
+	    StrNbrParticles = 0;
+	}
+      if (StrNbrParticles == 0)
+	{
+	  cout << "can't guess length lx from file name " << filename << endl;
+	  return false;            
+	}
+    }
+  if (ly == 0)
+    {
+      StrNbrParticles = strstr(filename, "_y_");
+      if (StrNbrParticles != 0)
+	{
+	  StrNbrParticles += 3;
+	  int SizeString = 0;
+	  while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+		 && (StrNbrParticles[SizeString] <= '9'))
+	    ++SizeString;
+	  if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	    {
+	      StrNbrParticles[SizeString] = '\0';
+	      ly = atoi(StrNbrParticles);
+	      StrNbrParticles[SizeString] = '_';
+	      StrNbrParticles += SizeString;
+	    }
+	  else
+	    StrNbrParticles = 0;
+	}
+      if (StrNbrParticles == 0)
+	{
+	  cout << "can't guess length ly from file name " << filename << endl;
+	  return false;            
+	}
+    }
+  StrNbrParticles = strstr(filename, "hardcore");
+  if (StrNbrParticles != 0)
+    {
+      hardcore=true;
+    }
+  
+  if (flux == 0)
+    {
+      StrNbrParticles = strstr(filename, "_q_");
+      if (StrNbrParticles != 0)
+	{
+	  StrNbrParticles += 3;
+	  int SizeString = 0;
+	  while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '.') && (StrNbrParticles[SizeString] >= '0') 
+		 && (StrNbrParticles[SizeString] <= '9'))
+	    ++SizeString;
+	  if (SizeString != 0)
+	    {
+	      char tmpC = StrNbrParticles[SizeString];
+	      StrNbrParticles[SizeString] = '\0';
+	      flux = atoi(StrNbrParticles);
+	      StrNbrParticles[SizeString] = tmpC;
+	      StrNbrParticles += SizeString;
+	    }
+	  else
+	    StrNbrParticles = 0;
+	}
+      if (StrNbrParticles == 0)
+	{
+	  cout << "can't guess flux from file name " << filename << endl;
+	  return false;
+	}
+    }
+  if (statistics == true)
+    {
+      if (strstr(filename, "fermion") == 0)
+	{
+	  if (strstr(filename, "boson") == 0)
+	    {
+	      cout << "can't guess particle statistics from file name " << filename << endl;
+	      return false;	  
+	    }
+	  else
+	    {
+	      statistics = false;
+	    }
+	}
+      else
+	{
+	  statistics = true;
+	}
+    }
+  return true;
+}
+
+// try to guess system information from file name
+//
+// filename = file name
+// nbrParticles = reference to the number of particles (grab it only if initial value is 0)
+// lx, ly = indication of lattice geometry
+// interaction = strength of interaction parameter
+// flux = number of flux quanta
+// statistics = reference to flag for fermionic statistics (true for fermion, false for bosons, grab it only if initial value is true)
+// hardcore = returns true if hardcore bosons encountered
+// return value = true if no error occured
 bool FQHEOnLatticeFindSystemInfoFromFileName(char* filename, int& nbrParticles, int& lx, int& ly, double &interaction, int &flux, bool& statistics, bool& hardcore)
 {
   char* StrNbrParticles;

@@ -643,7 +643,7 @@ ComplexVector* GetTrialState(OptionManager &Manager, ParticleOnLattice* Space, d
   ComplexVector CFState(Space->GetHilbertSpaceDimension(), true);
   ComplexVector JastrowState(Space->GetHilbertSpaceDimension(), true);
 
-  /*
+  
   ComplexVector AnalyticJastrowX(Space->GetHilbertSpaceDimension(), true);
   ComplexVector AnalyticRelativeX(Space->GetHilbertSpaceDimension(), true);
   ComplexVector AnalyticCM1X(Space->GetHilbertSpaceDimension(), true);
@@ -657,7 +657,7 @@ ComplexVector* GetTrialState(OptionManager &Manager, ParticleOnLattice* Space, d
   ComplexVector AnalyticCM2Y(Space->GetHilbertSpaceDimension(), true);
   ComplexVector Analytic1Y(Space->GetHilbertSpaceDimension(), true);
   ComplexVector Analytic2Y(Space->GetHilbertSpaceDimension(), true);
-  */
+  
 
   // for calculation of analytic Laughlin state:
   // with Landau-gauge along x-axis:
@@ -714,7 +714,7 @@ ComplexVector* GetTrialState(OptionManager &Manager, ParticleOnLattice* Space, d
 	      SumSqX+=PosX[q]*PosX[q];
 	      SumSqY+=PosY[q]*PosY[q];
 	    }
-	  /*
+	  
 	  FRelX=1.0;
 	  for (int bi = 1; bi < NbrBosons; ++bi)
 	    for (int bj = 0; bj < bi; ++bj)
@@ -742,7 +742,7 @@ ComplexVector* GetTrialState(OptionManager &Manager, ParticleOnLattice* Space, d
 // 	  ThetaCM2Y.PrintValue(cout,Complex((2.0*(double)SumY)/Ly,(2.0*(double)SumX)/Ly))<<endl;
 	  Analytic1Y[i] = AnalyticRelativeY[i] * AnalyticCM1Y[i];
 	  Analytic2Y[i] = AnalyticRelativeY[i] * AnalyticCM2Y[i];
-	  */
+	  
 	}
       
     }
@@ -769,7 +769,7 @@ ComplexVector* GetTrialState(OptionManager &Manager, ParticleOnLattice* Space, d
     CFState.WriteVector(TmpC);
 
 
-  /*
+  
   // writing Laughlin state in Landau gauge along x-direction
   if (Manager.GetBoolean("analytic"))
     {
@@ -823,7 +823,7 @@ ComplexVector* GetTrialState(OptionManager &Manager, ParticleOnLattice* Space, d
       sprintf(TmpC,"%s.A2Y.vec",OutputName);
       Analytic2Y.WriteVector(TmpC);
     }
-  */
+  
   
   delete [] TmpC;
   delete [] QuantumNumbers;
