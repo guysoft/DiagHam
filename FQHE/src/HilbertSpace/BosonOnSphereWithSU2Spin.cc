@@ -113,12 +113,12 @@ BosonOnSphereWithSU2Spin::BosonOnSphereWithSU2Spin (int nbrBosons, int totalLz, 
 
 
   this->GenerateLookUpTable(memory);
-//   for (int i = 0; i < this->HilbertSpaceDimension; ++i)	
-//      {
-//        cout << i << " : ";
-//        this->PrintState(cout, i);
-//        cout << this->FindStateIndex(this->StateDescriptionUp[i], this->StateDescriptionDown[i]);
-//        cout << endl;
+  //   for (int i = 0; i < this->HilbertSpaceDimension; ++i)	
+  //      {
+  //        cout << i << " : ";
+  //        this->PrintState(cout, i);
+  //        cout << this->FindStateIndex(this->StateDescriptionUp[i], this->StateDescriptionDown[i]);
+  //        cout << endl;
 //        unsigned long Tmp1;
 //        unsigned long Tmp2;
 //        this->FermionToBoson(this->StateDescriptionUp[i], this->NUpLzMax, this->TemporaryStateUp);

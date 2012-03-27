@@ -39,6 +39,7 @@
 
 
 class BosonOnSphereShort;
+class ParticleOnSphereWithSpin;
 
 
 class BosonOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
@@ -97,6 +98,14 @@ class BosonOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   int** UniqueStateDescriptionSubArraySizeUpMinus;
   // first time a unique combination of type up-plus and type up-minus particle configurations appears in the Hilbert space
   int** FirstIndexUniqueStateDescriptionUpMinus;
+  // number of unique configurations for the type down-plus particles per unique type up-plus / up-minus particle configuration 
+  int** NbrUniqueStateDescriptionDownPlus;
+  // unique configurations for the type down-plus particles per unique type up-plus / up-minus particle configuration 
+  unsigned long*** UniqueStateDescriptionDownPlus;
+  // number of time each unique configuration for the type down-plus particles appears in StateDescription2 having the same type up-plus / up-minus particle configuration
+  int*** UniqueStateDescriptionSubArraySizeDownPlus;
+  // first time a unique combination of type up-plus, type up-minus and type down minus particle configurations appears in the Hilbert space
+  int*** FirstIndexUniqueStateDescriptionDownPlus;
 
   // temporary state used when applying operators for type up-plus particles
   unsigned long* TemporaryStateUpPlus;
@@ -528,6 +537,14 @@ class BosonOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
   // return value = transformation matrix
   virtual ComplexMatrix TransformationMatrixOneBodyBasis(ComplexMatrix* oneBodyBasis);
+
+  // compute the projection matrix from the SU(4) Hilbert space to an SU(2) Hilbert space
+  // 
+  // targetSpace = pointer to the SU(2) Hilbert space
+  // spinUp = index of the component that has to be consider as a spin up
+  // spinDown = index of the component that has to be consider as a spin down
+  // return value = projection matrix
+  virtual ComplexMatrix TransformationMatrixSU4ToSU2(ParticleOnSphereWithSpin* targetSpace, int spinUp = 0, int spinDown = 1);
 
   // compute the projection matrix from the SU(4) Hilbert space to an U(1) Hilbert space
   // 

@@ -2502,9 +2502,10 @@ void FermionOnSphereWithSU4Spin::TransformOneBodyBasisRecursive(ComplexVector& t
 // spinDown = index of the component that has to be consider as a spin down
 // return value = projection matrix
 
-ComplexMatrix FermionOnSphereWithSU4Spin::TransformationMatrixSU4ToSU2(FermionOnSphereWithSpin* targetSpace, int spinUp, int spinDown)
+ComplexMatrix FermionOnSphereWithSU4Spin::TransformationMatrixSU4ToSU2(ParticleOnSphereWithSpin* targetSpace, int spinUp, int spinDown)
 {
-  ComplexMatrix TmpMatrix (targetSpace->HilbertSpaceDimension, this->HilbertSpaceDimension, true) ;
+  FermionOnSphereWithSpin* TmpTargetSpace = (FermionOnSphereWithSpin*) targetSpace;
+  ComplexMatrix TmpMatrix (TmpTargetSpace->HilbertSpaceDimension, this->HilbertSpaceDimension, true) ;
   unsigned long MaskUp = 0x1ul << spinUp;
   unsigned long MaskDown = 0x1ul << spinDown;
   unsigned long Mask = (~(MaskUp | MaskDown)) & 0xful;
@@ -2551,8 +2552,8 @@ ComplexMatrix FermionOnSphereWithSU4Spin::TransformationMatrixSU4ToSU2(FermionOn
 	  int TmpLzMax = (this->LzMax << 1) + 1;
 	  while ((TmpState2 >> TmpLzMax) == 0x0ul)
 	    --TmpLzMax;
-	  int Index = targetSpace->FindStateIndex(TmpState2, TmpLzMax);
-	  if (Index < targetSpace->HilbertSpaceDimension)
+	  int Index = TmpTargetSpace->FindStateIndex(TmpState2, TmpLzMax);
+	  if (Index < TmpTargetSpace->HilbertSpaceDimension)
 	    {
 	      TmpMatrix[i][Index] = Sign;
 	    }

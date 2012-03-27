@@ -80,6 +80,7 @@ int main(int argc, char** argv)
   (*OutputGroup) += new BooleanOption ('\n', "density-eigenstate", "compute the eigenstates of the reduced density matrix");
   (*OutputGroup) += new SingleIntegerOption  ('\n', "lza-eigenstate", "compute the eigenstates of the reduced density matrix only for a subsystem with a fixed total Lz value", 0);
   (*OutputGroup) += new SingleIntegerOption  ('\n', "nbr-eigenstates", "number of reduced density matrix eigenstates to compute (0 if all)", 0);
+  (*OutputGroup) += new SingleStringOption ('\n', "save-matrix", "save the entanglement matrix (in SVD mode) or the reduced density matrix in a ascii file");
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
 #ifdef __LAPACK__
@@ -464,6 +465,21 @@ int main(int argc, char** argv)
 	    }
 	  if ((PartialDensityMatrix.GetNbrRow() > 1)||(PartialEntanglementMatrix.GetNbrRow() >= 1))
 	    {
+	      if (Manager.GetString("save-matrix") != 0)
+		{	
+		  ofstream OutputDensityMatrixFile;
+		  OutputDensityMatrixFile.open(Manager.GetString("save-matrix"), ios::binary | ios::out); 
+		  OutputDensityMatrixFile.precision(14);
+		  if (SVDFlag == false)
+		    {
+		      OutputDensityMatrixFile << PartialDensityMatrix;
+		    }
+		  else
+		    {
+		      OutputDensityMatrixFile << PartialEntanglementMatrix;
+		    }
+		  OutputDensityMatrixFile.close();
+		}
 	      RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
 	      if (ComputeLValueFlag == false)
 		{

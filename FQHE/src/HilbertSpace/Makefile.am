@@ -128,5 +128,5 @@ BosonOnSquareLatticeWithSU2SpinMomentumSpace.cc \
 BosonOnTorusWithMagneticTranslationsShort.cc \
 BosonOnSquareLatticeWannierSpace.cc \
 ParticleOnSquareLatticeWannierInterface.cc \
-BosonOnCubicLatticeWithSU2SpinMomentumSpace.cc
-
+BosonOnCubicLatticeWithSU2SpinMomentumSpace.cc \
+BosonOnCubicLatticeWithSU4SpinMomentumSpace.cc

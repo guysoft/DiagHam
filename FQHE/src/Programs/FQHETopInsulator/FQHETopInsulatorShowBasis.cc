@@ -11,6 +11,8 @@
 #include "HilbertSpace/BosonOnSquareLatticeWithSU2SpinMomentumSpace.h"
 #include "HilbertSpace/BosonOnSquareLatticeWithSU3SpinMomentumSpace.h"
 #include "HilbertSpace/BosonOnSquareLatticeWithSU4SpinMomentumSpace.h"
+#include "HilbertSpace/BosonOnCubicLatticeWithSU2SpinMomentumSpace.h"
+#include "HilbertSpace/BosonOnCubicLatticeWithSU4SpinMomentumSpace.h"
 
 #include "Vector/ComplexVector.h"
 
@@ -205,13 +207,21 @@ int main(int argc, char** argv)
 	}
       if (Manager.GetInteger("nbr-subbands") == 2)
 	{
-	  if (Manager.GetBoolean("spin-conserved") == false)
+	  if (Manager.GetBoolean("3d") == false)
 	    {
-	      Space = new BosonOnSquareLatticeWithSU2SpinMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
+	      if (Manager.GetBoolean("spin-conserved") == false)
+		{
+		  Space = new BosonOnSquareLatticeWithSU2SpinMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
+		}
+	      else
+		{
+		  Space = new BosonOnSquareLatticeWithSU2SpinMomentumSpace (NbrParticles, (Sz + NbrParticles) / 2, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
+		}
 	    }
 	  else
 	    {
-	      Space = new BosonOnSquareLatticeWithSU2SpinMomentumSpace (NbrParticles, (Sz + NbrParticles) / 2, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
+	      Space = new BosonOnCubicLatticeWithSU2SpinMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, NbrSiteZ,
+								       TotalKx, TotalKy, TotalKz);
 	    }
 	}
       if (Manager.GetInteger("nbr-subbands") == 3)
@@ -220,7 +230,15 @@ int main(int argc, char** argv)
 	}
       if (Manager.GetInteger("nbr-subbands") == 4)
 	{
-	  Space = new BosonOnSquareLatticeWithSU4SpinMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
+	  if (Manager.GetBoolean("3d") == false)
+	    {
+	      Space = new BosonOnSquareLatticeWithSU4SpinMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
+	    }
+	  else
+	    {
+	      Space = new BosonOnCubicLatticeWithSU4SpinMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, NbrSiteZ,
+								       TotalKx, TotalKy, TotalKz);
+	    }
 	}
       if (Manager.GetString("save-hilbert") != 0)
 	{

@@ -126,6 +126,13 @@ BosonOnCubicLatticeWithSU2SpinMomentumSpace::BosonOnCubicLatticeWithSU2SpinMomen
 	}
       SortDoubleElementArrayDownOrdering<unsigned long>(this->StateDescriptionUp, this->StateDescriptionDown, TmpLargeHilbertSpaceDimension);
       this->GenerateLookUpTable(memory);
+//    for (int i = 0; i < this->HilbertSpaceDimension; ++i)	
+//       {
+//         cout << i << " : ";
+//         this->PrintState(cout, i);
+//         cout << this->FindStateIndex(this->StateDescriptionUp[i], this->StateDescriptionDown[i]);
+//         cout << endl;
+//       }
 #ifdef __DEBUG__
       long UsedMemory = 0;
       UsedMemory += (long) this->HilbertSpaceDimension * (4 * sizeof(unsigned long));

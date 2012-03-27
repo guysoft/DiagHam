@@ -32,6 +32,7 @@
 #include "HilbertSpace/BosonOnSphereWithSU4Spin.h"
 #include "HilbertSpace/BosonOnSphere.h"
 #include "HilbertSpace/BosonOnSphereShort.h"
+#include "HilbertSpace/BosonOnSphereWithSU2Spin.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
 #include "Matrix/ComplexMatrix.h"
@@ -210,16 +211,31 @@ BosonOnSphereWithSU4Spin::~BosonOnSphereWithSU4Spin ()
       delete[] this->StateDescriptionDownMinus;
       delete[] this->UniqueStateDescriptionUpPlus;
       delete[] this->UniqueStateDescriptionSubArraySizeUpPlus;
-      delete[] this->NbrUniqueStateDescriptionUpMinus;
       for (long i = 0l; i < this->NbrUniqueStateDescriptionUpPlus; ++i)
 	{
+	  for (long j = 0l; j < this->NbrUniqueStateDescriptionUpMinus[i]; ++j)
+	    {
+	      delete[] this->UniqueStateDescriptionDownPlus[i][j];
+	      delete[] this->UniqueStateDescriptionSubArraySizeDownPlus[i][j];
+	      delete[] this->FirstIndexUniqueStateDescriptionDownPlus[i][j];
+	    }
 	  delete[] this->UniqueStateDescriptionUpMinus[i];
 	  delete[] this->UniqueStateDescriptionSubArraySizeUpMinus[i];
 	  delete[] this->FirstIndexUniqueStateDescriptionUpMinus[i];
+	  delete[] this->NbrUniqueStateDescriptionDownPlus[i];
+	  delete[] this->UniqueStateDescriptionDownPlus[i];
+	  delete[] this->UniqueStateDescriptionSubArraySizeDownPlus[i];
+	  delete[] this->FirstIndexUniqueStateDescriptionDownPlus[i];
 	}
+      delete[] this->NbrUniqueStateDescriptionUpMinus;
       delete[] this->UniqueStateDescriptionUpMinus;
       delete[] this->UniqueStateDescriptionSubArraySizeUpMinus;
       delete[] this->FirstIndexUniqueStateDescriptionUpMinus;
+      delete[] this->NbrUniqueStateDescriptionDownPlus;
+      delete[] this->UniqueStateDescriptionDownPlus;
+      delete[] this->UniqueStateDescriptionSubArraySizeDownPlus;
+      delete[] this->FirstIndexUniqueStateDescriptionDownPlus;
+
     }
   delete[] this->TemporaryStateUpPlus;
   delete[] this->TemporaryStateUpMinus;
@@ -403,56 +419,52 @@ double BosonOnSphereWithSU4Spin::AddmAdm (int index, int m)
 int BosonOnSphereWithSU4Spin::FindStateIndex(unsigned long stateDescriptionUpPlus, unsigned long stateDescriptionUpMinus, 
 					     unsigned long stateDescriptionDownPlus, unsigned long stateDescriptionDownMinus)
 {
-//  cout << hex << stateDescriptionUpPlus << " " << stateDescriptionUpMinus << " " << stateDescriptionDownPlus << dec << endl;
   int PosMin = 0;
   int PosMax = this->NbrUniqueStateDescriptionUpPlus - 1;
-  int PosMid = (PosMin + PosMax) >> 1;
-//  cout << "entering " << PosMin << " " << PosMax << endl;
-  unsigned long CurrentState = this->UniqueStateDescriptionUpPlus[PosMid];
+  int PosMidUpPlus = (PosMin + PosMax) >> 1;
+  unsigned long CurrentState = this->UniqueStateDescriptionUpPlus[PosMidUpPlus];
   while ((PosMax > PosMin) && (CurrentState != stateDescriptionUpPlus))
     {
        if (CurrentState > stateDescriptionUpPlus)
 	 {
-	   PosMin = PosMid + 1;
+	   PosMin = PosMidUpPlus + 1;
 	 }
        else
  	{
- 	  PosMax = PosMid - 1;
+ 	  PosMax = PosMidUpPlus - 1;
 	} 
-       PosMid = (PosMin + PosMax) >> 1;
-       CurrentState = this->UniqueStateDescriptionUpPlus[PosMid];
+       PosMidUpPlus = (PosMin + PosMax) >> 1;
+       CurrentState = this->UniqueStateDescriptionUpPlus[PosMidUpPlus];
     }
   if (CurrentState != stateDescriptionUpPlus)
-    PosMid = PosMax;
-//  cout << "pass 1 : " << PosMid << endl;
-  unsigned long* TmpStateDescriptionArray = this->UniqueStateDescriptionUpMinus[PosMid];
-  int* TmpFirstIndexUniqueStateDescriptionUpMinus = this->FirstIndexUniqueStateDescriptionUpMinus[PosMid];
-  int* TmpUniqueStateDescriptionSubArraySizeUpMinus = this->UniqueStateDescriptionSubArraySizeUpMinus[PosMid];
+    PosMidUpPlus = PosMax;
+
+  unsigned long* TmpStateDescriptionArray = this->UniqueStateDescriptionUpMinus[PosMidUpPlus];
   PosMin = 0;
-  PosMax = this->NbrUniqueStateDescriptionUpMinus[PosMid] - 1;
-  PosMid = (PosMin + PosMax) >> 1;
-//  cout << "entring pass 2 : " << PosMin << " " << PosMax << endl;
-  CurrentState = TmpStateDescriptionArray[PosMid];
+  PosMax = this->NbrUniqueStateDescriptionUpMinus[PosMidUpPlus] - 1;
+  int PosMidUpMinus = (PosMin + PosMax) >> 1;
+  CurrentState = TmpStateDescriptionArray[PosMidUpMinus];
   while ((PosMax > PosMin) && (CurrentState != stateDescriptionUpMinus))
     {
        if (CurrentState > stateDescriptionUpMinus)
 	 {
-	   PosMin = PosMid + 1;
+	   PosMin = PosMidUpMinus + 1;
 	 }
        else
  	{
- 	  PosMax = PosMid - 1;
+ 	  PosMax = PosMidUpMinus - 1;
 	} 
-       PosMid = (PosMin + PosMax) >> 1;
-       CurrentState = TmpStateDescriptionArray[PosMid];
+       PosMidUpMinus = (PosMin + PosMax) >> 1;
+       CurrentState = TmpStateDescriptionArray[PosMidUpMinus];
     }
   if (CurrentState != stateDescriptionUpMinus)
-    PosMid = PosMax;
-  PosMin = TmpFirstIndexUniqueStateDescriptionUpMinus[PosMid];
-  PosMax = PosMin + TmpUniqueStateDescriptionSubArraySizeUpMinus[PosMid] - 1;
-//  cout << "pass2 : " << PosMin << " " << PosMax << endl;
-  PosMid = (PosMin + PosMax) >> 1;
-  CurrentState = this->StateDescriptionDownPlus[PosMid];
+    PosMidUpMinus = PosMax;
+
+  TmpStateDescriptionArray = this->UniqueStateDescriptionDownPlus[PosMidUpPlus][PosMidUpMinus];
+  PosMin = 0;
+  PosMax = this->NbrUniqueStateDescriptionDownPlus[PosMidUpPlus][PosMidUpMinus] - 1;
+  int PosMid = (PosMin + PosMax) >> 1;
+  CurrentState = TmpStateDescriptionArray[PosMid];
   while ((PosMax > PosMin) && (CurrentState != stateDescriptionDownPlus))
     {
        if (CurrentState > stateDescriptionDownPlus)
@@ -464,9 +476,30 @@ int BosonOnSphereWithSU4Spin::FindStateIndex(unsigned long stateDescriptionUpPlu
  	  PosMax = PosMid - 1;
 	} 
        PosMid = (PosMin + PosMax) >> 1;
-       CurrentState = this->StateDescriptionDownPlus[PosMid];
+       CurrentState = TmpStateDescriptionArray[PosMid];
     }
   if (CurrentState != stateDescriptionDownPlus)
+    PosMid = PosMax;
+
+  PosMin = this->FirstIndexUniqueStateDescriptionDownPlus[PosMidUpPlus][PosMidUpMinus][PosMid];
+  PosMax = PosMin + this->UniqueStateDescriptionSubArraySizeDownPlus[PosMidUpPlus][PosMidUpMinus][PosMid] - 1;
+  PosMid = (PosMin + PosMax) >> 1;
+  CurrentState = this->StateDescriptionDownMinus[PosMid];
+  while ((PosMax > PosMin) && (CurrentState != stateDescriptionDownMinus))
+    {
+       if (CurrentState > stateDescriptionDownMinus)
+	 {
+	   PosMin = PosMid + 1;
+	 }
+       else
+ 	{
+ 	  PosMax = PosMid - 1;
+	} 
+       PosMid = (PosMin + PosMax) >> 1;
+       CurrentState = this->StateDescriptionDownMinus[PosMid];
+    }
+
+  if (CurrentState != stateDescriptionDownMinus)
     return PosMax;
   else
     return PosMid;
@@ -678,12 +711,20 @@ void BosonOnSphereWithSU4Spin::GenerateLookUpTable(unsigned long memory)
   this->UniqueStateDescriptionUpMinus = new unsigned long* [this->NbrUniqueStateDescriptionUpPlus];
   this->UniqueStateDescriptionSubArraySizeUpMinus = new int* [this->NbrUniqueStateDescriptionUpPlus];
   this->FirstIndexUniqueStateDescriptionUpMinus = new int* [this->NbrUniqueStateDescriptionUpPlus];
+  this->NbrUniqueStateDescriptionDownPlus = new int* [this->NbrUniqueStateDescriptionUpPlus];
+  this->UniqueStateDescriptionDownPlus = new unsigned long** [this->NbrUniqueStateDescriptionUpPlus];
+  this->UniqueStateDescriptionSubArraySizeDownPlus = new int** [this->NbrUniqueStateDescriptionUpPlus];
+  this->FirstIndexUniqueStateDescriptionDownPlus = new int** [this->NbrUniqueStateDescriptionUpPlus];
   for (long i = 0l; i < this->NbrUniqueStateDescriptionUpPlus; ++i)
     {
       this->UniqueStateDescriptionUpMinus[i] = new unsigned long [this->NbrUniqueStateDescriptionUpMinus[i]];
       this->UniqueStateDescriptionSubArraySizeUpMinus[i] = new int [this->NbrUniqueStateDescriptionUpMinus[i]];
       this->FirstIndexUniqueStateDescriptionUpMinus[i] = new int [this->NbrUniqueStateDescriptionUpMinus[i]];
-    }
+      this->NbrUniqueStateDescriptionDownPlus[i] = new int [this->NbrUniqueStateDescriptionUpMinus[i]]; 
+      this->UniqueStateDescriptionDownPlus[i] = new unsigned long* [this->NbrUniqueStateDescriptionUpMinus[i]];
+      this->UniqueStateDescriptionSubArraySizeDownPlus[i] = new int* [this->NbrUniqueStateDescriptionUpMinus[i]];
+      this->FirstIndexUniqueStateDescriptionDownPlus[i] = new int* [this->NbrUniqueStateDescriptionUpMinus[i]];
+   }
 
   TmpUniquePartition = 0;
   TmpIndex = 0l;
@@ -712,6 +753,62 @@ void BosonOnSphereWithSU4Spin::GenerateLookUpTable(unsigned long memory)
 	    }
 	}
       ++TmpUniquePartition;
+    }
+
+  for (long i = 0l; i < this->NbrUniqueStateDescriptionUpPlus; ++i)
+    {
+      for (long j = 0; j < this->NbrUniqueStateDescriptionUpMinus[i]; ++j)
+	{
+	  TmpIndex = this->FirstIndexUniqueStateDescriptionUpMinus[i][j];
+	  long Lim = TmpIndex + this->UniqueStateDescriptionSubArraySizeUpMinus[i][j];
+	  long TmpUnique = 1l;
+	  ++TmpIndex;
+	  while (TmpIndex < Lim)
+	    {
+	      while ((TmpIndex < Lim) && (this->StateDescriptionDownPlus[TmpIndex - 1] == this->StateDescriptionDownPlus[TmpIndex]))
+		++TmpIndex;
+	      if (TmpIndex < Lim)
+		{
+		  ++TmpIndex;
+		  TmpUnique++;
+		}
+	    }	  
+	  this->NbrUniqueStateDescriptionDownPlus[i][j] = TmpUnique;
+	  this->UniqueStateDescriptionDownPlus[i][j] = new unsigned long [TmpUnique];
+	  this->UniqueStateDescriptionSubArraySizeDownPlus[i][j] = new int [TmpUnique];
+	  this->FirstIndexUniqueStateDescriptionDownPlus[i][j] = new int [TmpUnique];
+	}
+    }
+
+  for (long i = 0l; i < this->NbrUniqueStateDescriptionUpPlus; ++i)
+    {
+      for (long j = 0; j < this->NbrUniqueStateDescriptionUpMinus[i]; ++j)
+	{
+	  TmpIndex = this->FirstIndexUniqueStateDescriptionUpMinus[i][j];
+	  long Lim = TmpIndex + this->UniqueStateDescriptionSubArraySizeUpMinus[i][j];
+	  long Tmp = 0l;
+	  this->UniqueStateDescriptionDownPlus[i][j][Tmp] = this->StateDescriptionDownPlus[TmpIndex];	
+	  this->UniqueStateDescriptionSubArraySizeDownPlus[i][j][Tmp] = 1;
+	  this->FirstIndexUniqueStateDescriptionDownPlus[i][j][Tmp] = TmpIndex;	  
+	  long TmpUnique = 1l;
+	  ++TmpIndex;
+	  while (TmpIndex < Lim)
+	    {
+	      while ((TmpIndex < Lim) && (this->StateDescriptionDownPlus[TmpIndex - 1] == this->StateDescriptionDownPlus[TmpIndex]))
+		{
+		  ++TmpIndex;
+		  ++this->UniqueStateDescriptionSubArraySizeDownPlus[i][j][Tmp];
+		}
+	      if (TmpIndex < Lim)
+		{
+		  ++Tmp;
+		  this->UniqueStateDescriptionDownPlus[i][j][Tmp] = this->StateDescriptionDownPlus[TmpIndex];	
+		  this->UniqueStateDescriptionSubArraySizeDownPlus[i][j][Tmp] = 1;
+		  this->FirstIndexUniqueStateDescriptionDownPlus[i][j][Tmp] = TmpIndex;	  
+		  ++TmpIndex;
+		}
+	    }	  
+	}
     }
 }
 
@@ -1156,8 +1253,8 @@ int BosonOnSphereWithSU4Spin::AddmAdm (int index, int m, int n, double& coeffici
       return this->HilbertSpaceDimension;      
     }
   coefficient = (double) this->TemporaryStateDownMinus[n];
-  --this->TemporaryStateDownPlus[n];
-  ++this->TemporaryStateDownPlus[m];
+  --this->TemporaryStateDownMinus[n];
+  ++this->TemporaryStateDownMinus[m];
   coefficient *= (double) this->TemporaryStateDownMinus[m];
   coefficient = sqrt(coefficient);  
   return this->FindStateIndex(this->StateDescriptionUpPlus[index], this->StateDescriptionUpMinus[index], 
@@ -1400,10 +1497,10 @@ double BosonOnSphereWithSU4Spin::AdmAdm (int index, int n1, int n2)
   this->FermionToBoson(this->StateDescriptionUpPlus[index], this->NUpPlusLzMax, this->ProdATemporaryStateUpPlus);
   this->FermionToBoson(this->StateDescriptionUpMinus[index], this->NUpMinusLzMax, this->ProdATemporaryStateUpMinus);
   this->FermionToBoson(this->StateDescriptionDownPlus[index], this->NDownPlusLzMax, this->ProdATemporaryStateDownPlus);
-  double Coefficient = this->ProdATemporaryStateDownPlus[n2];
-  --this->ProdATemporaryStateDownPlus[n2];
-  Coefficient *= this->ProdATemporaryStateDownPlus[n1];
-  --this->ProdATemporaryStateDownPlus[n1];
+  double Coefficient = this->ProdATemporaryStateDownMinus[n2];
+  --this->ProdATemporaryStateDownMinus[n2];
+  Coefficient *= this->ProdATemporaryStateDownMinus[n1];
+  --this->ProdATemporaryStateDownMinus[n1];
   return sqrt(Coefficient);
 }
 
@@ -1716,11 +1813,11 @@ void BosonOnSphereWithSU4Spin::TransformOneBodyBasisRecursive(ComplexVector& tar
   else
     {
       currentSU4Indices[position] = 0;
-      this->TransformOneBodyBasisRecursive(targetState, coefficient * (oneBodyBasis[momentumIndices[position]][3 - initialSU4Indices[position]][2]), position + 1, momentumIndices, initialSU4Indices, currentSU4Indices, oneBodyBasis, occupationCoefficient, occupationCoefficientArray);
+      this->TransformOneBodyBasisRecursive(targetState, coefficient * (oneBodyBasis[momentumIndices[position]][3 - initialSU4Indices[position]][3]), position + 1, momentumIndices, initialSU4Indices, currentSU4Indices, oneBodyBasis, occupationCoefficient, occupationCoefficientArray);
       currentSU4Indices[position] = 1;
-      this->TransformOneBodyBasisRecursive(targetState, coefficient * (oneBodyBasis[momentumIndices[position]][3 - initialSU4Indices[position]][1]), position + 1, momentumIndices, initialSU4Indices, currentSU4Indices, oneBodyBasis, occupationCoefficient, occupationCoefficientArray);
+      this->TransformOneBodyBasisRecursive(targetState, coefficient * (oneBodyBasis[momentumIndices[position]][3 - initialSU4Indices[position]][2]), position + 1, momentumIndices, initialSU4Indices, currentSU4Indices, oneBodyBasis, occupationCoefficient, occupationCoefficientArray);
       currentSU4Indices[position] = 2;
-      this->TransformOneBodyBasisRecursive(targetState, coefficient * (oneBodyBasis[momentumIndices[position]][3 - initialSU4Indices[position]][0]), position + 1, momentumIndices, initialSU4Indices, currentSU4Indices, oneBodyBasis, occupationCoefficient, occupationCoefficientArray);
+      this->TransformOneBodyBasisRecursive(targetState, coefficient * (oneBodyBasis[momentumIndices[position]][3 - initialSU4Indices[position]][1]), position + 1, momentumIndices, initialSU4Indices, currentSU4Indices, oneBodyBasis, occupationCoefficient, occupationCoefficientArray);
       currentSU4Indices[position] = 3;
       this->TransformOneBodyBasisRecursive(targetState, coefficient * (oneBodyBasis[momentumIndices[position]][3 - initialSU4Indices[position]][0]), position + 1, momentumIndices, initialSU4Indices, currentSU4Indices, oneBodyBasis, occupationCoefficient, occupationCoefficientArray);
     }
@@ -1785,6 +1882,152 @@ ComplexMatrix BosonOnSphereWithSU4Spin::TransformationMatrixSU4ToU1(BosonOnSpher
 	    --TmpLzMax;
 	  int Index = targetSpace->FermionBasis->FindStateIndex(TmpState, TmpLzMax);
 	  if (Index < targetSpace->HilbertSpaceDimension)
+	    {
+	      TmpMatrix[i][Index] = 1.0;
+	    }
+	}
+    }
+  return TmpMatrix;
+}
+
+// compute the projection matrix from the SU(4) Hilbert space to an SU(2) Hilbert space
+// 
+// targetSpace = pointer to the SU(2) Hilbert space
+// spinUp = index of the component that has to be consider as a spin up
+// spinDown = index of the component that has to be consider as a spin down
+// return value = projection matrix
+
+ComplexMatrix BosonOnSphereWithSU4Spin::TransformationMatrixSU4ToSU2(ParticleOnSphereWithSpin* targetSpace, int spinUp, int spinDown)
+{
+  BosonOnSphereWithSU2Spin* TmpTargetSpace = (BosonOnSphereWithSU2Spin*) targetSpace;
+  ComplexMatrix TmpMatrix (TmpTargetSpace->HilbertSpaceDimension, this->HilbertSpaceDimension, true) ;
+
+  unsigned long* SpinUpComponent = 0;
+  unsigned long* SpinDownComponent = 0;
+  unsigned long* UnwantedComponent1 = 0;
+  unsigned long* UnwantedComponent2 = 0;
+  
+  if (spinUp == 0)
+    {
+      SpinUpComponent = this->StateDescriptionUpPlus;
+      switch (spinDown)
+	{
+	case 1:
+	  {
+	    SpinDownComponent = this->StateDescriptionUpMinus;
+	    UnwantedComponent1 = this->StateDescriptionDownPlus;
+	    UnwantedComponent2 = this->StateDescriptionDownMinus;
+	  }
+	  break;
+	case 2:
+	  {
+	    SpinDownComponent = this->StateDescriptionDownPlus;
+	    UnwantedComponent1 = this->StateDescriptionUpMinus;
+	    UnwantedComponent2 = this->StateDescriptionDownMinus;
+	  }
+	  break;
+	case 3:
+	  {
+	    SpinDownComponent = this->StateDescriptionDownMinus;
+	    UnwantedComponent1 = this->StateDescriptionUpMinus;
+	    UnwantedComponent2 = this->StateDescriptionDownPlus;
+	  }
+	  break;
+	}
+    }
+  if (spinUp == 1)
+    {
+      SpinUpComponent = this->StateDescriptionUpMinus;
+      switch (spinDown)
+	{
+	case 0:
+	  {
+	    SpinDownComponent = this->StateDescriptionUpPlus;
+	    UnwantedComponent1 = this->StateDescriptionDownPlus;
+	    UnwantedComponent2 = this->StateDescriptionDownMinus;
+	  }
+	  break;
+	case 2:
+	  {
+	    SpinDownComponent = this->StateDescriptionDownPlus;
+	    UnwantedComponent1 = this->StateDescriptionUpPlus;
+	    UnwantedComponent2 = this->StateDescriptionDownMinus;
+	  }
+	  break;
+	case 3:
+	  {
+	    SpinDownComponent = this->StateDescriptionDownMinus;
+	    UnwantedComponent1 = this->StateDescriptionUpPlus;
+	    UnwantedComponent2 = this->StateDescriptionDownPlus;
+	  }
+	  break;
+	}
+    }
+
+  if (spinUp == 2)
+    {
+      SpinUpComponent = this->StateDescriptionDownPlus;
+      switch (spinDown)
+	{
+	case 0:
+	  {
+	    SpinDownComponent = this->StateDescriptionUpPlus;
+	    UnwantedComponent1 = this->StateDescriptionUpMinus;
+	    UnwantedComponent2 = this->StateDescriptionDownMinus;
+	  }
+	  break;
+	case 1:
+	  {
+	    SpinDownComponent = this->StateDescriptionUpMinus;
+	    UnwantedComponent1 = this->StateDescriptionUpPlus;
+	    UnwantedComponent2 = this->StateDescriptionDownMinus;
+	  }
+	  break;
+	case 3:
+	  {
+	    SpinDownComponent = this->StateDescriptionDownMinus;
+	    UnwantedComponent1 = this->StateDescriptionUpPlus;
+	    UnwantedComponent2 = this->StateDescriptionUpMinus;
+	  }
+	  break;
+	}
+    }
+
+  if (spinUp == 3)
+    {
+      SpinUpComponent = this->StateDescriptionDownMinus;
+      switch (spinDown)
+	{
+	case 0:
+	  {
+	    SpinDownComponent = this->StateDescriptionUpPlus;
+	    UnwantedComponent1 = this->StateDescriptionUpMinus;
+	    UnwantedComponent2 = this->StateDescriptionDownPlus;
+	  }
+	  break;
+	case 1:
+	  {
+	    SpinDownComponent = this->StateDescriptionUpMinus;
+	    UnwantedComponent1 = this->StateDescriptionUpPlus;
+	    UnwantedComponent2 = this->StateDescriptionDownPlus;
+	  }
+	  break;
+	case 2:
+	  {
+	    SpinDownComponent = this->StateDescriptionDownPlus;
+	    UnwantedComponent1 = this->StateDescriptionUpPlus;
+	    UnwantedComponent2 = this->StateDescriptionUpMinus;
+	  }
+	  break;
+	}
+    }
+
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    {
+      if ((UnwantedComponent1[i] == 0x0ul) && (UnwantedComponent2[i] == 0x0ul))
+	{
+	  int Index = TmpTargetSpace->FindStateIndex(SpinUpComponent[i], SpinDownComponent[i]);
+	  if (Index < TmpTargetSpace->HilbertSpaceDimension)
 	    {
 	      TmpMatrix[i][Index] = 1.0;
 	    }

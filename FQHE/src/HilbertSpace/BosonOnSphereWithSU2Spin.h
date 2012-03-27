@@ -47,6 +47,10 @@ class BosonOnSphereShort;
 class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
 {
 
+
+  friend class BosonOnSphereWithSU4Spin;
+
+
  protected:
 
   // number of bosons

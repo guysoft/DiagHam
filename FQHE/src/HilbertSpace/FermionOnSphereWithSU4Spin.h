@@ -40,6 +40,7 @@
 
 class FermionOnSphere;
 class FermionOnSphereWithSpin;
+class ParticleOnSphereWithSpin;
 
 
 class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
@@ -561,7 +562,7 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // spinUp = index of the component that has to be consider as a spin up
   // spinDown = index of the component that has to be consider as a spin down
   // return value = projection matrix
-  virtual ComplexMatrix TransformationMatrixSU4ToSU2(FermionOnSphereWithSpin* targetSpace, int spinUp = 0, int spinDown = 1);
+  virtual ComplexMatrix TransformationMatrixSU4ToSU2(ParticleOnSphereWithSpin* targetSpace, int spinUp = 0, int spinDown = 1);
 
   protected:
 
