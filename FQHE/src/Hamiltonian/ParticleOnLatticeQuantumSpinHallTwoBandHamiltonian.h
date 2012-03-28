@@ -52,23 +52,24 @@ class ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian : public ParticleOnLatt
   // szSymmetryBreaking = amplitude of the Sz symmetry breaking term
   double SzSymmetryBreaking;
 
-  // array containing all interaction factors for spin up and spin up
+  // interaction factors : the table first entry is a the sum of annihilation/creation indices, the second entry linearized index (annihilation_index * nbr_creation_index + creation_index)
+  // array containing all interaction factors for spin up and spin up (a^+_u a^+_u a_u a_u)
   Complex** InteractionFactorsupupupup;
-  // array containing all interaction factors for spin up and spin up
+  // array containing all interaction factors for spin up and spin up (a^+_u a^+_u a_u a_d)
   Complex** InteractionFactorsupupupdown;
-  // array containing all interaction factors for spin up and spin up
+  // array containing all interaction factors for spin up and spin up (a^+_d a^+_d a_u a_u)
   Complex** InteractionFactorsupupdowndown;
-  // array containing all interaction factors for spin down and spin down
+  // array containing all interaction factors for spin down and spin down (a^+_d a^+_d a_u a_u)
   Complex** InteractionFactorsdowndownupup;
-  // array containing all interaction factors for spin down and spin down
+  // array containing all interaction factors for spin down and spin down (a^+_d a^+_d a_u a_d)
   Complex** InteractionFactorsdowndownupdown;
-  // array containing all interaction factors for spin down and spin down
+  // array containing all interaction factors for spin down and spin down (a^+_d a^+_d a_d a_d)
   Complex** InteractionFactorsdowndowndowndown;
-  // array containing all interaction factors for spin up and spin down
+  // array containing all interaction factors for spin up and spin down  (a^+_u a^+_d a_u a_u)
   Complex** InteractionFactorsupdownupup;
-  // array containing all interaction factors for spin up and spin down
+  // array containing all interaction factors for spin up and spin down  (a^+_u a^+_d a_u a_d)
   Complex** InteractionFactorsupdownupdown;
-  // array containing all interaction factors for spin up and spin down
+  // array containing all interaction factors for spin up and spin down  (a^+_u a^+_d a_d a_d)
   Complex** InteractionFactorsupdowndowndown;
 
 

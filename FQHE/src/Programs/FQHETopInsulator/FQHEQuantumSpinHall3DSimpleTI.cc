@@ -138,7 +138,14 @@ int main(int argc, char** argv)
   char* EigenvalueOutputFile = new char [512];
   if (Manager.GetBoolean("four-bands") == true)
     {
-      sprintf (EigenvalueOutputFile, "%s_quantumspinhall3d_simpleti_fourbands_n_%d_x_%d_y_%d_z_%d_u_%f_v_%f_m_%f_gx_%f_gy_%f_gz_%f.dat", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("mass"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"));
+      if (Manager.GetBoolean("project-fourbands") == true)
+	{
+	  sprintf (EigenvalueOutputFile, "%s_quantumspinhall3d_simpleti_projectedfourbands_n_%d_x_%d_y_%d_z_%d_u_%f_v_%f_m_%f_gx_%f_gy_%f_gz_%f.dat", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("mass"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"));
+	}
+      else
+	{
+	  sprintf (EigenvalueOutputFile, "%s_quantumspinhall3d_simpleti_fourbands_n_%d_x_%d_y_%d_z_%d_u_%f_v_%f_m_%f_gx_%f_gy_%f_gz_%f.dat", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("mass"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"));
+	}
     }
   else
     {
