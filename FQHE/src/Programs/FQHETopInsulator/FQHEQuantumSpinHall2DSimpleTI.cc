@@ -3,6 +3,8 @@
 #include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeWithSU4SpinMomentumSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeWithSU4SpinMomentumSpaceLong.h"
+#include "HilbertSpace/BosonOnSquareLatticeWithSU2SpinMomentumSpace.h"
+#include "HilbertSpace/BosonOnSquareLatticeWithSU4SpinMomentumSpace.h"
 
 #include "Hamiltonian/ParticleOnSquareLatticeTwoBandSimpleTIHamiltonian.h"
 #include "Hamiltonian/ParticleOnSquareLatticeFourBandSimpleTIHamiltonian.h"
@@ -18,6 +20,7 @@
 #include "Matrix/RealDiagonalMatrix.h"
 
 #include "MainTask/GenericComplexMainTask.h"
+#include "GeneralTools/FilenameTools.h"
 
 #include <iostream>
 #include <cstring>
@@ -71,6 +74,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('y', "nbr-sitey", "number of sites along the y direction", 3);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1);
+  (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive on-site potential strength between different orbitals", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "v-potential", "repulsive on-site potential strength between opposite spins", 1.0);
@@ -90,6 +94,7 @@ int main(int argc, char** argv)
 #ifdef __SCALAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-scalapack", "use SCALAPACK libraries instead of DiagHam or LAPACK libraries");
 #endif
+  (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
   (*ToolsGroup) += new SingleStringOption  ('\n', "export-hamiltonian", "export hamiltonian in an ASCII column formatted file", 0);
   (*ToolsGroup) += new BooleanOption  ('\n', "test-hermitian", "show matrix representation of the hamiltonian");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -111,30 +116,32 @@ int main(int argc, char** argv)
   int TotalNbrSites = NbrSitesX * NbrSitesY;
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
 
+  char* StatisticPrefix = new char [16];
+  if (Manager.GetBoolean("boson") == false)
+    {
+      sprintf (StatisticPrefix, "fermions");
+    }
+  else
+    {
+      sprintf (StatisticPrefix, "bosons");
+    }
   char* CommentLine = new char [256];
   sprintf (CommentLine, "eigenvalues\n# kx ky ");
   char* EigenvalueOutputFile = new char [512];
   if (Manager.GetBoolean("four-bands") == true)
     {
-      if (Manager.GetBoolean("flat-band") == true)
+      if (Manager.GetBoolean("project-fourbands") == true)
 	{
-	  sprintf (EigenvalueOutputFile, "fermions_quantumspinhall_simpleti_fourbands_n_%d_x_%d_y_%d_v_%f_m_%f_gx_%f_gy_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("v-potential"), Manager.GetDouble("mass"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	  sprintf (EigenvalueOutputFile, "%s_quantumspinhall3d_simpleti_projectedfourbands_n_%d_x_%d_y_%d_u_%f_v_%f_m_%f_gx_%f_gy_%f.dat", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("mass"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 	}
       else
 	{
-	  sprintf (EigenvalueOutputFile, "fermions_quantumspinhall_simpleti_fourbands_n_%d_x_%d_y_%d_u_%f_v_%f_m_%f_gx_%f_gy_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("mass"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	  sprintf (EigenvalueOutputFile, "%s_quantumspinhall3d_simpleti_fourbands_n_%d_x_%d_y_%d_u_%f_v_%f_m_%f_gx_%f_gy_%f.dat", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("mass"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 	}
     }
   else
     {
-      if (Manager.GetBoolean("flat-band") == true)
-	{
-	  sprintf (EigenvalueOutputFile, "fermions_quantumspinhall_simpleti_n_%d_x_%d_y_%d_v_%f_m_%f_gx_%f_gy_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("v-potential"), Manager.GetDouble("mass"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
-	}
-      else
-	{
-	  sprintf (EigenvalueOutputFile, "fermions_quantumspinhall_simpleti_n_%d_x_%d_y_%d_u_%f_v_%f_m_%f_gx_%f_gy_%f.dat", NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("mass"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
-	}
+      sprintf (EigenvalueOutputFile, "%s_quantumspinhall_simpleti_n_%d_x_%d_y_%d_u_%f_v_%f_m_%f_gx_%f_gy_%f.dat", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("mass"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
     }
   if (Manager.GetBoolean("singleparticle-spectrum") == true)
     {
@@ -164,27 +171,28 @@ int main(int argc, char** argv)
 	  cout << "(kx=" << i << ",ky=" << j << ") " << endl;
 	  if (Manager.GetBoolean("four-bands") == false)
 	    {
-	      FermionOnSquareLatticeWithSpinMomentumSpace Space(NbrParticles, NbrSitesX, NbrSitesY, i, j);
-	      cout << "dim = " << Space.GetHilbertSpaceDimension()  << endl;
-	      Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());	
+	      ParticleOnSphereWithSpin* Space = 0;
+	      if (Manager.GetBoolean("boson") == false)
+		{
+		  Space = new FermionOnSquareLatticeWithSpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		}
+	      else
+		{
+		  Space = new BosonOnSquareLatticeWithSU2SpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		}
+	      cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
+	      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
 	      AbstractQHEHamiltonian* Hamiltonian = 0;
-	      Hamiltonian = new ParticleOnSquareLatticeTwoBandSimpleTIHamiltonian(&Space, NbrParticles, NbrSitesX, NbrSitesY,
+	      Hamiltonian = new ParticleOnSquareLatticeTwoBandSimpleTIHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
 										  Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("mass"),
 										  Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
 										  Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 	      char* ContentPrefix = new char[256];
 	      sprintf (ContentPrefix, "%d %d", i, j);
 	      char* EigenstateOutputFile = new char [512];
-	      if (Manager.GetBoolean("flat-band") == true)
-		{
-		  sprintf (EigenstateOutputFile, "fermions_quantumspinhall_simpleti_n_%d_x_%d_y_%d_m_%f_gx_%f_gy_%f_kx_%d_ky_%d", NbrParticles, NbrSitesX, NbrSitesY, 
-			   Manager.GetDouble("mass"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j);
-		}
-	      else
-		{
-		  sprintf (EigenstateOutputFile, "fermions_quantumspinhall_simpleti_n_%d_x_%d_y_%d_u_%f_m_%f_gx_%f_gy_%f_kx_%d_ky_%d", NbrParticles, NbrSitesX, NbrSitesY, 
-			   Manager.GetDouble("u-potential"), Manager.GetDouble("mass"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j);
-		}
+	      char* TmpExtention = new char [512];
+	      sprintf (TmpExtention, "_kx_%d_ky_%d", i, j);
+	      EigenstateOutputFile = ReplaceExtensionToFileName(EigenvalueOutputFile, ".dat", TmpExtention);
 	      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
 	      FirstRunFlag = false;
 	      MainTaskOperation TaskOperation (&Task);
@@ -198,18 +206,25 @@ int main(int argc, char** argv)
 	    {
 	      ParticleOnSphere* Space = 0;
 	      cout << TotalNbrSites << endl;
+	      if (Manager.GetBoolean("boson") == false)
+		{
 #ifdef __128_BIT_LONGLONG__
-	      if (TotalNbrSites <= 15)
+		  if (TotalNbrSites <= 15)
 #else
-		if (TotalNbrSites <= 7)
+		    if (TotalNbrSites <= 7)
 #endif
-		  {
-		    Space = new FermionOnSquareLatticeWithSU4SpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
-		  }
-		else
-		  {
-		    Space = new FermionOnSquareLatticeWithSU4SpinMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, i, j);
-		  }
+		      {
+			Space = new FermionOnSquareLatticeWithSU4SpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		      }
+		    else
+		      {
+			Space = new FermionOnSquareLatticeWithSU4SpinMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		      }
+		}
+	      else
+		{
+		  Space = new BosonOnSquareLatticeWithSU4SpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		}
 	      cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
 	      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
 	      AbstractHamiltonian* Hamiltonian = 0;
@@ -221,12 +236,36 @@ int main(int argc, char** argv)
 	      if (Manager.GetBoolean("project-fourbands") == true)
 		{
 		  ComplexMatrix* OneBodyBasis = ComputeSingleParticleTransformationMatrices(NbrSitesX, NbrSitesY, Manager.GetDouble("mass"));
-		  ComplexMatrix NBodyTransformationMatrix = ((FermionOnSquareLatticeWithSU4SpinMomentumSpace*) Space)->TransformationMatrixOneBodyBasis(OneBodyBasis);
+		  ComplexMatrix NBodyTransformationMatrix;
+		  if (Manager.GetBoolean("boson") == false)
+		    {
+		      NBodyTransformationMatrix = ((FermionOnSquareLatticeWithSU4SpinMomentumSpace*) Space)->TransformationMatrixOneBodyBasis(OneBodyBasis);
+		    }
+		  else
+		    {
+		      NBodyTransformationMatrix = ((BosonOnSquareLatticeWithSU4SpinMomentumSpace*) Space)->TransformationMatrixOneBodyBasis(OneBodyBasis);
+		    }
 		  ComplexMatrix HRep (Hamiltonian->GetHilbertSpaceDimension(), Hamiltonian->GetHilbertSpaceDimension());
 		  Hamiltonian->GetHamiltonian(HRep);
 		  ComplexMatrix TransformedHRep = HRep.Conjugate(NBodyTransformationMatrix);
-		  FermionOnSquareLatticeWithSpinMomentumSpace* TargetSpace = new FermionOnSquareLatticeWithSpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
-		  ComplexMatrix SU4SU2TransformationMatrix = ((FermionOnSquareLatticeWithSU4SpinMomentumSpace*) Space)->TransformationMatrixSU4ToSU2(TargetSpace, 2, 3);
+		  ParticleOnSphereWithSpin* TargetSpace;
+		  if (Manager.GetBoolean("boson") == false)
+		    {
+		      TargetSpace = new FermionOnSquareLatticeWithSpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		    }
+		  else
+		    {
+		      TargetSpace = new BosonOnSquareLatticeWithSU2SpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		    }
+		  ComplexMatrix SU4SU2TransformationMatrix;
+		  if (Manager.GetBoolean("boson") == false)
+		    {
+		      SU4SU2TransformationMatrix = ((FermionOnSquareLatticeWithSU4SpinMomentumSpace*) Space)->TransformationMatrixSU4ToSU2(TargetSpace, 2, 3);
+		    }
+		  else
+		    {
+		      SU4SU2TransformationMatrix = ((BosonOnSquareLatticeWithSU4SpinMomentumSpace*) Space)->TransformationMatrixSU4ToSU2(TargetSpace, 2, 3);
+		    }
 		  ComplexMatrix TransformedHRep2 = TransformedHRep.InvConjugate(SU4SU2TransformationMatrix);
 		  if (Manager.GetDouble("u-potential") != 0.0)
 		    TransformedHRep2 /= Manager.GetDouble("u-potential");
@@ -243,16 +282,9 @@ int main(int argc, char** argv)
 	      char* ContentPrefix = new char[256];
 	      sprintf (ContentPrefix, "%d %d", i, j);
 	      char* EigenstateOutputFile = new char [512];
-	      if (Manager.GetBoolean("flat-band") == true)
-		{
-		  sprintf (EigenstateOutputFile, "fermions_quantumspinhall_simpleti_fourbands_n_%d_x_%d_y_%d_m_%f_gx_%f_gy_%f_kx_%d_ky_%d", NbrParticles, NbrSitesX, NbrSitesY, 
-			   Manager.GetDouble("mass"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j);
-		}
-	      else
-		{
-		  sprintf (EigenstateOutputFile, "fermions_quantumspinhall_simpleti_fourbands_n_%d_x_%d_y_%d_u_%f_m_%f_gx_%f_gy_%f_kx_%d_ky_%d", NbrParticles, NbrSitesX, NbrSitesY, 
-			   Manager.GetDouble("u-potential"), Manager.GetDouble("mass"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j);
-		}
+	      char* TmpExtention = new char [512];
+	      sprintf (TmpExtention, "_kx_%d_ky_%d", i, j);
+	      EigenstateOutputFile = ReplaceExtensionToFileName(EigenvalueOutputFile, ".dat", TmpExtention);
 	      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
 	      FirstRunFlag = false;
 	      MainTaskOperation TaskOperation (&Task);
