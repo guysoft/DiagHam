@@ -35,7 +35,7 @@
 
 
 #include "config.h"
-#include "Hamiltonian/ParticleOnLatticeQuantumSpinHallFourBandHamiltonian.h"
+#include "Hamiltonian/ParticleOnCubicLatticeFourBandSimpleTIHamiltonian.h"
 #include "Matrix/ComplexMatrix.h"
 
 #include <iostream>
@@ -46,23 +46,11 @@ using std::cout;
 using std::endl;
 
 
-class ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian : public ParticleOnLatticeQuantumSpinHallFourBandHamiltonian
+class ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian : public ParticleOnCubicLatticeFourBandSimpleTIHamiltonian
 {
 
  protected:
  
-  // number of sites in the z direction
-  int NbrSiteZ;
-  // number of sites in the direction perpendicular to X
-  int NbrSiteYZ;
-
-  // numerical factor for momentum along x
-  double KxFactor;
-  // numerical factor for momentum along y
-  double KyFactor;
-  // numerical factor for momentum along z
-  double KzFactor;
-  
   // global energy scale of the kinetic energy term (i.e t1 hopping term)
   double KineticScale;
   // distortion of nearest neighbor hoping amplitude in the (111) direction
@@ -75,19 +63,6 @@ class ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian : public ParticleOnLat
   double NextNNHoping;
   // hoping amplitude between second next neareast neighbor sites
   double SecondNextNNHoping;
-  // boundary condition twisting angle along x
-  double GammaX;
-  // boundary condition twisting angle along y
-  double GammaY;
-  // boundary condition twisting angle along z
-  double GammaZ;
-  // nearest neighbor density-density potential strength
-  double UPotential;
-  // strength of the repulsive two body on site interaction
-  double VPotential;
-
-  // use flat band model
-  bool FlatBand;
 
  public:
 
@@ -122,9 +97,74 @@ class ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian : public ParticleOnLat
 
  protected:
  
-  // evaluate all interaction factors
-  //   
-  virtual void EvaluateInteractionFactors();
+  // compute the matrix element for the two body on site interaction for site A and up spins
+  //
+  // kx1 = momentum along x for the first creation operator on A site with spin up
+  // ky1 = momentum along y for the first creation operator on A site with spin up
+  // kz1 = momentum along z for the first creation operator on A site with spin up
+  // kx2 = momentum along x for the creation operator on A site with spin up
+  // ky2 = momentum along y for the creation operator on A site with spin up
+  // kz2 = momentum along z for the creation operator on A site with spin up
+  // kx3 = momentum along x for the first annihilation operator on A site with spin up
+  // ky3 = momentum along y for the first annihilation operator on A site with spin up
+  // kz3 = momentum along z for the first annihilation operator on A site with spin up
+  // kx4 = momentum along x for the creation annihilation operator on B site with spin up
+  // ky4 = momentum along y for the creation annihilation operator on B site with spin up
+  // kz4 = momentum along z for the creation annihilation operator on B site with spin up
+  // return value = corresponding matrix element
+  virtual Complex ComputeTwoBodyMatrixElementAUpAUp(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4);
+
+
+  // compute the matrix element for the two body on site interaction for site A and down spins
+  //
+  // kx1 = momentum along x for the first creation operator on A site with spin down
+  // ky1 = momentum along y for the first creation operator on A site with spin down
+  // kz1 = momentum along z for the first creation operator on A site with spin down
+  // kx2 = momentum along x for the creation operator on A site with spin down
+  // ky2 = momentum along y for the creation operator on A site with spin down
+  // kz2 = momentum along z for the creation operator on A site with spin down
+  // kx3 = momentum along x for the first annihilation operator on A site with spin down
+  // ky3 = momentum along y for the first annihilation operator on A site with spin down
+  // kz3 = momentum along z for the first annihilation operator on A site with spin down
+  // kx4 = momentum along x for the creation annihilation operator on B site with spin down
+  // ky4 = momentum along y for the creation annihilation operator on B site with spin down
+  // kz4 = momentum along z for the creation annihilation operator on B site with spin down
+  // return value = corresponding matrix element
+  virtual Complex ComputeTwoBodyMatrixElementADownADown(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4);
+
+  // compute the matrix element for the two body on site interaction for site B and up spins
+  //
+  // kx1 = momentum along x for the first creation operator on B site with spin up
+  // ky1 = momentum along y for the first creation operator on B site with spin up
+  // kz1 = momentum along z for the first creation operator on B site with spin up
+  // kx2 = momentum along x for the creation operator on B site with spin up
+  // ky2 = momentum along y for the creation operator on B site with spin up
+  // kz2 = momentum along z for the creation operator on B site with spin up
+  // kx3 = momentum along x for the first annihilation operator on B site with spin up
+  // ky3 = momentum along y for the first annihilation operator on B site with spin up
+  // kz3 = momentum along z for the first annihilation operator on B site with spin up
+  // kx4 = momentum along x for the creation annihilation operator on B site with spin up
+  // ky4 = momentum along y for the creation annihilation operator on B site with spin up
+  // kz4 = momentum along z for the creation annihilation operator on B site with spin up
+  // return value = corresponding matrix element  
+  virtual Complex ComputeTwoBodyMatrixElementBUpBUp(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4);
+
+  // compute the matrix element for the two body on site interaction for site B and down spins
+  //
+  // kx1 = momentum along x for the first creation operator on B site with spin down
+  // ky1 = momentum along y for the first creation operator on B site with spin down
+  // kz1 = momentum along z for the first creation operator on B site with spin down
+  // kx2 = momentum along x for the creation operator on B site with spin down
+  // ky2 = momentum along y for the creation operator on B site with spin down
+  // kz2 = momentum along z for the creation operator on B site with spin down
+  // kx3 = momentum along x for the first annihilation operator on B site with spin down
+  // ky3 = momentum along y for the first annihilation operator on B site with spin down
+  // kz3 = momentum along z for the first annihilation operator on B site with spin down
+  // kx4 = momentum along x for the creation annihilation operator on B site with spin down
+  // ky4 = momentum along y for the creation annihilation operator on B site with spin down
+  // kz4 = momentum along z for the creation annihilation operator on B site with spin down
+  // return value = corresponding matrix element  
+  virtual Complex ComputeTwoBodyMatrixElementBDownBDown(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4);
 
   // compute the matrix element for the two body interaction between two sites A and B  belonging to the same layer
   //
@@ -228,26 +268,6 @@ class ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian : public ParticleOnLat
   // return value = corresponding matrix element
   virtual Complex ComputeTwoBodyMatrixElementBUpBDown(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4);
     
-
-  // compute the transformation basis contribution to the interaction matrix element
-  // 
-  // oneBodyBasis = array of transformation basis matrices
-  // momentumIndex1 = compact momentum index of the first creation operator
-  // momentumIndex2 = compact momentum index of the second creation operator
-  // momentumIndex3 = compact momentum index of the first annihilation operator
-  // momentumIndex4 = compact momentum index of the second annihiliation operator
-  // energyIndex1 = energy index of the first creation operator
-  // energyIndex2 = energy index of the second creation operator
-  // energyIndex3 = energy index of the first annihilation operator
-  // energyIndex4 = energy index of the second annihiliation operator
-  // siteIndex1 = site index of the first creation operator (0=Aup, 1=Bup, 2=Adown, 3=Bdown)
-  // siteIndex2 = site index of the second creation operator (0=Aup, 1=Bup, 2=Adown, 3=Bdown)
-  // siteIndex3 = site index of the first annihilation operator (0=Aup, 1=Bup, 2=Adown, 3=Bdown)
-  // siteIndex4 = site index of the second annihiliation operator (0=Aup, 1=Bup, 2=Adown, 3=Bdown)
-/*   virtual Complex ComputeTransfomationBasisContribution(ComplexMatrix* oneBodyBasis, */
-/* 							int momentumIndex1, int momentumIndex2, int momentumIndex3, int momentumIndex4,  */
-/* 							int energyIndex1, int energyIndex2, int energyIndex3, int energyIndex4, */
-/* 							int siteIndex1, int siteIndex2, int siteIndex3, int siteIndex4); */
 
   // compute the one body hamiltonians related to the band stucture contribution
   //

@@ -48,6 +48,13 @@ using std::endl;
 using std::ostream;
 
 
+// default constructor
+//
+
+ParticleOnCubicLatticeFourBandSimpleTIHamiltonian::ParticleOnCubicLatticeFourBandSimpleTIHamiltonian()
+{
+}
+
 // constructor
 //
 // particles = Hilbert space associated to the system
@@ -87,8 +94,42 @@ ParticleOnCubicLatticeFourBandSimpleTIHamiltonian::ParticleOnCubicLatticeFourBan
   this->GammaY = gammaY;
   this->GammaZ = gammaZ;
   this->FlatBand = flatBandFlag;
+
   this->UPotential = uPotential;
   this->VPotential = vPotential;
+  this->AUpAUpPotential = 0.0;
+  this->ADownADownPotential = 0.0;
+  this->AUpADownPotential = 0.0;
+  this->BUpBUpPotential = 0.0;
+  this->BDownBDownPotential = 0.0;
+  this->BUpBDownPotential = 0.0;
+  this->AUpBUpPotential = 0.0;
+  this->ADownBDownPotential = 0.0;
+  this->AUpBDownPotential = 0.0;
+  this->ADownBUpPotential = 0.0;
+  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+    {
+      this->AUpADownPotential = this->VPotential;
+      this->BUpBDownPotential = this->VPotential;
+      this->AUpBUpPotential = this->UPotential;
+      this->ADownBDownPotential = this->UPotential;
+      this->AUpBDownPotential = this->UPotential;
+      this->ADownBUpPotential = this->UPotential;
+    }
+  else
+    {
+      this->AUpAUpPotential = this->UPotential;
+      this->ADownADownPotential = this->UPotential;
+      this->AUpADownPotential = this->VPotential;
+      this->BUpBUpPotential = this->UPotential;
+      this->BDownBDownPotential = this->UPotential;
+      this->BUpBDownPotential = this->VPotential;
+      this->AUpBUpPotential = this->UPotential;
+      this->ADownBDownPotential = this->UPotential;
+      this->AUpBDownPotential = this->UPotential;
+      this->ADownBUpPotential = this->UPotential;
+    }
+
   this->Architecture = architecture;
   this->Memory = memory;
   this->OneBodyInteractionFactorsupup = 0;
@@ -274,13 +315,12 @@ void ParticleOnCubicLatticeFourBandSimpleTIHamiltonian::EvaluateInteractionFacto
 		  }
       
       double Factor = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ));
-      double FactorAUpADown = Factor * this->VPotential;
-      double FactorBUpBDown = Factor * this->VPotential;
-      Factor *= this->UPotential;
-      double FactorAUpBUp = Factor;
-      double FactorADownBDown = Factor;
-      double FactorAUpBDown = Factor;
-      double FactorADownBUp = Factor;
+      double FactorAUpADown = Factor * this->AUpADownPotential;
+      double FactorBUpBDown = Factor * this->BUpBDownPotential;
+      double FactorAUpBUp = Factor * this->AUpBUpPotential;
+      double FactorADownBDown = Factor * this->ADownBDownPotential;
+      double FactorAUpBDown = Factor * this->AUpBDownPotential;
+      double FactorADownBUp = Factor * this->ADownBUpPotential;
 
       Complex Tmp;
 
@@ -440,17 +480,16 @@ void ParticleOnCubicLatticeFourBandSimpleTIHamiltonian::EvaluateInteractionFacto
 		  }
       
       double Factor = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ));
-      double FactorAUpADown = Factor * this->VPotential;
-      double FactorBUpBDown = Factor * this->VPotential;
-      Factor *= this->UPotential;
-      double FactorAUpAUp = Factor;
-      double FactorADownADown = Factor;
-      double FactorBUpBUp = Factor;
-      double FactorBDownBDown = Factor;
-      double FactorAUpBUp = Factor;
-      double FactorADownBDown = Factor;
-      double FactorAUpBDown = Factor;
-      double FactorADownBUp = Factor;
+      double FactorAUpADown = Factor * this->AUpADownPotential;
+      double FactorBUpBDown = Factor * this->BUpBDownPotential;
+      double FactorAUpAUp = Factor * this->AUpAUpPotential;
+      double FactorADownADown = Factor * this->ADownADownPotential;
+      double FactorBUpBUp = Factor * this->BUpBUpPotential;
+      double FactorBDownBDown = Factor * this->BDownBDownPotential;
+      double FactorAUpBUp = Factor * this->AUpBUpPotential;
+      double FactorADownBDown = Factor * this->ADownBDownPotential;
+      double FactorAUpBDown = Factor * this->AUpBDownPotential;
+      double FactorADownBUp = Factor * this->ADownBUpPotential;
 
       Complex Tmp;
 

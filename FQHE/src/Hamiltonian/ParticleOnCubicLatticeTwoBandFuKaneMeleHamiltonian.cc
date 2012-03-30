@@ -93,8 +93,38 @@ ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::ParticleOnCubicLatticeTwoBan
   this->GammaY = gammaY;
   this->GammaZ = gammaZ;
   this->FlatBand = flatBandFlag;
+
   this->UPotential = uPotential;
   this->VPotential = vPotential;
+  this->AUpAUpPotential = 0.0;
+  this->ADownADownPotential = 0.0;
+  this->AUpADownPotential = 0.0;
+  this->BUpBUpPotential = 0.0;
+  this->BDownBDownPotential = 0.0;
+  this->BUpBDownPotential = 0.0;
+  this->AUpBUpPotential = 0.0;
+  this->ADownBDownPotential = 0.0;
+  this->AUpBDownPotential = 0.0;
+  this->ADownBUpPotential = 0.0;
+  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+    {
+      this->AUpADownPotential = this->VPotential;
+      this->BUpBDownPotential = this->VPotential;
+      this->AUpBUpPotential = this->UPotential;
+      this->ADownBDownPotential = this->UPotential;
+      this->AUpBDownPotential = this->UPotential;
+      this->ADownBUpPotential = this->UPotential;
+    }
+  else
+    {
+      this->AUpAUpPotential = this->UPotential;
+      this->ADownADownPotential = this->UPotential;
+      this->AUpADownPotential = this->VPotential;
+      this->BUpBUpPotential = this->UPotential;
+      this->BDownBDownPotential = this->UPotential;
+      this->BUpBDownPotential = this->VPotential;
+    }
+
   this->Architecture = architecture;
   this->Memory = memory;
   this->OneBodyInteractionFactorsupup = 0;
@@ -140,6 +170,91 @@ ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::~ParticleOnCubicLatticeTwoBa
 }
   
 
+// compute the matrix element for the two body on site interaction for site A and up spins
+//
+// kx1 = momentum along x for the first creation operator on A site with spin up
+// ky1 = momentum along y for the first creation operator on A site with spin up
+// kz1 = momentum along z for the first creation operator on A site with spin up
+// kx2 = momentum along x for the creation operator on A site with spin up
+// ky2 = momentum along y for the creation operator on A site with spin up
+// kz2 = momentum along z for the creation operator on A site with spin up
+// kx3 = momentum along x for the first annihilation operator on A site with spin up
+// ky3 = momentum along y for the first annihilation operator on A site with spin up
+// kz3 = momentum along z for the first annihilation operator on A site with spin up
+// kx4 = momentum along x for the creation annihilation operator on B site with spin up
+// ky4 = momentum along y for the creation annihilation operator on B site with spin up
+// kz4 = momentum along z for the creation annihilation operator on B site with spin up
+// return value = corresponding matrix element
+
+Complex ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::ComputeTwoBodyMatrixElementAUpAUp(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4)
+{
+  return this->ComputeTwoBodyMatrixElementAUpADown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
+}
+
+
+// compute the matrix element for the two body on site interaction for site A and down spins
+//
+// kx1 = momentum along x for the first creation operator on A site with spin down
+// ky1 = momentum along y for the first creation operator on A site with spin down
+// kz1 = momentum along z for the first creation operator on A site with spin down
+// kx2 = momentum along x for the creation operator on A site with spin down
+// ky2 = momentum along y for the creation operator on A site with spin down
+// kz2 = momentum along z for the creation operator on A site with spin down
+// kx3 = momentum along x for the first annihilation operator on A site with spin down
+// ky3 = momentum along y for the first annihilation operator on A site with spin down
+// kz3 = momentum along z for the first annihilation operator on A site with spin down
+// kx4 = momentum along x for the creation annihilation operator on B site with spin down
+// ky4 = momentum along y for the creation annihilation operator on B site with spin down
+// kz4 = momentum along z for the creation annihilation operator on B site with spin down
+// return value = corresponding matrix element
+
+Complex ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::ComputeTwoBodyMatrixElementADownADown(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4)
+{
+  return this->ComputeTwoBodyMatrixElementAUpADown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
+}
+
+// compute the matrix element for the two body on site interaction for site B and up spins
+//
+// kx1 = momentum along x for the first creation operator on B site with spin up
+// ky1 = momentum along y for the first creation operator on B site with spin up
+// kz1 = momentum along z for the first creation operator on B site with spin up
+// kx2 = momentum along x for the creation operator on B site with spin up
+// ky2 = momentum along y for the creation operator on B site with spin up
+// kz2 = momentum along z for the creation operator on B site with spin up
+// kx3 = momentum along x for the first annihilation operator on B site with spin up
+// ky3 = momentum along y for the first annihilation operator on B site with spin up
+// kz3 = momentum along z for the first annihilation operator on B site with spin up
+// kx4 = momentum along x for the creation annihilation operator on B site with spin up
+// ky4 = momentum along y for the creation annihilation operator on B site with spin up
+// kz4 = momentum along z for the creation annihilation operator on B site with spin up
+// return value = corresponding matrix element  
+
+Complex ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::ComputeTwoBodyMatrixElementBUpBUp(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4)
+{
+  return this->ComputeTwoBodyMatrixElementBUpBDown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
+}
+
+// compute the matrix element for the two body on site interaction for site B and down spins
+//
+// kx1 = momentum along x for the first creation operator on B site with spin down
+// ky1 = momentum along y for the first creation operator on B site with spin down
+// kz1 = momentum along z for the first creation operator on B site with spin down
+// kx2 = momentum along x for the creation operator on B site with spin down
+// ky2 = momentum along y for the creation operator on B site with spin down
+// kz2 = momentum along z for the creation operator on B site with spin down
+// kx3 = momentum along x for the first annihilation operator on B site with spin down
+// ky3 = momentum along y for the first annihilation operator on B site with spin down
+// kz3 = momentum along z for the first annihilation operator on B site with spin down
+// kx4 = momentum along x for the creation annihilation operator on B site with spin down
+// ky4 = momentum along y for the creation annihilation operator on B site with spin down
+// kz4 = momentum along z for the creation annihilation operator on B site with spin down
+// return value = corresponding matrix element  
+
+Complex ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::ComputeTwoBodyMatrixElementBDownBDown(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4)
+{
+  return this->ComputeTwoBodyMatrixElementBUpBDown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
+}
+
 // compute the matrix element for the two body interaction between two sites A and B with up spins
 //
 // kx1 = momentum along x for the creation operator on A site with spin up
@@ -158,7 +273,7 @@ ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::~ParticleOnCubicLatticeTwoBa
 
 Complex ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::ComputeTwoBodyMatrixElementAUpBUp(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4)
 {
-  return 0.0;
+  //  return 0.0;
   Complex Tmp = 1.0 ;
 //   Tmp += Phase (0.5 * ((((double) (kx1 - kx3)) * this->KxFactor) + (((double) (ky1 - ky3)) * this->KyFactor)));
 //   Tmp += Phase (0.5 * ((((double) (kx1 - kx3)) * this->KxFactor) + (((double) (kz1 - kz3)) * this->KzFactor)));
@@ -364,7 +479,7 @@ void ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::ComputeOneBodyMatrices(
 	      this->OneBodyInteractionFactorsupup[Index] = TmpDiag(0, 0);
 	      this->OneBodyInteractionFactorsdowndown[Index] = TmpDiag(1, 1);
 	    }
-	  cout << "Index = " << Index << endl;
+	  cout << "index=" << Index << " kx=" << kx << " ky=" << ky << " kz=" << kz <<  " : ";
 	  cout << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << " " << TmpDiag(2, 2) << " " << TmpDiag(3, 3) << endl;
 	  //	  cout << endl << TmpMatrix << endl;
 	}

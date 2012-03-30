@@ -95,8 +95,38 @@ ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian::ParticleOnCubicLatticeFourB
   this->GammaY = gammaY;
   this->GammaZ = gammaZ;
   this->FlatBand = flatBandFlag;
+
   this->UPotential = uPotential;
   this->VPotential = vPotential;
+  this->AUpAUpPotential = 0.0;
+  this->ADownADownPotential = 0.0;
+  this->AUpADownPotential = 0.0;
+  this->BUpBUpPotential = 0.0;
+  this->BDownBDownPotential = 0.0;
+  this->BUpBDownPotential = 0.0;
+  this->AUpBUpPotential = 0.0;
+  this->ADownBDownPotential = 0.0;
+  this->AUpBDownPotential = 0.0;
+  this->ADownBUpPotential = 0.0;
+  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+    {
+      this->AUpADownPotential = this->VPotential;
+      this->BUpBDownPotential = this->VPotential;
+      this->AUpBUpPotential = this->UPotential;
+      this->ADownBDownPotential = this->UPotential;
+      this->AUpBDownPotential = this->UPotential;
+      this->ADownBUpPotential = this->UPotential;
+    }
+  else
+    {
+      this->AUpAUpPotential = this->UPotential;
+      this->ADownADownPotential = this->UPotential;
+      this->AUpADownPotential = this->VPotential;
+      this->BUpBUpPotential = this->UPotential;
+      this->BDownBDownPotential = this->UPotential;
+      this->BUpBDownPotential = this->VPotential;
+    }
+
   this->Architecture = architecture;
   this->Memory = memory;
   this->OneBodyInteractionFactorsupup = 0;
@@ -150,271 +180,90 @@ ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian::~ParticleOnCubicLatticeFour
 {
 }
   
-// evaluate all interaction factors
-//   
+// compute the matrix element for the two body on site interaction for site A and up spins
+//
+// kx1 = momentum along x for the first creation operator on A site with spin up
+// ky1 = momentum along y for the first creation operator on A site with spin up
+// kz1 = momentum along z for the first creation operator on A site with spin up
+// kx2 = momentum along x for the creation operator on A site with spin up
+// ky2 = momentum along y for the creation operator on A site with spin up
+// kz2 = momentum along z for the creation operator on A site with spin up
+// kx3 = momentum along x for the first annihilation operator on A site with spin up
+// ky3 = momentum along y for the first annihilation operator on A site with spin up
+// kz3 = momentum along z for the first annihilation operator on A site with spin up
+// kx4 = momentum along x for the creation annihilation operator on B site with spin up
+// ky4 = momentum along y for the creation annihilation operator on B site with spin up
+// kz4 = momentum along z for the creation annihilation operator on B site with spin up
+// return value = corresponding matrix element
 
-void ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian::EvaluateInteractionFactors()
+Complex ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian::ComputeTwoBodyMatrixElementAUpAUp(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4)
 {
-  long TotalNbrInteractionFactors = 0;
-  int NbrSites = this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ;
-  HermitianMatrix*OneBodyHamiltonian  = new HermitianMatrix [NbrSites];
-  this->ComputeOneBodyHamiltonian(OneBodyHamiltonian);
-
-  this->InteractionFactorsupup = 0;
-  this->InteractionFactorsdowndown = 0;
-  this->InteractionFactorsupdown = 0;
-  this->OneBodyInteractionFactorsupup = new double [NbrSites];
-  this->OneBodyInteractionFactorsumum = new double [NbrSites];
-  this->OneBodyInteractionFactorsdpdp = new double [NbrSites];
-  this->OneBodyInteractionFactorsdmdm = new double [NbrSites];
-  this->OneBodyInteractionFactorsupum = new Complex [NbrSites];
-  this->OneBodyInteractionFactorsupdp = new Complex [NbrSites];
-  this->OneBodyInteractionFactorsupdm = new Complex [NbrSites];
-  this->OneBodyInteractionFactorsumdp = new Complex [NbrSites];
-  this->OneBodyInteractionFactorsumdm = new Complex [NbrSites];
-  this->OneBodyInteractionFactorsdpdm = new Complex [NbrSites];
-
-  for (int i = 0; i < NbrSites; ++i)
-    {
-      double Tmp1;
-      Complex Tmp2;
-      OneBodyHamiltonian[i].GetMatrixElement(0, 0, Tmp1);      
-      this->OneBodyInteractionFactorsupup[i] = Tmp1;
-      OneBodyHamiltonian[i].GetMatrixElement(1, 1, Tmp1);      
-      this->OneBodyInteractionFactorsumum[i] = Tmp1;
-      OneBodyHamiltonian[i].GetMatrixElement(2, 2, Tmp1);      
-      this->OneBodyInteractionFactorsdpdp[i] = Tmp1;
-      OneBodyHamiltonian[i].GetMatrixElement(3, 3, Tmp1);      
-      this->OneBodyInteractionFactorsdmdm[i] = Tmp1;
-
-      OneBodyHamiltonian[i].GetMatrixElement(0, 1, Tmp2);      
-      this->OneBodyInteractionFactorsupum[i] = Tmp2;
-      OneBodyHamiltonian[i].GetMatrixElement(0, 2, Tmp2);      
-      this->OneBodyInteractionFactorsupdp[i] = Tmp2;
-      OneBodyHamiltonian[i].GetMatrixElement(0, 3, Tmp2);      
-      this->OneBodyInteractionFactorsupdm[i] = Tmp2;
-      OneBodyHamiltonian[i].GetMatrixElement(1, 2, Tmp2);      
-      this->OneBodyInteractionFactorsumdp[i] = Tmp2;
-      OneBodyHamiltonian[i].GetMatrixElement(1, 3, Tmp2);      
-      this->OneBodyInteractionFactorsumdm[i] = Tmp2;
-      OneBodyHamiltonian[i].GetMatrixElement(2, 3, Tmp2);      
-      this->OneBodyInteractionFactorsdpdm[i] = Tmp2;
-    }
-
-
-  this->NbrInterSectorSums = this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ;
-  this->NbrInterSectorIndicesPerSum = new int[this->NbrInterSectorSums];
-  for (int i = 0; i < this->NbrInterSectorSums; ++i)
-    this->NbrInterSectorIndicesPerSum[i] = 0;
-  this->NbrIntraSectorSums = this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ;
-  this->NbrIntraSectorIndicesPerSum = new int[this->NbrIntraSectorSums];
-  for (int i = 0; i < this->NbrIntraSectorSums; ++i)
-    this->NbrIntraSectorIndicesPerSum[i] = 0;      
-
-  for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
-    for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
-      for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
-	for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2)      
-	  for (int kz1 = 0; kz1 < this->NbrSiteZ; ++kz1)
-	    for (int kz2 = 0; kz2 < this->NbrSiteZ; ++kz2)      
-	      ++this->NbrInterSectorIndicesPerSum[((((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY)) * this->NbrSiteZ + ((kz1 + kz2) % this->NbrSiteZ)];    
-  this->InterSectorIndicesPerSum = new int* [this->NbrInterSectorSums];
-  for (int i = 0; i < this->NbrInterSectorSums; ++i)
-    {
-      if (this->NbrInterSectorIndicesPerSum[i] > 0)
-	{
-	  this->InterSectorIndicesPerSum[i] = new int[2 * this->NbrInterSectorIndicesPerSum[i]];      
-	  this->NbrInterSectorIndicesPerSum[i] = 0;
-	}
-    }
-  for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
-    for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
-      for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
-	for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2)    
-	  for (int kz1 = 0; kz1 < this->NbrSiteZ; ++kz1)
-	    for (int kz2 = 0; kz2 < this->NbrSiteZ; ++kz2)      
-	      {
-		int TmpSum = ((((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY)) * this->NbrSiteZ + ((kz1 + kz2) % this->NbrSiteZ);
-		this->InterSectorIndicesPerSum[TmpSum][this->NbrInterSectorIndicesPerSum[TmpSum] << 1] = ((kx1 * this->NbrSiteY) + ky1) * this->NbrSiteZ + kz1;
-		this->InterSectorIndicesPerSum[TmpSum][1 + (this->NbrInterSectorIndicesPerSum[TmpSum] << 1)] = ((kx2 * this->NbrSiteY) + ky2) * this->NbrSiteZ + kz2;
-		++this->NbrInterSectorIndicesPerSum[TmpSum];    
-	      }
- 
-  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
-    {
-      for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
-	for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
-	  for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
-	    for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
-	      for (int kz1 = 0; kz1 < this->NbrSiteZ; ++kz1)
-		for (int kz2 = 0; kz2 < this->NbrSiteZ; ++kz2)      
-		  {
-		    int Index1 = ((kx1 * this->NbrSiteY) + ky1) * this->NbrSiteZ + kz1;
-		    int Index2 = ((kx2 * this->NbrSiteY) + ky2) * this->NbrSiteZ + kz2;
-		    if (Index1 < Index2)
-		      ++this->NbrIntraSectorIndicesPerSum[((((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY)) * this->NbrSiteZ + ((kz1 + kz2) % this->NbrSiteZ)];    
-		  }
-      this->IntraSectorIndicesPerSum = new int* [this->NbrIntraSectorSums];
-      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
-	{
-	  if (this->NbrIntraSectorIndicesPerSum[i]  > 0)
-	    {
-	      this->IntraSectorIndicesPerSum[i] = new int[2 * this->NbrIntraSectorIndicesPerSum[i]];      
-	      this->NbrIntraSectorIndicesPerSum[i] = 0;
-	    }
-	}
-      for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
-	for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
-	  for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
-	    for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
-	      for (int kz1 = 0; kz1 < this->NbrSiteZ; ++kz1)
-		for (int kz2 = 0; kz2 < this->NbrSiteZ; ++kz2)      
-		  {
-		    int Index1 = ((kx1 * this->NbrSiteY) + ky1) * this->NbrSiteZ + kz1;
-		    int Index2 = ((kx2 * this->NbrSiteY) + ky2) * this->NbrSiteZ + kz2;
-		    if (Index1 < Index2)
-		      {
-			int TmpSum = ((((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY)) * this->NbrSiteZ + ((kz1 + kz2) % this->NbrSiteZ);
-			this->IntraSectorIndicesPerSum[TmpSum][this->NbrIntraSectorIndicesPerSum[TmpSum] << 1] = Index1;
-			this->IntraSectorIndicesPerSum[TmpSum][1 + (this->NbrIntraSectorIndicesPerSum[TmpSum] << 1)] = Index2;
-			++this->NbrIntraSectorIndicesPerSum[TmpSum];    
-		      }
-		  }
-      
-      double Factor = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ));
-      if (this->FlatBand == true)
-	Factor *= this->UPotential;
-      double FactorAUpADown = Factor * this->VPotential;
-      double FactorBUpBDown = Factor * this->VPotential;
-      if (this->FlatBand == false)
-	Factor *= this->UPotential;
-      //      Factor = 0.0;
-      double FactorAUpBUp = Factor;
-      double FactorADownBDown = Factor;
-      double FactorAUpBDown = Factor;
-      double FactorADownBUp = Factor;
-
-      Complex Tmp;
-
-      //  upup upup coefficient
-      this->InteractionFactorsupupupup = new Complex* [this->NbrIntraSectorSums];
-      this->InteractionFactorsumumumum = new Complex* [this->NbrIntraSectorSums];
-      this->InteractionFactorsdpdpdpdp = new Complex* [this->NbrIntraSectorSums];
-      this->InteractionFactorsdmdmdmdm = new Complex* [this->NbrIntraSectorSums];
-      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
-	{
-	  this->InteractionFactorsupupupup[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
-	  this->InteractionFactorsumumumum[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
-	  this->InteractionFactorsdpdpdpdp[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
-	  this->InteractionFactorsdmdmdmdm[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
-	  int Index = 0;
-	  for (int j1 = 0; j1 < this->NbrIntraSectorIndicesPerSum[i]; ++j1)
-	    {
-	      int Index1 = this->IntraSectorIndicesPerSum[i][j1 << 1];
-	      int Index2 = this->IntraSectorIndicesPerSum[i][(j1 << 1) + 1];
-	      int kx1 = Index1 / this->NbrSiteYZ;
-	      int ky1 = Index1 % this->NbrSiteYZ;
-	      int kz1 = ky1 % this->NbrSiteZ;
-	      ky1 /= this->NbrSiteZ;
-	      int kx2 = Index2 / this->NbrSiteYZ;
-	      int ky2 = Index2 % this->NbrSiteYZ;
-	      int kz2 = ky2 % this->NbrSiteZ;
-	      ky2 /= this->NbrSiteZ;
-	      for (int j2 = 0; j2 < this->NbrIntraSectorIndicesPerSum[i]; ++j2)
-		{
-		  int Index3 = this->IntraSectorIndicesPerSum[i][j2 << 1];
-		  int Index4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1];
-		  int kx3 = Index3 / this->NbrSiteYZ;
-		  int ky3 = Index3 % this->NbrSiteYZ;
-		  int kz3 = ky3 % this->NbrSiteZ;
-		  ky3 /= this->NbrSiteZ;
-		  int kx4 = Index4 / this->NbrSiteYZ;
-		  int ky4 = Index4 % this->NbrSiteYZ;
-		  int kz4 = ky4 % this->NbrSiteZ;
-		  ky4 /= this->NbrSiteZ;
-
-//                   Tmp = this->ComputeTwoBodyMatrixElementAUpADown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
-//                   Tmp -=this->ComputeTwoBodyMatrixElementAUpADown(kx1, ky1, kz1, kx2, ky2, kz2, kx4, ky4, kz4, kx3, ky3, kz3);
-//                   Tmp -= this->ComputeTwoBodyMatrixElementAUpADown(kx2, ky2, kz2, kx1, ky1, kz1, kx3, ky3, kz3, kx4, ky4, kz4);
-//                   Tmp += this->ComputeTwoBodyMatrixElementAUpADown(kx2, ky2, kz2, kx1, ky1, kz1, kx4, ky4, kz4, kx3, ky3, kz3);
-//                   this->InteractionFactorsupupupup[i][Index] = -2.0 * FactorAUpADown * Tmp;
-
-                  this->InteractionFactorsupupupup[i][Index] = 0.0;
-                  this->InteractionFactorsumumumum[i][Index] = 0.0;
-                  this->InteractionFactorsdpdpdpdp[i][Index] = 0.0;
-                  this->InteractionFactorsdmdmdmdm[i][Index] = 0.0;		  
-		  ++TotalNbrInteractionFactors;
-		  ++Index;
-		}
-	    }
-	}
-
-
-
-      //  updown updown coefficient
-      this->InteractionFactorsupumupum = new Complex* [this->NbrInterSectorSums];
-      this->InteractionFactorsupdpupdp = new Complex* [this->NbrInterSectorSums];
-      this->InteractionFactorsupdmupdm = new Complex* [this->NbrInterSectorSums];
-      this->InteractionFactorsumdpumdp = new Complex* [this->NbrInterSectorSums];
-      this->InteractionFactorsumdmumdm = new Complex* [this->NbrInterSectorSums];
-      this->InteractionFactorsdpdmdpdm = new Complex* [this->NbrInterSectorSums];
-      for (int i = 0; i < this->NbrInterSectorSums; ++i)
-	{
-	  this->InteractionFactorsupumupum[i] = new Complex[this->NbrInterSectorIndicesPerSum[i] * this->NbrInterSectorIndicesPerSum[i]];
-	  this->InteractionFactorsupdpupdp[i] = new Complex[this->NbrInterSectorIndicesPerSum[i] * this->NbrInterSectorIndicesPerSum[i]];
-	  this->InteractionFactorsupdmupdm[i] = new Complex[this->NbrInterSectorIndicesPerSum[i] * this->NbrInterSectorIndicesPerSum[i]];
-	  this->InteractionFactorsumdpumdp[i] = new Complex[this->NbrInterSectorIndicesPerSum[i] * this->NbrInterSectorIndicesPerSum[i]];
-	  this->InteractionFactorsumdmumdm[i] = new Complex[this->NbrInterSectorIndicesPerSum[i] * this->NbrInterSectorIndicesPerSum[i]];
-	  this->InteractionFactorsdpdmdpdm[i] = new Complex[this->NbrInterSectorIndicesPerSum[i] * this->NbrInterSectorIndicesPerSum[i]];
-	  int Index = 0;
-	  for (int j1 = 0; j1 < this->NbrInterSectorIndicesPerSum[i]; ++j1)
-	    {
-	      int Index1 = this->InterSectorIndicesPerSum[i][j1 << 1];
-	      int Index2 = this->InterSectorIndicesPerSum[i][(j1 << 1) + 1];
-	      int kx1 = Index1 / this->NbrSiteYZ;
-	      int ky1 = Index1 % this->NbrSiteYZ;
-	      int kz1 = ky1 % this->NbrSiteZ;
-	      ky1 /= this->NbrSiteZ;
-	      int kx2 = Index2 / this->NbrSiteYZ;
-	      int ky2 = Index2 % this->NbrSiteYZ;
-	      int kz2 = ky2 % this->NbrSiteZ;
-	      ky2 /= this->NbrSiteZ;
-	      for (int j2 = 0; j2 < this->NbrInterSectorIndicesPerSum[i]; ++j2)
-		{
-		  int Index3 = this->InterSectorIndicesPerSum[i][j2 << 1];
-		  int Index4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1];
-		  int kx3 = Index3 / this->NbrSiteYZ;
-		  int ky3 = Index3 % this->NbrSiteYZ;
-		  int kz3 = ky3 % this->NbrSiteZ;
-		  ky3 /= this->NbrSiteZ;
-		  int kx4 = Index4 / this->NbrSiteYZ;
-		  int ky4 = Index4 % this->NbrSiteYZ;
-		  int kz4 = ky4 % this->NbrSiteZ;
-		  ky4 /= this->NbrSiteZ;
-                  Tmp = this->ComputeTwoBodyMatrixElementAUpBUp(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
-                  this->InteractionFactorsupumupum[i][Index] = -2.0 * FactorAUpBUp * Tmp;
-                  Tmp = this->ComputeTwoBodyMatrixElementADownBDown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
-                  this->InteractionFactorsdpdmdpdm[i][Index] = -2.0 * FactorADownBDown * Tmp;
-                  Tmp = this->ComputeTwoBodyMatrixElementAUpBDown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
-                  this->InteractionFactorsupdmupdm[i][Index] = -2.0 * FactorAUpBDown * Tmp;
-                  Tmp = this->ComputeTwoBodyMatrixElementADownBUp(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
-                  this->InteractionFactorsumdpumdp[i][Index] = -2.0 * FactorADownBUp * Tmp;
-                  Tmp = this->ComputeTwoBodyMatrixElementAUpADown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
-                  this->InteractionFactorsupdpupdp[i][Index] = -2.0 * FactorAUpADown * Tmp;
-                  Tmp = this->ComputeTwoBodyMatrixElementBUpBDown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
-                  this->InteractionFactorsumdmumdm[i][Index] = -2.0 * FactorBUpBDown * Tmp;
-
-		  ++TotalNbrInteractionFactors;
-		  ++Index;
-		}
-	    }
-	}
-    }
-
-  delete[] OneBodyHamiltonian;
-  cout << "nbr interaction = " << TotalNbrInteractionFactors << endl;
-  cout << "====================================" << endl;
+  return this->ComputeTwoBodyMatrixElementAUpADown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
 }
+
+// compute the matrix element for the two body on site interaction for site A and down spins
+//
+// kx1 = momentum along x for the first creation operator on A site with spin down
+// ky1 = momentum along y for the first creation operator on A site with spin down
+// kz1 = momentum along z for the first creation operator on A site with spin down
+// kx2 = momentum along x for the creation operator on A site with spin down
+// ky2 = momentum along y for the creation operator on A site with spin down
+// kz2 = momentum along z for the creation operator on A site with spin down
+// kx3 = momentum along x for the first annihilation operator on A site with spin down
+// ky3 = momentum along y for the first annihilation operator on A site with spin down
+// kz3 = momentum along z for the first annihilation operator on A site with spin down
+// kx4 = momentum along x for the creation annihilation operator on B site with spin down
+// ky4 = momentum along y for the creation annihilation operator on B site with spin down
+// kz4 = momentum along z for the creation annihilation operator on B site with spin down
+// return value = corresponding matrix element
+
+Complex ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian::ComputeTwoBodyMatrixElementADownADown(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4)
+{
+  return this->ComputeTwoBodyMatrixElementAUpADown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
+}
+
+// compute the matrix element for the two body on site interaction for site B and up spins
+//
+// kx1 = momentum along x for the first creation operator on B site with spin up
+// ky1 = momentum along y for the first creation operator on B site with spin up
+// kz1 = momentum along z for the first creation operator on B site with spin up
+// kx2 = momentum along x for the creation operator on B site with spin up
+// ky2 = momentum along y for the creation operator on B site with spin up
+// kz2 = momentum along z for the creation operator on B site with spin up
+// kx3 = momentum along x for the first annihilation operator on B site with spin up
+// ky3 = momentum along y for the first annihilation operator on B site with spin up
+// kz3 = momentum along z for the first annihilation operator on B site with spin up
+// kx4 = momentum along x for the creation annihilation operator on B site with spin up
+// ky4 = momentum along y for the creation annihilation operator on B site with spin up
+// kz4 = momentum along z for the creation annihilation operator on B site with spin up
+// return value = corresponding matrix element  
+
+Complex ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian::ComputeTwoBodyMatrixElementBUpBUp(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4)
+{
+  return this->ComputeTwoBodyMatrixElementBUpBDown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
+}
+
+// compute the matrix element for the two body on site interaction for site B and down spins
+//
+// kx1 = momentum along x for the first creation operator on B site with spin down
+// ky1 = momentum along y for the first creation operator on B site with spin down
+// kz1 = momentum along z for the first creation operator on B site with spin down
+// kx2 = momentum along x for the creation operator on B site with spin down
+// ky2 = momentum along y for the creation operator on B site with spin down
+// kz2 = momentum along z for the creation operator on B site with spin down
+// kx3 = momentum along x for the first annihilation operator on B site with spin down
+// ky3 = momentum along y for the first annihilation operator on B site with spin down
+// kz3 = momentum along z for the first annihilation operator on B site with spin down
+// kx4 = momentum along x for the creation annihilation operator on B site with spin down
+// ky4 = momentum along y for the creation annihilation operator on B site with spin down
+// kz4 = momentum along z for the creation annihilation operator on B site with spin down
+// return value = corresponding matrix element  
+
+Complex ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian::ComputeTwoBodyMatrixElementBDownBDown(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4)
+{
+  return this->ComputeTwoBodyMatrixElementBUpBDown(kx1, ky1, kz1, kx2, ky2, kz2, kx3, ky3, kz3, kx4, ky4, kz4);
+}
+
 
 // compute the matrix element for the two body interaction between two sites A and B with up spins
 //

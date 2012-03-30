@@ -72,10 +72,31 @@ class ParticleOnCubicLatticeTwoBandSimpleTIHamiltonian : public ParticleOnLattic
   double GammaY;
   // boundary condition twisting angle along z
   double GammaZ;
+
   // nearest neighbor density-density potential strength
   double UPotential;
   // strength of the repulsive two body on site interaction
   double VPotential;
+  // strength of the repulsive two body interaction on a A site between two up spins
+  double AUpAUpPotential;
+  // strength of the repulsive two body interaction on a A site between two down spins
+  double ADownADownPotential;
+  // strength of the repulsive two body interaction on a A site between two opposite spins
+  double AUpADownPotential;
+  // strength of the repulsive two body interaction on a B site between two up spins
+  double BUpBUpPotential;
+  // strength of the repulsive two body interaction on a B site between two down spins
+  double BDownBDownPotential;
+  // strength of the repulsive two body interaction on a B site between two opposite spins
+  double BUpBDownPotential;
+  // strength of the repulsive two body interaction between a A and B sites and two up spins
+  double AUpBUpPotential;
+  // strength of the repulsive two body interaction between a A and B sites and two down spins
+  double ADownBDownPotential;
+  // strength of the repulsive two body interaction between a A-up and B-down sites
+  double AUpBDownPotential;
+  // strength of the repulsive two body interaction between a A-down and B-up sites
+  double ADownBUpPotential;
 
   // use flat band model
   bool FlatBand;
