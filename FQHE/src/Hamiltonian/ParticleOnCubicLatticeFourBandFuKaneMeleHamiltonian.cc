@@ -395,7 +395,9 @@ Complex ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian::ComputeTwoBodyMatri
 
 Complex ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian::ComputeTwoBodyMatrixElementBUpBDown(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4)
 {
-  Complex Tmp = Phase (0.25  * ((((double) (kx4 + kx3 - kx1 - kx2)) * this->KxFactor) + (((double) (ky4 + ky3 - ky1 - ky2)) * this->KyFactor) + (((double) (kz4 + kz3 - kz1 - kz2)) * this->KzFactor)));
+  Complex Tmp = Phase (0.25  * ((((double) (kx4 + kx3 - kx1 - kx2)) * this->KxFactor) +
+				(((double) (ky4 + ky3 - ky1 - ky2)) * this->KyFactor) +
+				(((double) (kz4 + kz3 - kz1 - kz2)) * this->KzFactor)));
   return Tmp;
 }
 

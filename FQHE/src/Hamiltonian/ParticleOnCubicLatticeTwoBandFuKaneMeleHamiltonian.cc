@@ -273,20 +273,12 @@ Complex ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::ComputeTwoBodyMatrix
 
 Complex ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::ComputeTwoBodyMatrixElementAUpBUp(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4)
 {
-  //  return 0.0;
   Complex Tmp = 1.0 ;
-//   Tmp += Phase (0.5 * ((((double) (kx1 - kx3)) * this->KxFactor) + (((double) (ky1 - ky3)) * this->KyFactor)));
-//   Tmp += Phase (0.5 * ((((double) (kx1 - kx3)) * this->KxFactor) + (((double) (kz1 - kz3)) * this->KzFactor)));
-//   Tmp += Phase (0.5 * ((((double) (ky1 - ky3)) * this->KyFactor) + (((double) (kz1 - kz3)) * this->KzFactor)));
-//   Tmp *= Phase (-0.25 * ((((double) (kx4 - kx2)) * this->KxFactor) + (((double) (ky4 - ky2)) * this->KyFactor)
-// 			+ (((double) (kz4 - kz2)) * this->KzFactor)));
   Tmp += Phase ((((double) (kx1 - kx3)) * this->KxFactor));
   Tmp += Phase ((((double) (kz1 - kz3)) * this->KzFactor));
   Tmp += Phase ((((double) (ky1 - ky3)) * this->KyFactor));
   Tmp *= Phase (0.25 * ((((double) (kx4 - kx2)) * this->KxFactor) + (((double) (ky4 - ky2)) * this->KyFactor)
 		       + (((double) (kz4 - kz2)) * this->KzFactor)));
-//   Tmp *= Phase (0.25 * ((((double) (kx4 - kx2)) * this->KxFactor) + (((double) (ky4 - ky2)) * this->KyFactor)
-// 			+ (((double) (kz4 - kz2)) * this->KzFactor)));
   return Tmp;
 }
 
@@ -393,8 +385,6 @@ Complex ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::ComputeTwoBodyMatrix
 
 Complex ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::ComputeTwoBodyMatrixElementBUpBDown(int kx1, int ky1, int kz1, int kx2, int ky2, int kz2, int kx3, int ky3, int kz3, int kx4, int ky4, int kz4)
 {
-  return 0.0;
-//   Complex Tmp = Phase (0.25  * ((((double) (kx4 + kx3 - kx1 - kx2)) * this->KxFactor) + (((double) (ky4 + ky3 - ky1 - ky2)) * this->KyFactor) + (((double) (kz4 + kz3 - kz1 - kz2)) * this->KzFactor)));
   Complex Tmp = Phase (0.25  * ((((double) (kx4 + kx3 - kx1 - kx2)) * this->KxFactor) + 
 				(((double) (ky4 + ky3 - ky1 - ky2)) * this->KyFactor) + 
 				(((double) (kz4 + kz3 - kz1 - kz2)) * this->KzFactor)));
@@ -414,24 +404,8 @@ void ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::ComputeOneBodyMatrices(
 	  HermitianMatrix TmpOneBodyHamiltonian(4, true);
 	  int Index = ((kx * this->NbrSiteY) + ky) * this->NbrSiteZ + kz;
 	  Complex B1 = 1.0 + this->NNHopingDistortion111 + Phase(((double) kx) * this->KxFactor) + Phase(((double) ky) * this->KyFactor) + Phase(((double) kz) * this->KzFactor);
-	  // 	  Complex TmpPhase = Phase (-0.25 * ((((double) kx) * this->KxFactor) +(((double) ky) * this->KyFactor) + (((double) kz) * this->KzFactor)));
-	  // 	  Complex TmpPhase = Phase (-0.5 * ((((double) kx) * this->KxFactor) +(((double) ky) * this->KyFactor) + (((double) kz) * this->KzFactor)));
-	  // 	  B1 *= TmpPhase;
-
-
-	  //	  Complex B1 = 1.0 + this->NNHopingDistortion111 + Phase(0.5 * (((double) ky) * this->KyFactor) + 0.5 * (((double) kz) * this->KzFactor))   + Phase(0.5 * (((double) kx) * this->KxFactor) + 0.5 * (((double) kz) * this->KzFactor))  + Phase(0.5 * (((double) kx) * this->KxFactor) + 0.5 * (((double) ky) * this->KyFactor)) ;
-// 	  double d3 = this->SpinOrbitCoupling * (sin (0.5 * (((double) kx) * this->KxFactor) + 0.5 * (((double) kz) * this->KzFactor))
-// 						 - sin (0.5 * (((double) kx) * this->KxFactor) + 0.5 * (((double) ky) * this->KyFactor))
-// 						 - sin (0.5 * (((double) kx) * this->KxFactor) - 0.5 * (((double) ky) * this->KyFactor))
-// 						 + sin (0.5 * (((double) kx) * this->KxFactor) - 0.5 * (((double) kz) * this->KzFactor)));
-// 	  double d4 = this->SpinOrbitCoupling * (sin (0.5 * (((double) kx) * this->KxFactor) + 0.5 * (((double) kz) * this->KzFactor))
-// 						 - sin (0.5 * (((double) ky) * this->KyFactor) + 0.5 * (((double) kz) * this->KzFactor))
-// 						 - sin (0.5 * (((double) ky) * this->KyFactor) - 0.5 * (((double) kz) * this->KzFactor))
-// 						 + sin (0.5 * (((double) ky) * this->KyFactor) - 0.5 * (((double) kx) * this->KxFactor)));
-// 	  double d5 = this->SpinOrbitCoupling * (sin (0.5 * (((double) ky) * this->KyFactor) + 0.5 * (((double) kx) * this->KxFactor))
-// 						 - sin (0.5 * (((double) kx) * this->KxFactor) + 0.5 * (((double) kz) * this->KzFactor))
-// 						 - sin (0.5 * (((double) kz) * this->KzFactor) - 0.5 * (((double) kx) * this->KxFactor))
-// 						 + sin (0.5 * (((double) kz) * this->KzFactor) - 0.5 * (((double) ky) * this->KyFactor)));
+	  Complex TmpPhase = Phase (-0.25 * ((((double) kx) * this->KxFactor) +(((double) ky) * this->KyFactor) + (((double) kz) * this->KzFactor)));
+	  B1 *= TmpPhase;
 	  double d3 = this->SpinOrbitCoupling * (sin ((((double) ky) * this->KyFactor))
 						 - sin ((((double) kz) * this->KzFactor))
 						 - sin ((((double) ky) * this->KyFactor) - (((double) kx) * this->KxFactor))
@@ -441,7 +415,7 @@ void ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::ComputeOneBodyMatrices(
 						 - sin ((((double) kz) * this->KzFactor) - (((double) ky) * this->KyFactor))
 						 + sin ((((double) kx) * this->KxFactor) - (((double) ky) * this->KyFactor)));
 	  double d5 = this->SpinOrbitCoupling * (sin ((((double) kx) * this->KxFactor))
-						 - sin ((((double) ky) * this->KyFactor))
+ 						 - sin ((((double) ky) * this->KyFactor))
 						 - sin ((((double) kx) * this->KxFactor) - (((double) kz) * this->KzFactor))
 						 + sin ((((double) ky) * this->KyFactor) - (((double) kz) * this->KzFactor)));
 	  Complex B2 = d3 - I() * d4;
@@ -454,19 +428,8 @@ void ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::ComputeOneBodyMatrices(
 	  TmpOneBodyHamiltonian.SetMatrixElement(0, 2, B2);
 	  TmpOneBodyHamiltonian.SetMatrixElement(1, 3, -B2);
 
-// 	  TmpOneBodyHamiltonian.SetMatrixElement(0, 0, 0.0);
-// 	  TmpOneBodyHamiltonian.SetMatrixElement(1, 1, 0.0);
-// 	  TmpOneBodyHamiltonian.SetMatrixElement(2, 2, 1.0);
-// 	  TmpOneBodyHamiltonian.SetMatrixElement(3, 3, 1.0);
-
-
-	  //	  cout << TmpOneBodyHamiltonian << endl;
-
 	  ComplexMatrix TmpMatrix(4, 4, true);
-	  TmpMatrix[0][0] = 1.0;
-	  TmpMatrix[1][1] = 1.0;
-	  TmpMatrix[2][2] = 1.0;
-	  TmpMatrix[3][3] = 1.0;
+	  TmpMatrix.SetToIdentity();
 	  RealDiagonalMatrix TmpDiag;
 #ifdef __LAPACK__
 	  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
@@ -481,6 +444,5 @@ void ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::ComputeOneBodyMatrices(
 	    }
 	  cout << "index=" << Index << " kx=" << kx << " ky=" << ky << " kz=" << kz <<  " : ";
 	  cout << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << " " << TmpDiag(2, 2) << " " << TmpDiag(3, 3) << endl;
-	  //	  cout << endl << TmpMatrix << endl;
 	}
 }
