@@ -61,8 +61,9 @@ using std::ostream;
 // t2 = real part of the hopping amplitude between next neareast neighbor sites
 // lambda1 = imaginary part of the hopping amplitude between neareast neighbor sites
 // lambda1 = imaginary part of the hopping amplitude between next neareast neighbor sites
-// mixingTermNorm = norm of the mixing term coupling the two copies of the kagome lattice
-// mixingTermArgv = argument of the mixing term coupling the two copies of the kagome lattice
+// mixingTerm12 = mixing term coupling the two copies of the kagome lattice (sites 1 and 2)
+// mixingTerm13 = mixing term coupling the two copies of the kagome lattice (sites 1 and 3)
+// mixingTerm23 = mixing term coupling the two copies of the kagome lattice (sites 2 and 3)
 // gammaX = boundary condition twisting angle along x
 // gammaY = boundary condition twisting angle along y
 // flatBandFlag = use flat band model
@@ -70,7 +71,8 @@ using std::ostream;
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
 ParticleOnLatticeQuantumSpinHallTwoBandKagomeHamiltonian::ParticleOnLatticeQuantumSpinHallTwoBandKagomeHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, 
-														   int nbrSiteY, double uPotential, double vPotential, double wPotential, double t1, double t2, double lambda1, double lambda2, double mixingTermNorm, double mixingTermArg, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
+														   int nbrSiteY, double uPotential, double vPotential, double wPotential, double t1, double t2, double lambda1, double lambda2, double mixingTerm12, double mixingTerm13, double mixingTerm23, 
+														   double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -84,7 +86,9 @@ ParticleOnLatticeQuantumSpinHallTwoBandKagomeHamiltonian::ParticleOnLatticeQuant
   this->NextNNHopping = t2;
   this->NNSpinOrbit = lambda1;
   this->NextNNSpinOrbit = lambda2;
-  this->MixingTerm = mixingTermNorm * Phase(mixingTermArg);
+  this->MixingTerm12 = mixingTerm12;
+  this->MixingTerm13 = mixingTerm13;
+  this->MixingTerm23 = mixingTerm23;
   this->GammaX = gammaX;
   this->GammaY = gammaY;
   this->FlatBand = flatBandFlag;
@@ -1299,12 +1303,12 @@ void ParticleOnLatticeQuantumSpinHallTwoBandKagomeHamiltonian::ComputeOneBodyMat
 	TmpOneBodyHamiltonian.SetMatrixElement(3, 5, Conj(InvHAC));
 	TmpOneBodyHamiltonian.SetMatrixElement(4, 5, Conj(InvHBC));
 
-	TmpOneBodyHamiltonian.SetMatrixElement(0, 4, this->MixingTerm);
-	TmpOneBodyHamiltonian.SetMatrixElement(0, 5, this->MixingTerm);
-	TmpOneBodyHamiltonian.SetMatrixElement(1, 3, -this->MixingTerm);
-	TmpOneBodyHamiltonian.SetMatrixElement(1, 5, this->MixingTerm);
-	TmpOneBodyHamiltonian.SetMatrixElement(2, 3, -this->MixingTerm);
-	TmpOneBodyHamiltonian.SetMatrixElement(2, 4, -this->MixingTerm);
+	TmpOneBodyHamiltonian.SetMatrixElement(0, 4, this->MixingTerm12);
+	TmpOneBodyHamiltonian.SetMatrixElement(0, 5, this->MixingTerm13);
+	TmpOneBodyHamiltonian.SetMatrixElement(1, 3, -this->MixingTerm12);
+	TmpOneBodyHamiltonian.SetMatrixElement(1, 5, this->MixingTerm23);
+	TmpOneBodyHamiltonian.SetMatrixElement(2, 3, -this->MixingTerm13);
+	TmpOneBodyHamiltonian.SetMatrixElement(2, 4, -this->MixingTerm23);
 
 	ComplexMatrix TmpMatrix(6, 6, true);
 	TmpMatrix.SetToIdentity();

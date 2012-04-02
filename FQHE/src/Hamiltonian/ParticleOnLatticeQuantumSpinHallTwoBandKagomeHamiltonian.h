@@ -60,8 +60,12 @@ class ParticleOnLatticeQuantumSpinHallTwoBandKagomeHamiltonian : public Particle
   // spin orbit coupling to next neareast neighbor sites
   double NextNNSpinOrbit;
   
-  // mixing term coupling the two copies of the kagome lattice
-  Complex MixingTerm;
+  // mixingTerm12 = mixing term coupling the two copies of the kagome lattice (sites 1 and 2)
+  double MixingTerm12;
+  // mixingTerm13 = mixing term coupling the two copies of the kagome lattice (sites 1 and 3)
+  double MixingTerm13;
+  // mixingTerm23 = mixing term coupling the two copies of the kagome lattice (sites 2 and 3)
+  double MixingTerm23;
 
   // four times the sublattice staggered chemical potential 
   double MuS;
@@ -93,14 +97,17 @@ class ParticleOnLatticeQuantumSpinHallTwoBandKagomeHamiltonian : public Particle
   // t2 = real part of the hopping amplitude between next neareast neighbor sites
   // lambda1 = imaginary part of the hopping amplitude between neareast neighbor sites
   // lambda1 = imaginary part of the hopping amplitude between next neareast neighbor sites
-  // mixingTermNorm = norm of the mixing term coupling the two copies of the kagome lattice
-  // mixingTermArgv = argument of the mixing term coupling the two copies of the kagome lattice
+  // mixingTerm12 = mixing term coupling the two copies of the kagome lattice (sites 1 and 2)
+  // mixingTerm13 = mixing term coupling the two copies of the kagome lattice (sites 1 and 3)
+  // mixingTerm23 = mixing term coupling the two copies of the kagome lattice (sites 2 and 3)
   // gammaX = boundary condition twisting angle along x
   // gammaY = boundary condition twisting angle along y
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeQuantumSpinHallTwoBandKagomeHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential, double wPotential, double t1, double t2, double lambda1, double lambda2, double mixingTermNorm, double mixingTermArg, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnLatticeQuantumSpinHallTwoBandKagomeHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential, double wPotential, 
+							   double t1, double t2, double lambda1, double lambda2, double mixingTerm12, double mixingTerm13, double mixingTerm23, 
+							   double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //

@@ -40,9 +40,10 @@ using std::ofstream;
 // lambda1 = imaginary part of the hopping amplitude between neareast neighbor sites
 // lambda2 = imaginary part of the hopping amplitude between next neareast neighbor sites
 // mus = sublattice staggered chemical potential 
-// mixingTermNorm = norm of the mixing term coupling the two copies of the kagome lattice
-// mixingTermArgv = argument of the mixing term coupling the two copies of the kagome lattice
-void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double t1, double t2, double lambda1, double lambda2, double mus, double mixingTermNorm, double mixingTermArg);
+// mixingTerm12 = mixing term coupling the two copies of the kagome lattice (sites 1 and 2)
+// mixingTerm13 = mixing term coupling the two copies of the kagome lattice (sites 1 and 3)
+// mixingTerm23 = mixing term coupling the two copies of the kagome lattice (sites 2 and 3)
+void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double t1, double t2, double lambda1, double lambda2, double mus, double mixingTerm12, double mixingTerm13, double mixingTerm23);
 
 
 int main(int argc, char** argv)
@@ -79,8 +80,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "mu-s", "sublattice chemical potential on A site", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "mixing-norm", "norm of the mixing term coupling the two copies of the kagome lattice", 0.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "mixing-arg", "argument of the mixing term coupling the two copies of the kagome lattice (in 2 Pi unit)", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "mixing-12", "mixing term coupling the two copies of the kagome lattice (sites 1 and 2)", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "mixing-13", "mixing term coupling the two copies of the kagome lattice (sites 1 and 3)", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "mixing-23", "mixing term coupling the two copies of the kagome lattice (sites 2 and 3)", 0.0);
   (*SystemGroup) += new BooleanOption ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
   (*SystemGroup) += new BooleanOption ('\n', "flat-band", "use flat band model");
   (*SystemGroup) += new BooleanOption ('\n', "decoupled", "assume two decoupled copies of the kagome lattice");
@@ -141,7 +143,7 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  sprintf (EigenvalueOutputFile, "%s_twoband_quantumspinhall_kagome_n_%d_x_%d_y_%d_u_%f_v_%f_w_%f_t1_%f_t2_%f_l1_%f_l2_%f_mixn_%f_mixp_%f_gx_%f_gy_%f.dat", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mixing-norm"), Manager.GetDouble("mixing-arg"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	  sprintf (EigenvalueOutputFile, "%s_twoband_quantumspinhall_kagome_n_%d_x_%d_y_%d_u_%f_v_%f_w_%f_t1_%f_t2_%f_l1_%f_l2_%f_mix12_%f_mix13_%f_mix23_%f_gx_%f_gy_%f.dat", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 	}
     }
   else
@@ -152,12 +154,12 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  sprintf (EigenvalueOutputFile, "%s_twoband_quantumspinhall_kagome_n_%d_x_%d_y_%d_u_%f_v_%f_w_%f_t1_%f_t2_%f_l1_%f_l2_%f_mixn_%f_mixp_%f_gx_%f_gy_%f_mus_%f.dat", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mixing-norm"), Manager.GetDouble("mixing-arg"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+	  sprintf (EigenvalueOutputFile, "%s_twoband_quantumspinhall_kagome_n_%d_x_%d_y_%d_u_%f_v_%f_w_%f_t1_%f_t2_%f_l1_%f_l2_%f_mix12_%f_mix13_%f_mix23_%f_gx_%f_gy_%f_mus_%f.dat", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
 	}
     }
   if (Manager.GetBoolean("singleparticle-spectrum") == true)
     {
-      ComputeSingleParticleSpectrum(EigenvalueOutputFile, NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), Manager.GetDouble("mixing-norm"), Manager.GetDouble("mixing-arg") * 2.0 * M_PI);
+      ComputeSingleParticleSpectrum(EigenvalueOutputFile, NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"));
       return 0;
     }
 
@@ -196,7 +198,7 @@ int main(int argc, char** argv)
 	      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
 	      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnLatticeQuantumSpinHallTwoBandKagomeHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
 														 Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"),
-														 Manager.GetDouble("mixing-norm"), Manager.GetDouble("mixing-arg") * 2.0 * M_PI, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
+														 Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
 														 Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 	      char* ContentPrefix = new char[256];
 	      sprintf (ContentPrefix, "%d %d", i, j);
@@ -275,19 +277,19 @@ int main(int argc, char** argv)
 // lambda1 = imaginary part of the hopping amplitude between neareast neighbor sites
 // lambda2 = imaginary part of the hopping amplitude between next neareast neighbor sites
 // mus = sublattice staggered chemical potential 
-// mixingTermNorm = norm of the mixing term coupling the two copies of the kagome lattice
-// mixingTermArgv = argument of the mixing term coupling the two copies of the kagome lattice
+// mixingTerm12 = mixing term coupling the two copies of the kagome lattice (sites 1 and 2)
+// mixingTerm13 = mixing term coupling the two copies of the kagome lattice (sites 1 and 3)
+// mixingTerm23 = mixing term coupling the two copies of the kagome lattice (sites 2 and 3)
 
-void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double t1, double t2, double lambda1, double lambda2, double mus, double mixingTermNorm, double mixingTermArg)
+void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double t1, double t2, double lambda1, double lambda2, double mus, double mixingTerm12, double mixingTerm13, double mixingTerm23)
 {
   ofstream File;
   File.open(outputFileName);
-  File << "# kx    ky     E_{-,1}    E_{-,2}    E_{+,1}    E_{+,2}" << endl;
+  File << "# kx    ky     E_{-,1}    E_{-,2}    E_{-,3}    E_{+,1}    E_{+,2}    E_{+,3}" << endl;
   double MinEMinus = 0.0;
   double MaxEMinus = -10.0;
   double MinEPlus = 10.0;
   double MaxEPlus = 0.0;
-  Complex MixingTerm = mixingTermNorm * Phase(mixingTermArg);
   double NNHopping = t1;
   double NNSpinOrbit = lambda1;
   double NextNNHopping = t2;
@@ -319,38 +321,41 @@ void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrS
 	  HAB += HAB2;
 	  HAC += HAC2;
 	  HBC += HBC2;
-
+	  
+	  double InvKX = 0.5 * KxFactor * (((double) -kx));
+	  double InvKY = 0.5 * KyFactor * (((double) -ky));
+	  Complex InvHAB (-2.0 * NNHopping, -2.0 * NNSpinOrbit);
+	  InvHAB *= cos (InvKX);
+	  Complex InvHAC (-2.0 * NNHopping, 2.0 * NNSpinOrbit);
+	  InvHAC *= cos (InvKY);
+	  Complex InvHBC (-2.0 * NNHopping, -2.0 * NNSpinOrbit);
+	  InvHBC *= cos(InvKX - InvKY);
+	  
+	  Complex InvHAB2 = Complex(-2.0 * NextNNHopping, 2.0 * NextNNSpinOrbit);
+	  InvHAB2 *= cos (InvKX - 2.0 * InvKY);
+	  Complex InvHAC2 = Complex(-2.0 * NextNNHopping, -2.0 * NextNNSpinOrbit);
+	  InvHAC2 *= cos (2.0 * InvKX - InvKY);
+	  Complex InvHBC2 = Complex(-2.0 * NextNNHopping, 2.0 * NextNNSpinOrbit);
+	  InvHBC2 *= cos (InvKX + InvKY);
+	  
+	  InvHAB += InvHAB2;
+	  InvHAC += InvHAC2;
+	  InvHBC += InvHBC2;
+	  
 	  TmpOneBodyHamiltonian.SetMatrixElement(0, 1, HAB);
 	  TmpOneBodyHamiltonian.SetMatrixElement(0, 2, HAC);
 	  TmpOneBodyHamiltonian.SetMatrixElement(1, 2, HBC);
-
-	  KX = 0.5 * KxFactor * ((double) -kx);
-	  KY = 0.5 * KyFactor * ((double) -ky);
-	  HAB = Complex(-2.0 * NNHopping, -2.0 * NNSpinOrbit);
-	  HAB *= cos (KX);
-	  HAC = Complex(-2.0 * NNHopping, 2.0 * NNSpinOrbit);
-	  HAC *= cos (KY);
-	  HBC = Complex(-2.0 * NNHopping, -2.0 * NNSpinOrbit);
-	  HBC *= cos(KX - KY);
+	  TmpOneBodyHamiltonian.SetMatrixElement(3, 4, Conj(InvHAB));
+	  TmpOneBodyHamiltonian.SetMatrixElement(3, 5, Conj(InvHAC));
+	  TmpOneBodyHamiltonian.SetMatrixElement(4, 5, Conj(InvHBC));
 	  
-	  HAB2 = Complex(-2.0 * NextNNHopping, 2.0 * NextNNSpinOrbit);
-	  HAB2 *= cos (KX - 2.0 * KY);
-	  HAC2 = Complex(-2.0 * NextNNHopping, -2.0 * NextNNSpinOrbit);
-	  HAC2 *= cos (2.0 * KX - KY);
-	  HBC2 = Complex(-2.0 * NextNNHopping, 2.0 * NextNNSpinOrbit);
-	  HBC2 *= cos (KX + KY);
+	  TmpOneBodyHamiltonian.SetMatrixElement(0, 4, mixingTerm12);
+	  TmpOneBodyHamiltonian.SetMatrixElement(0, 5, mixingTerm13);
+	  TmpOneBodyHamiltonian.SetMatrixElement(1, 3, -mixingTerm12);
+	  TmpOneBodyHamiltonian.SetMatrixElement(1, 5, mixingTerm23);
+	  TmpOneBodyHamiltonian.SetMatrixElement(2, 3, -mixingTerm13);
+	  TmpOneBodyHamiltonian.SetMatrixElement(2, 4, -mixingTerm23);
 	  
-	  HAB += HAB2;
-	  HAC += HAC2;
-	  HBC += HBC2;
-	  
-	  TmpOneBodyHamiltonian.SetMatrixElement(3, 4, Conj(HAB));
-	  TmpOneBodyHamiltonian.SetMatrixElement(3, 5, Conj(HAC));
-	  TmpOneBodyHamiltonian.SetMatrixElement(4, 5, Conj(HBC));
-	  
-// 	  TmpOneBodyHamiltonian.SetMatrixElement(0, 3, - I() * MixingTerm);
-// 	  TmpOneBodyHamiltonian.SetMatrixElement(1, 2, I() * MixingTerm);
-
 	  RealDiagonalMatrix TmpDiag;
 #ifdef __LAPACK__
 	  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag);
@@ -373,7 +378,7 @@ void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrS
 	    {
 	      MinEPlus = TmpDiag(2, 2);
 	    }
-	  File << (2.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) << " " << (2.0 * M_PI * ((double) ky) / ((double) nbrSitesY)) << " " << TmpDiag(0, 0) << " " << TmpDiag(1, 1) <<  " " << TmpDiag(2, 2) << " " << TmpDiag(3, 3) << endl;
+	  File << (2.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) << " " << (2.0 * M_PI * ((double) ky) / ((double) nbrSitesY)) << " " << TmpDiag(0, 0) << " " << TmpDiag(1, 1) <<  " " << TmpDiag(2, 2) << " " << TmpDiag(3, 3) << " " << TmpDiag(4, 4) << " " << TmpDiag(5, 5) << endl;
 	}
       File << endl;
     }
