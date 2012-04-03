@@ -7,6 +7,7 @@
 
 #include "HilbertSpace/FermionOnTorusWithSpinNew.h"
 #include "HilbertSpace/FermionOnTorusWithSpin.h"
+#include "HilbertSpace/BosonOnTorusWithSpin.h"
 
 #include "MathTools/IntegerAlgebraTools.h"
 
@@ -214,68 +215,70 @@ int main(int argc, char** argv)
     }
   else
     {
-      if (Manager.GetBoolean("boson") == true)
+      if (Manager.GetBoolean("no-translation") == false)
 	{
-	  cout << "bosons with spin on torus are not implemented" << endl;
+	  cout << "particles on torus with spin and magnetic translations are not implemented" << endl;
 	  return -1;
+	  // 	      for (int x = 0; x < MomentumModulo; ++x)
+	  // 		for (int y = 0; y < MomentumModulo; ++y)
+	  // 		  {
+	  // 		  }
 	}
       else
 	{
-	  if (Manager.GetBoolean("no-translation") == false)
+	  int MinKy = 0;
+	  int MaxKy = NbrFluxQuanta;
+	  if (Manager.GetInteger("ky-momentum") >= 0)
 	    {
-	      for (int x = 0; x < MomentumModulo; ++x)
-		for (int y = 0; y < MomentumModulo; ++y)
-		  {
-		  }
+	      MinKy = Manager.GetInteger("ky-momentum") % NbrFluxQuanta;
+	      MaxKy = MinKy + 1;
 	    }
-	  else
+	  for (int y = MinKy; y < MaxKy; ++y)
 	    {
-	      int MinKy = 0;
-	      int MaxKy = NbrFluxQuanta;
-	      if (Manager.GetInteger("ky-momentum") >= 0)
+	      ParticleOnSphereWithSpin* Space;
+	      if (Manager.GetBoolean("boson") == true)
 		{
-		  MinKy = Manager.GetInteger("ky-momentum") % NbrFluxQuanta;
-		  MaxKy = MinKy + 1;
+		  Space = new BosonOnTorusWithSpin  (NbrParticles, NbrFluxQuanta, Manager.GetInteger("total-sz"), y);
 		}
-	      for (int y = MinKy; y < MaxKy; ++y)
+	      else
 		{
-		  //		  FermionOnTorusWithSpinNew Space (NbrParticles, Manager.GetInteger("total-sz"), NbrFluxQuanta, y);
-		  FermionOnTorusWithSpin Space (NbrParticles, NbrFluxQuanta, Manager.GetInteger("total-sz"), y);
-		  cout << " (k_y = " << y << ") : " << endl;
-		  if (Manager.GetString("state") == 0)
+		  Space = new FermionOnTorusWithSpin  (NbrParticles, NbrFluxQuanta, Manager.GetInteger("total-sz"), y);
+		}
+	      cout << " (k_y = " << y << ") : " << endl;
+	      if (Manager.GetString("state") == 0)
+		{
+		  for (int i = 0; i <  Space->GetHilbertSpaceDimension(); ++i)
+		    Space->PrintState(cout, i) << endl;
+		  cout << endl;
+		}
+	      else
+		{
+		  int NbrHiddenComponents = 0;
+		  double WeightHiddenComponents = 0.0;
+		  double Normalization = 0.0;
+		  RealVector State;
+		  if (State.ReadVector(Manager.GetString("state")) == false)
 		    {
-		      for (int i = 0; i <  Space.GetHilbertSpaceDimension(); ++i)
-			Space.PrintState(cout, i) << endl;
-		      cout << endl;
+		      cout << "error while reading " << Manager.GetString("state") << endl;
+		      return -1;
+		    }
+		  if (Space->GetHilbertSpaceDimension() != State.GetVectorDimension())
+		    {
+			  cout << "dimension mismatch between the state (" << State.GetVectorDimension() << ") and the Hilbert space (" << Space->GetHilbertSpaceDimension() << ")" << endl;
+			  return -1;
+		    }
+		  if (Manager.GetDouble("hide-component") > 0.0)
+		    {
+		      double Error = Manager.GetDouble("hide-component");
+		      for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+			if (Norm(State[i]) > Error)
+			  Space->PrintState(cout, i) << " : "  << State[i] << endl;;
 		    }
 		  else
-		    {
-		      int NbrHiddenComponents = 0;
-		      double WeightHiddenComponents = 0.0;
-		      double Normalization = 0.0;
-		      RealVector State;
-		      if (State.ReadVector(Manager.GetString("state")) == false)
-			{
-			  cout << "error while reading " << Manager.GetString("state") << endl;
-			  return -1;
-			}
-		      if (Space.GetHilbertSpaceDimension() != State.GetVectorDimension())
-			{
-			  cout << "dimension mismatch between the state (" << State.GetVectorDimension() << ") and the Hilbert space (" << Space.GetHilbertSpaceDimension() << ")" << endl;
-			  return -1;
-			}
-		      if (Manager.GetDouble("hide-component") > 0.0)
-			{
-			  double Error = Manager.GetDouble("hide-component");
-			  for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
-			    if (Norm(State[i]) > Error)
-			      Space.PrintState(cout, i) << " : "  << State[i] << endl;;
-			}
-		      else
-			for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
-			  Space.PrintState(cout, i) << " : "  << State[i] << endl;;
-		    }
+		    for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+		      Space->PrintState(cout, i) << " : "  << State[i] << endl;;
 		}
+	      delete Space;
 	    }
 	}
     }
