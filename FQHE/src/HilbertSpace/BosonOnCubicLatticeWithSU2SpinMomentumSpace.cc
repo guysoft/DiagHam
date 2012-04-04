@@ -523,6 +523,51 @@ long BosonOnCubicLatticeWithSU2SpinMomentumSpace::EvaluateHilbertSpaceDimension(
   return Count;
 }
 
+// evaluate Hilbert space dimension with a fixed number of bosons with spin up
+//
+// nbrBosons = number of bosons
+// currentKx = current momentum along x for a single particle
+// currentKy = current momentum along y for a single particle
+// currentKz = current momentum along z for a single particle
+// currentTotalKx = current total momentum along x
+// currentTotalKy = current total momentum along y
+// currentTotalKz = current total momentum along z
+// nbrSpinUp = number of particles with spin up
+// return value = Hilbert space dimension
+
+long BosonOnCubicLatticeWithSU2SpinMomentumSpace::EvaluateHilbertSpaceDimension(int nbrBosons, int currentKx, int currentKy, int currentKz,
+										int currentTotalKx, int currentTotalKy, int currentTotalKz, int nbrSpinUp)
+{
+  if (currentKz < 0)
+    {
+      currentKz = this->NbrSiteZ - 1;
+      currentKy--;
+      if (currentKy < 0)
+	{
+	  currentKy = this->NbrSiteY - 1;
+	  currentKx--;
+	}
+    }
+  if ((nbrSpinUp < 0) || (nbrSpinUp > nbrBosons))
+    return 0l;
+
+  if (nbrBosons == 0)
+    {
+      if (((currentTotalKx % this->NbrSiteX) == this->KxMomentum) && ((currentTotalKy % this->NbrSiteY) == this->KyMomentum)
+	  && ((currentTotalKz % this->NbrSiteZ) == this->KzMomentum))
+	return 1l;
+      else	
+	return 0l;
+    }
+  if (currentKx < 0)
+    return 0l;
+  long Count = 0;
+  for (int i = nbrBosons; i >= 0; --i)
+    for (int j = i; j >= 0; --j)
+      Count += this->EvaluateHilbertSpaceDimension(nbrBosons - i, currentKx, currentKy, currentKz - 1, currentTotalKx + (i * currentKx), currentTotalKy + (i * currentKy), currentTotalKz + (i * currentKz), nbrSpinUp -j);
+  return Count;
+}
+
 // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given momentum sector.
 // 
 // nbrParticleSector = number of particles that belong to the subsytem 
@@ -593,51 +638,6 @@ HermitianMatrix BosonOnCubicLatticeWithSU2SpinMomentumSpace::EvaluatePartialDens
     }
 }
 
-// evaluate Hilbert space dimension with a fixed number of bosons with spin up
-//
-// nbrBosons = number of bosons
-// currentKx = current momentum along x for a single particle
-// currentKy = current momentum along y for a single particle
-// currentKz = current momentum along z for a single particle
-// currentTotalKx = current total momentum along x
-// currentTotalKy = current total momentum along y
-// currentTotalKz = current total momentum along z
-// nbrSpinUp = number of particles with spin up
-// return value = Hilbert space dimension
-
-long BosonOnCubicLatticeWithSU2SpinMomentumSpace::EvaluateHilbertSpaceDimension(int nbrBosons, int currentKx, int currentKy, int currentKz,
-										int currentTotalKx, int currentTotalKy, int currentTotalKz, int nbrSpinUp)
-{
-  if (currentKz < 0)
-    {
-      currentKz = this->NbrSiteZ - 1;
-      currentKy--;
-      if (currentKy < 0)
-	{
-	  currentKy = this->NbrSiteY - 1;
-	  currentKx--;
-	}
-    }
-  if ((nbrSpinUp < 0) || (nbrSpinUp > nbrBosons))
-    return 0l;
-
-  if (nbrBosons == 0)
-    {
-      if (((currentTotalKx % this->NbrSiteX) == this->KxMomentum) && ((currentTotalKy % this->NbrSiteY) == this->KyMomentum)
-	  && ((currentTotalKz % this->NbrSiteZ) == this->KzMomentum))
-	return 1l;
-      else	
-	return 0l;
-    }
-  if (currentKx < 0)
-    return 0l;
-  long Count = 0;
-  for (int i = nbrBosons; i >= 0; --i)
-    for (int j = i; j >= 0; --j)
-      Count += this->EvaluateHilbertSpaceDimension(nbrBosons - i, currentKx, currentKy, currentKz - 1, currentTotalKx + (i * currentKx), currentTotalKy + (i * currentKy), currentTotalKz + (i * currentKz), nbrSpinUp -j);
-  return Count;
-}
-
 // evaluate a density matrix of a subsystem of the whole system described by a given sum of projectors, using particle partition. The density matrix is only evaluated in a given momentum sector.
 // 
 // nbrParticleSector = number of particles that belong to the subsytem 
@@ -651,7 +651,7 @@ long BosonOnCubicLatticeWithSU2SpinMomentumSpace::EvaluateHilbertSpaceDimension(
 // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
 
 HermitianMatrix BosonOnCubicLatticeWithSU2SpinMomentumSpace::EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int kxSector, int kySector, int kzSector, 
-													 int nbrGroundStates, ComplexVector* groundStates, double* weights, AbstractArchitecture* architecture)
+													    int nbrGroundStates, ComplexVector* groundStates, double* weights, AbstractArchitecture* architecture)
 {
   if (nbrParticleSector == 0)
     {
