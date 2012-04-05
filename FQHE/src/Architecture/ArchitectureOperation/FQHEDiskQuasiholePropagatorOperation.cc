@@ -113,6 +113,16 @@ AbstractArchitectureOperation* FQHEDiskQuasiholePropagatorOperation::Clone()
   return new FQHEDiskQuasiholePropagatorOperation (*this);
 }
   
+// get dimension (i.e. Hilbert space dimension, nbr of subdivisions,...), return 0 if large number are required
+// 
+// return value = dimension  
+
+int FQHEDiskQuasiholePropagatorOperation::GetDimension ()
+{
+  return this->HilbertSpace->GetHilbertSpaceDimension();
+}
+
+
 // apply operation (architecture independent)
 //
 // return value = true if no error occurs

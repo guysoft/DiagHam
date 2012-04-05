@@ -132,4 +132,5 @@ BosonOnCubicLatticeWithSU2SpinMomentumSpace.cc \
 BosonOnCubicLatticeWithSU4SpinMomentumSpace.cc \
 HardCoreBosonLong.cc \
 BosonOnLatticeLong.cc \
-BosonOnTorusWithSpin.cc
+BosonOnTorusWithSpin.cc \
+BosonOnHyperCubicLatticeWithSU2SpinMomentumSpace.cc

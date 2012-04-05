@@ -230,7 +230,7 @@ int main(int argc, char** argv)
  	}
        cout << "total degeneracy counting " << TotalDegenracy << endl;
        cout << "degeneracy counting : " << endl;
-       if (Flag3d == true)
+       if (Flag3d == false)
 	 {
 	   for (int i = MinKa; i <= MaxKa; ++i)
 	     {

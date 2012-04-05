@@ -88,12 +88,12 @@ class AbstractScalarSumOperation: public AbstractArchitectureOperation
   // get dimension (i.e. Hilbert space dimension, nbr of subdivisions,...), return 0 if large number are required
   // 
   // return value = dimension  
-  virtual int GetDimension ();
+  virtual int GetDimension () = 0;
 
   // get dimension (i.e. Hilbert space dimension, nbr of subdivisions,...) when large number are required
   // 
   // return value = dimension  
-  virtual long GetLargeDimension ();
+  virtual long GetLargeDimension () = 0;
 
   // return scalar corresponding to the result of the operation
   //

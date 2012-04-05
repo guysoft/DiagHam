@@ -13,6 +13,7 @@
 #include "HilbertSpace/BosonOnSquareLatticeWithSU4SpinMomentumSpace.h"
 #include "HilbertSpace/BosonOnCubicLatticeWithSU2SpinMomentumSpace.h"
 #include "HilbertSpace/BosonOnCubicLatticeWithSU4SpinMomentumSpace.h"
+#include "HilbertSpace/BosonOnHyperCubicLatticeWithSU2SpinMomentumSpace.h"
 
 #include "Vector/ComplexVector.h"
 
@@ -209,13 +210,21 @@ int main(int argc, char** argv)
 	{
 	  if (Manager.GetBoolean("3d") == false)
 	    {
-	      if (Manager.GetBoolean("spin-conserved") == false)
+	      if (Manager.GetBoolean("4d") == false)
 		{
-		  Space = new BosonOnSquareLatticeWithSU2SpinMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
+		  if (Manager.GetBoolean("spin-conserved") == false)
+		    {
+		      Space = new BosonOnSquareLatticeWithSU2SpinMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
+		    }
+		  else
+		    {
+		      Space = new BosonOnSquareLatticeWithSU2SpinMomentumSpace (NbrParticles, (Sz + NbrParticles) / 2, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
+		    }
 		}
 	      else
 		{
-		  Space = new BosonOnSquareLatticeWithSU2SpinMomentumSpace (NbrParticles, (Sz + NbrParticles) / 2, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
+		  Space = new BosonOnHyperCubicLatticeWithSU2SpinMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, NbrSiteZ, NbrSiteT,
+										TotalKx, TotalKy, TotalKz, TotalKt);
 		}
 	    }
 	  else

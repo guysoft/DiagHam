@@ -90,6 +90,16 @@ class OperatorMatrixElementOperation: public AbstractScalarSumOperation
   // return value = pointer to cloned operation
   AbstractArchitectureOperation* Clone();
   
+  // get dimension (i.e. Hilbert space dimension, nbr of subdivisions,...), return 0 if large number are required
+  // 
+  // return value = dimension  
+  virtual int GetDimension ();
+
+  // get dimension (i.e. Hilbert space dimension, nbr of subdivisions,...) when large number are required
+  // 
+  // return value = dimension  
+  virtual long GetLargeDimension ();
+
  protected:
 
   // apply operation(architecture independent)

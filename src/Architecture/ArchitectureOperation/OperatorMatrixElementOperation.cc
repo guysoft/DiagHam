@@ -110,6 +110,38 @@ AbstractArchitectureOperation* OperatorMatrixElementOperation::Clone()
   return new OperatorMatrixElementOperation (*this);
 }
   
+// get dimension (i.e. Hilbert space dimension, nbr of subdivisions,...), return 0 if large number are required
+// 
+// return value = dimension  
+
+int OperatorMatrixElementOperation::GetDimension ()
+{
+  if (this->RealRightVector.GetVectorDimension() > 0)
+    {
+      return this->RealRightVector.GetVectorDimension();
+    }
+  else
+    {
+      return this->ComplexRightVector.GetVectorDimension();
+    }
+}
+
+// get dimension (i.e. Hilbert space dimension, nbr of subdivisions,...) when large number are required
+// 
+// return value = dimension  
+
+long OperatorMatrixElementOperation::GetLargeDimension ()
+{
+  if (this->RealRightVector.GetLargeVectorDimension() > 0)
+    {
+      return this->RealRightVector.GetLargeVectorDimension();
+    }
+  else
+    {
+      return this->ComplexRightVector.GetLargeVectorDimension();
+    }
+}
+
 // apply operation(architecture independent)
 //
 // return value = true if no error occurs

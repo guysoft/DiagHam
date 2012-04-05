@@ -210,6 +210,29 @@ long BosonCubicLatticeFourBandEvaluateHilbertSpaceDimension(int nbrParticles, in
 // return value = Hilbert space dimension
 long FermionHyperCubicLatticeTwoBandEvaluateHilbertSpaceDimension(int nbrParticles, int kxMomentum, int kyMomentum, int kzMomentum, int ktMomentum, int nbrSiteX, int nbrSiteY, int nbrSiteZ, int nbrSiteT, int currentKx, int currentKy, int currentKz, int currentKt, int currentTotalKx = 0, int currentTotalKy = 0, int currentTotalKz = 0, int currentTotalKt = 0);
 
+// evaluate Hilbert space dimension for bosons on a hypercubic lattice within two bands
+//
+// nbrParticles = number of nbrParticles
+// kxMomentum = momentum along the x direction
+// kyMomentum = momentum along the y direction
+// kzMomentum = momentum along the z direction
+// ktMomentum = momentum along the t direction
+// nbrSiteX = number of sites along x
+// nbrSiteY = number of sites along y
+// nbrSiteZ = number of sites along z
+// nbrSiteT = number of sites along t
+// currentKx = current momentum along x for a single particle
+// currentKy = current momentum along y for a single particle
+// currentKz = current momentum along z for a single particle
+// currentKt = current momentum along t for a single particle
+// currentTotalKx = current total momentum along x
+// currentTotalKy = current total momentum along y
+// currentTotalKz = current total momentum along z
+// currentTotalKt = current total momentum along t
+// return value = Hilbert space dimension
+long BosonHyperCubicLatticeTwoBandEvaluateHilbertSpaceDimension(int nbrParticles, int kxMomentum, int kyMomentum, int kzMomentum, int ktMomentum, int nbrSiteX, int nbrSiteY, int nbrSiteZ, int nbrSiteT, int currentKx, int currentKy, int currentKz, int currentKt, int currentTotalKx = 0, int currentTotalKy = 0, int currentTotalKz = 0, int currentTotalKt = 0);
+
+
 int main(int argc, char** argv)
 {
   OptionManager Manager ("FQHETopInsulatorGetDimension" , "0.01");
@@ -285,7 +308,7 @@ int main(int argc, char** argv)
 			    {
 			      long Dimension = 0l;
 			      if (Manager.GetBoolean("bosons") == false)
-				Dimension = FermionTwoBandEvaluateHilbertSpaceDimension(NbrParticles, kx, ky, NbrSitesX, NbrSitesY, NbrSitesX - 1, NbrSitesY - 1);
+ 				Dimension = FermionTwoBandEvaluateHilbertSpaceDimension(NbrParticles, kx, ky, NbrSitesX, NbrSitesY, NbrSitesX - 1, NbrSitesY - 1);
 			      else
 				Dimension = BosonTwoBandEvaluateHilbertSpaceDimension(NbrParticles, kx, ky, NbrSitesX, NbrSitesY, NbrSitesX - 1, NbrSitesY - 1);
 			      cout << "(kx=" << kx << ",ky=" << ky << ") : " << Dimension << endl;
@@ -318,10 +341,9 @@ int main(int argc, char** argv)
 			      if (Manager.GetBoolean("bosons") == false)
 				Dimension = FermionHyperCubicLatticeTwoBandEvaluateHilbertSpaceDimension(NbrParticles, kx, ky, kz, kt, NbrSitesX, NbrSitesY, NbrSitesZ, NbrSitesT, NbrSitesX - 1, NbrSitesY - 1, NbrSitesZ - 1, NbrSitesT - 1);
 			      else
-				cout << "warning : not implemented for bosons" << endl;
+				Dimension = BosonHyperCubicLatticeTwoBandEvaluateHilbertSpaceDimension(NbrParticles, kx, ky, kz, kt, NbrSitesX, NbrSitesY, NbrSitesZ, NbrSitesT, NbrSitesX - 1, NbrSitesY - 1, NbrSitesZ - 1, NbrSitesT - 1);
 			      TotalDimension += Dimension;
 			      cout << "(kx=" << kx << ",ky=" << ky << ",kz=" << kz << ",kt=" << kt << ") : " << Dimension << endl;
-			      return 0;
 			    }
 			}
 		      cout << TotalDimension << endl;
@@ -1182,5 +1204,60 @@ long FermionHyperCubicLatticeTwoBandEvaluateHilbertSpaceDimension(int nbrParticl
   Count += FermionHyperCubicLatticeTwoBandEvaluateHilbertSpaceDimension(nbrParticles - 2, kxMomentum, kyMomentum, kzMomentum, ktMomentum, nbrSiteX, nbrSiteY, nbrSiteZ, nbrSiteT, currentKx, currentKy, currentKz, currentKt - 1, currentTotalKx + (2 * currentKx), currentTotalKy + (2 * currentKy), currentTotalKz + (2 * currentKz), currentTotalKt + (2 * currentKt));
   Count += (2 * FermionHyperCubicLatticeTwoBandEvaluateHilbertSpaceDimension(nbrParticles - 1, kxMomentum, kyMomentum, kzMomentum, ktMomentum, nbrSiteX, nbrSiteY, nbrSiteZ, nbrSiteT, currentKx, currentKy, currentKz, currentKt - 1, currentTotalKx + currentKx, currentTotalKy + currentKy, currentTotalKz + currentKz, currentTotalKt + currentKt));
   Count += FermionHyperCubicLatticeTwoBandEvaluateHilbertSpaceDimension(nbrParticles, kxMomentum, kyMomentum, kzMomentum, ktMomentum, nbrSiteX, nbrSiteY, nbrSiteZ, nbrSiteT, currentKx, currentKy, currentKz, currentKt - 1, currentTotalKx, currentTotalKy, currentTotalKz, currentTotalKt);
+  return Count;
+}
+
+
+// evaluate Hilbert space dimension for bosons on a hypercubic lattice within two bands
+//
+// nbrParticles = number of nbrParticles
+// kxMomentum = momentum along the x direction
+// kyMomentum = momentum along the y direction
+// kzMomentum = momentum along the z direction
+// ktMomentum = momentum along the t direction
+// nbrSiteX = number of sites along x
+// nbrSiteY = number of sites along y
+// nbrSiteZ = number of sites along z
+// nbrSiteT = number of sites along t
+// currentKx = current momentum along x for a single particle
+// currentKy = current momentum along y for a single particle
+// currentKz = current momentum along z for a single particle
+// currentKt = current momentum along t for a single particle
+// currentTotalKx = current total momentum along x
+// currentTotalKy = current total momentum along y
+// currentTotalKz = current total momentum along z
+// currentTotalKt = current total momentum along t
+// return value = Hilbert space dimension
+
+long BosonHyperCubicLatticeTwoBandEvaluateHilbertSpaceDimension(int nbrParticles, int kxMomentum, int kyMomentum, int kzMomentum, int ktMomentum, int nbrSiteX, int nbrSiteY, int nbrSiteZ, int nbrSiteT, int currentKx, int currentKy, int currentKz, int currentKt, int currentTotalKx, int currentTotalKy, int currentTotalKz, int currentTotalKt)
+{
+  if (currentKt < 0)
+    {
+      currentKt = nbrSiteT - 1;
+      currentKz--;
+      if (currentKz < 0)
+	{
+	  currentKz = nbrSiteZ - 1;
+	  currentKy--;
+	  if (currentKy < 0)
+	    {
+	      currentKy = nbrSiteY - 1;
+	      currentKx--;
+	    }
+	}
+    }
+  if (nbrParticles == 0)
+    {
+      if (((currentTotalKx % nbrSiteX) == kxMomentum) && ((currentTotalKy % nbrSiteY) == kyMomentum)
+	  && ((currentTotalKz % nbrSiteZ) == kzMomentum)&& ((currentTotalKt % nbrSiteT) == ktMomentum))
+	return 1l;
+      else	
+	return 0l;
+    }
+  if (currentKx < 0)
+    return 0l;
+  long Count = 0;
+  for (int i = nbrParticles; i >= 0; --i)
+    Count += (((long) i) + 1l) * BosonHyperCubicLatticeTwoBandEvaluateHilbertSpaceDimension(nbrParticles - i, kxMomentum, kyMomentum, kzMomentum, ktMomentum, nbrSiteX, nbrSiteY, nbrSiteZ, nbrSiteT, currentKx, currentKy, currentKz, currentKt - 1, currentTotalKx + (i * currentKx), currentTotalKy + (i * currentKy), currentTotalKz + (i * currentKz), currentTotalKt + (i * currentKt));
   return Count;
 }

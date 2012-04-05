@@ -6,10 +6,10 @@
 //                    Copyright (C) 2001-2011 Nicolas Regnault                //
 //                                                                            //
 //                                                                            //
-//                 class of bosons on a cubic lattice with SU(2) spin         //
+//            class of bosons on a 4D hypercubic lattice with SU(2) spin      //
 //                                in momentum space                           //
 //                                                                            //
-//                        last modification : 15/03/2012                      //
+//                        last modification : 04/04/2012                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -30,7 +30,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/BosonOnCubicLatticeWithSU2SpinMomentumSpace.h"
+#include "HilbertSpace/BosonOnHyperCubicLatticeWithSU2SpinMomentumSpace.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
 #include "Matrix/ComplexMatrix.h"
@@ -57,26 +57,21 @@ using std::ifstream;
 using std::ios;
 
 
-// default constructor
-// 
-
-BosonOnCubicLatticeWithSU2SpinMomentumSpace::BosonOnCubicLatticeWithSU2SpinMomentumSpace()
-{
-}
-
 // basic constructor
 // 
 // nbrBosons = number of bosons
 // nbrSiteX = number of sites in the x direction
 // nbrSiteY = number of sites in the y direction
 // nbrSiteZ = number of sites in the z direction
+// nbrSiteT = number of sites in the t direction
 // kxMomentum = momentum along the x direction
 // kyMomentum = momentum along the y direction
 // kzMomentum = momentum along the z direction
+// ktMomentum = momentum along the t direction
 // memory = amount of memory granted for precalculations
 
-BosonOnCubicLatticeWithSU2SpinMomentumSpace::BosonOnCubicLatticeWithSU2SpinMomentumSpace (int nbrBosons, int nbrSiteX, int nbrSiteY, int nbrSiteZ,
-											  int kxMomentum, int kyMomentum, int kzMomentum, unsigned long memory)
+BosonOnHyperCubicLatticeWithSU2SpinMomentumSpace::BosonOnHyperCubicLatticeWithSU2SpinMomentumSpace (int nbrBosons, int nbrSiteX, int nbrSiteY, int nbrSiteZ, int nbrSiteT,
+												    int kxMomentum, int kyMomentum, int kzMomentum, int ktMomentum, unsigned long memory)
 {  
   this->NbrBosons = nbrBosons;
   this->IncNbrBosons = this->NbrBosons + 1;
@@ -88,11 +83,14 @@ BosonOnCubicLatticeWithSU2SpinMomentumSpace::BosonOnCubicLatticeWithSU2SpinMomen
   this->NbrSiteX = nbrSiteX;
   this->NbrSiteY = nbrSiteY;
   this->NbrSiteZ = nbrSiteZ;
-  this->NbrSiteYZ = this->NbrSiteZ * this->NbrSiteY;
+  this->NbrSiteT = nbrSiteT;
+  this->NbrSiteYZT = this->NbrSiteZ * this->NbrSiteY * this->NbrSiteT;
+  this->NbrSiteZT = this->NbrSiteZ * this->NbrSiteT;
   this->KxMomentum = kxMomentum;
   this->KyMomentum = kyMomentum;
   this->KzMomentum = kzMomentum;
-  this->LzMax = this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ;
+  this->KtMomentum = ktMomentum;
+  this->LzMax = this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ * this->NbrSiteT;
   this->NbrLzValue = this->LzMax + 1;
   this->Flag.Initialize();
   this->TemporaryStateUp = new unsigned long[this->NbrLzValue];
@@ -103,7 +101,7 @@ BosonOnCubicLatticeWithSU2SpinMomentumSpace::BosonOnCubicLatticeWithSU2SpinMomen
   this->NUpLzMax = this->LzMax + this->NbrBosons - 1;
   this->NDownLzMax = this->LzMax + this->NbrBosons - 1;
   this->FermionicLzMax = this->NUpLzMax;
-  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->NbrSiteX - 1, this->NbrSiteY - 1, this->NbrSiteZ - 1, 0, 0, 0);
+  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->NbrSiteX - 1, this->NbrSiteY - 1, this->NbrSiteZ - 1, this->NbrSiteT - 1, 0, 0, 0, 0);
   if (this->LargeHilbertSpaceDimension >= (1l << 30))
     this->HilbertSpaceDimension = 0;
   else
@@ -113,7 +111,7 @@ BosonOnCubicLatticeWithSU2SpinMomentumSpace::BosonOnCubicLatticeWithSU2SpinMomen
       this->StateDescriptionUp = new unsigned long [this->LargeHilbertSpaceDimension];
       this->StateDescriptionDown = new unsigned long [this->LargeHilbertSpaceDimension];
       this->Flag.Initialize();
-      long TmpLargeHilbertSpaceDimension = this->GenerateStates(this->NbrBosons, this->NbrSiteX - 1, this->NbrSiteY - 1, this->NbrSiteZ - 1, 0, 0, 0, this->LzMax + this->NbrBosons, this->LzMax + this->NbrBosons, 0l);
+      long TmpLargeHilbertSpaceDimension = this->GenerateStates(this->NbrBosons, this->NbrSiteX - 1, this->NbrSiteY - 1, this->NbrSiteZ - 1, this->NbrSiteT - 1, 0, 0, 0, 0, this->LzMax + this->NbrBosons, this->LzMax + this->NbrBosons, 0l);
       if (this->LargeHilbertSpaceDimension != TmpLargeHilbertSpaceDimension)
 	{
 	  cout << "error while generating the Hilbert space " << this->LargeHilbertSpaceDimension << " " << TmpLargeHilbertSpaceDimension << endl;
@@ -162,13 +160,15 @@ BosonOnCubicLatticeWithSU2SpinMomentumSpace::BosonOnCubicLatticeWithSU2SpinMomen
 // nbrSiteX = number of sites in the x direction
 // nbrSiteY = number of sites in the y direction
 // nbrSiteZ = number of sites in the z direction
+// nbrSiteT = number of sites in the t direction
 // kxMomentum = momentum along the x direction
 // kyMomentum = momentum along the y direction
 // kzMomentum = momentum along the z direction
+// ktMomentum = momentum along the t direction
 // memory = amount of memory granted for precalculations
 
-BosonOnCubicLatticeWithSU2SpinMomentumSpace::BosonOnCubicLatticeWithSU2SpinMomentumSpace (int nbrBosons, int nbrSpinUp, int nbrSiteX, int nbrSiteY, int nbrSiteZ,
-											  int kxMomentum, int kyMomentum, int kzMomentum, unsigned long memory)
+BosonOnHyperCubicLatticeWithSU2SpinMomentumSpace::BosonOnHyperCubicLatticeWithSU2SpinMomentumSpace (int nbrBosons, int nbrSpinUp, int nbrSiteX, int nbrSiteY, int nbrSiteZ, int nbrSiteT,
+												    int kxMomentum, int kyMomentum, int kzMomentum, int ktMomentum, unsigned long memory)
 {
   this->NbrBosons = nbrBosons;
   this->IncNbrBosons = this->NbrBosons + 1;
@@ -180,11 +180,14 @@ BosonOnCubicLatticeWithSU2SpinMomentumSpace::BosonOnCubicLatticeWithSU2SpinMomen
   this->NbrSiteX = nbrSiteX;
   this->NbrSiteY = nbrSiteY;
   this->NbrSiteZ = nbrSiteZ;
-  this->NbrSiteYZ = this->NbrSiteZ * this->NbrSiteY;
+  this->NbrSiteT = nbrSiteT;
+  this->NbrSiteYZT = this->NbrSiteZ * this->NbrSiteY * this->NbrSiteT;
+  this->NbrSiteZT = this->NbrSiteZ * this->NbrSiteT;
   this->KxMomentum = kxMomentum;
   this->KyMomentum = kyMomentum;
   this->KzMomentum = kzMomentum;
-  this->LzMax = this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ;
+  this->KtMomentum = ktMomentum;
+  this->LzMax = this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ * this->NbrSiteT;
   this->NbrLzValue = this->LzMax + 1;
   this->Flag.Initialize();
   this->TemporaryStateUp = new unsigned long[this->NbrLzValue];
@@ -195,7 +198,7 @@ BosonOnCubicLatticeWithSU2SpinMomentumSpace::BosonOnCubicLatticeWithSU2SpinMomen
   this->NUpLzMax = this->LzMax + this->NbrBosonsUp - 1;
   this->NDownLzMax = this->LzMax + this->NbrBosonsDown - 1;
   this->FermionicLzMax = this->NUpLzMax;
-  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->NbrSiteX - 1, this->NbrSiteY - 1, this->NbrSiteZ - 1, 0, 0, 0, this->NbrBosonsUp);
+  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->NbrSiteX - 1, this->NbrSiteY - 1, this->NbrSiteZ - 1, this->NbrSiteT - 1, 0, 0, 0, 0, this->NbrBosonsUp);
   if (this->LargeHilbertSpaceDimension >= (1l << 30))
     this->HilbertSpaceDimension = 0;
   else
@@ -205,7 +208,7 @@ BosonOnCubicLatticeWithSU2SpinMomentumSpace::BosonOnCubicLatticeWithSU2SpinMomen
       this->StateDescriptionUp = new unsigned long [this->LargeHilbertSpaceDimension];
       this->StateDescriptionDown = new unsigned long [this->LargeHilbertSpaceDimension];
       this->Flag.Initialize();
-      long TmpLargeHilbertSpaceDimension = this->GenerateStates(this->NbrBosons, this->NbrSiteX - 1, this->NbrSiteY - 1, this->NbrSiteZ - 1, 0, 0, 0, this->LzMax + this->NbrBosonsUp, this->LzMax + this->NbrBosonsDown, this->NbrBosonsUp, 0l);
+      long TmpLargeHilbertSpaceDimension = this->GenerateStates(this->NbrBosons, this->NbrSiteX - 1, this->NbrSiteY - 1, this->NbrSiteZ - 1, this->NbrSiteT - 1, 0, 0, 0, 0, this->LzMax + this->NbrBosonsUp, this->LzMax + this->NbrBosonsDown, this->NbrBosonsUp, 0l);
       if (this->LargeHilbertSpaceDimension != TmpLargeHilbertSpaceDimension)
 	{
 	  cout << "error while generating the Hilbert space " << this->LargeHilbertSpaceDimension << " " << TmpLargeHilbertSpaceDimension << endl;
@@ -231,15 +234,18 @@ BosonOnCubicLatticeWithSU2SpinMomentumSpace::BosonOnCubicLatticeWithSU2SpinMomen
 //
 // bosons = reference on the hilbert space to copy to copy
 
-BosonOnCubicLatticeWithSU2SpinMomentumSpace::BosonOnCubicLatticeWithSU2SpinMomentumSpace(const BosonOnCubicLatticeWithSU2SpinMomentumSpace& bosons)
+BosonOnHyperCubicLatticeWithSU2SpinMomentumSpace::BosonOnHyperCubicLatticeWithSU2SpinMomentumSpace(const BosonOnHyperCubicLatticeWithSU2SpinMomentumSpace& bosons)
 {
   this->NbrSiteX = bosons.NbrSiteX;
   this->NbrSiteY = bosons.NbrSiteY;
   this->NbrSiteZ = bosons.NbrSiteZ;
-  this->NbrSiteYZ = bosons.NbrSiteYZ;
+  this->NbrSiteT = bosons.NbrSiteT;
+  this->NbrSiteYZT = bosons.NbrSiteYZT;
+  this->NbrSiteZT = bosons.NbrSiteZT;
   this->KxMomentum = bosons.KxMomentum;
   this->KyMomentum = bosons.KyMomentum;
   this->KzMomentum = bosons.KzMomentum;
+  this->KtMomentum = bosons.KtMomentum;
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
   this->Flag = bosons.Flag;
   this->NbrBosons = bosons.NbrBosons;
@@ -270,7 +276,7 @@ BosonOnCubicLatticeWithSU2SpinMomentumSpace::BosonOnCubicLatticeWithSU2SpinMomen
 // destructor
 //
 
-BosonOnCubicLatticeWithSU2SpinMomentumSpace::~BosonOnCubicLatticeWithSU2SpinMomentumSpace ()
+BosonOnHyperCubicLatticeWithSU2SpinMomentumSpace::~BosonOnHyperCubicLatticeWithSU2SpinMomentumSpace ()
 {
 }
 
@@ -279,7 +285,7 @@ BosonOnCubicLatticeWithSU2SpinMomentumSpace::~BosonOnCubicLatticeWithSU2SpinMome
 // bosons = reference on the hilbert space to copy to copy
 // return value = reference on current hilbert space
 
-BosonOnCubicLatticeWithSU2SpinMomentumSpace& BosonOnCubicLatticeWithSU2SpinMomentumSpace::operator = (const BosonOnCubicLatticeWithSU2SpinMomentumSpace& bosons)
+BosonOnHyperCubicLatticeWithSU2SpinMomentumSpace& BosonOnHyperCubicLatticeWithSU2SpinMomentumSpace::operator = (const BosonOnHyperCubicLatticeWithSU2SpinMomentumSpace& bosons)
 {
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
@@ -295,11 +301,14 @@ BosonOnCubicLatticeWithSU2SpinMomentumSpace& BosonOnCubicLatticeWithSU2SpinMomen
   delete[] this->ProdATemporaryStateDown;
   this->NbrSiteX = bosons.NbrSiteX;
   this->NbrSiteY = bosons.NbrSiteY;
-  this->NbrSiteZ = bosons.NbrSiteZ;
-  this->NbrSiteYZ = bosons.NbrSiteYZ;
+  this->NbrSiteZ = bosons.NbrSiteZ; 
+  this->NbrSiteT = bosons.NbrSiteT;
+  this->NbrSiteYZT = bosons.NbrSiteYZT;
+  this->NbrSiteZT = bosons.NbrSiteZT;
   this->KxMomentum = bosons.KxMomentum;
   this->KyMomentum = bosons.KyMomentum;
   this->KzMomentum = bosons.KzMomentum;
+  this->KtMomentum = bosons.KtMomentum;
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
   this->Flag = bosons.Flag;
   this->NbrBosons = bosons.NbrBosons;
@@ -332,9 +341,9 @@ BosonOnCubicLatticeWithSU2SpinMomentumSpace& BosonOnCubicLatticeWithSU2SpinMomen
 //
 // return value = pointer to cloned Hilbert space
 
-AbstractHilbertSpace* BosonOnCubicLatticeWithSU2SpinMomentumSpace::Clone()
+AbstractHilbertSpace* BosonOnHyperCubicLatticeWithSU2SpinMomentumSpace::Clone()
 {
-  return new BosonOnCubicLatticeWithSU2SpinMomentumSpace(*this);
+  return new BosonOnHyperCubicLatticeWithSU2SpinMomentumSpace(*this);
 }
 
 // print a given State
@@ -343,7 +352,7 @@ AbstractHilbertSpace* BosonOnCubicLatticeWithSU2SpinMomentumSpace::Clone()
 // state = ID of the state to print
 // return value = reference on current output stream 
 
-ostream& BosonOnCubicLatticeWithSU2SpinMomentumSpace::PrintState (ostream& Str, int state)
+ostream& BosonOnHyperCubicLatticeWithSU2SpinMomentumSpace::PrintState (ostream& Str, int state)
 {
   this->FermionToBoson(this->StateDescriptionUp[state], this->StateDescriptionDown[state], TemporaryStateUp, TemporaryStateDown); 
 
@@ -351,19 +360,21 @@ ostream& BosonOnCubicLatticeWithSU2SpinMomentumSpace::PrintState (ostream& Str, 
   Str << "[";
   for (int i = 0; i <= this->LzMax; ++i)
     {
-      int TmpKx = i / this->NbrSiteYZ;
-      int TmpKy = i % this->NbrSiteYZ;
-      int TmpKz = TmpKy % this->NbrSiteZ;
-      TmpKy /= this->NbrSiteZ;
+      int TmpKx = i / this->NbrSiteYZT;
+      int TmpKy = i % this->NbrSiteYZT;
+      int TmpKz = TmpKy % this->NbrSiteZT;
+      TmpKy /= this->NbrSiteZT;
+      int TmpKt = TmpKz % this->NbrSiteT;
+      TmpKz /= this->NbrSiteT;
       if (this->TemporaryStateUp[i] > 0)
 	{
 	  for (int j = 0; j < this->TemporaryStateUp[i]; ++j)
-	    Str << "(" << TmpKx << "," << TmpKy << "," << TmpKz << ",up)";
+	    Str << "(" << TmpKx << "," << TmpKy << "," << TmpKz << "," << TmpKt << ",up)";
 	}
       if (this->TemporaryStateDown[i] > 0)
 	{
 	  for (int j = 0; j < this->TemporaryStateDown[i]; ++j)
-	    Str << "(" << TmpKx << "," << TmpKy << "," << TmpKz << ",down)";
+	    Str << "(" << TmpKx << "," << TmpKy << "," << TmpKz << "," << TmpKt << ",down)";
 	}
     }
   Str << "]";
@@ -376,31 +387,38 @@ ostream& BosonOnCubicLatticeWithSU2SpinMomentumSpace::PrintState (ostream& Str, 
 // currentKx = current momentum along x for a single particle
 // currentKy = current momentum along y for a single particle
 // currentKz = current momentum along z for a single particle
+// currentKt = current momentum along z for a single particle
 // currentTotalKx = current total momentum along x
 // currentTotalKy = current total momentum along y
 // currentTotalKz = current total momentum along z
+// currentTotalKt = current total momentum along t
 // currentFermionicPositionUp = current fermionic position within the state description for the spin up
 // currentFermionicPositionDown = current fermionic position within the state description for the spin down
 // pos = position in StateDescription array where to store states
 // return value = position from which new states have to be stored
 
-long BosonOnCubicLatticeWithSU2SpinMomentumSpace::GenerateStates(int nbrBosons, int currentKx, int currentKy, int currentKz,
-								 int currentTotalKx, int currentTotalKy, int currentTotalKz, int currentFermionicPositionUp, int currentFermionicPositionDown, long pos)
+long BosonOnHyperCubicLatticeWithSU2SpinMomentumSpace::GenerateStates(int nbrBosons, int currentKx, int currentKy, int currentKz, int currentKt,
+								      int currentTotalKx, int currentTotalKy, int currentTotalKz, int currentTotalKt, int currentFermionicPositionUp, int currentFermionicPositionDown, long pos)
 {
-  if (currentKz < 0)
+  if (currentKt < 0)
     {
-      currentKz = this->NbrSiteZ - 1;
-      currentKy--;
-      if (currentKy < 0)
+      currentKt = this->NbrSiteT - 1;
+      currentKz--;
+      if (currentKz < 0)
 	{
-	  currentKy = this->NbrSiteY - 1;
-	  currentKx--;
+	  currentKz = this->NbrSiteZ - 1;
+	  currentKy--;
+	  if (currentKy < 0)
+	    {
+	      currentKy = this->NbrSiteY - 1;
+	      currentKx--;
+	    }
 	}
     }
   if (nbrBosons == 0)
     {
       if (((currentTotalKx % this->NbrSiteX) == this->KxMomentum) && ((currentTotalKy % this->NbrSiteY) == this->KyMomentum)
-	  && ((currentTotalKz % this->NbrSiteZ) == this->KzMomentum))
+	  && ((currentTotalKz % this->NbrSiteZ) == this->KzMomentum) && ((currentTotalKt % this->NbrSiteT) == this->KtMomentum))
 	{
  	  this->StateDescriptionUp[pos] = 0x0ul;
  	  this->StateDescriptionDown[pos] = 0x0ul;
@@ -416,7 +434,7 @@ long BosonOnCubicLatticeWithSU2SpinMomentumSpace::GenerateStates(int nbrBosons, 
       unsigned long MaskUp = ((0x1ul << i) - 0x1ul) << (currentFermionicPositionUp - i - 1);
       for (int j = nbrBosons - i; j >= 0; --j)
 	{
-	  long TmpPos = this->GenerateStates(nbrBosons - i - j, currentKx, currentKy, currentKz - 1, currentTotalKx + ((i + j) * currentKx), currentTotalKy + ((i + j) * currentKy), currentTotalKz + ((i + j) * currentKz), currentFermionicPositionUp - i - 1, currentFermionicPositionDown - j - 1, pos);
+	  long TmpPos = this->GenerateStates(nbrBosons - i - j, currentKx, currentKy, currentKz, currentKt - 1, currentTotalKx + ((i + j) * currentKx), currentTotalKy + ((i + j) * currentKy), currentTotalKz + ((i + j) * currentKz), currentTotalKt + ((i + j) * currentKt), currentFermionicPositionUp - i - 1, currentFermionicPositionDown - j - 1, pos);
 	  unsigned long MaskDown = ((0x1ul << j) - 0x1ul) << (currentFermionicPositionDown - j - 1);
 	  for (; pos < TmpPos; ++pos)
 	    {
@@ -434,27 +452,34 @@ long BosonOnCubicLatticeWithSU2SpinMomentumSpace::GenerateStates(int nbrBosons, 
 // currentKx = current momentum along x for a single particle
 // currentKy = current momentum along y for a single particle
 // currentKz = current momentum along z for a single particle
+// currentKt = current momentum along z for a single particle
 // currentTotalKx = current total momentum along x
 // currentTotalKy = current total momentum along y
 // currentTotalKz = current total momentum along z
+// currentTotalKt = current total momentum along t
 // currentFermionicPositionUp = current fermionic position within the state description for the spin up
 // currentFermionicPositionDown = current fermionic position within the state description for the spin down
 // nbrSpinUp = number of particles with spin up
 // pos = position in StateDescription array where to store states
 // return value = position from which new states have to be stored
 
-long BosonOnCubicLatticeWithSU2SpinMomentumSpace::GenerateStates(int nbrBosons, int currentKx, int currentKy, int currentKz,
-								 int currentTotalKx, int currentTotalKy, int currentTotalKz, 
-								 int currentFermionicPositionUp, int currentFermionicPositionDown, int nbrSpinUp, long pos)
+long BosonOnHyperCubicLatticeWithSU2SpinMomentumSpace::GenerateStates(int nbrBosons, int currentKx, int currentKy, int currentKz, int currentKt,
+								      int currentTotalKx, int currentTotalKy, int currentTotalKz, int currentTotalKt, 
+								      int currentFermionicPositionUp, int currentFermionicPositionDown, int nbrSpinUp, long pos)
 {
-  if (currentKz < 0)
+  if (currentKt < 0)
     {
-      currentKz = this->NbrSiteZ - 1;
-      currentKy--;
-      if (currentKy < 0)
+      currentKt = this->NbrSiteT - 1;
+      currentKz--;
+      if (currentKz < 0)
 	{
-	  currentKy = this->NbrSiteY - 1;
-	  currentKx--;
+	  currentKz = this->NbrSiteZ - 1;
+	  currentKy--;
+	  if (currentKy < 0)
+	    {
+	      currentKy = this->NbrSiteY - 1;
+	      currentKx--;
+	    }
 	}
     }
   if ((nbrSpinUp < 0) || (nbrSpinUp > nbrBosons))
@@ -462,7 +487,7 @@ long BosonOnCubicLatticeWithSU2SpinMomentumSpace::GenerateStates(int nbrBosons, 
   if (nbrBosons == 0)
     {
       if (((currentTotalKx % this->NbrSiteX) == this->KxMomentum) && ((currentTotalKy % this->NbrSiteY) == this->KyMomentum)
-	  && ((currentTotalKz % this->NbrSiteZ) == this->KzMomentum))
+	  && ((currentTotalKz % this->NbrSiteZ) == this->KzMomentum) && ((currentTotalKt % this->NbrSiteT) == this->KtMomentum))
 	{
  	  this->StateDescriptionUp[pos] = 0x0ul;
  	  this->StateDescriptionDown[pos] = 0x0ul;
@@ -478,7 +503,7 @@ long BosonOnCubicLatticeWithSU2SpinMomentumSpace::GenerateStates(int nbrBosons, 
       unsigned long MaskUp = ((0x1ul << i) - 0x1ul) << (currentFermionicPositionUp - i - 1);
       for (int j = nbrBosons - i; j >= 0; --j)
 	{
-	  long TmpPos = this->GenerateStates(nbrBosons - i - j, currentKx, currentKy, currentKz - 1, currentTotalKx + ((i + j) * currentKx), currentTotalKy + ((i + j) * currentKy), currentTotalKz + ((i + j) * currentKz), currentFermionicPositionUp - i - 1, currentFermionicPositionDown - j - 1, nbrSpinUp - i, pos);
+	  long TmpPos = this->GenerateStates(nbrBosons - i - j, currentKx, currentKy, currentKz, currentKt - 1, currentTotalKx + ((i + j) * currentKx), currentTotalKy + ((i + j) * currentKy), currentTotalKz + ((i + j) * currentKz), currentTotalKt + ((i + j) * currentKt), currentFermionicPositionUp - i - 1, currentFermionicPositionDown - j - 1, nbrSpinUp - i, pos);
 	  unsigned long MaskDown = ((0x1ul << j) - 0x1ul) << (currentFermionicPositionDown - j - 1);
 	  for (; pos < TmpPos; ++pos)
 	    {
@@ -496,28 +521,35 @@ long BosonOnCubicLatticeWithSU2SpinMomentumSpace::GenerateStates(int nbrBosons, 
 // currentKx = current momentum along x for a single particle
 // currentKy = current momentum along y for a single particle
 // currentKz = current momentum along z for a single particle
+// currentKt = current momentum along z for a single particle
 // currentTotalKx = current total momentum along x
 // currentTotalKy = current total momentum along y
 // currentTotalKz = current total momentum along z
+// currentTotalKt = current total momentum along t
 // return value = Hilbert space dimension
 
-long BosonOnCubicLatticeWithSU2SpinMomentumSpace::EvaluateHilbertSpaceDimension(int nbrBosons, int currentKx, int currentKy, int currentKz,
-										int currentTotalKx, int currentTotalKy, int currentTotalKz)
+long BosonOnHyperCubicLatticeWithSU2SpinMomentumSpace::EvaluateHilbertSpaceDimension(int nbrBosons, int currentKx, int currentKy, int currentKz, int currentKt,
+										     int currentTotalKx, int currentTotalKy, int currentTotalKz, int currentTotalKt)
 {
-  if (currentKz < 0)
+  if (currentKt < 0)
     {
-      currentKz = this->NbrSiteZ - 1;
-      currentKy--;
-      if (currentKy < 0)
+      currentKt = this->NbrSiteT - 1;
+      currentKz--;
+      if (currentKz < 0)
 	{
-	  currentKy = this->NbrSiteY - 1;
-	  currentKx--;
+	  currentKz = this->NbrSiteZ - 1;
+	  currentKy--;
+	  if (currentKy < 0)
+	    {
+	      currentKy = this->NbrSiteY - 1;
+	      currentKx--;
+	    }
 	}
     }
   if (nbrBosons == 0)
     {
       if (((currentTotalKx % this->NbrSiteX) == this->KxMomentum) && ((currentTotalKy % this->NbrSiteY) == this->KyMomentum)
-	  && ((currentTotalKz % this->NbrSiteZ) == this->KzMomentum))
+	  && ((currentTotalKz % this->NbrSiteZ) == this->KzMomentum)&& ((currentTotalKt % this->NbrSiteT) == this->KtMomentum))
 	return 1l;
       else	
 	return 0l;
@@ -526,7 +558,7 @@ long BosonOnCubicLatticeWithSU2SpinMomentumSpace::EvaluateHilbertSpaceDimension(
     return 0l;
   long Count = 0;
   for (int i = nbrBosons; i >= 0; --i)
-    Count += (((long) i) + 1l) * this->EvaluateHilbertSpaceDimension(nbrBosons - i, currentKx, currentKy, currentKz - 1, currentTotalKx + (i * currentKx), currentTotalKy + (i * currentKy), currentTotalKz + (i * currentKz));
+    Count += (((long) i) + 1l) * this->EvaluateHilbertSpaceDimension(nbrBosons - i, currentKx, currentKy, currentKz, currentKt - 1, currentTotalKx + (i * currentKx), currentTotalKy + (i * currentKy), currentTotalKz + (i * currentKz), currentTotalKt + (i * currentKt));
   return Count;
 }
 
@@ -536,23 +568,30 @@ long BosonOnCubicLatticeWithSU2SpinMomentumSpace::EvaluateHilbertSpaceDimension(
 // currentKx = current momentum along x for a single particle
 // currentKy = current momentum along y for a single particle
 // currentKz = current momentum along z for a single particle
+// currentKt = current momentum along z for a single particle
 // currentTotalKx = current total momentum along x
 // currentTotalKy = current total momentum along y
 // currentTotalKz = current total momentum along z
+// currentTotalKt = current total momentum along t
 // nbrSpinUp = number of particles with spin up
 // return value = Hilbert space dimension
 
-long BosonOnCubicLatticeWithSU2SpinMomentumSpace::EvaluateHilbertSpaceDimension(int nbrBosons, int currentKx, int currentKy, int currentKz,
-										int currentTotalKx, int currentTotalKy, int currentTotalKz, int nbrSpinUp)
+long BosonOnHyperCubicLatticeWithSU2SpinMomentumSpace::EvaluateHilbertSpaceDimension(int nbrBosons, int currentKx, int currentKy, int currentKz, int currentKt,
+										int currentTotalKx, int currentTotalKy, int currentTotalKz, int currentTotalKt, int nbrSpinUp)
 {
-  if (currentKz < 0)
+  if (currentKt < 0)
     {
-      currentKz = this->NbrSiteZ - 1;
-      currentKy--;
-      if (currentKy < 0)
+      currentKt = this->NbrSiteT - 1;
+      currentKz--;
+      if (currentKz < 0)
 	{
-	  currentKy = this->NbrSiteY - 1;
-	  currentKx--;
+	  currentKz = this->NbrSiteZ - 1;
+	  currentKy--;
+	  if (currentKy < 0)
+	    {
+	      currentKy = this->NbrSiteY - 1;
+	      currentKx--;
+	    }
 	}
     }
   if ((nbrSpinUp < 0) || (nbrSpinUp > nbrBosons))
@@ -561,7 +600,7 @@ long BosonOnCubicLatticeWithSU2SpinMomentumSpace::EvaluateHilbertSpaceDimension(
   if (nbrBosons == 0)
     {
       if (((currentTotalKx % this->NbrSiteX) == this->KxMomentum) && ((currentTotalKy % this->NbrSiteY) == this->KyMomentum)
-	  && ((currentTotalKz % this->NbrSiteZ) == this->KzMomentum))
+	  && ((currentTotalKz % this->NbrSiteZ) == this->KzMomentum)&& ((currentTotalKt % this->NbrSiteT) == this->KyMomentum))
 	return 1l;
       else	
 	return 0l;
@@ -571,7 +610,7 @@ long BosonOnCubicLatticeWithSU2SpinMomentumSpace::EvaluateHilbertSpaceDimension(
   long Count = 0;
   for (int i = nbrBosons; i >= 0; --i)
     for (int j = i; j >= 0; --j)
-      Count += this->EvaluateHilbertSpaceDimension(nbrBosons - i, currentKx, currentKy, currentKz - 1, currentTotalKx + (i * currentKx), currentTotalKy + (i * currentKy), currentTotalKz + (i * currentKz), nbrSpinUp -j);
+      Count += this->EvaluateHilbertSpaceDimension(nbrBosons - i, currentKx, currentKy, currentKz, currentKt - 1, currentTotalKx + (i * currentKx), currentTotalKy + (i * currentKy), currentTotalKz + (i * currentKz), currentTotalKt + (i * currentKt), nbrSpinUp -j);
   return Count;
 }
 
@@ -579,17 +618,18 @@ long BosonOnCubicLatticeWithSU2SpinMomentumSpace::EvaluateHilbertSpaceDimension(
 // 
 // nbrParticleSector = number of particles that belong to the subsytem 
 // kxSector = kx sector in which the density matrix has to be evaluated 
-// kySector = kx sector in which the density matrix has to be evaluated 
-// kzSector = kx sector in which the density matrix has to be evaluated 
+// kySector = ky sector in which the density matrix has to be evaluated 
+// kzSector = kz sector in which the density matrix has to be evaluated 
+// kzSector = kt sector in which the density matrix has to be evaluated 
 // groundState = reference on the total system ground state
 // architecture = pointer to the architecture to use parallelized algorithm 
 // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
 
-HermitianMatrix BosonOnCubicLatticeWithSU2SpinMomentumSpace::EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int kxSector, int kySector, int kzSector, ComplexVector& groundState, AbstractArchitecture* architecture)
+HermitianMatrix BosonOnHyperCubicLatticeWithSU2SpinMomentumSpace::EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int kxSector, int kySector, int kzSector, int ktSector, ComplexVector& groundState, AbstractArchitecture* architecture)
 {
   if (nbrParticleSector == 0)
     {
-      if ((kxSector == 0) && (kySector == 0) && (kzSector == 0))
+      if ((kxSector == 0) && (kySector == 0) && (kzSector == 0) && (ktSector == 0))
 	{
 	  HermitianMatrix TmpDensityMatrix(1, true);
 	  TmpDensityMatrix(0, 0) = 1.0;
@@ -603,7 +643,8 @@ HermitianMatrix BosonOnCubicLatticeWithSU2SpinMomentumSpace::EvaluatePartialDens
     }
   if (nbrParticleSector == this->NbrBosons)
     {
-      if ((kxSector == this->KxMomentum) && (kySector == this->KyMomentum) && (kzSector == this->KzMomentum))
+      if ((kxSector == this->KxMomentum) && (kySector == this->KyMomentum) && (kzSector == this->KzMomentum)
+	  && (ktSector == this->KxMomentum))
 	{
 	  HermitianMatrix TmpDensityMatrix(1, true);
 	  TmpDensityMatrix(0, 0) = 1.0;
@@ -619,18 +660,22 @@ HermitianMatrix BosonOnCubicLatticeWithSU2SpinMomentumSpace::EvaluatePartialDens
   int ComplementaryKxMomentum = (this->KxMomentum - kxSector) % this->NbrSiteX;
   int ComplementaryKyMomentum = (this->KyMomentum - kySector) % this->NbrSiteY;
   int ComplementaryKzMomentum = (this->KzMomentum - kzSector) % this->NbrSiteZ;
+  int ComplementaryKtMomentum = (this->KtMomentum - ktSector) % this->NbrSiteT;
   if (ComplementaryKxMomentum < 0)
     ComplementaryKxMomentum += this->NbrSiteX;
   if (ComplementaryKyMomentum < 0)
     ComplementaryKyMomentum += this->NbrSiteY;
   if (ComplementaryKzMomentum < 0)
     ComplementaryKzMomentum += this->NbrSiteZ;
+  if (ComplementaryKtMomentum < 0)
+    ComplementaryKtMomentum += this->NbrSiteT;
   cout << "kx = " << this->KxMomentum << " " << kxSector << " " << ComplementaryKxMomentum << endl;
   cout << "ky = " << this->KyMomentum << " " << kySector << " " << ComplementaryKyMomentum << endl;
   cout << "kz = " << this->KzMomentum << " " << kzSector << " " << ComplementaryKzMomentum << endl;
-  BosonOnCubicLatticeWithSU2SpinMomentumSpace SubsytemSpace (nbrParticleSector, this->NbrSiteX, this->NbrSiteY, this->NbrSiteZ, kxSector, kySector, kzSector);
+  cout << "kt = " << this->KtMomentum << " " << ktSector << " " << ComplementaryKtMomentum << endl;
+  BosonOnHyperCubicLatticeWithSU2SpinMomentumSpace SubsytemSpace (nbrParticleSector, this->NbrSiteX, this->NbrSiteY, this->NbrSiteZ, this->NbrSiteT, kxSector, kySector, kzSector, ktSector);
   HermitianMatrix TmpDensityMatrix (SubsytemSpace.GetHilbertSpaceDimension(), true);
-  BosonOnCubicLatticeWithSU2SpinMomentumSpace ComplementarySpace (ComplementaryNbrParticles, this->NbrSiteX, this->NbrSiteY, this->NbrSiteZ, ComplementaryKxMomentum, ComplementaryKyMomentum, ComplementaryKzMomentum);
+  BosonOnHyperCubicLatticeWithSU2SpinMomentumSpace ComplementarySpace (ComplementaryNbrParticles, this->NbrSiteX, this->NbrSiteY, this->NbrSiteZ, this->NbrSiteT, ComplementaryKxMomentum, ComplementaryKyMomentum, ComplementaryKzMomentum, ComplementaryKtMomentum);
   cout << "subsystem Hilbert space dimension = " << SubsytemSpace.HilbertSpaceDimension << endl;
 
 
@@ -649,20 +694,21 @@ HermitianMatrix BosonOnCubicLatticeWithSU2SpinMomentumSpace::EvaluatePartialDens
 // 
 // nbrParticleSector = number of particles that belong to the subsytem 
 // kxSector = kx sector in which the density matrix has to be evaluated 
-// kySector = kx sector in which the density matrix has to be evaluated 
-// kzSector = kx sector in which the density matrix has to be evaluated 
+// kySector = ky sector in which the density matrix has to be evaluated 
+// kzSector = kz sector in which the density matrix has to be evaluated 
+// ktSector = kt sector in which the density matrix has to be evaluated 
 // nbrGroundStates = number of projectors
 // groundStates = array of degenerate groundstates associated to each projector
 // weights = array of weights in front of each projector
 // architecture = pointer to the architecture to use parallelized algorithm 
 // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
 
-HermitianMatrix BosonOnCubicLatticeWithSU2SpinMomentumSpace::EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int kxSector, int kySector, int kzSector, 
+HermitianMatrix BosonOnHyperCubicLatticeWithSU2SpinMomentumSpace::EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int kxSector, int kySector, int kzSector, int ktSector, 
 													    int nbrGroundStates, ComplexVector* groundStates, double* weights, AbstractArchitecture* architecture)
 {
   if (nbrParticleSector == 0)
     {
-      if ((kxSector == 0) && (kySector == 0) && (kzSector == 0))
+      if ((kxSector == 0) && (kySector == 0) && (kzSector == 0) && (ktSector == 0))
 	{
 	  HermitianMatrix TmpDensityMatrix(1, true);
 	  TmpDensityMatrix(0, 0) = 0.0;
@@ -678,7 +724,8 @@ HermitianMatrix BosonOnCubicLatticeWithSU2SpinMomentumSpace::EvaluatePartialDens
     }
   if (nbrParticleSector == this->NbrBosons)
     {
-      if ((kxSector == this->KxMomentum) && (kySector == this->KyMomentum) && (kzSector == this->KzMomentum))
+      if ((kxSector == this->KxMomentum) && (kySector == this->KyMomentum) && (kzSector == this->KzMomentum)
+	   && (ktSector == this->KtMomentum))
 	{
 	  HermitianMatrix TmpDensityMatrix(1, true);
 	  TmpDensityMatrix(0, 0) = 0.0;
@@ -696,20 +743,24 @@ HermitianMatrix BosonOnCubicLatticeWithSU2SpinMomentumSpace::EvaluatePartialDens
   int ComplementaryKxMomentum = (this->KxMomentum - kxSector) % this->NbrSiteX;
   int ComplementaryKyMomentum = (this->KyMomentum - kySector) % this->NbrSiteY;
   int ComplementaryKzMomentum = (this->KzMomentum - kzSector) % this->NbrSiteZ;
+  int ComplementaryKtMomentum = (this->KtMomentum - ktSector) % this->NbrSiteT;
   if (ComplementaryKxMomentum < 0)
     ComplementaryKxMomentum += this->NbrSiteX;
   if (ComplementaryKyMomentum < 0)
     ComplementaryKyMomentum += this->NbrSiteY;
   if (ComplementaryKzMomentum < 0)
     ComplementaryKzMomentum += this->NbrSiteZ;
+  if (ComplementaryKtMomentum < 0)
+    ComplementaryKtMomentum += this->NbrSiteT;
   cout << "kx = " << this->KxMomentum << " " << kxSector << " " << ComplementaryKxMomentum << endl;
   cout << "ky = " << this->KyMomentum << " " << kySector << " " << ComplementaryKyMomentum << endl;
   cout << "kz = " << this->KzMomentum << " " << kzSector << " " << ComplementaryKzMomentum << endl;
-  BosonOnCubicLatticeWithSU2SpinMomentumSpace SubsytemSpace (nbrParticleSector, this->NbrSiteX, this->NbrSiteY, this->NbrSiteZ, 
-							    kxSector, kySector, kzSector);
+  cout << "kt = " << this->KtMomentum << " " << ktSector << " " << ComplementaryKtMomentum << endl;
+  BosonOnHyperCubicLatticeWithSU2SpinMomentumSpace SubsytemSpace (nbrParticleSector, this->NbrSiteX, this->NbrSiteY, this->NbrSiteZ, this->NbrSiteT, 
+								  kxSector, kySector, kzSector, ktSector);
   HermitianMatrix TmpDensityMatrix (SubsytemSpace.GetHilbertSpaceDimension(), true);
-  BosonOnCubicLatticeWithSU2SpinMomentumSpace ComplementarySpace (ComplementaryNbrParticles, this->NbrSiteX, this->NbrSiteY, this->NbrSiteZ,
-								 ComplementaryKxMomentum, ComplementaryKyMomentum, ComplementaryKzMomentum);
+  BosonOnHyperCubicLatticeWithSU2SpinMomentumSpace ComplementarySpace (ComplementaryNbrParticles, this->NbrSiteX, this->NbrSiteY, this->NbrSiteZ, this->NbrSiteT,
+								 ComplementaryKxMomentum, ComplementaryKyMomentum, ComplementaryKzMomentum, ComplementaryKtMomentum);
   cout << "subsystem Hilbert space dimension = " << SubsytemSpace.HilbertSpaceDimension << endl;
 
 
@@ -722,239 +773,5 @@ HermitianMatrix BosonOnCubicLatticeWithSU2SpinMomentumSpace::EvaluatePartialDens
       HermitianMatrix TmpDensityMatrixZero;
       return TmpDensityMatrixZero;
     }
-}
-
-// core part of the evaluation density matrix particle partition calculation
-// 
-// minIndex = first index to consider in complementary Hilbert space
-// nbrIndex = number of indices to consider in complementary Hilbert space
-// complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e part B)
-// destinationHilbertSpace = pointer to the destination Hilbert space (i.e. part A)
-// groundState = reference on the total system ground state
-// densityMatrix = reference on the density matrix where result has to stored
-// return value = number of components that have been added to the density matrix
-
-long BosonOnCubicLatticeWithSU2SpinMomentumSpace::EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace,
-												  ComplexVector& groundState,  HermitianMatrix* densityMatrix)
-{
-  BosonOnCubicLatticeWithSU2SpinMomentumSpace* TmpHilbertSpace =  (BosonOnCubicLatticeWithSU2SpinMomentumSpace*) complementaryHilbertSpace;
-  BosonOnCubicLatticeWithSU2SpinMomentumSpace* TmpDestinationHilbertSpace =  (BosonOnCubicLatticeWithSU2SpinMomentumSpace*) destinationHilbertSpace;
-  int ComplementaryNbrBosonSector = TmpHilbertSpace->NbrBosons;
-  int NbrBosonSector = TmpDestinationHilbertSpace->NbrBosons;
-  int* TmpStatePosition = new int [TmpDestinationHilbertSpace->HilbertSpaceDimension];
-  int* TmpStatePosition2 = new int [TmpDestinationHilbertSpace->HilbertSpaceDimension];
-  Complex* TmpStateCoefficient = new Complex [TmpDestinationHilbertSpace->HilbertSpaceDimension];
-  int MaxIndex = minIndex + nbrIndex;
-  long TmpNbrNonZeroElements = 0l;
-  
-  double* LogFactorials = new double[this->NbrBosons + 1];
-  LogFactorials[0] = 0.0;
-  LogFactorials[1] = 0.0;
-  for (int i = 2 ; i <= this->NbrBosons; ++i)
-    LogFactorials[i] = LogFactorials[i - 1] + log((double) i); 
-  double* TmpDestinationLogFactorials = new double [TmpDestinationHilbertSpace->HilbertSpaceDimension];
-  double TmpLogBinomial = LogFactorials[this->NbrBosons] - LogFactorials[ComplementaryNbrBosonSector] - LogFactorials[NbrBosonSector];
-  for (int i = 0; i < TmpDestinationHilbertSpace->HilbertSpaceDimension; ++i)
-    {
-      TmpDestinationHilbertSpace->FermionToBoson(TmpDestinationHilbertSpace->StateDescriptionUp[i], TmpDestinationHilbertSpace->StateDescriptionDown[i], TmpDestinationHilbertSpace->TemporaryStateUp, TmpDestinationHilbertSpace->TemporaryStateDown); 
-
-      double TmpFactor = 0.0;
-      for (int k = 0; k <= TmpDestinationHilbertSpace->LzMax; ++k)
-	{
-	  TmpFactor += LogFactorials[TmpDestinationHilbertSpace->TemporaryStateUp[k]];
-	  TmpFactor += LogFactorials[TmpDestinationHilbertSpace->TemporaryStateDown[k]];
-	}
-      TmpDestinationLogFactorials[i] =  TmpFactor;
-    }
-
-  
-  for (; minIndex < MaxIndex; ++minIndex)    
-    {
-      int Pos = 0;
-      TmpHilbertSpace->FermionToBoson(TmpHilbertSpace->StateDescriptionUp[minIndex], TmpHilbertSpace->StateDescriptionDown[minIndex], TmpHilbertSpace->TemporaryStateUp, TmpHilbertSpace->TemporaryStateDown);
-       double TmpHilbertSpaceFactorial = 0.0;
-       for (int k = 0; k <= TmpHilbertSpace->LzMax; ++k)
-	 {
-	   TmpHilbertSpaceFactorial += LogFactorials[TmpHilbertSpace->TemporaryStateUp[k]];
-	   TmpHilbertSpaceFactorial += LogFactorials[TmpHilbertSpace->TemporaryStateDown[k]];
-	 }
-       for (int j = 0; j < TmpDestinationHilbertSpace->HilbertSpaceDimension; ++j)
-	 {
-	   TmpDestinationHilbertSpace->FermionToBoson(TmpDestinationHilbertSpace->StateDescriptionUp[j], TmpDestinationHilbertSpace->StateDescriptionDown[j], TmpDestinationHilbertSpace->TemporaryStateUp, TmpDestinationHilbertSpace->TemporaryStateDown);
-	   for (int k = 0; k <=  TmpDestinationHilbertSpace->LzMax; ++k)
-	     {
-	       this->TemporaryStateUp[k] = TmpDestinationHilbertSpace->TemporaryStateUp[k];
-	       this->TemporaryStateDown[k] = TmpDestinationHilbertSpace->TemporaryStateDown[k];
-	     }
-	   for (int k = TmpDestinationHilbertSpace->LzMax + 1; k <=  this->LzMax; ++k)
-	     {
-	       this->TemporaryStateUp[k] = 0x0ul;
-	       this->TemporaryStateDown[k] = 0x0ul;
-	     }	   
-	   for (int k = 0; k <=  TmpHilbertSpace->LzMax; ++k)
-	     {
-	       this->TemporaryStateUp[k] += TmpHilbertSpace->TemporaryStateUp[k];
-	       this->TemporaryStateDown[k] += TmpHilbertSpace->TemporaryStateDown[k];
-	     }
-
-	   int TmpPos = this->FindStateIndex(this->TemporaryStateUp, this->TemporaryStateDown);
-	   if (TmpPos != this->HilbertSpaceDimension)
-	     {
-	       double TmpFactorial = 0.0;	      
-	       for (int k = 0; k <= this->LzMax; ++k)
-		 {
-		   TmpFactorial += LogFactorials[this->TemporaryStateUp[k]];
-		   TmpFactorial += LogFactorials[this->TemporaryStateDown[k]];
-		 }
-	       TmpFactorial -= TmpHilbertSpaceFactorial + TmpDestinationLogFactorials[j] + TmpLogBinomial;
-	       TmpFactorial *= 0.5; 
-	       
-	       TmpStatePosition[Pos] = TmpPos;
-	       TmpStatePosition2[Pos] = j;
-	       TmpStateCoefficient[Pos] = exp(TmpFactorial);
-	       ++Pos;
-	     }
-	 }
-       if (Pos != 0)
- 	{
- 	  ++TmpNbrNonZeroElements;
- 	  for (int j = 0; j < Pos; ++j)
- 	    {
- 	      int Pos2 = TmpStatePosition2[j];
- 	      Complex TmpValue = Conj(groundState[TmpStatePosition[j]]) * TmpStateCoefficient[j];
- 	      for (int k = 0; k < Pos; ++k)
- 		if (TmpStatePosition2[k] >= Pos2)
- 		  {
- 		    densityMatrix->AddToMatrixElement(Pos2, TmpStatePosition2[k], TmpValue * groundState[TmpStatePosition[k]] * TmpStateCoefficient[k]);
- 		  }
- 	    }
- 	}
-     }
-  delete[] TmpStatePosition;
-  delete[] TmpStatePosition2;
-  delete[] TmpStateCoefficient;
-  return TmpNbrNonZeroElements;
-}
-
-// core part of the evaluation density matrix particle partition calculation involving a sum of projetors 
-// 
-// minIndex = first index to consider in source Hilbert space
-// nbrIndex = number of indices to consider in source Hilbert space
-// complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e. part B)
-// destinationHilbertSpace = pointer to the destination Hilbert space  (i.e. part A)
-// nbrGroundStates = number of projectors
-// groundStates = array of degenerate groundstates associated to each projector
-// weights = array of weights in front of each projector
-// densityMatrix = reference on the density matrix where result has to stored
-// return value = number of components that have been added to the density matrix
-
-long BosonOnCubicLatticeWithSU2SpinMomentumSpace::EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace,
-												  int nbrGroundStates, ComplexVector* groundStates, double* weights, HermitianMatrix* densityMatrix)
-{
-  BosonOnCubicLatticeWithSU2SpinMomentumSpace* TmpHilbertSpace =  (BosonOnCubicLatticeWithSU2SpinMomentumSpace*) complementaryHilbertSpace;
-  BosonOnCubicLatticeWithSU2SpinMomentumSpace* TmpDestinationHilbertSpace =  (BosonOnCubicLatticeWithSU2SpinMomentumSpace*) destinationHilbertSpace;
-  int ComplementaryNbrBosonSector = TmpHilbertSpace->NbrBosons;
-  int NbrBosonSector = TmpDestinationHilbertSpace->NbrBosons;
-  int* TmpStatePosition = new int [TmpDestinationHilbertSpace->HilbertSpaceDimension];
-  int* TmpStatePosition2 = new int [TmpDestinationHilbertSpace->HilbertSpaceDimension];
-  Complex* TmpStateCoefficient = new Complex [TmpDestinationHilbertSpace->HilbertSpaceDimension];
-  int MaxIndex = minIndex + nbrIndex;
-  long TmpNbrNonZeroElements = 0l;
-
-  double* LogFactorials = new double[this->NbrBosons + 1];
-  LogFactorials[0] = 0.0;
-  LogFactorials[1] = 0.0;
-  for (int i = 2 ; i <= this->NbrBosons; ++i)
-    LogFactorials[i] = LogFactorials[i - 1] + log((double) i); 
-  double* TmpDestinationLogFactorials = new double [TmpDestinationHilbertSpace->HilbertSpaceDimension];
-  double TmpLogBinomial = LogFactorials[this->NbrBosons] - LogFactorials[ComplementaryNbrBosonSector] - LogFactorials[NbrBosonSector];
-  for (int i = 0; i < TmpDestinationHilbertSpace->HilbertSpaceDimension; ++i)
-    {
-      TmpDestinationHilbertSpace->FermionToBoson(TmpDestinationHilbertSpace->StateDescriptionUp[i], TmpDestinationHilbertSpace->StateDescriptionDown[i], TmpDestinationHilbertSpace->TemporaryStateUp, TmpDestinationHilbertSpace->TemporaryStateDown); 
-
-      double TmpFactor = 0.0;
-      for (int k = 0; k <= TmpDestinationHilbertSpace->LzMax; ++k)
-	{
-	  TmpFactor += LogFactorials[TmpDestinationHilbertSpace->TemporaryStateUp[k]];
-	  TmpFactor += LogFactorials[TmpDestinationHilbertSpace->TemporaryStateDown[k]];
-	}
-      TmpDestinationLogFactorials[i] =  TmpFactor;
-    }
-
-  Complex* TmpValues = new Complex[nbrGroundStates];
-  
-  
-  for (; minIndex < MaxIndex; ++minIndex)    
-    {
-      int Pos = 0;
-      TmpHilbertSpace->FermionToBoson(TmpHilbertSpace->StateDescriptionUp[minIndex], TmpHilbertSpace->StateDescriptionDown[minIndex], TmpHilbertSpace->TemporaryStateUp, TmpHilbertSpace->TemporaryStateDown);
-       double TmpHilbertSpaceFactorial = 0.0;
-       for (int k = 0; k <= TmpHilbertSpace->LzMax; ++k)
-	 {
-	   TmpHilbertSpaceFactorial += LogFactorials[TmpHilbertSpace->TemporaryStateUp[k]];
-	   TmpHilbertSpaceFactorial += LogFactorials[TmpHilbertSpace->TemporaryStateDown[k]];
-	 }
-       for (int j = 0; j < TmpDestinationHilbertSpace->HilbertSpaceDimension; ++j)
-	 {
-	   TmpDestinationHilbertSpace->FermionToBoson(TmpDestinationHilbertSpace->StateDescriptionUp[j], TmpDestinationHilbertSpace->StateDescriptionDown[j], TmpDestinationHilbertSpace->TemporaryStateUp, TmpDestinationHilbertSpace->TemporaryStateDown);
-	   for (int k = 0; k <=  TmpDestinationHilbertSpace->LzMax; ++k)
-	     {
-	       this->TemporaryStateUp[k] = TmpDestinationHilbertSpace->TemporaryStateUp[k];
-	       this->TemporaryStateDown[k] = TmpDestinationHilbertSpace->TemporaryStateDown[k];
-	     }
-	   for (int k = TmpDestinationHilbertSpace->LzMax + 1; k <=  this->LzMax; ++k)
-	     {
-	       this->TemporaryStateUp[k] = 0x0ul;
-	       this->TemporaryStateDown[k] = 0x0ul;
-	     }	   
-	   for (int k = 0; k <=  TmpHilbertSpace->LzMax; ++k)
-	     {
-	       this->TemporaryStateUp[k] += TmpHilbertSpace->TemporaryStateUp[k];
-	       this->TemporaryStateDown[k] += TmpHilbertSpace->TemporaryStateDown[k];
-	     }
-
-	   int TmpPos = this->FindStateIndex(this->TemporaryStateUp, this->TemporaryStateDown);
-	   if (TmpPos != this->HilbertSpaceDimension)
-	     {
-	       double TmpFactorial = 0.0;	      
-	       for (int k = 0; k <= this->LzMax; ++k)
-		 {
-		   TmpFactorial += LogFactorials[this->TemporaryStateUp[k]];
-		   TmpFactorial += LogFactorials[this->TemporaryStateDown[k]];
-		 }
-	       TmpFactorial -= TmpHilbertSpaceFactorial + TmpDestinationLogFactorials[j] + TmpLogBinomial;
-	       TmpFactorial *= 0.5; 
-	       
-	       TmpStatePosition[Pos] = TmpPos;
-	       TmpStatePosition2[Pos] = j;
-	       TmpStateCoefficient[Pos] = exp(TmpFactorial);
-	       ++Pos;
-	     }
-	 }
-      if (Pos != 0)
-	{
-	  ++TmpNbrNonZeroElements;
-	  for (int j = 0; j < Pos; ++j)
-	    {
-	      int Pos2 = TmpStatePosition2[j];
-	      for (int l = 0; l < nbrGroundStates; ++l)
-		TmpValues[l] = weights[l] * Conj(groundStates[l][TmpStatePosition[j]]) * TmpStateCoefficient[j];
-	      for (int k = 0; k < Pos; ++k)
-		if (TmpStatePosition2[k] >= Pos2)
-		  {
-		    for (int l = 0; l < nbrGroundStates; ++l)
-		      densityMatrix->AddToMatrixElement(Pos2, TmpStatePosition2[k], 
-							TmpValues[l] * groundStates[l][TmpStatePosition[k]] * TmpStateCoefficient[k]);
-		  }
-	    }
-	}
-    }
-
-  delete[] TmpValues;
-  delete[] TmpStatePosition;
-  delete[] TmpStatePosition2;
-  delete[] TmpStateCoefficient;
-  delete[] TmpDestinationLogFactorials;
-  return TmpNbrNonZeroElements;
 }
 

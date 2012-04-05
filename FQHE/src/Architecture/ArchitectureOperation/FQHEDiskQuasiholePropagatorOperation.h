@@ -78,6 +78,11 @@ class FQHEDiskQuasiholePropagatorOperation: public AbstractScalarSumOperation
   //
   ~FQHEDiskQuasiholePropagatorOperation();
   
+  // get dimension (i.e. Hilbert space dimension, nbr of subdivisions,...), return 0 if large number are required
+  // 
+  // return value = dimension  
+  virtual int GetDimension ();
+
   // get dimension (i.e. Hilbert space dimension)
   //
   // return value = dimension
