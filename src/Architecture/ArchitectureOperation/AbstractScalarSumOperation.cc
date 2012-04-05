@@ -81,26 +81,6 @@ void AbstractScalarSumOperation::SetIndicesRange (const long& firstComponent, co
 }
 
 
-// get dimension (i.e. Hilbert space dimension, nbr of subdivisions,...), return 0 if large number are required
-// 
-// return value = dimension  
-
-// int AbstractScalarSumOperation::GetDimension ()
-// {
-//   cout << "AbstractScalarSumOperation::GetDimension () needs to be overridden in derived classes"<<endl;
-//   return 0;
-// }
-
-// get dimension (i.e. Hilbert space dimension, nbr of subdivisions,...) when large number are required
-// 
-// return value = dimension  
-
-// long AbstractScalarSumOperation::GetLargeDimension ()
-// {
-//   cout << "AbstractScalarSumOperation::GetLargeDimension () needs to be overridden in derived classes"<<endl;
-//   return 0;
-// }
-
 // apply operation for SMP architecture
 //
 // architecture = pointer to the architecture
