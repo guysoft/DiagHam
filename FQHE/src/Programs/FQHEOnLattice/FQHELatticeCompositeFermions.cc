@@ -1,6 +1,8 @@
 #include "HilbertSpace/BosonOnLattice.h"
+#include "HilbertSpace/BosonOnLatticeLong.h"
 #include "HilbertSpace/FermionOnLattice.h"
 #include "HilbertSpace/HardCoreBosonOnLattice.h"
+#include "HilbertSpace/HardCoreBosonLong.h"
 #include "Hamiltonian/ParticleOnLatticeDeltaHamiltonian.h"
 #include "Operator/ParticleOnLatticeTranslationOperator.h"
 
@@ -193,9 +195,24 @@ int main(int argc, char** argv)
   cout << "* Full Hilbert-space: N="<<NbrBosons<<" bosons in "<<Lx<<" x "<<Ly<<" cells at N_phi="<<NbrFluxQuanta<<endl;
   ParticleOnLattice* Space;
   if (HardCore)
-    Space =new HardCoreBosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
-  else Space = new BosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
-  
+    {
+      if (Lx*Ly + NbrBosons - 1 < 63)
+	{
+	  Space =new HardCoreBosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
+	}	
+      else		
+	{			
+	  cout <<"Not implemented Hilberspace"<<endl;
+	  return -1;
+	}
+    }	
+  else 
+    {
+      if (Lx*Ly + NbrBosons - 1 < 63)
+	Space = new BosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
+      else	
+	Space = new BosonOnLatticeLong(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
+    }	
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
 
 
