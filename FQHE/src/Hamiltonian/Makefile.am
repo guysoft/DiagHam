@@ -76,6 +76,7 @@ ParticleOnTorusLaplacianDeltaHamiltonian.cc \
 ParticleOnTorusWithSpinLaplacianDeltaHamiltonian.cc \
 ParticleOnTorusHaffnianHamiltonian.cc \
 ParticleOnLatticeWithSpinChernInsulatorHamiltonian.cc \
+ParticleOnLatticeWithSpinChernInsulatorNBodyHamiltonian.cc \
 ParticleOnLatticeChernInsulatorSingleBandHamiltonian.cc \
 ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian.cc \
 ParticleOnSphereTwoLandauLevelDeltaHamiltonian.cc \
@@ -119,4 +120,5 @@ ParticleOnLatticeKagomeLatticeTwoBandHamiltonian.cc \
 ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier.cc \
 ParticleOnLatticeQuantumSpinHallTwoBandKagomeHamiltonian.cc \
 AbstractQHEOnCylinderHamiltonian.cc \
-ParticleOnCylinderLaplacianDeltaHamiltonian.cc
+ParticleOnCylinderLaplacianDeltaHamiltonian.cc \
+ParticleOnLatticeWithSpinHaldaneModelTwoBandDecoupledThreeBodyHamiltonian.cc 

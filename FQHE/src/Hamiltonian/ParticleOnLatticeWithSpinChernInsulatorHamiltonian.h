@@ -37,6 +37,7 @@
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphereWithSpin.h"
 #include "Hamiltonian/AbstractQHEHamiltonian.h"
+#include "Hamiltonian/ParticleOnSphereWithSpinS2Hamiltonian.h"
 #include "Vector/ComplexVector.h"
 
 #include <iostream>
@@ -145,6 +146,10 @@ class ParticleOnLatticeWithSpinChernInsulatorHamiltonian : public AbstractQHEHam
 
   // flag for implementation of hermitian symmetry
   bool HermitianSymmetryFlag;
+
+  // pointer to an optional S^2 operator in the Hamiltonian 
+  ParticleOnSphereWithSpinS2Hamiltonian* S2Hamiltonian;
+
   
  public:
 
@@ -168,7 +173,7 @@ class ParticleOnLatticeWithSpinChernInsulatorHamiltonian : public AbstractQHEHam
 
   // destructor
   //
-  ~ParticleOnLatticeWithSpinChernInsulatorHamiltonian();
+  virtual ~ParticleOnLatticeWithSpinChernInsulatorHamiltonian();
   
   // ask if Hamiltonian implements hermitian symmetry operations
   //
@@ -239,6 +244,16 @@ class ParticleOnLatticeWithSpinChernInsulatorHamiltonian : public AbstractQHEHam
   // return value = pointer to the array of vectors where result has been stored
   virtual ComplexVector* HermitianLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
 							      int firstComponent, int nbrComponent);
+
+  // add an additional S^2 term to the Hamiltonian
+  //
+  // totalLz = twice the projected momentum total value
+  // totalSz = twice the projected spin total value
+  // factor = factor in front of the S^2
+  // memory = amount of memory that can be used for S^2  precalculations
+  // fixedSz = flag indicating whether Sz needs to be evaluated
+  void AddS2 (int totalLz, int totalSz, double factor = 1.0, long memory = 0l, bool fixedSz = true);
+
 
  protected:
  
@@ -323,13 +338,22 @@ class ParticleOnLatticeWithSpinChernInsulatorHamiltonian : public AbstractQHEHam
   virtual void EvaluateMNOneBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int firstComponent, int lastComponent,
 						     int step, ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors);
 
-  // core part of the PartialFastMultiplicationMemory method involving two-body term
+  // core part of the PartialFastMultiplicationMemory method involving two-body term and one-body terms
   // 
   // particles = pointer to the Hilbert space
   // firstComponent = index of the first component that has to be precalcualted
   // lastComponent  = index of the last component that has to be precalcualted
   // memory = reference on the amount of memory required for precalculations
   virtual void EvaluateMNTwoBodyFastMultiplicationMemoryComponent(ParticleOnSphereWithSpin* particles, int firstComponent, int lastComponent, long& memory);
+
+  // core part of the PartialFastMultiplicationMemory method involving two-body term and one-body terms
+  // 
+  // particles = pointer to the Hilbert space
+  // firstComponent = index of the first component that has to be precalcualted
+  // lastComponent  = index of the last component that has to be precalcualted
+  // memory = reference on the amount of memory required for precalculations
+  virtual void EvaluateMNOneBodyFastMultiplicationMemoryComponent(ParticleOnSphereWithSpin* particles, int firstComponent, int lastComponent, long& memory);
+
 
   // multiply a et of vectors by the current hamiltonian for a given range of indices 
   // and add result to another et of vectors, low level function (no architecture optimization)
@@ -1158,9 +1182,9 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNOneBod
       if (this->OneBodyInteractionFactorsdowndown != 0)
 	for (int j = 0; j <= this->LzMax; ++j)
 	  TmpDiagonal += this->OneBodyInteractionFactorsdowndown[j] * particles->AddAd(index + this->PrecalculationShift, j);	  
-	  indexArray[position] = index + this->PrecalculationShift;
-	  coefficientArray[position] = TmpDiagonal;
-	  ++position;	  
+      indexArray[position] = index + this->PrecalculationShift;
+      coefficientArray[position] = TmpDiagonal;
+      ++position;
     }
   if (this->OneBodyInteractionFactorsupdown != 0)
     {
@@ -1184,10 +1208,11 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNOneBod
 	      ++position;
 	    }
 	}
-    }       
+    }
 }
 
-// core part of the PartialFastMultiplicationMemory method involving two-body term
+
+// core part of the PartialFastMultiplicationMemory method involving two-body term and one-body terms
 // 
 // particles = pointer to the Hilbert space
 // firstComponent = index of the first component that has to be precalcualted
@@ -1202,7 +1227,7 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
   int* TmpIndices;
   // double* TmpInteractionFactor;
   int Dim = particles->GetHilbertSpaceDimension();
-
+  
   if (this->HermitianSymmetryFlag == false)
     {
       for (int i = firstComponent; i < lastComponent; ++i)
@@ -1263,27 +1288,6 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
 		    }
 		}
 	    }	
-	}
-      if (this->OneBodyInteractionFactorsupdown != 0)
-	{
-	  for (int i = firstComponent; i < lastComponent; ++i)
-	    {
-	      for (int j=0; j<= this->LzMax; ++j)
-		{
-		  Index = particles->AddAu(i, j, j, Coefficient);
-		  if (Index < Dim)
-		    {
-		      ++memory;
-		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
-		    }
-		  Index = particles->AduAd(i, j, j, Coefficient);
-		  if (Index < Dim)
-		    {
-		      ++memory;
-		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
-		    }
-		}
-	    }
 	}
     }
   else
@@ -1347,6 +1351,51 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
 		}
 	    }	
 	}
+    }
+}
+
+
+
+// core part of the PartialFastMultiplicationMemory method involving two-body term and one-body terms
+// 
+// particles = pointer to the Hilbert space
+// firstComponent = index of the first component that has to be precalcualted
+// lastComponent  = index of the last component that has to be precalcualted
+// memory = reference on the amount of memory required for precalculations
+
+inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNOneBodyFastMultiplicationMemoryComponent(ParticleOnSphereWithSpin* particles, int firstComponent, int lastComponent, long& memory)
+{
+  int Index;
+  double Coefficient = 0.0;
+
+  int Dim = particles->GetHilbertSpaceDimension();
+  
+  if (this->HermitianSymmetryFlag == false)
+    {
+      if (this->OneBodyInteractionFactorsupdown != 0)
+	{
+	  for (int i = firstComponent; i < lastComponent; ++i)
+	    {
+	      for (int j=0; j<= this->LzMax; ++j)
+		{
+		  Index = particles->AddAu(i, j, j, Coefficient);
+		  if (Index < Dim)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+		    }
+		  Index = particles->AduAd(i, j, j, Coefficient);
+		  if (Index < Dim)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+		    }
+		}
+	    }
+	}
+    }
+  else
+    {
       if (this->OneBodyInteractionFactorsupdown != 0)
 	{
 	  for (int i = firstComponent; i < lastComponent; ++i)
@@ -1379,7 +1428,6 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
 	}
     }
 }
-
 
 
 #endif

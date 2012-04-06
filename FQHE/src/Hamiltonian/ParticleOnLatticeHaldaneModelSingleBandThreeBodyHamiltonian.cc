@@ -38,6 +38,7 @@
 
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/QHEParticlePrecalculationOperation.h"
+#include "GeneralTools/StringTools.h"
 
 #include <iostream>
 #include <sys/time.h>
@@ -91,9 +92,9 @@ ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonian::ParticleOnLatticeHa
 
   this->HamiltonianShift = 0.0;
   this->SqrNBodyValue = this->NBodyValue * this->NBodyValue;
-  this->NNHoping = t1;
-  this->NextNNHoping = t2;
-  this->NextNextNNHoping = t3;
+  this->NNHopping = t1;
+  this->NextNNHopping = t2;
+  this->NextNextNNHopping = t3;
   this->HaldanePhase = phi;
   this->MuS = mus;
   this->GammaX = gammaX;
@@ -116,24 +117,7 @@ ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonian::ParticleOnLatticeHa
   if (memory > 0)
     {
       long TmpMemory = this->FastMultiplicationMemory(memory);
-      if (TmpMemory < 1024)
-	cout  << "fast = " <<  TmpMemory << "b ";
-      else
-	if (TmpMemory < (1 << 20))
-	  cout  << "fast = " << (TmpMemory >> 10) << "kb ";
-	else
-	  if (TmpMemory < (1 << 30))
-	    cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
-	  else
-	    {
-	      cout  << "fast = " << (TmpMemory >> 30) << ".";
-	      TmpMemory -= ((TmpMemory >> 30) << 30);
-	      TmpMemory *= 100l;
-	      TmpMemory >>= 30;
-	      if (TmpMemory < 10l)
-		cout << "0";
-	      cout  << TmpMemory << " Gb ";
-	    }
+      PrintMemorySize(cout,TmpMemory);
       this->EnableFastMultiplication();
     }
 }
@@ -1381,15 +1365,15 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonian::ComputeOneBody
 	int Index = (kx * this->NbrSiteY) + ky;
 
 	// My Convention
-        // Complex B1 = - this->NNHoping * Complex(1 + cos(x) + cos(y), - sin(x) - sin(y));
-	// Complex B2 = - this->NextNextNNHoping * Complex(cos(x+y)+2*cos(x-y),-sin(x+y) );
-        // double d0 = - 2.0 * this->NextNNHoping * cos(this->HaldanePhase) * (cos(x) + cos(y) + cos(x-y));
-        // double d3 = - 2.0 * this->NextNNHoping * sin(this->HaldanePhase) * (sin(x) - sin(y) - sin(x-y)) + this->MuS;
+        // Complex B1 = - this->NNHopping * Complex(1 + cos(x) + cos(y), - sin(x) - sin(y));
+	// Complex B2 = - this->NextNextNNHopping * Complex(cos(x+y)+2*cos(x-y),-sin(x+y) );
+        // double d0 = - 2.0 * this->NextNNHopping * cos(this->HaldanePhase) * (cos(x) + cos(y) + cos(x-y));
+        // double d3 = - 2.0 * this->NextNNHopping * sin(this->HaldanePhase) * (sin(x) - sin(y) - sin(x-y)) + this->MuS;
 
-        Complex B1 = - this->NNHoping * Complex(1 + cos(x+y) + cos(y), + sin(x+y) + sin(y));
-	Complex B2 = - this->NextNextNNHoping * Complex(2* cos(x) + cos(x+2*y),  sin(x+2*y));
-        double d0 = - 2.0 * this->NextNNHoping * cos(this->HaldanePhase) * (cos(x) + cos(y) + cos(x+y));
-        double d3 = - 2.0 * this->NextNNHoping * sin(this->HaldanePhase) * (sin(x) + sin(y) - sin(x+y)) + this->MuS;
+        Complex B1 = - this->NNHopping * Complex(1 + cos(x+y) + cos(y), + sin(x+y) + sin(y));
+	Complex B2 = - this->NextNextNNHopping * Complex(2* cos(x) + cos(x+2*y),  sin(x+2*y));
+        double d0 = - 2.0 * this->NextNNHopping * cos(this->HaldanePhase) * (cos(x) + cos(y) + cos(x+y));
+        double d3 = - 2.0 * this->NextNNHopping * sin(this->HaldanePhase) * (sin(x) + sin(y) - sin(x+y)) + this->MuS;
 
 	HermitianMatrix TmpOneBodyHamiltonian(2, true);
 	TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d0 + d3);

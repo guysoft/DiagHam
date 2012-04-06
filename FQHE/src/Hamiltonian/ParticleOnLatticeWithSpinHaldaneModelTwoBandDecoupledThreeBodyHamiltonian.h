@@ -30,13 +30,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PARTICLEONLATTICEHALDANEMODELSINGLEBANDTHREEBODYHAMILTONIAN_H
-#define PARTICLEONLATTICEHALDANEMODELSINGLEBANDTHREEBODYHAMILTONIAN_H
+#ifndef PARTICLEONLATTICEWITHSPINHALDANEMODELTWOBANDDECOUPLEDTHREEBODYHAMILTONIAN_H
+#define PARTICLEONLATTICEWITHSPINHALDANEMODELTWOBANDDECOUPLEDTHREEBODYHAMILTONIAN_H
 
 
 #include "config.h"
-#include "HilbertSpace/ParticleOnSphere.h"
-#include "Hamiltonian/ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian.h"
+#include "HilbertSpace/ParticleOnSphereWithSpin.h"
+#include "Hamiltonian/ParticleOnLatticeWithSpinChernInsulatorNBodyHamiltonian.h"
 #include "Vector/ComplexVector.h"
 
 #include <iostream>
@@ -47,7 +47,7 @@ using std::cout;
 using std::endl;
 
 
-class ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonian : public ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian
+class ParticleOnLatticeWithSpinHaldaneModelTwoBandDecoupledThreeBodyHamiltonian : public ParticleOnLatticeWithSpinChernInsulatorNBodyHamiltonian
 {
 
  protected:
@@ -77,8 +77,12 @@ class ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonian : public Parti
 
   // use flat band model
   bool FlatBand;
+
+  // anisotropy for spin interactions:
+  double ThreeBodySpinAnisotropy;
   
   // precalculation tables for cosine and sine factors
+  int NBodyValue;	
   Complex* XPhaseTable;
   Complex* YPhaseTable;
   Complex* XHalfPhaseTable;
@@ -90,7 +94,7 @@ class ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonian : public Parti
 
   // default constructor
   //
-  ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonian();
+  ParticleOnLatticeWithSpinHaldaneModelTwoBandDecoupledThreeBodyHamiltonian();
 
   // constructor
   //
@@ -112,13 +116,13 @@ class ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonian : public Parti
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, 
+  ParticleOnLatticeWithSpinHaldaneModelTwoBandDecoupledThreeBodyHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, 
           double uPotential, double vPotential, double wPotential, double sPotential,
-							      double t1, double t2, double t3, double phi, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+									    double t1, double t2, double t3, double phi, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1, bool hermitianFlag=false);
 
   // destructor
   //
-  ~ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonian();
+  virtual ~ParticleOnLatticeWithSpinHaldaneModelTwoBandDecoupledThreeBodyHamiltonian();
   
 
  protected:
@@ -129,8 +133,8 @@ class ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonian : public Parti
 
   // compute the one body transformation matrices and the optional one body band stucture contribution
   //
-  // oneBodyBasis = array of one body transformation matrices
-  virtual void ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis);
+  // oneBodyBasis = array of one body transformation matrices (spin up, spin down)
+  virtual void ComputeOneBodyMatrices(ComplexMatrix** oneBodyBasis);
 
   // compute all the phase precalculation arrays 
   //

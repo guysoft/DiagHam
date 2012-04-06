@@ -15,6 +15,8 @@
 #include "GeneralTools/ConfigurationParser.h"
 #include "GeneralTools/MultiColumnASCIIFile.h"
 
+#include "MathTools/GroupedPermutations.h"
+
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
 #include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
 
@@ -75,6 +77,16 @@ int main(int argc, char** argv)
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
   Manager.StandardProceedings(argv, argc, cout);
+
+
+  // testing:
+  GroupedPermutations TestPer(2,2,false);
+  SmallIntegerArray* Perms = TestPer.GetPermutations();
+  cout << "total number of grouped permutations (of 4+4 particles) : "<<TestPer.GetNbrPermutations()<<endl;
+  
+  for (int i=0; i<TestPer.GetNbrPermutations(); ++i)
+    cout << i<<"\t"<<Perms[i]<<endl;
+  exit(1);
  	
   RealVector InitialState;
   if (InitialState.ReadVector(Manager.GetString("state")) == false)

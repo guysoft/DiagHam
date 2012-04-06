@@ -92,8 +92,8 @@ ParticleOnLatticeHaldaneModelSingleBandFourBodyHamiltonian::ParticleOnLatticeHal
 
   this->HamiltonianShift = 0.0;
   this->SqrNBodyValue = this->NBodyValue * this->NBodyValue;
-  this->NNHoping = t1;
-  this->NextNNHoping = t2;
+  this->NNHopping = t1;
+  this->NextNNHopping = t2;
   this->HaldanePhase = phi;
   this->MuS = mus;
   this->GammaX = gammaX;

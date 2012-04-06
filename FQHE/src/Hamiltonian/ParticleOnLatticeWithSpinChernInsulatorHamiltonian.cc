@@ -163,7 +163,9 @@ ParticleOnLatticeWithSpinChernInsulatorHamiltonian::~ParticleOnLatticeWithSpinCh
 	delete[] this->InterSectorIndicesPerSum[i];
     }
   delete[] this->NbrIntraSectorIndicesPerSum;
+  delete[] this->IntraSectorIndicesPerSum;
   delete[] this->NbrInterSectorIndicesPerSum;
+  delete[] this->InterSectorIndicesPerSum;
   if (this->FastMultiplicationFlag == true)
     {
       long MinIndex;
@@ -769,7 +771,7 @@ void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateInteractionFact
       for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
 	for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
 	  for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
-	    for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
+	    for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2)
 	      {
 		int Index1 = (kx1 * this->NbrSiteY) + ky1;
 		int Index2 = (kx2 * this->NbrSiteY) + ky2;
@@ -979,6 +981,7 @@ long ParticleOnLatticeWithSpinChernInsulatorHamiltonian::PartialFastMultiplicati
   ParticleOnSphereWithSpin* TmpParticles = (ParticleOnSphereWithSpin*) this->Particles->Clone();
   int LastComponent = lastComponent + firstComponent;
 
+  this->EvaluateMNOneBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
   this->EvaluateMNTwoBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
 
   delete TmpParticles;

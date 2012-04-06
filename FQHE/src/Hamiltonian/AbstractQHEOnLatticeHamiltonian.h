@@ -1635,7 +1635,6 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyAddMultiplyCompone
 {
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
-  double Coefficient3;
   int Index;
   Complex TmpInteraction;
   Complex TmpCoefficient;
@@ -1715,7 +1714,6 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyConjugateAddMultip
 {
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
-  double Coefficient3;
   int Index;
   Complex TmpInteraction;
   Complex TmpCoefficient;
@@ -1991,7 +1989,6 @@ inline void AbstractQHEOnLatticeHamiltonian::HermitianEvaluateMNTwoBodyAddMultip
 {
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
-  double Coefficient3;
   int Index;
   Complex TmpInteraction;
   Complex TmpCoefficient;
@@ -2257,7 +2254,6 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyAddMultiplyCompone
 {
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
-  double Coefficient3;
   int Index;
   double TmpCoefficient;
   if (this->NbrQ12Indices == 0) // full storage
@@ -2510,7 +2506,6 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyConjugateAddMultip
 {
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
-  double Coefficient3;
   int Index;
   double TmpCoefficient;
   if (this->NbrQ12Indices == 0) // full storage
@@ -2780,7 +2775,6 @@ inline void AbstractQHEOnLatticeHamiltonian::HermitianEvaluateMNTwoBodyAddMultip
 {
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
-  double Coefficient3;
   int Index;
   double TmpCoefficient;
   if (this->NbrQ12Indices == 0) // full storage
@@ -2862,7 +2856,6 @@ inline void AbstractQHEOnLatticeHamiltonian::EvaluateMNTwoBodyFastMultiplication
 {
   int Index;
   double Coefficient = 0.0;
-  double Coefficient2 = 0.0;
   int Dim = particles->GetHilbertSpaceDimension();
   if (this->NbrQ12Indices == 0) // full storage
     {

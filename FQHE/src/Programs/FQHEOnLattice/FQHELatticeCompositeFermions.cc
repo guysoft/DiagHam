@@ -676,8 +676,13 @@ ComplexVector* GetTrialState(OptionManager &Manager, ParticleOnLattice* Space, d
   int Subl;
   double SumX, SumY, SumSqX, SumSqY;
   Complex FRelX, FRelY;  
-  double XSpacing = sqrt(((double)2*M_PI*NbrFluxQuanta)/((double)Lx*Ly));
-  double YSpacing = sqrt(((double)2*M_PI*NbrFluxQuanta)/((double)Ly*Lx));
+//   double XSpacing = sqrt(((double)2.0*M_PI*NbrFluxQuanta)/((double)Lx*Ly));
+//   double YSpacing = sqrt(((double)2.0*M_PI*NbrFluxQuanta)/((double)Ly*Lx));
+  double AreaScaling = 2.0*M_PI*NbrFluxQuanta/((double)(Lx*Ly));
+
+  bool EvaluateAnalytic=Manager.GetBoolean("analytic");
+
+
   
   for (int i=0; i<Space->GetHilbertSpaceDimension(); ++i)
     {
@@ -703,53 +708,54 @@ ComplexVector* GetTrialState(OptionManager &Manager, ParticleOnLattice* Space, d
 	  JastrowState[i] = SlaterJastrow.Determinant();
 	  
 	  // analytic states:
-
-	  SumX=0;
-	  SumY=0;
-	  SumSqX=0;
-	  SumSqY=0;
-	  for (int q = 0; q < NbrBosons; ++q)
+	  if (EvaluateAnalytic)
 	    {
-	      Space->DecodeQuantumNumber(QuantumNumbers[q],PosX[q],PosY[q],Subl);
-	      //cout << "q="<<QuantumNumbers[q]<<" => [x="<<PosX[q]<<", y="<<PosY[q]<<"]"<<endl;
-	      SumX+=PosX[q];
-	      SumY+=PosY[q];
-	      SumSqX+=PosX[q]*PosX[q]*XSpacing*XSpacing;
-	      SumSqY+=PosY[q]*PosY[q]*YSpacing*YSpacing;
+
+	      SumX=0;
+	      SumY=0;
+	      SumSqX=0;
+	      SumSqY=0;
+	      for (int q = 0; q < NbrBosons; ++q)
+		{
+		  Space->DecodeQuantumNumber(QuantumNumbers[q],PosX[q],PosY[q],Subl);
+		  //cout << "q="<<QuantumNumbers[q]<<" => [x="<<PosX[q]<<", y="<<PosY[q]<<"]"<<endl;
+		  SumX+=PosX[q];
+		  SumY+=PosY[q];
+		  SumSqX+=PosX[q]*PosX[q]*AreaScaling; // XSpacing*XSpacing;
+		  SumSqY+=PosY[q]*PosY[q]*AreaScaling; // YSpacing*YSpacing;
+		}
+	  
+	      FRelX=1.0;
+	      for (int bi = 1; bi < NbrBosons; ++bi)
+		for (int bj = 0; bj < bi; ++bj)
+		  FRelX*=ThetaRelX.GetValue(Complex( ((double)(PosX[bi]-PosX[bj]))/Lx,-((double)(PosY[bi]-PosY[bj]))/Lx));
+	  
+	      AnalyticJastrowX[i] = FRelX * exp(-0.5*SumSqY);
+	      AnalyticRelativeX[i] = FRelX*FRelX * exp(-0.5*SumSqY);
+	      AnalyticCM1X[i] = ThetaCM1X.GetValue(2.0*Complex(((double)SumX)/(Lx),-((double)SumY)/(Lx)));
+	      AnalyticCM2X[i] = ThetaCM2X.GetValue(2.0*Complex(((double)SumX)/(Lx),-((double)SumY)/(Lx)));
+	      //  	  ThetaCM1X.PrintValue(cout,Complex((2.0*(double)SumX)/Lx,(2.0*(double)SumY)/Lx))<<endl;
+	      // 	  ThetaCM2X.PrintValue(cout,Complex((2.0*(double)SumX)/Lx,(2.0*(double)SumY)/Lx))<<endl;
+	      Analytic1X[i] = AnalyticRelativeX[i] * AnalyticCM1X[i];
+	      Analytic2X[i] = AnalyticRelativeX[i] * AnalyticCM2X[i];
+
+	      FRelY=1.0;
+	      for (int bi = 1; bi < NbrBosons; ++bi)
+		for (int bj = 0; bj < bi; ++bj)
+		  FRelY*=ThetaRelY.GetValue(Complex( ((double)(PosY[bi]-PosY[bj]))/Ly,((double)(PosX[bi]-PosX[bj]))/Ly));
+	  
+	      AnalyticJastrowY[i] = FRelY * exp(-0.5*SumSqX);
+	      AnalyticRelativeY[i] = FRelY*FRelY * exp(-0.5*SumSqX);
+	      AnalyticCM1Y[i] = ThetaCM1Y.GetValue(2.0*Complex(((double)SumY)/Ly,((double)SumX)/Ly));
+	      AnalyticCM2Y[i] = ThetaCM2Y.GetValue(2.0*Complex(((double)SumY)/Ly,((double)SumX)/Ly));
+	      //  	  ThetaCM1Y.PrintValue(cout,Complex(((double)SumY)/Ly,((double)SumX)/Ly))<<endl;
+	      // 	  ThetaCM2Y.PrintValue(cout,Complex((2.0*(double)SumY)/Ly,(2.0*(double)SumX)/Ly))<<endl;
+	      Analytic1Y[i] = AnalyticRelativeY[i] * AnalyticCM1Y[i];
+	      Analytic2Y[i] = AnalyticRelativeY[i] * AnalyticCM2Y[i];
 	    }
-	  
-	  FRelX=1.0;
-	  for (int bi = 1; bi < NbrBosons; ++bi)
-	    for (int bj = 0; bj < bi; ++bj)
-	      FRelX*=ThetaRelX.GetValue(Complex( ((double)(PosX[bi]-PosX[bj]))/Lx,-((double)(PosY[bi]-PosY[bj]))/Lx));
-	  
-	  AnalyticJastrowX[i] = FRelX * exp(-0.5*SumSqY);
-	  AnalyticRelativeX[i] = FRelX*FRelX * exp(-0.5*SumSqY);
-	  AnalyticCM1X[i] = ThetaCM1X.GetValue(2.0*Complex(((double)SumX)/(Lx),-((double)SumY)/(Lx)));
-	  AnalyticCM2X[i] = ThetaCM2X.GetValue(2.0*Complex(((double)SumX)/(Lx),-((double)SumY)/(Lx)));
-//  	  ThetaCM1X.PrintValue(cout,Complex((2.0*(double)SumX)/Lx,(2.0*(double)SumY)/Lx))<<endl;
-// 	  ThetaCM2X.PrintValue(cout,Complex((2.0*(double)SumX)/Lx,(2.0*(double)SumY)/Lx))<<endl;
-	  Analytic1X[i] = AnalyticRelativeX[i] * AnalyticCM1X[i];
-	  Analytic2X[i] = AnalyticRelativeX[i] * AnalyticCM2X[i];
-
-	  FRelY=1.0;
-	  for (int bi = 1; bi < NbrBosons; ++bi)
-	    for (int bj = 0; bj < bi; ++bj)
-	      FRelY*=ThetaRelY.GetValue(Complex( ((double)(PosY[bi]-PosY[bj]))/Ly,((double)(PosX[bi]-PosX[bj]))/Ly));
-	  
-	  AnalyticJastrowY[i] = FRelY * exp(-0.5*SumSqX);
-	  AnalyticRelativeY[i] = FRelY*FRelY * exp(-0.5*SumSqX);
-	  AnalyticCM1Y[i] = ThetaCM1Y.GetValue(2.0*Complex(((double)SumY)/Ly,((double)SumX)/Ly));
-	  AnalyticCM2Y[i] = ThetaCM2Y.GetValue(2.0*Complex(((double)SumY)/Ly,((double)SumX)/Ly));
-//  	  ThetaCM1Y.PrintValue(cout,Complex(((double)SumY)/Ly,((double)SumX)/Ly))<<endl;
-// 	  ThetaCM2Y.PrintValue(cout,Complex((2.0*(double)SumY)/Ly,(2.0*(double)SumX)/Ly))<<endl;
-	  Analytic1Y[i] = AnalyticRelativeY[i] * AnalyticCM1Y[i];
-	  Analytic2Y[i] = AnalyticRelativeY[i] * AnalyticCM2Y[i];
-	  
 	}
-      
     }
-
+  
   if (Manager.GetBoolean("write-slater"))
     {
       CFState /= CFState.Norm();  

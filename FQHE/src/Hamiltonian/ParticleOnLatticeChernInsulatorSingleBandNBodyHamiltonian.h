@@ -95,7 +95,7 @@ class ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian : public Particl
 
   // destructor
   //
-  ~ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian();
+  virtual ~ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian();
   
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)

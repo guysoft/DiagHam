@@ -18,4 +18,5 @@ FQHELatticeParticleEntanglementSpectrumOperation.cc \
 FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation.cc \
 FQHESphereSymmetrizeU1U1StateOperation.cc \
 FQHESphereBosonsWithSpinLandauLevelLiftOperation.cc \
+FQHESquareLatticeSymmetrizeU1U1StateOperation.cc \
 FQHELatticeFourierTransformOperation.cc

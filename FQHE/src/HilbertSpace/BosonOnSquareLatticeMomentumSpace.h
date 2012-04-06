@@ -42,6 +42,8 @@
 class BosonOnSquareLatticeMomentumSpace : public BosonOnSphereShort
 {
 
+  friend class FQHESquareLatticeSymmetrizeU1U1StateOperation;
+  
  protected:
 
   // number of sites in the x direction
@@ -174,6 +176,19 @@ class BosonOnSquareLatticeMomentumSpace : public BosonOnSphereShort
   // return value = corresponding index, -1 if an error occured
   virtual int FindStateIndexFromArray(int* stateDescription);
 
+  // symmetrized a product of two uncoupled states 
+  //
+  // outputVector = reference on the vector which will contain the symmetrozed state
+  // leftVector = reference on the vector associated to the first color
+  // rightVector = reference on the vector associated to the second color
+  // leftSpace = pointer to the Hilbert space of the first color
+  // rightSpace = pointer to the Hilbert space of the second color
+  // unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+  // return value = symmetrized state
+
+  ComplexVector SymmetrizeU1U1State (ComplexVector& leftVector, ComplexVector& rightVector, BosonOnSquareLatticeMomentumSpace* leftSpace, BosonOnSquareLatticeMomentumSpace* rightSpace, bool unnormalizedBasisFlag, AbstractArchitecture* architecture);
+
+
  protected:
 
   // evaluate Hilbert space dimension
@@ -224,6 +239,19 @@ class BosonOnSquareLatticeMomentumSpace : public BosonOnSphereShort
   // return value = number of components that have been added to the density matrix
   virtual long EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace,
 								  int nbrGroundStates, ComplexVector* groundStates, double* weights, HermitianMatrix* densityMatrix);
+
+  // symmetrized a product of two uncoupled states 
+  //
+  // outputVector = reference on the vector which will contain the symmetrozed state
+  // leftVector = reference on the vector associated to the first color
+  // rightVector = reference on the vector associated to the second color
+  // leftSpace = pointer to the Hilbert space of the first color
+  // rightSpace = pointer to the Hilbert space of the second color
+  // unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+  // return value = symmetrized state
+
+  void SymmetrizeU1U1StateCore (ComplexVector& symmetrizedVector, ComplexVector& leftVector, ComplexVector& rightVector, BosonOnSquareLatticeMomentumSpace* leftSpace, BosonOnSquareLatticeMomentumSpace* rightSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents);
+
 
 };
 
