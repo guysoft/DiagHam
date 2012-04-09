@@ -151,7 +151,7 @@ class BosonOnLatticeLong : public ParticleOnLattice
   // return value = number of sites
   virtual int GetNbrSites();
 
-  virtual void print_array2(int length, long unsigned int*array);
+  //  virtual void print_array2(int length, long unsigned int*array);
 
   
   // return a list of all possible quantum numbers 

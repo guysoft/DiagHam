@@ -316,21 +316,11 @@ int BosonOnLatticeLong::GetNbrFluxQuanta()
 }
 
 
-void BosonOnLatticeLong::print_array2(int length, long unsigned int*array)
-{
-  if (length>0)
-    {
-      cout << array[0];
-      for (int i=1; i<length; ++i) cout << " " << array[i];
-      cout << " (length "<<length<<")"<<endl;
-    }
-}
-
-
 // apply creation operator to a word, using the conventions
 // for state-coding and quantum numbers of this space
 // state = word to be acted upon
 // q = quantum number of boson to be added
+
 ULONGLONG BosonOnLatticeLong::Ad (ULONGLONG state, int q, double& coefficient)
 {
   int StateHighestBit = getHighestBit(state)-1;
