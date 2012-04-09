@@ -151,7 +151,7 @@ int main(int argc, char** argv)
 
 
       double Shift = -10.0;
-      //Hamiltonian->ShiftHamiltonian(Shift);
+      Hamiltonian->ShiftHamiltonian(Shift);
       char* EigenvectorName = 0;
       if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
 	{
@@ -163,7 +163,7 @@ int main(int argc, char** argv)
       sprintf (CommentLine, "# kx (dummy) ky E");
       char* ContentPrefix = new char[256];
       sprintf (ContentPrefix, "%d %d", -1, Momentum);
-      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  OutputNameLz, FirstRun, EigenvectorName);
+      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, Shift,  OutputNameLz, FirstRun, EigenvectorName);
       MainTaskOperation TaskOperation (&Task);
       TaskOperation.ApplyOperation(Architecture.GetArchitecture());
       cout << "------------------------------------" << endl;
