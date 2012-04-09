@@ -316,7 +316,7 @@ int BosonOnLatticeLong::GetNbrFluxQuanta()
 }
 
 
-void print_array2(int length, long unsigned int*array)
+void BosonOnLatticeLong::print_array2(int length, long unsigned int*array)
 {
   if (length>0)
     {
