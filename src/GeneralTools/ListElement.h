@@ -32,6 +32,16 @@
 #ifndef LISTELEMENT_H
 #define LISTELEMENT_H
 
+#include "config.h"
+
+/* template <class ClassName> */
+/* ostream& operator << (ostream & Str, const ClassName &Element) */
+/* { */
+/*   Str << Element; */
+/*   return Str;  */
+/* } */
+
+
 template <class ClassName>
 class ListElement
 {
@@ -41,7 +51,7 @@ public:
   ClassName Element;
   ListElement* NextPointer;
   ListElement* PreviousPointer;
-    
+  
   //constructors
   ListElement();
   ListElement(const ClassName &Element);
@@ -53,8 +63,12 @@ public:
   ~ListElement();
   
   void Exchange(ListElement *LElement);
-  
+
+  //template<class U> friend ostream& operator << (ostream & Str, const typename ListElement<U>::Element &Element);
+
 };
+
+
 
 //constructors
 
@@ -134,5 +148,15 @@ void ListElement<ClassName>::Exchange(ListElement *LElement)
   LElement->PreviousPointer = TmpPP;
 }
 
+
+/* template <class ClassName> */
+/* ostream& operator << (ostream & Str, const typename ListElement<ClassName>::Element &Element) */
+/* { */
+/*   Str << Element; */
+/*   return Str;  */
+/* } */
+
+  
+
+
 #endif
-#include "config.h"

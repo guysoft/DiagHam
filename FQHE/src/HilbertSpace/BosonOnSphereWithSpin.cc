@@ -838,7 +838,18 @@ long BosonOnSphereWithSpin::GenerateStatesWithConstraint(int nbrBosonsUp, int nb
 	}
       if ((nbrBosonsUp * currentLzMax) == totalLzUp)
 	{
-	  long TmpPos = this->GenerateStatesWithConstraint(0, nbrBosonsDown, lzMax, 0, lzMax, 0, totalLzDown, pos, level+1);
+	  long TmpPos;
+	  if (nbrBosonsDown>0)
+	    TmpPos = this->GenerateStatesWithConstraint(0, nbrBosonsDown, lzMax, 0, lzMax, 0, totalLzDown, pos, level+1);
+	  else
+	    {
+	      TmpPos = pos+1;
+	      this->StateDescription[pos] = new unsigned [this->LzMax + 1];
+	      this->StateLzMaxDown[pos] = 0;
+	      unsigned* TmpState = this->StateDescription[pos];
+	      for (int i = 0; i <= this->LzMax; ++i)
+		TmpState[i] = 0;
+	    }
 	  for (long i = pos; i < TmpPos; i++)
 	    {
 	      this->StateDescription[i][currentLzMax] |= nbrBosonsUp<<16;
@@ -848,7 +859,18 @@ long BosonOnSphereWithSpin::GenerateStatesWithConstraint(int nbrBosonsUp, int nb
 	}
       if ((currentLzMax == 0) || (totalLzUp == 0))
 	{
-	  long TmpPos = this->GenerateStatesWithConstraint(0, nbrBosonsDown, lzMax, 0, lzMax, 0, totalLzDown, pos, level+1);
+	  long TmpPos;
+	  if (nbrBosonsDown>0)
+	    TmpPos = this->GenerateStatesWithConstraint(0, nbrBosonsDown, lzMax, 0, lzMax, 0, totalLzDown, pos, level+1);
+	  else
+	    {
+	      TmpPos = pos+1;
+	      this->StateDescription[pos] = new unsigned [this->LzMax + 1];
+	      this->StateLzMaxDown[pos] = 0;
+	      unsigned* TmpState = this->StateDescription[pos];
+	      for (int i = 0; i <= this->LzMax; ++i)
+		TmpState[i] = 0;
+	    }
 	  for (long i = pos; i < TmpPos; i++)
 	    {
 	      this->StateDescription[i][0] |= nbrBosonsUp<<16;
@@ -1216,7 +1238,7 @@ long BosonOnSphereWithSpin::ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, 
   for (int i = totalSpin; i >= 0; --i)
     for (int j = (nbrBosons - totalSpin); j >= 0; --j)
       Tmp += this->ShiftedEvaluateHilbertSpaceDimension(nbrBosons - (i + j), lzMax - 1, totalLz - (lzMax * (i + j)), totalSpin - i);
-  return Tmp;  
+  return Tmp;
 }
 
 

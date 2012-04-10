@@ -55,11 +55,11 @@ inline void EvaluatePermutationsOfSubGroups(unsigned long nbrPermutations, int n
 	  for (int i = 0; i < nbrElementPerColor; ++i)
 	    {
 	      TmpPerm2 |= TmpArrayPerm[i] << (i * 5);
-			}
-	    for (int i = 0; i < NbrElementOtherColor; ++i)
+	    }
+	  for (unsigned i = 0; i < NbrElementOtherColor; ++i)
 	    {
-				TmpPerm3 |= TmpArrayPerm[i + nbrElementPerColor]<< (i*5);
-			}
+	      TmpPerm3 |= TmpArrayPerm[i + nbrElementPerColor]<< (i*5);
+	    }
 	  permutations1[nbrPermutations] = TmpPerm2;
 	  permutations2[nbrPermutations] = TmpPerm3;	      
 	  ++nbrPermutations;

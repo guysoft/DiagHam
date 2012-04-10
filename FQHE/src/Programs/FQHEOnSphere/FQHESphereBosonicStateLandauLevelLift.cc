@@ -15,7 +15,11 @@
 #include "GeneralTools/ConfigurationParser.h"
 #include "GeneralTools/MultiColumnASCIIFile.h"
 
-#include "MathTools/GroupedPermutations.h"
+//Permutations routine I need to test and its dependents
+#include "GeneralTools/SmallIntegerArray.h"
+#include "GeneralTools/List.h"
+#include "GeneralTools/OrderedList.h"
+#include "GeneralTools/Permutations.h"
 
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
 #include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
@@ -46,7 +50,7 @@ using std::ifstream;
 int main(int argc, char** argv)
 {
   cout.precision(14);
-  
+  /*
   OptionManager Manager ("FQHESphereBosonicStateLandauLevelLift" , "0.01");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
@@ -77,16 +81,6 @@ int main(int argc, char** argv)
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
   Manager.StandardProceedings(argv, argc, cout);
-
-
-  // testing:
-  GroupedPermutations TestPer(2,2,false);
-  SmallIntegerArray* Perms = TestPer.GetPermutations();
-  cout << "total number of grouped permutations (of 4+4 particles) : "<<TestPer.GetNbrPermutations()<<endl;
-  
-  for (int i=0; i<TestPer.GetNbrPermutations(); ++i)
-    cout << i<<"\t"<<Perms[i]<<endl;
-  exit(1);
  	
   RealVector InitialState;
   if (InitialState.ReadVector(Manager.GetString("state")) == false)
@@ -190,6 +184,134 @@ int main(int argc, char** argv)
   delete InitialSpace;
   delete PolarizedSpace;
   delete FinalSpace;
+  */
+  
+  
+  cout << "Testing OrderedList\n";
+  int insertionPosition;
+  SmallIntegerArray * duplicate;
+  OrderedList<SmallIntegerArray> testOrderedList(true);
+
+  unsigned int * initialisation = new unsigned int[4];
+  initialisation[0] = 1;
+  initialisation[1] = 1;
+  initialisation[2] = 0;
+  initialisation[3] = 0;
+  SmallIntegerArray SIA1(4, 1, initialisation);
+
+  initialisation[1] = 0;
+  initialisation[2] = 1;
+  SmallIntegerArray SIA2(4, 1, initialisation);
+
+  initialisation[2] = 0;
+  initialisation[3] = 1;
+  SmallIntegerArray SIA3(4, 1, initialisation);
+
+  initialisation[0] = 0;
+  initialisation[1] = 1;
+  initialisation[2] = 1;
+  initialisation[3] = 0;
+  SmallIntegerArray SIA4(4, 1, initialisation);
+
+  initialisation[2] = 0;
+  initialisation[3] = 1;
+  SmallIntegerArray SIA5(4, 1, initialisation);
+
+  initialisation[1] = 0;
+  initialisation[2] = 1;
+  SmallIntegerArray SIA6(4, 1, initialisation);
+
+  SmallIntegerArray firstDuplication = SIA5;
+ 
+  delete [] initialisation;
+  
+  cout << "Inserting "<<SIA1<<endl;
+  testOrderedList.Insert(SIA1, insertionPosition, duplicate);
+  cout << "InsertionPosition " << insertionPosition << "\n";
+  cout << "Find element inserted " << (testOrderedList[insertionPosition]) << endl;
+    
+  //  cout << "Find element inserted " << (testOrderedList[insertionPosition] == testOrderedList[insertionPosition]) << "\n";
+  cout << "Inserting "<<SIA2<<endl;
+  testOrderedList.Insert(SIA2, insertionPosition, duplicate);
+  cout << "InsertionPosition " << insertionPosition << "\n";
+  cout << "Find element inserted " << (testOrderedList[insertionPosition]) << endl;
+
+  // cout << "Find element inserted " << (testOrderedList[insertionPosition] == testOrderedList[insertionPosition]) << "\n";
+
+  cout << "Inserting "<<SIA3<<endl;
+  testOrderedList.Insert(SIA3, insertionPosition, duplicate);
+  cout << "InsertionPosition " << insertionPosition << "\n";
+  cout << "Find element inserted " << (testOrderedList[insertionPosition]) << endl;
+
+    
+  //cout << "Find element inserted " << (testOrderedList[insertionPosition] == testOrderedList[insertionPosition]) << "\n";
+  testOrderedList.Insert(SIA4, insertionPosition, duplicate);
+  cout << "InsertionPosition " << insertionPosition << "\n";
+  //cout << "Find element inserted " << (testOrderedList[insertionPosition] == testOrderedList[insertionPosition]) << "\n";
+  testOrderedList.Insert(SIA5, insertionPosition, duplicate);
+  cout << "InsertionPosition " << insertionPosition << "\n";
+  //cout << "Find element inserted " << (testOrderedList[insertionPosition] == testOrderedList[insertionPosition]) << "\n";
+  testOrderedList.Insert(firstDuplication, insertionPosition, duplicate);
+  cout << "InsertionPosition " << insertionPosition << "\n";
+  //cout << "Find element inserted " << (testOrderedList[insertionPosition] == testOrderedList[insertionPosition]) << "\n";
+  testOrderedList.Insert(SIA6, insertionPosition, duplicate);
+  cout << "InsertionPosition " << insertionPosition << "\n";
+  cout << "Find element inserted " << (testOrderedList[insertionPosition]) << endl;
+  
+ 
+
+  /*
+  
+  cout << "Testing AllGivenSizeSubsets\n";
+  
+  cout << "Declaring set to partitions\n";
+  int setSize = 4;
+  int maxElement = 4;
+  unsigned * occupationNumbers = new unsigned [maxElement];
+
+  cout << "Declaring OrderedList\n";
+  OrderedList<SmallIntegerArray> partitions(true);
+  cout << "Declaring List\n";
+  List<SmallIntegerArray> partitionComplements;
+  int noOfSubsets;
+
+  cout << "Declared lists successfully. Set to partition occupation numbers:\n";
+
+  
+  int sizeOfSubset = 2;
+
+  occupationNumbers[0] = 1;
+  occupationNumbers[1] = 1;
+  occupationNumbers[2] = 1;
+  occupationNumbers[3] = 1;
+  // occupationNumbers[4] = 1;
+  // occupationNumbers[5] = 1;
+
+
+  for(int i = 0; i<maxElement; i++) {
+    cout << occupationNumbers[i] << " ";
+  }
+  cout << "\nNow let's find subsets\n";
+
+  noOfSubsets =  AllGivenSizeSubsets( occupationNumbers, setSize, maxElement, sizeOfSubset, partitions, partitionComplements);
+
+  cout << "Found " << noOfSubsets << " subsets of size " << sizeOfSubset << "\n";
+
+  for(int subsetNo = 0; subsetNo < noOfSubsets; subsetNo++) {
+    cout << "partition " << subsetNo << "\n";
+    cout << "\tsubset ";
+    for(int i = 0; i < maxElement; i++) {
+      cout << partitions[subsetNo].GetElement(i) << " ";
+    }
+    cout << "\tcomplement ";
+    for(int i = 0; i < maxElement; i++) {
+      cout << partitionComplements[subsetNo].GetElement(i) << " ";
+    }
+    cout << "\n";
+  }
+  
+  delete occupationNumbers;
+*/
 }
 
 

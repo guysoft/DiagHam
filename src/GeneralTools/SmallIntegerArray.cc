@@ -136,7 +136,7 @@ SmallIntegerArray& SmallIntegerArray::operator = (const SmallIntegerArray& array
 }
 
 // access function: reading
-void SmallIntegerArray::GetElement(int i, unsigned &value)
+void SmallIntegerArray::GetElement(int i, unsigned &value) const
 {
   int EntriesPerWord=ULENGTH/NbrBitsPerEntry;
   int Word = i/EntriesPerWord;
@@ -145,7 +145,7 @@ void SmallIntegerArray::GetElement(int i, unsigned &value)
   value =(InternalArray[Word] & Mask) >> (Entry*NbrBitsPerEntry);
 }
 
-unsigned SmallIntegerArray::GetElement(int i)
+unsigned SmallIntegerArray::GetElement(int i) const
 {
   int EntriesPerWord=ULENGTH/NbrBitsPerEntry;
   int Word = i/EntriesPerWord;
@@ -266,7 +266,7 @@ bool operator >= (const SmallIntegerArray& a1,const SmallIntegerArray& a2)
   return (!(a1<a2));
 }
 
-ostream& operator << (ostream & Str, SmallIntegerArray& a)
+ostream& operator << (ostream & Str, const SmallIntegerArray& a)
 {  
   if (a.NbrEntries>0)
     {

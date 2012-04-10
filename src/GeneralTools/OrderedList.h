@@ -89,8 +89,10 @@ public:
   
   //return the number of element
   int GetNbrElement () {return NbrElement;}
+
     
 };
+
 
 
 //constructors
@@ -245,18 +247,19 @@ OrderedList<ClassName>& OrderedList<ClassName>::Insert (const ClassName& Element
       while ((Tmp->Element<Element) && (Tmp->NextPointer != 0))
 	{
 	  ++i;
-/* 	  cout << "Found "<<Tmp->Element<< " < " << Element << " -> proceed to next "<< endl; */
+ 	  cout << "1 - Found "<<Tmp->Element<< " < " ;
+	  cout << (ClassName)Element << " -> proceed to next "<< endl; 
 	  Tmp = Tmp->NextPointer;
 	}
-/*       cout<< "Inserting near " << Tmp->Element << endl; */
-/*       if (Tmp->Element<Element) */
-/* 	    { */
-/* 	      cout << Tmp->Element<<" < " << Element << endl; */
-/* 	    } */
-/* 	  else */
-/* 	    { */
-/* 	      cout << Tmp->Element<<" >= " << Element << endl; */
-/* 	    } */
+      cout<< "2 - Inserting near " << Tmp->Element << endl;
+      if (Tmp->Element<Element)
+	{
+	      cout << "3 - " << Tmp->Element<<" < " << Element << endl;
+	    }
+	  else
+	    {
+	      cout << "4 - " << Tmp->Element<<" >= " << Element << endl;
+	    }
       if ((this->EliminateDuplicates)&&(Tmp->Element==Element))
 	{
 	  Pos=i;
@@ -267,7 +270,7 @@ OrderedList<ClassName>& OrderedList<ClassName>::Insert (const ClassName& Element
 	{
 	  if (Tmp->Element<Element) // insert after Tmp
 	    { 
-/* 	      cout << "Next=0 && " << Tmp->Element<<" < " << Element << endl; */
+	      cout << "5 - Next=0 && " << Tmp->Element<<" < " << Element << endl;
 	      Tmp->NextPointer = new ListElement<ClassName>(Element, this->CurrentElement); 	      
 	      Duplicate = NULL;
 	      Pos = i+1;	      
@@ -275,12 +278,12 @@ OrderedList<ClassName>& OrderedList<ClassName>::Insert (const ClassName& Element
 	    }
 	  else // insert before tmp
 	    {
-/* 	      cout << "Next=0 && " << Tmp->Element<<" >= " << Element << endl; */
+	      cout << "6 - Next=0 && " << Tmp->Element<<" >= " << endl; //Element << endl;
 	      
 	      Tmp->PreviousPointer = new ListElement<ClassName>(Element, Tmp, Tmp->PreviousPointer);
 	      if (Tmp->PreviousPointer->PreviousPointer==0)
 		{
-/* 		  cout << "New first element!"<<endl; */
+ 		  cout << "7 - New first element!"<<endl; 
 		  this->FirstElement = Tmp->PreviousPointer;
 		}
 	      Duplicate = NULL;
@@ -291,18 +294,18 @@ OrderedList<ClassName>& OrderedList<ClassName>::Insert (const ClassName& Element
 	{
 	  if (Tmp->Element<Element) // insert after Tmp
 	    {
-/* 	      cout<< "NonZero NextPointer, insert after Tmp"<<endl;	   */
+	      cout<< "8 - NonZero NextPointer, insert after Tmp"<<endl;	  
 	      Tmp->NextPointer = new ListElement<ClassName>(Element, Tmp->NextPointer, Tmp->PreviousPointer);
 	      Duplicate = NULL;
 	      Pos = i+1;
 	    }
 	  else // insert before tmp
 	    {
-/* 	      cout << "NonZero NextPointer, " << Tmp->Element<<" >= " << Element << endl;	       */
+ 	      cout << "9 - NonZero NextPointer, " << Tmp->Element<<" >= " << Element << endl;	       
 	      Tmp->PreviousPointer = new ListElement<ClassName>(Element, Tmp, Tmp->PreviousPointer);
 	      if (Tmp->PreviousPointer->PreviousPointer==0)
 		{
-/* 		  cout << "New first element!"<<endl; */
+ 		  cout << "10 - New first element!"<<endl; 
 		  this->FirstElement = Tmp->PreviousPointer;
 		}
 	      Duplicate = NULL;

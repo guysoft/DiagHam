@@ -91,8 +91,8 @@ class SmallIntegerArray
 
   // access functions: reading
   //
-  void GetElement(int i, unsigned &value);
-  unsigned GetElement(int i);
+  void GetElement(int i, unsigned &value) const;
+  unsigned GetElement(int i) const;
 
   // access function: writing
   //
@@ -123,7 +123,7 @@ class SmallIntegerArray
 
   // output stream overload
   //
-  friend ostream& operator << (ostream & Str, SmallIntegerArray& a);
+  friend ostream& operator << (ostream & Str, const SmallIntegerArray& a);
   
   
 };
