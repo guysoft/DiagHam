@@ -88,7 +88,7 @@ BosonOnSphereWithSpin::BosonOnSphereWithSpin (int nbrBosons, int totalLz, int lz
       TmpLzMax = this->ShiftedTotalLz;	  
     }
   //  int TmpDim = this->GenerateStates(this->NbrBosonsUp, this->NbrBosonsDown, TmpLzMax, TmpLzMax, this->ShiftedTotalLz, 0);
-  long TmpDim = GenerateStates(this->NbrBosonsUp, this->NbrBosonsDown, this->LzMax, this->ShiftedTotalLz);
+  long TmpDim = GenerateStates(this->NbrBosonsUp, this->NbrBosonsDown, this->LzMax, this->TotalLz);
 
   if (TmpDim!=this->HilbertSpaceDimension)
     cout << "Count inconsistent: "<<TmpDim<<" vs " << this->HilbertSpaceDimension<<endl;
@@ -805,8 +805,14 @@ ostream& BosonOnSphereWithSpin::PrintState (ostream& Str, unsigned *myState)
 long BosonOnSphereWithSpin::GenerateStates(int nbrBosonsUp, int nbrBosonsDown, int lzMax, int totalLz)
 {
   long Pos=0;
-  for (int TotalLzUp=0; TotalLzUp<=totalLz; ++TotalLzUp)
-    Pos=this->GenerateStatesWithConstraint(nbrBosonsUp, nbrBosonsDown, lzMax, lzMax, lzMax, TotalLzUp, totalLz-TotalLzUp, Pos, /*level*/ 0);
+  
+  for (int TotalLzUp=totalLz-nbrBosonsDown*lzMax; TotalLzUp<=totalLz+nbrBosonsDown*lzMax; TotalLzUp+=2)
+    {
+      int ShiftedTotalLzUp = (TotalLzUp + nbrBosonsUp * this->LzMax) >> 1;
+      int ShiftedTotalLzDown = (totalLz-TotalLzUp + nbrBosonsDown * this->LzMax) >> 1;
+      if ((ShiftedTotalLzUp>=0)&&(ShiftedTotalLzDown>=0))
+	Pos=this->GenerateStatesWithConstraint(nbrBosonsUp, nbrBosonsDown, lzMax, lzMax, lzMax, ShiftedTotalLzUp, ShiftedTotalLzDown, Pos, /*level*/ 0);
+    }
   return Pos;
 }
 
@@ -912,6 +918,7 @@ long BosonOnSphereWithSpin::GenerateStatesWithConstraint(int nbrBosonsUp, int nb
 	    TmpState[i] = 0;
 	  TmpState[currentLzMax] = nbrBosonsDown;
 	  this->StateLzMaxDown[pos] = lzMax;
+	  this->StateLzMaxUp[pos] = 0;
 	  return pos + 1;
 	}
       if ((currentLzMax == 0) || (totalLzDown == 0))
@@ -922,8 +929,9 @@ long BosonOnSphereWithSpin::GenerateStatesWithConstraint(int nbrBosonsUp, int nb
 	    TmpState[i] = 0;
 	  TmpState[0] = nbrBosonsDown;
 	  this->StateLzMaxDown[pos] = lzMax;
+	  this->StateLzMaxUp[pos] = 0;
 	  return pos + 1;
-	}      
+	}
       int TmpTotalLzDown = totalLzDown / currentLzMax;
       int TmpNbrBosonsDown = nbrBosonsDown - TmpTotalLzDown;
       TmpTotalLzDown = totalLzDown - TmpTotalLzDown * currentLzMax;
