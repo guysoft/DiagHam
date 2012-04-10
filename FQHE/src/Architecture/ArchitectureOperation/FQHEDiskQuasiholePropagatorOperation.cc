@@ -49,6 +49,8 @@ FQHEDiskQuasiholePropagatorOperation::FQHEDiskQuasiholePropagatorOperation (Part
   this->HilbertSpace = (ParticleOnSphere*) space->Clone();
   this->JackPolynomial = jackPolynomial;
   this->RationalJackPolynomial = 0;
+  this->JackPolynomial2 = 0;
+  this->RationalJackPolynomial2 = 0;
   this->OperationType = AbstractArchitectureOperation::QHEParticleWaveFunction;
   this->Scalars = 0;
   this->LongRationalScalars = 0;
@@ -69,6 +71,54 @@ FQHEDiskQuasiholePropagatorOperation::FQHEDiskQuasiholePropagatorOperation (Part
   this->HilbertSpace = (ParticleOnSphere*) space->Clone();
   this->RationalJackPolynomial = jackPolynomial;
   this->JackPolynomial = 0;
+  this->JackPolynomial2 = 0;
+  this->RationalJackPolynomial2 = 0;
+  this->OperationType = AbstractArchitectureOperation::QHEParticleWaveFunction;
+  this->Scalars = 0;
+  this->LongRationalScalars = 0;
+  this->NbrScalars = 1;
+}
+
+// constructor for a scalar product
+//
+// space = pointer to the Hilbert space to use
+// jackPolynomial1 = vector corresponding to the first Jack polynomial
+// jackPolynomial2 = vector corresponding to the second Jack polynomial
+
+FQHEDiskQuasiholePropagatorOperation::FQHEDiskQuasiholePropagatorOperation(ParticleOnSphere* space, RealVector* jackPolynomial1, RealVector* jackPolynomial2)
+{
+  this->FirstComponent = 0;
+  this->NbrComponent = 0;
+  this->LargeFirstComponent = 0;
+  this->LargeNbrComponent = space->GetLargeHilbertSpaceDimension();
+  this->HilbertSpace = (ParticleOnSphere*) space->Clone();
+  this->JackPolynomial = jackPolynomial1;
+  this->RationalJackPolynomial = 0;
+  this->JackPolynomial2 = jackPolynomial2;
+  this->RationalJackPolynomial2 = 0;
+  this->OperationType = AbstractArchitectureOperation::QHEParticleWaveFunction;
+  this->Scalars = 0;
+  this->LongRationalScalars = 0;
+  this->NbrScalars = 1;
+}
+
+// constructor  for a scalar product
+//
+// space = pointer to the Hilbert space to use
+// jackPolynomial1 = vector corresponding to the first Jack polynomial
+// jackPolynomial2 = vector corresponding to the second Jack polynomial
+
+FQHEDiskQuasiholePropagatorOperation::FQHEDiskQuasiholePropagatorOperation(ParticleOnSphere* space, LongRationalVector* jackPolynomial1, LongRationalVector* jackPolynomial2)
+{
+  this->FirstComponent = 0;
+  this->NbrComponent = 0;
+  this->LargeFirstComponent = 0;
+  this->LargeNbrComponent = space->GetLargeHilbertSpaceDimension();
+  this->HilbertSpace = (ParticleOnSphere*) space->Clone();
+  this->RationalJackPolynomial = jackPolynomial1;
+  this->JackPolynomial = 0;
+  this->JackPolynomial2 = 0;
+  this->RationalJackPolynomial2 = jackPolynomial2;
   this->OperationType = AbstractArchitectureOperation::QHEParticleWaveFunction;
   this->Scalars = 0;
   this->LongRationalScalars = 0;
@@ -87,6 +137,8 @@ FQHEDiskQuasiholePropagatorOperation::FQHEDiskQuasiholePropagatorOperation(const
   this->LargeNbrComponent = operation.LargeNbrComponent;
   this->JackPolynomial = operation.JackPolynomial;
   this->RationalJackPolynomial = operation.RationalJackPolynomial;
+  this->JackPolynomial2 = operation.JackPolynomial2;
+  this->RationalJackPolynomial2 = operation.RationalJackPolynomial2;
   this->HilbertSpace = (ParticleOnSphere*) operation.HilbertSpace->Clone();
   this->OperationType = AbstractArchitectureOperation::QHEParticleWaveFunction;
   this->Scalar = operation.Scalar;
@@ -129,13 +181,27 @@ int FQHEDiskQuasiholePropagatorOperation::GetDimension ()
 
 bool FQHEDiskQuasiholePropagatorOperation::RawApplyOperation()
 {
-  if (this->RationalJackPolynomial == 0)
+  if ((this->RationalJackPolynomial2 == 0) && (this->JackPolynomial2 == 0))
     {
-      this->Scalar = this->HilbertSpace->JackSqrNormalization(*(this->JackPolynomial), this->LargeFirstComponent, this->LargeNbrComponent);
+      if (this->RationalJackPolynomial == 0)
+	{
+	  this->Scalar = this->HilbertSpace->JackSqrNormalization(*(this->JackPolynomial), this->LargeFirstComponent, this->LargeNbrComponent);
+	}
+      else
+	{
+	  this->LongRationalScalar = this->HilbertSpace->JackSqrNormalization(*(this->RationalJackPolynomial), this->LargeFirstComponent, this->LargeNbrComponent);
+	}
     }
   else
     {
-      this->LongRationalScalar = this->HilbertSpace->JackSqrNormalization(*(this->RationalJackPolynomial), this->LargeFirstComponent, this->LargeNbrComponent);
+      if (this->RationalJackPolynomial == 0)
+	{
+	  this->Scalar = this->HilbertSpace->JackScalarProduct(*(this->JackPolynomial), *(this->JackPolynomial2), this->LargeFirstComponent, this->LargeNbrComponent);
+	}
+      else
+	{
+	  this->LongRationalScalar = this->HilbertSpace->JackScalarProduct(*(this->RationalJackPolynomial), *(this->RationalJackPolynomial2), this->LargeFirstComponent, this->LargeNbrComponent);
+	}
     }
   return true;
 }

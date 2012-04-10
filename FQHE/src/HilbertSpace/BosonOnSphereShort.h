@@ -537,6 +537,23 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // return value = quare normalization 
   virtual LongRational JackSqrNormalization (LongRationalVector& outputVector, long minIndex = 0l, long nbrComponents = 0l);
 
+  // compute part of the Jack polynomial scalar product in a given range of indices
+  //
+  // state1 = reference on the first unnormalized Jack polynomial
+  // state2 = reference on the second unnormalized Jack polynomial
+  // minIndex = first index to compute 
+  // nbrComponents = number of indices to compute (0 if they all have to be computed from minIndex)
+  // return value = quare normalization 
+  virtual double JackScalarProduct (RealVector& state1, RealVector& state2, long minIndex = 0l, long nbrComponents = 0l);
+
+  // compute part of the Jack polynomial square normalization in a given range of indices
+  //
+  // state1 = reference on the first unnormalized Jack polynomial
+  // state2 = reference on the second unnormalized Jack polynomial
+  // minIndex = first index to compute 
+  // nbrComponents = number of indices to compute (0 if they all have to be computed from minIndex)
+  // return value = quare normalization 
+  virtual LongRational JackScalarProduct (LongRationalVector& state1, LongRationalVector& state2, long minIndex = 0l, long nbrComponents = 0l);
   
   // symmetrized a product of two uncoupled states 
   //

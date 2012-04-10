@@ -932,6 +932,34 @@ LongRational ParticleOnSphere::JackSqrNormalization (LongRationalVector& outputV
   return LongRational();
 }
 
+// compute part of the Jack polynomial scalar product in a given range of indices
+//
+// state1 = reference on the first unnormalized Jack polynomial
+// state2 = reference on the second unnormalized Jack polynomial
+// minIndex = first index to compute 
+// nbrComponents = number of indices to compute (0 if they all have to be computed from minIndex)
+// return value = quare normalization 
+
+double ParticleOnSphere::JackScalarProduct (RealVector& state1, RealVector& state2, long minIndex, long nbrComponents)
+{
+  return 0.0;
+}
+
+
+// compute part of the Jack polynomial square normalization in a given range of indices
+//
+// state1 = reference on the first unnormalized Jack polynomial
+// state2 = reference on the second unnormalized Jack polynomial
+// minIndex = first index to compute 
+// nbrComponents = number of indices to compute (0 if they all have to be computed from minIndex)
+// return value = quare normalization 
+
+LongRational ParticleOnSphere::JackScalarProduct (LongRationalVector& state1, LongRationalVector& state2, long minIndex, long nbrComponents)
+{
+  return LongRational();
+}
+  
+
 // remove part of each Fock state, discarding component if the Fock state does not a given pattern
 //
 // inputVector = state to truncate

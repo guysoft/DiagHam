@@ -73,6 +73,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "excited-state", "vector file that describes the excited state");
   (*SystemGroup) += new SingleStringOption  ('\n', "excited-reference", "use a file as the definition of the reference state of the excited state");
   (*SystemGroup) += new BooleanOption  ('\n', "excitedhuge-basis", "use huge Hilbert space support for the excited state");
+  (*SystemGroup) += new SingleStringOption  ('\n', "excited-state2", "vector file that describes the second excited state if a scalar product has to be computed (state should be in the same squeezed basis than excited-state)");
   (*SystemGroup) += new BooleanOption  ('\n', "no-base", "do not compute the contribution fron the base state");  
   (*SystemGroup) += new BooleanOption  ('\n', "fermion", "consider fermions instead of bosons");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
@@ -108,9 +109,7 @@ int main(int argc, char** argv)
     SU2Flag = true;
 
   if (Manager.GetBoolean("no-base") == false)
-    {
-
-      
+    {      
       ParticleOnSphere* BaseBasis = FQHEDiskQuasiholePropagatorGetHilbertSpace(Statistics, Manager.GetBoolean("basehuge-basis"), Manager.GetString("base-reference"), Manager.GetString("baseload-hilbert"), 
 									       BaseNbrParticles, BaseLzMax, BaseTotalLz, TotalSz, DiffLzMax, SU2Flag, Manager.GetInteger("memory"));
       if (BaseBasis == 0)
@@ -159,10 +158,24 @@ int main(int argc, char** argv)
 	  cout << "can't open vector file " << Manager.GetString("excited-state") << endl;
 	  return -1;      
 	}
-      FQHEDiskQuasiholePropagatorOperation Operation2(ExcitedBasis, &ExcitedVector);
-      Operation2.ApplyOperation(Architecture.GetArchitecture());
-      Excited = Operation2.GetLongRationalScalar();
-
+      if (Manager.GetString("excited-state2") == 0)
+	{
+	  FQHEDiskQuasiholePropagatorOperation Operation2(ExcitedBasis, &ExcitedVector);
+	  Operation2.ApplyOperation(Architecture.GetArchitecture());
+	  Excited = Operation2.GetLongRationalScalar();
+	}
+      else
+	{
+	  LongRationalVector ExcitedVector2;
+	  if (ExcitedVector2.ReadVector (Manager.GetString("excited-state2")) == false)
+	    {
+	      cout << "can't open vector file " << Manager.GetString("excited-state2") << endl;
+	      return -1;      
+	    }
+	  FQHEDiskQuasiholePropagatorOperation Operation2(ExcitedBasis, &ExcitedVector, &ExcitedVector2);
+	  Operation2.ApplyOperation(Architecture.GetArchitecture());
+	  Excited = Operation2.GetLongRationalScalar();
+	}
       if (Manager.GetBoolean("no-base") == false)
 	{
 	  LongRational Tmp = Excited / RationalBase;
@@ -185,9 +198,24 @@ int main(int argc, char** argv)
 	  cout << "can't open vector file " << Manager.GetString("excited-state") << endl;
 	  return -1;      
 	}
-      FQHEDiskQuasiholePropagatorOperation Operation2(ExcitedBasis, &ExcitedVector);
-      Operation2.ApplyOperation(Architecture.GetArchitecture());
-      Excited = Operation2.GetScalar().Re;
+      if (Manager.GetString("excited-state2") == 0)
+	{
+	  FQHEDiskQuasiholePropagatorOperation Operation2(ExcitedBasis, &ExcitedVector);
+	  Operation2.ApplyOperation(Architecture.GetArchitecture());
+	  Excited = Operation2.GetScalar().Re;
+	}
+      else
+	{
+	  RealVector ExcitedVector2;
+	  if (ExcitedVector2.ReadVector (Manager.GetString("excited-state2")) == false)
+	    {
+	      cout << "can't open vector file " << Manager.GetString("excited-state2") << endl;
+	      return -1;      
+	    }
+	  FQHEDiskQuasiholePropagatorOperation Operation2(ExcitedBasis, &ExcitedVector, &ExcitedVector2);
+	  Operation2.ApplyOperation(Architecture.GetArchitecture());
+	  Excited = Operation2.GetScalar().Re;
+	}
       if (Manager.GetBoolean("no-base") == false)
 	{
 	  cout << "2^" << DiffLzMax <<  " * " << Excited << " / " << Base << " = " << (pow(2.0, (double) DiffLzMax) * Excited / Base) << endl;

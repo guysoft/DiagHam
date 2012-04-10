@@ -55,6 +55,11 @@ class FQHEDiskQuasiholePropagatorOperation: public AbstractScalarSumOperation
   // vector corresponding to the Jack polynomial, rational version  
   LongRationalVector* RationalJackPolynomial;
 
+  // vector corresponding to the second Jack polynomial  (to compute scalar product instead of norm)
+  RealVector* JackPolynomial2;
+  // vector corresponding to the Jack polynomial, rational version   (to compute scalar product instead of norm)
+  LongRationalVector* RationalJackPolynomial2;
+
  public:
   
   // constructor 
@@ -68,6 +73,20 @@ class FQHEDiskQuasiholePropagatorOperation: public AbstractScalarSumOperation
   // space = pointer to the Hilbert space to use
   // jackPolynomial = vector corresponding to the Jack polynomial
   FQHEDiskQuasiholePropagatorOperation(ParticleOnSphere* space, LongRationalVector* jackPolynomial);
+
+  // constructor for a scalar product
+  //
+  // space = pointer to the Hilbert space to use
+  // jackPolynomial1 = vector corresponding to the first Jack polynomial
+  // jackPolynomial2 = vector corresponding to the second Jack polynomial
+  FQHEDiskQuasiholePropagatorOperation(ParticleOnSphere* space, RealVector* jackPolynomial1, RealVector* jackPolynomial2);
+
+  // constructor  for a scalar product
+  //
+  // space = pointer to the Hilbert space to use
+  // jackPolynomial1 = vector corresponding to the first Jack polynomial
+  // jackPolynomial2 = vector corresponding to the second Jack polynomial
+  FQHEDiskQuasiholePropagatorOperation(ParticleOnSphere* space, LongRationalVector* jackPolynomial1, LongRationalVector* jackPolynomial2);
 
   // copy constructor 
   //
