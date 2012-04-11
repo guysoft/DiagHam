@@ -36,7 +36,7 @@
 #include "HilbertSpace/AbstractQHEParticle.h"
 #include "HilbertSpace/ParticleOnSphere.h"
 #include "Matrix/RealSymmetricMatrix.h"
-
+#include "Matrix/HermitianMatrix.h"
 #include <iostream>
 
 
@@ -92,6 +92,7 @@ class ParticleOnTorus :  public ParticleOnSphere
   // groundState = reference on the total system ground state
   // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
   virtual RealSymmetricMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrBosonSector, int kySector, RealVector& groundState);
+  virtual HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrBosonSector, int kySector, ComplexVector& groundState);
 
   // apply a magnetic translation along x to a given state
   //

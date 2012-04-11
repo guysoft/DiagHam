@@ -36,7 +36,9 @@
 #include "QuantumNumber/VectorQuantumNumber.h"
 #include "MathTools/FactorialCoefficient.h"
 #include "HilbertSpace/SubspaceSpaceConverter.h"
+#include "HilbertSpace/BosonOnTorusShort.h" 
 #include "GeneralTools/ArrayTools.h"
+#include "Vector/ComplexVector.h"
 
 #include <math.h>
 #include <stdlib.h>
@@ -457,3 +459,43 @@ long BosonOnTorusWithSpin::EvaluateHilbertSpaceDimension(int nbrBosons, int curr
   return Count;
 }
 
+
+// project out any configurations that have particles on levels other than lll
+//
+// inputVector = vector to apply the projection to
+// outputVector = projected vector
+// finalSpace = reference to output vector space
+
+void BosonOnTorusWithSpin::ProjectionInTheLowestLevel(RealVector &inputVector, RealVector & outputVector, BosonOnTorusShort *finalSpace)
+{
+  unsigned long Etat;
+  int Idx; 
+  for(int i = 0 ; i < finalSpace->GetHilbertSpaceDimension() ; i++)
+    {
+      Etat = finalSpace->StateDescription[i]; 
+      Idx = this->FindStateIndex(0,Etat);
+      if ( Idx < this->HilbertSpaceDimension ) 
+	{
+	  outputVector[i] = inputVector[Idx];
+	}
+    }
+  cout <<"Norm after projection" <<outputVector.Norm()<<endl;
+}
+
+
+void BosonOnTorusWithSpin::ProjectionInTheLowestLevel(ComplexVector &inputVector, ComplexVector & outputVector, BosonOnTorusShort *finalSpace)
+{
+  unsigned long Etat;
+  int Idx; 
+  for(int i = 0 ; i < finalSpace->GetHilbertSpaceDimension() ; i++)
+    {
+      Etat = finalSpace->StateDescription[i]; 
+      Idx = this->FindStateIndex(Etat,0);
+      if ( Idx < this->HilbertSpaceDimension ) 
+	{
+	  cout <<i<< " "<<Idx<<endl;
+	  outputVector[i] = inputVector[Idx];
+	}
+    }
+  cout <<"Norm after projection" <<outputVector.Norm()<<endl;
+}

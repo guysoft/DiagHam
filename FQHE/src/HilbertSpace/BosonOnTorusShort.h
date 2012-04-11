@@ -43,7 +43,7 @@
 class BosonOnTorusShort :  public ParticleOnTorus
 {
   friend class BosonOnSquareLatticeWannierSpace;
-  
+  friend class BosonOnTorusWithSpin;
  protected:
 
   // number of bosons
@@ -359,6 +359,7 @@ class BosonOnTorusShort :  public ParticleOnTorus
   // groundState = reference on the total system ground state
   // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
   RealSymmetricMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrBosonSector, int kySector, RealVector& groundState);
+  HermitianMatrix  EvaluatePartialDensityMatrixParticlePartition (int nbrBosonSector, int kySector, ComplexVector& groundState);
 
 };
 

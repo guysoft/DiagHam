@@ -37,10 +37,12 @@
 
 #include <iostream>
 
+class BosonOnTorusShort;
 
 class BosonOnTorusWithSpin :  public BosonOnSphereWithSU2Spin
 {
 
+  friend class BosonOnTorusShort;
  protected:
 
   // momentum along the y direction
@@ -138,6 +140,15 @@ class BosonOnTorusWithSpin :  public BosonOnSphereWithSU2Spin
   // return value = Hilbert space dimension
   long EvaluateHilbertSpaceDimension(int nbrBosons, int currentKy, int currentTotalKy, int nbrSpinUp);
 
+ public:
+  
+  // project out any configurations that have particles on levels other than lll
+  //
+  // inputVector = vector to apply the projection to
+  // outputVector = projected vector
+  // finalSpace = reference to output vector space
+  void ProjectionInTheLowestLevel(RealVector &inputVector, RealVector & outputVector, BosonOnTorusShort *finalSpace);
+  void ProjectionInTheLowestLevel(ComplexVector &inputVector, ComplexVector & outputVector, BosonOnTorusShort *finalSpace);
 };
 
 

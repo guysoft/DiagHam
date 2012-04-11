@@ -909,7 +909,7 @@ long BosonOnTorusShort::EvaluateHilbertSpaceDimension(int nbrBosons, int maxMome
 //     {
 //       RealSymmetricMatrix TmpDensityMatrixZero;
 //       return TmpDensityMatrixZero;
-//     }
+ //     }
 // }
 
 // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Ky sector.
@@ -1318,3 +1318,217 @@ int BosonOnTorusShort::ApplyXMagneticTranslation(int index)
 }
 
 
+
+// evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Ky sector.
+// 
+// nbrBosonSector = number of particles that belong to the subsytem 
+// kySector = Ky sector in which the density matrix has to be evaluated 
+// groundState = reference on the total system ground state
+// return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+
+HermitianMatrix  BosonOnTorusShort::EvaluatePartialDensityMatrixParticlePartition (int nbrBosonSector, int kySector, ComplexVector& groundState)
+{  
+  if (nbrBosonSector == 0)
+    {
+      if (kySector == 0)
+	{
+	  HermitianMatrix  TmpDensityMatrix(1);
+	  TmpDensityMatrix.SetMatrixElement(0, 0, 1.0);
+	  return TmpDensityMatrix;
+	}
+      else
+	{
+	  HermitianMatrix TmpDensityMatrix;
+	  return TmpDensityMatrix;	  
+	}
+    }
+
+  if (nbrBosonSector == this->NbrBosons)
+    {
+      if (kySector == this->TotalKy)
+	{
+	  HermitianMatrix TmpDensityMatrix(1);
+	  TmpDensityMatrix.SetMatrixElement(0, 0, 1.0);
+	  return TmpDensityMatrix;
+	}
+      else
+	{
+	  HermitianMatrix TmpDensityMatrix;
+	  return TmpDensityMatrix;	  
+	}
+    }
+  
+  int ComplementaryNbrBosonSector = this->NbrBosons - nbrBosonSector;
+  int ComplementaryKySector = this->TotalKy - kySector;
+  if (ComplementaryKySector < 0)
+    ComplementaryKySector += this->KyMax;
+  if (ComplementaryKySector >= this->KyMax)
+    ComplementaryKySector -= this->KyMax;
+  
+  if (nbrBosonSector == 1)
+    {
+      double TmpValue = 0.0;
+      unsigned long* TmpMonomial1 = new unsigned long [ComplementaryNbrBosonSector];
+      unsigned long* TmpMonomial3 = new unsigned long [this->NbrBosons];
+      cout << "ComplementaryKySector = " << ComplementaryKySector << endl;
+      BosonOnTorusShort TmpHilbertSpace(this->NbrBosons - 1, this->KyMax, ComplementaryKySector);
+      FactorialCoefficient Factorial;
+      //       for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
+      // 	TmpHilbertSpace.PrintState(cout, MinIndex) << " | " << TmpHilbertSpace.StateKyMax[MinIndex] << " | " << hex << TmpHilbertSpace.StateDescription[MinIndex] << dec << endl;
+    
+      for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
+	{
+	  TmpHilbertSpace.FermionToBoson(TmpHilbertSpace.StateDescription[MinIndex], TmpHilbertSpace.StateKyMax[MinIndex] + TmpHilbertSpace.NbrBosons - 1, TmpHilbertSpace.TemporaryState, TmpHilbertSpace.TemporaryStateKyMax);
+	  TmpHilbertSpace.ConvertToMonomial(TmpHilbertSpace.StateDescription[MinIndex], TmpHilbertSpace.TemporaryStateKyMax + TmpHilbertSpace.NbrBosons - 1, TmpMonomial1);
+	  int TmpIndex2 = 0;
+	  int TmpIndex4 = 0;
+	  while ((TmpIndex2 < ComplementaryNbrBosonSector) && (TmpMonomial1[TmpIndex2] >= kySector))
+	    {
+	      TmpMonomial3[TmpIndex4] = TmpMonomial1[TmpIndex2];
+	      ++TmpIndex2;
+	      ++TmpIndex4;		  
+	    }
+	  TmpMonomial3[TmpIndex4] = kySector;
+	  ++TmpIndex4;
+	  while (TmpIndex2 < ComplementaryNbrBosonSector)
+	    {
+	      TmpMonomial3[TmpIndex4] = TmpMonomial1[TmpIndex2];
+	      ++TmpIndex2;
+	      ++TmpIndex4;		  
+	    }
+	  unsigned long TmpState = this->ConvertFromMonomial(TmpMonomial3);
+	  int TmpPos = this->FindStateIndex(TmpState, TmpMonomial3[0] + this->NbrBosons - 1);
+	  if (TmpPos != this->HilbertSpaceDimension)
+	    {
+	      this->FermionToBoson(TmpState, TmpMonomial3[0] + this->NbrBosons - 1, this->TemporaryState, this->TemporaryStateKyMax);
+	      Factorial.SetToOne();
+	      for (int k = 0; k <= TmpHilbertSpace.TemporaryStateKyMax; ++k)
+		if (TmpHilbertSpace.TemporaryState[k] > 1)
+		  Factorial.FactorialDivide(TmpHilbertSpace.TemporaryState[k]);
+	      for (int k = 0; k <= this->TemporaryStateKyMax; ++k)
+		if (this->TemporaryState[k] > 1)
+		  Factorial.FactorialMultiply(this->TemporaryState[k]);
+	      Factorial.BinomialDivide(this->NbrBosons, nbrBosonSector);
+	      TmpValue += (Conj(groundState[TmpPos]) * groundState[TmpPos] * (Factorial.GetNumericalValue())).Re;	
+	    }
+	}
+      
+      HermitianMatrix TmpDensityMatrix(1);
+      TmpDensityMatrix.SetMatrixElement(0, 0, TmpValue);
+      return TmpDensityMatrix;
+    }
+
+
+  BosonOnTorusShort TmpDestinationHilbertSpace(nbrBosonSector, this->KyMax, kySector);
+  cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
+  HermitianMatrix TmpDensityMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
+  int* TmpStatePosition = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+  int* TmpStatePosition2 = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+  double* TmpStateCoefficient = new double [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+  long TmpNbrNonZeroElements = 0;
+  unsigned long* TmpMonomial2 = new unsigned long [nbrBosonSector];
+  unsigned long* TmpMonomial1 = new unsigned long [ComplementaryNbrBosonSector];
+  unsigned long* TmpMonomial3 = new unsigned long [this->NbrBosons];
+  BosonOnTorusShort TmpHilbertSpace(ComplementaryNbrBosonSector, this->KyMax, ComplementaryKySector);
+  FactorialCoefficient Factorial;
+
+  for (int MinIndex = 0; MinIndex < TmpHilbertSpace.HilbertSpaceDimension; ++MinIndex)    
+    {
+      int Pos = 0;
+      TmpHilbertSpace.FermionToBoson(TmpHilbertSpace.StateDescription[MinIndex], TmpHilbertSpace.StateKyMax[MinIndex] + TmpHilbertSpace.NbrBosons - 1, TmpHilbertSpace.TemporaryState, TmpHilbertSpace.TemporaryStateKyMax);
+      TmpHilbertSpace.ConvertToMonomial(TmpHilbertSpace.StateDescription[MinIndex], TmpHilbertSpace.TemporaryStateKyMax + TmpHilbertSpace.NbrBosons - 1 , TmpMonomial1);
+      for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
+	{
+	  TmpDestinationHilbertSpace.FermionToBoson(TmpDestinationHilbertSpace.StateDescription[j], TmpDestinationHilbertSpace.StateKyMax[j] + TmpDestinationHilbertSpace.NbrBosons - 1, TmpDestinationHilbertSpace.TemporaryState, TmpDestinationHilbertSpace.TemporaryStateKyMax);
+	  TmpDestinationHilbertSpace.ConvertToMonomial(TmpDestinationHilbertSpace.StateDescription[j], TmpDestinationHilbertSpace.TemporaryStateKyMax + TmpDestinationHilbertSpace.NbrBosons - 1, TmpMonomial2);
+	  
+	  int TmpIndex2 = 0;
+	  int TmpIndex3 = 0;
+	  int TmpIndex4 = 0;
+	  while ((TmpIndex2 < ComplementaryNbrBosonSector) && (TmpIndex3 < nbrBosonSector)) 
+	    {
+	      while ((TmpIndex2 < ComplementaryNbrBosonSector) && (TmpMonomial2[TmpIndex3] <= TmpMonomial1[TmpIndex2]))
+		{
+		  TmpMonomial3[TmpIndex4] = TmpMonomial1[TmpIndex2];
+		  ++TmpIndex2;
+		  ++TmpIndex4;		  
+		}
+	      if (TmpIndex2 < ComplementaryNbrBosonSector)
+		{
+		  while ((TmpIndex3 < nbrBosonSector) && (TmpMonomial1[TmpIndex2] <= TmpMonomial2[TmpIndex3]))
+		    {
+		      TmpMonomial3[TmpIndex4] = TmpMonomial2[TmpIndex3];
+		      ++TmpIndex3;
+		      ++TmpIndex4;		  
+		    }
+		}
+	    }
+	  while (TmpIndex2 < ComplementaryNbrBosonSector)
+	    {
+	      TmpMonomial3[TmpIndex4] = TmpMonomial1[TmpIndex2];
+	      ++TmpIndex2;
+	      ++TmpIndex4;		  
+	    }
+	  while (TmpIndex3 < nbrBosonSector)
+	    {
+	      TmpMonomial3[TmpIndex4] = TmpMonomial2[TmpIndex3];
+	      ++TmpIndex3;
+	      ++TmpIndex4;		  
+	    }
+	  
+	  unsigned long TmpState = this->ConvertFromMonomial(TmpMonomial3);
+	  int TmpPos = this->FindStateIndex(TmpState, TmpMonomial3[0] + this->NbrBosons - 1);
+	  if (TmpPos != this->HilbertSpaceDimension)
+	    {
+ 	      Factorial.SetToOne();
+ 	      for (int k = 0; k <= TmpHilbertSpace.TemporaryStateKyMax; ++k)
+		{
+		  if (TmpHilbertSpace.TemporaryState[k] > 1)
+		    Factorial.FactorialDivide(TmpHilbertSpace.TemporaryState[k]);
+		}
+  	      for (int k = 0; k <= TmpDestinationHilbertSpace.TemporaryStateKyMax; ++k)
+		{
+		  if (TmpDestinationHilbertSpace.TemporaryState[k] > 1)
+		    Factorial.FactorialDivide(TmpDestinationHilbertSpace.TemporaryState[k]);
+		}
+ 	      this->FermionToBoson(TmpState, TmpMonomial3[0] + this->NbrBosons - 1, this->TemporaryState, this->TemporaryStateKyMax);
+ 	      
+	      for (int k = 0; k <= this->TemporaryStateKyMax; ++k)
+		if (this->TemporaryState[k] > 1)
+ 		  Factorial.FactorialMultiply(this->TemporaryState[k]);
+	      Factorial.BinomialDivide(this->NbrBosons, nbrBosonSector);
+	      TmpStatePosition[Pos] = TmpPos;
+	      TmpStatePosition2[Pos] = j;
+	      TmpStateCoefficient[Pos] = sqrt(Factorial.GetNumericalValue());
+	      ++Pos;
+	    }
+	}
+      if (Pos != 0)
+	{
+	  ++TmpNbrNonZeroElements;
+	  for (int j = 0; j < Pos; ++j)
+	    {
+	      int Pos2 = TmpStatePosition2[j];
+	      Complex TmpValue = groundState[TmpStatePosition[j]] * TmpStateCoefficient[j];
+	      for (int k = 0; k < Pos; ++k)
+		if (TmpStatePosition2[k] >= Pos2)
+		  {
+		    TmpDensityMatrix.AddToMatrixElement(Pos2, TmpStatePosition2[k], TmpValue * Conj(groundState[TmpStatePosition[k]]) * TmpStateCoefficient[k]);
+		  }
+	    }
+	}
+    }
+  delete[] TmpStatePosition2;
+  delete[] TmpStatePosition;
+  delete[] TmpStateCoefficient;
+  delete[] TmpMonomial1;
+  delete[] TmpMonomial2;
+  delete[] TmpMonomial3;
+  if (TmpNbrNonZeroElements > 0)	
+    return TmpDensityMatrix;
+  else
+    {
+      HermitianMatrix TmpDensityMatrixZero;
+      return TmpDensityMatrixZero;
+    }
+}

@@ -2,6 +2,10 @@
 #include "Matrix/RealSymmetricMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
 #include "Matrix/RealMatrix.h"
+#include "Matrix/ComplexMatrix.h"
+
+#include "Vector/ComplexVector.h"
+#include "Matrix/HermitianMatrix.h"
 
 #include "HilbertSpace/BosonOnTorus.h"
 #include "HilbertSpace/BosonOnTorusShort.h"
@@ -47,7 +51,7 @@ using std::ofstream;
 // eigenvalues = matrix that contains the sorted eigenvalues
 // kxValues = array where the Kx values will be stored
 // error = relative error below which two eigenvalues are assumed to be degenerated
-void FQHETorusBatchComputeKxMomentum(int nbrParticles, int nbrFluxQuanta, int kyMomentum, RealMatrix& eigenstates, RealDiagonalMatrix& eigenvalues, double* kxValues, double error);
+void FQHETorusBatchComputeKxMomentum(int nbrParticles, int nbrFluxQuanta, int kyMomentum, RealDiagonalMatrix& eigenvalues, double* kxValues, double error);
 
 
 int main(int argc, char** argv)
@@ -71,6 +75,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "max-na", "maximum size of the particles whose entropy has to be evaluated (0 if equal to half the total system size)", 0);
   (*SystemGroup) += new SingleStringOption  ('\n', "degenerated-groundstate", "single column file describing a degenerated ground state");
   (*SystemGroup) += new BooleanOption  ('\n', "compute-kx", "compute the momentum alonx for each eigenstate of the reduced density matrix");
+  (*SystemGroup) += new BooleanOption  ('c', "complex", "states of the density matrix are complex");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with partent extension");
   (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
   (*OutputGroup) += new BooleanOption ('\n', "density-eigenstate", "compute the eigenstates of the reduced density matrix");
@@ -127,8 +132,10 @@ int main(int argc, char** argv)
   int NbrSpaces = 1;
   ParticleOnTorus** Spaces = 0;
   RealVector* GroundStates = 0;
+  ComplexVector * ComplexGroundStates = 0;
   char** GroundStateFiles = 0;
   double EigenvalueError = 1e-10;
+  bool ComplexFlag = Manager.GetBoolean("complex");
 
   if (Manager.GetString("degenerated-groundstate") == 0)
     {
@@ -171,28 +178,49 @@ int main(int argc, char** argv)
 	}
     }
 
-
-  GroundStates = new RealVector [NbrSpaces];  
-  for (int i = 0; i < NbrSpaces; ++i)
-    if (GroundStates[i].ReadVector (GroundStateFiles[i]) == false)
-      {
-	cout << "can't open vector file " << GroundStateFiles[i] << endl;
-	return -1;      
-      }
-
-
-  Spaces = new ParticleOnTorus* [NbrSpaces];
+ Spaces = new ParticleOnTorus* [NbrSpaces];
   for (int i = 0; i < NbrSpaces; ++i)
     {
       Spaces[i] = new BosonOnTorusShort (NbrParticles, KyMax, TotalKy[i]);
-      
-      if (Spaces[i]->GetLargeHilbertSpaceDimension() != GroundStates[i].GetLargeVectorDimension())
+    }
+  
+  if (ComplexFlag == false)
+    {
+      GroundStates = new RealVector [NbrSpaces];  
+      for (int i = 0; i < NbrSpaces; ++i)
 	{
-	  cout << "dimension mismatch between Hilbert space and ground state" << endl;
-	  return 0;
+	  if (GroundStates[i].ReadVector (GroundStateFiles[i]) == false)
+	    {
+	      cout << "can't open vector file " << GroundStateFiles[i] << endl;
+	      return -1;      
+	    }
+	  
+	  if (Spaces[i]->GetLargeHilbertSpaceDimension() != GroundStates[i].GetLargeVectorDimension())
+	    {
+	      cout << "dimension mismatch between Hilbert space and ground state" << endl;
+	      return 0;
+	    }
 	}
     }
-
+  else
+    {
+      ComplexGroundStates = new ComplexVector [NbrSpaces];  
+      for (int i = 0; i < NbrSpaces; ++i)
+	{	
+	  if (ComplexGroundStates[i].ReadVector (GroundStateFiles[i]) == false)
+	    {
+	      cout << "can't open vector file " << GroundStateFiles[i] << endl;
+	      return -1;      
+	    }
+	  
+	  if (Spaces[i]->GetLargeHilbertSpaceDimension() != ComplexGroundStates[i].GetLargeVectorDimension())
+	    {
+	      cout << "dimension mismatch between Hilbert space and ground state" << endl;
+	      return 0;
+	    }
+	}
+    }
+  
   if (DensityMatrixFileName != 0)
     {
       ofstream DensityMatrixFile;
@@ -238,134 +266,105 @@ int main(int argc, char** argv)
       for (; SubsystemTotalKy <= SubsystemMaxTotalKy; ++SubsystemTotalKy)
 	{
 	  cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Ky=" << SubsystemTotalKy << endl;
-	  RealSymmetricMatrix PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKy, GroundStates[0]);
-	  for (int i = 1; i < NbrSpaces; ++i)
+	  if(ComplexFlag == false)
 	    {
-	      RealSymmetricMatrix TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKy, GroundStates[i]);
-	      PartialDensityMatrix += TmpMatrix;
-	    }
-	  if (NbrSpaces > 1)
-	    PartialDensityMatrix /= ((double) NbrSpaces);
-	  double* KxValues = 0;
-	  if (KxFlag == true)
-	    KxValues = new double [PartialDensityMatrix.GetNbrRow()];
-	  if (PartialDensityMatrix.GetNbrRow() > 1)
-	    {
-	      RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
+	      RealSymmetricMatrix PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKy, GroundStates[0]);
+	      for (int i = 1; i < NbrSpaces; ++i)
+		{
+		  RealSymmetricMatrix TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKy, GroundStates[i]);
+		  PartialDensityMatrix += TmpMatrix;
+		}
+	      if (NbrSpaces > 1)
+		PartialDensityMatrix /= ((double) NbrSpaces);
+	      double* KxValues = 0;
+	      if (KxFlag == true)
+		KxValues = new double [PartialDensityMatrix.GetNbrRow()];
+	      if (PartialDensityMatrix.GetNbrRow() > 1)
+		{
+		  RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
 #ifdef __LAPACK__
-	      if (LapackFlag == true)
-		{
-		  if (((EigenstateFlag == true) && (FilterKya == SubsystemTotalKy)) || (KxFlag == true))
+		  if (LapackFlag == true)
 		    {
-		      RealMatrix TmpEigenstates(PartialDensityMatrix.GetNbrRow(),
-						PartialDensityMatrix.GetNbrRow(), true);
-		      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
-			TmpEigenstates[i][i] = 1.0;
-		      PartialDensityMatrix.LapackDiagonalize(TmpDiag, TmpEigenstates);
-		      TmpDiag.SortMatrixDownOrder(TmpEigenstates);
-		      if ((EigenstateFlag == true) && (FilterKya == SubsystemTotalKy))
+		      if (((EigenstateFlag == true) && (FilterKya == SubsystemTotalKy)) || (KxFlag == true))
 			{
-			  char* TmpEigenstateName = new char[512];
-			  int MaxNbrEigenstates = NbrEigenstates;
-			  if (NbrEigenstates == 0)
-			    MaxNbrEigenstates = PartialDensityMatrix.GetNbrRow();
-			  for (int i = 0; i < MaxNbrEigenstates; ++i)
+			  RealMatrix TmpEigenstates(PartialDensityMatrix.GetNbrRow(),
+						    PartialDensityMatrix.GetNbrRow(), true);
+			  for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+			    TmpEigenstates[i][i] = 1.0;
+			  PartialDensityMatrix.LapackDiagonalize(TmpDiag, TmpEigenstates);
+			  TmpDiag.SortMatrixDownOrder(TmpEigenstates);
+			  if ((EigenstateFlag == true) && (FilterKya == SubsystemTotalKy))
 			    {
-			      if (TmpDiag[i] > 1e-14)
+			      char* TmpEigenstateName = new char[512];
+			      int MaxNbrEigenstates = NbrEigenstates;
+			      if (NbrEigenstates == 0)
+				MaxNbrEigenstates = PartialDensityMatrix.GetNbrRow();
+			      for (int i = 0; i < MaxNbrEigenstates; ++i)
 				{
-				  sprintf (TmpEigenstateName,
-					   "bosons_torus_kysym_density_n_%d_2s_%d_ky_%d_na_%d_kya_%d.%d.vec",
-					   NbrParticles, KyMax, TotalKy[0], 
-					   SubsystemNbrParticles, SubsystemTotalKy, i);
-				  TmpEigenstates[i].WriteVector(TmpEigenstateName);
+				  if (TmpDiag[i] > 1e-14)
+				    {
+				      sprintf (TmpEigenstateName,
+					       "bosons_torus_kysym_density_n_%d_2s_%d_ky_%d_na_%d_kya_%d.%d.vec",
+					       NbrParticles, KyMax, TotalKy[0], 
+					       SubsystemNbrParticles, SubsystemTotalKy, i);
+				      TmpEigenstates[i].WriteVector(TmpEigenstateName);
+				    }
 				}
+			      delete[] TmpEigenstateName;
 			    }
-			  delete[] TmpEigenstateName;
+			  if (KxFlag == true)
+			    {
+			      FQHETorusBatchComputeKxMomentum(SubsystemNbrParticles, KyMax, SubsystemTotalKy, TmpDiag, KxValues, EigenvalueError);
+			    }
 			}
-		      if (KxFlag == true)
+		      else
 			{
-			  FQHETorusBatchComputeKxMomentum(SubsystemNbrParticles, KyMax, SubsystemTotalKy, TmpEigenstates, TmpDiag, KxValues, EigenvalueError);
+			  PartialDensityMatrix.LapackDiagonalize(TmpDiag);
 			}
 		    }
 		  else
 		    {
-		      PartialDensityMatrix.LapackDiagonalize(TmpDiag);
-		    }
-		}
-	      else
-		{
-		  if (((EigenstateFlag == true) && (FilterKya == SubsystemTotalKy)) || (KxFlag == true))
-		    {
-		      RealMatrix TmpEigenstates(PartialDensityMatrix.GetNbrRow(),
-						PartialDensityMatrix.GetNbrRow(), true);
-		      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
-			TmpEigenstates[i][i] = 1.0;
-		      PartialDensityMatrix.Diagonalize(TmpDiag, TmpEigenstates, Manager.GetDouble("diag-precision"));
-		      TmpDiag.SortMatrixDownOrder(TmpEigenstates);
-		      if ((EigenstateFlag == true) && (FilterKya == SubsystemTotalKy))
+		      if (((EigenstateFlag == true) && (FilterKya == SubsystemTotalKy)) || (KxFlag == true))
 			{
-			  char* TmpEigenstateName = new char[512];
-			  int MaxNbrEigenstates = NbrEigenstates;
-			  if (NbrEigenstates == 0)
-			    MaxNbrEigenstates = PartialDensityMatrix.GetNbrRow();
-			  for (int i = 0; i < MaxNbrEigenstates; ++i)
+			  RealMatrix TmpEigenstates(PartialDensityMatrix.GetNbrRow(),
+						    PartialDensityMatrix.GetNbrRow(), true);
+			  for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+			    TmpEigenstates[i][i] = 1.0;
+			  PartialDensityMatrix.Diagonalize(TmpDiag, TmpEigenstates, Manager.GetDouble("diag-precision"));
+			  TmpDiag.SortMatrixDownOrder(TmpEigenstates);
+			  if ((EigenstateFlag == true) && (FilterKya == SubsystemTotalKy))
 			    {
-			      if (TmpDiag[i] > 1e-14)
+			      char* TmpEigenstateName = new char[512];
+			      int MaxNbrEigenstates = NbrEigenstates;
+			      if (NbrEigenstates == 0)
+				MaxNbrEigenstates = PartialDensityMatrix.GetNbrRow();
+			      for (int i = 0; i < MaxNbrEigenstates; ++i)
 				{
-				  sprintf (TmpEigenstateName,
-					   "bosons_torus_kysym_density_n_%d_2s_%d_ky_%d_na_%d_kya_%d.%d.vec",
-					   NbrParticles, KyMax, TotalKy[0], 
-					   SubsystemNbrParticles, SubsystemTotalKy, i);
-				  TmpEigenstates[i].WriteVector(TmpEigenstateName);
+				  if (TmpDiag[i] > 1e-14)
+				    {
+				      sprintf (TmpEigenstateName,
+					       "bosons_torus_kysym_density_n_%d_2s_%d_ky_%d_na_%d_kya_%d.%d.vec",
+					       NbrParticles, KyMax, TotalKy[0], 
+					       SubsystemNbrParticles, SubsystemTotalKy, i);
+				      TmpEigenstates[i].WriteVector(TmpEigenstateName);
+				    }
 				}
+			      delete[] TmpEigenstateName;
 			    }
-			  delete[] TmpEigenstateName;
+			  if (KxFlag == true)
+			    {
+			      FQHETorusBatchComputeKxMomentum(SubsystemNbrParticles, KyMax, SubsystemTotalKy, TmpDiag, KxValues, EigenvalueError);			  
+			    }
 			}
-		      if (KxFlag == true)
+		      else
 			{
-			  FQHETorusBatchComputeKxMomentum(SubsystemNbrParticles, KyMax, SubsystemTotalKy, TmpEigenstates, TmpDiag, KxValues, EigenvalueError);			  
+			  PartialDensityMatrix.Diagonalize(TmpDiag);
 			}
 		    }
-		  else
-		    {
-		      PartialDensityMatrix.Diagonalize(TmpDiag);
-		    }
-		}
 #else
-	      PartialDensityMatrix.Diagonalize(TmpDiag);
+		  PartialDensityMatrix.Diagonalize(TmpDiag);
 #endif		  
-	      TmpDiag.SortMatrixDownOrder();
-	      if (DensityMatrixFileName != 0)
-		{
-		  ofstream DensityMatrixFile;
-		  DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
-		  DensityMatrixFile.precision(14);
-		  if (KxFlag == true)
-		    {
-		      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
-			DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalKy << " " << TmpDiag[i] << " " << KxValues[i] << " " << ((int) round(KxValues[i])) << endl;
-		    }
-		  else
-		    {
-		      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
-			DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalKy << " " << TmpDiag[i] << endl;
-		    }
-		  DensityMatrixFile.close();
-		}
-	      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
-		{
-		  if (TmpDiag[i] > 1e-14)
-		    {
-		      EntanglementEntropy += TmpDiag[i] * log(TmpDiag[i]);
-		      DensitySum +=TmpDiag[i];
-		    }
-		}
-	    }
-	  else
-	    {
-	      if (PartialDensityMatrix.GetNbrRow() == 1)
-		{
-		  double TmpValue = PartialDensityMatrix(0,0);
+		  TmpDiag.SortMatrixDownOrder();
 		  if (DensityMatrixFileName != 0)
 		    {
 		      ofstream DensityMatrixFile;
@@ -373,35 +372,232 @@ int main(int argc, char** argv)
 		      DensityMatrixFile.precision(14);
 		      if (KxFlag == true)
 			{
-			  double KxValue = 0.0;
-			  RealMatrix TmpEigenstates(1, 1, true);	
-			  RealDiagonalMatrix TmpDiag (1);
-			  TmpDiag[0] = TmpValue;
-			  TmpEigenstates.SetMatrixElement(0, 0, 1.0);
-			  FQHETorusBatchComputeKxMomentum(SubsystemNbrParticles, KyMax, SubsystemTotalKy, TmpEigenstates, TmpDiag, &KxValue, EigenvalueError);
-			  DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalKy << " " << TmpValue 
-					    << " " << KxValue << " " << ((int) round(KxValue)) << endl;
+			  for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+			    DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalKy << " " << TmpDiag[i] << " " << KxValues[i] << " " << ((int) round(KxValues[i])) << endl;
 			}
 		      else
 			{
-			  DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalKy << " " << TmpValue << endl;
+			  for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+			    DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalKy << " " << TmpDiag[i] << endl;
 			}
 		      DensityMatrixFile.close();
-		    }		  
-		  if (TmpValue > 1e-14)
+		    }
+		  for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
 		    {
-		      EntanglementEntropy += TmpValue * log(TmpValue);
-		      DensitySum += TmpValue;
+		      if (TmpDiag[i] > 1e-14)
+			{
+			  EntanglementEntropy += TmpDiag[i] * log(TmpDiag[i]);
+			  DensitySum +=TmpDiag[i];
+			}
 		    }
 		}
+	      else
+		{
+		  if (PartialDensityMatrix.GetNbrRow() == 1)
+		    {
+		      double TmpValue = PartialDensityMatrix(0,0);
+		      if (DensityMatrixFileName != 0)
+			{
+			  ofstream DensityMatrixFile;
+			  DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
+			  DensityMatrixFile.precision(14);
+			  if (KxFlag == true)
+			    {
+			      double KxValue = 0.0;
+			      RealMatrix TmpEigenstates(1, 1, true);	
+			      RealDiagonalMatrix TmpDiag (1);
+			      TmpDiag[0] = TmpValue;
+			      TmpEigenstates.SetMatrixElement(0, 0, 1.0);
+			      FQHETorusBatchComputeKxMomentum(SubsystemNbrParticles, KyMax, SubsystemTotalKy,TmpDiag, &KxValue, EigenvalueError);
+			      DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalKy << " " << TmpValue 
+						<< " " << KxValue << " " << ((int) round(KxValue)) << endl;
+			    }
+			  else
+			    {
+			      DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalKy << " " << TmpValue << endl;
+			    }
+			  DensityMatrixFile.close();
+			}		  
+		      if (TmpValue > 1e-14)
+			{
+			  EntanglementEntropy += TmpValue * log(TmpValue);
+			  DensitySum += TmpValue;
+			}
+		    }
+		}
+	      if (KxFlag == true)
+		delete[] KxValues;
 	    }
-	  if (KxFlag == true)
-	    delete[] KxValues;
+	  else
+	    {
+	      HermitianMatrix PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKy, ComplexGroundStates[0]);
+	      for (int i = 1; i < NbrSpaces; ++i)
+		{
+		  HermitianMatrix TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKy, ComplexGroundStates[i]);
+		  PartialDensityMatrix += TmpMatrix;
+		}
+	      if (NbrSpaces > 1)
+		PartialDensityMatrix /= ((double) NbrSpaces);
+	      double* KxValues = 0;
+	      if (KxFlag == true)
+		KxValues = new double [PartialDensityMatrix.GetNbrRow()];
+	      if (PartialDensityMatrix.GetNbrRow() > 1)
+		{
+		  RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
+#ifdef __LAPACK__
+		  if (LapackFlag == true)
+		    {
+		      if (((EigenstateFlag == true) && (FilterKya == SubsystemTotalKy)) || (KxFlag == true))
+			{
+			  ComplexMatrix TmpEigenstates(PartialDensityMatrix.GetNbrRow(),
+						       PartialDensityMatrix.GetNbrRow(), true);
+			  for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+			    TmpEigenstates[i][i] = 1.0;
+			  PartialDensityMatrix.LapackDiagonalize(TmpDiag, TmpEigenstates);
+			  TmpDiag.SortMatrixDownOrder(TmpEigenstates);
+			  if ((EigenstateFlag == true) && (FilterKya == SubsystemTotalKy))
+			    {
+			      char* TmpEigenstateName = new char[512];
+			      int MaxNbrEigenstates = NbrEigenstates;
+			      if (NbrEigenstates == 0)
+				MaxNbrEigenstates = PartialDensityMatrix.GetNbrRow();
+			      for (int i = 0; i < MaxNbrEigenstates; ++i)
+				{
+				  if (TmpDiag[i] > 1e-14)
+				    {
+				      sprintf (TmpEigenstateName,
+					       "bosons_torus_kysym_density_n_%d_2s_%d_ky_%d_na_%d_kya_%d.%d.vec",
+					       NbrParticles, KyMax, TotalKy[0], 
+					       SubsystemNbrParticles, SubsystemTotalKy, i);
+				      TmpEigenstates[i].WriteVector(TmpEigenstateName);
+				    }
+				}
+			      delete[] TmpEigenstateName;
+			    }
+			  if (KxFlag == true)
+			    {
+			      FQHETorusBatchComputeKxMomentum(SubsystemNbrParticles, KyMax, SubsystemTotalKy, TmpDiag, KxValues, EigenvalueError);
+			    }
+			}
+		      else
+			{
+			  PartialDensityMatrix.LapackDiagonalize(TmpDiag);
+			}
+		    }
+		  else
+		    {
+		      if (((EigenstateFlag == true) && (FilterKya == SubsystemTotalKy)) || (KxFlag == true))
+			{
+			  ComplexMatrix TmpEigenstates(PartialDensityMatrix.GetNbrRow(),
+						       PartialDensityMatrix.GetNbrRow(), true);
+			  for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+			    TmpEigenstates[i][i] = 1.0;
+			  PartialDensityMatrix.Diagonalize(TmpDiag, TmpEigenstates, Manager.GetDouble("diag-precision"));
+			  TmpDiag.SortMatrixDownOrder(TmpEigenstates);
+			  if ((EigenstateFlag == true) && (FilterKya == SubsystemTotalKy))
+			    {
+			      char* TmpEigenstateName = new char[512];
+			      int MaxNbrEigenstates = NbrEigenstates;
+			      if (NbrEigenstates == 0)
+				MaxNbrEigenstates = PartialDensityMatrix.GetNbrRow();
+			      for (int i = 0; i < MaxNbrEigenstates; ++i)
+				{
+				  if (TmpDiag[i] > 1e-14)
+				    {
+				      sprintf (TmpEigenstateName,
+					       "bosons_torus_kysym_density_n_%d_2s_%d_ky_%d_na_%d_kya_%d.%d.vec",
+					       NbrParticles, KyMax, TotalKy[0], 
+					       SubsystemNbrParticles, SubsystemTotalKy, i);
+				      TmpEigenstates[i].WriteVector(TmpEigenstateName);
+				    }
+				}
+			      delete[] TmpEigenstateName;
+			    }
+			  if (KxFlag == true)
+			    {
+			      FQHETorusBatchComputeKxMomentum(SubsystemNbrParticles, KyMax, SubsystemTotalKy, TmpDiag, KxValues, EigenvalueError);			  
+			    }
+			}
+		      else
+			{
+			  PartialDensityMatrix.Diagonalize(TmpDiag);
+			}
+		    }
+#else
+		  PartialDensityMatrix.Diagonalize(TmpDiag);
+#endif		  
+		  TmpDiag.SortMatrixDownOrder();
+		  if (DensityMatrixFileName != 0)
+		    {
+		      ofstream DensityMatrixFile;
+		      DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
+		      DensityMatrixFile.precision(14);
+		      if (KxFlag == true)
+			{
+			  for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+			    DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalKy << " " << TmpDiag[i] << " " << KxValues[i] << " " << ((int) round(KxValues[i])) << endl;
+			}
+		      else
+			{
+			  for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+			    DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalKy << " " << TmpDiag[i] << endl;
+			}
+		      DensityMatrixFile.close();
+		    }
+		  for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+		    {
+		      if (TmpDiag[i] > 1e-14)
+			{
+			  EntanglementEntropy += TmpDiag[i] * log(TmpDiag[i]);
+			  DensitySum +=TmpDiag[i];
+			}
+		    }
+		}
+	      else
+		{
+		  if (PartialDensityMatrix.GetNbrRow() == 1)
+		    {
+		      double TmpValue;
+		      PartialDensityMatrix.GetMatrixElement(0,0,TmpValue);
+		      if (DensityMatrixFileName != 0)
+			{
+			  ofstream DensityMatrixFile;
+			  DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
+			  DensityMatrixFile.precision(14);
+			  if (KxFlag == true)
+			    {
+			      double KxValue = 0.0;
+			      ComplexMatrix TmpEigenstates(1, 1, true);	
+			      RealDiagonalMatrix TmpDiag (1);
+			      TmpDiag[0] = TmpValue;
+			      TmpEigenstates.SetMatrixElement(0, 0, 1.0);
+			      FQHETorusBatchComputeKxMomentum(SubsystemNbrParticles, KyMax, SubsystemTotalKy,TmpDiag, &KxValue, EigenvalueError);
+			      DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalKy << " " << TmpValue 
+						<< " " << KxValue << " " << ((int) round(KxValue)) << endl;
+			    }
+			  else
+			    {
+			      DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalKy << " " << TmpValue << endl;
+			    }
+			  DensityMatrixFile.close();
+			}		  
+		      if (TmpValue > 1e-14)
+			{
+			  EntanglementEntropy += TmpValue * log(TmpValue);
+			  DensitySum += TmpValue;
+			}
+		    }
+		}
+	      if (KxFlag == true)
+		delete[] KxValues;
+	      
+	    }
 	}
       File << SubsystemNbrParticles << " " << (-EntanglementEntropy) << " " << DensitySum << " " << (1.0 - DensitySum) << endl;
     }
   File.close();
 }
+
 
 // compute the Kx momentum for a set of eigenvectors
 //
@@ -413,11 +609,10 @@ int main(int argc, char** argv)
 // kxValues = array where the Kx values will be stored
 // error = relative error below which two eigenvalues are assumed to be degenerated
 
-void FQHETorusBatchComputeKxMomentum(int nbrParticles, int nbrFluxQuanta, int kyMomentum, 
-				     RealMatrix& eigenstates, RealDiagonalMatrix& eigenvalues, double* kxValues, double error)
+void FQHETorusBatchComputeKxMomentum(int nbrParticles, int nbrFluxQuanta, int kyMomentum, RealDiagonalMatrix& eigenvalues, double* kxValues, double error)
 {
   BosonOnTorusShort Space (nbrParticles, nbrFluxQuanta, kyMomentum);
-  int NbrEigenvalues = eigenstates.GetNbrColumn();
+  int NbrEigenvalues = eigenvalues.GetNbrColumn();
   //  ParticleOnTorusKxOperator KxOperator (&Space);
   int KxMaxMomentum = FindGCD(nbrParticles, nbrFluxQuanta);
   double TmpFactor = ((double) KxMaxMomentum) / (2.0 * M_PI);
