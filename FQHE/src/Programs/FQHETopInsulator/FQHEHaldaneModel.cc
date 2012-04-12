@@ -76,6 +76,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "t2", "next nearest neighbor hoping amplitude", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "t3", "next to next nearest neighbor hoping amplitude", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "phi", "Haldane phase on nnn hopping (multiples of pi)", 1.0/3.0);
+  (*SystemGroup) += new BooleanOption  ('\n', "phi-in-pi", "Haldane phase on nnn hopping given in multiples of pi");  
   (*SystemGroup) += new SingleDoubleOption  ('\n', "mu-s", "sublattice staggered chemical potential", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
@@ -110,6 +111,13 @@ int main(int argc, char** argv)
   int NbrSiteX = Manager.GetInteger("nbr-sitex"); 
   int NbrSiteY = Manager.GetInteger("nbr-sitey"); 
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
+
+  double HaldanePhi;
+
+  if (Manager.GetBoolean("phi-in-pi"))
+    HaldanePhi = M_PI*Manager.GetDouble("phi");
+  else
+    HaldanePhi = Manager.GetDouble("phi");
 
 
   char* StatisticPrefix = new char [16];
@@ -161,7 +169,7 @@ int main(int argc, char** argv)
 
   if (Manager.GetBoolean("singleparticle-spectrum") == true)
     {
-      ComputeSingleParticleSpectrum(EigenvalueOutputFile, NbrSiteX, NbrSiteY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), M_PI*Manager.GetDouble("phi"), Manager.GetDouble("mu-s"));
+      ComputeSingleParticleSpectrum(EigenvalueOutputFile, NbrSiteX, NbrSiteY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), HaldanePhi, Manager.GetDouble("mu-s"));
       return 0;
     }
 
@@ -215,7 +223,7 @@ int main(int argc, char** argv)
               {
                   Hamiltonian = new ParticleOnLatticeHaldaneModelSingleBandHamiltonian(Space, NbrParticles, NbrSiteX, NbrSiteY, 
                           Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), 
-                          Manager.GetDouble("t1"), Manager.GetDouble("t2"), M_PI*Manager.GetDouble("phi"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"),
+                          Manager.GetDouble("t1"), Manager.GetDouble("t2"), HaldanePhi, Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"),
                           Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
               }
               else
@@ -224,7 +232,7 @@ int main(int argc, char** argv)
                   {
                       Hamiltonian = new ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonian(Space, NbrParticles, NbrSiteX, NbrSiteY, 
                               Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("s-potential"),
-			      Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), M_PI*Manager.GetDouble("phi"), Manager.GetDouble("mu-s"), 
+			      Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), HaldanePhi, Manager.GetDouble("mu-s"), 
 			      Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"),
                               Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
                   }
@@ -232,7 +240,7 @@ int main(int argc, char** argv)
                   {
                       Hamiltonian = new ParticleOnLatticeHaldaneModelSingleBandFourBodyHamiltonian(Space, NbrParticles, NbrSiteX, NbrSiteY, 
                               Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("s-potential"),
-                              Manager.GetDouble("t1"), Manager.GetDouble("t2"), M_PI*Manager.GetDouble("phi"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"),
+                              Manager.GetDouble("t1"), Manager.GetDouble("t2"), HaldanePhi, Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"),
                               Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
                   }
               }
