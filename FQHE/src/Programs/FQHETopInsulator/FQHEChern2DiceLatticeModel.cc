@@ -260,19 +260,11 @@ int main(int argc, char** argv)
 	    sprintf (EigenstateOutputFile, "%s_kx_%d_ky_%d", Manager.GetString("eigenstate-file"), i, j);
 	  else
 	    {
-	      if (Manager.GetBoolean("flat-band") == true)
-		{
-		  sprintf (EigenstateOutputFile, "%s_t_%g_epsilon_%g_lambda_%g_B1_%g_B3_%g_gx_%g_gy_%g_kx_%d_ky_%d",FilePrefix, 
-			   Manager.GetDouble("t"), Manager.GetDouble("epsilon"), Manager.GetDouble("lambda"), Manager.GetDouble("B1"), Manager.GetDouble("B3"),
-			   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j);
-		}
-	      else
-		{
-		  sprintf (EigenstateOutputFile, "%s_u_%g_t_%g_epsilon_%g_lambda_%g_B1_%g_B3_%g_gx_%g_gy_%g_kx_%d_ky_%d",FilePrefix, 
-			   Manager.GetDouble("u-potential"), Manager.GetDouble("t"), Manager.GetDouble("epsilon"), Manager.GetDouble("lambda"),
-			   Manager.GetDouble("B1"), Manager.GetDouble("B3"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j);
-		}
+	      char* TmpExtention = new char [512];
+	      sprintf (TmpExtention, "_kx_%d_ky_%d", i, j);
+	      EigenstateOutputFile = ReplaceExtensionToFileName(EigenvalueOutputFile, ".dat", TmpExtention);
 	    }
+
 	  GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
 	  FirstRunFlag = false;
 	  MainTaskOperation TaskOperation (&Task);
