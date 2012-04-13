@@ -77,7 +77,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "t2", "next nearest neighbor hoping amplitude", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "t3", "next to next nearest neighbor hoping amplitude", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "phi", "Haldane phase on nnn hopping", M_PI/3);
-  (*SystemGroup) += new BooleanOption  ('\n', "phi-in-pi", "Haldane phase on nnn hopping given in multiples of pi");
+  (*SystemGroup) += new BooleanOption  ('\n', "phase-in-pi", "Haldane phase on nnn hopping given in multiples of pi");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "mu-s", "sublattice staggered chemical potential", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
@@ -113,7 +113,7 @@ int main(int argc, char** argv)
 
   double HaldanePhi;
 
-  if (Manager.GetBoolean("phi-in-pi"))
+  if (Manager.GetBoolean("phase-in-pi"))
     HaldanePhi = M_PI*Manager.GetDouble("phi");
   else
     HaldanePhi = Manager.GetDouble("phi");
