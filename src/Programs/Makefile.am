@@ -1,6 +1,6 @@
 SUBDIRS=
 
-bin_PROGRAMS=ExplicitMatrixExample ResizeLanczos GenericOverlap VectorBinary2Ascii ReplayLanczos ReplayFastLanczos ExtractLinearlyIndependentVectors GenerateRandomNumbers BuildSuperPosition TestDiagHamConf ReorthogonalizeVectorSet MergeMCHistories NormalizeVector PrintAllThreeJ ZeroingVector CountingZero VectorAscii2Binary MatrixElement DiffBinaryVectors GenericHamiltonianDiagonalization VectorPhaseMultiply VectorRational2Double MergeVectors
+bin_PROGRAMS=ExplicitMatrixExample ResizeLanczos GenericOverlap VectorBinary2Ascii ReplayLanczos ReplayFastLanczos ExtractLinearlyIndependentVectors GenerateRandomNumbers BuildSuperPosition TestDiagHamConf ReorthogonalizeVectorSet MergeMCHistories MCHistoryToText NormalizeVector PrintAllThreeJ ZeroingVector CountingZero VectorAscii2Binary MatrixElement DiffBinaryVectors GenericHamiltonianDiagonalization VectorPhaseMultiply VectorRational2Double MergeVectors
 
 ExplicitMatrixExample_SOURCES=ExplicitMatrixExample.cc
 
@@ -25,6 +25,8 @@ TestDiagHamConf_SOURCES=TestDiagHamConf.cc
 ReorthogonalizeVectorSet_SOURCES=ReorthogonalizeVectorSet.cc
 
 MergeMCHistories_SOURCES=MergeMCHistories.cc
+
+MCHistoryToText_SOURCES=MCHistoryToText.cc
 
 NormalizeVector_SOURCES=NormalizeVector.cc
 
@@ -95,6 +97,10 @@ ReorthogonalizeVectorSet_LDADD=-L$(top_builddir)/src/Vector -L$(top_builddir)/sr
 MergeMCHistories_DEPENDENCIES=$(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/MainTask/libMainTask.a $(top_builddir)/src/MathTools/NumericalAnalysis/libNumericalAnalysis.a $(top_builddir)/src/MathTools/RandomNumber/libRandomNumber.a $(top_builddir)/src/MCObservables/libMCObservables.a
 
 MergeMCHistories_LDADD=-L$(top_builddir)/src/Vector/  -L$(top_builddir)/src/Matrix/  -L$(top_builddir)/src/Output/  -L$(top_builddir)/src/GeneralTools/  -L$(top_builddir)/src/MathTools/ -L$(top_builddir)/src/Options/ -L$(top_builddir)/src/MathTools/NumericalAnalysis/ -L$(top_builddir)/src/MathTools/RandomNumber/ -L$(top_builddir)/src/MainTask -L$(top_builddir)/src/MCObservables/ -lMCObservables -lVector -lMatrix -lOutput -lOptions -lGeneralTools -lMathTools -lOptions -lMainTask -lNumericalAnalysis -lRandomNumber @THREAD_LIBS@ @GMP_LIBS@
+
+MCHistoryToText_DEPENDENCIES=$(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/MainTask/libMainTask.a $(top_builddir)/src/MathTools/NumericalAnalysis/libNumericalAnalysis.a $(top_builddir)/src/MathTools/RandomNumber/libRandomNumber.a $(top_builddir)/src/MCObservables/libMCObservables.a
+
+MCHistoryToText_LDADD=-L$(top_builddir)/src/Vector/  -L$(top_builddir)/src/Matrix/  -L$(top_builddir)/src/Output/  -L$(top_builddir)/src/GeneralTools/  -L$(top_builddir)/src/MathTools/ -L$(top_builddir)/src/Options/ -L$(top_builddir)/src/MathTools/NumericalAnalysis/ -L$(top_builddir)/src/MathTools/RandomNumber/ -L$(top_builddir)/src/MainTask -L$(top_builddir)/src/MCObservables/ -lMCObservables -lVector -lMatrix -lOutput -lOptions -lGeneralTools -lMathTools -lOptions -lMainTask -lNumericalAnalysis -lRandomNumber @THREAD_LIBS@ @GMP_LIBS@
 
 NormalizeVector_DEPENDENCIES=$(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Options/libOptions.a
 

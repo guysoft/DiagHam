@@ -57,6 +57,9 @@ double OverlapError(ComplexObservable &ScalarProduct, RealObservable &Norm);
 Complex OverlapValue(WeightedComplexObservable &ScalarProduct, WeightedRealObservable &Norm1, WeightedRealObservable &Norm2);
 double OverlapError(WeightedComplexObservable &ScalarProduct, WeightedRealObservable &Norm1, WeightedRealObservable &Norm2);
 
+void FillRecursiveGrid(int NbrCoordinate, int MaxGrid, RealVector &GridPositions, Abstract1DComplexFunction* TestWaveFunction, MCHistoryRecord *History);
+
+
 double MinDist (RealVector &Positions)
 {
   int NbrFermions = Positions.GetVectorDimension()/2;
@@ -116,6 +119,9 @@ int main(int argc, char** argv)
   (*MonteCarloGroup) += new SingleStringOption ('\n', "random-file", "name of the file where random number to use are stored (use internal random generator if no file name is provided)");
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "random-seek", "if usage of a random number file is activiated, jump the first random numbers up to the seek position", 0);
   (*MonteCarloGroup) += new BooleanOption  ('\n', "show-details", "show intermediate values used for overlap calculation", false);
+  (*MiscGroup) += new BooleanOption ('\n', "write-grid", "output wave function on grid points");
+  (*MiscGroup) += new BooleanOption ('\n', "write-random", "output wave function on random points");
+  (*MiscGroup) += new SingleIntegerOption ('\n', "max-grid", "number of grid points in each direction",10);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -272,6 +278,35 @@ int main(int argc, char** argv)
 	  char *tmpC = WaveFunctionManager.GetDescription();
 	  History=new MCHistoryRecord(NbrIter, 2*NbrFermions, Manager.GetString("exact-state"), tmpC, HistoryFileName
 				      /* could add additional observables here */);
+
+	  /* testing code: write coordinates on cluster of grid-points */
+	  if (Manager.GetBoolean("write-grid"))
+	    {
+	      RealVector GridPositions(2*NbrFermions,true);
+
+	      cout << "Writing grid"<<endl;
+	      FillRecursiveGrid(2*NbrFermions-1, Manager.GetInteger("max-grid"), GridPositions, TestWaveFunction, History);
+
+	      cout << "Grid-points written"<<endl;
+	      
+	      return 0;
+	    }
+	  /* testing code: write coordinates on cluster of grid-points */
+	  if (Manager.GetBoolean("write-random"))
+	    {
+	      cout << "Writing random sampling"<<endl;
+	      for (int i=0; i<NbrIter; ++i)
+		{
+		  Particles->Randomize();
+		  Complex Value = (*TestWaveFunction)(Particles->GetPositions());
+		  double SA=1.0;
+		  History->RecordAcceptedStep( SA, Particles->GetPositions(), Value);
+		}
+	      cout << "Random points written"<<endl;
+	      return 0;
+	    }
+	  
+
 	  delete [] tmpC;
 	}
       else if ((HistoryFileName==NULL)&&(HistoryMode>1))
@@ -657,3 +692,25 @@ double OverlapError(WeightedComplexObservable &ScalarProduct, WeightedRealObserv
   return sqrt( DSQR(ScalarProduct.ErrorEstimate()/norm) + DSQR(prod*NormObs1.ErrorEstimate()*NormObs2.Average()/2.0/norm/norm/norm) + DSQR(prod*NormObs2.ErrorEstimate()*NormObs1.Average()/2.0/norm/norm/norm));
 }
   
+
+void FillRecursiveGrid(int NbrCoordinate, int MaxGrid, RealVector &GridPositions, Abstract1DComplexFunction* TestWaveFunction, MCHistoryRecord *History)
+{
+  if (NbrCoordinate<0)
+    {
+      Complex Value = (*TestWaveFunction)(GridPositions);
+      double SA=1.0;
+      History->RecordAcceptedStep( SA, GridPositions, Value);
+    }
+  else
+    {
+      for (int NbrGrid=0; NbrGrid<MaxGrid; ++NbrGrid)
+	{
+	  if (NbrCoordinate&1 != 0)
+	    GridPositions[NbrCoordinate] = NbrGrid * 2.0*M_PI/(double)MaxGrid;
+	  else
+	    GridPositions[NbrCoordinate] = NbrGrid * M_PI/(double)(MaxGrid-1);
+	  FillRecursiveGrid(NbrCoordinate-1,MaxGrid, GridPositions, TestWaveFunction, History);
+	}
+    }
+}
+

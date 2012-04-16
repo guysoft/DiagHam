@@ -23,6 +23,7 @@
 #include "MainTask/GenericComplexMainTask.h"
 
 #include "GeneralTools/FilenameTools.h"
+#include "GeneralTools/StringTools.h"
 
 #include <iostream>
 #include <cstring>
