@@ -176,8 +176,8 @@ void ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian::EvaluateInte
 		  }
 	      }
       double FactorU = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
-      if (this->FlatBand == false)
-	FactorU *= this->UPotential;
+      //      if (this->FlatBand == false)
+      FactorU *= this->UPotential;
       double FactorV = 0.5 * this->VPotential / ((double) (this->NbrSiteX * this->NbrSiteY));
 
       this->InteractionFactors = new Complex* [this->NbrSectorSums];
