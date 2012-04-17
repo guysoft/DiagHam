@@ -7,9 +7,9 @@
 //                                                                            //
 //                                                                            //
 //       class of hamiltonian associated to particles on a torus with         //
-//                          laplacian delta interaction                       //
+//                         generic two body interaction                       //
 //                                                                            //
-//                        last modification : 29/06/2010                      //
+//                        last modification : 17/04/2012                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,7 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "Hamiltonian/ParticleOnTorusWithSpinLaplacianDeltaHamiltonian.h"
+#include "Hamiltonian/ParticleOnTorusWithSpinGenericHamiltonian.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
@@ -39,6 +39,7 @@
 #include "Output/MathematicaOutput.h"
 #include "MathTools/FactorialCoefficient.h"
 #include "MathTools/ClebschGordanCoefficients.h"
+#include "Polynomial/SpecialPolynomial.h"
 
 #include "Architecture/AbstractArchitecture.h"
 
@@ -61,12 +62,15 @@ using std::ostream;
 // nbrParticles = number of particles
 // maxMomentum = maximum Lz value reached by a particle in the state
 // ratio = ratio between the width in the x direction and the width in the y direction
+// nbrPseudopotentials = number of pseudopotentials indicated
+// pseudopotentials = pseudopotential coefficients
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
-ParticleOnTorusWithSpinLaplacianDeltaHamiltonian::ParticleOnTorusWithSpinLaplacianDeltaHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int maxMomentum,
-												   double ratio, AbstractArchitecture* architecture, long memory, char* precalculationFileName)
+ParticleOnTorusWithSpinGenericHamiltonian::ParticleOnTorusWithSpinGenericHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int maxMomentum,
+										     double ratio, int nbrPseudopotentials, double* pseudopotentials,
+										     AbstractArchitecture* architecture, long memory, char* precalculationFileName)
 {
   this->Particles = particles;
   this->LzMax = maxMomentum - 1;
@@ -78,6 +82,15 @@ ParticleOnTorusWithSpinLaplacianDeltaHamiltonian::ParticleOnTorusWithSpinLaplaci
   this->Architecture = architecture;
   long MinIndex;
   long MaxIndex;
+  this->NbrPseudopotentials = nbrPseudopotentials;
+  this->Pseudopotentials = new double[this->NbrPseudopotentials];
+  this->LaguerrePolynomials =new Polynomial[NbrPseudopotentials];
+  for (int i = 0; i < this->NbrPseudopotentials; ++i)
+    {
+      this->Pseudopotentials[i] = pseudopotentials[i];
+      this->LaguerrePolynomials[i] = LaguerrePolynomial(i);
+    }
+
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex;  
   this->EvaluateInteractionFactors();
@@ -116,15 +129,16 @@ ParticleOnTorusWithSpinLaplacianDeltaHamiltonian::ParticleOnTorusWithSpinLaplaci
 // destructor
 //
 
-ParticleOnTorusWithSpinLaplacianDeltaHamiltonian::~ParticleOnTorusWithSpinLaplacianDeltaHamiltonian() 
+ParticleOnTorusWithSpinGenericHamiltonian::~ParticleOnTorusWithSpinGenericHamiltonian() 
 {
+  delete[] this->Pseudopotentials;
 }
 
 // set Hilbert space
 //
 // hilbertSpace = pointer to Hilbert space to use
 
-void ParticleOnTorusWithSpinLaplacianDeltaHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
+void ParticleOnTorusWithSpinGenericHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
 {
   delete[] this->InteractionFactors;
   if (this->FastMultiplicationFlag == true)
@@ -145,7 +159,7 @@ void ParticleOnTorusWithSpinLaplacianDeltaHamiltonian::SetHilbertSpace (Abstract
 // evaluate all interaction factors
 //   
 
-void ParticleOnTorusWithSpinLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
+void ParticleOnTorusWithSpinGenericHamiltonian::EvaluateInteractionFactors()
 {
   this->M1IntraValue = 0;
   this->M1InterValue = 0;
@@ -357,7 +371,7 @@ void ParticleOnTorusWithSpinLaplacianDeltaHamiltonian::EvaluateInteractionFactor
 // m4 = fourth index
 // return value = numerical coefficient
 
-double ParticleOnTorusWithSpinLaplacianDeltaHamiltonian::EvaluateIntraInteractionCoefficient(int m1, int m2, int m3, int m4)
+double ParticleOnTorusWithSpinGenericHamiltonian::EvaluateIntraInteractionCoefficient(int m1, int m2, int m3, int m4)
 {
   double Coefficient = 1.0;
   double PIOnM = M_PI / ((double) this->NbrLzValue);
@@ -428,7 +442,7 @@ double ParticleOnTorusWithSpinLaplacianDeltaHamiltonian::EvaluateIntraInteractio
 // m4 = fourth index
 // return value = numerical coefficient
 
-double ParticleOnTorusWithSpinLaplacianDeltaHamiltonian::EvaluateInterV0InteractionCoefficient(int m1, int m2, int m3, int m4)
+double ParticleOnTorusWithSpinGenericHamiltonian::EvaluateInterV0InteractionCoefficient(int m1, int m2, int m3, int m4)
 {
   double Coefficient = 1.0;
   double PIOnM = M_PI / ((double) this->NbrLzValue);
@@ -499,7 +513,7 @@ double ParticleOnTorusWithSpinLaplacianDeltaHamiltonian::EvaluateInterV0Interact
 // m4 = fourth index
 // return value = numerical coefficient
 
-double ParticleOnTorusWithSpinLaplacianDeltaHamiltonian::EvaluateInterInteractionCoefficient(int m1, int m2, int m3, int m4)
+double ParticleOnTorusWithSpinGenericHamiltonian::EvaluateInterInteractionCoefficient(int m1, int m2, int m3, int m4)
 {
   double Coefficient = 1.0;
   double PIOnM = M_PI / ((double) this->NbrLzValue);

@@ -195,7 +195,7 @@ Complex ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::ComputeTw
 
 Complex ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementOnSiteBB(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
 {
-  return (0.0 * Phase(-1.0*(((this->KxFactor * ((double) (kx1 + kx2 - kx3 -kx4))) +(this->KyFactor * ((double) (ky1 + ky2 - ky3 -ky4))))/3.0)));
+  return 1.0;
 }
 
 // compute the matrix element for on-site two body interaction involving C sites
@@ -212,7 +212,7 @@ Complex ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::ComputeTw
 
 Complex ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementOnSiteCC(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
 {
-  return (0.0 * Phase(((this->KxFactor * ((double) (kx1 + kx2 - kx3 -kx4))) +(-2.0*this->KyFactor * ((double) (ky1 + ky2 - ky3 -ky4))))/3.0));
+  return 1.0;
 }
 
 // compute the one body transformation matrices and the optional one body band stucture contribution
@@ -229,15 +229,14 @@ void ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::ComputeOneBo
 	KB = this->KyFactor * (((double) kb) + this->GammaY);
 	int Index = (ka * this->NbrSiteY) + kb;
 	
-	Complex HAB = this->NNHopping * (1.0 + Phase(KA) + Phase(KB));
-	Complex HAC = -1.0*this->NNHopping*(Phase(-2.0*this->Phi)+Phase(KB)+Phase(2.0*this->Phi+KB-KA));
-	Complex HBC = this->NNHopping*(Phase(2.0*this->Phi) + Phase(KB - KA - 2.0*this->Phi) + Phase(-KA));
+ 	Complex HAB = this->NNHopping * (1.0 + Phase(KA) + Phase(KB));
+ 	Complex HAC = -this->NNHopping * (Phase(-2.0 * this->Phi) + Phase(KB) + Phase(2.0 * this->Phi + KB - KA));
+ 	Complex HBC = this->NNHopping * (Phase(2.0 * this->Phi) + Phase(KB - KA - 2.0 * this->Phi) + Phase(-KA));
 
-	Complex HAA = 2.0*this->NextNNHopping*(cos(KB+this->Phi)+cos(KA-this->Phi)+cos(KA - KB + this->Phi));
-	Complex HBB = 2.0*this->NextNNHopping*(cos(KB-this->Phi)+cos(KA+this->Phi)+cos(KA - KB - this->Phi));
-	Complex HCC = -2.0*this->NextNNHopping*(cos(KB)+cos(KA)+cos(KA - KB));
+ 	Complex HAA = 2.0 * this->NextNNHopping * (cos(KB + this->Phi) + cos(KA - this->Phi) + cos(KA - KB + this->Phi));
+ 	Complex HBB = 2.0 * this->NextNNHopping * (cos(KB - this->Phi) + cos(KA + this->Phi) + cos(KA - KB - this->Phi));
+ 	Complex HCC = -2.0 * this->NextNNHopping * (cos(KB) + cos(KA) + cos(KA - KB));
 	
-		
 	HermitianMatrix TmpOneBobyHamiltonian(3, true);
 	
 	TmpOneBobyHamiltonian.SetMatrixElement(0, 1, HAB);
