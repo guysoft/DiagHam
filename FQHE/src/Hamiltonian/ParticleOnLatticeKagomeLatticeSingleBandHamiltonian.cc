@@ -50,7 +50,11 @@ using std::ostream;
 using std::sin;
 using std::cos;
 
-
+// constructor
+//
+ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ParticleOnLatticeKagomeLatticeSingleBandHamiltonian()
+{
+}
 
 // constructor
 //
@@ -71,8 +75,7 @@ using std::cos;
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
-ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ParticleOnLatticeKagomeLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrCellX, 
-													 int nbrCellY, double uPotential, double vPotential, double t1, double t2, double lambda1, double lambda2, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
+ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ParticleOnLatticeKagomeLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrCellX, int nbrCellY, double uPotential, double vPotential, double t1, double t2, double lambda1, double lambda2, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -316,7 +319,7 @@ void ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::EvaluateInteractionFac
 		      this->InteractionFactors[i][Index] += FactorV * (Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1] * Conj(OneBodyBasis[Index2][0][2]) * OneBodyBasis[Index3][0][2]) * this->ComputeTwoBodyMatrixElementBC(kx1, ky1, kx2, ky2, kx4, ky4, kx3, ky3);
 		      this->InteractionFactors[i][Index] += FactorV * (Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1] * Conj(OneBodyBasis[Index1][0][2]) * OneBodyBasis[Index3][0][2]) * this->ComputeTwoBodyMatrixElementBC(kx2, ky2, kx1, ky1, kx4, ky4, kx3, ky3);
 		    }
-
+		  
 		  if (Index3 == Index4)
 		    this->InteractionFactors[i][Index] *= 0.5;
 		  if (Index1 == Index2)
@@ -325,7 +328,6 @@ void ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::EvaluateInteractionFac
 
 		  TotalNbrInteractionFactors++;
 		  ++Index;
-
 		}
 	    }
 	}

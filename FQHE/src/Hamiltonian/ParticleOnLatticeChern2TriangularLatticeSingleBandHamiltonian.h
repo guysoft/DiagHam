@@ -30,13 +30,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PARTICLEONLATTICEWITHSPINKAGOMELATTICESINGLEBANDHAMILTONIAN_H
-#define PARTICLEONLATTICEWITHSPINKAGOMELATTICESINGLEBANDHAMILTONIAN_H
+#ifndef PARTICLEONLATTICECHERN2TRIANGULARLATTICESINGLEBANDHAMILTONIAN_H
+#define PARTICLEONLATTICECHERN2TRIANGULARLATTICESINGLEBANDHAMILTONIAN_H
 
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphere.h"
-#include "Hamiltonian/ParticleOnLatticeChernInsulatorSingleBandHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeKagomeLatticeSingleBandHamiltonian.h"
 #include "Vector/ComplexVector.h"
 
 #include <iostream>
@@ -47,41 +47,14 @@ using std::cout;
 using std::endl;
 
 
-class ParticleOnLatticeKagomeLatticeSingleBandHamiltonian : public ParticleOnLatticeChernInsulatorSingleBandHamiltonian
+class ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian : public ParticleOnLatticeKagomeLatticeSingleBandHamiltonian
 {
-
- protected:
   
-  // hopping amplitude between neareast neighbor sites
-  double NNHopping;
-  // hopping amplitude between next neareast neighbor sites
-  double NextNNHopping;
-  // spin orbit coupling to neareast neighbor sites
-  double NNSpinOrbit;
-  // spin orbit coupling to next neareast neighbor sites
-  double NextNNSpinOrbit;
+  // phase on the hopping terms
+  double Phi;
   
-  // four times the sublattice staggered chemical potential 
-  double MuS;
-  // nearest neighbor density-density potential strength
-  double UPotential;
-  // second nearest neighbor density-density potential strength
-  double VPotential;
-
-  // boundary condition twisting angle along x
-  double GammaX;
-  // boundary condition twisting angle along y
-  double GammaY;
-
-  // use flat band model
-  bool FlatBand;
   
- public:
-
-  // constructor
-  //
-  ParticleOnLatticeKagomeLatticeSingleBandHamiltonian();
-
+public:
   // constructor
   //
   // particles = Hilbert space associated to the system
@@ -100,19 +73,12 @@ class ParticleOnLatticeKagomeLatticeSingleBandHamiltonian : public ParticleOnLat
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeKagomeLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential, double t1, double t2, double lambda1, double lambda2, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential, double t1, double t2, double phi, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //
-  ~ParticleOnLatticeKagomeLatticeSingleBandHamiltonian();
+  ~ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian();
   
-
- protected:
- 
-  // evaluate all interaction factors
-  //   
-  virtual void EvaluateInteractionFactors();
-
   // compute the matrix element for the two body interaction between two sites A and B 
   //
   // kx1 = creation momentum along x for the B site
@@ -182,7 +148,6 @@ class ParticleOnLatticeKagomeLatticeSingleBandHamiltonian : public ParticleOnLat
   virtual void ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis);
 
 };
-
 
 
 #endif

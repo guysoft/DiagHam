@@ -6,10 +6,8 @@
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpaceLong.h"
 #include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
 
-#include "Hamiltonian/ParticleOnLatticeChern2DiceLatticeSingleBandHamiltonian.h"
-//#include "Hamiltonian/ParticleOnLatticeChern2DiceLatticeSingleBandThreeBodyHamiltonian.h"
-//#include "Hamiltonian/ParticleOnLatticeChern2DiceLatticeSingleBandFourBodyHamiltonian.h"
-//#include "Hamiltonian/ParticleOnLatticeChern2DiceLatticeSingleBandFiveBodyHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian.h"
+
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -75,14 +73,14 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive nearest neighbor potential strength", 1.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "v-potential", "repulsive next to nearest neighbor potential strength", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "three-body", "use a three body interaction instead of a two body interaction");
   (*SystemGroup) += new BooleanOption  ('\n', "four-body", "use a four body interaction instead of a two body interaction");
   (*SystemGroup) += new BooleanOption  ('\n', "five-body", "use a five body interaction instead of a two body interaction");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "t", "nearest neighbor hopping amplitude", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "tprime", "next to nearest neighbor hopping amplitude", 0.25);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "phi", "phase in the hoppng terms", 0.166667);
-  //(*SystemGroup) += new SingleDoubleOption  ('\n', "B1", "magnetic field strength on sites 1 and 2", 0.2440);
-  //(*SystemGroup) += new SingleDoubleOption  ('\n', "B3", "magnetic field strength on site 3", -0.0162);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "mus", "chemical potential on site B and C", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
@@ -101,7 +99,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHEChern2DiceLatticeModel -h" << endl;
+      cout << "see man page for option syntax or type FQHEChern2TriangularLatticeModel -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)
@@ -159,11 +157,11 @@ int main(int argc, char** argv)
     {
       if (Manager.GetBoolean("flat-band") == true)
 	{
-	  sprintf (EigenvalueOutputFile, "%s_t_%g_t1_%g_phi_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("t"), Manager.GetDouble("tprime"), Manager.GetDouble("phi"),  Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	  sprintf (EigenvalueOutputFile, "%s_t_%g_t1_%g_phi_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("t"), Manager.GetDouble("tprime"), Manager.GetDouble("phi"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 	}
       else
 	{
-	  sprintf (EigenvalueOutputFile, "%s_u_%g_t_%g_t1_%g_phi_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("t"), Manager.GetDouble("tprime"), Manager.GetDouble("phi"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	  sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_t_%g_t1_%g_phi_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"),Manager.GetDouble("v-potential"), Manager.GetDouble("t"), Manager.GetDouble("tprime"), Manager.GetDouble("phi"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 	}
     }
 
@@ -217,8 +215,7 @@ int main(int argc, char** argv)
 	  AbstractQHEHamiltonian* Hamiltonian = 0;
 	  if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false) && (Manager.GetBoolean("five-body") == false))
 	    { 
-	      Hamiltonian =0;
-	      //Hamiltonian = new ParticleOnLatticeChern2DiceLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("t"), Manage	r.GetDouble("epsilon"), Manager.GetDouble("lambda"), Manager.GetDouble("B1"), Manager.GetDouble("B3"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+	      Hamiltonian = new ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"),Manager.GetDouble("v-potential"), Manager.GetDouble("t"), Manager.GetDouble("tprime"), Manager.GetDouble("phi"),Manager.GetDouble("mus"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 	    }
 	  else
 	    { 
@@ -312,7 +309,7 @@ void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrS
  	  Complex GammaK = t * (1.0 + Phase(KX) + Phase(KY));
  	  Complex GammaKPlus = -t*(Phase(-2.0*TruePhase)+Phase(KY)+Phase(2.0*TruePhase+KY-KX));
  	  Complex GammaKMinus = t*(Phase(2.0*TruePhase) + Phase(KY - KX - 2.0*TruePhase) + Phase(-KX));
-	  double Diag1 = 2.0*tprime*(cos(KY+TruePhase)+cos(KX-TruePhase)+cos(KX - KY - TruePhase));
+	  double Diag1 = 2.0*tprime*(cos(KY+TruePhase)+cos(KX-TruePhase)+cos(KX - KY + TruePhase));
 	  double Diag2 = 2.0*tprime*(cos(KY-TruePhase)+cos(KX+TruePhase)+cos(KX - KY - TruePhase));
 	  double Diag3 = -2.0*tprime*(cos(KY)+cos(KX)+cos(KX - KY));
 	  HermitianMatrix TmpOneBodyHamiltonian(3, true);

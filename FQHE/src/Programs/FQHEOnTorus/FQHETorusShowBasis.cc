@@ -284,9 +284,9 @@ int main(int argc, char** argv)
 		      Space->PrintState(cout, i) << " : "  << State[i] << endl;;
 		}
 	      delete Space;
-	
+	      
 	    }
-	    }
+	}
       }
     }
   else

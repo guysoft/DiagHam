@@ -122,4 +122,5 @@ ParticleOnLatticeQuantumSpinHallTwoBandKagomeHamiltonian.cc \
 AbstractQHEOnCylinderHamiltonian.cc \
 ParticleOnLatticeWithSpinHaldaneModelTwoBandDecoupledThreeBodyHamiltonian.cc \
 ParticleOnCylinderLaplacianDeltaHamiltonian.cc  \
-ParticleOnTorusTwoLandauLevelsHamiltonian.cc
+ParticleOnTorusTwoLandauLevelsHamiltonian.cc \
+ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian.cc
