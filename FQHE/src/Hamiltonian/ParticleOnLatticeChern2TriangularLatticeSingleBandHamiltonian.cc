@@ -195,7 +195,7 @@ Complex ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::ComputeTw
 
 Complex ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementOnSiteBB(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
 {
-  return Phase(-1.0*(((this->KxFactor * ((double) (kx1 + kx2 - kx3 -kx4))) +(this->KyFactor * ((double) (ky1 + ky2 - ky3 -ky4))))/3.0));
+  return (0.0 * Phase(-1.0*(((this->KxFactor * ((double) (kx1 + kx2 - kx3 -kx4))) +(this->KyFactor * ((double) (ky1 + ky2 - ky3 -ky4))))/3.0)));
 }
 
 // compute the matrix element for on-site two body interaction involving C sites
@@ -212,7 +212,7 @@ Complex ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::ComputeTw
 
 Complex ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementOnSiteCC(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
 {
-  return Phase(((this->KxFactor * ((double) (kx1 + kx2 - kx3 -kx4))) +(-2.0*this->KyFactor * ((double) (ky1 + ky2 - ky3 -ky4))))/3.0);
+  return (0.0 * Phase(((this->KxFactor * ((double) (kx1 + kx2 - kx3 -kx4))) +(-2.0*this->KyFactor * ((double) (ky1 + ky2 - ky3 -ky4))))/3.0));
 }
 
 // compute the one body transformation matrices and the optional one body band stucture contribution
@@ -221,7 +221,7 @@ Complex ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::ComputeTw
 
 void ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis)
 {
-  double KA, KB;
+ double KA, KB;
   for (int ka = 0; ka < this->NbrSiteX; ++ka)
     for (int kb = 0; kb < this->NbrSiteY; ++kb)
       {
