@@ -285,7 +285,7 @@ int main(int argc, char** argv)
 	  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 	    {
 	      if (Norm(State[i]) > Error)
-		Space->PrintState(cout, i) << " : "  << State[i] << endl;
+		Space->PrintState(cout, i) << " : "  << State[i] << " Norm : "<< Norm(State[i]) << " Phase : " <<  Arg(State[i]) << endl;
 	      else
 		{
 		  WeightHiddenComponents += SqrNorm(State[i]);

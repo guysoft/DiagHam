@@ -1423,8 +1423,14 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Compute
 #else
 	TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
 #endif   
-	oneBodyBasis[Index] = TmpMatrix;	
-	// if (this->FlatBand == false)
+	oneBodyBasis[Index] = TmpMatrix;
+	if(Real(TmpMatrix[0][1])<0.0)
+	  {
+	    TmpMatrix[0][0]*= -1.0;
+	    TmpMatrix[0][1]*= -1.0;
+	  }	
+
+// if (this->FlatBand == false)
 	//   {
 	//     this->OneBodyInteractionFactors[Index] = 0.5*TmpDiag(0, 0);
 	//     // The 1/2 factor is needed because this one body term is counted twice somewhere in ChernInsulatorSingleBandHamiltonian because it was written for spin half particles. This factor is also present for the Kagome Lattice
@@ -1433,6 +1439,77 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Compute
       }
   }
 
+ // OneBodyBasis for BerryConnection
+
+  this->CA = new Complex* [this->NbrSiteY+1];
+  this->CB = new Complex* [this->NbrSiteY+1];
+
+  for (int ky = 0; ky < this->NbrSiteY+1; ++ky)
+  {
+     cout << "ky = " << ky << endl;
+    this->CA[ky] = new Complex[this->NbrSiteX+1];
+    this->CB[ky] = new Complex[this->NbrSiteX+1];
+    double kyl=((double)ky + this->GammaY) * this->KyFactor;
+    for (int kx = 0; kx < this->NbrSiteX+1; ++kx)
+      {
+	cout << "kx = " << kx << endl;
+        double kxl=((double)kx + this->GammaX) * this->KxFactor;
+	int Index = (kx * this->NbrSiteY) + ky;
+
+        Complex B1 = - this->NNHoping * Complex(1 + cos(kxl+kyl) + cos(kyl), + sin(kxl+kyl) + sin(kyl));
+	Complex B2 = - this->NextNextNNHoping * Complex(2* cos(kxl) + cos(kxl+2*kyl),  sin(kxl+2*kyl));
+        double d0 = - 2.0 * this->NextNNHoping * cos(this->HaldanePhase) * (cos(kxl) + cos(kyl) + cos(kxl+kyl));
+        double d3 = - 2.0 * this->NextNNHoping * sin(this->HaldanePhase) * (sin(kxl) + sin(kyl) - sin(kxl+kyl)) + this->MuS;
+
+	HermitianMatrix TmpOneBodyHamiltonian(2, true);
+	TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d0 + d3);
+	TmpOneBodyHamiltonian.SetMatrixElement(0, 1, B1+B2);
+	TmpOneBodyHamiltonian.SetMatrixElement(1, 1, d0 - d3);
+	ComplexMatrix TmpMatrix(2, 2, true);
+	TmpMatrix[0][0] = 1.0;
+	TmpMatrix[1][1] = 1.0;
+	RealDiagonalMatrix TmpDiag;
+#ifdef __LAPACK__
+	TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
+#else
+	TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
+#endif  
+	if(Real(TmpMatrix[0][1])<0.0)
+	  {
+	    TmpMatrix[0][0]*= -1.0;
+	    TmpMatrix[0][1]*= -1.0;
+	  } 
+	CA[ky][kx] = Conj(TmpMatrix[0][0]);
+  	CB[ky][kx] = Conj(TmpMatrix[0][1]);//*Phase((kxl+2.0*kyl)/3.0);
+	cout << "CA = " << CA[ky][kx] << endl;
+	cout << "CB = " << CB[ky][kx] << endl;
+
+      }
+  }
+
+  // Enforce Ay = 0
+  for (int kx = 0; kx < this->NbrSiteX+1; ++kx)
+    {
+      double kxl=((double)kx + this->GammaX) * this->KxFactor;
+      for (int ky = 0; ky < this->NbrSiteY; ++ky)
+	{
+	  double kyl=((double)ky + this->GammaY) * this->KyFactor;
+	  int Index = (kx * this->NbrSiteY) + ky;
+	  double ArgTemp;
+	  ArgTemp = Arg(CA[ky+1][kx]*Conj(CA[ky][kx])+CB[ky+1][kx]*Conj(CB[ky][kx]));
+	  CA[ky][kx]*=Phase(ArgTemp);
+	  CB[ky][kx]*=Phase(ArgTemp);
+
+	  if(Index< this->NbrSiteX*this->NbrSiteY)
+	    {
+	      ComplexMatrix TmpMatrix(2, 2, true);
+	      TmpMatrix = oneBodyBasis[Index];
+	      TmpMatrix[0][0] *= Phase(-ArgTemp);
+	      TmpMatrix[0][1] *= Phase(-ArgTemp);
+	      oneBodyBasis[Index] = TmpMatrix;
+	    }
+	}
+    }
 
   // BerryConnection 
   this->BerryConnectionX = new double* [this->NbrSiteY];
@@ -1441,34 +1518,30 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Compute
 
   for (int ky = 0; ky < this->NbrSiteY; ++ky)
     {
+      cout << "ky = " << ky << endl;
       double TempTheta = 0;
       this->BerryConnectionX[ky] = new double[this->NbrSiteX];
       this->BerryConnectionXCumSum[ky] = new double[this->NbrSiteX];
       for (int kx = 0; kx < this->NbrSiteX; ++kx)
 	{
-	  int Index1=kx*this->NbrSiteY+ky;
-	  int Index2;
-	  if(kx!=this->NbrSiteX-1)
-	    { 
-	      Index2=(kx+1)*this->NbrSiteY+ky;
-	    }
-	  else
-	    {
-	      Index2=ky;
-	    }
-	  double ArgTemp = -Arg(oneBodyBasis[Index2][0][0]*Conj(oneBodyBasis[Index1][0][0])+oneBodyBasis[Index2][0][1]*Conj(oneBodyBasis[Index1][0][1]));
+	  cout << "kx = " << kx << endl;
+	  double ArgTemp = Arg(CA[ky][kx+1]*Conj(CA[ky][kx])+CB[ky][kx+1]*Conj(CB[ky][kx]));
+	  cout << "ArgTemp = " << ArgTemp << endl;
 	  this->BerryConnectionX[ky][kx]= ArgTemp ;
 	  this->BerryConnectionXCumSum[ky][kx]= TempTheta ;
 	  TempTheta += ArgTemp;
+	  cout << "TempTheta = " << TempTheta << endl;
 	}
       if(ky!=0)
 	{
-	  if(TempTheta > this->Theta[ky-1])
-	    TempTheta -= 2.0 * M_PI ;
+	  while(TempTheta > this->Theta[ky-1])
+	    {
+	      TempTheta -= 2.0 * M_PI ;
+	      cout << "TempThetaBis = " << TempTheta << endl;
+	    }
 	}
       this->Theta[ky]=TempTheta;
-      cout << "ky = " << ky << endl;
-      cout << "theta = " << TempTheta << endl;
+      cout << "Theta[ky] = " << Theta[ky] << endl;
     }
 
   //WannierBasis

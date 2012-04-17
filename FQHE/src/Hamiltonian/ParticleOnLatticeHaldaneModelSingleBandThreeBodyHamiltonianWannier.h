@@ -91,6 +91,8 @@ class ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier : publi
   double** BerryConnectionXCumSum;
   double* Theta;
   Complex*** WannierBasis;
+  Complex** CA;
+  Complex** CB;
 
 
  public:
