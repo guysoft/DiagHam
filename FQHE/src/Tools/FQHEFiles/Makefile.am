@@ -8,4 +8,5 @@ FQHEOnDiskFileTools.cc \
 FQHESqueezedBasisTools.cc \
 FQHESpherePseudopotentialTools.cc \
 FQHEOnTorusFileTools.cc \
-FQHEOnSquareLatticeFileTools.cc
+FQHEOnSquareLatticeFileTools.cc \
+FQHETorusPseudopotentialTools.cc
