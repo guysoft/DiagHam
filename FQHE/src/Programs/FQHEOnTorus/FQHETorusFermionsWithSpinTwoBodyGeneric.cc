@@ -7,9 +7,11 @@
 #include "HilbertSpace/FermionOnTorusWithSpin.h"
 #include "HilbertSpace/FermionOnTorus.h"
 
-#include "Hamiltonian/ParticleOnTorusWithSpinLaplacianDeltaHamiltonian.h"
+#include "Hamiltonian/ParticleOnTorusWithSpinGenericHamiltonian.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
+
+#include "Tools/FQHEFiles/FQHETorusPseudopotentialTools.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -45,7 +47,7 @@ int main(int argc, char** argv)
   cout.precision(14);
     
   // some running options and help
-  OptionManager Manager ("FQHETorusFermionsWithSpinHollowcore" , "0.01");
+  OptionManager Manager ("FQHETorusFermionsWithSpinTwoBodyGeneric" , "0.01");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
@@ -65,6 +67,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('s', "total-spin", "total spin of the system", 0);
   (*SystemGroup) += new SingleIntegerOption ('y', "ky-momentum", "constraint on the total momentum modulo the maximum momentum (negative if none)", -1);
   (*SystemGroup) += new SingleDoubleOption ('r', "ratio", "ratio between the two torus lengths", 1.0);
+  (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
+  (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
   (*SystemGroup) += new  BooleanOption  ('\n', "redundant-kymomenta", "Calculate all subspaces up to Ky  = MaxMomentum-1", false);
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
@@ -83,7 +87,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHETorusFermionsWithSpinHollowcore -h" << endl;
+      cout << "see man page for option syntax or type FQHETorusFermionsWithSpinTwoBodyGeneric -h" << endl;
       return -1;
     }
   if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
@@ -108,8 +112,21 @@ int main(int argc, char** argv)
       TotalSpin |= (NbrFermions & 1);
     }
 
+  double** PseudoPotentials  = new double*[3];
+  int* NbrPseudoPotentials  = new int[3];
+  if (Manager.GetString("interaction-file") == 0)
+    {
+      cout << "an interaction file has to be provided" << endl;
+      return -1;
+    }
+  else
+    {
+      if (FQHETorusSU2GetPseudopotentials(Manager.GetString("interaction-file"), NbrPseudoPotentials, PseudoPotentials) == false)
+	return -1;
+    }
+
   char* OutputFileName = new char [512];
-  sprintf (OutputFileName, "fermions_torus_su2_kysym_hollowcore_n_%d_2s_%d_sz_%d_ratio_%f.dat", NbrFermions, MaxMomentum, TotalSpin, XRatio);
+  sprintf (OutputFileName, "fermions_torus_su2_kysym_%s_n_%d_2s_%d_sz_%d_ratio_%f.dat", Manager.GetString("interaction-name"), NbrFermions, MaxMomentum, TotalSpin, XRatio);
   ofstream File;
   File.open(OutputFileName, ios::binary | ios::out);
   File.precision(14);
@@ -133,15 +150,18 @@ int main(int argc, char** argv)
       FermionOnTorusWithSpin Space (NbrFermions, MaxMomentum, TotalSpin, YMomentum2);	
 
       Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());	
-      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnTorusWithSpinLaplacianDeltaHamiltonian(&Space, NbrFermions, MaxMomentum, XRatio,
-      												 Architecture.GetArchitecture(), Memory);
+      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnTorusWithSpinGenericHamiltonian(&Space, NbrFermions, MaxMomentum, XRatio,
+											  NbrPseudoPotentials[0], PseudoPotentials[0],
+											  NbrPseudoPotentials[1], PseudoPotentials[1],
+											  NbrPseudoPotentials[2], PseudoPotentials[2],
+											  Architecture.GetArchitecture(), Memory);
       double Shift = -10.0;
       Hamiltonian->ShiftHamiltonian(Shift);
       char* EigenvectorName = 0;
       if ( Manager.GetBoolean("eigenstate") == true)	
 	{
 	  EigenvectorName = new char [100];
-	  sprintf (EigenvectorName, "fermions_torus_su2_kysym_hollowcore_n_%d_2s_%d_sz_%d_ratio_%f_ky_%d", NbrFermions, MaxMomentum,
+	  sprintf (EigenvectorName, "fermions_torus_su2_kysym_%s_n_%d_2s_%d_sz_%d_ratio_%f_ky_%d", Manager.GetString("interaction-name"), NbrFermions, MaxMomentum,
 		   TotalSpin, XRatio,YMomentum2);
 	}
       
