@@ -42,6 +42,30 @@ using std::endl;
 using std::string;
 
 
+// get pseudopototentials for particles on torus from file
+// 
+// fileName = name of the file that contains the pseudopotantial description
+// nbrPseudoPotentials = reference on the number of pseudopotentials
+// pseudoPotentials = reference on the array with the pseudo-potentials (sorted such that the first element corresponds to the delta interaction)
+// return value = true if no error occured
+
+bool FQHETorusGetPseudopotentials (char* fileName, int& nbrPseudoPotentials, double*& pseudoPotentials)
+{
+  ConfigurationParser InteractionDefinition;
+  if (InteractionDefinition.Parse(fileName) == false)
+    {
+      InteractionDefinition.DumpErrors(cout) << endl;
+      return false;
+    }
+  if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials", ' ', pseudoPotentials, nbrPseudoPotentials) == false)
+    {
+      cout << "Pseudopotentials has a wrong value in " << fileName << endl;
+      return false;
+    }
+  return true;
+}
+
+
 // get pseudopototentials for particles on torus with SU(2) spin from file
 // 
 // fileName = name of the file that contains the pseudopotantial description
@@ -67,6 +91,7 @@ bool FQHETorusSU2GetPseudopotentials (char* fileName, int* nbrPseudoPotentials, 
       for (int i = 0; i < 3; ++i)
 	{
 	  nbrPseudoPotentials[i] = TmpNbrPseudoPotentials;
+	  pseudoPotentials[i] = new double[nbrPseudoPotentials[i]];
 	  for (int j = 0; j < TmpNbrPseudoPotentials; ++j)
 	    pseudoPotentials[i][j] = TmpPseudoPotentials[j];
 	}

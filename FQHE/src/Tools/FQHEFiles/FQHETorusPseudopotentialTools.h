@@ -35,6 +35,14 @@
 
 
 
+// get pseudopototentials for particles on torus from file
+// 
+// fileName = name of the file that contains the pseudopotantial description
+// nbrPseudoPotentials = reference on the number of pseudopotentials
+// pseudoPotentials = reference on the array with the pseudo-potentials (sorted such that the first element corresponds to the delta interaction)
+// return value = true if no error occured
+bool FQHETorusGetPseudopotentials (char* fileName, int& nbrPseudoPotentials, double*& pseudoPotentials);
+
 // get pseudopototentials for particles on torus with SU(2) spin from file
 // 
 // fileName = name of the file that contains the pseudopotantial description

@@ -4,7 +4,7 @@
 #include "HilbertSpace/FermionOnTorus.h"
 
 #include "Hamiltonian/ParticleOnTorusCoulombHamiltonian.h"
-#include "Hamiltonian/ParticleOnTorusLaplacianDeltaHamiltonian.h"
+#include "Hamiltonian/ParticleOnTorusGenericHamiltonian.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -14,6 +14,10 @@
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/MonoProcessorArchitecture.h"
 #include "Architecture/SMPArchitecture.h"
+
+#include "Hamiltonian/ParticleOnTorusWithSpinGenericHamiltonian.h"
+
+#include "Tools/FQHEFiles/FQHETorusPseudopotentialTools.h"
 
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
 
@@ -104,8 +108,21 @@ int main(int argc, char** argv)
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
   bool FirstRun = true;
   
+  double* PseudoPotentials;
+  int NbrPseudoPotentials = 0;
+  if (Manager.GetString("interaction-file") == 0)
+    {
+      cout << "an interaction file has to be provided" << endl;
+      return -1;
+    }
+  else
+    {
+      if (FQHETorusGetPseudopotentials(Manager.GetString("interaction-file"), NbrPseudoPotentials, PseudoPotentials) == false)
+	return -1;
+    }
+
   char* OutputNameLz = new char [256];
-  sprintf (OutputNameLz, "fermions_torus_kysym_delta_n_%d_2s_%d_ratio_%f.dat", NbrParticles, MaxMomentum, XRatio);
+  sprintf (OutputNameLz, "fermions_torus_kysym_%s_n_%d_2s_%d_ratio_%f.dat", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, XRatio);
   ofstream File;
   File.open(OutputNameLz, ios::binary | ios::out);
   File.precision(14);
@@ -128,7 +145,8 @@ int main(int argc, char** argv)
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
 
-      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnTorusLaplacianDeltaHamiltonian (Space, NbrParticles, MaxMomentum, XRatio, Architecture.GetArchitecture(), Memory);
+      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnTorusGenericHamiltonian (Space, NbrParticles, MaxMomentum, XRatio, NbrPseudoPotentials, PseudoPotentials,
+										   Architecture.GetArchitecture(), Memory);
 
       double Shift = -10.0;
       Hamiltonian->ShiftHamiltonian(Shift);
@@ -136,7 +154,7 @@ int main(int argc, char** argv)
       if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
 	{
 	  EigenvectorName = new char [256];
-	  sprintf (EigenvectorName, "fermions_torus_kysym_delta_n_%d_2s_%d_ratio_%f_ky_%d", NbrParticles, MaxMomentum, XRatio, Momentum);
+	  sprintf (EigenvectorName, "fermions_torus_kysym_%_n_%d_2s_%d_ratio_%f_ky_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, XRatio, Momentum);
 	}
       FQHEOnTorusMainTask Task (&Manager, Space, &Lanczos, Hamiltonian, Momentum, Shift, OutputNameLz, FirstRun, EigenvectorName);
       MainTaskOperation TaskOperation (&Task);

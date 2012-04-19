@@ -124,4 +124,5 @@ ParticleOnLatticeWithSpinHaldaneModelTwoBandDecoupledThreeBodyHamiltonian.cc \
 ParticleOnCylinderLaplacianDeltaHamiltonian.cc  \
 ParticleOnTorusTwoLandauLevelsHamiltonian.cc \
 ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian.cc \
-ParticleOnTorusWithSpinGenericHamiltonian.cc
+ParticleOnTorusWithSpinGenericHamiltonian.cc \
+ParticleOnTorusGenericHamiltonian.cc
