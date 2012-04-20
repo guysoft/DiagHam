@@ -263,8 +263,8 @@ void ParticleOnTorusWithSpinGenericHamiltonian::EvaluateInteractionFactors()
 								+ this->EvaluateInteractionCoefficient(m2, m1, m4, m3, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown)
 								- this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown)
 								- this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown));
- 		  this->InteractionFactorsupup[i][Index] *= -1.0;
- 		  this->InteractionFactorsdowndown[i][Index] *= -1.0;		  
+		  //		  this->InteractionFactorsupup[i][Index] = 0.0;
+		  //		  this->InteractionFactorsdowndown[i][Index] = 0.0;		  
 		  TotalNbrInteractionFactors += 2;
 		  ++Index;
 		}
@@ -278,7 +278,7 @@ void ParticleOnTorusWithSpinGenericHamiltonian::EvaluateInteractionFactors()
 	  int Index = 0;
 	  for (int j1 = 0; j1 < this->NbrInterSectorIndicesPerSum[i]; ++j1)
 	    {
-	      double Factor = 2.0;
+	      double Factor = -2.0;
 	      int m1 = this->InterSectorIndicesPerSum[i][j1 << 1];
 	      int m2 = this->InterSectorIndicesPerSum[i][(j1 << 1) + 1];
 	      for (int j2 = 0; j2 < this->NbrInterSectorIndicesPerSum[i]; ++j2)
