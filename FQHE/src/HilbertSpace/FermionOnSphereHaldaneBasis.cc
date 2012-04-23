@@ -343,6 +343,10 @@ FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis (char* fileName, unsign
   else
     this->InvertUnshift = this->InvertShift;
 
+  if (this->LargeHilbertSpaceDimension >= (1l << 30))
+    this->HilbertSpaceDimension = 0;
+  else
+    this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
   this->TargetSpace = this;
   this->NbrLzValue = this->LzMax + 1;
   this->MaximumSignLookUp = 16;

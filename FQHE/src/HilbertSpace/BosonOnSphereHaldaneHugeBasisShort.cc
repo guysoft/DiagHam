@@ -2169,6 +2169,7 @@ double BosonOnSphereHaldaneHugeBasisShort::JackSqrNormalization (RealVector& out
     MaxIndex = this->LargeHilbertSpaceDimension;
   if (this->FermionHugeBasis->NbrRootSuffix == 0)
     {
+cout << "check" << endl;
       for (long i = minIndex; i < MaxIndex; ++i)
 	{
 	  unsigned long TmpState = this->FermionHugeBasis->StateDescription[i];
@@ -2199,6 +2200,7 @@ double BosonOnSphereHaldaneHugeBasisShort::JackSqrNormalization (RealVector& out
     }
   else
     {
+cout << "chack" << endl;
       for (long i = minIndex; i < MaxIndex; ++i)
 	{
 	  unsigned long TmpState = this->FermionHugeBasis->GetStateFactorized(i);
