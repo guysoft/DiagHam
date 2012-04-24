@@ -592,7 +592,7 @@ int main(int argc, char** argv)
 	}      
       if (Manager.GetBoolean("project-l2-s2"))
 	{
-	  AbstractQHEOnSphereWithSU4SpinHamiltonian* L2S2Projector =
+	  AbstractQHEOnSphereWithSU4SpinCasimirHamiltonian* L2S2Projector =
 	    new ParticleOnSphereWithSU4SpinL2Hamiltonian(Space, NbrFermions, LzMax, L,
 							 Architecture.GetArchitecture(), 1.0,
 							 ((unsigned long)Manager.GetInteger("l2-memory")) << 20,

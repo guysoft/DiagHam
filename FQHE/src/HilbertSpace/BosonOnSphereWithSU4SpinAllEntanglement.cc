@@ -173,6 +173,8 @@ BosonOnSphereWithSU4SpinAllEntanglement::BosonOnSphereWithSU4SpinAllEntanglement
   this->NUpMinusLzMax = bosons.LzMax;
   this->NDownPlusLzMax = bosons.LzMax;
   this->NDownMinusLzMax = bosons.LzMax;
+  this->NPlusLzMax = bosons.NPlusLzMax;
+  this->NMinusLzMax = bosons.NMinusLzMax;
   this->FermionicLzMax = bosons.FermionicLzMax;
   this->TotalSpin = bosons.TotalSpin;
   this->TotalIsospin = bosons.TotalIsospin;
@@ -271,6 +273,8 @@ BosonOnSphereWithSU4SpinAllEntanglement& BosonOnSphereWithSU4SpinAllEntanglement
   this->NUpMinusLzMax = bosons.LzMax;
   this->NDownPlusLzMax = bosons.LzMax;
   this->NDownMinusLzMax = bosons.LzMax;
+  this->NPlusLzMax = bosons.NPlusLzMax;
+  this->NMinusLzMax = bosons.NMinusLzMax;
   this->FermionicLzMax = bosons.FermionicLzMax;
   this->LargeHilbertSpaceDimension = bosons.LargeHilbertSpaceDimension;
   

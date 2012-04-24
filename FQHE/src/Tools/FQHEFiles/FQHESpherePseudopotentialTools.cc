@@ -92,7 +92,7 @@ bool FQHESphereSU2GetPseudopotentials (char* fileName, int lzMax, double** pseud
   if (InteractionDefinition.GetAsDoubleArray("PseudopotentialsUpUp", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
     {
       Flag = true;
-      if (TmpNbrPseudoPotentials != (lzMax +1))
+      if (TmpNbrPseudoPotentials > (lzMax +1))
 	{
 	  cout << "Invalid number of pseudo-potentials in PseudopotentialsUpUp" << endl;
 	  return false;	  

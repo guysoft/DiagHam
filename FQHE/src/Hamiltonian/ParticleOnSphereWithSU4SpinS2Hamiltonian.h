@@ -35,7 +35,7 @@
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphereWithSU4Spin.h"
-#include "Hamiltonian/AbstractQHEOnSphereWithSU4SpinHamiltonian.h"
+#include "Hamiltonian/AbstractQHEOnSphereWithSU4SpinCasimirHamiltonian.h"
 
 #include <iostream>
 
@@ -47,7 +47,7 @@ class MathematicaOutput;
 class AbstractArchitecture;
 
 
-class ParticleOnSphereWithSU4SpinS2Hamiltonian : public AbstractQHEOnSphereWithSU4SpinHamiltonian
+class ParticleOnSphereWithSU4SpinS2Hamiltonian : public AbstractQHEOnSphereWithSU4SpinCasimirHamiltonian
 {
 
   friend class QHEParticlePrecalculationOperation;

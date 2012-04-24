@@ -42,6 +42,7 @@
 #include "Architecture/ArchitectureOperation/QHEParticlePrecalculationOperation.h"
 
 #include "Hamiltonian/ParticleOnSphereWithSU4SpinS2Hamiltonian.h"
+#include "GeneralTools/StringTools.h"
 
 #include <iostream>
 #include <sys/time.h>
@@ -89,31 +90,14 @@ ParticleOnSphereWithSU4SpinS2Hamiltonian::ParticleOnSphereWithSU4SpinS2Hamiltoni
   this->PrecalculationShift = (int) MinIndex;  
   this->DiskStorageFlag = onDiskCacheFlag;
   this->Memory = memory;
-  this->NbrIntraSectorSums = 0;
-  this->NbrInterSectorSums = 0;
   if (precalculationFileName == 0)
     {
       if (memory > 0)
 	{
 	  long TmpMemory = this->FastMultiplicationMemory(memory);
-	  if (TmpMemory < 1024)
-	    cout  << "fast = " <<  TmpMemory << "b ";
-	  else
-	    if (TmpMemory < (1 << 20))
-	      cout  << "fast = " << (TmpMemory >> 10) << "kb ";
-	    else
-	  if (TmpMemory < (1 << 30))
-	    cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
-	  else
-	    {
-	      cout  << "fast = " << (TmpMemory >> 30) << ".";
-	      TmpMemory -= ((TmpMemory >> 30) << 30);
-	      TmpMemory *= 100l;
-	      TmpMemory >>= 30;
-	      if (TmpMemory < 10l)
-		cout << "0";
-	      cout  << TmpMemory << " Gb ";
-	    }
+	  
+	  PrintMemorySize(cout,TmpMemory);
+
 	  if (this->DiskStorageFlag == false)
 	    {
 	      this->EnableFastMultiplication();

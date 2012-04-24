@@ -1677,9 +1677,6 @@ void AbstractQHEOnSphereWithSU4SpinHamiltonian::EnableFastMultiplicationWithDisk
   this->DiskStorageStart = (int) MinIndex;
   int DiskStorageEnd = 1 + (int) MaxIndex;
 
-  int Index;
-  double Coefficient;
-  double Coefficient2;
   int* TmpIndexArray;
   double* TmpCoefficientArray;
   int Pos;
@@ -1690,9 +1687,6 @@ void AbstractQHEOnSphereWithSU4SpinHamiltonian::EnableFastMultiplicationWithDisk
   cout << "start" << endl;
   this->InteractionPerComponentIndex = 0;
   this->InteractionPerComponentCoefficient = 0;
-  double* TmpInteraction;
-  int* MIndices;
-  int* NIndices;
   this->MaxNbrInteractionPerComponent = 0;
 
   int TotalPos = 0;

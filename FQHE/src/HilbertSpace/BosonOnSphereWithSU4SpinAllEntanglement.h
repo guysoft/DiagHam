@@ -919,6 +919,8 @@ inline int BosonOnSphereWithSU4SpinAllEntanglement::AdiAdj (int m1, int m2, unsi
   ++temporaryStatej[m1];
   coefficient *= temporaryStatej[m1];
   coefficient = sqrt(coefficient);
+  //return this->FindStateIndex(this->TemporaryStateUpPlus, this->TemporaryStateUpMinus, this->TemporaryStateDownPlus, this->TemporaryStateDownMinus);
+
   return this->FindStateIndex(this->TemporaryStatePlus, this->TemporaryStateMinus);
 }
 

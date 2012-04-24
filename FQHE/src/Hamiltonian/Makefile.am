@@ -125,4 +125,5 @@ ParticleOnCylinderLaplacianDeltaHamiltonian.cc  \
 ParticleOnTorusTwoLandauLevelsHamiltonian.cc \
 ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian.cc \
 ParticleOnTorusWithSpinGenericHamiltonian.cc \
-ParticleOnTorusGenericHamiltonian.cc
+ParticleOnTorusGenericHamiltonian.cc \
+AbstractQHEOnSphereWithSU4SpinCasimirHamiltonian.cc
