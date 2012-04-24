@@ -278,14 +278,13 @@ void ParticleOnTorusWithSpinGenericHamiltonian::EvaluateInteractionFactors()
 	  int Index = 0;
 	  for (int j1 = 0; j1 < this->NbrInterSectorIndicesPerSum[i]; ++j1)
 	    {
-	      double Factor = -2.0;
 	      int m1 = this->InterSectorIndicesPerSum[i][j1 << 1];
 	      int m2 = this->InterSectorIndicesPerSum[i][(j1 << 1) + 1];
 	      for (int j2 = 0; j2 < this->NbrInterSectorIndicesPerSum[i]; ++j2)
 		{
 		  int m3 = this->InterSectorIndicesPerSum[i][j2 << 1];
 		  int m4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1];
-		  this->InteractionFactorsupdown[i][Index] = Factor * this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentialsUpDown, this->PseudopotentialsUpDown);
+		  this->InteractionFactorsupdown[i][Index] = (-this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentialsUpDown, this->PseudopotentialsUpDown)-this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentialsUpDown, this->PseudopotentialsUpDown));
 		  ++TotalNbrInteractionFactors;
 		  ++Index;
 		}
@@ -434,9 +433,12 @@ double ParticleOnTorusWithSpinGenericHamiltonian::EvaluateInteractionCoefficient
 	  TmpInteraction = 0.0;
 	  for (int i = 0; i < nbrPseudopotentials; ++i)
 	    if (pseudopotentials[i] != 0.0)
-	      TmpInteraction += pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(PIOnM * Q2);
+	      TmpInteraction += pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(2.0* PIOnM * Q2);
 	  Coefficient = exp(- PIOnM * Q2) * TmpInteraction;
-	  Precision = Coefficient;
+          if (fabs(Coefficient) != 0.0)
+ 	    Precision = Coefficient;
+          else
+            Precision = 1.0;
 	}
        else
  	{
@@ -453,7 +455,7 @@ double ParticleOnTorusWithSpinGenericHamiltonian::EvaluateInteractionCoefficient
 	  TmpInteraction = 0.0;
 	  for (int i = 0; i < nbrPseudopotentials; ++i)
 	    if (pseudopotentials[i] != 0.0)
-	      TmpInteraction += pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(PIOnM * Q2);
+	      TmpInteraction += pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(2.0 * PIOnM * Q2);
 	  Precision = 2.0 * exp(- PIOnM * Q2) * TmpInteraction;
 	  Coefficient += Precision * cos (N1 * Factor);
 	  N1 += 1.0;
@@ -472,9 +474,12 @@ double ParticleOnTorusWithSpinGenericHamiltonian::EvaluateInteractionCoefficient
 	  TmpInteraction = 0.0;
 	  for (int i=0; i< nbrPseudopotentials; ++i)
 	    if (pseudopotentials[i] != 0.0)
-	      TmpInteraction += pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(PIOnM * Q2);
+	      TmpInteraction += pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(2.0 * PIOnM * Q2);
 	  Coefficient = exp(- PIOnM * Q2) * TmpInteraction;
-	  Precision = Coefficient;
+          if (fabs(Coefficient) != 0.0)
+	    Precision = Coefficient;
+          else
+            Precision = 1.0;
 	}
        else
  	{
@@ -491,7 +496,7 @@ double ParticleOnTorusWithSpinGenericHamiltonian::EvaluateInteractionCoefficient
 	  TmpInteraction = 0.0;
 	  for (int i = 0; i < nbrPseudopotentials; ++i)
 	    if (pseudopotentials[i] != 0.0)
-	      TmpInteraction += pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(PIOnM * Q2);
+	      TmpInteraction += pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(2.0 * PIOnM * Q2);
 	  Precision = 2.0 *  exp(- PIOnM * Q2) * TmpInteraction;
 	  Coefficient += Precision * cos (N1 * Factor);
 	  N1 += 1.0;
@@ -499,7 +504,8 @@ double ParticleOnTorusWithSpinGenericHamiltonian::EvaluateInteractionCoefficient
       Sum += Coefficient;
       N2 -= this->NbrLzValue;
     }
-  return (Sum / (4.0 * M_PI * this->NbrLzValue));
+  //Normalize per flux (gives correct energy scale for 2-particle problem)
+  return (Sum / ((double) this->NbrLzValue));
 }
 
 
