@@ -31,7 +31,7 @@
 #include <stdio.h>
 
 
-#define __profiling__
+//#define __profiling__
 
 #ifdef __profiling__
 #include "MathTools/RandomNumber/NumRecRandomGenerator.h"
@@ -67,10 +67,10 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
 
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the system", 0);
-  (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "l2");
+  (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new SingleDoubleOption ('\n', "l2-factor", "multiplicative factor in front of an optional L^2 operator than can be added to the Hamiltonian", 1.0);
-  (*SystemGroup) += new SingleDoubleOption ('\n', "energy-shift", "if non zero, override energy shift using the indicated value ", -10.0);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "energy-shift", "if non zero, override energy shift using the indicated value ", 0.0);
 
   (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
   (*LanczosGroup)  += new SingleIntegerOption  ('\n', "full-diag",
@@ -103,6 +103,7 @@ int main(int argc, char** argv)
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
   (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
+  (*ToolsGroup) += new BooleanOption  ('\n', "show-basis", "show basis representation of the hilbert space");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
   Manager.StandardProceedings(argv, argc, cout);
@@ -120,6 +121,7 @@ int main(int argc, char** argv)
   timeval TotalStartingTime2;
   timeval TotalEndingTime2;
   double Dt2;
+  cout << "test on large arrays:"<<endl;
   cout << "------------------------------------------------------------------" << endl << endl;;
   cout << "start copy loops...";
   gettimeofday (&(TotalStartingTime2), 0);
@@ -150,7 +152,44 @@ int main(int argc, char** argv)
   cout << "done" << endl;
   Dt2 = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
     ((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
+  cout << "time = " << Dt2 << endl<<endl;
+
+    cout << "test on small arrays:"<<endl;
+  cout << "------------------------------------------------------------------" << endl << endl;;
+  cout << "start copy loops...";
+  MySize = 10;
+  NbrCopies = 2<<25;
+  gettimeofday (&(TotalStartingTime2), 0);
+  for (int k=0; k<NbrCopies; ++k)
+    for (int i=0; i<MySize; ++i)
+      Copy[i] = Data[i];
+  gettimeofday (&(TotalEndingTime2), 0);
+  cout << "done" << endl;
+  Dt2 = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
+    ((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
   cout << "time = " << Dt2 << endl;
+  cout << "------------------------------------------------------------------" << endl << endl;
+  cout << "start memcpy...";
+  gettimeofday (&(TotalStartingTime2), 0);
+  for (int k=0; k<NbrCopies; ++k)
+    memcpy (Copy, Data, MySize*sizeof(double));
+  gettimeofday (&(TotalEndingTime2), 0);
+  cout << "done" << endl;
+  Dt2 = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
+    ((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
+  cout << "time = " << Dt2 << endl;
+  cout << "------------------------------------------------------------------" << endl << endl;
+  cout << "start std::copy...";
+  gettimeofday (&(TotalStartingTime2), 0);
+  for (int k=0; k<NbrCopies; ++k)
+    std::copy (&Data[0],&Data[MySize-1],Copy);
+  gettimeofday (&(TotalEndingTime2), 0);
+  cout << "done" << endl;
+  Dt2 = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
+    ((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
+  cout << "time = " << Dt2 << endl;
+
+  
   return 0;
 #endif
   int NbrParticles = Manager.GetInteger("nbr-particles");
@@ -164,28 +203,43 @@ int main(int argc, char** argv)
 //   bool TzSymmetrizedBasis = ((BooleanOption*) Manager["tzsymmetrized-basis"])->GetBoolean();
 //   bool Z3SymmetrizedBasis = ((BooleanOption*) Manager["z3symmetrized-basis"])->GetBoolean();
 //   bool TzMinusParity = ((BooleanOption*) Manager["minus-tzparity"])->GetBoolean();
-  unsigned long Memory = ((unsigned long) Manager.GetInteger("fast-search")) << 20;
+  unsigned long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
+
   char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");
   bool DiskCacheFlag = Manager.GetBoolean("disk-cache");
-  bool FirstRun = true;
-  char* OutputNameLz = new char [256 + strlen(Manager.GetString("interaction-name"))];
+  bool FirstRun = true;  
+  char* OutputNameLz, *InteractionName;
+  if (Manager.GetString("interaction-name")!=NULL)
+    {
+      OutputNameLz = new char [256 + strlen(Manager.GetString("interaction-name"))];
+      InteractionName = Manager.GetString("interaction-name");
+    }
+  else
+    {
+      OutputNameLz = new char [369];
+      InteractionName = new char[65];
+      if (fabs(Manager.GetDouble("l2-factor")-1.0)<1e-12)
+	sprintf(InteractionName,"l2");
+      else
+	sprintf(InteractionName,"l2_%g",Manager.GetDouble("l2-factor"));
+    }
 
   if (strcmp ("fermions", Manager.GetString("statistics")) == 0)
     {  
       if (Manager.GetBoolean("use-entanglement"))
-	sprintf (OutputNameLz, "fermions_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_pz_%d_lz.dat", Manager.GetString("interaction-name"), 
+	sprintf (OutputNameLz, "fermions_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_pz_%d_lz.dat", InteractionName, 
 		 NbrParticles, LzMax, TotalSz, IsoSzTotal, TotalEntanglement);
       else
-	sprintf (OutputNameLz, "fermions_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_lz.dat", Manager.GetString("interaction-name"), 
+	sprintf (OutputNameLz, "fermions_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_lz.dat", InteractionName, 
 		 NbrParticles, LzMax, TotalSz, IsoSzTotal);
     }
   else
     {
       if (Manager.GetBoolean("use-entanglement"))
-	sprintf (OutputNameLz, "bosons_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_pz_%d_lz.dat", Manager.GetString("interaction-name"), 
+	sprintf (OutputNameLz, "bosons_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_pz_%d_lz.dat", InteractionName, 
 		 NbrParticles, LzMax, TotalSz, IsoSzTotal, TotalEntanglement);
       else
-	sprintf (OutputNameLz, "bosons_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_lz.dat", Manager.GetString("interaction-name"), 
+	sprintf (OutputNameLz, "bosons_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_lz.dat", InteractionName, 
 		 NbrParticles, LzMax, TotalSz, IsoSzTotal);
     }
 
@@ -195,7 +249,10 @@ int main(int argc, char** argv)
 
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
   if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
-    Memory = Architecture.GetArchitecture()->GetLocalMemory();
+    {
+      cout << "Overriding memory by architecture"<<endl;
+      Memory = Architecture.GetArchitecture()->GetLocalMemory();
+    }
   AbstractQHEOnSphereHamiltonian* Hamiltonian = new ParticleOnSphereWithSU4SpinL2Hamiltonian(Space, NbrParticles, LzMax, TotalLz,
 											     Architecture.GetArchitecture(), 
 											     Manager.GetDouble("l2-factor"),
@@ -209,12 +266,12 @@ int main(int argc, char** argv)
       
   if (Manager.GetBoolean("eigenstate") == true)	
     {
-      EigenvectorName = new char [128 + strlen(Manager.GetString("interaction-name"))];
+      EigenvectorName = new char [128 + strlen(InteractionName)];
       if (Manager.GetBoolean("use-entanglement"))
-	sprintf (EigenvectorName, "fermions_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_pz_%d_lz", Manager.GetString("interaction-name"), 
+	sprintf (EigenvectorName, "fermions_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_pz_%d_lz", InteractionName, 
 		 NbrParticles, LzMax, TotalSz, IsoSzTotal, TotalEntanglement);
       else
-	sprintf (EigenvectorName, "fermions_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_lz", Manager.GetString("interaction-name"), 
+	sprintf (EigenvectorName, "fermions_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_lz", InteractionName, 
 	     NbrParticles, LzMax, TotalSz, IsoSzTotal);
     }
   QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, TotalLz, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);
@@ -223,6 +280,7 @@ int main(int argc, char** argv)
   if (EigenvectorName != 0)
     delete[] EigenvectorName;
   delete Hamiltonian;
+  delete Space;
   if (FirstRun == true)
     FirstRun = false;
 

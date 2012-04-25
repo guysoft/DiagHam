@@ -218,6 +218,14 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
       this->Hamiltonian->GetHamiltonian(HRep);
       cout << HRep << endl;
     }
+  if (((*options)["show-basis"] != 0) && (((BooleanOption*) (*options)["show-basis"])->GetBoolean() == true))
+    {
+      for (int i=0; i<space->GetHilbertSpaceDimension(); ++i)
+	{
+	  cout << i << " : ";
+	  space->PrintState(cout, i)<<endl;
+	}
+    }
   if (((*options)["lanczos-precision"] != 0) && (((SingleDoubleOption*) (*options)["lanczos-precision"])->GetDouble() > 0))
     {
       this->LanczosPrecision = options->GetDouble("lanczos-precision");

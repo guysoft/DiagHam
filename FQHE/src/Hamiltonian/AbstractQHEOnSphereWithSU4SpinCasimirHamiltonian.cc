@@ -56,6 +56,12 @@ using std::ifstream;
 using std::ios;
 
 
+AbstractQHEOnSphereWithSU4SpinCasimirHamiltonian::AbstractQHEOnSphereWithSU4SpinCasimirHamiltonian()
+{
+  this->L2Hamiltonian=0;
+  this->S2Hamiltonian=0;
+}
+
 // destructor
 //
 
@@ -152,14 +158,21 @@ void AbstractQHEOnSphereWithSU4SpinCasimirHamiltonian::AddL2 (int totalLz, int t
 RealVector& AbstractQHEOnSphereWithSU4SpinCasimirHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
 									   int firstComponent, int nbrComponent)
 {
+  cout << "AbstractQHEOnSphereWithSU4SpinCasimirHamiltonian::LowLevelAddMultiply"<<endl;
   int LastComponent = firstComponent + nbrComponent;
   double Coefficient;
   if (this->FastMultiplicationFlag == false)
     {
       ParticleOnSphereWithSU4Spin* TmpParticles = (ParticleOnSphereWithSU4Spin*) this->Particles->Clone();
+      cout << "vSource="<<endl<<vSource;
       for (int i = firstComponent; i < LastComponent; ++i)
-	this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+	{
+	  cout << "i="<<i<<endl;
+	  this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+	}
+      cout << "One-body terms:"<<endl;
       this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSource, vDestination);
+      cout << "vDestination="<<endl<<vDestination;
       delete TmpParticles;
     }
   else

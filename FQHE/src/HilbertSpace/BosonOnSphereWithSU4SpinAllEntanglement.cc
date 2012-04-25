@@ -189,7 +189,7 @@ BosonOnSphereWithSU4SpinAllEntanglement::BosonOnSphereWithSU4SpinAllEntanglement
   this->TemporaryStateUpPlus = this->TemporaryStatePlus + this->NbrLzValue;
   this->TemporaryStateUpMinus = this->TemporaryStateMinus + this->NbrLzValue;
   this->TemporaryStateDownPlus = this->TemporaryStatePlus;
-  this->TemporaryStateDownMinus = this->TemporaryStateMinus + this->NbrLzValue;
+  this->TemporaryStateDownMinus = this->TemporaryStateMinus;
 
   this->ProdATemporaryStatePlus = new unsigned long[2*this->NbrLzValue];
   this->ProdATemporaryStateMinus = new unsigned long[2*this->NbrLzValue];
@@ -396,12 +396,34 @@ double BosonOnSphereWithSU4SpinAllEntanglement::AddpAdp (int index, int m)
 double BosonOnSphereWithSU4SpinAllEntanglement::AddmAdm (int index, int m)
 {
   this->FermionToBoson(this->StateDescriptionMinus[index], this->NMinusLzMax, this->TemporaryStateMinus);
+  return (double) (this->TemporaryStateDownMinus[m]);
+}
+
+/*
+{
+  this->FermionToBoson(this->StateDescriptionMinus[index], this->NMinusLzMax, this->TemporaryStateMinus);
+  cout << "in AddmAdm [ -(" <<this->TemporaryStateMinus[0];
+  for (int i = 1; i <2*NbrLzValue ; ++i)
+    cout << ", "<<this->TemporaryStateMinus[i];
+  cout << ") +("<<this->TemporaryStatePlus[0];
+  for (int i = 1; i <2*NbrLzValue ; ++i)
+    cout << ", "<<this->TemporaryStatePlus[i];
+  cout <<")]"<<endl;
+
+  for (int i = 0; i <NbrLzValue ; ++i)
+    {
+      if (this->TemporaryStateMinus[i]!=this->TemporaryStateDownMinus[i])
+	cout << "Discrepancy in Down Minus "<<i<<endl;
+      if (this->TemporaryStateMinus[i+NbrLzValue]!=this->TemporaryStateUpMinus[i])
+	cout << "Discrepancy in Up Minus "<<i<<endl;
+    }
+
   double ReturnVal = (double) (this->TemporaryStateDownMinus[m]);
   this->PrintState(cout,index)<< ": dm["<<m<<"]=" <<ReturnVal<<endl;
   return ReturnVal;
   //return (double) (this->TemporaryStateDownMinus[m]);  
 }
-
+*/
 
 // print a given State
 //

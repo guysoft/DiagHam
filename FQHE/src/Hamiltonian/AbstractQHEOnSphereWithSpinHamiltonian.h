@@ -981,9 +981,9 @@ inline void AbstractQHEOnSphereWithSpinHamiltonian::EvaluateMNOneBodyFastMultipl
       if (this->OneBodyInteractionFactorsdowndown != 0)
 	for (int j = 0; j <= this->LzMax; ++j)
 	  TmpDiagonal += this->OneBodyInteractionFactorsdowndown[j] * particles->AddAd(index + this->PrecalculationShift, j);	  
-	  indexArray[position] = index + this->PrecalculationShift;
-	  coefficientArray[position] = TmpDiagonal;
-	  ++position;	  
+      indexArray[position] = index + this->PrecalculationShift;
+      coefficientArray[position] = TmpDiagonal;
+      ++position; 
     }
   if (this->OneBodyInteractionFactorsupdown != 0)
     {
