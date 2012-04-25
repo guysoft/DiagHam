@@ -221,7 +221,7 @@ void ParticleOnSphereWithSU4SpinL2Hamiltonian::EvaluateInteractionFactors()
 	Coefficients(j, i) *= 0.5 * TmpCoefficient;
     }
 
-  cout << "Coefficients="<<endl<<Coefficients;
+  // cout << "Coefficients="<<endl<<Coefficients;
 
   //  this->L2Factor  = 1.0;
 

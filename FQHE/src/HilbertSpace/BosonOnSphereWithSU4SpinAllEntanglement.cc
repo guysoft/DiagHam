@@ -435,7 +435,8 @@ ostream& BosonOnSphereWithSU4SpinAllEntanglement::PrintState (ostream& Str, int 
 {
   this->FermionToBoson(this->StateDescriptionPlus[state], this->StateDescriptionMinus[state], 
 		       this->TemporaryStatePlus, this->TemporaryStateMinus);
-  Str <<hex << this->StateDescriptionPlus[state] <<" "<< this->StateDescriptionMinus[state]<<dec<< " | ";
+  //  Str <<hex << this->StateDescriptionPlus[state] <<" "<< this->StateDescriptionMinus[state]<<dec;
+  Str << " | ";
   for (int i = this->LzMax; i >=0 ; --i)
     {
       Str << "(" << this->TemporaryStateUpPlus[i] << "," << this->TemporaryStateUpMinus[i] << "," 

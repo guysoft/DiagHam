@@ -303,11 +303,7 @@ inline void AbstractQHEOnSphereWithSU4SpinCasimirHamiltonian::EvaluateMNTwoBodyA
 	    {
 	      Index = particles->AdupAdup(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
 	      if (Index < Dim)
-		{
-		  cout << "Contribution on "<<index<<"->"<<Index<<" upup ("<<SumIndices - TmpM3Values[m3]<<", "<<TmpM3Values[m3]<<", "<<M2IntraValue[m1]<<", "<<M1IntraValue[m1]<<")="<<this->M12InteractionFactorsupup[ReducedNbrInteractionFactors]<<" Coeff="<<Coefficient<<" Coeff2="<<Coefficient2<<endl;
-		  vDestination[Index] += Coefficient * this->M12InteractionFactorsupup[ReducedNbrInteractionFactors] * Coefficient2;
-		  cout << "vDestination["<<Index<<"]="<<vDestination[Index]<<endl;
-		}
+		vDestination[Index] += Coefficient * this->M12InteractionFactorsupup[ReducedNbrInteractionFactors] * Coefficient2;
 	      ++ReducedNbrInteractionFactors;
 	    }
 	}
@@ -328,11 +324,7 @@ inline void AbstractQHEOnSphereWithSU4SpinCasimirHamiltonian::EvaluateMNTwoBodyA
 	    {
 	      Index = particles->AdumAdum(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
 	      if (Index < Dim)
-		{
-		  cout << "Contribution on "<<index<<"->"<<Index<<" umum ("<<SumIndices - TmpM3Values[m3]<<", "<<TmpM3Values[m3]<<", "<<M2IntraValue[m1]<<", "<<M1IntraValue[m1]<<")="<<this->M12InteractionFactorsumum[ReducedNbrInteractionFactors]<<" Coeff="<<Coefficient<<" Coeff2="<<Coefficient2<<endl;
-		  vDestination[Index] += Coefficient * this->M12InteractionFactorsumum[ReducedNbrInteractionFactors] * Coefficient2;
-		  cout << "vDestination["<<Index<<"]="<<vDestination[Index]<<endl;
-		}
+		vDestination[Index] += Coefficient * this->M12InteractionFactorsumum[ReducedNbrInteractionFactors] * Coefficient2;
 	      ++ReducedNbrInteractionFactors;
 	    }
 	}
@@ -353,11 +345,7 @@ inline void AbstractQHEOnSphereWithSU4SpinCasimirHamiltonian::EvaluateMNTwoBodyA
 	    {
 	      Index = particles->AddpAddp(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
 	      if (Index < Dim)
-		{
-		  cout << "Contribution on "<<index<<"->"<<Index<<" dpdp ("<<SumIndices - TmpM3Values[m3]<<", "<<TmpM3Values[m3]<<", "<<M2IntraValue[m1]<<", "<<M1IntraValue[m1]<<")="<<this->M12InteractionFactorsdpdp[ReducedNbrInteractionFactors]<<" Coeff="<<Coefficient<<" Coeff2="<<Coefficient2<<endl;
-		  vDestination[Index] += Coefficient * this->M12InteractionFactorsdpdp[ReducedNbrInteractionFactors] * Coefficient2;
-		  cout << "vDestination["<<Index<<"]="<<vDestination[Index]<<endl;
-		}
+		vDestination[Index] += Coefficient * this->M12InteractionFactorsdpdp[ReducedNbrInteractionFactors] * Coefficient2;
 	      ++ReducedNbrInteractionFactors;
 	    }
 	}
@@ -378,11 +366,7 @@ inline void AbstractQHEOnSphereWithSU4SpinCasimirHamiltonian::EvaluateMNTwoBodyA
 	    {
 	      Index = particles->AddmAddm(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
 	      if (Index < Dim)
-		{
-		  cout << "Contribution on "<<index<<"->"<<Index<<" dmdm ("<<SumIndices - TmpM3Values[m3]<<", "<<TmpM3Values[m3]<<", "<<M2IntraValue[m1]<<", "<<M1IntraValue[m1]<<")="<<this->M12InteractionFactorsdmdm[ReducedNbrInteractionFactors]<<" Coeff="<<Coefficient<<" Coeff2="<<Coefficient2<<endl;
-		  vDestination[Index] += Coefficient * this->M12InteractionFactorsdmdm[ReducedNbrInteractionFactors] * Coefficient2;
-		  cout << "vDestination["<<Index<<"]="<<vDestination[Index]<<endl;
-		}
+		vDestination[Index] += Coefficient * this->M12InteractionFactorsdmdm[ReducedNbrInteractionFactors] * Coefficient2;
 	      ++ReducedNbrInteractionFactors;
 	    }
 	}
@@ -404,11 +388,7 @@ inline void AbstractQHEOnSphereWithSU4SpinCasimirHamiltonian::EvaluateMNTwoBodyA
 	    {
 	      Index = particles->AdupAdum(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
 	      if (Index < Dim)
-		{
-		  cout << "Contribution on "<<index<<"->"<<Index<<" upum ("<<SumIndices - TmpM3Values[m3]<<", "<<TmpM3Values[m3]<<", "<<M2InterValue[m1]<<", "<<M1InterValue[m1]<<")="<<this->M12InteractionFactorsupum[ReducedNbrInteractionFactors]<<" Coeff="<<Coefficient<<" Coeff2="<<Coefficient2<<endl;
-		  vDestination[Index] += Coefficient * this->M12InteractionFactorsupum[ReducedNbrInteractionFactors] * Coefficient2;
-		  cout << "vDestination["<<Index<<"]="<<vDestination[Index]<<endl;
-		}
+		vDestination[Index] += Coefficient * this->M12InteractionFactorsupum[ReducedNbrInteractionFactors] * Coefficient2;
 	      ++ReducedNbrInteractionFactors;
 	    }
 	}
@@ -429,11 +409,7 @@ inline void AbstractQHEOnSphereWithSU4SpinCasimirHamiltonian::EvaluateMNTwoBodyA
 	    {
 	      Index = particles->AdupAddp(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
 	      if (Index < Dim)
-		{
-		  cout << "Contribution on "<<index<<"->"<<Index<<" updp ("<<SumIndices - TmpM3Values[m3]<<", "<<TmpM3Values[m3]<<", "<<M2InterValue[m1]<<", "<<M1InterValue[m1]<<")="<<this->M12InteractionFactorsupdp[ReducedNbrInteractionFactors]<<" Coeff="<<Coefficient<<" Coeff2="<<Coefficient2<<endl;
-		  vDestination[Index] += Coefficient * this->M12InteractionFactorsupdp[ReducedNbrInteractionFactors] * Coefficient2;
-		  cout << "vDestination["<<Index<<"]="<<vDestination[Index]<<endl;
-		}
+		vDestination[Index] += Coefficient * this->M12InteractionFactorsupdp[ReducedNbrInteractionFactors] * Coefficient2;
 	      ++ReducedNbrInteractionFactors;
 	    }
 	}
@@ -455,11 +431,7 @@ inline void AbstractQHEOnSphereWithSU4SpinCasimirHamiltonian::EvaluateMNTwoBodyA
 	    {
 	      Index = particles->AdupAddm(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
 	      if (Index < Dim)
-		{
-		  cout << "Contribution on "<<index<<"->"<<Index<<" updm ("<<SumIndices - TmpM3Values[m3]<<", "<<TmpM3Values[m3]<<", "<<M2InterValue[m1]<<", "<<M1InterValue[m1]<<")="<<this->M12InteractionFactorsupdm[ReducedNbrInteractionFactors]<<" Coeff="<<Coefficient<<" Coeff2="<<Coefficient2<<endl;
-		  vDestination[Index] += Coefficient * this->M12InteractionFactorsupdm[ReducedNbrInteractionFactors] * Coefficient2;
-		  cout << "vDestination["<<Index<<"]="<<vDestination[Index]<<endl;
-		}
+		vDestination[Index] += Coefficient * this->M12InteractionFactorsupdm[ReducedNbrInteractionFactors] * Coefficient2;
 	      ++ReducedNbrInteractionFactors;
 	    }
 	}
@@ -481,11 +453,7 @@ inline void AbstractQHEOnSphereWithSU4SpinCasimirHamiltonian::EvaluateMNTwoBodyA
 	    {
 	      Index = particles->AdumAddp(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
 	      if (Index < Dim)
-		{
-		  cout << "Contribution on "<<index<<"->"<<Index<<" umdp ("<<SumIndices - TmpM3Values[m3]<<", "<<TmpM3Values[m3]<<", "<<M2InterValue[m1]<<", "<<M1InterValue[m1]<<")="<<this->M12InteractionFactorsumdp[ReducedNbrInteractionFactors]<<" Coeff="<<Coefficient<<" Coeff2="<<Coefficient2<<endl;
-		  vDestination[Index] += Coefficient * this->M12InteractionFactorsumdp[ReducedNbrInteractionFactors] * Coefficient2;
-		  cout << "vDestination["<<Index<<"]="<<vDestination[Index]<<endl;
-		}
+		vDestination[Index] += Coefficient * this->M12InteractionFactorsumdp[ReducedNbrInteractionFactors] * Coefficient2;
 	      ++ReducedNbrInteractionFactors;
 	    }
 	}
@@ -507,11 +475,7 @@ inline void AbstractQHEOnSphereWithSU4SpinCasimirHamiltonian::EvaluateMNTwoBodyA
 	    {
 	      Index = particles->AdumAddm(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
 	      if (Index < Dim)
-		{
-		  cout << "Contribution on "<<index<<"->"<<Index<<" umdm ("<<SumIndices - TmpM3Values[m3]<<", "<<TmpM3Values[m3]<<", "<<M2InterValue[m1]<<", "<<M1InterValue[m1]<<")="<<this->M12InteractionFactorsumdm[ReducedNbrInteractionFactors]<<" Coeff="<<Coefficient<<" Coeff2="<<Coefficient2<<endl;
-		  vDestination[Index] += Coefficient * this->M12InteractionFactorsumdm[ReducedNbrInteractionFactors] * Coefficient2;
-		  cout << "vDestination["<<Index<<"]="<<vDestination[Index]<<endl;
-		}
+		vDestination[Index] += Coefficient * this->M12InteractionFactorsumdm[ReducedNbrInteractionFactors] * Coefficient2;
 	      ++ReducedNbrInteractionFactors;
 	    }
 	}
@@ -532,11 +496,7 @@ inline void AbstractQHEOnSphereWithSU4SpinCasimirHamiltonian::EvaluateMNTwoBodyA
 	    {
 	      Index = particles->AddpAddm(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
 	      if (Index < Dim)
-		{
-		  cout << "Contribution on "<<index<<"->"<<Index<<" dpdm ("<<SumIndices - TmpM3Values[m3]<<", "<<TmpM3Values[m3]<<", "<<M2InterValue[m1]<<", "<<M1InterValue[m1]<<")="<<this->M12InteractionFactorsdpdm[ReducedNbrInteractionFactors]<<" Coeff="<<Coefficient<<" Coeff2="<<Coefficient2<<endl;
-		  vDestination[Index] += Coefficient * this->M12InteractionFactorsdpdm[ReducedNbrInteractionFactors] * Coefficient2;
-		  cout << "vDestination["<<Index<<"]="<<vDestination[Index]<<endl;
-		}
+		vDestination[Index] += Coefficient * this->M12InteractionFactorsdpdm[ReducedNbrInteractionFactors] * Coefficient2;
 	      ++ReducedNbrInteractionFactors;
 	    }
 	}
@@ -1118,22 +1078,10 @@ inline void AbstractQHEOnSphereWithSU4SpinCasimirHamiltonian::EvaluateMNOneBodyA
 	  for (int j = 0; j <= this->LzMax; ++j) 
 	    {
 	      TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * particles->AdupAup(i, j);
-	      if (particles->AdupAup(i, j))
-		cout << "1-body upup on "<<i<<": "<<this->OneBodyInteractionFactorsupup[j]<<" * "<<particles->AdupAup(i, j)<<endl;
 	      TmpDiagonal += this->OneBodyInteractionFactorsumum[j] * particles->AdumAum(i, j);
-	      if (particles->AdumAum(i, j))
-		cout << "1-body umum on "<<i<<": "<<this->OneBodyInteractionFactorsumum[j]<<" * "<<particles->AdumAum(i, j)<<endl;
-
 	      TmpDiagonal += this->OneBodyInteractionFactorsdpdp[j] * particles->AddpAdp(i, j);
-	      if (particles->AddpAdp(i, j))
-		cout << "1-body dpdp on "<<i<<": "<<this->OneBodyInteractionFactorsdpdp[j]<<" * "<<particles->AddpAdp(i, j)<<endl;
-
 	      TmpDiagonal += this->OneBodyInteractionFactorsdmdm[j] * particles->AddmAdm(i, j);
-	      if (particles->AddmAdm(i, j))
-		cout << "1-body dmdm on "<<i<<": "<<this->OneBodyInteractionFactorsdmdm[j]<<" * "<<particles->AddmAdm(i, j)<<endl;
-		      
 	    }
-	  cout << "Diagonal Term: "<<TmpDiagonal<<endl;
 	  vDestination[i] += (this->HamiltonianShift + TmpDiagonal) * vSource[i];
 	}
     }
