@@ -256,6 +256,8 @@ FermionOnSphereWithSU4Spin::~FermionOnSphereWithSU4Spin ()
       for (int i = 0; i <= MaxHighestBit; ++i)
 	delete[] this->LookUpTable[i];
       delete[] this->LookUpTable;
+      delete[] this->SignLookUpTable;
+      delete[] this->SignLookUpTableMask;
     }
 }
 

@@ -36,7 +36,8 @@
 #include "HilbertSpace/ParticleOnSphereWithSU4Spin.h"
 
 #include <iostream>
-
+using std::cout;
+using std::endl;
 
 class BosonOnSphereShort;
 
@@ -691,47 +692,6 @@ inline int BosonOnSphereWithSU4SpinAllEntanglement::GetParticleStatistic()
   return AbstractQHEParticle::BosonicStatistic;
 }
 
-/*
-
-// convert a fermionic state into its bosonic  counterpart
-//
-// initialState = initial fermionic state
-// initialStateLzMax = initial fermionic state maximum Lz value
-// finalState = reference on the array where the bosonic state has to be stored
-// finalStateLzMax = reference on the integer where the bosonic state maximum Lz value has to be stored
-
-inline void BosonOnSphereWithSU4SpinAllEntanglement::FermionToBoson(unsigned long initialState, int initialStateLzMax, unsigned long*& finalState, int& finalStateLzMax)
-{
-  finalStateLzMax = 0;
-  while (initialStateLzMax >= 0)
-    {
-      unsigned long TmpState = (~initialState - 1ul) ^ (~initialState);
-      TmpState &= ~(TmpState >> 1);
-//      cout << hex << initialState << "  " << TmpState << dec << endl;
-#ifdef  __64_BITS__
-      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaaaaaaaaaul) != 0);
-      TmpPower |= ((TmpState & 0xccccccccccccccccul) != 0) << 1;
-      TmpPower |= ((TmpState & 0xf0f0f0f0f0f0f0f0ul) != 0) << 2;
-      TmpPower |= ((TmpState & 0xff00ff00ff00ff00ul) != 0) << 3;      
-      TmpPower |= ((TmpState & 0xffff0000ffff0000ul) != 0) << 4;      
-      TmpPower |= ((TmpState & 0xffffffff00000000ul) != 0) << 5;      
-#else
-      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaul) != 0);
-      TmpPower |= ((TmpState & 0xccccccccul) != 0) << 1;
-      TmpPower |= ((TmpState & 0xf0f0f0f0ul) != 0) << 2;
-      TmpPower |= ((TmpState & 0xff00ff00ul) != 0) << 3;      
-      TmpPower |= ((TmpState & 0xffff0000ul) != 0) << 4;      
-#endif
-//      cout << TmpPower << endl;
-      finalState[finalStateLzMax] = (unsigned long) TmpPower;
-      ++TmpPower;
-      initialState >>= TmpPower;
-      ++finalStateLzMax;
-      initialStateLzMax -= TmpPower;
-    }
-  --finalStateLzMax;
-}
-*/
 
 // old boson to fermion conversions:
 
@@ -766,17 +726,19 @@ inline void BosonOnSphereWithSU4SpinAllEntanglement::BosonToFermion(unsigned lon
 {
   finalStatePlus = 0x0ul;
   unsigned long Shift = 0;
-  for (int i = 0; i < 2*(this->LzMax+1); ++i)
+  for (int i = 0; i < 2*(this->NbrLzValue); ++i)
     {
       finalStatePlus |= ((1ul << initialStatePlus[i]) - 1ul) << Shift;
+/*       cout << "initialStatePlus["<<i<<"]="<<initialStatePlus[i]<<endl; */
       Shift += initialStatePlus[i];
       ++Shift;
     }
   finalStateMinus = 0x0ul;
   Shift = 0;
-  for (int i = 0; i < 2*(this->LzMax+1); ++i)
+  for (int i = 0; i < 2*(this->NbrLzValue); ++i)
     {
       finalStateMinus |= ((1ul << initialStateMinus[i]) - 1ul) << Shift;
+/*       cout << "initialStateMinus["<<i<<"]="<<initialStateMinus[i]<<endl; */
       Shift += initialStateMinus[i];
       ++Shift;
     }
@@ -801,15 +763,15 @@ inline void BosonOnSphereWithSU4SpinAllEntanglement::FermionToBoson(unsigned lon
       unsigned int TmpPower = ((TmpState & 0xaaaaaaaaaaaaaaaaul) != 0);
       TmpPower |= ((TmpState & 0xccccccccccccccccul) != 0) << 1;
       TmpPower |= ((TmpState & 0xf0f0f0f0f0f0f0f0ul) != 0) << 2;
-      TmpPower |= ((TmpState & 0xff00ff00ff00ff00ul) != 0) << 3;      
-      TmpPower |= ((TmpState & 0xffff0000ffff0000ul) != 0) << 4;      
-      TmpPower |= ((TmpState & 0xffffffff00000000ul) != 0) << 5;      
+      TmpPower |= ((TmpState & 0xff00ff00ff00ff00ul) != 0) << 3;
+      TmpPower |= ((TmpState & 0xffff0000ffff0000ul) != 0) << 4;
+      TmpPower |= ((TmpState & 0xffffffff00000000ul) != 0) << 5;
 #else
       unsigned int TmpPower = ((TmpState & 0xaaaaaaaaul) != 0);
       TmpPower |= ((TmpState & 0xccccccccul) != 0) << 1;
       TmpPower |= ((TmpState & 0xf0f0f0f0ul) != 0) << 2;
-      TmpPower |= ((TmpState & 0xff00ff00ul) != 0) << 3;      
-      TmpPower |= ((TmpState & 0xffff0000ul) != 0) << 4;      
+      TmpPower |= ((TmpState & 0xff00ff00ul) != 0) << 3;
+      TmpPower |= ((TmpState & 0xffff0000ul) != 0) << 4;
 #endif
       finalState[FinalStateLzMax] = (unsigned long) TmpPower;
       ++TmpPower;
@@ -817,7 +779,7 @@ inline void BosonOnSphereWithSU4SpinAllEntanglement::FermionToBoson(unsigned lon
       ++FinalStateLzMax;
       initialStateLzMax -= TmpPower;
     }
-  for (; FinalStateLzMax <= this->LzMax; ++FinalStateLzMax)
+  for (; FinalStateLzMax < (this->NbrLzValue<<1); ++FinalStateLzMax)
     finalState[FinalStateLzMax] = 0x0ul;
 }
 
@@ -860,7 +822,7 @@ inline void BosonOnSphereWithSU4SpinAllEntanglement::FermionToBoson(unsigned lon
       ++FinalStateLzMax;
       InitialStateLzMax -= TmpPower;
     }
-  for (; FinalStateLzMax <= this->LzMax; ++FinalStateLzMax)
+  for (; FinalStateLzMax < (this->NbrLzValue<<1); ++FinalStateLzMax)
     finalStatePlus[FinalStateLzMax] = 0x0ul;
 
   FinalStateLzMax = 0;
@@ -891,7 +853,7 @@ inline void BosonOnSphereWithSU4SpinAllEntanglement::FermionToBoson(unsigned lon
       ++FinalStateLzMax;
       InitialStateLzMax -= TmpPower;
     }
-  for (; FinalStateLzMax <= this->LzMax; ++FinalStateLzMax)
+  for (; FinalStateLzMax < (this->NbrLzValue<<1); ++FinalStateLzMax)
     finalStateMinus[FinalStateLzMax] = 0x0ul;
 }
 
@@ -907,17 +869,15 @@ inline void BosonOnSphereWithSU4SpinAllEntanglement::FermionToBoson(unsigned lon
 inline int BosonOnSphereWithSU4SpinAllEntanglement::AdiAdj (int m1, int m2, unsigned long*& temporaryStatei, unsigned long*& temporaryStatej,
 							    double& coefficient)
 {
-  for (int i = 0; i < this->NbrLzValue; ++i)
+  for (int i = 0; i < (this->NbrLzValue<<1); ++i)
     {
-      this->TemporaryStateUpPlus[i] = this->ProdATemporaryStateUpPlus[i];
-      this->TemporaryStateUpMinus[i] = this->ProdATemporaryStateUpMinus[i];
-      this->TemporaryStateDownPlus[i] = this->ProdATemporaryStateDownPlus[i];
-      this->TemporaryStateDownMinus[i] = this->ProdATemporaryStateDownMinus[i];
+      this->TemporaryStatePlus[i] = this->ProdATemporaryStatePlus[i];
+      this->TemporaryStateMinus[i] = this->ProdATemporaryStateMinus[i];
     }
-  ++temporaryStatei[m2];
-  coefficient = temporaryStatei[m2];
-  ++temporaryStatej[m1];
-  coefficient *= temporaryStatej[m1];
+  ++temporaryStatei[m1];
+  coefficient = temporaryStatei[m1];
+  ++temporaryStatej[m2];
+  coefficient *= temporaryStatej[m2];
   coefficient = sqrt(coefficient);
   //return this->FindStateIndex(this->TemporaryStateUpPlus, this->TemporaryStateUpMinus, this->TemporaryStateDownPlus, this->TemporaryStateDownMinus);
 
@@ -936,7 +896,13 @@ inline int BosonOnSphereWithSU4SpinAllEntanglement::FindStateIndex(unsigned long
 {
   unsigned long Tmp1;
   unsigned long Tmp2;
+/*   cout << "Current state:"<<endl; */
+/*   for (int o=0; o<2*NbrLzValue; ++o) */
+/*     cout << "("<<stateDescriptionPlus[o]<<","<< stateDescriptionMinus[o]<<") "; */
+/*   cout << " done "<<endl; */
   this->BosonToFermion(stateDescriptionPlus, stateDescriptionMinus, Tmp1, Tmp2);
+/*   cout << "Tmp1="<<std::hex<<Tmp1; */
+/*   cout << "Tmp2="<<Tmp2<<std::dec<<endl; */
   return this->FindStateIndex(Tmp1, Tmp2);
 }
 
@@ -948,7 +914,7 @@ inline int BosonOnSphereWithSU4SpinAllEntanglement::FindStateIndex(unsigned long
 
 int BosonOnSphereWithSU4SpinAllEntanglement::FindStateIndex(unsigned long stateDescriptionPlus, unsigned long stateDescriptionMinus)
 {
-  std::cout << "searching "<< std::hex << stateDescriptionPlus << " " << stateDescriptionMinus << std::dec << std::endl;
+/*   std::cout << "searching "<< std::hex << stateDescriptionPlus << " " << stateDescriptionMinus << std::dec << std::endl; */
   if (FullLookUp)
     {
       int Result = LookUpTablePlus[stateDescriptionPlus];

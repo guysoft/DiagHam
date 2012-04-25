@@ -83,18 +83,18 @@ BosonOnSphereWithSU4SpinAllEntanglement::BosonOnSphereWithSU4SpinAllEntanglement
   this->TemporaryStatePlus = new unsigned long[2*this->NbrLzValue];
   this->TemporaryStateMinus = new unsigned long[2*this->NbrLzValue];
   
-  this->TemporaryStateUpPlus = this->TemporaryStatePlus;
-  this->TemporaryStateUpMinus = this->TemporaryStateMinus;
-  this->TemporaryStateDownPlus = this->TemporaryStatePlus + this->NbrLzValue;
-  this->TemporaryStateDownMinus = this->TemporaryStateMinus + this->NbrLzValue;
+  this->TemporaryStateDownMinus = this->TemporaryStateMinus;
+  this->TemporaryStateUpMinus = this->TemporaryStateMinus + this->NbrLzValue;
+  this->TemporaryStateDownPlus = this->TemporaryStatePlus;
+  this->TemporaryStateUpPlus = this->TemporaryStatePlus + this->NbrLzValue;
 
   this->ProdATemporaryStatePlus = new unsigned long[2*this->NbrLzValue];
   this->ProdATemporaryStateMinus = new unsigned long[2*this->NbrLzValue];
   
-  this->ProdATemporaryStateUpPlus = this->ProdATemporaryStatePlus;
-  this->ProdATemporaryStateUpMinus = this->ProdATemporaryStateMinus;
-  this->ProdATemporaryStateDownPlus = this->ProdATemporaryStatePlus + this->NbrLzValue;
-  this->ProdATemporaryStateDownMinus = this->ProdATemporaryStateMinus + this->NbrLzValue;
+  this->ProdATemporaryStateUpPlus = this->ProdATemporaryStatePlus + this->NbrLzValue;
+  this->ProdATemporaryStateUpMinus = this->ProdATemporaryStateMinus + this->NbrLzValue;
+  this->ProdATemporaryStateDownPlus = this->ProdATemporaryStatePlus;
+  this->ProdATemporaryStateDownMinus = this->ProdATemporaryStateMinus;
 
   int NUp = this->NbrBosons + this->TotalSpin;
   int NDown = this->NbrBosons - this->TotalSpin;
@@ -103,11 +103,14 @@ BosonOnSphereWithSU4SpinAllEntanglement::BosonOnSphereWithSU4SpinAllEntanglement
   this->NPlusLzMax = 2*this->LzMax + NPlus;
   this->NMinusLzMax = 2*this->LzMax + NMinus;
 
+  //cout << "NUp="<<NUp<<" NDown="<<NDown<<" NPlus="<<NPlus<<" NMinus="<<NMinus<<endl;
+
   if ((NUp < 0) || ((NUp & 0x1) != 0) || (NMinus < 0) || ((NMinus & 0x1) != 0) ||
       (NDown < 0) || ((NDown & 0x1) != 0) || (NPlus < 0) || ((NPlus & 0x1) != 0))
     {
       cout << "Error: TotalSz and TotalIsoSpin need to have the same parity as nbrBosons !"<<endl;
       this->LargeHilbertSpaceDimension = 0l;
+      exit(-1);
     }
   else
     {
@@ -183,18 +186,18 @@ BosonOnSphereWithSU4SpinAllEntanglement::BosonOnSphereWithSU4SpinAllEntanglement
   this->TemporaryStatePlus = new unsigned long[2*this->NbrLzValue];
   this->TemporaryStateMinus = new unsigned long[2*this->NbrLzValue];
   
-  this->TemporaryStateUpPlus = this->TemporaryStatePlus;
-  this->TemporaryStateUpMinus = this->TemporaryStateMinus;
-  this->TemporaryStateDownPlus = this->TemporaryStatePlus + this->NbrLzValue;
+  this->TemporaryStateUpPlus = this->TemporaryStatePlus + this->NbrLzValue;
+  this->TemporaryStateUpMinus = this->TemporaryStateMinus + this->NbrLzValue;
+  this->TemporaryStateDownPlus = this->TemporaryStatePlus;
   this->TemporaryStateDownMinus = this->TemporaryStateMinus + this->NbrLzValue;
 
   this->ProdATemporaryStatePlus = new unsigned long[2*this->NbrLzValue];
   this->ProdATemporaryStateMinus = new unsigned long[2*this->NbrLzValue];
   
-  this->ProdATemporaryStateUpPlus = this->ProdATemporaryStatePlus;
-  this->ProdATemporaryStateUpMinus = this->ProdATemporaryStateMinus;
-  this->ProdATemporaryStateDownPlus = this->ProdATemporaryStatePlus + this->NbrLzValue;
-  this->ProdATemporaryStateDownMinus = this->ProdATemporaryStateMinus + this->NbrLzValue;
+  this->ProdATemporaryStateUpPlus = this->ProdATemporaryStatePlus + this->NbrLzValue;
+  this->ProdATemporaryStateUpMinus = this->ProdATemporaryStateMinus + this->NbrLzValue;
+  this->ProdATemporaryStateDownPlus = this->ProdATemporaryStatePlus;
+  this->ProdATemporaryStateDownMinus = this->ProdATemporaryStateMinus;
     
   this->StateDescriptionPlus = bosons.StateDescriptionPlus;
   this->StateDescriptionMinus = bosons.StateDescriptionMinus;
@@ -281,18 +284,18 @@ BosonOnSphereWithSU4SpinAllEntanglement& BosonOnSphereWithSU4SpinAllEntanglement
   this->TemporaryStatePlus = new unsigned long[2*this->NbrLzValue];
   this->TemporaryStateMinus = new unsigned long[2*this->NbrLzValue];
   
-  this->TemporaryStateUpPlus = this->TemporaryStatePlus;
-  this->TemporaryStateUpMinus = this->TemporaryStateMinus;
-  this->TemporaryStateDownPlus = this->TemporaryStatePlus + this->NbrLzValue;
-  this->TemporaryStateDownMinus = this->TemporaryStateMinus + this->NbrLzValue;
+  this->TemporaryStateUpPlus = this->TemporaryStatePlus + this->NbrLzValue;
+  this->TemporaryStateUpMinus = this->TemporaryStateMinus + this->NbrLzValue;
+  this->TemporaryStateDownPlus = this->TemporaryStatePlus;
+  this->TemporaryStateDownMinus = this->TemporaryStateMinus;
 
   this->ProdATemporaryStatePlus = new unsigned long[2*this->NbrLzValue];
   this->ProdATemporaryStateMinus = new unsigned long[2*this->NbrLzValue];
   
-  this->ProdATemporaryStateUpPlus = this->ProdATemporaryStatePlus;
-  this->ProdATemporaryStateUpMinus = this->ProdATemporaryStateMinus;
-  this->ProdATemporaryStateDownPlus = this->ProdATemporaryStatePlus + this->NbrLzValue;
-  this->ProdATemporaryStateDownMinus = this->ProdATemporaryStateMinus + this->NbrLzValue;
+  this->ProdATemporaryStateUpPlus = this->ProdATemporaryStatePlus + this->NbrLzValue;
+  this->ProdATemporaryStateUpMinus = this->ProdATemporaryStateMinus + this->NbrLzValue;
+  this->ProdATemporaryStateDownPlus = this->ProdATemporaryStatePlus;
+  this->ProdATemporaryStateDownMinus = this->ProdATemporaryStateMinus;
 
   this->StateDescriptionPlus = bosons.StateDescriptionPlus;
   this->StateDescriptionMinus = bosons.StateDescriptionMinus;
@@ -393,7 +396,10 @@ double BosonOnSphereWithSU4SpinAllEntanglement::AddpAdp (int index, int m)
 double BosonOnSphereWithSU4SpinAllEntanglement::AddmAdm (int index, int m)
 {
   this->FermionToBoson(this->StateDescriptionMinus[index], this->NMinusLzMax, this->TemporaryStateMinus);
-  return (double) (this->TemporaryStateDownMinus[m]);  
+  double ReturnVal = (double) (this->TemporaryStateDownMinus[m]);
+  this->PrintState(cout,index)<< ": dm["<<m<<"]=" <<ReturnVal<<endl;
+  return ReturnVal;
+  //return (double) (this->TemporaryStateDownMinus[m]);  
 }
 
 
@@ -407,7 +413,7 @@ ostream& BosonOnSphereWithSU4SpinAllEntanglement::PrintState (ostream& Str, int 
 {
   this->FermionToBoson(this->StateDescriptionPlus[state], this->StateDescriptionMinus[state], 
 		       this->TemporaryStatePlus, this->TemporaryStateMinus);
-  Str << " | ";
+  Str <<hex << this->StateDescriptionPlus[state] <<" "<< this->StateDescriptionMinus[state]<<dec<< " | ";
   for (int i = this->LzMax; i >=0 ; --i)
     {
       Str << "(" << this->TemporaryStateUpPlus[i] << "," << this->TemporaryStateUpMinus[i] << "," 
@@ -457,7 +463,7 @@ void BosonOnSphereWithSU4SpinAllEntanglement::GenerateLookUpTable(unsigned long 
 
   // set shift for higher bits
   int MaxLookUpSize = (NPlusLzMax>NMinusLzMax ? NPlusLzMax+1 : NMinusLzMax+1);
-  if (MaxLookUpSize<std::log((double)memory)/std::log(2.0)/sizeof(unsigned long))
+  if (MaxLookUpSize<std::log((double)memory/sizeof(unsigned long))/std::log(2.0))
     {
       cout << "Using full look-up table"<<endl;
       this->FullLookUp=true;
@@ -545,7 +551,7 @@ long BosonOnSphereWithSU4SpinAllEntanglement::GenerateStates(int nbrBosons, int 
   int CurrentMomentum = currentLzMax%(this->NbrLzValue<<1);
   int CurrentSpinUp = CurrentMomentum/(this->NbrLzValue);
   CurrentMomentum = CurrentMomentum%this->NbrLzValue;
-  
+  //cout << "BosonOnSphereWithSU4SpinAllEntanglement::GenerateStates(nBos="<< nbrBosons<<", currentLzMax="<<currentLzMax<<", nPlus="<<nPlus<<", totalLz="<< totalLz<<", nUp="<< nUp<<") - Block = "<<CurrentBlock<<"Momentum="<<CurrentMomentum<<", Spin = "<<CurrentSpinUp<<endl;
   if ((nbrBosons < 0) || (nPlus < 0 ) || (nUp<0) || (currentLzMax < 0) || (totalLz < 0) || ((currentLzMax<NbrLzValue)&&((nbrBosons * CurrentMomentum) < totalLz)))
     return pos;
   if (nbrBosons == 0)
@@ -560,6 +566,12 @@ long BosonOnSphereWithSU4SpinAllEntanglement::GenerateStates(int nbrBosons, int 
     }
   if (currentLzMax<NbrLzValue)
     {
+      if (((nbrBosons * currentLzMax) == totalLz)&&(nPlus==0)&&(nUp==0))
+	{
+	  this->StateDescriptionPlus[pos] = 0x0ul;
+	  this->StateDescriptionMinus[pos] = ((0x1ul<<nbrBosons)-1ul) << CurrentMomentum;
+	  return (pos + 1l);
+	}     
       if ((nbrBosons == 1)&&(nUp == 0)&&(nPlus == 0))
 	{
 	  if (currentLzMax >= totalLz)
@@ -643,33 +655,43 @@ long BosonOnSphereWithSU4SpinAllEntanglement::ShiftedEvaluateHilbertSpaceDimensi
     {
       if ((totalLz == 0)&&(nPlus==0)&&(nUp==0))
 	{
-//  	  for (int i=0; i<level; ++i) cout << "  ";
-//  	  cout << "c1 - add 1"<<endl;
+//   	  for (int i=0; i<level; ++i) cout << "  ";
+//   	  cout << "c1 - add 1"<<endl;
 	  return 1;
 	}
       else
 	{
-//  	  for (int i=0; i<level; ++i) cout << "  ";	  
-//  	  cout << "c1 - add 0"<<endl;
+//   	  for (int i=0; i<level; ++i) cout << "  ";	  
+//   	  cout << "c1 - add 0"<<endl;
 	  return 0;
 	}
     }
   if (currentLzMax<NbrLzValue)
     {
-      if ((nbrBosons == 1)&&(nUp == 0)&&(nPlus == 0))
+      if (((nbrBosons * currentLzMax) == totalLz)&&(nPlus==0)&&(nUp==0))
+	{
+// 	  for (int i=0; i<level; ++i) cout << "  ";
+// 	  cout << "c2a - add 1"<<endl;
+	  return 1;
+	}
+      if ((nbrBosons == 1)&&(nPlus==0)&&(nUp==0))
 	{
 	  if (currentLzMax >= totalLz)
 	    {
-// 	      for (int i=0; i<level; ++i) cout << "  ";
-// 	      cout << "c2 - add 1"<<endl;
+//  	      for (int i=0; i<level; ++i) cout << "  ";
+//  	      cout << "c2b - add 1"<<endl;
 	      return 1;
 	    }
 	  else
 	    {
-// 	      for (int i=0; i<level; ++i) cout << "  ";
-// 	      cout << "c2 - add 0"<<endl;
+//  	      for (int i=0; i<level; ++i) cout << "  ";
+//  	      cout << "c2b - add 0"<<endl;
 	      return 0;
 	    }
+	}
+      else
+	{
+	  
 	}
     }
   int ReducedCurrentLzMax = currentLzMax - 1;
@@ -679,8 +701,8 @@ long BosonOnSphereWithSU4SpinAllEntanglement::ShiftedEvaluateHilbertSpaceDimensi
   for (int ToPlace=MaxToPlace; ToPlace>=0; --ToPlace)
     TmpDim += this->ShiftedEvaluateHilbertSpaceDimension(nbrBosons-ToPlace, ReducedCurrentLzMax, nPlus-ToPlace*CurrentBlock,
 							 totalLz-ToPlace*CurrentMomentum, nUp-ToPlace*CurrentSpinUp, level+1);
-//   for (int i=0; i<level; ++i) cout << "  ";
-//   cout << "add: "<<TmpDim<<endl;
+//    for (int i=0; i<level; ++i) cout << "  ";
+//    cout << "add: "<<TmpDim<<endl;
   return TmpDim;
 }
 
@@ -1311,10 +1333,10 @@ double BosonOnSphereWithSU4SpinAllEntanglement::AdmAdm (int index, int n1, int n
       return 0.0;
     }
   this->FermionToBoson(this->StateDescriptionPlus[index], this->NPlusLzMax, this->ProdATemporaryStatePlus);
-  double Coefficient = this->ProdATemporaryStateDownPlus[n2];
-  --this->ProdATemporaryStateDownPlus[n2];
-  Coefficient *= this->ProdATemporaryStateDownPlus[n1];
-  --this->ProdATemporaryStateDownPlus[n1];
+  double Coefficient = this->ProdATemporaryStateDownMinus[n2];
+  --this->ProdATemporaryStateDownMinus[n2];
+  Coefficient *= this->ProdATemporaryStateDownMinus[n1];
+  --this->ProdATemporaryStateDownMinus[n1];
   return sqrt(Coefficient);
 }
 
