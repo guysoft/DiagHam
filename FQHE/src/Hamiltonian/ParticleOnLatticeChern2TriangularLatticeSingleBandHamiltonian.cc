@@ -132,8 +132,7 @@ ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::~ParticleOnLattic
 
 Complex ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementAB(int k1a, int k1b, int k2a, int k2b)
 {
-  Complex Tmp = 2.0 * cos (0.5 * (this->KxFactor * ((double) (k2a - k1a))));
-  //Complex Tmp = Phase (0.5 * (this->KxFactor * ((double) (k2a - k1a))));
+  Complex Tmp = (1+Phase(-this->KyFactor * ((double) (k2b - k1b))) + Phase(-this->KxFactor * ((double) (k2a - k1a))));
   return Tmp;
 }
 
@@ -147,8 +146,7 @@ Complex ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::ComputeTw
 
 Complex ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementAC(int k1a, int k1b, int k2a, int k2b)
 {
-  Complex Tmp = 2.0 * cos (0.5 * (this->KyFactor * ((double) (k2b - k1b))));
-  //Complex Tmp = Phase (0.5 * (this->KyFactor * ((double) (k2b - k1b))));
+  Complex Tmp = (1+Phase(-this->KyFactor * ((double) (k2b - k1b))) + Phase(-this->KxFactor * ((double) (k1a - k2a))+this->KyFactor * ((double) (k1b - k2b))));
   return Tmp;
 }
 
@@ -166,8 +164,7 @@ Complex ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::ComputeTw
 
 Complex ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementBC(int k1a, int k1b, int k2a, int k2b, int k3a, int k3b, int k4a, int k4b)
 {
-  Complex Tmp = 2.0 * cos (0.5 * ((this->KxFactor * ((double) (k3a - k1a))) + (this->KyFactor * ((double) (k4b - k2b)))));
-  //Complex Tmp = Phase(0.5 * ((this->KxFactor * ((double) (k3a - k1a))) + (this->KyFactor * ((double) (k4b - k2b)))));
+  Complex Tmp = (1+Phase(-this->KxFactor * ((double) (k3a - k1a))) + Phase(-this->KxFactor * ((double) (k3a - k1a)) - this->KyFactor * ((double) (k1b - k3b))));
   return Tmp;
 }
 

@@ -116,7 +116,7 @@ public:
   // return value = corresponding matrix element
   virtual Complex ComputeTwoBodyMatrixElementOnSiteAA();
 
-  // compute the matrix element for on-site two body interaction involving B sites
+            // compute the matrix element for on-site two body interaction involving B sites
   //
   // kx1 = first creation momentum along x for the B site
   // ky1 = first creation momentum along y for the B site
@@ -148,6 +148,5 @@ public:
   virtual void ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis);
 
 };
-
 
 #endif
