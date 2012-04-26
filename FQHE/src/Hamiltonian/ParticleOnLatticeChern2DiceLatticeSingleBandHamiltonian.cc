@@ -67,8 +67,7 @@ using std::ostream;
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
-ParticleOnLatticeChern2DiceLatticeSingleBandHamiltonian::ParticleOnLatticeChern2DiceLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, 
-												       int nbrSiteY, double uPotential, double t, double epsilon, double lambda, double bfield1, double bfield3, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
+ParticleOnLatticeChern2DiceLatticeSingleBandHamiltonian::ParticleOnLatticeChern2DiceLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double t, double epsilon, double lambda, double bfield1, double bfield3, double intraCoefficient , double interCoefficient, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -89,7 +88,8 @@ ParticleOnLatticeChern2DiceLatticeSingleBandHamiltonian::ParticleOnLatticeChern2
   this->GammaY = gammaY;
   this->FlatBand = flatBandFlag;
   this->UPotential = uPotential;
-
+  this->IntraCoefficient = intraCoefficient;
+  this->InterCoefficient = interCoefficient;
   this->Architecture = architecture;
   this->Memory = memory;
   this->OneBodyInteractionFactors = 0;
@@ -312,51 +312,79 @@ void ParticleOnLatticeChern2DiceLatticeSingleBandHamiltonian::EvaluateInteractio
 		  int kx4 = Index4 / this->NbrSiteY;
 		  int ky4 = Index4 % this->NbrSiteY;
 
- 		  this->InteractionFactors[i][Index] = 2.0 * FactorUOnSiteA * (Conj(OneBodyBasis[Index1][BandIndex][0]) * OneBodyBasis[Index3][BandIndex][0] * Conj(OneBodyBasis[Index2][BandIndex][1]) * OneBodyBasis[Index4][BandIndex][1]) * this->ComputeTwoBodyMatrixElementOnSiteA();
- 		  this->InteractionFactors[i][Index] += 2.0 * FactorUOnSiteA * (Conj(OneBodyBasis[Index2][BandIndex][0]) * OneBodyBasis[Index3][BandIndex][0] * Conj(OneBodyBasis[Index1][BandIndex][1]) * OneBodyBasis[Index4][BandIndex][1]) * this->ComputeTwoBodyMatrixElementOnSiteA();
- 		  this->InteractionFactors[i][Index] += 2.0 * FactorUOnSiteA * (Conj(OneBodyBasis[Index1][BandIndex][0]) * OneBodyBasis[Index4][BandIndex][0] * Conj(OneBodyBasis[Index2][BandIndex][1]) * OneBodyBasis[Index3][BandIndex][1]) * this->ComputeTwoBodyMatrixElementOnSiteA();
- 		  this->InteractionFactors[i][Index] += 2.0 * FactorUOnSiteA * (Conj(OneBodyBasis[Index2][BandIndex][0]) * OneBodyBasis[Index4][BandIndex][0] * Conj(OneBodyBasis[Index1][BandIndex][1]) * OneBodyBasis[Index3][BandIndex][1]) * this->ComputeTwoBodyMatrixElementOnSiteA();
+		  Complex Tmp = (Conj(OneBodyBasis[Index1][BandIndex][0]) * OneBodyBasis[Index3][BandIndex][0] * Conj(OneBodyBasis[Index2][BandIndex][1]) * OneBodyBasis[Index4][BandIndex][1]) * this->ComputeTwoBodyMatrixElementOnSiteA();
+ 		  
+		  Tmp += (Conj(OneBodyBasis[Index2][BandIndex][0]) * OneBodyBasis[Index3][BandIndex][0] * Conj(OneBodyBasis[Index1][BandIndex][1]) * OneBodyBasis[Index4][BandIndex][1]) * this->ComputeTwoBodyMatrixElementOnSiteA();
+ 		  Tmp += (Conj(OneBodyBasis[Index1][BandIndex][0]) * OneBodyBasis[Index4][BandIndex][0] * Conj(OneBodyBasis[Index2][BandIndex][1]) * OneBodyBasis[Index3][BandIndex][1]) * this->ComputeTwoBodyMatrixElementOnSiteA();
+ 		  Tmp += (Conj(OneBodyBasis[Index2][BandIndex][0]) * OneBodyBasis[Index4][BandIndex][0] * Conj(OneBodyBasis[Index1][BandIndex][1]) * OneBodyBasis[Index3][BandIndex][1]) * this->ComputeTwoBodyMatrixElementOnSiteA();
+		  Tmp *= 2.0 * FactorUOnSiteA *this->InterCoefficient;
+		  this->InteractionFactors[i][Index] = Tmp;
 
- 		  this->InteractionFactors[i][Index] += FactorUOnSiteA * (Conj(OneBodyBasis[Index1][BandIndex][0]) * OneBodyBasis[Index3][BandIndex][0] * Conj(OneBodyBasis[Index2][BandIndex][0]) * OneBodyBasis[Index4][BandIndex][0]) * this->ComputeTwoBodyMatrixElementOnSiteA();
- 		  this->InteractionFactors[i][Index] += FactorUOnSiteA * (Conj(OneBodyBasis[Index2][BandIndex][0]) * OneBodyBasis[Index3][BandIndex][0] * Conj(OneBodyBasis[Index1][BandIndex][0]) * OneBodyBasis[Index4][BandIndex][0]) * this->ComputeTwoBodyMatrixElementOnSiteA();
- 		  this->InteractionFactors[i][Index] += FactorUOnSiteA * (Conj(OneBodyBasis[Index1][BandIndex][0]) * OneBodyBasis[Index4][BandIndex][0] * Conj(OneBodyBasis[Index2][BandIndex][0]) * OneBodyBasis[Index3][BandIndex][0]) * this->ComputeTwoBodyMatrixElementOnSiteA();
- 		  this->InteractionFactors[i][Index] += FactorUOnSiteA * (Conj(OneBodyBasis[Index2][BandIndex][0]) * OneBodyBasis[Index4][BandIndex][0] * Conj(OneBodyBasis[Index1][BandIndex][0]) * OneBodyBasis[Index3][BandIndex][0]) * this->ComputeTwoBodyMatrixElementOnSiteA();
+ 		  Tmp = (Conj(OneBodyBasis[Index1][BandIndex][0]) * OneBodyBasis[Index3][BandIndex][0] * Conj(OneBodyBasis[Index2][BandIndex][0]) * OneBodyBasis[Index4][BandIndex][0]) * this->ComputeTwoBodyMatrixElementOnSiteA();
+ 		  Tmp += (Conj(OneBodyBasis[Index2][BandIndex][0]) * OneBodyBasis[Index3][BandIndex][0] * Conj(OneBodyBasis[Index1][BandIndex][0]) * OneBodyBasis[Index4][BandIndex][0]) * this->ComputeTwoBodyMatrixElementOnSiteA();
+ 		  Tmp += (Conj(OneBodyBasis[Index1][BandIndex][0]) * OneBodyBasis[Index4][BandIndex][0] * Conj(OneBodyBasis[Index2][BandIndex][0]) * OneBodyBasis[Index3][BandIndex][0]) * this->ComputeTwoBodyMatrixElementOnSiteA();
+ 		  Tmp += (Conj(OneBodyBasis[Index2][BandIndex][0]) * OneBodyBasis[Index4][BandIndex][0] * Conj(OneBodyBasis[Index1][BandIndex][0]) * OneBodyBasis[Index3][BandIndex][0]) * this->ComputeTwoBodyMatrixElementOnSiteA();
 
- 		  this->InteractionFactors[i][Index] += FactorUOnSiteA * (Conj(OneBodyBasis[Index1][BandIndex][1]) * OneBodyBasis[Index3][BandIndex][1] * Conj(OneBodyBasis[Index2][BandIndex][1]) * OneBodyBasis[Index4][BandIndex][1]) * this->ComputeTwoBodyMatrixElementOnSiteA();
- 		  this->InteractionFactors[i][Index] += FactorUOnSiteA * (Conj(OneBodyBasis[Index2][BandIndex][1]) * OneBodyBasis[Index3][BandIndex][1] * Conj(OneBodyBasis[Index1][BandIndex][1]) * OneBodyBasis[Index4][BandIndex][1]) * this->ComputeTwoBodyMatrixElementOnSiteA();
- 		  this->InteractionFactors[i][Index] += FactorUOnSiteA * (Conj(OneBodyBasis[Index1][BandIndex][1]) * OneBodyBasis[Index4][BandIndex][1] * Conj(OneBodyBasis[Index2][BandIndex][1]) * OneBodyBasis[Index3][BandIndex][1]) * this->ComputeTwoBodyMatrixElementOnSiteA();
- 		  this->InteractionFactors[i][Index] += FactorUOnSiteA * (Conj(OneBodyBasis[Index2][BandIndex][1]) * OneBodyBasis[Index4][BandIndex][1] * Conj(OneBodyBasis[Index1][BandIndex][1]) * OneBodyBasis[Index3][BandIndex][1]) * this->ComputeTwoBodyMatrixElementOnSiteA();
+		  Tmp *= FactorUOnSiteA *this->IntraCoefficient;
+		  this->InteractionFactors[i][Index] += Tmp;
 
- 		  this->InteractionFactors[i][Index] += 2.0 * FactorUOnSiteB * (Conj(OneBodyBasis[Index1][BandIndex][2]) * OneBodyBasis[Index3][BandIndex][2] * Conj(OneBodyBasis[Index2][BandIndex][3]) * OneBodyBasis[Index4][BandIndex][3]) * this->ComputeTwoBodyMatrixElementOnSiteB();
- 		  this->InteractionFactors[i][Index] += 2.0 * FactorUOnSiteB * (Conj(OneBodyBasis[Index2][BandIndex][2]) * OneBodyBasis[Index3][BandIndex][2] * Conj(OneBodyBasis[Index1][BandIndex][3]) * OneBodyBasis[Index4][BandIndex][3]) * this->ComputeTwoBodyMatrixElementOnSiteB();
- 		  this->InteractionFactors[i][Index] += 2.0 * FactorUOnSiteB * (Conj(OneBodyBasis[Index1][BandIndex][2]) * OneBodyBasis[Index4][BandIndex][2] * Conj(OneBodyBasis[Index2][BandIndex][3]) * OneBodyBasis[Index3][BandIndex][3]) * this->ComputeTwoBodyMatrixElementOnSiteB();
- 		  this->InteractionFactors[i][Index] += 2.0 * FactorUOnSiteB * (Conj(OneBodyBasis[Index2][BandIndex][2]) * OneBodyBasis[Index4][BandIndex][2] * Conj(OneBodyBasis[Index1][BandIndex][3]) * OneBodyBasis[Index3][BandIndex][3]) * this->ComputeTwoBodyMatrixElementOnSiteB();
+ 		  Tmp = (Conj(OneBodyBasis[Index1][BandIndex][1]) * OneBodyBasis[Index3][BandIndex][1] * Conj(OneBodyBasis[Index2][BandIndex][1]) * OneBodyBasis[Index4][BandIndex][1]) * this->ComputeTwoBodyMatrixElementOnSiteA();
+ 		  Tmp += (Conj(OneBodyBasis[Index2][BandIndex][1]) * OneBodyBasis[Index3][BandIndex][1] * Conj(OneBodyBasis[Index1][BandIndex][1]) * OneBodyBasis[Index4][BandIndex][1]) * this->ComputeTwoBodyMatrixElementOnSiteA();
+ 		  Tmp += (Conj(OneBodyBasis[Index1][BandIndex][1]) * OneBodyBasis[Index4][BandIndex][1] * Conj(OneBodyBasis[Index2][BandIndex][1]) * OneBodyBasis[Index3][BandIndex][1]) * this->ComputeTwoBodyMatrixElementOnSiteA();
+ 		  Tmp += (Conj(OneBodyBasis[Index2][BandIndex][1]) * OneBodyBasis[Index4][BandIndex][1] * Conj(OneBodyBasis[Index1][BandIndex][1]) * OneBodyBasis[Index3][BandIndex][1]) * this->ComputeTwoBodyMatrixElementOnSiteA();
 
- 		  this->InteractionFactors[i][Index] += FactorUOnSiteB * (Conj(OneBodyBasis[Index1][BandIndex][2]) * OneBodyBasis[Index3][BandIndex][2] * Conj(OneBodyBasis[Index2][BandIndex][2]) * OneBodyBasis[Index4][BandIndex][2]) * this->ComputeTwoBodyMatrixElementOnSiteB();
- 		  this->InteractionFactors[i][Index] += FactorUOnSiteB * (Conj(OneBodyBasis[Index2][BandIndex][2]) * OneBodyBasis[Index3][BandIndex][2] * Conj(OneBodyBasis[Index1][BandIndex][2]) * OneBodyBasis[Index4][BandIndex][2]) * this->ComputeTwoBodyMatrixElementOnSiteB();
- 		  this->InteractionFactors[i][Index] += FactorUOnSiteB * (Conj(OneBodyBasis[Index1][BandIndex][2]) * OneBodyBasis[Index4][BandIndex][2] * Conj(OneBodyBasis[Index2][BandIndex][2]) * OneBodyBasis[Index3][BandIndex][2]) * this->ComputeTwoBodyMatrixElementOnSiteB();
- 		  this->InteractionFactors[i][Index] += FactorUOnSiteB * (Conj(OneBodyBasis[Index2][BandIndex][2]) * OneBodyBasis[Index4][BandIndex][2] * Conj(OneBodyBasis[Index1][BandIndex][2]) * OneBodyBasis[Index3][BandIndex][2]) * this->ComputeTwoBodyMatrixElementOnSiteB();
+		  Tmp *= FactorUOnSiteA *this->IntraCoefficient;
+		  this->InteractionFactors[i][Index] += Tmp;
 
- 		  this->InteractionFactors[i][Index] += FactorUOnSiteB * (Conj(OneBodyBasis[Index1][BandIndex][3]) * OneBodyBasis[Index3][BandIndex][3] * Conj(OneBodyBasis[Index2][BandIndex][3]) * OneBodyBasis[Index4][BandIndex][3]) * this->ComputeTwoBodyMatrixElementOnSiteB();
- 		  this->InteractionFactors[i][Index] += FactorUOnSiteB * (Conj(OneBodyBasis[Index2][BandIndex][3]) * OneBodyBasis[Index3][BandIndex][3] * Conj(OneBodyBasis[Index1][BandIndex][3]) * OneBodyBasis[Index4][BandIndex][3]) * this->ComputeTwoBodyMatrixElementOnSiteB();
- 		  this->InteractionFactors[i][Index] += FactorUOnSiteB * (Conj(OneBodyBasis[Index1][BandIndex][3]) * OneBodyBasis[Index4][BandIndex][3] * Conj(OneBodyBasis[Index2][BandIndex][3]) * OneBodyBasis[Index3][BandIndex][3]) * this->ComputeTwoBodyMatrixElementOnSiteB();
- 		  this->InteractionFactors[i][Index] += FactorUOnSiteB * (Conj(OneBodyBasis[Index2][BandIndex][3]) * OneBodyBasis[Index4][BandIndex][3] * Conj(OneBodyBasis[Index1][BandIndex][3]) * OneBodyBasis[Index3][BandIndex][3]) * this->ComputeTwoBodyMatrixElementOnSiteB();
+ 		  Tmp = (Conj(OneBodyBasis[Index1][BandIndex][2]) * OneBodyBasis[Index3][BandIndex][2] * Conj(OneBodyBasis[Index2][BandIndex][3]) * OneBodyBasis[Index4][BandIndex][3]) * this->ComputeTwoBodyMatrixElementOnSiteB();
+ 		  Tmp += (Conj(OneBodyBasis[Index2][BandIndex][2]) * OneBodyBasis[Index3][BandIndex][2] * Conj(OneBodyBasis[Index1][BandIndex][3]) * OneBodyBasis[Index4][BandIndex][3]) * this->ComputeTwoBodyMatrixElementOnSiteB();
+ 		  Tmp += (Conj(OneBodyBasis[Index1][BandIndex][2]) * OneBodyBasis[Index4][BandIndex][2] * Conj(OneBodyBasis[Index2][BandIndex][3]) * OneBodyBasis[Index3][BandIndex][3]) * this->ComputeTwoBodyMatrixElementOnSiteB();
+ 		  Tmp += (Conj(OneBodyBasis[Index2][BandIndex][2]) * OneBodyBasis[Index4][BandIndex][2] * Conj(OneBodyBasis[Index1][BandIndex][3]) * OneBodyBasis[Index3][BandIndex][3]) * this->ComputeTwoBodyMatrixElementOnSiteB();
 
- 		  this->InteractionFactors[i][Index] += 2.0 * FactorUOnSiteC * (Conj(OneBodyBasis[Index1][BandIndex][4]) * OneBodyBasis[Index3][BandIndex][4] * Conj(OneBodyBasis[Index2][BandIndex][5]) * OneBodyBasis[Index4][BandIndex][5]) * this->ComputeTwoBodyMatrixElementOnSiteC();
- 		  this->InteractionFactors[i][Index] += 2.0 * FactorUOnSiteC * (Conj(OneBodyBasis[Index2][BandIndex][4]) * OneBodyBasis[Index3][BandIndex][4] * Conj(OneBodyBasis[Index1][BandIndex][5]) * OneBodyBasis[Index4][BandIndex][5]) * this->ComputeTwoBodyMatrixElementOnSiteC();
- 		  this->InteractionFactors[i][Index] += 2.0 * FactorUOnSiteC * (Conj(OneBodyBasis[Index1][BandIndex][4]) * OneBodyBasis[Index4][BandIndex][4] * Conj(OneBodyBasis[Index2][BandIndex][5]) * OneBodyBasis[Index3][BandIndex][5]) * this->ComputeTwoBodyMatrixElementOnSiteC();
- 		  this->InteractionFactors[i][Index] += 2.0 * FactorUOnSiteC * (Conj(OneBodyBasis[Index2][BandIndex][4]) * OneBodyBasis[Index4][BandIndex][4] * Conj(OneBodyBasis[Index1][BandIndex][5]) * OneBodyBasis[Index3][BandIndex][5]) * this->ComputeTwoBodyMatrixElementOnSiteC();
+		  Tmp *= 2.0 * FactorUOnSiteB *this->InterCoefficient;
+		  this->InteractionFactors[i][Index] += Tmp; 		  
+		  
+		  
+		  Tmp = (Conj(OneBodyBasis[Index1][BandIndex][2]) * OneBodyBasis[Index3][BandIndex][2] * Conj(OneBodyBasis[Index2][BandIndex][2]) * OneBodyBasis[Index4][BandIndex][2]) * this->ComputeTwoBodyMatrixElementOnSiteB();
+ 		  Tmp += (Conj(OneBodyBasis[Index2][BandIndex][2]) * OneBodyBasis[Index3][BandIndex][2] * Conj(OneBodyBasis[Index1][BandIndex][2]) * OneBodyBasis[Index4][BandIndex][2]) * this->ComputeTwoBodyMatrixElementOnSiteB();
+ 		  Tmp += (Conj(OneBodyBasis[Index1][BandIndex][2]) * OneBodyBasis[Index4][BandIndex][2] * Conj(OneBodyBasis[Index2][BandIndex][2]) * OneBodyBasis[Index3][BandIndex][2]) * this->ComputeTwoBodyMatrixElementOnSiteB();
+ 		  Tmp += (Conj(OneBodyBasis[Index2][BandIndex][2]) * OneBodyBasis[Index4][BandIndex][2] * Conj(OneBodyBasis[Index1][BandIndex][2]) * OneBodyBasis[Index3][BandIndex][2]) * this->ComputeTwoBodyMatrixElementOnSiteB();
 
- 		  this->InteractionFactors[i][Index] += FactorUOnSiteC * (Conj(OneBodyBasis[Index1][BandIndex][4]) * OneBodyBasis[Index3][BandIndex][4] * Conj(OneBodyBasis[Index2][BandIndex][4]) * OneBodyBasis[Index4][BandIndex][4]) * this->ComputeTwoBodyMatrixElementOnSiteC();
- 		  this->InteractionFactors[i][Index] += FactorUOnSiteC * (Conj(OneBodyBasis[Index2][BandIndex][4]) * OneBodyBasis[Index3][BandIndex][4] * Conj(OneBodyBasis[Index1][BandIndex][4]) * OneBodyBasis[Index4][BandIndex][4]) * this->ComputeTwoBodyMatrixElementOnSiteC();
- 		  this->InteractionFactors[i][Index] += FactorUOnSiteC * (Conj(OneBodyBasis[Index1][BandIndex][4]) * OneBodyBasis[Index4][BandIndex][4] * Conj(OneBodyBasis[Index2][BandIndex][4]) * OneBodyBasis[Index3][BandIndex][4]) * this->ComputeTwoBodyMatrixElementOnSiteC();
- 		  this->InteractionFactors[i][Index] += FactorUOnSiteC * (Conj(OneBodyBasis[Index2][BandIndex][4]) * OneBodyBasis[Index4][BandIndex][4] * Conj(OneBodyBasis[Index1][BandIndex][4]) * OneBodyBasis[Index3][BandIndex][4]) * this->ComputeTwoBodyMatrixElementOnSiteC();
+		  Tmp *= FactorUOnSiteB *this->IntraCoefficient;
+		  this->InteractionFactors[i][Index] += Tmp;
 
- 		  this->InteractionFactors[i][Index] += FactorUOnSiteC * (Conj(OneBodyBasis[Index1][BandIndex][5]) * OneBodyBasis[Index3][BandIndex][5] * Conj(OneBodyBasis[Index2][BandIndex][5]) * OneBodyBasis[Index4][BandIndex][5]) * this->ComputeTwoBodyMatrixElementOnSiteC();
- 		  this->InteractionFactors[i][Index] += FactorUOnSiteC * (Conj(OneBodyBasis[Index2][BandIndex][5]) * OneBodyBasis[Index3][BandIndex][5] * Conj(OneBodyBasis[Index1][BandIndex][5]) * OneBodyBasis[Index4][BandIndex][5]) * this->ComputeTwoBodyMatrixElementOnSiteC();
- 		  this->InteractionFactors[i][Index] += FactorUOnSiteC * (Conj(OneBodyBasis[Index1][BandIndex][5]) * OneBodyBasis[Index4][BandIndex][5] * Conj(OneBodyBasis[Index2][BandIndex][5]) * OneBodyBasis[Index3][BandIndex][5]) * this->ComputeTwoBodyMatrixElementOnSiteC();
- 		  this->InteractionFactors[i][Index] += FactorUOnSiteC * (Conj(OneBodyBasis[Index2][BandIndex][5]) * OneBodyBasis[Index4][BandIndex][5] * Conj(OneBodyBasis[Index1][BandIndex][5]) * OneBodyBasis[Index3][BandIndex][5]) * this->ComputeTwoBodyMatrixElementOnSiteC();
+ 		  Tmp =  (Conj(OneBodyBasis[Index1][BandIndex][3]) * OneBodyBasis[Index3][BandIndex][3] * Conj(OneBodyBasis[Index2][BandIndex][3]) * OneBodyBasis[Index4][BandIndex][3]) * this->ComputeTwoBodyMatrixElementOnSiteB();
+ 		  Tmp += (Conj(OneBodyBasis[Index2][BandIndex][3]) * OneBodyBasis[Index3][BandIndex][3] * Conj(OneBodyBasis[Index1][BandIndex][3]) * OneBodyBasis[Index4][BandIndex][3]) * this->ComputeTwoBodyMatrixElementOnSiteB();
+ 		  Tmp += (Conj(OneBodyBasis[Index1][BandIndex][3]) * OneBodyBasis[Index4][BandIndex][3] * Conj(OneBodyBasis[Index2][BandIndex][3]) * OneBodyBasis[Index3][BandIndex][3]) * this->ComputeTwoBodyMatrixElementOnSiteB();
+ 		  Tmp += (Conj(OneBodyBasis[Index2][BandIndex][3]) * OneBodyBasis[Index4][BandIndex][3] * Conj(OneBodyBasis[Index1][BandIndex][3]) * OneBodyBasis[Index3][BandIndex][3]) * this->ComputeTwoBodyMatrixElementOnSiteB();
 
+		  Tmp *= FactorUOnSiteB *this->IntraCoefficient;
+		  this->InteractionFactors[i][Index] += Tmp;
+
+ 		  Tmp = (Conj(OneBodyBasis[Index1][BandIndex][4]) * OneBodyBasis[Index3][BandIndex][4] * Conj(OneBodyBasis[Index2][BandIndex][5]) * OneBodyBasis[Index4][BandIndex][5]) * this->ComputeTwoBodyMatrixElementOnSiteC();
+ 		  Tmp += (Conj(OneBodyBasis[Index2][BandIndex][4]) * OneBodyBasis[Index3][BandIndex][4] * Conj(OneBodyBasis[Index1][BandIndex][5]) * OneBodyBasis[Index4][BandIndex][5]) * this->ComputeTwoBodyMatrixElementOnSiteC();
+ 		  Tmp += (Conj(OneBodyBasis[Index1][BandIndex][4]) * OneBodyBasis[Index4][BandIndex][4] * Conj(OneBodyBasis[Index2][BandIndex][5]) * OneBodyBasis[Index3][BandIndex][5]) * this->ComputeTwoBodyMatrixElementOnSiteC();
+ 		  Tmp += (Conj(OneBodyBasis[Index2][BandIndex][4]) * OneBodyBasis[Index4][BandIndex][4] * Conj(OneBodyBasis[Index1][BandIndex][5]) * OneBodyBasis[Index3][BandIndex][5]) * this->ComputeTwoBodyMatrixElementOnSiteC();
+
+		  Tmp *= 2.0 * FactorUOnSiteC *this->InterCoefficient;
+		  this->InteractionFactors[i][Index] += Tmp; 		
+
+ 		  Tmp = (Conj(OneBodyBasis[Index1][BandIndex][4]) * OneBodyBasis[Index3][BandIndex][4] * Conj(OneBodyBasis[Index2][BandIndex][4]) * OneBodyBasis[Index4][BandIndex][4]) * this->ComputeTwoBodyMatrixElementOnSiteC();
+ 		  Tmp += (Conj(OneBodyBasis[Index2][BandIndex][4]) * OneBodyBasis[Index3][BandIndex][4] * Conj(OneBodyBasis[Index1][BandIndex][4]) * OneBodyBasis[Index4][BandIndex][4]) * this->ComputeTwoBodyMatrixElementOnSiteC();
+ 		  Tmp += (Conj(OneBodyBasis[Index1][BandIndex][4]) * OneBodyBasis[Index4][BandIndex][4] * Conj(OneBodyBasis[Index2][BandIndex][4]) * OneBodyBasis[Index3][BandIndex][4]) * this->ComputeTwoBodyMatrixElementOnSiteC();
+ 		  Tmp += (Conj(OneBodyBasis[Index2][BandIndex][4]) * OneBodyBasis[Index4][BandIndex][4] * Conj(OneBodyBasis[Index1][BandIndex][4]) * OneBodyBasis[Index3][BandIndex][4]) * this->ComputeTwoBodyMatrixElementOnSiteC();
+		  
+		  Tmp *= FactorUOnSiteC *this->IntraCoefficient;
+		  this->InteractionFactors[i][Index] += Tmp;
+
+ 		  Tmp = (Conj(OneBodyBasis[Index1][BandIndex][5]) * OneBodyBasis[Index3][BandIndex][5] * Conj(OneBodyBasis[Index2][BandIndex][5]) * OneBodyBasis[Index4][BandIndex][5]) * this->ComputeTwoBodyMatrixElementOnSiteC();
+ 		  Tmp += (Conj(OneBodyBasis[Index2][BandIndex][5]) * OneBodyBasis[Index3][BandIndex][5] * Conj(OneBodyBasis[Index1][BandIndex][5]) * OneBodyBasis[Index4][BandIndex][5]) * this->ComputeTwoBodyMatrixElementOnSiteC();
+ 		  Tmp += (Conj(OneBodyBasis[Index1][BandIndex][5]) * OneBodyBasis[Index4][BandIndex][5] * Conj(OneBodyBasis[Index2][BandIndex][5]) * OneBodyBasis[Index3][BandIndex][5]) * this->ComputeTwoBodyMatrixElementOnSiteC();
+ 		  Tmp += (Conj(OneBodyBasis[Index2][BandIndex][5]) * OneBodyBasis[Index4][BandIndex][5] * Conj(OneBodyBasis[Index1][BandIndex][5]) * OneBodyBasis[Index3][BandIndex][5]) * this->ComputeTwoBodyMatrixElementOnSiteC();
+		  
+		  Tmp *= FactorUOnSiteC *this->IntraCoefficient;
+		  this->InteractionFactors[i][Index] += Tmp;
+		  
 		  if (Index3 == Index4)
 		    this->InteractionFactors[i][Index] *= 0.5;
 		  if (Index1 == Index2)

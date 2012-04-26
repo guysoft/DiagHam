@@ -84,7 +84,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "epsilon", "on site energy for site 3", 0.6);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "lambda", "Rashba spin orbit coupling strength", 0.3);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "B1", "magnetic field strength on sites 1 and 2", 0.2440);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "B3", "magnetic field strength on site 3", -0.0162);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "B3", "magnetic field strength on site 3", -0.0162);  
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "intraspin-coefficient", "interaction coefficient between same spin ", 1);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "interspin-coefficient", "interaction coefficient between opposite spin", 1);  
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
@@ -219,9 +221,7 @@ int main(int argc, char** argv)
 	  AbstractQHEHamiltonian* Hamiltonian = 0;
 	  if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false) && (Manager.GetBoolean("five-body") == false))
 	    { 
-	      Hamiltonian = new ParticleOnLatticeChern2DiceLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
-										    Manager.GetDouble("u-potential"), Manager.GetDouble("t"), Manager.GetDouble("epsilon"), Manager.GetDouble("lambda"), Manager.GetDouble("B1"),
-										    Manager.GetDouble("B3"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
+	      Hamiltonian = new ParticleOnLatticeChern2DiceLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("t"), Manager.GetDouble("epsilon"), Manager.GetDouble("lambda"), Manager.GetDouble("B1"),Manager.GetDouble("B3"), Manager.GetDouble("intraspin-coefficient"), Manager.GetDouble("interspin-coefficient"),Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
 										    Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 	    }
 	  else
