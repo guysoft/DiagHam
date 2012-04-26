@@ -207,6 +207,10 @@ List<Matrix*> ParticleOnSphereWithSU4SpinL2Hamiltonian::RightInteractionOperator
 
 void ParticleOnSphereWithSU4SpinL2Hamiltonian::EvaluateInteractionFactors()
 {
+  // no entangled terms mixing spin and pseudospin
+  this->M12InteractionFactorsupdmEnt = NULL;
+  this->M12InteractionFactorsumdpEnt = NULL;
+  
   RealMatrix Coefficients (this->LzMax + 1, this->LzMax + 1);
   for (int i = 0; i <= this->LzMax; ++i)
     {
@@ -326,7 +330,7 @@ void ParticleOnSphereWithSU4SpinL2Hamiltonian::EvaluateInteractionFactors()
   this->M12InteractionFactorsumdp = new double [4 * this->NbrM12InterIndices];
   this->M12InteractionFactorsumdm = new double [4 * this->NbrM12InterIndices];
   this->M12InteractionFactorsdpdm = new double [4 * this->NbrM12InterIndices];
-
+  
   this->NbrM12InterIndices = 0;
   int TmpNbrM12InterIndices = 0;
   
@@ -425,36 +429,40 @@ void ParticleOnSphereWithSU4SpinL2Hamiltonian::EvaluateInteractionFactors()
 
   //   this->L2Factor  = 0.0;
 
-  this->OneBodyInteractionFactorsupup = new double[this->LzMax + 1];
-  this->OneBodyInteractionFactorsumum = new double[this->LzMax + 1];
-  this->OneBodyInteractionFactorsdpdp = new double[this->LzMax + 1];
-  this->OneBodyInteractionFactorsdmdm = new double[this->LzMax + 1];
-  this->OneBodyInteractionFactorsupup[0] = 0.0;
-  this->OneBodyInteractionFactorsumum[0] = 0.0;
-  this->OneBodyInteractionFactorsdpdp[0] = 0.0;
-  this->OneBodyInteractionFactorsdmdm[0] = 0.0;
-//   if (this->LzMax>0)
-//     {
+  if (this->LzMax>0)
+    {     
+      this->OneBodyInteractionFactorsupup = new double[this->LzMax + 1];
+      this->OneBodyInteractionFactorsumum = new double[this->LzMax + 1];
+      this->OneBodyInteractionFactorsdpdp = new double[this->LzMax + 1];
+      this->OneBodyInteractionFactorsdmdm = new double[this->LzMax + 1];
       this->OneBodyInteractionFactorsupup[0] = this->L2Factor * Coefficients(0, 1);
       this->OneBodyInteractionFactorsumum[0] = this->L2Factor * Coefficients(0, 1);
       this->OneBodyInteractionFactorsdpdp[0] = this->L2Factor * Coefficients(0, 1);
       this->OneBodyInteractionFactorsdmdm[0] = this->L2Factor * Coefficients(0, 1);
-//     }
-  for (int i = 1; i < this->LzMax; ++i)
-    {
-      this->OneBodyInteractionFactorsupup[i] = this->L2Factor * (Coefficients(i, i + 1) + Coefficients(i - 1, i));
-      this->OneBodyInteractionFactorsumum[i] = this->L2Factor * (Coefficients(i, i + 1) + Coefficients(i - 1, i));
-      this->OneBodyInteractionFactorsdpdp[i] = this->L2Factor * (Coefficients(i, i + 1) + Coefficients(i - 1, i));
-      this->OneBodyInteractionFactorsdmdm[i] = this->L2Factor * (Coefficients(i, i + 1) + Coefficients(i - 1, i));
-
+    
+      for (int i = 1; i < this->LzMax; ++i)
+	{
+	  this->OneBodyInteractionFactorsupup[i] = this->L2Factor * (Coefficients(i, i + 1) + Coefficients(i - 1, i));
+	  this->OneBodyInteractionFactorsumum[i] = this->L2Factor * (Coefficients(i, i + 1) + Coefficients(i - 1, i));
+	  this->OneBodyInteractionFactorsdpdp[i] = this->L2Factor * (Coefficients(i, i + 1) + Coefficients(i - 1, i));
+	  this->OneBodyInteractionFactorsdmdm[i] = this->L2Factor * (Coefficients(i, i + 1) + Coefficients(i - 1, i));
+	  
+	}
+      if (this->LzMax>0)
+	{
+	  this->OneBodyInteractionFactorsupup[this->LzMax] = this->L2Factor * Coefficients(this->LzMax - 1, this->LzMax);
+	  this->OneBodyInteractionFactorsumum[this->LzMax] = this->L2Factor * Coefficients(this->LzMax - 1, this->LzMax);
+	  this->OneBodyInteractionFactorsdpdp[this->LzMax] = this->L2Factor * Coefficients(this->LzMax - 1, this->LzMax);
+	  this->OneBodyInteractionFactorsdmdm[this->LzMax] = this->L2Factor * Coefficients(this->LzMax - 1, this->LzMax);
+	}
     }
-//   if (this->LzMax>0)
-//     {
-      this->OneBodyInteractionFactorsupup[this->LzMax] = this->L2Factor * Coefficients(this->LzMax - 1, this->LzMax);
-      this->OneBodyInteractionFactorsumum[this->LzMax] = this->L2Factor * Coefficients(this->LzMax - 1, this->LzMax);
-      this->OneBodyInteractionFactorsdpdp[this->LzMax] = this->L2Factor * Coefficients(this->LzMax - 1, this->LzMax);
-      this->OneBodyInteractionFactorsdmdm[this->LzMax] = this->L2Factor * Coefficients(this->LzMax - 1, this->LzMax);
-//     }
+  else
+    {
+      this->OneBodyInteractionFactorsupup = 0;
+      this->OneBodyInteractionFactorsumum = 0;
+      this->OneBodyInteractionFactorsdpdp = 0;
+      this->OneBodyInteractionFactorsdmdm = 0;
+    }
 
   cout << "nbr interaction = " << ((4 * (this->NbrM12IntraIndices + this->LzMax)) + 4 + 6 * this->NbrM12InterIndices) << endl;
   cout << "====================================" << endl;

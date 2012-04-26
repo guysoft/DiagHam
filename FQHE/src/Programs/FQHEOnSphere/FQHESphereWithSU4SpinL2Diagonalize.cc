@@ -19,6 +19,7 @@
 #include "Options/SingleStringOption.h"
 
 #include "GeneralTools/ConfigurationParser.h"
+#include "GeneralTools/FilenameTools.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 #include "HilbertSpace/ParticleOnSphereManager.h"
@@ -70,6 +71,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new SingleDoubleOption ('\n', "l2-factor", "multiplicative factor in front of an optional L^2 operator than can be added to the Hamiltonian", 1.0);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "s2-factor", "multiplicative factor in front of an optional S^2 operator than can be added to the Hamiltonian", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "energy-shift", "if non zero, override energy shift using the indicated value ", 0.0);
 
   (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
@@ -209,6 +211,14 @@ int main(int argc, char** argv)
   bool DiskCacheFlag = Manager.GetBoolean("disk-cache");
   bool FirstRun = true;  
   char* OutputNameLz, *InteractionName;
+
+
+  if ((Manager.GetDouble("l2-factor")==0.0)&&(Manager.GetDouble("s2-factor")==0.0))
+    {
+      cout << "Either l2 or s2 need to be non-zero!"<<endl;
+      return -1;
+    }
+  
   if (Manager.GetString("interaction-name")!=NULL)
     {
       OutputNameLz = new char [256 + strlen(Manager.GetString("interaction-name"))];
@@ -218,10 +228,23 @@ int main(int argc, char** argv)
     {
       OutputNameLz = new char [369];
       InteractionName = new char[65];
-      if (fabs(Manager.GetDouble("l2-factor")-1.0)<1e-12)
-	sprintf(InteractionName,"l2");
-      else
-	sprintf(InteractionName,"l2_%g",Manager.GetDouble("l2-factor"));
+      int lenFilePrefix=0;
+      if (fabs(Manager.GetDouble("l2-factor"))>1e-12)
+	{
+	  if (fabs(Manager.GetDouble("l2-factor")-1.0)<1e-12)
+	    lenFilePrefix += sprintf(InteractionName,"l2");
+	  else
+	    lenFilePrefix += sprintf(InteractionName,"l2_%g",Manager.GetDouble("l2-factor"));
+	  if (fabs(Manager.GetDouble("s2-factor"))>1e-12)
+	    lenFilePrefix += sprintf(lenFilePrefix+InteractionName,"_");
+	}
+      if (fabs(Manager.GetDouble("s2-factor"))>1e-12)
+	{
+	  if (fabs(Manager.GetDouble("s2-factor")-1.0)<1e-12)
+	    sprintf(lenFilePrefix+InteractionName,"s2");
+	  else
+	    sprintf(lenFilePrefix+InteractionName,"s2_%g",Manager.GetDouble("s2-factor"));
+	}
     }
 
   if (strcmp ("fermions", Manager.GetString("statistics")) == 0)
@@ -243,8 +266,6 @@ int main(int argc, char** argv)
 		 NbrParticles, LzMax, TotalSz, IsoSzTotal);
     }
 
-
-
   ParticleOnSphereWithSU4Spin* Space=(ParticleOnSphereWithSU4Spin*) ParticleManager.GetHilbertSpace(TotalLz);
 
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
@@ -253,27 +274,61 @@ int main(int argc, char** argv)
       cout << "Overriding memory by architecture"<<endl;
       Memory = Architecture.GetArchitecture()->GetLocalMemory();
     }
-  AbstractQHEOnSphereHamiltonian* Hamiltonian = new ParticleOnSphereWithSU4SpinL2Hamiltonian(Space, NbrParticles, LzMax, TotalLz,
-											     Architecture.GetArchitecture(), 
-											     Manager.GetDouble("l2-factor"),
-											     Memory, DiskCacheFlag,
-											     LoadPrecalculationFileName);
+  AbstractQHEOnSphereWithSU4SpinCasimirHamiltonian* Hamiltonian;
+  if (Manager.GetDouble("l2-factor")!=0.0)
+    {
+      Hamiltonian = new ParticleOnSphereWithSU4SpinL2Hamiltonian(Space, NbrParticles, LzMax, TotalLz,
+								 Architecture.GetArchitecture(), 
+								 Manager.GetDouble("l2-factor"),
+								 Memory, DiskCacheFlag,
+								 LoadPrecalculationFileName);
+      
+      if (Manager.GetDouble("s2-factor") != 0.0)
+	Hamiltonian->AddS2(TotalLz, TotalSz, Manager.GetDouble("s2-factor")/Manager.GetDouble("l2-factor"), ((unsigned long)Manager.GetInteger("memory")) << 20);
+      
+    }
+  else
+    {
+      Hamiltonian = new ParticleOnSphereWithSU4SpinS2Hamiltonian(Space, NbrParticles, LzMax, TotalLz, TotalSz,
+								 Architecture.GetArchitecture(), 
+								 Manager.GetDouble("s2-factor"),
+								 Memory, DiskCacheFlag,
+								 LoadPrecalculationFileName);
+    }
+       
+
 
   double Shift = Manager.GetDouble("energy-shift");
   Hamiltonian->ShiftHamiltonian(Shift);
   char* EigenvectorName = 0;
-  if (strcmp ("fermions", Manager.GetString("statistics")) == 0)
-      
+
+
   if (Manager.GetBoolean("eigenstate") == true)	
     {
-      EigenvectorName = new char [128 + strlen(InteractionName)];
-      if (Manager.GetBoolean("use-entanglement"))
-	sprintf (EigenvectorName, "fermions_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_pz_%d_lz", InteractionName, 
-		 NbrParticles, LzMax, TotalSz, IsoSzTotal, TotalEntanglement);
+      EigenvectorName = RemoveExtensionFromFileName(OutputNameLz,".dat");
+      /*
+	new char [128 + strlen(InteractionName)];
+      if (strcmp ("fermions", Manager.GetString("statistics")) == 0)
+	{  
+	  if (Manager.GetBoolean("use-entanglement"))
+	    sprintf (OutputNameLz, "fermions_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_pz_%d_lz", InteractionName, 
+		     NbrParticles, LzMax, TotalSz, IsoSzTotal, TotalEntanglement);
+	  else
+	    sprintf (OutputNameLz, "fermions_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_lz", InteractionName, 
+		     NbrParticles, LzMax, TotalSz, IsoSzTotal);
+	}
       else
-	sprintf (EigenvectorName, "fermions_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_lz", InteractionName, 
-	     NbrParticles, LzMax, TotalSz, IsoSzTotal);
+	{
+	  if (Manager.GetBoolean("use-entanglement"))
+	    sprintf (OutputNameLz, "bosons_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_pz_%d_lz", InteractionName, 
+		     NbrParticles, LzMax, TotalSz, IsoSzTotal, TotalEntanglement);
+	  else
+	    sprintf (OutputNameLz, "bosons_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_lz", InteractionName, 
+		     NbrParticles, LzMax, TotalSz, IsoSzTotal);
+	}
+      */
     }
+
   QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, TotalLz, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);
   MainTaskOperation TaskOperation (&Task);
   TaskOperation.ApplyOperation(Architecture.GetArchitecture());

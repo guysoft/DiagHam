@@ -82,18 +82,29 @@ AbstractQHEOnSphereWithSU4SpinCasimirHamiltonian::~AbstractQHEOnSphereWithSU4Spi
 	  delete[] this->M3InterValues[i];
 	delete[] this->M3InterValues;
 	delete[] this->NbrM3InterValues;
-	delete[] M12InteractionFactorsupup;
-	delete[] M12InteractionFactorsumum;
+	if (M12InteractionFactorsupup)
+	  delete[] M12InteractionFactorsupup;
+	if (M12InteractionFactorsumum)
+	  delete[] M12InteractionFactorsumum;
 	delete[] M12InteractionFactorsdpdp;
-	delete[] M12InteractionFactorsdmdm;
+	if (M12InteractionFactorsdpdp)
+	  delete[] M12InteractionFactorsdmdm;
 	delete[] M12InteractionFactorsupum;
-	delete[] M12InteractionFactorsupdp;
+	if (M12InteractionFactorsupum)
+	  delete[] M12InteractionFactorsupdp;
+	if (M12InteractionFactorsupdm)
 	delete[] M12InteractionFactorsupdm;
-	delete[] M12InteractionFactorsumdp;
-	delete[] M12InteractionFactorsumdm;
-	delete[] M12InteractionFactorsdpdm;
+	if (M12InteractionFactorsumdp)
+	  delete[] M12InteractionFactorsumdp;
+	if (M12InteractionFactorsumdm)
+	  delete[] M12InteractionFactorsumdm;
+	if (M12InteractionFactorsdpdm)
+	  delete[] M12InteractionFactorsdpdm;
+	if (M12InteractionFactorsumdpEnt)
+	  delete[] M12InteractionFactorsumdpEnt;
+	if (M12InteractionFactorsupdmEnt)
+	  delete[] M12InteractionFactorsupdmEnt;
       }
-      
   if (this->OneBodyInteractionFactorsupup != 0)
     {
       delete[] this->OneBodyInteractionFactorsupup;
@@ -504,200 +515,6 @@ long AbstractQHEOnSphereWithSU4SpinCasimirHamiltonian::PartialFastMultiplication
   return Memory;
 }
 
-
-/*
-// test the amount of memory needed for fast multiplication algorithm (partial evaluation)
-//
-// firstComponent = index of the first component that has to be precalcualted
-// lastComponent  = index of the last component that has to be precalcualted
-// return value = number of non-zero matrix element
-
-long AbstractQHEOnSphereWithSU4SpinCasimirHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int lastComponent)
-{
-  int Index;
-  double Coefficient = 0.0;
-  double Coefficient2 = 0.0;
-  long Memory = 0;
-  int* TmpIndices;
-  ParticleOnSphereWithSU4Spin* TmpParticles = (ParticleOnSphereWithSU4Spin*) this->Particles->Clone();
-  int LastComponent = lastComponent + firstComponent;
-  int Dim = this->Particles->GetHilbertSpaceDimension();
-
-  for (int i = firstComponent; i < LastComponent; ++i)
-    {
-      for (int m1 = 0; m1 < this->NbrM12IntraIndices; ++m1)
-	{
-	  Coefficient = TmpParticles->AupAup(i, this->M1IntraValue[m1], this->M2IntraValue[m1]);
-	  if (Coefficient != 0.0)
-	    {
-	      SumIndices = this->M1IntraValue[m1] + this->M2IntraValue[m1];
-	      TmpM3Values = this->M3IntraValues[m1];
-	      TmpNbrM3Values = this->NbrM3IntraValues[m1];
-	      for (int m3 = 0; m3 < TmpNbrM3Values; ++m3)
-		{
-		  if (TmpParticles->AdupAdup(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient) < this->Particles->GetHilbertSpaceDimension())
-		    {
-		      ++Memory;
-		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		    }
-		}    
-	    }
-	  Coefficient = TmpParticles->AumAum(i, this->M1IntraValue[m1], this->M2IntraValue[m1]);
-	  if (Coefficient != 0.0)
-	    {
-	      SumIndices = this->M1IntraValue[m1] + this->M2IntraValue[m1];
-	      TmpM3Values = this->M3IntraValues[m1];
-	      TmpNbrM3Values = this->NbrM3IntraValues[m1];
-	      for (int m3 = 0; m3 < TmpNbrM3Values; ++m3)
-		{
-		  if (TmpParticles->AdumAdum(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient) < this->Particles->GetHilbertSpaceDimension())
-		    {
-		      ++Memory;
-		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		    }
-		}    
-	    }
-	  Coefficient = TmpParticles->AdpAdp(i, this->M1IntraValue[m1], this->M2IntraValue[m1]);	  
-	  if (Coefficient != 0.0)
-	    {
-	      SumIndices = this->M1IntraValue[m1] + this->M2IntraValue[m1];
-	      TmpM3Values = this->M3IntraValues[m1];
-	      TmpNbrM3Values = this->NbrM3IntraValues[m1];
-	      for (int m3 = 0; m3 < TmpNbrM3Values; ++m3)
-		{
-		  if (TmpParticles->AddpAddp(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient) < this->Particles->GetHilbertSpaceDimension())
-		    {
-		      ++Memory;
-		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		    }
-		}    
-	    }
-	  Coefficient = TmpParticles->AdmAdm(i, this->M1IntraValue[m1], this->M2IntraValue[m1]);	  
-	  if (Coefficient != 0.0)
-	    {
-	      SumIndices = this->M1IntraValue[m1] + this->M2IntraValue[m1];
-	      TmpM3Values = this->M3IntraValues[m1];
-	      TmpNbrM3Values = this->NbrM3IntraValues[m1];
-	      for (int m3 = 0; m3 < TmpNbrM3Values; ++m3)
-		{
-		  if (TmpParticles->AddmAddm(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient) < this->Particles->GetHilbertSpaceDimension())
-		    {
-		      ++Memory;
-		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		    }
-		}    
-	    }
-	}
-      for (int m1 = 0; m1 < this->NbrM12InterIndices; ++m1)
-	{
-	  Coefficient = TmpParticles->AupAum(i, this->M1InterValue[m1], this->M2InterValue[m1]);	  
-	  if (Coefficient != 0.0)
-	    {
-	      SumIndices = this->M1InterValue[m1] + this->M2InterValue[m1];
-	      TmpM3Values = this->M3InterValues[m1];
-	      TmpNbrM3Values = this->NbrM3InterValues[m1];
-	      for (int m3 = 0; m3 < TmpNbrM3Values; ++m3)
-		{
-		  if (TmpParticles->AdupAdum(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient) < this->Particles->GetHilbertSpaceDimension())
-		    {
-		      ++Memory;
-		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		    }
-		}    
-	    }
-	  Coefficient = TmpParticles->AupAdp(i, this->M1InterValue[m1], this->M2InterValue[m1]);	  
-	  if (Coefficient != 0.0)
-	    {
-	      SumIndices = this->M1InterValue[m1] + this->M2InterValue[m1];
-	      TmpM3Values = this->M3InterValues[m1];
-	      TmpNbrM3Values = this->NbrM3InterValues[m1];
-	      for (int m3 = 0; m3 < TmpNbrM3Values; ++m3)
-		{
-		  if (TmpParticles->AdupAddp(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient) < this->Particles->GetHilbertSpaceDimension())
-		    {
-		      ++Memory;
-		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		    }
-		}    
-	    }
-	  Coefficient = TmpParticles->AupAdm(i, this->M1InterValue[m1], this->M2InterValue[m1]);	  
-	  if (Coefficient != 0.0)
-	    {
-	      SumIndices = this->M1InterValue[m1] + this->M2InterValue[m1];
-	      TmpM3Values = this->M3InterValues[m1];
-	      TmpNbrM3Values = this->NbrM3InterValues[m1];
-	      for (int m3 = 0; m3 < TmpNbrM3Values; ++m3)
-		{
-		  if (TmpParticles->AdupAddm(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient) < this->Particles->GetHilbertSpaceDimension())
-		    {
-		      ++Memory;
-		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		    }
-		}    
-	    }
-	  Coefficient = TmpParticles->AumAdp(i, this->M1InterValue[m1], this->M2InterValue[m1]);	  
-	  if (Coefficient != 0.0)
-	    {
-	      SumIndices = this->M1InterValue[m1] + this->M2InterValue[m1];
-	      TmpM3Values = this->M3InterValues[m1];
-	      TmpNbrM3Values = this->NbrM3InterValues[m1];
-	      for (int m3 = 0; m3 < TmpNbrM3Values; ++m3)
-		{
-		  if (TmpParticles->AdumAddp(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient) < this->Particles->GetHilbertSpaceDimension())
-		    {
-		      ++Memory;
-		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		    }
-		}    
-	    }
-	  Coefficient = TmpParticles->AumAdm(i, this->M1InterValue[m1], this->M2InterValue[m1]);	  
-	  if (Coefficient != 0.0)
-	    {
-	      SumIndices = this->M1InterValue[m1] + this->M2InterValue[m1];
-	      TmpM3Values = this->M3InterValues[m1];
-	      TmpNbrM3Values = this->NbrM3InterValues[m1];
-	      for (int m3 = 0; m3 < TmpNbrM3Values; ++m3)
-		{
-		  if (TmpParticles->AdumAddm(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient) < this->Particles->GetHilbertSpaceDimension())
-		    {
-		      ++Memory;
-		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		    }
-		}    
-	    }
-	  Coefficient = TmpParticles->AdpAdm(i, this->M1InterValue[m1], this->M2InterValue[m1]);	  
-	  if (Coefficient != 0.0)
-	    {
-	      SumIndices = this->M1InterValue[m1] + this->M2InterValue[m1];
-	      TmpM3Values = this->M3InterValues[m1];
-	      TmpNbrM3Values = this->NbrM3InterValues[m1];
-	      for (int m3 = 0; m3 < TmpNbrM3Values; ++m3)
-		{
-		  if (TmpParticles->AddpAddm(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient) < this->Particles->GetHilbertSpaceDimension())
-		    {
-		      ++Memory;
-		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		    }
-		}    
-	    }
-
-	}
-    }
-  if ((this->OneBodyInteractionFactorsupup != 0) || (this->OneBodyInteractionFactorsumum != 0) || (this->OneBodyInteractionFactorsdpdp != 0) || (this->OneBodyInteractionFactorsdmdm != 0))
-    {
-      for (int i = firstComponent; i < LastComponent; ++i)
-	{
-	  ++Memory;
-	  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
-	}
-    }
-
-  delete TmpParticles;
-
-  return Memory;
-}
-
-*/
 
 // enable fast multiplication algorithm
 //

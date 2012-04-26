@@ -57,7 +57,9 @@ class ParticleOnSphereWithSU4SpinS2Hamiltonian : public AbstractQHEOnSphereWithS
   // twice the projected momentum total value and total spin value
   int TotalLz;
   int TotalSz;
-  
+
+  // flag indicating whether total Sz is fixed.
+  bool FixedSz;
 
   // multiplicative factor in front of the L^2 operator in the Hamiltonian
   double S2Factor;
