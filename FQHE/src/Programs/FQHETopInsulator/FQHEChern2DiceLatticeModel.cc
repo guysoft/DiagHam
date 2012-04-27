@@ -163,11 +163,11 @@ int main(int argc, char** argv)
     {
       if (Manager.GetBoolean("flat-band") == true)
 	{
-	  sprintf (EigenvalueOutputFile, "%s_t_%g_epsilon_%g_lambda_%g_B1_%g_B3_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("t"), Manager.GetDouble("epsilon"), Manager.GetDouble("lambda"), Manager.GetDouble("B1"), Manager.GetDouble("B3"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	  sprintf (EigenvalueOutputFile, "%s_t_%g_epsilon_%g_lambda_%g_B1_%g_B3_%g_v_%.2f_w_%.2f_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("t"), Manager.GetDouble("epsilon"), Manager.GetDouble("lambda"), Manager.GetDouble("B1"), Manager.GetDouble("B3"), Manager.GetDouble("intraspin-coefficient"),  Manager.GetDouble("interspin-coefficient") , Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 	}
       else
 	{
-	  sprintf (EigenvalueOutputFile, "%s_u_%g_t_%g_epsilon_%g_lambda_%g_B1_%g_B3_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("t"), Manager.GetDouble("epsilon"), Manager.GetDouble("lambda"), Manager.GetDouble("B1"), Manager.GetDouble("B3"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	  sprintf (EigenvalueOutputFile, "%s_u_%g_t_%g_epsilon_%g_lambda_%g_B1_%g_B3_%g_v_%.2f_w_%.2f_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("t"), Manager.GetDouble("epsilon"), Manager.GetDouble("lambda"), Manager.GetDouble("B1"), Manager.GetDouble("B3"),  Manager.GetDouble("intraspin-coefficient"),  Manager.GetDouble("interspin-coefficient"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 	}
     }
 
