@@ -91,6 +91,7 @@ BosonOnTorusWithSpin::BosonOnTorusWithSpin (int nbrBosons, int maxMomentum, int 
 	{
 	  cout << "error while generating the Hilbert space " << this->LargeHilbertSpaceDimension << " " << TmpLargeHilbertSpaceDimension << endl;
 	}
+      cout  << "Dimension = " << this->LargeHilbertSpaceDimension << endl;
       for (long i = 0; i < TmpLargeHilbertSpaceDimension; ++i)
 	{
 	  unsigned long TmpState = this->StateDescriptionUp[i];
@@ -161,6 +162,7 @@ BosonOnTorusWithSpin::BosonOnTorusWithSpin (int nbrBosons, int maxMomentum, int 
       this->StateDescriptionDown = new unsigned long [this->LargeHilbertSpaceDimension];
       this->Flag.Initialize();
       long TmpLargeHilbertSpaceDimension = this->GenerateStates(this->NbrBosons, this->LzMax, 0, this->LzMax + this->NbrBosonsUp + 1, this->LzMax + this->NbrBosonsDown + 1, this->NbrBosonsUp, 0l);
+      cout  << "Dimension = " << this->LargeHilbertSpaceDimension << endl;
       if (this->LargeHilbertSpaceDimension != TmpLargeHilbertSpaceDimension)
 	{
 	  cout << "error while generating the Hilbert space " << this->LargeHilbertSpaceDimension << " " << TmpLargeHilbertSpaceDimension << endl;

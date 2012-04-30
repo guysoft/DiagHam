@@ -5,11 +5,12 @@
 //                                                                            //
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
+//                        class author: Yang-Le Wu                            //
 //                                                                            //
-//       class of hamiltonian associated to particles on a torus with         //
-//                  coulomb interaction and magnetic translations             //
+//       class of hamiltonian associated to particles on a twisted torus      //
+//             with coulomb interaction and magnetic translations             //
 //                                                                            //
-//                        last modification : 02/10/2003                      //
+//                        last modification : 11/04/2012                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,7 +30,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "Hamiltonian/ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian.h"
+#include "Hamiltonian/ParticleOnTwistedTorusCoulombWithMagneticTranslationsHamiltonian.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
@@ -65,7 +66,8 @@ static double MySqrArg;
 // nbrParticles = number of particles
 // maxMomentum = maximum Lz value reached by a particle in the state
 // xMomentum = momentum in the x direction (modulo GCD of nbrParticles and maxMomentum)
-// ratio = ratio between the width in the x direction and the width in the y direction
+// ratio = ratio between the lengths of the two fundamental cycles of the torus L1 / L2
+// angle = angle between the two fundamental cycles of the torus, along (L1 sin, L1 cos) and (0, L2)
 // haveCoulomb = flag indicating whether a coulomb term is present
 // landauLevel = landauLevel to be simulated (GaAs (>=0) or graphene (<0))
 // nbrPseudopotentials = number of pseudopotentials indicated
@@ -75,11 +77,9 @@ static double MySqrArg;
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
-ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian(ParticleOnTorusWithMagneticTranslations* particles, 
-														     int nbrParticles, int maxMomentum, 
-														     int xMomentum, double ratio, bool haveCoulomb, int landauLevel, int nbrPseudopotentials, double* pseudopotentials, bool noWignerEnergy,
-														     AbstractArchitecture* architecture, long memory, 
-														     char* precalculationFileName)
+ParticleOnTwistedTorusCoulombWithMagneticTranslationsHamiltonian::ParticleOnTwistedTorusCoulombWithMagneticTranslationsHamiltonian(ParticleOnTorusWithMagneticTranslations* particles, 
+        int nbrParticles, int maxMomentum, int xMomentum, double ratio, double angle, bool haveCoulomb, int landauLevel, int nbrPseudopotentials, double* pseudopotentials, bool noWignerEnergy,
+        AbstractArchitecture* architecture, long memory, char* precalculationFileName)
 {
   this->Particles = particles;
   this->MaxMomentum = maxMomentum;
@@ -90,6 +90,7 @@ ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::ParticleOnTorusCoulom
   this->FastMultiplicationFlag = false;
   this->Ratio = ratio;
   this->InvRatio = 1.0 / ratio;
+  this->Angle = angle;
   this->LandauLevel = landauLevel;
   this->NbrPseudopotentials = nbrPseudopotentials;
   if (this->NbrPseudopotentials>0)
@@ -158,7 +159,7 @@ ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::ParticleOnTorusCoulom
 // destructor
 //
 
-ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::~ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian() 
+ParticleOnTwistedTorusCoulombWithMagneticTranslationsHamiltonian::~ParticleOnTwistedTorusCoulombWithMagneticTranslationsHamiltonian() 
 {
   delete[] this->InteractionFactors;
   delete[] this->M1Value;
@@ -191,7 +192,7 @@ ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::~ParticleOnTorusCoulo
 //
 // hilbertSpace = pointer to Hilbert space to use
 
-void ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
+void ParticleOnTwistedTorusCoulombWithMagneticTranslationsHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
 {
   delete[] this->InteractionFactors;
   if (this->FastMultiplicationFlag == true)
@@ -213,7 +214,7 @@ void ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::SetHilbertSpace 
 //
 // shift = shift value
 
-void ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::ShiftHamiltonian (double shift)
+void ParticleOnTwistedTorusCoulombWithMagneticTranslationsHamiltonian::ShiftHamiltonian (double shift)
 {
   this->EnergyShift=shift+this->WignerEnergy;
 }
@@ -221,11 +222,11 @@ void ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::ShiftHamiltonian
 // evaluate all interaction factors
 //   
 
-void ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::EvaluateInteractionFactors()
+void ParticleOnTwistedTorusCoulombWithMagneticTranslationsHamiltonian::EvaluateInteractionFactors()
 {
   int Pos = 0;
   int m4;
-  double* TmpCoefficient = new double [this->NbrLzValue * this->NbrLzValue * this->NbrLzValue];
+  Complex* TmpCoefficient = new Complex [this->NbrLzValue * this->NbrLzValue * this->NbrLzValue];
   double MaxCoefficient = 0.0;
 
   if (this->Particles->GetParticleStatistic() == ParticleOnTorusWithMagneticTranslations::FermionicStatistic)
@@ -246,8 +247,8 @@ void ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::EvaluateInteract
 					 + this->EvaluateInteractionCoefficient(m2, m1, m4, m3)
 					 - this->EvaluateInteractionCoefficient(m1, m2, m4, m3)
 					 - this->EvaluateInteractionCoefficient(m2, m1, m3, m4));
-		  if (MaxCoefficient < fabs(TmpCoefficient[Pos]))
-		    MaxCoefficient = fabs(TmpCoefficient[Pos]);
+		  if (MaxCoefficient < Norm(TmpCoefficient[Pos]))
+		    MaxCoefficient = Norm(TmpCoefficient[Pos]);
 		  ++Pos;
 		}
 	    }
@@ -256,7 +257,7 @@ void ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::EvaluateInteract
       this->M2Value = new int [Pos];
       this->M3Value = new int [Pos];
       this->M4Value = new int [Pos];
-      this->InteractionFactors = new double [Pos];
+      this->InteractionFactors = new Complex [Pos];
       cout << "nbr interaction = " << Pos << endl;
       Pos = 0;
       MaxCoefficient *= MACHINE_PRECISION;
@@ -272,7 +273,7 @@ void ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::EvaluateInteract
 		  m4 -= this->MaxMomentum;
 	      if (m3 > m4)
 		{
-		  if  (fabs(TmpCoefficient[Pos]) > MaxCoefficient)
+		  if  (Norm(TmpCoefficient[Pos]) > MaxCoefficient)
 		    {
 		      this->InteractionFactors[this->NbrInteractionFactors] = TmpCoefficient[Pos];
 		      this->M1Value[this->NbrInteractionFactors] = m1;
@@ -305,8 +306,8 @@ void ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::EvaluateInteract
 					 + this->EvaluateInteractionCoefficient(m2, m1, m3, m4));
 		  if (m1 == m2)
 		    TmpCoefficient[Pos] *= 0.5;
-		  if (MaxCoefficient < fabs(TmpCoefficient[Pos]))
-		    MaxCoefficient = fabs(TmpCoefficient[Pos]);
+		  if (MaxCoefficient < Norm(TmpCoefficient[Pos]))
+		    MaxCoefficient = Norm(TmpCoefficient[Pos]);
 		  ++Pos;
 		}
 	      else
@@ -317,8 +318,8 @@ void ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::EvaluateInteract
 					     + this->EvaluateInteractionCoefficient(m2, m1, m3, m4));
 		      if (m1 == m2)
 			TmpCoefficient[Pos] *= 0.5;
-		      if (MaxCoefficient < fabs(TmpCoefficient[Pos]))
-			MaxCoefficient = fabs(TmpCoefficient[Pos]);
+		      if (MaxCoefficient < Norm(TmpCoefficient[Pos]))
+			MaxCoefficient = Norm(TmpCoefficient[Pos]);
 		      ++Pos;
 		    }
 		}
@@ -328,7 +329,7 @@ void ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::EvaluateInteract
       this->M2Value = new int [Pos];
       this->M3Value = new int [Pos];
       this->M4Value = new int [Pos];
-      this->InteractionFactors = new double [Pos];
+      this->InteractionFactors = new Complex [Pos];
       cout << "nbr interaction = " << Pos << endl;
       Pos = 0;
       MaxCoefficient *= MACHINE_PRECISION;
@@ -344,7 +345,7 @@ void ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::EvaluateInteract
 		  m4 -= this->MaxMomentum;
 	      if (m3 > m4)
 		{
-		  if  (fabs(TmpCoefficient[Pos]) > MaxCoefficient)
+		  if  (Norm(TmpCoefficient[Pos]) > MaxCoefficient)
 		    {
 		      this->InteractionFactors[this->NbrInteractionFactors] = TmpCoefficient[Pos];
 		      this->M1Value[this->NbrInteractionFactors] = m1;
@@ -361,7 +362,7 @@ void ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::EvaluateInteract
 		{
 		  if (m3 == m4)
 		    {
-		      if  (fabs(TmpCoefficient[Pos]) > MaxCoefficient)
+		      if  (Norm(TmpCoefficient[Pos]) > MaxCoefficient)
 			{
 			  this->InteractionFactors[this->NbrInteractionFactors] = TmpCoefficient[Pos];
 			  this->M1Value[this->NbrInteractionFactors] = m1;
@@ -390,62 +391,78 @@ void ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::EvaluateInteract
 // m4 = fourth index
 // return value = numerical coefficient
 
-double ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4)
+Complex ParticleOnTwistedTorusCoulombWithMagneticTranslationsHamiltonian::EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4)
 {
-  double Coefficient = 1.0;
+  Complex Coefficient;
   double PIOnM = M_PI / ((double) this->MaxMomentum);
-  double Factor =  - ((double) (m1-m3)) * PIOnM * 2.0;
-  double Sum = 0.0;
-  double N2 = (double) (m1 - m4);
+  double PIOnMS = PIOnM / sin(this->Angle);
+  double cosine = cos(this->Angle);
+  double Factor =  ((double) (m1-m3)) * PIOnM * 2.0;
+  Complex Sum = 0.0;
+  double N2;
   double N1;
   double Q2;
-  double Precision;
-//  cout << "new coef====================================" << m1 << " "  << m2 << " "  << m3 << " "  << m4 << endl;
-  while ((fabs(Sum) + fabs(Coefficient)) != fabs(Sum))
+  double Precision1;
+  double Precision2;
+
+  N2 = (double) (m1 - m4);
+  Coefficient = 1.0;
+  while ((Norm(Sum) + Norm(Coefficient)) != Norm(Sum))
     {
-      N1 = 1.0;
       Q2 = this->Ratio * N2 * N2;
       if (N2 != 0.0)
 	{
-	  Coefficient = this->GetVofQ(PIOnM*Q2);
-	  Precision = Coefficient;
+	  Coefficient = this->GetVofQ(PIOnMS*Q2);
+	  Precision1 = (Precision2 = Coefficient.Re);
 	}
       else
 	{
-	  Coefficient = this->GetVofQ(PIOnM*Q2); // yields non-zero terms only for non-singular interactions
-	  Precision = 1.0;
+	  Coefficient = this->GetVofQ(PIOnMS*Q2); // yields non-zero terms only for non-singular interactions
+	  Precision1 = (Precision2 = 1.0);
 	}
-      while ((fabs(Coefficient) + Precision) != fabs(Coefficient))
+      N1 = 1.0;
+      while ((Norm(Coefficient) + (fabs(Precision1) + fabs(Precision2))) != Norm(Coefficient))
 	{
-	  Q2 = this->InvRatio * N1 * N1 + this->Ratio * N2 * N2;
-	  Precision = 2.0 * this->GetVofQ(PIOnM*Q2);
-	  Coefficient += Precision * cos (N1 * Factor);
+	  Q2 = this->InvRatio * N1 * N1 - 2 * N1 * N2 * cosine + this->Ratio * N2 * N2;
+	  Precision1 = this->GetVofQ(PIOnMS*Q2);
+	  Coefficient += Precision1 * Phase(N1 * Factor);
+
+	  Q2 = this->InvRatio * N1 * N1 + 2 * N1 * N2 * cosine + this->Ratio * N2 * N2;
+	  Precision2 = this->GetVofQ(PIOnMS*Q2);
+	  Coefficient += Precision2 * Phase(- N1 * Factor);
+
 	  N1 += 1.0;
 	}
       Sum += Coefficient;
       N2 += this->MaxMomentum;
     }
+
   N2 = (double) (m1 - m4 - this->MaxMomentum);
   Coefficient = 1.0;
-  while ((fabs(Sum) + fabs(Coefficient)) != fabs(Sum))
+  while ((Norm(Sum) + Norm(Coefficient)) != Norm(Sum))
     {
-      N1 = 1.0;
       Q2 = this->Ratio * N2 * N2;
       if (N2 != 0.0)
 	{
-	  Coefficient =  this->GetVofQ(PIOnM*Q2);
-	  Precision = Coefficient;
+	  Coefficient = this->GetVofQ(PIOnMS*Q2);
+	  Precision1 = (Precision2 = Norm(Coefficient.Re));
 	}
       else
 	{
-	  Coefficient = this->GetVofQ(PIOnM*Q2); // yields non-zero terms only for non-singular interactions
-	  Precision = 1.0;
+	  Coefficient = this->GetVofQ(PIOnMS*Q2); // yields non-zero terms only for non-singular interactions
+	  Precision1 = (Precision2 = 1.0);
 	}
-      while ((fabs(Coefficient) + Precision) != fabs(Coefficient))
+      N1 = 1.0;
+      while ((Norm(Coefficient) + fabs(Precision1) + fabs(Precision2)) != Norm(Coefficient))
 	{
-	  Q2 = this->InvRatio * N1 * N1 + this->Ratio * N2 * N2;
-	  Precision = 2.0 * this->GetVofQ(PIOnM*Q2);
-	  Coefficient += Precision * cos (N1 * Factor);
+	  Q2 = this->InvRatio * N1 * N1 - 2 * N1 * N2 * cosine + this->Ratio * N2 * N2;
+	  Precision1 = this->GetVofQ(PIOnMS*Q2);
+	  Coefficient += Precision1 * Phase(N1 * Factor);
+
+	  Q2 = this->InvRatio * N1 * N1 + 2 * N1 * N2 * cosine + this->Ratio * N2 * N2;
+	  Precision2 = this->GetVofQ(PIOnMS*Q2);
+	  Coefficient += Precision2 * Phase(- N1 * Factor);
+
 	  N1 += 1.0;
 	}
       Sum += Coefficient;
@@ -457,7 +474,7 @@ double ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::EvaluateIntera
 
 // get fourier transform of interaction
 // Q2_half = one half of q² value
-double ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::GetVofQ(double Q2_half)
+double ParticleOnTwistedTorusCoulombWithMagneticTranslationsHamiltonian::GetVofQ(double Q2_half)
 {
   double Result;
   double Q2=2.0*Q2_half;
@@ -480,7 +497,7 @@ double ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::GetVofQ(double
 //
 // return value = Wigner crystal energy per particle
 
-double ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::EvaluateWignerCrystalEnergy ()
+double ParticleOnTwistedTorusCoulombWithMagneticTranslationsHamiltonian::EvaluateWignerCrystalEnergy ()
 {
   double TmpRatio = M_PI * this->Ratio;
   double TmpInvRatio = M_PI * this->InvRatio;
@@ -519,7 +536,7 @@ double ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::EvaluateWigner
 // x = point where the function has to be evaluated (> 0)
 // return value = value of the n-Misra function at x
 
-double ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::MisraFunction (double n, double x)
+double ParticleOnTwistedTorusCoulombWithMagneticTranslationsHamiltonian::MisraFunction (double n, double x)
 {
   int Count=0;
   int NbrSubdivision = 100000;
@@ -547,7 +564,7 @@ double ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::MisraFunction 
 // nbrSubdivision = number of subdivision used for the integral
 // return value = value of the integral
 
-double ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::PartialMisraFunction (double n, double x, double min, double max, int nbrSubdivision)
+double ParticleOnTwistedTorusCoulombWithMagneticTranslationsHamiltonian::PartialMisraFunction (double n, double x, double min, double max, int nbrSubdivision)
 {
   double Sum = 0.0;
   x *= -1.0;
@@ -573,7 +590,7 @@ double ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::PartialMisraFu
 // H = Hamiltonian to print
 // return value = reference on output stream
 
-ostream& operator << (ostream& Str, ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian& H) 
+ostream& operator << (ostream& Str, ParticleOnTwistedTorusCoulombWithMagneticTranslationsHamiltonian& H) 
 {
   RealVector TmpV2 (H.Particles->GetHilbertSpaceDimension(), true);
   RealVector* TmpV = new RealVector [H.Particles->GetHilbertSpaceDimension()];
@@ -602,7 +619,7 @@ ostream& operator << (ostream& Str, ParticleOnTorusCoulombWithMagneticTranslatio
 // H = Hamiltonian to print
 // return value = reference on output stream
 
-MathematicaOutput& operator << (MathematicaOutput& Str, ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian& H) 
+MathematicaOutput& operator << (MathematicaOutput& Str, ParticleOnTwistedTorusCoulombWithMagneticTranslationsHamiltonian& H) 
 {
   RealVector TmpV2 (H.Particles->GetHilbertSpaceDimension(), true);
   RealVector* TmpV = new RealVector [H.Particles->GetHilbertSpaceDimension()];

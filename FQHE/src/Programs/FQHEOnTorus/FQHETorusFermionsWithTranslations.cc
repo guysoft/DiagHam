@@ -7,6 +7,7 @@
 #include "HilbertSpace/FermionOnTorus.h"
 #include "HilbertSpace/FermionOnTorusWithMagneticTranslations.h"
 #include "Hamiltonian/ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian.h"
+#include "Hamiltonian/ParticleOnTwistedTorusCoulombWithMagneticTranslationsHamiltonian.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -69,10 +70,13 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption   ('R', "ratio", 
 					      "ratio between lengths along the x and y directions (-1 if has to be taken equal to nbr-particles/4)", 
 					      -1);
+  (*SystemGroup) += new SingleDoubleOption   ('\n', "angle", "angle between the two fundamental cycles of the torus in radians (0 if rectangular)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('L', "landau-level", "Landau-level to be simulated", 0);
   (*SystemGroup) += new SingleStringOption  ('\n', "interaction-file", "file describing the interaction");
   (*SystemGroup) += new BooleanOption  ('\n', "all-points", "calculate all points", false);
   (*SystemGroup) += new BooleanOption  ('\n', "add-wigner", "consider the energy contribution from the Wigner crystal", false);
+  (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
+  (*SystemGroup) += new SingleStringOption  ('\n', "eigenstate-file", "filename for eigenstates output; to be appended by _kx_#_ky_#.#.vec");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 
 						      500);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
@@ -152,6 +156,9 @@ int main(int argc, char** argv)
     {
       XRatio = ((SingleDoubleOption*) Manager["ratio"])->GetDouble();
     }
+
+  double Angle = Manager.GetDouble("angle");
+
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
 
   char* OutputName = new char [512];
@@ -169,6 +176,9 @@ int main(int argc, char** argv)
 	else
 	  sprintf (OutputName, "fermions_torus_coulomb_n_%d_2s_%d_ratio_%f.dat", NbrFermions, MaxMomentum, XRatio);
     }
+
+  if (Manager.GetString("eigenvalue-file")!=0)
+      strcpy(OutputName, Manager.GetString("eigenvalue-file"));
 
   int MomentumModulo = FindGCD(NbrFermions, MaxMomentum);
   int XMaxMomentum = (MomentumModulo - 1);
@@ -335,23 +345,37 @@ int main(int argc, char** argv)
       
       cout << "----------------------------------------------------------------" << endl;
       cout << " Ratio = " << XRatio << endl;
+      if (Angle != 0.0)
+          cout << " Angle = " << Angle / M_PI << " Pi"<< endl;
       //	FermionOnTorus TotalSpace (NbrFermions, MaxMomentum, y);
       FermionOnTorusWithMagneticTranslations *TotalSpace = new FermionOnTorusWithMagneticTranslations(NbrFermions, MaxMomentum, XMomentum, YMomentum);
       //cout << " Total Hilbert space dimension = " << TotalSpace->GetHilbertSpaceDimension() << endl;
       //cout << "momentum = (" << XMomentum << "," << YMomentum << ")" << endl;
       Architecture.GetArchitecture()->SetDimension(TotalSpace->GetHilbertSpaceDimension());
 
-      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian (TotalSpace, 
-													   NbrFermions, MaxMomentum, XMomentum, XRatio, HaveCoulomb, LandauLevel, NbrPseudopotentials, Pseudopotentials, !Manager.GetBoolean("add-wigner"),
-													   Architecture.GetArchitecture(), 
-													   Memory, LoadPrecalculationFile);
+      AbstractQHEHamiltonian* Hamiltonian;
+      if (Angle == 0.0)
+      {
+          Hamiltonian = new ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian(TotalSpace, NbrFermions, MaxMomentum, XMomentum, 
+                  XRatio, HaveCoulomb, LandauLevel, NbrPseudopotentials, Pseudopotentials, !Manager.GetBoolean("add-wigner"),
+                  Architecture.GetArchitecture(), Memory, LoadPrecalculationFile);
+      }
+      else
+      {
+          Hamiltonian = new ParticleOnTwistedTorusCoulombWithMagneticTranslationsHamiltonian(TotalSpace, NbrFermions, MaxMomentum, XMomentum, 
+                  XRatio, Angle, HaveCoulomb, LandauLevel, NbrPseudopotentials, Pseudopotentials, !Manager.GetBoolean("add-wigner"),
+                  Architecture.GetArchitecture(), Memory, LoadPrecalculationFile);
+      }
       
       char* EigenvectorName = 0;
       if (Manager.GetBoolean("eigenstate"))	
 	{
 	  EigenvectorName = new char [512];
 	  char *TmpName=RemoveExtensionFromFileName(OutputName, ".dat");
-	  sprintf (EigenvectorName, "%s_kx_%d_ky_%d", TmpName, XMomentum, YMomentum);
+          if (Manager.GetString("eigenstate-file") == 0)
+              sprintf (EigenvectorName, "%s_kx_%d_ky_%d", TmpName, XMomentum, YMomentum);
+          else
+              sprintf (EigenvectorName, "%s_kx_%d_ky_%d", Manager.GetString("eigenstate-file"), XMomentum, YMomentum);
 	  delete [] TmpName;
 	}
       double Shift=0.0;

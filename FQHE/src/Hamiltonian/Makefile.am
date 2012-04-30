@@ -126,4 +126,6 @@ ParticleOnTorusTwoLandauLevelsHamiltonian.cc \
 ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian.cc \
 ParticleOnTorusWithSpinGenericHamiltonian.cc \
 ParticleOnTorusGenericHamiltonian.cc \
-AbstractQHEOnSphereWithSU4SpinCasimirHamiltonian.cc
+AbstractQHEOnSphereWithSU4SpinCasimirHamiltonian.cc \
+AbstractQHEOnTwistedTorusWithMagneticTranslationsHamiltonian.cc \
+ParticleOnTwistedTorusCoulombWithMagneticTranslationsHamiltonian.cc

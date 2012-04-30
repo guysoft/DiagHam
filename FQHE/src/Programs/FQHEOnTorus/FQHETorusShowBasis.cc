@@ -8,6 +8,8 @@
 #include "HilbertSpace/FermionOnTorusWithSpinNew.h"
 #include "HilbertSpace/FermionOnTorusWithSpin.h"
 #include "HilbertSpace/BosonOnTorusWithSpin.h"
+#include "HilbertSpace/BosonOnTorusWithSpinAndMagneticTranslations.h"
+#include "HilbertSpace/FermionOnTorusWithSpinAndMagneticTranslations.h"
 
 #include "MathTools/IntegerAlgebraTools.h"
 
@@ -77,19 +79,232 @@ int main(int argc, char** argv)
   if (Manager.GetBoolean("su2-spin") == false)
     {
       if(Manager.GetBoolean("2-ll") == false)
-      {
-	if (Manager.GetBoolean("no-translation") == false)
 	{
-	  int Kx = Manager.GetInteger("kx-momentum") % MomentumModulo;
-	  int Ky = Manager.GetInteger("ky-momentum") % NbrFluxQuanta;
-	  ParticleOnTorusWithMagneticTranslations* Space;
-	  if (Manager.GetBoolean("boson") == true)
+	  if (Manager.GetBoolean("no-translation") == false)
 	    {
-	      Space = new BosonOnTorusWithMagneticTranslationsShort  (NbrParticles, NbrFluxQuanta, Kx, Ky);
+	      int Kx = Manager.GetInteger("kx-momentum") % MomentumModulo;
+	      int Ky = Manager.GetInteger("ky-momentum") % NbrFluxQuanta;
+	      ParticleOnTorusWithMagneticTranslations* Space;
+	      if (Manager.GetBoolean("boson") == true)
+		{
+		  Space = new BosonOnTorusWithMagneticTranslationsShort  (NbrParticles, NbrFluxQuanta, Kx, Ky);
+		}
+	      else
+		{
+		  Space = new FermionOnTorusWithMagneticTranslations (NbrParticles, NbrFluxQuanta, Kx, Ky);
+		}
+	      if (Manager.GetString("state") == 0)
+		{
+		  for (int i = 0; i <  Space->GetHilbertSpaceDimension(); ++i)
+		    Space->PrintState(cout, i) << endl;;
+		  cout << endl;
+		}
+	      else
+		{
+		  int NbrHiddenComponents = 0;
+		  double WeightHiddenComponents = 0.0;
+		  double Normalization = 0.0;
+		  ComplexVector State;
+		  if (State.ReadVector(Manager.GetString("state")) == false)
+		    {
+		      cout << "error while reading " << Manager.GetString("state") << endl;
+		      return -1;
+		    }
+		  if (Space->GetHilbertSpaceDimension() != State.GetVectorDimension())
+		    {
+		      cout << "dimension mismatch between the state (" << State.GetVectorDimension() << ") and the Hilbert space (" << Space->GetHilbertSpaceDimension() << ")" << endl;
+		      return -1;
+		    }
+		  if (Manager.GetDouble("hide-component") > 0.0)
+		    {
+		      double Error = Manager.GetDouble("hide-component");
+		      for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+			if (Norm(State[i]) > Error)
+			  Space->PrintState(cout, i) << " : "  << State[i] << endl;;
+		    }
+		  else
+		    for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+		      Space->PrintState(cout, i) << " : "  << State[i] << endl;;
+		}
+	      delete Space;
 	    }
 	  else
 	    {
-	      Space = new FermionOnTorusWithMagneticTranslations (NbrParticles, NbrFluxQuanta, Kx, Ky);
+	      int MinKy = 0;
+	      int MaxKy = NbrFluxQuanta;
+	      if (Manager.GetInteger("ky-momentum") >= 0)
+		{
+		  MinKy = Manager.GetInteger("ky-momentum") % NbrFluxQuanta;
+		  MaxKy = MinKy + 1;
+		}
+	      for (int y = MinKy; y < MaxKy; ++y)
+		{
+		  if (Manager.GetBoolean("boson") == true)
+		    {
+		      BosonOnTorusShort Space (NbrParticles, NbrFluxQuanta, y);
+		      cout << " (k_y = " << y << ") : " << endl;
+		      if (Manager.GetString("state") == 0)
+			{
+			  for (int i = 0; i <  Space.GetHilbertSpaceDimension(); ++i)
+			    Space.PrintState(cout, i) << endl;
+			  cout << endl;
+			}
+		      else
+			{
+			  int NbrHiddenComponents = 0;
+			  double WeightHiddenComponents = 0.0;
+			  double Normalization = 0.0;
+			  RealVector State;
+			  if (State.ReadVector(Manager.GetString("state")) == false)
+			    {
+			      cout << "error while reading " << Manager.GetString("state") << endl;
+			      return -1;
+			    }
+			  if (Space.GetHilbertSpaceDimension() != State.GetVectorDimension())
+			    {
+			      cout << "dimension mismatch between the state (" << State.GetVectorDimension() << ") and the Hilbert space (" << Space.GetHilbertSpaceDimension() << ")" << endl;
+			      return -1;
+			    }
+			  if (Manager.GetDouble("hide-component") > 0.0)
+			    {
+			      double Error = Manager.GetDouble("hide-component");
+			      for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
+				if (Norm(State[i]) > Error)
+				  Space.PrintState(cout, i) << " : "  << State[i] << endl;;
+			    }
+			  else
+			    for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
+			      Space.PrintState(cout, i) << " : "  << State[i] << endl;;
+			}
+		    }
+		  else
+		    {
+		      FermionOnTorus Space (NbrParticles, NbrFluxQuanta, y);
+		      cout << " (k_y = " << y << ") : " << endl;
+		      if (Manager.GetString("state") == 0)
+			{
+			  for (int i = 0; i <  Space.GetHilbertSpaceDimension(); ++i)
+			    Space.PrintState(cout, i) << endl;;
+			  cout << endl;
+		    }
+		      else
+			{
+			  int NbrHiddenComponents = 0;
+			  double WeightHiddenComponents = 0.0;
+			  double Normalization = 0.0;
+			  RealVector State;
+			  if (State.ReadVector(Manager.GetString("state")) == false)
+			    {
+			      cout << "error while reading " << Manager.GetString("state") << endl;
+			      return -1;
+			    }
+			  if (Space.GetHilbertSpaceDimension() != State.GetVectorDimension())
+			    {
+			      cout << "dimension mismatch between the state (" << State.GetVectorDimension() << ") and the Hilbert space (" << Space.GetHilbertSpaceDimension() << ")" << endl;
+			      return -1;
+			    }
+			  if (Manager.GetDouble("hide-component") > 0.0)
+			    {
+			      double Error = Manager.GetDouble("hide-component");
+			      for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
+				if (Norm(State[i]) > Error)
+				  Space.PrintState(cout, i) << " : "  << State[i] << endl;;
+			    }
+			  else
+			    for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
+			      Space.PrintState(cout, i) << " : "  << State[i] << endl;;
+			}
+		    }
+		}
+	    }
+	}
+      else
+	{
+	  if (Manager.GetBoolean("no-translation") == false)
+	    {
+	      cout << "particles on torus with with 2 Landau levels are not implemented" << endl;
+	      return -1;
+	      // 	      for (int x = 0; x < MomentumModulo; ++x)
+	      // 		for (int y = 0; y < MomentumModulo; ++y)
+	      // 		  {
+	      // 		  }
+	    }
+	  else
+	    {
+	      int MinKy = 0;
+	      int MaxKy = NbrFluxQuanta;
+	      if (Manager.GetInteger("ky-momentum") >= 0)
+		{
+		  MinKy = Manager.GetInteger("ky-momentum") % NbrFluxQuanta;
+		  MaxKy = MinKy + 1;
+		}
+	      for (int y = MinKy; y < MaxKy; ++y)
+		{
+		  ParticleOnSphereWithSpin* Space;
+		  if (Manager.GetBoolean("boson") == true)
+		    {
+		      Space = new BosonOnTorusWithSpin  (NbrParticles, NbrFluxQuanta, y);
+		    }
+		  else
+		    {
+		      //Space = new FermionOnTorusWithSpin  (NbrParticles, NbrFluxQuanta,  y);
+		      
+		      cout <<"fermions on torus with 2 Landau levels are not implemented"<<endl;
+		    }
+		  cout << " (k_y = " << y << ") : " << endl;
+		  if (Manager.GetString("state") == 0)
+		    {
+		      for (int i = 0; i <  Space->GetHilbertSpaceDimension(); ++i)
+			Space->PrintState(cout, i) << endl;
+		      cout << endl;
+		    }
+		  else
+		    {
+		      int NbrHiddenComponents = 0;
+		      double WeightHiddenComponents = 0.0;
+		      double Normalization = 0.0;
+		      RealVector State;
+		      if (State.ReadVector(Manager.GetString("state")) == false)
+			{
+			  cout << "error while reading " << Manager.GetString("state") << endl;
+			  return -1;
+			}
+		      if (Space->GetHilbertSpaceDimension() != State.GetVectorDimension())
+			{
+			  cout << "dimension mismatch between the state (" << State.GetVectorDimension() << ") and the Hilbert space (" << Space->GetHilbertSpaceDimension() << ")" << endl;
+			  return -1;
+			}
+		      if (Manager.GetDouble("hide-component") > 0.0)
+			{
+			  double Error = Manager.GetDouble("hide-component");
+			  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+			    if (Norm(State[i]) > Error)
+			      Space->PrintState(cout, i) << " : "  << State[i] << endl;;
+			}
+		      else
+			for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+			  Space->PrintState(cout, i) << " : "  << State[i] << endl;;
+		    }
+		  delete Space;
+		  
+		}
+	    }
+	}
+    }
+  else
+    {
+      if (Manager.GetBoolean("no-translation") == false)
+	{
+	  int Kx = Manager.GetInteger("kx-momentum") % MomentumModulo;
+	  int Ky = Manager.GetInteger("ky-momentum") % NbrFluxQuanta;
+	  ParticleOnTorusWithSpinAndMagneticTranslations* Space;
+	  if (Manager.GetBoolean("boson") == true)
+	    {
+	      Space = new BosonOnTorusWithSpinAndMagneticTranslations(NbrParticles, Manager.GetInteger("total-sz"), NbrFluxQuanta, Kx, Ky);
+	    }
+	  else
+	    {
+	      Space = new FermionOnTorusWithSpinAndMagneticTranslations(NbrParticles, Manager.GetInteger("total-sz"), NbrFluxQuanta, Kx, Ky);
 	    }
 	  if (Manager.GetString("state") == 0)
 	    {
@@ -122,183 +337,9 @@ int main(int argc, char** argv)
 		}
 	      else
 		for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-		  Space->PrintState(cout, i) << " : "  << State[i] << endl;;
+		  Space->PrintState(cout, i) << " : "  << State[i] << endl;
 	    }
 	  delete Space;
-	}
-      else
-	{
-	  int MinKy = 0;
-	  int MaxKy = NbrFluxQuanta;
-	  if (Manager.GetInteger("ky-momentum") >= 0)
-	    {
-	      MinKy = Manager.GetInteger("ky-momentum") % NbrFluxQuanta;
-	      MaxKy = MinKy + 1;
-	    }
-	  for (int y = MinKy; y < MaxKy; ++y)
-	    {
-	      if (Manager.GetBoolean("boson") == true)
-		{
-		  BosonOnTorusShort Space (NbrParticles, NbrFluxQuanta, y);
-		  cout << " (k_y = " << y << ") : " << endl;
-		  if (Manager.GetString("state") == 0)
-		    {
-		      for (int i = 0; i <  Space.GetHilbertSpaceDimension(); ++i)
-			Space.PrintState(cout, i) << endl;
-		      cout << endl;
-		    }
-		  else
-		    {
-		      int NbrHiddenComponents = 0;
-		      double WeightHiddenComponents = 0.0;
-		      double Normalization = 0.0;
-		      RealVector State;
-		      if (State.ReadVector(Manager.GetString("state")) == false)
-			{
-			  cout << "error while reading " << Manager.GetString("state") << endl;
-			  return -1;
-			}
-		      if (Space.GetHilbertSpaceDimension() != State.GetVectorDimension())
-			{
-			  cout << "dimension mismatch between the state (" << State.GetVectorDimension() << ") and the Hilbert space (" << Space.GetHilbertSpaceDimension() << ")" << endl;
-			  return -1;
-			}
-		      if (Manager.GetDouble("hide-component") > 0.0)
-			{
-			  double Error = Manager.GetDouble("hide-component");
-			  for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
-			    if (Norm(State[i]) > Error)
-			      Space.PrintState(cout, i) << " : "  << State[i] << endl;;
-			}
-		      else
-			for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
-			  Space.PrintState(cout, i) << " : "  << State[i] << endl;;
-		    }
-		}
-	      else
-		{
-		  FermionOnTorus Space (NbrParticles, NbrFluxQuanta, y);
-		  cout << " (k_y = " << y << ") : " << endl;
-		  if (Manager.GetString("state") == 0)
-		    {
-		      for (int i = 0; i <  Space.GetHilbertSpaceDimension(); ++i)
-			Space.PrintState(cout, i) << endl;;
-		      cout << endl;
-		    }
-		  else
-		    {
-		      int NbrHiddenComponents = 0;
-		      double WeightHiddenComponents = 0.0;
-		      double Normalization = 0.0;
-		      RealVector State;
-		      if (State.ReadVector(Manager.GetString("state")) == false)
-			{
-			  cout << "error while reading " << Manager.GetString("state") << endl;
-			  return -1;
-			}
-		      if (Space.GetHilbertSpaceDimension() != State.GetVectorDimension())
-			{
-			  cout << "dimension mismatch between the state (" << State.GetVectorDimension() << ") and the Hilbert space (" << Space.GetHilbertSpaceDimension() << ")" << endl;
-			  return -1;
-			}
-		      if (Manager.GetDouble("hide-component") > 0.0)
-			{
-			  double Error = Manager.GetDouble("hide-component");
-			  for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
-			    if (Norm(State[i]) > Error)
-			      Space.PrintState(cout, i) << " : "  << State[i] << endl;;
-			}
-		      else
-			for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
-			  Space.PrintState(cout, i) << " : "  << State[i] << endl;;
-		    }
-		}
-	    }
-	}
-      }
-      else
-      {
-	if (Manager.GetBoolean("no-translation") == false)
-	{
-	  cout << "particles on torus with with 2 Landau levels are not implemented" << endl;
-	  return -1;
-	  // 	      for (int x = 0; x < MomentumModulo; ++x)
-	  // 		for (int y = 0; y < MomentumModulo; ++y)
-	  // 		  {
-	  // 		  }
-	}
-      else
-	{
-	  int MinKy = 0;
-	  int MaxKy = NbrFluxQuanta;
-	  if (Manager.GetInteger("ky-momentum") >= 0)
-	    {
-	      MinKy = Manager.GetInteger("ky-momentum") % NbrFluxQuanta;
-	      MaxKy = MinKy + 1;
-	    }
-	  for (int y = MinKy; y < MaxKy; ++y)
-	    {
-	      ParticleOnSphereWithSpin* Space;
-	      if (Manager.GetBoolean("boson") == true)
-		{
-		  Space = new BosonOnTorusWithSpin  (NbrParticles, NbrFluxQuanta, y);
-		}
-	      else
-		{
-		  //Space = new FermionOnTorusWithSpin  (NbrParticles, NbrFluxQuanta,  y);
-		  
-		  cout <<"fermions on torus with 2 Landau levels are not implemented"<<endl;
-		}
-	      cout << " (k_y = " << y << ") : " << endl;
-	      if (Manager.GetString("state") == 0)
-		{
-		  for (int i = 0; i <  Space->GetHilbertSpaceDimension(); ++i)
-		    Space->PrintState(cout, i) << endl;
-		  cout << endl;
-		}
-	      else
-		{
-		  int NbrHiddenComponents = 0;
-		  double WeightHiddenComponents = 0.0;
-		  double Normalization = 0.0;
-		  RealVector State;
-		  if (State.ReadVector(Manager.GetString("state")) == false)
-		    {
-		      cout << "error while reading " << Manager.GetString("state") << endl;
-		      return -1;
-		    }
-		  if (Space->GetHilbertSpaceDimension() != State.GetVectorDimension())
-		    {
-			  cout << "dimension mismatch between the state (" << State.GetVectorDimension() << ") and the Hilbert space (" << Space->GetHilbertSpaceDimension() << ")" << endl;
-			  return -1;
-		    }
-		  if (Manager.GetDouble("hide-component") > 0.0)
-		    {
-		      double Error = Manager.GetDouble("hide-component");
-		      for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-			if (Norm(State[i]) > Error)
-			  Space->PrintState(cout, i) << " : "  << State[i] << endl;;
-		    }
-		  else
-		    for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-		      Space->PrintState(cout, i) << " : "  << State[i] << endl;;
-		}
-	      delete Space;
-	      
-	    }
-	}
-      }
-    }
-  else
-    {
-      if (Manager.GetBoolean("no-translation") == false)
-	{
-	  cout << "particles on torus with spin and magnetic translations are not implemented" << endl;
-	  return -1;
-	  // 	      for (int x = 0; x < MomentumModulo; ++x)
-	  // 		for (int y = 0; y < MomentumModulo; ++y)
-	  // 		  {
-	  // 		  }
 	}
       else
 	{

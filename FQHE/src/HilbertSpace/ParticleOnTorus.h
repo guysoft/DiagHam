@@ -94,6 +94,16 @@ class ParticleOnTorus :  public ParticleOnSphere
   virtual RealSymmetricMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrBosonSector, int kySector, RealVector& groundState);
   virtual HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrBosonSector, int kySector, ComplexVector& groundState);
 
+  // remove part of each Fock state, discarding component if the Fock state does not a given pattern
+  //
+  // inputVector = state to truncate
+  // reducedSpace = Hilbert space where the truncated state will lie
+  // pattern = array describing the pattern 
+  // patternSize = pattern size
+  // patternShift = indicate where the pattern has to be applied
+  // return value = trucated state
+  virtual RealVector TruncateStateWithPatternConstraint(RealVector& inputVector, ParticleOnTorus* reducedSpace, int* pattern, int patternSize, int patternShift = 0);
+
   // apply a magnetic translation along x to a given state
   //
   // index = state index 
