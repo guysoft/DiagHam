@@ -68,6 +68,9 @@ class ParticleOnLatticeKagomeLatticeSingleBandHamiltonian : public ParticleOnLat
   // second nearest neighbor density-density potential strength
   double VPotential;
 
+  // index of the band to be filled
+  int BandIndex;
+
   // boundary condition twisting angle along x
   double GammaX;
   // boundary condition twisting angle along y

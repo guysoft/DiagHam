@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 //                                                                            //
 //                                                                            //
 //                            DiagHam  version 0.01                           //
@@ -7,10 +7,10 @@
 //                                                                            //
 //                        class author: Nicolas Regnault                      //
 //                                                                            //
-//      class of checkerboard lattice model with interacting particles        //
-//                       in the single band approximation                     // 
+//            class of ruby lattice model with interacting particles          //
+//         in the single band approximation and three body interaction        // 
 //                                                                            //
-//                        last modification : 08/09/2011                      //
+//                        last modification : 25/10/2011                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -31,34 +31,42 @@
 
 
 #include "config.h"
-#include "Hamiltonian/ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonianThreeBodyHamiltonian.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
-#include "GeneralTools/StringTools.h"
+
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/QHEParticlePrecalculationOperation.h"
 
+#include "GeneralTools/StringTools.h"
+
 #include <iostream>
-#include <cmath>
 #include <sys/time.h>
 
 
 using std::cout;
 using std::endl;
 using std::ostream;
-using std::sin;
-using std::cos;
 
+
+
+// default constructor
+//
+
+ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian()
+{
+}
 
 // constructor
 //
 // particles = Hilbert space associated to the system
 // nbrParticles = number of particles
-// nbrCellX = number of sites in the x direction
-// nbrCellY = number of sites in the y direction
+// nbrSiteX = number of sites in the x direction
+// nbrSiteY = number of sites in the y direction
+// threeBodyPotential = strength of the repulsive three body neareast neighbor interaction
 // uPotential = strength of the repulsive two body neareast neighbor interaction
-// vPotential = strength of the repulsive two body second nearest neighbor interaction
+// vPotential = strength of the repulsive two body neareast neighbor interaction
 // t1 = real part of the hopping amplitude between neareast neighbor sites
 // t2 = real part of the hopping amplitude between next neareast neighbor sites
 // lambda1 = imaginary part of the hopping amplitude between neareast neighbor sites
@@ -70,7 +78,7 @@ using std::cos;
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
-ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrCellX, int nbrCellY, double uPotential, double vPotential, double t1, double t2, double phi, double mus, double gammaX, double gammaY, bool flatBandFlag, int bandIndex , AbstractArchitecture* architecture, long memory)
+ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrCellX, int nbrCellY, double threeBodyPotential, double uPotential, double vPotential, double t1, double t2, double phi, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -79,23 +87,34 @@ ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::ParticleOnLattice
   this->LzMax = nbrCellX * nbrCellY - 1;
   this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
   this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
-  this->Phi = 2.0 * M_PI*phi;
+
   this->HamiltonianShift = 0.0;
   this->NNHopping = t1;
   this->NextNNHopping = t2;
-  this->NNSpinOrbit = 0;
-  this->NextNNSpinOrbit = 0;
+  this->NNSpinOrbit = 0.0;
+  this->NextNNSpinOrbit = 0.0;
+  this->Phi = phi;
   this->MuS = mus;
   this->GammaX = gammaX;
   this->GammaY = gammaY;
+
+
+  this->NBodyValue = 3;
+  this->SqrNBodyValue = this->NBodyValue * this->NBodyValue;
   this->FlatBand = flatBandFlag;
+  this->ThreeBodyPotential = threeBodyPotential;
   this->UPotential = uPotential;
   this->VPotential = vPotential;
-  this->BandIndex= bandIndex;
+
   this->Architecture = architecture;
   this->Memory = memory;
   this->OneBodyInteractionFactors = 0;
   this->FastMultiplicationFlag = false;
+
+  if (fabs(uPotential)<1e-15)
+    this->TwoBodyFlag = false;
+  else
+    this->TwoBodyFlag = true;
   long MinIndex;
   long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
@@ -113,9 +132,10 @@ ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::ParticleOnLattice
 // destructor
 //
 
-ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::~ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian()
+ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::~ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian()
 {
 }
+
 
 // conventions adopted for matrix elements:
 // modified with respect to Tang, Mei, Wen:
@@ -130,7 +150,7 @@ ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::~ParticleOnLattic
 // k2b = annihilation momentum along y for the B site
 // return value = corresponding matrix element
 
-Complex ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementAB(int k1a, int k1b, int k2a, int k2b)
+Complex ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::ComputeTwoBodyMatrixElementAB(int k1a, int k1b, int k2a, int k2b)
 {
   Complex Tmp = (1+Phase(-this->KyFactor * ((double) (k2b - k1b))) + Phase(-this->KxFactor * ((double) (k2a - k1a))));
   return Tmp;
@@ -144,9 +164,10 @@ Complex ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::ComputeTw
 // k2b = annihilation momentum along y for the C site
 // return value = corresponding matrix element
 
-Complex ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementAC(int k1a, int k1b, int k2a, int k2b)
+Complex ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::ComputeTwoBodyMatrixElementAC(int k1a, int k1b, int k2a, int k2b)
 {
-  Complex Tmp = (1+Phase(-this->KyFactor * ((double) (k2b - k1b))) + Phase(-this->KxFactor * ((double) (k1a - k2a))+this->KyFactor * ((double) (k1b - k2b))));
+  Complex Tmp = 2.0 * cos (0.5 * (this->KyFactor * ((double) (k2b - k1b))));
+  //Complex Tmp = Phase (0.5 * (this->KyFactor * ((double) (k2b - k1b))));
   return Tmp;
 }
 
@@ -162,7 +183,7 @@ Complex ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::ComputeTw
 // k4b = annihilation momentum along y for the C site
 // return value = corresponding matrix element
 
-Complex ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementBC(int k1a, int k1b, int k2a, int k2b, int k3a, int k3b, int k4a, int k4b)
+Complex ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::ComputeTwoBodyMatrixElementBC(int k1a, int k1b, int k2a, int k2b, int k3a, int k3b, int k4a, int k4b)
 {
   Complex Tmp = (1+Phase(-this->KxFactor * ((double) (k3a - k1a))) + Phase(-this->KxFactor * ((double) (k3a - k1a)) - this->KyFactor * ((double) (k1b - k3b))));
   return Tmp;
@@ -173,7 +194,7 @@ Complex ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::ComputeTw
 //
 // return value = corresponding matrix element
 
-Complex ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementOnSiteAA()
+Complex ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::ComputeTwoBodyMatrixElementOnSiteAA()
 {
   return 1.0;
 }
@@ -190,7 +211,7 @@ Complex ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::ComputeTw
 // ky4 = second annihilation momentum along y for the B site
 // return value = corresponding matrix element
 
-Complex ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementOnSiteBB(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
+Complex ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::ComputeTwoBodyMatrixElementOnSiteBB(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
 {
   return 1.0;
 }
@@ -207,8 +228,77 @@ Complex ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::ComputeTw
 // ky4 = second annihilation momentum along y for the C site
 // return value = corresponding matrix element
 
-Complex ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementOnSiteCC(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
+Complex ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::ComputeTwoBodyMatrixElementOnSiteCC(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
 {
+  return 1.0;
+}
+
+/* END TWO-BODY TERMS */
+
+
+
+// compute the matrix element for the on-site three body interaction related to sites A
+//
+// kx1 = first creation momentum along x for the first A site
+// ky1 = first creation momentum along y for the first A site
+// kx2 = second creation momentum along x for the second A site
+// ky2 = second creation momentum along y for the second A site
+// kx3 = third creation momentum along x for the second A site
+// ky3 = third creation momentum along y for the second A site
+// kx4 = first annihilation momentum along x for the first A site
+// ky4 = first annihilation momentum along y for the first A site
+// kx5 = second annihilation momentum along x for the second A site
+// ky5 = second annihilation momentum along y for the second A site
+// kx6 = third annihilation momentum along x for the second A site
+// ky6 = third annihilation momentum along y for the second A site
+// return value = corresponding matrix element
+
+Complex ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementOnSiteAAA(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4, int kx5, int ky5, int kx6, int ky6)
+{
+  return 1.0;
+}
+
+// compute the matrix element for the on-site three body interaction related to sites B
+//
+// kx1 = first creation momentum along x for the first B site
+// ky1 = first creation momentum along y for the first B site
+// kx2 = second creation momentum along x for the second B site
+// ky2 = second creation momentum along y for the second B site
+// kx3 = third creation momentum along x for the second B site
+// ky3 = third creation momentum along y for the second B site
+// kx4 = first annihilation momentum along x for the first B site
+// ky4 = first annihilation momentum along y for the first B site
+// kx5 = second annihilation momentum along x for the second B site
+// ky5 = second annihilation momentum along y for the second B site
+// kx6 = third annihilation momentum along x for the second B site
+// ky6 = third annihilation momentum along y for the second B site
+// return value = corresponding matrix element
+
+Complex ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementOnSiteBBB(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4, int kx5, int ky5, int kx6, int ky6)
+{
+  //Complex Tmp = Phase (0.5 * ((((double) (kx6 + kx5 + kx4 - kx3 - kx2 - kx1)) * this->KxFactor)));
+  return 1.0;
+}
+
+// compute the matrix element for the on-site three body interaction related to sites A
+//
+// kx1 = first creation momentum along x for the first C site
+// ky1 = first creation momentum along y for the first C site
+// kx2 = second creation momentum along x for the second C site
+// ky2 = second creation momentum along y for the second C site
+// kx3 = third creation momentum along x for the second C site
+// ky3 = third creation momentum along y for the second C site
+// kx4 = first annihilation momentum along x for the first C site
+// ky4 = first annihilation momentum along y for the first C site
+// kx5 = second annihilation momentum along x for the second C site
+// ky5 = second annihilation momentum along y for the second C site
+// kx6 = third annihilation momentum along x for the second C site
+// ky6 = third annihilation momentum along y for the second C site
+// return value = corresponding matrix element
+
+Complex ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementOnSiteCCC(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4, int kx5, int ky5, int kx6, int ky6)
+{
+  //Complex Tmp = Phase (0.5 * ((((double) (ky6 + ky5 + ky4 - ky3 - ky2 - ky1)) * this->KyFactor)));
   return 1.0;
 }
 
@@ -216,7 +306,7 @@ Complex ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::ComputeTw
 //
 // oneBodyBasis = array of one body transformation matrices
 
-void ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis)
+void ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis)
 {
  double KA, KB;
   for (int ka = 0; ka < this->NbrSiteX; ++ka)
@@ -262,3 +352,6 @@ void ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::ComputeOneBo
 	cout << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << " " << TmpDiag(2, 2) << endl;
       }
 }
+
+
+

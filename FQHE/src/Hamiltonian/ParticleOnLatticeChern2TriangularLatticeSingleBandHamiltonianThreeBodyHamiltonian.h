@@ -31,13 +31,13 @@
 
 
 
-#ifndef PARTICLEONLATTICEKAGOMELATTICESINGLEBANDTHREEBODYHAMILTONIAN_H
-#define PARTICLEONLATTICEKAGOMELATTICESINGLEBANDTHREEBODYHAMILTONIAN_H
+#ifndef PARTICLEONLATTICECHERN2TRIANGULARLATTICESINGLEBANDTHREEBODYHAMILTONIAN_H
+#define PARTICLEONLATTICECHERN2TRIANGULARLATTICESINGLEBANDTHREEBODYHAMILTONIAN_H
 
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphere.h"
-#include "Hamiltonian/ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian.h"
 #include "Vector/ComplexVector.h"
 
 #include <iostream>
@@ -48,44 +48,19 @@ using std::cout;
 using std::endl;
 
 
-class ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian : public ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian
+class ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian : public ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian
 {
 
  protected:
   
-  // hopping amplitude between neareast neighbor sites
-  double NNHopping;
-  // hopping amplitude between next neareast neighbor sites
-  double NextNNHopping;
-  // spin orbit coupling to neareast neighbor sites
-  double NNSpinOrbit;
-  // spin orbit coupling to next neareast neighbor sites
-  double NextNNSpinOrbit;
-  
-  // four times the sublattice staggered chemical potential 
-  double MuS;
-
-  // boundary condition twisting angle along x
-  double GammaX;
-  // boundary condition twisting angle along y
-  double GammaY;
-
-  // use flat band model
-  bool FlatBand;
-
-  // nearest neighbor density-density-density potential strength
-  double ThreeBodyPotential;
-  // nearest neighbor density-density potential strength
-  double UPotential;
-  // next nearest neighbor density-density potential strength
-  double VPotential;
-
+  // phase on the hopping terms
+  double Phi;
   
  public:
 
   // default constructor
   //
-  ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian();
+  ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian();
 
   // constructor
   //
@@ -106,20 +81,15 @@ class ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian : public Part
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrCellX, 
-							       int nbrCellY, double threeBodyPotential, double uPotential, double vPotential, double t1, double t2, double lambda1, double lambda2, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrCellX, int nbrCellY, double threeBodyPotential, double uPotential, double vPotential, double t1, double t2, double phi, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
   
   // destructor
   //
-  ~ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian();
+  ~ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian();
   
 
  protected:
  
-  // evaluate all interaction factors
-  //   
-  virtual void EvaluateInteractionFactors();
-
   // compute the one body transformation matrices and the optional one body band stucture contribution
   //
   // oneBodyBasis = array of one body transformation matrices
@@ -132,7 +102,7 @@ class ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian : public Part
   // kx2 = momentum along x for the B site
   // ky2 = momentum along y for the B site
   // return value = corresponding matrix element
-  virtual Complex ComputeTwoBodyMatrixElementAB(int kx1, int ky1, int kx2, int ky2);
+  Complex ComputeTwoBodyMatrixElementAB(int kx1, int ky1, int kx2, int ky2);
 
     // compute the matrix element for the two body interaction between two sites A and C
   //
@@ -141,7 +111,7 @@ class ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian : public Part
   // kx2 = annihilation momentum along x for the C site
   // ky2 = annihilation momentum along y for the C site
   // return value = corresponding matrix element
-  virtual Complex ComputeTwoBodyMatrixElementAC(int kx1, int ky1, int kx2, int ky2);
+  Complex ComputeTwoBodyMatrixElementAC(int kx1, int ky1, int kx2, int ky2);
 
   // compute the matrix element for the two body interaction between two sites B and C 
   //
@@ -154,12 +124,12 @@ class ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian : public Part
   // k4a = annihilation momentum along e_a for the A site
   // k4b = annihilation momentum along e_b for the A site
   // return value = corresponding matrix element
-  virtual Complex ComputeTwoBodyMatrixElementBC(int k1a, int k1b, int k2a, int k2b, int k3a, int k3b, int k4a, int k4b);
+  Complex ComputeTwoBodyMatrixElementBC(int k1a, int k1b, int k2a, int k2b, int k3a, int k3b, int k4a, int k4b);
 
     // compute the matrix element for on-site two body interaction involving A sites
   //
   // return value = corresponding matrix element
-  virtual Complex ComputeTwoBodyMatrixElementOnSiteAA();
+  Complex ComputeTwoBodyMatrixElementOnSiteAA();
 
   // compute the matrix element for on-site two body interaction involving B sites
   //
@@ -172,7 +142,7 @@ class ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian : public Part
   // kx4 = second annihilation momentum along x for the B site
   // ky4 = second annihilation momentum along y for the B site
   // return value = corresponding matrix element
-  virtual Complex ComputeTwoBodyMatrixElementOnSiteBB(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
+  Complex ComputeTwoBodyMatrixElementOnSiteBB(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
 
   // compute the matrix element for on-site two body interaction involving C sites
   //
@@ -185,7 +155,7 @@ class ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian : public Part
   // kx4 = second annihilation momentum along x for the C site
   // ky4 = second annihilation momentum along y for the C site
   // return value = corresponding matrix element
-  virtual Complex ComputeTwoBodyMatrixElementOnSiteCC(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
+  Complex ComputeTwoBodyMatrixElementOnSiteCC(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
 
   // compute the matrix element for the on-site three body interaction related to sites A
   //
@@ -202,7 +172,7 @@ class ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian : public Part
   // kx6 = third annihilation momentum along x for the second A site
   // ky6 = third annihilation momentum along y for the second A site
   // return value = corresponding matrix element
-  virtual Complex ComputeThreeBodyMatrixElementOnSiteAAA(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
+  Complex ComputeThreeBodyMatrixElementOnSiteAAA(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
 
   // compute the matrix element for the on-site three body interaction related to sites A
   //
@@ -219,9 +189,9 @@ class ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian : public Part
   // kx6 = third annihilation momentum along x for the second A site
   // ky6 = third annihilation momentum along y for the second A site
   // return value = corresponding matrix element
-  virtual Complex ComputeThreeBodyMatrixElementOnSiteBBB(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
+  Complex ComputeThreeBodyMatrixElementOnSiteBBB(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
 
-  virtual Complex ComputeThreeBodyMatrixElementOnSiteCCC(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
+  Complex ComputeThreeBodyMatrixElementOnSiteCCC(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
     
 
   // compute the matrix element for the creation part of the three body on site interaction for the A1 sites 
@@ -233,7 +203,7 @@ class ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian : public Part
   // kx3 = momentum along x of the third creation operator
   // ky3 = momentum along y of the third creation operator
   // return value = corresponding matrix element
-  virtual Complex ComputeThreeBodyMatrixElementOnSiteAAAIn(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3);
+  Complex ComputeThreeBodyMatrixElementOnSiteAAAIn(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3);
 
   // compute the matrix element for the annihilation part of the three body on site interaction for the A1 sites 
   //
@@ -244,7 +214,7 @@ class ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian : public Part
   // kx6 = momentum along x of the third annihilation operator
   // ky6 = momentum along y of the third annihilation operator
   // return value = corresponding matrix element
-  virtual Complex ComputeThreeBodyMatrixElementOnSiteAAAOut(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
+  Complex ComputeThreeBodyMatrixElementOnSiteAAAOut(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
 
   // compute the matrix element for the creation part of the three body on site interaction for the A2 sites 
   //
@@ -255,7 +225,7 @@ class ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian : public Part
   // kx3 = momentum along x of the third creation operator
   // ky3 = momentum along y of the third creation operator
   // return value = corresponding matrix element
-  virtual Complex ComputeThreeBodyMatrixElementOnSiteBBBIn(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3);
+  Complex ComputeThreeBodyMatrixElementOnSiteBBBIn(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3);
 
   // compute the matrix element for the annihilation part of the three body on site interaction for the A2 sites 
   //
@@ -266,7 +236,7 @@ class ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian : public Part
   // kx6 = momentum along x of the third annihilation operator
   // ky6 = momentum along y of the third annihilation operator
   // return value = corresponding matrix element
-  virtual Complex ComputeThreeBodyMatrixElementOnSiteBBBOut(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
+  Complex ComputeThreeBodyMatrixElementOnSiteBBBOut(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
 
   // compute the matrix element for the creation part of the three body on site interaction for the A3 sites 
   //
@@ -277,7 +247,7 @@ class ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian : public Part
   // kx3 = momentum along x of the third creation operator
   // ky3 = momentum along y of the third creation operator
   // return value = corresponding matrix element
-  virtual Complex ComputeThreeBodyMatrixElementOnSiteCCCIn(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3);
+  Complex ComputeThreeBodyMatrixElementOnSiteCCCIn(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3);
 
   // compute the matrix element for the annihilation part of the three body on site interaction for the A3 sites 
   //
@@ -288,7 +258,7 @@ class ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian : public Part
   // kx6 = momentum along x of the third annihilation operator
   // ky6 = momentum along y of the third annihilation operator
   // return value = corresponding matrix element
-  virtual Complex ComputeThreeBodyMatrixElementOnSiteCCCOut(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
+  Complex ComputeThreeBodyMatrixElementOnSiteCCCOut(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
 
 
   // compute the matrix element for the creation part of the three body interaction between sites A, B and C, for triangle standing up 
@@ -300,9 +270,9 @@ class ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian : public Part
   // kx3 = momentum along x of the creation operator of the C site
   // ky3 = momentum along y of the creation operator of the C site
   // return value = corresponding matrix element
-  virtual Complex ComputeThreeBodyMatrixElementABCUpIn(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3);
+  Complex ComputeThreeBodyMatrixElementABCUpIn(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3);
   // same for triangle pointing down
-  virtual Complex ComputeThreeBodyMatrixElementABCDownIn(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3);
+  Complex ComputeThreeBodyMatrixElementABCDownIn(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3);
 
   // compute the matrix element for the annihilation part of the three body interaction between sites A, B and C , for triangle standing up 
   //
@@ -313,9 +283,9 @@ class ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian : public Part
   // kx6 = momentum along x of the annihilation operator of the C site
   // ky6 = momentum along y of the annihilation operator of the C site
   // return value = corresponding matrix element
-  virtual Complex ComputeThreeBodyMatrixElementABCUpOut(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
+  Complex ComputeThreeBodyMatrixElementABCUpOut(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
   // same for triangle pointing down
-  virtual Complex ComputeThreeBodyMatrixElementABCDownOut(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
+  Complex ComputeThreeBodyMatrixElementABCDownOut(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
 
 };
 
@@ -329,9 +299,9 @@ class ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian : public Part
 // kx3 = momentum along x of the creation operator of the C site
 // ky3 = momentum along y of the creation operator of the C site
 // return value = corresponding matrix element
-inline Complex ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementABCUpIn(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3)
+inline Complex ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementABCUpIn(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3)
 {
-  return Phase(-0.5*this->KxFactor * ((double) kx2)-0.5*this->KyFactor * ((double) ky3));
+  return 0.0;
 }
 
 
@@ -345,9 +315,9 @@ inline Complex ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::Com
 // kx3 = momentum along x of the creation operator of the C site
 // ky3 = momentum along y of the creation operator of the C site
 // return value = corresponding matrix element
-inline Complex ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementABCDownIn(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3)
+inline Complex ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementABCDownIn(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3)
 {
-  return Phase(0.5*this->KxFactor * ((double) kx2)+0.5*this->KyFactor * ((double) ky3));
+  return 0.0;
 }
 
 
@@ -360,9 +330,9 @@ inline Complex ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::Com
 // kx3 = momentum along x of the creation operator of the C site
 // ky3 = momentum along y of the creation operator of the C site
 // return value = corresponding matrix element
-inline Complex ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementABCUpOut(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3)
+inline Complex ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementABCUpOut(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3)
 {
-  return Phase(0.5*this->KxFactor * ((double) kx2)+0.5*this->KyFactor * ((double) ky3));
+  return 0.0;
 }
 
 
@@ -376,9 +346,9 @@ inline Complex ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::Com
 // kx3 = momentum along x of the creation operator of the C site
 // ky3 = momentum along y of the creation operator of the C site
 // return value = corresponding matrix element
-inline Complex ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementABCDownOut(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3)
+inline Complex ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementABCDownOut(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3)
 {
-  return Phase(-0.5*this->KxFactor * ((double) kx2)-0.5*this->KyFactor * ((double) ky3));
+  return 0.0;
 }
 
 
@@ -393,7 +363,7 @@ inline Complex ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::Com
 // ky3 = momentum along y of the third creation operator
 // return value = corresponding matrix element
 
-inline Complex ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementOnSiteAAAIn(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3)
+inline Complex ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementOnSiteAAAIn(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3)
 {
   return 1.0;
 }
@@ -408,7 +378,7 @@ inline Complex ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::Com
 // ky6 = momentum along y of the third annihilation operator
 // return value = corresponding matrix element
 
-inline Complex ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementOnSiteAAAOut(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6)
+inline Complex ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementOnSiteAAAOut(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6)
 {
   return 1.0;
 }
@@ -423,10 +393,9 @@ inline Complex ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::Com
 // ky3 = momentum along y of the third creation operator
 // return value = corresponding matrix element
 
-inline Complex ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementOnSiteBBBIn(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3)
+inline Complex ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementOnSiteBBBIn(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3)
 {
-  return Phase(0.5*this->KxFactor * ((double) (kx1+kx2+kx3)));
-  //return 1.0;
+  return 1.0;
 }
 
 // compute the matrix element for the annihilation part of the three body on site interaction for the A2 sites 
@@ -439,10 +408,10 @@ inline Complex ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::Com
 // ky6 = momentum along y of the third annihilation operator
 // return value = corresponding matrix element
 
-inline Complex ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementOnSiteBBBOut(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6)
+inline Complex ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementOnSiteBBBOut(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6)
 {
-  return Phase(-0.5*this->KxFactor * ((double) (kx4+kx5+kx6)));
-  //return 1.0;
+  //return Phase(-0.5*this->KxFactor * ((double) (kx4+kx5+kx6)));
+  return 1.0;
 }
 
 // compute the matrix element for the creation part of the three body on site interaction for the A3 sites 
@@ -455,10 +424,10 @@ inline Complex ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::Com
 // ky3 = momentum along y of the third creation operator
 // return value = corresponding matrix element
 
-inline Complex ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementOnSiteCCCIn(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3)
+inline Complex ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementOnSiteCCCIn(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3)
 {
-  return Phase(0.5*this->KyFactor * ((double) (ky1+ky2+ky3)));
-  //return 1.0;
+  //return Phase(0.5*this->KyFactor * ((double) (ky1+ky2+ky3)));
+  return 1.0;
 }
 
 // compute the matrix element for the annihilation part of the three body on site interaction for the A3 sites 
@@ -471,10 +440,10 @@ inline Complex ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::Com
 // ky6 = momentum along y of the third annihilation operator
 // return value = corresponding matrix element
 
-inline Complex ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementOnSiteCCCOut(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6)
+inline Complex ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementOnSiteCCCOut(int kx4, int ky4, int kx5, int ky5, int kx6, int ky6)
 {
-  return Phase(-0.5*this->KyFactor * ((double) (ky4+ky5+ky6)));
-  //return 1.0;
+  //return Phase(-0.5*this->KyFactor * ((double) (ky4+ky5+ky6)));
+  return 1.0;
 }
 
 
