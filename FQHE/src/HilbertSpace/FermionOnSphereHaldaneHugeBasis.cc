@@ -1100,6 +1100,68 @@ int FermionOnSphereHaldaneHugeBasis::GetTargetHilbertSpaceDimension()
   return this->TargetSpace->HilbertSpaceDimension;
 }
 
+// convert a given state from Haldane basis to the usual n-body basis
+//
+// state = reference on the vector to convert
+// nbodyBasis = reference on the nbody-basis to use
+// return value = converted vector
+
+RealVector FermionOnSphereHaldaneHugeBasis::ConvertToNbodyBasis(RealVector& state, FermionOnSphereHaldaneHugeBasis& nbodyBasis)
+{
+  RealVector TmpVector (nbodyBasis.GetLargeHilbertSpaceDimension(), true);
+  for (long i = 0l; i < this->LargeHilbertSpaceDimension; ++i)
+    {
+      TmpVector[nbodyBasis.FindStateIndexFactorized(this->GetStateFactorized(i))] = state[i];
+    }
+  return TmpVector;
+}
+
+// convert a given state from the usual n-body basis to the Haldane basis
+//
+// state = reference on the vector to convert
+// nbodyBasis = reference on the nbody-basis to use
+// return value = converted vector
+
+RealVector FermionOnSphereHaldaneHugeBasis::ConvertFromNbodyBasis(RealVector& state, FermionOnSphereHaldaneHugeBasis& nbodyBasis)
+{
+  RealVector TmpVector (this->LargeHilbertSpaceDimension, true);
+  for (long i = 0l; i < this->LargeHilbertSpaceDimension; ++i)
+    TmpVector[i] = state[nbodyBasis.FindStateIndexFactorized(this->GetStateFactorized(i))];
+  TmpVector /= TmpVector.Norm();
+  return TmpVector;
+}
+
+// convert a given state from Haldane basis to the usual n-body basis
+//
+// state = reference on the vector to convert
+// nbodyBasis = reference on the nbody-basis to use
+// return value = converted vector
+
+LongRationalVector FermionOnSphereHaldaneHugeBasis::ConvertToNbodyBasis(LongRationalVector& state, FermionOnSphereHaldaneHugeBasis& nbodyBasis)
+{
+  LongRationalVector TmpVector (nbodyBasis.GetLargeHilbertSpaceDimension(), true);
+  for (long i = 0l; i < this->LargeHilbertSpaceDimension; ++i)
+    {
+      TmpVector[nbodyBasis.FindStateIndexFactorized(this->GetStateFactorized(i))] = state[i];
+    }
+  return TmpVector;
+}
+
+// convert a given state from the usual n-body basis to the Haldane basis
+//
+// state = reference on the vector to convert
+// nbodyBasis = reference on the nbody-basis to use
+// return value = converted vector
+
+LongRationalVector FermionOnSphereHaldaneHugeBasis::ConvertFromNbodyBasis(LongRationalVector& state, FermionOnSphereHaldaneHugeBasis& nbodyBasis)
+{
+  LongRationalVector TmpVector (this->LargeHilbertSpaceDimension, true);
+  for (long i = 0l; i < this->LargeHilbertSpaceDimension; ++i)
+    TmpVector[i] = state[nbodyBasis.FindStateIndexFactorized(this->GetStateFactorized(i))];
+  TmpVector /= TmpVector.Norm();
+  return TmpVector;
+}
+
 // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
 //
 // index = index of the state on which the operator has to be applied

@@ -6,9 +6,12 @@
 #include "HilbertSpace/FermionOnSphere.h"
 #include "HilbertSpace/FermionOnSphereSymmetricBasis.h"
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
+#include "HilbertSpace/FermionOnSphereHaldaneHugeBasis.h"
 #include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasis.h"
 #include "HilbertSpace/BosonOnSphereShort.h"
 #include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
+#include "HilbertSpace/BosonOnSphereHaldaneBasisLong.h"
+#include "HilbertSpace/BosonOnSphereHaldaneHugeBasisShort.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -56,6 +59,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "rational" , "use rational numbers instead of double precision floating point numbers");
   (*SystemGroup) += new BooleanOption  ('\n', "target-haldane", "target space is also a Haldane squeezed basis instead of the full n-body basis");
   (*SystemGroup) += new SingleStringOption  ('\n', "target-referencefile", "definition of the target reference state");
+  (*SystemGroup) += new BooleanOption  ('\n', "huge-basis", "use huge Hilbert space support (only available when both the source and target spaces are squeezed basis)");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the non-symmetric Haldane basis)",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "target-loadhilbert", "load the target Hilbert space description from the indicated file",0);
@@ -129,201 +134,379 @@ int main(int argc, char** argv)
       strcpy (OutputFileName + (TagPosition - InputFileName), TagPosition + 8);
     }
 
-
-  if (Statistics == true)
+  if ((Manager.GetBoolean("huge-basis") == false) && (Manager.GetBoolean("target-haldane") == true))
     {
-      int* ReferenceState = 0;
-      if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, NbrFluxQuanta, ReferenceState) == false)
-	return -1;
-      FermionOnSphereHaldaneBasis* InitialSpace;
-      if (Manager.GetString("load-hilbert") != 0)
-	InitialSpace = new FermionOnSphereHaldaneBasis(Manager.GetString("load-hilbert"));
-      else
+      if (Statistics == true)
 	{
-	  InitialSpace = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);
-	  if (Manager.GetString("save-hilbert") != 0)
+	  int* ReferenceState = 0;
+	  if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, NbrFluxQuanta, ReferenceState) == false)
+	    return -1;
+	  FermionOnSphereHaldaneHugeBasis* InitialSpace;
+	  if (Manager.GetString("load-hilbert") != 0)
 	    {
-	      InitialSpace->WriteHilbertSpace(Manager.GetString("save-hilbert"));
-	      return 0;
+	      InitialSpace = new FermionOnSphereHaldaneHugeBasis(Manager.GetString("load-hilbert"), Manager.GetInteger("memory"));
 	    }
-	}
-      FermionOnSphere* TargetSpace = 0;
-      if (Manager.GetBoolean("target-haldane") == false)
-	{
-	  TargetSpace = new FermionOnSphere (NbrParticles, TotalLz, NbrFluxQuanta);
-	}
-      else
-	{
+	  else
+	    {
+	      cout << "initial space initialization requires to use the load-hilbert option in huge mode" << endl;
+	      return -1;
+	    }
+	  FermionOnSphereHaldaneHugeBasis* TargetSpace = 0;
 	  int* TargetReferenceState = 0;
 	  if (FQHEGetRootPartition(Manager.GetString("target-referencefile"), NbrParticles, NbrFluxQuanta, TargetReferenceState) == false)
 	    return -1;
-	  if (Manager.GetString("load-hilbert") != 0)
-	    TargetSpace = new FermionOnSphereHaldaneBasis(Manager.GetString("target-loadhilbert"));
+	  if (Manager.GetString("target-loadhilbert") != 0)
+	    {
+	      TargetSpace = new FermionOnSphereHaldaneHugeBasis(Manager.GetString("target-loadhilbert"), Manager.GetInteger("memory"));
+	    }
 	  else
 	    {
-	      TargetSpace = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, NbrFluxQuanta, TargetReferenceState);
+	      cout << "target space initialization requires to use the load-hilbert option in huge mode" << endl;
 	    }
-	}
-      if (Manager.GetBoolean("rational") == false)
-	{
-	  RealVector State;
-	  if (State.ReadVector (Manager.GetString("input-file")) == false)
+	  if (Manager.GetBoolean("rational") == false)
 	    {
-	      cout << "can't open vector file " << Manager.GetString("input-file") << endl;
-	      return -1;      
+	      RealVector State;
+	      if (State.ReadVector (Manager.GetString("input-file")) == false)
+		{
+		  cout << "can't open vector file " << Manager.GetString("input-file") << endl;
+		  return -1;      
+		}
+	      if ((ReverseFlag == false) && (InitialSpace->GetHilbertSpaceDimension() != State.GetVectorDimension()))
+		{
+		  cout << "dimension mismatch between Hilbert space and input state" << endl;
+		  return -1;      
+		}
+	      if ((ReverseFlag == true) && (TargetSpace->GetHilbertSpaceDimension() != State.GetVectorDimension()))
+		{
+		  cout << "dimension mismatch between Hilbert space and input state" << endl;
+		  return -1;      
+		}	    
+	      RealVector OutputState;
+	      if (ReverseFlag == false)
+		OutputState = InitialSpace->ConvertToNbodyBasis(State, *TargetSpace);
+	      else
+		OutputState = InitialSpace->ConvertFromNbodyBasis(State, *TargetSpace);
+	      if (OutputState.WriteVector(OutputFileName) == false)
+		{
+		  cout << "error while writing output state " << OutputFileName << endl;
+		  return -1;
+		}
 	    }
-	  if ((ReverseFlag == false) && (InitialSpace->GetHilbertSpaceDimension() != State.GetVectorDimension()))
-	    {
-	      cout << "dimension mismatch between Hilbert space and input state" << endl;
-	      return -1;      
-	    }
-	  if ((ReverseFlag == true) && (TargetSpace->GetHilbertSpaceDimension() != State.GetVectorDimension()))
-	    {
-	      cout << "dimension mismatch between Hilbert space and input state" << endl;
-	      return -1;      
-	    }	    
-	  RealVector OutputState;
-	  if (ReverseFlag == false)
-	    OutputState = InitialSpace->ConvertToNbodyBasis(State, *TargetSpace);
 	  else
-	    OutputState = InitialSpace->ConvertFromNbodyBasis(State, *TargetSpace);
-	  if (OutputState.WriteVector(OutputFileName) == false)
 	    {
-	      cout << "error while writing output state " << OutputFileName << endl;
-	      return -1;
+	      LongRationalVector State;
+	      if (State.ReadVector (Manager.GetString("input-file")) == false)
+		{
+		  cout << "can't open vector file " << Manager.GetString("input-file") << endl;
+		  return -1;      
+		}
+	      if ((ReverseFlag == false) && (InitialSpace->GetHilbertSpaceDimension() != State.GetVectorDimension()))
+		{
+		  cout << "dimension mismatch between Hilbert space and input state" << endl;
+		  return -1;      
+		}
+	      if ((ReverseFlag == true) && (TargetSpace->GetHilbertSpaceDimension() != State.GetVectorDimension()))
+		{
+		  cout << "dimension mismatch between Hilbert space and input state" << endl;
+		  return -1;      
+		}	    
+	      LongRationalVector OutputState;
+	      if (ReverseFlag == false)
+		OutputState = InitialSpace->ConvertToNbodyBasis(State, *TargetSpace);
+	      else
+		OutputState = InitialSpace->ConvertFromNbodyBasis(State, *TargetSpace);
+	      if (OutputState.WriteVector(OutputFileName) == false)
+		{
+		  cout << "error while writing output state " << OutputFileName << endl;
+		  return -1;
+		}
 	    }
+	  delete InitialSpace;
 	}
       else
 	{
-	  LongRationalVector State;
-	  if (State.ReadVector (Manager.GetString("input-file")) == false)
+	  int* ReferenceState = 0;
+	  if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, NbrFluxQuanta, ReferenceState) == false)
+	    return -1;
+	  BosonOnSphereHaldaneHugeBasisShort* InitialSpace;
+	  if (Manager.GetString("load-hilbert") != 0)
 	    {
-	      cout << "can't open vector file " << Manager.GetString("input-file") << endl;
-	      return -1;      
+	      InitialSpace = new BosonOnSphereHaldaneHugeBasisShort(Manager.GetString("load-hilbert"), Manager.GetInteger("memory"));
 	    }
-	  if ((ReverseFlag == false) && (InitialSpace->GetHilbertSpaceDimension() != State.GetVectorDimension()))
-	    {
-	      cout << "dimension mismatch between Hilbert space and input state" << endl;
-	      return -1;      
-	    }
-	  if ((ReverseFlag == true) && (TargetSpace->GetHilbertSpaceDimension() != State.GetVectorDimension()))
-	    {
-	      cout << "dimension mismatch between Hilbert space and input state" << endl;
-	      return -1;      
-	    }	    
-	  LongRationalVector OutputState;
-	  if (ReverseFlag == false)
-	    OutputState = InitialSpace->ConvertToNbodyBasis(State, *TargetSpace);
 	  else
-	    OutputState = InitialSpace->ConvertFromNbodyBasis(State, *TargetSpace);
-	  if (OutputState.WriteVector(OutputFileName) == false)
 	    {
-	      cout << "error while writing output state " << OutputFileName << endl;
-	      return -1;
+	      cout << "initial space initialization requires to use the load-hilbert option in huge mode" << endl;
 	    }
+	  BosonOnSphereHaldaneHugeBasisShort* TargetSpace = 0;
+	  int* TargetReferenceState = 0;
+	  if (FQHEGetRootPartition(Manager.GetString("target-referencefile"), NbrParticles, NbrFluxQuanta, TargetReferenceState) == false)
+	    return -1;
+	  if (Manager.GetString("target-loadhilbert") != 0)
+	    {
+	      TargetSpace = new BosonOnSphereHaldaneHugeBasisShort(Manager.GetString("target-loadhilbert"), Manager.GetInteger("memory"));
+	    }
+	  else
+	    {
+	      cout << "target space initialization requires to use the load-hilbert option in huge mode" << endl;
+	    }
+	  if (Manager.GetBoolean("rational") == false)
+	    {
+	      RealVector State;
+	      if (State.ReadVector (Manager.GetString("input-file")) == false)
+		{
+		  cout << "can't open vector file " << Manager.GetString("input-file") << endl;
+		  return -1;      
+		}
+	      if ((ReverseFlag == false) && (InitialSpace->GetHilbertSpaceDimension() != State.GetVectorDimension()))
+		{
+		  cout << "dimension mismatch between Hilbert space and input state" << endl;
+		  return -1;      
+		}
+	      if ((ReverseFlag == true) && (TargetSpace->GetHilbertSpaceDimension() != State.GetVectorDimension()))
+		{
+		  cout << "dimension mismatch between Hilbert space and input state" << endl;
+		  return -1;      
+		}	    
+	      RealVector OutputState;
+	      if (ReverseFlag == false)
+		OutputState = InitialSpace->ConvertToNbodyBasis(State, *TargetSpace);
+	      else
+		OutputState = InitialSpace->ConvertFromNbodyBasis(State, *TargetSpace);
+	      if (OutputState.WriteVector(OutputFileName) == false)
+		{
+		  cout << "error while writing output state " << OutputFileName << endl;
+		  return -1;
+		}
+	    }
+	  else
+	    {
+	      LongRationalVector State;
+	      if (State.ReadVector (Manager.GetString("input-file")) == false)
+		{
+		  cout << "can't open vector file " << Manager.GetString("input-file") << endl;
+		  return -1;      
+		}
+	      if ((ReverseFlag == false) && (InitialSpace->GetHilbertSpaceDimension() != State.GetVectorDimension()))
+		{
+		  cout << "dimension mismatch between Hilbert space and input state" << endl;
+		  return -1;      
+		}
+	      if ((ReverseFlag == true) && (TargetSpace->GetHilbertSpaceDimension() != State.GetVectorDimension()))
+		{
+		  cout << "dimension mismatch between Hilbert space and input state" << endl;
+		  return -1;      
+		}	    
+	      LongRationalVector OutputState;
+	      if (ReverseFlag == false)
+		OutputState = InitialSpace->ConvertToNbodyBasis(State, *TargetSpace);
+	      else
+		OutputState = InitialSpace->ConvertFromNbodyBasis(State, *TargetSpace);
+	      if (OutputState.WriteVector(OutputFileName) == false)
+		{
+		  cout << "error while writing output state " << OutputFileName << endl;
+		  return -1;
+		}
+	    }
+	  delete InitialSpace;
 	}
-      delete InitialSpace;
     }
   else
     {
-     int* ReferenceState = 0;
-     if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, NbrFluxQuanta, ReferenceState) == false)
-       return -1;
+      if (Statistics == true)
+	{
+	  int* ReferenceState = 0;
+	  if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, NbrFluxQuanta, ReferenceState) == false)
+	    return -1;
+	  FermionOnSphereHaldaneBasis* InitialSpace;
+	  if (Manager.GetString("load-hilbert") != 0)
+	    InitialSpace = new FermionOnSphereHaldaneBasis(Manager.GetString("load-hilbert"));
+	  else
+	    {
+	      InitialSpace = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);
+	      if (Manager.GetString("save-hilbert") != 0)
+		{
+		  InitialSpace->WriteHilbertSpace(Manager.GetString("save-hilbert"));
+		  return 0;
+		}
+	    }
+	  FermionOnSphere* TargetSpace = 0;
+	  if (Manager.GetBoolean("target-haldane") == false)
+	    {
+	      TargetSpace = new FermionOnSphere (NbrParticles, TotalLz, NbrFluxQuanta);
+	    }
+	  else
+	    {
+	      int* TargetReferenceState = 0;
+	      if (FQHEGetRootPartition(Manager.GetString("target-referencefile"), NbrParticles, NbrFluxQuanta, TargetReferenceState) == false)
+		return -1;
+	      if (Manager.GetString("load-hilbert") != 0)
+		TargetSpace = new FermionOnSphereHaldaneBasis(Manager.GetString("target-loadhilbert"));
+	      else
+		{
+		  TargetSpace = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, NbrFluxQuanta, TargetReferenceState);
+		}
+	    }
+	  if (Manager.GetBoolean("rational") == false)
+	    {
+	      RealVector State;
+	      if (State.ReadVector (Manager.GetString("input-file")) == false)
+		{
+		  cout << "can't open vector file " << Manager.GetString("input-file") << endl;
+		  return -1;      
+		}
+	      if ((ReverseFlag == false) && (InitialSpace->GetHilbertSpaceDimension() != State.GetVectorDimension()))
+		{
+		  cout << "dimension mismatch between Hilbert space and input state" << endl;
+		  return -1;      
+		}
+	      if ((ReverseFlag == true) && (TargetSpace->GetHilbertSpaceDimension() != State.GetVectorDimension()))
+		{
+		  cout << "dimension mismatch between Hilbert space and input state" << endl;
+		  return -1;      
+		}	    
+	      RealVector OutputState;
+	      if (ReverseFlag == false)
+		OutputState = InitialSpace->ConvertToNbodyBasis(State, *TargetSpace);
+	      else
+		OutputState = InitialSpace->ConvertFromNbodyBasis(State, *TargetSpace);
+	      if (OutputState.WriteVector(OutputFileName) == false)
+		{
+		  cout << "error while writing output state " << OutputFileName << endl;
+		  return -1;
+		}
+	    }
+	  else
+	    {
+	      LongRationalVector State;
+	      if (State.ReadVector (Manager.GetString("input-file")) == false)
+		{
+		  cout << "can't open vector file " << Manager.GetString("input-file") << endl;
+		  return -1;      
+		}
+	      if ((ReverseFlag == false) && (InitialSpace->GetHilbertSpaceDimension() != State.GetVectorDimension()))
+		{
+		  cout << "dimension mismatch between Hilbert space and input state" << endl;
+		  return -1;      
+		}
+	      if ((ReverseFlag == true) && (TargetSpace->GetHilbertSpaceDimension() != State.GetVectorDimension()))
+		{
+		  cout << "dimension mismatch between Hilbert space and input state" << endl;
+		  return -1;      
+		}	    
+	      LongRationalVector OutputState;
+	      if (ReverseFlag == false)
+		OutputState = InitialSpace->ConvertToNbodyBasis(State, *TargetSpace);
+	      else
+		OutputState = InitialSpace->ConvertFromNbodyBasis(State, *TargetSpace);
+	      if (OutputState.WriteVector(OutputFileName) == false)
+		{
+		  cout << "error while writing output state " << OutputFileName << endl;
+		  return -1;
+		}
+	    }
+	  delete InitialSpace;
+	}
+      else
+	{
+	  int* ReferenceState = 0;
+	  if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, NbrFluxQuanta, ReferenceState) == false)
+	    return -1;
 #ifdef  __64_BITS__
-     if ((NbrFluxQuanta + NbrParticles - 1) < 63)
+	  if ((NbrFluxQuanta + NbrParticles - 1) < 63)
 #else
-       if ((NbrFluxQuanta + NbrParticles - 1) < 31)	
+	    if ((NbrFluxQuanta + NbrParticles - 1) < 31)	
 #endif
-	 {
-	   BosonOnSphereHaldaneBasisShort *InitialSpace;
-	   if (Manager.GetString("load-hilbert") != 0)
-	     InitialSpace = new BosonOnSphereHaldaneBasisShort(Manager.GetString("load-hilbert"));
-	   else
-	     {
-	       InitialSpace = new BosonOnSphereHaldaneBasisShort(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);	  
-	       if (Manager.GetString("save-hilbert") != 0)
-		 {
-		   InitialSpace->WriteHilbertSpace(Manager.GetString("save-hilbert"));
-		   return 0;
-		 }
-	     }
-	   BosonOnSphereShort* TargetSpace;
-	   if (Manager.GetBoolean("target-haldane") == false)
-	     {
-	       TargetSpace = new BosonOnSphereShort(NbrParticles, TotalLz, NbrFluxQuanta);
-	     }
-	   else
-	     {
-	       int* TargetReferenceState = 0;
-	       if (FQHEGetRootPartition(Manager.GetString("target-referencefile"), NbrParticles, NbrFluxQuanta, TargetReferenceState) == false)
-		 return -1;
-	       if (Manager.GetString("load-hilbert") != 0)
-		 TargetSpace = new BosonOnSphereHaldaneBasisShort(Manager.GetString("target-loadhilbert"));
-	       else
-		 {
-		   TargetSpace = new BosonOnSphereHaldaneBasisShort(NbrParticles, TotalLz, NbrFluxQuanta, TargetReferenceState);
-		 }
-	     }
-	   if (Manager.GetBoolean("rational") == false)
-	     {
-	       RealVector State;
-	       if (State.ReadVector (Manager.GetString("input-file")) == false)
-		 {
-		   cout << "can't open vector file " << Manager.GetString("input-file") << endl;
-		   return -1;      
-		 }
-	       if ((ReverseFlag == false) && (InitialSpace->GetHilbertSpaceDimension() != State.GetVectorDimension()))
-		 {
-		   cout << "dimension mismatch between Hilbert space and input state" << endl;
-		   return -1;      
-		 }
-	       if ((ReverseFlag == true) && (TargetSpace->GetHilbertSpaceDimension() != State.GetVectorDimension()))
-		 {
-		   cout << "dimension mismatch between Hilbert space and input state" << endl;
-		   return -1;      
-		 }	    
-	       RealVector OutputState;
-	       if (ReverseFlag == false)
-		 OutputState = InitialSpace->ConvertToNbodyBasis(State, *TargetSpace);
-	       else
-		 OutputState = InitialSpace->ConvertFromNbodyBasis(State, *TargetSpace);
-	       if (OutputState.WriteVector(OutputFileName) == false)
-		 {
-		   cout << "error while writing output state " << OutputFileName << endl;
-		   return -1;
-		 }
-	     }
-	   else
-	     {
-	       LongRationalVector State;
-	       if (State.ReadVector (Manager.GetString("input-file")) == false)
-		 {
-		   cout << "can't open vector file " << Manager.GetString("input-file") << endl;
-		   return -1;      
-		 }
-	       if ((ReverseFlag == false) && (InitialSpace->GetHilbertSpaceDimension() != State.GetVectorDimension()))
-		 {
-		   cout << "dimension mismatch between Hilbert space and input state" << endl;
-		   return -1;      
-		 }
-	       if ((ReverseFlag == true) && (TargetSpace->GetHilbertSpaceDimension() != State.GetVectorDimension()))
-		 {
-		   cout << "dimension mismatch between Hilbert space and input state" << endl;
-		   return -1;      
-		 }	    
-	       LongRationalVector OutputState;
-	       if (ReverseFlag == false)
-		 OutputState = InitialSpace->ConvertToNbodyBasis(State, *TargetSpace);
-	       else
-		 OutputState = InitialSpace->ConvertFromNbodyBasis(State, *TargetSpace);
-	       if (OutputState.WriteVector(OutputFileName) == false)
-		 {
-		   cout << "error while writing output state " << OutputFileName << endl;
-		   return -1;
-		 }
-	     }
-	   delete InitialSpace;
-	 }
+	      {
+		BosonOnSphereHaldaneBasisShort *InitialSpace;
+		if (Manager.GetString("load-hilbert") != 0)
+		  InitialSpace = new BosonOnSphereHaldaneBasisShort(Manager.GetString("load-hilbert"));
+		else
+		  {
+		    InitialSpace = new BosonOnSphereHaldaneBasisShort(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);	  
+		    if (Manager.GetString("save-hilbert") != 0)
+		      {
+			InitialSpace->WriteHilbertSpace(Manager.GetString("save-hilbert"));
+			return 0;
+		      }
+		  }
+		BosonOnSphereShort* TargetSpace;
+		if (Manager.GetBoolean("target-haldane") == false)
+		  {
+		    TargetSpace = new BosonOnSphereShort(NbrParticles, TotalLz, NbrFluxQuanta);
+		  }
+		else
+		  {
+		    int* TargetReferenceState = 0;
+		    if (FQHEGetRootPartition(Manager.GetString("target-referencefile"), NbrParticles, NbrFluxQuanta, TargetReferenceState) == false)
+		      return -1;
+		    if (Manager.GetString("load-hilbert") != 0)
+		      TargetSpace = new BosonOnSphereHaldaneBasisShort(Manager.GetString("target-loadhilbert"));
+		    else
+		      {
+			TargetSpace = new BosonOnSphereHaldaneBasisShort(NbrParticles, TotalLz, NbrFluxQuanta, TargetReferenceState);
+		      }
+		  }
+		if (Manager.GetBoolean("rational") == false)
+		  {
+		    RealVector State;
+		    if (State.ReadVector (Manager.GetString("input-file")) == false)
+		      {
+			cout << "can't open vector file " << Manager.GetString("input-file") << endl;
+			return -1;      
+		      }
+		    if ((ReverseFlag == false) && (InitialSpace->GetHilbertSpaceDimension() != State.GetVectorDimension()))
+		      {
+			cout << "dimension mismatch between Hilbert space and input state" << endl;
+			return -1;      
+		      }
+		    if ((ReverseFlag == true) && (TargetSpace->GetHilbertSpaceDimension() != State.GetVectorDimension()))
+		      {
+			cout << "dimension mismatch between Hilbert space and input state" << endl;
+			return -1;      
+		      }	    
+		    RealVector OutputState;
+		    if (ReverseFlag == false)
+		      OutputState = InitialSpace->ConvertToNbodyBasis(State, *TargetSpace);
+		    else
+		      OutputState = InitialSpace->ConvertFromNbodyBasis(State, *TargetSpace);
+		    if (OutputState.WriteVector(OutputFileName) == false)
+		      {
+			cout << "error while writing output state " << OutputFileName << endl;
+			return -1;
+		      }
+		  }
+		else
+		  {
+		    LongRationalVector State;
+		    if (State.ReadVector (Manager.GetString("input-file")) == false)
+		      {
+			cout << "can't open vector file " << Manager.GetString("input-file") << endl;
+			return -1;      
+		      }
+		    if ((ReverseFlag == false) && (InitialSpace->GetHilbertSpaceDimension() != State.GetVectorDimension()))
+		      {
+			cout << "dimension mismatch between Hilbert space and input state" << endl;
+			return -1;      
+		      }
+		    if ((ReverseFlag == true) && (TargetSpace->GetHilbertSpaceDimension() != State.GetVectorDimension()))
+		      {
+			cout << "dimension mismatch between Hilbert space and input state" << endl;
+			return -1;      
+		      }	    
+		    LongRationalVector OutputState;
+		    if (ReverseFlag == false)
+		      OutputState = InitialSpace->ConvertToNbodyBasis(State, *TargetSpace);
+		    else
+		      OutputState = InitialSpace->ConvertFromNbodyBasis(State, *TargetSpace);
+		    if (OutputState.WriteVector(OutputFileName) == false)
+		      {
+			cout << "error while writing output state " << OutputFileName << endl;
+			return -1;
+		      }
+		  }
+		delete InitialSpace;
+	      }
+	}
    }
 }
 
