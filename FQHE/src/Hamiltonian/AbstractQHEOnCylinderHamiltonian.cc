@@ -215,6 +215,12 @@ ComplexVector& AbstractQHEOnCylinderHamiltonian::LowLevelAddMultiply(ComplexVect
 	    vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
 	  vDestination[i] += this->EnergyShift * vSource[i];
 	}
+
+      if (this->OneBodyInteractionFactors != 0)
+        for (int i = firstComponent; i < LastComponent; ++i)
+	    for (int j = 0; j <= this->MaxMomentum; ++j) 
+		vDestination[i] += this->OneBodyInteractionFactors[j] * TmpParticles->AdA(i, j) * vSource[i];
+
       delete TmpParticles;
     }
   else
@@ -225,6 +231,7 @@ ComplexVector& AbstractQHEOnCylinderHamiltonian::LowLevelAddMultiply(ComplexVect
 	  Complex* TmpCoefficientArray; 
 	  int j;
 	  int TmpNbrInteraction;
+          ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
 	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
 	      TmpNbrInteraction = this->NbrInteractionPerComponent[i];
@@ -234,6 +241,12 @@ ComplexVector& AbstractQHEOnCylinderHamiltonian::LowLevelAddMultiply(ComplexVect
 		vDestination[TmpIndexArray[j]] +=  TmpCoefficientArray[j] * vSource[i];
 	      vDestination[i] += Shift * vSource[i];
 	    }
+        
+          if (this->OneBodyInteractionFactors != 0)
+           for (int i = firstComponent; i < LastComponent; ++i)
+	     for (int j = 0; j <= this->MaxMomentum; ++j) 
+		vDestination[i] += this->OneBodyInteractionFactors[j] * TmpParticles->AdA(i, j) * vSource[i];
+          delete TmpParticles;
 	}
       else
 	{
@@ -243,6 +256,7 @@ ComplexVector& AbstractQHEOnCylinderHamiltonian::LowLevelAddMultiply(ComplexVect
 	  int TmpNbrInteraction;
 	  int Pos = firstComponent / this->FastMultiplicationStep; 
 	  int PosMod = firstComponent % this->FastMultiplicationStep;
+	  ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
 	  if (PosMod != 0)
 	    {
 	      ++Pos;
@@ -258,6 +272,11 @@ ComplexVector& AbstractQHEOnCylinderHamiltonian::LowLevelAddMultiply(ComplexVect
 	      vDestination[i] += Shift * vSource[i];
 	      ++Pos;
 	    }
+           if (this->OneBodyInteractionFactors != 0)
+            for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
+	     for (int j = 0; j <= this->MaxMomentum; ++j) 
+	       vDestination[i] += this->OneBodyInteractionFactors[j] * TmpParticles->AdA(i, j) * vSource[i];
+
 	  int Index;
 	  int m1;
 	  int m2;
@@ -265,7 +284,7 @@ ComplexVector& AbstractQHEOnCylinderHamiltonian::LowLevelAddMultiply(ComplexVect
 	  int m4;
 	  Complex TmpInteraction;
 	  int ReducedNbrInteractionFactors = this->NbrInteractionFactors - 1;
-	  ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
+
 	  for (int k = 0; k < this->FastMultiplicationStep; ++k)
 	    if (PosMod != k)
 	      {		
@@ -288,7 +307,6 @@ ComplexVector& AbstractQHEOnCylinderHamiltonian::LowLevelAddMultiply(ComplexVect
 		m3 = this->M3Value[ReducedNbrInteractionFactors];
 		m4 = this->M4Value[ReducedNbrInteractionFactors];
 		TmpInteraction = this->InteractionFactors[ReducedNbrInteractionFactors];
-		//m4 = m1 + m2 - m3;
 		for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
 		  {
 		    Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
@@ -296,6 +314,10 @@ ComplexVector& AbstractQHEOnCylinderHamiltonian::LowLevelAddMultiply(ComplexVect
 		      vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
 		    vDestination[i] += this->EnergyShift * vSource[i];
 		  }
+                if (this->OneBodyInteractionFactors != 0)
+                 for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
+	          for (int j = 0; j <= this->MaxMomentum; ++j) 
+		     vDestination[i] += this->OneBodyInteractionFactors[j] * TmpParticles->AdA(i, j) * vSource[i];
 	      }
 	  delete TmpParticles;
 	}

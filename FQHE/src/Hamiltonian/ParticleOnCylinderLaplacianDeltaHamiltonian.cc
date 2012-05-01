@@ -66,7 +66,7 @@ using std::ostream;
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
 ParticleOnCylinderLaplacianDeltaHamiltonian::ParticleOnCylinderLaplacianDeltaHamiltonian(ParticleOnSphere* particles, int nbrParticles, int maxMomentum,
-										   double ratio, AbstractArchitecture* architecture, long memory, char* precalculationFileName)
+										   double ratio, double electricFieldParameter, double bFieldParameter, AbstractArchitecture* architecture, long memory, char* precalculationFileName)
 {
   this->Particles = particles;
   this->MaxMomentum = maxMomentum;
@@ -78,6 +78,23 @@ ParticleOnCylinderLaplacianDeltaHamiltonian::ParticleOnCylinderLaplacianDeltaHam
   this->Architecture = architecture;
   this->EvaluateInteractionFactors();
   this->EnergyShift = 0.0;
+  this->ElectricField = electricFieldParameter;
+  this->MagneticField = bFieldParameter;
+
+  this->OneBodyInteractionFactors = 0;
+  if (this->ElectricField != 0)
+    {
+      this->OneBodyInteractionFactors = new Complex [this->NbrLzValue];
+      Complex Factor;
+      double kappa = sqrt(2.0 * M_PI /(this->NbrLzValue * this->Ratio));
+      for (int i = 0; i < this->NbrLzValue; ++i)
+        { 
+           Factor.Re = 0.194 * sqrt(this->MagneticField) * ((this->ElectricField/(1.0 + this->ElectricField)) * kappa * kappa * ((double)i - 0.5 * this->MaxMomentum) * ((double)i - 0.5 * this->MaxMomentum)); 
+           Factor.Im = 0.0;
+	   this->OneBodyInteractionFactors[i] = Factor;
+        }
+    }
+
   if (precalculationFileName == 0)
     {
       if (memory > 0)
@@ -113,6 +130,10 @@ ParticleOnCylinderLaplacianDeltaHamiltonian::~ParticleOnCylinderLaplacianDeltaHa
   delete[] this->M2Value;
   delete[] this->M3Value;
   delete[] this->M4Value;
+
+  if (this->OneBodyInteractionFactors != 0)
+    delete[] this->OneBodyInteractionFactors;
+
   if (this->FastMultiplicationFlag == true)
     {
       int ReducedDim = this->Particles->GetHilbertSpaceDimension() / this->FastMultiplicationStep;
@@ -323,9 +344,18 @@ Complex ParticleOnCylinderLaplacianDeltaHamiltonian::EvaluateInteractionCoeffici
 
   Complex Coefficient(0,0);
 
-  Coefficient.Re = exp(-0.5*pow(Xm1-Xm3,2.0)-0.5*pow(Xm1-Xm4,2.0)) * (pow(Xm1-Xm3,2.0)-pow(Xm1-Xm4,2.0)-1.0);
-  Coefficient.Im = 0.0;
-
-  return (Coefficient/sqrt(this->Ratio * this->NbrLzValue));
+  if (this->ElectricField == 0)
+   {
+     Coefficient.Re = exp(-0.5*pow(Xm1-Xm3,2.0)-0.5*pow(Xm1-Xm4,2.0)) * (pow(Xm1-Xm3,2.0)-pow(Xm1-Xm4,2.0)-1.0);
+     Coefficient.Im = 0.0;
+     return (Coefficient/sqrt(this->Ratio * this->NbrLzValue));
+   }
+  else
+   {
+     double alpha = sqrt(1.0 + this->ElectricField);
+     Coefficient.Re = exp(-pow(Xm1-Xm3,2.0)/(2.0*pow(alpha,3.0))-pow(Xm1-Xm4,2.0)/(2.0 * pow(alpha,3.0))) * (pow(Xm1-Xm3,2.0)-alpha*alpha*pow(Xm1-Xm4,2.0)+alpha*alpha-alpha*alpha*alpha);
+     Coefficient.Im = 0.0;
+     return (Coefficient/sqrt(this->Ratio * this->NbrLzValue * alpha * alpha * alpha));
+   }
 }
 

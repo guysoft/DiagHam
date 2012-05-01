@@ -68,10 +68,13 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
 
   (*SystemGroup) += new SingleIntegerOption ('p', "nbr-particles", "number of particles", 6);
-  (*SystemGroup) += new SingleIntegerOption ('l', "max-momentum", "maximum momentum for a single particle (total l+1 orbitals, from -l/2 to l/2)", 18);
+  (*SystemGroup) += new SingleIntegerOption ('l', "max-momentum", "maximum momentum for a single particle (total l+1 orbitals, from -l/2 to l/2)", 15);
   (*SystemGroup) += new SingleIntegerOption ('y', "ky-momentum", "constraint on the total momentum along y-axis (negative if none)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-ky", "number of Ky values to evaluate", -1);
-  (*SystemGroup) += new SingleDoubleOption ('r', "ratio", "ratio between the height and length of the cylinder (L^2=2pi r N_{orb})", 1.0);
+  (*SystemGroup) += new SingleDoubleOption ('r', "ratio", "ratio between the height and length of the cylinder (LH=2pi r N_{orb})", 1.0);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "electric-field", "parameter for the value of the electric field applied along the cylinder (a=eEl_B^2/hbar omega_c", 0.0);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "b-field", "parameter for the value of the magnetic field [in T] when also the electric field is present (needed to set the scale for the kinetic term)", 0.0);
+  (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "delta");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
@@ -104,13 +107,24 @@ int main(int argc, char** argv)
   int MaxMomentum = ((SingleIntegerOption*) Manager["max-momentum"])->GetInteger();
   int Momentum = ((SingleIntegerOption*) Manager["ky-momentum"])->GetInteger();
   int NbrKy = Manager.GetInteger("nbr-ky");
-
   double XRatio = ((SingleDoubleOption*) Manager["ratio"])->GetDouble();
+
+  double ElectricFieldParameter = ((SingleDoubleOption*) Manager["electric-field"])->GetDouble();
+  double BFieldParameter = ((SingleDoubleOption*) Manager["b-field"])->GetDouble();
+  if (ElectricFieldParameter != 0)
+   {
+      cout << "Electric field is applied along the cylinder with magnitude a=eEl_B^2/hbar omega_c = " << ElectricFieldParameter << endl;
+      cout << "The energies are given in units e^2/epsilon l_B, but there is a kinetic term " << endl;
+      cout << "K= (hbar omega_c/2/e^2/epsilon l_B) [sqrt(1+a) Ne + \sum_m a/(1+a) (2pi m/L)^2 l_B^2 c_m^+ c_m] " << endl;
+      cout << "The code sets (hbar omega_c/2/e^2/epsilon l_B) = 0.194 \sqrt{B[T]} " << endl;  
+      cout << "and neglects the term sqrt(1+a)N_e (overall constant)." << endl;
+   }
+
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
   bool FirstRun = true;
   
   char* OutputNameLz = new char [256];
-  sprintf (OutputNameLz, "fermions_cylinder_ky_delta_n_%d_2s_%d_ratio_%f.dat", NbrParticles, MaxMomentum, XRatio);
+  sprintf (OutputNameLz, "fermions_cylinder_ky_%s_n_%d_2s_%d_ratio_%f.dat", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, XRatio);
   ofstream File;
   File.open(OutputNameLz, ios::binary | ios::out);
   File.precision(14);
@@ -162,7 +176,7 @@ int main(int argc, char** argv)
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
 
-      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnCylinderLaplacianDeltaHamiltonian (Space, NbrParticles, MaxMomentum, XRatio, Architecture.GetArchitecture(), Memory);
+      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnCylinderLaplacianDeltaHamiltonian (Space, NbrParticles, MaxMomentum, XRatio, ElectricFieldParameter, BFieldParameter, Architecture.GetArchitecture(), Memory);
 
       double Shift = -10.0;
       Hamiltonian->ShiftHamiltonian(Shift);
@@ -170,7 +184,7 @@ int main(int argc, char** argv)
       if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
 	{
 	  EigenvectorName = new char [256];
-	  sprintf (EigenvectorName, "fermions_cylinder_delta_n_%d_2s_%d_ratio_%f_ky_%d", NbrParticles, MaxMomentum, XRatio, Ky);
+	  sprintf (EigenvectorName, "fermions_cylinder_%s_n_%d_2s_%d_ratio_%f_ky_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, XRatio, Ky);
 	}
       FQHEOnTorusMainTask Task (&Manager, Space, &Lanczos, Hamiltonian, Ky, Shift, OutputNameLz, FirstRun, EigenvectorName);
       Task.SetKxValue(-1);

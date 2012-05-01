@@ -72,6 +72,12 @@ class AbstractQHEOnCylinderHamiltonian : public AbstractQHEHamiltonian
   // number of Lz values in a state
   int NbrLzValue;
 
+  //parameter for the electric field
+  double ElectricField;
+
+  //parameter for the magnetic field (needed when electric field is nonzero)
+  double MagneticField;
+
   // array containing all interaction factors 
   Complex* InteractionFactors;
   // number of interaction factors
@@ -82,6 +88,9 @@ class AbstractQHEOnCylinderHamiltonian : public AbstractQHEHamiltonian
   int* M3Value;
   int* M4Value;
 
+  // array that contains all one-body interaction factors
+  Complex* OneBodyInteractionFactors;
+  
   // flag for fast multiplication algorithm
   bool FastMultiplicationFlag;
   // step between each precalculated index
