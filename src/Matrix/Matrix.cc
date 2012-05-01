@@ -291,6 +291,45 @@ ostream& operator << (ostream& str, const Matrix& matrix)
 
 // write matrix in a file 
 //
+// file = reference on the output file stream
+// return value = true if no error occurs
+
+bool Matrix::WriteMatrix (ofstream& file)
+{
+  if ((this->MatrixType & Matrix::RealElements) == Matrix::RealElements)
+    {
+      int TmpType = Matrix::RealElements;
+      WriteLittleEndian(file, TmpType);
+      WriteLittleEndian(file, this->NbrRow);
+      WriteLittleEndian(file, this->NbrColumn);
+      double Tmp;
+      for (int i = 0; i < this->NbrRow; ++i)
+	for (int j = 0; j < this->NbrColumn; ++j)
+	  {
+	    this->GetMatrixElement(i, j, Tmp);
+	    WriteLittleEndian(file, Tmp);
+	  }
+    }
+  else
+    {
+      int TmpType = Matrix::ComplexElements;
+      WriteLittleEndian(file, TmpType);
+      WriteLittleEndian(file, this->NbrRow);
+      WriteLittleEndian(file, this->NbrColumn);
+      Complex Tmp;
+      for (int i = 0; i < this->NbrRow; ++i)
+	for (int j = 0; j < this->NbrColumn; ++j)
+	  {
+	    this->GetMatrixElement(i, j, Tmp);
+	    WriteLittleEndian(file, Tmp.Re);
+	    WriteLittleEndian(file, Tmp.Im);
+	  }
+    }
+  return true;
+}
+
+// write matrix in a file 
+//
 // fileName = name of the file where the matrix has to be stored
 // return value = true if no error occurs
 
@@ -298,35 +337,7 @@ bool Matrix::WriteMatrix (char* fileName)
 {
   ofstream File;
   File.open(fileName, ios::binary | ios::out);
-  if ((this->MatrixType & Matrix::RealElements) == Matrix::RealElements)
-    {
-      int TmpType = Matrix::RealElements;
-      WriteLittleEndian(File, TmpType);
-      WriteLittleEndian(File, this->NbrRow);
-      WriteLittleEndian(File, this->NbrColumn);
-      double Tmp;
-      for (int i = 0; i < this->NbrRow; ++i)
-	for (int j = 0; j < this->NbrColumn; ++j)
-	  {
-	    this->GetMatrixElement(i, j, Tmp);
-	    WriteLittleEndian(File, Tmp);
-	  }
-    }
-  else
-    {
-      int TmpType = Matrix::ComplexElements;
-      WriteLittleEndian(File, TmpType);
-      WriteLittleEndian(File, this->NbrRow);
-      WriteLittleEndian(File, this->NbrColumn);
-      Complex Tmp;
-      for (int i = 0; i < this->NbrRow; ++i)
-	for (int j = 0; j < this->NbrColumn; ++j)
-	  {
-	    this->GetMatrixElement(i, j, Tmp);
-	    WriteLittleEndian(File, Tmp.Re);
-	    WriteLittleEndian(File, Tmp.Im);
-	  }
-    }
+  this->WriteMatrix(File);
   File.close();
   return true;
 }
@@ -377,6 +388,54 @@ bool Matrix::WriteAsciiMatrix (char* fileName)
 
 // read matrix from a file 
 //
+// file = reference  on the input file stream
+// return value = true if no error occurs
+
+bool Matrix::ReadMatrix (ifstream& file)
+{
+  int TmpType = Matrix::RealElements;
+  file.read ((char*) &(TmpType), sizeof(int));
+  if (((this->MatrixType & TmpType & Matrix::RealElements) == 0) && ((this->MatrixType & TmpType & Matrix::ComplexElements) == 0))
+    {
+      file.close();
+      return false;
+    }
+  if ((this->MatrixType & Matrix::RealElements) == Matrix::RealElements)
+    {
+      int TmpNbrRow;
+      int TmpNbrColumn;
+      ReadLittleEndian(file, TmpNbrRow);
+      ReadLittleEndian(file, TmpNbrColumn);
+      this->Resize(TmpNbrRow, TmpNbrColumn);
+      double Tmp;
+      for (int i = 0; i < this->NbrRow; ++i)
+	for (int j = 0; j < this->NbrColumn; ++j)
+	  {
+	    ReadLittleEndian(file, Tmp);
+	    this->SetMatrixElement(i, j, Tmp);
+	  }
+    }
+  else
+    {
+      int TmpNbrRow;
+      int TmpNbrColumn;
+      ReadLittleEndian(file, TmpNbrRow);
+      ReadLittleEndian(file, TmpNbrColumn);
+      this->Resize(TmpNbrRow, TmpNbrColumn);
+      Complex Tmp;
+      for (int i = 0; i < this->NbrRow; ++i)
+	for (int j = 0; j < this->NbrColumn; ++j)
+	  {
+	    ReadLittleEndian(file, Tmp.Re);
+	    ReadLittleEndian(file, Tmp.Im);
+	    this->SetMatrixElement(i, j, Tmp);
+	  }
+    }
+  return true;
+}
+
+// read matrix from a file 
+//
 // fileName = name of the file where the matrix has to be read
 // return value = true if no error occurs
 
@@ -389,44 +448,7 @@ bool Matrix::ReadMatrix (char* fileName)
       cout << "Cannot open the file: " << fileName << endl;
       return false;
     }
-  int TmpType = Matrix::RealElements;
-  File.read ((char*) &(TmpType), sizeof(int));
-  if (((this->MatrixType & TmpType & Matrix::RealElements) == 0) && ((this->MatrixType & TmpType & Matrix::ComplexElements) == 0))
-    {
-      File.close();
-      return false;
-    }
-  if ((this->MatrixType & Matrix::RealElements) == Matrix::RealElements)
-    {
-      int TmpNbrRow;
-      int TmpNbrColumn;
-      ReadLittleEndian(File, TmpNbrRow);
-      ReadLittleEndian(File, TmpNbrColumn);
-      this->Resize(TmpNbrRow, TmpNbrColumn);
-      double Tmp;
-      for (int i = 0; i < this->NbrRow; ++i)
-	for (int j = 0; j < this->NbrColumn; ++j)
-	  {
-	    ReadLittleEndian(File, Tmp);
-	    this->SetMatrixElement(i, j, Tmp);
-	  }
-    }
-  else
-    {
-      int TmpNbrRow;
-      int TmpNbrColumn;
-      ReadLittleEndian(File, TmpNbrRow);
-      ReadLittleEndian(File, TmpNbrColumn);
-      this->Resize(TmpNbrRow, TmpNbrColumn);
-      Complex Tmp;
-      for (int i = 0; i < this->NbrRow; ++i)
-	for (int j = 0; j < this->NbrColumn; ++j)
-	  {
-	    ReadLittleEndian(File, Tmp.Re);
-	    ReadLittleEndian(File, Tmp.Im);
-	    this->SetMatrixElement(i, j, Tmp);
-	  }
-    }
+  this->ReadMatrix(File);
   File.close();
   return true;
 }

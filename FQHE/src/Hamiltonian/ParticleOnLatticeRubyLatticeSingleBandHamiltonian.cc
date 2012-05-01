@@ -60,20 +60,14 @@ using std::cos;
 // nbrCellY = number of sites in the y direction
 // uPotential = strength of the repulsive two body neareast neighbor interaction
 // vPotential = strength of the repulsive two body next neareast neighbor interaction
-// tr = real part of the hopping amplitude between neareast neighbor sites with same parity
-// ti = imaginary part of the hopping amplitude between neareast neighbor sites with same parity
-// t1r = real part of the hopping amplitude next neareast neighbor sites with different parity
-// t1i = real part of the hopping amplitude next neareast neighbor sites with different parity
-// t4 = hopping amplitude along square diagonal
-// mus = sublattice chemical potential on A1 sites
-// gammaX = boundary condition twisting angle along e_a (measured in units of 2pi)
-// gammaY = boundary condition twisting angle along e_b (measured in units of 2pi)
+// tightBindingModel = pointer to the tight binding model
 // flatBandFlag = use flat band model
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
-ParticleOnLatticeRubyLatticeSingleBandHamiltonian::ParticleOnLatticeRubyLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrCellX, 
-												       int nbrCellY, double uPotential, double vPotential, double tr, double ti, double t1r, double t1i, double t4, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
+ParticleOnLatticeRubyLatticeSingleBandHamiltonian::ParticleOnLatticeRubyLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrCellX, int nbrCellY, 
+												     double uPotential, double vPotential, 
+												     Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -82,16 +76,9 @@ ParticleOnLatticeRubyLatticeSingleBandHamiltonian::ParticleOnLatticeRubyLatticeS
   this->LzMax = nbrCellX * nbrCellY - 1;
   this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
   this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
+  this->TightBindingModel = tightBindingModel;
 
   this->HamiltonianShift = 0.0;
-  this->TrHopping = tr;
-  this->TiHopping = ti;
-  this->T1rHopping = t1r;
-  this->T1iHopping = t1i;
-  this->T4Hopping = t4;
-  this->MuS = mus;
-  this->GammaX = gammaX;
-  this->GammaY = gammaY;
   this->FlatBand = flatBandFlag;
   this->UPotential = uPotential;
   this->VPotential = vPotential;
@@ -127,10 +114,19 @@ ParticleOnLatticeRubyLatticeSingleBandHamiltonian::~ParticleOnLatticeRubyLattice
 void ParticleOnLatticeRubyLatticeSingleBandHamiltonian::EvaluateInteractionFactors()
 {
   long TotalNbrInteractionFactors = 0;
-  ComplexMatrix* OneBodyBasis = new ComplexMatrix [this->NbrSiteX * this->NbrSiteY];
+  ComplexMatrix* OneBodyBasis = new ComplexMatrix[this->TightBindingModel->GetNbrStatePerBand()];
   if (this->FlatBand == false)
-    this->OneBodyInteractionFactors = new double [this->NbrSiteX * this->NbrSiteY];
-  this->ComputeOneBodyMatrices(OneBodyBasis);
+    {
+      this->OneBodyInteractionFactors = new double [this->TightBindingModel->GetNbrStatePerBand()];
+    }
+  for (int kx = 0; kx < this->NbrSiteX; ++kx)
+    for (int ky = 0; ky < this->NbrSiteY; ++ky)
+      {
+	int Index = this->TightBindingModel->GetLinearizedMomentumIndex(kx, ky);
+	if (this->FlatBand == false)
+	  this->OneBodyInteractionFactors[Index] = 0.5 * this->TightBindingModel->GetEnergy(0, Index);
+	OneBodyBasis[Index] =  this->TightBindingModel->GetOneBodyMatrix(Index);
+      }
   
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
@@ -724,63 +720,3 @@ Complex ParticleOnLatticeRubyLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixE
   return Phase(0.5 * this->KyFactor * ((double) (ky4 + ky3 - ky2 -ky1)));
 }
 
-// compute the one body transformation matrices and the optional one body band stucture contribution
-//
-// oneBodyBasis = array of one body transformation matrices
-
-void ParticleOnLatticeRubyLatticeSingleBandHamiltonian::ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis)
-{
-  Complex CT (this->TrHopping, this->TiHopping);
-  Complex CT1 (this->T1rHopping, this->T1iHopping);
-  double KX;
-  double KY;
-  for (int kx = 0; kx < this->NbrSiteX; ++kx)
-    {
-      for (int ky = 0; ky < this->NbrSiteY; ++ky)
-	{
-	  KX = this->KxFactor * (((double) kx) + this->GammaX);
-	  KY = this->KyFactor * (((double) ky) + this->GammaY);
-	  int Index = (kx * this->NbrSiteY) + ky;
-	  
-	  Complex PhaseX = Phase(KX);
-	  Complex PhaseXY = Phase(KX + KY);
-	  
-	  HermitianMatrix TmpOneBodyHamiltonian(6, true);
-	  TmpOneBodyHamiltonian.SetMatrixElement(0, 2, Conj(CT));
-	  TmpOneBodyHamiltonian.SetMatrixElement(0, 4, CT);
-	  TmpOneBodyHamiltonian.SetMatrixElement(2, 4, Conj(CT));
-	  TmpOneBodyHamiltonian.SetMatrixElement(1, 3, Conj(CT));
-	  TmpOneBodyHamiltonian.SetMatrixElement(1, 5, CT);
-	  TmpOneBodyHamiltonian.SetMatrixElement(3, 5, Conj(CT));
-
-	  TmpOneBodyHamiltonian.SetMatrixElement(0, 1, CT1);
-	  TmpOneBodyHamiltonian.SetMatrixElement(3, 4, CT1);
-	  TmpOneBodyHamiltonian.SetMatrixElement(0, 5, Conj(CT1) * Conj(PhaseX));
-	  TmpOneBodyHamiltonian.SetMatrixElement(1, 2, CT1 * PhaseXY);
-	  TmpOneBodyHamiltonian.SetMatrixElement(2, 3, CT1 * Conj(PhaseX));	
-	  TmpOneBodyHamiltonian.SetMatrixElement(4, 5, CT1 * Conj(PhaseXY));
-
-	  TmpOneBodyHamiltonian.SetMatrixElement(0, 3, this->T4Hopping * (1.0 + Conj(PhaseX)));
-	  TmpOneBodyHamiltonian.SetMatrixElement(1, 4, this->T4Hopping * (1.0 + PhaseXY));
-	  TmpOneBodyHamiltonian.SetMatrixElement(2, 5, this->T4Hopping * (Conj(PhaseX) + Conj(PhaseXY)));
-
-	  TmpOneBodyHamiltonian *= -1.0;
-
-	  ComplexMatrix TmpMatrix(6, 6, true);
-	  TmpMatrix.SetToIdentity();
-	  RealDiagonalMatrix TmpDiag;
-#ifdef __LAPACK__
-	  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
-#else
-	  TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
-#endif
-	  oneBodyBasis[Index] = TmpMatrix;
-	  if (this->FlatBand == false)
-	    {
-	      this->OneBodyInteractionFactors[Index] = 0.5 * TmpDiag(0, 0);
-	  }
-	  cout << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << " " << TmpDiag(2, 2) << " " 
-	       << TmpDiag(3, 3) << " " << TmpDiag(4, 4) << " " << TmpDiag(5, 5) << endl;
-	}
-    }
-}

@@ -88,18 +88,12 @@ class ParticleOnLatticeRubyLatticeSingleBandHamiltonian : public ParticleOnLatti
   // nbrSiteY = number of sites in the y direction
   // uPotential = strength of the repulsive two body neareast neighbor interaction
   // vPotential = strength of the repulsive two body next neareast neighbor interaction
-  // tr = real part of the hopping amplitude between neareast neighbor sites with same parity
-  // ti = imaginary part of the hopping amplitude between neareast neighbor sites with same parity
-  // t1r = real part of the hopping amplitude next neareast neighbor sites with different parity
-  // t1i = real part of the hopping amplitude next neareast neighbor sites with different parity
-  // t4 = hopping amplitude along square diagonal
-  // mus = sublattice chemical potential on A1 sites
-  // gammaX = boundary condition twisting angle along x (measured in units of 2pi)
-  // gammaY = boundary condition twisting angle along y (measured in units of 2pi)
+  // tightBindingModel = pointer to the tight binding model
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeRubyLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential, double tr, double ti, double t1r, double t1i, double t4, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnLatticeRubyLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential, 
+						    Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //
@@ -275,11 +269,6 @@ class ParticleOnLatticeRubyLatticeSingleBandHamiltonian : public ParticleOnLatti
   // ky4 = second annihilation momentum along y for the C site
   // return value = corresponding matrix element
   Complex ComputeTwoBodyMatrixElementOnSiteCC(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
-
-  // compute the one body transformation matrices and the optional one body band stucture contribution
-  //
-  // oneBodyBasis = array of one body transformation matrices
-  virtual void ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis);
 
 };
 

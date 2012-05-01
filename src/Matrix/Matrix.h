@@ -35,9 +35,12 @@
 #include "config.h"
 
 #include <iostream>
+#include <fstream>
 
 
 using std::ostream;
+using std::ofstream;
+using std::ifstream;
 
 
 class Complex;
@@ -232,6 +235,12 @@ class Matrix
 
   // write matrix in a file 
   //
+  // file = reference on the output file stream
+  // return value = true if no error occurs
+  virtual bool WriteMatrix (ofstream& file);
+
+  // write matrix in a file 
+  //
   // fileName = name of the file where the matrix has to be stored
   // return value = true if no error occurs
   virtual bool WriteMatrix (char* fileName);
@@ -250,6 +259,12 @@ class Matrix
   // zeroBased = indices are written starting from zero (i.e. C convention)
   // return value = true if no error occurs
   virtual bool SparseWriteAsciiMatrix (char* fileName, double error = 0.0, bool zeroBased = true);
+
+  // read matrix from a file 
+  //
+  // file = reference  on the input file stream
+  // return value = true if no error occurs
+  bool ReadMatrix (ifstream& file);
 
   // read matrix from a file 
   //

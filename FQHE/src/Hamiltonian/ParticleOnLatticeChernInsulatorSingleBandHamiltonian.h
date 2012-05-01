@@ -37,6 +37,7 @@
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphere.h"
 #include "Hamiltonian/AbstractQHEHamiltonian.h"
+#include "Tools/FTITightBinding/Abstract2DTightBindingModel.h"
 #include "Vector/ComplexVector.h"
 
 #include <iostream>
@@ -57,6 +58,9 @@ class ParticleOnLatticeChernInsulatorSingleBandHamiltonian : public AbstractQHEH
   
   // Hilbert space associated to the system
   ParticleOnSphere* Particles;
+
+  // pointer to the tight binding model
+  Abstract2DTightBindingModel* TightBindingModel;
 
   // number of particles
   int NbrParticles;

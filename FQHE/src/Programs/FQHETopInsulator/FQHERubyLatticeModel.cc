@@ -11,6 +11,8 @@
 //#include "Hamiltonian/ParticleOnLatticeRubyLatticeSingleBandFourBodyHamiltonian.h"
 //#include "Hamiltonian/ParticleOnLatticeRubyLatticeSingleBandFiveBodyHamiltonian.h"
 
+#include "Tools/FTITightBinding/TightBindingModelRubyLattice.h"
+
 #include "LanczosAlgorithm/LanczosManager.h"
 
 #include "Architecture/ArchitectureManager.h"
@@ -33,19 +35,6 @@ using std::cout;
 using std::endl;
 using std::ios;
 using std::ofstream;
-
-
-// compute the single particle spectrum 
-//
-// outputFileName = name of the output file
-// nbrSitesX = number of sites in the x direction
-// nbrSitesY = number of sites in the x direction
-// tr = real part of the hopping amplitude between neareast neighbor sites with same parity
-// ti = imaginary part of the hopping amplitude between neareast neighbor sites with same parity
-// t1r = real part of the hopping amplitude next neareast neighbor sites with different parity
-// t1i = real part of the hopping amplitude next neareast neighbor sites with different parity
-// t4 = hopping amplitude along square diagonal
-void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double tr, double ti, double t1r, double t1i, double t4);
 
 
 int main(int argc, char** argv)
@@ -198,8 +187,14 @@ int main(int argc, char** argv)
     }
 
   if (Manager.GetBoolean("singleparticle-spectrum") == true)
-    {
-      ComputeSingleParticleSpectrum(EigenvalueOutputFile, NbrSitesX, NbrSitesY, Manager.GetDouble("tr"), Manager.GetDouble("ti"), Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"));
+    {      
+      TightBindingModelRubyLattice TightBindingModel(NbrSitesX, NbrSitesY, Manager.GetDouble("tr"), Manager.GetDouble("ti"), 
+						     Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"),
+						     Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), false);
+      TightBindingModel.WriteAsciiSpectrum(EigenvalueOutputFile);
+      double BandSpread = TightBindingModel.ComputeBandSpread(0);
+      double DirectBandGap = TightBindingModel.ComputeDirectBandGap(0);
+      cout << "Spread = " << BandSpread << "  Direct Gap = " << DirectBandGap  << "  Flattening = " << (BandSpread / DirectBandGap) << endl;
       return 0;
     }
 
@@ -217,6 +212,9 @@ int main(int argc, char** argv)
       MinKy = Manager.GetInteger("only-ky");
       MaxKy = MinKy;
     }
+  TightBindingModelRubyLattice TightBindingModel(NbrSitesX, NbrSitesY, Manager.GetDouble("tr"), Manager.GetDouble("ti"), 
+						 Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"),
+						 Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
   bool FirstRunFlag = true;
   for (int i = MinKx; i <= MaxKx; ++i)
     {
@@ -248,9 +246,8 @@ int main(int argc, char** argv)
 	  if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false) && (Manager.GetBoolean("five-body") == false))
 	    { 
 	      Hamiltonian = new ParticleOnLatticeRubyLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
-										  Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("tr"), Manager.GetDouble("ti"), Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"),
-										  Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
-										  Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+										  Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), 
+										  &TightBindingModel, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 	    }
 	  else
 	    { 
@@ -308,96 +305,4 @@ int main(int argc, char** argv)
   return 0;
 }
 
-// compute the single particle spectrum 
-//
-// outputFileName = name of the output file
-// nbrSitesX = number of sites in the x direction
-// nbrSitesY = number of sites in the x direction
-// tr = real part of the hopping amplitude between neareast neighbor sites with same parity
-// ti = imaginary part of the hopping amplitude between neareast neighbor sites with same parity
-// t1r = real part of the hopping amplitude next neareast neighbor sites with different parity
-// t1i = real part of the hopping amplitude next neareast neighbor sites with different parity
-// t4 = hopping amplitude along square diagonal
 
-void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double tr, double ti, double t1r, 
-				   double t1i, double t4)
-{
-  ofstream File;
-  File.open(outputFileName);
-  File << "# kx    ky     E_1    E_2    E_3    E_4    E_5    E_6" << endl;
-  double MinEMinus = 0.0;
-  double MaxEMinus = -10.0;
-  double MinEPlus = 10.0;
-  double MaxEPlus = 0.0;
-  double KX, KY;
-  for (int kx = 0; kx < nbrSitesX; ++kx)
-    {
-      for (int ky = 0; ky < nbrSitesY; ++ky)
-	{
-	  KX = 2.0 * M_PI / ((double) nbrSitesX) * ((double) kx);
-	  KY = 2.0 * M_PI / ((double) nbrSitesY) * ((double) ky);
-	  Complex CT (tr, ti);
-	  Complex CT1 (t1r, t1i);
-	  Complex PhaseX = Phase(KX);
-	  Complex PhaseXY = Phase(KX + KY);
-
-	  HermitianMatrix TmpOneBodyHamiltonian(6, true);
-	  TmpOneBodyHamiltonian.SetMatrixElement(0, 2, Conj(CT));
-	  TmpOneBodyHamiltonian.SetMatrixElement(0, 4, CT);
-	  TmpOneBodyHamiltonian.SetMatrixElement(2, 4, Conj(CT));
-	  TmpOneBodyHamiltonian.SetMatrixElement(1, 3, Conj(CT));
-	  TmpOneBodyHamiltonian.SetMatrixElement(1, 5, CT);
-	  TmpOneBodyHamiltonian.SetMatrixElement(3, 5, Conj(CT));
-
-	  TmpOneBodyHamiltonian.SetMatrixElement(0, 1, CT1);
-	  TmpOneBodyHamiltonian.SetMatrixElement(3, 4, CT1);
-	  TmpOneBodyHamiltonian.SetMatrixElement(0, 5, Conj(CT1) * Conj(PhaseX));
-	  TmpOneBodyHamiltonian.SetMatrixElement(1, 2, CT1 * PhaseXY);
-	  TmpOneBodyHamiltonian.SetMatrixElement(2, 3, CT1 * Conj(PhaseX));	
-	  TmpOneBodyHamiltonian.SetMatrixElement(4, 5, CT1 * Conj(PhaseXY));
-
-	  TmpOneBodyHamiltonian.SetMatrixElement(0, 3, t4 * (1.0 + Conj(PhaseX)));
-	  TmpOneBodyHamiltonian.SetMatrixElement(1, 4, t4 * (1.0 + PhaseXY));
-	  TmpOneBodyHamiltonian.SetMatrixElement(2, 5, t4 * (Conj(PhaseX) + Conj(PhaseXY)));
-
-	  TmpOneBodyHamiltonian *= -1.0;
-
-	  ComplexMatrix TmpMatrix(6, 6, true);
-	  TmpMatrix.SetToIdentity();
-	  RealDiagonalMatrix TmpDiag;
-#ifdef __LAPACK__
-	  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
-#else
-	  TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
-#endif
-	  if (MaxEMinus < TmpDiag(0, 0))
-	    {
-	      MaxEMinus = TmpDiag(0, 0);
-	    }
-	  if (MinEMinus > TmpDiag(0, 0))
-	    {
-	      MinEMinus = TmpDiag(0, 0);
-	    }
-	  if (MaxEPlus < TmpDiag(1, 1))
-	    {
-	      MaxEPlus = TmpDiag(1, 1);
-	    }
-	  if (MinEPlus > TmpDiag(1, 1))
-	    {
-	      MinEPlus = TmpDiag(1, 1);
-	    }
-	  double Kx = KX;
-	  if (Kx > M_PI) 
-	    Kx -= M_PI;
-	  double Ky = (KX + 2.0 * KY) /sqrt(3.0);
-	  if (Ky  > M_PI) 
-	    Ky -= M_PI;
-	  if (Ky < -M_PI) 
-	    Ky += M_PI;
-	  File << Kx << " " << Ky << " " << KX << " " << KY << " " << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << " " << TmpDiag(2, 2)  
-	       << " " << TmpDiag(3, 3) << " " << TmpDiag(4, 4) << " " << TmpDiag(5, 5) << endl;
-	}
-      File << endl;
-    }
-  cout << "Spread = " << (MaxEMinus - MinEMinus) << "  Gap = " <<  (MinEPlus - MaxEMinus) << "  Flattening = " << ((MaxEMinus - MinEMinus) / (MinEPlus - MaxEMinus)) << endl;
-}
