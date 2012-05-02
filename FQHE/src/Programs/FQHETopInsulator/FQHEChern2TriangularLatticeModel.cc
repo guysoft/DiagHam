@@ -87,7 +87,6 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
   (*SystemGroup) += new BooleanOption  ('\n', "flat-band", "use flat band model");
   (*SystemGroup) += new BooleanOption  ('\n', "single-band", "project onto the lowest energy band");
-  (*SystemGroup) += new BooleanOption  ('\n', "three-body", "use three-body interaction");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "3body-potential", "3 body interaction strength", 0.0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "band", "band to be filled", 0);
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
@@ -220,6 +219,7 @@ int main(int argc, char** argv)
 	    Memory = Architecture.GetArchitecture()->GetLocalMemory();
 	  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
 	  AbstractQHEHamiltonian* Hamiltonian = 0;
+	  
 	  if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false) && (Manager.GetBoolean("five-body") == false))
 	    { 
 	      Hamiltonian = new ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"),Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("phi"),Manager.GetDouble("mus"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetBoolean("flat-band"), Manager.GetInteger("band"),Architecture.GetArchitecture(), Memory);
@@ -228,7 +228,7 @@ int main(int argc, char** argv)
 	    { 
 	      if (Manager.GetBoolean("three-body") == true)
 		{
-		  Hamiltonian = new ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("3body-potential"), Manager.GetDouble("u-potential"),Manager.GetDouble("v-potential") , Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("phi"),Manager.GetDouble("mus"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetBoolean("flat-band") , Architecture.GetArchitecture(), Memory);
+		  Hamiltonian = new ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("3body-potential"), Manager.GetDouble("u-potential"),Manager.GetDouble("v-potential") , Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("phi"),Manager.GetDouble("mus"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetBoolean("flat-band") , Architecture.GetArchitecture(), Memory);
 		}
 	      else
 		{

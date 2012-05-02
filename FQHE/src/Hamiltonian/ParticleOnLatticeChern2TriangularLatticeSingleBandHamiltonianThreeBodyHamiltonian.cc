@@ -93,7 +93,7 @@ ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::Particle
   this->NextNNHopping = t2;
   this->NNSpinOrbit = 0.0;
   this->NextNNSpinOrbit = 0.0;
-  this->Phi = phi;
+  this->Phi = 2.0 * M_PI*phi;
   this->MuS = mus;
   this->GammaX = gammaX;
   this->GammaY = gammaY;
@@ -166,9 +166,8 @@ Complex ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::
 
 Complex ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::ComputeTwoBodyMatrixElementAC(int k1a, int k1b, int k2a, int k2b)
 {
-  Complex Tmp = 2.0 * cos (0.5 * (this->KyFactor * ((double) (k2b - k1b))));
-  //Complex Tmp = Phase (0.5 * (this->KyFactor * ((double) (k2b - k1b))));
-  return Tmp;
+ Complex Tmp = (1+Phase(-this->KyFactor * ((double) (k2b - k1b))) + Phase(-this->KxFactor * ((double) (k1a - k2a))+this->KyFactor * ((double) (k1b - k2b))));
+ return Tmp;
 }
 
 // compute the matrix element for the two body interaction between two sites B and C 
@@ -276,7 +275,6 @@ Complex ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::
 
 Complex ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementOnSiteBBB(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4, int kx5, int ky5, int kx6, int ky6)
 {
-  //Complex Tmp = Phase (0.5 * ((((double) (kx6 + kx5 + kx4 - kx3 - kx2 - kx1)) * this->KxFactor)));
   return 1.0;
 }
 
@@ -298,7 +296,6 @@ Complex ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::
 
 Complex ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::ComputeThreeBodyMatrixElementOnSiteCCC(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4, int kx5, int ky5, int kx6, int ky6)
 {
-  //Complex Tmp = Phase (0.5 * ((((double) (ky6 + ky5 + ky4 - ky3 - ky2 - ky1)) * this->KyFactor)));
   return 1.0;
 }
 

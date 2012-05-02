@@ -83,8 +83,8 @@ ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian::ParticleOnLattice
   this->HamiltonianShift = 0.0;
   this->NNHopping = t1;
   this->NextNNHopping = t2;
-  this->NNSpinOrbit = 0;
-  this->NextNNSpinOrbit = 0;
+  this->NNSpinOrbit = 0.0;
+  this->NextNNSpinOrbit = 0.0;
   this->MuS = mus;
   this->GammaX = gammaX;
   this->GammaY = gammaY;
