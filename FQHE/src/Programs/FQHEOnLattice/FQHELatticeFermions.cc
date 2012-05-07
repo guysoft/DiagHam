@@ -6,6 +6,8 @@
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
 #include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
 
+#include "LanczosAlgorithm/LanczosManager.h"
+
 #include "MainTask/QHEOnLatticeMainTask.h"
 
 #include "GeneralTools/FilenameTools.h"
@@ -83,10 +85,11 @@ int main(int argc, char** argv)
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
 
   ArchitectureManager Architecture;
+  LanczosManager Lanczos(true);
 
   Manager += SystemGroup;
   Architecture.AddOptionGroup(&Manager);
-  QHEOnLatticeMainTask::AddOptionGroup(&Manager);
+  Lanczos.AddOptionGroup(&Manager);
   Manager += PrecalculationGroup;
   Manager += MiscGroup;
 
@@ -110,6 +113,12 @@ int main(int argc, char** argv)
 #endif
   (*MiscGroup) += new SingleStringOption('\n', "energy-expectation", "name of the file containing the state vector, whose energy expectation value shall be calculated");
   (*MiscGroup) += new SingleStringOption  ('o', "output-file", "redirect output to this file",NULL);
+  (*MiscGroup) += new BooleanOption  ('\n', "get-hvalue", "show energy expectation value for eigenstates", false);
+  (*MiscGroup) += new  BooleanOption ('\n',"show-basis", "show the basis of the Hilbert-space");
+  (*MiscGroup) += new  BooleanOption ('\n',"show-hamiltonian", "show Hamiltonian matrix, and exit");
+#ifdef HAVE_ARPACK
+  (*MiscGroup) += new  BooleanOption ('\n',"use-arpack","use ARPACK routines for Lanczos algorithm");
+#endif
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   Manager.StandardProceedings(argv, argc, cout);
@@ -209,7 +218,7 @@ int main(int argc, char** argv)
 	  EigenvectorName = new char [64];
 	  sprintf (EigenvectorName, "fermions_lattice_n_%d_x_%d_y_%d%s_%s%sq_%d", NbrFermions, Lx, Ly, interactionStr, reverseHoppingString, deltaString, NbrFluxQuanta);
 	}
-      QHEOnLatticeMainTask Task (&Manager, Space, Hamiltonian, NbrFluxQuanta, 0.0, OutputName, FirstRun, EigenvectorName);
+      QHEOnLatticeMainTask Task (&Manager, Space, &Lanczos, Hamiltonian, NbrFluxQuanta, 0.0, OutputName, FirstRun, EigenvectorName);
       MainTaskOperation TaskOperation (&Task);
       TaskOperation.ApplyOperation(Architecture.GetArchitecture());
       if (EigenvectorName != 0)

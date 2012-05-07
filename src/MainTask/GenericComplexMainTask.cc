@@ -710,7 +710,7 @@ int GenericComplexMainTask::ExecuteMainTask()
       Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
 	((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);
       cout << "time = " << Dt << endl;
-      AlgorithmManager->FreeLanczosAlgorithm();
+      AlgorithmManager->FreeLanczosAlgorithm(); 
     }
   cout << "----------------------------------------------------------------" << endl;
   File.close(); 

@@ -37,6 +37,7 @@
 
 #include "MainTask/AbstractMainTask.h"
 #include "MathTools/Complex.h"
+#include "LanczosAlgorithm/LanczosManager.h"
 
 #include <iostream>
 
@@ -68,6 +69,8 @@ class QHEOnLatticeMainTask: public AbstractMainTask
   AbstractQHEHamiltonian* Hamiltonian;
   // pointer to the current Hilbert space
   AbstractHilbertSpace* Space;
+  // pointer to Lanczos manager
+  LanczosManager *AlgorithmManager;
 
   // name of the file where hamiltonian precalculations have to be saved (null if no precalculation has to be saved)
   char* SavePrecalculationFileName;
@@ -77,7 +80,7 @@ class QHEOnLatticeMainTask: public AbstractMainTask
   bool DiskFlag;
   // resume from disk datas
   bool ResumeFlag;
-    // enable block Lanczos algorithm
+  // enable block Lanczos algorithm
   bool BlockLanczosFlag;
   // size of the blocks used in the block Lanczos algorithm
   int SizeBlockLanczos;
@@ -139,9 +142,7 @@ class QHEOnLatticeMainTask: public AbstractMainTask
   // firstRun = flag that indicates if it the first time the main task is used
   // eigenvectorFileName = prefix to add to the name of each file that will contain an eigenvector
   // ky = many-body momentum in y-direction
-  QHEOnLatticeMainTask(OptionManager* options, AbstractHilbertSpace* space, 
-		       AbstractQHEHamiltonian* hamiltonian, int nbrFluxQuanta, double shift, char* outputFileName,
-		       bool firstRun = true, char* eigenvectorFileName = 0, int ky=-1);
+  QHEOnLatticeMainTask(OptionManager* options, AbstractHilbertSpace* space, LanczosManager* lanczos, AbstractQHEHamiltonian* hamiltonian, int nbrFluxQuanta, double shift, char* outputFileName, bool firstRun = true, char* eigenvectorFileName = 0, int ky=-1);
   
   // destructor
   //  
@@ -159,7 +160,7 @@ class QHEOnLatticeMainTask: public AbstractMainTask
 
   // add optiongroup with options related to this module to the given OptionManager
   //
-  static void AddOptionGroup(OptionManager *optionManager);
+  static  void AddOptionGroup(OptionManager *optionManager);
 
  protected:
 

@@ -105,8 +105,8 @@ int main(int argc, char** argv)
   Manager += SystemGroup;
   LatticePhases::AddOptionGroup(&Manager);
   Architecture.AddOptionGroup(&Manager);
-  QHEOnLatticeMainTask::AddOptionGroup(&Manager);
-  LanczosManager Lanczos(false);  // functions in parallel to complex lattice main task...
+  
+  LanczosManager Lanczos(true);  // functions in parallel to complex lattice main task...
   Lanczos.AddOptionGroup(&Manager);
   Manager += PrecalculationGroup;
   Manager += ToolsGroup;
@@ -141,10 +141,14 @@ int main(int argc, char** argv)
   (*MiscGroup) += new SingleDoubleOption('\n', "tolerance", "tolerance for variational parameters in condensate",1e-6);
   (*MiscGroup) += new SingleStringOption('\n', "energy-expectation", "name of the file containing the state vector, whose energy expectation value shall be calculated");
   (*MiscGroup) += new SingleStringOption  ('o', "output-file", "redirect output to this file",NULL);
+  
   (*MiscGroup) += new BooleanOption  ('\n', "test-hamiltonian", "test hermiticity of Hamiltonian");
   (*MiscGroup) += new BooleanOption  ('\n', "force-complex", "always use complex vectors, even if Hamiltonian is real");
+  (*MiscGroup) += new BooleanOption  ('\n', "get-hvalue", "show energy expectation value for eigenstates", false);
+  (*MiscGroup) += new  BooleanOption ('\n',"show-basis", "show the basis of the Hilbert-space");
+  (*MiscGroup) += new  BooleanOption ('\n',"show-hamiltonian", "show Hamiltonian matrix, and exit");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
-
+  
   Manager.StandardProceedings(argv, argc, cout);
   
   int NbrBosons = Manager.GetInteger("nbr-particles");
@@ -438,7 +442,7 @@ int main(int argc, char** argv)
 	{
 	  if (Hamiltonian->IsComplex()||Manager.GetBoolean("force-complex"))
 	    {
-	      QHEOnLatticeMainTask Task (&Manager, Space, Hamiltonian, NbrFluxQuanta, Shift, OutputName, FirstRun, EigenvectorName);
+	      QHEOnLatticeMainTask Task (&Manager, Space,&Lanczos ,Hamiltonian, NbrFluxQuanta, Shift, OutputName, FirstRun, EigenvectorName);
 	      MainTaskOperation TaskOperation (&Task);
 	      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
 	    }

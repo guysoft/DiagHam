@@ -227,7 +227,7 @@ int main(int argc, char** argv)
   AbstractQHEOnLatticeHamiltonian* Hamiltonian;
   if (Manager.GetString("external-two-body")==NULL)
     Hamiltonian = new ParticleOnLatticeGenericHamiltonian(TargetSpace, TargetNbrBosons, Lattice, NbrFluxQuanta, ContactU,
-							  ReverseHopping, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName, Manager.GetDouble("cont-flux"), !Manager.GetBoolean("no-hermitian"), Manager.GetBoolean("hopping-only"));
+		       				  ReverseHopping, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName, Manager.GetDouble("cont-flux"), !Manager.GetBoolean("no-hermitian"), Manager.GetBoolean("hopping-only"));
   else
     Hamiltonian = new ParticleOnLatticeExternalHamiltonian(TargetSpace, TargetNbrBosons, NbrSites, Manager.GetString("one-body"),
 							   Manager.GetString("external-two-body"), Architecture.GetArchitecture(),

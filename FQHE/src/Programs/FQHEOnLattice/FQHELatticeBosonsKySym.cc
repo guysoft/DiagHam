@@ -10,6 +10,7 @@
 #include "MainTask/QHEOnLatticeMainTask.h"
 
 #include "GeneralTools/FilenameTools.h"
+#include "LanczosAlgorithm/LanczosManager.h"
 
 #include "Options/Options.h"
 
@@ -85,13 +86,13 @@ int main(int argc, char** argv)
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
 
   ArchitectureManager Architecture;
-
+  LanczosManager Lanczos(true);
   Manager += SystemGroup;
   Architecture.AddOptionGroup(&Manager);
-  QHEOnLatticeMainTask::AddOptionGroup(&Manager);
+  Lanczos.AddOptionGroup(&Manager);
   Manager += PrecalculationGroup;
   Manager += MiscGroup;
-	Manager += ToolsGroup;
+  Manager += ToolsGroup;
 	
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 8);
   (*SystemGroup) += new SingleIntegerOption  ('x', "lx", "length in x-direction of given lattice", 5);
@@ -114,6 +115,12 @@ int main(int argc, char** argv)
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
   (*MiscGroup) += new SingleStringOption('\n', "energy-expectation", "name of the file containing the state vector, whose energy expectation value shall be calculated");
+  (*MiscGroup) += new BooleanOption  ('\n', "get-hvalue", "show energy expectation value for eigenstates", false);
+  (*MiscGroup) += new  BooleanOption ('\n',"show-basis", "show the basis of the Hilbert-space");
+  (*MiscGroup) += new  BooleanOption ('\n',"show-hamiltonian", "show Hamiltonian matrix, and exit");
+#ifdef HAVE_ARPACK
+  (*MiscGroup) += new  BooleanOption ('\n',"use-arpack","use ARPACK routines for Lanczos algorithm");
+#endif
   (*MiscGroup) += new SingleStringOption  ('o', "output-file", "redirect output to this file",NULL);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -307,7 +314,7 @@ int main(int argc, char** argv)
 	      EigenvectorName = new char [100];	      
 	      sprintf (EigenvectorName, "bosons_lattice_n_%d_x_%d_y_%d%s%s%s_k_%d_q_%d", NbrBosons, Lx, Ly, interactionStr, reverseHoppingString, randomString, k, NbrFluxQuanta);
 	    }
-	  QHEOnLatticeMainTask Task (&Manager, Space, Hamiltonian, NbrFluxQuanta, 0.0, OutputName, FirstRun, EigenvectorName, k);
+	  QHEOnLatticeMainTask Task (&Manager, Space, &Lanczos , Hamiltonian, NbrFluxQuanta, 0.0, OutputName, FirstRun, EigenvectorName, k);
 	  MainTaskOperation TaskOperation (&Task);
 	  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
 	  FirstRun=false;

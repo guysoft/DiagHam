@@ -43,7 +43,7 @@
 
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
-
+ 
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/ComplexMatrix.h"
@@ -53,14 +53,8 @@
 #include "HilbertSpace/ParticleOnLattice.h"
 #include "Hamiltonian/AbstractQHEHamiltonian.h"
 
-#include "LanczosAlgorithm/ComplexBasicLanczosAlgorithm.h"
-#include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithDiskStorage.h"
-#include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithGroundState.h"
-#include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithEigenstates.h"
-#include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithGroundStateFastDisk.h"
-#include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithm.h"
-#include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage.h"
-#include "LanczosAlgorithm/ComplexBasicBlockLanczosAlgorithm.h"
+#include "LanczosAlgorithm/LanczosManager.h"
+#include "LanczosAlgorithm/AbstractLanczosAlgorithm.h"
 
 #include "Options/Options.h"
 
@@ -145,9 +139,7 @@ template<class T>
 // eigenvectorFileName = prefix to add to the name of each file that will contain an eigenvector
 // ky = many-body momentum in y-direction
 
-QHEOnLatticeMainTask::QHEOnLatticeMainTask(OptionManager* options, AbstractHilbertSpace* space, 
-					   AbstractQHEHamiltonian* hamiltonian, int nbrFluxQuanta, double shift,
-					   char* outputFileName, bool firstRun, char* eigenvectorFileName, int ky)
+QHEOnLatticeMainTask::QHEOnLatticeMainTask(OptionManager* options, AbstractHilbertSpace* space,  LanczosManager* lanczos,  AbstractQHEHamiltonian* hamiltonian, int nbrFluxQuanta, double shift,   char* outputFileName, bool firstRun, char* eigenvectorFileName, int ky)
 {
   this->OutputFileName = new char [strlen(outputFileName) + 1];
   strncpy(this->OutputFileName, outputFileName, strlen(outputFileName));
@@ -164,19 +156,20 @@ QHEOnLatticeMainTask::QHEOnLatticeMainTask(OptionManager* options, AbstractHilbe
     }
   this->Hamiltonian = hamiltonian;
   this->Space = space;
+  this->AlgorithmManager = lanczos;
   this->NbrFluxQuanta = nbrFluxQuanta;
-  this->Ky=ky;
+  this->Ky = ky;
   this->EnergyShift = shift;
-  this->ResumeFlag = ((BooleanOption*) (*options)["resume"])->GetBoolean();
-  this->DiskFlag = ((BooleanOption*) (*options)["disk"])->GetBoolean();
-  this->MaxNbrIterLanczos = ((SingleIntegerOption*) (*options)["iter-max"])->GetInteger();
-  this->NbrIterLanczos = ((SingleIntegerOption*) (*options)["nbr-iter"])->GetInteger();
-  this->NbrEigenvalue = ((SingleIntegerOption*) (*options)["nbr-eigen"])->GetInteger();
+  this->ResumeFlag = options->GetBoolean("resume");
+  this->DiskFlag = options->GetBoolean("disk");
+  this->MaxNbrIterLanczos = options->GetInteger("iter-max");
+  this->NbrIterLanczos = options->GetInteger("nbr-iter");
+  this->NbrEigenvalue = options->GetInteger("nbr-eigen");
   if (this->NbrEigenvalue > this->Space->GetHilbertSpaceDimension())
     {
       this->NbrEigenvalue = this->Space->GetHilbertSpaceDimension();
     }
-  this->FullDiagonalizationLimit = ((SingleIntegerOption*) (*options)["full-diag"])->GetInteger();
+  this->FullDiagonalizationLimit = options->GetInteger("full-diag");
   this->BlockLanczosFlag = false;
   if ((*options)["block-lanczos"] != 0)
     {
@@ -187,20 +180,21 @@ QHEOnLatticeMainTask::QHEOnLatticeMainTask(OptionManager* options, AbstractHilbe
     {
       this->SizeBlockLanczos = options->GetInteger("block-size");
     }
-  this->VectorMemory = ((SingleIntegerOption*) (*options)["nbr-vector"])->GetInteger();
-  this->SavePrecalculationFileName = ((SingleStringOption*) (*options)["save-precalculation"])->GetString();
-  this->FullReorthogonalizationFlag = ((BooleanOption*) (*options)["force-reorthogonalize"])->GetBoolean();
-  this->EvaluateEigenvectors = ((BooleanOption*) (*options)["eigenstate"])->GetBoolean();
-  this->EigenvectorConvergence = ((BooleanOption*) (*options)["eigenstate-convergence"])->GetBoolean();
+  this->VectorMemory = options->GetInteger("nbr-vector");
+if ((*options)["save-precalculation"] != 0)
+  this->SavePrecalculationFileName = options->GetString("save-precalculation");
+ this->FullReorthogonalizationFlag = options->GetBoolean("force-reorthogonalize");
+  this->EvaluateEigenvectors = options->GetBoolean("eigenstate");
+  this->EigenvectorConvergence = options->GetBoolean("eigenstate-convergence"); 
   if ((*options)["show-itertime"] != 0)
     {
-      this->ShowIterationTime = ((BooleanOption*) (*options)["show-itertime"])->GetBoolean();
+      this->ShowIterationTime = options->GetBoolean("show-itertime");
     }
   else
     this->ShowIterationTime = false;
   if ((*options)["initial-vector"] != 0)
     {
-      this->InitialVectorFileName = ((SingleStringOption*) (*options)["initial-vector"])->GetString();
+      this->InitialVectorFileName = options->GetString("initial-vector");
     }
   else
     {
@@ -216,7 +210,7 @@ QHEOnLatticeMainTask::QHEOnLatticeMainTask(OptionManager* options, AbstractHilbe
     }
   if ((*options)["partial-lanczos"] != 0)
     {
-      this->PartialLanczos = ((BooleanOption*) (*options)["partial-lanczos"])->GetBoolean();
+      this->PartialLanczos = options->GetBoolean("partial-lanczos");
     }
   else
     {
@@ -224,7 +218,7 @@ QHEOnLatticeMainTask::QHEOnLatticeMainTask(OptionManager* options, AbstractHilbe
     }
   if ((*options)["use-lapack"] != 0)
     {
-      this->LapackFlag = ((BooleanOption*) (*options)["use-lapack"])->GetBoolean();
+      this->LapackFlag = options->GetBoolean("use-lapack");
     }
   else
     {
@@ -232,7 +226,7 @@ QHEOnLatticeMainTask::QHEOnLatticeMainTask(OptionManager* options, AbstractHilbe
     }
   if ((*options)["limit-time"] != 0)
     {
-      this->MaximumAllowedTime = (((SingleIntegerOption*) (*options)["limit-time"])->GetInteger());
+      this->MaximumAllowedTime = options->GetInteger("limit-time");
     }
   else
     {
@@ -248,7 +242,7 @@ QHEOnLatticeMainTask::QHEOnLatticeMainTask(OptionManager* options, AbstractHilbe
     }
   if ((*options)["get-hvalue"] != 0)
     {
-      this->ComputeEnergyFlag = ((BooleanOption*) (*options)["get-hvalue"])->GetBoolean();
+      this->ComputeEnergyFlag = options->GetBoolean("get-hvalue");
     }
   else
     {
@@ -634,62 +628,7 @@ int QHEOnLatticeMainTask::ExecuteMainTask()
       else
 #endif	
 	{  
-	  AbstractLanczosAlgorithm* Lanczos;
-	  if ((this->NbrEigenvalue == 1) && (this->FullReorthogonalizationFlag == false))
-	    {
-	      if (this->DiskFlag == false)
-		if (this->EvaluateEigenvectors == true)
-		  //Lanczos = new ComplexBasicLanczosAlgorithmWithGroundState(this->Architecture, this->MaxNbrIterLanczos);// replaced by more elaborate algorithm with fast-disk option -> still need to check that one
-		  {
-		    cout << "Using ComplexBasicLanczosAlgorithmWithGroundStateFastDisk"<<endl;
-		    Lanczos = new ComplexBasicLanczosAlgorithmWithGroundStateFastDisk(this->Architecture, this->MaxNbrIterLanczos , this->FastDiskFlag, this->ResumeFastDiskFlag);
-		  }
-		else
-		  Lanczos = new ComplexBasicLanczosAlgorithm(this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
-	      else
-		if (this->EvaluateEigenvectors == true)
-		  {
-		    cout << "Complex Lanczos Algorithm with GroundState and Disk Storage not implemented!"<<endl;
-		    exit(1);
-		    //Lanczos = new ComplexBasicLanczosAlgorithmWithGroundStateDiskStorage(this->Architecture, this->NbrIterLanczos, this->MaxNbrIterLanczos);
-		  }
-		else
-		  Lanczos = new ComplexBasicLanczosAlgorithmWithDiskStorage(this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
-	    }
-	  else
-	    {
-	      if (this->DiskFlag == false)
-		{
-		  if (this->BlockLanczosFlag == true)
-		    {
-		      if (this->FullReorthogonalizationFlag == true)
-			{
-			  cout << "reorthogonalized block lanczos is not yet defined: ComplexFullReorthogonalizedBlockLanczosAlgorithm missing"<<endl;
-			  cout << "using non-reorthogonalized algorithm 'ComplexBasicBlockLanczosAlgorithm'"<<endl;
-			  //Lanczos = new ComplexFullReorthogonalizedBlockLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->SizeBlockLanczos, this->MaxNbrIterLanczos, false, this->LapackFlag);
-			  Lanczos = new ComplexBasicBlockLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->SizeBlockLanczos, this->MaxNbrIterLanczos, 
-									   this->FastDiskFlag, this->ResumeFastDiskFlag, false, this->LapackFlag);
-			  
-			}
-		      else
-			{
-			  cout << "Using ComplexBasicBlockLanczosAlgorithm"<<endl;
-			  Lanczos = new ComplexBasicBlockLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->SizeBlockLanczos, this->MaxNbrIterLanczos, 
-									   this->FastDiskFlag, this->ResumeFastDiskFlag, false, this->LapackFlag);
-			}
-		    }
-		  else
-		    {
-		      cout << "Using FullReorthogonalizedComplexLanczosAlgorithm"<<endl;
-		      Lanczos = new FullReorthogonalizedComplexLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
-		    }
-		}
-	      else
-		{
-		  cout << "Using FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage"<<endl;
-		  Lanczos = new FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage (this->Architecture, this->NbrEigenvalue, this->VectorMemory, this->MaxNbrIterLanczos);
-		}
-	    }
+	  AbstractLanczosAlgorithm* Lanczos = AlgorithmManager->GetLanczosAlgorithm(this->Architecture, this->EvaluateEigenvectors, this->LapackFlag);
 	  if (this->LanczosPrecision != 0.0)
 	    Lanczos->SetEigenvaluePrecision(this->LanczosPrecision);
 	  double GroundStateEnergy;
@@ -938,7 +877,7 @@ int QHEOnLatticeMainTask::ExecuteMainTask()
 	  Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
 	    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);
 	  cout << "time = " << Dt << endl;
-	  delete Lanczos;
+	  AlgorithmManager->FreeLanczosAlgorithm();
 	}
     }
   cout << "----------------------------------------------------------------" << endl;
@@ -1082,17 +1021,17 @@ void QHEOnLatticeMainTask::DiagonalizeInHilbertSubspace(char* subspaceDescriptio
 void QHEOnLatticeMainTask::AddOptionGroup(OptionManager *optionManager)
 {
   OptionGroup* LanczosGroup;
-	OptionGroup* TestGroup = new OptionGroup ("Test options");
-	(*optionManager) += TestGroup;
-	(*TestGroup) += new BooleanOption  ('\n', "test-hermitian", "test-hermitian", false);
+  OptionGroup* TestGroup = new OptionGroup ("Test options");
+  (*optionManager) += TestGroup;
+  (*TestGroup) += new BooleanOption  ('\n', "test-hermitian", "test-hermitian", false);
   if (optionManager->GetOptionGroup("Lanczos options")==0)
     {
       LanczosGroup  = new OptionGroup ("Lanczos options");
       (*optionManager) += LanczosGroup;
       // add standard options
       (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
-      (*LanczosGroup)  += new SingleIntegerOption  ('\n', "full-diag", 
-						    "maximum Hilbert space dimension for which full diagonalization is applied", 300, true, 10);
+      (*LanczosGroup)  += new SingleIntegerOption  ('\n', "full-diag",
+                                                    "maximum Hilbert space dimension for which full diagonalization is applied", 300, true, 10);
       (*LanczosGroup) += new SingleIntegerOption  ('\n', "iter-max", "maximum number of lanczos iteration", 3000);
       (*LanczosGroup) += new BooleanOption  ('\n', "block-lanczos", "use block Lanczos algorithm", false);
       (*LanczosGroup) += new SingleIntegerOption  ('\n', "block-size", "size of the block used in the block Lanczos algorithm", 2);
@@ -1101,8 +1040,8 @@ void QHEOnLatticeMainTask::AddOptionGroup(OptionManager *optionManager)
       (*LanczosGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of lanczos iteration (for the current run)", 10);
       (*LanczosGroup) += new SingleIntegerOption  ('\n', "nbr-vector", "maximum number of vector in RAM during Lanczos iteration", 10);
       (*LanczosGroup) += new SingleIntegerOption  ('\n', "limit-time", "use limit in time instead of a number of lanczos iteration (0 if none, time in seconds)", 0);
-      (*LanczosGroup) += new BooleanOption  ('\n', "force-reorthogonalize", 
-					     "force to use Lanczos algorithm with reorthogonalizion even if the number of eigenvalues to evaluate is 1", false);
+      (*LanczosGroup) += new BooleanOption  ('\n', "force-reorthogonalize",
+                                             "force to use Lanczos algorithm with reorthogonalizion even if the number of eigenvalues to evaluate is 1", false);
       (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate", "evaluate eigenstates", false);  
       (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate-convergence", "evaluate Lanczos convergence from eigenstate convergence", false);
       (*LanczosGroup) += new SingleIntegerOption  ('\n', "partial-eigenstate", "evaluate eigenstates every given number of iterations (0 to discard this option)", 0);  
