@@ -76,8 +76,7 @@ ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ParticleOnLatticeRub
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
-ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, 
-												       int nbrSiteY, double uPotential, double vPotential, double tr, double ti, double t1r, double t1i, double t4, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
+ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX,   int nbrSiteY, double uPotential, double vPotential, double tr, double ti, double t1r, double t1i, double t4, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -87,7 +86,7 @@ ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ParticleOnLatticeRub
   this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
   this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
   this->NBodyValue = 3;
-  this->ComputePhaseArray();
+  //  this->ComputePhaseArray();
 
   this->HamiltonianShift = 0.0;
   this->SqrNBodyValue = this->NBodyValue * this->NBodyValue;
@@ -144,10 +143,10 @@ ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ParticleOnLatticeRub
 
 ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::~ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian()
 {
-  delete[] this->XPhaseTable;
+  /*  delete[] this->XPhaseTable;
   delete[] this->XHalfPhaseTable;
   delete[] this->YPhaseTable;
-  delete[] this->YHalfPhaseTable;
+  delete[] this->YHalfPhaseTable;*/
 }
 
 // evaluate all interaction factors
@@ -226,6 +225,7 @@ void ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::EvaluateInterac
 		    if ((Index1 < Index2) && (Index2 < Index3))
 		      ++this->NbrNBodySectorIndicesPerSum[(((kx1 + kx2 + kx3) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2 + ky3) % this->NbrSiteY)];    
 		  }
+      
       this->NBodySectorIndicesPerSum = new int* [this->NbrNBodySectorSums];
       for (int i = 0; i < this->NbrNBodySectorSums; ++i)
 	{
@@ -812,7 +812,7 @@ Complex ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeThree
   Tmp *= Phase (0.5 * ((((double) (kx6 - kx3)) * this->KxFactor)
 		       + ((((double) (ky6 - ky3)) * this->KyFactor))));
   return Tmp;
-}
+} 
 
 // compute the matrix element for the on-site three body interaction with two particles on a B site and one on a A site
 //
@@ -905,6 +905,7 @@ void ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputeOneBodyM
 }
 
 
+/*
 
 // compute all the phase precalculation arrays 
 //
@@ -928,3 +929,4 @@ void ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ComputePhaseArr
       this->YHalfPhaseTable[this->YPhaseTableShift + i] = Phase(0.5 * this->KyFactor * ((double) i));
     }
 }
+*/

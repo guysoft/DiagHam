@@ -7,7 +7,7 @@
 #include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
 
 #include "Hamiltonian/ParticleOnLatticeChern2DiceLatticeSingleBandHamiltonian.h"
-//#include "Hamiltonian/ParticleOnLatticeChern2DiceLatticeSingleBandThreeBodyHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeChern2DiceLatticeSingleBandThreeBodyHamiltonian.h"
 //#include "Hamiltonian/ParticleOnLatticeChern2DiceLatticeSingleBandFourBodyHamiltonian.h"
 //#include "Hamiltonian/ParticleOnLatticeChern2DiceLatticeSingleBandFiveBodyHamiltonian.h"
 
@@ -228,11 +228,7 @@ int main(int argc, char** argv)
 	    { 
 	      if (Manager.GetBoolean("three-body") == true)
 		{
-		  Hamiltonian = 0;
-// 		  Hamiltonian = new ParticleOnLatticeChern2DiceLatticeSingleBandThreeBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
-// 												 Manager.GetDouble("u-potential"), Manager.GetDouble("t"), Manager.GetDouble("epsilon"), Manager.GetDouble("lambda"), Manager.GetDouble("B1"),
-// 												 Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
-// 												 Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+		  Hamiltonian = new ParticleOnLatticeChern2DiceLatticeSingleBandThreeBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,1.0, Manager.GetDouble("u-potential"), Manager.GetDouble("t"), Manager.GetDouble("epsilon"), Manager.GetDouble("lambda"), Manager.GetDouble("B1"),Manager.GetDouble("B3"), Manager.GetDouble("intraspin-coefficient"), Manager.GetDouble("interspin-coefficient")  , Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"),    Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 		}
 	      else
 		{
