@@ -29,7 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "Hamiltonian/ParticleOnCylinderLaplacianDeltaHamiltonian.h"
+#include "Hamiltonian/ParticleOnCylinderCoulombHamiltonian.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
@@ -65,7 +65,7 @@ using std::ostream;
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
-ParticleOnCylinderLaplacianDeltaHamiltonian::ParticleOnCylinderLaplacianDeltaHamiltonian(ParticleOnSphere* particles, int nbrParticles, int maxMomentum,
+ParticleOnCylinderCoulombHamiltonian::ParticleOnCylinderCoulombHamiltonian(ParticleOnSphere* particles, int nbrParticles, int maxMomentum,
 										   double ratio, double electricFieldParameter, double bFieldParameter, AbstractArchitecture* architecture, long memory, char* precalculationFileName)
 {
   this->Particles = particles;
@@ -123,7 +123,7 @@ ParticleOnCylinderLaplacianDeltaHamiltonian::ParticleOnCylinderLaplacianDeltaHam
 // destructor
 //
 
-ParticleOnCylinderLaplacianDeltaHamiltonian::~ParticleOnCylinderLaplacianDeltaHamiltonian() 
+ParticleOnCylinderCoulombHamiltonian::~ParticleOnCylinderCoulombHamiltonian() 
 {
   delete[] this->InteractionFactors;
   delete[] this->M1Value;
@@ -155,7 +155,7 @@ ParticleOnCylinderLaplacianDeltaHamiltonian::~ParticleOnCylinderLaplacianDeltaHa
 //
 // hilbertSpace = pointer to Hilbert space to use
 
-void ParticleOnCylinderLaplacianDeltaHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
+void ParticleOnCylinderCoulombHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
 {
   delete[] this->InteractionFactors;
   if (this->FastMultiplicationFlag == true)
@@ -177,7 +177,7 @@ void ParticleOnCylinderLaplacianDeltaHamiltonian::SetHilbertSpace (AbstractHilbe
 //
 // shift = shift value
 
-void ParticleOnCylinderLaplacianDeltaHamiltonian::ShiftHamiltonian (double shift)
+void ParticleOnCylinderCoulombHamiltonian::ShiftHamiltonian (double shift)
 {
   this->EnergyShift = shift;
 }
@@ -185,7 +185,7 @@ void ParticleOnCylinderLaplacianDeltaHamiltonian::ShiftHamiltonian (double shift
 // evaluate all interaction factors
 //   
 
-void ParticleOnCylinderLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
+void ParticleOnCylinderCoulombHamiltonian::EvaluateInteractionFactors()
 {
   int Pos = 0;
   int m4;
@@ -202,10 +202,12 @@ void ParticleOnCylinderLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
 	      if ((m4 >= 0) && (m4 <= this->MaxMomentum))
   	        if (m3 > m4)
 		  {
-		    TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4)
-			  		 + this->EvaluateInteractionCoefficient(m2, m1, m4, m3)
-					 - this->EvaluateInteractionCoefficient(m1, m2, m4, m3)
-					 - this->EvaluateInteractionCoefficient(m2, m1, m3, m4));
+ 		    TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4)
+                                           + this->EvaluateInteractionCoefficient(m2, m1, m4, m3)
+                                           - this->EvaluateInteractionCoefficient(m1, m2, m4, m3)
+                                           - this->EvaluateInteractionCoefficient(m2, m1, m3, m4));
+
+		     //cout << m1 << " " << m2 << " " << m3 << " " << m4 << " : " << TmpCoefficient[Pos]<< endl;
 		    if (MaxCoefficient < Norm(TmpCoefficient[Pos]))
 		      MaxCoefficient = Norm(TmpCoefficient[Pos]);
 		    ++Pos;
@@ -249,8 +251,8 @@ void ParticleOnCylinderLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
 	    {
 	      m4 = m1 + m2 - m3;
 	      if ((m4 >= 0) && (m4 <= this->MaxMomentum))
- 	       if (m3 > m4)
-		 {
+	       if (m3 > m4)
+		{
 		  if (m1 != m2)
 		    {
 		      TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4)
@@ -277,7 +279,7 @@ void ParticleOnCylinderLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
 		      MaxCoefficient = Norm(TmpCoefficient[Pos]);
 		    ++Pos;
 		  }
-	     }
+	    }
       this->NbrInteractionFactors = 0;
       this->M1Value = new int [Pos];
       this->M2Value = new int [Pos];
@@ -294,7 +296,7 @@ void ParticleOnCylinderLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
 	      m4 = m1 + m2 - m3;
 	      if ((m4 >= 0) && (m4 <= this->MaxMomentum))
 	       if (m3 >= m4)
-		 {
+		{
 		  if (Norm(TmpCoefficient[Pos]) > MaxCoefficient)
 		    {
 		      this->InteractionFactors[this->NbrInteractionFactors] = TmpCoefficient[Pos];
@@ -306,7 +308,7 @@ void ParticleOnCylinderLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
 		    }
 		  ++Pos;
 		}
-	     }
+	    }
     }
   cout << "nbr interaction = " << this->NbrInteractionFactors << endl;
   cout << "====================================" << endl;
@@ -321,7 +323,7 @@ void ParticleOnCylinderLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
 // m4 = fourth index
 // return value = numerical coefficient
 
-Complex ParticleOnCylinderLaplacianDeltaHamiltonian::EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4)
+Complex ParticleOnCylinderCoulombHamiltonian::EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4)
 {
   double Length = sqrt(2.0 * M_PI * this->Ratio * this->NbrLzValue);
   double kappa = 2.0 * M_PI/Length;
@@ -329,21 +331,106 @@ Complex ParticleOnCylinderLaplacianDeltaHamiltonian::EvaluateInteractionCoeffici
   double Xm2 = kappa * m2;
   double Xm3 = kappa * m3;
   double Xm4 = kappa * m4;	
+  double error;
 
   Complex Coefficient(0,0);
 
   if (this->ElectricField == 0)
    {
-
-     Coefficient.Re = exp(-0.5*pow(Xm1-Xm3,2.0)-0.5*pow(Xm1-Xm4,2.0)) * (pow(Xm1-Xm3,2.0)-pow(Xm1-Xm4,2.0)-1.0);
+     Coefficient.Re = exp(-0.5*(Xm1-Xm4)*(Xm1-Xm4)) * this->CoulombMatrixElement(Xm1-Xm4,Xm1-Xm3,error);
      Coefficient.Im = 0.0;
      return (Coefficient/sqrt(this->Ratio * this->NbrLzValue));
    }
   else
    {
      double alpha = sqrt(1.0 + this->ElectricField);
-     Coefficient.Re = exp(-pow(Xm1-Xm3,2.0)/(2.0*pow(alpha,3.0))-pow(Xm1-Xm4,2.0)/(2.0 * pow(alpha,3.0))) * (pow(Xm1-Xm3,2.0)-alpha*alpha*pow(Xm1-Xm4,2.0)+alpha*alpha-alpha*alpha*alpha);
+     Coefficient.Re = exp(-pow(Xm1-Xm4,2.0)/(2.0 * pow(alpha,3.0))) * this->CoulombMatrixElement(Xm1-Xm4,Xm1-Xm3,error);;
      Coefficient.Im = 0.0;
      return (Coefficient/sqrt(this->Ratio * this->NbrLzValue * alpha * alpha * alpha));
    }
 }
+
+
+#ifdef HAVE_GSL  
+
+#include <gsl/gsl_integration.h>
+#include <gsl/gsl_errno.h>
+
+namespace CoulombMatEl
+{
+
+struct f_params {
+  double Xj14;
+  double Xj13;
+  double ElectricField;
+};
+
+double Integrand(double qx, void *p)
+{
+  f_params &params= *reinterpret_cast<f_params *>(p);
+  if (params.ElectricField == 0)
+   {
+    if (params.Xj14 != 0.0)
+      return (exp(-0.5*qx*qx)*(2.0*cos(qx*params.Xj13))*(1.0/sqrt(qx*qx+params.Xj14*params.Xj14)));
+    else
+      return (exp(-0.5*qx*qx)*(2.0*(cos(qx*params.Xj13)-1.0))*(1.0/sqrt(qx*qx+params.Xj14*params.Xj14)));
+   }
+  else
+   {
+     if (params.Xj14 != 0.0)
+       {
+         double alpha = sqrt(1.0 + params.ElectricField);
+         return (exp(-0.5*qx*qx/alpha)*(2.0*cos(qx*params.Xj13/(alpha*alpha)))*(1.0/sqrt(qx*qx+params.Xj14*params.Xj14)));
+       }
+     else
+      {
+         double alpha = sqrt(1.0 + params.ElectricField);
+         return (exp(-0.5*qx*qx/alpha)*(2.0*(cos(qx*params.Xj13/(alpha*alpha))-1.0))*(1.0/sqrt(qx*qx+params.Xj14*params.Xj14)));
+      }
+   }
+}
+
+}
+
+
+#endif
+
+double ParticleOnCylinderCoulombHamiltonian::CoulombMatrixElement(double xj14, double xj13, double &error)
+{
+#ifdef HAVE_GSL
+
+  gsl_integration_workspace *work_ptr =
+    gsl_integration_workspace_alloc (1000000);
+
+  double lower_limit = 0.0;
+  double abs_error = 1.0e-12;
+  double rel_error = 1.0e-12;
+  double result;
+
+  CoulombMatEl::f_params params;
+  params.Xj14=xj14;
+  params.Xj13=xj13;
+  params.ElectricField = this->ElectricField;
+  
+  //cout<<"Xj14 "<<params.Xj14<<" Xj13 "<<params.Xj13<<" Efield "<<params.ElectricField<<endl;
+
+  gsl_function F;
+  F.function = &CoulombMatEl::Integrand;
+  F.params = reinterpret_cast<void *>(&params);
+
+  gsl_integration_qagiu (&F, lower_limit,
+			 abs_error, rel_error, 100000, work_ptr, &result,
+			 &error);
+
+  //cout<<"result "<<result<<endl;
+
+  gsl_integration_workspace_free (work_ptr);
+  
+  //cout << "result          = " << result << endl;
+  //cout << "estimated error = " << error << endl;
+  //cout << "intervals =  " << work_ptr->size << endl;
+
+  return result;
+#endif
+}
+
