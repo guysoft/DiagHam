@@ -50,10 +50,6 @@ using std::endl;
 class ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian : public ParticleOnLatticeKagomeLatticeSingleBandHamiltonian
 {
   
-  // phase on the hopping terms
-  double Phi;
-  
-  
 public:
   // constructor
   //
@@ -63,17 +59,10 @@ public:
   // nbrSiteY = number of sites in the y direction
   // uPotential = strength of the repulsive two body neareast neighbor interaction
   // vPotential = strength of the repulsive two body second nearest neighbor interaction
-  // t1 = real part of the hopping amplitude between neareast neighbor sites
-  // t2 = real part of the hopping amplitude between next neareast neighbor sites
-  // lambda1 = imaginary part of the hopping amplitude between neareast neighbor sites
-  // lambda1 = imaginary part of the hopping amplitude between next neareast neighbor sites
-  // mus = sublattice chemical potential on A sites
-  // gammaX = boundary condition twisting angle along x (measured in units of 2pi)
-  // gammaY = boundary condition twisting angle along y (measured in units of 2pi)
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential, double t1, double t2, double phi, double mus, double gammaX, double gammaY, bool flatBandFlag, int bandIndex, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential, Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, int bandIndex, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //
@@ -141,11 +130,6 @@ public:
   // ky4 = second annihilation momentum along y for the C site
   // return value = corresponding matrix element
   virtual Complex ComputeTwoBodyMatrixElementOnSiteCC(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
-
-  // compute the one body transformation matrices and the optional one body band stucture contribution
-  //
-  // oneBodyBasis = array of one body transformation matrices
-  virtual void ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis);
 
 };
 

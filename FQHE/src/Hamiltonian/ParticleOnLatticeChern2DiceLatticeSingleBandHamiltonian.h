@@ -52,24 +52,10 @@ class ParticleOnLatticeChern2DiceLatticeSingleBandHamiltonian : public ParticleO
 
  protected:
   
-  // hopping amplitude between neareast neighbor sites
-  double THopping;
-  // on site energy for site 3
-  double Epsilon;
-  // Rashba spin orbit coupling strength
-  double Lambda;
-  // magnetic field strength on sites 1 and 2
-  double BField1;
-  // magnetic field strength on site 3
-  double BField3;
-
+ 
   // on site density-density potential strength
   double UPotential;
-  // boundary condition twisting angle along x
-  double GammaX;
-  // boundary condition twisting angle along y
-  double GammaY;
-  
+   
   double IntraCoefficient; 
   double InterCoefficient;
 
@@ -85,17 +71,11 @@ class ParticleOnLatticeChern2DiceLatticeSingleBandHamiltonian : public ParticleO
   // nbrSiteX = number of sites in the x direction
   // nbrSiteY = number of sites in the y direction
   // uPotential = strength of the repulsive two body neareast neighbor interaction
-  // t = nearest neighbor hopping amplitude
-  // epsilon = on site energy for site 3
-  // lambda = Rashba spin orbit coupling strength
-  // bfield1 = magnetic field strength on sites 1 and 2
-  // bfield3 = magnetic field strength on site 3
-  // gammaX = boundary condition twisting angle along x
-  // gammaY = boundary condition twisting angle along y
+  // tightBindingModel = pointer to the tight binding model
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeChern2DiceLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double t, double espilon, double lambda, double bfield1, double bfield3, double intraCoefficient, double interCoefficient, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnLatticeChern2DiceLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double intraCoefficient, double interCoefficient, Abstract2DTightBindingModel* tightBindingModel,  bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //
@@ -122,11 +102,6 @@ class ParticleOnLatticeChern2DiceLatticeSingleBandHamiltonian : public ParticleO
   //
   // return value = corresponding matrix element
   Complex ComputeTwoBodyMatrixElementOnSiteC();
-
-  // compute the one body transformation matrices and the optional one body band stucture contribution
-  //
-  // oneBodyBasis = array of one body transformation matrices
-  virtual void ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis);
 
 };
 

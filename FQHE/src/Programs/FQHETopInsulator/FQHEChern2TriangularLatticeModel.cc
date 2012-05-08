@@ -22,6 +22,9 @@
 #include "GeneralTools/FilenameTools.h"
 #include "MainTask/GenericComplexMainTask.h"
 
+
+#include "Tools/FTITightBinding/TightBindingModelChern2TriangularLattice.h"
+
 #include <iostream>
 #include <cstring>
 #include <stdlib.h>
@@ -32,21 +35,6 @@ using std::cout;
 using std::endl;
 using std::ios;
 using std::ofstream;
-
-
-// compute the single particle spectrum 
-// 
-// outputFileName = name of the output file
-// nbrSitesX = number of sites in the x direction
-// nbrSitesY = number of sites in the x direction
-// t = nearest neighbor hopping amplitude
-// epsilon = on site energy for site 3
-// lambda = Rashba spin orbit coupling strength
-// bfield1 = magnetic field strength on sites 1 and 2
-// bfield3 = magnetic field strength on site 3
-// gammaX = boundary condition twisting angle along e_a (measured in units of 2pi)
-// gammaY = boundary condition twisting angle along e_b (measured in units of 2pi)
-void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double t, double tprime, double phi, double gammaX, double gammaY);
 
 
 int main(int argc, char** argv)
@@ -173,7 +161,13 @@ int main(int argc, char** argv)
 
   if (Manager.GetBoolean("singleparticle-spectrum") == true)
     {
-      ComputeSingleParticleSpectrum(EigenvalueOutputFile, NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("phi"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+      TightBindingModelChern2TriangularLattice TightBindingModel(NbrSitesX, NbrSitesY, 
+								 Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("phi"),
+								 Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), false);
+      TightBindingModel.WriteAsciiSpectrum(EigenvalueOutputFile);
+      double BandSpread = TightBindingModel.ComputeBandSpread(0);
+      double DirectBandGap = TightBindingModel.ComputeDirectBandGap(0);
+      cout << "Spread = " << BandSpread << "  Direct Gap = " << DirectBandGap  << "  Flattening = " << (BandSpread / DirectBandGap) << endl;
       return 0;
     }
 
@@ -191,6 +185,10 @@ int main(int argc, char** argv)
       MinKy = Manager.GetInteger("only-ky");
       MaxKy = MinKy;
     }
+
+  TightBindingModelChern2TriangularLattice TightBindingModel(NbrSitesX, NbrSitesY, 
+							     Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("phi"),
+							     Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
   bool FirstRunFlag = true;
   for (int i = MinKx; i <= MaxKx; ++i)
     {
@@ -222,13 +220,13 @@ int main(int argc, char** argv)
 	  
 	  if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false) && (Manager.GetBoolean("five-body") == false))
 	    { 
-	      Hamiltonian = new ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"),Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("phi"),Manager.GetDouble("mus"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetBoolean("flat-band"), Manager.GetInteger("band"),Architecture.GetArchitecture(), Memory);
+	      Hamiltonian = new ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"),Manager.GetDouble("v-potential"), &TightBindingModel , Manager.GetBoolean("flat-band"), Manager.GetInteger("band"),Architecture.GetArchitecture(), Memory);
 	    }
 	  else
 	    { 
 	      if (Manager.GetBoolean("three-body") == true)
 		{
-		  Hamiltonian = new ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("3body-potential"), Manager.GetDouble("u-potential"),Manager.GetDouble("v-potential") , Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("phi"),Manager.GetDouble("mus"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetBoolean("flat-band") , Architecture.GetArchitecture(), Memory);
+		  Hamiltonian = new ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("3body-potential"), Manager.GetDouble("u-potential"),Manager.GetDouble("v-potential") , &TightBindingModel , Manager.GetBoolean("flat-band") , Architecture.GetArchitecture(), Memory);
 		}
 	      else
 		{
@@ -278,90 +276,3 @@ int main(int argc, char** argv)
   return 0;
 }
 
-// compute the single particle spectrum 
-//
-// outputFileName = name of the output file
-// nbrSitesX = number of sites in the x direction
-// nbrSitesY = number of sites in the x direction
-// t = nearest neighbor hopping amplitude
-// epsilon = on site energy for site 3
-// lambda = Rashba spin orbit coupling strength
-// bfield1 = magnetic field strength on sites 1 and 2
-// bfield3 = magnetic field strength on site 3
-// gammaX = boundary condition twisting angle along e_a (measured in units of 2pi)
-// gammaY = boundary condition twisting angle along e_b (measured in units of 2pi)
-
-void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double t, double tprime, double phi, double gammaX, double gammaY)
-{
-  ofstream File;
-  File.open(outputFileName);
-  File << "# kx    ky     E_1    E_2    E_3 " << endl;
-  double MinEMinus = 0.0;
-  double MaxEMinus = -10.0;
-  double MinEPlus = 10.0;
-  double MaxEPlus = 0.0;
-  double DirectGap = 20.0;
-  double KX, KY;
-  double TruePhase = 2.0*M_PI*phi;
-  for (int kx = 0; kx < nbrSitesX; ++kx)
-    {
-      for (int ky = 0; ky < nbrSitesY; ++ky)
-	{
-	  KX = 2.0 * M_PI / ((double) nbrSitesX) * ((double) kx);
-	  KY = 2.0 * M_PI / ((double) nbrSitesY) * ((double) ky);
- 	  Complex GammaK = t * (1.0 + Phase(KX) + Phase(KY));
- 	  Complex GammaKPlus = -t*(Phase(-2.0*TruePhase)+Phase(KY)+Phase(2.0*TruePhase+KY-KX));
- 	  Complex GammaKMinus = t*(Phase(2.0*TruePhase) + Phase(KY - KX - 2.0*TruePhase) + Phase(-KX));
-	  double Diag1 = 2.0*tprime*(cos(KY+TruePhase)+cos(KX-TruePhase)+cos(KX - KY + TruePhase));
-	  double Diag2 = 2.0*tprime*(cos(KY-TruePhase)+cos(KX+TruePhase)+cos(KX - KY - TruePhase));
-	  double Diag3 = -2.0*tprime*(cos(KY)+cos(KX)+cos(KX - KY));
-	  HermitianMatrix TmpOneBodyHamiltonian(3, true);
- 	  TmpOneBodyHamiltonian.SetMatrixElement(0, 1, GammaK);
- 	  TmpOneBodyHamiltonian.SetMatrixElement(0, 2, GammaKPlus);
- 	  TmpOneBodyHamiltonian.SetMatrixElement(1, 2, GammaKMinus);
-
- 	  TmpOneBodyHamiltonian.SetMatrixElement(0, 0, Diag1);
- 	  TmpOneBodyHamiltonian.SetMatrixElement(1, 1, Diag2);
- 	  TmpOneBodyHamiltonian.SetMatrixElement(2, 2, Diag3);
-
-	  ComplexMatrix TmpMatrix(3, 3, true);
-	  TmpMatrix.SetToIdentity();
-	  RealDiagonalMatrix TmpDiag;
-#ifdef __LAPACK__
-	  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
-#else
-	  TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
-#endif
-	  if (MaxEMinus < TmpDiag(0, 0))
-	    {
-	      MaxEMinus = TmpDiag(0, 0);
-	    }
-	  if (MinEMinus > TmpDiag(0, 0))
-	    {
-	      MinEMinus = TmpDiag(0, 0);
-	    }
-	    if (MaxEPlus < TmpDiag(1, 1))
-	    {
-	      MaxEPlus = TmpDiag(1, 1);
-	    }
-	  if (MinEPlus > TmpDiag(1, 1))
-	    {
-	      MinEPlus = TmpDiag(1, 1);
-	    }
-	  
-	  if ((TmpDiag(2, 2) - TmpDiag(1, 1)) < DirectGap)
-	    DirectGap = TmpDiag(2, 2) - TmpDiag(1, 1);
-	  /*double Kx = KX;
-	  if (Kx > M_PI) 
-	    Kx -= M_PI;
-	  double Ky = (KX + 2.0 * KY) /sqrt(3.0);
-	  if (Ky  > M_PI) 
-	    Ky -= M_PI;
-	  if (Ky < -M_PI) 
-	    Ky += M_PI;*/
-	  File << KX << " " << KY << " " << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << " " << TmpDiag(2, 2) << endl;
-	}
-      File << endl;
-    }
-  cout << "Spread = " << (MaxEMinus - MinEMinus) << "  Gap = " <<  (MinEPlus - MaxEMinus) << "  Flattening = " << ((MaxEMinus - MinEMinus) / (MinEPlus - MaxEMinus)) << "  Direct Gap = " << DirectGap << endl;
-}

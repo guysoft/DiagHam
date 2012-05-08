@@ -18,6 +18,8 @@
 
 #include "Hamiltonian/ExplicitHamiltonian.h"
 
+#include "Tools/FTITightBinding/TightBindingModelKagomeLattice.h"
+
 #include "LanczosAlgorithm/LanczosManager.h"
 
 #include "Architecture/ArchitectureManager.h"
@@ -41,20 +43,6 @@ using std::endl;
 using std::ios;
 using std::ofstream;
 
-
-// compute the single particle spectrum 
-//
-// outputFileName = name of the output file
-// nbrSitesX = number of sites in the x direction
-// nbrSitesY = number of sites in the x direction
-// t1 = real part of the hopping amplitude between neareast neighbor sites
-// t2 = real part of the hopping amplitude between next neareast neighbor sites
-// lambda1 = imaginary part of the hopping amplitude between neareast neighbor sites
-// lambda1 = imaginary part of the hopping amplitude between next neareast neighbor sites
-// mus = sublattice chemical potential on A sites
-// gammaX = boundary condition twisting angle along e_a (measured in units of 2pi)
-// gammaY = boundary condition twisting angle along e_b (measured in units of 2pi)
-void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double t1, double t2, double lambda1, double lambda2, double mus, double gammaX, double gammaY);
 
 // compute the single particle tranformation matrices 
 //
@@ -275,8 +263,14 @@ int main(int argc, char** argv)
 
   if (Manager.GetBoolean("singleparticle-spectrum") == true)
     {
-      ComputeSingleParticleSpectrum(EigenvalueOutputFile, NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+      TightBindingModelKagomeLattice TightBindingModel(NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
+					   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), false);
+      TightBindingModel.WriteAsciiSpectrum(EigenvalueOutputFile);
+      double BandSpread = TightBindingModel.ComputeBandSpread(0);
+      double DirectBandGap = TightBindingModel.ComputeDirectBandGap(0);
+      cout << "Spread = " << BandSpread << "  Direct Gap = " << DirectBandGap  << "  Flattening = " << (BandSpread / DirectBandGap) << endl;
       return 0;
+
     }
 
   int MinKx = 0;
@@ -293,6 +287,9 @@ int main(int argc, char** argv)
       MinKy = Manager.GetInteger("only-ky");
       MaxKy = MinKy;
     }
+
+ TightBindingModelKagomeLattice TightBindingModel(NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
+						      Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
   bool FirstRunFlag = true;
   for (int i = MinKx; i <= MaxKx; ++i)
     {
@@ -325,10 +322,7 @@ int main(int argc, char** argv)
 	      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
 	      if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false) && (Manager.GetBoolean("five-body") == false))
 		{ 
-		  Hamiltonian = new ParticleOnLatticeKagomeLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
-											Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"),
-											Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
-											Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+		  Hamiltonian = new ParticleOnLatticeKagomeLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), &TightBindingModel, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 		}
 	      else
 		{ 
@@ -458,92 +452,6 @@ int main(int argc, char** argv)
 	}
     }
   return 0;
-}
-
-// compute the single particle spectrum 
-//
-// outputFileName = name of the output file
-// nbrSitesX = number of sites in the x direction
-// nbrSitesY = number of sites in the x direction
-// t1 = real part of the hopping amplitude between neareast neighbor sites
-// t2 = real part of the hopping amplitude between next neareast neighbor sites
-// lambda1 = imaginary part of the hopping amplitude between neareast neighbor sites
-// lambda1 = imaginary part of the hopping amplitude between next neareast neighbor sites
-// mus = sublattice chemical potential on A sites
-// gammaX = boundary condition twisting angle along e_a (measured in units of 2pi)
-// gammaY = boundary condition twisting angle along e_b (measured in units of 2pi)
-
-void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double t1, double t2, double lambda1, double lambda2, double mus, double gammaX, double gammaY)
-{
-  ofstream File;
-  File.open(outputFileName);
-  File << "# kx    ky     E_1    E_2    E_3" << endl;
-  double MinEMinus = 0.0;
-  double MaxEMinus = -10.0;
-  double MinEPlus = 10.0;
-  double MaxEPlus = 0.0;
-  double KA, KB;
-  for (int ka = 0; ka < nbrSitesX; ++ka)
-    {
-      for (int kb = 0; kb < nbrSitesY; ++kb)
-	{
-	  KA = M_PI / ((double) nbrSitesX) * (((double) ka) + gammaX);
-	  KB = M_PI / ((double) nbrSitesY) * (((double) kb) + gammaY);
-	  Complex HAB (-2.0*t1, -2.0*lambda1);
-	  HAB *= cos (KA);
-	  Complex HAC(-2.0*t1, 2.0*lambda1);
-	  HAC *= cos (KB);
-	  Complex HBC(-2.0*t1, -2.0*lambda1);
-	  HBC *= cos(KA-KB);
-	  Complex HAB2 (-2.0*t2, 2.0*lambda2);
-	  HAB2 *= cos (KA-2.0*KB);
-	  Complex HAC2 (-2.0*t2, -2.0*lambda2);
-	  HAC2 *= cos (2.0*KA-KB);
-	  Complex HBC2 (-2.0*t2, 2.0*lambda2);
-	  HBC2 *= cos (KA+KB);
-	  HAB+=HAB2;
-	  HAC+=HAC2;
-	  HBC+=HBC2;
-	  HermitianMatrix TmpOneBodyHamiltonian(3, true);
-	  TmpOneBodyHamiltonian.SetMatrixElement(0, 1, HAB);
-	  TmpOneBodyHamiltonian.SetMatrixElement(0, 2, HAC);
-	  TmpOneBodyHamiltonian.SetMatrixElement(1, 2, HBC);
-	  ComplexMatrix TmpMatrix(3, 3, true);
-	  TmpMatrix[0][0] = 1.0;
-	  TmpMatrix[1][1] = 1.0;
-	  TmpMatrix[2][2] = 1.0;
-	  RealDiagonalMatrix TmpDiag;
-#ifdef __LAPACK__
-	  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
-#else
-	  TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
-#endif
-	  if (MaxEMinus < TmpDiag(0, 0))
-	    {
-	      MaxEMinus = TmpDiag(0, 0);
-	    }
-	  if (MinEMinus > TmpDiag(0, 0))
-	    {
-	      MinEMinus = TmpDiag(0, 0);
-	    }
-	  if (MaxEPlus < TmpDiag(1, 1))
-	    {
-	      MaxEPlus = TmpDiag(1, 1);
-	    }
-	  if (MinEPlus > TmpDiag(1, 1))
-	    {
-	      MinEPlus = TmpDiag(1, 1);
-	    }
-	  double Kx = KA;
-	  if (Kx > M_PI/2.0) Kx -= M_PI;
-	  double Ky = -KA/sqrt(3.0) + 2.0*KB/sqrt(3.0);
-	  if (Kx/2.0+sqrt(3.0)/2.0*Ky > M_PI/2.0) Ky -= M_PI;
-	  if (-Kx/2.0+sqrt(3.0)/2.0*Ky > M_PI/2.0) Ky -= M_PI;
-	  File << Kx << " " << Ky << " " << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << " " << TmpDiag(2, 2) << endl;
-	}
-      File << endl;
-    }
-  cout << "Spread = " << (MaxEMinus - MinEMinus) << "  Gap = " <<  (MinEPlus - MaxEMinus) << "  Flattening = " << ((MaxEMinus - MinEMinus) / (MinEPlus - MaxEMinus)) << endl;
 }
 
 

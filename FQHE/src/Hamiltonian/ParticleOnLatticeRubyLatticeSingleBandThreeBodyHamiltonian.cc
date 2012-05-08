@@ -129,10 +129,6 @@ ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::ParticleOnLatticeRub
 
 ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::~ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian()
 {
-  /*  delete[] this->XPhaseTable;
-  delete[] this->XHalfPhaseTable;
-  delete[] this->YPhaseTable;
-  delete[] this->YHalfPhaseTable;*/
 }
 
 // evaluate all interaction factors

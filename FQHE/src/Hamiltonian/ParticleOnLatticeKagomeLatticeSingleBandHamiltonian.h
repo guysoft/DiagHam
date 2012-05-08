@@ -52,17 +52,7 @@ class ParticleOnLatticeKagomeLatticeSingleBandHamiltonian : public ParticleOnLat
 
  protected:
   
-  // hopping amplitude between neareast neighbor sites
-  double NNHopping;
-  // hopping amplitude between next neareast neighbor sites
-  double NextNNHopping;
-  // spin orbit coupling to neareast neighbor sites
-  double NNSpinOrbit;
-  // spin orbit coupling to next neareast neighbor sites
-  double NextNNSpinOrbit;
   
-  // four times the sublattice staggered chemical potential 
-  double MuS;
   // nearest neighbor density-density potential strength
   double UPotential;
   // second nearest neighbor density-density potential strength
@@ -70,11 +60,6 @@ class ParticleOnLatticeKagomeLatticeSingleBandHamiltonian : public ParticleOnLat
 
   // index of the band to be filled
   int BandIndex;
-
-  // boundary condition twisting angle along x
-  double GammaX;
-  // boundary condition twisting angle along y
-  double GammaY;
 
   // use flat band model
   bool FlatBand;
@@ -92,18 +77,11 @@ class ParticleOnLatticeKagomeLatticeSingleBandHamiltonian : public ParticleOnLat
   // nbrSiteX = number of sites in the x direction
   // nbrSiteY = number of sites in the y direction
   // uPotential = strength of the repulsive two body neareast neighbor interaction
-  // vPotential = strength of the repulsive two body second nearest neighbor interaction
-  // t1 = real part of the hopping amplitude between neareast neighbor sites
-  // t2 = real part of the hopping amplitude between next neareast neighbor sites
-  // lambda1 = imaginary part of the hopping amplitude between neareast neighbor sites
-  // lambda1 = imaginary part of the hopping amplitude between next neareast neighbor sites
-  // mus = sublattice chemical potential on A sites
-  // gammaX = boundary condition twisting angle along x (measured in units of 2pi)
-  // gammaY = boundary condition twisting angle along y (measured in units of 2pi)
-  // flatBandFlag = use flat band model
+  // vPotential = strength of the repulsive two body second nearest neighbor interactio
+  // tightBindingModel = pointer to the tight binding modeln
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeKagomeLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential, double t1, double t2, double lambda1, double lambda2, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnLatticeKagomeLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential,  Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //
@@ -178,11 +156,6 @@ class ParticleOnLatticeKagomeLatticeSingleBandHamiltonian : public ParticleOnLat
   // ky4 = second annihilation momentum along y for the C site
   // return value = corresponding matrix element
   virtual Complex ComputeTwoBodyMatrixElementOnSiteCC(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
-
-  // compute the one body transformation matrices and the optional one body band stucture contribution
-  //
-  // oneBodyBasis = array of one body transformation matrices
-  virtual void ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis);
 
 };
 

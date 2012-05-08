@@ -10,4 +10,5 @@ GenericTightBindingModel.cc \
 TightBindingModelRubyLattice.cc \
 TightBindingModelKagomeLattice.cc \
 TightBindingModelCheckerboardLattice.cc \
-TightBindingModelChern2DiceLattice.cc
+TightBindingModelChern2DiceLattice.cc \
+TightBindingModelChern2TriangularLattice.cc

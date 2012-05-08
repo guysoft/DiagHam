@@ -67,18 +67,12 @@ ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::Particle
 // threeBodyPotential = strength of the repulsive three body neareast neighbor interaction
 // uPotential = strength of the repulsive two body neareast neighbor interaction
 // vPotential = strength of the repulsive two body neareast neighbor interaction
-// t1 = real part of the hopping amplitude between neareast neighbor sites
-// t2 = real part of the hopping amplitude between next neareast neighbor sites
-// lambda1 = imaginary part of the hopping amplitude between neareast neighbor sites
-// lambda1 = imaginary part of the hopping amplitude between next neareast neighbor sites
-// mus = sublattice chemical potential on A sites
-// gammaX = boundary condition twisting angle along e_a (measured in units of 2pi)
-// gammaY = boundary condition twisting angle along e_b (measured in units of 2pi)
+// tightBindingModel = pointer to the tight binding model
 // flatBandFlag = use flat band model
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
-ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrCellX, int nbrCellY, double threeBodyPotential, double uPotential, double vPotential, double t1, double t2, double phi, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
+ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrCellX, int nbrCellY, double threeBodyPotential, double uPotential, double vPotential, Abstract2DTightBindingModel* tightBindingModel , bool flatBandFlag, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -89,15 +83,8 @@ ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::Particle
   this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
 
   this->HamiltonianShift = 0.0;
-  this->NNHopping = t1;
-  this->NextNNHopping = t2;
-  this->NNSpinOrbit = 0.0;
-  this->NextNNSpinOrbit = 0.0;
-  this->Phi = 2.0 * M_PI*phi;
-  this->MuS = mus;
-  this->GammaX = gammaX;
-  this->GammaY = gammaY;
 
+  this->TightBindingModel = tightBindingModel;
 
   this->NBodyValue = 3;
   this->SqrNBodyValue = this->NBodyValue * this->NBodyValue;
@@ -298,57 +285,4 @@ Complex ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::
 {
   return 1.0;
 }
-
-// compute the one body transformation matrices and the optional one body band stucture contribution
-//
-// oneBodyBasis = array of one body transformation matrices
-
-void ParticleOnLatticeChern2TriangularLatticeSingleBandThreeBodyHamiltonian::ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis)
-{
- double KA, KB;
-  for (int ka = 0; ka < this->NbrSiteX; ++ka)
-    for (int kb = 0; kb < this->NbrSiteY; ++kb)
-      {
-	KA = this->KxFactor * (((double) ka) + this->GammaX);
-	KB = this->KyFactor * (((double) kb) + this->GammaY);
-	int Index = (ka * this->NbrSiteY) + kb;
-	
- 	Complex HAB = this->NNHopping * (1.0 + Phase(KA) + Phase(KB));
- 	Complex HAC = -this->NNHopping * (Phase(-2.0 * this->Phi) + Phase(KB) + Phase(2.0 * this->Phi + KB - KA));
- 	Complex HBC = this->NNHopping * (Phase(2.0 * this->Phi) + Phase(KB - KA - 2.0 * this->Phi) + Phase(-KA));
-
- 	Complex HAA = 2.0 * this->NextNNHopping * (cos(KB + this->Phi) + cos(KA - this->Phi) + cos(KA - KB + this->Phi));
- 	Complex HBB = 2.0 * this->NextNNHopping * (cos(KB - this->Phi) + cos(KA + this->Phi) + cos(KA - KB - this->Phi));
- 	Complex HCC = -2.0 * this->NextNNHopping * (cos(KB) + cos(KA) + cos(KA - KB));
-	
-	HermitianMatrix TmpOneBobyHamiltonian(3, true);
-	
-	TmpOneBobyHamiltonian.SetMatrixElement(0, 1, HAB);
-	TmpOneBobyHamiltonian.SetMatrixElement(0, 2, HAC);
-	TmpOneBobyHamiltonian.SetMatrixElement(1, 2, HBC);
-	TmpOneBobyHamiltonian.SetMatrixElement(0, 0, HAA);
-	TmpOneBobyHamiltonian.SetMatrixElement(1, 1, HBB);
-	TmpOneBobyHamiltonian.SetMatrixElement(2, 2, HCC);
-	//cout << TmpOneBobyHamiltonian << endl;
-	ComplexMatrix TmpMatrix(3, 3, true);
-	TmpMatrix[0][0] = 1.0;
-	TmpMatrix[1][1] = 1.0;
-	TmpMatrix[2][2] = 1.0;
-	RealDiagonalMatrix TmpDiag;
-#ifdef __LAPACK__
-	TmpOneBobyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
-#else
-	TmpOneBobyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
-#endif
-	//cout << TmpMatrix[0][0]<<" "<< TmpMatrix[0][1]<< " " << TmpMatrix[0][2]<<endl;
-	oneBodyBasis[Index] = TmpMatrix;
-	if (this->FlatBand == false)
-	  {
-	    this->OneBodyInteractionFactors[Index] = 0.5*TmpDiag(0, 0);
-	  }
-	cout << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << " " << TmpDiag(2, 2) << endl;
-      }
-}
-
-
 

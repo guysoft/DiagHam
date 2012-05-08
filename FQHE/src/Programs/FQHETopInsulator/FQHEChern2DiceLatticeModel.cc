@@ -221,8 +221,7 @@ int main(int argc, char** argv)
 	  AbstractQHEHamiltonian* Hamiltonian = 0;
 	  if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false) && (Manager.GetBoolean("five-body") == false))
 	    { 
-	      Hamiltonian = new ParticleOnLatticeChern2DiceLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("t"), Manager.GetDouble("epsilon"), Manager.GetDouble("lambda"), Manager.GetDouble("B1"),Manager.GetDouble("B3"), Manager.GetDouble("intraspin-coefficient"), Manager.GetDouble("interspin-coefficient"),Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
-										    Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+	      Hamiltonian = new ParticleOnLatticeChern2DiceLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"),  Manager.GetDouble("intraspin-coefficient"), Manager.GetDouble("interspin-coefficient"), &TightBindingModel ,Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 	    }
 	  else
 	    { 
