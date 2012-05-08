@@ -254,8 +254,7 @@ int main(int argc, char** argv)
 	      if (Manager.GetBoolean("three-body") == true)
 		{
  		  Hamiltonian = new ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
-											       Manager.GetDouble("u-potential"), 0.0, Manager.GetDouble("tr"), Manager.GetDouble("ti"), Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"),
-											       Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
+											       Manager.GetDouble("u-potential"), 0.0, &TightBindingModel, 		     
 											       Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 		}
 	      else
@@ -264,16 +263,14 @@ int main(int argc, char** argv)
 		    {
 		      Hamiltonian = 0;
 // 		      Hamiltonian = new ParticleOnLatticeRubyLatticeSingleBandFourBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
-// 												    Manager.GetDouble("u-potential"), Manager.GetDouble("tr"), Manager.GetDouble("ti"), Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"),
-// 												    Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
+// 												    Manager.GetDouble("u-potential"), &TightBindingModel, 		     
 // 												    Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 		    }
 		  else
 		    {
 		      Hamiltonian = 0;
 // 		      Hamiltonian = new ParticleOnLatticeRubyLatticeSingleBandFiveBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
-// 												    Manager.GetDouble("u-potential"), Manager.GetDouble("tr"), Manager.GetDouble("ti"), Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"),
-// 												    Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
+// 												    Manager.GetDouble("u-potential"),  &TightBindingModel, 		     
 // 												    Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 		    }
 		  

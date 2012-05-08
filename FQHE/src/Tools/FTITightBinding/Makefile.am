@@ -9,4 +9,5 @@ Abstract3DTightBindingModel.cc \
 GenericTightBindingModel.cc \
 TightBindingModelRubyLattice.cc \
 TightBindingModelKagomeLattice.cc \
-TightBindingModelCheckerboardLattice.cc
+TightBindingModelCheckerboardLattice.cc \
+TightBindingModelChern2DiceLattice.cc

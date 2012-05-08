@@ -52,40 +52,15 @@ class ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian : public Partic
 
  protected:
   
-  // real part of the hopping amplitude between neareast neighbor sites with same parity
-  double TrHopping;
-  // imaginary part of the hopping amplitude between neareast neighbor sites with same parity
-  double TiHopping;
-  // real part of the hopping amplitude next neareast neighbor sites with different parity
-  double T1rHopping;
-  // real part of the hopping amplitude next neareast neighbor sites with different parity
-  double T1iHopping;
-  // t4 = hopping amplitude along square diagonal
-  double T4Hopping;
-
-  // four times the sublattice staggered chemical potential 
-  double MuS;
-
   // nearest neighbor density-density-density potential strength
   double UPotential;
   // nearest neighbor density-density potential strength
   double VPotential;
 
-  // boundary condition twisting angle along x
-  double GammaX;
-  // boundary condition twisting angle along y
-  double GammaY;
 
   // use flat band model
   bool FlatBand;
   
-  // precalculation tables for cosine and sine factors
-  /*Complex* XPhaseTable;
-  Complex* YPhaseTable;
-  Complex* XHalfPhaseTable;
-  Complex* YHalfPhaseTable;
-  int XPhaseTableShift;
-  int YPhaseTableShift;*/
 
  public:
 
@@ -101,18 +76,12 @@ class ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian : public Partic
   // nbrSiteY = number of sites in the y direction
   // uPotential = strength of the repulsive three body neareast neighbor interaction
   // vPotential = strength of the repulsive two body neareast neighbor interaction
-  // tr = real part of the hopping amplitude between neareast neighbor sites with same parity
-  // ti = imaginary part of the hopping amplitude between neareast neighbor sites with same parity
-  // t1r = real part of the hopping amplitude next neareast neighbor sites with different parity
-  // t1i = real part of the hopping amplitude next neareast neighbor sites with different parity
-  // t4 = hopping amplitude along square diagonal
-  // mus = sublattice chemical potential on A1 sites
-  // gammaX = boundary condition twisting angle along x
-  // gammaY = boundary condition twisting angle along y
+  // tightBindingModel = pointer to the tight binding model
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential, double tr, double ti, double t1r, double t1i, double t4, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential, 
+							     Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //
@@ -124,15 +93,6 @@ class ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian : public Partic
   // evaluate all interaction factors
   //   
   virtual void EvaluateInteractionFactors();
-
-  // compute the one body transformation matrices and the optional one body band stucture contribution
-  //
-  // oneBodyBasis = array of one body transformation matrices
-  virtual void ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis);
-
-  // compute all the phase precalculation arrays 
-  //
-  //  virtual void ComputePhaseArray();
 
   // compute the matrix element for the two body interaction between two sites A and B 
   //
