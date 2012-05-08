@@ -305,28 +305,31 @@ int main(int argc, char** argv)
 
   if (Manager.GetBoolean("eigenstate") == true)	
     {
-      EigenvectorName = RemoveExtensionFromFileName(OutputNameLz,".dat");
-      /*
-	new char [128 + strlen(InteractionName)];
+      /*EigenvectorName = new char[strlen(OutputNameLz)+10];
+	char *TmpC=RemoveExtensionFromFileName(OutputNameLz,".dat")
+	sprintf(EigenvectorName,"%s_%d",TmpC,TotalLz);
+	delete [] TmpC;
+       */
+      
+      EigenvectorName =  new char [128 + strlen(InteractionName)];
       if (strcmp ("fermions", Manager.GetString("statistics")) == 0)
 	{  
 	  if (Manager.GetBoolean("use-entanglement"))
-	    sprintf (OutputNameLz, "fermions_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_pz_%d_lz", InteractionName, 
-		     NbrParticles, LzMax, TotalSz, IsoSzTotal, TotalEntanglement);
+	    sprintf (EigenvectorName, "fermions_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_pz_%d_lz_%d", InteractionName, 
+		     NbrParticles, LzMax, TotalSz, IsoSzTotal, TotalEntanglement, TotalLz);
 	  else
-	    sprintf (OutputNameLz, "fermions_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_lz", InteractionName, 
-		     NbrParticles, LzMax, TotalSz, IsoSzTotal);
+	    sprintf (EigenvectorName, "fermions_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_lz_%d", InteractionName, 
+		     NbrParticles, LzMax, TotalSz, IsoSzTotal, TotalLz);
 	}
       else
 	{
 	  if (Manager.GetBoolean("use-entanglement"))
-	    sprintf (OutputNameLz, "bosons_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_pz_%d_lz", InteractionName, 
-		     NbrParticles, LzMax, TotalSz, IsoSzTotal, TotalEntanglement);
+	    sprintf (EigenvectorName, "bosons_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_pz_%d_lz_%d", InteractionName, 
+		     NbrParticles, LzMax, TotalSz, IsoSzTotal, TotalEntanglement, TotalLz);
 	  else
-	    sprintf (OutputNameLz, "bosons_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_lz", InteractionName, 
-		     NbrParticles, LzMax, TotalSz, IsoSzTotal);
+	    sprintf (EigenvectorName, "bosons_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_lz_%d", InteractionName, 
+		     NbrParticles, LzMax, TotalSz, IsoSzTotal, TotalLz);
 	}
-      */
     }
 
   QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, TotalLz, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);

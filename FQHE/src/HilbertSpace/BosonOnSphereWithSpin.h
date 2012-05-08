@@ -36,6 +36,8 @@
 #include "HilbertSpace/ParticleOnSphereWithSpin.h"
 #include "Matrix/RealSymmetricMatrix.h"
 
+#include "MathTools/FactorialCoefficient.h"
+
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
@@ -98,11 +100,13 @@ class BosonOnSphereWithSpin :  public ParticleOnSphereWithSpin
   Complex** Minors;
 
   // temporary state used when applying operators
-  unsigned* TemporaryState;
+  unsigned* TemporaryState;  
   // temporary state used when applying ProdA operator
   unsigned* ProdATemporaryState;
   // number of up spins in temporary state
   unsigned ProdATemporaryStateNbrUp;
+  // temporary storage for monomial decompositions - should convert to unsigned at some point
+  unsigned long* TemporaryMonomials;
   
  public:
 
@@ -427,8 +431,17 @@ class BosonOnSphereWithSpin :  public ParticleOnSphereWithSpin
   //
   // j = index of the component in Hilbert space
   // return value = twice the Lz component
-  virtual int GetLzValue(int j=0);
+  virtual inline int GetLzValue(int j=0);
 
+  //get total Lz of up spins in a state
+  //index = index of state in Hilbert space
+  // return value = twice the total lz of up spins in state
+  inline int GetTotalLzUp(long index);
+
+  //get total Lz of down spins in a state
+  //index = index of state in Hilbert space
+  //return value = twice the total lz of down spins in a state
+  inline int GetTotalLzDown(long index);
   
   // Compute the product of two states that belong to different Hilbert Spaces
   //
@@ -443,14 +456,114 @@ class BosonOnSphereWithSpin :  public ParticleOnSphereWithSpin
   void BosonicStateWithSpinTimesBosonicState(RealVector& spinfulState, RealVector& polarizedState, RealVector& outputVector,BosonOnSphereShort * polarizedSpace,int minIndex,int nbrComponents, BosonOnSphereWithSpin * finalSpace);
 
 
+  //Calculate state and coefficient when symmetrising over two groups of particles
+  //PlusStateUp = reference on array where plus state up spin occupations stored
+  //MinusStateUp = reference on array where minus state up spin occupations stored
+  //PlusStateDown = reference on array where plus state down spin occupations stored
+  //MinusStateDown = reference on array where minus state down spin occupations stored
+  //coefficient = coefficient of term before symmetrisation
+  //OutputVector = vector where resulting term will be added
+
+  void SymmetriseOverGroupsAndAddToVector(unsigned long * & PlusStateUp, unsigned long * & MinusStateUp, unsigned long * & PlusStateDown, unsigned long * &MinusStateDown, double coefficient, RealVector & OutputVector);
+
+  //Compute the geometric correction factor for a given product state when multiplying two monomials and working with second quantised forms on the sphere for fully polarized states
+  //
+  //firstState = reference on array where monomial representation of first state stored
+  //secondState = reference on array where monomial representation of second state stored
+  //productState = reference on array where monomial representation of a given final state in the product is stored
+  //lzMaxOne = twice maximum lz value for a boson in first state
+  //lzMaxTwo = twice maximum lz value for a boson in second state
+  double GeometricCorrectionFactor(unsigned long * firstMonomial, unsigned long * secondMonomial, unsigned long * productMonomial, int lzMaxOne, int lzMaxTwo);
+
+  //Compute the geometric correction factor for a given product state when multiplying two monomials and working with second quantised forms on the sphere for for spinful states
+  //
+  //firstState = reference on array where monomial representation of first state stored
+  //secondState = reference on array where monomial representation of second state stored
+  //productState = reference on array where monomial representation of a given final state in the product is stored
+  //lzMaxOne = twice maximum lz value for a boson in first state
+  //lzMaxTwo = twice maximum lz value for a boson in second state
+  double GeometricCorrectionFactor(unsigned long * firstMonomial, unsigned long * secondMonomial, unsigned long * productMonomialUp, unsigned long * productMonomialDown, int lzMaxOne, int lzMaxTwo);
+
+  //Compute the occupation correction factor for a given product state when multiplying two monomials and working with second quantised forms on the sphere for spinful states
+  //
+  //firstState = reference on array where bosonic representation of first state stored
+  //secondState = reference on array where bosonic representation of second state stored
+  //productState = reference on array where bosonic representation of a given final state in the product is stored
+  //lzMaxOne = twice maximum lz value for a boson in first state
+  //lzMaxTwo = twice maximum lz value for a boson in second state
+  double OccupationCorrectionFactor(unsigned long * firstState, unsigned long * secondState, unsigned long * productState, int lzMaxOne, int lzMaxTwo);
+
+  //Compute the occupation correction factor for a given product state when multiplying two monomials and working with second quantised forms on the sphere for spinful states
+  //
+  //firstState = reference on array where bosonic representation of first state stored
+  //secondState = reference on array where bosonic representation of second state stored
+  //productState = reference on array where bosonic representation of a given final state in the product is stored
+  //lzMaxOne = twice maximum lz value for a boson in first state
+  //lzMaxTwo = twice maximum lz value for a boson in second state
+  double OccupationCorrectionFactor(unsigned long * firstPolarizedState, unsigned long * secondUpState, unsigned long * secondDownState, unsigned long * productUpState, unsigned long * productDownState, int lzMaxOne, int lzMaxTwo);
+
+
+  // convert a fermionic state to its monomial representation
+  //
+  // index = index of the fermionic state
+  // finalState = reference on the array where the monomial representation has to be stored
+  virtual void GetMonomial(long index, unsigned long*& finalState);
+
+  //get the bosonic state description of a state
+  //index = index of the fermionic state
+  //stateDescriptionUp = reference on array where up description will be stored
+  //stateDescriptionDown = reference on array where down description will be stored
+  void GetBosonicDescription(int index, unsigned long * & stateDescriptionUp, unsigned long * & stateDescriptionDown);
+
+  //convert a vector in the monomial basis to the Fock basis
+  //
+  //StateInMonomialBasis = state vector components in the basis of symmetric monomials
+  //StateInFockBasis = reference on the state vector components in the Fock basis where result is stored
+  void MonomialToFockBasis( RealVector & StateInMonomialBasis, RealVector & StateInFockBasis);
+
+  //convert a vector in the Fock basis to the monomial basis
+  //
+  //StateInFockBasis = state vector componenets in the Fock basis
+  //StateInMonomialBasis = reference on the state vector components in the Monomial basis where result is stored
+  void FockToMonomialBasis( RealVector & StateInFockBasis, RealVector & StateInMonomialBasis );
+
+  //get the conversion factor to go from a symmetric monomial to the Fock basis
+  //
+  //index = index of state
+  double MonomialToFockConversionFactor( long index );
+
+  //convert a polarized monomial to occupation basis.
+  //PolarizedMonomial input monomial
+  //PolarizedMonomialOccupationBasis reference on array to store result
+  //maxLz twice the maximum angular momentum of the monomial
+  void ConvertPolarizedMonomialToOccupationBasis( unsigned long *& PolarizedMonomial, unsigned long *& PolarizedMonomialOccupationBasis, int maxLz );
+
+  //find state index
+  //
+  //stateDescriptionUp = fermionic description of the up spins
+  //stateDescriptionDown = fermionic description of the down spins
+  int FindStateIndex(unsigned long stateDescriptionUp, unsigned long StateDescriptionDown);
+
+  //find state index
+  //
+  //stateDescriptionUp = reference on array describing up spin occupations
+  //stateDescriptionDown = reference on array describing down spin occupations
+  int FindStateIndex(unsigned long * stateDescriptionUp, unsigned long * stateDescriptionDown);
+
  protected:
+
+  //convert a polarized monomial to occupation basis.
+  //PolarizedMonomial input monomial
+  //PolarizedMonomialOccupationBasis reference on array to store result
+  //maxLz twice the maximum angular momentum of the monomial
+  void PolarizedMonomialToOccupationBasis( unsigned long *& PolarizedMonomial, unsigned long *& PolarizedMonomialOccupationBasis, int maxLz );
 
   // find state index
   //
   // stateDescription = array describing the state
   // lzmax = maximum Lz value reached by a boson in the state
   // return value = corresponding index
-  int FindStateIndex(unsigned long stateDescriptionUp, unsigned long stateDescriptionDown);
+  //int FindStateIndex(unsigned long stateDescriptionUp, unsigned long stateDescriptionDown);
 
   
   // find index of a tensored configuration
@@ -527,10 +640,36 @@ class BosonOnSphereWithSpin :  public ParticleOnSphereWithSpin
   
   void FermionToBoson(unsigned long initialStateUp, unsigned long initialStateDown, unsigned initialInfo, unsigned*& finalState, int &finalStateLzMaxUp, int &finalStateLzMaxDown);
 
+  // convert a bosonic state to its monomial representation
+  //
+  // initialStateUp = initial spin up bosonic state in its fermionic representation 
+  // initialStateDown = initial spin down bosonic state in its fermionic representation
+  // initialStateLzMax = initial bosonic state maximum Lz value
+  // finalState = reference on the array where the monomial representation has to be stored
+  
+  void ConvertToMonomial(unsigned long initialStateUp, unsigned long initialStateDown, int initialStateLzMax, unsigned long*& finalState);
+
+  // convert a bosonic state from its monomial representation
+  //
+  // initialState = array where the monomial representation is stored
+  // return value = bosonic state in its fermionic representation
+  
+  unsigned long ConvertFromMonomial(unsigned long* initialState);
+
   // get LzMax value for a given state
   // index = index of state to analyse
   // return = lzMax value (max of up and down)
   int GetStateLzMax(int index);
+
+  //get LzMax value for a given state up spin
+  //index = index of state to analyse
+  //return = lzMax value (up)
+  int GetStateLzMaxUp(long index);
+
+  //getLzMaxValue for a given state down spin
+  //index = index of state to analyse
+  //return = lzMax value (down)
+  int GetStateLzMaxDown(long index);
 
   // sort an array and reflect permutations in auxiliary array
   //
@@ -541,18 +680,60 @@ class BosonOnSphereWithSpin :  public ParticleOnSphereWithSpin
   void ShellSortAux(unsigned length, unsigned long* sortArray, unsigned *auxArray, int *auxArray2);
 
   
-  // Compute the product of two Monomials
-  //
-  // spinfulState = array where the monomial representation of the first state is stored
-  // polarizedState = array where the monomial representation of the second state is stored
-  // finalStates = reference on the array where the fermionic representation of the states product will be stored
-  // weight = reference on the array where the coefficient of the states product will be stored
-  // FinalSpace = pointer on the Hilbert Space whose the final monomials belong
-  unsigned long ProductOfTwoMonomials (unsigned long* spinfulState,int * equalPowerIndex,const int nbrEqualPower,unsigned long* polarizedState, unsigned long * & finalStates, long * & weight, BosonOnSphereWithSpin * finalSpace);
-
-
-
 };
+
+
+// get Lz component of a component
+//
+// j = index of the component in Hilbert space
+// return value = twice the Lz component
+int BosonOnSphereWithSpin::GetLzValue(int j)
+{
+  return this->TotalLz;
+}
+
+
+//get total Lz of up spins in a state
+//index = index of state in Hilbert space
+//return value = twice the total lz of up spins in state
+inline int BosonOnSphereWithSpin::GetTotalLzUp(long index)
+{
+  this->GetMonomial(index, TemporaryMonomials);
+  int totalLzUp=0;
+  for(int i=0; i<this->NbrBosonsUp; i++) 
+    {
+      totalLzUp += (2*TemporaryMonomials[i] - this->LzMax);
+    }
+  return totalLzUp;
+}
+
+//get total Lz of down spins in a state
+//index = index of state in Hilbert space
+//return value = twice the total lz of down spins in a state
+inline int BosonOnSphereWithSpin::GetTotalLzDown(long index)
+{
+  this->GetMonomial(index, TemporaryMonomials);
+  int totalLzDown=0;
+  for(int i=this->NbrBosonsUp; i<this->NbrBosons; i++)
+    {
+      totalLzDown += (2*TemporaryMonomials[i] - this->LzMax);
+    }
+  return totalLzDown;
+}
+
+//convert a polarized monomial to occupation basis.
+//PolarizedMonomial input monomial
+//PolarizedMonomialOccupationBasis reference on array to store result
+//nbrbosons = number of bosons in the monomial
+inline void BosonOnSphereWithSpin::ConvertPolarizedMonomialToOccupationBasis( unsigned long *& PolarizedMonomial, unsigned long *& PolarizedMonomialOccupationBasis, int nbrBosons )
+{
+  for(int i=0; i<nbrBosons; i++)
+    {
+      PolarizedMonomialOccupationBasis[ PolarizedMonomial[i] ] ++;
+    }
+}
+
+
 
 // get the particle statistic 
 //
@@ -577,9 +758,9 @@ inline int BosonOnSphereWithSpin::GetParticleStatistic()
 inline void BosonOnSphereWithSpin::BosonToFermion(unsigned long &finalStateUp, unsigned long &finalStateDown, int &finalLzMaxUp, int &finalLzMaxDown, unsigned*& initialState)
 {
 /*   cout << "NbrUp="<<StateNbrUp <<", InitialState = |"; */
-/*   for (int i=0; i<=LzMax; ++i) */
-/*     cout << " " << (initialState[i] >> 16)<< "u "<< (initialState[i] & 0xffff)<<"d |"; */
-/*   cout << endl; */
+//   for (int i=0; i<=LzMax; ++i) 
+//     cout << " " << (initialState[i] >> 16)<< "u "<< (initialState[i] & 0xffff)<<"d |"; 
+//   cout << endl; 
 
   finalStateUp = 0x0ul;
   unsigned ShiftUp = 0;
@@ -700,6 +881,110 @@ inline void BosonOnSphereWithSpin::FermionToBoson(unsigned long initialStateUp, 
 }
 
 
+// convert a fermionic state to its monomial representation
+//
+// index = index of the fermionic state
+// finalState = reference on the array where the monomial representation has to be stored
+
+inline void BosonOnSphereWithSpin::GetMonomial(long index, unsigned long*& finalState)
+{
+  int Index = 0;
+  unsigned long InitialStateUp = this->StateDescriptionUp[index];
+  unsigned long InitialStateDown = this->StateDescriptionDown[index];
+  int InitialStateLzMax  = this->LzMax + this->NbrBosonsUp -1;
+  int TmpLz = this->LzMax;
+  while (InitialStateLzMax >= 0)
+    {
+      while ((InitialStateLzMax >= 0) && (((InitialStateUp >> InitialStateLzMax) & 0x1ul) != 0x0ul))
+	{
+	  finalState[Index++] = (unsigned long) TmpLz;
+	  --InitialStateLzMax;
+	}
+      while ((InitialStateLzMax >= 0) && (((InitialStateUp >> InitialStateLzMax) & 0x1ul) == 0x0ul))
+	{
+	  --TmpLz;
+	  --InitialStateLzMax;
+	}
+    }
+  InitialStateLzMax = this->LzMax + this->NbrBosonsDown - 1;
+  TmpLz = this->LzMax;
+  while (InitialStateLzMax >= 0)
+    {
+      while ((InitialStateLzMax >= 0) && (((InitialStateDown >> InitialStateLzMax) & 0x1ul) != 0x0ul))
+	{
+	  finalState[Index++] = (unsigned long) TmpLz;
+	  --InitialStateLzMax;
+	}
+      while ((InitialStateLzMax >= 0) && (((InitialStateDown >> InitialStateLzMax) & 0x1ul) == 0x0ul))
+	{
+	  --TmpLz;
+	  --InitialStateLzMax;
+	}
+    }
+  
+}
+
+// convert a bosonic state to its monomial representation
+//
+// initialStateUp = initial spin up bosonic state in its fermionic representation 
+// initialStateDown = initial spin down bosonic state in its fermionic representation
+// initialStateLzMax = initial bosonic state maximum Lz value
+// finalState = reference on the array where the monomial representation has to be stored
+
+//let's try with just the one initialStateLzMax
+
+inline void BosonOnSphereWithSpin::ConvertToMonomial(unsigned long initialStateUp, unsigned long initialStateDown, int initialStateBosonLzMax, unsigned long*& finalState) 
+{
+  int initialStateLzMax = initialStateBosonLzMax + this->NbrBosonsUp -1;
+  int Index = 0;
+  int TmpLz = initialStateLzMax - this->NbrBosonsUp + 1;
+  while (initialStateLzMax >= 0)
+    {
+      while ((initialStateLzMax >= 0) && (((initialStateUp >> initialStateLzMax) & 0x1ul) != 0x0ul))
+	{
+	  finalState[Index++] = TmpLz;
+	  --initialStateLzMax;
+	}
+      while ((initialStateLzMax >= 0) && (((initialStateUp >> initialStateLzMax) & 0x1ul) == 0x0ul))
+	{
+	  --TmpLz;
+	  --initialStateLzMax;
+	}
+    }
+  initialStateLzMax = initialStateBosonLzMax + this->NbrBosonsDown - 1;
+  TmpLz = initialStateLzMax - this->NbrBosonsDown + 1;
+  while (initialStateLzMax >= 0)
+    {
+      while ((initialStateLzMax >= 0) && (((initialStateDown >> initialStateLzMax) & 0x1ul) != 0x0ul))
+	{
+	  finalState[Index++] = TmpLz;
+	  --initialStateLzMax;
+	}
+      while ((initialStateLzMax >= 0) && (((initialStateDown >> initialStateLzMax) & 0x1ul) == 0x0ul))
+	{
+	  --TmpLz;
+	  --initialStateLzMax;
+	}
+    }
+  
+}
+
+
+// convert a bosonic state from its monomial representation
+//
+// initialState = array where the monomial representation is stored
+// return value = bosonic state in its fermionic representation
+
+inline unsigned long BosonOnSphereWithSpin::ConvertFromMonomial(unsigned long* initialState)
+{
+  unsigned long Tmp = 0x0ul;
+  for (int i = 0; i < this->NbrBosonsUp; ++i)
+    Tmp |= 0x1ul << (initialState[i] + ((unsigned long) (this->NbrBosons - i)) - 1ul);
+  for (int i = this->NbrBosonsUp; i < this->NbrBosons; ++i)
+    Tmp |= 0x1ul << (initialState[i] + ((unsigned long) (this->NbrBosons - i)) - 1ul);
+  return Tmp;
+}
+
 // get LzMax value for a given state
 // index = index of state to analyse
 // return = lzMax value (max of up and down)
@@ -711,6 +996,75 @@ inline int BosonOnSphereWithSpin::GetStateLzMax(int index)
   LzMaxUp -= NbrBosonsUp-(NbrBosonsUp!=0);
   LzMaxDown -= this->NbrBosonsDown - (NbrBosonsDown!=0);
   return std::max(LzMaxUp, LzMaxDown);
+}
+
+//get LzMax value for a given state up spin
+//index = index of state to analyse
+//return = lzMax value of up spins
+inline int BosonOnSphereWithSpin::GetStateLzMaxUp(long index)
+{
+  /*
+  unsigned Info = StateInfo[index];
+  int LzMaxUp = Info >> 16;
+  LzMaxUp -= NbrBosonsUp-(NbrBosonsUp!=0);
+  return LzMaxUp;  
+  */
+  this->GetMonomial(index, TemporaryMonomials);
+  unsigned long lzmaxup = 0;
+  if(this->NbrBosonsUp != 0)
+    {
+      for(int i = 0; i<this->NbrBosonsUp; i++)
+	{
+	  if(TemporaryMonomials[i] > lzmaxup)
+	    lzmaxup = TemporaryMonomials[i];
+	}
+    }
+  else
+    {
+      cout << "Error NbrBosons == 0\n";
+      lzmaxup = -1;
+    }
+  /*
+  int myLzMax = ((StateInfo[index])>>16) - this->NbrBosonsUp;
+  if (NbrBosonsUp!=0)
+    ++myLzMax;
+  cout << "myLzMax = "<<myLzMax<<" lzmaxup="<<lzmaxup<<" state: ";
+  PrintState(cout,index)<<endl;
+  */
+      
+  return (int) lzmaxup;
+}
+
+//get LzMax value for a given state up spin
+//index = index of state to analyse
+//return = lzMax value of down spins
+inline int BosonOnSphereWithSpin::GetStateLzMaxDown(long index)
+{
+  /*
+  unsigned Info = StateInfo[index];
+  int LzMaxDown = Info >> 16;
+  LzMaxDown -= NbrBosonsDown-(NbrBosonsDown!=0);
+  return LzMaxDown;
+  */
+  this->GetMonomial(index, TemporaryMonomials);
+  unsigned long lzmaxdown = 0;
+  if(this->NbrBosonsDown != 0)
+    {
+      for(int i = this->NbrBosonsUp; i<this->NbrBosons; i++)
+	{
+	  if(TemporaryMonomials[i] > lzmaxdown)
+	    lzmaxdown =  TemporaryMonomials[i];
+	}
+    }
+  else
+    {
+      cout << "Error lzmaxdown\n";
+      lzmaxdown = -1;
+
+    }
+
+  return (int) lzmaxdown;
+
 }
 
 
@@ -744,5 +1098,105 @@ inline int BosonOnSphereWithSpin::FindStateIndex(unsigned long stateDescriptionU
   int Offset = this->LookUpTableDown[stateDescriptionDown];
   return Base+Offset;
 }
+
+inline long factorial(int n) {
+  if(n==0 || n==1)
+    return 1l;
+  else
+    return n*factorial(n-1l);
+}
+
+inline int BosonOnSphereWithSpin::FindStateIndex(unsigned long * stateDescriptionUp, unsigned long * stateDescriptionDown)
+{
+  for(int i=0; i<this->NbrLzValue; i++)
+    {
+      TemporaryState[i] = ((unsigned) stateDescriptionDown[i]) | (((unsigned) stateDescriptionUp[i])<<16);
+    }
+  unsigned long fermionUp, fermionDown;
+  int fermionLzMaxUp, fermionLzMaxDown;
+  this->BosonToFermion(fermionUp, fermionDown, fermionLzMaxUp, fermionLzMaxDown, TemporaryState);
+  //cout << "Fermion up description " << fermionUp << " fermion down description  " << fermionDown << "\n";
+  int index = this->FindStateIndex( fermionUp, fermionDown );
+  
+  //int index = this->FindStateIndex( TemporaryState );
+
+  //  cout << "Index found to be " << index << " with state description ";
+  //  this->PrintState(cout, index);
+  //  cout << "\n";
+  return index;
+}
+
+
+//convert a vector in the monomial basis to the Fock basis
+//
+//StateInMonomialBasis = state vector components in the basis of symmetric monomials
+//StateInFockBasis = reference on the state vector components in the Fock basis where result is stored
+
+inline void BosonOnSphereWithSpin::MonomialToFockBasis( RealVector & StateInMonomialBasis, RealVector & StateInFockBasis )
+{
+  for(long i=0x0l; i<this->GetHilbertSpaceDimension(); i++)
+    {
+      (StateInFockBasis)[i] = StateInMonomialBasis[i] * this->MonomialToFockConversionFactor(i);
+    }
+}
+
+//convert a vector in the Fock basis to the monomial basis
+//
+//StateInFockBasis = state vector components in the Fock basis
+//StateInMonomialBasis = reference on the state vector components in the basis of symmetric monomials where result is stored
+
+inline void BosonOnSphereWithSpin::FockToMonomialBasis( RealVector & StateInFockBasis, RealVector & StateInMonomialBasis )
+{
+  for(long i=0x0l; i<this->GetHilbertSpaceDimension(); i++)
+    {
+      (StateInMonomialBasis)[i] = StateInFockBasis[i] / this->MonomialToFockConversionFactor(i);
+    }
+}
+
+//get the conversion factor to go from a symmetric monomial to the Fock basis
+//
+//index = index of state
+
+inline double BosonOnSphereWithSpin::MonomialToFockConversionFactor( long index )
+{
+  long SphericalGeometricFactorSquared = 1l;
+  long OccupationFactorSquared = 1l;
+  this->GetMonomial(index, TemporaryMonomials);
+  unsigned long * OccupationBasisUp = new unsigned long[this->LzMax+1];
+  unsigned long * OccupationBasisDown = new unsigned long[this->LzMax+1];
+  for(int i=0; i < this->LzMax+1; i++)
+    {
+      OccupationBasisUp[i] = 0x0ul;
+      OccupationBasisDown[i] = 0x0ul;
+    }
+
+  int N_phi = this->LzMax;
+  for( int i=0; i<this->NbrBosonsUp; i++ )
+    {
+      ++OccupationBasisUp[ TemporaryMonomials[i] ];
+      SphericalGeometricFactorSquared *= (factorial( (int)TemporaryMonomials[i] ))*factorial(N_phi - (int)TemporaryMonomials[i]);
+      //cout << "UpBoson " << i << " 2lz " << TemporaryMonomials[i] << " N_phi - 2lz " << N_phi - TemporaryMonomials[i] << "\n";
+    }
+  for( int i=this->NbrBosonsUp; i<this->NbrBosons; i++ )
+    {
+      OccupationBasisDown[ TemporaryMonomials[i] ]++;
+      SphericalGeometricFactorSquared *= (factorial( (int)TemporaryMonomials[i] ))*factorial(N_phi - (int)TemporaryMonomials[i]);
+      //cout << "DownBoson " << i << " 2lz " << TemporaryMonomials[i] << " N_phi - 2lz " << N_phi - TemporaryMonomials[i] << "\n";
+    }
+  for( int i=0; i <= this->LzMax; i++)
+    {
+      OccupationFactorSquared *= factorial( OccupationBasisUp[i] )*factorial( OccupationBasisDown[i] );
+      //cout << "OccupationBasisUp " << OccupationBasisUp[i] << " OccupationBasisDown " << OccupationBasisDown[i] << " for lz " << i << "\n";
+    }
+
+  double conversionFactor = sqrt( (double)factorial(this->NbrBosons) * (double)SphericalGeometricFactorSquared / (double) OccupationFactorSquared );
+  cout << "conversionFactor " << conversionFactor << "\n";
+
+  delete [] OccupationBasisUp;
+  delete [] OccupationBasisDown;
+
+  return conversionFactor;
+}
+
 
 #endif

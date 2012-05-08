@@ -39,12 +39,19 @@
 #include "HilbertSpace/BosonOnSphere.h"
 #include "HilbertSpace/BosonOnSphereWithSpin.h"
 
+#include "GeneralTools/List.h"
+#include "GeneralTools/OrderedList.h"
+#include "GeneralTools/SmallIntegerArray.h"
+#include "GeneralTools/Permutations.h"
+#include "HilbertSpace/BosonOnSphereShort.h"
+
+
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
 
 // testing flag - switches debut output
-//#define TESTING
+// #define TESTING
 
 // default constructor
 //
@@ -78,6 +85,7 @@ BosonOnSphereWithSpin::BosonOnSphereWithSpin (int nbrBosons, int totalLz, int lz
   cout << "dim = " << this->HilbertSpaceDimension << endl;
   this->TemporaryState = new unsigned [this->NbrLzValue];
   this->ProdATemporaryState = new unsigned [this->NbrLzValue];
+  this->TemporaryMonomials = new unsigned long [this->NbrBosons];
   this->Flag.Initialize();
   this->StateDescription = new unsigned* [this->HilbertSpaceDimension];
   this->StateLzMaxUp = new unsigned [this->HilbertSpaceDimension];
@@ -89,7 +97,7 @@ BosonOnSphereWithSpin::BosonOnSphereWithSpin (int nbrBosons, int totalLz, int lz
     }
   //  int TmpDim = this->GenerateStates(this->NbrBosonsUp, this->NbrBosonsDown, TmpLzMax, TmpLzMax, this->ShiftedTotalLz, 0);
   long TmpDim = GenerateStates(this->NbrBosonsUp, this->NbrBosonsDown, this->LzMax, this->TotalLz);
-
+  
   if (TmpDim!=this->HilbertSpaceDimension)
     cout << "Count inconsistent: "<<TmpDim<<" vs " << this->HilbertSpaceDimension<<endl;
   this->GenerateLookUpTable(memory);
@@ -147,6 +155,7 @@ BosonOnSphereWithSpin::BosonOnSphereWithSpin(const BosonOnSphereWithSpin& bosons
   this->Minors = bosons.Minors;
   this->TemporaryState = new unsigned [this->NbrLzValue];
   this->ProdATemporaryState = new unsigned [this->NbrLzValue];
+    this->TemporaryMonomials = new unsigned long [this->NbrBosons];
   this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
 }
@@ -157,6 +166,7 @@ BosonOnSphereWithSpin::BosonOnSphereWithSpin(const BosonOnSphereWithSpin& bosons
 BosonOnSphereWithSpin::~BosonOnSphereWithSpin ()
 {
   delete[] this->TemporaryState;
+  delete[] this->TemporaryMonomials;
   delete[] this->ProdATemporaryState;
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
@@ -191,6 +201,7 @@ BosonOnSphereWithSpin::~BosonOnSphereWithSpin ()
 BosonOnSphereWithSpin& BosonOnSphereWithSpin::operator = (const BosonOnSphereWithSpin& bosons)
 {
   delete[] this->TemporaryState;
+  delete[] this->TemporaryMonomials;
   delete[] this->ProdATemporaryState;
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
@@ -242,6 +253,7 @@ BosonOnSphereWithSpin& BosonOnSphereWithSpin::operator = (const BosonOnSphereWit
   this->Minors = bosons.Minors;
   this->TemporaryState = new unsigned [this->NbrLzValue];
   this->ProdATemporaryState = new unsigned [this->NbrLzValue];
+  this->TemporaryMonomials = new unsigned long [this->NbrBosons];
   this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
   return *this;
@@ -275,6 +287,22 @@ List<AbstractQuantumNumber*> BosonOnSphereWithSpin::GetQuantumNumbers ()
 AbstractQuantumNumber* BosonOnSphereWithSpin::GetQuantumNumber (int index)
 {
   return new SzQuantumNumber (this->TotalLz);
+}
+
+//Get the fermionic state description
+//stateDescriptionUp = unsigned long where state description of up spins will be stored
+//stateDescriptionDown = unsigned long where state description of down spins will be stored
+void BosonOnSphereWithSpin::GetBosonicDescription(int state, unsigned long * & stateDescriptionUp, unsigned long * & stateDescriptionDown)
+{
+  int CurrentLzMaxUp, CurrentLzMaxDown;
+  this->FermionToBoson(this->StateDescriptionUp[state], this->StateDescriptionDown[state], this->StateInfo[state],
+		       TemporaryState, CurrentLzMaxUp, CurrentLzMaxDown);
+  unsigned* TmpState = TemporaryState; // this->StateDescription[state];
+  for (int i=0; i <= LzMax; ++i)
+    {
+      stateDescriptionUp[i] = (TmpState[i]>>16);
+      stateDescriptionDown[i] = (TmpState[i]&0xffff);
+    }
 }
 
 // extract subspace with a fixed quantum number
@@ -738,15 +766,6 @@ void BosonOnSphereWithSpin::ShellSortAux(unsigned length, unsigned long* sortArr
     }
 }
   
-// get Lz component of a component
-//
-// j = index of the component in Hilbert space
-// return value = twice the Lz component
-int BosonOnSphereWithSpin::GetLzValue(int j)
-{
-  return this->TotalLz;
-}
-
 
 // print a given State
 //
@@ -1922,83 +1941,601 @@ double BosonOnSphereWithSpin::MeanSzValue(RealVector& state)
 // OutputVector = reference on the vector where the result will be stored
 // PolarizedSpace = pointer on the Hilbert Space whose the polarized state belong
 // minIndex = first computed component
-// nbrComponents = Nomber of computed components
+// nbrComponents = Number of computed components
 // FinalSpace = pointer on the Hilbert Space whose the final state belong
 
-void BosonOnSphereWithSpin::BosonicStateWithSpinTimesBosonicState(RealVector& spinfulState, RealVector& polarizedState, RealVector& outputVector,BosonOnSphereShort * polarizedSpace,int minIndex,int nbrComponents, BosonOnSphereWithSpin * finalSpace)
-{ 
-  unsigned long * FinalStates = new unsigned long[finalSpace->GetHilbertSpaceDimension()];
-  long * Weight = new long [finalSpace->GetHilbertSpaceDimension()];
+//My attempt
+
+void BosonOnSphereWithSpin::BosonicStateWithSpinTimesBosonicState( RealVector& spinfulState, RealVector& polarizedState, RealVector& outputVector, BosonOnSphereShort * polarizedSpace, int minIndex, int nbrComponents, BosonOnSphereWithSpin * finalSpace)
+{
+  //cout << "BosonOnSphereWithSpin::BosonicStateWithSpinTimesBosonicState("<<minIndex<<", "<< nbrComponents<<")"<<endl;
   unsigned long * FirstMonomials = new unsigned long[this->NbrBosons];
-  unsigned long * SecondMonomials = new unsigned long[this->NbrBosons];
-  /*
+  unsigned long * FirstPolarizedMonomials = new unsigned long[this->NbrBosons];
+  unsigned long * FirstPolarizedMonomialsOccupationBasis = new unsigned long[polarizedSpace->LzMax+1];  
+  unsigned * FirstPolarizedMonomialsOccupationBasisInt = new unsigned[polarizedSpace->LzMax+1];
+
+  OrderedList< SmallIntegerArray > SpinUpOccupationBasisPartitions;
+  List< SmallIntegerArray > SpinDownOccupationBasisPartitions;
+
+  unsigned long * SpinUpPartitionExponents = new unsigned long[this->NbrBosonsUp];
+  unsigned long * SpinDownPartitionExponents = new unsigned long[this->NbrBosonsDown];
+
+  unsigned long * SpinfulUpOccupationNos = new unsigned long [this->LzMax + 1];
+  unsigned long * SpinfulDownOccupationNos = new unsigned long [this->LzMax + 1];
+
+  unsigned long * upConversionFromSmallIntegerArray = new unsigned long [finalSpace->LzMax+1];
+  unsigned long * downConversionFromSmallIntegerArray = new unsigned long [finalSpace->LzMax+1];
+  
+  unsigned long * FinalStateUpOccupationNos = new unsigned long [finalSpace->LzMax + 1];
+  unsigned long * FinalStateUpExponents = new unsigned long [this->NbrBosons];
+  
+  unsigned long * FinalStateDownOccupationNos = new unsigned long [finalSpace->LzMax + 1];
+  unsigned long * FinalStateDownExponents = new unsigned long [this->NbrBosons];
+
+  int * EqualPowerIndexUp = new int[this->NbrBosonsUp];
+  int * EqualPowerIndexDown = new int[this->NbrBosonsDown];
+
   int MaxIndex = minIndex + nbrComponents;
   for (long i = minIndex; i < MaxIndex; i++)
-    {
-      this->GetMonomial(i,FirstMonomials);
-      int * EqualPowerIndex = new int[this->NbrBosons];
-      int NbrEqualPower = 0;
-      for (int Index = 0; Index < this->NbrBosons-1; Index++)
+   {
+    if( spinfulState[i] != 0 ) {
+      
+      this->GetMonomial(i, FirstMonomials);
+      
+      unsigned long * FirstUpMonomials = &FirstMonomials[0];
+      unsigned long * FirstDownMonomials = &FirstMonomials[this->NbrBosonsUp];
+
+      for(int lz=0; lz<= this->LzMax; lz++)
 	{
-	  if(FirstMonomials[Index] == FirstMonomials[Index+1])
+	  SpinfulUpOccupationNos[lz] = 0;
+	  SpinfulDownOccupationNos[lz] = 0;
+	}
+    
+      this->ConvertPolarizedMonomialToOccupationBasis( FirstUpMonomials, SpinfulUpOccupationNos, this->NbrBosonsUp );
+      this->ConvertPolarizedMonomialToOccupationBasis( FirstDownMonomials, SpinfulDownOccupationNos, this->NbrBosonsDown );
+      /*
+      cout << "Next spinful state to lift\n";
+      for(int lz=0; lz<= this->LzMax; lz++)
+	{
+	  cout << SpinfulUpOccupationNos[lz] << " u " << SpinfulDownOccupationNos[lz] << " d | "; 
+	}
+      cout << "\n";
+      */
+      
+      int NbrEqualPowerUp = 0;
+      int NbrEqualPowerDown = 0;
+      
+      for (int Index = 0; Index < this->NbrBosonsUp-1; Index++)
+	{
+	  if(FirstUpMonomials[Index] == FirstUpMonomials[Index+1])
 	    {
-	      EqualPowerIndex[NbrEqualPower] = Index;
-	      NbrEqualPower++;
+	      EqualPowerIndexUp[NbrEqualPowerUp] = Index;
+	      NbrEqualPowerUp++;
 	    }
 	}
-      for (long j = 0; j < secondSpace->HilbertSpaceDimension; j++)
+      
+      for (int Index = 0 ; Index < this->NbrBosonsDown-1; Index++) 
 	{
-	  secondSpace->GetMonomial(j,SecondMonomials);
-	  unsigned long NbrStates = this->ProductOfTwoMonomials(FirstMonomials,EqualPowerIndex,NbrEqualPower,SecondMonomials,FinalStates,Weight,finalSpace);
-	  for (unsigned long Index = 0x0ul; Index < NbrStates; Index++)
+	  if(FirstDownMonomials[Index] == FirstDownMonomials[Index+1]) 
 	    {
-	      int TmpLzMax = finalSpace->LzMax + finalSpace->NbrBosons - 1;
-	      while ((FinalStates[Index] >> TmpLzMax) == 0x0ul)
-		--TmpLzMax;
-	      outputVector[finalSpace->FermionBasis->FindStateIndex(FinalStates[Index],TmpLzMax)]+=firstState[i]*secondState[j]*Weight[Index];
+	      EqualPowerIndexDown[NbrEqualPowerDown] = Index;
+	      NbrEqualPowerDown++;
 	    }
 	}
-    }
-  */
-}
+      
+      
+      for(int j = 0; j < polarizedSpace->GetHilbertSpaceDimension(); j++)
+	{
+	  if( polarizedState[j] != 0 ) {       
+	    polarizedSpace->GetMonomial( j, FirstPolarizedMonomials );
+	    /*
+	    cout << "Lifting initial states \n polarized ";
+	    for(int particle = 0; particle < this->NbrBosons; particle++)
+	      {
+		cout << FirstPolarizedMonomials[particle] << " ";
+	      }
+	    cout << "\tspin up ";
+	    for(int particle = 0; particle < this->NbrBosonsUp; particle++)
+	      {
+		cout << FirstUpMonomials[particle] << " ";
+	      }
+	    cout << "\tspin down ";
+	    for(int particle = 0; particle < this->NbrBosonsDown; particle++)
+	      {
+		cout << FirstDownMonomials[particle] << " ";
+	      }
+	    cout << "\n";
+	    */
+	    //Create the set of all length NbrBosonsUp subsets of FirstPolarizedMonomials
 
+	    SpinUpOccupationBasisPartitions.DeleteList();
+	    SpinDownOccupationBasisPartitions.DeleteList();
 
-// Compute the product of two Monomials
-//
-// spinfulState = array where the monomial representation of the first state is stored
-// polarizedState = array where the monomial representation of the second state is stored
-// finalStates = reference on the array where the fermionic representation of the states product will be stored
-// weight = reference on the array where the coefficient of the states product will be stored
-// FinalSpace = pointer on the Hilbert Space whose the final monomials belong
+	    for( int lzvalue = 0; lzvalue <= polarizedSpace->LzMax; lzvalue++)
+	      {
+		FirstPolarizedMonomialsOccupationBasis[ lzvalue ] = 0x0ul;
+	      }
+	    
+	    this->ConvertPolarizedMonomialToOccupationBasis( FirstPolarizedMonomials, FirstPolarizedMonomialsOccupationBasis, polarizedSpace->NbrBosons );
+	    for( int lzvalue = 0; lzvalue <= polarizedSpace->LzMax; lzvalue++ )
+	      {
+		FirstPolarizedMonomialsOccupationBasisInt[ lzvalue ] = (int) FirstPolarizedMonomialsOccupationBasis[ lzvalue ];
+	      }
 
-unsigned long BosonOnSphereWithSpin::ProductOfTwoMonomials (unsigned long* spinfulState,int * equalPowerIndex,const int nbrEqualPower,unsigned long* polarizedState, unsigned long * & finalStates, long * & weight, BosonOnSphereWithSpin * finalSpace)
-{
-  /*
-  unsigned long NbrStates = 0ul;
-  long Coef = 1l;
-  unsigned long State [this->NbrBosons];
+	    //generate all possible ways of partitioning the exponents into up and down
+
+	    int NbrSpinPartitions = AllGivenSizeSubsets( FirstPolarizedMonomialsOccupationBasisInt, this->NbrBosons, polarizedSpace->LzMax + 1, this->NbrBosonsUp, SpinUpOccupationBasisPartitions, SpinDownOccupationBasisPartitions );
+
+	    for(int p=0; p<NbrSpinPartitions; p++) 
+	      {
+		cout << "\t";
+		for(int lz=0;  lz <= polarizedSpace->LzMax; lz++) 
+		  {
+		    cout << SpinUpOccupationBasisPartitions[p].GetElement(lz) << " ";
+		  } 
+	       	cout << "\t";
+		for(int lz=0; lz <= polarizedSpace->LzMax; lz++)
+		  {
+		    cout << SpinDownOccupationBasisPartitions[p].GetElement(lz) << " ";
+		  }
+		cout << "\n";
+	      }
+
+	    for (int spinPartition = 0; spinPartition < NbrSpinPartitions; spinPartition++) 
+	      {
+		//convert each occupation basis to the monomial basis so they can be multiplied
+		//calculate LzMax and TotalLz for up and down spaces and convert to unsigned longs
+		int SpinUpMaxLzOfPartition = polarizedSpace->LzMax;
+		int SpinDownMaxLzOfPartition = polarizedSpace->LzMax;
+
+		int SpinUpTmpLzOfPartition = polarizedSpace->LzMax;
+		int SpinDownTmpLzOfPartition = polarizedSpace->LzMax;
+		while(SpinUpTmpLzOfPartition > 0 && SpinUpOccupationBasisPartitions[spinPartition].GetElement( SpinUpTmpLzOfPartition ) == 0)
+		  SpinUpTmpLzOfPartition--;
+		while(SpinDownTmpLzOfPartition > 0 && SpinDownOccupationBasisPartitions[spinPartition].GetElement( SpinDownTmpLzOfPartition ) == 0)
+		  SpinDownTmpLzOfPartition--;
   
-  if(CheckLexiOrder(equalPowerIndex,secondState,nbrEqualPower))
-    {
-      for (int Index = 0; Index < this->NbrBosons; Index++)
-	State[Index] = firstState[Index] + secondState[Index];
-	  
-      finalStates[0] = finalSpace->ConvertFromMonomial(State);
-      weigth[0] = Coef;
-      NbrStates++;
-    }
-  while (std::prev_permutation(secondState,secondState + this->NbrBosons))
-    {
-      if(CheckLexiOrder(equalPowerIndex,secondState,nbrEqualPower))
-	{
-	  for (int Index = 0; Index < this->NbrBosons; Index++)
-	    State[Index] = firstState[Index] + secondState[Index];
-	  Coef = this->ComputeCoefficient(State,firstState);
-	  
-	  SortArrayDownOrdering(State,this->NbrBosons);
-	  NbrStates += SearchInArrayAndSetWeight(finalSpace->ConvertFromMonomial(State),finalStates,weigth,NbrStates,Coef);
+		SpinUpMaxLzOfPartition = SpinUpTmpLzOfPartition;
+		SpinDownMaxLzOfPartition = SpinDownTmpLzOfPartition;
+
+		int SpinUpTotalLzOfPartition = 0;
+		int SpinDownTotalLzOfPartition = 0;
+
+		//unsigned long * upConversionFromSmallIntegerArray = new unsigned long [SpinUpMaxLzOfPartition+1];
+		//unsigned long * downConversionFromSmallIntegerArray = new unsigned long [SpinDownMaxLzOfPartition+1];
+
+		//cout << "Spin up partition lz occupation values\n\t";
+		for(int lzvalue = 0; lzvalue <= SpinUpMaxLzOfPartition && this->NbrBosonsUp!=0; lzvalue++) 
+		  {
+		    upConversionFromSmallIntegerArray[ lzvalue ] = (unsigned long) SpinUpOccupationBasisPartitions[spinPartition].GetElement( lzvalue );
+		    SpinUpTotalLzOfPartition += SpinUpOccupationBasisPartitions[spinPartition].GetElement( lzvalue ) * (2*lzvalue - polarizedSpace->LzMax);
+		    //cout << upConversionFromSmallIntegerArray[ lzvalue ] << " ";
+		  }
+		//cout << "Spin down partition ";
+		for(int lzvalue = 0; lzvalue <= SpinDownMaxLzOfPartition && this->NbrBosonsDown!=0; lzvalue++)
+		  {
+		    downConversionFromSmallIntegerArray[ lzvalue ] = (unsigned long) SpinDownOccupationBasisPartitions[spinPartition].GetElement( lzvalue );
+		    SpinDownTotalLzOfPartition += SpinDownOccupationBasisPartitions[spinPartition].GetElement( lzvalue ) * (2*lzvalue - polarizedSpace->LzMax);
+		    //cout << downConversionFromSmallIntegerArray[ lzvalue ] << " ";
+		  }
+		cout << "\n";
+
+		if(this->NbrBosonsUp==0)
+		  {
+		    BosonOnSphereShort * InitialSpinDownSpace = new BosonOnSphereShort(this->NbrBosonsDown, SpinDownTotalLzOfPartition, SpinDownMaxLzOfPartition);
+		    cout << "InitialSpinDownSpace initialised with NbrBosonsDown " << this->NbrBosonsDown << " TotalLz " << SpinDownTotalLzOfPartition << " LzMax " << SpinDownMaxLzOfPartition << "\n";
+		    //cout << "this->GetStateLzMaxDown(" << i << ") = " << this->GetStateLzMaxDown(i) << "\n";
+		    BosonOnSphereShort * FinalSpinDownSpace = new BosonOnSphereShort(this->NbrBosonsDown, this->GetTotalLzDown(i) + SpinDownTotalLzOfPartition, this->GetStateLzMaxDown(i) + SpinDownMaxLzOfPartition );
+		    cout << "FinalSpinDownSpace initialised with NbrBosonsDown " << this->NbrBosonsDown << " TotalLz " << this->GetTotalLzDown(i) + SpinDownTotalLzOfPartition << " LzMax " << this->GetStateLzMaxDown(i) + SpinDownMaxLzOfPartition << "\n";
+
+		    unsigned long * FinalDownStates = new unsigned long [ FinalSpinDownSpace->GetHilbertSpaceDimension() ];
+		    long * DownWeight = new long [ FinalSpinDownSpace->GetHilbertSpaceDimension() ];
+
+		    InitialSpinDownSpace->ConvertToMonomial( downConversionFromSmallIntegerArray, SpinDownMaxLzOfPartition, SpinDownPartitionExponents );
+
+		    unsigned long NbrDownStates = InitialSpinDownSpace->ProductOfTwoMonomials( FirstDownMonomials, EqualPowerIndexDown, NbrEqualPowerDown, SpinDownPartitionExponents, FinalDownStates, DownWeight, FinalSpinDownSpace);
+
+		    //	    cout << "NbrDownStates = " << NbrDownStates << "\n";
+
+		    for(unsigned downIndex = 0; downIndex < NbrDownStates; downIndex++)
+		      {
+			//unsigned long * FinalStateDownOccupationNos = new unsigned long [finalSpace->LzMax + 1];
+			for( int lz = 0; lz <= finalSpace->LzMax; lz++ )
+			  FinalStateDownOccupationNos[lz] = 0x0ul;
+			//	cout <<  "FinalSpinDownSpace->LzMax " << FinalSpinDownSpace->LzMax << "\n";
+			//unsigned long * FinalStateDownExponents = new unsigned long [this->NbrBosonsDown];
+			for(int p=0; p<this->NbrBosonsDown; p++)
+			  FinalStateDownExponents[p] = 0x0ul;
+			this->ConvertToMonomial( 0x0ul, FinalDownStates[downIndex], FinalSpinDownSpace->LzMax, FinalStateDownExponents );
+			/*
+			cout << "Exponents ";
+			for(int p = 0; p < this->NbrBosonsDown; p++)
+			  cout << FinalStateDownExponents[p] << " ";
+			cout << "\n";
+			*/
+			this->ConvertPolarizedMonomialToOccupationBasis( FinalStateDownExponents, FinalStateDownOccupationNos, this->NbrBosonsDown );
+
+			double geometricCorrectionFactorDown = this->GeometricCorrectionFactor( FirstMonomials, FirstPolarizedMonomials, FinalStateDownExponents, polarizedSpace->LzMax, this->LzMax );
+			double occupationCorrectionFactorDown = this->OccupationCorrectionFactor(FirstPolarizedMonomialsOccupationBasis, SpinfulDownOccupationNos, FinalStateDownOccupationNos, SpinDownMaxLzOfPartition, this->GetStateLzMaxDown(i) );
+
+			unsigned long EmptyUpState = 0x0ul;
+			outputVector[ finalSpace->FindStateIndex( EmptyUpState, FinalDownStates[downIndex] ) ] += spinfulState[i]*polarizedState[j]*DownWeight[downIndex]*geometricCorrectionFactorDown*occupationCorrectionFactorDown;
+		      }
+		    delete InitialSpinDownSpace;
+		    delete FinalSpinDownSpace;
+		    delete [] FinalDownStates;
+		    delete [] DownWeight;
+		  }
+		else if (this->NbrBosonsDown==0)
+		  {
+		    BosonOnSphereShort * InitialSpinUpSpace = new BosonOnSphereShort(this->NbrBosonsUp, SpinUpTotalLzOfPartition, SpinUpMaxLzOfPartition);
+		    BosonOnSphereShort * FinalSpinUpSpace = new BosonOnSphereShort(this->NbrBosonsUp, this->GetTotalLzUp(i) + SpinUpTotalLzOfPartition, this->GetStateLzMaxUp(i) + SpinUpMaxLzOfPartition );
+		  
+		    unsigned long * FinalUpStates = new unsigned long [ FinalSpinUpSpace->GetHilbertSpaceDimension() ];
+		    long * UpWeight = new long [FinalSpinUpSpace->GetHilbertSpaceDimension() ];
+
+		    InitialSpinUpSpace->ConvertToMonomial( upConversionFromSmallIntegerArray, SpinUpMaxLzOfPartition, SpinUpPartitionExponents );
+
+		    unsigned long NbrUpStates = InitialSpinUpSpace->ProductOfTwoMonomials( FirstUpMonomials, EqualPowerIndexUp, NbrEqualPowerUp, SpinUpPartitionExponents, FinalUpStates, UpWeight, FinalSpinUpSpace);
+		    
+		    //	    cout << "NbrUpStates = " << NbrUpStates << "\n";
+
+		    for( unsigned upIndex = 0; upIndex < NbrUpStates; upIndex++ )
+		      {
+			
+			//unsigned long * FinalStateUpOccupationNos = new unsigned long [finalSpace->LzMax + 1];
+			for( int lz = 0; lz <= finalSpace->LzMax; lz++ )
+			  FinalStateUpOccupationNos[lz] = 0x0ul;
+			//unsigned long * FinalStateUpExponents = new unsigned long [this->NbrBosonsUp];
+			for(int p=0; p < this->NbrBosonsUp; p++)
+			  FinalStateUpExponents[p] = 0x0ul;
+			this->ConvertToMonomial( FinalUpStates[upIndex], 0x0ul, FinalSpinUpSpace->LzMax, FinalStateUpExponents );
+			/*
+			cout << "Exponents ";
+			for(int p = 0; p < this->NbrBosonsUp; p++)
+			  cout << FinalStateUpExponents[p] << " ";
+			cout << "\n";
+			*/
+			this->ConvertPolarizedMonomialToOccupationBasis( FinalStateUpExponents, FinalStateUpOccupationNos, this->NbrBosonsUp );
+
+			double geometricCorrectionFactorUp = this->GeometricCorrectionFactor( FirstPolarizedMonomials, FirstMonomials, FinalStateUpExponents, polarizedSpace->LzMax, this->LzMax );
+			double occupationCorrectionFactorUp = this->OccupationCorrectionFactor( FirstPolarizedMonomialsOccupationBasis, SpinfulUpOccupationNos, FinalStateUpOccupationNos, SpinUpMaxLzOfPartition, this->GetStateLzMaxUp(i) );
+			
+			//cout << "Weight " << UpWeight[upIndex] << "\n";
+
+			unsigned long EmptyDownState = 0x0ul;
+			outputVector[ finalSpace->FindStateIndex( FinalUpStates[upIndex], EmptyDownState ) ] += spinfulState[i]*polarizedState[j]*UpWeight[upIndex]*occupationCorrectionFactorUp*geometricCorrectionFactorUp;
+			//cout << "UpWeight[" << upIndex << "] = " << UpWeight[upIndex] << "\n";
+		      }
+		    delete InitialSpinUpSpace;
+		    delete FinalSpinUpSpace;
+		    delete [] FinalUpStates;
+		    delete [] UpWeight;
+		  }
+		else
+		  {
+		    BosonOnSphereShort * InitialSpinUpSpace = new BosonOnSphereShort(this->NbrBosonsUp, SpinUpTotalLzOfPartition, polarizedSpace->LzMax );
+		    BosonOnSphereShort * InitialSpinDownSpace = new BosonOnSphereShort(this->NbrBosonsDown, SpinDownTotalLzOfPartition, polarizedSpace->LzMax );
+
+		    cout << "InitialSpinUpSpace initialised with TotalLz " << SpinUpTotalLzOfPartition << " LzMax " << SpinUpMaxLzOfPartition << "\n";
+		    cout << "InitialSpinDownSpace initialised with TotalLz " << SpinDownTotalLzOfPartition << " LzMax " << SpinDownMaxLzOfPartition << "\n";
+
+		   
+		    BosonOnSphereShort * FinalSpinUpSpace = new BosonOnSphereShort(this->NbrBosonsUp, this->GetTotalLzUp(i) + SpinUpTotalLzOfPartition, this->LzMax + polarizedSpace->LzMax );
+		    BosonOnSphereShort * FinalSpinDownSpace = new BosonOnSphereShort(this->NbrBosonsDown, this->GetTotalLzDown(i) + SpinDownTotalLzOfPartition, this->LzMax + polarizedSpace->LzMax );
+		    
+		    int lzmaxup = this->GetStateLzMaxUp(i);
+		    int lzmaxdown = this->GetStateLzMaxDown(i);
+		    cout << "Creating FinalSpinUpSpace NbrBosonsUp " << this->NbrBosonsUp << " TotalLz " << this->GetTotalLzUp(i) << " + " << SpinUpTotalLzOfPartition << " = " << this->GetTotalLzUp(i) + SpinUpTotalLzOfPartition << " lzmax " << lzmaxup << " + " << SpinUpMaxLzOfPartition << " = " << SpinUpMaxLzOfPartition + lzmaxup << "\n";
+		    cout << "Arguments used: "<<this->NbrBosonsUp<<", "<<this->GetTotalLzUp(i) + SpinUpTotalLzOfPartition<<", "<<this->LzMax + polarizedSpace->LzMax<<endl;
+		    cout << "Creating FinalSpinDownSpace NbrBosonsDown " << this->NbrBosonsDown << " TotalLz " << this->GetTotalLzDown(i) << " + " << SpinDownTotalLzOfPartition << " = " << this->GetTotalLzDown(i) + SpinDownTotalLzOfPartition << " lzmax " << lzmaxdown << " + " << SpinDownMaxLzOfPartition << " = "<< SpinDownMaxLzOfPartition + lzmaxdown << "\n";
+		    cout << "Arguments used: "<<this->NbrBosonsDown<<", "<<this->GetTotalLzDown(i) + SpinDownTotalLzOfPartition<<", "<<this->LzMax + polarizedSpace->LzMax<<endl;
+
+		    
+		    
+		    unsigned long * FinalUpStates = new unsigned long [FinalSpinUpSpace->GetHilbertSpaceDimension() ];
+		    unsigned long * FinalDownStates = new unsigned long [FinalSpinDownSpace->GetHilbertSpaceDimension() ];
+		    long * UpWeight = new long [FinalSpinUpSpace->GetHilbertSpaceDimension() ];
+		    long * DownWeight = new long [FinalSpinDownSpace->GetHilbertSpaceDimension() ];
+    
+		    InitialSpinUpSpace->ConvertToMonomial( upConversionFromSmallIntegerArray, SpinUpMaxLzOfPartition, SpinUpPartitionExponents );
+		    InitialSpinDownSpace->ConvertToMonomial( downConversionFromSmallIntegerArray, SpinDownMaxLzOfPartition, SpinDownPartitionExponents );
+		    
+		    //multiply monomials within each spin group
+		    unsigned long NbrUpStates = InitialSpinUpSpace->ProductOfTwoMonomials( FirstUpMonomials, EqualPowerIndexUp, NbrEqualPowerUp, SpinUpPartitionExponents, FinalUpStates, UpWeight, FinalSpinUpSpace); 
+		    unsigned long NbrDownStates = InitialSpinDownSpace->ProductOfTwoMonomials( FirstDownMonomials, EqualPowerIndexDown, NbrEqualPowerDown, SpinDownPartitionExponents, FinalDownStates, DownWeight, FinalSpinDownSpace);
+		    
+		    //find all the combinations of spin products and add the result to the output vector
+		    for( unsigned long upIndex = 0x0ul; upIndex < NbrUpStates; upIndex++) 
+		      {
+			//unsigned long * FinalStateUpOccupationNos = new unsigned long [finalSpace->LzMax + 1];
+			for( int lz = 0; lz <= finalSpace->LzMax; lz++ )
+			  FinalStateUpOccupationNos[lz] = 0x0ul;
+			//	cout <<  "FinalSpinUpSpace->LzMax " << FinalSpinUpSpace->LzMax << "\n";
+			//unsigned long * FinalStateUpExponents = new unsigned long [this->NbrBosonsUp];
+			for(int p=0; p < this->NbrBosonsUp; p++)
+			  FinalStateUpExponents[p] = 0x0ul;
+			this->ConvertToMonomial( FinalUpStates[upIndex], 0x0ul, FinalSpinUpSpace->LzMax, FinalStateUpExponents );
+		
+			this->ConvertPolarizedMonomialToOccupationBasis( FinalStateUpExponents, FinalStateUpOccupationNos, this->NbrBosonsUp );
+					
+			for( unsigned long downIndex = 0x0ul; downIndex < NbrDownStates; downIndex++ ) 
+			  {
+			    // unsigned long * FinalStateDownOccupationNos = new unsigned long [finalSpace->LzMax + 1];
+			    for( int lz = 0; lz <= finalSpace->LzMax; lz++ )
+			      FinalStateDownOccupationNos[lz] = 0x0ul;
+			    // unsigned long * FinalStateDownExponents = new unsigned long [this->NbrBosonsDown];
+			    for(int p=0; p<this->NbrBosonsDown; p++)
+			      FinalStateDownExponents[p] = 0x0ul;
+			    this->ConvertToMonomial( 0x0ul, FinalDownStates[downIndex], FinalSpinDownSpace->LzMax, FinalStateDownExponents );
+			    this->ConvertPolarizedMonomialToOccupationBasis( FinalStateDownExponents, FinalStateDownOccupationNos, this->NbrBosonsDown );
+			    
+			    
+			    double geometricCorrectionFactor = this->GeometricCorrectionFactor( FirstPolarizedMonomials, FirstMonomials, FinalStateUpExponents, FinalStateDownExponents, polarizedSpace->LzMax, this->LzMax );
+			    double occupationCorrectionFactor = this->OccupationCorrectionFactor( FirstPolarizedMonomialsOccupationBasis, SpinfulUpOccupationNos, SpinfulDownOccupationNos, FinalStateUpOccupationNos, FinalStateDownOccupationNos, polarizedSpace->LzMax, this->LzMax );
+			    
+			    outputVector[ finalSpace->FindStateIndex( FinalUpStates[upIndex], FinalDownStates[downIndex] ) ] += spinfulState[i]*polarizedState[j]*UpWeight[upIndex]*DownWeight[downIndex]*geometricCorrectionFactor*occupationCorrectionFactor;
+			  }
+		      }
+		    
+		    delete InitialSpinUpSpace;
+		    delete InitialSpinDownSpace;
+		    delete FinalSpinUpSpace;
+		    delete FinalSpinDownSpace;
+		    delete [] FinalUpStates;
+		    delete [] FinalDownStates;
+		    delete [] UpWeight;
+		    delete [] DownWeight;
+		  }
+	      }
+	  }
 	}
     }
-  return NbrStates;
-  */
+  }
+  
+  delete [] FinalStateUpOccupationNos;
+  delete [] FinalStateUpExponents;
+
+  delete [] FinalStateDownOccupationNos;
+  delete [] FinalStateDownExponents;
+
+  delete [] upConversionFromSmallIntegerArray;
+  delete [] downConversionFromSmallIntegerArray;
+
+  delete [] EqualPowerIndexUp;
+  delete [] EqualPowerIndexDown;
+  
+  delete [] SpinfulUpOccupationNos;
+  delete [] SpinfulDownOccupationNos;
+
+  delete [] FirstMonomials;
+  delete [] FirstPolarizedMonomials;
+  delete [] FirstPolarizedMonomialsOccupationBasis;
+  delete [] FirstPolarizedMonomialsOccupationBasisInt;
+
+  delete [] SpinUpPartitionExponents;
+  delete [] SpinDownPartitionExponents;
 }
+
+
+
+void BosonOnSphereWithSpin::SymmetriseOverGroupsAndAddToVector(unsigned long * & PlusStateUp, unsigned long * & MinusStateUp, unsigned long * & PlusStateDown, unsigned long * & MinusStateDown, double coefficient, RealVector & OutputVector )
+{
+  unsigned long * FinalUpState = new unsigned long [this->LzMax+1];
+  unsigned long * FinalDownState = new unsigned long [this->LzMax+1];
+  FactorialCoefficient occupationCorrection( 1l );
+  for(int lz=0; lz <= this->LzMax; lz++)
+    {
+      FinalUpState[lz] = PlusStateUp[lz] + MinusStateUp[lz];
+      occupationCorrection.FactorialMultiply( FinalUpState[lz] );
+      occupationCorrection.FactorialDivide( PlusStateUp[lz] );
+      occupationCorrection.FactorialDivide( MinusStateUp[lz] );
+
+      FinalDownState[lz] = PlusStateDown[lz] + MinusStateDown[lz];
+      occupationCorrection.FactorialMultiply( FinalDownState[lz] );
+      occupationCorrection.FactorialDivide( PlusStateDown[lz] );
+      occupationCorrection.FactorialDivide( MinusStateDown[lz] );
+    }
+  double occCorrFactor = sqrt( occupationCorrection.GetNumericalValue() );
+
+  long index = this->FindStateIndex( FinalUpState, FinalDownState );
+  OutputVector[ index ] += occCorrFactor*coefficient;
+  delete [] FinalUpState;
+  delete [] FinalDownState;
+
+}
+
+//Compute the geometric correction factor for a given product state when multiplying two monomials and working with second quantised forms on the sphere for a given spin value for the case of a fully polarized state
+//
+//firstState = reference on array where monomial representation of first state stored
+//secondState = reference on array where monomial representation of second state stored
+//productState = reference on array where monomial representation of a given final state in the product is stored
+//lzMaxOne = twice maximum lz value for a boson in first state
+//lzMaxTwo = twice maximum lz value for a boson in second state
+double BosonOnSphereWithSpin::GeometricCorrectionFactor(unsigned long * firstMonomial, unsigned long * secondMonomial, unsigned long * productMonomial, int lzMaxOne, int lzMaxTwo)
+{
+  //cout << "N_phi polarized " << lzMaxOne << " N_phi spinful " << lzMaxTwo << " N_phi final " << lzMaxOne + lzMaxTwo << "\n";
+  FactorialCoefficient factor(1l);
+  for(int particle=0; particle<this->NbrBosons; particle++)
+    {
+      // cout << productMonomial[particle] << "!/" << firstMonomial[particle] << "!" << secondMonomial[particle] << "!\n";
+      // cout << lzMaxOne+lzMaxTwo-productMonomial[particle] << "!/" << lzMaxOne-firstMonomial[particle] << "!" << lzMaxTwo-secondMonomial[particle] << "!\n";
+      factor.FactorialMultiply( productMonomial[particle] );
+      factor.FactorialDivide( firstMonomial[particle] );
+      factor.FactorialDivide( secondMonomial[particle] );
+      factor.FactorialMultiply( lzMaxOne + lzMaxTwo - productMonomial[particle] );
+      factor.FactorialDivide( lzMaxOne - firstMonomial[particle] );
+      factor.FactorialDivide( lzMaxTwo - secondMonomial[particle] );
+    }
+  //cout << "GeometricCorrectionFactor squared " << factor << "\n";
+  double SquaredResult = factor.GetNumericalValue();
+  //cout << "GeometricCorrectionFactor " << sqrt(SquaredResult) << "\n";
+  return sqrt(SquaredResult);
+}
+
+//Compute the geometric correction factor for a given product state when multiplying two monomials and working with second quantised forms on the sphere for a given spin value for the case of a non-fully polarized spin state
+//
+//firstState = reference on array where monomial representation of first state stored
+//secondState = reference on array where monomial representation of second state stored
+//productState = reference on array where monomial representation of a given final state in the product is stored
+//lzMaxOne = twice maximum lz value for a boson in first state
+//lzMaxTwo = twice maximum lz value for a boson in second state
+double BosonOnSphereWithSpin::GeometricCorrectionFactor(unsigned long * firstMonomial, unsigned long * secondMonomial, unsigned long * productMonomialUp, unsigned long * productMonomialDown, int lzMaxOne, int lzMaxTwo)
+{
+  //cout << "N_phi polarized " << lzMaxOne << " N_phi spinful " << lzMaxTwo << " N_phi final " << lzMaxOne + lzMaxTwo << "\n";
+
+  FactorialCoefficient factor(1l);
+  for(int particle=0; particle < this->NbrBosonsUp; particle++)
+    {
+      factor.FactorialMultiply( productMonomialUp[particle] );
+      factor.FactorialDivide( firstMonomial[particle] );
+      factor.FactorialDivide( secondMonomial[particle] );
+      factor.FactorialMultiply( lzMaxOne + lzMaxTwo - productMonomialUp[particle] );
+      factor.FactorialDivide( lzMaxOne - firstMonomial[particle] );
+      factor.FactorialDivide( lzMaxTwo - secondMonomial[particle] );
+    }
+  for(int particle=0; particle < this->NbrBosonsDown; particle++)
+    {
+      factor.FactorialMultiply( productMonomialDown[particle] );
+      factor.FactorialDivide( firstMonomial[this->NbrBosonsUp + particle] );
+      factor.FactorialDivide( secondMonomial[this->NbrBosonsUp + particle] );
+      factor.FactorialMultiply( lzMaxOne + lzMaxTwo - productMonomialDown[particle] );
+      factor.FactorialDivide( lzMaxOne - firstMonomial[this->NbrBosonsUp + particle] );
+      factor.FactorialDivide( lzMaxTwo - secondMonomial[this->NbrBosonsDown + particle] );
+    }
+  //cout << "GeometricCorrectionFactor squared " << factor << "\n";
+
+  double SquaredResult = factor.GetNumericalValue();
+  //cout << "GeometricCorrectionFactor " << sqrt(SquaredResult) << "\n";
+  return sqrt(SquaredResult);
+}
+
+//Compute the occupation correction factor for a given product state when multiplying two monomials and working with second quantised forms on the sphere for the case of fully polarized states
+//
+//firstState = reference on array where bosonic representation of first state stored
+//secondState = reference on array where bosonic representation of second state stored
+//productState = reference on array where bosonic representation of a given final state in the product is stored
+//lzMaxOne = twice maximum lz value for a boson in first state
+//lzMaxTwo = twice maximum lz value for a boson in second state
+double BosonOnSphereWithSpin::OccupationCorrectionFactor(unsigned long * firstState, unsigned long * secondState, unsigned long * productState, int lzMaxOne, int lzMaxTwo)
+{
+  FactorialCoefficient factor(1l);
+  int lz = 0;
+  if( lzMaxOne < lzMaxTwo ) 
+    {
+      while( lz <= lzMaxOne )
+	{
+	  factor.FactorialMultiply( firstState[lz] );
+	  factor.FactorialMultiply( secondState[lz] );
+	  factor.FactorialDivide( productState[lz] );
+	  lz++;
+	}
+      while( lz <= lzMaxTwo )
+	{
+	  factor.FactorialMultiply( secondState[lz] );
+	  factor.FactorialDivide( productState[lz] );
+	  lz++;
+	}
+      while(lz <= lzMaxOne + lzMaxTwo)
+	{
+	  factor.FactorialDivide( productState[lz] );
+	  lz++;
+	}
+    }
+  else
+    {
+      while( lz <= lzMaxTwo )
+	{
+	  factor.FactorialMultiply( firstState[lz] );
+	  factor.FactorialMultiply( secondState[lz] );
+	  factor.FactorialDivide( productState[lz] );
+	  lz++;
+	}
+      while( lz <= lzMaxOne )
+	{
+	  factor.FactorialMultiply( firstState[lz] );
+	  factor.FactorialDivide( productState[lz] );
+	  lz++;
+	}
+      while( lz <= lzMaxOne + lzMaxTwo )
+	{
+	  factor.FactorialDivide( productState[lz] );
+	  lz++;
+	}
+    }
+  factor.FactorialDivide( this->NbrBosons );
+  double squaredResult = factor.GetNumericalValue();
+  //cout << "OccupationCorrectionFactor " << sqrt(squaredResult) << "\n"; 
+  return sqrt( squaredResult );
+}
+
+
+//Compute the occupation correction factor for a given product state when multiplying two monomials and working with second quantised forms on the sphere for the case of spinful states
+//
+//firstState = reference on array where bosonic representation of first state stored
+//secondState = reference on array where bosonic representation of second state stored
+//productState = reference on array where bosonic representation of a given final state in the product is stored
+//lzMaxOne = twice maximum lz value for a boson in first state
+//lzMaxTwo = twice maximum lz value for a boson in second state
+double BosonOnSphereWithSpin::OccupationCorrectionFactor(unsigned long * firstPolarizedState, unsigned long * secondUpState, unsigned long * secondDownState, unsigned long * productUpState, unsigned long * productDownState, int lzMaxOne, int lzMaxTwo)
+{
+  FactorialCoefficient factor(1l);
+  int lz = 0;
+  if( lzMaxOne < lzMaxTwo ) 
+    {
+      while( lz <= lzMaxOne )
+	{
+	  factor.FactorialMultiply( firstPolarizedState[lz] );
+	  factor.FactorialMultiply( secondUpState[lz] );
+	  factor.FactorialMultiply( secondDownState[lz] );
+	  factor.FactorialDivide( productUpState[lz] );
+	  factor.FactorialDivide( productDownState[lz] );
+
+	  lz++;
+	}
+      while( lz <= lzMaxTwo )
+	{
+	  factor.FactorialMultiply( secondUpState[lz] );
+	  factor.FactorialMultiply( secondDownState[lz] );
+	  factor.FactorialDivide( productUpState[lz] );
+	  factor.FactorialDivide( productDownState[lz] );
+	  lz++;
+	}
+      while(lz <= lzMaxOne + lzMaxTwo)
+	{
+	  factor.FactorialDivide( productUpState[lz] );
+	  factor.FactorialDivide( productDownState[lz] );
+	  lz++;
+	}
+    }
+  else
+    {
+      while( lz <= lzMaxTwo )
+	{
+	  factor.FactorialMultiply( firstPolarizedState[lz] );
+	  factor.FactorialMultiply( secondUpState[lz] );
+	  factor.FactorialMultiply( secondDownState[lz] );
+	  factor.FactorialDivide( productUpState[lz] );
+	  factor.FactorialDivide( productDownState[lz] );
+	  lz++;
+	}
+      while( lz <= lzMaxOne )
+	{
+	  factor.FactorialMultiply( firstPolarizedState[lz] );
+	  factor.FactorialDivide( productUpState[lz] );
+	  factor.FactorialDivide( productDownState[lz] );
+	  lz++;
+	}
+      while( lz <= lzMaxOne + lzMaxTwo )
+	{
+	  factor.FactorialDivide( productUpState[lz] );
+	  factor.FactorialDivide( productDownState[lz] );
+	  lz++;
+	}
+    }
+  factor.FactorialDivide(this->NbrBosons);
+  double squaredResult = factor.GetNumericalValue();
+  //cout << "OccupationCorrectionFactor " << sqrt(squaredResult) << "\n"; 
+  return sqrt( squaredResult );
+}
+

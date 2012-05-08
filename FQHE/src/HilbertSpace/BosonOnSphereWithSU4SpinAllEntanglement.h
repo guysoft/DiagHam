@@ -137,15 +137,15 @@ class BosonOnSphereWithSU4SpinAllEntanglement : public ParticleOnSphereWithSU4Sp
   BosonOnSphereWithSU4SpinAllEntanglement ();
 
   // basic constructor
-// 
-// nbrBosons = number of bosons
-// totalLz = twice the momentum total value
-// lzMax = twice the maximum Lz value reached by a boson
-// totalSz = twice the total sz projection
-// totalIsospin = twice the total isospin value (number imbalance between Plus and Minus)
-// memory = amount of memory granted for precalculations
-
-BosonOnSphereWithSU4SpinAllEntanglement (int nbrBosons, int totalLz, int lzMax, int totalSz, int totalIsospin,
+  // 
+  // nbrBosons = number of bosons
+  // totalLz = twice the momentum total value
+  // lzMax = twice the maximum Lz value reached by a boson
+  // totalSz = twice the total sz projection
+  // totalIsospin = twice the total isospin value (number imbalance between Plus and Minus)
+  // memory = amount of memory granted for precalculations
+  
+  BosonOnSphereWithSU4SpinAllEntanglement (int nbrBosons, int totalLz, int lzMax, int totalSz, int totalIsospin,
 					 unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
@@ -552,6 +552,27 @@ BosonOnSphereWithSU4SpinAllEntanglement (int nbrBosons, int totalLz, int lzMax, 
   // return value = projection matrix
   virtual ComplexMatrix TransformationMatrixSU4ToU1(BosonOnSphereShort* targetSpace, int type = 0);
   */
+
+  //get bosonic state description for state with index index
+  //PlusOccupation = reference on array where plus state occupation numbers will be stored
+  //MinusOccupation = reference on array where minus state occupation numbers will be stored
+  inline void GetBosonicStateDescription(int index, unsigned long *& PlusOccupation, unsigned long *& MinusOccupation );
+
+  //get fermionic state description for state with index index
+  //PlusDescription = unsigned long where plus state description will be stored
+  //MinusDescription = unsigned long where minus state description will be stored
+  inline void GetFermionicStateDescription(int index, unsigned long & PlusDescription, unsigned long & MinusDescription );
+
+  //get total lz of spins for state index
+  //TotalLzPlus = int where twice total lz of plus spins will be stored
+  //TotalLzMinus = int where twice total lz of minus spins will be stored
+  inline void GetTotalLz(int index, int & TotalLzPlus, int & TotalLzMinus);
+
+  //get total sz of plus spins for state index 
+  //TotalSzPlus = int where twice total sz of plus spins will be stored
+  //TotalSzMinus = int where twice total sz of minus spins will be stored
+  inline void GetTotalSz(int index, int & TotalSzPlus, int & TotalSzMinus);
+
 
   protected:
 
@@ -966,6 +987,65 @@ int BosonOnSphereWithSU4SpinAllEntanglement::FindStateIndex(unsigned long stateD
 	return PosMax;
       else
 	return PosMid;
+    }
+}
+
+//get Bosonic description of the state with index index
+//PlusStateDescription = reference on array where Bosonic description of the plus state will be stored
+//MinusStateDescription = reference on array where Bosonic description of the minus state will be stored
+inline void BosonOnSphereWithSU4SpinAllEntanglement::GetBosonicStateDescription(int index, unsigned long *& PlusStateDescription, unsigned long *& MinusStateDescription)
+{
+  this->FermionToBoson(this->StateDescriptionPlus[index], this->StateDescriptionMinus[index], PlusStateDescription, MinusStateDescription);
+}
+
+//get Fermionic description of the state with index index
+//PlusDescription = unsigned long where Fermionic description of the plus state will be stored
+//MinusDescription = unsigned long where Fermionic description of the minus state will be stored
+inline void BosonOnSphereWithSU4SpinAllEntanglement::GetFermionicStateDescription(int index, unsigned long & PlusDescription, unsigned long & MinusDescription)
+{
+  PlusDescription = this->StateDescriptionPlus[index];
+  MinusDescription = this->StateDescriptionMinus[index];
+}
+
+
+//get total lz of plus spins for state index
+//TotalLzPlus = int where twice total lz of plus spins will be stored
+//TotalLzMinus = int where twice total lz of minus spins will be stored
+inline void BosonOnSphereWithSU4SpinAllEntanglement::GetTotalLz(int index, int & TotalLzPlus, int & TotalLzMinus)
+{
+  for(int i=0; i<2*this->NbrLzValue; i++)
+    {
+      TemporaryStatePlus[i] = 0x0ul;
+      TemporaryStateMinus[i] = 0x0ul;
+    }
+  this->FermionToBoson(this->StateDescriptionPlus[index], this->StateDescriptionMinus[index], TemporaryStatePlus, TemporaryStateMinus);
+  TotalLzPlus=0;
+  TotalLzMinus=0;
+  for(int lz=0; lz<this->NbrLzValue; lz++)
+    {
+      TotalLzPlus += (TemporaryStateUpPlus[lz]+TemporaryStateDownPlus[lz])*(2*lz - this->LzMax);
+      TotalLzMinus += (TemporaryStateUpMinus[lz]+TemporaryStateDownMinus[lz])*(2*lz - this->LzMax);
+    }
+
+}
+
+//get total lz of minus spins for state index
+//TotalSzPlus = int where twice total sz of plus spins will be stored
+//TotalSzMinus = int where twice total sz of minus spins will be stored
+inline void BosonOnSphereWithSU4SpinAllEntanglement::GetTotalSz(int index, int & TotalSzPlus, int & TotalSzMinus)
+{
+  for(int i=0; i<2*this->NbrLzValue; i++)
+    {
+      TemporaryStatePlus[i] = 0x0ul;
+      TemporaryStateMinus[i] = 0x0ul;
+    }
+  this->FermionToBoson(this->StateDescriptionPlus[index], this->StateDescriptionMinus[index], TemporaryStatePlus, TemporaryStateMinus);
+  TotalSzPlus = 0;
+  TotalSzMinus = 0;
+  for(int lz=0; lz<this->NbrLzValue; lz++)
+    {
+      TotalSzPlus += TemporaryStateUpPlus[lz] - TemporaryStateDownPlus[lz];
+      TotalSzMinus += TemporaryStateUpMinus[lz] - TemporaryStateDownMinus[lz];
     }
 }
 

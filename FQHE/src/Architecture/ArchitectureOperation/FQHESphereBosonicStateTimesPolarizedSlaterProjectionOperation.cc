@@ -272,7 +272,7 @@ bool FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation::ApplyOperati
 	  sprintf (TmpString, "FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation core operation on SMP id %d finished stage %d with size %d in %.4f",  threadID, StageIdx, this->GetRankChunkSize(NbrComponents, StageIdx,  NbrStages),
 		   (((double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec)) +(((double) (TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec)) / 1000000.0)) );	      
 	  StageIdx++;
-	}      	
+	}
     }
   if ( locked )
     {

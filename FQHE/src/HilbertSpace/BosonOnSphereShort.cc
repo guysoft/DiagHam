@@ -4184,7 +4184,7 @@ void BosonOnSphereShort::SymmetrizeU1U1StateCore (RealVector& symmetrizedVector,
   FactorialCoefficient Factorial2;
   if (unnormalizedBasisFlag == true)
     {
-      for (long i = firstComponent; i < LastComponent; ++i)
+      for (long i = (long) firstComponent; i < (long) LastComponent; ++i)
 	{
 	  this->FermionToBoson(leftSpace->FermionBasis->StateDescription[i], leftSpace->FermionBasis->StateLzMax[i], 
 			       leftSpace->TemporaryState, leftSpace->TemporaryStateLzMax);
@@ -4228,7 +4228,7 @@ void BosonOnSphereShort::SymmetrizeU1U1StateCore (RealVector& symmetrizedVector,
     }
   else
     {
-      for (long i = firstComponent; i < LastComponent; ++i)
+      for (long i = (long) firstComponent; i < (long) LastComponent; ++i)
 	{
 	  this->FermionToBoson(leftSpace->FermionBasis->StateDescription[i], leftSpace->FermionBasis->StateLzMax[i], 
 			       leftSpace->TemporaryState, leftSpace->TemporaryStateLzMax);
@@ -4369,7 +4369,7 @@ void BosonOnSphereShort::BosonicStateTimeBosonicState(RealVector& firstState, Re
 	  
 	  unsigned long NbrStates = this->ProductOfTwoMonomials(FirstMonomials,EqualPowerIndex,NbrEqualPower,SecondMonomials,FinalStates,Weigth,finalSpace);
 	  
-	  for (long Index = 0l; Index < NbrStates; Index++)
+	  for (long Index = 0l; Index < (long) NbrStates; Index++)
 	    {
 	      int TmpLzMax = 2 * this->LzMax + this->NbrBosons - 1;
 	      while ((FinalStates[Index] >> TmpLzMax) == 0x0ul)
@@ -4384,7 +4384,7 @@ void BosonOnSphereShort::BosonicStateTimeBosonicState(RealVector& firstState, Re
 		{
 		  this->GetMonomial(j,SecondMonomials);	
 		  NbrStates = this->ProductOfTwoMonomials(FirstMonomials,EqualPowerIndex,NbrEqualPower,SecondMonomials,FinalStates,Weigth,finalSpace);
-		  for (long Index = 0; Index < NbrStates; Index++)
+		  for (long Index = 0; Index < (long) NbrStates; Index++)
 		    {
 		      int TmpLzMax = 2 * this->LzMax + this->NbrBosons - 1;
 		      while ((FinalStates[Index] >> TmpLzMax) == 0x0ul)
@@ -4881,7 +4881,7 @@ void BosonOnSphereShort::BosonicStateTimePolarizedSlaters(RealVector& bosonState
   unsigned long* Slater = new unsigned long[fermionSpace->NbrFermions];
   
   int NbrMax = firstComponent + nbrComponent;
-  int NbrVariable = 0;
+  //  int NbrVariable = 0;
   
   fermionSpace->ConvertToMonomial(fermionSpace->StateDescription[0], Slater);
   

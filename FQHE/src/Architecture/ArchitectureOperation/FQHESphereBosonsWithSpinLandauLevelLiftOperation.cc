@@ -71,8 +71,8 @@ FQHESphereBosonsWithSpinLandauLevelLiftOperation::FQHESphereBosonsWithSpinLandau
   this->FirstComponent = operation.FirstComponent;	
   this->NbrComponent 	= operation.NbrComponent;
   this->InitialSpace = (BosonOnSphereWithSpin *)operation.InitialSpace->Clone();
-  this->PolarizedSpace = (BosonOnSphereShort*)operation.InitialSpace->Clone();
-  this->FinalSpace = (BosonOnSphereWithSpin *) operation.FinalSpace->Clone();
+  this->PolarizedSpace = (BosonOnSphereShort*)operation.PolarizedSpace->Clone();
+  this->FinalSpace = (BosonOnSphereWithSpin*) operation.FinalSpace->Clone();
   this->OperationType = AbstractArchitectureOperation::FQHESphereBosonsWithSpinLandauLevelLiftOperation;
   this->OutputVector =  operation.OutputVector;
   this->InitialVector = operation.InitialVector;
@@ -80,8 +80,8 @@ FQHESphereBosonsWithSpinLandauLevelLiftOperation::FQHESphereBosonsWithSpinLandau
   this->NbrMPIStage = operation.NbrMPIStage;
   this->NbrSMPStage = operation.NbrSMPStage;
   this->MPINodeNbr = operation.MPINodeNbr;
-  this->SMPStages = operation.SMPStages;
   this->ResumeIdx = operation.ResumeIdx;
+  this->SMPStages = operation.SMPStages;
 }
 
 // destructor
@@ -129,10 +129,10 @@ bool FQHESphereBosonsWithSpinLandauLevelLiftOperation::RawApplyOperation()
 {
   timeval TotalStartingTime;
   gettimeofday (&TotalStartingTime, 0);
+  //cout << "Calling BosonicStateWithSpinTimesBosonicState("<< this->InitialVector<<", *"<<this->PolarizedVector<<", *"<<this->OutputVector<<", "<<this->PolarizedSpace<<", "<<this->FirstComponent<<", "<<this->NbrComponent<<", "<<this->FinalSpace<<");"<<endl;
 
-  ((BosonOnSphereWithSpin * )this->InitialSpace)->BosonicStateWithSpinTimesBosonicState( *this->InitialVector, *this->PolarizedVector, *this->OutputVector,this->PolarizedSpace, this->FirstComponent, this->NbrComponent, this->FinalSpace);
-	
-	
+  ((BosonOnSphereWithSpin * )this->InitialSpace)->BosonicStateWithSpinTimesBosonicState( *this->InitialVector, *this->PolarizedVector, *this->OutputVector, this->PolarizedSpace, this->FirstComponent, this->NbrComponent, this->FinalSpace);
+  
   timeval TotalEndingTime;
   gettimeofday (&TotalEndingTime, 0);
   this->ExecutionTime   = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) +(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));
@@ -153,24 +153,26 @@ bool FQHESphereBosonsWithSpinLandauLevelLiftOperation::ApplyOperationSMPRoundRob
   timeval TotalStartingTime;
   gettimeofday (&TotalStartingTime, 0);
   int NbrStages = this->NbrSMPStage*architecture->GetNbrThreads();
+  if (NbrStages>NbrComponent)
+    NbrStages=NbrComponent;
   int StageIdx=0;
   bool locked = false;
   char TmpString[512];
   TmpString[0]='\0';
   while ( StageIdx < NbrStages ) 
     {
-      if ( ! locked )	
+      if ( ! locked )
         {
           architecture->LockMutex();
           locked = true;
         }
       StageIdx = this->SMPStages[0];
-      if ( StageIdx < NbrStages ) 
-	{	  
-	  this->SMPStages[0]++;	  
-	  if (architecture->VerboseMode() == true && strcmp(TmpString,"") != 0 )
+      if ( StageIdx < NbrStages )
+	{
+	  this->SMPStages[0]++;
+	  if (architecture->VerboseMode() == true && strlen(TmpString) > 0 )
 	    {
-	      architecture->AddToLog(TmpString);	      
+	      architecture->AddToLog(TmpString);
 	    }
 	  architecture->UnLockMutex();
 	  locked = false;
@@ -224,7 +226,7 @@ bool FQHESphereBosonsWithSpinLandauLevelLiftOperation::ArchitectureDependentAppl
   for (int i = 1; i < architecture->GetNbrThreads(); ++i)
     {
       TmpOperations[i]->SetOutputVector((RealVector*)this->OutputVector->EmptyClone(true));
-    }      
+    }
     
   architecture->SendJobsRoundRobin();
   if (architecture->VerboseMode() == true)

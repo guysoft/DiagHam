@@ -205,12 +205,13 @@ FermionOnSphere::FermionOnSphere(const FermionOnSphere& fermions)
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;
+  this->ShiftedTotalLz = fermions.ShiftedTotalLz;
+  this->LzMax = fermions.LzMax;
+  this->NbrLzValue = fermions.NbrLzValue;
   this->LargeHilbertSpaceDimension = fermions.LargeHilbertSpaceDimension;
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
   this->StateDescription = fermions.StateDescription;
   this->StateLzMax = fermions.StateLzMax;
-  this->LzMax = fermions.LzMax;
-  this->NbrLzValue = fermions.NbrLzValue;
   this->Flag = fermions.Flag;
   this->MaximumLookUpShift = fermions.MaximumLookUpShift;
   this->LookUpTableMemorySize = fermions.LookUpTableMemorySize;
