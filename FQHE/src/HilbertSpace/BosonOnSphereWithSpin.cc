@@ -585,7 +585,7 @@ int BosonOnSphereWithSpin::ProdAd (int* m, int* spinIndices, int nbrIndices, dou
 double BosonOnSphereWithSpin::AduAu (int index, int m)
 {
   unsigned Info = this->StateInfo[index];
-  int CurrentLzMaxUp = (Info>>16) - NbrBosonsUp + (NbrBosonsUp!=0);
+  int CurrentLzMaxUp = ((Info>>10)&0x3ff) - NbrBosonsUp + (NbrBosonsUp!=0);
   if (CurrentLzMaxUp < m)
     return 0.0;
   else
@@ -606,7 +606,7 @@ double BosonOnSphereWithSpin::AduAu (int index, int m)
 double BosonOnSphereWithSpin::AddAd (int index, int m)
 {
   unsigned Info = this->StateInfo[index];
-  int CurrentLzMaxDown = (Info&0xffff) - NbrBosonsDown + (NbrBosonsDown!=0);
+  int CurrentLzMaxDown = (Info&0x3ff) - NbrBosonsDown + (NbrBosonsDown!=0);
   if (CurrentLzMaxDown < m)
     {
       return 0.0;
@@ -1161,13 +1161,18 @@ void BosonOnSphereWithSpin::GenerateLookUpTable(int memory)
       LzMaxDown = this->StateLzMaxDown[i] + NbrBosonsDown;
       if (NbrBosonsUp!=NbrBosons) --LzMaxDown;
 
-      this->StateInfo[i]=(LzMaxUp<<16) | LzMaxDown;
+      this->StateInfo[i]=(LzMaxUp<<10) | LzMaxDown;
       this->BosonToFermion(this->StateDescriptionUp[i], this->StateDescriptionDown[i], LzMaxUp, LzMaxDown,
 			   this->StateDescription[i]);
 #ifdef TESTING
       cout << i << " ";
       this->PrintState(cout, StateDescription[i]) <<" "<<this->StateDescriptionUp[i]<<" "<< this->StateDescriptionDown[i] << endl;
 #endif
+      this->GetMonomial(i,TemporaryMonomials);
+      int TotalLzUp=0;
+      for(int k=0; k<this->NbrBosonsUp; ++k) 
+	TotalLzUp += TemporaryMonomials[k];
+      this->StateInfo[i]|=(TotalLzUp<<20);
     }
   
   // size of lookup tables
@@ -1212,8 +1217,8 @@ void BosonOnSphereWithSpin::GenerateLookUpTable(int memory)
   for (int i=0; i<this->HilbertSpaceDimension; ++i)
     {
       Info = this->StateInfo[i];
-      LzMaxUp = (Info>>16); // +CurrentStateNbrUp-(CurrentStateNbrUp!=0);
-      LzMaxDown = (Info&0xffff); // + NbrBosons - CurrentStateNbrUp - (CurrentStateNbrUp!=NbrBosons);
+      LzMaxUp = ((Info>>10)&0x3ff); // +CurrentStateNbrUp-(CurrentStateNbrUp!=0);
+      LzMaxDown = (Info&0x3ff); // + NbrBosons - CurrentStateNbrUp - (CurrentStateNbrUp!=NbrBosons);
       Index = this->FindStateIndex(this->StateDescriptionUp[i], this->StateDescriptionDown[i]);
       if (Index != i)
 	cout << "Error in state "<<i<<" base: " << this->LookUpTableUp[this->StateDescriptionUp[i]]
@@ -2217,8 +2222,8 @@ void BosonOnSphereWithSpin::BosonicStateWithSpinTimesBosonicState( RealVector& s
 		    BosonOnSphereShort * InitialSpinUpSpace = new BosonOnSphereShort(this->NbrBosonsUp, SpinUpTotalLzOfPartition, polarizedSpace->LzMax );
 		    BosonOnSphereShort * InitialSpinDownSpace = new BosonOnSphereShort(this->NbrBosonsDown, SpinDownTotalLzOfPartition, polarizedSpace->LzMax );
 
-		    cout << "InitialSpinUpSpace initialised with TotalLz " << SpinUpTotalLzOfPartition << " LzMax " << SpinUpMaxLzOfPartition << "\n";
-		    cout << "InitialSpinDownSpace initialised with TotalLz " << SpinDownTotalLzOfPartition << " LzMax " << SpinDownMaxLzOfPartition << "\n";
+		    cout << "InitialSpinUpSpace initialised with NbrBosonsUp="<<this->NbrBosonsUp<<", TotalLz " << SpinUpTotalLzOfPartition << " LzMax " << SpinUpMaxLzOfPartition << "\n";
+		    cout << "InitialSpinDownSpace initialised with NbrBosonsDown="<<this->NbrBosonsDown<<", TotalLz " << SpinDownTotalLzOfPartition << " LzMax " << SpinDownMaxLzOfPartition << "\n";
 
 		   
 		    BosonOnSphereShort * FinalSpinUpSpace = new BosonOnSphereShort(this->NbrBosonsUp, this->GetTotalLzUp(i) + SpinUpTotalLzOfPartition, this->LzMax + polarizedSpace->LzMax );

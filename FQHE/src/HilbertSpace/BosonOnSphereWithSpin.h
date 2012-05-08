@@ -433,15 +433,26 @@ class BosonOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // return value = twice the Lz component
   virtual inline int GetLzValue(int j=0);
 
-  //get total Lz of up spins in a state
+  //get total Lz of up spins in a state from lookup
   //index = index of state in Hilbert space
   // return value = twice the total lz of up spins in state
   inline int GetTotalLzUp(long index);
 
-  //get total Lz of down spins in a state
+  //get total Lz of down spins in a state from lookup
   //index = index of state in Hilbert space
   //return value = twice the total lz of down spins in a state
   inline int GetTotalLzDown(long index);
+
+
+  //get total Lz of up spins in a state
+  //index = index of state in Hilbert space
+  // return value = twice the total lz of up spins in state
+  inline int CalculateTotalLzUp(long index);
+
+  //get total Lz of down spins in a state
+  //index = index of state in Hilbert space
+  //return value = twice the total lz of down spins in a state
+  inline int CalculateTotalLzDown(long index);
   
   // Compute the product of two states that belong to different Hilbert Spaces
   //
@@ -693,10 +704,27 @@ int BosonOnSphereWithSpin::GetLzValue(int j)
 }
 
 
-//get total Lz of up spins in a state
+//get total Lz of up spins in a state using lookup
 //index = index of state in Hilbert space
 //return value = twice the total lz of up spins in state
 inline int BosonOnSphereWithSpin::GetTotalLzUp(long index)
+{
+  return 2*(this->StateInfo[index]>>20)-this->LzMax*NbrBosonsUp;
+}
+
+//get total Lz of up spins in a state using lookup
+//index = index of state in Hilbert space
+//return value = twice the total lz of up spins in state
+inline int BosonOnSphereWithSpin::GetTotalLzDown(long index)
+{
+  return this->TotalLz - 2*(this->StateInfo[index]>>20)+this->LzMax*NbrBosonsUp;
+}
+
+
+//calculate total Lz of up spins in a state
+//index = index of state in Hilbert space
+//return value = twice the total lz of up spins in state
+inline int BosonOnSphereWithSpin::CalculateTotalLzUp(long index)
 {
   this->GetMonomial(index, TemporaryMonomials);
   int totalLzUp=0;
@@ -707,10 +735,10 @@ inline int BosonOnSphereWithSpin::GetTotalLzUp(long index)
   return totalLzUp;
 }
 
-//get total Lz of down spins in a state
+//calculate total Lz of down spins in a state
 //index = index of state in Hilbert space
 //return value = twice the total lz of down spins in a state
-inline int BosonOnSphereWithSpin::GetTotalLzDown(long index)
+inline int BosonOnSphereWithSpin::CalculateTotalLzDown(long index)
 {
   this->GetMonomial(index, TemporaryMonomials);
   int totalLzDown=0;
@@ -804,7 +832,7 @@ inline void BosonOnSphereWithSpin::FermionToBoson(unsigned long initialStateUp, 
 {
   //cout << "FermionToBoson :: initialStateUp =" << hex << initialStateUp << ", initialStateDown="<<initialStateDown<<dec<<endl;
   int StateNbrUp=0;
-  int InitialStateLzMax = initialInfo >> 16;
+  int InitialStateLzMax = (initialInfo >> 10)&0x3ffu;
   finalStateLzMaxUp = 0;
   while (InitialStateLzMax >= 0)
     {
@@ -844,7 +872,7 @@ inline void BosonOnSphereWithSpin::FermionToBoson(unsigned long initialStateUp, 
   for (int i=finalStateLzMaxUp+1; i<NbrLzValue; ++i)
     finalState[i]=0;
   finalStateLzMaxDown = 0;
-  InitialStateLzMax = initialInfo&0xffff;
+  InitialStateLzMax = initialInfo&0x3ff;
   while (InitialStateLzMax >= 0)
     {
       unsigned long TmpState = (~initialStateDown - 1ul) ^ (~initialStateDown);
@@ -991,8 +1019,8 @@ inline unsigned long BosonOnSphereWithSpin::ConvertFromMonomial(unsigned long* i
 inline int BosonOnSphereWithSpin::GetStateLzMax(int index)
 {
   unsigned Info = StateInfo[index];
-  int LzMaxUp = Info >> 16;
-  int LzMaxDown = Info&0xffff;
+  int LzMaxUp = (Info >> 10)&0x3ffu;
+  int LzMaxDown = Info&0x3ff;
   LzMaxUp -= NbrBosonsUp-(NbrBosonsUp!=0);
   LzMaxDown -= this->NbrBosonsDown - (NbrBosonsDown!=0);
   return std::max(LzMaxUp, LzMaxDown);
@@ -1005,7 +1033,7 @@ inline int BosonOnSphereWithSpin::GetStateLzMaxUp(long index)
 {
   /*
   unsigned Info = StateInfo[index];
-  int LzMaxUp = Info >> 16;
+  int LzMaxUp = (Info >> 10)&0x3ffu;
   LzMaxUp -= NbrBosonsUp-(NbrBosonsUp!=0);
   return LzMaxUp;  
   */
@@ -1025,7 +1053,7 @@ inline int BosonOnSphereWithSpin::GetStateLzMaxUp(long index)
       lzmaxup = -1;
     }
   /*
-  int myLzMax = ((StateInfo[index])>>16) - this->NbrBosonsUp;
+  int myLzMax = (((StateInfo[index])>>10)&0x3ffu) - this->NbrBosonsUp;
   if (NbrBosonsUp!=0)
     ++myLzMax;
   cout << "myLzMax = "<<myLzMax<<" lzmaxup="<<lzmaxup<<" state: ";
@@ -1042,7 +1070,7 @@ inline int BosonOnSphereWithSpin::GetStateLzMaxDown(long index)
 {
   /*
   unsigned Info = StateInfo[index];
-  int LzMaxDown = Info >> 16;
+  int LzMaxDown = (Info & 0x3ffu);
   LzMaxDown -= NbrBosonsDown-(NbrBosonsDown!=0);
   return LzMaxDown;
   */

@@ -447,13 +447,12 @@ void ParticleOnSphereWithSU4SpinL2Hamiltonian::EvaluateInteractionFactors()
 	  this->OneBodyInteractionFactorsdpdp[i] = this->L2Factor * (Coefficients(i, i + 1) + Coefficients(i - 1, i));
 	  this->OneBodyInteractionFactorsdmdm[i] = this->L2Factor * (Coefficients(i, i + 1) + Coefficients(i - 1, i));
 	  
-	} (this->LzMax>0)
-	{
-	  this->OneBodyInteractionFactorsupup[this->LzMax] = this->L2Factor * Coefficients(this->LzMax - 1, this->LzMax);
-	  this->OneBodyInteractionFactorsumum[this->LzMax] = this->L2Factor * Coefficients(this->LzMax - 1, this->LzMax);
-	  this->OneBodyInteractionFactorsdpdp[this->LzMax] = this->L2Factor * Coefficients(this->LzMax - 1, this->LzMax);
-	  this->OneBodyInteractionFactorsdmdm[this->LzMax] = this->L2Factor * Coefficients(this->LzMax - 1, this->LzMax);
 	}
+
+      this->OneBodyInteractionFactorsupup[this->LzMax] = this->L2Factor * Coefficients(this->LzMax - 1, this->LzMax);
+      this->OneBodyInteractionFactorsumum[this->LzMax] = this->L2Factor * Coefficients(this->LzMax - 1, this->LzMax);
+      this->OneBodyInteractionFactorsdpdp[this->LzMax] = this->L2Factor * Coefficients(this->LzMax - 1, this->LzMax);
+      this->OneBodyInteractionFactorsdmdm[this->LzMax] = this->L2Factor * Coefficients(this->LzMax - 1, this->LzMax);
     }
   else
     {
