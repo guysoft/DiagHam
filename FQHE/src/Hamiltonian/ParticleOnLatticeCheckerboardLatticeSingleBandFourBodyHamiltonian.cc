@@ -1,4 +1,4 @@
- ////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 //                                                                            //
 //                                                                            //
 //                            DiagHam  version 0.01                           //
@@ -64,18 +64,15 @@ ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian::ParticleOnLat
 // nbrSiteY = number of sites in the y direction
 // uPotential = strength of the repulsive four body neareast neighbor interaction
 // vPotential = strength of the repulsive two body neareast neighbor interaction
-// t1 = hoping amplitude between neareast neighbor sites
-// t2 = hoping amplitude between next neareast neighbor sites
-// t2p = hoping amplitude between second next neareast neighbor sites
-// mus = sublattice staggered chemical potential 
-// gammaX = boundary condition twisting angle along x
-// gammaY = boundary condition twisting angle along y
+// tightBindingModel = pointer to the tight binding model
 // flatBandFlag = use flat band model
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
 ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian::ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, 
-												       int nbrSiteY, double uPotential, double vPotential, double t1, double t2, double t2p, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
+																     int nbrSiteY, double uPotential, double vPotential, 
+																     Abstract2DTightBindingModel* tightBindingModel, 
+																     bool flatBandFlag, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -89,12 +86,7 @@ ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian::ParticleOnLat
 
   this->HamiltonianShift = 0.0;
   this->SqrNBodyValue = this->NBodyValue * this->NBodyValue;
-  this->NNHoping = t1;
-  this->NextNNHoping = t2;
-  this->SecondNextNNHoping = t2p;
-  this->MuS = mus;
-  this->GammaX = gammaX;
-  this->GammaY = gammaY;
+  this->TightBindingModel = tightBindingModel;
   this->FlatBand = flatBandFlag;
   this->UPotential = uPotential;
   this->VPotential = vPotential;
@@ -146,10 +138,20 @@ ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian::~ParticleOnLa
 void ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian::EvaluateInteractionFactors()
 {
   long TotalNbrInteractionFactors = 0;
-  ComplexMatrix* OneBodyBasis = new ComplexMatrix [this->NbrSiteX * this->NbrSiteY];
+  ComplexMatrix* OneBodyBasis = new ComplexMatrix[this->TightBindingModel->GetNbrStatePerBand()];
   if (this->FlatBand == false)
-    this->OneBodyInteractionFactors = new double [this->NbrSiteX * this->NbrSiteY];
-  this->ComputeOneBodyMatrices(OneBodyBasis);
+    {
+      this->OneBodyInteractionFactors = new double [this->TightBindingModel->GetNbrStatePerBand()];
+    }
+  for (int kx = 0; kx < this->NbrSiteX; ++kx)
+    for (int ky = 0; ky < this->NbrSiteY; ++ky)
+      {
+	int Index = this->TightBindingModel->GetLinearizedMomentumIndex(kx, ky);
+	if (this->FlatBand == false)
+	  this->OneBodyInteractionFactors[Index] = this->TightBindingModel->GetEnergy(0, Index);
+	OneBodyBasis[Index] =  this->TightBindingModel->GetOneBodyMatrix(Index);
+      }
+
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
       this->NbrSectorSums = this->NbrSiteX * this->NbrSiteY;

@@ -2446,14 +2446,14 @@ void FermionOnSphereHaldaneHugeBasis::GenerateJackPolynomialSparse(double alpha,
     maxIndex = this->LargeHilbertSpaceDimension - 1l;
   double TmpComponent = 1.0;
   long FileShift = 4l;
-  if (this->HilbertSpaceDimension == -1)
+  if (this->HilbertSpaceDimension <= 0)
     FileShift = 12l;
   if ((minIndex <= 0) && (resumeFlag == false))
     {
       ofstream File;
       File.open(partialSave, ios::binary | ios::out);
       WriteLittleEndian(File, this->HilbertSpaceDimension);  
-      if (this->HilbertSpaceDimension == -1)
+      if (this->HilbertSpaceDimension <= 0)
 	{
 	  WriteLittleEndian(File, this->LargeHilbertSpaceDimension);  
 	}
@@ -2693,14 +2693,14 @@ void FermionOnSphereHaldaneHugeBasis::GenerateSymmetrizedJackPolynomialSparse(do
     maxIndex = this->LargeHilbertSpaceDimension - 1l;
   double TmpComponent = 1.0;
   long FileShift = 4l;
-  if (this->HilbertSpaceDimension == -1)
+  if (this->HilbertSpaceDimension <= 0)
     FileShift = 12l;
   if ((minIndex <= 0) && (resumeFlag == false))
     {
       ofstream File;
       File.open(partialSave, ios::binary | ios::out);
       WriteLittleEndian(File, this->HilbertSpaceDimension);  
-      if (this->HilbertSpaceDimension == -1)
+      if (this->HilbertSpaceDimension <= 0)
 	{
 	  WriteLittleEndian(File, this->LargeHilbertSpaceDimension);  
 	}

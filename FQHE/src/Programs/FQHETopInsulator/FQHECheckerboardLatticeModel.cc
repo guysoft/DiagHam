@@ -12,6 +12,8 @@
 #include "Hamiltonian/ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeCheckerboardLatticeSingleBandFiveBodyHamiltonian.h"
 
+#include "Tools/FTITightBinding/TightBindingModelCheckerboardLattice.h"
+
 #include "LanczosAlgorithm/LanczosManager.h"
 
 #include "Architecture/ArchitectureManager.h"
@@ -23,6 +25,8 @@
 
 #include "MainTask/GenericComplexMainTask.h"
 
+#include "GeneralTools/FilenameTools.h"
+
 #include <iostream>
 #include <cstring>
 #include <stdlib.h>
@@ -33,18 +37,6 @@ using std::cout;
 using std::endl;
 using std::ios;
 using std::ofstream;
-
-
-// compute the single particle spectrum 
-//
-// outputFileName = name of the output file
-// nbrSitesX = number of sites in the x direction
-// nbrSitesY = number of sites in the x direction
-// nnHoping = nearest neighbor hoping amplitude
-// nnnHoping =  next nearest neighbor hoping amplitude
-// nnnnHoping =  second next nearest neighbor hoping amplitude
-// mus = sublattice staggered chemical potential 
-void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double nnHoping, double nnnHoping, double nnnnHoping, double mus);
 
 
 int main(int argc, char** argv)
@@ -189,7 +181,12 @@ int main(int argc, char** argv)
   
   if (Manager.GetBoolean("singleparticle-spectrum") == true)
     {
-      ComputeSingleParticleSpectrum(EigenvalueOutputFile, NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"));
+      TightBindingModelCheckerboardLattice TightBindingModel(NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), 
+							     Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), false);
+      TightBindingModel.WriteAsciiSpectrum(EigenvalueOutputFile);
+      double BandSpread = TightBindingModel.ComputeBandSpread(0);
+      double DirectBandGap = TightBindingModel.ComputeDirectBandGap(0);
+      cout << "Spread = " << BandSpread << "  Direct Gap = " << DirectBandGap  << "  Flattening = " << (BandSpread / DirectBandGap) << endl;
       return 0;
     }
 
@@ -207,6 +204,8 @@ int main(int argc, char** argv)
       MinKy = Manager.GetInteger("only-ky");
       MaxKy = MinKy;
     }
+  TightBindingModelCheckerboardLattice TightBindingModel(NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"),
+							 Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
   bool FirstRunFlag = true;
   for (int i = MinKx; i <= MaxKx; ++i)
     {
@@ -273,17 +272,16 @@ int main(int argc, char** argv)
 	      if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false) && (Manager.GetBoolean("five-body") == false))
 		{ 
 		  Hamiltonian = new ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
-											      Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"),
-											      Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
-											      Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+											      Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), 
+											      &TightBindingModel,Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 		}
 	      else
 		{ 
 		  if (Manager.GetBoolean("three-body") == true)
 		    {
 		      Hamiltonian = new ParticleOnLatticeCheckerboardLatticeSingleBandThreeBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
-													   Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"),
-													   Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
+													   Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), 
+													   &TightBindingModel, 		     
 													   Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 		    }
 		  else
@@ -291,16 +289,16 @@ int main(int argc, char** argv)
 		      if (Manager.GetBoolean("four-body") == true)
 			{
 			  Hamiltonian = new ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
-													       Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"),
-													       Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
-													       Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+													      Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), 
+													      &TightBindingModel, 		     
+													      Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 			}
 		      else
 			{
 			  Hamiltonian = new ParticleOnLatticeCheckerboardLatticeSingleBandFiveBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
-													       Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"),
-													       Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
-													       Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+													      Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), 
+													      &TightBindingModel, 		     
+													      Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 			}
 
 		    }
@@ -311,26 +309,11 @@ int main(int argc, char** argv)
               if (Manager.GetString("eigenstate-file")!=0)
                   sprintf (EigenstateOutputFile, "%s_kx_%d_ky_%d", Manager.GetString("eigenstate-file"), i, j);
               else
-              {
-                  if (Manager.GetBoolean("flat-band") == true)
-                    {
-                      if (Manager.GetDouble("mu-s") == 0.0)
-                        sprintf (EigenstateOutputFile, "%s_v_%f_t1_%f_t2_%f_gx_%f_gy_%f_kx_%d_ky_%d",FilePrefix, 
-                                 Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j);
-                      else
-                        sprintf (EigenstateOutputFile, "%s_v_%f_t1_%f_t2_%f_gx_%f_gy_%f_mus_%f_kx_%d_ky_%d",FilePrefix, 
-                                 Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"), i, j);
-                    }
-                  else
-                    {
-                      if (Manager.GetDouble("mu-s") == 0.0)
-                        sprintf (EigenstateOutputFile, "%s_u_%f_v_%f_t1_%f_t2_%f_gx_%f_gy_%f_kx_%d_ky_%d",FilePrefix, 
-                                 Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j);
-                      else
-                        sprintf (EigenstateOutputFile, "%s_u_%f_v_%f_t1_%f_t2_%f_gx_%f_gy_%f_mus_%f_kx_%d_ky_%d",FilePrefix, 
-                                 Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"), i, j);
-                    }
-              }
+		{
+		  char* TmpExtention = new char [512];
+		  sprintf (TmpExtention, "_kx_%d_ky_%d", i, j);
+		  EigenstateOutputFile = ReplaceExtensionToFileName(EigenvalueOutputFile, ".dat", TmpExtention);
+		}
 	      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
 	      FirstRunFlag = false;
 	      MainTaskOperation TaskOperation (&Task);
@@ -346,63 +329,3 @@ int main(int argc, char** argv)
   return 0;
 }
 
-// compute the single particle spectrum 
-//
-// outputFileName = name of the output file
-// nbrSitesX = number of sites in the x direction
-// nbrSitesY = number of sites in the x direction
-// nnHoping = nearest neighbor hoping amplitude
-// nnnHoping =  next nearest neighbor hoping amplitude
-// nnnnHoping =  second next nearest neighbor hoping amplitude
-// mus = sublattice staggered chemical potential 
-
-void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double nnHoping, double nnnHoping, double nnnnHoping, double mus)
-{
-  ofstream File;
-  File.open(outputFileName);
-  File << "# kx    ky     E_-    E_-" << endl;
-  double MinEMinus = 0.0;
-  double MaxEMinus = -10.0;
-  double MinEPlus = 10.0;
-  double MaxEPlus = 0.0;
-  for (int kx = 0; kx < nbrSitesX; ++kx)
-    {
-      for (int ky = 0; ky < nbrSitesY; ++ky)
-	{
-	  Complex B1 = 4.0 * nnHoping * Complex (cos (1.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) * cos (1.0 * M_PI * ((double) ky) / ((double) nbrSitesY)) * cos(M_PI * 0.25), 
-					   sin (1.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) * sin (1.0 * M_PI * ((double) ky) / ((double) nbrSitesY)) * sin(M_PI * 0.25));
-	  double d1 = 4.0 * nnnnHoping * cos (2.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) * cos (2.0 * M_PI * ((double) ky) / ((double) nbrSitesY));
-	  double d3 = mus + (2.0 * nnnHoping * (cos (2.0 * M_PI * ((double) kx) / ((double) nbrSitesX))
-						- cos (2.0 * M_PI * ((double) ky) / ((double) nbrSitesY))));
-	  HermitianMatrix TmpOneBobyHamiltonian(2, true);
-	  TmpOneBobyHamiltonian.SetMatrixElement(0, 0, d1 + d3);
-	  TmpOneBobyHamiltonian.SetMatrixElement(0, 1, B1);
-	  TmpOneBobyHamiltonian.SetMatrixElement(1, 1, d1 - d3);
-	  RealDiagonalMatrix TmpDiag;
-#ifdef __LAPACK__
-	  TmpOneBobyHamiltonian.LapackDiagonalize(TmpDiag);
-#else
-	  TmpOneBobyHamiltonian.Diagonalize(TmpDiag);
-#endif   
-	  if (MaxEMinus < TmpDiag(0, 0))
-	    {
-	      MaxEMinus = TmpDiag(0, 0);
-	    }
-	  if (MinEMinus > TmpDiag(0, 0))
-	    {
-	      MinEMinus = TmpDiag(0, 0);
-	    }
-	  if (MaxEPlus < TmpDiag(1, 1))
-	    {
-	      MaxEPlus = TmpDiag(1, 1);
-	    }
-	  if (MinEPlus > TmpDiag(1, 1))
-	    {
-	      MinEPlus = TmpDiag(1, 1);
-	    }
-	  File << (2.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) << " " << (2.0 * M_PI * ((double) ky) / ((double) nbrSitesY)) << " " << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << endl;
-	}
-      File << endl;
-    }
-  cout << "Spread = " << (MaxEMinus - MinEMinus) << "  Gap = " <<  (MinEPlus - MaxEMinus) << "  Flatening = " << ((MaxEMinus - MinEMinus) / (MinEPlus - MaxEMinus)) << endl;
-}

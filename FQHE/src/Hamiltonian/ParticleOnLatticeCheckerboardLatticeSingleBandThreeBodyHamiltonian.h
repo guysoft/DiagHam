@@ -52,22 +52,10 @@ class ParticleOnLatticeCheckerboardLatticeSingleBandThreeBodyHamiltonian : publi
 
  protected:
   
-  // hoping amplitude between neareast neighbor sites
-  double NNHoping;
-  // hoping amplitude between next neareast neighbor sites
-  double NextNNHoping;
-  // hoping amplitude between second next neareast neighbor sites
-  double SecondNextNNHoping;
-  // four times the sublattice staggered chemical potential 
-  double MuS;
   // nearest neighbor density-density-density potential strength
   double UPotential;
   // nearest neighbor density-density potential strength
   double VPotential;
-  // boundary condition twisting angle along x
-  double GammaX;
-  // boundary condition twisting angle along y
-  double GammaY;
 
   // use flat band model
   bool FlatBand;
@@ -94,16 +82,12 @@ class ParticleOnLatticeCheckerboardLatticeSingleBandThreeBodyHamiltonian : publi
   // nbrSiteY = number of sites in the y direction
   // uPotential = strength of the repulsive three body neareast neighbor interaction
   // vPotential = strength of the repulsive two body neareast neighbor interaction
-  // t1 = hoping amplitude between neareast neighbor sites
-  // t2 = hoping amplitude between next neareast neighbor sites
-  // t2p = hoping amplitude between second next neareast neighbor sites
-  // mus = sublattice staggered chemical potential 
-  // gammaX = boundary condition twisting angle along x
-  // gammaY = boundary condition twisting angle along y
+  // tightBindingModel = pointer to the tight binding model
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeCheckerboardLatticeSingleBandThreeBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential, double t1, double t2, double t2p, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnLatticeCheckerboardLatticeSingleBandThreeBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential, 
+								     Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //
@@ -115,11 +99,6 @@ class ParticleOnLatticeCheckerboardLatticeSingleBandThreeBodyHamiltonian : publi
   // evaluate all interaction factors
   //   
   virtual void EvaluateInteractionFactors();
-
-  // compute the one body transformation matrices and the optional one body band stucture contribution
-  //
-  // oneBodyBasis = array of one body transformation matrices
-  virtual void ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis);
 
   // compute all the phase precalculation arrays 
   //

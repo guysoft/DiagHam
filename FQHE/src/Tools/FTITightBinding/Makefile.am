@@ -7,4 +7,6 @@ Abstract1DTightBindingModel.cc \
 Abstract2DTightBindingModel.cc \
 Abstract3DTightBindingModel.cc \
 GenericTightBindingModel.cc \
-TightBindingModelRubyLattice.cc
+TightBindingModelRubyLattice.cc \
+TightBindingModelKagomeLattice.cc \
+TightBindingModelCheckerboardLattice.cc
