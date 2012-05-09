@@ -622,7 +622,41 @@ void ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian::EvaluateInterac
  		  TmpA4A4A4Out2 += OneBodyBasis[IndexIn[TmpPerm[0]]][0][3] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][3] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][3] * this->ComputeThreeBodyMatrixElementOnSiteA4A4A4Out(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
  		  TmpA5A5A5Out2 += OneBodyBasis[IndexIn[TmpPerm[0]]][0][4] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][4] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][4] * this->ComputeThreeBodyMatrixElementOnSiteA5A5A5Out(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
  		  TmpA6A6A6Out2 += OneBodyBasis[IndexIn[TmpPerm[0]]][0][5] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][5] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][5] * this->ComputeThreeBodyMatrixElementOnSiteA6A6A6Out(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
- 		}
+
+		  if ((IndexIn[TmpPerm[0]] == IndexIn[TmpPerm[1]]) && (IndexIn[TmpPerm[1]] == IndexIn[TmpPerm[2]]))
+		    {
+		      TmpA1A1A1In2 /= 6.0;
+		      TmpA2A2A2In2 /= 6.0;
+		      TmpA3A3A3In2 /= 6.0;
+		      TmpA4A4A4In2 /= 6.0;
+		      TmpA5A5A5In2 /= 6.0;
+		      TmpA6A6A6In2 /= 6.0;
+		      TmpA1A1A1Out2 /= 6.0;
+		      TmpA2A2A2Out2 /= 6.0;
+		      TmpA3A3A3Out2 /= 6.0;
+		      TmpA4A4A4Out2 /= 6.0;
+		      TmpA5A5A5Out2 /= 6.0;
+		      TmpA6A6A6Out2 /= 6.0;
+		    }
+		  else
+		    {
+		      if( (IndexIn[TmpPerm[0]] == IndexIn[TmpPerm[1]])  || (IndexIn[TmpPerm[1]] == IndexIn[TmpPerm[2]])  || (IndexIn[TmpPerm[0]] == IndexIn[TmpPerm[2]]) )
+			{
+			  TmpA1A1A1In2 *= 0.5;
+			  TmpA2A2A2In2 *= 0.5;
+			  TmpA3A3A3In2 *= 0.5;
+			  TmpA4A4A4In2 *= 0.5;
+			  TmpA5A5A5In2 *= 0.5;
+			  TmpA6A6A6In2 *= 0.5;
+			  TmpA1A1A1Out2 *= 0.5;
+			  TmpA2A2A2Out2 *= 0.5;
+			  TmpA3A3A3Out2 *= 0.5;
+			  TmpA4A4A4Out2 *= 0.5;
+			  TmpA5A5A5Out2 *= 0.5;
+			  TmpA6A6A6Out2 *= 0.5;
+			}
+		    }
+		}
 
  	      TmpA1A1A1In[j1] =  TmpA1A1A1In2;
  	      TmpA1A1A1Out[j1] = TmpA1A1A1Out2;
