@@ -115,7 +115,6 @@ ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::~ParticleOnLatticeKagomeLat
 
 void ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::EvaluateInteractionFactors()
 {
-
   long TotalNbrInteractionFactors = 0;
   ComplexMatrix* OneBodyBasis = new ComplexMatrix[this->TightBindingModel->GetNbrStatePerBand()];
   if (this->FlatBand == false)

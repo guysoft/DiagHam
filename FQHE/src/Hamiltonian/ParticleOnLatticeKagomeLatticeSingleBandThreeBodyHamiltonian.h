@@ -53,23 +53,6 @@ class ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian : public Part
 
  protected:
   
-  // hopping amplitude between neareast neighbor sites
-  double NNHopping;
-  // hopping amplitude between next neareast neighbor sites
-  double NextNNHopping;
-  // spin orbit coupling to neareast neighbor sites
-  double NNSpinOrbit;
-  // spin orbit coupling to next neareast neighbor sites
-  double NextNNSpinOrbit;
-  
-  // four times the sublattice staggered chemical potential 
-  double MuS;
-
-  // boundary condition twisting angle along x
-  double GammaX;
-  // boundary condition twisting angle along y
-  double GammaY;
-
   // use flat band model
   bool FlatBand;
 
@@ -96,18 +79,11 @@ class ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian : public Part
   // threeBodyPotential = strength of the repulsive three body neareast neighbor interaction
   // uPotential = strength of the repulsive two body neareast neighbor interaction
   // vPotential = strength of the repulsive two body next neareast neighbor interaction
-  // t1 = real part of the hopping amplitude between neareast neighbor sites
-  // t2 = real part of the hopping amplitude between next neareast neighbor sites
-  // lambda1 = imaginary part of the hopping amplitude between neareast neighbor sites
-  // lambda1 = imaginary part of the hopping amplitude between next neareast neighbor sites
-  // mus = sublattice chemical potential on A sites
-  // gammaX = boundary condition twisting angle along x
-  // gammaY = boundary condition twisting angle along y
+  // tightBindingModel = pointer to the tight binding model
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrCellX, 
-							       int nbrCellY, double threeBodyPotential, double uPotential, double vPotential, double t1, double t2, double lambda1, double lambda2, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrCellX, 							       int nbrCellY, double threeBodyPotential, double uPotential, double vPotential ,  Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
   
   // destructor
   //
@@ -119,11 +95,6 @@ class ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian : public Part
   // evaluate all interaction factors
   //   
   virtual void EvaluateInteractionFactors();
-
-  // compute the one body transformation matrices and the optional one body band stucture contribution
-  //
-  // oneBodyBasis = array of one body transformation matrices
-  virtual void ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis);
 
   // compute the matrix element for the two body interaction between two sites A and B 
   //

@@ -51,6 +51,7 @@ class ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonian : public Par
 {
   
 public:
+
   // constructor
   //
   // particles = Hilbert space associated to the system

@@ -287,9 +287,9 @@ int main(int argc, char** argv)
       MinKy = Manager.GetInteger("only-ky");
       MaxKy = MinKy;
     }
-
- TightBindingModelKagomeLattice TightBindingModel(NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
-						      Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+  
+  TightBindingModelKagomeLattice TightBindingModel(NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
+						   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
   bool FirstRunFlag = true;
   for (int i = MinKx; i <= MaxKx; ++i)
     {
@@ -331,9 +331,7 @@ int main(int argc, char** argv)
 		      // use unit three-body interaction by default
 		      Hamiltonian = new ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian
 			(Space, NbrParticles, NbrSitesX, NbrSitesY, /* three-body */ 1.0, Manager.GetDouble("u-potential"),
-			 Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"),
-			 Manager.GetDouble("l2"),Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"),
-			 Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+			 Manager.GetDouble("v-potential"),  &TightBindingModel, 			 Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 		    }
 		  else
 		    {

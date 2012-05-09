@@ -78,7 +78,7 @@ class ParticleOnLatticeKagomeLatticeSingleBandHamiltonian : public ParticleOnLat
   // nbrSiteY = number of sites in the y direction
   // uPotential = strength of the repulsive two body neareast neighbor interaction
   // vPotential = strength of the repulsive two body second nearest neighbor interactio
-  // tightBindingModel = pointer to the tight binding modeln
+  // tightBindingModel = pointer to the tight binding model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   ParticleOnLatticeKagomeLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential,  Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);

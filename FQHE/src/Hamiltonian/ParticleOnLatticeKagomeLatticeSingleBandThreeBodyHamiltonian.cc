@@ -67,19 +67,13 @@ ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::ParticleOnLatticeK
 // threeBodyPotential = strength of the repulsive three body neareast neighbor interaction
 // uPotential = strength of the repulsive two body neareast neighbor interaction
 // vPotential = strength of the repulsive two body neareast neighbor interaction
-// t1 = real part of the hopping amplitude between neareast neighbor sites
-// t2 = real part of the hopping amplitude between next neareast neighbor sites
-// lambda1 = imaginary part of the hopping amplitude between neareast neighbor sites
-// lambda1 = imaginary part of the hopping amplitude between next neareast neighbor sites
-// mus = sublattice chemical potential on A sites
-// gammaX = boundary condition twisting angle along e_a (measured in units of 2pi)
-// gammaY = boundary condition twisting angle along e_b (measured in units of 2pi)
+// tightBindingModel = pointer to the tight binding model
 // flatBandFlag = use flat band model
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
 ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrCellX, 
-															   int nbrCellY, double threeBodyPotential, double uPotential, double vPotential, double t1, double t2, double lambda1, double lambda2, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
+															   int nbrCellY, double threeBodyPotential, double uPotential, double vPotential ,  Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -90,14 +84,7 @@ ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::ParticleOnLatticeK
   this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
 
   this->HamiltonianShift = 0.0;
-  this->NNHopping = t1;
-  this->NextNNHopping = t2;
-  this->NNSpinOrbit = lambda1;
-  this->NextNNSpinOrbit = lambda2;
-  this->MuS = mus;
-  this->GammaX = gammaX;
-  this->GammaY = gammaY;
-
+  this->TightBindingModel = tightBindingModel;
 
   this->NBodyValue = 3;
   this->SqrNBodyValue = this->NBodyValue * this->NBodyValue;
@@ -142,10 +129,20 @@ ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::~ParticleOnLattice
 void ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::EvaluateInteractionFactors()
 {
   long TotalNbrInteractionFactors = 0;
-  ComplexMatrix* OneBodyBasis = new ComplexMatrix [this->NbrSiteX * this->NbrSiteY];
+  ComplexMatrix* OneBodyBasis = new ComplexMatrix[this->TightBindingModel->GetNbrStatePerBand()];
   if (this->FlatBand == false)
-    this->OneBodyInteractionFactors = new double [this->NbrSiteX * this->NbrSiteY];
-  this->ComputeOneBodyMatrices(OneBodyBasis);
+    {
+      this->OneBodyInteractionFactors = new double [this->TightBindingModel->GetNbrStatePerBand()];
+    }
+  for (int kx = 0; kx < this->NbrSiteX; ++kx)
+    for (int ky = 0; ky < this->NbrSiteY; ++ky)
+      {
+	int Index = this->TightBindingModel->GetLinearizedMomentumIndex(kx, ky);
+	if (this->FlatBand == false)
+	  this->OneBodyInteractionFactors[Index] = 0.5 * this->TightBindingModel->GetEnergy(0, Index);
+	OneBodyBasis[Index] =  this->TightBindingModel->GetOneBodyMatrix(Index);
+      }
+
  
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
@@ -933,64 +930,5 @@ Complex ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::ComputeThr
   return Tmp;
 }
 
-
-
-
-// compute the one body transformation matrices and the optional one body band stucture contribution
-//
-// oneBodyBasis = array of one body transformation matrices
-
-void ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis)
-{
-    double KA, KB;
-  for (int ka = 0; ka < this->NbrSiteX; ++ka)
-    for (int kb = 0; kb < this->NbrSiteY; ++kb)
-      {
-	KA = 0.5 * this->KxFactor * (((double) ka) + this->GammaX);
-	KB = 0.5 * this->KyFactor * (((double) kb) + this->GammaY);
-	int Index = (ka * this->NbrSiteY) + kb;
-	Complex HAB (-2.0*this->NNHopping, -2.0*this->NNSpinOrbit);
-	HAB *= cos (KA);
-	Complex HAC(-2.0*this->NNHopping, 2.0*this->NNSpinOrbit);
-	HAC *= cos (KB);
-	Complex HBC(-2.0*this->NNHopping, -2.0*this->NNSpinOrbit);
-	HBC *= cos(KA-KB);
-
-	Complex HAB2 (-2.0*this->NextNNHopping, 2.0*this->NextNNSpinOrbit);
-	HAB2 *= cos (KA-2.0*KB);
-	Complex HAC2 (-2.0*this->NextNNHopping, -2.0*this->NextNNSpinOrbit);
-	HAC2 *= cos (2.0*KA-KB);
-	Complex HBC2 (-2.0*this->NextNNHopping, 2.0*this->NextNNSpinOrbit);
-	HBC2 *= cos (KA+KB);
-
-	HAB+=HAB2;
-	HAC+=HAC2;
-	HBC+=HBC2;
-		
-	HermitianMatrix TmpOneBobyHamiltonian(3, true);
-	
-	TmpOneBobyHamiltonian.SetMatrixElement(0, 1, HAB);
-	TmpOneBobyHamiltonian.SetMatrixElement(0, 2, HAC);
-	TmpOneBobyHamiltonian.SetMatrixElement(1, 2, HBC);
-	//cout << TmpOneBobyHamiltonian << endl;
-	ComplexMatrix TmpMatrix(3, 3, true);
-	TmpMatrix[0][0] = 1.0;
-	TmpMatrix[1][1] = 1.0;
-	TmpMatrix[2][2] = 1.0;
-	RealDiagonalMatrix TmpDiag;
-#ifdef __LAPACK__
-	TmpOneBobyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
-#else
-	TmpOneBobyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
-#endif
-	//cout << TmpMatrix[0][0]<<" "<< TmpMatrix[0][1]<< " " << TmpMatrix[0][2]<<endl;
-	oneBodyBasis[Index] = TmpMatrix;
-	if (this->FlatBand == false)
-	  {
-	    this->OneBodyInteractionFactors[Index] = 0.5*TmpDiag(0, 0);
-	  }
-	cout << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << " " << TmpDiag(2, 2) << endl;
-      }
-}
 
 
