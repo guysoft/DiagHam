@@ -39,7 +39,7 @@ using std::ofstream;
 
 int main(int argc, char** argv)
 {
-  OptionManager Manager ("FQHEChern2DiceLatticeModel" , "0.01");
+  OptionManager Manager ("FQHEChern2TriangularLatticeModel" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
@@ -163,7 +163,7 @@ int main(int argc, char** argv)
     {
       TightBindingModelChern2TriangularLattice TightBindingModel(NbrSitesX, NbrSitesY, 
 								 Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("phi"),
-								 Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), false);
+								 Manager.GetDouble("mus"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), false);
       TightBindingModel.WriteAsciiSpectrum(EigenvalueOutputFile);
       double BandSpread = TightBindingModel.ComputeBandSpread(0);
       double DirectBandGap = TightBindingModel.ComputeDirectBandGap(0);
@@ -188,7 +188,7 @@ int main(int argc, char** argv)
 
   TightBindingModelChern2TriangularLattice TightBindingModel(NbrSitesX, NbrSitesY, 
 							     Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("phi"),
-							     Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+							     Manager.GetDouble("mus"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
   bool FirstRunFlag = true;
   for (int i = MinKx; i <= MaxKx; ++i)
     {
@@ -235,7 +235,7 @@ int main(int argc, char** argv)
 		      Hamiltonian = 0;
 // 		      Hamiltonian = new ParticleOnLatticeChern2DiceLatticeSingleBandFourBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
 // 												    Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("epsilon"), Manager.GetDouble("lambda"), Manager.GetDouble("B1"),
-// 												    Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
+// 												    Manager.GetDouble("mus"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
 // 												    Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 		    }
 		  else
@@ -243,7 +243,7 @@ int main(int argc, char** argv)
 		      Hamiltonian = 0;
 // 		      Hamiltonian = new ParticleOnLatticeChern2DiceLatticeSingleBandFiveBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
 // 												    Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("epsilon"), Manager.GetDouble("lambda"), Manager.GetDouble("B1"),
-// 												    Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
+// 												    Manager.GetDouble("mus"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
 // 												    Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 		    }
 		  
