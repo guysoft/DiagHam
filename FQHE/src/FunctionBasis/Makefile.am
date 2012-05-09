@@ -6,4 +6,5 @@ libQHEFunctionBasis_a_SOURCES=ParticleOnSphereFunctionBasis.cc \
 ParticleOnDiskFunctionBasis.cc \
 ParticleOnSphereGenericLLFunctionBasis.cc \
 ParticleOnChernInsulatorSingleBandFunctionBasis.cc \
-ParticleOnCheckerboardLatticeFunctionBasis.cc
+ParticleOnCheckerboardLatticeFunctionBasis.cc \
+ParticleOnCylinderFunctionBasis.cc

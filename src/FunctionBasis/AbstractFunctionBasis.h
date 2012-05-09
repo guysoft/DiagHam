@@ -102,6 +102,12 @@ class AbstractFunctionBasis
   // index = function index 
   virtual void GetFunctionValue(ComplexVector& value, Complex& result, int index);
 
+  // get value of the i-th function at a given point (for functions which take values in C)
+  //
+  // x, y = coordinate where the function has to be evaluated
+  // index = function index 
+  virtual Complex GetFunctionValue(double x, double y, int index);
+
 };
 
 // return Hilbert space dimension

@@ -120,4 +120,14 @@ void AbstractFunctionBasis::GetFunctionValue(ComplexVector& value, Complex& resu
   return;
 }
 
-
+// get value of the i-th function at a given point (for functions which take values in C)
+//
+// x, y = coordinate where the function has to be evaluated
+// index = function index 
+Complex AbstractFunctionBasis::GetFunctionValue(double x, double y, int index)
+{
+  Complex result;
+  result.Re = 0.0;
+  result.Im = 0.0;
+  return result;
+}

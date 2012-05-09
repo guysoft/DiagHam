@@ -207,8 +207,9 @@ void ParticleOnCylinderCoulombHamiltonian::EvaluateInteractionFactors()
                                            - this->EvaluateInteractionCoefficient(m1, m2, m4, m3)
                                            - this->EvaluateInteractionCoefficient(m2, m1, m3, m4));
 
-		     //cout << m1 << " " << m2 << " " << m3 << " " << m4 << " : " << TmpCoefficient[Pos]<< endl;
-		    if (MaxCoefficient < Norm(TmpCoefficient[Pos]))
+		     cout << m1 << " " << m2 << " " << m3 << " " << m4 << " : " << this->EvaluateInteractionCoefficient(m1, m2, m3, m4) << endl;
+		     cout << m1 << " " << m2 << " " << m4 << " " << m3 << " : " << this->EvaluateInteractionCoefficient(m1,m2,m4,m3) << endl;
+                     if (MaxCoefficient < Norm(TmpCoefficient[Pos]))
 		      MaxCoefficient = Norm(TmpCoefficient[Pos]);
 		    ++Pos;
 		  }
