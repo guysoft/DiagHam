@@ -29,7 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "Hamiltonian/ParticleOnCylinderLaplacianDeltaHamiltonian.h"
+#include "Hamiltonian/ParticleOnCylinderStructureFactor.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
@@ -65,35 +65,23 @@ using std::ostream;
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
-ParticleOnCylinderLaplacianDeltaHamiltonian::ParticleOnCylinderLaplacianDeltaHamiltonian(ParticleOnSphere* particles, int nbrParticles, int maxMomentum,
-										   double ratio, double electricFieldParameter, double bFieldParameter, AbstractArchitecture* architecture, long memory, char* precalculationFileName)
+ParticleOnCylinderStructureFactor::ParticleOnCylinderStructureFactor(ParticleOnSphere* particles, int nbrParticles, int maxMomentum,
+										   double ratio, double qxValue, int tValue, AbstractArchitecture* architecture, long memory, char* precalculationFileName)
 {
   this->Particles = particles;
   this->MaxMomentum = maxMomentum;
   this->NbrLzValue = this->MaxMomentum + 1;
   this->NbrParticles = nbrParticles;
+  this->QxValue = qxValue;
+  this->TValue = tValue;
   this->FastMultiplicationFlag = false;
   this->Ratio = ratio;
   this->InvRatio = 1.0 / ratio;
   this->Architecture = architecture;
   this->EvaluateInteractionFactors();
   this->EnergyShift = 0.0;
-  this->ElectricField = electricFieldParameter;
-  this->MagneticField = bFieldParameter;
 
   this->OneBodyInteractionFactors = 0;
-  if (this->ElectricField != 0)
-    {
-      this->OneBodyInteractionFactors = new Complex [this->NbrLzValue];
-      Complex Factor;
-      double kappa = sqrt(2.0 * M_PI /(this->NbrLzValue * this->Ratio));
-      for (int i = 0; i < this->NbrLzValue; ++i)
-        { 
-           Factor.Re = 0.194 * sqrt(this->MagneticField) * ((this->ElectricField/(1.0 + this->ElectricField)) * kappa * kappa * ((double)i - 0.5 * this->MaxMomentum) * ((double)i - 0.5 * this->MaxMomentum)); 
-           Factor.Im = 0.0;
-	   this->OneBodyInteractionFactors[i] = Factor;
-        }
-    }
 
   if (precalculationFileName == 0)
     {
@@ -123,7 +111,7 @@ ParticleOnCylinderLaplacianDeltaHamiltonian::ParticleOnCylinderLaplacianDeltaHam
 // destructor
 //
 
-ParticleOnCylinderLaplacianDeltaHamiltonian::~ParticleOnCylinderLaplacianDeltaHamiltonian() 
+ParticleOnCylinderStructureFactor::~ParticleOnCylinderStructureFactor() 
 {
   delete[] this->InteractionFactors;
   delete[] this->M1Value;
@@ -155,7 +143,7 @@ ParticleOnCylinderLaplacianDeltaHamiltonian::~ParticleOnCylinderLaplacianDeltaHa
 //
 // hilbertSpace = pointer to Hilbert space to use
 
-void ParticleOnCylinderLaplacianDeltaHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
+void ParticleOnCylinderStructureFactor::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
 {
   delete[] this->InteractionFactors;
   if (this->FastMultiplicationFlag == true)
@@ -177,7 +165,7 @@ void ParticleOnCylinderLaplacianDeltaHamiltonian::SetHilbertSpace (AbstractHilbe
 //
 // shift = shift value
 
-void ParticleOnCylinderLaplacianDeltaHamiltonian::ShiftHamiltonian (double shift)
+void ParticleOnCylinderStructureFactor::ShiftHamiltonian (double shift)
 {
   this->EnergyShift = shift;
 }
@@ -185,7 +173,7 @@ void ParticleOnCylinderLaplacianDeltaHamiltonian::ShiftHamiltonian (double shift
 // evaluate all interaction factors
 //   
 
-void ParticleOnCylinderLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
+void ParticleOnCylinderStructureFactor::EvaluateInteractionFactors()
 {
   int Pos = 0;
   int m4;
@@ -195,17 +183,15 @@ void ParticleOnCylinderLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
       for (int m1 = 0; m1 <= this->MaxMomentum; ++m1)
-	for (int m2 = 0; m2 < m1; ++m2)
+	for (int m2 = 0; m2 <= this->MaxMomentum; ++m2)
 	  for (int m3 = 0; m3 <= this->MaxMomentum; ++m3)
 	    {
 	      m4 = m1 + m2 - m3;
 	      if ((m4 >= 0) && (m4 <= this->MaxMomentum))
-  	        if (m3 > m4)
+  	        if ((m1 - m4) == this->TValue)
 		  {
-		    TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4)
-			  		 + this->EvaluateInteractionCoefficient(m2, m1, m4, m3)
-					 - this->EvaluateInteractionCoefficient(m1, m2, m4, m3)
-					 - this->EvaluateInteractionCoefficient(m2, m1, m3, m4));
+		    TmpCoefficient[Pos] = this->EvaluateInteractionCoefficient(m1, m2, m3, m4);
+
 		    if (MaxCoefficient < Norm(TmpCoefficient[Pos]))
 		      MaxCoefficient = Norm(TmpCoefficient[Pos]);
 		    ++Pos;
@@ -221,12 +207,12 @@ void ParticleOnCylinderLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
       Pos = 0;
       MaxCoefficient *= MACHINE_PRECISION;
       for (int m1 = 0; m1 <= this->MaxMomentum; ++m1)
-	for (int m2 = 0; m2 < m1; ++m2)
+	for (int m2 = 0; m2 <= this->MaxMomentum; ++m2)
 	  for (int m3 = 0; m3 <= this->MaxMomentum; ++m3)
 	    {
 	      m4 = m1 + m2 - m3;
               if ((m4 >= 0) && (m4 <= this->MaxMomentum))
-	        if (m3 > m4)
+	        if ((m1 - m4) == this->TValue)
 		  {
 		    if  (Norm(TmpCoefficient[Pos]) > MaxCoefficient)
 		      {
@@ -243,6 +229,7 @@ void ParticleOnCylinderLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
     }
   else //bosons
     {
+/*
       for (int m1 = 0; m1 <= this->MaxMomentum; ++m1)
 	for (int m2 = 0; m2 <= m1; ++m2)
 	  for (int m3 = 0; m3 <= this->MaxMomentum; ++m3)
@@ -307,6 +294,7 @@ void ParticleOnCylinderLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
 		  ++Pos;
 		}
 	     }
+*/
     }
   cout << "nbr interaction = " << this->NbrInteractionFactors << endl;
   cout << "====================================" << endl;
@@ -321,29 +309,19 @@ void ParticleOnCylinderLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
 // m4 = fourth index
 // return value = numerical coefficient
 
-Complex ParticleOnCylinderLaplacianDeltaHamiltonian::EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4)
+Complex ParticleOnCylinderStructureFactor::EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4)
 {
   double Length = sqrt(2.0 * M_PI * this->Ratio * this->NbrLzValue);
   double kappa = 2.0 * M_PI/Length;
   double Xm1 = kappa * m1;
   double Xm2 = kappa * m2;
   double Xm3 = kappa * m3;
-  double Xm4 = kappa * m4;	
+  double Xm4 = kappa * m4;
 
-  Complex Coefficient(0,0);
+  Complex Phase;
 
-  if (this->ElectricField == 0)
-   {
+  Phase.Re = cos(-this->QxValue * (Xm1 - Xm3));
+  Phase.Im = sin(-this->QxValue * (Xm1 - Xm3));
 
-     Coefficient.Re = exp(-0.5*pow(Xm1-Xm3,2.0)-0.5*pow(Xm1-Xm4,2.0)) * (pow(Xm1-Xm3,2.0)-pow(Xm1-Xm4,2.0)-1.0);
-     Coefficient.Im = 0.0;
-     return (Coefficient/sqrt(this->Ratio * this->NbrLzValue));
-   }
-  else
-   {
-     double alpha = sqrt(1.0 + this->ElectricField);
-     Coefficient.Re = exp(-pow(Xm1-Xm3,2.0)/(2.0*pow(alpha,3.0))-pow(Xm1-Xm4,2.0)/(2.0 * pow(alpha,3.0))) * (pow(Xm1-Xm3,2.0)-alpha*alpha*pow(Xm1-Xm4,2.0)+alpha*alpha-alpha*alpha*alpha);
-     Coefficient.Im = 0.0;
-     return (Coefficient/sqrt(this->Ratio * this->NbrLzValue * alpha * alpha * alpha));
-   }
+  return (Phase/(double)this->NbrLzValue);
 }
