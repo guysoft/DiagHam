@@ -69,7 +69,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "t1", "nearest neighbor hopping amplitude", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "t2", "next to nearest neighbor hopping amplitude", 0.25);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "phi", "phase in the hoppng terms", 0.166667);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "mus", "chemical potential on site B and C", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "mus", "chemical potential on site A", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-spectrum", "only compute the one body spectrum");

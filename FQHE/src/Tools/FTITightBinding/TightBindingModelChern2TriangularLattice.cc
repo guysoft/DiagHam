@@ -111,7 +111,7 @@ void TightBindingModelChern2TriangularLattice::ComputeBandStructure(long minStat
 	      Complex HAC = -this->NNHopping * (Phase(-2.0 * this->Phi) + Phase(KY) + Phase(2.0 * this->Phi + KY - KX));
 	      Complex HBC = this->NNHopping * (Phase(2.0 * this->Phi) + Phase(KY - KX - 2.0 * this->Phi) + Phase(-KX));
 	      
-	      Complex HAA = 2.0 * this->NextNNHopping * (cos(KY + this->Phi) + cos(KX - this->Phi) + cos(KX - KY + this->Phi));
+	      Complex HAA = 2.0 * this->NextNNHopping * (cos(KY + this->Phi) + cos(KX - this->Phi) + cos(KX - KY + this->Phi)) - this->MuS;
 	      Complex HBB = 2.0 * this->NextNNHopping * (cos(KY - this->Phi) + cos(KX + this->Phi) + cos(KX - KY - this->Phi));
 	      Complex HCC = -2.0 * this->NextNNHopping * (cos(KY) + cos(KX) + cos(KX - KY));
 	      
