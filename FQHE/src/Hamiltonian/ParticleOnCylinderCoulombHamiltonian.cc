@@ -61,12 +61,15 @@ using std::ostream;
 // nbrParticles = number of particles
 // maxMomentum = maximum Lz value reached by a particle in the state
 // ratio = ratio between the width in the x direction and the width in the y direction
+// confinement = amplitude of the quadratic confinement potential
+// electricFieldParameter = amplitude of the electric field along the cylinder
+// bFieldfParameter = amplitude of the magnetic field (to set the energy scale)
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
 ParticleOnCylinderCoulombHamiltonian::ParticleOnCylinderCoulombHamiltonian(ParticleOnSphere* particles, int nbrParticles, int maxMomentum,
-										   double ratio, double electricFieldParameter, double bFieldParameter, AbstractArchitecture* architecture, long memory, char* precalculationFileName)
+										   double ratio, double confinement, double electricFieldParameter, double bFieldParameter, AbstractArchitecture* architecture, long memory, char* precalculationFileName)
 {
   this->Particles = particles;
   this->MaxMomentum = maxMomentum;
@@ -78,19 +81,23 @@ ParticleOnCylinderCoulombHamiltonian::ParticleOnCylinderCoulombHamiltonian(Parti
   this->Architecture = architecture;
   this->EvaluateInteractionFactors();
   this->EnergyShift = 0.0;
+  this->Confinement = confinement;
   this->ElectricField = electricFieldParameter;
   this->MagneticField = bFieldParameter;
 
   this->OneBodyInteractionFactors = 0;
-  if (this->ElectricField != 0)
+  if ((this->ElectricField != 0) || (this->Confinement != 0))
     {
       this->OneBodyInteractionFactors = new Complex [this->NbrLzValue];
       Complex Factor;
       double kappa = sqrt(2.0 * M_PI /(this->NbrLzValue * this->Ratio));
       for (int i = 0; i < this->NbrLzValue; ++i)
         { 
-           Factor.Re = 0.194 * sqrt(this->MagneticField) * ((this->ElectricField/(1.0 + this->ElectricField)) * kappa * kappa * ((double)i - 0.5 * this->MaxMomentum) * ((double)i - 0.5 * this->MaxMomentum)); 
+           Factor.Re = this->Confinement * pow(kappa * i, 2.0);
            Factor.Im = 0.0;
+           //add the contribution from electric field
+           Factor.Re += 0.194 * sqrt(this->MagneticField) * ((this->ElectricField/(1.0 + this->ElectricField)) * kappa * kappa * ((double)i - 0.5 * this->MaxMomentum) * ((double)i - 0.5 * this->MaxMomentum)); 
+           Factor.Im += 0.0;
 	   this->OneBodyInteractionFactors[i] = Factor;
         }
     }

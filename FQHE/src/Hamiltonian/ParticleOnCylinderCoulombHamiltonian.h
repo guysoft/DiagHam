@@ -58,10 +58,13 @@ class ParticleOnCylinderCoulombHamiltonian : public AbstractQHEOnCylinderHamilto
   // nbrParticles = number of particles
   // maxMomentum = maximum Lz value reached by a particle in the state
   // ratio = ratio between the width in the x direction and the width in the y direction
+  // confinement = amplitude of the quadratic confinement potential
+  // electricFieldParameter = amplitude of the electric field along the cylinder
+  // bFielfParameter = amplitude of the magnetic field (to set the energy scale)
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnCylinderCoulombHamiltonian(ParticleOnSphere* particles, int nbrParticles, int maxMomentum, double ratio, double electricFieldParameter, double bFieldParameter,
+  ParticleOnCylinderCoulombHamiltonian(ParticleOnSphere* particles, int nbrParticles, int maxMomentum, double ratio, double confinement, double electricFieldParameter, double bFieldParameter,
 					   AbstractArchitecture* architecture, long memory = -1, char* precalculationFileName = 0);
 
   // destructor
