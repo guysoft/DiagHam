@@ -43,6 +43,15 @@ USER_DEFINED_LAPACK=yes
 ]
 )
 
+USER_DEFINED_FORTRAN2C=no
+AC_ARG_WITH(fortran2c-libs,[AC_HELP_STRING([--with-fortran2c-libs="LIBS"],[FORTRAN2C libraries @<:@"-lgfortran"@:>@])],
+[FORTRAN2C_LIBS=${withval}
+AC_MSG_CHECKING(user-defined FORTRAN2C libraries)
+AC_MSG_RESULT([${FORTRAN2C_LIBS}])
+USER_DEFINED_FORTRAN2C=yes
+]
+)
+
 AC_ARG_WITH(blas-libdir,
 [AC_HELP_STRING([--with-blas-libdir=DIR],[BLAS library directory @<:@BLASROOT/lib@:>@])],
 [BLAS_LIBDIR=${withval}
@@ -73,7 +82,7 @@ if test X${HAVE_PKG_LAPACK} = Xyes; then
      AC_CHECK_LIB(lapack, dsyev, [HAVE_PKG_LAPACK=$enableval; LAPACK_LIBS="-llapack"], AC_MSG_ERROR(LAPACK lib not found), "-lblas")
   fi
   AC_LANG_POP(Fortran 77)
-  if test X${USER_DEFINED_LAPACK} = Xno; then
+  if test X${USER_DEFINED_FORTRAN2C} = Xno; then
 	AC_CHECK_LIB(f2c, main,FORTRAN2C_LIBS="-lf2c",
 	AC_CHECK_LIB(g2c, main,FORTRAN2C_LIBS="-lg2c",
 	AC_CHECK_LIB(gfortran, main,FORTRAN2C_LIBS="-lgfortran",AC_MSG_ERROR(can't link fortran to c++: no f2c, g2c or gfortran lib found))))
