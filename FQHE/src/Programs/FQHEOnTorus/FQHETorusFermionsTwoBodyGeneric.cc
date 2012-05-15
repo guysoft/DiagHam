@@ -154,7 +154,7 @@ int main(int argc, char** argv)
       if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
 	{
 	  EigenvectorName = new char [256];
-	  sprintf (EigenvectorName, "fermions_torus_kysym_%_n_%d_2s_%d_ratio_%f_ky_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, XRatio, Momentum);
+	  sprintf (EigenvectorName, "fermions_torus_kysym_%s_n_%d_2s_%d_ratio_%f_ky_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, XRatio, Momentum);
 	}
       FQHEOnTorusMainTask Task (&Manager, Space, &Lanczos, Hamiltonian, Momentum, Shift, OutputNameLz, FirstRun, EigenvectorName);
       MainTaskOperation TaskOperation (&Task);
