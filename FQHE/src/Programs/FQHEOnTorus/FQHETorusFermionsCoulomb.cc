@@ -65,6 +65,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption ('l', "max-momentum", "maximum momentum for a single particle", 18);
   (*SystemGroup) += new SingleIntegerOption ('y', "ky-momentum", "constraint on the total momentum modulo the maximum momentum (negative if none)", -1);
   (*SystemGroup) += new SingleDoubleOption ('r', "ratio", "ratio between the two torus lengths", 1.0);
+  (*SystemGroup) += new SingleIntegerOption ('\n', "landau-level", "index of the Landau level (0 if LLL)", 0);
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
@@ -86,17 +87,17 @@ int main(int argc, char** argv)
       cout << "see man page for option syntax or type FQHETorusFermionsLaplacianDelta -h" << endl;
       return -1;
     }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
     }
 
 
-  int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
-  int MaxMomentum = ((SingleIntegerOption*) Manager["max-momentum"])->GetInteger();
-  int Momentum = ((SingleIntegerOption*) Manager["ky-momentum"])->GetInteger();
-  double XRatio = ((SingleDoubleOption*) Manager["ratio"])->GetDouble();
+  int NbrParticles = Manager.GetInteger("nbr-particles");
+  int MaxMomentum = Manager.GetInteger("max-momentum");
+  int Momentum = Manager.GetInteger("ky-momentum");
+  double XRatio = Manager.GetDouble("ratio");
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
   bool FirstRun = true;
   
@@ -132,12 +133,12 @@ int main(int argc, char** argv)
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
 
-      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnTorusCoulombHamiltonian (Space, NbrParticles, MaxMomentum, XRatio, Architecture.GetArchitecture(), Memory);
+      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnTorusCoulombHamiltonian (Space, NbrParticles, MaxMomentum, XRatio, Manager.GetInteger("landau-level"), Architecture.GetArchitecture(), Memory);
 
       double Shift = -10.0;
       Hamiltonian->ShiftHamiltonian(Shift);
       char* EigenvectorName = 0;
-      if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
+      if (Manager.GetBoolean("eigenstate") == true)	
 	{
 	  EigenvectorName = new char [256];
 	  sprintf (EigenvectorName, "fermions_torus_kysym_coulomb_n_%d_2s_%d_ratio_%f_ky_%d", NbrParticles, MaxMomentum, XRatio, Momentum);

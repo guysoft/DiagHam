@@ -94,17 +94,17 @@ int main(int argc, char** argv)
       cout << "see man page for option syntax or type FQHETorusBosonsTwoBodyGeneric -h" << endl;
       return -1;
     }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
     }
 
 
-  int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
-  int MaxMomentum = ((SingleIntegerOption*) Manager["max-momentum"])->GetInteger();
-  int Momentum = ((SingleIntegerOption*) Manager["ky-momentum"])->GetInteger();
-  double XRatio = ((SingleDoubleOption*) Manager["ratio"])->GetDouble();
+  int NbrParticles = Manager.GetInteger("nbr-particles");
+  int MaxMomentum = Manager.GetInteger("max-momentum");
+  int Momentum = Manager.GetInteger("ky-momentum");
+  double XRatio = Manager.GetDouble("ratio");
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
   bool FirstRun = true;
   
@@ -162,7 +162,7 @@ int main(int argc, char** argv)
       double Shift = -10.0;
       Hamiltonian->ShiftHamiltonian(Shift);
       char* EigenvectorName = 0;
-      if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
+      if (Manager.GetBoolean("eigenstate") == true)	
 	{
 	  EigenvectorName = new char [256];
 	  sprintf (EigenvectorName, "bosons_torus_kysym_%s_n_%d_2s_%d_ratio_%f_ky_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, XRatio, Momentum);
