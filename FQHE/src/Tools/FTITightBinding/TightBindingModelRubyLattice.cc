@@ -116,6 +116,7 @@ void TightBindingModelRubyLattice::ComputeBandStructure(long minStateIndex, long
 	      Complex PhaseXY = Phase(KX + KY);
 	      
 	      HermitianMatrix TmpOneBodyHamiltonian(6, true);
+	      TmpOneBodyHamiltonian.SetMatrixElement(0, 0, this->MuS);
 	      TmpOneBodyHamiltonian.SetMatrixElement(0, 2, Conj(CT));
 	      TmpOneBodyHamiltonian.SetMatrixElement(0, 4, CT);
 	      TmpOneBodyHamiltonian.SetMatrixElement(2, 4, Conj(CT));

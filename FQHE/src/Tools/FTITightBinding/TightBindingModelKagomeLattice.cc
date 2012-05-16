@@ -128,6 +128,7 @@ void TightBindingModelKagomeLattice::ComputeBandStructure(long minStateIndex, lo
 	      HBC += HBC2;
 
 	      HermitianMatrix TmpOneBodyHamiltonian(this->NbrBands, true);
+	      TmpOneBodyHamiltonian.SetMatrixElement(0, 0, this->MuS);
 	      TmpOneBodyHamiltonian.SetMatrixElement(0, 1, HAB);
 	      TmpOneBodyHamiltonian.SetMatrixElement(0, 2, HAC);
 	      TmpOneBodyHamiltonian.SetMatrixElement(1, 2, HBC);
